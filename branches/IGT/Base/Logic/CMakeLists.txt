@@ -14,7 +14,6 @@ SET(SlicerBaseLogic_SRCS
   vtkSlicerModelsLogic.cxx 
   vtkSlicerFiducialsLogic.cxx
   vtkSlicerColorLogic.cxx
-  vtkSlicerIGTDemoLogic.cxx
   # slicer's vtk extensions
   vtkImageSlicePaint.cxx 
   vtkImageAccumulateDiscrete.cxx
@@ -51,7 +50,6 @@ INCLUDE_DIRECTORIES(
   ${vtkTeem_SOURCE_DIR}
   ${vtkTeem_BINARY_DIR}
   ${SlicerBase_BINARY_DIR}
-  ${OPENTRACKER_INC_DIR}
   )
 
 
@@ -83,8 +81,8 @@ TARGET_LINK_LIBRARIES(SlicerBaseLogic
   vtkFilteringTCL
   vtkGraphicsTCL
   vtkIOTCL
-  vtkHybridTCL
-  ${OPENTRACKER_LIB}
+  #  vtkHybridTCL
+  # ${OPENTRACKER_LIB}
   )
 
 IF( TEEM_FOUND )

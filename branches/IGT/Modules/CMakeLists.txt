@@ -9,7 +9,7 @@ SUBDIRS(
   Editor
   QueryAtlas
   Tractography
-  IGTDemo
+  Neurosurgery
 )
 
 
