@@ -74,14 +74,15 @@
 //#define Neurosurgery_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
-//#define EMSEG_DEBUG
+#define EMSEG_DEBUG
+//#define NEUROSURGERY_DEBUG
 
 #ifndef EMSEG_DEBUG
 #include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentGUI.h"
 #endif
 
-#ifndef EMSEG_DEBUG
+#ifndef NEUROSURGERY_DEBUG
 #include "vtkNeurosurgeryLogic.h"
 #include "vtkNeurosurgeryGUI.h"
 #endif
@@ -648,7 +649,7 @@ int Slicer3_main(int argc, char *argv[])
     colorGUI->AddGUIObservers ( );
 #endif
 
-#ifndef Neurosurgery_DEBUG
+#ifndef NEUROSURGERY_DEBUG
     // -- Neurosurgery module
     vtkNeurosurgeryLogic *NeurosurgeryLogic = vtkNeurosurgeryLogic::New ( );
     NeurosurgeryLogic->SetAndObserveMRMLScene ( scene );
