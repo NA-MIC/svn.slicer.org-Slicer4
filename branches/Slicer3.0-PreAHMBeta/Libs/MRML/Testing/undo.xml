@@ -1,0 +1,4 @@
+<MRML>
+<VolumeArchetypeStorage
+FileArchetype='TestData/fixed.nrrd' ID='storage1'></VolumeArchetypeStorage>
+</MRML>
