@@ -316,7 +316,6 @@ IF (Slicer3_SOURCE_DIR)
         ModelMaker
         GrayscaleModelMaker
         CheckerBoardLib
-        LinearRegistration
         GrayscaleFillHoleImageFilter
         GrayscaleFillHoleImageFilterLib
         GrayscaleGrindPeakImageFilter
