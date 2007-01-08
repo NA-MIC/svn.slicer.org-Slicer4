@@ -16,7 +16,6 @@
 #include "vtkSlicerModelsLogic.h"
 #include "vtkSlicerFiducialsLogic.h"
 #include "vtkSlicerColorLogic.h"
-#include "vtkSlicerIGTDemoLogic.h"
 #include "vtkMRMLScene.h"
 #include "vtkSlicerComponentGUI.h"
 #include "vtkSlicerApplicationGUI.h"
@@ -29,7 +28,6 @@
 #include "vtkSlicerModelsGUI.h"
 #include "vtkSlicerFiducialsGUI.h"
 #include "vtkSlicerColorGUI.h"
-#include "vtkSlicerIGTDemoGUI.h"
 #include "vtkSlicerDataGUI.h"
 #include "vtkSlicerTransformsGUI.h"
 #include "vtkSlicerCamerasGUI.h"
@@ -73,7 +71,7 @@
 //#define VOLUMES_DEBUG
 //#define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
-//#define IGTDEMO_DEBUG
+//#define Neurosurgery_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
 //#define EMSEG_DEBUG
@@ -81,6 +79,11 @@
 #ifndef EMSEG_DEBUG
 #include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentGUI.h"
+#endif
+
+#ifndef EMSEG_DEBUG
+#include "vtkNeurosurgeryLogic.h"
+#include "vtkNeurosurgeryGUI.h"
 #endif
 
 #ifdef _WIN32
@@ -645,24 +648,24 @@ int Slicer3_main(int argc, char *argv[])
     colorGUI->AddGUIObservers ( );
 #endif
 
-#ifndef IGTDEMO_DEBUG
-    // -- IGTDemo module
-    vtkSlicerIGTDemoLogic *IGTDemoLogic = vtkSlicerIGTDemoLogic::New ( );
-    IGTDemoLogic->SetAndObserveMRMLScene ( scene );
-    vtkSlicerIGTDemoGUI *IGTDemoGUI = vtkSlicerIGTDemoGUI::New ( );
+#ifndef Neurosurgery_DEBUG
+    // -- Neurosurgery module
+    vtkNeurosurgeryLogic *NeurosurgeryLogic = vtkNeurosurgeryLogic::New ( );
+    NeurosurgeryLogic->SetAndObserveMRMLScene ( scene );
+    vtkNeurosurgeryGUI *NeurosurgeryGUI = vtkNeurosurgeryGUI::New ( );
 
-    IGTDemoGUI->SetApplication ( slicerApp );
-    IGTDemoGUI->SetApplicationGUI ( appGUI );
-    IGTDemoGUI->SetAndObserveApplicationLogic ( appLogic );
-    IGTDemoGUI->SetAndObserveMRMLScene ( scene );
-    IGTDemoGUI->SetModuleLogic ( IGTDemoLogic );
-    IGTDemoGUI->SetGUIName( "IGT Demo" );
-    IGTDemoGUI->GetUIPanel()->SetName ( IGTDemoGUI->GetGUIName ( ) );
-    IGTDemoGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    IGTDemoGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( IGTDemoGUI );
-    IGTDemoGUI->BuildGUI ( );
-    IGTDemoGUI->AddGUIObservers ( );
+    NeurosurgeryGUI->SetApplication ( slicerApp );
+    NeurosurgeryGUI->SetApplicationGUI ( appGUI );
+    NeurosurgeryGUI->SetAndObserveApplicationLogic ( appLogic );
+    NeurosurgeryGUI->SetAndObserveMRMLScene ( scene );
+    NeurosurgeryGUI->SetModuleLogic ( NeurosurgeryLogic );
+    NeurosurgeryGUI->SetGUIName( "Neurosurgery" );
+    NeurosurgeryGUI->GetUIPanel()->SetName ( NeurosurgeryGUI->GetGUIName ( ) );
+    NeurosurgeryGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    NeurosurgeryGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( NeurosurgeryGUI );
+    NeurosurgeryGUI->BuildGUI ( );
+    NeurosurgeryGUI->AddGUIObservers ( );
 #endif 
     
     // --- Transforms module
@@ -1022,9 +1025,9 @@ int Slicer3_main(int argc, char *argv[])
     name = colorGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ColorGUI %s", name);
 #endif
-#ifndef IGTDEMO_DEBUG
-    name = IGTDemoGUI->GetTclName();
-    slicerApp->Script ("namespace eval slicer3 set IGTDemoGUI %s", name);
+#ifndef Neurosurgery_DEBUG
+    name = NeurosurgeryGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set NeurosurgeryGUI %s", name);
 #endif
     name = transformsGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set TransformsGUI %s", name);
@@ -1223,8 +1226,8 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorGUI->RemoveGUIObservers ( );
 #endif
-#ifndef IGTDEMO_DEBUG
-    IGTDemoGUI->RemoveGUIObservers ( );
+#ifndef Neurosurgery_DEBUG
+    NeurosurgeryGUI->RemoveGUIObservers ( );
 #endif
     transformsGUI->RemoveGUIObservers ( );
 #ifndef CAMERA_DEBUG
@@ -1311,8 +1314,8 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorGUI->Delete();
 #endif
-#ifndef IGTDEMO_DEBUG
-    IGTDemoGUI->Delete();
+#ifndef Neurosurgery_DEBUG
+    NeurosurgeryGUI->Delete();
 #endif    
     transformsGUI->Delete ();
 #ifndef CAMERA_DEBUG
@@ -1382,9 +1385,9 @@ int Slicer3_main(int argc, char *argv[])
     colorLogic->SetAndObserveMRMLScene ( NULL );
     colorLogic->Delete();
 #endif
-#ifndef IGTDEMO_DEBUG
-    IGTDemoLogic->SetAndObserveMRMLScene ( NULL );
-    IGTDemoLogic->Delete();
+#ifndef Neurosurgery_DEBUG
+    NeurosurgeryLogic->SetAndObserveMRMLScene ( NULL );
+    NeurosurgeryLogic->Delete();
 #endif    
     sliceLogic2->SetAndObserveMRMLScene ( NULL );
     sliceLogic2->Delete ();

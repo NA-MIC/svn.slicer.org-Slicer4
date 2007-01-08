@@ -55,7 +55,6 @@ SET(LIB_SRCS
   vtkSlicerModuleChooseGUI.cxx
   vtkSlicerLogoDisplayGUI.cxx
   vtkSlicerApplicationGUI.cxx
-  vtkSlicerIGTDemoGUI.cxx
   # KW Widgets
   vtkSlicerModuleCollapsibleFrame.cxx
   vtkSlicerNodeSelectorWidget.cxx
@@ -161,7 +160,7 @@ ENDIF(WIN32 AND NOT BORLAND AND NOT CYGWIN)
 
 INCLUDE_DIRECTORIES(
   ${SlicerBaseGUI_BINARY_DIR}
-  ${OPENTRACKER_INC_DIR}
+#  ${OPENTRACKER_INC_DIR}
 )
 CONFIGURE_FILE(
   ${SlicerBaseGUI_SOURCE_DIR}/vtkSlicerBaseGUIConfigure.h.in 
