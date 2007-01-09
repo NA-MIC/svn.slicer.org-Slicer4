@@ -651,22 +651,22 @@ int Slicer3_main(int argc, char *argv[])
 
 #ifndef NEUROSURGERY_DEBUG
     // -- Neurosurgery module
-    vtkNeurosurgeryLogic *NeurosurgeryLogic = vtkNeurosurgeryLogic::New ( );
-    NeurosurgeryLogic->SetAndObserveMRMLScene ( scene );
-    vtkNeurosurgeryGUI *NeurosurgeryGUI = vtkNeurosurgeryGUI::New ( );
+    vtkNeurosurgeryLogic *neurosurgLogic = vtkNeurosurgeryLogic::New ( );
+    neurosurgLogic->SetAndObserveMRMLScene ( scene );
+    vtkNeurosurgeryGUI *neurosurgGUI = vtkNeurosurgeryGUI::New ( );
 
-    NeurosurgeryGUI->SetApplication ( slicerApp );
-    NeurosurgeryGUI->SetApplicationGUI ( appGUI );
-    NeurosurgeryGUI->SetAndObserveApplicationLogic ( appLogic );
-    NeurosurgeryGUI->SetAndObserveMRMLScene ( scene );
-    NeurosurgeryGUI->SetModuleLogic ( NeurosurgeryLogic );
-    NeurosurgeryGUI->SetGUIName( "Neurosurgery" );
-    NeurosurgeryGUI->GetUIPanel()->SetName ( NeurosurgeryGUI->GetGUIName ( ) );
-    NeurosurgeryGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    NeurosurgeryGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( NeurosurgeryGUI );
-    NeurosurgeryGUI->BuildGUI ( );
-    NeurosurgeryGUI->AddGUIObservers ( );
+    neurosurgGUI->SetApplication ( slicerApp );
+    neurosurgGUI->SetApplicationGUI ( appGUI );
+    neurosurgGUI->SetAndObserveApplicationLogic ( appLogic );
+    neurosurgGUI->SetAndObserveMRMLScene ( scene );
+    neurosurgGUI->SetModuleLogic ( neurosurgLogic );
+    neurosurgGUI->SetGUIName( "Neurosurgery" );
+    neurosurgGUI->GetUIPanel()->SetName ( neurosurgGUI->GetGUIName ( ) );
+    neurosurgGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    neurosurgGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( neurosurgGUI );
+    neurosurgGUI->BuildGUI ( );
+    neurosurgGUI->AddGUIObservers ( );
 #endif 
     
     // --- Transforms module
@@ -1027,7 +1027,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->Script ("namespace eval slicer3 set ColorGUI %s", name);
 #endif
 #ifndef Neurosurgery_DEBUG
-    name = NeurosurgeryGUI->GetTclName();
+    name = neurosurgGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set NeurosurgeryGUI %s", name);
 #endif
     name = transformsGUI->GetTclName();
@@ -1228,7 +1228,7 @@ int Slicer3_main(int argc, char *argv[])
     colorGUI->RemoveGUIObservers ( );
 #endif
 #ifndef Neurosurgery_DEBUG
-    NeurosurgeryGUI->RemoveGUIObservers ( );
+    neurosurgGUI->RemoveGUIObservers ( );
 #endif
     transformsGUI->RemoveGUIObservers ( );
 #ifndef CAMERA_DEBUG
@@ -1316,7 +1316,7 @@ int Slicer3_main(int argc, char *argv[])
     colorGUI->Delete();
 #endif
 #ifndef Neurosurgery_DEBUG
-    NeurosurgeryGUI->Delete();
+    neurosurgGUI->Delete();
 #endif    
     transformsGUI->Delete ();
 #ifndef CAMERA_DEBUG
@@ -1387,8 +1387,8 @@ int Slicer3_main(int argc, char *argv[])
     colorLogic->Delete();
 #endif
 #ifndef Neurosurgery_DEBUG
-    NeurosurgeryLogic->SetAndObserveMRMLScene ( NULL );
-    NeurosurgeryLogic->Delete();
+    neurosurgLogic->SetAndObserveMRMLScene ( NULL );
+    neurosurgLogic->Delete();
 #endif    
     sliceLogic2->SetAndObserveMRMLScene ( NULL );
     sliceLogic2->Delete ();
