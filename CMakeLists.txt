@@ -90,7 +90,7 @@ ENDIF(USE_TEEM)
 #
 # OpenTracker 
 #
-OPTION(USE_OPENTRACKER "Need OpenTracker lib to build IGT Demo module." OFF)
+OPTION(USE_OPENTRACKER "Need OpenTracker lib to build Neurosurgery module." OFF)
 IF(USE_OPENTRACKER)
   FIND_LIBRARY(OPENTRACKER_LIB 
                NAMES opentrackerd opentracker
