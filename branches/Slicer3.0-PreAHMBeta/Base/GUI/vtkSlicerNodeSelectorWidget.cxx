@@ -42,11 +42,6 @@ static void MRMLCallback(vtkObject *caller, unsigned long eid, void *__clientDat
     return;
     }
 
-    if (!strcmp(self->GetWidgetName(), "DisplayVolumeSelector") ) 
-      {
-      vtkErrorMacro ("here\n");
-      }
-
   if (self->GetInMRMLCallbackFlag())
     {
 #ifdef _DEBUG
