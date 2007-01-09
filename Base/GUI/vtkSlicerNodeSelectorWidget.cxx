@@ -246,10 +246,6 @@ void vtkSlicerNodeSelectorWidget::UpdateMenu()
           continue;
           }
 
-      if (!strcmp(this->GetWidgetName(), "DisplayVolumeSelector") ) {
-        std::cerr << "here\n";
-      }
-
         // If there is a Attribute Name-Value  specified, then only include nodes that
         // match both the NodeClass and Attribute
         if (this->GetNodeAttributeName(c)== NULL  ||
