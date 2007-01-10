@@ -775,6 +775,8 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
 
+   
+
     // --- Gradient anisotropic diffusion filter module
     slicerApp->GetSplashScreen()->SetProgressMessage(
       "Initializing Gradient Anisotropic Module...");
