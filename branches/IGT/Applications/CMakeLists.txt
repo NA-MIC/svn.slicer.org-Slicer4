@@ -1,7 +1,7 @@
 PROJECT( Applications )
 
 SUBDIRS(
-  CLI
+#  CLI
   GUI
 )
 
