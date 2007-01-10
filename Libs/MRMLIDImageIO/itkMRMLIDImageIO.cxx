@@ -314,18 +314,18 @@ MRMLIDImageIO
 
     vtkMatrix4x4::Multiply4x4(lpsToRas,ijkToLps, rasToIjk);
 
-    int extent[6];  
-    extent[0] = 0;
-    extent[1] = m_Dimensions[0] - 1;
-    extent[2] = 0;
-    extent[3] = m_Dimensions[1] - 1;
-    extent[4] = 0;
-    extent[5] = m_Dimensions[2] - 1;
-    rasToIjk->Invert();
     for (int j = 0; j < 3; j++)
       {
-      rasToIjk->SetElement(j, 3, (extent[2*j+1] - extent[2*j])/2.0);
+      if (j < 2)
+        {
+        rasToIjk->SetElement(j, 3, -m_Origin[j]);
+        }
+      else
+        {
+        rasToIjk->SetElement(j, 3, m_Origin[j]);
+        }
       }
+    rasToIjk->Invert();
     
     rasToIjk->SetElement(3,3,1.0);
     node->SetRASToIJKMatrix(rasToIjk);
