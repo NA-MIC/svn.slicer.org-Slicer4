@@ -9,6 +9,7 @@ SUBDIRS(
   Editor
   QueryAtlas
   Tractography
+#MRAblation
   Neurosurgery
 )
 
