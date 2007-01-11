@@ -71,10 +71,12 @@
 //#define VOLUMES_DEBUG
 //#define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
+//#define RealTimeImaging_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
 #define EMSEG_DEBUG
 //#define NEUROSURGERY_DEBUG
+//#define REALTIMEIMAGING_DEBUG
 //#define MRABLATION_DEBUG
 
 #ifndef EMSEG_DEBUG
@@ -85,6 +87,11 @@
 #ifndef NEUROSURGERY_DEBUG
 #include "vtkNeurosurgeryLogic.h"
 #include "vtkNeurosurgeryGUI.h"
+#endif
+
+#ifndef REALTIMEIMAGING_DEBUG
+#include "vtkRealTimeImagingLogic.h"
+#include "vtkRealTimeImagingGUI.h"
 #endif
 
 #ifndef MRABLATION_DEBUG
@@ -674,6 +681,27 @@ int Slicer3_main(int argc, char *argv[])
     neurosurgGUI->AddGUIObservers ( );
 #endif 
 
+#ifndef REALTIMEIMAGING_DEBUG
+    // -- Real Time Imaging module
+    vtkRealTimeImagingLogic *realtimeimagingLogic = vtkRealTimeImagingLogic::New ( );
+    realtimeimagingLogic->SetAndObserveMRMLScene ( scene );
+    realtimeimagingLogic->AddRealTimeVolumeNode ("Real time test image");
+    vtkRealTimeImagingGUI *realtimeimagingGUI = vtkRealTimeImagingGUI::New ( );
+
+    realtimeimagingGUI->SetApplication ( slicerApp );
+    realtimeimagingGUI->SetApplicationGUI ( appGUI );
+    realtimeimagingGUI->SetAndObserveApplicationLogic ( appLogic );
+    realtimeimagingGUI->SetAndObserveMRMLScene ( scene );
+    realtimeimagingGUI->SetModuleLogic ( realtimeimagingLogic );
+    realtimeimagingGUI->SetGUIName( "Real Time Imaging" );
+    realtimeimagingGUI->GetUIPanel()->SetName ( realtimeimagingGUI->GetGUIName ( ) );
+    realtimeimagingGUI->GetUIPanel()->SetUserInterfaceManager(appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    realtimeimagingGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( realtimeimagingGUI );
+    realtimeimagingGUI->BuildGUI ( );
+    realtimeimagingGUI->AddGUIObservers ( );
+#endif 
+
 #ifndef MRABLATION_DEBUG
     // -- MRAblation module
     vtkMRAblationLogic *ablationLogic = vtkMRAblationLogic::New(); 
@@ -693,7 +721,7 @@ int Slicer3_main(int argc, char *argv[])
     ablationGUI->BuildGUI ( );
     ablationGUI->AddGUIObservers ( );
 #endif 
-   
+
     // --- Transforms module
     slicerApp->GetSplashScreen()->SetProgressMessage(
       "Initializing Transforms Module...");
@@ -1057,6 +1085,10 @@ int Slicer3_main(int argc, char *argv[])
     name = neurosurgGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set NeurosurgeryGUI %s", name);
 #endif
+#ifndef RealTimeImaging_DEBUG
+    name = realtimeimagingGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set RealTimeImagingGUI %s", name);
+#endif
 #ifndef MRABLATION_DEBUG
     name = neurosurgGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set MRAblationGUI %s", name);
@@ -1261,6 +1293,9 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef NEUROSURGERY_DEBUG
     neurosurgGUI->RemoveGUIObservers ( );
 #endif
+#ifndef RealTimeImaging_DEBUG
+    realtimeimagingGUI->RemoveGUIObservers ( );
+#endif
 #ifndef MRABLATION_DEBUG
     ablationGUI->RemoveGUIObservers ( );
 #endif
@@ -1351,6 +1386,9 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 #ifndef NEUROSURGERY_DEBUG
     neurosurgGUI->Delete();
+#endif
+#ifndef RealTimeImaging_DEBUG
+    realtimeimagingGUI->Delete();
 #endif    
 #ifndef MRABLATION_DEBUG
     ablationGUI->Delete();
@@ -1426,7 +1464,11 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef NEUROSURGERY_DEBUG
     neurosurgLogic->SetAndObserveMRMLScene ( NULL );
     neurosurgLogic->Delete();
-#endif    
+#endif
+#ifndef RealTimeIMaging_DEBUG
+    realtimeimagingLogic->SetAndObserveMRMLScene ( NULL );
+    realtimeimagingLogic->Delete();
+#endif
 #ifndef MRABLATION_DEBUG
     ablationLogic->SetAndObserveMRMLScene ( NULL );
     ablationLogic->Delete();
