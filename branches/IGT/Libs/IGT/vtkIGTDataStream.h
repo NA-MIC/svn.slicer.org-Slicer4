@@ -3,6 +3,9 @@
 #define IGTDATASTREAM_H
 
 
+#include <string>
+#include <vector>
+
 #include "vtkObject.h"
 #include "vtkIGTMatrixState.h"
 
@@ -36,18 +39,7 @@ public:
    */
   virtual ~vtkIGTDataStream ( );
 
-  // Static Public attributes
-  //  
-
-
-  // Public attributes
-  //  
-
   
-
-  // Public attribute accessor methods
-  //  
-
 
 protected:
 
@@ -58,11 +50,10 @@ protected:
    @return:stream_id
 
   */   
-  void Init (int buffersize);
+  void Init ();
   int register_stream_device (int stream_type );
   
-  
-  
+ 
 private:
 
   // Static Private attribu tes
@@ -71,18 +62,22 @@ private:
 
   // Private attributes
   //  
-  void** stream_device_hash;
-  int buffer_size;
-  int num_registered_device;
+  
+
+
   int LastInputNum;
   int LastInputTime;
+  vtkMRMLScene* scene;
 
-  // Private attribute accessor methods
-  //  
+  //BTX
+  
+  std::vector<vtkIGTDataStream*> RegisteredDataStream;
+  std::vector<int> DeviceType;
+
+  //ETX
 
 
-  // Private attribute accessor methods
-  //  
+
 
 };
 
