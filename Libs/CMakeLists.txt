@@ -19,7 +19,7 @@ SUBDIRS(
       ITKCommandIO
       MRMLIDImageIO
       MGHImageIO
-#      IGT
+      IGT
 )
 
 

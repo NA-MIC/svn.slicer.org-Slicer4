@@ -1,6 +1,6 @@
 
-#ifndef __IGTDATASTREAM_H
-#define __IGTDATASTREAM_H
+#ifndef IGTDATASTREAM_H
+#define IGTDATASTREAM_H
 
 
 #include "vtkObject.h"
@@ -118,4 +118,4 @@ private:
 
 };
 
-#endif // __IGTDATASTREAM_H
+#endif // IGTDATASTREAM_H
