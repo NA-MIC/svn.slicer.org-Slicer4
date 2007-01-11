@@ -32,20 +32,6 @@ Version:   $Revision: 1.2 $
 vtkCxxRevisionMacro(vtkMRAblationLogic, "$Revision: 1.0 $");
 vtkStandardNewMacro(vtkMRAblationLogic);
 
-/*
-vtkMRAblationLogic* vtkMRAblationLogic::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRAblationLogic");
-  if(ret)
-    {
-      return (vtkMRAblationLogic*)ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRAblationLogic;
-}
-*/
-
 
 //----------------------------------------------------------------------------
 vtkMRAblationLogic::vtkMRAblationLogic()
