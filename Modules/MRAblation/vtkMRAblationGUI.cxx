@@ -46,20 +46,6 @@ Version:   $Revision: 1.2 $
 
 vtkStandardNewMacro (vtkMRAblationGUI );
 vtkCxxRevisionMacro ( vtkMRAblationGUI, "$Revision: 1.0 $");
-/*
-//------------------------------------------------------------------------------
-vtkMRAblationGUI* vtkMRAblationGUI::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRAblationGUI");
-  if(ret)
-    {
-      return (vtkMRAblationGUI*)ret;
-    }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRAblationGUI;
-}
-*/
 
 
 //----------------------------------------------------------------------------
@@ -251,20 +237,13 @@ void vtkMRAblationGUI::UpdateMRML ()
   this->GetLogic()->GetMRMLScene()->SaveStateForUndo(n);
 
   // set node parameters from GUI widgets
-  n->SetTimepoints(this->TimepointsScale->GetValue());
-  n->SetSlices(this->SlicesScale->GetValue());
+  n->SetTimepoints((int)this->TimepointsScale->GetValue());
+  n->SetSlices((int)this->SlicesScale->GetValue());
   n->SetTE(this->TEEntry->GetWidget()->GetValueAsDouble());
   n->Setw0(this->w0Entry->GetWidget()->GetValueAsDouble());
   n->SetTC(this->TCEntry->GetWidget()->GetValueAsDouble());
   n->SetOutputVolumeRef(this->OutVolumeSelector->GetSelected()->GetID());
-
-std::cerr << "file name = " << this->ImageDirectory->GetWidget()->GetFileName() << std::endl;
-
   n->SetImageDirectory(this->ImageDirectory->GetWidget()->GetFileName());
-
-std::cerr << "my file \n";
-
-
   n->SetWorkingDirectory(this->WorkingDirectory->GetWidget()->GetFileName());
 }
 
