@@ -28,65 +28,19 @@ public:
    * Empty Constructor
    */
   vtkIGTMatrixState ( );
-
+  void Init();
   /**
    * Empty Destructor
    */
   virtual ~vtkIGTMatrixState ( );
 
-  // Static Public attributes
-  //  
 
-  // Public attributes
-  //  
-
-
-  // Public attribute accessor methods
-  //  
-
-
-  // Public attribute accessor methods
-  //  
-
-
-
-  /**
-   * obtain registration result from IGTRegistration and copy it to
-   * userspace_to_IJK_matrix
-   */
-  void get_userspace_to_IJK_from_registration ( );
-
-
-  /**
-   */
-  void get_userspace_to_RAS_from_registration ( );
 
 protected:
 
-  // Static Protected attributes
-  //  
-
-  // Protected attributes
-  //  
-
-
-  // Protected attribute accessor methods
-  //  
-
-
-  // Protected attribute accessor methods
-  //  
-
-
-  // Static Private attributes
-  //  
-
-  // Private attributes
-  //  
-
-  vtkMatrix4x4* m_location_matrix_in_userspace;
-  vtkMatrix4x4* m_matrix_in_RAS;
-  vtkMatrix4x4* m_matrix_in_IJK;
+  vtkMatrix4x4* Matrix;
+  vtkMatrix4x4* Matrix_in_RAS;
+  vtkMatrix4x4* Matrix_in_IJK;
   int m_timestamp;
   // Private attribute accessor methods
   //  
@@ -108,11 +62,7 @@ protected:
 
 
 
-  /**
-   */
-  void get_RAS_to_IJK_fom_Slicer ( );
-
-  void initAttributes ( ) ;
+  
 
 };
 

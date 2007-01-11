@@ -3,104 +3,48 @@
 #ifndef IGTOPENTRACKERSTREAM_H
 #define IGTOPENTRACKERSTREAM_H
 
-#include <string>
+
+#include "vtkMatrix4x4.h"
 #include "vtkIGTDataStream.h"
 
-/**
-  * class IGTOpenTrackerStream
-  */
+#include "OpenTracker/OpenTracker.h"
+#include "OpenTracker/common/CallbackModule.h"
+using namespace ot;
+
 
 class vtkIGTOpenTrackerStream : public vtkIGTDataStream
 {
 public:
 
-  // Constructors/Destructors
-  //  
 
     static vtkIGTOpenTrackerStream *New();
       vtkTypeMacro(vtkIGTOpenTrackerStream,vtkIGTDataStream);
       void PrintSelf(ostream& os, vtkIndent indent);
 
-  /**
-   * Empty Constructor
-   */
+
   vtkIGTOpenTrackerStream ( );
 
-  /**
-   * Empty Destructor
-   */
+  Init(int device_type, char* configfile);
+
+
   virtual ~vtkIGTOpenTrackerStream ( );
 
-  // Static Public attributes
-  //  
-
-  // Public attributes
-  //  
 
 
-  // Public attribute accessor methods
-  //  
-
-
-  // Public attribute accessor methods
-  //  
-
-
-
-  /**
-   */
-  void initi_open_tracker ( );
-
-
-  /**
-   */
-  void add_data_to_data_stream ( );
-
-
-  /**
-   */
-  void callback_function ( );
-
-
-  /**
-   */
-  void read_configuration_file ( );
 
 protected:
 
-  // Static Protected attributes
-  //  
+  
+  
+ private:
 
-  // Protected attributes
-  //  
+  vtkIGTMatrixState* matrixstate;
+  //vtkIGTImageState* imagestate;
 
-
-  // Protected attribute accessor methods
-  //  
-
-
-  // Protected attribute accessor methods
-  //  
-
-
-private:
-
-  // Static Private attributes
-  //  
-
-  // Private attributes
-  //  
-
-
-  // Private attribute accessor methods
-  //  
-
-
-  // Private attribute accessor methods
-  //  
-
-
-
+  int  Initialize_Opentracker(char* configfile);
+  static void CallbackF(const Node&,const Event &event, void ata);
+  Context *context;
+  quaternion2xyz(float* orientation, float *normal,float *transnormal);
 };
 
 #endif // IGTOPENTRACKERSTREAM_H
