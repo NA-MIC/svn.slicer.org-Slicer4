@@ -43,6 +43,10 @@ Version:   $Revision: 1.2 $
 #include "vtkKWLoadSaveDialog.h"
 #include "vtkKWEntryWithLabel.h"
 
+
+vtkStandardNewMacro (vtkMRAblationGUI );
+vtkCxxRevisionMacro ( vtkMRAblationGUI, "$Revision: 1.0 $");
+/*
 //------------------------------------------------------------------------------
 vtkMRAblationGUI* vtkMRAblationGUI::New()
 {
@@ -55,6 +59,7 @@ vtkMRAblationGUI* vtkMRAblationGUI::New()
   // If the factory was unable to create the object, then create it here.
   return new vtkMRAblationGUI;
 }
+*/
 
 
 //----------------------------------------------------------------------------
@@ -116,9 +121,9 @@ vtkMRAblationGUI::~vtkMRAblationGUI()
         this->ApplyButton = NULL;
     }
 
-  this->SetLogic (NULL);
+  // this->SetLogic (NULL);
   if ( this->MRAblationNode ) {
-      this->SetAndObserveMRML( vtkObjectPointer(&this->MRAblationNode), NULL );
+      //this->SetAndObserveMRML( vtkObjectPointer(&this->MRAblationNode), NULL );
   }
   this->SetMRAblationNode (NULL); 
 }
@@ -128,7 +133,7 @@ void vtkMRAblationGUI::PrintSelf(ostream& os, vtkIndent indent)
 {
   
 }
-
+ 
 //---------------------------------------------------------------------------
 void vtkMRAblationGUI::AddGUIObservers ( ) 
 {
@@ -239,7 +244,7 @@ void vtkMRAblationGUI::UpdateMRML ()
     // set an observe new node in Logic
     this->Logic->SetMRAblationNode(n);
     this->SetMRAblationNode(n);
-    this->SetAndObserveMRML( vtkObjectPointer(&this->MRAblationNode), n);
+    // this->SetAndObserveMRML( vtkObjectPointer(&this->MRAblationNode), n);
   }
 
   // save node parameters for Undo

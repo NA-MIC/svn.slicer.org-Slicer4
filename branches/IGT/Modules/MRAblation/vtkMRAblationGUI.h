@@ -32,17 +32,25 @@ class vtkKWEntryWithLabel;
 class VTK_MRABLATION_EXPORT vtkMRAblationGUI : public vtkSlicerModuleGUI
 {
   public:
-  static vtkMRAblationGUI *New();
-  vtkTypeMacro(vtkMRAblationGUI,vtkSlicerModuleGUI);
-  void PrintSelf(ostream& os, vtkIndent indent);
+
+  static vtkMRAblationGUI* New (  );
+  vtkTypeRevisionMacro ( vtkMRAblationGUI, vtkSlicerModuleGUI );
+  void PrintSelf (ostream& os, vtkIndent indent );
 
    // Description: Get/Set MRML node
   vtkGetObjectMacro (Logic, vtkMRAblationLogic);
-  vtkSetObjectMacro (Logic, vtkMRAblationLogic);
   
   // Description: Get/Set MRML node
   vtkGetObjectMacro (MRAblationNode, vtkMRMLMRAblationNode);
   vtkSetObjectMacro (MRAblationNode, vtkMRMLMRAblationNode);
+
+  // Description:
+  // API for setting VolumeNode, VolumeLogic and
+  // for both setting and observing them.
+  void SetModuleLogic ( vtkMRAblationLogic *logic )
+  { this->SetLogic ( vtkObjectPointer (&this->Logic), logic ); }
+  void SetAndObserveModuleLogic ( vtkMRAblationLogic *logic )
+  { this->SetAndObserveLogic ( vtkObjectPointer (&this->Logic), logic ); }
 
   // Description:
   // Create widgets

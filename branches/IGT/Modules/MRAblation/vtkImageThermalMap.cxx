@@ -70,8 +70,8 @@ static void vtkImageThermalMapExecute(
 
     // Get increments to march through data 
     // all indatas are the same type, so use the same increments
-    inDatas[0]->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
-    outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+//   inDatas[0]->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
+//   outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
     // find the region to loop over
     rowLength = (outExt[1] - outExt[0]+1)*inDatas[0]->GetNumberOfScalarComponents();
