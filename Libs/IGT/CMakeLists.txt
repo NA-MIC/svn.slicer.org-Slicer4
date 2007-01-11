@@ -14,6 +14,7 @@ SET(IGT_SRCS
 #vtkIGTDataStream.cxx
 #vtkIGTOpenTrackerStream.cxx
 #vtkIGTMatrixState.cxx
+vtkIGTDataManager.cxx
 )
 
 # Abstract/pure virtual classes
@@ -36,6 +37,8 @@ INCLUDE_DIRECTORIES(
   ${IGT_BINARY_DIR}
   ${IGT_INCLUDE_DIRS}
   ${VTK_INCLUDE_DIRS}
+  ${MRML_SOURCE_DIR}
+  ${MRML_BINARY_DIR}
   )
 
 # --------------------------------------------------------------------------
