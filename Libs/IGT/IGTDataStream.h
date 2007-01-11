@@ -1,14 +1,12 @@
 
-#ifndef IGTAURORATRACKER_H
-#define IGTAURORATRACKER_H
+#ifndef __IGTDATASTREAM_H
+#define __IGTDATASTREAM_H
 
-#include <string>
 
-/**
-  * class IGTAuroraTracker
-  */
+#include "vtkMatrix4x4.h"
 
-class IGTAuroraTracker
+
+class vtkIGTDataStream : public vtkMatrix4x4
 {
 public:
 
@@ -19,12 +17,12 @@ public:
   /**
    * Empty Constructor
    */
-  IGTAuroraTracker ( );
+  vtkIGTDataStream ( );
 
   /**
    * Empty Destructor
    */
-  virtual ~IGTAuroraTracker ( );
+  virtual ~vtkIGTDataStream ( );
 
   // Static Public attributes
   //  
@@ -42,95 +40,6 @@ public:
 
 
 protected:
-
-  // Static Protected attributes
-  //  
-
-  // Protected attributes
-  //  
-
-
-  // Protected attribute accessor methods
-  //  
-
-
-  // Protected attribute accessor methods
-  //  
-
-
-private:
-
-  // Static Private attributes
-  //  
-
-  // Private attributes
-  //  
-
-
-  // Private attribute accessor methods
-  //  
-
-
-  // Private attribute accessor methods
-  //  
-
-
-
-};
-
-#endif // IGTAURORATRACKER_H
-
-
-#ifndef IGTDATASTREAM_H
-#define IGTDATASTREAM_H
-
-#include <string>
-#include <vector>
-
-
-
-/**
-  * class IGTDataStream
-  */
-
-class IGTDataStream
-{
-public:
-
-  // Constructors/Destructors
-  //  
-
-
-  /**
-   * Empty Constructor
-   */
-  IGTDataStream ( );
-
-  /**
-   * Empty Destructor
-   */
-  virtual ~IGTDataStream ( );
-
-  // Static Public attributes
-  //  
-
-  // Public attributes
-  //  
-
-
-  // Public attribute accessor methods
-  //  
-
-
-  // Public attribute accessor methods
-  //  
-
-
-
-  /**
-   */
-  void register_matrix_state_and_create_buffer ( );
-
 
   /**
    */
@@ -141,21 +50,6 @@ public:
    */
   void update_mrml ( );
 
-protected:
-
-  // Static Protected attributes
-  //  
-
-  // Protected attributes
-  //  
-
-
-  // Protected attribute accessor methods
-  //  
-
-
-  // Protected attribute accessor methods
-  //  
 
 
 private:
@@ -221,4 +115,4 @@ private:
 
 };
 
-#endif // IGTDATASTREAM_H
+#endif // __IGTDATASTREAM_H
