@@ -11,7 +11,7 @@ INCLUDE(${VTK_USE_FILE})
 
 
 SET(IGT_SRCS
-
+IGTDataStream.cxx
 )
 
 # Abstract/pure virtual classes
