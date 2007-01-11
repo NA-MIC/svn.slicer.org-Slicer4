@@ -28,35 +28,65 @@ vtkIGTDataStream::~vtkIGTDataStream ( ) { }
 
 void vtkIGTDataStream::Init (int numbuffer ) {
   buffer_size = numbuffer;
-  stream_device_hash = new void* [DEVICE_MAX_NUM];
+
 }
 
 
 /**
  */
-int vtkIGTDataStream::register_stream_device ( int stream_type) {
+int vtkIGTDataStream::register_stream_device ( int stream_type, vtkIGTDataStream* datastream) {
   
-  int this_device_id = num_registered_device +1;
+ 
   vtkIGTMatrixState *p_matrix;
-  
+  //vtkIGTImageState *p_image;
   switch (stream_type) {
     case IGT_MATRIX_STREAM:
-      p_matrix = new vtkIGTMatrixState[buffer_size];
-      stream_device_hash[this_device_id] = (vtkIGTMatrixState*)p_matrix;
-      
-      break;
+    
+      p_matrix = new vtkIGTMatrixState;
+
+      DeviceType->push_back(stream_type);
+      RegisteredDataStream->push_back(datastream);
+      create_mrml_node(DeviceType->size());
+
+      return (DeviceType->size());
       
     case IGT_IMAGE_STREAM:
-      cout << "" ;
-      break;
-      
+      //p_image = new vtkIGTImageState;
+      //RegisteredMatrixState->push_back(p_image);
+      DeviceIDs->push_back();
+      RegisteredDataStream->push_back(datastream);
+      return (DeviceType->size());     
     default:
       cout << "";
       return(-1);
       
     }
+ 
+}
+
+
+vtkIGTMatrixState* vtkIGTDataStream:GetMatrixState(int devicenumber){
+  vtkIGTDataStream* p_data_stream;  
+  p_data_stream = RegisteredDataStream->at(devicenumber);
+  return(vtkIGTDataStream->vtkIGTMatrixState);
   
-  return this_device_id;
+}
+
+vtkIGTImageState* vtkIGTDataStream::GetImageState(int devicenumber){
+  vtkIGTDataStream* p_data_stream;
+  p_data_stream = RegisteredDataStream->at(devicenumber);
+  return(vtkIGTDataStream->vtkIGTImageState);
+}
+
+void vtkIGTDataStream::StartMRMLUpdater() {
+  //go through vtkIGTDataStream
+  //access the matrix or image using GetMatrixState or GetImageState
 
 }
 
+
+create_mrml_node(int index_num) {
+
+  // create mrml node 
+  //use contents of DeviceType to check
+}
