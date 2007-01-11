@@ -11,9 +11,9 @@ INCLUDE(${VTK_USE_FILE})
 
 
 SET(IGT_SRCS
-vtkIGTDataStream.cxx
-vtkIGTOpenTrackerStream.cxx
-vtkIGTMatrixState.cxx
+#vtkIGTDataStream.cxx
+#vtkIGTOpenTrackerStream.cxx
+#vtkIGTMatrixState.cxx
 )
 
 # Abstract/pure virtual classes
