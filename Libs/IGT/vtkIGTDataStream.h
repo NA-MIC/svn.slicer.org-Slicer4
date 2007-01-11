@@ -4,25 +4,34 @@
 
 
 #include "vtkObject.h"
+#include "vtkIGTMatrixState.h"
 
+
+#define DEVICE_MAX_NUM 1024
+#define IGT_MATRIX_STREAM 0
+#define IGT_IMAGE_STREAM 1
 
 class vtkIGTDataStream : public vtkObject
 {
 public:
 
   // Constructors/Destructors
-  //  
+  //  Magic lines for vtk and Slicer
     static vtkIGTDataStream *New();
       vtkTypeMacro(vtkIGTDataStream,vtkObject);
       void PrintSelf(ostream& os, vtkIndent indent);
 
 
   /**
-   * Empty Constructor
+   * Constructor
+   @ param buffersize: size of buufer (
    */
-  vtkIGTDataStream ( );
+  vtkIGTDataStream ();
 
-  /**
+  
+
+  
+/**
    * Empty Destructor
    */
   virtual ~vtkIGTDataStream ( );
@@ -30,13 +39,11 @@ public:
   // Static Public attributes
   //  
 
+
   // Public attributes
   //  
 
-
-  // Public attribute accessor methods
-  //  
-
+  
 
   // Public attribute accessor methods
   //  
@@ -45,76 +52,37 @@ public:
 protected:
 
   /**
-   */
-  void create_MRML_node ( );
+   * registering stream_device and allocating buffers of the nodes
+   * users should not use any vtk classes in implementation (subclass) of this class
+   * we shoud diffrentiate the datatype by flag
+   @return:stream_id
 
-
-  /**
-   */
-  void update_mrml ( );
-
-
-
+  */   
+  void Init (int buffersize);
+  int register_stream_device (int stream_type );
+  
+  
+  
 private:
 
-  // Static Private attributes
+  // Static Private attribu tes
   //  
+
 
   // Private attributes
   //  
-
-  int m_buffer_size;
-  int m_LastInputNum;
-  int m_LastInputTime;
-
-  // Private attribute accessor methods
-  //  
-
+  void** stream_device_hash;
+  int buffer_size;
+  int num_registered_device;
+  int LastInputNum;
+  int LastInputTime;
 
   // Private attribute accessor methods
   //  
 
 
-  /**
-   * Set the value of m_buffer_size
-   * @param new_var the new value of m_buffer_size
-   */
-  void setBuffer_size ( int new_var );
-
-  /**
-   * Get the value of m_buffer_size
-   * @return the value of m_buffer_size
-   */
-  int getBuffer_size ( );
-
-
-  /**
-   * Set the value of m_LastInputNum
-   * @param new_var the new value of m_LastInputNum
-   */
-  void setLastInputNum ( int new_var );
-
-  /**
-   * Get the value of m_LastInputNum
-   * @return the value of m_LastInputNum
-   */
-  int getLastInputNum ( );
-
-
-  /**
-   * Set the value of m_LastInputTime
-   * @param new_var the new value of m_LastInputTime
-   */
-  void setLastInputTime ( int new_var );
-
-  /**
-   * Get the value of m_LastInputTime
-   * @return the value of m_LastInputTime
-   */
-  int getLastInputTime ( );
-
-
-  void initAttributes ( ) ;
+  // Private attribute accessor methods
+  //  
 
 };
 
