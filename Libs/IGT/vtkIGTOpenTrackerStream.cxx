@@ -24,29 +24,73 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream ( ) {
 vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream ( ) { }
 
 
+void Init(int device_type, char* configfile) {
+  
+  
+  
+  /// initialize the Satte class
+  
+  switch(device_type) {
+  case:IGT_MARIX_STREAM
+      Matrix = new vtkIGTMatrixState;
+    //the following class is from the superclass
+    register_stream_device(IGT_MATRIX_STREAM,this);
+    break;
+  case:IGT_IMAGE_STREAM
+      
+      break;
+  default
+    break;
+  
+  }
+  
+  matrixstate = new vtkIGTMatrixState;
+  
+  Initialize_Opentracker(configfile);
+  
+}
+
 int Initialize_Opentracker(char* configfile) {
+  
+  fprintf(stderr,"config file: %s\n",configfile);
+  this->context = new Context(1); 
+  // get callback module from the context
+  CallbackModule * callbackMod = (CallbackModule *)context->getModule("CallbackConfig");
+  
+  context->parseConfiguration(configfile);  // parse the configuration file
+  
+  callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);    // sets the callback function
+  
+  
+  context->start();
+  
+}
 
 
+vtkIGTMatrixState* getMatrix(){
+  
+  return(matrixstate);
+  
 
 }
 
 static void callbackF(const Node&,const Event &event, void ata) {
-
-
-{
+  
+  
+  {
     float position[3];
     float orientation[4];
     float norm[3];
     float transnorm[3];
     int j;
-
+    
     vtkIGTOpenTrackerStream *VOT=(vtkIGTOpenTrackerStream *)data;
-
+    
     // the original values are in the unit of meters
     position[0]=(float)(event.getPosition())[0] * 1000.0; 
     position[1]=(float)(event.getPosition())[1] * 1000.0;
     position[2]=(float)(event.getPosition())[2] * 1000.0;
-
+    
     orientation[0]=(float)(event.getOrientation())[0];
     orientation[1]=(float)(event.getOrientation())[1];
     orientation[2]=(float)(event.getOrientation())[2];
