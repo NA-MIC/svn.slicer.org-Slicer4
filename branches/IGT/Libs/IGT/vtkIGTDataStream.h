@@ -3,15 +3,18 @@
 #define __IGTDATASTREAM_H
 
 
-#include "vtkMatrix4x4.h"
+#include "vtkObject.h"
 
 
-class vtkIGTDataStream : public vtkMatrix4x4
+class vtkIGTDataStream : public vtkObject
 {
 public:
 
   // Constructors/Destructors
   //  
+    static vtkIGTDataStream *New();
+      vtkTypeMacro(vtkIGTDataStream,vtkObject);
+      void PrintSelf(ostream& os, vtkIndent indent);
 
 
   /**

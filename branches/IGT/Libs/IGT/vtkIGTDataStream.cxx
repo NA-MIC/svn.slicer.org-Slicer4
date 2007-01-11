@@ -1,10 +1,21 @@
 
 #include "vtkIGTDataStream.h"
+#include "vtkObjectFactory.h"
 
 // Constructors/Destructors
 //  
 
-IGTDataStream::vtkIGTDataStream ( ) {
+vtkIGTDataStream* vtkIGTDataStream::New()
+{
+  vtkObject* ret=vtkObjectFactory::CreateInstance("vtkIGTDataStream");
+  if(ret)
+    {
+      return(vtkIGTDataStream*) ret;
+    }
+  return new vtkIGTDataStream;
+}
+
+vtkIGTDataStream::vtkIGTDataStream ( ) {
 initAttributes();
 }
 
@@ -95,11 +106,7 @@ int vtkIGTDataStream::getLastInputTime ( ) {
 //  
 
 
-/**
- */
-void vtkIGTDataStream::register_matrix_state_and_create_buffer ( ) {
 
-}
 
 
 /**
