@@ -95,7 +95,6 @@ SET(dir_list
   ${SlicerDaemon_Init_BINARY_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
   ${VTK_INCLUDE_DIR}
-  ${OPENTRACKER_INC_DIR}
   )
 INCLUDE_DIRECTORIES(${dir_list})
 
