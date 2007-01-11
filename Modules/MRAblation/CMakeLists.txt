@@ -1,8 +1,8 @@
 PROJECT(MRAblation)
 
-# --------------------------------------------------------------------------
+#
 # Sources
-
+#
 SET(MRAblation_SRCS
   vtkMRAblationLogic.cxx
   vtkMRAblationGUI.cxx
@@ -10,26 +10,12 @@ SET(MRAblation_SRCS
   vtkImageThermalMap.cxx
 )
 
-# Abstract/pure virtual classes
-
-#SET_SOURCE_FILES_PROPERTIES(
-  #vtkModule.cxx
-  #PROPERTIES
-  #ABSTRACT "TRUE"
-  #)
-
-# Helper classes
-
-#SET_SOURCE_FILES_PROPERTIES(
-  #vtkModule.cxx
-  #PROPERTIES
-  #WRAP_EXCLUDE "TRUE"
-  #)
-
-# --------------------------------------------------------------------------
+#
 # Include dirs
-
+#
 INCLUDE_DIRECTORIES(
+  ${ModulesBaseClasses_SOURCE_DIR}
+  ${ModulesBaseClasses_BINARY_DIR}
   ${MRAblation_SOURCE_DIR}
   ${MRAblation_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
@@ -40,26 +26,24 @@ INCLUDE_DIRECTORIES(
   ${SlicerBaseGUI_BINARY_DIR}
   ${vtkITK_SOURCE_DIR}
   ${vtkITK_BINARY_DIR}
-  ${ITK_INCLUDE_DIRS}
-  ${VTK_INCLUDE_DIRS}
+  ${ITK_INCLUDE_DIR}
+  ${VTK_INCLUDE_DIR}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
   )
 
-
-# --------------------------------------------------------------------------
+#
 # Wrapping
-
+#
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
 VTK_WRAP_TCL3(MRAblation MRAblation_TCL_SRCS "${MRAblation_SRCS}" "")
 
-
-# --------------------------------------------------------------------------
+#
 # Build the library
-
+#
 ADD_LIBRARY(MRAblation
-  ${MRAblation_SRCS}
+  ${MRAblation_SRCS} 
   ${MRAblation_TCL_SRCS}
   )
 
@@ -85,18 +69,13 @@ TARGET_LINK_LIBRARIES(MRAblation
   ITKBasicFilters
   ITKIO
   ITKDICOMParser
-  ${KWWidgets_LIBRARIES} )
+  ${KWWidgets_LIBRARIES} 
+  )
 
-
-
-# --------------------------------------------------------------------------
-# Testing (requires some of the examples)
-
-IF(BUILD_TESTING)
-  SUBDIRS(Testing)
-ENDIF(BUILD_TESTING)
-
+#
+# Configure include file
+#
 CONFIGURE_FILE(
   ${MRAblation_SOURCE_DIR}/vtkMRAblationConfigure.h.in 
   ${MRAblation_BINARY_DIR}/vtkMRAblationConfigure.h
-)
+  )
