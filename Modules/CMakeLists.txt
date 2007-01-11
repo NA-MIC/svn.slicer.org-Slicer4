@@ -11,6 +11,7 @@ SUBDIRS(
   Tractography
 #MRAblation
   Neurosurgery
+  RealTimeImaging
   MRAblation
 )
 
