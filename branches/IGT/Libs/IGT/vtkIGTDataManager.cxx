@@ -1,38 +1,38 @@
 
-#include "vtkIGTDataStream.h"
+#include "vtkIGTDataManager.h"
 #include "vtkIGTMatrixState.h"
 #include "vtkObjectFactory.h"
 
 // Constructors/Destructors
 //  
 
-vtkIGTDataStream* vtkIGTDataStream::New()
+vtkIGTDataManager* vtkIGTDataManager::New()
 {
-  vtkObject* ret=vtkObjectFactory::CreateInstance("vtkIGTDataStream");
+  vtkObject* ret=vtkObjectFactory::CreateInstance("vtkIGTDataManager");
   if(ret)
     {
-      return(vtkIGTDataStream*) ret;
+      return(vtkIGTDataManager*) ret;
     }
-  return new vtkIGTDataStream;
+  return new vtkIGTDataManager;
 }
 
-vtkIGTDataStream::vtkIGTDataStream(){};
+vtkIGTDataManager::vtkIGTDataManager(){};
 
 
 
-vtkIGTDataStream::~vtkIGTDataStream ( ) { }
+vtkIGTDataManager::~vtkIGTDataManager ( ) { }
 
 //  
 // Methods
 //  
 
-void vtkIGTDataStream::Init () {
+void vtkIGTDataManager::Init () {
 }
 
 
 /**
  */
-int vtkIGTDataStream::register_stream_device ( int stream_type, vtkIGTDataStream* datastream) {
+int vtkIGTDataManager::register_stream_device ( int stream_type, vtkIGTDataManager* datastream) {
   
  
   vtkIGTMatrixState *p_matrix;
@@ -63,26 +63,26 @@ int vtkIGTDataStream::register_stream_device ( int stream_type, vtkIGTDataStream
 }
 
 
-vtkIGTMatrixState* vtkIGTDataStream::GetMatrixState(int devicenumber){
+vtkIGTMatrixState* vtkIGTDataManager::GetMatrixState(int devicenumber){
   vtkIGTDataStream* p_data_stream = RegisteredDataStream.at(devicenumber);
   return(->vtkIGTMatrixState);
   
 }
 
-vtkIGTImageState* vtkIGTDataStream::GetImageState(int devicenumber){
+vtkIGTImageState* vtkIGTDataManager::GetImageState(int devicenumber){
   vtkIGTDataStream* p_data_stream;
   p_data_stream = RegisteredDataStream->at(devicenumber);
   return(vtkIGTDataStream->vtkIGTImageState);
 }
 
-void vtkIGTDataStream::StartMRMLUpdater() {
+void vtkIGTDataManager::StartMRMLUpdater() {
   //go through vtkIGTDataStream
   //access the matrix or image using GetMatrixState or GetImageState
 
 }
 
 
-void vtkIGTDataStream::create_mrml_node(int index_num) {
+void vtkIGTDataManager::create_mrml_node(int index_num) {
 
   // create mrml node 
   //use contents of DeviceType to check

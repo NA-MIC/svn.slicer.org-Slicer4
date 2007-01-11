@@ -1,6 +1,6 @@
 
-#ifndef IGTDATASTREAM_H
-#define IGTDATASTREAM_H
+#ifndef IGTDATAMANAGER_H
+#define IGTDATAMANAGER_H
 
 
 #include <string>
@@ -15,14 +15,14 @@
 #define IGT_MATRIX_STREAM 0
 #define IGT_IMAGE_STREAM 1
 
-class vtkIGTDataStream : public vtkObject
+class vtkIGTDataManager : public vtkObject
 {
 public:
 
   // Constructors/Destructors
   //  Magic lines for vtk and Slicer
-    static vtkIGTDataStream *New();
-      vtkTypeMacro(vtkIGTDataStream,vtkObject);
+    static vtkIGTDataManager *New();
+      vtkTypeMacro(vtkIGTDataManager,vtkObject);
       void PrintSelf(ostream& os, vtkIndent indent);
 
 
@@ -30,7 +30,7 @@ public:
    * Constructor
    @ param buffersize: size of buufer (
    */
-  vtkIGTDataStream ();
+  vtkIGTDataManager ();
 
   
 
@@ -38,7 +38,7 @@ public:
 /**
    * Empty Destructor
    */
-  virtual ~vtkIGTDataStream ( );
+  virtual ~vtkIGTDataManager ( );
 
   
   vtkIGTMatrixState* GetMatrixState(int devicenumber);
@@ -53,7 +53,7 @@ protected:
 
   */   
   void Init ();
-  int register_stream_device (int stream_type, vtkIGTDataStream* datastream);
+  int register_stream_device (int stream_type, vtkIGTDataManager* datastream);
   
   void create_mrml_node(int index_num);
 
@@ -84,4 +84,4 @@ private:
 
 };
 
-#endif // IGTDATASTREAM_H
+#endif // IGTDATAMANAGER_H
