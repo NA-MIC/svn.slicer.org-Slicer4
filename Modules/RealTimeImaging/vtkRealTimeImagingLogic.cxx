@@ -54,38 +54,75 @@ vtkRealTimeImagingLogic::vtkRealTimeImagingLogic()
     this->nOld[2] = 0.0;
 
     this->LocatorNormalTransform = vtkTransform::New();
+
+#ifdef USE_OPENTRACKER
+    cout << "Using OpenTracker" << endl;
+#endif
 }
 
 vtkMRMLVolumeNode* vtkRealTimeImagingLogic::AddRealTimeVolumeNode (const char* volname)
 {
   vtkMRMLVolumeDisplayNode *displayNode = vtkMRMLVolumeDisplayNode::New();
   vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
-  vtkMRMLVolumeNode *volumeNode = scalarNode;
+  vtkImageData *newvolume=vtkImageData::New();
 
-  volumeNode->SetName(volname);
+  newvolume->SetExtent(0,9,0,9,0,0);
+  newvolume->SetScalarTypeToUnsignedShort ();
+  newvolume->SetNumberOfScalarComponents (1);
+  newvolume->UpdateInformation();
+  newvolume->AllocateScalars();
+  // Create volume data.
+  PixelArray = (vtkUnsignedShortArray*)newvolume->GetPointData()->GetScalars();
+
+  for(int i=0; i<10*10; i++)
+  {
+    PixelArray->SetValue(i,i);
+  }
+
+  newvolume->Modified();
+
+  scalarNode->SetAndObserveImageData(newvolume);
+
+  scalarNode->SetSpacing(10.0,10.0,10.0);
+  scalarNode->SetOrigin(-4.5*10,-4.5*10,0);
+  scalarNode->SetName(volname);
+
+  scalarNode->Modified();
 
   this->GetMRMLScene()->SaveStateForUndo();
-  volumeNode->SetScene(this->GetMRMLScene());
+  scalarNode->SetScene(this->GetMRMLScene());
   displayNode->SetScene(this->GetMRMLScene());
 
-  this->GetMRMLScene()->AddNode(displayNode);  
+  double range[2];
+  scalarNode->GetImageData()->GetScalarRange(range);
+  displayNode->SetLowerThreshold(range[0]);
+  displayNode->SetUpperThreshold(range[1]);
+  displayNode->SetWindow(range[1] - range[0]);
+  displayNode->SetLevel( 0.5 * (range[1] + range[0]) );
 
-  volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
+  this->GetMRMLScene()->AddNode(displayNode);
+
+  vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
+  displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
+  colorLogic->Delete();
+
+  scalarNode->SetAndObserveDisplayNodeID(displayNode->GetID());
 
   cout<<"Display node "<<displayNode->GetClassName()<<endl;
-  this->GetMRMLScene()->AddNode(volumeNode);
+  this->GetMRMLScene()->AddNode(scalarNode);
   cout<<"Node added to scene"<<endl;
+
+  //this->SetActiveVolumeNode(scalarNode);
 
   this->Modified();
 
-  scalarNode->Delete();
+  if(newvolume)
+    newvolume->Delete();
 
   if (displayNode)
-  {
     displayNode->Delete();
-  }
 
-  return volumeNode;
+  return scalarNode;
 }
 
 vtkRealTimeImagingLogic::~vtkRealTimeImagingLogic()

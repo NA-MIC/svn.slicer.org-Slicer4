@@ -75,7 +75,7 @@
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
 #define EMSEG_DEBUG
-//#define NEUROSURGERY_DEBUG
+#define NEUROSURGERY_DEBUG
 //#define REALTIMEIMAGING_DEBUG
 //#define MRABLATION_DEBUG
 
@@ -685,7 +685,7 @@ int Slicer3_main(int argc, char *argv[])
     // -- Real Time Imaging module
     vtkRealTimeImagingLogic *realtimeimagingLogic = vtkRealTimeImagingLogic::New ( );
     realtimeimagingLogic->SetAndObserveMRMLScene ( scene );
-    realtimeimagingLogic->AddRealTimeVolumeNode ("Real time test image");
+    realtimeimagingLogic->AddRealTimeVolumeNode ("RealTime");
     vtkRealTimeImagingGUI *realtimeimagingGUI = vtkRealTimeImagingGUI::New ( );
 
     realtimeimagingGUI->SetApplication ( slicerApp );
@@ -1090,7 +1090,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->Script ("namespace eval slicer3 set RealTimeImagingGUI %s", name);
 #endif
 #ifndef MRABLATION_DEBUG
-    name = neurosurgGUI->GetTclName();
+    name = ablationGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set MRAblationGUI %s", name);
 #endif
     name = transformsGUI->GetTclName();

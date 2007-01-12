@@ -31,6 +31,11 @@
 
 #include "vtkPoints.h"
 #include "vtkMatrix4x4.h"
+#include "vtkUnsignedShortArray.h"
+#include "vtkImageData.h"
+#include "vtkPointData.h"
+#include "vtkSlicerColorLogic.h"
+
 
 #ifdef USE_OPENTRACKER
 #include "OpenTracker/OpenTracker.h"
@@ -53,7 +58,7 @@ public:
     vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
     vtkGetObjectMacro(LandmarkTransformMatrix,vtkMatrix4x4);
     vtkGetObjectMacro(LocatorNormalTransform,vtkTransform);
-
+    vtkGetObjectMacro(PixelArray,vtkUnsignedShortArray);
 
     vtkSetMacro(UseRegistration,int);
     vtkGetMacro(UseRegistration,int);
@@ -118,6 +123,8 @@ protected:
     void Normalize(float *a);
     void Cross(float *a, float *b, float *c);
 
+  //simond
+  vtkUnsignedShortArray *PixelArray;
 };
 
 #endif
