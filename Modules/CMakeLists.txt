@@ -10,9 +10,10 @@ SUBDIRS(
   QueryAtlas
   Tractography
 MRAblation
-  Neurosurgery
+  #Neurosurgery
  RealTimeImaging
   MRAblation
+#Opentracker
 )
 
 
