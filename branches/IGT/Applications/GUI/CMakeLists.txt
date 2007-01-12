@@ -67,10 +67,10 @@ SET(dir_list
   ${EMSegment_BINARY_DIR}
   ${EMSegment_Init_SOURCE_DIR}
   ${EMSegment_Init_BINARY_DIR}
-  ${Neurosurgery_SOURCE_DIR}
-  ${Neurosurgery_BINARY_DIR}
-  ${Neurosurgery_Init_SOURCE_DIR}
-  ${Neurosurgery_Init_BINARY_DIR}
+#  ${Neurosurgery_SOURCE_DIR}
+#  ${Neurosurgery_BINARY_DIR}
+#  ${Neurosurgery_Init_SOURCE_DIR}
+#  ${Neurosurgery_Init_BINARY_DIR}
   ${RealTimeImaging_SOURCE_DIR}
   ${RealTimeImaging_BINARY_DIR}
   ${RealTimeImaging_Init_SOURCE_DIR}
@@ -133,7 +133,7 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     GradientAnisotropicDiffusionFilter
     SlicerTractographyDisplay
     EMSegment
-    Neurosurgery
+    #Neurosurgery
     RealTimeImaging
     MRAblation
     QueryAtlas

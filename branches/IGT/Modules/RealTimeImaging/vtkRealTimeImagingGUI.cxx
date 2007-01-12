@@ -726,6 +726,24 @@ void vtkRealTimeImagingGUI::ProcessTimerEvents ()
             this->UpdateSliceDisplay(px, py, pz);
         }
 
+        //simond
+        static int toggle=0;
+        vtkRealTimeImagingLogic *logic = this->GetLogic();
+        vtkUnsignedShortArray *PArray = logic->GetPixelArray();
+
+        for(int i=0; i<10*10; i++)
+        {
+          if(toggle)
+          {
+             PArray->SetValue(i,i);
+             toggle=0;
+          }
+          else
+            {
+              PArray->SetValue(i,99-i);
+              toggle=1;
+            }
+        }
     }
 }
 
