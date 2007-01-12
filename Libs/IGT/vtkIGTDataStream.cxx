@@ -16,7 +16,11 @@ vtkIGTDataStream* vtkIGTDataStream::New()
   return new vtkIGTDataStream;
 }
 
-vtkIGTDataStream::vtkIGTDataStream(){};
+vtkIGTDataStream::vtkIGTDataStream()
+{
+    this->MatrixState = NULL;
+
+}
 
 
 

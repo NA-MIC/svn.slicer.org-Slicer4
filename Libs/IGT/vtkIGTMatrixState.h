@@ -34,6 +34,8 @@ public:
    */
   virtual ~vtkIGTMatrixState ( );
 
+  vtkSetObjectMacro(Matrix,vtkMatrix4x4); 
+  vtkGetObjectMacro(Matrix,vtkMatrix4x4); 
 
 
 protected:
