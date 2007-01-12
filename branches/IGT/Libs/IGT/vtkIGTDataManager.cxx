@@ -2,88 +2,83 @@
 #include "vtkIGTDataManager.h"
 #include "vtkIGTMatrixState.h"
 #include "vtkObjectFactory.h"
+#include "vtkMRMLModelNode.h"
+#include "vtkMRMLModelDisplayNode.h"
+#include "vtkCylinderSource.h"
 
-// Constructors/Destructors
-//  
 
-vtkIGTDataManager* vtkIGTDataManager::New()
+void vtkIGTDataManager::RegisterStreamDevice (int streamType, vtkIGTDataStream* datastream)
 {
-  vtkObject* ret=vtkObjectFactory::CreateInstance("vtkIGTDataManager");
-  if(ret)
-    {
-      return(vtkIGTDataManager*) ret;
+    // streamType: 0 - matrix; 1 - image 
+    //vtkIGTImageState *p_image;
+    this->StreamTypes.push_back(streamType);
+    this->RegisteredDataStreams.push_back(datastream);
+    CreateMRMLNode(streamType);
+}
+
+
+
+
+
+void vtkIGTDataManager::CreateMRMLNode(int streamType)
+{
+    switch (streamType) {
+        case IGT_MATRIX_STREAM:
+            {
+
+            vtkMRMLModelNode *modelNode = vtkMRMLModelNode::New();
+            vtkMRMLModelDisplayNode *dispNode = vtkMRMLModelDisplayNode::New();
+
+            this->MRMLScene->SaveStateForUndo();
+            this->MRMLScene->AddNode(dispNode);
+            this->MRMLScene->AddNode(modelNode);  
+
+            dispNode->SetScene(this->MRMLScene);
+
+            int size = this->MRMLIds.size();
+            char name[20];
+            sprintf(name, "matrix_%d", size);
+
+            modelNode->SetName(name);
+            modelNode->SetScene(this->MRMLScene);
+            modelNode->SetAndObserveDisplayNodeID(dispNode->GetID());  
+            this->MRMLIds.push_back(modelNode->GetID());
+
+            vtkCylinderSource *cylinder = vtkCylinderSource::New();
+            cylinder->SetRadius(1.5);
+            cylinder->SetHeight(100);
+            modelNode->SetAndObservePolyData(cylinder->GetOutput());
+            this->Modified();  
+
+            // modelNode->Delete();
+            cylinder->Delete();
+            // displayNode->Delete();
+            }
+            break;
+
+        case IGT_IMAGE_STREAM:
+            break;
+        default:
+            break;
     }
-  return new vtkIGTDataManager;
-}
-
-vtkIGTDataManager::vtkIGTDataManager(){};
-
-
-
-vtkIGTDataManager::~vtkIGTDataManager ( ) { }
-
-//  
-// Methods
-//  
-
-void vtkIGTDataManager::Init () {
-}
-
-
-/**
- */
-int vtkIGTDataManager::register_stream_device ( int stream_type, vtkIGTDataManager* datastream) {
-  
- 
-  vtkIGTMatrixState *p_matrix;
-  //vtkIGTImageState *p_image;
-  switch (stream_type) {
-    case IGT_MATRIX_STREAM:
-    
-      p_matrix = new vtkIGTMatrixState;
-
-      DeviceType.push_back(stream_type);
-      RegisteredDataStream.push_back(datastream);
-      create_mrml_node(DeviceType.size());
-
-      return (DeviceType.size());
-      
-    case IGT_IMAGE_STREAM:
-      //p_image = new vtkIGTImageState;
-      //RegisteredMatrixState->push_back(p_image);
-      DeviceType.push_back(stream_type);
-      RegisteredDataStream.push_back(datastream);
-      return (DeviceType.size());     
-    default:
-      cout << "";
-      return(-1);
-      
-    }
- 
-}
-
-
-vtkIGTMatrixState* vtkIGTDataManager::GetMatrixState(int devicenumber){
-  vtkIGTDataStream* p_data_stream = RegisteredDataStream.at(devicenumber);
-  return(->vtkIGTMatrixState);
-  
-}
-
-vtkIGTImageState* vtkIGTDataManager::GetImageState(int devicenumber){
-  vtkIGTDataStream* p_data_stream;
-  p_data_stream = RegisteredDataStream->at(devicenumber);
-  return(vtkIGTDataStream->vtkIGTImageState);
-}
-
-void vtkIGTDataManager::StartMRMLUpdater() {
-  //go through vtkIGTDataStream
-  //access the matrix or image using GetMatrixState or GetImageState
 
 }
 
 
-void vtkIGTDataManager::create_mrml_node(int index_num) {
 
-  // create mrml node 
-  //use contents of DeviceType to check
+char *vtkIGTDataManager::GetMRMLId(int index) 
+{
+    return this->MRMLIds.at(index);
 }
+
+
+/*
+void vtkIGTDataManager::UpdateMatrixData(int index, vtkIGTMatrixState state)
+{
+    vtkIGTDataStream  *stream = this->RegisteredDataStreams.at(index);
+    // stream->SetMatrixState(state);
+
+}
+*/
+
+

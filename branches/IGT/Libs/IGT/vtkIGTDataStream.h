@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "vtkObject.h"
+#include "vtkIGTMatrixState.h"
 
 
 
@@ -32,7 +33,8 @@ public:
    */
   vtkIGTDataStream ();
 
-  
+  vtkSetObjectMacro(MatrixState,vtkIGTMatrixState); 
+  vtkGetObjectMacro(MatrixState,vtkIGTMatrixState); 
 
   
 /**
@@ -45,6 +47,8 @@ protected:
  
   
 private:
+
+    vtkIGTMatrixState* MatrixState;
   
  };
 

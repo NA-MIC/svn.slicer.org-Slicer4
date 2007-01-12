@@ -18,7 +18,7 @@ vtkIGTMatrixState* vtkIGTMatrixState::New()
 }
 
 vtkIGTMatrixState::vtkIGTMatrixState ( ) {
-  Matrix = new vtkMatrix4x4;
+  this->Matrix = vtkMatrix4x4::New();
 
 }
 

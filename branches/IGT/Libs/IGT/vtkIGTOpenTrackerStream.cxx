@@ -24,35 +24,9 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream ( ) {
 vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream ( ) { }
 
 
-void Init(int device_type, char* configfile) {
-  
-  
-  
-  /// initialize the Satte class
-  
-  switch(device_type) {
-  case:IGT_MARIX_STREAM
-      Matrix = new vtkIGTMatrixState;
-    //the following class is from the superclass
-    register_stream_device(IGT_MATRIX_STREAM,this);
-    break;
-  case:IGT_IMAGE_STREAM
-      
-      break;
-  default
-    break;
-  
-  }
-  
-  matrixstate = new vtkIGTMatrixState;
-  
-  Initialize_Opentracker(configfile);
-  
-}
-
-int Initialize_Opentracker(char* configfile) {
-  
-  fprintf(stderr,"config file: %s\n",configfile);
+void vtkIGTOpenTrackerStream::Init(char* configfile) 
+{
+   fprintf(stderr,"config file: %s\n",configfile);
   this->context = new Context(1); 
   // get callback module from the context
   CallbackModule * callbackMod = (CallbackModule *)context->getModule("CallbackConfig");
@@ -63,21 +37,13 @@ int Initialize_Opentracker(char* configfile) {
   
   
   context->start();
-  
-}
-
-
-vtkIGTMatrixState* getMatrix(){
-  
-  return(matrixstate);
-  
 
 }
+  
 
-static void callbackF(const Node&,const Event &event, void ata) {
-  
-  
-  {
+
+void vtkIGTOpenTrackerStream::callbackF(const Node&,const Event &event, void *data) 
+{
     float position[3];
     float orientation[4];
     float norm[3];
@@ -98,32 +64,32 @@ static void callbackF(const Node&,const Event &event, void ata) {
 
     VOT->quaternion2xyz(orientation, norm, transnorm);
 
+    vtkIGTMatrixState *state = VOT->GetMatrixState();
+    vtkMatrix4x4 *matrix = state->GetMatrix();
 
 
     for (j=0; j<3; j++) {
-        VOT->Matrix->SetElement(j,0,position[j]);
-        VOT->p[j] = position[j];
+        matrix->SetElement(j,0,position[j]);
     }
 
 
     for (j=0; j<3; j++) {
-        VOT->Matrix->SetElement(j,1,norm[j]);
-        VOT->n[j] = norm[j];
+        matrix->SetElement(j,1,norm[j]);
     }
 
     for (j=0; j<3; j++) {
-        VOT->Matrix->SetElement(j,2,transnorm[j]);
+        matrix->SetElement(j,2,transnorm[j]);
     }
 
     for (j=0; j<3; j++) {
-        VOT->Matrix->SetElement(j,3,0);
+        matrix->SetElement(j,3,0);
     }
 
     for (j=0; j<3; j++) {
-        VOT->Matrix->SetElement(3,j,0);
+        matrix->SetElement(3,j,0);
     }
 
-    VOT->Matrix->SetElement(3,3,1);
+    matrix->SetElement(3,3,1);
 
 
 }

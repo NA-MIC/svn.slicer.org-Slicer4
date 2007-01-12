@@ -9,77 +9,51 @@
 #include "vtkObject.h"
 #include "vtkMRMLScene.h"
 #include "vtkIGTMatrixState.h"
+#include "vtkIGTDataStream.h"
 
-
-#define DEVICE_MAX_NUM 1024
-#define IGT_MATRIX_STREAM 0
-#define IGT_IMAGE_STREAM 1
 
 class vtkIGTDataManager : public vtkObject
 {
 public:
 
-  // Constructors/Destructors
-  //  Magic lines for vtk and Slicer
+    // Constructors/Destructors
+    //  Magic lines for vtk and Slicer
     static vtkIGTDataManager *New();
-      vtkTypeMacro(vtkIGTDataManager,vtkObject);
-      void PrintSelf(ostream& os, vtkIndent indent);
+    vtkTypeRevisionMacro(vtkIGTDataManager,vtkObject);
+    void PrintSelf(ostream& os, vtkIndent indent);
+
+    vtkSetObjectMacro(MRMLScene,vtkMRMLScene);
+    vtkGetObjectMacro(MRMLScene,vtkMRMLScene);
+
+    /**
+     * Constructor
+     @ param buffersize: size of buufer (
+     */
+    vtkIGTDataManager();
 
 
-  /**
-   * Constructor
-   @ param buffersize: size of buufer (
-   */
-  vtkIGTDataManager ();
+    /**
+     * Empty Destructor
+     */
+    virtual ~vtkIGTDataManager ( );
 
-  
-
-  
-/**
-   * Empty Destructor
-   */
-  virtual ~vtkIGTDataManager ( );
-
-  
-  vtkIGTMatrixState* GetMatrixState(int devicenumber);
+    char *GetMRMLId(int index);
+//    void UpdateMatrixData(int index, vtkIGTMatrixState state);
+    void RegisterStreamDevice (int streamType, vtkIGTDataStream* datastream);
 
 protected:
 
-  /**
-   * registering stream_device and allocating buffers of the nodes
-   * users should not use any vtk classes in implementation (subclass) of this class
-   * we shoud diffrentiate the datatype by flag
-   @return:stream_id
-
-  */   
-  void Init ();
-  int register_stream_device (int stream_type, vtkIGTDataManager* datastream);
-  
-  void create_mrml_node(int index_num);
+    void CreateMRMLNode(int streamType);
 
 private:
 
-  // Static Private attribu tes
-  //  
+    vtkMRMLScene* MRMLScene;
 
-
-  // Private attributes
-  //  
-  
-
-
-  int LastInputNum;
-  int LastInputTime;
-  vtkMRMLScene* scene;
-
-  //BTX
-  
-  std::vector<vtkIGTDataStream*> RegisteredDataStream;
-  std::vector<int> DeviceType;
-
-  //ETX
-
-
+//BTX
+    std::vector<vtkIGTDataStream *> RegisteredDataStreams;
+    std::vector<int> StreamTypes;  // matrix or image
+    std::vector<char *> MRMLIds;  
+//ETX
 
 
 };

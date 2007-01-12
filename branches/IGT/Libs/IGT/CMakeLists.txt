@@ -11,9 +11,9 @@ INCLUDE(${VTK_USE_FILE})
 
 
 SET(IGT_SRCS
-#vtkIGTDataStream.cxx
-#vtkIGTOpenTrackerStream.cxx
-#vtkIGTMatrixState.cxx
+vtkIGTDataStream.cxx
+vtkIGTOpenTrackerStream.cxx
+vtkIGTMatrixState.cxx
 vtkIGTDataManager.cxx
 )
 
@@ -39,6 +39,8 @@ INCLUDE_DIRECTORIES(
   ${VTK_INCLUDE_DIRS}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
+  ${OPENTRACKER_INC_DIR}
+
   )
 
 # --------------------------------------------------------------------------
@@ -68,6 +70,7 @@ TARGET_LINK_LIBRARIES(IGT
   vtkFiltering
   vtkImaging
   vtkIOTCL
+  ${OPENTRACKER_LIB}
   )
 
 
