@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "vtkIGTWin32Header.h" 
 #include "vtkObject.h"
 #include "vtkMatrix4x4.h"
 
@@ -14,15 +15,15 @@
   * This represents a single data from sensor source
   */
 
-class vtkIGTMatrixState : public vtkObject
+class VTK_IGT_EXPORT vtkIGTMatrixState : public vtkObject
 {
 public:
 
   // Constructors/Destructors
   //  
     static vtkIGTMatrixState *New();
-      vtkTypeMacro(vtkIGTMatrixState,vtkObject);
-      void PrintSelf(ostream& os, vtkIndent indent);
+    vtkTypeRevisionMacro(vtkIGTMatrixState,vtkObject);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
   /**
    * Empty Constructor

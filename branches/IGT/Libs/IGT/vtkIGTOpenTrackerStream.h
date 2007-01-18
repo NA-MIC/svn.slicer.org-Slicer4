@@ -4,6 +4,7 @@
 #define IGTOPENTRACKERSTREAM_H
 
 
+#include "vtkIGTWin32Header.h" 
 #include "vtkMatrix4x4.h"
 #include "vtkIGTDataStream.h"
 #include "vtkIGTMatrixState.h"
@@ -14,13 +15,13 @@
 using namespace ot;
 
 
-class vtkIGTOpenTrackerStream : public vtkIGTDataStream
+class VTK_IGT_EXPORT vtkIGTOpenTrackerStream : public vtkIGTDataStream
 {
  public:
   
   
   static vtkIGTOpenTrackerStream *New();
-  vtkTypeMacro(vtkIGTOpenTrackerStream,vtkIGTDataStream);
+  vtkTypeRevisionMacro(vtkIGTOpenTrackerStream,vtkIGTDataStream);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   

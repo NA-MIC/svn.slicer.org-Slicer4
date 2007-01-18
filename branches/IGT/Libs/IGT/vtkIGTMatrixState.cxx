@@ -5,24 +5,17 @@
 
 // Constructors/Destructors
 //  
+vtkStandardNewMacro (vtkIGTMatrixState);
+vtkCxxRevisionMacro (vtkIGTMatrixState, "$Revision: 1.0 $");
 
-
-vtkIGTMatrixState* vtkIGTMatrixState::New()
-{
-  vtkObject* ret=vtkObjectFactory::CreateInstance("vtkIGTMatrixState");
-  if(ret)
-    {
-      return(vtkIGTMatrixState*) ret;
-    }
-  return new vtkIGTMatrixState;
-}
 
 vtkIGTMatrixState::vtkIGTMatrixState ( ) {
   this->Matrix = vtkMatrix4x4::New();
 
 }
 
-vtkIGTMatrixState::~vtkIGTMatrixState ( ) { }
+vtkIGTMatrixState::~vtkIGTMatrixState ( ) { 
+}
 
 
 //  
@@ -39,6 +32,11 @@ void vtkIGTMatrixState::setTimestamp ( int new_var ) {
 
 int vtkIGTMatrixState::getTimestamp ( ) {
   return m_timestamp;
+}
+
+void vtkIGTMatrixState::PrintSelf(ostream& os, vtkIndent indent)
+{
+
 }
 
 
