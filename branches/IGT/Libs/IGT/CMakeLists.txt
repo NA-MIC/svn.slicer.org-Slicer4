@@ -11,6 +11,7 @@ CONFIGURE_FILE(
 # --------------------------------------------------------------------------
 # Sources
 
+IF(USE_OPENTRACKER)
 SET(IGT_SRCS
     vtkIGTDataManager.cxx
     vtkIGTDataStream.cxx
@@ -18,6 +19,14 @@ SET(IGT_SRCS
     vtkIGTOpenTrackerStream.cxx
     vtkIGTPat2ImgRegistration.cxx
 )
+ELSE(USE_OPENTRACKER)
+SET(IGT_SRCS
+    vtkIGTDataManager.cxx
+    vtkIGTDataStream.cxx
+    vtkIGTMatrixState.cxx
+    vtkIGTPat2ImgRegistration.cxx
+)
+ENDIF(USE_OPENTRACKER)
 
 
 
@@ -34,9 +43,14 @@ INCLUDE_DIRECTORIES(
   ${IGT_SOURCE_DIR}
   ${ITK_INCLUDE_DIRS}
   ${VTK_INCLUDE_DIRS}
-  ${OPENTRACKER_INC_DIR}
+
   )
 
+IF(USE_OPENTRACKER)
+INCLUDE_DIRECTORIES(
+  ${OPENTRACKER_INC_DIR}
+)
+ENDIF(USE_OPENTRACKER)
 
 
 # Build the library
@@ -65,8 +79,9 @@ TARGET_LINK_LIBRARIES(IGT
   ITKBasicFilters
   ITKIO
   ITKDICOMParser
-  ${OPENTRACKER_LIB}
   )
+
+
 
 
 # --------------------------------------------------------------------------
