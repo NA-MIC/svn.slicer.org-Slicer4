@@ -1,14 +1,14 @@
 PROJECT( Modules )
 
 SUBDIRS(
-  CommandLineModule
-  ScriptedModule
-  GradientAnisotropicDiffusionFilter
-  EMSegment
-  SlicerDaemon
-  Editor
-  QueryAtlas
-  Tractography
+#  CommandLineModule
+#  ScriptedModule
+#  GradientAnisotropicDiffusionFilter
+#  EMSegment
+#  SlicerDaemon
+#  Editor
+#  QueryAtlas
+#  Tractography
   RealTimeImaging
   MRAblation
   NeuroNav 
