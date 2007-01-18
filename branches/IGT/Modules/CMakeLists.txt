@@ -9,11 +9,9 @@ SUBDIRS(
   Editor
   QueryAtlas
   Tractography
-  #Neurosurgery
   RealTimeImaging
   MRAblation
-  #Opentracker
-
+  NeuroNav 
 )
 
 
