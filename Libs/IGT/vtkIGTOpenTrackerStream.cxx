@@ -5,18 +5,9 @@
 #include "vtkIGTOpenTrackerStream.h"
 #include "vtkObjectFactory.h"
 
-// Constructors/Destructors
-//  
+vtkStandardNewMacro (vtkIGTOpenTrackerStream);
+vtkCxxRevisionMacro (vtkIGTOpenTrackerStream, "$Revision: 1.0 $");
 
-  vtkIGTOpenTrackerStream* vtkIGTOpenTrackerStream::New()
-{
-  vtkObject* ret=vtkObjectFactory::CreateInstance("vtkIGTOpenTrackerStream");
-  if(ret)
-    {
-      return(vtkIGTOpenTrackerStream*) ret;
-    }
-  return new vtkIGTOpenTrackerStream;
-}
 
 vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream ( ) {
 }
@@ -117,6 +108,9 @@ void vtkIGTOpenTrackerStream::quaternion2xyz(float* orientation, float *normal, 
 
 
 
+void vtkIGTOpenTrackerStream::PrintSelf(ostream& os, vtkIndent indent)
+{
 
+}
 
 

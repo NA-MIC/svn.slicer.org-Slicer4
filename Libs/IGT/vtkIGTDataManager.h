@@ -10,13 +10,27 @@
 #include <string>
 #include <vector>
 
+#include "vtkIGTWin32Header.h" 
 #include "vtkObject.h"
 #include "vtkMRMLScene.h"
 #include "vtkIGTMatrixState.h"
 #include "vtkIGTDataStream.h"
 
+#include "vtkCallbackCommand.h"
+#include "vtkMatrix4x4.h"
+#include "vtkTransform.h"
 
-class vtkIGTDataManager : public vtkObject
+#include "vtkSlicerApplicationGUI.h"
+
+#ifdef USE_OPENTRACKER
+#include "OpenTracker/OpenTracker.h"
+#include "OpenTracker/common/CallbackModule.h"
+using namespace ot;
+#endif
+
+
+
+class VTK_IGT_EXPORT vtkIGTDataManager : public vtkObject
 {
 public:
 
@@ -33,16 +47,22 @@ public:
     // Get MRML scene stored
     vtkGetObjectMacro(MRMLScene,vtkMRMLScene);
 
+    vtkSetObjectMacro(RegMatrix,vtkMatrix4x4);
+    vtkGetObjectMacro(RegMatrix,vtkMatrix4x4);
 
 
-    //Description:
-    //Contructor
+    vtkSetObjectMacro(SlicerAppGUI,vtkSlicerApplicationGUI);
+
+
+    /**
+     * Constructor
+     @ param buffersize: size of buufer (
+     */
     vtkIGTDataManager();
 
 
     //Description:
     //Destructor
-
     virtual ~vtkIGTDataManager ( );
 
     //Description:
@@ -53,11 +73,17 @@ public:
     //Reigster stream device (trackers and imagers). Parameters: int stram type (IGT_IMAGE_STREAM, IGT_MATRIX_DEVICE) defined in vtkIGTDataStream, vtkIGTDataStream
     void RegisterStreamDevice (int streamType, vtkIGTDataStream* datastream);
 
-protected:
+    void Init(char *configFile);
+    void StartReceivingData(int speed);
+    void StopReceivingData();
+    void ProcessTimerEvents();
+    void PollRealtime();
+    void SetKWEntry(int key, vtkKWEntry *entry);
 
-    //Descripton:
-    //Create MRML Node for registered device. It is usually called after RegisterStreamDevice
-    void CreateMRMLNode(int streamType);
+#ifdef USE_OPENTRACKER
+    static void callbackF(const Node&, const Event &event, void *data);
+#endif
+
 
 private:
 
@@ -65,6 +91,25 @@ private:
     //MRML scene passed from the Module instantiating this class
 
     vtkMRMLScene* MRMLScene;
+    int StopTimer;
+    int Speed;
+    vtkMatrix4x4 *LocatorMatrix;
+    vtkMatrix4x4 *RegMatrix;
+    vtkTransform *LocatorNormalTransform;
+
+
+    vtkKWEntry *NREntry;
+    vtkKWEntry *NAEntry;
+    vtkKWEntry *NSEntry;
+    vtkKWEntry *TREntry;
+    vtkKWEntry *TAEntry;
+    vtkKWEntry *TSEntry;
+    vtkKWEntry *PREntry;
+    vtkKWEntry *PAEntry;
+    vtkKWEntry *PSEntry;
+
+    vtkSlicerApplicationGUI *SlicerAppGUI;
+
 
 //BTX
     std::vector<vtkIGTDataStream *> RegisteredDataStreams;
@@ -72,7 +117,23 @@ private:
     std::vector<char *> MRMLIds;  
 //ETX
 
+#ifdef USE_OPENTRACKER
+    Context *context;
+#endif
+
+    void CreateMRMLNode(int streamType);
+    void Normalize(float *a);
+    void Cross(float *a, float *b, float *c);
+    void SetLocatorTransforms();
+    void UpdateLocator();
+    void UpdateSliceDisplay(float px, float py, float pz);
+    void ApplyTransform(float *position, float *norm, float *transnorm);
+    void CloseConnection();
+
+    void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
+
 
 };
+
 
 #endif // IGTDATAMANAGER_H
