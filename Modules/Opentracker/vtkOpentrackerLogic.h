@@ -37,7 +37,7 @@ using namespace ot;
 
 
 
-class VTK_NEUROSURGERY_EXPORT vtkOpentrackerLogic : public vtkSlicerLogic 
+class VTK_OPENTRACKER_EXPORT vtkOpentrackerLogic : public vtkSlicerLogic 
 {
 public:
 

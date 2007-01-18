@@ -72,6 +72,8 @@ TARGET_LINK_LIBRARIES(Opentracker
   ${KWWidgets_LIBRARIES} 
   vtkHybridTCL
   ${OPENTRACKER_LIB}
+  IGT
+
   )
 
 #
