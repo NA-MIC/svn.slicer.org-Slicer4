@@ -55,6 +55,8 @@ SET(dir_list
   ${SlicerBaseGUI_BINARY_DIR}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
+  ${IGT_SOURCE_DIR}
+  ${IGT_BINARY_DIR}
   ${GradientAnisotropicDiffusionFilter_SOURCE_DIR}
   ${GradientAnisotropicDiffusionFilter_BINARY_DIR}
   ${GradientAnisotropicDiffusionFilter_Init_SOURCE_DIR}
@@ -67,10 +69,10 @@ SET(dir_list
   ${EMSegment_BINARY_DIR}
   ${EMSegment_Init_SOURCE_DIR}
   ${EMSegment_Init_BINARY_DIR}
-#  ${Neurosurgery_SOURCE_DIR}
-#  ${Neurosurgery_BINARY_DIR}
-#  ${Neurosurgery_Init_SOURCE_DIR}
-#  ${Neurosurgery_Init_BINARY_DIR}
+  ${Neurosurgery_SOURCE_DIR}
+  ${Neurosurgery_BINARY_DIR}
+  ${Neurosurgery_Init_SOURCE_DIR}
+  ${Neurosurgery_Init_BINARY_DIR}
   ${RealTimeImaging_SOURCE_DIR}
   ${RealTimeImaging_BINARY_DIR}
   ${RealTimeImaging_Init_SOURCE_DIR}
@@ -79,6 +81,10 @@ SET(dir_list
   ${MRAblation_BINARY_DIR}
   ${MRAblation_Init_SOURCE_DIR}
   ${MRAblation_Init_BINARY_DIR}
+  ${NeuroNav_SOURCE_DIR}
+  ${NeuroNav_BINARY_DIR}
+  ${NeuroNav_Init_SOURCE_DIR}
+  ${NeuroNav_Init_BINARY_DIR}
   ${QueryAtlas_SOURCE_DIR}
   ${QueryAtlas_BINARY_DIR}
   ${QueryAtlas_Init_SOURCE_DIR}
@@ -131,12 +137,14 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     SlicerBaseLogic
     SlicerBaseGUI
     MRML
+    IGT
     GradientAnisotropicDiffusionFilter
     SlicerTractographyDisplay
     EMSegment
-    #Neurosurgery
+    Neurosurgery
     RealTimeImaging
     MRAblation
+    NeuroNav
     QueryAtlas
     CommandLineModule
     ScriptedModule
