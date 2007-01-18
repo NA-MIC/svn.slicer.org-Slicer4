@@ -90,7 +90,7 @@ ENDIF(USE_TEEM)
 #
 # OpenTracker 
 #
-OPTION(USE_OPENTRACKER "Need OpenTracker lib to build Neurosurgery module." ON)
+OPTION(USE_OPENTRACKER "Need OpenTracker lib to build Neurosurgery module." OFF)
 IF(USE_OPENTRACKER)
   FIND_LIBRARY(OPENTRACKER_LIB 
                NAMES opentrackerd opentracker
@@ -110,6 +110,21 @@ ELSE(USE_OPENTRACKER)
   SET(OPENTRACKER_LIB "")
   SET(OPENTRACKER_INC_DIR "")
 ENDIF(USE_OPENTRACKER)
+
+
+#
+# IGSTK
+#
+OPTION(USE_IGSTK "Testing IGSTK in Slicer." OFF)
+IF(USE_IGSTK)
+  FIND_PATH(IGSTK_SOURCE_DIR "IGSTKConfig.cmake" 
+           /home/noby/igtdev-dir/IGSTK-build
+           )
+  IF(IGSTK_INC_DIR-NOTFOUND)
+    MESSAGE (FATAL_ERROR "IGSTKConfig.cmake to build")
+  ENDIF(IGSTK_INC_DIR-NOTFOUND)
+  INCLUDE (${IGSTK_SOURCE_DIR}/IGSTKConfig.cmake)
+ENDIF(USE_IGSTK)
 
 
 # Generate the default setup paths scripts.
