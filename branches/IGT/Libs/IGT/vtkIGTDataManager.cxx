@@ -50,16 +50,16 @@ vtkIGTDataManager::~vtkIGTDataManager()
 
 }
 
-void vtkIGTDataManager::Init(char *conFigfile)
+void vtkIGTDataManager::Init(char *configFile)
 {
 #ifdef USE_OPENTRACKER
-    fprintf(stderr,"config file: %s\n",configfile);
+    fprintf(stderr,"config file: %s\n",configFile);
     this->context = new Context(1); 
     // get callback module from the context
     CallbackModule * callbackMod = (CallbackModule *)context->getModule("CallbackConfig");
 
     // parse the configuration file
-    context->parseConfiguration(configfile);  
+    context->parseConfiguration(configFile);  
 
     // sets the callback function
     callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);    
@@ -101,13 +101,11 @@ void vtkIGTDataManager::callbackF(const Node&, const Event &event, void *data)
 
     for (j=0; j<3; j++) {
         VOT->LocatorMatrix->SetElement(j,0,position[j]);
-        VOT->p[j] = position[j];
     }
 
 
     for (j=0; j<3; j++) {
         VOT->LocatorMatrix->SetElement(j,1,norm[j]);
-        VOT->n[j] = norm[j];
     }
 
     for (j=0; j<3; j++) {
