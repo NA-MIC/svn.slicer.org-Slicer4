@@ -75,9 +75,10 @@
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
 #define EMSEG_DEBUG
-#define NEUROSURGERY_DEBUG
+//#define NEUROSURGERY_DEBUG 
 //#define REALTIMEIMAGING_DEBUG
 //#define MRABLATION_DEBUG
+//#define NEURONAV_DEBUG
 
 #ifndef EMSEG_DEBUG
 #include "vtkEMSegmentLogic.h"
@@ -97,6 +98,11 @@
 #ifndef MRABLATION_DEBUG
 #include "vtkMRAblationLogic.h"
 #include "vtkMRAblationGUI.h"
+#endif
+
+#ifndef NEURONAV_DEBUG
+#include "vtkNeuroNavLogic.h"
+#include "vtkNeuroNavGUI.h"
 #endif
 
 #ifdef _WIN32
@@ -722,6 +728,27 @@ int Slicer3_main(int argc, char *argv[])
     ablationGUI->AddGUIObservers ( );
 #endif 
 
+
+#ifndef NEURONAV_DEBUG
+    // -- NeuroNav module
+    vtkNeuroNavLogic *neuronavLogic = vtkNeuroNavLogic::New(); 
+    neuronavLogic->SetAndObserveMRMLScene ( scene );
+    vtkNeuroNavGUI *neuronavGUI = vtkNeuroNavGUI::New();
+
+    neuronavGUI->SetApplication ( slicerApp );
+    neuronavGUI->SetApplicationGUI ( appGUI );
+    neuronavGUI->SetAndObserveApplicationLogic ( appLogic );
+    neuronavGUI->SetAndObserveMRMLScene ( scene );
+    neuronavGUI->SetModuleLogic ( neuronavLogic );
+    neuronavGUI->SetGUIName( "NeuroNav" );
+    neuronavGUI->GetUIPanel()->SetName ( neuronavGUI->GetGUIName ( ) );
+    neuronavGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    neuronavGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( neuronavGUI );
+    neuronavGUI->BuildGUI ( );
+    neuronavGUI->AddGUIObservers ( );
+#endif 
+
     // --- Transforms module
     slicerApp->GetSplashScreen()->SetProgressMessage(
       "Initializing Transforms Module...");
@@ -1093,6 +1120,12 @@ int Slicer3_main(int argc, char *argv[])
     name = ablationGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set MRAblationGUI %s", name);
 #endif
+
+#ifndef NEURONAV_DEBUG
+    name = neuronavGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set NeuroNavGUI %s", name);
+#endif
+
     name = transformsGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set TransformsGUI %s", name);
 #ifndef QUERYATLAS_DEBUG
@@ -1299,6 +1332,10 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef MRABLATION_DEBUG
     ablationGUI->RemoveGUIObservers ( );
 #endif
+#ifndef NEURONAV_DEBUG
+    neuronavGUI->RemoveGUIObservers ( );
+#endif
+
     transformsGUI->RemoveGUIObservers ( );
 #ifndef CAMERA_DEBUG
     cameraGUI->RemoveGUIObservers ( );
@@ -1393,6 +1430,10 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef MRABLATION_DEBUG
     ablationGUI->Delete();
 #endif    
+#ifndef NEURONAV_DEBUG
+    neuronavGUI->Delete();
+#endif    
+
     transformsGUI->Delete ();
 #ifndef CAMERA_DEBUG
     cameraGUI->Delete ();
@@ -1473,6 +1514,11 @@ int Slicer3_main(int argc, char *argv[])
     ablationLogic->SetAndObserveMRMLScene ( NULL );
     ablationLogic->Delete();
 #endif    
+#ifndef NEURONAV_DEBUG
+    neuronavLogic->SetAndObserveMRMLScene ( NULL );
+    neuronavLogic->Delete();
+#endif    
+
     sliceLogic2->SetAndObserveMRMLScene ( NULL );
     sliceLogic2->Delete ();
     sliceLogic1->SetAndObserveMRMLScene ( NULL );
