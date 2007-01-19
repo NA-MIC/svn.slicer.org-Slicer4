@@ -669,8 +669,6 @@ void vtkNeurosurgeryGUI::ProcessMRMLEvents ( vtkObject *caller,
 
 void vtkNeurosurgeryGUI::ProcessTimerEvents ()
 {
-    cout << "timer.\n"
-
     if (! this->StopTimer)
     {
 
