@@ -33,6 +33,7 @@ SET (LIBRARY_OUTPUT_PATH ${Slicer3_BINARY_DIR}/bin/
         "Single output directory for building all libraries." 
         FORCE)
 SET (EXECUTABLE_OUTPUT_PATH ${Slicer3_BINARY_DIR}/bin/ 
+
         CACHE PATH 
         "Single output directory for building all executables." 
         FORCE)
@@ -40,6 +41,7 @@ SET (EXECUTABLE_OUTPUT_PATH ${Slicer3_BINARY_DIR}/bin/
 # Slicer libraries subdirectory
 #
 SET (SLICER_INSTALL_LIBRARIES_DIR "lib/Slicer3")
+
 SET (SLICER_LIBRARIES_DIR "${Slicer3_BINARY_DIR}/${SLICER_INSTALL_LIBRARIES_DIR}")
 
 
@@ -53,6 +55,7 @@ IF(Slicer3_BUILD_TESTING)
     MARK_AS_ADVANCED(TCL_TCLSH DART_ROOT)
 ENDIF(Slicer3_BUILD_TESTING)
 
+
 #
 # Libs
 # - ITK
@@ -65,6 +68,7 @@ IF (NOT ITK_FOUND)
   MESSAGE (FATAL_ERROR "Need ITK to build")
 ENDIF (NOT ITK_FOUND)
 
+
 INCLUDE(${ITK_USE_FILE})
 
 
@@ -75,6 +79,7 @@ FIND_PACKAGE(KWWidgets REQUIRED)
 IF (NOT KWWidgets_FOUND)
   MESSAGE (FATAL_ERROR "Need KWWidgets to build")
 ENDIF (NOT KWWidgets_FOUND)
+
 
 INCLUDE(${KWWidgets_USE_FILE})
 
@@ -87,6 +92,7 @@ IF(USE_TEEM)
   INCLUDE(${TEEM_USE_FILE})
 ENDIF(USE_TEEM)
 
+
 #
 # OpenTracker 
 #
@@ -94,14 +100,15 @@ OPTION(USE_OPENTRACKER "Need OpenTracker lib to build Neurosurgery module." OFF)
 IF(USE_OPENTRACKER)
   FIND_LIBRARY(OPENTRACKER_LIB 
                NAMES opentrackerd opentracker
-               /home/surg/projects/splot-build/opentracker/lib
+               PATH "" 
                )
   IF(OPENTRACKER_LIB-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker to build")
+
   ENDIF(OPENTRACKER_LIB-NOTFOUND)
 
   FIND_PATH(OPENTRACKER_INC_DIR "OpenTracker/OpenTracker.h" 
-           /home/surg/projects/splot-build/opentracker/include
+           ""
            )
   IF(OPENTRACKER_INC_DIR-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker.h to build")
@@ -116,6 +123,7 @@ ENDIF(USE_OPENTRACKER)
 # IGSTK
 #
 OPTION(USE_IGSTK "Testing IGSTK in Slicer." OFF)
+
 IF(USE_IGSTK)
   FIND_PATH(IGSTK_SOURCE_DIR "IGSTKConfig.cmake" 
            /home/noby/igtdev-dir/IGSTK-build
@@ -137,6 +145,7 @@ KWWidgets_GENERATE_SETUP_PATHS_SCRIPTS(
   
 
 # VTK 5.0 does not have VTK_CMAKE_DIR
+
 # Alternatively you could use KWWidget's wrapping, which encapsulate
 # the differences between various VTK versions:
 #  INCLUDE("${KWWidgets_CMAKE_DIR}/KWWidgetsWrappingMacros.cmake")
