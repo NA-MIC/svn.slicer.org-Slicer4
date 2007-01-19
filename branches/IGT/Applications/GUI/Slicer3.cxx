@@ -74,7 +74,7 @@
 //#define RealTimeImaging_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
-#define EMSEG_DEBUG
+// #define EMSEG_DEBUG
 //#define NEUROSURGERY_DEBUG 
 //#define REALTIMEIMAGING_DEBUG
 //#define MRABLATION_DEBUG
