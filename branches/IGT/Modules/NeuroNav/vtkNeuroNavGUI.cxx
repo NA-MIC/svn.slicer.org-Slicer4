@@ -34,7 +34,7 @@
 #include "vtkActor.h"
 #include "vtkProperty.h"
 
-#include "vtkIGTOpenTrackerStream.h"
+#include "vtkIGTDataStream.h"
 
 
 //---------------------------------------------------------------------------
@@ -489,8 +489,8 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             {
                 this->DataManager->Init(filename);
 
-                vtkIGTOpenTrackerStream *openStream = vtkIGTOpenTrackerStream::New();
-                this->DataManager->RegisterStreamDevice(0, openStream);
+                vtkIGTDataStream *dataStream = vtkIGTDataStream::New();
+                this->DataManager->RegisterStreamDevice(0, dataStream);
 
                 // Pass handles to vtkIGTDataManager for value update
                 this->DataManager->SetKWEntry(0, this->NREntry);
