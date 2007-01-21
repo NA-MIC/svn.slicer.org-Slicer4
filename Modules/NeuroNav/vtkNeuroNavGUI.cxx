@@ -487,6 +487,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             }
             else
             {
+                this->DataManager->SetMRMLScene(this->GetMRMLScene());
                 this->DataManager->Init(filename);
 
                 vtkIGTDataStream *dataStream = vtkIGTDataStream::New();
