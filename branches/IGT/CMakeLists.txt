@@ -96,11 +96,11 @@ ENDIF(USE_TEEM)
 #
 # OpenTracker 
 #
-OPTION(USE_OPENTRACKER "Need OpenTracker lib to build Neurosurgery module." ON)
+OPTION(USE_OPENTRACKER "Build Slicer3 with OpenTracker support." OFF)
 IF(USE_OPENTRACKER)
   FIND_LIBRARY(OPENTRACKER_LIB 
                NAMES opentrackerd opentracker
-               PATH /home/surg/projects/splot-build/opentracker/lib
+               PATH "" 
                )
   IF(OPENTRACKER_LIB-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker to build")
@@ -108,7 +108,7 @@ IF(USE_OPENTRACKER)
   ENDIF(OPENTRACKER_LIB-NOTFOUND)
 
   FIND_PATH(OPENTRACKER_INC_DIR "OpenTracker/OpenTracker.h" 
-      /home/surg/projects/splot-build/opentracker/include
+           ""
            )
   IF(OPENTRACKER_INC_DIR-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker.h to build")
