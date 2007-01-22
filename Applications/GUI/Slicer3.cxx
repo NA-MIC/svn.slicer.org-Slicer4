@@ -126,6 +126,8 @@ extern "C" int Slicerbaselogic_Init(Tcl_Interp *interp);
 extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Vtkitk_Init(Tcl_Interp *interp);
 extern "C" int Freesurfer_Init(Tcl_Interp *interp);
+extern "C" int Igt_Init(Tcl_Interp *interp);
+
 
 //TODO added temporary
 #ifndef EMSEG_DEBUG
@@ -434,7 +436,9 @@ int Slicer3_main(int argc, char *argv[])
     Mrml_Init(interp);
     Vtkitk_Init(interp);
     Freesurfer_Init(interp);
-    //TODO added temporary
+    Igt_Init(interp);
+
+    //TODO added
 #ifndef EMSEG_DEBUG
     Emsegment_Init(interp);
 #endif

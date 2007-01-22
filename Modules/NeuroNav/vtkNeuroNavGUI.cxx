@@ -1,6 +1,5 @@
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
-#include "vtkCommand.h"
 
 #include "vtkNeuroNavGUI.h"
 #include "vtkSlicerApplication.h"
@@ -114,6 +113,9 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->DataManager = vtkIGTDataManager::New();
     this->Pat2ImgReg = vtkIGTPat2ImgRegistration::New();
 
+    this->DataCallbackCommand = vtkCallbackCommand::New();
+    this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
+    this->DataCallbackCommand->SetCallback(vtkNeuroNavGUI::DataCallback);
 
 }
 
@@ -450,6 +452,9 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
     this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
 
+    this->DataManager->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+
+
 }
 
 
@@ -493,33 +498,16 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 vtkIGTDataStream *dataStream = vtkIGTDataStream::New();
                 this->DataManager->RegisterStreamDevice(0, dataStream);
 
-                // Pass handles to vtkIGTDataManager for value update
-                this->DataManager->SetKWEntry(0, this->NREntry);
-                this->DataManager->SetKWEntry(1, this->NAEntry);
-                this->DataManager->SetKWEntry(2, this->NSEntry);
-                this->DataManager->SetKWEntry(3, this->TREntry);
-                this->DataManager->SetKWEntry(4, this->TAEntry);
-                this->DataManager->SetKWEntry(5, this->TSEntry);
-                this->DataManager->SetKWEntry(6, this->PREntry);
-                this->DataManager->SetKWEntry(7, this->PAEntry);
-                this->DataManager->SetKWEntry(8, this->PSEntry);
-
-                vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-                this->DataManager->SetSlicerAppGUI(appGUI);
-
-                vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-                int rate = atoi(this->UpdateRateEntry->GetWidget()->GetValue ());
-                this->DataManager->StartReceivingData(rate);
-
-                //vtkKWTkUtilities::CreateTimerHandler (app, rate, this, "ProcessTimerEvents");
-                //this->StopTimer = 0;
+                int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue ());
+                this->DataManager->SetSpeed(sp);
+                this->DataManager->SetStartTimer(1);
+                this->DataManager->ProcessTimerEvents();
 
             }
         }
         else
         {
-            this->DataManager->StopReceivingData();
-            // igtLogic->CloseConnection();
+            this->DataManager->SetStartTimer(0);
         }
     }
     else if (this->GetPatCoordinatesPushButton == vtkKWPushButton::SafeDownCast(caller) 
@@ -634,10 +622,15 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
              && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
         int checked = this->LocatorCheckButton->GetSelectedState(); 
-        this->LocatorModelDisplayNode->SetVisibility(checked);
+        const char *id = this->DataManager->GetMRMLModelId(0);
+        vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(id); 
+        vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
+
+        disp->SetVisibility(checked);
         vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
         vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
-        this->LocatorModelDisplayNode->SetColor(color->SliceGUIGreen);
+        disp->SetColor(color->SliceGUIGreen);
+
     }
     else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
              && event == vtkKWCheckButton::SelectedStateChangedEvent )
@@ -669,6 +662,18 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
     }
 
 } 
+
+
+
+void 
+vtkNeuroNavGUI::DataCallback(vtkObject *caller, 
+            unsigned long eid, void *clientData, void *callData)
+{
+    vtkNeuroNavGUI *self = reinterpret_cast<vtkNeuroNavGUI *>(clientData);
+    //  vtkDebugWithObjectMacro(self, "In vtkSlicerLogic LogicCallback");
+
+    self->UpdateAll();
+}
 
 
 //---------------------------------------------------------------------------
@@ -1603,5 +1608,97 @@ void vtkNeuroNavGUI::BuildGUIForHandPieceFrame ()
     pFrame->Delete ();
     // colorFrame->Delete ();
 
+}
+
+void vtkNeuroNavGUI::UpdateAll()
+{
+    this->LocatorMatrix = this->DataManager->GetLocatorMatrix();
+    if (this->LocatorMatrix)
+    {
+        char Val[10];
+
+        float px = this->LocatorMatrix->GetElement(0, 0);
+        float py = this->LocatorMatrix->GetElement(1, 0);
+        float pz = this->LocatorMatrix->GetElement(2, 0);
+        float nx = this->LocatorMatrix->GetElement(0, 1);
+        float ny = this->LocatorMatrix->GetElement(1, 1);
+        float nz = this->LocatorMatrix->GetElement(2, 1);
+        float tx = this->LocatorMatrix->GetElement(0, 2);
+        float ty = this->LocatorMatrix->GetElement(1, 2);
+        float tz = this->LocatorMatrix->GetElement(2, 2);
+
+        sprintf(Val, "%6.2f", px);
+        this->PREntry->SetValue(Val);
+        sprintf(Val, "%6.2f", py);
+        this->PAEntry->SetValue(Val);
+        sprintf(Val, "%6.2f", pz);
+        this->PSEntry->SetValue(Val);
+
+        sprintf(Val, "%6.2f", nx);
+        this->NREntry->SetValue(Val);
+        sprintf(Val, "%6.2f", ny);
+        this->NAEntry->SetValue(Val);
+        sprintf(Val, "%6.2f", nz);
+        this->NSEntry->SetValue(Val);
+
+        sprintf(Val, "%6.2f", tx);
+        this->TREntry->SetValue(Val);
+        sprintf(Val, "%6.2f", ty);
+        this->TAEntry->SetValue(Val);
+        sprintf(Val, "%6.2f", tz);
+        this->TSEntry->SetValue(Val);
+
+
+        int checked = this->LocatorModeCheckButton->GetSelectedState(); 
+        if (checked)
+        {
+            // update the display of locator
+            this->DataManager->SetLocatorTransforms();
+            this->UpdateLocator();
+            this->UpdateSliceDisplay(px, py, pz);
+        }
+
+    }
+}
+
+
+void vtkNeuroNavGUI::UpdateLocator()
+{
+    vtkTransform *transform = this->DataManager->GetLocatorNormalTransform(); 
+
+    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+    vtkSlicerViewerWidget *viewerWidget = appGUI->GetViewerWidget();
+
+    const char *id = this->DataManager->GetMRMLModelId(0);
+    vtkActor *locatorActor = viewerWidget->GetActorByID(id);
+    if (locatorActor)
+    {
+        //locatorActor->GetProperty()->SetColor(1, 0, 0);
+
+        locatorActor->SetUserMatrix(transform->GetMatrix());
+        locatorActor->Modified();
+    }
+}
+
+
+
+void vtkNeuroNavGUI::UpdateSliceDisplay(float px, float py, float pz)
+{
+    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+
+    vtkSlicerSliceLogic *logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
+    vtkSlicerSliceLogic *logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
+    vtkSlicerSliceLogic *logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
+
+    vtkSlicerSliceControllerWidget *control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
+    vtkSlicerSliceControllerWidget *control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
+    vtkSlicerSliceControllerWidget *control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
+    control0->GetOffsetScale()->SetValue(pz);
+    control1->GetOffsetScale()->SetValue(px);
+    control2->GetOffsetScale()->SetValue(py);
+
+    logic0->SetSliceOffset(pz);
+    logic1->SetSliceOffset(px);
+    logic2->SetSliceOffset(py);
 }
 

@@ -35,10 +35,10 @@ ENDIF(USE_OPENTRACKER)
 # Include dirs
 
 INCLUDE_DIRECTORIES(
-  ${SlicerBaseGUI_SOURCE_DIR}
-  ${SlicerBaseGUI_BINARY_DIR}
-  ${SlicerBaseLogic_SOURCE_DIR}
-  ${SlicerBaseLogic_BINARY_DIR}
+    #  ${SlicerBaseGUI_SOURCE_DIR}
+    # ${SlicerBaseGUI_BINARY_DIR}
+    # ${SlicerBaseLogic_SOURCE_DIR}
+    # ${SlicerBaseLogic_BINARY_DIR}
   ${MRML_BINARY_DIR}
   ${MRML_SOURCE_DIR}
   ${IGT_BINARY_DIR}
@@ -53,6 +53,12 @@ INCLUDE_DIRECTORIES(
   ${OPENTRACKER_INC_DIR}
 )
 ENDIF(USE_OPENTRACKER)
+
+# --------------------------------------------------------------------------
+# Wrapping
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+VTK_WRAP_TCL3(IGT IGT_TCL_SRCS "${IGT_SRCS}" "")
 
 
 # Build the library
