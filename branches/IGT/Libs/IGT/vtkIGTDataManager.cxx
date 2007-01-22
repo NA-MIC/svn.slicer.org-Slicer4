@@ -5,12 +5,10 @@
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkCylinderSource.h"
-#include "vtkSlicerApplication.h"
-#include "vtkKWTkUtilities.h"
-#include "vtkKWEntry.h"
 
-#include "vtkActor.h"
-#include "vtkSlicerSliceControllerWidget.h"
+#include "vtkKWTkUtilities.h"
+#include "vtkKWApplication.h"
+#include "vtkCommand.h"
 
 #include <vtksys/SystemTools.hxx>
 #include "vtkCallbackCommand.h"
@@ -21,25 +19,11 @@ vtkCxxRevisionMacro(vtkIGTDataManager, "$Revision: 1.0 $");
 
 vtkIGTDataManager::vtkIGTDataManager()
 {
+    this->Speed = 0;
+    this->StartTimer = 0;
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
-
-    this->StopTimer = 1;
-    this->Speed = 0;
-
-    this->NREntry = NULL;
-    this->NAEntry = NULL;
-    this->NSEntry = NULL;
-    this->TREntry = NULL;
-    this->TAEntry = NULL;
-    this->TSEntry = NULL;
-    this->PREntry = NULL;
-    this->PAEntry = NULL;
-    this->PSEntry = NULL;    
-
-    this->SlicerAppGUI = NULL;
     this->RegMatrix = NULL;
-
 }
 
 
@@ -126,26 +110,8 @@ void vtkIGTDataManager::callbackF(const Node&, const Event &event, void *data)
 
 
 
-void vtkIGTDataManager::StartReceivingData(int speed)
-{
-    vtkSlicerApplication *app = vtkSlicerApplication::GetInstance();
-    this->Speed = speed;
-    vtkKWTkUtilities::CreateTimerHandler (app, speed, this, "ProcessTimerEvents");
-    this->StopTimer = 0;
 
-}
-
-
-
-void vtkIGTDataManager::StopReceivingData()
-{
-    this->StopTimer = 1;
-    CloseConnection();
-}
-
-
-
-void vtkIGTDataManager::CloseConnection()
+void vtkIGTDataManager::StopPolling()
 {
 #ifdef USE_OPENTRACKER
     context->close();
@@ -163,86 +129,6 @@ void vtkIGTDataManager::PollRealtime()
     context->stop();
 #endif
 }
-
-
-
-void vtkIGTDataManager::ProcessTimerEvents()
-{
-    cout << "timer event." << endl;
-
-    if (! this->StopTimer)
-    {
-        vtkSlicerApplication *app = vtkSlicerApplication::GetInstance();
-        vtkKWTkUtilities::CreateTimerHandler (app, this->Speed, this, "ProcessTimerEvents");
-
-        PollRealtime();
-        if (this->LocatorMatrix)
-        {
-            char Val[10];
-
-            float px = this->LocatorMatrix->GetElement(0, 0);
-            float py = this->LocatorMatrix->GetElement(1, 0);
-            float pz = this->LocatorMatrix->GetElement(2, 0);
-            float nx = this->LocatorMatrix->GetElement(0, 1);
-            float ny = this->LocatorMatrix->GetElement(1, 1);
-            float nz = this->LocatorMatrix->GetElement(2, 1);
-            float tx = this->LocatorMatrix->GetElement(0, 2);
-            float ty = this->LocatorMatrix->GetElement(1, 2);
-            float tz = this->LocatorMatrix->GetElement(2, 2);
-
-            sprintf(Val, "%6.2f", px);
-            this->PREntry->SetValue(Val);
-            sprintf(Val, "%6.2f", py);
-            this->PAEntry->SetValue(Val);
-            sprintf(Val, "%6.2f", pz);
-            this->PSEntry->SetValue(Val);
-
-            sprintf(Val, "%6.2f", nx);
-            this->NREntry->SetValue(Val);
-            sprintf(Val, "%6.2f", ny);
-            this->NAEntry->SetValue(Val);
-            sprintf(Val, "%6.2f", nz);
-            this->NSEntry->SetValue(Val);
-
-            sprintf(Val, "%6.2f", tx);
-            this->TREntry->SetValue(Val);
-            sprintf(Val, "%6.2f", ty);
-            this->TAEntry->SetValue(Val);
-            sprintf(Val, "%6.2f", tz);
-            this->TSEntry->SetValue(Val);
-
-
-            // update the display of locator
-            SetLocatorTransforms();
-            UpdateLocator();
-            UpdateSliceDisplay(px, py, pz);
-
-        }
-    }
-}
-
-
-
-void vtkIGTDataManager::UpdateSliceDisplay(float px, float py, float pz)
-{
-
-    vtkSlicerSliceLogic *logic0 = this->SlicerAppGUI->GetMainSliceGUI0()->GetLogic();
-    vtkSlicerSliceLogic *logic1 = this->SlicerAppGUI->GetMainSliceGUI1()->GetLogic();
-    vtkSlicerSliceLogic *logic2 = this->SlicerAppGUI->GetMainSliceGUI2()->GetLogic();
-
-    vtkSlicerSliceControllerWidget *control0 = this->SlicerAppGUI->GetMainSliceGUI0()->GetSliceController();
-    vtkSlicerSliceControllerWidget *control1 = this->SlicerAppGUI->GetMainSliceGUI1()->GetSliceController();
-    vtkSlicerSliceControllerWidget *control2 = this->SlicerAppGUI->GetMainSliceGUI2()->GetSliceController();
-    control0->GetOffsetScale()->SetValue(pz);
-    control1->GetOffsetScale()->SetValue(px);
-    control2->GetOffsetScale()->SetValue(py);
-
-    logic0->SetSliceOffset(pz);
-    logic1->SetSliceOffset(px);
-    logic2->SetSliceOffset(py);
-
-}
-
 
 
 
@@ -275,14 +161,14 @@ void vtkIGTDataManager::CreateMRMLNode(int streamType)
 
             dispNode->SetScene(this->MRMLScene);
 
-            int size = this->MRMLIds.size();
+            int size = this->MRMLModelIds.size();
             char name[20];
             sprintf(name, "matrix_%d", size);
 
             modelNode->SetName(name);
             modelNode->SetScene(this->MRMLScene);
             modelNode->SetAndObserveDisplayNodeID(dispNode->GetID());  
-            this->MRMLIds.push_back(modelNode->GetID());
+            this->MRMLModelIds.push_back(modelNode->GetID());
 
             vtkCylinderSource *cylinder = vtkCylinderSource::New();
             cylinder->SetRadius(1.5);
@@ -306,9 +192,9 @@ void vtkIGTDataManager::CreateMRMLNode(int streamType)
 
 
 
-char *vtkIGTDataManager::GetMRMLId(int index) 
+char *vtkIGTDataManager::GetMRMLModelId(int index) 
 {
-    return this->MRMLIds.at(index);
+    return this->MRMLModelIds.at(index);
 }
 
 
@@ -337,59 +223,6 @@ void vtkIGTDataManager::quaternion2xyz(float* orientation, float *normal, float 
     normal[2] = 1-2*qx*qx-2*qy*qy;
 }
 
-
-
-void vtkIGTDataManager::SetKWEntry(int key, vtkKWEntry *entry)
-{
-    switch (key) {
-        case 0:
-            this->NREntry = entry;
-            break;
-        case 1:
-            this->NAEntry = entry;
-            break;
-        case 2:
-            this->NSEntry = entry;
-            break;
-        case 3:
-            this->TREntry = entry;
-            break;
-        case 4:
-            this->TAEntry = entry;
-            break;
-        case 5:
-            this->TSEntry = entry;
-            break;
-        case 6:
-            this->PREntry = entry;
-            break;
-        case 7:
-            this->PAEntry = entry;
-            break;
-        case 8:
-            this->PSEntry = entry;
-            break;
-        default:
-            break;
-    }
-}
-
-
-void vtkIGTDataManager::UpdateLocator()
-{
-    SetLocatorTransforms();
-
-    const char *id = this->MRMLIds.at(0);
-    vtkSlicerViewerWidget *viewerWidget = this->SlicerAppGUI->GetViewerWidget();
-    vtkActor *locatorActor = viewerWidget->GetActorByID(id);
-    if (locatorActor)
-    {
-        //locatorActor->GetProperty()->SetColor(1, 0, 0);
-
-        locatorActor->SetUserMatrix(this->LocatorNormalTransform->GetMatrix());
-        locatorActor->Modified();
-    }
-}
 
 
 
@@ -570,6 +403,23 @@ void vtkIGTDataManager::ApplyTransform(float *position, float *norm, float *tran
         position[i] = p[i];
         norm[i] = n[i];
         transnorm[i] = tn[i];
+    }
+}
+
+
+
+void vtkIGTDataManager::ProcessTimerEvents()
+{
+    if (this->StartTimer)
+    {
+        this->PollRealtime();
+        this->InvokeEvent (vtkCommand::ModifiedEvent);
+        vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
+                200, this, "ProcessTimerEvents");        
+    }
+    else
+    {
+        this->StopPolling();
     }
 }
 

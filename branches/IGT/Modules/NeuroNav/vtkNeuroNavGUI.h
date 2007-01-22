@@ -10,9 +10,11 @@
 #include "vtkSlicerModuleGUI.h"
 
 #include "vtkNeuroNavLogic.h"
+
 #include "vtkIGTDataManager.h"
 #include "vtkIGTPat2ImgRegistration.h"
 
+#include "vtkCallbackCommand.h"
 
 class vtkKWPushButton;
 class vtkKWEntryWithLabel;
@@ -72,6 +74,12 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     // Describe behavior at module startup and exit.
     virtual void Enter ( );
     virtual void Exit ( );
+
+  //BTX
+  static void DataCallback(vtkObject *caller, 
+                unsigned long eid, void *clientData, void *callData);
+
+  //ETX
 
  protected:
     vtkNeuroNavGUI ( );
@@ -152,6 +160,11 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     vtkIGTDataManager *DataManager;
     vtkIGTPat2ImgRegistration *Pat2ImgReg;
 
+    vtkCallbackCommand *DataCallbackCommand;
+
+    void UpdateAll();
+    void UpdateLocator();
+    void UpdateSliceDisplay(float x, float y, float z);
 
  private:
     vtkNeuroNavGUI ( const vtkNeuroNavGUI& ); // Not implemented.
