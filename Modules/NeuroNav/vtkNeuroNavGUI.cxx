@@ -604,13 +604,14 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             }
 
             int error = this->Pat2ImgReg->DoRegistration();
-            // igtLogic->GetLandmarkTransformMatrix()->PrintSelf(cout, 5);
-
-
             if (error)
             {
                 vtkSlicerApplication::GetInstance()->ErrorMessage("Error registration between patient and image land marks.");
+                return;
             }
+
+            this->DataManager->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
+
         }
     }
     else if (this->ResetPushButton == vtkKWPushButton::SafeDownCast(caller) 
