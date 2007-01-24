@@ -104,10 +104,9 @@ IF(USE_OPENTRACKER)
                )
   IF(OPENTRACKER_LIB-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker to build")
-
   ENDIF(OPENTRACKER_LIB-NOTFOUND)
 
-  FIND_PATH(OPENTRACKER_INC_DIR "OpenTracker/OpenTracker.h" 
+  FIND_PATH(OPENTRACKER_INC_DIR "OpenTracker.h" 
            ""
            )
   IF(OPENTRACKER_INC_DIR-NOTFOUND)
