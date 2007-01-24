@@ -20,8 +20,8 @@
 #include "vtkTransform.h"
 
 #ifdef USE_OPENTRACKER
-#include "OpenTracker/OpenTracker.h"
-#include "OpenTracker/common/CallbackModule.h"
+#include "OpenTracker.h"
+#include "common/CallbackModule.h"
 using namespace ot;
 #endif
 
