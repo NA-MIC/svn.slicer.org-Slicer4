@@ -12,7 +12,6 @@ SUBDIRS(
   RealTimeImaging
   MRAblation
   NeuroNav 
-  Neurosurgery
 )
 
 
