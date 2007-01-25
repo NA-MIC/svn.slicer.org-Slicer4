@@ -1678,6 +1678,7 @@ void vtkNeuroNavGUI::UpdateLocator()
 
         locatorActor->SetUserMatrix(transform->GetMatrix());
         locatorActor->Modified();
+        this->GetMRMLScene()->Modified();
     }
 }
 
