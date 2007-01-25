@@ -124,6 +124,16 @@ ENDIF(USE_OPENTRACKER)
 OPTION(USE_IGSTK "Testing IGSTK in Slicer." OFF)
 
 IF(USE_IGSTK)
+
+  FIND_LIBRARY(IGSTK_LIB 
+               NAMES IGSTKd IGSTK
+               PATH "" 
+               )
+  IF(OPENTRACKER_LIB-NOTFOUND)
+    MESSAGE (FATAL_ERROR "Need libIGSTK to build")
+  ENDIF(OPENTRACKER_LIB-NOTFOUND)
+
+
   FIND_PATH(IGSTK_SOURCE_DIR "IGSTKConfig.cmake" 
            /home/noby/igtdev-dir/IGSTK-build
            )
