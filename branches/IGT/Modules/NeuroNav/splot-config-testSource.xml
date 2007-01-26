@@ -2,13 +2,13 @@
 <!DOCTYPE OpenTracker SYSTEM "../data/splot.dtd">
 
 <OpenTracker>
-  <configuration>
-    <ConsoleConfig interval="10" headerline="Aurora Test" display="on"/>
-  </configuration>
+    <configuration>
+        <ConsoleConfig interval="10" headerline="Test Source" display="on"/>
+    </configuration>
 
-  <ConsoleSink>
-    <NetworkSink mode="unicast" name="dummy" number="1" port="54321">
-       <TestSource noise="5"/> 
-    </NetworkSink>
-  </ConsoleSink>
+    <ConsoleSink>
+        <NetworkSink mode="unicast" name="dummy" number="1" port="54321">
+            <TestSource noise="5"/> 
+        </NetworkSink>
+    </ConsoleSink>
 </OpenTracker>
