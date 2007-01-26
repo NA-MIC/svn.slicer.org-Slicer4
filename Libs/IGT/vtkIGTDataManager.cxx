@@ -24,6 +24,7 @@ vtkIGTDataManager::vtkIGTDataManager()
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     this->RegMatrix = NULL;
+    this->MRMLScene = NULL;
 }
 
 
