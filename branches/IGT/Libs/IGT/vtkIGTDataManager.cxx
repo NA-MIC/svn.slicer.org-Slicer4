@@ -155,6 +155,7 @@ void vtkIGTDataManager::CreateMRMLNode(int streamType)
 
             vtkMRMLModelNode *modelNode = vtkMRMLModelNode::New();
             vtkMRMLModelDisplayNode *dispNode = vtkMRMLModelDisplayNode::New();
+            dispNode->SetVisibility(0);
 
             this->MRMLScene->SaveStateForUndo();
             this->MRMLScene->AddNode(dispNode);
@@ -176,10 +177,11 @@ void vtkIGTDataManager::CreateMRMLNode(int streamType)
             cylinder->SetHeight(100);
             modelNode->SetAndObservePolyData(cylinder->GetOutput());
             this->Modified();  
+            this->MRMLScene->Modified();
 
-            // modelNode->Delete();
+            modelNode->Delete();
             cylinder->Delete();
-            // displayNode->Delete();
+            dispNode->Delete();
             }
             break;
 
