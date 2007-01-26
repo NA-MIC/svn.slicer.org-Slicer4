@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE OpenTracker SYSTEM "../data/splot.dtd">
+
+<OpenTracker>
+  <configuration>
+    <ConsoleConfig interval="10" headerline="Console Source" display="on">
+    <KeyDefinition function="Move_X_plus" key="up"/>
+    <KeyDefinition function="Move_Y_plus" key="left"/>
+    <KeyDefinition function="Move_Z_plus" key="page_up"/>
+    <KeyDefinition function="Move_X_minus" key="down"/>
+    <KeyDefinition function="Move_Y_minus" key="right"/>
+    <KeyDefinition function="Move_Z_minus" key="page_down"/>
+  </ConsoleConfig>
+
+  </configuration>
+  <ConsoleSink>
+
+    
+  <EventTransform scale="10 10 10">
+    <NetworkSink mode="unicast" name="dummy" number="1" port="54321">
+      <ConsoleSource number="1"/>
+    </NetworkSink>
+  </EventTransform>
+
+  </ConsoleSink>
+</OpenTracker>
