@@ -46,7 +46,7 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 {
     this->Logic = NULL;
 
-    this->ServerMenu = NULL;
+    this->DeviceMenu = NULL;
     this->NormalOffsetEntry = NULL; 
     this->TransOffsetEntry = NULL;
     this->NXTOffsetEntry = NULL;
@@ -89,8 +89,8 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 
     this->LoadConfigButton = NULL;
 
-    this->ConfigFileEntry;
-    this->UpdateRateEntry;
+    this->ConfigFileEntry = NULL;
+    this->UpdateRateEntry = NULL;
 
     this->PatCoordinatesEntry = NULL;
     this->SlicerCoordinatesEntry = NULL;
@@ -117,6 +117,8 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
     this->DataCallbackCommand->SetCallback(vtkNeuroNavGUI::DataCallback);
 
+    this->DeviceMenu = NULL; 
+
 }
 
 
@@ -134,10 +136,10 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
 
     this->RemoveGUIObservers();
 
-    if (this->ServerMenu)
+    if (this->DeviceMenu)
     {
-        this->ServerMenu->SetParent(NULL );
-        this->ServerMenu->Delete ( );
+        this->DeviceMenu->SetParent(NULL );
+        this->DeviceMenu->Delete ( );
     }
     if (this->NormalOffsetEntry)
     {
@@ -364,6 +366,12 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
         this->ResetPushButton->SetParent(NULL );
         this->ResetPushButton->Delete ( );
     }
+    if (this->DeviceMenu)
+    {
+        this->DeviceMenu->SetParent(NULL );
+        this->DeviceMenu->Delete ( );
+    }
+
 
     this->SetModuleLogic ( NULL );
 }
@@ -428,6 +436,10 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
     {
         this->UserModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
+    if (this->DeviceMenu)
+    {
+        this->DeviceMenu->GetWidget()->GetMenu()->RemoveObservers ( vtkKWMenu::MenuItemInvokedEvent, this->GUICallbackCommand);
+    }
 
 }
 
@@ -453,7 +465,7 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
 
     this->DataManager->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-
+    this->DeviceMenu->GetWidget()->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, this->GUICallbackCommand);
 
 }
 
@@ -492,6 +504,10 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             }
             else
             {
+
+                vtkKWMenuButton *mb = this->DeviceMenu->GetWidget();
+                this->DataManager->SetDevice(mb->GetValue());
+
                 this->DataManager->SetMRMLScene(this->GetMRMLScene());
                 this->DataManager->Init(filename);
 
@@ -751,7 +767,6 @@ void vtkNeuroNavGUI::BuildGUI ( )
 
     NeuroNavHelpFrame->Delete();
 
-
     BuildGUIForServerFrame ();
     BuildGUIForRegistrationFrame ();
     BuildGUIForTrackingFrame ();
@@ -985,28 +1000,67 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
             serverFrame->GetWidgetName(), page->GetWidgetName());
 
-    // Active server frame: Server options 
+    // source frame: Servers and tracking devices
     // -----------------------------------------
-    vtkKWFrame *activeServerFrame = vtkKWFrame::New();
-    activeServerFrame->SetParent ( serverFrame->GetFrame() );
-    activeServerFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
-                 activeServerFrame->GetWidgetName(),
+    vtkKWFrameWithLabel *sourceFrame = vtkKWFrameWithLabel::New ( );
+    sourceFrame->SetParent ( serverFrame->GetFrame() );
+    sourceFrame->Create ( );
+    sourceFrame->SetLabelText ("Source");
+    app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
+                 sourceFrame->GetWidgetName(),
                  serverFrame->GetFrame()->GetWidgetName());
 
-    // active server 
-    this->ServerMenu = vtkKWMenuButtonWithLabel::New();
-    this->ServerMenu->SetParent(activeServerFrame);
-    this->ServerMenu->Create();
-    this->ServerMenu->SetWidth(25);
-    this->ServerMenu->SetLabelWidth(12);
-    this->ServerMenu->SetLabelText("Active Server:");
-    // this->ServerMenu->GetWidget()->GetMenu()->AddRadioButton ( "None");
-    this->ServerMenu->GetWidget()->GetMenu()->AddRadioButton ( "SPL Open Tracker");
-    this->ServerMenu->GetWidget()->SetValue ( "SPL Open Tracker" );
+     // server frame 
+    vtkKWFrame *realServerFrame = vtkKWFrame::New();
+    realServerFrame->SetParent ( sourceFrame->GetFrame() );
+    realServerFrame->Create ( );
+    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+                  realServerFrame->GetWidgetName());
+
+    // server: opentracker or igstk 
+    vtkKWLabel *nameLabel = vtkKWLabel::New();
+    nameLabel->SetParent(realServerFrame);
+    nameLabel->Create();
+    nameLabel->SetWidth(6);
+    nameLabel->SetText("Server: ");
+
+    vtkKWLabel *valueLabel = vtkKWLabel::New();
+    valueLabel->SetParent(realServerFrame);
+    valueLabel->Create();
+    valueLabel->SetWidth(10);
+    valueLabel->SetText("None");
+#ifdef USE_OPENTRACKER
+    valueLabel->SetText("OpenTracker");
+#endif
+#ifdef USE_IGSTK
+    valueLabel->SetText("IGSTK");
+#endif
+
+    this->Script(
+            "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
+            nameLabel->GetWidgetName(),
+            valueLabel->GetWidgetName());
+   
+    // device frame 
+    vtkKWFrame *deviceFrame = vtkKWFrame::New();
+    deviceFrame->SetParent ( sourceFrame->GetFrame() );
+    deviceFrame->Create ( );
+    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+                  deviceFrame->GetWidgetName());
+
+    // device type 
+    this->DeviceMenu = vtkKWMenuButtonWithLabel::New();
+    this->DeviceMenu->SetParent(deviceFrame);
+    this->DeviceMenu->Create();
+    this->DeviceMenu->SetWidth(30);
+    this->DeviceMenu->SetLabelWidth(8);
+    this->DeviceMenu->SetLabelText("Device:");
+    this->DeviceMenu->GetWidget()->GetMenu()->AddRadioButton ("Aurora");
+    this->DeviceMenu->GetWidget()->GetMenu()->AddRadioButton ("ConsoleSource");
+    this->DeviceMenu->GetWidget()->SetValue ( "ConsoleSource" );
     this->Script(
             "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
-            this->ServerMenu->GetWidgetName());
+            this->DeviceMenu->GetWidgetName());
 
 
     // Setup frame: Config file and update rate 
@@ -1096,7 +1150,7 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
                 this->ConnectCheckButton->GetWidgetName());
 
     serverFrame->Delete ();
-    activeServerFrame->Delete ();
+    sourceFrame->Delete ();
     setupFrame->Delete ();
     fileFrame->Delete ();
     rateFrame->Delete ();
@@ -1610,6 +1664,7 @@ void vtkNeuroNavGUI::BuildGUIForHandPieceFrame ()
     // colorFrame->Delete ();
 
 }
+
 
 void vtkNeuroNavGUI::UpdateAll()
 {
