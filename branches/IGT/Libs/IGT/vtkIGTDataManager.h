@@ -38,6 +38,9 @@ public:
     vtkSetMacro(Speed,int);
     vtkSetMacro(StartTimer,int);
 
+    vtkSetStringMacro(Device);
+
+
     //Description:
     // Set MRML scene from the Slicer main routine
     vtkSetObjectMacro(MRMLScene,vtkMRMLScene);
@@ -86,13 +89,15 @@ private:
 
     int Speed;
     int StartTimer;
+    float Ratio;
 
     //Description.
     //MRML scene passed from the Module instantiating this class
-    vtkMRMLScene* MRMLScene;
+    vtkMRMLScene *MRMLScene;
     vtkMatrix4x4 *LocatorMatrix;
     vtkMatrix4x4 *RegMatrix;
     vtkTransform *LocatorNormalTransform;
+    char *Device;
 
 
 //BTX
