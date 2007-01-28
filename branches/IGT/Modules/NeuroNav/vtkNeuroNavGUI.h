@@ -85,7 +85,7 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     vtkNeuroNavGUI ( );
     virtual ~vtkNeuroNavGUI ( );
 
-    vtkKWMenuButtonWithLabel *ServerMenu;
+    vtkKWMenuButtonWithLabel *DeviceMenu;
 
     vtkKWEntryWithLabel *NormalOffsetEntry;
     vtkKWEntryWithLabel *TransOffsetEntry;
