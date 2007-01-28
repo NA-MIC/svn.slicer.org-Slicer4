@@ -21,10 +21,12 @@ vtkIGTDataManager::vtkIGTDataManager()
 {
     this->Speed = 0;
     this->StartTimer = 0;
+    this->Ratio = 1.0;
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     this->RegMatrix = NULL;
     this->MRMLScene = NULL;
+    this->Device = NULL;
 }
 
 
@@ -38,6 +40,13 @@ vtkIGTDataManager::~vtkIGTDataManager()
 void vtkIGTDataManager::Init(char *configFile)
 {
 #ifdef USE_OPENTRACKER
+    // The position coordinates coming from Aurora in meters.
+    // We need convert them into mm.
+    if (!strcmp (this->Device, "Aurora") )   
+    {
+        this->Ratio = 1000.0;
+    }
+
     fprintf(stderr,"config file: %s\n",configFile);
     this->context = new Context(1); 
     // get callback module from the context
@@ -67,9 +76,9 @@ void vtkIGTDataManager::callbackF(const Node&, const Event &event, void *data)
     vtkIGTDataManager *VOT=(vtkIGTDataManager *)data;
 
     // the original values are in the unit of meters
-    position[0]=(float)(event.getPosition())[0] * 1000.0; 
-    position[1]=(float)(event.getPosition())[1] * 1000.0;
-    position[2]=(float)(event.getPosition())[2] * 1000.0;
+    position[0]=(float)(event.getPosition())[0] * VOT->Ratio; 
+    position[1]=(float)(event.getPosition())[1] * VOT->Ratio;
+    position[2]=(float)(event.getPosition())[2] * VOT->Ratio;
 
     orientation[0]=(float)(event.getOrientation())[0];
     orientation[1]=(float)(event.getOrientation())[1];
