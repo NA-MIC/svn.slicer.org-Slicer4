@@ -99,6 +99,11 @@
 #include "vtkNeuroNavGUI.h"
 #endif
 
+#ifndef WFENGINE_DEBUG
+#include "vtkWFEngineModuleLogic.h"
+#include "vtkWFEngineModuleGUI.h"
+#endif
+
 #ifdef _WIN32
 #  define slicerCerr(x) \
   do { \
@@ -133,6 +138,9 @@ extern "C" int Queryatlas_Init(Tcl_Interp *interp);
 extern "C" int Slicerdaemon_Init(Tcl_Interp *interp);
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
 extern "C" int Scriptedmodule_Init(Tcl_Interp *interp);
+#ifndef WFENGINE_DEBUG
+extern "C" int Wfenginemodule_Init(Tcl_Interp *interp);
+#endif
 
 struct SpacesToUnderscores
 {
@@ -442,6 +450,9 @@ int Slicer3_main(int argc, char *argv[])
     Slicerdaemon_Init(interp);
     Commandlinemodule_Init(interp);
     Scriptedmodule_Init(interp);
+#ifndef WFENGINE_DEBUG
+    Wfenginemodule_Init(interp);
+#endif
 
     //
     // use the startup script passed on command line if it exists
@@ -933,6 +944,27 @@ int Slicer3_main(int argc, char *argv[])
     queryAtlasGUI->BuildGUI ( );
     queryAtlasGUI->AddGUIObservers ( );
 #endif
+    
+#ifndef WFENGINE_DEBUG
+    slicerApp->GetSplashScreen()->SetProgressMessage(
+      "Initializing WFEngine Module...");
+    //--- WFEngine Module
+    vtkWFEngineModuleGUI *wfEngineModuleGUI = vtkWFEngineModuleGUI::New ( );
+    vtkWFEngineModuleLogic *wfEngineModuleLogic  = vtkWFEngineModuleLogic::New ( );
+    wfEngineModuleLogic->SetAndObserveMRMLScene ( scene );
+    wfEngineModuleLogic->SetApplicationLogic ( appLogic );
+    wfEngineModuleLogic->SetMRMLScene(scene);
+    wfEngineModuleGUI->SetApplication ( slicerApp );
+    wfEngineModuleGUI->SetApplicationLogic ( appLogic );
+    wfEngineModuleGUI->SetApplicationGUI ( appGUI );
+    wfEngineModuleGUI->SetGUIName( "WFEngineModule" );
+    wfEngineModuleGUI->GetUIPanel()->SetName ( wfEngineModuleGUI->GetGUIName ( ) );
+    wfEngineModuleGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    wfEngineModuleGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( wfEngineModuleGUI );
+    wfEngineModuleGUI->BuildGUI ( );
+    wfEngineModuleGUI->AddGUIObservers ( );
+#endif
 
     // --- SlicerDaemon Module
     // need to source the slicerd.tcl script here
@@ -1107,6 +1139,12 @@ int Slicer3_main(int argc, char *argv[])
     name = queryAtlasGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set QueryAtlasGUI %s", name);
 #endif
+    
+#ifndef WFENGINE_DEBUG
+    name = wfEngineModuleGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set WFEngineModuleGUI %s", name);
+#endif
+
 
     name = appGUI->GetViewerWidget()->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ViewerWidget %s", name);
@@ -1307,6 +1345,10 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef NEURONAV_DEBUG
     neuronavGUI->RemoveGUIObservers ( );
 #endif
+    
+#ifndef WFENGINE_DEBUG
+    wfEngineModuleGUI->RemoveGUIObservers ( );
+#endif
 
     transformsGUI->RemoveGUIObservers ( );
 #ifndef CAMERA_DEBUG
@@ -1401,7 +1443,11 @@ int Slicer3_main(int argc, char *argv[])
 #endif    
 #ifndef NEURONAV_DEBUG
     neuronavGUI->Delete();
-#endif    
+#endif
+    
+#ifndef WFENGINE_DEBUG
+    wfEngineModuleGUI->Delete ( );
+#endif
 
     transformsGUI->Delete ();
 #ifndef CAMERA_DEBUG
@@ -1482,7 +1528,12 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef NEURONAV_DEBUG
     neuronavLogic->SetAndObserveMRMLScene ( NULL );
     neuronavLogic->Delete();
-#endif    
+#endif
+    
+#ifndef WFENGINE_DEBUG
+    wfEngineModuleLogic->SetAndObserveMRMLScene ( NULL );
+    wfEngineModuleLogic->Delete ( );
+#endif
 
     sliceLogic2->SetAndObserveMRMLScene ( NULL );
     sliceLogic2->Delete ();
