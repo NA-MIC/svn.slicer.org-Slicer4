@@ -11,7 +11,8 @@ SUBDIRS(
   Tractography
   RealTimeImaging
   MRAblation
-  NeuroNav 
+  NeuroNav
+  WFEngineModule
 )
 
 

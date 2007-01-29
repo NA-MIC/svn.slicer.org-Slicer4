@@ -85,6 +85,10 @@ SET(dir_list
   ${QueryAtlas_BINARY_DIR}
   ${QueryAtlas_Init_SOURCE_DIR}
   ${QueryAtlas_Init_BINARY_DIR}
+  ${WFEngineModule_SOURCE_DIR}
+  ${WFEngineModule_BINARY_DIR}
+  ${WFEngineModule_Init_SOURCE_DIR}
+  ${WFEngineModule_Init_BINARY_DIR}
   ${CommandLineModule_SOURCE_DIR}
   ${CommandLineModule_BINARY_DIR}
   ${CommandLineModule_Init_SOURCE_DIR}
@@ -129,6 +133,12 @@ ELSE ( Slicer3_BUILD_WIN32_CONSOLE )
   ADD_EXECUTABLE (Slicer3${SLICER_EXE_SUFFIX} WIN32 ${SRC} ${RC_FILENAME})
 ENDIF ( Slicer3_BUILD_WIN32_CONSOLE )
 
+IF(WFENGINEMODULE)
+SET(WFENGINE_LINK_LIB WFEngineModule)
+ELSE(WFENGINEMODULE)
+ADD_DEFINITIONS(-DWFENGINE_DEBUG)
+ENDIF(WFENGINEMODULE)
+
 TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     SlicerBaseLogic
     SlicerBaseGUI
@@ -148,7 +158,8 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     vtkITK
     ITKCommon 
     ITKIO
-    ${KWWidgets_LIBRARIES} )
+    ${WFENGINE_LINK_LIB}
+    ${KWWidgets_LIBRARIES} )    
 INSTALL_TARGETS(/bin Slicer3${SLICER_EXE_SUFFIX})
 
 # Generate a lightweight C launcher for a *specific* executable.
