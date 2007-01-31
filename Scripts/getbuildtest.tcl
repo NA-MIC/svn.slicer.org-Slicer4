@@ -40,7 +40,7 @@ proc Usage { {msg ""} } {
 }
 
 set ::GETBUILDTEST(clean) "false"
-set ::GETBUILDTEST(update) "IGT branch"
+set ::GETBUILDTEST(update) ""
 set ::GETBUILDTEST(release) ""
 set ::GETBUILDTEST(test-type) "Experimental"
 set ::GETBUILDTEST(version-patch) ""
