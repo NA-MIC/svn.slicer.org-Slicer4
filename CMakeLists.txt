@@ -2,6 +2,13 @@ PROJECT( Slicer3 )
 CMAKE_MINIMUM_REQUIRED(VERSION 2.2)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
+#
+# Disable the warnings that DevStudio 2005 emits wrt to sprintf, strcpu, etc.
+#
+IF(CMAKE_COMPILER_2005)
+  ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
+ENDIF(CMAKE_COMPILER_2005)
+
 #-----------------------------------------------------------------------------
 # Slicer version number.
 SET(Slicer3_VERSION_MAJOR "3")
@@ -61,6 +68,13 @@ ENDIF(Slicer3_BUILD_TESTING)
 # - ITK
 # - KWWidgets (pulls in VTK)
 #
+
+## Python
+OPTION(USE_PYTHON "Integrate a python interpreter into Slicer." OFF)
+IF (USE_PYTHON)
+   FIND_PACKAGE(PythonLibs)
+ENDIF(USE_PYTHON)
+
 
 ## ITK
 FIND_PACKAGE(ITK REQUIRED)
@@ -225,3 +239,9 @@ ENDIF(BUILD_DOCUMENTATION)
 #INSTALL(DIRECTORY "${Slicer3_BINARY_DIR}/Modules/Packages"
 #  DESTINATION ${SLICER_INSTALL_LIBRARIES_DIR}/Modules)
 INSTALL(CODE "EXECUTE_PROCESS\(COMMAND \"${CMAKE_COMMAND}\" -E copy_directory \"${SLICER_LIBRARIES_DIR}/Modules/Packages\" \"\${CMAKE_INSTALL_PREFIX}/${SLICER_INSTALL_LIBRARIES_DIR}/Modules/Packages\"\)")
+
+CONFIGURE_FILE(
+  ${Slicer3_SOURCE_DIR}/launch.tcl
+  ${Slicer3_BINARY_DIR}/launch.tcl
+  COPYONLY
+)

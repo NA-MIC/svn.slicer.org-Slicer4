@@ -74,14 +74,14 @@ itcl::body DrawSWidget::constructor {sliceGUI} {
   $this processEvent
 
   set _guiObserverTags ""
-  lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "itcl::delete object $this"]
+  lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
   foreach event { LeftButtonPressEvent LeftButtonReleaseEvent MouseMoveEvent } {
-    lappend _guiObserverTags [$sliceGUI AddObserver $event "$this processEvent $sliceGUI"]
+    lappend _guiObserverTags [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI"]
   }
 
   set node [[$sliceGUI GetLogic] GetSliceNode]
-  lappend _nodeObserverTags [$node AddObserver DeleteEvent "itcl::delete object $this"]
-  lappend _nodeObserverTags [$node AddObserver AnyEvent "$this processEvent $node"]
+  lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
+  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent $node"]
 }
 
 itcl::body DrawSWidget::destructor {} {
@@ -353,6 +353,8 @@ itcl::body DrawSWidget::apply {} {
   $painter Delete
   $labelIJKToRAS Delete
   $backgroundIJKToRAS Delete
+  $maskIJKToRAS Delete
+  $mask Delete
 
   # TODO maybe just call $sliceGUI Render for faster update
   # and call this on mouse up - more important for paint

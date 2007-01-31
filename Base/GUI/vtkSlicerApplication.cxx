@@ -171,7 +171,7 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     this->LoadCommandLineModules = 1;
    
     // configure the application before creating
-    this->SetName ( "3D Slicer Version 3.0 Alpha" );
+    this->SetName ( "3D Slicer Version 3.0 Beta" );
 
 #ifdef _WIN32
     vtkKWWin32RegistryHelper *regHelper = 
@@ -382,7 +382,7 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
   GetTempPath(vtkKWRegistryHelper::RegistryKeyValueSizeMax,
               this->TemporaryDirectory);
 #else
-  strcpy(this->TemporaryDirectory, "/usr/tmp");
+  strcpy(this->TemporaryDirectory, "/tmp");
 #endif
 
   // Tk does not understand Windows short path names, so convert to
@@ -637,15 +637,30 @@ void vtkSlicerApplication::ProcessDisplayMessage()
       vtkSlicerApplication::GetInstance()->GetLogDialog()->GetLogWidget()->AddDebugRecord( record.second.c_str() );
       }
     }
-  
-  // schedule the next timer
-  vtkKWTkUtilities::CreateTimerHandler(this, 100, this, "ProcessDisplayMessage");
+
+  if ((*this->InternalDisplayMessageQueue).size() > 0)
+    {
+    // schedule the next timer sooner in case there's stuff in the queue
+    vtkKWTkUtilities::CreateTimerHandler(this, 5, this, "ProcessDisplayMessage");
+    }
+  else
+    {
+    // schedule the next timer for a while later
+    vtkKWTkUtilities::CreateTimerHandler(this, 100, this, "ProcessDisplayMessage");
+    }
 }
 
 //----------------------------------------------------------------------------
 void
 vtkSlicerApplication::WarningMessage(const char* message)
 {
+#ifdef _WIN32
+  ::OutputDebugString(message);
+#endif
+#ifndef NDEBUG
+  cerr << message;
+#endif
+
   this->RequestDisplayMessage("Warning", message);
 }
 
@@ -653,6 +668,13 @@ vtkSlicerApplication::WarningMessage(const char* message)
 void
 vtkSlicerApplication::ErrorMessage(const char* message)
 {
+#ifdef _WIN32
+  ::OutputDebugString(message);
+#endif
+#ifndef NDEBUG
+  cerr << message;
+#endif
+
   this->RequestDisplayMessage("Error", message);
 }
 
@@ -660,6 +682,13 @@ vtkSlicerApplication::ErrorMessage(const char* message)
 void
 vtkSlicerApplication::DebugMessage(const char* message)
 {
+#ifdef _WIN32
+  ::OutputDebugString(message);
+#endif
+#ifndef NDEBUG
+  cerr << message;
+#endif
+
   this->RequestDisplayMessage("Debug", message);
 }
 
@@ -667,7 +696,40 @@ vtkSlicerApplication::DebugMessage(const char* message)
 void
 vtkSlicerApplication::InformationMessage(const char* message)
 {
+#ifdef _WIN32
+  ::OutputDebugString(message);
+#endif
+#ifndef NDEBUG
+  cerr << message;
+#endif
+
   this->RequestDisplayMessage("Information", message);
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::AddAboutCopyrights(ostream &os)
+{
+  os << "See http://www.na-mic.org/Wiki/index.php/Slicer3:Acknowledgements" << endl << endl;
+
+  os << "VTK http://www.vtk.org/copyright.php" << endl;
+  os << "ITK http://www.itk.org/HTML/Copyright.htm" << endl;
+  os << "KWWidgets http://www.kitware.com/Copyright.htm" << endl;
+  os << "Tcl/Tk http://www.tcl.tk" << endl;
+  os << "Teem:  http://teem.sf.net" << endl;
+  os << "Supported by: NA-MIC, NAC, BIRN, NCIGT and the Slicer Community." << endl;
+  os << "Special thanks to the NIH and our other supporters." << endl;
+  os << "This work is part of the National Alliance for Medical Image Computing (NAMIC), funded by the National Institutes of Health through the NIH Roadmap for Medical Research, Grant U54 EB005149. Information on the National Centers for Biomedical Computing can be obtained from http://nihroadmap.nih.gov/bioinformatics." << endl;
+
+#if 0
+  // example of the extra detail needed:
+  //
+     << tcl_major << "." << tcl_minor << "." << tcl_patch_level << endl
+     << "  - Copyright (c) 1989-1994 The Regents of the University of "
+     << "California." << endl
+     << "  - Copyright (c) 1994 The Australian National University." << endl
+     << "  - Copyright (c) 1994-1998 Sun Microsystems, Inc." << endl
+     << "  - Copyright (c) 1998-2000 Ajuba Solutions." << endl;
+#endif
 }
 
 //----------------------------------------------------------------------------

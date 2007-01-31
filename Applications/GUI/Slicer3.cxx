@@ -74,10 +74,12 @@
 //#define RealTimeImaging_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
-// #define EMSEG_DEBUG
+//#define EMSEG_DEBUG
 //#define REALTIMEIMAGING_DEBUG
 //#define MRABLATION_DEBUG
 //#define NEURONAV_DEBUG
+#define TRACTOGRAPHY_DEBUG
+
 
 #ifndef EMSEG_DEBUG
 #include "vtkEMSegmentLogic.h"
@@ -867,7 +869,7 @@ int Slicer3_main(int argc, char *argv[])
     gradientAnisotropicDiffusionFilterGUI->BuildGUI ( );
     gradientAnisotropicDiffusionFilterGUI->AddGUIObservers ( );
 
-
+#ifndef TRACTOGRAPHY_DEBUG
     // --- Tractography Display module
     slicerApp->GetSplashScreen()->SetProgressMessage(
       "Initializing Tractography Display Module...");
@@ -887,6 +889,8 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->AddModuleGUI ( slicerTractographyDisplayGUI );
     slicerTractographyDisplayGUI->BuildGUI ( );
     slicerTractographyDisplayGUI->AddGUIObservers ( );
+#endif
+
 
 #ifndef EMSEG_DEBUG
     //
@@ -1314,7 +1318,9 @@ int Slicer3_main(int argc, char *argv[])
     // REMOVE OBSERVERS and references to MRML and Logic
     gradientAnisotropicDiffusionFilterGUI->RemoveGUIObservers ( );
 
+#ifndef TRACTOGRAPHY_DEBUG
     slicerTractographyDisplayGUI->RemoveGUIObservers ( );
+#endif
 
 #ifndef EMSEG_DEBUG
     emSegmentGUI->RemoveGUIObservers();
@@ -1413,7 +1419,9 @@ int Slicer3_main(int argc, char *argv[])
 
     gradientAnisotropicDiffusionFilterGUI->Delete ();
 
+#ifndef TRACTOGRAPHY_DEBUG
     slicerTractographyDisplayGUI->Delete ();
+#endif
 
 #ifndef EMSEG_DEBUG
     emSegmentGUI->Delete();
@@ -1517,10 +1525,12 @@ int Slicer3_main(int argc, char *argv[])
     colorLogic->SetAndObserveMRMLScene ( NULL );
     colorLogic->Delete();
 #endif
-#ifndef RealTimeIMaging_DEBUG
+
+#ifndef RealTimeImaging_DEBUG
     realtimeimagingLogic->SetAndObserveMRMLScene ( NULL );
     realtimeimagingLogic->Delete();
 #endif
+
 #ifndef MRABLATION_DEBUG
     ablationLogic->SetAndObserveMRMLScene ( NULL );
     ablationLogic->Delete();

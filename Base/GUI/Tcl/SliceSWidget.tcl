@@ -88,7 +88,7 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
   #
   set _guiObserverTags ""
 
-  lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "itcl::delete object $this"]
+  lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
 
   set events {  "MouseMoveEvent" "RightButtonPressEvent" "RightButtonReleaseEvent"
     "LeftButtonPressEvent" "LeftButtonReleaseEvent" "MiddleButtonPressEvent"
@@ -97,19 +97,20 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
     "TimerEvent" "KeyPressEvent" "KeyReleaseEvent"
     "CharEvent" "ExitEvent" "UserEvent" }
   foreach event $events {
-    lappend _guiObserverTags [$sliceGUI AddObserver $event "$this processEvent"]    
+   lappend _guiObserverTags [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent"]    
   }
 
   set node [[$sliceGUI GetLogic] GetSliceNode]
-  lappend _nodeObserverTags [$node AddObserver DeleteEvent "itcl::delete object $this"]
-  lappend _nodeObserverTags [$node AddObserver AnyEvent "$this processEvent"]
+  lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
+  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent"]
 }
 
 
 itcl::body SliceSWidget::destructor {} {
 
-  itcl::delete object $_fiducialsSWidget
-  itcl::delete object $_gridSWidget
+  ::SWidget::ProtectedDelete $_fiducialsSWidget
+
+  ::SWidget::ProtectedDelete $_gridSWidget
 
   if { [info command $sliceGUI] != "" } {
     foreach tag $_guiObserverTags {
@@ -170,7 +171,7 @@ itcl::body SliceSWidget::processEvent { } {
   if { [info command $sliceGUI] == "" } {
     # the sliceGUI was deleted behind our back, so we need to 
     # self destruct
-    itcl::delete object $this
+    ::SWidget::ProtectedDelete $this
     return
   }
 

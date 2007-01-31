@@ -52,6 +52,8 @@ vtkMRMLNode* vtkMRMLSelectionNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLSelectionNode::vtkMRMLSelectionNode()
 {
+  this->SingletonTag = "vtkMRMLSelectionNode";
+
   this->ActiveVolumeID = NULL;
   this->ActiveLabelVolumeID = NULL;
   this->ActiveFiducialListID = NULL;
@@ -60,7 +62,7 @@ vtkMRMLSelectionNode::vtkMRMLSelectionNode()
 
   //--- by default, the application begins with the mouse
   //--- mode set to twiddle the 3D view.
-  this->SetMouseInteractionMode ( this->MouseTransform );
+  this->MouseInteractionMode = this->MouseTransform;
 }
 
 //----------------------------------------------------------------------------

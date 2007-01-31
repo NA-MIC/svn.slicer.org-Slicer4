@@ -33,7 +33,7 @@ public:
 
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() {return "EMSTemplate";};
+  virtual const char* GetNodeTagName() {return "EMSTemplate";}
 
   // Description:
   // Updates this node if it depends on other nodes
@@ -46,11 +46,11 @@ public:
 
   // associated parameters nodes
   vtkGetStringMacro(TreeNodeID);
-  vtkSetStringMacro(TreeNodeID);
+  vtkSetReferenceStringMacro(TreeNodeID);
   vtkMRMLEMSTreeNode* GetTreeNode();
 
   vtkGetStringMacro(GlobalParametersNodeID);
-  vtkSetStringMacro(GlobalParametersNodeID);
+  vtkSetReferenceStringMacro(GlobalParametersNodeID);
   vtkMRMLEMSGlobalParametersNode* GetGlobalParametersNode();
 
 protected:
@@ -64,4 +64,3 @@ protected:
 };
 
 #endif
-

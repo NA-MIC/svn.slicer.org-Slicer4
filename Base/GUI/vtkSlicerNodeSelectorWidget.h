@@ -108,6 +108,14 @@ public:
   vtkGetMacro(ShowHidden, int);
   vtkSetMacro(ShowHidden, int);
 
+  // Description:
+  // Specifies whether or not display super-classes of a specified class
+  // Default: true
+  vtkBooleanMacro(ChildClassesEnabled, int);
+  vtkGetMacro(ChildClassesEnabled, int);
+  vtkSetMacro(ChildClassesEnabled, int);
+
+
   // Description
   // Get selected node
   vtkMRMLNode *GetSelected();
@@ -129,8 +137,12 @@ public:
 //ETX
 
   // Description:
-  // reflect the state of the mrml scene in the menu
+  // Reflect the state of the mrml scene in the menu
   void UpdateMenu();
+
+  // Description:
+  // Remove all menu entries
+  void ClearMenu();
 
   void ProcessNewNodeCommand(const char *className, const char *nodeName);
   void ProcessCommand(char *slectedId);
@@ -163,6 +175,8 @@ protected:
   int NoneEnabled;
 
   int ShowHidden;
+
+  int ChildClassesEnabled;
 
   vtkMRMLScene       *MRMLScene;
 

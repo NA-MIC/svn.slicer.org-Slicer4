@@ -134,15 +134,20 @@ bool HasDefault(const ModuleParameter &parameter)
 void GeneratePre(std::ofstream &, ModuleDescription &, int, char *[]);
 
 /* Generate the last statements. This defines the PARSE_ARGS macro */
-void GeneratePost(std::ofstream &, ModuleDescription &);
+void GeneratePost(std::ofstream &);
+
+/* Generate a function to split a string into a vector of strings. */
+void GenerateSplitString(std::ofstream &);
 
 /* Generate the code that echos the XML file that describes the
  * command line arguments.
  */
-void GeneratePluginEntryPoints(std::ofstream &, ModuleDescription &, std::vector<std::string> &, std::string);
-void GeneratePluginProcedures(std::ofstream &, ModuleDescription &, std::vector<std::string> &, std::string);
-void GenerateLOGO(std::ofstream &, ModuleDescription &, std::vector<std::string> &, std::string);
-void GenerateXML(std::ofstream &, ModuleDescription &, std::string);
+void GenerateExports(std::ofstream &);
+void GeneratePluginDataSymbols(std::ofstream &, std::vector<std::string>&, std::string);
+void GeneratePluginEntryPoints(std::ofstream &, std::vector<std::string> &);
+void GeneratePluginProcedures(std::ofstream &, std::vector<std::string> &);
+void GenerateLOGO(std::ofstream &, std::vector<std::string> &);
+void GenerateXML(std::ofstream &);
 
 /* Generate the code that uses TCLAP to parse the command line
  * arguments.
@@ -154,7 +159,7 @@ void GenerateEchoArgs(std::ofstream &, ModuleDescription &);
 
 /** Generate code to decode the address of a process information
  * structure */
-void GenerateProcessInformationAddressDecoding(std::ofstream &sout, ModuleDescription &);
+void GenerateProcessInformationAddressDecoding(std::ofstream &sout);
 
 int
 main(int argc, char *argv[])
@@ -212,20 +217,24 @@ main(int argc, char *argv[])
     perror(argv[0]);
     return EXIT_FAILURE;
     }
-  GeneratePre(sout, module, argc, argv);
   if (logoFiles.size() > 0 && !itksys::SystemTools::FileExists(logoFiles[0].c_str()))
     {
     std::cerr << argv[0] << ": Cannot open " << logoFiles[0] << " as a logo file" << std::endl;
     return EXIT_FAILURE;
     }
-  GeneratePluginEntryPoints(sout, module, logoFiles, InputXML);
-  GeneratePluginProcedures(sout, module, logoFiles, InputXML);
-  GenerateLOGO(sout, module, logoFiles, InputXML);
-  GenerateXML(sout, module, InputXML);
+
+  GeneratePre(sout, module, argc, argv);
+  GenerateExports(sout);
+  GeneratePluginEntryPoints(sout, logoFiles);
+  GeneratePluginDataSymbols(sout, logoFiles, InputXML);
+  GenerateSplitString(sout);
+  GeneratePluginProcedures(sout, logoFiles);
+  GenerateLOGO(sout, logoFiles);
+  GenerateXML(sout);
   GenerateTCLAP(sout, module);
   GenerateEchoArgs(sout, module);
-  GenerateProcessInformationAddressDecoding(sout, module);
-  GeneratePost(sout, module);
+  GenerateProcessInformationAddressDecoding(sout);
+  GeneratePost(sout);
   sout.close();
 
   return (EXIT_SUCCESS);
@@ -242,14 +251,19 @@ void GeneratePre(std::ofstream &sout, ModuleDescription &module, int argc, char 
   sout << std::endl;
   sout << "//" << std::endl;
   sout << "#include <stdio.h>" << std::endl;
-  sout << "#include <string.h>" << std::endl;
   sout << "#include <stdlib.h>" << std::endl;
-  sout << "" << std::endl;
   sout << "#include <iostream>" << std::endl;
+  sout << "#include <string.h>" << std::endl;
+  sout << std::endl;
+  sout << "#include <itksys/ios/sstream>" << std::endl;
+  sout << std::endl;
   sout << "#include \"tclap/CmdLine.h\"" << std::endl;
   sout << "#include \"ModuleProcessInformation.h\"" << std::endl;
-  sout << "#include <itksys/ios/sstream>" << std::endl;
-  sout << "" << std::endl;
+  sout << std::endl;
+}
+
+void GenerateSplitString(std::ofstream &sout)
+{
   sout << "void" << std::endl;
   sout << "splitString (std::string &text," << std::endl;
   sout << "             std::string &separators," << std::endl;
@@ -266,37 +280,100 @@ void GeneratePre(std::ofstream &sout, ModuleDescription &module, int argc, char 
   sout << "    start = text.find_first_not_of(separators, stop+1);" << std::endl;
   sout << "    }" << std::endl;
   sout << "}" << std::endl;
-
+  sout << std::endl;
 }
 
-void GeneratePluginEntryPoints(std::ofstream &sout, ModuleDescription &module, std::vector<std::string> &logos, std::string XMLFile)
+void GenerateExports(std::ofstream &sout)
 {
+  sout << "#ifdef WIN32" << std::endl;
+  sout << "#define Module_EXPORT __declspec(dllexport)" << std::endl;
+  sout << "#else" << std::endl;
+  sout << "#define Module_EXPORT " << std::endl;
+  sout << "#endif" << std::endl;
   sout << std::endl;
+}
+
+void GeneratePluginDataSymbols(std::ofstream &sout, std::vector<std::string>& logos, std::string XMLFile)
+{
+  sout << "extern \"C\" {" << std::endl;
+  sout << "Module_EXPORT char XMLModuleDescription[] = " << std::endl;
+
+  std::string line;
+  std::ifstream fin(XMLFile.c_str(),std::ios::in);
+  while (!fin.eof())
+    {
+    std::getline( fin, line );
+
+    // replace quotes with escaped quotes
+    std::string cleanLine;
+    for (size_t j = 0; j < line.length(); j++)
+      {
+      if (line[j] == '\"')
+        {
+        cleanLine.append("\\\"");
+        }
+      else
+        {
+        cleanLine.append(1,line[j]);
+        }
+      }
+    sout << "\"" << cleanLine << "\\n\"" << std::endl;
+    }
+  sout << ";" << std::endl << std::endl;
+
+  fin.close();
+
   if (logos.size() == 1)
     {
+    std::string logo = logos[0];
+    std::string fileName = itksys::SystemTools::GetFilenameWithoutExtension (logo);
+    
+    sout << "#define static Module_EXPORT" << std::endl;
+    sout << "#define const" << std::endl;
+    sout << "#define image_" << fileName << "_width ModuleLogoWidth"
+         << std::endl;
+    sout << "#define image_" << fileName << "_height ModuleLogoHeight"
+         << std::endl;
+    sout << "#define image_" << fileName << "_pixel_size ModuleLogoPixelSize"
+         << std::endl;
+    sout << "#define image_" << fileName << "_length ModuleLogoLength"
+         << std::endl;
+    sout << "#define image_" << fileName << " ModuleLogoImage"
+         << std::endl;
     sout << "#include \"" << logos[0] << "\"" << std::endl;
+    sout << "#undef static" << std::endl;
+    sout << "#undef const" << std::endl;
+    sout << "#undef image_" << fileName << "_width" << std::endl;
+    sout << "#undef image_" << fileName << "_height" << std::endl;
+    sout << "#undef image_" << fileName << "_pixel_size" << std::endl;
+    sout << "#undef image_" << fileName << "_length" << std::endl;
+    sout << "#undef image_" << fileName << std::endl;
     }
+  sout << "}" << std::endl;
+  sout << std::endl;
+}
+
+void GeneratePluginEntryPoints(std::ofstream &sout, std::vector<std::string> &logos)
+{
   sout << "#ifdef main" << std::endl;
-  sout << "#ifdef WIN32" << std::endl;
-  sout << "#define Slicer_EXPORT __declspec(dllexport)" << std::endl;
-  sout << "#else" << std::endl;
-  sout << "#define Slicer_EXPORT " << std::endl;
-  sout << "#endif" << std::endl;
+  sout << "// If main defined as a preprocessor symbol, redefine it to the expected entry point." << std::endl;
+  sout << "#undef main" << std::endl;
+  sout << "#define main ModuleEntryPoint" << std::endl;
   sout << std::endl;
 
   sout << "extern \"C\" {" << std::endl;
-  sout << "  Slicer_EXPORT char *GetXMLModuleDescription();" << std::endl;
-  sout << "  Slicer_EXPORT int SlicerModuleEntryPoint(int, char*[]);" << std::endl;
+  sout << "  Module_EXPORT char *GetXMLModuleDescription();" << std::endl;
+  sout << "  Module_EXPORT int ModuleEntryPoint(int, char*[]);" << std::endl;
   if (logos.size() == 1)
     {
-    sout << "  Slicer_EXPORT unsigned char *GetModuleLogo(int *width, int *height, int *pixel_size, unsigned long *bufferLength, int *options);" << std::endl;
+    sout << "  Module_EXPORT unsigned char *GetModuleLogo(int *width, int *height, int *pixel_size, unsigned long *bufferLength);" << std::endl;
     }
   sout << "}" << std::endl;
   sout << "#endif" << std::endl;
   sout << std::endl;
 }
 
-void GeneratePluginProcedures(std::ofstream &sout, ModuleDescription &module, std::vector<std::string> &logos, std::string XMLFile)
+void GeneratePluginProcedures(std::ofstream &sout, std::vector<std::string> &logos)
 {
   if (logos.size() == 1)
     {
@@ -305,55 +382,26 @@ void GeneratePluginProcedures(std::ofstream &sout, ModuleDescription &module, st
     sout << "unsigned char *GetModuleLogo(int *width," << std::endl;
     sout << "                             int *height," << std::endl;
     sout << "                             int *pixel_size," << std::endl;
-    sout << "                             unsigned long *length," << std::endl;
-    sout << "                             int *options)" << std::endl;
+    sout << "                             unsigned long *length)" << std::endl;
     sout << "{" << std::endl;
 
-    sout << "  *width = image_" << fileName << "_width;" << std::endl;
-    sout << "  *height = image_" << fileName << "_height;" << std::endl;
-    sout << "  *pixel_size = image_" << fileName << "_pixel_size;" << std::endl;
-    sout << "  *length = image_" << fileName << "_length;" << std::endl;
-    sout << "  *options = 0;" << std::endl;
-    sout << "  return const_cast<unsigned char *>(image_" << fileName << ");" << std::endl;
+    sout << "  *width = ModuleLogoWidth;" << std::endl;
+    sout << "  *height = ModuleLogoHeight;" << std::endl;
+    sout << "  *pixel_size = ModuleLogoPixelSize;" << std::endl;
+    sout << "  *length = ModuleLogoLength;" << std::endl;
+    sout << "  return const_cast<unsigned char *>(ModuleLogoImage);" << std::endl;
     sout << "}" << std::endl;
+    sout << std::endl;
     }
-
-  char linec[2048];
-  std::ifstream fin(XMLFile.c_str(),std::ios::in);
 
   sout << "char *GetXMLModuleDescription()" << std::endl;
-  sout << "  {" << std::endl;
-  sout << "  std::string xml;" << std::endl;
-
-  while (!fin.eof())
-    {
-    fin.getline (linec, 2048);
-    // replace quotes with escaped quotes
-    std::string line(linec);
-    std::string cleanLine;
-    for (size_t j = 0; j < line.length(); j++)
-      {
-      if (line[j] == '\"')
-        {
-        cleanLine += "\\\"";
-        }
-      else
-        {
-        cleanLine += line[j];
-        }
-      }
-    sout << "  xml += \"" << cleanLine << "\\n\";" << std::endl;
-    }
-  sout << "  char *xmlChar = new char[xml.size()+1];" << std::endl;
-  sout << "  memcpy (xmlChar, xml.c_str(), xml.size());" << std::endl;
-  sout << "  xmlChar[xml.size()] = '\\0';" << std::endl;
-  sout << "  return xmlChar;" << std::endl;
-  sout << "  }" << std::endl;
-
-  fin.close();
+  sout << "{" << std::endl;
+  sout << "   return XMLModuleDescription;" << std::endl;
+  sout << "}" << std::endl;
+  sout << std::endl;
 }
 
-void GenerateLOGO(std::ofstream &sout, ModuleDescription &module, std::vector<std::string> &logos, std::string XMLFile)
+void GenerateLOGO(std::ofstream &sout, std::vector<std::string> &logos)
 {
   if (logos.size() > 0)
     {
@@ -363,15 +411,14 @@ void GenerateLOGO(std::ofstream &sout, ModuleDescription &module, std::vector<st
     // Generate special section to produce logo description
     sout << "  if (argc >= 2 && (strcmp(argv[1],\"--logo\") == 0))" << EOL << std::endl;
     sout << "    {" << EOL << std::endl;
-    sout << "    int width, height, pixel_size, options;    " << EOL << std::endl;
+    sout << "    int width, height, pixel_size;    " << EOL << std::endl;
     sout << "    unsigned long length; " << EOL << std::endl;
-    sout << "    unsigned char *logo = GetModuleLogo(&width, &height, &pixel_size, &length, &options); " << EOL << std::endl;
+    sout << "    unsigned char *logo = GetModuleLogo(&width, &height, &pixel_size, &length); " << EOL << std::endl;
     sout << "    std::cout << \"LOGO\" << std::endl; " << EOL << std::endl;
     sout << "    std::cout << width << std::endl; " << EOL << std::endl;
     sout << "    std::cout << height << std::endl; " << EOL << std::endl;
     sout << "    std::cout << pixel_size << std::endl; " << EOL << std::endl;
     sout << "    std::cout << length << std::endl; " << EOL << std::endl;
-    sout << "    std::cout << options << std::endl; " << EOL << std::endl;
     sout << "    std::cout << logo << std::endl; " << EOL << std::endl;
     sout << "    return EXIT_SUCCESS; " << EOL << std::endl;
     sout << "    }" << std::endl;
@@ -382,7 +429,7 @@ void GenerateLOGO(std::ofstream &sout, ModuleDescription &module, std::vector<st
     }
 }
 
-void GenerateXML(std::ofstream &sout, ModuleDescription &module, std::string XMLFile)
+void GenerateXML(std::ofstream &sout)
 {
   std::string EOL(" \\");
 
@@ -958,12 +1005,12 @@ void GenerateTCLAP(std::ofstream &sout, ModuleDescription &module)
   sout << "    }" << std::endl;
 }
 
-void GeneratePost(std::ofstream &sout, ModuleDescription &module)
+void GeneratePost(std::ofstream &sout)
 {
   sout << "#define PARSE_ARGS GENERATE_LOGO;GENERATE_XML;GENERATE_TCLAP;GENERATE_ECHOARGS;GENERATE_ProcessInformationAddressDecoding;" << std::endl;
 }
 
-void GenerateProcessInformationAddressDecoding(std::ofstream &sout, ModuleDescription &module)
+void GenerateProcessInformationAddressDecoding(std::ofstream &sout)
 {
   std::string EOL(" \\");
   sout << "#define GENERATE_ProcessInformationAddressDecoding \\" << std::endl;

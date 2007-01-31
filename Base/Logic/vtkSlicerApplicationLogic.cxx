@@ -93,6 +93,7 @@ vtkSlicerApplicationLogic::vtkSlicerApplicationLogic()
     this->Modules = NULL;
     this->ActiveSlice = NULL;
     this->SelectionNode = NULL;
+    this->InteractionNode = NULL;
 
     this->ProcessingThreader = itk::MultiThreader::New();
     this->ProcessingThreadId = -1;
@@ -134,6 +135,7 @@ vtkSlicerApplicationLogic::~vtkSlicerApplicationLogic()
         this->Modules = NULL;
     }
   this->SetSelectionNode ( NULL );
+  this->SetInteractionNode ( NULL );
   this->SetActiveSlice ( NULL );
 
   // Note that TerminateThread does not kill a thread, it only waits
@@ -197,24 +199,47 @@ void vtkSlicerApplicationLogic::ProcessMRMLEvents(vtkObject * /*caller*/,
   node = vtkMRMLSelectionNode::SafeDownCast (
           this->MRMLScene->GetNthNodeByClass(0, "vtkMRMLSelectionNode"));
 
+  // selection node
   if ( node == NULL )
     {
     node = vtkMRMLSelectionNode::New();
     this->SetSelectionNode (node);
     node->Delete();
     }
-
   if ( this->SelectionNode != node )
     {
       this->SetSelectionNode (node);
     }
-
   if (this->MRMLScene->GetNodeByID(this->SelectionNode->GetID()) == NULL)
     {
     this->SetMRMLScene(this->GetMRMLScene());
     this->MRMLScene->AddNode(this->SelectionNode);
     this->SetAndObserveMRMLScene(this->GetMRMLScene());
     }
+
+
+  vtkMRMLInteractionNode *inode;
+  inode = vtkMRMLInteractionNode::SafeDownCast (
+          this->MRMLScene->GetNthNodeByClass(0, "vtkMRMLInteractionNode"));                                                
+
+  // interaction node
+  if ( inode == NULL )
+    {
+    inode = vtkMRMLInteractionNode::New();
+    this->SetInteractionNode ( inode );
+    inode->Delete ( );
+    }
+  if ( this->InteractionNode != inode )
+    {
+    this->SetInteractionNode (inode );
+    }
+  if (this->MRMLScene->GetNodeByID(this->InteractionNode->GetID()) == NULL)
+    {
+    this->SetMRMLScene(this->GetMRMLScene());
+    this->MRMLScene->AddNode(this->InteractionNode);
+    this->SetAndObserveMRMLScene(this->GetMRMLScene());
+    }
+  
 }
 
 //----------------------------------------------------------------------------
@@ -531,8 +556,18 @@ void vtkSlicerApplicationLogic::ProcessModified()
     }
   
   // schedule the next timer
-  vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(),
-                                       100, this, "ProcessModified");
+  if ((*this->InternalModifiedQueue).size() > 0)
+    {
+    // schedule the next timer sooner in case there is stuff in the queue
+    vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(),
+                                         5, this, "ProcessModified");
+    }
+  else
+    {
+    // schedule the next timer for a while later
+    vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(),
+                                         100, this, "ProcessModified");
+    }
 }
 
 void vtkSlicerApplicationLogic::ProcessReadData()
@@ -715,7 +750,17 @@ void vtkSlicerApplicationLogic::ProcessReadData()
     }
   
   // schedule the next timer
-  vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(),
-                                       100, this, "ProcessReadData");
+  if ((*this->InternalReadDataQueue).size() > 0)
+    {
+    // schedule the next timer sooner in case there is stuff in the queue
+    vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(),
+                                         5, this, "ProcessReadData");
+    }
+  else
+    {
+    // schedule the next timer for a while later
+    vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(),
+                                         100, this, "ProcessReadData");
+    }
 }
 

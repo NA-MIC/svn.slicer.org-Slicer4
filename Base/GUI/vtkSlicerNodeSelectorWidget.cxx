@@ -34,9 +34,16 @@ vtkCxxRevisionMacro(vtkSlicerNodeSelectorWidget, "$Revision: 1.33 $");
 //
 static void MRMLCallback(vtkObject *caller, unsigned long eid, void *__clientData, void *callData)
 {
-
   vtkSlicerNodeSelectorWidget *self = reinterpret_cast<vtkSlicerNodeSelectorWidget *>(__clientData);
 
+  /* don't clear menu on scene close since the singleton nodes are not recreated anymore
+  if (vtkMRMLScene::SceneCloseEvent == eid)
+    {
+    self->ClearMenu();
+    self->SetSelected(NULL);
+    return;
+    }
+  */
   if (self->GetInMRMLCallbackFlag())
     {
 #ifdef _DEBUG
@@ -67,6 +74,7 @@ vtkSlicerNodeSelectorWidget::vtkSlicerNodeSelectorWidget()
   this->NewNodeEnabled = 0;
   this->NoneEnabled = 0;
   this->ShowHidden = 0;
+  this->ChildClassesEnabled = 1;
   this->MRMLScene      = NULL;
   this->MRMLCallbackCommand = vtkCallbackCommand::New();
   this->MRMLCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
@@ -103,6 +111,8 @@ void vtkSlicerNodeSelectorWidget::SetMRMLScene( vtkMRMLScene *MRMLScene)
     this->MRMLScene->Register(this);
     this->MRMLScene->AddObserver( vtkMRMLScene::NodeAddedEvent, this->MRMLCallbackCommand );
     this->MRMLScene->AddObserver( vtkMRMLScene::NodeRemovedEvent, this->MRMLCallbackCommand );
+    this->MRMLScene->AddObserver( vtkMRMLScene::NewSceneEvent, this->MRMLCallbackCommand );
+    this->MRMLScene->AddObserver( vtkMRMLScene::SceneCloseEvent, this->MRMLCallbackCommand );
     }
 
   this->UpdateMenu();
@@ -114,7 +124,12 @@ bool vtkSlicerNodeSelectorWidget::CheckNodeClass(vtkMRMLNode *node)
   for (int c=0; c < this->GetNumberOfNodeClasses(); c++)
     {
     const char *className = this->GetNodeClass(c);
-    if (node->IsA(className))
+    if (this->GetChildClassesEnabled() && node->IsA(className))
+      {
+      return true;
+      }
+
+    if (!this->GetChildClassesEnabled() && !strcmp(node->GetClassName(), className))
       {
       return true;
       }
@@ -175,6 +190,13 @@ void vtkSlicerNodeSelectorWidget::AddNodeClass(const char *className,
     }
 
 }
+//----------------------------------------------------------------------------
+void vtkSlicerNodeSelectorWidget::ClearMenu()
+{
+    vtkKWMenuButton *mb = this->GetWidget()->GetWidget();
+    vtkKWMenu *m = mb->GetMenu();
+    m->DeleteAllItems();
+}
 
 //----------------------------------------------------------------------------
 void vtkSlicerNodeSelectorWidget::UpdateMenu()
@@ -188,11 +210,12 @@ void vtkSlicerNodeSelectorWidget::UpdateMenu()
       {
       return;
       }
+    vtkMRMLNode *oldSelectedNode = this->GetSelected();
+    this->ClearMenu();
+
     vtkKWMenuButton *mb = this->GetWidget()->GetWidget();
     vtkKWMenu *m = mb->GetMenu();
 
-    vtkMRMLNode *oldSelectedNode = this->GetSelected();
-    m->DeleteAllItems();
     int count = 0;
     int c=0;
 
@@ -236,6 +259,11 @@ void vtkSlicerNodeSelectorWidget::UpdateMenu()
       while ( (node = this->MRMLScene->GetNextNodeByClass(className) ) != NULL)
         {
         if (!this->ShowHidden && node->GetHideFromEditors())
+          {
+          continue;
+          }
+
+        if (!this->GetChildClassesEnabled() && strcmp(node->GetClassName(), className) != 0)
           {
           continue;
           }
@@ -369,19 +397,26 @@ void vtkSlicerNodeSelectorWidget::ProcessCommand(char *slectedId)
 //----------------------------------------------------------------------------
 void vtkSlicerNodeSelectorWidget::SetSelected(vtkMRMLNode *node)
 {
+ 
+  vtkKWMenuButton *m = this->GetWidget()->GetWidget();
+
   if ( node != NULL) 
     {
-    vtkKWMenuButton *m = this->GetWidget()->GetWidget();
     if ( !strcmp ( m->GetValue(), node->GetName() ) )
       {
       return; // no change, don't propogate events
       }
 
     // new value, set it and notify observers
-    m->SetValue(node->GetName());
     this->SetBalloonHelpString(node->GetName());
     this->SelectedID = std::string(node->GetID());
+    m->SetValue(node->GetName());
     this->InvokeEvent(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, NULL);
+    }
+  else 
+    {
+    this->SelectedID = std::string("");
+    m->SetValue("");
     }
 }
 

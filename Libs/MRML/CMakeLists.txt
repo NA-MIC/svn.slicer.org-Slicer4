@@ -34,6 +34,7 @@ SET(MRML_SRCS
         vtkMRMLSliceNode.cxx
         vtkMRMLSliceCompositeNode.cxx
         vtkMRMLSelectionNode.cxx
+        vtkMRMLInteractionNode.cxx
         vtkObserverManager.cxx
         vtkMRMLColorNode.cxx
         vtkMRMLColorTableNode.cxx
@@ -45,7 +46,9 @@ SET(MRML_SRCS
         vtkMRMLDiffusionTensorVolumeNode.cxx
         vtkMRMLDiffusionTensorVolumeDisplayNode.cxx
         vtkMRMLVectorVolumeDisplayNode.cxx
+        vtkMRMLFiberBundleNode.cxx
         vtkMRMLFiberBundleDisplayNode.cxx
+        vtkMRMLFiberBundleStorageNode.cxx
         # Note: when you add new node types, add
         # register code to the vtkMRMLScene constructor
 )
@@ -121,6 +124,7 @@ TARGET_LINK_LIBRARIES(MRML
   )
 
 IF( TEEM_FOUND )
+  SET_TARGET_PROPERTIES(MRML PROPERTIES DEFINE_SYMBOL USE_TEEM)
   TARGET_LINK_LIBRARIES(MRML
     vtkTeem
   )

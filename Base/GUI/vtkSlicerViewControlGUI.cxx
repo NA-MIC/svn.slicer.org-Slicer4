@@ -50,7 +50,7 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->RockCount = 0;
   this->NavZoomWidgetWid = 150;
   this->NavZoomWidgetHit = 80;
-  this->Magnification = 10.0;
+  this->Magnification = 10;
 
   this->SlicerViewControlIcons = vtkSlicerViewControlIcons::New ( );
   this->SpinButton = vtkKWCheckButton::New ( );
@@ -88,6 +88,7 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->ZoomWidget = vtkKWRenderWidget::New ( );
   this->NavZoomFrame = vtkKWFrame::New ( );
 
+/*
   this->Zoomer = vtkImageMagnify::New();
   this->Zoomer->SetMagnificationFactors (this->Magnification, this->Magnification, this->Magnification);
   this->Zoomer->SetInterpolate(0);
@@ -101,7 +102,13 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->ZoomCursor->SetFilled(0);
   this->ZoomCursor->SetColor ( 1.0, 1.0, 0.0);
   this->ZoomCursor->SetCenter( this->NavZoomWidgetWid/2.0, this->NavZoomWidgetHit/2.0, 0.0);
-
+*/
+  
+  this->Zoomer = NULL;
+  this->ZoomExtractor = NULL;
+  this->ZoomChanger = NULL;
+  this->ZoomCursor = NULL;
+  
   this->ViewNode = NULL;
   this->Slice0Events = NULL;
   this->Slice1Events = NULL;
@@ -1259,7 +1266,8 @@ void vtkSlicerViewControlGUI::BuildCameraSelectMenu()
 {
   
   this->SelectCameraButton->GetMenu( )->DeleteAllItems();
-  this->SelectCameraButton->GetMenu()->AddRadioButton ("Save current camera (not yet available)" );
+  this->SelectCameraButton->GetMenu()->AddRadioButton ("Save current camera" );
+  this->SelectCameraButton->GetMenu()->SetItemStateToDisabled ( "Save current camera" );
   this->SelectCameraButton->GetMenu()->AddSeparator();
   this->SelectCameraButton->GetMenu()->AddSeparator();
   this->SelectCameraButton->GetMenu()->AddCommand ( "close" );
@@ -1322,7 +1330,8 @@ void vtkSlicerViewControlGUI::BuildViewSelectMenu ( )
 {
   
   this->SelectViewButton->GetMenu( )->DeleteAllItems();
-  this->SelectViewButton->GetMenu()->AddRadioButton ("Save current view (not yet available)" );
+  this->SelectViewButton->GetMenu()->AddRadioButton ("Save current view" );
+  this->SelectViewButton->GetMenu()->SetItemStateToDisabled ( "Save current view" );
   this->SelectViewButton->GetMenu()->AddSeparator();
   this->SelectViewButton->GetMenu()->AddSeparator();
   this->SelectViewButton->GetMenu()->AddCommand ( "close" );
@@ -2037,6 +2046,7 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       this->ZoomEntry->GetWidget()->SetFont ( "-Adobe-Helvetica-Bold-R-Normal-*-10-*-*-*-*-*-*-*" );
       this->ZoomEntry->SetLabelText ( "%: ");
       this->ZoomEntry->GetWidget()->SetWidth (7);
+      this->ZoomEntry->GetWidget()->SetStateToDisabled();
       this->Script ( "pack %s -side left -anchor w -padx 1 -pady 2 -expand n", this->FOVEntry->GetWidgetName ( ) );
       this->Script ( "pack %s -side left -anchor e -padx 2 -pady 2 -expand n", this->ZoomEntry->GetWidgetName ( ) );
       
@@ -2063,7 +2073,7 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       vtkImageMapper *zoomMapper = vtkImageMapper::New ( );
       zoomMapper->SetColorWindow(255);
       zoomMapper->SetColorLevel (127.5);
-      zoomMapper->SetInput ( this->Zoomer->GetOutput() );
+//      zoomMapper->SetInput ( this->Zoomer->GetOutput() );
       vtkActor2D *zoomActor = vtkActor2D::New();
       zoomActor->SetMapper( zoomMapper);
       this->ZoomWidget->GetRenderer()->AddActor2D ( zoomActor );

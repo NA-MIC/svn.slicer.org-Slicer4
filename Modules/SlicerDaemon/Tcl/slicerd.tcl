@@ -141,6 +141,17 @@ proc slicerd_sock_fileevent {sock} {
             } else {
                 set node [$::slicer3::MRMLScene GetNodeByID $volid]
             }
+
+            if { $node == "" } {
+              # try to get volume by name
+              set numNodes [$::slicer3::MRMLScene GetNumberOfNodesByClass vtkMRMLVolumeNode]
+              for {set n 0} {$n < $numNodes} {incr n} {
+                set node [$::slicer3::MRMLScene GetNthNodeByClass $n vtkMRMLVolumeNode]
+                if { [$node GetName] == $volid } {
+                  break;
+                }
+              }
+            }
             
             if { $node == "" } {
                 puts $sock "get error: bad id"
@@ -186,7 +197,7 @@ proc slicerd_sock_fileevent {sock} {
             puts $sock "space_directions $space_directions"
             flush $sock
 
-            ::tcl_$sock SetAndObserveImageData $im
+            ::tcl_$sock SetImageData $im
             fconfigure $sock -translation binary
             ::tcl_$sock SendImageDataScalars $sock
             fconfigure $sock -translation auto
@@ -255,7 +266,7 @@ proc slicerd_sock_fileevent {sock} {
 
             $::slicer3::MRMLScene AddNode $node
 
-            [$::slicer3::ApplicationLogic GetSelectionNode] SetActiveVolumeID [$node GetID]
+            [$::slicer3::ApplicationLogic GetSelectionNode] SetReferenceActiveVolumeID [$node GetID]
             $::slicer3::ApplicationLogic PropagateVolumeSelection
 
             $node Delete

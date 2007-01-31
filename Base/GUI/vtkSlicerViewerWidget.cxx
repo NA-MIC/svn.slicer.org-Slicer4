@@ -68,7 +68,11 @@ vtkSlicerViewerWidget::vtkSlicerViewerWidget ( )
 
   this->ViewNode = NULL;
   this->BoxAxisActor = NULL;
+
+  this->SceneClosing = false;
 }
+
+
 
 
 //---------------------------------------------------------------------------
@@ -88,27 +92,44 @@ vtkSlicerViewerWidget::~vtkSlicerViewerWidget ( )
     {
     this->SetMRMLScene ( NULL );
     this->MainViewer->RemoveAllViewProps ( );
-    this->MainViewer->SetParent ( NULL );
-    this->MainViewer->Delete();
-    this->MainViewer = NULL;
-    this->ViewerFrame->SetParent ( NULL );
-    this->ViewerFrame->Delete ( );
-    this->ViewerFrame = NULL;
     }
 
+//  this->SlicePlanes->RemoveFunction (this->RedSlicePlane);
+//  this->SlicePlanes->RemoveFunction (this->GreenSlicePlane);
+//  this->SlicePlanes->RemoveFunction (this->YellowSlicePlane);
   this->SlicePlanes->Delete();
+  this->SlicePlanes = NULL;
   this->RedSlicePlane->Delete();
+  this->RedSlicePlane = NULL;
   this->GreenSlicePlane->Delete();
+  this->GreenSlicePlane = NULL;
   this->YellowSlicePlane->Delete();
+  this->YellowSlicePlane = NULL;
 
   if (this->BoxAxisActor)
     {
     this->BoxAxisActor->Delete();
+    this->BoxAxisActor = NULL;
     }
   for (unsigned int i=0; i<this->AxisLabelActors.size(); i++)
     {
+    this->AxisLabelActors[i]->SetCamera ( NULL );
     this->AxisLabelActors[i]->Delete();
     }
+  this->AxisLabelActors.clear();
+
+  if (this->MainViewer)
+    {
+    this->MainViewer->SetParent ( NULL );
+    this->MainViewer->Delete();
+    this->MainViewer = NULL;
+    }
+
+  this->ViewerFrame->SetParent ( NULL );
+  this->ViewerFrame->Delete ( );
+  this->ViewerFrame = NULL;
+
+
 }
 
 //---------------------------------------------------------------------------
@@ -174,9 +195,11 @@ void vtkSlicerViewerWidget::CreateAxis()
     axisText->SetText(labels[i].c_str());
     vtkPolyDataMapper *axisMapper = vtkPolyDataMapper::New();
     axisMapper->SetInput(axisText->GetOutput());
+    axisText->Delete();
     vtkFollower *axisActor = vtkFollower::New();
 
     axisActor->SetMapper(axisMapper);
+    axisMapper->Delete();
     axisActor->SetScale(1,1,1); 
     axisActor->SetPickable (0);
 
@@ -196,8 +219,6 @@ void vtkSlicerViewerWidget::CreateAxis()
   this->AxisLabelActors[3]->SetPosition(-pos,0,0);
   this->AxisLabelActors[4]->SetPosition(0,-pos,0);
   this->AxisLabelActors[5]->SetPosition(0,0,-pos);
-
-  this->AddAxisActors();
 
   boxSource->Delete();
   boxMapper->Delete();
@@ -822,6 +843,7 @@ void vtkSlicerViewerWidget::UpdateModelPolyData(vtkMRMLModelNode *model)
     actor = (*ait).second;
     }
   actor->SetMapper( mapper );
+  mapper->Delete();
 
   if (ait == this->DisplayedModels.end())
     {

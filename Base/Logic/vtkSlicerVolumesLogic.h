@@ -29,6 +29,8 @@
 #include "vtkMRML.h"
 #include "vtkMRMLVolumeNode.h"
 
+class vtkMRMLScalarVolumeNode;
+
 
 class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic 
 {
@@ -54,10 +56,21 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
   int SaveArchetypeVolume (char* filename, vtkMRMLVolumeNode *volumeNode);
 
   // Description:
-  // Update logic state when MRML scene chenges
+  // Create a label map volume to match the given volume node and add it to
+  // the scene
+  vtkMRMLScalarVolumeNode *CreateLabelVolume (vtkMRMLScene *scene, vtkMRMLVolumeNode *volumeNode, char *name);
+
+  // Description:
+  // Update MRML events
   virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
                                   unsigned long /*event*/, 
                                   void * /*callData*/ );    
+  // Description:
+  // Update logic events
+  virtual void ProcessLogicEvents ( vtkObject * /*caller*/, 
+                                  unsigned long /*event*/, 
+                                  void * /*callData*/ );  
+
 protected:
   vtkSlicerVolumesLogic();
   virtual ~vtkSlicerVolumesLogic();

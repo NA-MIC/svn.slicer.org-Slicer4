@@ -32,7 +32,7 @@ public:
 
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() {return "EMSTree";};
+  virtual const char* GetNodeTagName() {return "EMSTree";}
 
   // Description:
   // Updates this node if it depends on other nodes
@@ -45,11 +45,11 @@ public:
 
   // associated parameters nodes
   vtkGetStringMacro(ParentNodeID);
-  vtkSetStringMacro(ParentNodeID);
+  vtkSetReferenceStringMacro(ParentNodeID);
   virtual vtkMRMLEMSTreeNode* GetParentNode();
 
   vtkGetStringMacro(TreeParametersNodeID);
-  vtkSetStringMacro(TreeParametersNodeID);
+  vtkSetReferenceStringMacro(TreeParametersNodeID);
   virtual vtkMRMLEMSTreeParametersNode* GetParametersNode();
 
   // the label is from a controlled vocabulary
@@ -79,4 +79,3 @@ protected:
 };
 
 #endif
-

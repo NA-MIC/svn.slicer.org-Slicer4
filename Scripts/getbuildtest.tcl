@@ -35,6 +35,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n                   : default: version-patch is the current date"
     set msg "$msg\n   --tag : same as version-patch"
     set msg "$msg\n   --pack : run cpack after building (default: off)"
+    set msg "$msg\n   --doxy : just do an svn update on Slicer3 and run doxygen"
     puts stderr $msg
 }
 
@@ -44,6 +45,7 @@ set ::GETBUILDTEST(release) ""
 set ::GETBUILDTEST(test-type) "Experimental"
 set ::GETBUILDTEST(version-patch) ""
 set ::GETBUILDTEST(pack) "false"
+set ::GETBUILDTEST(doxy) "false"
 set strippedargs ""
 set argc [llength $argv]
 for {set i 0} {$i < $argc} {incr i} {
@@ -80,6 +82,9 @@ for {set i 0} {$i < $argc} {incr i} {
         }
         "--pack" {
                 set ::GETBUILDTEST(pack) "true"
+        }
+        "--doxy" {
+            set ::GETBUILDTEST(doxy) "true"
         }
         "--help" -
         "-h" {
@@ -153,6 +158,8 @@ cd $cwd
 
 set ::SLICER_LIB $::SLICER_HOME/../Slicer3-lib
 set ::SLICER_BUILD $::SLICER_HOME/../Slicer3-build
+# use an environment variable so doxygen can use it
+set ::env(SLICER_DOC) $::SLICER_HOME/../Slicer3-doc
 
 #######
 #
@@ -188,12 +195,12 @@ if { $::GETBUILDTEST(clean) } {
     if { $isDarwin } {
         runcmd rm -rf $SLICER_LIB
         runcmd rm -rf $SLICER_BUILD
-        if { [file exists $SLICER_HOME/isPatched] } {
-            runcmd rm $SLICER_HOME/isPatched
+        if { [file exists $SLICER_LIB/tcl/isPatched] } {
+            runcmd rm $SLICER_LIB/tcl/isPatched
         }
 
-        if { [file exists $SLICER_HOME/isPatchedBLT] } {
-            runcmd rm $SLICER_HOME/isPatchedBLT
+        if { [file exists $SLICER_LIB/tcl/isPatchedBLT] } {
+            runcmd rm $SLICER_LIB/tcl/isPatchedBLT
         }
     } else {
         file delete -force $SLICER_LIB
@@ -207,6 +214,11 @@ if { ![file exists $SLICER_LIB] } {
 
 if { ![file exists $SLICER_BUILD] } {
     file mkdir $SLICER_BUILD
+}
+
+if { $::GETBUILDTEST(doxy) && ![file exists $::env(SLICER_DOC)] } {
+    puts "Making documentation directory  $::env(SLICER_DOC)"
+    file mkdir $::env(SLICER_DOC)
 }
 
 
@@ -223,7 +235,17 @@ if { ![file exists $SLICER_BUILD] } {
 
 # svn checkout (does an update if it already exists)
 cd $::SLICER_HOME/..
+
 runcmd svn checkout http://www.na-mic.org/svn/Slicer3/branches/IGT Slicer3
+
+
+if { $::GETBUILDTEST(doxy) } {
+    # just run doxygen and exit
+    puts "Creating documenation files in $::env(SLICER_DOC)"
+    set cmd "doxygen $::SLICER_HOME/Doxyfile"
+    eval runcmd $cmd
+    return
+}
 
 # build the lib with options
 cd $::SLICER_HOME
@@ -245,6 +267,7 @@ if { $::GETBUILDTEST(version-patch) == "" } {
 cd $::SLICER_BUILD
 runcmd $::CMAKE \
         -G$::GENERATOR \
+        -DMAKECOMMAND:STRING=$::MAKE \
         -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
         -DKWWidgets_DIR:FILEPATH=$SLICER_LIB/KWWidgets-build \
         -DTEEM_DIR:FILEPATH=$SLICER_LIB/teem-build \

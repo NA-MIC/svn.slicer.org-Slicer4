@@ -78,13 +78,6 @@ vtkSlicerToolbarGUI::vtkSlicerToolbarGUI ( )
 vtkSlicerToolbarGUI::~vtkSlicerToolbarGUI ( )
 {
 
-  // Delete Toolbar Icons
-  if ( this->SlicerToolbarIcons )
-    {
-    this->SlicerToolbarIcons->Delete ( );
-    this->SlicerToolbarIcons = NULL;
-    }
-
   // Remove widgets from Toolbars
   if ( this->ModulesToolbar )
     {
@@ -252,8 +245,8 @@ vtkSlicerToolbarGUI::~vtkSlicerToolbarGUI ( )
     vtkSlicerApplicationGUI *p = this->GetApplicationGUI ( );
     if ( p ) 
       {
-      vtkSlicerWindow *win = p->GetMainSlicerWindow();
-      if ( win ) 
+      vtkSlicerWindow *win = this->ApplicationGUI->GetMainSlicerWindow();
+      if ( win)
         {
         vtkKWToolbarSet *tbs = win->GetMainToolbarSet ( );
         if (tbs) 
@@ -301,6 +294,13 @@ vtkSlicerToolbarGUI::~vtkSlicerToolbarGUI ( )
       this->MouseModeRadioButtons = NULL;      
       }
 
+  // Delete Toolbar Icons
+  if ( this->SlicerToolbarIcons )
+    {
+    this->SlicerToolbarIcons->Delete ( );
+    this->SlicerToolbarIcons = NULL;
+    }
+
     this->SetApplicationGUI ( NULL );
     this->SetSelectionNodeID ( NULL );
     vtkSetMRMLNodeMacro(this->SelectionNode, NULL);
@@ -325,6 +325,7 @@ void vtkSlicerToolbarGUI::RemoveGUIObservers ( )
     // Fill in
     this->HomeIconButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->DataIconButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->EditorIconButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->VolumeIconButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModelIconButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->FiducialsIconButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -353,6 +354,7 @@ void vtkSlicerToolbarGUI::AddGUIObservers ( )
     // add observers onto the module icon buttons 
     this->HomeIconButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->DataIconButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->EditorIconButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->VolumeIconButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModelIconButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->FiducialsIconButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -444,7 +446,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           else
             {
-            std::cerr << "ERROR:  no slicer module gui found for Volumes\n"; 
+            vtkDebugMacro ("ERROR:  no slicer module gui found for Volumes\n"); 
             }
           }
         else if (pushb == this->DataIconButton && event == vtkKWPushButton::InvokedEvent )
@@ -456,7 +458,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           else
             {
-            std::cerr << "ERROR:  no slicer module gui found for Data\n"; 
+            vtkDebugMacro ("ERROR:  no slicer module gui found for Data\n");
             }
           }
         else if (pushb == this->VolumeIconButton && event == vtkKWPushButton::InvokedEvent )
@@ -468,7 +470,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           else
             {
-            std::cerr << "ERROR:  no slicer module gui found for Volumes\n"; 
+            vtkDebugMacro ("ERROR:  no slicer module gui found for Volumes\n");
             }
           }
         else if (pushb == this->ModelIconButton && event == vtkKWPushButton::InvokedEvent )
@@ -480,7 +482,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           else
             {
-            std::cerr << "ERROR:  no slicer module gui found for Models\n"; 
+            vtkDebugMacro ("ERROR:  no slicer module gui found for Models\n");
             }
           }
         else if (pushb == this->FiducialsIconButton && event == vtkKWPushButton::InvokedEvent )
@@ -492,7 +494,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           else
             {
-            std::cerr << "ERROR:  no slicer module gui found for Fiducials\n"; 
+            vtkDebugMacro ("ERROR:  no slicer module gui found for Fiducials\n");
             }
           }
         else if (pushb == this->ColorIconButton && event == vtkKWPushButton::InvokedEvent )
@@ -504,7 +506,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           else
             {
-            std::cerr << "ERROR:  no slicer module gui found for Color\n"; 
+            vtkDebugMacro ("ERROR:  no slicer module gui found for Color\n");
             }
           }
         else if (pushb == this->TransformIconButton && event == vtkKWPushButton::InvokedEvent )
@@ -516,7 +518,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           else
             {
-            std::cerr << "ERROR:  no slicer module gui found for Transforms\n"; 
+            vtkDebugMacro ("ERROR:  no slicer module gui found for Transforms\n");
             }
           }
         else if (pushb == this->EditorIconButton && event == vtkKWPushButton::InvokedEvent )
@@ -528,7 +530,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           else
             {
-            std::cerr << "ERROR:  no slicer module gui found for Editor\n"; 
+            vtkDebugMacro ("ERROR:  no slicer module gui found for Editor\n");
             }
           }
         }
@@ -609,11 +611,11 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
         }
       else if ( pushb == this->UndoIconButton && event == vtkKWPushButton::InvokedEvent )
         {
-        // FILL IN
+        p->GetMRMLScene()->Undo();
         }
       else if ( pushb == this->RedoIconButton && event == vtkKWPushButton::InvokedEvent )
         {
-        // FILL IN
+        p->GetMRMLScene()->Redo();
         }
       }
     }
@@ -1035,7 +1037,11 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
       {
       mouseMode = selnode->GetMouseInteractionMode();
       }
-    } else { std::cout << "MRML Scene not set yet, not getting mouse interaction mode, using default of transform\n"; }
+    }
+  else 
+    { 
+    vtkDebugMacro ("MRML Scene not set yet, not getting mouse interaction mode, using default of transform\n"); 
+    }
   
   vtkKWRadioButton *radiob = this->MouseModeRadioButtons->AddWidget ( vtkMRMLSelectionNode::MouseSelect );
   radiob->SetReliefToFlat ( );
@@ -1043,7 +1049,7 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
   radiob->SetOverReliefToNone ( );
   radiob->SetImageToIcon ( this->SlicerToolbarIcons->GetMousePickIconLow ( ) );
   radiob->SetSelectImageToIcon ( this->SlicerToolbarIcons->GetMousePickIcon ( ) );
-  radiob->IndicatorVisibilityOn();
+  radiob->IndicatorVisibilityOff();
   radiob->SetHighlightThickness ( 0 );
   radiob->SetBorderWidth ( 0 );
   radiob->SetSelectColor ( app->GetSlicerTheme()->GetSlicerColors()->White );
@@ -1061,13 +1067,13 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
   radiob->SetReliefToFlat ( );
   radiob->SetOffReliefToFlat ( );
   radiob->SetOverReliefToNone ( );
-  radiob->SetImageToIcon ( this->SlicerToolbarIcons->GetMousePlaceFiducialIconLow ( ) );
-  radiob->SetSelectImageToIcon ( this->SlicerToolbarIcons->GetMousePlaceFiducialIcon ( ) );
-  radiob->IndicatorVisibilityOn();
+  radiob->SetImageToIcon ( this->SlicerToolbarIcons->GetMousePlaceIconLow ( ) );
+  radiob->SetSelectImageToIcon ( this->SlicerToolbarIcons->GetMousePlaceIcon ( ) );
+  radiob->IndicatorVisibilityOff();
   radiob->SetHighlightThickness ( 0 );  
   radiob->SetBorderWidth ( 0 );
   radiob->SetSelectColor ( app->GetSlicerTheme()->GetSlicerColors()->White );
-  radiob->SetBalloonHelpString ( "Set the 3DViewer mouse mode to 'place fiducials'" );
+  radiob->SetBalloonHelpString ( "Set the 3DViewer mouse mode to 'place a new object (like a fiducial point)'" );
   if ( mouseMode == vtkMRMLSelectionNode::MousePut )
     {
     radiob->SelectedStateOn ( );
@@ -1084,7 +1090,7 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
   radiob->SetOverReliefToNone ( );
   radiob->SetImageToIcon ( this->SlicerToolbarIcons->GetMouseTransformViewIconLow ( ) );
   radiob->SetSelectImageToIcon ( this->SlicerToolbarIcons->GetMouseTransformViewIcon ( ) );
-  radiob->IndicatorVisibilityOn();
+  radiob->IndicatorVisibilityOff();
   radiob->SetHighlightThickness ( 0 );  
   radiob->SetBorderWidth ( 0 );
   radiob->SetSelectColor ( app->GetSlicerTheme()->GetSlicerColors()->White );
