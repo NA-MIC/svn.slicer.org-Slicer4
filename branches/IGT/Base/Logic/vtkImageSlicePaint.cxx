@@ -246,13 +246,14 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *ptr)
           // note: k will always be zero for the mask since it is 2D...
           transform3(maskWorldToIJK, workingWorld, maskIJK);
           for (int i = 0; i < 2; i++) { intMaskIJK[i] = paintRound(maskIJK[i]); }
-          intMaskIJK[2] = 0.0;
+          intMaskIJK[2] = 0;
 
           void *ptr = self->GetMaskImage()->GetScalarPointer ( 
                           intMaskIJK[0], intMaskIJK[1], intMaskIJK[2] );
 
           if ( ptr == NULL ) 
             {
+            // TODO: this will leak matrices...
             vtkErrorWithObjectMacro ( self, << "Cannot get mask pointer for pixel\n"
               << "workingWorld = " << 
               workingWorld[0] << " " <<  workingWorld[1] << " " << workingWorld[2] << "\n"
@@ -304,6 +305,7 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *ptr)
         }
       else  // working pointer was null
         {
+        // TODO: this will leak matrices...
         vtkErrorWithObjectMacro (self, 
           << "can't get working image pointer for " 
           << intIJK[0] << " " << intIJK[1] << " " << intIJK[2] << "\n");
@@ -319,6 +321,7 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *ptr)
           }
         else
           {
+          // TODO: this will leak matrices...
           vtkErrorWithObjectMacro (self, 
             << "can't get extract image pointer for " << row << " " << column << "\n");
           return; // we got out of the region somehow and there will be error messages...
@@ -340,6 +343,7 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *ptr)
       }
     }
 
+  maskWorldToIJK->Delete();
   backgroundWorldToIJK->Delete();
 
   self->GetWorkingImage()->Modified();

@@ -83,7 +83,7 @@ public:
 
   // Description:
   // Remove nodes and clear undo/redo stacks
-  void Clear();
+  void Clear(int removeSingletons);
 
   // Description:
   // Create node with a given class
@@ -284,6 +284,19 @@ public:
 
   int IsFilePathRelative(const char * filepath);
 
+  vtkSetMacro(ErrorCode,unsigned long);
+  vtkGetMacro(ErrorCode,unsigned long);
+
+//BTX
+  void SetErrorMessage(const std::string &error) {
+    this->ErrorMessage = error;
+  };
+
+  std::string GetErrorMessage() {
+    return this->ErrorMessage;
+  };
+//ETX
+
 protected:
   vtkMRMLScene();
   ~vtkMRMLScene();
@@ -320,12 +333,13 @@ protected:
   std::vector< std::string > ReferencedIDs;
   std::vector< vtkMRMLNode* > ReferencingNodes;
   std::map< std::string, std::string> ReferencedIDChanges;
+  
+  std::string ErrorMessage;
   //ETX
   
   void UpdateNodeReferences();
 
-  vtkSetMacro(ErrorCode,unsigned long);
-  vtkGetMacro(ErrorCode,unsigned long);
+  void RemoveAllNodesExceptSingletons();
 
   vtkSetStringMacro(ClassNameList);
   vtkGetStringMacro(ClassNameList);

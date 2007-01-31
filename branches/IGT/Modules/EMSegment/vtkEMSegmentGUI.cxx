@@ -164,6 +164,7 @@ void vtkEMSegmentGUI::AddGUIObservers()
     {
     this->SetAndObserveMRMLSceneEvents(this->GetMRMLScene(), events);
     }
+  events->Delete();
 }
 
 //---------------------------------------------------------------------------
@@ -257,7 +258,8 @@ void vtkEMSegmentGUI::ProcessMRMLEvents(vtkObject *caller,
       if(node == this->GetNode() && event == vtkMRMLScene::NodeRemovedEvent)
         {
         vtkKWMessageDialog::PopupMessage( 
-          this->GetApplication(), this->GetApplicationGUI()->GetMainSlicerWindow(),
+          this->GetApplication(), 
+          this->GetApplicationGUI()->GetMainSlicerWindow(),
           "EM Segment", "Current MRML node is removed!",
           vtkKWMessageDialog::WarningIcon);
         }
@@ -333,6 +335,7 @@ void vtkEMSegmentGUI::BuildGUI()
   this->WizardWidget->Create();
   this->WizardWidget->GetSubTitleLabel()->SetHeight(1);
   this->WizardWidget->SetClientAreaMinimumHeight(320);
+  //this->WizardWidget->SetButtonsPositionToTop();
   this->WizardWidget->HelpButtonVisibilityOn();
   app->Script("pack %s -side top -anchor nw -fill both -expand y",
               this->WizardWidget->GetWidgetName());
@@ -435,6 +438,45 @@ void vtkEMSegmentGUI::BuildGUI()
 //---------------------------------------------------------------------------
 void vtkEMSegmentGUI::TearDownGUI() 
 {
+  if (this->ParametersSetStep)
+    {
+    this->ParametersSetStep->SetGUI(NULL);
+    }
+
+  if (this->AnatomicalStructureStep)
+    {
+    this->AnatomicalStructureStep->SetGUI(NULL);
+    }
+
+  if (this->SpatialPriorsStep)
+    {
+    this->SpatialPriorsStep->SetGUI(NULL);
+    }
+
+  if (this->IntensityImagesStep)
+    {
+    this->IntensityImagesStep->SetGUI(NULL);
+    }
+
+  if (this->IntensityDistributionsStep)
+    {
+    this->IntensityDistributionsStep->SetGUI(NULL);
+    }
+
+  if (this->NodeParametersStep)
+    {
+    this->NodeParametersStep->SetGUI(NULL);
+    }
+
+  if (this->RegistrationParametersStep)
+    {
+    this->RegistrationParametersStep->SetGUI(NULL);
+    }
+
+  if (this->RunSegmentationStep)
+    {
+    this->RunSegmentationStep->SetGUI(NULL);
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -482,18 +524,19 @@ void vtkEMSegmentGUI::PopulateTestingData()
       {
       vtksys_stl::string filename = dir->GetFile(i);
       //skip . and ..
-      if (strcmp(filename.c_str(), ".")==0)
+      if (strcmp(filename.c_str(), ".") == 0)
         {
         continue;
         }
-      else if (strcmp(filename.c_str(), "..")==0)
+      else if (strcmp(filename.c_str(), "..") == 0)
         {
         continue;
         }
 
       vtksys_stl::string fullName = file_path;
       fullName.append(filename.c_str());
-      if (strcmp(vtksys::SystemTools::GetFilenameExtension(fullName.c_str()).c_str(), ".mhd")!=0)
+      if (strcmp(vtksys::SystemTools::
+                 GetFilenameExtension(fullName.c_str()).c_str(), ".mhd") != 0)
         {
         continue;
         }
@@ -501,8 +544,8 @@ void vtkEMSegmentGUI::PopulateTestingData()
       if (vtksys::SystemTools::FileExists(fullName.c_str()) &&
           !vtksys::SystemTools::FileIsDirectory(fullName.c_str()))
         {
-          volume_logic->AddArchetypeVolume( 
-          (char*)(fullName.c_str()), 1, 0, filename.c_str()); 
+        volume_logic->AddArchetypeVolume((char*)(fullName.c_str()), 1, 0, 
+                                         filename.c_str()); 
         }
       }
     dir->Delete();
@@ -514,12 +557,12 @@ void vtkEMSegmentGUI::PopulateTestingData()
     this->Logic->SetRegistrationAtlasVolumeID(
       this->Logic->GetVolumeNthID(0));
     this->Logic->AddTargetSelectedVolume(
-      this->Logic->GetVolumeNthID(1));      
+      this->Logic->GetVolumeNthID(1));
     this->Logic->SetRegistrationTargetVolumeID(
       this->Logic->GetVolumeNthID(1));
 
     this->Logic->SetSaveWorkingDirectory(file_path.c_str());
-    this->Logic->SetSaveTemplateFilename(file_path.append("EMSTemplate.mrml").c_str());
+    this->Logic->
+      SetSaveTemplateFilename(file_path.append("EMSTemplate.mrml").c_str());
     }
 } 
-

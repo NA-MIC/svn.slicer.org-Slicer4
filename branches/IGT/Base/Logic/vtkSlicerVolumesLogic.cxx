@@ -16,6 +16,8 @@
 #include "vtkCallbackCommand.h"
 #include <vtksys/SystemTools.hxx> 
 
+#include "vtkImageThreshold.h"
+
 #include "vtkSlicerVolumesLogic.h"
 #include "vtkSlicerColorLogic.h"
 
@@ -56,11 +58,21 @@ vtkSlicerVolumesLogic::~vtkSlicerVolumesLogic()
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerVolumesLogic::ProcessMRMLEvents(vtkObject * /*caller*/, 
-                                            unsigned long /*event*/, 
-                                            void * /*callData*/)
+void vtkSlicerVolumesLogic::ProcessMRMLEvents(vtkObject *caller, 
+                                            unsigned long event, 
+                                            void *callData)
 {
-  // TODO: implement if needed
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerVolumesLogic::ProcessLogicEvents(vtkObject *caller, 
+                                            unsigned long event, 
+                                            void *callData)
+{
+  if (event ==  vtkCommand::ProgressEvent) 
+    {
+    this->InvokeEvent ( vtkCommand::ProgressEvent,callData );
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -88,9 +100,12 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
   
   storageNode1->SetFileName(filename);
   storageNode1->SetCenterImage(centerImage);
+  storageNode1->AddObserver(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
+
   storageNode2->SetFileName(filename);
   storageNode2->SetCenterImage(centerImage);
-  
+  storageNode2->AddObserver(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
+
   // Try to read first with NRRD reader (look if file is a dwi or a tensor)
   cout<<"TEST DWI: "<< storageNode1->ReadData(dwiNode)<<endl;
 
@@ -132,7 +147,10 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
     volumeNode = vectorNode;
     storageNode = storageNode2;
     }
-  
+
+  storageNode1->RemoveObservers(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
+  storageNode2->RemoveObservers(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
+
   if (volumeNode != NULL)
     {
     if (volname == NULL)
@@ -211,6 +229,8 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
 
   storageNode->SetFileName(filename);
   storageNode->SetCenterImage(centerImage);
+  storageNode->AddObserver(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
+
   if (storageNode->ReadData(scalarNode))
     {
     scalarNode->SetLabelMap(labelMap);
@@ -221,7 +241,9 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
     // cannot read scalar data, try vector
     volumeNode = vectorNode;
     }
-  
+
+  storageNode->RemoveObservers(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
+
   if (volumeNode != NULL)
     {
     if (volname == NULL)
@@ -321,6 +343,52 @@ int vtkSlicerVolumesLogic::SaveArchetypeVolume (char* filename, vtkMRMLVolumeNod
 
   
   return res;
+}
+
+//----------------------------------------------------------------------------
+vtkMRMLScalarVolumeNode *vtkSlicerVolumesLogic::CreateLabelVolume (vtkMRMLScene *scene, vtkMRMLVolumeNode *volumeNode, char *name)
+{
+  if ( volumeNode == NULL ) 
+    {
+    return NULL;
+    }
+
+  // create a display node
+  vtkMRMLVolumeDisplayNode *labelDisplayNode  = vtkMRMLVolumeDisplayNode::New();
+
+  scene->AddNode(labelDisplayNode);
+
+  // create a volume node as copy of source volume
+  vtkMRMLScalarVolumeNode *labelNode = vtkMRMLScalarVolumeNode::New();
+  labelNode->Copy(volumeNode);
+  labelNode->SetStorageNodeID(NULL);
+  labelNode->SetModifiedSinceRead(1);
+  labelNode->SetLabelMap(1);
+
+  // set the display node to have a label map lookup table
+  labelDisplayNode->SetAndObserveColorNodeID ("vtkMRMLColorTableNodeLabels");
+  labelNode->SetName(name);
+  labelNode->SetAndObserveDisplayNodeID( labelDisplayNode->GetID() );
+
+  // make an image data of the same size and shape as the input volume,
+  // but filled with zeros
+  vtkImageThreshold *thresh = vtkImageThreshold::New();
+  thresh->ReplaceInOn();
+  thresh->ReplaceOutOn();
+  thresh->SetInValue(0);
+  thresh->SetOutValue(0);
+  thresh->SetInput( volumeNode->GetImageData() );
+  thresh->GetOutput()->Update();
+  labelNode->SetAndObserveImageData( thresh->GetOutput() );
+  thresh->Delete();
+
+  // add the label volume to the scene
+  scene->AddNode(labelNode);
+
+  labelNode->Delete();
+  labelDisplayNode->Delete();
+
+  return (labelNode);
 }
 
 //----------------------------------------------------------------------------

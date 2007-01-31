@@ -135,29 +135,47 @@ startElement(void *userData, const char *element, const char **attrs)
   //  
   if (ps->Depth == 0 && (name != "executable") )
     {
-    std::string error("ModuleDescriptionParser Error: <executable> must be the outer most tag. " + name + std::string(" was found instead."));
-    ps->ErrorDescription = error;
-    ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-    ps->Error = true;
+    std::string error("ModuleDescriptionParser Error: <executable> must be the outer most tag. <" + name + std::string("> was found instead."));
+    if (ps->ErrorDescription.size() == 0)
+      {
+      ps->ErrorDescription = error;
+      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+      ps->Error = true;
+      }
+    ps->CurrentParameter = 0;
+    ps->CurrentGroup = 0;
+    ps->OpenTags.push(name);
     return;
     }
   else if (ps->Depth != 0 && (name == "executable"))
     {
     std::string error("ModuleDescriptionParser Error: <executable> was found inside another tag <" + ps->OpenTags.top() + ">.");
-    ps->ErrorDescription = error;
-    ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-    ps->Error = true;
+    if (ps->ErrorDescription.size() == 0)
+      {
+      ps->ErrorDescription = error;
+      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+      ps->Error = true;
+      }
+    ps->CurrentParameter = 0;
+    ps->CurrentGroup = 0;
+    ps->OpenTags.push(name);
     return;
     }
 
   if (name == "parameters")
     {
-    if (ps->Depth != 1)
+    if (ps->OpenTags.top() != "executable")
       {
       std::string error("ModuleDescriptionParser Error: <parameters> can only be inside <executable> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
+      ps->CurrentParameter = 0;
+      ps->CurrentGroup = 0;
+      ps->OpenTags.push(name);
       return;
       }
     else
@@ -175,9 +193,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + std::string(name) + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
+    if (ps->ErrorDescription.size() == 0)
+      {
       ps->ErrorDescription = error;
       ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
       ps->Error = true;
+      }
       ps->OpenTags.push(name);
       return;
       }
@@ -202,9 +223,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + std::string(name) + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
+    if (ps->ErrorDescription.size() == 0)
+      {
       ps->ErrorDescription = error;
       ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
       ps->Error = true;
+      }
       ps->OpenTags.push(name);
       return;
       }
@@ -230,9 +254,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + std::string(name) + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
+    if (ps->ErrorDescription.size() == 0)
+      {
       ps->ErrorDescription = error;
       ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
       ps->Error = true;
+      }
       ps->OpenTags.push(name);
       return;
       }
@@ -258,9 +285,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
+    if (ps->ErrorDescription.size() == 0)
+      {
       ps->ErrorDescription = error;
       ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
       ps->Error = true;
+      }
       ps->OpenTags.push(name);
       return;
       }
@@ -285,9 +315,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
+    if (ps->ErrorDescription.size() == 0)
+      {
       ps->ErrorDescription = error;
       ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
       ps->Error = true;
+      }
       ps->OpenTags.push(name);
       return;
       }
@@ -300,9 +333,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -317,9 +353,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
+    if (ps->ErrorDescription.size() == 0)
+      {
       ps->ErrorDescription = error;
       ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
       ps->Error = true;
+      }
       ps->OpenTags.push(name);
       return;
       }
@@ -334,9 +373,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -351,9 +393,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -368,9 +413,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -392,9 +440,12 @@ startElement(void *userData, const char *element, const char **attrs)
         else
           {
           std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid argument for the attribute \"multiple\". Only \"true\" and \"false\" are accepted.");
-          ps->ErrorDescription = error;
-          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-          ps->Error = true;
+          if (ps->ErrorDescription.size() == 0)
+            {
+            ps->ErrorDescription = error;
+            ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+            ps->Error = true;
+            }
           ps->OpenTags.push(name);
           return;
           }
@@ -410,9 +461,12 @@ startElement(void *userData, const char *element, const char **attrs)
         else
           {
           std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid coordinate system. Only \"ijk\", \"lps\" and \"ras\" are accepted.");
-          ps->ErrorDescription = error;
-          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-          ps->Error = true;
+          if (ps->ErrorDescription.size() == 0)
+            {
+            ps->ErrorDescription = error;
+            ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+            ps->Error = true;
+            }
           ps->OpenTags.push(name);
           return;
           }
@@ -420,9 +474,12 @@ startElement(void *userData, const char *element, const char **attrs)
       else
         {
           std::string error("ModuleDescriptionParser Error: " + std::string(attrs[2*attr]) + " is not a valid attribute for the tag" + name);
-          ps->ErrorDescription = error;
-          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-          ps->Error = true;
+          if (ps->ErrorDescription.size() == 0)
+            {
+            ps->ErrorDescription = error;
+            ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+            ps->Error = true;
+            }
           ps->OpenTags.push(name);
           return;
         }
@@ -440,9 +497,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -455,9 +515,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -470,9 +533,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -485,9 +551,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -500,25 +569,63 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
-      ps->OpenTags.push(name);
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       return;
       }
     parameter = new ModuleParameter;
     int attrCount = XML_GetSpecifiedAttributeCount(ps->Parser);
-    if (attrCount == 2 && 
-        (strcmp(attrs[0], "multiple") == 0) &&
-        (strcmp(attrs[1], "true") == 0))
+
+    // Parse attribute pairs
+    parameter->SetCPPType("std::string");
+    parameter->SetType("scalar");
+    for (int attr=0; attr < (attrCount / 2); attr++)
       {
-      parameter->SetMultiple(attrs[1]);
-      parameter->SetCPPType("std::vector<std::string>");
-      parameter->SetArgType("std::string");
-      }
-    else
-      {
-      parameter->SetCPPType("std::string");
+      if ((strcmp(attrs[2*attr], "multiple") == 0))
+        {
+        if ((strcmp(attrs[2*attr+1], "true") == 0) ||
+            (strcmp(attrs[2*attr+1], "false") == 0))
+          {
+          parameter->SetMultiple(attrs[2*attr+1]);
+          if (strcmp(attrs[2*attr+1], "true") == 0)
+            {
+            parameter->SetCPPType("std::vector<std::string>");
+            parameter->SetArgType("std::string");
+            }
+          }
+        else
+          {
+          std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid argument for the attribute \"multiple\". Only \"true\" and \"false\" are accepted.");
+          if (ps->ErrorDescription.size() == 0)
+            {
+            ps->ErrorDescription = error;
+            ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+            ps->Error = true;
+            }
+          ps->OpenTags.push(name);
+          return;
+          }
+        }
+      else if ((strcmp(attrs[2*attr], "fileExtensions") == 0))
+        {
+        parameter->SetFileExtensionsAsString(attrs[2*attr+1]);
+        }
+      else
+        {
+        std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr]) + "\" is not a valid attribute for \"" + name + "\". Only \"multiple\" and \"fileExtensions\" are accepted.");
+        if (ps->ErrorDescription.size() == 0)
+          {
+          ps->ErrorDescription = error;
+          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+          ps->Error = true;
+          }
+        ps->OpenTags.push(name);
+        return;
+        }
       }
     parameter->SetTag(name);
     }
@@ -527,9 +634,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -554,9 +664,12 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
@@ -574,13 +687,21 @@ startElement(void *userData, const char *element, const char **attrs)
             (strcmp(attrs[2*attr+1], "false") == 0))
           {
           parameter->SetMultiple(attrs[2*attr+1]);
+          if (strcmp(attrs[2*attr+1], "true") == 0)
+            {
+            parameter->SetCPPType("std::vector<std::string>");
+            parameter->SetArgType("std::string");
+            }
           }
         else
           {
           std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid argument for the attribute \"multiple\". Only \"true\" and \"false\" are accepted.");
-          ps->ErrorDescription = error;
-          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-          ps->Error = true;
+          if (ps->ErrorDescription.size() == 0)
+            {
+            ps->ErrorDescription = error;
+            ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+            ps->Error = true;
+            }
           ps->OpenTags.push(name);
           return;
           }
@@ -597,13 +718,32 @@ startElement(void *userData, const char *element, const char **attrs)
           }
         else
           {
-          std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid image type. Only \"scalar\", \"label\", \"vector\", \"diffusion-weighted\" and \"tensor\" are accepted.");
-          ps->ErrorDescription = error;
-          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-          ps->Error = true;
+          std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid value for the attribute \"" + "type" + "\". Only \"scalar\", \"label\" , \"tensor\", \"diffusion-weighted\"  and \"vector\" are accepted.");
+          if (ps->ErrorDescription.size() == 0)
+            {
+            ps->ErrorDescription = error;
+            ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+            ps->Error = true;
+            }
           ps->OpenTags.push(name);
           return;
           }
+        }
+      else if ((strcmp(attrs[2*attr], "fileExtensions") == 0))
+        {
+        parameter->SetFileExtensionsAsString(attrs[2*attr+1]);
+        }
+      else
+        {
+        std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr]) + "\" is not a valid attribute for \"" + name + "\". Only \"multiple\", \"fileExtensions\" and \"type\" are accepted.");
+        if (ps->ErrorDescription.size() == 0)
+          {
+          ps->ErrorDescription = error;
+          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+          ps->Error = true;
+          }
+        ps->OpenTags.push(name);
+        return;
         }
       }
     parameter->SetTag(name);
@@ -613,39 +753,66 @@ startElement(void *userData, const char *element, const char **attrs)
     if (!group || (ps->OpenTags.top() != "parameters"))
       {
       std::string error("ModuleDescriptionParser Error: <" + name + "> can only be used inside <parameters> but was found inside <" + ps->OpenTags.top() + ">");
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
       ps->OpenTags.push(name);
       return;
       }
     parameter = new ModuleParameter;
     int attrCount = XML_GetSpecifiedAttributeCount(ps->Parser);
-    if (attrCount == 2 && 
-        (strcmp(attrs[0], "multiple") == 0) &&
-        (strcmp(attrs[1], "true") == 0))
+
+    // Parse attribute pairs
+    parameter->SetCPPType("std::string");
+    parameter->SetType("scalar");
+    for (int attr=0; attr < (attrCount / 2); attr++)
       {
-      parameter->SetMultiple(attrs[1]);
-      parameter->SetCPPType("std::vector<std::string>");
-      parameter->SetArgType("std::string");
-      }
-    else
-      {
-      parameter->SetCPPType("std::string");
+      if ((strcmp(attrs[2*attr], "multiple") == 0))
+        {
+        if ((strcmp(attrs[2*attr+1], "true") == 0) ||
+            (strcmp(attrs[2*attr+1], "false") == 0))
+          {
+          parameter->SetMultiple(attrs[2*attr+1]);
+          if (strcmp(attrs[2*attr+1], "true") == 0)
+            {
+            parameter->SetCPPType("std::vector<std::string>");
+            parameter->SetArgType("std::string");
+            }
+          }
+        else
+          {
+          std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid argument for the attribute \"multiple\". Only \"true\" and \"false\" are accepted.");
+          if (ps->ErrorDescription.size() == 0)
+            {
+            ps->ErrorDescription = error;
+            ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+            ps->Error = true;
+            }
+          ps->OpenTags.push(name);
+          return;
+          }
+        }
+      else if ((strcmp(attrs[2*attr], "fileExtensions") == 0))
+        {
+        parameter->SetFileExtensionsAsString(attrs[2*attr+1]);
+        }
+      else
+        {
+        std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr]) + "\" is not a valid attribute for \"" + name + "\". Only \"multiple\" and \"fileExtensions\" are accepted.");
+        if (ps->ErrorDescription.size() == 0)
+          {
+          ps->ErrorDescription = error;
+          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+          ps->Error = true;
+          }
+        ps->OpenTags.push(name);
+        return;
+        }
       }
     parameter->SetTag(name);
-    }
-  else
-    {
-    // Warn if an unknown parameter type is found
-    if (ps->Depth == 2 && name != "label" && name != "description")
-      {
-      std::string warning("ModuleDescriptionParser Warning: <" + name + "> is an unknown parameter tag");
-      std::cout << warning << " at line " << XML_GetCurrentLineNumber(ps->Parser) << std::endl;
-      std::cout << "ModuleDescriptionParser Warning: <title> " << ps->CurrentDescription.GetTitle() << std::endl;
-      ps->OpenTags.push(name);
-      return;
-      }
     }
   ps->CurrentParameter = parameter;
   ps->CurrentGroup = group;
@@ -663,7 +830,13 @@ endElement(void *userData, const char *element)
 
   if (name == "parameters" && ps->Depth == 1)
     {
+
     ps->CurrentDescription.AddParameterGroup(*ps->CurrentGroup);
+    ps->CurrentGroup = 0;
+    ps->CurrentParameter = 0;
+    }
+  else if (name == "parameters" && ps->Depth != 1)
+    {
     ps->CurrentGroup = 0;
     ps->CurrentParameter = 0;
     }
@@ -769,10 +942,16 @@ endElement(void *userData, const char *element)
                         + std::string("> can only contain one character. \"") 
                         + temp
                         + std::string("\" has more than one character."));
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
-      ps->OpenTags.pop();
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
+      if (!ps->OpenTags.empty())
+        {
+        ps->OpenTags.pop();
+        }
       ps->Depth--;
       return;
       }
@@ -784,11 +963,17 @@ endElement(void *userData, const char *element)
                           + std::string(name)
                           + "> cannot be specified because an index has been specified for this parameter."
                           + std::string("\""));
-        ps->ErrorDescription = error;
-        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-        ps->Error = true;
-        ps->OpenTags.pop();
-        ps->Depth--;
+        if (ps->ErrorDescription.size() == 0)
+          {
+          ps->ErrorDescription = error;
+          ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+          ps->Error = true;
+          }
+        if (!ps->OpenTags.empty())
+          {
+          ps->OpenTags.pop();
+          ps->Depth--;
+          }
         return;
         }
       parameter->SetFlag(temp);
@@ -806,12 +991,18 @@ endElement(void *userData, const char *element)
                         + "> can only contain letters, numbers and underscores and must start with a _ or letter. The offending name is \""
                         + temp
                         + std::string("\""));
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
-      ps->OpenTags.pop();
-      ps->Depth--;
-      return;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
+        if (!ps->OpenTags.empty())
+          {
+          ps->OpenTags.pop();
+          ps->Depth--;
+          }
+        return;
       }
     if (!parameter->GetIndex().empty())
       {
@@ -819,11 +1010,17 @@ endElement(void *userData, const char *element)
                         + std::string(name)
                         + "> cannot be specified because an index has been specified for this parameter."
                         + std::string("\""));
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
-      ps->OpenTags.pop();
-      ps->Depth--;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
+        if (!ps->OpenTags.empty())
+          {
+          ps->OpenTags.pop();
+          ps->Depth--;
+          }
       return;
       }
     parameter->SetLongFlag(temp);
@@ -843,11 +1040,17 @@ endElement(void *userData, const char *element)
                         + "> can only contain letters, numbers and underscores and must start with an _ or letter. The offending name is \""
                         + temp
                         + std::string("\""));
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
-      ps->OpenTags.pop();
-      ps->Depth--;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
+        if (!ps->OpenTags.empty())
+          {
+          ps->OpenTags.pop();
+          ps->Depth--;
+          }
       return;
       }
     parameter->SetName(temp);
@@ -952,11 +1155,17 @@ endElement(void *userData, const char *element)
                         + std::string(name)
                         + "> cannot be specified because a <longflag> and/or <flag> has been specified for this parameter."
                         + std::string("\""));
-      ps->ErrorDescription = error;
-      ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
-      ps->Error = true;
-      ps->OpenTags.pop();
-      ps->Depth--;
+      if (ps->ErrorDescription.size() == 0)
+        {
+        ps->ErrorDescription = error;
+        ps->ErrorLine = XML_GetCurrentLineNumber(ps->Parser);
+        ps->Error = true;
+        }
+        if (!ps->OpenTags.empty())
+          {
+          ps->OpenTags.pop();
+          ps->Depth--;
+          }
       return;
       }
     std::string temp = ps->LastData[ps->Depth];
@@ -985,8 +1194,11 @@ endElement(void *userData, const char *element)
     trimLeadingAndTrailing(temp);
     parameter->SetStep(temp);
     }
-  ps->OpenTags.pop();
-  ps->Depth--;
+  if (!ps->OpenTags.empty())
+    {
+    ps->OpenTags.pop();
+    ps->Depth--;
+    }
 }
 
 void

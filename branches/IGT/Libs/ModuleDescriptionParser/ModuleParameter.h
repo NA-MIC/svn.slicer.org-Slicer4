@@ -219,6 +219,15 @@ public:
     return this->Multiple;
   }
 
+  virtual void SetFileExtensionsAsString(const std::string &extensions);
+
+  virtual std::string GetFileExtensionsAsString() const
+  {
+    return this->FileExtensionsAsString;
+  }
+
+  virtual const std::vector<std::string> &GetFileExtensions() const;
+
   virtual void SetCoordinateSystem(const std::string &coordinateSystem)
   {
     this->CoordinateSystem = coordinateSystem;
@@ -229,7 +238,7 @@ public:
     return this->CoordinateSystem;
   }
 
-  const virtual std::vector<std::string> &GetElements() const
+  virtual const std::vector<std::string> &GetElements() const
   {
     return this->Elements;
   }
@@ -262,6 +271,8 @@ private:
   std::string Channel;
   std::string Index;
   std::string Multiple;
+  std::string FileExtensionsAsString;
+  mutable std::vector<std::string> FileExtensions;
   std::string CoordinateSystem;
   std::vector<std::string> Elements;
 };

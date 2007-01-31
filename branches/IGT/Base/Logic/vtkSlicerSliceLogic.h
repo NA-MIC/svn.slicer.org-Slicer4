@@ -43,7 +43,6 @@
 #include "vtkImageBlend.h"
 
 class vtkImageData;
-class vtkPlaneSource;
 class vtkMRMLModelDisplayNode;
 
 class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic 
@@ -131,6 +130,12 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
                                   unsigned long /*event*/, 
                                   void * /*callData*/ );
   virtual void ProcessMRMLEvents () { this->ProcessMRMLEvents( NULL, vtkCommand::NoEvent, NULL ); };
+
+  // Description:
+  // process logic events
+  virtual void ProcessLogicEvents ( vtkObject * /*caller*/, 
+                                  unsigned long /*event*/, 
+                                  void * /*callData*/ ) {this->ProcessLogicEvents();};
   void ProcessLogicEvents(); 
 
   // Description:
@@ -173,7 +178,6 @@ protected:
   vtkImageBlend *Blend;
 
   vtkMRMLModelNode *SliceModelNode;
-  vtkPlaneSource  *PlaneSource;
   vtkMRMLModelDisplayNode *SliceModelDisplayNode;
 
   void CreateSliceModel();

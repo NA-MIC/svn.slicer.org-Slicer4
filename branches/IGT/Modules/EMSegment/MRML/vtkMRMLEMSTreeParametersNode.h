@@ -1,5 +1,5 @@
-#ifndef __vtkMRMLEMSTreeParameters_h
-#define __vtkMRMLEMSTreeParameters_h
+#ifndef __vtkMRMLEMSTreeParametersNode_h
+#define __vtkMRMLEMSTreeParametersNode_h
 
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
@@ -33,7 +33,7 @@ public:
 
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() {return "EMSTreeParameters";};
+  virtual const char* GetNodeTagName() {return "EMSTreeParameters";}
 
   // Description:
   // Updates this node if it depends on other nodes
@@ -49,17 +49,17 @@ public:
   virtual void SynchronizeNumberOfTargetInputChannels();
 
   // reference to algorithm global parameters
-  vtkSetStringMacro(GlobalParametersNodeID);
+  vtkSetReferenceStringMacro(GlobalParametersNodeID);
   vtkGetStringMacro(GlobalParametersNodeID);
   virtual vtkMRMLEMSGlobalParametersNode* GetGlobalParametersNode();
 
   // additional parameters valid for leaf nodes
-  vtkSetStringMacro(LeafParametersNodeID);
+  vtkSetReferenceStringMacro(LeafParametersNodeID);
   vtkGetStringMacro(LeafParametersNodeID);
   virtual vtkMRMLEMSTreeParametersLeafNode* GetLeafParametersNode();
   
   // additional parameters valid for parent nodes
-  vtkSetStringMacro(ParentParametersNodeID);
+  vtkSetReferenceStringMacro(ParentParametersNodeID);
   vtkGetStringMacro(ParentParametersNodeID);
   virtual vtkMRMLEMSTreeParametersParentNode* GetParentParametersNode();
 
@@ -121,4 +121,3 @@ protected:
 };
 
 #endif
-

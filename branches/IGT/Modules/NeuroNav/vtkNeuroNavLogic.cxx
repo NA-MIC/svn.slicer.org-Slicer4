@@ -21,12 +21,15 @@
 #include "vtkCylinderSource.h"
 
 
+//#include "igstkAuroraTracker.h"
+
+
 vtkCxxRevisionMacro(vtkNeuroNavLogic, "$Revision: 1.9.12.1 $");
 vtkStandardNewMacro(vtkNeuroNavLogic);
 
 vtkNeuroNavLogic::vtkNeuroNavLogic()
 {
-
+//  igstk::RealTimeClock::Initialize();
 }
 
 

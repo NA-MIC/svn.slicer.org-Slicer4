@@ -42,6 +42,12 @@ Version:   $Revision: 1.2 $
 #include <algorithm>
 #include <set>
 
+#ifdef _WIN32
+#else
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
 struct DigitsToCharacters
 {
   char operator() (char in)
@@ -95,10 +101,47 @@ vtkCommandLineModuleLogic
 ::ConstructTemporaryFileName(const std::string& tag,
                              const std::string& type,
                              const std::string& name,
+                             const std::vector<std::string>& extensions,
                              bool isCommandLineModule) const
 {
   std::string fname = name;
+  std::string pid;
+  std::ostringstream pidString;
 
+  // Constructing a temporary filename from a node involves:
+  //
+  // 1. If the consumer of the file can communicate directly with the
+  // MRML scene, then the node is encoded as slicer:%p/%p where the
+  // first pointer is the address of the scene which contains the node
+  // and the second pointer is the pointer to the node.
+  //
+  // 2. If the consumer of the file cannot communicate directly with
+  // the MRML scene, then a real temporary filename is constructed.
+  // The filename will point to the Temporary directory defined for
+  // Slicer. THe filename will be unique to the process (multiple
+  // running instances of slicer will not collide).  The filename
+  // will be unique to the node in the process (the same node will be
+  // encoded to the same filename every time within that running
+  // instance of Slicer).  This last point is an optimization to
+  // minimize the number of times a file is written when running a
+  // module.  However, if we change the execution model such that more
+  // than one module can run at the same time within the same Slicer
+  // process, then this encoding will need to be changed to be unique
+  // per module execution.
+  //
+
+  
+  // Encode process id into a string.  To avoid confusing the
+  // Archetype reader, convert the numbers in pid to characters [0-9]->[A-J]
+#ifdef _WIN32
+  pidString << GetCurrentProcessId();
+#else
+  pidString << getpid();
+#endif
+  pid = pidString.str();
+  std::transform(pid.begin(), pid.end(), pid.begin(), DigitsToCharacters());
+
+  
   if (tag == "image")
     {
     if (isCommandLineModule || (type != "scalar" && type != "label"))
@@ -111,7 +154,15 @@ vtkCommandLineModuleLogic
       std::transform(fname.begin(), fname.end(),
                      fname.begin(), DigitsToCharacters());
       
-      fname = this->TemporaryDirectory + "/" + fname + ".nrrd";
+      fname = this->TemporaryDirectory + "/" + fname
+        + "_" + pid;
+
+      std::string ext = ".nrrd";
+      if (extensions.size() != 0)
+        {
+        ext = extensions[0];
+        }
+      fname = fname + ext;
       }
     else
       {
@@ -141,7 +192,15 @@ vtkCommandLineModuleLogic
     std::transform(fname.begin(), fname.end(),
                    fname.begin(), DigitsToCharacters());
     
-    fname = this->TemporaryDirectory + "/" + fname + ".vtk";
+    fname = this->TemporaryDirectory + "/" + fname
+      + "_" + pid;
+
+    std::string ext = ".vtkp";
+    if (extensions.size() != 0)
+      {
+      ext = extensions[0];
+      }
+    fname = fname + ext;
     }
 
     
@@ -280,6 +339,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
           = this->ConstructTemporaryFileName((*pit).GetTag(),
                                              (*pit).GetType(),
                                              (*pit).GetDefault(),
+                                             (*pit).GetFileExtensions(),
                                              isCommandLine);
 
         filesToDelete.insert(fname);
@@ -348,12 +408,20 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       
       if (hasFlag)
         {
-        if ((*pit).GetTag() != "boolean" && (*pit).GetTag() != "image"
-            && (*pit).GetTag() != "point" && (*pit).GetTag() != "geometry")
+        if ((*pit).GetTag() != "boolean"
+            && (*pit).GetTag() != "file" && (*pit).GetTag() != "directory"
+            && (*pit).GetTag() != "string"
+            && (*pit).GetTag() != "integer-vector"
+            && (*pit).GetTag() != "float-vector"
+            && (*pit).GetTag() != "double-vector"
+            && (*pit).GetTag() != "string-vector"
+            && (*pit).GetTag() != "image" && (*pit).GetTag() != "point"
+            && (*pit).GetTag() != "geometry")
           {
           // simple parameter, write flag and value
           commandLineAsString.push_back(prefix + flag);
           commandLineAsString.push_back((*pit).GetDefault());
+          continue;
           }
         if ((*pit).GetTag() == "boolean")
           {
@@ -362,6 +430,22 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
             {
             commandLineAsString.push_back(prefix + flag);
             }
+          continue;
+          }
+        if ((*pit).GetTag() == "file" || (*pit).GetTag() == "directory"
+            || (*pit).GetTag() == "string"
+            || (*pit).GetTag() == "integer-vector"
+            || (*pit).GetTag() == "float-vector"
+            || (*pit).GetTag() == "double-vector"
+            || (*pit).GetTag() == "string-vector")
+          {
+          // Only write out the flag if value is not empty
+          if ((*pit).GetDefault() != "")
+            {
+            commandLineAsString.push_back(prefix + flag);
+            commandLineAsString.push_back((*pit).GetDefault());
+            }
+          continue;
           }
         if ((*pit).GetTag() == "image" || (*pit).GetTag() == "geometry")
           {
@@ -381,6 +465,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
             commandLineAsString.push_back(prefix + flag);
             commandLineAsString.push_back( (*id2fn).second );
             }
+          continue;
           }
         if ((*pit).GetTag() == "point")
           {
@@ -430,6 +515,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
                         << std::endl;
               }
             }
+          continue;
           }
         }
       }
@@ -461,10 +547,42 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
   std::map<int, ModuleParameter>::const_iterator iit;
   for (iit = indexmap.begin(); iit != indexmap.end(); ++iit)
     {
+    // Most parameter types have a reasonable default. However,
+    // parameters like image, geometry, file, and directory have no
+    // defaults that are reasonable for index parameters
     if ((*iit).second.GetTag() != "image"
-        && (*iit).second.GetTag() != "geometry")
+        && (*iit).second.GetTag() != "geometry"
+        && (*iit).second.GetTag() != "file"
+        && (*iit).second.GetTag() != "directory"
+        && (*iit).second.GetTag() != "string"
+        && (*iit).second.GetTag() != "integer-vector"
+        && (*iit).second.GetTag() != "float-vector"
+        && (*iit).second.GetTag() != "double-vector"
+        && (*iit).second.GetTag() != "string-vector")
       {
       commandLineAsString.push_back((*iit).second.GetDefault());
+      }
+    else if ((*iit).second.GetTag() == "file"
+             || (*iit).second.GetTag() == "directory"
+             || (*iit).second.GetTag() == "string"
+             || (*iit).second.GetTag() == "integer-vector"
+             || (*iit).second.GetTag() == "float-vector"
+             || (*iit).second.GetTag() == "double-vector"
+             || (*iit).second.GetTag() == "string-vector")
+      {
+      if ((*iit).second.GetDefault() != "")
+        {
+        commandLineAsString.push_back((*iit).second.GetDefault());
+        }
+      else
+        {
+        vtkErrorMacro("No value assigned to \""
+                      << (*iit).second.GetLabel().c_str() << "\"");
+
+        node->SetStatus(vtkMRMLCommandLineModuleNode::Idle, false);
+        this->GetApplicationLogic()->RequestModified( node );
+        return;
+        }
       }
     else
       {

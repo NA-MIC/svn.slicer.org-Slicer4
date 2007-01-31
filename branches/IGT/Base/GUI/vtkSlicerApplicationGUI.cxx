@@ -69,6 +69,7 @@ vtkCxxRevisionMacro(vtkSlicerApplicationGUI, "$Revision: 1.0 $");
 //#define TOOLBAR_DEBUG
 //#define VIEWCONTROL_DEBUG
 //#define SLICEVIEWER_DEBUG
+
 //#define MENU_DEBUG
 //#define SLICESCONTROL_DEBUG
 //#define MODULECHOOSE_DEBUG
@@ -115,6 +116,7 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
     //--- Main viewer, 3 main slice viewers and collection.
     this->ViewerWidget = NULL;
     this->FiducialListWidget = NULL;
+
     this->MainSliceGUI0 = NULL;
     this->MainSliceGUI1 = NULL;
     this->MainSliceGUI2 = NULL;
@@ -141,36 +143,6 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
 //---------------------------------------------------------------------------
 vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
 {
-#ifndef VIEWCONTROL_DEBUG
-    if ( this->ViewControlGUI )
-      {
-      this->ViewControlGUI->RemoveSliceGUIObservers();
-      this->ViewControlGUI->SetAndObserveMRMLScene ( NULL );
-      this->ViewControlGUI->SetApplicationGUI(NULL);
-      this->ViewControlGUI->SetApplication(NULL);
-      this->ViewControlGUI->Delete ( );
-      this->ViewControlGUI = NULL;
-    }
-#endif
-#ifndef LOGODISPLAY_DEBUG
-    if ( this->LogoDisplayGUI ) {
-      this->LogoDisplayGUI->Delete ( );
-      this->LogoDisplayGUI = NULL;
-    }
-#endif
-#ifndef SLICESCONTROL_DEBUG
-    if ( this->SlicesControlGUI ) {
-      this->SlicesControlGUI->SetAndObserveMRMLScene ( NULL );
-      this->SlicesControlGUI->Delete ( );
-      this->SlicesControlGUI = NULL;
-    }
-#endif
-#ifndef TOOLBAR_DEBUG
-    if ( this->ApplicationToolbar ) {
-      this->ApplicationToolbar->Delete ( );
-      this->ApplicationToolbar = NULL;
-    }
-#endif
     if ( this->SliceGUICollection )
       {
         this->SliceGUICollection->RemoveAllItems();
@@ -251,17 +223,38 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI:: DeleteComponentGUIs()
 {
-#ifndef TOOLBAR_DEBUG
-   this->ApplicationToolbar->Delete();
-#endif
 #ifndef VIEWCONTROL_DEBUG
-   this->ViewControlGUI->Delete();
-#endif
-#ifndef SLICESCONTROL_DEBUG
-   this->SlicesControlGUI->Delete();
+    if ( this->ViewControlGUI )
+      {
+      this->ViewControlGUI->RemoveSliceGUIObservers();
+      this->ViewControlGUI->SetAndObserveMRMLScene ( NULL );
+      this->ViewControlGUI->SetApplicationGUI ( NULL);
+      this->ViewControlGUI->SetApplication ( NULL );
+      this->ViewControlGUI->Delete ( );
+      this->ViewControlGUI = NULL;
+      }
 #endif
 #ifndef LOGODISPLAY_DEBUG
-   this->LogoDisplayGUI->Delete();
+    if ( this->LogoDisplayGUI )
+      {
+      this->LogoDisplayGUI->Delete ( );
+      this->LogoDisplayGUI = NULL;
+      }
+#endif
+#ifndef SLICESCONTROL_DEBUG
+    if ( this->SlicesControlGUI )
+      {
+      this->SlicesControlGUI->UnbuildGUI ( );
+      this->SlicesControlGUI->Delete ( );
+      this->SlicesControlGUI = NULL;
+      }
+#endif
+#ifndef TOOLBAR_DEBUG
+    if ( this->ApplicationToolbar )
+      {
+      this->ApplicationToolbar->Delete ( );
+      this->ApplicationToolbar = NULL;
+      }
 #endif
 }
 
@@ -300,6 +293,17 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
 
+        if (  this->GetMRMLScene()->GetErrorCode() != 0 ) 
+          {
+          vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+          dialog->SetParent (  this->MainSlicerWindow );
+          dialog->SetStyleToMessage();
+          std::string msg = this->GetMRMLScene()->GetErrorMessage();
+          dialog->SetText(msg.c_str());
+          dialog->Create ( );
+          dialog->Invoke();
+          dialog->Delete();
+          }
       }
     return;
 }
@@ -328,6 +332,17 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
 
+        if (  this->GetMRMLScene()->GetErrorCode() != 0 ) 
+          {
+          vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+          dialog->SetParent (  this->MainSlicerWindow );
+          dialog->SetStyleToMessage();
+          std::string msg = this->GetMRMLScene()->GetErrorMessage();
+          dialog->SetText(msg.c_str());
+          dialog->Create ( );
+          dialog->Invoke();
+          dialog->Delete();
+          }
       }
     return;
 }
@@ -345,7 +360,8 @@ void vtkSlicerApplicationGUI::ProcessCloseSceneCommand()
   {
     if (this->GetMRMLScene()) 
       {
-      this->MRMLScene->Clear();
+      //this->MRMLScene->Clear();
+      this->MRMLScene->Clear(false);
       }
   }
   dialog->Delete();
@@ -568,7 +584,9 @@ void vtkSlicerApplicationGUI::Exit ( )
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::SelectModule ( const char *moduleName )
 {
+#ifndef TOOLBAR_DEBUG
   this->GetApplicationToolbar()->GetModuleChooseGUI()->SelectModule(moduleName);
+#endif
 }
 
 //---------------------------------------------------------------------------
@@ -659,9 +677,11 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             // after SliceGUIs are created, the ViewControlGUI
             // needs to observe them to feed its magnifier
             // Zoom Widget.
+#ifndef VIEWCONTROL_DEBUG
             vcGUI->UpdateFromMRML();
             vcGUI->UpdateSliceGUIInteractorStyles();
-            
+#endif
+
 #ifndef MENU_DEBUG
             // Construct menu bar and set up global key bindings
             // 
@@ -744,6 +764,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::SetCurrentModuleToHome (  )
 {
+#ifndef TOOLBAR_DEBUG
   if ( this->GetApplication() != NULL )
       {
       if ( this->GetApplicationToolbar()->GetModuleChooseGUI() )
@@ -758,6 +779,7 @@ void vtkSlicerApplicationGUI::SetCurrentModuleToHome (  )
           }
         }
       }
+#endif
 }
 
 
@@ -1575,7 +1597,9 @@ void vtkSlicerApplicationGUI::SetAndObserveMainSliceLogic ( vtkSlicerSliceLogic 
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::PopulateModuleChooseList ( )
 {
+#ifndef TOOLBAR_DEBUG
   this->GetApplicationToolbar()->GetModuleChooseGUI()->Populate();
+#endif
 }
 
 
