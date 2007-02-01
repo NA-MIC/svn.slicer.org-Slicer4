@@ -28,6 +28,8 @@
 #include "vtkMRMLModelNode.h"
 #include "vtkMRML.h"
 #include "vtkMRMLVolumeNode.h"
+#include "vtkMRMLScalarVolumeNode.h"
+#include "vtkMRMLVectorVolumeNode.h"
 
 #include "vtkPoints.h"
 #include "vtkMatrix4x4.h"
@@ -37,9 +39,13 @@
 #include "vtkSlicerColorLogic.h"
 
 
+
 #ifdef USE_OPENTRACKER
 #include "OpenTracker.h"
 #include "common/CallbackModule.h"
+#include "Image.h"
+#include <arpa/inet.h>
+#include "stdio.h"
 using namespace ot;
 #endif
 
@@ -59,6 +65,8 @@ public:
     vtkGetObjectMacro(LandmarkTransformMatrix,vtkMatrix4x4);
     vtkGetObjectMacro(LocatorNormalTransform,vtkTransform);
     vtkGetObjectMacro(PixelArray,vtkUnsignedShortArray);
+    vtkGetObjectMacro(scalarNode,vtkMRMLScalarVolumeNode);
+    //vtkGetObjectMacro(OTInputImage,short);
 
     vtkSetMacro(UseRegistration,int);
     vtkGetMacro(UseRegistration,int);
@@ -90,6 +98,9 @@ public:
 
     // RSierra, S DiMaio; adopted this funtion from vtkSlicerVolumesLogic.cxx, Jan 10 2007
     vtkMRMLVolumeNode* AddRealTimeVolumeNode(const char* volname);
+
+    //simond
+    short                   OTInputImage[256*256];
 
 protected:
 
@@ -124,7 +135,8 @@ protected:
     void Cross(float *a, float *b, float *c);
 
   //simond
-  vtkUnsignedShortArray *PixelArray;
+  vtkMRMLScalarVolumeNode *scalarNode;
+  vtkUnsignedShortArray   *PixelArray;
 };
 
 #endif

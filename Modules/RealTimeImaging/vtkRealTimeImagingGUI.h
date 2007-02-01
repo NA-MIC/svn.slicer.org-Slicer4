@@ -159,7 +159,6 @@ class VTK_REALTIMEIMAGING_EXPORT vtkRealTimeImagingGUI : public vtkSlicerModuleG
     void BuildGUIForTrackingFrame ();
     void BuildGUIForServerFrame ();
     void BuildGUIForRegistrationFrame ();
-
 };
 
 #endif

@@ -7,6 +7,7 @@ SET(RealTimeImaging_SRCS
   # module
   vtkRealTimeImagingLogic.cxx
   vtkRealTimeImagingGUI.cxx
+  #Image.cxx
   )
 
 #
@@ -38,6 +39,9 @@ INCLUDE_DIRECTORIES(
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
 VTK_WRAP_TCL3(RealTimeImaging RealTimeImaging_TCL_SRCS "${RealTimeImaging_SRCS}" "")
+#Simond
+#INCLUDE("${KWWidgets_CMAKE_DIR}/KWWidgetsWrappingMacros.cmake")
+#KWWidgets_WRAP_TCL(RealTimeImaging RealTimeImaging_TCL_SRCS "${RealTimeImaging_SRCS}" "")
 
 #
 # Build the library
