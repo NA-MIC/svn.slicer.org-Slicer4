@@ -134,6 +134,9 @@ extern "C" int Igt_Init(Tcl_Interp *interp);
 #ifndef EMSEG_DEBUG
 extern "C" int Emsegment_Init(Tcl_Interp *interp);
 #endif
+#ifndef REALTIMEIMAGING_DEBUG
+extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
+#endif
 extern "C" int Gradientanisotropicdiffusionfilter_Init(Tcl_Interp *interp);
 extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
 extern "C" int Queryatlas_Init(Tcl_Interp *interp);
@@ -446,6 +449,10 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef EMSEG_DEBUG
     Emsegment_Init(interp);
 #endif
+#ifndef REALTIMEIMAGING_DEBUG
+    Realtimeimaging_Init(interp);
+#endif
+
     Gradientanisotropicdiffusionfilter_Init(interp);
     Slicertractographydisplay_Init(interp);
     Queryatlas_Init(interp);

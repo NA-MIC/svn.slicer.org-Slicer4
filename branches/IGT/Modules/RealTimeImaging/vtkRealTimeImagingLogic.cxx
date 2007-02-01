@@ -56,6 +56,7 @@ vtkRealTimeImagingLogic::vtkRealTimeImagingLogic()
     this->LocatorNormalTransform = vtkTransform::New();
 
 #ifdef USE_OPENTRACKER
+    Event::registerGenericTypeName((Image*)NULL,"MedScanImage");
     cout << "Using OpenTracker" << endl;
 #endif
 }
@@ -63,10 +64,10 @@ vtkRealTimeImagingLogic::vtkRealTimeImagingLogic()
 vtkMRMLVolumeNode* vtkRealTimeImagingLogic::AddRealTimeVolumeNode (const char* volname)
 {
   vtkMRMLVolumeDisplayNode *displayNode = vtkMRMLVolumeDisplayNode::New();
-  vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
+  scalarNode = vtkMRMLScalarVolumeNode::New();
   vtkImageData *newvolume=vtkImageData::New();
 
-  newvolume->SetExtent(0,9,0,9,0,0);
+  newvolume->SetExtent(0,255,0,255,0,0);
   newvolume->SetScalarTypeToUnsignedShort ();
   newvolume->SetNumberOfScalarComponents (1);
   newvolume->UpdateInformation();
@@ -74,7 +75,7 @@ vtkMRMLVolumeNode* vtkRealTimeImagingLogic::AddRealTimeVolumeNode (const char* v
   // Create volume data.
   PixelArray = (vtkUnsignedShortArray*)newvolume->GetPointData()->GetScalars();
 
-  for(int i=0; i<10*10; i++)
+  for(int i=0; i<256*256; i++)
   {
     PixelArray->SetValue(i,i);
   }
@@ -83,8 +84,8 @@ vtkMRMLVolumeNode* vtkRealTimeImagingLogic::AddRealTimeVolumeNode (const char* v
 
   scalarNode->SetAndObserveImageData(newvolume);
 
-  scalarNode->SetSpacing(10.0,10.0,10.0);
-  scalarNode->SetOrigin(-4.5*10,-4.5*10,0);
+  scalarNode->SetSpacing(1.0,1.0,1.0);
+  scalarNode->SetOrigin(-128,-128,0);
   scalarNode->SetName(volname);
 
   scalarNode->Modified();
@@ -185,8 +186,28 @@ void vtkRealTimeImagingLogic::Init(char *configfile)
 
     callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);    // sets the callback function
 
-
     context->start();
+
+    //simond
+    /*
+    static int toggle=0;
+
+    for(int i=0; i<10*10; i++)
+    {
+      if(toggle)
+      {
+        PixelArray->SetValue(i,i);
+      }
+      else
+        {
+          PixelArray->SetValue(i,99-i);
+        }
+    }
+    if(toggle==0) toggle=1;
+    else toggle=0;
+    scalarNode->Modified();
+    cout << "Image update" << endl;
+    */
 #else
     // TODO: open a file
 
@@ -242,7 +263,9 @@ void vtkRealTimeImagingLogic::callbackF(const Node&, const Event &event, void *d
     float orientation[4];
     float norm[3];
     float transnorm[3];
-    int j;
+    int   j;
+    Image image_attrib;
+    int   xsize, ysize;
 
     vtkRealTimeImagingLogic *VOT=(vtkRealTimeImagingLogic *)data;
 
@@ -288,6 +311,30 @@ void vtkRealTimeImagingLogic::callbackF(const Node&, const Event &event, void *d
     }
 
     VOT->LocatorMatrix->SetElement(3,3,1);
+
+#ifdef USE_OPENTRACKER
+    // Check for an image attribute
+    if(event.hasAttribute("image"))
+    {
+      // Get the image attribute.
+      image_attrib=event.getAttribute((Image*)NULL,"image");
+
+      // Get the image size attributes from the event.
+      if(event.hasAttribute("xsize"))
+        xsize=256; //event.getAttribute(string("xsize"),0);
+      else xsize=0;
+      if(event.hasAttribute("ysize"))
+        ysize=256; //event.getAttribute(string("ysize"),0);
+      else ysize=0;
+
+      // Check image dimensions are 256x256xshort.
+      if(xsize==256 && ysize==256 && (image_attrib.size()==256*256*sizeof(short)))
+      {
+        // Get a pointer to the image array and transfer to storage.
+        memcpy(VOT->OTInputImage, (short*)image_attrib.image_ptr, 256*256*sizeof(short));
+      }
+    }
+#endif
 }
 #endif
 
@@ -552,4 +599,129 @@ void vtkRealTimeImagingLogic::PrintSelf(ostream& os, vtkIndent indent)
     os << indent << "vtkRealTimeImagingLogic:             " << this->GetClassName() << "\n";
 
 }
+
+//simond: Everything from here on down should be in Image.cxx.
+//simond: There were build errors with a separate file - need to figure out why.
+ Image::Image(){
+   this->SetSize(256,256,2);
+ };
+
+
+ Image::Image(int x,int y, int p,void* pixel_data)
+ {
+   xsize=x;
+   pixelsize=p;
+   ysize=y;
+   image_ptr=(void*)malloc(x*y*p);
+    //void* tmp=(void*)calloc(x*y*p,1);
+    //memcpy(image_ptr,tmp,x*y*p);
+   memcpy(image_ptr,pixel_data,x*y*p);
+ }
+
+
+ void Image::SetSize(int x,int y,int p)
+ {
+   xsize=x;
+   ysize=y;
+   pixelsize=p;
+ }
+ 
+std::ostream& operator<<(std::ostream& os, const Image& object)
+{
+
+  os << "[" << object.xsize << ":" << object.ysize << ":" << object.pixelsize << ":";
+
+  short *tmp_short;
+  long *tmp_long;
+
+
+
+
+  if(object.pixelsize==2)
+  {
+    tmp_short=(short*)malloc(object.size());
+    memcpy(tmp_short,object.image_ptr,object.size());
+    for(int i=0;i<object.xsize*object.ysize;i++)
+      tmp_short[i]=htons(tmp_short[i]);
+    os.write((char*)tmp_short,object.size());
+    free(tmp_short);
+  }
+
+  if(object.pixelsize==4)
+  {
+    tmp_long=(long*)malloc(object.size());
+    memcpy(tmp_long,object.image_ptr,object.size());
+    for(int i=0;i<object.xsize*object.ysize;i++)
+      tmp_long[i]=htonl(tmp_long[i]);
+    os.write((char*)tmp_long,object.size());
+    free(tmp_long);
+  }
+
+
+
+
+
+  os << "]";
+
+    ///todo need to serialize the xdim, ydim and pixel size as well
+
+  return os;
+};
+
+
+  std::istream& operator>>(std::istream& is, Image& object)
+{
+  char c;
+  int size;
+
+  if (!(is >> c) || c != '['
+        || !(is >> object.xsize)
+        || !(is >> c) || c != ':'
+        || !(is >> object.ysize)
+        || !(is >> c) || c != ':'
+        || !(is >> object.pixelsize)
+        || !(is >> c) || c != ':')
+  {
+
+    is.setstate(std::ios_base::failbit);
+    return is;
+  }
+
+  size = object.xsize*object.ysize*object.pixelsize;
+  object.image_ptr=(void*)malloc(size);
+  is.read((char*)object.image_ptr,size);
+
+  short *tmp_short;
+  int *tmp_long;
+
+
+  tmp_short=(short*)object.image_ptr;
+  tmp_long=(int*)object.image_ptr;
+
+  if(object.pixelsize==2)
+  {
+
+    for(int i=0;i<object.size()/2;i++)
+      tmp_short[i]=ntohs(tmp_short[i]);
+  }
+
+  if(object.pixelsize==4)
+  {
+
+    for(int i=0;i<object.size()/2;i++)
+      tmp_long[i]=ntohl(tmp_long[i]);
+  }
+
+
+  if (!(is >> c) || c != ']')
+  {
+
+    is.setstate(std::ios_base::failbit);
+    return is;
+  }
+
+
+
+  return is;
+};
 

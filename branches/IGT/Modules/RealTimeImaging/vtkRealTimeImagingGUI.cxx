@@ -110,8 +110,6 @@ vtkRealTimeImagingGUI::vtkRealTimeImagingGUI ( )
 
     this->LocatorModelNode = NULL;
     this->LocatorModelDisplayNode = NULL;
-
-
 }
 
 
@@ -484,9 +482,9 @@ void vtkRealTimeImagingGUI::ProcessGUIEvents ( vtkObject *caller,
                 igtLogic->Init(filename);
                 vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
                 int rate = atoi(this->UpdateRateEntry->GetWidget()->GetValue ());
+
                 vtkKWTkUtilities::CreateTimerHandler (app, rate, this, "ProcessTimerEvents");
                 this->StopTimer = 0;
-
             }
         }
         else
@@ -671,7 +669,6 @@ void vtkRealTimeImagingGUI::ProcessTimerEvents ()
 {
     if (! this->StopTimer)
     {
-
         vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
         int rate = atoi(this->UpdateRateEntry->GetWidget()->GetValue ());
         vtkKWTkUtilities::CreateTimerHandler (app, rate, this, "ProcessTimerEvents");
@@ -729,21 +726,31 @@ void vtkRealTimeImagingGUI::ProcessTimerEvents ()
         //simond
         static int toggle=0;
         vtkRealTimeImagingLogic *logic = this->GetLogic();
-        vtkUnsignedShortArray *PArray = logic->GetPixelArray();
-
-        for(int i=0; i<10*10; i++)
-        {
+        vtkUnsignedShortArray   *PixelArray = logic->GetPixelArray();
+        vtkMRMLScalarVolumeNode *scalarNode = logic->GetscalarNode();
+        //short                   *OTInputImage = logic->GetOTInputImage();
+        //for(int i=0; i<10*10; i++)
+        //{
+/*
           if(toggle)
           {
-             PArray->SetValue(i,i);
-             toggle=0;
+             //PixelArray->SetValue(i,i);
+             memset(PixelArray->GetPointer(0), 255, 256*256*sizeof(short));
           }
           else
             {
-              PArray->SetValue(i,99-i);
-              toggle=1;
+              //PixelArray->SetValue(i,99-i);
+              // Transfer image to Pixel Array.
+              memcpy(PixelArray->GetPointer(0), OTInputImage, 256*256*sizeof(short));
+              //memset(PixelArray->GetPointer(0), 0, 256*256*sizeof(short));
             }
-        }
+        //}
+        if(toggle==0) toggle=1;
+        else toggle=0;
+*/
+        //PixelArray->Modified();
+        memcpy(PixelArray->GetPointer(0), logic->OTInputImage, 256*256*sizeof(short));
+        scalarNode->Modified();
     }
 }
 
