@@ -75,6 +75,8 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     virtual void Enter ( );
     virtual void Exit ( );
 
+    void Init();
+
   //BTX
   static void DataCallback(vtkObject *caller, 
                 unsigned long eid, void *clientData, void *callData);
