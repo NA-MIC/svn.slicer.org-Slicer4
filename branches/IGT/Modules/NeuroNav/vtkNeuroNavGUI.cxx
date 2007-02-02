@@ -504,15 +504,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             }
             else
             {
-
-                vtkKWMenuButton *mb = this->DeviceMenu->GetWidget();
-                this->DataManager->SetDevice(mb->GetValue());
-
-                this->DataManager->SetMRMLScene(this->GetMRMLScene());
                 this->DataManager->Init(filename);
-
-                vtkIGTDataStream *dataStream = vtkIGTDataStream::New();
-                this->DataManager->RegisterStreamDevice(0, dataStream);
 
                 int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue ());
                 this->DataManager->SetSpeed(sp);
@@ -638,7 +630,12 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
     else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
              && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
+        cout << "\nhiiiiiiiiiiiiiiiiiiiiiiii\n"; 
+
         int checked = this->LocatorCheckButton->GetSelectedState(); 
+
+        cout << "\n9999999999999999999999\n"; 
+
         const char *id = this->DataManager->GetMRMLModelId(0);
         vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(id); 
         vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
@@ -677,13 +674,24 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         }
 
     }
-
 } 
 
 
 
-void 
-vtkNeuroNavGUI::DataCallback(vtkObject *caller, 
+void vtkNeuroNavGUI::Init()
+{
+    vtkKWMenuButton *mb = this->DeviceMenu->GetWidget();
+    this->DataManager->SetDevice(mb->GetValue());
+
+    this->DataManager->SetMRMLScene(this->GetMRMLScene());
+
+    vtkIGTDataStream *dataStream = vtkIGTDataStream::New();
+    this->DataManager->RegisterStreamDevice(0, dataStream);
+}
+
+
+
+void vtkNeuroNavGUI::DataCallback(vtkObject *caller, 
             unsigned long eid, void *clientData, void *callData)
 {
     vtkNeuroNavGUI *self = reinterpret_cast<vtkNeuroNavGUI *>(clientData);
