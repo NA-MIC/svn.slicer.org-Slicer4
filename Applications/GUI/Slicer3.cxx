@@ -746,6 +746,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->AddModuleGUI ( neuronavGUI );
     neuronavGUI->BuildGUI ( );
     neuronavGUI->AddGUIObservers ( );
+    neuronavGUI->Init();
 #endif 
 
     // --- Transforms module
