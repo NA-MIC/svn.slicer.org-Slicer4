@@ -75,6 +75,7 @@ TARGET_LINK_LIBRARIES(IGT
   vtkCommonTCL
   vtkImagingTCL
   vtkFilteringTCL
+  vtkHybridTCL
   vtkIOTCL
   vtkGraphicsTCL
   vtkRenderingTCL
@@ -87,6 +88,7 @@ TARGET_LINK_LIBRARIES(IGT
   ITKBasicFilters
   ITKIO
   ITKDICOMParser
+  ${KWWidgets_LIBRARIES}
   )
 
 
