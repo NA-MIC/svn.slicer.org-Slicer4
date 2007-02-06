@@ -41,7 +41,7 @@
 #include "vtkGradientAnisotropicDiffusionFilterGUI.h"
 
 //#include "vtkSlicerTractographyDisplayLogic.h"
-#include "vtkSlicerTractographyDisplayGUI.h"
+//#include "vtkSlicerTractographyDisplayGUI.h"
 
 #include "vtkQueryAtlasLogic.h"
 #include "vtkQueryAtlasGUI.h"
@@ -71,12 +71,12 @@
 //#define VOLUMES_DEBUG
 //#define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
-//#define RealTimeImaging_DEBUG
+#define RealTimeImaging_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
-//#define EMSEG_DEBUG
-//#define REALTIMEIMAGING_DEBUG
-//#define MRABLATION_DEBUG
+#define EMSEG_DEBUG
+#define REALTIMEIMAGING_DEBUG
+#define MRABLATION_DEBUG
 //#define NEURONAV_DEBUG
 #define TRACTOGRAPHY_DEBUG
 
@@ -138,7 +138,7 @@ extern "C" int Emsegment_Init(Tcl_Interp *interp);
 extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
 #endif
 extern "C" int Gradientanisotropicdiffusionfilter_Init(Tcl_Interp *interp);
-extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
+// extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
 extern "C" int Queryatlas_Init(Tcl_Interp *interp);
 extern "C" int Slicerdaemon_Init(Tcl_Interp *interp);
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
@@ -454,7 +454,7 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
     Gradientanisotropicdiffusionfilter_Init(interp);
-    Slicertractographydisplay_Init(interp);
+//    Slicertractographydisplay_Init(interp);
     Queryatlas_Init(interp);
     Slicerdaemon_Init(interp);
     Commandlinemodule_Init(interp);
