@@ -10,7 +10,7 @@ SUBDIRS(
   QueryAtlas
 #  Tractography
 #  RealTimeImaging
-#  MRAblation
+  MRAblation
   NeuroNav
 #  WFEngineModule
 )
