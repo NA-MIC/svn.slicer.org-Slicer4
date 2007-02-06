@@ -4,15 +4,15 @@ SUBDIRS(
   CommandLineModule
   ScriptedModule
   GradientAnisotropicDiffusionFilter
-  EMSegment
+#  EMSegment
   SlicerDaemon
   Editor
   QueryAtlas
-  Tractography
-  RealTimeImaging
-  MRAblation
+#  Tractography
+#  RealTimeImaging
+#  MRAblation
   NeuroNav
-  WFEngineModule
+#  WFEngineModule
 )
 
 
