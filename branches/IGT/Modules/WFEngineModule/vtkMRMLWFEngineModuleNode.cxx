@@ -97,3 +97,32 @@ void vtkMRMLWFEngineModuleNode::PrintSelf(ostream& os, vtkIndent indent)
   vtkMRMLNode::PrintSelf(os,indent);
 }
 
+int vtkMRMLWFEngineModuleNode::SetNewWorkflowInstance()
+{
+    
+}
+
+void vtkMRMLWFEngineModuleNode::SetParameterAsBool(const std::string &name, bool value)
+{
+    
+}
+
+void vtkMRMLWFEngineModuleNode::SetParameterAsDouble(const std::string &name, double value)
+{
+    
+}
+
+void vtkMRMLWFEngineModuleNode::SetParameterAsFloat(const std::string &name, float value)
+{
+    
+}
+
+void vtkMRMLWFEngineModuleNode::SetParameterAsInt(const std::string &name, int value)
+{
+    
+}
+
+void vtkMRMLWFEngineModuleNode::SetParameterAsString(const std::string &name, const std::string &value)
+{
+    
+}

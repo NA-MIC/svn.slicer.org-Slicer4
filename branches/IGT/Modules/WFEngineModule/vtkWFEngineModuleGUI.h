@@ -74,6 +74,8 @@ class VTK_WFENGINEMODULE_EXPORT vtkWFEngineModuleGUI : public vtkSlicerModuleGUI
     
     virtual void SaveState();
     
+    virtual void workStepGUICallBack();
+    
 protected:
     vtkWFEngineModuleGUI ( );
     virtual ~vtkWFEngineModuleGUI ( );
@@ -97,8 +99,7 @@ protected:
     
 //BTX
     virtual void workStepValidationCallBack(WFEngine::nmWFStepObject::WFStepObject* nextWS);
-//ETX
-    virtual void workStepGUICallBack();
+//ETX    
 
     void deleteWizardWidgetContainer();
 private:
