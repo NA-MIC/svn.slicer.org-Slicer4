@@ -31,9 +31,16 @@ SET(WFEngineModule_SRCS
   #)
 
 # Find the WFEngine Sources and libraries
-INCLUDE(FindWFEngine.cmake)
 INCLUDE(FindXercesC.cmake)
 
+#Build the WFEngine Library
+SET(WFENGINE_BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/WFEngine)
+SUBDIRS(WFEngine)
+
+SET(WFENGINE_INCLUDE_DIR ${WFENGINE_BASE_DIRECTORY} ${WFENGINE_BASE_DIRECTORY}/engine
+                            ${WFENGINE_BASE_DIRECTORY}/interfaces ${WFENGINE_BASE_DIRECTORY}/interfaces/direct 
+                            ${WFENGINE_BASE_DIRECTORY}/xmlManager)
+                            
 # --------------------------------------------------------------------------
 # Include dirs
 
@@ -54,6 +61,7 @@ INCLUDE_DIRECTORIES(
   ${VTK_INCLUDE_DIRS}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
+  ${ModuleDescriptionParser_SOURCE_DIR}
   )
 
 

@@ -28,7 +28,7 @@ class vtkImageData;
 //VTK_WFENGINEMODULE_EXPORT
 class VTK_WFENGINEMODULE_EXPORT vtkMRMLWFEngineModuleNode : public vtkMRMLNode
 {
-  public:
+public:
   static vtkMRMLWFEngineModuleNode *New();
   vtkTypeMacro(vtkMRMLWFEngineModuleNode,vtkMRMLNode);
   void PrintSelf(ostream& os, vtkIndent indent);
@@ -51,6 +51,23 @@ class VTK_WFENGINEMODULE_EXPORT vtkMRMLWFEngineModuleNode : public vtkMRMLNode
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "WFEngineModuleParameters";};
 
+  // Description:
+  // Set new workflow-instance
+  int SetNewWorkflowInstance();
+  
+  // Description:
+  // Get/Set a parameter for the workflow.
+//BTX
+  void SetParameterAsString(const std::string& name, const std::string& value);
+  void SetParameterAsInt(const std::string& name, int value);
+  void SetParameterAsBool(const std::string& name, bool value);
+  void SetParameterAsDouble(const std::string& name, double value);
+  void SetParameterAsFloat(const std::string& name, float value);
+
+  std::string GetParameterAsString(const std::string &name) const;
+//ETX  
+  
+  
 protected:
   vtkMRMLWFEngineModuleNode();
   ~vtkMRMLWFEngineModuleNode();

@@ -14,6 +14,7 @@
 #include <vtkKWLabel.h>
 
 #include <vtkKWWidget.h>
+#include <vtkKWFrame.h>
 #include "vtkKWMyWizardWidget.h"
 #include <vtkKWWizardStep.h>
 #include "vtkKWMyWizardWorkflow.h"
@@ -25,7 +26,14 @@
 #include <vtkSlicerVisibilityIcons.h>
 #include <vtkSlicerModuleCollapsibleFrame.h>
 
+#include <ModuleDescription.h>
+#include <ModuleDescriptionParser.h>
+#include <vtkSlicerParameterWidget.h>
+#include <vtkSlicerModuleLogic.h>
+
 #include "WFStateConverter.h"
+
+#include <string>
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkWFEngineModuleGUI );
@@ -174,12 +182,21 @@ void vtkWFEngineModuleGUI::BuildGUI ( )
     app->Script("pack %s -side top -anchor nw -expand y -fill both -padx 2 -pady 2", 
             m_mclDW->GetWidgetName());
     
+    vtkKWFrame *buttonFrame = vtkKWFrame::New();
+    buttonFrame->SetParent(page);
+    buttonFrame->Create();
+    buttonFrame->SetBorderWidth(2);
+    buttonFrame->SetReliefToFlat();
+
+    app->Script("pack %s -side top -anchor se -expand n -fill x -padx 2 -pady 2", 
+            buttonFrame->GetWidgetName());
+
     m_pbtnSet = vtkKWPushButtonSet::New();
-    m_pbtnSet->SetParent(loadFrame->GetFrame());
+    m_pbtnSet->SetParent(buttonFrame);
     m_pbtnSet->PackHorizontallyOn();
     
     m_pbtnSet->Create();
-
+    
     vtkKWPushButton *pbtn = m_pbtnSet->AddWidget(0);
     pbtn->SetText("Load");
     pbtn->SetEnabled(0);
@@ -363,7 +380,17 @@ void vtkWFEngineModuleGUI::loadBtnPushCmdCallback(vtkObject* obj, unsigned long,
         myDW->m_curWizWidg->Delete();
         myDW->m_curWizWidg = NULL;
         myDW->deleteWizardWidgetContainer();
-//        myDW->m_nbDW->GetFrame(myDW->m_selWF)->RemoveAllChildren();
+        
+        vtkKWWidget *page = myDW->UIPanel->GetPageWidget ( "WFEngineModule" );
+        for(int i = 0; i < page->GetNumberOfChildren(); i++)
+        {
+            vtkSlicerModuleCollapsibleFrame *curFrame = vtkSlicerModuleCollapsibleFrame::SafeDownCast(page->GetNthChild(i));
+            if(curFrame)
+            {
+                curFrame->ExpandFrame();
+            }
+        }
+        
         loadBtn->SetText("Load");
 //        myDW->m_nbDW->SetPageEnabled(myDW->m_selWF,0);
         myDW->m_wfDI->CloseWorkflowManager();
@@ -373,6 +400,16 @@ void vtkWFEngineModuleGUI::loadBtnPushCmdCallback(vtkObject* obj, unsigned long,
     else if(loadBtn != NULL && myDW->m_wizFrame == NULL)
     {
         myDW->m_wfDI->loadWorkflowFromFile(selectedWF);
+        
+        vtkKWWidget *page = myDW->UIPanel->GetPageWidget ( "WFEngineModule" );
+        for(int i = 0; i < page->GetNumberOfChildren(); i++)
+        {
+            vtkSlicerModuleCollapsibleFrame *curFrame = vtkSlicerModuleCollapsibleFrame::SafeDownCast(page->GetNthChild(i));
+            if(curFrame)
+            {
+                curFrame->CollapseFrame ( );
+            }
+        }
         myDW->createWizard();
 //        myDW->m_nbDW->RaisePage(myDW->m_selWF);
         myDW->m_mclDW->SetRowBackgroundColor(myDW->m_mclDW->GetIndexOfFirstSelectedRow(),128,255,128);
@@ -440,6 +477,7 @@ void vtkWFEngineModuleGUI::workStepValidationCallBack(WFStepObject *nextWS)
         
         curWF->PushInput(validStepInput);
         
+        this->m_curWFStep = nextWS;        
     }
     else
     {
@@ -450,6 +488,7 @@ void vtkWFEngineModuleGUI::workStepValidationCallBack(WFStepObject *nextWS)
         curWF->CreateBackTransition(curWF->GetFinishStep(),
                 curWF->GetCurrentStep());
         curWF->PushInput(vtkKWWizardStep::GetValidationSucceededInput());
+        this->m_curWFStep = NULL;
     }
     curWF->ProcessInputs();
     this->m_curStepID = curWF->GetCurrentStep()->GetId();
@@ -479,7 +518,49 @@ void vtkWFEngineModuleGUI::backTransitionCallback(vtkObject* obj, unsigned long 
 
 void vtkWFEngineModuleGUI::workStepGUICallBack()
 {
-
+    if(!this->m_curWFStep)
+    {
+        return;
+    }
+    
+    // Destroy all ClientAreaChildren!
+    this->m_curWizWidg->GetClientArea()->RemoveAllChildren();
+    
+    ModuleDescription curModuleDesc;
+    
+    ModuleDescriptionParser curMDParser;
+    
+    std::string guiDesc = this->m_curWFStep->GetGUIDescription();
+    std::cout<<"guiParser: ";
+    std::cout<<curMDParser.Parse(guiDesc, curModuleDesc)<<std::endl;
+    
+    vtkSlicerParameterWidget *myParameterWidgets = vtkSlicerParameterWidget::New();
+    myParameterWidgets->SetApplication(this->GetApplication());
+    vtkSlicerModuleLogic *myModuleLogic = vtkSlicerModuleLogic::New();
+    
+    myParameterWidgets->SetParent(this->m_curWizWidg->GetClientArea());
+    myParameterWidgets->SetSlicerModuleLogic(myModuleLogic);
+    myParameterWidgets->SetModuleDescription(&curModuleDesc);
+    myParameterWidgets->CreateWidgets();
+    std::cout<<"vector size "<<myParameterWidgets->size()<<std::endl;
+    
+    if(myParameterWidgets->size() == 0)
+    {
+        return;
+    }
+    
+    // Build GUI out of the widget list
+    vtkKWWidget *curParameterWidget = myParameterWidgets->GetNextWidget();    
+    while(curParameterWidget)
+    {
+//        std::cout<<curParameterWidget->GetWidgetName()<<std::endl;
+//        -side top -anchor ne -expand y -fill both -padx 2 -pady 2
+//        this->GetApplication()->Script("pack %s -in %s",
+//                curParameterWidget->GetWidgetName(), this->m_curWizWidg->GetClientArea()->GetWidgetName());
+        this->GetApplication()->Script("pack %s -side top -anchor ne -expand y -fill both -padx 2 -pady 2",
+                curParameterWidget->GetWidgetName());
+        curParameterWidget = myParameterWidgets->GetNextWidget();
+    }    
 }
 
 void vtkWFEngineModuleGUI::deleteWizardWidgetContainer()
