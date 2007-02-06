@@ -73,10 +73,10 @@ SET(dir_list
 #  ${RealTimeImaging_BINARY_DIR}
 #  ${RealTimeImaging_Init_SOURCE_DIR}
 #  ${RealTimeImaging_Init_BINARY_DIR}
-#  ${MRAblation_SOURCE_DIR}
-#  ${MRAblation_BINARY_DIR}
-#  ${MRAblation_Init_SOURCE_DIR}
-#  ${MRAblation_Init_BINARY_DIR}
+  ${MRAblation_SOURCE_DIR}
+  ${MRAblation_BINARY_DIR}
+  ${MRAblation_Init_SOURCE_DIR}
+  ${MRAblation_Init_BINARY_DIR}
   ${NeuroNav_SOURCE_DIR}
   ${NeuroNav_BINARY_DIR}
   ${NeuroNav_Init_SOURCE_DIR}
@@ -148,7 +148,7 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
 #    SlicerTractographyDisplay
 #    EMSegment
 #    RealTimeImaging
-#    MRAblation
+    MRAblation
     NeuroNav
     QueryAtlas
     CommandLineModule
