@@ -73,7 +73,7 @@
 //#define COLORS_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
-#define EMSEG_DEBUG
+//#define EMSEG_DEBUG
 //#define REALTIMEIMAGING_DEBUG
 //#define MRABLATION_DEBUG
 //#define NEURONAV_DEBUG
@@ -137,7 +137,7 @@ extern "C" int Emsegment_Init(Tcl_Interp *interp);
 extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
 #endif
 extern "C" int Gradientanisotropicdiffusionfilter_Init(Tcl_Interp *interp);
-// extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
+//extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
 extern "C" int Queryatlas_Init(Tcl_Interp *interp);
 extern "C" int Slicerdaemon_Init(Tcl_Interp *interp);
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
