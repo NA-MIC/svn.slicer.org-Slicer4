@@ -512,6 +512,9 @@ void vtkWFEngineModuleGUI::backTransitionCallback(vtkObject* obj, unsigned long 
     {
         vtkKWMyWizardWorkflow *wizWF = wfEngineModule->m_curWizWidg->GetMyWizardWorkflow();
         wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfDI->getBackWorkStep());
+        wfEngineModule->workStepGUICallBack();
+        //because there is no GUI callback in a backtransition we call this manually
+        
         wfEngineModule->m_curWizWidg->Update();
     }
 }
