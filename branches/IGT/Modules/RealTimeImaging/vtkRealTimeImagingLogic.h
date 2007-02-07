@@ -44,7 +44,11 @@
 #include "OpenTracker.h"
 #include "common/CallbackModule.h"
 #include "Image.h"
+#if defined(_WIN32) || defined(__CYGWIN__)
+#include <Winsock2.h>
+#else
 #include <arpa/inet.h>
+#endif
 #include "stdio.h"
 using namespace ot;
 #endif
