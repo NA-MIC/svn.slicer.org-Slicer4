@@ -71,11 +71,10 @@
 //#define VOLUMES_DEBUG
 //#define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
-#define RealTimeImaging_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
 #define EMSEG_DEBUG
-#define REALTIMEIMAGING_DEBUG
+//#define REALTIMEIMAGING_DEBUG
 //#define MRABLATION_DEBUG
 //#define NEURONAV_DEBUG
 #define TRACTOGRAPHY_DEBUG
@@ -1131,7 +1130,7 @@ int Slicer3_main(int argc, char *argv[])
     name = colorGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ColorGUI %s", name);
 #endif
-#ifndef RealTimeImaging_DEBUG
+#ifndef REALTIMEIMAGING_DEBUG
     name = realtimeimagingGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set RealTimeImagingGUI %s", name);
 #endif
@@ -1350,7 +1349,7 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorGUI->RemoveGUIObservers ( );
 #endif
-#ifndef RealTimeImaging_DEBUG
+#ifndef REALTIMEIMAGING_DEBUG
     realtimeimagingGUI->RemoveGUIObservers ( );
 #endif
 #ifndef MRABLATION_DEBUG
@@ -1451,7 +1450,7 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorGUI->Delete();
 #endif
-#ifndef RealTimeImaging_DEBUG
+#ifndef REALTIMEIMAGING_DEBUG
     realtimeimagingGUI->Delete();
 #endif    
 #ifndef MRABLATION_DEBUG
@@ -1534,7 +1533,7 @@ int Slicer3_main(int argc, char *argv[])
     colorLogic->Delete();
 #endif
 
-#ifndef RealTimeImaging_DEBUG
+#ifndef REALTIMEIMAGING_DEBUG
     realtimeimagingLogic->SetAndObserveMRMLScene ( NULL );
     realtimeimagingLogic->Delete();
 #endif
