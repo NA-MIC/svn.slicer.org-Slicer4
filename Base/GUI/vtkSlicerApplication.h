@@ -12,6 +12,11 @@
 
 #include "vtkSlicerApplicationGUI.h"
 
+#ifdef USE_PYTHON
+#include <Python.h>
+#endif
+
+
 class vtkSlicerModuleGUI;
 class vtkSlicerGUILayout;
 class vtkSlicerTheme;
@@ -146,6 +151,14 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   virtual void DisplayTclInteractor(vtkKWTopLevel *master);
   virtual void DisplayLogDialog(vtkKWTopLevel *master);
 
+#ifdef USE_PYTHON
+//BTX
+  virtual void InitializePython( PyObject* mod, PyObject* dict );
+  vtkGetMacro(PythonModule, PyObject*);
+  vtkGetMacro(PythonDictionary, PyObject*);
+//ETX
+#endif
+
   // Description:
   // Add additional copyright messages
   virtual void AddAboutCopyrights(ostream &);
@@ -172,6 +185,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   char HomeModule [ vtkKWRegistryHelper::RegistryKeyValueSizeMax];
 
   int LoadCommandLineModules;
+#ifdef USE_PYTHON
+  PyObject* PythonModule;
+  PyObject* PythonDictionary;
+#endif
 
 private:
   vtkSlicerApplication ( const vtkSlicerApplication& ); // Not implemented.

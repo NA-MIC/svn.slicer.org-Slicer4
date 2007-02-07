@@ -58,6 +58,10 @@
 #include "vtkSlicerApplicationSettingsInterface.h"
 #include "vtkSlicerSliceControllerWidget.h"
 
+#ifdef USE_PYTHON
+#include <Python.h>
+#endif
+
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerApplicationGUI);
 vtkCxxRevisionMacro(vtkSlicerApplicationGUI, "$Revision: 1.0 $");
@@ -723,6 +727,11 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "Redo", NULL, "$::slicer3::MRMLScene Redo" );
             this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+Y");
             this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+#ifdef USE_PYTHON
+            i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "Python console", NULL, "$::slicer3::ApplicationGUI PythonConsole" );
+#endif
+            // this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+Y");
+            // this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
             //
             // View Menu
@@ -762,6 +771,50 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
     }
 }
 
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::PythonConsole (  )
+{
+#ifdef USE_PYTHON
+  std::cout << "Python Console: dictionary" << std::endl;
+  PyObject_Print(vtkSlicerApplication::GetInstance()->GetPythonDictionary(),
+                 stdout, Py_PRINT_RAW);
+  std::cout << std::endl;
+
+  PyObject* v = PyRun_StringFlags ( "import sys; print 'Search path: ', sys.path;"
+                                    "sys.path.append ( 'c:\\\\Projects\\\\Source\\\\Slicer3\\\\' );"
+                                    "import PySlicer3;"
+                                    "print 'Globals, before module', globals().keys();"
+                                    "reload ( PySlicer3 );"
+                                    "from PySlicer3 import *;"
+                                    "startup();",
+                                    Py_file_input,
+                                    vtkSlicerApplication::GetInstance()->GetPythonDictionary(),
+                                    vtkSlicerApplication::GetInstance()->GetPythonDictionary(),
+                                    NULL);
+
+  std::cout << "\nAfter Python Console: dictionary" << std::endl;
+  PyObject_Print(vtkSlicerApplication::GetInstance()->GetPythonDictionary(),
+                 stdout, Py_PRINT_RAW);
+  std::cout << std::endl;
+  
+  if (v == NULL)
+    {
+    PyErr_Print();
+    vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", "Failed to startup python interpreter" );
+    return;
+    }
+  Py_DECREF ( v );
+  if (Py_FlushLine())
+    {
+    PyErr_Clear();
+    }
+  std::cout << endl;
+  std::cerr << endl;
+
+#endif
+}
 
 
 //---------------------------------------------------------------------------

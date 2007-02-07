@@ -762,6 +762,16 @@ void vtkSlicerApplication::DisplayTclInteractor(vtkKWTopLevel *master)
     }
 }
 
+#ifdef USE_PYTHON
+// Initialize Python
+void vtkSlicerApplication::InitializePython ( PyObject* module, PyObject* dict )
+{
+  // Initialize Python
+  PythonModule = module;
+  PythonDictionary = dict;
+}
+
+#endif
 //----------------------------------------------------------------------------
 //  override default behavior of KWWidgets so that toplevel window 
 //  can be on top of the log dialog (i.e. so it's not 'transient')
