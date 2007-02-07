@@ -72,7 +72,7 @@ SET(LIB_SRCS
   vtkSlicerColorDisplayWidget.cxx
   vtkSlicerMRMLSaveDataWidget.cxx
   vtkSlicerClipModelsWidget.cxx
-  vtkSlicerParameterWidget.cxx
+  #vtkSlicerParameterWidget.cxx
   # VTK Replacement classes
   vtkSlicerInteractorStyle.cxx
   vtkSlicerViewerInteractorStyle.cxx  
