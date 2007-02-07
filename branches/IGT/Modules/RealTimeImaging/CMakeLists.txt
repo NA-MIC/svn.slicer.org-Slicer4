@@ -1,5 +1,9 @@
 PROJECT(RealTimeImaging)
 
+#Check if OpenTracker is switch on, else don't compile that module!
+
+IF(USE_OPENTRACKER)
+
 #
 # Sources
 #
@@ -85,3 +89,7 @@ CONFIGURE_FILE(
   ${RealTimeImaging_SOURCE_DIR}/vtkRealTimeImagingConfigure.h.in 
   ${RealTimeImaging_BINARY_DIR}/vtkRealTimeImagingConfigure.h
   )
+ 
+ELSE(USE_OPENTRACKER)
+ MESSAGE("You have to turn OpenTracker 'ON' to compile RealTimeImageing")
+ENDIF(USE_OPENTRACKER)
