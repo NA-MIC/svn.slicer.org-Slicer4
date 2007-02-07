@@ -58,11 +58,11 @@ public:
   // Description:
   // Get/Set a parameter for the workflow.
 //BTX
-  void SetParameterAsString(const std::string& name, const std::string& value);
-  void SetParameterAsInt(const std::string& name, int value);
-  void SetParameterAsBool(const std::string& name, bool value);
-  void SetParameterAsDouble(const std::string& name, double value);
-  void SetParameterAsFloat(const std::string& name, float value);
+  void SetParameterAsString(const std::string &stepID, const std::string& name, const std::string& value);
+  void SetParameterAsInt(const std::string &stepID, const std::string& name, int value);
+  void SetParameterAsBool(const std::string &stepID, const std::string& name, bool value);
+  void SetParameterAsDouble(const std::string &stepID, const std::string& name, double value);
+  void SetParameterAsFloat(const std::string &stepID, const std::string& name, float value);
 
   std::string GetParameterAsString(const std::string &name) const;
 //ETX  

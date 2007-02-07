@@ -102,27 +102,27 @@ int vtkMRMLWFEngineModuleNode::SetNewWorkflowInstance()
     
 }
 
-void vtkMRMLWFEngineModuleNode::SetParameterAsBool(const std::string &name, bool value)
+void vtkMRMLWFEngineModuleNode::SetParameterAsBool(const std::string &stepID, const std::string &name, bool value)
 {
     
 }
 
-void vtkMRMLWFEngineModuleNode::SetParameterAsDouble(const std::string &name, double value)
+void vtkMRMLWFEngineModuleNode::SetParameterAsDouble(const std::string &stepID, const std::string &name, double value)
 {
     
 }
 
-void vtkMRMLWFEngineModuleNode::SetParameterAsFloat(const std::string &name, float value)
+void vtkMRMLWFEngineModuleNode::SetParameterAsFloat(const std::string &stepID, const std::string &name, float value)
 {
     
 }
 
-void vtkMRMLWFEngineModuleNode::SetParameterAsInt(const std::string &name, int value)
+void vtkMRMLWFEngineModuleNode::SetParameterAsInt(const std::string &stepID, const std::string &name, int value)
 {
     
 }
 
-void vtkMRMLWFEngineModuleNode::SetParameterAsString(const std::string &name, const std::string &value)
+void vtkMRMLWFEngineModuleNode::SetParameterAsString(const std::string &stepID, const std::string &name, const std::string &value)
 {
     
 }
