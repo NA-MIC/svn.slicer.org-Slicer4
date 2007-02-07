@@ -72,7 +72,7 @@ SET(LIB_SRCS
   vtkSlicerColorDisplayWidget.cxx
   vtkSlicerMRMLSaveDataWidget.cxx
   vtkSlicerClipModelsWidget.cxx
-  #vtkSlicerParameterWidget.cxx
+  vtkSlicerParameterWidget.cxx
   # VTK Replacement classes
   vtkSlicerInteractorStyle.cxx
   vtkSlicerViewerInteractorStyle.cxx  
@@ -98,6 +98,7 @@ INCLUDE_DIRECTORIES(
   ${VTKITK_SOURCE_DIR}/Libs/vtkITK
   ${VTK_INCLUDE_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
+  ${ModuleDescriptionParser_BINARY_DIR}
   )
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
