@@ -9,7 +9,7 @@ SUBDIRS(
   Editor
   QueryAtlas
   Tractography
-  RealTimeImaging
+#  RealTimeImaging
   MRAblation
   NeuroNav
   WFEngineModule
