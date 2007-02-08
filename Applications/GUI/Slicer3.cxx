@@ -416,15 +416,6 @@ int Slicer3_main(int argc, char *argv[])
     return 1;
     }
   std::cout << "Initialized vtkKWApplication" << std::endl;
-#else
-
-  interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr);
-  if (!interp)
-    {
-    std::cerr << "Error: InitializeTcl failed" << endl;
-    return 1;
-    }
-  std::cout << "Initialized vtkKWApplication" << std::endl;
 #endif
     
     // Tell KWWidgets to make names like .vtkKWPushButton10 instead of .10 
