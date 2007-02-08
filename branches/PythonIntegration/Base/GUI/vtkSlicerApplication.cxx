@@ -763,6 +763,7 @@ void vtkSlicerApplication::DisplayTclInteractor(vtkKWTopLevel *master)
     }
 }
 
+#ifdef USE_PYTHON
 //----------------------------------------------------------------------------
 void vtkSlicerApplication::DoOneTclEvent()
 {
