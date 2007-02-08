@@ -350,15 +350,14 @@ int Slicer3_main(int argc, char *argv[])
   // let Python start Tcl/Tk, then get the interperter
   PyObject* v;
   v = PyRun_String( "import Tkinter;"
-                         "global tk;"
-                         "tk = Tkinter.Tk();"
-                         "tk.loadtk();"
-                         "addr = tk.interpaddr();"
-                         "print 'Tk: ', tk;"
-                         "print 'Tk address: ', addr;",
-                         Py_file_input,
-                         PythonDictionary,
-                         PythonDictionary );
+                    "tk = Tkinter.Tk();"
+                    "tk.loadtk();"
+                    "addr = tk.interpaddr();"
+                    "print 'Tk: ', tk;"
+                    "print 'Tk address: ', addr;",
+                    Py_file_input,
+                    PythonDictionary,
+                    PythonDictionary );
   if (v == NULL)
     {
     PyErr_Print();
@@ -379,6 +378,7 @@ int Slicer3_main(int argc, char *argv[])
     {
     PyErr_Clear();
     }
+  
   if (!Tcl_PkgPresent(interp, "Tk", NULL, 0))
     {
     std::cerr << "Error: Python failed to initialize Tk" << endl;
@@ -386,8 +386,30 @@ int Slicer3_main(int argc, char *argv[])
     }
 
   std::cout << "Initialized python: addr: " << (long)interp << std::endl;
-  vtkKWApplication::InitializeTcl(interp, &cerr);
-  // interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr, interp);
+  // vtkKWApplication::InitializeTcl(interp, &cerr);
+  interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr, interp);
+  if (!interp)
+    {
+    std::cerr << "Error: InitializeTcl failed" << endl;
+    return 1;
+    }
+  std::cout << "Initialized vtkKWApplication"
+            << "\n\tPython Interp: " << (long) interp
+            << "\n\tSlicer Interp: " << (long) vtkSlicerApplication::GetInstance()->GetMainInterp() << std::endl;
+  int foo;
+  // std::cin >> foo;
+
+  vtkSlicerApplication::GetInstance()->InitializePython ( PythonModule, PythonDictionary );
+  std::cout << "Initialized Python" << std::endl;
+  int threaded = Tcl_GetVar2Ex(vtkSlicerApplication::GetInstance()->GetMainInterp(),
+                               "tcl_platform", "threaded",
+                               TCL_GLOBAL_ONLY) != NULL;
+  std::cout << "Are we threaded: " << threaded << std::endl;
+
+
+#else
+
+    interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr);
   if (!interp)
     {
     std::cerr << "Error: InitializeTcl failed" << endl;
@@ -396,13 +418,14 @@ int Slicer3_main(int argc, char *argv[])
   std::cout << "Initialized vtkKWApplication" << std::endl;
 #else
 
-    interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr);
+  interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr);
   if (!interp)
     {
-    slicerCerr("Error: InitializeTcl failed" << endl );
+    std::cerr << "Error: InitializeTcl failed" << endl;
     return 1;
     }
-
+  std::cout << "Initialized vtkKWApplication" << std::endl;
+#endif
     
     // Tell KWWidgets to make names like .vtkKWPushButton10 instead of .10 
     vtkKWWidget::UseClassNameInWidgetNameOn();
@@ -1270,9 +1293,10 @@ int Slicer3_main(int argc, char *argv[])
     }
 
     //--- set home module based on registry settings
-    if ( slicerApp->GetHomeModule() )
+    const char *homeModule = slicerApp->GetHomeModule();
+    if ( homeModule && *homeModule )
       {
-      appGUI->SelectModule ( slicerApp->GetHomeModule() );
+        appGUI->SelectModule ( homeModule );
       }
     else
       {
