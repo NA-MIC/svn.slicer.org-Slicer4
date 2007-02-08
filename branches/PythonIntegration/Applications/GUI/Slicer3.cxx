@@ -386,26 +386,18 @@ int Slicer3_main(int argc, char *argv[])
     }
 
   std::cout << "Initialized python: addr: " << (long)interp << std::endl;
-  // vtkKWApplication::InitializeTcl(interp, &cerr);
-  interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr, interp);
+  //vtkKWApplication::InitializeTcl(interp, &cerr);
+  std::cout << "Initialized vtkKWApplication"
+            << "\n\tPython Interp: " << (long) interp
+            << "\n\tSlicer Interp: " << (long) vtkSlicerApplication::GetInstance()->GetMainInterp() << std::endl;
+  interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr, NULL);
   if (!interp)
     {
     std::cerr << "Error: InitializeTcl failed" << endl;
     return 1;
     }
-  std::cout << "Initialized vtkKWApplication"
-            << "\n\tPython Interp: " << (long) interp
-            << "\n\tSlicer Interp: " << (long) vtkSlicerApplication::GetInstance()->GetMainInterp() << std::endl;
   int foo;
-  // std::cin >> foo;
-
-  vtkSlicerApplication::GetInstance()->InitializePython ( PythonModule, PythonDictionary );
-  std::cout << "Initialized Python" << std::endl;
-  int threaded = Tcl_GetVar2Ex(vtkSlicerApplication::GetInstance()->GetMainInterp(),
-                               "tcl_platform", "threaded",
-                               TCL_GLOBAL_ONLY) != NULL;
-  std::cout << "Are we threaded: " << threaded << std::endl;
-
+  std::cin >> foo;
 
 #else
 
@@ -420,6 +412,7 @@ int Slicer3_main(int argc, char *argv[])
     
     // Tell KWWidgets to make names like .vtkKWPushButton10 instead of .10 
     vtkKWWidget::UseClassNameInWidgetNameOn();
+  std::cout << "here 1" << std::endl;
 
     //
     // Set a global variable so modules that use tcl can find the 
@@ -497,6 +490,7 @@ int Slicer3_main(int argc, char *argv[])
     Mrml_Init(interp);
     Vtkitk_Init(interp);
     Freesurfer_Init(interp);
+  std::cout << "here 2" << std::endl;
     //TODO added temporary
 #ifndef EMSEG_DEBUG
     Emsegment_Init(interp);
@@ -507,6 +501,7 @@ int Slicer3_main(int argc, char *argv[])
     Slicerdaemon_Init(interp);
     Commandlinemodule_Init(interp);
     Scriptedmodule_Init(interp);
+  std::cout << "here 3" << std::endl;
 
   vtkSlicerApplication *slicerApp = vtkSlicerApplication::GetInstance ( );
   slicerApp->Script ( "rename exit tcl_exit" );
@@ -562,6 +557,7 @@ int Slicer3_main(int argc, char *argv[])
       cmd += "eval $::SLICER(eval);";
       return ( Slicer3_Tcl_Eval( interp, cmd.c_str() ) );
       }
+  std::cout << "here 4" << std::endl;
 
     // Create SlicerGUI application, style, and main window 
     //  - note: use the singleton application 
@@ -581,6 +577,7 @@ int Slicer3_main(int argc, char *argv[])
       curPos += len;
       }
 
+  std::cout << "here 4.1" << std::endl;
     vtkKWTkUtilities::UpdatePhoto(
       slicerApp->GetMainInterp(),
       "S3SplashScreen", 
@@ -591,12 +588,16 @@ int Slicer3_main(int argc, char *argv[])
       image_S3SplashScreen_length);
     delete [] buffer; 
 
+  std::cout << "here 4.2" << std::endl;
     slicerApp->GetSplashScreen()->SetImageName("S3SplashScreen");
     slicerApp->SupportSplashScreenOn();
     slicerApp->SplashScreenVisibilityOn();
+  std::cout << "here 4.3" << std::endl;
     slicerApp->GetSplashScreen()->SetProgressMessageVerticalOffset(-25);
+  std::cout << "here 4.4" << std::endl;
     slicerApp->GetSplashScreen()->SetProgressMessage(
       "Initializing Window...");
+  std::cout << "here 5" << std::endl;
 
     // Create MRML scene
     vtkMRMLScene *scene = vtkMRMLScene::New();
@@ -1297,6 +1298,12 @@ int Slicer3_main(int argc, char *argv[])
 #ifdef USE_PYTHON
   vtkSlicerApplication::GetInstance()->InitializePython ( PythonModule, PythonDictionary );
   std::cout << "Initialized Python" << std::endl;
+  int threaded = Tcl_GetVar2Ex(vtkSlicerApplication::GetInstance()->GetMainInterp(),
+                               "tcl_platform", "threaded",
+                               TCL_GLOBAL_ONLY) != NULL;
+  std::cout << "Are we threaded: " << threaded << std::endl;
+
+
 #endif
     //
     // Run!  - this will return when the user exits
