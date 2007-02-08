@@ -373,6 +373,7 @@ int vtkSlicerApplication::StartApplication ( ) {
     return ret;
 }
 
+
 //----------------------------------------------------------------------------
 void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
 {
@@ -762,16 +763,34 @@ void vtkSlicerApplication::DisplayTclInteractor(vtkKWTopLevel *master)
     }
 }
 
-#ifdef USE_PYTHON
-// Initialize Python
-void vtkSlicerApplication::InitializePython ( PyObject* module, PyObject* dict )
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::DoOneTclEvent()
 {
-  // Initialize Python
-  PythonModule = module;
-  PythonDictionary = dict;
+
+  std::cout << "Starting Python's event loop" << std::endl;
+  // Let's start the python mainloop, rather than the tcl version
+  PyObject* v = PyRun_StringFlags (
+                                    "from __main__ import tk;"
+                                    "tk.mainloop();",
+                                    Py_file_input,
+                                    PythonDictionary,
+                                    PythonDictionary,
+                                    NULL);
+  if (v == NULL)
+    {
+    PyErr_Print();
+    return;
+    }
+  Py_DECREF ( v );
+  if (Py_FlushLine())
+    {
+    PyErr_Clear();
+    }
 }
 
 #endif
+
+
 //----------------------------------------------------------------------------
 //  override default behavior of KWWidgets so that toplevel window 
 //  can be on top of the log dialog (i.e. so it's not 'transient')

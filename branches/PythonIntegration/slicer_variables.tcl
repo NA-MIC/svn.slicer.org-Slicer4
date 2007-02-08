@@ -33,6 +33,7 @@ set ::SOLARIS "solaris8"
 set ::LINUX "linux-x86"
 set ::LINUX_64 "linux-x86_64"
 set ::DARWIN "darwin-ppc"
+set ::DARWIN_X86 "darwin-x86"
 set ::WINDOWS "win32"
 
 #
@@ -47,7 +48,13 @@ switch $::tcl_platform(os) {
             set ::env(BUILD) $::LINUX
         }
     }       
-    "Darwin" { set ::env(BUILD) $::DARWIN }
+    "Darwin" { 
+        if {$::tcl_plafrom(machine) == "i386"} {
+            set ::env(BUILD) $::DARWIN_X86
+        } else {
+            set ::env(BUILD) $::DARWIN 
+        }
+    }
     default { 
         set ::env(BUILD) $::WINDOWS 
         set ::SLICER_HOME [file attributes $::SLICER_HOME -shortname]
@@ -235,7 +242,6 @@ switch $::tcl_platform(os) {
         set ::CMAKE $::CMAKE_PATH/bin/cmake
         set numCPUs [lindex [exec grep processor /proc/cpuinfo | wc] 0]
         set ::MAKE "make -j [expr $numCPUs * 2]"
-        puts "making with $::MAKE"
         set ::SERIAL_MAKE "make"
     }
     "Darwin" {
