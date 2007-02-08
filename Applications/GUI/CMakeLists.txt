@@ -147,14 +147,14 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     GradientAnisotropicDiffusionFilter
     SlicerTractographyDisplay
     EMSegment
-    RealTimeImaging
-    MRAblation
+ #   RealTimeImaging
+ #   MRAblation
     NeuroNav
     QueryAtlas
     CommandLineModule
     ScriptedModule
     SlicerDaemon
-    ModuleDescriptionParser
+ #   ModuleDescriptionParser
     vtkITK
     ITKCommon 
     ITKIO
