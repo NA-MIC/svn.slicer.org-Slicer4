@@ -40,6 +40,15 @@ vtkIGTDataManager::~vtkIGTDataManager()
 void vtkIGTDataManager::Init(char *configFile)
 {
 #ifdef USE_OPENTRACKER
+
+  ///////////Hata Note to Haiying
+  /////////// This Opentracker specific codes has to be in vtkIGTOpenTrackerStream
+  //////////This part should be more generic
+  ///////// and should contain
+  //////// internal_configfile_memory_pointer = configFIle
+  //////// return(0)
+
+
     // The position coordinates coming from Aurora in meters.
     // We need convert them into mm.
     if (!strcmp (this->Device, "Aurora") )   
