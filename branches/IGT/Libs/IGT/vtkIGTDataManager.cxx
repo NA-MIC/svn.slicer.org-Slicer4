@@ -140,26 +140,26 @@ void vtkIGTDataManager::callbackF(const Node&, const Event &event, void *data)
 ///Event becomes IGSTK event to extract the info
 ////////////////Edit here Noby Tuesday Feb 13
 /////////////// Edit here
-void vtkIGTDataManager::callbackF(const IGSTKEvent &igstkevent, void *data)
+void vtkIGTDataManager::callbackF(double* position, double* orientation)
 {
-    float position[3];
-    float orientation[4];
+  //float position[3];
+  //float orientation[4];
     float norm[3];
     float transnorm[3];
     int j;
 
-    vtkIGTDataManager *VOT=(vtkIGTDataManager *)data;
+    vtkIGTDataManager *VOT=(vtkIGTDataManager *)this;
 
     // the original values are in the unit of meters
     //this part has to be changed
-    position[0]=(float)(event.getPosition())[0] * VOT->Ratio; 
-    position[1]=(float)(event.getPosition())[1] * VOT->Ratio;
-    position[2]=(float)(event.getPosition())[2] * VOT->Ratio;
+    position[0]=(float)position[0] * VOT->Ratio; 
+    position[1]=(float)position[1] * VOT->Ratio;
+    position[2]=(float)position[2] * VOT->Ratio;
 
-    orientation[0]=(float)(event.getOrientation())[0];
-    orientation[1]=(float)(event.getOrientation())[1];
-    orientation[2]=(float)(event.getOrientation())[2];
-    orientation[3]=(float)(event.getOrientation())[3];
+    orientation[0]=(float)orientation[0];
+    orientation[1]=(float)orientation[1];
+    orientation[2]=(float)orientation[2];
+    orientation[3]=(float)orientation[3];
 
 
 
