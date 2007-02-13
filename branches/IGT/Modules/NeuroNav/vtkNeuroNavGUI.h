@@ -196,6 +196,8 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     void BuildGUIForServerFrame ();
     void BuildGUIForRegistrationFrame ();
 
+    void TrackerLoop();
+
     //BTX
 #ifdef USE_IGSTK    
     // IGSTK integration test
