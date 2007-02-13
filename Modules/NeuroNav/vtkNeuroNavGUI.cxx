@@ -771,6 +771,27 @@ void vtkNeuroNavGUI::Init()
 
     vtkIGTDataStream *dataStream = vtkIGTDataStream::New();
     this->DataManager->RegisterStreamDevice(0, dataStream);
+
+
+    this->TrackerLoop();
+    
+
+}
+
+
+
+
+void vtkNeuroNavGUI::TrackerLoop()
+{
+        
+  cout << "test" << endl;
+  vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+  
+  
+  int rate = 100;
+  vtkKWTkUtilities::CreateTimerHandler (app, rate, this, "TrackerLoop");
+  
+
 }
 
 
