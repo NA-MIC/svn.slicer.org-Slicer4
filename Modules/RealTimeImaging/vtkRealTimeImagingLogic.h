@@ -41,8 +41,8 @@
 
 
 #ifdef USE_OPENTRACKER
-#include "OpenTracker.h"
-#include "common/CallbackModule.h"
+#include "OpenTracker/OpenTracker.h"
+#include "OpenTracker/common/CallbackModule.h"
 #include "Image.h"
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <Winsock2.h>

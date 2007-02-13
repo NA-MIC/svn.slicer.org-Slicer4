@@ -6,7 +6,11 @@
 #ifndef __vtkNeuroNavGUI_h
 #define __vtkNeuroNavGUI_h
 
+
+#ifdef WIN32
 #include "vtkNeuroNavWin32Header.h"
+#endif
+
 #include "vtkSlicerModuleGUI.h"
 
 #include "vtkNeuroNavLogic.h"
@@ -30,10 +34,16 @@ class vtkKWMultiColumnListWithScrollbars;
 
 #ifdef USE_IGSTK
 #include <igstkSerialCommunication.h>
+
+#ifdef _WIN32
 #include <igstkSerialCommunicationForWindows.h>
+#else
 #include <igstkSerialCommunicationForPosix.h>
+#endif
+
 #include <igstkAuroraTracker.h>
 #include <igstkPolarisTracker.h>
+
 #endif 
 
 // Description:

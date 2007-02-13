@@ -48,11 +48,11 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 #ifdef USE_IGSTK
   igstk::RealTimeClock::Initialize();
 
-#ifdef WIN32 //running on a windows system
-  serialCommunication = igstk::SerialCommunicationForWindows::New();
-#else //running on a unix system
+ #ifdef _WIN32 //running on a windows system
+  //serialCommunication = igstk::SerialCommunicationForWindows::New();
+ #else //running on a unix system
   serialCommunication = igstk::SerialCommunicationForPosix::New();
-#endif
+ #endif
 
   //set the communication settings
   //This is the serial port of your device. 'PortNumber2' == COM3 under windows
