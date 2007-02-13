@@ -84,6 +84,10 @@ public:
     static void callbackF(const Node&, const Event &event, void *data);
 #endif
 
+#ifdef USE_IGSTK
+    static void callbackF(double*, double*);
+#endif
+
 
 private:
 
