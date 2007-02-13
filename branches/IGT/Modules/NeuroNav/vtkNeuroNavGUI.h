@@ -28,6 +28,14 @@ class vtkKWLoadSaveButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
 
 
+#ifdef USE_IGSTK
+#include <igstkSerialCommunication.h>
+#include <igstkSerialCommunicationForWindows.h>
+#include <igstkSerialCommunicationForPosix.h>
+#include <igstkAuroraTracker.h>
+#include <igstkPolarisTracker.h>
+#endif 
+
 // Description:
 // This class implements Slicer's Volumes GUI
 //
@@ -176,6 +184,15 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     void BuildGUIForTrackingFrame ();
     void BuildGUIForServerFrame ();
     void BuildGUIForRegistrationFrame ();
+
+    //BTX
+#ifdef USE_IGSTK    
+    // IGSTK integration test
+    igstk::PolarisTracker::Pointer       tracker;
+    igstk::SerialCommunication::Pointer  serialCommunication;
+    // IGSTK integration test. END
+#endif
+    //ETX
 
 };
 
