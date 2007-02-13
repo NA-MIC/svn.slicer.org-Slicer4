@@ -102,6 +102,7 @@ SET(dir_list
   ${ModuleDescriptionParser_SOURCE_DIR}
   ${VTK_INCLUDE_DIR}
   ${OPENTRACKER_INC_DIR}
+  ${IGSTK_INCLUDE_DIRS}
   )
 INCLUDE_DIRECTORIES(${dir_list})
 

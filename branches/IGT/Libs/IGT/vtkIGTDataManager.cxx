@@ -66,11 +66,18 @@ void vtkIGTDataManager::Init(char *configFile)
 
     // sets the callback function
     callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);    
-
-
     context->start();
 #endif
+
+#ifdef USE_IGSTK
+    //Initializing IGSTK
+
+#endif
+
+
+
 }
+
 
 
 #ifdef USE_OPENTRACKER
@@ -83,6 +90,7 @@ void vtkIGTDataManager::callbackF(const Node&, const Event &event, void *data)
     int j;
 
     vtkIGTDataManager *VOT=(vtkIGTDataManager *)data;
+
 
     // the original values are in the unit of meters
     position[0]=(float)(event.getPosition())[0] * VOT->Ratio; 
@@ -128,6 +136,66 @@ void vtkIGTDataManager::callbackF(const Node&, const Event &event, void *data)
 #endif
 
 
+#ifdef USE_IGSTK
+///Event becomes IGSTK event to extract the info
+////////////////Edit here Noby Tuesday Feb 13
+/////////////// Edit here
+void vtkIGTDataManager::callbackF(const IGSTKEvent &igstkevent, void *data)
+{
+    float position[3];
+    float orientation[4];
+    float norm[3];
+    float transnorm[3];
+    int j;
+
+    vtkIGTDataManager *VOT=(vtkIGTDataManager *)data;
+
+    // the original values are in the unit of meters
+    //this part has to be changed
+    position[0]=(float)(event.getPosition())[0] * VOT->Ratio; 
+    position[1]=(float)(event.getPosition())[1] * VOT->Ratio;
+    position[2]=(float)(event.getPosition())[2] * VOT->Ratio;
+
+    orientation[0]=(float)(event.getOrientation())[0];
+    orientation[1]=(float)(event.getOrientation())[1];
+    orientation[2]=(float)(event.getOrientation())[2];
+    orientation[3]=(float)(event.getOrientation())[3];
+
+
+
+
+    VOT->quaternion2xyz(orientation, norm, transnorm);
+
+
+    // Apply the transform matrix 
+    // to the postion, norm and transnorm
+    if (VOT->RegMatrix)
+        VOT->ApplyTransform(position, norm, transnorm);
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(j,0,position[j]);
+    }
+
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(j,1,norm[j]);
+    }
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(j,2,transnorm[j]);
+    }
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(j,3,0);
+    }
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(3,j,0);
+    }
+
+    VOT->LocatorMatrix->SetElement(3,3,1);
+}
+#endif
 
 
 void vtkIGTDataManager::StopPolling()
