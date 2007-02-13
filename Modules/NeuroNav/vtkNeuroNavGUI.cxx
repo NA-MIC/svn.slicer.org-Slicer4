@@ -48,12 +48,34 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 #ifdef USE_IGSTK
   igstk::RealTimeClock::Initialize();
 
- #ifdef _WIN32 //running on a windows system
-  //serialCommunication = igstk::SerialCommunicationForWindows::New();
+  typedef itk::Logger        LoggerType;
+  typedef itk::StdStreamLogOutput        LogOutputType;
+
+  LoggerType::Pointer          m_Logger;
+  m_Logger   = LoggerType::New();
+
+  /** Logger */
+  LogOutputType::Pointer              m_LogFileOutput;  // log output to file
+  std::ofstream                       m_LogFile;        // file stream
+    
+  m_LogFileOutput = LogOutputType::New();
+  std::string logFileName = "logIGSTK.txt";
+  m_LogFile.open( logFileName.c_str() );
+  if( !m_LogFile.fail() )
+  {
+    m_LogFileOutput->SetStream( m_LogFile );
+    m_Logger->AddLogOutput( m_LogFileOutput );
+  }
+
+
+ #ifdef _WIN32 
+  //running on a windows system
+  serialCommunication = igstk::SerialCommunicationForWindows::New();
  #else //running on a unix system
   serialCommunication = igstk::SerialCommunicationForPosix::New();
  #endif
 
+  //serialCommunication->SetLogger( m_Logger );
   //set the communication settings
   //This is the serial port of your device. 'PortNumber2' == COM3 under windows
   serialCommunication->SetPortNumber(igstk::SerialCommunication::PortNumber2);
@@ -67,10 +89,11 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 
   //Instantiate the tracker here
   tracker = igstk::PolarisTracker::New();
+  tracker->SetLogger( m_Logger );
   tracker->SetCommunication(serialCommunication);
 
   //attach SROM file 
-  tracker->AttachSROMFileNameToPort(0, "8700340.rom");
+  tracker->AttachSROMFileNameToPort(3, "8700340.rom");
   tracker->RequestOpen();          
   tracker->RequestInitialize();
   tracker->RequestStartTracking();  
@@ -84,13 +107,18 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     //get the tracking data for all tools
     tracker->RequestUpdateStatus();
 
-    tracker->GetToolTransform(0, 0, transform);
-    translation = transform.GetTranslation();
-    rotation = transform.GetRotation(); 
-    std::cout<<translation[0]<<" "<<translation[1]<<" "<<translation[2]<<" ";
-    std::cout<<rotation.GetX()<<" "<<rotation.GetY()<<" "<<rotation.GetZ()<<" "<<rotation.GetW()<<"\n";
+    tracker->GetToolTransform(3, 0, transform);
+    //translation = transform.GetTranslation();
+    //rotation = transform.GetRotation(); 
+    igstkLogMacro2( m_Logger, DEBUG, transform << "\n" );
+    //igstkLogMacro2( m_Logger, DEBUG, translation << "\n" );
+    //igstkLogMacro2( m_Logger, DEBUG, rotation << "\n" );
   }
   std::cout<<"End data acquisition.\n";
+
+  tracker->RequestStopTracking();
+  tracker->RequestClose();
+  serialCommunication->CloseCommunication();
 
 #endif
 
