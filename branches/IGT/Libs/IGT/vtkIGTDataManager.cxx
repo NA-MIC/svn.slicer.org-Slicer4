@@ -142,8 +142,8 @@ void vtkIGTDataManager::callbackF(const Node&, const Event &event, void *data)
 /////////////// Edit here
 void vtkIGTDataManager::callbackF(double* position, double* orientation)
 {
-  //float position[3];
-  //float orientation[4];
+  float f_position[3];
+  float f_orientation[4];
     float norm[3];
     float transnorm[3];
     int j;
@@ -152,25 +152,25 @@ void vtkIGTDataManager::callbackF(double* position, double* orientation)
 
     // the original values are in the unit of meters
     //this part has to be changed
-    position[0]=(float)position[0] * VOT->Ratio; 
-    position[1]=(float)position[1] * VOT->Ratio;
-    position[2]=(float)position[2] * VOT->Ratio;
+    f_position[0]=(float)position[0] * VOT->Ratio; 
+    f_position[1]=(float)position[1] * VOT->Ratio;
+    f_position[2]=(float)position[2] * VOT->Ratio;
 
-    orientation[0]=(float)orientation[0];
-    orientation[1]=(float)orientation[1];
-    orientation[2]=(float)orientation[2];
-    orientation[3]=(float)orientation[3];
-
-
+    f_orientation[0]=(float)orientation[0];
+    f_orientation[1]=(float)orientation[1];
+    f_orientation[2]=(float)orientation[2];
+    f_orientation[3]=(float)orientation[3];
 
 
-    VOT->quaternion2xyz(orientation, norm, transnorm);
+
+
+    VOT->quaternion2xyz(f_orientation, norm, transnorm);
 
 
     // Apply the transform matrix 
     // to the postion, norm and transnorm
     if (VOT->RegMatrix)
-        VOT->ApplyTransform(position, norm, transnorm);
+        VOT->ApplyTransform(f_position, norm, transnorm);
 
     for (j=0; j<3; j++) {
         VOT->LocatorMatrix->SetElement(j,0,position[j]);
