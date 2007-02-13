@@ -20,4 +20,5 @@
 #endif
 
 #cmakedefine USE_OPENTRACKER
+#cmakedefine USE_IGSTK
 
