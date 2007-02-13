@@ -44,6 +44,61 @@ vtkCxxRevisionMacro ( vtkNeuroNavGUI, "$Revision: 1.0 $");
 //---------------------------------------------------------------------------
 vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 {
+
+#ifdef USE_IGSTK
+  igstk::RealTimeClock::Initialize();
+
+#ifdef WIN32 //running on a windows system
+  serialCommunication = igstk::SerialCommunicationForWindows::New();
+#else //running on a unix system
+  serialCommunication = igstk::SerialCommunicationForPosix::New();
+#endif
+
+  //set the communication settings
+  //This is the serial port of your device. 'PortNumber2' == COM3 under windows
+  serialCommunication->SetPortNumber(igstk::SerialCommunication::PortNumber2);
+
+  serialCommunication->SetParity(igstk::SerialCommunication::NoParity);
+  serialCommunication->SetBaudRate(igstk::SerialCommunication::BaudRate115200);
+  serialCommunication->SetDataBits(igstk::SerialCommunication::DataBits8);
+  serialCommunication->SetStopBits(igstk::SerialCommunication::StopBits1);
+  serialCommunication->SetHardwareHandshake(igstk::SerialCommunication::HandshakeOff);  
+  serialCommunication->OpenCommunication();  
+
+  //Instantiate the tracker here
+  tracker = igstk::PolarisTracker::New();
+  tracker->SetCommunication(serialCommunication);
+
+  //attach SROM file 
+  tracker->AttachSROMFileNameToPort(0, "8700340.rom");
+  tracker->RequestOpen();          
+  tracker->RequestInitialize();
+  tracker->RequestStartTracking();  
+
+  igstk::Transform transform;               
+  igstk::Transform::VectorType translation;
+  igstk::Transform::VersorType rotation;
+  std::cout<<"Start data acquisition\n";
+  for(int i=0; i<100; i++) 
+  {
+    //get the tracking data for all tools
+    tracker->RequestUpdateStatus();
+
+    tracker->GetToolTransform(0, 0, transform);
+    translation = transform.GetTranslation();
+    rotation = transform.GetRotation(); 
+    std::cout<<translation[0]<<" "<<translation[1]<<" "<<translation[2]<<" ";
+    std::cout<<rotation.GetX()<<" "<<rotation.GetY()<<" "<<rotation.GetZ()<<" "<<rotation.GetW()<<"\n";
+  }
+  std::cout<<"End data acquisition.\n";
+
+#endif
+
+
+  
+  // IGSTK integration test. END
+
+
     this->Logic = NULL;
 
     this->DeviceMenu = NULL;
@@ -125,6 +180,7 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 //---------------------------------------------------------------------------
 vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
 {
+
     if (this->DataManager)
     {
         this->DataManager->Delete();
