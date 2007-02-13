@@ -85,7 +85,7 @@ public:
 #endif
 
 #ifdef USE_IGSTK
-    static void callbackF(double*, double*);
+    void callbackF(double*, double*);
 #endif
 
 
