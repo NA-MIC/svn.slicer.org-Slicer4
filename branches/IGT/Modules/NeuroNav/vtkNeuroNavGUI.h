@@ -43,6 +43,7 @@ class vtkKWMultiColumnListWithScrollbars;
 
 #include <igstkAuroraTracker.h>
 #include <igstkPolarisTracker.h>
+#include "itkStdStreamLogOutput.h"
 
 #endif 
 
