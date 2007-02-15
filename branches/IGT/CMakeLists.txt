@@ -113,7 +113,7 @@ ENDIF(USE_TEEM)
 OPTION(USE_OPENTRACKER "Build Slicer3 with OpenTracker support." OFF)
 IF(USE_OPENTRACKER)
   FIND_LIBRARY(OPENTRACKER_LIB 
-               NAMES opentrackerd opentracker
+               NAMES opentrackerd opentracker OpenTracker
                PATH "" 
                )
   IF(OPENTRACKER_LIB-NOTFOUND)
