@@ -2,8 +2,10 @@
 
 #include <vtkObjectFactory.h>
 #include <vtkKWWidget.h>
+#include <vtkKWCoreWidget.h>
 
-#include "vtkCommand.h"
+#include <vtkCommand.h>
+#include <vtkCallbackCommand.h>
 #include "vtkSmartPointer.h"
 #include "vtkSlicerApplication.h"
 #include "vtkSlicerApplicationLogic.h"
@@ -36,6 +38,7 @@
 #include "vtkKWMessage.h"
 #include "vtkKWProgressGauge.h"
 #include "vtkKWWindowBase.h"
+#include <vtkMRMLNode.h>
 
 #include "itkNumericTraits.h"
 
@@ -43,8 +46,11 @@
 #include <ModuleParameterGroup.h>
 #include <ModuleParameter.h>
 
+
 #include <string>
 #include <vector>
+#include <sstream>
+#include <iostream>
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro( vtkSlicerParameterWidget );
@@ -60,6 +66,9 @@ vtkSlicerParameterWidget::vtkSlicerParameterWidget()
     this->m_ModuleDescription = NULL;
     this->m_ModuleLogic = NULL;
     this->m_ParentWidget = NULL;
+    this->m_MRMLNode = NULL;
+    
+    this->m_widgID = "";
 }
 
 vtkSlicerParameterWidget::~vtkSlicerParameterWidget()
@@ -81,6 +90,12 @@ void vtkSlicerParameterWidget::CreateWidgets()
         return;
     }
     
+    if(!this->GetMRMLNode())
+    {
+        std::cout<<"vtkSlicerParameterWidget: MRMLNode is not set!"<<std::endl;
+        return;
+    }
+    
     if(!this->m_ParentWidget)
     {
         std::cout<<this->GetApplication()->GetNumberOfWindows()<<std::endl;
@@ -97,6 +112,7 @@ void vtkSlicerParameterWidget::CreateWidgets()
     vtkSlicerParameterWidget::moduleParameterWidgetStruct *curModWidgetStruct;
     
     this->m_InternalWidgetParamList = new std::vector<vtkSlicerParameterWidget::moduleParameterWidgetStruct*>;
+    this->m_internalWidgetToParamMap = new std::map<vtkKWCoreWidget*, ModuleParameter>;
     
     // iterate over each parameter group
     std::vector<ModuleParameterGroup>::const_iterator pgbeginit
@@ -108,22 +124,22 @@ void vtkSlicerParameterWidget::CreateWidgets()
     for (pgit = pgbeginit; pgit != pgendit; ++pgit)
     {
         curModWidgetStruct = new vtkSlicerParameterWidget::moduleParameterWidgetStruct; 
-        curModWidgetStruct->modParam = NULL;
+        curModWidgetStruct->modParams = new std::vector<ModuleParameter>;
         curModWidgetStruct->paramWidget = NULL;
         
-      // each parameter group is its own labeled frame
+        // each parameter group is its own labeled frame
         vtkKWFrame *parameterGroupFrame = vtkKWFrame::New ( );
-      parameterGroupFrame->SetParent ( this->m_ParentWidget );
-      parameterGroupFrame->Create ( );
+        parameterGroupFrame->SetParent ( this->m_ParentWidget );
+        parameterGroupFrame->Create ( );
 //      parameterGroupFrame->SetLabelText ((*pgit).GetLabel().c_str());
 //      if ((*pgit).GetAdvanced() == "true")
 //        {
 //        parameterGroupFrame->CollapseFrame ( );
 //        }
       
-      std::string parameterGroupBalloonHelp = (*pgit).GetDescription();
-      parameterGroupFrame
-        ->SetBalloonHelpString(parameterGroupBalloonHelp.c_str());
+        std::string parameterGroupBalloonHelp = (*pgit).GetDescription();
+        parameterGroupFrame
+            ->SetBalloonHelpString(parameterGroupBalloonHelp.c_str());
 
 //      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
 //                    parameterGroupFrame->GetWidgetName() );
@@ -131,456 +147,366 @@ void vtkSlicerParameterWidget::CreateWidgets()
       // Store the parameter group frame in a SmartPointer
 //      (*this->InternalWidgetMap)[(*pgit).GetLabel()] = parameterGroupFrame;
         
-      parameterGroupFrame->Delete();
+        parameterGroupFrame->Delete();
       
-      // iterate over each parameter in this group
-      std::vector<ModuleParameter>::const_iterator pbeginit
-        = (*pgit).GetParameters().begin();
-      std::vector<ModuleParameter>::const_iterator pendit
-        = (*pgit).GetParameters().end();
-      std::vector<ModuleParameter>::const_iterator pit;
+        // iterate over each parameter in this group
+        std::vector<ModuleParameter>::const_iterator pbeginit
+            = (*pgit).GetParameters().begin();
+        std::vector<ModuleParameter>::const_iterator pendit
+            = (*pgit).GetParameters().end();
+        std::vector<ModuleParameter>::const_iterator pit;
 
-      int pcount;
-      for (pcount = 0, pit = pbeginit; pit != pendit; ++pit, ++pcount)
-      {
-        // switch on the type of the parameter...
-        vtkKWCoreWidget *parameter;
+        int pcount;
+        for (pcount = 0, pit = pbeginit; pit != pendit; ++pit, ++pcount)
+        {
+            // switch on the type of the parameter...
+            vtkKWCoreWidget *parameter;
 
-        if ((*pit).GetTag() == "integer")
-          {
-          if ((*pit).GetConstraints() == "")
+            if ((*pit).GetTag() == "integer")
             {
-            vtkKWSpinBoxWithLabel *tparameter = vtkKWSpinBoxWithLabel::New();
-            tparameter->SetParent( parameterGroupFrame );
-            tparameter->Create();
-            tparameter->SetLabelText((*pit).GetLabel().c_str());
-            tparameter->GetWidget()->SetRestrictValueToInteger();
-            tparameter->GetWidget()->SetIncrement(1);
-            tparameter->GetWidget()->SetValue(atof((*pit).GetDefault().c_str()));
-            tparameter->GetWidget()
-              ->SetRange(itk::NumericTraits<int>::NonpositiveMin(),
-                         itk::NumericTraits<int>::max());
-            parameter = tparameter;
-            }
-          else
+                if ((*pit).GetConstraints() == "")
+                {
+                    vtkKWSpinBoxWithLabel
+                            *tparameter = vtkKWSpinBoxWithLabel::New();
+                    tparameter->SetParent( parameterGroupFrame);
+                    tparameter->Create();
+                    tparameter->SetLabelText((*pit).GetLabel().c_str());
+                    tparameter->GetWidget()->SetRestrictValueToInteger();
+                    tparameter->GetWidget()->SetIncrement(1);
+                    tparameter->GetWidget()->SetValue(atof((*pit).GetDefault().c_str()));
+                    tparameter->GetWidget()
+                    ->SetRange(itk::NumericTraits<int>::NonpositiveMin(),
+                            itk::NumericTraits<int>::max());
+                    parameter = tparameter;
+                }
+                else
             {
-            int min, max, step;
-            if ((*pit).GetMinimum() != "")
-              {
-              min = atoi((*pit).GetMinimum().c_str());
-              }
-            else
-              {
-              min = itk::NumericTraits<int>::NonpositiveMin();
-              }
-            if ((*pit).GetMaximum() != "")
-              {
-              max = atoi((*pit).GetMaximum().c_str());
-              }
-            else
-              {
-              max = itk::NumericTraits<int>::max();
-              }
-            if ((*pit).GetStep() != "")
-              {
-              step = atoi((*pit).GetStep().c_str());
-              }
-            else
-              {
-              step = 1;
-              }
+                    int min, max, step;
+                    if ((*pit).GetMinimum()!= "") {
+                        min = atoi((*pit).GetMinimum().c_str());
+                    } else {
+                        min = itk::NumericTraits<int>::NonpositiveMin();
+                    }
+                    if ((*pit).GetMaximum()!= "") {
+                        max = atoi((*pit).GetMaximum().c_str());
+                    } else {
+                        max = itk::NumericTraits<int>::max();
+                    }
+                    if ((*pit).GetStep()!= "") {
+                        step = atoi((*pit).GetStep().c_str());
+                    } else {
+                        step = 1;
+                    }
 
-            vtkKWScaleWithEntry *tparameter = vtkKWScaleWithEntry::New();
-            tparameter->SetParent( parameterGroupFrame );
-            tparameter->PopupModeOn();
-            tparameter->Create();
-            tparameter->SetLabelText((*pit).GetLabel().c_str());
-            tparameter->RangeVisibilityOn();
-            tparameter->SetRange(min, max);
-            tparameter->SetValue(atof((*pit).GetDefault().c_str()));
-            tparameter->SetResolution(step);
-            parameter = tparameter;
-            }
-          }
-        else if ((*pit).GetTag() == "boolean")
-          {
-          vtkKWCheckButtonWithLabel *tparameter = vtkKWCheckButtonWithLabel::New();
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetLabelText((*pit).GetLabel().c_str());
-          tparameter->GetWidget()->SetSelectedState((*pit).GetDefault() == "true" ? 1 : 0);
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "float")
-          {
-          if ((*pit).GetConstraints() == "")
-            {
-            vtkKWSpinBoxWithLabel *tparameter = vtkKWSpinBoxWithLabel::New();
-            tparameter->SetParent( parameterGroupFrame );
-            tparameter->Create();
-            tparameter->SetLabelText((*pit).GetLabel().c_str());
-            tparameter->GetWidget()
-              ->SetRange(itk::NumericTraits<float>::NonpositiveMin(),
-                         itk::NumericTraits<float>::max());
-            tparameter->GetWidget()->SetIncrement( 0.1 );
-            tparameter->GetWidget()->SetValueFormat("%1.1f");
-            tparameter->GetWidget()->SetValue(atof((*pit).GetDefault().c_str()));
-            parameter = tparameter;
-            }
-          else
-            {
-            double min, max, step;
-            if ((*pit).GetMinimum() != "")
-              {
-              min = atof((*pit).GetMinimum().c_str());
-              }
-            else
-              {
-              min = itk::NumericTraits<float>::NonpositiveMin();
-              }
-            if ((*pit).GetMaximum() != "")
-              {
-              max = atof((*pit).GetMaximum().c_str());
-              }
-            else
-              {
-              max = itk::NumericTraits<float>::max();
-              }
-            if ((*pit).GetStep() != "")
-              {
-              step = atof((*pit).GetStep().c_str());
-              }
-            else
-              {
-              step = 0.1;
-              }
+                    vtkKWScaleWithEntry
+                            *tparameter = vtkKWScaleWithEntry::New();
+                    tparameter->SetParent( parameterGroupFrame);
+                    tparameter->PopupModeOn();
+                    tparameter->Create();
+                    tparameter->SetLabelText((*pit).GetLabel().c_str());
+                    tparameter->RangeVisibilityOn();
+                    tparameter->SetRange(min, max);
+                    tparameter->SetValue(atof((*pit).GetDefault().c_str()));
+                    tparameter->SetResolution(step);
+                    parameter = tparameter;
+                }
+            } else if ((*pit).GetTag()== "boolean") {
+                vtkKWCheckButtonWithLabel
+                        *tparameter = vtkKWCheckButtonWithLabel::New();
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetLabelText((*pit).GetLabel().c_str());
+                tparameter->GetWidget()->SetSelectedState((*pit).GetDefault()== "true" ? 1 : 0);
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "float") {
+                if ((*pit).GetConstraints()== "") {
+                    vtkKWSpinBoxWithLabel
+                            *tparameter = vtkKWSpinBoxWithLabel::New();
+                    tparameter->SetParent( parameterGroupFrame);
+                    tparameter->Create();
+                    tparameter->SetLabelText((*pit).GetLabel().c_str());
+                    tparameter->GetWidget()
+                    ->SetRange(itk::NumericTraits<float>::NonpositiveMin(),
+                            itk::NumericTraits<float>::max());
+                    tparameter->GetWidget()->SetIncrement( 0.1);
+                    tparameter->GetWidget()->SetValueFormat("%1.1f");
+                    tparameter->GetWidget()->SetValue(atof((*pit).GetDefault().c_str()));
+                    parameter = tparameter;
+                } else {
+                    double min, max, step;
+                    if ((*pit).GetMinimum()!= "") {
+                        min = atof((*pit).GetMinimum().c_str());
+                    } else {
+                        min = itk::NumericTraits<float>::NonpositiveMin();
+                    }
+                    if ((*pit).GetMaximum()!= "") {
+                        max = atof((*pit).GetMaximum().c_str());
+                    } else {
+                        max = itk::NumericTraits<float>::max();
+                    }
+                    if ((*pit).GetStep()!= "") {
+                        step = atof((*pit).GetStep().c_str());
+                    } else {
+                        step = 0.1;
+                    }
 
-            vtkKWScaleWithEntry *tparameter
-              = vtkKWScaleWithEntry::New();
-            tparameter->SetParent( parameterGroupFrame );
-            tparameter->PopupModeOn();
-            tparameter->Create();
-            tparameter->SetLabelText((*pit).GetLabel().c_str());
-            tparameter->RangeVisibilityOn();
-            tparameter->SetRange(min, max);
-            tparameter->SetResolution(step);
-            tparameter->SetValue(atof((*pit).GetDefault().c_str()));
-            parameter = tparameter;
-            }
-          }
-        else if ((*pit).GetTag() == "double")
-          {
-          if ((*pit).GetConstraints() == "")
-            {
-            vtkKWSpinBoxWithLabel *tparameter = vtkKWSpinBoxWithLabel::New();
-            tparameter->SetParent( parameterGroupFrame );
-            tparameter->Create();
-            tparameter->SetLabelText((*pit).GetLabel().c_str());
-            tparameter->GetWidget()
-              ->SetRange(itk::NumericTraits<double>::NonpositiveMin(),
-                         itk::NumericTraits<double>::max());
-            tparameter->GetWidget()->SetIncrement( 0.1 );
-            tparameter->GetWidget()->SetValueFormat("%1.1f");
-            tparameter->GetWidget()->SetValue(atof((*pit).GetDefault().c_str()));
-            parameter = tparameter;
-            }
-          else
-            {
-            double min, max, step;
-            if ((*pit).GetMinimum() != "")
-              {
-              min = atof((*pit).GetMinimum().c_str());
-              }
-            else
-              {
-              min = itk::NumericTraits<double>::NonpositiveMin();
-              }
-            if ((*pit).GetMaximum() != "")
-              {
-              max = atof((*pit).GetMaximum().c_str());
-              }
-            else
-              {
-              max = itk::NumericTraits<double>::max();
-              }
-            if ((*pit).GetStep() != "")
-              {
-              step = atof((*pit).GetStep().c_str());
-              }
-            else
-              {
-              step = 0.1;
-              }
+                    vtkKWScaleWithEntry *tparameter= vtkKWScaleWithEntry::New();
+                    tparameter->SetParent( parameterGroupFrame);
+                    tparameter->PopupModeOn();
+                    tparameter->Create();
+                    tparameter->SetLabelText((*pit).GetLabel().c_str());
+                    tparameter->RangeVisibilityOn();
+                    tparameter->SetRange(min, max);
+                    tparameter->SetResolution(step);
+                    tparameter->SetValue(atof((*pit).GetDefault().c_str()));
+                    parameter = tparameter;
+                }
+            } else if ((*pit).GetTag()== "double") {
+                if ((*pit).GetConstraints()== "") {
+                    vtkKWSpinBoxWithLabel
+                            *tparameter = vtkKWSpinBoxWithLabel::New();
+                    tparameter->SetParent( parameterGroupFrame);
+                    tparameter->Create();
+                    tparameter->SetLabelText((*pit).GetLabel().c_str());
+                    tparameter->GetWidget()
+                    ->SetRange(itk::NumericTraits<double>::NonpositiveMin(),
+                            itk::NumericTraits<double>::max());
+                    tparameter->GetWidget()->SetIncrement( 0.1);
+                    tparameter->GetWidget()->SetValueFormat("%1.1f");
+                    tparameter->GetWidget()->SetValue(atof((*pit).GetDefault().c_str()));
+                    parameter = tparameter;
+                } else {
+                    double min, max, step;
+                    if ((*pit).GetMinimum()!= "") {
+                        min = atof((*pit).GetMinimum().c_str());
+                    } else {
+                        min = itk::NumericTraits<double>::NonpositiveMin();
+                    }
+                    if ((*pit).GetMaximum()!= "") {
+                        max = atof((*pit).GetMaximum().c_str());
+                    } else {
+                        max = itk::NumericTraits<double>::max();
+                    }
+                    if ((*pit).GetStep()!= "") {
+                        step = atof((*pit).GetStep().c_str());
+                    } else {
+                        step = 0.1;
+                    }
 
-            vtkKWScaleWithEntry *tparameter
-              = vtkKWScaleWithEntry::New();
-            tparameter->SetParent( parameterGroupFrame );
-            tparameter->PopupModeOn();
-            tparameter->Create();
-            tparameter->SetLabelText((*pit).GetLabel().c_str());
-            tparameter->RangeVisibilityOn();
-            tparameter->SetRange(min, max);
-            tparameter->SetResolution(step);
-            tparameter->SetValue(atof((*pit).GetDefault().c_str()));
-            parameter = tparameter;
-            }
-          }
-        else if ((*pit).GetTag() == "string"
-                 || (*pit).GetTag() == "integer-vector"
-                 || (*pit).GetTag() == "float-vector"
-                 || (*pit).GetTag() == "double-vector"
-                 || (*pit).GetTag() == "string-vector")
-          {
-          vtkKWEntryWithLabel *tparameter = vtkKWEntryWithLabel::New();
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetLabelText((*pit).GetLabel().c_str());
-          tparameter->GetWidget()->SetValue((*pit).GetDefault().c_str());
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "point")
-          {
-          vtkSlicerNodeSelectorWidget *tparameter
-            = vtkSlicerNodeSelectorWidget::New();
-          
-          tparameter->SetNodeClass("vtkMRMLFiducialListNode",
-                                   NULL,
-                                   NULL,
-                                   (title + " FiducialList").c_str());
-          tparameter->SetNewNodeEnabled(1);
-          tparameter->SetNoneEnabled(1);
-//          tparameter->SetNewNodeName((title+" output").c_str());
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
-          tparameter->UpdateMenu();
-          
-          tparameter->SetBorderWidth(2);
-          tparameter->SetReliefToFlat();
-          tparameter->SetLabelText( (*pit).GetLabel().c_str());
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "image" && (*pit).GetChannel() == "input")
-          {
-          vtkSlicerNodeSelectorWidget *tparameter
-            = vtkSlicerNodeSelectorWidget::New();
-          std::string labelAttrName("LabelMap");
-          std::string labelAttrValue("1");
-          std::string nodeClass;
-          const char *attrName = 0;
-          const char *attrValue = 0;
-          if ((*pit).GetType() == "label")
-            {
-            nodeClass = "vtkMRMLScalarVolumeNode";
-            attrName = labelAttrName.c_str();
-            attrValue = labelAttrValue.c_str();
-            }
-          else if ((*pit).GetType() == "vector")
-            {
-            nodeClass = "vtkMRMLVectorVolumeNode";
-            }
-          else if ((*pit).GetType() == "tensor")
-            {
-            nodeClass = "vtkMRMLDiffusionTensorVolumeNode";
-            }
-          else if ((*pit).GetType() == "diffusion-weighted")
-            {
-            nodeClass = "vtkMRMLDiffusionWeightedVolumeNode";
-            }
-          else
-            {
-            nodeClass = "vtkMRMLScalarVolumeNode";
+                    vtkKWScaleWithEntry *tparameter= vtkKWScaleWithEntry::New();
+                    tparameter->SetParent( parameterGroupFrame);
+                    tparameter->PopupModeOn();
+                    tparameter->Create();
+                    tparameter->SetLabelText((*pit).GetLabel().c_str());
+                    tparameter->RangeVisibilityOn();
+                    tparameter->SetRange(min, max);
+                    tparameter->SetResolution(step);
+                    tparameter->SetValue(atof((*pit).GetDefault().c_str()));
+                    parameter = tparameter;
+                }
+            } else if ((*pit).GetTag()== "string"|| (*pit).GetTag()== "integer-vector"|| (*pit).GetTag()== "float-vector"|| (*pit).GetTag()== "double-vector"|| (*pit).GetTag()== "string-vector") {
+                vtkKWEntryWithLabel *tparameter = vtkKWEntryWithLabel::New();
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetLabelText((*pit).GetLabel().c_str());
+                tparameter->GetWidget()->SetValue((*pit).GetDefault().c_str());
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "point") {
+                vtkSlicerNodeSelectorWidget
+                        *tparameter= vtkSlicerNodeSelectorWidget::New();
+
+                tparameter->SetNodeClass("vtkMRMLFiducialListNode", NULL, NULL,
+                        (title + " FiducialList").c_str());
+                tparameter->SetNewNodeEnabled(1);
+                tparameter->SetNoneEnabled(1);
+                //          tparameter->SetNewNodeName((title+" output").c_str());
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
+                tparameter->UpdateMenu();
+
+                tparameter->SetBorderWidth(2);
+                tparameter->SetReliefToFlat();
+                tparameter->SetLabelText( (*pit).GetLabel().c_str());
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "image" && (*pit).GetChannel()== "input") {
+                vtkSlicerNodeSelectorWidget
+                        *tparameter= vtkSlicerNodeSelectorWidget::New();
+                std::string labelAttrName("LabelMap");
+                std::string labelAttrValue("1");
+                std::string nodeClass;
+                const char *attrName = 0;
+                const char *attrValue = 0;
+                if ((*pit).GetType()== "label") {
+                    nodeClass = "vtkMRMLScalarVolumeNode";
+                    attrName = labelAttrName.c_str();
+                    attrValue = labelAttrValue.c_str();
+                } else if ((*pit).GetType()== "vector") {
+                    nodeClass = "vtkMRMLVectorVolumeNode";
+                } else if ((*pit).GetType()== "tensor") {
+                    nodeClass = "vtkMRMLDiffusionTensorVolumeNode";
+                } else if ((*pit).GetType()== "diffusion-weighted") {
+                    nodeClass = "vtkMRMLDiffusionWeightedVolumeNode";
+                } else {
+                    nodeClass = "vtkMRMLScalarVolumeNode";
+                }
+
+                tparameter->SetNodeClass(nodeClass.c_str(), attrName,
+                        attrValue, (title + " Volume").c_str());
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
+                tparameter->UpdateMenu();
+
+                tparameter->SetBorderWidth(2);
+                tparameter->SetReliefToFlat();
+                tparameter->SetLabelText( (*pit).GetLabel().c_str());
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "image" && (*pit).GetChannel()== "output") {
+                vtkSlicerNodeSelectorWidget
+                        *tparameter= vtkSlicerNodeSelectorWidget::New();
+                std::string labelAttrName("LabelMap");
+                std::string labelAttrValue("1");
+                std::string nodeClass;
+                const char *attrName = 0;
+                const char *attrValue = 0;
+                if ((*pit).GetType()== "label") {
+                    nodeClass = "vtkMRMLScalarVolumeNode";
+                    attrName = labelAttrName.c_str();
+                    attrValue = labelAttrValue.c_str();
+                } else if ((*pit).GetType()== "vector") {
+                    nodeClass = "vtkMRMLVectorVolumeNode";
+                } else if ((*pit).GetType()== "tensor") {
+                    nodeClass = "vtkMRMLDiffusionTensorVolumeNode";
+                } else if ((*pit).GetType()== "diffusion-weighted") {
+                    nodeClass = "vtkMRMLDiffusionWeightedVolumeNode";
+                } else {
+                    nodeClass = "vtkMRMLScalarVolumeNode";
+                }
+
+                tparameter->SetNodeClass(nodeClass.c_str(), attrName,
+                        attrValue, (title + " Volume").c_str());
+                tparameter->SetNewNodeEnabled(1);
+                tparameter->SetNoneEnabled(1);
+                //          tparameter->SetNewNodeName((title+" output").c_str());
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
+                tparameter->UpdateMenu();
+
+                tparameter->SetBorderWidth(2);
+                tparameter->SetReliefToFlat();
+                tparameter->SetLabelText( (*pit).GetLabel().c_str());
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "geometry" && (*pit).GetChannel()== "input") {
+                vtkSlicerNodeSelectorWidget
+                        *tparameter= vtkSlicerNodeSelectorWidget::New();
+                tparameter->SetNodeClass("vtkMRMLModelNode", NULL, NULL, (title + " Model").c_str());
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
+                tparameter->UpdateMenu();
+
+                tparameter->SetBorderWidth(2);
+                tparameter->SetReliefToFlat();
+                tparameter->SetLabelText( (*pit).GetLabel().c_str());
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "geometry" && (*pit).GetChannel()=="output") {
+                vtkSlicerNodeSelectorWidget
+                        *tparameter= vtkSlicerNodeSelectorWidget::New();
+
+                tparameter->SetNodeClass("vtkMRMLModelNode", NULL, NULL, (title + " Model").c_str());
+                tparameter->SetNewNodeEnabled(1);
+                tparameter->SetNoneEnabled(1);
+                //          tparameter->SetNewNodeName((title+" output").c_str());
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
+                tparameter->UpdateMenu();
+
+                tparameter->SetBorderWidth(2);
+                tparameter->SetReliefToFlat();
+                tparameter->SetLabelText( (*pit).GetLabel().c_str());
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "directory") {
+                vtkKWLoadSaveButtonWithLabel
+                        *tparameter= vtkKWLoadSaveButtonWithLabel::New();
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                if ((*pit).GetChannel()== "output") {
+                    tparameter->GetWidget()->GetLoadSaveDialog()->SaveDialogOn();
+                }
+                tparameter->SetLabelText( (*pit).GetLabel().c_str());
+                tparameter->GetWidget()->GetLoadSaveDialog()->ChooseDirectoryOn();
+                tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialFileName( (*pit).GetDefault().c_str());
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "file") {
+                vtkKWLoadSaveButtonWithLabel
+                        *tparameter= vtkKWLoadSaveButtonWithLabel::New();
+                tparameter->SetParent( parameterGroupFrame);
+                if ((*pit).GetChannel()== "output") {
+                    tparameter->GetWidget()->GetLoadSaveDialog()->SaveDialogOn();
+                }
+                tparameter->Create();
+                tparameter->SetLabelText( (*pit).GetLabel().c_str());
+                tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialFileName( (*pit).GetDefault().c_str());
+                parameter = tparameter;
+            } else if ((*pit).GetTag()== "string-enumeration"|| (*pit).GetTag()== "integer-enumeration"|| (*pit).GetTag()== "float-enumeration"|| (*pit).GetTag()== "double-enumeration") {
+                vtkKWRadioButtonSetWithLabel
+                        *tparameter= vtkKWRadioButtonSetWithLabel::New();
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetLabelText( (*pit).GetLabel().c_str());
+                tparameter->GetWidget()->PackHorizontallyOn();
+                tparameter->GetWidget()->SetMaximumNumberOfWidgetsInPackingDirection(4);
+                std::vector<std::string>::const_iterator sbeginit= (*pit).GetElements().begin();
+                std::vector<std::string>::const_iterator sendit= (*pit).GetElements().end();
+                std::vector<std::string>::const_iterator sit;
+                int id;
+                for (sit = sbeginit, id=0; sit != sendit; ++sit, ++id) {
+                    vtkKWRadioButton *b = tparameter->GetWidget()->AddWidget(id);
+                    b->SetValue( (*sit).c_str());
+                    b->SetText( (*sit).c_str());
+                    b->SetAnchorToWest();
+                    if (*sit == (*pit).GetDefault()) {
+                        b->SetSelectedState(1);
+                    } else {
+                        b->SetSelectedState(0);
+                    }
+                }
+                parameter = tparameter;
+            } else {
+                vtkKWLabel *tparameter = vtkKWLabel::New();
+                tparameter->SetParent( parameterGroupFrame);
+                tparameter->Create();
+                tparameter->SetText( (*pit).GetLabel().c_str());
+                parameter = tparameter;
             }
 
-          tparameter->SetNodeClass(nodeClass.c_str(), attrName, attrValue, 
-                                   (title + " Volume").c_str());
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
-          tparameter->UpdateMenu();
-          
-          tparameter->SetBorderWidth(2);
-          tparameter->SetReliefToFlat();
-          tparameter->SetLabelText( (*pit).GetLabel().c_str());
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "image" && (*pit).GetChannel() == "output")
-          {
-          vtkSlicerNodeSelectorWidget *tparameter
-            = vtkSlicerNodeSelectorWidget::New();
-          std::string labelAttrName("LabelMap");
-          std::string labelAttrValue("1");
-          std::string nodeClass;
-          const char *attrName = 0;
-          const char *attrValue = 0;
-          if ((*pit).GetType() == "label")
-            {
-            nodeClass = "vtkMRMLScalarVolumeNode";
-            attrName = labelAttrName.c_str();
-            attrValue = labelAttrValue.c_str();
-            }
-          else if ((*pit).GetType() == "vector")
-            {
-            nodeClass = "vtkMRMLVectorVolumeNode";
-            }
-          else if ((*pit).GetType() == "tensor")
-            {
-            nodeClass = "vtkMRMLDiffusionTensorVolumeNode";
-            }
-          else if ((*pit).GetType() == "diffusion-weighted")
-            {
-            nodeClass = "vtkMRMLDiffusionWeightedVolumeNode";
-            }
-          else
-            {
-            nodeClass = "vtkMRMLScalarVolumeNode";
-            }
+            // build the balloon help for the parameter
+            std::string parameterBalloonHelp = (*pit).GetDescription();
+            parameter->SetBalloonHelpString(parameterBalloonHelp.c_str());
 
-          tparameter->SetNodeClass(nodeClass.c_str(), attrName, attrValue, 
-                                   (title + " Volume").c_str());
-          tparameter->SetNewNodeEnabled(1);
-          tparameter->SetNoneEnabled(1);
-//          tparameter->SetNewNodeName((title+" output").c_str());
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
-          tparameter->UpdateMenu();
-          
-          tparameter->SetBorderWidth(2);
-          tparameter->SetReliefToFlat();
-          tparameter->SetLabelText( (*pit).GetLabel().c_str());
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "geometry" && (*pit).GetChannel() == "input")
-          {
-          vtkSlicerNodeSelectorWidget *tparameter
-            = vtkSlicerNodeSelectorWidget::New();
-          tparameter->SetNodeClass("vtkMRMLModelNode",
-                                   NULL,
-                                   NULL,
-                                   (title + " Model").c_str());
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
-          tparameter->UpdateMenu();
-          
-          tparameter->SetBorderWidth(2);
-          tparameter->SetReliefToFlat();
-          tparameter->SetLabelText( (*pit).GetLabel().c_str());
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "geometry" && (*pit).GetChannel() =="output")
-          {
-          vtkSlicerNodeSelectorWidget *tparameter
-            = vtkSlicerNodeSelectorWidget::New();
-          
-          tparameter->SetNodeClass("vtkMRMLModelNode",
-                                   NULL,
-                                   NULL,
-                                   (title + " Model").c_str());
-          tparameter->SetNewNodeEnabled(1);
-          tparameter->SetNoneEnabled(1);
-//          tparameter->SetNewNodeName((title+" output").c_str());
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetMRMLScene(this->m_ModuleLogic->GetMRMLScene());
-          tparameter->UpdateMenu();
-          
-          tparameter->SetBorderWidth(2);
-          tparameter->SetReliefToFlat();
-          tparameter->SetLabelText( (*pit).GetLabel().c_str());
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "directory")
-          {
-          vtkKWLoadSaveButtonWithLabel *tparameter
-            = vtkKWLoadSaveButtonWithLabel::New();
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          if ((*pit).GetChannel() == "output")
-            {
-            tparameter->GetWidget()->GetLoadSaveDialog()->SaveDialogOn();
-            }
-          tparameter->SetLabelText( (*pit).GetLabel().c_str() );
-          tparameter->GetWidget()->GetLoadSaveDialog()->ChooseDirectoryOn();
-          tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialFileName( (*pit).GetDefault().c_str() );
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "file")
-          {
-          vtkKWLoadSaveButtonWithLabel *tparameter
-            = vtkKWLoadSaveButtonWithLabel::New();
-          tparameter->SetParent( parameterGroupFrame );
-          if ((*pit).GetChannel() == "output")
-            {
-            tparameter->GetWidget()->GetLoadSaveDialog()->SaveDialogOn();
-            }
-          tparameter->Create();
-          tparameter->SetLabelText( (*pit).GetLabel().c_str() );
-          tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialFileName( (*pit).GetDefault().c_str() );
-          parameter = tparameter;
-          }
-        else if ((*pit).GetTag() == "string-enumeration"
-                 || (*pit).GetTag() == "integer-enumeration"
-                 || (*pit).GetTag() == "float-enumeration"
-                 || (*pit).GetTag() == "double-enumeration")
-          {
-          vtkKWRadioButtonSetWithLabel *tparameter
-            = vtkKWRadioButtonSetWithLabel::New();
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetLabelText( (*pit).GetLabel().c_str() );
-          tparameter->GetWidget()->PackHorizontallyOn();
-          tparameter->GetWidget()->SetMaximumNumberOfWidgetsInPackingDirection(4);
-          std::vector<std::string>::const_iterator sbeginit
-            = (*pit).GetElements().begin();
-          std::vector<std::string>::const_iterator sendit
-            = (*pit).GetElements().end();
-          std::vector<std::string>::const_iterator sit;
-          int id;
-          for(sit = sbeginit, id=0; sit != sendit; ++sit, ++id)
-            {
-            vtkKWRadioButton *b = tparameter->GetWidget()->AddWidget(id);
-            b->SetValue( (*sit).c_str() );
-            b->SetText( (*sit).c_str() );
-            b->SetAnchorToWest();
-            if (*sit == (*pit).GetDefault())
-              {
-              b->SetSelectedState(1);
-              }
-            else
-              {
-              b->SetSelectedState(0);
-              }
-            }
-          parameter = tparameter;
-          }
-        else
-          {
-          vtkKWLabel *tparameter = vtkKWLabel::New();
-          tparameter->SetParent( parameterGroupFrame );
-          tparameter->Create();
-          tparameter->SetText( (*pit).GetLabel().c_str() );
-          parameter = tparameter;
-          }
+            // pack the parameter. if the parameter has a separate label and
+            // widget, then pack both side by side.
+            app->Script( "pack %s -side top -anchor ne -padx 2 -pady 2",
+                    parameter->GetWidgetName());
 
-        // build the balloon help for the parameter
-        std::string parameterBalloonHelp = (*pit).GetDescription();
-        parameter->SetBalloonHelpString(parameterBalloonHelp.c_str());
+            curModWidgetStruct->modParams->push_back((*pit));
 
-        // pack the parameter. if the parameter has a separate label and
-        // widget, then pack both side by side.
-        app->Script ( "pack %s -side top -anchor ne -padx 2 -pady 2",
-                      parameter->GetWidgetName() );
+            //initialze/update MRML for this widget;
+            this->UpdateMRMLForWidget(parameter, (*pit));
+            
+            this->AddParameterAndEventToWidget(parameter, (*pit));                        
 
-        // Store the parameter widget in a SmartPointer
-//        (*this->InternalWidgetMap)[(*pit).GetName()] = parameter;
-        parameter->Delete();
-        }
-      curModWidgetStruct->modParam = &(*pit);
-      curModWidgetStruct->paramWidget = parameterGroupFrame;
-      this->m_InternalWidgetParamList->push_back(curModWidgetStruct);
+            parameter->Delete();
+        }                
+        curModWidgetStruct->paramWidget = parameterGroupFrame;
+        this->m_InternalWidgetParamList->push_back(curModWidgetStruct);
     }//for
+    
+    //Add all change Events
+    
     this->m_Created = true;
     this->m_End = false;
 }
@@ -600,7 +526,7 @@ vtkKWWidget *vtkSlicerParameterWidget::GetNextWidget()
     else if(this->m_InternalIterator != this->m_InternalWidgetParamList->end())
     {
         this->m_CurrentIndex++;
-        this->m_InternalIterator++;    
+        this->m_InternalIterator++;                
     }
     else
     {
@@ -637,7 +563,7 @@ void vtkSlicerParameterWidget::reset()
     this->m_End = false;
 }
 
-const ModuleParameter *vtkSlicerParameterWidget::GetCurrentParameter()
+std::vector<ModuleParameter> *vtkSlicerParameterWidget::GetCurrentParameters()
 {
     if(this->end())
     {
@@ -645,7 +571,7 @@ const ModuleParameter *vtkSlicerParameterWidget::GetCurrentParameter()
     }
     else
     {
-        return (*(this->m_InternalIterator))->modParam;
+        return (*(this->m_InternalIterator))->modParams;
     }
 }
 
@@ -667,4 +593,337 @@ void vtkSlicerParameterWidget::SetSlicerModuleLogic(vtkSlicerModuleLogic *module
 void vtkSlicerParameterWidget::SetModuleDescription(ModuleDescription *modDescription)
 {
     this->m_ModuleDescription = modDescription;
+}
+
+void vtkSlicerParameterWidget::SetMRMLNode(vtkMRMLNode *mrmlNode)
+{
+    this->m_MRMLNode = mrmlNode;
+}
+
+vtkMRMLNode *vtkSlicerParameterWidget::GetMRMLNode()
+{
+    return this->m_MRMLNode;
+}
+
+void vtkSlicerParameterWidget::AddGUIObservers()
+{
+//    this->GUIChangedCallbackCommand->SetClientData(NULL);    
+    
+    std::map<vtkKWCoreWidget*, ModuleParameter>::iterator mapIter;
+    for(mapIter = this->m_internalWidgetToParamMap->begin(); mapIter != this->m_internalWidgetToParamMap->end(); mapIter++)
+    {
+//        vtkKWWidget *curWidg = this->m_ParentWidget->GetChildWidgetWithName((*mapIter).first.c_str());
+        // Need to determine what type of widget we are using so we can
+        // set the appropriate type of observer
+        vtkKWSpinBoxWithLabel *sb = vtkKWSpinBoxWithLabel::SafeDownCast((*mapIter).first);
+        vtkKWScaleWithEntry *se = vtkKWScaleWithEntry::SafeDownCast((*mapIter).first);
+        vtkKWCheckButtonWithLabel *cb = vtkKWCheckButtonWithLabel::SafeDownCast((*mapIter).first);
+        vtkKWEntryWithLabel *e = vtkKWEntryWithLabel::SafeDownCast((*mapIter).first);
+        vtkSlicerNodeSelectorWidget *ns = vtkSlicerNodeSelectorWidget::SafeDownCast((*mapIter).first);
+        vtkKWLoadSaveButtonWithLabel *lsb = vtkKWLoadSaveButtonWithLabel::SafeDownCast((*mapIter).first);
+        vtkKWRadioButtonSetWithLabel *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast((*mapIter).first);
+        
+        //create the callbackCommand
+        
+        vtkCallbackCommand *GUIChangedCallbackCommand = vtkCallbackCommand::New();
+        GUIChangedCallbackCommand->SetCallback(vtkSlicerParameterWidget::GUIChangedCallback);
+        
+        callBackDataStruct *cbStruct = new callBackDataStruct;
+        //    cbStruct->curWidgetName = NULL;
+        cbStruct->parentClass = this;
+
+        if (sb)
+        {
+//            cbStruct->curWidget = sb->GetWidget();
+            GUIChangedCallbackCommand->SetClientData(cbStruct);
+            sb->GetWidget()->AddObserver(vtkKWSpinBox::SpinBoxValueChangedEvent,
+                    (vtkCommand *) GUIChangedCallbackCommand);
+        }
+        else if (se)
+        {
+//            cbStruct->curWidget = se;
+            GUIChangedCallbackCommand->SetClientData(cbStruct);
+            se->AddObserver(vtkKWScale::ScaleValueStartChangingEvent,
+                    (vtkCommand *) GUIChangedCallbackCommand);
+            se->AddObserver(vtkKWScale::ScaleValueChangedEvent,
+                    (vtkCommand *) GUIChangedCallbackCommand);
+        }
+        else if (cb)
+        {
+//            cbStruct->curWidget = cb->GetWidget();
+            GUIChangedCallbackCommand->SetClientData(cbStruct);
+            cb->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent,
+                    (vtkCommand *) GUIChangedCallbackCommand);
+        }
+        else if (e)
+        {
+//            cbStruct->curWidget = e->GetWidget();
+            GUIChangedCallbackCommand->SetClientData(cbStruct);
+            e->GetWidget()->AddObserver(vtkKWEntry::EntryValueChangedEvent,
+                    (vtkCommand *) GUIChangedCallbackCommand);
+        }
+        else if (ns)
+        {
+//            cbStruct->curWidget = ns;
+            GUIChangedCallbackCommand->SetClientData(cbStruct);
+            ns->AddObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent,
+                    (vtkCommand *) GUIChangedCallbackCommand);
+        }
+        else if (lsb)
+        {
+//            cbStruct->curWidget = lsb->GetWidget();
+            GUIChangedCallbackCommand->SetClientData(cbStruct);
+            lsb->GetWidget()->AddObserver(vtkKWPushButton::InvokedEvent,
+                    (vtkCommand *) GUIChangedCallbackCommand);
+        }
+        else if (rbs)
+        {
+            int num = rbs->GetWidget()->GetNumberOfWidgets();
+            for (int i=0; i < num; ++i)
+            {
+                int id = rbs->GetWidget()->GetIdOfNthWidget(i);
+                vtkKWRadioButton* rb = rbs->GetWidget()->GetWidget(id);
+//                cbStruct->curWidget= rb;
+                GUIChangedCallbackCommand->SetClientData(cbStruct);
+                rb->AddObserver(vtkKWRadioButton::SelectedStateChangedEvent,
+                        (vtkCommand *) GUIChangedCallbackCommand);
+            }
+        }
+    }//for
+}
+
+void vtkSlicerParameterWidget::AddParameterAndEventToWidget(vtkKWCoreWidget *parentWidget, ModuleParameter widgetParameter)
+{
+    
+    vtkCallbackCommand *GUIChangedCallbackCommand = vtkCallbackCommand::New();
+    GUIChangedCallbackCommand->SetCallback(vtkSlicerParameterWidget::GUIChangedCallback);
+    
+    callBackDataStruct *cbStruct = new callBackDataStruct;
+    //    cbStruct->curWidgetName = NULL;
+    cbStruct->parentClass = this;
+    cbStruct->widgetParameter = widgetParameter;
+    
+    //vtkKWWidget *curWidg = this->m_ParentWidget->GetChildWidgetWithName((*mapIter).first.c_str());
+    // Need to determine what type of widget we are using so we can
+    // set the appropriate type of observer
+    vtkKWSpinBoxWithLabel *sb = vtkKWSpinBoxWithLabel::SafeDownCast(parentWidget);
+    vtkKWScaleWithEntry *se = vtkKWScaleWithEntry::SafeDownCast(parentWidget);
+    vtkKWCheckButtonWithLabel *cb = vtkKWCheckButtonWithLabel::SafeDownCast(parentWidget);
+    vtkKWEntryWithLabel *e = vtkKWEntryWithLabel::SafeDownCast(parentWidget);
+    vtkSlicerNodeSelectorWidget
+            *ns = vtkSlicerNodeSelectorWidget::SafeDownCast(parentWidget);
+    vtkKWLoadSaveButtonWithLabel
+            *lsb = vtkKWLoadSaveButtonWithLabel::SafeDownCast(parentWidget);
+    vtkKWRadioButtonSetWithLabel
+            *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast(parentWidget);
+
+    if (sb) {
+//        this->m_internalWidgetToParamMap->insert(std::make_pair(sb->GetWidget(), widgetParameter));
+        GUIChangedCallbackCommand->SetClientData(cbStruct);
+        sb->GetWidget()->AddObserver(vtkKWSpinBox::SpinBoxValueChangedEvent,
+                (vtkCommand *) GUIChangedCallbackCommand);
+    } else if (se) {
+        GUIChangedCallbackCommand->SetClientData(cbStruct);
+        se->AddObserver(vtkKWScale::ScaleValueStartChangingEvent,
+                (vtkCommand *) GUIChangedCallbackCommand);
+        se->AddObserver(vtkKWScale::ScaleValueChangedEvent,
+                (vtkCommand *) GUIChangedCallbackCommand);
+    } else if (cb) {
+        GUIChangedCallbackCommand->SetClientData(cbStruct);
+        cb->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent,
+                (vtkCommand *) GUIChangedCallbackCommand);
+    } else if (e) {
+        GUIChangedCallbackCommand->SetClientData(cbStruct);
+        e->GetWidget()->AddObserver(vtkKWEntry::EntryValueChangedEvent,
+                (vtkCommand *) GUIChangedCallbackCommand);
+    } else if (ns) {
+        GUIChangedCallbackCommand->SetClientData(cbStruct);
+        ns->AddObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent,
+                (vtkCommand *) GUIChangedCallbackCommand);
+    } else if (lsb) {
+        GUIChangedCallbackCommand->SetClientData(cbStruct);
+        lsb->GetWidget()->AddObserver(vtkKWPushButton::InvokedEvent,
+                (vtkCommand *) GUIChangedCallbackCommand);
+    } else if (rbs) {
+        int num = rbs->GetWidget()->GetNumberOfWidgets();
+        for (int i=0;
+        i < num; ++i) {
+            int id = rbs->GetWidget()->GetIdOfNthWidget(i);
+            vtkKWRadioButton* rb = rbs->GetWidget()->GetWidget(id);
+            GUIChangedCallbackCommand->SetClientData(cbStruct);
+            rb->AddObserver(vtkKWRadioButton::SelectedStateChangedEvent,
+                    (vtkCommand *) GUIChangedCallbackCommand);
+        }
+    }        
+}
+
+void vtkSlicerParameterWidget::GUIChangedCallback(vtkObject *__caller, unsigned long eid, void *__clientData, void *callData)
+{
+    
+    vtkSlicerParameterWidget::callBackDataStruct *myCBStruct = (vtkSlicerParameterWidget::callBackDataStruct*)__clientData;
+    
+    if(!myCBStruct)
+    {
+        std::cout<<"myCBStruct is NULL"<<std::endl;
+        return;
+    }
+    
+//    vtkSlicerParameterWidget::ParameterWidgetChangedStruct *eventStruct = new vtkSlicerParameterWidget::ParameterWidgetChangedStruct;
+//    eventStruct->inputWidget = (vtkKWWidget*)__caller;
+//    eventStruct->widgetParameter = myCBStruct.widgetParameter;
+//    
+    if(myCBStruct->parentClass->GetMRMLNode())
+    {
+        std::string name = myCBStruct->widgetParameter.GetName();
+        const char * value = myCBStruct->parentClass->GetValueFromWidget((vtkKWWidget*)__caller);
+        //try to downcast to vtkMRMLWFEngineModuleNode to access their setAttribute directly
+        std::cout<<"GUIChangeCallback - name: "<<name<<" value: "<<value<<std::endl;
+        myCBStruct->parentClass->GetMRMLNode()->SetAttribute(myCBStruct->parentClass->GetAttributeName(name), value);   
+    }    
+    
+//    myCBStruct->parentClass->InvokeEvent(vtkSlicerParameterWidget::ParameterWidgetChangedEvent, eventStruct);
+//    
+//    std::map<vtkKWCoreWidget*, ModuleParameter>::iterator iter;
+//    int i = 0;
+//    for(iter = myCBStruct->parentClass->m_internalWidgetToParamMap->begin(); iter != myCBStruct->parentClass->m_internalWidgetToParamMap->end(); iter++)
+//    {
+//        std::cout<<(*iter).first->GetWidgetName()<<" == "<<myCBStruct->curWidget->GetWidgetName()<<std::endl;
+//        if(strcmp((*iter).first->GetWidgetName(), myCBStruct->curWidget->GetWidgetName()) == 0)
+//        {
+//            std::cout<<"Widget found: "<<i<<std::endl;
+//            ModuleParameter curInternalParam = (*iter).second;
+//            break;
+//        }        
+//        i++;
+//    }
+//    std::cout<<myCBStruct->parentClass->m_internalWidgetToParamMap->size()<<std::endl;
+    
+//    ModuleParameter* curParam = &((*iter).second);
+    
+//    myCBStruct->parentClass->InvokeEvent(myCBStruct->parentClass->ParameterWidgetChangedEvent, curParam);
+}
+
+const char *vtkSlicerParameterWidget::GetValueFromWidget(vtkKWWidget *widg)
+{
+    vtkKWSpinBox *sb = vtkKWSpinBox::SafeDownCast(widg);
+    vtkKWScaleWithEntry *se = vtkKWScaleWithEntry::SafeDownCast(widg);
+    vtkKWCheckButton *cb = vtkKWCheckButton::SafeDownCast(widg);
+    vtkKWEntry *e = vtkKWEntry::SafeDownCast(widg);
+    vtkSlicerNodeSelectorWidget
+            *ns = vtkSlicerNodeSelectorWidget::SafeDownCast(widg);
+    vtkKWLoadSaveButton
+            *lsb = vtkKWLoadSaveButton::SafeDownCast(widg);
+    vtkKWRadioButton
+            *rb = vtkKWRadioButton::SafeDownCast(widg);
+    std::ostringstream strvalue;
+    
+    if (sb) {
+        strvalue << sb->GetValue();
+        strvalue << ends;
+        std::cout<<strvalue.str()<<std::endl;
+        return strvalue.str().c_str();
+    } else if (se) {
+        strvalue << se->GetValue();
+        strvalue << ends;
+        std::cout<<strvalue.str()<<std::endl;
+        return strvalue.str().c_str();
+    } else if (cb) {
+        return (cb->GetSelectedState() ? "true" : "false");
+    } else if (e) {
+        return e->GetValue();
+    } else if (ns && ns->GetSelected() != NULL) {
+        return ns->GetSelected()->GetID();
+    } else if (lsb) {
+        if (lsb->GetFileName())
+        {
+            return lsb->GetFileName();
+        }
+    } else if (rb) {
+        return rb->GetValue();
+    } else {
+        std::cout<<"WARNING: vtkSlicerParameterWidget - unsupported Widget monitored; return \"\""<<std::endl;
+        return "";
+    }
+    
+//    strvalue.rdbuf()->freeze(0);
+}
+
+void vtkSlicerParameterWidget::SetWidgetID(std::string id)
+{
+    this->m_widgID = id;
+}
+
+const char* vtkSlicerParameterWidget::GetAttributeName(std::string name)
+{
+    if(this->m_widgID == "")
+    {
+        std::cout<<"WARNING: vtkSlicerParameterWidget - no stepID set"<<std::endl;
+        return name.c_str();
+    }
+    
+    std::string attribName = this->m_widgID + "." + name;
+    return attribName.c_str();
+}
+
+void vtkSlicerParameterWidget::UpdateMRMLForWidget(vtkKWCoreWidget *parentWidget, ModuleParameter widgetParameter)
+{
+    const char* curValue = this->GetMRMLNode()->GetAttribute(this->GetAttributeName(widgetParameter.GetName().c_str()));
+    
+    if(curValue)
+    {
+        this->SetValueForWidget(parentWidget, curValue);
+    }
+    else
+    {
+        const char* name = this->GetAttributeName(widgetParameter.GetName().c_str());
+        const char* value = widgetParameter.GetDefault().c_str();
+        std::cout<<"name: "<<name<<" value: "<<value<<std::endl;
+        this->GetMRMLNode()->SetAttribute(name, value);
+    }
+}
+
+void vtkSlicerParameterWidget::SetValueForWidget(vtkKWCoreWidget *inputWidget, const char* value)
+{
+    if(!value)
+    {
+        return;
+    }
+    
+    vtkKWSpinBoxWithLabel *sb = vtkKWSpinBoxWithLabel::SafeDownCast(inputWidget);
+    vtkKWScaleWithEntry *se = vtkKWScaleWithEntry::SafeDownCast(inputWidget);
+    vtkKWCheckButtonWithLabel *cb = vtkKWCheckButtonWithLabel::SafeDownCast(inputWidget);
+    vtkKWEntryWithLabel *e = vtkKWEntryWithLabel::SafeDownCast(inputWidget);
+    vtkSlicerNodeSelectorWidget
+            *ns = vtkSlicerNodeSelectorWidget::SafeDownCast(inputWidget);
+    vtkKWLoadSaveButtonWithLabel
+            *lsb = vtkKWLoadSaveButtonWithLabel::SafeDownCast(inputWidget);
+    vtkKWRadioButtonSetWithLabel
+            *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast(inputWidget);    
+    
+    if (sb) {
+        double d;
+        std::string a_double = value;
+        std::istringstream ss(a_double);
+        ss >> d;
+        sb->GetWidget()->SetValue(d);        
+    } else if (se) {
+        int i;
+        std::string a_int = value;
+        std::istringstream ss(a_int);
+        ss >> i;
+        se->SetValue(i);  
+    } else if (cb) {        
+        cb->GetWidget()->SetSelectedState((strcmp(value, "true") == 0) ? 1 : 0);
+    } else if (e) {
+        e->GetWidget()->SetValue(value);
+    } else if (ns && ns->GetSelected() != NULL) {
+        ns->SetSelected(this->GetMRMLNode()->GetScene()->GetNodeByID(value));
+    } else if (lsb) {
+        lsb->GetWidget()->GetLoadSaveDialog()->SetFileName(value);
+//    } else if (rb) {
+//        rb->SetValue(value);
+    } else {
+        std::cout<<"WARNING: vtkSlicerParameterWidget - try to set unsupported Widget; return \"\""<<std::endl;
+        return;
+    }
 }

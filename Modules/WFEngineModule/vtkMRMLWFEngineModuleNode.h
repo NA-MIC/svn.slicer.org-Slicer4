@@ -14,8 +14,8 @@
 #ifndef __vtkMRMLWFEngineModuleNode_h
 #define __vtkMRMLWFEngineModuleNode_h
 
-#include "vtkMRML.h"
-#include "vtkMRMLNode.h"
+#include <vtkMRML.h>
+#include <vtkMRMLNode.h>
 #include "vtkMRMLStorageNode.h"
 
 #include "vtkMatrix4x4.h"
@@ -23,6 +23,8 @@
 #include "vtkImageData.h"
 
 #include "vtkWFEngineModule.h"
+
+#include <string>
 
 class vtkImageData;
 //VTK_WFENGINEMODULE_EXPORT
@@ -55,6 +57,7 @@ public:
   // Set new workflow-instance
   int SetNewWorkflowInstance();
   
+//  void SetAttribute(const char* name, const char* value);
   // Description:
   // Get/Set a parameter for the workflow.
 //BTX
@@ -64,9 +67,11 @@ public:
   void SetParameterAsDouble(const std::string &stepID, const std::string& name, double value);
   void SetParameterAsFloat(const std::string &stepID, const std::string& name, float value);
 
-  std::string GetParameterAsString(const std::string &name) const;
-//ETX  
+  void GetMRMLNodeByID(std::string stepID);
   
+  std::string GetParameterAsString(const std::string &name);
+  const char *GetValueByName(std::string paramName);
+//ETX
   
 protected:
   vtkMRMLWFEngineModuleNode();
@@ -74,6 +79,10 @@ protected:
   vtkMRMLWFEngineModuleNode(const vtkMRMLWFEngineModuleNode&);
   void operator=(const vtkMRMLWFEngineModuleNode&);
 
+private:
+//BTX
+    std::string m_curStepID;
+//ETX
 };
 
 #endif
