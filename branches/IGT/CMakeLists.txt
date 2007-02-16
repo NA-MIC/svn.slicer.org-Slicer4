@@ -119,21 +119,22 @@ IF(USE_OPENTRACKER)
 
   FIND_LIBRARY(OPENTRACKER_LIB 
     NAMES opentrackerd opentracker OpenTracker 
-    PATHS ""
+    PATHS "" 
   )
   IF(OPENTRACKER_LIB-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker to build")
   ENDIF(OPENTRACKER_LIB-NOTFOUND)
 
+  # include file for OpenTracker 1.3
   IF(OT_VERSION_13)
-    FIND_PATH(OPENTRACKER_INC_DIR "OpenTracker.h" 
-      ""
-  )
+    SET(INC "OpenTracker.h")
+  # include file for OpenTracker 2.0 
   ELSE(OT_VERSION_13)
-    FIND_PATH(OPENTRACKER_INC_DIR "OpenTracker/OpenTracker.h" 
-      ""
-  )
+    SET(INC "OpenTracker/OpenTracker.h") 
   ENDIF(OT_VERSION_13)
+  FIND_PATH(OPENTRACKER_INC_DIR "${INC}" 
+    ""
+  )
 
   IF(OPENTRACKER_INC_DIR-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker.h to build")
