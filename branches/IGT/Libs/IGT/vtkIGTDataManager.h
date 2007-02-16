@@ -20,7 +20,6 @@
 #include "vtkTransform.h"
 
 #ifdef USE_OPENTRACKER
-#ifdef USE_OPENTRACKER
 #ifdef OT_VERSION_20
 #include "OpenTracker/OpenTracker.h"
 #include "OpenTracker/common/CallbackModule.h"
