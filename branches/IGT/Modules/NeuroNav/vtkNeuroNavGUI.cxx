@@ -789,7 +789,7 @@ void vtkNeuroNavGUI::TrackerLoop()
   
   
   int rate = 100;
-  vtkKWTkUtilities::CreateTimerHandler (app, rate, this, "TrackerLoop");
+//  vtkKWTkUtilities::CreateTimerHandler (app, rate, this, "TrackerLoop");
   
 
 }
