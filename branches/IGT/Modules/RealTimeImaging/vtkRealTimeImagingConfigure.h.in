@@ -21,7 +21,9 @@
 
 #cmakedefine USE_OPENTRACKER
 #cmakedefine OT_VERSION_13 
+#ifdef USE_OPENTRACKER
 #ifndef OT_VERSION_13
 #define OT_VERSION_20
+#endif
 #endif
  
