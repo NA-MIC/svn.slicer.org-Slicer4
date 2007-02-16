@@ -968,6 +968,7 @@ int Slicer3_main(int argc, char *argv[])
     wfEngineModuleLogic->SetAndObserveMRMLScene ( scene );
     wfEngineModuleLogic->SetApplicationLogic ( appLogic );
     wfEngineModuleLogic->SetMRMLScene(scene);
+    wfEngineModuleGUI->SetAndObserveModuleLogic(wfEngineModuleLogic);
     wfEngineModuleGUI->SetApplication ( slicerApp );
     wfEngineModuleGUI->SetApplicationLogic ( appLogic );
     wfEngineModuleGUI->SetApplicationGUI ( appGUI );

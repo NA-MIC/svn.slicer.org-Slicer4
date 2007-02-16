@@ -1,9 +1,12 @@
 #include "vtkWFEngineModuleGUI.h"
+
+#include "vtkMRMLWFEngineModuleNode.h"
 #include <WFDirectInterface.h>
 
 #include <vtkObject.h>
-#include "vtkObjectFactory.h"
-#include "vtkCommand.h"
+#include <vtkObjectFactory.h>
+#include <vtkCommand.h>
+#include <vtkCallbackCommand.h>
 
 #include <vtkKWWidget.h>
 #include <vtkKWMenu.h>
@@ -19,7 +22,16 @@
 #include <vtkKWWizardStep.h>
 #include "vtkKWMyWizardWorkflow.h"
 #include <vtkKWStateMachineInput.h>
-
+#include <vtkKWSpinBoxWithLabel.h>
+#include <vtkKWSpinBox.h>
+#include <vtkKWScaleWithEntry.h>
+#include <vtkKWCheckButtonWithLabel.h>
+#include <vtkKWEntryWithLabel.h>
+#include <vtkKWEntry.h>
+#include <vtkSlicerNodeSelectorWidget.h>
+#include <vtkKWLoadSaveButtonWithLabel.h>
+#include <vtkKWRadioButtonSetWithLabel.h>
+#include <vtkKWRadioButton.h>
 #include <vtkSlicerModelsGUI.h>
 #include <vtkSlicerApplication.h>
 #include <vtkSlicerModuleLogic.h>
@@ -33,7 +45,8 @@
 
 #include "WFStateConverter.h"
 
-#include <string>
+#include <map>
+#include <iostream>
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkWFEngineModuleGUI );
@@ -52,6 +65,7 @@ vtkWFEngineModuleGUI::vtkWFEngineModuleGUI ( )
     this->m_pbtnSet = NULL;
     this->m_wfDI = NULL;
     this->m_wizFrame = NULL;
+    this->m_curNameToWidgetMap = NULL;
     
     this->m_inTransition = false;
     //this->DebugOn();
@@ -286,11 +300,15 @@ void vtkWFEngineModuleGUI::createWizard()
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "WFEngineModule" );
     //Insert here the WFEngine GUI
     // ---
-    // LOAD FRAME            
+    // LOAD FRAME
+    
+    // get Name for selected work-flow
+    std::string name = this->m_mclDW->GetCellText(this->m_mclDW->GetIndexOfFirstSelectedRow(),0);
+    
     this->m_wizFrame = vtkSlicerModuleCollapsibleFrame::New ( );
     m_wizFrame->SetParent ( page );
     m_wizFrame->Create ( );
-    m_wizFrame->SetLabelText (this->m_mclDW->GetCellText(this->m_mclDW->GetIndexOfFirstSelectedRow(),0));
+    m_wizFrame->SetLabelText (name.c_str());
 //    loadFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
             m_wizFrame->GetWidgetName(),
@@ -341,24 +359,14 @@ void vtkWFEngineModuleGUI::createWizard()
     wizCB->SetClientData(this);
     this->m_curWizWidg->AddObserver(vtkKWMyWizardWidget::backButtonClicked, wizCB);
     
-//    vtkCallbackCommand *wizCB = vtkCallbackCommand::New();
-//    wizCB->SetCallback(&vtkWFEngineModuleGUI::nextTransitionCallback);
-//    wizCB->SetClientData(this);
-//    wizWorkflow->AddObserver(vtkKWMyWizardWorkflow::nextTransitionStartEvent, wizCB);
-//    
-//    wizCB = vtkCallbackCommand::New();
-//    wizCB->SetCallback(&vtkWFEngineModuleGUI::nextTransitionCallback);
-//    wizCB->SetClientData(this);
-//    wizWorkflow->AddObserver(vtkKWMyWizardWorkflow::backTransitionEndEvent, wizCB);
-//    
-//    wizCB = vtkCallbackCommand::New();
-//    wizCB->SetCallback(&vtkWFEngineModuleGUI::backTransitionCallback);
-//    wizCB->SetClientData(this);
-//    wizWorkflow->AddObserver(vtkKWMyWizardWorkflow::backTransitionStartEvent, wizCB);
-//    wizCB = vtkCallbackCommand::New();
-//    wizCB->SetCallback(&vtkWFEngineModuleGUI::backTransitionCallback);
-//    wizCB->SetClientData(this);
-//    wizWorkflow->AddObserver(vtkKWMyWizardWorkflow::backTransitionEndEvent, wizCB);
+    // create a new MRMLNode to get track of all workflow variables
+    
+    vtkMRMLWFEngineModuleNode *myWFENode = vtkMRMLWFEngineModuleNode::New();
+    myWFENode->SetName(name.c_str());
+    myWFENode->SetDescription("WFEngineModule: Current selected work-flow node");
+    myWFENode->SetScene(this->Logic->GetMRMLScene());
+    this->Logic->GetMRMLScene()->AddNode(myWFENode);
+    this->SetWFEngineModuleNode(myWFENode);
 }
 
 void vtkWFEngineModuleGUI::closeBtnPushCmdCallback(vtkObject* obj, unsigned long, void* param, void*)
@@ -500,6 +508,7 @@ void vtkWFEngineModuleGUI::nextTransitionCallback(vtkObject* obj, unsigned long 
     vtkWFEngineModuleGUI *wfEngineModule = (vtkWFEngineModuleGUI*)callBackData;
     if(wfEngineModule)
     {
+        wfEngineModule->UpdateMRML();
         wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfDI->getNextWorkStep());
     }
 }
@@ -521,13 +530,16 @@ void vtkWFEngineModuleGUI::backTransitionCallback(vtkObject* obj, unsigned long 
 
 void vtkWFEngineModuleGUI::workStepGUICallBack()
 {
+    if(this->m_curWizWidg)
+    {
+        // Destroy all ClientAreaChildren!
+        this->m_curWizWidg->GetClientArea()->RemoveAllChildren();        
+    }
+    
     if(!this->m_curWFStep)
     {
         return;
-    }
-    
-    // Destroy all ClientAreaChildren!
-    this->m_curWizWidg->GetClientArea()->RemoveAllChildren();
+    }    
     
     ModuleDescription curModuleDesc;
     
@@ -538,13 +550,25 @@ void vtkWFEngineModuleGUI::workStepGUICallBack()
     std::cout<<curMDParser.Parse(guiDesc, curModuleDesc)<<std::endl;
     
     vtkSlicerParameterWidget *myParameterWidgets = vtkSlicerParameterWidget::New();
+    
+    vtkCallbackCommand *widgetChangedCBC = vtkCallbackCommand::New();
     myParameterWidgets->SetApplication(this->GetApplication());
     vtkSlicerModuleLogic *myModuleLogic = vtkSlicerModuleLogic::New();
     
     myParameterWidgets->SetParent(this->m_curWizWidg->GetClientArea());
     myParameterWidgets->SetSlicerModuleLogic(myModuleLogic);
+    
+    // set ModuleNode to the new step
+    myParameterWidgets->SetWidgetID(this->m_curWFStep->GetID());
+    myParameterWidgets->SetMRMLNode(this->GetWFEngineModuleNode());
     myParameterWidgets->SetModuleDescription(&curModuleDesc);
     myParameterWidgets->CreateWidgets();
+    
+    widgetChangedCBC->SetClientData(this);
+    widgetChangedCBC->SetCallback(vtkWFEngineModuleGUI::widgetChangedCallback);
+    myParameterWidgets->AddObserver(vtkSlicerParameterWidget::ParameterWidgetChangedEvent, widgetChangedCBC);
+    
+    widgetChangedCBC->Delete();
     std::cout<<"vector size "<<myParameterWidgets->size()<<std::endl;
     
     if(myParameterWidgets->size() == 0)
@@ -553,7 +577,8 @@ void vtkWFEngineModuleGUI::workStepGUICallBack()
     }
     
     // Build GUI out of the widget list
-    vtkKWWidget *curParameterWidget = myParameterWidgets->GetNextWidget();    
+    vtkKWWidget *curParameterWidget = myParameterWidgets->GetNextWidget();
+    this->m_curNameToWidgetMap = new std::map<std::string, vtkKWWidget*>;
     while(curParameterWidget)
     {
 //        std::cout<<curParameterWidget->GetWidgetName()<<std::endl;
@@ -562,7 +587,8 @@ void vtkWFEngineModuleGUI::workStepGUICallBack()
 //                curParameterWidget->GetWidgetName(), this->m_curWizWidg->GetClientArea()->GetWidgetName());
         this->GetApplication()->Script("pack %s -side top -anchor ne -expand y -fill both -padx 2 -pady 2",
                 curParameterWidget->GetWidgetName());
-        curParameterWidget = myParameterWidgets->GetNextWidget();
+//        this->m_curNameToWidgetMap->insert(std::make_pair(myParameterWidgets->GetCurrentParameters(),curParameterWidget));
+        curParameterWidget = myParameterWidgets->GetNextWidget();  
     }    
 }
 
@@ -577,4 +603,106 @@ void vtkWFEngineModuleGUI::deleteWizardWidgetContainer()
         this->m_wizFrame = NULL;
     }
        
+}
+
+void vtkWFEngineModuleGUI::UpdateMRML()
+{
+    //check if information is available
+    if(!this->m_curNameToWidgetMap)
+    {
+        return;
+    }
+    
+    vtkMRMLWFEngineModuleNode* n = this->GetWFEngineModuleNode();
+    bool createdNode = false;
+    if (n == NULL)
+    {
+        n = vtkMRMLWFEngineModuleNode::New();
+        
+        if (n == NULL)
+        {
+//        this->InUpdateMRML = false;
+        vtkDebugMacro("No CommandLineModuleNode available");
+        return;
+        }
+      
+      // set the a module description for this node
+//      n->SetModuleDescription( this->ModuleDescriptionObject );
+      
+      // set an observe new node in Logic
+//      this->Logic->SetCommandLineModuleNode(n);
+      vtkSetAndObserveMRMLNodeMacro(this->WFEngineModuleNode,n);
+
+      createdNode = true;
+    }
+    
+    std::map<std::string, vtkKWWidget*>::iterator iter;        
+    
+    for(iter = this->m_curNameToWidgetMap->begin(); iter != this->m_curNameToWidgetMap->end(); iter++)
+    {
+        vtkKWSpinBoxWithLabel *sb = vtkKWSpinBoxWithLabel::SafeDownCast((*iter).second);
+        vtkKWScaleWithEntry *se = vtkKWScaleWithEntry::SafeDownCast((*iter).second);
+        vtkKWCheckButtonWithLabel *cb = vtkKWCheckButtonWithLabel::SafeDownCast((*iter).second);
+        vtkKWEntryWithLabel *e = vtkKWEntryWithLabel::SafeDownCast((*iter).second);
+        vtkSlicerNodeSelectorWidget *ns = vtkSlicerNodeSelectorWidget::SafeDownCast((*iter).second);
+        vtkKWLoadSaveButtonWithLabel *lsb = vtkKWLoadSaveButtonWithLabel::SafeDownCast((*iter).second);
+        vtkKWRadioButtonSetWithLabel *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast((*iter).second);
+
+        if (sb)
+          {
+          // std::cout << "SpinBox" << std::endl;
+          n->SetParameterAsDouble(this->m_curWFStep->GetID(), (*iter).first, sb->GetWidget()->GetValue());
+          }
+        else if (se)
+          {
+          n->SetParameterAsDouble(this->m_curWFStep->GetID(), (*iter).first, se->GetValue());
+          }
+        else if (cb)
+          {
+          n->SetParameterAsBool(this->m_curWFStep->GetID(), (*iter).first, cb->GetWidget()->GetSelectedState());
+          }
+        else if (e)
+          {
+          n->SetParameterAsString(this->m_curWFStep->GetID(), (*iter).first, e->GetWidget()->GetValue());
+          }
+        else if (ns && ns->GetSelected() != NULL)
+          {
+          n->SetParameterAsString(this->m_curWFStep->GetID(), (*iter).first, ns->GetSelected()->GetID());
+          }
+        else if (lsb)
+          {
+          if (lsb->GetWidget()->GetFileName())
+            {
+            n->SetParameterAsString(this->m_curWFStep->GetID(), (*iter).first, lsb->GetWidget()->GetFileName());
+            }
+          }
+        else if (rbs)
+        {
+          // find out who is set
+          int num = rbs->GetWidget()->GetNumberOfWidgets();
+          for (int i=0; i < num; ++i)
+          {
+            int id = rbs->GetWidget()->GetIdOfNthWidget(i);
+            vtkKWRadioButton* rb = rbs->GetWidget()->GetWidget(id);
+            if (rb->GetSelectedState())
+            {
+              n->SetParameterAsString(this->m_curWFStep->GetID(), (*iter).first, rb->GetValue());
+              break;
+            }
+          }
+        }
+    }//for
+    
+    //set the map back to null
+    this->m_curNameToWidgetMap = NULL;
+}
+
+void vtkWFEngineModuleGUI::SetWFEngineModuleNode(vtkMRMLWFEngineModuleNode *node)
+{
+    this->WFEngineModuleNode = node;
+}
+
+void vtkWFEngineModuleGUI::widgetChangedCallback(vtkObject* obj, unsigned long eid, void* clientData, void* callData)
+{
+    std::cout<<"something Changed Called Back;-)"<<std::endl;
 }

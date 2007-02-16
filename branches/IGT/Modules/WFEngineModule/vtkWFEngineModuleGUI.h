@@ -12,6 +12,7 @@
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkWFEngineModuleLogic.h"
 
+#include <map>
 //#include <string>
 
 // Description:
@@ -21,6 +22,8 @@
 class vtkKWMultiColumnList;
 class vtkKWMyWizardWidget;
 class vtkKWPushButtonSet;
+class vtkKWWidget;
+class vtkMRMLWFEngineModuleNode;
 //BTX
 class WFDirectInterface;
 
@@ -41,6 +44,10 @@ class VTK_WFENGINEMODULE_EXPORT vtkWFEngineModuleGUI : public vtkSlicerModuleGUI
     static vtkWFEngineModuleGUI* New (  );
     vtkTypeRevisionMacro ( vtkWFEngineModuleGUI, vtkSlicerModuleGUI );
     void PrintSelf ( ostream& os, vtkIndent indent );
+    
+    // Description: Get/Set MRML node
+    vtkGetObjectMacro (WFEngineModuleNode, vtkMRMLWFEngineModuleNode);
+    virtual void SetWFEngineModuleNode(vtkMRMLWFEngineModuleNode* node);
     
     // Description:
     // Get methods on class members ( no Set methods required. )
@@ -93,9 +100,13 @@ protected:
     static void backTransitionCallback(vtkObject* obj, unsigned long,void*, void*);
     static void closeBtnPushCmdCallback(vtkObject* obj, unsigned long,void*, void*);
     
+    static void widgetChangedCallback(vtkObject* obj, unsigned long,void*, void*);
+    
     virtual void closeWorkflow();
     
     virtual void createWizard();
+    
+    virtual void UpdateMRML();
     
 //BTX
     virtual void workStepValidationCallBack(WFEngine::nmWFStepObject::WFStepObject* nextWS);
@@ -108,6 +119,7 @@ private:
     
     //BTX
     WFEngine::nmWFStepObject::WFStepObject *m_curWFStep;
+    std::map<std::string, vtkKWWidget*> *m_curNameToWidgetMap;
     //ETX
     
     vtkKWMyWizardWidget *m_curWizWidg;
@@ -115,8 +127,10 @@ private:
     WFDirectInterface *m_wfDI;
     vtkKWPushButtonSet *m_pbtnSet;
     vtkSlicerModuleCollapsibleFrame *m_wizFrame;
-    
+        
     bool m_inTransition;
+    
+    vtkMRMLWFEngineModuleNode *WFEngineModuleNode;
     
     vtkWFEngineModuleGUI ( const vtkWFEngineModuleGUI& ); // Not implemented.
     void operator = ( const vtkWFEngineModuleGUI& ); //Not implemented.

@@ -53,6 +53,8 @@ vtkMRMLNode* vtkMRMLWFEngineModuleNode::CreateNodeInstance()
 vtkMRMLWFEngineModuleNode::vtkMRMLWFEngineModuleNode()
 {
    this->HideFromEditors = true;
+   
+   this->m_curStepID = "";
 }
 
 //----------------------------------------------------------------------------
@@ -95,6 +97,12 @@ void vtkMRMLWFEngineModuleNode::Copy(vtkMRMLNode *anode)
 void vtkMRMLWFEngineModuleNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkMRMLNode::PrintSelf(os,indent);
+  
+  std::map<std::string, std::string>::iterator iter;
+  for(iter = this->Attributes.begin(); iter != this->Attributes.end(); iter++)
+  {
+      os << indent <<iter->first<<" := \""<<iter->second<<"\"\n";
+  }
 }
 
 int vtkMRMLWFEngineModuleNode::SetNewWorkflowInstance()
@@ -104,25 +112,49 @@ int vtkMRMLWFEngineModuleNode::SetNewWorkflowInstance()
 
 void vtkMRMLWFEngineModuleNode::SetParameterAsBool(const std::string &stepID, const std::string &name, bool value)
 {
+    const char* paramName = std::string(stepID + "." + name).c_str();
     
+    std::string str = (value?"true":"false");
+        
+    this->SetAttribute(paramName, str.c_str());
 }
 
 void vtkMRMLWFEngineModuleNode::SetParameterAsDouble(const std::string &stepID, const std::string &name, double value)
 {
+    const char* paramName = std::string(stepID + "." + name).c_str();
     
+    std::stringstream s;
+    s << value; // insert value into s
+    
+    this->SetAttribute(paramName, s.str().c_str());
 }
 
 void vtkMRMLWFEngineModuleNode::SetParameterAsFloat(const std::string &stepID, const std::string &name, float value)
 {
+    const char* paramName = std::string(stepID + "." + name).c_str();
     
+    std::stringstream s;
+    s << value; // insert value into s
+    
+    this->SetAttribute(paramName, s.str().c_str());
 }
 
 void vtkMRMLWFEngineModuleNode::SetParameterAsInt(const std::string &stepID, const std::string &name, int value)
 {
+    const char* paramName = std::string(stepID + "." + name).c_str();
     
+    std::stringstream s;
+    s << value; // insert value into s 
+    
+    this->SetAttribute(paramName, s.str().c_str());
 }
 
 void vtkMRMLWFEngineModuleNode::SetParameterAsString(const std::string &stepID, const std::string &name, const std::string &value)
 {
+    const char* paramName = std::string(stepID + "." + name).c_str();
     
+    std::stringstream s;
+    s << value; // insert value into s 
+    
+    this->SetAttribute(paramName, s.str().c_str());
 }
