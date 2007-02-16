@@ -128,7 +128,7 @@ extern "C" int Vtkitk_Init(Tcl_Interp *interp);
 extern "C" int Freesurfer_Init(Tcl_Interp *interp);
 extern "C" int Igt_Init(Tcl_Interp *interp);
 
-extern "C" int NeuroNav_Init(Tcl_Interp *interp);
+extern "C" int Neuronav_Init(Tcl_Interp *interp);
 
 
 //TODO added temporary
@@ -445,7 +445,7 @@ int Slicer3_main(int argc, char *argv[])
     Vtkitk_Init(interp);
     Freesurfer_Init(interp);
     Igt_Init(interp);
-    NeuroNav_Init(interp);
+    Neuronav_Init(interp);
 
     //TODO added
 #ifndef EMSEG_DEBUG
