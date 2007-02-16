@@ -20,16 +20,18 @@
 #include "vtkLandmarkTransform.h"
 #include "vtkCylinderSource.h"
 
-
+#ifndef IGSTK_OFF
 #include "igstkAuroraTracker.h"
-
+#endif
 
 vtkCxxRevisionMacro(vtkNeuroNavLogic, "$Revision: 1.9.12.1 $");
 vtkStandardNewMacro(vtkNeuroNavLogic);
 
 vtkNeuroNavLogic::vtkNeuroNavLogic()
 {
+#ifndef IGSTK_OFF
   igstk::RealTimeClock::Initialize();
+#endif
 }
 
 
