@@ -110,18 +110,24 @@ ENDIF(USE_TEEM)
 #
 # OpenTracker 
 #
-OPTION(USE_OPENTRACKER "Build Slicer3 with OpenTracker support." OFF)
+OPTION(USE_OPENTRACKER "Build Slicer3 with OpenTracker support." ON)
+
 IF(USE_OPENTRACKER)
+  # version of opentracker: 1.3 or 2.0
+  # By default, use versin 1.3. If use 2.0, turn it off
+  OPTION(OT_VERSION_13 "Specify the opentracker version." ON)
+
   FIND_LIBRARY(OPENTRACKER_LIB 
-               NAMES opentrackerd opentracker OpenTracker
-               PATH "" 
+               NAMES opentrackerd opentracker OpenTracker 
+               PATHS /home/liu/projects/splot-build/opentracker/lib
                )
+
   IF(OPENTRACKER_LIB-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker to build")
   ENDIF(OPENTRACKER_LIB-NOTFOUND)
 
   FIND_PATH(OPENTRACKER_INC_DIR "OpenTracker.h" 
-           ""
+           /home/liu/projects/splot-build/opentracker/src
            )
   IF(OPENTRACKER_INC_DIR-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker.h to build")
