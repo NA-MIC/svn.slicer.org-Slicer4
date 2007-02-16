@@ -35,28 +35,9 @@ void WFStepObject::AddNextStepID(std::string &nextStepID)
     this->m_nextSteps.push_back(nextStepID);
 }
 
-void WFStepObject::SetVariableMapping(std::string &from, std::string &to)
-{
-    this->m_varMapping.insert(std::make_pair(from,to));
-}
-
 void WFStepObject::SetDescription(std::string &stepDesc)
 {
     this->m_desc = stepDesc;
-}
-
-void WFStepObject::SetGUIDescription(std::string &stepGUIDesc)
-{
-    if(strcmp(stepGUIDesc.c_str(),"") != 0)
-    {
-        if(strcmp(stepGUIDesc.substr(0,5).c_str(), "<?xml") != 0)
-        {
-            std::string xmlHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
-            xmlHeader.append(stepGUIDesc);
-            stepGUIDesc = xmlHeader;
-        }
-        this->m_guiDesc = stepGUIDesc;        
-    }    
 }
 
 std::string WFStepObject::GetID()
@@ -84,5 +65,26 @@ std::string WFStepObject::GetDescription()
 
 std::string WFStepObject::GetGUIDescription()
 {
-    return this->m_guiDesc;
+    variablePropertyStruct *tempPropStruct = this->m_varMap["gui"];
+    if(tempPropStruct)
+    {
+        std::string stepGUIDesc = tempPropStruct->value;
+        
+        if(strcmp(stepGUIDesc.c_str(), "") != 0)
+        {
+            if(strcmp(stepGUIDesc.substr(0,5).c_str(), "<?xml") != 0)
+            {
+                std::string xmlHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+                xmlHeader.append(stepGUIDesc);
+                stepGUIDesc = xmlHeader;
+            }
+            return stepGUIDesc;        
+        }     
+    }
+    return "";
+}
+
+void WFStepObject::AddVariable(std::string &varName, variablePropertyStruct *propStruct)
+{
+    this->m_varMap.insert(std::make_pair(varName, propStruct));
 }
