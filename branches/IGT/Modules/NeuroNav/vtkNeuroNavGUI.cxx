@@ -24,6 +24,7 @@
 #include "vtkKWMenu.h"
 #include "vtkKWLabel.h"
 #include "vtkKWMultiColumnList.h"
+#include "vtkKWMessageDialog.h"
 #include "vtkKWMultiColumnListWithScrollbars.h"
 
 #include "vtkKWTkUtilities.h"
@@ -147,6 +148,8 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->PREntry = NULL;
     this->PAEntry = NULL;
     this->PSEntry = NULL;
+
+    this->FileFrame = NULL;
 
 /*
     this->RedColorScale = NULL;
@@ -450,7 +453,14 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
     }
 
     this->SetModuleLogic ( NULL );
+
+
+    if (this->FileFrame)
+    {
+        this->FileFrame->Delete ( );
+    }
 }
+
 
 
 //---------------------------------------------------------------------------
@@ -567,10 +577,18 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         if (checked)
         {
             // connected
-            char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
+            char *filename = this->LoadConfigButton->GetWidget()->GetFileName();
             if (! filename)
             {
-                // TODO: Generate an error ...
+                vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+                dialog->SetParent ( this->FileFrame );
+                dialog->SetStyleToMessage();
+                std::string msg = std::string("Please input a valid configuration file (.xml).");
+                dialog->SetText(msg.c_str());
+                dialog->Create();
+                dialog->Invoke();
+                dialog->Delete();
+                this->ConnectCheckButton->SetSelectedState(0);
             }
             else
             {
@@ -1167,20 +1185,20 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
                  serverFrame->GetFrame()->GetWidgetName());
 
     // add a file browser 
-    vtkKWFrame *fileFrame = vtkKWFrame::New();
-    fileFrame->SetParent ( connectFrame->GetFrame() );
-    fileFrame->Create ( );
+    this->FileFrame = vtkKWFrame::New();
+    this->FileFrame->SetParent ( connectFrame->GetFrame() );
+    this->FileFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  fileFrame->GetWidgetName());
+                  this->FileFrame->GetWidgetName());
 
     this->ConfigFileEntry = vtkKWEntry::New();
-    this->ConfigFileEntry->SetParent(fileFrame);
+    this->ConfigFileEntry->SetParent(this->FileFrame);
     this->ConfigFileEntry->Create();
     this->ConfigFileEntry->SetWidth(50);
     this->ConfigFileEntry->SetValue ( "" );
 
     this->LoadConfigButton = vtkKWLoadSaveButtonWithLabel::New ( );
-    this->LoadConfigButton->SetParent ( fileFrame );
+    this->LoadConfigButton->SetParent ( this->FileFrame );
     this->LoadConfigButton->Create ( );
     this->LoadConfigButton->SetWidth(15);
     this->LoadConfigButton->GetWidget()->SetText ("Browse Config File");
@@ -1224,7 +1242,7 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
     serverFrame->Delete ();
     sourceFrame->Delete ();
     connectFrame->Delete ();
-    fileFrame->Delete ();
+    // fileFrame->Delete ();
     rateFrame->Delete ();
 }
 
