@@ -23,12 +23,10 @@ vtkIGTDataManager::vtkIGTDataManager()
 {
     this->Speed = 0;
     this->StartTimer = 0;
-    this->Ratio = 1.0;
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     this->RegMatrix = NULL;
     this->MRMLScene = NULL;
-    this->Device = NULL;
 }
 
 
@@ -53,10 +51,6 @@ void vtkIGTDataManager::Init(char *configFile)
 
     // The position coordinates coming from Aurora in meters.
     // We need convert them into mm.
-    if (!strcmp (this->Device, "Aurora") )   
-    {
-        this->Ratio = 1000.0;
-    }
 
     fprintf(stderr,"config file: %s\n",configFile);
     this->context = new Context(1); 
@@ -95,9 +89,9 @@ void vtkIGTDataManager::callbackF(const Node&, const Event &event, void *data)
 
 
     // the original values are in the unit of meters
-    position[0]=(float)(event.getPosition())[0] * VOT->Ratio; 
-    position[1]=(float)(event.getPosition())[1] * VOT->Ratio;
-    position[2]=(float)(event.getPosition())[2] * VOT->Ratio;
+    position[0]=(float)(event.getPosition())[0] * VOT->MultiFactor; 
+    position[1]=(float)(event.getPosition())[1] * VOT->MultiFactor;
+    position[2]=(float)(event.getPosition())[2] * VOT->MultiFactor;
 
     orientation[0]=(float)(event.getOrientation())[0];
     orientation[1]=(float)(event.getOrientation())[1];
@@ -154,9 +148,9 @@ void vtkIGTDataManager::callbackF(double* position, double* orientation)
 
     // the original values are in the unit of meters
     //this part has to be changed
-    f_position[0]=(float)position[0] * VOT->Ratio; 
-    f_position[1]=(float)position[1] * VOT->Ratio;
-    f_position[2]=(float)position[2] * VOT->Ratio;
+    f_position[0]=(float)position[0] * VOT->MultiFactor; 
+    f_position[1]=(float)position[1] * VOT->MultiFactor;
+    f_position[2]=(float)position[2] * VOT->MultiFactor;
 
     f_orientation[0]=(float)orientation[0];
     f_orientation[1]=(float)orientation[1];
@@ -269,8 +263,8 @@ void vtkIGTDataManager::CreateMRMLNode(int streamType)
             this->MRMLScene->Modified();
 
             modelNode->Delete();
-            cylinder->Delete();
-            dispNode->Delete();
+//            cylinder->Delete();
+//            dispNode->Delete();
             }
             break;
 
