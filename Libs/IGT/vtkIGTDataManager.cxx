@@ -263,6 +263,7 @@ void vtkIGTDataManager::CreateMRMLNode(int streamType)
             vtkCylinderSource *cylinder = vtkCylinderSource::New();
             cylinder->SetRadius(1.5);
             cylinder->SetHeight(100);
+            cylinder->Update();
             modelNode->SetAndObservePolyData(cylinder->GetOutput());
             this->Modified();  
             this->MRMLScene->Modified();
