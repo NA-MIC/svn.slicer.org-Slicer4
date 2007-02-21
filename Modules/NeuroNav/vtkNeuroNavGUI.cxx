@@ -35,6 +35,7 @@
 
 #include "vtkIGTDataStream.h"
 
+#include "vtkCylinderSource.h"
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkNeuroNavGUI );
@@ -129,7 +130,6 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 
     this->Logic = NULL;
 
-    this->DeviceMenu = NULL;
     this->NormalOffsetEntry = NULL; 
     this->TransOffsetEntry = NULL;
     this->NXTOffsetEntry = NULL;
@@ -174,6 +174,7 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 
     this->ConfigFileEntry = NULL;
     this->UpdateRateEntry = NULL;
+    this->MultiFactorEntry = NULL;
 
     this->PatCoordinatesEntry = NULL;
     this->SlicerCoordinatesEntry = NULL;
@@ -199,9 +200,6 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->DataCallbackCommand = vtkCallbackCommand::New();
     this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
     this->DataCallbackCommand->SetCallback(vtkNeuroNavGUI::DataCallback);
-
-    this->DeviceMenu = NULL; 
-
 }
 
 
@@ -220,11 +218,6 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
 
     this->RemoveGUIObservers();
 
-    if (this->DeviceMenu)
-    {
-        this->DeviceMenu->SetParent(NULL );
-        this->DeviceMenu->Delete ( );
-    }
     if (this->NormalOffsetEntry)
     {
         this->NormalOffsetEntry->SetParent(NULL );
@@ -391,6 +384,11 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
         this->UpdateRateEntry->SetParent(NULL );
         this->UpdateRateEntry->Delete ( );
     }
+    if (this->MultiFactorEntry)
+    {
+        this->MultiFactorEntry->SetParent(NULL );
+        this->MultiFactorEntry->Delete ( );
+    }
     if (this->PatCoordinatesEntry)
     {
         this->PatCoordinatesEntry->SetParent(NULL );
@@ -450,12 +448,6 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
         this->ResetPushButton->SetParent(NULL );
         this->ResetPushButton->Delete ( );
     }
-    if (this->DeviceMenu)
-    {
-        this->DeviceMenu->SetParent(NULL );
-        this->DeviceMenu->Delete ( );
-    }
-
 
     this->SetModuleLogic ( NULL );
 }
@@ -520,11 +512,6 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
     {
         this->UserModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->DeviceMenu)
-    {
-        this->DeviceMenu->GetWidget()->GetMenu()->RemoveObservers ( vtkKWMenu::MenuItemInvokedEvent, this->GUICallbackCommand);
-    }
-
 }
 
 
@@ -549,7 +536,6 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
 
     this->DataManager->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-    this->DeviceMenu->GetWidget()->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, this->GUICallbackCommand);
 
 }
 
@@ -590,8 +576,10 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             {
                 this->DataManager->Init(filename);
 
-                int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue ());
+                int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
+                float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
                 this->DataManager->SetSpeed(sp);
+                this->DataManager->SetMultiFactor(multi);
                 this->DataManager->SetStartTimer(1);
                 this->DataManager->ProcessTimerEvents();
 
@@ -720,10 +708,11 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(id); 
         vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
 
-        disp->SetVisibility(checked);
         vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
         vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
         disp->SetColor(color->SliceGUIGreen);
+
+        disp->SetVisibility(checked);
 
     }
     else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
@@ -760,9 +749,6 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
 
 void vtkNeuroNavGUI::Init()
 {
-    vtkKWMenuButton *mb = this->DeviceMenu->GetWidget();
-    this->DataManager->SetDevice(mb->GetValue());
-
     this->DataManager->SetMRMLScene(this->GetMRMLScene());
 
     vtkIGTDataStream *dataStream = vtkIGTDataStream::New();
@@ -1109,32 +1095,32 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
             serverFrame->GetWidgetName(), page->GetWidgetName());
 
-    // source frame: Servers and tracking devices
+    // source frame: tracking interface and multiplication factor 
     // -----------------------------------------
     vtkKWFrameWithLabel *sourceFrame = vtkKWFrameWithLabel::New ( );
     sourceFrame->SetParent ( serverFrame->GetFrame() );
     sourceFrame->Create ( );
-    sourceFrame->SetLabelText ("Source");
+    sourceFrame->SetLabelText ("Data Source");
     app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
                  sourceFrame->GetWidgetName(),
                  serverFrame->GetFrame()->GetWidgetName());
 
-     // server frame 
-    vtkKWFrame *realServerFrame = vtkKWFrame::New();
-    realServerFrame->SetParent ( sourceFrame->GetFrame() );
-    realServerFrame->Create ( );
+     // interface frame 
+    vtkKWFrame *interfaceFrame = vtkKWFrame::New();
+    interfaceFrame->SetParent ( sourceFrame->GetFrame() );
+    interfaceFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  realServerFrame->GetWidgetName());
+                  interfaceFrame->GetWidgetName());
 
-    // server: opentracker or igstk 
+    // interface: opentracker or igstk 
     vtkKWLabel *nameLabel = vtkKWLabel::New();
-    nameLabel->SetParent(realServerFrame);
+    nameLabel->SetParent(interfaceFrame);
     nameLabel->Create();
-    nameLabel->SetWidth(6);
-    nameLabel->SetText("Server: ");
+    nameLabel->SetWidth(15);
+    nameLabel->SetText("Tracking Interface: ");
 
     vtkKWLabel *valueLabel = vtkKWLabel::New();
-    valueLabel->SetParent(realServerFrame);
+    valueLabel->SetParent(interfaceFrame);
     valueLabel->Create();
     valueLabel->SetWidth(10);
     valueLabel->SetText("None");
@@ -1150,41 +1136,39 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
             nameLabel->GetWidgetName(),
             valueLabel->GetWidgetName());
    
-    // device frame 
-    vtkKWFrame *deviceFrame = vtkKWFrame::New();
-    deviceFrame->SetParent ( sourceFrame->GetFrame() );
-    deviceFrame->Create ( );
+    // Multi frame 
+    vtkKWFrame *multiFrame = vtkKWFrame::New();
+    multiFrame->SetParent ( sourceFrame->GetFrame() );
+    multiFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  deviceFrame->GetWidgetName());
+                  multiFrame->GetWidgetName());
 
-    // device type 
-    this->DeviceMenu = vtkKWMenuButtonWithLabel::New();
-    this->DeviceMenu->SetParent(deviceFrame);
-    this->DeviceMenu->Create();
-    this->DeviceMenu->SetWidth(30);
-    this->DeviceMenu->SetLabelWidth(8);
-    this->DeviceMenu->SetLabelText("Device:");
-    this->DeviceMenu->GetWidget()->GetMenu()->AddRadioButton ("Aurora");
-    this->DeviceMenu->GetWidget()->GetMenu()->AddRadioButton ("ConsoleSource");
-    this->DeviceMenu->GetWidget()->SetValue ( "ConsoleSource" );
+    // Multi factor
+    this->MultiFactorEntry = vtkKWEntryWithLabel::New();
+    this->MultiFactorEntry->SetParent(multiFrame);
+    this->MultiFactorEntry->Create();
+    this->MultiFactorEntry->SetWidth(20);
+    this->MultiFactorEntry->SetLabelWidth(15);
+    this->MultiFactorEntry->SetLabelText("Multiplication By:");
+    this->MultiFactorEntry->GetWidget()->SetValue ( "1.0" );
     this->Script(
-            "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
-            this->DeviceMenu->GetWidgetName());
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+      this->MultiFactorEntry->GetWidgetName());
 
 
-    // Setup frame: Config file and update rate 
+    // Connection to Server 
     // -----------------------------------------
-    vtkKWFrameWithLabel *setupFrame = vtkKWFrameWithLabel::New ( );
-    setupFrame->SetParent ( serverFrame->GetFrame() );
-    setupFrame->Create ( );
-    setupFrame->SetLabelText ("Setup");
+    vtkKWFrameWithLabel *connectFrame = vtkKWFrameWithLabel::New ( );
+    connectFrame->SetParent ( serverFrame->GetFrame() );
+    connectFrame->Create ( );
+    connectFrame->SetLabelText ("Connection To Server");
     app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
-                 setupFrame->GetWidgetName(),
+                 connectFrame->GetWidgetName(),
                  serverFrame->GetFrame()->GetWidgetName());
 
     // add a file browser 
     vtkKWFrame *fileFrame = vtkKWFrame::New();
-    fileFrame->SetParent ( setupFrame->GetFrame() );
+    fileFrame->SetParent ( connectFrame->GetFrame() );
     fileFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                   fileFrame->GetWidgetName());
@@ -1211,7 +1195,7 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
 
     // update rate 
     vtkKWFrame *rateFrame = vtkKWFrame::New();
-    rateFrame->SetParent ( setupFrame->GetFrame() );
+    rateFrame->SetParent ( connectFrame->GetFrame() );
     rateFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                   rateFrame->GetWidgetName());
@@ -1227,43 +1211,21 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
       "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
       this->UpdateRateEntry->GetWidgetName());
 
-
-    // Connect frame: Connects to server 
-    // -----------------------------------------
-    vtkKWFrameWithLabel *connectFrame = vtkKWFrameWithLabel::New ( );
-    connectFrame->SetParent ( serverFrame->GetFrame() );
-    connectFrame->Create ( );
-    connectFrame->SetLabelText ("Connection to server");
-    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   connectFrame->GetWidgetName() );
-
     this->ConnectCheckButton = vtkKWCheckButton::New();
     this->ConnectCheckButton->SetParent(connectFrame->GetFrame());
     this->ConnectCheckButton->Create();
     this->ConnectCheckButton->SelectedStateOff();
     this->ConnectCheckButton->SetText("Connect");
 
-/*
-    this->PauseCheckButton = vtkKWCheckButton::New();
-    this->PauseCheckButton->SetParent(connectFrame->GetFrame());
-    this->PauseCheckButton->Create();
-    this->PauseCheckButton->SelectedStateOff();
-    this->PauseCheckButton->SetText("Pause");
-
-    this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButton->GetWidgetName(),
-                this->PauseCheckButton->GetWidgetName());
-*/
-
     this->Script("pack %s -side left -anchor w -padx 2 -pady 2", 
                 this->ConnectCheckButton->GetWidgetName());
 
+
     serverFrame->Delete ();
     sourceFrame->Delete ();
-    setupFrame->Delete ();
+    connectFrame->Delete ();
     fileFrame->Delete ();
     rateFrame->Delete ();
-    connectFrame->Delete ();
 }
 
 
