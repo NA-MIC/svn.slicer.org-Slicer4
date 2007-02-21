@@ -43,9 +43,9 @@ public:
     void PrintSelf(ostream& os, vtkIndent indent);
 
     vtkSetMacro(Speed,int);
-    vtkSetMacro(StartTimer,int);
+    vtkSetMacro(MultiFactor,float);
 
-    vtkSetStringMacro(Device);
+    vtkSetMacro(StartTimer,int);
 
 
     //Description:
@@ -101,7 +101,7 @@ private:
 
     int Speed;
     int StartTimer;
-    float Ratio;
+    float MultiFactor;
 
     //Description.
     //MRML scene passed from the Module instantiating this class
@@ -109,8 +109,6 @@ private:
     vtkMatrix4x4 *LocatorMatrix;
     vtkMatrix4x4 *RegMatrix;
     vtkTransform *LocatorNormalTransform;
-    char *Device;
-
 
 //BTX
     std::vector<vtkIGTDataStream *> RegisteredDataStreams;
