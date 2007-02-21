@@ -714,11 +714,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
     else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
              && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
-        cout << "\nhiiiiiiiiiiiiiiiiiiiiiiii\n"; 
-
         int checked = this->LocatorCheckButton->GetSelectedState(); 
-
-        cout << "\n9999999999999999999999\n"; 
 
         const char *id = this->DataManager->GetMRMLModelId(0);
         vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(id); 
