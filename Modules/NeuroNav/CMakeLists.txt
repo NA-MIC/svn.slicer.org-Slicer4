@@ -78,7 +78,6 @@ TARGET_LINK_LIBRARIES(NeuroNav
   ITKDICOMParser
   ${KWWidgets_LIBRARIES} 
   vtkHybridTCL
-  ${OPENTRACKER_LIB}
   IGT
   ${IGSTK_LIB}
   )
