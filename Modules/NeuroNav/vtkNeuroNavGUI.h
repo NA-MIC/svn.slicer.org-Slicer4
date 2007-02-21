@@ -106,8 +106,6 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     vtkNeuroNavGUI ( );
     virtual ~vtkNeuroNavGUI ( );
 
-    vtkKWMenuButtonWithLabel *DeviceMenu;
-
     vtkKWEntryWithLabel *NormalOffsetEntry;
     vtkKWEntryWithLabel *TransOffsetEntry;
     vtkKWEntryWithLabel *NXTOffsetEntry;
@@ -152,6 +150,7 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
 
     vtkKWEntry *ConfigFileEntry;
     vtkKWEntryWithLabel *UpdateRateEntry;
+    vtkKWEntryWithLabel * MultiFactorEntry;
 
     vtkKWEntryWithLabel *PatCoordinatesEntry;
     vtkKWEntryWithLabel *SlicerCoordinatesEntry;
