@@ -203,12 +203,23 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->DataCallbackCommand = vtkCallbackCommand::New();
     this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
     this->DataCallbackCommand->SetCallback(vtkNeuroNavGUI::DataCallback);
+
+
+#ifdef USE_OPENTRACKER
+    this->OpenTrackerStream = vtkIGTOpenTrackerStream::New();
+#endif
 }
 
 
 //---------------------------------------------------------------------------
 vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
 {
+#ifdef USE_OPENTRACKER
+    if (this->OpenTrackerStream)
+    {
+        this->OpenTrackerStream->Delete();
+    }
+#endif
 
     if (this->DataManager)
     {
@@ -545,7 +556,9 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
     this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
 
-    this->DataManager->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+#ifdef USE_OPENTRACKER
+    this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+#endif
 
 }
 
@@ -592,20 +605,24 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             }
             else
             {
-                this->DataManager->Init(filename);
+#ifdef USE_OPENTRACKER
+                this->OpenTrackerStream->Init(filename);
 
                 int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
                 float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
-                this->DataManager->SetSpeed(sp);
-                this->DataManager->SetMultiFactor(multi);
-                this->DataManager->SetStartTimer(1);
-                this->DataManager->ProcessTimerEvents();
+                this->OpenTrackerStream->SetSpeed(sp);
+                this->OpenTrackerStream->SetMultiFactor(multi);
+                this->OpenTrackerStream->SetStartTimer(1);
+                this->OpenTrackerStream->ProcessTimerEvents();
+#endif
 
             }
         }
         else
         {
-            this->DataManager->SetStartTimer(0);
+#ifdef USE_OPENTRACKER
+            this->OpenTrackerStream->SetStartTimer(0);
+#endif
         }
     }
     else if (this->GetPatCoordinatesPushButton == vtkKWPushButton::SafeDownCast(caller) 
@@ -708,22 +725,24 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 return;
             }
 
-            this->DataManager->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
-
+#ifdef USE_OPENTRACKER
+            this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
+#endif
         }
     }
     else if (this->ResetPushButton == vtkKWPushButton::SafeDownCast(caller) 
              && event == vtkKWPushButton::InvokedEvent)
     {
-        this->DataManager->SetRegMatrix(NULL);
+#ifdef USE_OPENTRACKER
+        this->OpenTrackerStream->SetRegMatrix(NULL);
+#endif
     }
     else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
              && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
         int checked = this->LocatorCheckButton->GetSelectedState(); 
 
-        const char *id = this->DataManager->GetMRMLModelId(0);
-        vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(id); 
+        vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str()); 
         vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
 
         vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
@@ -768,9 +787,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
 void vtkNeuroNavGUI::Init()
 {
     this->DataManager->SetMRMLScene(this->GetMRMLScene());
-
-    vtkIGTDataStream *dataStream = vtkIGTDataStream::New();
-    this->DataManager->RegisterStreamDevice(0, dataStream);
+    this->LocatorModelID = std::string(this->DataManager->RegisterStream(0));
 
 
     this->TrackerLoop();
@@ -1757,7 +1774,11 @@ void vtkNeuroNavGUI::BuildGUIForHandPieceFrame ()
 
 void vtkNeuroNavGUI::UpdateAll()
 {
-    this->LocatorMatrix = this->DataManager->GetLocatorMatrix();
+    this->LocatorMatrix = NULL;
+#ifdef USE_OPENTRACKER
+    this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
+#endif
+
     if (this->LocatorMatrix)
     {
         char Val[10];
@@ -1798,7 +1819,9 @@ void vtkNeuroNavGUI::UpdateAll()
         if (checked)
         {
             // update the display of locator
-            this->DataManager->SetLocatorTransforms();
+#ifdef USE_OPENTRACKER
+            this->OpenTrackerStream->SetLocatorTransforms();
+#endif
             this->UpdateLocator();
             this->UpdateSliceDisplay(px, py, pz);
         }
@@ -1809,20 +1832,25 @@ void vtkNeuroNavGUI::UpdateAll()
 
 void vtkNeuroNavGUI::UpdateLocator()
 {
-    vtkTransform *transform = this->DataManager->GetLocatorNormalTransform(); 
+    vtkTransform *transform = NULL;
+#ifdef USE_OPENTRACKER
+    transform = this->OpenTrackerStream->GetLocatorNormalTransform(); 
+#endif
 
-    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-    vtkSlicerViewerWidget *viewerWidget = appGUI->GetViewerWidget();
-
-    const char *id = this->DataManager->GetMRMLModelId(0);
-    vtkActor *locatorActor = viewerWidget->GetActorByID(id);
-    if (locatorActor)
+    if (transform)
     {
-        //locatorActor->GetProperty()->SetColor(1, 0, 0);
+        vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+        vtkSlicerViewerWidget *viewerWidget = appGUI->GetViewerWidget();
 
-        locatorActor->SetUserMatrix(transform->GetMatrix());
-        locatorActor->Modified();
-        this->GetMRMLScene()->Modified();
+        vtkActor *locatorActor = viewerWidget->GetActorByID(this->LocatorModelID.c_str());
+        if (locatorActor)
+        {
+            //locatorActor->GetProperty()->SetColor(1, 0, 0);
+
+            locatorActor->SetUserMatrix(transform->GetMatrix());
+            locatorActor->Modified();
+            this->GetMRMLScene()->Modified();
+        }
     }
 }
 
