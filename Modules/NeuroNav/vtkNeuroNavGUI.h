@@ -23,6 +23,10 @@
 #ifdef USE_OPENTRACKER
 #include "vtkIGTOpenTrackerStream.h"
 #endif
+#ifdef USE_IGSTK
+#include "vtkIGTOpenTrackerStream.h"
+#endif
+
 
 class vtkKWPushButton;
 class vtkKWEntryWithLabel;
@@ -37,20 +41,6 @@ class vtkKWLoadSaveButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
 
 
-#ifdef USE_IGSTK
-#include <igstkSerialCommunication.h>
-
-#ifdef _WIN32
-#include <igstkSerialCommunicationForWindows.h>
-#else
-#include <igstkSerialCommunicationForPosix.h>
-#endif
-
-#include <igstkAuroraTracker.h>
-#include <igstkPolarisTracker.h>
-#include "itkStdStreamLogOutput.h"
-
-#endif 
 
 // Description:
 // This class implements Slicer's Volumes GUI
@@ -211,14 +201,9 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     vtkIGTOpenTrackerStream *OpenTrackerStream;
 #endif
 
-    //BTX
 #ifdef USE_IGSTK    
-    // IGSTK integration test
-    igstk::PolarisTracker::Pointer       tracker;
-    igstk::SerialCommunication::Pointer  serialCommunication;
-    // IGSTK integration test. END
+    vtkIGTIGSTKStream *IGSTKStream;
 #endif
-    //ETX
 
 };
 
