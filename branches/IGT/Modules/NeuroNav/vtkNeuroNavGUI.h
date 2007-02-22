@@ -12,13 +12,17 @@
 #endif
 
 #include "vtkSlicerModuleGUI.h"
-
 #include "vtkNeuroNavLogic.h"
 
 #include "vtkIGTDataManager.h"
 #include "vtkIGTPat2ImgRegistration.h"
-
 #include "vtkCallbackCommand.h"
+
+#include <string>
+
+#ifdef USE_OPENTRACKER
+#include "vtkIGTOpenTrackerStream.h"
+#endif
 
 class vtkKWPushButton;
 class vtkKWEntryWithLabel;
@@ -179,7 +183,9 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     vtkMRMLModelNode *LocatorModelNode;
     vtkMRMLModelDisplayNode *LocatorModelDisplayNode;
 
-
+    //BTX
+    std::string LocatorModelID;
+    //ETX
     vtkIGTDataManager *DataManager;
     vtkIGTPat2ImgRegistration *Pat2ImgReg;
 
@@ -199,6 +205,11 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     void BuildGUIForRegistrationFrame ();
 
     void TrackerLoop();
+
+
+#ifdef USE_OPENTRACKER
+    vtkIGTOpenTrackerStream *OpenTrackerStream;
+#endif
 
     //BTX
 #ifdef USE_IGSTK    
