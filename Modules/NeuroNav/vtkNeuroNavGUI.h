@@ -27,6 +27,7 @@ class vtkKWMenuButton;
 class vtkKWCheckButton;
 class vtkKWScaleWithEntry;
 class vtkKWEntry;
+class vtkKWFrame;
 class vtkKWEntryWithLabel;
 class vtkKWLoadSaveButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
@@ -123,6 +124,8 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     vtkKWEntry *PREntry;
     vtkKWEntry *PAEntry;
     vtkKWEntry *PSEntry;
+
+    vtkKWFrame *FileFrame;
 
     /*
     vtkKWScaleWithEntry* RedColorScale;
