@@ -162,6 +162,65 @@ void vtkIGTIGSTKSteeam::quaternion2xyz(float* orientation, float *normal, float 
 }
 
 
+///Event becomes IGSTK event to extract the info
+////////////////Edit here Noby Tuesday Feb 13
+/////////////// Edit here
+void vtkIGTIGSTK::callbackF(double* position, double* orientation)
+{
+  float f_position[3];
+  float f_orientation[4];
+    float norm[3];
+    float transnorm[3];
+    int j;
+
+    vtkIGTDataManager *VOT=(vtkIGTDataManager *)this;
+
+    // the original values are in the unit of meters
+    //this part has to be changed
+    f_position[0]=(float)position[0] * VOT->Ratio; 
+    f_position[1]=(float)position[1] * VOT->Ratio;
+    f_position[2]=(float)position[2] * VOT->Ratio;
+
+    f_orientation[0]=(float)orientation[0];
+    f_orientation[1]=(float)orientation[1];
+    f_orientation[2]=(float)orientation[2];
+    f_orientation[3]=(float)orientation[3];
+
+
+
+
+    VOT->quaternion2xyz(f_orientation, norm, transnorm);
+
+
+    // Apply the transform matrix 
+    // to the postion, norm and transnorm
+    if (VOT->RegMatrix)
+        VOT->ApplyTransform(f_position, norm, transnorm);
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(j,0,position[j]);
+    }
+
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(j,1,norm[j]);
+    }
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(j,2,transnorm[j]);
+    }
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(j,3,0);
+    }
+
+    for (j=0; j<3; j++) {
+        VOT->LocatorMatrix->SetElement(3,j,0);
+    }
+
+    VOT->LocatorMatrix->SetElement(3,3,1);
+}
+
 
 
 void vtkIGTIGSTKSteeam::SetLocatorTransforms()
