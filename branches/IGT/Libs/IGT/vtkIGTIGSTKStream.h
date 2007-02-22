@@ -67,6 +67,8 @@ public:
     void SetLocatorTransforms();
     void ProcessTimerEvents();
 
+    void callbackF(double*, double*);
+
 private:
 
     //BTX
