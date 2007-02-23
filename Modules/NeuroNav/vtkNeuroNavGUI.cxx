@@ -738,7 +738,7 @@ void vtkNeuroNavGUI::DataCallback(vtkObject *caller,
             unsigned long eid, void *clientData, void *callData)
 {
     vtkNeuroNavGUI *self = reinterpret_cast<vtkNeuroNavGUI *>(clientData);
-    vtkDebugWithObjectMacro(self, "In vtkSlicerLogic LogicCallback");
+    vtkDebugWithObjectMacro(self, "In vtkNeuroNavGUI DataCallback");
 
     self->UpdateAll();
 }
