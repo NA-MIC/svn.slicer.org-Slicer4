@@ -17,6 +17,8 @@
 #include "vtkIGTDataManager.h"
 #include "vtkIGTPat2ImgRegistration.h"
 #include "vtkCallbackCommand.h"
+#include "vtkSlicerInteractorStyle.h"
+
 
 #include <string>
 
@@ -82,6 +84,8 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     virtual void ProcessLogicEvents ( vtkObject *caller, unsigned long event, void *callData );
     virtual void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
     virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
+
+    void HandleMouseEvent(vtkSlicerInteractorStyle *style);
 
     
     // Description:
