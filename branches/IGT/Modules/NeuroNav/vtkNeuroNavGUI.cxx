@@ -26,6 +26,8 @@
 #include "vtkKWMultiColumnList.h"
 #include "vtkKWMessageDialog.h"
 #include "vtkKWMultiColumnListWithScrollbars.h"
+#include "vtkKWEvent.h"
+
 
 #include "vtkKWTkUtilities.h"
 #include "vtkMRMLModelDisplayNode.h"
@@ -409,6 +411,18 @@ void vtkNeuroNavGUI::PrintSelf ( ostream& os, vtkIndent indent )
 //---------------------------------------------------------------------------
 void vtkNeuroNavGUI::RemoveGUIObservers ( )
 {
+    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+
+    appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+
+
+#ifdef USE_OPENTRACKER
+    this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+#endif
+
+
     // Fill in
     if (this->LoadConfigButton)
     {
@@ -460,6 +474,17 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
 //---------------------------------------------------------------------------
 void vtkNeuroNavGUI::AddGUIObservers ( )
 {
+    this->RemoveGUIObservers();
+
+    // make a user interactor style to process our events
+    // look at the InteractorStyle to get our events
+
+    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+
+    appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+    appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+    appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+
 
     // Fill in
     // observer load volume button
@@ -485,221 +510,255 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
 
 
+void vtkNeuroNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
+{
+
+}
+
+
+
 //---------------------------------------------------------------------------
 void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         unsigned long event, void *callData )
 {
-    if (this->LoadConfigButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-        && event == vtkKWPushButton::InvokedEvent )
+    const char *eventName = vtkCommand::GetStringFromEventId(event);
+    if (strcmp(eventName, "LeftButtonPressEvent") == 0)
     {
-        const char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
-        if (filename)
+        vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+        vtkSlicerInteractorStyle *istyle0 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
+        vtkSlicerInteractorStyle *istyle1 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
+        vtkSlicerInteractorStyle *istyle2 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
+
+
+        vtkSlicerInteractorStyle *style = vtkSlicerInteractorStyle::SafeDownCast(caller);
+        if (style == istyle0)
         {
-            const vtksys_stl::string fname(filename);
-            this->ConfigFileEntry->SetValue(fname.c_str());
+            this->HandleMouseEvent(istyle0);
         }
-        else
+        if (style == istyle1)
         {
-            this->ConfigFileEntry->SetValue("");
+            this->HandleMouseEvent(istyle1);
         }
-        this->LoadConfigButton->GetWidget()->SetText ("Browse Config File");
-    }  
-    else if (this->ConnectCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-             && event == vtkKWCheckButton::SelectedStateChangedEvent )
+        if (style == istyle2)
+        {
+            this->HandleMouseEvent(istyle2);
+        }
+
+        return;
+    }
+    else
     {
-        int checked = this->ConnectCheckButton->GetSelectedState(); 
-        if (checked)
+        if (this->LoadConfigButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent )
         {
-            // connected
-            char *filename = this->LoadConfigButton->GetWidget()->GetFileName();
-            if (! filename)
+            const char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
+            if (filename)
             {
-                vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
-                dialog->SetParent ( this->FileFrame );
-                dialog->SetStyleToMessage();
-                std::string msg = std::string("Please input a valid configuration file (.xml).");
-                dialog->SetText(msg.c_str());
-                dialog->Create();
-                dialog->Invoke();
-                dialog->Delete();
-                this->ConnectCheckButton->SetSelectedState(0);
+                const vtksys_stl::string fname(filename);
+                this->ConfigFileEntry->SetValue(fname.c_str());
+            }
+            else
+            {
+                this->ConfigFileEntry->SetValue("");
+            }
+            this->LoadConfigButton->GetWidget()->SetText ("Browse Config File");
+        }  
+        else if (this->ConnectCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+                && event == vtkKWCheckButton::SelectedStateChangedEvent )
+        {
+            int checked = this->ConnectCheckButton->GetSelectedState(); 
+            if (checked)
+            {
+                // connected
+                char *filename = this->LoadConfigButton->GetWidget()->GetFileName();
+                if (! filename)
+                {
+                    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+                    dialog->SetParent ( this->FileFrame );
+                    dialog->SetStyleToMessage();
+                    std::string msg = std::string("Please input a valid configuration file (.xml).");
+                    dialog->SetText(msg.c_str());
+                    dialog->Create();
+                    dialog->Invoke();
+                    dialog->Delete();
+                    this->ConnectCheckButton->SetSelectedState(0);
+                }
+                else
+                {
+#ifdef USE_OPENTRACKER
+                    this->OpenTrackerStream->Init(filename);
+
+                    int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
+                    float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
+                    this->OpenTrackerStream->SetSpeed(sp);
+                    this->OpenTrackerStream->SetMultiFactor(multi);
+                    this->OpenTrackerStream->SetStartTimer(1);
+                    this->OpenTrackerStream->ProcessTimerEvents();
+#endif
+
+                }
             }
             else
             {
 #ifdef USE_OPENTRACKER
-                this->OpenTrackerStream->Init(filename);
-
-                int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
-                float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
-                this->OpenTrackerStream->SetSpeed(sp);
-                this->OpenTrackerStream->SetMultiFactor(multi);
-                this->OpenTrackerStream->SetStartTimer(1);
-                this->OpenTrackerStream->ProcessTimerEvents();
+                this->OpenTrackerStream->SetStartTimer(0);
 #endif
-
             }
         }
-        else
+        else if (this->GetPatCoordinatesPushButton == vtkKWPushButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent)
         {
-#ifdef USE_OPENTRACKER
-            this->OpenTrackerStream->SetStartTimer(0);
-#endif
-        }
-    }
-    else if (this->GetPatCoordinatesPushButton == vtkKWPushButton::SafeDownCast(caller) 
-             && event == vtkKWPushButton::InvokedEvent)
-    {
-        float position[3];
-        char value[50];
-        if (this->LocatorMatrix)
-        {
-            for (int j = 0; j < 3; j++) 
+            float position[3];
+            char value[50];
+            if (this->LocatorMatrix)
             {
-                position[j] = this->LocatorMatrix->GetElement(j,0);
-                // position[j] = j / 1.0;
+                for (int j = 0; j < 3; j++) 
+                {
+                    position[j] = this->LocatorMatrix->GetElement(j,0);
+                    // position[j] = j / 1.0;
+                }
+                sprintf(value, "%6.2f  %6.2f  %6.2f", position[0], position[1], position[2]);
+                this->PatCoordinatesEntry->GetWidget()->SetValue(value);
+
             }
-            sprintf(value, "%6.2f  %6.2f  %6.2f", position[0], position[1], position[2]);
-            this->PatCoordinatesEntry->GetWidget()->SetValue(value);
+        }
+        else if (this->AddPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent)
+        {
+            int scSize = 0;
+            int pcSize = 0;
+            const char *pc = this->PatCoordinatesEntry->GetWidget()->GetValue();
+            const char *sc = this->SlicerCoordinatesEntry->GetWidget()->GetValue();
 
-        }
-    }
-    else if (this->AddPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
-             && event == vtkKWPushButton::InvokedEvent)
-    {
-        int scSize = 0;
-        int pcSize = 0;
-        const char *pc = this->PatCoordinatesEntry->GetWidget()->GetValue();
-        const char *sc = this->SlicerCoordinatesEntry->GetWidget()->GetValue();
+            if (pc) 
+            {
+                const vtksys_stl::string pcCor(pc);
+                pcSize = pcCor.size();
+            }
+            if (sc) 
+            {
+                const vtksys_stl::string scCor(sc);
+                scSize = scCor.size();
+            }
 
-        if (pc) 
-        {
-            const vtksys_stl::string pcCor(pc);
-            pcSize = pcCor.size();
+            if (pcSize < 5 || scSize < 5)
+            {
+                vtkSlicerApplication::GetInstance()->ErrorMessage("Patient or Slicer coordinates are invalid."); 
+            }
+            else 
+            {
+                int row = this->PointPairMultiColumnList->GetWidget()->GetNumberOfRows();
+                this->PointPairMultiColumnList->GetWidget()->AddRow();
+                this->PointPairMultiColumnList->GetWidget()->SetCellText(row, 0, pc);
+                this->PointPairMultiColumnList->GetWidget()->SetCellText(row, 1, sc);
+            }
         }
-        if (sc) 
+        else if (this->DeletePointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent)
         {
-            const vtksys_stl::string scCor(sc);
-            scSize = scCor.size();
+            int numOfRows = this->PointPairMultiColumnList->GetWidget()->GetNumberOfSelectedRows();
+            if (numOfRows == 1)
+            {
+                int index[2];
+                this->PointPairMultiColumnList->GetWidget()->GetSelectedRows(index);
+                this->PointPairMultiColumnList->GetWidget()->DeleteRow(index[0]);
+            }
         }
- 
-        if (pcSize < 5 || scSize < 5)
+        else if (this->DeleteAllPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent)
         {
-            vtkSlicerApplication::GetInstance()->ErrorMessage("Patient or Slicer coordinates are invalid."); 
+            this->PointPairMultiColumnList->GetWidget()->DeleteAllRows();
         }
-        else 
+        else if (this->RegisterPushButton == vtkKWPushButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent)
         {
             int row = this->PointPairMultiColumnList->GetWidget()->GetNumberOfRows();
-            this->PointPairMultiColumnList->GetWidget()->AddRow();
-            this->PointPairMultiColumnList->GetWidget()->SetCellText(row, 0, pc);
-            this->PointPairMultiColumnList->GetWidget()->SetCellText(row, 1, sc);
-        }
-    }
-    else if (this->DeletePointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
-             && event == vtkKWPushButton::InvokedEvent)
-    {
-        int numOfRows = this->PointPairMultiColumnList->GetWidget()->GetNumberOfSelectedRows();
-        if (numOfRows == 1)
-        {
-            int index[2];
-            this->PointPairMultiColumnList->GetWidget()->GetSelectedRows(index);
-            this->PointPairMultiColumnList->GetWidget()->DeleteRow(index[0]);
-        }
-    }
-    else if (this->DeleteAllPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
-             && event == vtkKWPushButton::InvokedEvent)
-    {
-        this->PointPairMultiColumnList->GetWidget()->DeleteAllRows();
-    }
-    else if (this->RegisterPushButton == vtkKWPushButton::SafeDownCast(caller) 
-             && event == vtkKWPushButton::InvokedEvent)
-    {
-        int row = this->PointPairMultiColumnList->GetWidget()->GetNumberOfRows();
-        if (row < 2)
-        {
-            vtkSlicerApplication::GetInstance()->ErrorMessage("At least 2 pairs of landmarks are needed for patient to image registration.");
-        }
-        else
-        {
-            this->Pat2ImgReg->SetNumberOfPoints(row);
-            float pc1 = 0.0, pc2 = 0.0, pc3 = 0.0, sc1 = 0.0, sc2 = 0.0, sc3 = 0.0;
-            for (int r = 0; r < row; r++)
+            if (row < 2)
             {
-                for (int c = 0; c < 2; c++)
+                vtkSlicerApplication::GetInstance()->ErrorMessage("At least 2 pairs of landmarks are needed for patient to image registration.");
+            }
+            else
+            {
+                this->Pat2ImgReg->SetNumberOfPoints(row);
+                float pc1 = 0.0, pc2 = 0.0, pc3 = 0.0, sc1 = 0.0, sc2 = 0.0, sc3 = 0.0;
+                for (int r = 0; r < row; r++)
                 {
-                    const char *val = this->PointPairMultiColumnList->GetWidget()->GetCellText(r, c);
-                    if (c == 0)
+                    for (int c = 0; c < 2; c++)
                     {
-                        sscanf(val, "%f %f %f", &pc1, &pc2, &pc3);
+                        const char *val = this->PointPairMultiColumnList->GetWidget()->GetCellText(r, c);
+                        if (c == 0)
+                        {
+                            sscanf(val, "%f %f %f", &pc1, &pc2, &pc3);
+                        }
+                        else
+                        {
+                            sscanf(val, "%f %f %f", &sc1, &sc2, &sc3);
+                        }
                     }
-                    else
-                    {
-                        sscanf(val, "%f %f %f", &sc1, &sc2, &sc3);
-                    }
+                    this->Pat2ImgReg->AddPoint(r, sc1, sc2, sc3, pc1, pc2, pc3);
                 }
-                this->Pat2ImgReg->AddPoint(r, sc1, sc2, sc3, pc1, pc2, pc3);
-            }
 
-            int error = this->Pat2ImgReg->DoRegistration();
-            if (error)
+                int error = this->Pat2ImgReg->DoRegistration();
+                if (error)
+                {
+                    vtkSlicerApplication::GetInstance()->ErrorMessage("Error registration between patient and image land marks.");
+                    return;
+                }
+
+#ifdef USE_OPENTRACKER
+                this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
+#endif
+            }
+        }
+        else if (this->ResetPushButton == vtkKWPushButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent)
+        {
+#ifdef USE_OPENTRACKER
+            this->OpenTrackerStream->SetRegMatrix(NULL);
+#endif
+        }
+        else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+                && event == vtkKWCheckButton::SelectedStateChangedEvent )
+        {
+            int checked = this->LocatorCheckButton->GetSelectedState(); 
+
+            vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str()); 
+            vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
+
+            vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+            vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
+            disp->SetColor(color->SliceGUIGreen);
+
+            disp->SetVisibility(checked);
+
+        }
+        else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+                && event == vtkKWCheckButton::SelectedStateChangedEvent )
+        {
+            int checked = this->LocatorModeCheckButton->GetSelectedState(); 
+            if (checked)
             {
-                vtkSlicerApplication::GetInstance()->ErrorMessage("Error registration between patient and image land marks.");
-                return;
+                this->UserModeCheckButton->SelectedStateOff();
+            }
+            else
+            {
+                this->UserModeCheckButton->SelectedStateOn();
             }
 
-#ifdef USE_OPENTRACKER
-            this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
-#endif
         }
-    }
-    else if (this->ResetPushButton == vtkKWPushButton::SafeDownCast(caller) 
-             && event == vtkKWPushButton::InvokedEvent)
-    {
-#ifdef USE_OPENTRACKER
-        this->OpenTrackerStream->SetRegMatrix(NULL);
-#endif
-    }
-    else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-             && event == vtkKWCheckButton::SelectedStateChangedEvent )
-    {
-        int checked = this->LocatorCheckButton->GetSelectedState(); 
-
-        vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str()); 
-        vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
-
-        vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-        vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
-        disp->SetColor(color->SliceGUIGreen);
-
-        disp->SetVisibility(checked);
-
-    }
-    else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-             && event == vtkKWCheckButton::SelectedStateChangedEvent )
-    {
-        int checked = this->LocatorModeCheckButton->GetSelectedState(); 
-        if (checked)
+        else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+                && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
-            this->UserModeCheckButton->SelectedStateOff();
+            int checked = this->UserModeCheckButton->GetSelectedState(); 
+            if (checked)
+            {
+                this->LocatorModeCheckButton->SelectedStateOff();
+            }
+            else
+            {
+                this->LocatorModeCheckButton->SelectedStateOn();
+            }
         }
-        else
-        {
-            this->UserModeCheckButton->SelectedStateOn();
-        }
-
-    }
-    else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-             && event == vtkKWCheckButton::SelectedStateChangedEvent )
-    {
-        int checked = this->UserModeCheckButton->GetSelectedState(); 
-        if (checked)
-        {
-            this->LocatorModeCheckButton->SelectedStateOff();
-        }
-        else
-        {
-            this->LocatorModeCheckButton->SelectedStateOn();
-        }
-
     }
 } 
 
