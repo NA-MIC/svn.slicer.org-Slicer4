@@ -8,6 +8,7 @@
 #include "vtkSlicerColor.h"
 #include "vtkSlicerTheme.h"
 
+#include "vtkKWRenderWidget.h"
 #include "vtkKWWidget.h"
 #include "vtkKWMenuButton.h"
 #include "vtkKWCheckButton.h"
@@ -35,6 +36,7 @@
 #include "vtkTransformPolyDataFilter.h"
 #include "vtkActor.h"
 #include "vtkProperty.h"
+#include "vtkCornerAnnotation.h"
 
 #include "vtkIGTDataStream.h"
 
@@ -512,7 +514,31 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
 void vtkNeuroNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
 {
+    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+    vtkSlicerInteractorStyle *istyle0 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
+    vtkSlicerInteractorStyle *istyle1 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
+    vtkSlicerInteractorStyle *istyle2 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
 
+
+    vtkCornerAnnotation *anno = NULL;
+    if (style == istyle0)
+    {
+        anno = appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+    }
+    else if (style == istyle1)
+    {
+        anno = appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+    }
+    else if (style == istyle2)
+    {
+        anno = appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+    }
+
+    if (anno)
+    {
+        char *rasText = anno->GetText(3);
+        cout << "rasText = " << rasText << endl;
+    }
 }
 
 
@@ -524,27 +550,8 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
     const char *eventName = vtkCommand::GetStringFromEventId(event);
     if (strcmp(eventName, "LeftButtonPressEvent") == 0)
     {
-        vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-        vtkSlicerInteractorStyle *istyle0 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
-        vtkSlicerInteractorStyle *istyle1 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
-        vtkSlicerInteractorStyle *istyle2 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
-
-
         vtkSlicerInteractorStyle *style = vtkSlicerInteractorStyle::SafeDownCast(caller);
-        if (style == istyle0)
-        {
-            this->HandleMouseEvent(istyle0);
-        }
-        if (style == istyle1)
-        {
-            this->HandleMouseEvent(istyle1);
-        }
-        if (style == istyle2)
-        {
-            this->HandleMouseEvent(istyle2);
-        }
-
-        return;
+        HandleMouseEvent(style);
     }
     else
     {
