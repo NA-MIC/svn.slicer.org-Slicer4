@@ -150,7 +150,7 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
     }
     if (this->Pat2ImgReg)
     {
-        this->DataManager->Delete();
+        this->Pat2ImgReg->Delete();
     }
 
     this->RemoveGUIObservers();
