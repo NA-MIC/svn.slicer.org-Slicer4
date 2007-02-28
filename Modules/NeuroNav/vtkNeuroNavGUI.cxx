@@ -634,6 +634,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 && event == vtkKWPushButton::InvokedEvent)
         {
             float position[3];
+            position[0] = position[1] = position[2] = 0.0;
             char value[50];
             if (this->LocatorMatrix)
             {
@@ -642,10 +643,9 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                     position[j] = this->LocatorMatrix->GetElement(j,0);
                     // position[j] = j / 1.0;
                 }
-                sprintf(value, "%6.2f  %6.2f  %6.2f", position[0], position[1], position[2]);
-                this->PatCoordinatesEntry->GetWidget()->SetValue(value);
-
             }
+            sprintf(value, "%6.2f  %6.2f  %6.2f", position[0], position[1], position[2]);
+            this->PatCoordinatesEntry->GetWidget()->SetValue(value);
         }
         else if (this->AddPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
                 && event == vtkKWPushButton::InvokedEvent)
