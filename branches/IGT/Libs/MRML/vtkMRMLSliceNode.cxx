@@ -23,6 +23,8 @@ Version:   $Revision: 1.2 $
 #include "vtkTransform.h"
 #include "vtkMatrix4x4.h"
 
+#include "vnl/vnl_double_3.h"
+
 //------------------------------------------------------------------------------
 vtkMRMLSliceNode* vtkMRMLSliceNode::New()
 {
@@ -176,6 +178,97 @@ int vtkMRMLSliceNode::Matrix4x4AreEqual(vtkMatrix4x4 *m1, vtkMatrix4x4 *m2)
       }
     }
     return 1;
+}
+
+//----------------------------------------------------------------------------
+//  Set the SliceToRAS matrix by the postion and orientation of the locator
+//
+void vtkMRMLSliceNode::SetSliceToRASByNTP (double Nx, double Ny, double Nz,
+                         double Tx, double Ty, double Tz,
+                         double Px, double Py, double Pz,
+                         int Orientation)
+{
+    vnl_double_3 n, t, c;
+
+    n[0] = Nx; 
+    n[1] = Ny; 
+    n[2] = Nz; 
+    t[0] = Tx; 
+    t[1] = Ty; 
+    t[2] = Tz; 
+
+    // Ensure N, T orthogonal:
+    //    C = N x T
+    //    T = C x N
+    c = vnl_cross_3d(n, t);
+    t = vnl_cross_3d(c, n);
+
+    // Ensure vectors are normalized
+    n.normalize();
+    t.normalize();
+    c.normalize();
+
+    this->SliceToRAS->Identity();
+    // Tip location
+    this->SliceToRAS->SetElement(0, 3, Px);
+    this->SliceToRAS->SetElement(1, 3, Py);
+    this->SliceToRAS->SetElement(2, 3, Pz);
+
+    switch (Orientation)
+    {
+        // Slice plane is perpendicular to N
+        case 0: 
+            // Nx, Ny, Nz
+            this->SliceToRAS->SetElement(0, 2, n[0]);
+            this->SliceToRAS->SetElement(1, 2, n[1]);
+            this->SliceToRAS->SetElement(2, 2, n[2]);
+            // Tx, Ty, Tz
+            this->SliceToRAS->SetElement(0, 1, t[0]);
+            this->SliceToRAS->SetElement(1, 1, t[1]);
+            this->SliceToRAS->SetElement(2, 1, t[2]);
+            // Cx, Cy, Cz
+            this->SliceToRAS->SetElement(0, 0, c[0]);
+            this->SliceToRAS->SetElement(1, 0, c[1]);
+            this->SliceToRAS->SetElement(2, 0, c[2]);
+
+            break;
+
+        // Slice plane is perpendicular to C 
+        case 1: 
+            // Cx, Cy, Cz
+            this->SliceToRAS->SetElement(0, 2, c[0]);
+            this->SliceToRAS->SetElement(1, 2, c[1]);
+            this->SliceToRAS->SetElement(2, 2, c[2]);
+            // Nx, Ny, Nz
+            this->SliceToRAS->SetElement(0, 1, n[0]);
+            this->SliceToRAS->SetElement(1, 1, n[1]);
+            this->SliceToRAS->SetElement(2, 1, n[2]);
+            // Tx, Ty, Tz
+            this->SliceToRAS->SetElement(0, 0, t[0]);
+            this->SliceToRAS->SetElement(1, 0, t[1]);
+            this->SliceToRAS->SetElement(2, 0, t[2]);
+
+            break;
+
+        // Slice plane is perpendicular to T 
+        case 2: 
+            // Tx, Ty, Tz
+            this->SliceToRAS->SetElement(0, 2, t[0]);
+            this->SliceToRAS->SetElement(1, 2, t[1]);
+            this->SliceToRAS->SetElement(2, 2, t[2]);
+            // Cx, Cy, Cz
+            this->SliceToRAS->SetElement(0, 1, c[0]);
+            this->SliceToRAS->SetElement(1, 1, c[1]);
+            this->SliceToRAS->SetElement(2, 1, c[2]);
+            // Nx, Ny, Nz
+            this->SliceToRAS->SetElement(0, 0, n[0]);
+            this->SliceToRAS->SetElement(1, 0, n[1]);
+            this->SliceToRAS->SetElement(2, 0, n[2]);
+
+            break;
+    }
+
+    this->UpdateMatrices();  
 }
 
 //----------------------------------------------------------------------------
