@@ -761,6 +761,12 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
             int checked = this->LocatorModeCheckButton->GetSelectedState(); 
+            vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+
+            vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+            vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
+            vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
+
             if (checked)
             {
                 this->UserModeCheckButton->SelectedStateOff();
@@ -768,6 +774,9 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             else
             {
                 this->UserModeCheckButton->SelectedStateOn();
+                sliceNode0->SetOrientationToAxial();
+                sliceNode1->SetOrientationToSagittal();
+                sliceNode2->SetOrientationToCoronal();
             }
 
         }
@@ -775,9 +784,19 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
             int checked = this->UserModeCheckButton->GetSelectedState(); 
+            vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+
+            vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+            vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
+            vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
+
             if (checked)
             {
                 this->LocatorModeCheckButton->SelectedStateOff();
+                sliceNode0->SetOrientationToAxial();
+                sliceNode1->SetOrientationToSagittal();
+                sliceNode2->SetOrientationToCoronal();
+
             }
             else
             {
@@ -1823,12 +1842,23 @@ void vtkNeuroNavGUI::UpdateAll()
         int checked = this->LocatorModeCheckButton->GetSelectedState(); 
         if (checked)
         {
+            vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+
+            vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+            vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
+            vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
+
+            sliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+            sliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+            sliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+
+
             // update the display of locator
 #ifdef USE_OPENTRACKER
             this->OpenTrackerStream->SetLocatorTransforms();
 #endif
-            this->UpdateLocator();
             this->UpdateSliceDisplay(px, py, pz);
+            this->UpdateLocator();
         }
 
     }
