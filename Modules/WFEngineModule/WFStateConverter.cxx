@@ -42,7 +42,11 @@ vtkKWStateMachineState *WFStateConverter::createKWState(WFStepObject *wfStep)
     vtkKWStateMachineState *curState = vtkKWStateMachineState::New();
     
     curState->SetName(wfStep->GetName().c_str());
-    curState->SetDescription(wfStep->GetDescription().c_str());
+    
+    if(wfStep->GetStepDescription() == "")
+        curState->SetDescription(wfStep->GetWFDescription().c_str());       
+    else
+        curState->SetDescription(wfStep->GetStepDescription().c_str());
     
     return curState;
 }
@@ -52,7 +56,10 @@ vtkKWWizardStep *WFStateConverter::createKWWizardStep(WFStepObject *wfStep)
     vtkKWWizardStep *curWS = vtkKWWizardStep::New();
     
     curWS->SetName(wfStep->GetName().c_str());
-    curWS->SetDescription(wfStep->GetDescription().c_str());
+    if(wfStep->GetStepDescription() == "")
+        curWS->SetDescription(wfStep->GetWFDescription().c_str());       
+    else
+        curWS->SetDescription(wfStep->GetStepDescription().c_str());
     
     return curWS;
 }
