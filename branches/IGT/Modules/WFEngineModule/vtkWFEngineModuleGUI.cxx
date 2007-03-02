@@ -1,7 +1,7 @@
 #include "vtkWFEngineModuleGUI.h"
 
 #include "vtkMRMLWFEngineModuleNode.h"
-#include <WFDirectInterface.h>
+//#include <WFDirectInterface.h>
 
 #include <vtkObject.h>
 #include <vtkObjectFactory.h>
@@ -44,6 +44,7 @@
 #include <vtkSlicerModuleLogic.h>
 
 #include "WFStateConverter.h"
+#include "vtkWFStepHandler.h"
 
 #include <map>
 #include <iostream>
@@ -63,10 +64,10 @@ vtkWFEngineModuleGUI::vtkWFEngineModuleGUI ( )
     this->m_selectedWF = -1;
     this->m_mclDW = NULL;
     this->m_pbtnSet = NULL;
-    this->m_wfDI = NULL;
+//    this->m_wfDI = NULL;
     this->m_wizFrame = NULL;
-    this->m_curNameToWidgetMap = NULL;
-    
+    this->m_curNameToValueMap = NULL;
+    this->m_wfStepHandler = NULL;
     this->m_inTransition = false;
     //this->DebugOn();
 }
@@ -241,24 +242,12 @@ void vtkWFEngineModuleGUI::BuildGUI ( )
 
 int vtkWFEngineModuleGUI::ConnectToWFEngine()
 {
-    m_wfDI = WFDirectInterface::New();
-    
-    if(m_wfDI->InitializeWFEngine())
+    this->m_wfStepHandler = vtkWFStepHandler::New();
+    if(this->m_wfStepHandler->InitializeWFEngine() == vtkWFStepHandler::SUCC)
     {
-        std::vector<WFDirectInterface::workflowDesc*> knownWFs;
-        knownWFs = m_wfDI->GetAllKnownWorkflows();
-        
-        std::cout<<"knownWFs.size() "<<knownWFs.size()<<std::endl;
-        
-        for(std::vector<WFDirectInterface::workflowDesc*>::iterator iter = knownWFs.begin(); iter != knownWFs.end(); iter++)
-        {
-            WFDirectInterface::workflowDesc *curWFDesc = *iter;
-            this->addWorkflowToList(curWFDesc->workflowName.c_str(), curWFDesc->fileName.c_str(), curWFDesc->createTime);
-        }
-        
-        return 1;
+        this->m_wfStepHandler->SetApplication(this->GetApplication());
+        this->UpdateWorkflowList();
     }
-    else return 0;
 }
 
 void vtkWFEngineModuleGUI::addWorkflowToList(const char* workflowName, const char* fileName, int date)
@@ -401,13 +390,13 @@ void vtkWFEngineModuleGUI::loadBtnPushCmdCallback(vtkObject* obj, unsigned long,
         
         loadBtn->SetText("Load");
 //        myDW->m_nbDW->SetPageEnabled(myDW->m_selWF,0);
-        myDW->m_wfDI->CloseWorkflowManager();
+        myDW->m_wfStepHandler->CloseWorkflowSession();
         myDW->m_wizFrame = NULL;
         myDW->m_selectedWF = -1;
     }
     else if(loadBtn != NULL && myDW->m_wizFrame == NULL)
     {
-        myDW->m_wfDI->loadWorkflowFromFile(selectedWF);
+        myDW->m_wfStepHandler->LoadNewWorkflowSession(selectedWF);
         
         vtkKWWidget *page = myDW->UIPanel->GetPageWidget ( "WFEngineModule" );
         for(int i = 0; i < page->GetNumberOfChildren(); i++)
@@ -428,38 +417,19 @@ void vtkWFEngineModuleGUI::loadBtnPushCmdCallback(vtkObject* obj, unsigned long,
 
 void vtkWFEngineModuleGUI::closeWorkflow()
 {
-    this->m_wfDI->CloseWorkflowManager();
+    this->m_wfStepHandler->CloseWorkflowSession();
 }
 
-void vtkWFEngineModuleGUI::workStepValidationCallBack(WFStepObject *nextWS)
+void vtkWFEngineModuleGUI::workStepValidationCallBack(WFEngine::nmWFStepObject::WFStepObject *nextWS)
 {
-//    vtkWFDynamicWizard *wfDW = (vtkWFDynamicWizard*)param;
-        
-//    std::cout<<obj->GetClassName()<<std::endl;
-//    std::cout<<this->m_curStepID<<" == "<<curWF->GetCurrentStep()->GetId() + 1<<std::endl;
-//    if(this->m_curStepID != (curWF->GetCurrentStep()->GetId() + 1))
-//    {
-//        std::cout<<"***workStepCallBack***"<<std::endl;
-//        
-//        m_curWFStep = NULL;
-////        std::cout<<"***Current StateID: "<<curWF->GetCurrentStep()->GetId()<<" stateMapSize: "<<this->m_kwwID2StepIDMap.size()<<std::endl;
-//        std::cout<<"***Stack-Width: "<<curWF->GetNumberOfStepsInNavigationStack()<<" Number of known steps: "<<curWF->GetNumberOfSteps()<<std::endl;
-//        if(curWF->GetCurrentStep()->GetId() < curWF->GetNumberOfStepsInNavigationStack())
-//        {
-//            std::cout<<"Back pressed at position: "<<curWF->GetCurrentStep()->GetId()<<std::endl;
-//            m_curWFStep = this->m_wfDI->getBackWorkStep();
-//    //        this->m_kwwID2StepIDMap.erase(iter->first);
-//        }
-//        else
-//        {
-//            std::cout<<"Next pressed at position: "<<curWF->GetCurrentStep()->GetId()<<std::endl;
-//            m_curWFStep = this->m_wfDI->getNextWorkStep();
-//        }
     vtkKWMyWizardWorkflow *curWF = this->m_curWizWidg->GetMyWizardWorkflow();    
-    int nb_steps_in_stack = curWF->GetNumberOfStepsInNavigationStack();
-    std::cout<<"Steps in navigation stack: "<<nb_steps_in_stack<<std::endl;
+    std::cout<<"Steps in navigation stack: "<<curWF->GetNumberOfStepsInNavigationStack()<<std::endl;
+    
     if(nextWS)
     {
+        //initialize TCL Conditions
+//        this->initializeTCLConditions(nextWS);
+        
         WFStateConverter *wfSC = new WFStateConverter(nextWS);
         vtkKWWizardStep *nextStep = wfSC->GetKWWizardStep();
                 
@@ -509,7 +479,20 @@ void vtkWFEngineModuleGUI::nextTransitionCallback(vtkObject* obj, unsigned long 
     if(wfEngineModule)
     {
         wfEngineModule->UpdateMRML();
-        wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfDI->getNextWorkStep());
+        wfEngineModule->UpdateParameter();
+        //check step validation
+
+        if(wfEngineModule->m_wfStepHandler->LoadNextWorkStep() == vtkWFStepHandler::SUCC)
+        {
+            wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfStepHandler->GetLoadedWFStep());            
+        }
+        else
+        {
+            wfEngineModule->m_curWizWidg->SetErrorText(wfEngineModule->m_wfStepHandler->GetLastError().c_str());
+            wfEngineModule->UpdateGUI();
+            
+            wfEngineModule->m_curWizWidg->GetWizardWorkflow()->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+        }
     }
 }
 
@@ -520,7 +503,16 @@ void vtkWFEngineModuleGUI::backTransitionCallback(vtkObject* obj, unsigned long 
     if(wfEngineModule)
     {
         vtkKWMyWizardWorkflow *wizWF = wfEngineModule->m_curWizWidg->GetMyWizardWorkflow();
-        wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfDI->getBackWorkStep());
+        if(wfEngineModule->m_wfStepHandler->LoadBackWorkStep() == vtkWFStepHandler::SUCC)
+        {
+            wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfStepHandler->GetLoadedWFStep());   
+        }
+        else
+        {
+            wfEngineModule->m_curWFStep = NULL;
+            wfEngineModule->m_curWizWidg->GetWizardWorkflow()->AttemptToGoToPreviousStep();            
+        }
+        
         wfEngineModule->workStepGUICallBack();
         //because there is no GUI callback in a backtransition we call this manually
         
@@ -530,66 +522,7 @@ void vtkWFEngineModuleGUI::backTransitionCallback(vtkObject* obj, unsigned long 
 
 void vtkWFEngineModuleGUI::workStepGUICallBack()
 {
-    if(this->m_curWizWidg)
-    {
-        // Destroy all ClientAreaChildren!
-        this->m_curWizWidg->GetClientArea()->RemoveAllChildren();        
-    }
-    
-    if(!this->m_curWFStep)
-    {
-        return;
-    }    
-    
-    ModuleDescription curModuleDesc;
-    
-    ModuleDescriptionParser curMDParser;
-    
-    std::string guiDesc = this->m_curWFStep->GetGUIDescription();
-    std::cout<<"guiParser: ";
-    std::cout<<curMDParser.Parse(guiDesc, curModuleDesc)<<std::endl;
-    
-    vtkSlicerParameterWidget *myParameterWidgets = vtkSlicerParameterWidget::New();
-    
-    vtkCallbackCommand *widgetChangedCBC = vtkCallbackCommand::New();
-    myParameterWidgets->SetApplication(this->GetApplication());
-    vtkSlicerModuleLogic *myModuleLogic = vtkSlicerModuleLogic::New();
-    
-    myParameterWidgets->SetParent(this->m_curWizWidg->GetClientArea());
-    myParameterWidgets->SetSlicerModuleLogic(myModuleLogic);
-    
-    // set ModuleNode to the new step
-    myParameterWidgets->SetWidgetID(this->m_curWFStep->GetID());
-    myParameterWidgets->SetMRMLNode(this->GetWFEngineModuleNode());
-    myParameterWidgets->SetModuleDescription(&curModuleDesc);
-    myParameterWidgets->CreateWidgets();
-    
-    widgetChangedCBC->SetClientData(this);
-    widgetChangedCBC->SetCallback(vtkWFEngineModuleGUI::widgetChangedCallback);
-    myParameterWidgets->AddObserver(vtkSlicerParameterWidget::ParameterWidgetChangedEvent, widgetChangedCBC);
-    
-    widgetChangedCBC->Delete();
-    std::cout<<"vector size "<<myParameterWidgets->size()<<std::endl;
-    
-    if(myParameterWidgets->size() == 0)
-    {
-        return;
-    }
-    
-    // Build GUI out of the widget list
-    vtkKWWidget *curParameterWidget = myParameterWidgets->GetNextWidget();
-    this->m_curNameToWidgetMap = new std::map<std::string, vtkKWWidget*>;
-    while(curParameterWidget)
-    {
-//        std::cout<<curParameterWidget->GetWidgetName()<<std::endl;
-//        -side top -anchor ne -expand y -fill both -padx 2 -pady 2
-//        this->GetApplication()->Script("pack %s -in %s",
-//                curParameterWidget->GetWidgetName(), this->m_curWizWidg->GetClientArea()->GetWidgetName());
-        this->GetApplication()->Script("pack %s -side top -anchor ne -expand y -fill both -padx 2 -pady 2",
-                curParameterWidget->GetWidgetName());
-//        this->m_curNameToWidgetMap->insert(std::make_pair(myParameterWidgets->GetCurrentParameters(),curParameterWidget));
-        curParameterWidget = myParameterWidgets->GetNextWidget();  
-    }    
+    this->UpdateGUI();
 }
 
 void vtkWFEngineModuleGUI::deleteWizardWidgetContainer()
@@ -608,7 +541,7 @@ void vtkWFEngineModuleGUI::deleteWizardWidgetContainer()
 void vtkWFEngineModuleGUI::UpdateMRML()
 {
     //check if information is available
-    if(!this->m_curNameToWidgetMap)
+    if(!this->m_curNameToValueMap)
     {
         return;
     }
@@ -636,65 +569,15 @@ void vtkWFEngineModuleGUI::UpdateMRML()
       createdNode = true;
     }
     
-    std::map<std::string, vtkKWWidget*>::iterator iter;        
+    std::map<std::string, std::string>::iterator iter;        
     
-    for(iter = this->m_curNameToWidgetMap->begin(); iter != this->m_curNameToWidgetMap->end(); iter++)
+    for(iter = this->m_curNameToValueMap->begin(); iter != this->m_curNameToValueMap->end(); iter++)
     {
-        vtkKWSpinBoxWithLabel *sb = vtkKWSpinBoxWithLabel::SafeDownCast((*iter).second);
-        vtkKWScaleWithEntry *se = vtkKWScaleWithEntry::SafeDownCast((*iter).second);
-        vtkKWCheckButtonWithLabel *cb = vtkKWCheckButtonWithLabel::SafeDownCast((*iter).second);
-        vtkKWEntryWithLabel *e = vtkKWEntryWithLabel::SafeDownCast((*iter).second);
-        vtkSlicerNodeSelectorWidget *ns = vtkSlicerNodeSelectorWidget::SafeDownCast((*iter).second);
-        vtkKWLoadSaveButtonWithLabel *lsb = vtkKWLoadSaveButtonWithLabel::SafeDownCast((*iter).second);
-        vtkKWRadioButtonSetWithLabel *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast((*iter).second);
-
-        if (sb)
-          {
-          // std::cout << "SpinBox" << std::endl;
-          n->SetParameterAsDouble(this->m_curWFStep->GetID(), (*iter).first, sb->GetWidget()->GetValue());
-          }
-        else if (se)
-          {
-          n->SetParameterAsDouble(this->m_curWFStep->GetID(), (*iter).first, se->GetValue());
-          }
-        else if (cb)
-          {
-          n->SetParameterAsBool(this->m_curWFStep->GetID(), (*iter).first, cb->GetWidget()->GetSelectedState());
-          }
-        else if (e)
-          {
-          n->SetParameterAsString(this->m_curWFStep->GetID(), (*iter).first, e->GetWidget()->GetValue());
-          }
-        else if (ns && ns->GetSelected() != NULL)
-          {
-          n->SetParameterAsString(this->m_curWFStep->GetID(), (*iter).first, ns->GetSelected()->GetID());
-          }
-        else if (lsb)
-          {
-          if (lsb->GetWidget()->GetFileName())
-            {
-            n->SetParameterAsString(this->m_curWFStep->GetID(), (*iter).first, lsb->GetWidget()->GetFileName());
-            }
-          }
-        else if (rbs)
-        {
-          // find out who is set
-          int num = rbs->GetWidget()->GetNumberOfWidgets();
-          for (int i=0; i < num; ++i)
-          {
-            int id = rbs->GetWidget()->GetIdOfNthWidget(i);
-            vtkKWRadioButton* rb = rbs->GetWidget()->GetWidget(id);
-            if (rb->GetSelectedState())
-            {
-              n->SetParameterAsString(this->m_curWFStep->GetID(), (*iter).first, rb->GetValue());
-              break;
-            }
-          }
-        }
+        
     }//for
     
     //set the map back to null
-    this->m_curNameToWidgetMap = NULL;
+//    this->m_curNameToWidgetMap = NULL;
 }
 
 void vtkWFEngineModuleGUI::SetWFEngineModuleNode(vtkMRMLWFEngineModuleNode *node)
@@ -706,3 +589,152 @@ void vtkWFEngineModuleGUI::widgetChangedCallback(vtkObject* obj, unsigned long e
 {
     std::cout<<"something Changed Called Back;-)"<<std::endl;
 }
+
+const char *vtkWFEngineModuleGUI::getStepInputValueByName(std::string name)
+{
+    //check if information is available
+    if(!this->WFEngineModuleNode)
+    {
+        return "";
+    }
+    
+    if(!this->m_curWFStep)
+    {
+        return "";
+    }
+    
+    std::string curAttributeName = this->m_curWFStep->GetID();
+    curAttributeName.append("." + name);
+    
+    std::cout<<curAttributeName<<std::endl;
+    return this->WFEngineModuleNode->GetAttribute(curAttributeName.c_str());
+                   
+}
+
+void vtkWFEngineModuleGUI::UpdateWorkflowList()
+{
+    std::vector<vtkWFStepHandler::workflowDesc*> *tmpWFDescList = this->m_wfStepHandler->GetKnownWorkflowDescriptions();
+    std::vector<vtkWFStepHandler::workflowDesc*>::iterator iter;
+    
+    if(this->m_mclDW)
+    {
+        this->m_mclDW->DeleteAllRows();
+        for(iter = tmpWFDescList->begin(); iter != tmpWFDescList->end(); iter++)
+        {
+            vtkWFStepHandler::workflowDesc *tmpWFDesc = *iter;
+            this->addWorkflowToList(tmpWFDesc->workflowName.c_str(), tmpWFDesc->fileName.c_str(), tmpWFDesc->createTime);
+        }
+    }        
+}
+
+void vtkWFEngineModuleGUI::UpdateParameter()
+{
+    if(this->m_wfStepHandler && this->m_curNameToValueMap)
+    {
+        std::map<std::string, std::string>::iterator iter;
+        for(iter = this->m_curNameToValueMap->begin(); iter != this->m_curNameToValueMap->end(); iter++)
+        {
+            const char* value = this->getStepInputValueByName(iter->first);
+            std::string strValue = value;
+            std::cout<<strValue<<std::endl;
+            std::cout<<"name: "<<iter->first<<" value: "<<value<<std::endl;
+            this->m_wfStepHandler->AddParameter(iter->first.c_str(), value);
+        }        
+    }
+}
+
+void vtkWFEngineModuleGUI::UpdateGUI()
+{
+    if(this->m_curWizWidg)
+    {
+        // Destroy all ClientAreaChildren!
+        this->m_curWizWidg->GetClientArea()->RemoveAllChildren();        
+    }
+    
+    if(!this->m_wfStepHandler)
+    {
+        return;
+    }
+    
+    if(!this->m_curWFStep)
+    {
+        return;
+    }
+    
+//    ModuleDescription curModuleDesc;
+//    
+//    ModuleDescriptionParser curMDParser;
+//    
+//    std::string guiDesc = this->m_curWFStep->GetGUIDescription();
+//    std::cout<<"guiParser: ";
+//    std::cout<<curMDParser.Parse(guiDesc, curModuleDesc)<<std::endl;
+    
+    this->m_curParameterWidgets = vtkSlicerParameterWidget::New();
+    
+    vtkCallbackCommand *widgetChangedCBC = vtkCallbackCommand::New();
+    m_curParameterWidgets->SetApplication(this->GetApplication());
+    vtkSlicerModuleLogic *myModuleLogic = vtkSlicerModuleLogic::New();
+    
+    m_curParameterWidgets->SetParent(this->m_curWizWidg->GetClientArea());
+    m_curParameterWidgets->SetSlicerModuleLogic(myModuleLogic);
+    
+    // set ModuleNode to the new step
+    m_curParameterWidgets->SetWidgetID(this->m_curWFStep->GetID());
+    m_curParameterWidgets->SetMRMLNode(this->GetWFEngineModuleNode());
+    
+    m_curParameterWidgets->SetModuleDescription(this->m_wfStepHandler->GetCurrentModuleDescription());
+    m_curParameterWidgets->SetErrorMap(this->m_wfStepHandler->GetValidationErrorMap());
+    m_curParameterWidgets->CreateWidgets();
+    
+    widgetChangedCBC->SetClientData(this);
+    widgetChangedCBC->SetCallback(vtkWFEngineModuleGUI::widgetChangedCallback);
+    m_curParameterWidgets->AddObserver(vtkSlicerParameterWidget::ParameterWidgetChangedEvent, widgetChangedCBC);
+    
+    widgetChangedCBC->Delete();
+    std::cout<<"vector size "<<m_curParameterWidgets->size()<<std::endl;
+    
+    if(m_curParameterWidgets->size() == 0)
+    {
+        return;
+    }
+    
+    // Build GUI out of the widget list
+    vtkKWWidget *curGroupWidget = m_curParameterWidgets->GetNextWidget();
+    this->m_curNameToValueMap = new std::map<std::string, std::string>;
+    while(curGroupWidget)
+    {
+        this->GetApplication()->Script("pack %s -side top -anchor ne -expand y -fill both -padx 2 -pady 2",
+                curGroupWidget->GetWidgetName());
+        std::vector<ModuleParameter> *curParameterList = m_curParameterWidgets->GetCurrentParameters();
+        
+        std::vector<ModuleParameter>::iterator iter;
+        for(iter = curParameterList->begin(); iter != curParameterList->end(); iter++)
+        {
+            this->m_curNameToValueMap->insert(std::make_pair(iter->GetName(),iter->GetDefault()));
+        }
+        curGroupWidget = m_curParameterWidgets->GetNextWidget();  
+    }
+}
+
+//void vtkWFEngineModuleGUI::initializeTCLConditions(WFEngine::nmWFStepObject::WFStepObject* curWS)
+//{
+//    this->m_condChecker = vtkWFStepConditionChecker::New();
+//    this->m_condChecker->SetApplication(this->GetApplication());
+//    this->m_condChecker->LoadStepValidationFunction(curWS->GetTCLValidationFunction().c_str());
+//    this->m_condChecker->LoadNextStepFunction(curWS->GetTCLNextWorkstepFunction().c_str());
+////    condChecker->SetTCLInterp(this->GetApplication()->)    
+//}
+
+//void vtkWFEngineModuleGUI::validateStep(WFEngine::nmWFStepObject::WFStepObject* curWS)
+//{
+//    if(this->m_condChecker)
+//    {
+//        std::map<std::string, std::string>::iterator iter;
+//        for(iter = this->m_curNameToValueMap->begin(); iter != this->m_curNameToValueMap->end(); iter++)
+//        {
+//            std::cout<<"name: "<<iter->first<<" value: "<<iter->second<<std::endl;
+//            this->m_condChecker->AddParameter(iter->first.c_str(), iter->second.c_str());
+//        }
+//        int result = this->m_condChecker->ValidateStep();
+//    }
+//}

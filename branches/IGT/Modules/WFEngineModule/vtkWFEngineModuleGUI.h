@@ -24,9 +24,10 @@ class vtkKWMyWizardWidget;
 class vtkKWPushButtonSet;
 class vtkKWWidget;
 class vtkMRMLWFEngineModuleNode;
-//BTX
-class WFDirectInterface;
+class vtkWFStepHandler;
+class vtkSlicerParameterWidget;
 
+//BTX
 namespace WFEngine
 {
     namespace nmWFStepObject
@@ -81,7 +82,17 @@ class VTK_WFENGINEMODULE_EXPORT vtkWFEngineModuleGUI : public vtkSlicerModuleGUI
     
     virtual void SaveState();
     
-    virtual void workStepGUICallBack();
+    virtual void workStepGUICallBack();       
+    
+    // Descritpion:
+    // Event that handles all events declared in the workflow xml file
+    //BTX
+    enum{
+        WorkflowHandleEvent = 10000
+    };
+    
+    const char* getStepInputValueByName(std::string name); 
+    //ETX
     
 protected:
     vtkWFEngineModuleGUI ( );
@@ -108,8 +119,14 @@ protected:
     
     virtual void UpdateMRML();
     
+    virtual void UpdateWorkflowList();
+    
+    virtual void UpdateParameter();
+    
+    virtual void UpdateGUI();
 //BTX
     virtual void workStepValidationCallBack(WFEngine::nmWFStepObject::WFStepObject* nextWS);
+//    virtual void initializeTCLConditions(WFEngine::nmWFStepObject::WFStepObject* curWS);    
 //ETX    
 
     void deleteWizardWidgetContainer();
@@ -119,18 +136,19 @@ private:
     
     //BTX
     WFEngine::nmWFStepObject::WFStepObject *m_curWFStep;
-    std::map<std::string, vtkKWWidget*> *m_curNameToWidgetMap;
+    std::map<std::string, std::string> *m_curNameToValueMap;
     //ETX
     
     vtkKWMyWizardWidget *m_curWizWidg;
     vtkKWMultiColumnList *m_mclDW;
-    WFDirectInterface *m_wfDI;
     vtkKWPushButtonSet *m_pbtnSet;
     vtkSlicerModuleCollapsibleFrame *m_wizFrame;
-        
+    vtkSlicerParameterWidget *m_curParameterWidgets;    
     bool m_inTransition;
     
     vtkMRMLWFEngineModuleNode *WFEngineModuleNode;
+    
+    vtkWFStepHandler *m_wfStepHandler;
     
     vtkWFEngineModuleGUI ( const vtkWFEngineModuleGUI& ); // Not implemented.
     void operator = ( const vtkWFEngineModuleGUI& ); //Not implemented.

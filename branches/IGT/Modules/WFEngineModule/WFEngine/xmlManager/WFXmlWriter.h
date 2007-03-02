@@ -1,11 +1,11 @@
 #ifndef WFXMLWRITER_H_
 #define WFXMLWRITER_H_
 
-#include <xercesc/dom/DOMLSSerializerFilter.hpp>
+#include <xercesc/dom/DOMWriterFilter.hpp>
 
 XERCES_CPP_NAMESPACE_USE
 
-class WFXmlWriter : public DOMLSSerializerFilter
+class WFXmlWriter : public DOMWriterFilter
 {
 public:
 
@@ -22,6 +22,8 @@ public:
     //@{
 
   virtual unsigned long getWhatToShow() const {return fWhatToShow;};
+  
+  virtual void          setWhatToShow(unsigned long toShow) {fWhatToShow = toShow;};
 
 private:
   // unimplemented copy ctor and assignement operator

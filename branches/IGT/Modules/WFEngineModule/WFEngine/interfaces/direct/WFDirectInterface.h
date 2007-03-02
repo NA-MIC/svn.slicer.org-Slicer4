@@ -18,14 +18,14 @@ public:
     
     int InitializeWFEngine();
     
-    typedef struct 
+    struct workflowDesc 
     {
         std::string fileName;
         std::string workflowName;
         int createTime; 
-    } workflowDesc;
+    };
     
-    std::vector<WFDirectInterface::workflowDesc*> GetAllKnownWorkflows();
+    std::vector<WFDirectInterface::workflowDesc*> *GetAllKnownWorkflows();
     
     int loadWorkflowFromFile(std::string fileName);
     

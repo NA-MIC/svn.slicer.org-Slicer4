@@ -28,15 +28,21 @@ namespace WFEngine
             void SetName(std::string &name);
             void AddNextStepID(std::string &nextStepID);
 //            void SetVariableMapping(std::string &from, std::string &to);
-            void SetDescription(std::string &stepDesc);            
+            void SetWFDescription(std::string &wfDesc);            
             void AddVariable(std::string &varName, variablePropertyStruct *propStruct);
             
             std::string GetNextStepID();
             std::string GetID();
             std::string GetName();
-            std::string GetDescription();
+            std::string GetWFDescription();
+            std::string GetStepDescription();
+            std::string GetTCLValidationFunction();
+            std::string GetTCLNextWorkstepFunction();
             std::string GetGUIDescription();
-            bool ExistsEvent(std::string &eventName);                        
+            variablePropertyStruct *GetVariableStructByName(std::string &variableName);
+            bool ExistsEvent(std::string &eventName);
+            
+            std::vector<std::string>* GetAllEvents();
             
         protected:
             WFStepObject();
@@ -44,11 +50,10 @@ namespace WFEngine
         private:
             std::string m_ID;
             std::string m_name;
+            std::string m_wfDesc;
             std::vector<std::string> m_nextSteps;
 //            std::map<std::string, std::string> m_varMapping;
-            std::map<std::string, variablePropertyStruct*> m_varMap;
-            std::string m_desc;
-            std::string m_guiDesc;
+            std::map<std::string, variablePropertyStruct*> m_varMap;                        
         };
     }
 }

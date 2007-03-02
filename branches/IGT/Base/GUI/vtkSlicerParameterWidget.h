@@ -15,6 +15,7 @@ class vtkSlicerModuleLogic;
 class vtkCallbackCommand;
 class vtkKWCoreWidget;
 class vtkMRMLNode;
+class vtkKWLabel;
 //BTX
 class ModuleDescription;
 //ETX
@@ -33,12 +34,15 @@ public:
     //BTX
     std::vector<ModuleParameter> *GetCurrentParameters();
     
-    typedef struct{
-        vtkKWWidget *inputWidget;
+    struct ParameterWidgetChangedStruct{
+        vtkKWWidget *inputWidget;        
         ModuleParameter *widgetParameter;
-    } ParameterWidgetChangedStruct;
+    };
     
     void SetWidgetID(std::string ID);
+    
+    std::string GetValueByName(std::string name);
+    void SetErrorMap(std::map<std::string, std::string> *errorMap);
     //ETX
     bool IsCreated();
     void CreateWidgets();
@@ -79,17 +83,19 @@ protected:
     
     void SetValueForWidget(vtkKWCoreWidget *widg, const char* value);
     //BTX
-    typedef struct{
+    struct callBackDataStruct{
         ModuleParameter widgetParameter;
         vtkSlicerParameterWidget *parentClass;
-    } callBackDataStruct;
+    };
     
-    typedef struct{
+    struct moduleParameterWidgetStruct{
         std::vector<ModuleParameter> *modParams;
         vtkKWCoreWidget *paramWidget;
-    } moduleParameterWidgetStruct;
+    };
     
     const char *GetAttributeName(std::string name);
+        
+    std::string GetErrorByParamName(std::string name);
     //ETX
         
 private:
@@ -97,14 +103,17 @@ private:
     std::vector<moduleParameterWidgetStruct*> *m_InternalWidgetParamList;
     std::vector<moduleParameterWidgetStruct*>::iterator m_InternalIterator;
     
-    std::map<vtkKWCoreWidget*, ModuleParameter> *m_internalWidgetToParamMap; 
+//    std::map<vtkKWCoreWidget*, ModuleParameter> *m_internalWidgetToParamMap; 
     std::string m_curWidgetLabel;
     std::string m_widgID;
+
+    std::map<std::string, std::string> *m_paramToErrorMap;
     //ETX
     vtkKWWidget *m_ParentWidget;
     vtkSlicerModuleLogic *m_ModuleLogic;
     ModuleDescription *m_ModuleDescription;
     vtkMRMLNode *m_MRMLNode;
+    
     
     
     bool m_End;

@@ -39,6 +39,7 @@
 #include "vtkKWProgressGauge.h"
 #include "vtkKWWindowBase.h"
 #include <vtkMRMLNode.h>
+#include <vtkKWLabel.h>
 
 #include "itkNumericTraits.h"
 
@@ -68,6 +69,7 @@ vtkSlicerParameterWidget::vtkSlicerParameterWidget()
     this->m_ParentWidget = NULL;
     this->m_MRMLNode = NULL;
     
+    this->m_paramToErrorMap = NULL;
     this->m_widgID = "";
 }
 
@@ -112,7 +114,7 @@ void vtkSlicerParameterWidget::CreateWidgets()
     vtkSlicerParameterWidget::moduleParameterWidgetStruct *curModWidgetStruct;
     
     this->m_InternalWidgetParamList = new std::vector<vtkSlicerParameterWidget::moduleParameterWidgetStruct*>;
-    this->m_internalWidgetToParamMap = new std::map<vtkKWCoreWidget*, ModuleParameter>;
+//    this->m_internalWidgetToParamMap = new std::map<vtkKWCoreWidget*, ModuleParameter>;
     
     // iterate over each parameter group
     std::vector<ModuleParameterGroup>::const_iterator pgbeginit
@@ -491,6 +493,23 @@ void vtkSlicerParameterWidget::CreateWidgets()
             // widget, then pack both side by side.
             app->Script( "pack %s -side top -anchor ne -padx 2 -pady 2",
                     parameter->GetWidgetName());
+            
+            // check for errors, after validation
+            
+            std::string error = this->GetErrorByParamName(pit->GetName());
+            
+            if(error != "")
+            {
+                vtkKWLabel *errorLabel = vtkKWLabel::New();
+                errorLabel->SetParent(parameterGroupFrame);     
+                errorLabel->Create();                
+                errorLabel->SetText(error.c_str());
+                errorLabel->SetBackgroundColor(1,0,0);
+                errorLabel->SetForegroundColor(1,1,1);
+                errorLabel->SetFont("times 8 bold");
+                app->Script( "pack %s -side top -anchor ne -padx 2 -pady 2",
+                        errorLabel->GetWidgetName());
+            }
 
             curModWidgetStruct->modParams->push_back((*pit));
 
@@ -609,87 +628,87 @@ void vtkSlicerParameterWidget::AddGUIObservers()
 {
 //    this->GUIChangedCallbackCommand->SetClientData(NULL);    
     
-    std::map<vtkKWCoreWidget*, ModuleParameter>::iterator mapIter;
-    for(mapIter = this->m_internalWidgetToParamMap->begin(); mapIter != this->m_internalWidgetToParamMap->end(); mapIter++)
-    {
-//        vtkKWWidget *curWidg = this->m_ParentWidget->GetChildWidgetWithName((*mapIter).first.c_str());
-        // Need to determine what type of widget we are using so we can
-        // set the appropriate type of observer
-        vtkKWSpinBoxWithLabel *sb = vtkKWSpinBoxWithLabel::SafeDownCast((*mapIter).first);
-        vtkKWScaleWithEntry *se = vtkKWScaleWithEntry::SafeDownCast((*mapIter).first);
-        vtkKWCheckButtonWithLabel *cb = vtkKWCheckButtonWithLabel::SafeDownCast((*mapIter).first);
-        vtkKWEntryWithLabel *e = vtkKWEntryWithLabel::SafeDownCast((*mapIter).first);
-        vtkSlicerNodeSelectorWidget *ns = vtkSlicerNodeSelectorWidget::SafeDownCast((*mapIter).first);
-        vtkKWLoadSaveButtonWithLabel *lsb = vtkKWLoadSaveButtonWithLabel::SafeDownCast((*mapIter).first);
-        vtkKWRadioButtonSetWithLabel *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast((*mapIter).first);
-        
-        //create the callbackCommand
-        
-        vtkCallbackCommand *GUIChangedCallbackCommand = vtkCallbackCommand::New();
-        GUIChangedCallbackCommand->SetCallback(vtkSlicerParameterWidget::GUIChangedCallback);
-        
-        callBackDataStruct *cbStruct = new callBackDataStruct;
-        //    cbStruct->curWidgetName = NULL;
-        cbStruct->parentClass = this;
-
-        if (sb)
-        {
-//            cbStruct->curWidget = sb->GetWidget();
-            GUIChangedCallbackCommand->SetClientData(cbStruct);
-            sb->GetWidget()->AddObserver(vtkKWSpinBox::SpinBoxValueChangedEvent,
-                    (vtkCommand *) GUIChangedCallbackCommand);
-        }
-        else if (se)
-        {
-//            cbStruct->curWidget = se;
-            GUIChangedCallbackCommand->SetClientData(cbStruct);
-            se->AddObserver(vtkKWScale::ScaleValueStartChangingEvent,
-                    (vtkCommand *) GUIChangedCallbackCommand);
-            se->AddObserver(vtkKWScale::ScaleValueChangedEvent,
-                    (vtkCommand *) GUIChangedCallbackCommand);
-        }
-        else if (cb)
-        {
-//            cbStruct->curWidget = cb->GetWidget();
-            GUIChangedCallbackCommand->SetClientData(cbStruct);
-            cb->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent,
-                    (vtkCommand *) GUIChangedCallbackCommand);
-        }
-        else if (e)
-        {
-//            cbStruct->curWidget = e->GetWidget();
-            GUIChangedCallbackCommand->SetClientData(cbStruct);
-            e->GetWidget()->AddObserver(vtkKWEntry::EntryValueChangedEvent,
-                    (vtkCommand *) GUIChangedCallbackCommand);
-        }
-        else if (ns)
-        {
-//            cbStruct->curWidget = ns;
-            GUIChangedCallbackCommand->SetClientData(cbStruct);
-            ns->AddObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent,
-                    (vtkCommand *) GUIChangedCallbackCommand);
-        }
-        else if (lsb)
-        {
-//            cbStruct->curWidget = lsb->GetWidget();
-            GUIChangedCallbackCommand->SetClientData(cbStruct);
-            lsb->GetWidget()->AddObserver(vtkKWPushButton::InvokedEvent,
-                    (vtkCommand *) GUIChangedCallbackCommand);
-        }
-        else if (rbs)
-        {
-            int num = rbs->GetWidget()->GetNumberOfWidgets();
-            for (int i=0; i < num; ++i)
-            {
-                int id = rbs->GetWidget()->GetIdOfNthWidget(i);
-                vtkKWRadioButton* rb = rbs->GetWidget()->GetWidget(id);
-//                cbStruct->curWidget= rb;
-                GUIChangedCallbackCommand->SetClientData(cbStruct);
-                rb->AddObserver(vtkKWRadioButton::SelectedStateChangedEvent,
-                        (vtkCommand *) GUIChangedCallbackCommand);
-            }
-        }
-    }//for
+//    std::map<vtkKWCoreWidget*, ModuleParameter>::iterator mapIter;
+//    for(mapIter = this->m_internalWidgetToParamMap->begin(); mapIter != this->m_internalWidgetToParamMap->end(); mapIter++)
+//    {
+////        vtkKWWidget *curWidg = this->m_ParentWidget->GetChildWidgetWithName((*mapIter).first.c_str());
+//        // Need to determine what type of widget we are using so we can
+//        // set the appropriate type of observer
+//        vtkKWSpinBoxWithLabel *sb = vtkKWSpinBoxWithLabel::SafeDownCast((*mapIter).first);
+//        vtkKWScaleWithEntry *se = vtkKWScaleWithEntry::SafeDownCast((*mapIter).first);
+//        vtkKWCheckButtonWithLabel *cb = vtkKWCheckButtonWithLabel::SafeDownCast((*mapIter).first);
+//        vtkKWEntryWithLabel *e = vtkKWEntryWithLabel::SafeDownCast((*mapIter).first);
+//        vtkSlicerNodeSelectorWidget *ns = vtkSlicerNodeSelectorWidget::SafeDownCast((*mapIter).first);
+//        vtkKWLoadSaveButtonWithLabel *lsb = vtkKWLoadSaveButtonWithLabel::SafeDownCast((*mapIter).first);
+//        vtkKWRadioButtonSetWithLabel *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast((*mapIter).first);
+//        
+//        //create the callbackCommand
+//        
+//        vtkCallbackCommand *GUIChangedCallbackCommand = vtkCallbackCommand::New();
+//        GUIChangedCallbackCommand->SetCallback(vtkSlicerParameterWidget::GUIChangedCallback);
+//        
+//        callBackDataStruct *cbStruct = new callBackDataStruct;
+//        //    cbStruct->curWidgetName = NULL;
+//        cbStruct->parentClass = this;
+//
+//        if (sb)
+//        {
+////            cbStruct->curWidget = sb->GetWidget();
+//            GUIChangedCallbackCommand->SetClientData(cbStruct);
+//            sb->GetWidget()->AddObserver(vtkKWSpinBox::SpinBoxValueChangedEvent,
+//                    (vtkCommand *) GUIChangedCallbackCommand);
+//        }
+//        else if (se)
+//        {
+////            cbStruct->curWidget = se;
+//            GUIChangedCallbackCommand->SetClientData(cbStruct);
+//            se->AddObserver(vtkKWScale::ScaleValueStartChangingEvent,
+//                    (vtkCommand *) GUIChangedCallbackCommand);
+//            se->AddObserver(vtkKWScale::ScaleValueChangedEvent,
+//                    (vtkCommand *) GUIChangedCallbackCommand);
+//        }
+//        else if (cb)
+//        {
+////            cbStruct->curWidget = cb->GetWidget();
+//            GUIChangedCallbackCommand->SetClientData(cbStruct);
+//            cb->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent,
+//                    (vtkCommand *) GUIChangedCallbackCommand);
+//        }
+//        else if (e)
+//        {
+////            cbStruct->curWidget = e->GetWidget();
+//            GUIChangedCallbackCommand->SetClientData(cbStruct);
+//            e->GetWidget()->AddObserver(vtkKWEntry::EntryValueChangedEvent,
+//                    (vtkCommand *) GUIChangedCallbackCommand);
+//        }
+//        else if (ns)
+//        {
+////            cbStruct->curWidget = ns;
+//            GUIChangedCallbackCommand->SetClientData(cbStruct);
+//            ns->AddObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent,
+//                    (vtkCommand *) GUIChangedCallbackCommand);
+//        }
+//        else if (lsb)
+//        {
+////            cbStruct->curWidget = lsb->GetWidget();
+//            GUIChangedCallbackCommand->SetClientData(cbStruct);
+//            lsb->GetWidget()->AddObserver(vtkKWPushButton::InvokedEvent,
+//                    (vtkCommand *) GUIChangedCallbackCommand);
+//        }
+//        else if (rbs)
+//        {
+//            int num = rbs->GetWidget()->GetNumberOfWidgets();
+//            for (int i=0; i < num; ++i)
+//            {
+//                int id = rbs->GetWidget()->GetIdOfNthWidget(i);
+//                vtkKWRadioButton* rb = rbs->GetWidget()->GetWidget(id);
+////                cbStruct->curWidget= rb;
+//                GUIChangedCallbackCommand->SetClientData(cbStruct);
+//                rb->AddObserver(vtkKWRadioButton::SelectedStateChangedEvent,
+//                        (vtkCommand *) GUIChangedCallbackCommand);
+//            }
+//        }
+//    }//for
 }
 
 void vtkSlicerParameterWidget::AddParameterAndEventToWidget(vtkKWCoreWidget *parentWidget, ModuleParameter widgetParameter)
@@ -926,4 +945,35 @@ void vtkSlicerParameterWidget::SetValueForWidget(vtkKWCoreWidget *inputWidget, c
         std::cout<<"WARNING: vtkSlicerParameterWidget - try to set unsupported Widget; return \"\""<<std::endl;
         return;
     }
+}
+
+std::string vtkSlicerParameterWidget::GetValueByName(std::string name)
+{
+    if(!this->GetMRMLNode())
+    {
+        return "";
+    }
+    
+    const char* attrName = this->GetAttributeName(name.c_str());
+    return this->GetMRMLNode()->GetAttribute(attrName);
+}
+
+void vtkSlicerParameterWidget::SetErrorMap(std::map<std::string, std::string> *errorMap)
+{
+    this->m_paramToErrorMap = errorMap;
+}
+
+std::string vtkSlicerParameterWidget::GetErrorByParamName(std::string name)
+{
+    if(this->m_paramToErrorMap)
+    {
+        std::map<std::string, std::string>::iterator iter = this->m_paramToErrorMap->find(name);
+        
+        if(iter != this->m_paramToErrorMap->end())
+        {
+            return iter->second;
+        }
+    }
+    
+    return "";
 }

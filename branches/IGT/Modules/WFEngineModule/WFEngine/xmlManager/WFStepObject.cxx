@@ -6,8 +6,7 @@ WFStepObject::WFStepObject()
 {
     this->m_ID = "";
     this->m_name = "";
-    this->m_desc = "";
-    this->m_guiDesc = "";
+    this->m_wfDesc = "";    
 }
 
 WFStepObject::~WFStepObject()
@@ -35,11 +34,6 @@ void WFStepObject::AddNextStepID(std::string &nextStepID)
     this->m_nextSteps.push_back(nextStepID);
 }
 
-void WFStepObject::SetDescription(std::string &stepDesc)
-{
-    this->m_desc = stepDesc;
-}
-
 std::string WFStepObject::GetID()
 {
     return this->m_ID;
@@ -58,28 +52,46 @@ std::string WFStepObject::GetNextStepID()
         return "";           
 }
 
-std::string WFStepObject::GetDescription()
+std::string WFStepObject::GetStepDescription()
 {
-    return this->m_desc;
+    std::string description = "description";
+    variablePropertyStruct *tempPropStruct = this->GetVariableStructByName(description);
+    
+    if(tempPropStruct)
+    {
+        return tempPropStruct->value;
+    }
+    return "";
+}
+
+std::string WFStepObject::GetWFDescription()
+{
+    return this->m_wfDesc;
+}
+
+void WFStepObject::SetWFDescription(std::string &wfDesc)
+{
+    this->m_wfDesc = wfDesc;
 }
 
 std::string WFStepObject::GetGUIDescription()
 {
-    variablePropertyStruct *tempPropStruct = this->m_varMap["gui"];
+    std::string gui = "gui";
+    variablePropertyStruct *tempPropStruct = this->GetVariableStructByName(gui);
+    
     if(tempPropStruct)
-    {
+    {   
         std::string stepGUIDesc = tempPropStruct->value;
-        
-        if(strcmp(stepGUIDesc.c_str(), "") != 0)
-        {
-            if(strcmp(stepGUIDesc.substr(0,5).c_str(), "<?xml") != 0)
-            {
-                std::string xmlHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+
+        if (strcmp(stepGUIDesc.c_str(), "")!= 0) {
+            if (strcmp(stepGUIDesc.substr(0,5).c_str(), "<?xml")!= 0) {
+                std::string
+                        xmlHeader = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
                 xmlHeader.append(stepGUIDesc);
                 stepGUIDesc = xmlHeader;
             }
-            return stepGUIDesc;        
-        }     
+            return stepGUIDesc;
+        }
     }
     return "";
 }
@@ -88,3 +100,69 @@ void WFStepObject::AddVariable(std::string &varName, variablePropertyStruct *pro
 {
     this->m_varMap.insert(std::make_pair(varName, propStruct));
 }
+
+bool WFStepObject::ExistsEvent(std::string &eventName)
+{
+    std::string curEventName = "event_";
+    curEventName.append(eventName);
+    
+    variablePropertyStruct *tempPropStruct = this->GetVariableStructByName(eventName);
+    if(tempPropStruct)
+    {
+        return true;
+    }
+    return false;
+}
+
+std::vector<std::string>* WFStepObject::GetAllEvents()
+{
+    std::vector<std::string> *stepEvents = new std::vector<std::string>;
+    
+    std::map<std::string, WFStepObject::variablePropertyStruct*>::iterator mIter;
+    for(mIter = this->m_varMap.begin(); mIter != this->m_varMap.end(); mIter++)
+    {
+//        std::cout<<(*mIter).first.substr(0,5)<<std::endl;
+        if(std::strcmp((*mIter).first.substr(0,5).c_str(), "event") == 0)
+        {
+            std::cout<<(*mIter).first.substr(6,(*mIter).first.size()-1)<<std::endl;
+            stepEvents->push_back((*mIter).first.substr(6,(*mIter).first.size()-1));
+        }
+    }
+    return stepEvents;
+}
+
+WFStepObject::variablePropertyStruct* WFStepObject::GetVariableStructByName(std::string &variableName)
+{
+    std::map<std::string, variablePropertyStruct*>::iterator curIter = this->m_varMap.find(variableName);
+    if(curIter != this->m_varMap.end())
+    {
+        return curIter->second;
+    }
+    else
+    {
+        return NULL;
+    }
+}
+
+std::string WFStepObject::GetTCLNextWorkstepFunction()
+{
+    std::string nextWorkstepVarName = "tclNextStepFunc";
+    
+    variablePropertyStruct *varStruct = this->GetVariableStructByName(nextWorkstepVarName);
+    if(varStruct)
+        return varStruct->value;
+    else
+        return "";            
+}
+
+std::string WFStepObject::GetTCLValidationFunction()
+{
+    std::string validationVarName = "tclValidationFunc";
+    
+    variablePropertyStruct *varStruct = this->GetVariableStructByName(validationVarName);
+    if(varStruct)
+        return varStruct->value;
+    else
+        return "";
+}
+

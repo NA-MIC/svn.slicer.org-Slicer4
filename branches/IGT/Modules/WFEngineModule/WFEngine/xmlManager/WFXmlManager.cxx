@@ -168,11 +168,11 @@ int WFXmlManager::saveXmlFile()
         // get a serializer, an instance of DOMLSSerializer
         XMLCh tempStr[3] = {chLatin_L, chLatin_S, chNull};
         DOMImplementation *impl          = DOMImplementationRegistry::getDOMImplementation(tempStr);
-        DOMLSSerializer   *theSerializer = ((DOMImplementationLS*)impl)->createLSSerializer();
-        DOMLSOutput       *theOutputDesc = ((DOMImplementationLS*)impl)->createLSOutput();
+        DOMWriter   *theSerializer = ((DOMImplementationLS*)impl)->createDOMWriter();
+//        DOMLSOutput       *theOutputDesc = ((DOMImplementationLS*)impl)->createLSOutput();
 
         // set user specified output encoding
-        theOutputDesc->setEncoding(gOutputEncoding);
+        theSerializer->setEncoding(gOutputEncoding);
 
         // plug in user's own filter
         if (gUseFilter)
@@ -192,23 +192,23 @@ int WFXmlManager::saveXmlFile()
         }
 
         // plug in user's own error handler
-        DOMConfiguration* serializerConfig=theSerializer->getDomConfig();
+//        DOMConfiguration* serializerConfig=theSerializer->getDomConfig();
         
         // set feature if the serializer supports the feature/mode
-        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTSplitCdataSections, gSplitCdataSections))
-            serializerConfig->setParameter(XMLUni::fgDOMWRTSplitCdataSections, gSplitCdataSections);
+        if (theSerializer->canSetFeature(XMLUni::fgDOMWRTSplitCdataSections, gSplitCdataSections))
+            theSerializer->setFeature(XMLUni::fgDOMWRTSplitCdataSections, gSplitCdataSections);
 
-        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTDiscardDefaultContent, gDiscardDefaultContent))
-            serializerConfig->setParameter(XMLUni::fgDOMWRTDiscardDefaultContent, gDiscardDefaultContent);
+        if (theSerializer->canSetFeature(XMLUni::fgDOMWRTDiscardDefaultContent, gDiscardDefaultContent))
+            theSerializer->setFeature(XMLUni::fgDOMWRTDiscardDefaultContent, gDiscardDefaultContent);
 
-        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTFormatPrettyPrint, gFormatPrettyPrint))
-            serializerConfig->setParameter(XMLUni::fgDOMWRTFormatPrettyPrint, gFormatPrettyPrint);
+        if (theSerializer->canSetFeature(XMLUni::fgDOMWRTFormatPrettyPrint, gFormatPrettyPrint))
+            theSerializer->setFeature(XMLUni::fgDOMWRTFormatPrettyPrint, gFormatPrettyPrint);
 
-        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTBOM, gWriteBOM))
-            serializerConfig->setParameter(XMLUni::fgDOMWRTBOM, gWriteBOM);
+        if (theSerializer->canSetFeature(XMLUni::fgDOMWRTBOM, gWriteBOM))
+            theSerializer->setFeature(XMLUni::fgDOMWRTBOM, gWriteBOM);
 
-        if (serializerConfig->canSetParameter(XMLUni::fgDOMWRTWhitespaceInElementContent , gWhitespaceInElementContent))
-            serializerConfig->setParameter(XMLUni::fgDOMWRTWhitespaceInElementContent , gWhitespaceInElementContent);
+        if (theSerializer->canSetFeature(XMLUni::fgDOMWRTWhitespaceInElementContent , gWhitespaceInElementContent))
+            theSerializer->setFeature(XMLUni::fgDOMWRTWhitespaceInElementContent , gWhitespaceInElementContent);
         //
         // Plug in a format target to receive the resultant
         // XML stream from the serializer.
@@ -218,14 +218,17 @@ int WFXmlManager::saveXmlFile()
         //
         XMLFormatTarget *myFormTarget;
         myFormTarget=new LocalFileFormatTarget(goutputfile);
-        theOutputDesc->setByteStream(myFormTarget);
-
+//        theOutputDesc->setByteStream(myFormTarget);
+        
+        // get the DOM representation
+        DOMNode *doc = this->xmlDoc;
+        
         //
         // do the serialization through DOMLSSerializer::write();
         //
-        theSerializer->write(this->xmlDoc, theOutputDesc);
+        theSerializer->writeNode(myFormTarget, *doc);
 
-        theOutputDesc->release();
+//        theOutputDesc->release();
         theSerializer->release();
 
         //
@@ -372,7 +375,7 @@ DOMElement *WFXmlManager::getFirstChildByName(DOMElement *parentElement, std::st
         for(int i = 0; i < myKnownWFNL->getLength(); i++)
         {
             if(myKnownWFNL->item(i)->getNodeType() == 1)
-                return (DOMElement*)myKnownWFNL->item(i);
+                return (DOMElement*)(myKnownWFNL->item(i));
         }        
     }    
     return NULL;

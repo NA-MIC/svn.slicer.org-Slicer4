@@ -24,14 +24,14 @@ WFDirectInterface *WFDirectInterface::New()
     return new WFDirectInterface;
 }
 
-std::vector<WFDirectInterface::workflowDesc*> WFDirectInterface::GetAllKnownWorkflows()
+std::vector<WFDirectInterface::workflowDesc*> *WFDirectInterface::GetAllKnownWorkflows()
 {
     using namespace WFEngine::nmWFWorkflowManager;
     
     std::cout<<"GetAllKnownWorkflows"<<std::endl;
     
     std::vector<std::map<std::string, std::string> > knownWFs;
-    std::vector<WFDirectInterface::workflowDesc*> myKnownWFs;
+    std::vector<WFDirectInterface::workflowDesc*> *myKnownWFs = new std::vector<WFDirectInterface::workflowDesc*>;
     WFDirectInterface::workflowDesc *myWFDesc;    
     
     knownWFs = this->Superclass::m_wfeOpts->GetKnownWorkflows();
@@ -50,9 +50,8 @@ std::vector<WFDirectInterface::workflowDesc*> WFDirectInterface::GetAllKnownWork
       myWFDesc->workflowName = wfXmlWFMgr->GetWorkflowName();
       myWFDesc->createTime = this->getModifiedDateFromFile(attrMap["fileName"]);
 //      int i = 1000000000;
-//      myWFDesc.createTime = i;
-      std::cout<<"test"<<std::endl;
-      myKnownWFs.push_back(myWFDesc); 
+//      myWFDesc.createTime = i;      
+      myKnownWFs->push_back(myWFDesc); 
     }
     
     return myKnownWFs;

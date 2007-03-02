@@ -12,6 +12,7 @@ SET(WFEngineModule_SRCS
   vtkMRMLWFEngineModuleNode.cxx
   vtkKWMyWizardWidget.cxx
   vtkKWMyWizardWorkflow.cxx
+  vtkWFStepHandler.cxx
 )
 
 # Abstract/pure virtual classes

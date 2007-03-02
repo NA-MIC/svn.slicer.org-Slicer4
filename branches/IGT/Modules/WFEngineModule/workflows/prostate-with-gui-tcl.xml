@@ -11,13 +11,13 @@
       <processControlElements>
         <inputCondition id="InputCondition_1">
           <flowsInto>
-            <nextElementRef id="step0.1_3" />
+            <nextElementRef id="step0.1_5" />
           </flowsInto>
         </inputCondition>
-        <task id="step0.1_3">
+        <task id="step0.1_5">
           <name>step0.1</name>
           <flowsInto>
-            <nextElementRef id="step2_4" />
+            <nextElementRef id="step2_3" />
           </flowsInto>
           <join code="xor" />
           <split code="and" />
@@ -35,21 +35,21 @@
               <mapsTo>name</mapsTo>
             </mapping>
             <mapping>
-              <expression query="&lt;tclValidationFunc&gt;proc validate {name value} { set retval false; switch $name { test { if {[string compare $value test]} {set retval true} } numberTest { if {$value &gt; 20} {set retval true} } }; return $retval; }&lt;/tclValidationFunc&gt;" />
+              <expression query="&lt;tclValidationFunc&gt;proc validate {names values} { set retval true; set errorList {};  foreach name $names value $values {  set errorMSG {};  switch $name {   doubleVariable {    if {$value == 30} {set errorMSG {The Text is not test!}} }   test2 { if {$value != 3} {set errorMSG {The value should be 3}} } }; lappend errorList $errorMSG; if {[string compare $errorMSG {}] != 0} {set retval false}; }; if {$retval != true} {return $errorList} else {return $retval}; }&lt;/tclValidationFunc&gt;" />
               <mapsTo>tclValidationFunc</mapsTo>
             </mapping>
           </startingMappings>
           <decomposesTo id="input_params" />
         </task>
-        <task id="step2_4">
+        <task id="step2_3">
           <name>step2</name>
           <flowsInto>
-            <nextElementRef id="processing_5" />
+            <nextElementRef id="processing_4" />
           </flowsInto>
           <join code="xor" />
           <split code="and" />
         </task>
-        <task id="processing_5">
+        <task id="processing_4">
           <name>processing</name>
           <flowsInto>
             <nextElementRef id="OutputCondition_2" />

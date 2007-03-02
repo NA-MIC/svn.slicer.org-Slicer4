@@ -104,7 +104,7 @@ WFStepObject *WFXmlWorkflowManager::getNextWorkstepDescription(WFStepObject *cur
         curWS->SetID(ID);
         
         std::string desc = this->getWorkflowDescription();
-        curWS->SetDescription(desc);
+        curWS->SetWFDescription(desc);
         
         std::string name = "name";
         curProcessElement = this->getFirstChildByName(curTaskElement, name);
@@ -133,48 +133,55 @@ WFStepObject *WFXmlWorkflowManager::getNextWorkstepDescription(WFStepObject *cur
         }
         
 //        look for GUI Description
-        std::string decomposesTo = "decomposeTo";
+        std::string decomposesTo = "decomposesTo";
         std::string mapping = "mapping";
-        curProcessElement = this->getFirstChildByName(curTaskElement, decomposesTo);
-        if(curProcessElement)
+        DOMElement *curDecomposeToElement = this->getFirstChildByName(curTaskElement, decomposesTo);
+        if(curDecomposeToElement)
         {
-            const XMLCh* decompositionName = curProcessElement->getAttribute(XMLString::transcode("id"));
-            DOMNodeList *mappingNL = this->getAllChildesByName(curProcessElement, mapping);
+            const XMLCh* decompositionName = curDecomposeToElement->getAttribute(XMLString::transcode("id"));
+            DOMNodeList *mappingNL = this->getAllChildesByName(curTaskElement, mapping);
             std::string expression = "expression";
             std::string mapsTo = "mapsTo";
             bool found = false;
             
-            WFStepObject::variablePropertyStruct *myCurVarStruct;
-            DOMElement *decompElem;
+            WFStepObject::variablePropertyStruct *myCurVarStruct = NULL;
+            DOMElement *decompElem = NULL;
             std::set<std::string> varNameSet;
+            
+            //set the properties of the variable
             myCurVarStruct = this->getNextVariableFromDecomposition(decompositionName, &varNameSet, decompElem);
             while(myCurVarStruct)
             {
-                for (int i = 0; i< mappingNL->getLength(); i++)
+                //get the value of the current Variable
+                bool exit = false;
+                std::cout<<mappingNL->getLength()<<std::endl;
+                for(int j = 0; j < mappingNL->getLength() && !exit; j++)
                 {
-                    myCurVarStruct = new WFStepObject::variablePropertyStruct;
-                    DOMElement *curElem = (DOMElement*)(mappingNL->item(i));
-                    if (std::strcmp(XMLString::transcode(this->getFirstChildByName(curElem, mapsTo)->getTextContent()), myCurVarStruct->name.c_str())== 0)
+                    DOMElement *mapsToElement = this->getFirstChildByName((DOMElement*)(mappingNL->item(j)), mapsTo);
+                    
+                    if(strcmp(XMLString::transcode(mapsToElement->getTextContent()), myCurVarStruct->name.c_str()) == 0)
                     {
-                        std::cout<<"GUI Description found!"<<std::endl;
-                    }
-                    myCurVarStruct->value = XMLString::transcode(this->getFirstChildByName(curElem, expression)->getAttribute(XMLString::transcode("query")));                    
+                        DOMElement *exprToElement = this->getFirstChildByName((DOMElement*)(mappingNL->item(j)), expression);
+                        std::string tmpValue = std::string(XMLString::transcode(exprToElement->getAttribute(XMLString::transcode("query"))));
+                        
+                        //strip off the first and last tag because this is just meta-information of YAWL
+                        if(tmpValue.find("<" + myCurVarStruct->name +">",0) != std::string::npos)
+                        {
+                            int firstPos = tmpValue.find(">", 0);
+                            int lastPos = tmpValue.rfind("<");
+                            if(firstPos != std::string::npos && lastPos != std::string::npos)
+                            {
+                                int length = ((tmpValue.size() - (firstPos + 1)) - (tmpValue.size() - (lastPos)));                                                               
+                                myCurVarStruct->value = tmpValue.substr(firstPos + 1, length);                                
+                            }
+                        }                        
+                        exit = true;
+                    }                                        
                 }
-                curWS->AddVariable(myCurVarStruct->name, myCurVarStruct);                
-            }
-//            for(int i = 0; i< mappingNL->getLength(); i++)
-//            {
-//                myCurVarStruct = new WFStepObject::variablePropertyStruct;
-//                DOMElement *curElem = (DOMElement*)(mappingNL->item(i));
-//                if(std::strcmp(XMLString::transcode(this->getFirstChildByName(curElem, mapsTo)->getTextContent()), "gui") == 0)
-//                {
-//                    std::cout<<"GUI Description found!"<<std::endl;                    
-//                }
-//                myCurVarStruct->name = XMLString::transcode(this->getFirstChildByName(curElem, mapsTo)->getTextContent());
-//                myCurVarStruct->value = MLString::transcode(this->getFirstChildByName(curElem, expression)->getAttribute(XMLString::transcode("query")));
-//                
-//                curWS->AddVariable(myCurVarStruct->name, myCurVarStruct);
-//            }
+                
+                curWS->AddVariable(myCurVarStruct->name, myCurVarStruct);
+                myCurVarStruct = this->getNextVariableFromDecomposition(decompositionName, &varNameSet, decompElem);                
+            }    
         }        
 
 //        curWS->SetVariableMapping();
@@ -252,16 +259,21 @@ WFStepObject::variablePropertyStruct *WFXmlWorkflowManager::getNextVariableFromD
 {
     WFStepObject::variablePropertyStruct *tempPropStruct = NULL;
     
+    std::cout<<XMLString::transcode(decompositionName)<<std::endl;
+    
     if(!decomElem)
     {
         DOMNodeList *decompositionList = this->getAllChildesByName(specification, decomposition);
         
-        for(int i = 0; i < decompositionList->getLength(); i++)
+        bool found = false;
+        for(int i = 0; i < decompositionList->getLength() && !found; i++)
         {
-            DOMElement *curElem = (DOMElement*)decompositionList->item(i);
+            DOMElement *curElem = (DOMElement*)(decompositionList->item(i));
+            std::cout<<XMLString::transcode(curElem->getAttribute(XMLString::transcode("id")))<<" == "<<XMLString::transcode(decompositionName)<<std::endl;
             if(strcmp(XMLString::transcode(curElem->getAttribute(XMLString::transcode("id"))), XMLString::transcode(decompositionName)) == 0)
             {
                 decomElem = curElem;
+                found = true;
             }
         }
     }
@@ -277,27 +289,25 @@ WFStepObject::variablePropertyStruct *WFXmlWorkflowManager::getNextVariableFromD
     bool exit = false;
     for(int i = 0; i < inputNodes->getLength() && !exit; i++)
     {
-        DOMElement *curElem = (DOMElement*)inputNodes->item(i);
+        DOMElement *curElem = (DOMElement*)(inputNodes->item(i));
         
-        std::string varName = XMLString::transcode(this->getFirstChildByName(curElem, name)->getNodeValue());
+        std::string varName = "";
+        DOMElement* tmpElement = this->getFirstChildByName(curElem, name);
+        const XMLCh* tmpCh = tmpElement->getTextContent();
+        varName = std::string(XMLString::transcode(tmpCh));
         
         std::pair<std::set<std::string>::iterator,bool> success;
         // Element einfügen
         success = varSet->insert(varName);
         // Abprüfen ob Element eingefügt wurde
-        if (!success.second)
-        {
-            //already insert try now if there are some not yet insert output Parameters
-            exit = true;
-        }
-        else
+        if (success.second)        
         {
             //create the values for the struct
             tempPropStruct = new WFStepObject::variablePropertyStruct;
             tempPropStruct->name = varName;
             tempPropStruct->isInputParameter = true;
             tempPropStruct->isOutputParameter = false;
-            tempPropStruct->type = XMLString::transcode(this->getFirstChildByName(curElem, type)->getNodeValue());    
+            tempPropStruct->type = XMLString::transcode(this->getFirstChildByName(curElem, type)->getTextContent());    
             exit = true;
         }
     }
@@ -307,7 +317,7 @@ WFStepObject::variablePropertyStruct *WFXmlWorkflowManager::getNextVariableFromD
     {
         DOMElement *curElem = (DOMElement*)outputNodes->item(i);
         
-        std::string varName = XMLString::transcode(this->getFirstChildByName(curElem, name)->getNodeValue());
+        std::string varName = XMLString::transcode(this->getFirstChildByName(curElem, name)->getTextContent());
         
         if(tempPropStruct)
         {
@@ -330,7 +340,7 @@ WFStepObject::variablePropertyStruct *WFXmlWorkflowManager::getNextVariableFromD
                 tempPropStruct->name = varName;
                 tempPropStruct->isInputParameter = false;
                 tempPropStruct->isOutputParameter = true;
-                tempPropStruct->type = XMLString::transcode(this->getFirstChildByName(curElem, type)->getNodeValue());    
+                tempPropStruct->type = XMLString::transcode(this->getFirstChildByName(curElem, type)->getTextContent());    
                 exit = true;                
             }
         }
