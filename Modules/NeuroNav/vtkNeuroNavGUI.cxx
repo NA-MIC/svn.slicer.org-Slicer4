@@ -536,7 +536,7 @@ void vtkNeuroNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
 
     if (anno)
     {
-        char *rasText = anno->GetText(3);
+        const char *rasText = anno->GetText(3);
         std::string ras = std::string(rasText);
 
         // remove "R:," "A:," and "S:" from the string
