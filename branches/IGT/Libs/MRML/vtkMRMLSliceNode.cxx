@@ -189,6 +189,7 @@ void vtkMRMLSliceNode::SetSliceToRASByNTP (double Nx, double Ny, double Nz,
                          int Orientation)
 {
     vnl_double_3 n, t, c;
+    vnl_double_3 negN, negT, negC;
 
     n[0] = Nx; 
     n[1] = Ny; 
@@ -208,6 +209,11 @@ void vtkMRMLSliceNode::SetSliceToRASByNTP (double Nx, double Ny, double Nz,
     t.normalize();
     c.normalize();
 
+    // Get negative vectors
+    negN = -n;
+    negT = -t;
+    negC = -c;
+
     this->SliceToRAS->Identity();
     // Tip location
     this->SliceToRAS->SetElement(0, 3, Px);
@@ -216,54 +222,54 @@ void vtkMRMLSliceNode::SetSliceToRASByNTP (double Nx, double Ny, double Nz,
 
     switch (Orientation)
     {
-        // Slice plane is perpendicular to N
+        // para-Axial 
         case 0: 
-            // Nx, Ny, Nz
-            this->SliceToRAS->SetElement(0, 2, n[0]);
-            this->SliceToRAS->SetElement(1, 2, n[1]);
-            this->SliceToRAS->SetElement(2, 2, n[2]);
-            // Tx, Ty, Tz
-            this->SliceToRAS->SetElement(0, 1, t[0]);
-            this->SliceToRAS->SetElement(1, 1, t[1]);
-            this->SliceToRAS->SetElement(2, 1, t[2]);
-            // Cx, Cy, Cz
-            this->SliceToRAS->SetElement(0, 0, c[0]);
-            this->SliceToRAS->SetElement(1, 0, c[1]);
-            this->SliceToRAS->SetElement(2, 0, c[2]);
-
-            break;
-
-        // Slice plane is perpendicular to C 
-        case 1: 
-            // Cx, Cy, Cz
-            this->SliceToRAS->SetElement(0, 2, c[0]);
-            this->SliceToRAS->SetElement(1, 2, c[1]);
-            this->SliceToRAS->SetElement(2, 2, c[2]);
-            // Nx, Ny, Nz
-            this->SliceToRAS->SetElement(0, 1, n[0]);
-            this->SliceToRAS->SetElement(1, 1, n[1]);
-            this->SliceToRAS->SetElement(2, 1, n[2]);
-            // Tx, Ty, Tz
+            // negN
+            this->SliceToRAS->SetElement(0, 2, negN[0]);
+            this->SliceToRAS->SetElement(1, 2, negN[1]);
+            this->SliceToRAS->SetElement(2, 2, negN[2]);
+            // C 
+            this->SliceToRAS->SetElement(0, 1, c[0]);
+            this->SliceToRAS->SetElement(1, 1, c[1]);
+            this->SliceToRAS->SetElement(2, 1, c[2]);
+            // T 
             this->SliceToRAS->SetElement(0, 0, t[0]);
             this->SliceToRAS->SetElement(1, 0, t[1]);
             this->SliceToRAS->SetElement(2, 0, t[2]);
 
             break;
 
-        // Slice plane is perpendicular to T 
+        // para-Sagittal 
+        case 1: 
+            // negT 
+            this->SliceToRAS->SetElement(0, 2, negT[0]);
+            this->SliceToRAS->SetElement(1, 2, negT[1]);
+            this->SliceToRAS->SetElement(2, 2, negT[2]);
+            // negN 
+            this->SliceToRAS->SetElement(0, 1, negN[0]);
+            this->SliceToRAS->SetElement(1, 1, negN[1]);
+            this->SliceToRAS->SetElement(2, 1, negN[2]);
+            // negC 
+            this->SliceToRAS->SetElement(0, 0, negC[0]);
+            this->SliceToRAS->SetElement(1, 0, negC[1]);
+            this->SliceToRAS->SetElement(2, 0, negC[2]);
+
+            break;
+
+        // para-Coronal 
         case 2: 
-            // Tx, Ty, Tz
-            this->SliceToRAS->SetElement(0, 2, t[0]);
-            this->SliceToRAS->SetElement(1, 2, t[1]);
-            this->SliceToRAS->SetElement(2, 2, t[2]);
-            // Cx, Cy, Cz
-            this->SliceToRAS->SetElement(0, 1, c[0]);
-            this->SliceToRAS->SetElement(1, 1, c[1]);
-            this->SliceToRAS->SetElement(2, 1, c[2]);
-            // Nx, Ny, Nz
-            this->SliceToRAS->SetElement(0, 0, n[0]);
-            this->SliceToRAS->SetElement(1, 0, n[1]);
-            this->SliceToRAS->SetElement(2, 0, n[2]);
+            // C 
+            this->SliceToRAS->SetElement(0, 2, c[0]);
+            this->SliceToRAS->SetElement(1, 2, c[1]);
+            this->SliceToRAS->SetElement(2, 2, c[2]);
+            // negN 
+            this->SliceToRAS->SetElement(0, 1, negN[0]);
+            this->SliceToRAS->SetElement(1, 1, negN[1]);
+            this->SliceToRAS->SetElement(2, 1, negN[2]);
+            // T 
+            this->SliceToRAS->SetElement(0, 0, t[0]);
+            this->SliceToRAS->SetElement(1, 0, t[1]);
+            this->SliceToRAS->SetElement(2, 0, t[2]);
 
             break;
     }
