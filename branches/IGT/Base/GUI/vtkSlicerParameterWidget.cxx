@@ -834,6 +834,11 @@ const char *vtkSlicerParameterWidget::GetValueFromWidget(vtkKWWidget *widg)
             *lsb = vtkKWLoadSaveButton::SafeDownCast(widg);
     vtkKWRadioButton
             *rb = vtkKWRadioButton::SafeDownCast(widg);
+    
+    // because vtkKWCheckButton is a parent of vtkKWRadioButton both return not null if a radio-button is clicked
+    if(rb)
+        cb = NULL;
+    
     std::ostringstream strvalue;
     
     if (sb) {
@@ -852,15 +857,31 @@ const char *vtkSlicerParameterWidget::GetValueFromWidget(vtkKWWidget *widg)
         return e->GetValue();
     } else if (ns && ns->GetSelected() != NULL) {
         return ns->GetSelected()->GetID();
-    } else if (lsb) {
+    } else if (lsb) {        
         if (lsb->GetFileName())
         {
             return lsb->GetFileName();
         }
     } else if (rb) {
-        return rb->GetValue();
+        vtkKWRadioButtonSetWithLabel *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast(rb->GetParent());
+        if(rbs)
+        {
+            int num = rbs->GetWidget()->GetNumberOfWidgets();
+            for (int i=0; i < num; ++i) {
+                int id = rbs->GetWidget()->GetIdOfNthWidget(i);
+                vtkKWRadioButton* rb = rbs->GetWidget()->GetWidget(id);
+                if(rb->GetSelectedState() == 1)
+                {
+                    return rb->GetText();
+                }
+            }        
+        }
+        else
+            return rb->GetText();
+            
     } else {
         std::cout<<"WARNING: vtkSlicerParameterWidget - unsupported Widget monitored; return \"\""<<std::endl;
+        std::cout<<widg->GetWidgetName()<<std::endl;
         return "";
     }
     
@@ -916,8 +937,10 @@ void vtkSlicerParameterWidget::SetValueForWidget(vtkKWCoreWidget *inputWidget, c
             *ns = vtkSlicerNodeSelectorWidget::SafeDownCast(inputWidget);
     vtkKWLoadSaveButtonWithLabel
             *lsb = vtkKWLoadSaveButtonWithLabel::SafeDownCast(inputWidget);
+    vtkKWRadioButton
+            *rb = vtkKWRadioButton::SafeDownCast(inputWidget);
     vtkKWRadioButtonSetWithLabel
-            *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast(inputWidget);    
+    *rbswl = vtkKWRadioButtonSetWithLabel::SafeDownCast(inputWidget);    
     
     if (sb) {
         double d;
@@ -939,10 +962,43 @@ void vtkSlicerParameterWidget::SetValueForWidget(vtkKWCoreWidget *inputWidget, c
         ns->SetSelected(this->GetMRMLNode()->GetScene()->GetNodeByID(value));
     } else if (lsb) {
         lsb->GetWidget()->GetLoadSaveDialog()->SetFileName(value);
-//    } else if (rb) {
-//        rb->SetValue(value);
+    } else if (rb) {
+        vtkKWRadioButtonSetWithLabel *rbs = vtkKWRadioButtonSetWithLabel::SafeDownCast(rb->GetParent());
+        if(rbs)
+        {
+            int num = rbs->GetWidget()->GetNumberOfWidgets();
+            for (int i=0; i < num; ++i) {
+                int id = rbs->GetWidget()->GetIdOfNthWidget(i);
+                vtkKWRadioButton* rb = rbs->GetWidget()->GetWidget(id);
+                std::cout<<rb->GetValue()<<" == "<<value<<std::endl;
+                if(strcmp(rb->GetText(), value) == 0)
+                {
+                    rb->SelectedStateOn();
+                    return;
+                }
+            }        
+        }
+        else
+        {
+            if(rb->GetValue() == value)
+            {
+                rb->SelectedStateOn();
+            }
+        }
+    } else if(rbswl) {
+        int num = rbswl->GetWidget()->GetNumberOfWidgets();
+        for (int i=0; i < num; ++i) {
+            int id = rbswl->GetWidget()->GetIdOfNthWidget(i);
+            vtkKWRadioButton* rb = rbswl->GetWidget()->GetWidget(id);
+            std::cout<<rb->GetValue()<<" == "<<value<<std::endl;
+            if(strcmp(rb->GetText(), value) == 0)
+            {
+                rb->SelectedStateOn();
+                return;
+            }
+        }        
     } else {
-        std::cout<<"WARNING: vtkSlicerParameterWidget - try to set unsupported Widget; return \"\""<<std::endl;
+        std::cout<<"WARNING: vtkSlicerParameterWidget - try to set unsupported Widget; return \"\""<<std::endl;        
         return;
     }
 }

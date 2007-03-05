@@ -10,6 +10,7 @@
 
 #include <vtkKWWidget.h>
 #include <vtkKWMenu.h>
+#include <vtkKWMenuButtonWithLabel.h>
 #include <vtkKWMultiColumnList.h>
 #include <vtkKWMultiColumnListWithScrollbars.h>
 #include <vtkKWPushButtonSet.h>
@@ -45,6 +46,7 @@
 
 #include "WFStateConverter.h"
 #include "vtkWFStepHandler.h"
+#include "vtkWFEngineEventHandler.h"
 
 #include <map>
 #include <iostream>
@@ -69,6 +71,8 @@ vtkWFEngineModuleGUI::vtkWFEngineModuleGUI ( )
     this->m_curNameToValueMap = NULL;
     this->m_wfStepHandler = NULL;
     this->m_inTransition = false;
+    this->m_wfEngineEventHandler = NULL;
+    this->m_curParameterWidgets = NULL;
     //this->DebugOn();
 }
 
@@ -77,6 +81,8 @@ vtkWFEngineModuleGUI::vtkWFEngineModuleGUI ( )
 vtkWFEngineModuleGUI::~vtkWFEngineModuleGUI ( )
 {
     this->SetModuleLogic ( NULL );
+    
+    this->deleteWizardWidgetContainer();
 }
 
 
@@ -111,11 +117,16 @@ void vtkWFEngineModuleGUI::AddGUIObservers ( )
 
 //---------------------------------------------------------------------------
 void vtkWFEngineModuleGUI::ProcessGUIEvents ( vtkObject *caller,
-                                            unsigned long event, void *callData )
+                                            unsigned long event, void *clientData, void *callData )
 {
     // nothing to do here yet...
   vtkKWPushButton *b = vtkKWPushButton::SafeDownCast ( caller );
   vtkKWMenu *m = vtkKWMenu::SafeDownCast ( caller );
+  
+  if(m)
+  {
+      std::cout<<"Menu item "<<(int*)(clientData)<<" was pressed!"<<std::endl;
+  }
   
   return;
 }
@@ -230,6 +241,31 @@ void vtkWFEngineModuleGUI::BuildGUI ( )
     app->Script("pack %s -side top -anchor se -expand n -fill none -padx 2 -pady 2", 
             m_pbtnSet->GetWidgetName());
     
+    vtkKWMenuButtonWithLabel *mbWFOpts = vtkKWMenuButtonWithLabel::New();
+    mbWFOpts->SetParent(buttonFrame);
+    mbWFOpts->Create();
+    mbWFOpts->SetBalloonHelpString("Workflow Module Options");
+    
+    mbWFOpts->SetReliefToFlat();
+    mbWFOpts->GetWidget()->IndicatorVisibilityOff();
+    mbWFOpts->SetLabelText("Options:");
+    mbWFOpts->GetWidget()->GetMenu()->AddCommand("Load configuration..", this, "ProcessGUIEvents");
+    mbWFOpts->GetWidget()->GetMenu()->AddCommand("Save configuration..");
+    mbWFOpts->GetWidget()->GetMenu()->AddCommand("Save configuration as..");
+    mbWFOpts->GetWidget()->GetMenu()->AddSeparator();
+    mbWFOpts->GetWidget()->GetMenu()->AddCommand("Add workflow description..");
+    mbWFOpts->GetWidget()->GetMenu()->AddCommand("Update workflow list..");
+    
+    mbWFOpts->GetWidget()->SetValue("WorkflowEngine options");
+    
+    vtkCallbackCommand *menuBtnItemInvoked = vtkCallbackCommand::New();
+    menuBtnItemInvoked->SetClientData(this);
+    menuBtnItemInvoked->SetCallback(&vtkWFEngineModuleGUI::ProcessGUIEvents);
+    
+    mbWFOpts->GetWidget()->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, menuBtnItemInvoked);
+    
+    app->Script("pack %s -side top -anchor sw -expand n -fill none -padx 2 -pady 2", 
+            mbWFOpts->GetWidgetName());
 //    // add button to load a scene. this is wrong widget, but for now let it sit.
 //    this->LoadSceneButton = vtkKWPushButton::New ( );
 //    this->LoadSceneButton->SetParent ( loadFrame->GetFrame() );
@@ -356,6 +392,13 @@ void vtkWFEngineModuleGUI::createWizard()
     myWFENode->SetScene(this->Logic->GetMRMLScene());
     this->Logic->GetMRMLScene()->AddNode(myWFENode);
     this->SetWFEngineModuleNode(myWFENode);
+    
+    // create WFEngineEventHandler and create all Observers
+    
+    this->m_wfEngineEventHandler = vtkWFEngineEventHandler::New();
+    this->m_wfEngineEventHandler->SetMRMLScene(this->Logic->GetMRMLScene());
+    
+    this->m_wfEngineEventHandler->AddWorkflowObservers(this);
 }
 
 void vtkWFEngineModuleGUI::closeBtnPushCmdCallback(vtkObject* obj, unsigned long, void* param, void*)
@@ -374,8 +417,6 @@ void vtkWFEngineModuleGUI::loadBtnPushCmdCallback(vtkObject* obj, unsigned long,
     vtkKWPushButton *loadBtn = vtkKWPushButton::SafeDownCast(obj);
     if(loadBtn != NULL && myDW->m_wizFrame != NULL)
     {
-        myDW->m_curWizWidg->Delete();
-        myDW->m_curWizWidg = NULL;
         myDW->deleteWizardWidgetContainer();
         
         vtkKWWidget *page = myDW->UIPanel->GetPageWidget ( "WFEngineModule" );
@@ -391,7 +432,6 @@ void vtkWFEngineModuleGUI::loadBtnPushCmdCallback(vtkObject* obj, unsigned long,
         loadBtn->SetText("Load");
 //        myDW->m_nbDW->SetPageEnabled(myDW->m_selWF,0);
         myDW->m_wfStepHandler->CloseWorkflowSession();
-        myDW->m_wizFrame = NULL;
         myDW->m_selectedWF = -1;
     }
     else if(loadBtn != NULL && myDW->m_wizFrame == NULL)
@@ -478,12 +518,33 @@ void vtkWFEngineModuleGUI::nextTransitionCallback(vtkObject* obj, unsigned long 
     vtkWFEngineModuleGUI *wfEngineModule = (vtkWFEngineModuleGUI*)callBackData;
     if(wfEngineModule)
     {
+        // get all events and throw them if they are input related
+        std::vector<std::string> *eventList = NULL;
+        
+        if(wfEngineModule->m_curWFStep)
+        {
+            eventList = wfEngineModule->m_curWFStep->GetAllEvents();                        
+        }
+        
         wfEngineModule->UpdateMRML();
         wfEngineModule->UpdateParameter();
         //check step validation
 
         if(wfEngineModule->m_wfStepHandler->LoadNextWorkStep() == vtkWFStepHandler::SUCC)
         {
+            if(eventList)
+            {
+                std::vector<std::string>::iterator iter;
+                for(iter = eventList->begin(); iter != eventList->end(); iter++)
+                {
+                    std::cout<<"event '"<<(*iter)<<"' found!"<<std::endl;
+                    const char *tmp = (*iter).c_str();
+                    wfEngineModule->m_wfEngineEventHandler->SetEventName(tmp);
+                    wfEngineModule->m_wfEngineEventHandler->SetCurrentStepID(wfEngineModule->m_curWFStep->GetID().c_str());
+                    wfEngineModule->InvokeEvent(vtkWFEngineModuleGUI::WorkflowHandleEvent, wfEngineModule->m_wfEngineEventHandler);
+                }
+            }
+            
             wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfStepHandler->GetLoadedWFStep());            
         }
         else
@@ -528,14 +589,42 @@ void vtkWFEngineModuleGUI::workStepGUICallBack()
 void vtkWFEngineModuleGUI::deleteWizardWidgetContainer()
 {
     std::cout<<"deleteWizardWidgetContainer"<<std::endl;
+    
     if(this->m_wizFrame)
     {
-//        vtkKWWidget *page = this->UIPanel->GetPageWidget ( "WFEngineModule" );
         this->m_wizFrame->Unpack();
+    }
+    
+    if(this->m_curParameterWidgets)
+    {
+        this->m_curParameterWidgets->Delete();
+        this->m_curParameterWidgets = NULL;
+        std::cout<<"m_curParameterWidgets"<<std::endl;
+    }       
+    
+    if(this->m_curWizWidg)
+    {
+        this->m_curWizWidg->RemoveAllObservers();
+        this->m_curWizWidg->Delete();
+        this->m_curWizWidg = NULL;
+        std::cout<<"m_curWizWidg"<<std::endl;
+    }    
+    
+    if(this->m_wizFrame)
+    {     
         this->m_wizFrame->Delete();
         this->m_wizFrame = NULL;
+        std::cout<<"m_wizFrame"<<std::endl;
     }
-       
+    
+    if(this->m_wfEngineEventHandler)
+    {
+        this->m_wfEngineEventHandler->Delete();
+        this->m_wfEngineEventHandler = NULL;
+        std::cout<<"m_wfEngineEventHandler"<<std::endl;
+    }
+    
+    this->m_curNameToValueMap = NULL;       
 }
 
 void vtkWFEngineModuleGUI::UpdateMRML()
@@ -695,6 +784,7 @@ void vtkWFEngineModuleGUI::UpdateGUI()
     
     if(m_curParameterWidgets->size() == 0)
     {
+        this->m_curNameToValueMap = NULL;
         return;
     }
     

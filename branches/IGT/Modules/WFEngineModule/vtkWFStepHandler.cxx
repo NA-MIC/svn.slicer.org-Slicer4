@@ -226,9 +226,18 @@ int vtkWFStepHandler::LoadBackWorkStep()
     this->m_curWFStepObject = this->m_wfDI->getBackWorkStep();
     
     if(this->m_curWFStepObject)
+    {
+        this->LoadNextStepFunction(this->m_curWFStepObject->GetTCLNextWorkstepFunction().c_str());
+        this->LoadStepValidationFunction(this->m_curWFStepObject->GetTCLValidationFunction().c_str());
+        
         return SUCC;
+    }                
     else
-        return FAIL;
+    {
+        this->LoadNextStepFunction("");
+        this->LoadStepValidationFunction("");
+        return FAIL;   
+    }        
 }
 
 WFEngine::nmWFStepObject::WFStepObject *vtkWFStepHandler::GetLoadedWFStep()
