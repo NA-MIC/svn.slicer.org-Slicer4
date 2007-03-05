@@ -13,6 +13,7 @@ SET(WFEngineModule_SRCS
   vtkKWMyWizardWidget.cxx
   vtkKWMyWizardWorkflow.cxx
   vtkWFStepHandler.cxx
+  vtkWFEngineEventHandler.cxx
 )
 
 # Abstract/pure virtual classes

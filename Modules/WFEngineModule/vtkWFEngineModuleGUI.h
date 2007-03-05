@@ -26,6 +26,7 @@ class vtkKWWidget;
 class vtkMRMLWFEngineModuleNode;
 class vtkWFStepHandler;
 class vtkSlicerParameterWidget;
+class vtkWFEngineEventHandler;
 
 //BTX
 namespace WFEngine
@@ -72,7 +73,7 @@ class VTK_WFENGINEMODULE_EXPORT vtkWFEngineModuleGUI : public vtkSlicerModuleGUI
     // Class's mediator methods for processing events invoked by
     // either the Logic, MRML or GUI.
     virtual void ProcessLogicEvents ( vtkObject *caller, unsigned long event, void *callData );
-    virtual void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
+    static void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *clientData, void *callData );
     virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
 
     // Description:
@@ -149,6 +150,8 @@ private:
     vtkMRMLWFEngineModuleNode *WFEngineModuleNode;
     
     vtkWFStepHandler *m_wfStepHandler;
+    
+    vtkWFEngineEventHandler *m_wfEngineEventHandler;
     
     vtkWFEngineModuleGUI ( const vtkWFEngineModuleGUI& ); // Not implemented.
     void operator = ( const vtkWFEngineModuleGUI& ); //Not implemented.

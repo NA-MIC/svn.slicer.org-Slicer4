@@ -121,7 +121,7 @@ std::vector<std::string>* WFStepObject::GetAllEvents()
     std::map<std::string, WFStepObject::variablePropertyStruct*>::iterator mIter;
     for(mIter = this->m_varMap.begin(); mIter != this->m_varMap.end(); mIter++)
     {
-//        std::cout<<(*mIter).first.substr(0,5)<<std::endl;
+        std::cout<<"GetAllEvents: "<<(*mIter).first.substr(0,5)<<std::endl;
         if(std::strcmp((*mIter).first.substr(0,5).c_str(), "event") == 0)
         {
             std::cout<<(*mIter).first.substr(6,(*mIter).first.size()-1)<<std::endl;
