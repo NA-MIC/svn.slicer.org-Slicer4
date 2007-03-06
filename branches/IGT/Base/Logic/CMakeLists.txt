@@ -16,6 +16,7 @@ SET(SlicerBaseLogic_SRCS
   vtkSlicerColorLogic.cxx
   # slicer's vtk extensions
   vtkImageSlicePaint.cxx 
+  vtkImageSlice.cxx 
   vtkImageAccumulateDiscrete.cxx
   vtkImageBimodalAnalysis.cxx
   vtkImageFillROI.cxx
@@ -52,6 +53,8 @@ INCLUDE_DIRECTORIES(
   ${vtkTeem_SOURCE_DIR}
   ${vtkTeem_BINARY_DIR}
   ${SlicerBase_BINARY_DIR}
+  ${FreeSurfer_SOURCE_DIR}
+  ${FreeSurfer_BINARY_DIR}
   )
 
 IF(USE_OPENTRACKER)
@@ -91,10 +94,11 @@ TARGET_LINK_LIBRARIES(SlicerBaseLogic
   vtkIOTCL
   #  vtkHybridTCL
   # ${OPENTRACKER_LIB}
+  FreeSurfer
   )
 
 IF( TEEM_FOUND )
-  SET_TARGET_PROPERTIES(SlicerBaseLogic PROPERTIES DEFINE_SYMBOL USE_TEEM)
+  ADD_DEFINITIONS(-DUSE_TEEM)
   TARGET_LINK_LIBRARIES(SlicerBaseLogic
     vtkTeem
   )
