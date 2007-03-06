@@ -21,6 +21,7 @@
 
 #include "vtkKWScaleWithEntry.h"
 #include "vtkKWScale.h"
+#include "vtkKWLabel.h"
 
 // Description:
 // This class implements Slicer's Fiducials GUI
@@ -33,7 +34,6 @@ class vtkSlicerVisibilityIcons;
 class vtkKWChangeColorButton;
 class vtkKWScaleWithEntry;
 class vtkKWMenuButtonWithLabel;
-
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerFiducialsGUI : public vtkSlicerModuleGUI
 {
  public:
@@ -78,6 +78,17 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerFiducialsGUI : public vtkSlicerModuleG
     // Description:
     // This method builds the Fiducials module GUI
     virtual void BuildGUI ( ) ;
+
+    // Description:
+    // This method releases references and key-bindings,
+    // and optionally removes observers.
+    virtual void TearDownGUI ( );
+
+    // Description:
+    // Methods for adding module-specific key bindings and
+    // removing them.
+    virtual void CreateModuleEventBindings ( );
+    virtual void ReleaseModuleEventBindings ( );
 
     // Description:
     // Add/Remove observers on widgets in the GUI
@@ -126,6 +137,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerFiducialsGUI : public vtkSlicerModuleG
         FiducialListIDModifiedEvent = 20000,
     };
     //ETX
+
+    // Description:
+    // Update the gui from the currently selected list, called on Enter
+    void UpdateGUI();
+    
  protected:
     vtkSlicerFiducialsGUI ( );
     virtual ~vtkSlicerFiducialsGUI ( );
@@ -177,6 +193,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerFiducialsGUI : public vtkSlicerModuleG
     // the columns that hold the
     // name, x, y, z, orientation x y z w, selected
     int NumberOfColumns;
+    vtkKWLabel *NACLabel;
+    vtkKWLabel *NAMICLabel;
+    vtkKWLabel *NCIGTLabel;
+    vtkKWLabel *BIRNLabel;
 
     //BTX
     // Description:
@@ -194,7 +214,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerFiducialsGUI : public vtkSlicerModuleG
         OrZColumn = 8,
     };
     //ETX
-    
+
 private:
     vtkSlicerFiducialsGUI ( const vtkSlicerFiducialsGUI& ); // Not implemented.
     void operator = ( const vtkSlicerFiducialsGUI& ); //Not implemented.
