@@ -87,12 +87,6 @@ void vtkMRMLColorTableNode::WriteXML(ostream& of, int nIndent)
   
   vtkIndent indent(nIndent);
   
-  of << " type=\"" << this->GetType() << "\"";
-
-  if (this->Type == this->File && this->FileName != NULL)
-    {
-    of << " filename=\"" << this->FileName << "\"";
-    }
   // only print out the look up table if ?
   if (this->LookupTable != NULL) // && this->Type != this->File
     {
@@ -178,7 +172,7 @@ void vtkMRMLColorTableNode::ReadXMLAttributes(const char** atts)
         }
       else
       {
-          std::cerr << "Unknown attribute name " << attName << endl;
+          vtkErrorMacro ("Unknown attribute name " << attName << endl);
       }
   }
   vtkDebugMacro("Finished reading in xml attributes, list id = " << this->GetID() << " and name = " << this->GetName() << endl);
@@ -282,8 +276,10 @@ void vtkMRMLColorTableNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
   vtkMRMLColorTableNode *node = (vtkMRMLColorTableNode *) anode;
-
-  this->SetLookupTable(node->LookupTable);
+  if (node->LookupTable)
+    {
+    this->SetLookupTable(node->LookupTable);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1063,13 +1059,27 @@ void vtkMRMLColorTableNode::SetNamesFromColors()
 //---------------------------------------------------------------------------
 void vtkMRMLColorTableNode::SetNumberOfColors(int n)
 {
+  if (this->GetLookupTable() == NULL)
+    {
+    vtkErrorMacro("SetNumberofColors: lookup table is null, set the type first.");
+    return;
+    }
   if (this->GetType() != this->User)
     {
       vtkErrorMacro("vtkMRMLColorTableNode::SetNumberOfColors: ERROR: can't set number of colours if not a user defined colour table, reset the type first to User\n");
       return;
     }
 
-  this->GetLookupTable()->SetNumberOfTableValues(n);
+  if (this->GetLookupTable()->GetNumberOfTableValues() != n)
+    {
+    this->GetLookupTable()->SetNumberOfTableValues(n);
+    }
+
+  if (this->Names.size() != n)
+    {
+    this->Names.resize(n);
+    }
+  
 }
 
 //---------------------------------------------------------------------------

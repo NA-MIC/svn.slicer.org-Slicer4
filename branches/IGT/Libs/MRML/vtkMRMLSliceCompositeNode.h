@@ -65,18 +65,21 @@ class VTK_MRML_EXPORT vtkMRMLSliceCompositeNode : public vtkMRMLNode
   // the ID of a MRMLVolumeNode
   vtkGetStringMacro (BackgroundVolumeID);
   vtkSetReferenceStringMacro (BackgroundVolumeID);
+  void SetReferenceBackgroundVolumeID(const char *id) { this->SetBackgroundVolumeID(id); }
 
   // Description:
   // the ID of a MRMLVolumeNode
   // TODO: make this an arbitrary list of layers
   vtkGetStringMacro (ForegroundVolumeID);
   vtkSetReferenceStringMacro (ForegroundVolumeID);
+  void SetReferenceForegroundVolumeID(const char *id) { this->SetForegroundVolumeID(id); }
 
   // Description:
   // the ID of a MRMLVolumeNode
   // TODO: make this an arbitrary list of layers
   vtkGetStringMacro (LabelVolumeID);
   vtkSetReferenceStringMacro (LabelVolumeID);
+  void SetReferenceLabelVolumeID(const char *id) { this->SetLabelVolumeID(id); }
 
   // Description:
   // opacity of the Foreground for rendering over background
@@ -129,8 +132,12 @@ class VTK_MRML_EXPORT vtkMRMLSliceCompositeNode : public vtkMRMLNode
 
   // Description:
   // Name of the layout
-  vtkGetStringMacro (LayoutName);
-  vtkSetStringMacro (LayoutName);
+  void SetLayoutName(const char *layoutName) {
+    this->SetSingletonTag(layoutName);
+  }
+  char *GetLayoutName() {
+    return this->GetSingletonTag();
+  }
 
   //BTX
   // Modes for annotation space and mode
@@ -189,8 +196,6 @@ protected:
   
   int CrosshairMode;
   int CrosshairBehavior;
-  
-  char* LayoutName;
 
 };
 

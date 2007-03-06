@@ -46,6 +46,12 @@ Version:   $Revision: 1.18 $
 #include "vtkMRMLFiberBundleStorageNode.h"
 #include "vtkMRMLCameraNode.h"
 #include "vtkMRMLViewNode.h"
+#include "vtkMRMLModelHierarchyNode.h"
+
+#ifdef USE_TEEM
+#include "vtkMRMLNRRDStorageNode.h"
+#endif
+
 
 //------------------------------------------------------------------------------
 vtkMRMLScene::vtkMRMLScene() 
@@ -92,7 +98,6 @@ vtkMRMLScene::vtkMRMLScene()
   vtkMRMLClipModelsNode *modelclipnode = vtkMRMLClipModelsNode::New(); 
   this->RegisterNodeClass( modelclipnode );
   modelclipnode->Delete();
-
   
   vtkMRMLScalarVolumeNode *svoln = vtkMRMLScalarVolumeNode::New(); 
   this->RegisterNodeClass( svoln );
@@ -171,6 +176,15 @@ vtkMRMLScene::vtkMRMLScene()
   this->RegisterNodeClass ( view );
   view->Delete();
 
+  vtkMRMLModelHierarchyNode *mhier = vtkMRMLModelHierarchyNode::New();
+  this->RegisterNodeClass ( mhier );
+  mhier->Delete();
+
+#ifdef USE_TEEM
+  vtkMRMLNRRDStorageNode *nrrd = vtkMRMLNRRDStorageNode::New();
+  this->RegisterNodeClass ( nrrd );
+  nrrd->Delete();
+#endif
 
 }
 
@@ -204,6 +218,7 @@ void vtkMRMLScene::Clear(int removeSingletons)
   if (!removeSingletons)
     {
     this->RemoveAllNodesExceptSingletons();
+    this->ResetNodes();
     }
   else
     {
@@ -235,10 +250,34 @@ void vtkMRMLScene::RemoveAllNodesExceptSingletons()
       removeNodes.push_back(node);
       }
     }
-    for(int i=0; i<removeNodes.size(); i++)
+    for(unsigned int i=0; i<removeNodes.size(); i++)
       {
       this->CurrentScene->vtkCollection::RemoveItem(removeNodes[i]);
       }
+}
+
+//------------------------------------------------------------------------------
+void vtkMRMLScene::ResetNodes()
+{
+  vtkMRMLNode *node;
+  std::vector <vtkMRMLNode *> nodes;
+  vtkMRMLNode *newNode;
+  this->InitTraversal();
+  while (node = this->GetNextNode()) 
+    {
+    nodes.push_back(node);
+    }
+  for(unsigned int i=0; i<nodes.size(); i++) 
+    {
+    int save = nodes[i]->GetSaveWithScene();
+    int hide = nodes[i]->GetHideFromEditors();
+    newNode = nodes[i]->CreateNodeInstance();
+    nodes[i]->Copy(newNode);
+    nodes[i]->SetSaveWithScene(save);
+    nodes[i]->SetHideFromEditors(hide);
+    newNode->Delete();
+    }
+
 }
 
 vtkMRMLScene *vtkMRMLScene::ActiveScene = NULL;
@@ -531,7 +570,6 @@ int vtkMRMLScene::Commit(const char* url)
   if (file.fail()) 
     {
     vtkErrorMacro("Write: Could not open file " << url);
-    cerr << "Write: Could not open file " << url;
 #if (VTK_MAJOR_VERSION <= 5)      
     this->SetErrorCode(2);
 #else
@@ -609,7 +647,7 @@ void vtkMRMLScene::RequestNodeID(vtkMRMLNode *node, const char *ID)
 }
 
 //------------------------------------------------------------------------------
-void vtkMRMLScene::AddNodeNoNotify(vtkMRMLNode *n)
+vtkMRMLNode*  vtkMRMLScene::AddNodeNoNotify(vtkMRMLNode *n)
 {
   //TODO convert URL to Root directory
   //n->SetSceneRootDir("");
@@ -627,7 +665,7 @@ void vtkMRMLScene::AddNodeNoNotify(vtkMRMLNode *n)
                                                   n->GetSingletonTag()) == 0)
         {
         sn->Copy(n);
-        return;
+        return sn;
         }
       }
     }
@@ -655,14 +693,17 @@ void vtkMRMLScene::AddNodeNoNotify(vtkMRMLNode *n)
     }
   this->CurrentScene->vtkCollection::AddItem((vtkObject *)n);
   n->SetScene( this );
+
+  return n;
 }
 
 //------------------------------------------------------------------------------
-void vtkMRMLScene::AddNode(vtkMRMLNode *n)
+vtkMRMLNode*  vtkMRMLScene::AddNode(vtkMRMLNode *n)
 {
-  this->AddNodeNoNotify(n);
+  vtkMRMLNode* node = this->AddNodeNoNotify(n);
   this->InvokeEvent(this->NodeAddedEvent, n);
   this->Modified();
+  return node;
 }
 
 //------------------------------------------------------------------------------
