@@ -24,7 +24,10 @@ SET(LIB_SRCS
   vtkSlicerColor.cxx
   vtkSlicerFont.cxx
   vtkSlicerIcons.cxx
+  vtkSlicerImageCloseUp2D.cxx
+  vtkSlicerImageCrossHair2D.cxx
   vtkSlicerLogoIcons.cxx
+  vtkSlicerBaseAcknowledgementLogoIcons.cxx
   vtkSlicerVisibilityIcons.cxx
   vtkSlicerModuleNavigationIcons.cxx
   vtkSlicerToolbarIcons.cxx
@@ -99,16 +102,23 @@ INCLUDE_DIRECTORIES(
   ${VTK_INCLUDE_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
   ${ModuleDescriptionParser_BINARY_DIR}
+  ${FreeSurfer_SOURCE_DIR}
+  ${FreeSurfer_BINARY_DIR}
   )
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${KWWidgets_CMAKE_DIR}/KWWidgetsWrappingMacros.cmake")
 KWWidgets_WRAP_TCL(${LIB_NAME} LIB_TCL_SRCS "${LIB_SRCS}" "")
 
+
 # Create the library.
 
 ADD_LIBRARY(${LIB_NAME} ${LIB_TCL_SRCS} ${LIB_SRCS})
-TARGET_LINK_LIBRARIES(${LIB_NAME} ${KWWidgets_LIBRARIES} SlicerBaseLogic ModuleDescriptionParser)
+TARGET_LINK_LIBRARIES(${LIB_NAME} 
+  ${KWWidgets_LIBRARIES} 
+  ModuleDescriptionParser
+  SlicerBaseLogic
+  FreeSurfer)
 
 IF(BUILD_SHARED_LIBS)
   INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} ${LIB_NAME})
@@ -231,6 +241,20 @@ CONFIGURE_FILE(
   ${SlicerBaseGUITcl_DIR}/Slicer2Import.tcl
   COPYONLY
 )
+
+# Python settings
+IF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
+  SUBDIRS(Python)
+  ADD_DEFINITIONS(-DUSE_PYTHON)
+  INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+  IF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+     TARGET_LINK_LIBRARIES( ${LIB_NAME}
+                            debug ${PYTHON_DEBUG_LIBRARIES}
+                            optimized ${PYTHON_LIBRARIES})
+  ELSE (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+     TARGET_LINK_LIBRARIES( ${LIB_NAME} ${PYTHON_LIBRARIES})
+  ENDIF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+ENDIF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
 
 # CMAke 2.4 does not have INSTALL(DIRECTORY ...) do it manually
 #INSTALL(DIRECTORY "${Slicer3_BINARY_DIR}/SlicerBaseGUITcl"
