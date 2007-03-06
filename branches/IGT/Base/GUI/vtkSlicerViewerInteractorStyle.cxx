@@ -25,6 +25,9 @@
 #include "vtkSlicerFiducialsGUI.h"
 #include "vtkMRMLSelectionNode.h"
 
+// for picking
+#include "vtkSlicerViewerWidget.h"
+
 vtkCxxRevisionMacro(vtkSlicerViewerInteractorStyle, "$Revision: 1.32 $");
 vtkStandardNewMacro(vtkSlicerViewerInteractorStyle);
 
@@ -33,14 +36,14 @@ vtkSlicerViewerInteractorStyle::vtkSlicerViewerInteractorStyle()
 {
   this->MotionFactor   = 10.0;
   this->CameraNode = NULL;
-  this->Application = NULL;
+  this->ApplicationLogic = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkSlicerViewerInteractorStyle::~vtkSlicerViewerInteractorStyle() 
 {
   this->SetCameraNode(NULL);
-  this->SetApplication ( NULL );
+  this->ApplicationLogic = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -112,17 +115,18 @@ void vtkSlicerViewerInteractorStyle::OnLeftButtonDown()
     }
   
   // get the scene's mouse interaction mode
-  int mouseInteractionMode = vtkMRMLSelectionNode::MouseTransform;
+  int mouseInteractionMode = vtkMRMLInteractionNode::ViewTransform;
   
   if ( this->GetCameraNode() != NULL )
     {
-    vtkMRMLSelectionNode *selnode;
-    selnode = vtkMRMLSelectionNode::SafeDownCast (this->GetCameraNode()->GetScene()->GetNthNodeByClass(0, "vtkMRMLSelectionNode"));
-    if (selnode != NULL)
+    vtkMRMLInteractionNode *interactionNode;
+    interactionNode = vtkMRMLInteractionNode::SafeDownCast (this->GetCameraNode()->GetScene()->GetNthNodeByClass(0,"vtkMRMLInteractionNode"));
+    //this->GetApplicationLogic()->GetInteractionNode());
+    if (interactionNode != NULL)
       {
-      mouseInteractionMode = selnode->GetMouseInteractionMode();
+      mouseInteractionMode = interactionNode->GetCurrentInteractionMode();
       // release the pointer
-      selnode = NULL;
+      interactionNode = NULL;
       }
     }
   
@@ -147,18 +151,43 @@ void vtkSlicerViewerInteractorStyle::OnLeftButtonDown()
       }
     else 
       {
-      if (mouseInteractionMode == vtkMRMLSelectionNode::MouseTransform)
+      if (mouseInteractionMode == vtkMRMLInteractionNode::ViewTransform)
         {
         this->StartRotate();
         }
-      else if (mouseInteractionMode == vtkMRMLSelectionNode::MousePut)
+      else if (mouseInteractionMode == vtkMRMLInteractionNode::Place)
         {
-        this->AddFiducial();
+        /*
+        // get the current renderer's size, and possibly update the interactor
+        int *renSize = ren->GetSize();
+        if (this->Interactor->GetSize()[0] != renSize[0] ||
+            this->Interactor->GetSize()[1] != renSize[1])
+          {
+          std::cout << "MousePut: Updating interactor size to renderer size " << renSize[0] << "," << renSize[1] << endl;
+          this->Interactor->UpdateSize(renSize[0], renSize[1]);
+          }
+        */
+        // get the current event position, flipping Y
+        int x = this->Interactor->GetEventPosition()[0];
+        int rawY = this->Interactor->GetEventPosition()[1];
+        this->Interactor->SetEventPositionFlipY(x, rawY);
+        int y = this->Interactor->GetEventPosition()[1];
+        vtkDebugMacro("MousePut: got x = " << x << ", y = " << y << " (raw y = " << rawY << ")\n");
+        // throw a pick event, let observers deal with it        
+        this->InvokeEvent(vtkSlicerViewerInteractorStyle::PickEvent, this->Interactor->GetEventPosition());
+        if (0)
+          {
+          if (this->GetViewerWidget() != NULL)
+            {
+            this->GetViewerWidget()->Pick(x, y);
+            }
+          }
         }
-      else if (mouseInteractionMode == vtkMRMLSelectionNode::MouseSelect)
+      else if (mouseInteractionMode == vtkMRMLInteractionNode::PickManipulate)
         {
         // deal with select mode
-        std::cout << "Mouse Selection mode not implemented, try something else...\n";
+        // throw a select region event
+        this->InvokeEvent(vtkSlicerViewerInteractorStyle::SelectRegionEvent);
         }
       }
     }
@@ -495,53 +524,8 @@ void vtkSlicerViewerInteractorStyle::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerViewerInteractorStyle::SetApplication ( vtkSlicerApplication *app )
+void vtkSlicerViewerInteractorStyle::SetViewerWidget ( vtkSlicerViewerWidget *viewerWidget )
 {
-  this->Application = app;
+  this->ViewerWidget = viewerWidget;
 }
 
-//----------------------------------------------------------------------------
-void vtkSlicerViewerInteractorStyle::AddFiducial()
-{
-  vtkDebugMacro( "Putting down a fiducial at the origin\n");
-  if (this->CurrentRenderer == NULL)
-    {
-    return;
-    }
-  
-  double ras[3] = {0.0, 0.0, 0.0};
-  
-  vtkDebugMacro("\tnew pick point = " << ras[0] << ", " << ras[1] << ", " << ras[2]);
-  if (this->GetApplication())
-    {
-    vtkSlicerFiducialsGUI *fidGUI = vtkSlicerFiducialsGUI::SafeDownCast(this->GetApplication()->GetModuleGUIByName("Fiducials"));
-    if (fidGUI != NULL)
-      {
-      if (fidGUI->GetLogic() != NULL)
-        {
-        int pt = fidGUI->GetLogic()->AddFiducial(ras[0], ras[1], ras[2]);
-        if (pt != -1)
-          {
-          vtkDebugMacro("Added a fiducial at pt = " << pt << endl);
-          }
-        else
-          {
-          vtkErrorMacro("Wasn't able to add a fiducial");
-          }
-        }
-      else
-        {
-        vtkErrorMacro("Cant't get the fiducials logic");
-        }
-      }
-    else
-      {
-      vtkErrorMacro("Can't get the fiducials gui");
-      }
-    fidGUI = NULL;
-    }
-  else
-    {
-    vtkErrorMacro("Can't get the application");
-    }
-}
