@@ -20,8 +20,10 @@ vtkCxxRevisionMacro ( vtkSlicerDataGUI, "$Revision: 1.0 $");
 vtkSlicerDataGUI::vtkSlicerDataGUI ( )
 {
   MRMLTreeWidget = vtkSlicerMRMLTreeWidget::New();
-    //this->Logic = NULL;
-
+  NACLabel = NULL;
+  NAMICLabel = NULL;
+  NCIGTLabel = NULL;
+  BIRNLabel = NULL;
 }
 
 
@@ -34,8 +36,32 @@ vtkSlicerDataGUI::~vtkSlicerDataGUI ( )
     this->MRMLTreeWidget->SetParent (NULL );
     this->MRMLTreeWidget->Delete ( );
     }
-    // class not yet defined!
-    //this->SetModuleLogic ( NULL );
+  if ( this->NACLabel )
+    {
+    this->NACLabel->SetParent ( NULL );
+    this->NACLabel->Delete();
+    this->NACLabel = NULL;
+    }
+  if ( this->NAMICLabel )
+    {
+    this->NAMICLabel->SetParent ( NULL );
+    this->NAMICLabel->Delete();
+    this->NAMICLabel = NULL;
+    }
+  if ( this->NCIGTLabel )
+    {
+    this->NCIGTLabel->SetParent ( NULL );
+    this->NCIGTLabel->Delete();
+    this->NCIGTLabel = NULL;
+    }
+  if ( this->BIRNLabel )
+    {
+    this->BIRNLabel->SetParent ( NULL );
+    this->BIRNLabel->Delete();
+    this->BIRNLabel = NULL;
+    }
+
+  this->Built = false;
 }
 
 
@@ -106,20 +132,54 @@ void vtkSlicerDataGUI::ProcessMRMLEvents ( vtkObject *caller,
     // Fill in
 }
 
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerDataGUI::CreateModuleEventBindings ( )
+{
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerDataGUI::ReleaseModuleEventBindings ( )
+{
+  
+}
+
+
+
+
 //---------------------------------------------------------------------------
 void vtkSlicerDataGUI::Enter ( )
 {
-    // Fill in
+  if ( this->Built == false )
+    {
+    this->BuildGUI();
+    this->Built = true;
+    this->AddGUIObservers();
+    this->AddObserver ( vtkSlicerModuleGUI::ModuleSelectedEvent, (vtkCommand *)this->ApplicationGUI->GetGUICallbackCommand() );
+    }
+    this->CreateModuleEventBindings();
 }
+
+
 
 //---------------------------------------------------------------------------
 void vtkSlicerDataGUI::Exit ( )
 {
-    // Fill in
+  this->ReleaseModuleEventBindings();
 }
 
 
 
+//---------------------------------------------------------------------------
+void vtkSlicerDataGUI::TearDownGUI ( )
+{
+  this->Exit();
+  if ( this->Built )
+    {
+    this->RemoveGUIObservers();
+    }
+}
 
 //---------------------------------------------------------------------------
 void vtkSlicerDataGUI::BuildGUI ( )
@@ -140,6 +200,30 @@ void vtkSlicerDataGUI::BuildGUI ( )
     const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details. ";
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Data" );
     this->BuildHelpAndAboutFrame ( page, help, about );
+
+    this->NACLabel = vtkKWLabel::New();
+    this->NACLabel->SetParent ( this->GetLogoFrame() );
+    this->NACLabel->Create();
+    this->NACLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNACLogo() );
+
+    this->NAMICLabel = vtkKWLabel::New();
+    this->NAMICLabel->SetParent ( this->GetLogoFrame() );
+    this->NAMICLabel->Create();
+    this->NAMICLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNAMICLogo() );    
+
+    this->NCIGTLabel = vtkKWLabel::New();
+    this->NCIGTLabel->SetParent ( this->GetLogoFrame() );
+    this->NCIGTLabel->Create();
+    this->NCIGTLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNCIGTLogo() );
+    
+    this->BIRNLabel = vtkKWLabel::New();
+    this->BIRNLabel->SetParent ( this->GetLogoFrame() );
+    this->BIRNLabel->Create();
+    this->BIRNLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetBIRNLogo() );
+    app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky w", this->NAMICLabel->GetWidgetName());
+    app->Script ("grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w",  this->NACLabel->GetWidgetName());
+    app->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky w",  this->BIRNLabel->GetWidgetName());
+    app->Script ( "grid %s -row 1 -column 1 -padx 2 -pady 2 -sticky w",  this->NCIGTLabel->GetWidgetName());                  
 
     // INSPECT FRAME
     vtkSlicerModuleCollapsibleFrame *displayModifyFrame = vtkSlicerModuleCollapsibleFrame::New ( );
