@@ -5,9 +5,11 @@ PROJECT(SlicerTractographyDisplay)
 
 SET(SlicerTractographyDisplay_SRCS
   vtkSlicerTractographyDisplayGUI.cxx
+  vtkSlicerAllFiberBundlesDisplayWidget.cxx
   vtkSlicerFiberBundleDisplayWidget.cxx
   vtkSlicerFiberBundleDisplayLogic.cxx
   vtkSlicerFiberBundleLogic.cxx
+  vtkSlicerDiffusionTensorIcons.cxx
 )
 
 # Abstract/pure virtual classes
@@ -30,6 +32,8 @@ SET(SlicerTractographyDisplay_SRCS
 # Include dirs
 
 INCLUDE_DIRECTORIES(
+  ${vtkTeem_SOURCE_DIR}
+  ${vtkTeem_BINARY_DIR}
   ${SlicerTractographyDisplay_SOURCE_DIR}
   ${SlicerTractographyDisplay_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
@@ -85,9 +89,13 @@ TARGET_LINK_LIBRARIES(SlicerTractographyDisplay
   ITKBasicFilters
   ITKIO
   ITKDICOMParser
-  ${KWWidgets_LIBRARIES} )
+  ${KWWidgets_LIBRARIES}
+   )
 
-
+IF( TEEM_FOUND )
+  ADD_DEFINITIONS(-DUSE_TEEM)
+  TARGET_LINK_LIBRARIES(SlicerTractographyDisplay vtkTeem)
+ENDIF( TEEM_FOUND )
 
 # --------------------------------------------------------------------------
 # Testing (requires some of the examples)

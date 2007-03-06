@@ -6,12 +6,13 @@
 #ifndef __vtkSlicerTractographyDisplayGUI_h
 #define __vtkSlicerTractographyDisplayGUI_h
 
-#include "vtkSlicerTractographyDisplayWin32Header.h"
+#include "vtkSlicerTractographyDisplay.h"
 #include "vtkSlicerModuleGUI.h"
 
 #include "vtkSlicerFiberBundleLogic.h"
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerFiberBundleDisplayWidget.h"
+#include "vtkSlicerAllFiberBundlesDisplayWidget.h"
 
 #include "vtkKWLoadSaveButton.h"
 #include "vtkKWLoadSaveDialog.h"
@@ -81,6 +82,8 @@ class VTK_SLICERTRACTOGRAPHYDISPLAY_EXPORT vtkSlicerTractographyDisplayGUI : pub
     vtkKWLoadSaveButton *SaveTractographyButton;
     vtkSlicerNodeSelectorWidget* FiberBundleSelectorWidget;
 
+    vtkSlicerAllFiberBundlesDisplayWidget *AllFiberBundlesDisplayWidget;
+  
     vtkSlicerFiberBundleDisplayWidget *FiberBundleDisplayWidget;
 
  private:
