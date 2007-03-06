@@ -13,6 +13,8 @@
 
 #include "vtkMatrix4x4.h"
 #include "vtkDoubleArray.h"
+#include "teem/nrrd.h"
+
 #include "vtkTeemConfigure.h"
 
 class vtkImageData;
@@ -38,11 +40,11 @@ public:
   vtkSetStringMacro(FileName);
   vtkGetStringMacro(FileName);
 
-  vtkSetObjectMacro(DiffusionGradient,vtkDoubleArray);
-  vtkGetObjectMacro(DiffusionGradient,vtkDoubleArray);
+  vtkSetObjectMacro(DiffusionGradients,vtkDoubleArray);
+  vtkGetObjectMacro(DiffusionGradients,vtkDoubleArray);
   
-  vtkSetObjectMacro(B,vtkDoubleArray);
-  vtkGetObjectMacro(B,vtkDoubleArray);
+  vtkSetObjectMacro(BValues,vtkDoubleArray);
+  vtkGetObjectMacro(BValues,vtkDoubleArray);
   
   vtkSetObjectMacro(IJKToRASMatrix,vtkMatrix4x4);
   vtkGetObjectMacro(IJKToRASMatrix,vtkMatrix4x4);
@@ -63,14 +65,16 @@ protected:
   vtkNRRDWriter();
   ~vtkNRRDWriter();
 
+  virtual int FillInputPortInformation(int port, vtkInformation *info);
+
   // Description:
   // Write method. It is called by vtkWriter::Write();
   void WriteData();
 
   char *FileName;
   
-  vtkDoubleArray *B;
-  vtkDoubleArray *DiffusionGradient;
+  vtkDoubleArray *BValues;
+  vtkDoubleArray *DiffusionGradients;
 
   vtkMatrix4x4 *IJKToRASMatrix;
   vtkMatrix4x4 *MeasurementFrameMatrix;
@@ -82,8 +86,9 @@ protected:
 private:
   vtkNRRDWriter(const vtkNRRDWriter&);  // Not implemented.
   void operator=(const vtkNRRDWriter&);  // Not implemented.
-  
-  void vtkImageDataInfoToNrrdInfo(vtkImageData *in, int &nrrdKind, size_t &numComp, int &vtkType, void *buffer);
+  //BTX
+  void vtkImageDataInfoToNrrdInfo(vtkImageData *in, int &nrrdKind, size_t &numComp, int &vtkType, void **buffer);
+  //ETX
   int VTKToNrrdPixelType( const int vtkPixelType );
 };
 

@@ -14,8 +14,10 @@ INCLUDE(${VTK_USE_FILE})
 
 SET(vtkTeem_SRCS
   vtkNRRDReader.cxx
-  vtkTensorMathematics.cxx
+  vtkNRRDWriter.cxx
+  vtkDiffusionTensorMathematics.cxx
   vtkTeemEstimateDiffusionTensor.cxx
+  vtkDiffusionTensorGlyph.cxx
 )
 
 # Abstract/pure virtual classes
@@ -67,6 +69,7 @@ TARGET_LINK_LIBRARIES(vtkTeem
   vtkFiltering
   vtkImaging
   vtkIOTCL
+  vtkGraphicsTCL
   air
   biff
   nrrd
