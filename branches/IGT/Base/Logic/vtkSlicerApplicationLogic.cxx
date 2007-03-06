@@ -213,7 +213,7 @@ void vtkSlicerApplicationLogic::ProcessMRMLEvents(vtkObject * /*caller*/,
   if (this->MRMLScene->GetNodeByID(this->SelectionNode->GetID()) == NULL)
     {
     this->SetMRMLScene(this->GetMRMLScene());
-    this->MRMLScene->AddNode(this->SelectionNode);
+    this->SetSelectionNode ( vtkMRMLSelectionNode::SafeDownCast(this->MRMLScene->AddNode(this->SelectionNode)) );
     this->SetAndObserveMRMLScene(this->GetMRMLScene());
     }
 
@@ -236,7 +236,7 @@ void vtkSlicerApplicationLogic::ProcessMRMLEvents(vtkObject * /*caller*/,
   if (this->MRMLScene->GetNodeByID(this->InteractionNode->GetID()) == NULL)
     {
     this->SetMRMLScene(this->GetMRMLScene());
-    this->MRMLScene->AddNode(this->InteractionNode);
+    this->SetInteractionNode ( vtkMRMLInteractionNode::SafeDownCast(this->MRMLScene->AddNode(this->InteractionNode)) );
     this->SetAndObserveMRMLScene(this->GetMRMLScene());
     }
   
@@ -288,12 +288,12 @@ vtkSlicerSliceLogic *vtkSlicerApplicationLogic::CreateSlice ()
 
     // Create the mrml nodes to store state
     vtkMRMLSliceNode *sliceNode = vtkMRMLSliceNode::New();
-    this->MRMLScene->AddNode(sliceNode);
+    vtkMRMLSliceNode *sliceNode1 = vtkMRMLSliceNode::SafeDownCast(this->MRMLScene->AddNode(sliceNode));
 
     // Configure the logic
     sliceLogic->SetBackgroundLayer(bg);
     sliceLogic->SetForegroundLayer(fg);
-    sliceLogic->SetSliceNode(sliceNode);
+    sliceLogic->SetSliceNode(sliceNode1);
 
     // Update internal state
     this->Slices->AddItem(sliceLogic);
@@ -493,8 +493,7 @@ bool vtkSlicerApplicationLogic::RequestReadData( const char *refNode, const char
 {
   bool active;
 
-  //std::cout << "Requesting " << filename << " be read into node " <<
-  // refNode << std::endl;
+//  std::cout << "Requesting " << filename << " be read into node " << refNode << ", display data = " << (displayData?"true":"false") <<  std::endl;
 
   // only request to read a file if the ReadData queue is up
   this->ReadDataQueueActiveLock->Lock();
@@ -574,7 +573,7 @@ void vtkSlicerApplicationLogic::ProcessReadData()
 {
   bool active = true;
   ReadDataRequest req;
-
+  
   // Check to see if we should be shutting down
   this->ReadDataQueueActiveLock->Lock();
   active = this->ReadDataQueueActive;
@@ -687,34 +686,40 @@ void vtkSlicerApplicationLogic::ProcessReadData()
       // display node?
       if (disp)
         {
+//        std::cout << " vtkSlicerApplicationLogic::ProcessReadData\n";
         disp->SetScene( this->MRMLScene );
-        this->MRMLScene->AddNode( disp );
+        disp = this->MRMLScene->AddNode( disp );
+        int isLabelMap = 0;
         if (svnd)
           {
-          vtkMRMLVolumeDisplayNode *displayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(disp);
-          if (displayNode)
+          isLabelMap = svnd->GetLabelMap();
+          }
+        vtkMRMLVolumeDisplayNode *displayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(disp);
+        if (displayNode)
+          {
+          //  int isLabelMap = svnd->GetLabelMap();            
+          //std::cout << "vtkSlicerApplicationLogic: setting the volume display node default color, islabelmap = " << isLabelMap << "\n";
+          //displayNode->SetDefaultColorMap(isLabelMap);
+          //std::cout << "\tdisp color node id = " <<
+          //(displayNode->GetColorNodeID() == NULL ? "NULL" :
+          //displayNode->GetColorNodeID()) << endl;
+          vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
+          //vtkSlicerColorGUI::SafeDownCast(vtkSlicerApplication::SafeDownCast(this->GetApplication())->GetModuleGUIByName("Color"))->GetLogic();
+          if (colorLogic)
             {
-            int isLabelMap = svnd->GetLabelMap();            
-            //std::cout << "vtkSlicerApplicationLogic: setting the volume display node default color, islabelmap = " << isLabelMap << "\n";
-            //displayNode->SetDefaultColorMap(isLabelMap);
-            //std::cout << "\tdisp color node id = " <<
-            //(displayNode->GetColorNodeID() == NULL ? "NULL" :
-            //displayNode->GetColorNodeID()) << endl;
-            vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
-            //vtkSlicerColorGUI::SafeDownCast(vtkSlicerApplication::SafeDownCast(this->GetApplication())->GetModuleGUIByName("Color"))->GetLogic();
-            if (colorLogic)
+            if (isLabelMap)
               {
-              if (isLabelMap)
-                {
-                displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultLabelMapColorNodeID());
-                }
-              else
-                {
-                displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
-                }
-              colorLogic->Delete();
+              displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultLabelMapColorNodeID());
               }
+            else
+              {
+              displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
+              }
+            colorLogic->Delete();
             }
+          } 
+        if (svnd)
+          {
           svnd->SetAndObserveDisplayNodeID( disp->GetID() );
           }
         else if (vvnd) vvnd->SetAndObserveDisplayNodeID( disp->GetID() );
