@@ -750,6 +750,49 @@ void vtkCommandLineModuleGUI::ProcessMRMLEvents ( vtkObject *caller,
 
 
 
+//---------------------------------------------------------------------------
+void vtkCommandLineModuleGUI::CreateModuleEventBindings ( )
+{
+}
+
+//---------------------------------------------------------------------------
+void vtkCommandLineModuleGUI::ReleaseModuleEventBindings ( )
+{
+  
+}
+
+
+//---------------------------------------------------------------------------
+void vtkCommandLineModuleGUI::Enter ( )
+{
+  if ( this->Built == false )
+    {
+    this->BuildGUI();
+    this->Built = true;
+    this->AddGUIObservers();
+    }
+    this->CreateModuleEventBindings();
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkCommandLineModuleGUI::Exit ( )
+{
+  this->ReleaseModuleEventBindings();
+}
+
+
+//---------------------------------------------------------------------------
+void vtkCommandLineModuleGUI::TearDownGUI ( )
+{
+  this->Exit();
+  if ( this->Built )
+    {
+    this->RemoveGUIObservers();
+    }
+}
+
 
 //---------------------------------------------------------------------------
 void vtkCommandLineModuleGUI::BuildGUI ( ) 
@@ -780,8 +823,8 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
   defaultExtensionMap[".spr"] = "STD/SPR (Stimulate)";
 
   defaultExtensionMap[".vtk"] = "VTK (Legacy)";
-  defaultExtensionMap[".vtkp"] = "VTK PolyData";
-  defaultExtensionMap[".vtki"] = "VTK ImageData";
+  defaultExtensionMap[".vtp"] = "VTK PolyData";
+  defaultExtensionMap[".vti"] = "VTK ImageData";
   defaultExtensionMap[".stl"] = "Stereolithography";
 
   defaultExtensionMap[".csv"] = "Comma Separated Value";
