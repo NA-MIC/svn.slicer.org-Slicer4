@@ -13,6 +13,9 @@
 #include "vtkKWMenuButton.h"
 #include "vtkKWMessageDialog.h"
 
+// for scalars
+#include "vtkPointData.h"
+
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerModelsGUI );
 vtkCxxRevisionMacro ( vtkSlicerModelsGUI, "$Revision: 1.0 $");
@@ -32,7 +35,10 @@ vtkSlicerModelsGUI::vtkSlicerModelsGUI ( )
     this->ModelDisplayWidget = NULL;
     this->ClipModelsWidget = NULL;
     this->LoadScalarsButton = NULL;
-
+    NACLabel = NULL;
+    NAMICLabel =NULL;
+    NCIGTLabel = NULL;
+    BIRNLabel = NULL;
 }
 
 
@@ -78,6 +84,31 @@ vtkSlicerModelsGUI::~vtkSlicerModelsGUI ( )
     this->LoadScalarsButton->SetParent(NULL);
     this->LoadScalarsButton->Delete ( );
     }
+  if ( this->NACLabel )
+    {
+    this->NACLabel->SetParent ( NULL );
+    this->NACLabel->Delete();
+    this->NACLabel = NULL;
+    }
+  if ( this->NAMICLabel )
+    {
+    this->NAMICLabel->SetParent ( NULL );
+    this->NAMICLabel->Delete();
+    this->NAMICLabel = NULL;
+    }
+  if ( this->NCIGTLabel )
+    {
+    this->NCIGTLabel->SetParent ( NULL );
+    this->NCIGTLabel->Delete();
+    this->NCIGTLabel = NULL;
+    }
+  if ( this->BIRNLabel )
+    {
+    this->BIRNLabel->SetParent ( NULL );
+    this->BIRNLabel->Delete();
+    this->BIRNLabel = NULL;
+    }
+  this->Built = false;
 }
 
 
@@ -111,7 +142,7 @@ void vtkSlicerModelsGUI::RemoveGUIObservers ( )
     }
   if (this->LoadScalarsButton)
     {
-    this->LoadScalarsButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->LoadScalarsButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 }
 
@@ -122,7 +153,7 @@ void vtkSlicerModelsGUI::AddGUIObservers ( )
   this->LoadModelButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
   this->LoadModelDirectoryButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
   this->SaveModelButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
-  this->LoadScalarsButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+  this->LoadScalarsButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
 }
 
 
@@ -211,34 +242,40 @@ void vtkSlicerModelsGUI::ProcessGUIEvents ( vtkObject *caller,
        }
        return;
     } 
-  else if (filebrowse == this->LoadScalarsButton  && event == vtkKWPushButton::InvokedEvent )
+  else if (filebrowse == this->LoadScalarsButton->GetWidget()  && event == vtkKWPushButton::InvokedEvent )
     {
     // If a scalar file has been selected for loading...
     char *fileName = filebrowse->GetFileName();
     if ( fileName ) 
       {
-      // get the model
-      vtkMRMLModelNode *modelNode = vtkMRMLModelNode::SafeDownCast(this->ModelSelectorWidget->GetSelected());
-
-      // load the scalars
-      vtkSlicerModelsLogic* modelLogic = this->Logic;
-      if (!modelLogic->AddScalar(fileName, modelNode))
+      // get the model from the display widget rather than this gui's save
+      // model selector
+      vtkMRMLModelNode *modelNode = vtkMRMLModelNode::SafeDownCast(this->ModelDisplayWidget->GetModelSelectorWidget()->GetSelected());
+      if (modelNode != NULL)
         {
-        vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
-        dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
-        dialog->SetStyleToMessage();
-        std::string msg = std::string("Unable to read scalars file ") + std::string(fileName);
-        dialog->SetText(msg.c_str());
-        dialog->Create ( );
-        dialog->Invoke();
-        dialog->Delete();
-
-        vtkErrorMacro("Error loading scalar overlay file " << fileName);
-        this->LoadScalarsButton->SetText ("Load FreeSurfer Overlay");
-        }
-      else
-        {
-        filebrowse->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
+        vtkDebugMacro("vtkSlicerModelsGUI: loading scalar for model " << modelNode->GetName());
+        // load the scalars
+        vtkSlicerModelsLogic* modelLogic = this->Logic;
+        if (!modelLogic->AddScalar(fileName, modelNode))
+          {
+          vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+          dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+          dialog->SetStyleToMessage();
+          std::string msg = std::string("Unable to read scalars file ") + std::string(fileName);
+          dialog->SetText(msg.c_str());
+          dialog->Create ( );
+          dialog->Invoke();
+          dialog->Delete();
+          
+          vtkErrorMacro("Error loading scalar overlay file " << fileName);
+          this->LoadScalarsButton->GetWidget()->SetText ("None");
+          }
+        else
+          {
+          filebrowse->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
+          // set the active scalar in the display node to this one
+          // - is done in the model storage node         
+          }
         }
       }
     return;
@@ -261,18 +298,47 @@ void vtkSlicerModelsGUI::ProcessMRMLEvents ( vtkObject *caller,
 
 
 //---------------------------------------------------------------------------
+void vtkSlicerModelsGUI::CreateModuleEventBindings ( )
+{
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerModelsGUI::ReleaseModuleEventBindings ( )
+{
+  
+}
+
+
+//---------------------------------------------------------------------------
 void vtkSlicerModelsGUI::Enter ( )
 {
-    // Fill in
+  if ( this->Built == false )
+    {
+    this->BuildGUI();
+    this->Built = true;
+    this->AddGUIObservers();
+    }
+    this->CreateModuleEventBindings();
 }
+
+
 
 //---------------------------------------------------------------------------
 void vtkSlicerModelsGUI::Exit ( )
 {
-    // Fill in
+  this->ReleaseModuleEventBindings();
 }
 
 
+//---------------------------------------------------------------------------
+void vtkSlicerModelsGUI::TearDownGUI ( )
+{
+  this->Exit();
+  if ( this->Built )
+    {
+    this->RemoveGUIObservers();
+    }
+}
 
 
 //---------------------------------------------------------------------------
@@ -295,6 +361,30 @@ void vtkSlicerModelsGUI::BuildGUI ( )
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Models" );
     this->BuildHelpAndAboutFrame ( page, help, about );
 
+    this->NACLabel = vtkKWLabel::New();
+    this->NACLabel->SetParent ( this->GetLogoFrame() );
+    this->NACLabel->Create();
+    this->NACLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNACLogo() );
+
+    this->NAMICLabel = vtkKWLabel::New();
+    this->NAMICLabel->SetParent ( this->GetLogoFrame() );
+    this->NAMICLabel->Create();
+    this->NAMICLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNAMICLogo() );    
+
+    this->NCIGTLabel = vtkKWLabel::New();
+    this->NCIGTLabel->SetParent ( this->GetLogoFrame() );
+    this->NCIGTLabel->Create();
+    this->NCIGTLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNCIGTLogo() );
+    
+    this->BIRNLabel = vtkKWLabel::New();
+    this->BIRNLabel->SetParent ( this->GetLogoFrame() );
+    this->BIRNLabel->Create();
+    this->BIRNLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetBIRNLogo() );
+    app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky w", this->NAMICLabel->GetWidgetName());
+    app->Script ("grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w",  this->NACLabel->GetWidgetName());
+    app->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky w",  this->BIRNLabel->GetWidgetName());
+    app->Script ( "grid %s -row 1 -column 1 -padx 2 -pady 2 -sticky w",  this->NCIGTLabel->GetWidgetName());                  
+
     // ---
     // LOAD FRAME            
     vtkSlicerModuleCollapsibleFrame *modLoadFrame = vtkSlicerModuleCollapsibleFrame::New ( );
@@ -310,6 +400,7 @@ void vtkSlicerModelsGUI::BuildGUI ( )
     this->LoadModelButton->SetParent ( modLoadFrame->GetFrame() );
     this->LoadModelButton->Create ( );
     this->LoadModelButton->SetText ("Load Model");
+    this->LoadModelButton->GetLoadSaveDialog()->SetTitle("Open Model");
     this->LoadModelButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
     this->LoadModelButton->GetLoadSaveDialog()->SetFileTypes(
                                                              "{ {model} {*.*} }");
@@ -335,12 +426,14 @@ void vtkSlicerModelsGUI::BuildGUI ( )
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   modDisplayFrame->GetWidgetName(), this->UIPanel->GetPageWidget("Models")->GetWidgetName());
 
-    this->LoadScalarsButton = vtkKWLoadSaveButton::New();
+    this->LoadScalarsButton = vtkKWLoadSaveButtonWithLabel::New();
     this->LoadScalarsButton->SetParent ( modDisplayFrame->GetFrame() );
     this->LoadScalarsButton->Create ( );
-    this->LoadScalarsButton->SetText ("Load FreeSurfer Overlay");
-    this->LoadScalarsButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
-    this->LoadScalarsButton->GetLoadSaveDialog()->SetFileTypes("{ {Thickness} {*.thickness} } { {Curve} {*.curv} } { {Average Curve} {*.avg_curv} } { {Sulc} {*.sulc} } { {Area} {*.area} } { {W} {*.w} }");
+    this->LoadScalarsButton->SetLabelText ("Load FreeSurfer Overlay: ");
+    this->LoadScalarsButton->GetWidget()->SetText ("None");
+    this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open FreeSurfer Overlay");
+    this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
+    this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {Thickness} {*.thickness} } { {Curve} {*.curv} } { {Average Curve} {*.avg_curv} } { {Sulc} {*.sulc} } { {Area} {*.area} } { {W} {*.w} } { {Parcellation Annotation} {*.annot} } { {All} {*.*} }");
     app->Script("pack %s -side top -anchor nw -padx 2 -pady 4", 
                 this->LoadScalarsButton->GetWidgetName());
 
