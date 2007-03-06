@@ -42,14 +42,18 @@
 
 #include "vtkMRML.h"
 #include "vtkMRMLCameraNode.h"
+#include "vtkSlicerApplicationLogic.h"
 
-class vtkSlicerApplication;
+class vtkSlicerViewerWidget;
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewerInteractorStyle : public vtkInteractorStyle
 {
 public:
   static vtkSlicerViewerInteractorStyle *New();
   vtkTypeRevisionMacro(vtkSlicerViewerInteractorStyle,vtkInteractorStyle);
   void PrintSelf(ostream& os, vtkIndent indent);
+
+  vtkGetObjectMacro (ApplicationLogic, vtkSlicerApplicationLogic );
+  vtkSetObjectMacro (ApplicationLogic, vtkSlicerApplicationLogic );
 
   // Description:
   // Event bindings controlling the effects of pressing mouse buttons
@@ -72,9 +76,8 @@ public:
   virtual void Spin();
   virtual void Pan();
   virtual void Dolly();
+  virtual void Dolly(double factor);
 
-  virtual void AddFiducial();
-  
   virtual void OnEnter();
   virtual void OnLeave();
 
@@ -85,25 +88,34 @@ public:
   vtkSetObjectMacro ( CameraNode, vtkMRMLCameraNode );
 
   // Description:
-  // Get/Set the main slicer application, so can access the fiducials module
-  vtkGetObjectMacro (Application, vtkSlicerApplication );
-  virtual void SetApplication ( vtkSlicerApplication *app );
-  
+  // Get/Set the main slicer viewer widget, for picking
+  vtkGetObjectMacro(ViewerWidget, vtkSlicerViewerWidget);
+  virtual void SetViewerWidget(vtkSlicerViewerWidget *viewerWidget);
+
+  // Description:
+  // Events
+  //BTX
+  enum
+  {
+      PickEvent,
+      PlaceEvent,
+      SelectRegionEvent,
+  };
+  //ETX
+    
 protected:
   vtkSlicerViewerInteractorStyle();
   ~vtkSlicerViewerInteractorStyle();
 
   vtkMRMLCameraNode *CameraNode;
+  vtkSlicerApplicationLogic *ApplicationLogic;
 
   double MotionFactor;
 
-  virtual void Dolly(double factor);
-
-
   // Description:
-  // A pointer to the application so can get the fiducial module
-  vtkSlicerApplication *Application;
-
+  // A pointer back to the viewer widget, useful for picking
+  vtkSlicerViewerWidget *ViewerWidget;
+  
 private:
   vtkSlicerViewerInteractorStyle(const vtkSlicerViewerInteractorStyle&);  // Not implemented.
   void operator=(const vtkSlicerViewerInteractorStyle&);  // Not implemented.
