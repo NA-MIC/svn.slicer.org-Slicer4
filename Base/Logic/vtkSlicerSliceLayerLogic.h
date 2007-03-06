@@ -42,6 +42,7 @@
 #include "vtkMRMLSliceNode.h"
 
 #include "vtkImageReslice.h"
+#include "vtkImageSlice.h"
 #include "vtkImageMapToColors.h"
 
 #include "vtkMRMLScalarVolumeNode.h"
@@ -57,7 +58,7 @@
 #include "vtkImageCast.h"
 #include "vtkLookupTable.h"
 
-class vtkTensorMathematics;
+class vtkDiffusionTensorMathematics;
 
 class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLayerLogic : public vtkSlicerLogic 
 {
@@ -85,8 +86,15 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLayerLogic : public vtkSlicerLo
   void SetSliceNode (vtkMRMLSliceNode *SliceNode);
 
   // Description:
-  // The image reslice being used
+  // The image reslice or slice being used
+  vtkGetObjectMacro (Slice, vtkImageSlice);
   vtkGetObjectMacro (Reslice, vtkImageReslice);
+
+  // Description:
+  // Select the vtkImageReslice or slicer's own vtkImageSlice
+  vtkGetMacro (UseReslice, int);
+  vtkSetMacro (UseReslice, int);
+  vtkBooleanMacro(UseReslice, int);
 
   // Description:
   // The image map that applies the window/level
@@ -195,6 +203,7 @@ protected:
   vtkImageCast *ResliceAlphaCast;
   vtkImageLogic *AlphaLogic;
   vtkImageReslice *Reslice;
+  vtkImageSlice *Slice;
   vtkImageMapToColors *MapToColors;
   vtkImageThreshold *Threshold;
   vtkImageAppendComponents *AppendComponents;
@@ -205,10 +214,12 @@ protected:
   vtkImageExtractComponents *DWIExtractComponent;
 
   vtkImageReslice *DTIReslice;
-  vtkTensorMathematics *DTIMathematics;
+  vtkDiffusionTensorMathematics *DTIMathematics;
 
   // TODO: make this a vtkAbstractTransform for non-linear
   vtkTransform *XYToIJKTransform;
+
+  int UseReslice;
 
   // Description:
   // Generic pipeline for scalar slice logic
