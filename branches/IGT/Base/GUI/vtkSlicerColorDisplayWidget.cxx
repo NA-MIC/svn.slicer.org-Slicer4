@@ -19,6 +19,7 @@
 
 #include "vtkMRMLColorNode.h"
 #include "vtkMRMLColorTableNode.h"
+#include "vtkMRMLFreeSurferProceduralColorNode.h"
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerColorDisplayWidget );
@@ -168,7 +169,7 @@ void vtkSlicerColorDisplayWidget::SetColorNodeID (char * id)
       }
     else
       {
-        std::cerr << "ERROR: unable to get the mrml color node to observe!\n";
+      vtkErrorMacro ("ERROR: unable to get the mrml color node to observe!\n");
       }
 }
 
@@ -218,7 +219,7 @@ void vtkSlicerColorDisplayWidget::ProcessWidgetEvents ( vtkObject *caller,
 
   if (activeColorNode == NULL)
     {
-    std::cerr << "ERROR: No Color!\n";
+    vtkErrorMacro("ERROR: No Color!\n");
     return;
     }
 
@@ -333,15 +334,17 @@ void vtkSlicerColorDisplayWidget::UpdateWidget()
       this->ColorNodeTypeLabel->SetText(newLabel.c_str());
       }
     
-    int numColours;
+    int numColours = 0;
     if (vtkMRMLColorTableNode::SafeDownCast(colorNode) != NULL)
       {
       numColours = vtkMRMLColorTableNode::SafeDownCast(colorNode)->GetNumberOfColors();
       }
-    else
+    else if (vtkMRMLFreeSurferProceduralColorNode::SafeDownCast(colorNode) != NULL &&
+             vtkMRMLFreeSurferProceduralColorNode::SafeDownCast(colorNode)->GetLookupTable() != NULL)
       {
-      numColours = 0;
+      numColours = vtkMRMLFreeSurferProceduralColorNode::SafeDownCast(colorNode)->GetLookupTable()->GetNumberOfColors();
       }
+
     // set the number of colours
     std::stringstream ss;
     ss << "Number of Colors: ";
@@ -392,7 +395,7 @@ void vtkSlicerColorDisplayWidget::UpdateWidget()
         }
       if (colour == NULL)
         {
-        std::cerr << "SetGUIFromNode: at " << row << "th colour, got a null pointer" << endl;
+        vtkErrorMacro ("SetGUIFromNode: at " << row << "th colour, got a null pointer" << endl);
         }
       // get the colour label
       name = colorNode->GetColorName(row);
@@ -596,7 +599,7 @@ void vtkSlicerColorDisplayWidget::UpdateElement(int row, int col, char * str)
     if (activeColorNode == NULL)
       {
       // 
-      std::cerr << "UpdateElement: ERROR: No colournode, add one first!\n";
+      vtkErrorMacro ("UpdateElement: ERROR: No colournode, add one first!\n");
       return;
       }
     // the entry in the colour table
@@ -624,7 +627,7 @@ void vtkSlicerColorDisplayWidget::UpdateElement(int row, int col, char * str)
     }
   else
     {
-    std::cerr << "Invalid row " << row << " or column " << col <<  ", valid columns are 0-" << this->NumberOfColumns << "\n";
+    vtkErrorMacro ("Invalid row " << row << " or column " << col <<  ", valid columns are 0-" << this->NumberOfColumns << "\n");
     }
 }
 
