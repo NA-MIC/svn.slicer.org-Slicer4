@@ -160,7 +160,7 @@ proc QueryAtlasAddModel {} {
     $::slicer3::MRMLScene AddNode $modelStorageNode
     $::slicer3::MRMLScene AddNode $modelDisplayNode
 
-    $modelNode SetStorageNodeID [$modelStorageNode GetID]
+    $modelNode SetReferenceStorageNodeID [$modelStorageNode GetID]
     $modelNode SetAndObserveDisplayNodeID [$modelDisplayNode GetID]
 
     $::slicer3::MRMLScene AddNode $modelNode
@@ -230,13 +230,12 @@ proc QueryAtlasAddVolumes {} {
 
 
   set fileName $::QA(directory)/mri/aparc+aseg.mgz
-
   set volumeNode [$volumesLogic AddArchetypeVolume $fileName $centered 1 aparc+aseg]
   set ::QA(label,volumeNodeID) [$volumeNode GetID]
 
   set volumeDisplayNode [$volumeNode GetDisplayNode]
 
-  set colorNode [vtkMRMLColorNode New]
+  set colorNode [vtkMRMLFreeSurferProceduralColorNode New]
   $colorNode SetFileName $::SLICER_BUILD/../Slicer3/Libs/FreeSurfer/Testing/FreeSurferColorLUT.txt
   $colorNode ReadFile
   $::slicer3::MRMLScene AddNode $colorNode
@@ -248,9 +247,9 @@ proc QueryAtlasAddVolumes {} {
   set nNodes [$::slicer3::MRMLScene GetNumberOfNodesByClass "vtkMRMLSliceCompositeNode"]
   for { set i 0 } { $i < $nNodes } { incr i } {
     set cnode [$::slicer3::MRMLScene GetNthNodeByClass $i "vtkMRMLSliceCompositeNode"]
-    $cnode SetBackgroundVolumeID $::QA(brain,volumeNodeID)
-    $cnode SetForegroundVolumeID $::QA(functional,volumeNodeID)
-    $cnode SetLabelVolumeID $::QA(label,volumeNodeID)
+    $cnode SetReferenceBackgroundVolumeID $::QA(brain,volumeNodeID)
+    $cnode SetReferenceForegroundVolumeID $::QA(functional,volumeNodeID)
+    $cnode SetReferenceLabelVolumeID $::QA(label,volumeNodeID)
     $cnode SetForegroundOpacity 1
     $cnode SetLabelOpacity 0.5
   }
@@ -277,6 +276,8 @@ proc QueryAtlasAddAnnotations {} {
 
     set polydata [$modelNode GetPolyData]
     set scalaridx [[$polydata GetPointData] SetActiveScalars "labels"]
+    [$modelNode GetDisplayNode] SetActiveScalarName "labels"
+    [$modelNode GetDisplayNode] SetScalarVisibility 1
 
     if { $scalaridx == "-1" } {
         set scalars [vtkIntArray New]
@@ -288,12 +289,16 @@ proc QueryAtlasAddAnnotations {} {
     set scalaridx [[$polydata GetPointData] SetActiveScalars "labels"]
     set scalars [[$polydata GetPointData] GetArray $scalaridx]
 
-    set lut [vtkLookupTable New]
+    set lutNode [vtkMRMLColorTableNode New]
+    $lutNode SetTypeToUser
+    $::slicer3::MRMLScene AddNode $lutNode
+    [$modelNode GetDisplayNode] SetAndObserveColorNodeID [$lutNode GetID]
+
     set fssar [vtkFSSurfaceAnnotationReader New]
 
     $fssar SetFileName $fileName
     $fssar SetOutput $scalars
-    $fssar SetColorTableOutput $lut
+    $fssar SetColorTableOutput [$lutNode GetLookupTable]
     # try reading an internal colour table first
     $fssar UseExternalColorTableFileOff
 
@@ -303,7 +308,7 @@ proc QueryAtlasAddAnnotations {} {
     }
 
     # set the look up table
-    $mapper SetLookupTable $lut
+    $mapper SetLookupTable [$lutNode GetLookupTable]
     
     array unset _labels
     array set _labels [$fssar GetColorTableNames]
@@ -318,7 +323,9 @@ proc QueryAtlasAddAnnotations {} {
     $mapper SetScalarRange  [lindex $entries 0] [lindex $entries end]
     $mapper SetScalarVisibility 1
 
-    $lut Delete
+    [$modelNode GetDisplayNode] SetScalarRange [lindex $entries 0] [lindex $entries end]
+
+    $lutNode Delete
     $fssar Delete
     [$viewer GetMainViewer] Reset
   }
