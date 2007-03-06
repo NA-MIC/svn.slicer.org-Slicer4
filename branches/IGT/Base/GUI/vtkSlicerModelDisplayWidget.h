@@ -31,6 +31,8 @@
 #include "vtkKWScaleWithLabel.h"
 #include "vtkKWSurfaceMaterialPropertyWidget.h"
 #include "vtkKWChangeColorButton.h"
+#include "vtkKWMenuButton.h"
+#include "vtkKWMenuButtonWithLabel.h"
 
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLModelDisplayNode.h"
@@ -55,6 +57,11 @@ public:
   // Getting setting and observing MRML ModelDisplayNodeID.
   vtkGetStringMacro ( ModelDisplayNodeID );
   vtkSetStringMacro ( ModelDisplayNodeID );
+
+  // Description:
+  // Get the currently displayed model node (called from vtkSlicerModelsGUI
+  // for loading scalars)
+  vtkGetObjectMacro ( ModelSelectorWidget, vtkSlicerNodeSelectorWidget );
   
   // Description:
   // alternative method to propagate events generated in GUI to logic / mrml
@@ -93,12 +100,17 @@ public:
   vtkSlicerNodeSelectorWidget* ModelSelectorWidget;
   vtkKWCheckButtonWithLabel *VisibilityButton;
   vtkKWCheckButtonWithLabel *ScalarVisibilityButton;
+  vtkKWMenuButtonWithLabel *ScalarMenu;
   vtkSlicerNodeSelectorWidget* ColorSelectorWidget;
   vtkKWCheckButtonWithLabel *ClippingButton;
   vtkKWScaleWithLabel  *OpacityScale;
   vtkKWSurfaceMaterialPropertyWidget *SurfaceMaterialPropertyWidget;
   vtkKWChangeColorButton *ChangeColorButton;
 
+  // Description:
+  // Set this when processing an event, since repopulate the scalars menu
+  int ProcessingMRMLEvent;
+  
 private:
 
 
