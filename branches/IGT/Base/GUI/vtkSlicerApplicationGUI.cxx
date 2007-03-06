@@ -57,6 +57,17 @@
 #include "vtkSlicerMRMLSaveDataWidget.h"
 #include "vtkSlicerApplicationSettingsInterface.h"
 #include "vtkSlicerSliceControllerWidget.h"
+#include "vtkSlicerViewerInteractorStyle.h"
+
+#ifdef USE_PYTHON
+#ifdef _DEBUG
+#undef _DEBUG
+#include <Python.h>
+#define _DEBUG
+#else
+#include <Python.h>
+#endif
+#endif
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerApplicationGUI);
@@ -218,6 +229,7 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
       }
 
     this->SetApplication(NULL);
+    this->SetApplicationLogic ( NULL );
 }
 
 //---------------------------------------------------------------------------
@@ -226,6 +238,7 @@ void vtkSlicerApplicationGUI:: DeleteComponentGUIs()
 #ifndef VIEWCONTROL_DEBUG
     if ( this->ViewControlGUI )
       {
+//      this->ViewControlGUI->TearDownGUI ( );
       this->ViewControlGUI->RemoveSliceGUIObservers();
       this->ViewControlGUI->SetAndObserveMRMLScene ( NULL );
       this->ViewControlGUI->SetApplicationGUI ( NULL);
@@ -244,7 +257,7 @@ void vtkSlicerApplicationGUI:: DeleteComponentGUIs()
 #ifndef SLICESCONTROL_DEBUG
     if ( this->SlicesControlGUI )
       {
-      this->SlicesControlGUI->UnbuildGUI ( );
+      this->SlicesControlGUI->TearDownGUI ( );
       this->SlicesControlGUI->Delete ( );
       this->SlicesControlGUI = NULL;
       }
@@ -643,6 +656,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             vtkSlicerToolbarGUI *appTB = this->GetApplicationToolbar ( );
             appTB->SetApplicationGUI ( this );
             appTB->SetApplication ( app );
+            appTB->SetApplicationLogic ( this->GetApplicationLogic());
             appTB->BuildGUI ( );
 #endif
 
@@ -677,10 +691,6 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             // after SliceGUIs are created, the ViewControlGUI
             // needs to observe them to feed its magnifier
             // Zoom Widget.
-#ifndef VIEWCONTROL_DEBUG
-            vcGUI->UpdateFromMRML();
-            vcGUI->UpdateSliceGUIInteractorStyles();
-#endif
 
 #ifndef MENU_DEBUG
             // Construct menu bar and set up global key bindings
@@ -720,6 +730,13 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "Redo", NULL, "$::slicer3::MRMLScene Redo" );
             this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+Y");
             this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+#ifdef USE_PYTHON
+            i = this->MainSlicerWindow->GetWindowMenu()->AddCommand ( "Python console", NULL, "$::slicer3::ApplicationGUI PythonConsole" );
+            this->MainSlicerWindow->GetWindowMenu()->SetItemAccelerator ( i, "Ctrl+P");
+            this->MainSlicerWindow->GetWindowMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+#endif
+            // this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+Y");
+            // this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
             //
             // View Menu
@@ -759,6 +776,60 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
     }
 }
 
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::InitializeNavigationWidget (  )
+{
+
+  vtkSlicerViewControlGUI *vcGUI = this->GetViewControlGUI ( );
+  vcGUI->UpdateFromMRML();
+  vcGUI->UpdateSliceGUIInteractorStyles();
+  vcGUI->UpdateMainViewerInteractorStyles( );
+  vcGUI->InitializeNavigationWidgetCamera( );
+  vcGUI->UpdateNavigationWidgetViewActors ( );
+  vcGUI->ConfigureNavigationWidgetRender ( );
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::PythonConsole (  )
+{
+  
+#ifdef USE_PYTHON
+  PyObject* d = vtkSlicerApplication::GetInstance()->GetPythonDictionary();
+  if ( d == NULL )
+    {
+    vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", "Failed to startup python interpreter: dictionary null" );
+    return;
+    }
+    
+  PyObject* v = PyRun_StringFlags ( "import sys;\n"
+                                    "try:\n"
+                                    "  import Slicer;\n"
+                                    "  reload ( Slicer );\n"
+                                    "  Slicer.StartConsole();\n"
+                                    "except Exception, e:\n"
+                                    "  print 'Failed to import Slicer', e\n"
+                                    "sys.stdout.flush();\n"
+                                    "sys.stderr.flush();\n",
+                                    Py_file_input,
+                                    d,
+                                    d,
+                                    NULL);
+
+  if (v == NULL)
+    {
+    PyErr_Print();
+    vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", "Failed to startup python interpreter" );
+    return;
+    }
+  Py_DECREF ( v );
+  if (Py_FlushLine())
+    {
+    PyErr_Clear();
+    }
+#endif
+}
 
 
 //---------------------------------------------------------------------------
@@ -936,6 +1007,7 @@ void vtkSlicerApplicationGUI::DestroyMain3DViewer ( )
           {
             this->ViewerWidget->UnpackWidget ( );
           }
+        this->ViewerWidget->SetApplicationLogic ( NULL );
         this->ViewerWidget->SetParent ( NULL );
         this->ViewerWidget->Delete ( );
         this->ViewerWidget = NULL;
@@ -1079,10 +1151,13 @@ void vtkSlicerApplicationGUI::CreateMain3DViewer ( int arrangementType )
       this->ViewerWidget->Create();
       this->ViewerWidget->GetMainViewer()->SetRendererBackgroundColor (app->GetSlicerTheme()->GetSlicerColors()->ViewerBlue );
       this->ViewerWidget->UpdateFromMRML();
+      this->ViewerWidget->SetApplicationLogic ( this->GetApplicationLogic () );
       // add the fiducial list widget
       this->FiducialListWidget = vtkSlicerFiducialListWidget::New();
       this->FiducialListWidget->SetApplication( app );
       this->FiducialListWidget->SetMainViewer(this->ViewerWidget->GetMainViewer());
+      this->FiducialListWidget->SetViewerWidget(this->ViewerWidget);
+      this->FiducialListWidget->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(this->ViewerWidget->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
       this->FiducialListWidget->Create();
       this->FiducialListWidget->SetAndObserveMRMLSceneEvents (this->MRMLScene, events );
       events->Delete();
