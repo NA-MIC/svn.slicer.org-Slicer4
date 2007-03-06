@@ -18,7 +18,9 @@
 
 #include "vtkKWLoadSaveButton.h"
 #include "vtkKWLoadSaveDialog.h"
+#include "vtkKWLoadSaveButtonWithLabel.h"
 #include "vtkKWFrame.h"
+#include "vtkKWLabel.h"
 
 // Description:
 // This class implements Slicer's Models GUI
@@ -37,7 +39,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     // Description:
     // Get methods on class members ( no Set methods required. )
     vtkGetObjectMacro ( LoadModelButton, vtkKWLoadSaveButton );
-    vtkGetObjectMacro ( LoadScalarsButton, vtkKWLoadSaveButton);
+    vtkGetObjectMacro ( LoadScalarsButton, vtkKWLoadSaveButtonWithLabel);
     //vtkGetObjectMacro ( Logic, vtkSlicerModelsLogic);
     //vtkGetObjectMacro ( ModelNode, vtkMRMLModelNode );
     
@@ -67,6 +69,17 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     // This method builds the Models module GUI
     virtual void BuildGUI ( ) ;
 
+       // Descripgion:
+    // This method releases references and key-bindings,
+    // and optionally removes observers.
+    virtual void TearDownGUI ( );
+
+        // Description:
+    // Methods for adding module-specific key bindings and
+    // removing them.
+    virtual void CreateModuleEventBindings ( );
+    virtual void ReleaseModuleEventBindings ( );
+
     // Description:
     // Add/Remove observers on widgets in the GUI
     virtual void AddGUIObservers ( );
@@ -94,10 +107,14 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     
     // Widgets for the Models module
     vtkKWLoadSaveButton *LoadModelButton;
-    vtkKWLoadSaveButton *LoadScalarsButton;
+    vtkKWLoadSaveButtonWithLabel *LoadScalarsButton;
     vtkKWLoadSaveButton *LoadModelDirectoryButton;
     vtkKWLoadSaveButton *SaveModelButton;
     vtkSlicerNodeSelectorWidget* ModelSelectorWidget;
+    vtkKWLabel *NACLabel;
+    vtkKWLabel *NAMICLabel;
+    vtkKWLabel *NCIGTLabel;
+    vtkKWLabel *BIRNLabel;
 
     vtkSlicerModelDisplayWidget *ModelDisplayWidget;
 
