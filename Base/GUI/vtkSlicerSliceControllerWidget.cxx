@@ -257,7 +257,7 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
     this->ColorCodeButton->SetParent ( this );
     this->ColorCodeButton->Create ( );
     this->ColorCodeButton->SetBorderWidth (0 );
-    this->ColorCodeButton->SetImageToPredefinedIcon (vtkKWIcon::IconSpinDown );
+    this->ColorCodeButton->SetImageToPredefinedIcon (vtkKWIcon::IconSpinUp );
     this->ColorCodeButton->SetHeight (7 );
     this->ColorCodeButton->SetCommand (this, "Shrink");
     this->ColorCodeButton->SetBalloonHelpString ("Click to shrink/expand" );
@@ -1251,8 +1251,8 @@ void vtkSlicerSliceControllerWidget::ProcessMRMLEvents ( vtkObject *caller, unsi
   //
   // when the composite node changes, update the menus to match
   //
-  if ( caller == this->SliceCompositeNode )
-    {
+  //if ( caller == this->SliceCompositeNode )
+  //  {
     vtkMRMLNode *node = this->MRMLScene->GetNodeByID( this->SliceCompositeNode->GetForegroundVolumeID() );
     if ( node )
       {
@@ -1282,7 +1282,7 @@ void vtkSlicerSliceControllerWidget::ProcessMRMLEvents ( vtkObject *caller, unsi
       {
       this->LabelSelector->GetWidget()->GetWidget()->GetMenu()->SelectItem("None");
       }
-    }
+    //}
 
   //
   //  Trigger events if needed
@@ -1300,7 +1300,7 @@ void vtkSlicerSliceControllerWidget::Shrink()
     {
     if (this->ColorCodeButton)
       {
-      this->ColorCodeButton->SetImageToPredefinedIcon (vtkKWIcon::IconSpinUp );
+      this->ColorCodeButton->SetImageToPredefinedIcon (vtkKWIcon::IconSpinDown );
       this->ColorCodeButton->SetCommand (this, "Expand");
       }
     this->Script ("pack forget %s", 
@@ -1316,7 +1316,7 @@ void vtkSlicerSliceControllerWidget::Expand()
     {
     if (this->ColorCodeButton)
       {
-      this->ColorCodeButton->SetImageToPredefinedIcon (vtkKWIcon::IconSpinDown );
+      this->ColorCodeButton->SetImageToPredefinedIcon (vtkKWIcon::IconSpinUp );
       this->ColorCodeButton->SetCommand (this, "Shrink");
       }
     this->Script ("pack %s -side bottom -expand 1 -fill x", 
