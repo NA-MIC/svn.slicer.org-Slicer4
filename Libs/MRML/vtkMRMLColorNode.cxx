@@ -92,7 +92,6 @@ void vtkMRMLColorNode::ReadXMLAttributes(const char** atts)
 
   const char* attName;
   const char* attValue;
-  int numColours;
   while (*atts != NULL) 
     {
     attName = *(atts++);
@@ -141,8 +140,10 @@ void vtkMRMLColorNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLColorNode *node = (vtkMRMLColorNode *) anode;
 
-  this->SetName(node->Name);
-  this->SetType(node->Type);
+  if (node->Type != -1)
+    {
+    this->SetType(node->Type);
+    }
   this->SetFileName(node->FileName);
 }
 
@@ -156,7 +157,7 @@ void vtkMRMLColorNode::PrintSelf(ostream& os, vtkIndent indent)
       (this->Name ? this->Name : "(none)") << "\n";
   
 
-  os << indent << "Type: (" << this->GetType() << ")\n";
+  os << indent << "Type: (" << this->GetTypeAsString() << ")\n";
 
   if (this->Names.size() > 0)
     {

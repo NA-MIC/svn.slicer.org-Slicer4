@@ -86,6 +86,10 @@ public:
   void Clear(int removeSingletons);
 
   // Description:
+  // Reset all nodes to their constructor's state
+  void ResetNodes();
+  
+  // Description:
   // Create node with a given class
   vtkMRMLNode* CreateNodeByClass(const char* className);
 
@@ -113,11 +117,11 @@ public:
   
   // Description:
   // Add a node to the scene and send NewNode and SceneModified events.
-  void AddNode(vtkMRMLNode *n);
+  vtkMRMLNode* AddNode(vtkMRMLNode *n);
 
   // Description:
   // Add a node to the scene.
-  void AddNodeNoNotify(vtkMRMLNode *n);
+  vtkMRMLNode* AddNodeNoNotify(vtkMRMLNode *n);
   
   // Description:
   // Remove a path from the list.

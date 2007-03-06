@@ -80,6 +80,7 @@ vtkMRMLModelDisplayNode::vtkMRMLModelDisplayNode()
   this->ColorNodeID = NULL;
   this->ColorNode = NULL;
 
+  this->ActiveScalarName = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -133,7 +134,12 @@ void vtkMRMLModelDisplayNode::WriteXML(ostream& of, int nIndent)
 
   if (this->ColorNodeID != NULL) 
     {
-    of << indent << "colorNodeRef=\"" << this->ColorNodeID << "\" ";
+    of << indent << " colorNodeRef=\"" << this->ColorNodeID << "\"";
+    }
+
+  if (this->ActiveScalarName != NULL)
+    {
+    of << indent << " activeScalarName=\"" << this->ActiveScalarName << "\"";
     }
 
 }
@@ -275,6 +281,10 @@ void vtkMRMLModelDisplayNode::ReadXMLAttributes(const char** atts)
       this->SetColorNodeID(attValue);
       this->Scene->AddReferencedNodeID(this->ColorNodeID, this);
       }
+    else if (!strcmp(attName, "activeScalarName"))
+      {
+      this->SetActiveScalarName(attValue);
+      }
 
     }  
 }
@@ -307,7 +317,7 @@ void vtkMRMLModelDisplayNode::Copy(vtkMRMLNode *anode)
   this->SetClipping(node->Clipping);
   this->SetAndObserveTextureImageData(node->TextureImageData);
   this->SetColorNodeID(node->ColorNodeID);
-
+  this->SetActiveScalarName(node->ActiveScalarName);
 }
 
 //----------------------------------------------------------------------------
@@ -333,9 +343,12 @@ void vtkMRMLModelDisplayNode::PrintSelf(ostream& os, vtkIndent indent)
     {
     os << indent << ", " << this->ScalarRange[idx];
     }
+  os << endl;
   os << indent << "ColorNodeID: " <<
     (this->ColorNodeID ? this->ColorNodeID : "(none)") << "\n";
 
+  os << indent<< "ActiveScalarName: " <<
+    (this->ActiveScalarName ? this->ActiveScalarName : "(none)") << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -373,19 +386,6 @@ void vtkMRMLModelDisplayNode::UpdateReferences()
     }
 }
 
-/*
-//-----------------------------------------------------------
-void vtkMRMLModelDisplayNode::SetDefaultColorMap()
-{
-  // set up a default color node
-  //this->SetAndObserveColorNodeID("vtkMRMLFreeSurferColorNodeHeat");
-  this->SetAndObserveColorNodeID("vtkMRMLColorTableNodeOcean");
-  if (this->ColorNode == NULL)
-    {
-    vtkDebugMacro("vtkMRMLModelDisplayNode: FAILED setting default Heat color node, it's still null\n")
-    }
-}
-*/
 //----------------------------------------------------------------------------
 vtkMRMLColorNode* vtkMRMLModelDisplayNode::GetColorNode()
 {
@@ -433,4 +433,50 @@ void vtkMRMLModelDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
     this->InvokeEvent(vtkCommand::ModifiedEvent, NULL);
     }
   return;
+}
+
+//---------------------------------------------------------------------------
+void vtkMRMLModelDisplayNode::SetActiveScalarName(const char *scalarName)
+{
+  vtkDebugMacro(<< this->GetClassName() << " (" << this << "): setting ActiveScalarName to " << (scalarName ? scalarName : "(null)"));
+  
+  if (this->ActiveScalarName == NULL && scalarName == NULL)
+    {
+    return;
+    }
+  if (this->ActiveScalarName && scalarName && (!strcmp(this->ActiveScalarName,scalarName)))
+    {
+    return;
+    }
+  if (this->ActiveScalarName)
+    {
+    delete [] this->ActiveScalarName;
+    }
+
+  if (scalarName)
+    {
+    size_t n = strlen(scalarName) + 1;
+    char *cp1 = new char[n];
+    const char *cp2 = (scalarName);
+    this->ActiveScalarName = cp1;
+    do { *cp1++ = *cp2++; } while ( --n );
+    }
+  else
+    {
+    this->ActiveScalarName = NULL;
+    this->Modified();
+    return;
+    }
+
+  // is it an empty string?
+  if (strcmp(scalarName,"") == 0)
+    {
+    vtkDebugMacro("SetActiveScalarName: scalar name is an emtpy string, not setting the color node on display node " << this->GetID());
+    return;
+    }
+
+  // calls to SetAndObserveColorNodeID will set up the color table for
+  // displaying these scalars
+  
+  this->Modified();
 }

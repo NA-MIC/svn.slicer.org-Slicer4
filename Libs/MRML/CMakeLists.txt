@@ -38,9 +38,12 @@ SET(MRML_SRCS
         vtkObserverManager.cxx
         vtkMRMLColorNode.cxx
         vtkMRMLColorTableNode.cxx
+        vtkMRMLProceduralColorNode.cxx
+        vtkMRMLFreeSurferProceduralColorNode.cxx
         vtkMRMLCameraNode.cxx
         vtkMRMLViewNode.cxx
         vtkMRMLTensorVolumeNode.cxx
+        vtkMRMLDiffusionTensorDisplayPropertiesNode.cxx
         vtkMRMLDiffusionWeightedVolumeDisplayNode.cxx
         vtkMRMLDiffusionWeightedVolumeNode.cxx
         vtkMRMLDiffusionTensorVolumeNode.cxx
@@ -49,6 +52,8 @@ SET(MRML_SRCS
         vtkMRMLFiberBundleNode.cxx
         vtkMRMLFiberBundleDisplayNode.cxx
         vtkMRMLFiberBundleStorageNode.cxx
+        vtkMRMLHierarchyNode.cxx
+        vtkMRMLModelHierarchyNode.cxx
         # Note: when you add new node types, add
         # register code to the vtkMRMLScene constructor
 )
@@ -124,7 +129,7 @@ TARGET_LINK_LIBRARIES(MRML
   )
 
 IF( TEEM_FOUND )
-  SET_TARGET_PROPERTIES(MRML PROPERTIES DEFINE_SYMBOL USE_TEEM)
+  ADD_DEFINITIONS(-DUSE_TEEM)
   TARGET_LINK_LIBRARIES(MRML
     vtkTeem
   )
