@@ -50,6 +50,12 @@ vtkSlicerVolumesGUI::vtkSlicerVolumesGUI ( )
     this->CenterImageMenu = NULL;
     this->LabelMapCheckButton = NULL;
     this->ApplyButton=NULL;
+
+    NACLabel = NULL;
+    NAMICLabel = NULL;
+    NCIGTLabel = NULL;
+    BIRNLabel = NULL;
+
 }
 
 
@@ -129,6 +135,32 @@ vtkSlicerVolumesGUI::~vtkSlicerVolumesGUI ( )
     this->DisplayFrame = NULL;
     }
 
+  if ( this->NACLabel )
+    {
+    this->NACLabel->SetParent ( NULL );
+    this->NACLabel->Delete();
+    this->NACLabel = NULL;
+    }
+  if ( this->NAMICLabel )
+    {
+    this->NAMICLabel->SetParent ( NULL );
+    this->NAMICLabel->Delete();
+    this->NAMICLabel = NULL;
+    }
+  if ( this->NCIGTLabel )
+    {
+    this->NCIGTLabel->SetParent ( NULL );
+    this->NCIGTLabel->Delete();
+    this->NCIGTLabel = NULL;
+    }
+  if ( this->BIRNLabel )
+    {
+    this->BIRNLabel->SetParent ( NULL );
+    this->BIRNLabel->Delete();
+    this->BIRNLabel = NULL;
+    }
+
+  this->Built = false;
   this->SetModuleLogic ( NULL );
    vtkSetMRMLNodeMacro (this->VolumeNode, NULL );
 }
@@ -299,16 +331,49 @@ void vtkSlicerVolumesGUI::ProcessMRMLEvents ( vtkObject *caller,
 }
 
 
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerVolumesGUI::CreateModuleEventBindings ( )
+{
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerVolumesGUI::ReleaseModuleEventBindings ( )
+{
+  
+}
+
+
 //---------------------------------------------------------------------------
 void vtkSlicerVolumesGUI::Enter ( )
 {
-    // Fill in
+  if ( this->Built == false )
+    {
+    this->BuildGUI();
+    this->Built = true;
+    this->AddGUIObservers();
+    }
+    this->CreateModuleEventBindings();
 }
+
+
 
 //---------------------------------------------------------------------------
 void vtkSlicerVolumesGUI::Exit ( )
 {
-    // Fill in
+  this->ReleaseModuleEventBindings();
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerVolumesGUI::TearDownGUI ( )
+{
+  this->Exit();
+  if ( this->Built )
+    {
+    this->RemoveGUIObservers();
+    }
 }
 
 
@@ -331,6 +396,30 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
     const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details. ";
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Volumes" );
     this->BuildHelpAndAboutFrame ( page, help, about );
+
+    this->NACLabel = vtkKWLabel::New();
+    this->NACLabel->SetParent ( this->GetLogoFrame() );
+    this->NACLabel->Create();
+    this->NACLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNACLogo() );
+
+    this->NAMICLabel = vtkKWLabel::New();
+    this->NAMICLabel->SetParent ( this->GetLogoFrame() );
+    this->NAMICLabel->Create();
+    this->NAMICLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNAMICLogo() );    
+
+    this->NCIGTLabel = vtkKWLabel::New();
+    this->NCIGTLabel->SetParent ( this->GetLogoFrame() );
+    this->NCIGTLabel->Create();
+    this->NCIGTLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNCIGTLogo() );
+    
+    this->BIRNLabel = vtkKWLabel::New();
+    this->BIRNLabel->SetParent ( this->GetLogoFrame() );
+    this->BIRNLabel->Create();
+    this->BIRNLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetBIRNLogo() );
+    app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky w", this->NAMICLabel->GetWidgetName());
+    app->Script ("grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w",  this->NACLabel->GetWidgetName());
+    app->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky w",  this->BIRNLabel->GetWidgetName());
+    app->Script ( "grid %s -row 1 -column 1 -padx 2 -pady 2 -sticky w",  this->NCIGTLabel->GetWidgetName());                  
     
     // ---
     // LOAD FRAME            
@@ -347,6 +436,7 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
     this->LoadVolumeButton->Create ( );
     this->LoadVolumeButton->SetWidth(20);
     this->LoadVolumeButton->GetWidget()->SetText ("Select Volume File");
+    this->LoadVolumeButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open Volume File");
     this->LoadVolumeButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
                                                               "{ {volume} {*.*} }");
     this->LoadVolumeButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
