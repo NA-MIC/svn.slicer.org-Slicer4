@@ -25,6 +25,7 @@
 #define __vtkSlicerViewerWidget_h
 
 #include "vtkSlicerWidget.h"
+#include "vtkSlicerApplicationLogic.h"
 
 #include "vtkKWRenderWidget.h"
 #include "vtkKWFrame.h"
@@ -42,7 +43,10 @@ class vtkActorText;
 class vtkFollower;
 class vtkImplicitBoolean;
 class vtkPlane;
-
+class vtkWorldPointPicker;
+class vtkPropPicker;
+class vtkCellPicker;
+class vtkPointPicker;
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewerWidget : public vtkSlicerWidget
 {
   
@@ -74,6 +78,9 @@ public:
   // Description:
   // removes observers on widgets in the class
   virtual void RemoveMRMLObservers ( );
+
+  vtkGetObjectMacro (ApplicationLogic, vtkSlicerApplicationLogic );
+  vtkSetObjectMacro (ApplicationLogic, vtkSlicerApplicationLogic );
 
   vtkGetObjectMacro(MainViewer, vtkKWRenderWidget);
   vtkSetObjectMacro(MainViewer, vtkKWRenderWidget);
@@ -129,7 +136,45 @@ public:
   // Updates Actors based on models in the scene
   void UpdateFromMRML();
 
+  // Description:
+  // picks a world point
+  vtkGetObjectMacro(WorldPointPicker, vtkWorldPointPicker);
   
+  // Description:
+  // picks a property in the scene
+  vtkGetObjectMacro(PropPicker, vtkPropPicker);
+  // Description:
+  // picks a cell
+  vtkGetObjectMacro(CellPicker, vtkCellPicker);
+  // Description:
+  // picks a point
+  vtkGetObjectMacro(PointPicker, vtkPointPicker);
+  
+  // Description:
+  // Convert an x/y location to a mrml node, 3d RAS point, point id, cell id,
+  // as appropriate depending what's found under the xy. Called by
+  // vtkSlicerViewerInteractorStyle PickEvent consumers. Returns 1 on
+  // successful pick.
+  int Pick(int x, int y);
+
+  // Description:
+  // Get the name of the picked node, returns empty string if no pick
+  const char *GetPickedNodeName()
+  {    
+    return this->PickedNodeName.c_str();
+  }
+  // Description:
+  // Get/Set the picked RAS point, returns 0,0,0 if no pick
+  vtkGetVectorMacro( PickedRAS, double, 3);
+  vtkSetVectorMacro( PickedRAS, double, 3);
+  // Description:
+  // Get/Set the picked cell id, returns -1 if no pick
+  vtkGetMacro( PickedCellID, vtkIdType);
+  vtkSetMacro( PickedCellID, vtkIdType);
+  // Description:
+  // Get/Set the picked point id, returns -1 if no pick
+  vtkGetMacro( PickedPointID, vtkIdType);
+  vtkSetMacro( PickedPointID, vtkIdType);
 protected:
   vtkSlicerViewerWidget();
   virtual ~vtkSlicerViewerWidget();
@@ -141,6 +186,7 @@ protected:
   void UpdateCameraNode();
   void UpdateViewNode();
 
+  vtkSlicerApplicationLogic *ApplicationLogic;
   vtkKWRenderWidget *MainViewer;
   vtkKWFrame *ViewerFrame;
   int RenderPending;
@@ -152,7 +198,6 @@ protected:
   void UpdateModelsFromMRML();
   void UpdateModel(vtkMRMLModelNode *model);
   void UpdateModelPolyData(vtkMRMLModelNode *model);
-
   void CreateClipSlices();
 
   void CreateAxis();
@@ -160,6 +205,12 @@ protected:
   void UpdateAxis();
 
   int UpdateClipSlicesFormMRML();
+
+  void CheckModelHierarchies();
+  void AddHierarchiyObservers();
+  void RemoveHierarchyObservers();
+
+  vtkMRMLModelDisplayNode* GetModelDisplayNode(vtkMRMLModelNode *model);
 
   void SetModelDisplayProperty(vtkMRMLModelNode *model,  vtkActor *actor);
 
@@ -169,7 +220,10 @@ protected:
   std::map<const char *, int> DisplayedModelsClipState;
 
   std::vector<vtkFollower *> AxisLabelActors;
+
+  std::map<const char *, int>  RegisteredModelHierarchies;
   //ETX
+
   vtkActor *BoxAxisActor;
 
   int ProcessingMRMLEvent;
@@ -192,11 +246,31 @@ protected:
 
   bool ClippingOn;
   
+  bool ModelHierarchiesPresent;
+
   vtkMRMLCameraNode *CameraNode;
   vtkMRMLViewNode *ViewNode;
 
   bool SceneClosing;
 
+  vtkWorldPointPicker *WorldPointPicker;
+  vtkPropPicker *PropPicker;
+  vtkCellPicker *CellPicker;
+  vtkPointPicker *PointPicker;
+  
+  // Description:
+  // information about a pick event
+  //BTX
+  std::string PickedNodeName;
+  //ETX
+  double PickedRAS[3];
+  vtkIdType PickedCellID;
+  vtkIdType PickedPointID;
+
+  // Description:
+  // Reset all the pick vars
+  void ResetPick();
+  
 private:
   
   vtkSlicerViewerWidget(const vtkSlicerViewerWidget&); // Not implemented
