@@ -104,6 +104,12 @@ SET(dir_list
   ${OPENTRACKER_INC_DIR}
   ${IGSTK_INCLUDE_DIRS}
   )
+
+IF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
+  SET(dir_list ${dir_list} ${PYTHON_INCLUDE_PATH})
+  SET_SOURCE_FILES_PROPERTIES(Slicer3.cxx PROPERTIES COMPILE_FLAGS -DUSE_PYTHON)
+ENDIF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
+
 INCLUDE_DIRECTORIES(${dir_list})
 
 # On Win32 platforms, let's configure the KWWidgets sample resource file
@@ -140,6 +146,7 @@ ELSE(WFENGINEMODULE)
 ADD_DEFINITIONS(-DWFENGINE_DEBUG)
 ENDIF(WFENGINEMODULE)
 
+
 TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     SlicerBaseLogic
     SlicerBaseGUI
@@ -155,12 +162,30 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     CommandLineModule
     ScriptedModule
     SlicerDaemon
- #   ModuleDescriptionParser
+    ModuleDescriptionParser
     vtkITK
     ITKCommon 
     ITKIO
     ${WFENGINE_LINK_LIB}
-    ${KWWidgets_LIBRARIES} )    
+    ${KWWidgets_LIBRARIES}
+    )    
+
+IF(USE_PYTHON AND PYTHON_LIBRARIES)
+  TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX} SlicerGUIPython)
+  IF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+     TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
+                            debug ${PYTHON_DEBUG_LIBRARIES}
+                            optimized ${PYTHON_LIBRARIES})
+  ELSE (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+     TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX} ${PYTHON_LIBRARIES})
+  ENDIF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+  IF(NOT WIN32)
+     # Linux/Unix requires util library
+     TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX} util)
+  ENDIF(NOT WIN32)
+ENDIF(USE_PYTHON AND PYTHON_LIBRARIES)
+
+
 INSTALL_TARGETS(/bin Slicer3${SLICER_EXE_SUFFIX})
 
 # Generate a lightweight C launcher for a *specific* executable.

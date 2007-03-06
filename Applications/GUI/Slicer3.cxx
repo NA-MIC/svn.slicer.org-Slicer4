@@ -53,6 +53,22 @@
 #include "vtkScriptedModuleGUI.h"
 
 #include "ModuleFactory.h"
+ 
+#ifdef USE_PYTHON
+// If debug, Python wants pythonxx_d.lib, so fake it out
+#ifdef _DEBUG
+#undef _DEBUG
+#include <Python.h>
+#define _DEBUG
+#else
+#include <Python.h>
+#endif
+
+extern "C" {
+  void init_mytkinter(void );
+  void init_slicer(void );
+}
+#endif
 
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/stl/string>
@@ -67,17 +83,19 @@
 //#define CLIMODULES_DEBUG
 //#define TCLMODULES_DEBUG
 //#define SLICES_DEBUG
+//#define GAD_DEBUG
 //#define MODELS_DEBUG
 //#define VOLUMES_DEBUG
 //#define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
-#define EMSEG_DEBUG
+//#define EMSEG_DEBUG
 #define REALTIMEIMAGING_DEBUG
 #define MRABLATION_DEBUG
 //#define NEURONAV_DEBUG
 #define TRACTOGRAPHY_DEBUG
+//#define VIEWCONTROL_DEBUG
 
 
 #ifndef EMSEG_DEBUG
@@ -105,16 +123,25 @@
 #include "vtkWFEngineModuleGUI.h"
 #endif
 
+//
+// note: always write to cout rather than cerr so log messages will
+// appear in the correct order when running tests.  Normally cerr preempts cout
+// when output is buffered going to a terminal, but in the case of the launcher
+// cerr is collected in a separate buffer and printed at the end.   Either
+// way, it's better for all logging to go the the same channel so it shows
+// up in the correct order.
+//
 #ifdef _WIN32
 #  define slicerCerr(x) \
   do { \
+    cout << x; \
     vtkstd::ostringstream str; \
     str << x; \
     MessageBox(NULL, str.str().c_str(), "Slicer Error", MB_OK);\
   } while (0)
 #else
 #  define slicerCerr(x) \
-  cerr << x
+  cout << x
 #endif
 
 
@@ -139,7 +166,7 @@ extern "C" int Emsegment_Init(Tcl_Interp *interp);
 extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
 #endif
 extern "C" int Gradientanisotropicdiffusionfilter_Init(Tcl_Interp *interp);
-//extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
+extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
 extern "C" int Queryatlas_Init(Tcl_Interp *interp);
 extern "C" int Slicerdaemon_Init(Tcl_Interp *interp);
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
@@ -306,7 +333,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerCerr("Error: Cannot find Slicer3 executable" << endl);
     return 1;
     }
-  cerr << "Using slicer executable: " << programPath.c_str() << endl;
+  cout << "Using slicer executable: " << programPath.c_str() << endl;
   
   std::string slicerBinDir
     = vtksys::SystemTools::GetFilenamePath(programPath.c_str());
@@ -337,8 +364,10 @@ int Slicer3_main(int argc, char *argv[])
     }
   std::string tclEnv = "TCL_LIBRARY=";
   tclEnv += slicerBinDir + "/../lib/Slicer3/tcl/lib/tcl8.4";
-  cerr << "Set environment: " << tclEnv.c_str() << endl;
-  putenv(const_cast <char *> (tclEnv.c_str()));
+  cout << "Set environment: " << tclEnv.c_str() << endl;
+  // putenv(const_cast <char *> (tclEnv.c_str()));
+  vtkKWApplication::PutEnv(const_cast <char *> (tclEnv.c_str()));
+
 
   ptemp = vtksys::SystemTools::CollapseFullPath(argv[0]);
   ptemp = vtksys::SystemTools::GetFilenamePath(ptemp);
@@ -349,22 +378,111 @@ int Slicer3_main(int argc, char *argv[])
   itkAutoLoadPath = ptemp + ":" + itkAutoLoadPath;
 #endif
   itkAutoLoadPath = "ITK_AUTOLOAD_PATH=" + itkAutoLoadPath;
-  putenv(const_cast <char *> (itkAutoLoadPath.c_str()));
-  
-  
-    // Initialize Tcl
-    // -- create the interp
-    // -- set up initial global variables
-    // -- later in this function tcl scripts are executed 
-    //    and some additional global variables are defined
+  // putenv(const_cast <char *> (itkAutoLoadPath.c_str()));
+  int putSuccess
+    = vtkKWApplication::PutEnv(const_cast <char *> (itkAutoLoadPath.c_str()));
+  if (!putSuccess)
+    {
+    cout << "Unable to set ITK_AUTOLOAD_PATH. " << itkAutoLoadPath << endl;
+    }
 
-    Tcl_Interp *interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr);
-    if (!interp)
-        {
-            slicerCerr("Error: InitializeTcl failed" << endl );
-            return 1;
-        }
+  
+  // Initialize Tcl
+  // -- create the interp
+  // -- set up initial global variables
+  // -- later in this function tcl scripts are executed 
+  //    and some additional global variables are defined
+  Tcl_Interp *interp = NULL;
+#ifdef USE_PYTHON
 
+#if WIN32
+#define PathSep ";"
+#else
+#define PathSep ":"
+#endif
+  // Initialize Python
+
+  // Set up the search path
+  std::string pythonEnv = "PYTHONPATH=";
+
+  const char* existingPythonEnv = vtksys::SystemTools::GetEnv("PYTHONPATH");
+  if ( existingPythonEnv )
+    {
+    pythonEnv += std::string ( existingPythonEnv ) + PathSep;
+    }
+
+  pythonEnv += slicerBinDir + "/../../Slicer3/Base/GUI/Python" + PathSep;
+  pythonEnv += slicerBinDir + "/../Base/GUI/Python";
+  vtkKWApplication::PutEnv(const_cast <char *> (pythonEnv.c_str()));
+  std::cout << "Environment: " << pythonEnv << std::endl; 
+  
+  Py_Initialize();
+  PySys_SetArgv(argc, argv);
+  PyObject* PythonModule = PyImport_AddModule("__main__");
+  if (PythonModule == NULL)
+    {
+    std::cout << "Warning: Failed to initialize python" << std::endl;
+    return 1;
+    }
+  PyObject* PythonDictionary = PyModule_GetDict(PythonModule);
+
+  // Intercept _tkinter, and use ours...
+  init_mytkinter();
+  init_slicer();
+  // let Python start Tcl/Tk, then get the interperter
+  PyObject* v;
+
+  std::string TkinitString = "import Tkinter, sys;"
+    "tk = Tkinter.Tk();"
+    "tk.loadtk();"
+    "addr = tk.interpaddr();\n"
+    "sys.path.append ( \""
+    + slicerBinDir + "/../../Slicer3/Base/GUI/Python"
+    + "\" );\n"
+    "sys.path.append ( \""
+    + slicerBinDir + "/../Base/GUI/Python"
+    + "\" );\n";
+  
+  v = PyRun_String( TkinitString.c_str(),
+                    Py_file_input,
+                    PythonDictionary,
+                    PythonDictionary );
+  if (v == NULL)
+    {
+    PyErr_Print();
+    std::cout << "Error: Failed to initialize Python" << std::endl;
+    return 1;
+    }
+  interp = (Tcl_Interp*) PyLong_AsLong ( PyDict_GetItemString ( PythonDictionary, "addr" ) );
+  if ( (long)interp == -1 )
+    {
+    std::cout << "Error: Failed to get Tcl interp address from Python" << std::endl;
+    return 1;
+    }
+  Py_DECREF(v);
+  if (Py_FlushLine())
+    {
+    PyErr_Clear();
+    }
+  if (!Tcl_PkgPresent(interp, "Tk", NULL, 0))
+    {
+    std::cout << "Error: Python failed to initialize Tk" << std::endl;
+    return 1;
+    }
+
+  std::cout << "Initialized python: addr: " << (long)interp << std::endl;
+  vtkKWApplication::InitializeTcl(interp, &cout);
+  // interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr, interp);
+  std::cout << "Initialized python: Slicer Interp: " << (long)vtkSlicerApplication::GetInstance()->GetMainInterp() << std::endl;
+#else
+  interp = vtkKWApplication::InitializeTcl(argc, argv, &cout);
+  if (!interp)
+    {
+    slicerCerr("Error: InitializeTcl failed" << endl );
+    return 1;
+    }
+#endif
+    
     // Tell KWWidgets to make names like .vtkKWPushButton10 instead of .10 
     vtkKWWidget::UseClassNameInWidgetNameOn();
 
@@ -465,6 +583,19 @@ int Slicer3_main(int argc, char *argv[])
     Wfenginemodule_Init(interp);
 #endif
 
+  vtkSlicerApplication *slicerApp = vtkSlicerApplication::GetInstance ( );
+  slicerApp->Script ( "rename exit tcl_exit" );
+  slicerApp->Script ( 
+    "proc exit {args} { \
+      if { $args != {} && [string is integer $args] == \"1\" } { \
+        %s SetExitStatus $args \
+      } else { \
+        %s SetExitStatus -1 \
+      } ;\
+      after idle \"%s Exit\"; \
+    }", 
+    slicerApp->GetTclName(), slicerApp->GetTclName(), slicerApp->GetTclName() );
+
     //
     // use the startup script passed on command line if it exists
     //
@@ -509,7 +640,6 @@ int Slicer3_main(int argc, char *argv[])
 
     // Create SlicerGUI application, style, and main window 
     //  - note: use the singleton application 
-    vtkSlicerApplication *slicerApp = vtkSlicerApplication::GetInstance ( );
     slicerApp->InstallTheme( slicerApp->GetSlicerTheme() );
 
     // copy the image from the header file into memory
@@ -571,6 +701,14 @@ int Slicer3_main(int argc, char *argv[])
     appGUI->BuildGUI ( );
     appGUI->AddGUIObservers ( );
     slicerApp->SetApplicationGUI ( appGUI );
+    /*
+    const char *name1;
+    name1 = slicerApp->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set Application %s", name1);
+    name1 = appGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set ApplicationGUI %s", name1);
+    int res1 = slicerApp->StartApplication();
+    */
 
     // ------------------------------
     // CREATE MODULE LOGICS & GUIS; add to GUI collection
@@ -608,8 +746,6 @@ int Slicer3_main(int argc, char *argv[])
     volumesGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
     volumesGUI->GetUIPanel()->Create ( );
     slicerApp->AddModuleGUI ( volumesGUI );
-    volumesGUI->BuildGUI ( );
-    volumesGUI->AddGUIObservers ( );
 #endif
 
 #ifndef MODELS_DEBUG
@@ -630,8 +766,6 @@ int Slicer3_main(int argc, char *argv[])
     modelsGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
     modelsGUI->GetUIPanel()->Create ( );
     slicerApp->AddModuleGUI ( modelsGUI );
-    modelsGUI->BuildGUI ( );
-    modelsGUI->AddGUIObservers ( );
 #endif
 
 
@@ -653,8 +787,6 @@ int Slicer3_main(int argc, char *argv[])
     fiducialsGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
     fiducialsGUI->GetUIPanel()->Create ( );
     slicerApp->AddModuleGUI ( fiducialsGUI );
-    fiducialsGUI->BuildGUI ( );
-    fiducialsGUI->AddGUIObservers ( );
 #endif
 
 #ifndef COLORS_DEBUG
@@ -683,8 +815,6 @@ int Slicer3_main(int argc, char *argv[])
     colorGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
     colorGUI->GetUIPanel()->Create ( );
     slicerApp->AddModuleGUI ( colorGUI );
-    colorGUI->BuildGUI ( );
-    colorGUI->AddGUIObservers ( );
 #endif
 
 
@@ -765,8 +895,6 @@ int Slicer3_main(int argc, char *argv[])
     transformsGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
     transformsGUI->GetUIPanel()->Create ( );
     slicerApp->AddModuleGUI ( transformsGUI );
-    transformsGUI->BuildGUI ( );
-    transformsGUI->AddGUIObservers ( );
 
     //--- Data module
     slicerApp->GetSplashScreen()->SetProgressMessage(
@@ -786,10 +914,7 @@ int Slicer3_main(int argc, char *argv[])
     dataGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
     dataGUI->GetUIPanel()->Create ( );    
     slicerApp->AddModuleGUI ( dataGUI );
-    dataGUI->BuildGUI ( );
-    dataGUI->AddGUIObservers ( );
-    dataGUI->AddObserver (vtkSlicerModuleGUI::ModuleSelectedEvent, (vtkCommand *)appGUI->GetGUICallbackCommand() );
-  
+    
 #ifndef CAMERA_DEBUG
     slicerApp->GetSplashScreen()->SetProgressMessage(
       "Initializing Camera Module...");
@@ -856,9 +981,12 @@ int Slicer3_main(int argc, char *argv[])
     slicesGUI->AddGUIObservers ( );
 #endif
 
+#ifndef VIEWCONTROL_DEBUG
+    appGUI->InitializeNavigationWidget();
+#endif
 
-   
 
+#ifndef GAD_DEBUG
     // --- Gradient anisotropic diffusion filter module
     slicerApp->GetSplashScreen()->SetProgressMessage(
       "Initializing Gradient Anisotropic Module...");
@@ -878,19 +1006,27 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->AddModuleGUI ( gradientAnisotropicDiffusionFilterGUI );
     gradientAnisotropicDiffusionFilterGUI->BuildGUI ( );
     gradientAnisotropicDiffusionFilterGUI->AddGUIObservers ( );
+#endif
 
 #ifndef TRACTOGRAPHY_DEBUG
     // --- Tractography Display module
     slicerApp->GetSplashScreen()->SetProgressMessage(
       "Initializing Tractography Display Module...");
     vtkSlicerTractographyDisplayGUI *slicerTractographyDisplayGUI = vtkSlicerTractographyDisplayGUI::New ( );
-    //vtkSlicerTractographyDisplayLogic *slicerTractographyDisplayLogic  = vtkSlicerTractographyDisplayLogic::New ( );
-    //slicerTractographyDisplayLogic->SetAndObserveMRMLScene ( scene );
-    //slicerTractographyDisplayLogic->SetApplicationLogic ( appLogic );
-    ////    slicerTractographyDisplayLogic->SetMRMLScene(scene);
-    //slicerTractographyDisplayGUI->SetLogic ( slicerTractographyDisplayLogic );
+    vtkSlicerFiberBundleLogic *slicerFiberBundleLogic  = vtkSlicerFiberBundleLogic::New ( );
+    //slicerFiberBundleLogic->DebugOn ( );
+
+    // Observe scene events to handle display logic for new nodes or new scenes
+    events = vtkIntArray::New();
+    events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
+    //events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+    slicerFiberBundleLogic->SetAndObserveMRMLSceneEvents ( scene , events );
+    events->Delete();
+
+    slicerFiberBundleLogic->SetApplicationLogic ( appLogic );
+    slicerTractographyDisplayGUI->SetLogic ( slicerFiberBundleLogic );
     slicerTractographyDisplayGUI->SetApplication ( slicerApp );
-    //slicerTractographyDisplayGUI->SetApplicationLogic ( appLogic );
+    slicerTractographyDisplayGUI->SetApplicationLogic ( appLogic );
     slicerTractographyDisplayGUI->SetApplicationGUI ( appGUI );
     slicerTractographyDisplayGUI->SetGUIName( "Tractography" );
     slicerTractographyDisplayGUI->GetUIPanel()->SetName ( slicerTractographyDisplayGUI->GetGUIName ( ) );
@@ -1040,6 +1176,7 @@ int Slicer3_main(int argc, char *argv[])
 
       // Search for modules
       ModuleFactory moduleFactory;
+      moduleFactory.SetName("Slicer");
       moduleFactory.SetSearchPath( packagePath );
       moduleFactory.SetWarningMessageCallback( WarningMessage );
       moduleFactory.SetErrorMessageCallback( ErrorMessage );
@@ -1092,10 +1229,10 @@ int Slicer3_main(int argc, char *argv[])
 
         vtkSlicerModuleGUI *module;
         module = slicerApp->GetModuleGUIByName( (*mit).c_str() );
-
+/*
         module->BuildGUI();
         module->AddGUIObservers();
-      
+*/
         ++mit;
         }
       }
@@ -1287,14 +1424,14 @@ int Slicer3_main(int argc, char *argv[])
         std::vector<std::string>::const_iterator argit = Args.begin();
         while (argit != Args.end())
         {
-            cerr << "Arg =  " << *argit << endl;
+            cout << "Arg =  " << *argit << endl;
             std::string fileName;
             fileName.append(*argit);
             // is it a MRML or XML file?
             if (fileName.find(".mrml",0) != std::string::npos ||
                 fileName.find(".xml",0) != std::string::npos)
             {
-                cerr << fileName << " is a MRML or XML file, setting MRML scene file name and connecting\n";
+                cout << fileName << " is a MRML or XML file, setting MRML scene file name and connecting\n";
                 appLogic->GetMRMLScene()->SetURL(fileName.c_str());
                 // and then load it
                 int errorCode = appLogic->GetMRMLScene()->Connect();
@@ -1308,15 +1445,18 @@ int Slicer3_main(int argc, char *argv[])
     }
 
     //--- set home module based on registry settings
-    if ( slicerApp->GetHomeModule() )
+    const char *homeModule = slicerApp->GetHomeModule();
+    if ( homeModule && *homeModule )
       {
-      appGUI->SelectModule ( slicerApp->GetHomeModule() );
+        appGUI->SelectModule ( homeModule );
       }
     else
       {
       appGUI->SelectModule("Volumes");
       }
-
+#ifdef USE_PYTHON
+    vtkSlicerApplication::GetInstance()->InitializePython ( PythonModule, PythonDictionary );
+#endif    
     //
     // Run!  - this will return when the user exits
     //
@@ -1334,6 +1474,7 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
 #ifndef EMSEG_DEBUG
+    emSegmentGUI->TearDownGUI();
     emSegmentGUI->RemoveGUIObservers();
 #endif
 
@@ -1342,36 +1483,39 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
 #ifndef VOLUMES_DEBUG
-    volumesGUI->RemoveGUIObservers ( );
+//    volumesGUI->RemoveGUIObservers ( );
+    volumesGUI->TearDownGUI ( );
 #endif
 #ifndef MODELS_DEBUG
-    modelsGUI->RemoveGUIObservers ( );
+    modelsGUI->TearDownGUI ( );
 #endif
 #ifndef FIDUCIALS_DEBUG
-    fiducialsGUI->RemoveGUIObservers ( );
+    fiducialsGUI->TearDownGUI ( );
 #endif
 #ifndef COLORS_DEBUG
-    colorGUI->RemoveGUIObservers ( );
+    colorGUI->TearDownGUI ( );
 #endif
 #ifndef REALTIMEIMAGING_DEBUG
-    realtimeimagingGUI->RemoveGUIObservers ( );
+    realtimeimagingGUI->TearDownGUI ( );
 #endif
 #ifndef MRABLATION_DEBUG
-    ablationGUI->RemoveGUIObservers ( );
+    ablationGUI->TearDownGUI ( );
 #endif
 #ifndef NEURONAV_DEBUG
-    neuronavGUI->RemoveGUIObservers ( );
+    neuronavGUI->TearDownGUI ( );
 #endif
     
 #ifndef WFENGINE_DEBUG
-    wfEngineModuleGUI->RemoveGUIObservers ( );
+    wfEngineModuleGUI->TearDownGUI ( );
 #endif
 
-    transformsGUI->RemoveGUIObservers ( );
+    transformsGUI->TearDownGUI ( );
 #ifndef CAMERA_DEBUG
     cameraGUI->RemoveGUIObservers ( );
 #endif
-    dataGUI->RemoveGUIObservers ( );
+
+    dataGUI->TearDownGUI ( );
+    
 #ifndef SLICES_DEBUG
     slicesGUI->RemoveGUIObservers ( );
 #endif
@@ -1395,7 +1539,8 @@ int Slicer3_main(int argc, char *argv[])
       vtkSlicerModuleGUI *module;
       module = slicerApp->GetModuleGUIByName( (*mit).c_str() );
 
-      module->RemoveGUIObservers();
+/*      module->RemoveGUIObservers();*/
+      module->TearDownGUI ( );
 
       moduleGUIs.push_back(module);
       
@@ -1489,7 +1634,8 @@ int Slicer3_main(int argc, char *argv[])
     // and delete it.
    slicerApp->SetApplicationGUI ( NULL );
    appGUI->DeleteComponentGUIs();
-   appGUI->Delete ();
+//cout << "vtkSlicerApplicationGUI deleting app GUI\n";
+//   appGUI->Delete ();
 
 #ifndef CLIMODULES_DEBUG
     // delete the factory discovered module GUIs (as we delete the
@@ -1505,15 +1651,20 @@ int Slicer3_main(int argc, char *argv[])
       }
     moduleGUIs.clear();
 #endif
+
+    // Release reference to applicaiton GUI
+    // and delete it.
+   slicerApp->SetApplicationGUI ( NULL );
+   appGUI->DeleteComponentGUIs();
+   appGUI->Delete ();
     
     //--- delete logic next, removing Refs to MRML
     appLogic->ClearCollections ( );
 
+#ifndef GAD_DEBUG
     gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( NULL );
     gradientAnisotropicDiffusionFilterLogic->Delete ();
-
-    //slicerTractographyDisplayLogic->SetAndObserveMRMLScene ( NULL );
-    //slicerTractographyDisplayLogic->Delete ();
+#endif
         
 #ifndef QUERYATLAS_DEBUG
     queryAtlasLogic->SetAndObserveMRMLScene ( NULL );
@@ -1555,7 +1706,6 @@ int Slicer3_main(int argc, char *argv[])
     wfEngineModuleLogic->SetAndObserveMRMLScene ( NULL );
     wfEngineModuleLogic->Delete ( );
 #endif
-
     sliceLogic2->SetAndObserveMRMLScene ( NULL );
     sliceLogic2->Delete ();
     sliceLogic1->SetAndObserveMRMLScene ( NULL );
@@ -1595,6 +1745,13 @@ int Slicer3_main(int argc, char *argv[])
 
     //--- application last
     slicerApp->Delete ();
+
+#ifdef USE_PYTHON
+    // Shutdown python interpreter
+    Py_Finalize();
+#endif
+
+
     return res;
 }
 
