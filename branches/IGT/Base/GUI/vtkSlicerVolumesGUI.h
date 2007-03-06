@@ -62,6 +62,17 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     // This method builds the Volumes module GUI
     virtual void BuildGUI ( );
 
+       // Description:
+    // This method releases references and key-bindings,
+    // and optionally removes observers.
+    virtual void TearDownGUI ( );
+
+        // Description:
+    // Methods for adding module-specific key bindings and
+    // removing them.
+    virtual void CreateModuleEventBindings ( );
+    virtual void ReleaseModuleEventBindings ( );
+    
     // Description:
     // Add/Remove observers on widgets in the GUI
     virtual void AddGUIObservers ( );
@@ -105,6 +116,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     vtkSlicerNodeSelectorWidget* VolumeSelectorWidget;
     vtkKWLoadSaveButton *SaveVolumeButton;
     vtkSlicerVolumeDisplayWidget *VolumeDisplayWidget;
+
+    vtkKWLabel *NACLabel;
+    vtkKWLabel *NAMICLabel;
+    vtkKWLabel *NCIGTLabel;
+    vtkKWLabel *BIRNLabel;
 
  private:
     vtkSlicerVolumesGUI ( const vtkSlicerVolumesGUI& ); // Not implemented.
