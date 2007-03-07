@@ -1665,6 +1665,16 @@ int Slicer3_main(int argc, char *argv[])
     gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( NULL );
     gradientAnisotropicDiffusionFilterLogic->Delete ();
 #endif
+
+#ifndef TRACTOGRAPHY_DEBUG
+    slicerFiberBundleLogic->SetAndObserveMRMLScene ( NULL );
+    slicerFiberBundleLogic->Delete ();
+#endif
+        
+#ifndef EMSEG_DEBUG
+    emSegmentLogic->SetAndObserveMRMLScene ( NULL );
+    emSegmentLogic->Delete();
+#endif
         
 #ifndef QUERYATLAS_DEBUG
     queryAtlasLogic->SetAndObserveMRMLScene ( NULL );
