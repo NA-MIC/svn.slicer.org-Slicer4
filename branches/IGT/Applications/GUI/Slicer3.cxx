@@ -40,8 +40,8 @@
 #include "vtkGradientAnisotropicDiffusionFilterLogic.h"
 #include "vtkGradientAnisotropicDiffusionFilterGUI.h"
 
-//#include "vtkSlicerTractographyDisplayLogic.h"
-//#include "vtkSlicerTractographyDisplayGUI.h"
+#include "vtkSlicerFiberBundleLogic.h"
+#include "vtkSlicerTractographyDisplayGUI.h"
 
 #include "vtkQueryAtlasLogic.h"
 #include "vtkQueryAtlasGUI.h"
@@ -94,7 +94,7 @@ extern "C" {
 #define REALTIMEIMAGING_DEBUG
 #define MRABLATION_DEBUG
 //#define NEURONAV_DEBUG
-#define TRACTOGRAPHY_DEBUG
+//#define TRACTOGRAPHY_DEBUG
 //#define VIEWCONTROL_DEBUG
 
 
@@ -574,7 +574,7 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
     Gradientanisotropicdiffusionfilter_Init(interp);
-//    Slicertractographydisplay_Init(interp);
+    Slicertractographydisplay_Init(interp);
     Queryatlas_Init(interp);
     Slicerdaemon_Init(interp);
     Commandlinemodule_Init(interp);
