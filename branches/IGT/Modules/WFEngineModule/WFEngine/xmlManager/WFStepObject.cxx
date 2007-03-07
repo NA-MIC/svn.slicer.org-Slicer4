@@ -114,18 +114,17 @@ bool WFStepObject::ExistsEvent(std::string &eventName)
     return false;
 }
 
-std::vector<std::string>* WFStepObject::GetAllEvents()
+std::vector<WFStepObject::variablePropertyStruct*>* WFStepObject::GetAllEvents()
 {
-    std::vector<std::string> *stepEvents = new std::vector<std::string>;
+    std::vector<WFStepObject::variablePropertyStruct*> *stepEvents = new std::vector<WFStepObject::variablePropertyStruct*>;
     
     std::map<std::string, WFStepObject::variablePropertyStruct*>::iterator mIter;
     for(mIter = this->m_varMap.begin(); mIter != this->m_varMap.end(); mIter++)
-    {
-        std::cout<<"GetAllEvents: "<<(*mIter).first.substr(0,5)<<std::endl;
+    {        
         if(std::strcmp((*mIter).first.substr(0,5).c_str(), "event") == 0)
         {
             std::cout<<(*mIter).first.substr(6,(*mIter).first.size()-1)<<std::endl;
-            stepEvents->push_back((*mIter).first.substr(6,(*mIter).first.size()-1));
+            stepEvents->push_back((*mIter).second);
         }
     }
     return stepEvents;

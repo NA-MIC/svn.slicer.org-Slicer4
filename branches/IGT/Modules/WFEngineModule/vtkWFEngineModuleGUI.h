@@ -19,12 +19,12 @@
 // This class implements Slicer's WFEngineModule GUI
 // VTK_WFENGINEMODULE_EXPORT
 
-class vtkKWMultiColumnList;
+class vtkKWMultiColumnListWithScrollbars;
 class vtkKWMyWizardWidget;
 class vtkKWPushButtonSet;
 class vtkKWWidget;
 class vtkMRMLWFEngineModuleNode;
-class vtkWFStepHandler;
+class vtkWFEngineHandler;
 class vtkSlicerParameterWidget;
 class vtkWFEngineEventHandler;
 
@@ -83,15 +83,9 @@ class VTK_WFENGINEMODULE_EXPORT vtkWFEngineModuleGUI : public vtkSlicerModuleGUI
     
     virtual void SaveState();
     
-    virtual void workStepGUICallBack();       
+    virtual void workStepGUICallBack();               
     
-    // Descritpion:
-    // Event that handles all events declared in the workflow xml file
     //BTX
-    enum{
-        WorkflowHandleEvent = 10000
-    };
-    
     const char* getStepInputValueByName(std::string name); 
     //ETX
     
@@ -141,7 +135,7 @@ private:
     //ETX
     
     vtkKWMyWizardWidget *m_curWizWidg;
-    vtkKWMultiColumnList *m_mclDW;
+    vtkKWMultiColumnListWithScrollbars *m_mclDW;
     vtkKWPushButtonSet *m_pbtnSet;
     vtkSlicerModuleCollapsibleFrame *m_wizFrame;
     vtkSlicerParameterWidget *m_curParameterWidgets;    
@@ -149,7 +143,7 @@ private:
     
     vtkMRMLWFEngineModuleNode *WFEngineModuleNode;
     
-    vtkWFStepHandler *m_wfStepHandler;
+    vtkWFEngineHandler *m_wfEngineHandler;
     
     vtkWFEngineEventHandler *m_wfEngineEventHandler;
     
