@@ -132,8 +132,6 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     */
 
     vtkKWCheckButton *ConnectCheckButton;
-    vtkKWCheckButton *PauseCheckButton;
-
     vtkKWCheckButton *LocatorCheckButton;
     vtkKWCheckButton *HandleCheckButton;
     vtkKWCheckButton *GuideCheckButton;
