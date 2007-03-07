@@ -22,6 +22,7 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream()
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     this->RegMatrix = NULL;
+    this->context = NULL;
 }
 
 
@@ -29,6 +30,11 @@ vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream()
 {
     this->LocatorNormalTransform->Delete();
     this->LocatorMatrix->Delete();
+
+    if (this->context)
+    {
+        delete this->context;
+    }
 
 }
 
