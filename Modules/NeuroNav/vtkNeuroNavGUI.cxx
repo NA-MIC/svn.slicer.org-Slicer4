@@ -79,7 +79,6 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     */
 
     this->ConnectCheckButton = NULL;
-    this->PauseCheckButton = NULL;
 
     this->LocatorCheckButton = NULL;
     this->HandleCheckButton = NULL;
@@ -145,6 +144,13 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
         this->OpenTrackerStream->Delete();
     }
 #endif
+#ifdef USE_IGSTK
+    if (this->IGSTKStream)
+    {
+        this->IGSTKStream->Delete();
+    }
+#endif
+
 
     if (this->DataManager)
     {
@@ -153,6 +159,10 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
     if (this->Pat2ImgReg)
     {
         this->Pat2ImgReg->Delete();
+    }
+    if (this->DataCallbackCommand)
+    {
+        this->DataCallbackCommand->Delete();
     }
 
     this->RemoveGUIObservers();
@@ -255,11 +265,6 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
     {
         this->ConnectCheckButton->SetParent(NULL );
         this->ConnectCheckButton->Delete ( );
-    }
-    if (this->PauseCheckButton)
-    {
-        this->PauseCheckButton->SetParent(NULL );
-        this->PauseCheckButton->Delete ( );
     }
 
     if (this->LocatorCheckButton)
@@ -1280,10 +1285,14 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
                 this->ConnectCheckButton->GetWidgetName());
 
 
+    nameLabel->Delete();
+    valueLabel->Delete();
+    interfaceFrame->Delete();
+    multiFrame->Delete();
+
     serverFrame->Delete ();
     sourceFrame->Delete ();
     connectFrame->Delete ();
-    // fileFrame->Delete ();
     rateFrame->Delete ();
 }
 
@@ -1366,24 +1375,6 @@ void vtkNeuroNavGUI::BuildGUIForTrackingFrame ()
                  modeFrame->GetWidgetName(),
                  driverFrame->GetFrame()->GetWidgetName());
 
-    /*
-    // Slice frame
-    vtkKWFrame *sliceFrame = vtkKWFrame::New();
-    sliceFrame->SetParent ( driverFrame->GetFrame() );
-    sliceFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
-                 sliceFrame->GetWidgetName(),
-                 driverFrame->GetFrame()->GetWidgetName());
-   */
-
-    /*
-    // Contents in mode frame 
-    vtkKWLabel *modeLabel = vtkKWLabel::New();
-    modeLabel->SetParent(modeFrame);
-    modeLabel->Create();
-    modeLabel->SetWidth(5);
-    modeLabel->SetText("Mode:");
-    */
 
     this->LocatorModeCheckButton = vtkKWCheckButton::New();
     this->LocatorModeCheckButton->SetParent(modeFrame);
@@ -1397,12 +1388,6 @@ void vtkNeuroNavGUI::BuildGUIForTrackingFrame ()
     this->UserModeCheckButton->SelectedStateOn();
     this->UserModeCheckButton->SetText("User");
 
-    /*
-    this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
-                modeLabel->GetWidgetName(),
-                this->LocatorModeCheckButton->GetWidgetName(),
-                this->UserModeCheckButton->GetWidgetName());
-                */
 
     this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
                 this->LocatorModeCheckButton->GetWidgetName(),
@@ -1452,8 +1437,6 @@ void vtkNeuroNavGUI::BuildGUIForTrackingFrame ()
     displayFrame->Delete ();
     driverFrame->Delete ();
     modeFrame->Delete ();
-//    sliceFrame->Delete ();
-
 }
 
 
@@ -1782,6 +1765,14 @@ void vtkNeuroNavGUI::BuildGUIForHandPieceFrame ()
     this->Script("pack %s -side top -anchor w -padx 0 -pady 2", 
                   this->BlueColorScale->GetWidgetName());
 */
+
+    pLabel->Delete();
+    nLabel->Delete();
+    emptyLabel->Delete();
+    rLabel->Delete();
+    aLabel->Delete();
+    sLabel->Delete();
+    tLabel->Delete();
 
     handPieceFrame->Delete ();
     offsetFrame->Delete ();
