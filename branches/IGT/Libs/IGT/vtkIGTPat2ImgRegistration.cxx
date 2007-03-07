@@ -23,6 +23,8 @@ vtkIGTPat2ImgRegistration::vtkIGTPat2ImgRegistration()
 
 vtkIGTPat2ImgRegistration::~vtkIGTPat2ImgRegistration()
 {
+    this->LandmarkTransformMatrix->Delete();
+
     if (this->SourceLandmarks)
     {
         this->SourceLandmarks->Delete();
