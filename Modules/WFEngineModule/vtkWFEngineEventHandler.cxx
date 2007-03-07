@@ -5,7 +5,8 @@
 #include <vtkMRMLScene.h>
 #include <vtkMRMLFiducialListNode.h>
 
-#include "vtkWFEngineModuleGUI.h"
+#include "vtkWFEngineHandler.h"
+#include "vtkMRMLWFEngineModuleNode.h"
 
 #include <string>
 #include <sstream>
@@ -34,15 +35,16 @@ vtkWFEngineEventHandler *vtkWFEngineEventHandler::New()
     return new vtkWFEngineEventHandler;
 }
 
-void vtkWFEngineEventHandler::ProcessWorkflowEvents(vtkObject *caller, unsigned long event, void *clientData, void *callData)
+void vtkWFEngineEventHandler::ProcessWorkflowLeaveEvents(vtkObject *caller, unsigned long event, void *callData, void *clientData)
 {
     std::cout<<"vtkWFEngineEventHandler::ProcessWorkflowEvents"<<std::endl;
-    vtkWFEngineModuleGUI *curWFGUI = (vtkWFEngineModuleGUI*)caller;
+    vtkWFEngineHandler *curWFHandler = (vtkWFEngineHandler*)caller;
     vtkWFEngineEventHandler *curWFEventHandler = (vtkWFEngineEventHandler*)callData;
-    std::string test = "";
+    
     
     if(curWFEventHandler)
     {
+        curWFEventHandler->m_eventName = (const char*)clientData;
         std::cout<<"EVENT catched: "<<curWFEventHandler->m_eventName<<std::endl;
         if(curWFEventHandler->m_eventName && strcmp(curWFEventHandler->m_eventName, "addFiducial") == 0)
         {
@@ -54,13 +56,13 @@ void vtkWFEngineEventHandler::ProcessWorkflowEvents(vtkObject *caller, unsigned 
                 vtkMRMLWFEngineModuleNode *wfEngineModuleNode = vtkMRMLWFEngineModuleNode::SafeDownCast(tmpWFEngineNode);
                 if(wfEngineModuleNode)
                 {
-                    std::string fidNameParameter = curWFEventHandler->m_id;
+                    std::string fidNameParameter = curWFHandler->GetCurrentStepID();
                     fidNameParameter.append(".fidName");
-                    std::string fidXParameter = curWFEventHandler->m_id;
+                    std::string fidXParameter = curWFHandler->GetCurrentStepID();
                     fidXParameter.append(".fidX");
-                    std::string fidYParameter = curWFEventHandler->m_id;
+                    std::string fidYParameter = curWFHandler->GetCurrentStepID();
                     fidYParameter.append(".fidY");
-                    std::string fidZParameter = curWFEventHandler->m_id;
+                    std::string fidZParameter = curWFHandler->GetCurrentStepID();
                     fidZParameter.append(".fidZ");
                     
                     const char* fidNameValue = wfEngineModuleNode->GetAttribute(fidNameParameter.c_str());
@@ -125,15 +127,15 @@ void vtkWFEngineEventHandler::ProcessWorkflowEvents(vtkObject *caller, unsigned 
     }
 }
 
-void vtkWFEngineEventHandler::AddWorkflowObservers(vtkWFEngineModuleGUI *curModuleGUI)
+void vtkWFEngineEventHandler::AddWorkflowObservers(vtkWFEngineHandler *curWFHandler)
 {
     this->m_workflowCB = vtkCallbackCommand::New();
     this->m_workflowCB->SetClientData(this);
-    this->m_workflowCB->SetCallback(&vtkWFEngineEventHandler::ProcessWorkflowEvents);
+    this->m_workflowCB->SetCallback(&vtkWFEngineEventHandler::ProcessWorkflowLeaveEvents);
     
-    if(curModuleGUI)
+    if(curWFHandler)
     {
-        curModuleGUI->AddObserver(vtkWFEngineModuleGUI::WorkflowHandleEvent, this->m_workflowCB);
+        curWFHandler->AddObserver(vtkWFEngineHandler::WorkflowStepLeaveEvent, this->m_workflowCB);
     }          
 }
 

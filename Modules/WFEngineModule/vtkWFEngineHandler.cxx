@@ -1,11 +1,11 @@
-#include "vtkWFStepHandler.h"
+#include "vtkWFEngineHandler.h"
 
 //#include <WFDirectInterface.h>
 
 #include "ModuleDescription.h"
 #include "ModuleDescriptionParser.h"
 
-vtkWFStepHandler::vtkWFStepHandler()
+vtkWFEngineHandler::vtkWFEngineHandler()
 {
     this->m_errorMSG = "";
     this->m_nextStepFuncLoaded = false;
@@ -16,13 +16,16 @@ vtkWFStepHandler::vtkWFStepHandler()
     
     this->m_paramNames = "";
     this->m_paramValues = "";
+    
+    this->m_curModuleDescription = NULL;
+    this->m_curWFStepObject = NULL;
 }
 
-vtkWFStepHandler::~vtkWFStepHandler()
+vtkWFEngineHandler::~vtkWFEngineHandler()
 {
 }
 
-int vtkWFStepHandler::InitializeWFEngine()
+int vtkWFEngineHandler::InitializeWFEngine()
 {
     this->m_wfDI = WFDirectInterface::New();
     
@@ -34,7 +37,7 @@ int vtkWFStepHandler::InitializeWFEngine()
     else FAIL;
 }
 
-std::vector<vtkWFStepHandler::workflowDesc*>* vtkWFStepHandler::GetKnownWorkflowDescriptions()
+std::vector<vtkWFEngineHandler::workflowDesc*>* vtkWFEngineHandler::GetKnownWorkflowDescriptions()
 {
     if(!this->m_initialized)
     {
@@ -46,12 +49,12 @@ std::vector<vtkWFStepHandler::workflowDesc*>* vtkWFStepHandler::GetKnownWorkflow
 //    std::cout<<"knownWFs.size() "<<knownWFs.size()<<std::endl;
 }
 
-vtkWFStepHandler *vtkWFStepHandler::New()
+vtkWFEngineHandler *vtkWFEngineHandler::New()
 {
-    return new vtkWFStepHandler;
+    return new vtkWFEngineHandler;
 }
 
-void vtkWFStepHandler::LoadNextStepFunction(const char* tclFunc)
+void vtkWFEngineHandler::LoadNextStepFunction(const char* tclFunc)
 {
     this->m_nextStepFuncLoaded = false;
     this->m_nextStepFuncTCL = tclFunc;
@@ -59,7 +62,7 @@ void vtkWFStepHandler::LoadNextStepFunction(const char* tclFunc)
         this->m_nextStepFuncLoaded = true;
 }
 
-void vtkWFStepHandler::LoadStepValidationFunction(const char* tclFunc)
+void vtkWFEngineHandler::LoadStepValidationFunction(const char* tclFunc)
 {
     this->m_validationFuncLoaded = false;
     this->m_validationFuncTCL = tclFunc;
@@ -67,7 +70,7 @@ void vtkWFStepHandler::LoadStepValidationFunction(const char* tclFunc)
         this->m_validationFuncLoaded = true;
 }
 
-int vtkWFStepHandler::GetNextStepID()
+int vtkWFEngineHandler::GetNextStepID()
 {
     this->m_errorMSG = "";
     
@@ -99,7 +102,7 @@ int vtkWFStepHandler::GetNextStepID()
     }
 }
 
-int vtkWFStepHandler::ValidateStep()
+int vtkWFEngineHandler::ValidateStep()
 {
     this->m_errorMSG = "";
     
@@ -182,17 +185,17 @@ int vtkWFStepHandler::ValidateStep()
     }
 }
 
-std::string vtkWFStepHandler::GetLastError()
+std::string vtkWFEngineHandler::GetLastError()
 {
     return this->m_errorMSG;
 }
 
-void vtkWFStepHandler::AddParameter(const char* name, const char* value)
+void vtkWFEngineHandler::AddParameter(const char* name, const char* value)
 {
     this->m_parameterToValueMap.insert(std::make_pair(name,value));
 }
 
-int vtkWFStepHandler::LoadNextWorkStep()
+int vtkWFEngineHandler::LoadNextWorkStep()
 {
     int validated = SUCC;
     if(this->m_validationFuncLoaded)
@@ -204,12 +207,19 @@ int vtkWFStepHandler::LoadNextWorkStep()
     
     if(validated == SUCC)
     {
+        if(this->m_curWFStepObject)
+        {
+            this->InvokeLeaveEvents();
+        }
+        
         this->m_curWFStepObject = this->m_wfDI->getNextWorkStep();
         
         if(this->m_curWFStepObject)
         {
             this->LoadNextStepFunction(this->m_curWFStepObject->GetTCLNextWorkstepFunction().c_str());
             this->LoadStepValidationFunction(this->m_curWFStepObject->GetTCLValidationFunction().c_str());
+            
+            this->InvokeEnterEvents();
             
         }
         
@@ -221,8 +231,13 @@ int vtkWFStepHandler::LoadNextWorkStep()
     return validated;
 }
 
-int vtkWFStepHandler::LoadBackWorkStep()
+int vtkWFEngineHandler::LoadBackWorkStep()
 {
+    if(this->m_curWFStepObject)
+    {
+        this->InvokeLeaveEvents();
+    }
+    
     this->m_curWFStepObject = this->m_wfDI->getBackWorkStep();
     
     if(this->m_curWFStepObject)
@@ -230,6 +245,7 @@ int vtkWFStepHandler::LoadBackWorkStep()
         this->LoadNextStepFunction(this->m_curWFStepObject->GetTCLNextWorkstepFunction().c_str());
         this->LoadStepValidationFunction(this->m_curWFStepObject->GetTCLValidationFunction().c_str());
         
+        this->InvokeEnterEvents();
         return SUCC;
     }                
     else
@@ -240,11 +256,11 @@ int vtkWFStepHandler::LoadBackWorkStep()
     }        
 }
 
-WFEngine::nmWFStepObject::WFStepObject *vtkWFStepHandler::GetLoadedWFStep()
+WFEngine::nmWFStepObject::WFStepObject *vtkWFEngineHandler::GetLoadedWFStep()
 {
     return this->m_curWFStepObject;
 }
-int vtkWFStepHandler::CloseWorkflowSession()
+int vtkWFEngineHandler::CloseWorkflowSession()
 {
     this->m_wfDI->CloseWorkflowManager();
     
@@ -267,12 +283,12 @@ int vtkWFStepHandler::CloseWorkflowSession()
     return SUCC;
 }
 
-void vtkWFStepHandler::LoadNewWorkflowSession(std::string workflowFilename)
+void vtkWFEngineHandler::LoadNewWorkflowSession(std::string workflowFilename)
 {
     this->m_wfDI->loadWorkflowFromFile(workflowFilename);
 }
 
-ModuleDescription *vtkWFStepHandler::GetCurrentModuleDescription()
+ModuleDescription *vtkWFEngineHandler::GetCurrentModuleDescription()
 {
     ModuleDescriptionParser curMDParser;
 
@@ -289,7 +305,7 @@ ModuleDescription *vtkWFStepHandler::GetCurrentModuleDescription()
     return this->m_curModuleDescription;
 }
 
-std::map<std::string, std::string> *vtkWFStepHandler::GetValidationErrorMap()
+std::map<std::string, std::string> *vtkWFEngineHandler::GetValidationErrorMap()
 {
     std::cout<<"error-size: "<<this->m_parameterToErrorMap.size()<<std::endl;
     if(this->m_parameterToErrorMap.size() == 0)
@@ -298,4 +314,56 @@ std::map<std::string, std::string> *vtkWFStepHandler::GetValidationErrorMap()
     }
     else
         return &(this->m_parameterToErrorMap);
+}
+
+void vtkWFEngineHandler::InvokeEnterEvents()
+{
+    if(!this->m_curWFStepObject)
+    {
+        return;
+    }
+    
+    std::vector<WFEngine::nmWFStepObject::WFStepObject::variablePropertyStruct*> *eventList = this->m_curWFStepObject->GetAllEvents();
+    
+    std::vector<WFEngine::nmWFStepObject::WFStepObject::variablePropertyStruct*>::iterator iter;
+    
+    for(iter = eventList->begin(); iter != eventList->end(); iter++)
+    {
+        WFEngine::nmWFStepObject::WFStepObject::variablePropertyStruct *tmpStruct = (*iter);
+        if(tmpStruct->isInputParameter)
+        {
+            this->InvokeEvent(vtkWFEngineHandler::WorkflowStepEnterEvent, (void*)(tmpStruct->name.substr(6,tmpStruct->name.size()-1).c_str()));
+        }
+    }
+}
+
+void vtkWFEngineHandler::InvokeLeaveEvents()
+{
+    if(!this->m_curWFStepObject)
+    {
+        return;
+    }
+    
+    std::vector<WFEngine::nmWFStepObject::WFStepObject::variablePropertyStruct*> *eventList = this->m_curWFStepObject->GetAllEvents();
+    
+    std::vector<WFEngine::nmWFStepObject::WFStepObject::variablePropertyStruct*>::iterator iter;
+    
+    for(iter = eventList->begin(); iter != eventList->end(); iter++)
+    {
+        WFEngine::nmWFStepObject::WFStepObject::variablePropertyStruct *tmpStruct = (*iter);
+        if(tmpStruct->isOutputParameter)
+        {
+            const char* eventName = tmpStruct->name.substr(6,tmpStruct->name.size()-1).c_str();
+            this->InvokeEvent(vtkWFEngineHandler::WorkflowStepLeaveEvent, (void*)eventName);
+        }
+    }
+}
+
+const char* vtkWFEngineHandler::GetCurrentStepID()
+{
+    if(this->m_curWFStepObject)
+    {
+        return this->m_curWFStepObject->GetID().c_str();
+    }
+    else return "";
 }

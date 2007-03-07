@@ -1,5 +1,5 @@
-#ifndef WFSTEPHANDLER_H_
-#define WFSTEPHANDLER_H_
+#ifndef WFENGINEHANDLER_H_
+#define WFENGINEHANDLER_H_
 
 #include <string>
 #include <vector>
@@ -24,10 +24,10 @@ namespace WFEngine {
 }
 //ETX
 
-class vtkWFStepHandler : public vtkKWObject
+class vtkWFEngineHandler : public vtkKWObject
 {
 public:
-    static vtkWFStepHandler *New();
+    static vtkWFEngineHandler *New();
     
     int InitializeWFEngine();
     int CloseWorkflowSession();
@@ -45,6 +45,13 @@ public:
         SUCC = 1
     };
     
+    // Descritpion:
+    // Event that handles all events declared in the workflow xml file    
+    enum{
+        WorkflowStepEnterEvent = 10000,
+        WorkflowStepLeaveEvent
+    };
+    
     std::string GetLastError();
     
     std::map<std::string,std::string> *GetValidationErrorMap();
@@ -58,9 +65,11 @@ public:
     WFEngine::nmWFStepObject::WFStepObject *GetLoadedWFStep();
     void LoadNewWorkflowSession(std::string workflowFilename);
     //ETX
+    
+    const char* GetCurrentStepID();
 protected:
-    vtkWFStepHandler();
-    virtual ~vtkWFStepHandler();
+    vtkWFEngineHandler();
+    virtual ~vtkWFEngineHandler();
     
     void LoadStepValidationFunction(const char* tclFunc);
     
@@ -69,6 +78,10 @@ protected:
     int ValidateStep();
     
     int GetNextStepID();
+    
+    void InvokeEnterEvents();
+    
+    void InvokeLeaveEvents();
     
 private:
     
@@ -99,4 +112,4 @@ private:
     
 };
 
-#endif /*WFSTEPHANDLER_H_*/
+#endif /*WFENGINEHANDLER_H_*/

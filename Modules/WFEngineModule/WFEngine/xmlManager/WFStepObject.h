@@ -42,7 +42,7 @@ namespace WFEngine
             variablePropertyStruct *GetVariableStructByName(std::string &variableName);
             bool ExistsEvent(std::string &eventName);
             
-            std::vector<std::string>* GetAllEvents();
+            std::vector<variablePropertyStruct*>* GetAllEvents();
             
         protected:
             WFStepObject();

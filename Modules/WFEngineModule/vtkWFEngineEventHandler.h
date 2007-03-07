@@ -5,7 +5,7 @@
 
 class vtkObject;
 class vtkCallbackCommand;
-class vtkWFEngineModuleGUI;
+class vtkWFEngineHandler;
 class vtkMRMLScene;
 
 class vtkWFEngineEventHandler : public vtkKWObject
@@ -13,7 +13,7 @@ class vtkWFEngineEventHandler : public vtkKWObject
 public:
     static vtkWFEngineEventHandler *New();
     
-    void AddWorkflowObservers(vtkWFEngineModuleGUI *curModuleGUI);
+    void AddWorkflowObservers(vtkWFEngineHandler *curModuleGUI);
         
     void SetMRMLScene(vtkMRMLScene *scene);
     
@@ -25,7 +25,7 @@ protected:
     vtkWFEngineEventHandler();
     virtual ~vtkWFEngineEventHandler();
     
-    static void ProcessWorkflowEvents(vtkObject *caller, unsigned long event, void *clientData, void *callData);
+    static void ProcessWorkflowLeaveEvents(vtkObject *caller, unsigned long event, void *callData, void *clientData);
     
 private:
     
