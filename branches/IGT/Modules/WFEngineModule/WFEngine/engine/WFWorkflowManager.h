@@ -27,6 +27,9 @@ namespace WFEngine
             
             WFEngine::nmWFStepObject::WFStepObject *GetNextWFStep();
             WFEngine::nmWFStepObject::WFStepObject *GetPreviousWFStep();
+            
+            int getNumberOfProcessedSteps();
+                        
         protected:
             WFWorkflowManager();
             virtual ~WFWorkflowManager();

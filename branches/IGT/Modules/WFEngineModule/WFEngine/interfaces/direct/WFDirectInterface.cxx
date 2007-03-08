@@ -99,11 +99,35 @@ int WFDirectInterface::IsLoaded()
 
 WFStepObject *WFDirectInterface::getNextWorkStep()
 {
-    return this->m_wfMgr->GetNextWFStep();
+    if(this->IsLoaded())
+    {
+        return this->m_wfMgr->GetNextWFStep();   
+    }    
 }
 
 WFStepObject *WFDirectInterface::getBackWorkStep()
 {
-    this->m_wfMgr->GetPreviousWFStep();
+    if(this->IsLoaded())
+    {
+        this->m_wfMgr->GetPreviousWFStep();   
+    }    
+}
+
+int WFDirectInterface::getNumberOfProcessedSteps()
+{
+    if(this->IsLoaded())
+    {
+        return this->m_wfMgr->getNumberOfProcessedSteps();   
+    }
+    else
+        return -1;
+}
+
+int WFDirectInterface::getNumberOfUnprocessedSteps(std::string &curStepID)
+{
+    if(this->IsLoaded())
+    {
+        this->m_wfMgr->getNumberOfUnprocessedSteps(curStepID);   
+    }    
 }
 

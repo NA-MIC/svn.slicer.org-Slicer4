@@ -124,11 +124,10 @@ WFStepObject *WFXmlWorkflowManager::getNextWorkstepDescription(WFStepObject *cur
             bool found = false;
             DOMNodeList *nextStepIDsElements = this->getAllChildesByName(curProcessElement, nextElementRef);
             for(int i = 0; i < nextStepIDsElements->getLength() && !found; i++)
-            {
+            {              
                 DOMElement *curElem = (DOMElement*)(nextStepIDsElements->item(i));
                 std::string nextStepID = XMLString::transcode(curElem->getAttribute(XMLString::transcode("id")));
-                curWS->AddNextStepID(nextStepID);
-                found = true;
+                curWS->AddNextStepID(nextStepID);                                
             }    
         }
         
@@ -182,8 +181,7 @@ WFStepObject *WFXmlWorkflowManager::getNextWorkstepDescription(WFStepObject *cur
                 curWS->AddVariable(myCurVarStruct->name, myCurVarStruct);
                 myCurVarStruct = this->getNextVariableFromDecomposition(decompositionName, &varNameSet, decompElem);                
             }    
-        }        
-
+        }                
 //        curWS->SetVariableMapping();
         return curWS;
     }
@@ -347,4 +345,29 @@ WFStepObject::variablePropertyStruct *WFXmlWorkflowManager::getNextVariableFromD
     }
     
     return tempPropStruct;
+}
+
+int WFXmlWorkflowManager::getNumberOfUnprocessedSteps(std::string &curStepID)
+{
+    int m_approxUnprocessedSteps = 0;
+    std::string flowsInto = "flowsInto";
+    std::string nextElementRef = "nextElementRef";
+    
+    DOMElement *curTaskIteratorElement = this->getElementFromID(curStepID);
+    while(curTaskIteratorElement)
+    {
+        m_approxUnprocessedSteps++;
+        DOMElement *flowsIntoElement =  this->getFirstChildByName(curTaskIteratorElement, flowsInto);
+        curStepID = XMLString::transcode(this->getFirstChildByName(flowsIntoElement, nextElementRef)->getAttribute(XMLString::transcode("id")));
+        if(curStepID != "")
+        {
+            curTaskIteratorElement = this->getElementFromID(curStepID);
+        }
+        else
+        {
+            curTaskIteratorElement = NULL;
+        }
+    }
+    
+    return m_approxUnprocessedSteps;
 }
