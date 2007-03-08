@@ -87,6 +87,19 @@ WFStepObject *WFWorkflowManager::GetPreviousWFStep()
     return NULL;
 }
 
+int WFWorkflowManager::getNumberOfProcessedSteps()
+{
+    if(m_workSteps.size() > 0)
+        return m_workSteps.size()-1;
+    else
+        return 0;    
+}
+//
+//int WFWorkflowManager::GetNumberOfUnprocessedSteps()
+//{
+//    return this->getNumberOfUnprocessedSteps();
+//}
+
 }//namespace
 
 }//namespace

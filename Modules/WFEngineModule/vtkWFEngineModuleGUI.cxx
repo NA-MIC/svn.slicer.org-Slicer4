@@ -358,6 +358,8 @@ void vtkWFEngineModuleGUI::createWizard()
     m_curWizWidg->Create();
     m_curWizWidg->SetClientAreaMinimumHeight(300);
     
+    m_curWizWidg->SetNumberOfUnprocessedSteps(this->m_wfEngineHandler->GetUnprocessedSteps());
+    
     this->GetApplication()->Script("pack %s -side top -anchor ne -expand y -fill both -padx 2 -pady 2", 
             m_curWizWidg->GetWidgetName());
     
@@ -537,7 +539,9 @@ void vtkWFEngineModuleGUI::nextTransitionCallback(vtkObject* obj, unsigned long 
 
         if(wfEngineModule->m_wfEngineHandler->LoadNextWorkStep() == vtkWFEngineHandler::SUCC)
         {            
-            wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfEngineHandler->GetLoadedWFStep());            
+            wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfEngineHandler->GetLoadedWFStep());
+            wfEngineModule->m_curWizWidg->SetNumberOfUnprocessedSteps(wfEngineModule->m_wfEngineHandler->GetUnprocessedSteps());
+            wfEngineModule->m_curWizWidg->SetNumberOfProcessedSteps(wfEngineModule->m_wfEngineHandler->GetProcessedSteps());
         }
         else
         {
@@ -558,12 +562,18 @@ void vtkWFEngineModuleGUI::backTransitionCallback(vtkObject* obj, unsigned long 
         vtkKWMyWizardWorkflow *wizWF = wfEngineModule->m_curWizWidg->GetMyWizardWorkflow();
         if(wfEngineModule->m_wfEngineHandler->LoadBackWorkStep() == vtkWFEngineHandler::SUCC)
         {
-            wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfEngineHandler->GetLoadedWFStep());   
+            wfEngineModule->workStepValidationCallBack(wfEngineModule->m_wfEngineHandler->GetLoadedWFStep());
+            wfEngineModule->m_curWizWidg->SetNumberOfUnprocessedSteps(wfEngineModule->m_wfEngineHandler->GetUnprocessedSteps());
+            wfEngineModule->m_curWizWidg->SetNumberOfProcessedSteps(wfEngineModule->m_wfEngineHandler->GetProcessedSteps());
+            wfEngineModule->m_curWizWidg->UpdateProcessGauge();
         }
         else
         {
             wfEngineModule->m_curWFStep = NULL;
-            wfEngineModule->m_curWizWidg->GetWizardWorkflow()->AttemptToGoToPreviousStep();            
+            wfEngineModule->m_curWizWidg->GetWizardWorkflow()->AttemptToGoToPreviousStep();
+            wfEngineModule->m_curWizWidg->SetNumberOfUnprocessedSteps(wfEngineModule->m_wfEngineHandler->GetUnprocessedSteps());
+            wfEngineModule->m_curWizWidg->SetNumberOfProcessedSteps(-1);
+            wfEngineModule->m_curWizWidg->UpdateProcessGauge();
         }
         
         wfEngineModule->workStepGUICallBack();
