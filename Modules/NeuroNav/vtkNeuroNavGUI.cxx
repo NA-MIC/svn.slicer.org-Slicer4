@@ -154,6 +154,9 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
 
     if (this->DataManager)
     {
+        // If we don't set the scence to NULL for DataManager,
+        // Slicer will report a lot leak when it is closed.
+        this->DataManager->SetMRMLScene(NULL);
         this->DataManager->Delete();
     }
     if (this->Pat2ImgReg)
