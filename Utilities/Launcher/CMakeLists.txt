@@ -21,6 +21,12 @@ IF(${launcher_platform} MATCHES Linux)
   SET(launcher_platform  linux-x86)
 ENDIF(${launcher_platform} MATCHES Linux)
 
+MESSAGE ( "launcher_platform is ${launcher_platform}" )
+
+IF(${launcher_platform} MATCHES Darwin-powerpc)
+  SET(launcher_platform darwin-ppc)
+ENDIF(${launcher_platform} MATCHES Darwin-powerpc)
+
 STRING ( TOLOWER "${launcher_platform}" launcher_platform )
 SET (launcher_name "Slicer3-${launcher_platform}${CMAKE_EXECUTABLE_SUFFIX}")
 
@@ -31,6 +37,10 @@ SET ( launcher_binary
 
 CONFIGURE_FILE ( "${CMAKE_CURRENT_SOURCE_DIR}/Slicer3Launchers/${launcher_name}"
                  "${launcher_binary}"
+                 COPYONLY )
+
+CONFIGURE_FILE ( "${CMAKE_CURRENT_SOURCE_DIR}/3DSlicerLogoICOimages/slicer3.ico"
+                 "${Slicer3_BINARY_DIR}/lib"
                  COPYONLY )
 
 INSTALL ( PROGRAMS "${launcher_binary}" DESTINATION "" )
