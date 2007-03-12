@@ -1,5 +1,5 @@
 
-#include "vtkIGTIGSTKSteeam.h"
+#include "vtkIGTIGSTKSteam.h"
 #include "vtkObjectFactory.h"
 #include "vtkKWTkUtilities.h"
 #include "vtkKWApplication.h"
@@ -19,11 +19,7 @@ vtkIGTIGSTKSteeam::vtkIGTIGSTKSteeam()
 {
     igstk::RealTimeClock::Initialize();
 
-    typedef itk::Logger        LoggerType;
-    typedef itk::StdStreamLogOutput        LogOutputType;
-
-    LoggerType::Pointer          m_Logger;
-    m_Logger   = LoggerType::New();
+    this->Logger   = LoggerType::New();
 
     /** Logger */
     LogOutputType::Pointer              m_LogFileOutput;  // log output to file
@@ -39,6 +35,27 @@ vtkIGTIGSTKSteeam::vtkIGTIGSTKSteeam()
     }
 
 
+
+    this->Speed = 0;
+    this->StartTimer = 0;
+    this->LocatorNormalTransform = vtkTransform::New();
+    this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
+    this->RegMatrix = NULL;
+}
+
+
+
+vtkIGTIGSTKSteeam::~vtkIGTIGSTKSteeam()
+{
+    this->LocatorNormalTransform->Delete();
+    this->LocatorMatrix->Delete();
+
+}
+
+
+
+void vtkIGTIGSTKSteeam::Init()
+{
 #ifdef _WIN32 
     //running on a windows system
     serialCommunication = igstk::SerialCommunicationForWindows::New();
@@ -87,32 +104,6 @@ vtkIGTIGSTKSteeam::vtkIGTIGSTKSteeam()
     }
     std::cout<<"End data acquisition.\n";
 
-    tracker->RequestStopTracking();
-    tracker->RequestClose();
-    serialCommunication->CloseCommunication();
-
-
-
-    this->Speed = 0;
-    this->StartTimer = 0;
-    this->LocatorNormalTransform = vtkTransform::New();
-    this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
-    this->RegMatrix = NULL;
-}
-
-
-
-vtkIGTIGSTKSteeam::~vtkIGTIGSTKSteeam()
-{
-    this->LocatorNormalTransform->Delete();
-    this->LocatorMatrix->Delete();
-
-}
-
-
-
-void vtkIGTIGSTKSteeam::Init(char *configFile)
-{
 
 
 }
@@ -121,8 +112,9 @@ void vtkIGTIGSTKSteeam::Init(char *configFile)
 
 void vtkIGTIGSTKSteeam::StopPolling()
 {
-
-
+    this->Tracker->RequestStopTracking();
+    this->Tracker->RequestClose();
+    this->SerialCommunication->CloseCommunication();
 }
 
 

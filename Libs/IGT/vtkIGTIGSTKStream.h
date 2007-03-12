@@ -12,7 +12,6 @@
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 
-
 #include <string>
 
 #include <igstkSerialCommunication.h>
@@ -28,6 +27,10 @@
 #include "itkStdStreamLogOutput.h"
 
 
+typedef itk::Logger               LoggerType;
+typedef itk::StdStreamLogOutput   LogOutputType;
+
+
 class VTK_IGT_EXPORT vtkIGTIGSTKStream : public vtkObject
 {
 public:
@@ -39,7 +42,6 @@ public:
 
     vtkSetMacro(Speed,int);
     vtkSetMacro(MultiFactor,float);
-
     vtkSetMacro(StartTimer,int);
 
 
@@ -61,7 +63,7 @@ public:
     virtual ~vtkIGTIGSTKStream ( );
 
 
-    void Init(char *configFile);
+    void Init();
     void StopPolling();
     void PollRealtime();
     void SetLocatorTransforms();
@@ -72,8 +74,11 @@ public:
 private:
 
     //BTX
-    igstk::PolarisTracker::Pointer       tracker;
-    igstk::SerialCommunication::Pointer  serialCommunication;
+    igstk::PolarisTracker::Pointer       Tracker;
+    igstk::SerialCommunication::Pointer  SerialCommunication;
+
+    LoggerType::Pointer                  Logger;
+    LogOutputType::Pointer               LogFileOutput;  // log output to file
     //ETX
 
 
@@ -85,13 +90,8 @@ private:
     vtkMatrix4x4 *RegMatrix;
     vtkTransform *LocatorNormalTransform;
 
-    void Normalize(float *a);
-    void Cross(float *a, float *b, float *c);
-    void ApplyTransform(float *position, float *norm, float *transnorm);
-    void CloseConnection();
-
     void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
-
+    void ApplyTransform(float *position, float *norm, float *transnorm);
 
 };
 
