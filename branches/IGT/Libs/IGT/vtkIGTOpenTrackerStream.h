@@ -85,7 +85,6 @@ private:
     void Normalize(float *a);
     void Cross(float *a, float *b, float *c);
     void ApplyTransform(float *position, float *norm, float *transnorm);
-    void CloseConnection();
 
     void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
 
