@@ -676,7 +676,7 @@ if { ![file exists $::TEEM_TEST_FILE] || $::GENLIB(update) } {
         }
     }
 
-    runcmd $::CMAKE \
+    runcmd $::CMAKE \$::VTK_BUILD_TYPE/vtk.exe
         -G$GENERATOR \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
@@ -685,10 +685,10 @@ if { ![file exists $::TEEM_TEST_FILE] || $::GENLIB(update) } {
         -DBUILD_TESTING:BOOL=OFF \
         -DTEEM_ZLIB:BOOL=ON \
         -DTEEM_PNG:BOOL=ON \
-        -DTEEM_VTK_MANGLE:BOOL=ON \
+        -DTEEM_VTK_MANGLE:BOOL=ON \$::VTK_BUILD_TYPE/vtk.exe
         -DTEEM_VTK_TOOLKITS_IPATH:FILEPATH=$::SLICER_LIB/VTK-build \
         -DZLIB_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/vtkzlib \
-        -DTEEM_ZLIB_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities \
+        -DTEEM_ZLIB_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities \$::VTK_BUILD_TYPE/vtk.exe
         -DZLIB_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_SUBDIR/$zlib \
         -DPNG_PNG_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/vtkpng \
         -DTEEM_PNG_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities \
@@ -718,7 +718,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
 
     file mkdir $SLICER_LIB/NAMICSandBox-build
     cd $SLICER_LIB/NAMICSandBox-build
-
+$::VTK_BUILD_TYPE/vtk.exe
     if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
         # to build correctly, 64 bit linux requires shared libs for the sandbox
         runcmd $::CMAKE \
@@ -727,7 +727,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
             -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
             -DBUILD_SHARED_LIBS:BOOL=ON \
             -DCMAKE_SKIP_RPATH:BOOL=ON \
-            -DBUILD_EXAMPLES:BOOL=OFF \
+            -DBUILD_EXAMPLES:BOOL=OFF \$::VTK_BUILD_TYPE/vtk.exe
             -DBUILD_TESTING:BOOL=OFF \
             -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
             -DVTK_DIR:PATH=$VTK_DIR \
@@ -748,13 +748,13 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
             -DVTK_DIR:PATH=$VTK_DIR \
             -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
             -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
-            ../NAMICSandBox
+            ../NAMICSandBox$::VTK_BUILD_TYPE/vtk.exe
     }
 
     if {$isWindows} {
         if { $MSVC6 } {
             runcmd $::MAKE NAMICSandBox.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
-        } else {
+        } else {$::VTK_BUILD_TYPE/vtk.exe
             #runcmd $::MAKE NAMICSandBox.SLN /build  $::VTK_BUILD_TYPE
 
             # These two lines fail on windows because the .sln file has a problem.
@@ -766,7 +766,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
             cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation/Code
             runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE
             cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation/Code
-            runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE
+            runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE$::VTK_BUILD_TYPE/vtk.exe
             # However then it doesn't pick up this needed library
             cd $SLICER_LIB/NAMICSandBox-build/SpectralClustering
             runcmd $::MAKE SpectralClustering.SLN /build  $::VTK_BUILD_TYPE
@@ -781,7 +781,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
     } else {
 
         # Just build the two libraries we need, not the rest of the sandbox.
-        # This line builds the SlicerClustering library.
+        # This line builds the SlicerClustering library.$::VTK_BUILD_TYPE/vtk.exe
         # It also causes the SpectralClustering lib to build, 
         # since SlicerClustering depends on it.
         # Later in the slicer Module build process, 
@@ -798,6 +798,62 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
         cd $SLICER_LIB/NAMICSandBox-build
     }
 }
+
+
+################################################################################
+# Get and build igstk 
+#
+
+if { ![file exists $::IGSTK_TEST_FILE] || $::GENLIB(update) } {
+    cd $SLICER_LIB
+
+    runcmd $::CVS -d:pserver:anonymous:igstk@public.kitware.com:/cvsroot/IGSTK login
+    eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous@public.kitware.com:/cvsroot/IGSTK co IGSTK"
+
+    file mkdir $SLICER_LIB/IGSTK-build
+    cd $SLICER_LIB/IGSTK-build
+
+
+    if {$isDarwin} {
+    runcmd $::CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+        -DVTK_DIR:PATH=$VTK_DIR \
+        -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DCMAKE_SKIP_RPATH:BOOL=OFF \
+        -DBUILD_EXAMPLES:BOOL=OFF \
+        -DBUILD_TESTING:BOOL=OFF \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        ../IGSTK
+    } else {
+    runcmd $::CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+        -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+        -DVTK_DIR:PATH=$VTK_DIR \
+        -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DCMAKE_SKIP_RPATH:BOOL=ON \
+        -DBUILD_EXAMPLES:BOOL=OFF \
+        -DBUILD_TESTING:BOOL=OFF \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        ../IGSTK
+    }
+
+    if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE IGSTK.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE IGSTK.SLN /build  $::VTK_BUILD_TYPE
+        }
+    } else {
+        eval runcmd $::MAKE 
+    }
+}
+
+
 
 # Are all the test files present and accounted for?  If not, return error code
 
