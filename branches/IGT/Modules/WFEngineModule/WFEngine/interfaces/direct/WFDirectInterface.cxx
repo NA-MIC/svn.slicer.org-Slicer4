@@ -28,7 +28,7 @@ std::vector<WFDirectInterface::workflowDesc*> *WFDirectInterface::GetAllKnownWor
 {
     using namespace WFEngine::nmWFWorkflowManager;
     
-    std::cout<<"GetAllKnownWorkflows"<<std::endl;
+    //std::cout<<"GetAllKnownWorkflows"<<std::endl;
     
     std::vector<std::map<std::string, std::string> > knownWFs;
     std::vector<WFDirectInterface::workflowDesc*> *myKnownWFs = new std::vector<WFDirectInterface::workflowDesc*>;

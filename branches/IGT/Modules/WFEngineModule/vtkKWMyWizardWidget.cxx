@@ -14,6 +14,10 @@
 #include <vtkKWSeparator.h>
 #include <vtkKWComboBox.h>
 #include <vtkKWLabel.h>
+#include <vtkKWWizardStep.h>
+#include <vtkKWEntry.h>
+
+#include <sstream>
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro( vtkKWMyWizardWidget );
@@ -55,8 +59,10 @@ vtkKWMyWizardWidget::vtkKWMyWizardWidget()
 
     this->ButtonsPosition   = vtkKWWizardWidget::ButtonsPositionBottom;
     
-    this->m_wfAdvancementPG = NULL;
-    this->m_historyCBWL = NULL;
+    this->ProgressGauge = NULL;
+    this->ComboBox = NULL;
+    
+    this->m_itemToStepMap = NULL;
 }
 
 vtkKWMyWizardWidget::~vtkKWMyWizardWidget()
@@ -98,44 +104,49 @@ void vtkKWMyWizardWidget::CreateWidget()
   this->Superclass::CreateWidget();
   
   // Add some workflow related items into the wizard gui
-  if(!this->m_historyCBWL)
+  if(!this->ComboBox)
   {
-      this->m_historyCBWL = vtkKWComboBoxWithLabel::New();
+      this->ComboBox = vtkKWComboBoxWithLabel::New();
   }
 
-  this->m_historyCBWL->SetParent(this->TitleFrame);
-  this->m_historyCBWL->SetBackgroundColor(this->GetTitleAreaBackgroundColor());
-  this->m_historyCBWL->GetWidget()->SetBackgroundColor(this->GetTitleAreaBackgroundColor());
-  this->m_historyCBWL->Create();
+  this->ComboBox->SetParent(this->TitleFrame);
+  this->ComboBox->SetBackgroundColor(this->GetTitleAreaBackgroundColor());
+  this->ComboBox->GetWidget()->SetBackgroundColor(this->GetTitleAreaBackgroundColor());
+  this->ComboBox->Create();
   
 //  this->m_historyCBWL->SetBackgroundColor(this->GetTitleAreaBackgroundColor());
-  this->m_historyCBWL->SetBackgroundColor(1.0,0,0);
-  this->m_historyCBWL->GetWidget()->SetBackgroundColor(1.0,0,0);
-  this->m_historyCBWL->GetLabel()->SetBackgroundColor(1.0,0,0);
+  this->ComboBox->SetBackgroundColor(1.0,0,0);
+  this->ComboBox->GetWidget()->SetBackgroundColor(1.0,0,0);
+  this->ComboBox->GetLabel()->SetBackgroundColor(1.0,0,0);
 //  this->m_historyCBWL->GetWidget()->SetBackgroundColor(this->GetTitleAreaBackgroundColor());
   
-  this->m_historyCBWL->SetLabelText("History:");
+  this->ComboBox->SetLabelText("History:");
+  this->ComboBox->GetWidget()->ReadOnlyOn();
+  this->ComboBox->GetWidget()->SetCommandTriggerToAnyChange();
   
   this->Script("grid %s -row 0 -column 2 -sticky nswe -padx 8",
-          this->m_historyCBWL->GetWidgetName());
+          this->ComboBox->GetWidgetName());
 
   this->Script("grid columnconfigure %s 2 -weight 0",
           this->TitleFrame->GetWidgetName());
+  
+  this->ComboBox->GetWidget()->SetCommand(this, "ComboBoxEntryChanged");
   
 //  this->GetApplication()->Script("pack %s -side right -anchor ne -expand y -fill both -padx 2 -pady 2", 
 //          cbStepHistory->GetWidgetName());
   
   // Add some workflow related items into the wizard gui
-  if(!this->m_wfAdvancementPG)
+  if(!this->ProgressGauge)
   {
-      this->m_wfAdvancementPG = vtkKWProgressGauge::New();
+      this->ProgressGauge = vtkKWProgressGauge::New();
   }
   
-  this->m_wfAdvancementPG->SetParent(this->TitleFrame);
-  this->m_wfAdvancementPG->Create();  
+  this->ProgressGauge->SetParent(this->TitleFrame);
+  this->ProgressGauge->Create();  
+  this->ProgressGauge->SetWidth(175);
   
-  this->Script("grid %s -row 1 -column 2 -sticky nwe -padx 8",
-          this->m_wfAdvancementPG->GetWidgetName());
+  this->Script("grid %s -row 1 -column 2 -sticky nwe -padx 8 -pady 2",
+          this->ProgressGauge->GetWidgetName());
 
   this->Script("grid columnconfigure %s 2 -weight 0",
           this->TitleFrame->GetWidgetName());
@@ -170,6 +181,11 @@ void vtkKWMyWizardWidget::CreateWidget()
   navStackChanged->SetClientData(this);
   navStackChanged->SetCallback(&vtkKWMyWizardWidget::NavigationStackChanged);
   this->AddObserver(vtkKWWizardWorkflow::NavigationStackedChangedEvent, navStackChanged);
+  
+  if(!this->m_itemToStepMap)
+  {
+      this->m_itemToStepMap = new std::map<int, vtkKWWizardStep*>;
+  }
 }
 
 void vtkKWMyWizardWidget::NextButtonClicked(vtkObject* obj, unsigned long,void* callbackData, void*)
@@ -195,7 +211,7 @@ void vtkKWMyWizardWidget::BackButtonClicked(vtkObject* obj, unsigned long,void* 
 void vtkKWMyWizardWidget::NavigationStackChanged(vtkObject* obj, unsigned long,void* callbackData, void* clientData)
 {
     vtkKWMyWizardWidget *myWizWidg = (vtkKWMyWizardWidget*)callbackData;            
-    myWizWidg->UpdateProcessGauge();
+    myWizWidg->UpdateNavigationGUI();
 }
 
 int vtkKWMyWizardWidget::GetNumberOfUnprocessedSteps()
@@ -213,7 +229,7 @@ void vtkKWMyWizardWidget::SetNumberOfProcessedSteps(int steps)
     this->m_numberOfProcessedSteps = steps;
 }
 
-void vtkKWMyWizardWidget::UpdateProcessGauge()
+void vtkKWMyWizardWidget::UpdateNavigationGUI()
 {
     double percent = 0;
     if(this->WizardWorkflow->GetCurrentStep() == this->WizardWorkflow->GetFinishStep())
@@ -227,29 +243,65 @@ void vtkKWMyWizardWidget::UpdateProcessGauge()
     else
     {
         // subtract 2 from the actual navigation stack because of the intial and last step
-        int stepAmount = this->m_numberOfUnprocessedSteps + this->m_numberOfProcessedSteps + 1;
-        int processedSteps = this->m_numberOfProcessedSteps + 1;
+        int stepAmount = this->m_numberOfUnprocessedSteps + this->m_numberOfProcessedSteps;
+        int processedSteps = this->m_numberOfProcessedSteps;
         percent = (processedSteps * 100 / stepAmount);        
     }
             
-    this->m_wfAdvancementPG->SetValue(percent);
+    this->ProgressGauge->SetValue(percent);
+    
+    // Update ComboBox
+    
+    std::map<int, vtkKWWizardStep*>::iterator iter;
+    bool found = false;
+    int selectedIndex = 0;
+    
+    std::cout<<this->m_numberOfProcessedSteps + 1 <<" < "<<this->ComboBox->GetWidget()->GetNumberOfValues()<<std::endl;
+    if(this->m_numberOfProcessedSteps < this->ComboBox->GetWidget()->GetNumberOfValues())
+    {
+            found = true;
+            selectedIndex = this->m_numberOfProcessedSteps;
+    }    
+    
+    if(!found)
+    {
+        selectedIndex = this->ComboBox->GetWidget()->GetNumberOfValues();
+        
+        std::ostringstream strvalue;                
+        strvalue << selectedIndex;
+        strvalue << ends;
+        std::string value = strvalue.str().c_str();
+        value.append(": ");
+        std::string name = this->GetTitle();
+        value.append(name);
+        this->ComboBox->GetWidget()->AddValue(value.c_str());
+        this->m_itemToStepMap->insert(std::make_pair(selectedIndex, this->WizardWorkflow->GetCurrentStep()));
+    }
+    std::string temp = this->ComboBox->GetWidget()->GetValueFromIndex(selectedIndex);
+    std::cout<<temp<<std::endl;
+    this->ComboBox->GetWidget()->SetValue(temp.c_str());
 }
 
 void vtkKWMyWizardWidget::Delete()
 {
-    if(this->m_wfAdvancementPG)
+    if(this->ProgressGauge)
     {
-        this->m_wfAdvancementPG->Unpack();
-        this->m_wfAdvancementPG->Delete();
-        this->m_wfAdvancementPG = NULL;
+        this->ProgressGauge->Unpack();
+        this->ProgressGauge->Delete();
+        this->ProgressGauge = NULL;
     }
     
-    if(this->m_historyCBWL)
+    if(this->ComboBox)
     {
-        this->m_historyCBWL->Unpack();
-        this->m_historyCBWL->Delete();
-        this->m_historyCBWL = NULL;
+        this->ComboBox->Unpack();
+        this->ComboBox->Delete();
+        this->ComboBox = NULL;
     }
     
     this->Superclass::Delete();
+}
+
+void vtkKWMyWizardWidget::ComboBoxEntryChanged(const char* value)
+{
+    std::cout<<"ComboBoxEntryChanged: "<<this->ComboBox->GetWidget()->GetValue()<<std::endl;
 }
