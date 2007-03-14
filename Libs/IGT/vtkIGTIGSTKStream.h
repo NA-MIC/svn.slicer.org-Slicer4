@@ -14,16 +14,16 @@
 
 #include <string>
 
-#include <igstkSerialCommunication.h>
+#include "igstkSerialCommunication.h"
 
 #ifdef _WIN32
-#include <igstkSerialCommunicationForWindows.h>
+#include "igstkSerialCommunicationForWindows.h"
 #else
-#include <igstkSerialCommunicationForPosix.h>
+#include "igstkSerialCommunicationForPosix.h"
 #endif
 
-#include <igstkAuroraTracker.h>
-#include <igstkPolarisTracker.h>
+#include "igstkAuroraTracker.h"
+#include "igstkPolarisTracker.h"
 #include "itkStdStreamLogOutput.h"
 
 
@@ -34,8 +34,6 @@ typedef itk::StdStreamLogOutput   LogOutputType;
 class VTK_IGT_EXPORT vtkIGTIGSTKStream : public vtkObject
 {
 public:
-
-
     static vtkIGTIGSTKStream *New();
     vtkTypeRevisionMacro(vtkIGTIGSTKStream,vtkObject);
     void PrintSelf(ostream& os, vtkIndent indent);
@@ -43,7 +41,6 @@ public:
     vtkSetMacro(Speed,int);
     vtkSetMacro(MultiFactor,float);
     vtkSetMacro(StartTimer,int);
-
 
 
     vtkSetObjectMacro(RegMatrix,vtkMatrix4x4);
