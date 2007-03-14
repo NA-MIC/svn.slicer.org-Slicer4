@@ -121,7 +121,7 @@ set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 set ::SOV_BINARY_DIR ""
 set ::XVNC_EXECUTABLE " "
-set ::IGSTK_BUILD_DIR $::SLICER_LIB/IGSTK-build 
+set ::IGSTK_DIR $::SLICER_LIB/IGSTK-build 
 
 
 
@@ -164,7 +164,7 @@ switch $::tcl_platform(os) {
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::IGSTK_TEST_FILE $::IGSTK_BUILD_DIR/bin/libIGSTK.a
+        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.a
 
     }
     "Linux" {
@@ -187,7 +187,7 @@ switch $::tcl_platform(os) {
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::IGSTK_TEST_FILE $::IGSTK_BUILD_DIR/bin/libIGSTK.a
+        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.a
 
     }
     "Windows NT" {
@@ -218,7 +218,7 @@ switch $::tcl_platform(os) {
         set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$::VTK_BUILD_TYPE/ITKCommon.dll
-        set ::IGSTK_TEST_FILE $::IGTSTK_BUILD_DIR/bin/$::VTK_BUILD_TYPE/IGSTK.lib
+        set ::IGSTK_TEST_FILE $::IGTSTK_DIR/bin/$::VTK_BUILD_TYPE/IGSTK.lib
     }
     default {
         puts stderr "Could not match platform \"$::tcl_platform(os)\"."
