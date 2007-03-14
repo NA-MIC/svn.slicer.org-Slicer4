@@ -1,5 +1,5 @@
 
-#include "vtkIGTIGSTKSteam.h"
+#include "vtkIGTIGSTKStream.h"
 #include "vtkObjectFactory.h"
 #include "vtkKWTkUtilities.h"
 #include "vtkKWApplication.h"
@@ -19,21 +19,20 @@ vtkIGTIGSTKSteeam::vtkIGTIGSTKSteeam()
 {
     igstk::RealTimeClock::Initialize();
 
+    // Logger
     this->Logger   = LoggerType::New();
 
-    /** Logger */
-    LogOutputType::Pointer              m_LogFileOutput;  // log output to file
-    std::ofstream                       m_LogFile;        // file stream
-
-    m_LogFileOutput = LogOutputType::New();
+    // log output to file
+    // file stream
+    std::ofstream logFile;
+    this->LogFileOutput = LogOutputType::New();
     std::string logFileName = "logIGSTK.txt";
-    m_LogFile.open( logFileName.c_str() );
-    if( !m_LogFile.fail() )
+    logFile.open(logFileName.c_str());
+    if(!logFile.fail())
     {
-        m_LogFileOutput->SetStream( m_LogFile );
-        m_Logger->AddLogOutput( m_LogFileOutput );
+        this->LogFileOutput->SetStream(logFile);
+        this->Logger->AddLogOutput(this->LogFileOutput);
     }
-
 
 
     this->Speed = 0;
@@ -47,9 +46,22 @@ vtkIGTIGSTKSteeam::vtkIGTIGSTKSteeam()
 
 vtkIGTIGSTKSteeam::~vtkIGTIGSTKSteeam()
 {
-    this->LocatorNormalTransform->Delete();
-    this->LocatorMatrix->Delete();
-
+    if (this->Logger)
+    {
+        this->Logger->Delete();
+    }
+    if (this->LogFileOutput)
+    {
+        this->LogFileOutput->Delete();
+    }
+    if (this->LocatorNormalTransform)
+    {
+        this->LocatorNormalTransform->Delete();
+    }
+    if (this->LocatorMatrix)
+    {
+        this->LocatorMatrix->Delete();
+    }
 }
 
 
@@ -103,9 +115,6 @@ void vtkIGTIGSTKSteeam::Init()
         //igstkLogMacro2( m_Logger, DEBUG, rotation << "\n" );
     }
     std::cout<<"End data acquisition.\n";
-
-
-
 }
 
 
