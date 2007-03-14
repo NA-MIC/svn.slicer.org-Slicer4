@@ -266,7 +266,7 @@ if { $::GETBUILDTEST(doxy) && ![file exists $::env(SLICER_DOC)] } {
 # svn checkout (does an update if it already exists)
 cd $::SLICER_HOME/..
 
-runcmd svn checkout http://www.na-mic.org/svn/Slicer3/branches/IGT Slicer3
+# runcmd svn checkout http://www.na-mic.org/svn/Slicer3/branches/IGT Slicer3
 
 
 if { $::GETBUILDTEST(doxy) } {
@@ -322,6 +322,7 @@ runcmd $::CMAKE \
         -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
         -DKWWidgets_DIR:FILEPATH=$SLICER_LIB/KWWidgets-build \
         -DTEEM_DIR:FILEPATH=$SLICER_LIB/teem-build \
+        -DIGSTK_DIR:FILEPATH=$SLICER_LIB/IGSTK-build \
         -DCMAKE_BUILD_TYPE=$::VTK_BUILD_TYPE \
         -DSlicer3_VERSION_PATCH:STRING=$::GETBUILDTEST(version-patch) \
         -DCPACK_GENERATOR:STRING=$::GETBUILDTEST(cpack-generator) \
