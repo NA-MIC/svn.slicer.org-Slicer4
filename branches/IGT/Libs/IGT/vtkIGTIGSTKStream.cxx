@@ -46,6 +46,9 @@ vtkIGTIGSTKStream::vtkIGTIGSTKStream()
 
 vtkIGTIGSTKStream::~vtkIGTIGSTKStream()
 {
+    this->Tracker->RequestClose();
+    this->SerialCommunication->CloseCommunication();
+
     if (this->Logger)
     {
         this->Logger->Delete();
@@ -98,23 +101,7 @@ void vtkIGTIGSTKStream::Init()
     this->Tracker->RequestInitialize();
     this->Tracker->RequestStartTracking();  
 
-    igstk::Transform transform;               
-    igstk::Transform::VectorType translation;
-    igstk::Transform::VersorType rotation;
-    std::cout<<"Start data acquisition\n";
-    for(int i=0; i<100; i++) 
-    {
-        //get the tracking data for all tools
-        this->Tracker->RequestUpdateStatus();
 
-        this->Tracker->GetToolTransform(3, 0, transform);
-        //translation = transform.GetTranslation();
-        //rotation = transform.GetRotation(); 
-        igstkLogMacro2( this->Logger, DEBUG, transform << "\n" );
-        //igstkLogMacro2( m_Logger, DEBUG, translation << "\n" );
-        //igstkLogMacro2( m_Logger, DEBUG, rotation << "\n" );
-    }
-    std::cout<<"End data acquisition.\n";
 }
 
 
@@ -122,15 +109,26 @@ void vtkIGTIGSTKStream::Init()
 void vtkIGTIGSTKStream::StopPolling()
 {
     this->Tracker->RequestStopTracking();
-    this->Tracker->RequestClose();
-    this->SerialCommunication->CloseCommunication();
 }
 
 
 
 void vtkIGTIGSTKStream::PollRealtime()
 {
+    igstk::Transform transform;               
+    igstk::Transform::VectorType translation;
+    igstk::Transform::VersorType rotation;
+    std::cout<<"Start data acquisition\n";
 
+    //get the tracking data for all tools
+    this->Tracker->RequestUpdateStatus();
+
+    this->Tracker->GetToolTransform(3, 0, transform);
+    //translation = transform.GetTranslation();
+    //rotation = transform.GetRotation(); 
+    igstkLogMacro2( this->Logger, DEBUG, transform << "\n" );
+    //igstkLogMacro2( m_Logger, DEBUG, translation << "\n" );
+    //igstkLogMacro2( m_Logger, DEBUG, rotation << "\n" );
 
 }
 
