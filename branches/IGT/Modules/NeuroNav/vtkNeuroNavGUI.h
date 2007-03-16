@@ -26,7 +26,7 @@
 #include "vtkIGTOpenTrackerStream.h"
 #endif
 #ifdef USE_IGSTK
-#include "vtkIGTOpenTrackerStream.h"
+#include "vtkIGTIGSTKStream.h"
 #endif
 
 
@@ -193,7 +193,7 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
 
     void BuildGUIForHandPieceFrame ();
     void BuildGUIForTrackingFrame ();
-    void BuildGUIForServerFrame ();
+    void BuildGUIForDeviceFrame ();
     void BuildGUIForRegistrationFrame ();
 
     void TrackerLoop();
