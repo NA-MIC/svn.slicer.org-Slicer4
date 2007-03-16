@@ -431,6 +431,9 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
 #ifdef USE_OPENTRACKER
     this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
 #endif
+#ifdef USE_IGSTK
+    this->IGSTKStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+#endif
 
 
     // Fill in
@@ -514,6 +517,9 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
 #ifdef USE_OPENTRACKER
     this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+#endif
+#ifdef USE_IGSTK
+    this->IGSTKStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
 #endif
 
 }
@@ -618,16 +624,23 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 }
                 else
                 {
-#ifdef USE_OPENTRACKER
-                    this->OpenTrackerStream->Init(filename);
-
                     int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
                     float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
+#ifdef USE_OPENTRACKER
+                    this->OpenTrackerStream->Init(filename);
                     this->OpenTrackerStream->SetSpeed(sp);
                     this->OpenTrackerStream->SetMultiFactor(multi);
                     this->OpenTrackerStream->SetStartTimer(1);
                     this->OpenTrackerStream->ProcessTimerEvents();
 #endif
+#ifdef USE_IGSTK
+                    this->IGSTKStream->Init();
+                    this->IGSTKStream->SetSpeed(sp);
+                    this->IGSTKStream->SetMultiFactor(multi);
+                    this->IGSTKStream->SetStartTimer(1);
+                    this->IGSTKStream->ProcessTimerEvents();
+#endif
+
 
                 }
             }
@@ -635,6 +648,9 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             {
 #ifdef USE_OPENTRACKER
                 this->OpenTrackerStream->SetStartTimer(0);
+#endif
+#ifdef USE_IGSTK
+                this->IGSTKStream->SetStartTimer(0);
 #endif
             }
         }
@@ -741,6 +757,9 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
 #ifdef USE_OPENTRACKER
                 this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
 #endif
+#ifdef USE_IGSTK
+                this->IGSTKStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
+#endif
             }
         }
         else if (this->ResetPushButton == vtkKWPushButton::SafeDownCast(caller) 
@@ -748,6 +767,9 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         {
 #ifdef USE_OPENTRACKER
             this->OpenTrackerStream->SetRegMatrix(NULL);
+#endif
+#ifdef USE_IGSTK
+            this->IGSTKStream->SetRegMatrix(NULL);
 #endif
         }
         else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
@@ -833,7 +855,6 @@ void vtkNeuroNavGUI::Init()
 void vtkNeuroNavGUI::TrackerLoop()
 {
         
-  cout << "test" << endl;
   vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
   
   
@@ -929,7 +950,7 @@ void vtkNeuroNavGUI::BuildGUI ( )
 
     NeuroNavHelpFrame->Delete();
 
-    BuildGUIForServerFrame ();
+    BuildGUIForDeviceFrame ();
     BuildGUIForRegistrationFrame ();
     BuildGUIForTrackingFrame ();
     BuildGUIForHandPieceFrame ();
@@ -1146,35 +1167,28 @@ void vtkNeuroNavGUI::BuildGUIForRegistrationFrame ()
 }
 
 
-void vtkNeuroNavGUI::BuildGUIForServerFrame ()
+void vtkNeuroNavGUI::BuildGUIForDeviceFrame ()
 {
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "NeuroNav" );
 
     // ----------------------------------------------------------------
-    // SERVER FRAME            
+    // DEVICE FRAME            
     // ----------------------------------------------------------------
-    vtkSlicerModuleCollapsibleFrame *serverFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    serverFrame->SetParent ( page );
-    serverFrame->Create ( );
-    serverFrame->SetLabelText ("Server");
-    serverFrame->ExpandFrame ( );
+    vtkSlicerModuleCollapsibleFrame *deviceFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+    deviceFrame->SetParent ( page );
+    deviceFrame->Create ( );
+    deviceFrame->SetLabelText ("Tracking Device");
+    deviceFrame->ExpandFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-            serverFrame->GetWidgetName(), page->GetWidgetName());
+            deviceFrame->GetWidgetName(), page->GetWidgetName());
 
-    // source frame: tracking interface and multiplication factor 
-    // -----------------------------------------
-    vtkKWFrameWithLabel *sourceFrame = vtkKWFrameWithLabel::New ( );
-    sourceFrame->SetParent ( serverFrame->GetFrame() );
-    sourceFrame->Create ( );
-    sourceFrame->SetLabelText ("Data Source");
-    app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
-                 sourceFrame->GetWidgetName(),
-                 serverFrame->GetFrame()->GetWidgetName());
+    /////////////////////////////////////////////////////////////////////
+    /// Interface frame 
+    /////////////////////////////////////////////////////////////////////
 
-     // interface frame 
     vtkKWFrame *interfaceFrame = vtkKWFrame::New();
-    interfaceFrame->SetParent ( sourceFrame->GetFrame() );
+    interfaceFrame->SetParent ( deviceFrame->GetFrame() );
     interfaceFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                   interfaceFrame->GetWidgetName());
@@ -1183,29 +1197,55 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
     vtkKWLabel *nameLabel = vtkKWLabel::New();
     nameLabel->SetParent(interfaceFrame);
     nameLabel->Create();
-    nameLabel->SetWidth(15);
-    nameLabel->SetText("Tracking Interface: ");
+    nameLabel->SetWidth(8);
+    nameLabel->SetText("Interface: ");
 
     vtkKWLabel *valueLabel = vtkKWLabel::New();
     valueLabel->SetParent(interfaceFrame);
     valueLabel->Create();
-    valueLabel->SetWidth(10);
-    valueLabel->SetText("None");
+    valueLabel->SetWidth(21);
+    valueLabel->SetText("None        ");
 #ifdef USE_OPENTRACKER
-    valueLabel->SetText("OpenTracker");
+    valueLabel->SetText("IGSTK       ");
 #endif
 #ifdef USE_IGSTK
-    valueLabel->SetText("IGSTK");
+    valueLabel->SetText("OpenTracker");
 #endif
 
     this->Script(
             "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
             nameLabel->GetWidgetName(),
             valueLabel->GetWidgetName());
-   
-    // Multi frame 
+
+
+    /////////////////////////////////////////////////////////////////////
+    /// Update rate frame 
+    /////////////////////////////////////////////////////////////////////
+
+    vtkKWFrame *rateFrame = vtkKWFrame::New();
+    rateFrame->SetParent ( deviceFrame->GetFrame() );
+    rateFrame->Create ( );
+    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+                  rateFrame->GetWidgetName());
+
+    this->UpdateRateEntry = vtkKWEntryWithLabel::New();
+    this->UpdateRateEntry->SetParent(rateFrame);
+    this->UpdateRateEntry->Create();
+    this->UpdateRateEntry->SetWidth(25);
+    this->UpdateRateEntry->SetLabelWidth(15);
+    this->UpdateRateEntry->SetLabelText("Pulling Rate (ms):");
+    this->UpdateRateEntry->GetWidget()->SetValue ( "100" );
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+      this->UpdateRateEntry->GetWidgetName());
+
+
+    /////////////////////////////////////////////////////////////////////
+    /// Multi frame 
+    /////////////////////////////////////////////////////////////////////
+
     vtkKWFrame *multiFrame = vtkKWFrame::New();
-    multiFrame->SetParent ( sourceFrame->GetFrame() );
+    multiFrame->SetParent ( deviceFrame->GetFrame() );
     multiFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                   multiFrame->GetWidgetName());
@@ -1216,26 +1256,19 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
     this->MultiFactorEntry->Create();
     this->MultiFactorEntry->SetWidth(20);
     this->MultiFactorEntry->SetLabelWidth(15);
-    this->MultiFactorEntry->SetLabelText("Multiplication By:");
+    this->MultiFactorEntry->SetLabelText("Conversion Rate:");
     this->MultiFactorEntry->GetWidget()->SetValue ( "1.0" );
     this->Script(
       "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
       this->MultiFactorEntry->GetWidgetName());
 
 
-    // Connection to Server 
-    // -----------------------------------------
-    vtkKWFrameWithLabel *connectFrame = vtkKWFrameWithLabel::New ( );
-    connectFrame->SetParent ( serverFrame->GetFrame() );
-    connectFrame->Create ( );
-    connectFrame->SetLabelText ("Connection To Server");
-    app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
-                 connectFrame->GetWidgetName(),
-                 serverFrame->GetFrame()->GetWidgetName());
-
+    /////////////////////////////////////////////////////////////////////
+    /// Config file frame
+    /////////////////////////////////////////////////////////////////////
     // add a file browser 
     this->FileFrame = vtkKWFrame::New();
-    this->FileFrame->SetParent ( connectFrame->GetFrame() );
+    this->FileFrame->SetParent ( deviceFrame->GetFrame() );
     this->FileFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                   this->FileFrame->GetWidgetName());
@@ -1260,31 +1293,18 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
                 this->LoadConfigButton->GetWidgetName(),
                 this->ConfigFileEntry->GetWidgetName());
 
-    // update rate 
-    vtkKWFrame *rateFrame = vtkKWFrame::New();
-    rateFrame->SetParent ( connectFrame->GetFrame() );
-    rateFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  rateFrame->GetWidgetName());
 
-    this->UpdateRateEntry = vtkKWEntryWithLabel::New();
-    this->UpdateRateEntry->SetParent(rateFrame);
-    this->UpdateRateEntry->Create();
-    this->UpdateRateEntry->SetWidth(25);
-    this->UpdateRateEntry->SetLabelWidth(15);
-    this->UpdateRateEntry->SetLabelText("Update Rate (ms):");
-    this->UpdateRateEntry->GetWidget()->SetValue ( "200" );
-    this->Script(
-      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-      this->UpdateRateEntry->GetWidgetName());
+    /////////////////////////////////////////////////////////////////////
+    /// Connnect button 
+    /////////////////////////////////////////////////////////////////////
 
     this->ConnectCheckButton = vtkKWCheckButton::New();
-    this->ConnectCheckButton->SetParent(connectFrame->GetFrame());
+    this->ConnectCheckButton->SetParent(deviceFrame->GetFrame());
     this->ConnectCheckButton->Create();
     this->ConnectCheckButton->SelectedStateOff();
     this->ConnectCheckButton->SetText("Connect");
 
-    this->Script("pack %s -side left -anchor w -padx 2 -pady 2", 
+    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
                 this->ConnectCheckButton->GetWidgetName());
 
 
@@ -1292,11 +1312,8 @@ void vtkNeuroNavGUI::BuildGUIForServerFrame ()
     valueLabel->Delete();
     interfaceFrame->Delete();
     multiFrame->Delete();
-
-    serverFrame->Delete ();
-    sourceFrame->Delete ();
-    connectFrame->Delete ();
     rateFrame->Delete ();
+    deviceFrame->Delete ();
 }
 
 
@@ -1796,6 +1813,9 @@ void vtkNeuroNavGUI::UpdateAll()
 #ifdef USE_OPENTRACKER
     this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
 #endif
+#ifdef USE_IGSTK
+    this->LocatorMatrix = this->IGSTKStream->GetLocatorMatrix();
+#endif
 
     if (this->LocatorMatrix)
     {
@@ -1851,6 +1871,9 @@ void vtkNeuroNavGUI::UpdateAll()
 #ifdef USE_OPENTRACKER
             this->OpenTrackerStream->SetLocatorTransforms();
 #endif
+#ifdef USE_IGSTK
+            this->IGSTKStream->SetLocatorTransforms();
+#endif
             this->UpdateSliceDisplay(px, py, pz);
             this->UpdateLocator();
         }
@@ -1864,6 +1887,9 @@ void vtkNeuroNavGUI::UpdateLocator()
     vtkTransform *transform = NULL;
 #ifdef USE_OPENTRACKER
     transform = this->OpenTrackerStream->GetLocatorNormalTransform(); 
+#endif
+#ifdef USE_IGSTK
+    transform = this->IGSTKStream->GetLocatorNormalTransform(); 
 #endif
 
     if (transform)
