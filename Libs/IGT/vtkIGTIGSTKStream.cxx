@@ -19,6 +19,7 @@ vtkIGTIGSTKStream::vtkIGTIGSTKStream()
 {
     igstk::RealTimeClock::Initialize();
 
+#if 0
     // Logger
     this->Logger   = LoggerType::New();
 
@@ -33,6 +34,7 @@ vtkIGTIGSTKStream::vtkIGTIGSTKStream()
         this->LogFileOutput->SetStream(logFile);
         this->Logger->AddLogOutput(this->LogFileOutput);
     }
+#endif
 
 
     this->Speed = 0;
@@ -46,17 +48,30 @@ vtkIGTIGSTKStream::vtkIGTIGSTKStream()
 
 vtkIGTIGSTKStream::~vtkIGTIGSTKStream()
 {
-    this->Tracker->RequestClose();
-    this->SerialCommunication->CloseCommunication();
-
-    if (this->Logger)
+    if (this->Tracker) 
     {
-        this->Logger->Delete();
+        this->Tracker->SetLogger(NULL);
+        this->Tracker->SetCommunication(NULL);
+        this->Tracker->RequestStopTracking();  
+        this->Tracker->RequestClose();
+        this->Tracker->Delete();
     }
+    if (this->SerialCommunication)
+    {
+        this->SerialCommunication->CloseCommunication();
+        this->SerialCommunication->Delete();
+    }
+
     if (this->LogFileOutput)
     {
         this->LogFileOutput->Delete();
     }
+    if (this->Logger)
+    {
+        this->Logger->Flush();
+        this->Logger->Delete();
+    }
+
     if (this->LocatorNormalTransform)
     {
         this->LocatorNormalTransform->Delete();
