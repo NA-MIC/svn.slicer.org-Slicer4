@@ -57,13 +57,6 @@ INCLUDE_DIRECTORIES(
   ${FreeSurfer_BINARY_DIR}
   )
 
-IF(USE_OPENTRACKER)
-INCLUDE_DIRECTORIES(
-  ${OPENTRACKER_INC_DIR}
-)
-ENDIF(USE_OPENTRACKER)
-
-
 
 # --------------------------------------------------------------------------
 # Wrapping
@@ -93,7 +86,6 @@ TARGET_LINK_LIBRARIES(SlicerBaseLogic
   vtkGraphicsTCL
   vtkIOTCL
   #  vtkHybridTCL
-  # ${OPENTRACKER_LIB}
   FreeSurfer
   )
 
