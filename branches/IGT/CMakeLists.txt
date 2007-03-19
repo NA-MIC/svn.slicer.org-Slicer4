@@ -111,15 +111,14 @@ ENDIF(USE_TEEM)
 # OpenTracker 
 #
 OPTION(USE_OPENTRACKER "Build Slicer3 with OpenTracker support." OFF)
-
 IF(USE_OPENTRACKER)
   # version of opentracker: 1.3 or 2.0
   # By default, use versin 1.3. If use 2.0, turn it off
   OPTION(OT_VERSION_13 "Specify the opentracker version." ON)
 
   FIND_LIBRARY(OPENTRACKER_LIB 
-    NAMES opentrackerd opentracker OpenTracker 
-    PATHS "" 
+    NAMES opentrackerd opentracker OpenTracker NaviTrack
+    PATHS ${OT_LIB_DIR} 
   )
   IF(OPENTRACKER_LIB-NOTFOUND)
     MESSAGE (FATAL_ERROR "Need OpenTracker to build")
@@ -130,10 +129,10 @@ IF(USE_OPENTRACKER)
     SET(INC "OpenTracker.h")
   # include file for OpenTracker 2.0 
   ELSE(OT_VERSION_13)
-    SET(INC "OpenTracker/OpenTracker.h") 
+    SET(INC "OpenTracker/OpenTracker.h")
   ENDIF(OT_VERSION_13)
   FIND_PATH(OPENTRACKER_INC_DIR "${INC}" 
-    ""
+    ${OT_INC_DIR}
   )
 
   IF(OPENTRACKER_INC_DIR-NOTFOUND)
