@@ -328,6 +328,11 @@ runcmd $::CMAKE \
         -DCPACK_GENERATOR:STRING=$::GETBUILDTEST(cpack-generator) \
         -DCPACK_PACKAGE_FILE_NAME:STRING=$::GETBUILDTEST(binary-filename) \
         -DUSE_TEEM=ON \
+        -DUSE_IGSTK=$::IGSTK \
+        -DUSE_OPENTRACKER=$::OPENTRACKER \
+        -DOT_VERSION_13=$::OT_VERSION \
+        -DOT_LIB_DIR:FILEPATH=$::OT_LIB_DIR \
+        -DOT_INC_DIR:FILEPATH=$::OT_INC_DIR \
         $SLICER_HOME
 
 if { $isWindows } {
@@ -416,3 +421,4 @@ if {$::GETBUILDTEST(pack) == "true" &&
         puts "Not uploading $curlfile"
     }
 }
+
