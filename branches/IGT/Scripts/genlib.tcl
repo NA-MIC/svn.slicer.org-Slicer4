@@ -863,6 +863,9 @@ if { ![file exists $::CMAKE] } {
 if { ![file exists $::TEEM_TEST_FILE] } {
     puts "Teem test file $::TEEM_TEST_FILE not found."
 }
+if { ![file exists $::IGSTK_TEST_FILE] } {
+    puts "IGSTK test file $::IGSTK_TEST_FILE not found."
+}
 if { ![file exists $::TCL_TEST_FILE] } {
     puts "Tcl test file $::TCL_TEST_FILE not found."
 }
