@@ -124,8 +124,26 @@ set ::XVNC_EXECUTABLE " "
 set ::IGSTK_DIR $::SLICER_LIB/IGSTK-build 
 
 
+# Options for building IGT modules in Slicer
+set ::IGSTK "OFF"
+set ::OPENTRACKER "OFF"
+# If the value of OPENTRACKER is "ON", you need to set the following variables:
 
-# Files to test if library has already been built by genlib.tcl.
+# ON:  opentracker 1.3
+# OFF: opentracker 2.0
+set ::OT_VERSION "ON"
+
+# OT_LIB_DIR: the absolute path contains the OpenTracker library, 
+# e.g. libOpenTrakcer.so 
+# set ::OT_LIB ""
+set ::OT_LIB_DIR /home/hliu/projects/splot-build/opentracker/lib/.libs/
+
+# OT_INC: the directory contains "OpenTracker.h" (opentracker 1.3) or 
+#         "OpenTracker/OpenTracker.h" (opentracker 2.0) 
+# set ::OT_INC_DIR "" 
+set ::OT_INC_DIR /home/hliu/projects/splot-build/opentracker/src
+
+
 
 switch $::tcl_platform(os) {
     "SunOS" -
