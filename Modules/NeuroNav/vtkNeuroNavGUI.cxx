@@ -93,9 +93,14 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->GreenSliceMenu = NULL;
     */
 
+#ifdef USE_OPENTRACKER
     this->LoadConfigButton = NULL;
-
     this->ConfigFileEntry = NULL;
+#endif
+#ifdef USE_IGSTK
+    this->DeviceMenuButton = NULL;
+#endif
+
     this->UpdateRateEntry = NULL;
     this->MultiFactorEntry = NULL;
 
@@ -315,6 +320,7 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
     }
     */
 
+#ifdef USE_OPENTRACKER
     if (this->LoadConfigButton)
     {
         this->LoadConfigButton->SetParent(NULL );
@@ -326,6 +332,16 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
         this->ConfigFileEntry->SetParent(NULL );
         this->ConfigFileEntry->Delete ( );
     }
+#endif
+#ifdef USE_IGSTK
+    if (this->DeviceMenuButton) 
+    {
+        this->DeviceMenuButton->SetParent(NULL );
+        this->DeviceMenuButton->Delete();
+    }
+#endif
+
+
     if (this->UpdateRateEntry)
     {
         this->UpdateRateEntry->SetParent(NULL );
@@ -430,17 +446,13 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
 
 #ifdef USE_OPENTRACKER
     this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+    this->LoadConfigButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
 #endif
 #ifdef USE_IGSTK
     this->IGSTKStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+    this->DeviceMenuButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
 #endif
 
-
-    // Fill in
-    if (this->LoadConfigButton)
-    {
-        this->LoadConfigButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
     if (this->ConnectCheckButton)
     {
         this->ConnectCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
@@ -501,7 +513,6 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
     // Fill in
     // observer load volume button
-    this->LoadConfigButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->GetPatCoordinatesPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->AddPointPairPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -517,9 +528,11 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
 #ifdef USE_OPENTRACKER
     this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+    this->LoadConfigButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 #endif
 #ifdef USE_IGSTK
     this->IGSTKStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+    this->DeviceMenuButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 #endif
 
 }
@@ -587,25 +600,14 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
     }
     else
     {
-        if (this->LoadConfigButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent )
-        {
-            const char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
-            if (filename)
-            {
-                const vtksys_stl::string fname(filename);
-                this->ConfigFileEntry->SetValue(fname.c_str());
-            }
-            else
-            {
-                this->ConfigFileEntry->SetValue("");
-            }
-            this->LoadConfigButton->GetWidget()->SetText ("Browse Config File");
-        }  
-        else if (this->ConnectCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+        if (this->ConnectCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
             int checked = this->ConnectCheckButton->GetSelectedState(); 
+            int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
+            float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
+
+#ifdef USE_OPENTRACKER
             if (checked)
             {
                 // connected
@@ -624,36 +626,51 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 }
                 else
                 {
-                    int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
-                    float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
-#ifdef USE_OPENTRACKER
                     this->OpenTrackerStream->Init(filename);
                     this->OpenTrackerStream->SetSpeed(sp);
                     this->OpenTrackerStream->SetMultiFactor(multi);
                     this->OpenTrackerStream->SetStartTimer(1);
                     this->OpenTrackerStream->ProcessTimerEvents();
-#endif
-#ifdef USE_IGSTK
-                    this->IGSTKStream->Init();
-                    this->IGSTKStream->SetSpeed(sp);
-                    this->IGSTKStream->SetMultiFactor(multi);
-                    this->IGSTKStream->SetStartTimer(1);
-                    this->IGSTKStream->ProcessTimerEvents();
-#endif
-
-
                 }
             }
             else
             {
-#ifdef USE_OPENTRACKER
                 this->OpenTrackerStream->SetStartTimer(0);
+            }
 #endif
 #ifdef USE_IGSTK
-                this->IGSTKStream->SetStartTimer(0);
-#endif
+            if (checked)
+            {
+                this->IGSTKStream->Init();
+                this->IGSTKStream->SetSpeed(sp);
+                this->IGSTKStream->SetMultiFactor(multi);
+                this->IGSTKStream->SetStartTimer(1);
+                this->IGSTKStream->ProcessTimerEvents();
+
             }
+            else
+            {
+                this->IGSTKStream->SetStartTimer(0);
+            }
+#endif
         }
+#ifdef USE_OPENTRACKER
+        else if (this->LoadConfigButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent )
+        {
+            const char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
+            if (filename)
+            {
+                const vtksys_stl::string fname(filename);
+                this->ConfigFileEntry->SetValue(fname.c_str());
+            }
+            else
+            {
+                this->ConfigFileEntry->SetValue("");
+            }
+            this->LoadConfigButton->GetWidget()->SetText ("Browse Config File");
+        }  
+#endif
         else if (this->GetPatCoordinatesPushButton == vtkKWPushButton::SafeDownCast(caller) 
                 && event == vtkKWPushButton::InvokedEvent)
         {
@@ -1206,10 +1223,10 @@ void vtkNeuroNavGUI::BuildGUIForDeviceFrame ()
     valueLabel->SetWidth(21);
     valueLabel->SetText("None        ");
 #ifdef USE_OPENTRACKER
-    valueLabel->SetText("IGSTK       ");
+    valueLabel->SetText("OpenTracker");
 #endif
 #ifdef USE_IGSTK
-    valueLabel->SetText("OpenTracker");
+    valueLabel->SetText("IGSTK       ");
 #endif
 
     this->Script(
@@ -1273,6 +1290,7 @@ void vtkNeuroNavGUI::BuildGUIForDeviceFrame ()
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                   this->FileFrame->GetWidgetName());
 
+#ifdef USE_OPENTRACKER
     this->ConfigFileEntry = vtkKWEntry::New();
     this->ConfigFileEntry->SetParent(this->FileFrame);
     this->ConfigFileEntry->Create();
@@ -1292,6 +1310,21 @@ void vtkNeuroNavGUI::BuildGUIForDeviceFrame ()
     this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
                 this->LoadConfigButton->GetWidgetName(),
                 this->ConfigFileEntry->GetWidgetName());
+#endif
+#ifdef USE_IGSTK
+    this->DeviceMenuButton = vtkKWMenuButtonWithLabel::New();
+    this->DeviceMenuButton->SetParent(this->FileFrame);
+    this->DeviceMenuButton->Create();
+    this->DeviceMenuButton->SetWidth(50);
+    this->DeviceMenuButton->SetLabelWidth(12);
+    this->DeviceMenuButton->SetLabelText("Device Type:");
+    this->DeviceMenuButton->GetWidget()->GetMenu()->AddRadioButton("Aurora");
+    this->DeviceMenuButton->GetWidget()->GetMenu()->AddRadioButton("Polaris");
+    this->DeviceMenuButton->GetWidget()->SetValue ("Aurora");
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+      this->DeviceMenuButton->GetWidgetName());
+#endif
 
 
     /////////////////////////////////////////////////////////////////////
