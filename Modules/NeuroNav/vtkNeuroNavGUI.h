@@ -145,9 +145,14 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     vtkKWMenuButton *GreenSliceMenu;
     */
 
+#ifdef USE_OPENTRACKER
     vtkKWLoadSaveButtonWithLabel *LoadConfigButton;
-
     vtkKWEntry *ConfigFileEntry;
+#endif
+#ifdef USE_IGSTK
+    vtkKWMenuButtonWithLabel *DeviceMenuButton;
+#endif
+
     vtkKWEntryWithLabel *UpdateRateEntry;
     vtkKWEntryWithLabel * MultiFactorEntry;
 
