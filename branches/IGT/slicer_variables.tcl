@@ -164,7 +164,7 @@ switch $::tcl_platform(os) {
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.a
+        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.so
 
     }
     "Linux" {
@@ -187,7 +187,7 @@ switch $::tcl_platform(os) {
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.a
+        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.so
 
     }
     "Windows NT" {
