@@ -139,11 +139,9 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *LocatorModeCheckButton;
     vtkKWCheckButton *UserModeCheckButton;
 
-    /*
     vtkKWMenuButton *RedSliceMenu;
     vtkKWMenuButton *YellowSliceMenu;
     vtkKWMenuButton *GreenSliceMenu;
-    */
 
 #ifdef USE_OPENTRACKER
     vtkKWLoadSaveButtonWithLabel *LoadConfigButton;
