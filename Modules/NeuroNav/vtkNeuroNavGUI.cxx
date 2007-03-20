@@ -87,11 +87,9 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->LocatorModeCheckButton = NULL;
     this->UserModeCheckButton = NULL;
 
-    /*
     this->RedSliceMenu = NULL;
     this->YellowSliceMenu = NULL;
     this->GreenSliceMenu = NULL;
-    */
 
 #ifdef USE_OPENTRACKER
     this->LoadConfigButton = NULL;
@@ -302,7 +300,6 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
         this->UserModeCheckButton->Delete ( );
     }
 
-    /*
     if (this->RedSliceMenu)
     {
         this->RedSliceMenu->SetParent(NULL );
@@ -318,7 +315,6 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
         this->GreenSliceMenu->SetParent(NULL );
         this->GreenSliceMenu->Delete ( );
     }
-    */
 
 #ifdef USE_OPENTRACKER
     if (this->LoadConfigButton)
@@ -824,6 +820,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
             vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
 
+            std::string val("Locator");
             if (checked)
             {
                 this->UserModeCheckButton->SelectedStateOff();
@@ -834,8 +831,11 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 sliceNode0->SetOrientationToAxial();
                 sliceNode1->SetOrientationToSagittal();
                 sliceNode2->SetOrientationToCoronal();
+                val = "User";
             }
-
+            this->RedSliceMenu->SetValue(val.c_str());
+            this->YellowSliceMenu->SetValue(val.c_str());
+            this->GreenSliceMenu->SetValue(val.c_str());
         }
         else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
@@ -847,6 +847,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
             vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
 
+            std::string val("User");
             if (checked)
             {
                 this->LocatorModeCheckButton->SelectedStateOff();
@@ -858,7 +859,11 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             else
             {
                 this->LocatorModeCheckButton->SelectedStateOn();
+                val = "Locator";
             }
+            this->RedSliceMenu->SetValue(val.c_str());
+            this->YellowSliceMenu->SetValue(val.c_str());
+            this->GreenSliceMenu->SetValue(val.c_str());
         }
     }
 } 
@@ -1368,12 +1373,12 @@ void vtkNeuroNavGUI::BuildGUIForTrackingFrame ()
 
 
     // ----------------------------------------------------------------
-    // TRACKING FRAME            
+    // Navigation FRAME            
     // ----------------------------------------------------------------
     vtkSlicerModuleCollapsibleFrame *trackingFrame = vtkSlicerModuleCollapsibleFrame::New ( );    
     trackingFrame->SetParent ( page );
     trackingFrame->Create ( );
-    trackingFrame->SetLabelText ("Tracking");
+    trackingFrame->SetLabelText ("Navigation");
     //trackingFrame->ExpandFrame ( );
     trackingFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
@@ -1456,7 +1461,16 @@ void vtkNeuroNavGUI::BuildGUIForTrackingFrame ()
                 this->LocatorModeCheckButton->GetWidgetName(),
                 this->UserModeCheckButton->GetWidgetName());
 
-/*
+
+    // slice frame
+    vtkKWFrame *sliceFrame = vtkKWFrame::New();
+    sliceFrame->SetParent ( driverFrame->GetFrame() );
+    sliceFrame->Create ( );
+    app->Script ("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
+                 sliceFrame->GetWidgetName(),
+                 driverFrame->GetFrame()->GetWidgetName());
+
+
     // Contents in slice frame 
     vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
 
@@ -1494,12 +1508,12 @@ void vtkNeuroNavGUI::BuildGUIForTrackingFrame ()
                 this->RedSliceMenu->GetWidgetName(),
                 this->YellowSliceMenu->GetWidgetName(),
                 this->GreenSliceMenu->GetWidgetName());
-*/
 
-    trackingFrame->Delete ();
-    displayFrame->Delete ();
-    driverFrame->Delete ();
-    modeFrame->Delete ();
+    trackingFrame->Delete();
+    displayFrame->Delete();
+    driverFrame->Delete();
+    modeFrame->Delete();
+    sliceFrame->Delete();
 }
 
 
@@ -1908,7 +1922,6 @@ void vtkNeuroNavGUI::UpdateAll()
             sliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
             sliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
             sliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-
 
             // update the display of locator
 #ifdef USE_OPENTRACKER
