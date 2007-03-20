@@ -641,6 +641,16 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
 #ifdef USE_IGSTK
             if (checked)
             {
+                vtkKWMenuButton *mb = this->DeviceMenuButton->GetWidget();
+                if (!strcmp (mb->GetValue(), "Aurora"))   
+                {
+                    this->IGSTKStream->SetTrackerType(0);
+                }
+                else 
+                {
+                    this->IGSTKStream->SetTrackerType(1);
+                }
+
                 this->IGSTKStream->Init();
                 this->IGSTKStream->SetSpeed(sp);
                 this->IGSTKStream->SetMultiFactor(multi);
