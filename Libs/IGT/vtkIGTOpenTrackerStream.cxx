@@ -343,7 +343,7 @@ void vtkIGTOpenTrackerStream::ProcessTimerEvents()
         this->PollRealtime();
         this->InvokeEvent (vtkCommand::ModifiedEvent);
         vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
-                200, this, "ProcessTimerEvents");        
+                this->Speed, this, "ProcessTimerEvents");        
     }
     else
     {
