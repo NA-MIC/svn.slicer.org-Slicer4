@@ -152,7 +152,6 @@ void vtkIGTIGSTKStream::PollRealtime()
 void vtkIGTIGSTKStream::PrintSelf(ostream& os, vtkIndent indent)
 {
 
-
 }
 
 
@@ -430,7 +429,7 @@ void vtkIGTIGSTKStream::ProcessTimerEvents()
         this->PollRealtime();
         this->InvokeEvent (vtkCommand::ModifiedEvent);
         vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
-                200, this, "ProcessTimerEvents");        
+                this->Speed, this, "ProcessTimerEvents");        
     }
     else
     {
