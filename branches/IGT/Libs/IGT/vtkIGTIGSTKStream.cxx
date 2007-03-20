@@ -38,23 +38,36 @@ vtkIGTIGSTKStream::vtkIGTIGSTKStream()
 
 
     this->Speed = 0;
+    this->TrackerType = 0;
     this->StartTimer = 0;
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     this->RegMatrix = NULL;
+
+    this->AuroraTracker = NULL;
+    this->PolarisTracker = NULL;
+    this->SerialCommunication = NULL; 
 }
 
 
 
 vtkIGTIGSTKStream::~vtkIGTIGSTKStream()
 {
-    if (this->Tracker) 
+    if (this->AuroraTracker) 
     {
-        this->Tracker->SetLogger(NULL);
-        this->Tracker->SetCommunication(NULL);
-        this->Tracker->RequestStopTracking();  
-        this->Tracker->RequestClose();
-        this->Tracker->Delete();
+        this->AuroraTracker->SetLogger(NULL);
+        this->AuroraTracker->SetCommunication(NULL);
+        this->AuroraTracker->RequestStopTracking();  
+        this->AuroraTracker->RequestClose();
+        this->AuroraTracker->Delete();
+    }
+    if (this->PolarisTracker) 
+    {
+        this->PolarisTracker->SetLogger(NULL);
+        this->PolarisTracker->SetCommunication(NULL);
+        this->PolarisTracker->RequestStopTracking();  
+        this->PolarisTracker->RequestClose();
+        this->PolarisTracker->Delete();
     }
     if (this->SerialCommunication)
     {
@@ -86,6 +99,33 @@ vtkIGTIGSTKStream::~vtkIGTIGSTKStream()
 
 void vtkIGTIGSTKStream::Init()
 {
+    if (this->SerialCommunication)
+    {
+        this->SerialCommunication->Delete();
+        this->SerialCommunication = NULL;
+    }
+
+    if (this->AuroraTracker) 
+    {
+        this->AuroraTracker->SetLogger(NULL);
+        //this->AuroraTracker->SetCommunication(NULL);
+        this->AuroraTracker->RequestStopTracking();  
+        this->AuroraTracker->RequestClose();
+        this->AuroraTracker->Delete();
+        this->AuroraTracker = NULL;
+
+    }
+    if (this->PolarisTracker) 
+    {
+        this->PolarisTracker->SetLogger(NULL);
+        //this->PolarisTracker->SetCommunication(NULL);
+        this->PolarisTracker->RequestStopTracking();  
+        this->PolarisTracker->RequestClose();
+        this->PolarisTracker->Delete();
+        this->PolarisTracker = NULL;
+
+    }
+
 #ifdef _WIN32 
     //running on a windows system
     this->SerialCommunication = igstk::SerialCommunicationForWindows::New();
@@ -105,25 +145,45 @@ void vtkIGTIGSTKStream::Init()
     this->SerialCommunication->SetHardwareHandshake(igstk::SerialCommunication::HandshakeOff);  
     this->SerialCommunication->OpenCommunication();  
 
-    //Instantiate the tracker here
-    this->Tracker = igstk::PolarisTracker::New();
-    this->Tracker->SetLogger( this->Logger );
-    this->Tracker->SetCommunication(this->SerialCommunication);
+    if (this->TrackerType == 0)  // Aurora
+    {
+        //Instantiate the tracker here
+        this->AuroraTracker = igstk::AuroraTracker::New();
+        this->AuroraTracker->SetLogger( this->Logger );
+        this->AuroraTracker->SetCommunication(this->SerialCommunication);
 
-    //attach SROM file 
-    this->Tracker->AttachSROMFileNameToPort(3, "8700340.rom");
-    this->Tracker->RequestOpen();          
-    this->Tracker->RequestInitialize();
-    this->Tracker->RequestStartTracking();  
+        //attach SROM file 
+        this->AuroraTracker->AttachSROMFileNameToPort(3, "8700340.rom");
+        this->AuroraTracker->RequestOpen();          
+        this->AuroraTracker->RequestInitialize();
+        this->AuroraTracker->RequestStartTracking();  
+    }
+    else  // Polaris
+    {
+        this->PolarisTracker = igstk::PolarisTracker::New();
+        this->PolarisTracker->SetLogger( this->Logger );
+        this->PolarisTracker->SetCommunication(this->SerialCommunication);
 
-
+        //attach SROM file 
+        this->PolarisTracker->AttachSROMFileNameToPort(3, "8700340.rom");
+        this->PolarisTracker->RequestOpen();          
+        this->PolarisTracker->RequestInitialize();
+        this->PolarisTracker->RequestStartTracking();  
+    }
 }
 
 
 
 void vtkIGTIGSTKStream::StopPolling()
 {
-    this->Tracker->RequestStopTracking();
+    if (this->TrackerType == 0)  // Aurora
+    {
+        this->AuroraTracker->RequestStopTracking();
+    }
+    else
+    {
+        this->PolarisTracker->RequestStopTracking();
+    }
 }
 
 
@@ -135,10 +195,18 @@ void vtkIGTIGSTKStream::PollRealtime()
     igstk::Transform::VersorType rotation;
     std::cout<<"Start data acquisition\n";
 
-    //get the tracking data for all tools
-    this->Tracker->RequestUpdateStatus();
 
-    this->Tracker->GetToolTransform(3, 0, transform);
+    if (this->TrackerType == 0)  // Aurora
+    {
+        //get the tracking data for all tools
+        this->AuroraTracker->RequestUpdateStatus();
+        this->AuroraTracker->GetToolTransform(3, 0, transform);
+    }
+    else
+    {
+        this->PolarisTracker->RequestUpdateStatus();
+        this->PolarisTracker->GetToolTransform(3, 0, transform);
+    }
     //translation = transform.GetTranslation();
     //rotation = transform.GetRotation(); 
     igstkLogMacro2( this->Logger, DEBUG, transform << "\n" );
