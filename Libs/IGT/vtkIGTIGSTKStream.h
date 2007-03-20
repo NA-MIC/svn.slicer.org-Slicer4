@@ -41,6 +41,7 @@ public:
     vtkSetMacro(Speed,int);
     vtkSetMacro(MultiFactor,float);
     vtkSetMacro(StartTimer,int);
+    vtkSetMacro(TrackerType,short);
 
 
     vtkSetObjectMacro(RegMatrix,vtkMatrix4x4);
@@ -71,7 +72,9 @@ public:
 private:
 
     //BTX
-    igstk::PolarisTracker::Pointer       Tracker;
+    igstk::AuroraTracker::Pointer        AuroraTracker;
+    igstk::PolarisTracker::Pointer       PolarisTracker;
+
     igstk::SerialCommunication::Pointer  SerialCommunication;
 
     LoggerType::Pointer                  Logger;
@@ -82,6 +85,7 @@ private:
     int Speed;
     int StartTimer;
     float MultiFactor;
+    short TrackerType;  // 0 - Aurora; 1 - Polaris
 
     vtkMatrix4x4 *LocatorMatrix;
     vtkMatrix4x4 *RegMatrix;
