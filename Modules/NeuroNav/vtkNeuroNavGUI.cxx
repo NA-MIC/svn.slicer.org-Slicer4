@@ -1910,19 +1910,42 @@ void vtkNeuroNavGUI::UpdateAll()
         this->TSEntry->SetValue(Val);
 
 
-        int checked = this->LocatorModeCheckButton->GetSelectedState(); 
-        if (checked)
+        int count = 0;
+        vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+        vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+        vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
+        vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
+
+        if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
         {
-            vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-
-            vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
-            vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
-            vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
-
+            sliceNode0->SetOrientationToAxial();
+        }
+        else
+        {
             sliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+            count++;
+        }
+        if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
+        {
+            sliceNode1->SetOrientationToSagittal();
+        }
+        else
+        {
             sliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+            count++;
+        }
+        if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
+        {
+            sliceNode2->SetOrientationToCoronal();
+        }
+        else
+        {
             sliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+            count++;
+        }
 
+        if (count > 0)
+        {
             // update the display of locator
 #ifdef USE_OPENTRACKER
             this->OpenTrackerStream->SetLocatorTransforms();
@@ -1933,7 +1956,6 @@ void vtkNeuroNavGUI::UpdateAll()
             this->UpdateSliceDisplay(px, py, pz);
             this->UpdateLocator();
         }
-
     }
 }
 
