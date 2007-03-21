@@ -135,14 +135,13 @@ set ::OT_VERSION "ON"
 
 # OT_LIB_DIR: the absolute path contains the OpenTracker library, 
 # e.g. libOpenTrakcer.so 
-# set ::OT_LIB ""
-set ::OT_LIB_DIR /home/hliu/projects/splot-build/opentracker/lib/.libs/
+# set ::OT_LIB_DIR /home/hliu/projects/splot-build/opentracker/lib/.libs/
+set ::OT_LIB_DIR ""
 
 # OT_INC: the directory contains "OpenTracker.h" (opentracker 1.3) or 
 #         "OpenTracker/OpenTracker.h" (opentracker 2.0) 
-# set ::OT_INC_DIR "" 
-set ::OT_INC_DIR /home/hliu/projects/splot-build/opentracker/src
-
+# set ::OT_INC_DIR /home/hliu/projects/splot-build/opentracker/src
+set ::OT_INC_DIR "" 
 
 
 switch $::tcl_platform(os) {
