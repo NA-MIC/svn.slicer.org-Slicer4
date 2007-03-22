@@ -1909,103 +1909,103 @@ void vtkNeuroNavGUI::UpdateAll()
         sprintf(Val, "%6.2f", tz);
         this->TSEntry->SetValue(Val);
 
-
-        int count = 0;
-        vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-        vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
-        vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
-        vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
-
-        if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
-        {
-            sliceNode0->SetOrientationToAxial();
-        }
-        else
-        {
-            sliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-            count++;
-        }
-        if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
-        {
-            sliceNode1->SetOrientationToSagittal();
-        }
-        else
-        {
-            sliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-            count++;
-        }
-        if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
-        {
-            sliceNode2->SetOrientationToCoronal();
-        }
-        else
-        {
-            sliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-            count++;
-        }
-
-        if (count > 0)
-        {
-            // update the display of locator
+        // update the display of locator
 #ifdef USE_OPENTRACKER
-            this->OpenTrackerStream->SetLocatorTransforms();
+        this->OpenTrackerStream->SetLocatorTransforms();
 #endif
 #ifdef USE_IGSTK
-            this->IGSTKStream->SetLocatorTransforms();
+        this->IGSTKStream->SetLocatorTransforms();
 #endif
-            this->UpdateSliceDisplay(px, py, pz);
-            this->UpdateLocator();
-        }
+        this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
+        this->UpdateLocator();
     }
 }
 
 
 void vtkNeuroNavGUI::UpdateLocator()
 {
-    vtkTransform *transform = NULL;
+    int count = 0;
+    if (! strcmp(this->RedSliceMenu->GetValue(), "Locator")) count++;
+    if (! strcmp(this->YellowSliceMenu->GetValue(), "Locator")) count++;
+    if (! strcmp(this->GreenSliceMenu->GetValue(), "Locator")) count++;
+
+    // Update the locator only if at least one slice is driven by Locator
+    if (count > 0)
+    {
+        vtkTransform *transform = NULL;
 #ifdef USE_OPENTRACKER
-    transform = this->OpenTrackerStream->GetLocatorNormalTransform(); 
+        transform = this->OpenTrackerStream->GetLocatorNormalTransform(); 
 #endif
 #ifdef USE_IGSTK
-    transform = this->IGSTKStream->GetLocatorNormalTransform(); 
+        transform = this->IGSTKStream->GetLocatorNormalTransform(); 
 #endif
 
-    if (transform)
-    {
-        vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-        vtkSlicerViewerWidget *viewerWidget = appGUI->GetViewerWidget();
-
-        vtkActor *locatorActor = viewerWidget->GetActorByID(this->LocatorModelID.c_str());
-        if (locatorActor)
+        if (transform)
         {
-            //locatorActor->GetProperty()->SetColor(1, 0, 0);
+            vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+            vtkSlicerViewerWidget *viewerWidget = appGUI->GetViewerWidget();
 
-            locatorActor->SetUserMatrix(transform->GetMatrix());
-            locatorActor->Modified();
-            this->GetMRMLScene()->Modified();
+            vtkActor *locatorActor = viewerWidget->GetActorByID(this->LocatorModelID.c_str());
+            if (locatorActor)
+            {
+                //locatorActor->GetProperty()->SetColor(1, 0, 0);
+
+                locatorActor->SetUserMatrix(transform->GetMatrix());
+                locatorActor->Modified();
+                this->GetMRMLScene()->Modified();
+            }
         }
     }
 }
 
 
 
-void vtkNeuroNavGUI::UpdateSliceDisplay(float px, float py, float pz)
+void vtkNeuroNavGUI::UpdateSliceDisplay(float nx, float ny, float nz, 
+                                        float tx, float ty, float tz, 
+                                        float px, float py, float pz)
 {
     vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
 
     vtkSlicerSliceLogic *logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
     vtkSlicerSliceLogic *logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
     vtkSlicerSliceLogic *logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
-
+    vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+    vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
+    vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
     vtkSlicerSliceControllerWidget *control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
     vtkSlicerSliceControllerWidget *control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
     vtkSlicerSliceControllerWidget *control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
-    control0->GetOffsetScale()->SetValue(pz);
-    control1->GetOffsetScale()->SetValue(px);
-    control2->GetOffsetScale()->SetValue(py);
 
-    logic0->SetSliceOffset(pz);
-    logic1->SetSliceOffset(px);
-    logic2->SetSliceOffset(py);
+
+    if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
+    {
+        sliceNode0->SetOrientationToAxial();
+    }
+    else
+    {
+        sliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+        control0->GetOffsetScale()->SetValue(pz);
+        logic0->SetSliceOffset(pz);
+    }
+    if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
+    {
+        sliceNode1->SetOrientationToSagittal();
+    }
+    else
+    {
+        sliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+        control1->GetOffsetScale()->SetValue(px);
+        logic1->SetSliceOffset(px);
+    }
+    if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
+    {
+        sliceNode2->SetOrientationToCoronal();
+    }
+    else
+    {
+        sliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+        control2->GetOffsetScale()->SetValue(py);
+        logic2->SetSliceOffset(py);
+    }
 }
 
