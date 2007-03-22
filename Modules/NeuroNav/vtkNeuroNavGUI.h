@@ -188,7 +188,9 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
 
     void UpdateAll();
     void UpdateLocator();
-    void UpdateSliceDisplay(float x, float y, float z);
+    void UpdateSliceDisplay(float nx, float ny, float nz, 
+                            float tx, float ty, float tz, 
+                            float px, float py, float pz);
 
  private:
     vtkNeuroNavGUI ( const vtkNeuroNavGUI& ); // Not implemented.
