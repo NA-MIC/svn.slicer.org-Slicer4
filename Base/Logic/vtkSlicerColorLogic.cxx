@@ -231,8 +231,7 @@ void vtkSlicerColorLogic::RemoveDefaultColorNodes()
       node = vtkMRMLColorTableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(id.c_str()));
       if (node != NULL)
         {
-        node->Delete();
-        node = NULL;
+        this->GetMRMLScene()->RemoveNode(node);
         }
       }
     }
@@ -247,9 +246,8 @@ void vtkSlicerColorLogic::RemoveDefaultColorNodes()
     vtkDebugMacro("vtkSlicerColorLogic::RemoveDefaultColorNodes: trying to find node with id " << id.c_str() << endl);
     fsnode =  vtkMRMLFreeSurferProceduralColorNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(id.c_str()));
     if (fsnode != NULL)
-      {       
-      fsnode->Delete();
-      fsnode = NULL;
+      {
+      this->GetMRMLScene()->RemoveNode(fsnode);
       }
     }
   basicFSNode->Delete();
@@ -257,16 +255,14 @@ void vtkSlicerColorLogic::RemoveDefaultColorNodes()
   // remove the fs lookup table node
   node = vtkMRMLColorTableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->GetDefaultFreeSurferLabelMapColorNodeID()));
   if (node != NULL)
-    {       
-    node->Delete();
-    node = NULL;
+    {
+    this->GetMRMLScene()->RemoveNode(node);
     }
   // remove the fs surface labels node
   node = vtkMRMLColorTableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->GetDefaultFreeSurferSurfaceLabelsColorNodeID()));
   if (node != NULL)
-    {       
-    node->Delete();
-    node = NULL;
+    {
+    this->GetMRMLScene()->RemoveNode(node);
     }
 }
 
