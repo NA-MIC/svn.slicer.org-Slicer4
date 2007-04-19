@@ -1,0 +1,56 @@
+#SET(CPACK_INSTALLED_DIRECTORIES)
+
+SET(TCL_DIR "${Slicer3_BINARY_DIR}/../Slicer3-lib/tcl-build")
+IF(EXISTS "${TCL_DIR}/bin/tclsh8.4" OR EXISTS "${TCL_DIR}/bin/tclsh84.exe")
+ELSE(EXISTS "${TCL_DIR}/bin/tclsh8.4" OR EXISTS "${TCL_DIR}/bin/tclsh84.exe")
+  MESSAGE(STATUS "Not Packaging TCL (cannot found: ${TCL_DIR}/bin/tclsh8.4 or ${TCL_DIR}/bin/tclsh84.exe)")
+  SET(TCL_DIR "")
+ENDIF(EXISTS "${TCL_DIR}/bin/tclsh8.4" OR EXISTS "${TCL_DIR}/bin/tclsh84.exe")
+
+IF(TCL_DIR)
+  #SET(CPACK_INSTALLED_DIRECTORIES ${CPACK_INSTALLED_DIRECTORIES}
+  #  "${TCL_DIR}" "/lib/Slicer3/tcl")
+  INSTALL(CODE "EXECUTE_PROCESS\(COMMAND \"${CMAKE_COMMAND}\" -E copy_directory \"${TCL_DIR}\" \"\${CMAKE_INSTALL_PREFIX}/lib/Slicer3/tcl\"\)")
+ENDIF(TCL_DIR)
+
+CONFIGURE_FILE(
+  "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt.in"
+  "${Slicer3_BINARY_DIR}/PackageLibraries/CMakeLists.txt"
+  @ONLY)
+
+
+# If the cmake version includes cpack, use it
+INCLUDE(InstallRequiredSystemLibraries)
+INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/InstallDebugSystemLibraries.cmake)
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Medical Visualization and Processing Environment for Research")
+SET(CPACK_PACKAGE_VENDOR "NA-MIC")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${Slicer3_SOURCE_DIR}/README.txt")
+SET(CPACK_RESOURCE_FILE_LICENSE "${Slicer3_SOURCE_DIR}/License.txt")
+SET(CPACK_PACKAGE_VERSION_MAJOR "${Slicer3_VERSION_MAJOR}")
+SET(CPACK_PACKAGE_VERSION_MINOR "${Slicer3_VERSION_MINOR}")
+SET(CPACK_PACKAGE_VERSION_PATCH "${Slicer3_VERSION_PATCH}")
+SET(CPACK_INSTALL_CMAKE_PROJECTS
+  "${Slicer3_BINARY_DIR};Slicer3;ALL;/")
+IF(EXISTS "${VTK_DIR}/CMakeCache.txt")
+  SET(CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${VTK_DIR};VTK;ALL;/")
+ENDIF(EXISTS "${VTK_DIR}/CMakeCache.txt")
+IF(EXISTS "${ITK_DIR}/CMakeCache.txt")
+  SET(CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${ITK_DIR};ITK;ALL;/")
+ENDIF(EXISTS "${ITK_DIR}/CMakeCache.txt")
+IF(EXISTS "${KWWidgets_DIR}/CMakeCache.txt")
+  SET(CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${KWWidgets_DIR};KWWidgets;ALL;/")
+ENDIF(EXISTS "${KWWidgets_DIR}/CMakeCache.txt")
+IF(EXISTS "${TEEM_DIR}/CMakeCache.txt")
+  SET(CPACK_INSTALL_CMAKE_PROJECTS "${CPACK_INSTALL_CMAKE_PROJECTS};${TEEM_DIR};teem;ALL;/")
+ENDIF(EXISTS "${TEEM_DIR}/CMakeCache.txt")
+IF(APPLE)
+  SET(CPACK_PACKAGE_ICON "${Slicer3_SOURCE_DIR}/Utilities/Package/Slicer3.icns")
+ENDIF(APPLE)
+
+# slicer3 does _not_ require setting the windows path
+SET(CPACK_NSIS_MODIFY_PATH OFF)
+
+SET(CPACK_PACKAGE_EXECUTABLES "..\\\\Slicer3" "Slicer")
+INCLUDE(CPack)
+
+
