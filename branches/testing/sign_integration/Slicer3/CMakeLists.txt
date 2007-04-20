@@ -35,8 +35,8 @@ ENDIF(BUILD_SHARED_LIBS)
 # Top level slicer3 configurations
 #
 
-SET (LIBRARY_OUTPUT_PATH ${Slicer3_BINARY_DIR}/bin/ 
-        CACHE PATH 
+SET (LIBRARY_OUTPUT_PATH ${Slicer3_BINARY_DIR}/bin/
+        CACHE PATH
         "Single output directory for building all libraries." 
         FORCE)
 SET (EXECUTABLE_OUTPUT_PATH ${Slicer3_BINARY_DIR}/bin/ 

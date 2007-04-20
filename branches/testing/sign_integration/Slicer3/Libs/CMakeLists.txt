@@ -8,6 +8,17 @@ IF( TEEM_FOUND )
   )
 ENDIF( TEEM_FOUND )
 
+FIND_FILE(SIGN_DIR SIGN
+${CMAKE_CURRENT_SOURCE_DIR}
+ )
+
+IF(SIGN_DIR)
+SUBDIRS(
+SIGN
+)
+ENDIF(SIGN_DIR)
+
+
 SUBDIRS(
       vtkITK
       FreeSurfer
@@ -21,5 +32,3 @@ SUBDIRS(
       MGHImageIO
       IGT
 )
-
-

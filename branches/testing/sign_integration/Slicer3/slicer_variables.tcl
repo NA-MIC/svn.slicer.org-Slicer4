@@ -6,7 +6,7 @@
 #   launch.tcl -- sets up the runtime env and starts slicer
 #   Scripts/tarup.tcl -- makes a tar.gz files with all the support files
 #
-# - use this file to set your local environment and then your change won't 
+# - use this file to set your local environment and then your change won't
 #   be overwritten when those files are updated through CVS
 #
 
@@ -41,22 +41,22 @@ set ::WINDOWS "win32"
 #
 switch $::tcl_platform(os) {
     "SunOS" { set ::env(BUILD) $::SOLARIS }
-    "Linux" {           
+    "Linux" {
         if {$::tcl_platform(machine) == "x86_64"} {
-            set ::env(BUILD) $::LINUX_64 
+            set ::env(BUILD) $::LINUX_64
         } else {
             set ::env(BUILD) $::LINUX
         }
-    }       
-    "Darwin" { 
+    }
+    "Darwin" {
         if {$::tcl_platform(machine) == "i386"} {
             set ::env(BUILD) $::DARWIN_X86
         } else {
-            set ::env(BUILD) $::DARWIN 
+            set ::env(BUILD) $::DARWIN
         }
     }
-    default { 
-        set ::env(BUILD) $::WINDOWS 
+    default {
+        set ::env(BUILD) $::WINDOWS
         set ::SLICER_HOME [file attributes $::SLICER_HOME -shortname]
         set ::env(SLICER_HOME) $::SLICER_HOME
     }
@@ -86,10 +86,13 @@ set ::ITCL_TAG "itcl-3-2-1"
 set ::IWIDGETS_TAG "iwidgets-4-0-1"
 set ::BLT_TAG "blt24z"
 set ::SANDBOX_TAG "http://svn.na-mic.org/svn/NAMICSandBox/branches/Slicer-2-6"
+set ::NAVITRACK_TAG "https://ariser.uio.no/svn/navitrack/trunk"
+set ::SIGN_TAG "https://ariser.uio.no/svn/sign/branches/stable-2.0/libs/SIGN"
+set ::SIGN_APP_TAG "https://ariser.uio.no/svn/sign/branches/stable-2.0/Applications"
 
 # Set library, binary, etc. paths...
 
-# if SLICER_LIB and SLICER_BUILD haven't been set, 
+# if SLICER_LIB and SLICER_BUILD haven't been set,
 # then assume they are in the 'standard' places next to the source tree
 # (as created by getbuildtest.tcl
 if { ![info exists ::SLICER_LIB] } {
@@ -122,7 +125,10 @@ set ::TCL_INCLUDE_DIR $::SLICER_LIB/tcl-build/include
 set ::CMAKE_PATH $::SLICER_LIB/CMake-build
 set ::SOV_BINARY_DIR ""
 set ::XVNC_EXECUTABLE " "
-set ::IGSTK_DIR $::SLICER_LIB/IGSTK-build 
+set ::IGSTK_DIR $::SLICER_LIB/IGSTK-build
+set ::NaviTrack_DIR $::SLICER_LIB/NaviTrack-build
+set ::dcmtk_DIR $::SLICER_LIB/dcmtk-build
+
 
 
 # Options for building IGT modules in Slicer
@@ -134,15 +140,15 @@ set ::OPENTRACKER "OFF"
 # OFF: opentracker 2.0
 set ::OT_VERSION "ON"
 
-# OT_LIB_DIR: the absolute path contains the OpenTracker library, 
-# e.g. libOpenTrakcer.so 
+# OT_LIB_DIR: the absolute path contains the OpenTracker library,
+# e.g. libOpenTrakcer.so
 # set ::OT_LIB_DIR /home/hliu/projects/splot-build/opentracker/lib/.libs/
 set ::OT_LIB_DIR ""
 
-# OT_INC: the directory contains "OpenTracker.h" (opentracker 1.3) or 
-#         "OpenTracker/OpenTracker.h" (opentracker 2.0) 
+# OT_INC: the directory contains "OpenTracker.h" (opentracker 1.3) or
+#         "OpenTracker/OpenTracker.h" (opentracker 2.0)
 # set ::OT_INC_DIR /home/hliu/projects/splot-build/opentracker/src
-set ::OT_INC_DIR "" 
+set ::OT_INC_DIR ""
 
 
 switch $::tcl_platform(os) {
@@ -175,14 +181,16 @@ switch $::tcl_platform(os) {
         set ::KWWidgets_TEST_FILE $::KWWidgets_BUILD_DIR/bin/libKWWidgets.$shared_lib_ext
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
         set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
-        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.so
+        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.$shared_lib_ext
+        set ::NaviTrack_TEST_FILE $::NaviTrack_DIR/libNaviTrack.$shared_lib_ext
+        set ::dcmtk_TEST_FILE $::dcmtk_DIR/dcmnet/libsrc/libdcmnet.a
 
     }
     "Linux" {
@@ -198,7 +206,7 @@ switch $::tcl_platform(os) {
         set ::KWWidgets_TEST_FILE $::KWWidgets_BUILD_DIR/bin/libKWWidgets.so
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.so
         set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
-        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext
         set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
@@ -206,13 +214,15 @@ switch $::tcl_platform(os) {
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
         set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.so
+        set ::NaviTrack_TEST_FILE $::NaviTrack_DIR/libNaviTrack.$shared_lib_ext
+        set ::dcmtk_TEST_FILE $::dcmtk_DIR/dcmnet/libsrc/libdcmnet.a
 
     }
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
 
         #
-        ### Set your peferred build type: 
+        ### Set your peferred build type:
         #
         #set ::VTK_BUILD_TYPE RelWithDebInfo ;# good if you have the full (expensive) compiler
         #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
@@ -237,6 +247,9 @@ switch $::tcl_platform(os) {
         set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$::VTK_BUILD_TYPE/ITKCommon.dll
         set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/$::VTK_BUILD_TYPE/IGSTK.lib
+        set ::NaviTrack_TEST_FILE $::NaviTrack_DIR/$::VTK_BUILD_TYPE//libNaviTrack.lib
+        set ::dcmtk_TEST_FILE $::dcmtk_DIR/bin::$VTK_BUILD_TYPE/libdcmdata.a
+
     }
     default {
         puts stderr "Could not match platform \"$::tcl_platform(os)\"."
@@ -260,7 +273,7 @@ switch $::tcl_platform(os) {
     "Linux" {
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.so
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.so
-        set ::GENERATOR "Unix Makefiles" 
+        set ::GENERATOR "Unix Makefiles"
         set ::COMPILER_PATH "/usr/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
@@ -271,7 +284,7 @@ switch $::tcl_platform(os) {
     "Darwin" {
         set ::VTKSLICERBASE_BUILD_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBase.dylib
         set ::VTKSLICERBASE_BUILD_TCL_LIB $::SLICER_HOME/Base/builds/$::env(BUILD)/bin/vtkSlicerBaseTCL.dylib
-        set ::GENERATOR "Unix Makefiles" 
+        set ::GENERATOR "Unix Makefiles"
         set ::COMPILER_PATH "/usr/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
@@ -293,9 +306,9 @@ switch $::tcl_platform(os) {
         #
         ## match this to the version of the compiler you have:
         #
-        
+
         ## for Visual Studio 6:
-        #set ::GENERATOR "Visual Studio 6" 
+        #set ::GENERATOR "Visual Studio 6"
         #set ::MAKE "msdev"
         #set ::COMPILER_PATH ""
         #set MSVC6 1
@@ -309,7 +322,7 @@ switch $::tcl_platform(os) {
         if {[info exists ::env(GENERATOR)]} {
             set ::GENERATOR $::env(GENERATOR)
         } else {
-            set ::GENERATOR "Visual Studio 7" 
+            set ::GENERATOR "Visual Studio 7"
         }
 
         if {[info exists ::env(MAKE)]} {
@@ -329,7 +342,7 @@ switch $::tcl_platform(os) {
         # - automatically use newer if available
         #
         if { [file exists "c:/Program Files/Microsoft Visual Studio .NET 2003/Common7/IDE/devenv.exe"] } {
-            set ::GENERATOR "Visual Studio 7 .NET 2003" 
+            set ::GENERATOR "Visual Studio 7 .NET 2003"
             set ::MAKE "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Common7/IDE/devenv"
             set ::COMPILER_PATH "c:/Program\ Files/Microsoft\ Visual\ Studio\ .NET 2003/Vc7/bin"
         }
@@ -340,14 +353,14 @@ switch $::tcl_platform(os) {
         # - use full if available, otherwise express
         #
         if { [file exists "c:/Program Files/Microsoft Visual Studio 8/Common7/IDE/VCExpress.exe"] } {
-            set ::GENERATOR "Visual Studio 8 2005" 
+            set ::GENERATOR "Visual Studio 8 2005"
             set ::MAKE "c:/Program Files/Microsoft Visual Studio 8/Common7/IDE/VCExpress.exe"
             set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 8/VC/bin"
         }
 
 
         if { [file exists "c:/Program Files/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"] } {
-            set ::GENERATOR "Visual Studio 8 2005" 
+            set ::GENERATOR "Visual Studio 8 2005"
             set ::MAKE "c:/Program Files/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"
             set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 8/VC/bin"
         }
@@ -356,5 +369,3 @@ switch $::tcl_platform(os) {
         set ::SERIAL_MAKE $::MAKE
     }
 }
-
-

@@ -15,7 +15,7 @@
 # - build for this platform
 #
 # Packages: cmake, tcl, itcl, ITK, VTK, blt, teem, NA-MIC sandbox
-# 
+#
 # Usage:
 #   genlib [options] [target]
 #
@@ -47,7 +47,7 @@ if {[info exists ::env(SVN)]} {
 
 proc Usage { {msg ""} } {
     global SLICER
-    
+
     set msg "$msg\nusage: genlib \[options\] \[target\]"
     set msg "$msg\n  \[target\] is the SLICER_LIB directory"
     set msg "$msg\n             and is determined automatically if not specified"
@@ -124,7 +124,7 @@ proc runcmd {args} {
         gets $fp line
         puts $line
     }
-    set ret [catch "close $fp" res] 
+    set ret [catch "close $fp" res]
     if { $ret } {
         puts stderr $res
         if { $isWindows } {
@@ -132,7 +132,7 @@ proc runcmd {args} {
         } else {
             error $ret
         }
-    } 
+    }
 }
 
 
@@ -140,7 +140,7 @@ proc runcmd {args} {
 # First, set up the directory
 # - determine the location
 # - determine the build
-# 
+#
 
 # hack to work around lack of normalize option in older tcl
 # set SLICER_HOME [file dirname [file dirname [file normalize [info script]]]]
@@ -158,7 +158,7 @@ if { $::SLICER_LIB == "" } {
 #######
 #
 # Note: the local vars file, slicer2/slicer_variables.tcl, overrides the default values in this script
-# - use it to set your local environment and then your change won't 
+# - use it to set your local environment and then your change won't
 #   be overwritten when this file is updated
 #
 set localvarsfile $SLICER_HOME/slicer_variables.tcl
@@ -179,19 +179,19 @@ switch $tcl_platform(os) {
         set isDarwin 0
         set isLinux 0
     }
-    "Linux" { 
+    "Linux" {
         set isSolaris 0
         set isWindows 0
         set isDarwin 0
         set isLinux 1
     }
-    "Darwin" { 
+    "Darwin" {
         set isSolaris 0
         set isWindows 0
         set isDarwin 1
         set isLinux 0
     }
-    default { 
+    default {
         set isSolaris 0
         set isWindows 1
         set isDarwin 0
@@ -251,9 +251,9 @@ if {$isWindows} {
 #
 
 if {$isDarwin} {
-    set CVS_CO_FLAGS "-q"  
+    set CVS_CO_FLAGS "-q"
 } else {
-    set CVS_CO_FLAGS "-q -z3"    
+    set CVS_CO_FLAGS "-q -z3"
 }
 
 
@@ -282,7 +282,7 @@ if { ![file exists $::CMAKE] || $::GENLIB(update) } {
             runcmd $SLICER_LIB/CMake/bootstrap --init=$SLICER_HOME/Scripts/spl.cmake.init
         } else {
             runcmd $SLICER_LIB/CMake/bootstrap
-        } 
+        }
         eval runcmd $::MAKE
     }
 }
@@ -329,7 +329,7 @@ if { ![file exists $::TK_TEST_FILE] || $::GENLIB(update) } {
         if { ![file exists $SLICER_LIB/tcl/isPatched] } {
                 puts "Patching..."
                 runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/tkEventPatch.diff
-                runcmd cp tkEventPatch.diff $SLICER_LIB/tcl/tk/generic 
+                runcmd cp tkEventPatch.diff $SLICER_LIB/tcl/tk/generic
                 cd $SLICER_LIB/tcl/tk/generic
                 runcmd patch -i tkEventPatch.diff
 
@@ -360,7 +360,7 @@ if { ![file exists $::ITCL_TEST_FILE] || $::GENLIB(update) } {
 
     cd $SLICER_LIB/tcl/incrTcl
 
-    exec chmod +x ../incrTcl/configure 
+    exec chmod +x ../incrTcl/configure
 
     if {$isWindows} {
         # can't do windows
@@ -389,7 +389,7 @@ if { ![file exists $::IWIDGETS_TEST_FILE] || $::GENLIB(update) } {
     } else {
         cd $SLICER_LIB/tcl/iwidgets
         runcmd ../iwidgets/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --with-itcl=$SLICER_LIB/tcl/incrTcl --prefix=$SLICER_LIB/tcl-build
-        # make all doesn't do anything... 
+        # make all doesn't do anything...
         # iwidgets won't compile in parallel (with -j flag)
         eval runcmd $::SERIAL_MAKE all
         eval runcmd $::SERIAL_MAKE install
@@ -403,7 +403,7 @@ if { ![file exists $::IWIDGETS_TEST_FILE] || $::GENLIB(update) } {
 
 if { ![file exists $::BLT_TEST_FILE] || $::GENLIB(update) } {
     cd $SLICER_LIB/tcl
-    
+
     runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
     eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt"
 
@@ -415,7 +415,7 @@ if { ![file exists $::BLT_TEST_FILE] || $::GENLIB(update) } {
             runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch
             cd $SLICER_LIB/tcl/blt
             runcmd patch -p2 < ../bltpatch
-            
+
             # create a file to make sure BLT isn't patched twice
             runcmd touch $SLICER_LIB/tcl/isPatchedBLT
             file delete $SLICER_LIB/tcl/bltpatch
@@ -425,12 +425,12 @@ if { ![file exists $::BLT_TEST_FILE] || $::GENLIB(update) } {
 
         cd $SLICER_LIB/tcl/blt
         runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build --enable-shared --x-includes=/usr/X11R6/include --with-cflags=-fno-common
-        
+
         eval runcmd $::MAKE
         eval runcmd $::MAKE install
     } else {
         cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
+        runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build
         eval runcmd $::SERIAL_MAKE
         eval runcmd $::SERIAL_MAKE install
     }
@@ -553,7 +553,7 @@ if { ![file exists $::VTK_TEST_FILE] || $::GENLIB(update) } {
             runcmd $::MAKE VTK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE 
+        eval runcmd $::MAKE
     }
 }
 
@@ -591,7 +591,7 @@ if { ![file exists $::KWWidgets_TEST_FILE] || $::GENLIB(update) } {
             runcmd $::MAKE KWWidgets.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE 
+        eval runcmd $::MAKE
     }
 }
 
@@ -640,9 +640,11 @@ if { ![file exists $::ITK_TEST_FILE] || $::GENLIB(update) } {
             runcmd $::MAKE ITK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE 
+        eval runcmd $::MAKE
     }
 }
+
+
 
 
 ################################################################################
@@ -653,7 +655,7 @@ if { ![file exists $::ITK_TEST_FILE] || $::GENLIB(update) } {
 if { ![file exists $::TEEM_TEST_FILE] || $::GENLIB(update) } {
     cd $SLICER_LIB
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login 
+    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
     eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TEEM_TAG teem"
 
     file mkdir $SLICER_LIB/teem-build
@@ -707,7 +709,7 @@ if { ![file exists $::TEEM_TEST_FILE] || $::GENLIB(update) } {
             runcmd $::MAKE teem.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        eval runcmd $::MAKE 
+        eval runcmd $::MAKE
     }
 }
 
@@ -719,7 +721,7 @@ if { ![file exists $::TEEM_TEST_FILE] || $::GENLIB(update) } {
 if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] || $::GENLIB(update) } {
     cd $SLICER_LIB
 
-    runcmd $::SVN checkout $::SANDBOX_TAG NAMICSandBox 
+    runcmd $::SVN checkout $::SANDBOX_TAG NAMICSandBox
 
     file mkdir $SLICER_LIB/NAMICSandBox-build
     cd $SLICER_LIB/NAMICSandBox-build
@@ -787,14 +789,14 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
 
         # Just build the two libraries we need, not the rest of the sandbox.
         # This line builds the SlicerClustering library.
-        # It also causes the SpectralClustering lib to build, 
+        # It also causes the SpectralClustering lib to build,
         # since SlicerClustering depends on it.
-        # Later in the slicer Module build process, 
+        # Later in the slicer Module build process,
         # vtkDTMRI links to SlicerClustering.
         # At some point in the future, the classes in these libraries
         # will become part of ITK and this will no longer be needed.
-        cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation   
-        eval runcmd $::MAKE 
+        cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation
+        eval runcmd $::MAKE
         # TODO Distributions broken with ITK 3.0 f2c
         #cd $SLICER_LIB/NAMICSandBox-build/Distributions
         #eval runcmd $::MAKE
@@ -806,7 +808,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
 
 
 ################################################################################
-# Get and build igstk 
+# Get and build igstk
 #
 
 if { ![file exists $::IGSTK_TEST_FILE] || $::GENLIB(update) } {
@@ -854,13 +856,84 @@ if { ![file exists $::IGSTK_TEST_FILE] || $::GENLIB(update) } {
             runcmd $::MAKE IGSTK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
-        # Running this cmake again will populate those CMake variables 
-        # in IGSTK/CMakeLists.txt marked as MARK_AS_ADVANCED with their 
+
+        # Running this cmake again will populate those CMake variables
+        # in IGSTK/CMakeLists.txt marked as MARK_AS_ADVANCED with their
         # default values. For instance, IGSTK_SERIAL_PORT_0, IGSTK_SERIAL_PORT_1,
         # IGSTK_SERIAL_PORT_2, ......
-        eval runcmd $::CMAKE ../IGSTK 
+        eval runcmd $::CMAKE ../IGSTK
 
-        eval runcmd $::MAKE 
+        eval runcmd $::MAKE
+
+    }
+}
+
+################################################################################
+# Get and build NaviTrack
+#
+#
+
+if { ![file exists $::NaviTrack_TEST_FILE] || $::GENLIB(update) } {
+    cd $SLICER_LIB
+
+    runcmd $::SVN co https://ariser.uio.no/svn/navitrack/trunk NaviTrack
+
+    file mkdir $SLICER_LIB/NaviTrack-build
+    cd $SLICER_LIB/NaviTrack-build
+
+    runcmd $::CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DBUILD_TESTING:BOOL=OFF \
+        ../NaviTrack
+
+
+    if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE NaviTrack.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE NaviTrack.SLN /build  $::VTK_BUILD_TYPE
+        }
+    } else {
+        eval runcmd $::MAKE
+    }
+}
+
+
+
+################################################################################
+# Get and build dcmtk
+#
+#
+
+if { ![file exists $::dcmtk_TEST_FILE] || $::GENLIB(update) } {
+    cd $SLICER_LIB
+
+    runcmd $::SVN --username ivs --password ivs co https://ariser.uio.no/svn/sign/trunk/libs/dcmtk-3.5.4 dcmtk
+
+    file mkdir $SLICER_LIB/dcmtk-build
+    cd $SLICER_LIB/dcmtk-build
+
+    runcmd $::CMAKE \
+        -G$GENERATOR \
+        -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
+        -DBUILD_SHARED_LIBS:BOOL=ON \
+        -DBUILD_TESTING:BOOL=OFF \
+        -DINSTALL_LIBDIR:PATH=$SLICER_LIB/dcmtk-build/bin \
+        ../dcmtk
+
+
+    if {$isWindows} {
+        if { $MSVC6 } {
+            runcmd $::MAKE dcmtk.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
+        } else {
+            runcmd $::MAKE dcmtk.SLN /build  $::VTK_BUILD_TYPE
+        }
+    } else {
+        eval runcmd $::MAKE
     }
 }
 
@@ -898,11 +971,11 @@ if { ![file exists $::VTK_TEST_FILE] } {
 if { ![file exists $::ITK_TEST_FILE] } {
     puts "ITK test file $::ITK_TEST_FILE not found."
 }
-if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] } { 
-    if {$isLinux} { 
-    puts "Sandbox test file $::SANDBOX_TEST_FILE or $::ALT_SANDBOX_TEST_FILE not found." 
-    } else { 
-    puts "Sandbox test file $::SANDBOX_TEST_FILE not found." 
+if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FILE] } {
+    if {$isLinux} {
+    puts "Sandbox test file $::SANDBOX_TEST_FILE or $::ALT_SANDBOX_TEST_FILE not found."
+    } else {
+    puts "Sandbox test file $::SANDBOX_TEST_FILE not found."
     }
 }
 
@@ -919,9 +992,9 @@ if { ![file exists $::CMAKE] || \
          ![file exists $::SANDBOX_TEST_FILE] } {
     if { ![file exists $::ALT_SANDBOX_TEST_FILE] } {
     puts "Not all packages compiled; check errors and run genlib.tcl again."
-    exit 1 
+    exit 1
     }
-} else { 
+} else {
     puts "All packages compiled."
-    exit 0 
+    exit 0
 }

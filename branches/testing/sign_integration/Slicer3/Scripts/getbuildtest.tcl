@@ -22,7 +22,7 @@
 
 proc Usage { {msg ""} } {
     global SLICER
-    
+
     set msg "$msg\nusage: getbuildtest \[options\] \[target\]"
     set msg "$msg\n  \[target\] is determined automatically if not specified"
     set msg "$msg\n  \[options\] is one of the following:"
@@ -87,13 +87,13 @@ for {set i 0} {$i < $argc} {incr i} {
             }
         }
         "--pack" {
-                set ::GETBUILDTEST(pack) "true"            
+                set ::GETBUILDTEST(pack) "true"
         }
         "--upload" {
             set ::GETBUILDTEST(upload) "true"
             incr i
             if {$i == $argc} {
-                # uses default value                
+                # uses default value
             } else {
                 # peek at the next arg to see if we should use it...
                 set arg [lindex $argv $i]
@@ -155,7 +155,7 @@ proc runcmd {args} {
         gets $fp line
         puts $line
     }
-    set ret [catch "close $fp" res] 
+    set ret [catch "close $fp" res]
     if { $ret } {
         puts stderr $res
         if { $isWindows } {
@@ -163,7 +163,7 @@ proc runcmd {args} {
         } else {
             error $ret
         }
-    } 
+    }
 }
 
 
@@ -171,7 +171,7 @@ proc runcmd {args} {
 # First, set up the directory
 # - determine the location
 # - determine the build
-# 
+#
 
 set script [info script]
 catch {set script [file normalize $script]}
@@ -192,7 +192,7 @@ set ::env(SLICER_DOC) $::SLICER_HOME/../Slicer3-doc
 #######
 #
 # Note: the local vars file, slicer2/slicer_variables.tcl, overrides the default values in this script
-# - use it to set your local environment and then your change won't 
+# - use it to set your local environment and then your change won't
 #   be overwritten when this file is updated
 #
 set localvarsfile $SLICER_HOME/slicer_variables.tcl
@@ -272,6 +272,33 @@ if { [file exists Slicer3] } {
   runcmd svn checkout $::SLICER_TAG Slicer3
 }
 
+# svn checkout of NaviTrack
+cd $::SLICER_HOME/Libs
+if { [file exists NaviTrack] } {
+  cd NaviTrack
+  runcmd svn switch $::NAVITRACK_TAG
+} else {
+  runcmd svn --username ivs --password ivs  checkout $::NAVITRACK_TAG NaviTrack
+}
+
+# svn checkout of SIGN
+cd $::SLICER_HOME/Libs
+if { [file exists SIGN] } {
+  cd SIGN
+  runcmd svn switch $::SIGN_TAG
+} else {
+  runcmd svn --username ivs --password ivs checkout $::SIGN_TAG SIGN
+}
+
+cd $::SLICER_HOME/Applications
+if { [file exists SIGN] } {
+  cd SIGN
+  runcmd svn switch $::SIGN_APP_TAG
+} else {
+  runcmd svn --username ivs --password ivs checkout $::SIGN_APP_TAG SIGN
+}
+
+
 if { $::GETBUILDTEST(doxy) } {
     # just run doxygen and exit
     puts "Creating documenation files in $::env(SLICER_DOC)"
@@ -286,10 +313,10 @@ cd $::SLICER_HOME
 set cmd "sh ./Scripts/genlib.tcl $SLICER_LIB"
 if { $::GETBUILDTEST(release) != "" } {
    append cmd " $::GETBUILDTEST(release)"
-} 
+}
 if { $::GETBUILDTEST(update) != "" } {
    append cmd " $::GETBUILDTEST(update)"
-} 
+}
 eval runcmd $cmd
 
 if { $::GETBUILDTEST(version-patch) == "" } {
@@ -337,6 +364,9 @@ runcmd $::CMAKE \
         -DOT_VERSION_13=$::OT_VERSION \
         -DOT_LIB_DIR:FILEPATH=$::OT_LIB_DIR \
         -DOT_INC_DIR:FILEPATH=$::OT_INC_DIR \
+        -DNAVITRACK_INCLUDE_DIR:FILEPATH=$SLICER_LIB/NaviTrack/include \
+        -DNAVITRACK_BINARY_DIR:FILEPATH=$SLICER_LIB/NaviTrack-build/$VTK_BUILD_SUBDIR/ \
+        -Ddcmtk_SOURCE_DIR:FILEPATH=$SLICER_LIB/dcmtk \
         $SLICER_HOME
 
 if { $isWindows } {
@@ -375,13 +405,13 @@ if { $isWindows } {
 }
 # upload
 set curlfile "${::GETBUILDTEST(binary-filename)}${::GETBUILDTEST(cpack-extension)}"
-if {$::GETBUILDTEST(pack) == "true" && 
+if {$::GETBUILDTEST(pack) == "true" &&
     [file exists $::SLICER_BUILD/$curlfile] &&
     $::GETBUILDTEST(upload) == "true"} {
     puts "About to do a curl $::GETBUILDTEST(uploadFlag) upload with $curlfile"
     set namic_url "http://www.na-mic.org/Slicer/Upload.cgi"
     switch $::GETBUILDTEST(uploadFlag) {
-        "nightly" {            
+        "nightly" {
             # reset the file name - take out the date
             set ex ".${::GETBUILDTEST(version-patch)}"
             regsub $ex $curlfile "" curlNightlyFile
@@ -404,13 +434,13 @@ if {$::GETBUILDTEST(pack) == "true" &&
     switch $::tcl_platform(os) {
         "SunOS" -
         "Linux" {
-            
+
             set curlcmd "xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest"
         }
-        "Darwin" {            
+        "Darwin" {
             set curlcmd "/usr/X11R6/bin/xterm -e curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest"
         }
-        default {             
+        default {
             set curlcmd "curl --connect-timeout 120 --silent --show-error --upload-file $curlfile $curldest"
         }
     }
