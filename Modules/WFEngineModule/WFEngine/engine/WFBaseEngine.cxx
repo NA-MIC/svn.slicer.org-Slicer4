@@ -25,6 +25,18 @@ WFBaseEngine::WFBaseEngine()
 
 WFBaseEngine::~WFBaseEngine()
 {
+    if(this->m_wfeOpts)
+    {
+        this->m_wfeOpts->Destroy();
+        this->m_wfeOpts = NULL;
+    }
+#ifndef WFDIRECTINTERFACE
+    if(this->m_wfeSC)
+    {
+        delete(this->m_wfeSC);
+        this->m_wfeSC = NULL;
+    }
+#endif
 }
 
 WFBaseEngine* WFBaseEngine::New()
@@ -36,7 +48,7 @@ int WFBaseEngine::InitializeWFEngine(std::string wfConfigFile)
 {
   if(wfConfigFile == "")
   {
-    fstream fs_op("wfConfig.xml",ios::in);
+    fstream fs_op("../Modules/WFEngineModule/wfConfig.xml",ios::in);
     if(!fs_op)
     {
      cout<<"wfConfig.xml not found!"<<endl;
@@ -44,7 +56,7 @@ int WFBaseEngine::InitializeWFEngine(std::string wfConfigFile)
     else
     {
      cout<<"wfConfig.xml found!"<<endl;
-     wfConfigFile = "wfConfig.xml";
+     wfConfigFile = "../Modules/WFEngineModule/wfConfig.xml";
      configExists = true;
     }
     fs_op.close();
@@ -289,3 +301,9 @@ void WFBaseEngine::RunNetworkInterface()
    this->mainInterfaceLoop();
 }
 #endif
+
+void WFBaseEngine::Destroy()
+{
+    delete(this);
+}
+

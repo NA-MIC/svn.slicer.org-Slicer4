@@ -36,9 +36,13 @@
 // uncomment in order to stub out the NavZoom widget.
 //#define NAVZOOMWIDGET_DEBUG
 
+// uncomment in order to stub out the FOV Entries.
+//#define FOV_ENTRIES_DEBUG
+
 #define DEGREES2RADIANS 0.0174532925
 #define RADIANS2DEGREES 57.295779513
 #define NUM_ZOOM_INCREMENTS 20.0
+
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerViewControlGUI );
@@ -51,6 +55,7 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   
   this->NavigationRenderPending = 0;
   this->ZoomRenderPending = 0;
+  this->EntryUpdatePending = 0;
   this->SceneClosing = false;
   this->ProcessingMRMLEvent = 0;
   this->RockCount = 0;
@@ -58,6 +63,7 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->NavigationZoomWidgetHit = 80;
 
   this->SliceMagnification = 10.0;
+  this->SliceInteracting = 0;
 
   this->SlicerViewControlIcons = NULL;
   this->SpinButton = NULL;
@@ -102,9 +108,12 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->FOVBoxActor = NULL;
   
   this->ViewNode = NULL;
-  this->Slice0Events = NULL;
-  this->Slice1Events = NULL;
-  this->Slice2Events = NULL;
+  this->RedSliceNode = NULL;
+  this->YellowSliceNode = NULL;
+  this->GreenSliceNode = NULL;
+  this->RedSliceEvents = NULL;
+  this->YellowSliceEvents = NULL;
+  this->GreenSliceEvents = NULL;
   this->MainViewerEvents = NULL;
 
   this->SetAndObserveMRMLScene ( NULL );
@@ -115,8 +124,8 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::TearDownGUI ( )
 {
-  this->RemoveSliceGUIObservers();
-  this->RemoveMainViewerObservers();
+  this->RemoveSliceEventObservers();
+  this->RemoveMainViewerEventObservers();
   this->SetAndObserveMRMLScene ( NULL );
   this->SetApplicationGUI ( NULL);
   this->SetApplication ( NULL );
@@ -129,8 +138,10 @@ vtkSlicerViewControlGUI::~vtkSlicerViewControlGUI ( )
 
   this->NavigationRenderPending = 0;
   this->ZoomRenderPending = 0;
+  this->EntryUpdatePending = 0;
   this->SceneClosing = false;
   this->RockCount = 0;  
+  this->SliceInteracting = 0;
 
   if ( this->SliceMagnifier )
     {
@@ -331,14 +342,15 @@ vtkSlicerViewControlGUI::~vtkSlicerViewControlGUI ( )
     this->FOVBoxActor = NULL;
     }
 
-
-  this->RemoveViewObservers();
-  this->SetViewNode ( NULL );
-  this->RemoveSliceGUIObservers();
-  this->RemoveMainViewerObservers();
-  this->SetSlice0Events(NULL);
-  this->SetSlice1Events(NULL);
-  this->SetSlice2Events(NULL);
+  vtkSetAndObserveMRMLNodeMacro ( this->ViewNode, NULL );
+  vtkSetAndObserveMRMLNodeMacro ( this->RedSliceNode, NULL );
+  vtkSetAndObserveMRMLNodeMacro ( this->GreenSliceNode, NULL );
+  vtkSetAndObserveMRMLNodeMacro ( this->YellowSliceNode, NULL );
+  this->RemoveSliceEventObservers();
+  this->RemoveMainViewerEventObservers();
+  this->SetRedSliceEvents(NULL);
+  this->SetYellowSliceEvents(NULL);
+  this->SetGreenSliceEvents(NULL);
   this->SetMainViewerEvents ( NULL );
   this->SetAndObserveMRMLScene ( NULL );
   this->SetApplicationGUI ( NULL );
@@ -427,6 +439,38 @@ void vtkSlicerViewControlGUI::PrintSelf ( ostream& os, vtkIndent indent )
   os << indent << "ZoomEntry: " << this->GetZoomEntry(  ) << "\n";
   os << indent << "SlicerViewControlIcons: " << this->GetSlicerViewControlIcons(  ) << "\n";
   os << indent << "ApplicationGUI: " << this->GetApplicationGUI(  ) << "\n";
+
+  os << indent << "NavigationWidget: " << this->GetNavigationWidget(  ) << "\n";    
+  os << indent << "ZoomWidget: " << this->GetZoomWidget(  ) << "\n";    
+  os << indent << "NavigationZoomFrame: " << this->GetNavigationZoomFrame(  ) << "\n";
+
+  os << indent << "SliceMagnifier: " << this->GetSliceMagnifier(  ) << "\n";
+  os << indent << "SliceMagnifierCursor: " << this->GetSliceMagnifierCursor(  ) << "\n";    
+  os << indent << "SliceMagnifierMapper: " << this->GetSliceMagnifierMapper(  ) << "\n";    
+  os << indent << "SliceMagnifierActor: " << this->GetSliceMagnifierActor(  ) << "\n";    
+  
+  os << indent << "FOVBox: " << this->GetFOVBox(  ) << "\n";
+  os << indent << "FOVBoxMapper: " << this->GetFOVBoxMapper(  ) << "\n";
+  os << indent << "FOVBoxActor: " << this->GetFOVBoxActor(  ) << "\n";
+
+  os << indent << "ViewNode: " << this->GetViewNode(  ) << "\n";    
+  os << indent << "RedSliceNode: " << this->GetRedSliceNode(  ) << "\n";
+  os << indent << "GreenSliceNode: " << this->GetGreenSliceNode(  ) << "\n";    
+  os << indent << "YellowSliceNode: " << this->GetYellowSliceNode(  ) << "\n";    
+  os << indent << "RedSliceEvents: " << this->GetRedSliceEvents(  ) << "\n";    
+  os << indent << "GreenSliceEvents: " << this->GetGreenSliceEvents(  ) << "\n";    
+  os << indent << "YellowSliceEvents: " << this->GetYellowSliceEvents(  ) << "\n";    
+  os << indent << "MainViewerEvents: " << this->GetMainViewerEvents() << "\n";
+
+  os << indent << "NavigationRenderPending: " << this->GetNavigationRenderPending(  ) << "\n";
+  os << indent << "ZoomRenderPending: " << this->GetZoomRenderPending(  ) << "\n";
+  os << indent << "EntryUpdatePending: " << this->GetEntryUpdatePending(  ) << "\n";  
+  os << indent << "ProcessingMRMLEvent: " << this->GetProcessingMRMLEvent(  ) << "\n";  
+  os << indent << "RockCount: " << this->GetRockCount(  ) << "\n";      
+  os << indent << "NavigationZoomWidgetWid: " << this->GetNavigationZoomWidgetWid(  ) << "\n";    
+  os << indent << "NavigationZoomWidgetHit: " << this->GetNavigationZoomWidgetHit(  ) << "\n";
+  os << indent << "SliceMagnification: " << this->GetSliceMagnification(  ) << "\n";
+  os << indent << "SliceInteracting: " << this->GetSliceInteracting(  ) << "\n";      
 }
 
 
@@ -446,10 +490,14 @@ void vtkSlicerViewControlGUI::RemoveGUIObservers ( )
     this->SelectViewButton->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SelectCameraButton->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->VisibilityButton->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ZoomEntry->GetWidget()->RemoveObservers (vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+
+#ifndef FOV_ENTRIES_DEBUG
     this->RedFOVEntry->GetWidget()->RemoveObservers (vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->YellowFOVEntry->RemoveObservers (vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->GreenFOVEntry->RemoveObservers (vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->ZoomEntry->GetWidget()->RemoveObservers (vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+#endif
+
 }
 
 
@@ -468,11 +516,372 @@ void vtkSlicerViewControlGUI::AddGUIObservers ( )
     this->SelectViewButton->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SelectCameraButton->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->VisibilityButton->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ZoomEntry->GetWidget()->AddObserver ( vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+#ifndef FOV_ENTRIES_DEBUG
     this->RedFOVEntry->GetWidget()->AddObserver ( vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->YellowFOVEntry->AddObserver ( vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->GreenFOVEntry->AddObserver ( vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->ZoomEntry->GetWidget()->AddObserver ( vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+#endif
+
 }
+
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::AddMainViewerEventObservers()
+{
+  
+  if ( this->GetApplicationGUI() != NULL )
+    {
+    if ( this->MainViewerEvents != NULL )
+      {
+      this->MainViewerEvents->AddObserver ( vtkCommand::EndInteractionEvent, this->GUICallbackCommand );
+      }
+    }
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::RemoveMainViewerEventObservers()
+{
+  if ( this->GetApplicationGUI() != NULL )
+    {
+    if ( this->MainViewerEvents != NULL )
+      {
+      this->MainViewerEvents->RemoveObservers ( vtkCommand::EndInteractionEvent, this->GUICallbackCommand );
+      }
+    }
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::UpdateSliceGUIInteractorStyles ( )
+{
+  // get all views from the scene
+  // and observe active view.
+  if (this->SceneClosing)
+    {
+    return;
+    }
+
+  // Find current SliceGUIs; if there are none, do nothing.
+  if ( ( this->GetApplicationGUI()->GetMainSliceGUI0() == NULL ) ||
+       ( this->GetApplicationGUI()->GetMainSliceGUI1() == NULL ) ||
+       ( this->GetApplicationGUI()->GetMainSliceGUI2() == NULL ))
+    {
+    return;
+    }
+
+  // If the interactor and these references are out of sync...
+  if ( ( this->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceViewer()->
+         GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->RedSliceEvents ) ||
+       ( this->GetApplicationGUI()->GetMainSliceGUI1()->GetSliceViewer()->
+         GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->YellowSliceEvents ) ||
+       ( this->GetApplicationGUI()->GetMainSliceGUI2()->GetSliceViewer()->
+         GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->GreenSliceEvents ) )
+    {
+    this->RemoveSliceEventObservers();
+    this->SetRedSliceEvents(NULL );
+    this->SetYellowSliceEvents(NULL );
+    this->SetGreenSliceEvents(NULL );
+
+    this->SetRedSliceEvents( vtkSlicerInteractorStyle::SafeDownCast(
+                                                                 this->GetApplicationGUI()->
+                                                                 GetMainSliceGUI0()->
+                                                                 GetSliceViewer()->
+                                                                 GetRenderWidget()->
+                                                                 GetRenderWindowInteractor()->
+                                                                 GetInteractorStyle() ));
+    this->SetYellowSliceEvents( vtkSlicerInteractorStyle::SafeDownCast(
+                                                                 this->GetApplicationGUI()->
+                                                                 GetMainSliceGUI1()->
+                                                                 GetSliceViewer()->
+                                                                 GetRenderWidget()->
+                                                                 GetRenderWindowInteractor()->
+                                                                 GetInteractorStyle() ));
+    this->SetGreenSliceEvents( vtkSlicerInteractorStyle::SafeDownCast(
+                                                                 this->GetApplicationGUI()->
+                                                                 GetMainSliceGUI2()->
+                                                                 GetSliceViewer()->
+                                                                 GetRenderWidget()->
+                                                                 GetRenderWindowInteractor()->
+                                                                 GetInteractorStyle() ));
+    this->AddSliceEventObservers();
+    }
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::UpdateFromMRML()
+{
+
+
+  // called:
+  // 1. whenever any new node is created or deleted
+  // 2. when a new view or camera has been selected
+  // Needs to remove old observers, put new
+  // observers on the current camera and view,
+  // repopulate the NavigationZoom widget's actors, etc.,
+  // and rerender the NavigationZoom widget's view.
+
+  this->UpdateViewFromMRML();
+  this->UpdateSlicesFromMRML();
+  this->RequestNavigationRender ( );
+}
+
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::UpdateViewFromMRML()
+{
+    if (this->SceneClosing)
+    {
+    return;
+    }
+
+  vtkMRMLViewNode *node =  vtkMRMLViewNode::SafeDownCast (
+       this->MRMLScene->GetNthNodeByClass(0, "vtkMRMLViewNode"));
+
+  if ( this->ViewNode != NULL && node != NULL && this->ViewNode != node)
+    {
+    // local ViewNode is out of sync with the scene
+    vtkSetAndObserveMRMLNodeMacro ( this->ViewNode, NULL );
+    }
+  if ( this->ViewNode != NULL && this->MRMLScene->GetNodeByID(this->ViewNode->GetID()) == NULL)
+    {
+    // local node not in the scene
+    vtkSetAndObserveMRMLNodeMacro ( this->ViewNode, NULL );
+    }
+  if ( this->ViewNode == NULL )
+    {
+    if ( node == NULL )
+      {
+      // no view in the scene and local
+      // create an active camera
+      node = vtkMRMLViewNode::New();
+      this->MRMLScene->AddNode(node);
+      node->Delete();
+      }
+
+    vtkIntArray  *events = vtkIntArray::New();
+    events->InsertNextValue( vtkMRMLViewNode::AnimationModeEvent);
+    events->InsertNextValue( vtkMRMLViewNode::RenderModeEvent);
+    events->InsertNextValue( vtkMRMLViewNode::StereoModeEvent);
+    events->InsertNextValue( vtkMRMLViewNode::VisibilityEvent);
+    events->InsertNextValue( vtkMRMLViewNode::BackgroundColorEvent);    
+    vtkSetAndObserveMRMLNodeEventsMacro ( this->ViewNode, node, events );
+    events->Delete();
+    events = NULL;
+    }
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::UpdateSlicesFromMRML()
+{
+  if (this->SceneClosing)
+    {
+    return;
+    }
+
+  // update Slice nodes
+  vtkMRMLSliceNode *node= NULL;
+  vtkMRMLSliceNode *nodeRed= NULL;
+  vtkMRMLSliceNode *nodeGreen= NULL;
+  vtkMRMLSliceNode *nodeYellow= NULL;
+  int nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLSliceNode");
+  for (int n=0; n<nnodes; n++)
+    {
+    node = vtkMRMLSliceNode::SafeDownCast (
+          this->MRMLScene->GetNthNodeByClass(n, "vtkMRMLSliceNode"));
+    if (!strcmp(node->GetLayoutName(), "Red"))
+      {
+      nodeRed = node;
+      }
+    else if (!strcmp(node->GetLayoutName(), "Green"))
+      {
+      nodeGreen = node;
+      }
+    else if (!strcmp(node->GetLayoutName(), "Yellow"))
+      {
+      nodeYellow = node;
+      }
+    node = NULL;
+    }
+
+  // set and observe
+  if (nodeRed != this->RedSliceNode)
+    {
+    vtkSetAndObserveMRMLNodeMacro(this->RedSliceNode, nodeRed);
+    }
+  if (nodeGreen != this->GreenSliceNode)
+   {
+   vtkSetAndObserveMRMLNodeMacro(this->GreenSliceNode, nodeGreen);
+   }
+  if (nodeYellow != this->YellowSliceNode)
+   {
+   vtkSetAndObserveMRMLNodeMacro(this->YellowSliceNode, nodeYellow);
+   }
+
+  // tidy up.
+  nodeRed = NULL;
+  nodeGreen = NULL;
+  nodeYellow = NULL;
+}
+
+
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::RequestNavigationRender()
+{
+#ifndef NAVZOOMWIDGET_DEBUG
+  if (this->GetNavigationRenderPending())
+    {
+    return;
+    }
+
+  this->SetNavigationRenderPending(1);
+  this->Script("after idle \"%s NavigationRender\"", this->GetTclName());
+#endif
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::RequestZoomRender()
+{
+#ifndef NAVZOOMWIDGET_DEBUG
+  if (this->GetZoomRenderPending())
+    {
+    return;
+    }
+
+  this->SetZoomRenderPending(1);
+  this->Script("after idle \"%s ZoomRender\"", this->GetTclName());
+#endif
+}
+
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::ZoomRender()
+{
+#ifndef NAVZOOMWIDGET_DEBUG
+  if ( this->SliceMagnifier->GetInput() != NULL )
+    {
+    this->ZoomWidget->Render();
+    }
+  this->SetZoomRenderPending(0);
+#endif
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::NavigationRender()
+{
+
+#ifndef  NAVZOOMWIDGET_DEBUG
+  this->UpdateNavigationWidgetViewActors ( );
+  this->ConfigureNavigationWidgetRender ( );
+  this->NavigationWidget->Render();
+  this->SetNavigationRenderPending(0);
+#endif
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::ResetNavigationCamera ( )
+{
+  double center[3];
+  double distance;
+  double vn[3], *vup;
+  double bounds[6];
+  double viewAngle = 20.0;
+  
+  vtkRenderer *ren = this->NavigationWidget->GetRenderer();
+  vtkCamera *cam = ren->GetActiveCamera();
+  
+  ren->ComputeVisiblePropBounds( bounds );
+  if (!vtkMath::AreBoundsInitialized(bounds))
+    {
+    vtkDebugMacro( << "Cannot reset camera!" );
+    }
+  else
+    {
+    ren->InvokeEvent(vtkCommand::ResetCameraEvent, ren);
+
+    if ( cam != NULL )
+      {
+      cam->GetViewPlaneNormal(vn);
+      }
+    else
+      {
+      vtkErrorMacro(<< "Trying to reset non-existant camera");
+      return;
+      }
+
+    center[0] = (bounds[0] + bounds[1])/2.0;
+    center[1] = (bounds[2] + bounds[3])/2.0;
+    center[2] = (bounds[4] + bounds[5])/2.0;
+
+    double w1 = bounds[1] - bounds[0];
+    double w2 = bounds[3] - bounds[2];
+    double w3 = bounds[5] - bounds[4];
+    w1 *= w1;
+    w2 *= w2;
+    w3 *= w3;
+    double radius = w1 + w2 + w3;
+
+    // If we have just a single point, pick a radius of 1.0
+    radius = (radius==0)?(1.0):(radius);
+
+    // compute the radius of the enclosing sphere
+    radius = sqrt(radius)*0.5;
+
+    // default so that the bounding sphere fits within the view fustrum
+    // compute the distance from the intersection of the view frustum with the
+    // bounding sphere. Basically in 2D draw a circle representing the bounding
+    // sphere in 2D then draw a horizontal line going out from the center of
+    // the circle. That is the camera view. Then draw a line from the camera
+    // position to the point where it intersects the circle. (it will be tangent
+    // to the circle at this point, this is important, only go to the tangent
+    // point, do not draw all the way to the view plane). Then draw the radius
+    // from the tangent point to the center of the circle. You will note that
+    // this forms a right triangle with one side being the radius, another being
+    // the target distance for the camera, then just find the target dist using
+    // a sin.
+    distance = radius/sin(viewAngle*vtkMath::Pi()/360.0);
+
+    // check view-up vector against view plane normal
+    vup = cam->GetViewUp();
+    if ( fabs(vtkMath::Dot(vup,vn)) > 0.999 )
+      {
+      vtkWarningMacro(<<"Resetting view-up since view plane normal is parallel");
+      cam->SetViewUp(-vup[2], vup[0], vup[1]);
+      }
+
+    // update the camera
+    cam->SetFocalPoint(center[0],center[1],center[2]);
+    cam->SetPosition(center[0]+distance*vn[0],
+                     center[1]+distance*vn[1],
+                     center[2]+distance*vn[2]);
+
+    ren->ResetCameraClippingRange( bounds );
+
+    // setup default parallel scale
+    cam->SetParallelScale(radius);
+    }
+}
+
+
 
 
 //---------------------------------------------------------------------------
@@ -497,17 +906,33 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
       vtkSlicerInteractorStyle *istyle = vtkSlicerInteractorStyle::SafeDownCast ( caller );
       vtkSlicerViewerInteractorStyle *vstyle = vtkSlicerViewerInteractorStyle::SafeDownCast ( caller );
 
-#ifndef NAVZOOMWIDGET_DEBUG
       // has interaction occured in the slice viewers?
-      if ( istyle == this->Slice0Events || istyle == this->Slice1Events || istyle == this->Slice2Events)
+      if ( istyle == this->RedSliceEvents || istyle == this->YellowSliceEvents || istyle == this->GreenSliceEvents)
         {
+#ifndef NAVZOOMWIDGET_DEBUG
         this->SliceViewMagnify( event, istyle );
+#endif
+        // set interacting flag -- don't update gui until
+        // interaction has stopped.
+        if ( event == vtkCommand::RightButtonPressEvent ||
+             event == vtkCommand::MiddleButtonPressEvent )
+          {
+          this->SliceInteracting = 1;
+          }
+        // interaction has stopped; update GUI's FOVentry widgets
+        if ( event == vtkCommand::RightButtonReleaseEvent ||
+             event == vtkCommand::MiddleButtonReleaseEvent )
+          {
+          this->SliceInteracting = 0;
+          this->RequestFOVEntriesUpdate();
+          }
         }
+#ifndef NAVZOOMWIDGET_DEBUG
       // has interaction occured in the main viewer?
       if (vstyle == this->MainViewerEvents )
         {
         this->RequestNavigationRender();
-        }  
+        }
 #endif
       
       double val;
@@ -521,13 +946,17 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
           this->MainViewZoom ( val );
           }
         }
+#ifndef FOV_ENTRIES_DEBUG
       // RedFOVEntry
       if ( e == this->RedFOVEntry->GetWidget() && event == vtkKWEntry::EntryValueChangedEvent )
         {
         val = this->RedFOVEntry->GetWidget()->GetValueAsDouble();
         snode  = appGUI->GetMainSliceGUI0()->GetSliceNode();
         appGUI->GetMRMLScene()->SaveStateForUndo( snode );
-        snode->SetFieldOfView( val, val, val);
+        if ( val > 0 && snode && appGUI )
+          {
+          this->FitFOVToBackground( val, 0 );
+          }
         }
       // YellowFOVEntry
       if ( e == this->YellowFOVEntry && event == vtkKWEntry::EntryValueChangedEvent )
@@ -535,7 +964,10 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
         val = this->YellowFOVEntry->GetValueAsDouble();
         snode  = appGUI->GetMainSliceGUI1()->GetSliceNode();
         appGUI->GetMRMLScene()->SaveStateForUndo( snode );
-        snode->SetFieldOfView( val, val, val);
+        if ( val > 0 && snode && appGUI )
+          {
+          this->FitFOVToBackground( val, 1 );
+          }
         }
       // GreenFOVEntry
       if ( e == this->GreenFOVEntry && event == vtkKWEntry::EntryValueChangedEvent )
@@ -543,9 +975,12 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
         val = this->GreenFOVEntry->GetValueAsDouble();
         snode  = appGUI->GetMainSliceGUI2()->GetSliceNode();
         appGUI->GetMRMLScene()->SaveStateForUndo( snode );
-        snode->SetFieldOfView( val, val, val);
+        if ( val > 0 && snode && appGUI )
+          {
+          this->FitFOVToBackground( val, 2 );
+          }
         }
-
+#endif
       // Make requested changes to the ViewNode
       // save state for undo
       if ( m == this->StereoButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent ||
@@ -560,72 +995,65 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
            b == this->RotateAroundButton && event == vtkKWCheckButton::SelectedStateChangedEvent ||                      
            b == this->LookFromButton && event == vtkKWCheckButton::SelectedStateChangedEvent)
         {
-
         vtkMRMLViewNode *vn = this->GetActiveView();
         if ( vn != NULL )
           {
           appGUI->GetMRMLScene()->SaveStateForUndo( vn );
           if ( m == this->StereoButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent )
             {
-            if ( vn != NULL )
+            if ( !strcmp (this->StereoButton->GetValue(), "NoStereo"))
               {
-              if ( !strcmp (this->StereoButton->GetValue(), "NoStereo"))
-                {
-                vn->SetStereoType( vtkMRMLViewNode::NoStereo);
-                }
-              else if (!strcmp (this->StereoButton->GetValue(), "Red/Blue"))
-                {
-                vn->SetStereoType( vtkMRMLViewNode::RedBlue);
-                }
-              else if (!strcmp (this->StereoButton->GetValue(), "CrystalEyes"))
-                {
-                vn->SetStereoType( vtkMRMLViewNode::CrystalEyes);
-                }
-              else if (!strcmp (this->StereoButton->GetValue(), "Interlaced"))
-                {
-                vn->SetStereoType( vtkMRMLViewNode::Interlaced);            
-                }
+              vn->SetStereoType( vtkMRMLViewNode::NoStereo);
+              }
+            else if (!strcmp (this->StereoButton->GetValue(), "Red/Blue"))
+              {
+              vn->SetStereoType( vtkMRMLViewNode::RedBlue);
+              }
+            else if (!strcmp (this->StereoButton->GetValue(), "CrystalEyes"))
+              {
+              vn->SetStereoType( vtkMRMLViewNode::CrystalEyes);
+              }
+            else if (!strcmp (this->StereoButton->GetValue(), "Interlaced"))
+              {
+              vn->SetStereoType( vtkMRMLViewNode::Interlaced);            
               }
             }
           else if ( m == this->VisibilityButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent )
             {
             // Get all menu items
-            if ( vn != NULL )
+            if ( vn->GetFiducialsVisible() != m->GetItemSelectedState("Fiducial points"))
               {
-              if ( vn->GetFiducialsVisible() != m->GetItemSelectedState("Fiducial points"))
-                {
 //                this->SetMRMLFiducialPointVisibility (m->GetItemSelectedState("Fiducial points"));
-                }
-              if ( vn->GetFiducialLabelsVisible() !=m->GetItemSelectedState("Fiducial labels"))
-                {
-//                this->SetMRMLFiducialLabelVisibility (m->GetItemSelectedState("Fiducial labels"));
-                }
-              if ( vn->GetBoxVisible() !=m->GetItemSelectedState ("3D cube"))
-                {
-                vn->SetBoxVisible ( m->GetItemSelectedState ("3D cube"));
-                this->RequestNavigationRender();
-                }
-              if ( vn->GetAxisLabelsVisible() != m->GetItemSelectedState ("3D axis labels"))
-                {
-                vn->SetAxisLabelsVisible (m->GetItemSelectedState ("3D axis labels"));
-                this->RequestNavigationRender();
-                }
-              if ( m->GetItemSelectedState ("Light blue background" ) == 1 )
-                {
-                vn->SetBackgroundColor ( app->GetSlicerTheme()->GetSlicerColors()->ViewerBlue );
-                this->RequestNavigationRender();
-                }
-              else if ( m->GetItemSelectedState ("Black background" ) == 1 )
-                {
-                vn->SetBackgroundColor ( app->GetSlicerTheme()->GetSlicerColors()->Black );
-                this->RequestNavigationRender();
-                }
-              else if ( m->GetItemSelectedState ("White background" ) == 1 )
-                {
-                vn->SetBackgroundColor (app->GetSlicerTheme()->GetSlicerColors()->White );
-                this->RequestNavigationRender();
-                }            
               }
+            if ( vn->GetFiducialLabelsVisible() !=m->GetItemSelectedState("Fiducial labels"))
+              {
+//                this->SetMRMLFiducialLabelVisibility (m->GetItemSelectedState("Fiducial labels"));
+              }
+            if ( vn->GetBoxVisible() !=m->GetItemSelectedState ("3D cube"))
+              {
+              vn->SetBoxVisible ( m->GetItemSelectedState ("3D cube"));
+              this->RequestNavigationRender();
+              }
+            if ( vn->GetAxisLabelsVisible() != m->GetItemSelectedState ("3D axis labels"))
+              {
+              vn->SetAxisLabelsVisible (m->GetItemSelectedState ("3D axis labels"));
+              this->RequestNavigationRender();
+              }
+            if ( m->GetItemSelectedState ("Light blue background" ) == 1 )
+              {
+              vn->SetBackgroundColor ( app->GetSlicerTheme()->GetSlicerColors()->ViewerBlue );
+              this->RequestNavigationRender();
+              }
+            else if ( m->GetItemSelectedState ("Black background" ) == 1 )
+              {
+              vn->SetBackgroundColor ( app->GetSlicerTheme()->GetSlicerColors()->Black );
+              this->RequestNavigationRender();
+              }
+            else if ( m->GetItemSelectedState ("White background" ) == 1 )
+              {
+              vn->SetBackgroundColor (app->GetSlicerTheme()->GetSlicerColors()->White );
+              this->RequestNavigationRender();
+              }            
             }
           else if ( m == this->SelectViewButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent )
             {
@@ -643,16 +1071,13 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
           // toggle the Ortho/Perspective rendering state
           if ( (p == this->OrthoButton) && (event == vtkKWPushButton::InvokedEvent ) && vn )
             {
-            if ( vn != NULL )
+            if ( vn->GetRenderMode() == vtkMRMLViewNode::Orthographic )
               {
-              if ( vn->GetRenderMode() == vtkMRMLViewNode::Orthographic )
-                {
-                vn->SetRenderMode (vtkMRMLViewNode::Perspective);
-                }
-              else if ( vn->GetRenderMode() == vtkMRMLViewNode::Perspective )
-                {
-                vn->SetRenderMode(vtkMRMLViewNode::Orthographic );
-                }
+              vn->SetRenderMode (vtkMRMLViewNode::Perspective);
+              }
+            else if ( vn->GetRenderMode() == vtkMRMLViewNode::Perspective )
+              {
+              vn->SetRenderMode(vtkMRMLViewNode::Orthographic );
               }
             }
 
@@ -668,8 +1093,8 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
               {
               vn->SetAnimationMode( vtkMRMLViewNode::Off );
               }
-
             }
+
           if ( (b == this->RockButton) && (event == vtkKWCheckButton::SelectedStateChangedEvent) && vn )
             {
             // toggle the Rock 
@@ -681,7 +1106,6 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
               {
               vn->SetAnimationMode ( vtkMRMLViewNode::Off );
               }
-
             }
 
           //--- automatic camera control mode: switch 'rotate around axis' or 'look from direction'
@@ -690,6 +1114,7 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
             {
             vn->SetViewAxisMode ( vtkMRMLViewNode::RotateAround );
             }
+
           if (( b == this->LookFromButton ) && ( event == vtkKWCheckButton::SelectedStateChangedEvent ) &&
               (vn->GetViewAxisMode() == vtkMRMLViewNode::RotateAround) )
             {
@@ -697,6 +1122,134 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           }
         }
+      }
+    }
+}
+
+
+
+// adjust the node's field of view to match the extent of current background volume
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::FitFOVToBackground( double fov, int viewer )
+{
+
+  if ( viewer != 0 && viewer != 1 && viewer != 2 )
+    {
+    return;
+    }
+  
+  // reference the slice node and composite node and sliceGUI
+  if ( this->GetApplicationGUI() != NULL )
+    {
+    vtkSlicerApplicationGUI *appGUI = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( ));
+    vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast( appGUI->GetApplication() );
+    if ( appGUI != NULL )
+      {
+      vtkMRMLSliceNode *sliceNode = NULL;
+      vtkMRMLSliceCompositeNode *compositeNode = NULL;
+      vtkMRMLScalarVolumeNode *backgroundNode = NULL;
+      vtkSlicerSliceGUI *sgui = NULL;
+      if ( viewer == 0 )
+        {
+        sliceNode = this->RedSliceNode;
+        compositeNode = appGUI->GetMainSliceLogic0()->GetSliceCompositeNode();
+        sgui = appGUI->GetMainSliceGUI0();
+        }
+      else if ( viewer == 1 )
+        {
+        sliceNode = this->YellowSliceNode;
+        compositeNode = appGUI->GetMainSliceLogic1()->GetSliceCompositeNode();
+        sgui = appGUI->GetMainSliceGUI1();
+        }
+      else if ( viewer == 2 )
+        {
+        sliceNode = this->GreenSliceNode;
+        compositeNode = appGUI->GetMainSliceLogic2()->GetSliceCompositeNode();
+        sgui = appGUI->GetMainSliceGUI2();
+        }
+      appGUI->GetMRMLScene()->SaveStateForUndo( sliceNode );
+
+      if ( !sgui )
+        {
+        return;
+        }
+
+      // get viewer's wid and height
+      int width, height;
+      sscanf(this->Script("winfo width %s", sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()),"%d", &width);
+      sscanf(this->Script("winfo height %s",sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()),"%d", &height);
+
+      if ( !sliceNode || !compositeNode )
+        {
+        return;
+        }
+  
+      // get backgroundNode  and imagedata
+      backgroundNode =
+        vtkMRMLScalarVolumeNode::SafeDownCast (
+                                               appGUI->GetMRMLScene()->GetNodeByID( compositeNode->GetBackgroundVolumeID() ));
+      vtkImageData *backgroundImage;
+      if ( !backgroundNode || ! (backgroundImage = backgroundNode->GetImageData()) )
+        {
+        return;
+        }
+
+      int dimensions[3];
+      double rasDimensions[4];
+      double doubleDimensions[4];
+      vtkMatrix4x4 *ijkToRAS = vtkMatrix4x4::New();
+
+      // what are the actual dimensions of the imagedata?
+      backgroundImage->GetDimensions(dimensions);
+      doubleDimensions[0] = dimensions[0];
+      doubleDimensions[1] = dimensions[1];
+      doubleDimensions[2] = dimensions[2];
+      doubleDimensions[3] = 0.0;
+      backgroundNode->GetIJKToRASMatrix (ijkToRAS);
+      ijkToRAS->MultiplyPoint (doubleDimensions, rasDimensions);
+      ijkToRAS->Delete();
+      ijkToRAS = NULL;
+
+      // and what are their slice dimensions?
+      vtkMatrix4x4 *rasToSlice = vtkMatrix4x4::New();
+      double sliceDimensions[4];
+      rasToSlice->DeepCopy(sliceNode->GetSliceToRAS());
+      rasToSlice->SetElement(0, 3, 0.0);
+      rasToSlice->SetElement(1, 3, 0.0);
+      rasToSlice->SetElement(2, 3, 0.0);
+      rasToSlice->Invert();
+      rasToSlice->MultiplyPoint( rasDimensions, sliceDimensions );
+      rasToSlice->Delete();
+      rasToSlice = NULL;
+
+      double fovh, fovv;
+      // which is bigger, slice viewer width or height?
+      // assign user-specified fov to smaller slice window
+      // dimension
+      if ( width < height )
+        {
+        fovh = fov;
+        fovv = fov * height/width;
+        }
+      else
+        {
+        fovv = fov;
+        fovh = fov * width/height;
+        }
+      
+      // we want to compute the slice dimensions of the
+      // user-specified fov.
+      double absSliceDimensions;
+      // user specified FOV in mm units (RAS)
+      absSliceDimensions = fabs(sliceDimensions[2]);
+      sliceNode->SetFieldOfView(fovh, fovv, absSliceDimensions );
+
+      vtkMatrix4x4 *sliceToRAS = vtkMatrix4x4::New();
+      sliceToRAS->DeepCopy(sliceNode->GetSliceToRAS());
+      sliceNode->GetSliceToRAS()->DeepCopy(sliceToRAS);
+      sliceToRAS->Delete();
+      sliceToRAS = NULL;
+      sliceNode->UpdateMatrices( );
       }
     }
 }
@@ -965,32 +1518,75 @@ void vtkSlicerViewControlGUI::UpdateNavigationWidgetViewActors ( )
   if ( this->GetApplicationGUI() != NULL )
     {
     vtkRenderer *ren;
-    vtkActorCollection *actors;
-    vtkActor *actor;
+    vtkActorCollection *mainActors;
+    vtkActor *mainActor;
+    vtkActorCollection *navActors;
+    vtkActor *newActor;
+    vtkPolyDataMapper *newMapper;
+    double bounds[6];
+    double dimension;
+    double x,y,z;
+    double cutoff = 0.1;
+    double cutoffDimension;
 
+    // iterate thru NavigationWidget's actor collection,
+    // remove item, delete actor, delete mapper.
+    navActors = this->NavigationWidget->GetRenderer()->GetActors();
+    
+    if (navActors != NULL )
+      {
+      this->NavigationWidget->RemoveAllViewProps();
+      navActors->RemoveAllItems();
+      }
+
+    // get estimate of Main Viewer's visible scene max dimension;
     vtkSlicerApplicationGUI *p = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( ));    
     ren = p->GetViewerWidget()->GetMainViewer()->GetRenderer();
+    ren->ComputeVisiblePropBounds( bounds );
+    x = bounds[1] - bounds[0];
+    y = bounds[3] - bounds[2];
+    z = bounds[5] - bounds[4];
+    dimension = x*x + y*y + z*z;
+    cutoffDimension = cutoff * dimension;
 
-    // remove all actors
-    this->NavigationWidget->GetRenderer()->GetActors()->RemoveAllItems();
-
-    // Get actor collection
-    actors = ren->GetActors();    
-    if (actors != NULL )
+    // Get actor collection from the main viewer's renderer
+    mainActors = ren->GetActors();    
+    if (mainActors != NULL )
       {
+      // add the little FOV box to NavigationWidget's actors
       this->NavigationWidget->GetRenderer()->AddViewProp( this->FOVBoxActor);
-
-      actors->InitTraversal();
-      actor = actors->GetNextActor();
-
-      // try adding actors 0-9 and see what breaks it.
-      // Add each actor to the Navigation widget; each
-      // actor should already have its properties and
-      // mapper set.
-      while (actor != NULL )
+      mainActors->InitTraversal();
+      mainActor = mainActors->GetNextActor();
+      while (mainActor != NULL )
         {
-        this->NavigationWidget->GetRenderer()->AddActor( actor );
-        actor = actors->GetNextActor();
+        // get the bbox of this actor
+        mainActor->GetBounds ( bounds );
+        // check to see if it's big enough to include in the scene...
+        x = bounds[1] - bounds[0];
+        y = bounds[3] - bounds[2];
+        z = bounds[5] - bounds[4];
+        dimension = x*x + y*y + z*z;
+
+        // add a copy of the actor to NavigationWidgets's renderer
+        // only if it's big enough to count (don't bother with tiny
+        // and don't bother with invisible stuff)
+        int vis = mainActor->GetVisibility();
+        if ( dimension > cutoffDimension && vis )
+          {
+          // ---new: create new actor, mapper, deep copy, add it.
+          newMapper = vtkPolyDataMapper::New();
+          newMapper->ShallowCopy (mainActor->GetMapper() );
+          newMapper->SetInput ( vtkPolyData::SafeDownCast(mainActor->GetMapper()->GetInput()) );
+
+          newActor = vtkActor::New();
+          newActor->ShallowCopy (mainActor );
+          newActor->SetMapper ( newMapper );
+          newMapper->Delete();
+          
+          this->NavigationWidget->GetRenderer()->AddActor( newActor );
+          newActor->Delete();
+          }
+        mainActor = mainActors->GetNextActor();
         }
       }
     }
@@ -1050,7 +1646,7 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
     {
     vtkSlicerApplicationGUI *appGUI = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( ));
     
-    if ( istyle == this->Slice0Events )
+    if ( istyle == this->RedSliceEvents )
       {
       if ( appGUI->GetMainSliceGUI0()->GetLogic() != NULL )
         {
@@ -1059,8 +1655,8 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
           if (event == vtkCommand::EnterEvent )
             {
             // configure zoom
-            x = this->Slice0Events->GetLastPos ()[0];
-            y = this->Slice0Events->GetLastPos ()[1];
+            x = this->RedSliceEvents->GetLastPos ()[0];
+            y = this->RedSliceEvents->GetLastPos ()[1];
             if ( x > 0 && y > 0 )
               {
               this->SliceMagnifier->SetX ( x );
@@ -1085,8 +1681,8 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
           else if ( event == vtkCommand::MouseMoveEvent )
             {
             // configure zoom
-            x = this->Slice0Events->GetLastPos ()[0];
-            y = this->Slice0Events->GetLastPos ()[1];
+            x = this->RedSliceEvents->GetLastPos ()[0];
+            y = this->RedSliceEvents->GetLastPos ()[1];
             this->SliceMagnifier->SetX ( x );
             this->SliceMagnifier->SetY ( y );
             this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI0()->GetLogic()->GetImageData());
@@ -1096,7 +1692,7 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
         }
       }
     
-    else if ( istyle == this->Slice1Events)
+    else if ( istyle == this->YellowSliceEvents)
       {
       if ( appGUI->GetMainSliceGUI1()->GetLogic() != NULL )
         {
@@ -1105,8 +1701,8 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
           if (event == vtkCommand::EnterEvent )
             {
             // configure zoom
-            x = this->Slice1Events->GetLastPos ()[0];
-            y = this->Slice1Events->GetLastPos ()[1];
+            x = this->YellowSliceEvents->GetLastPos ()[0];
+            y = this->YellowSliceEvents->GetLastPos ()[1];
             if ( x > 0 && y > 0 )
               {
               this->SliceMagnifier->SetX ( x );
@@ -1131,8 +1727,8 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
           else if ( event == vtkCommand::MouseMoveEvent )
             {
             // configure zoom
-            x = this->Slice1Events->GetLastPos ()[0];
-            y = this->Slice1Events->GetLastPos ()[1];
+            x = this->YellowSliceEvents->GetLastPos ()[0];
+            y = this->YellowSliceEvents->GetLastPos ()[1];
             this->SliceMagnifier->SetX ( x );
             this->SliceMagnifier->SetY ( y );
             this->SliceMagnifier->SetInput (appGUI->GetMainSliceGUI1()->GetLogic()->GetImageData());
@@ -1141,7 +1737,7 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
           }
         }
       }
-    else if ( istyle == this->Slice2Events )
+    else if ( istyle == this->GreenSliceEvents )
       {
       if ( appGUI->GetMainSliceGUI2()->GetLogic() != NULL )
         {
@@ -1150,8 +1746,8 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
           if (event == vtkCommand::EnterEvent )
             {
             // configure zoom
-            x = this->Slice2Events->GetLastPos ()[0];
-            y = this->Slice2Events->GetLastPos ()[1];
+            x = this->GreenSliceEvents->GetLastPos ()[0];
+            y = this->GreenSliceEvents->GetLastPos ()[1];
             if ( x > 0 && y > 0 )
               {
               this->SliceMagnifier->SetX ( x );
@@ -1176,8 +1772,8 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
           else if ( event == vtkCommand::MouseMoveEvent )
             {
             // configure zoom
-            x = this->Slice2Events->GetLastPos ()[0];
-            y = this->Slice2Events->GetLastPos ()[1];
+            x = this->GreenSliceEvents->GetLastPos ()[0];
+            y = this->GreenSliceEvents->GetLastPos ()[1];
             this->SliceMagnifier->SetX ( x );
             this->SliceMagnifier->SetY ( y );
             this->SliceMagnifier->SetInput (appGUI->GetMainSliceGUI2()->GetLogic()->GetImageData());
@@ -1237,12 +1833,12 @@ void vtkSlicerViewControlGUI::MainViewRock ( )
     if ( vn != NULL )
       {
       if ( vn->GetAnimationMode() == vtkMRMLViewNode::Rock )
-      {
-      this->RockView ( );
-      this->RequestNavigationRender();
-      this->Script ( "update idletasks" );
-      this->Script ( "after idle \"%s MainViewRock \"",  this->GetTclName() );
-      }
+        {
+        this->RockView ( );
+        //this->RequestNavigationRender();
+        this->Script ( "update idletasks" );
+        this->Script ( "after 5 \"%s MainViewRock \"",  this->GetTclName() );
+        }
       }
     }
 }
@@ -1296,9 +1892,9 @@ void vtkSlicerViewControlGUI::MainViewSpin ( )
       if ( vn->GetAnimationMode() == vtkMRMLViewNode::Spin )
         {
         this->SpinView (vn->GetSpinDirection(), vn->GetSpinDegrees() );
-        this->RequestNavigationRender();
+        //this->RequestNavigationRender();
         this->Script ( "update idletasks" );
-        this->Script ( "after idle \"%s MainViewSpin \"",  this->GetTclName() );
+        this->Script ( "after 5 \"%s MainViewSpin \"",  this->GetTclName() );
         }
       }
     }
@@ -1677,7 +2273,7 @@ void vtkSlicerViewControlGUI::ProcessMRMLEvents ( vtkObject *caller,
 
   vtkMRMLViewNode *vnode = vtkMRMLViewNode::SafeDownCast ( caller );
   vtkMRMLSelectionNode *snode = vtkMRMLSelectionNode::SafeDownCast ( caller );
-
+  vtkMRMLSliceNode *slnode = vtkMRMLSliceNode::SafeDownCast ( caller );
   
   // has a node been added or deleted?
   if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene 
@@ -1694,53 +2290,17 @@ void vtkSlicerViewControlGUI::ProcessMRMLEvents ( vtkObject *caller,
      this->UpdateNavigationWidgetViewActors ( );
     }    
 
-  // check fov entries...
-  if ( this->GetApplicationGUI() != NULL )
+  // update FOV entry widgets to match node, if
+  // we're not interactively zooming the slices.
+  // (too slow to track MRML during interaction)
+  if ( !this->SliceInteracting)
     {
-    vtkSlicerApplicationGUI *appGUI = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( ));
-    double fov;
-    vtkMRMLSliceNode *slnode;
-    if ( appGUI->GetMainSliceGUI0() )
+    if ( vtkMRMLSliceNode::SafeDownCast ( caller) )
       {
-      slnode = appGUI->GetMainSliceGUI0()->GetSliceNode();
-      if (  slnode )
-        {
-        fov = slnode->GetFieldOfView()[2];
-        // right now, not sure which fov value we should use.
-        // probably should check orientation and the get the correct fov field.
-        if ( this->RedFOVEntry->GetWidget()->GetValueAsDouble() != fov )
-          {
-          this->RedFOVEntry->GetWidget()->SetValueAsDouble( fov );
-          }
-        }
-      }
-    if ( appGUI->GetMainSliceGUI1() )
-      {
-      slnode = appGUI->GetMainSliceGUI1()->GetSliceNode();
-      if ( slnode )
-        {
-        fov = slnode->GetFieldOfView()[2];
-        if ( this->YellowFOVEntry->GetValueAsDouble() != fov )
-          {
-          this->YellowFOVEntry->SetValueAsDouble(fov );
-          }
-        }
-      }
-    if ( appGUI->GetMainSliceGUI2() )
-      {
-      slnode = appGUI->GetMainSliceGUI2()->GetSliceNode();    
-      if ( slnode  )
-        {
-        fov = slnode->GetFieldOfView()[2];
-        if ( this->GreenFOVEntry->GetValueAsDouble() != fov )
-          {
-          this->GreenFOVEntry->SetValueAsDouble( fov );
-          }
-        }
+      this->RequestFOVEntriesUpdate();
       }
     }
-
-
+  
   // has view been manipulated?
   if ( vnode != NULL )
     {
@@ -1775,6 +2335,11 @@ void vtkSlicerViewControlGUI::ProcessMRMLEvents ( vtkObject *caller,
           {
           this->SpinButton->Deselect();
           }
+        if ( this->SpinButton->GetSelectedState() == 0 &&
+             this->RockButton->GetSelectedState() == 0)
+          {
+          this->RequestNavigationRender();
+          }
         }
       }
 
@@ -1806,7 +2371,6 @@ void vtkSlicerViewControlGUI::ProcessMRMLEvents ( vtkObject *caller,
       }
     // whatever else...
     }
-
   // handle whatever other change is made to the view.
   else
     {
@@ -2428,6 +2992,12 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       this->GreenFOVEntry->SetValueAsDouble (250);
       this->GreenFOVEntry->SetCommandTrigger (vtkKWEntry::TriggerOnReturnKey );
 
+#ifdef FOV_ENTRIES_DEBUG
+      this->RedFOVEntry->GetWidget()->SetStateToDisabled();
+      this->YellowFOVEntry->SetStateToDisabled();
+      this->GreenFOVEntry->SetStateToDisabled();
+#endif
+
       this->ZoomEntry->SetParent ( f2 );
       this->ZoomEntry->Create ( );
       this->ZoomEntry->GetLabel()->SetFont ( "-Adobe-Helvetica-Bold-R-Normal-*-8-*-*-*-*-*-*-*" );
@@ -2507,62 +3077,84 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       f6->Delete ( );
       }
     }
-
 }
 
 
 
 
 //---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::AddSliceGUIObservers()
+void vtkSlicerViewControlGUI::AddSliceEventObservers()
 {
   
   if ( this->GetApplicationGUI() != NULL )
     {
-    if ( this->Slice0Events != NULL )
+    if ( this->RedSliceEvents != NULL )
       {
-      this->Slice0Events->AddObserver ( vtkCommand::EnterEvent, this->GUICallbackCommand );
-      this->Slice0Events->AddObserver ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
-      this->Slice0Events->AddObserver ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->AddObserver ( vtkCommand::EnterEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->AddObserver ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->AddObserver ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->AddObserver ( vtkCommand::RightButtonPressEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->AddObserver ( vtkCommand::RightButtonReleaseEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->AddObserver ( vtkCommand::MiddleButtonPressEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->AddObserver ( vtkCommand::MiddleButtonReleaseEvent, this->GUICallbackCommand );
       }
-    if ( this->Slice1Events != NULL )
+    if ( this->YellowSliceEvents != NULL )
       {
-      this->Slice1Events->AddObserver ( vtkCommand::EnterEvent, this->GUICallbackCommand );
-      this->Slice1Events->AddObserver ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
-      this->Slice1Events->AddObserver ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->AddObserver ( vtkCommand::EnterEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->AddObserver ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->AddObserver ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->AddObserver ( vtkCommand::RightButtonPressEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->AddObserver ( vtkCommand::RightButtonReleaseEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->AddObserver ( vtkCommand::MiddleButtonPressEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->AddObserver ( vtkCommand::MiddleButtonReleaseEvent, this->GUICallbackCommand );
       }
-    if ( this->Slice2Events != NULL )
+    if ( this->GreenSliceEvents != NULL )
       {
-      this->Slice2Events->AddObserver ( vtkCommand::EnterEvent, this->GUICallbackCommand );
-      this->Slice2Events->AddObserver ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
-      this->Slice2Events->AddObserver ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->AddObserver ( vtkCommand::EnterEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->AddObserver ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->AddObserver ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->AddObserver ( vtkCommand::RightButtonPressEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->AddObserver ( vtkCommand::RightButtonReleaseEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->AddObserver ( vtkCommand::MiddleButtonPressEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->AddObserver ( vtkCommand::MiddleButtonReleaseEvent, this->GUICallbackCommand );
       }
     }
-  
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::RemoveSliceGUIObservers()
+void vtkSlicerViewControlGUI::RemoveSliceEventObservers()
 {
   if ( this->GetApplicationGUI() != NULL )
     {
-    if ( this->Slice0Events != NULL )
+    if ( this->RedSliceEvents != NULL )
       {
-      this->Slice0Events->RemoveObservers ( vtkCommand::EnterEvent, this->GUICallbackCommand );
-      this->Slice0Events->RemoveObservers ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
-      this->Slice0Events->RemoveObservers ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->RemoveObservers ( vtkCommand::EnterEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->RemoveObservers ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->RemoveObservers ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->RemoveObservers ( vtkCommand::RightButtonPressEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->RemoveObservers ( vtkCommand::RightButtonReleaseEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->RemoveObservers ( vtkCommand::MiddleButtonPressEvent, this->GUICallbackCommand );
+      this->RedSliceEvents->RemoveObservers ( vtkCommand::MiddleButtonReleaseEvent, this->GUICallbackCommand );
       }
-    if ( this->Slice1Events != NULL )
+    if ( this->YellowSliceEvents != NULL )
       {
-      this->Slice1Events->RemoveObservers ( vtkCommand::EnterEvent, this->GUICallbackCommand );
-      this->Slice1Events->RemoveObservers ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
-      this->Slice1Events->RemoveObservers ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->RemoveObservers ( vtkCommand::EnterEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->RemoveObservers ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->RemoveObservers ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->RemoveObservers ( vtkCommand::RightButtonPressEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->RemoveObservers ( vtkCommand::RightButtonReleaseEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->RemoveObservers ( vtkCommand::MiddleButtonPressEvent, this->GUICallbackCommand );
+      this->YellowSliceEvents->RemoveObservers ( vtkCommand::MiddleButtonReleaseEvent, this->GUICallbackCommand );
       }
-    if ( this->Slice2Events != NULL )
+    if ( this->GreenSliceEvents != NULL )
       {
-      this->Slice2Events->RemoveObservers ( vtkCommand::EnterEvent, this->GUICallbackCommand );
-      this->Slice2Events->RemoveObservers ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
-      this->Slice2Events->RemoveObservers ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->RemoveObservers ( vtkCommand::EnterEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->RemoveObservers ( vtkCommand::LeaveEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->RemoveObservers ( vtkCommand::MouseMoveEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->RemoveObservers ( vtkCommand::RightButtonPressEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->RemoveObservers ( vtkCommand::RightButtonReleaseEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->RemoveObservers ( vtkCommand::MiddleButtonPressEvent, this->GUICallbackCommand );
+      this->GreenSliceEvents->RemoveObservers ( vtkCommand::MiddleButtonReleaseEvent, this->GUICallbackCommand );
       }
     }
 }
@@ -2605,87 +3197,86 @@ vtkMRMLCameraNode *vtkSlicerViewControlGUI::GetActiveCamera()
 }
 
 
+//---------------------------------------------------------------------------
+void vtkSlicerViewControlGUI::RequestFOVEntriesUpdate ( )
+{
+#ifndef FOV_ENTRIES_DEBUG
+  if ( this->GetEntryUpdatePending() )
+    {
+    return;
+    }
+  this->SetEntryUpdatePending(1);
+  this->Script("after idle \"%s FOVEntriesUpdate\"", this->GetTclName() );
+#endif
+}
+
+
 
 //---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::UpdateGUI ( )
+void vtkSlicerViewControlGUI::FOVEntriesUpdate ( )
 {
-
-  vtkMRMLViewNode *vn = this->GetActiveView();
-  if ( vn != NULL )
+#ifndef FOV_ENTRIES_DEBUG
+  // check fov entries... see if they match MRML.
+  // if not, update them.
+  double fov, fovX, fovY;
+  if ( this->RedSliceNode != NULL )
     {
-    if ( vn->GetRenderMode() == vtkMRMLViewNode::Orthographic )
+    fovX = this->RedSliceNode->GetFieldOfView()[0];
+    fovY = this->RedSliceNode->GetFieldOfView()[1];
+    if ( fovX < fovY )
       {
-      this->OrthoButton->SetImageToIcon ( this->SlicerViewControlIcons->GetPerspectiveButtonIcon() );
+      fov = fovX;
       }
     else
       {
-      this->OrthoButton->SetImageToIcon ( this->SlicerViewControlIcons->GetOrthoButtonIcon() );
+      fov = fovY;
       }
-    switch ( vn->GetStereoType() )
+    if ( this->RedFOVEntry->GetWidget()->GetValueAsDouble() != fov )
       {
-      case vtkMRMLViewNode::NoStereo:
-        this->StereoButton->GetMenu()->SelectItem ( "No stereo");
-        break;
-      case vtkMRMLViewNode::RedBlue:
-        this->StereoButton->GetMenu()->SelectItem ( "Red/Blue");
-        break;
-      case vtkMRMLViewNode::Interlaced:
-        this->StereoButton->GetMenu()->SelectItem ( "Interlaced");        
-        break;
-      case vtkMRMLViewNode::CrystalEyes:
-        this->StereoButton->GetMenu()->SelectItem ( "CrystalEyes");
-        break;
-      default:
-        break;
+      this->RedFOVEntry->GetWidget()->SetValueAsDouble( fov );
       }
-    if ( vn->GetFiducialsVisible() == 1 )
+    }
+  if ( this->YellowSliceNode != NULL )
+    {
+    fovX = this->YellowSliceNode->GetFieldOfView()[0];
+    fovY = this->YellowSliceNode->GetFieldOfView()[1];
+    if ( fovX < fovY )
       {
-//      this->VisibilityButton->GetMenu()->SelectItem ("Fiducial points" );
+      fov = fovX;
       }
     else
       {
-//      this->VisibilityButton->GetMenu()->DeselectItem ("Fiducial points" );
+      fov = fovY;
       }
-    if ( vn->GetFiducialLabelsVisible() == 1 )
+    if ( this->YellowFOVEntry->GetValueAsDouble() != fov )
       {
-//      this->VisibilityButton->GetMenu()->SelectItem ("Fiducial labels" );
+      this->YellowFOVEntry->SetValueAsDouble(fov );
+      }
+    }
+  if ( this->GreenSliceNode != NULL )
+    {
+    fovX = this->GreenSliceNode->GetFieldOfView()[0];
+    fovY = this->GreenSliceNode->GetFieldOfView()[1];
+    if ( fovX < fovY )
+      {
+      fov = fovX;
       }
     else
       {
-//      this->VisibilityButton->GetMenu()->DeselectItem ("Fiducial labels" );
+      fov = fovY;
       }
-    if ( vn->GetBoxVisible() == 1 )
+    if ( this->GreenFOVEntry->GetValueAsDouble() != fov )
       {
-      this->VisibilityButton->GetMenu()->SelectItem ("3D cube" );
+      this->GreenFOVEntry->SetValueAsDouble( fov );
       }
-    else
-      {
-      this->VisibilityButton->GetMenu()->DeselectItem ("3D cube" );
-      }
-    if ( vn->GetAxisLabelsVisible ( ) == 1 )
-      {
-      this->VisibilityButton->GetMenu()->SelectItem ("3D axis labels" );
-      }
-    else
-      {
-      this->VisibilityButton->GetMenu()->DeselectItem ("3D axis labels" );
-      }
-    double *c = vn->GetBackgroundColor();
-    if ( c[0] == 0.0 )
-      {
-      this->VisibilityButton->GetMenu()->SelectItem ("Black background" );
-      }
-    if  (c[0] == 1.0 )
-      {
-      this->VisibilityButton->GetMenu()->SelectItem ("White background");
-      }
-    else 
-      {  
-
-      this->VisibilityButton->GetMenu()->SelectItem ("Light blue background");
-      }
-    }    
+    }
+  this->SetEntryUpdatePending(0);
+#endif
 }
+
+
+
+
 
 
 
@@ -2714,7 +3305,7 @@ void vtkSlicerViewControlGUI::UpdateMainViewerInteractorStyles ( )
          GetRenderWindowInteractor()->GetInteractorStyle() != this->MainViewerEvents ) )
     {
     // tear down pointer assignment
-    this->RemoveMainViewerObservers();
+    this->RemoveMainViewerEventObservers();
     this->SetMainViewerEvents(NULL );
     // reassign pointer
     this->SetMainViewerEvents( vtkSlicerViewerInteractorStyle::SafeDownCast(
@@ -2724,338 +3315,8 @@ void vtkSlicerViewControlGUI::UpdateMainViewerInteractorStyles ( )
                                                                  GetRenderWindowInteractor()->
                                                                  GetInteractorStyle() ));
     // add observers on events
-    this->AddMainViewerObservers();
+    this->AddMainViewerEventObservers();
     }
 }
 
 
-
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::AddMainViewerObservers()
-{
-  
-  if ( this->GetApplicationGUI() != NULL )
-    {
-    if ( this->MainViewerEvents != NULL )
-      {
-      this->MainViewerEvents->AddObserver ( vtkCommand::EndInteractionEvent, this->GUICallbackCommand );
-      }
-    }
-  
-}
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::RemoveMainViewerObservers()
-{
-  if ( this->GetApplicationGUI() != NULL )
-    {
-    if ( this->MainViewerEvents != NULL )
-      {
-      this->MainViewerEvents->RemoveObservers ( vtkCommand::EndInteractionEvent, this->GUICallbackCommand );
-      }
-    }
-}
-
-
-
-
-
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::UpdateSliceGUIInteractorStyles ( )
-{
-  // get all views from the scene
-  // and observe active view.
-  if (this->SceneClosing)
-    {
-    return;
-    }
-
-  // Find current SliceGUIs; if there are none, do nothing.
-  if ( ( this->GetApplicationGUI()->GetMainSliceGUI0() == NULL ) ||
-       ( this->GetApplicationGUI()->GetMainSliceGUI1() == NULL ) ||
-       ( this->GetApplicationGUI()->GetMainSliceGUI2() == NULL ))
-    {
-    return;
-    }
-
-  // If the interactor and these references are out of sync...
-  if ( ( this->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceViewer()->
-         GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->Slice0Events ) ||
-       ( this->GetApplicationGUI()->GetMainSliceGUI1()->GetSliceViewer()->
-         GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->Slice1Events ) ||
-       ( this->GetApplicationGUI()->GetMainSliceGUI2()->GetSliceViewer()->
-         GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->Slice2Events ) )
-    {
-    this->RemoveSliceGUIObservers();
-    this->SetSlice0Events(NULL );
-    this->SetSlice1Events(NULL );
-    this->SetSlice2Events(NULL );
-
-    this->SetSlice0Events( vtkSlicerInteractorStyle::SafeDownCast(
-                                                                 this->GetApplicationGUI()->
-                                                                 GetMainSliceGUI0()->
-                                                                 GetSliceViewer()->
-                                                                 GetRenderWidget()->
-                                                                 GetRenderWindowInteractor()->
-                                                                 GetInteractorStyle() ));
-    this->SetSlice1Events( vtkSlicerInteractorStyle::SafeDownCast(
-                                                                 this->GetApplicationGUI()->
-                                                                 GetMainSliceGUI1()->
-                                                                 GetSliceViewer()->
-                                                                 GetRenderWidget()->
-                                                                 GetRenderWindowInteractor()->
-                                                                 GetInteractorStyle() ));
-    this->SetSlice2Events( vtkSlicerInteractorStyle::SafeDownCast(
-                                                                 this->GetApplicationGUI()->
-                                                                 GetMainSliceGUI2()->
-                                                                 GetSliceViewer()->
-                                                                 GetRenderWidget()->
-                                                                 GetRenderWindowInteractor()->
-                                                                 GetInteractorStyle() ));
-    this->AddSliceGUIObservers();
-    }
-}
-
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::UpdateFromMRML()
-{
-
-
-  // called:
-  // 1. whenever any new node is created or deleted
-  // 2. when a new view or camera has been selected
-  // Needs to remove old observers, put new
-  // observers on the current camera and view,
-  // repopulate the NavigationZoom widget's actors, etc.,
-  // and rerender the NavigationZoom widget's view.
-
-  this->UpdateView();
-  this->RequestNavigationRender ( );
-}
-
-
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::UpdateView()
-{
-    if (this->SceneClosing)
-    {
-    return;
-    }
-
-  vtkMRMLViewNode *node =  vtkMRMLViewNode::SafeDownCast (
-       this->MRMLScene->GetNthNodeByClass(0, "vtkMRMLViewNode"));
-
-  if ( this->ViewNode != NULL && node != NULL && this->ViewNode != node)
-    {
-    // local ViewNode is out of sync with the scene
-    this->RemoveViewObservers();
-    this->SetViewNode (NULL);
-    }
-  if ( this->ViewNode != NULL && this->MRMLScene->GetNodeByID(this->ViewNode->GetID()) == NULL)
-    {
-    // local node not in the scene
-    this->RemoveViewObservers();
-    this->SetViewNode(NULL );
-    }
-  if ( this->ViewNode == NULL )
-    {
-    if ( node == NULL )
-      {
-      // no view in the scene and local
-      // create an active camera
-      node = vtkMRMLViewNode::New();
-      this->MRMLScene->AddNode(node);
-      node->Delete();
-      }
-    this->SetViewNode ( node );
-    this->AddViewObservers();
-    }
-}
-
-
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::AddViewObservers()
-{
-  // observe scene for add/remove nodes
-  if ( this->ViewNode )
-    {
-    this->ViewNode->AddObserver ( vtkMRMLViewNode::AnimationModeEvent, this->MRMLCallbackCommand );
-    this->ViewNode->AddObserver ( vtkMRMLViewNode::RenderModeEvent, this->MRMLCallbackCommand );
-    this->ViewNode->AddObserver ( vtkMRMLViewNode::StereoModeEvent, this->MRMLCallbackCommand );
-    this->ViewNode->AddObserver ( vtkMRMLViewNode::VisibilityEvent, this->MRMLCallbackCommand );
-    this->ViewNode->AddObserver ( vtkMRMLViewNode::BackgroundColorEvent, this->MRMLCallbackCommand );
-    }
-}
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::RemoveViewObservers()
-{
-  if ( this->ViewNode )
-    {
-    this->ViewNode->RemoveObservers ( vtkMRMLViewNode::AnimationModeEvent, this->MRMLCallbackCommand );
-    this->ViewNode->RemoveObservers ( vtkMRMLViewNode::RenderModeEvent, this->MRMLCallbackCommand );
-    this->ViewNode->RemoveObservers ( vtkMRMLViewNode::StereoModeEvent, this->MRMLCallbackCommand );
-    this->ViewNode->RemoveObservers ( vtkMRMLViewNode::VisibilityEvent, this->MRMLCallbackCommand );
-    this->ViewNode->RemoveObservers ( vtkMRMLViewNode::BackgroundColorEvent, this->MRMLCallbackCommand );
-    }
-}
-
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::RequestNavigationRender()
-{
-#ifndef NAVZOOMWIDGET_DEBUG
-  if (this->GetNavigationRenderPending())
-    {
-    return;
-    }
-
-  this->SetNavigationRenderPending(1);
-  this->Script("after idle \"%s NavigationRender\"", this->GetTclName());
-#endif
-}
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::RequestZoomRender()
-{
-#ifndef NAVZOOMWIDGET_DEBUG
-  if (this->GetZoomRenderPending())
-    {
-    return;
-    }
-
-  this->SetZoomRenderPending(1);
-  this->Script("after idle \"%s ZoomRender\"", this->GetTclName());
-#endif
-}
-
-
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::ZoomRender()
-{
-#ifndef NAVZOOMWIDGET_DEBUG
-  if ( this->SliceMagnifier->GetInput() != NULL )
-    {
-    this->ZoomWidget->Render();
-    }
-  this->SetZoomRenderPending(0);
-#endif
-}
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::NavigationRender()
-{
-
-#ifndef  NAVZOOMWIDGET_DEBUG
-  this->UpdateNavigationWidgetViewActors ( );
-  this->ConfigureNavigationWidgetRender ( );
-  this->NavigationWidget->Render();
-  this->SetNavigationRenderPending(0);
-#endif
-  
-}
-
-
-
-//---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::ResetNavigationCamera ( )
-{
-  double center[3];
-  double distance;
-  double vn[3], *vup;
-  double bounds[6];
-  double viewAngle = 20.0;
-  
-  vtkRenderer *ren = this->NavigationWidget->GetRenderer();
-  vtkCamera *cam = ren->GetActiveCamera();
-  
-  ren->ComputeVisiblePropBounds( bounds );
-  if (!vtkMath::AreBoundsInitialized(bounds))
-    {
-    vtkDebugMacro( << "Cannot reset camera!" );
-    }
-  else
-    {
-
-
-  // Here to let parallel/distributed compositing intercept 
-  // and do the right thing.
-  ren->InvokeEvent(vtkCommand::ResetCameraEvent, ren);
-
-  if ( cam != NULL )
-    {
-    cam->GetViewPlaneNormal(vn);
-    }
-  else
-    {
-    vtkErrorMacro(<< "Trying to reset non-existant camera");
-    return;
-    }
-
-  center[0] = (bounds[0] + bounds[1])/2.0;
-  center[1] = (bounds[2] + bounds[3])/2.0;
-  center[2] = (bounds[4] + bounds[5])/2.0;
-
-  double w1 = bounds[1] - bounds[0];
-  double w2 = bounds[3] - bounds[2];
-  double w3 = bounds[5] - bounds[4];
-  w1 *= w1;
-  w2 *= w2;
-  w3 *= w3;
-  double radius = w1 + w2 + w3;
-
-  // If we have just a single point, pick a radius of 1.0
-  radius = (radius==0)?(1.0):(radius);
-
-  // compute the radius of the enclosing sphere
-  radius = sqrt(radius)*0.5;
-
-  // default so that the bounding sphere fits within the view fustrum
-  // compute the distance from the intersection of the view frustum with the
-  // bounding sphere. Basically in 2D draw a circle representing the bounding
-  // sphere in 2D then draw a horizontal line going out from the center of
-  // the circle. That is the camera view. Then draw a line from the camera
-  // position to the point where it intersects the circle. (it will be tangent
-  // to the circle at this point, this is important, only go to the tangent
-  // point, do not draw all the way to the view plane). Then draw the radius
-  // from the tangent point to the center of the circle. You will note that
-  // this forms a right triangle with one side being the radius, another being
-  // the target distance for the camera, then just find the target dist using
-  // a sin.
-  distance = radius/sin(viewAngle*vtkMath::Pi()/360.0);
-
-  // check view-up vector against view plane normal
-  vup = cam->GetViewUp();
-  if ( fabs(vtkMath::Dot(vup,vn)) > 0.999 )
-    {
-    vtkWarningMacro(<<"Resetting view-up since view plane normal is parallel");
-    cam->SetViewUp(-vup[2], vup[0], vup[1]);
-    }
-
-  // update the camera
-  cam->SetFocalPoint(center[0],center[1],center[2]);
-  cam->SetPosition(center[0]+distance*vn[0],
-                                  center[1]+distance*vn[1],
-                                  center[2]+distance*vn[2]);
-
-  ren->ResetCameraClippingRange( bounds );
-
-  // setup default parallel scale
-  cam->SetParallelScale(radius);
-    }
-}

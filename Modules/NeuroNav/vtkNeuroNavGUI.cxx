@@ -41,6 +41,8 @@
 #include "vtkIGTDataStream.h"
 
 #include "vtkCylinderSource.h"
+#include "vtkMRMLLinearTransformNode.h"
+
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkNeuroNavGUI );
@@ -70,7 +72,7 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->PAEntry = NULL;
     this->PSEntry = NULL;
 
-    this->FileFrame = NULL;
+    this->ExtraFrame = NULL;
 
 /*
     this->RedColorScale = NULL;
@@ -97,6 +99,12 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 #endif
 #ifdef USE_IGSTK
     this->DeviceMenuButton = NULL;
+    this->PortNumberMenuButton = NULL;
+    this->BaudRateMenuButton = NULL;
+    this->DataBitsMenuButton = NULL;
+    this->ParityTypeMenuButton = NULL;
+    this->StopBitsMenuButton = NULL;
+    this->HandShakeMenuButton = NULL;
 #endif
 
     this->UpdateRateEntry = NULL;
@@ -126,6 +134,20 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->DataCallbackCommand = vtkCallbackCommand::New();
     this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
     this->DataCallbackCommand->SetCallback(vtkNeuroNavGUI::DataCallback);
+
+    this->Logic0 = NULL; 
+    this->Logic1 = NULL; 
+    this->Logic2 = NULL; 
+    this->SliceNode0 = NULL; 
+    this->SliceNode1 = NULL; 
+    this->SliceNode2 = NULL; 
+    this->Control0 = NULL; 
+    this->Control1 = NULL; 
+    this->Control2 = NULL; 
+
+    this->NeedOrientationUpdate0 = 0;
+    this->NeedOrientationUpdate1 = 0;
+    this->NeedOrientationUpdate2 = 0;
 
 
 #ifdef USE_OPENTRACKER
@@ -332,9 +354,40 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
 #ifdef USE_IGSTK
     if (this->DeviceMenuButton) 
     {
-        this->DeviceMenuButton->SetParent(NULL );
+        this->DeviceMenuButton->SetParent(NULL);
         this->DeviceMenuButton->Delete();
     }
+    if (this->PortNumberMenuButton) 
+    {
+        this->PortNumberMenuButton->SetParent(NULL);
+        this->PortNumberMenuButton->Delete();
+    }
+    if (this->BaudRateMenuButton) 
+    {
+        this->BaudRateMenuButton->SetParent(NULL);
+        this->BaudRateMenuButton->Delete();
+    }
+    if (this->DataBitsMenuButton) 
+    {
+        this->DataBitsMenuButton->SetParent(NULL);
+        this->DataBitsMenuButton->Delete();
+    }
+    if (this->ParityTypeMenuButton) 
+    {
+        this->ParityTypeMenuButton->SetParent(NULL);
+        this->ParityTypeMenuButton->Delete();
+    }
+    if (this->StopBitsMenuButton) 
+    {
+        this->StopBitsMenuButton->SetParent(NULL);
+        this->StopBitsMenuButton->Delete();
+    }
+    if (this->HandShakeMenuButton) 
+    {
+        this->HandShakeMenuButton->SetParent(NULL);
+        this->HandShakeMenuButton->Delete();
+    }
+
 #endif
 
 
@@ -411,9 +464,9 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
     this->SetModuleLogic ( NULL );
 
 
-    if (this->FileFrame)
+    if (this->ExtraFrame)
     {
-        this->FileFrame->Delete ( );
+        this->ExtraFrame->Delete ( );
     }
 }
 
@@ -559,29 +612,40 @@ void vtkNeuroNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
 
     if (anno)
     {
-        const char *rasText = anno->GetText(3);
-        std::string ras = std::string(rasText);
+        const char *rasText = anno->GetText(1);
+        if ( rasText != NULL )
+          {
+          std::string ras = std::string(rasText);
 
-        // remove "R:," "A:," and "S:" from the string
-        int loc = ras.find("R:", 0);
-        ras = ras.replace(loc, 2, "");
-        loc = ras.find("A:", 0);
-        ras = ras.replace(loc, 2, "");
-        loc = ras.find("S:", 0);
-        ras = ras.replace(loc, 2, "");
+          // remove "R:," "A:," and "S:" from the string
+          int loc = ras.find("R:", 0);
+          if ( loc != std::string::npos ) 
+            {
+            ras = ras.replace(loc, 2, "");
+            }
+          loc = ras.find("A:", 0);
+          if ( loc != std::string::npos ) 
+            {
+            ras = ras.replace(loc, 2, "");
+            }
+          loc = ras.find("S:", 0);
+          if ( loc != std::string::npos ) 
+            {
+            ras = ras.replace(loc, 2, "");
+            }
 
-        // remove "\n" from the string
-        int found = ras.find("\n", 0);
-        while (found >0)
-        {
+          // remove "\n" from the string
+          int found = ras.find("\n", 0);
+          while ( found != std::string::npos )
+            {
             ras = ras.replace(found, 1, " ");
             found = ras.find("\n", 0);
-        }
+            }
 
-        this->SlicerCoordinatesEntry->GetWidget()->SetValue(ras.c_str());
+          this->SlicerCoordinatesEntry->GetWidget()->SetValue(ras.c_str());
+          }
     }
 }
-
 
 
 //---------------------------------------------------------------------------
@@ -599,65 +663,11 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         if (this->ConnectCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
-            int checked = this->ConnectCheckButton->GetSelectedState(); 
-            int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
-            float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
-
 #ifdef USE_OPENTRACKER
-            if (checked)
-            {
-                // connected
-                char *filename = this->LoadConfigButton->GetWidget()->GetFileName();
-                if (! filename)
-                {
-                    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
-                    dialog->SetParent ( this->FileFrame );
-                    dialog->SetStyleToMessage();
-                    std::string msg = std::string("Please input a valid configuration file (.xml).");
-                    dialog->SetText(msg.c_str());
-                    dialog->Create();
-                    dialog->Invoke();
-                    dialog->Delete();
-                    this->ConnectCheckButton->SetSelectedState(0);
-                }
-                else
-                {
-                    this->OpenTrackerStream->Init(filename);
-                    this->OpenTrackerStream->SetSpeed(sp);
-                    this->OpenTrackerStream->SetMultiFactor(multi);
-                    this->OpenTrackerStream->SetStartTimer(1);
-                    this->OpenTrackerStream->ProcessTimerEvents();
-                }
-            }
-            else
-            {
-                this->OpenTrackerStream->SetStartTimer(0);
-            }
+            SetOpenTrackerConnectionParameters();
 #endif
 #ifdef USE_IGSTK
-            if (checked)
-            {
-                vtkKWMenuButton *mb = this->DeviceMenuButton->GetWidget();
-                if (!strcmp (mb->GetValue(), "Aurora"))   
-                {
-                    this->IGSTKStream->SetTrackerType(0);
-                }
-                else 
-                {
-                    this->IGSTKStream->SetTrackerType(1);
-                }
-
-                this->IGSTKStream->Init();
-                this->IGSTKStream->SetSpeed(sp);
-                this->IGSTKStream->SetMultiFactor(multi);
-                this->IGSTKStream->SetStartTimer(1);
-                this->IGSTKStream->ProcessTimerEvents();
-
-            }
-            else
-            {
-                this->IGSTKStream->SetStartTimer(0);
-            }
+            SetIGSTKConnectionParameters();
 #endif
         }
 #ifdef USE_OPENTRACKER
@@ -800,27 +810,24 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         {
             int checked = this->LocatorCheckButton->GetSelectedState(); 
 
-            vtkMRMLModelNode *model = (vtkMRMLModelNode *)this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str()); 
-            vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
+            vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+            if (model != NULL)
+            {
+                vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
 
-            vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-            vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
-            disp->SetColor(color->SliceGUIGreen);
-
-            disp->SetVisibility(checked);
+                vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+                vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
+                disp->SetColor(color->SliceGUIGreen);
+                disp->SetVisibility(checked);
+            }
 
         }
         else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
             int checked = this->LocatorModeCheckButton->GetSelectedState(); 
-            vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-
-            vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
-            vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
-            vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
-
             std::string val("Locator");
+
             if (checked)
             {
                 this->UserModeCheckButton->SelectedStateOff();
@@ -828,9 +835,13 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             else
             {
                 this->UserModeCheckButton->SelectedStateOn();
-                sliceNode0->SetOrientationToAxial();
-                sliceNode1->SetOrientationToSagittal();
-                sliceNode2->SetOrientationToCoronal();
+                this->SliceNode0->SetOrientationToAxial();
+                this->SliceNode1->SetOrientationToSagittal();
+                this->SliceNode2->SetOrientationToCoronal();
+                this->NeedOrientationUpdate0 = 0;
+                this->NeedOrientationUpdate1 = 0;
+                this->NeedOrientationUpdate2 = 0;
+
                 val = "User";
             }
             this->RedSliceMenu->SetValue(val.c_str());
@@ -841,20 +852,18 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
             int checked = this->UserModeCheckButton->GetSelectedState(); 
-            vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-
-            vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
-            vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
-            vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
-
             std::string val("User");
+
             if (checked)
             {
                 this->LocatorModeCheckButton->SelectedStateOff();
-                sliceNode0->SetOrientationToAxial();
-                sliceNode1->SetOrientationToSagittal();
-                sliceNode2->SetOrientationToCoronal();
+                this->SliceNode0->SetOrientationToAxial();
+                this->SliceNode1->SetOrientationToSagittal();
+                this->SliceNode2->SetOrientationToCoronal();
 
+                this->NeedOrientationUpdate0 = 0;
+                this->NeedOrientationUpdate1 = 0;
+                this->NeedOrientationUpdate2 = 0;
             }
             else
             {
@@ -874,26 +883,6 @@ void vtkNeuroNavGUI::Init()
 {
     this->DataManager->SetMRMLScene(this->GetMRMLScene());
     this->LocatorModelID = std::string(this->DataManager->RegisterStream(0));
-
-
-    this->TrackerLoop();
-    
-
-}
-
-
-
-
-void vtkNeuroNavGUI::TrackerLoop()
-{
-        
-  vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-  
-  
-  int rate = 100;
-//  vtkKWTkUtilities::CreateTimerHandler (app, rate, this, "TrackerLoop");
-  
-
 }
 
 
@@ -929,6 +918,17 @@ void vtkNeuroNavGUI::ProcessMRMLEvents ( vtkObject *caller,
 void vtkNeuroNavGUI::Enter ( )
 {
     // Fill in
+    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+
+    this->Logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
+    this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
+    this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
+    this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+    this->SliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
+    this->SliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
+    this->Control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
+    this->Control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
+    this->Control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
 
 }
 
@@ -1299,21 +1299,21 @@ void vtkNeuroNavGUI::BuildGUIForDeviceFrame ()
     /// Config file frame
     /////////////////////////////////////////////////////////////////////
     // add a file browser 
-    this->FileFrame = vtkKWFrame::New();
-    this->FileFrame->SetParent ( deviceFrame->GetFrame() );
-    this->FileFrame->Create ( );
+    this->ExtraFrame = vtkKWFrame::New();
+    this->ExtraFrame->SetParent ( deviceFrame->GetFrame() );
+    this->ExtraFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  this->FileFrame->GetWidgetName());
+                  this->ExtraFrame->GetWidgetName());
 
 #ifdef USE_OPENTRACKER
     this->ConfigFileEntry = vtkKWEntry::New();
-    this->ConfigFileEntry->SetParent(this->FileFrame);
+    this->ConfigFileEntry->SetParent(this->ExtraFrame);
     this->ConfigFileEntry->Create();
     this->ConfigFileEntry->SetWidth(50);
     this->ConfigFileEntry->SetValue ( "" );
 
     this->LoadConfigButton = vtkKWLoadSaveButtonWithLabel::New ( );
-    this->LoadConfigButton->SetParent ( this->FileFrame );
+    this->LoadConfigButton->SetParent ( this->ExtraFrame );
     this->LoadConfigButton->Create ( );
     this->LoadConfigButton->SetWidth(15);
     this->LoadConfigButton->GetWidget()->SetText ("Browse Config File");
@@ -1328,17 +1328,126 @@ void vtkNeuroNavGUI::BuildGUIForDeviceFrame ()
 #endif
 #ifdef USE_IGSTK
     this->DeviceMenuButton = vtkKWMenuButtonWithLabel::New();
-    this->DeviceMenuButton->SetParent(this->FileFrame);
+    this->DeviceMenuButton->SetParent(this->ExtraFrame);
     this->DeviceMenuButton->Create();
     this->DeviceMenuButton->SetWidth(50);
     this->DeviceMenuButton->SetLabelWidth(12);
     this->DeviceMenuButton->SetLabelText("Device Type:");
     this->DeviceMenuButton->GetWidget()->GetMenu()->AddRadioButton("Aurora");
     this->DeviceMenuButton->GetWidget()->GetMenu()->AddRadioButton("Polaris");
-    this->DeviceMenuButton->GetWidget()->SetValue ("Aurora");
+    this->DeviceMenuButton->GetWidget()->SetValue ("Polaris");
     this->Script(
       "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
       this->DeviceMenuButton->GetWidgetName());
+
+
+    // Port numbers
+    this->PortNumberMenuButton = vtkKWMenuButtonWithLabel::New();
+    this->PortNumberMenuButton->SetParent(this->ExtraFrame);
+    this->PortNumberMenuButton->Create();
+    this->PortNumberMenuButton->SetWidth(50);
+    this->PortNumberMenuButton->SetLabelWidth(12);
+    this->PortNumberMenuButton->SetLabelText("Port Number:");
+    this->PortNumberMenuButton->GetWidget()->GetMenu()->AddRadioButton("0");
+    this->PortNumberMenuButton->GetWidget()->GetMenu()->AddRadioButton("1");
+    this->PortNumberMenuButton->GetWidget()->GetMenu()->AddRadioButton("2");
+    this->PortNumberMenuButton->GetWidget()->GetMenu()->AddRadioButton("3");
+    this->PortNumberMenuButton->GetWidget()->GetMenu()->AddRadioButton("4");
+    this->PortNumberMenuButton->GetWidget()->GetMenu()->AddRadioButton("5");
+    this->PortNumberMenuButton->GetWidget()->GetMenu()->AddRadioButton("6");
+    this->PortNumberMenuButton->GetWidget()->GetMenu()->AddRadioButton("7");
+ 
+    this->PortNumberMenuButton->GetWidget()->SetValue ("0");
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+      this->PortNumberMenuButton->GetWidgetName());
+
+
+    // Baud rates
+    this->BaudRateMenuButton = vtkKWMenuButtonWithLabel::New();
+    this->BaudRateMenuButton->SetParent(this->ExtraFrame);
+    this->BaudRateMenuButton->Create();
+    this->BaudRateMenuButton->SetWidth(50);
+    this->BaudRateMenuButton->SetLabelWidth(12);
+    this->BaudRateMenuButton->SetLabelText("Baud Rate:");
+    this->BaudRateMenuButton->GetWidget()->GetMenu()->AddRadioButton("9600");
+    this->BaudRateMenuButton->GetWidget()->GetMenu()->AddRadioButton("19200");
+    this->BaudRateMenuButton->GetWidget()->GetMenu()->AddRadioButton("38400");
+    this->BaudRateMenuButton->GetWidget()->GetMenu()->AddRadioButton("57600");
+    this->BaudRateMenuButton->GetWidget()->GetMenu()->AddRadioButton("115200");
+ 
+    this->BaudRateMenuButton->GetWidget()->SetValue ("9600");
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+      this->BaudRateMenuButton->GetWidgetName());
+
+
+    // Data bits 
+    this->DataBitsMenuButton = vtkKWMenuButtonWithLabel::New();
+    this->DataBitsMenuButton->SetParent(this->ExtraFrame);
+    this->DataBitsMenuButton->Create();
+    this->DataBitsMenuButton->SetWidth(50);
+    this->DataBitsMenuButton->SetLabelWidth(12);
+    this->DataBitsMenuButton->SetLabelText("Data Bits:");
+    this->DataBitsMenuButton->GetWidget()->GetMenu()->AddRadioButton("7");
+    this->DataBitsMenuButton->GetWidget()->GetMenu()->AddRadioButton("8");
+ 
+    this->DataBitsMenuButton->GetWidget()->SetValue ("8");
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+      this->DataBitsMenuButton->GetWidgetName());
+
+
+    // Parity 
+    this->ParityTypeMenuButton = vtkKWMenuButtonWithLabel::New();
+    this->ParityTypeMenuButton->SetParent(this->ExtraFrame);
+    this->ParityTypeMenuButton->Create();
+    this->ParityTypeMenuButton->SetWidth(50);
+    this->ParityTypeMenuButton->SetLabelWidth(12);
+    this->ParityTypeMenuButton->SetLabelText("Parity Type:");
+    this->ParityTypeMenuButton->GetWidget()->GetMenu()->AddRadioButton("No");
+    this->ParityTypeMenuButton->GetWidget()->GetMenu()->AddRadioButton("Odd");
+    this->ParityTypeMenuButton->GetWidget()->GetMenu()->AddRadioButton("Even");
+ 
+    this->ParityTypeMenuButton->GetWidget()->SetValue ("No");
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+      this->ParityTypeMenuButton->GetWidgetName());
+
+
+    // Stop bits 
+    this->StopBitsMenuButton = vtkKWMenuButtonWithLabel::New();
+    this->StopBitsMenuButton->SetParent(this->ExtraFrame);
+    this->StopBitsMenuButton->Create();
+    this->StopBitsMenuButton->SetWidth(50);
+    this->StopBitsMenuButton->SetLabelWidth(12);
+    this->StopBitsMenuButton->SetLabelText("Stop Bits:");
+    this->StopBitsMenuButton->GetWidget()->GetMenu()->AddRadioButton("1");
+    this->StopBitsMenuButton->GetWidget()->GetMenu()->AddRadioButton("2");
+
+ 
+    this->StopBitsMenuButton->GetWidget()->SetValue ("1");
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+      this->StopBitsMenuButton->GetWidgetName());
+
+
+    // Hand shake 
+    this->HandShakeMenuButton = vtkKWMenuButtonWithLabel::New();
+    this->HandShakeMenuButton->SetParent(this->ExtraFrame);
+    this->HandShakeMenuButton->Create();
+    this->HandShakeMenuButton->SetWidth(50);
+    this->HandShakeMenuButton->SetLabelWidth(12);
+    this->HandShakeMenuButton->SetLabelText("Hand Shake:");
+    this->HandShakeMenuButton->GetWidget()->GetMenu()->AddRadioButton("Off");
+    this->HandShakeMenuButton->GetWidget()->GetMenu()->AddRadioButton("On");
+
+ 
+    this->HandShakeMenuButton->GetWidget()->SetValue ("Off");
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+      this->HandShakeMenuButton->GetWidgetName());
+
 #endif
 
 
@@ -1909,51 +2018,36 @@ void vtkNeuroNavGUI::UpdateAll()
         sprintf(Val, "%6.2f", tz);
         this->TSEntry->SetValue(Val);
 
+
         // update the display of locator
-#ifdef USE_OPENTRACKER
-        this->OpenTrackerStream->SetLocatorTransforms();
-#endif
-#ifdef USE_IGSTK
-        this->IGSTKStream->SetLocatorTransforms();
-#endif
+        if (this->LocatorCheckButton->GetSelectedState()) this->UpdateLocator();
+
+        //this->UpdateSliceDisplay(px, py, pz);  // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
         this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
-        this->UpdateLocator();
     }
 }
 
 
 void vtkNeuroNavGUI::UpdateLocator()
 {
-    int count = 0;
-    if (! strcmp(this->RedSliceMenu->GetValue(), "Locator")) count++;
-    if (! strcmp(this->YellowSliceMenu->GetValue(), "Locator")) count++;
-    if (! strcmp(this->GreenSliceMenu->GetValue(), "Locator")) count++;
-
-    // Update the locator only if at least one slice is driven by Locator
-    if (count > 0)
-    {
-        vtkTransform *transform = NULL;
+    vtkTransform *transform = NULL;
 #ifdef USE_OPENTRACKER
-        transform = this->OpenTrackerStream->GetLocatorNormalTransform(); 
+    this->OpenTrackerStream->SetLocatorTransforms();
+    transform = this->OpenTrackerStream->GetLocatorNormalTransform(); 
 #endif
 #ifdef USE_IGSTK
-        transform = this->IGSTKStream->GetLocatorNormalTransform(); 
+    this->IGSTKStream->SetLocatorTransforms();
+    transform = this->IGSTKStream->GetLocatorNormalTransform(); 
 #endif
 
+    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+    if (model != NULL)
+    {
         if (transform)
         {
-            vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-            vtkSlicerViewerWidget *viewerWidget = appGUI->GetViewerWidget();
-
-            vtkActor *locatorActor = viewerWidget->GetActorByID(this->LocatorModelID.c_str());
-            if (locatorActor)
-            {
-                //locatorActor->GetProperty()->SetColor(1, 0, 0);
-
-                locatorActor->SetUserMatrix(transform->GetMatrix());
-                locatorActor->Modified();
-                this->GetMRMLScene()->Modified();
-            }
+            vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
+            lnode->SetAndObserveMatrixTransformToParent(transform->GetMatrix());
+            this->GetMRMLScene()->Modified();
         }
     }
 }
@@ -1964,48 +2058,184 @@ void vtkNeuroNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
                                         float tx, float ty, float tz, 
                                         float px, float py, float pz)
 {
-    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-
-    vtkSlicerSliceLogic *logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
-    vtkSlicerSliceLogic *logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
-    vtkSlicerSliceLogic *logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
-    vtkMRMLSliceNode *sliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
-    vtkMRMLSliceNode *sliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
-    vtkMRMLSliceNode *sliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
-    vtkSlicerSliceControllerWidget *control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
-    vtkSlicerSliceControllerWidget *control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
-    vtkSlicerSliceControllerWidget *control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
-
-
+    // Axial
     if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
     {
-        sliceNode0->SetOrientationToAxial();
+        if (this->NeedOrientationUpdate0) 
+        {
+            this->SliceNode0->SetOrientationToAxial();
+            this->NeedOrientationUpdate0 = 0;
+        }
     }
     else
     {
-        sliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-        control0->GetOffsetScale()->SetValue(pz);
-        logic0->SetSliceOffset(pz);
+        this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+        this->Control0->GetOffsetScale()->SetValue(pz);
+        this->Logic0->SetSliceOffset(pz);
+        this->NeedOrientationUpdate0 = 1;
     }
+
+    // Sagittal
     if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
     {
-        sliceNode1->SetOrientationToSagittal();
+        if (this->NeedOrientationUpdate1) 
+        {
+            this->SliceNode1->SetOrientationToSagittal();
+            this->NeedOrientationUpdate1 = 0;
+        }
     }
     else
     {
-        sliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-        control1->GetOffsetScale()->SetValue(px);
-        logic1->SetSliceOffset(px);
+        this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+        this->Control1->GetOffsetScale()->SetValue(px);
+        this->Logic1->SetSliceOffset(px);
+        this->NeedOrientationUpdate1 = 1;
     }
+
+    // Coronal
     if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
     {
-        sliceNode2->SetOrientationToCoronal();
+        if (this->NeedOrientationUpdate2) 
+        {
+            this->SliceNode2->SetOrientationToCoronal();
+            this->NeedOrientationUpdate2 = 0;
+        }
     }
     else
     {
-        sliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-        control2->GetOffsetScale()->SetValue(py);
-        logic2->SetSliceOffset(py);
+        this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+        this->Control2->GetOffsetScale()->SetValue(py);
+        this->Logic2->SetSliceOffset(py);
+        this->NeedOrientationUpdate2 = 1;
     }
 }
 
+
+
+#ifdef USE_OPENTRACKER
+void vtkNeuroNavGUI::SetOpenTrackerConnectionParameters()
+{
+    int checked = this->ConnectCheckButton->GetSelectedState(); 
+    if (checked)
+    {
+        // connected
+        const char *filename = this->LoadConfigButton->GetWidget()->GetFileName();
+        if (! filename)
+        {
+            vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+            dialog->SetParent ( this->ExtraFrame );
+            dialog->SetStyleToMessage();
+            std::string msg = std::string("Please input a valid configuration file (.xml).");
+            dialog->SetText(msg.c_str());
+            dialog->Create();
+            dialog->Invoke();
+            dialog->Delete();
+            this->ConnectCheckButton->SetSelectedState(0);
+        }
+        else
+        {
+            this->OpenTrackerStream->Init(filename);
+
+            int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
+            float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
+
+            this->OpenTrackerStream->SetSpeed(sp);
+            this->OpenTrackerStream->SetMultiFactor(multi);
+            this->OpenTrackerStream->SetStartTimer(1);
+            this->OpenTrackerStream->ProcessTimerEvents();
+        }
+    }
+    else
+    {
+        this->OpenTrackerStream->SetStartTimer(0);
+    }
+}
+#endif
+
+
+
+#ifdef USE_IGSTK
+void vtkNeuroNavGUI::SetIGSTKConnectionParameters()
+{
+    int checked = this->ConnectCheckButton->GetSelectedState(); 
+    if (checked)
+    {
+
+        // Pulling rate for data
+        int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
+        this->IGSTKStream->SetSpeed(sp);
+
+        // Conversion rate
+        float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
+        this->IGSTKStream->SetMultiFactor(multi);
+
+
+        // Device type 
+        vtkKWMenuButton *mb = this->DeviceMenuButton->GetWidget();
+        if (!strcmp (mb->GetValue(), "Polaris"))   
+        {
+            this->IGSTKStream->SetTrackerType(0);
+        }
+        else 
+        {
+            this->IGSTKStream->SetTrackerType(1);
+
+        }
+
+
+        // Port number
+        int pn = atoi(this->PortNumberMenuButton->GetWidget()->GetValue());
+        this->IGSTKStream->SetPortNumber((PortNumberT)pn);
+
+        // Baud rate 
+        int br = atoi(this->BaudRateMenuButton->GetWidget()->GetValue());
+        this->IGSTKStream->SetBaudRate((BaudRateT)br);
+
+        // Data bits 
+        int db = atoi(this->DataBitsMenuButton->GetWidget()->GetValue());
+        this->IGSTKStream->SetBaudRate((BaudRateT)db);
+
+        // Parity 
+        mb = this->ParityTypeMenuButton->GetWidget();
+        if (!strcmp (mb->GetValue(), "No"))   
+
+        {
+            this->IGSTKStream->SetParity(igstk::SerialCommunication::NoParity);
+        }
+        else if  (!strcmp (mb->GetValue(), "Odd")) 
+        {
+            this->IGSTKStream->SetParity(igstk::SerialCommunication::OddParity);
+        }
+        else
+        {
+
+            this->IGSTKStream->SetParity(igstk::SerialCommunication::EvenParity);
+        }
+
+        // Stop bits 
+        int sb = atoi(this->StopBitsMenuButton->GetWidget()->GetValue());
+        this->IGSTKStream->SetStopBits((StopBitsT)sb);
+
+        // Hand shake
+        mb = this->HandShakeMenuButton->GetWidget();
+        if (!strcmp (mb->GetValue(), "Off"))   
+        {
+            this->IGSTKStream->SetHandShake(igstk::SerialCommunication::HandshakeOff);
+        }
+        else
+        {
+            this->IGSTKStream->SetHandShake(igstk::SerialCommunication::HandshakeOn);
+        }
+
+        this->IGSTKStream->SetTracking(1);
+        this->IGSTKStream->SetSpeed(sp);
+        this->IGSTKStream->SetMultiFactor(multi);
+        this->IGSTKStream->Init();
+        this->IGSTKStream->ProcessTimerEvents();
+    }
+    else
+    {
+        this->IGSTKStream->SetTracking(0);
+    }
+}
+#endif

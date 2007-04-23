@@ -122,14 +122,15 @@ void vtkMRMLColorNode::ReadXMLAttributes(const char** atts)
 //----------------------------------------------------------------------------
 vtkLookupTable * vtkMRMLColorNode::GetLookupTable()
 {
-  vtkWarningMacro("Subclass has not implemented GetLookupTable, returning NULL");
+  vtkDebugMacro("Subclass has not implemented GetLookupTable, returning NULL");
   return NULL;
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLColorNode::ReadFile ()
+int vtkMRMLColorNode::ReadFile ()
 {
   vtkErrorMacro("Subclass has not implemented ReadFile.");
+  return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -284,6 +285,7 @@ const char *vtkMRMLColorNode::GetColorName(int ind)
 const char *vtkMRMLColorNode::GetColorNameWithoutSpaces(int ind, const char *subst)
 {
   std::string name = std::string(this->GetColorName(ind));
+  const char *returnName;
   if (strstr(name.c_str(), " ") != NULL)
     {
     std::string::size_type spaceIndex = name.find( " ", 0 );
@@ -292,13 +294,14 @@ const char *vtkMRMLColorNode::GetColorNameWithoutSpaces(int ind, const char *sub
       name.replace(spaceIndex, 1, subst, 0, strlen(subst));
       spaceIndex = name.find( " ", spaceIndex );
       }
-    return name.c_str();
+    returnName =  name.c_str();
     }
   else
     {
     // no spaces, return it as is
-    return name.c_str();
+    returnName = name.c_str();
     }
+  return returnName;
 }
 
 //---------------------------------------------------------------------------

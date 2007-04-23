@@ -489,8 +489,22 @@ inline void Arg::setRequireLabel( const std::string& s)
 
 inline bool Arg::argMatches( const std::string& argFlag ) const
 {
-  if ( ( argFlag == Arg::flagStartString() + _flag && _flag != "" ) ||
-       argFlag == Arg::nameStartString() + _name )
+  // allow matching for patterns like --load-dicom with --load_dicom 
+  // (more standard and user friendly)
+  // only change dashes to underscores if the string starts with --
+  std::string fixedFlag(argFlag);
+  if ( argFlag.find_first_of(Arg::nameStartString()) == 0 )
+    {
+    std::string::size_type nameStartLen = Arg::nameStartString().length(); 
+    std::string::size_type dashIndex; 
+    while ( (dashIndex = fixedFlag.find_first_of("-", nameStartLen)) != std::string::npos )
+      {
+      fixedFlag[dashIndex] = '_';
+      }
+    }
+
+  if ( ( fixedFlag == Arg::flagStartString() + _flag && _flag != "" ) ||
+       fixedFlag == Arg::nameStartString() + _name )
     return true;
   else
     return false;

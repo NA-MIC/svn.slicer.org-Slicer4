@@ -30,7 +30,7 @@
 #include "vtkMRMLVolumeNode.h"
 
 class vtkMRMLScalarVolumeNode;
-
+class vtkMRMLVolumeHeaderlessStorageNode;
 
 class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic 
 {
@@ -49,11 +49,17 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
   // Description:
   // Create new mrml node and associated storage node.
   // Read image data from a specified file
-  vtkMRMLVolumeNode* AddArchetypeVolume (char* filename, int centerImage, int labelMap, const char* volname);
+  vtkMRMLVolumeNode* AddArchetypeVolume (const char* filename, int centerImage, int labelMap, const char* volname);
+
+  // Description:
+  // Create new mrml node and associated storage node.
+  // Read image data from a specified file
+  vtkMRMLVolumeNode* AddHeaderVolume (const char* filename, int centerImage, int labelMap, const char* volname, 
+                                      vtkMRMLVolumeHeaderlessStorageNode *headerStorage);
 
   // Description:
   // Write volume's image data to a specified file
-  int SaveArchetypeVolume (char* filename, vtkMRMLVolumeNode *volumeNode);
+  int SaveArchetypeVolume (const char* filename, vtkMRMLVolumeNode *volumeNode);
 
   // Description:
   // Create a label map volume to match the given volume node and add it to
@@ -77,6 +83,12 @@ protected:
   vtkSlicerVolumesLogic(const vtkSlicerVolumesLogic&);
   void operator=(const vtkSlicerVolumesLogic&);
 
+  // Description:
+  // Examine the file name to see if the extension is one of the supported
+  // freesurfer volume formats. Used to assign the proper colour node to label
+  // maps.
+  int IsFreeSurferVolume (const char* filename);
+  
   // Description:
   //
   vtkMRMLVolumeNode *ActiveVolumeNode;

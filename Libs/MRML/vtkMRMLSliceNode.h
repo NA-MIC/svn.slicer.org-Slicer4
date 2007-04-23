@@ -93,6 +93,7 @@ class VTK_MRML_EXPORT vtkMRMLSliceNode : public vtkMRMLNode
       this->FieldOfView[1] = y;
       this->FieldOfView[2] = z;
       this->UpdateMatrices();
+      this->Modified();
       }
   }
 
@@ -151,6 +152,11 @@ class VTK_MRML_EXPORT vtkMRMLSliceNode : public vtkMRMLNode
                            double Tx, double Ty, double Tz,
                            double Px, double Py, double Pz,
                            int Orientation);
+
+  // Description:
+  // Set the RAS offset of the Slice to the passed values
+  void JumpSlice(double r, double a, double s);
+  void JumpAllSlices(double r, double a, double s);
 
 protected:
 

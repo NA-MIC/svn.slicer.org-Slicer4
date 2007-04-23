@@ -92,12 +92,20 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   vtkGetMacro ( ZoomRenderPending, int );
   vtkSetMacro ( ZoomRenderPending, int );
 
+  vtkGetMacro (EntryUpdatePending, int );
+  vtkSetMacro (EntryUpdatePending, int);
+  
   // Description:
   // parameters used for animated rock
   vtkGetMacro ( RockCount, int );
   vtkSetMacro ( RockCount, int );
   vtkGetMacro ( SliceMagnification, double );  
+  vtkGetMacro ( SliceInteracting, int );
 
+  vtkGetMacro (ProcessingMRMLEvent, int);
+  vtkGetMacro (NavigationZoomWidgetWid, int);
+  vtkGetMacro (NavigationZoomWidgetHit, int);
+  
   // Description:
   // Icons that modify the widgets in ViewControlGUI
   vtkGetObjectMacro ( SlicerViewControlIcons, vtkSlicerViewControlIcons );
@@ -118,7 +126,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   vtkGetObjectMacro (ZoomEntry, vtkKWEntryWithLabel);
   vtkGetObjectMacro (LookFromButton, vtkKWRadioButton);
   vtkGetObjectMacro (RotateAroundButton, vtkKWRadioButton );
-  vtkGetObjectMacro (NavigationZoomFrame, vtkKWFrame );
+
   
   // Description:
   // Get the Widgets that display the RotateAround rollover images
@@ -132,14 +140,18 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   vtkGetObjectMacro (ViewAxisCenterIconButton, vtkKWLabel );
   vtkGetObjectMacro (ViewAxisTopCornerIconButton, vtkKWLabel );
   vtkGetObjectMacro (ViewAxisBottomCornerIconButton, vtkKWLabel);
+
   vtkGetObjectMacro (NavigationWidget, vtkKWRenderWidget );
   vtkGetObjectMacro (ZoomWidget, vtkKWRenderWidget );
-
+  vtkGetObjectMacro (NavigationZoomFrame, vtkKWFrame );
+  
   // Description:
   // Box that represents the 3DViewer's window in the
   // Navigation rendered view
   vtkGetObjectMacro (FOVBox, vtkOutlineSource );
   vtkSetObjectMacro (FOVBox, vtkOutlineSource );
+  vtkGetObjectMacro (FOVBoxMapper, vtkPolyDataMapper);
+  vtkGetObjectMacro (FOVBoxActor, vtkFollower);
 
   // Description:
   // Get the Widgets that display the Zoom images
@@ -156,13 +168,13 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
 
   // Description:
   // API for getting & setting SliceGUI and MainViewer's interactor style
-  vtkSetObjectMacro ( Slice0Events, vtkSlicerInteractorStyle );
-  vtkSetObjectMacro ( Slice1Events, vtkSlicerInteractorStyle );
-  vtkSetObjectMacro ( Slice2Events, vtkSlicerInteractorStyle );
+  vtkSetObjectMacro ( RedSliceEvents, vtkSlicerInteractorStyle );
+  vtkSetObjectMacro ( YellowSliceEvents, vtkSlicerInteractorStyle );
+  vtkSetObjectMacro ( GreenSliceEvents, vtkSlicerInteractorStyle );
   vtkSetObjectMacro ( MainViewerEvents, vtkSlicerViewerInteractorStyle );
-  vtkGetObjectMacro ( Slice0Events, vtkSlicerInteractorStyle );
-  vtkGetObjectMacro ( Slice1Events, vtkSlicerInteractorStyle );
-  vtkGetObjectMacro ( Slice2Events, vtkSlicerInteractorStyle );
+  vtkGetObjectMacro ( RedSliceEvents, vtkSlicerInteractorStyle );
+  vtkGetObjectMacro ( YellowSliceEvents, vtkSlicerInteractorStyle );
+  vtkGetObjectMacro ( GreenSliceEvents, vtkSlicerInteractorStyle );
   vtkGetObjectMacro ( MainViewerEvents, vtkSlicerViewerInteractorStyle);
 
   // Description:
@@ -171,6 +183,9 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   // an accompanying Logic class.
   vtkGetObjectMacro ( ViewNode, vtkMRMLViewNode );
   vtkSetObjectMacro ( ViewNode, vtkMRMLViewNode );
+  vtkGetObjectMacro ( RedSliceNode, vtkMRMLSliceNode );
+  vtkGetObjectMacro ( YellowSliceNode, vtkMRMLSliceNode );  
+  vtkGetObjectMacro ( GreenSliceNode, vtkMRMLSliceNode );
   vtkMRMLViewNode *GetActiveView();
   vtkMRMLCameraNode *GetActiveCamera();
     
@@ -189,26 +204,23 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   // MainViewer so that we can manage
   // functionality of the Navigation widget
   void UpdateMainViewerInteractorStyles ( );
-  void AddMainViewerObservers();
-  void RemoveMainViewerObservers();
+  void AddMainViewerEventObservers();
+  void RemoveMainViewerEventObservers();
   
   // Description:
   // Add and remove observers on the
   // slice GUIs so that we can manage
   // functionality of the Zoom widget
   virtual void UpdateSliceGUIInteractorStyles();
-  virtual void AddSliceGUIObservers();
-  virtual void RemoveSliceGUIObservers();
+  virtual void AddSliceEventObservers();
+  virtual void RemoveSliceEventObservers();
   
   // Description:
-  // Add and remove observers on the view node.
-  virtual void AddViewObservers();
-  virtual void RemoveViewObservers();
-
-  // Description:
   // Methods to update GUI, View and MRML
-  virtual void UpdateGUI ( );
-  virtual void UpdateView();
+  virtual void RequestFOVEntriesUpdate ( );
+  virtual void FOVEntriesUpdate();
+  virtual void UpdateViewFromMRML();
+  virtual void UpdateSlicesFromMRML();
   virtual void UpdateFromMRML ( );
   
   // Description:
@@ -242,20 +254,20 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   // Starts and stops automatic view spinning
   virtual void MainViewSpin ( );
   virtual void SpinView (int direction, double degrees );
+  // Description:
+  // Zooms the main view with user-specified
+  // relative (percent) zoom factor.
   virtual void MainViewZoom ( double factor );
-
   // Description:
   // Resets focal point to origin
   virtual void MainViewResetFocalPoint ( );
   // Description:
   // Sets cameras focal point.
   virtual void MainViewSetFocalPoint ( double x, double y, double z);
-    
   // Description:
   // Starts and stops automatic view rocking
   virtual void MainViewRock ( );
   virtual void RockView ( );
-
   // Description:
   // Moves camera down selected axis in MainViewer and looks at
   // focal point from there
@@ -282,6 +294,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   // when mouse moves over a slice window.
   virtual void SliceViewMagnify( int event, vtkSlicerInteractorStyle *istyle);
 
+  virtual void FitFOVToBackground( double fov, int viewer );
+
   // Description:
   // Keeps the actors added to the Navigation Widget's
   // renderer the same as those in the 3DView's renderer.
@@ -291,16 +305,19 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   // Updates the Navigation widget's camera to track
   // the 3DView camera
   virtual void ConfigureNavigationWidgetRender ( );
+
   // Description:
   // Configures the Navigation widget's camera on
   // startup.
   virtual void InitializeNavigationWidgetCamera ( );
+
   // Description: Similar to vtkRenderer's ResetCamera
   // method, but tries to use a smaller ViewAngle to
   // compute a nearer camera distance that still
-  // accommodates all visible actors in scene. Not
+  // accommodates all visible actors in scene but fills
+  // more of the little render window with stuff. Not
   // working any differently than ResetCamera yet,
-  // for reasons unknown...
+  // for reasons unknown... 
   virtual void ResetNavigationCamera ( );
 
   // Description:
@@ -355,6 +372,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
     
   int NavigationRenderPending;
   int ZoomRenderPending;
+  int  EntryUpdatePending;
   int ProcessingMRMLEvent;
   bool SceneClosing;
   
@@ -418,15 +436,19 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   // MRML and GUI objects that this class will need
   // to set and observe.
   vtkMRMLViewNode *ViewNode;
-  vtkSlicerInteractorStyle *Slice0Events;
-  vtkSlicerInteractorStyle *Slice1Events;
-  vtkSlicerInteractorStyle *Slice2Events;
+  vtkSlicerInteractorStyle *RedSliceEvents;
+  vtkSlicerInteractorStyle *YellowSliceEvents;
+  vtkSlicerInteractorStyle *GreenSliceEvents;
+  vtkMRMLSliceNode *RedSliceNode;
+  vtkMRMLSliceNode *YellowSliceNode;
+  vtkMRMLSliceNode *GreenSliceNode;
   vtkSlicerViewerInteractorStyle *MainViewerEvents;
 
   int RockCount;
   int NavigationZoomWidgetWid;
   int NavigationZoomWidgetHit;
   double SliceMagnification;
+  int SliceInteracting;
 
  private:
   vtkSlicerViewControlGUI ( const vtkSlicerViewControlGUI& ); // Not implemented.

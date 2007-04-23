@@ -176,12 +176,12 @@ WFStepObject *WFXmlWorkflowManager::getNextWorkstepDescription(WFStepObject *cur
                         }                        
                         exit = true;
                     }                                        
-                }
-                
+                }        
                 curWS->AddVariable(myCurVarStruct->name, myCurVarStruct);
                 myCurVarStruct = this->getNextVariableFromDecomposition(decompositionName, &varNameSet, decompElem);                
             }    
         }                
+
 //        curWS->SetVariableMapping();
         return curWS;
     }
@@ -256,9 +256,6 @@ DOMElement *WFXmlWorkflowManager::getElementFromID(std::string &id)
 WFStepObject::variablePropertyStruct *WFXmlWorkflowManager::getNextVariableFromDecomposition(const XMLCh *decompositionName, std::set<std::string> *varSet, DOMElement *decomElem)
 {
     WFStepObject::variablePropertyStruct *tempPropStruct = NULL;
-    
-    //std::cout<<XMLString::transcode(decompositionName)<<std::endl;
-    
     if(!decomElem)
     {
         DOMNodeList *decompositionList = this->getAllChildesByName(specification, decomposition);
@@ -370,4 +367,9 @@ int WFXmlWorkflowManager::getNumberOfUnprocessedSteps(std::string &curStepID)
     }
     
     return m_approxUnprocessedSteps;
+}
+
+void WFXmlWorkflowManager::Destroy()
+{
+    delete(this);
 }

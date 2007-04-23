@@ -29,8 +29,18 @@ Version:   $Revision: 1.2 $
 #include "vtkSlicerApplication.h"
 #include "vtkImageThermalMap.h"
 
-vtkCxxRevisionMacro(vtkMRAblationLogic, "$Revision: 1.0 $");
-vtkStandardNewMacro(vtkMRAblationLogic);
+
+vtkMRAblationLogic* vtkMRAblationLogic::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRAblationLogic");
+  if(ret)
+    {
+      return (vtkMRAblationLogic*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkMRAblationLogic;
+}
 
 
 //----------------------------------------------------------------------------
@@ -38,7 +48,7 @@ vtkMRAblationLogic::vtkMRAblationLogic()
 {
   this->MRAblationNode = NULL;
 }
- 
+
 //----------------------------------------------------------------------------
 vtkMRAblationLogic::~vtkMRAblationLogic()
 {
@@ -181,7 +191,7 @@ void vtkMRAblationLogic::Apply(vtkSlicerVolumesGUI *volsGUI)
                         char *fileName = new char [size];
                         strcpy(fileName, first.c_str());
                         vtkSlicerVolumesLogic* volumeLogic = volsGUI->GetLogic();
-                        vtkMRMLVolumeNode *volumeNode = volumeLogic->AddArchetypeVolume( fileName, 1, 0, NULL );
+                        vtkMRMLVolumeNode *volumeNode = volumeLogic->AddArchetypeVolume( fileName, 1, 0 );
                         delete [] fileName;
 
                         if ( volumeNode == NULL )
@@ -190,12 +200,12 @@ void vtkMRAblationLogic::Apply(vtkSlicerVolumesGUI *volsGUI)
                         }
                         else
                         {
-//                            volsGUI->GetLoadVolumeButton()->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
+                            volsGUI->GetLoadVolumeButton()->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
                             volsGUI->GetApplicationLogic()->GetSelectionNode()->SetActiveVolumeID( volumeNode->GetID() );
                             volsGUI->GetApplicationLogic()->PropagateVolumeSelection();
                             volumeNode->SetName(volName);
                             volsGUI->GetVolumeDisplayWidget()->SetVolumeNode(volumeNode);
-//                            volsGUI->SetAndObserveMRMLNode(volumeNode);
+                                                        volsGUI->SetAndObserveMRMLNode(volumeNode);
 
                             // cold (first) real image
                             if (count == 1 && s == 2)
@@ -252,7 +262,7 @@ void vtkMRAblationLogic::Apply(vtkSlicerVolumesGUI *volsGUI)
 
                     vtkImageData* image = vtkImageData::New(); 
                     image->DeepCopy(tmap->GetOutput());
-                    // mapNode->SetImageData(image);
+                    mapNode->SetImageData(image);
                     image->Delete();
 
                     volsGUI->GetApplicationLogic()->GetSelectionNode()->SetActiveVolumeID(name);

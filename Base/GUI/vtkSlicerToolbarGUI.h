@@ -61,14 +61,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     vtkGetObjectMacro (FiducialsIconButton, vtkKWPushButton);
 //    vtkGetObjectMacro (MeasurementsIconButton, vtkKWPushButton);
     vtkGetObjectMacro (SaveSceneIconButton, vtkKWPushButton );
-    vtkGetObjectMacro (LoadSceneIconButton, vtkKWPushButton );
-    vtkGetObjectMacro (ConventionalViewIconButton, vtkKWPushButton );    
-    vtkGetObjectMacro (OneUp3DViewIconButton, vtkKWPushButton );
-    vtkGetObjectMacro (OneUpSliceViewIconButton, vtkKWMenuButton );
-    vtkGetObjectMacro (FourUpViewIconButton, vtkKWPushButton );
-    vtkGetObjectMacro (Tabbed3DViewIconButton, vtkKWPushButton );
-    vtkGetObjectMacro (TabbedSliceViewIconButton, vtkKWPushButton );
-    vtkGetObjectMacro (LightBoxViewIconButton, vtkKWPushButton );
+    vtkGetObjectMacro (LoadSceneIconButton, vtkKWMenuButton );
+    vtkGetObjectMacro (ChooseLayoutIconMenuButton, vtkKWMenuButton );
     vtkGetObjectMacro (UndoIconButton, vtkKWPushButton );
     vtkGetObjectMacro (RedoIconButton, vtkKWPushButton );
     vtkGetObjectMacro (InteractionModeRadioButtons, vtkKWRadioButtonSet );
@@ -101,6 +95,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     // stopped. Resumes when finished packing.
     virtual int StopViewRockOrSpin ( );
     virtual void ResumeViewRockOrSpin ( int mode );
+    virtual void SetLayoutMenubuttonValueToCurrentLayout ();
+    const char* GetCurrentLayoutStringName ( );
 
     // Description:
     // Getting and setting the mrml selection node id
@@ -145,14 +141,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     vtkKWPushButton *FiducialsIconButton;
 //    vtkKWPushButton *MeasurementsIconButton;
     vtkKWPushButton *SaveSceneIconButton;
-    vtkKWPushButton *LoadSceneIconButton;
-    vtkKWPushButton *ConventionalViewIconButton;
-    vtkKWPushButton *OneUp3DViewIconButton;
-    vtkKWMenuButton *OneUpSliceViewIconButton;
-    vtkKWPushButton *FourUpViewIconButton;
-    vtkKWPushButton *Tabbed3DViewIconButton;
-    vtkKWPushButton *TabbedSliceViewIconButton;
-    vtkKWPushButton *LightBoxViewIconButton;
+    vtkKWMenuButton *LoadSceneIconButton;
+    vtkKWMenuButton *ChooseLayoutIconMenuButton;
     vtkKWRadioButtonSet *InteractionModeRadioButtons;
 
     vtkSlicerModuleChooseGUI *ModuleChooseGUI;

@@ -56,6 +56,39 @@ vtkMRMLFreeSurferProceduralColorNode::vtkMRMLFreeSurferProceduralColorNode()
 {
   this->LookupTable = NULL;
   this->HideFromEditors = 1;
+  this->LabelsFileName = NULL;
+  this->SurfaceLabelsFileName = NULL;
+
+  // get the home directory and the colour file in the freesurfer lib dir
+  vtksys_stl::string slicerHome;
+  if (vtksys::SystemTools::GetEnv("SLICER_HOME") == NULL)
+    {
+    if (vtksys::SystemTools::GetEnv("PWD") != NULL)
+      {
+      slicerHome =  vtksys_stl::string(vtksys::SystemTools::GetEnv("PWD"));
+      }
+    else
+      {
+      slicerHome =  vtksys_stl::string("");
+      }
+    }
+  else
+    {
+    slicerHome = vtksys_stl::string(vtksys::SystemTools::GetEnv("SLICER_HOME"));
+    }
+  // check to see if slicer home was set
+  vtksys_stl::vector<vtksys_stl::string> filesVector;
+  filesVector.push_back(""); // for relative path
+  filesVector.push_back(slicerHome);
+  filesVector.push_back(vtksys_stl::string("Libs/FreeSurfer/FreeSurferColorLUT.txt"));
+  vtksys_stl::string colorFileName = vtksys::SystemTools::JoinPath(filesVector);
+  this->SetLabelsFileName(colorFileName.c_str());
+
+  filesVector.pop_back();
+  filesVector.push_back("Libs/FreeSurfer/Simple_surface_labels2002.txt");
+  colorFileName = vtksys::SystemTools::JoinPath(filesVector);
+  this->SetSurfaceLabelsFileName(colorFileName.c_str());
+  
   //this->DebugOn();
 }
 
@@ -66,6 +99,15 @@ vtkMRMLFreeSurferProceduralColorNode::~vtkMRMLFreeSurferProceduralColorNode()
     {
     this->LookupTable->Delete();
     this->LookupTable = NULL;
+    }
+
+  if (this->LabelsFileName)
+    {
+    delete [] this->LabelsFileName;
+    }
+  if (this->SurfaceLabelsFileName)
+    {
+    delete [] this->SurfaceLabelsFileName;
     }
 }
 
@@ -79,7 +121,7 @@ void vtkMRMLFreeSurferProceduralColorNode::WriteXML(ostream& of, int nIndent)
   vtkIndent indent(nIndent);
   
   // only print out the look up table if ?
-  if (this->LookupTable != NULL) // && this->Type != this->File
+  if (this->LookupTable != NULL)
     {
     of << " numcolors=\"" << this->LookupTable->GetNumberOfColors() << "\"";
     of << " colors=\"";
@@ -146,6 +188,8 @@ void vtkMRMLFreeSurferProceduralColorNode::ReadXMLAttributes(const char** atts)
   vtkDebugMacro("Finished reading in xml attributes, list id = " << this->GetID() << " and name = " << this->GetName() << endl);
 }
 
+/*
+  Done via the vtkMRMLColorTableNode::ReadFile method
 //----------------------------------------------------------------------------
 void vtkMRMLFreeSurferProceduralColorNode::ReadFile ()
 {
@@ -237,6 +281,8 @@ void vtkMRMLFreeSurferProceduralColorNode::ReadFile ()
     vtkErrorMacro ("ERROR opening colour file " << this->FileName << endl);
     }
 }
+*/
+
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, ID
@@ -261,6 +307,14 @@ void vtkMRMLFreeSurferProceduralColorNode::PrintSelf(ostream& os, vtkIndent inde
     {
     os << indent << "Look up table:\n";
     this->LookupTable->PrintSelf(os, indent.GetNextIndent());
+    }
+  if (this->LabelsFileName)
+    {
+    os << indent << "Volume label map color file: " << this->GetLabelsFileName() << endl;
+    }
+  if (this->SurfaceLabelsFileName)
+    {
+    os << indent << "Surface label map color file: " << this->GetSurfaceLabelsFileName() << endl;
     }
 }
 
@@ -319,13 +373,13 @@ void vtkMRMLFreeSurferProceduralColorNode::SetTypeToGreenRed()
 //----------------------------------------------------------------------------
 void vtkMRMLFreeSurferProceduralColorNode::SetTypeToLabels()
 {
-    this->SetType(this->Labels);
+  this->SetType(this->Labels);
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFreeSurferProceduralColorNode::SetTypeToFile()
+void vtkMRMLFreeSurferProceduralColorNode::SetTypeToSurfaceLabels()
 {
-    this->SetType(this->File);
+  this->SetType(this->SurfaceLabels);
 }
 
 //----------------------------------------------------------------------------
@@ -353,11 +407,11 @@ const char* vtkMRMLFreeSurferProceduralColorNode::GetTypeAsString()
     }
   if (this->Type == this->Labels)
     {
-    return "FreeSurferLabels";
+    return "Labels";
     }
-  if (this->Type == this->File)
+  if (this->Type == this->SurfaceLabels)
     {
-    return "FreeSurferFile";
+    return "SurfaceLabels";
     }
   return "(unknown)";
 }
@@ -385,13 +439,14 @@ const char* vtkMRMLFreeSurferProceduralColorNode::GetTypeAsIDString()
     {
     return "vtkMRMLFreeSurferProceduralColorNodeGreenRed";
     }
+  // these two are not held in this node, but use this node to define constants
   if (this->Type == this->Labels)
     {
-    return "vtkMRMLFreeSurferProceduralColorNodeLabels";
+    return "vtkMRMLFreeSurferColorNodeLabels";
     }
-  if (this->Type == this->File)
+  if (this->Type == this->SurfaceLabels)
     {
-    return "vtkMRMLFreeSurferProceduralColorNodeFile";
+    return "vtkMRMLFreeSurferColorNodeSurfaceLabels";
     }
   return "(unknown)";
 }
@@ -473,21 +528,11 @@ void vtkMRMLFreeSurferProceduralColorNode::SetType(int type)
       this->GetFSLookupTable()->SetLutTypeToGreenRed();
       this->SetNamesFromColors();
       }
-    else if (this->Type == this->Labels)
+    else if (this->Type == this->Labels ||
+             this->Type == this->SurfaceLabels)
       {
-      this->SetFileName("../Slicer3/Libs/FreeSurfer/Testing/FreeSurferColorLUT.txt");
-      vtkDebugMacro("SetType Labels: trying to read fs labels file " << this->GetFileName());
-      this->ReadFile();
-      // reset to labels, as read file sets the type to file
-      this->Type = this->Labels;
-      // the fs look up table shouldn't try to do anything special with labels
-      this->GetFSLookupTable()->SetLutTypeToLabels();
-      }        
-    else if (this->Type == this->File)
-      {
-      std::cout << "Set type to file, call SetFileName and ReadFile next..." << endl;
+      // do nothing
       }
-
     else
       {
       vtkErrorMacro ("vtkMRMLFreeSurferProceduralColorNode: SetType ERROR, unknown type " << type << endl);

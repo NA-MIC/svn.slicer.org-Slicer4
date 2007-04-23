@@ -66,6 +66,10 @@ SET(LIB_SRCS
   vtkKWScriptedWidget.cxx
   vtkKWWindowLevelThresholdEditor.cxx
   vtkSlicerVolumeDisplayWidget.cxx
+  vtkSlicerScalarVolumeDisplayWidget.cxx
+  vtkSlicerDiffusionWeightedVolumeDisplayWidget.cxx
+  vtkSlicerVolumeHeaderWidget.cxx
+  vtkSlicerVolumeFileHeaderWidget.cxx
   vtkSlicerTransformManagerWidget.cxx
   vtkSlicerTransformEditorWidget.cxx
   vtkSlicerMRMLTreeWidget.cxx
@@ -76,9 +80,11 @@ SET(LIB_SRCS
   vtkSlicerMRMLSaveDataWidget.cxx
   vtkSlicerClipModelsWidget.cxx
   vtkSlicerParameterWidget.cxx
+  vtkSlicerSceneSnapshotWidget.cxx
+  vtkSlicerModelHierarchyWidget.cxx
   # VTK Replacement classes
   vtkSlicerInteractorStyle.cxx
-  vtkSlicerViewerInteractorStyle.cxx  
+  vtkSlicerViewerInteractorStyle.cxx
   )
 
 # Helper classes
@@ -115,7 +121,7 @@ KWWidgets_WRAP_TCL(${LIB_NAME} LIB_TCL_SRCS "${LIB_SRCS}" "")
 
 ADD_LIBRARY(${LIB_NAME} ${LIB_TCL_SRCS} ${LIB_SRCS})
 TARGET_LINK_LIBRARIES(${LIB_NAME} 
-  ${KWWidgets_LIBRARIES} 
+  ${KWWidgets_LIBRARIES}
   ModuleDescriptionParser
   SlicerBaseLogic
   FreeSurfer)
@@ -173,7 +179,7 @@ ENDIF(WIN32 AND NOT BORLAND AND NOT CYGWIN)
 
 INCLUDE_DIRECTORIES(
   ${SlicerBaseGUI_BINARY_DIR}
-#  ${OPENTRACKER_INC_DIR}
+  ${OPENTRACKER_INC_DIR}
 )
 CONFIGURE_FILE(
   ${SlicerBaseGUI_SOURCE_DIR}/vtkSlicerBaseGUIConfigure.h.in 
@@ -237,8 +243,18 @@ CONFIGURE_FILE(
   COPYONLY
 )
 CONFIGURE_FILE(
+  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/CrosshairSWidget.tcl
+  ${SlicerBaseGUITcl_DIR}/CrosshairSWidget.tcl
+  COPYONLY
+)
+CONFIGURE_FILE(
   ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/Slicer2Import.tcl
   ${SlicerBaseGUITcl_DIR}/Slicer2Import.tcl
+  COPYONLY
+)
+CONFIGURE_FILE(
+  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/Loader.tcl
+  ${SlicerBaseGUITcl_DIR}/Loader.tcl
   COPYONLY
 )
 

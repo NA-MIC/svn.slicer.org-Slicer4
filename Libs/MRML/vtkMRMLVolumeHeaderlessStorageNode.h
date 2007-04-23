@@ -108,6 +108,8 @@ class VTK_MRML_EXPORT vtkMRMLVolumeHeaderlessStorageNode : public vtkMRMLStorage
     this->SetFileScalarType(VTK_DOUBLE);};
 
   const char* GetFileScalarTypeAsString();
+
+  void SetFileScalarTypeAsString(const char* );
   
   // Description:
   // The number of scalar components for each voxel. 
@@ -123,6 +125,12 @@ class VTK_MRML_EXPORT vtkMRMLVolumeHeaderlessStorageNode : public vtkMRMLStorage
   vtkSetMacro(FileLittleEndian, int);
   vtkBooleanMacro(FileLittleEndian, int);
 
+  // Description:
+  // Center image on read
+  vtkGetMacro(CenterImage, int);
+  vtkSetMacro(CenterImage, int);
+
+
 protected:
 
 
@@ -137,6 +145,8 @@ protected:
   int FileLittleEndian;
   double FileSpacing[3];
   int FileDimensions[3];
+
+  int CenterImage;
 
 
 };

@@ -5,6 +5,8 @@
 #include "ModuleDescription.h"
 #include "ModuleDescriptionParser.h"
 
+#include <vtkMRMLNode.h>
+
 vtkWFEngineHandler::vtkWFEngineHandler()
 {
     this->m_errorMSG = "";
@@ -19,10 +21,38 @@ vtkWFEngineHandler::vtkWFEngineHandler()
     
     this->m_curModuleDescription = NULL;
     this->m_curWFStepObject = NULL;
+    this->m_wfDI = NULL;
+    this->m_curWFMRMLNode = NULL;
+    this->m_clientArea = NULL;
 }
 
 vtkWFEngineHandler::~vtkWFEngineHandler()
 {
+    if(this->m_curModuleDescription)
+    {
+        delete(this->m_curModuleDescription);
+        this->m_curModuleDescription = NULL;
+    }
+    
+    if(this->m_curWFStepObject)
+    {
+        this->m_curWFStepObject->Destroy();
+        this->m_curWFStepObject = NULL;
+    }
+    
+    this->m_errorMSG = "";
+        
+    this->m_validationFuncTCL = NULL;
+    this->m_nextStepFuncTCL = NULL;
+    
+    if(this->m_wfDI)
+    {
+        this->CloseWorkflowSession();
+        m_wfDI->Destroy();
+        this->m_wfDI = NULL;
+    }
+    
+    this->m_clientArea = NULL;
 }
 
 int vtkWFEngineHandler::InitializeWFEngine()
@@ -88,9 +118,9 @@ int vtkWFEngineHandler::GetNextStepID()
     
     std::string tclFunction = this->m_nextStepFuncTCL;
     tclFunction.append(" \n\r getNextID");
-    std::cout<<tclFunction<<std::endl;
+//    std::cout<<tclFunction<<std::endl;
     const char* returnValue = this->Script(tclFunction.c_str());
-    std::cout<<returnValue<<std::endl;
+//    std::cout<<returnValue<<std::endl;
     
     if(strcmp(returnValue,"true") == 0)
     {
@@ -256,6 +286,31 @@ int vtkWFEngineHandler::LoadBackWorkStep()
     }        
 }
 
+int vtkWFEngineHandler::LoadWorkStepByIndex(int index)
+{
+    if(this->m_curWFStepObject)
+    {
+        //this->InvokeLeaveEvents();
+    }
+    
+    this->m_curWFStepObject = this->m_wfDI->getWorkStepByIndex(index);
+    
+    if(this->m_curWFStepObject)
+    {
+        this->LoadNextStepFunction(this->m_curWFStepObject->GetTCLNextWorkstepFunction().c_str());
+        this->LoadStepValidationFunction(this->m_curWFStepObject->GetTCLValidationFunction().c_str());
+        
+        this->InvokeEnterEvents();
+        return SUCC;
+    }                
+    else
+    {
+        this->LoadNextStepFunction("");
+        this->LoadStepValidationFunction("");
+        return FAIL;   
+    }        
+}
+
 WFEngine::nmWFStepObject::WFStepObject *vtkWFEngineHandler::GetLoadedWFStep()
 {
     return this->m_curWFStepObject;
@@ -274,6 +329,7 @@ int vtkWFEngineHandler::CloseWorkflowSession()
     this->m_validationFuncLoaded = false;
     this->m_validationFuncTCL = NULL;
     
+    this->m_clientArea = NULL;
     
     this->m_paramNames.clear();
     this->m_paramValues.clear();
@@ -370,19 +426,38 @@ const char* vtkWFEngineHandler::GetCurrentStepID()
 
 int vtkWFEngineHandler::GetProcessedSteps()
 {
-    if(this->m_wfDI)
+    if(this->m_initialized)
     {
         return this->m_wfDI->getNumberOfProcessedSteps();
     }
-    else return -1;
+    return -1;
 }
 
 int vtkWFEngineHandler::GetUnprocessedSteps()
 {
-    if(this->m_wfDI)
+    if(this->m_initialized)
     {
-        std::string curStepID = this->GetCurrentStepID();
-        return this->m_wfDI->getNumberOfUnprocessedSteps(curStepID);
+       return this->m_wfDI->getNumberOfUnprocessedSteps();
     }
-    else return -1;
+    return -1;
+}
+
+void vtkWFEngineHandler::SetWFMRMLNode(vtkMRMLNode *node)
+{
+    this->m_curWFMRMLNode = node;
+}
+
+vtkMRMLNode *vtkWFEngineHandler::GetWFMRMLNode()
+{
+    return this->m_curWFMRMLNode;
+}
+
+void vtkWFEngineHandler::SetWizardClientArea(vtkKWFrame *clientArea)
+{
+    this->m_clientArea = clientArea;
+}
+
+vtkKWFrame *vtkWFEngineHandler::GetWizardClientArea()
+{
+    return this->m_clientArea;
 }

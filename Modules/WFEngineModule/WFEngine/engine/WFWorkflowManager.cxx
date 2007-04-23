@@ -21,7 +21,7 @@ WFWorkflowManager::WFWorkflowManager() : WFXmlWorkflowManager()
 
 WFWorkflowManager::~WFWorkflowManager()
 {
-    this->m_workSteps.clear();    
+    this->m_workSteps.clear();        
 }
 
 WFWorkflowManager *WFWorkflowManager::New()
@@ -101,11 +101,12 @@ WFStepObject *WFWorkflowManager::GetPreviousWFStep()
 
 WFStepObject *WFWorkflowManager::GetNthWFStep(int pos)
 {
-    if(this->m_workSteps.size() >= pos)
+    if(this->m_workSteps.size() > pos && pos >= 0)
     {
         this->m_curPos = pos;
         return this->m_workSteps[this->m_curPos];
     }
+    this->m_curPos = -1;
     return NULL;
 }
 
@@ -125,13 +126,31 @@ WFStepObject *WFWorkflowManager::GetWFStepByID(std::string ID)
 int WFWorkflowManager::getNumberOfProcessedSteps()
 {
     //std::cout<<"getNumberOfProcessedSteps: "<<m_workSteps.size()<<std::endl;
-    return this->m_curPos + 1;
+//    return this->m_curPos + 1;
+    return this->m_workSteps.size();
 }
-//
-//int WFWorkflowManager::GetNumberOfUnprocessedSteps()
-//{
-//    return this->getNumberOfUnprocessedSteps();
-//}
+int WFWorkflowManager::getNumberOfUnprocessedSteps()
+{
+    std::string ID = "";
+    if(this->m_workSteps.size() > 0)
+    {
+        WFStepObject *curObj = this->m_workSteps[this->m_workSteps.size() - 1];
+        if(curObj)
+        {
+            ID = curObj->GetID();
+        }
+        else
+        {
+            return 0;
+        }       
+    }        
+    return WFXmlWorkflowManager::getNumberOfUnprocessedSteps(ID);
+}
+
+void WFWorkflowManager::Destroy()
+{
+    delete(this);
+}
 
 }//namespace
 

@@ -19,7 +19,9 @@ vtkCxxRevisionMacro ( vtkSlicerDataGUI, "$Revision: 1.0 $");
 //---------------------------------------------------------------------------
 vtkSlicerDataGUI::vtkSlicerDataGUI ( )
 {
-  MRMLTreeWidget = vtkSlicerMRMLTreeWidget::New();
+  this->MRMLTreeWidget = vtkSlicerMRMLTreeWidget::New();
+  this->SceneSnapshotWidget = vtkSlicerSceneSnapshotWidget::New();
+
   NACLabel = NULL;
   NAMICLabel = NULL;
   NCIGTLabel = NULL;
@@ -35,6 +37,12 @@ vtkSlicerDataGUI::~vtkSlicerDataGUI ( )
     this->MRMLTreeWidget->RemoveWidgetObservers ( );
     this->MRMLTreeWidget->SetParent (NULL );
     this->MRMLTreeWidget->Delete ( );
+    }
+  if (this->SceneSnapshotWidget)
+    {
+    this->SceneSnapshotWidget->RemoveWidgetObservers ( );
+    this->SceneSnapshotWidget->SetParent (NULL );
+    this->SceneSnapshotWidget->Delete ( );
     }
   if ( this->NACLabel )
     {
@@ -204,22 +212,22 @@ void vtkSlicerDataGUI::BuildGUI ( )
     this->NACLabel = vtkKWLabel::New();
     this->NACLabel->SetParent ( this->GetLogoFrame() );
     this->NACLabel->Create();
-    this->NACLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNACLogo() );
+    this->NACLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetNACLogo() );
 
     this->NAMICLabel = vtkKWLabel::New();
     this->NAMICLabel->SetParent ( this->GetLogoFrame() );
     this->NAMICLabel->Create();
-    this->NAMICLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNAMICLogo() );    
+    this->NAMICLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetNAMICLogo() );    
 
     this->NCIGTLabel = vtkKWLabel::New();
     this->NCIGTLabel->SetParent ( this->GetLogoFrame() );
     this->NCIGTLabel->Create();
-    this->NCIGTLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNCIGTLogo() );
+    this->NCIGTLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetNCIGTLogo() );
     
     this->BIRNLabel = vtkKWLabel::New();
     this->BIRNLabel->SetParent ( this->GetLogoFrame() );
     this->BIRNLabel->Create();
-    this->BIRNLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetBIRNLogo() );
+    this->BIRNLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetBIRNLogo() );
     app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky w", this->NAMICLabel->GetWidgetName());
     app->Script ("grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w",  this->NACLabel->GetWidgetName());
     app->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky w",  this->BIRNLabel->GetWidgetName());
@@ -239,8 +247,24 @@ void vtkSlicerDataGUI::BuildGUI ( )
     this->MRMLTreeWidget->Create ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->MRMLTreeWidget->GetWidgetName(), displayModifyFrame->GetFrame()->GetWidgetName());
-    
+
+    // Snapshot FRAME
+    vtkSlicerModuleCollapsibleFrame *snapshotFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+    snapshotFrame->SetParent ( this->UIPanel->GetPageWidget ( "Data" ) );
+    snapshotFrame->Create ( );
+    snapshotFrame->ExpandFrame ( );
+    snapshotFrame->SetLabelText ("Scene Snaphots");
+    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+                  snapshotFrame->GetWidgetName(), this->UIPanel->GetPageWidget("Data")->GetWidgetName());
+
+    this->SceneSnapshotWidget->SetAndObserveMRMLScene(this->GetMRMLScene() );
+    this->SceneSnapshotWidget->SetParent ( snapshotFrame->GetFrame() );
+    this->SceneSnapshotWidget->Create ( );
+    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+                  this->SceneSnapshotWidget->GetWidgetName(), snapshotFrame->GetFrame()->GetWidgetName());
+
     displayModifyFrame->Delete ( );
+    snapshotFrame->Delete ( );
 }
 
 

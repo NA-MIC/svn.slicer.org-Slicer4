@@ -62,17 +62,16 @@ static void vtkImageThermalMapExecute(
 {
     int idxR, idxY, idxZ;
     int maxY, maxZ;
-    vtkIdType inIncX, inIncY, inIncZ;
-    vtkIdType outIncX, outIncY, outIncZ;
+    int inIncX, inIncY, inIncZ;
+    int outIncX, outIncY, outIncZ;
     int rowLength;
     unsigned long count = 0;
     unsigned long target;
 
     // Get increments to march through data 
     // all indatas are the same type, so use the same increments
-//    inDatas[0]->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
-
-//    outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
+    inDatas[0]->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
+    outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
     // find the region to loop over
     rowLength = (outExt[1] - outExt[0]+1)*inDatas[0]->GetNumberOfScalarComponents();
@@ -162,7 +161,7 @@ static void vtkImageThermalMapExecute(
 void vtkImageThermalMap::ThreadedExecute(
         vtkImageData **inDatas, 
         vtkImageData *outData,
-        int *outExt, 
+        int outExt[6], 
         int id)
 {
     void **inPtrs = new void* [this->NumberOfInputs];

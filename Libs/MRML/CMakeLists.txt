@@ -20,6 +20,7 @@ SET(MRML_SRCS
         vtkMRMLVectorVolumeNode.cxx        
         vtkMRMLModelNode.cxx
         vtkMRMLModelStorageNode.cxx
+        vtkMRMLFreeSurferModelStorageNode.cxx    
         vtkMRMLModelDisplayNode.cxx
         vtkMRMLClipModelsNode.cxx
         vtkMRMLStorageNode.cxx
@@ -54,6 +55,7 @@ SET(MRML_SRCS
         vtkMRMLFiberBundleStorageNode.cxx
         vtkMRMLHierarchyNode.cxx
         vtkMRMLModelHierarchyNode.cxx
+        vtkMRMLSceneSnapshotNode.cxx
         # Note: when you add new node types, add
         # register code to the vtkMRMLScene constructor
 )

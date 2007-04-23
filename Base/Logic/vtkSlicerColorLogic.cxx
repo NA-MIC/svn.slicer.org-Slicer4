@@ -50,7 +50,6 @@ void vtkSlicerColorLogic::ProcessMRMLEvents(vtkObject * caller,
   if (event == vtkMRMLScene::NewSceneEvent)
     {
     vtkDebugMacro("vtkSlicerColorLogic::ProcessMRMLEvents: got a NewScene event " << event);
-    //this->RemoveDefaultColorNodesFromScene();
     this->AddDefaultColorNodes();
     }
 }
@@ -104,34 +103,122 @@ void vtkSlicerColorLogic::AddDefaultColorNodes()
   basicNode->Delete();
 
   // add freesurfer nodes
+  vtkDebugMacro("Adding Freesurfer nodes");
   vtkMRMLFreeSurferProceduralColorNode *basicFSNode = vtkMRMLFreeSurferProceduralColorNode::New();
   for (int i = basicFSNode->GetFirstType(); i <= basicFSNode->GetLastType(); i++)
     {
-    // don't add a File node
-    if (i != basicFSNode->File)
+    vtkMRMLFreeSurferProceduralColorNode *node = vtkMRMLFreeSurferProceduralColorNode::New();
+    node->SetType(i);
+    node->SaveWithSceneOff();
+    if (node->GetTypeAsString() == NULL)
       {
-      vtkMRMLFreeSurferProceduralColorNode *node = vtkMRMLFreeSurferProceduralColorNode::New();
-      node->SetType(i);
-      node->SaveWithSceneOff();
-      node->SetName(node->GetTypeAsString());      
-      std::string id = std::string(this->GetDefaultFreeSurferColorNodeID(i));
+      vtkWarningMacro("Node type as string is null");      
+      node->SetName("NoName");
+      }
+    else
+      {
+      vtkDebugMacro("Got node type as string " << node->GetTypeAsString());
+      node->SetName(node->GetTypeAsString());
+      }
+    /*
+    if (this->GetDefaultFreeSurferColorNodeID(i) == NULL)
+      {
+      vtkDebugMacro("Error getting default node id for freesurfer node " << i);
+      }
+    */
+    const char* id = this->GetDefaultFreeSurferColorNodeID(i);
+    node->SetSingletonTag(id);
+    vtkDebugMacro("vtkSlicerColorLogic::AddDefaultColorNodes: requesting id " << id << endl);
+    if (this->GetMRMLScene()->GetNodeByID(id) == NULL)
+      {
+      this->GetMRMLScene()->RequestNodeID(node, id);        
+      this->GetMRMLScene()->AddNode(node);
+      vtkDebugMacro("vtkSlicerColorLogic::AddDefaultColorNodes: added node " << node->GetID() << ", requested id was " << id << ", type = " << node->GetTypeAsString() << endl);
+      }
+    else
+      {
+      vtkDebugMacro("vtkSlicerColorLogic::AddDefaultColorNodes: didn't add node " << node->GetID() << " as it was already in the scene.\n");
+      }
+    node->Delete();
+    }
+  
+  // add a regular colour tables holding the freesurfer volume file colours and
+  // surface colours
+  vtkMRMLColorTableNode *node = vtkMRMLColorTableNode::New();
+  node->SetTypeToFile();
+  node->SaveWithSceneOff();
+
+  vtkDebugMacro("Adding FreeSurfer Labels file node");
+  std::string colorFileName;
+  std::string id;
+  // volume labels
+  node->SetName("FSLabels");
+  if (basicFSNode->GetLabelsFileName() == NULL)
+    {
+    vtkErrorMacro("Unable to get the labels file name, not adding");
+    }
+  else
+    {
+    colorFileName = std::string(basicFSNode->GetLabelsFileName());
+    vtkDebugMacro("Trying to read colour file " << colorFileName.c_str());
+  
+    node->SetFileName(colorFileName.c_str());
+    if (node->ReadFile())
+      {
+      id = std::string(this->GetDefaultFreeSurferLabelMapColorNodeID());
       node->SetSingletonTag(id.c_str());
-      vtkDebugMacro("vtkSlicerColorLogic::AddDefaultColorNodes: requesting id " << id.c_str() << endl);
-      if (this->GetMRMLScene()->GetNodeByID(id.c_str()) == NULL)
+      if (this->GetMRMLScene()->GetNodeByID(id) == NULL)
         {
         this->GetMRMLScene()->RequestNodeID(node, id.c_str());        
         this->GetMRMLScene()->AddNode(node);
-        vtkDebugMacro("vtkSlicerColorLogic::AddDefaultColorNodes: added node " << node->GetID() << ", requested id was " << id.c_str() << ", type = " << node->GetTypeAsString() << endl);
         }
       else
         {
-        vtkDebugMacro("vtkSlicerColorLogic::AddDefaultColorNodes: didn't add node " << node->GetID() << " as it was already in the scene.\n");
+        vtkWarningMacro("Unable to add a new colour node " << id.c_str() << " with freesurfer colours, from file: " << node->GetFileName());
         }
-      node->Delete();
+      }
+    else
+      {
+      vtkErrorMacro("Unable to read freesurfer colour file " << node->GetFileName());
+      }
+    }
+  node->Delete();
+
+  // surface labels
+  node = vtkMRMLColorTableNode::New();
+  node->SetTypeToFile();
+  node->SaveWithSceneOff();
+  node->SetName("FSSurfaceLabels");
+  if (basicFSNode->GetSurfaceLabelsFileName() == NULL)
+    {
+    vtkErrorMacro("Unable to get the freesurfer surface labels file name, not adding a colour node");
+    }
+  else
+    {
+    colorFileName = std::string(basicFSNode->GetSurfaceLabelsFileName());
+    vtkDebugMacro("Trying to read colour file " << colorFileName.c_str());
+    node->SetFileName(colorFileName.c_str());
+    if (node->ReadFile())
+      {
+      id = std::string(this->GetDefaultFreeSurferSurfaceLabelsColorNodeID());
+      node->SetSingletonTag(id.c_str());
+      if (this->GetMRMLScene()->GetNodeByID(id) == NULL)
+        {
+        this->GetMRMLScene()->RequestNodeID(node, id.c_str());        
+        this->GetMRMLScene()->AddNode(node);
+        }
+      else
+        {
+        vtkWarningMacro("Unable to add a new colour node " << id.c_str() << " with freesurfer colours, from file: " << node->GetFileName());
+        }
+      }
+    else
+      {
+      vtkErrorMacro("Unable to open freesurfer color file " << node->GetFileName());
       }
     }
   basicFSNode->Delete();
-
+  node->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -152,13 +239,13 @@ void vtkSlicerColorLogic::RemoveDefaultColorNodes()
     if (i != basicNode->File)
       {
       basicNode->SetType(i);
-      std::string id = std::string(this->GetDefaultColorTableNodeID(i));
-      vtkDebugMacro("vtkSlicerColorLogic::RemoveDefaultColorNodes: trying to find node with id " << id.c_str() << endl);
-      node = vtkMRMLColorTableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(id.c_str()));
+      //std::string id = std::string(this->GetDefaultColorTableNodeID(i));
+      const char* id = this->GetDefaultColorTableNodeID(i);
+      vtkWarningMacro("vtkSlicerColorLogic::RemoveDefaultColorNodes: trying to find node with id " << id << endl);
+      node = vtkMRMLColorTableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(id));
       if (node != NULL)
         {
-        node->Delete();
-        node = NULL;
+        this->GetMRMLScene()->RemoveNode(node);
         }
       }
     }
@@ -168,48 +255,28 @@ void vtkSlicerColorLogic::RemoveDefaultColorNodes()
   vtkMRMLFreeSurferProceduralColorNode *fsnode;
   for (int i = basicFSNode->GetFirstType(); i <= basicFSNode->GetLastType(); i++)
     {
-    // don't have a File node
-    if (i != basicFSNode->File)
+    basicFSNode->SetType(i);
+    const char* id = this->GetDefaultFreeSurferColorNodeID(i);
+    vtkDebugMacro("vtkSlicerColorLogic::RemoveDefaultColorNodes: trying to find node with id " << id << endl);
+    fsnode =  vtkMRMLFreeSurferProceduralColorNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(id));
+    if (fsnode != NULL)
       {
-      basicFSNode->SetType(i);
-      std::string id = std::string(this->GetDefaultFreeSurferColorNodeID(i));
-      vtkDebugMacro("vtkSlicerColorLogic::RemoveDefaultColorNodes: trying to find node with id " << id.c_str() << endl);
-      fsnode =  vtkMRMLFreeSurferProceduralColorNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(id.c_str()));
-      if (fsnode != NULL)
-        {       
-        fsnode->Delete();
-        fsnode = NULL;
-        }
+      this->GetMRMLScene()->RemoveNode(fsnode);
       }
     }
-}
-
-
-//----------------------------------------------------------------------------
-void vtkSlicerColorLogic::RemoveDefaultColorNodesFromScene()
-{
-  // try to find any of the default colour nodes that are still in the scene
-  if (this->GetMRMLScene() == NULL)
-    {
-    // nothing can do, it's gone
-    return;
-    }
+  basicFSNode->Delete();
   
-  vtkMRMLColorTableNode *basicNode = vtkMRMLColorTableNode::New();
-  vtkMRMLColorTableNode *node;
-  for (int i = basicNode->GetFirstType(); i <= basicNode->GetLastType(); i++)
+  // remove the fs lookup table node
+  node = vtkMRMLColorTableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->GetDefaultFreeSurferLabelMapColorNodeID()));
+  if (node != NULL)
     {
-    // don't have a File node
-    if (i != basicNode->File)
-      {
-      basicNode->SetType(i);
-      std::string id = std::string(this->GetDefaultColorTableNodeID(i));
-      node = vtkMRMLColorTableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(id.c_str()));
-      if (node != NULL)
-        {
-        this->GetMRMLScene()->RemoveNode(node);
-        }
-      }
+    this->GetMRMLScene()->RemoveNode(node);
+    }
+  // remove the fs surface labels node
+  node = vtkMRMLColorTableNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->GetDefaultFreeSurferSurfaceLabelsColorNodeID()));
+  if (node != NULL)
+    {
+    this->GetMRMLScene()->RemoveNode(node);
     }
 }
 
@@ -230,7 +297,7 @@ const char *vtkSlicerColorLogic::GetDefaultColorTableNodeID(int type)
 }
 
 //----------------------------------------------------------------------------
-const char *vtkSlicerColorLogic::GetDefaultFreeSurferColorNodeID(int type)
+const char * vtkSlicerColorLogic::GetDefaultFreeSurferColorNodeID(int type)
 {
   const char *id;
   vtkMRMLFreeSurferProceduralColorNode *basicNode = vtkMRMLFreeSurferProceduralColorNode::New();
@@ -241,6 +308,7 @@ const char *vtkSlicerColorLogic::GetDefaultFreeSurferColorNodeID(int type)
 
   return (id);
 }
+
 //----------------------------------------------------------------------------
 const char *vtkSlicerColorLogic::GetDefaultVolumeColorNodeID()
 {
@@ -256,14 +324,18 @@ const char *vtkSlicerColorLogic::GetDefaultLabelMapColorNodeID()
 //----------------------------------------------------------------------------
 const char *vtkSlicerColorLogic::GetDefaultModelColorNodeID()
 {
-  // TODO: return a freesurfer colour node ID
-  // return this->GetDefaultColorTableNodeID(vtkMRMLColorTableNode::Ocean);
   return this->GetDefaultFreeSurferColorNodeID(vtkMRMLFreeSurferProceduralColorNode::Heat);
 }
 
 //----------------------------------------------------------------------------
-const char *vtkSlicerColorLogic::GetDefaultFreeSurferLabelMapColorNodeID()
+const char * vtkSlicerColorLogic::GetDefaultFreeSurferLabelMapColorNodeID()
 {
   return this->GetDefaultFreeSurferColorNodeID(vtkMRMLFreeSurferProceduralColorNode::Labels);
+}
+
+//----------------------------------------------------------------------------
+const char * vtkSlicerColorLogic::GetDefaultFreeSurferSurfaceLabelsColorNodeID()
+{
+  return this->GetDefaultFreeSurferColorNodeID(vtkMRMLFreeSurferProceduralColorNode::SurfaceLabels);
 }
 

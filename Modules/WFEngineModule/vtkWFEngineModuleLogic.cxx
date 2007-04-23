@@ -18,7 +18,6 @@
 
 #include "vtkObjectFactory.h"
 #include "vtkObject.h"
-#include "vtkCallbackCommand.h"
 #include <vtksys/SystemTools.hxx> 
 
 #include "vtkWFEngineModuleLogic.h"
@@ -48,7 +47,11 @@ vtkWFEngineModuleLogic::vtkWFEngineModuleLogic()
 //----------------------------------------------------------------------------
 vtkWFEngineModuleLogic::~vtkWFEngineModuleLogic()
 {
-  this->SetWFEngineModuleNode(NULL);
+    if(this->WFEngineModuleNode)
+    {
+        this->WFEngineModuleNode->Delete();
+        this->SetWFEngineModuleNode(NULL);
+    }  
 }
 
 

@@ -148,6 +148,18 @@ public:
     };
 //ETX
 
+  // Description:
+  // Take scalar fields and composite them into a new one.
+  // New array will have values from the background array where the overlay is
+  // +/- if showOverlayPositive/Negative are 0.
+  // overlayMin and Max are used to adjust the color transfer function points,
+  // both should be positive, as they are mirrored around 0. -Min to Min gives the gap
+  // where the curvature will show through.
+  // New array name is backgroundName+overlayName
+  // Returns 1 on success, 0 on failure.
+  // Based on code from K. Teich, MGH
+  int CompositeScalars(const char* backgroundName, const char* overlayName, float overlayMin, float overlayMax, int showOverlayPositive, int showOverlayNegative, int reverseOverlay);
+  
 protected:
   vtkMRMLModelNode();
   ~vtkMRMLModelNode();

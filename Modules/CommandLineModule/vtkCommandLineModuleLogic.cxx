@@ -29,11 +29,14 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkMRMLDiffusionTensorVolumeNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeNode.h"
-//#include "vtkMRMLNRRDStorageNode.h"
 #include "vtkMRMLFiducialListNode.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLModelStorageNode.h"
 #include "vtkMRMLModelDisplayNode.h"
+
+#ifdef USE_TEEM // If we have NRRD support
+#include "vtkMRMLNRRDStorageNode.h"
+#endif
 
 #include "itksys/Process.h"
 #include "itksys/SystemTools.hxx"
@@ -294,6 +297,22 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
     {
     sscanf(target.c_str(), "slicer:%p", &entryPoint);
     isCommandLine = false;
+    }
+
+  // verify the status from the ModuleDescription
+  if (isCommandLine)
+    {
+    if (node->GetModuleDescription().GetType() != "CommandLineModule")
+      {
+      vtkWarningMacro("Module reports that it is not a command line module but does not have a shared object module target. " << target.c_str());
+      }
+    }
+  else
+    {
+    if (node->GetModuleDescription().GetType() != "SharedObjectModule")
+      {
+      vtkWarningMacro("Module reports that it is not a shared object module but has a shared object module target. " << target.c_str());
+      }
     }
   
   // map to keep track of MRML Ids and filenames
@@ -686,8 +705,12 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       }
     else if (dtvnd || dwvnd)
       {
+#ifdef USE_TEEM
       // for now, always write out the diffusion tensor nodes
-//      out = vtkMRMLNRRDStorageNode::New();
+      out = vtkMRMLNRRDStorageNode::New();
+#else
+      vtkErrorMacro ( "Slicer3 was not complied with TEEM support, export of diffusion tensor nodes disabled" );
+#endif
       }
     else if (mnd)
       {
@@ -699,7 +722,10 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
     if (out)
       {
       out->SetFileName( (*id2fn).second.c_str() );
-      out->WriteData( nd );
+      if (!out->WriteData( nd ))
+        {
+        vtkErrorMacro("ERROR writing file " << out->GetFileName());
+        }
       out->Delete();
       }
     }

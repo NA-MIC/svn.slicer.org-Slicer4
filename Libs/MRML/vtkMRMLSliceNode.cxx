@@ -223,10 +223,11 @@ void vtkMRMLSliceNode::SetSliceToRASByNTP (double Nx, double Ny, double Nz,
     {
         // para-Axial 
         case 0: 
-            // negN
-            this->SliceToRAS->SetElement(0, 2, negN[0]);
-            this->SliceToRAS->SetElement(1, 2, negN[1]);
-            this->SliceToRAS->SetElement(2, 2, negN[2]);
+            // N
+            this->SliceToRAS->SetElement(0, 2, n[0]);
+            this->SliceToRAS->SetElement(1, 2, n[1]);
+            this->SliceToRAS->SetElement(2, 2, n[2]);
+
             // C 
             this->SliceToRAS->SetElement(0, 1, c[0]);
             this->SliceToRAS->SetElement(1, 1, c[1]);
@@ -240,10 +241,11 @@ void vtkMRMLSliceNode::SetSliceToRASByNTP (double Nx, double Ny, double Nz,
 
         // para-Sagittal 
         case 1: 
-            // negT 
-            this->SliceToRAS->SetElement(0, 2, negT[0]);
-            this->SliceToRAS->SetElement(1, 2, negT[1]);
-            this->SliceToRAS->SetElement(2, 2, negT[2]);
+            // T
+            this->SliceToRAS->SetElement(0, 2, t[0]);
+            this->SliceToRAS->SetElement(1, 2, t[1]);
+            this->SliceToRAS->SetElement(2, 2, t[2]);
+
             // negN 
             this->SliceToRAS->SetElement(0, 1, negN[0]);
             this->SliceToRAS->SetElement(1, 1, negN[1]);
@@ -319,7 +321,7 @@ void vtkMRMLSliceNode::UpdateMatrices()
       {
       this->XYToSlice->DeepCopy( xyToSlice );
       this->XYToRAS->DeepCopy( xyToRAS );
-      this->Modified();
+      this->Modified();  // RSierra 3/9/07 This triggesr the update on the windows. In the IGT module when the slices are updated by the tracker it might be better to trigger the update AFTER all positions are modified to synchoronously update what the user sees ...
       }
 
     xyToSlice->Delete();
@@ -496,3 +498,33 @@ void vtkMRMLSliceNode::UpdateScene(vtkMRMLScene* scene)
     }
 }
 // End
+
+void vtkMRMLSliceNode::JumpSlice(double r, double a, double s)
+{
+  vtkMatrix4x4 *sliceToRAS = this->GetSliceToRAS();
+  double sr = sliceToRAS->GetElement(0, 3);
+  double sa = sliceToRAS->GetElement(1, 3);
+  double ss = sliceToRAS->GetElement(2, 3);
+  if ( r != sr || a != sa || s != ss ) {
+    sliceToRAS->SetElement( 0, 3, r );
+    sliceToRAS->SetElement( 1, 3, a );
+    sliceToRAS->SetElement( 2, 3, s );
+    this->UpdateMatrices();
+  }
+}
+
+void vtkMRMLSliceNode::JumpAllSlices(double r, double a, double s)
+{
+  vtkMRMLSliceNode *node= NULL;
+  vtkMRMLScene *scene = this->GetScene();
+  int nnodes = scene->GetNumberOfNodesByClass("vtkMRMLSliceNode");
+  for (int n=0; n<nnodes; n++)
+    {
+    node = vtkMRMLSliceNode::SafeDownCast (
+          scene->GetNthNodeByClass(n, "vtkMRMLSliceNode"));
+    if ( node != NULL && node != this )
+      {
+      node->JumpSlice(r, a, s);
+      }
+    }
+}

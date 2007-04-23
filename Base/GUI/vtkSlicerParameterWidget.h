@@ -45,9 +45,9 @@ public:
     void SetErrorMap(std::map<std::string, std::string> *errorMap);
     //ETX
     bool IsCreated();
-    void CreateWidgets();
+    int CreateWidgets();
     
-    vtkKWWidget *GetNextWidget();    
+    vtkKWWidget *GetNextWidget();
     
     bool end();
     void reset();
@@ -57,6 +57,12 @@ public:
     //BTX
     enum{
       ParameterWidgetChangedEvent = 10000
+    };
+    
+    enum{
+        ERR = -1,
+        FAIL = 0,
+        SUCC = 1        
     };
     //ETX
 protected:
@@ -82,6 +88,8 @@ protected:
     const char* GetValueFromWidget(vtkKWWidget *widg);
     
     void SetValueForWidget(vtkKWCoreWidget *widg, const char* value);
+    
+    void DeleteInputWidget(vtkKWWidget *widg);
     //BTX
     struct callBackDataStruct{
         ModuleParameter widgetParameter;
@@ -97,6 +105,9 @@ protected:
         
     std::string GetErrorByParamName(std::string name);
     //ETX
+    void DeleteInternalLists();
+    
+    void Initialize();
         
 private:
     //BTX

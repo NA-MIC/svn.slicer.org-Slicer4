@@ -472,7 +472,7 @@ void vtkRealTimeImagingGUI::ProcessGUIEvents ( vtkObject *caller,
         if (checked)
         {
             // connected
-            char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
+            const char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
             if (! filename)
             {
                 // TODO: Generate an error ...
@@ -671,7 +671,7 @@ void vtkRealTimeImagingGUI::ProcessTimerEvents ()
     {
       
         int rate = atoi(this->UpdateRateEntry->GetWidget()->GetValue ());
-        vtkKWTkUtilities::CreateTimerHandler (this->GetApplication, rate, this, "ProcessTimerEvents");
+        vtkKWTkUtilities::CreateTimerHandler (vtkKWApplication::GetMainInterp(), rate, this, "ProcessTimerEvents");
     }
 
     vtkRealTimeImagingLogic *igtLogic = this->Logic;

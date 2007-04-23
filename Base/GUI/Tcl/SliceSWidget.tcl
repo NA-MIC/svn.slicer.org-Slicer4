@@ -33,13 +33,17 @@ if { [itcl::find class SliceSWidget] == "" } {
     variable _kwObserverTags ""
     variable _fiducialsSWidget ""
     variable _gridSWidget ""
+    variable _crosshairSWidget ""
 
     # methods
     method resizeSliceNode {} {}
     method processEvent {} {}
+    method updateAnnotation {x y r a s} {}
     method incrementSlice {} {}
     method decrementSlice {} {}
     method moveSlice { delta } {}
+    method jumpSlice { r a s } {}
+    method jumpOtherSlices { r a s } {}
   }
 }
 
@@ -53,6 +57,7 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
   set _fiducialsSWidget [FiducialsSWidget #auto $sliceGUI]
   set _gridSWidget [GridSWidget #auto $sliceGUI]
   $_gridSWidget configure -layer "label"
+  set _crosshairSWidget [CrosshairSWidget #auto $sliceGUI]
  
   # create matrices to store transform state
   set o(storeXYToRAS) [$this vtkNew vtkMatrix4x4]
@@ -111,6 +116,8 @@ itcl::body SliceSWidget::destructor {} {
   ::SWidget::ProtectedDelete $_fiducialsSWidget
 
   ::SWidget::ProtectedDelete $_gridSWidget
+
+  ::SWidget::ProtectedDelete $_crosshairSWidget
 
   if { [info command $sliceGUI] != "" } {
     foreach tag $_guiObserverTags {
@@ -227,55 +234,57 @@ itcl::body SliceSWidget::processEvent { } {
       # - then handle modifying the view
       #
 
+      $this updateAnnotation $x $y $r $a $s
 
-      $_annotation SetText 0 "Lb: $_layers(label,pixel)\nFg: $_layers(foreground,pixel)\nBg: $_layers(background,pixel)"
-      $_annotation SetText 1 [format "Bg I: %d\nBg J: %d\nBg K: %d" \
-                    $_layers(background,i) $_layers(background,j) $_layers(background,k)]
-      $_annotation SetText 2 "X: $x\nY:$y"
-      set rasText [format "R: %.1f\nA: %.1f\nS: %.1f" $r $a $s]
-      $_annotation SetText 3 $rasText
-
-      switch $_actionState {
-        "Translate" {
-          #
-          # Translate
-          # TODO: move calculation to vtkSlicerSliceLogic
-          set currentRAS [$o(storeXYToRAS) MultiplyPoint $x $y 0 1]
-          foreach d {dr da ds} start $_actionStartRAS current $currentRAS {
-            set $d [expr $current - $start]
+      if { [$_interactor GetShiftKey] } {
+        $this jumpOtherSlices $r $a $s
+        # need to render to show the annotation
+        [$sliceGUI GetSliceViewer] RequestRender
+      } else {
+        switch $_actionState {
+          "Translate" {
+            #
+            # Translate
+            # TODO: move calculation to vtkSlicerSliceLogic
+            set currentRAS [$o(storeXYToRAS) MultiplyPoint $x $y 0 1]
+            foreach d {dr da ds} start $_actionStartRAS current $currentRAS {
+              set $d [expr $current - $start]
+            }
+            $o(scratchMatrix) DeepCopy $o(storeSliceToRAS)
+            foreach d {dr da ds} i {0 1 2} {
+              set v [$o(scratchMatrix) GetElement $i 3]
+              $o(scratchMatrix) SetElement $i 3 [expr $v - [set $d]]
+            }
+            [$_sliceNode GetSliceToRAS] DeepCopy $o(scratchMatrix)
+            $_sliceNode UpdateMatrices
+            $sliceGUI SetGUICommandAbortFlag 1
           }
-          $o(scratchMatrix) DeepCopy $o(storeSliceToRAS)
-          foreach d {dr da ds} i {0 1 2} {
-            set v [$o(scratchMatrix) GetElement $i 3]
-            $o(scratchMatrix) SetElement $i 3 [expr $v - [set $d]]
-          }
-          [$_sliceNode GetSliceToRAS] DeepCopy $o(scratchMatrix)
-          $_sliceNode UpdateMatrices
-          $sliceGUI SetGUICommandAbortFlag 1
-        }
-        "Zoom" {
-          #
-          # Zoom
-          # TODO: move calculation to vtkSlicerSliceLogic
-          set deltay [expr $y - [lindex $_actionStartXY 1]]
-          set tkwindow [$_renderWidget  GetWidgetName]
-          set h [winfo height $tkwindow]
-          set percent [expr ($h + $deltay) / (1.0 * $h)]
+          "Zoom" {
+            #
+            # Zoom
+            # TODO: move calculation to vtkSlicerSliceLogic
+            set deltay [expr $y - [lindex $_actionStartXY 1]]
+            set tkwindow [$_renderWidget  GetWidgetName]
+            set h [winfo height $tkwindow]
+            set percent [expr ($h + $deltay) / (1.0 * $h)]
 
-          # the factor operation is so 'z' isn't changed and the 
-          # slider can still move through the full range
-          set newFOV ""
-          foreach f $_actionStartFOV factor "$percent $percent 1" {
-            lappend newFOV [expr $f * $factor]
-          }
-          eval $_sliceNode SetFieldOfView $newFOV
+            # the factor operation is so 'z' isn't changed and the 
+            # slider can still move through the full range
+            if { $percent > 0. } {
+              set newFOV ""
+              foreach f $_actionStartFOV factor "$percent $percent 1" {
+                lappend newFOV [expr $f * $factor]
+              }
+              eval $_sliceNode SetFieldOfView $newFOV
 
-          $_sliceNode UpdateMatrices
-          $sliceGUI SetGUICommandAbortFlag 1
-        }
-        default {
-          # need to render to show the annotation
-          [$sliceGUI GetSliceViewer] RequestRender
+              $_sliceNode UpdateMatrices
+            }
+            $sliceGUI SetGUICommandAbortFlag 1
+          }
+          default {
+            # need to render to show the annotation
+            [$sliceGUI GetSliceViewer] RequestRender
+          }
         }
       }
     }
@@ -333,6 +342,7 @@ itcl::body SliceSWidget::processEvent { } {
       $this resizeSliceNode
     }
     "EnterEvent" { 
+      $this updateAnnotation $x $y $r $a $s
       $_renderWidget CornerAnnotationVisibilityOn
       [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText "Middle Button: Pan; Right Button: Zoom"
     }
@@ -396,6 +406,55 @@ itcl::body SliceSWidget::processEvent { } {
 }
 
 
+itcl::body SliceSWidget::updateAnnotation {x y r a s} {
+
+  set logic [$sliceGUI GetLogic]
+  set sliceCompositeNode [$logic GetSliceCompositeNode]
+
+  set labelText "Lb: $_layers(label,pixel)"
+  set voxelText "Fg: $_layers(foreground,pixel)\nBg: $_layers(background,pixel)"
+  set ijkText [format "Bg I: %d\nBg J: %d\nBg K: %d" \
+                $_layers(background,i) $_layers(background,j) $_layers(background,k)]
+  set xyText "X: $x\nY:$y"
+  set rasText [format "R: %.1f\nA: %.1f\nS: %.1f" $r $a $s]
+
+  set spaceText0 ""
+  set spaceText1 ""
+  switch [$sliceCompositeNode GetAnnotationSpace] {
+    "0" {set spaceText0 $xyText}
+    "1" {set spaceText0 $ijkText}
+    "2" {set spaceText0 $rasText}
+    "3" {set spaceText0 $rasText; set spaceText1 $ijkText}
+  }
+
+  switch [$sliceCompositeNode GetAnnotationMode] {
+    "0" {
+      $_annotation SetText 0 ""
+      $_annotation SetText 1 ""
+      $_annotation SetText 2 ""
+      $_annotation SetText 3 ""
+    }
+    "1" {
+      $_annotation SetText 0 "${labelText}\n${voxelText}"
+      $_annotation SetText 1 $spaceText0
+      $_annotation SetText 2 $spaceText1
+      $_annotation SetText 3 ""
+    }
+    "2" {
+      $_annotation SetText 0 "${labelText}"
+      $_annotation SetText 1 ""
+      $_annotation SetText 2 ""
+      $_annotation SetText 3 ""
+    }
+    "3" {
+      $_annotation SetText 0 "${labelText}\n${voxelText}"
+      $_annotation SetText 1 ""
+      $_annotation SetText 2 ""
+      $_annotation SetText 3 ""
+    }
+  }
+}
+
 
 itcl::body SliceSWidget::incrementSlice {} {
   $this moveSlice $sliceStep
@@ -409,4 +468,16 @@ itcl::body SliceSWidget::moveSlice { delta } {
   set logic [$sliceGUI GetLogic]
   set offset [$logic GetSliceOffset]
   $logic SetSliceOffset [expr $offset + $delta]
+}
+
+itcl::body SliceSWidget::jumpSlice { r a s } {
+  set logic [$sliceGUI GetLogic]
+  set sliceNode [$logic GetSliceNode]
+  $sliceNode JumpSlice $r $a $s
+}
+
+itcl::body SliceSWidget::jumpOtherSlices { r a s } {
+  set logic [$sliceGUI GetLogic]
+  set sliceNode [$logic GetSliceNode]
+  $sliceNode JumpAllSlices $r $a $s
 }

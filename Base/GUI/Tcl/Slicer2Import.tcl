@@ -31,6 +31,8 @@ proc ImportSlicer2Scene {sceneFile} {
   ImportElement $root
 
   $parser Delete
+
+  $::slicer3::MRMLScene SetErrorCode 0
 }
 
 #
@@ -106,7 +108,11 @@ proc ImportNodeMatrix {node} {
   set transformNode [vtkMRMLLinearTransformNode New]
 
   set matrix [$transformNode GetMatrixTransformToParent]
-  $transformNode SetName $n(name)
+  if { [info exists n(name)] } {
+    $transformNode SetName $n(name)
+  } else {
+    $transformNode SetName "Imported Transform"
+  }
   eval $matrix DeepCopy $n(matrix)
 
   $::slicer3::MRMLScene AddNode $transformNode
@@ -135,11 +141,18 @@ proc ImportNodeVolume {node} {
     set n(fileType) "Basic"
   }
 
+  if { ![info exists n(name)] } {
+    set n(name) "Imported Volume"
+  }
+
+  if { ![info exists n(description)] } {
+    set n(description) ""
+  }
+
   switch $n(fileType) {
 
     "NRRD" -
     "Generic" {
-      puts stderr "Archetype nodes not yet supported!"
 
       if { [file pathtype $n(fileName)] == "relative" } {
         set fileName $::S2(dir)/$n(fileName)
@@ -148,7 +161,7 @@ proc ImportNodeVolume {node} {
       }
 
       set labelMap 0
-      if { [info exists n(labelMap)] && $n(labelMap) == "yes" } {
+      if { [info exists n(labelMap)] && ($n(labelMap) == "yes"  || $n(labelMap) == "true") } {
           set labelMap 1
       }
 
@@ -163,8 +176,8 @@ proc ImportNodeVolume {node} {
       #
       # first, parse the slicer2 node
       #
-      if { ![info exists n(Dimensions)] } {
-        set n(Dimensions) "256 256"
+      if { ![info exists n(dimensions)] } {
+        set n(dimensions) "256 256"
       }
 
       if { ![info exists n(scalarType)] } {
@@ -202,7 +215,7 @@ proc ImportNodeVolume {node} {
       }
       $imageReader SetFilePattern  $n(filePattern)
 
-      foreach {w h} $n(Dimensions) {}
+      foreach {w h} $n(dimensions) {}
       foreach {zlo zhi} $n(imageRange) {}
       set d [expr $zhi - $zlo]
       $imageReader SetDataExtent 0 [expr $w -1] 0 [expr $h - 1] 0 [expr $d -1]
@@ -225,7 +238,7 @@ proc ImportNodeVolume {node} {
       $volumeNode SetDescription $n(description)
       $imageReader Delete
 
-      if { [info exists n(labelMap)] && $n(labelMap) == "yes" } {
+      if { [info exists n(labelMap)] && ($n(labelMap) == "yes"  || $n(labelMap) == "true") } {
           $volumeNode SetLabelMap 1
       }
 
@@ -271,11 +284,11 @@ proc ImportNodeVolume {node} {
       $volumeDisplayNode SetAndObserveColorNodeID "vtkMRMLColorTableNodeGrey"
     }
   }
-  if { [info exists n(labelMap)] && $n(labelMap) == "yes" } {
+  if { [info exists n(labelMap)] && ($n(labelMap) == "yes"  || $n(labelMap) == "true") } {
     $volumeDisplayNode SetAndObserveColorNodeID "vtkMRMLColorTableNodeLabels"
   }
 
-  if { [info exists n(applyThreshold)] && $n(applyThreshold) == "yes" } {
+  if { [info exists n(applyThreshold)] && ( $n(applyThreshold) == "yes" || $n(applyThreshold) == "true" ) } {
     $volumeDisplayNode SetApplyThreshold 1
   }
   $volumeDisplayNode SetWindow $n(window)

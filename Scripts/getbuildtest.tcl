@@ -265,9 +265,12 @@ if { $::GETBUILDTEST(doxy) && ![file exists $::env(SLICER_DOC)] } {
 
 # svn checkout (does an update if it already exists)
 cd $::SLICER_HOME/..
-
-# runcmd svn checkout http://www.na-mic.org/svn/Slicer3/branches/IGT Slicer3
-
+if { [file exists Slicer3] } {
+  cd Slicer3
+  runcmd svn switch $::SLICER_TAG
+} else {
+  runcmd svn checkout $::SLICER_TAG Slicer3
+}
 
 if { $::GETBUILDTEST(doxy) } {
     # just run doxygen and exit
@@ -276,6 +279,7 @@ if { $::GETBUILDTEST(doxy) } {
     eval runcmd $cmd
     return
 }
+
 
 # build the lib with options
 cd $::SLICER_HOME
@@ -421,4 +425,3 @@ if {$::GETBUILDTEST(pack) == "true" &&
         puts "Not uploading $curlfile"
     }
 }
-

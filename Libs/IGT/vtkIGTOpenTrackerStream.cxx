@@ -38,7 +38,7 @@ vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream()
 
 }
 
-void vtkIGTOpenTrackerStream::Init(char *configFile)
+void vtkIGTOpenTrackerStream::Init(const char *configFile)
 {
     fprintf(stderr,"config file: %s\n",configFile);
     this->context = new Context(1); 
@@ -49,7 +49,15 @@ void vtkIGTOpenTrackerStream::Init(char *configFile)
     context->parseConfiguration(configFile);  
 
     // sets the callback function
+    // if we use NaviTrack (not opentracker), use this function
+    // callbackMod->setCallback( "cb1", (OTCallbackFunction*)&callbackF ,this);    
+#ifdef OT_VERSION_20
+    callbackMod->setCallback( "cb1", (OTCallbackFunction*)&callbackF ,this);    
+#endif
+#ifdef OT_VERSION_13
     callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);    
+#endif
+
     context->start();
 }
 
@@ -343,7 +351,7 @@ void vtkIGTOpenTrackerStream::ProcessTimerEvents()
         this->PollRealtime();
         this->InvokeEvent (vtkCommand::ModifiedEvent);
         vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
-                this->Speed, this, "ProcessTimerEvents");        
+                2, this, "ProcessTimerEvents");  // RSierra 3/8/07 The integer defines the update rate. On my laptop there is no differenct in performance (i.e. the CPU load is minimal and approx. 10% for update of 2). Is the value equivalent to ms?        
     }
     else
     {

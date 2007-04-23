@@ -197,7 +197,7 @@ void vtkMRMLVolumeNode::Copy(vtkMRMLNode *anode)
       this->IJKToRASDirections[i][j] = node->IJKToRASDirections[i][j];
       }
     }
-  if (this->ImageData) 
+  if (node->ImageData != NULL)
     {
     this->SetImageData(node->ImageData);
     }
@@ -460,9 +460,99 @@ void vtkMRMLVolumeNode::GetRASToIJKMatrix(vtkMatrix4x4* mat)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLVolumeNode::ComputeIJKToRASFromScanOrder(char *order, vtkMatrix4x4 *IJKToRAS)
+void vtkMRMLVolumeNode::ComputeIJKToRASFromScanOrder(char *order, 
+                                                     double* spacing, int *dims,
+                                                     bool centerImage,
+                                                     vtkMatrix4x4 *IJKToRAS)
 {
-  cout << "NOT IMPLEMENTED YET" << "\n";
+  IJKToRAS->Identity();
+  if (order == NULL) 
+    {
+    return;
+    }
+
+  vtkMatrix4x4 *scaleMat = vtkMatrix4x4::New();
+  scaleMat->Identity();
+  scaleMat->SetElement(0,0, spacing[0]);
+  scaleMat->SetElement(1,1, spacing[1]);
+  scaleMat->SetElement(2,2, spacing[2]);
+
+  vtkMatrix4x4 *orientMat = vtkMatrix4x4::New();
+  orientMat->Identity();
+
+  if (!strcmp(order,"IS") ||
+      !strcmp(order,"Axial IS") ||
+      !strcmp(order,  "Axial"))
+    {
+    double elems[] = { -1,  0,  0,  0,
+                        0, -1,  0,  0, 
+                        0,  0,  1,  0,
+                        0,  0,  0,  1};   
+    orientMat->DeepCopy(elems);
+    }
+  else if (!strcmp(order,"SI") ||
+           !strcmp(order,"Axial SI"))
+    {
+    double elems[] = { -1,  0,  0,  0,
+                        0, -1,  0,  0, 
+                        0,  0, -1,  0,
+                        0,  0,  0,  1};   
+    orientMat->DeepCopy(elems);
+    }
+  else if (!strcmp(order,"RL") ||
+           !strcmp(order,"Sagittal RL") ||
+           !strcmp(order,  "Sagittal"))
+    {
+    double elems[] = {  0,  0, -1,  0,
+                       -1,  0,  0,  0, 
+                        0,  -1,  0,  0,
+                        0,  0,  0,  1};   
+    orientMat->DeepCopy(elems);
+    }
+  else if (!strcmp(order,"LR") ||
+      !strcmp(order,"Sagittal LR") )
+    {
+    double elems[] = {  0,  0,  1,  0,
+                       -1,  0,  0,  0, 
+                        0, -1,  0,  0,
+                        0,  0,  0,  1};   
+    orientMat->DeepCopy(elems);
+    }
+  else if (!strcmp(order,"PA") ||
+      !strcmp(order,"Coronal PA") ||
+      !strcmp(order,  "Coronal"))
+    {
+    double elems[] = { -1,  0,  0,  0,
+                        0,  0,  1,  0, 
+                        0, -1,  0,  0,
+                        0,  0,  0,  1};   
+    orientMat->DeepCopy(elems);
+    }
+  else if (!strcmp(order,"AP") ||
+      !strcmp(order,"Coronal AP") )
+    {
+    double elems[] = { -1,  0,  0,  0,
+                        0,  0, -1,  0, 
+                        0, -1,  0,  0,
+                        0,  0,  0,  1};   
+    orientMat->DeepCopy(elems);
+    }
+
+  vtkMatrix4x4::Multiply4x4(orientMat, scaleMat, IJKToRAS);
+
+  double pnt[] = {-dims[0]/2, -dims[1]/2, -dims[2]/2, 0};
+
+  double *pnt1 = IJKToRAS->MultiplyDoublePoint(pnt);
+
+  if (centerImage)
+    {
+    for (int j = 0; j < 3; j++)
+      {
+      IJKToRAS->SetElement(j, 3, pnt1[j]);
+      }
+    }
+  orientMat->Delete();
+  scaleMat->Delete();
 }
 
 //----------------------------------------------------------------------------

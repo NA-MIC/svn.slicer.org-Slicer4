@@ -58,12 +58,16 @@ void vtkSlicerFiberBundleLogic::ProcessMRMLEvents(vtkObject * caller,
       && (event == vtkMRMLScene::NewSceneEvent))
     {
 
-    vtkErrorMacro("New scene event");
+   
 
     // Loop through all of the fiberBundleNodes.
     // If the node does not have a display logic node yet, then make one for it.
     vtkMRMLFiberBundleNode *node= NULL;
     int nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLFiberBundleNode");
+    if (nnodes > 0)
+      {
+      vtkWarningMacro("New scene event, processing " << nnodes << " fibre bundles");
+      }
     for (int n=0; n<nnodes; n++)
       {
       node = 
@@ -135,7 +139,7 @@ int vtkSlicerFiberBundleLogic::AddFiberBundles (const char* dirname, const char*
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLFiberBundleNode* vtkSlicerFiberBundleLogic::AddFiberBundle (char* filename)
+vtkMRMLFiberBundleNode* vtkSlicerFiberBundleLogic::AddFiberBundle (const char* filename)
 {
   vtkErrorMacro("Adding fiber bundle from filename " << filename);
 
@@ -200,7 +204,7 @@ vtkMRMLFiberBundleNode* vtkSlicerFiberBundleLogic::AddFiberBundle (char* filenam
   return fiberBundleNode;  
 }
 //----------------------------------------------------------------------------
-int vtkSlicerFiberBundleLogic::SaveFiberBundle (char* filename, vtkMRMLFiberBundleNode *fiberBundleNode)
+int vtkSlicerFiberBundleLogic::SaveFiberBundle (const char* filename, vtkMRMLFiberBundleNode *fiberBundleNode)
 {
    if (fiberBundleNode == NULL || filename == NULL)
     {

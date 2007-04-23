@@ -206,6 +206,7 @@ void vtkSlicerFiducialsGUI::RemoveGUIObservers ( )
     
     this->RemoveObservers (vtkSlicerFiducialsGUI::FiducialListIDModifiedEvent, (vtkCommand *)this->GUICallbackCommand);    
 
+    this->MRMLScene->RemoveObservers(vtkMRMLScene::NodeRemovedEvent, (vtkCommand *)this->GUICallbackCommand);
 }
 
 
@@ -226,7 +227,21 @@ void vtkSlicerFiducialsGUI::AddGUIObservers ( )
     this->ListTextScale->AddObserver (vtkKWScale::ScaleValueChangedEvent, (vtkCommand *)this->GUICallbackCommand);
     this->ListOpacity->AddObserver (vtkKWScale::ScaleValueChangedEvent, (vtkCommand *)this->GUICallbackCommand);
     
-    this->AddObserver(vtkSlicerFiducialsGUI::FiducialListIDModifiedEvent, (vtkCommand *)this->GUICallbackCommand);    
+    this->AddObserver(vtkSlicerFiducialsGUI::FiducialListIDModifiedEvent, (vtkCommand *)this->GUICallbackCommand);
+
+    // observe the scene for node deleted events
+    if (this->MRMLScene)
+      {
+      if (this->MRMLScene->HasObserver(vtkMRMLScene::NodeRemovedEvent, (vtkCommand *)this->GUICallbackCommand) != 1)
+        {
+        this->MRMLScene->AddObserver(vtkMRMLScene::NodeRemovedEvent, (vtkCommand *)this->GUICallbackCommand);
+        }
+      else
+        {
+        vtkDebugMacro("MRML scene already has the node removed event being watched by the fid gui");
+        }
+      }
+        
 }
 
 
@@ -237,6 +252,24 @@ void vtkSlicerFiducialsGUI::ProcessGUIEvents ( vtkObject *caller,
 {
   vtkDebugMacro("vtkSlicerFiducialsGUI::ProcessGUIEvents: event = " << event);
   
+  // first check to see if there was a fiducial list node deleted
+  if (vtkMRMLScene::SafeDownCast(caller) != NULL &&
+      vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene &&
+      event == vtkMRMLScene::NodeRemovedEvent)
+    {
+    vtkDebugMacro("vtkSlicerFiducialsGUI::ProcessGUIEvents: got a node deleted event on scene");
+    // check to see if it was the current node that was deleted
+    if (callData != NULL)
+      {
+      vtkMRMLNode *delNode = (vtkMRMLNode *)callData;
+      if (delNode != NULL &&
+          delNode->GetID() == this->GetFiducialListNodeID())
+        {
+        vtkDebugMacro("My node got deleted " << this->GetFiducialListNodeID());
+//        this->SetFiducialListNodeID(NULL);
+        }
+      }
+    }
     // process fiducial list node selector events
     vtkSlicerNodeSelectorWidget *fidListSelector = 
         vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
@@ -826,22 +859,22 @@ void vtkSlicerFiducialsGUI::BuildGUI ( )
     this->NACLabel = vtkKWLabel::New();
     this->NACLabel->SetParent ( this->GetLogoFrame() );
     this->NACLabel->Create();
-    this->NACLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNACLogo() );
+    this->NACLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetNACLogo() );
 
     this->NAMICLabel = vtkKWLabel::New();
     this->NAMICLabel->SetParent ( this->GetLogoFrame() );
     this->NAMICLabel->Create();
-    this->NAMICLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNAMICLogo() );    
+    this->NAMICLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetNAMICLogo() );    
 
     this->NCIGTLabel = vtkKWLabel::New();
     this->NCIGTLabel->SetParent ( this->GetLogoFrame() );
     this->NCIGTLabel->Create();
-    this->NCIGTLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetNCIGTLogo() );
+    this->NCIGTLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetNCIGTLogo() );
     
     this->BIRNLabel = vtkKWLabel::New();
     this->BIRNLabel->SetParent ( this->GetLogoFrame() );
     this->BIRNLabel->Create();
-    this->BIRNLabel->SetImageToIcon ( vtkSlicerModuleGUI::AcknowledgementIcons->GetBIRNLogo() );
+    this->BIRNLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetBIRNLogo() );
     app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky w", this->NAMICLabel->GetWidgetName());
     app->Script ("grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w",  this->NACLabel->GetWidgetName());
     app->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky w",  this->BIRNLabel->GetWidgetName());

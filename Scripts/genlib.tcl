@@ -171,15 +171,6 @@ if { [file exists $localvarsfile] } {
     exit 1
 }
 
-set ::VTK_DEBUG_LEAKS "ON"
-if ($isRelease) {
-    set ::VTK_BUILD_TYPE "Release"
-    set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
-    puts "Overriding slicer_variables.tcl; VTK_BUILD_TYPE is $::env(VTK_BUILD_TYPE)"
-    set ::VTK_DEBUG_LEAKS "OFF"
-
-}
-
 #initialize platform variables
 switch $tcl_platform(os) {
     "SunOS" {
@@ -206,6 +197,20 @@ switch $tcl_platform(os) {
         set isDarwin 0
         set isLinux 0
     }
+}
+
+set ::VTK_DEBUG_LEAKS "ON"
+if ($isRelease) {
+    set ::VTK_BUILD_TYPE "Release"
+    set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
+    if ($isWindows) {
+        set ::VTK_BUILD_SUBDIR "Release"
+    } else {
+        set ::VTK_BUILD_SUBDIR ""
+    }
+    puts "Overriding slicer_variables.tcl; VTK_BUILD_TYPE is '$::env(VTK_BUILD_TYPE)', VTK_BUILD_SUBDIR is '$::VTK_BUILD_SUBDIR'"
+    set ::VTK_DEBUG_LEAKS "OFF"
+
 }
 
 # tcl file delete is broken on Darwin, so use rm -rf instead
@@ -676,7 +681,7 @@ if { ![file exists $::TEEM_TEST_FILE] || $::GENLIB(update) } {
         }
     }
 
-    runcmd $::CMAKE \$::VTK_BUILD_TYPE/vtk.exe
+    runcmd $::CMAKE \
         -G$GENERATOR \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
@@ -685,10 +690,10 @@ if { ![file exists $::TEEM_TEST_FILE] || $::GENLIB(update) } {
         -DBUILD_TESTING:BOOL=OFF \
         -DTEEM_ZLIB:BOOL=ON \
         -DTEEM_PNG:BOOL=ON \
-        -DTEEM_VTK_MANGLE:BOOL=ON \$::VTK_BUILD_TYPE/vtk.exe
+        -DTEEM_VTK_MANGLE:BOOL=ON \
         -DTEEM_VTK_TOOLKITS_IPATH:FILEPATH=$::SLICER_LIB/VTK-build \
         -DZLIB_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/vtkzlib \
-        -DTEEM_ZLIB_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities \$::VTK_BUILD_TYPE/vtk.exe
+        -DTEEM_ZLIB_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities \
         -DZLIB_LIBRARY:FILEPATH=$::SLICER_LIB/VTK-build/bin/$::VTK_BUILD_SUBDIR/$zlib \
         -DPNG_PNG_INCLUDE_DIR:PATH=$::SLICER_LIB/VTK/Utilities/vtkpng \
         -DTEEM_PNG_DLLCONF_IPATH:PATH=$::SLICER_LIB/VTK-build/Utilities \
@@ -718,7 +723,7 @@ if { ![file exists $::SANDBOX_TEST_FILE] && ![file exists $::ALT_SANDBOX_TEST_FI
 
     file mkdir $SLICER_LIB/NAMICSandBox-build
     cd $SLICER_LIB/NAMICSandBox-build
-$::VTK_BUILD_TYPE/vtk.exe
+
     if { $isLinux && $::tcl_platform(machine) == "x86_64" } {
         # to build correctly, 64 bit linux requires shared libs for the sandbox
         runcmd $::CMAKE \
@@ -727,7 +732,7 @@ $::VTK_BUILD_TYPE/vtk.exe
             -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
             -DBUILD_SHARED_LIBS:BOOL=ON \
             -DCMAKE_SKIP_RPATH:BOOL=ON \
-            -DBUILD_EXAMPLES:BOOL=OFF \$::VTK_BUILD_TYPE/vtk.exe
+            -DBUILD_EXAMPLES:BOOL=OFF \
             -DBUILD_TESTING:BOOL=OFF \
             -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
             -DVTK_DIR:PATH=$VTK_DIR \
@@ -748,13 +753,13 @@ $::VTK_BUILD_TYPE/vtk.exe
             -DVTK_DIR:PATH=$VTK_DIR \
             -DITK_DIR:FILEPATH=$ITK_BINARY_PATH \
             -DOPENGL_glu_LIBRARY:FILEPATH=\" \" \
-            ../NAMICSandBox$::VTK_BUILD_TYPE/vtk.exe
+            ../NAMICSandBox
     }
 
     if {$isWindows} {
         if { $MSVC6 } {
             runcmd $::MAKE NAMICSandBox.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
-        } else {$::VTK_BUILD_TYPE/vtk.exe
+        } else {
             #runcmd $::MAKE NAMICSandBox.SLN /build  $::VTK_BUILD_TYPE
 
             # These two lines fail on windows because the .sln file has a problem.
@@ -766,7 +771,7 @@ $::VTK_BUILD_TYPE/vtk.exe
             cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation/Code
             runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE
             cd $SLICER_LIB/NAMICSandBox-build/SlicerTractClusteringImplementation/Code
-            runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE$::VTK_BUILD_TYPE/vtk.exe
+            runcmd $::MAKE SlicerClustering.vcproj /build  $::VTK_BUILD_TYPE
             # However then it doesn't pick up this needed library
             cd $SLICER_LIB/NAMICSandBox-build/SpectralClustering
             runcmd $::MAKE SpectralClustering.SLN /build  $::VTK_BUILD_TYPE
@@ -781,7 +786,7 @@ $::VTK_BUILD_TYPE/vtk.exe
     } else {
 
         # Just build the two libraries we need, not the rest of the sandbox.
-        # This line builds the SlicerClustering library.$::VTK_BUILD_TYPE/vtk.exe
+        # This line builds the SlicerClustering library.
         # It also causes the SpectralClustering lib to build, 
         # since SlicerClustering depends on it.
         # Later in the slicer Module build process, 
@@ -849,6 +854,12 @@ if { ![file exists $::IGSTK_TEST_FILE] || $::GENLIB(update) } {
             runcmd $::MAKE IGSTK.SLN /build  $::VTK_BUILD_TYPE
         }
     } else {
+        # Running this cmake again will populate those CMake variables 
+        # in IGSTK/CMakeLists.txt marked as MARK_AS_ADVANCED with their 
+        # default values. For instance, IGSTK_SERIAL_PORT_0, IGSTK_SERIAL_PORT_1,
+        # IGSTK_SERIAL_PORT_2, ......
+        eval runcmd $::CMAKE ../IGSTK 
+
         eval runcmd $::MAKE 
     }
 }

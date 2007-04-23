@@ -24,6 +24,8 @@
 #include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLVectorVolumeNode.h"
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
+#include "vtkMRMLVolumeHeaderlessStorageNode.h"
+
 
 #ifdef USE_TEEM
   #include "vtkMRMLNRRDStorageNode.h"
@@ -79,9 +81,115 @@ void vtkSlicerVolumesLogic::SetActiveVolumeNode(vtkMRMLVolumeNode *activeNode)
   vtkSetMRMLNodeMacro(this->ActiveVolumeNode, activeNode );
   this->Modified();
 }
+
+//----------------------------------------------------------------------------
+vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddHeaderVolume (const char* filename, int centerImage, int labelMap, const char* volname, 
+                                                           vtkMRMLVolumeHeaderlessStorageNode *headerStorage)
+{
+  vtkMRMLVolumeNode *volumeNode = NULL;
+  vtkMRMLVolumeDisplayNode *displayNode = NULL;
+
+  vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
+  vtkMRMLVectorVolumeNode *vectorNode = vtkMRMLVectorVolumeNode::New();
+
+  vtkMRMLVolumeHeaderlessStorageNode *storageNode = vtkMRMLVolumeHeaderlessStorageNode::New();
+  storageNode->Copy(headerStorage);
+  
+  storageNode->SetFileName(filename);
+  storageNode->SetCenterImage(centerImage);
+  storageNode->AddObserver(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
+
+ if (storageNode->ReadData(scalarNode))
+    {
+    displayNode = vtkMRMLVolumeDisplayNode::New();
+    scalarNode->SetLabelMap(labelMap);
+    volumeNode = scalarNode;
+    }
+  else if (storageNode->ReadData(vectorNode))
+    {
+    displayNode = vtkMRMLVectorVolumeDisplayNode::New();
+    volumeNode = vectorNode;
+    }
+
+  storageNode->RemoveObservers(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
+
+  if (volumeNode != NULL)
+    {
+    if (volname == NULL)
+      {
+      const vtksys_stl::string fname(filename);
+      vtksys_stl::string name = vtksys::SystemTools::GetFilenameName(fname);
+      volumeNode->SetName(name.c_str());
+      }
+    else
+      {
+      volumeNode->SetName(volname);
+      }
+
+    this->GetMRMLScene()->SaveStateForUndo();
+    vtkDebugMacro("Setting scene info");
+    volumeNode->SetScene(this->GetMRMLScene());
+    storageNode->SetScene(this->GetMRMLScene());
+    displayNode->SetScene(this->GetMRMLScene());
+  
+    //should we give the user the chance to modify this?.
+    double range[2];
+    vtkDebugMacro("Set basic display info");
+    volumeNode->GetImageData()->GetScalarRange(range);
+    displayNode->SetLowerThreshold(range[0]);
+    displayNode->SetUpperThreshold(range[1]);
+    displayNode->SetWindow(range[1] - range[0]);
+    displayNode->SetLevel(0.5 * (range[1] + range[0]) );
+
+    vtkDebugMacro("Adding node..");
+    this->GetMRMLScene()->AddNode(storageNode);  
+    this->GetMRMLScene()->AddNode(displayNode);  
+
+    //displayNode->SetDefaultColorMap();
+    vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
+    if (labelMap) 
+      {
+      if (this->IsFreeSurferVolume(filename))
+        {
+        displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultFreeSurferLabelMapColorNodeID());
+        }
+      else
+        {
+        displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultLabelMapColorNodeID());
+        }
+      }
+    else
+      {
+      displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
+      }
+    colorLogic->Delete();
+    
+    volumeNode->SetStorageNodeID(storageNode->GetID());
+    volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
+
+    vtkDebugMacro("Name vol node "<<volumeNode->GetClassName());
+    vtkDebugMacro("Display node "<<displayNode->GetClassName());
+    this->GetMRMLScene()->AddNode(volumeNode);
+    vtkDebugMacro("Node added to scene");
+
+    this->SetActiveVolumeNode(volumeNode);
+
+    this->Modified();
+    }
+
+  scalarNode->Delete();
+  vectorNode->Delete();
+  storageNode->Delete();
+  if (displayNode)
+    {
+    displayNode->Delete();
+    }
+  return volumeNode;
+}
+
 #ifdef USE_TEEM
 //----------------------------------------------------------------------------
-vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, int centerImage, int labelMap, const char* volname)
+vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (const char* filename, int centerImage, int labelMap, const char* volname)
 {
   vtkMRMLVolumeNode *volumeNode = NULL;
   vtkMRMLVolumeDisplayNode *displayNode = NULL;
@@ -105,34 +213,34 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
   storageNode2->AddObserver(vtkCommand::ProgressEvent,  this->LogicCallbackCommand);
 
   // Try to read first with NRRD reader (look if file is a dwi or a tensor)
-  cout<<"TEST DWI: "<< storageNode1->ReadData(dwiNode)<<endl;
+  vtkDebugMacro("TEST DWI: "<< storageNode1->ReadData(dwiNode));
 
   if (storageNode1->ReadData(dwiNode))
     {
-    cout<<"DWI HAS BEEN READ"<<endl;
+    vtkDebugMacro("DWI HAS BEEN READ");
     displayNode = vtkMRMLDiffusionWeightedVolumeDisplayNode::New();
     // Give a chance to set/update displayNode
     volumeNode =  dwiNode;
     storageNode = storageNode1;
-    cout<<"Done setting volumeNode to class: "<<volumeNode->GetClassName()<<endl;
+    vtkDebugMacro("Done setting volumeNode to class: "<<volumeNode->GetClassName());
     }
   else if (storageNode1->ReadData(tensorNode))
     {
-    cout<<"Tensor HAS BEEN READ"<<endl;
+    vtkDebugMacro("Tensor HAS BEEN READ");
     displayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::New();
     volumeNode = tensorNode;
     storageNode = storageNode1;
     }
   else if (storageNode1->ReadData(vectorNode))
     {
-    cout<<"Vector HAS BEEN READ WITH NRRD READER"<<endl;
+    vtkDebugMacro("Vector HAS BEEN READ WITH NRRD READER");
     displayNode = vtkMRMLVectorVolumeDisplayNode::New();
     volumeNode = vectorNode;
     storageNode = storageNode1;
     }
   else if (storageNode2->ReadData(scalarNode))
     {
-    cout<<"Scalar HAS BEEN READ WITH ARCHTYPE READER"<<endl;
+    vtkDebugMacro("Scalar HAS BEEN READ WITH ARCHTYPE READER");
     displayNode = vtkMRMLVolumeDisplayNode::New();
     scalarNode->SetLabelMap(labelMap);
     volumeNode = scalarNode;
@@ -140,7 +248,7 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
     }
   else if (storageNode2->ReadData(vectorNode))
     {
-    cout<<"Vector HAS BEEN READ WITH ARCHTYPE READER"<<endl;
+    vtkDebugMacro("Vector HAS BEEN READ WITH ARCHTYPE READER");
     displayNode = vtkMRMLVectorVolumeDisplayNode::New();
     volumeNode = vectorNode;
     storageNode = storageNode2;
@@ -163,36 +271,50 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
       }
 
     this->GetMRMLScene()->SaveStateForUndo();
-    cout<<"Setting scene info"<<endl;
+    vtkDebugMacro("Setting scene info");
     volumeNode->SetScene(this->GetMRMLScene());
     storageNode->SetScene(this->GetMRMLScene());
     displayNode->SetScene(this->GetMRMLScene());
   
     //should we give the user the chance to modify this?.
     double range[2];
-    cout<<"Set basic display info"<<endl;
+    vtkDebugMacro("Set basic display info");
     volumeNode->GetImageData()->GetScalarRange(range);
     displayNode->SetLowerThreshold(range[0]);
     displayNode->SetUpperThreshold(range[1]);
     displayNode->SetWindow(range[1] - range[0]);
     displayNode->SetLevel(0.5 * (range[1] + range[0]) );
 
-    cout<<"Adding node.."<<endl;
+    vtkDebugMacro("Adding node..");
     this->GetMRMLScene()->AddNode(storageNode);  
     this->GetMRMLScene()->AddNode(displayNode);  
 
     //displayNode->SetDefaultColorMap();
     vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
-    displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
+    if (labelMap) 
+      {
+      if (this->IsFreeSurferVolume(filename))
+        {
+        displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultFreeSurferLabelMapColorNodeID());
+        }
+      else
+        {
+        displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultLabelMapColorNodeID());
+        }
+      }
+    else
+      {
+      displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
+      }
     colorLogic->Delete();
     
     volumeNode->SetStorageNodeID(storageNode->GetID());
     volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
 
-    cout<<"Name vol node "<<volumeNode->GetClassName()<<endl;
-    cout<<"Display node "<<displayNode->GetClassName()<<endl;
+    vtkDebugMacro("Name vol node "<<volumeNode->GetClassName());
+    vtkDebugMacro("Display node "<<displayNode->GetClassName());
     this->GetMRMLScene()->AddNode(volumeNode);
-    cout<<"Node added to scene"<<endl;
+    vtkDebugMacro("Node added to scene");
 
     this->SetActiveVolumeNode(volumeNode);
 
@@ -213,7 +335,7 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
 }
 
 //----------------------------------------------------------------------------
-int vtkSlicerVolumesLogic::SaveArchetypeVolume (char* filename, vtkMRMLVolumeNode *volumeNode)
+int vtkSlicerVolumesLogic::SaveArchetypeVolume (const char* filename, vtkMRMLVolumeNode *volumeNode)
 {
   if (volumeNode == NULL || filename == NULL)
     {
@@ -274,7 +396,7 @@ int vtkSlicerVolumesLogic::SaveArchetypeVolume (char* filename, vtkMRMLVolumeNod
 #else
 
 //----------------------------------------------------------------------------
-vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, int centerImage, int labelMap, const char* volname)
+vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (const char* filename, int centerImage, int labelMap, const char* volname)
 {
   vtkMRMLVolumeNode *volumeNode = NULL;
   
@@ -334,14 +456,19 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
       {
       isLabelMap = vtkMRMLScalarVolumeNode::SafeDownCast(volumeNode)->GetLabelMap();
       }
-    //displayNode->SetDefaultColorMap(isLabelMap);
     vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
-      //vtkSlicerColorGUI::SafeDownCast(vtkSlicerApplication::SafeDownCast(this->GetApplication())->GetModuleGUIByName("Color"))->GetLogic();
     if (colorLogic)
       {
       if (isLabelMap)
         {
-        displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultLabelMapColorNodeID());
+        if (this->IsFreeSurferVolume(filename))
+          {
+          displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultFreeSurferLabelMapColorNodeID());
+          }
+        else
+          {
+          displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultLabelMapColorNodeID());
+          }
         }
       else
         {
@@ -369,7 +496,7 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (char* filename, in
 }
 
 //----------------------------------------------------------------------------
-int vtkSlicerVolumesLogic::SaveArchetypeVolume (char* filename, vtkMRMLVolumeNode *volumeNode)
+int vtkSlicerVolumesLogic::SaveArchetypeVolume (const char* filename, vtkMRMLVolumeNode *volumeNode)
 {
   if (volumeNode == NULL || filename == NULL)
     {
@@ -459,3 +586,27 @@ void vtkSlicerVolumesLogic::PrintSelf(ostream& os, vtkIndent indent)
     (this->ActiveVolumeNode ? this->ActiveVolumeNode->GetName() : "(none)") << "\n";
 }
 
+//----------------------------------------------------------------------------
+int vtkSlicerVolumesLogic::IsFreeSurferVolume (const char* filename)
+{
+  std::string fname(filename);
+  std::string::size_type loc = fname.find(".");
+  if (loc != std::string::npos)
+    {
+    std::string extension = fname.substr(loc);
+    if (extension == std::string(".mgz") ||
+        extension == std::string(".mgh") ||
+        extension == std::string(".mgh.gz"))
+      {
+      return 1;
+      }
+    else
+      {
+      return 0;
+      }
+    }
+  else
+    {
+    return 0;
+    }
+}

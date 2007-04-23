@@ -25,6 +25,7 @@ Version:   $Revision: 1.18 $
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLModelStorageNode.h"
+#include "vtkMRMLFreeSurferModelStorageNode.h"
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLClipModelsNode.h"
 #include "vtkMRMLScalarVolumeNode.h"
@@ -47,6 +48,7 @@ Version:   $Revision: 1.18 $
 #include "vtkMRMLCameraNode.h"
 #include "vtkMRMLViewNode.h"
 #include "vtkMRMLModelHierarchyNode.h"
+#include "vtkMRMLSceneSnapshotNode.h"
 
 #ifdef USE_TEEM
 #include "vtkMRMLNRRDStorageNode.h"
@@ -91,6 +93,10 @@ vtkMRMLScene::vtkMRMLScene()
   this->RegisterNodeClass( modelstorenode );
   modelstorenode->Delete();
 
+  vtkMRMLFreeSurferModelStorageNode *surfermodelstorenode = vtkMRMLFreeSurferModelStorageNode::New(); 
+  this->RegisterNodeClass( surfermodelstorenode );
+  surfermodelstorenode->Delete();
+  
   vtkMRMLModelDisplayNode *modeldisplaynode = vtkMRMLModelDisplayNode::New(); 
   this->RegisterNodeClass( modeldisplaynode );
   modeldisplaynode->Delete();
@@ -179,6 +185,10 @@ vtkMRMLScene::vtkMRMLScene()
   vtkMRMLModelHierarchyNode *mhier = vtkMRMLModelHierarchyNode::New();
   this->RegisterNodeClass ( mhier );
   mhier->Delete();
+
+  vtkMRMLSceneSnapshotNode *sshot = vtkMRMLSceneSnapshotNode::New();
+  this->RegisterNodeClass ( sshot );
+  sshot->Delete();
 
 #ifdef USE_TEEM
   vtkMRMLNRRDStorageNode *nrrd = vtkMRMLNRRDStorageNode::New();
@@ -381,6 +391,9 @@ int vtkMRMLScene::Connect()
   this->ClearReferencedNodeID();
 
   this->InvokeEvent(this->SceneCloseEvent, NULL);
+
+  this->ClearUndoStack ( );
+  this->ClearRedoStack ( );
 
   // after SceneCloseEvent there may be nodes created such as Camera
   // keep them so we don't call update on them
@@ -603,7 +616,9 @@ int vtkMRMLScene::Commit(const char* url)
 
     node->WriteXML(file, indent);
     
-    file << vindent << "></" << node->GetNodeTagName() << ">\n";
+    file << vindent << ">";
+    node->WriteNodeBodyXML(file, indent);
+    file << "</" << node->GetNodeTagName() << ">\n";
     
     if ( deltaIndent > 0 ) 
       {
@@ -649,6 +664,11 @@ void vtkMRMLScene::RequestNodeID(vtkMRMLNode *node, const char *ID)
 //------------------------------------------------------------------------------
 vtkMRMLNode*  vtkMRMLScene::AddNodeNoNotify(vtkMRMLNode *n)
 {
+  if (!n->GetAddToScene())
+    {
+    return NULL;
+    }
+
   //TODO convert URL to Root directory
   //n->SetSceneRootDir("");
   
@@ -700,6 +720,11 @@ vtkMRMLNode*  vtkMRMLScene::AddNodeNoNotify(vtkMRMLNode *n)
 //------------------------------------------------------------------------------
 vtkMRMLNode*  vtkMRMLScene::AddNode(vtkMRMLNode *n)
 {
+  if (!n->GetAddToScene())
+    {
+    return NULL;
+    }
+
   vtkMRMLNode* node = this->AddNodeNoNotify(n);
   this->InvokeEvent(this->NodeAddedEvent, n);
   this->Modified();
@@ -856,6 +881,30 @@ vtkCollection* vtkMRMLScene::GetNodesByName(const char* name)
   return nodes;
 }
 
+//------------------------------------------------------------------------------
+vtkMRMLNode* vtkMRMLScene::GetNodeByID(std::string id)
+{
+//  return this->GetNodeByID(id.c_str());
+  vtkMRMLNode *node = NULL;
+  if (id == "" || this == NULL  || this->CurrentScene == NULL)
+    {
+    return NULL;
+    }
+  for (int n=0; n < this->CurrentScene->GetNumberOfItems(); n++) 
+    {
+    //node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
+    node = vtkMRMLNode::SafeDownCast(this->CurrentScene->GetItemAsObject(n));
+    if (node == NULL)
+      {
+      return NULL;
+      }
+    if (id == node->GetID())
+      {
+      return node;
+      }
+    }
+  return NULL;
+}
 
 //------------------------------------------------------------------------------
 vtkMRMLNode* vtkMRMLScene::GetNodeByID(const char* id)

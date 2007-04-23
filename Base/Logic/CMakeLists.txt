@@ -47,15 +47,15 @@ INCLUDE_DIRECTORIES(
   ${SlicerBaseLogic_BINARY_DIR}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
-  ${IGT_SOURCE_DIR}
-  ${IGT_BINARY_DIR}
   ${VTK_INCLUDE_DIR}  
   ${vtkTeem_SOURCE_DIR}
   ${vtkTeem_BINARY_DIR}
   ${SlicerBase_BINARY_DIR}
+  ${OPENTRACKER_INC_DIR}
   ${FreeSurfer_SOURCE_DIR}
   ${FreeSurfer_BINARY_DIR}
   )
+
 
 
 # --------------------------------------------------------------------------
@@ -85,7 +85,8 @@ TARGET_LINK_LIBRARIES(SlicerBaseLogic
   vtkFilteringTCL
   vtkGraphicsTCL
   vtkIOTCL
-  #  vtkHybridTCL
+  vtkHybridTCL
+  ${OPENTRACKER_LIB}
   FreeSurfer
   )
 

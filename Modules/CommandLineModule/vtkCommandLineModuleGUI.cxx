@@ -600,6 +600,8 @@ void vtkCommandLineModuleGUI::UpdateGUI ()
         w->EnabledOn();
         w->UpdateEnableState();
         }
+      (*this->InternalWidgetMap)["CancelButton"]->EnabledOff();
+      (*this->InternalWidgetMap)["CancelButton"]->UpdateEnableState();
       }
 
     // Set the progress value and balloon help
@@ -703,7 +705,7 @@ void vtkCommandLineModuleGUI::UpdateGUI ()
             }
           else if (lsb)
             {
-            lsb->GetWidget()->GetLoadSaveDialog()->SetFileName(value.c_str());
+            lsb->GetWidget()->GetLoadSaveDialog()->SetInitialFileName(value.c_str());
             }
           else if (rbs)
             {
@@ -836,9 +838,6 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
   std::string title = this->ModuleDescriptionObject.GetTitle();
   
   vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-  vtkMRMLCommandLineModuleNode* node = vtkMRMLCommandLineModuleNode::New();
-  this->Logic->GetMRMLScene()->RegisterNodeClass(node);
-  node->Delete();
 
   this->UIPanel->AddPage ( title.c_str(), title.c_str(), NULL );
 
@@ -847,6 +846,19 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
                        this->ModuleDescriptionObject.GetDescription().c_str(),
                        this->ModuleDescriptionObject.GetContributor().c_str());
 
+  // If the module has a logo, then add it to logo frame
+  if (this->GetLogo())
+    {
+    vtkKWLabel *logoLabel = vtkKWLabel::New();
+    logoLabel->SetParent( this->GetLogoFrame() );
+    logoLabel->Create();
+    logoLabel->SetImageToIcon( this->GetLogo() );
+    app->Script("pack %s", logoLabel->GetWidgetName() );
+    
+    (*this->InternalWidgetMap)["LogoLabel"] = logoLabel;
+    logoLabel->Delete();
+    }
+  
   // Make a frame for the module parameters
   vtkSlicerModuleCollapsibleFrame *moduleFrame = vtkSlicerModuleCollapsibleFrame::New ( );
   moduleFrame->SetParent ( this->UIPanel->GetPageWidget ( title.c_str() ) );
@@ -866,8 +878,8 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
   this->CommandLineModuleNodeSelector->SetParent( moduleFrame->GetFrame() );
   this->CommandLineModuleNodeSelector->Create();
   this->CommandLineModuleNodeSelector->SetMRMLScene(this->Logic->GetMRMLScene());
-  this->CommandLineModuleNodeSelector->UpdateMenu();
-
+  this->CommandLineModuleNodeSelector->SetSelected(NULL); // force empty select
+  
   this->CommandLineModuleNodeSelector->SetBorderWidth(2);
   this->CommandLineModuleNodeSelector->SetReliefToFlat();
   this->CommandLineModuleNodeSelector->SetLabelText( "Parameter set");
@@ -896,7 +908,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
   std::vector<ModuleParameterGroup>::const_iterator pgendit
     = this->ModuleDescriptionObject.GetParameterGroups().end();
   std::vector<ModuleParameterGroup>::const_iterator pgit;
-  
+
   for (pgit = pgbeginit; pgit != pgendit; ++pgit)
     {
     // each parameter group is its own labeled frame
@@ -1443,6 +1455,8 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
   (*this->InternalWidgetMap)["CancelButton"] = cancel;
   cancel->Delete();
 
+  (*this->InternalWidgetMap)["CancelButton"]->EnabledOff();
+  (*this->InternalWidgetMap)["CancelButton"]->UpdateEnableState();
 }
 
 

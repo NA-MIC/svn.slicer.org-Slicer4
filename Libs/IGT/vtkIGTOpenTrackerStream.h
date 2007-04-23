@@ -61,7 +61,7 @@ public:
     virtual ~vtkIGTOpenTrackerStream ( );
 
 
-    void Init(char *configFile);
+    void Init(const char *configFile);
     void StopPolling();
     void PollRealtime();
     void SetLocatorTransforms();
@@ -85,6 +85,7 @@ private:
     void Normalize(float *a);
     void Cross(float *a, float *b, float *c);
     void ApplyTransform(float *position, float *norm, float *transnorm);
+    void CloseConnection();
 
     void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
 

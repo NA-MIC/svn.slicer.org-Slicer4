@@ -113,6 +113,14 @@ WFStepObject *WFDirectInterface::getBackWorkStep()
     }    
 }
 
+WFStepObject *WFDirectInterface::getWorkStepByIndex(int index)
+{
+    if(this->IsLoaded())
+    {
+        this->m_wfMgr->GetNthWFStep(index);   
+    }    
+}
+
 int WFDirectInterface::getNumberOfProcessedSteps()
 {
     if(this->IsLoaded())
@@ -123,11 +131,17 @@ int WFDirectInterface::getNumberOfProcessedSteps()
         return -1;
 }
 
-int WFDirectInterface::getNumberOfUnprocessedSteps(std::string &curStepID)
+int WFDirectInterface::getNumberOfUnprocessedSteps()
 {
     if(this->IsLoaded())
     {
-        this->m_wfMgr->getNumberOfUnprocessedSteps(curStepID);   
+        this->m_wfMgr->getNumberOfUnprocessedSteps();   
     }    
 }
+
+void WFDirectInterface::Destroy()
+{
+    delete(this);
+}
+
 

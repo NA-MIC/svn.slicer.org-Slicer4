@@ -83,7 +83,7 @@ class VTK_WFENGINEMODULE_EXPORT vtkWFEngineModuleGUI : public vtkSlicerModuleGUI
     
     virtual void SaveState();
     
-    virtual void workStepGUICallBack();               
+    virtual void workStepGUICallBack();
     
     //BTX
     const char* getStepInputValueByName(std::string name); 
@@ -104,6 +104,7 @@ protected:
     static void loadBtnPushCmdCallback(vtkObject* obj, unsigned long,void*, void*);
     static void nextTransitionCallback(vtkObject* obj, unsigned long,void*, void*);
     static void backTransitionCallback(vtkObject* obj, unsigned long,void*, void*);
+    static void jumpToStepCallback(vtkObject* obj, unsigned long,void*, void*);
     static void closeBtnPushCmdCallback(vtkObject* obj, unsigned long,void*, void*);
     
     static void widgetChangedCallback(vtkObject* obj, unsigned long,void*, void*);
@@ -138,8 +139,8 @@ private:
     vtkKWMultiColumnListWithScrollbars *m_mclDW;
     vtkKWPushButtonSet *m_pbtnSet;
     vtkSlicerModuleCollapsibleFrame *m_wizFrame;
-    vtkSlicerParameterWidget *m_curParameterWidgets;    
-    bool m_inTransition;
+    vtkSlicerParameterWidget *m_curParameterWidgets;        
+    bool m_ParameterWidgetChanged;
     
     vtkMRMLWFEngineModuleNode *WFEngineModuleNode;
     

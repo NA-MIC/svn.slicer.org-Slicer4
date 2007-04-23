@@ -32,6 +32,7 @@ if { [itcl::find class SeedSWidget] == "" } {
     destructor {}
 
     public variable movedCommand ""
+    public variable movingCommand ""
     public variable glyph "StarBurst"
     public variable scale "1"
     public variable color "1 0 0"
@@ -41,7 +42,7 @@ if { [itcl::find class SeedSWidget] == "" } {
     public variable text ""
     public variable textScale "1"
 
-    variable _startPosition "0 0 0"
+    variable _startOffset "0 0"
     variable _currentPosition "0 0 0"
 
     # methods
@@ -65,8 +66,8 @@ itcl::body SeedSWidget::constructor {sliceGUI} {
   set renderWidget [[$sliceGUI GetSliceViewer] GetRenderWidget]
  
   set o(glyph) [$this createGlyph]
-  set o(glyphTransform) [vtkTransform New]
-  set o(glyphTransformFilter) [vtkTransformPolyDataFilter New]
+  set o(glyphTransform) [vtkNew vtkTransform]
+  set o(glyphTransformFilter) [vtkNew vtkTransformPolyDataFilter]
   $o(glyphTransformFilter) SetInput $o(glyph)
   $o(glyphTransformFilter) SetTransform $o(glyphTransform)
   set o(mapper) [vtkNew vtkPolyDataMapper2D]
@@ -76,7 +77,7 @@ itcl::body SeedSWidget::constructor {sliceGUI} {
   [$renderWidget GetRenderer] AddActor2D $o(actor)
   lappend _actors $o(actor)
 
-  set o(textActor) [vtkTextActor New]
+  set o(textActor) [vtkNew vtkTextActor]
   [$renderWidget GetRenderer] AddActor2D $o(textActor)
   set textProperty [$o(textActor) GetTextProperty]
   $textProperty ShadowOn
@@ -94,6 +95,7 @@ itcl::body SeedSWidget::constructor {sliceGUI} {
   set node [[$sliceGUI GetLogic] GetSliceNode]
   lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
   lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent"]
+
 }
 
 itcl::body SeedSWidget::destructor {} {
@@ -115,6 +117,7 @@ itcl::body SeedSWidget::destructor {} {
       $_renderer RemoveActor2D $a
     }
   }
+
 }
 
 
@@ -198,6 +201,7 @@ itcl::body SeedSWidget::pick {} {
   foreach {ex ey} [$interactor GetEventPosition] {}
   if { [expr abs($ex - $x) < 15] && [expr abs($ey - $y) < 15] } {
     set _pickState "over"
+    set _startOffset [list [expr $x - $ex] [expr $y - $ey]] 
   } else {
     set _pickState "outside"
   }
@@ -295,7 +299,11 @@ itcl::body SeedSWidget::processEvent { } {
         "MouseMoveEvent" {
           switch $_actionState {
             "dragging" {
-              set _currentPosition [$this xyToRAS [$_interactor GetEventPosition]]
+              foreach {ex ey} [$_interactor GetEventPosition] {}
+              foreach {dx dy} $_startOffset {}
+              set newxy [list [expr $ex + $dx] [expr $ey + $dy]]
+              set _currentPosition [$this xyToRAS $newxy]
+              eval $movingCommand
             }
             default {
             }

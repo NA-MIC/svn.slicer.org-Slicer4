@@ -7,6 +7,8 @@
 #define IGTIGSTKSTREAM_H
 
 
+#include "itkCommand.h"
+
 #include "vtkIGTWin32Header.h" 
 #include "vtkObject.h"
 #include "vtkMatrix4x4.h"
@@ -15,20 +17,16 @@
 #include <string>
 
 #include "igstkSerialCommunication.h"
-
-#ifdef _WIN32
-#include "igstkSerialCommunicationForWindows.h"
-#else
-#include "igstkSerialCommunicationForPosix.h"
-#endif
-
 #include "igstkAuroraTracker.h"
 #include "igstkPolarisTracker.h"
-#include "itkStdStreamLogOutput.h"
 
 
-typedef itk::Logger               LoggerType;
-typedef itk::StdStreamLogOutput   LogOutputType;
+typedef igstk::SerialCommunication::PortNumberType PortNumberT;
+typedef igstk::SerialCommunication::BaudRateType   BaudRateT;
+typedef igstk::SerialCommunication::DataBitsType   DataBitsT;
+typedef igstk::SerialCommunication::ParityType     ParityT;
+typedef igstk::SerialCommunication::StopBitsType   StopBitsT;
+typedef igstk::SerialCommunication::HandshakeType  HandshakeT;
 
 
 class VTK_IGT_EXPORT vtkIGTIGSTKStream : public vtkObject
@@ -38,9 +36,18 @@ public:
     vtkTypeRevisionMacro(vtkIGTIGSTKStream,vtkObject);
     void PrintSelf(ostream& os, vtkIndent indent);
 
+
+    vtkSetMacro(PortNumber,PortNumberT);
+    vtkSetMacro(BaudRate,BaudRateT);
+    vtkSetMacro(DataBits,DataBitsT);
+    vtkSetMacro(Parity,ParityT);
+    vtkSetMacro(StopBits,StopBitsT);
+    vtkSetMacro(HandShake,HandshakeT);
+
+
     vtkSetMacro(Speed,int);
+    vtkSetMacro(Tracking,int);
     vtkSetMacro(MultiFactor,float);
-    vtkSetMacro(StartTimer,int);
     vtkSetMacro(TrackerType,short);
 
 
@@ -51,7 +58,7 @@ public:
     vtkGetObjectMacro(LocatorNormalTransform,vtkTransform);
 
     /**
-     * Constructor
+     * Constructor    vtkSetMacro(StopBits,StopBitsType);    vtkSetMacro(StopBits,StopBitsType);
      */
     vtkIGTIGSTKStream();
 
@@ -60,14 +67,13 @@ public:
     //Destructor
     virtual ~vtkIGTIGSTKStream ( );
 
-
-    void Init();
-    void StopPolling();
-    void PollRealtime();
-    void SetLocatorTransforms();
     void ProcessTimerEvents();
 
-    void callbackF(double*, double*);
+    void Init();
+    void StopPulling();
+    void PullRealTime();    
+    void SetLocatorTransforms();
+    void CleanTracker();
 
 private:
 
@@ -75,26 +81,40 @@ private:
     igstk::AuroraTracker::Pointer        AuroraTracker;
     igstk::PolarisTracker::Pointer       PolarisTracker;
 
-    igstk::SerialCommunication::Pointer  SerialCommunication;
 
-    LoggerType::Pointer                  Logger;
-    LogOutputType::Pointer               LogFileOutput;  // log output to file
+    // Communication Parameters
+    /**  Port Number */
+    PortNumberT PortNumber;   
+    /** Baud rate of communication */
+    BaudRateT   BaudRate;  
+    /** Number of bits/byte */
+    DataBitsT   DataBits;
+    /** Parity */
+    ParityT     Parity;
+    /** Stop bits */
+    StopBitsT   StopBits;
+    /** Hardware handshaking */
+    HandshakeT  HandShake;
+
     //ETX
 
-
     int Speed;
-    int StartTimer;
     float MultiFactor;
-    short TrackerType;  // 0 - Aurora; 1 - Polaris
+    short TrackerType;  // 0 - Polaris; 1 - Aurora 
+    int Tracking;
 
     vtkMatrix4x4 *LocatorMatrix;
     vtkMatrix4x4 *RegMatrix;
     vtkTransform *LocatorNormalTransform;
 
-    void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
+    void UpdateLocatorMatrix(float *positon, float *orientation);
+    void QuaternionToXYZ(float *orientation, float *normal, float *transnormal); 
     void ApplyTransform(float *position, float *norm, float *transnorm);
 
 };
+
+
+
 
 #endif // IGTIGSTKSTREAM_H
 

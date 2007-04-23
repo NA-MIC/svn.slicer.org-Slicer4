@@ -1,6 +1,9 @@
 PROJECT( Modules )
 
 SUBDIRS(
+  NeuroNav
+  RealTimeImaging
+  WFEngineModule
   CommandLineModule
   ScriptedModule
   GradientAnisotropicDiffusionFilter
@@ -9,10 +12,6 @@ SUBDIRS(
   Editor
   QueryAtlas
   Tractography
-#  RealTimeImaging
-  MRAblation
-  NeuroNav
-  WFEngineModule
 )
 
 

@@ -1,13 +1,19 @@
-
 #include "vtkIGTIGSTKStream.h"
 #include "vtkObjectFactory.h"
 #include "vtkKWTkUtilities.h"
 #include "vtkKWApplication.h"
 #include "vtkCommand.h"
-
-
-#include <vtksys/SystemTools.hxx>
 #include "vtkCallbackCommand.h"
+
+#include "vnl/vnl_float_3.h"
+
+#include "itksys/SystemTools.hxx"
+#include "itkStdStreamLogOutput.h"
+#ifdef _WIN32
+#include "igstkSerialCommunicationForWindows.h"
+#else
+#include "igstkSerialCommunicationForPosix.h"
+#endif
 
 
 vtkStandardNewMacro(vtkIGTIGSTKStream);
@@ -17,74 +23,22 @@ vtkCxxRevisionMacro(vtkIGTIGSTKStream, "$Revision: 1.0 $");
 
 vtkIGTIGSTKStream::vtkIGTIGSTKStream()
 {
-    igstk::RealTimeClock::Initialize();
-
-#if 0
-    // Logger
-    this->Logger   = LoggerType::New();
-
-    // log output to file
-    // file stream
-    std::ofstream logFile;
-    this->LogFileOutput = LogOutputType::New();
-    std::string logFileName = "logIGSTK.txt";
-    logFile.open(logFileName.c_str());
-    if(!logFile.fail())
-    {
-        this->LogFileOutput->SetStream(logFile);
-        this->Logger->AddLogOutput(this->LogFileOutput);
-    }
-#endif
-
 
     this->Speed = 0;
-    this->TrackerType = 0;
-    this->StartTimer = 0;
+    this->Tracking = 0;
+    this->TrackerType = 1;
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     this->RegMatrix = NULL;
 
     this->AuroraTracker = NULL;
     this->PolarisTracker = NULL;
-    this->SerialCommunication = NULL; 
 }
 
 
 
 vtkIGTIGSTKStream::~vtkIGTIGSTKStream()
 {
-    if (this->AuroraTracker) 
-    {
-        this->AuroraTracker->SetLogger(NULL);
-        this->AuroraTracker->SetCommunication(NULL);
-        this->AuroraTracker->RequestStopTracking();  
-        this->AuroraTracker->RequestClose();
-        this->AuroraTracker->Delete();
-    }
-    if (this->PolarisTracker) 
-    {
-        this->PolarisTracker->SetLogger(NULL);
-        this->PolarisTracker->SetCommunication(NULL);
-        this->PolarisTracker->RequestStopTracking();  
-        this->PolarisTracker->RequestClose();
-        this->PolarisTracker->Delete();
-    }
-    if (this->SerialCommunication)
-    {
-        this->SerialCommunication->CloseCommunication();
-        this->SerialCommunication->Delete();
-    }
-
-    if (this->LogFileOutput)
-    {
-        this->LogFileOutput->Delete();
-    }
-    if (this->Logger)
-    {
-        this->Logger->Flush();
-        this->Logger->Delete();
-    }
-
     if (this->LocatorNormalTransform)
     {
         this->LocatorNormalTransform->Delete();
@@ -97,122 +51,29 @@ vtkIGTIGSTKStream::~vtkIGTIGSTKStream()
 
 
 
-void vtkIGTIGSTKStream::Init()
+void vtkIGTIGSTKStream::CleanTracker()
 {
-    if (this->SerialCommunication)
-    {
-        this->SerialCommunication->Delete();
-        this->SerialCommunication = NULL;
-    }
-
     if (this->AuroraTracker) 
     {
         this->AuroraTracker->SetLogger(NULL);
-        //this->AuroraTracker->SetCommunication(NULL);
-        this->AuroraTracker->RequestStopTracking();  
-        this->AuroraTracker->RequestClose();
+        // this->AuroraTracker->SetCommunication(NULL);
         this->AuroraTracker->Delete();
         this->AuroraTracker = NULL;
-
     }
     if (this->PolarisTracker) 
     {
         this->PolarisTracker->SetLogger(NULL);
-        //this->PolarisTracker->SetCommunication(NULL);
-        this->PolarisTracker->RequestStopTracking();  
-        this->PolarisTracker->RequestClose();
+        // this->PolarisTracker->SetCommunication(NULL);
         this->PolarisTracker->Delete();
         this->PolarisTracker = NULL;
-
     }
-
-#ifdef _WIN32 
-    //running on a windows system
-    this->SerialCommunication = igstk::SerialCommunicationForWindows::New();
-#else //running on a unix system
-    this->SerialCommunication = igstk::SerialCommunicationForPosix::New();
-#endif
-
-    //serialCommunication->SetLogger( m_Logger );
-    //set the communication settings
-    //This is the serial port of your device. 'PortNumber2' == COM3 under windows
-    this->SerialCommunication->SetPortNumber(igstk::SerialCommunication::PortNumber2);
-
-    this->SerialCommunication->SetParity(igstk::SerialCommunication::NoParity);
-    this->SerialCommunication->SetBaudRate(igstk::SerialCommunication::BaudRate115200);
-    this->SerialCommunication->SetDataBits(igstk::SerialCommunication::DataBits8);
-    this->SerialCommunication->SetStopBits(igstk::SerialCommunication::StopBits1);
-    this->SerialCommunication->SetHardwareHandshake(igstk::SerialCommunication::HandshakeOff);  
-    this->SerialCommunication->OpenCommunication();  
-
-    if (this->TrackerType == 0)  // Aurora
+    /*
+    if (this->SerialCommunication)
     {
-        //Instantiate the tracker here
-        this->AuroraTracker = igstk::AuroraTracker::New();
-        this->AuroraTracker->SetLogger( this->Logger );
-        this->AuroraTracker->SetCommunication(this->SerialCommunication);
-
-        //attach SROM file 
-        this->AuroraTracker->AttachSROMFileNameToPort(3, "8700340.rom");
-        this->AuroraTracker->RequestOpen();          
-        this->AuroraTracker->RequestInitialize();
-        this->AuroraTracker->RequestStartTracking();  
+        this->SerialCommunication->CloseCommunication();
+        this->SerialCommunication->Delete();
     }
-    else  // Polaris
-    {
-        this->PolarisTracker = igstk::PolarisTracker::New();
-        this->PolarisTracker->SetLogger( this->Logger );
-        this->PolarisTracker->SetCommunication(this->SerialCommunication);
-
-        //attach SROM file 
-        this->PolarisTracker->AttachSROMFileNameToPort(3, "8700340.rom");
-        this->PolarisTracker->RequestOpen();          
-        this->PolarisTracker->RequestInitialize();
-        this->PolarisTracker->RequestStartTracking();  
-    }
-}
-
-
-
-void vtkIGTIGSTKStream::StopPolling()
-{
-    if (this->TrackerType == 0)  // Aurora
-    {
-        this->AuroraTracker->RequestStopTracking();
-    }
-    else
-    {
-        this->PolarisTracker->RequestStopTracking();
-    }
-}
-
-
-
-void vtkIGTIGSTKStream::PollRealtime()
-{
-    igstk::Transform transform;               
-    igstk::Transform::VectorType translation;
-    igstk::Transform::VersorType rotation;
-    std::cout<<"Start data acquisition\n";
-
-
-    if (this->TrackerType == 0)  // Aurora
-    {
-        //get the tracking data for all tools
-        this->AuroraTracker->RequestUpdateStatus();
-        this->AuroraTracker->GetToolTransform(3, 0, transform);
-    }
-    else
-    {
-        this->PolarisTracker->RequestUpdateStatus();
-        this->PolarisTracker->GetToolTransform(3, 0, transform);
-    }
-    //translation = transform.GetTranslation();
-    //rotation = transform.GetRotation(); 
-    igstkLogMacro2( this->Logger, DEBUG, transform << "\n" );
-    //igstkLogMacro2( m_Logger, DEBUG, translation << "\n" );
-    //igstkLogMacro2( m_Logger, DEBUG, rotation << "\n" );
-
+    */
 }
 
 
@@ -224,7 +85,7 @@ void vtkIGTIGSTKStream::PrintSelf(ostream& os, vtkIndent indent)
 
 
 
-void vtkIGTIGSTKStream::quaternion2xyz(float* orientation, float *normal, float *transnormal) 
+void vtkIGTIGSTKStream::QuaternionToXYZ(float* orientation, float *normal, float *transnormal) 
 {
     float q0, qx, qy, qz;
 
@@ -243,65 +104,51 @@ void vtkIGTIGSTKStream::quaternion2xyz(float* orientation, float *normal, float 
 }
 
 
-///Event becomes IGSTK event to extract the info
-////////////////Edit here Noby Tuesday Feb 13
-/////////////// Edit here
-void vtkIGTIGSTKStream::callbackF(double* position, double* orientation)
+void vtkIGTIGSTKStream::UpdateLocatorMatrix(float *position, float *orientation)
 {
-    float f_position[3];
-    float f_orientation[4];
+    float pos[3];
     float norm[3];
     float transnorm[3];
     int j;
 
-#if 0
-    vtkIGTDataManager *VOT=(vtkIGTDataManager *)this;
 
     // the original values are in the unit of meters
     //this part has to be changed
-    f_position[0]=(float)position[0] * VOT->Ratio; 
-    f_position[1]=(float)position[1] * VOT->Ratio;
-    f_position[2]=(float)position[2] * VOT->Ratio;
-
-    f_orientation[0]=(float)orientation[0];
-    f_orientation[1]=(float)orientation[1];
-    f_orientation[2]=(float)orientation[2];
-    f_orientation[3]=(float)orientation[3];
+    pos[0]=(float) (position[0] * this->MultiFactor); 
+    pos[1]=(float) (position[1] * this->MultiFactor);
+    pos[2]=(float) (position[2] * this->MultiFactor);
 
 
-
-
-    VOT->quaternion2xyz(f_orientation, norm, transnorm);
+    QuaternionToXYZ(orientation, norm, transnorm);
 
 
     // Apply the transform matrix 
     // to the postion, norm and transnorm
-    if (VOT->RegMatrix)
-        VOT->ApplyTransform(f_position, norm, transnorm);
+    if (this->RegMatrix)
+        ApplyTransform(pos, norm, transnorm);
 
     for (j=0; j<3; j++) {
-        VOT->LocatorMatrix->SetElement(j,0,position[j]);
+        this->LocatorMatrix->SetElement(j,0,pos[j]);
     }
 
 
     for (j=0; j<3; j++) {
-        VOT->LocatorMatrix->SetElement(j,1,norm[j]);
+        this->LocatorMatrix->SetElement(j,1,norm[j]);
     }
 
     for (j=0; j<3; j++) {
-        VOT->LocatorMatrix->SetElement(j,2,transnorm[j]);
+        this->LocatorMatrix->SetElement(j,2,transnorm[j]);
     }
 
     for (j=0; j<3; j++) {
-        VOT->LocatorMatrix->SetElement(j,3,0);
+        this->LocatorMatrix->SetElement(j,3,0);
     }
 
     for (j=0; j<3; j++) {
-        VOT->LocatorMatrix->SetElement(3,j,0);
+        this->LocatorMatrix->SetElement(3,j,0);
     }
 
-    VOT->LocatorMatrix->SetElement(3,3,1);
-#endif
+    this->LocatorMatrix->SetElement(3,3,1);
 }
 
 
@@ -309,7 +156,8 @@ void vtkIGTIGSTKStream::callbackF(double* position, double* orientation)
 void vtkIGTIGSTKStream::SetLocatorTransforms()
 {
     // Get locator matrix
-    float p[3], n[3], t[3], c[3];
+    vnl_float_3 p, n, t, c;
+    
     p[0] = this->LocatorMatrix->GetElement(0, 0);
     p[1] = this->LocatorMatrix->GetElement(1, 0);
     p[2] = this->LocatorMatrix->GetElement(2, 0);
@@ -324,14 +172,13 @@ void vtkIGTIGSTKStream::SetLocatorTransforms()
     // Ensure N, T orthogonal:
     //    C = N x T
     //    T = C x N
-    // this->Cross(c, n, t);
-    // this->Cross(t, c, n);
+    c = vnl_cross_3d(n, t);
+    t = vnl_cross_3d(c, n);
 
     // Ensure vectors are normalized
-    // this->Normalize(n);
-    // this->Normalize(t);
-    // this->Normalize(c); 
-
+    n.normalize();
+    t.normalize();
+    c.normalize(); 
 
     /*
     # Find transform, N, that brings the locator coordinate frame 
@@ -432,32 +279,6 @@ void vtkIGTIGSTKStream::SetLocatorTransforms()
 
 
 
-#if 0
-void vtkIGTIGSTKStream::Normalize(float *a)
-{
-    float d;
-    d = sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
-
-    if (d == 0.0) return;
-
-    a[0] = a[0] / d;
-    a[1] = a[1] / d;
-    a[2] = a[2] / d;
-}
-
-
-
-// a = b x c
-void vtkIGTIGSTKStream::Cross(float *a, float *b, float *c)
-{
-    a[0] = b[1]*c[2] - c[1]*b[2];
-    a[1] = c[0]*b[2] - b[0]*c[2];
-    a[2] = b[0]*c[1] - c[0]*b[1];
-}
-#endif
-
-
-
 void vtkIGTIGSTKStream::ApplyTransform(float *position, float *norm, float *transnorm)
 {
     // Transform position, norm and transnorm
@@ -490,18 +311,188 @@ void vtkIGTIGSTKStream::ApplyTransform(float *position, float *norm, float *tran
 
 
 
+
 void vtkIGTIGSTKStream::ProcessTimerEvents()
 {
-    if (this->StartTimer)
+    if (this->Tracking)
     {
-        this->PollRealtime();
-        this->InvokeEvent (vtkCommand::ModifiedEvent);
+        this->PullRealTime();
         vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
-                this->Speed, this, "ProcessTimerEvents");        
+                100, this, "ProcessTimerEvents");        
+ 
     }
     else
     {
-        this->StopPolling();
+        this->StopPulling();
     }
+}
+
+
+
+void vtkIGTIGSTKStream::Init()
+{
+
+    igstk::RealTimeClock::Initialize();
+
+    typedef itk::Logger                   LoggerType; 
+    typedef itk::StdStreamLogOutput       LogOutputType;
+
+    igstk::PolarisTrackerTool::Pointer tool = igstk::PolarisTrackerTool::New();
+#ifdef _WIN32 
+    //running on a windows system
+    igstk::SerialCommunicationForWindows::Pointer
+        serialComm = igstk::SerialCommunicationForWindows::New();
+#else //running on a unix system
+    igstk::SerialCommunicationForPosix::Pointer
+        serialComm = igstk::SerialCommunicationForPosix::New();
+#endif
+
+    // logger object created 
+    std::string testName = "IGSTK";
+    std::string outputDirectory = EXECUTABLE_OUTPUT_PATH; 
+    std::string filename = outputDirectory +"/";
+    filename = filename + testName;
+    filename = filename + "LoggerOutput.txt";
+
+    std::ofstream loggerFile;
+    loggerFile.open( filename.c_str() );
+    LoggerType::Pointer   logger = LoggerType::New();
+    LogOutputType::Pointer logOutput = LogOutputType::New();  
+    logOutput->SetStream( loggerFile );
+    logger->AddLogOutput( logOutput );
+    logger->SetPriorityLevel( itk::Logger::DEBUG);
+
+
+    // serialComm->SetLogger( logger );
+    serialComm->SetPortNumber(this->PortNumber);
+    serialComm->SetParity(this->Parity);
+    serialComm->SetBaudRate(this->BaudRate);
+    serialComm->SetDataBits(this->DataBits);
+    serialComm->SetStopBits(this->StopBits);
+    serialComm->SetHardwareHandshake(this->HandShake);
+
+
+    serialComm->OpenCommunication();
+
+    if (this->TrackerType == 0) // Polaris
+    {
+        this->PolarisTracker = igstk::PolarisTracker::New();
+
+        // this->PolarisTracker->SetLogger( logger );
+        this->PolarisTracker->SetCommunication( serialComm );
+        this->PolarisTracker->RequestOpen();
+        this->PolarisTracker->RequestInitialize();
+        std::cout << "\n\nInit Polaris ...... done.\n\n";
+    }
+    else
+    {
+        this->AuroraTracker = igstk::AuroraTracker::New();
+
+        // this->AuroraTracker->SetLogger( logger );
+        this->AuroraTracker->SetCommunication( serialComm );
+        this->AuroraTracker->RequestOpen();
+        this->AuroraTracker->RequestInitialize();
+        std::cout << "\n\nInit Aurora ...... done.\n\n";
+    }
+
+    itksys::SystemTools::Delay(10000);
+ 
+}
+
+
+
+void vtkIGTIGSTKStream::StopPulling()
+{
+    if (this->TrackerType == 0) // Polaris
+    {
+        this->PolarisTracker->RequestReset();
+        this->PolarisTracker->RequestClose();
+    }
+    else
+    {
+        this->AuroraTracker->RequestReset();
+        this->AuroraTracker->RequestClose();
+    }
+ 
+   // serialComm->CloseCommunication();
+    std::cout << "Pulling data ...... done." << std::endl;
+    // CleanTracker();
+}
+
+
+
+void vtkIGTIGSTKStream::PullRealTime()
+{
+
+    // unsigned int ntools = this->PolarisTracker->GetNumberOfTools();
+
+    typedef igstk::Transform            TransformType;
+    typedef ::itk::Vector<double, 3>    VectorType;
+    typedef ::itk::Versor<double>       VersorType;
+
+    TransformType             transform;
+    VectorType                position;
+    VersorType                rotation;
+
+    float pos[3];
+    float rot[4];
+
+    if (this->TrackerType == 0) // Polaris
+    {
+        this->PolarisTracker->RequestStartTracking();
+        for (int y = 0; y < 10; y++)
+        {
+            this->PolarisTracker->RequestUpdateStatus();
+            this->PolarisTracker->GetToolTransform( 0, 0, transform );
+            position = transform.GetTranslation();
+            rotation = transform.GetRotation();
+
+ 
+            for (int ii = 0; ii < 3; ii++) pos[ii] = position[ii];
+            rot[0] = rotation.GetX();
+            rot[1] = rotation.GetY();
+            rot[2] = rotation.GetZ();
+            rot[3] = rotation.GetW();
+            UpdateLocatorMatrix(pos, rot);
+
+            // std::cout << " Position = (" << position[0] << "," << position[1] << "," << position[2] << ")" << std::endl;
+            // std::cout << " Rotation = (" << rot[0] << "," << rot[1] << "," << rot[2] << "," << rot[3] << ")" << std::endl;
+
+            this->InvokeEvent (vtkCommand::ModifiedEvent);
+            itksys::SystemTools::Delay(this->Speed);
+        }
+
+        this->PolarisTracker->RequestStopTracking();
+    }
+    else  // Aurora
+    {
+        this->AuroraTracker->RequestStartTracking();
+        for (int y = 0; y < 10; y++)
+        {
+            this->AuroraTracker->RequestUpdateStatus();
+            this->AuroraTracker->GetToolTransform( 0, 0, transform );
+
+            position = transform.GetTranslation();
+            rotation = transform.GetRotation();
+
+ 
+            for (int ii = 0; ii < 3; ii++) pos[ii] = position[ii];
+            rot[0] = rotation.GetX();
+            rot[1] = rotation.GetY();
+            rot[2] = rotation.GetZ();
+            rot[3] = rotation.GetW();
+            UpdateLocatorMatrix(pos, rot);
+
+            // std::cout << " Position = (" << position[0] << "," << position[1] << "," << position[2] << ")" << std::endl;
+            // std::cout << " Rotation = (" << rot[0] << "," << rot[1] << "," << rot[2] << "," << rot[3] << ")" << std::endl;
+
+            this->InvokeEvent (vtkCommand::ModifiedEvent);
+            itksys::SystemTools::Delay(this->Speed);
+        }
+
+        this->AuroraTracker->RequestStopTracking();
+    }
+
+    // std::cout << "Pull realtime." << std::endl;
 }
 

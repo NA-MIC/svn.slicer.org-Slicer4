@@ -24,11 +24,11 @@
 
 class vtkITKGradientAnisotropicDiffusionImageFilter;
 
-class VTK_MRABLATION_EXPORT vtkMRAblationLogic : public vtkSlicerLogic
+class VTK_MRABLATION_EXPORT vtkMRAblationLogic : public vtkSlicerModuleLogic
 {
   public:
   static vtkMRAblationLogic *New();
-  vtkTypeRevisionMacro(vtkMRAblationLogic,vtkObject);
+  vtkTypeMacro(vtkMRAblationLogic,vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // TODO: do we need to observe MRML here?
