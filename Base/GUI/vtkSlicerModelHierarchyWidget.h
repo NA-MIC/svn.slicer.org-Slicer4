@@ -29,12 +29,15 @@
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRMLModelHierarchyNode.h"
+#include "vtkMRMLModelDisplayNode.h"
 
 #include <vtksys/stl/string>
 
 class vtkKWMenu;
 class vtkKWTreeWithScrollbars;
 class vtkKWSimpleEntryDialog;
+class vtkSlicerNodeSelectorWidget;
+class vtkSlicerModelDisplayWidget;
 
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelHierarchyWidget : public vtkSlicerWidget
 {
@@ -61,6 +64,8 @@ public:
   virtual void InsertHierarchyNodeCallback(const char *id);
 
   virtual void DeleteNodeCallback(const char *id);
+
+  virtual void RenameNodeCallback(const char *id);
 
   virtual void OpenHierarchyCommand(const char *id);
 
@@ -100,6 +105,12 @@ private:
   vtkKWMenu *ContextMenu;
 
   vtkKWSimpleEntryDialog *NameDialog;
+
+  vtkMRMLModelDisplayNode* ModelDisplayNode;
+
+  vtkSlicerNodeSelectorWidget *ModelDisplaySelectorWidget;
+
+  vtkSlicerModelDisplayWidget *ModelDisplayWidget;
 
   vtkSlicerModelHierarchyWidget(const vtkSlicerModelHierarchyWidget&); // Not implemented
   void operator=(const vtkSlicerModelHierarchyWidget&); // Not Implemented

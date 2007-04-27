@@ -376,13 +376,13 @@ void vtkSlicerVolumesGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           volumeNode = this->VolumeNode;
           }
-        }
-
+        }      
       this->LoadVolumeButton->GetWidget()->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
       if (volumeNode)
         {
         this->ApplicationLogic->GetSelectionNode()->SetActiveVolumeID( volumeNode->GetID() );
         this->ApplicationLogic->PropagateVolumeSelection();
+        this->VolumeSelectorWidget->SetSelected( volumeNode );
         this->VolumeDisplayWidget->SetVolumeNode(volumeNode);
         }
       volumeLogic->RemoveObservers(vtkCommand::ProgressEvent,  this->GUICallbackCommand);
@@ -541,8 +541,9 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
     {
     // Repack new GUI
     this->VolumeDisplayWidget->SetVolumeNode(refNode);
-    this->VolumeDisplayWidget->AddWidgetObservers( );
+    // set the mrml scene before adding observers
     this->VolumeDisplayWidget->SetMRMLScene(this->GetMRMLScene());
+    this->VolumeDisplayWidget->AddWidgetObservers( );
     this->VolumeDisplayWidget->UpdateWidgetFromMRML();
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -before %s",
                   this->VolumeDisplayFrame->GetWidgetName(),oldFrame->GetWidgetName());
@@ -724,6 +725,10 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
     this->dwiVDW = vtkSlicerDiffusionWeightedVolumeDisplayWidget::New( );
     this->scalarVDW->SetParent( this->ScalarDisplayFrame );
     this->dwiVDW->SetParent( this->DWIDisplayFrame );
+    // set the mrml scene before calling create so that the node selectors can
+    // be initialised properly
+    this->scalarVDW->SetMRMLScene(this->GetMRMLScene());
+    this->dwiVDW->SetMRMLScene(this->GetMRMLScene());
     this->scalarVDW->Create();
     this->dwiVDW->Create();
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
@@ -733,7 +738,6 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
 
 
     this->VolumeDisplayWidget = this->scalarVDW;
-    this->VolumeDisplayWidget->SetMRMLScene(this->GetMRMLScene() );
 
     // ---
     // Info FRAME            
