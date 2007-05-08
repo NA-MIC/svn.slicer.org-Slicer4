@@ -876,7 +876,7 @@ if { ![file exists $::IGSTK_TEST_FILE] || $::GENLIB(update) } {
 if { ![file exists $::NaviTrack_TEST_FILE] || $::GENLIB(update) } {
     cd $SLICER_LIB
 
-    runcmd $::SVN co https://ariser.uio.no/svn/navitrack/trunk NaviTrack
+    runcmd echo t | $::SVN co https://ariser.uio.no/svn/navitrack/trunk NaviTrack
 
     file mkdir $SLICER_LIB/NaviTrack-build
     cd $SLICER_LIB/NaviTrack-build
@@ -911,7 +911,7 @@ if { ![file exists $::NaviTrack_TEST_FILE] || $::GENLIB(update) } {
 if { ![file exists $::dcmtk_TEST_FILE] || $::GENLIB(update) } {
     cd $SLICER_LIB
 
-    runcmd $::SVN --username ivs --password ivs co https://ariser.uio.no/svn/sign/trunk/libs/dcmtk-3.5.4 dcmtk
+    runcmd echo t | $::SVN --username ivs --password ivs co https://ariser.uio.no/svn/sign/trunk/libs/dcmtk-3.5.4 dcmtk
 
     file mkdir $SLICER_LIB/dcmtk-build
     cd $SLICER_LIB/dcmtk-build

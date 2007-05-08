@@ -272,30 +272,21 @@ if { [file exists Slicer3] } {
   runcmd svn checkout $::SLICER_TAG Slicer3
 }
 
-# svn checkout of NaviTrack
-cd $::SLICER_HOME/Libs
-if { [file exists NaviTrack] } {
-  cd NaviTrack
-  runcmd svn switch $::NAVITRACK_TAG
-} else {
-  runcmd svn --username ivs --password ivs  checkout $::NAVITRACK_TAG NaviTrack
-}
-
 # svn checkout of SIGN
 cd $::SLICER_HOME/Libs
 if { [file exists SIGN] } {
   cd SIGN
-  runcmd svn switch $::SIGN_TAG
+  runcmd echo t | svn switch $::SIGN_TAG
 } else {
-  runcmd svn --username ivs --password ivs checkout $::SIGN_TAG SIGN
+  runcmd echo t | svn --username ivs --password ivs checkout $::SIGN_TAG SIGN
 }
 
 cd $::SLICER_HOME/Applications
 if { [file exists SIGN] } {
   cd SIGN
-  runcmd svn switch $::SIGN_APP_TAG
+  runcmd echo t | svn switch $::SIGN_APP_TAG
 } else {
-  runcmd svn --username ivs --password ivs checkout $::SIGN_APP_TAG SIGN
+  runcmd echo t | svn --username ivs --password ivs checkout $::SIGN_APP_TAG SIGN
 }
 
 
