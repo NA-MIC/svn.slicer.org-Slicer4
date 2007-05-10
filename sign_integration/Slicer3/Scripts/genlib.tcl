@@ -885,7 +885,6 @@ if { ![file exists $::NaviTrack_TEST_FILE] || $::GENLIB(update) } {
         -G$GENERATOR \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=OFF \
-        -DBUILD_SHARED_LIBS:BOOL=ON \
         -DBUILD_TESTING:BOOL=OFF \
         ../NaviTrack
 
