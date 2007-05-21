@@ -5,7 +5,11 @@
 #include "vtkKWTkUtilities.h"
 #include "vtkKWApplication.h"
 #include "vtkCommand.h"
-
+#include <OpenTracker/OpenTracker.h>
+#include <OpenTracker/dllinclude.h>
+#include <OpenTracker/input/SlicerNTModule.h>
+#include <OpenTracker/core/Configurator.h>
+//#include <OpenTracker/types/Image.h>
 
 
 #include <vtksys/SystemTools.hxx>
@@ -41,6 +45,8 @@ vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream()
 void vtkIGTOpenTrackerStream::Init(const char *configFile)
 {
     fprintf(stderr,"config file: %s\n",configFile);
+
+    OT_REGISTER_MODULE(SlicerNTModule,NULL);
     this->context = new Context(1); 
     // get callback module from the context
     CallbackModule * callbackMod = (CallbackModule *)context->getModule("CallbackConfig");
@@ -63,7 +69,7 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
 
 
 
-void vtkIGTOpenTrackerStream::callbackF(const Node&, const Event &event, void *data)
+void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
 {
     float position[3];
     float orientation[4];
@@ -359,3 +365,19 @@ void vtkIGTOpenTrackerStream::ProcessTimerEvents()
     }
 }
 
+void vtkIGTOpenTrackerStream::SetTracker(std::vector<float> pos,std::vector<float> quat)
+{
+  SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
+  
+  module->SetTracker(pos,quat);
+  
+
+}
+void vtkIGTOpenTrackerStream::SetOpenTrackerforScannerControll(std::vector<std::string> scancommandkeys, std::vector<std::string> scancommandvalue)
+{
+  SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
+  
+  module->SetOpenTrackerforScannerControll(scancommandkeys, scancommandvalue);
+  
+
+}

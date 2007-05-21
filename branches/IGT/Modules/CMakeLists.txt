@@ -1,6 +1,7 @@
 PROJECT( Modules )
 
 SUBDIRS(
+  BrpNav
   NeuroNav
   RealTimeImaging
   WFEngineModule
