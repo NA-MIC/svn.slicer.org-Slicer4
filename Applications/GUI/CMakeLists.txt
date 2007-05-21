@@ -82,6 +82,10 @@ SET(dir_list
   ${NeuroNav_Init_SOURCE_DIR}
   ${NeuroNav_Init_BINARY_DIR}
   ${QueryAtlas_SOURCE_DIR}
+  ${BrpNav_SOURCE_DIR}
+  ${BrpNav_BINARY_DIR}
+  ${BrpNav_Init_SOURCE_DIR}
+  ${BrpNav_Init_BINARY_DIR}
   ${QueryAtlas_BINARY_DIR}
   ${QueryAtlas_Init_SOURCE_DIR}
   ${QueryAtlas_Init_BINARY_DIR}
@@ -157,6 +161,7 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
  #   RealTimeImaging
  #   MRAblation
     NeuroNav
+    BrpNav
     QueryAtlas
     CommandLineModule
     ScriptedModule

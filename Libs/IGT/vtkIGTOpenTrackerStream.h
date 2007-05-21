@@ -19,6 +19,7 @@
 #ifdef OT_VERSION_20
 #include "OpenTracker/OpenTracker.h"
 #include "OpenTracker/common/CallbackModule.h"
+#include <OpenTracker/types/Image.h>
 #endif
 #ifdef OT_VERSION_13
 #include "OpenTracker.h"
@@ -66,10 +67,15 @@ public:
     void PollRealtime();
     void SetLocatorTransforms();
     void ProcessTimerEvents();
-
-    static void callbackF(const Node&, const Event &event, void *data);
-
-
+    
+   
+    static void callbackF(Node&, Event&, void *data);
+    //BTX
+    void SetTracker(std::vector<float> pos,std::vector<float> quat);
+    //ETX
+    //BTX
+    void SetOpenTrackerforScannerControll(std::vector<std::string> scancommandkeys,std::vector<std::string> scancommandvalue);
+    //ETX
 private:
 
     int Speed;

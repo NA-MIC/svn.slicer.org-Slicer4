@@ -95,6 +95,7 @@ extern "C" {
 #define MRABLATION_DEBUG
 //#define WFENGINE_DEBUG
 //#define NEURONAV_DEBUG
+//#define BRPNAV_DEBUG
 //#define TRACTOGRAPHY_DEBUG
 
 #ifndef EMSEG_DEBUG
@@ -115,6 +116,11 @@ extern "C" {
 #ifndef NEURONAV_DEBUG
 #include "vtkNeuroNavLogic.h"
 #include "vtkNeuroNavGUI.h"
+#endif
+
+#ifndef BRPNAV_DEBUG
+#include "vtkBrpNavLogic.h"
+#include "vtkBrpNavGUI.h"
 #endif
 
 #ifndef WFENGINE_DEBUG
@@ -161,6 +167,9 @@ extern "C" int Emsegment_Init(Tcl_Interp *interp);
 #endif
 #ifndef NEURONAV_DEBUG
 extern "C" int Neuronav_Init(Tcl_Interp *interp);
+#endif
+#ifndef BRPNAV_DEBUG
+extern "C" int Brpnav_Init(Tcl_Interp *interp);
 #endif
 #ifndef REALTIMEIMAGING_DEBUG
 extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
@@ -622,6 +631,9 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef NEURONAV_DEBUG
     Neuronav_Init(interp);
 #endif
+#ifndef BRPNAV_DEBUG
+    Brpnav_Init(interp);
+#endif
 #ifndef REALTIMEIMAGING_DEBUG
     Realtimeimaging_Init(interp);
 #endif
@@ -939,6 +951,27 @@ int Slicer3_main(int argc, char *argv[])
     neuronavGUI->BuildGUI ( );
     neuronavGUI->AddGUIObservers ( );
     neuronavGUI->Init();
+#endif 
+
+    #ifndef BRPNAV_DEBUG
+    // -- Brpnav module
+    vtkBrpNavLogic *brpnavLogic = vtkBrpNavLogic::New(); 
+    brpnavLogic->SetAndObserveMRMLScene ( scene );
+    vtkBrpNavGUI *brpnavGUI = vtkBrpNavGUI::New();
+
+    brpnavGUI->SetApplication ( slicerApp );
+    brpnavGUI->SetApplicationGUI ( appGUI );
+    brpnavGUI->SetAndObserveApplicationLogic ( appLogic );
+    brpnavGUI->SetAndObserveMRMLScene ( scene );
+    brpnavGUI->SetModuleLogic ( brpnavLogic );
+    brpnavGUI->SetGUIName( "Prostate Module" );
+    brpnavGUI->GetUIPanel()->SetName ( brpnavGUI->GetGUIName ( ) );
+    brpnavGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    brpnavGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( brpnavGUI );
+    brpnavGUI->BuildGUI ( );
+    brpnavGUI->AddGUIObservers ( );
+    brpnavGUI->Init();
 #endif 
 
     // --- Transforms module
@@ -1340,6 +1373,11 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef NEURONAV_DEBUG
     name = neuronavGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set NeuroNavGUI %s", name);
+#endif
+
+#ifndef BRPNAV_DEBUG
+    name = brpnavGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set BrpnavGUI %s", name);
 #endif
 
     name = transformsGUI->GetTclName();
