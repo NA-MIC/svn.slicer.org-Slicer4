@@ -1,4 +1,7 @@
 
+
+
+
 #include "vtkIGTOpenTrackerStream.h"
 #include "vtkObjectFactory.h"
 
@@ -25,8 +28,12 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream()
     this->StartTimer = 0;
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
+    this->RealtimeXsize = 0;
+    this->RealtimeYsize = 0;
+    //this->RealtimeImageData = Image::Image();
     this->RegMatrix = NULL;
     this->context = NULL;
+
 }
 
 
@@ -34,6 +41,7 @@ vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream()
 {
     this->LocatorNormalTransform->Delete();
     this->LocatorMatrix->Delete();
+
 
     if (this->context)
     {
@@ -46,13 +54,17 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
 {
     fprintf(stderr,"config file: %s\n",configFile);
 
-    OT_REGISTER_MODULE(SlicerNTModule,NULL);
+    //OT_REGISTER_MODULE(SlicerNTModule,NULL);
+
+    addSPLModules();
+
     this->context = new Context(1); 
     // get callback module from the context
     CallbackModule * callbackMod = (CallbackModule *)context->getModule("CallbackConfig");
 
     // parse the configuration file
     context->parseConfiguration(configFile);  
+    context->start();
 
     // sets the callback function
     // if we use NaviTrack (not opentracker), use this function
@@ -64,7 +76,6 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
     callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);    
 #endif
 
-    context->start();
 }
 
 
@@ -75,12 +86,12 @@ void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
     float orientation[4];
     float norm[3];
     float transnorm[3];
-    int j;
-
+    int j;    
+    
     vtkIGTOpenTrackerStream *VOT=(vtkIGTOpenTrackerStream *)data;
 
-
     // the original values are in the unit of meters
+
     position[0]=(float)(event.getPosition())[0] * VOT->MultiFactor; 
     position[1]=(float)(event.getPosition())[1] * VOT->MultiFactor;
     position[2]=(float)(event.getPosition())[2] * VOT->MultiFactor;
@@ -90,8 +101,19 @@ void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
     orientation[2]=(float)(event.getOrientation())[2];
     orientation[3]=(float)(event.getOrientation())[3];
 
-    VOT->quaternion2xyz(orientation, norm, transnorm);
+   VOT->quaternion2xyz(orientation, norm, transnorm);
 
+   //VOT->RealtimeXsize=(int)event.getAttribute(std::string("xsize"),0);
+   //VOT->RealtimeYsize=(int)event.getAttribute(std::string("ysize"),0);
+   int Xsize=(int)event.getAttribute(std::string("xdim"),0);
+   int Ysize=(int)event.getAttribute(std::string("ydim"),0);
+
+   cout << "controll Callback x = " << Xsize << ", y = " << Ysize << endl;
+
+   if(event.hasAttribute("image")) {
+     VOT->RealtimeImageData=(Image)event.getAttribute((Image*)NULL,"image");
+     cout << "image size is " << VOT->RealtimeImageData.size() << endl;
+   }
 
     // Apply the transform matrix 
     // to the postion, norm and transnorm
@@ -133,9 +155,10 @@ void vtkIGTOpenTrackerStream::StopPolling()
 
 void vtkIGTOpenTrackerStream::PollRealtime()
 {
-    context->pushEvents();       // push event and
-    context->pullEvents();       // pull event 
-    context->stop();
+  if (context) {
+    cout <<"PollRealtime()"<< endl;
+    context->loopOnce();
+  }
 }
 
 
@@ -285,6 +308,7 @@ void vtkIGTOpenTrackerStream::SetLocatorTransforms()
     locator_transform->Translate(x0, y0, z0);
 
     this->LocatorNormalTransform->DeepCopy(locator_transform);
+   
 
     locator_matrix->Delete();
     locator_transform->Delete();
@@ -354,10 +378,12 @@ void vtkIGTOpenTrackerStream::ProcessTimerEvents()
 {
     if (this->StartTimer)
     {
-        this->PollRealtime();
+      this->PollRealtime();
+
         this->InvokeEvent (vtkCommand::ModifiedEvent);
+
         vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
-                2, this, "ProcessTimerEvents");  // RSierra 3/8/07 The integer defines the update rate. On my laptop there is no differenct in performance (i.e. the CPU load is minimal and approx. 10% for update of 2). Is the value equivalent to ms?        
+                1, this, "ProcessTimerEvents");  // RSierra 3/8/07 The integer defines the update rate. On my laptop there is no differenct in performance (i.e. the CPU load is minimal and approx. 10% for update of 2). Is the value equivalent to ms?        
     }
     else
     {
@@ -367,17 +393,36 @@ void vtkIGTOpenTrackerStream::ProcessTimerEvents()
 
 void vtkIGTOpenTrackerStream::SetTracker(std::vector<float> pos,std::vector<float> quat)
 {
+#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
   SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
-  
   module->SetTracker(pos,quat);
-  
+#endif
 
 }
+
 void vtkIGTOpenTrackerStream::SetOpenTrackerforScannerControll(std::vector<std::string> scancommandkeys, std::vector<std::string> scancommandvalue)
 {
+  #if defined(OT_VERSION_20) || defined(OT_VERSION_13)
+
   SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
   
   module->SetOpenTrackerforScannerControll(scancommandkeys, scancommandvalue);
-  
-
+ #endif
 }
+
+
+void vtkIGTOpenTrackerStream::GetSizeforRealtimeImaging(int* xsizevalueRI, int* ysizevalueRI)
+{
+ 
+  *xsizevalueRI = RealtimeXsize;
+  *ysizevalueRI = RealtimeYsize;
+ 
+}
+
+void vtkIGTOpenTrackerStream::GetImageDataforRealtimeImaging(Image* ImageDataRI)
+{
+ 
+   *ImageDataRI = RealtimeImageData;
+ 
+}
+
