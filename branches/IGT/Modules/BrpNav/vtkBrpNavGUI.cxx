@@ -1,6 +1,4 @@
 
-
-
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -29,16 +27,17 @@
 #include "vtkKWLabel.h"
 #include "vtkKWMultiColumnList.h"
 #include "vtkKWMessageDialog.h"
+
 #include "vtkKWMultiColumnListWithScrollbars.h"
 #include "vtkKWEvent.h"
 
+#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
 
 #include <OpenTracker/input/SlicerNTModule.h>
-
-
-
 #include <OpenTracker/OpenTracker.h>
 #include <OpenTracker/input/SPLModules.h>
+
+#endif
 
 #include "vtkKWTkUtilities.h"
 #include "vtkMRMLModelDisplayNode.h"
@@ -76,6 +75,7 @@ int pathbrp;
 
     this->NREntry = NULL;
     this->NAEntry = NULL;
+
     this->NSEntry = NULL;
     this->TREntry = NULL;
     this->TAEntry = NULL;
@@ -133,8 +133,12 @@ int pathbrp;
     this->HandShakeMenuButton = NULL;
 #endif
 
+   
+
     this->UpdateRateEntry = NULL;
-    this->MultiFactorEntry = NULL;
+    this->GetImageSize = NULL;
+    
+this->MultiFactorEntry = NULL;
 
     this->PatCoordinatesEntry = NULL;
     this->SlicerCoordinatesEntry = NULL;
@@ -152,6 +156,8 @@ int pathbrp;
     this->ResetPushButton = NULL;
 
     this->LocatorMatrix = NULL;
+   
+
 
     this->LocatorModelDisplayNode = NULL;
 
@@ -184,8 +190,9 @@ int pathbrp;
     this->IGSTKStream = vtkIGTIGSTKStream::New();
 #endif
 
-}
 
+
+}
 
 //---------------------------------------------------------------------------
 vtkBrpNavGUI::~vtkBrpNavGUI ( )
@@ -193,304 +200,304 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
 #ifdef USE_OPENTRACKER
     if (this->OpenTrackerStream)
     {
-        this->OpenTrackerStream->Delete();
+         this->OpenTrackerStream->Delete();
     }
 #endif
 #ifdef USE_IGSTK
     if (this->IGSTKStream)
     {
-        this->IGSTKStream->Delete();
+    this->IGSTKStream->Delete();
     }
 #endif
 
 
     if (this->DataManager)
     {
-        // If we don't set the scence to NULL for DataManager,
-        // Slicer will report a lot leak when it is closed.
-        this->DataManager->SetMRMLScene(NULL);
-        this->DataManager->Delete();
+    // If we don't set the scence to NULL for DataManager,
+    // Slicer will report a lot leak when it is closed.
+    this->DataManager->SetMRMLScene(NULL);
+    this->DataManager->Delete();
     }
     if (this->Pat2ImgReg)
     {
-        this->Pat2ImgReg->Delete();
+    this->Pat2ImgReg->Delete();
     }
     if (this->DataCallbackCommand)
     {
-        this->DataCallbackCommand->Delete();
+    this->DataCallbackCommand->Delete();
     }
 
     this->RemoveGUIObservers();
 
     if (this->NormalOffsetEntry)
     {
-        this->NormalOffsetEntry->SetParent(NULL );
-        this->NormalOffsetEntry->Delete ( );
+    this->NormalOffsetEntry->SetParent(NULL );
+    this->NormalOffsetEntry->Delete ( );
     }
     if (this->TransOffsetEntry)
     {
-        this->TransOffsetEntry->SetParent(NULL );
-        this->TransOffsetEntry->Delete ( );
+    this->TransOffsetEntry->SetParent(NULL );
+    this->TransOffsetEntry->Delete ( );
     }
     if (this->NXTOffsetEntry)
     {
-        this->NXTOffsetEntry->SetParent(NULL );
-        this->NXTOffsetEntry->Delete ( );
+    this->NXTOffsetEntry->SetParent(NULL );
+    this->NXTOffsetEntry->Delete ( );
     }
     if (this->NormalSizeEntry)
     {
-        this->NormalSizeEntry->SetParent(NULL );
-        this->NormalSizeEntry->Delete ( );
+    this->NormalSizeEntry->SetParent(NULL );
+    this->NormalSizeEntry->Delete ( );
     }
     if (this->TransSizeEntry)
     {
-        this->TransSizeEntry->SetParent(NULL );
-        this->TransSizeEntry->Delete ( );
+    this->TransSizeEntry->SetParent(NULL );
+    this->TransSizeEntry->Delete ( );
     }
     if (this->RadiusEntry)
     {
-        this->RadiusEntry->SetParent(NULL );
-        this->RadiusEntry->Delete ( );
+    this->RadiusEntry->SetParent(NULL );
+    this->RadiusEntry->Delete ( );
     }
     if (this->NREntry)
     {
-        this->NREntry->SetParent(NULL );
-        this->NREntry->Delete ( );
+    this->NREntry->SetParent(NULL );
+    this->NREntry->Delete ( );
     }
     if (this->NAEntry)
     {
-        this->NAEntry->SetParent(NULL );
-        this->NAEntry->Delete ( );
+    this->NAEntry->SetParent(NULL );
+    this->NAEntry->Delete ( );
     }
     if (this->NSEntry)
     {
-        this->NSEntry->SetParent(NULL );
-        this->NSEntry->Delete ( );
+    this->NSEntry->SetParent(NULL );
+    this->NSEntry->Delete ( );
     }
     if (this->TREntry)
     {
-        this->TREntry->SetParent(NULL );
-        this->TREntry->Delete ( );
+    this->TREntry->SetParent(NULL );
+    this->TREntry->Delete ( );
     }
     if (this->TAEntry)
     {
-        this->TAEntry->SetParent(NULL );
-        this->TAEntry->Delete ( );
+    this->TAEntry->SetParent(NULL );
+    this->TAEntry->Delete ( );
     }
     if (this->TSEntry)
     {
-        this->TSEntry->SetParent(NULL );
-        this->TSEntry->Delete ( );
+    this->TSEntry->SetParent(NULL );
+    this->TSEntry->Delete ( );
     }
     if (this->PREntry)
     {
-        this->PREntry->SetParent(NULL );
-        this->PREntry->Delete ( );
+    this->PREntry->SetParent(NULL );
+    this->PREntry->Delete ( );
     }
     if (this->PAEntry)
     {
-        this->PAEntry->SetParent(NULL );
-        this->PAEntry->Delete ( );
+    this->PAEntry->SetParent(NULL );
+    this->PAEntry->Delete ( );
     }
     if (this->PSEntry)
     {
-        this->PSEntry->SetParent(NULL );
-        this->PSEntry->Delete ( );
+    this->PSEntry->SetParent(NULL );
+    this->PSEntry->Delete ( );
     }
     /*
     if (this->RedColorScale)
     {
-        this->RedColorScale->SetParent(NULL );
-        this->RedColorScale->Delete ( );
+    this->RedColorScale->SetParent(NULL );
+    this->RedColorScale->Delete ( );
     }
     if (this->GreenColorScale)
     {
-        this->GreenColorScale->SetParent(NULL );
-        this->GreenColorScale->Delete ( );
+    this->GreenColorScale->SetParent(NULL );
+    this->GreenColorScale->Delete ( );
     }
     if (this->BlueColorScale)
     {
-        this->BlueColorScale->SetParent(NULL );
-        this->BlueColorScale->Delete ( );
+    this->BlueColorScale->SetParent(NULL );
+    this->BlueColorScale->Delete ( );
     }
     */
     
 
     if (this->ConnectCheckButton)
     {
-        this->ConnectCheckButton->SetParent(NULL );
-        this->ConnectCheckButton->Delete ( );
+    this->ConnectCheckButton->SetParent(NULL );
+    this->ConnectCheckButton->Delete ( );
     }
     if (this->ConnectCheckButton)
     {
-        this->ConnectCheckButton->SetParent(NULL );
-        this->ConnectCheckButton->Delete ( );
+    this->ConnectCheckButton->SetParent(NULL );
+    this->ConnectCheckButton->Delete ( );
     }
     if (this->ConnectCheckButtonRI)
     {
-        this->ConnectCheckButtonRI->SetParent(NULL );
-        this->ConnectCheckButtonRI->Delete ( );
+    this->ConnectCheckButtonRI->SetParent(NULL );
+    this->ConnectCheckButtonRI->Delete ( );
     }
 
      if (this->ConnectCheckButtonNT)
     {
-        this->ConnectCheckButtonNT->SetParent(NULL );
-        this->ConnectCheckButtonNT->Delete ( );
+    this->ConnectCheckButtonNT->SetParent(NULL );
+    this->ConnectCheckButtonNT->Delete ( );
     }
 
        if (this->ConnectCheckButtonSEND)
     {
-        this->ConnectCheckButtonSEND->SetParent(NULL );
-        this->ConnectCheckButtonSEND->Delete ( );
+    this->ConnectCheckButtonSEND->SetParent(NULL );
+    this->ConnectCheckButtonSEND->Delete ( );
     }
 
  
-        if (this->ConnectCheckButtonStopScanner)
+    if (this->ConnectCheckButtonStopScanner)
     {
-        this->ConnectCheckButtonStopScanner->SetParent(NULL );
-        this->ConnectCheckButtonStopScanner->Delete ( );
+    this->ConnectCheckButtonStopScanner->SetParent(NULL );
+    this->ConnectCheckButtonStopScanner->Delete ( );
     }
 
-         if (this->ConnectCheckButtonStartScanner)
+     if (this->ConnectCheckButtonStartScanner)
     {
-        this->ConnectCheckButtonStartScanner->SetParent(NULL );
-        this->ConnectCheckButtonStartScanner->Delete ( );
+    this->ConnectCheckButtonStartScanner->SetParent(NULL );
+    this->ConnectCheckButtonStartScanner->Delete ( );
     }
-          
-          if (this->ConnectCheckButtonsetprotocol)
+      
+      if (this->ConnectCheckButtonsetprotocol)
     {
-        this->ConnectCheckButtonsetprotocol->SetParent(NULL );
-        this->ConnectCheckButtonsetprotocol->Delete ( );
+    this->ConnectCheckButtonsetprotocol->SetParent(NULL );
+    this->ConnectCheckButtonsetprotocol->Delete ( );
     }
-           if (this->ConnectCheckButtonprepScanner)
+       if (this->ConnectCheckButtonprepScanner)
     {
-        this->ConnectCheckButtonprepScanner->SetParent(NULL );
-        this->ConnectCheckButtonprepScanner->Delete ( );
+    this->ConnectCheckButtonprepScanner->SetParent(NULL );
+    this->ConnectCheckButtonprepScanner->Delete ( );
     }
-            if (this->ConnectCheckButtonpauseScanner)
+        if (this->ConnectCheckButtonpauseScanner)
     {
-        this->ConnectCheckButtonpauseScanner->SetParent(NULL );
-        this->ConnectCheckButtonpauseScanner->Delete ( );
+    this->ConnectCheckButtonpauseScanner->SetParent(NULL );
+    this->ConnectCheckButtonpauseScanner->Delete ( );
     }
-             if (this->ConnectCheckButtonresumeScanner)
+         if (this->ConnectCheckButtonresumeScanner)
     {
-        this->ConnectCheckButtonresumeScanner->SetParent(NULL );
-        this->ConnectCheckButtonresumeScanner->Delete ( );
+    this->ConnectCheckButtonresumeScanner->SetParent(NULL );
+    this->ConnectCheckButtonresumeScanner->Delete ( );
     }
 
-              if (this->ConnectCheckButtonnewexam)
+          if (this->ConnectCheckButtonnewexam)
     {
-        this->ConnectCheckButtonnewexam->SetParent(NULL );
-        this->ConnectCheckButtonnewexam->Delete ( );
+    this->ConnectCheckButtonnewexam->SetParent(NULL );
+    this->ConnectCheckButtonnewexam->Delete ( );
     }
 
     if (this->LocatorCheckButton)
     {
-        this->LocatorCheckButton->SetParent(NULL );
-        this->LocatorCheckButton->Delete ( );
+    this->LocatorCheckButton->SetParent(NULL );
+    this->LocatorCheckButton->Delete ( );
     }
     if (this->HandleCheckButton)
     {
-        this->HandleCheckButton->SetParent(NULL );
-        this->HandleCheckButton->Delete ( );
+    this->HandleCheckButton->SetParent(NULL );
+    this->HandleCheckButton->Delete ( );
     }
     if (this->GuideCheckButton)
     {
-        this->GuideCheckButton->SetParent(NULL );
-        this->GuideCheckButton->Delete ( );
+    this->GuideCheckButton->SetParent(NULL );
+    this->GuideCheckButton->Delete ( );
     }
 
     if (this->LocatorModeCheckButton)
     {
-        this->LocatorModeCheckButton->SetParent(NULL );
-        this->LocatorModeCheckButton->Delete ( );
+    this->LocatorModeCheckButton->SetParent(NULL );
+    this->LocatorModeCheckButton->Delete ( );
     }
     if (this->UserModeCheckButton)
     {
-        this->UserModeCheckButton->SetParent(NULL );
-        this->UserModeCheckButton->Delete ( );
+    this->UserModeCheckButton->SetParent(NULL );
+    this->UserModeCheckButton->Delete ( );
     }
 
     if (this->RedSliceMenu)
     {
-        this->RedSliceMenu->SetParent(NULL );
-        this->RedSliceMenu->Delete ( );
+    this->RedSliceMenu->SetParent(NULL );
+    this->RedSliceMenu->Delete ( );
     }
     if (this->YellowSliceMenu)
     {
-        this->YellowSliceMenu->SetParent(NULL );
-        this->YellowSliceMenu->Delete ( );
+    this->YellowSliceMenu->SetParent(NULL );
+    this->YellowSliceMenu->Delete ( );
     }
     if (this->GreenSliceMenu)
     {
-        this->GreenSliceMenu->SetParent(NULL );
-        this->GreenSliceMenu->Delete ( );
+    this->GreenSliceMenu->SetParent(NULL );
+    this->GreenSliceMenu->Delete ( );
     }
 
 #ifdef USE_OPENTRACKER
     if (this->LoadConfigButton)
     {
-        this->LoadConfigButton->SetParent(NULL );
-        this->LoadConfigButton->Delete ( );
+    this->LoadConfigButton->SetParent(NULL );
+    this->LoadConfigButton->Delete ( );
     }
      if (this->LoadConfigButtonRI)
     {
-        this->LoadConfigButtonRI->SetParent(NULL );
-        this->LoadConfigButtonRI->Delete ( );
+    this->LoadConfigButtonRI->SetParent(NULL );
+    this->LoadConfigButtonRI->Delete ( );
     }
      if (this->LoadConfigButtonNT)
     {
-        this->LoadConfigButtonNT->SetParent(NULL );
-        this->LoadConfigButtonNT->Delete ( );
+    this->LoadConfigButtonNT->SetParent(NULL );
+    this->LoadConfigButtonNT->Delete ( );
     }
     if (this->ConfigFileEntry)
     {
-        this->ConfigFileEntry->SetParent(NULL );
-        this->ConfigFileEntry->Delete ( );
+    this->ConfigFileEntry->SetParent(NULL );
+    this->ConfigFileEntry->Delete ( );
     }
 
     if (this->ConfigFileEntryRI)
     {
-        this->ConfigFileEntryRI->SetParent(NULL );
-        this->ConfigFileEntryRI->Delete ( );
+    this->ConfigFileEntryRI->SetParent(NULL );
+    this->ConfigFileEntryRI->Delete ( );
     }
 
 #endif
 #ifdef USE_IGSTK
     if (this->DeviceMenuButton) 
     {
-        this->DeviceMenuButton->SetParent(NULL);
-        this->DeviceMenuButton->Delete();
+    this->DeviceMenuButton->SetParent(NULL);
+    this->DeviceMenuButton->Delete();
     }
     if (this->PortNumberMenuButton) 
     {
-        this->PortNumberMenuButton->SetParent(NULL);
-        this->PortNumberMenuButton->Delete();
+    this->PortNumberMenuButton->SetParent(NULL);
+    this->PortNumberMenuButton->Delete();
     }
     if (this->BaudRateMenuButton) 
     {
-        this->BaudRateMenuButton->SetParent(NULL);
-        this->BaudRateMenuButton->Delete();
+    this->BaudRateMenuButton->SetParent(NULL);
+    this->BaudRateMenuButton->Delete();
     }
     if (this->DataBitsMenuButton) 
     {
-        this->DataBitsMenuButton->SetParent(NULL);
-        this->DataBitsMenuButton->Delete();
+    this->DataBitsMenuButton->SetParent(NULL);
+    this->DataBitsMenuButton->Delete();
     }
     if (this->ParityTypeMenuButton) 
     {
-        this->ParityTypeMenuButton->SetParent(NULL);
-        this->ParityTypeMenuButton->Delete();
+    this->ParityTypeMenuButton->SetParent(NULL);
+    this->ParityTypeMenuButton->Delete();
     }
     if (this->StopBitsMenuButton) 
     {
-        this->StopBitsMenuButton->SetParent(NULL);
-        this->StopBitsMenuButton->Delete();
+    this->StopBitsMenuButton->SetParent(NULL);
+    this->StopBitsMenuButton->Delete();
     }
     if (this->HandShakeMenuButton) 
     {
-        this->HandShakeMenuButton->SetParent(NULL);
-        this->HandShakeMenuButton->Delete();
+    this->HandShakeMenuButton->SetParent(NULL);
+    this->HandShakeMenuButton->Delete();
     }
 
 #endif
@@ -498,72 +505,80 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
 
     if (this->UpdateRateEntry)
     {
-        this->UpdateRateEntry->SetParent(NULL );
-        this->UpdateRateEntry->Delete ( );
+    this->UpdateRateEntry->SetParent(NULL );
+    this->UpdateRateEntry->Delete ( );
     }
+
+    if (this->GetImageSize)
+    {
+    this->GetImageSize->SetParent(NULL );
+    this->GetImageSize->Delete ( );
+    }
+
+
     if (this->MultiFactorEntry)
     {
-        this->MultiFactorEntry->SetParent(NULL );
-        this->MultiFactorEntry->Delete ( );
+    this->MultiFactorEntry->SetParent(NULL );
+    this->MultiFactorEntry->Delete ( );
     }
     if (this->PatCoordinatesEntry)
     {
-        this->PatCoordinatesEntry->SetParent(NULL );
-        this->PatCoordinatesEntry->Delete ( );
+    this->PatCoordinatesEntry->SetParent(NULL );
+    this->PatCoordinatesEntry->Delete ( );
     }
     if (this->SlicerCoordinatesEntry)
     {
-        this->SlicerCoordinatesEntry->SetParent(NULL );
-        this->SlicerCoordinatesEntry->Delete ( );
+    this->SlicerCoordinatesEntry->SetParent(NULL );
+    this->SlicerCoordinatesEntry->Delete ( );
     }
     if (this->GetPatCoordinatesPushButton)
     {
-        this->GetPatCoordinatesPushButton->SetParent(NULL );
-        this->GetPatCoordinatesPushButton->Delete ( );
+    this->GetPatCoordinatesPushButton->SetParent(NULL );
+    this->GetPatCoordinatesPushButton->Delete ( );
     }
     if (this->AddPointPairPushButton)
     {
-        this->AddPointPairPushButton->SetParent(NULL );
-        this->AddPointPairPushButton->Delete ( );
+    this->AddPointPairPushButton->SetParent(NULL );
+    this->AddPointPairPushButton->Delete ( );
     }
   
     if (this->PointPairMultiColumnList)
     {
-        this->PointPairMultiColumnList->SetParent(NULL );
-        this->PointPairMultiColumnList->Delete ( );
+    this->PointPairMultiColumnList->SetParent(NULL );
+    this->PointPairMultiColumnList->Delete ( );
     }
 
     /*
     if (this->LoadPointPairPushButton)
     {
-        this->LoadPointPairPushButton->SetParent(NULL );
-        this->LoadPointPairPushButton->Delete ( );
+    this->LoadPointPairPushButton->SetParent(NULL );
+    this->LoadPointPairPushButton->Delete ( );
     }
     if (this->SavePointPairPushButton)
     {
-        this->SavePointPairPushButton->SetParent(NULL );
-        this->SavePointPairPushButton->Delete ( );
+    this->SavePointPairPushButton->SetParent(NULL );
+    this->SavePointPairPushButton->Delete ( );
     }
     */
     if (this->DeletePointPairPushButton)
     {
-        this->DeletePointPairPushButton->SetParent(NULL );
-        this->DeletePointPairPushButton->Delete ( );
+    this->DeletePointPairPushButton->SetParent(NULL );
+    this->DeletePointPairPushButton->Delete ( );
     }
     if (this->DeleteAllPointPairPushButton)
     {
-        this->DeleteAllPointPairPushButton->SetParent(NULL );
-        this->DeleteAllPointPairPushButton->Delete ( );
+    this->DeleteAllPointPairPushButton->SetParent(NULL );
+    this->DeleteAllPointPairPushButton->Delete ( );
     }
     if (this->RegisterPushButton)
     {
-        this->RegisterPushButton->SetParent(NULL );
-        this->RegisterPushButton->Delete ( );
+    this->RegisterPushButton->SetParent(NULL );
+    this->RegisterPushButton->Delete ( );
     }
     if (this->ResetPushButton)
     {
-        this->ResetPushButton->SetParent(NULL );
-        this->ResetPushButton->Delete ( );
+    this->ResetPushButton->SetParent(NULL );
+    this->ResetPushButton->Delete ( );
     }
 
     this->SetModuleLogic ( NULL );
@@ -571,7 +586,7 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
 
     if (this->ExtraFrame)
     {
-        this->ExtraFrame->Delete ( );
+    this->ExtraFrame->Delete ( );
     }
 }
 
@@ -613,97 +628,97 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     
     if (this->ConnectCheckButton)
     {
-        this->ConnectCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
     if (this->ConnectCheckButtonRI)
     {
-        this->ConnectCheckButtonRI->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonRI->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
      if (this->ConnectCheckButtonnewexam)
     {
-        this->ConnectCheckButtonnewexam->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonnewexam->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,     (vtkCommand *)this->GUICallbackCommand );
     }
      
     if (this->ConnectCheckButtonNT)
     {
-        this->ConnectCheckButtonNT->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonNT->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
      if (this->ConnectCheckButtonSEND)
     {
-        this->ConnectCheckButtonSEND->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonSEND->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
      
    
 
       if (this->ConnectCheckButtonStartScanner)
     {
-        this->ConnectCheckButtonStartScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonStartScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
      
       if (this->ConnectCheckButtonStopScanner)
     {
-        this->ConnectCheckButtonStopScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonStopScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
        if (this->ConnectCheckButtonsetprotocol)
     {
-        this->ConnectCheckButtonsetprotocol->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonsetprotocol->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-        if (this->ConnectCheckButtonprepScanner)
+    if (this->ConnectCheckButtonprepScanner)
     {
-        this->ConnectCheckButtonprepScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonprepScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-         if (this->ConnectCheckButtonpauseScanner)
+     if (this->ConnectCheckButtonpauseScanner)
     {
-        this->ConnectCheckButtonpauseScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonpauseScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-          if (this->ConnectCheckButtonresumeScanner)
+      if (this->ConnectCheckButtonresumeScanner)
     {
-        this->ConnectCheckButtonresumeScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonresumeScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
 
 
     if (this->GetPatCoordinatesPushButton)
     {
-        this->GetPatCoordinatesPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->GetPatCoordinatesPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     }
     if (this->AddPointPairPushButton)
     {
-        this->AddPointPairPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->AddPointPairPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     }
     
     if (this->DeletePointPairPushButton)
     {
-        this->DeletePointPairPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->DeletePointPairPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     }
     if (this->DeleteAllPointPairPushButton)
     {
-        this->DeleteAllPointPairPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->DeleteAllPointPairPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     }
     if (this->RegisterPushButton)
     {
-        this->RegisterPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->RegisterPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     }
     if (this->ResetPushButton)
     {
-        this->ResetPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ResetPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     }
     if (this->LocatorCheckButton)
     {
-        this->LocatorCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->LocatorCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
     if (this->LocatorModeCheckButton)
     {
-        this->LocatorModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->LocatorModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
     if (this->UserModeCheckButton)
     {
-        this->UserModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->UserModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 }
 
@@ -786,117 +801,131 @@ void vtkBrpNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
     vtkCornerAnnotation *anno = NULL;
     if (style == istyle0)
     {
-        anno = appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+    anno = appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
     }
     else if (style == istyle1)
     {
-        anno = appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+    anno = appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
     }
     else if (style == istyle2)
     {
-        anno = appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+    anno = appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
     }
 
     if (anno)
     {
-        const char *rasText = anno->GetText(1);
-        if ( rasText != NULL )
-          {
-          std::string ras = std::string(rasText);
+    const char *rasText = anno->GetText(1);
+    if ( rasText != NULL )
+      {
+      std::string ras = std::string(rasText);
 
-          // remove "R:," "A:," and "S:" from the string
-          int loc = ras.find("R:", 0);
-          if ( loc != std::string::npos ) 
-            {
-            ras = ras.replace(loc, 2, "");
-            }
-          loc = ras.find("A:", 0);
-          if ( loc != std::string::npos ) 
-            {
-            ras = ras.replace(loc, 2, "");
-            }
-          loc = ras.find("S:", 0);
-          if ( loc != std::string::npos ) 
-            {
-            ras = ras.replace(loc, 2, "");
-            }
+      // remove "R:," "A:," and "S:" from the string
+      int loc = ras.find("R:", 0);
+      if ( loc != std::string::npos ) 
+        {
+        ras = ras.replace(loc, 2, "");
+        }
+      loc = ras.find("A:", 0);
+      if ( loc != std::string::npos ) 
+        {
+        ras = ras.replace(loc, 2, "");
+        }
+      loc = ras.find("S:", 0);
+      if ( loc != std::string::npos ) 
+        {
+        ras = ras.replace(loc, 2, "");
+        }
 
-          // remove "\n" from the string
-          int found = ras.find("\n", 0);
-          while ( found != std::string::npos )
-            {
-            ras = ras.replace(found, 1, " ");
-            found = ras.find("\n", 0);
-            }
+      // remove "\n" from the string
+      int found = ras.find("\n", 0);
+      while ( found != std::string::npos )
+        {
+        ras = ras.replace(found, 1, " ");
+        found = ras.find("\n", 0);
+        }
 
-          this->SlicerCoordinatesEntry->GetWidget()->SetValue(ras.c_str());
-          }
+      this->SlicerCoordinatesEntry->GetWidget()->SetValue(ras.c_str());
+      }
     }
 }
 
 
 //---------------------------------------------------------------------------
 void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
-        unsigned long event, void *callData )
+    unsigned long event, void *callData )
 {
     const char *eventName = vtkCommand::GetStringFromEventId(event);
     if (strcmp(eventName, "LeftButtonPressEvent") == 0)
     {
-        vtkSlicerInteractorStyle *style = vtkSlicerInteractorStyle::SafeDownCast(caller);
-        HandleMouseEvent(style);
+    vtkSlicerInteractorStyle *style = vtkSlicerInteractorStyle::SafeDownCast(caller);
+    HandleMouseEvent(style);
     }
     else
     {
-        if (this->ConnectCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-                && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
+    if (this->ConnectCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
 #ifdef USE_OPENTRACKER
-            SetOpenTrackerConnectionParameters();
+        SetOpenTrackerConnectionParameters();
 #endif
 #ifdef USE_IGSTK
-            SetIGSTKConnectionParameters();
+        SetIGSTKConnectionParameters();
 #endif
-        }
-        
-        if (this->ConnectCheckButtonRI == vtkKWCheckButton::SafeDownCast(caller) 
-                && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
+    }
+    
+    if (this->ConnectCheckButtonRI == vtkKWCheckButton::SafeDownCast(caller) 
+        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
 #ifdef USE_OPENTRACKER
-            UpdateRealtimeImg();
+        UpdateRealtimeImg();
 #endif
 #ifdef USE_IGSTK
-            SetIGSTKConnectionParameters();
+        SetIGSTKConnectionParameters();
 #endif
-        }
-        
-         if (this->ConnectCheckButtonNT == vtkKWCheckButton::SafeDownCast(caller) 
-                && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
-          
+    }
+    
+     if (this->ConnectCheckButtonNT == vtkKWCheckButton::SafeDownCast(caller) 
+        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+      
 #ifdef USE_OPENTRACKER
-            SetOpenTrackerConnectionParameters();
+        SetOpenTrackerConnectionParameters();
 #endif
-          
+      
 #ifdef USE_IGSTK
-            SetIGSTKConnectionParameters();
+        SetIGSTKConnectionParameters();
 #endif
-          
-        }
+      
+    }
 
- if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller) 
-                && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
-          
+     
+     // GET RI 
+
+     if (this->ConnectCheckButtonRI == vtkKWCheckButton::SafeDownCast(caller) 
+        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {      
+      
+      
+      this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
+      this->OpenTrackerStream->GetImageDataforRealtimeImaging(&ImageDataRI);
+      
+     }
+
+
+if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller) 
+        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+      
 #ifdef USE_OPENTRACKER
 
-           SetOpenTrackerConnectionCoordandOrient();
+       SetOpenTrackerConnectionCoordandOrient();
 #endif
-          
+      
 #ifdef USE_IGSTK
-            SetIGSTKConnectionParameters();
+        SetIGSTKConnectionParameters();
 #endif
-          
-        }
+      
+    }
 
  if ((this->ConnectCheckButtonStartScanner == vtkKWCheckButton::SafeDownCast(caller) 
       && event == vtkKWCheckButton::SelectedStateChangedEvent)
@@ -921,245 +950,247 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
       && event == vtkKWCheckButton::SelectedStateChangedEvent)
      
      )
-        {
-          
+    {
+      
 #ifdef USE_OPENTRACKER
 
-           SetOpenTrackerforScannerControll();
+       SetOpenTrackerforScannerControll();
 #endif
-          
+      
 #ifdef USE_IGSTK
-            SetIGSTKConnectionParameters();
+        SetIGSTKConnectionParameters();
 #endif
-          
-        }
+      
+    }
 
 
 #ifdef USE_OPENTRACKER
-        else if (this->LoadConfigButtonNT->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent )
+    else if (this->LoadConfigButtonNT->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
+        && event == vtkKWPushButton::InvokedEvent )
+    {
+        const char * filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
+        if (filename)
         {
-            const char * filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
-            if (filename)
-            {
-                const vtksys_stl::string fname(filename);
-                this->ConfigFileEntry->SetValue(fname.c_str());
-            }
-            else
-            {
-                this->ConfigFileEntry->SetValue("");
-            }
-            this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
+        const vtksys_stl::string fname(filename);
+        this->ConfigFileEntry->SetValue(fname.c_str());
         }
+        else
+        {
+        this->ConfigFileEntry->SetValue("");
+        }
+        this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
+    }
 
 
  else if (this->LoadConfigButtonRI->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent )
+        && event == vtkKWPushButton::InvokedEvent )
+    {
+        const char * filenameRI = this->LoadConfigButtonRI->GetWidget()->GetFileName();
+        if (filenameRI)
         {
-            const char * filenameRI = this->LoadConfigButtonRI->GetWidget()->GetFileName();
-            if (filenameRI)
-            {
-                const vtksys_stl::string fname(filenameRI);
-                this->ConfigFileEntryRI->SetValue(fname.c_str());
-            }
-            else
-            {
-                this->ConfigFileEntryRI->SetValue("");
-            }
-            this->LoadConfigButtonRI->GetWidget()->SetText ("Browse Config File");
+        const vtksys_stl::string fname(filenameRI);
+        this->ConfigFileEntryRI->SetValue(fname.c_str());
         }
+        else
+        {
+        this->ConfigFileEntryRI->SetValue("");
+        }
+        this->LoadConfigButtonRI->GetWidget()->SetText ("Browse Config File");
+    }
 #endif
+    
 
+ 
+ 
 
-
-        else if (this->GetPatCoordinatesPushButton == vtkKWPushButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent)
+    else if (this->GetPatCoordinatesPushButton == vtkKWPushButton::SafeDownCast(caller) 
+        && event == vtkKWPushButton::InvokedEvent)
+    {
+        float position[3];
+        position[0] = position[1] = position[2] = 0.0;
+        char value[50];
+        if (this->LocatorMatrix)
         {
-            float position[3];
-            position[0] = position[1] = position[2] = 0.0;
-            char value[50];
-            if (this->LocatorMatrix)
-            {
-                for (int j = 0; j < 3; j++) 
-                {
-                    position[j] = this->LocatorMatrix->GetElement(j,0);
-                    // position[j] = j / 1.0;
-                }
-            }
-            sprintf(value, "%6.2f  %6.2f  %6.2f", position[0], position[1], position[2]);
-            this->PatCoordinatesEntry->GetWidget()->SetValue(value);
+        for (int j = 0; j < 3; j++) 
+        {
+            position[j] = this->LocatorMatrix->GetElement(j,0);
+            // position[j] = j / 1.0;
         }
-        else if (this->AddPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent)
-         
-        {
-            int scSize = 0;
-            int pcSize = 0;
-            const char *pc = this->PatCoordinatesEntry->GetWidget()->GetValue();
-            const char *sc = this->SlicerCoordinatesEntry->GetWidget()->GetValue();
+        }
+        sprintf(value, "%6.2f  %6.2f  %6.2f", position[0], position[1], position[2]);
+        this->PatCoordinatesEntry->GetWidget()->SetValue(value);
+    }
+    else if (this->AddPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
+        && event == vtkKWPushButton::InvokedEvent)
+     
+    {
+        int scSize = 0;
+        int pcSize = 0;
+        const char *pc = this->PatCoordinatesEntry->GetWidget()->GetValue();
+        const char *sc = this->SlicerCoordinatesEntry->GetWidget()->GetValue();
 
-            if (pc) 
-            {
-                const vtksys_stl::string pcCor(pc);
-                pcSize = pcCor.size();
-            }
-            if (sc) 
-            {
-                const vtksys_stl::string scCor(sc);
-                scSize = scCor.size();
-            }
+        if (pc) 
+        {
+        const vtksys_stl::string pcCor(pc);
+        pcSize = pcCor.size();
+        }
+        if (sc) 
+        {
+        const vtksys_stl::string scCor(sc);
+        scSize = scCor.size();
+        }
 
-            if (pcSize < 5 || scSize < 5)
-            {
-                vtkSlicerApplication::GetInstance()->ErrorMessage("Patient or Slicer coordinates are invalid."); 
-            }
-            else 
-            {
-                int row = this->PointPairMultiColumnList->GetWidget()->GetNumberOfRows();
-                this->PointPairMultiColumnList->GetWidget()->AddRow();
-                this->PointPairMultiColumnList->GetWidget()->SetCellText(row, 0, pc);
-                this->PointPairMultiColumnList->GetWidget()->SetCellText(row, 1, sc);
-            }
-        }
-        else if (this->DeletePointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent)
+        if (pcSize < 5 || scSize < 5)
         {
-            int numOfRows = this->PointPairMultiColumnList->GetWidget()->GetNumberOfSelectedRows();
-            if (numOfRows == 1)
-            {
-                int index[2];
-                this->PointPairMultiColumnList->GetWidget()->GetSelectedRows(index);
-                this->PointPairMultiColumnList->GetWidget()->DeleteRow(index[0]);
-            }
+        vtkSlicerApplication::GetInstance()->ErrorMessage("Patient or Slicer coordinates are invalid."); 
         }
-        else if (this->DeleteAllPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent)
+        else 
         {
-            this->PointPairMultiColumnList->GetWidget()->DeleteAllRows();
+        int row = this->PointPairMultiColumnList->GetWidget()->GetNumberOfRows();
+        this->PointPairMultiColumnList->GetWidget()->AddRow();
+        this->PointPairMultiColumnList->GetWidget()->SetCellText(row, 0, pc);
+        this->PointPairMultiColumnList->GetWidget()->SetCellText(row, 1, sc);
         }
-        else if (this->RegisterPushButton == vtkKWPushButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent)
+    }
+    else if (this->DeletePointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
+        && event == vtkKWPushButton::InvokedEvent)
+    {
+        int numOfRows = this->PointPairMultiColumnList->GetWidget()->GetNumberOfSelectedRows();
+        if (numOfRows == 1)
         {
-            int row = this->PointPairMultiColumnList->GetWidget()->GetNumberOfRows();
-            if (row < 2)
+        int index[2];
+        this->PointPairMultiColumnList->GetWidget()->GetSelectedRows(index);
+        this->PointPairMultiColumnList->GetWidget()->DeleteRow(index[0]);
+        }
+    }
+    else if (this->DeleteAllPointPairPushButton == vtkKWPushButton::SafeDownCast(caller) 
+        && event == vtkKWPushButton::InvokedEvent)
+    {
+        this->PointPairMultiColumnList->GetWidget()->DeleteAllRows();
+    }
+    else if (this->RegisterPushButton == vtkKWPushButton::SafeDownCast(caller) 
+        && event == vtkKWPushButton::InvokedEvent)
+    {
+        int row = this->PointPairMultiColumnList->GetWidget()->GetNumberOfRows();
+        if (row < 2)
+        {
+        vtkSlicerApplication::GetInstance()->ErrorMessage("At least 2 pairs of landmarks are needed for patient to image registration.");
+        }
+        else
+        {
+        this->Pat2ImgReg->SetNumberOfPoints(row);
+        float pc1 = 0.0, pc2 = 0.0, pc3 = 0.0, sc1 = 0.0, sc2 = 0.0, sc3 = 0.0;
+        for (int r = 0; r < row; r++)
+        {
+            for (int c = 0; c < 2; c++)
             {
-                vtkSlicerApplication::GetInstance()->ErrorMessage("At least 2 pairs of landmarks are needed for patient to image registration.");
+            const char *val = this->PointPairMultiColumnList->GetWidget()->GetCellText(r, c);
+            if (c == 0)
+            {
+                sscanf(val, "%f %f %f", &pc1, &pc2, &pc3);
             }
             else
             {
-                this->Pat2ImgReg->SetNumberOfPoints(row);
-                float pc1 = 0.0, pc2 = 0.0, pc3 = 0.0, sc1 = 0.0, sc2 = 0.0, sc3 = 0.0;
-                for (int r = 0; r < row; r++)
-                {
-                    for (int c = 0; c < 2; c++)
-                    {
-                        const char *val = this->PointPairMultiColumnList->GetWidget()->GetCellText(r, c);
-                        if (c == 0)
-                        {
-                            sscanf(val, "%f %f %f", &pc1, &pc2, &pc3);
-                        }
-                        else
-                        {
-                            sscanf(val, "%f %f %f", &sc1, &sc2, &sc3);
-                        }
-                    }
-                    this->Pat2ImgReg->AddPoint(r, sc1, sc2, sc3, pc1, pc2, pc3);
-                }
+                sscanf(val, "%f %f %f", &sc1, &sc2, &sc3);
+            }
+            }
+            this->Pat2ImgReg->AddPoint(r, sc1, sc2, sc3, pc1, pc2, pc3);
+        }
 
-                int error = this->Pat2ImgReg->DoRegistration();
-                if (error)
-                {
-                    vtkSlicerApplication::GetInstance()->ErrorMessage("Error registration between patient and image land marks.");
-                    return;
-                }
+        int error = this->Pat2ImgReg->DoRegistration();
+        if (error)
+        {
+            vtkSlicerApplication::GetInstance()->ErrorMessage("Error registration between patient and image land marks.");
+            return;
+        }
 
 #ifdef USE_OPENTRACKER
-                this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
+        this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
 #endif
 #ifdef USE_IGSTK
-                this->IGSTKStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
+        this->IGSTKStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
 #endif
-            }
         }
-        else if (this->ResetPushButton == vtkKWPushButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent)
-        {
+    }
+    else if (this->ResetPushButton == vtkKWPushButton::SafeDownCast(caller) 
+        && event == vtkKWPushButton::InvokedEvent)
+    {
 #ifdef USE_OPENTRACKER
-            this->OpenTrackerStream->SetRegMatrix(NULL);
+        this->OpenTrackerStream->SetRegMatrix(NULL);
 #endif
 #ifdef USE_IGSTK
-            this->IGSTKStream->SetRegMatrix(NULL);
+        this->IGSTKStream->SetRegMatrix(NULL);
 #endif
-        }
-        else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-                && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    }
+    else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+        int checked = this->LocatorCheckButton->GetSelectedState(); 
+
+        vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+        if (model != NULL)
         {
-            int checked = this->LocatorCheckButton->GetSelectedState(); 
+        vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
 
-            vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
-            if (model != NULL)
-            {
-                vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
-
-                vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-                vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
-                disp->SetColor(color->SliceGUIGreen);
-                disp->SetVisibility(checked);
-            }
-
+        vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+        vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
+        disp->SetColor(color->SliceGUIGreen);
+        disp->SetVisibility(checked);
         }
-        else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-                && event == vtkKWCheckButton::SelectedStateChangedEvent )
+
+    }
+    else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+        int checked = this->LocatorModeCheckButton->GetSelectedState(); 
+        std::string val("Locator");
+
+        if (checked)
         {
-            int checked = this->LocatorModeCheckButton->GetSelectedState(); 
-            std::string val("Locator");
-
-            if (checked)
-            {
-                this->UserModeCheckButton->SelectedStateOff();
-            }
-            else
-            {
-                this->UserModeCheckButton->SelectedStateOn();
-                this->SliceNode0->SetOrientationToAxial();
-                this->SliceNode1->SetOrientationToSagittal();
-                this->SliceNode2->SetOrientationToCoronal();
-                this->NeedOrientationUpdate0 = 0;
-                this->NeedOrientationUpdate1 = 0;
-                this->NeedOrientationUpdate2 = 0;
-
-                val = "User";
-            }
-            this->RedSliceMenu->SetValue(val.c_str());
-            this->YellowSliceMenu->SetValue(val.c_str());
-            this->GreenSliceMenu->SetValue(val.c_str());
+        this->UserModeCheckButton->SelectedStateOff();
         }
-        else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-                && event == vtkKWCheckButton::SelectedStateChangedEvent )
+        else
         {
-            int checked = this->UserModeCheckButton->GetSelectedState(); 
-            std::string val("User");
+        this->UserModeCheckButton->SelectedStateOn();
+        this->SliceNode0->SetOrientationToAxial();
+        this->SliceNode1->SetOrientationToSagittal();
+        this->SliceNode2->SetOrientationToCoronal();
+        this->NeedOrientationUpdate0 = 0;
+        this->NeedOrientationUpdate1 = 0;
+        this->NeedOrientationUpdate2 = 0;
 
-            if (checked)
-            {
-                this->LocatorModeCheckButton->SelectedStateOff();
-                this->SliceNode0->SetOrientationToAxial();
-                this->SliceNode1->SetOrientationToSagittal();
-                this->SliceNode2->SetOrientationToCoronal();
-
-                this->NeedOrientationUpdate0 = 0;
-                this->NeedOrientationUpdate1 = 0;
-                this->NeedOrientationUpdate2 = 0;
-            }
-            else
-            {
-                this->LocatorModeCheckButton->SelectedStateOn();
-                val = "Locator";
-            }
-            this->RedSliceMenu->SetValue(val.c_str());
-            this->YellowSliceMenu->SetValue(val.c_str());
-            this->GreenSliceMenu->SetValue(val.c_str());
+        val = "User";
         }
+        this->RedSliceMenu->SetValue(val.c_str());
+        this->YellowSliceMenu->SetValue(val.c_str());
+        this->GreenSliceMenu->SetValue(val.c_str());
+    }
+    else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+        int checked = this->UserModeCheckButton->GetSelectedState(); 
+        std::string val("User");
+
+        if (checked)
+        {
+        this->LocatorModeCheckButton->SelectedStateOff();
+        this->SliceNode0->SetOrientationToAxial();
+        this->SliceNode1->SetOrientationToSagittal();
+        this->SliceNode2->SetOrientationToCoronal();
+
+        this->NeedOrientationUpdate0 = 0;
+        this->NeedOrientationUpdate1 = 0;
+        this->NeedOrientationUpdate2 = 0;
+        }
+        else
+        {
+        this->LocatorModeCheckButton->SelectedStateOn();
+        val = "Locator";
+        }
+        this->RedSliceMenu->SetValue(val.c_str());
+        this->YellowSliceMenu->SetValue(val.c_str());
+        this->GreenSliceMenu->SetValue(val.c_str());
+    }
     }
 } 
 
@@ -1174,18 +1205,18 @@ void vtkBrpNavGUI::Init()
 
 
 void vtkBrpNavGUI::DataCallback(vtkObject *caller, 
-            unsigned long eid, void *clientData, void *callData)
+        unsigned long eid, void *clientData, void *callData)
 {
     vtkBrpNavGUI *self = reinterpret_cast<vtkBrpNavGUI *>(clientData);
     vtkDebugWithObjectMacro(self, "In vtkBrpNavGUI DataCallback");
 
-    //    self->UpdateAll();
+    //      self->UpdateAll();
 }
 
 
 //---------------------------------------------------------------------------
 void vtkBrpNavGUI::ProcessLogicEvents ( vtkObject *caller,
-        unsigned long event, void *callData )
+    unsigned long event, void *callData )
 {
     // Fill in
 }
@@ -1193,7 +1224,7 @@ void vtkBrpNavGUI::ProcessLogicEvents ( vtkObject *caller,
 
 //---------------------------------------------------------------------------
 void vtkBrpNavGUI::ProcessMRMLEvents ( vtkObject *caller,
-        unsigned long event, void *callData )
+    unsigned long event, void *callData )
 {
     // Fill in
 }
@@ -1242,7 +1273,7 @@ void vtkBrpNavGUI::BuildGUI ( )
 
 
     // ----------------------------------------------------------------
-    // HELP FRAME            
+    // HELP FRAME         
     // ----------------------------------------------------------------
     vtkSlicerModuleCollapsibleFrame *BrpNavHelpFrame = vtkSlicerModuleCollapsibleFrame::New ( );
     BrpNavHelpFrame->SetParent ( page );
@@ -1250,7 +1281,7 @@ void vtkBrpNavGUI::BuildGUI ( )
     BrpNavHelpFrame->CollapseFrame ( );
     BrpNavHelpFrame->SetLabelText ("Help");
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-            BrpNavHelpFrame->GetWidgetName(), page->GetWidgetName());
+        BrpNavHelpFrame->GetWidgetName(), page->GetWidgetName());
 
     // configure the parent classes help text widget
     this->HelpText->SetParent ( BrpNavHelpFrame->GetFrame() );
@@ -1264,7 +1295,7 @@ void vtkBrpNavGUI::BuildGUI ( )
     this->HelpText->GetWidget()->QuickFormattingOn ( );
     this->HelpText->GetWidget()->SetBalloonHelpString ( "" );
     app->Script ( "pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 4",
-            this->HelpText->GetWidgetName ( ) );
+        this->HelpText->GetWidgetName ( ) );
 
     BrpNavHelpFrame->Delete();
  
@@ -1275,7 +1306,7 @@ void vtkBrpNavGUI::BuildGUI ( )
      BuildGUIForRealtimeacqFrame ();
 
 
-    //  BuildGUIForHandPieceFrame ();
+    //    BuildGUIForHandPieceFrame ();
 }
 
 
@@ -1287,7 +1318,7 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "BrpNav" );
 
     // ----------------------------------------------------------------
-    // REGISTRATION FRAME            
+    // REGISTRATION FRAME         
     // ----------------------------------------------------------------
     vtkSlicerModuleCollapsibleFrame *regFrame = vtkSlicerModuleCollapsibleFrame::New ( );
     regFrame->SetParent ( page );
@@ -1295,7 +1326,7 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     regFrame->SetLabelText ("Registration");
     regFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-            regFrame->GetWidgetName(), page->GetWidgetName());
+        regFrame->GetWidgetName(), page->GetWidgetName());
 
 
     // add a point pair 
@@ -1304,19 +1335,19 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     addFrame->Create ( );
     addFrame->SetLabelText ("Add a point pair");
     this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  addFrame->GetWidgetName());
+          addFrame->GetWidgetName());
 
     vtkKWFrame *patFrame = vtkKWFrame::New();
     patFrame->SetParent ( addFrame->GetFrame() );
     patFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  patFrame->GetWidgetName());
+          patFrame->GetWidgetName());
     
     vtkKWFrame *okFrame = vtkKWFrame::New();
     okFrame->SetParent ( addFrame->GetFrame() );
     okFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  okFrame->GetWidgetName());
+          okFrame->GetWidgetName());
 
     this->PatCoordinatesEntry = vtkKWEntryWithLabel::New();
     this->PatCoordinatesEntry->SetParent(patFrame);
@@ -1325,7 +1356,7 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     this->PatCoordinatesEntry->SetLabelWidth(16);
     this->PatCoordinatesEntry->SetLabelText("Patient Coordinates:");
     this->PatCoordinatesEntry->GetWidget()->SetValue ( "" );
-
+    
     this->GetPatCoordinatesPushButton = vtkKWPushButton::New();
     this->GetPatCoordinatesPushButton->SetParent(patFrame);
     this->GetPatCoordinatesPushButton->Create();
@@ -1345,7 +1376,7 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     this->SlicerCoordinatesEntry->SetLabelText("Image Coordinates:");
     this->SlicerCoordinatesEntry->GetWidget()->SetValue ( "" );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  this->SlicerCoordinatesEntry->GetWidgetName());
+          this->SlicerCoordinatesEntry->GetWidgetName());
 
     this->AddPointPairPushButton = vtkKWPushButton::New();
     this->AddPointPairPushButton->SetParent(okFrame);
@@ -1353,7 +1384,7 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     this->AddPointPairPushButton->SetText( "OK" );
     this->AddPointPairPushButton->SetWidth ( 12 );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  this->AddPointPairPushButton->GetWidgetName());
+          this->AddPointPairPushButton->GetWidgetName());
 
     // list of defined point pairs 
     vtkKWFrameWithLabel *listFrame = vtkKWFrameWithLabel::New();
@@ -1361,7 +1392,7 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     listFrame->Create ( );
     listFrame->SetLabelText ("Defined point pairs");
     this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  listFrame->GetWidgetName());
+          listFrame->GetWidgetName());
 
 
     // add the multicolumn list to show the points
@@ -1383,25 +1414,25 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     // now set the attributes that are equal across the columns
     for (int col = 0; col < 2; col++)
     {
-        this->PointPairMultiColumnList->GetWidget()->SetColumnWidth(col, 22);
+    this->PointPairMultiColumnList->GetWidget()->SetColumnWidth(col, 22);
 
-        this->PointPairMultiColumnList->GetWidget()->SetColumnAlignmentToLeft(col);
-        this->PointPairMultiColumnList->GetWidget()->ColumnEditableOff(col);
+    this->PointPairMultiColumnList->GetWidget()->SetColumnAlignmentToLeft(col);
+    this->PointPairMultiColumnList->GetWidget()->ColumnEditableOff(col);
     }
-        /*
-        if (col >= this->XColumn && col <= this->OrZColumn)
-        {
-            this->PointPairMultiColumnList->GetWidget()->SetColumnEditWindowToSpinBox(col);
-        }
-        */
+    /*
+    if (col >= this->XColumn && col <= this->OrZColumn)
+    {
+        this->PointPairMultiColumnList->GetWidget()->SetColumnEditWindowToSpinBox(col);
+    }
+    */
     // set the name column width to be higher
     // this->PointPairMultiColumnList->GetWidget()->SetColumnWidth(this->NameColumn, 15);
     // set the selected column width a bit higher
     // this->PointPairMultiColumnList->GetWidget()->SetColumnWidth(this->SelectedColumn, 9);
     
     app->Script ( "pack %s -fill both -expand true",
-                  this->PointPairMultiColumnList->GetWidgetName());
-//                  listFrame->GetWidgetName());
+          this->PointPairMultiColumnList->GetWidgetName());
+//            listFrame->GetWidgetName());
 //    this->PointPairMultiColumnList->GetWidget()->SetCellUpdatedCommand(this, "UpdateElement");
 
     // button frame
@@ -1409,8 +1440,8 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     buttonFrame->SetParent ( listFrame->GetFrame() );
     buttonFrame->Create ( );
     app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                 buttonFrame->GetWidgetName(),
-                 listFrame->GetFrame()->GetWidgetName());
+         buttonFrame->GetWidgetName(),
+         listFrame->GetFrame()->GetWidgetName());
 /*    
      // add an load button
     this->LoadPointPairPushButton = vtkKWPushButton::New ( );
@@ -1446,8 +1477,8 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     this->DeleteAllPointPairPushButton->SetBalloonHelpString("Delete all point pairs.");
 
     app->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->DeletePointPairPushButton->GetWidgetName(),
-                this->DeleteAllPointPairPushButton->GetWidgetName());
+        this->DeletePointPairPushButton->GetWidgetName(),
+        this->DeleteAllPointPairPushButton->GetWidgetName());
 
 
 
@@ -1456,7 +1487,7 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
     actionFrame->SetParent ( regFrame->GetFrame() );
     actionFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  actionFrame->GetWidgetName());
+          actionFrame->GetWidgetName());
 
      // add a register button 
     this->RegisterPushButton = vtkKWPushButton::New ( );
@@ -1476,8 +1507,8 @@ void vtkBrpNavGUI::BuildGUIForRegistrationFrame ()
 
 
     app->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->RegisterPushButton->GetWidgetName(),
-                this->ResetPushButton->GetWidgetName());
+        this->RegisterPushButton->GetWidgetName(),
+        this->ResetPushButton->GetWidgetName());
 
 
      regFrame->Delete ();
@@ -1497,7 +1528,7 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "BrpNav" );
 
     // ----------------------------------------------------------------
-    // DEVICE FRAME            
+    // DEVICE FRAME           
     // ----------------------------------------------------------------
     vtkSlicerModuleCollapsibleFrame *deviceFrame = vtkSlicerModuleCollapsibleFrame::New ( );
     deviceFrame->SetParent ( page );
@@ -1505,7 +1536,7 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     deviceFrame->SetLabelText ("Robot Controll");
     deviceFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-            deviceFrame->GetWidgetName(), page->GetWidgetName());
+        deviceFrame->GetWidgetName(), page->GetWidgetName());
 
     /////////////////////////////////////////////////////////////////////
     /// Interface frame 
@@ -1515,7 +1546,7 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     interfaceFrame->SetParent ( deviceFrame->GetFrame() );
     interfaceFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  interfaceFrame->GetWidgetName());
+          interfaceFrame->GetWidgetName());
 
     // interface: opentracker or igstk 
     vtkKWLabel *nameLabel = vtkKWLabel::New();
@@ -1528,18 +1559,18 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     valueLabel->SetParent(interfaceFrame);
     valueLabel->Create();
     valueLabel->SetWidth(21);
-    valueLabel->SetText("None        ");
+    valueLabel->SetText("None         ");
 #ifdef USE_OPENTRACKER
     valueLabel->SetText("OpenTracker");
 #endif
 #ifdef USE_IGSTK
-    valueLabel->SetText("IGSTK       ");
+    valueLabel->SetText("IGSTK         ");
 #endif
 
     this->Script(
-            "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
-            nameLabel->GetWidgetName(),
-            valueLabel->GetWidgetName());
+        "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
+        nameLabel->GetWidgetName(),
+        valueLabel->GetWidgetName());
 
 
     /////////////////////////////////////////////////////////////////////
@@ -1550,7 +1581,7 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     rateFrame->SetParent ( deviceFrame->GetFrame() );
     rateFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  rateFrame->GetWidgetName());
+          rateFrame->GetWidgetName());
 
     this->UpdateRateEntry = vtkKWEntryWithLabel::New();
     this->UpdateRateEntry->SetParent(rateFrame);
@@ -1571,7 +1602,7 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     multiFrame->SetParent ( deviceFrame->GetFrame() );
     multiFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  multiFrame->GetWidgetName());
+          multiFrame->GetWidgetName());
 
     // Multi factor
     this->MultiFactorEntry = vtkKWEntryWithLabel::New();
@@ -1594,7 +1625,7 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     this->ExtraFrame->SetParent ( deviceFrame->GetFrame() );
     this->ExtraFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  this->ExtraFrame->GetWidgetName());
+          this->ExtraFrame->GetWidgetName());
 
 #ifdef USE_OPENTRACKER
     this->ConfigFileEntry = vtkKWEntry::New();
@@ -1609,13 +1640,13 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     this->LoadConfigButton->SetWidth(15);
     this->LoadConfigButton->GetWidget()->SetText ("Browse Config File");
     this->LoadConfigButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
-                                                              "{ {BrpNav} {*.xml} }");
+                                  "{ {BrpNav} {*.xml} }");
     this->LoadConfigButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
       "OpenPath");
 
     this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                this->LoadConfigButton->GetWidgetName(),
-                this->ConfigFileEntry->GetWidgetName());
+        this->LoadConfigButton->GetWidgetName(),
+        this->ConfigFileEntry->GetWidgetName());
 #endif
 #ifdef USE_IGSTK
     this->DeviceMenuButton = vtkKWMenuButtonWithLabel::New();
@@ -1753,7 +1784,7 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     this->ConnectCheckButton->SetText("Connect");
 
     this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButton->GetWidgetName());
+        this->ConnectCheckButton->GetWidgetName());
 
 
       nameLabel->Delete();
@@ -1773,16 +1804,16 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
 
 
     // ----------------------------------------------------------------
-    // Navigation FRAME            
+    // Navigation FRAME           
     // ----------------------------------------------------------------
-    vtkSlicerModuleCollapsibleFrame *trackingFrame = vtkSlicerModuleCollapsibleFrame::New ( );    
+    vtkSlicerModuleCollapsibleFrame *trackingFrame = vtkSlicerModuleCollapsibleFrame::New ( );      
     trackingFrame->SetParent ( page );
     trackingFrame->Create ( );
     trackingFrame->SetLabelText ("Navigation");
     //trackingFrame->ExpandFrame ( );
     trackingFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-            trackingFrame->GetWidgetName(), page->GetWidgetName());
+        trackingFrame->GetWidgetName(), page->GetWidgetName());
 
 
 
@@ -1793,7 +1824,7 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     displayFrame->Create ( );
     displayFrame->SetLabelText ("Locator Display");
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   displayFrame->GetWidgetName() );
+           displayFrame->GetWidgetName() );
 
     this->LocatorCheckButton = vtkKWCheckButton::New();
     this->LocatorCheckButton->SetParent(displayFrame->GetFrame());
@@ -1816,14 +1847,14 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
 
 
     this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->LocatorCheckButton->GetWidgetName(),
-                this->HandleCheckButton->GetWidgetName(),
-                this->GuideCheckButton->GetWidgetName());
+        this->LocatorCheckButton->GetWidgetName(),
+        this->HandleCheckButton->GetWidgetName(),
+        this->GuideCheckButton->GetWidgetName());
 */
 
 
     this->Script("pack %s -side left -anchor w -padx 2 -pady 2", 
-                this->LocatorCheckButton->GetWidgetName());
+        this->LocatorCheckButton->GetWidgetName());
 
 
     // Driver frame: Locator can drive slices 
@@ -1833,15 +1864,15 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     driverFrame->Create ( );
     driverFrame->SetLabelText ("Driver");
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   driverFrame->GetWidgetName() );
+           driverFrame->GetWidgetName() );
 
     // Mode frame
     vtkKWFrame *modeFrame = vtkKWFrame::New();
     modeFrame->SetParent ( driverFrame->GetFrame() );
     modeFrame->Create ( );
     app->Script ("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
-                 modeFrame->GetWidgetName(),
-                 driverFrame->GetFrame()->GetWidgetName());
+         modeFrame->GetWidgetName(),
+         driverFrame->GetFrame()->GetWidgetName());
 
 
     this->LocatorModeCheckButton = vtkKWCheckButton::New();
@@ -1858,8 +1889,8 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
 
 
     this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->LocatorModeCheckButton->GetWidgetName(),
-                this->UserModeCheckButton->GetWidgetName());
+        this->LocatorModeCheckButton->GetWidgetName(),
+        this->UserModeCheckButton->GetWidgetName());
 
 
     // slice frame
@@ -1867,8 +1898,8 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     sliceFrame->SetParent ( driverFrame->GetFrame() );
     sliceFrame->Create ( );
     app->Script ("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
-                 sliceFrame->GetWidgetName(),
-                 driverFrame->GetFrame()->GetWidgetName());
+         sliceFrame->GetWidgetName(),
+         driverFrame->GetFrame()->GetWidgetName());
 
 
     // Contents in slice frame 
@@ -1905,9 +1936,9 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     this->GreenSliceMenu->SetValue ("User");
 
     this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->RedSliceMenu->GetWidgetName(),
-                this->YellowSliceMenu->GetWidgetName(),
-                this->GreenSliceMenu->GetWidgetName());
+        this->RedSliceMenu->GetWidgetName(),
+        this->YellowSliceMenu->GetWidgetName(),
+        this->GreenSliceMenu->GetWidgetName());
 
     trackingFrame->Delete();
     displayFrame->Delete();
@@ -1919,7 +1950,7 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
 
 
     // ----------------------------------------------------------------
-    // Scanner Controll FRAME     START       
+    // Scanner Controll FRAME      START          
     // ----------------------------------------------------------------
 
 
@@ -1935,13 +1966,13 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     scancontrollbrpFrame->SetLabelText ("Scan Controll");
 
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-            scancontrollbrpFrame->GetWidgetName(), page->GetWidgetName());
+        scancontrollbrpFrame->GetWidgetName(), page->GetWidgetName());
 
     /////////////////////////////////////////////////////////////////////
     /// Main Controlle frame 
     /////////////////////////////////////////////////////////////////////
     
-
+#ifdef USE_OPENTRACKER
     
     vtkKWFrameWithLabel *maincontroll = vtkKWFrameWithLabel::New();
     maincontroll->SetParent ( scancontrollbrpFrame->GetFrame() );
@@ -1949,13 +1980,13 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     maincontroll->CollapseFrame ( );
     maincontroll->SetLabelText ("Main Controll Functions");
     this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  maincontroll->GetWidgetName());
+          maincontroll->GetWidgetName());
 
        vtkKWFrame *maincontrollsetpatientNTFrame = vtkKWFrame::New();
     maincontrollsetpatientNTFrame->SetParent ( maincontroll->GetFrame() );
     maincontrollsetpatientNTFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  maincontrollsetpatientNTFrame->GetWidgetName());
+          maincontrollsetpatientNTFrame->GetWidgetName());
   
     
 
@@ -1963,13 +1994,13 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     maincontrollsetprotocolNTFrame->SetParent ( maincontroll->GetFrame() );
     maincontrollsetprotocolNTFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  maincontrollsetprotocolNTFrame->GetWidgetName());
+          maincontrollsetprotocolNTFrame->GetWidgetName());
     
      vtkKWFrame *maincontrollsetscannerNTFrame = vtkKWFrame::New();
     maincontrollsetscannerNTFrame->SetParent ( maincontroll->GetFrame() );
     maincontrollsetscannerNTFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  maincontrollsetscannerNTFrame->GetWidgetName());
+          maincontrollsetscannerNTFrame->GetWidgetName());
     
 
     /////////////////////////NEW EXAM//////////////////////////////////////////
@@ -2008,7 +2039,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->positionbrppatientweight->SetWidth(5);
     this->positionbrppatientweight->SetLabelWidth(25);
     this->positionbrppatientweight->SetLabelText("Patient Weight (lbs.)");
-    this->positionbrppatientweight->GetWidget()->SetValue ("");  
+    this->positionbrppatientweight->GetWidget()->SetValue ("");     
 
 
     this->Script(
@@ -2021,10 +2052,10 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->ConnectCheckButtonnewexam->SetParent(maincontrollsetpatientNTFrame);
     this->ConnectCheckButtonnewexam->Create();
     this->ConnectCheckButtonnewexam->SelectedStateOff();
-    this->ConnectCheckButtonnewexam->SetText("New Exam       ----------------------------------------");
+    this->ConnectCheckButtonnewexam->SetText("New Exam         ----------------------------------------");
 
     this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonnewexam->GetWidgetName());
+        this->ConnectCheckButtonnewexam->GetWidgetName());
     
     ////////////////////////////////SET PROTOCOL//////////////////////////////
     
@@ -2048,10 +2079,10 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->ConnectCheckButtonsetprotocol->SetParent(maincontrollsetprotocolNTFrame);
     this->ConnectCheckButtonsetprotocol->Create();
     this->ConnectCheckButtonsetprotocol->SelectedStateOff();
-    this->ConnectCheckButtonsetprotocol->SetText("Set Protocol    ----------------------------------------");
+    this->ConnectCheckButtonsetprotocol->SetText("Set Protocol      ----------------------------------------");
 
     this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonsetprotocol->GetWidgetName());
+        this->ConnectCheckButtonsetprotocol->GetWidgetName());
     
     
 
@@ -2066,7 +2097,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->ConnectCheckButtonprepScanner->SetText("PreScan");
 
     this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonprepScanner->GetWidgetName());
+        this->ConnectCheckButtonprepScanner->GetWidgetName());
     
 
 
@@ -2077,7 +2108,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->ConnectCheckButtonStartScanner->SetText("Start Scanner");
 
     this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonStartScanner->GetWidgetName());
+        this->ConnectCheckButtonStartScanner->GetWidgetName());
     
     this->ConnectCheckButtonStopScanner = vtkKWCheckButton::New();
     this->ConnectCheckButtonStopScanner->SetParent(maincontrollsetscannerNTFrame);
@@ -2086,7 +2117,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->ConnectCheckButtonStopScanner->SetText("Stop Scanner");
 
     this->Script("pack %s -side right -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonStopScanner->GetWidgetName());
+        this->ConnectCheckButtonStopScanner->GetWidgetName());
     
     
     this->ConnectCheckButtonpauseScanner = vtkKWCheckButton::New();
@@ -2096,7 +2127,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->ConnectCheckButtonpauseScanner->SetText("Pause Scanner");
 
     this->Script("pack %s -side right -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonpauseScanner->GetWidgetName());
+        this->ConnectCheckButtonpauseScanner->GetWidgetName());
     
     this->ConnectCheckButtonresumeScanner = vtkKWCheckButton::New();
     this->ConnectCheckButtonresumeScanner->SetParent(maincontrollsetscannerNTFrame);
@@ -2105,7 +2136,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->ConnectCheckButtonresumeScanner->SetText("Resume Scanner");
 
     this->Script("pack %s -side right -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonresumeScanner->GetWidgetName());
+        this->ConnectCheckButtonresumeScanner->GetWidgetName());
     
 
 
@@ -2114,26 +2145,26 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     /////////////////////////////////////////////////////////////////////
    
 
-#ifdef USE_OPENTRACKER
+
     vtkKWFrameWithLabel *configcoordsorient = vtkKWFrameWithLabel::New();
     configcoordsorient->SetParent ( scancontrollbrpFrame->GetFrame() );
     configcoordsorient->Create ( );
     configcoordsorient->SetLabelText ("Config File + Connect");
     this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  configcoordsorient->GetWidgetName());
+          configcoordsorient->GetWidgetName());
     
    
      vtkKWFrame *configNTFrame = vtkKWFrame::New();
     configNTFrame->SetParent ( configcoordsorient->GetFrame() );
     configNTFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  configNTFrame->GetWidgetName());
+          configNTFrame->GetWidgetName());
     
     vtkKWFrame *connectNTFrame = vtkKWFrame::New();
     connectNTFrame->SetParent ( configcoordsorient->GetFrame() );
     connectNTFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  connectNTFrame->GetWidgetName());
+          connectNTFrame->GetWidgetName());
 
 
     this->ConfigFileEntry = vtkKWEntry::New();
@@ -2148,7 +2179,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->LoadConfigButtonNT->SetWidth(15);
     this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
     this->LoadConfigButtonNT->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
-                                                              "{ {BrpNav} {*.xml} }");
+                                  "{ {BrpNav} {*.xml} }");
     this->LoadConfigButtonNT->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
       "OpenPath");
 
@@ -2156,8 +2187,8 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     //strncpy(xmlpathfilename, this->LoadConfigButton->GetWidget()->GetFileName(), 256); 
 
     this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                this->LoadConfigButtonNT->GetWidgetName(),
-                this->ConfigFileEntry->GetWidgetName());
+        this->LoadConfigButtonNT->GetWidgetName(),
+        this->ConfigFileEntry->GetWidgetName());
 
 
     /// Connnect button 
@@ -2169,8 +2200,8 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->ConnectCheckButtonNT->SetText("Connect");
 
     this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonNT->GetWidgetName());
-#endif
+        this->ConnectCheckButtonNT->GetWidgetName());
+
 
      /////////////////////////////////////////////////////////////////////
     /// Send Orientation and Coords frame 
@@ -2183,20 +2214,20 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     coordsbrpFrame->CollapseFrame ( );
     coordsbrpFrame->SetLabelText ("Type and Send");
     this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  coordsbrpFrame->GetWidgetName());
+          coordsbrpFrame->GetWidgetName());
     
    
      vtkKWFrame *typecoordsorientNTFrame = vtkKWFrame::New();
     typecoordsorientNTFrame->SetParent ( coordsbrpFrame->GetFrame() );
     typecoordsorientNTFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  typecoordsorientNTFrame->GetWidgetName());
+          typecoordsorientNTFrame->GetWidgetName());
     
     vtkKWFrame *sendNTFrame = vtkKWFrame::New();
     sendNTFrame->SetParent ( coordsbrpFrame->GetFrame() );
     sendNTFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  sendNTFrame->GetWidgetName());
+          sendNTFrame->GetWidgetName());
 
 
 
@@ -2249,7 +2280,7 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     orientationbrpFrame->SetParent ( scancontrollbrpFrame->GetFrame() );
     orientationbrpFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  orientationbrpFrame->GetWidgetName());
+          orientationbrpFrame->GetWidgetName());
     */
     this->orientationbrpo1 = vtkKWEntryWithLabel::New();
     this->orientationbrpo1->SetParent(typecoordsorientNTFrame);
@@ -2257,7 +2288,7 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->orientationbrpo1->SetWidth(5);
     this->orientationbrpo1->SetLabelWidth(25);
     this->orientationbrpo1->SetLabelText("O1-Orientation: ");
-    this->orientationbrpo1->GetWidget()->SetValue ("");  
+    this->orientationbrpo1->GetWidget()->SetValue ("");     
 
 
     this->Script(
@@ -2271,7 +2302,7 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->orientationbrpo2->SetWidth(5);
     this->orientationbrpo2->SetLabelWidth(25);
     this->orientationbrpo2->SetLabelText("O2-Orientation: ");
-    this->orientationbrpo2->GetWidget()->SetValue ("");  
+    this->orientationbrpo2->GetWidget()->SetValue ("");     
 
 
     this->Script(
@@ -2285,7 +2316,7 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->orientationbrpo3->SetWidth(5);
     this->orientationbrpo3->SetLabelWidth(25);
     this->orientationbrpo3->SetLabelText("O3-Orientation: ");
-    this->orientationbrpo3->GetWidget()->SetValue ("");  
+    this->orientationbrpo3->GetWidget()->SetValue ("");     
 
 
     this->Script(
@@ -2298,7 +2329,7 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->orientationbrpo4->SetWidth(5);
     this->orientationbrpo4->SetLabelWidth(25);
     this->orientationbrpo4->SetLabelText("O4-Orientation: ");
-    this->orientationbrpo4->GetWidget()->SetValue ("");  
+    this->orientationbrpo4->GetWidget()->SetValue ("");     
 
 
     this->Script(
@@ -2312,7 +2343,7 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->ConnectCheckButtonSEND->SetText("Send");
 
     this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonSEND->GetWidgetName());
+        this->ConnectCheckButtonSEND->GetWidgetName());
     
    
 
@@ -2326,13 +2357,14 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
      sendNTFrame->Delete();
      typecoordsorientNTFrame->Delete();
      configcoordsorient->Delete();
-    coordsbrpFrame->Delete ();  
+    coordsbrpFrame->Delete ();    
     scancontrollbrpFrame->Delete ();
-    //  orientationbrpFrame->Delete ();
+    //    orientationbrpFrame->Delete ();
+#endif
 }
 
     // ----------------------------------------------------------------
-    // Scanner Controll FRAME  END          
+    // Scanner Controll FRAME  END        
     // ----------------------------------------------------------------
 
 
@@ -2345,7 +2377,7 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "BrpNav" );
 
     // ----------------------------------------------------------------
-    // REALTIME FRAME            
+    // REALTIME FRAME         
     // ----------------------------------------------------------------
     
     
@@ -2355,23 +2387,26 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     realtimeacqFrame->SetLabelText ("Realtime Imaging");
     realtimeacqFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-            realtimeacqFrame->GetWidgetName(), page->GetWidgetName());
+        realtimeacqFrame->GetWidgetName(), page->GetWidgetName());
 
-    //------------------------------------Content--------------*
+#ifdef USE_OPENTRACKER 
+   //------------------------------------Content--------------*
     
     
-    //------------------------------- SERVER FRAME-------------*            
+    //------------------------------- SERVER FRAME-------------*        
     
 
     // Active server frame: Server options 
     // -----------------------------------------
 
+
+
     vtkKWFrame *activeServerFrame = vtkKWFrame::New();
     activeServerFrame->SetParent ( realtimeacqFrame->GetFrame() );
     activeServerFrame->Create ( );
     app->Script ("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
-               activeServerFrame->GetWidgetName(),
-                 realtimeacqFrame->GetFrame()->GetWidgetName());
+           activeServerFrame->GetWidgetName(),
+         realtimeacqFrame->GetFrame()->GetWidgetName());
 
 
       
@@ -2387,8 +2422,8 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     this->ServerMenu->GetWidget()->GetMenu()->AddRadioButton ( "SPL Open Tracker");
     this->ServerMenu->GetWidget()->SetValue ( "SPL Open Tracker" );
     this->Script(
-            "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
-            this->ServerMenu->GetWidgetName());
+        "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+        this->ServerMenu->GetWidgetName());
 
      
     // Setup frame: Config file and update rate 
@@ -2398,17 +2433,27 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     setupFrame->Create ( );
     setupFrame->SetLabelText ("Setup");
     app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
-                 setupFrame->GetWidgetName(),
-                 realtimeacqFrame->GetFrame()->GetWidgetName());
+         setupFrame->GetWidgetName(),
+         realtimeacqFrame->GetFrame()->GetWidgetName());
 
-
+    
     
     // add a file browser 
     vtkKWFrame *fileFrame = vtkKWFrame::New();
     fileFrame->SetParent ( realtimeacqFrame->GetFrame() );
+   
     fileFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  fileFrame->GetWidgetName());
+          fileFrame->GetWidgetName());
+
+    
+    this->PAEntry = vtkKWEntry::New();
+    PAEntry->SetParent(setupFrame);
+    PAEntry->Create();
+    PAEntry->SetWidth(13);
+    PAEntry->SetValue("");
+
+
 
     this->ConfigFileEntryRI = vtkKWEntry::New();
     this->ConfigFileEntryRI->SetParent(fileFrame);
@@ -2422,20 +2467,20 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     this->LoadConfigButtonRI->SetWidth(15);
     this->LoadConfigButtonRI->GetWidget()->SetText ("Browse Config File");
     this->LoadConfigButtonRI->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
-                                                              "{ {RealTimeImaging} {*.xml} }");
+                                  "{ {RealTimeImaging} {*.xml} }");
     this->LoadConfigButtonRI->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
       "OpenPath");
 
     this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                this->LoadConfigButtonRI->GetWidgetName(),
-                this->ConfigFileEntryRI->GetWidgetName());
+        this->LoadConfigButtonRI->GetWidgetName(),
+        this->ConfigFileEntryRI->GetWidgetName());
 
     // update rate 
     vtkKWFrame *rateFrame = vtkKWFrame::New();
     rateFrame->SetParent ( setupFrame->GetFrame() );
     rateFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  rateFrame->GetWidgetName());
+          rateFrame->GetWidgetName());
 
     this->UpdateRateEntry = vtkKWEntryWithLabel::New();
     this->UpdateRateEntry->SetParent(rateFrame);
@@ -2448,6 +2493,19 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
       "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
       this->UpdateRateEntry->GetWidgetName());
     
+
+    this->GetImageSize = vtkKWEntryWithLabel::New();
+    this->GetImageSize->SetParent(rateFrame);
+    this->GetImageSize->Create();
+    this->GetImageSize->SetWidth(25);
+    this->GetImageSize->SetLabelWidth(15);
+    this->GetImageSize->SetLabelText("Size");
+    this->GetImageSize->GetWidget()->SetValue ("");
+    this->Script(
+      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+      this->GetImageSize->GetWidgetName());
+    
+
    
     // Connect frame: Connects to server 
     // -----------------------------------------
@@ -2456,27 +2514,35 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     connectFrame->Create ( );
     connectFrame->SetLabelText ("Connection to server");
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   connectFrame->GetWidgetName() );
-
+           connectFrame->GetWidgetName() );
+    
     this->ConnectCheckButtonRI = vtkKWCheckButton::New();
     this->ConnectCheckButtonRI->SetParent(connectFrame->GetFrame());
     this->ConnectCheckButtonRI->Create();
     this->ConnectCheckButtonRI->SelectedStateOff();
     this->ConnectCheckButtonRI->SetText("Connect");
-    /*  
-    this->PauseCheckButton = vtkKWCheckButton::New();
-    this->PauseCheckButton->SetParent(connectFrame->GetFrame());
-    this->PauseCheckButton->Create();
-    this->PauseCheckButton->SelectedStateOff();
-    this->PauseCheckButton->SetText("Pause");
+ 
 
-    this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButton->GetWidgetName(),
-                this->PauseCheckButton->GetWidgetName());
-    
-*/
     this->Script("pack %s -side left -anchor w -padx 2 -pady 2", 
-                this->ConnectCheckButtonRI->GetWidgetName());
+        this->ConnectCheckButtonRI->GetWidgetName());
+
+    /* 
+vtkKWFrameWithLabel *tempFrame = vtkKWFrameWithLabel::New ( );
+    connectFrame->SetParent ( realtimeacqFrame->GetFrame() );
+    connectFrame->Create ( );
+    connectFrame->SetLabelText ("test");
+    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+           connectFrame->GetWidgetName() );
+    
+
+
+    
+    this->PAEntry = vtkKWEntry::New();
+    PAEntry->SetParent(tempFrame);
+    PAEntry->Create();
+    PAEntry->SetWidth(13);
+    PAEntry->SetValue("");
+    */
 
     realtimeacqFrame->Delete ();
     activeServerFrame->Delete ();
@@ -2484,7 +2550,10 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
      fileFrame->Delete ();
      rateFrame->Delete ();
     connectFrame->Delete ();
+    // tempFrame->Delete ();
    
+#endif
+
 }
 
 
@@ -2492,7 +2561,7 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
 //////////////////////////////////////////////////////
 /////Middelware Main LOOP/////////////////////////////
 /////////////////////////////////////////////////////
-
+/*
 void vtkBrpNavGUI:: brpxml(const char* xmlpathfilename)
 {
 
@@ -2558,7 +2627,7 @@ void vtkBrpNavGUI::brpthreadstop()
 }
 
 
-/*
+
 int vtkBrpNavGUI::brpthreadmainthread()
 {
   
@@ -2574,55 +2643,61 @@ void vtkBrpNavGUI::UpdateAll()
     this->LocatorMatrix = NULL;
 #ifdef USE_OPENTRACKER
     this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
+    this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
+   
+    
+
 #endif
 #ifdef USE_IGSTK
     this->LocatorMatrix = this->IGSTKStream->GetLocatorMatrix();
 #endif
 
+   
+
+
     if (this->LocatorMatrix)
     {
-        char Val[10];
+    char Val[10];
 
-        float px = this->LocatorMatrix->GetElement(0, 0);
-        float py = this->LocatorMatrix->GetElement(1, 0);
-        float pz = this->LocatorMatrix->GetElement(2, 0);
-        float nx = this->LocatorMatrix->GetElement(0, 1);
-        float ny = this->LocatorMatrix->GetElement(1, 1);
-        float nz = this->LocatorMatrix->GetElement(2, 1);
-        float tx = this->LocatorMatrix->GetElement(0, 2);
-        float ty = this->LocatorMatrix->GetElement(1, 2);
-        float tz = this->LocatorMatrix->GetElement(2, 2);
+    float px = this->LocatorMatrix->GetElement(0, 0);
+    float py = this->LocatorMatrix->GetElement(1, 0);
+    float pz = this->LocatorMatrix->GetElement(2, 0);
+    float nx = this->LocatorMatrix->GetElement(0, 1);
+    float ny = this->LocatorMatrix->GetElement(1, 1);
+    float nz = this->LocatorMatrix->GetElement(2, 1);
+    float tx = this->LocatorMatrix->GetElement(0, 2);
+    float ty = this->LocatorMatrix->GetElement(1, 2);
+    float tz = this->LocatorMatrix->GetElement(2, 2);
 
-        sprintf(Val, "%6.2f", px);
-        this->PREntry->SetValue(Val);
-        sprintf(Val, "%6.2f", py);
-        this->PAEntry->SetValue(Val);
-        sprintf(Val, "%6.2f", pz);
-        this->PSEntry->SetValue(Val);
+    sprintf(Val, "%6.2f", px);
+    this->PREntry->SetValue(Val);
+    sprintf(Val, "%6.2f", py);
+    this->PAEntry->SetValue(Val);
+    sprintf(Val, "%6.2f", pz);
+    this->PSEntry->SetValue(Val);
 
-        sprintf(Val, "%6.2f", nx);
-        this->NREntry->SetValue(Val);
-        sprintf(Val, "%6.2f", ny);
-        this->NAEntry->SetValue(Val);
-        sprintf(Val, "%6.2f", nz);
-        this->NSEntry->SetValue(Val);
+    sprintf(Val, "%6.2f", nx);
+    this->NREntry->SetValue(Val);
+    sprintf(Val, "%6.2f", ny);
+    this->NAEntry->SetValue(Val);
+    sprintf(Val, "%6.2f", nz);
+    this->NSEntry->SetValue(Val);
 
-        sprintf(Val, "%6.2f", tx);
-        this->TREntry->SetValue(Val);
-        sprintf(Val, "%6.2f", ty);
-        this->TAEntry->SetValue(Val);
-        sprintf(Val, "%6.2f", tz);
-        this->TSEntry->SetValue(Val);
-        
+    sprintf(Val, "%6.2f", tx);
+    this->TREntry->SetValue(Val);
+    sprintf(Val, "%6.2f", ty);
+    this->TAEntry->SetValue(Val);
+    sprintf(Val, "%6.2f", tz);
+    this->TSEntry->SetValue(Val);
+    
 
-        // update the display of locator
-        if (this->LocatorCheckButton->GetSelectedState()) this->UpdateLocator();
+    // update the display of locator
+    if (this->LocatorCheckButton->GetSelectedState()) this->UpdateLocator();
 
-        //this->UpdateSliceDisplay(px, py, pz);  // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
-        this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
+    //this->UpdateSliceDisplay(px, py, pz);     // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
+    this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
 
-        
-        
+    
     }
 }
 
@@ -2642,12 +2717,12 @@ void vtkBrpNavGUI::UpdateLocator()
     vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
     if (model != NULL)
     {
-        if (transform)
-        {
-            vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
-            lnode->SetAndObserveMatrixTransformToParent(transform->GetMatrix());
-            this->GetMRMLScene()->Modified();
-        }
+    if (transform)
+    {
+        vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
+        lnode->SetAndObserveMatrixTransformToParent(transform->GetMatrix());
+        this->GetMRMLScene()->Modified();
+    }
     }
 }
 
@@ -2658,67 +2733,85 @@ void vtkBrpNavGUI::UpdateRealtimeImg()
   int checkedRI = this->ConnectCheckButtonRI->GetSelectedState(); 
     if (checkedRI)
     {
+#ifdef USE_OPENTRACKER
+      
+     this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
+     this->OpenTrackerStream->GetImageDataforRealtimeImaging(&ImageDataRI);
+      
+
+#endif
+      // xsizevalue = 5;
       printf("GetRealTimeImage\n");
       
-      // int xsize;
+      cout << "xsixe:  ";
+      cout<< xsizevalueRI << endl;
+       
+       cout << "ysixe:    ";
+       cout<< xsizevalueRI << endl;
 
+       
+       ofstream fout("output.raw");
+       fout.write((const char*)ImageDataRI.image_ptr, ImageDataRI.size());
+       fout.close();
+      
+      
     }
 
 }
 
 void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz, 
-                                        float tx, float ty, float tz, 
-                                        float px, float py, float pz)
+                    float tx, float ty, float tz, 
+                    float px, float py, float pz)
 {
     // Axial
     if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
     {
-        if (this->NeedOrientationUpdate0) 
-        {
-            this->SliceNode0->SetOrientationToAxial();
-            this->NeedOrientationUpdate0 = 0;
-        }
+    if (this->NeedOrientationUpdate0) 
+    {
+        this->SliceNode0->SetOrientationToAxial();
+        this->NeedOrientationUpdate0 = 0;
+    }
     }
     else
     {
-        this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-        this->Control0->GetOffsetScale()->SetValue(pz);
-        this->Logic0->SetSliceOffset(pz);
-        this->NeedOrientationUpdate0 = 1;
+    this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+    this->Control0->GetOffsetScale()->SetValue(pz);
+    this->Logic0->SetSliceOffset(pz);
+    this->NeedOrientationUpdate0 = 1;
     }
 
     // Sagittal
     if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
     {
-        if (this->NeedOrientationUpdate1) 
-        {
-            this->SliceNode1->SetOrientationToSagittal();
-            this->NeedOrientationUpdate1 = 0;
-        }
+    if (this->NeedOrientationUpdate1) 
+    {
+        this->SliceNode1->SetOrientationToSagittal();
+        this->NeedOrientationUpdate1 = 0;
+    }
     }
     else
     {
-        this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-        this->Control1->GetOffsetScale()->SetValue(px);
-        this->Logic1->SetSliceOffset(px);
-        this->NeedOrientationUpdate1 = 1;
+    this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+    this->Control1->GetOffsetScale()->SetValue(px);
+    this->Logic1->SetSliceOffset(px);
+    this->NeedOrientationUpdate1 = 1;
     }
 
     // Coronal
     if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
     {
-        if (this->NeedOrientationUpdate2) 
-        {
-            this->SliceNode2->SetOrientationToCoronal();
-            this->NeedOrientationUpdate2 = 0;
-        }
+    if (this->NeedOrientationUpdate2) 
+    {
+        this->SliceNode2->SetOrientationToCoronal();
+        this->NeedOrientationUpdate2 = 0;
+    }
     }
     else
     {
-        this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-        this->Control2->GetOffsetScale()->SetValue(py);
-        this->Logic2->SetSliceOffset(py);
-        this->NeedOrientationUpdate2 = 1;
+    this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+    this->Control2->GetOffsetScale()->SetValue(py);
+    this->Logic2->SetSliceOffset(py);
+    this->NeedOrientationUpdate2 = 1;
     }
 }
 
@@ -2734,7 +2827,7 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionParameters()
     if (checked)
     {
       printf("SetOpenTrackerConnectionParameters()\n");
-        // connected
+    // connected
       strncpy(xmlpathfilename, this->LoadConfigButtonNT->GetWidget()->GetFileName(), 256);
     
       // if (! filename)
@@ -2750,39 +2843,40 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionParameters()
       sprintf(buf, "Connect to OpenTracker with %s", xmlpathfilename,"%s file?");
      
       //dialog->SetText(msg.c_str());
-          dialog->SetText(buf);
-          dialog->Create();
-          dialog->Invoke();
-          dialog->Delete();
-          // this->ConnectCheckButtonNT->SetSelectedState(0);
+      dialog->SetText(buf);
+      dialog->Create();
+      dialog->Invoke();
+      dialog->Delete();
+      // this->ConnectCheckButtonNT->SetSelectedState(0);
 
-          //      brpthreadrun();
+      //      brpthreadrun();
 
-          this->OpenTrackerStream->Init(xmlpathfilename); 
-                
+      this->OpenTrackerStream->Init(xmlpathfilename); 
+        
+      cout << "=====================1GUI " << endl; 
 
-          int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
-          float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
-          this->OpenTrackerStream->SetSpeed(sp);
-          this->OpenTrackerStream->SetMultiFactor(multi);
-          this->OpenTrackerStream->SetStartTimer(1);
-          this->OpenTrackerStream->ProcessTimerEvents();        
-         
-          
-         
-      
-
-          
-        cout << "1GUI "; 
+      //int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
+      int sp = 100;
+      //float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
+        float multi = 1.0;
+      cout << "=====================2GUI " << endl; 
+      this->OpenTrackerStream->SetSpeed(sp);
+      cout << "=====================3GUI " << endl; 
+      this->OpenTrackerStream->SetMultiFactor(multi);
+      cout << "=====================4GUI " << endl; 
+      this->OpenTrackerStream->SetStartTimer(1);
+      cout << "=====================5GUI " << endl; 
+      this->OpenTrackerStream->ProcessTimerEvents();    
+      cout << "=====================6GUI " << endl; 
        
     }
     else
      {
-        this->OpenTrackerStream->StopPolling();
+    this->OpenTrackerStream->StopPolling();
     }
 
 
-          
+      
 }
 
 
@@ -2794,31 +2888,31 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionCoordandOrient()
     {
      
 
-        
-        
-        cout << "2GUI "; 
-          std::vector<float> pos;
-          std::vector<float> quat;
-                cout << "3GUI "; 
-          pos.resize(3);
-          quat.resize(4);
-                cout << "4GUI "; 
-          // float brptmp = atof(this->positionbrpy->GetWidget()->GetValue ());
-          //  float brptmp = this->positionbrpy->GetWidget()->GetValue ();
-         
-          pos[0]= atof(this->positionbrpy->GetWidget()->GetValue ());
-          pos[1]= atof(this->positionbrpx->GetWidget()->GetValue ());
-          pos[2]= atof(this->positionbrpz->GetWidget()->GetValue ());
-          quat[0]= atof(this->orientationbrpo1->GetWidget()->GetValue ());
-          quat[1]= atof(this->orientationbrpo2->GetWidget()->GetValue ());
-          quat[2]= atof(this->orientationbrpo3->GetWidget()->GetValue ());
-          quat[3]= atof(this->orientationbrpo4->GetWidget()->GetValue ());
-        cout << "1GUI "; 
-          this->OpenTrackerStream->SetTracker(pos,quat);
-        cout << "5GUI "; 
-        
+    
+    
+    cout << "2GUI "; 
+      std::vector<float> pos;
+      std::vector<float> quat;
+        cout << "3GUI "; 
+      pos.resize(3);
+      quat.resize(4);
+        cout << "4GUI "; 
+      // float brptmp = atof(this->positionbrpy->GetWidget()->GetValue ());
+      //  float brptmp = this->positionbrpy->GetWidget()->GetValue ();
+     
+      pos[0]= atof(this->positionbrpy->GetWidget()->GetValue ());
+      pos[1]= atof(this->positionbrpx->GetWidget()->GetValue ());
+      pos[2]= atof(this->positionbrpz->GetWidget()->GetValue ());
+      quat[0]= atof(this->orientationbrpo1->GetWidget()->GetValue ());
+      quat[1]= atof(this->orientationbrpo2->GetWidget()->GetValue ());
+      quat[2]= atof(this->orientationbrpo3->GetWidget()->GetValue ());
+      quat[3]= atof(this->orientationbrpo4->GetWidget()->GetValue ());
+    cout << "1GUI "; 
+      this->OpenTrackerStream->SetTracker(pos,quat);
+    cout << "5GUI "; 
+    
 
-        
+    
 
 
     }
@@ -2846,64 +2940,64 @@ void vtkBrpNavGUI::SetOpenTrackerforScannerControll()
      ||checkedsendsetprotocol ||checkedsendprepScanner
      ||checkedsendpauseScanner ||checkedsendresumeScanner
      ||checkedsendnewexam )   
-   {            
+   {        
       std::vector<std::string> scancommandkeys;
       std::vector<std::string> scancommandvalues;
       
       
-           if (checkedsendstartScanner)   {scancommandkeys.resize(1);
-                                          scancommandkeys[0] = "mrctrl_cmd";
-                                          scancommandvalues.resize(1);
-                                          scancommandvalues[0] = "START_SCAN"; }
+       if (checkedsendstartScanner)      {scancommandkeys.resize(1);
+                      scancommandkeys[0] = "mrctrl_cmd";
+                      scancommandvalues.resize(1);
+                      scancommandvalues[0] = "START_SCAN"; }
 
 
-           if (checkedsendstopScanner)    {scancommandkeys.resize(1);
-                                          scancommandkeys[0] = "mrctrl_cmd";
-                                          scancommandvalues.resize(1);
-                                          scancommandvalues[0] = "STOP_SCAN"; }
+       if (checkedsendstopScanner)      {scancommandkeys.resize(1);
+                      scancommandkeys[0] = "mrctrl_cmd";
+                      scancommandvalues.resize(1);
+                      scancommandvalues[0] = "STOP_SCAN"; }
 
 
 
-           if (checkedsendprepScanner)    {scancommandkeys.resize(1);
-                                          scancommandkeys[0] = "mrctrl_cmd";
-                                          scancommandvalues.resize(1);
-                                          scancommandvalues[0] = "PREP_SCAN"; }
+       if (checkedsendprepScanner)      {scancommandkeys.resize(1);
+                      scancommandkeys[0] = "mrctrl_cmd";
+                      scancommandvalues.resize(1);
+                      scancommandvalues[0] = "PREP_SCAN"; }
 
-           if (checkedsendpauseScanner)  {scancommandkeys.resize(1);
-                                          scancommandkeys[0] = "mrctrl_cmd";
-                                          scancommandvalues.resize(1);
-                                          scancommandvalues[0] = "PAUSE_SCAN"; }
+       if (checkedsendpauseScanner)     {scancommandkeys.resize(1);
+                      scancommandkeys[0] = "mrctrl_cmd";
+                      scancommandvalues.resize(1);
+                      scancommandvalues[0] = "PAUSE_SCAN"; }
 
 
-           if (checkedsendresumeScanner)  {scancommandkeys.resize(1);
-                                          scancommandkeys[0] = "mrctrl_cmd";
-                                          scancommandvalues.resize(1);
-                                          scancommandvalues[0] = "RESUME_SCAN"; }
+       if (checkedsendresumeScanner)  {scancommandkeys.resize(1);
+                      scancommandkeys[0] = "mrctrl_cmd";
+                      scancommandvalues.resize(1);
+                      scancommandvalues[0] = "RESUME_SCAN"; }
 
-           if (checkedsendnewexam)       {scancommandkeys.resize(4);
-                                          scancommandvalues.resize(4);
-                                            
-                                          scancommandkeys[0]= "mrctrl_cmd";
-                                          scancommandkeys[1]= "patient_id";
-                                          scancommandkeys[2]= "patient_name";
-                                          scancommandkeys[3]= "patient_weight";
-                                          
-                                          scancommandvalues[0]= "NEW_EXAM";
-                                          scancommandvalues[1]= this->positionbrppatientweight->GetWidget()->GetValue ();
-                                          scancommandvalues[2]= this->positionbrppatientname->GetWidget()->GetValue ();   
-                                          scancommandvalues[3]= this->positionbrppatientid->GetWidget()->GetValue ();}
+       if (checkedsendnewexam)     {scancommandkeys.resize(4);
+                      scancommandvalues.resize(4);
+                        
+                      scancommandkeys[0]= "mrctrl_cmd";
+                      scancommandkeys[1]= "patient_id";
+                      scancommandkeys[2]= "patient_name";
+                      scancommandkeys[3]= "patient_weight";
+                      
+                      scancommandvalues[0]= "NEW_EXAM";
+                      scancommandvalues[1]= this->positionbrppatientid->GetWidget()->GetValue ();
+                      scancommandvalues[2]= this->positionbrppatientname->GetWidget()->GetValue ();      
+                      scancommandvalues[3]= this->positionbrppatientweight->GetWidget()->GetValue ();}
 
-           if (checkedsendsetprotocol)   {scancommandkeys.resize(2);
-                                          scancommandvalues.resize(2);
+       if (checkedsendsetprotocol)     {scancommandkeys.resize(2);
+                      scancommandvalues.resize(2);
 
-                                          scancommandkeys[0]= "mrctrl_cmd";
-                                          scancommandkeys[1]= "protocol_name";
+                      scancommandkeys[0]= "mrctrl_cmd";
+                      scancommandkeys[1]= "protocol_name";
 
-                                          scancommandvalues[0] = "LOAD_PROTOCOL"; 
-                                          scancommandvalues[1]= this->positionbrpsetprotocol->GetWidget()->GetValue ();}
+                      scancommandvalues[0] = "LOAD_PROTOCOL"; 
+                      scancommandvalues[1]= this->positionbrpsetprotocol->GetWidget()->GetValue ();}
       
       this->OpenTrackerStream->SetOpenTrackerforScannerControll(scancommandkeys, scancommandvalues);
-        
+    
     }
 
 
@@ -2925,81 +3019,81 @@ void vtkBrpNavGUI::SetIGSTKConnectionParameters()
     if (checked)
     {
 
-        // Pulling rate for data
-        int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
-        this->IGSTKStream->SetSpeed(sp);
+    // Pulling rate for data
+    int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
+    this->IGSTKStream->SetSpeed(sp);
 
-        // Conversion rate
-        float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
-        this->IGSTKStream->SetMultiFactor(multi);
-
-
-        // Device type 
-        vtkKWMenuButton *mb = this->DeviceMenuButton->GetWidget();
-        if (!strcmp (mb->GetValue(), "Polaris"))   
-        {
-            this->IGSTKStream->SetTrackerType(0);
-        }
-        else 
-        {
-            this->IGSTKStream->SetTrackerType(1);
-
-        }
+    // Conversion rate
+    float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
+    this->IGSTKStream->SetMultiFactor(multi);
 
 
-        // Port number
-        int pn = atoi(this->PortNumberMenuButton->GetWidget()->GetValue());
-        this->IGSTKStream->SetPortNumber((PortNumberT)pn);
+    // Device type 
+    vtkKWMenuButton *mb = this->DeviceMenuButton->GetWidget();
+    if (!strcmp (mb->GetValue(), "Polaris"))   
+    {
+        this->IGSTKStream->SetTrackerType(0);
+    }
+    else 
+    {
+        this->IGSTKStream->SetTrackerType(1);
 
-        // Baud rate 
-        int br = atoi(this->BaudRateMenuButton->GetWidget()->GetValue());
-        this->IGSTKStream->SetBaudRate((BaudRateT)br);
+    }
 
-        // Data bits 
-        int db = atoi(this->DataBitsMenuButton->GetWidget()->GetValue());
-        this->IGSTKStream->SetBaudRate((BaudRateT)db);
 
-        // Parity 
-        mb = this->ParityTypeMenuButton->GetWidget();
-        if (!strcmp (mb->GetValue(), "No"))   
+    // Port number
+    int pn = atoi(this->PortNumberMenuButton->GetWidget()->GetValue());
+    this->IGSTKStream->SetPortNumber((PortNumberT)pn);
 
-        {
-            this->IGSTKStream->SetParity(igstk::SerialCommunication::NoParity);
-        }
-        else if  (!strcmp (mb->GetValue(), "Odd")) 
-        {
-            this->IGSTKStream->SetParity(igstk::SerialCommunication::OddParity);
-        }
-        else
-        {
+    // Baud rate 
+    int br = atoi(this->BaudRateMenuButton->GetWidget()->GetValue());
+    this->IGSTKStream->SetBaudRate((BaudRateT)br);
 
-            this->IGSTKStream->SetParity(igstk::SerialCommunication::EvenParity);
-        }
+    // Data bits 
+    int db = atoi(this->DataBitsMenuButton->GetWidget()->GetValue());
+    this->IGSTKStream->SetBaudRate((BaudRateT)db);
 
-        // Stop bits 
-        int sb = atoi(this->StopBitsMenuButton->GetWidget()->GetValue());
-        this->IGSTKStream->SetStopBits((StopBitsT)sb);
+    // Parity 
+    mb = this->ParityTypeMenuButton->GetWidget();
+    if (!strcmp (mb->GetValue(), "No"))   
 
-        // Hand shake
-        mb = this->HandShakeMenuButton->GetWidget();
-        if (!strcmp (mb->GetValue(), "Off"))   
-        {
-            this->IGSTKStream->SetHandShake(igstk::SerialCommunication::HandshakeOff);
-        }
-        else
-        {
-            this->IGSTKStream->SetHandShake(igstk::SerialCommunication::HandshakeOn);
-        }
-
-        this->IGSTKStream->SetTracking(1);
-        this->IGSTKStream->SetSpeed(sp);
-        this->IGSTKStream->SetMultiFactor(multi);
-        this->IGSTKStream->Init();
-        this->IGSTKStream->ProcessTimerEvents();
+    {
+        this->IGSTKStream->SetParity(igstk::SerialCommunication::NoParity);
+    }
+    else if     (!strcmp (mb->GetValue(), "Odd")) 
+    {
+        this->IGSTKStream->SetParity(igstk::SerialCommunication::OddParity);
     }
     else
     {
-        this->IGSTKStream->SetTracking(0);
+
+        this->IGSTKStream->SetParity(igstk::SerialCommunication::EvenParity);
+    }
+
+    // Stop bits 
+    int sb = atoi(this->StopBitsMenuButton->GetWidget()->GetValue());
+    this->IGSTKStream->SetStopBits((StopBitsT)sb);
+
+    // Hand shake
+    mb = this->HandShakeMenuButton->GetWidget();
+    if (!strcmp (mb->GetValue(), "Off"))   
+    {
+        this->IGSTKStream->SetHandShake(igstk::SerialCommunication::HandshakeOff);
+    }
+    else
+    {
+        this->IGSTKStream->SetHandShake(igstk::SerialCommunication::HandshakeOn);
+    }
+
+    this->IGSTKStream->SetTracking(1);
+    this->IGSTKStream->SetSpeed(sp);
+    this->IGSTKStream->SetMultiFactor(multi);
+    this->IGSTKStream->Init();
+    this->IGSTKStream->ProcessTimerEvents();
+    }
+    else
+    {
+    this->IGSTKStream->SetTracking(0);
     }
 }
 #endif
