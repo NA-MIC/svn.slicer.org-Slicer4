@@ -28,7 +28,6 @@
 
 using namespace ot;
 
-
 class VTK_IGT_EXPORT vtkIGTOpenTrackerStream : public vtkObject
 {
 public:
@@ -49,16 +48,23 @@ public:
     vtkGetObjectMacro(RegMatrix,vtkMatrix4x4);
 
     vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
+
+    vtkSetMacro(RealtimeXsize,int);
+    vtkSetMacro(RealtimeYsize,int);
+    // vtkSetMacro(RealtimeImageData,Image);
+    
+   
     vtkGetObjectMacro(LocatorNormalTransform,vtkTransform);
 
     /**
      * Constructor
-     */
+     **/
     vtkIGTOpenTrackerStream();
 
 
     //Description:
     //Destructor
+
     virtual ~vtkIGTOpenTrackerStream ( );
 
 
@@ -75,7 +81,12 @@ public:
     //ETX
     //BTX
     void SetOpenTrackerforScannerControll(std::vector<std::string> scancommandkeys,std::vector<std::string> scancommandvalue);
-    //ETX
+    //ETX    
+    //BTX
+    void GetSizeforRealtimeImaging(int* xsizevalueRI, int* ysizevalueRI);
+    void GetImageDataforRealtimeImaging(Image* ImageDataRI);
+      //ETX
+
 private:
 
     int Speed;
@@ -85,8 +96,12 @@ private:
     vtkMatrix4x4 *LocatorMatrix;
     vtkMatrix4x4 *RegMatrix;
     vtkTransform *LocatorNormalTransform;
-
+                                          
     Context *context;
+
+    int RealtimeXsize;
+    int RealtimeYsize;
+    Image RealtimeImageData;
 
     void Normalize(float *a);
     void Cross(float *a, float *b, float *c);
@@ -95,7 +110,8 @@ private:
 
     void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
 
-
+   
+    
 };
 
 #endif // IGTOPENTRACKERSTREAM_H
