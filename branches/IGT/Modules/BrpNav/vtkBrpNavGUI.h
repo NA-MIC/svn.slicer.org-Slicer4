@@ -202,6 +202,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 #endif
 
     vtkKWEntryWithLabel *UpdateRateEntry;
+    vtkKWEntryWithLabel *GetImageSize;
     vtkKWEntryWithLabel * MultiFactorEntry;
 
     vtkKWEntryWithLabel *PatCoordinatesEntry;
@@ -224,6 +225,10 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 
     // int StopTimer;
     vtkMatrix4x4 *LocatorMatrix;
+    
+
+    //RI
+
 
     vtkMRMLModelNode *LocatorModelNode;
     vtkMRMLModelDisplayNode *LocatorModelDisplayNode;
@@ -251,10 +256,15 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     int NeedOrientationUpdate1;
     int NeedOrientationUpdate2;
 
-    int realtimexsize;
-    int realtimeysize;
+     int RealtimeXsize;
+     int RealtimeYsize;
+     int RealtimeImageData;
+     int  xsizevalueRI;
+     int  ysizevalueRI;
 
+    
 
+     
     pthread_t thread;
     char xmlpathfilename[256];
     float brptmp;
@@ -299,6 +309,11 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
  
     void SetOpenTrackerConnectionCoordandOrient();
     void SetOpenTrackerforScannerControll();
+    void GetSizeforRealtimeImaging();
+    void GetImageDataforRealtimeImaging();
+
+    Image  ImageDataRI;
+
 #endif
 
 #ifdef USE_IGSTK    
