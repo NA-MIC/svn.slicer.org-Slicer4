@@ -1,4 +1,5 @@
 
+
 #include "vtkRenderWindow.h"
 
 #include "vtkKWApplication.h"
@@ -95,7 +96,7 @@ extern "C" {
 #define MRABLATION_DEBUG
 //#define WFENGINE_DEBUG
 //#define NEURONAV_DEBUG
-//#define BRPNAV_DEBUG
+#define BRPNAV_DEBUG
 //#define TRACTOGRAPHY_DEBUG
 
 #ifndef EMSEG_DEBUG
