@@ -35,6 +35,9 @@ class VTK_MRML_EXPORT vtkMRMLVolumeDisplayNode : public vtkMRMLNode
   public:
   static vtkMRMLVolumeDisplayNode *New();
   vtkTypeMacro(vtkMRMLVolumeDisplayNode,vtkMRMLNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLVolumeDisplayNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

@@ -40,6 +40,9 @@ class VTK_MRML_EXPORT vtkMRMLModelNode : public vtkMRMLTransformableNode
 public:
   static vtkMRMLModelNode *New();
   vtkTypeMacro(vtkMRMLModelNode,vtkMRMLTransformableNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLModelNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------

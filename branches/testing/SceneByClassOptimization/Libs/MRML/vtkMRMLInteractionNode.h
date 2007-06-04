@@ -11,6 +11,9 @@ class VTK_MRML_EXPORT vtkMRMLInteractionNode : public vtkMRMLNode
 public:
   static vtkMRMLInteractionNode *New();
   vtkTypeMacro(vtkMRMLInteractionNode,vtkMRMLNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLInteractionNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------

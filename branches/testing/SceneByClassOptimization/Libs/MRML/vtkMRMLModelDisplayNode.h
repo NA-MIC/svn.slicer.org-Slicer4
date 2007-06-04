@@ -36,6 +36,9 @@ class VTK_MRML_EXPORT vtkMRMLModelDisplayNode : public vtkMRMLNode
 public:
   static vtkMRMLModelDisplayNode *New();
   vtkTypeMacro(vtkMRMLModelDisplayNode,vtkMRMLNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLModelDisplayNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------

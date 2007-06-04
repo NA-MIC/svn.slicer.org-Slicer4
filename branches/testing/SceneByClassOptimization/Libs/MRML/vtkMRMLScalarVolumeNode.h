@@ -34,6 +34,9 @@ class VTK_MRML_EXPORT vtkMRMLScalarVolumeNode : public vtkMRMLVolumeNode
   public:
   static vtkMRMLScalarVolumeNode *New();
   vtkTypeMacro(vtkMRMLScalarVolumeNode,vtkMRMLVolumeNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLScalarVolumeNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

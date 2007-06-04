@@ -29,6 +29,7 @@ Version:   $Revision: 1.18 $
 #include <vector>
 #include <string>
 #include <vtksys/SystemTools.hxx> 
+#include <vtksys/hash_map.hxx> 
 
 #include "vtkCollection.h"
 #include "vtkObjectFactory.h"
@@ -165,6 +166,10 @@ public:
   // Description:
   // Get nodes of a specified class having the specified name
   vtkCollection *GetNodesByClassByName(const char* className, const char* name);
+
+  // Description:
+  // Get nodes of a specified class 
+  vtkCollection *GetNodesByClass(const char* className);
   
   // Description:
   // Get number of nodes in the scene
@@ -351,10 +356,16 @@ protected:
   std::vector< std::string > ReferencedIDs;
   std::vector< vtkMRMLNode* > ReferencingNodes;
   std::map< std::string, std::string> ReferencedIDChanges;
+
+  std::map<std::string, std::vector <vtkMRMLNode *> > NodesByClasses;
   
+  unsigned long NodesByClassesMTime;
+
   std::string ErrorMessage;
   //ETX
   
+  void UpdateNodesByClasses();
+
   void UpdateNodeReferences();
 
   void RemoveAllNodesExceptSingletons();

@@ -35,7 +35,10 @@ class VTK_MRML_EXPORT vtkMRMLColorNode : public vtkMRMLNode
 public:
   static vtkMRMLColorNode *New();
   vtkTypeMacro(vtkMRMLColorNode,vtkMRMLNode);
-  void PrintSelf(ostream& os, vtkIndent indent);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLColorNode);
+  //ETX
+ void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------
   // MRMLNode methods

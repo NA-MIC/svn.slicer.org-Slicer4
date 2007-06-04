@@ -33,6 +33,9 @@ class VTK_MRML_EXPORT vtkMRMLFiberBundleDisplayNode : public vtkMRMLModelDisplay
  public:
   static vtkMRMLFiberBundleDisplayNode *New (  );
   vtkTypeMacro ( vtkMRMLFiberBundleDisplayNode,vtkMRMLModelDisplayNode );
+  //BTX
+  vtkMRMLNodeInheritanceMacro( vtkMRMLFiberBundleDisplayNode);
+  //ETX
   void PrintSelf ( ostream& os, vtkIndent indent );
   
   //--------------------------------------------------------------------------

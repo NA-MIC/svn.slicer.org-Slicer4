@@ -39,6 +39,9 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionWeightedVolumeDisplayNode : public vtkMRML
   public:
   static vtkMRMLDiffusionWeightedVolumeDisplayNode *New();
   vtkTypeMacro(vtkMRMLDiffusionWeightedVolumeDisplayNode,vtkMRMLVolumeDisplayNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLDiffusionWeightedVolumeDisplayNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

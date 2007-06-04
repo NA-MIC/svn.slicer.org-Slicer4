@@ -31,6 +31,9 @@ class VTK_MRML_EXPORT vtkMRMLFreeSurferModelStorageNode : public vtkMRMLModelSto
   public:
   static vtkMRMLFreeSurferModelStorageNode *New();
   vtkTypeMacro(vtkMRMLFreeSurferModelStorageNode,vtkMRMLStorageNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLFreeSurferModelStorageNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

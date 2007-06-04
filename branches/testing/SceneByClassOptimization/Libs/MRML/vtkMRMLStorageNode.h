@@ -28,6 +28,9 @@ class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
   public:
   static vtkMRMLStorageNode *New(){return NULL;};
   vtkTypeMacro(vtkMRMLStorageNode,vtkMRMLNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLStorageNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance() = 0;

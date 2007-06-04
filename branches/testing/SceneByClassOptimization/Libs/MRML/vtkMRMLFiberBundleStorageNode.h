@@ -27,6 +27,9 @@ class VTK_MRML_EXPORT vtkMRMLFiberBundleStorageNode : public vtkMRMLModelStorage
   public:
   static vtkMRMLFiberBundleStorageNode *New();
   vtkTypeMacro(vtkMRMLFiberBundleStorageNode,vtkMRMLModelStorageNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLFiberBundleStorageNode);
+  //ETX
   //void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

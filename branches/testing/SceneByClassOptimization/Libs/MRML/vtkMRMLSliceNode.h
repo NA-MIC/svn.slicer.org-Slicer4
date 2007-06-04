@@ -32,6 +32,9 @@ class VTK_MRML_EXPORT vtkMRMLSliceNode : public vtkMRMLNode
   public:
   static vtkMRMLSliceNode *New();
   vtkTypeMacro(vtkMRMLSliceNode,vtkMRMLNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLSliceNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();
