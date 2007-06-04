@@ -28,6 +28,9 @@ class VTK_MRML_EXPORT vtkMRMLViewNode : public vtkMRMLNode
 public:
   static vtkMRMLViewNode *New();
   vtkTypeMacro(vtkMRMLViewNode,vtkMRMLNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLCameraNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------
