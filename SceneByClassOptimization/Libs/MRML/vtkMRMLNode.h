@@ -71,6 +71,23 @@ virtual void Set##name (const char* _arg) \
 #endif
 //ETX
 
+//BTX 
+#ifndef vtkMRMLNodeInheritanceMacro
+#define vtkMRMLNodeInheritanceMacro(thisClass) \
+public: \
+  static void GetNodeClasses(std::vector<std::string> &classes) \
+  { \
+    classes.push_back(std::string(#thisClass)); \
+    Superclass::GetNodeClasses(classes); \
+  }; \
+public: \
+  virtual void GetNodeInheritanceClasses(std::vector<std::string> &classes) \
+  { \
+  this->GetNodeClasses(classes); \
+  }; 
+#endif
+//ETX 
+
 class vtkMRMLScene;
 class vtkCallbackCommand;
 
@@ -85,6 +102,10 @@ class VTK_MRML_EXPORT vtkMRMLNode : public vtkObject
 public:
   static vtkMRMLNode *New();
   vtkTypeMacro(vtkMRMLNode,vtkObject);
+//BTX
+  virtual void GetNodeInheritanceClasses(std::vector<std::string> &classes) {};
+  static void GetNodeClasses(std::vector<std::string> &classes) {};
+//ETX
   void PrintSelf(ostream& os, vtkIndent indent);
   
   // Description:

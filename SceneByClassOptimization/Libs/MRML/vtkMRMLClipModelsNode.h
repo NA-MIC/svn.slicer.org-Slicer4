@@ -35,6 +35,9 @@ class VTK_MRML_EXPORT vtkMRMLClipModelsNode : public vtkMRMLNode
 public:
   static vtkMRMLClipModelsNode *New();
   vtkTypeMacro(vtkMRMLClipModelsNode,vtkMRMLNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLClipModelsNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------

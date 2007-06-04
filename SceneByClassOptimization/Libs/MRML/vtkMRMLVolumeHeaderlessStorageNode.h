@@ -30,6 +30,9 @@ class VTK_MRML_EXPORT vtkMRMLVolumeHeaderlessStorageNode : public vtkMRMLStorage
   public:
   static vtkMRMLVolumeHeaderlessStorageNode *New();
   vtkTypeMacro(vtkMRMLVolumeHeaderlessStorageNode,vtkMRMLStorageNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLVolumeHeaderlessStorageNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

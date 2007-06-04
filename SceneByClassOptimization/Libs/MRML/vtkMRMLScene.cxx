@@ -219,6 +219,12 @@ vtkMRMLScene::~vtkMRMLScene()
     {
     this->RegisteredNodeClasses[n]->Delete();
     }
+  std::map<std::string, std::vector <vtkMRMLNode *> >::iterator it;
+  // clean the old vectors
+  for (it=this->NodesByClasses.begin(); it != this->NodesByClasses.end(); it++)
+    {
+    (it->second).clear();
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -697,10 +703,11 @@ vtkMRMLNode*  vtkMRMLScene::AddNodeNoNotify(vtkMRMLNode *n)
     {
     // check if there is a singletone of this class in the scene 
     // and if found copy this node into it
-    int numNodes = GetNumberOfNodesByClass(n->GetClassName());
-    for (int i=0; i<numNodes; i++)
+    vtkCollection* snodes = this->GetNodesByClass(n->GetClassName());
+    snodes->InitTraversal();
+    for (int i=0; i<snodes->GetNumberOfItems(); i++)
       {
-      vtkMRMLNode *sn = this->GetNthNodeByClass(i, n->GetClassName());
+      vtkMRMLNode *sn = vtkMRMLNode::SafeDownCast(snodes->GetNextItemAsObject());
       if (sn->GetSingletonTag() != NULL && strcmp(sn->GetSingletonTag(),
                                                   n->GetSingletonTag()) == 0)
         {
@@ -708,6 +715,7 @@ vtkMRMLNode*  vtkMRMLScene::AddNodeNoNotify(vtkMRMLNode *n)
         return sn;
         }
       }
+    snodes->Delete();
     }
   if (n->GetID() == NULL || n->GetID()[0] == '\0' || this->GetNodeByID(n->GetID()) != NULL) 
     {
@@ -770,18 +778,17 @@ void vtkMRMLScene::RemoveNode(vtkMRMLNode *n)
 //------------------------------------------------------------------------------
 int vtkMRMLScene::GetNumberOfNodesByClass(const char *className)
 {
-  int num=0;
-  vtkMRMLNode *node;
-  int n;
-  for (n=0; n < this->CurrentScene->GetNumberOfItems(); n++) 
+  this->UpdateNodesByClasses();
+  std::map<std::string, std::vector <vtkMRMLNode *> >::iterator it = 
+    this->NodesByClasses.find(std::string(className));
+  if (it != this->NodesByClasses.end()) 
     {
-    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(n);
-    if (node->IsA(className)) 
-      {
-      num++;
-      }
+    return (it->second).size();
     }
-  return num;
+  else
+    {
+    return 0;
+    }
 }
 
 //------------------------------------------------------------------------------
@@ -863,24 +870,55 @@ vtkMRMLNode* vtkMRMLScene::GetNthNode(int n)
 }
 
 //------------------------------------------------------------------------------
-vtkMRMLNode* vtkMRMLScene::GetNthNodeByClass(int n, const char *className)
+void vtkMRMLScene::UpdateNodesByClasses()
 {
-  int num=0;
-  vtkMRMLNode *node;
-  for (int nn=0; nn < this->CurrentScene->GetNumberOfItems(); nn++) 
+  if (this->CurrentScene->GetMTime() > this->NodesByClassesMTime)
     {
-    node = (vtkMRMLNode*)this->CurrentScene->GetItemAsObject(nn);
-    if (node->IsA(className)) 
+    std::map<std::string, std::vector <vtkMRMLNode *> >::iterator it;
+    // clean the old vectors
+    for (it=this->NodesByClasses.begin(); it != this->NodesByClasses.end(); it++)
       {
-      if (num == n) 
+      (it->second).clear();
+      }
+    this->CurrentScene->InitTraversal();
+    vtkMRMLNode *node = NULL;
+    while (node = this->GetNextNode()) 
+      {
+      std::vector<std::string> classes;
+      node->GetNodeInheritanceClasses(classes);
+      for(unsigned int i=0; i<classes.size(); i++)
         {
-        return node;
+        it = this->NodesByClasses.find(classes[i]);
+        if (it == this->NodesByClasses.end())
+          {
+          std::vector <vtkMRMLNode *> nodeVector;
+          this->NodesByClasses[classes[i]] = nodeVector;
+          it = this->NodesByClasses.find(classes[i]);
+          }
+        (it->second).push_back(node);
         }
-      num++;
       }
     }
-  return NULL;
+  this->NodesByClassesMTime = this->CurrentScene->GetMTime(); 
 }
+
+
+//------------------------------------------------------------------------------
+vtkMRMLNode* vtkMRMLScene::GetNthNodeByClass(int n, const char *className)
+{
+  this->UpdateNodesByClasses();
+  std::map<std::string, std::vector <vtkMRMLNode *> >::iterator it = 
+    this->NodesByClasses.find(std::string(className));
+  if (it != this->NodesByClasses.end()) 
+    {
+    return (it->second)[n];
+    }
+  else
+    {
+    return NULL;
+    }
+}
+
 
 //------------------------------------------------------------------------------
 vtkCollection* vtkMRMLScene::GetNodesByName(const char* name)
@@ -948,6 +986,25 @@ vtkMRMLNode* vtkMRMLScene::GetNodeByID(const char* id)
 }
 
 //------------------------------------------------------------------------------
+vtkCollection* vtkMRMLScene::GetNodesByClass(const char* className)
+{
+  vtkCollection* nodes = vtkCollection::New();
+  
+  this->UpdateNodesByClasses();
+  std::map<std::string, std::vector <vtkMRMLNode *> >::iterator it = 
+    this->NodesByClasses.find(std::string(className));
+  if (it != this->NodesByClasses.end()) 
+    {
+    int nnodes =  (it->second).size();
+    for (unsigned int n=0; n<nnodes; n++)
+      {
+      nodes->AddItem((it->second)[n]);
+      }
+    }
+  return nodes;
+}
+
+//------------------------------------------------------------------------------
 vtkCollection* vtkMRMLScene::GetNodesByClassByName(const char* className, const char* name)
 {
   vtkCollection* nodes = vtkCollection::New();
@@ -964,7 +1021,6 @@ vtkCollection* vtkMRMLScene::GetNodesByClassByName(const char* className, const 
 
   return nodes;
 }
-
 //------------------------------------------------------------------------------
 int  vtkMRMLScene::GetTransformBetweenNodes(vtkMRMLNode *node1,
                                             vtkMRMLNode *node2, 

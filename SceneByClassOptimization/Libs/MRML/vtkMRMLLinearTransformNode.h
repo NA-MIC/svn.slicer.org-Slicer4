@@ -28,6 +28,9 @@ class VTK_MRML_EXPORT vtkMRMLLinearTransformNode : public vtkMRMLTransformNode
   public:
   static vtkMRMLLinearTransformNode *New();
   vtkTypeMacro(vtkMRMLLinearTransformNode,vtkMRMLTransformNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLLinearTransformNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

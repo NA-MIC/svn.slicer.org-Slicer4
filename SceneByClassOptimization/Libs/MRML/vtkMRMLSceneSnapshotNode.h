@@ -26,6 +26,9 @@ class VTK_MRML_EXPORT vtkMRMLSceneSnapshotNode : public vtkMRMLNode
   public:
   static vtkMRMLSceneSnapshotNode *New();
   vtkTypeMacro(vtkMRMLSceneSnapshotNode,vtkMRMLNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLSceneSnapshotNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

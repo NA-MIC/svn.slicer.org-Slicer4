@@ -31,6 +31,9 @@ class VTK_MRML_EXPORT vtkMRMLVolumeArchetypeStorageNode : public vtkMRMLStorageN
   public:
   static vtkMRMLVolumeArchetypeStorageNode *New();
   vtkTypeMacro(vtkMRMLVolumeArchetypeStorageNode,vtkMRMLStorageNode);
+  //BTX
+  vtkMRMLNodeInheritanceMacro(vtkMRMLVolumeArchetypeStorageNode);
+  //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();
