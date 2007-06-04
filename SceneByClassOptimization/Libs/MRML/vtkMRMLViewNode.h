@@ -29,7 +29,7 @@ public:
   static vtkMRMLViewNode *New();
   vtkTypeMacro(vtkMRMLViewNode,vtkMRMLNode);
   //BTX
-  vtkMRMLNodeInheritanceMacro(vtkMRMLCameraNode);
+  vtkMRMLNodeInheritanceMacro(vtkMRMLViewNode);
   //ETX
   void PrintSelf(ostream& os, vtkIndent indent);
   
