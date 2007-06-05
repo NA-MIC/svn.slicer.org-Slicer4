@@ -1,5 +1,4 @@
 
-#
 # Note: this local vars file overrides sets the default environment for :
 #   Scripts/genlib.tcl -- make all the support libs
 #   Scripts/cmaker.tcl -- makes slicer code
@@ -136,7 +135,7 @@ set ::OT_VERSION "OFF"
 
 # OT_LIB_DIR: the absolute path contains the OpenTracker library, 
 # e.g. libOpenTrakcer.so 
-set ::OT_LIB_DIR /projects/igtdev/mewes/NaviTrackBrp/NaviTrack-build
+set ::OT_LIB_DIR /projects/igtdev/mewes/NaviTrackBrp/NaviTrack
 # set ::OT_LIB_DIR ""
 
 # OT_INC: the directory contains "OpenTracker.h" (opentracker 1.3) or 
