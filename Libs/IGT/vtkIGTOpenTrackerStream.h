@@ -1,4 +1,4 @@
-// .NAME vtkIGTOpenTrackerStream - Central registry to provide control and I/O for
+ // .NAME vtkIGTOpenTrackerStream - Central registry to provide control and I/O for
 //  trackers and imagers
 // .SECTION Description
 // vtkIGTOpenTrackerStream registers arbitary number of trackers and imagers, created MRML nodes in the MRML secene. Designed and Coded by Nobuhiko Hata and Haiying Liu, Jan 12, 2007 @ NA-MIC All Hands Meeting, Salt Lake City, UT
@@ -16,6 +16,9 @@
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
 
+#include "vtkImageData.h"
+
+
 #ifdef OT_VERSION_20
 #include "OpenTracker/OpenTracker.h"
 #include "OpenTracker/common/CallbackModule.h"
@@ -27,6 +30,7 @@
 #endif
 
 using namespace ot;
+
 
 class VTK_IGT_EXPORT vtkIGTOpenTrackerStream : public vtkObject
 {
@@ -42,12 +46,13 @@ public:
 
     vtkSetMacro(StartTimer,int);
 
-
-
     vtkSetObjectMacro(RegMatrix,vtkMatrix4x4);
     vtkGetObjectMacro(RegMatrix,vtkMatrix4x4);
 
-    vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
+   
+
+     vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
+   
 
     vtkSetMacro(RealtimeXsize,int);
     vtkSetMacro(RealtimeYsize,int);
@@ -55,7 +60,7 @@ public:
     
    
     vtkGetObjectMacro(LocatorNormalTransform,vtkTransform);
-
+       
     /**
      * Constructor
      **/
@@ -66,25 +71,34 @@ public:
     //Destructor
 
     virtual ~vtkIGTOpenTrackerStream ( );
-
+  
 
     void Init(const char *configFile);
     void StopPolling();
     void PollRealtime();
     void SetLocatorTransforms();
-    void ProcessTimerEvents();
-    
    
+
+    void ProcessTimerEvents();
+
+    
+     
     static void callbackF(Node&, Event&, void *data);
+     static void callbackF_cb2(Node&, Event&, void *data_cb2);
     //BTX
     void SetTracker(std::vector<float> pos,std::vector<float> quat);
     //ETX
     //BTX
-    void SetOpenTrackerforScannerControll(std::vector<std::string> scancommandkeys,std::vector<std::string> scancommandvalue);
+    void SetOpenTrackerforScannerControll(std::vector<std::string> scancommandkeys, std::vector<std::string> scancommandvalue);
+    //ETX
+    //BTX
+    void SetOpenTrackerforBRPDataFlowValveFilter(std::vector<std::string> filtercommandkeys, std::vector<std::string> filtercommandvalue);
+    //ETX
+    //BTX
+    void SetOrientationforRobot(float xsendrobotcoords, float ysendrobotcoords, float zsendrobotcoords, std::vector<float> sendrobotcoordsvector, std::string robotcommandvalue,std::string robotcommandkey);
     //ETX    
     //BTX
-    void GetSizeforRealtimeImaging(int* xsizevalueRI, int* ysizevalueRI);
-    void GetImageDataforRealtimeImaging(Image* ImageDataRI);
+      void GetRealtimeImage(int*, vtkImageData* image);
       //ETX
 
 private:
@@ -94,23 +108,30 @@ private:
     float MultiFactor;
 
     vtkMatrix4x4 *LocatorMatrix;
+    vtkMatrix4x4 *LocatorMatrix_cb2;
     vtkMatrix4x4 *RegMatrix;
+    vtkMatrix4x4 *RegMatrix_cb2;
     vtkTransform *LocatorNormalTransform;
+    vtkTransform *LocatorNormalTransform_cb2;
                                           
     Context *context;
 
     int RealtimeXsize;
     int RealtimeYsize;
     Image RealtimeImageData;
+     int RealtimeImageSerial;
+
 
     void Normalize(float *a);
     void Cross(float *a, float *b, float *c);
     void ApplyTransform(float *position, float *norm, float *transnorm);
+    void ApplyTransform_cb2(float *position_cb2, float *norm_cb2, float *transnorm_cb2);
     void CloseConnection();
 
     void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
+    void quaternion2xyz_cb2(float* orientation_cb2, float *normal_cb2, float *transnormal_cb2); 
 
-   
+    
     
 };
 

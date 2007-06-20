@@ -1,7 +1,4 @@
 
-
-
-
 #include "vtkIGTOpenTrackerStream.h"
 #include "vtkObjectFactory.h"
 
@@ -27,11 +24,20 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream()
     this->Speed = 0;
     this->StartTimer = 0;
     this->LocatorNormalTransform = vtkTransform::New();
+    this->LocatorNormalTransform_cb2 = vtkTransform::New();
+    this->LocatorMatrix = vtkMatrix4x4::New();
+    this->LocatorMatrix_cb2 = vtkMatrix4x4::New();// Identity
+    /*
+    this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
+    */
     this->RealtimeXsize = 0;
     this->RealtimeYsize = 0;
+    this->RealtimeImageSerial = 0;
+
     //this->RealtimeImageData = Image::Image();
     this->RegMatrix = NULL;
+    this->RegMatrix_cb2 = NULL;
     this->context = NULL;
 
 }
@@ -42,6 +48,8 @@ vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream()
     this->LocatorNormalTransform->Delete();
     this->LocatorMatrix->Delete();
 
+    this->LocatorNormalTransform_cb2->Delete();
+    this->LocatorMatrix_cb2->Delete();
 
     if (this->context)
     {
@@ -61,6 +69,7 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
     this->context = new Context(1); 
     // get callback module from the context
     CallbackModule * callbackMod = (CallbackModule *)context->getModule("CallbackConfig");
+    
 
     // parse the configuration file
     context->parseConfiguration(configFile);  
@@ -70,18 +79,83 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
     // if we use NaviTrack (not opentracker), use this function
     // callbackMod->setCallback( "cb1", (OTCallbackFunction*)&callbackF ,this);    
 #ifdef OT_VERSION_20
-    callbackMod->setCallback( "cb1", (OTCallbackFunction*)&callbackF ,this);    
+
+    callbackMod->setCallback( "cb1", (OTCallbackFunction*)&callbackF ,this);
+    callbackMod->setCallback( "cb2", (OTCallbackFunction*)&callbackF_cb2 ,this);
+
 #endif
 #ifdef OT_VERSION_13
-    callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);    
+    callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);
+    callbackMod->setCallback( "cb2", (CallbackFunction*)&callbackF_cb2 ,this);
 #endif
 
 }
+//this second callbackF is for receiving Orientation and Position data from a Robot with a Needle device, philip
 
 
+void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
+{
+
+
+    float position_cb2[3];
+    float orientation_cb2[4];
+    float norm_cb2[3];
+    float transnorm_cb2[3];
+    int j;    
+    
+    vtkIGTOpenTrackerStream *VOT_cb2 =(vtkIGTOpenTrackerStream *)data_cb2;
+
+        // the original values are in the unit of meters
+
+    position_cb2[0]=(float)(event.getPosition())[0] * VOT_cb2->MultiFactor; 
+    position_cb2[1]=(float)(event.getPosition())[1] * VOT_cb2->MultiFactor;
+    position_cb2[2]=(float)(event.getPosition())[2] * VOT_cb2->MultiFactor;
+
+    orientation_cb2[0]=(float)(event.getOrientation())[0];
+    orientation_cb2[1]=(float)(event.getOrientation())[1];
+    orientation_cb2[2]=(float)(event.getOrientation())[2];
+    orientation_cb2[3]=(float)(event.getOrientation())[3];
+    
+    VOT_cb2->quaternion2xyz_cb2(orientation_cb2, norm_cb2, transnorm_cb2);
+
+     
+
+    // Apply the transform matrix 
+    // to the postion, norm and transnorm
+    if (VOT_cb2->RegMatrix)
+        VOT_cb2->ApplyTransform_cb2(position_cb2, norm_cb2, transnorm_cb2);
+
+    for (j=0; j<3; j++) {
+        VOT_cb2->LocatorMatrix->SetElement(j,0,position_cb2[j]);
+    }
+
+
+    for (j=0; j<3; j++) {
+        VOT_cb2->LocatorMatrix->SetElement(j,1,norm_cb2[j]);
+    }
+
+    for (j=0; j<3; j++) {
+        VOT_cb2->LocatorMatrix->SetElement(j,2,transnorm_cb2[j]);
+    }
+
+    for (j=0; j<3; j++) {
+      VOT_cb2->LocatorMatrix->SetElement(j,3,0);
+    }
+
+    for (j=0; j<3; j++) {
+        VOT_cb2->LocatorMatrix->SetElement(3,j,0);
+    }
+
+    VOT_cb2->LocatorMatrix->SetElement(3,3,1);
+
+
+}
 
 void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
 {
+
+ 
+  
     float position[3];
     float orientation[4];
     float norm[3];
@@ -101,19 +175,21 @@ void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
     orientation[2]=(float)(event.getOrientation())[2];
     orientation[3]=(float)(event.getOrientation())[3];
 
-   VOT->quaternion2xyz(orientation, norm, transnorm);
+     VOT->quaternion2xyz(orientation, norm, transnorm);
 
-   //VOT->RealtimeXsize=(int)event.getAttribute(std::string("xsize"),0);
-   //VOT->RealtimeYsize=(int)event.getAttribute(std::string("ysize"),0);
-   int Xsize=(int)event.getAttribute(std::string("xdim"),0);
-   int Ysize=(int)event.getAttribute(std::string("ydim"),0);
+        VOT->RealtimeXsize=(int)event.getAttribute(std::string("xdim"),0);
+      VOT->RealtimeYsize=(int)event.getAttribute(std::string("ydim"),0);
+      // int Xsize=(int)event.getAttribute(std::string("xdim"),0);
+      // int Ysize=(int)event.getAttribute(std::string("ydim"),0);
 
-   cout << "controll Callback x = " << Xsize << ", y = " << Ysize << endl;
+      //  cout << "controll Callback x = " << Xsize << ", y = " << Ysize << endl;
 
-   if(event.hasAttribute("image")) {
+     if(event.hasAttribute("image")) {
+        VOT->RealtimeImageSerial = (VOT->RealtimeImageSerial + 1) % 32768;
+
      VOT->RealtimeImageData=(Image)event.getAttribute((Image*)NULL,"image");
-     cout << "image size is " << VOT->RealtimeImageData.size() << endl;
-   }
+       cout << "image size is " << VOT->RealtimeImageData.size() << endl;
+     }
 
     // Apply the transform matrix 
     // to the postion, norm and transnorm
@@ -156,7 +232,7 @@ void vtkIGTOpenTrackerStream::StopPolling()
 void vtkIGTOpenTrackerStream::PollRealtime()
 {
   if (context) {
-    cout <<"PollRealtime()"<< endl;
+    // cout <<"PollRealtime()"<< endlq;
     context->loopOnce();
   }
 }
@@ -186,6 +262,25 @@ void vtkIGTOpenTrackerStream::quaternion2xyz(float* orientation, float *normal, 
     normal[0] = 2*qx*qz+2*qy*q0;
     normal[1] = 2*qy*qz-2*qx*q0;
     normal[2] = 1-2*qx*qx-2*qy*qy;
+}
+
+
+void vtkIGTOpenTrackerStream::quaternion2xyz_cb2(float* orientation_cb2, float *normal_cb2, float *transnormal_cb2) 
+{
+    float q0, qx, qy, qz;
+
+    q0 = orientation_cb2[3];
+    qx = orientation_cb2[0];
+    qy = orientation_cb2[1];
+    qz = orientation_cb2[2]; 
+
+    transnormal_cb2[0] = 1-2*qy*qy-2*qz*qz;
+    transnormal_cb2[1] = 2*qx*qy+2*qz*q0;
+    transnormal_cb2[2] = 2*qx*qz-2*qy*q0;
+
+    normal_cb2[0] = 2*qx*qz+2*qy*q0;
+    normal_cb2[1] = 2*qy*qz-2*qx*q0;
+    normal_cb2[2] = 1-2*qx*qx-2*qy*qy;
 }
 
 
@@ -374,18 +469,56 @@ void vtkIGTOpenTrackerStream::ApplyTransform(float *position, float *norm, float
 
 
 
+
+void vtkIGTOpenTrackerStream::ApplyTransform_cb2(float *position_cb2, float *norm_cb2, float *transnorm_cb2)
+{
+    // Transform position, norm and transnorm
+    // ---------------------------------------------------------
+    float p[4];
+    float n[4];
+    float tn[4];
+
+    for (int i = 0; i < 3; i++)
+    {
+        p[i] = position_cb2[i];
+        n[i] = norm_cb2[i];
+        tn[i] = transnorm_cb2[i];
+    }
+    p[3] = 1;     // translation affects a poistion
+    n[3] = 0;     // translation doesn't affect an orientation
+    tn[3] = 0;    // translation doesn't affect an orientation
+
+    this->RegMatrix_cb2->MultiplyPoint(p, p);    // transform a position
+    this->RegMatrix_cb2->MultiplyPoint(n, n);    // transform an orientation
+    this->RegMatrix_cb2->MultiplyPoint(tn, tn);  // transform an orientation
+
+    for (int i = 0; i < 3; i++)
+    {
+        position_cb2[i] = p[i];
+        norm_cb2[i] = n[i];
+        transnorm_cb2[i] = tn[i];
+    }
+}
+
+
+
+
 void vtkIGTOpenTrackerStream::ProcessTimerEvents()
 {
     if (this->StartTimer)
-    {
+      {   
+        //   cout << "vtkIGT=====================StartTimer " << endl;
+   
       this->PollRealtime();
-
+      // cout << "vtkIGT=====================PollRealtime() " << endl;
         this->InvokeEvent (vtkCommand::ModifiedEvent);
-
+        // cout << "vtkIGT=====================InvokeEvent(vtkCommand...) " << endl;
         vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
-                1, this, "ProcessTimerEvents");  // RSierra 3/8/07 The integer defines the update rate. On my laptop there is no differenct in performance (i.e. the CPU load is minimal and approx. 10% for update of 2). Is the value equivalent to ms?        
-    }
-    else
+               100, this, "ProcessTimerEvents");  // RSierra 3/8/07 The integer defines the update rate. On my laptop there is no differenct in performance (i.e. the CPU load is minimal and approx. 10% for update of 2). Is the value equivalent to ms?        
+    
+        // cout << "vtkIGT=====================CreatTimerHandler " << endl;
+   } 
+   else
     {
         this->StopPolling();
     }
@@ -411,6 +544,29 @@ void vtkIGTOpenTrackerStream::SetOpenTrackerforScannerControll(std::vector<std::
 }
 
 
+void vtkIGTOpenTrackerStream::SetOpenTrackerforBRPDataFlowValveFilter(std::vector<std::string> filtercommandkeys, std::vector<std::string> filtercommandvalue)
+{
+  #if defined(OT_VERSION_20) || defined(OT_VERSION_13)
+
+  SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
+  
+  module->SetOpenTrackerforBRPDataFlowValveFilter(filtercommandkeys, filtercommandvalue);
+ #endif
+}
+
+
+
+void vtkIGTOpenTrackerStream::SetOrientationforRobot(float xsendrobotcoords, float ysendrobotcoords, float zsendrobotcoords, std::vector<float> sendrobotcoordsvector, std::string robotcommandvalue,std::string robotcommandkey)
+{
+  #if defined(OT_VERSION_20) || defined(OT_VERSION_13)
+  cout<<"opentrackerstream";
+  SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
+  
+  module->SetOrientationforRobot(xsendrobotcoords, ysendrobotcoords, zsendrobotcoords, sendrobotcoordsvector,robotcommandvalue, robotcommandkey);
+ #endif
+}
+
+/*
 void vtkIGTOpenTrackerStream::GetSizeforRealtimeImaging(int* xsizevalueRI, int* ysizevalueRI)
 {
  
@@ -425,4 +581,36 @@ void vtkIGTOpenTrackerStream::GetImageDataforRealtimeImaging(Image* ImageDataRI)
    *ImageDataRI = RealtimeImageData;
  
 }
+*/
 
+void vtkIGTOpenTrackerStream::GetRealtimeImage(int* serial, vtkImageData* image)
+{
+  //std::cerr << "Serial : " << this->RealtimeImageSerial << ", " <<  *serial << std::endl;
+  //std::cerr << "(xsize, ysize) = (" << RealtimeXsize << ", " << RealtimeYsize << ")" << std::endl;
+
+    if (*serial != this->RealtimeImageSerial)
+    {
+      std::cerr << "Serial : " << this->RealtimeImageSerial << ", " <<  *serial << std::endl;
+        *serial = this->RealtimeImageSerial;
+        if (image && RealtimeImageData.size() > 0)
+        {
+            image->SetDimensions(RealtimeXsize, RealtimeYsize, 1);
+            //image->SetExtent( xmin, xmax, ymin, ymax, zmin, zmax );
+            image->SetExtent(0, RealtimeXsize-1, 0, RealtimeYsize-1, 0, 0 );
+            image->SetNumberOfScalarComponents( 1 );
+            image->SetOrigin( 0, 0, 0 );
+            image->SetSpacing( 1, 1, 10 );
+            image->SetScalarTypeToShort();
+            image->AllocateScalars();
+
+            short* dest = (short*) image->GetScalarPointer();
+           if (dest) {
+             memcpy(dest, RealtimeImageData.image_ptr, RealtimeImageData.size());
+             image->Update();
+           }
+        }
+    }
+    else
+    {
+    }
+}
