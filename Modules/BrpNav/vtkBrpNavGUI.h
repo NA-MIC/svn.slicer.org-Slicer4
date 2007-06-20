@@ -18,6 +18,7 @@
 #include "vtkIGTPat2ImgRegistration.h"
 #include "vtkCallbackCommand.h"
 #include "vtkSlicerInteractorStyle.h"
+#include "vtkSlicerVolumesLogic.h"
 
 #include <string>
 
@@ -112,15 +113,18 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWEntryWithLabel *TransSizeEntry;
     vtkKWEntryWithLabel *RadiusEntry;
 
-    vtkKWEntry *NREntry;    
-    vtkKWEntry *NAEntry;
-    vtkKWEntry *NSEntry;
+    vtkKWEntryWithLabel *setSpeedEntry;
+
+    vtkKWEntryWithLabel *NREntry;    
+    vtkKWEntryWithLabel *NAEntry;
+    vtkKWEntryWithLabel *NSEntry;
     vtkKWEntry *TREntry;
     vtkKWEntry *TAEntry;
     vtkKWEntry *TSEntry;
-    vtkKWEntry *PREntry;
-    vtkKWEntry *PAEntry;
-    vtkKWEntry *PSEntry;
+    vtkKWEntryWithLabel *PREntry;
+    vtkKWEntryWithLabel *PAEntry;
+    vtkKWEntryWithLabel *PSEntry;
+    vtkKWEntryWithLabel *O4Entry;
 
     vtkKWFrame *ExtraFrame;
 
@@ -155,6 +159,17 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *ConnectCheckButtonsetprotocol;
 
     vtkKWCheckButton *LocatorCheckButton;
+    vtkKWCheckButton *NeedleCheckButton;
+    
+    vtkKWCheckButton *WorkPhaseStartUpButton;
+    vtkKWCheckButton *WorkPhasePlanningButton;
+    vtkKWCheckButton *WorkPhaseCalibarationButton;
+    vtkKWCheckButton *WorkPhaseTargetingButton;
+    vtkKWCheckButton *WorkPhaseManualButton;
+    vtkKWCheckButton *WorkPhaseEmergencyButton;
+    
+
+
     vtkKWCheckButton *HandleCheckButton;
     vtkKWCheckButton *GuideCheckButton;
 
@@ -209,13 +224,20 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWEntryWithLabel *SlicerCoordinatesEntry;
     vtkKWPushButton *GetPatCoordinatesPushButton;
     vtkKWPushButton *AddPointPairPushButton;
+    vtkKWPushButton *AddCoordsandOrientTarget;
 
     vtkKWMultiColumnListWithScrollbars *PointPairMultiColumnList;
+    vtkKWMultiColumnListWithScrollbars *TargetListColumnList;
 
-//    vtkKWPushButton *LoadPointPairPushButton;
+    //    vtkKWPushButton *LoadPointPairPushButton;
 //    vtkKWPushButton *SavePointPairPushButton;
     vtkKWPushButton *DeletePointPairPushButton;
-    vtkKWPushButton *DeleteAllPointPairPushButton;    
+    vtkKWPushButton *DeleteTargetPushButton;
+    vtkKWPushButton *DeleteAllTargetPushButton;
+    vtkKWPushButton *DeleteAllPointPairPushButton;
+    vtkKWPushButton *MoveBWPushButton;
+    vtkKWPushButton *MoveFWPushButton;
+    vtkKWPushButton *SetOrientButton;
     vtkKWPushButton *RegisterPushButton;
     vtkKWPushButton *ResetPushButton;
 
@@ -225,8 +247,22 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 
     // int StopTimer;
     vtkMatrix4x4 *LocatorMatrix;
+    vtkMatrix4x4 *LocatorMatrix_cb2;
     
+    
+    //Robotcontrollvector
+    //BTX
 
+    typedef std::vector<float> FloatVector;
+   
+    std::vector<float> xsendrobotcoords;
+    std::vector<float> ysendrobotcoords;
+    std::vector<float> zsendrobotcoords;
+    
+    std::vector<float> osendrobotcoords;
+
+    std::vector<FloatVector> sendrobotcoordsvector;
+      //ETX
     //RI
 
 
@@ -252,21 +288,38 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkSlicerSliceControllerWidget *Control1;
     vtkSlicerSliceControllerWidget *Control2;
 
+    vtkSlicerVolumesLogic *VolumesLogic;
+    vtkMRMLVolumeNode     *RealtimeVolumeNode;
+
+
     int NeedOrientationUpdate0;
     int NeedOrientationUpdate1;
     int NeedOrientationUpdate2;
-
+   
      int RealtimeXsize;
      int RealtimeYsize;
-     int RealtimeImageData;
-     int  xsizevalueRI;
+     
+     // int RealtimeImageData;
+      int  xsizevalueRI;
      int  ysizevalueRI;
-
     
+
+    int RealtimeImageSerial;
+    int NeedRealtimeImageUpdate;
+
 
      
     pthread_t thread;
     char xmlpathfilename[256];
+    char xcoordsrobot[12];
+    char ycoordsrobot[12];
+    char zcoordsrobot[12];
+
+    char o1coordsrobot[12];
+    char o2coordsrobot[12];
+    char o3coordsrobot[12];
+    char o4coordsrobot[12];
+
     float brptmp;
     void UpdateAll();
     void UpdateLocator();
@@ -287,9 +340,9 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void BuildGUIForDeviceFrame (); 
      void BuildGUIForRealtimeacqFrame ();
     
-    void BuildGUIForRegistrationFrame ();
+    void BuildGUIForWorkPhaseFrame ();
     void BuildGUIForscancontrollFrame ();
-    
+    void SetOpenTrackerforBRPDataFlowValveFilter ();
     
     void TrackerLoop();
 
@@ -297,8 +350,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void brpthreadrun();
     void brpthreadstop();
     int  brpthreadmainthread();
-    
-    
+     
 
 
 
@@ -311,6 +363,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void SetOpenTrackerforScannerControll();
     void GetSizeforRealtimeImaging();
     void GetImageDataforRealtimeImaging();
+    void SetOrientationforRobot();
 
     Image  ImageDataRI;
 
@@ -321,9 +374,11 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void SetIGSTKConnectionParameters();
 #endif
 
+
+vtkMRMLVolumeNode* AddVolumeNode(vtkSlicerVolumesLogic*, const char*);
+
+
 };
-
-
 
 
 
