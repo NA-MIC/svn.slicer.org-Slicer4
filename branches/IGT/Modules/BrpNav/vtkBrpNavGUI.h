@@ -20,6 +20,7 @@
 #include "vtkSlicerInteractorStyle.h"
 #include "vtkSlicerVolumesLogic.h"
 
+
 #include <string>
 
 #ifdef USE_OPENTRACKER
@@ -248,8 +249,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     // int StopTimer;
     vtkMatrix4x4 *LocatorMatrix;
     vtkMatrix4x4 *LocatorMatrix_cb2;
-    
-    
+      
     //Robotcontrollvector
     //BTX
 
@@ -309,7 +309,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 
 
      
-    pthread_t thread;
+   
     char xmlpathfilename[256];
     char xcoordsrobot[12];
     char ycoordsrobot[12];
@@ -345,14 +345,6 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void SetOpenTrackerforBRPDataFlowValveFilter ();
     
     void TrackerLoop();
-
-    static void* brpthreadprocess(void*);
-    void brpthreadrun();
-    void brpthreadstop();
-    int  brpthreadmainthread();
-     
-
-
 
 
 #ifdef USE_OPENTRACKER
