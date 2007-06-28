@@ -1,3 +1,5 @@
+
+
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -164,7 +166,7 @@ int pathbrp;
     // this->LoadPointPairPushButton = NULL;
     // this->SavePointPairPushButton = NULL;
   
-    this->DeleteAllPointPairPushButton = NULL;
+  
     this->DeleteTargetPushButton = NULL;
     this->DeleteAllTargetPushButton = NULL;
     this->MoveBWPushButton = NULL;
@@ -202,7 +204,6 @@ int pathbrp;
     this->RealtimeXsize = 0;
     this->RealtimeYsize = 0;
     this->RealtimeImageSerial = 0;
-
 
     this->NeedRealtimeImageUpdate = 0;
     
@@ -601,12 +602,7 @@ if (this->WorkPhaseEmergencyButton)
     }
     */
   
-    if (this->DeleteAllPointPairPushButton)
-    {
-    this->DeleteAllPointPairPushButton->SetParent(NULL );
-    this->DeleteAllPointPairPushButton->Delete ( );
-    }
-
+   
     if (this->DeleteTargetPushButton)
     {
     this->DeleteTargetPushButton->SetParent(NULL );
@@ -737,11 +733,7 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     {
     this->AddCoordsandOrientTarget->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     }
-  
-    if (this->DeleteAllPointPairPushButton)
-    {
-    this->DeleteAllPointPairPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    }
+ 
     if (this->DeleteTargetPushButton)
     {
     this->DeleteTargetPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -860,8 +852,6 @@ this->AddCoordsandOrientTarget->AddObserver ( vtkKWPushButton::InvokedEvent, (vt
     this->DeleteTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->DeleteAllTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     
-    this->DeleteAllTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->DeleteAllTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     
 
     this->MoveBWPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -1195,6 +1185,13 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
         }
     }
 
+
+      else if (this->DeleteAllTargetPushButton == vtkKWPushButton::SafeDownCast(caller) 
+                && event == vtkKWPushButton::InvokedEvent)
+        {
+            this->TargetListColumnList->GetWidget()->DeleteAllRows();
+        }
+
  /*   
 #ifdef USE_OPENTRACKER
         this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
@@ -1227,7 +1224,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
  else if (this->NeedleCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
         && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
-      cerr<<"NeedleCheckButton";
+    
         int checked = this->NeedleCheckButton->GetSelectedState(); 
 
         vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
@@ -1284,6 +1281,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
         this->SliceNode1->SetOrientationToSagittal();
         this->SliceNode2->SetOrientationToCoronal();
 
+    
         this->NeedOrientationUpdate0 = 0;
         this->NeedOrientationUpdate1 = 0;
         this->NeedOrientationUpdate2 = 0;
@@ -1298,7 +1296,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
         this->RedSliceMenu->SetValue(val.c_str());
         this->YellowSliceMenu->SetValue(val.c_str());
         this->GreenSliceMenu->SetValue(val.c_str());
-    }
+      }
     }
 } 
 
@@ -1316,7 +1314,7 @@ void vtkBrpNavGUI::DataCallback(vtkObject *caller,
     vtkBrpNavGUI *self = reinterpret_cast<vtkBrpNavGUI *>(clientData);
     vtkDebugWithObjectMacro(self, "In vtkBrpNavGUI DataCallback");
 
-         self->UpdateAll();
+    self->UpdateAll();
 }
 
 
@@ -1346,7 +1344,8 @@ void vtkBrpNavGUI::Enter ( )
     this->Logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
     this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
     this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
-    this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+     this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+  
     this->SliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
     this->SliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
     this->Control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
@@ -1356,9 +1355,11 @@ void vtkBrpNavGUI::Enter ( )
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
     vtkSlicerVolumesGUI *volGui = (vtkSlicerVolumesGUI*)app->GetModuleGUIByName("Volumes");
     this->VolumesLogic = (vtkSlicerVolumesLogic*)(volGui->GetLogic());
-    if (this->RealtimeVolumeNode == NULL)
+      
+  if (this->RealtimeVolumeNode == NULL)
     this->RealtimeVolumeNode = AddVolumeNode(this->VolumesLogic, "Realtime");
-
+    
+    //Set to 1, philip 21/06/2007
     this->Logic0->GetForegroundLayer()->SetUseReslice(0);
 
 
@@ -1378,7 +1379,7 @@ void vtkBrpNavGUI::BuildGUI ( )
 
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
     // Define your help text here.
-    const char *help = "The **BrpNav Module** helps you to do prostate Biopsy by: getting Images from MR-Scanner into Slicer3, control Scanner with Slicer 3, determinate fiducial detection and control the Robot."; 
+    const char *help = "The **BrpNav Module** helps you to do prostate Biopsy by: getting Images from MR-Scanner into Slicer3, control Scanner with Slicer 3, determinate fiducial detection and control the Robot. Module and Logic mainly coded by Junichi Tokuda and Philip Mewes"; 
 
     // ---
     // MODULE GUI FRAME 
@@ -1927,7 +1928,7 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     vtkSlicerModuleCollapsibleFrame *trackingFrame = vtkSlicerModuleCollapsibleFrame::New ( );      
     trackingFrame->SetParent ( page );
     trackingFrame->Create ( );
-    trackingFrame->SetLabelText ("not in use");
+    trackingFrame->SetLabelText ("Orientation Controll");
     //trackingFrame->ExpandFrame ( );
     trackingFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
@@ -2513,7 +2514,7 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     
     //------------------------------- SERVER FRAME-------------*        
     
-
+    /*
     // Active server frame: Server options 
     // -----------------------------------------
 
@@ -2542,7 +2543,7 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     this->Script(
         "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
         this->ServerMenu->GetWidgetName());
-
+    */
      
     // Setup frame: Config file and update rate 
     // -----------------------------------------
@@ -2550,6 +2551,7 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     setupFrame->SetParent ( realtimeacqFrame->GetFrame() );
     setupFrame->Create ( );
     setupFrame->SetLabelText ("Setup");
+    setupFrame->CollapseFrame ( );
     app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
          setupFrame->GetWidgetName(),
          realtimeacqFrame->GetFrame()->GetWidgetName());
@@ -2576,6 +2578,7 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     vtkKWFrame *rateFrame = vtkKWFrame::New();
     rateFrame->SetParent ( setupFrame->GetFrame() );
     rateFrame->Create ( );
+   
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
           rateFrame->GetWidgetName());
 
@@ -2632,6 +2635,30 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
                  this->ConnectCheckButtonRI->GetWidgetName(),
         this->NeedleCheckButton->GetWidgetName());
 
+
+    vtkKWFrameWithLabel *imageorientationFrame = vtkKWFrameWithLabel::New ( );
+    imageorientationFrame->SetParent ( realtimeacqFrame->GetFrame() );
+    imageorientationFrame->Create ( );
+    imageorientationFrame->SetLabelText ("Image Orientation");
+    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+           imageorientationFrame->GetWidgetName() );
+    /*   
+    this->LocatorModeCheckButton = vtkKWCheckButton::New();
+    this->LocatorModeCheckButton->SetParent(imageorientationFrame->GetFrame());
+    this->LocatorModeCheckButton->Create();
+    this->LocatorModeCheckButton->SelectedStateOff();
+    this->LocatorModeCheckButton->SetText("Lock");
+    
+
+    this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
+                 this->LocatorModeCheckButton->GetWidgetName());
+       
+    */
+
+
+
+
+
     /* 
 vtkKWFrameWithLabel *tempFrame = vtkKWFrameWithLabel::New ( );
     connectFrame->SetParent ( realtimeacqFrame->GetFrame() );
@@ -2651,7 +2678,7 @@ vtkKWFrameWithLabel *tempFrame = vtkKWFrameWithLabel::New ( );
     */
 
     realtimeacqFrame->Delete ();
-    activeServerFrame->Delete ();
+    //  activeServerFrame->Delete ();
      setupFrame->Delete ();
      fileFrame->Delete ();
      rateFrame->Delete ();
@@ -2664,85 +2691,6 @@ vtkKWFrameWithLabel *tempFrame = vtkKWFrameWithLabel::New ( );
 
 
 
-//////////////////////////////////////////////////////
-/////Middelware Main LOOP/////////////////////////////
-/////////////////////////////////////////////////////
-/*
-void vtkBrpNavGUI:: brpxml(const char* xmlpathfilename)
-{
-
-
-  double rate;
-
-  rate = 30.f; // default rate
-
-
-    // add the extra medical tracker modules
-    // addSPLModules();
-
-    // important parts of the system
-    // get a context, the default modules and factories are
-    // added allready ( because of the parameter 1 )
-  Context context( 1 );
-
-    // cout << "Context established." << endl;
-
-    // parse the configuration file, builds the tracker tree
-    context.parseConfiguration( xmlpathfilename );
-//   cout << "Parsing complete." << endl << endl << "Starting mainloop !" << endl;
-
-    // initializes the modules and starts the tracker main loop
-  context.runAtRate(rate);
-  OSUtils::sleep(1000);
-    // return 0;
-}
-
-
-//////////////////////////////////////////////////////
-/////////Thread for Middelware////////////////////////
-//////////////////////////////////////////////////////
-
-// thread implementation
-void* vtkBrpNavGUI::brpthreadprocess(void* ptr)
-{
-
-  vtkBrpNavGUI* vbng = (vtkBrpNavGUI*)ptr;
-  
- while (1) {
-    sleep(1);
-    vbng->brpxml(vbng->xmlpathfilename);
-  }
-}
-
-
-// function to start the thread.
-void vtkBrpNavGUI:: brpthreadrun()
-{
-  pthread_create(&thread, NULL, brpthreadprocess, (void*)this);
-  pthread_detach(thread);
- 
-}
-
-
-void vtkBrpNavGUI::brpthreadstop()
-{
-
-  // check alive?.
-
-  pthread_cancel(thread);
-}
-
-
-
-int vtkBrpNavGUI::brpthreadmainthread()
-{
-  
-  brpthreadrun();
-
-  //  stop();
-}
-*/
--
 
 void vtkBrpNavGUI::UpdateAll()
 {
@@ -2755,29 +2703,29 @@ void vtkBrpNavGUI::UpdateAll()
        
 
 #endif
-
-
+ 
   if (this->OpenTrackerStream)
     {
-        vtkImageData* vid = NULL;
-        if (this->RealtimeVolumeNode)
-          vid = this->RealtimeVolumeNode->GetImageData();
+         vtkImageData* vid = NULL;
+               if (this->RealtimeVolumeNode)
+               vid = this->RealtimeVolumeNode->GetImageData();
 
         //  std::cerr << "vid = " << vid << std::endl;
-        if (vid) {
-          //  std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
-           int orgSerial = this->RealtimeImageSerial;
-            this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
-           if (orgSerial != this->RealtimeImageSerial) {
-             this->NeedRealtimeImageUpdate = 1;
-             //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
-             this->Logic0->UpdatePipeline ();
-           }
-        } else {
+                if (vid) {
+                          //  std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
+                          int orgSerial = this->RealtimeImageSerial;
+                          this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
+                              if (orgSerial != this->RealtimeImageSerial) {
+                                          this->NeedRealtimeImageUpdate = 1;
+                                           //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
+                                          //this->Logic0->UpdatePipeline ();
+                                           this->RealtimeVolumeNode->SetAndObserveImageData(vid);
+                                      }
+                              } else {
           //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
         }
-    }
-
+ 
+}
 
 
 
@@ -2793,6 +2741,7 @@ void vtkBrpNavGUI::UpdateAll()
     if (this->LocatorMatrix)
     {
     char Val[10];
+    
 
     float px = this->LocatorMatrix->GetElement(0, 0);
     float py = this->LocatorMatrix->GetElement(1, 0);
@@ -2803,7 +2752,22 @@ void vtkBrpNavGUI::UpdateAll()
     float tx = this->LocatorMatrix->GetElement(0, 2);
     float ty = this->LocatorMatrix->GetElement(1, 2);
     float tz = this->LocatorMatrix->GetElement(2, 2);
+    
+
+
     /*
+    float px = 1;
+    float py = 0;
+    float pz = 0;
+    float nx = 1;
+    float ny = 1;
+    float nz = 1;
+    float tx = 1;
+    float ty = 1;
+    float tz = 1;
+    */
+
+ /*
     sprintf(Val, "%6.2f", px);
     this->PREntry->SetValue(Val);
     sprintf(Val, "%6.2f", py);
@@ -2831,15 +2795,12 @@ void vtkBrpNavGUI::UpdateAll()
     if (this->NeedleCheckButton->GetSelectedState()) this->UpdateLocator();
 
 
-    //this->UpdateSliceDisplay(px, py, pz);     // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
+    //  this->UpdateSliceDisplay(px, py, pz);     // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
     this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
+
+    this->Logic0->UpdatePipeline ();
   
     }
-
-
-
-
-
 }
 
 
@@ -2883,16 +2844,16 @@ void vtkBrpNavGUI::UpdateLocator()
 
 void vtkBrpNavGUI::UpdateRealtimeImg()
 {
-
+  /*
   int checkedRI = this->ConnectCheckButtonRI->GetSelectedState(); 
     if (checkedRI)
     {
 #ifdef USE_OPENTRACKER
      
-      /*
+        
      this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
      this->OpenTrackerStream->GetImageDataforRealtimeImaging(&ImageDataRI);
-      */
+  
 
 #endif
       // xsizevalue = 5;
@@ -2911,71 +2872,120 @@ void vtkBrpNavGUI::UpdateRealtimeImg()
       
       
     }
-
+*/
 }
+
+
+
 
 void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz, 
                     float tx, float ty, float tz, 
                     float px, float py, float pz)
 {
 
-    // Real-time Image source
-    if (this->NeedRealtimeImageUpdate)
+
+     if (this->NeedOrientationUpdate0 ||
+        this->NeedOrientationUpdate1 ||
+         this->NeedOrientationUpdate2
+         //     ||   this->NeedRealtimeImageUpdate
+         )
     {
+      cout<<"UpdateSliceDesplay" <<endl;
+
+ vtkMatrix4x4* mat = vtkMatrix4x4::New();
+
+       cout<<"coordinatex: ";
+      cout<<px <<endl;
+      cout<<"coordinatey: ";
+      cout<<py <<endl;
+      cout<<"coordinatez: ";
+      cout<<pz <<endl;
+      
+
+
+
+      mat->SetElement(0, 0, nx);
+      mat->SetElement(0, 1, ny);
+      mat->SetElement(0, 2, nz);
+      mat->SetElement(1, 0, tx);
+      mat->SetElement(1, 1, ty);
+      mat->SetElement(1, 2, tz);
+      mat->SetElement(2, 0, ny*tz-nz*ty);
+      mat->SetElement(2, 1, nz*tx-nx*tz);
+      mat->SetElement(2, 2, nx*ty-ny*tx);
+      mat->Invert();
+
+
+      mat->SetElement(0, 3, px);
+      mat->SetElement(1, 3, py);
+      mat->SetElement(2, 3, pz);
+      mat->SetElement(3, 3, 1.0);
+
+      this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
+      //            this->RealtimeVolumeNode->SetOrigin(0,0,0);
+
+
+      mat->Delete();
+
+
     }
 
-
-
+     
     // Axial
     if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
     {
-    if (this->NeedOrientationUpdate0) 
-    {
+      if (this->NeedOrientationUpdate0) 
+      {  
         this->SliceNode0->SetOrientationToAxial();
         this->NeedOrientationUpdate0 = 0;
-    }
+      }
     }
     else
     {
-    this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-    this->Control0->GetOffsetScale()->SetValue(pz);
-    this->Logic0->SetSliceOffset(pz);
-    this->NeedOrientationUpdate0 = 1;
+      this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+      this->Control0->GetOffsetScale()->SetValue(pz);
+      //this->Logic0->SetSliceOffset(pz);
+      this->NeedOrientationUpdate0 = 1;
+
     }
 
     // Sagittal
     if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
     {
-    if (this->NeedOrientationUpdate1) 
-    {
+      if (this->NeedOrientationUpdate1) 
+      {
         this->SliceNode1->SetOrientationToSagittal();
         this->NeedOrientationUpdate1 = 0;
-    }
+      }
     }
     else
     {
-    this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-    this->Control1->GetOffsetScale()->SetValue(px);
-    this->Logic1->SetSliceOffset(px);
-    this->NeedOrientationUpdate1 = 1;
+      this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+      this->Control1->GetOffsetScale()->SetValue(px);
+      //this->Logic1->SetSliceOffset(px);
+      this->NeedOrientationUpdate1 = 1;
     }
 
     // Coronal
     if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
     {
-    if (this->NeedOrientationUpdate2) 
-    {
+      if (this->NeedOrientationUpdate2) 
+      {
         this->SliceNode2->SetOrientationToCoronal();
         this->NeedOrientationUpdate2 = 0;
-    }
+      }
     }
     else
     {
-    this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-    this->Control2->GetOffsetScale()->SetValue(py);
-    this->Logic2->SetSliceOffset(py);
-    this->NeedOrientationUpdate2 = 1;
+      this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 3);
+      this->Control2->GetOffsetScale()->SetValue(py);
+      //this->Logic2->SetSliceOffset(py);
+      this->NeedOrientationUpdate2 = 1;
+
+
+
     }
+  
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -3013,7 +3023,7 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionParameters()
       dialog->Delete();
       // this->ConnectCheckButtonNT->SetSelectedState(0);
 
-      //      brpthreadrun();
+   
 
       this->OpenTrackerStream->Init(xmlpathfilename); 
         
@@ -3250,8 +3260,17 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
       if (dest) {
        memset(dest, 0x01, 256*100*sizeof(short));
        image->Update();
+      
       }
+  
+      /*
+      vtkMRMLSliceNode *sliceorient = vtkMRMLSliceNode::New();
+      sliceorient->SetSliceToRAS(LocatorMatrix);
+      sliceorient->UpdateMatrices();
+      */
 
+      vtkSlicerSliceLayerLogic *reslice = vtkSlicerSliceLayerLogic::New();
+      reslice->SetUseReslice(0);
 
       vtkImageChangeInformation *ici = vtkImageChangeInformation::New();
       ici->SetInput (image);
@@ -3270,6 +3289,7 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
       dim[1]   = 256;
       dim[2]   = 1;
       scalarNode->ComputeIJKToRASFromScanOrder("IS",
+                                               // possible is IS, PA, LR
                                               //image->GetSpacing(),
                                               space,
                                               //image->GetDimensions(),
@@ -3301,8 +3321,8 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
           double range[2];
           vtkDebugMacro("Set basic display info");
           volumeNode->GetImageData()->GetScalarRange(range);
-         range[0] = 0.0;
-         range[1] = 256.0;
+           range[0] = 0.0;
+           range[1] = 256.0;
           displayNode->SetLowerThreshold(range[0]);
           displayNode->SetUpperThreshold(range[1]);
           displayNode->SetWindow(range[1] - range[0]);
