@@ -25,6 +25,14 @@
 
 #ifdef USE_OPENTRACKER
 #include "vtkIGTOpenTrackerStream.h"
+
+#define PREP_PHASE = 1;
+#define PLANNING_PHASE = 2;
+#define CALIB_PHASE = 3;
+#define TARG_PHASE = 4;
+#define MANU_PHASE = 5;
+#define EMER_PHASE = 6;
+
 #endif
 #ifdef USE_IGSTK
 #include "vtkIGTIGSTKStream.h"
@@ -147,6 +155,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *ConnectCheckButtonNT;
 
     vtkKWCheckButton *ConnectCheckButtonSEND;
+    vtkKWCheckButton *ConnectCheckButtonPASSROBOTCOORDS;
     vtkKWCheckButton *ConnectCheckButtonStartScanner;
     vtkKWCheckButton *ConnectCheckButtonStopScanner;
     vtkKWCheckButton *ConnectCheckButtonprepScanner;
@@ -187,6 +196,9 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWLoadSaveButtonWithLabel *LoadConfigButtonNT;
     vtkKWLoadSaveButtonWithLabel *LoadConfigButtonRI;
     vtkKWEntry *ConfigFileEntry;
+    vtkKWEntry *ScannerStatusLabelDisp;
+    vtkKWEntry *SoftwareStatusLabelDisp;
+    vtkKWEntry *RobotStatusLabelDisp;
     vtkKWEntry *ConfigFileEntry2;
     vtkKWEntry *ConfigFileEntryRI;
 
@@ -291,6 +303,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkSlicerVolumesLogic *VolumesLogic;
     vtkMRMLVolumeNode     *RealtimeVolumeNode;
 
+  
 
     int NeedOrientationUpdate0;
     int NeedOrientationUpdate1;
@@ -300,16 +313,22 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
      int RealtimeYsize;
      
      // int RealtimeImageData;
-      int  xsizevalueRI;
-     int  ysizevalueRI;
+      float  xsizevalueRI;
+     float  ysizevalueRI;
+
+    
     
 
     int RealtimeImageSerial;
     int NeedRealtimeImageUpdate;
 
+    //status check
+    int var_status_scanner;
+    int var_status_soft;
+    int var_status_robot;
+    
+    
 
-     
-   
     char xmlpathfilename[256];
     char xcoordsrobot[12];
     char ycoordsrobot[12];
@@ -356,7 +375,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void GetSizeforRealtimeImaging();
     void GetImageDataforRealtimeImaging();
     void SetOrientationforRobot();
-
+    void GetCoordsOrientforScanner();
     Image  ImageDataRI;
 
 #endif
