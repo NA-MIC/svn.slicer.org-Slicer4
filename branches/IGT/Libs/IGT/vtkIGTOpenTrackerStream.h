@@ -53,6 +53,15 @@ public:
 
      vtkGetObjectMacro(LocatorMatrix,vtkMatrix4x4);
    
+     vtkSetMacro(position_cb2_FS0,float);
+     vtkSetMacro(position_cb2_FS1,float);
+     vtkSetMacro(position_cb2_FS2,float);
+
+     vtkSetMacro(orientation_cb2_FS0,float);
+     vtkSetMacro(orientation_cb2_FS1,float);
+     vtkSetMacro(orientation_cb2_FS2,float);
+     vtkSetMacro(orientation_cb2_FS3,float);
+
 
     vtkSetMacro(RealtimeXsize,int);
     vtkSetMacro(RealtimeYsize,int);
@@ -101,6 +110,12 @@ public:
       void GetRealtimeImage(int*, vtkImageData* image);
       //ETX
 
+      //BTX
+      //  void GetCoordsOrientforScanner(std::vector<float> OrientationForScanner, std::vector<float> PositionForScanner);
+      void GetCoordsOrientforScanner(float* OrientationForScanner,float* PositionForScanner);
+     
+ //ETX
+
 private:
 
     int Speed;
@@ -115,9 +130,25 @@ private:
     vtkTransform *LocatorNormalTransform_cb2;
                                           
     Context *context;
+    
+    float position_cb2_FS0;
+    float position_cb2_FS1;
+    float position_cb2_FS2;
+
+    float orientation_cb2_FS0;
+    float orientation_cb2_FS1;
+    float orientation_cb2_FS2;
+    float orientation_cb2_FS3;
+    // float orientation_cb2_FS[4];
+    
+    float position_cb2[3];
+    float orientation_cb2[4];
+    
 
     int RealtimeXsize;
     int RealtimeYsize;
+
+  
     Image RealtimeImageData;
      int RealtimeImageSerial;
 
