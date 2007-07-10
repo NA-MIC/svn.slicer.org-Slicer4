@@ -68,7 +68,8 @@ vtkCxxRevisionMacro ( vtkBrpNavGUI, "$Revision: 1.0 $");
 vtkBrpNavGUI::vtkBrpNavGUI ( )
 {
 
-int pathbrp;
+  int pathbrp;
+  
     this->Logic = NULL;
 
     this->NormalOffsetEntry = NULL; 
@@ -105,6 +106,7 @@ int pathbrp;
     this->NeedleCheckButton = NULL;
     this->ConnectCheckButtonNT = NULL;
     this->ConnectCheckButtonSEND = NULL;
+    this->ConnectCheckButtonPASSROBOTCOORDS = NULL;
     this->ConnectCheckButtonStartScanner = NULL;
     this->ConnectCheckButtonStopScanner = NULL;
     this->ConnectCheckButtonsetprotocol = NULL;
@@ -137,9 +139,10 @@ int pathbrp;
 
 #ifdef USE_OPENTRACKER
   
-    this->LoadConfigButtonNT = NULL;
-      this->ConfigFileEntry = NULL;
-   
+     this->LoadConfigButtonNT = NULL;
+     this->ConfigFileEntry = NULL;
+     this->ScannerStatusLabelDisp = NULL;
+     this->SoftwareStatusLabelDisp = NULL;
 #endif
 #ifdef USE_IGSTK
     this->DeviceMenuButton = NULL;
@@ -376,6 +379,12 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
     {
     this->ConnectCheckButtonSEND->SetParent(NULL );
     this->ConnectCheckButtonSEND->Delete ( );
+    }
+       
+      if (this->ConnectCheckButtonPASSROBOTCOORDS)
+    {
+    this->ConnectCheckButtonPASSROBOTCOORDS->SetParent(NULL );
+    this->ConnectCheckButtonPASSROBOTCOORDS->Delete ( );
     }
 
  
@@ -691,8 +700,10 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     {
     this->ConnectCheckButtonSEND->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-     
-   
+      if (this->ConnectCheckButtonPASSROBOTCOORDS)
+    {
+    this->ConnectCheckButtonPASSROBOTCOORDS->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    }  
 
       if (this->ConnectCheckButtonStartScanner)
     {
@@ -830,6 +841,7 @@ void vtkBrpNavGUI::AddGUIObservers ( )
     
 this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButtonSEND->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonPASSROBOTCOORDS->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
    this->ConnectCheckButtonStartScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButtonStopScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -998,7 +1010,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
 
 
 if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller) 
-        && event == vtkKWCheckButton::SelectedStateChangedEvent )
+        && event == vtkKWCheckButton::SelectedStateChangedEvent  )
     {
       
 #ifdef USE_OPENTRACKER
@@ -1051,7 +1063,6 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
 
  if ((this->WorkPhaseStartUpButton == vtkKWCheckButton::SafeDownCast(caller) 
       && event == vtkKWCheckButton::SelectedStateChangedEvent)
-     
      ||(
      this->WorkPhasePlanningButton == vtkKWCheckButton::SafeDownCast(caller) 
      && event == vtkKWCheckButton::SelectedStateChangedEvent)
@@ -1066,21 +1077,102 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       && event == vtkKWCheckButton::SelectedStateChangedEvent)
      ||(
      this->WorkPhaseEmergencyButton == vtkKWCheckButton::SafeDownCast(caller) 
-      && event == vtkKWCheckButton::SelectedStateChangedEvent)
-         
-     )
+      && event == vtkKWCheckButton::SelectedStateChangedEvent))
+
     {
       
 #ifdef USE_OPENTRACKER
+     
+      SetOpenTrackerforBRPDataFlowValveFilter();
+   
+      this->WorkPhaseStartUpButton->SetStateToNormal();
+      this->WorkPhasePlanningButton->SetStateToNormal();
+      this->WorkPhaseCalibarationButton->SetStateToNormal();
+      this->WorkPhaseTargetingButton->SetStateToNormal();
+      this->WorkPhaseManualButton->SetStateToNormal();
+      this->WorkPhaseEmergencyButton->SetStateToNormal();
+         
 
-       SetOpenTrackerforBRPDataFlowValveFilter();
-#endif
+      int checkedPhase1 = this->WorkPhaseStartUpButton->GetSelectedState();
+      int checkedPhase2 = this->WorkPhasePlanningButton->GetSelectedState();
+      int checkedPhase3 = this->WorkPhaseCalibarationButton->GetSelectedState();
+      int checkedPhase4 = this->WorkPhaseTargetingButton->GetSelectedState();
+      int checkedPhase5 = this->WorkPhaseManualButton->GetSelectedState();
+      int checkedPhase6 = this->WorkPhaseEmergencyButton->GetSelectedState();
+
+      if(checkedPhase1)
+         {
+
+          int var_status_scanner PREP_PHASE;
+          this->SoftwareStatusLabelDisp->SetValue("READY");
+          this->WorkPhasePlanningButton->SetStateToDisabled();         
+          this->WorkPhaseCalibarationButton->SetStateToDisabled();
+          this->WorkPhaseTargetingButton->SetStateToDisabled();
+          this->WorkPhaseManualButton->SetStateToDisabled();
+          this->WorkPhaseEmergencyButton->SetStateToDisabled();
+         }         
+      else if (checkedPhase2)
+         {
+          int var_status_scanner PLANNING_PHASE;                  
+          this->SoftwareStatusLabelDisp->SetValue("READY");
+          this->WorkPhaseStartUpButton->SetStateToDisabled();
+          this->WorkPhaseCalibarationButton->SetStateToDisabled();
+          this->WorkPhaseTargetingButton->SetStateToDisabled();
+          this->WorkPhaseManualButton->SetStateToDisabled();
+          this->WorkPhaseEmergencyButton->SetStateToDisabled();
+         }
+      else if (checkedPhase3)
+         {
+          int var_status_scanner CALIB_PHASE;                  
+          this->SoftwareStatusLabelDisp->SetValue("READY");
+          this->WorkPhaseStartUpButton->SetStateToDisabled();
+          this->WorkPhasePlanningButton->SetStateToDisabled();
+          this->WorkPhaseTargetingButton->SetStateToDisabled();
+          this->WorkPhaseManualButton->SetStateToDisabled();
+          this->WorkPhaseEmergencyButton->SetStateToDisabled();
+         }
+      else if (checkedPhase4)
+         {
+          int var_status_scanner TARG_PHASE;                  
+          this->SoftwareStatusLabelDisp->SetValue("READY");
+          this->WorkPhaseStartUpButton->SetStateToDisabled();
+          this->WorkPhaseCalibarationButton->SetStateToDisabled();
+          this->WorkPhasePlanningButton->SetStateToDisabled();
+          this->WorkPhaseManualButton->SetStateToDisabled();
+          this->WorkPhaseEmergencyButton->SetStateToDisabled();
+         }
+      else if (checkedPhase5)
+         {
+          int var_status_scanner MANU_PHASE;                  
+          this->SoftwareStatusLabelDisp->SetValue("READY");
+          this->WorkPhaseStartUpButton->SetStateToDisabled();
+          this->WorkPhaseCalibarationButton->SetStateToDisabled();
+          this->WorkPhaseTargetingButton->SetStateToDisabled();
+          this->WorkPhasePlanningButton->SetStateToDisabled();
+          this->WorkPhaseEmergencyButton->SetStateToDisabled();
+         }
+      else if (checkedPhase6)
+         {
+          int var_status_scanner EMER_PHASE;                  
+          this->SoftwareStatusLabelDisp->SetValue("READY");
+          this->WorkPhaseStartUpButton->SetStateToDisabled();
+          this->WorkPhaseCalibarationButton->SetStateToDisabled();
+          this->WorkPhaseTargetingButton->SetStateToDisabled();
+          this->WorkPhaseManualButton->SetStateToDisabled();
+          this->WorkPhasePlanningButton->SetStateToDisabled();
+         }
       
-#ifdef USE_IGSTK
-        SetIGSTKConnectionParameters();
-#endif
+       else
+        {
+        this->SoftwareStatusLabelDisp->SetValue("");
+        }
       
-   }
+        
+       
+
+#endif
+            
+        }
 
 
 #ifdef USE_OPENTRACKER
@@ -1139,7 +1231,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
          
        
           sendrobotcoordsvector.push_back(osendrobotcoords);   
-          cerr<<"mal";
+         
           osendrobotcoords.clear();
          
         char coordsxyz[512]; 
@@ -1220,7 +1312,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
         }
 
     }
-
+ /*
  else if (this->NeedleCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
         && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
@@ -1239,7 +1331,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
         }
 
     }
-
+ */
     else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
         && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
@@ -1466,16 +1558,29 @@ void vtkBrpNavGUI::BuildGUIForWorkPhaseFrame ()
       app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                    filter3Frame->GetWidgetName(),
                    filterFrame->GetFrame()->GetWidgetName());
-    
-      /*
-      vtkKWFrame *header1robotFrame = vtkKWFrame::New();
-    header1robotFrame->SetParent ( controllrobotFrame->GetFrame() );
-    header1robotFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                 header1robotFrame->GetWidgetName(),
-                 controllrobotFrame->GetFrame()->GetWidgetName());
-      */
-    
+
+
+      vtkKWFrame *workphasestatusFrame = vtkKWFrame::New ( );
+    workphasestatusFrame->SetParent ( filterFrame->GetFrame() );
+    workphasestatusFrame->Create ( );
+      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+                   workphasestatusFrame->GetWidgetName(),
+                   filterFrame->GetFrame()->GetWidgetName());
+
+      vtkKWFrame *workphasestatus2Frame = vtkKWFrame::New ( );
+    workphasestatus2Frame->SetParent ( filterFrame->GetFrame() );
+    workphasestatus2Frame->Create ( );
+      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+                   workphasestatus2Frame->GetWidgetName(),
+                   filterFrame->GetFrame()->GetWidgetName());
+
+      vtkKWFrame *workphasestatus3Frame = vtkKWFrame::New ( );
+    workphasestatus3Frame->SetParent ( filterFrame->GetFrame() );
+    workphasestatus3Frame->Create ( );
+      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+                   workphasestatus3Frame->GetWidgetName(),
+                   filterFrame->GetFrame()->GetWidgetName());
+
 
 
     this->WorkPhaseStartUpButton = vtkKWCheckButton::New();
@@ -1526,9 +1631,70 @@ void vtkBrpNavGUI::BuildGUIForWorkPhaseFrame ()
 
 
 
+    vtkKWLabel *SoftwareStatusLabel = vtkKWLabel::New();
+    SoftwareStatusLabel->SetParent(workphasestatusFrame);
+    SoftwareStatusLabel->Create();
+    SoftwareStatusLabel->SetWidth(15);
+    SoftwareStatusLabel->SetText("Software Status:");
+
+
+    this->SoftwareStatusLabelDisp = vtkKWEntry::New();
+    this->SoftwareStatusLabelDisp->SetParent(workphasestatusFrame);
+    this->SoftwareStatusLabelDisp->Create();
+    this->SoftwareStatusLabelDisp->SetWidth(10);
+    this->SoftwareStatusLabelDisp->SetValue ( "" );
+
+    this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
+                 SoftwareStatusLabel->GetWidgetName(),
+                 SoftwareStatusLabelDisp->GetWidgetName());
+
+
+    vtkKWLabel *ScannerStatusLabel = vtkKWLabel::New();
+    ScannerStatusLabel->SetParent(workphasestatus2Frame);
+    ScannerStatusLabel->Create();
+    ScannerStatusLabel->SetWidth(15);
+    ScannerStatusLabel->SetText("Scanner Status:");
+
+
+    
+    this->ScannerStatusLabelDisp = vtkKWEntry::New();
+    this->ScannerStatusLabelDisp->SetParent(workphasestatus2Frame);
+    this->ScannerStatusLabelDisp->Create();
+    this->ScannerStatusLabelDisp->SetWidth(10);
+    this->ScannerStatusLabelDisp->SetValue ( "" );
+
+    this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
+                 ScannerStatusLabel->GetWidgetName(),
+                 ScannerStatusLabelDisp->GetWidgetName()
+                 );
+
+    vtkKWLabel *RobotStatusLabel = vtkKWLabel::New();
+    RobotStatusLabel->SetParent(workphasestatus3Frame);
+    RobotStatusLabel->Create();
+    RobotStatusLabel->SetWidth(15);
+    RobotStatusLabel->SetText("Robot Status:");
+
+
+    
+    this->RobotStatusLabelDisp = vtkKWEntry::New();
+    this->RobotStatusLabelDisp->SetParent(workphasestatus3Frame);
+    this->RobotStatusLabelDisp->Create();
+    this->RobotStatusLabelDisp->SetWidth(10);
+    this->RobotStatusLabelDisp->SetValue ( "" );
+
+    this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
+                 RobotStatusLabel->GetWidgetName(),
+                 RobotStatusLabelDisp->GetWidgetName()
+                 );
+
+
+
+    
+
+
     workphaseFrame->Delete ();
     filterFrame->Delete ();
-
+  
 }
 
 
@@ -1606,25 +1772,25 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     vtkKWLabel *empty1Label = vtkKWLabel::New();
     empty1Label->SetParent(header1robotFrame);
     empty1Label->Create();
-    empty1Label->SetWidth(1);
+    empty1Label->SetWidth(5);
     empty1Label->SetText("");
 
     vtkKWLabel *xLabel = vtkKWLabel::New();
     xLabel->SetParent(header1robotFrame);
     xLabel->Create();
-    xLabel->SetWidth(13);
+    xLabel->SetWidth(5);
     xLabel->SetText("X");
 
     vtkKWLabel *yLabel = vtkKWLabel::New();
     yLabel->SetParent(header1robotFrame);
     yLabel->Create();
-    yLabel->SetWidth(13);
+    yLabel->SetWidth(5);
     yLabel->SetText("Y");
 
     vtkKWLabel *zLabel = vtkKWLabel::New();
     zLabel->SetParent(header1robotFrame);
     zLabel->Create();
-    zLabel->SetWidth(13);
+    zLabel->SetWidth(5);
     zLabel->SetText("Z");
   
     this->Script("pack %s %s %s %s -side left -anchor w -padx 2 -pady 2", 
@@ -1638,25 +1804,25 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     vtkKWLabel *nLabel = vtkKWLabel::New();
     nLabel->SetParent(coordinatesrobotFrame);
     nLabel->Create();
-    nLabel->SetWidth(1);
+    nLabel->SetWidth(5);
     nLabel->SetText("C:");
    
     this->NREntry = vtkKWEntryWithLabel::New();
     this->NREntry->SetParent(coordinatesrobotFrame);
     this->NREntry->Create();
-    this->NREntry->SetWidth(13);
+    this->NREntry->GetWidget()->SetWidth(5);
     this->NREntry->GetWidget()->SetValue("0");
 
     this->NAEntry = vtkKWEntryWithLabel::New();
     this->NAEntry->SetParent(coordinatesrobotFrame);
     this->NAEntry->Create();
-    this->NAEntry->SetWidth(13);
+    this->NAEntry->GetWidget()->SetWidth(5);
     this->NAEntry->GetWidget()->SetValue("0");
 
     this->NSEntry = vtkKWEntryWithLabel::New();
     this->NSEntry->SetParent(coordinatesrobotFrame);
     this->NSEntry->Create();
-    this->NSEntry->SetWidth(13);
+    this->NSEntry->GetWidget()->SetWidth(5);
     this->NSEntry->GetWidget()->SetValue("0");
   
     this->Script("pack %s %s %s %s -side left -anchor w -padx 2 -pady 2", 
@@ -1672,31 +1838,31 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     vtkKWLabel *empty2Label = vtkKWLabel::New();
     empty2Label->SetParent(header2robotFrame);
     empty2Label->Create();
-    empty2Label->SetWidth(1);
+    empty2Label->SetWidth(5);
     empty2Label->SetText("");
 
     vtkKWLabel *o1Label = vtkKWLabel::New();
     o1Label->SetParent(header2robotFrame);
     o1Label->Create();
-    o1Label->SetWidth(13);
+    o1Label->SetWidth(5);
     o1Label->SetText("O-1");
 
     vtkKWLabel *o2Label = vtkKWLabel::New();
     o2Label->SetParent(header2robotFrame);
     o2Label->Create();
-    o2Label->SetWidth(13);
+    o2Label->SetWidth(5);
     o2Label->SetText("O-2");
 
     vtkKWLabel *o3Label = vtkKWLabel::New();
     o3Label->SetParent(header2robotFrame);
     o3Label->Create();
-    o3Label->SetWidth(13);
+    o3Label->SetWidth(5);
     o3Label->SetText("O-3");
     
     vtkKWLabel *o4Label = vtkKWLabel::New();
     o4Label->SetParent(header2robotFrame);
     o4Label->Create();
-    o4Label->SetWidth(13);
+    o4Label->SetWidth(5);
     o4Label->SetText("O-4");
 
     this->Script("pack %s %s %s %s %s  -side left -anchor w -padx 2 -pady 2", 
@@ -1711,7 +1877,7 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     vtkKWLabel *oLabel = vtkKWLabel::New();
     oLabel->SetParent(orientationsrobotFrame);
     oLabel->Create();
-    oLabel->SetWidth(1);
+    oLabel->SetWidth(5);
     oLabel->SetText("O:");
    
   
@@ -1719,32 +1885,32 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     this->PREntry = vtkKWEntryWithLabel::New();
     this->PREntry->SetParent(orientationsrobotFrame);
     this->PREntry->Create();
-    this->PREntry->SetWidth(13);
+    this->PREntry->GetWidget()->SetWidth(5);
     this->PREntry->GetWidget()->SetValue("0");
 
     this->PAEntry = vtkKWEntryWithLabel::New();
     this->PAEntry->SetParent(orientationsrobotFrame);
     this->PAEntry->Create();
-    this->PAEntry->SetWidth(13);
+    this->PAEntry->GetWidget()->SetWidth(5);
     this->PAEntry->GetWidget()->SetValue("0");
 
     this->PSEntry = vtkKWEntryWithLabel::New();
     this->PSEntry->SetParent(orientationsrobotFrame);
     this->PSEntry->Create();
-    this->PSEntry->SetWidth(13);
+    this->PSEntry->GetWidget()->SetWidth(5);
     this->PSEntry->GetWidget()->SetValue("0");
 
     this->O4Entry = vtkKWEntryWithLabel::New();
     this->O4Entry->SetParent(orientationsrobotFrame);
     this->O4Entry->Create();
-    this->O4Entry->SetWidth(13);
+    this->O4Entry->GetWidget()->SetWidth(5);
     this->O4Entry->GetWidget()->SetValue("0");
 
     this->Script("pack %s %s %s %s %s -side left -anchor w -padx 2 -pady 2", 
-                oLabel->GetWidgetName(),
+               oLabel->GetWidgetName(),
                this->PREntry->GetWidgetName(),
                this->PAEntry->GetWidgetName(),
-                 this->PSEntry->GetWidgetName(),
+               this->PSEntry->GetWidgetName(),
               this->O4Entry->GetWidgetName());
 
   
@@ -2285,7 +2451,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
           connectNTFrame->GetWidgetName());
 
-
+    
     this->ConfigFileEntry = vtkKWEntry::New();
     this->ConfigFileEntry->SetParent(configNTFrame);
     this->ConfigFileEntry->Create();
@@ -2460,9 +2626,18 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->ConnectCheckButtonSEND->Create();
     this->ConnectCheckButtonSEND->SelectedStateOff();
     this->ConnectCheckButtonSEND->SetText("Send");
+    
+    this->ConnectCheckButtonPASSROBOTCOORDS = vtkKWCheckButton::New();
+    this->ConnectCheckButtonPASSROBOTCOORDS->SetParent(sendNTFrame);
+    this->ConnectCheckButtonPASSROBOTCOORDS->Create();
+    this->ConnectCheckButtonPASSROBOTCOORDS->SelectedStateOff();
+    this->ConnectCheckButtonPASSROBOTCOORDS->SetText("Switch (Manual / Robot)");
 
-    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-        this->ConnectCheckButtonSEND->GetWidgetName());
+
+
+    this->Script("pack %s %s -side top -anchor w -padx 2 -pady 2", 
+                 this->ConnectCheckButtonSEND->GetWidgetName(),
+                 this->ConnectCheckButtonPASSROBOTCOORDS->GetWidgetName());
     
    
 
@@ -2703,7 +2878,40 @@ void vtkBrpNavGUI::UpdateAll()
        
 
 #endif
- 
+    int checkedpassrobotcoords = this->ConnectCheckButtonPASSROBOTCOORDS->GetSelectedState();
+    if (checkedpassrobotcoords)
+          {
+        
+                std::vector<float> pos;
+                std::vector<float> quat;
+       
+                pos.resize(3);
+             quat.resize(4);
+
+             float OrientationForScanner;
+             float PositionForScanner;
+  
+
+        this->OpenTrackerStream->GetCoordsOrientforScanner(&OrientationForScanner, &PositionForScanner);
+            
+        /*
+             cout <<OrientationForScanner[0] <<endl;
+             cout <<PositionForScanner[0] <<endl;
+        */   
+
+              pos[0]= PositionForScanner;
+            pos[1]= 0.0;
+            pos[2]=0.0;
+            quat[0]= OrientationForScanner;
+            quat[1]= 0.0;
+            quat[2]= 0.0;
+            quat[3]= 0.0;
+
+          
+            this->OpenTrackerStream->SetTracker(pos,quat);
+          }
+
+
   if (this->OpenTrackerStream)
     {
          vtkImageData* vid = NULL;
@@ -2720,7 +2928,8 @@ void vtkBrpNavGUI::UpdateAll()
                                            //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
                                           //this->Logic0->UpdatePipeline ();
                                            this->RealtimeVolumeNode->SetAndObserveImageData(vid);
-                                      }
+                                          
+                                         }
                               } else {
           //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
         }
@@ -2890,19 +3099,67 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
          //     ||   this->NeedRealtimeImageUpdate
          )
     {
-      cout<<"UpdateSliceDesplay" <<endl;
+      //    cout<<"UpdateSliceDesplay" <<endl;
 
  vtkMatrix4x4* mat = vtkMatrix4x4::New();
-
-       cout<<"coordinatex: ";
-      cout<<px <<endl;
-      cout<<"coordinatey: ";
-      cout<<py <<endl;
-      cout<<"coordinatez: ";
+ /*
+       cout<<"coordinatexyzP";
+       cout<<px;
+      cout<<", ";
+      cout<<py;   
+      cout<<", ";
       cout<<pz <<endl;
+
+
+      cout<<"coordinatexyzN";
+       cout<<nx;
+      cout<<", ";
+      cout<<ny;   
+      cout<<", ";
+      cout<<nz <<endl;
+      
+      cout<<"coordinatexyzT";
+       cout<<tx;
+      cout<<", ";
+      cout<<ty;   
+      cout<<", ";
+      cout<<tz <<endl;
+ */
+      
+      /*Veraendert die Groesse
+          nx=nx*5.5;
+          ny=ny*5.5;
+          nz=nz*5.5;
+          tx=tx*5.5;
+          ty=ty*5.5;
+          tz=tz*5.5; 
       
 
+  //versuch 90 grad Drehung zu simulieren        
+      // nx=nz;
+       nz=-90*nz;
+      // tz=tx;
+       tz=-90*tz;
+       
+      //  same fpr n
+      tx=tx/180;
+      ty=ty/180;
+      tz=tz/180;
+      */
+      
+ 
+      
+      
+      /* Verzieht das Object
+         nx=-nx;
+         ny=-ny;
+          nz=-nz;
+          tx=-tx;
+          ty=-ty ;
+          tz=-tz ; 
+      */
 
+      
 
       mat->SetElement(0, 0, nx);
       mat->SetElement(0, 1, ny);
@@ -2913,21 +3170,63 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
       mat->SetElement(2, 0, ny*tz-nz*ty);
       mat->SetElement(2, 1, nz*tx-nx*tz);
       mat->SetElement(2, 2, nx*ty-ny*tx);
-      mat->Invert();
 
 
+        mat->Invert();
+
+        /*
       mat->SetElement(0, 3, px);
       mat->SetElement(1, 3, py);
       mat->SetElement(2, 3, pz);
+        */
+
+        
+      double ns[3];
+      double ts[3];
+      double cx = -128;
+      double cy = -128;
+      ns[0] = cx * nx;
+      ns[1] = cx * ny;
+      ns[2] = cx * nz;
+
+      ts[0] = cy * tx;
+      ts[1] = cy * ty;
+      ts[2] = cy * tz;
+
+      mat->SetElement(0, 3, px + ns[0] + ts[0]);
+      mat->SetElement(1, 3, py + ns[1] + ts[1]);
+      mat->SetElement(2, 3, pz + ns[2] + ts[2]);
       mat->SetElement(3, 3, 1.0);
+        
 
-      this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
-      //            this->RealtimeVolumeNode->SetOrigin(0,0,0);
+     
+      mat->SetElement(3, 3, 1.0);
+      
+      
+    
+       this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
+     
+      
 
+
+       /*
+       char* order="AP";
+       double spacing[3];
+        spacing[0]=1.0;
+        spacing[1]=1.0;
+        spacing[2]=0.0;
+        int dim[3];
+         dim[0]=256;
+         dim[1]=256;
+         dim[2]=1;       
+         bool centerImage=1;       
+            this->RealtimeVolumeNode->ComputeIJKToRASFromScanOrder(order,spacing,dim,centerImage,mat);
+       */
+    
+
+ 
 
       mat->Delete();
-
-
     }
 
      
@@ -3058,35 +3357,70 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionParameters()
 void vtkBrpNavGUI::SetOpenTrackerConnectionCoordandOrient()
 {
 
- int checkedsend = this->ConnectCheckButtonSEND->GetSelectedState(); 
-    if (checkedsend)
-    {
-     
+ int checkedsend = this->ConnectCheckButtonSEND->GetSelectedState();
 
-    
-    
-    cout << "2GUI "; 
-      std::vector<float> pos;
-      std::vector<float> quat;
-        cout << "3GUI "; 
-      pos.resize(3);
-      quat.resize(4);
-        cout << "4GUI "; 
+ 
+
+                std::vector<float> pos;
+                std::vector<float> quat;
+       
+             pos.resize(3);
+             quat.resize(4);
+
+         
       // float brptmp = atof(this->positionbrpy->GetWidget()->GetValue ());
       //  float brptmp = this->positionbrpy->GetWidget()->GetValue ();
      
-      pos[0]= atof(this->positionbrpy->GetWidget()->GetValue ());
-      pos[1]= atof(this->positionbrpx->GetWidget()->GetValue ());
-      pos[2]= atof(this->positionbrpz->GetWidget()->GetValue ());
-      quat[0]= atof(this->orientationbrpo1->GetWidget()->GetValue ());
-      quat[1]= atof(this->orientationbrpo2->GetWidget()->GetValue ());
-      quat[2]= atof(this->orientationbrpo3->GetWidget()->GetValue ());
-      quat[3]= atof(this->orientationbrpo4->GetWidget()->GetValue ());
-    cout << "1GUI "; 
-      this->OpenTrackerStream->SetTracker(pos,quat);
-    cout << "5GUIsetorientpos "; 
+
+        if (checkedsend)
+          {
+            
+            
+            cout << "Prepare to send orientations and postion so scanner (MANUAL)" <<endl; 
+             
+             pos[0]= atof(this->positionbrpy->GetWidget()->GetValue ());
+            pos[1]= atof(this->positionbrpx->GetWidget()->GetValue ());
+            pos[2]= atof(this->positionbrpz->GetWidget()->GetValue ());
+            quat[0]= atof(this->orientationbrpo1->GetWidget()->GetValue ());
+            quat[1]= atof(this->orientationbrpo2->GetWidget()->GetValue ());
+            quat[2]= atof(this->orientationbrpo3->GetWidget()->GetValue ());
+            quat[3]= atof(this->orientationbrpo4->GetWidget()->GetValue ());
+            
+  }
+        /*
+        if (checkedpassrobotcoords)
+          {
+            
+            // std::vector<float> OrientationForScanner;
+            //    std::vector<float> PositionForScanner;
+  
+                   float OrientationForScanner;
+                  float PositionForScanner;
+  
+
+        this->OpenTrackerStream->GetCoordsOrientforScanner(&OrientationForScanner, &PositionForScanner);
+            
+        cout << "Prepare to send orientations and postion so scanner (TRANSFER ROBOT COORDS. and ORIENT." <<endl;
+             cout <<OrientationForScanner <<endl;
+             cout <<PositionForScanner <<endl;
+             
+
+              pos[0]= PositionForScanner;
+            pos[1]= atof(this->positionbrpx->GetWidget()->GetValue ());
+            pos[2]= atof(this->positionbrpz->GetWidget()->GetValue ());
+            quat[0]= OrientationForScanner;
+            quat[1]= atof(this->orientationbrpo2->GetWidget()->GetValue ());
+            quat[2]= atof(this->orientationbrpo3->GetWidget()->GetValue ());
+            quat[3]= atof(this->orientationbrpo4->GetWidget()->GetValue ());
+                       */
+  
+
+
+            this->OpenTrackerStream->SetTracker(pos,quat);
+            
+            cout << "Send orientations and postion so scanner, Mission accomplished :-)" <<endl;
     
-    }
+    
 }
 
 
@@ -3268,7 +3602,7 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
       sliceorient->SetSliceToRAS(LocatorMatrix);
       sliceorient->UpdateMatrices();
       */
-
+      
       vtkSlicerSliceLayerLogic *reslice = vtkSlicerSliceLayerLogic::New();
       reslice->SetUseReslice(0);
 
@@ -3289,7 +3623,7 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
       dim[1]   = 256;
       dim[2]   = 1;
       scalarNode->ComputeIJKToRASFromScanOrder("IS",
-                                               // possible is IS, PA, LR
+                                               // possible is IS, PA, LR and inverse
                                               //image->GetSpacing(),
                                               space,
                                               //image->GetDimensions(),
