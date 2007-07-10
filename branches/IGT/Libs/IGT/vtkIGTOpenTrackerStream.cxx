@@ -34,6 +34,12 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream()
     this->RealtimeXsize = 0;
     this->RealtimeYsize = 0;
     this->RealtimeImageSerial = 0;
+   
+      this->position_cb2_FS0= 0;
+      this->position_cb2_FS1= 0;
+      this->position_cb2_FS2= 0;
+      
+
 
     //this->RealtimeImageData = Image::Image();
     this->RegMatrix = NULL;
@@ -96,12 +102,17 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
 void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
 {
 
-
-    float position_cb2[3];
+  int status_robot;
+       float position_cb2[3];
     float orientation_cb2[4];
     float norm_cb2[3];
     float transnorm_cb2[3];
     int j;    
+
+
+     float position_cb2_FS;
+    float orientation_cb2_FS[4];
+    
     
     vtkIGTOpenTrackerStream *VOT_cb2 =(vtkIGTOpenTrackerStream *)data_cb2;
 
@@ -115,6 +126,59 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     orientation_cb2[1]=(float)(event.getOrientation())[1];
     orientation_cb2[2]=(float)(event.getOrientation())[2];
     orientation_cb2[3]=(float)(event.getOrientation())[3];
+     
+   
+     
+ 
+    VOT_cb2->position_cb2_FS0=(float)(event.getPosition())[0];
+    VOT_cb2->position_cb2_FS1=(float)(event.getPosition())[1];
+    VOT_cb2->position_cb2_FS2=(float)(event.getPosition())[2];
+
+    VOT_cb2->orientation_cb2_FS0=(float)(event.getOrientation())[0];
+    VOT_cb2->orientation_cb2_FS1=(float)(event.getOrientation())[1];
+    VOT_cb2->orientation_cb2_FS2=(float)(event.getOrientation())[2];
+    VOT_cb2->orientation_cb2_FS3=(float)(event.getOrientation())[3];
+   
+
+
+
+    /*
+ VOT_cb2->position_cb2_FS[1]=(float)(event.getPosition())[1];
+    VOT_cb2->position_cb2_FS[2]=(float)(event.getPosition())[2];
+      
+   VOT_cb2->orientation_cb2_FS[0]=(float)(event.getOrientation())[0];
+   VOT_cb2->orientation_cb2_FS[1]=(float)(event.getOrientation())[1];
+   VOT_cb2->orientation_cb2_FS[2]=(float)(event.getOrientation())[2];
+   VOT_cb2->orientation_cb2_FS[3]=(float)(event.getOrientation())[3];
+      
+   
+    
+    std::vector<float> pos;
+    std::vector<float> quat;
+   
+    pos[0]=(float)(event.getPosition())[0] * VOT_cb2->MultiFactor;
+    pos[1]=(float)(event.getPosition())[1] * VOT_cb2->MultiFactor;
+    pos[2]=(float)(event.getPosition())[2] * VOT_cb2->MultiFactor;
+    
+    quat[0]=(float)(event.getOrientation())[0];
+    quat[1]=(float)(event.getOrientation())[1];
+    quat[2]=(float)(event.getOrientation())[2];
+    quat[3]=(float)(event.getOrientation())[3];
+
+    VOT_cb2->SetTracker(pos, quat);
+    */
+    
+     cout<< position_cb2[0] <<endl;
+     cout<< position_cb2[1] <<endl; 
+     cout<< position_cb2[2] <<endl;
+
+     cout<< orientation_cb2[0] <<endl;
+     cout<< orientation_cb2[1] <<endl;
+     cout<< orientation_cb2[2] <<endl;
+     cout<< orientation_cb2[3] <<endl;
+    
+
+    
     
     VOT_cb2->quaternion2xyz_cb2(orientation_cb2, norm_cb2, transnorm_cb2);
 
@@ -175,9 +239,10 @@ void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
     orientation[2]=(float)(event.getOrientation())[2];
     orientation[3]=(float)(event.getOrientation())[3];
 
+
      VOT->quaternion2xyz(orientation, norm, transnorm);
 
-        VOT->RealtimeXsize=(int)event.getAttribute(std::string("xdim"),0);
+             VOT->RealtimeXsize=(int)event.getAttribute(std::string("xdim"),0);
       VOT->RealtimeYsize=(int)event.getAttribute(std::string("ydim"),0);
       // int Xsize=(int)event.getAttribute(std::string("xdim"),0);
       // int Ysize=(int)event.getAttribute(std::string("ydim"),0);
@@ -549,7 +614,7 @@ void vtkIGTOpenTrackerStream::SetOpenTrackerforBRPDataFlowValveFilter(std::vecto
   #if defined(OT_VERSION_20) || defined(OT_VERSION_13)
 
   SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
-  
+     
   module->SetOpenTrackerforBRPDataFlowValveFilter(filtercommandkeys, filtercommandvalue);
  #endif
 }
@@ -613,4 +678,15 @@ void vtkIGTOpenTrackerStream::GetRealtimeImage(int* serial, vtkImageData* image)
     else
     {
     }
+}
+
+//void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(std::vector<float> OrientationForScanner, std::vector<float> PositionForScanner)
+void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* OrientationForScanner,float* PositionForScanner)
+
+{
+
+   
+  *OrientationForScanner = orientation_cb2_FS0;
+  *PositionForScanner = position_cb2_FS0;
+
 }
