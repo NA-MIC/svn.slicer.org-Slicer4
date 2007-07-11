@@ -681,12 +681,18 @@ void vtkIGTOpenTrackerStream::GetRealtimeImage(int* serial, vtkImageData* image)
 }
 
 //void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(std::vector<float> OrientationForScanner, std::vector<float> PositionForScanner)
-void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* OrientationForScanner,float* PositionForScanner)
+void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* OrientationForScanner0,float* OrientationForScanner1, float* OrientationForScanner2, float* OrientationForScanner3, float* PositionForScanner0, float* PositionForScanner1, float* PositionForScanner2)
 
 {
 
    
-  *OrientationForScanner = orientation_cb2_FS0;
-  *PositionForScanner = position_cb2_FS0;
+  *OrientationForScanner0 = orientation_cb2_FS0;
+  *OrientationForScanner1 = orientation_cb2_FS1;
+*OrientationForScanner2 = orientation_cb2_FS2;
+*OrientationForScanner3 = orientation_cb2_FS3;
+
+  *PositionForScanner0 = position_cb2_FS0;
+  *PositionForScanner1 = position_cb2_FS1;
+*PositionForScanner2 = position_cb2_FS2;
 
 }

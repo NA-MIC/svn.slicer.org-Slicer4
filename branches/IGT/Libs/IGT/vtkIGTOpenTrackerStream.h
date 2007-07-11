@@ -112,7 +112,8 @@ public:
 
       //BTX
       //  void GetCoordsOrientforScanner(std::vector<float> OrientationForScanner, std::vector<float> PositionForScanner);
-      void GetCoordsOrientforScanner(float* OrientationForScanner,float* PositionForScanner);
+      void GetCoordsOrientforScanner(float* OrientationForScanner0,float* OrientationForScanner1, float* OrientationForScanner2, float* OrientationForScanner3, float* PositionForScanner0, float* PositionForScanner1, float* PositionForScanner2);
+      // void GetCoordsOrientforScanner(float* OrientationForScanner[4],float* PositionForScanner[3]);
      
  //ETX
 
