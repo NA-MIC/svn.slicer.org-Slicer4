@@ -1,5 +1,6 @@
 
 
+
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -116,6 +117,7 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->ConnectCheckButtonnewexam = NULL;
 
      this->LocatorCheckButton = NULL;
+     this->FreezeImageCheckButton = NULL;
 
      this->WorkPhaseStartUpButton = NULL;
      this->WorkPhasePlanningButton = NULL;
@@ -432,6 +434,13 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
     this->LocatorCheckButton->SetParent(NULL );
     this->LocatorCheckButton->Delete ( );
     }
+
+    if (this->FreezeImageCheckButton)
+    {
+    this->FreezeImageCheckButton->SetParent(NULL );
+    this->FreezeImageCheckButton->Delete ( );
+    }
+
 
     if (this->WorkPhaseStartUpButton)
     {
@@ -766,8 +775,10 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     {
     this->LocatorCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-
-
+    if (this->FreezeImageCheckButton)
+    {
+    this->FreezeImageCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    }
     if (this->WorkPhaseStartUpButton)
     {
     this->WorkPhaseStartUpButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
@@ -870,7 +881,7 @@ this->AddCoordsandOrientTarget->AddObserver ( vtkKWPushButton::InvokedEvent, (vt
     this->MoveFWPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
     this->LocatorCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-
+    this->FreezeImageCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->WorkPhaseStartUpButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->WorkPhasePlanningButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->WorkPhaseCalibarationButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -2172,9 +2183,16 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     this->UserModeCheckButton->SelectedStateOn();
     this->UserModeCheckButton->SetText("User");
 
+    this->FreezeImageCheckButton = vtkKWCheckButton::New();
+    this->FreezeImageCheckButton->SetParent(modeFrame);
+    this->FreezeImageCheckButton->Create();
+    this->FreezeImageCheckButton->SelectedStateOff();
+    this->FreezeImageCheckButton->SetText("Freeze Image Position");
 
-    this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
+
+    this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
         this->LocatorModeCheckButton->GetWidgetName(),
+        this->FreezeImageCheckButton->GetWidgetName(),
         this->UserModeCheckButton->GetWidgetName());
 
 
@@ -2888,24 +2906,29 @@ void vtkBrpNavGUI::UpdateAll()
                 pos.resize(3);
              quat.resize(4);
 
-             float OrientationForScanner;
-             float PositionForScanner;
+
+            
+
+ 
+             float OrientationForScanner0;
+             float OrientationForScanner1;
+             float OrientationForScanner2;
+             float OrientationForScanner3;
+             float PositionForScanner0;
+             float PositionForScanner1;
+             float PositionForScanner2;
+  
+             
+             this->OpenTrackerStream->GetCoordsOrientforScanner(&OrientationForScanner0, &OrientationForScanner1, &OrientationForScanner2, &OrientationForScanner3, &PositionForScanner0, &PositionForScanner1, &PositionForScanner2);
   
 
-        this->OpenTrackerStream->GetCoordsOrientforScanner(&OrientationForScanner, &PositionForScanner);
-            
-        /*
-             cout <<OrientationForScanner[0] <<endl;
-             cout <<PositionForScanner[0] <<endl;
-        */   
-
-              pos[0]= PositionForScanner;
-            pos[1]= 0.0;
-            pos[2]=0.0;
-            quat[0]= OrientationForScanner;
-            quat[1]= 0.0;
-            quat[2]= 0.0;
-            quat[3]= 0.0;
+              pos[0]= PositionForScanner0;
+            pos[1]= PositionForScanner1;
+            pos[2]=PositionForScanner2;
+            quat[0]= OrientationForScanner0;
+            quat[1]= OrientationForScanner1;
+            quat[2]= OrientationForScanner2;
+            quat[3]= OrientationForScanner3;
 
           
             this->OpenTrackerStream->SetTracker(pos,quat);
@@ -3073,7 +3096,7 @@ void vtkBrpNavGUI::UpdateRealtimeImg()
        
        cout << "ysixe:    ";
        cout<< xsizevalueRI << endl;
-
+`
        
        ofstream fout("output.raw");
        fout.write((const char*)ImageDataRI.image_ptr, ImageDataRI.size());
@@ -3092,6 +3115,8 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
                     float px, float py, float pz)
 {
 
+int checked = this->FreezeImageCheckButton->GetSelectedState();
+
 
      if (this->NeedOrientationUpdate0 ||
         this->NeedOrientationUpdate1 ||
@@ -3099,66 +3124,10 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
          //     ||   this->NeedRealtimeImageUpdate
          )
     {
-      //    cout<<"UpdateSliceDesplay" <<endl;
+ 
 
  vtkMatrix4x4* mat = vtkMatrix4x4::New();
- /*
-       cout<<"coordinatexyzP";
-       cout<<px;
-      cout<<", ";
-      cout<<py;   
-      cout<<", ";
-      cout<<pz <<endl;
-
-
-      cout<<"coordinatexyzN";
-       cout<<nx;
-      cout<<", ";
-      cout<<ny;   
-      cout<<", ";
-      cout<<nz <<endl;
-      
-      cout<<"coordinatexyzT";
-       cout<<tx;
-      cout<<", ";
-      cout<<ty;   
-      cout<<", ";
-      cout<<tz <<endl;
- */
-      
-      /*Veraendert die Groesse
-          nx=nx*5.5;
-          ny=ny*5.5;
-          nz=nz*5.5;
-          tx=tx*5.5;
-          ty=ty*5.5;
-          tz=tz*5.5; 
-      
-
-  //versuch 90 grad Drehung zu simulieren        
-      // nx=nz;
-       nz=-90*nz;
-      // tz=tx;
-       tz=-90*tz;
-       
-      //  same fpr n
-      tx=tx/180;
-      ty=ty/180;
-      tz=tz/180;
-      */
-      
- 
-      
-      
-      /* Verzieht das Object
-         nx=-nx;
-         ny=-ny;
-          nz=-nz;
-          tx=-tx;
-          ty=-ty ;
-          tz=-tz ; 
-      */
-
+ cout<<"UpdateSliceDisplay" <<endl;
       
 
       mat->SetElement(0, 0, nx);
@@ -3174,13 +3143,7 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
 
         mat->Invert();
 
-        /*
-      mat->SetElement(0, 3, px);
-      mat->SetElement(1, 3, py);
-      mat->SetElement(2, 3, pz);
-        */
-
-        
+         
       double ns[3];
       double ts[3];
       double cx = -128;
@@ -3241,7 +3204,10 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
     }
     else
     {
+      if(!checked)
+        {
       this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+        }
       this->Control0->GetOffsetScale()->SetValue(pz);
       //this->Logic0->SetSliceOffset(pz);
       this->NeedOrientationUpdate0 = 1;
