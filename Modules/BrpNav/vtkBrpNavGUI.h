@@ -169,6 +169,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *ConnectCheckButtonsetprotocol;
 
     vtkKWCheckButton *LocatorCheckButton;
+    vtkKWCheckButton *FreezeImageCheckButton;
     vtkKWCheckButton *NeedleCheckButton;
     
     vtkKWCheckButton *WorkPhaseStartUpButton;
