@@ -1,6 +1,4 @@
 
-
-
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -3431,7 +3429,7 @@ void vtkBrpNavGUI::SetOpenTrackerforBRPDataFlowValveFilter()
       if (checkedWorkPhaseEmergencyButton){filtercommandkeys[0] = "workphase";
                                          filtercommandvalues[0] = "EMERGENCY"; }
       
-      this->OpenTrackerStream->SetOpenTrackerforScannerControll(filtercommandkeys, filtercommandvalues);
+      this->OpenTrackerStream->SetOpenTrackerforBRPDataFlowValveFilter(filtercommandkeys, filtercommandvalues);
 
       cout <<"end SetOpenTrackerforBRPDataFlowValveFilter()" <<endl;
 
