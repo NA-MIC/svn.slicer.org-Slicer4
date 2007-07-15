@@ -61,7 +61,10 @@ public:
      vtkSetMacro(orientation_cb2_FS1,float);
      vtkSetMacro(orientation_cb2_FS2,float);
      vtkSetMacro(orientation_cb2_FS3,float);
-
+     
+     
+     // vtkSetMacro(robot_Status, char);
+     
 
     vtkSetMacro(RealtimeXsize,int);
     vtkSetMacro(RealtimeYsize,int);
@@ -108,12 +111,13 @@ public:
     //ETX    
     //BTX
       void GetRealtimeImage(int*, vtkImageData* image);
+      void GetDevicesStatus(std::string& robotstatus,std::string& scannerstatus);
       //ETX
 
       //BTX
-      //  void GetCoordsOrientforScanner(std::vector<float> OrientationForScanner, std::vector<float> PositionForScanner);
+  
       void GetCoordsOrientforScanner(float* OrientationForScanner0,float* OrientationForScanner1, float* OrientationForScanner2, float* OrientationForScanner3, float* PositionForScanner0, float* PositionForScanner1, float* PositionForScanner2);
-      // void GetCoordsOrientforScanner(float* OrientationForScanner[4],float* PositionForScanner[3]);
+  
      
  //ETX
 
@@ -140,7 +144,13 @@ private:
     float orientation_cb2_FS1;
     float orientation_cb2_FS2;
     float orientation_cb2_FS3;
-    // float orientation_cb2_FS[4];
+
+    
+    //BTX
+    std::string robot_Status;
+    //ETX
+
+   
     
     float position_cb2[3];
     float orientation_cb2[4];
