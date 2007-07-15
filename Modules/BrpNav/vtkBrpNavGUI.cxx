@@ -122,8 +122,8 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
      this->WorkPhaseCalibarationButton = NULL;
      this->WorkPhaseTargetingButton = NULL;
      this->WorkPhaseManualButton = NULL;
-     this->WorkPhaseEmergencyButton = NULL;
-
+      this->WorkPhaseEmergencyButton = NULL;
+      this->ClearWorkPhasecontrollButton = NULL;
 
 
     this->NeedleCheckButton = NULL;
@@ -472,6 +472,12 @@ if (this->WorkPhaseEmergencyButton)
     this->WorkPhaseEmergencyButton->Delete ( );
     }
 
+ if (this->ClearWorkPhasecontrollButton)
+    {
+    this->ClearWorkPhasecontrollButton->SetParent(NULL );
+    this->ClearWorkPhasecontrollButton->Delete ( );
+    }
+
 
 
     if (this->NeedleCheckButton)
@@ -782,29 +788,33 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     this->WorkPhaseStartUpButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-if (this->WorkPhasePlanningButton)
+    if (this->WorkPhasePlanningButton)
     {
     this->WorkPhasePlanningButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-if (this->WorkPhaseCalibarationButton)
+    if (this->WorkPhaseCalibarationButton)
     {
     this->WorkPhaseCalibarationButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-if (this->WorkPhaseTargetingButton)
+    if (this->WorkPhaseTargetingButton)
     {
     this->WorkPhaseTargetingButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-if (this->WorkPhaseManualButton)
+    if (this->WorkPhaseManualButton)
     {
     this->WorkPhaseManualButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-if (this->WorkPhaseEmergencyButton)
+    if (this->WorkPhaseEmergencyButton)
     {
     this->WorkPhaseEmergencyButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    }
+    if (this->ClearWorkPhasecontrollButton)
+    {
+    this->ClearWorkPhasecontrollButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
     if (this->NeedleCheckButton)
@@ -886,7 +896,10 @@ this->AddCoordsandOrientTarget->AddObserver ( vtkKWPushButton::InvokedEvent, (vt
     this->WorkPhaseTargetingButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->WorkPhaseManualButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->WorkPhaseEmergencyButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+     this->ClearWorkPhasecontrollButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     
+
+   
     this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->LocatorModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -1069,6 +1082,14 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       
    }
 
+ if (this->ClearWorkPhasecontrollButton == vtkKWCheckButton::SafeDownCast(caller) 
+      && event == vtkKWCheckButton::SelectedStateChangedEvent)
+    {
+     
+      StateTransitionDiagramControll();
+      this->SoftwareStatusLabelDisp->SetValue("CLEARED");
+    }
+
 
  if ((this->WorkPhaseStartUpButton == vtkKWCheckButton::SafeDownCast(caller) 
       && event == vtkKWCheckButton::SelectedStateChangedEvent)
@@ -1092,7 +1113,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       
 #ifdef USE_OPENTRACKER
      
-      SetOpenTrackerforBRPDataFlowValveFilter();
+      
    
       this->WorkPhaseStartUpButton->SetStateToNormal();
       this->WorkPhasePlanningButton->SetStateToNormal();
@@ -1101,84 +1122,36 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       this->WorkPhaseManualButton->SetStateToNormal();
       this->WorkPhaseEmergencyButton->SetStateToNormal();
          
-
+      
       int checkedPhase1 = this->WorkPhaseStartUpButton->GetSelectedState();
       int checkedPhase2 = this->WorkPhasePlanningButton->GetSelectedState();
       int checkedPhase3 = this->WorkPhaseCalibarationButton->GetSelectedState();
       int checkedPhase4 = this->WorkPhaseTargetingButton->GetSelectedState();
       int checkedPhase5 = this->WorkPhaseManualButton->GetSelectedState();
       int checkedPhase6 = this->WorkPhaseEmergencyButton->GetSelectedState();
-
-      if(checkedPhase1)
-         {
-
-          int var_status_scanner PREP_PHASE;
-          this->SoftwareStatusLabelDisp->SetValue("READY");
-          this->WorkPhasePlanningButton->SetStateToDisabled();         
-          this->WorkPhaseCalibarationButton->SetStateToDisabled();
-          this->WorkPhaseTargetingButton->SetStateToDisabled();
-          this->WorkPhaseManualButton->SetStateToDisabled();
-          this->WorkPhaseEmergencyButton->SetStateToDisabled();
-         }         
-      else if (checkedPhase2)
-         {
-          int var_status_scanner PLANNING_PHASE;                  
-          this->SoftwareStatusLabelDisp->SetValue("READY");
-          this->WorkPhaseStartUpButton->SetStateToDisabled();
-          this->WorkPhaseCalibarationButton->SetStateToDisabled();
-          this->WorkPhaseTargetingButton->SetStateToDisabled();
-          this->WorkPhaseManualButton->SetStateToDisabled();
-          this->WorkPhaseEmergencyButton->SetStateToDisabled();
-         }
-      else if (checkedPhase3)
-         {
-          int var_status_scanner CALIB_PHASE;                  
-          this->SoftwareStatusLabelDisp->SetValue("READY");
-          this->WorkPhaseStartUpButton->SetStateToDisabled();
-          this->WorkPhasePlanningButton->SetStateToDisabled();
-          this->WorkPhaseTargetingButton->SetStateToDisabled();
-          this->WorkPhaseManualButton->SetStateToDisabled();
-          this->WorkPhaseEmergencyButton->SetStateToDisabled();
-         }
-      else if (checkedPhase4)
-         {
-          int var_status_scanner TARG_PHASE;                  
-          this->SoftwareStatusLabelDisp->SetValue("READY");
-          this->WorkPhaseStartUpButton->SetStateToDisabled();
-          this->WorkPhaseCalibarationButton->SetStateToDisabled();
-          this->WorkPhasePlanningButton->SetStateToDisabled();
-          this->WorkPhaseManualButton->SetStateToDisabled();
-          this->WorkPhaseEmergencyButton->SetStateToDisabled();
-         }
-      else if (checkedPhase5)
-         {
-          int var_status_scanner MANU_PHASE;                  
-          this->SoftwareStatusLabelDisp->SetValue("READY");
-          this->WorkPhaseStartUpButton->SetStateToDisabled();
-          this->WorkPhaseCalibarationButton->SetStateToDisabled();
-          this->WorkPhaseTargetingButton->SetStateToDisabled();
-          this->WorkPhasePlanningButton->SetStateToDisabled();
-          this->WorkPhaseEmergencyButton->SetStateToDisabled();
-         }
-      else if (checkedPhase6)
-         {
-          int var_status_scanner EMER_PHASE;                  
-          this->SoftwareStatusLabelDisp->SetValue("READY");
-          this->WorkPhaseStartUpButton->SetStateToDisabled();
-          this->WorkPhaseCalibarationButton->SetStateToDisabled();
-          this->WorkPhaseTargetingButton->SetStateToDisabled();
-          this->WorkPhaseManualButton->SetStateToDisabled();
-          this->WorkPhasePlanningButton->SetStateToDisabled();
-         }
       
-       else
+  
+      if(checkedPhase1)
+        RequestedWorkphase=1; 
+      else if(checkedPhase2) 
+      RequestedWorkphase=2;
+      else if(checkedPhase3)
+      RequestedWorkphase=3;
+      else if(checkedPhase4)
+      RequestedWorkphase=4;
+      else if(checkedPhase5)
+       RequestedWorkphase=5;
+      else if(checkedPhase6)
+      RequestedWorkphase=6;
+
+      if (checkedPhase1 || checkedPhase2 || checkedPhase3 || checkedPhase4 || checkedPhase5 || checkedPhase6)
+        {
+        StateTransitionDiagramControll();
+        }
+      else
         {
         this->SoftwareStatusLabelDisp->SetValue("");
         }
-      
-        
-       
-
 #endif
             
         }
@@ -1264,9 +1237,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
          robotcommandkey = "command";
          robotcommandvalue = "SET_ORIENTATION";
 
-         cerr<<robotcommandvalue <<endl;
-         cerr<< robotcommandkey;
-
+        
         int sendindex = this->TargetListColumnList->GetWidget()->GetIndexOfFirstSelectedRow();
                
         this->OpenTrackerStream->SetOrientationforRobot(xsendrobotcoords[sendindex],ysendrobotcoords[sendindex],zsendrobotcoords[sendindex], sendrobotcoordsvector[sendindex], robotcommandvalue,robotcommandkey);
@@ -1590,6 +1561,15 @@ void vtkBrpNavGUI::BuildGUIForWorkPhaseFrame ()
                    workphasestatus3Frame->GetWidgetName(),
                    filterFrame->GetFrame()->GetWidgetName());
 
+      vtkKWFrame *ClearWorkphaseButtonFrame = vtkKWFrame::New ( );
+    ClearWorkphaseButtonFrame->SetParent ( filterFrame->GetFrame() );
+    ClearWorkphaseButtonFrame->Create ( );
+      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+                   ClearWorkphaseButtonFrame->GetWidgetName(),
+                   filterFrame->GetFrame()->GetWidgetName());
+
+      
+      
 
 
     this->WorkPhaseStartUpButton = vtkKWCheckButton::New();
@@ -1696,6 +1676,15 @@ void vtkBrpNavGUI::BuildGUIForWorkPhaseFrame ()
                  RobotStatusLabelDisp->GetWidgetName()
                  );
 
+
+    this->ClearWorkPhasecontrollButton = vtkKWCheckButton::New();
+    this->ClearWorkPhasecontrollButton->SetParent(ClearWorkphaseButtonFrame);
+    this->ClearWorkPhasecontrollButton->Create();
+    this->ClearWorkPhasecontrollButton->SelectedStateOff();
+    this->ClearWorkPhasecontrollButton->SetText("Clear WorkphaseControll");
+    
+    this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
+              this->ClearWorkPhasecontrollButton->GetWidgetName());
 
 
     
@@ -2894,19 +2883,25 @@ void vtkBrpNavGUI::UpdateAll()
        
 
 #endif
+    std::string sttapt;
+    std::string robotstatus;
+    std::string scannerstatus;
+    this->OpenTrackerStream->GetDevicesStatus(robotstatus, scannerstatus);
+    
+    // *sttapt = robotstatus;
+
+    cout<<"robotstatus";
+    cout<<robotstatus<<endl;
+
     int checkedpassrobotcoords = this->ConnectCheckButtonPASSROBOTCOORDS->GetSelectedState();
     if (checkedpassrobotcoords)
           {
         
-                std::vector<float> pos;
-                std::vector<float> quat;
+              std::vector<float> pos;
+              std::vector<float> quat;
        
-                pos.resize(3);
-             quat.resize(4);
-
-
-            
-
+               pos.resize(3);
+               quat.resize(4);
  
              float OrientationForScanner0;
              float OrientationForScanner1;
@@ -2917,12 +2912,12 @@ void vtkBrpNavGUI::UpdateAll()
              float PositionForScanner2;
   
              
-             this->OpenTrackerStream->GetCoordsOrientforScanner(&OrientationForScanner0, &OrientationForScanner1, &OrientationForScanner2, &OrientationForScanner3, &PositionForScanner0, &PositionForScanner1, &PositionForScanner2);
+            this->OpenTrackerStream->GetCoordsOrientforScanner(&OrientationForScanner0, &OrientationForScanner1, &OrientationForScanner2, &OrientationForScanner3, &PositionForScanner0, &PositionForScanner1, &PositionForScanner2);
   
 
-              pos[0]= PositionForScanner0;
+            pos[0]= PositionForScanner0;
             pos[1]= PositionForScanner1;
-            pos[2]=PositionForScanner2;
+            pos[2]= PositionForScanner2;
             quat[0]= OrientationForScanner0;
             quat[1]= OrientationForScanner1;
             quat[2]= OrientationForScanner2;
@@ -3127,6 +3122,7 @@ int checked = this->FreezeImageCheckButton->GetSelectedState();
  vtkMatrix4x4* mat = vtkMatrix4x4::New();
  cout<<"UpdateSliceDisplay" <<endl;
       
+
 
       mat->SetElement(0, 0, nx);
       mat->SetElement(0, 1, ny);
@@ -3386,6 +3382,211 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionCoordandOrient()
     
     
 }
+void vtkBrpNavGUI::StateTransitionDiagramControll()
+
+{
+
+
+   //
+  // State transition diagram of the Workphase:
+  //                |
+  //                |START_UP (SU)
+  //                v 
+  //         +-------------+
+  //         |             |
+  //     +-->| PREP_PHASE  |
+  //     |   |             |
+  //     |   +-------------+
+  //     |          |
+  //     |EM        |PLANNING (PL)
+  //     |          v
+  //     |   +-------------+
+  //     |   |             |
+  //     +---|   PLANNING  |
+  //     |   |(Seg,Targets |<---------+
+  //     |   +-------------+          |
+  //     |          |                 |
+  //     |EM        |CALIBRATION (CL) |PL
+  //     |          v                 |
+  //     |   +-------------+          |
+  //     |   |             |----------+
+  //     +---| CALIBRATION |            
+  //     |   | (Z-FRAME)   |<-------+            
+  //     |   +-------------+        |            
+  //     |          |               |            
+  //     |EM        |TARGETING(TR)  |CL        
+  //     |          v               |            
+  //     |   +-------------+        |            
+  //     |   |             |--------+            
+  //     +---|   TARGETING |                   
+  //     |   |(Positioning)|<----+            
+  //     |   +-------------+     |            
+  //     |          |            |  
+  //     |EM        |MANUAL      |TR       
+  //     |          v            | 
+  //     |   +-------------+     |            
+  //     |   |             |-----+            
+  //     +---|    MANUAL   |                  
+  //     |   | (INSERTION) |
+  //     |   +-------------+        
+  //     |          |               
+  //     |          |EMERGENCY               
+  //     |          v               
+  //     |   +-------------+                 
+  //     |   |             |            
+  //     +---|    MANUAL   |                  
+  //         | (INSERTION) |
+  //         +-------------+
+  // 
+  //
+  //actual (last active) workphase
+  //
+  //
+  // | 1,1,0,0,0,1 | START_UP    |
+  // | 0,0,1,0,0,1 | PLANNING    |
+  // | 0,0,0,1,0,1 | CALIBRATION |
+  // | 0,1,0,0,1,1 | TARGETING   |
+  // | 0,0,0,1,1,1 | MANUAL      |
+  // | 0,0,0,0,0,0 | EMERGENCY   |
+  //
+  //
+
+     
+
+  int WorkphaseClearanceSOFT = 0;
+  int checkedClear = this->ClearWorkPhasecontrollButton->GetSelectedState();
+
+  if (checkedClear)
+    {
+      ActualWorkPhase = 0;
+      RequestedWorkphase = 0;
+    }
+  else
+    {
+      
+  if (ActualWorkPhase==0)
+    {
+      ActualWorkPhase= ActualWorkPhase+1;
+    }
+
+      int WorkphaseCheckArrayD2[6][6] ={ {1,1,0,0,0,1}, {0,0,1,0,0,1}, {0,0,0,1,0,1}, {0,1,0,0,1,1}, {0,0,0,1,1,1}, {0,0,0,0,0,0} };
+       ActualWorkPhase = ActualWorkPhase - 1;
+       RequestedWorkphase = RequestedWorkphase -1;
+
+ if (WorkphaseCheckArrayD2[ActualWorkPhase][RequestedWorkphase]==1)
+       {
+         WorkphaseClearanceSOFT = 1;
+         ActualWorkPhase = RequestedWorkphase;
+       }
+     else
+       {
+          WorkphaseClearanceSOFT = 0;
+          RequestedWorkphase =  ActualWorkPhase; 
+       }
+  
+    ActualWorkPhase = ActualWorkPhase + 1;
+    RequestedWorkphase = RequestedWorkphase + 1;
+
+
+              if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==1)
+                {
+                int var_status_scanner PREP_PHASE;
+               
+                int var_status_robot PREP_PHASE;
+                this->SoftwareStatusLabelDisp->SetValue("READY");
+                this->WorkPhasePlanningButton->SetStateToDisabled();
+                this->WorkPhaseCalibarationButton->SetStateToDisabled();
+                this->WorkPhaseTargetingButton->SetStateToDisabled();
+                this->WorkPhaseManualButton->SetStateToDisabled();
+                this->WorkPhaseEmergencyButton->SetStateToDisabled();
+                } 
+
+             else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==2)
+               {
+              int var_status_scanner PLANNING_PHASE;
+            
+              int var_status_robot PLANNING_PHASE;
+              this->SoftwareStatusLabelDisp->SetValue("READY");
+              this->WorkPhaseStartUpButton->SetStateToDisabled();
+              this->WorkPhaseCalibarationButton->SetStateToDisabled();
+              this->WorkPhaseTargetingButton->SetStateToDisabled();
+              this->WorkPhaseManualButton->SetStateToDisabled();
+              this->WorkPhaseEmergencyButton->SetStateToDisabled();
+              }
+       
+             else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==3)
+               {
+               int var_status_scanner CALIB_PHASE;
+               int var_status_robot CALIB_PHASE;
+               this->SoftwareStatusLabelDisp->SetValue("READY");
+               this->WorkPhaseStartUpButton->SetStateToDisabled();
+               this->WorkPhasePlanningButton->SetStateToDisabled();
+               this->WorkPhaseTargetingButton->SetStateToDisabled();
+               this->WorkPhaseManualButton->SetStateToDisabled();
+               this->WorkPhaseEmergencyButton->SetStateToDisabled();
+               }
+          
+             else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==4)
+               {
+               int var_status_scanner TARG_PHASE;
+               int var_status_robot TARG_PHASE;
+               this->SoftwareStatusLabelDisp->SetValue("READY");
+               this->WorkPhaseStartUpButton->SetStateToDisabled();
+               this->WorkPhaseCalibarationButton->SetStateToDisabled();
+               this->WorkPhasePlanningButton->SetStateToDisabled();
+               this->WorkPhaseManualButton->SetStateToDisabled();
+               this->WorkPhaseEmergencyButton->SetStateToDisabled();
+               }
+          else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==5)
+            {
+          int var_status_scanner MANU_PHASE;
+         
+          int var_status_robot MANU_PHASE;
+          this->SoftwareStatusLabelDisp->SetValue("READY");
+          this->WorkPhaseStartUpButton->SetStateToDisabled();
+          this->WorkPhaseCalibarationButton->SetStateToDisabled();
+          this->WorkPhaseTargetingButton->SetStateToDisabled();
+          this->WorkPhasePlanningButton->SetStateToDisabled();
+          this->WorkPhaseEmergencyButton->SetStateToDisabled();
+          }
+        else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==6)
+              {
+              int var_status_scanner EMER_PHASE;
+             
+              int var_status_robot EMER_PHASE;
+              this->SoftwareStatusLabelDisp->SetValue("EMER");
+              this->WorkPhaseStartUpButton->SetStateToDisabled();
+              this->WorkPhaseCalibarationButton->SetStateToDisabled();
+              this->WorkPhaseTargetingButton->SetStateToDisabled();
+              this->WorkPhaseManualButton->SetStateToDisabled();
+              this->WorkPhasePlanningButton->SetStateToDisabled();
+              }
+          
+      else if(!WorkphaseClearanceSOFT)
+        {
+         this->SoftwareStatusLabelDisp->SetValue("N/A");
+         cout<<"requested workphase Change not allowed"<<endl;
+        }
+
+              //gives Clearance to ValveFiler (Workphases)
+      
+      if(WorkphaseClearanceSOFT)
+        {
+            SetOpenTrackerforBRPDataFlowValveFilter();
+        }
+
+             //give Clearance to process the Workphases
+      if(    var_status_scanner == received_scanner_status
+         &&  var_status_robot == received_robot_status
+         &&  WorkphaseClearanceSOFT)
+        {
+          ProcessClearance = 1;
+        }
+    }
+}
+
+
+
 
 
 void vtkBrpNavGUI::SetOpenTrackerforBRPDataFlowValveFilter()
@@ -3440,6 +3641,8 @@ void vtkBrpNavGUI::SetOpenTrackerforBRPDataFlowValveFilter()
 
 void vtkBrpNavGUI::SetOpenTrackerforScannerControll()
 {
+
+
 
  int checkedsendstartScanner = this->ConnectCheckButtonStartScanner->GetSelectedState(); 
  int checkedsendstopScanner = this->ConnectCheckButtonStopScanner->GetSelectedState(); 
