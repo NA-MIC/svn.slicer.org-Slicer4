@@ -178,8 +178,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *WorkPhaseTargetingButton;
     vtkKWCheckButton *WorkPhaseManualButton;
     vtkKWCheckButton *WorkPhaseEmergencyButton;
-    
-
+    vtkKWCheckButton *ClearWorkPhasecontrollButton;
 
     vtkKWCheckButton *HandleCheckButton;
     vtkKWCheckButton *GuideCheckButton;
@@ -317,9 +316,18 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
       float  xsizevalueRI;
      float  ysizevalueRI;
 
-    
-    
+     //Workphase State Transition Controll
 
+    
+     int WorkphaseClearanceSOFT;
+     int checkedPhase1;
+     int checkedPhase2;
+     int checkedPhase3;
+     int checkedPhase4;
+     int checkedPhase5;
+     int checkedPhase6;
+
+  
     int RealtimeImageSerial;
     int NeedRealtimeImageUpdate;
 
@@ -328,6 +336,13 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     int var_status_soft;
     int var_status_robot;
     
+    int received_scanner_status;
+    int received_robot_status;
+    
+    int RequestedWorkphase;
+    int ProcessClearance; 
+
+     int ActualWorkPhase;
     
 
     char xmlpathfilename[256];
@@ -377,6 +392,10 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void GetImageDataforRealtimeImaging();
     void SetOrientationforRobot();
     void GetCoordsOrientforScanner();
+    void GetDevicesStatus();
+
+    void StateTransitionDiagramControll();
+
     Image  ImageDataRI;
 
 #endif
