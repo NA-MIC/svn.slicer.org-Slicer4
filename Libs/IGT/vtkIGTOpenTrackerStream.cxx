@@ -102,7 +102,7 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
 void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
 {
 
-  int status_robot;
+   
        float position_cb2[3];
     float orientation_cb2[4];
     float norm_cb2[3];
@@ -112,7 +112,6 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
 
      float position_cb2_FS;
     float orientation_cb2_FS[4];
-    
     
     vtkIGTOpenTrackerStream *VOT_cb2 =(vtkIGTOpenTrackerStream *)data_cb2;
 
@@ -128,8 +127,6 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     orientation_cb2[3]=(float)(event.getOrientation())[3];
      
    
-     
- 
     VOT_cb2->position_cb2_FS0=(float)(event.getPosition())[0];
     VOT_cb2->position_cb2_FS1=(float)(event.getPosition())[1];
     VOT_cb2->position_cb2_FS2=(float)(event.getPosition())[2];
@@ -138,10 +135,14 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     VOT_cb2->orientation_cb2_FS1=(float)(event.getOrientation())[1];
     VOT_cb2->orientation_cb2_FS2=(float)(event.getOrientation())[2];
     VOT_cb2->orientation_cb2_FS3=(float)(event.getOrientation())[3];
-   
+    
+    //robot status    
 
-
-
+    if (event.hasAttribute("status")) {
+      VOT_cb2->robot_Status = (std::string)event.getAttribute<std::string>("status","");
+      cout<< "robot Status:  " << VOT_cb2->robot_Status <<endl;
+    }
+    
     /*
  VOT_cb2->position_cb2_FS[1]=(float)(event.getPosition())[1];
     VOT_cb2->position_cb2_FS[2]=(float)(event.getPosition())[2];
@@ -166,7 +167,7 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     quat[3]=(float)(event.getOrientation())[3];
 
     VOT_cb2->SetTracker(pos, quat);
-    */
+  
     
      cout<< position_cb2[0] <<endl;
      cout<< position_cb2[1] <<endl; 
@@ -177,7 +178,7 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
      cout<< orientation_cb2[2] <<endl;
      cout<< orientation_cb2[3] <<endl;
     
-
+*/
     
     
     VOT_cb2->quaternion2xyz_cb2(orientation_cb2, norm_cb2, transnorm_cb2);
@@ -696,3 +697,14 @@ void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* OrientationForSca
 *PositionForScanner2 = position_cb2_FS2;
 
 }
+
+
+void vtkIGTOpenTrackerStream::GetDevicesStatus(std::string& robotstatus,std::string& scannerstatus)
+{
+
+  robotstatus = robot_Status;
+  //*scannerstatus = scanner_Status;
+
+
+}
+
