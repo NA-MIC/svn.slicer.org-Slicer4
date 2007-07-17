@@ -145,9 +145,14 @@ private:
     float orientation_cb2_FS2;
     float orientation_cb2_FS3;
 
+    float needle_tip_cb2_FS0;
+    float needle_tip_cb2_FS1;
+    float needle_tip_cb2_FS2;
     
+
     //BTX
     std::string robot_Status;
+    std::vector<float> needle_depth;
     //ETX
 
    
