@@ -26,12 +26,14 @@
 #ifdef USE_OPENTRACKER
 #include "vtkIGTOpenTrackerStream.h"
 
-#define PREP_PHASE = 1;
-#define PLANNING_PHASE = 2;
-#define CALIB_PHASE = 3;
-#define TARG_PHASE = 4;
-#define MANU_PHASE = 5;
-#define EMER_PHASE = 6;
+/*
+#define PREP_PHASE     1
+#define PLANNING_PHASE 2
+#define CALIB_PHASE    3
+#define TARG_PHASE     4
+#define MANU_PHASE     5
+#define EMER_PHASE     6
+*/
 
 #endif
 #ifdef USE_IGSTK
