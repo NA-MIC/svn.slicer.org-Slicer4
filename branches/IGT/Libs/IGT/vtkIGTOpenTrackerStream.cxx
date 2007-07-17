@@ -137,10 +137,10 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     VOT_cb2->orientation_cb2_FS3=(float)(event.getOrientation())[3];
     
     //robot status    
-
+    cout <<"event in NT"<<endl;
     if (event.hasAttribute("status")) {
       VOT_cb2->robot_Status = (std::string)event.getAttribute<std::string>("status","");
-      cout<< "robot Status:  " << VOT_cb2->robot_Status <<endl;
+      cout<< "robot Status (NT):  " << VOT_cb2->robot_Status <<endl;
     }
     
     /*
@@ -699,11 +699,11 @@ void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* OrientationForSca
 }
 
 
-void vtkIGTOpenTrackerStream::GetDevicesStatus(std::string& robotstatus,std::string& scannerstatus)
+void vtkIGTOpenTrackerStream::GetDevicesStatus(std::string& received_robot_status,std::string& received_scanner_status)
 {
 
-  robotstatus = robot_Status;
-  //*scannerstatus = scanner_Status;
+  received_robot_status = robot_Status;
+  cout<<received_robot_status<<endl;
 
 
 }
