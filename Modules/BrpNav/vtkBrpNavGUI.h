@@ -178,7 +178,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *WorkPhaseTargetingButton;
     vtkKWCheckButton *WorkPhaseManualButton;
     vtkKWCheckButton *WorkPhaseEmergencyButton;
-    vtkKWCheckButton *ClearWorkPhasecontrollButton;
+     vtkKWCheckButton *ClearWorkPhasecontrollButton;
 
     vtkKWCheckButton *HandleCheckButton;
     vtkKWCheckButton *GuideCheckButton;
@@ -317,7 +317,8 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
      float  ysizevalueRI;
 
      //Workphase State Transition Controll
-
+     
+     int WorkFlowProcessStart;
     
      int WorkphaseClearanceSOFT;
      int checkedPhase1;
@@ -336,9 +337,10 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     int var_status_soft;
     int var_status_robot;
     
-    int received_scanner_status;
-    int received_robot_status;
-    
+    //BTX
+    std::string received_scanner_status;
+    std::string received_robot_status;
+    //ETX
     int RequestedWorkphase;
     int ProcessClearance; 
 
