@@ -126,7 +126,7 @@ set ::IGSTK_DIR $::SLICER_LIB/IGSTK-build
 
 # Options for building IGT modules in Slicer
 set ::IGSTK "OFF"
-set ::OPENTRACKER "ON"
+set ::OPENTRACKER "OFF"
 # If the value of OPENTRACKER is "ON", you need to set the following variables:
 
 # ON:  opentracker 1.3
