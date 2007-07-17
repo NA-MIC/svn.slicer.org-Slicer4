@@ -1221,10 +1221,16 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
         sprintf(coordsxyz, "%s, %s, %s", xcoordsrobot, ycoordsrobot, zcoordsrobot);
         char orientsxyz[512]; 
         sprintf(orientsxyz, "%s, %s, %s, %s", o1coordsrobot, o2coordsrobot, o3coordsrobot, o4coordsrobot);
-                 
+   /*
+   int CountTarget;   
+   CountTarget = 1;
+   char DispCountTarget[512];
+   sprintf(DispCountTarget,"%s", CountTarget); 
+   */
         this->TargetListColumnList->GetWidget()->AddRow();
-        this->TargetListColumnList->GetWidget()->SetCellText(row, 0,coordsxyz);
-        this->TargetListColumnList->GetWidget()->SetCellText(row, 1,orientsxyz);
+   // this->TargetListColumnList->GetWidget()->SetCellText(row, 0,DispCountTarget);
+        this->TargetListColumnList->GetWidget()->SetCellText(row, 1,coordsxyz);
+        this->TargetListColumnList->GetWidget()->SetCellText(row, 2,orientsxyz);
                
     }
 
@@ -1943,13 +1949,22 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
     this->TargetListColumnList->GetWidget()->MovableColumnsOff();
     // set up the columns of data for each point
     // refer to the header file for order
+      this->TargetListColumnList->GetWidget()->AddColumn("T#");
     this->TargetListColumnList->GetWidget()->AddColumn("Target Coords. (x,y,z)");
     this->TargetListColumnList->GetWidget()->AddColumn("Target Orient. ()");
+  
     
     // now set the attributes that are equal across the columns
-    for (int col = 0; col < 2; col++)
+    for (int col = 0; col < 3; col++)
     {
-        this->TargetListColumnList->GetWidget()->SetColumnWidth(col, 22);
+      if(col==0)
+   {
+        this->TargetListColumnList->GetWidget()->SetColumnWidth(col, 7);
+   }
+      else
+   {
+   this->TargetListColumnList->GetWidget()->SetColumnWidth(col, 22);
+   }
 
         this->TargetListColumnList->GetWidget()->SetColumnAlignmentToLeft(col);
         this->TargetListColumnList->GetWidget()->ColumnEditableOff(col);
@@ -2887,39 +2902,50 @@ void vtkBrpNavGUI::UpdateAll()
 #endif
         
 
-    
+    //Philip Mewes 17.07.2007: defining and sending te workphase (WP) commands depending of requestet WP
    
         
         this->OpenTrackerStream->GetDevicesStatus(received_robot_status, received_scanner_status);
         if(received_robot_status == "START_UP" && RequestedWorkphase==1)
           {
-            RobotStatusLabelDisp->SetValue ( "READY" );
-            int var_status_robot PREP_PHASE;
+            RobotStatusLabelDisp->SetValue ( "Idle" );
           }
         else if(received_robot_status == "PLANNING" && RequestedWorkphase==2)
           {
-            RobotStatusLabelDisp->SetValue ( "READY" );
-            int var_status_robot PLANNING_PHASE;
+            RobotStatusLabelDisp->SetValue ( "" );
           }
         else if(received_robot_status == "CALIBRATION" && RequestedWorkphase==3)
           {
-            RobotStatusLabelDisp->SetValue ( "READY" );
-            int var_status_robot CALIB_PHASE;
+            RobotStatusLabelDisp->SetValue ( "UNCALIBRATED" );
+          
           }
         else if(received_robot_status == "TARGETING" && RequestedWorkphase==4)
           {
             RobotStatusLabelDisp->SetValue ( "READY" );
-            int var_status_robot TARG_PHASE;
+          
           }
-        else if(received_robot_status == "MANUAL" && RequestedWorkphase==5)
+   // Philip Mewes 17.07.2007: Receiving Status for the Beginning of the Positioning (Moving) Process
+   else if(received_robot_status == "TARGETING_START" && RequestedWorkphase==4)
+          {
+            RobotStatusLabelDisp->SetValue ( "MOVING" );
+          
+          }
+   // Philip Mewes 17.07.2007: Receiving Status for the Beginning of the Positioning (Moving) Process
+   else if(received_robot_status == "TARGETING_END" && RequestedWorkphase==4)
           {
             RobotStatusLabelDisp->SetValue ( "READY" );
-            int var_status_robot MANU_PHASE;
+          
+          }
+
+        else if(received_robot_status == "MANUAL" && RequestedWorkphase==5)
+          {
+            RobotStatusLabelDisp->SetValue ( "MANUAL" );
+          
           }
         else  if(received_robot_status == "EMERGENCY" && RequestedWorkphase==6)
           {
             RobotStatusLabelDisp->SetValue ( "READY" );
-            int var_status_robot EMER_PHASE;
+          
           }
         else
            RobotStatusLabelDisp->SetValue ( "" );
@@ -3563,9 +3589,6 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
 
              else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==2)
                {
-              int var_status_scanner PLANNING_PHASE;
-            
-              int var_status_robot PLANNING_PHASE;
               this->SoftwareStatusLabelDisp->SetValue("READY");
               this->WorkPhaseStartUpButton->SetStateToDisabled();
               this->WorkPhaseCalibarationButton->SetStateToDisabled();
@@ -3576,8 +3599,6 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
        
              else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==3)
                {
-               int var_status_scanner CALIB_PHASE;
-               int var_status_robot CALIB_PHASE;
                this->SoftwareStatusLabelDisp->SetValue("READY");
                this->WorkPhaseStartUpButton->SetStateToDisabled();
                this->WorkPhasePlanningButton->SetStateToDisabled();
@@ -3588,8 +3609,6 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
           
              else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==4)
                {
-               int var_status_scanner TARG_PHASE;
-               int var_status_robot TARG_PHASE;
                this->SoftwareStatusLabelDisp->SetValue("READY");
                this->WorkPhaseStartUpButton->SetStateToDisabled();
                this->WorkPhaseCalibarationButton->SetStateToDisabled();
@@ -3599,9 +3618,6 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
                }
           else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==5)
             {
-          int var_status_scanner MANU_PHASE;
-         
-          int var_status_robot MANU_PHASE;
           this->SoftwareStatusLabelDisp->SetValue("READY");
           this->WorkPhaseStartUpButton->SetStateToDisabled();
           this->WorkPhaseCalibarationButton->SetStateToDisabled();
@@ -3611,9 +3627,6 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
           }
         else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==6)
               {
-              int var_status_scanner EMER_PHASE;
-             
-              int var_status_robot EMER_PHASE;
               this->SoftwareStatusLabelDisp->SetValue("EMER");
               this->WorkPhaseStartUpButton->SetStateToDisabled();
               this->WorkPhaseCalibarationButton->SetStateToDisabled();
@@ -3673,8 +3686,8 @@ void vtkBrpNavGUI::SetOpenTrackerforBRPDataFlowValveFilter()
  
 
       if (checkedWorkPhaseStartUpButton){                
-                      filtercommandkeys[0] = "workphase";
-                      filtercommandvalues[0] = "START_UP";
+                                           filtercommandkeys[0] = "workphase";
+                                         filtercommandvalues[0] = "START_UP";
                                                           }
       
       if (checkedWorkPhasePlanningButton){filtercommandkeys[0] = "workphase";
