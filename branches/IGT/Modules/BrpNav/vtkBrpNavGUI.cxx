@@ -4,6 +4,7 @@
 #include "vtkObjectFactory.h"
 
 #include "vtkBrpNavGUI.h"
+#include "BRPTPRInterface.h"
 #include "vtkSlicerApplication.h"
 #include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkSlicerSliceControllerWidget.h"
@@ -2919,7 +2920,7 @@ void vtkBrpNavGUI::UpdateAll()
             RobotStatusLabelDisp->SetValue ( "UNCALIBRATED" );
           
           }
-        else if(received_robot_status == "TARGETING" && RequestedWorkphase==4)
+        else if(received_robot_status == "TARGETTING" && RequestedWorkphase==4)
           {
             RobotStatusLabelDisp->SetValue ( "READY" );
           
@@ -3687,23 +3688,23 @@ void vtkBrpNavGUI::SetOpenTrackerforBRPDataFlowValveFilter()
 
       if (checkedWorkPhaseStartUpButton){                
                                            filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = "START_UP";
+                                         filtercommandvalues[0] = BRPTPR_START_UP;
                                                           }
       
       if (checkedWorkPhasePlanningButton){filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = "PLANNING"; }
+                                         filtercommandvalues[0] = BRPTPR_PLANNING; }
       
       if (checkedWorkPhaseCalibarationButton){filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = "CALIBRATION"; }
+                                         filtercommandvalues[0] = BRPTPR_CALIBRATION; }
 
       if (checkedWorkPhaseTargetingButton){filtercommandkeys[0] = "workphase";
-                                             filtercommandvalues[0] = "TARGETING";}
+                                             filtercommandvalues[0] = BRPTPR_TARGETTING;}
 
       if (checkedWorkPhaseManualButton){filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = "MANUAL"; }
+                                         filtercommandvalues[0] = BRPTPR_MANUAL; }
 
       if (checkedWorkPhaseEmergencyButton){filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = "EMERGENCY"; }
+                                         filtercommandvalues[0] = BRPTPR_EMERGENCY; }
       
       this->OpenTrackerStream->SetOpenTrackerforBRPDataFlowValveFilter(filtercommandkeys, filtercommandvalues);
 
