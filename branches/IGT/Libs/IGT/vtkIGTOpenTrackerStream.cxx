@@ -1,10 +1,12 @@
 
+
 #include "vtkIGTOpenTrackerStream.h"
 #include "vtkObjectFactory.h"
 
 #include "vtkKWTkUtilities.h"
 #include "vtkKWApplication.h"
 #include "vtkCommand.h"
+#include "vtkMath.h"
 #include <OpenTracker/OpenTracker.h>
 #include <OpenTracker/dllinclude.h>
 #include <OpenTracker/input/SlicerNTModule.h>
@@ -104,7 +106,9 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
 
    
        float position_cb2[3];
+         float needleposition_cb2[3];
     float orientation_cb2[4];
+    
     float norm_cb2[3];
     float transnorm_cb2[3];
     int j;    
@@ -125,8 +129,9 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     orientation_cb2[1]=(float)(event.getOrientation())[1];
     orientation_cb2[2]=(float)(event.getOrientation())[2];
     orientation_cb2[3]=(float)(event.getOrientation())[3];
-     
-   
+    
+        
+
     VOT_cb2->position_cb2_FS0=(float)(event.getPosition())[0];
     VOT_cb2->position_cb2_FS1=(float)(event.getPosition())[1];
     VOT_cb2->position_cb2_FS2=(float)(event.getPosition())[2];
@@ -142,6 +147,12 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
       VOT_cb2->robot_Status = (std::string)event.getAttribute<std::string>("status","");
       cout<< "robot Status (NT):  " << VOT_cb2->robot_Status <<endl;
     }
+
+    if (event.hasAttribute("depth")) {
+      VOT_cb2->needle_depth = (std::vector<float>)event.getAttribute <std::vector<float> >("depth", VOT_cb2->needle_depth);
+    }
+
+
     
     /*
  VOT_cb2->position_cb2_FS[1]=(float)(event.getPosition())[1];
@@ -213,7 +224,29 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
 
     VOT_cb2->LocatorMatrix->SetElement(3,3,1);
 
+    // get a 3x3 matrix from the quaterion
+    float transform_matrix[3][3];
+    vtkMath::QuaternionToMatrix3x3(orientation_cb2, transform_matrix);
+    
+    // get the "needle depth" vector and multiply it by the robot orientation,
+    // this will give the offsets in Slicer coordinates
+    float needle_offset[3];
+    for (j=0; j<3; j++) {
+      needle_offset[j] = VOT_cb2->needle_depth[j];
+    }
+    // multiply the vector in-place
+    vtkMath::Multiply3x3(transform_matrix, needle_offset, needle_offset);
 
+    // add the needle offset to the robot position to get the needle top position
+    VOT_cb2->needle_tip_cb2_FS0 = VOT_cb2->position_cb2_FS0 + needle_offset[0];
+    VOT_cb2->needle_tip_cb2_FS1 = VOT_cb2->position_cb2_FS1 + needle_offset[1];
+    VOT_cb2->needle_tip_cb2_FS2 = VOT_cb2->position_cb2_FS2 + needle_offset[2];
+
+    // to make things simple, replace the robot position by the needle tip
+    //  in the LocatorMatrix
+    VOT_cb2->LocatorMatrix->SetElement(0,0,VOT_cb2->needle_tip_cb2_FS0);
+    VOT_cb2->LocatorMatrix->SetElement(1,0,VOT_cb2->needle_tip_cb2_FS1);
+    VOT_cb2->LocatorMatrix->SetElement(2,0,VOT_cb2->needle_tip_cb2_FS2);
 }
 
 void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
