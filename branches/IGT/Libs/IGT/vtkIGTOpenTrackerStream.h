@@ -111,7 +111,7 @@ public:
     //ETX    
     //BTX
       void GetRealtimeImage(int*, vtkImageData* image);
-      void GetDevicesStatus(std::string& robotstatus,std::string& scannerstatus);
+      void GetDevicesStatus(std::string& received_robot_status,std::string& received_scanner_status);
       //ETX
 
       //BTX
