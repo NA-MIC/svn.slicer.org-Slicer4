@@ -1,4 +1,8 @@
 // BRPTPRInterface.h version 1.0: July 17, 2007 2:42pm
+
+#ifndef _BRPTPRInterface_h_
+#define _BRPTPRInterface_h_
+
  
 // Workflow values: "workphase" attribute
 #define BRPTPR_START_UP     "START_UP"
@@ -24,3 +28,4 @@
 #define BRPTPR_EStop        "EStop"
 
 
+#endif // _BRPTPRInterface_h_
