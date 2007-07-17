@@ -1,4 +1,5 @@
 
+
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -66,8 +67,6 @@ vtkCxxRevisionMacro ( vtkBrpNavGUI, "$Revision: 1.0 $");
 
 vtkBrpNavGUI::vtkBrpNavGUI ( )
 {
-
-  int pathbrp;
   
     this->Logic = NULL;
 
@@ -122,7 +121,7 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
      this->WorkPhaseCalibarationButton = NULL;
      this->WorkPhaseTargetingButton = NULL;
      this->WorkPhaseManualButton = NULL;
-      this->WorkPhaseEmergencyButton = NULL;
+     this->WorkPhaseEmergencyButton = NULL;
       this->ClearWorkPhasecontrollButton = NULL;
 
 
@@ -812,11 +811,11 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     {
     this->WorkPhaseEmergencyButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->ClearWorkPhasecontrollButton)
-    {
+        if (this->ClearWorkPhasecontrollButton)
+     {
     this->ClearWorkPhasecontrollButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-
+     }
+    
     if (this->NeedleCheckButton)
     {
     this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
@@ -1081,7 +1080,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
 #endif
       
    }
-
+ 
  if (this->ClearWorkPhasecontrollButton == vtkKWCheckButton::SafeDownCast(caller) 
       && event == vtkKWCheckButton::SelectedStateChangedEvent)
     {
@@ -1090,7 +1089,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       this->SoftwareStatusLabelDisp->SetValue("CLEARED");
     }
 
-
+ 
  if ((this->WorkPhaseStartUpButton == vtkKWCheckButton::SafeDownCast(caller) 
       && event == vtkKWCheckButton::SelectedStateChangedEvent)
      ||(
@@ -1122,7 +1121,8 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       this->WorkPhaseManualButton->SetStateToNormal();
       this->WorkPhaseEmergencyButton->SetStateToNormal();
          
-      
+      WorkFlowProcessStart = 1;
+
       int checkedPhase1 = this->WorkPhaseStartUpButton->GetSelectedState();
       int checkedPhase2 = this->WorkPhasePlanningButton->GetSelectedState();
       int checkedPhase3 = this->WorkPhaseCalibarationButton->GetSelectedState();
@@ -1151,6 +1151,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       else
         {
         this->SoftwareStatusLabelDisp->SetValue("");
+        RequestedWorkphase=0;
         }
 #endif
             
@@ -1451,7 +1452,7 @@ void vtkBrpNavGUI::BuildGUI ( )
 
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
     // Define your help text here.
-    const char *help = "The **BrpNav Module** helps you to do prostate Biopsy by: getting Images from MR-Scanner into Slicer3, control Scanner with Slicer 3, determinate fiducial detection and control the Robot. Module and Logic mainly coded by Junichi Tokuda and Philip Mewes"; 
+    const char *help = "The **BrpNav Module** helps you to do prostate Biopsy and Treatment by: getting Realtime Images from MR-Scanner into Slicer3, control Scanner with Slicer 3, determinate fiducial detection and control the Robot. Module and Logic mainly coded by Junichi Tokuda and Philip Mewes"; 
 
     // ---
     // MODULE GUI FRAME 
@@ -1560,7 +1561,7 @@ void vtkBrpNavGUI::BuildGUIForWorkPhaseFrame ()
       app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                    workphasestatus3Frame->GetWidgetName(),
                    filterFrame->GetFrame()->GetWidgetName());
-
+      
       vtkKWFrame *ClearWorkphaseButtonFrame = vtkKWFrame::New ( );
     ClearWorkphaseButtonFrame->SetParent ( filterFrame->GetFrame() );
     ClearWorkphaseButtonFrame->Create ( );
@@ -1676,7 +1677,7 @@ void vtkBrpNavGUI::BuildGUIForWorkPhaseFrame ()
                  RobotStatusLabelDisp->GetWidgetName()
                  );
 
-
+    
     this->ClearWorkPhasecontrollButton = vtkKWCheckButton::New();
     this->ClearWorkPhasecontrollButton->SetParent(ClearWorkphaseButtonFrame);
     this->ClearWorkPhasecontrollButton->Create();
@@ -1685,13 +1686,14 @@ void vtkBrpNavGUI::BuildGUIForWorkPhaseFrame ()
     
     this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
               this->ClearWorkPhasecontrollButton->GetWidgetName());
-
-
+    
+    
     
 
-
+    
     workphaseFrame->Delete ();
     filterFrame->Delete ();
+    
   
 }
 
@@ -2883,16 +2885,71 @@ void vtkBrpNavGUI::UpdateAll()
        
 
 #endif
-    std::string sttapt;
-    std::string robotstatus;
-    std::string scannerstatus;
-    this->OpenTrackerStream->GetDevicesStatus(robotstatus, scannerstatus);
+        
+
     
-    // *sttapt = robotstatus;
+   
+        
+        this->OpenTrackerStream->GetDevicesStatus(received_robot_status, received_scanner_status);
+        if(received_robot_status == "START_UP" && RequestedWorkphase==1)
+          {
+            RobotStatusLabelDisp->SetValue ( "READY" );
+            int var_status_robot PREP_PHASE;
+          }
+        else if(received_robot_status == "PLANNING" && RequestedWorkphase==2)
+          {
+            RobotStatusLabelDisp->SetValue ( "READY" );
+            int var_status_robot PLANNING_PHASE;
+          }
+        else if(received_robot_status == "CALIBRATION" && RequestedWorkphase==3)
+          {
+            RobotStatusLabelDisp->SetValue ( "READY" );
+            int var_status_robot CALIB_PHASE;
+          }
+        else if(received_robot_status == "TARGETING" && RequestedWorkphase==4)
+          {
+            RobotStatusLabelDisp->SetValue ( "READY" );
+            int var_status_robot TARG_PHASE;
+          }
+        else if(received_robot_status == "MANUAL" && RequestedWorkphase==5)
+          {
+            RobotStatusLabelDisp->SetValue ( "READY" );
+            int var_status_robot MANU_PHASE;
+          }
+        else  if(received_robot_status == "EMERGENCY" && RequestedWorkphase==6)
+          {
+            RobotStatusLabelDisp->SetValue ( "READY" );
+            int var_status_robot EMER_PHASE;
+          }
+        else
+           RobotStatusLabelDisp->SetValue ( "" );
 
-    cout<<"robotstatus";
-    cout<<robotstatus<<endl;
+        //timer for resend workphase request
+        /*
+        if(!received_robot_status || var_status_robot < RequestedWorkphase)
+          {
+            int i=0;
+               for (i=0; i<100; i++)
+                 {
+                   if(received_robot_status)
+                   i = 100;
+                 }
+               //recall Requestfunction
+               if(!received_robot_status)
+                 {
+                 ActualWorkPhase = ActualWorkPhase -1; 
+                 StateTransitionDiagramControll();     
+                 }
+          }
+        */
 
+        
+
+
+
+    cout<<"robotstatusSD3): ";
+    cout<<received_robot_status<<endl;
+        
     int checkedpassrobotcoords = this->ConnectCheckButtonPASSROBOTCOORDS->GetSelectedState();
     if (checkedpassrobotcoords)
           {
@@ -2900,8 +2957,10 @@ void vtkBrpNavGUI::UpdateAll()
               std::vector<float> pos;
               std::vector<float> quat;
        
-               pos.resize(3);
-               quat.resize(4);
+
+                pos.resize(3);
+                quat.resize(4);
+
  
              float OrientationForScanner0;
              float OrientationForScanner1;
@@ -2915,7 +2974,9 @@ void vtkBrpNavGUI::UpdateAll()
             this->OpenTrackerStream->GetCoordsOrientforScanner(&OrientationForScanner0, &OrientationForScanner1, &OrientationForScanner2, &OrientationForScanner3, &PositionForScanner0, &PositionForScanner1, &PositionForScanner2);
   
 
-            pos[0]= PositionForScanner0;
+
+
+           pos[0]= PositionForScanner0;
             pos[1]= PositionForScanner1;
             pos[2]= PositionForScanner2;
             quat[0]= OrientationForScanner0;
@@ -2926,8 +2987,8 @@ void vtkBrpNavGUI::UpdateAll()
           
             this->OpenTrackerStream->SetTracker(pos,quat);
           }
-
-
+      
+    
   if (this->OpenTrackerStream)
     {
          vtkImageData* vid = NULL;
@@ -3272,7 +3333,7 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionParameters()
       
 
       char buf[128];
-      sprintf(buf, "Connect to OpenTracker with %s file?", xmlpathfilename);
+        sprintf(buf, "Connect to OpenTracker with %s file?", xmlpathfilename);
 
      
       //dialog->SetText(msg.c_str());
@@ -3372,14 +3433,14 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionCoordandOrient()
             quat[1]= atof(this->orientationbrpo2->GetWidget()->GetValue ());
             quat[2]= atof(this->orientationbrpo3->GetWidget()->GetValue ());
             quat[3]= atof(this->orientationbrpo4->GetWidget()->GetValue ());
-                       */
+                       
   
 
 
             this->OpenTrackerStream->SetTracker(pos,quat);
             
             cout << "Send orientations and postion so scanner, Mission accomplished :-)" <<endl;
-    
+        */
     
 }
 void vtkBrpNavGUI::StateTransitionDiagramControll()
@@ -3454,14 +3515,15 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
      
 
   int WorkphaseClearanceSOFT = 0;
-  int checkedClear = this->ClearWorkPhasecontrollButton->GetSelectedState();
+   int checkedClear = this->ClearWorkPhasecontrollButton->GetSelectedState();
 
-  if (checkedClear)
-    {
-      ActualWorkPhase = 0;
-      RequestedWorkphase = 0;
+    if (checkedClear)
+   {
+        ActualWorkPhase = 0;
+     RequestedWorkphase = 0;
     }
-  else
+    else
+      
     {
       
   if (ActualWorkPhase==0)
@@ -3490,15 +3552,13 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
 
               if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==1)
                 {
-                int var_status_scanner PREP_PHASE;
-               
-                int var_status_robot PREP_PHASE;
                 this->SoftwareStatusLabelDisp->SetValue("READY");
                 this->WorkPhasePlanningButton->SetStateToDisabled();
                 this->WorkPhaseCalibarationButton->SetStateToDisabled();
                 this->WorkPhaseTargetingButton->SetStateToDisabled();
                 this->WorkPhaseManualButton->SetStateToDisabled();
                 this->WorkPhaseEmergencyButton->SetStateToDisabled();
+               
                 } 
 
              else if(WorkphaseClearanceSOFT==1 && RequestedWorkphase==2)
@@ -3576,13 +3636,15 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
         }
 
              //give Clearance to process the Workphases
+      /*
       if(    var_status_scanner == received_scanner_status
-         &&  var_status_robot == received_robot_status
+       &&  var_status_robot == received_robot_status
          &&  WorkphaseClearanceSOFT)
-        {
-          ProcessClearance = 1;
+       {
+        ProcessClearance = 1;
         }
-    }
+      */
+       }
 }
 
 
@@ -3631,6 +3693,7 @@ void vtkBrpNavGUI::SetOpenTrackerforBRPDataFlowValveFilter()
                                          filtercommandvalues[0] = "EMERGENCY"; }
       
       this->OpenTrackerStream->SetOpenTrackerforBRPDataFlowValveFilter(filtercommandkeys, filtercommandvalues);
+
 
       cout <<"end SetOpenTrackerforBRPDataFlowValveFilter()" <<endl;
 
