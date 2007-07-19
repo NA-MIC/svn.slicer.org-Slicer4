@@ -53,6 +53,9 @@
 #include "vtkSlicerColorLogic.h"
 #include "vtkSlicerVolumesGUI.h"
 
+// DG
+#include <math.h>
+#include <limits.h>
 
 #include "vtkIGTDataStream.h"
 
@@ -667,6 +670,50 @@ void vtkBrpNavGUI::PrintSelf ( ostream& os, vtkIndent indent )
     // print widgets?
 }
 
+//---------------------------------------------------------------------------
+// Compute the rotation angle between two quaternion orientations.
+// The dot product of two normalized quaternions is equal to the
+// cosine of half of the angle between the orientations.
+// The return value will be a positive number in the range [0, pi].
+double vtkBrpAngleBetweenOrientations(
+  double a0, double a1, double a2, double a3,
+  double b0, double b1, double b2, double b3)
+{
+  // Find the norms of the two quaternions
+  double norm1 = sqrt(a0*a0 + a1*a1 + a2*a2 + a3*a3);
+  double norm2 = sqrt(b0*b0 + b1*b1 + b2*b2 + b3*b3);
+
+  // Ensure that we don't have division-by-zero error
+  if (norm1 * norm2 == 0.0)
+    {
+    // return the maximum possible angle difference (180 degrees)
+    return M_PI;
+    }
+
+  // Calculate the dot product, include normalization
+  double dotprod = (a0*b0 + a1*b1 + a2*b2 + a3*b3) / (norm1*norm2);
+
+  // The angle (in radians) is twice the arccos of the dot product 
+  double angle = 2*acos(dotprod);
+
+  return angle;
+}
+
+//---------------------------------------------------------------------------
+// Compute the distance between two points
+double vtkBrpDistanceBetweenPositions(
+  double ax, double ay, double az,
+  double bx, double by, double bz)
+{
+  // Use pythagoras
+  double dx = bx - ax;
+  double dy = by - ay;
+  double dz = bz - az;
+
+  double distance = sqrt(dx*dx + dy*dy + dz*dz);
+  
+  return distance;
+}
 
 //---------------------------------------------------------------------------
 void vtkBrpNavGUI::RemoveGUIObservers ( )
