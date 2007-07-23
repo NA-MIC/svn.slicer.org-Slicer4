@@ -285,6 +285,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 
     //BTX
     std::string LocatorModelID;
+    std::string LocatorModelID_new;
     //ETX
     vtkIGTDataManager *DataManager;
     vtkIGTPat2ImgRegistration *Pat2ImgReg;
@@ -341,6 +342,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     
     //BTX
     std::string received_scanner_status;
+    std::string received_error_status;
     std::string received_robot_status;
     //ETX
     int RequestedWorkphase;
