@@ -18,12 +18,13 @@
 #define BRPTPR_POSITION     "POSITION"
  
 // Status values: "status" attribute
-#define BRPTPR_Idle         "Idle"
-#define BRPTPR_Initializing "Initializing"
-#define BRPTPR_Uncalibrated "Uncalibrated"
-#define BRPTPR_Ready        "Ready"
-#define BRPTPR_Moving       "Moving"
-#define BRPTPR_Manual       "Manual"
+#define BRPTPR_Idle         "Idle" //before all
+#define BRPTPR_Initializing "Initializing" //after Start Up
+#define BRPTPR_Uncalibrated "Uncalibrated"// after init
+#define BRPTPR_Ready        "Ready" //Calibration after receiving Z fRAME 
+//                                    and after oving to position
+#define BRPTPR_Moving       "Moving" //after Sending Traget
+#define BRPTPR_Manual       "Manual" //after going to Manual and  breaking the axes
 #define BRPTPR_Error        "Error"
 #define BRPTPR_EStop        "EStop"
 
