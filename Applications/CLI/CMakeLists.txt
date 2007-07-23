@@ -38,19 +38,20 @@ ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
 TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters)
 
 #####################
-SET (CLP DiffusionTensorEstimation)
+IF (USE_TEEM)
+  SET (CLP DiffusionTensorEstimation)
 
-SET ( ${CLP}_SOURCE ${CLP}.cxx)
-GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${CLI_SOURCE_DIR}/Resources/ITKLogo.h)
-ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
-LINK_DIRECTORIES(${MRML_LIB_DIR} ${vtkTeem_LIB_DIR})
-TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters MRML vtkTeem)
-INCLUDE_DIRECTORIES(
-        ${vtkITK_SOURCE_DIR} 
-        ${vtkITK_BINARY_DIR} 
-        ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
-        ${vtkTeem_SOURCE_DIR}  ${vtkTeem_BINARY_DIR})
-
+  SET ( ${CLP}_SOURCE ${CLP}.cxx)
+  GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${CLI_SOURCE_DIR}/Resources/ITKLogo.h)
+  ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+  LINK_DIRECTORIES(${MRML_LIB_DIR} ${vtkTeem_LIB_DIR})
+  TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters MRML vtkTeem)
+  INCLUDE_DIRECTORIES(
+          ${vtkITK_SOURCE_DIR} 
+          ${vtkITK_BINARY_DIR} 
+          ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
+          ${vtkTeem_SOURCE_DIR}  ${vtkTeem_BINARY_DIR})
+ENDIF (USE_TEEM)
 
 #####################
 SET (CLP LinearRegistration)
