@@ -100,6 +100,82 @@ const char *vtkIGTDataManager::RegisterStream(int streamType)
 
 
 
+//Philip Mewes: 07/20/2007 This Locator has an extention to show were the needle is going to advance
+
+const char *vtkIGTDataManager::RegisterStream_new(int streamType)
+{
+    std::string id_extend("");
+
+    // streamType: 0 - matrix; 1 - image 
+    switch (streamType) {
+        case IGT_MATRIX_STREAM:
+            {
+
+            vtkMRMLModelNode *modelNode_extend = vtkMRMLModelNode::New();
+            vtkMRMLModelDisplayNode *dispNode_extend = vtkMRMLModelDisplayNode::New();
+            vtkMRMLLinearTransformNode *transform_extend = vtkMRMLLinearTransformNode::New();
+            dispNode_extend->SetVisibility(0);
+
+            this->MRMLScene->SaveStateForUndo();
+            this->MRMLScene->AddNode(dispNode_extend);
+            this->MRMLScene->AddNode(transform_extend);
+            this->MRMLScene->AddNode(modelNode_extend);  
+
+            dispNode_extend->SetScene(this->MRMLScene);
+
+            char name[20];
+            sprintf(name, "igt_matrix_%d", index);
+
+            modelNode_extend->SetName(name);
+            modelNode_extend->SetHideFromEditors(1);
+            modelNode_extend->SetScene(this->MRMLScene);
+            modelNode_extend->SetAndObserveDisplayNodeID(dispNode_extend->GetID());  
+            modelNode_extend->SetAndObserveTransformNodeID(transform_extend->GetID());  
+            id_extend = std::string(modelNode_extend->GetID());
+
+            // Cylinder represents the locator stick
+            vtkCylinderSource *cylinder_new = vtkCylinderSource::New();
+            cylinder_new->SetRadius(10.5);
+            cylinder_new->SetHeight(100);
+            cylinder_new->Update();    
+            // Sphere represents the locator tip 
+            vtkSphereSource *sphere_new = vtkSphereSource::New();
+            sphere_new->SetRadius(50.0);
+            sphere_new->SetCenter(0, -50, 0);
+            sphere_new->Update();
+
+            vtkAppendPolyData *apd_extend = vtkAppendPolyData::New();
+            apd_extend->AddInput(sphere_new->GetOutput());
+            apd_extend->AddInput(cylinder_new->GetOutput());
+            apd_extend->Update();
+
+            modelNode_extend->SetAndObservePolyData(apd_extend->GetOutput());
+            this->Modified();  
+            this->MRMLScene->Modified();
+
+            modelNode_extend->Delete();
+            cylinder_new->Delete();
+            sphere_new->Delete();
+            apd_extend->Delete();
+            dispNode_extend->Delete();
+            transform_extend->Delete();
+            }
+            break;
+
+        case IGT_IMAGE_STREAM:
+            break;
+        default:
+            break;
+    }
+
+    return id_extend.c_str();
+}
+
+
+
+
+
+
 void vtkIGTDataManager::PrintSelf(ostream& os, vtkIndent indent)
 {
 }
