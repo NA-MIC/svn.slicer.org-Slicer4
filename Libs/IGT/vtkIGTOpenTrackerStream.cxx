@@ -125,12 +125,23 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     position_cb2[1]=(float)(event.getPosition())[1] * VOT_cb2->MultiFactor;
     position_cb2[2]=(float)(event.getPosition())[2] * VOT_cb2->MultiFactor;
 
+   
     orientation_cb2[0]=(float)(event.getOrientation())[0];
     orientation_cb2[1]=(float)(event.getOrientation())[1];
     orientation_cb2[2]=(float)(event.getOrientation())[2];
     orientation_cb2[3]=(float)(event.getOrientation())[3];
     
-        
+    cout<<"Coordinates from the robot"<<endl;
+    cout<<position_cb2[0]<<endl;
+    cout<<position_cb2[1]<<endl;
+     cout<<position_cb2[2]<<endl;
+
+      cout<<"Oreintation from the robot"<<endl;
+  cout<<orientation_cb2[0]<<endl;
+  cout<<orientation_cb2[1]<<endl;
+  cout<<orientation_cb2[2]<<endl;
+  cout<<orientation_cb2[3]<<endl;
+   
 
     VOT_cb2->position_cb2_FS0=(float)(event.getPosition())[0];
     VOT_cb2->position_cb2_FS1=(float)(event.getPosition())[1];
@@ -142,12 +153,22 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     VOT_cb2->orientation_cb2_FS3=(float)(event.getOrientation())[3];
     
     //robot status    
-    cout <<"event in NT"<<endl;
-    if (event.hasAttribute("status")) {
+    //   cout <<"event in NT"<<endl;
+    if (event.hasAttribute("status"))
+         {
       VOT_cb2->robot_Status = (std::string)event.getAttribute<std::string>("status","");
-      cout<< "robot Status (NT):  " << VOT_cb2->robot_Status <<endl;
-    }
+     
+         }
+    //Philip Mewes: 17.07.2007 This gets in addition to the Status Msg a Msg
+    //which is precising the type of error
 
+    if (event.hasAttribute("message"))
+         {
+      VOT_cb2->robot_message = (std::string)event.getAttribute<std::string>("message","");
+
+         }
+
+    VOT_cb2->needle_depth.resize(3, 0.0);
     if (event.hasAttribute("depth")) {
       VOT_cb2->needle_depth = (std::vector<float>)event.getAttribute <std::vector<float> >("depth", VOT_cb2->needle_depth);
     }
@@ -732,11 +753,14 @@ void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* OrientationForSca
 }
 
 
-void vtkIGTOpenTrackerStream::GetDevicesStatus(std::string& received_robot_status,std::string& received_scanner_status)
+void vtkIGTOpenTrackerStream::GetDevicesStatus(std::string& received_robot_status,std::string& received_scanner_status,std::string& received_error_status)
 {
+  //   cout<< "robot Status (NT):  " << robot_Status <<endl;
+  // cout<< "robot Message (NT):  " << robot_message <<endl;
 
   received_robot_status = robot_Status;
-  cout<<received_robot_status<<endl;
+  received_error_status = robot_message;
+  //  cout<<received_robot_status<<endl;
 
 
 }
