@@ -111,7 +111,7 @@ public:
     //ETX    
     //BTX
       void GetRealtimeImage(int*, vtkImageData* image);
-      void GetDevicesStatus(std::string& received_robot_status,std::string& received_scanner_status);
+      void GetDevicesStatus(std::string& received_robot_status,std::string& received_scanner_status, std::string& received_error_status);
       //ETX
 
       //BTX
@@ -152,6 +152,7 @@ private:
 
     //BTX
     std::string robot_Status;
+    std::string robot_message;
     std::vector<float> needle_depth;
     //ETX
 
