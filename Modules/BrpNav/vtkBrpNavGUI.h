@@ -99,6 +99,8 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 
     void HandleMouseEvent(vtkSlicerInteractorStyle *style);
 
+
+       void SetOpenTrackerforBRPDataFlowValveFilter ();
     
     // Description:
     // Describe behavior at module startup and exit.
@@ -125,6 +127,14 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWEntryWithLabel *RadiusEntry;
 
     vtkKWEntryWithLabel *setSpeedEntry;
+    //Philip Mewes: To show Robots Coordinates and Orientation
+    //as a Feedback for the develp core
+    vtkKWEntryWithLabel *PositionEntry;
+    vtkKWLabel *RobotPositionLabel;
+
+    vtkKWEntryWithLabel *OrientEntry;
+    vtkKWLabel *RobotOrientLabel;
+
 
     vtkKWEntryWithLabel *NREntry;    
     vtkKWEntryWithLabel *NAEntry;
@@ -383,7 +393,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     
     void BuildGUIForWorkPhaseFrame ();
     void BuildGUIForscancontrollFrame ();
-    void SetOpenTrackerforBRPDataFlowValveFilter ();
+ 
     
     void TrackerLoop();
 
