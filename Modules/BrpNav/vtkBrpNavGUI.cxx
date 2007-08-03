@@ -1,5 +1,7 @@
 
 
+
+
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -53,9 +55,6 @@
 #include "vtkSlicerColorLogic.h"
 #include "vtkSlicerVolumesGUI.h"
 
-// DG
-#include <math.h>
-#include <limits.h>
 
 #include "vtkIGTDataStream.h"
 
@@ -71,7 +70,8 @@ vtkCxxRevisionMacro ( vtkBrpNavGUI, "$Revision: 1.0 $");
 
 vtkBrpNavGUI::vtkBrpNavGUI ( )
 {
-  
+ 
+
     this->Logic = NULL;
 
     this->NormalOffsetEntry = NULL; 
@@ -664,56 +664,16 @@ if (this->WorkPhaseEmergencyButton)
 void vtkBrpNavGUI::PrintSelf ( ostream& os, vtkIndent indent )
 {
     this->vtkObject::PrintSelf ( os, indent );
+    
+
+
 
     os << indent << "BrpNavGUI: " << this->GetClassName ( ) << "\n";
     os << indent << "Logic: " << this->GetLogic ( ) << "\n";
+   
     // print widgets?
 }
 
-//---------------------------------------------------------------------------
-// Compute the rotation angle between two quaternion orientations.
-// The dot product of two normalized quaternions is equal to the
-// cosine of half of the angle between the orientations.
-// The return value will be a positive number in the range [0, pi].
-double vtkBrpAngleBetweenOrientations(
-  double a0, double a1, double a2, double a3,
-  double b0, double b1, double b2, double b3)
-{
-  // Find the norms of the two quaternions
-  double norm1 = sqrt(a0*a0 + a1*a1 + a2*a2 + a3*a3);
-  double norm2 = sqrt(b0*b0 + b1*b1 + b2*b2 + b3*b3);
-
-  // Ensure that we don't have division-by-zero error
-  if (norm1 * norm2 == 0.0)
-    {
-    // return the maximum possible angle difference (180 degrees)
-    return M_PI;
-    }
-
-  // Calculate the dot product, include normalization
-  double dotprod = (a0*b0 + a1*b1 + a2*b2 + a3*b3) / (norm1*norm2);
-
-  // The angle (in radians) is twice the arccos of the dot product 
-  double angle = 2*acos(dotprod);
-
-  return angle;
-}
-
-//---------------------------------------------------------------------------
-// Compute the distance between two points
-double vtkBrpDistanceBetweenPositions(
-  double ax, double ay, double az,
-  double bx, double by, double bz)
-{
-  // Use pythagoras
-  double dx = bx - ax;
-  double dy = by - ay;
-  double dz = bz - az;
-
-  double distance = sqrt(dx*dx + dy*dy + dz*dz);
-  
-  return distance;
-}
 
 //---------------------------------------------------------------------------
 void vtkBrpNavGUI::RemoveGUIObservers ( )
@@ -1178,9 +1138,10 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       int checkedPhase5 = this->WorkPhaseManualButton->GetSelectedState();
       int checkedPhase6 = this->WorkPhaseEmergencyButton->GetSelectedState();
       
+      cout<<"Button pressed"<<endl;
   
       if(checkedPhase1)
-        RequestedWorkphase=1; 
+      RequestedWorkphase=1; 
       else if(checkedPhase2) 
       RequestedWorkphase=2;
       else if(checkedPhase3)
@@ -1199,6 +1160,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
       else
         {
         this->SoftwareStatusLabelDisp->SetValue("");
+        WorkFlowProcessStart = 0;
         RequestedWorkphase=0;
         }
 #endif
@@ -1269,7 +1231,8 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
         sprintf(coordsxyz, "%s, %s, %s", xcoordsrobot, ycoordsrobot, zcoordsrobot);
         char orientsxyz[512]; 
         sprintf(orientsxyz, "%s, %s, %s, %s", o1coordsrobot, o2coordsrobot, o3coordsrobot, o4coordsrobot);
-   /*
+   
+/*
    int CountTarget;   
    CountTarget = 1;
    char DispCountTarget[512];
@@ -1290,7 +1253,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
          std::string robotcommandkey;
          std::string robotcommandvalue;  
          robotcommandkey = "command";
-         robotcommandvalue = "SET_ORIENTATION";
+         robotcommandvalue = BRPTPR_TARGET;
 
         
         int sendindex = this->TargetListColumnList->GetWidget()->GetIndexOfFirstSelectedRow();
@@ -1335,7 +1298,7 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
     {
         int checked = this->LocatorCheckButton->GetSelectedState(); 
 
-        vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+        vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
         if (model != NULL)
         {
         vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
@@ -1430,7 +1393,9 @@ if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller)
 void vtkBrpNavGUI::Init()
 {
     this->DataManager->SetMRMLScene(this->GetMRMLScene());
-    this->LocatorModelID = std::string(this->DataManager->RegisterStream(0));
+    //   this->LocatorModelID = std::string(this->DataManager->RegisterStream(0));
+    this->LocatorModelID_new = std::string(this->DataManager->RegisterStream_new(0));
+    
 }
 
 
@@ -1886,7 +1851,6 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
                 this->NSEntry->GetWidgetName());
 
 
-
         
     // Contents in header 1 frame
     vtkKWLabel *empty2Label = vtkKWLabel::New();
@@ -2114,6 +2078,73 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
                 this->SetOrientButton->GetWidgetName());
 
     
+
+    vtkKWFrameWithLabel *DisplayRobotCoordsLabelFrame = vtkKWFrameWithLabel::New();
+    DisplayRobotCoordsLabelFrame->SetParent ( deviceFrame->GetFrame() );
+    DisplayRobotCoordsLabelFrame->Create ( );
+    DisplayRobotCoordsLabelFrame->CollapseFrame ( );
+    DisplayRobotCoordsLabelFrame->SetLabelText ("Show Robot Coords. and Orient.");
+    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+                  DisplayRobotCoordsLabelFrame->GetWidgetName());
+
+
+    vtkKWFrame *DisplayRobotCoordsFrame = vtkKWFrame::New();
+    DisplayRobotCoordsFrame->SetParent (DisplayRobotCoordsLabelFrame->GetFrame() );
+    DisplayRobotCoordsFrame->Create ( );
+    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
+                  DisplayRobotCoordsFrame->GetWidgetName(),
+                  DisplayRobotCoordsLabelFrame->GetFrame()->GetWidgetName());
+
+    vtkKWFrame *DisplayRobotOrientFrame = vtkKWFrame::New();
+    DisplayRobotOrientFrame->SetParent (DisplayRobotCoordsLabelFrame->GetFrame() );
+    DisplayRobotOrientFrame->Create ( );
+    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
+                  DisplayRobotOrientFrame->GetWidgetName(),
+                  DisplayRobotCoordsLabelFrame->GetFrame()->GetWidgetName());
+
+    
+   
+    vtkKWLabel *RobotPositionLabel = vtkKWLabel::New();
+    RobotPositionLabel->SetParent(DisplayRobotCoordsFrame);
+    RobotPositionLabel->Create();
+    RobotPositionLabel->SetWidth(20);
+    RobotPositionLabel->SetText("Position: ");
+
+    this->PositionEntry = vtkKWEntryWithLabel::New();
+    this->PositionEntry->SetParent(DisplayRobotCoordsFrame);
+    this->PositionEntry->Create();
+    this->PositionEntry->GetWidget()->SetWidth(23);
+    this->PositionEntry->GetWidget()->SetValue("0.0, 0.0 ,0.0");
+    
+    this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
+                RobotPositionLabel->GetWidgetName(),
+                this->PositionEntry->GetWidgetName());
+
+
+    vtkKWLabel *RobotOrientLabel = vtkKWLabel::New();
+    RobotOrientLabel->SetParent(DisplayRobotOrientFrame);
+    RobotOrientLabel->Create();
+    RobotOrientLabel->SetWidth(20);
+    RobotOrientLabel->SetText("Normal / Transnormal: ");
+
+    this->OrientEntry = vtkKWEntryWithLabel::New();
+    this->OrientEntry->SetParent(DisplayRobotOrientFrame);
+    this->OrientEntry->Create();
+    this->OrientEntry->GetWidget()->SetWidth(40);
+    this->OrientEntry->GetWidget()->SetValue("0.0, 0.0, 0.0");
+    
+    this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
+                RobotOrientLabel->GetWidgetName(),
+                this->OrientEntry->GetWidgetName());
+
+
+    
+
+
+    /*
+     this->NREntry->GetWidget()->SetWidth(5);
+    this->NREntry->GetWidget()->SetValue("0");
+    */
 
     //---------------------------------------------------------------------------------------------------------------------------
      empty1Label->Delete();
@@ -2951,56 +2982,62 @@ void vtkBrpNavGUI::UpdateAll()
         
 
     //Philip Mewes 17.07.2007: defining and sending te workphase (WP) commands depending of requestet WP
-   
+    //
         
-        this->OpenTrackerStream->GetDevicesStatus(received_robot_status, received_scanner_status);
-        if(received_robot_status == "START_UP" && RequestedWorkphase==1)
+    // received_robot_status = NULL;
+    
+    this->OpenTrackerStream->GetDevicesStatus(received_robot_status, received_scanner_status, received_error_status);
+        if(received_robot_status == BRPTPR_Initializing && RequestedWorkphase==1)
           {
-            RobotStatusLabelDisp->SetValue ( "Idle" );
-          }
-        else if(received_robot_status == "PLANNING" && RequestedWorkphase==2)
-          {
-            RobotStatusLabelDisp->SetValue ( "" );
-          }
-        else if(received_robot_status == "CALIBRATION" && RequestedWorkphase==3)
-          {
-            RobotStatusLabelDisp->SetValue ( "UNCALIBRATED" );
-          
-          }
-        else if(received_robot_status == "TARGETTING" && RequestedWorkphase==4)
-          {
-            RobotStatusLabelDisp->SetValue ( "READY" );
-          
-          }
-   // Philip Mewes 17.07.2007: Receiving Status for the Beginning of the Positioning (Moving) Process
-   else if(received_robot_status == "TARGETING_START" && RequestedWorkphase==4)
-          {
-            RobotStatusLabelDisp->SetValue ( "MOVING" );
-          
-          }
-   // Philip Mewes 17.07.2007: Receiving Status for the Beginning of the Positioning (Moving) Process
-   else if(received_robot_status == "TARGETING_END" && RequestedWorkphase==4)
-          {
-            RobotStatusLabelDisp->SetValue ( "READY" );
-          
+            RobotStatusLabelDisp->SetValue ( "Initializing" );
           }
 
-        else if(received_robot_status == "MANUAL" && RequestedWorkphase==5)
+        if(received_robot_status == BRPTPR_Uncalibrated && RequestedWorkphase==1)
+          {
+            RobotStatusLabelDisp->SetValue ( "Uncalibrated" );
+          }
+        else if(RequestedWorkphase==2)
+          {
+            RobotStatusLabelDisp->SetValue ( "Planning" );
+          }
+        else if(received_robot_status == BRPTPR_Ready && RequestedWorkphase==3)
+          {
+            RobotStatusLabelDisp->SetValue ( "Ready (Calb.)" );
+          }
+         // Philip Mewes 17.07.2007: Receiving Status for the Beginning
+        // of the Positioning (Moving) Process
+        else if(received_robot_status == BRPTPR_Moving && RequestedWorkphase==4)
+          {
+            RobotStatusLabelDisp->SetValue ( "Moving" );
+          }
+         // Philip Mewes 17.07.2007: Receiving Status when Robot
+        //is in the right position
+         else if(received_robot_status == BRPTPR_Ready  && RequestedWorkphase==4)
+          {
+            RobotStatusLabelDisp->SetValue ( "Ready (Pos.)" );
+          }
+         // Philip Mewes 17.07.2007: After sending the Manual WP-Command
+        //and the breaking of the robot axes
+        else if(received_robot_status == BRPTPR_Manual && RequestedWorkphase==5)
           {
             RobotStatusLabelDisp->SetValue ( "MANUAL" );
-          
           }
-        else  if(received_robot_status == "EMERGENCY" && RequestedWorkphase==6)
+        else  if(received_robot_status == BRPTPR_EStop && RequestedWorkphase==6)
           {
-            RobotStatusLabelDisp->SetValue ( "READY" );
-          
+            RobotStatusLabelDisp->SetValue ( "911" );
           }
+        else  if(BRPTPR_Error)
+          {
+           
+            RobotStatusLabelDisp->SetValue ( "Err: ");
+          }
+        
         else
            RobotStatusLabelDisp->SetValue ( "" );
 
         //timer for resend workphase request
-        /*
-        if(!received_robot_status || var_status_robot < RequestedWorkphase)
+        /*        
+        if(!received_robot_status) //|| (var_status_robot < RequestedWorkphase))
           {
             int i=0;
                for (i=0; i<100; i++)
@@ -3017,12 +3054,7 @@ void vtkBrpNavGUI::UpdateAll()
           }
         */
 
-        
-
-
-
-    cout<<"robotstatusSD3): ";
-    cout<<received_robot_status<<endl;
+    
         
     int checkedpassrobotcoords = this->ConnectCheckButtonPASSROBOTCOORDS->GetSelectedState();
     if (checkedpassrobotcoords)
@@ -3102,7 +3134,7 @@ void vtkBrpNavGUI::UpdateAll()
     {
     char Val[10];
     
-
+    
     float px = this->LocatorMatrix->GetElement(0, 0);
     float py = this->LocatorMatrix->GetElement(1, 0);
     float pz = this->LocatorMatrix->GetElement(2, 0);
@@ -3114,17 +3146,17 @@ void vtkBrpNavGUI::UpdateAll()
     float tz = this->LocatorMatrix->GetElement(2, 2);
     
 
-
     /*
-    float px = 1;
+    
+    float px = 0;
     float py = 0;
     float pz = 0;
-    float nx = 1;
-    float ny = 1;
-    float nz = 1;
-    float tx = 1;
-    float ty = 1;
-    float tz = 1;
+    float nx = 0;
+    float ny = 0;
+    float nz = 0;
+    float tx = 0.5;
+    float ty = 0.5;
+    float tz = 0.1;
     */
 
  /*
@@ -3149,6 +3181,19 @@ void vtkBrpNavGUI::UpdateAll()
     sprintf(Val, "UI6.2f", tz);
     this->TSEntry->SetValue(Val);
     */
+
+    //Philip Mewes: For better debugging reasons and verification
+    //in clinic workflow Needle tipp position, normal and transnormal vector
+    //are going to be displayed here
+    
+    char coordsxyz[512];
+    sprintf(coordsxyz, "%6.2f, %6.2f, %6.2f", px, py, pz);
+    this->PositionEntry->GetWidget()->SetValue(coordsxyz);
+    
+    char orientxyz[512];
+    sprintf(orientxyz, "(%6.2f, %6.2f, %6.2f) (%6.2f, %6.2f, %6.2f)", nx, ny, nz, tx, ty, tz);
+    this->OrientEntry->GetWidget()->SetValue(orientxyz);
+    
 
     // update the display of locator
     if (this->LocatorCheckButton->GetSelectedState()) this->UpdateLocator();
@@ -3183,7 +3228,7 @@ void vtkBrpNavGUI::UpdateLocator()
     transform = this->IGSTKStream->GetLocatorNormalTransform(); 
 #endif
 
-    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
     if (model != NULL)
     {
     if (transform)
@@ -3294,10 +3339,12 @@ int checked = this->FreezeImageCheckButton->GetSelectedState();
      
       mat->SetElement(3, 3, 1.0);
       
-      
-    
+
+      //Philip Mewes: Image can be frozen at the last updated
+       if(!checked)
+         {
        this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
-     
+         }
       
 
 
@@ -3586,7 +3633,13 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
   //
   //
 
-     
+  
+
+
+  /*
+    cout<<"robotstatusSD3): ";
+    cout<<received_robot_status<<endl;
+  */ 
 
   int WorkphaseClearanceSOFT = 0;
    int checkedClear = this->ClearWorkPhasecontrollButton->GetSelectedState();
@@ -3714,52 +3767,71 @@ void vtkBrpNavGUI::StateTransitionDiagramControll()
 
 void vtkBrpNavGUI::SetOpenTrackerforBRPDataFlowValveFilter()
 {
-     int checkedWorkPhaseStartUpButton = this->WorkPhaseStartUpButton->GetSelectedState();
-    int checkedWorkPhasePlanningButton = this->WorkPhasePlanningButton->GetSelectedState() ;
-    int checkedWorkPhaseCalibarationButton = this->WorkPhaseCalibarationButton->GetSelectedState();
-    int checkedWorkPhaseTargetingButton = this->WorkPhaseTargetingButton->GetSelectedState();
-    int checkedWorkPhaseManualButton = this->WorkPhaseManualButton->GetSelectedState();
-    int checkedWorkPhaseEmergencyButton = this->WorkPhaseEmergencyButton->GetSelectedState();
 
-   if (checkedWorkPhaseStartUpButton ||checkedWorkPhasePlanningButton
-     ||checkedWorkPhaseCalibarationButton ||checkedWorkPhaseTargetingButton
-     ||checkedWorkPhaseManualButton ||checkedWorkPhaseEmergencyButton )   
-   {        
+              int checkedWorkPhaseStartUpButton = this->WorkPhaseStartUpButton->GetSelectedState();
+              int checkedWorkPhasePlanningButton = this->WorkPhasePlanningButton->GetSelectedState() ;
+              int checkedWorkPhaseCalibarationButton = this->WorkPhaseCalibarationButton->GetSelectedState();
+              int checkedWorkPhaseTargetingButton = this->WorkPhaseTargetingButton->GetSelectedState();
+              int checkedWorkPhaseManualButton = this->WorkPhaseManualButton->GetSelectedState();
+              int checkedWorkPhaseEmergencyButton = this->WorkPhaseEmergencyButton->GetSelectedState();
+
+               if (checkedWorkPhaseStartUpButton ||checkedWorkPhasePlanningButton
+                   ||checkedWorkPhaseCalibarationButton ||checkedWorkPhaseTargetingButton
+                   ||checkedWorkPhaseManualButton ||checkedWorkPhaseEmergencyButton )   
+                      {        
+                        
+                        
+                       std::vector<std::string> filtercommandkeys;
+                       std::vector<std::string> filtercommandvalues;
+                        filtercommandkeys.resize(1);
+                        filtercommandvalues.resize(1);
+  
  
-        std::vector<std::string> filtercommandkeys;
-        std::vector<std::string> filtercommandvalues;
-        filtercommandkeys.resize(1);
-        filtercommandvalues.resize(1);
+                             if (checkedWorkPhaseStartUpButton){                
+                                              filtercommandkeys[0] = "workphase";
+                                              filtercommandvalues[0] = BRPTPR_START_UP;
+                                                           }
+       
+                             if (checkedWorkPhasePlanningButton){filtercommandkeys[0] = "workphase";
+                                               filtercommandvalues[0] = BRPTPR_PLANNING; }
+        
+                             if (checkedWorkPhaseCalibarationButton){filtercommandkeys[0] = "workphase";
+                                               filtercommandvalues[0] = BRPTPR_CALIBRATION; }
+  
+                             if (checkedWorkPhaseTargetingButton){filtercommandkeys[0] = "workphase";
+                                               filtercommandvalues[0] = BRPTPR_TARGETTING;}
+  
+                             if (checkedWorkPhaseManualButton){filtercommandkeys[0] = "workphase";
+                                               filtercommandvalues[0] = BRPTPR_MANUAL; }
+  
+                             if (checkedWorkPhaseEmergencyButton){filtercommandkeys[0] = "workphase";
+                                               filtercommandvalues[0] = BRPTPR_EMERGENCY; }
+       
+                             this->OpenTrackerStream->SetOpenTrackerforBRPDataFlowValveFilter(filtercommandkeys, filtercommandvalues);
 
- 
+                         
+                      }
 
-      if (checkedWorkPhaseStartUpButton){                
-                                           filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = BRPTPR_START_UP;
-                                                          }
-      
-      if (checkedWorkPhasePlanningButton){filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = BRPTPR_PLANNING; }
-      
-      if (checkedWorkPhaseCalibarationButton){filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = BRPTPR_CALIBRATION; }
+               //08/02/2007 Philip Mewes TCL timer for resending Workphase command
+               //defined in the Silcer<->robot Handshake Protokol. This is also used for
+               //coordinates and orientation sending protokol
+               
+               
+               if(
+                  (received_robot_status==BRPTPR_Ready && checkedWorkPhaseStartUpButton) 
+                  ||
+                  (received_robot_status==BRPTPR_Uncalibrated && checkedWorkPhaseCalibarationButton) 
 
-      if (checkedWorkPhaseTargetingButton){filtercommandkeys[0] = "workphase";
-                                             filtercommandvalues[0] = BRPTPR_TARGETTING;}
+                  )
+                 {
 
-      if (checkedWorkPhaseManualButton){filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = BRPTPR_MANUAL; }
+           cout<<"run TCL TIMER"<<endl;
+           this->Script("after 5000 \"%s SetOpenTrackerforBRPDataFlowValveFilter\"", this->GetTclName());
 
-      if (checkedWorkPhaseEmergencyButton){filtercommandkeys[0] = "workphase";
-                                         filtercommandvalues[0] = BRPTPR_EMERGENCY; }
-      
-      this->OpenTrackerStream->SetOpenTrackerforBRPDataFlowValveFilter(filtercommandkeys, filtercommandvalues);
+                 }
+  }
 
 
-      cout <<"end SetOpenTrackerforBRPDataFlowValveFilter()" <<endl;
-
-   }
-}
 
 
 
