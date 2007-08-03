@@ -31,6 +31,7 @@ vtkIGTDataManager::~vtkIGTDataManager()
 
 const char *vtkIGTDataManager::RegisterStream(int streamType)
 {
+ 
     std::string id("");
 
     // streamType: 0 - matrix; 1 - image 
@@ -104,6 +105,7 @@ const char *vtkIGTDataManager::RegisterStream(int streamType)
 
 const char *vtkIGTDataManager::RegisterStream_new(int streamType)
 {
+
     std::string id_extend("");
 
     // streamType: 0 - matrix; 1 - image 
@@ -115,6 +117,10 @@ const char *vtkIGTDataManager::RegisterStream_new(int streamType)
             vtkMRMLModelDisplayNode *dispNode_extend = vtkMRMLModelDisplayNode::New();
             vtkMRMLLinearTransformNode *transform_extend = vtkMRMLLinearTransformNode::New();
             dispNode_extend->SetVisibility(0);
+            dispNode_extend->GetColorNode();
+           
+            dispNode_extend->SetColor(0, 100, 0);
+            dispNode_extend->SetOpacity(0.5);
 
             this->MRMLScene->SaveStateForUndo();
             this->MRMLScene->AddNode(dispNode_extend);
@@ -134,19 +140,30 @@ const char *vtkIGTDataManager::RegisterStream_new(int streamType)
             id_extend = std::string(modelNode_extend->GetID());
 
             // Cylinder represents the locator stick
-            vtkCylinderSource *cylinder_new = vtkCylinderSource::New();
-            cylinder_new->SetRadius(10.5);
-            cylinder_new->SetHeight(100);
-            cylinder_new->Update();    
+            vtkCylinderSource *cylinder_extend = vtkCylinderSource::New();
+            cylinder_extend->SetRadius(1.5);
+            cylinder_extend->SetHeight(100);
+            cylinder_extend->Update();  
+  
             // Sphere represents the locator tip 
-            vtkSphereSource *sphere_new = vtkSphereSource::New();
-            sphere_new->SetRadius(50.0);
-            sphere_new->SetCenter(0, -50, 0);
-            sphere_new->Update();
+            vtkSphereSource *sphere_extend = vtkSphereSource::New();
+            sphere_extend->SetRadius(3.0);
+            sphere_extend->SetCenter(0, -50, 0);
+            sphere_extend->Update();
+            
+           
+            vtkCylinderSource *VirtualCylinder_extend = vtkCylinderSource::New();
+            VirtualCylinder_extend->SetRadius(1.0);
+            VirtualCylinder_extend->SetHeight(300);
+            VirtualCylinder_extend->SetCenter(0, -100, 0);
+            VirtualCylinder_extend->SetResolution(50);
+            VirtualCylinder_extend->Update();
+            
 
             vtkAppendPolyData *apd_extend = vtkAppendPolyData::New();
-            apd_extend->AddInput(sphere_new->GetOutput());
-            apd_extend->AddInput(cylinder_new->GetOutput());
+            apd_extend->AddInput(sphere_extend->GetOutput());
+            apd_extend->AddInput(cylinder_extend->GetOutput());
+            apd_extend->AddInput(VirtualCylinder_extend->GetOutput());
             apd_extend->Update();
 
             modelNode_extend->SetAndObservePolyData(apd_extend->GetOutput());
@@ -154,8 +171,9 @@ const char *vtkIGTDataManager::RegisterStream_new(int streamType)
             this->MRMLScene->Modified();
 
             modelNode_extend->Delete();
-            cylinder_new->Delete();
-            sphere_new->Delete();
+            cylinder_extend->Delete();
+            sphere_extend ->Delete();
+            VirtualCylinder_extend->Delete();
             apd_extend->Delete();
             dispNode_extend->Delete();
             transform_extend->Delete();
