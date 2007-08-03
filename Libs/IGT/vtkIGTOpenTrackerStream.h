@@ -117,9 +117,7 @@ public:
       //BTX
   
       void GetCoordsOrientforScanner(float* OrientationForScanner0,float* OrientationForScanner1, float* OrientationForScanner2, float* OrientationForScanner3, float* PositionForScanner0, float* PositionForScanner1, float* PositionForScanner2);
-  
-     
- //ETX
+      //ETX
 
 private:
 

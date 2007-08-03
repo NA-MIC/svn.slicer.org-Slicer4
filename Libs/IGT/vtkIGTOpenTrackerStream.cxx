@@ -131,6 +131,9 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     orientation_cb2[2]=(float)(event.getOrientation())[2];
     orientation_cb2[3]=(float)(event.getOrientation())[3];
     
+
+    //Philip Mewes: remove for debugging
+    /*
     cout<<"Coordinates from the robot"<<endl;
     cout<<position_cb2[0]<<endl;
     cout<<position_cb2[1]<<endl;
@@ -141,7 +144,7 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
   cout<<orientation_cb2[1]<<endl;
   cout<<orientation_cb2[2]<<endl;
   cout<<orientation_cb2[3]<<endl;
-   
+    */
 
     VOT_cb2->position_cb2_FS0=(float)(event.getPosition())[0];
     VOT_cb2->position_cb2_FS1=(float)(event.getPosition())[1];
@@ -249,7 +252,7 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     float transform_matrix[3][3];
     vtkMath::QuaternionToMatrix3x3(orientation_cb2, transform_matrix);
     
-    // get the "needle depth" vector and multiply it by the robot orientation,
+    // get the "needle depth" vector(3,1) and multiply it by the robot orientation,
     // this will give the offsets in Slicer coordinates
     float needle_offset[3];
     for (j=0; j<3; j++) {
