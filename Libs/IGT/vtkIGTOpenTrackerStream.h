@@ -66,10 +66,9 @@ public:
      // vtkSetMacro(robot_Status, char);
      
 
-    vtkSetMacro(RealtimeXsize,int);
-    vtkSetMacro(RealtimeYsize,int);
+    vtkSetMacro(RealtimeImageX,int);
+    vtkSetMacro(RealtimeImageY,int);
     // vtkSetMacro(RealtimeImageData,Image);
-    
    
     vtkGetObjectMacro(LocatorNormalTransform,vtkTransform);
        
@@ -160,22 +159,20 @@ private:
     float orientation_cb2[4];
     
 
-    int RealtimeXsize;
-    int RealtimeYsize;
-
-  
     Image RealtimeImageData;
-     int RealtimeImageSerial;
-
+    int   RealtimeImageSerial;
+    int   RealtimeImageX;                // (pixel)
+    int   RealtimeImageY;                // (pixel)
+    float RealtimeImageFov;              // (mm)
+    float RealtimeImageSlthick;          // (mm)
+    
 
     void Normalize(float *a);
     void Cross(float *a, float *b, float *c);
     void ApplyTransform(float *position, float *norm, float *transnorm);
-    void ApplyTransform_cb2(float *position_cb2, float *norm_cb2, float *transnorm_cb2);
     void CloseConnection();
 
     void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
-    void quaternion2xyz_cb2(float* orientation_cb2, float *normal_cb2, float *transnormal_cb2); 
 
     
     
