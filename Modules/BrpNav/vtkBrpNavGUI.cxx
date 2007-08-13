@@ -3799,7 +3799,7 @@ void vtkBrpNavGUI::SetOpenTrackerforBRPDataFlowValveFilter()
                                                filtercommandvalues[0] = BRPTPR_CALIBRATION; }
   
                              if (checkedWorkPhaseTargetingButton){filtercommandkeys[0] = "workphase";
-                                               filtercommandvalues[0] = BRPTPR_TARGETTING;}
+                                               filtercommandvalues[0] = BRPTPR_TARGETING;}
   
                              if (checkedWorkPhaseManualButton){filtercommandkeys[0] = "workphase";
                                                filtercommandvalues[0] = BRPTPR_MANUAL; }
