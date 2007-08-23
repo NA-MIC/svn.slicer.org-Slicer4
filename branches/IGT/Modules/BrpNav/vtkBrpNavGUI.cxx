@@ -3083,6 +3083,13 @@ void vtkBrpNavGUI::UpdateAll()
                 //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
                 //this->Logic0->UpdatePipeline ();
                 this->RealtimeVolumeNode->SetAndObserveImageData(vid);
+                vtkMatrix4x4* mat = vtkMatrix4x4::New();
+                this->RealtimeVolumeNode->ComputeIJKToRASFromScanOrder("IS",
+                                                                       vid->GetSpacing(),
+                                                                       vid->GetDimensions(),
+                                                                       true, mat);
+                this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
+                mat->Delete();
             }
         }
         else
@@ -3900,12 +3907,9 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
 
         vtkMRMLVolumeDisplayNode *displayNode = NULL;
         vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
-        
         vtkImageData* image = vtkImageData::New();
         
-        //image->SetDimensions(RealtimeXsize, RealtimeYsize, 1);
         image->SetDimensions(256, 256, 1);
-        //image->SetExtent( xmin, xmax, ymin, ymax, zmin, zmax );
         image->SetExtent(0, 255, 0, 255, 0, 0 );
         image->SetNumberOfScalarComponents( 1 );
         image->SetOrigin( 0, 0, 0 );
@@ -3916,47 +3920,24 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
         short* dest = (short*) image->GetScalarPointer();
         if (dest)
         {
-            memset(dest, 0x01, 256*100*sizeof(short));
-            image->Update();
+          memset(dest, 0x00, 256*256*sizeof(short));
+          image->Update();
         }
-  
-        /*
-        vtkMRMLSliceNode *sliceorient = vtkMRMLSliceNode::New();
-        sliceorient->SetSliceToRAS(LocatorMatrix);
-        sliceorient->UpdateMatrices();
-        */
         
         vtkSlicerSliceLayerLogic *reslice = vtkSlicerSliceLayerLogic::New();
         reslice->SetUseReslice(0);
-        
-        vtkImageChangeInformation *ici = vtkImageChangeInformation::New();
-        ici->SetInput (image);
-        ici->SetOutputSpacing( 1, 1, 1 );
-        ici->SetOutputOrigin( 0, 0, 0 );
-        ici->Update();
-        scalarNode->SetAndObserveImageData (ici->GetOutput());
+        scalarNode->SetAndObserveImageData(image);
         
         vtkMatrix4x4* mat = vtkMatrix4x4::New();
-        double space[3];
-        int dim[3];
-        space[0] = 1;
-        space[1] = 1;
-        space[2] = 10;
-        dim[0]   = 256;
-        dim[1]   = 256;
-        dim[2]   = 1;
         scalarNode->ComputeIJKToRASFromScanOrder("IS",
                                                  // possible is IS, PA, LR and inverse
-                                                 //image->GetSpacing(),
-                                                 space,
-                                                 //image->GetDimensions(),
-                                                 dim,
+                                                 image->GetSpacing(),
+                                                 image->GetDimensions(),
                                                  true, mat);
         scalarNode->SetIJKToRASMatrix(mat);
         mat->Delete();
         image->Delete();
         
-        ici->Delete();
         
         
         /* Based on the code in vtkSlicerVolumeLogic::AddHeaderVolume() */
