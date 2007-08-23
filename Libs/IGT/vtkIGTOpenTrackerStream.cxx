@@ -297,27 +297,33 @@ void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
     
     if (event.hasAttribute("image"))
     {
-      VOT->RealtimeImageSerial = (VOT->RealtimeImageSerial + 1) % 32768;
-      VOT->RealtimeImageData=(Image)event.getAttribute((Image*)NULL,"image");
-      cout << "image size is " << VOT->RealtimeImageData.size() << endl;
-    }
+        VOT->RealtimeImageSerial = (VOT->RealtimeImageSerial + 1) % 32768;
+        VOT->RealtimeImageData=(Image)event.getAttribute((Image*)NULL,"image");
+        cout << "image size is " << VOT->RealtimeImageData.size() << endl;
+        if (event.hasAttribute("xdim") && event.hasAttribute("ydim"))
+        {
+            VOT->RealtimeImageX = (int)event.getAttribute(std::string("xdim"),0);
+            VOT->RealtimeImageY = (int)event.getAttribute(std::string("ydim"),0);
+        } else {
+            std::cerr << "No image size information." << std::endl;
+        }
 
-    if (event.hasAttribute("xdim") && event.hasAttribute("ydim"))
-    {
-      VOT->RealtimeImageX = (int)event.getAttribute(std::string("xdim"),0);
-      VOT->RealtimeImageY = (int)event.getAttribute(std::string("ydim"),0);
+        
+        if (event.hasAttribute("fov"))
+        {
+            VOT->RealtimeImageFov = (float)event.getAttribute(std::string("fov"),0.0);
+        } else {
+            std::cerr << "No image FOV information." << std::endl;
+        }
+        
+        if (event.hasAttribute("slthick"))
+        {
+            VOT->RealtimeImageSlthick = (float)event.getAttribute(std::string("slthick"),0.0);
+        } else {
+            std::cerr << "No slice thickness information." << std::endl;
+        }
     }
-
-    if (event.hasAttribute("fov"))
-    {
-      VOT->RealtimeImageFov = (float)event.getAttribute(std::string("fov"),0.0);
-    }
-
-    if (event.hasAttribute("slthick"))
-    {
-      VOT->RealtimeImageSlthick = (float)event.getAttribute(std::string("slthick"),0.0);
-    }
-
+    
     // For debug 
     std::cerr << "Image size            : " << VOT->RealtimeImageX << " x " << VOT->RealtimeImageY << std::endl;
     std::cerr << "Image position        : (" << position[0] << ", " << position[1] << ", "
@@ -654,20 +660,24 @@ void vtkIGTOpenTrackerStream::SetOrientationforRobot(float xsendrobotcoords, flo
 void vtkIGTOpenTrackerStream::GetRealtimeImage(int* serial, vtkImageData* image)
 {
   //std::cerr << "Serial : " << this->RealtimeImageSerial << ", " <<  *serial << std::endl;
-  //std::cerr << "(xsize, ysize) = (" << RealtimeXsize << ", " << RealtimeYsize << ")" << std::endl;
-
+  //std::cerr << "(xsize, ysize) = (" << RealtimeImageX << ", " << RealtimeImageY << ")" << std::endl;
     if (*serial != this->RealtimeImageSerial)
     {
         std::cerr << "Serial : " << this->RealtimeImageSerial << ", " <<  *serial << std::endl;
         *serial = this->RealtimeImageSerial;
         if (image && RealtimeImageData.size() > 0)
         {
+          float spacing[3];
+          spacing[0] = RealtimeImageFov / RealtimeImageX;
+          spacing[1] = RealtimeImageFov / RealtimeImageY;
+          spacing[2] = RealtimeImageSlthick;
+          
           image->SetDimensions(RealtimeImageX, RealtimeImageY, 1);
           //image->SetExtent( xmin, xmax, ymin, ymax, zmin, zmax );
           image->SetExtent(0, RealtimeImageX-1, 0, RealtimeImageY-1, 0, 0 );
           image->SetNumberOfScalarComponents( 1 );
           image->SetOrigin( 0, 0, 0 );
-          image->SetSpacing( 1, 1, 10 );
+          image->SetSpacing( spacing[0], spacing[1], spacing[2] );
           image->SetScalarTypeToShort();
           image->AllocateScalars();
 
