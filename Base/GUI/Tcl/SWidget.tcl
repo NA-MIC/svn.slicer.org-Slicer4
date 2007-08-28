@@ -85,7 +85,7 @@ if { [itcl::find class SWidget] == "" } {
     # methods
     method rasToXY {rasPoint} {}
     method xyToRAS {xyPoint} {}
-    method queryLayers { x y } {}
+    method queryLayers { x y {z 0} } {}
     method getLayers {} {return [array get _layers]}
     method getObjects {} {return [array get o]}
     method processEvent {} {}
@@ -111,6 +111,15 @@ if { [itcl::find class SWidget] == "" } {
       set _vtkObjects ""
     }
 
+    # generic useful routine
+    method superclass {} {
+      return [lindex [$this info heritage] 1]
+    }
+
+    # interact with the status line on the main window
+    method statusText {msg} {
+      [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText $msg
+    }
   }
 }
 
@@ -120,7 +129,10 @@ if { [itcl::find class SWidget] == "" } {
 #
 itcl::configbody SWidget::sliceGUI {
   set _renderWidget [[$sliceGUI GetSliceViewer] GetRenderWidget]
-  set _renderer [$_renderWidget GetRenderer]
+    
+  #set numberOfRenderers
+
+  #set _renderer [$_renderWidget GetRenderer]
   set _interactor [$_renderWidget GetRenderWindowInteractor]
   set _annotation [$_renderWidget GetCornerAnnotation]
   set _sliceNode [[$sliceGUI GetLogic] GetSliceNode]
@@ -143,7 +155,7 @@ itcl::body SWidget::xyToRAS { xyPoint } {
   return [lrange $rast 0 2]
 }
 
-itcl::body SWidget::queryLayers { x y } {
+itcl::body SWidget::queryLayers { x y {z 0} } {
   # 
   # get the logic, node, image, ijk coords, and pixel for each layer
   # - store these in a layers array for easy access
@@ -161,7 +173,7 @@ itcl::body SWidget::queryLayers { x y } {
     } else {
       set _layers($layer,image) [$_layers($layer,node) GetImageData]
       set _layers($layer,xyToIJK) [[$_layers($layer,logic) GetXYToIJKTransform] GetMatrix]
-      foreach {i j k l} [$_layers($layer,xyToIJK) MultiplyPoint $x $y 0 1] {}
+      foreach {i j k l} [$_layers($layer,xyToIJK) MultiplyPoint $x $y $z 1] {}
       foreach v {i j k} { ;# cast to integer
         if { ![string is double [set $v]] } {
           set _layers($layer,$v) 0
@@ -182,8 +194,24 @@ itcl::body SWidget::getPixel { image i j k } {
     if { $ind < 0 || $ind >= $dimension } {return "Unknown"}
   }
   set n [$image GetNumberOfScalarComponents]
-  for {set c 0} {$c < $n} {incr c} {
-    lappend pixel [$image GetScalarComponentAsDouble $i $j $k $c]
+
+  if { 0 } {
+    ### BUG IN vtkImageData GetScalarComponentAsDouble ??? 
+    for {set c 0} {$c < $n} {incr c} {
+      lappend pixel [$image GetScalarComponentAsDouble $i $j $k $c]
+    }
+  } else {
+    # directly access the scalars to get pixel value
+    # - need to compensate because the increments already include the pixel size
+    set scalars [[$image GetPointData] GetScalars]
+    foreach "w h d" [$image GetDimensions] {}
+    set sliceSize [expr $w * $h]
+    set idx [expr $i + $j*$w + $k*$sliceSize]
+    if { $scalars != "" && $n <= 4 } {
+      set pixel [$scalars GetTuple$n $idx]
+    } else {
+      set pixel "Unknown"
+    }
   }
   return $pixel
 }
@@ -212,4 +240,17 @@ itcl::body SWidget::setPixel { image i j k value } {
     }
   }
   return 0
+}
+
+#
+# TODO: this little helper reloads the swidget functionality
+#
+proc sssss {} {
+  itcl::delete class SWidget
+
+  set dir $::env(SLICER_HOME)/../Slicer3/Base/GUI/Tcl
+  source $dir/SWidget.tcl
+  foreach sw [glob $dir/*SWidget.tcl] {
+    source $sw
+  }
 }

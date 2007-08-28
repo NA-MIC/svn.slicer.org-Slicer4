@@ -29,6 +29,7 @@ proc ImportSlicer2Scene {sceneFile} {
   set ::S2(transformIDStack) ""
   set ::S2(fiducialListNode) ""
   set ::S2_HParent_ID ""
+  array unset ::S2_Model_ID ""
 
   ImportElement $root
 
@@ -85,7 +86,9 @@ proc ImportNode {element} {
   set nodeType [$element GetName]
   set handler ImportNode$nodeType
   if { [info command $handler] == "" } {
-    error "no handler for $nodeType"
+    set err [$::slicer3::MRMLScene GetErrorMessagePointer]
+    $::slicer3::MRMLScene SetErrorMessage "$err\nno handler for $nodeType"
+    $::slicer3::MRMLScene SetErrorCode 1
   }
 
   # call the handler for this element
@@ -156,10 +159,14 @@ proc ImportNodeVolume {node} {
     set n(description) ""
   }
 
-  switch $n(fileType) {
+  switch [string tolower $n(fileType)] {
 
-    "NRRD" -
-    "Generic" {
+    "nrrd" -
+    "generic" {
+
+      if { ![info exists n(fileName)] } {
+        set n(fileName) [format $n(filePattern) $n(filePrefix)]
+      }
 
       if { [file pathtype $n(fileName)] == "relative" } {
         set fileName $::S2(dir)/$n(fileName)
@@ -178,7 +185,8 @@ proc ImportNodeVolume {node} {
 
     }
 
-    "Basic" {
+    "headerless" -
+    "basic" {
 
       #
       # first, parse the slicer2 node
@@ -259,6 +267,14 @@ proc ImportNodeVolume {node} {
       $::slicer3::MRMLScene AddNode $volumeNode
       $volumeNode SetAndObserveDisplayNodeID [$volumeDisplayNode GetID]
 
+      # use the RASToIJK information from the file, to override what the 
+      # archetype reader might have set
+      set rasToVTK [vtkMatrix4x4 New]
+      eval $rasToVTK DeepCopy $n(rasToVtkMatrix)
+      $volumeNode SetRASToIJKMatrix $rasToVTK
+      $rasToVTK Delete
+
+
       #
       # clean up
       #
@@ -270,29 +286,22 @@ proc ImportNodeVolume {node} {
 
   set volumeNode [$::slicer3::MRMLScene GetNodeByID $volumeNodeID]
 
-  # use the RASToIJK information from the file, to override what the 
-  # archetype reader might have set
-  set rasToVTK [vtkMatrix4x4 New]
-  eval $rasToVTK DeepCopy $n(rasToVtkMatrix)
-  $volumeNode SetRASToIJKMatrix $rasToVTK
-  $rasToVTK Delete
-
   # use the current top of stack (might be "" if empty, but that's okay)
   set transformID [lindex $::S2(transformIDStack) end]
   $volumeNode SetAndObserveTransformNodeID $transformID
 
   set volumeDisplayNode [$volumeNode GetDisplayNode]
 
-  switch { $n(colorLUT) } {
+  switch -- $n(colorLUT) {
     "0" {
       $volumeDisplayNode SetAndObserveColorNodeID "vtkMRMLColorTableNodeGrey"
+    }
+    "-1" {
+      $volumeDisplayNode SetAndObserveColorNodeID "vtkMRMLColorTableNodeLabels"
     }
     default {
       $volumeDisplayNode SetAndObserveColorNodeID "vtkMRMLColorTableNodeGrey"
     }
-  }
-  if { [info exists n(labelMap)] && ($n(labelMap) == "yes"  || $n(labelMap) == "true") } {
-    $volumeDisplayNode SetAndObserveColorNodeID "vtkMRMLColorTableNodeLabels"
   }
 
   if { [info exists n(applyThreshold)] && ( $n(applyThreshold) == "yes" || $n(applyThreshold) == "true" ) } {
@@ -323,6 +332,16 @@ proc ImportNodeModel {node} {
   set mnode [$logic AddModel $fileName]
   set dnode [$mnode GetDisplayNode]
 
+  if { ![info exists n(id)] } {
+    # model node has no id, so create one
+    # - try to get a high number that isn't already used
+    for {set i 1000} {$i < 1000000} {incr i} {
+      if { [lsearch [array names ::S2_Model_ID] $i] == -1 } {
+        set n(id) $i
+        break
+      }
+    }
+  }
   set ::S2_Model_ID($n(id)) [$mnode GetID]
 
   if { [info exists n(visibility)] } {
@@ -334,12 +353,34 @@ proc ImportNodeModel {node} {
   }
 
   if { [info exists n(color)] } {
-      set cnode [$::slicer3::MRMLScene GetNodeByID vtkMRMLColorTableNodeLabels]
+
+    if { [string tolower $n(color)] == "skin" } {
+      # workaround slicer2 ethnocentrism
+      set n(color) "peach"
+    }
+
+    set cnode [vtkMRMLColorTableNode New]
+    foreach colorType "SPLBrainAtlas Labels" {
+
+      $cnode SetTypeTo$colorType
+      puts "looking for $n(color) in $colorType node $cnode"
+      set saveColor 0
       for {set i 0} {$i < [$cnode GetNumberOfColors]} {incr i} {
-          if {[$cnode GetColorName $i] == $n(color)} {
-              eval $dnode SetColor [lrange [[$cnode GetLookupTable] GetTableValue $i] 0 2]
-          }
+        set name [$cnode GetColorName $i]
+        if {[string tolower $name] == [string tolower $n(color)]} {
+          eval $dnode SetColor [lrange [[$cnode GetLookupTable] GetTableValue $i] 0 2]
+          set saveColor 1
+          puts " found color $i $name"
+          break
+        }
       } 
+      if {$saveColor == 0} {
+        $dnode SetAttribute colorid $n(color)
+      } else {
+        break
+      }
+    }
+    $cnode Delete
   }
 }
 
@@ -367,7 +408,7 @@ proc ImportNodeModelGroup {node} {
   }
 
   if { [info exists n(color)] } {
-      set cnode [$::slicer3::MRMLScene GetNodeByID vtkMRMLColorTableNodeLabels]
+      set cnode [$::slicer3::MRMLScene GetNodeByID vtkMRMLColorTableNodeSPLBrainAtlas]
       for {set i 0} {$i < [$cnode GetNumberOfColors]} {incr i} {
           if {[$cnode GetColorName $i] == $n(color)} {
               eval $dnode SetColor [lrange [[$cnode GetLookupTable] GetTableValue $i] 0 2]
@@ -396,8 +437,8 @@ proc ImportNodeModelRef {node} {
   set id3 $::S2_Model_ID($id2)
   $hnode SetName [[$::slicer3::MRMLScene GetNodeByID $id3] GetName]
 
-  set dnode [vtkMRMLModelDisplayNode New]
-  set dnode [$::slicer3::MRMLScene AddNodeNoNotify $dnode]
+  #set dnode [vtkMRMLModelDisplayNode New]
+  #set dnode [$::slicer3::MRMLScene AddNodeNoNotify $dnode]
 
   set hnode [$::slicer3::MRMLScene AddNode $hnode]
 
@@ -406,7 +447,7 @@ proc ImportNodeModelRef {node} {
   }
   $hnode SetModelNodeIDReference $id3
 
-  $hnode SetAndObserveDisplayNodeID [$dnode GetID]
+  #$hnode SetAndObserveDisplayNodeID [$dnode GetID]
 
 }
 
@@ -445,8 +486,30 @@ proc ImportNodePoint {node} {
   }
 }
 
+proc ImportNodeColor {node} {
+  upvar $node n
+  if { [info exists n(name)] } {
+      set id $n(name)
+      if { [info exists n(diffuseColor)] } {
+          foreach {r g b} $n(diffuseColor) {}
+          $::slicer3::MRMLScene InitTraversal
+          set ndnodes [$::slicer3::MRMLScene GetNumberOfNodesByClass vtkMRMLModelDisplayNode]
+          for {set i 0} {$i < $ndnodes} {incr i} {
+              set dnode [$::slicer3::MRMLScene GetNthNodeByClass $i vtkMRMLModelDisplayNode]
+              set cid [$dnode GetAttribute colorid]
+              #$dnode SetAttribute one $id
+              #$dnode SetAttribute two $cid
+              if {$id == $cid} {
+                  $dnode SetColor $r $g $b
+              }
+          }
+      }
+  }
+}
+
 proc ImportNodeOptions {node} {
-  puts stderr "warning: option nodes cannot be imported"
+  $::slicer3::MRMLScene SetErrorMessage "$err\nwarning: option nodes cannot be imported"
+  $::slicer3::MRMLScene SetErrorCode 1
 }
 
 

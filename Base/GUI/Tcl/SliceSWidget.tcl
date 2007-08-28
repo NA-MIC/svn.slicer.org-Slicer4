@@ -29,11 +29,14 @@ if { [itcl::find class SliceSWidget] == "" } {
 
     variable _actionStartRAS "0 0 0"
     variable _actionStartXY "0 0"
+    variable _actionStartViewportOrigin "0 0"
+    variable _actionStartWindowXY "0 0"
     variable _actionStartFOV "250 250 250"
     variable _kwObserverTags ""
     variable _fiducialsSWidget ""
     variable _gridSWidget ""
     variable _crosshairSWidget ""
+    variable _regionsSWidget ""
 
     # methods
     method resizeSliceNode {} {}
@@ -58,6 +61,7 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
   set _gridSWidget [GridSWidget #auto $sliceGUI]
   $_gridSWidget configure -layer "label"
   set _crosshairSWidget [CrosshairSWidget #auto $sliceGUI]
+  set _regionsSWidget [RegionsSWidget #auto $sliceGUI]
  
   # create matrices to store transform state
   set o(storeXYToRAS) [$this vtkNew vtkMatrix4x4]
@@ -78,6 +82,7 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
   [$o(focusActor) GetProperty] SetColor 1 1 0
   $o(focusActor) VisibilityOff
   $o(focusActor) SetPosition 3 3
+  # We'll need to change this or come up with a different way to indicate which active frame
   [$_renderWidget GetRenderer] AddActor2D $o(focusActor)
   lappend _actors $o(focusActor)
 
@@ -119,6 +124,8 @@ itcl::body SliceSWidget::destructor {} {
 
   ::SWidget::ProtectedDelete $_crosshairSWidget
 
+  ::SWidget::ProtectedDelete $_regionsSWidget
+
   if { [info command $sliceGUI] != "" } {
     foreach tag $_guiObserverTags {
       $sliceGUI RemoveObserver $tag
@@ -131,11 +138,7 @@ itcl::body SliceSWidget::destructor {} {
     }
   }
 
-  if { [info command $_renderer] != "" } {
-    foreach a $_actors {
-      $_renderer RemoveActor2D $a
-    }
-  }
+  $_renderWidget RemoveAllRenderers
 }
 
 
@@ -148,10 +151,16 @@ itcl::body SliceSWidget::destructor {} {
 # make sure the size of the slice matches the window size of the widget
 #
 itcl::body SliceSWidget::resizeSliceNode {} {
+  if { $_layers(background,node) != "" } {
+    set logic [$sliceGUI GetLogic]
+    set sliceSpacing [$logic GetBackgroundSliceSpacing]
 
-  set tkwindow [$_renderWidget  GetWidgetName]
-  set w [winfo width $tkwindow]
-  set h [winfo height $tkwindow]
+    $this configure -sliceStep [lindex $sliceSpacing 2]
+  }
+
+  set renderer [$_renderWidget GetRenderer]
+  foreach {w h} [$renderer GetSize] {}
+
   foreach {nodeW nodeH nodeD} [$_sliceNode GetDimensions] {}
   if { $w == $nodeW && $h == $nodeH } {
     return
@@ -164,9 +173,11 @@ itcl::body SliceSWidget::resizeSliceNode {} {
     set oldDim [$_sliceNode GetDimensions]
     set oldPixelSize0 [expr [lindex $oldFOV 0] / (1. * [lindex $oldDim 0])]
     set oldPixelSize1 [expr [lindex $oldFOV 1] / (1. * [lindex $oldDim 1])]
-    $_sliceNode SetDimensions $w $h [lindex $oldDim 2]
+    set oldPixelSize2 $sliceStep  
+    $_sliceNode SetDimensions $w $h [lindex $oldDim 2]    
     $_sliceNode SetFieldOfView \
-        [expr $oldPixelSize0 * $w] [expr $oldPixelSize1 * $h] [lindex $oldFOV 2]
+        [expr $oldPixelSize0 * $w] [expr $oldPixelSize1 * $h] [expr [lindex $oldDim 2]*$oldPixelSize2]
+
   }
 }
 
@@ -198,8 +209,8 @@ itcl::body SliceSWidget::processEvent { } {
   #
   set event [$sliceGUI GetCurrentGUIEvent] 
   if { $event != "ConfigureEvent" } {
-    # this call is needed (shouldn't be)
-    eval $_interactor UpdateSize [$_renderer GetSize]
+    set tkwindow [$_renderWidget  GetWidgetName]
+    $_interactor UpdateSize [winfo width $tkwindow] [winfo height $tkwindow]
   }
 
   #
@@ -214,10 +225,31 @@ itcl::body SliceSWidget::processEvent { } {
     }
   }
 
-  foreach {x y} [$_interactor GetEventPosition] {}
-  $this queryLayers $x $y
+  #
+  # get the event position and make it relative to a renderer
+  #
+  foreach {windowx windowy} [$_interactor GetEventPosition] {}
+  set pokedRenderer [$_interactor FindPokedRenderer $windowx $windowy]
+
+
+  # figure out which slice corresponds to the viewer
+  foreach {windoww windowh} [[$_interactor GetRenderWindow] GetSize] {}
+  set numRows [[$sliceGUI GetSliceViewer] GetLayoutGridRows]
+  set numCols [[$sliceGUI GetSliceViewer] GetLayoutGridColumns]
+
+  set tx [expr $windowx / double($windoww)]
+  set ty [expr ($windowh - $windowy) / double($windowh)]
+
+  set z [expr (floor($ty*$numRows)*$numCols + floor($tx*$numCols))]
+
+  foreach {w h} [$pokedRenderer GetSize] {}
+  foreach {rox roy} [$pokedRenderer GetOrigin] {}
+  set x [expr $windowx - $rox]
+  set y [expr $windowy - $roy]
+  $this queryLayers $x $y $z
   set xyToRAS [$_sliceNode GetXYToRAS]
-  set ras [$xyToRAS MultiplyPoint $x $y 0 1]
+  set ras [$xyToRAS MultiplyPoint $x $y $z 1]
+
   foreach {r a s t} $ras {}
 
   #
@@ -246,7 +278,10 @@ itcl::body SliceSWidget::processEvent { } {
             #
             # Translate
             # TODO: move calculation to vtkSlicerSliceLogic
-            set currentRAS [$o(storeXYToRAS) MultiplyPoint $x $y 0 1]
+            set tx [expr $windowx - [lindex $_actionStartViewportOrigin 0]]
+            set ty [expr $windowy - [lindex $_actionStartViewportOrigin 1]]
+            
+            set currentRAS [$o(storeXYToRAS) MultiplyPoint $tx $ty 0 1]
             foreach d {dr da ds} start $_actionStartRAS current $currentRAS {
               set $d [expr $current - $start]
             }
@@ -263,9 +298,8 @@ itcl::body SliceSWidget::processEvent { } {
             #
             # Zoom
             # TODO: move calculation to vtkSlicerSliceLogic
-            set deltay [expr $y - [lindex $_actionStartXY 1]]
-            set tkwindow [$_renderWidget  GetWidgetName]
-            set h [winfo height $tkwindow]
+            set deltay [expr $windowy - [lindex $_actionStartWindowXY 1]]
+
             set percent [expr ($h + $deltay) / (1.0 * $h)]
 
             # the factor operation is so 'z' isn't changed and the 
@@ -276,7 +310,7 @@ itcl::body SliceSWidget::processEvent { } {
                 lappend newFOV [expr $f * $factor]
               }
               eval $_sliceNode SetFieldOfView $newFOV
-
+ 
               $_sliceNode UpdateMatrices
             }
             $sliceGUI SetGUICommandAbortFlag 1
@@ -292,6 +326,9 @@ itcl::body SliceSWidget::processEvent { } {
     "RightButtonPressEvent" {
       set _actionState "Zoom"
       set _actionStartXY "$x $y"
+      set _actionStartWindowXY "$windowx $windowy"
+      set _actionStartViewportOrigin "$rox $roy"
+      set _actionStartRAS $ras
       $sliceGUI SetGrabID $this
       $sliceGUI SetGUICommandAbortFlag 1
       set _actionStartFOV [$_sliceNode GetFieldOfView]
@@ -317,6 +354,9 @@ itcl::body SliceSWidget::processEvent { } {
     }
     "MiddleButtonPressEvent" {
       set _actionState "Translate"
+      set _actionStartXY "$x $y"
+      set _actionStartWindowXY "$windowx $windowy"
+      set _actionStartViewportOrigin "$rox $roy"
       set _actionStartRAS $ras
       $sliceGUI SetGrabID $this
       $sliceGUI SetGUICommandAbortFlag 1
@@ -351,28 +391,31 @@ itcl::body SliceSWidget::processEvent { } {
       [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText ""
     }
     "TimerEvent" { }
+    "CharEvent" - 
     "KeyPressEvent" { 
       $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
+      $sliceGUI SetGUICommandAbortFlag 1
       switch [$_interactor GetKeySym] {
         "v" {
-          $sliceGUI SetGUICommandAbortFlag 1
           $_sliceNode SetSliceVisible [expr ![$_sliceNode GetSliceVisible]]
         }
-        "f" {
-
+        "r" {
           # use c++ version of calculation
-          set tkwindow [$_renderWidget  GetWidgetName]
-          set w [winfo width $tkwindow]
-          set h [winfo height $tkwindow]
           [$sliceGUI GetLogic] FitSliceToBackground $w $h
           $_sliceNode UpdateMatrices
           $sliceGUI SetGUICommandAbortFlag 1
         }
-        "Left" - "Down" {
+        "b" - "Left" - "Down" {
           $this decrementSlice
         }
-        "Right" - "Up" {
+        "f" - "Right" - "Up" {
           $this incrementSlice
+        }
+        "space" {
+          ::EditBox::ShowDialog
+        }
+        "c" {
+          ::Box::ShowDialog ColorBox
         }
         default {
           puts "[$_interactor GetKeyCode], [$_interactor GetKeySym]"
@@ -411,7 +454,24 @@ itcl::body SliceSWidget::updateAnnotation {x y r a s} {
   set logic [$sliceGUI GetLogic]
   set sliceCompositeNode [$logic GetSliceCompositeNode]
 
-  set labelText "Lb: $_layers(label,pixel)"
+  
+  # get the display node for the label volume, extract the name of the colour used to represent the label pixel
+  set colorName ""
+  if {[info command $_layers(label,node)] != "" && \
+      $_layers(label,node) != "" && \
+      $_layers(label,pixel) != "" && \
+      $_layers(label,pixel) != "Unknown"} {
+      set labelDisplayNode [$_layers(label,node) GetDisplayNode]
+      if {$labelDisplayNode != "" && [$labelDisplayNode GetColorNodeID] != ""} {
+          set colorNode [$labelDisplayNode GetColorNode]
+          if {$colorNode != ""} {
+              if {[string is integer $_layers(label,pixel)]} {
+                  set colorName [$colorNode GetColorName $_layers(label,pixel)]
+              }
+          }
+      }
+  }
+  set labelText "Lb: $_layers(label,pixel) $colorName"
   set voxelText "Fg: $_layers(foreground,pixel)\nBg: $_layers(background,pixel)"
   set ijkText [format "Bg I: %d\nBg J: %d\nBg K: %d" \
                 $_layers(background,i) $_layers(background,j) $_layers(background,k)]

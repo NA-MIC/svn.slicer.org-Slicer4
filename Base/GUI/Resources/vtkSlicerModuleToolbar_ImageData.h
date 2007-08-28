@@ -49,6 +49,21 @@ static const unsigned char image_ToolbarEditor[] =
 
 /* 
  * Resource generated for file:
+ *    EditorToolbox.png (zlib, base64) (image file)
+ */
+static const unsigned int  image_EditorToolbox_width          = 21;
+static const unsigned int  image_EditorToolbox_height         = 21;
+static const unsigned int  image_EditorToolbox_pixel_size     = 3;
+static const unsigned long image_EditorToolbox_length         = 160;
+static const unsigned long image_EditorToolbox_decoded_length = 1323;
+
+static const unsigned char image_EditorToolbox[] = 
+  "eNpjYmJgogz9JxcMfu0M9ZzIiCTtQPWnnm0FIv0l+hAGsglU147mVCACakRGeLRj2oXJoK"
+  "l2NKdiokHreOSQhzuVjGQDdwaaeiITLYXakX0BFzEysgSitLQ0CIOMHGdkZDRz5kxXV1ey"
+  "MyzQBCrmdwoBAEwyY7Q=";
+
+/* 
+ * Resource generated for file:
  *    ToolbarEditorToolbox.png (zlib, base64) (image file)
  */
 static const unsigned int  image_ToolbarEditorToolbox_width          = 21;
