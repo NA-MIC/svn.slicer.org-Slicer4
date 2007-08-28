@@ -75,6 +75,7 @@
 #include "itkGE5ImageIO.h"
 #include "itkNiftiImageIO.h"
 #include "itkVTKImageIO.h"
+#include "itkTIFFImageIO.h"
 #include "itkAnalyzeImageIO.h"
 #include <itksys/SystemTools.hxx>
 
@@ -93,6 +94,7 @@ vtkITKArchetypeImageSeriesReader::vtkITKArchetypeImageSeriesReader()
   this->FileNameSliceCount = 0;
   this->UseNativeOrigin = false;
   this->OutputScalarType = VTK_FLOAT;
+  this->NumberOfComponents = 0;
   this->UseNativeScalarType = 0;
   for (int i = 0; i < 3; i++)
     {
@@ -210,23 +212,31 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   int extent[6];  
   std::string fileNameCollapsed = itksys::SystemTools::CollapseFullPath( this->Archetype);
 
-  // First see if the archetype exists
-  if (!itksys::SystemTools::FileExists (fileNameCollapsed.c_str()))
+  // Since we only need origin, spacing and extents, we can use one
+  // image type.
+  typedef itk::Image<float,3> ImageType;
+  itk::ImageRegion<3> region;
+
+  typedef itk::ImageSource<ImageType> FilterType;
+  FilterType::Pointer filter;
+
+  // First see if the archetype exists, if it's not a pointer into memory
+  if (fileNameCollapsed.find("slicer:0x") != std::string::npos &&
+      fileNameCollapsed.find("#") != std::string::npos)
     {
-    itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: Archetype file " << fileNameCollapsed.c_str() << " does not exist.");
-    return;
+    vtkDebugMacro("File " << fileNameCollapsed.c_str() << " is a pointer to the mrml scene in memory, not checking for it on disk");
+    }
+  else 
+    {
+    if (!itksys::SystemTools::FileExists (fileNameCollapsed.c_str()))
+      {
+      itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: Archetype file " << fileNameCollapsed.c_str() << " does not exist.");
+      return;
+      }
     }
 
   // Some file types require special processing
   itk::GDCMImageIO::Pointer dicomIO = itk::GDCMImageIO::New();
-  itk::MetaImageIO::Pointer metaIO = itk::MetaImageIO::New();
-  itk::NrrdImageIO::Pointer nrrdIO = itk::NrrdImageIO::New();
-#ifdef USE_ITKGE5READER
-  itk::GE5ImageIO::Pointer ge5IO = itk::GE5ImageIO::New();
-#endif
-  itk::AnalyzeImageIO::Pointer analyzeIO = itk::AnalyzeImageIO::New();
-  itk::NiftiImageIO::Pointer niftiIO = itk::NiftiImageIO::New();
-  itk::VTKImageIO::Pointer vtkIO = itk::VTKImageIO::New();
 
   // Test whether the input file is a DICOM file
   bool isDicomFile = dicomIO->CanReadFile(this->Archetype);
@@ -264,31 +274,28 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
       candidateFiles.push_back(this->Archetype);
       }
     }
-  // Each of these file types can contain a 3D volume in a single file
-  // (or represented by a single file). In this reader we assume that if
-  // a file can contain a 3D volume, we only need that single
-  // file. This means that in this reader, these types cannot read a
-  // volume described in multiple files.
-  else if ( metaIO->CanReadFile(this->Archetype) ||
-            nrrdIO->CanReadFile(this->Archetype) ||
-#ifdef USE_ITKGE5READER
-            ge5IO->CanReadFile(this->Archetype) ||
-#endif
-            niftiIO->CanReadFile(this->Archetype) ||
-            vtkIO->CanReadFile(this->Archetype) ||
-            analyzeIO->CanReadFile(this->Archetype))
-    {
-    if (candidateFiles.size() == 0)
+  else 
+    { // not dicom
+    // check the dimensions of the archetype - if there 
+    // is more then one slice, use only the archetype
+    // but if it is a single slice, try to generate a 
+    // series of filenames
+    itk::ImageFileReader<ImageType>::Pointer imageReader =
+      itk::ImageFileReader<ImageType>::New();
+    imageReader->SetFileName(this->Archetype);
+    imageReader->UpdateOutputInformation();
+    region = imageReader->GetOutput()->GetLargestPossibleRegion();
+    if ( region.GetSize()[2] > 1 )
       {
       candidateFiles.push_back(this->Archetype);
       }
-    }
-  else
-    {  
-    // Generate filenames from the Archetype
-    itk::ArchetypeSeriesFileNames::Pointer fit = itk::ArchetypeSeriesFileNames::New();
-    fit->SetArchetype (this->Archetype);
-    candidateFiles = fit->GetFileNames();
+    else
+      {
+      // Generate filenames from the Archetype
+      itk::ArchetypeSeriesFileNames::Pointer fit = itk::ArchetypeSeriesFileNames::New();
+      fit->SetArchetype (this->Archetype);
+      candidateFiles = fit->GetFileNames();
+      }
     }
 
   // Reduce the selection of filenames
@@ -327,13 +334,6 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
   double spacing[3];
   double origin[3];
   
-  // Since we only need origin, spacing and extents, we can use one
-  // image type.
-  typedef itk::Image<float,3> ImageType;
-  itk::ImageRegion<3> region;
-
-  typedef itk::ImageSource<ImageType> FilterType;
-  FilterType::Pointer filter;
 
   itk::ImageIOBase::Pointer imageIO = NULL;
 
@@ -403,12 +403,12 @@ void vtkITKArchetypeImageSeriesReader::ExecuteInformation()
         }
       else 
         {
-          imageIO = seriesReader->GetImageIO();
-          if (imageIO.GetPointer() == NULL) 
-            {
-              //itkGenericExceptionMacro ( "vtkITKArchetypeImageSeriesReader::ExecuteInformation: ImageIO for file " << fileNameCollapsed.c_str() << " does not exist.");
-              //return;  TODO - figure out why imageIO is NULL for image series with more than one file
-            }
+        itk::ImageFileReader<ImageType>::Pointer imageReader =
+          itk::ImageFileReader<ImageType>::New();
+        imageReader->SetFileName(this->FileNames[0].c_str());
+        imageReader->UpdateOutputInformation();
+        imageIO = imageReader->GetImageIO();
+        seriesReader->SetImageIO(imageIO);
         }
       if (this->UseNativeCoordinateOrientation)
         {

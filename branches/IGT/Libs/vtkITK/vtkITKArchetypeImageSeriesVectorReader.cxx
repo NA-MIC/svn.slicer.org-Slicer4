@@ -64,7 +64,7 @@ void vtkITKArchetypeImageSeriesVectorReader::ExecuteData(vtkDataObject *output)
     }
 
   vtkImageData *data = vtkImageData::SafeDownCast(output);
-  data->UpdateInformation();
+  //data->UpdateInformation();
   data->SetExtent(0,0,0,0,0,0);
   data->AllocateScalars();
   data->SetExtent(data->GetWholeExtent());
@@ -74,7 +74,7 @@ void vtkITKArchetypeImageSeriesVectorReader::ExecuteData(vtkDataObject *output)
     case typeN: \
     {\
       typedef itk::Vector<type, 3>    VectorPixelType;\
-      typedef itk::Image<VectorPixelType,3> image##typeN;\
+      typedef itk::VectorImage<VectorPixelType,3> image##typeN;\
       typedef itk::ImageSource<image##typeN> FilterType; \
       FilterType::Pointer filter; \
       itk::ImageSeriesReader<image##typeN>::Pointer reader##typeN = \
@@ -111,11 +111,12 @@ void vtkITKArchetypeImageSeriesVectorReader::ExecuteData(vtkDataObject *output)
     case typeN: \
     {\
       typedef itk::Vector<type, 3>    VectorPixelType;\
-      typedef itk::Image<VectorPixelType,3> image2##typeN;\
+      typedef itk::VectorImage<type,3> image2##typeN;\
       typedef itk::ImageSource<image2##typeN> FilterType; \
       FilterType::Pointer filter; \
-      itk::ImageFileReader<image2##typeN>::Pointer reader2##typeN = \
-            itk::ImageFileReader<image2##typeN>::New(); \
+      typedef itk::ImageFileReader<\
+        image2##typeN > ReaderType##typeN; \
+      ReaderType##typeN::Pointer reader2##typeN = ReaderType##typeN::New();\
       reader2##typeN->SetFileName(this->FileNames[0].c_str()); \
       if (this->UseNativeCoordinateOrientation) \
         { \
@@ -132,7 +133,7 @@ void vtkITKArchetypeImageSeriesVectorReader::ExecuteData(vtkDataObject *output)
         filter = orient2##typeN; \
         } \
        filter->UpdateLargestPossibleRegion();\
-      itk::ImportImageContainer<unsigned long, VectorPixelType>::Pointer PixelContainer2##typeN;\
+      itk::ImportImageContainer<unsigned long, type >::Pointer PixelContainer2##typeN;\
       PixelContainer2##typeN = filter->GetOutput()->GetPixelContainer();\
       void *ptr = static_cast<void *> (PixelContainer2##typeN->GetBufferPointer());\
       (dynamic_cast<vtkImageData *>( output))->GetPointData()->GetScalars()->SetVoidArray(ptr, PixelContainer2##typeN->Size(), 0);\
@@ -141,56 +142,45 @@ void vtkITKArchetypeImageSeriesVectorReader::ExecuteData(vtkDataObject *output)
     break
   // END VECTOR MACRO
 
+
     // If there is only one file in the series, just use an image file reader
   if (this->FileNames.size() == 1)
     {
-      if (this->GetNumberOfComponents() == 3) 
-      {
-       switch (this->OutputScalarType)
-        {
-          vtkITKExecuteDataFromFileVector(VTK_DOUBLE, double);
-          vtkITKExecuteDataFromFileVector(VTK_FLOAT, float);
-          vtkITKExecuteDataFromFileVector(VTK_LONG, long);
-          vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_LONG, unsigned long);
-          vtkITKExecuteDataFromFileVector(VTK_INT, int);
-          vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_INT, unsigned int);
-          vtkITKExecuteDataFromFileVector(VTK_SHORT, short);
-          vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_SHORT, unsigned short);
-          vtkITKExecuteDataFromFileVector(VTK_CHAR, char);
-          vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_CHAR, unsigned char);
-        default:
-          vtkErrorMacro(<< "UpdateFromFile: Unknown data type");
-        }
-    }
-      else 
-    {
-      vtkErrorMacro(<< "UpdateFromFile: Unsupported Number Of Components: 3 != " << this->GetNumberOfComponents());
-    }
-    }
-  else
-    {
-      if (this->GetNumberOfComponents() == 3)
-      {
+    vtkDebugMacro("ImageSeriesVectorReader: only one file: " << this->FileNames[0].c_str());
     switch (this->OutputScalarType)
       {
-        vtkITKExecuteDataFromSeriesVector(VTK_DOUBLE, double);
-        vtkITKExecuteDataFromSeriesVector(VTK_FLOAT, float);
-        vtkITKExecuteDataFromSeriesVector(VTK_LONG, long);
-        vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_LONG, unsigned long);
-        vtkITKExecuteDataFromSeriesVector(VTK_INT, int);
-        vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_INT, unsigned int);
-        vtkITKExecuteDataFromSeriesVector(VTK_SHORT, short);
-        vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_SHORT, unsigned short);
-        vtkITKExecuteDataFromSeriesVector(VTK_CHAR, char);
-        vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_CHAR, unsigned char);
+      vtkITKExecuteDataFromFileVector(VTK_DOUBLE, double);
+      vtkITKExecuteDataFromFileVector(VTK_FLOAT, float);
+      vtkITKExecuteDataFromFileVector(VTK_LONG, long);
+      vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_LONG, unsigned long);
+      vtkITKExecuteDataFromFileVector(VTK_INT, int);
+      vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_INT, unsigned int);
+      vtkITKExecuteDataFromFileVector(VTK_SHORT, short);
+      vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_SHORT, unsigned short);
+      vtkITKExecuteDataFromFileVector(VTK_CHAR, char);
+      vtkITKExecuteDataFromFileVector(VTK_UNSIGNED_CHAR, unsigned char);
       default:
-        vtkErrorMacro(<< "UpdateFromFile: Unknown data type");
+        vtkErrorMacro(<< "UpdateFromFile: Unknown data type " << this->OutputScalarType);
       }
-      }
-      else 
+    }    
+  else
     {
-          vtkErrorMacro(<< "UpdateFromFile: Unsupported Number Of Components: 3 != " << this->GetNumberOfComponents());
-    }
+    // use the series reader
+    switch (this->OutputScalarType)
+      {
+      vtkITKExecuteDataFromSeriesVector(VTK_DOUBLE, double);
+      vtkITKExecuteDataFromSeriesVector(VTK_FLOAT, float);
+      vtkITKExecuteDataFromSeriesVector(VTK_LONG, long);
+      vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_LONG, unsigned long);
+      vtkITKExecuteDataFromSeriesVector(VTK_INT, int);
+      vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_INT, unsigned int);
+      vtkITKExecuteDataFromSeriesVector(VTK_SHORT, short);
+      vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_SHORT, unsigned short);
+      vtkITKExecuteDataFromSeriesVector(VTK_CHAR, char);
+      vtkITKExecuteDataFromSeriesVector(VTK_UNSIGNED_CHAR, unsigned char);
+      default:
+        vtkErrorMacro(<< "UpdateFromFile Series: Unknown data type " << this->OutputScalarType);
+      }
     }
 }
 
