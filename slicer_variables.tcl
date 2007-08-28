@@ -108,7 +108,7 @@ set ::TEEM_SRC_DIR  $::SLICER_LIB/teem
 set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
-set ::VTK_BUILD_TYPE "Debug"
+set ::VTK_BUILD_TYPE "Debug" ;# options: Release, RelWithDebInfo, Debug
 set ::VTK_BUILD_SUBDIR ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWidgets_BUILD_DIR  $::SLICER_LIB/KWWidgets-build
@@ -126,22 +126,17 @@ set ::IGSTK_DIR $::SLICER_LIB/IGSTK-build
 
 # Options for building IGT modules in Slicer
 set ::IGSTK "OFF"
-set ::OPENTRACKER "OFF"
-# If the value of OPENTRACKER is "ON", you need to set the following variables:
+set ::NAVITRACK "OFF"
 
-# ON:  opentracker 1.3
-# OFF: opentracker 2.0
-set ::OT_VERSION "OFF"
+# The absolute path and directory containing the navitrack library,
+# for instance on linux the libNaviTrack.so
+# set ::NAVITRACK_LIB_DIR /home/hliu/projects/navitrack/NaviTrack-build
+set ::NAVITRACK_LIB_DIR "" 
 
-# OT_LIB_DIR: the absolute path contains the OpenTracker library, 
-# e.g. libOpenTrakcer.so 
-set ::OT_LIB_DIR /projects/igtdev/mewes/NaviTrackBrp/NaviTrack
-# set ::OT_LIB_DIR ""
-
-# OT_INC: the directory contains "OpenTracker.h" (opentracker 1.3) or 
-#         "OpenTracker/OpenTracker.h" (opentracker 2.0) 
-# set ::OT_INC_DIR /home/hliu/projects/splot-build/opentracker/src
-set ::OT_INC_DIR /projects/igtdev/mewes/NaviTrackBrp/NaviTrack/include
+# The navitrack include directry, e.g.
+# /home/hliu/projects/navitrack/NaviTrack/include
+# set ::NAVITRACK_INC_DIR /home/hliu/projects/navitrack/NaviTrack/include
+set ::NAVITRACK_INC_DIR "" 
 
 switch $::tcl_platform(os) {
     "SunOS" -
@@ -209,13 +204,6 @@ switch $::tcl_platform(os) {
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
 
-        #
-        ### Set your peferred build type: 
-        #
-        #set ::VTK_BUILD_TYPE RelWithDebInfo ;# good if you have the full (expensive) compiler
-        #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
-        #set ::VTK_BUILD_TYPE Debug  ;# a good default
-        #set ::VTK_BUILD_TYPE RelWithDebInfo  ;# a good default
         set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
 
