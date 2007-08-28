@@ -84,18 +84,8 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
     context->start();
 
     // sets the callback function
-    // if we use NaviTrack (not opentracker), use this function
-    // callbackMod->setCallback( "cb1", (OTCallbackFunction*)&callbackF ,this);    
-#ifdef OT_VERSION_20
-
     callbackMod->setCallback( "cb1", (OTCallbackFunction*)&callbackF ,this);
     callbackMod->setCallback( "cb2", (OTCallbackFunction*)&callbackF_cb2 ,this);
-
-#endif
-#ifdef OT_VERSION_13
-    callbackMod->setCallback( "cb1", (CallbackFunction*)&callbackF ,this);
-    callbackMod->setCallback( "cb2", (CallbackFunction*)&callbackF_cb2 ,this);
-#endif
 
 }
 //this second callbackF is for receiving Orientation and Position data from a Robot with a Needle device, philip
