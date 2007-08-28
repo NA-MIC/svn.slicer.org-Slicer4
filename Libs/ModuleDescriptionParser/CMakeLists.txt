@@ -59,14 +59,44 @@ IF (USE_BFD)
   ENDIF (NOT WIN32)
 ENDIF (USE_BFD)
 
+
 INCLUDE_DIRECTORIES(
   ${ModuleDescriptionParser_SOURCE_DIR} 
   ${ModuleDescriptionParser_BINARY_DIR}
 )
 
-ADD_LIBRARY(ModuleDescriptionParser ${ModuleDescriptionParser_SRCS})
+IF(USE_PYTHON)
+  FIND_PACKAGE(PythonLibs)
+ENDIF(USE_PYTHON)
 
-TARGET_LINK_LIBRARIES(ModuleDescriptionParser ITKEXPAT itksys)
+IF(USE_PYTHON)
+# Python requires a pointer to the Slicer Application
+INCLUDE_DIRECTORIES(
+  ${PYTHON_INCLUDE_PATH}
+)
+ENDIF(USE_PYTHON)
+
+ADD_LIBRARY(ModuleDescriptionParser ${ModuleDescriptionParser_SRCS})
+IF(USE_PYTHON)
+ADD_DEFINITIONS(-DUSE_PYTHON)
+ENDIF(USE_PYTHON)
+
+IF ( NOT WIN32 )
+  IF(NOT APPLE)
+    TARGET_LINK_LIBRARIES( ModuleDescriptionParser util)
+  ENDIF(NOT APPLE)
+ENDIF ( NOT WIN32 )
+
+TARGET_LINK_LIBRARIES(ModuleDescriptionParser
+  ITKEXPAT
+  itksys
+)
+IF(USE_PYTHON)
+  TARGET_LINK_LIBRARIES(ModuleDescriptionParser
+    ${PYTHON_LIBRARIES}
+  )
+ENDIF(USE_PYTHON)
+
 IF (NOT WIN32)
   IF (HAVE_BFD)
     TARGET_LINK_LIBRARIES(ModuleDescriptionParser bfd iberty)
