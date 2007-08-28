@@ -79,6 +79,13 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
     virtual void InstallTheme ( vtkKWTheme *theme );
 
   // Description:
+  // methods to access registry from wrapped languages
+  int HasRegistry(const char *key);
+  void RequestRegistry(const char *key);
+  const char *GetRegistryHolder();
+  void SetRegistry(const char *key, char *value);
+
+  // Description:
   // Save/Retrieve the application settings to/from registry.
   // Do not call that method before the application name is known and the
   // proper registry level set (if any).
@@ -94,7 +101,24 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   static const char *HomeModuleRegKey;
   static const char *LoadCommandLineModulesRegKey;
   static const char *EnableDaemonRegKey;
+  static const char *ApplicationFontFamilyRegKey;
+  static const char *ApplicationFontSizeRegKey;
+  static const char *ApplicationWindowWidthRegKey;
+  static const char *ApplicationWindowHeightRegKey;
+  static const char *ApplicationSlicesFrameHeightRegKey;
+  static const char *ApplicationLayoutTypeRegKey;
   //ETX
+
+
+  // Description:
+  // Set/Get the application font family
+  void SetApplicationFontFamily ( const char *family);
+  const char *GetApplicationFontFamily ( ) const;
+
+  // Description:
+  // Set/Get the application font size
+  void SetApplicationFontSize ( const char *size );
+  const char *GetApplicationFontSize ( ) const;
 
   // Descrition:
   // Set/Get the confirm delete flag
@@ -115,6 +139,27 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   // Set/Get a directory for temporary file storage
   void SetTemporaryDirectory(const char *path);
   const char* GetTemporaryDirectory() const;
+
+  // Description:
+  // Set/Get the application window size
+  // for saving in the registry.
+  void SetApplicationWindowSize (int width, int height );
+  vtkGetMacro (ApplicationWindowWidth, int);
+  vtkSetMacro (ApplicationWindowWidth, int);
+  vtkGetMacro (ApplicationWindowHeight, int);
+  vtkSetMacro (ApplicationWindowHeight, int);
+
+  // Description:
+  // Saves the application window size for registry setting
+  void SaveApplicationWindowConfiguration ( );
+
+  // Description:
+  // Set/Get the application layout for saving in
+  // the registry.
+  vtkGetMacro (ApplicationSlicesFrameHeight, int );
+  vtkSetMacro (ApplicationSlicesFrameHeight, int );
+  vtkGetMacro (ApplicationLayoutType, int );
+  vtkSetMacro (ApplicationLayoutType, int );
 
   // Description:
   // Set/Get if command line modules should be loaded
@@ -207,6 +252,15 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   char ModulePath[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char TemporaryDirectory[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char HomeModule [ vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char ApplicationFontSize [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char ApplicationFontFamily [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  
+  int ApplicationWindowWidth;
+  int ApplicationWindowHeight;
+  int ApplicationSlicesFrameHeight;
+  int ApplicationLayoutType;
+
+  char RegistryHolder [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
 
   int LoadCommandLineModules;
   int EnableDaemon;

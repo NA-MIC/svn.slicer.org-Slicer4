@@ -44,6 +44,7 @@
 #include "vtkKWUserInterfaceManagerNotebook.h"
 #include "vtkKWMessageDialog.h"
 #include "vtkKWToolbarSet.h"
+#include "vtkKWMessageDialog.h"
 
 #include "vtkSlicerWindow.h"
 #include "vtkSlicerApplication.h"
@@ -53,6 +54,7 @@
 #include "vtkSlicerModuleNavigator.h"
 #include "vtkSlicerGUILayout.h"
 #include "vtkSlicerTheme.h"
+#include "vtkSlicerFont.h"
 #include "vtkSlicerColor.h"
 #include "vtkSlicerMRMLSaveDataWidget.h"
 #include "vtkSlicerApplicationSettingsInterface.h"
@@ -91,7 +93,7 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
     //---  
     // widgets used in the Slice module
     //---
-
+  
     //--- slicer main window
     this->MainSlicerWindow = vtkSlicerWindow::New ( );
 
@@ -142,7 +144,8 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
 
     //--- Save and load scene dialogs, widgets
     this->LoadSceneDialog = vtkKWLoadSaveDialog::New();
-    this->SaveDataWidget = NULL;
+
+    this->SaveDataWidget = vtkSlicerMRMLSaveDataWidget::New();
 
     //--- unique tag used to mark all view notebook pages
     //--- so that they can be identified and deleted when 
@@ -155,6 +158,13 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
 //---------------------------------------------------------------------------
 vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
 {
+    if (this->SaveDataWidget)
+      {
+      this->SaveDataWidget->SetParent(NULL);
+      this->SaveDataWidget->Delete();
+      this->SaveDataWidget=NULL;
+      }
+
     if ( this->SliceGUICollection )
       {
         this->SliceGUICollection->RemoveAllItems();
@@ -367,6 +377,12 @@ void vtkSlicerApplicationGUI::ProcessAddDataCommand()
   this->GetApplication()->Script("::Loader::ShowDialog");
 }
 
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessAddVolumeCommand()
+{
+  this->GetApplication()->Script("::LoadVolume::ShowDialog");
+}
+
 
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessCloseSceneCommand()
@@ -390,16 +406,11 @@ void vtkSlicerApplicationGUI::ProcessCloseSceneCommand()
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessSaveSceneAsCommand()
 {
-    this->SaveDataWidget = vtkSlicerMRMLSaveDataWidget::New();
-    this->SaveDataWidget->SetParent ( this->MainSlicerWindow);
     this->SaveDataWidget->SetAndObserveMRMLScene(this->GetMRMLScene());
     this->SaveDataWidget->AddObserver ( vtkSlicerMRMLSaveDataWidget::DataSavedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    this->SaveDataWidget->Create();  
+    this->SaveDataWidget->Invoke();  
 
     this->SaveDataWidget->RemoveObservers ( vtkSlicerMRMLSaveDataWidget::DataSavedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    this->SaveDataWidget->SetParent(NULL);
-    this->SaveDataWidget->Delete();
-    this->SaveDataWidget=NULL;
     return;
 }    
 
@@ -450,6 +461,11 @@ void vtkSlicerApplicationGUI::AddGUIObservers ( )
       vtkSlicerSliceControllerWidget::ShrinkEvent, 
       (vtkCommand *)this->GUICallbackCommand);
     }
+  if (this->SaveDataWidget)
+    {
+    this->SaveDataWidget->AddObserver ( vtkSlicerMRMLSaveDataWidget::DataSavedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    }
+
 }
 
 
@@ -499,6 +515,11 @@ void vtkSlicerApplicationGUI::RemoveGUIObservers ( )
       vtkSlicerSliceControllerWidget::ShrinkEvent, 
       (vtkCommand *)this->GUICallbackCommand);
     }
+  if (this->SaveDataWidget)
+    {
+    this->SaveDataWidget->RemoveObservers ( vtkSlicerMRMLSaveDataWidget::DataSavedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    }
+
 }
 
 //---------------------------------------------------------------------------
@@ -613,16 +634,22 @@ void vtkSlicerApplicationGUI::SelectModule ( const char *moduleName )
 void vtkSlicerApplicationGUI::BuildGUI ( )
 {
     int i;
+
+    this->SaveDataWidget->SetParent ( this->MainSlicerWindow);
+    this->SaveDataWidget->SetAndObserveMRMLScene(this->GetMRMLScene());
     
     // Set up the conventional window: 3Dviewer, slice widgets, UI panel for now.
     if ( this->GetApplication() != NULL ) {
+
         vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
         vtkSlicerGUILayout *layout = app->GetMainLayout ( );
         
         // Set a pointer to the MainSlicerWindow in vtkSlicerGUILayout, and
         // Set default sizes for all main frames (UIpanel and viewers) in GUI
         layout->SetMainSlicerWindow ( this->MainSlicerWindow );
-        layout->InitializeLayoutDimensions ( );
+        layout->InitializeLayoutDimensions ( app->GetApplicationWindowWidth(),
+                                             app->GetApplicationWindowHeight(),
+                                             app->GetApplicationSlicesFrameHeight());
 
         if ( this->MainSlicerWindow != NULL ) {
 
@@ -674,7 +701,6 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             scGUI->SetApplication ( app );
             scGUI->SetAndObserveMRMLScene ( this->MRMLScene );
             scGUI->BuildGUI ( this->SlicesControlFrame->GetFrame() );
-
 #endif
 
             // Build 3DView Control panel
@@ -692,7 +718,9 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             // Build 3DViewer and Slice Viewers
 
 #ifndef SLICEVIEWER_DEBUG
-            this->BuildMainViewer ( vtkSlicerGUILayout::SlicerLayoutDefaultView );
+            // restore view layout from application registry...
+            this->BuildMainViewer ( app->GetApplicationLayoutType());
+//            this->BuildMainViewer (vtkSlicerGUILayout::SlicerLayoutDefaultView );
 #endif
 
             // after SliceGUIs are created, the ViewControlGUI
@@ -704,31 +732,43 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             // 
             // File Menu
             //
-            this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (
+            i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (
                       this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                       "Load Scene...", this, "ProcessLoadSceneCommand");
+            this->MainSlicerWindow->GetFileMenu()->SetItemAccelerator ( i, "Ctrl-O");
+            this->MainSlicerWindow->GetFileMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
             this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (
                       this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                       "Import Scene...", this, "ProcessImportSceneCommand");
 
-            this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (
+            i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (
                       this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                       "Add Data...", this, "ProcessAddDataCommand");
+            this->MainSlicerWindow->GetFileMenu()->SetItemAccelerator ( i, "Ctrl-A");
+            this->MainSlicerWindow->GetFileMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
-            this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
+            i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (
+                      this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
+                                      "Add Volume...", this, "ProcessAddVolumeCommand");
+
+            i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                                "Save", this, "ProcessSaveSceneAsCommand");
+            this->MainSlicerWindow->GetFileMenu()->SetItemAccelerator ( i, "Ctrl-S");
+            this->MainSlicerWindow->GetFileMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
-            this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
+            i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                                "Close Scene", this, "ProcessCloseSceneCommand");
+            this->MainSlicerWindow->GetFileMenu()->SetItemAccelerator ( i, "Ctrl-W");
+            this->MainSlicerWindow->GetFileMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
             this->GetMainSlicerWindow()->GetFileMenu()->InsertSeparator (
                 this->GetMainSlicerWindow()->GetFileMenuInsertPosition());
 
             // don't need the 'close command'
-            this->GetMainSlicerWindow()->GetFileMenu()->DeleteItem (
-                                                                    this->GetMainSlicerWindow()->GetFileMenu()->GetIndexOfItem(
-                                                                                                                               this->GetMainSlicerWindow()->GetFileCloseMenuLabel()));
+            this->GetMainSlicerWindow()->GetFileMenu()->DeleteItem ( 
+                this->GetMainSlicerWindow()->GetFileMenu()->GetIndexOfItem(
+                    this->GetMainSlicerWindow()->GetFileCloseMenuLabel()));
             //
             // Edit Menu
             //
@@ -741,32 +781,68 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "Redo", NULL, "$::slicer3::MRMLScene Redo" );
             this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+Y");
             this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+            
+            this->GetMainSlicerWindow()->GetEditMenu()->InsertSeparator (this->GetMainSlicerWindow()->GetEditMenu()->GetNumberOfItems());
+            i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "Edit Box", NULL, "::EditBox::ShowDialog" );
+            this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "space");
+            this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+
 #ifdef USE_PYTHON
             i = this->MainSlicerWindow->GetWindowMenu()->AddCommand ( "Python console", NULL, "$::slicer3::ApplicationGUI PythonConsole" );
             this->MainSlicerWindow->GetWindowMenu()->SetItemAccelerator ( i, "Ctrl+P");
             this->MainSlicerWindow->GetWindowMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 #endif
-            // this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+Y");
-            // this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
             //
             // View Menu
             //
-/*
-            this->GetMainSlicerWindow()->GetViewMenu()->InsertCommand (
-                      this->GetMainSlicerWindow()->GetViewMenuInsertPosition(),
-                                      "Single Slice", NULL, "$::slicer3::ApplicationGUI UnpackMainSliceViewerFrames ; $::slicer3::ApplicationGUI PackFirstSliceViewerFrame ");
-            this->GetMainSlicerWindow()->GetViewMenu()->InsertCommand (
-                      this->GetMainSlicerWindow()->GetViewMenuInsertPosition(),
-                                      "Three Slices", NULL, "$::slicer3::ApplicationGUI UnpackMainSliceViewerFrames ; $::slicer3::ApplicationGUI PackFirstSliceViewerFrame ");
-*/
+            this->MainSlicerWindow->GetViewMenu()->InsertCascade( 2, "Font size",  this->MainSlicerWindow->GetFontSizeMenu());
+            int zz;
+            const char *size;
+            vtkSlicerFont *f = app->GetSlicerTheme()->GetSlicerFonts();
+            int rindex;
+            for ( zz = 0; zz < f->GetNumberOfFontSizes(); zz++ )
+              {
+              size = f->GetFontSize( zz );
+              this->MainSlicerWindow->GetFontSizeMenu()->AddRadioButton ( size, NULL, "$::slicer3::ApplicationGUI SetApplicationFontSize");
+              rindex = this->MainSlicerWindow->GetFontSizeMenu()->GetIndexOfItem ( size );
+              this->MainSlicerWindow->GetFontSizeMenu()->SetItemSelectedValue ( rindex, size );
+              //-- initialize interface to match application settings
+              if ( ! (strcmp (app->GetApplicationFontSize(), size )))
+                {
+                this->MainSlicerWindow->GetFontSizeMenu()->SetItemSelectedState ( rindex, 1 );
+                }
+              else
+                {
+                this->MainSlicerWindow->GetFontSizeMenu()->SetItemSelectedState ( rindex, 0 );
+                }
+              }
+            
+            this->MainSlicerWindow->GetViewMenu()->InsertCascade( 2, "Font family",  this->MainSlicerWindow->GetFontFamilyMenu());
+            const char *font;
+            for ( zz = 0; zz < f->GetNumberOfFontFamilies(); zz++ )
+              {
+              font = f->GetFontFamily ( zz );
+              this->MainSlicerWindow->GetFontFamilyMenu()->AddRadioButton ( font, NULL, "$::slicer3::ApplicationGUI SetApplicationFontFamily");
+              rindex = this->MainSlicerWindow->GetFontFamilyMenu()->GetIndexOfItem ( font );
+              this->MainSlicerWindow->GetFontFamilyMenu()->SetItemSelectedValue ( rindex, font );
+              //-- initialize interface to match application settings
+              if ( ! (strcmp (app->GetApplicationFontFamily( ), font )))
+                {
+                this->MainSlicerWindow->GetFontFamilyMenu()->SetItemSelectedState ( rindex, 1 );
+                }
+              else
+                {
+                this->MainSlicerWindow->GetFontFamilyMenu()->SetItemSelectedState ( rindex, 0 );
+                }
+              }
+
             //
             // Help Menu
             //
             this->GetMainSlicerWindow()->GetHelpMenu()->InsertCommand (
                                                                        this->GetMainSlicerWindow()->GetHelpMenuInsertPosition(),
                                                                        "Browse tutorials (not yet available)", NULL, "$::slicer3::ApplicationGUI OpenTutorialsLink");
-
             //
             // Feedback Menu
             //
@@ -789,7 +865,156 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
 
 
 //---------------------------------------------------------------------------
-void vtkSlicerApplicationGUI::InitializeNavigationWidget (  )
+void vtkSlicerApplicationGUI::SetApplicationFontFamily ( )
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
+  if ( app )
+    {
+    vtkSlicerTheme *theme = app->GetSlicerTheme();
+    if ( theme )
+      {
+      vtkSlicerFont *font = theme->GetSlicerFonts();
+      if ( font )
+        {
+        vtkKWMenu *m = this->GetMainSlicerWindow()->GetFontFamilyMenu();
+
+        const char *val;
+        // what's the selected family?
+        for ( int i=0; i < m->GetNumberOfItems(); i++ )
+          {
+          val = m->GetItemSelectedValue ( i );
+          if ( m->GetItemSelectedState ( i ))
+            {
+            // i guess we found it check to see if m has a valid value:        
+            if ( font->IsValidFontFamily ( val ) )
+              {
+              // save the change, and update the font
+              theme->SetFontFamily ( val );
+              app->SetApplicationFontFamily (val );
+              app->Script ( "font configure %s -family %s", theme->GetApplicationFont2(), val);
+              app->Script ( "font configure %s -family %s", theme->GetApplicationFont1(), val);
+              app->Script ( "font configure %s -family %s", theme->GetApplicationFont0(), val);
+              //--- and handle GUI widgets who aren't captured by the theme
+              this->GetApplicationToolbar()->ReconfigureGUIFonts();
+              this->GetViewControlGUI()->ReconfigureGUIFonts();
+              this->GetMainSlicerWindow()->GetApplicationSettingsInterface()->Update();
+              }
+            break;
+            }
+          }
+        
+        }
+      }
+    }
+}
+    
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::SetApplicationFontSize ( )
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
+  if ( app )
+    {
+    vtkSlicerTheme *theme = app->GetSlicerTheme();
+    if (theme)
+      {
+      vtkSlicerFont *font = theme->GetSlicerFonts();
+      if ( font)
+        {
+        vtkKWMenu *m = this->GetMainSlicerWindow()->GetFontSizeMenu();
+        
+        const char *val;
+        int f2, f1, f0;
+        // what's the selected family?
+        for ( int i=0; i < m->GetNumberOfItems(); i++ )
+          {
+          val = m->GetItemSelectedValue( i );
+          if ( m->GetItemSelectedState ( i ))
+            {
+            // check to see if m has a valid value:
+            if ( font->IsValidFontSize ( val) )
+              {
+              f2 = font->GetFontSize2( val );
+              f1 = font->GetFontSize1( val );
+              f0 = font->GetFontSize0( val );
+              app->SetApplicationFontSize ( val );
+              app->Script ( "font configure %s -size %d", theme->GetApplicationFont2(), f2);
+              app->Script ( "font configure %s -size %d", theme->GetApplicationFont1(), f1);
+              app->Script ( "font configure %s -size %d", theme->GetApplicationFont0(), f0);
+              //--- and handle GUI widgets who aren't captured by the theme
+              this->GetApplicationToolbar()->ReconfigureGUIFonts();
+              this->GetViewControlGUI()->ReconfigureGUIFonts();
+              this->GetMainSlicerWindow()->GetApplicationSettingsInterface()->Update();
+              }
+            }
+          }
+        }
+      }
+    }
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::UpdateFontSizeMenu()
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
+  if ( app )
+    {
+    // check to see if menu matches the Application Settings interface.
+    // if so, do nothing.
+    // if not, update.
+    vtkKWMenu *m = this->GetMainSlicerWindow()->GetFontSizeMenu();
+    if ( m )
+      {
+      const char *size = app->GetApplicationFontSize ( );
+      if ( !( m->GetItemSelectedState ( size ) ))
+        {
+        m->SetItemSelectedState ( size, 1 );
+        }
+      }
+    }
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::UpdateFontFamilyMenu()
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
+  if ( app )
+    {
+    // check to see if menu matches the Application Settings interface.
+    // if so, do nothing.
+    // if not, update.
+    vtkKWMenu *m = this->GetMainSlicerWindow()->GetFontFamilyMenu();
+    if ( m )
+      {
+      const char *font = app->GetApplicationFontFamily();
+      if (!( m->GetItemSelectedState ( font ) ))
+        {
+        m->SetItemSelectedState ( font, 1 );
+        }
+      }    
+    }
+}
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::InitializeSlicesControlGUI (  )
+{
+#ifndef SLICESCONTROL_DEBUG
+  vtkSlicerSlicesControlGUI *scGUI = this->GetSlicesControlGUI ( );
+  scGUI->UpdateFromMRML();
+  scGUI->UpdateSliceGUIInteractorStyles ( );
+#endif
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::InitializeViewControlGUI (  )
 {
 #ifndef VIEWCONTROL_DEBUG
   vtkSlicerViewControlGUI *vcGUI = this->GetViewControlGUI ( );
@@ -1044,13 +1269,32 @@ void vtkSlicerApplicationGUI::DisplayMainSlicerWindow ( )
   if ( this->GetApplication() != NULL )
     {
       vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    this->MainSlicerWindow->Display ( );
-    int w = this->MainSlicerWindow->GetWidth ( );
-    int h = this->MainSlicerWindow->GetHeight ( );
-    int vh = app->GetMainLayout()->GetDefault3DViewerHeight();
-    int sh = app->GetMainLayout()->GetDefaultSliceGUIFrameHeight();
-    int sfh = this->MainSlicerWindow->GetSecondarySplitFrame()->GetFrame1Size();
-    int sf2h = this->MainSlicerWindow->GetSecondarySplitFrame()->GetFrame2Size();
+      
+      // pop up a warning dialog here if the computer's
+      // display resolution in x is less than 1000 pixels.
+      const char *wstr = app->Script ("winfo screenwidth .");
+      const char *hstr = app->Script ("winfo screenheight .");
+      int screenwidth = atoi (wstr);
+      int screenheight = atoi ( hstr );
+      if (screenwidth < 1000 )
+        {
+        vtkKWMessageDialog *message = vtkKWMessageDialog::New();
+        message->SetParent ( this->MainSlicerWindow );
+        message->SetStyleToMessage();
+        message->SetText ("Slicer requires a horizontal screen resolution of at least 1024 pixels to display it's user interface. Some GUI elements may not be visible.");
+        message->Create();
+        message->Invoke();
+        message->Delete();
+        }
+      
+      this->MainSlicerWindow->Display ( );
+
+      int w = this->MainSlicerWindow->GetWidth ( );
+      int h = this->MainSlicerWindow->GetHeight ( );
+      int vh = app->GetMainLayout()->GetDefault3DViewerHeight();
+      int sh = app->GetMainLayout()->GetDefaultSliceGUIFrameHeight();
+      int sfh = this->MainSlicerWindow->GetSecondarySplitFrame()->GetFrame1Size();
+      int sf2h = this->MainSlicerWindow->GetSecondarySplitFrame()->GetFrame2Size();
     }
 }
 
@@ -1151,14 +1395,7 @@ void vtkSlicerApplicationGUI::CreateMain3DViewer ( int arrangementType )
       //
       this->ViewerWidget = vtkSlicerViewerWidget::New ( );
       this->ViewerWidget->SetApplication( app );
-      if ( arrangementType == vtkSlicerGUILayout::SlicerLayoutFourUpView )
-        {
-        this->ViewerWidget->SetParent ( this->GetGridFrame1 ( ) );
-        }
-      else
-        {
-        this->ViewerWidget->SetParent(this->MainSlicerWindow->GetViewPanelFrame());
-        }
+      this->ViewerWidget->SetParent(this->MainSlicerWindow->GetViewPanelFrame());
 
       // add events
       vtkIntArray *events = vtkIntArray::New();
@@ -1212,6 +1449,15 @@ void vtkSlicerApplicationGUI::PackMainViewer ( int arrangmentType, const char *w
         case vtkSlicerGUILayout::SlicerLayoutOneUp3DView:
           this->PackOneUp3DView ( );
           break;
+        case vtkSlicerGUILayout::SlicerLayoutOneUpRedSliceView:
+          this->PackOneUpSliceView ("Red");
+          break;
+        case vtkSlicerGUILayout::SlicerLayoutOneUpYellowSliceView:
+          this->PackOneUpSliceView ("Yellow");
+          break;
+        case vtkSlicerGUILayout::SlicerLayoutOneUpGreenSliceView:
+          this->PackOneUpSliceView ("Green");
+          break;
         case vtkSlicerGUILayout::SlicerLayoutOneUpSliceView:
           this->PackOneUpSliceView ( whichSlice );
           break;
@@ -1225,6 +1471,7 @@ void vtkSlicerApplicationGUI::PackMainViewer ( int arrangmentType, const char *w
           this->PackLightboxView ( );
           break;
         default:
+          this->PackConventionalView ( );
           break;
         }
     }
@@ -1335,6 +1582,7 @@ void vtkSlicerApplicationGUI::PackConventionalView ( )
       vtkSlicerGUILayout *layout = app->GetMainLayout ( );
 
       // Expose the main panel frame and secondary panel frame.
+
 //      this->MainSlicerWindow->SetMainPanelVisibility ( 1 );
       this->MainSlicerWindow->SetSecondaryPanelVisibility ( 1 );
 
@@ -1354,7 +1602,14 @@ void vtkSlicerApplicationGUI::PackConventionalView ( )
       
       this->MainSlicerWindow->GetViewNotebook()->SetAlwaysShowTabs ( 0 );
       layout->SetCurrentViewArrangement ( vtkSlicerGUILayout::SlicerLayoutDefaultView );
-      this->MainSlicerWindow->GetSecondarySplitFrame()->SetFrame1Size ( layout->GetDefaultSliceGUIFrameHeight () );
+      if ( layout->GetDefaultSliceGUIFrameHeight() > 0 )
+        {
+        this->MainSlicerWindow->GetSecondarySplitFrame()->SetFrame1Size ( layout->GetDefaultSliceGUIFrameHeight () );
+        }
+      else
+        {
+        this->MainSlicerWindow->GetSecondarySplitFrame()->SetFrame1Size ( layout->GetStandardSliceGUIFrameHeight () );
+        }
     }
 }
 
@@ -1402,23 +1657,25 @@ void vtkSlicerApplicationGUI::PackOneUpSliceView ( const char * whichSlice )
         this->MainSliceGUI0->PackGUI ( this->MainSlicerWindow->GetViewFrame ( ));
         this->MainSliceGUI1->PackGUI ( NULL );
         this->MainSliceGUI2->PackGUI ( NULL );
+      layout->SetCurrentViewArrangement ( vtkSlicerGUILayout::SlicerLayoutOneUpRedSliceView );
         }
       else if ( !strcmp ( whichSlice, "Yellow" ) )
         {
         this->MainSliceGUI0->PackGUI ( NULL);
         this->MainSliceGUI1->PackGUI ( this->MainSlicerWindow->GetViewFrame ( ));
         this->MainSliceGUI2->PackGUI ( NULL );
+      layout->SetCurrentViewArrangement ( vtkSlicerGUILayout::SlicerLayoutOneUpYellowSliceView );
         }
       else if ( !strcmp ( whichSlice, "Green" ) )
         {
         this->MainSliceGUI0->PackGUI ( NULL );
         this->MainSliceGUI1->PackGUI ( NULL );
         this->MainSliceGUI2->PackGUI ( this->MainSlicerWindow->GetViewFrame ( ));
+      layout->SetCurrentViewArrangement ( vtkSlicerGUILayout::SlicerLayoutOneUpGreenSliceView );
         }
 
 //      this->ViewerWidget->PackWidget(this->MainSlicerWindow->GetViewFrame() );
       this->MainSlicerWindow->GetViewNotebook()->SetAlwaysShowTabs ( 0 );
-      layout->SetCurrentViewArrangement ( vtkSlicerGUILayout::SlicerLayoutOneUpSliceView );
     }
 }
 
@@ -1469,7 +1726,14 @@ void vtkSlicerApplicationGUI::PackTabbed3DView ( )
       vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
       vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
       vtkSlicerGUILayout *layout = app->GetMainLayout ( );
-      this->MainSlicerWindow->GetSecondarySplitFrame()->SetFrame1Size ( layout->GetDefaultSliceGUIFrameHeight() );      
+      if ( layout->GetDefaultSliceGUIFrameHeight() > 0 )
+        {
+        this->MainSlicerWindow->GetSecondarySplitFrame()->SetFrame1Size ( layout->GetDefaultSliceGUIFrameHeight() );
+        }
+      else
+        {
+        this->MainSlicerWindow->GetSecondarySplitFrame()->SetFrame1Size ( layout->GetStandardSliceGUIFrameHeight() );
+        }
 //      this->MainSlicerWindow->SetMainPanelVisibility ( 1 );
       this->MainSlicerWindow->SetSecondaryPanelVisibility ( 0 );
 

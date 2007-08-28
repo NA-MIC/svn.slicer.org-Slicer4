@@ -15,8 +15,10 @@
 #include "vtkKWFrame.h"
 #include "vtkKWToolbar.h"
 #include "vtkKWPushButton.h"
-#include "vtkKWRadioButtonSet.h"
+
 #include "vtkKWMenuButton.h"
+#include "vtkKWRadioButtonSet.h"
+
 
 class vtkSlicerApplicationGUI;
 
@@ -55,7 +57,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     vtkGetObjectMacro (VolumeIconButton, vtkKWPushButton );
     vtkGetObjectMacro (ModelIconButton, vtkKWPushButton );
     vtkGetObjectMacro (EditorIconButton, vtkKWPushButton );
-//    vtkGetObjectMacro (EditorToolboxIconButton, vtkKWPushButton );
+    vtkGetObjectMacro (EditorToolboxIconButton, vtkKWPushButton );
     vtkGetObjectMacro (TransformIconButton, vtkKWPushButton );
     vtkGetObjectMacro (ColorIconButton, vtkKWPushButton );
     vtkGetObjectMacro (FiducialsIconButton, vtkKWPushButton);
@@ -65,7 +67,12 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     vtkGetObjectMacro (ChooseLayoutIconMenuButton, vtkKWMenuButton );
     vtkGetObjectMacro (UndoIconButton, vtkKWPushButton );
     vtkGetObjectMacro (RedoIconButton, vtkKWPushButton );
-    vtkGetObjectMacro (InteractionModeRadioButtons, vtkKWRadioButtonSet );
+    
+    vtkGetObjectMacro (MousePickButton, vtkKWRadioButton);
+    vtkGetObjectMacro (MousePlaceButton, vtkKWRadioButton);
+    vtkGetObjectMacro (MouseTransformViewButton, vtkKWRadioButton);    
+
+
 
     // Description:
     // This method builds the Data module's GUI
@@ -97,7 +104,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     virtual void ResumeViewRockOrSpin ( int mode );
     virtual void SetLayoutMenubuttonValueToCurrentLayout ();
     const char* GetCurrentLayoutStringName ( );
-
+    virtual void ReconfigureGUIFonts ( );
+  
     // Description:
     // Getting and setting the mrml selection node id
     vtkGetStringMacro(InteractionNodeID);
@@ -135,7 +143,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     vtkKWPushButton *VolumeIconButton;
     vtkKWPushButton *ModelIconButton;
     vtkKWPushButton *EditorIconButton;
-//  vtkKWPushButton *EditorToolboxIconButton;
+  vtkKWPushButton *EditorToolboxIconButton;
     vtkKWPushButton *TransformIconButton;    
     vtkKWPushButton *ColorIconButton;
     vtkKWPushButton *FiducialsIconButton;
@@ -143,7 +151,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     vtkKWPushButton *SaveSceneIconButton;
     vtkKWMenuButton *LoadSceneIconButton;
     vtkKWMenuButton *ChooseLayoutIconMenuButton;
-    vtkKWRadioButtonSet *InteractionModeRadioButtons;
+
+    vtkKWRadioButton *MousePickButton;
+    vtkKWRadioButton *MousePlaceButton;
+    vtkKWRadioButton *MouseTransformViewButton;
 
     vtkSlicerModuleChooseGUI *ModuleChooseGUI;
     vtkSlicerApplicationGUI *ApplicationGUI;

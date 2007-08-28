@@ -33,7 +33,10 @@
 #include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkKWRenderWidget.h"
 #include "vtkKWLoadSaveDialog.h"
+#include "vtkKWIcon.h"
+#include "vtkKWMenu.h"
 
+#include "vtkImageData.h"
 #include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
 #include "vtkSlicerViewerWidget.h"
@@ -153,6 +156,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     void ProcessLoadSceneCommand();
     void ProcessImportSceneCommand();
     void ProcessAddDataCommand();
+    void ProcessAddVolumeCommand();
     void ProcessSaveSceneAsCommand();
     void ProcessCloseSceneCommand();
     
@@ -165,6 +169,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     // Description:
     // These methods configure and pack the Slicer Window
     virtual void PackFirstSliceViewerFrame ( );
+    virtual void SetApplicationFontSize ( );
+    virtual void SetApplicationFontFamily ( );
 
     // Description:
     // These methods configure the Main Viewer's layout
@@ -210,10 +216,14 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     virtual void SetCurrentModuleToHome();
     virtual void PythonConsole();
 
-    virtual void InitializeNavigationWidget ();
+    virtual void InitializeViewControlGUI ();
+    virtual void InitializeSlicesControlGUI ();
 
     virtual void Save3DViewConfig ( );
     virtual void Restore3DViewConfig ( );
+
+    virtual void UpdateFontSizeMenu();
+    virtual void UpdateFontFamilyMenu();
 
     // Description:
     // Methods invoked by making selections from Help menu
@@ -235,6 +245,17 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     // Raise module's panel.
     void SelectModule ( const char *moduleName );
 
+    // Description:
+    // Helper routine to set images for icons
+    //
+    void SetIconImage (vtkKWIcon *icon, vtkImageData *image)
+      {
+      int *dims = image->GetDimensions();
+      int nComps = image->GetNumberOfScalarComponents();
+      icon->SetImage ( static_cast <const unsigned char *> (image->GetScalarPointer()),
+                       dims[0], dims[1], nComps,
+                       dims[0] * dims[1] * nComps, vtkKWIcon::ImageOptionFlipVertical);
+      };
 
 protected:
     vtkSlicerApplicationGUI ( );
@@ -294,6 +315,7 @@ protected:
     // Description:
     // Collection of SliceViewers
     vtkSlicerSliceGUICollection *SliceGUICollection;
+
 
     // Description:
     // Used to tag all pages added to the tabbed notebook

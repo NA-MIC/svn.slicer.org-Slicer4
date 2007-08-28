@@ -251,13 +251,17 @@ void vtkSlicerNodeSelectorWidget::UpdateMenu()
 
     vtkMRMLNode *node = NULL;
     vtkMRMLNode *selectedNode = NULL;
-    this->MRMLScene->InitTraversal();
     bool selected = false;
     for (c=0; c < this->GetNumberOfNodeClasses(); c++)
     {
       const char *className = this->GetNodeClass(c);
+      this->MRMLScene->InitTraversal();
       while ( (node = this->MRMLScene->GetNextNodeByClass(className) ) != NULL)
         {
+        if (!node->GetSelectable())
+          {
+          continue;
+          }
         if (!this->ShowHidden && node->GetHideFromEditors())
           {
           continue;
@@ -279,6 +283,11 @@ void vtkSlicerNodeSelectorWidget::UpdateMenu()
             sc << "ProcessCommand " << node->GetID();
 
             this->GetWidget()->GetWidget()->GetMenu()->AddRadioButton(node->GetName());
+            // do we need a column break?
+            if (count != 0 && count % 40 == 0)
+              {
+              this->GetWidget()->GetWidget()->GetMenu()->SetItemColumnBreak(count, 1);
+              }
             this->GetWidget()->GetWidget()->GetMenu()->SetItemCommand(count++, this, sc.str().c_str());
             if (oldSelectedNode == node)
             {

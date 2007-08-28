@@ -14,11 +14,14 @@
 #include "vtkKWInternationalization.h"
 #include "vtkKWTclInteractor.h"
 #include "vtkKWSplashScreen.h"
+#include "vtkKWSplitFrame.h"
+
 #include "vtkSlicerBaseGUIWin32Header.h"
 #include "vtkKWRegistryHelper.h"
 #include "vtkSlicerGUILayout.h"
 #include "vtkSlicerGUICollection.h"
 #include "vtkSlicerTheme.h"
+#include "vtkSlicerFont.h"
 
 #include "vtkOutputWindow.h"
 #include "itkOutputWindow.h"
@@ -40,6 +43,13 @@ const char *vtkSlicerApplication::ConfirmDeleteRegKey = "ConfirmDelete";
 const char *vtkSlicerApplication::HomeModuleRegKey = "HomeModule";
 const char *vtkSlicerApplication::LoadCommandLineModulesRegKey = "LoadCommandLineModules";
 const char *vtkSlicerApplication::EnableDaemonRegKey = "EnableDaemon";
+const char *vtkSlicerApplication::ApplicationFontSizeRegKey = "ApplicationFontSize";
+const char *vtkSlicerApplication::ApplicationFontFamilyRegKey = "ApplicationFontFamily";
+const char *vtkSlicerApplication::ApplicationWindowWidthRegKey = "ApplicationWindowWidth";
+const char *vtkSlicerApplication::ApplicationWindowHeightRegKey = "ApplicationWindowHeight";
+const char *vtkSlicerApplication::ApplicationSlicesFrameHeightRegKey = "ApplicationSlicesFrameHeight";
+const char *vtkSlicerApplication::ApplicationLayoutTypeRegKey = "ApplicationLayoutType";
+
 
 vtkSlicerApplication *vtkSlicerApplication::Instance = NULL;
 
@@ -173,6 +183,15 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     this->LoadCommandLineModules = 1;
     this->EnableDaemon = 0;
    
+    this->MainLayout = vtkSlicerGUILayout::New ( );
+    // defaults
+    strcpy (this->ApplicationFontSize, "small" );
+    strcpy ( this->ApplicationFontFamily, "Arial" );
+    this->ApplicationWindowWidth = 0;
+    this->ApplicationWindowHeight = 0;
+    this->ApplicationLayoutType = vtkSlicerGUILayout::SlicerLayoutDefaultView;
+    this->ApplicationSlicesFrameHeight = this->MainLayout->GetDefaultSliceGUIFrameHeight();
+    
     // configure the application before creating
     this->SetName ( "3D Slicer Version 3.0 Beta" );
 
@@ -183,11 +202,15 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
 #endif
 
     this->RestoreApplicationSettingsFromRegistry ( );
+    
+    // FOR NOW!
+//    this->ApplicationLayoutType = vtkSlicerGUILayout::SlicerLayoutDefaultView;
+
+
     this->SetHelpDialogStartingPage ( "http://www.slicer.org" );
 
     this->ModuleGUICollection = vtkSlicerGUICollection::New ( );
     vtkKWFrameWithLabel::SetDefaultLabelFontWeightToNormal( );
-    this->MainLayout = vtkSlicerGUILayout::New ( );
     this->SlicerTheme = vtkSlicerTheme::New ( );
     this->ApplicationGUI = NULL;
 
@@ -269,6 +292,9 @@ vtkSlicerApplication* vtkSlicerApplication::New()
   ret->Register(NULL);
   return ret;
 }
+
+
+
 
 //----------------------------------------------------------------------------
 // Return the single instance of the vtkSlicerApplication
@@ -381,6 +407,37 @@ int vtkSlicerApplication::StartApplication ( ) {
 }
 
 //----------------------------------------------------------------------------
+//  access to registry values
+
+int vtkSlicerApplication::HasRegistry(const char *key)
+{
+  return this->HasRegistryValue( 2, "RunTime", key);
+}
+
+void vtkSlicerApplication::RequestRegistry(const char *key)
+{
+  if (this->HasRegistryValue( 2, "RunTime", key))
+    {
+    this->GetRegistryValue( 2, "RunTime", key, this->RegistryHolder);
+    }
+  else
+    {
+    *this->RegistryHolder = '\0';
+    }
+}
+
+const char *vtkSlicerApplication::GetRegistryHolder()
+{
+  return this->RegistryHolder;
+}
+
+void vtkSlicerApplication::SetRegistry(const char *key, char *value)
+{
+  this->SetRegistryValue(2, "RunTime", key, value);
+}
+
+
+//----------------------------------------------------------------------------
 void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
 {
   // Make a good guess before we read from the registry.  Default to a
@@ -402,7 +459,16 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
   std::vector<std::string> pathcomponents;
   std::string pathWithSlicer;
   itksys::SystemTools::SplitPath(temporaryDirectory.c_str(), pathcomponents);
+#ifdef _WIN32
   pathcomponents.push_back("Slicer3");
+#else
+  std::string dirName("Slicer3");
+  if ( getenv("USER") != NULL )
+    {
+    dirName = dirName + getenv("USER");
+    }
+  pathcomponents.push_back(dirName);
+#endif
   pathWithSlicer = itksys::SystemTools::JoinPath(pathcomponents);
   
   itksys::SystemTools::MakeDirectory(pathWithSlicer.c_str());
@@ -474,6 +540,58 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
     this->EnableDaemon = this->GetIntRegistryValue(
       2, "RunTime", vtkSlicerApplication::EnableDaemonRegKey);
     }
+
+  if ( this->HasRegistryValue(2, "RunTime", vtkSlicerApplication::ApplicationFontSizeRegKey))
+    {
+    this->GetRegistryValue (
+      2, "RunTime", vtkSlicerApplication::ApplicationFontSizeRegKey, this->ApplicationFontSize);
+    }
+
+  if ( this->HasRegistryValue(2, "RunTime", vtkSlicerApplication::ApplicationFontFamilyRegKey))
+    {
+    this->GetRegistryValue (
+       2, "RunTime", vtkSlicerApplication::ApplicationFontFamilyRegKey, this->ApplicationFontFamily );
+    }
+
+  if ( this->HasRegistryValue (2, "RunTime", vtkSlicerApplication::ApplicationWindowWidthRegKey))
+    {
+    this->ApplicationWindowWidth = this->GetIntRegistryValue(
+        2, "RunTime", vtkSlicerApplication::ApplicationWindowWidthRegKey);
+    }
+  if ( this->HasRegistryValue (2, "RunTime", vtkSlicerApplication::ApplicationWindowHeightRegKey))
+    {
+    this->ApplicationWindowHeight = this->GetIntRegistryValue(
+        2, "RunTime", vtkSlicerApplication::ApplicationWindowHeightRegKey);
+    }
+  if ( this->HasRegistryValue (2, "RunTime", vtkSlicerApplication::ApplicationSlicesFrameHeightRegKey))
+    {
+    this->ApplicationSlicesFrameHeight = this->GetIntRegistryValue(
+        2, "RunTime", vtkSlicerApplication::ApplicationSlicesFrameHeightRegKey);
+    }
+  if ( this->HasRegistryValue (2, "RunTime", vtkSlicerApplication::ApplicationLayoutTypeRegKey))
+    {
+    this->ApplicationLayoutType = this->GetIntRegistryValue(
+        2, "RunTime", vtkSlicerApplication::ApplicationLayoutTypeRegKey);
+    }  
+}
+
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SaveApplicationWindowConfiguration()
+{
+  if ( this->ApplicationGUI )
+    {
+    if ( this->ApplicationGUI->GetMainSlicerWindow() )
+      {
+      this->SetApplicationWindowWidth (this->ApplicationGUI->GetMainSlicerWindow()->GetWidth());
+      this->SetApplicationWindowHeight (this->ApplicationGUI->GetMainSlicerWindow()->GetHeight());
+      this->SetApplicationSlicesFrameHeight ( this->ApplicationGUI->GetMainSlicerWindow()->GetSecondarySplitFrame()->GetFrame1Size() );
+      if ( this->MainLayout)
+        {
+        this->SetApplicationLayoutType ( this->MainLayout->GetCurrentViewArrangement() );
+        }
+      }
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -488,6 +606,11 @@ void vtkSlicerApplication::SaveApplicationSettingsToRegistry()
   this->SetRegistryValue(
     2, "RunTime", vtkSlicerApplication::HomeModuleRegKey, "%s", 
     this->HomeModule);
+
+  this->SetRegistryValue ( 2, "RunTime", vtkSlicerApplication::ApplicationFontFamilyRegKey, "%s",
+                           this->ApplicationFontFamily);
+  this->SetRegistryValue ( 2, "RunTime", vtkSlicerApplication::ApplicationFontSizeRegKey, "%s",
+                           this->ApplicationFontSize);
 
   this->SetRegistryValue(
     2, "RunTime", vtkSlicerApplication::ModulePathRegKey, "%s", 
@@ -504,7 +627,74 @@ void vtkSlicerApplication::SaveApplicationSettingsToRegistry()
   this->SetRegistryValue(
     2, "RunTime", vtkSlicerApplication::EnableDaemonRegKey, "%d", 
     this->EnableDaemon);
+
+  this->SaveApplicationWindowConfiguration();
+  this->SetRegistryValue(
+                         2, "RunTime", vtkSlicerApplication::ApplicationWindowWidthRegKey, "%d",
+                         this->ApplicationWindowWidth );
+  this->SetRegistryValue(
+                         2, "RunTime", vtkSlicerApplication::ApplicationWindowHeightRegKey, "%d",
+                         this->ApplicationWindowHeight );
+  this->SetRegistryValue(
+                         2, "RunTime", vtkSlicerApplication::ApplicationLayoutTypeRegKey, "%d",
+                         this->ApplicationLayoutType );
+  this->SetRegistryValue(
+                         2, "RunTime", vtkSlicerApplication::ApplicationSlicesFrameHeightRegKey, "%d",
+                         this->ApplicationSlicesFrameHeight );
+
 }
+
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetApplicationWindowSize (int width, int height )
+{
+  this->ApplicationWindowWidth = width;
+  this->ApplicationWindowHeight = height;
+}
+
+
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetApplicationFontFamily ( const char *family)
+{
+    if (family)
+    {
+        if (strcmp(this->ApplicationFontFamily, family) != 0
+        && strlen(family) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+        {
+            strcpy(this->ApplicationFontFamily, family);
+            this->Modified();
+        }
+    }
+}
+//----------------------------------------------------------------------------
+const char *vtkSlicerApplication::GetApplicationFontFamily () const
+{
+  return this->ApplicationFontFamily;
+}
+
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetApplicationFontSize ( const char *size)
+{
+    if (size )
+    {
+        if (strcmp(this->ApplicationFontSize, size) != 0
+        && strlen(size) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+        {
+            strcpy(this->ApplicationFontSize, size);
+            this->Modified();
+        }
+    }
+}
+//----------------------------------------------------------------------------
+const char *vtkSlicerApplication::GetApplicationFontSize () const
+{
+  return this->ApplicationFontSize;
+}
+
+
+
 
 //----------------------------------------------------------------------------
 void vtkSlicerApplication::SetConfirmDelete(const char* state)
@@ -519,6 +709,7 @@ void vtkSlicerApplication::SetConfirmDelete(const char* state)
         }
     }
 }
+
 
 //----------------------------------------------------------------------------
 const char *vtkSlicerApplication::GetConfirmDelete() const

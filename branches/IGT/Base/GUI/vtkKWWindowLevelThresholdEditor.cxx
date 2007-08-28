@@ -139,20 +139,23 @@ void vtkKWWindowLevelThresholdEditor::SetImageData(vtkImageData* imageData)
       tempImageData->UnRegister(this);
       }
       
-    this->UpdateFromImage();
+    if (this->ImageData)
+      {
+      this->UpdateFromImage();
 
-    this->UpdateTransferFunction();
+      this->UpdateTransferFunction();
 
-    this->UpdateAutoLevels();
+      this->UpdateAutoLevels();
 
-    this->Modified();   
+      this->Modified();
+      }
     }
 }
 
 void vtkKWWindowLevelThresholdEditor::UpdateAutoLevels()
 {
   if (this->ImageData == NULL ||
-    (this->GetAutoWindowLevel() == 0 && this->GetAutoThreshold() == 0)) 
+    (this->GetAutoWindowLevel() == 0 && this->GetThresholdType() != vtkKWWindowLevelThresholdEditor::ThresholdAuto)) 
     {
     return;
     }
@@ -167,7 +170,7 @@ void vtkKWWindowLevelThresholdEditor::UpdateAutoLevels()
   }
 
   // Auto Threshold
-  if (this->GetAutoThreshold())
+  if (this->GetThresholdType() == vtkKWWindowLevelThresholdEditor::ThresholdAuto)
   {
     this->SetThreshold(this->Bimodal->GetThreshold(), this->Bimodal->GetMax());
   }
@@ -393,19 +396,21 @@ void vtkKWWindowLevelThresholdEditor::UpdateFromImage()
 {
   if (this->ImageData != NULL)
   {   
+    if ( this->ImageData->GetPointData()->GetScalars() != NULL )
+      {
+      this->Histogram->BuildHistogram( this->ImageData->GetPointData()->GetScalars(), 0);
+      double *range = this->Histogram->GetRange();
 
-    this->Histogram->BuildHistogram( this->ImageData->GetPointData()->GetScalars(), 0);
-    double *range = this->Histogram->GetRange();
+      this->ThresholdRange->SetWholeRange(range[0], range[1]);
+      this->WindowLevelRange->SetWholeRange(range[0] - 0.5 * (range[0] + range[1]), range[1] + 0.5 * (range[0] + range[1]));
 
-    this->ThresholdRange->SetWholeRange(range[0], range[1]);
-    this->WindowLevelRange->SetWholeRange(range[0] - 0.5 * (range[0] + range[1]), range[1] + 0.5 * (range[0] + range[1]));
+      this->SetWindowLevel(range[1] - range[0], 0.5 * (range[0] + range[1]) );
+      this->SetThreshold(range[0], range[1]);
 
-    this->SetWindowLevel(range[1] - range[0], 0.5 * (range[0] + range[1]) );
-    this->SetThreshold(range[0], range[1]);
-
-    // avoid crash when Image not set for histogram
-    this->ColorTransferFunctionEditor->SetHistogram(NULL);
-    this->ColorTransferFunctionEditor->SetHistogram(this->Histogram);
+      // avoid crash when Image not set for histogram
+      this->ColorTransferFunctionEditor->SetHistogram(NULL);
+      this->ColorTransferFunctionEditor->SetHistogram(this->Histogram);
+    }
   }
 }
 //----------------------------------------------------------------------------
@@ -550,9 +555,9 @@ void vtkKWWindowLevelThresholdEditor::ProcessThresholdStartCommand(double min, d
   range[0] = min;
   range[1] = max;
   this->UpdateTransferFunction();
-  if (this->GetAutoThreshold() == 1)
+  if (this->GetThresholdType() == vtkKWWindowLevelThresholdEditor::ThresholdAuto)
     {
-    this->SetAutoThreshold(0);
+    this->SetThresholdType(vtkKWWindowLevelThresholdEditor::ThresholdManual);
     }
   this->InvokeEvent(vtkKWWindowLevelThresholdEditor::ValueStartChangingEvent, range);
 }
@@ -619,53 +624,42 @@ void vtkKWWindowLevelThresholdEditor::SetAutoWindowLevel(int value)
     }
 }
 
-int vtkKWWindowLevelThresholdEditor::GetAutoThreshold()
+int vtkKWWindowLevelThresholdEditor::GetThresholdType()
 {
-  if (!strcmp(this->TresholdAutoManual->GetWidget()->GetValue(), "Auto"))
+  if (!strcmp(this->TresholdAutoManual->GetWidget()->GetValue(), "Off"))
     {
-    return 1;
+    return this->ThresholdOff;
     }
-  else
+  else if (!strcmp(this->TresholdAutoManual->GetWidget()->GetValue(), "Auto"))
     {
-    return 0;
+    return this->ThresholdAuto;
+    }
+  else if (!strcmp(this->TresholdAutoManual->GetWidget()->GetValue(), "Manual"))
+    {
+    return this->ThresholdManual;
+    }
+  else 
+    {
+    return -1;
     }
 }
 
-void vtkKWWindowLevelThresholdEditor::SetAutoThreshold(int value)
+void vtkKWWindowLevelThresholdEditor::SetThresholdType(int value)
 {
-  if (value == 1)
+  if (value == ThresholdAuto)
     {
     this->TresholdAutoManual->GetWidget()->SetValue("Auto");
     this->UpdateAutoLevels();
     }
-  else if (value == 0)
+  if (value == ThresholdOff) 
+    {
+    this->TresholdAutoManual->GetWidget()->SetValue("Off");
+    }
+  else if (value == ThresholdManual)
     {
     this->TresholdAutoManual->GetWidget()->SetValue("Manual");
     }
-}
 
-int vtkKWWindowLevelThresholdEditor::GetApplyThreshold()
-{
-   if (!strcmp(this->TresholdAutoManual->GetWidget()->GetValue(), "Off"))
-    {
-    return 0;
-    }
-  else
-    {
-    return 1;
-    }
-}
-
-void vtkKWWindowLevelThresholdEditor::SetApplyThreshold(int value)
-{
- if (value == 1 && this->GetApplyThreshold() != 1)
-  {
-  this->TresholdAutoManual->GetWidget()->SetValue("Manual");
-  }
-  else 
-  {
-  this->TresholdAutoManual->GetWidget()->SetValue("Off");
-  }
 }
 
 void vtkKWWindowLevelThresholdEditor::ProcessButtonsCommand()

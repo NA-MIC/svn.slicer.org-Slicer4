@@ -41,20 +41,26 @@ class vtkSlicerViewControlIcons : public vtkSlicerIcons
     vtkGetObjectMacro (ViewAxisTopCornerIcon, vtkKWIcon );
     vtkGetObjectMacro (ViewAxisCenterIcon, vtkKWIcon );    
 
-    vtkGetObjectMacro (SpinButtonIcon, vtkKWIcon );
-    vtkGetObjectMacro (RockButtonIcon, vtkKWIcon );
+    vtkGetObjectMacro (SpinOffButtonIcon, vtkKWIcon );
+    vtkGetObjectMacro (SpinOnButtonIcon, vtkKWIcon );
+    vtkGetObjectMacro (RockOnButtonIcon, vtkKWIcon );
+    vtkGetObjectMacro (RockOffButtonIcon, vtkKWIcon );
     vtkGetObjectMacro (OrthoButtonIcon, vtkKWIcon );    
     vtkGetObjectMacro (PerspectiveButtonIcon, vtkKWIcon );
     vtkGetObjectMacro (CenterButtonIcon, vtkKWIcon );
     vtkGetObjectMacro (SelectViewButtonIcon, vtkKWIcon );
     vtkGetObjectMacro (StereoButtonIcon, vtkKWIcon );
-    vtkGetObjectMacro (LookFromButtonIcon, vtkKWIcon );
-    vtkGetObjectMacro (RotateAroundButtonIcon, vtkKWIcon );
+    vtkGetObjectMacro (LookFromOffButtonIcon, vtkKWIcon );
+    vtkGetObjectMacro (LookFromOnButtonIcon, vtkKWIcon );
+    vtkGetObjectMacro (RotateAroundOffButtonIcon, vtkKWIcon );
+    vtkGetObjectMacro (RotateAroundOnButtonIcon, vtkKWIcon );
     vtkGetObjectMacro (VisibilityButtonIcon, vtkKWIcon );
     vtkGetObjectMacro (SelectCameraButtonIcon, vtkKWIcon );
 
     vtkGetObjectMacro (NavZoomInIcon, vtkKWIcon);
-    vtkGetObjectMacro (NavZoomOutIcon, vtkKWIcon);    
+    vtkGetObjectMacro (NavZoomOutIcon, vtkKWIcon);
+
+    vtkGetObjectMacro (PercentZoomIcon, vtkKWIcon );
 
     // Description:
     // Method for setting images for widgets in Slicer's ViewControlFrame
@@ -80,20 +86,25 @@ class vtkSlicerViewControlIcons : public vtkSlicerIcons
     vtkKWIcon *ViewAxisTopCornerIcon;
     vtkKWIcon *ViewAxisCenterIcon;
 
-    vtkKWIcon *SpinButtonIcon;
-    vtkKWIcon *RockButtonIcon;
+    vtkKWIcon *SpinOffButtonIcon;
+    vtkKWIcon *SpinOnButtonIcon;
+    vtkKWIcon *RockOffButtonIcon;
+    vtkKWIcon *RockOnButtonIcon;
     vtkKWIcon *OrthoButtonIcon;
     vtkKWIcon *PerspectiveButtonIcon;
     vtkKWIcon *CenterButtonIcon;
     vtkKWIcon *SelectViewButtonIcon;
     vtkKWIcon *StereoButtonIcon;
-    vtkKWIcon *LookFromButtonIcon;
-    vtkKWIcon *RotateAroundButtonIcon;    
+    vtkKWIcon *LookFromOffButtonIcon;
+    vtkKWIcon *LookFromOnButtonIcon;
+    vtkKWIcon *RotateAroundOffButtonIcon;    
+    vtkKWIcon *RotateAroundOnButtonIcon;    
     vtkKWIcon *VisibilityButtonIcon;
     vtkKWIcon *SelectCameraButtonIcon;
 
     vtkKWIcon *NavZoomInIcon;
     vtkKWIcon *NavZoomOutIcon;
+    vtkKWIcon *PercentZoomIcon;
 
     
  private:

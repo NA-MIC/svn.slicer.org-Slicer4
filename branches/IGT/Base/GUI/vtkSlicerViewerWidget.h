@@ -34,8 +34,9 @@
 #include "vtkMRMLCameraNode.h"
 #include "vtkMRMLViewNode.h"
 
-class vtkMRMLModelNode;
-class vtkMRMLModelDisplayNode;
+class vtkMRMLDisplayableNode;
+class vtkMRMLDisplayNode;
+class vtkMRMLModelHierarchyNode;
 class vtkSlicerModelHierarchyLogic;
 class vtkPolyData;
 class vtkCellArray;
@@ -50,7 +51,7 @@ class vtkCellPicker;
 class vtkPointPicker;
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewerWidget : public vtkSlicerWidget
 {
-  
+
 public:
   static vtkSlicerViewerWidget* New();
   vtkTypeRevisionMacro(vtkSlicerViewerWidget,vtkSlicerWidget);
@@ -191,15 +192,18 @@ protected:
   vtkKWRenderWidget *MainViewer;
   vtkKWFrame *ViewerFrame;
   int RenderPending;
+  int UpdateFromMRMLRequested;
 
   void RemoveModelProps();
 
   void RemoveModelObservers();
-  void RemoveModelObservers( vtkMRMLModelNode *model);
+  void RemoveModelObservers( vtkMRMLDisplayableNode *model);
 
   void UpdateModelsFromMRML();
-  void UpdateModel(vtkMRMLModelNode *model);
-  void UpdateModelPolyData(vtkMRMLModelNode *model);
+  void UpdateModel(vtkMRMLDisplayableNode *model);
+  void UpdateModelPolyData(vtkMRMLDisplayableNode *model);
+  void UpdateModifiedModel(vtkMRMLDisplayableNode *model);
+
   void CreateClipSlices();
 
   void CreateAxis();
@@ -212,20 +216,35 @@ protected:
   void AddHierarchiyObservers();
   void RemoveHierarchyObservers();
 
-  vtkMRMLModelDisplayNode* GetModelDisplayNode(vtkMRMLModelNode *model);
+  void UpdateModelHierarchies() {
+    this->CheckModelHierarchies();
+    this->AddHierarchiyObservers();
+    };
+  void UpdateModelHierarchyVisibility(vtkMRMLModelHierarchyNode* mhnode, int visibility );
+  void UpdateModelHierarchyDisplay(vtkMRMLDisplayableNode *model);
 
-  void SetModelDisplayProperty(vtkMRMLModelNode *model,  vtkActor *actor);
+  void SetModelDisplayProperty(vtkMRMLDisplayableNode *model);
+
+  int GetDisplayedModelsVisibility(vtkMRMLDisplayNode *model);
+
+  void RemoveDisplayable(vtkMRMLDisplayableNode* model);
+
 
   //BTX
-  std::map<const char *, vtkActor *> DisplayedModels;
 
-  std::map<std::string, vtkMRMLModelNode *> DisplayedModelNodes;
+  std::vector< vtkMRMLDisplayNode* > GetDisplayNode(vtkMRMLDisplayableNode *model);
+  void RemoveDispalyedID(std::string &id);
 
-  std::map<const char *, int> DisplayedModelsClipState;
+  std::map<std::string, vtkActor *> DisplayedActors;
+  std::map<std::string, vtkMRMLDisplayNode *> DisplayedNodes;
+  std::map<std::string, int> DisplayedClipState;
+  std::map<std::string, int> DisplayedVisibility;
+  std::map<std::string, vtkMRMLDisplayableNode *> DisplayableNodes;
 
   std::vector<vtkFollower *> AxisLabelActors;
 
-  std::map<const char *, int>  RegisteredModelHierarchies;
+  std::map<std::string, int>  RegisteredModelHierarchies;
+
   //ETX
 
   vtkActor *BoxAxisActor;

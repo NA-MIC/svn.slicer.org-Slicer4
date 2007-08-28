@@ -21,68 +21,72 @@
 //
 
 
-#ifndef __vtkSlicerScalarVolumeDisplayWidget_h
-#define __vtkSlicerScalarVolumeDisplayWidget_h
+#ifndef __vtkSlicerDiffusionTensorVolumeDisplayWidget_h
+#define __vtkSlicerDiffusionTensorVolumeDisplayWidget_h
 
 #include "vtkSlicerVolumeDisplayWidget.h"
 
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkKWWindowLevelThresholdEditor.h"
+#include "vtkKWScaleWithEntry.h"
+#include "vtkKWMenuButtonWithSpinButtonsWithLabel.h"
 #include "vtkKWCheckButton.h"
-
+#include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLVolumeDisplayNode.h"
 
 
-class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerScalarVolumeDisplayWidget : public vtkSlicerVolumeDisplayWidget
+class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerDiffusionTensorVolumeDisplayWidget : public vtkSlicerVolumeDisplayWidget
 {
   
 public:
-  static vtkSlicerScalarVolumeDisplayWidget* New();
-  vtkTypeRevisionMacro(vtkSlicerScalarVolumeDisplayWidget,vtkSlicerVolumeDisplayWidget);
+  static vtkSlicerDiffusionTensorVolumeDisplayWidget* New();
+  vtkTypeRevisionMacro(vtkSlicerDiffusionTensorVolumeDisplayWidget,vtkSlicerVolumeDisplayWidget);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // alternative method to propagate events generated in GUI to logic / mrml
   virtual void ProcessWidgetEvents ( vtkObject *caller, unsigned long event, void *callData );
-  
+
   // Description:
   // alternative method to propagate events generated in GUI to logic / mrml
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
 
- // Description:
+  // Description:
   // add observers on widgets in the class
   virtual void AddWidgetObservers ( );
-
+  
   // Description:
   // removes observers on widgets in the class
   virtual void RemoveWidgetObservers ( );
 
- // Description:
-  // update the widget upon MRML change
   virtual void UpdateWidgetFromMRML();
-  
 
 protected:
-  vtkSlicerScalarVolumeDisplayWidget();
-  virtual ~vtkSlicerScalarVolumeDisplayWidget();
+  vtkSlicerDiffusionTensorVolumeDisplayWidget();
+  virtual ~vtkSlicerDiffusionTensorVolumeDisplayWidget();
 
   // Description:
   // Create the widget.
   virtual void CreateWidget();
 
+  vtkKWMenuButtonWithSpinButtonsWithLabel* ScalarModeMenu;
+  vtkSlicerModuleCollapsibleFrame* ScalarOptionsFrame; 
+  vtkKWCheckButton* GlyphButton;
+  vtkKWMenuButtonWithSpinButtonsWithLabel* GlyphModeMenu; 
   vtkSlicerNodeSelectorWidget* ColorSelectorWidget;
   vtkKWWindowLevelThresholdEditor* WindowLevelThresholdEditor;
   vtkKWCheckButton* InterpolateButton;
 
-  int UpdatingMRML;
-  int UpdatingWidget;
-
+  //BTX
+  std::map <std::string, int> ScalarModeMap;
+  std::map <std::string, int> GlyphModeMap;
+  //ETX
 private:
 
 
-  vtkSlicerScalarVolumeDisplayWidget(const vtkSlicerScalarVolumeDisplayWidget&); // Not implemented
-  void operator=(const vtkSlicerScalarVolumeDisplayWidget&); // Not Implemented
+  vtkSlicerDiffusionTensorVolumeDisplayWidget(const vtkSlicerDiffusionTensorVolumeDisplayWidget&); // Not implemented
+  void operator=(const vtkSlicerDiffusionTensorVolumeDisplayWidget&); // Not Implemented
 };
 
 #endif
