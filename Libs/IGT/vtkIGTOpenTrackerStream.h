@@ -19,15 +19,9 @@
 #include "vtkImageData.h"
 
 
-#ifdef OT_VERSION_20
 #include "OpenTracker/OpenTracker.h"
 #include "OpenTracker/common/CallbackModule.h"
 #include <OpenTracker/types/Image.h>
-#endif
-#ifdef OT_VERSION_13
-#include "OpenTracker.h"
-#include "common/CallbackModule.h"
-#endif
 
 using namespace ot;
 
