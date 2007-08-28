@@ -20,6 +20,7 @@
 #ifndef __vtkMRMLNode_h
 #define __vtkMRMLNode_h
 
+#include <vector>
 #include <string>
 #include <map>
 
@@ -130,10 +131,14 @@ public:
 
   
   // Description:
-  // Copy everything from another node of the same type.
+  // Copy paramters (not including ID and Scene) from another node of the same type.
   // NOTE: Subclasses should implement this method
   // NOTE: Call this method in the subclass impementation
   virtual void Copy(vtkMRMLNode *node);
+
+  // Description:
+  // Copy everything from another node of the same type.
+  void CopyWithScene(vtkMRMLNode *node);
 
   // Description:
   // Get node XML tag name (like Volume, Model)
@@ -154,6 +159,12 @@ public:
   vtkGetMacro(HideFromEditors, int);
   vtkSetMacro(HideFromEditors, int);
   vtkBooleanMacro(HideFromEditors, int);
+
+  // Description:
+  // Describes if the node is selectable
+  vtkGetMacro(Selectable, int);
+  vtkSetMacro(Selectable, int);
+  vtkBooleanMacro(Selectable, int);
 
   
   // Description:
@@ -219,6 +230,61 @@ public:
   vtkSetMacro(AddToScene, int);
   vtkBooleanMacro(AddToScene, int);
 
+  // Description:
+  // Turn off generating InvokeEvent for set macros
+  vtkGetMacro(DisableModifiedEvent, int);
+  void SetDisableModifiedEvent(int onOff)
+    {
+    this->DisableModifiedEvent = onOff;
+    }
+  void DisableModifiedEventOn()
+    {
+    this->SetDisableModifiedEvent(1);
+    }
+  void DisableModifiedEventOff()
+    {
+    this->SetDisableModifiedEvent(0);
+    }
+
+  virtual void Modified() 
+    {
+    if (!this->GetDisableModifiedEvent())
+      {
+      Superclass::Modified();
+      }
+    else
+      {
+      this->ModifiedEventPending = 1;
+      }
+    }
+
+  void InvokePendingModifiedEvent ()
+    {
+    if ( this->ModifiedEventPending )
+      {
+      Superclass::Modified();
+      }
+    this->ModifiedEventPending = 0;
+    }
+
+  void CopyWithSingleModifiedEvent (vtkMRMLNode *node)
+    {
+    int oldMode = this->GetDisableModifiedEvent();
+    this->DisableModifiedEventOn();
+    this->Copy(node);
+    this->InvokePendingModifiedEvent();
+    this->SetDisableModifiedEvent(oldMode);
+    }
+
+  void CopyWithSceneWithSingleModifiedEvent (vtkMRMLNode *node)
+    {
+    int oldMode = this->GetDisableModifiedEvent();
+    this->DisableModifiedEventOn();
+    this->CopyWithScene(node);
+    this->InvokePendingModifiedEvent();
+    this->SetDisableModifiedEvent(oldMode);
+    }
+
   
   vtkMRMLScene* GetScene() {return this->Scene;};
   void SetScene(vtkMRMLScene* scene) {this->Scene = scene;};
@@ -269,6 +335,7 @@ protected:
   char *SingletonTag;
   int Indent;
   int HideFromEditors;
+  int Selectable;
   int AddToScene;
 
   int  ModifiedSinceRead;
@@ -302,6 +369,8 @@ private:
   std::string TempID;
   //ETX
 
+  int DisableModifiedEvent;
+  int ModifiedEventPending;
 };
 
 #endif

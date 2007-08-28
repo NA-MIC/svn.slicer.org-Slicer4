@@ -22,6 +22,7 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLScene.h"
 
+#include "vtkSphereSource.h"
 
 //------------------------------------------------------------------------------
 vtkMRMLDiffusionTensorVolumeDisplayNode* vtkMRMLDiffusionTensorVolumeDisplayNode::New()
@@ -53,16 +54,28 @@ vtkMRMLNode* vtkMRMLDiffusionTensorVolumeDisplayNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLDiffusionTensorVolumeDisplayNode::vtkMRMLDiffusionTensorVolumeDisplayNode()
 {
+#ifdef USE_TEEM
+ this->DiffusionTensorGlyphFilter = vtkDiffusionTensorGlyph::New();
+ vtkSphereSource *sphere = vtkSphereSource::New();
+ sphere->Update();
+ this->DiffusionTensorGlyphFilter->SetSource( sphere->GetOutput() );
+ sphere->Delete();
+#endif
+
  this->VisualizationMode = 0;
- this->ScalarMode = 0;
- this->GlyphMode = 0;
+ this->DiffusionTensorDisplayPropertiesNode = NULL;
+ this->DiffusionTensorDisplayPropertiesNodeID = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLDiffusionTensorVolumeDisplayNode::~vtkMRMLDiffusionTensorVolumeDisplayNode()
 {
-
+  this->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(NULL); 
+#ifdef USE_TEEM
+  this->DiffusionTensorGlyphFilter->Delete();
+#endif
 }
+
 
 //----------------------------------------------------------------------------
 void vtkMRMLDiffusionTensorVolumeDisplayNode::WriteXML(ostream& of, int nIndent)
@@ -72,16 +85,11 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::WriteXML(ostream& of, int nIndent)
   vtkIndent indent(nIndent);
 
   std::stringstream ss;
-  ss << this->VisualizationMode;
-  of << indent << "visualizationMode=\"" << ss.str() << "\" ";
-
-  ss.clear();
-  ss << this->ScalarMode;
-  of << indent << "scalarMode=\"" << ss.str() << "\" ";
-
-  ss.clear();
-  ss << this->GlyphMode;
-  of << indent << "glyphMode=\"" << ss.str() << "\" ";
+ if (this->DiffusionTensorDisplayPropertiesNodeID != NULL)
+    {
+    ss << this->DiffusionTensorDisplayPropertiesNodeID;
+    of << indent << " diffussionTensorDisplayPropertiesNodeID=\"" << ss.str() << "\"";
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -96,25 +104,12 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::ReadXMLAttributes(const char** att
     {
     attName = *(atts++);
     attValue = *(atts++);
-    if (!strcmp(attName, "visualizationMode")) 
+    if (!strcmp(attName, "diffusionTensorDisplayPropertiesNodeID"))
       {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->VisualizationMode;
+      this->SetDiffusionTensorDisplayPropertiesNodeID(attValue);
+      this->Scene->AddReferencedNodeID(this->DiffusionTensorDisplayPropertiesNodeID, this);
       }
-    else if (!strcmp(attName, "scalarMode"))
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->ScalarMode;
-      }
-    else if (!strcmp(attName, "glyphMode")) 
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->GlyphMode;
-      }
-    }        
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -125,9 +120,7 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLDiffusionTensorVolumeDisplayNode *node = (vtkMRMLDiffusionTensorVolumeDisplayNode *) anode;
 
-  this->SetVisualizationMode(node->VisualizationMode);
-  this->SetScalarMode(node->ScalarMode);
-  this->SetGlyphMode(node->GlyphMode);
+  this->SetDiffusionTensorDisplayPropertiesNodeID(node->DiffusionTensorDisplayPropertiesNodeID);
 }
 
 //----------------------------------------------------------------------------
@@ -136,10 +129,115 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::PrintSelf(ostream& os, vtkIndent i
   
   Superclass::PrintSelf(os,indent);
 
-  os << indent << "Visualization Mode:   " << this->VisualizationMode << "\n";
-  os << indent << "Scalar Mode:   " << this->ScalarMode << "\n";
-  os << indent << "Glyph Mode:    " << this->GlyphMode << "\n";
+
+  os << indent << "DiffusionTensorDisplayPropertiesNodeID:   " << this->DiffusionTensorDisplayPropertiesNodeID << "\n";
 }
 
+//---------------------------------------------------------------------------
+void vtkMRMLDiffusionTensorVolumeDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
+                                           unsigned long event,
+                                           void *callData )
+{
+  Superclass::ProcessMRMLEvents(caller, event, callData);
 
+  vtkMRMLDiffusionTensorDisplayPropertiesNode *pnode = this->GetDiffusionTensorDisplayPropertiesNode();
+  if (pnode != NULL && pnode == vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast(caller) &&
+      event ==  vtkCommand::ModifiedEvent)
+    {
+    this->InvokeEvent(vtkCommand::ModifiedEvent, NULL);
+    }
+  return;
+}
+
+//-----------------------------------------------------------
+void vtkMRMLDiffusionTensorVolumeDisplayNode::UpdateScene(vtkMRMLScene *scene)
+{
+   Superclass::UpdateScene(scene);
+
+   this->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(this->GetDiffusionTensorDisplayPropertiesNodeID());
+
+}
+
+//-----------------------------------------------------------
+void vtkMRMLDiffusionTensorVolumeDisplayNode::UpdateReferences()
+{
+  Superclass::UpdateReferences();
+
+  if (this->DiffusionTensorDisplayPropertiesNodeID != NULL && this->Scene->GetNodeByID(this->DiffusionTensorDisplayPropertiesNodeID) == NULL)
+    {
+    this->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(NULL);
+    }
+}
+//-----------------------------------------------------------
+vtkPolyData* vtkMRMLDiffusionTensorVolumeDisplayNode::ExecuteGlyphPipeLineAndGetPolyData( vtkImageData* imageData )
+{
+#ifdef USE_TEEM
+  if ( true || this->GetVisualizationMode()==this->visModeGlyph || this->GetVisualizationMode()==this->visModeBoth )
+  {
+    vtkErrorMacro("Showing Tensor Glyph from data");
+    imageData->PrintSelf( std::cout, vtkIndent() );
+    this->DiffusionTensorGlyphFilter->SetInput( imageData );
+    this->DiffusionTensorGlyphFilter->ClampScalingOff();
+
+            // TO DO: implement max # ellipsoids, random sampling features
+   this->DiffusionTensorGlyphFilter->SetResolution(2);
+          
+    this->DiffusionTensorGlyphFilter->SetSource( this->GetDiffusionTensorDisplayPropertiesNode()->GetGlyphSource()   );
+  //  this->DiffusionTensorGlyphFilter->SetScaleFactor( this->GetDiffusionTensorDisplayPropertiesNode()->GetGlyphScaleFactor()  );
+    this->DiffusionTensorGlyphFilter->SetScaleFactor(100);
+
+
+
+    this->DiffusionTensorGlyphFilter->ColorGlyphsByFractionalAnisotropy( );
+    this->DiffusionTensorGlyphFilter->Update ( );
+   
+    return this->DiffusionTensorGlyphFilter->GetOutput();
+  } else {
+    return NULL;
+  }
+#else
+  return NULL;
+#endif
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLDiffusionTensorVolumeDisplayNode::UpdateReferenceID(const char *oldID, const char *newID)
+{
+  if (this->DiffusionTensorDisplayPropertiesNodeID && !strcmp(oldID, this->DiffusionTensorDisplayPropertiesNodeID))
+    {
+    this->SetDiffusionTensorDisplayPropertiesNodeID(newID);
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLDiffusionTensorVolumeDisplayNode::SetAndObserveDiffusionTensorDisplayPropertiesNodeID ( const char *ID )
+{
+  // Stop observing any old node
+  vtkSetAndObserveMRMLObjectMacro ( this->DiffusionTensorDisplayPropertiesNode, NULL );
+
+  // Set the ID. This is the "ground truth" reference to the node.
+  this->SetDiffusionTensorDisplayPropertiesNodeID ( ID );
+
+  // Get the node corresponding to the ID. This pointer is only to observe the object.
+  vtkMRMLNode *cnode = this->GetDiffusionTensorDisplayPropertiesNode ( );
+
+  // Observe the node using the pointer.
+  vtkSetAndObserveMRMLObjectMacro ( this->DiffusionTensorDisplayPropertiesNode , cnode );
+
+}
+
+//----------------------------------------------------------------------------
+vtkMRMLDiffusionTensorDisplayPropertiesNode* vtkMRMLDiffusionTensorVolumeDisplayNode::GetDiffusionTensorDisplayPropertiesNode ( )
+{
+  vtkMRMLDiffusionTensorDisplayPropertiesNode* node = NULL;
+
+  // Find the node corresponding to the ID we have saved.
+  if  ( this->GetScene ( ) && this->GetDiffusionTensorDisplayPropertiesNodeID ( ) )
+    {
+    vtkMRMLNode* cnode = this->GetScene ( ) -> GetNodeByID ( this->DiffusionTensorDisplayPropertiesNodeID );
+    node = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast ( cnode );
+    }
+
+  return node;
+}
 

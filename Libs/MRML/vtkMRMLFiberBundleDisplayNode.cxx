@@ -60,7 +60,7 @@ vtkMRMLFiberBundleDisplayNode::vtkMRMLFiberBundleDisplayNode()
   this->FiberGlyphOpacity = 1;
 
   this->FiberTubeRadius = 0.5;
-  this->FiberTubeNumberOfSides = 4;
+  this->FiberTubeNumberOfSides = 6;
 
   // Enumerated
   this->ColorModeForFiberLines = this->colorModeSolid;
@@ -138,15 +138,15 @@ void vtkMRMLFiberBundleDisplayNode::WriteXML(ostream& of, int nIndent)
   of << indent << " twoDimensionalVisibility=\"" << (this->TwoDimensionalVisibility ? "true" : "false") << "\"";
   if (this->FiberLineDTDisplayPropertiesNodeID != NULL) 
     {
-    of << indent << " fiberLineDisplayNodeRef=\"" << this->FiberLineDTDisplayPropertiesNodeID << "\" ";
+    of << indent << " fiberLineDisplayNodeRef=\"" << this->FiberLineDTDisplayPropertiesNodeID << "\"";
     }
   if (this->FiberTubeDTDisplayPropertiesNodeID != NULL) 
     {
-    of << indent << "fiberTubeDisplayNodeRef=\"" << this->FiberTubeDTDisplayPropertiesNodeID << "\" ";
+    of << indent << " fiberTubeDisplayNodeRef=\"" << this->FiberTubeDTDisplayPropertiesNodeID << "\"";
     }
   if (this->FiberGlyphDTDisplayPropertiesNodeID != NULL) 
     {
-    of << indent << "fiberGlyphDisplayNodeRef=\"" << this->FiberGlyphDTDisplayPropertiesNodeID << "\" ";
+    of << indent << " fiberGlyphDisplayNodeRef=\"" << this->FiberGlyphDTDisplayPropertiesNodeID << "\"";
     }
 }
 
@@ -267,17 +267,17 @@ void vtkMRMLFiberBundleDisplayNode::ReadXMLAttributes(const char** atts)
     else if (!strcmp(attName, "fiberLineDisplayNodeRef")) 
       {
       this->SetFiberLineDTDisplayPropertiesNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->FiberLineDTDisplayPropertiesNodeID, this);
+      //this->Scene->AddReferencedNodeID(this->FiberLineDTDisplayPropertiesNodeID, this);
       }
     else if (!strcmp(attName, "fiberTubeDisplayNodeRef")) 
       {
       this->SetFiberTubeDTDisplayPropertiesNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->FiberTubeDTDisplayPropertiesNodeID, this);
+      //this->Scene->AddReferencedNodeID(this->FiberTubeDTDisplayPropertiesNodeID, this);
       }
     else if (!strcmp(attName, "fiberGlyphDisplayNodeRef")) 
       {
       this->SetFiberGlyphDTDisplayPropertiesNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->FiberGlyphDTDisplayPropertiesNodeID, this);
+      //this->Scene->AddReferencedNodeID(this->FiberGlyphDTDisplayPropertiesNodeID, this);
       }
     }  
 }

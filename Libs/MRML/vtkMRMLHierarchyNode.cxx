@@ -54,7 +54,7 @@ void vtkMRMLHierarchyNode::WriteXML(ostream& of, int nIndent)
 
   if (this->ParentNodeID != NULL) 
     {
-    of << indent << "parentNodeRef=\"" << this->ParentNodeID << "\" ";
+    of << indent << " parentNodeRef=\"" << this->ParentNodeID << "\"";
     }
 }
 
@@ -81,7 +81,7 @@ void vtkMRMLHierarchyNode::ReadXMLAttributes(const char** atts)
     if (!strcmp(attName, "parentNodeRef")) 
       {
       this->SetParentNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->ParentNodeID, this);
+      //this->Scene->AddReferencedNodeID(this->ParentNodeID, this);
       }
     }
 }

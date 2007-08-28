@@ -29,6 +29,7 @@ Version:   $Revision: 1.18 $
 #include <vector>
 #include <string>
 #include <vtksys/SystemTools.hxx> 
+#include <vtksys/hash_map.hxx> 
 
 #include "vtkCollection.h"
 #include "vtkObjectFactory.h"
@@ -118,6 +119,10 @@ public:
   // Description:
   // Add a node to the scene and send NewNode and SceneModified events.
   vtkMRMLNode* AddNode(vtkMRMLNode *n);
+
+  // Description:
+  // Add a copy of a node to the scene.
+  vtkMRMLNode* CopyNode(vtkMRMLNode *n);
 
   // Description:
   // Add a node to the scene.
@@ -272,6 +277,12 @@ public:
     this->ReferencedIDChanges.clear();
   };
 
+  void RemoveNodeReferences(vtkMRMLNode *node);
+
+  // Description: 
+  // Return collection of all nodes referenced directly or indirectly by a node.
+  vtkCollection* GetReferencedNodes(vtkMRMLNode *node);
+
 //BTX
   // Description:
   // Get/Set the active Scene 
@@ -294,6 +305,7 @@ public:
   vtkSetMacro(ErrorCode,unsigned long);
   vtkGetMacro(ErrorCode,unsigned long);
 
+
 //BTX
   void SetErrorMessage(const std::string &error) {
     this->ErrorMessage = error;
@@ -304,19 +316,30 @@ public:
   };
 //ETX
 
+  void SetErrorMessage(const char * message)
+    {
+    this->SetErrorMessage(std::string(message));
+    }
+
+  const char *GetErrorMessagePointer()
+    {
+    return (this->GetErrorMessage().c_str());
+    }
+
 protected:
   vtkMRMLScene();
   ~vtkMRMLScene();
   vtkMRMLScene(const vtkMRMLScene&);
   void operator=(const vtkMRMLScene&);
   
-
   void PushIntoUndoStack();
   void PushIntoRedoStack();
 
   void CopyNodeInUndoStack(vtkMRMLNode *node);
   void CopyNodeInRedoStack(vtkMRMLNode *node);
-  
+
+  void AddReferencedNodes(vtkMRMLNode *node, vtkCollection *refNodes);
+
   vtkCollection* CurrentScene;
   int UndoStackSize;
   bool UndoFlag;
@@ -341,10 +364,17 @@ protected:
   std::vector< vtkMRMLNode* > ReferencingNodes;
   std::map< std::string, std::string> ReferencedIDChanges;
   
+  //vtksys::hash_map<const char*, vtkMRMLNode*> NodeIDs;
+  std::map<std::string, vtkMRMLNode*> NodeIDs;
+
   std::string ErrorMessage;
   //ETX
   
   void UpdateNodeReferences();
+
+  void UpdateNodeIDs();
+
+  unsigned long NodeIDsMTime;
 
   void RemoveAllNodesExceptSingletons();
 

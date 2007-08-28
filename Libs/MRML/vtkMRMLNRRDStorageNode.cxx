@@ -76,7 +76,7 @@ void vtkMRMLNRRDStorageNode::WriteXML(ostream& of, int nIndent)
 
   std::stringstream ss;
   ss << this->CenterImage;
-  of << indent << "centerImage=\"" << ss.str() << "\" ";
+  of << indent << " centerImage=\"" << ss.str() << "\"";
 
 }
 
@@ -344,8 +344,8 @@ int vtkMRMLNRRDStorageNode::WriteData(vtkMRMLNode *refNode)
   vtkMRMLVolumeNode *volNode;
   //Store volume nodes attributes.
   vtkMatrix4x4 *mf = vtkMatrix4x4::New();
-  vtkDoubleArray *grads;
-  vtkDoubleArray *bValues;
+  vtkDoubleArray *grads = NULL;
+  vtkDoubleArray *bValues = NULL;
   vtkMatrix4x4* ijkToRas = vtkMatrix4x4::New();
   
   if ( refNode->IsA("vtkMRMLScalarVolumeNode") ) 
@@ -406,12 +406,19 @@ int vtkMRMLNRRDStorageNode::WriteData(vtkMRMLNode *refNode)
   vtkNRRDWriter *writer = vtkNRRDWriter::New();
   writer->SetFileName(fullName.c_str());
   writer->SetInput(volNode->GetImageData() );
+  writer->SetUseCompression(this->GetUseCompression());
 
   // set volume attributes
   writer->SetIJKToRASMatrix(ijkToRas);
   writer->SetMeasurementFrameMatrix(mf);
-  writer->SetDiffusionGradients(grads);
-  writer->SetBValues(bValues);
+  if (grads)
+    {
+    writer->SetDiffusionGradients(grads);
+    }
+  if (bValues)
+    {
+    writer->SetBValues(bValues);
+    }
   
   writer->Write();
   int writeFlag = 1;

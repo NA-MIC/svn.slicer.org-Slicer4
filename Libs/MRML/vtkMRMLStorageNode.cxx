@@ -26,6 +26,7 @@ Version:   $Revision: 1.1.1.1 $
 vtkMRMLStorageNode::vtkMRMLStorageNode()
 {
   this->FileName = NULL;
+  this->UseCompression = 1;
 }
 
 //----------------------------------------------------------------------------
@@ -45,8 +46,14 @@ void vtkMRMLStorageNode::WriteXML(ostream& of, int nIndent)
 
   if (this->FileName != NULL) 
     {
-    of << indent << "fileName=\"" << vtkMRMLNode::URLEncodeString(this->FileName) << "\" ";
+    of << indent << " fileName=\"" << vtkMRMLNode::URLEncodeString(this->FileName) << "\"";
     }
+  {
+  std::stringstream ss;
+  ss << this->UseCompression;
+  of << indent << " useCompression=\"" << ss.str() << "\"";
+  }
+
 }
 
 //----------------------------------------------------------------------------
@@ -61,8 +68,19 @@ void vtkMRMLStorageNode::ReadXMLAttributes(const char** atts)
     attValue = *(atts++);
     if (!strcmp(attName, "fileName")) 
       {
-      this->SetFileName(vtkMRMLNode::URLDecodeString(attValue));
+      // URLDeodeString returns a buffer that was created using new[].
+      // It is up to the client to delete it.
+      const char* filename = vtkMRMLNode::URLDecodeString(attValue);
+      this->SetFileName(filename);
+      delete [] filename;
       }
+    else if (!strcmp(attName, "useCompression")) 
+      {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> this->UseCompression;
+      }
+
     }
 }
 
@@ -74,7 +92,7 @@ void vtkMRMLStorageNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLStorageNode *node = (vtkMRMLStorageNode *) anode;
   this->SetFileName(node->FileName);
-
+  this->SetUseCompression(node->UseCompression);
 }
 
 //----------------------------------------------------------------------------
@@ -83,6 +101,8 @@ void vtkMRMLStorageNode::PrintSelf(ostream& os, vtkIndent indent)
   Superclass::PrintSelf(os,indent);
   os << indent << "FileName: " <<
     (this->FileName ? this->FileName : "(none)") << "\n";
+  os << indent << "UseCompression:   " << this->UseCompression << "\n";
+
 }
 
 void vtkMRMLStorageNode::ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData )

@@ -26,8 +26,6 @@ Version:   $Revision: 1.14 $
 //----------------------------------------------------------------------------
 vtkMRMLVolumeNode::vtkMRMLVolumeNode()
 {
-  this->StorageNodeID = NULL;
-  this->DisplayNodeID = NULL;
   int i,j;
 
   for(i=0; i<3; i++) 
@@ -49,22 +47,13 @@ vtkMRMLVolumeNode::vtkMRMLVolumeNode()
     }
 
   this->ImageData = NULL;
-  this->VolumeDisplayNode = NULL;
 
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLVolumeNode::~vtkMRMLVolumeNode()
 {
-  if (this->StorageNodeID) 
-    {
-    delete [] this->StorageNodeID;
-    this->StorageNodeID = NULL;
-    }
-
-  this->SetAndObserveDisplayNodeID(NULL);
   this->SetAndObserveImageData(NULL);
-
 }
 
 //----------------------------------------------------------------------------
@@ -74,15 +63,6 @@ void vtkMRMLVolumeNode::WriteXML(ostream& of, int nIndent)
   
   vtkIndent indent(nIndent);
   
-  if (this->StorageNodeID != NULL) 
-    {
-    of << indent << "storageNodeRef=\"" << this->StorageNodeID << "\" ";
-    }
-  if (this->DisplayNodeID != NULL) 
-    {
-    of << indent << "displayNodeRef=\"" << this->DisplayNodeID << "\" ";
-    }
-
   std::stringstream ss;
   for(int i=0; i<3; i++) 
     {
@@ -95,28 +75,15 @@ void vtkMRMLVolumeNode::WriteXML(ostream& of, int nIndent)
         }
       }
     }
-    of << indent << "ijkToRASDirections=\"" << ss.str() << "\" ";
+    of << indent << " ijkToRASDirections=\"" << ss.str() << "\"";
 
 
-  of << indent << "spacing=\"" 
-    << this->Spacing[0] << " " << this->Spacing[1] << " " << this->Spacing[2] << "\" ";
+  of << indent << " spacing=\"" 
+    << this->Spacing[0] << " " << this->Spacing[1] << " " << this->Spacing[2] << "\"";
 
-  of << indent << "origin=\"" 
-    << this->Origin[0] << " " << this->Origin[1] << " " << this->Origin[2] << "\" ";
+  of << indent << " origin=\"" 
+    << this->Origin[0] << " " << this->Origin[1] << " " << this->Origin[2] << "\"";
 
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLVolumeNode::UpdateReferenceID(const char *oldID, const char *newID)
-{
-  if (this->StorageNodeID && !strcmp(oldID, this->StorageNodeID))
-    {
-    this->SetStorageNodeID(newID);
-    }
-  if (this->DisplayNodeID && !strcmp(oldID, this->DisplayNodeID))
-    {
-    this->SetDisplayNodeID(newID);
-    }
 }
 
 //----------------------------------------------------------------------------
@@ -168,16 +135,6 @@ void vtkMRMLVolumeNode::ReadXMLAttributes(const char** atts)
         this->Origin[i] = val;
         }
       }
-    else if (!strcmp(attName, "storageNodeRef")) 
-      {
-      this->SetStorageNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->StorageNodeID, this);
-      }
-    else if (!strcmp(attName, "displayNodeRef")) 
-      {
-      this->SetDisplayNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->DisplayNodeID, this);
-      }
    }  
 }
 
@@ -192,6 +149,8 @@ void vtkMRMLVolumeNode::Copy(vtkMRMLNode *anode)
   // Matrices
   for(int i=0; i<3; i++) 
     {
+    this->Origin[i] = node->Origin[i];
+    this->Spacing[i] = node->Spacing[i];
     for(int j=0; j<3; j++) 
       {
       this->IJKToRASDirections[i][j] = node->IJKToRASDirections[i][j];
@@ -201,12 +160,6 @@ void vtkMRMLVolumeNode::Copy(vtkMRMLNode *anode)
     {
     this->SetImageData(node->ImageData);
     }
-
-  this->SetOrigin(node->GetOrigin());
-  this->SetSpacing(node->GetSpacing());
-
-  this->SetStorageNodeID(node->StorageNodeID);
-  this->SetDisplayNodeID(node->DisplayNodeID);
 }
 
 //----------------------------------------------------------------------------
@@ -256,42 +209,11 @@ void vtkMRMLVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     os << indent << " " << this->Spacing[j];
     }
 
-  os << indent << "StorageNodeID: " <<
-    (this->StorageNodeID ? this->StorageNodeID : "(none)") << "\n";
-
-  os << indent << "DisplayNodeID: " <<
-    (this->DisplayNodeID ? this->DisplayNodeID : "(none)") << "\n";
-
-
   if (this->ImageData != NULL) 
     {
     os << indent << "ImageData:\n";
     this->ImageData->PrintSelf(os, indent.GetNextIndent()); 
     }
-}
-
-//----------------------------------------------------------------------------
-vtkMRMLStorageNode* vtkMRMLVolumeNode::GetStorageNode()
-{
-  vtkMRMLStorageNode* node = NULL;
-  if (this->GetScene() && this->GetStorageNodeID() )
-    {
-    vtkMRMLNode* snode = this->GetScene()->GetNodeByID(this->StorageNodeID);
-    node = vtkMRMLStorageNode::SafeDownCast(snode);
-    }
-  return node;
-}
-
-//----------------------------------------------------------------------------
-vtkMRMLVolumeDisplayNode* vtkMRMLVolumeNode::GetDisplayNode()
-{
-  vtkMRMLVolumeDisplayNode* node = NULL;
-  if (this->GetScene() && this->GetDisplayNodeID() )
-    {
-    vtkMRMLNode* snode = this->GetScene()->GetNodeByID(this->DisplayNodeID);
-    node = vtkMRMLVolumeDisplayNode::SafeDownCast(snode);
-    }
-  return node;
 }
 
 
@@ -611,18 +533,6 @@ const char* vtkMRMLVolumeNode::ComputeScanOrderFromIJKToRAS(vtkMatrix4x4 *ijkToR
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLVolumeNode::SetAndObserveDisplayNodeID(const char *displayNodeID)
-{
-  vtkSetAndObserveMRMLObjectMacro(this->VolumeDisplayNode, NULL);
-
-  this->SetDisplayNodeID(displayNodeID);
-
-  vtkMRMLVolumeDisplayNode *dnode = this->GetDisplayNode();
-
-  vtkSetAndObserveMRMLObjectMacro(this->VolumeDisplayNode, dnode);
-}
-
-//----------------------------------------------------------------------------
 void vtkMRMLVolumeNode::SetAndObserveImageData(vtkImageData *ImageData)
 {
   if (this->ImageData != NULL)
@@ -645,43 +555,9 @@ void vtkMRMLVolumeNode::UpdateScene(vtkMRMLScene *scene)
 {
   Superclass::UpdateScene(scene);
 
-  if (this->GetStorageNodeID() == NULL) 
-    {
-    vtkErrorMacro("No reference StorageNodeID found");
-    return;
-    }
-
-  vtkMRMLNode* mnode = scene->GetNodeByID(this->StorageNodeID);
-  if (mnode) 
-    {
-    vtkMRMLStorageNode *node  = dynamic_cast < vtkMRMLStorageNode *>(mnode);
-    if (node->ReadData(this) == 0)
-      {
-      scene->SetErrorCode(1);
-      std::string msg = std::string("Error reading volume file ") + std::string(node->GetFileName());
-      scene->SetErrorMessage(msg);
-      }
-    }
-   this->SetAndObserveDisplayNodeID(this->GetDisplayNodeID());
-   this->SetAndObserveImageData(this->GetImageData());
+  this->SetAndObserveImageData(this->GetImageData());
 
 }
-
-//-----------------------------------------------------------
-void vtkMRMLVolumeNode::UpdateReferences()
-{
-  Superclass::UpdateReferences();
-
-  if (this->DisplayNodeID != NULL && this->Scene->GetNodeByID(this->DisplayNodeID) == NULL)
-    {
-    this->SetAndObserveDisplayNodeID(NULL);
-    }
- if (this->StorageNodeID != NULL && this->Scene->GetNodeByID(this->StorageNodeID) == NULL)
-    {
-    this->SetStorageNodeID(NULL);
-    }
-}
-
 
 //---------------------------------------------------------------------------
 void vtkMRMLVolumeNode::ProcessMRMLEvents ( vtkObject *caller,
@@ -690,13 +566,7 @@ void vtkMRMLVolumeNode::ProcessMRMLEvents ( vtkObject *caller,
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);
 
-  vtkMRMLVolumeDisplayNode *dnode = this->GetDisplayNode();
-  if (dnode != NULL && dnode == vtkMRMLVolumeDisplayNode::SafeDownCast(caller) &&
-      event ==  vtkCommand::ModifiedEvent)
-    {
-    this->InvokeEvent(vtkMRMLVolumeNode::DisplayModifiedEvent, NULL);
-    }
-  else if (this->ImageData == vtkImageData::SafeDownCast(caller) &&
+  if (this->ImageData == vtkImageData::SafeDownCast(caller) &&
     event ==  vtkCommand::ModifiedEvent)
     {
     this->ModifiedSinceRead = true;
