@@ -1,7 +1,6 @@
 #include "vtkMRMLEMSTreeParametersLeafNode.h"
 #include <sstream>
 #include "vtkMRMLScene.h"
-#include "vtkMRMLEMSGlobalParametersNode.h"
 #include <algorithm>
 
 //-----------------------------------------------------------------------------
@@ -39,16 +38,15 @@ CreateNodeInstance()
 //-----------------------------------------------------------------------------
 vtkMRMLEMSTreeParametersLeafNode::vtkMRMLEMSTreeParametersLeafNode()
 {
-  this->NumberOfTargetInputChannels = 0;
-  this->GlobalParametersNodeID      = NULL;
-  this->PrintQuality                = 0;
-  this->IntensityLabel              = 0;
+  this->NumberOfTargetInputChannels     = 0;
+  this->PrintQuality                    = 0;
+  this->IntensityLabel                  = 0;
+  this->DistributionSpecificationMethod = 0;
 }
 
 //-----------------------------------------------------------------------------
 vtkMRMLEMSTreeParametersLeafNode::~vtkMRMLEMSTreeParametersLeafNode()
 {
-  this->SetGlobalParametersNodeID(NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -56,10 +54,6 @@ void vtkMRMLEMSTreeParametersLeafNode::WriteXML(ostream& of, int nIndent)
 {
   Superclass::WriteXML(of, nIndent);
   vtkIndent indent(nIndent);
-
-  of << indent << "GlobalParametersNodeID=\"" 
-     << (this->GlobalParametersNodeID ? this->GlobalParametersNodeID : "NULL")
-     << "\" ";
 
   of << indent << "PrintQuality=\""
      << this->PrintQuality << "\" ";
@@ -81,34 +75,24 @@ void vtkMRMLEMSTreeParametersLeafNode::WriteXML(ostream& of, int nIndent)
       {
       of << this->LogCovariance[r][c] << " ";
       }
+    if (r < this->GetNumberOfTargetInputChannels() - 1)
+      {
+      of << "| ";
+      }
     }
   of << "\" ";
-}
 
-//-----------------------------------------------------------------------------
-void
-vtkMRMLEMSTreeParametersLeafNode::
-UpdateReferenceID(const char* oldID, const char* newID)
-{
-  if (this->GlobalParametersNodeID && 
-      !strcmp(oldID, this->GlobalParametersNodeID))
+  of << indent << "DistributionSpecificationMethod=\""
+     << this->DistributionSpecificationMethod << "\" ";
+
+  of << indent << "DistributionSamplePointsRAS=\"";
+  for (SamplePointListConstIterator i = 
+         this->DistributionSamplePointsRAS.begin();
+       i != this->DistributionSamplePointsRAS.end(); ++i)
     {
-    this->SetGlobalParametersNodeID(newID);
+    of << (*i)[0] << " " << (*i)[1] << " " << (*i)[2] << " ";
     }
-}
-
-//-----------------------------------------------------------------------------
-void 
-vtkMRMLEMSTreeParametersLeafNode::
-UpdateReferences()
-{
-  Superclass::UpdateReferences();
-
-  if (this->GlobalParametersNodeID != NULL && 
-      this->Scene->GetNodeByID(this->GlobalParametersNodeID) == NULL)
-    {
-    this->SetGlobalParametersNodeID(NULL);
-    }
+  of << "\" ";
 }
 
 //-----------------------------------------------------------------------------
@@ -126,12 +110,7 @@ void vtkMRMLEMSTreeParametersLeafNode::ReadXMLAttributes(const char** attrs)
     key = *attrs++;
     val = *attrs++;
     
-    if (!strcmp(key, "GlobalParametersNodeID"))
-      {
-      this->SetGlobalParametersNodeID(val);
-      this->Scene->AddReferencedNodeID(this->GlobalParametersNodeID, this);   
-      }
-    else if (!strcmp(key, "PrintQuality"))
+    if (!strcmp(key, "PrintQuality"))
       {
       vtksys_stl::stringstream ss;
       ss << val;
@@ -166,9 +145,19 @@ void vtkMRMLEMSTreeParametersLeafNode::ReadXMLAttributes(const char** attrs)
       }
     else if (!strcmp(key, "LogCovariance"))
       {
+      // remove visual row seperators
+      std::string valStr(val);
+      for (int i = 0; i < valStr.size(); ++i)
+        {
+        if (valStr[i] == '|')
+          {
+          valStr[i] = ' ';
+          }
+        }
+
       // read data into a temporary vector
       vtksys_stl::stringstream ss;
-      ss << val;
+      ss << valStr;
       double d;
       vtksys_stl::vector<double> tmpVec;
       while (ss >> d)
@@ -194,6 +183,23 @@ void vtkMRMLEMSTreeParametersLeafNode::ReadXMLAttributes(const char** attrs)
           }   
         }
       }
+    else if (!strcmp(key, "DistributionSpecificationMethod"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << val;
+      ss >> this->DistributionSpecificationMethod;
+      }
+    else if (!strcmp(key, "DistributionSamplePointsRAS"))
+      {
+      this->DistributionSamplePointsRAS.clear();
+      vtksys_stl::stringstream ss;
+      ss << val;
+      vtkstd::vector<double> point(3);
+      while (ss >> point[0] >> point[1] >> point[2])
+        {
+        this->DistributionSamplePointsRAS.push_back(point);
+        }
+      }
     }
 }
 
@@ -204,12 +210,14 @@ void vtkMRMLEMSTreeParametersLeafNode::Copy(vtkMRMLNode *rhs)
   vtkMRMLEMSTreeParametersLeafNode* node = 
     (vtkMRMLEMSTreeParametersLeafNode*) rhs;
 
-  this->SetGlobalParametersNodeID(node->GlobalParametersNodeID);
   this->SetNumberOfTargetInputChannels(node->GetNumberOfTargetInputChannels());
   this->SetPrintQuality(node->PrintQuality);
   this->SetIntensityLabel(node->IntensityLabel);
   this->LogMean = node->LogMean;
   this->LogCovariance = node->LogCovariance;
+  this->SetDistributionSpecificationMethod
+    (node->DistributionSpecificationMethod);
+  this->DistributionSamplePointsRAS = node->DistributionSamplePointsRAS;
 }
 
 //-----------------------------------------------------------------------------
@@ -217,10 +225,6 @@ void vtkMRMLEMSTreeParametersLeafNode::PrintSelf(ostream& os,
                                                  vtkIndent indent)
 {
   Superclass::PrintSelf(os, indent);
-
-  os << indent << "GlobalParametersNodeID: " 
-     << (this->GlobalParametersNodeID ? this->GlobalParametersNodeID :"(none)")
-     << "\n";
 
   os << indent << "PrintQuality: "
      << this->PrintQuality
@@ -246,6 +250,18 @@ void vtkMRMLEMSTreeParametersLeafNode::PrintSelf(ostream& os,
       }
     }
   os << "\n";
+
+  os << indent << "DistributionSpecificationMethod: "
+     << this->DistributionSpecificationMethod
+     << "\n";
+
+  os << indent << "DistributionSamplePointsRAS: \n";
+  for (SamplePointListConstIterator i = 
+         this->DistributionSamplePointsRAS.begin();
+       i != this->DistributionSamplePointsRAS.end(); ++i)
+    {
+    os << (*i)[0] << " " << (*i)[1] << " " << (*i)[2] << "\n";
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -269,6 +285,58 @@ SetNumberOfTargetInputChannels(unsigned int n)
       this->LogCovariance[i].resize(n, 0.0);
       }
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkMRMLEMSTreeParametersLeafNode::
+AddTargetInputChannel()
+{
+  this->LogMean.push_back(0.0);
+  for (unsigned int i = 0; i < this->NumberOfTargetInputChannels; ++i)
+    {
+    this->LogCovariance[i].push_back(0.0);
+    }
+  ++this->NumberOfTargetInputChannels; 
+  this->LogCovariance.
+    push_back(vtkstd::vector<double>(this->NumberOfTargetInputChannels, 0.0));
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkMRMLEMSTreeParametersLeafNode::
+RemoveNthTargetInputChannel(int index)
+{
+  this->LogMean.erase(this->LogMean.begin() + index);
+  for (unsigned int i = 0; i < this->NumberOfTargetInputChannels; ++i)
+    {
+    this->LogCovariance[i].erase(this->LogCovariance[i].begin() + index);
+    }
+  this->LogCovariance.erase(this->LogCovariance.begin() + index);
+  --this->NumberOfTargetInputChannels;
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkMRMLEMSTreeParametersLeafNode::
+MoveNthTargetInputChannel(int fromIndex, int toIndex)
+{
+  double movingParam = this->LogMean[fromIndex];
+  this->LogMean.erase(this->LogMean.begin() + fromIndex);
+  this->LogMean.insert(this->LogMean.begin() + toIndex, movingParam);
+
+  for (unsigned int i = 0; i < this->NumberOfTargetInputChannels; ++i)
+    {
+    double movingParam = this->LogCovariance[i][fromIndex];
+    this->LogCovariance[i].erase(this->LogCovariance[i].begin() + fromIndex);
+    this->LogCovariance[i].insert(this->LogCovariance[i].begin() + toIndex, 
+                                  movingParam);
+    }
+
+  vtkstd::vector<double> movingVec = this->LogCovariance[fromIndex];
+  this->LogCovariance.erase(this->LogCovariance.begin() + fromIndex);
+  this->LogCovariance.insert(this->LogCovariance.begin() + toIndex, 
+                                movingVec);
 }
 
 //-----------------------------------------------------------------------------
@@ -304,31 +372,49 @@ SetLogCovariance(int row, int column, double value)
 }
 
 //-----------------------------------------------------------------------------
-void
+int 
 vtkMRMLEMSTreeParametersLeafNode::
-SynchronizeNumberOfTargetInputChannels()
+GetNumberOfSamplePoints() const
 {
-  //
-  // get global parameters node
-  //
-  vtkMRMLEMSGlobalParametersNode* node = vtkMRMLEMSGlobalParametersNode::
-    SafeDownCast(this->GetScene()->GetNodeByID(this->GlobalParametersNodeID));
-
-  int numChannels = node == NULL ? 0 : node->GetNumberOfTargetInputChannels();
-  this->SetNumberOfTargetInputChannels(numChannels);
+  return this->DistributionSamplePointsRAS.size();
 }
 
 //-----------------------------------------------------------------------------
-vtkMRMLEMSGlobalParametersNode*
+void 
 vtkMRMLEMSTreeParametersLeafNode::
-GetGlobalParametersNode()
+AddSamplePoint(double xyz[3])
 {
-  vtkMRMLEMSGlobalParametersNode* node = NULL;
-  if (this->GetScene() && this->GetGlobalParametersNodeID() )
-    {
-    vtkMRMLNode* snode = this->GetScene()->
-      GetNodeByID(this->GlobalParametersNodeID);
-    node = vtkMRMLEMSGlobalParametersNode::SafeDownCast(snode);
-    }
-  return node;
+  PointType point(3);
+  point[0] = xyz[0];
+  point[1] = xyz[1];
+  point[2] = xyz[2];
+  this->DistributionSamplePointsRAS.push_back(point);
 }
+
+//-----------------------------------------------------------------------------
+void 
+vtkMRMLEMSTreeParametersLeafNode::
+RemoveNthSamplePoint(int n)
+{
+  this->DistributionSamplePointsRAS.erase
+    (this->DistributionSamplePointsRAS.begin()+n);
+}
+
+//-----------------------------------------------------------------------------
+void 
+vtkMRMLEMSTreeParametersLeafNode::
+ClearSamplePoints()
+{
+  this->DistributionSamplePointsRAS.clear();
+}
+
+//-----------------------------------------------------------------------------
+void 
+vtkMRMLEMSTreeParametersLeafNode::
+GetNthSamplePoint(int n, double xyz[3]) const
+{
+  xyz[0] = this->DistributionSamplePointsRAS[n][0];
+  xyz[1] = this->DistributionSamplePointsRAS[n][1];
+  xyz[2] = this->DistributionSamplePointsRAS[n][2];
+}
+

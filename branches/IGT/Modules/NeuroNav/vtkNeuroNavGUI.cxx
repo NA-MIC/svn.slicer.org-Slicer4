@@ -93,7 +93,7 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->YellowSliceMenu = NULL;
     this->GreenSliceMenu = NULL;
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->LoadConfigButton = NULL;
     this->ConfigFileEntry = NULL;
 #endif
@@ -150,7 +150,7 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
     this->NeedOrientationUpdate2 = 0;
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->OpenTrackerStream = vtkIGTOpenTrackerStream::New();
 #endif
 #ifdef USE_IGSTK
@@ -163,7 +163,7 @@ vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 //---------------------------------------------------------------------------
 vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
 {
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     if (this->OpenTrackerStream)
     {
         this->OpenTrackerStream->Delete();
@@ -338,7 +338,7 @@ vtkNeuroNavGUI::~vtkNeuroNavGUI ( )
         this->GreenSliceMenu->Delete ( );
     }
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     if (this->LoadConfigButton)
     {
         this->LoadConfigButton->SetParent(NULL );
@@ -493,7 +493,7 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
     appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
     this->LoadConfigButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
 #endif
@@ -575,7 +575,7 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
     this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
     this->LoadConfigButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 #endif
@@ -663,14 +663,14 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         if (this->ConnectCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
             SetOpenTrackerConnectionParameters();
 #endif
 #ifdef USE_IGSTK
             SetIGSTKConnectionParameters();
 #endif
         }
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
         else if (this->LoadConfigButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
                 && event == vtkKWPushButton::InvokedEvent )
         {
@@ -787,7 +787,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
                     return;
                 }
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
                 this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
 #endif
 #ifdef USE_IGSTK
@@ -798,7 +798,7 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         else if (this->ResetPushButton == vtkKWPushButton::SafeDownCast(caller) 
                 && event == vtkKWPushButton::InvokedEvent)
         {
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
             this->OpenTrackerStream->SetRegMatrix(NULL);
 #endif
 #ifdef USE_IGSTK
@@ -810,10 +810,11 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
         {
             int checked = this->LocatorCheckButton->GetSelectedState(); 
 
-            vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+            // vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+            vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLModelNode1")); 
             if (model != NULL)
             {
-                vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
+                vtkMRMLModelDisplayNode *disp = model->GetModelDisplayNode();
 
                 vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
                 vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
@@ -1237,8 +1238,8 @@ void vtkNeuroNavGUI::BuildGUIForDeviceFrame ()
     valueLabel->Create();
     valueLabel->SetWidth(21);
     valueLabel->SetText("None        ");
-#ifdef USE_OPENTRACKER
-    valueLabel->SetText("OpenTracker");
+#ifdef USE_NAVITRACK
+    valueLabel->SetText("NaviTrack");
 #endif
 #ifdef USE_IGSTK
     valueLabel->SetText("IGSTK       ");
@@ -1305,7 +1306,7 @@ void vtkNeuroNavGUI::BuildGUIForDeviceFrame ()
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                   this->ExtraFrame->GetWidgetName());
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->ConfigFileEntry = vtkKWEntry::New();
     this->ConfigFileEntry->SetParent(this->ExtraFrame);
     this->ConfigFileEntry->Create();
@@ -1976,7 +1977,7 @@ void vtkNeuroNavGUI::BuildGUIForHandPieceFrame ()
 void vtkNeuroNavGUI::UpdateAll()
 {
     this->LocatorMatrix = NULL;
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
 #endif
 #ifdef USE_IGSTK
@@ -2020,7 +2021,7 @@ void vtkNeuroNavGUI::UpdateAll()
 
 
         // update the display of locator
-        if (this->LocatorCheckButton->GetSelectedState()) this->UpdateLocator();
+        if (this->LocatorModeCheckButton->GetSelectedState()) this->UpdateLocator();
 
         //this->UpdateSliceDisplay(px, py, pz);  // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
         this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
@@ -2031,7 +2032,7 @@ void vtkNeuroNavGUI::UpdateAll()
 void vtkNeuroNavGUI::UpdateLocator()
 {
     vtkTransform *transform = NULL;
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->OpenTrackerStream->SetLocatorTransforms();
     transform = this->OpenTrackerStream->GetLocatorNormalTransform(); 
 #endif
@@ -2040,7 +2041,8 @@ void vtkNeuroNavGUI::UpdateLocator()
     transform = this->IGSTKStream->GetLocatorNormalTransform(); 
 #endif
 
-    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+    //vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
+    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLModelNode1")); 
     if (model != NULL)
     {
         if (transform)
@@ -2112,7 +2114,7 @@ void vtkNeuroNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
 
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
 void vtkNeuroNavGUI::SetOpenTrackerConnectionParameters()
 {
     int checked = this->ConnectCheckButton->GetSelectedState(); 
@@ -2141,13 +2143,13 @@ void vtkNeuroNavGUI::SetOpenTrackerConnectionParameters()
 
             this->OpenTrackerStream->SetSpeed(sp);
             this->OpenTrackerStream->SetMultiFactor(multi);
-            this->OpenTrackerStream->SetStartTimer(1);
+            this->OpenTrackerStream->SetTracking(1);
             this->OpenTrackerStream->ProcessTimerEvents();
         }
     }
     else
     {
-        this->OpenTrackerStream->SetStartTimer(0);
+        this->OpenTrackerStream->SetTracking(0);
     }
 }
 #endif

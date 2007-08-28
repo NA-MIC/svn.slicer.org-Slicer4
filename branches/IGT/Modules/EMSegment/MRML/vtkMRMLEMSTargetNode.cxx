@@ -1,7 +1,6 @@
 #include "vtkMRMLEMSTargetNode.h"
 #include <sstream>
 #include "vtkMRMLScene.h"
-#include <algorithm>
 
 vtkMRMLEMSTargetNode* 
 vtkMRMLEMSTargetNode::
@@ -46,11 +45,23 @@ vtkMRMLEMSTargetNode::~vtkMRMLEMSTargetNode()
 void vtkMRMLEMSTargetNode::WriteXML(ostream& of, int nIndent)
 {
   Superclass::WriteXML(of, nIndent);
+  vtkIndent indent(nIndent);
 }
 
 void vtkMRMLEMSTargetNode::ReadXMLAttributes(const char** attrs)
 {
   Superclass::ReadXMLAttributes(attrs);
+
+  //
+  // we can assume an even number of elements
+  //
+  const char* key;
+  const char* val;
+  while (*attrs != NULL)
+    {
+    key = *attrs++;
+    val = *attrs++;
+    }
 }
 
 void vtkMRMLEMSTargetNode::Copy(vtkMRMLNode *rhs)
@@ -63,3 +74,5 @@ void vtkMRMLEMSTargetNode::PrintSelf(ostream& os,
 {
   Superclass::PrintSelf(os, indent);
 }
+
+

@@ -14,11 +14,10 @@ proc EditorAddQuickModel { sliceLogic } {
   set layerLogic [$sliceLogic GetLabelLayer]
   set volumeNode [$layerLogic GetVolumeNode]
   if { $volumeNode == "" } {
+    puts "cannot make quick model - no volume node for $layerLogic in $sliceLogic"
     return
   }
   set imageData [$volumeNode GetImageData]
-
-  puts [$imageData Print]
 
   #
   # make a poly data in RAS space
@@ -41,12 +40,11 @@ proc EditorAddQuickModel { sliceLogic } {
   $modelNode SetName "QuickModel"
   $modelNode SetScene $::slicer3::MRMLScene
   $modelDisplayNode SetScene $::slicer3::MRMLScene
+  eval $modelDisplayNode SetColor [lrange [EditorGetPaintColor $::Editor(singleton)] 0 2]
   $::slicer3::MRMLScene AddNode $modelDisplayNode
   $modelNode SetAndObserveDisplayNodeID [$modelDisplayNode GetID]
   $::slicer3::MRMLScene AddNode $modelNode
   $modelNode SetAndObservePolyData [$tpdf GetOutput]
-
-  puts [[$tpdf GetOutput] Print]
 
   #
   # clean up

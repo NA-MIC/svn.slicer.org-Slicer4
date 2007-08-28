@@ -2,6 +2,7 @@
 #include <sstream>
 #include "vtkMRMLScene.h"
 #include <algorithm>
+#include <iterator>
 
 //-----------------------------------------------------------------------------
 vtkMRMLEMSGlobalParametersNode* 
@@ -38,17 +39,16 @@ CreateNodeInstance()
 //-----------------------------------------------------------------------------
 vtkMRMLEMSGlobalParametersNode::vtkMRMLEMSGlobalParametersNode()
 {
-  this->AtlasNodeID                   = NULL;
-  this->TargetNodeID                  = NULL;
+  this->NumberOfTargetInputChannels   = 0;
 
   this->RegistrationAffineType        = 0;
   this->RegistrationDeformableType    = 0;
-  this->RegistrationInterpolationType = 0;
+  this->RegistrationInterpolationType = 0; // !!! this needs to be specified
 
-  this->RegistrationAtlasVolumeKey    = NULL;
-  this->RegistrationTargetVolumeKey   = NULL;
+  this->RegistrationAtlasVolumeKey = NULL;
+  this->RegistrationTargetVolumeKey = NULL;
 
-  this->WorkingDirectory              = NULL;
+  this->WorkingDirectory = NULL;
 
   this->SaveIntermediateResults       = 0;
   this->SaveSurfaceModels             = 0;
@@ -66,9 +66,43 @@ vtkMRMLEMSGlobalParametersNode::vtkMRMLEMSGlobalParametersNode()
 //-----------------------------------------------------------------------------
 vtkMRMLEMSGlobalParametersNode::~vtkMRMLEMSGlobalParametersNode()
 {
-  this->SetAtlasNodeID(NULL);
-  this->SetTargetNodeID(NULL);
   this->SetWorkingDirectory(NULL);
+  this->SetRegistrationTargetVolumeKey(NULL);
+  this->SetRegistrationAtlasVolumeKey(NULL);
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkMRMLEMSGlobalParametersNode::
+UpdateReferenceID(const char* oldID, const char* newID)
+{
+  for (IntensityNormalizationParameterListIterator i = 
+         this->IntensityNormalizationParameterList.begin(); 
+       i != this->IntensityNormalizationParameterList.end(); ++i)
+    {
+    if (oldID && newID && *i == vtksys_stl::string(oldID))
+      {
+      *i = newID;
+      }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void 
+vtkMRMLEMSGlobalParametersNode::
+UpdateReferences()
+{
+  Superclass::UpdateReferences();
+
+  for (IntensityNormalizationParameterListIterator i = 
+         this->IntensityNormalizationParameterList.begin(); 
+       i != this->IntensityNormalizationParameterList.end(); ++i)
+    {
+    if (this->Scene->GetNodeByID((*i).c_str()) == NULL)
+      {
+      *i = "NULL";
+      }
+    }
 }
 
 //-----------------------------------------------------------------------------
@@ -77,11 +111,8 @@ void vtkMRMLEMSGlobalParametersNode::WriteXML(ostream& of, int nIndent)
   Superclass::WriteXML(of, nIndent);
   vtkIndent indent(nIndent);
 
-  of << indent << "AtlasNodeID=\"" 
-     << (this->AtlasNodeID ? this->AtlasNodeID : "NULL") << "\" ";
-
-  of << indent << "TargetNodeID=\"" 
-     << (this->TargetNodeID ? this->TargetNodeID : "NULL") << "\" ";
+  of << indent << "NumberOfTargetInputChannels=\"" 
+     << this->NumberOfTargetInputChannels << "\" ";
 
   of << indent << "WorkingDirectory=\"" 
      << (this->WorkingDirectory ? this->WorkingDirectory : "NULL") << "\" ";
@@ -124,40 +155,13 @@ void vtkMRMLEMSGlobalParametersNode::WriteXML(ostream& of, int nIndent)
        << this->SaveSurfaceModels << "\" ";
     of << indent << "MultithreadingEnabled=\"" 
        << this->MultithreadingEnabled << "\" ";
-}
 
-//-----------------------------------------------------------------------------
-void
-vtkMRMLEMSGlobalParametersNode::
-UpdateReferenceID(const char* oldID, const char* newID)
-{
-  if (this->AtlasNodeID && !strcmp(oldID, this->AtlasNodeID))
-    {
-    this->SetAtlasNodeID(newID);
-    }
-  if (this->TargetNodeID && !strcmp(oldID, this->TargetNodeID))
-    {
-    this->SetTargetNodeID(newID);
-    }
-}
-
-//-----------------------------------------------------------------------------
-void 
-vtkMRMLEMSGlobalParametersNode::
-UpdateReferences()
-{
-  Superclass::UpdateReferences();
-
-  if (this->AtlasNodeID != NULL && 
-      this->Scene->GetNodeByID(this->AtlasNodeID) == NULL)
-    {
-    this->SetAtlasNodeID(NULL);
-    }
-  if (this->TargetNodeID != NULL && 
-      this->Scene->GetNodeByID(this->TargetNodeID) == NULL)
-    {
-    this->SetTargetNodeID(NULL);
-    }
+    of << indent << "IntensityNormalizationParameterNodeIDs=\"";
+    vtksys_stl::copy(this->IntensityNormalizationParameterList.begin(),
+                     this->IntensityNormalizationParameterList.end(),
+                     vtksys_stl::
+                     ostream_iterator<vtksys_stl::string>(of, " "));
+    of << "\" ";
 }
 
 //-----------------------------------------------------------------------------
@@ -172,15 +176,12 @@ void vtkMRMLEMSGlobalParametersNode::ReadXMLAttributes(const char** attrs)
     key = *attrs++;
     val = *attrs++;
     
-    if (!strcmp(key, "AtlasNodeID"))
+
+    if (!strcmp(key, "NumberOfTargetInputChannels"))
       {
-      this->SetAtlasNodeID(val);
-      this->Scene->AddReferencedNodeID(this->AtlasNodeID, this); 
-      }
-    else if (!strcmp(key, "TargetNodeID"))
-      {
-      this->SetTargetNodeID(val);
-      this->Scene->AddReferencedNodeID(this->TargetNodeID, this); 
+        vtksys_stl::stringstream ss;
+        ss << val;
+        ss >> this->NumberOfTargetInputChannels;
       }
     else if (!strcmp(key, "WorkingDirectory"))
       {
@@ -256,6 +257,23 @@ void vtkMRMLEMSGlobalParametersNode::ReadXMLAttributes(const char** attrs)
       ss << val;
       ss >> this->MultithreadingEnabled;
       }
+    if (!strcmp(key, "IntensityNormalizationParameterNodeIDs"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << val;
+      vtksys_stl::string s;
+
+      int index = 0;
+      while (ss >> s)
+        {
+        this->IntensityNormalizationParameterList.push_back(s);
+        if (s != "NULL")
+          {
+          this->Scene->AddReferencedNodeID(s.c_str(), this);
+          }
+        ++index;
+        }
+      }
     }
 }
 
@@ -266,8 +284,7 @@ void vtkMRMLEMSGlobalParametersNode::Copy(vtkMRMLNode *rhs)
   vtkMRMLEMSGlobalParametersNode* node = 
     (vtkMRMLEMSGlobalParametersNode*) rhs;
 
-  this->SetAtlasNodeID(node->AtlasNodeID);
-  this->SetTargetNodeID(node->TargetNodeID);
+  this->NumberOfTargetInputChannels = node->NumberOfTargetInputChannels;
   this->SetWorkingDirectory(node->WorkingDirectory);
 
   this->SetSegmentationBoundaryMin(node->SegmentationBoundaryMin);
@@ -282,6 +299,9 @@ void vtkMRMLEMSGlobalParametersNode::Copy(vtkMRMLNode *rhs)
   this->SetSaveIntermediateResults(node->SaveIntermediateResults);
   this->SetSaveSurfaceModels(node->SaveSurfaceModels);
   this->SetMultithreadingEnabled(node->MultithreadingEnabled);
+
+  this->IntensityNormalizationParameterList = 
+    node->IntensityNormalizationParameterList;
 }
 
 //-----------------------------------------------------------------------------
@@ -290,11 +310,8 @@ void vtkMRMLEMSGlobalParametersNode::PrintSelf(ostream& os,
 {
   Superclass::PrintSelf(os, indent);
 
-  os << indent << "AtlasNodeID: "
-     << (this->AtlasNodeID ? this->AtlasNodeID : "(none)") << "\n";
-
-  os << indent << "TargetNodeID: "
-     << (this->TargetNodeID ? this->TargetNodeID : "(none)") << "\n";
+  os << indent << "NumberOfTargetInputChannels: "
+     << this->NumberOfTargetInputChannels << "\n";
 
   os << indent << "WorkingDirectory: " 
      << (this->WorkingDirectory ? this->WorkingDirectory : "(none)") << "\n";
@@ -330,51 +347,88 @@ void vtkMRMLEMSGlobalParametersNode::PrintSelf(ostream& os,
      << this->SaveSurfaceModels << "\n";
   os << indent << "MultithreadingEnabled: " 
      << this->MultithreadingEnabled << "\n";
+
+  os << indent << "IntensityNormalizationParameterNodeIDs: ";
+  vtksys_stl::copy(this->IntensityNormalizationParameterList.begin(),
+                   this->IntensityNormalizationParameterList.end(),
+                   vtksys_stl::ostream_iterator<vtksys_stl::string>(os, " "));
+  os << "\n";
 }
 
-//-----------------------------------------------------------------------------
-vtkMRMLEMSAtlasNode*
+const char*
 vtkMRMLEMSGlobalParametersNode::
-GetAtlasNode()
+GetNthIntensityNormalizationParametersNodeID(int n)
 {
-  vtkMRMLEMSAtlasNode* node = NULL;
-  if (this->GetScene() && this->GetAtlasNodeID() )
-    {
-    vtkMRMLNode* snode = this->GetScene()->GetNodeByID(this->AtlasNodeID);
-    node = vtkMRMLEMSAtlasNode::SafeDownCast(snode);
-    }
-  return node;
+  return this->IntensityNormalizationParameterList[n].c_str();
 }
 
-//-----------------------------------------------------------------------------
-vtkMRMLEMSTargetNode*
+
+vtkMRMLEMSIntensityNormalizationParametersNode*
 vtkMRMLEMSGlobalParametersNode::
-GetTargetNode()
+GetNthIntensityNormalizationParametersNode(int n)
 {
-  vtkMRMLEMSTargetNode* node = NULL;
-  if (this->GetScene() && this->GetTargetNodeID() )
+  vtkMRMLEMSIntensityNormalizationParametersNode* node = NULL;
+  if (this->GetScene() && 
+      this->GetNthIntensityNormalizationParametersNodeID(n))
     {
-    vtkMRMLNode* snode = this->GetScene()->GetNodeByID(this->TargetNodeID);
-    node = vtkMRMLEMSTargetNode::SafeDownCast(snode);
+      vtkMRMLNode* snode = this->GetScene()->
+        GetNodeByID(this->GetNthIntensityNormalizationParametersNodeID(n));
+      node = 
+        vtkMRMLEMSIntensityNormalizationParametersNode::SafeDownCast(snode);
     }
-  return node;
+  return node;  
 }
 
-//-----------------------------------------------------------------------------
-int
+void
 vtkMRMLEMSGlobalParametersNode::
-GetNumberOfTargetInputChannels()
+SetNthIntensityNormalizationParametersNodeID(int n, const char* id)
 {
-  //
-  // get target node
-  //
-  vtkMRMLEMSTargetNode* target = this->GetTargetNode();
-  if (target == NULL)
+  this->IntensityNormalizationParameterList[n] = id;
+  this->Scene->AddReferencedNodeID(id, this);  
+}
+
+void
+vtkMRMLEMSGlobalParametersNode::
+AddTargetInputChannel()
+{
+  ++this->NumberOfTargetInputChannels;
+
+  // create intensity normalization parameter node
+  vtkMRMLEMSIntensityNormalizationParametersNode* intensityNormalizationNode
+    = vtkMRMLEMSIntensityNormalizationParametersNode::New();
+  intensityNormalizationNode->SetScene(this->GetScene());
+  this->GetScene()->AddNode(intensityNormalizationNode);
+
+  // add it to the scene
+  this->IntensityNormalizationParameterList.
+    push_back(intensityNormalizationNode->GetID());
+  this->GetScene()->
+    AddReferencedNodeID(intensityNormalizationNode->GetID(), this);
+
+  // clean up
+  intensityNormalizationNode->Delete();
+}
+
+void
+vtkMRMLEMSGlobalParametersNode::
+RemoveNthTargetInputChannel(int n)
+{
+  --this->NumberOfTargetInputChannels;
+  this->IntensityNormalizationParameterList.
+    erase(this->IntensityNormalizationParameterList.begin() + n);
+}
+
+void
+vtkMRMLEMSGlobalParametersNode::
+MoveNthTargetInputChannel(int n, int toIndex)
+{
+  if (toIndex == n)
     {
-    return 0;
+    return;
     }
-  else
-    {
-    return target->GetNumberOfVolumes();
-    }
+  IntensityNormalizationParameterListIterator b = 
+    this->IntensityNormalizationParameterList.begin();
+  std::string movingParam = this->IntensityNormalizationParameterList[n];
+  this->IntensityNormalizationParameterList.erase(b + n);
+  this->IntensityNormalizationParameterList.insert(b + toIndex, movingParam);
 }

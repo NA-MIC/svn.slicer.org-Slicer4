@@ -6,7 +6,6 @@
 #include "vtkEMSegment.h"
 #include "vtkMRMLEMSTreeParametersLeafNode.h"
 #include "vtkMRMLEMSTreeParametersParentNode.h"
-#include "vtkMRMLEMSGlobalParametersNode.h"
 #include <vector>
 
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSTreeParametersNode : 
@@ -46,12 +45,9 @@ public:
 
   vtkGetMacro(NumberOfTargetInputChannels, unsigned int);
   virtual void SetNumberOfTargetInputChannels(unsigned int n);
-  virtual void SynchronizeNumberOfTargetInputChannels();
-
-  // reference to algorithm global parameters
-  vtkSetReferenceStringMacro(GlobalParametersNodeID);
-  vtkGetStringMacro(GlobalParametersNodeID);
-  virtual vtkMRMLEMSGlobalParametersNode* GetGlobalParametersNode();
+  virtual void AddTargetInputChannel();
+  virtual void RemoveNthTargetInputChannel(int index);
+  virtual void MoveNthTargetInputChannel(int fromIndex, int toIndex);
 
   // additional parameters valid for leaf nodes
   vtkSetReferenceStringMacro(LeafParametersNodeID);
@@ -101,7 +97,6 @@ protected:
   // references to other nodes
   char*                               LeafParametersNodeID;
   char*                               ParentParametersNodeID;
-  char*                               GlobalParametersNodeID;
 
   double                              ColorRGB[3];
 

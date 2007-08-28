@@ -3,10 +3,14 @@
 #
 
 proc EditorConstructor {this} {
-
 }
 
 proc EditorDestructor {this} {
+
+  set boxes [itcl::find objects -isa Box]
+  foreach b $boxes {
+    itcl::delete object $b
+  }
 }
 
 
@@ -14,36 +18,23 @@ proc EditorDestructor {this} {
 # - remove the GUI from the current Application
 # - re-source the code (this file)
 # - re-build the GUI
-proc EditorReload { {this ""} } {
-
-  if { $this == "" } {
-    set tag [lindex [array names ::Editor] 0]
-    regsub -all "," $tag " " tag
-    set this [lindex $tag 0]
-  }
-  EditorRemoveGUIObservers $this
-  EditorTearDownGUI $this
-  foreach n [array names ::Editor ${this}*] {
-    unset ::Editor($n)
-  }
-  # TODO: figure this out from the CMakeCache and only offer the 
-  # reload button if the source files exist
-  source c:/pieper/bwh/slicer3/debug/Slicer3/Modules/Editor/EditorGUI.tcl
-  EditorBuildGUI $this
-  EditorAddGUIObservers $this
-
-}
-
 # Note: not a method - this is invoked directly by the GUI
 proc EditorTearDownGUI {this} {
 
+  # nodeSelector  ;# disabled for now
   set widgets {
-    nodeSelector volumesCreate volumeName volumesSelect
+    volumesCreate volumeName volumesSelect
     volumesFrame paintThreshold paintOver paintDropper
     paintRadius paintRange paintEnable paintLabel
-    paintPaint paintDraw
-      paintFrame rebuildButton
+    paintPaint paintDraw 
+    optionsFrame
+    paintFrame colorsColor colorsFrame
+    toolsActiveTool toolsEditFrame toolsColorFrame
+    toolsFrame 
   }
+
+  itcl::delete object $::Editor($this,editColor)
+  itcl::delete object $::Editor($this,editBox)
 
   foreach w $widgets {
     $::Editor($this,$w) SetParent ""
@@ -59,6 +50,11 @@ proc EditorTearDownGUI {this} {
 
 proc EditorBuildGUI {this} {
 
+  if { [info exists ::Editor(singleton)] } {
+    error "editor singleton already created"
+  }
+  set ::Editor(singleton) $this
+
   #
   # create and register the node class
   # - since this is a generic type of node, only do it if 
@@ -73,7 +69,6 @@ proc EditorBuildGUI {this} {
     $node Delete
   }
 
-  # TODO: make a node to store our parameters
 
   [$this GetUIPanel] AddPage "Editor" "Editor" ""
   set pageWidget [[$this GetUIPanel] GetPageWidget "Editor"]
@@ -81,23 +76,26 @@ proc EditorBuildGUI {this} {
   #
   # help frame
   #
-  set helptext "The Editor allows label maps to be created and edited. This module is currently a prototype and will be under active development throughout 3DSlicer's Beta release."
+  set helptext "The Editor allows label maps to be created and edited. The active label map will be modified by the Editor. This module is currently a prototype and will be under active development throughout 3DSlicer's Beta release."
   set abouttext "This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details."
   $this BuildHelpAndAboutFrame $pageWidget $helptext $abouttext
 
-  set ::Editor($this,nodeSelector) [vtkSlicerNodeSelectorWidget New]
-  $::Editor($this,nodeSelector) SetNodeClass "vtkMRMLScriptedModuleNode" "ModuleName" "Editor" "EditorParameter"
-  $::Editor($this,nodeSelector) SetNewNodeEnabled 1
-  $::Editor($this,nodeSelector) NoneEnabledOn
-  $::Editor($this,nodeSelector) NewNodeEnabledOn
-  $::Editor($this,nodeSelector) SetParent $pageWidget
-  $::Editor($this,nodeSelector) Create
-  $::Editor($this,nodeSelector) SetMRMLScene [[$this GetLogic] GetMRMLScene]
-  $::Editor($this,nodeSelector) UpdateMenu
-  $::Editor($this,nodeSelector) SetLabelText "Editor Parameters"
-  $::Editor($this,nodeSelector) SetBalloonHelpString "Select Editor parameters from current scene or create new ones"
-  pack [$::Editor($this,nodeSelector) GetWidgetName] \
-    -side top -anchor nw -fill x -padx 2 -pady 2 -in [$pageWidget GetWidgetName]
+  if { 0 } { 
+    # leave out the node selector for now - we'll use one global node and save GUI space
+    set ::Editor($this,nodeSelector) [vtkSlicerNodeSelectorWidget New]
+    $::Editor($this,nodeSelector) SetNodeClass "vtkMRMLScriptedModuleNode" "ModuleName" "Editor" "EditorParameter"
+    $::Editor($this,nodeSelector) SetNewNodeEnabled 1
+    $::Editor($this,nodeSelector) NoneEnabledOn
+    $::Editor($this,nodeSelector) NewNodeEnabledOn
+    $::Editor($this,nodeSelector) SetParent $pageWidget
+    $::Editor($this,nodeSelector) Create
+    $::Editor($this,nodeSelector) SetMRMLScene [[$this GetLogic] GetMRMLScene]
+    $::Editor($this,nodeSelector) UpdateMenu
+    $::Editor($this,nodeSelector) SetLabelText "Editor Parameters"
+    $::Editor($this,nodeSelector) SetBalloonHelpString "Select Editor parameters from current scene or create new ones"
+    pack [$::Editor($this,nodeSelector) GetWidgetName] \
+      -side top -anchor nw -fill x -padx 2 -pady 2 -in [$pageWidget GetWidgetName]
+  }
 
   #
   # Editor Volumes
@@ -197,8 +195,8 @@ proc EditorBuildGUI {this} {
   $::Editor($this,paintLabel) DisplayLabelOn
   $::Editor($this,paintLabel) SetValue 1
   [$::Editor($this,paintLabel) GetLabel] SetText "Label: "
-  pack [$::Editor($this,paintLabel) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
+#  pack [$::Editor($this,paintLabel) GetWidgetName] \
+#    -side top -anchor e -fill x -padx 2 -pady 2 
 
   set ::Editor($this,paintOver) [vtkKWCheckButtonWithLabel New]
   $::Editor($this,paintOver) SetParent [$::Editor($this,paintFrame) GetFrame]
@@ -234,31 +232,112 @@ proc EditorBuildGUI {this} {
   $::Editor($this,paintRange) SetBalloonHelpString "In threshold mode, the label will only be set if the background value is within this range."
   # don't pack this, it gets conditionally packed below
 
+
   #
-  # Rebuild Button
+  # Tool Frame
   #
-  set ::Editor($this,rebuildButton) [vtkKWPushButton New]
-  $::Editor($this,rebuildButton) SetParent $pageWidget
-  $::Editor($this,rebuildButton) Create
-  $::Editor($this,rebuildButton) SetText "Reload"
-  #pack [$::Editor($this,rebuildButton) GetWidgetName] -side top -anchor nw -fill x -padx 2 -pady 2 -in [$pageWidget GetWidgetName]
+  set ::Editor($this,toolsFrame) [vtkSlicerModuleCollapsibleFrame New]
+  $::Editor($this,toolsFrame) SetParent $pageWidget
+  $::Editor($this,toolsFrame) Create
+  $::Editor($this,toolsFrame) SetLabelText "Tools"
+  pack [$::Editor($this,toolsFrame) GetWidgetName] \
+    -side top -anchor nw -fill x -padx 2 -pady 2 -in [$pageWidget GetWidgetName]
+
+  set ::Editor($this,toolsEditFrame) [vtkKWFrame New]
+  $::Editor($this,toolsEditFrame) SetParent [$::Editor($this,toolsFrame) GetFrame]
+  $::Editor($this,toolsEditFrame) Create
+  pack [$::Editor($this,toolsEditFrame) GetWidgetName] \
+    -side right -anchor ne -padx 2 -pady 2
+
+  set ::Editor($this,toolsColorFrame) [vtkKWFrame New]
+  $::Editor($this,toolsColorFrame) SetParent [$::Editor($this,toolsFrame) GetFrame]
+  $::Editor($this,toolsColorFrame) Create
+  $::Editor($this,toolsColorFrame) SetBackgroundColor [expr 232/255.] [expr 230/255.] [expr 235/255.]
+  pack [$::Editor($this,toolsColorFrame) GetWidgetName] \
+    -side top -anchor nw -fill x -padx 2 -pady 2
+
+  set ::Editor($this,toolsActiveTool) [vtkKWLabelWithLabel New]
+  $::Editor($this,toolsActiveTool) SetParent [$::Editor($this,toolsFrame) GetFrame]
+  $::Editor($this,toolsActiveTool) Create
+  $::Editor($this,toolsActiveTool) SetBackgroundColor [expr 232/255.] [expr 230/255.] [expr 235/255.]
+  [$::Editor($this,toolsActiveTool) GetWidget] SetBackgroundColor [expr 232/255.] [expr 230/255.] [expr 235/255.]
+  [$::Editor($this,toolsActiveTool) GetLabel] SetBackgroundColor [expr 232/255.] [expr 230/255.] [expr 235/255.]
+  $::Editor($this,toolsActiveTool) SetLabelText "Active Tool: "
+  pack [$::Editor($this,toolsActiveTool) GetWidgetName] \
+    -side top -anchor nw -fill x -padx 2 -pady 2
+  
+  
+  # create the edit box and the color picker - note these aren't kwwidgets
+  #  but helper classes that create kwwidgets in the given frame
+  set ::Editor($this,editColor) [::EditColor #auto]
+  $::Editor($this,editColor) configure -frame $::Editor($this,toolsColorFrame)
+  $::Editor($this,editColor) create
+  set ::Editor($this,editBox) [::EditBox #auto]
+  $::Editor($this,editBox) configure -frame $::Editor($this,toolsEditFrame)
+  $::Editor($this,editBox) create
+
+  #
+  # Tool Options
+  #
+  set ::Editor($this,optionsFrame) [vtkKWFrame New]
+  $::Editor($this,optionsFrame) SetParent [$::Editor($this,toolsFrame) GetFrame]
+  $::Editor($this,optionsFrame) Create
+  $::Editor($this,optionsFrame) SetBorderWidth 1
+  $::Editor($this,optionsFrame) SetReliefToSolid
+  pack [$::Editor($this,optionsFrame) GetWidgetName] \
+    -side left -anchor nw -fill both -padx 2 -pady 2 
+
+  #
+  # Editor Colors
+  #
+  set ::Editor($this,colorsFrame) [vtkSlicerModuleCollapsibleFrame New]
+  $::Editor($this,colorsFrame) SetParent $pageWidget
+  $::Editor($this,colorsFrame) Create
+  $::Editor($this,colorsFrame) SetLabelText "Colors"
+  pack [$::Editor($this,colorsFrame) GetWidgetName] \
+    -side top -anchor nw -fill x -padx 2 -pady 2 -in [$pageWidget GetWidgetName]
+
+  set ::Editor($this,colorsColor) [vtkSlicerColorDisplayWidget New]
+  $::Editor($this,colorsColor) SetParent [$::Editor($this,colorsFrame) GetFrame]
+  $::Editor($this,colorsColor) SetMRMLScene  [[$this GetLogic] GetMRMLScene]
+  $::Editor($this,colorsColor) Create
+  # set it up with the labels color node. 
+  # TODO: here and in vtkSlicerVolumesLogic::CreateLabelVolume, use the color logic to get a default color node id
+  set colorNode [vtkMRMLColorTableNode New]
+  $colorNode SetTypeToLabels
+  $::Editor($this,colorsColor) SetColorNode [[[$this GetLogic] GetMRMLScene] GetNodeByID [$colorNode GetTypeAsIDString]]
+  $colorNode Delete
+  pack [$::Editor($this,colorsColor) GetWidgetName] \
+    -side top -anchor e -fill x -padx 2 -pady 2 
 }
 
 proc EditorAddGUIObservers {this} {
-  $this AddObserverByNumber $::Editor($this,rebuildButton) 10000 
   $this AddObserverByNumber $::Editor($this,volumesCreate) 10000 
   $this AddObserverByNumber [$::Editor($this,paintEnable) GetWidget] 10000 
   $this AddObserverByNumber $::Editor($this,paintDraw) 10000 
   $this AddObserverByNumber $::Editor($this,paintPaint) 10000 
   $this AddObserverByNumber $::Editor($this,paintLabel) 10001 
+  $this AddObserverByNumber $::Editor($this,colorsColor) 30000
+  $this AddObserverByNumber $::Editor($this,colorsColor) 30001
   $this AddObserverByNumber $::Editor($this,paintRange) 10001 
   $this AddObserverByNumber [$::Editor($this,paintThreshold) GetWidget] 10000 
   $this AddObserverByNumber [$::Editor($this,paintOver) GetWidget] 10000 
   $this AddObserverByNumber [$::Editor($this,paintDropper) GetWidget] 10000 
   $this AddObserverByNumber $::Editor($this,paintRadius) 10001 
+    
+# $this DebugOn
+    if {[$this GetDebug]} {
+        puts "Adding mrml observer to selection node, modified event"
+    }
+    $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] 31
+    
 }
 
 proc EditorRemoveGUIObservers {this} {
+    if {[$this GetDebug]} {
+        puts "Removing mrml observer on selection node, modified event"
+    }
+    $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] 31
 }
 
 proc EditorRemoveLogicObservers {this} {
@@ -272,13 +351,7 @@ proc EditorProcessLogicEvents {this caller event} {
 
 proc EditorProcessGUIEvents {this caller event} {
   
-  if { $caller == $::Editor($this,rebuildButton) } {
-    switch $event {
-      "10000" {
-        EditorReload $this
-      }
-    }
-  } elseif { $caller == $::Editor($this,volumesCreate) } {
+  if { $caller == $::Editor($this,volumesCreate) } {
     switch $event {
       "10000" {
         EditorCreateLabelVolume $this
@@ -315,6 +388,29 @@ proc EditorProcessGUIEvents {this caller event} {
         EditorUpdateSWidgets $this
       }
     }
+  } elseif { $caller == $::Editor($this,colorsColor) } {
+      switch $event {
+          "30000" {
+              # update the label volume's display node so that it will show up with the correct colours
+              set selectionNode [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode]
+              set labelVolume [[[$this GetLogic] GetMRMLScene] GetNodeByID [$selectionNode GetActiveLabelVolumeID]]
+              if {$labelVolume != ""} {
+                  set displayNode [$labelVolume GetDisplayNode] 
+                  if {$displayNode != ""} {
+                      $displayNode SetAndObserveColorNodeID [[$::Editor($this,colorsColor) GetColorNode] GetID]
+                  } else {
+                      puts "ERROR: display node not found"
+                  }
+              } else {
+                  puts "ERROR: active label volume not found"
+              }
+              EditorUpdateSWidgets $this
+          }
+          "30001" {
+              # Got selected color modified event
+              EditorUpdateSWidgets $this
+          }
+      }
   } elseif { $caller == $::Editor($this,paintRadius) } {
     switch $event {
       "10001" {
@@ -361,29 +457,191 @@ proc EditorUpdateSWidgets {this} {
   foreach {lo hi} [$::Editor($this,paintRange) GetRange] {}
 
   set cmd ::PaintSWidget::ConfigureAll
-    $cmd -paintColor [$::Editor($this,paintLabel) GetValue]
+    $cmd -paintColor [$::Editor($this,colorsColor) GetSelectedColorIndex]
     $cmd -paintOver [[$::Editor($this,paintOver) GetWidget] GetSelectedState]
     $cmd -paintDropper [[$::Editor($this,paintDropper) GetWidget] GetSelectedState]
     $cmd -thresholdPaint [[$::Editor($this,paintThreshold) GetWidget] GetSelectedState]
     $cmd -thresholdMin $lo -thresholdMax $hi
 
   set cmd ::DrawSWidget::ConfigureAll
-    $cmd -drawColor [$::Editor($this,paintLabel) GetValue]
+    $cmd -drawColor [$::Editor($this,colorsColor) GetSelectedColorIndex]
     $cmd -drawOver [[$::Editor($this,paintOver) GetWidget] GetSelectedState]
     $cmd -thresholdPaint [[$::Editor($this,paintThreshold) GetWidget] GetSelectedState]
     $cmd -thresholdMin $lo -thresholdMax $hi
 }
 
+
+#
+# Accessors to editor state
+#
+
+
+# get the editor parameter node, or create one if it doesn't exist
+proc EditorGetParameterNode {} {
+
+  set node ""
+  set nNodes [$::slicer3::MRMLScene GetNumberOfNodesByClass "vtkMRMLScriptedModuleNode"]
+  for {set i 0} {$i < $nNodes} {incr i} {
+    set n [$::slicer3::MRMLScene GetNthNodeByClass $i "vtkMRMLScriptedModuleNode"]
+    if { [$n GetModuleName] == "Editor" } {
+      set node $n
+      break;
+    }
+  }
+
+  if { $node == "" } {
+    set node [vtkMRMLScriptedModuleNode New]
+    $node SetModuleName "Editor"
+    $::slicer3::MRMLScene AddNode $node
+  }
+
+  return $node
+}
+
+proc EditorSetActiveToolLabel {name} {
+  [$::Editor($::Editor(singleton),toolsActiveTool) GetWidget] SetText $name
+  [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText $name
+}
+
+proc EditorGetPaintLabel {} {
+  set node [EditorGetParameterNode]
+  if { [$node GetParameter "label"] == "" } {
+    $node SetParameter "label" 1
+  }
+  return [$node GetParameter "label"]
+}
+
+proc EditorSetPaintLabel {index} {
+  set node [EditorGetParameterNode]
+  $node SetParameter "label" $index
+}
+
+proc EditorGetPaintColor {this} {
+  set node [$::Editor($this,colorsColor) GetColorNode]
+  set lut [$node GetLookupTable]
+  set index [EditorGetPaintLabel]
+  return [$lut GetTableValue $index]
+}
+
+proc EditorGetPaintThreshold {this} {
+  return [$::Editor($this,paintRange) GetRange]
+}
+
+proc EditorSetPaintThreshold {this min max} {
+  $::Editor($this,paintRange) SetRange $min $max
+  EditorUpdateSWidgets $this
+}
+
+proc EditorGetPaintThresholdState {this onOff} {
+  return [[$::Editor($this,paintThreshold) GetWidget] GetSelectedState]
+}
+
+proc EditorSetPaintThresholdState {this onOff} {
+  [$::Editor($this,paintThreshold) GetWidget] SetSelectedState $onOff
+  EditorUpdateSWidgets $this
+}
+
+proc EditorGetOptionsFrame {this} {
+  return $::Editor($this,optionsFrame)
+}
+
+proc EditorSelectModule {} {
+  set toolbar [$::slicer3::ApplicationGUI GetApplicationToolbar]
+  [$toolbar GetModuleChooseGUI] SelectModule "Editor"
+}
+
+
+#
+# MRML Event processing
+#
+
 proc EditorUpdateMRML {this} {
 }
 
-proc EditorProcessMRMLEvents {this caller event} {
+proc EditorProcessMRMLEvents {this callerID event} {
+
+    if { [$this GetDebug] } {
+        puts "EditorProcessMRMLEvents: event = $event, callerID = $callerID"
+    }
+    set caller [[[$this GetLogic] GetMRMLScene] GetNodeByID $callerID]
+    if { $caller == "" } {
+        return
+    }
+    set selectionNode  [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode]
+    # get the active label volume
+    set labelVolume [[[$this GetLogic] GetMRMLScene] GetNodeByID [$selectionNode GetActiveLabelVolumeID]]
+    if { $labelVolume == "" } {
+        if { [$this GetDebug] } { puts "No labelvolume..." }
+        return
+    }
+    # check it's display node colour node
+    set displayNode [$labelVolume GetDisplayNode] 
+
+    if { $caller == $selectionNode && $event == 31 } {
+        if { [$this GetDebug] } {
+            puts "...caller is selection node, with modified event"
+        }
+        if {[info exists ::Editor($this,observedNodeID)] && $::Editor($this,observedNodeID) != "" &&
+        $::Editor($this,observedNodeID) != [$selectionNode GetActiveLabelVolumeID]} {
+            # remove the observer on the old volume's display node
+            if { [$this GetDebug] } {
+                puts "Removing mrml observer on last node: $::Editor($this,observedNodeID) and $::Editor($this,observedEvent)"
+            }
+            $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetMRMLScene] GetNodeByID $::Editor($this,observedNodeID)] $::Editor($this,observedEvent)
+        }
+        
+
+        # is it the one we're showing?
+        if { $displayNode != "" } {
+            if { [$displayNode GetColorNodeID] != [[$::Editor($this,colorsColor) GetColorNode] GetID] } {
+                if { [$this GetDebug] } {
+                    puts "Resetting the color node"
+                }
+                $::Editor($this,colorsColor) SetColorNode [$displayNode GetColorNode]
+            }
+            # add an observer on the volume node for display modified events
+            if { [$this GetDebug] } {
+                puts "Adding display node observer on label volume [$labelVolume GetID]"
+            }
+            $this AddMRMLObserverByNumber $labelVolume 18000
+            set ::Editor($this,observedNodeID) [$labelVolume GetID]
+            set ::Editor($this,observedEvent) 18000
+        } else {
+            if { [$this GetDebug] } {
+                puts "Not resetting the color node, resetting the observed node id,  not adding display node observers, display node is null"
+            }
+            set ::Editor($this,observedNodeID) ""
+            set ::Editor($this,observedEvent) -1
+        }
+        return
+    } 
+
+    if { $caller == $labelVolume && $event == 18000 } {
+        if { [$this GetDebug] } {
+            puts "... caller is label volume, got a display modified event, display node = $displayNode"
+        }
+        if { $displayNode != "" && [$displayNode GetColorNodeID] != [[$::Editor($this,colorsColor) GetColorNode] GetID] } {
+            if { [$this GetDebug] } {
+                puts "...resetting the color node"
+            }
+            $::Editor($this,colorsColor) SetColorNode [$displayNode GetColorNode]
+        }
+        return
+    }
 }
 
 proc EditorEnter {this} {
+    if {[$this GetDebug]} {
+        puts "EditorEnter: Adding mrml observer on selection node, modified event"
+    }
+    $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] 31
 }
 
 proc EditorExit {this} {
+    if {[$this GetDebug]} {
+        puts "EditorExit: Removing mrml observer on selection node modified event"
+    }
+    $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] 31
 }
 
 # TODO: there might be a better place to put this for general use...  
@@ -410,6 +668,9 @@ proc EditorCreateLabelVolume {this} {
   $selectionNode SetReferenceActiveLabelVolumeID [$labelNode GetID]
   [[$this GetLogic] GetApplicationLogic]  PropagateVolumeSelection
 
+  # update the color node to show the label volume's display node's color node
+  $::Editor($this,colorsColor) SetColorNode [[$labelNode GetDisplayNode] GetColorNode]
+
   $labelNode Delete
 
   # update the editor range to be the full range of the background image
@@ -417,42 +678,6 @@ proc EditorCreateLabelVolume {this} {
   eval $::Editor($this,paintRange) SetWholeRange $range
   eval $::Editor($this,paintRange) SetRange $range
 
-}
-
-proc EditorSetRandomLabelColormap { {size 255} } {
-
-  # TODO: once the mrml label map functionality is set up this will migrate
-  # into the vtkSlicerVolumesDisplay -- the label map should be part of the DisplayNode
-  # get a lut with:
-  # [[[$::slicer3::ApplicationGUI GetMainSliceLogic0] GetLabelLayer] GetMapToColors] GetLookupTable
-    foreach g {0 1 2} {
-        puts "Setting logic $g label map to label colors..."
-        [[[[$::slicer3::ApplicationGUI GetMainSliceLogic$g] GetLabelLayer] GetVolumeDisplayNode] GetColorNode] SetTypeToRandom
-    }
-}
-
-proc EditorSetLabelColormap {} {
-    foreach g {0 1 2} {
-        puts "EditorGUI: Setting logic $g label map to label colors..."
-        [[[[$::slicer3::ApplicationGUI GetMainSliceLogic$g] GetLabelLayer] GetVolumeDisplayNode] GetColorNode] SetTypeToLabels
-    }
-}
-
-proc EditorLabelSelectDialog {this} {
-  set pageWidget [[$this GetUIPanel] GetPageWidget "Editor"]
-
-  set dialog [vtkKWDialog New]
-  $dialog SetParent $pageWidget
-  $dialog Create
-  set frame [$dialog GetFrame]
-  set color [vtkSlicerColorDisplayWidget New]
-  $color SetMRMLScene $::slicer3::MRMLScene
-  $color SetParent $frame
-  $color Create
-
-  pack [$color GetWidgetName] -side top -anchor nw -fill x -padx 2 -pady 2 
-
-  $dialog Display
-  $dialog Invoke
+  
 }
 

@@ -31,6 +31,8 @@
 #include "vtkMRMLFiberBundleNode.h"
 #include "vtkMRMLFiberBundleDisplayNode.h"
 
+#include "vtkDiffusionTensorGlyph.h"
+
 
 class VTK_SLICERTRACTOGRAPHYDISPLAY_EXPORT vtkSlicerFiberBundleDisplayLogic : public vtkSlicerLogic 
 {
@@ -121,6 +123,7 @@ protected:
 
   vtkMRMLFiberBundleNode *FiberBundleNode;
 
+  vtkDiffusionTensorGlyph *DiffusionTensorGlyphFilter;
 };
 
 #endif

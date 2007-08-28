@@ -1,7 +1,6 @@
 #include "vtkMRMLEMSTreeParametersParentNode.h"
 #include <sstream>
 #include "vtkMRMLScene.h"
-#include "vtkMRMLEMSGlobalParametersNode.h"
 
 //-----------------------------------------------------------------------------
 vtkMRMLEMSTreeParametersParentNode* 
@@ -38,7 +37,7 @@ CreateNodeInstance()
 //-----------------------------------------------------------------------------
 vtkMRMLEMSTreeParametersParentNode::vtkMRMLEMSTreeParametersParentNode()
 {
-  this->GlobalParametersNodeID        = NULL;
+  this->ClassInteractionMatrixNodeID  = NULL;
   
   this->Alpha                         = 0.7;
 
@@ -68,7 +67,7 @@ vtkMRMLEMSTreeParametersParentNode::vtkMRMLEMSTreeParametersParentNode()
 //-----------------------------------------------------------------------------
 vtkMRMLEMSTreeParametersParentNode::~vtkMRMLEMSTreeParametersParentNode()
 {
-  this->SetGlobalParametersNodeID(NULL);
+  this->SetClassInteractionMatrixNodeID(NULL);
 }
 
 //-----------------------------------------------------------------------------
@@ -77,8 +76,9 @@ void vtkMRMLEMSTreeParametersParentNode::WriteXML(ostream& of, int nIndent)
   Superclass::WriteXML(of, nIndent);
   vtkIndent indent(nIndent);
 
-  of << indent << "GlobalParametersNodeID=\"" 
-     << (this->GlobalParametersNodeID ? this->GlobalParametersNodeID : "NULL")
+  of << indent << "ClassInteractionMatrixNodeID=\"" 
+     << (this->ClassInteractionMatrixNodeID ? 
+         this->ClassInteractionMatrixNodeID : "NULL")
      << "\" ";
 
   of << indent << "Alpha=\"" << this->Alpha << "\" ";
@@ -128,10 +128,10 @@ void
 vtkMRMLEMSTreeParametersParentNode::
 UpdateReferenceID(const char* oldID, const char* newID)
 {
-  if (this->GlobalParametersNodeID && 
-      !strcmp(oldID, this->GlobalParametersNodeID))
+  if (this->ClassInteractionMatrixNodeID && 
+      !strcmp(oldID, this->ClassInteractionMatrixNodeID))
     {
-    this->SetGlobalParametersNodeID(newID);
+    this->SetClassInteractionMatrixNodeID(newID);
     }
 }
 
@@ -142,10 +142,10 @@ UpdateReferences()
 {
   Superclass::UpdateReferences();
 
-  if (this->GlobalParametersNodeID != NULL && 
-      this->Scene->GetNodeByID(this->GlobalParametersNodeID) == NULL)
+  if (this->ClassInteractionMatrixNodeID != NULL && 
+      this->Scene->GetNodeByID(this->ClassInteractionMatrixNodeID) == NULL)
     {
-    this->SetGlobalParametersNodeID(NULL);
+    this->SetClassInteractionMatrixNodeID(NULL);
     }
 }
 
@@ -163,12 +163,13 @@ void vtkMRMLEMSTreeParametersParentNode::ReadXMLAttributes(const char** attrs)
     {
     key = *attrs++;
     val = *attrs++;
-    
-    if (!strcmp(key, "GlobalParametersNodeID"))
+
+    if (!strcmp(key, "ClassInteractionMatrixNodeID"))
       {
-      this->SetGlobalParametersNodeID(val);
-      this->Scene->AddReferencedNodeID(this->GlobalParametersNodeID, this);   
-      }
+      this->SetClassInteractionMatrixNodeID(val);
+      this->Scene->AddReferencedNodeID(this->ClassInteractionMatrixNodeID, 
+                                       this);   
+      }    
     else if (!strcmp(key, "Alpha"))
       {
       vtksys_stl::stringstream ss;
@@ -287,7 +288,8 @@ void vtkMRMLEMSTreeParametersParentNode::Copy(vtkMRMLNode *rhs)
   vtkMRMLEMSTreeParametersParentNode* node = 
     (vtkMRMLEMSTreeParametersParentNode*) rhs;
 
-  this->SetGlobalParametersNodeID(node->GlobalParametersNodeID);
+  this->SetClassInteractionMatrixNodeID(node->ClassInteractionMatrixNodeID);
+
   this->SetAlpha(node->Alpha);
 
   this->SetPrintBias(node->PrintBias);
@@ -318,8 +320,9 @@ void vtkMRMLEMSTreeParametersParentNode::PrintSelf(ostream& os,
 {
   Superclass::PrintSelf(os, indent);
 
-  os << indent << "GlobalParametersNodeID: "
-     << (this->GlobalParametersNodeID ? this->GlobalParametersNodeID :"(none)")
+  os << indent << "ClassInteractionMatrixNodeID: " 
+     << (this->ClassInteractionMatrixNodeID ? 
+         this->ClassInteractionMatrixNodeID : "(none)")
      << "\n";
 
   os << indent << "Alpha: " << this->Alpha << "\n";
@@ -358,16 +361,16 @@ void vtkMRMLEMSTreeParametersParentNode::PrintSelf(ostream& os,
 }
 
 //-----------------------------------------------------------------------------
-vtkMRMLEMSGlobalParametersNode*
+vtkMRMLEMSClassInteractionMatrixNode*
 vtkMRMLEMSTreeParametersParentNode::
-GetGlobalParametersNode()
+GetClassInteractionMatrixNode()
 {
-  vtkMRMLEMSGlobalParametersNode* node = NULL;
-  if (this->GetScene() && this->GetGlobalParametersNodeID() )
+  vtkMRMLEMSClassInteractionMatrixNode* node = NULL;
+  if (this->GetScene() && this->GetClassInteractionMatrixNodeID() )
     {
     vtkMRMLNode* snode = this->GetScene()->
-      GetNodeByID(this->GlobalParametersNodeID);
-    node = vtkMRMLEMSGlobalParametersNode::SafeDownCast(snode);
+      GetNodeByID(this->ClassInteractionMatrixNodeID);
+    node = vtkMRMLEMSClassInteractionMatrixNode::SafeDownCast(snode);
     }
   return node;
 }

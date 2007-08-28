@@ -6,10 +6,12 @@ PROJECT(EMSegment)
 SET(EMSegment_SRCS 
   # module
   vtkEMSegmentGUI.cxx
-  vtkEMSegmentLogic.cxx
+  vtkEMSegmentLogic.cxx 
+  vtkEMSegmentMRMLManager.cxx 
   # wizard
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentParametersSetStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentIntensityImagesStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentIntensityNormalizationStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentAnatomicalStructureStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentSpatialPriorsStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkEMSegmentNodeParametersStep.cxx
@@ -29,6 +31,9 @@ SET(EMSegment_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML/vtkMRMLEMSVolumeCollectionNode.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML/vtkMRMLEMSAtlasNode.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/MRML/vtkMRMLEMSTargetNode.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/MRML/vtkMRMLEMSWorkingDataNode.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/MRML/vtkMRMLEMSIntensityNormalizationParametersNode.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/MRML/vtkMRMLEMSClassInteractionMatrixNode.cxx
   # Algorithm 
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/EMLocalInterface.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/EMLocalRegistrationCostFunction.cxx
@@ -43,6 +48,7 @@ SET(EMSegment_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMLocalSuperClass.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkSimonParameterReaderWriter.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkTimeDef.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageMeanIntensityNormalization.cxx
 # not used in current implementation---used in slicer2 modules
 #  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMAtlasClass.cxx
 #  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMAtlasSegmenter.cxx
@@ -127,6 +133,11 @@ TARGET_LINK_LIBRARIES(EMSegment
 IF(BUILD_TESTING)
   SUBDIRS(Testing)
 ENDIF(BUILD_TESTING)
+
+#
+# command line application
+#
+SUBDIRS(CommandLineApplication)
 
 #
 # Configure include file

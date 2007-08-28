@@ -53,12 +53,16 @@ vtkMRMLNode* vtkMRMLScriptedModuleNode::CreateNodeInstance()
 vtkMRMLScriptedModuleNode::vtkMRMLScriptedModuleNode()
 {
   this->Value = NULL;
+  this->ParameterList = NULL;
   this->ModuleName = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLScriptedModuleNode::~vtkMRMLScriptedModuleNode()
 {
+  this->SetValue(NULL);
+  this->SetParameterList(NULL);
+
   if (this->Value)
     {
     delete [] this->Value;
@@ -83,14 +87,14 @@ void vtkMRMLScriptedModuleNode::WriteXML(ostream& of, int nIndent)
 
   if (this->ModuleName != NULL)
     {
-    of << "ModuleName = '" << this->ModuleName << "' ";
+    of << " ModuleName =\"" << this->ModuleName << "\""; 
     }
 
   std::map<std::string, std::string>::iterator iter;
 
   for (iter=this->Parameters.begin(); iter != this->Parameters.end(); iter++)
     {
-    of << iter->first << "= '" << iter->second << "' ";
+    of << " " << iter->first << "= \"" << iter->second << "\"";
     }
 }
 
@@ -108,9 +112,7 @@ void vtkMRMLScriptedModuleNode::ReadXMLAttributes(const char** atts)
 
     if ( !strcmp(attName, "ModuleName") )
       {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->ModuleName;
+      this->SetModuleName( attValue );
       }
     else
       {
@@ -203,7 +205,31 @@ vtkMRMLScriptedModuleNode
 {
   std::string sname(name);
   const std::string *svaluep = this->GetParameter(sname);
-  this->SetValue (svaluep->c_str());
+  this->SetDisableModifiedEvent(1);
+  if ( svaluep )
+    {
+    this->SetValue (svaluep->c_str());
+    }
+  else
+    {
+    this->SetValue ("");
+    }
+  this->SetDisableModifiedEvent(0);
 }
 
 
+//----------------------------------------------------------------------------
+void
+vtkMRMLScriptedModuleNode
+::RequestParameterList()
+{
+  std::string list("");
+
+  std::map<std::string, std::string>::iterator iter;
+
+  for (iter=this->Parameters.begin(); iter != this->Parameters.end(); iter++)
+    {
+    list += "\"" + iter->first + "\" \"" + iter->second + "\" ";
+    }
+  this->SetParameterList (list.c_str());
+}

@@ -23,6 +23,7 @@
 #include "vtkEMSegmentNodeParametersStep.h"
 #include "vtkEMSegmentIntensityDistributionsStep.h"
 #include "vtkEMSegmentIntensityImagesStep.h"
+#include "vtkEMSegmentIntensityNormalizationStep.h"
 #include "vtkEMSegmentRegistrationParametersStep.h"
 #include "vtkEMSegmentRunSegmentationStep.h"
 
@@ -31,6 +32,7 @@
 
 vtkCxxSetObjectMacro(vtkEMSegmentGUI,Node,vtkMRMLEMSNode);
 vtkCxxSetObjectMacro(vtkEMSegmentGUI,Logic,vtkEMSegmentLogic);
+vtkCxxSetObjectMacro(vtkEMSegmentGUI,MRMLManager,vtkEMSegmentMRMLManager);
 
 //----------------------------------------------------------------------------
 vtkEMSegmentGUI* vtkEMSegmentGUI::New()
@@ -49,6 +51,7 @@ vtkEMSegmentGUI* vtkEMSegmentGUI::New()
 //----------------------------------------------------------------------------
 vtkEMSegmentGUI::vtkEMSegmentGUI()
 {
+  this->MRMLManager  = NULL;
   this->Logic        = NULL;
   this->Node         = NULL;
   this->ModuleName   = NULL;
@@ -59,6 +62,7 @@ vtkEMSegmentGUI::vtkEMSegmentGUI()
   this->AnatomicalStructureStep    = NULL;
   this->SpatialPriorsStep          = NULL;
   this->IntensityImagesStep        = NULL;
+  this->NormalizationStep          = NULL;
   this->IntensityDistributionsStep = NULL;
   this->NodeParametersStep         = NULL;
   this->RegistrationParametersStep = NULL;
@@ -79,6 +83,7 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
   this->RemoveMRMLNodeObservers();
   this->RemoveLogicObservers();
 
+  this->SetMRMLManager(NULL);
   this->SetLogic(NULL);
   this->SetNode(NULL);
 
@@ -110,6 +115,12 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
     {
     this->IntensityImagesStep->Delete();
     this->IntensityImagesStep = NULL;
+    }
+  
+  if (this->NormalizationStep)
+    {
+    this->NormalizationStep->Delete();
+    this->NormalizationStep = NULL;
     }
 
   if (this->IntensityDistributionsStep)
@@ -386,6 +397,16 @@ void vtkEMSegmentGUI::BuildGUI()
   wizard_workflow->AddNextStep(this->IntensityImagesStep);
 
   // -----------------------------------------------------------------
+  // Intensity Normalization step
+
+  if (!this->NormalizationStep)
+    {
+    this->NormalizationStep = vtkEMSegmentIntensityNormalizationStep::New();
+    this->NormalizationStep->SetGUI(this);
+    }
+  wizard_workflow->AddNextStep(this->NormalizationStep);
+
+  // -----------------------------------------------------------------
   // Intensity Distributions step
 
   if (!this->IntensityDistributionsStep)
@@ -456,6 +477,11 @@ void vtkEMSegmentGUI::TearDownGUI()
   if (this->IntensityImagesStep)
     {
     this->IntensityImagesStep->SetGUI(NULL);
+    }
+
+  if (this->NormalizationStep)
+    {
+    this->NormalizationStep->SetGUI(NULL);
     }
 
   if (this->IntensityDistributionsStep)
@@ -550,19 +576,19 @@ void vtkEMSegmentGUI::PopulateTestingData()
       }
     dir->Delete();
        
-    this->Logic->SetTreeNodeSpatialPriorVolumeID(
-      this->Logic->GetTreeRootNodeID(), 
-      this->Logic->GetVolumeNthID(0));
+    this->MRMLManager->SetTreeNodeSpatialPriorVolumeID(
+      this->MRMLManager->GetTreeRootNodeID(), 
+      this->MRMLManager->GetVolumeNthID(0));
 
-    this->Logic->SetRegistrationAtlasVolumeID(
-      this->Logic->GetVolumeNthID(0));
-    this->Logic->AddTargetSelectedVolume(
-      this->Logic->GetVolumeNthID(1));
-    this->Logic->SetRegistrationTargetVolumeID(
-      this->Logic->GetVolumeNthID(1));
+    this->MRMLManager->SetRegistrationAtlasVolumeID(
+      this->MRMLManager->GetVolumeNthID(0));
+    this->MRMLManager->AddTargetSelectedVolume(
+      this->MRMLManager->GetVolumeNthID(1));
+    this->MRMLManager->SetRegistrationTargetVolumeID(
+      this->MRMLManager->GetVolumeNthID(1));
 
-    this->Logic->SetSaveWorkingDirectory(file_path.c_str());
-    this->Logic->
+    this->MRMLManager->SetSaveWorkingDirectory(file_path.c_str());
+    this->MRMLManager->
       SetSaveTemplateFilename(file_path.append("EMSTemplate.mrml").c_str());
     }
 } 
