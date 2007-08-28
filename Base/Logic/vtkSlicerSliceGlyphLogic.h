@@ -6,13 +6,13 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $RCSfile: vtkSlicerSliceLayerLogic.h,v $
+  Module:    $RCSfile: vtkSlicerSliceGlyphLogic.h,v $
   Date:      $Date: 2006/01/08 04:48:05 $
   Version:   $Revision: 1.45 $
 
 =========================================================================auto=*/
 
-// .NAME vtkSlicerSliceLayerLogic - slicer logic class for slice manipulation
+// .NAME vtkSlicerSliceGlyphLogic - slicer logic class for slice manipulation
 // .SECTION Description
 // This class manages the logic associated with reslicing of volumes
 // (but not the GUI).  Features of the class include:
@@ -29,22 +29,23 @@
 //
 
 
-#ifndef __vtkSlicerSliceLayerLogic_h
-#define __vtkSlicerSliceLayerLogic_h
+#ifndef __vtkSlicerSliceGlyphLogic_h
+#define __vtkSlicerSliceGlyphLogic_h
 
 #include <stdlib.h>
 
 #include "vtkSlicerBaseLogic.h"
 #include "vtkSlicerLogic.h"
+#include "vtkSlicerGlyphLogic.h"
 
 #include "vtkMRML.h"
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLSliceNode.h"
 
-#include "vtkImageResliceMask.h"
 #include "vtkImageReslice.h"
 #include "vtkImageSlice.h"
-#include "vtkImageMapToColors.h"
+#include "vtkPolyData.h"
+#include "vtkAssignAttribute.h"
 
 #include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLVectorVolumeNode.h"
@@ -53,7 +54,6 @@
 
 #include "vtkImageMapToWindowLevelColors.h"
 #include "vtkImageThreshold.h"
-#include "vtkImageAppendComponents.h"
 #include "vtkImageLogic.h"
 #include "vtkImageExtractComponents.h"
 #include "vtkImageCast.h"
@@ -61,13 +61,13 @@
 
 class vtkDiffusionTensorMathematics;
 
-class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLayerLogic : public vtkSlicerLogic 
+class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceGlyphLogic : public vtkSlicerLogic 
 {
   public:
   
   // The Usual vtk class functions
-  static vtkSlicerSliceLayerLogic *New();
-  vtkTypeRevisionMacro(vtkSlicerSliceLayerLogic,vtkSlicerLogic);
+  static vtkSlicerSliceGlyphLogic *New();
+  vtkTypeRevisionMacro(vtkSlicerSliceGlyphLogic,vtkSlicerLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -88,70 +88,20 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLayerLogic : public vtkSlicerLo
 
   // Description:
   // The image reslice or slice being used
-  vtkGetObjectMacro (Slice, vtkImageSlice);
-  vtkGetObjectMacro (Reslice, vtkImageResliceMask);
+  vtkGetObjectMacro (Reslice, vtkImageReslice);
 
   // Description:
-  // Select the vtkImageResliceMask or slicer's own vtkImageSlice
-  vtkGetMacro (UseReslice, int);
-  vtkSetMacro (UseReslice, int);
-  vtkBooleanMacro(UseReslice, int);
-
-  // Description:
-  // The image map that applies the window/level
-  // this happens before the color map, so can't use the color map
-  // that's part of WindowLevelColors
-  vtkGetObjectMacro (MapToWindowLevelColors, vtkImageMapToWindowLevelColors);
+  // The glyph logic 
+  vtkGetObjectMacro (SlicerGlyphLogic, vtkSlicerGlyphLogic);
 
   // Description:
   // The image map that applies the lookup table
-  vtkGetObjectMacro (MapToColors, vtkImageMapToColors);
-  
-  // Description:
-  // The filter that applies the threshold
-  vtkGetObjectMacro (Threshold, vtkImageThreshold);
-
-  // Description:
-  // The filter that applies the threshold to the input of the Reslice
-  // so there's a fully opaque alpha channel within the image
-  // but fully transparent outside of the image
-  vtkGetObjectMacro (ResliceThreshold, vtkImageThreshold);
-
-  // Description:
-  // The add the alpha channel onto the image
-  vtkGetObjectMacro (AppendComponents, vtkImageAppendComponents);
-
-  // Description:
-  // The add the alpha channel onto the image before the reslice
-  vtkGetObjectMacro (ResliceAppendComponents, vtkImageAppendComponents);
-
-  // Description:
-  // Extract the two channels after reslice for separate processing
-  vtkGetObjectMacro (ResliceExtractLuminance, vtkImageExtractComponents);
-  vtkGetObjectMacro (ResliceExtractAlpha, vtkImageExtractComponents);
-
-  // Description:
-  // Used to convert the alpha channel of the reslice output to be unsigned char
-  // so it can be blended with the image based threshold
-  vtkGetObjectMacro (ResliceAlphaCast, vtkImageCast);
-
-  // Description:
-  // combine the reslice with the threshold 
-  vtkGetObjectMacro (AlphaLogic, vtkImageLogic);
+  vtkGetObjectMacro (LookupTable, vtkScalarsToColors);
 
   // Description:
   // Get the output of the pipeline for this layer
-  vtkImageData *GetImageData () { 
-    if ( this->GetVolumeNode() == NULL ) 
-      {
-      return NULL;
-      } 
-    else
-      {
-      return (this->GetAppendComponents()->GetOutput()); 
-      }
-  };
-
+  virtual vtkPolyData* GetPolyData();
+  
   // Description:
   // provide the virtual method that updates this Logic based
   // on mrml changes
@@ -171,7 +121,6 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLayerLogic : public vtkSlicerLo
 
   void DiffusionTensorVolumeNodeUpdateTransforms();
 
-
   // Description:
   // Check that we are observing the correct display node
   // (correct means the same one that the volume node is referencing)
@@ -182,10 +131,10 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLayerLogic : public vtkSlicerLo
   vtkGetObjectMacro (XYToIJKTransform, vtkTransform);
     
 protected:
-  vtkSlicerSliceLayerLogic();
-  virtual ~vtkSlicerSliceLayerLogic();
-  vtkSlicerSliceLayerLogic(const vtkSlicerSliceLayerLogic&);
-  void operator=(const vtkSlicerSliceLayerLogic&);
+  vtkSlicerSliceGlyphLogic();
+  virtual ~vtkSlicerSliceGlyphLogic();
+  vtkSlicerSliceGlyphLogic(const vtkSlicerSliceGlyphLogic&);
+  void operator=(const vtkSlicerSliceGlyphLogic&);
 
   // Description:
   // the MRML Nodes that define this Logic's parameters
@@ -193,20 +142,17 @@ protected:
   vtkMRMLVolumeDisplayNode *VolumeDisplayNode;
   vtkMRMLSliceNode *SliceNode;
 
+
+  // Description:
+  // the VTK class that will handle the glyhing of the sliced volume
+  vtkSlicerGlyphLogic* SlicerGlyphLogic;
+
+
   // Description:
   // the VTK class instances that implement this Logic's operations
-  vtkImageThreshold *ResliceThreshold;
-  vtkImageAppendComponents *ResliceAppendComponents;
-  vtkImageExtractComponents *ResliceExtractLuminance;
-  vtkImageExtractComponents *ResliceExtractAlpha;
-  vtkImageCast *ResliceAlphaCast;
-  vtkImageLogic *AlphaLogic;
-  vtkImageResliceMask *Reslice;
-  vtkImageSlice *Slice;
-  vtkImageMapToColors *MapToColors;
-  vtkImageThreshold *Threshold;
-  vtkImageAppendComponents *AppendComponents;
   vtkImageMapToWindowLevelColors *MapToWindowLevelColors;
+  vtkImageReslice *Reslice;
+  vtkScalarsToColors *LookupTable;
 
   // Description:
   // VTK class instances that implement the DWI logic operations
@@ -218,13 +164,11 @@ protected:
   // TODO: make this a vtkAbstractTransform for non-linear
   vtkTransform *XYToIJKTransform;
 
-  int UseReslice;
+  vtkAssignAttribute* AssignAttributeTensorsFromScalars;
+  vtkAssignAttribute* AssignAttributeScalarsFromTensors;
 
-  // Description:
-  // Generic pipeline for scalar slice logic
-  void ScalarSlicePipeline(vtkImageData *imageData, int labelMap, double window, double level, int interpolate, vtkLookupTable *lookupTable, int applyThreshold, double lowerThreshold, double upperThreshold);
 
-  void VectorSlicePipeline(vtkImageData *imageData, int interpolate);
+  void UpdatePipeline();
 };
 
 #endif
