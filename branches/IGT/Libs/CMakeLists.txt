@@ -11,6 +11,7 @@ ENDIF( TEEM_FOUND )
 SUBDIRS(
       vtkITK
       FreeSurfer
+      Qdec
       MRML
       tclap
       ModuleDescriptionParser
@@ -20,6 +21,7 @@ SUBDIRS(
       MRMLIDImageIO
       MGHImageIO
       IGT
+      #SIGN
 )
 
 
