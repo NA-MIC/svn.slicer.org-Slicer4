@@ -46,6 +46,7 @@ SET (SRC
 
 # --------------------------------------------------------------------------
 # Include dirs
+# MESSAGE(STATUS "Setting up dir_list, Qdec bin dir = ${Qdec_BINARY_DIR}, Qdec src dir = ${Qdec_SOURCE_DIR}")
 
 SET(dir_list
   ${SlicerBase_SOURCE_DIR}
@@ -82,11 +83,17 @@ SET(dir_list
   ${NeuroNav_BINARY_DIR}
   ${NeuroNav_Init_SOURCE_DIR}
   ${NeuroNav_Init_BINARY_DIR}
+  ${Qdec_SOURCE_DIR}
+  ${Qdec_BINARY_DIR}
+  ${QdecModule_SOURCE_DIR}
+  ${QdecModule_BINARY_DIR}
+  ${QdecModule_Init_SOURCE_DIR}
+  ${QdecModule_Init_BINARY_DIR}
   ${QueryAtlas_SOURCE_DIR}
-  # ${BrpNav_SOURCE_DIR}
-  # ${BrpNav_BINARY_DIR}
-  # ${BrpNav_Init_SOURCE_DIR}
-  # ${BrpNav_Init_BINARY_DIR}
+  #${BrpNav_SOURCE_DIR}
+  #${BrpNav_BINARY_DIR}
+  #${BrpNav_Init_SOURCE_DIR}
+  #${BrpNav_Init_BINARY_DIR}
   ${QueryAtlas_BINARY_DIR}
   ${QueryAtlas_Init_SOURCE_DIR}
   ${QueryAtlas_Init_BINARY_DIR}
@@ -102,7 +109,7 @@ SET(dir_list
   ${SlicerDaemon_Init_BINARY_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
   ${VTK_INCLUDE_DIR}
-  ${OPENTRACKER_INC_DIR}
+  ${NAVITRACK_INC}
   ${IGSTK_INCLUDE_DIRS}
   )
 
@@ -148,12 +155,11 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     MRML
     IGT
     GradientAnisotropicDiffusionFilter
-    SlicerTractographyDisplay
     EMSegment
  #   RealTimeImaging
  #   MRAblation
     NeuroNav
-#   BrpNav
+ #   BrpNav
     QueryAtlas
     CommandLineModule
     ScriptedModule
@@ -162,9 +168,20 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     vtkITK
     ITKCommon 
     ITKIO
-        ${KWWidgets_LIBRARIES})
+    ${WFENGINE_LINK_LIB}
+    ${KWWidgets_LIBRARIES}
+    Qdec
+    QdecModule
+)
+
+IF(USE_TEEM)
+  TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
+    SlicerTractographyDisplay
+    )
+ENDIF(USE_TEEM)
 
 IF(USE_PYTHON AND PYTHON_LIBRARIES)
+  ADD_DEFINITIONS(-DUSE_PYTHON)
   TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX} SlicerGUIPython)
   IF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
      TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
@@ -174,8 +191,12 @@ IF(USE_PYTHON AND PYTHON_LIBRARIES)
      TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX} ${PYTHON_LIBRARIES})
   ENDIF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
   IF(NOT WIN32)
-     # Linux/Unix requires util library
-     TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX} util)
+     # Linux/Unix requires util library, but mac doesn't
+     IF (APPLE)
+       TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX} )
+     ELSE (APPLE)
+       TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX} util )
+     ENDIF (APPLE)
   ENDIF(NOT WIN32)
 ENDIF(USE_PYTHON AND PYTHON_LIBRARIES)
 
@@ -210,24 +231,30 @@ INCLUDE(${Slicer3_SOURCE_DIR}/Libs/GenerateCLP/UseGenerateCLP.cmake)
 
 GENERATECLP(${SRC} Slicer3.xml)
 
+# set up teem variable in order to enable tractography if teem is present
+IF( TEEM_FOUND )
+  ADD_DEFINITIONS(-DUSE_TEEM)
+ENDIF( TEEM_FOUND )
+
 #
 # Command line parsing tests
 #
 
-ADD_TEST(Slicer3CLTest1 ${Slicer3_BINARY_DIR}/Slicer3 --help)
-ADD_TEST(Slicer3CLTest2 ${Slicer3_BINARY_DIR}/Slicer3 --xml)
-ADD_TEST(Slicer3CLTest3 ${Slicer3_BINARY_DIR}/Slicer3 -f ${Slicer3_SOURCE_DIR}/Applications/GUI/Testing/TestScript.tcl)
-ADD_TEST(Slicer3CLTest4 ${Slicer3_BINARY_DIR}/Slicer3 --eval "puts testing ,. exit 0")
-ADD_TEST(Slicer3CLTest5 ${Slicer3_BINARY_DIR}/Slicer3 --exec "puts testing ,. exit 0")
-ADD_TEST(Slicer3CLTest6 ${Slicer3_BINARY_DIR}/Slicer3 --script ${Slicer3_SOURCE_DIR}/Applications/GUI/Testing/TestScript.tcl)
-ADD_TEST(Slicer3CLTest7 ${Slicer3_BINARY_DIR}/Slicer3 --script ${Slicer3_SOURCE_DIR}/Applications/GUI/Testing/LoadSceneTest.tcl)
+ADD_TEST(Slicer3CLTest1 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --help)
+ADD_TEST(Slicer3CLTest2 ${Slicer3_BINARY_DIR}/Slicer3 --xml --no-splash)
+ADD_TEST(Slicer3CLTest3 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash -f ${Slicer3_SOURCE_DIR}/Applications/GUI/Testing/TestScript.tcl)
+ADD_TEST(Slicer3CLTest4 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --eval "puts testing ,. exit 0")
+ADD_TEST(Slicer3CLTest5 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --exec "puts testing ,. exit 0")
+ADD_TEST(Slicer3CLTest6 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --script ${Slicer3_SOURCE_DIR}/Applications/GUI/Testing/TestScript.tcl)
+ADD_TEST(Slicer3CLTest7 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --script ${Slicer3_SOURCE_DIR}/Applications/GUI/Testing/LoadSceneTest.tcl)
+ADD_TEST(Slicer3ScrollTest ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --script ${Slicer3_SOURCE_DIR}/Applications/GUI/Testing/ScrollTesting.tcl)
 
 #
 # MRML Tests
 #
 
-ADD_TEST(Slicer3MRMLUndo ${Slicer3_BINARY_DIR}/Slicer3 -f ${Slicer3_SOURCE_DIR}/Libs/MRML/Testing/testUndo.tcl)
-ADD_TEST(Slicer3MRMLVolume ${Slicer3_BINARY_DIR}/Slicer3 -f ${Slicer3_SOURCE_DIR}/Libs/MRML/Testing/testVolume.tcl)
+ADD_TEST(Slicer3MRMLUndo ${Slicer3_BINARY_DIR}/Slicer3 --no-splash -f ${Slicer3_SOURCE_DIR}/Libs/MRML/Testing/testUndo.tcl)
+ADD_TEST(Slicer3MRMLVolume ${Slicer3_BINARY_DIR}/Slicer3 --no-splash -f ${Slicer3_SOURCE_DIR}/Libs/MRML/Testing/testVolume.tcl)
 
 #
 # make the testing
