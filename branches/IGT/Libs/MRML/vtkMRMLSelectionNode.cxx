@@ -57,6 +57,7 @@ vtkMRMLSelectionNode::vtkMRMLSelectionNode()
   this->ActiveVolumeID = NULL;
   this->ActiveLabelVolumeID = NULL;
   this->ActiveFiducialListID = NULL;
+  this->ActiveROIListID  =NULL;
   this->ActiveCameraID = NULL;
   this->ActiveViewID = NULL;
 }
@@ -79,6 +80,11 @@ vtkMRMLSelectionNode::~vtkMRMLSelectionNode()
     delete [] this->ActiveFiducialListID;
     this->ActiveFiducialListID = NULL;
     }
+  if (this->ActiveROIListID)
+    {
+    delete [] this->ActiveROIListID;
+    this->ActiveROIListID = NULL;
+    }
   if ( this->ActiveCameraID )
     {
     delete [] this->ActiveCameraID;
@@ -98,11 +104,12 @@ void vtkMRMLSelectionNode::WriteXML(ostream& of, int nIndent)
 
   vtkIndent indent(nIndent);
 
-  of << indent << "activeVolumeID=\"" << (this->ActiveVolumeID ? this->ActiveVolumeID : "NULL") << "\" ";
-  of << indent << "activeLabelVolumeID=\"" << (this->ActiveLabelVolumeID ? this->ActiveLabelVolumeID : "NULL") << "\" ";
-  of << indent << "activeFiducialListID=\"" << (this->ActiveFiducialListID ? this->ActiveFiducialListID : "NULL") << "\" ";
-  of << indent << "activeCameraID=\"" << (this->ActiveCameraID ? this->ActiveCameraID : "NULL") << "\" ";
-  of << indent << "activeViewID=\"" << (this->ActiveViewID ? this->ActiveViewID : "NULL") << "\" ";
+  of << indent << " activeVolumeID=\"" << (this->ActiveVolumeID ? this->ActiveVolumeID : "NULL") << "\"";
+  of << indent << " activeLabelVolumeID=\"" << (this->ActiveLabelVolumeID ? this->ActiveLabelVolumeID : "NULL") << "\"";
+  of << indent << " activeFiducialListID=\"" << (this->ActiveFiducialListID ? this->ActiveFiducialListID : "NULL") << "\"";
+  of << indent << " activeROIListID=\"" << (this->ActiveROIListID ? this->ActiveROIListID : "NULL") << "\"";
+  of << indent << " activeCameraID=\"" << (this->ActiveCameraID ? this->ActiveCameraID : "NULL") << "\"";
+  of << indent << " activeViewID=\"" << (this->ActiveViewID ? this->ActiveViewID : "NULL") << "\"";
 }
 
 //----------------------------------------------------------------------------
@@ -145,27 +152,27 @@ void vtkMRMLSelectionNode::ReadXMLAttributes(const char** atts)
     if (!strcmp(attName, "activeVolumeID")) 
       {
       this->SetActiveVolumeID(attValue);
-      this->Scene->AddReferencedNodeID(this->ActiveVolumeID, this);
+      //this->Scene->AddReferencedNodeID(this->ActiveVolumeID, this);
       }
     if (!strcmp(attName, "activeLabelVolumeID")) 
       {
       this->SetActiveLabelVolumeID(attValue);
-      this->Scene->AddReferencedNodeID(this->ActiveLabelVolumeID, this);
+      //this->Scene->AddReferencedNodeID(this->ActiveLabelVolumeID, this);
       }
     if (!strcmp(attName, "activeFiducialListID")) 
       {
       this->SetActiveFiducialListID(attValue);
-      this->Scene->AddReferencedNodeID(this->ActiveFiducialListID, this);
+      //this->Scene->AddReferencedNodeID(this->ActiveFiducialListID, this);
       }
     if (!strcmp (attName, "activeCameraID"))
       {
       this->SetActiveCameraID (attValue );
-      this->Scene->AddReferencedNodeID (this->ActiveCameraID, this);
+      //this->Scene->AddReferencedNodeID (this->ActiveCameraID, this);
       }
     if (!strcmp (attName, "activeViewID"))
       {
       this->SetActiveViewID (attValue);
-      this->Scene->AddReferencedNodeID ( this->ActiveViewID, this);
+      //this->Scene->AddReferencedNodeID ( this->ActiveViewID, this);
       }
     }
 }

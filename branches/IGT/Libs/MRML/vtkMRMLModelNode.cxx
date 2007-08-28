@@ -19,6 +19,7 @@ Version:   $Revision: 1.3 $
 #include "vtkCallbackCommand.h"
 
 #include "vtkMRMLModelNode.h"
+#include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLScene.h"
 
 
@@ -61,98 +62,54 @@ vtkMRMLNode* vtkMRMLModelNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLModelNode::vtkMRMLModelNode()
 {
-  this->StorageNodeID = NULL;
-  this->DisplayNodeID = NULL;
-  this->ModelDisplayNode = NULL;
-  PolyData = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLModelNode::~vtkMRMLModelNode()
 {
-  if (this->StorageNodeID) 
-    {
-    delete [] this->StorageNodeID;
-    this->StorageNodeID = NULL;
-    }
-  this->SetAndObserveDisplayNodeID( NULL);
-
-  this->SetAndObservePolyData(NULL);
 }
 
-//----------------------------------------------------------------------------
-void vtkMRMLModelNode::WriteXML(ostream& of, int nIndent)
+//-----------------------------------------------------------
+void vtkMRMLModelNode::UpdateScene(vtkMRMLScene *scene)
 {
-  // Write all attributes not equal to their defaults
-  
-  Superclass::WriteXML(of, nIndent);
-
-  vtkIndent indent(nIndent);
-
-   if (this->StorageNodeID != NULL) 
+  Superclass::UpdateScene(scene);
+  int nnodes = this->GetNumberOfDisplayNodes();
+  for (int n=0; n<nnodes; n++)
     {
-    of << indent << "storageNodeRef=\"" << this->StorageNodeID << "\" ";
-    }
-  if (this->DisplayNodeID != NULL) 
-    {
-    of << indent << "displayNodeRef=\"" << this->DisplayNodeID << "\" ";
-    }
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLModelNode::UpdateReferenceID(const char *oldID, const char *newID)
-{
-  if (!strcmp(oldID, this->StorageNodeID))
-    {
-    this->SetStorageNodeID(newID);
-    return;
-    }
-  if (!strcmp(oldID, this->DisplayNodeID))
-    {
-    this->SetDisplayNodeID(newID);
-    }
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLModelNode::ReadXMLAttributes(const char** atts)
-{
-
-  Superclass::ReadXMLAttributes(atts);
-
-  const char* attName;
-  const char* attValue;
-  while (*atts != NULL) 
-    {
-    attName = *(atts++);
-    attValue = *(atts++);
-    if (!strcmp(attName, "storageNodeRef")) 
+    vtkMRMLNode *mnode = scene->GetNodeByID(this->GetNthDisplayNodeID(n));
+    if (mnode) 
       {
-      this->SetStorageNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->StorageNodeID, this);
+      vtkMRMLModelDisplayNode *node  = dynamic_cast < vtkMRMLModelDisplayNode *>(mnode);
+      if (node)
+        {
+        // set input/output to/from display pipeline
+        node->SetPolyData(this->GetPolyData());
+        //this->SetAndObservePolyData(node->GetPolyData());
+        }
       }
-    else if (!strcmp(attName, "displayNodeRef")) 
-      {
-      this->SetDisplayNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->DisplayNodeID, this);
-      }    
-    }  
+    }
 }
 
-
-//----------------------------------------------------------------------------
-// Copy the node's attributes to this object.
-// Does NOT copy: ID, FilePrefix, Name, ID
-void vtkMRMLModelNode::Copy(vtkMRMLNode *anode)
+//---------------------------------------------------------------------------
+void vtkMRMLModelNode::ProcessMRMLEvents ( vtkObject *caller,
+                                           unsigned long event, 
+                                           void *callData )
 {
-  Superclass::Copy(anode);
-  vtkMRMLModelNode *node = (vtkMRMLModelNode *) anode;
 
-  this->SetStorageNodeID(node->StorageNodeID);
-  this->SetDisplayNodeID(node->DisplayNodeID);
-  if (node->PolyData)
+  if (this->PolyData == vtkPolyData::SafeDownCast(caller) &&
+    event ==  vtkCommand::ModifiedEvent)
     {
-    this->SetPolyData(node->PolyData);
-    }
+    for (unsigned int i=0; i<this->DisplayNodes.size(); i++)
+      {
+      vtkMRMLModelDisplayNode *dnode = vtkMRMLModelDisplayNode::SafeDownCast(this->GetNthDisplayNode(i));
+      if (dnode != NULL)
+        {
+        dnode->SetPolyData(this->GetPolyData());
+        }
+      }
+  }
+  Superclass::ProcessMRMLEvents(caller, event, callData);
+  return;
 }
 
 //----------------------------------------------------------------------------
@@ -160,142 +117,6 @@ void vtkMRMLModelNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
   Superclass::PrintSelf(os,indent);
-
-  os << indent << "StorageNodeID: " <<
-    (this->StorageNodeID ? this->StorageNodeID : "(none)") << "\n";
-
-  os << indent << "DisplayNodeID: " <<
-    (this->DisplayNodeID ? this->DisplayNodeID : "(none)") << "\n";
-
-  os << "\nPoly Data:\n";
-  if (this->PolyData) 
-    {
-    this->PolyData->PrintSelf(os, indent.GetNextIndent());
-    }
-}
-
-//-----------------------------------------------------------
-void vtkMRMLModelNode::UpdateScene(vtkMRMLScene *scene)
-{
-   Superclass::UpdateScene(scene);
-
-  if (this->GetStorageNodeID() == NULL) 
-    {
-    //vtkErrorMacro("No reference StorageNodeID found");
-    return;
-    }
-
-  vtkMRMLNode* mnode = scene->GetNodeByID(this->StorageNodeID);
-  if (mnode) 
-    {
-    vtkMRMLStorageNode *node  = dynamic_cast < vtkMRMLStorageNode *>(mnode);
-    if (node->ReadData(this) == 0)
-      {
-      scene->SetErrorCode(1);
-      std::string msg = std::string("Error reading model file ") + std::string(node->GetFileName());
-      scene->SetErrorMessage(msg);
-      }
-    this->SetAndObservePolyData(this->GetPolyData());
-    this->SetAndObserveDisplayNodeID(this->GetDisplayNodeID());
-    }
-}
-
-//-----------------------------------------------------------
-void vtkMRMLModelNode::UpdateReferences()
-{
-   Superclass::UpdateReferences();
-
-  if (this->DisplayNodeID != NULL && this->Scene->GetNodeByID(this->DisplayNodeID) == NULL)
-    {
-    this->SetAndObserveDisplayNodeID(NULL);
-    }
- if (this->StorageNodeID != NULL && this->Scene->GetNodeByID(this->StorageNodeID) == NULL)
-    {
-    this->SetStorageNodeID(NULL);
-    }
-}
-
-vtkMRMLStorageNode* vtkMRMLModelNode::GetStorageNode()
-{
-  vtkMRMLStorageNode* node = NULL;
-  if (this->GetScene() && this->GetStorageNodeID() )
-    {
-    vtkMRMLNode* snode = this->GetScene()->GetNodeByID(this->StorageNodeID);
-    node = vtkMRMLStorageNode::SafeDownCast(snode);
-    }
-  return node;
-}
-
-//----------------------------------------------------------------------------
-vtkMRMLModelDisplayNode* vtkMRMLModelNode::GetDisplayNode()
-{
-  vtkMRMLModelDisplayNode* node = NULL;
-  if (this->GetScene() && this->GetDisplayNodeID() )
-    {
-    vtkMRMLNode* snode = this->GetScene()->GetNodeByID(this->DisplayNodeID);
-    node = vtkMRMLModelDisplayNode::SafeDownCast(snode);
-    }
-  return node;
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLModelNode::SetAndObserveDisplayNodeID(const char *displayNodeID)
-{
-  vtkSetAndObserveMRMLObjectMacro(this->ModelDisplayNode, NULL);
-
-  this->SetDisplayNodeID(displayNodeID);
-
-  vtkMRMLModelDisplayNode *dnode = this->GetDisplayNode();
-
-  vtkSetAndObserveMRMLObjectMacro(this->ModelDisplayNode, dnode);
-
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLModelNode::SetAndObservePolyData(vtkPolyData *polyData)
-{
-if (this->PolyData != NULL)
-    {
-    this->PolyData->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
-    }
-
-  unsigned long mtime1, mtime2;
-  mtime1 = this->GetMTime();
-  this->SetPolyData(polyData);
-  mtime2 = this->GetMTime();
-
-  if (this->PolyData != NULL)
-    {
-    this->PolyData->AddObserver ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
-    }
-
-  if (mtime1 != mtime2)
-    {
-    this->InvokeEvent( vtkMRMLModelNode::PolyDataModifiedEvent , this);
-    }
-}
-
-
-//---------------------------------------------------------------------------
-void vtkMRMLModelNode::ProcessMRMLEvents ( vtkObject *caller,
-                                           unsigned long event, 
-                                           void *callData )
-{
-  Superclass::ProcessMRMLEvents(caller, event, callData);
-
-  vtkMRMLModelDisplayNode *dnode = this->GetDisplayNode();
-  if (dnode != NULL && dnode == vtkMRMLModelDisplayNode::SafeDownCast(caller) &&
-      event ==  vtkCommand::ModifiedEvent)
-    {
-    this->InvokeEvent(vtkMRMLModelNode::DisplayModifiedEvent, NULL);
-    }
-  else if (this->PolyData == vtkPolyData::SafeDownCast(caller) &&
-    event ==  vtkCommand::ModifiedEvent)
-    {
-    this->ModifiedSinceRead = true;
-    this->InvokeEvent(vtkMRMLModelNode::PolyDataModifiedEvent, NULL);
-    }
-  return;
 }
 
 //---------------------------------------------------------------------------
@@ -435,7 +256,7 @@ const char * vtkMRMLModelNode::GetActivePointScalarName(const char *type)
     vtkErrorMacro("Unknown point scalar type " << type);
     return "";
     }
-  vtkErrorMacro("GetActivePointScalarName: unable to get " << type << " data to get the name");
+  vtkWarningMacro("GetActivePointScalarName: node " << this->GetName() << " unable to get " << type << " data to get the name, so active name is returned as an empty string");
   return "";
 }
 
@@ -540,9 +361,9 @@ int vtkMRMLModelNode::SetActiveScalars(const char *scalarName, const char *typeN
     vtkDebugMacro("Set active point " << typeName << " to " << scalarName << " (" <<
                   this->PolyData->GetPointData()->GetAttributeTypeAsString(retval) <<
                   ") on model " << this->GetName());
-    if (this->GetDisplayNode() != NULL)
+    if (this->GetModelDisplayNode() != NULL)
       {
-      this->GetDisplayNode()->SetActiveScalarName(scalarName);
+      this->GetModelDisplayNode()->SetActiveScalarName(scalarName);
       }
     return retval;
     }
@@ -550,9 +371,9 @@ int vtkMRMLModelNode::SetActiveScalars(const char *scalarName, const char *typeN
   retval =  this->SetActiveCellScalars(scalarName, attribute);
   if (retval != -1)
     {
-    if (this->GetDisplayNode() != NULL)
+    if (this->GetModelDisplayNode() != NULL)
       {
-      this->GetDisplayNode()->SetActiveScalarName(scalarName);
+      this->GetModelDisplayNode()->SetActiveScalarName(scalarName);
       }
     vtkDebugMacro("Set active cell " << typeName << " to " << scalarName << " (" <<
                   this->PolyData->GetCellData()->GetAttributeTypeAsString(retval) << ") on model " <<
@@ -692,7 +513,7 @@ int vtkMRMLModelNode::CompositeScalars(const char* backgroundName, const char* o
       }
     if (scalars1 == NULL || scalars2 == NULL)
       {
-      vtkErrorMacro("CompositScalars: unable to find the named scalar arrays " << backgroundName << " and/or " << overlayName);
+      vtkErrorMacro("CompositeScalars: unable to find the named scalar arrays " << backgroundName << " and/or " << overlayName);
       return 0;
       }
     if (scalars1->GetNumberOfTuples() != scalars1->GetNumberOfTuples())
@@ -758,6 +579,7 @@ int vtkMRMLModelNode::CompositeScalars(const char* backgroundName, const char* o
     
     // set up a colour node
     vtkMRMLProceduralColorNode *colorNode = vtkMRMLProceduralColorNode::New();
+    colorNode->SetName(composedName.c_str());
     vtkColorTransferFunction *func = colorNode->GetColorTransferFunction();
 
     // adapted from FS code that assumed that one scalar was curvature, the
@@ -815,15 +637,15 @@ int vtkMRMLModelNode::CompositeScalars(const char* backgroundName, const char* o
     vtkDebugMacro("CompositeScalars: created color transfer function, and added proc color node to scene, id = " << colorNode->GetID());
     if (colorNode->GetID() != NULL)
       {
-      this->GetDisplayNode()->SetAndObserveColorNodeID(colorNode->GetID());
-      this->GetDisplayNode()->SetScalarRange(-overlayMax, overlayMax);
+      this->GetModelDisplayNode()->SetAndObserveColorNodeID(colorNode->GetID());
+      this->GetModelDisplayNode()->SetScalarRange(-overlayMax, overlayMax);
       }
     
     // add the new scalars
     this->AddPointScalars(composedScalars);
 
     // make them active
-    this->GetDisplayNode()->SetActiveScalarName(composedName.c_str());
+    this->GetModelDisplayNode()->SetActiveScalarName(composedName.c_str());
 
     // clean up
     colorNode->Delete();

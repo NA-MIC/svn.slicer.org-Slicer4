@@ -71,12 +71,15 @@ vtkMRMLSliceNode::vtkMRMLSliceNode()
   // TODO: how best to represent this as a slab rather than infinitessimal slice?
   this->FieldOfView[0] = 250.0;
   this->FieldOfView[1] = 250.0;
-  this->FieldOfView[2] = 250.0;
+  this->FieldOfView[2] = 1.0;
 
   this->Dimensions[0] = 256;
   this->Dimensions[1] = 256;
   this->Dimensions[2] = 1;
   this->SliceVisible = 0;
+
+  this->LayoutGridColumns = 1;
+  this->LayoutGridRows = 1;
 
   this->SetOrientationToAxial();
 }
@@ -95,6 +98,10 @@ vtkMRMLSliceNode::~vtkMRMLSliceNode()
   if ( this->XYToRAS != NULL) 
     {
     this->XYToRAS->Delete();
+    }
+  if ( this->OrientationString )
+    {
+    delete [] this->OrientationString;
     }
   this->SetLayoutName(NULL);
 }
@@ -297,7 +304,9 @@ void vtkMRMLSliceNode::UpdateMatrices()
       xyToSlice->SetElement(i, i, spacing[i]);
       xyToSlice->SetElement(i, 3, -this->FieldOfView[i] / 2.);
       }
-    xyToSlice->SetElement(2, 2, 1.);
+    //vtkWarningMacro( << "FieldOfView[2] = " << this->FieldOfView[2] << ", Dimensions[2] = " << this->Dimensions[2] );
+    //xyToSlice->SetElement(2, 2, 1.);
+
     xyToSlice->SetElement(2, 3, 0.);
 
     // the mapping from slice plane coordinates to RAS 
@@ -321,7 +330,12 @@ void vtkMRMLSliceNode::UpdateMatrices()
       {
       this->XYToSlice->DeepCopy( xyToSlice );
       this->XYToRAS->DeepCopy( xyToRAS );
-      this->Modified();  // RSierra 3/9/07 This triggesr the update on the windows. In the IGT module when the slices are updated by the tracker it might be better to trigger the update AFTER all positions are modified to synchoronously update what the user sees ...
+      this->Modified();  // RSierra 3/9/07 This triggesr the update on
+                         // the windows. In the IGT module when the
+                         // slices are updated by the tracker it might
+                         // be better to trigger the update AFTER all
+                         // positions are modified to synchoronously
+                         // update what the user sees ...
       }
 
     xyToSlice->Delete();
@@ -338,15 +352,21 @@ void vtkMRMLSliceNode::WriteXML(ostream& of, int nIndent)
 
   vtkIndent indent(nIndent);
 
-  of << indent << "fieldOfView=\"" << 
+  of << indent << " fieldOfView=\"" << 
         this->FieldOfView[0] << " " <<
         this->FieldOfView[1] << " " <<
-        this->FieldOfView[2] << "\" ";
+        this->FieldOfView[2] << "\"";
 
-  of << indent << "dimensions=\"" << 
+  of << indent << " dimensions=\"" << 
         this->Dimensions[0] << " " <<
         this->Dimensions[1] << " " <<
-        this->Dimensions[2] << "\" ";
+        this->Dimensions[2] << "\"";
+
+  of << indent << " layoutGridRows=\"" << 
+        this->LayoutGridRows << "\"";
+
+  of << indent << " layoutGridColumns=\"" << 
+        this->LayoutGridColumns << "\"";
 
   std::stringstream ss;
   int j;
@@ -361,9 +381,11 @@ void vtkMRMLSliceNode::WriteXML(ostream& of, int nIndent)
         }
       }
     }
-  of << indent << "sliceToRAS=\"" << ss.str().c_str() << "\" ";
-  of << indent << "layoutName=\"" << this->GetLayoutName() << "\" ";
-  of << indent << "orientation=\"" << this->OrientationString << "\" ";
+  of << indent << " sliceToRAS=\"" << ss.str().c_str() << "\"";
+  of << indent << " layoutName=\"" << this->GetLayoutName() << "\"";
+  of << indent << " orientation=\"" << this->OrientationString << "\"";
+  of << indent << " sliceVisibility=\"" << (this->SliceVisible ? "true" : "false") << "\"";
+
 
 }
 
@@ -389,6 +411,35 @@ void vtkMRMLSliceNode::ReadXMLAttributes(const char** atts)
         {
         ss >> val;
         this->FieldOfView[i] = val;
+        }
+      }
+    else if (!strcmp(attName, "layoutGridRows")) 
+      {
+      std::stringstream ss;
+      int val;
+      ss << attValue;
+      ss >> val;
+      
+      this->LayoutGridRows = val;
+      }
+    else if (!strcmp(attName, "layoutGridColumns")) 
+      {
+      std::stringstream ss;
+      int val;
+      ss << attValue;
+      ss >> val;
+      
+      this->LayoutGridColumns = val;
+      }
+    else if (!strcmp(attName, "sliceVisibility")) 
+      {
+      if (!strcmp(attValue,"true")) 
+        {
+        this->SliceVisible = 1;
+        }
+      else
+        {
+        this->SliceVisible = 0;
         }
       }
    else if (!strcmp(attName, "orientation")) 
@@ -438,7 +489,9 @@ void vtkMRMLSliceNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLSliceNode *node = vtkMRMLSliceNode::SafeDownCast(anode);
 
+  this->SetSliceVisible(node->GetSliceVisible());
   this->SliceToRAS->DeepCopy(node->GetSliceToRAS());
+  this->SetOrientationString(node->GetOrientationString());
 
   int i;
   for(i=0; i<3; i++) 

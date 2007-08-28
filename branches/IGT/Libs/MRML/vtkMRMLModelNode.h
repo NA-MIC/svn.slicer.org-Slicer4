@@ -28,18 +28,18 @@
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
-#include "vtkMRMLTransformableNode.h"
+#include "vtkMRMLDisplayableNode.h"
 #include "vtkMRMLStorageNode.h"
 #include "vtkMRMLModelDisplayNode.h"
 
 
 class vtkCallbackCommand;
 class vtkFloatArray;
-class VTK_MRML_EXPORT vtkMRMLModelNode : public vtkMRMLTransformableNode
+class VTK_MRML_EXPORT vtkMRMLModelNode : public vtkMRMLDisplayableNode
 {
 public:
   static vtkMRMLModelNode *New();
-  vtkTypeMacro(vtkMRMLModelNode,vtkMRMLTransformableNode);
+  vtkTypeMacro(vtkMRMLModelNode,vtkMRMLDisplayableNode);
   void PrintSelf(ostream& os, vtkIndent indent);
   
   //--------------------------------------------------------------------------
@@ -49,59 +49,23 @@ public:
   virtual vtkMRMLNode* CreateNodeInstance();
 
   // Description:
-  // Read node attributes from XML file
-  virtual void ReadXMLAttributes( const char** atts);
-
-  // Description:
-  // Write this node's information to a MRML file in XML format.
-  virtual void WriteXML(ostream& of, int indent);
-
-
-  // Description:
-  // Copy the node's attributes to this object
-  virtual void Copy(vtkMRMLNode *node);
-  
-  // Description:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "Model";};
 
-   // Description:
-  // Updates this node if it depends on other nodes 
-  // when the node is deleted in the scene
-  virtual void UpdateReferences();
+  void UpdateScene(vtkMRMLScene *scene);
 
   // Description:
-  // Finds the storage node and read the data
-  virtual void UpdateScene(vtkMRMLScene *scene);
+  // alternative method to propagate events generated in Display nodes
+  virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
+                                   unsigned long /*event*/, 
+                                   void * /*callData*/ );
 
   // Description:
-  // Update the stored reference to another node in the scene
-  virtual void UpdateReferenceID(const char *oldID, const char *newID);
-
-  // Description:
-  // String ID of the storage MRML node
-  vtkSetReferenceStringMacro(StorageNodeID);
-  void SetReferenceStorageNodeID(const char *id) { this->SetStorageNodeID(id); }
-  vtkGetStringMacro(StorageNodeID);
-
-  // Description:
-  // String ID of the display MRML node
-  void SetAndObserveDisplayNodeID(const char *DisplayNodeID);
-  vtkGetStringMacro(DisplayNodeID);
-
-
-  // Description:
-  // Get associated storage MRML node
-  vtkMRMLStorageNode* GetStorageNode();
-
-  // Description:
-  // Get associated display MRML node
-  vtkMRMLModelDisplayNode* GetDisplayNode();
-    
-  // Description:
-  // Set and observe poly data for this model
-  vtkGetObjectMacro(PolyData, vtkPolyData);
-  void SetAndObservePolyData(vtkPolyData *PolyData);
+  // Get associated model display MRML node
+  vtkMRMLModelDisplayNode* GetModelDisplayNode() 
+  {
+    return vtkMRMLModelDisplayNode::SafeDownCast(this->GetDisplayNode());
+  }
 
 
   // Description:
@@ -131,21 +95,7 @@ public:
   int SetActivePointScalars(const char *scalarName, int attributeType);
   int SetActiveCellScalars(const char *scalarName, int attributeType);
   
-  // Description:
-  // alternative method to propagate events generated in Display nodes
-  virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
-                                   unsigned long /*event*/, 
-                                   void * /*callData*/ );
 
-//BTX
-  // Description:
-  // DisplayModifiedEvent is generated when display node parameters is changed
-  // PolyDataModifiedEvent is generated when PloyData is changed
-  enum
-    {
-      DisplayModifiedEvent = 17000,
-      PolyDataModifiedEvent = 17001,
-    };
 //ETX
 
   // Description:
@@ -166,18 +116,9 @@ protected:
   vtkMRMLModelNode(const vtkMRMLModelNode&);
   void operator=(const vtkMRMLModelNode&);
 
-  vtkSetReferenceStringMacro(DisplayNodeID);
-
-  vtkSetObjectMacro(PolyData, vtkPolyData);
-
 
   // Data
-  vtkPolyData *PolyData;
   
-  char *StorageNodeID;
-  char *DisplayNodeID;
-
-  vtkMRMLModelDisplayNode *ModelDisplayNode;
 };
 
 #endif

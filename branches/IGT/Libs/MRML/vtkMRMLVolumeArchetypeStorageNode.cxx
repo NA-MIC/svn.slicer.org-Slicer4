@@ -26,6 +26,8 @@ Version:   $Revision: 1.6 $
 
 #include "vtkMatrix4x4.h"
 #include "vtkImageData.h"
+#include "vtkDataArray.h"
+#include "vtkPointData.h"
 #include "vtkITKArchetypeImageSeriesReader.h"
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
 #include "vtkITKArchetypeImageSeriesVectorReader.h"
@@ -73,11 +75,11 @@ void vtkMRMLVolumeArchetypeStorageNode::WriteXML(ostream& of, int nIndent)
 {
   Superclass::WriteXML(of, nIndent);
   vtkIndent indent(nIndent);
-
+  {
   std::stringstream ss;
   ss << this->CenterImage;
-  of << indent << "centerImage=\"" << ss.str() << "\" ";
-
+  of << indent << " centerImage=\"" << ss.str() << "\"";
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -117,7 +119,6 @@ void vtkMRMLVolumeArchetypeStorageNode::PrintSelf(ostream& os, vtkIndent indent)
 {  
   vtkMRMLStorageNode::PrintSelf(os,indent);
   os << indent << "CenterImage:   " << this->CenterImage << "\n";
-
 }
 
 //----------------------------------------------------------------------------
@@ -132,7 +133,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
 {
 
   // test whether refNode is a valid node to hold a volume
-  if ( !(refNode->IsA("vtkMRMLScalarVolumeNode")) || refNode->IsA("vtkMRMLVectorVolumeNode" ) )
+  if ( !( refNode->IsA("vtkMRMLScalarVolumeNode") || refNode->IsA("vtkMRMLVectorVolumeNode" ) ) )
     {
     vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
     return 0;         
@@ -204,7 +205,8 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     reader->Delete();
     return 0;
     }
-  if (reader->GetOutput() == NULL) 
+  if (reader->GetOutput() == NULL 
+      || reader->GetOutput()->GetPointData()->GetScalars()->GetNumberOfTuples() == 0) 
     {
     vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file");
     reader->Delete();
@@ -289,6 +291,7 @@ int vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
   writer->SetFileName(fullName.c_str());
   
   writer->SetInput( volNode->GetImageData() );
+  writer->SetUseCompression(this->GetUseCompression());
 
   // set volume attributes
   vtkMatrix4x4* mat = vtkMatrix4x4::New();
@@ -304,6 +307,7 @@ int vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
     {
     result = 0;
     }
+  mat->Delete();
   writer->Delete();    
   
   return result;

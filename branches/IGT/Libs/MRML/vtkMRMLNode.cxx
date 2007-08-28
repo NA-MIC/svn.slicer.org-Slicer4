@@ -48,7 +48,6 @@ vtkMRMLNode::vtkMRMLNode()
   // Must set name to NULL first so that the SetName
   // macro will not free memory.
   this->Name = NULL;
-  this->SetName("");
 
   this->SingletonTag = NULL;
 
@@ -56,8 +55,12 @@ vtkMRMLNode::vtkMRMLNode()
   this->Scene = NULL;
 
   this->HideFromEditors = 1;
+  this->Selectable = 1;
 
   this->AddToScene = 1;
+
+  this->DisableModifiedEvent = 0;
+  this->ModifiedEventPending = 0;
 
   // Set up callbacks
   this->MRMLCallbackCommand = vtkCallbackCommand::New ( );
@@ -89,10 +92,15 @@ vtkMRMLNode::~vtkMRMLNode()
     {
     delete [] this->ID;
     }
+  if (this->SceneRootDir)
+    {
+    delete [] this->SceneRootDir;
+    }
   if (this->MRMLObserverManager)
     {
     this->MRMLObserverManager->Delete();
     }
+
   // unregister and set null pointers.
   if ( this->MRMLCallbackCommand )
     {
@@ -103,8 +111,9 @@ vtkMRMLNode::~vtkMRMLNode()
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLNode::Copy(vtkMRMLNode *node)
+void vtkMRMLNode::CopyWithScene(vtkMRMLNode *node)
 {
+
   if (node->GetScene())
     {
     this->SetScene(node->GetScene());
@@ -113,13 +122,21 @@ void vtkMRMLNode::Copy(vtkMRMLNode *node)
     {
     this->SetID( node->GetID() );
     } 
+  this->Copy(node);
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLNode::Copy(vtkMRMLNode *node)
+{
   if (node->GetName() && strcmp(node->GetName(),""))
     {
     this->SetName(node->GetName());
     }
   this->HideFromEditors = node->HideFromEditors;
   this->SaveWithScene = node->SaveWithScene ;
- 
+  this->Selectable = node->Selectable;
+  this->AddToScene = node->AddToScene;
+
   if (node->GetSingletonTag())
     {
     this->SetSingletonTag( node->GetSingletonTag() );
@@ -155,17 +172,19 @@ void vtkMRMLNode::WriteXML(ostream& of, int nIndent)
   vtkIndent indent(nIndent);
   if (this->ID != NULL) 
     {
-    of << indent << " id=\"" << this->ID << "\" ";
+    of << indent << " id=\"" << this->ID << "\"";
     }
   if (this->Name != NULL) 
     {
-    of << indent << "name=\"" << this->Name << "\" ";
+    of << indent << " name=\"" << this->Name << "\"";
     }
   if (this->Description != NULL) 
     {
-    of << indent << "description=\"" << this->Description << "\" ";
+    of << indent << " description=\"" << this->Description << "\"";
     }
-  of << indent << " hideFromEditors=\"" << (this->HideFromEditors ? "true" : "false") << "\" ";
+  of << indent << " hideFromEditors=\"" << (this->HideFromEditors ? "true" : "false") << "\"";
+
+  of << indent << " selectable=\"" << (this->Selectable ? "true" : "false") << "\" ";
 
 }
 
@@ -199,6 +218,17 @@ void vtkMRMLNode::ReadXMLAttributes(const char** atts)
       else
         {
         this->HideFromEditors = 0;
+        }
+      }
+    else if (!strcmp(attName, "selectable")) 
+      {
+      if (!strcmp(attValue,"true")) 
+        {
+        this->Selectable = 1;
+        }
+      else
+        {
+        this->Selectable = 0;
         }
       }
     } 

@@ -81,14 +81,14 @@ void vtkMRMLModelHierarchyNode::WriteXML(ostream& of, int nIndent)
 
    if (this->ModelNodeID != NULL) 
     {
-    of << indent << "modelNodeRef=\"" << this->ModelNodeID << "\" ";
+    of << indent << " modelNodeRef=\"" << this->ModelNodeID << "\"";
     }
   if (this->DisplayNodeID != NULL) 
     {
-    of << indent << "displayNodeRef=\"" << this->DisplayNodeID << "\" ";
+    of << indent << " displayNodeRef=\"" << this->DisplayNodeID << "\"";
     }
 
-  of << indent << " expanded=\"" << (this->Expanded ? "true" : "false") << "\" ";
+  of << indent << " expanded=\"" << (this->Expanded ? "true" : "false") << "\"";
 }
 
 //----------------------------------------------------------------------------
@@ -119,12 +119,12 @@ void vtkMRMLModelHierarchyNode::ReadXMLAttributes(const char** atts)
     if (!strcmp(attName, "modelNodeRef")) 
       {
       this->SetModelNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->ModelNodeID, this);
+      //this->Scene->AddReferencedNodeID(this->ModelNodeID, this);
       }
     else if (!strcmp(attName, "displayNodeRef")) 
       {
       this->SetDisplayNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->DisplayNodeID, this);
+      //this->Scene->AddReferencedNodeID(this->DisplayNodeID, this);
       }
     else if (!strcmp(attName, "expanded")) 
         {
@@ -173,6 +173,8 @@ void vtkMRMLModelHierarchyNode::PrintSelf(ostream& os, vtkIndent indent)
 void vtkMRMLModelHierarchyNode::UpdateScene(vtkMRMLScene *scene)
 {
   Superclass::UpdateScene(scene);
+  this->SetAndObserveDisplayNodeID(this->GetDisplayNodeID());
+
 }
 
 //-----------------------------------------------------------

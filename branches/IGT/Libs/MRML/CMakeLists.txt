@@ -27,6 +27,7 @@ SET(MRML_SRCS
         vtkMRMLVolumeArchetypeStorageNode.cxx
         vtkMRMLVolumeHeaderlessStorageNode.cxx
         vtkMRMLVolumeDisplayNode.cxx
+        vtkMRMLVolumeGlyphDisplayNode.cxx
         vtkMRMLTransformableNode.cxx
         vtkMRMLTransformNode.cxx
         vtkMRMLLinearTransformNode.cxx
@@ -47,6 +48,7 @@ SET(MRML_SRCS
         vtkMRMLDiffusionTensorDisplayPropertiesNode.cxx
         vtkMRMLDiffusionWeightedVolumeDisplayNode.cxx
         vtkMRMLDiffusionWeightedVolumeNode.cxx
+        vtkMRMLDiffusionImageVolumeNode.cxx
         vtkMRMLDiffusionTensorVolumeNode.cxx
         vtkMRMLDiffusionTensorVolumeDisplayNode.cxx
         vtkMRMLVectorVolumeDisplayNode.cxx
@@ -56,6 +58,14 @@ SET(MRML_SRCS
         vtkMRMLHierarchyNode.cxx
         vtkMRMLModelHierarchyNode.cxx
         vtkMRMLSceneSnapshotNode.cxx
+        vtkMRMLSnapshotClipNode.cxx
+        vtkMRMLROINode.cxx
+        vtkMRMLROIListNode.cxx
+        vtkMRMLUnstructuredGridNode.cxx
+        vtkMRMLUnstructuredGridDisplayNode.cxx
+        vtkMRMLUnstructuredGridStorageNode.cxx
+        vtkMRMLDisplayNode.cxx
+        vtkMRMLDisplayableNode.cxx
         # Note: when you add new node types, add
         # register code to the vtkMRMLScene constructor
 )
@@ -73,6 +83,8 @@ SET_SOURCE_FILES_PROPERTIES(
   vtkMRMLNode.cxx 
   vtkMRMLVolumeNode.cxx
   vtkMRMLTransformNode.cxx
+  vtkMRMLDisplayNode.cxx
+  vtkMRMLDisplayableNode.cxx
   ABSTRACT
   )
 

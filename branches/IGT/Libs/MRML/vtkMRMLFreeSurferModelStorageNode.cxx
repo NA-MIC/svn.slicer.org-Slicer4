@@ -117,7 +117,7 @@ void vtkMRMLFreeSurferModelStorageNode::WriteXML(ostream& of, int indent)
   Superclass::WriteXML(of, indent);
   if (this->SurfaceFileName != NULL)
     {
-    of << " surfaceFileName=\"" << vtkMRMLNode::URLEncodeString(this->SurfaceFileName) << "\" ";    
+    of << " surfaceFileName=\"" << vtkMRMLNode::URLEncodeString(this->SurfaceFileName) << "\"";    
     }
   
   if (this->GetNumberOfOverlayFiles() > 0)
@@ -279,6 +279,8 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
          extension == std::string(".smoothwm") ||
          extension == std::string(".pial") ) 
       {
+      vtkDebugMacro("Reading in a freesurfer surface file, extension = " << extension.c_str());
+
       //read in a free surfer file
       // -- create normals and triangle strips also
       vtkFSSurfaceReader *reader = vtkFSSurfaceReader::New();
@@ -321,6 +323,7 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
       if (modelNode->GetPolyData() != NULL &&
           modelNode->GetPolyData()->GetPointData() != NULL)
         {
+        vtkMRMLModelDisplayNode *displayNode = modelNode->GetModelDisplayNode();
         int numVertices = modelNode->GetPolyData()->GetPointData()->GetNumberOfTuples();
 
         vtkFSSurfaceScalarReader *reader = vtkFSSurfaceScalarReader::New();
@@ -330,13 +333,25 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
         std::string::size_type ptr = name.find_last_of(std::string("/"));
         std::string scalarName;
         if (ptr != std::string::npos)
-          {
-          scalarName = name.substr(++ptr);
-          }
+        {
+            // find the dir name above
+            std::string::size_type ptrNext = ptr;
+            std::string::size_type dirptr = name.find_last_of(std::string("/"), --ptrNext);
+            if (dirptr != std::string::npos)
+            {
+                scalarName = name.substr(++dirptr);
+                vtkDebugMacro("Using dir name in scalar name " << scalarName.c_str());
+            }
+            else
+            {
+                scalarName = name.substr(++ptr);
+                vtkDebugMacro("Not using the dir name in the scalar name " << scalarName.c_str());
+            }
+        }
         else
-          {
-          scalarName = name;
-          }
+        {
+            scalarName = name;
+        }
         floatArray->SetName(scalarName.c_str());
         reader->SetOutput(floatArray);
 
@@ -344,9 +359,12 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
 
         std::cout << "Finished reading model overlay file " << fullName.c_str() << "\n\tscalars called " << scalarName.c_str() << ", adding point scalars to model node " << modelNode->GetName() << endl;
         modelNode->AddPointScalars(floatArray);
-        modelNode->GetDisplayNode()->SetActiveScalarName(scalarName.c_str());
-        // make sure scalars are visible
-        modelNode->GetDisplayNode()->SetScalarVisibility(1);
+        if (displayNode)
+          {
+          displayNode->SetActiveScalarName(scalarName.c_str());
+          // make sure scalars are visible
+          displayNode->SetScalarVisibility(1);
+          }
         // set the colour look up table
         vtkMRMLFreeSurferProceduralColorNode *colorNode = vtkMRMLFreeSurferProceduralColorNode::New();
         if (extension == std::string(".thickness"))
@@ -373,7 +391,10 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
           //colorNode->SetTypeToColorWheel();
           }
         vtkDebugMacro("Using color node " << colorNode->GetTypeAsIDString() << " for scalar " << scalarName.c_str());
-        modelNode->GetDisplayNode()->SetAndObserveColorNodeID(colorNode->GetTypeAsIDString());
+        if (displayNode)
+          {
+          displayNode->SetAndObserveColorNodeID(colorNode->GetTypeAsIDString());
+          }
         colorNode->Delete();
         colorNode  = NULL;
 
@@ -445,14 +466,17 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
           {
           std::cout << "Finished reading model overlay file " << fullName.c_str() << "\n\tscalars called " << scalarName.c_str() << ", adding point scalars to model node" << endl;
           modelNode->AddPointScalars(floatArray);
-          // set the active array
-          modelNode->GetDisplayNode()->SetActiveScalarName(scalarName.c_str());
-          // make sure scalars are visible
-          modelNode->GetDisplayNode()->SetScalarVisibility(1);
+          vtkMRMLModelDisplayNode *displayNode = modelNode->GetModelDisplayNode();
           // set the colour look up table
           vtkMRMLFreeSurferProceduralColorNode *colorNode = vtkMRMLFreeSurferProceduralColorNode::New();
           colorNode->SetTypeToHeat();
-          modelNode->GetDisplayNode()->SetAndObserveColorNodeID(colorNode->GetTypeAsIDString());
+          if (displayNode)
+            {
+            displayNode->SetActiveScalarName(scalarName.c_str());
+            // make sure scalars are visible
+            displayNode->SetScalarVisibility(1);
+            displayNode->SetAndObserveColorNodeID(colorNode->GetTypeAsIDString());
+            }
           colorNode->Delete();
           colorNode = NULL;
           }
@@ -474,6 +498,7 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
       if (modelNode->GetPolyData() != NULL &&
           modelNode->GetPolyData()->GetPointData() != NULL)
         {
+        vtkMRMLModelDisplayNode *displayNode = modelNode->GetModelDisplayNode();
         vtkIntArray *scalars;
         int scalaridx = modelNode->GetPolyData()->GetPointData()->SetActiveScalars("labels");
         if (scalaridx == -1)
@@ -482,10 +507,13 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
           scalars = vtkIntArray::New();
           scalars->SetName("labels");
           modelNode->AddPointScalars(scalars);
-          scalaridx = modelNode->GetPolyData()->GetPointData()->SetActiveScalars("labels");
-          modelNode->GetDisplayNode()->SetActiveScalarName("labels");
-          modelNode->GetDisplayNode()->SetScalarVisibility(1);
           scalars->Delete();
+          scalaridx = modelNode->GetPolyData()->GetPointData()->SetActiveScalars("labels");
+          if (displayNode)
+            {
+            displayNode->SetActiveScalarName("labels");
+            displayNode->SetScalarVisibility(1);
+            }
           }
         scalars = vtkIntArray::SafeDownCast(modelNode->GetPolyData()->GetPointData()->GetArray(scalaridx));
 
@@ -515,7 +543,7 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
             if (cnode != NULL)
               {
               vtkWarningMacro("Could not find an internal colour table in " << fullName.c_str() << ", using default colour node " << cnode->GetName());
-              modelNode->GetDisplayNode()->SetAndObserveColorNodeID(cnode->GetID());
+              modelNode->GetModelDisplayNode()->SetAndObserveColorNodeID(cnode->GetID());
               cnode = NULL;
               }
             }
@@ -538,7 +566,7 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
           int numColours = lutNode->GetNumberOfColors();
           // set the number of colours so that can use add call to set the names
           lutNode->SetNumberOfColors(numColours);
-          modelNode->GetDisplayNode()->SetScalarRange(0, numColours);
+          modelNode->GetModelDisplayNode()->SetScalarRange(0, numColours);
           vtkDebugMacro("Got color table names " << colorNames << ", number of colours = " << numColours << endl);
           std::string colorString = std::string(colorNames);
           std::string::size_type startBracketIndex = colorString.find("{", 0);
@@ -562,7 +590,7 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
               }
             endBracketIndex = colorString.find( "}", startBracketIndex);
             }
-          modelNode->GetDisplayNode()->SetAndObserveColorNodeID(lutNode->GetID());
+          modelNode->GetModelDisplayNode()->SetAndObserveColorNodeID(lutNode->GetID());
           }
         lutNode->Delete();
         reader->Delete();
@@ -622,9 +650,22 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
         std::string::size_type ptr = name.find_last_of(std::string("/"));
         std::string scalarName;
         if (ptr != std::string::npos)
-          {
-          scalarName = name.substr(++ptr);
-          }
+        {
+            // find the dir name above
+            std::string::size_type ptrNext = ptr;
+            std::string::size_type dirptr = name.find_last_of(std::string("/"), --ptrNext);
+            if (dirptr != std::string::npos)
+            {
+                scalarName = name.substr(++dirptr);
+                vtkDebugMacro("Using dir name in scalar name " << scalarName.c_str());
+            }
+            else
+            {
+                scalarName = name.substr(++ptr);
+                vtkDebugMacro("Not using the dir name in the scalar name " << scalarName.c_str());
+            }
+
+        }
         else
           {
           scalarName = name;
@@ -650,18 +691,18 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
             }
           }
         vtkDebugMacro("ReadData: Setting scalar range, using min value = " << minValue << ", max value = " << maxValue);
-        modelNode->GetDisplayNode()->SetScalarRange(minValue, maxValue);
+        modelNode->GetModelDisplayNode()->SetScalarRange(minValue, maxValue);
         
         // add the scalars to the model
         modelNode->AddPointScalars(floatArray);
         // set the active array
-        modelNode->GetDisplayNode()->SetActiveScalarName(scalarName.c_str());
+        modelNode->GetModelDisplayNode()->SetActiveScalarName(scalarName.c_str());
         // make sure scalars are visible
-        modelNode->GetDisplayNode()->SetScalarVisibility(1);
+        modelNode->GetModelDisplayNode()->SetScalarVisibility(1);
         // use the heat colour scale
         vtkMRMLFreeSurferProceduralColorNode *colorNode = vtkMRMLFreeSurferProceduralColorNode::New();
         colorNode->SetTypeToHeat();
-        modelNode->GetDisplayNode()->SetAndObserveColorNodeID(colorNode->GetTypeAsIDString());
+        modelNode->GetModelDisplayNode()->SetAndObserveColorNodeID(colorNode->GetTypeAsIDString());
         colorNode->Delete();
         colorNode = NULL;         
        
@@ -672,7 +713,7 @@ int vtkMRMLFreeSurferModelStorageNode::ReadData(vtkMRMLNode *refNode)
       }
     else 
       {
-      vtkErrorMacro("Cannot read model file '" << name.c_str() << "' (extension = " << extension.c_str() << ")");
+      vtkErrorMacro("MRML FreeSurfer ModelStorage Node: Cannot read model file '" << name.c_str() << "' (extension = " << extension.c_str() << ")");
       return 0;
       }
     }

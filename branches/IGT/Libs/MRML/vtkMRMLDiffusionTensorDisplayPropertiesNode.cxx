@@ -63,7 +63,7 @@ vtkMRMLDiffusionTensorDisplayPropertiesNode::vtkMRMLDiffusionTensorDisplayProper
   this->ColorGlyphBy = this->FractionalAnisotropy;
 
   // Glyph general parameters
-  this->GlyphScaleFactor = 1000;
+  this->GlyphScaleFactor = 50;
   this->GlyphExtractEigenvalues = 1;
   this->GlyphEigenvector = this->Major;
 
@@ -75,8 +75,8 @@ vtkMRMLDiffusionTensorDisplayPropertiesNode::vtkMRMLDiffusionTensorDisplayProper
   this->TubeGlyphNumberOfSides = 4; // was 6 in dtmri.tcl
 
   // Ellipsoid Glyph parameters
-  this->EllipsoidGlyphThetaResolution = 6; // was 12
-  this->EllipsoidGlyphPhiResolution = 6; // was 12
+  this->EllipsoidGlyphThetaResolution = 9; // was 12
+  this->EllipsoidGlyphPhiResolution = 9; // was 12
 
   // Superquadric Glyph parameters
   this->SuperquadricGlyphGamma = 1;
@@ -85,6 +85,7 @@ vtkMRMLDiffusionTensorDisplayPropertiesNode::vtkMRMLDiffusionTensorDisplayProper
 
   // VTK Objects
   this->GlyphSource = NULL;
+  this->UpdateGlyphSource();
 
 }
 
@@ -263,8 +264,10 @@ void vtkMRMLDiffusionTensorDisplayPropertiesNode::PrintSelf(ostream& os, vtkInde
 
 
 //----------------------------------------------------------------------------
-vtkPolyData * vtkMRMLDiffusionTensorDisplayPropertiesNode::GetGlyphSource ( )
+void vtkMRMLDiffusionTensorDisplayPropertiesNode::UpdateGlyphSource ( )
 {
+  vtkDebugMacro("Get Glyph Source");
+
   // Get rid of any old glyph source
   if ( this->GlyphSource != NULL )
     {
@@ -304,7 +307,7 @@ vtkPolyData * vtkMRMLDiffusionTensorDisplayPropertiesNode::GetGlyphSource ( )
       line->Update( );
 
       // if we are doing tubes, put a tube on the line
-      if (this->GlyphGeometry == this->Tubes)
+      if (this->GlyphGeometry == Tubes)
         {
         vtkTubeFilter *tube = vtkTubeFilter::New();
         tube->SetInput( line->GetOutput( ) );
@@ -315,10 +318,11 @@ vtkPolyData * vtkMRMLDiffusionTensorDisplayPropertiesNode::GetGlyphSource ( )
         this->SetGlyphSource( tube->GetOutput( ) );
         tube->Delete( );
 
+        vtkDebugMacro("Get Glyph Source: Tubes");
         }
       else
         {
-
+        vtkDebugMacro("Get Glyph Source: Lines");
         // here we are just displaying lines
         this->SetGlyphSource( line->GetOutput( ) );
 
@@ -340,16 +344,178 @@ vtkPolyData * vtkMRMLDiffusionTensorDisplayPropertiesNode::GetGlyphSource ( )
       this->SetGlyphSource( sphere->GetOutput( ) );
       sphere->Delete( );
 
+      vtkDebugMacro("Get Glyph Source: Ellipsoids");
       }
 
       break;
 
     case Superquadrics:
+      {
+      vtkErrorMacro("vtkMRMLDiffusionTensorDisplayPropertiesNode: Superquadric glyph source not handled yet.");
       // Here do nothing, the superquadric must be created specifically for each tensor
+      }
+
       break;
 
     }
+}
 
-  return ( this->GlyphSource );
+const char* vtkMRMLDiffusionTensorDisplayPropertiesNode::GetScalarEnumAsString(int var)
+{
+  if (var ==  this->Trace)
+    {
+    return "Trace";
+    }
+  if (var == this->Determinant)
+    {
+    return "Determinant";
+    }
+  if (var == this->RelativeAnisotropy)
+    {
+    return "RelativeAnisotropy";
+    }
+  if (var == this->FractionalAnisotropy)
+    {
+    return "FractionalAnisotropy";
+    }
+  if (var == this->MaxEigenvalue)
+    {
+    return "MaxEigenvalue";
+    }
+  if (var == this->MidEigenvalue)
+    {
+    return "MidEigenvalue";
+    }
+  if (var == this->MinEigenvalue)
+    {
+    return "MinEigenvalue";
+    }
+  if (var == this->LinearMeasure)
+    {
+    return "LinearMeasure";
+    }
+  if (var == this->PlanarMeasure)
+    {
+    return "PlanarMeasure";
+    }
+  if (var == this->SphericalMeasure)
+    {
+    return "SphericalMeasure";
+    }
+  if (var == this->ColorOrientation)
+    {
+    return "ColorOrientation";
+    }
+  if (var == this->D11)
+    {
+    return "D11";
+    }
+  if (var == this->D22)
+    {
+    return "D22";
+    }
+  if (var == this->D33)
+    {
+    return "D33";
+    }
+  if (var == this->Mode)
+    {
+    return "Mode";
+    }
+  if (var == this->ColorMode)
+    {
+    return "ColorMode";
+    }
+  if (var == this->MaxEigenvalueProjX)
+    {
+    return "MaxEigenvalueProjX";
+    }
+  if (var == this->MaxEigenvalueProjY)
+    {
+    return "MaxEigenvalueProjY";
+    }
+  if (var == this->MaxEigenvalueProjZ)
+    {
+    return "MaxEigenvalueProjZ";
+    }
+  if (var == this->MaxEigenvec_ProjX)
+    {
+    return "MaxEigenvec_ProjX";
+    }
+  if (var == this->MaxEigenvec_ProjY)
+    {
+    return "MaxEigenvec_ProjY";
+    }
+  if (var == this->MaxEigenvec_ProjZ)
+    {
+    return "MaxEigenvec_ProjZ";
+    }
+  if (var == this->ParallelDiffusivity)
+    {
+    return "ParallelDiffusivity";
+    }
+  if (var == this->PerpendicularDiffusivity)
+    {
+    return "PerpendicularDiffusivity";
+    }
+  if (var == this->ColorOrientationMiddleEigenvector)
+    {
+    return "ColorOrientationMiddleEigenvector";
+    }
+  if (var == this->ColorOrientationMinEigenvector)
+    {
+    return "ColorOrientationMinEigenvector";
+    }
+  return "(unknown)";
+}
 
+const char* vtkMRMLDiffusionTensorDisplayPropertiesNode::GetScalarInvariantAsString()
+{
+  return this->GetScalarEnumAsString(this->ScalarInvariant);
+}
+
+const char* vtkMRMLDiffusionTensorDisplayPropertiesNode::GetGlyphGeometryAsString()
+{
+  if (this->GlyphGeometry == this->Lines)
+    {
+    return "Lines";
+    }
+  if (this->GlyphGeometry == this->Tubes)
+    {
+    return "Tubes";
+    }
+  if (this->GlyphGeometry == this->Ellipsoids)
+    {
+    return "Ellipsoids";
+    }
+  if (this->GlyphGeometry == this->Superquadrics)
+    {
+    return "Superquadrics";
+    }
+  return "(unknown)";
+}
+
+const char*
+vtkMRMLDiffusionTensorDisplayPropertiesNode::GetGlyphEigenvectorAsString()
+{
+
+  if (this->GlyphEigenvector == this->Major)
+    {
+    return "Major";
+    }
+  if (this->GlyphEigenvector == this->Middle)
+    {
+    return "Middle";
+    }
+  if (this->GlyphEigenvector == this->Minor)
+    {
+    return "Minor";
+    }
+  return "(unknown)";
+}
+
+const char *
+vtkMRMLDiffusionTensorDisplayPropertiesNode::GetColorGlyphByAsString()
+{
+  return this->GetScalarEnumAsString(this->ColorGlyphBy);
 }
