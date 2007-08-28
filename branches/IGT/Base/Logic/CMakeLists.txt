@@ -4,24 +4,33 @@ PROJECT(SlicerBaseLogic)
 # Sources
 
 SET(SlicerBaseLogic_SRCS
+  # Logic classes (data management and calculation)
   vtkSlicerLogic.cxx 
   vtkSlicerApplicationLogic.cxx 
   vtkSlicerModuleLogic.cxx 
   vtkSlicerTask.cxx
   vtkSlicerSliceLogic.cxx 
-  vtkSlicerSliceLayerLogic.cxx 
+  vtkSlicerSliceLayerLogic.cxx
+  vtkSlicerSliceGlyphLogic.cxx
+  vtkSlicerGlyphLogic.cxx
   vtkSlicerVolumesLogic.cxx 
   vtkSlicerModelsLogic.cxx 
   vtkSlicerModelHierarchyLogic.cxx
   vtkSlicerFiducialsLogic.cxx
   vtkSlicerColorLogic.cxx
-  # slicer's vtk extensions
+  # slicer's vtk extensions (filters)
   vtkImageSlicePaint.cxx 
   vtkImageSlice.cxx 
   vtkImageAccumulateDiscrete.cxx
   vtkImageBimodalAnalysis.cxx
   vtkImageFillROI.cxx
   vtkSlicerGlyphSource2D.cxx
+  vtkSlicerROILogic.cxx
+  vtkImageResliceMask.cxx 
+  vtkImageConnectivity.cxx 
+  vtkImageLabelChange.cxx 
+  vtkImageErode.cxx 
+  vtkImageNeighborhoodFilter.cxx
 )
 
 # Abstract/pure virtual classes
@@ -64,6 +73,7 @@ INCLUDE_DIRECTORIES(
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+SET(VTK_WRAP_HINTS ${SlicerBaseLogic_SOURCE_DIR}/Wrapping/Tcl/hints)
 VTK_WRAP_TCL3(SlicerBaseLogic SlicerBaseLogic_TCL_SRCS "${SlicerBaseLogic_SRCS}" "")
 
 
