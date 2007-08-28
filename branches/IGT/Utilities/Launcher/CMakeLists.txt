@@ -18,19 +18,22 @@ IF(${launcher_platform} MATCHES Windows)
 ENDIF(${launcher_platform} MATCHES Windows)
 
 IF(${launcher_platform} MATCHES Linux)
-  SET(launcher_platform  linux-x86)
+  EXEC_PROGRAM( uname ARGS -m OUTPUT_VARIABLE machine ) 
+  IF (${machine} MATCHES "i686")
+    SET (machine "x86") 
+  ENDIF (${machine} MATCHES "i686")
+  SET(launcher_platform  linux-${machine})
 ENDIF(${launcher_platform} MATCHES Linux)
-
-MESSAGE ( "launcher_platform is ${launcher_platform}" )
 
 IF(${launcher_platform} MATCHES Darwin-powerpc)
   SET(launcher_platform darwin-ppc)
 ENDIF(${launcher_platform} MATCHES Darwin-powerpc)
 
+
 STRING ( TOLOWER "${launcher_platform}" launcher_platform )
 SET (launcher_name "Slicer3-${launcher_platform}${CMAKE_EXECUTABLE_SUFFIX}")
 
-MESSAGE ( "launcher name is ${launcher_name}" )
+MESSAGE ( "launcher_platform is ${launcher_platform}\nlauncher name is ${launcher_name}" )
 
 SET ( launcher_binary
   "${Slicer3_BINARY_DIR}/Slicer3${CMAKE_EXECUTABLE_SUFFIX}" )
