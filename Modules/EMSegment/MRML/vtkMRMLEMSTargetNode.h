@@ -6,6 +6,8 @@
 #include "vtkEMSegment.h"
 #include "vtkMRMLEMSVolumeCollectionNode.h"
 
+class vtkMRMLEMSIntensityNormalizationParametersNode;
+
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSTargetNode : 
   public vtkMRMLEMSVolumeCollectionNode
 {

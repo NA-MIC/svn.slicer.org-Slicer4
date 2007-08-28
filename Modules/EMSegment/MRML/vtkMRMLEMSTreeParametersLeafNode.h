@@ -4,7 +4,7 @@
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkEMSegment.h"
-#include "vtkMRMLEMSGlobalParametersNode.h"
+#include "vtkMRMLScene.h"
 
 #include <vector>
 
@@ -34,19 +34,11 @@ public:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "EMSTreeParametersLeaf";}
 
-  // Description:
-  // Updates this node if it depends on other nodes
-  // when the node is deleted in the scene
-  virtual void UpdateReferences();
-
-  // Description:
-  // Update the stored reference to another node in the scene
-  virtual void UpdateReferenceID(const char *oldID, const char *newID);
-
   vtkGetMacro(NumberOfTargetInputChannels, unsigned int);
   virtual void SetNumberOfTargetInputChannels(unsigned int n);
-  // synchronize with global parameters
-  virtual void SynchronizeNumberOfTargetInputChannels();
+  virtual void AddTargetInputChannel();
+  virtual void RemoveNthTargetInputChannel(int index);
+  virtual void MoveNthTargetInputChannel(int fromIndex, int toIndex);
 
   vtkGetMacro(IntensityLabel, int);
   vtkSetMacro(IntensityLabel, int);
@@ -60,12 +52,22 @@ public:
   virtual double GetLogCovariance(int row, int column) const;
   virtual void SetLogCovariance(int row, int column, double value);
 
-  //
-  // related nodes
-  //
-  vtkSetReferenceStringMacro(GlobalParametersNodeID);
-  vtkGetStringMacro(GlobalParametersNodeID);
-  virtual vtkMRMLEMSGlobalParametersNode* GetGlobalParametersNode();
+  //BTX
+  enum
+    {
+    DistributionSpecificationManual = 0,
+    DistributionSpecificationManuallySample,
+    DistributionSpecificationAutoSample
+    };
+  //ETX
+  vtkGetMacro(DistributionSpecificationMethod, int);
+  vtkSetMacro(DistributionSpecificationMethod, int);
+
+  virtual int GetNumberOfSamplePoints() const;
+  virtual void AddSamplePoint(double xyz[3]);
+  virtual void RemoveNthSamplePoint(int n);
+  virtual void ClearSamplePoints();
+  virtual void GetNthSamplePoint(int n, double xyz[3]) const;
 
 protected:
   vtkMRMLEMSTreeParametersLeafNode();
@@ -73,13 +75,17 @@ protected:
   vtkMRMLEMSTreeParametersLeafNode(const vtkMRMLEMSTreeParametersLeafNode&);
   void operator=(const vtkMRMLEMSTreeParametersLeafNode&);
 
-  // references to other nodes
-  char*                               GlobalParametersNodeID;
-
   int                                 PrintQuality;
   int                                 IntensityLabel;
+  int                                 DistributionSpecificationMethod;
 
   //BTX
+  typedef vtkstd::vector<double>                PointType;
+  typedef vtkstd::vector<PointType>             SamplePointListType;
+  typedef SamplePointListType::iterator         SamplePointListIterator;
+  typedef SamplePointListType::const_iterator   SamplePointListConstIterator;
+
+  SamplePointListType                           DistributionSamplePointsRAS;
   vtkstd::vector<double>                        LogMean;
   vtkstd::vector<vtkstd::vector<double> >       LogCovariance;
   //ETX

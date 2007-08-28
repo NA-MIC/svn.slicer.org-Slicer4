@@ -4,8 +4,7 @@
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkEMSegment.h"
-#include "vtkMRMLEMSAtlasNode.h"
-#include "vtkMRMLEMSTargetNode.h"
+#include "vtkMRMLEMSIntensityNormalizationParametersNode.h"
 
 class VTK_EMSEGMENT_EXPORT vtkMRMLEMSGlobalParametersNode : 
   public vtkMRMLNode
@@ -16,6 +15,15 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();
+
+  // Description:
+  // Updates this node if it depends on other nodes
+  // when the node is deleted in the scene
+  virtual void UpdateReferences();
+
+  // Description:
+  // Update the stored reference to another node in the scene
+  virtual void UpdateReferenceID(const char *oldID, const char *newID);
 
   // Description:
   // Set node attributes
@@ -33,26 +41,6 @@ public:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "EMSGlobalParameters";}
 
-  // Description:
-  // Updates this node if it depends on other nodes
-  // when the node is deleted in the scene
-  virtual void UpdateReferences();
-
-  // Description:
-  // Update the stored reference to another node in the scene
-  virtual void UpdateReferenceID(const char *oldID, const char *newID);
-
-  //
-  // related mrml nodes
-  //
-  vtkGetStringMacro(AtlasNodeID);
-  vtkSetReferenceStringMacro(AtlasNodeID);
-  vtkMRMLEMSAtlasNode* GetAtlasNode();
-
-  vtkGetStringMacro(TargetNodeID);
-  vtkSetReferenceStringMacro(TargetNodeID);
-  vtkMRMLEMSTargetNode* GetTargetNode();
-
   //
   // general parmeters
   //
@@ -61,6 +49,11 @@ public:
 
   vtkSetVectorMacro(SegmentationBoundaryMax, int, 3);
   vtkGetVectorMacro(SegmentationBoundaryMax, int, 3);
+
+  virtual void AddTargetInputChannel();
+  virtual void RemoveNthTargetInputChannel(int n);
+  virtual void MoveNthTargetInputChannel(int fromIndex, int toIndex);
+  vtkGetMacro(NumberOfTargetInputChannels, int);
 
   //
   // registration parameters
@@ -99,19 +92,20 @@ public:
   vtkSetStringMacro(WorkingDirectory);
 
   //
-  // convinience method: queries target node
-  // 
-  virtual int GetNumberOfTargetInputChannels();
+  // intensity normlaization parameters
+  //
+  vtkMRMLEMSIntensityNormalizationParametersNode*
+    GetNthIntensityNormalizationParametersNode(int n);
+  virtual const char* GetNthIntensityNormalizationParametersNodeID(int n);
+  virtual void 
+    SetNthIntensityNormalizationParametersNodeID(int n, 
+                                                 const char* nodeID);
 
 protected:
   vtkMRMLEMSGlobalParametersNode();
   ~vtkMRMLEMSGlobalParametersNode();
   vtkMRMLEMSGlobalParametersNode(const vtkMRMLEMSGlobalParametersNode&);
   void operator=(const vtkMRMLEMSGlobalParametersNode&);
-
-  // references to other nodes
-  char*                               AtlasNodeID;
-  char*                               TargetNodeID;
 
   int                                 RegistrationAffineType;
   int                                 RegistrationDeformableType;
@@ -129,6 +123,15 @@ protected:
 
   int                                 SegmentationBoundaryMin[3];
   int                                 SegmentationBoundaryMax[3];
+
+  int                                 NumberOfTargetInputChannels;
+
+  //BTX
+  typedef vtkstd::vector<std::string>  IntensityNormalizationParameterListType;
+  typedef IntensityNormalizationParameterListType::iterator 
+  IntensityNormalizationParameterListIterator;
+  IntensityNormalizationParameterListType IntensityNormalizationParameterList;
+  //ETX
 };
 
 #endif

@@ -47,6 +47,12 @@ vtkScriptedModuleGUI::vtkScriptedModuleGUI()
 vtkScriptedModuleGUI::~vtkScriptedModuleGUI()
 {
 
+  if (this->GetApplication())
+    {
+    this->GetApplication()->Script("%sDestructor %s", 
+      this->GetModuleName(), this->GetTclName());
+    }
+
   this->RemoveMRMLNodeObservers();
   this->RemoveLogicObservers();
 
@@ -80,6 +86,19 @@ void vtkScriptedModuleGUI::RemoveLogicObservers()
 void vtkScriptedModuleGUI::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
+
+  os << indent << "ModuleName: " << (this->ModuleName ? this->ModuleName : "null") << endl;
+  os << indent << "Logic: " << endl;
+  if (this->Logic)
+    {
+    this->Logic->PrintSelf(os, indent.GetNextIndent());
+    }
+
+  os << indent << "ScriptedModuleNode: " << endl;
+  if (this->ScriptedModuleNode)
+    {
+    this->ScriptedModuleNode->PrintSelf(os, indent.GetNextIndent());
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -143,9 +162,17 @@ void vtkScriptedModuleGUI::ProcessMRMLEvents ( vtkObject *caller,
                                             unsigned long event,
                                             void *callData ) 
 {
-  // TODO: map the object and event to strings for tcl
+  vtkDebugMacro("ProcessMRMLEvents()");
+  vtkMRMLNode *mrmlNode = vtkMRMLNode::SafeDownCast(caller);
+
+  if (mrmlNode != NULL)
+    {
+    vtkDebugMacro("vtkScriptedModuleGUI::ProcessMRMLEvents: calling script " <<  this->GetModuleName() << "ProcessMRMLEvents with event " << event);
+    this->GetApplication()->Script("%sProcessMRMLEvents %s %s %ld", 
+                                   this->GetModuleName(), this->GetTclName(), mrmlNode->GetID(), event);
+    }
   
-  //std::cout << "ProcessMRMLEvents()" << std::endl;
+  
   // if parameter node has been changed externally, update GUI widgets
   // with new values 
   vtkMRMLScriptedModuleNode* node
@@ -187,3 +214,31 @@ unsigned long vtkScriptedModuleGUI::AddObserverByNumber ( vtkObject *observee, u
 } 
 
 
+//---------------------------------------------------------------------------
+unsigned long vtkScriptedModuleGUI::AddMRMLObserverByNumber ( vtkObject *observee, unsigned long event )
+{
+  if (observee == NULL)
+    {
+    vtkErrorMacro("AddMRMLObserverByNumber: observee is null, returning -1");
+    return VTK_UNSIGNED_LONG_MAX;
+    }
+  if (observee->HasObserver(event, (vtkCommand *)this->MRMLCallbackCommand) )
+    {
+    return event;
+    }
+  return ( observee->AddObserver(event, (vtkCommand *)this->MRMLCallbackCommand) );
+}
+
+//---------------------------------------------------------------------------
+void vtkScriptedModuleGUI::RemoveMRMLObserverByNumber ( vtkObject *observee, unsigned long event )
+{
+  if (observee == NULL)
+    {
+    vtkErrorMacro("RemoveMRMLObserverByNumber: observee is null");
+    }
+  vtkDebugMacro("RemoveMRMLObserverByNumber: event = " << event);
+  if (observee->HasObserver(event, (vtkCommand *)this->MRMLCallbackCommand))
+    {
+    observee->RemoveObservers(event, (vtkCommand *)this->MRMLCallbackCommand);
+    }
+}

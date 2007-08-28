@@ -17,6 +17,7 @@ Version:   $Revision: 1.2 $
 #include <sstream>
 
 #include "vtkObjectFactory.h"
+#include "vtkSmartPointer.h"
 
 #include "vtkCommandLineModuleLogic.h"
 #include "vtkCommandLineModule.h"
@@ -30,9 +31,13 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLDiffusionTensorVolumeNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeNode.h"
 #include "vtkMRMLFiducialListNode.h"
+#include "vtkMRMLROIListNode.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLModelStorageNode.h"
 #include "vtkMRMLModelDisplayNode.h"
+#include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLFiberBundleNode.h"
+#include "vtkMRMLFiberBundleStorageNode.h"
 
 #ifdef USE_TEEM // If we have NRRD support
 #include "vtkMRMLNRRDStorageNode.h"
@@ -98,6 +103,46 @@ void vtkCommandLineModuleLogic::PrintSelf(ostream& os, vtkIndent indent)
   
 }
 
+std::string
+vtkCommandLineModuleLogic
+::ConstructTemporarySceneFileName(vtkMRMLScene *scene)
+{
+  std::string fname;
+  std::ostringstream fnameString;
+  std::string pid;
+  std::ostringstream pidString;
+
+  // Part of the filename will include an encoding of the scene
+  // pointer for uniqueness
+  char tname[256];
+      
+  sprintf(tname, "%p", scene);
+      
+  fname = tname;
+
+  // To avoid confusing the Archetype readers, convert any
+  // numbers in the filename to characters [0-9]->[A-J]
+  std::transform(fname.begin(), fname.end(),
+                 fname.begin(), DigitsToCharacters());
+
+  // Encode process id into a string.  To avoid confusing the
+  // Archetype reader, convert the numbers in pid to characters [0-9]->[A-J]
+#ifdef _WIN32
+  pidString << GetCurrentProcessId();
+#else
+  pidString << getpid();
+#endif
+  pid = pidString.str();
+  std::transform(pid.begin(), pid.end(), pid.begin(), DigitsToCharacters());
+
+  // By default, the filename is based on the temporary directory and
+  // the pid
+  fname = this->TemporaryDirectory + "/" + pid + "_" + fname + ".mrml";
+
+  return fname;
+}
+
+
 //----------------------------------------------------------------------------
 std::string
 vtkCommandLineModuleLogic
@@ -105,7 +150,7 @@ vtkCommandLineModuleLogic
                              const std::string& type,
                              const std::string& name,
                              const std::vector<std::string>& extensions,
-                             bool isCommandLineModule) const
+                             CommandLineModuleType commandType) const
 {
   std::string fname = name;
   std::string pid;
@@ -114,14 +159,18 @@ vtkCommandLineModuleLogic
   // Constructing a temporary filename from a node involves:
   //
   // 1. If the consumer of the file can communicate directly with the
-  // MRML scene, then the node is encoded as slicer:%p/%p where the
-  // first pointer is the address of the scene which contains the node
-  // and the second pointer is the pointer to the node.
+  // MRML scene, then the node is encoded as slicer:%p#%s where the
+  // pointer is the address of the scene which contains the node
+  // and the string is the MRML node ID.
   //
-  // 2. If the consumer of the file cannot communicate directly with
+  // 2. If the consumer of the file is a Python module, it operates
+  // in the process space of Slicer.  The Python module can be given
+  // MRML node ID's directly.
+  //
+  // 3. If the consumer of the file cannot communicate directly with
   // the MRML scene, then a real temporary filename is constructed.
   // The filename will point to the Temporary directory defined for
-  // Slicer. THe filename will be unique to the process (multiple
+  // Slicer. The filename will be unique to the process (multiple
   // running instances of slicer will not collide).  The filename
   // will be unique to the node in the process (the same node will be
   // encoded to the same filename every time within that running
@@ -144,22 +193,31 @@ vtkCommandLineModuleLogic
   pid = pidString.str();
   std::transform(pid.begin(), pid.end(), pid.begin(), DigitsToCharacters());
 
+  // Because Python is responsible for looking up the MRML Object,
+  // we can simply return the MRML Id.
+  if ( commandType == PythonModule )
+    {
+    return fname;
+    }
   
+  // To avoid confusing the Archetype readers, convert any
+  // numbers in the filename to characters [0-9]->[A-J]
+  std::transform(fname.begin(), fname.end(),
+                 fname.begin(), DigitsToCharacters());
+
+  // By default, the filename is based on the temporary directory and
+  // the pid
+  fname = this->TemporaryDirectory + "/" + pid + "_" + fname;
+
   if (tag == "image")
     {
-    if (isCommandLineModule || (type != "scalar" && type != "label"))
+    if ( ( commandType == CommandLineModule )
+         || (type != "scalar" && type != "label"))
       {
       // If running an executable or running a shared memory module
       // but the image type is non-scalar...
-      
-      // To avoid confusing the Archetype readers, convert any
-      // numbers in the filename to characters [0-9]->[A-J]
-      std::transform(fname.begin(), fname.end(),
-                     fname.begin(), DigitsToCharacters());
-      
-      fname = this->TemporaryDirectory + "/" + fname
-        + "_" + pid;
 
+      // Use default fname construction, tack on extension
       std::string ext = ".nrrd";
       if (extensions.size() != 0)
         {
@@ -173,16 +231,17 @@ vtkCommandLineModuleLogic
       // then it is a shared object module for which we can
       // communicated directly with the MRML tree.
 
+      // Redefine the filename to be a reference to a slicer node.
       
-      // Must be large enough to hold slicer:, / and two copies of the
-      // ascii representation of the pointer. 256 should be more than
-      // enough.
-      char tname[256];
+      // Must be large enough to hold slicer:, #, an ascii
+      // representation of the scene pointer and the MRML node ID. 
+      char *tname = new char[name.size() + 100];
       
-      sprintf(tname, "slicer:%p/%p", this->MRMLScene,
-              this->MRMLScene->GetNodeByID(name.c_str()));
+      sprintf(tname, "slicer:%p#%s", this->MRMLScene, name.c_str());
       
       fname = tname;
+
+      delete [] tname;
       }
     }
 
@@ -190,14 +249,7 @@ vtkCommandLineModuleLogic
     {
     // geometry is currently always passed via files
 
-    // To avoid confusing the Archetype readers, convert any
-    // numbers in the filename to characters [0-9]->[A-J]
-    std::transform(fname.begin(), fname.end(),
-                   fname.begin(), DigitsToCharacters());
-    
-    fname = this->TemporaryDirectory + "/" + fname
-      + "_" + pid;
-
+    // Use default fname construction, tack on extension
     std::string ext = ".vtp";
     if (extensions.size() != 0)
       {
@@ -206,6 +258,19 @@ vtkCommandLineModuleLogic
     fname = fname + ext;
     }
 
+  if (tag == "transform")
+    {
+    // transform is currently always passed via files
+
+    // Use default fname construction, tack on extension
+    std::string ext = ".mrml";
+    if (extensions.size() != 0)
+      {
+      ext = extensions[0];
+      }
+    fname = fname + ext;
+    }
+  
     
   return fname;
 }
@@ -286,43 +351,63 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
   
   // Determine the type of the module: command line or shared object
   int (*entryPoint)(int argc, char* argv[]);
-  bool isCommandLine = true;
+  entryPoint = NULL;
+  CommandLineModuleType commandType = CommandLineModule;
 
   std::string target
     = node->GetModuleDescription().GetTarget();
-  std::string::size_type pos
-    = target.find("slicer:");
-
+  std::string::size_type pos = target.find("slicer:");
   if (pos != std::string::npos && pos == 0)
     {
     sscanf(target.c_str(), "slicer:%p", &entryPoint);
-    isCommandLine = false;
     }
 
-  // verify the status from the ModuleDescription
-  if (isCommandLine)
+  // Assume that the modules correctly report themselves
+  if ( node->GetModuleDescription().GetType() == "CommandLineModule" )
     {
-    if (node->GetModuleDescription().GetType() != "CommandLineModule")
+    vtkSlicerApplication::GetInstance()->InformationMessage( "Found CommandLine Module" );
+    commandType = CommandLineModule;
+    if ( entryPoint != NULL )
       {
-      vtkWarningMacro("Module reports that it is not a command line module but does not have a shared object module target. " << target.c_str());
+      vtkWarningMacro("Module reports that it is a Command Line Module but has a shared object module target. " << target.c_str());
       }
     }
-  else
+  else if ( node->GetModuleDescription().GetType() == "SharedObjectModule" )
     {
-    if (node->GetModuleDescription().GetType() != "SharedObjectModule")
+    vtkSlicerApplication::GetInstance()->InformationMessage( "Found SharedObject Module" );
+
+    commandType = SharedObjectModule;
+    if ( entryPoint == NULL )
       {
-      vtkWarningMacro("Module reports that it is not a shared object module but has a shared object module target. " << target.c_str());
+      vtkWarningMacro("Module reports that it is a Shared Object Module but does not have a shared object module target. " << target.c_str());
       }
     }
+  else if ( node->GetModuleDescription().GetType() == "PythonModule" )
+    {
+    vtkSlicerApplication::GetInstance()->InformationMessage( "Found Python Module" );
+    commandType = PythonModule;
+    }
+  vtkSlicerApplication::GetInstance()->InformationMessage( node->GetModuleDescription().GetType().c_str() );
+
   
   // map to keep track of MRML Ids and filenames
   typedef std::map<std::string, std::string> MRMLIDToFileNameMap;
   MRMLIDToFileNameMap nodesToReload;
   MRMLIDToFileNameMap nodesToWrite;
 
+  // map to keep track of the MRML Ids on the main scene to the MRML
+  // Ids in the miniscene sent to the module
+  typedef std::map<std::string, std::string> MRMLIDMap;
+  MRMLIDMap sceneToMiniSceneMap;
+
+  // Mini-scene used to communicate a subset of the main scene to the module
+  vtkSmartPointer<vtkMRMLScene> miniscene = vtkMRMLScene::New();
+  std::string minisceneFilename
+    = this->ConstructTemporarySceneFileName(miniscene);
+ 
   // vector of files to delete
   std::set<std::string> filesToDelete;
-  //std::cout << node->GetModuleDescription();  
+
   // iterators for parameter groups
   std::vector<ModuleParameterGroup>::const_iterator pgbeginit
     = node->GetModuleDescription().GetParameterGroups().begin();
@@ -332,8 +417,8 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
 
   
   // Make a pass over the parameters and establish which parameters
-  // have images or geometry that need to be written before execution
-  // or loaded upon completion.
+  // have images or geometry or transforms that need to be written
+  // before execution or loaded upon completion.
   for (pgit = pgbeginit; pgit != pgendit; ++pgit)
     {
     // iterate over each parameter in this group
@@ -345,9 +430,10 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
 
     for (pit = pbeginit; pit != pendit; ++pit)
       {
-      if ((*pit).GetTag() == "image" || (*pit).GetTag() == "geometry")
+      if ((*pit).GetTag() == "image" || (*pit).GetTag() == "geometry"
+        || (*pit).GetTag() == "transform" )
         {
-        // only keep track of images associated with real nodes
+        // only keep track of objects associated with real nodes
         if (!this->MRMLScene->GetNodeByID((*pit).GetDefault().c_str())
             || (*pit).GetDefault() == "None")
           {
@@ -359,7 +445,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
                                              (*pit).GetType(),
                                              (*pit).GetDefault(),
                                              (*pit).GetFileExtensions(),
-                                             isCommandLine);
+                                             commandType);
 
         filesToDelete.insert(fname);
 
@@ -375,6 +461,120 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       }
     }
   
+  
+  // write out the input datasets
+  //
+  //
+  MRMLIDToFileNameMap::const_iterator id2fn;
+    
+  for (id2fn = nodesToWrite.begin();
+       id2fn != nodesToWrite.end();
+       ++id2fn)
+    {
+    vtkMRMLNode *nd
+      = this->MRMLScene->GetNodeByID( (*id2fn).first.c_str() );
+    
+    vtkMRMLScalarVolumeNode *svnd
+      = vtkMRMLScalarVolumeNode::SafeDownCast(nd);
+    vtkMRMLVectorVolumeNode *vvnd
+      = vtkMRMLVectorVolumeNode::SafeDownCast(nd);
+    vtkMRMLDiffusionTensorVolumeNode *dtvnd
+      = vtkMRMLDiffusionTensorVolumeNode::SafeDownCast(nd);
+    vtkMRMLDiffusionWeightedVolumeNode *dwvnd
+      = vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(nd);
+    vtkMRMLModelNode *mnd
+      = vtkMRMLModelNode::SafeDownCast(nd);
+    vtkMRMLFiberBundleNode *fbnd
+      = vtkMRMLFiberBundleNode::SafeDownCast(nd);
+    vtkMRMLTransformNode *tnd
+      = vtkMRMLTransformNode::SafeDownCast(nd);
+
+    vtkMRMLStorageNode *out = 0;
+
+    // Determine if and how a node is to be written.  If we update the
+    // MRMLIDImageIO, then we can change these conditions for the
+    // other image types so that we only write nodes to disk if we are
+    // running as a command line executable (and all image types will
+    // go through memory in shared object modules).
+    if ( commandType == PythonModule )
+      {
+      // No need to write anything out with Python
+      continue;
+      }
+    if (((commandType == CommandLineModule) && svnd) || vvnd)
+      {
+      // only write out scalar image nodes if running an executable
+      out = vtkMRMLVolumeArchetypeStorageNode::New();
+      }
+    else if (dtvnd || dwvnd)
+      {
+#ifdef USE_TEEM
+      // for now, always write out the diffusion tensor nodes
+      out = vtkMRMLNRRDStorageNode::New();
+#else
+      vtkErrorMacro ( "Slicer3 was not complied with TEEM support, export of diffusion tensor nodes disabled" );
+#endif
+      }
+    else if (fbnd)
+      {
+      out = vtkMRMLFiberBundleStorageNode::New();
+      }
+    else if (mnd)
+      {
+      // always write out model nodes
+      out = vtkMRMLModelStorageNode::New();
+      }
+    else if (tnd)
+      {
+      // always write out transform nodes
+
+      // no storage node for transforms. put the transform in the mini-scene.
+      vtkMRMLNode *cp = miniscene->CopyNode(nd);
+
+      // Keep track what scene node corresponds to what miniscene node
+      sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+      }
+
+    // if the file is to be written, then write it
+    if (out)
+      {
+      out->SetFileName( (*id2fn).second.c_str() );
+      if (!out->WriteData( nd ))
+        {
+        vtkErrorMacro("ERROR writing file " << out->GetFileName());
+        }
+      out->Delete();
+      }
+    }
+
+  // Also need to run through any output nodes that will be
+  // communicated through the miniscene and add them to the miniscene
+  // 
+  for (id2fn = nodesToReload.begin();
+       id2fn != nodesToReload.end();
+       ++id2fn)
+    {
+    vtkMRMLNode *nd
+      = this->MRMLScene->GetNodeByID( (*id2fn).first.c_str() );
+    
+    vtkMRMLTransformNode *tnd
+      = vtkMRMLTransformNode::SafeDownCast(nd);
+  
+    if (tnd)
+      {
+      // always put transform nodes in the miniscene
+      vtkMRMLNode *cp = miniscene->CopyNode(nd);
+      
+      // Keep track what scene node corresponds to what miniscene node
+      sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+      }
+    }
+  
+  // write out the miniscene if needed
+  if (miniscene->GetNumberOfNodes() > 0)
+    {
+    miniscene->Commit( minisceneFilename.c_str() );
+    }
 
   // build the command line
   //
@@ -386,7 +586,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
 
 
   // Add a command line flag for the process information structure
-  if ( !isCommandLine )
+  if ( commandType == SharedObjectModule )
     {
     commandLineAsString.push_back( "--processinformationaddress" );
 
@@ -434,7 +634,10 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
             && (*pit).GetTag() != "float-vector"
             && (*pit).GetTag() != "double-vector"
             && (*pit).GetTag() != "string-vector"
-            && (*pit).GetTag() != "image" && (*pit).GetTag() != "point"
+            && (*pit).GetTag() != "image"
+            && (*pit).GetTag() != "point"
+            && (*pit).GetTag() != "region"
+            && (*pit).GetTag() != "transform"
             && (*pit).GetTag() != "geometry")
           {
           // simple parameter, write flag and value
@@ -448,6 +651,11 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
           if ((*pit).GetDefault() == "true")
             {
             commandLineAsString.push_back(prefix + flag);
+            }
+          if ( commandType == PythonModule )
+            {
+            // For Python, if the flag is true, specify that
+            commandLineAsString.push_back ( "true" );
             }
           continue;
           }
@@ -466,24 +674,44 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
             }
           continue;
           }
-        if ((*pit).GetTag() == "image" || (*pit).GetTag() == "geometry")
+        if ((*pit).GetTag() == "image" || (*pit).GetTag() == "geometry"
+            || (*pit).GetTag() == "transform")
           {
+          std::string fname;
+
+          // default to using filename in the read/write maps
+          // established earlier
           MRMLIDToFileNameMap::const_iterator id2fn;
           
           id2fn  = nodesToWrite.find( (*pit).GetDefault() );
           if ((*pit).GetChannel() == "input" && id2fn != nodesToWrite.end())
             {
-            // Only put out the flag if the node is in out list
-            commandLineAsString.push_back(prefix + flag);
-            commandLineAsString.push_back( (*id2fn).second );
+            fname = (*id2fn).second;
             }
 
           id2fn  = nodesToReload.find( (*pit).GetDefault() );
           if ((*pit).GetChannel() == "output" && id2fn != nodesToReload.end())
             {
-            commandLineAsString.push_back(prefix + flag);
-            commandLineAsString.push_back( (*id2fn).second );
+            fname = (*id2fn).second;
             }
+
+          // check to see if we need to remap to a scene file and node id
+          MRMLIDMap::iterator mit
+            = sceneToMiniSceneMap.find((*pit).GetDefault());
+          if (mit != sceneToMiniSceneMap.end())
+            {
+            // node is being sent inside of a scene, so use the scene
+            // filename and the remapped id
+            fname = minisceneFilename + "#" + (*mit).second;
+            }
+
+          // Only put out the flag if the node is in out list
+          if (fname.size() > 0)
+            {
+            commandLineAsString.push_back(prefix + flag);
+            commandLineAsString.push_back( fname );
+            }
+
           continue;
           }
         if ((*pit).GetTag() == "point")
@@ -535,6 +763,57 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
             }
           continue;
           }
+        if ((*pit).GetTag() == "region")
+          {
+          // get the region node
+          vtkMRMLNode *node
+            = this->MRMLScene->GetNodeByID((*pit).GetDefault().c_str());
+          vtkMRMLROIListNode *regions = vtkMRMLROIListNode::SafeDownCast(node);
+
+          if (regions)
+            {
+            // check to see if module can handle more than one region
+            long numberOfSelectedRegions=0;
+            for (int i=0; i < regions->GetNumberOfROIs(); ++i)
+              {
+              if (regions->GetNthROISelected(i))
+                {
+                numberOfSelectedRegions++;
+                }
+              }
+            
+            if (numberOfSelectedRegions == 1
+                || (*pit).GetMultiple() == "true")
+              {
+              for (int i=0; i < regions->GetNumberOfROIs(); ++i)
+                {
+                float *pt;
+                float *Radius;
+                std::ostrstream roiAsString;
+
+                if (regions->GetNthROISelected(i))
+                  {
+                  pt = regions->GetNthROIXYZ(i);
+                  Radius = regions->GetNthROIRadiusXYZ(i);
+                  roiAsString << pt[0] << "," << pt[1] << "," << pt[2] << ","
+                             << Radius[0] << "," << Radius[1] << "," << Radius[2]
+                             << std::ends;
+                  roiAsString.rdbuf()->freeze();
+                  
+                  commandLineAsString.push_back(prefix + flag);
+                  commandLineAsString.push_back(roiAsString.str());
+                  }
+                }
+              }
+            else
+              {
+              // Can't support this command line with this region
+              // list
+              vtkErrorMacro("Module does not support multiple regions. Region list contains " << numberOfSelectedRegions << " selected regions.");
+              }
+            }
+          continue;
+          }
         }
       }
     }
@@ -570,9 +849,12 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
     // defaults that are reasonable for index parameters
     if ((*iit).second.GetTag() != "image"
         && (*iit).second.GetTag() != "geometry"
+        && (*iit).second.GetTag() != "transform"
         && (*iit).second.GetTag() != "file"
         && (*iit).second.GetTag() != "directory"
         && (*iit).second.GetTag() != "string"
+        && (*iit).second.GetTag() != "point"
+        && (*iit).second.GetTag() != "region"
         && (*iit).second.GetTag() != "integer-vector"
         && (*iit).second.GetTag() != "float-vector"
         && (*iit).second.GetTag() != "double-vector"
@@ -602,8 +884,20 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
         return;
         }
       }
+    else if ((*iit).second.GetTag() == "point"
+             || (*iit).second.GetTag() == "region")
+      {
+      vtkErrorMacro("Fiducials and ROIs are not currently supported as index arguments to modules.");
+      node->SetStatus(vtkMRMLCommandLineModuleNode::Idle, false);
+      this->GetApplicationLogic()->RequestModified( node );
+      return;
+      }
     else
       {
+      // image or geometry or transform index parameter
+
+      std::string fname;
+      
       MRMLIDToFileNameMap::const_iterator id2fn;
 
       if ((*iit).second.GetChannel() == "input")
@@ -612,16 +906,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
         id2fn  = nodesToWrite.find( (*iit).second.GetDefault() );
         if (id2fn != nodesToWrite.end())
           {
-          commandLineAsString.push_back( (*id2fn).second );
-          }
-        else
-          {
-          vtkErrorMacro("No input data assigned to \""
-                        << (*iit).second.GetLabel().c_str() << "\"");
-
-          node->SetStatus(vtkMRMLCommandLineModuleNode::Idle, false);
-          this->GetApplicationLogic()->RequestModified( node );
-          return;
+          fname = (*id2fn).second;
           }
         }
       else if ((*iit).second.GetChannel() == "output")
@@ -630,17 +915,33 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
         id2fn  = nodesToReload.find( (*iit).second.GetDefault() );
         if (id2fn != nodesToReload.end())
           {
-          commandLineAsString.push_back( (*id2fn).second );
+          fname = (*id2fn).second;
           }
-        else
-          {
-          vtkErrorMacro("No output data assigned to \""
-                        << (*iit).second.GetLabel().c_str() << "\"");
+        }
 
-          node->SetStatus(vtkMRMLCommandLineModuleNode::Idle, false);
-          this->GetApplicationLogic()->RequestModified( node );
-          return;
-          }
+      // check to see if we need to remap to a scene file and node id
+      MRMLIDMap::iterator mit
+        = sceneToMiniSceneMap.find((*iit).second.GetDefault());
+      if (mit != sceneToMiniSceneMap.end())
+        {
+        // node is being sent inside of a scene, so use the scene
+        // filename and the remapped id
+        fname = minisceneFilename + "#" + (*mit).second;
+        }      
+
+      if (fname.size() > 0)
+        {
+        commandLineAsString.push_back( fname );
+        }
+      else
+        {
+        vtkErrorMacro("No " << (*iit).second.GetChannel().c_str()
+                      << " data assigned to \""
+                      << (*iit).second.GetLabel().c_str() << "\"");
+
+        node->SetStatus(vtkMRMLCommandLineModuleNode::Idle, false);
+        this->GetApplicationLogic()->RequestModified( node );
+        return;
         }
       }
     }
@@ -667,69 +968,6 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
   information << std::endl;
   vtkSlicerApplication::GetInstance()->InformationMessage( information.str().c_str() );
   
-  
-  // write out the input datasets
-  //
-  //
-  MRMLIDToFileNameMap::const_iterator id2fn;
-    
-  for (id2fn = nodesToWrite.begin();
-       id2fn != nodesToWrite.end();
-       ++id2fn)
-    {
-    vtkMRMLNode *nd
-      = this->MRMLScene->GetNodeByID( (*id2fn).first.c_str() );
-    
-    vtkMRMLScalarVolumeNode *svnd
-      = vtkMRMLScalarVolumeNode::SafeDownCast(nd);
-    vtkMRMLVectorVolumeNode *vvnd
-      = vtkMRMLVectorVolumeNode::SafeDownCast(nd);
-    vtkMRMLDiffusionTensorVolumeNode *dtvnd
-      = vtkMRMLDiffusionTensorVolumeNode::SafeDownCast(nd);
-    vtkMRMLDiffusionWeightedVolumeNode *dwvnd
-      = vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(nd);
-    vtkMRMLModelNode *mnd
-      = vtkMRMLModelNode::SafeDownCast(nd);
-
-    vtkMRMLStorageNode *out = 0;
-
-    // Determine if and how a node is to be written.  If we update the
-    // MRMLIDImageIO, then we can change these conditions for the
-    // other image types so that we only write nodes to disk if we are
-    // running as a command line executable (and all image types will
-    // go through memory in shared object modules).
-    if ((isCommandLine && svnd) || vvnd)
-      {
-      // only write out scalar image nodes if running an executable
-      out = vtkMRMLVolumeArchetypeStorageNode::New();
-      }
-    else if (dtvnd || dwvnd)
-      {
-#ifdef USE_TEEM
-      // for now, always write out the diffusion tensor nodes
-      out = vtkMRMLNRRDStorageNode::New();
-#else
-      vtkErrorMacro ( "Slicer3 was not complied with TEEM support, export of diffusion tensor nodes disabled" );
-#endif
-      }
-    else if (mnd)
-      {
-      // always write out model nodes
-      out = vtkMRMLModelStorageNode::New();
-      }
-
-    // if the file is to be written, then write it
-    if (out)
-      {
-      out->SetFileName( (*id2fn).second.c_str() );
-      if (!out->WriteData( nd ))
-        {
-        vtkErrorMacro("ERROR writing file " << out->GetFileName());
-        }
-      out->Delete();
-      }
-    }
-  
 
   // run the filter
   //
@@ -737,8 +975,12 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
   node->GetModuleDescription().GetProcessInformation()->Initialize();
   node->SetStatus(vtkMRMLCommandLineModuleNode::Running, false);
   this->GetApplicationLogic()->RequestModified( node );
-  if (isCommandLine)
+  if (commandType == CommandLineModule)
     {
+    // Run as a command line module
+    //
+    // 
+    
     itksysProcess *process = itksysProcess_New();
     
     // setup the command
@@ -1002,8 +1244,12 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       itksysProcess_Delete(process);
       }
     }
-  else
+  else if ( commandType == SharedObjectModule )
     {
+    // Run as a shared object module
+    //
+    //
+    
     std::ostringstream coutstringstream;
     std::ostringstream cerrstringstream;
     std::streambuf* origcoutrdbuf = std::cout.rdbuf();
@@ -1072,6 +1318,69 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       std::cerr.rdbuf( origcerrrdbuf );
       }
     }
+  else if ( commandType == PythonModule )
+    {
+    // For the moment, ignore the output and just run the module
+    vtkSlicerApplication::GetInstance()->InformationMessage( "Preparing to execute Python Module" );
+
+    // Now, call Python properly.  For the moment, make a big string...
+    // ...later we'll want to do this through the Python API
+    std::string ExecuteModuleString =
+      "import sys;\n"
+      "import Slicer;\n"
+      "ModuleName = \"" + node->GetModuleDescription().GetTarget() + "\"\n"
+      "ModuleArgs = []\n"
+      "ArgTags = []\n";
+
+    // Now add the individual command line items
+    for (std::vector<std::string>::size_type i=1; i < commandLineAsString.size(); ++i)
+      {
+      ExecuteModuleString += "ModuleArgs.append ( '" + commandLineAsString[i] + "' );\n";
+      }
+    for (pgit = pgbeginit; pgit != pgendit; ++pgit)
+      {
+      // iterate over each parameter in this group
+      std::vector<ModuleParameter>::const_iterator pbeginit
+        = (*pgit).GetParameters().begin();
+      std::vector<ModuleParameter>::const_iterator pendit
+        = (*pgit).GetParameters().end();
+      std::vector<ModuleParameter>::const_iterator pit;  
+      for (pit = pbeginit; pit != pendit; ++pit)
+        {
+        ExecuteModuleString += "ArgTags.append ( '" + (*pit).GetTag() + "' );\n";
+        }
+      }
+    ExecuteModuleString +=
+      "FlagArgs, PositionalArgs = Slicer.ParseArgs ( ModuleArgs, ArgTags )\n"
+      "Module = __import__ ( ModuleName )\n"
+      "reload ( Module )\n"
+      "Module.Execute ( *PositionalArgs, **FlagArgs )\n";
+#ifdef USE_PYTHON    
+    PyObject* v;
+      
+    v = PyRun_String( ExecuteModuleString.c_str(),
+                      Py_file_input,
+                      vtkSlicerApplication::GetInstance()->GetPythonDictionary(),
+                      vtkSlicerApplication::GetInstance()->GetPythonDictionary() );
+    if (v == NULL)
+      {
+      node->SetStatus(vtkMRMLCommandLineModuleNode::CompletedWithErrors, false);
+      PyErr_Print();
+      }
+    else
+      {
+      node->SetStatus(vtkMRMLCommandLineModuleNode::Completed, false);
+      if (Py_FlushLine())
+        {
+        PyErr_Clear();
+        }
+      }
+#else
+    vtkErrorMacro("Attempting to execute a Python Module without Python support enabled");
+#endif
+
+    this->GetApplicationLogic()->RequestModified( node );
+    }
   if (node->GetStatus() != vtkMRMLCommandLineModuleNode::Cancelled 
       && node->GetStatus() != vtkMRMLCommandLineModuleNode::CompletedWithErrors)
     {
@@ -1093,26 +1402,67 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
          id2fn != nodesToReload.end();
          ++id2fn)
       {
-      // Make request that data be reloaded. The data will loaded and
-      // rendered in the main gui thread.  Data to be reloaded can be
-      // safely deleted after the load. (It would not make sense for
-      // two outputs of a module to produce the same file to be
-      // reloaded.) We assume that if the user is looking at the node
-      // now, he/she will still be looking at the node by the time the
-      // data is reloaded by the main thread.
-      bool displayData = false;
-      bool deleteFile = true;
-      displayData = (node == this->GetCommandLineModuleNode());
-      this->GetApplicationLogic()
-        ->RequestReadData((*id2fn).first.c_str(), (*id2fn).second.c_str(),
-                          displayData, deleteFile);
+      // Is this node one that was put in the miniscene? Nodes in the
+      // miniscene will be handled later 
+      //
+      MRMLIDMap::iterator mit = sceneToMiniSceneMap.find((*id2fn).first);
+      if (mit == sceneToMiniSceneMap.end())
+        {
+        // Node is not being communicated in the miniscene, load via a file
 
-      // If we are reloading a file, then we know that it is a file
-      // that needs to be removed.  It wouldn't make sense for two
-      // outputs of a module to produce the same file to be reloaded.
-      filesToDelete.erase( (*id2fn).second );
+        // Make request that data be reloaded. The data will loaded and
+        // rendered in the main gui thread.  Data to be reloaded can be
+        // safely deleted after the load. (It would not make sense for
+        // two outputs of a module to produce the same file to be
+        // reloaded.) We assume that if the user is looking at the node
+        // now, he/she will still be looking at the node by the time the
+        // data is reloaded by the main thread.
+        bool displayData = false;
+        bool deleteFile = true;
+        displayData = (node == this->GetCommandLineModuleNode());
+        this->GetApplicationLogic()
+          ->RequestReadData((*id2fn).first.c_str(), (*id2fn).second.c_str(),
+                            displayData, deleteFile);
+        
+        // If we are reloading a file, then we know that it is a file
+        // that needs to be removed.  It wouldn't make sense for two
+        // outputs of a module to produce the same file to be reloaded.
+        filesToDelete.erase( (*id2fn).second );
+        }
       }
     }
+
+  // if there was a miniscene that needs loading, request it
+  if (miniscene->GetNumberOfNodes() > 0)
+    {
+    bool displayData = false;
+    bool deleteFile = true;
+    displayData = (node == this->GetCommandLineModuleNode());
+
+    // Convert the index map to two vectors so that we can pass it to
+    // a function in a different library (Win32 limitation)
+    std::vector<std::string> keys, values;
+    
+    MRMLIDMap::iterator mit;
+    for (mit = sceneToMiniSceneMap.begin(); mit != sceneToMiniSceneMap.end();
+         ++mit)
+      {
+      // only load the nodes that are needed back into the main scene
+      MRMLIDToFileNameMap::iterator rit = nodesToReload.find( (*mit).first );
+
+      if (rit != nodesToReload.end())
+        {
+        keys.push_back( (*mit).first );
+        values.push_back( (*mit).second );
+        }
+      }
+
+    // Place a request to read the miniscene and map any ids as necessary
+    this->GetApplicationLogic()
+      ->RequestReadScene( minisceneFilename, keys, values,
+                          displayData, deleteFile );
+    }
+
 
   // clean up
   //

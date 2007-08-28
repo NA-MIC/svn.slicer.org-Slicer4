@@ -52,11 +52,62 @@ Version:   $Revision$
 #include "vtkKWTextWithScrollbars.h"
 #include "vtkKWMessage.h"
 #include "vtkKWProgressGauge.h"
+#include "vtkStringArray.h"
 
 #include "itkNumericTraits.h"
 
 // Private implementaton of an std::map
 class ModuleWidgetMap : public std::map<std::string, vtkSmartPointer<vtkKWCoreWidget> > {};
+
+
+
+// Split a comma separated list of file names.  A filename can itsefl
+// contain a comma.  So we neeed to split on commas that are not
+// within quoted strings.
+void
+splitFilenames (std::string *text, vtkStringArray *words)
+{
+  int n = (*text).length();
+  int start, stop, startq, stopq;
+  bool quoted;
+  std::string comma(",");
+  std::string quote("\"");
+  start = (*text).find_first_not_of(comma);
+  while ((start >= 0) && (start < n))
+    {
+    // find any quotes
+    quoted = false;
+    startq = (*text).find_first_of(quote, start);
+    stopq = (*text).find_first_of(quote, startq+1);
+
+    stop = (*text).find_first_of(comma, start);
+    if ((stop < 0) || (stop > n)) stop = n;
+
+    if (startq != std::string::npos && stopq != std::string::npos)
+      {
+      // start and end quotes found in the string, check if comma was
+      // within the quotes, if so keep searching for next comma
+      // outside of quotes
+      while (startq < stop && stop < stopq && stop != n)
+        {
+        quoted = true;
+        stop = (*text).find_first_of(comma, stop+1);
+        if ((stop < 0) || (stop > n)) stop = n;
+        }
+      }
+
+    if (!quoted)
+      {
+      words->InsertNextValue((*text).substr(start, stop - start).c_str());
+      }
+    else
+      {
+      words->InsertNextValue((*text).substr(start+1, stop - start - 2).c_str());
+      }
+    start = (*text).find_first_not_of(comma, stop+1);
+    }
+}
+
 
 //------------------------------------------------------------------------------
 vtkCommandLineModuleGUI* vtkCommandLineModuleGUI::New()
@@ -75,9 +126,6 @@ vtkCommandLineModuleGUI* vtkCommandLineModuleGUI::New()
 //----------------------------------------------------------------------------
 vtkCommandLineModuleGUI::vtkCommandLineModuleGUI()
 {
-  this->CommandLineModuleNodeSelector = vtkSlicerNodeSelectorWidget::New();
-  this->CommandLineModuleNodeSelector->ShowHiddenOn();
-  
   this->Logic = NULL;
   this->CommandLineModuleNode = NULL;
 
@@ -104,13 +152,6 @@ vtkCommandLineModuleGUI::~vtkCommandLineModuleGUI()
   // Delete all the widgets
   delete this->InternalWidgetMap;
   
-  if ( this->CommandLineModuleNodeSelector )
-    {
-    this->CommandLineModuleNodeSelector->SetParent(NULL);
-    this->CommandLineModuleNodeSelector->Delete();
-    this->CommandLineModuleNodeSelector = NULL;
-    }
-
   this->SetLogic (NULL);
   // wjp test
   if ( this->CommandLineModuleNode ) {
@@ -185,9 +226,9 @@ void vtkCommandLineModuleGUI::PrintSelf(ostream& os, vtkIndent indent)
 //---------------------------------------------------------------------------
 void vtkCommandLineModuleGUI::AddGUIObservers ( ) 
 {
-  this->CommandLineModuleNodeSelector->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
+  (*this->InternalWidgetMap)["CommandLineModuleNodeSelector"]->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
 
-  this->CommandLineModuleNodeSelector->AddObserver (vtkSlicerNodeSelectorWidget::NewNodeEvent, (vtkCommand *)this->NewNodeCallbackCommand );  
+  (*this->InternalWidgetMap)["CommandLineModuleNodeSelector"]->AddObserver (vtkSlicerNodeSelectorWidget::NewNodeEvent, (vtkCommand *)this->NewNodeCallbackCommand );  
 
   (*this->InternalWidgetMap)["ApplyButton"]->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -262,30 +303,38 @@ void vtkCommandLineModuleGUI::AddGUIObservers ( )
 //---------------------------------------------------------------------------
 void vtkCommandLineModuleGUI::RemoveGUIObservers ( )
 {
-  if (this->CommandLineModuleNodeSelector)
-    {
-    this->CommandLineModuleNodeSelector->RemoveObservers (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
+  ModuleWidgetMap::const_iterator wit;
+  ModuleWidgetMap::const_iterator wend;
 
-    this->CommandLineModuleNodeSelector->RemoveObservers (vtkSlicerNodeSelectorWidget::NewNodeEvent, (vtkCommand *)this->NewNodeCallbackCommand );  
+  wend = (*this->InternalWidgetMap).end();
+
+  wit = (*this->InternalWidgetMap).find("CommandLineModuleNodeSelector");
+  if ( wit != wend)
+    {
+    (*wit).second->RemoveObservers (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
+
+    (*wit).second->RemoveObservers (vtkSlicerNodeSelectorWidget::NewNodeEvent, (vtkCommand *)this->NewNodeCallbackCommand );  
     }
 
-  if ( (*this->InternalWidgetMap)["ApplyButton"] )
+  wit = (*this->InternalWidgetMap).find("ApplyButton"); 
+  if ( wit != wend )
     {
-    (*this->InternalWidgetMap)["ApplyButton"]->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    (*wit).second->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
-  if ( (*this->InternalWidgetMap)["CancelButton"] )
+  wit = (*this->InternalWidgetMap).find("CancelButton"); 
+  if ( wit != wend )
     {
-    (*this->InternalWidgetMap)["CancelButton"]->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    (*wit).second->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
   
-  if ( (*this->InternalWidgetMap)["DefaultButton"] )
+  wit =  (*this->InternalWidgetMap).find("DefaultButton");
+  if ( wit != wend )
     {
-    (*this->InternalWidgetMap)["DefaultButton"]->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    (*wit).second->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
 
   // remove observers for each widget created
-  ModuleWidgetMap::const_iterator wit;
   for (wit = this->InternalWidgetMap->begin();
        wit != this->InternalWidgetMap->end(); ++wit)
     {
@@ -358,12 +407,14 @@ void vtkCommandLineModuleGUI::ProcessGUIEvents ( vtkObject *caller,
   // std::cout << "ProcessGUIEvents()" << std::endl;
   vtkKWPushButton *b = vtkKWPushButton::SafeDownCast(caller);
   vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
+  vtkSlicerNodeSelectorWidget *moduleNodeSelector = vtkSlicerNodeSelectorWidget::SafeDownCast( (*this->InternalWidgetMap)["CommandLineModuleNodeSelector"].GetPointer() );
 
-  if (selector == this->CommandLineModuleNodeSelector && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent ) 
+  if (selector && selector == moduleNodeSelector
+      && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent ) 
     {
     // Selected a new parameter node
     // std::cout << "  Selector" << std::endl;
-    vtkMRMLCommandLineModuleNode* n = vtkMRMLCommandLineModuleNode::SafeDownCast(this->CommandLineModuleNodeSelector->GetSelected());
+    vtkMRMLCommandLineModuleNode* n = vtkMRMLCommandLineModuleNode::SafeDownCast(moduleNodeSelector->GetSelected());
     if (n == NULL) 
       {
       return;
@@ -373,14 +424,14 @@ void vtkCommandLineModuleGUI::ProcessGUIEvents ( vtkObject *caller,
 
     this->UpdateGUI();
     }
-  else if (selector == this->CommandLineModuleNodeSelector && event == vtkSlicerNodeSelectorWidget::NewNodeEvent )
+  else if (selector && selector == moduleNodeSelector && event == vtkSlicerNodeSelectorWidget::NewNodeEvent )
     {
     // creating a new parameter node
     //std::cout << "  New node" << std::endl;
     vtkMRMLCommandLineModuleNode* n = vtkMRMLCommandLineModuleNode::SafeDownCast((vtkObjectBase*)callData);
     n->SetModuleDescription( this->ModuleDescriptionObject );
     }
-  else if (selector == this->CommandLineModuleNodeSelector && selector->GetSelected() == NULL)
+  else if (selector && selector == moduleNodeSelector && selector->GetSelected() == NULL)
     {
     return;
     }
@@ -439,10 +490,11 @@ void vtkCommandLineModuleGUI::UpdateMRML ()
     {
     // no parameter node selected yet, create new
     //std::cout << "  Creating a new node" << std::endl;
-    this->CommandLineModuleNodeSelector->SetSelectedNew("vtkMRMLCommandLineModuleNode");
+    vtkSlicerNodeSelectorWidget *moduleNodeSelector = vtkSlicerNodeSelectorWidget::SafeDownCast((*this->InternalWidgetMap)["CommandLineModuleNodeSelector"]);
+    moduleNodeSelector->SetSelectedNew("vtkMRMLCommandLineModuleNode");
     this->CreatingNewNode = true;
-    this->CommandLineModuleNodeSelector->ProcessNewNodeCommand("vtkMRMLCommandLineModuleNode", this->ModuleDescriptionObject.GetTitle().c_str());
-    n = vtkMRMLCommandLineModuleNode::SafeDownCast(this->CommandLineModuleNodeSelector->GetSelected());
+    moduleNodeSelector->ProcessNewNodeCommand("vtkMRMLCommandLineModuleNode", this->ModuleDescriptionObject.GetTitle().c_str());
+    n = vtkMRMLCommandLineModuleNode::SafeDownCast(moduleNodeSelector->GetSelected());
     this->CreatingNewNode = false;
 
     if (n == NULL)
@@ -504,9 +556,52 @@ void vtkCommandLineModuleGUI::UpdateMRML ()
       }
     else if (lsb)
       {
-      if (lsb->GetWidget()->GetFileName())
+      int numberOfFiles
+        = lsb->GetWidget()->GetLoadSaveDialog()->GetNumberOfFileNames();
+      if (numberOfFiles > 0)
         {
-        n->SetParameterAsString((*wit).first, lsb->GetWidget()->GetFileName());
+        // build a comma separated list of file names
+        std::string names;
+        for (int i=0; i < numberOfFiles; ++i)
+          {
+          // get a filename
+          std::string n
+            = lsb->GetWidget()->GetLoadSaveDialog()->GetNthFileName(i);
+
+          // quote it as needed (if multiple filenames and a filename
+          // contains a comma and is not already quoted, then quote it)
+          if (lsb->GetWidget()->GetLoadSaveDialog()->GetMultipleSelection())
+            {
+            int s1, len;
+            len = n.length();
+            s1 = n.find_first_of(",");
+            if (s1 > 0 && s1 < len)
+              {
+              // filename contains a comma
+              int q1, qn;
+              q1 = n.find_first_of("\"");
+              qn = n.find_last_of("\"");
+              if (q1 != 0 && qn != len-1)
+                {
+                // first and last character in name are not quotes, so
+                // quote
+                n = std::string("\"") + n + "\"";
+                }
+              }
+            }
+          
+          // add it to the list
+          names = names + n;
+          if (i < numberOfFiles-1)  // comma after all but last
+            {
+            names = names + ",";
+            }
+          }
+        //vtkWarningMacro(<< "Selected filenames: " << names);
+        n->SetParameterAsString((*wit).first, names);
+
+        // set the filenames as the selected filenames for next time
+        lsb->GetWidget()->GetLoadSaveDialog()->SetInitialSelectedFileNames( lsb->GetWidget()->GetLoadSaveDialog()->GetFileNames() );
         }
       }
     else if (rbs)
@@ -541,7 +636,7 @@ void vtkCommandLineModuleGUI::UpdateGUI ()
   }
 
   this->InUpdateGUI = true;
-
+  // vtkWarningMacro(<<"UpdateGUI()");
   // std::cout << "UpdateGUI()" << std::endl;
   vtkMRMLCommandLineModuleNode* n = this->GetCommandLineModuleNode();
   std::string statusString;
@@ -705,7 +800,10 @@ void vtkCommandLineModuleGUI::UpdateGUI ()
             }
           else if (lsb)
             {
-            lsb->GetWidget()->GetLoadSaveDialog()->SetInitialFileName(value.c_str());
+            vtkSmartPointer<vtkStringArray> names = vtkStringArray::New();
+            splitFilenames(&value, names);
+            //vtkWarningMacro(<<"Filenames being set: " << value);
+            lsb->GetWidget()->GetLoadSaveDialog()->SetInitialSelectedFileNames(names);
             }
           else if (rbs)
             {
@@ -843,8 +941,10 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
 
   // Build the Help and About frame
   this->BuildHelpAndAboutFrame(this->UIPanel->GetPageWidget ( title.c_str() ),
-                       this->ModuleDescriptionObject.GetDescription().c_str(),
-                       this->ModuleDescriptionObject.GetContributor().c_str());
+                    this->ModuleDescriptionObject.GetDescription().c_str(),
+                    (this->ModuleDescriptionObject.GetAcknowledgements()
+                     + "\n\n" + 
+                     this->ModuleDescriptionObject.GetContributor()).c_str());
 
   // If the module has a logo, then add it to logo frame
   if (this->GetLogo())
@@ -872,22 +972,29 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
   (*this->InternalWidgetMap)["ModuleFrame"] = moduleFrame;
   moduleFrame->Delete();
 
-  this->CommandLineModuleNodeSelector->SetNodeClass("vtkMRMLCommandLineModuleNode", "CommandLineModule", title.c_str(), title.c_str());
-  this->CommandLineModuleNodeSelector->SetNewNodeEnabled(1);
-  //this->CommandLineModuleNodeSelector->SetNewNodeName((title+" parameters").c_str());
-  this->CommandLineModuleNodeSelector->SetParent( moduleFrame->GetFrame() );
-  this->CommandLineModuleNodeSelector->Create();
-  this->CommandLineModuleNodeSelector->SetMRMLScene(this->Logic->GetMRMLScene());
-  this->CommandLineModuleNodeSelector->SetSelected(NULL); // force empty select
-  
-  this->CommandLineModuleNodeSelector->SetBorderWidth(2);
-  this->CommandLineModuleNodeSelector->SetReliefToFlat();
-  this->CommandLineModuleNodeSelector->SetLabelText( "Parameter set");
+  vtkSlicerNodeSelectorWidget*
+    moduleNodeSelector = vtkSlicerNodeSelectorWidget::New();
+  moduleNodeSelector->ShowHiddenOn();
+  moduleNodeSelector->SetNodeClass("vtkMRMLCommandLineModuleNode", "CommandLineModule", title.c_str(), title.c_str());
+  moduleNodeSelector->SetNewNodeEnabled(1);
+  moduleNodeSelector->SetParent( moduleFrame->GetFrame() );
+  moduleNodeSelector->Create();
+  moduleNodeSelector->SetMRMLScene(this->Logic->GetMRMLScene());
+  moduleNodeSelector->SetSelected(NULL);  // force empt select
+
+  moduleNodeSelector->SetBorderWidth(2);
+  moduleNodeSelector->SetReliefToFlat();
+  moduleNodeSelector->SetLabelText( "Parameter set");
+
 
   std::string nodeSelectorBalloonHelp = "select a \"" + title + " parameters\" node from the current mrml scene.";
-  this->CommandLineModuleNodeSelector->SetBalloonHelpString(nodeSelectorBalloonHelp.c_str());
+  moduleNodeSelector->SetBalloonHelpString(nodeSelectorBalloonHelp.c_str());
   app->Script("pack %s -side top -anchor e -padx 20 -pady 4", 
-                this->CommandLineModuleNodeSelector->GetWidgetName());
+              moduleNodeSelector->GetWidgetName());
+
+  (*this->InternalWidgetMap)["CommandLineModuleNodeSelector"]
+    = moduleNodeSelector;
+  moduleNodeSelector->Delete();
 
   // Add a block indicating the status of the module (on this
   // parameter set)
@@ -1159,6 +1266,28 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         tparameter->SetLabelText( (*pit).GetLabel().c_str());
         parameter = tparameter;
         }
+      else if ((*pit).GetTag() == "region")
+        {
+        vtkSlicerNodeSelectorWidget *tparameter
+          = vtkSlicerNodeSelectorWidget::New();
+        
+        tparameter->SetNodeClass("vtkMRMLROIListNode",
+                                 NULL,
+                                 NULL,
+                                 (title + " RegionList").c_str());
+        tparameter->SetNewNodeEnabled(1);
+        tparameter->SetNoneEnabled(1);
+        // tparameter->SetNewNodeName((title+" output").c_str());
+        tparameter->SetParent( parameterGroupFrame->GetFrame() );
+        tparameter->Create();
+        tparameter->SetMRMLScene(this->Logic->GetMRMLScene());
+        tparameter->UpdateMenu();
+        
+        tparameter->SetBorderWidth(2);
+        tparameter->SetReliefToFlat();
+        tparameter->SetLabelText( (*pit).GetLabel().c_str());
+        parameter = tparameter;
+        }
       else if ((*pit).GetTag() == "image" && (*pit).GetChannel() == "input")
         {
         vtkSlicerNodeSelectorWidget *tparameter
@@ -1254,7 +1383,14 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         {
         vtkSlicerNodeSelectorWidget *tparameter
           = vtkSlicerNodeSelectorWidget::New();
-        tparameter->SetNodeClass("vtkMRMLModelNode",
+
+        std::string nodeClass;
+        if((*pit).GetType() == "fiberbundle")
+          nodeClass = "vtkMRMLFiberBundleNode";
+        else //   "model"
+          nodeClass = "vtkMRMLModelNode";
+
+        tparameter->SetNodeClass(nodeClass.c_str(),
                                  NULL,
                                  NULL,
                                  (title + " Model").c_str());
@@ -1273,10 +1409,82 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         vtkSlicerNodeSelectorWidget *tparameter
           = vtkSlicerNodeSelectorWidget::New();
         
-        tparameter->SetNodeClass("vtkMRMLModelNode",
+        std::string nodeClass;
+        if((*pit).GetType() == "fiberbundle")
+          nodeClass = "vtkMRMLFiberBundleNode";
+        else // "model"
+          nodeClass = "vtkMRMLModelNode";
+
+        tparameter->SetNodeClass(nodeClass.c_str(),
                                  NULL,
                                  NULL,
                                  (title + " Model").c_str());
+        tparameter->SetNewNodeEnabled(1);
+        tparameter->SetNoneEnabled(1);
+        // tparameter->SetNewNodeName((title+" output").c_str());
+        tparameter->SetParent( parameterGroupFrame->GetFrame() );
+        tparameter->Create();
+        tparameter->SetMRMLScene(this->Logic->GetMRMLScene());
+        tparameter->UpdateMenu();
+        
+        tparameter->SetBorderWidth(2);
+        tparameter->SetReliefToFlat();
+        tparameter->SetLabelText( (*pit).GetLabel().c_str());
+        parameter = tparameter;
+        }
+      else if ((*pit).GetTag() == "transform" && (*pit).GetChannel() == "input")
+        {
+        vtkSlicerNodeSelectorWidget *tparameter
+          = vtkSlicerNodeSelectorWidget::New();
+
+        std::string nodeClass = "vtkMRMLTransformNode";
+        if ((*pit).GetType() == "linear")
+          {
+          nodeClass = "vtkMRMLLinearTransformNode";
+          }
+        else if ((*pit).GetType() == "nonlinear")
+          {
+          // no nonlinear nodes are currently, so default to TransformNode
+          }
+
+        tparameter->SetNodeClass(nodeClass.c_str(),
+                                 NULL,
+                                 NULL,
+                                 (title + " Transform").c_str());
+        tparameter->SetParent( parameterGroupFrame->GetFrame() );
+        tparameter->Create();
+        tparameter->SetMRMLScene(this->Logic->GetMRMLScene());
+        tparameter->UpdateMenu();
+        
+        tparameter->SetBorderWidth(2);
+        tparameter->SetReliefToFlat();
+        tparameter->SetLabelText( (*pit).GetLabel().c_str());
+        parameter = tparameter;
+        }
+      else if ((*pit).GetTag() == "transform" && (*pit).GetChannel() =="output")
+        {
+        vtkSlicerNodeSelectorWidget *tparameter
+          = vtkSlicerNodeSelectorWidget::New();
+
+        // Note: TransformNode is abstract making it inappropriate for
+        // an output type since the node selector must be able to make
+        // an instance of the class.  For now, revert to LinearTransformNode.
+
+        std::string nodeClass = "vtkMRMLLinearTransformNode";
+        if ((*pit).GetType() == "linear")
+          {
+          nodeClass = "vtkMRMLLinearTransformNode";
+          }
+        else if ((*pit).GetType() == "nonlinear")
+          {
+          // no nonlinear nodes are currently, default to LinearTransformNode
+          }
+
+
+        tparameter->SetNodeClass(nodeClass.c_str(),
+                                 NULL,
+                                 NULL,
+                                 (title + " Transform").c_str());
         tparameter->SetNewNodeEnabled(1);
         tparameter->SetNoneEnabled(1);
         // tparameter->SetNewNodeName((title+" output").c_str());
@@ -1314,9 +1522,16 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
           {
           tparameter->GetWidget()->GetLoadSaveDialog()->SaveDialogOn();
           }
+        if ( (*pit).GetMultiple() == "true" )
+          {
+          tparameter->GetWidget()->GetLoadSaveDialog()->MultipleSelectionOn();
+          }
         tparameter->Create();
         tparameter->SetLabelText( (*pit).GetLabel().c_str() );
-        tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialFileName( (*pit).GetDefault().c_str() );
+
+        vtkSmartPointer<vtkStringArray> names = vtkStringArray::New();
+        splitFilenames(&(*pit).GetDefault(), names);
+        tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialSelectedFileNames( names );
         if ((*pit).GetFileExtensions().size() != 0)
           {
           std::string extensionVector;
