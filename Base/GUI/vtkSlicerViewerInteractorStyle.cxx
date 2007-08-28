@@ -51,6 +51,13 @@ void vtkSlicerViewerInteractorStyle::OnMouseMove()
 { 
   int x = this->Interactor->GetEventPosition()[0];
   int y = this->Interactor->GetEventPosition()[1];
+  int cameraDisableState = 0;
+
+  if (this->CameraNode) 
+    {
+    cameraDisableState = this->CameraNode->GetDisableModifiedEvent();
+    this->CameraNode->DisableModifiedEventOn();
+    }
 
   switch (this->State) 
     {
@@ -80,6 +87,12 @@ void vtkSlicerViewerInteractorStyle::OnMouseMove()
     default:
       this->InvokeEvent(vtkCommand::MouseMoveEvent, NULL);
       break;
+    }
+
+  if (this->CameraNode) 
+    {
+    this->CameraNode->SetDisableModifiedEvent(cameraDisableState);
+    this->CameraNode->InvokePendingModifiedEvent();
     }
 }
 

@@ -33,12 +33,18 @@ vtkSlicerDiffusionWeightedVolumeDisplayWidget::vtkSlicerDiffusionWeightedVolumeD
     this->ColorSelectorWidget = NULL;
     this->InterpolateButton = NULL;
     this->WindowLevelThresholdEditor = NULL;
+    this->UpdatingMRML = 0;
+    this->UpdatingWidget = 0;
 }
 
 
 //---------------------------------------------------------------------------
 vtkSlicerDiffusionWeightedVolumeDisplayWidget::~vtkSlicerDiffusionWeightedVolumeDisplayWidget ( )
 {
+  if (this->IsCreated())
+    {
+    this->RemoveWidgetObservers();
+    }
  
  if (this->DiffusionSelectorWidget)
     {
@@ -82,7 +88,13 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::PrintSelf ( ostream& os, vtk
 void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObject *caller,
                                                          unsigned long event, void *callData )
 {
+  if (this->UpdatingMRML || this->UpdatingWidget)
+    {
+    return;
+    }
 
+  this->UpdatingWidget = 1;
+  
   this->Superclass::ProcessWidgetEvents(caller, event, callData);
   //
   // process volume selector events
@@ -94,12 +106,12 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
         event == vtkKWScale::ScaleValueChangedEvent ) 
     {
     // get the volume display node
-      vtkMRMLDiffusionWeightedVolumeDisplayNode *displayNode = vtkMRMLDiffusionWeightedVolumeDisplayNode::SafeDownCast(this->GetVolumeDisplayNode());
-      if (displayNode != NULL)
-        {
-        displayNode->SetDiffusionComponent((int) dwiSelector->GetScale()->GetValue());
-        }
-
+    vtkMRMLDiffusionWeightedVolumeDisplayNode *displayNode = vtkMRMLDiffusionWeightedVolumeDisplayNode::SafeDownCast(this->GetVolumeDisplayNode());
+    if (displayNode != NULL)
+      {
+      displayNode->SetDiffusionComponent((int) dwiSelector->GetScale()->GetValue());
+      }
+    this->UpdatingWidget = 0;
     return;
     }
 
@@ -120,13 +132,14 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
       if (displayNode != NULL)
         {
         // set and observe it's colour node id
-        if (strcmp(displayNode->GetColorNodeID(), color->GetID()) != 0)
+        if (displayNode->GetColorNodeID() && strcmp(displayNode->GetColorNodeID(), color->GetID()) != 0)
           {
           // there's a change, set it
           displayNode->SetAndObserveColorNodeID(color->GetID());
           }
         }
       }
+    this->UpdatingWidget = 0;    
     return;
     }
   //
@@ -150,6 +163,7 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
         vtkMRMLVolumeNode *volumeNode = this->GetVolumeNode();
         if (volumeNode == NULL)
           {
+          this->UpdatingWidget = 0;          
           return;
           }
         else 
@@ -157,6 +171,7 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
           displayNode = vtkMRMLDiffusionWeightedVolumeDisplayNode::New ();
           displayNode->SetScene(this->MRMLScene);
           this->MRMLScene->AddNode (displayNode);
+          displayNode->Delete();
           //displayNode->SetDefaultColorMap();
           if (this->GetApplication() &&
               vtkSlicerApplication::SafeDownCast(this->GetApplication()) &&
@@ -178,7 +193,6 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
             {
             vtkDebugMacro("Unable to get application or color gui");
             }
-          displayNode->Delete();
           }
       volumeNode->SetAndObserveDisplayNodeID( displayNode->GetID() );
       }
@@ -190,8 +204,22 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
       displayNode->SetUpperThreshold(this->WindowLevelThresholdEditor->GetUpperThreshold());
       displayNode->SetLowerThreshold(this->WindowLevelThresholdEditor->GetLowerThreshold());
       displayNode->SetAutoWindowLevel(this->WindowLevelThresholdEditor->GetAutoWindowLevel());
-      displayNode->SetAutoThreshold(this->WindowLevelThresholdEditor->GetAutoThreshold());
-      displayNode->SetApplyThreshold(this->WindowLevelThresholdEditor->GetApplyThreshold());
+      int thresholdType = this->WindowLevelThresholdEditor->GetThresholdType();
+      if (thresholdType == vtkKWWindowLevelThresholdEditor::ThresholdOff) 
+        {
+        displayNode->SetApplyThreshold(0);
+        }
+      else if (thresholdType == vtkKWWindowLevelThresholdEditor::ThresholdAuto) 
+        {
+        displayNode->SetApplyThreshold(1);
+        displayNode->SetAutoThreshold(1);
+        }
+      else if (thresholdType == vtkKWWindowLevelThresholdEditor::ThresholdManual) 
+        {
+        displayNode->SetApplyThreshold(1);
+        displayNode->SetAutoThreshold(0);
+        }
+      this->UpdatingWidget = 0;      
       return;
       }
     }
@@ -204,6 +232,7 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
         {
         displayNode->SetInterpolate( this->InterpolateButton->GetSelectedState() );
         }
+      this->UpdatingWidget = 0;      
       return;
       }
 
@@ -215,6 +244,7 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
       {
       this->MRMLScene->SaveStateForUndo(displayNode);
       }
+    this->UpdatingWidget = 0;    
     return;
     }
 
@@ -226,24 +256,42 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
 void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessMRMLEvents ( vtkObject *caller,
                                               unsigned long event, void *callData )
 {
+  if (this->UpdatingMRML || this->UpdatingWidget)
+    {
+    return;
+    }
+  this->UpdatingMRML = 1;
+  
   vtkMRMLVolumeNode *curVolumeNode = this->GetVolumeNode();
   if (curVolumeNode  == NULL)
     {
+    this->UpdatingMRML = 0;    
     return;
     }
 
   vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(caller);
-
   if (volumeNode == curVolumeNode && 
       volumeNode != NULL && event == vtkCommand::ModifiedEvent)
     {
     this->WindowLevelThresholdEditor->SetImageData(volumeNode->GetImageData());
     this->DiffusionSelectorWidget->GetScale()->SetRange(0,volumeNode->GetImageData()->GetNumberOfScalarComponents()-1);
+
+    //--- check the interpolation which may have been modified from the SliceGUI
+    if ( this->GetVolumeDisplayNode() && this->InterpolateButton )
+      {
+      if (this->GetVolumeDisplayNode()->GetInterpolate() != this->InterpolateButton->GetSelectedState() )
+        {
+        this->InterpolateButton->SetSelectedState( GetVolumeDisplayNode()->GetInterpolate()  );
+        }
+      }
+    //--- end check interpolation.
+
     }
 
   if (event == vtkCommand::ModifiedEvent)
     {
     this->UpdateWidgetFromMRML();
+    this->UpdatingMRML = 0;
     return;
     }
 }
@@ -251,6 +299,14 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessMRMLEvents ( vtkObjec
 void vtkSlicerDiffusionWeightedVolumeDisplayWidget::UpdateWidgetFromMRML ()
 { 
   vtkDebugMacro("UpdateWidgetFromMRML");
+  
+  vtkMRMLVolumeNode *volumeNode = this->GetVolumeNode();
+  if (volumeNode != NULL)
+    {
+    this->WindowLevelThresholdEditor->SetImageData(volumeNode->GetImageData());
+    this->DiffusionSelectorWidget->GetScale()->SetRange(0,volumeNode->GetImageData()->GetNumberOfScalarComponents()-1);
+    }
+  
   vtkMRMLDiffusionWeightedVolumeDisplayNode *displayNode = vtkMRMLDiffusionWeightedVolumeDisplayNode::SafeDownCast(this->GetVolumeDisplayNode());
 
   // check to see if the color selector widget has it's mrml scene set (it
@@ -264,16 +320,32 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::UpdateWidgetFromMRML ()
       this->ColorSelectorWidget->SetMRMLScene(this->GetMRMLScene());
       }
     }
-  
-  if (displayNode != NULL) 
+
+  // Adjust the range of the DWI slider selector
+  if (this->GetVolumeNode())
+    {
+    this->DiffusionSelectorWidget->GetScale()->SetRange(0,this->GetVolumeNode()->GetImageData()->GetNumberOfScalarComponents()-1);
+    }
+  // Adjust widget from display Node
+  if (displayNode != NULL  && this->WindowLevelThresholdEditor != NULL) 
     {
     this->WindowLevelThresholdEditor->SetWindowLevel(
           displayNode->GetWindow(), displayNode->GetLevel() );
     this->WindowLevelThresholdEditor->SetThreshold(
           displayNode->GetLowerThreshold(), displayNode->GetUpperThreshold() );
     this->WindowLevelThresholdEditor->SetAutoWindowLevel( displayNode->GetAutoWindowLevel() );
-    this->WindowLevelThresholdEditor->SetAutoThreshold( displayNode->GetAutoThreshold() );
-    this->WindowLevelThresholdEditor->SetApplyThreshold( displayNode->GetApplyThreshold() );
+    if (displayNode->GetApplyThreshold() == 0) 
+      {
+      this->WindowLevelThresholdEditor->SetThresholdType(vtkKWWindowLevelThresholdEditor::ThresholdOff);
+      }
+    else if (displayNode->GetAutoThreshold())
+      {
+      this->WindowLevelThresholdEditor->SetThresholdType(vtkKWWindowLevelThresholdEditor::ThresholdAuto);
+      }
+    else
+      {
+      this->WindowLevelThresholdEditor->SetThresholdType(vtkKWWindowLevelThresholdEditor::ThresholdManual);
+      }
     // set the color node selector to reflect the volume's color node
     this->ColorSelectorWidget->SetSelected(displayNode->GetColorNode());
     this->DiffusionSelectorWidget->GetScale()->SetValue(displayNode->GetDiffusionComponent());

@@ -21,27 +21,28 @@
 //
 
 
-#ifndef __vtkSlicerScalarVolumeDisplayWidget_h
-#define __vtkSlicerScalarVolumeDisplayWidget_h
+#ifndef __vtkSlicerRecordSnapshotWidget_h
+#define __vtkSlicerRecordSnapshotWidget_h
 
-#include "vtkSlicerVolumeDisplayWidget.h"
-
+#include "vtkSlicerWidget.h"
 #include "vtkSlicerNodeSelectorWidget.h"
-#include "vtkKWWindowLevelThresholdEditor.h"
-#include "vtkKWCheckButton.h"
 
-#include "vtkMRMLVolumeNode.h"
-#include "vtkMRMLVolumeDisplayNode.h"
+#include "vtkKWPushButton.h"
 
+#include "vtkMRMLSceneSnapshotNode.h"
+#include "vtkMRMLSnapshotClipNode.h"
 
-class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerScalarVolumeDisplayWidget : public vtkSlicerVolumeDisplayWidget
+class vtkKWSimpleEntryDialog;
+
+class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerRecordSnapshotWidget : public vtkSlicerWidget
 {
   
 public:
-  static vtkSlicerScalarVolumeDisplayWidget* New();
-  vtkTypeRevisionMacro(vtkSlicerScalarVolumeDisplayWidget,vtkSlicerVolumeDisplayWidget);
+  static vtkSlicerRecordSnapshotWidget* New();
+  vtkTypeRevisionMacro(vtkSlicerRecordSnapshotWidget,vtkSlicerWidget);
   void PrintSelf(ostream& os, vtkIndent indent);
-
+  
+  
   // Description:
   // alternative method to propagate events generated in GUI to logic / mrml
   virtual void ProcessWidgetEvents ( vtkObject *caller, unsigned long event, void *callData );
@@ -49,40 +50,38 @@ public:
   // Description:
   // alternative method to propagate events generated in GUI to logic / mrml
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
-
- // Description:
-  // add observers on widgets in the class
-  virtual void AddWidgetObservers ( );
-
+  
   // Description:
   // removes observers on widgets in the class
   virtual void RemoveWidgetObservers ( );
 
- // Description:
-  // update the widget upon MRML change
-  virtual void UpdateWidgetFromMRML();
-  
+  virtual void AddMRMLObservers();
+  virtual void RemoveMRMLObservers();
 
 protected:
-  vtkSlicerScalarVolumeDisplayWidget();
-  virtual ~vtkSlicerScalarVolumeDisplayWidget();
+  vtkSlicerRecordSnapshotWidget();
+  virtual ~vtkSlicerRecordSnapshotWidget();
 
   // Description:
   // Create the widget.
   virtual void CreateWidget();
 
-  vtkSlicerNodeSelectorWidget* ColorSelectorWidget;
-  vtkKWWindowLevelThresholdEditor* WindowLevelThresholdEditor;
-  vtkKWCheckButton* InterpolateButton;
+  vtkKWPushButton* StartRecordButton;
+  vtkKWPushButton* StopRecordButton;
+  vtkKWPushButton* ReplayButton;
 
-  int UpdatingMRML;
-  int UpdatingWidget;
+  vtkKWPushButton* SaveClipButton;
+  vtkSlicerNodeSelectorWidget* ClipSelectorWidget;
+  vtkKWSimpleEntryDialog *NameDialog;
 
+  //BTX
+  std::vector <vtkMRMLSceneSnapshotNode *> Sanpshots;
+  //ETX
 private:
 
 
-  vtkSlicerScalarVolumeDisplayWidget(const vtkSlicerScalarVolumeDisplayWidget&); // Not implemented
-  void operator=(const vtkSlicerScalarVolumeDisplayWidget&); // Not Implemented
+  vtkSlicerRecordSnapshotWidget(const vtkSlicerRecordSnapshotWidget&); // Not implemented
+  void operator=(const vtkSlicerRecordSnapshotWidget&); // Not Implemented
 };
 
 #endif

@@ -27,12 +27,15 @@ SET(LIB_SRCS
   vtkSlicerImageCloseUp2D.cxx
   vtkSlicerImageCrossHair2D.cxx
   vtkSlicerLogoIcons.cxx
+  vtkSlicerHelpIcons.cxx
+  vtkSlicerPopUpHelpWidget.cxx
   vtkSlicerBaseAcknowledgementLogoIcons.cxx
   vtkSlicerVisibilityIcons.cxx
   vtkSlicerModuleNavigationIcons.cxx
   vtkSlicerToolbarIcons.cxx
   vtkSlicerViewControlIcons.cxx
   vtkSlicerSlicesControlIcons.cxx
+  vtkSlicerCheckRadioButtonIcons.cxx
   vtkSlicerApplication.cxx
   vtkSlicerComponentGUI.cxx
   vtkSlicerModuleGUI.cxx
@@ -68,6 +71,7 @@ SET(LIB_SRCS
   vtkSlicerVolumeDisplayWidget.cxx
   vtkSlicerScalarVolumeDisplayWidget.cxx
   vtkSlicerDiffusionWeightedVolumeDisplayWidget.cxx
+  vtkSlicerDiffusionTensorVolumeDisplayWidget.cxx
   vtkSlicerVolumeHeaderWidget.cxx
   vtkSlicerVolumeFileHeaderWidget.cxx
   vtkSlicerTransformManagerWidget.cxx
@@ -81,10 +85,12 @@ SET(LIB_SRCS
   vtkSlicerClipModelsWidget.cxx
   vtkSlicerParameterWidget.cxx
   vtkSlicerSceneSnapshotWidget.cxx
+  vtkSlicerRecordSnapshotWidget.cxx
   vtkSlicerModelHierarchyWidget.cxx
   # VTK Replacement classes
   vtkSlicerInteractorStyle.cxx
   vtkSlicerViewerInteractorStyle.cxx
+  vtkSlicerROIGUI.cxx
   )
 
 # Helper classes
@@ -192,71 +198,24 @@ CONFIGURE_FILE(
 SET(SlicerBaseGUITcl_DIR "${SLICER_LIBRARIES_DIR}/SlicerBaseGUITcl")
 
 FILE(MAKE_DIRECTORY ${SlicerBaseGUITcl_DIR})
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/pkgIndex.tcl
-  ${SlicerBaseGUITcl_DIR}/pkgIndex.tcl
-  COPYONLY
+
+SET(TCLFILES
+  pkgIndex.tcl SliceViewerInteractor.tcl
+  SWidget.tcl SliceSWidget.tcl SeedSWidget.tcl CsysSWidget.tcl
+  FiducialsSWidget.tcl GridSWidget.tcl CrosshairSWidget.tcl
+  RegionsSWidget.tcl Slicer2Import.tcl 
+  Loader.tcl LoadVolume.tcl
+  MRMLWatcher.tcl
 )
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/SliceViewerInteractor.tcl
-  ${SlicerBaseGUITcl_DIR}/SliceViewerInteractor.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/SWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/SWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/SliceSWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/SliceSWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/SeedSWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/SeedSWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/PaintSWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/PaintSWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/DrawSWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/DrawSWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/CsysSWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/CsysSWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/FiducialsSWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/FiducialsSWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/GridSWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/GridSWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/CrosshairSWidget.tcl
-  ${SlicerBaseGUITcl_DIR}/CrosshairSWidget.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/Slicer2Import.tcl
-  ${SlicerBaseGUITcl_DIR}/Slicer2Import.tcl
-  COPYONLY
-)
-CONFIGURE_FILE(
-  ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/Loader.tcl
-  ${SlicerBaseGUITcl_DIR}/Loader.tcl
-  COPYONLY
-)
+
+FOREACH(tclfile ${TCLFILES})
+  CONFIGURE_FILE(
+    ${Slicer3_SOURCE_DIR}/Base/GUI/Tcl/${tclfile}
+    ${SlicerBaseGUITcl_DIR}/${tclfile}
+    COPYONLY
+  )
+ENDFOREACH(tclfile)
+
 
 # Python settings
 IF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
@@ -268,7 +227,11 @@ IF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
                             debug ${PYTHON_DEBUG_LIBRARIES}
                             optimized ${PYTHON_LIBRARIES})
   ELSE (WIN32 AND PYTHON_DEBUG_LIBRARIES)
-     TARGET_LINK_LIBRARIES( ${LIB_NAME} ${PYTHON_LIBRARIES})
+    IF (APPLE)
+     TARGET_LINK_LIBRARIES( ${LIB_NAME} ${PYTHON_LIBRARIES} )
+    ELSE (APPLE)
+     TARGET_LINK_LIBRARIES( ${LIB_NAME} ${PYTHON_LIBRARIES} util)
+    ENDIF (APPLE)
   ENDIF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
 ENDIF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
 

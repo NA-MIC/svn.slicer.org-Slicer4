@@ -15,6 +15,7 @@
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerVolumeDisplayWidget.h"
 #include "vtkSlicerDiffusionWeightedVolumeDisplayWidget.h"
+#include "vtkSlicerDiffusionTensorVolumeDisplayWidget.h"
 #include "vtkSlicerScalarVolumeDisplayWidget.h"
 
 #include "vtkSlicerVolumeHeaderWidget.h"
@@ -116,6 +117,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     vtkKWEntryWithLabel  *NameEntry;
     vtkKWMenuButtonWithLabel *CenterImageMenu;
     vtkKWCheckButton *LabelMapCheckButton;
+    vtkKWCheckButton *UseCompressionCheckButton;
     vtkKWPushButton *ApplyButton;
 
     vtkSlicerModuleCollapsibleFrame *HelpFrame;
@@ -127,6 +129,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
 
     vtkKWFrame *ScalarDisplayFrame;
     vtkKWFrame *DWIDisplayFrame;
+    vtkKWFrame *DTIDisplayFrame;
     vtkKWFrame *VolumeDisplayFrame;
 
     vtkSlicerNodeSelectorWidget* VolumeSelectorWidget;
@@ -134,6 +137,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     vtkSlicerVolumeDisplayWidget *VolumeDisplayWidget;
     vtkSlicerScalarVolumeDisplayWidget *scalarVDW;
     vtkSlicerDiffusionWeightedVolumeDisplayWidget *dwiVDW;
+    vtkSlicerDiffusionTensorVolumeDisplayWidget *dtiVDW;
     vtkSlicerVolumeHeaderWidget *VolumeHeaderWidget;
     vtkSlicerVolumeFileHeaderWidget *VolumeFileHeaderWidget;
 

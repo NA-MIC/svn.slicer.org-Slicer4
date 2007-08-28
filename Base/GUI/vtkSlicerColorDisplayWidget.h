@@ -45,10 +45,15 @@ public:
   vtkGetObjectMacro ( ColorNodeTypeLabel, vtkKWLabel);
   vtkGetObjectMacro ( NumberOfColorsLabel, vtkKWLabel);
   vtkGetObjectMacro ( AddColorButton, vtkKWPushButton);
-
+  vtkGetObjectMacro ( MultiColumnList, vtkKWMultiColumnListWithScrollbars );
   // Description:
   // Set the selected node, the color id, and update the widgets
   void SetColorNode ( vtkMRMLColorNode *node );
+
+  // Description:
+  // Get the color node, needed for the Editor
+  vtkGetObjectMacro ( ColorNode, vtkMRMLColorNode );
+  
   // Description:
   // Getting and setting the mrml color node id
   vtkGetStringMacro(ColorNodeID);
@@ -62,6 +67,7 @@ public:
   enum
   {
       ColorIDModifiedEvent = 30000,
+      SelectedColorModifiedEvent = 30001,
   };
   //ETX
 
@@ -95,6 +101,7 @@ public:
   // on the vtkMRMLColorNode. Returns -1 if no list box or no selection,
   // or if more than one row is selected.
   int GetSelectedColorIndex();
+  void SetSelectedColorIndex(int index);
 
   // Description:
   // API for setting ColorNode, and observing it
@@ -125,6 +132,10 @@ public:
   void UpdateMRML();
 
   // Description:
+  // Called when the selected row changes, just update the label, called from UpdateWidget
+  void UpdateSelectedColor();
+  
+  // Description:
   // id of the color node displayed in the widget
   char* ColorNodeID;
   
@@ -149,6 +160,10 @@ public:
   vtkKWLabel *NumberOfColorsLabel;
 
   // Description:
+  // displays the currently selected colour index
+  vtkKWLabel *SelectedColorLabel;
+  
+  // Description:
   // display the colours in the table
   vtkKWMultiColumnListWithScrollbars *MultiColumnList;
   int NumberOfColumns;
@@ -164,7 +179,8 @@ public:
       ColourColumn = 2,
     };
   //ETX
-  
+
+  vtkKWCheckButton *ShowOnlyNamedColorsCheckButton;
 private:
 
   vtkSlicerColorDisplayWidget(const vtkSlicerColorDisplayWidget&); // Not implemented
