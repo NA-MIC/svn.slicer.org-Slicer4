@@ -9,7 +9,6 @@
 #include "vtkAppendPolyData.h"
 
 
-#include <string>
 
 
 vtkStandardNewMacro(vtkIGTDataManager);
@@ -31,8 +30,7 @@ vtkIGTDataManager::~vtkIGTDataManager()
 
 const char *vtkIGTDataManager::RegisterStream(int streamType)
 {
- 
-    std::string id("");
+    this->StreamID = "";
 
     // streamType: 0 - matrix; 1 - image 
     switch (streamType) {
@@ -61,7 +59,7 @@ const char *vtkIGTDataManager::RegisterStream(int streamType)
             modelNode->SetScene(this->MRMLScene);
             modelNode->SetAndObserveDisplayNodeID(dispNode->GetID());  
             modelNode->SetAndObserveTransformNodeID(transform->GetID());  
-            id = std::string(modelNode->GetID());
+            this->StreamID = std::string(modelNode->GetID());
 
             // Cylinder represents the locator stick
             vtkCylinderSource *cylinder = vtkCylinderSource::New();
@@ -98,7 +96,7 @@ const char *vtkIGTDataManager::RegisterStream(int streamType)
             break;
     }
 
-    return id.c_str();
+    return this->StreamID.c_str();
 }
 
 
@@ -108,7 +106,7 @@ const char *vtkIGTDataManager::RegisterStream(int streamType)
 const char *vtkIGTDataManager::RegisterStream_new(int streamType)
 {
 
-    std::string id_extend("");
+    this->StreamID = "";
 
     // streamType: 0 - matrix; 1 - image 
     switch (streamType) {
@@ -139,7 +137,7 @@ const char *vtkIGTDataManager::RegisterStream_new(int streamType)
             modelNode_extend->SetScene(this->MRMLScene);
             modelNode_extend->SetAndObserveDisplayNodeID(dispNode_extend->GetID());  
             modelNode_extend->SetAndObserveTransformNodeID(transform_extend->GetID());  
-            id_extend = std::string(modelNode_extend->GetID());
+            this->StreamID = std::string(modelNode_extend->GetID());
 
             // Cylinder represents the locator stick
             vtkCylinderSource *cylinder_extend = vtkCylinderSource::New();
@@ -188,7 +186,7 @@ const char *vtkIGTDataManager::RegisterStream_new(int streamType)
             break;
     }
 
-    return id_extend.c_str();
+    return this->StreamID.c_str();
 }
 
 
