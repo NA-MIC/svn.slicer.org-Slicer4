@@ -407,7 +407,7 @@ void vtkSlicerSliceLayerLogic::ScalarVolumeNodeUpdateTransforms()
     }
 
   vtkMRMLVolumeDisplayNode *volumeDisplayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
-  if (volumeDisplayNode->GetColorNode())
+  if (volumeDisplayNode && volumeDisplayNode->GetColorNode())
     {
     lookupTable = volumeDisplayNode->GetColorNode()->GetLookupTable();
     }

@@ -66,20 +66,86 @@ vtkMRMLScalarVolumeDisplayNode::vtkMRMLScalarVolumeDisplayNode()
   this->ApplyThreshold = 0;
   this->LowerThreshold = VTK_SHORT_MIN;
   this->UpperThreshold = VTK_SHORT_MAX;
+
   // try setting a default greyscale color map
   //this->SetDefaultColorMap(0);
+
+  // create and set visulaization pipeline
+  this->ResliceAlphaCast = vtkImageCast::New();
+  this->AlphaLogic = vtkImageLogic::New();
+  this->MapToColors = vtkImageMapToColors::New();
+  this->Threshold = vtkImageThreshold::New();
+  this->AppendComponents = vtkImageAppendComponents::New();
+  this->MapToWindowLevelColors = vtkImageMapToWindowLevelColors::New();
+
+  this->MapToWindowLevelColors->SetOutputFormatToLuminance();
+  this->MapToColors->SetInput( this->MapToWindowLevelColors->GetOutput() );
+  this->Threshold->SetOutputScalarTypeToUnsignedChar();
+
+  this->AlphaLogic->SetInput1( this->ResliceAlphaCast->GetOutput() );
+  this->AlphaLogic->SetInput2( this->Threshold->GetOutput() );
+
+  this->AppendComponents->RemoveAllInputs();
+  this->AppendComponents->SetInputConnection(0, this->MapToColors->GetOutput()->GetProducerPort() );
+  this->AppendComponents->AddInputConnection(0, this->AlphaLogic->GetOutput()->GetProducerPort() );
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLScalarVolumeDisplayNode::SetDefaultColorMap()
 {
   this->SetAndObserveColorNodeID("vtkMRMLColorTableNodeGrey");
+
+
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLScalarVolumeDisplayNode::~vtkMRMLScalarVolumeDisplayNode()
 {
   this->SetAndObserveColorNodeID( NULL);
+
+  this->ResliceAlphaCast->Delete();
+  this->AlphaLogic->Delete();
+  this->MapToColors->Delete();
+  this->Threshold->Delete();
+  this->AppendComponents->Delete();
+  this->MapToWindowLevelColors->Delete();
+
+}
+
+void vtkMRMLScalarVolumeDisplayNode::UpdateImageDataPipeline()
+{
+  vtkLookupTable *lookupTable = NULL;
+  if (this->GetColorNode())
+    {
+    lookupTable = this->GetColorNode()->GetLookupTable();
+    }
+
+  if (lookupTable != this->MapToColors->GetLookupTable())
+    {
+    this->MapToColors->SetLookupTable(lookupTable);
+    }
+
+  this->MapToWindowLevelColors->SetWindow(this->GetWindow());
+  this->MapToWindowLevelColors->SetLevel(this->GetLevel());
+
+  if ( this->GetApplyThreshold() )
+    {
+    this->Threshold->ReplaceInOn();
+    this->Threshold->SetInValue(255);
+    this->Threshold->ReplaceOutOn();
+    this->Threshold->SetOutValue(0);
+    this->Threshold->ThresholdBetween( this->GetLowerThreshold(), 
+                                       this->GetUpperThreshold() );
+    }
+  else
+    {
+    // don't apply threshold - alpha channel becomes 255 everywhere
+    this->Threshold->ThresholdBetween( 1, 0 ); 
+    this->Threshold->ReplaceInOn();
+    this->Threshold->SetInValue(255);
+    this->Threshold->ReplaceOutOn();
+    this->Threshold->SetOutValue(255); 
+    }
 }
 
 //----------------------------------------------------------------------------
