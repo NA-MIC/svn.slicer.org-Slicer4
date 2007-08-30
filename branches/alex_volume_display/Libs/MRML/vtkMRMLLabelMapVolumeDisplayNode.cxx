@@ -57,6 +57,13 @@ vtkMRMLNode* vtkMRMLLabelMapVolumeDisplayNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLLabelMapVolumeDisplayNode::vtkMRMLLabelMapVolumeDisplayNode()
 {
+  this->MapToColors = vtkImageMapToColors::New();
+}
+
+//----------------------------------------------------------------------------
+vtkMRMLLabelMapVolumeDisplayNode::~vtkMRMLLabelMapVolumeDisplayNode()
+{
+   this->MapToColors->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -65,11 +72,6 @@ void vtkMRMLLabelMapVolumeDisplayNode::SetDefaultColorMap()
   // set up a default color node
   // TODO: figure out if can use vtkSlicerColorLogic's helper methods
   this->SetAndObserveColorNodeID("vtkMRMLColorTableNodeLabels");
-}
-
-//----------------------------------------------------------------------------
-vtkMRMLLabelMapVolumeDisplayNode::~vtkMRMLLabelMapVolumeDisplayNode()
-{
 }
 
 //----------------------------------------------------------------------------

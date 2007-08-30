@@ -24,8 +24,8 @@
 #include "vtkMRMLVolumeDisplayNode.h"
 
 #include "vtkImageData.h"
+#include "vtkImageMapToColors.h"
 
-class vtkImageData;
 
 class VTK_MRML_EXPORT vtkMRMLLabelMapVolumeDisplayNode : public vtkMRMLVolumeDisplayNode
 {
@@ -49,11 +49,27 @@ class VTK_MRML_EXPORT vtkMRMLLabelMapVolumeDisplayNode : public vtkMRMLVolumeDis
   // set gray colormap
   virtual void SetDefaultColorMap();
 
+  // Description:
+  // Sets ImageData to be converted to lables
+  void SetImageData(vtkImageData *imageData) 
+    {
+    this->MapToColors->SetInput( imageData);
+    };
+
+  // Description:
+  // Gets ImageData converted from the real data in the node
+  virtual vtkImageData* GetImageData() 
+    {
+    return this->MapToColors->GetOutput();
+    };
+
 protected:
   vtkMRMLLabelMapVolumeDisplayNode();
   ~vtkMRMLLabelMapVolumeDisplayNode();
   vtkMRMLLabelMapVolumeDisplayNode(const vtkMRMLLabelMapVolumeDisplayNode&);
   void operator=(const vtkMRMLLabelMapVolumeDisplayNode&);
+
+  vtkImageMapToColors *MapToColors;
 
 };
 

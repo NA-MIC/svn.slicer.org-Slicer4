@@ -70,6 +70,14 @@ class VTK_MRML_EXPORT vtkMRMLVolumeDisplayNode : public vtkMRMLDisplayNode
   virtual void UpdateScene(vtkMRMLScene *scene);
   
   // Description:
+  // Gets ImageData converted from the real data in the node
+  virtual vtkImageData* GetImageData() {return NULL;};
+
+  // Description:
+  // Update the pipeline based on this node attributes
+  virtual void UpdateImageDataPipeline() {};
+
+  // Description:
   // String ID of the color MRML node
   void SetAndObserveColorNodeID(const char *ColorNodeID);
   //BTX
@@ -90,10 +98,6 @@ class VTK_MRML_EXPORT vtkMRMLVolumeDisplayNode : public vtkMRMLDisplayNode
   // set gray colormap
   virtual void SetDefaultColorMap();
 
-  // Description:
-  // Associated ImageData
-  vtkGetObjectMacro(ImageData, vtkImageData);
- 
 protected:
   vtkMRMLVolumeDisplayNode();
   ~vtkMRMLVolumeDisplayNode();
@@ -105,8 +109,6 @@ protected:
   vtkSetReferenceStringMacro(ColorNodeID);
 
   vtkMRMLColorNode *ColorNode;
-
-  vtkImageData  *ImageData;
 
 };
 
