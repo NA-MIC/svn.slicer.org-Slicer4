@@ -21,7 +21,7 @@
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
-#include "vtkMRMLVolumeDisplayNode.h"
+#include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkMRMLColorNode.h"
 
 #include "vtkMatrix4x4.h"
@@ -32,11 +32,11 @@
 
 class vtkImageData;
 
-class VTK_MRML_EXPORT vtkMRMLVolumeGlyphDisplayNode : public vtkMRMLVolumeDisplayNode
+class VTK_MRML_EXPORT vtkMRMLVolumeGlyphDisplayNode : public vtkMRMLScalarVolumeDisplayNode
 {
   public:
   static vtkMRMLVolumeGlyphDisplayNode *New();
-  vtkTypeMacro(vtkMRMLVolumeGlyphDisplayNode,vtkMRMLVolumeDisplayNode);
+  vtkTypeMacro(vtkMRMLVolumeGlyphDisplayNode,vtkMRMLScalarVolumeDisplayNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

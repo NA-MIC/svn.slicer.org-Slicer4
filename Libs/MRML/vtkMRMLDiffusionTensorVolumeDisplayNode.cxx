@@ -22,6 +22,8 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLScene.h"
 
+#include "vtkDiffusionTensorGlyph.h"
+
 #include "vtkSphereSource.h"
 
 //------------------------------------------------------------------------------

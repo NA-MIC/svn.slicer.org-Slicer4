@@ -25,7 +25,7 @@
 #define __vtkMRMLDiffusionWeightedVolumeDisplayNode_h
 
 #include "vtkMRML.h"
-#include "vtkMRMLVolumeDisplayNode.h"
+#include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkMRMLStorageNode.h"
 #include "vtkMRMLColorNode.h"
 
@@ -34,11 +34,11 @@
 
 class vtkImageData;
 
-class VTK_MRML_EXPORT vtkMRMLDiffusionWeightedVolumeDisplayNode : public vtkMRMLVolumeDisplayNode
+class VTK_MRML_EXPORT vtkMRMLDiffusionWeightedVolumeDisplayNode : public vtkMRMLScalarVolumeDisplayNode
 {
   public:
   static vtkMRMLDiffusionWeightedVolumeDisplayNode *New();
-  vtkTypeMacro(vtkMRMLDiffusionWeightedVolumeDisplayNode,vtkMRMLVolumeDisplayNode);
+  vtkTypeMacro(vtkMRMLDiffusionWeightedVolumeDisplayNode,vtkMRMLScalarVolumeDisplayNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();

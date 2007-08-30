@@ -28,9 +28,7 @@
 #include "vtkMRMLVolumeGlyphDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 
-#include "vtkDiffusionTensorGlyph.h"
-
-
+class vtkDiffusionTensorGlyph;
 class vtkImageData;
 
 class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLVolumeGlyphDisplayNode

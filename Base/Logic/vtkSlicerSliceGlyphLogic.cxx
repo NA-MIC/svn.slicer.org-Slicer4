@@ -268,10 +268,8 @@ void vtkSlicerSliceGlyphLogic::UpdateNodeReferences ()
         displayNode->SetAndObserveColorNodeID(propNode->GetID());
         }
 
-      if (isLabelMap)
-        {
-        displayNode->SetDefaultColorMap(isLabelMap);
-        }
+      displayNode->SetDefaultColorMap();
+        
       this->VolumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
       displayNode->Delete();
       }
@@ -437,7 +435,7 @@ void vtkSlicerSliceGlyphLogic::ScalarVolumeNodeUpdateTransforms()
     labelMap = 0;
     }
 
-  vtkMRMLVolumeDisplayNode *scalarVolumeDisplayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
+  vtkMRMLScalarVolumeDisplayNode *scalarVolumeDisplayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
 
   if (scalarVolumeDisplayNode)
     {
@@ -464,7 +462,7 @@ void vtkSlicerSliceGlyphLogic::VectorVolumeNodeUpdateTransforms()
 
   if (vectorVolumeDisplayNode)
     {
-    interpolate = vectorVolumeDisplayNode->GetInterpolate();
+    //interpolate = vectorVolumeDisplayNode->GetInterpolate();
     }
 
 //  this->VectorSlicePipeline(vectorVolumeNode->GetImageData(), interpolate);
