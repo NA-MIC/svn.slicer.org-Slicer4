@@ -1285,12 +1285,15 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
             vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
             if (model != NULL)
             {
-                vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
+                vtkMRMLModelDisplayNode *disp = vtkMRMLModelDisplayNode::SafeDownCast(model->GetDisplayNode());
                 
-                vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-                vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
-                disp->SetColor(color->SliceGUIGreen);
-                disp->SetVisibility(checked);
+                if (disp != NULL)
+                {
+                    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+                    vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
+                    disp->SetColor(color->SliceGUIGreen);
+                    disp->SetVisibility(checked);
+                }
             }
         }
         /*
