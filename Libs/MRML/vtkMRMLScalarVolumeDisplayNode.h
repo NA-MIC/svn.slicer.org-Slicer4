@@ -115,8 +115,8 @@ class VTK_MRML_EXPORT vtkMRMLScalarVolumeDisplayNode : public vtkMRMLVolumeDispl
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
   // Description:
-  // Sets ImageData to be converted to lables
-  void SetImageData(vtkImageData *imageData)
+  // Sets vtkImageData to be converted to displayable vtkImageData
+  virtual void SetImageData(vtkImageData *imageData)
     {
     this->Threshold->SetInput( imageData);
     this->MapToWindowLevelColors->SetInput( imageData);
@@ -124,7 +124,7 @@ class VTK_MRML_EXPORT vtkMRMLScalarVolumeDisplayNode : public vtkMRMLVolumeDispl
 
   // Description:
   // Sets ImageData for background mask 
-  void SetBackgroundImageData(vtkImageData *imageData)
+  virtual void SetBackgroundImageData(vtkImageData *imageData)
     {
     this->ResliceAlphaCast->SetInput(imageData);
     };
