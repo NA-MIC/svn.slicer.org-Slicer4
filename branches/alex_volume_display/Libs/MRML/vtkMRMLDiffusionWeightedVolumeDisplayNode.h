@@ -31,6 +31,7 @@
 
 #include "vtkMatrix4x4.h"
 #include "vtkImageData.h"
+#include "vtkImageExtractComponents.h"
 
 class vtkImageData;
 
@@ -59,6 +60,19 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionWeightedVolumeDisplayNode : public vtkMRML
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "DiffusionWeightedVolumeDisplay";};
 
+    // Description:
+  // Sets vtkImageData to be converted to displayable vtkImageData
+  virtual void SetImageData(vtkImageData *imageData)
+    {
+    this->ExtractComponent->SetInput( imageData);
+    };
+
+  virtual void UpdateImageDataPipeline()
+    {
+    this->ExtractComponent->SetComponents(this->GetDiffusionComponent());
+    Superclass::UpdateImageDataPipeline();
+    };
+
   //--------------------------------------------------------------------------
   // Display Information
   //--------------------------------------------------------------------------
@@ -75,6 +89,9 @@ protected:
   void operator=(const vtkMRMLDiffusionWeightedVolumeDisplayNode&);
 
   int DiffusionComponent;
+
+  vtkImageExtractComponents *ExtractComponent;
+
 
 };
 
