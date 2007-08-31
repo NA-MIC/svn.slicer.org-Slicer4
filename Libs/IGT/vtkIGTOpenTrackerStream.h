@@ -12,6 +12,7 @@
 
 #include "vtkIGTWin32Header.h" 
 #include "vtkObject.h"
+#include "vtkIGTDataStream.h"
 
 #include "vtkMatrix4x4.h"
 #include "vtkTransform.h"
@@ -26,7 +27,7 @@
 using namespace ot;
 
 
-class VTK_IGT_EXPORT vtkIGTOpenTrackerStream : public vtkObject
+class VTK_IGT_EXPORT vtkIGTOpenTrackerStream : public vtkIGTDataStream
 {
 public:
 
