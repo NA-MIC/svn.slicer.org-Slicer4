@@ -354,6 +354,9 @@ void vtkSlicerSliceLayerLogic::UpdateTransforms()
     vtkMatrix4x4::Multiply4x4(rasToIJK, xyToIJK, xyToIJK); 
     rasToIJK->Delete();
 
+    this->UpdateImageDisplay();
+    
+    /***
     if (this->VolumeNode->IsA("vtkMRMLScalarVolumeNode"))
       {
       this->ScalarVolumeNodeUpdateTransforms();
@@ -370,6 +373,7 @@ void vtkSlicerSliceLayerLogic::UpdateTransforms()
       {
       this->VectorVolumeNodeUpdateTransforms();
       }
+      ***/
   }
 
   this->XYToIJKTransform->SetMatrix( xyToIJK );
@@ -428,6 +432,45 @@ void vtkSlicerSliceLayerLogic::ScalarVolumeNodeUpdateTransforms()
 
   this->Slice->SetSliceTransform( this->XYToIJKTransform ); 
   this->Reslice->SetResliceTransform( this->XYToIJKTransform ); 
+}
+
+void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
+{
+  vtkMRMLVolumeDisplayNode *volumeDisplayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
+  vtkMRMLLabelMapVolumeDisplayNode *labelMapVolumeDisplayNode = vtkMRMLLabelMapVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
+  vtkMRMLScalarVolumeDisplayNode *scalrVolumeDisplayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
+  vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast (this->VolumeNode);
+
+  if ( this->VolumeNode->GetImageData() && labelMapVolumeDisplayNode )
+    {
+    this->Slice->SetInterpolationModeToNearestNeighbor();
+    this->Reslice->SetInterpolationModeToNearestNeighbor();
+    }
+  else
+    {
+    this->Slice->SetInterpolationModeToLinear();
+    this->Reslice->SetInterpolationModeToLinear();
+    }
+  if (volumeNode)
+    {
+    this->Slice->SetInput( volumeNode->GetImageData()); 
+    this->Reslice->SetInput( volumeNode->GetImageData()); 
+    }
+  if (volumeDisplayNode)
+    {
+    volumeDisplayNode->SetImageData(this->Reslice->GetOutput());
+    volumeDisplayNode->SetBackgroundImageData(this->Reslice->GetBackgroundMask());
+    }
+
+  if (scalrVolumeDisplayNode && scalrVolumeDisplayNode->GetInterpolate() == 0  )
+    {
+    this->Slice->SetInterpolationModeToNearestNeighbor();
+    this->Reslice->SetInterpolationModeToNearestNeighbor();
+    }
+
+  this->Slice->SetSliceTransform( this->XYToIJKTransform ); 
+  this->Reslice->SetResliceTransform( this->XYToIJKTransform ); 
+
 }
 
 //----------------------------------------------------------------------------

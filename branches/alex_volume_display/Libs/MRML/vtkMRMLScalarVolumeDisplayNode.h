@@ -133,6 +133,8 @@ class VTK_MRML_EXPORT vtkMRMLScalarVolumeDisplayNode : public vtkMRMLVolumeDispl
   // Gets ImageData converted from the real data in the node
   virtual vtkImageData* GetImageData() 
     {
+    this->UpdateImageDataPipeline();
+    this->AppendComponents->Update();
     return this->AppendComponents->GetOutput();
     };
 
