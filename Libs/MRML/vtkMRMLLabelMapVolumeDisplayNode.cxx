@@ -89,4 +89,19 @@ void vtkMRMLLabelMapVolumeDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
   Superclass::ProcessMRMLEvents(caller, event, callData);
 }
 
+//---------------------------------------------------------------------------
+void vtkMRMLLabelMapVolumeDisplayNode::UpdateImageDataPipeline()
+{
+  Superclass::UpdateImageDataPipeline();
 
+  vtkLookupTable *lookupTable = NULL;
+  if (this->GetColorNode())
+    {
+    lookupTable = this->GetColorNode()->GetLookupTable();
+    }
+
+  if (lookupTable != this->MapToColors->GetLookupTable())
+    {
+    this->MapToColors->SetLookupTable(lookupTable);
+    }
+}

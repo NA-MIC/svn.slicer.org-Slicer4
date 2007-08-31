@@ -114,6 +114,8 @@ vtkMRMLScalarVolumeDisplayNode::~vtkMRMLScalarVolumeDisplayNode()
 
 void vtkMRMLScalarVolumeDisplayNode::UpdateImageDataPipeline()
 {
+  Superclass::UpdateImageDataPipeline();
+
   vtkLookupTable *lookupTable = NULL;
   if (this->GetColorNode())
     {
