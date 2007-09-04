@@ -79,11 +79,15 @@ vtkMRMLScalarVolumeDisplayNode::vtkMRMLScalarVolumeDisplayNode()
   this->MapToWindowLevelColors = vtkImageMapToWindowLevelColors::New();
 
   this->MapToWindowLevelColors->SetOutputFormatToLuminance();
+  this->MapToColors->SetOutputFormatToRGB();
   this->MapToColors->SetInput( this->MapToWindowLevelColors->GetOutput() );
   this->Threshold->SetOutputScalarTypeToUnsignedChar();
 
-  this->AlphaLogic->SetInput1( this->ResliceAlphaCast->GetOutput() );
-  this->AlphaLogic->SetInput2( this->Threshold->GetOutput() );
+  this->AlphaLogic->SetOperationToAnd();
+  this->AlphaLogic->SetOutputTrueValue(255);
+  this->AlphaLogic->SetInput1( this->Threshold->GetOutput() );
+  //this->AlphaLogic->SetInput2( this->Threshold->GetOutput() );
+  this->AlphaLogic->SetInput2( this->ResliceAlphaCast->GetOutput() );
 
   this->AppendComponents->RemoveAllInputs();
   this->AppendComponents->SetInputConnection(0, this->MapToColors->GetOutput()->GetProducerPort() );
