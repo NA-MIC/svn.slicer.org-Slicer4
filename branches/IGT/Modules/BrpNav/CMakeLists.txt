@@ -16,7 +16,7 @@ SET(BrpNav_SRCS
 #
 # Include dirs
 #
-MESSAGE("\n\nopentracker inc dir = ${OPENTRACKER_INC_DIR}")
+MESSAGE("\n\n navitrack inc dir = ${NAVITRACK_INC_DIR}")
 
 INCLUDE_DIRECTORIES(
   ${ModulesBaseClasses_SOURCE_DIR}
@@ -37,7 +37,7 @@ INCLUDE_DIRECTORIES(
   ${MRML_BINARY_DIR}
   ${IGT_SOURCE_DIR}
   ${IGT_BINARY_DIR}
-  ${OPENTRACKER_INC_DIR}
+  ${NAVITRACK_INC_DIR}
   ${IGSTK_INCLUDE_DIRS}
   )
 

@@ -2,6 +2,8 @@
 
 
 
+
+
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -34,13 +36,14 @@
 #include "vtkKWMultiColumnListWithScrollbars.h"
 #include "vtkKWEvent.h"
 
-#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
+//#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
 
-#include <OpenTracker/input/SlicerNTModule.h>
-#include <OpenTracker/OpenTracker.h>
-#include <OpenTracker/input/SPLModules.h>
-
-#endif
+#ifdef USE_NAVITRACK
+//#include <OpenTracker/input/SlicerNTModule.h>
+//#include <OpenTracker/OpenTracker.h>
+//#include <OpenTracker/input/SPLModules.h>
+#endif //USE_NAVITRACK
+//#endif
 
 #include "vtkKWTkUtilities.h"
 #include "vtkMRMLModelDisplayNode.h"
@@ -140,7 +143,7 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->YellowSliceMenu = NULL;
     this->GreenSliceMenu = NULL;
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
   
     this->LoadConfigButtonNT = NULL;
     this->ConfigFileEntry = NULL;
@@ -214,7 +217,7 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->NeedRealtimeImageUpdate = 0;
     
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->OpenTrackerStream = vtkIGTOpenTrackerStream::New();
 #endif
 #ifdef USE_IGSTK
@@ -228,7 +231,7 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
 //---------------------------------------------------------------------------
 vtkBrpNavGUI::~vtkBrpNavGUI ( )
 {
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     if (this->OpenTrackerStream)
     {
          this->OpenTrackerStream->Delete();
@@ -526,7 +529,7 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
     this->GreenSliceMenu->Delete ( );
     }
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
    
     if (this->LoadConfigButtonNT)
     {
@@ -685,7 +688,7 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
    
     this->LoadConfigButtonNT->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
@@ -910,7 +913,7 @@ this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChanged
     this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
    
     this->LoadConfigButtonNT->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -1000,7 +1003,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
         if (this->ConnectCheckButtonRI == vtkKWCheckButton::SafeDownCast(caller) 
             && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
             UpdateRealtimeImg();
 #endif
 #ifdef USE_IGSTK
@@ -1012,7 +1015,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
             && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
       
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
             SetOpenTrackerConnectionParameters();
 #endif
       
@@ -1039,7 +1042,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
             && event == vtkKWCheckButton::SelectedStateChangedEvent  )
         {
       
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
        
             SetOpenTrackerConnectionCoordandOrient();
 #endif
@@ -1073,7 +1076,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
             )
         {
       
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
           
             SetOpenTrackerforScannerControll();
 #endif
@@ -1111,7 +1114,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
                && event == vtkKWCheckButton::SelectedStateChangedEvent))
         {
             
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
           
             this->WorkPhaseStartUpButton->SetStateToNormal();
             this->WorkPhasePlanningButton->SetStateToNormal();
@@ -1159,7 +1162,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
         }
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
         else if (this->LoadConfigButtonNT->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
               && event == vtkKWPushButton::InvokedEvent )
         {
@@ -1267,7 +1270,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
         }
 
         /*   
-             #ifdef USE_OPENTRACKER
+             #ifdef USE_NAVITRACK
              this->OpenTrackerStream->SetRegMatrix(this->Pat2ImgReg->GetLandmarkTransformMatrix());
              #endif
              #ifdef USE_IGSTK
@@ -2345,7 +2348,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     /// Main Controlle frame 
     /////////////////////////////////////////////////////////////////////
     
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     
     vtkKWFrameWithLabel *maincontroll = vtkKWFrameWithLabel::New();
     maincontroll->SetParent ( scancontrollbrpFrame->GetFrame() );
@@ -2767,7 +2770,7 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         realtimeacqFrame->GetWidgetName(), page->GetWidgetName());
 
-#ifdef USE_OPENTRACKER 
+#ifdef USE_NAVITRACK 
    //------------------------------------Content--------------*
     
     
@@ -2956,7 +2959,7 @@ void vtkBrpNavGUI::UpdateAll()
     this->LocatorMatrix = NULL;
   
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
     //    this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
 #endif
@@ -3093,6 +3096,20 @@ void vtkBrpNavGUI::UpdateAll()
                                                                        true, mat);
                 this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
                 mat->Delete();
+
+                //Philip Mewes: Compare Timestamp from Scanner with Slicer System time
+                /*
+                gettimeofday(&actualtime, 0);  
+                         
+
+                            cout << actualtime.tv_sec << ':' << actualtime.tv_usec << endl;
+                            double ActualtimeAsDouble = actualtime.tv_usec%100000;
+                         
+                            cout<<ActualtimeAsDouble<<endl;
+                         
+                */
+
+
             }
         }
         else
@@ -3100,6 +3117,10 @@ void vtkBrpNavGUI::UpdateAll()
           //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
         }
         
+
+
+
+
     }
 
 
@@ -3189,7 +3210,7 @@ void vtkBrpNavGUI::UpdateLocator()
     vtkTransform *transform = NULL;
     vtkTransform *transform_cb2 = NULL;
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     this->OpenTrackerStream->SetLocatorTransforms();
     transform = this->OpenTrackerStream->GetLocatorNormalTransform();
 
@@ -3226,7 +3247,7 @@ void vtkBrpNavGUI::UpdateRealtimeImg()
   int checkedRI = this->ConnectCheckButtonRI->GetSelectedState(); 
     if (checkedRI)
     {
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
      
         
      this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
@@ -3388,7 +3409,7 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
 ///////////////////////////////////////////////////////////////////
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
 void vtkBrpNavGUI::SetOpenTrackerConnectionParameters()
 {
     int checked = this->ConnectCheckButtonNT->GetSelectedState(); 

@@ -6,6 +6,10 @@
 #ifndef __vtkBrpNavGUI_h
 #define __vtkBrpNavGUI_h
 
+#ifndef USE_NAVITRACK
+#define USE_NAVITRACK
+#endif
+
 
 #ifdef WIN32
 #include "vtkBrpNavWin32Header.h"
@@ -23,7 +27,7 @@
 
 #include <string>
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
 #include "vtkIGTOpenTrackerStream.h"
 
 /*
@@ -202,7 +206,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWMenuButton *YellowSliceMenu;
     vtkKWMenuButton *GreenSliceMenu;
 
-    //#ifdef USE_OPENTRACKER
+    //#ifdef USE_NAVITRACK
     vtkKWLoadSaveButtonWithLabel *LoadConfigButton;
     vtkKWLoadSaveButtonWithLabel *LoadConfigButton2;
     vtkKWLoadSaveButtonWithLabel *LoadConfigButtonNT;
@@ -398,7 +402,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void TrackerLoop();
 
 
-#ifdef USE_OPENTRACKER
+#ifdef USE_NAVITRACK
     vtkIGTOpenTrackerStream *OpenTrackerStream;
     void SetOpenTrackerConnectionParameters();
  
