@@ -82,6 +82,7 @@ vtkMRMLScalarVolumeDisplayNode::vtkMRMLScalarVolumeDisplayNode()
   this->MapToColors->SetOutputFormatToRGB();
   this->MapToColors->SetInput( this->MapToWindowLevelColors->GetOutput() );
   this->Threshold->SetOutputScalarTypeToUnsignedChar();
+  this->ResliceAlphaCast->SetOutputScalarTypeToUnsignedChar();
 
   this->AlphaLogic->SetOperationToAnd();
   this->AlphaLogic->SetOutputTrueValue(255);

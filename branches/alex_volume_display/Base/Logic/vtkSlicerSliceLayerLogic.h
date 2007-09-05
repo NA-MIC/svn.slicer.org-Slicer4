@@ -204,6 +204,7 @@ protected:
   // the MRML Nodes that define this Logic's parameters
   vtkMRMLVolumeNode *VolumeNode;
   vtkMRMLVolumeDisplayNode *VolumeDisplayNode;
+  vtkMRMLVolumeDisplayNode *VolumeDisplayNodeObserved;
   vtkMRMLSliceNode *SliceNode;
 
   // Description:
