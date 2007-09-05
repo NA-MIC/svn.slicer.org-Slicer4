@@ -58,6 +58,7 @@ vtkMRMLNode* vtkMRMLLabelMapVolumeDisplayNode::CreateNodeInstance()
 vtkMRMLLabelMapVolumeDisplayNode::vtkMRMLLabelMapVolumeDisplayNode()
 {
   this->MapToColors = vtkImageMapToColors::New();
+  this->MapToColors->SetOutputFormatToRGBA();
 }
 
 //----------------------------------------------------------------------------
