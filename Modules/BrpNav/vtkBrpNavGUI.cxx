@@ -64,6 +64,17 @@
 #include "vtkCylinderSource.h"
 #include "vtkMRMLLinearTransformNode.h"
 
+
+// for DICOM read
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include "itkImage.h"
+#include "itkMetaDataDictionary.h"
+#include "itkMetaDataObject.h"
+#include "itkGDCMImageIO.h"
+#include "itkSpatialOrientationAdapter.h"
+
+
 #include <vector>
 
 //---------------------------------------------------------------------------
@@ -215,6 +226,11 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->RealtimeImageSerial = 0;
 
     this->NeedRealtimeImageUpdate = 0;
+
+    // Widgets for Calibration Frame
+    this->CalibImageFileEntry      = NULL;
+    this->ReadCalibImageFileButton = NULL;
+    this->ListCalibImageFileButton = NULL;
     
 
 #ifdef USE_NAVITRACK
@@ -857,16 +873,11 @@ void vtkBrpNavGUI::AddGUIObservers ( )
 
     // Fill in
     // observer load volume button
-   
- 
-
-
-  
     this->ConnectCheckButtonRI->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     
-this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButtonSEND->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButtonPASSROBOTCOORDS->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButtonStartScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -911,7 +922,7 @@ this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChanged
     this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->LocatorModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-
+    this->ReadCalibImageFileButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
 
 #ifdef USE_NAVITRACK
     this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
@@ -1376,6 +1387,41 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
             this->YellowSliceMenu->SetValue(val.c_str());
             this->GreenSliceMenu->SetValue(val.c_str());
         }
+        else if (this->ReadCalibImageFileButton == vtkKWPushButton::SafeDownCast(caller) 
+                 && event == vtkKWPushButton::InvokedEvent)
+        {
+            const char * filename = this->ListCalibImageFileButton->GetWidget()->GetFileName();
+            if (filename)
+            {
+                int w, h;
+                std::vector<float> position;
+                std::vector<float> orientation;
+                position.resize(3, 0.0);
+                orientation.resize(4, 0.0);
+                
+                Image *ZFrameImage = DicomRead(filename, &w, &h, position, orientation);
+                this->OpenTrackerStream->SetZFrameTrackingData(ZFrameImage, w, h,
+                                                               position, orientation);
+
+            }
+        }
+        else if (this->ListCalibImageFileButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
+              && event == vtkKWPushButton::InvokedEvent )
+        {
+            const char * filename = this->ListCalibImageFileButton->GetWidget()->GetFileName();
+            if (filename)
+            {
+                const vtksys_stl::string fname(filename);
+                this->CalibImageFileEntry->SetValue(fname.c_str());
+            }
+            else
+            {
+                this->CalibImageFileEntry->SetValue("");
+            }
+            this->ListCalibImageFileButton->GetWidget()->SetText ("Browse Image File");
+        }
+
+
     }
 } 
 
@@ -1426,7 +1472,7 @@ void vtkBrpNavGUI::Enter ( )
     this->Logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
     this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
     this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
-     this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+    this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
   
     this->SliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
     this->SliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
@@ -1438,8 +1484,8 @@ void vtkBrpNavGUI::Enter ( )
     vtkSlicerVolumesGUI *volGui = (vtkSlicerVolumesGUI*)app->GetModuleGUIByName("Volumes");
     this->VolumesLogic = (vtkSlicerVolumesLogic*)(volGui->GetLogic());
       
-  if (this->RealtimeVolumeNode == NULL)
-    this->RealtimeVolumeNode = AddVolumeNode(this->VolumesLogic, "Realtime");
+    if (this->RealtimeVolumeNode == NULL)
+        this->RealtimeVolumeNode = AddVolumeNode(this->VolumesLogic, "Realtime");
     
     //Set to 1, philip 21/06/2007
     this->Logic0->GetForegroundLayer()->SetUseReslice(0);
@@ -1503,7 +1549,7 @@ void vtkBrpNavGUI::BuildGUI ( )
     BuildGUIForTrackingFrame ();
     BuildGUIForscancontrollFrame ();
     BuildGUIForRealtimeacqFrame ();
-    
+    BuildGUIForCalibration();
 
     //    BuildGUIForHandPieceFrame ();
 }
@@ -2526,7 +2572,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
           configcoordsorient->GetWidgetName());
     
    
-     vtkKWFrame *configNTFrame = vtkKWFrame::New();
+    vtkKWFrame *configNTFrame = vtkKWFrame::New();
     configNTFrame->SetParent ( configcoordsorient->GetFrame() );
     configNTFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
@@ -2948,6 +2994,81 @@ vtkKWFrameWithLabel *tempFrame = vtkKWFrameWithLabel::New ( );
     // tempFrame->Delete ();
    
 #endif
+
+}
+
+
+
+void vtkBrpNavGUI::BuildGUIForCalibration()
+{
+
+    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "BrpNav" );
+
+    // ----------------------------------------------------------------
+    // CALIBRATION FRAME         
+    // ----------------------------------------------------------------
+    
+    vtkSlicerModuleCollapsibleFrame *calibrationFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+    calibrationFrame->SetParent ( page );
+    calibrationFrame->Create ( );
+    calibrationFrame->SetLabelText ("Calibration");
+    calibrationFrame->CollapseFrame ( );
+    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+                  calibrationFrame->GetWidgetName(), page->GetWidgetName());
+
+    vtkKWFrameWithLabel *calibImageFrame = vtkKWFrameWithLabel::New ( );
+    calibImageFrame->SetParent ( calibrationFrame->GetFrame() );
+    calibImageFrame->Create ( );
+    calibImageFrame->SetLabelText ("Z Frame Calibration");
+    //setupFrame->CollapseFrame ( );
+    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+                  calibImageFrame->GetWidgetName());
+
+    vtkKWFrame *calibImageFileFrame = vtkKWFrame::New();
+    calibImageFileFrame->SetParent ( calibImageFrame->GetFrame() );
+    calibImageFileFrame->Create ( );
+    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+                  calibImageFileFrame->GetWidgetName());
+    
+    vtkKWFrame *calibImageButtonsFrame = vtkKWFrame::New();
+    calibImageButtonsFrame->SetParent ( calibImageFrame->GetFrame() );
+    calibImageButtonsFrame->Create ( );
+    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+                  calibImageButtonsFrame->GetWidgetName());
+
+    this->CalibImageFileEntry = vtkKWEntry::New();
+    this->CalibImageFileEntry->SetParent(calibImageFileFrame);
+    this->CalibImageFileEntry->Create();
+    this->CalibImageFileEntry->SetWidth(50);
+    this->CalibImageFileEntry->SetValue ( "" );
+
+    this->ListCalibImageFileButton = vtkKWLoadSaveButtonWithLabel::New ( );
+    this->ListCalibImageFileButton->SetParent (calibImageFileFrame);
+    this->ListCalibImageFileButton->Create ( );
+    this->ListCalibImageFileButton->SetWidth(15);
+    this->ListCalibImageFileButton->GetWidget()->SetText ("Browse Image File");
+    this->ListCalibImageFileButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
+                                  "{ {BrpNav} {*.*} }");
+    this->ListCalibImageFileButton->GetWidget()->
+      GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
+    this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
+                 this->ListCalibImageFileButton->GetWidgetName(),
+                 this->CalibImageFileEntry->GetWidgetName());
+    
+    this->ReadCalibImageFileButton = vtkKWPushButton::New ( );
+    this->ReadCalibImageFileButton->SetParent (calibImageButtonsFrame);
+    this->ReadCalibImageFileButton->Create ( );
+    this->ReadCalibImageFileButton->SetText (" Read Z-Frame Image ");
+    this->ReadCalibImageFileButton->SetBalloonHelpString(" Read Z-Frame Image ");
+    
+    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
+                this->ReadCalibImageFileButton->GetWidgetName());
+    
+    calibrationFrame->Delete ();
+    calibImageFrame->Delete ();
+    calibImageFileFrame->Delete ();
+    calibImageButtonsFrame->Delete ();
 
 }
 
@@ -4019,6 +4140,139 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
     }
     return volumeNode;
 }
+
+
+
+Image* vtkBrpNavGUI::DicomRead(const char* filename, int* width, int* height,
+                 std::vector<float>& position, std::vector<float>& orientation)
+{
+  position.resize(3, 0.0);
+  orientation.resize(4, 0.0);
+
+  const   unsigned int   Dimension = 2;
+  typedef unsigned short InputPixelType;
+  typedef itk::Image< InputPixelType, Dimension > InputImageType;
+  typedef itk::ImageFileReader< InputImageType > ReaderType;
+
+  ReaderType::Pointer reader = ReaderType::New();
+  reader->SetFileName(filename);
+
+  typedef itk::GDCMImageIO           ImageIOType;
+  ImageIOType::Pointer gdcmImageIO = ImageIOType::New();
+  reader->SetImageIO( gdcmImageIO );
+
+  try {
+    reader->Update();
+  } catch (itk::ExceptionObject & e) {
+    std::cerr << "exception in file reader " << std::endl;
+    std::cerr << e.GetDescription() << std::endl;
+    std::cerr << e.GetLocation() << std::endl;
+    return NULL;
+  }
+
+  char name[100];
+  gdcmImageIO->GetPatientName(name);
+  std::cerr << name << std::endl;
+
+  double origin[3];
+  double center[3];
+  int    size[3];
+  double spacing[3];
+
+  for (int i = 0; i < 3;i ++) {
+    origin[i]  = gdcmImageIO->GetOrigin(i);
+    size[i]    = gdcmImageIO->GetDimensions(i);
+    spacing[i] = gdcmImageIO->GetSpacing(i);
+  }
+
+  float imageDir[3][3];
+  for (int i = 0; i < 3; i ++) {
+    std::vector<double> v;
+    v = gdcmImageIO->GetDirection(i);
+    imageDir[i][0] = v[0];
+    imageDir[i][1] = v[1];
+    imageDir[i][2] = v[2];
+  }
+
+  // LPS to RAS
+  origin[0] *= -1.0;
+  origin[1] *= -1.0;
+  imageDir[0][0] *= -1.0;
+  imageDir[0][1] *= -1.0;
+  imageDir[0][2] *= -1.0;
+  imageDir[1][0] *= -1.0;
+  imageDir[1][1] *= -1.0;
+  imageDir[1][2] *= -1.0;
+
+  std::cerr << "DICOM IMAGE:" << std::endl;
+  std::cerr << " Dimension = ( "
+            << size[0] << ", " << size[1] << ", " << size[2] << " )" << std::endl;
+  std::cerr << " Origin    = ( "
+            << origin[0] << ", " << origin[1] << ", " << origin[2] << " )" << std::endl;
+  std::cerr << " Spacing   = ( "
+            << spacing[0] << ", " << spacing[1] << ", " << spacing[2] << " )" << std::endl;
+
+  std::cerr << " Orientation: " << std::endl;
+  std::cerr << "   " << imageDir[0][0] << ", " << imageDir[0][1] << ", " 
+            << imageDir[0][2] << std::endl;
+  std::cerr << "   " << imageDir[1][0] << ", " << imageDir[1][1] << ", "
+            << imageDir[1][2] << std::endl;
+  std::cerr << "   " << imageDir[2][0] << ", " << imageDir[2][1] << ", "
+            << imageDir[2][2] << std::endl;
+
+  InputImageType::Pointer    inputImage = reader->GetOutput();
+  InputImageType::RegionType region   = inputImage->GetLargestPossibleRegion();
+
+
+  // position is the center of the image
+  double coffset[3];
+  for (int i = 0; i < 3; i ++) {
+    coffset[i] = ((size[i]-1)*spacing[i])/2.0;
+  }
+
+  for (int i = 0; i < 3; i ++) {
+    position[i] = origin[i] + (coffset[0]*imageDir[i][0] + coffset[1]*imageDir[i][1]
+                               + coffset[2]*imageDir[i][2]);
+  }
+  std::cerr << " Center   =  ( "
+            << position[0] << ", " << position[1] << ", " << position[2] << " )" << std::endl;
+
+
+  float matrix[3][3];
+  float quat[4];
+  MathUtils::matrixToQuaternion(imageDir, quat);
+  for (int i = 0; i < 4; i ++) {
+    orientation[i] = quat[i];
+  }
+
+
+  int w = size[0];
+  int h = size[1];
+
+  short* data = new short[w*h];
+  InputImageType::IndexType index;
+
+  for (int j = 0; j < h; j ++) {
+    index[1] = j;
+    for (int i = 0; i < w; i ++) {
+      index[0] = w-i;
+      data[j*w+i] = (short) inputImage->GetPixel(index);
+    }
+  }
+
+  *width = w;
+  *height = h;
+  Image* img = new Image(size[0], size[1], sizeof(short), (void*)data);
+
+
+
+  return img;
+
+}
+
+
+
+
 
 /*
 #ifdef USE_IGSTK

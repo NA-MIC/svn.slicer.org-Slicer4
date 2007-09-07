@@ -1,4 +1,5 @@
 
+//#define USE_ZFRAME
 
 #include "vtkIGTOpenTrackerStream.h"
 #include "vtkObjectFactory.h"
@@ -11,6 +12,12 @@
 #include <OpenTracker/dllinclude.h>
 #include <OpenTracker/input/SlicerNTModule.h>
 #include <OpenTracker/core/Configurator.h>
+
+#ifdef USE_ZFRAME
+  #include <OpenTracker/input/BRPImageIOModule.h>
+#endif
+
+
 //#include <OpenTracker/types/Image.h>
 
 
@@ -47,7 +54,6 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream()
     this->RegMatrix = NULL;
     this->RegMatrix_cb2 = NULL;
     this->context = NULL;
-
 }
 
 
@@ -606,44 +612,44 @@ void vtkIGTOpenTrackerStream::ProcessTimerEvents()
 
 void vtkIGTOpenTrackerStream::SetTracker(std::vector<float> pos,std::vector<float> quat)
 {
-#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
+#ifdef USE_NAVITRACK
   SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
   module->SetTracker(pos,quat);
 #endif
-
+  
 }
 
 void vtkIGTOpenTrackerStream::SetOpenTrackerforScannerControll(std::vector<std::string> scancommandkeys, std::vector<std::string> scancommandvalue)
 {
-  #if defined(OT_VERSION_20) || defined(OT_VERSION_13)
-
+#ifdef USE_NAVITRACK
+  
   SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
   
   module->SetOpenTrackerforScannerControll(scancommandkeys, scancommandvalue);
- #endif
+#endif
 }
 
 
 void vtkIGTOpenTrackerStream::SetOpenTrackerforBRPDataFlowValveFilter(std::vector<std::string> filtercommandkeys, std::vector<std::string> filtercommandvalue)
 {
-  #if defined(OT_VERSION_20) || defined(OT_VERSION_13)
+#ifdef USE_NAVITRACK
 
   SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
      
   module->SetOpenTrackerforBRPDataFlowValveFilter(filtercommandkeys, filtercommandvalue);
- #endif
+#endif
 }
 
 
 
 void vtkIGTOpenTrackerStream::SetOrientationforRobot(float xsendrobotcoords, float ysendrobotcoords, float zsendrobotcoords, std::vector<float> sendrobotcoordsvector, std::string robotcommandvalue,std::string robotcommandkey)
 {
-  #if defined(OT_VERSION_20) || defined(OT_VERSION_13)
+#ifdef USE_NAVITRACK
   cout<<"opentrackerstream";
   SlicerNTModule * module = (SlicerNTModule *)context->getModule("SlicerConfig");
   
   module->SetOrientationforRobot(xsendrobotcoords, ysendrobotcoords, zsendrobotcoords, sendrobotcoordsvector,robotcommandvalue, robotcommandkey);
- #endif
+#endif
 }
 
 
@@ -707,10 +713,25 @@ void vtkIGTOpenTrackerStream::GetDevicesStatus(std::string& received_robot_statu
   //   cout<< "robot Status (NT):  " << robot_Status <<endl;
   // cout<< "robot Message (NT):  " << robot_message <<endl;
 
-  received_robot_status = robot_Status;
-  received_error_status = robot_message;
+    received_robot_status = robot_Status;
+    received_error_status = robot_message;
   //  cout<<received_robot_status<<endl;
 
 
 }
 
+
+void vtkIGTOpenTrackerStream::SetZFrameTrackingData(Image* img, int w, int h,
+                                                    std::vector<float> pos, std::vector<float> ori)
+{
+#if defined(USE_ZFRAME) && defined(USE_NAVITRACK)
+    BRPImageIOModule* module = (BRPImageIOModule*) context->getModule("BRPImageIOConfig");
+    if (!module) {
+        std::cerr << "Failed to get BRPImageIOModule." << std::endl;
+    }
+    else
+    {
+        module->setImage(*img, w, h, pos, ori);
+    }
+#endif
+}

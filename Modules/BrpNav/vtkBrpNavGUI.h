@@ -259,7 +259,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWMultiColumnListWithScrollbars *TargetListColumnList;
 
     //    vtkKWPushButton *LoadPointPairPushButton;
-//    vtkKWPushButton *SavePointPairPushButton;
+    //    vtkKWPushButton *SavePointPairPushButton;
     vtkKWPushButton *DeletePointPairPushButton;
     vtkKWPushButton *DeleteTargetPushButton;
     vtkKWPushButton *DeleteAllTargetPushButton;
@@ -270,6 +270,12 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWPushButton *RegisterPushButton;
     vtkKWPushButton *ResetPushButton;
 
+
+    // Widgets for Calibration Frame
+    vtkKWEntry               *CalibImageFileEntry;
+    vtkKWPushButton          *ReadCalibImageFileButton;
+    vtkKWLoadSaveButtonWithLabel *ListCalibImageFileButton;
+    
 
     // Module logic and mrml pointers
     vtkBrpNavLogic *Logic;
@@ -390,17 +396,14 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void operator = ( const vtkBrpNavGUI& ); //Not implemented.
 
     // void BuildGUIForHandPieceFrame ();
-    void BuildGUIForTrackingFrame ();
-   
-    void BuildGUIForDeviceFrame (); 
-     void BuildGUIForRealtimeacqFrame ();
-    
-    void BuildGUIForWorkPhaseFrame ();
-    void BuildGUIForscancontrollFrame ();
- 
+    void BuildGUIForTrackingFrame();
+    void BuildGUIForDeviceFrame(); 
+    void BuildGUIForRealtimeacqFrame();
+    void BuildGUIForWorkPhaseFrame();
+    void BuildGUIForscancontrollFrame();
+    void BuildGUIForCalibration();
     
     void TrackerLoop();
-
 
 #ifdef USE_NAVITRACK
     vtkIGTOpenTrackerStream *OpenTrackerStream;
@@ -426,8 +429,11 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 #endif
 
 
-vtkMRMLVolumeNode* AddVolumeNode(vtkSlicerVolumesLogic*, const char*);
-
+    vtkMRMLVolumeNode* AddVolumeNode(vtkSlicerVolumesLogic*, const char*);
+    //BTX
+    Image* DicomRead(const char* filename, int* width, int* height,
+                     std::vector<float>& position, std::vector<float>& orientation);
+    //ETX
 
 };
 
