@@ -90,28 +90,22 @@ public:
     
      
     static void callbackF(Node&, Event&, void *data);
-     static void callbackF_cb2(Node&, Event&, void *data_cb2);
+    static void callbackF_cb2(Node&, Event&, void *data_cb2);
     //BTX
     void SetTracker(std::vector<float> pos,std::vector<float> quat);
-    //ETX
-    //BTX
     void SetOpenTrackerforScannerControll(std::vector<std::string> scancommandkeys, std::vector<std::string> scancommandvalue);
-    //ETX
-    //BTX
     void SetOpenTrackerforBRPDataFlowValveFilter(std::vector<std::string> filtercommandkeys, std::vector<std::string> filtercommandvalue);
-    //ETX
-    //BTX
     void SetOrientationforRobot(float xsendrobotcoords, float ysendrobotcoords, float zsendrobotcoords, std::vector<float> sendrobotcoordsvector, std::string robotcommandvalue,std::string robotcommandkey);
-    //ETX    
-    //BTX
-      void GetRealtimeImage(int*, vtkImageData* image);
-      void GetDevicesStatus(std::string& received_robot_status,std::string& received_scanner_status, std::string& received_error_status);
-      //ETX
+    void GetRealtimeImage(int*, vtkImageData* image);
+    void GetDevicesStatus(std::string& received_robot_status,std::string& received_scanner_status, std::string& received_error_status);
+    void SetZFrameTrackingData(Image*, int, int, std::vector<float>, std::vector<float>);
 
-      //BTX
-  
-      void GetCoordsOrientforScanner(float* OrientationForScanner0,float* OrientationForScanner1, float* OrientationForScanner2, float* OrientationForScanner3, float* PositionForScanner0, float* PositionForScanner1, float* PositionForScanner2);
-      //ETX
+    //ETX
+    
+    //BTX
+    
+    void GetCoordsOrientforScanner(float* OrientationForScanner0,float* OrientationForScanner1, float* OrientationForScanner2, float* OrientationForScanner3, float* PositionForScanner0, float* PositionForScanner1, float* PositionForScanner2);
+    //ETX
 
 private:
 
