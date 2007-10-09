@@ -99,7 +99,8 @@ extern "C" {
 #define WFENGINE_DEBUG
 //#define NEURONAV_DEBUG
 
-#define BRPNAV_DEBUG
+//#define BRPNAV_DEBUG
+//#define PROSTATENAV_DEBUG
 
 #ifndef USE_TEEM
 #define TRACTOGRAPHY_DEBUG
@@ -137,6 +138,11 @@ extern "C" {
 #ifndef BRPNAV_DEBUG
 #include "vtkBrpNavLogic.h"
 #include "vtkBrpNavGUI.h"
+#endif
+
+#ifndef PROSTATENAV_DEBUG
+#include "vtkProstateNavLogic.h"
+#include "vtkProstateNavGUI.h"
 #endif
 
 #ifndef WFENGINE_DEBUG
@@ -191,6 +197,9 @@ extern "C" int Neuronav_Init(Tcl_Interp *interp);
 #endif
 #ifndef BRPNAV_DEBUG
 extern "C" int Brpnav_Init(Tcl_Interp *interp);
+#endif
+#ifndef PROSTATENAV_DEBUG
+extern "C" int Prostatenav_Init(Tcl_Interp *interp);
 #endif
 #ifndef REALTIMEIMAGING_DEBUG
 extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
@@ -649,6 +658,9 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef BRPNAV_DEBUG
     Brpnav_Init(interp);
 #endif
+#ifndef PROSTATENAV_DEBUG
+    Prostatenav_Init(interp);
+#endif
 #ifndef REALTIMEIMAGING_DEBUG
     Realtimeimaging_Init(interp);
 #endif
@@ -1014,7 +1026,7 @@ int Slicer3_main(int argc, char *argv[])
     neuronavGUI->Init();
 #endif 
 
-    #ifndef BRPNAV_DEBUG
+#ifndef BRPNAV_DEBUG
     // -- Brpnav module
     vtkBrpNavLogic *brpnavLogic = vtkBrpNavLogic::New(); 
     brpnavLogic->SetAndObserveMRMLScene ( scene );
@@ -1025,7 +1037,7 @@ int Slicer3_main(int argc, char *argv[])
     brpnavGUI->SetAndObserveApplicationLogic ( appLogic );
     brpnavGUI->SetAndObserveMRMLScene ( scene );
     brpnavGUI->SetModuleLogic ( brpnavLogic );
-    brpnavGUI->SetGUIName( "Prostate Module" );
+    brpnavGUI->SetGUIName( "Brp Module" );
     brpnavGUI->GetUIPanel()->SetName ( brpnavGUI->GetGUIName ( ) );
     brpnavGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
     brpnavGUI->GetUIPanel()->Create ( );
@@ -1033,6 +1045,27 @@ int Slicer3_main(int argc, char *argv[])
     brpnavGUI->BuildGUI ( );
     brpnavGUI->AddGUIObservers ( );
     brpnavGUI->Init();
+#endif 
+
+#ifndef PROSTATENAV_DEBUG
+    // -- Prostatenav module
+    vtkProstateNavLogic *prostatenavLogic = vtkProstateNavLogic::New(); 
+    prostatenavLogic->SetAndObserveMRMLScene ( scene );
+    vtkProstateNavGUI *prostatenavGUI = vtkProstateNavGUI::New();
+
+    prostatenavGUI->SetApplication ( slicerApp );
+    prostatenavGUI->SetApplicationGUI ( appGUI );
+    prostatenavGUI->SetAndObserveApplicationLogic ( appLogic );
+    prostatenavGUI->SetAndObserveMRMLScene ( scene );
+    prostatenavGUI->SetModuleLogic ( prostatenavLogic );
+    prostatenavGUI->SetGUIName( "Prostate Module" );
+    prostatenavGUI->GetUIPanel()->SetName ( prostatenavGUI->GetGUIName ( ) );
+    prostatenavGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    prostatenavGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( prostatenavGUI );
+    prostatenavGUI->BuildGUI ( );
+    prostatenavGUI->AddGUIObservers ( );
+    prostatenavGUI->Init();
 #endif 
 
     // --- Transforms module
@@ -1474,6 +1507,11 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef BRPNAV_DEBUG
     name = brpnavGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set BrpnavGUI %s", name);
+#endif
+
+#ifndef PROSTATENAV_DEBUG
+    name = prostatenavGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set ProstatenavGUI %s", name);
 #endif
 
     name = transformsGUI->GetTclName();
