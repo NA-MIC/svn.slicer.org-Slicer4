@@ -9,6 +9,11 @@
 #include "vtkSlicerColor.h"
 #include "vtkSlicerTheme.h"
 
+#include "vtkKWWizardWidget.h"
+#include "vtkKWWizardWorkflow.h"
+#include "vtkProstateNavConfigFileStep.h"
+#include "vtkProstateNavScanControlStep.h"
+
 #include "vtkKWRenderWidget.h"
 #include "vtkKWWidget.h"
 #include "vtkKWMenuButton.h"
@@ -69,6 +74,10 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
 {
 
     this->Logic = NULL;
+
+    this->WizardWidget = vtkKWWizardWidget::New();
+    this->ConfigFileStep = NULL;
+    this->ScanControlStep = NULL;
 
     this->NormalOffsetEntry = NULL; 
     this->TransOffsetEntry = NULL;
@@ -617,6 +626,12 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
     {
     this->MoveFWPushButton->SetParent(NULL );
     this->MoveFWPushButton->Delete ( );
+    }
+
+    if (this->WizardWidget)
+    {
+    this->WizardWidget->Delete();
+    this->WizardWidget = NULL;
     }
 
     this->SetModuleLogic ( NULL );
@@ -1328,6 +1343,11 @@ void vtkProstateNavGUI::DataCallback(vtkObject *caller,
 void vtkProstateNavGUI::ProcessLogicEvents ( vtkObject *caller,
     unsigned long event, void *callData )
 {
+    if ( !caller || !this->WizardWidget)
+      {
+      return;
+      }
+
     // Fill in
 }
 
@@ -1393,6 +1413,78 @@ void vtkProstateNavGUI::BuildGUI ( )
     this->UIPanel->AddPage ( "ProstateNav", "ProstateNav", NULL );
 
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "ProstateNav" );
+
+
+    // ----------------------------------------------------------------
+    // WIZARD FRAME         
+    // ----------------------------------------------------------------
+
+    vtkSlicerModuleCollapsibleFrame *wizardFrame = 
+      vtkSlicerModuleCollapsibleFrame::New();
+    wizardFrame->SetParent(page);
+    wizardFrame->Create();
+    wizardFrame->SetLabelText("Wizard");
+    wizardFrame->ExpandFrame();
+
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+                wizardFrame->GetWidgetName(), 
+                page->GetWidgetName());
+   
+    this->WizardWidget->SetParent(wizardFrame->GetFrame());
+    this->WizardWidget->Create();
+    this->WizardWidget->GetSubTitleLabel()->SetHeight(1);
+    this->WizardWidget->SetClientAreaMinimumHeight(200);
+    //this->WizardWidget->SetButtonsPositionToTop();
+    this->WizardWidget->NextButtonVisibilityOn();
+    this->WizardWidget->BackButtonVisibilityOn();
+    this->WizardWidget->OKButtonVisibilityOff();
+    this->WizardWidget->CancelButtonVisibilityOff();
+    this->WizardWidget->FinishButtonVisibilityOff();
+    this->WizardWidget->HelpButtonVisibilityOn();
+
+    app->Script("pack %s -side top -anchor nw -fill both -expand y",
+                this->WizardWidget->GetWidgetName());
+
+    wizardFrame->Delete();
+
+    // -----------------------------------------------------------------
+    // Add the steps to the workflow
+
+    vtkKWWizardWorkflow *wizard_workflow = 
+      this->WizardWidget->GetWizardWorkflow();
+
+    // -----------------------------------------------------------------
+    // Config File step
+
+    if (!this->ConfigFileStep)
+      {
+      this->ConfigFileStep = vtkProstateNavConfigFileStep::New();
+      this->ConfigFileStep->SetGUI(this);
+      }
+    wizard_workflow->AddStep(this->ConfigFileStep);
+
+    // -----------------------------------------------------------------
+    // Scan Control step
+
+    if (!this->ScanControlStep)
+      {
+      this->ScanControlStep = vtkProstateNavScanControlStep::New();
+      this->ScanControlStep->SetGUI(this);
+      }
+    wizard_workflow->AddNextStep(this->ScanControlStep);
+
+    // -----------------------------------------------------------------
+    // Initial and finish step
+
+    wizard_workflow->SetFinishStep(this->ScanControlStep);
+    wizard_workflow->CreateGoToTransitionsToFinishStep();
+    wizard_workflow->SetInitialStep(this->ConfigFileStep);
+
+    // -----------------------------------------------------------------
+    // Show the user interface
+
+    this->WizardWidget->GetWizardWorkflow()->
+      GetCurrentStep()->ShowUserInterface();
 
 
     // ----------------------------------------------------------------
