@@ -161,7 +161,7 @@ private:
     void ApplyTransform(float *position, float *norm, float *transnorm);
     void CloseConnection();
 
-    void quaternion2xyz(float* orientation, float *normal, float *transnormal); 
+    int  quaternion2xyz(float* orientation, float *normal, float *transnormal); 
 
     
     
