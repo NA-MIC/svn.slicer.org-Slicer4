@@ -11,18 +11,22 @@ SET(ProstateNav_SRCS
   # module
   vtkProstateNavLogic.cxx
   vtkProstateNavGUI.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavConfigFileStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavScanControlStep.cxx
   )
 
 #
 # Include dirs
 #
-MESSAGE("\n\n navitrack inc dir = ${NAVITRACK_INC_DIR}")
+MESSAGE("\n\n navitrack inc dir = ${NAVITRACK_INC}")
 
 INCLUDE_DIRECTORIES(
   ${ModulesBaseClasses_SOURCE_DIR}
   ${ModulesBaseClasses_BINARY_DIR}
   ${ProstateNav_SOURCE_DIR}
   ${ProstateNav_BINARY_DIR}
+  ${ProstateNav_SOURCE_DIR}/Wizard
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
@@ -37,7 +41,7 @@ INCLUDE_DIRECTORIES(
   ${MRML_BINARY_DIR}
   ${IGT_SOURCE_DIR}
   ${IGT_BINARY_DIR}
-  ${NAVITRACK_INC_DIR}
+  ${NAVITRACK_INC}
   ${IGSTK_INCLUDE_DIRS}
   )
 

@@ -56,6 +56,9 @@ class vtkKWEntryWithLabel;
 class vtkKWLoadSaveButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
 
+class vtkKWWizardWidget;
+class vtkProstateNavConfigFileStep;
+class vtkProstateNavScanControlStep;
 
 // Description:    
 // This class implements Slicer's Volumes GUI
@@ -81,6 +84,9 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
         { this->SetLogic ( vtkObjectPointer (&this->Logic), logic ); }
     void SetAndObserveModuleLogic ( vtkProstateNavLogic *logic )
         { this->SetAndObserveLogic ( vtkObjectPointer (&this->Logic), logic ); }
+    // Description: 
+    // Get wizard widget
+    vtkGetObjectMacro(WizardWidget, vtkKWWizardWidget);
 
     // Description:    
     // This method builds the IGTDemo module GUI
@@ -272,6 +278,11 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
     // Module logic and mrml pointers
     vtkProstateNavLogic *Logic;
+
+    // Wizard and wizard steps
+    vtkKWWizardWidget *WizardWidget;
+    vtkProstateNavConfigFileStep *ConfigFileStep;
+    vtkProstateNavScanControlStep *ScanControlStep;
 
     // int StopTimer;
     vtkMatrix4x4 *LocatorMatrix;
