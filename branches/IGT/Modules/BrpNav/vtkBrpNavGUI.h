@@ -335,10 +335,6 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
      int RealtimeXsize;
      int RealtimeYsize;
      
-     // int RealtimeImageData;
-      float  xsizevalueRI;
-     float  ysizevalueRI;
-
      //Workphase State Transition Controll
      
      int WorkFlowProcessStart;
@@ -351,43 +347,42 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
      int checkedPhase5;
      int checkedPhase6;
 
-  
-    int RealtimeImageSerial;
-    int NeedRealtimeImageUpdate;
-
-    //status check
-    int var_status_scanner;
-    int var_status_soft;
-    int var_status_robot;
-    
-    //BTX
-    std::string received_scanner_status;
-    std::string received_error_status;
-    std::string received_robot_status;
-    //ETX
-    int RequestedWorkphase;
-    int ProcessClearance; 
-
+     // For Real-time image dispaly
+     int RealtimeImageSerial;
+     int NeedRealtimeImageUpdate;
+     
+     //status check
+     int var_status_scanner;
+     int var_status_soft;
+     int var_status_robot;
+     
+     //BTX
+     std::string received_scanner_status;
+     std::string received_error_status;
+     std::string received_robot_status;
+     //ETX
+     int RequestedWorkphase;
+     int ProcessClearance; 
+     
      int ActualWorkPhase;
-    
-
-    char xmlpathfilename[256];
-    char xcoordsrobot[12];
-    char ycoordsrobot[12];
-    char zcoordsrobot[12];
-
-    char o1coordsrobot[12];
-    char o2coordsrobot[12];
-    char o3coordsrobot[12];
-    char o4coordsrobot[12];
-
-    float brptmp;
-    void UpdateAll();
-    void UpdateLocator();
-    void UpdateRealtimeImg();
-    void UpdateSliceDisplay(float nx, float ny, float nz, 
-                            float tx, float ty, float tz, 
-                            float px, float py, float pz);
+     
+     
+     char xmlpathfilename[256];
+     char xcoordsrobot[12];
+     char ycoordsrobot[12];
+     char zcoordsrobot[12];
+     
+     char o1coordsrobot[12];
+     char o2coordsrobot[12];
+     char o3coordsrobot[12];
+     char o4coordsrobot[12];
+     
+     float brptmp;
+     void UpdateAll();
+     void UpdateLocator();
+     void UpdateSliceDisplay(float nx, float ny, float nz, 
+                             float tx, float ty, float tz, 
+                             float px, float py, float pz);
 
     void brpxml(const char* xmlpathfilename);
 

@@ -17,16 +17,20 @@
   #include <OpenTracker/input/BRPImageIOModule.h>
 #endif
 
-
-//#include <OpenTracker/types/Image.h>
-
-
 #include <vtksys/SystemTools.hxx>
 #include "vtkCallbackCommand.h"
-
+#include "sys/time.h"
+#include <ctime>
 
 vtkStandardNewMacro(vtkIGTOpenTrackerStream);
 vtkCxxRevisionMacro(vtkIGTOpenTrackerStream, "$Revision: 1.0 $");
+
+
+#define IGT_OPENTRACKERSTREAM_DEFAULT_RTIMAGE_XRES     256    // pixel
+#define IGT_OPENTRACKERSTREAM_DEFAULT_RTIMAGE_YRES     256    // pixel
+#define IGT_OPENTRACKERSTREAM_DEFAULT_RTIMAGE_FOV      300    // mm
+#define IGT_OPENTRACKERSTREAM_DEFAULT_RTIMAGE_SLTHICK  5      // mm
+
 
 vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream()
 {
@@ -40,12 +44,12 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream()
     this->LocatorNormalTransform = vtkTransform::New();
     this->LocatorMatrix = vtkMatrix4x4::New(); // Identity
     */
-    this->RealtimeImageX       = 256;
-    this->RealtimeImageY       = 256;
+    this->RealtimeImageX       = IGT_OPENTRACKERSTREAM_DEFAULT_RTIMAGE_XRES;
+    this->RealtimeImageY       = IGT_OPENTRACKERSTREAM_DEFAULT_RTIMAGE_YRES;
+    this->RealtimeImageFov     = IGT_OPENTRACKERSTREAM_DEFAULT_RTIMAGE_FOV;
+    this->RealtimeImageSlthick = IGT_OPENTRACKERSTREAM_DEFAULT_RTIMAGE_SLTHICK;
     this->RealtimeImageSerial  = 0;
-    this->RealtimeImageFov     = 300;
-    this->RealtimeImageSlthick = 5;
-   
+
     this->position_cb2_FS0= 0;
     this->position_cb2_FS1= 0;
     this->position_cb2_FS2= 0;
@@ -101,7 +105,7 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
 {
 
    
-    float position_cb2[3];
+    float position[3];
     float needleposition_cb2[3];
     float orientation_cb2[4];
     
@@ -115,11 +119,13 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     
     vtkIGTOpenTrackerStream *VOT_cb2 =(vtkIGTOpenTrackerStream *)data_cb2;
 
+
+
     // the original values are in the unit of meters
 
-    position_cb2[0]=(float)(event.getPosition())[0] * VOT_cb2->MultiFactor; 
-    position_cb2[1]=(float)(event.getPosition())[1] * VOT_cb2->MultiFactor;
-    position_cb2[2]=(float)(event.getPosition())[2] * VOT_cb2->MultiFactor;
+    position[0]=(float)(event.getPosition())[0] * VOT_cb2->MultiFactor; 
+    position[1]=(float)(event.getPosition())[1] * VOT_cb2->MultiFactor;
+    position[2]=(float)(event.getPosition())[2] * VOT_cb2->MultiFactor;
 
    
     orientation_cb2[0]=(float)(event.getOrientation())[0];
@@ -127,21 +133,6 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     orientation_cb2[2]=(float)(event.getOrientation())[2];
     orientation_cb2[3]=(float)(event.getOrientation())[3];
     
-
-    //Philip Mewes: remove for debugging
-    /*
-    cout<<"Coordinates from the robot"<<endl;
-    cout<<position_cb2[0]<<endl;
-    cout<<position_cb2[1]<<endl;
-    cout<<position_cb2[2]<<endl;
-
-    cout<<"Oreintation from the robot"<<endl;
-    cout<<orientation_cb2[0]<<endl;
-    cout<<orientation_cb2[1]<<endl;
-    cout<<orientation_cb2[2]<<endl;
-    cout<<orientation_cb2[3]<<endl;
-    */
-
     VOT_cb2->position_cb2_FS0=(float)(event.getPosition())[0];
     VOT_cb2->position_cb2_FS1=(float)(event.getPosition())[1];
     VOT_cb2->position_cb2_FS2=(float)(event.getPosition())[2];
@@ -151,29 +142,26 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     VOT_cb2->orientation_cb2_FS2=(float)(event.getOrientation())[2];
     VOT_cb2->orientation_cb2_FS3=(float)(event.getOrientation())[3];
     
+
     //robot status    
     //   cout <<"event in NT"<<endl;
     if (event.hasAttribute("status"))
-         {
-      VOT_cb2->robot_Status = (std::string)event.getAttribute<std::string>("status","");
-     
-         }
+    {
+        VOT_cb2->robot_Status = (std::string)event.getAttribute<std::string>("status","");
+    }
+
     //Philip Mewes: 17.07.2007 This gets in addition to the Status Msg a Msg
     //which is precising the type of error
-
     if (event.hasAttribute("message"))
-         {
-      VOT_cb2->robot_message = (std::string)event.getAttribute<std::string>("message","");
-
-         }
+    {
+        VOT_cb2->robot_message = (std::string)event.getAttribute<std::string>("message","");
+    }
 
     VOT_cb2->needle_depth.resize(3, 0.0);
     if (event.hasAttribute("depth")) {
       VOT_cb2->needle_depth = (std::vector<float>)event.getAttribute <std::vector<float> >("depth", VOT_cb2->needle_depth);
     }
 
-
-    
     /*
     VOT_cb2->position_cb2_FS[1]=(float)(event.getPosition())[1];
     VOT_cb2->position_cb2_FS[2]=(float)(event.getPosition())[2];
@@ -198,9 +186,9 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     VOT_cb2->SetTracker(pos, quat);
   
     
-    cout<< position_cb2[0] <<endl;
-    cout<< position_cb2[1] <<endl; 
-    cout<< position_cb2[2] <<endl;
+    cout<< position[0] <<endl;
+    cout<< position[1] <<endl; 
+    cout<< position[2] <<endl;
 
     cout<< orientation_cb2[0] <<endl;
     cout<< orientation_cb2[1] <<endl;
@@ -210,17 +198,24 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
 */
     
     
-    VOT_cb2->quaternion2xyz(orientation_cb2, norm_cb2, transnorm_cb2);
-
-     
+    if (VOT_cb2->quaternion2xyz(orientation_cb2, norm_cb2, transnorm_cb2) == NULL)
+      {
+        std::cerr << "vtkIGTOpenTrackerStream -- WARNING: Invalid quaternion received." << endl;
+        std::cerr << " ORIENTATION = ( " 
+                  << orientation_cb2[0] << ", "
+                  << orientation_cb2[1] << ", "
+                  << orientation_cb2[2] << ", "
+                  << orientation_cb2[3] << ") " << std::endl;
+        return;
+      }
 
     // Apply the transform matrix 
     // to the postion, norm and transnorm
     if (VOT_cb2->RegMatrix)
-        VOT_cb2->ApplyTransform(position_cb2, norm_cb2, transnorm_cb2);
+        VOT_cb2->ApplyTransform(position, norm_cb2, transnorm_cb2);
 
     for (j=0; j<3; j++) {
-        VOT_cb2->LocatorMatrix->SetElement(j,0,position_cb2[j]);
+        VOT_cb2->LocatorMatrix->SetElement(j,0,position[j]);
     }
 
 
@@ -291,6 +286,46 @@ void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
     
     VOT->quaternion2xyz(orientation, norm, transnorm);
     
+   
+    ////
+    ////Philip Mewes: Only for validation, can be removed 
+    ////
+
+    timeval systemtime;
+    sleep(1);
+    gettimeofday(&systemtime, 0);
+    cout << systemtime.tv_sec << ':' << systemtime.tv_usec << endl; 
+   
+    //VOT->time_stamp_scanner = event->time();   
+    
+ 
+    float secenstart = systemtime.tv_usec/100000;
+    float secenstartmod = systemtime.tv_usec%1000000;
+   
+    //Calculation of the delay
+
+    double secend_event;
+    double usecent_event;
+
+    double time_diff_sec = secenstart - secend_event;
+    double time_diff_usec = secenstartmod - usecent_event;
+
+    //write to file
+    
+
+    // char time_diff_tofile[80] = {time_diff_sec, time_diff_usec};
+    // char time_diff_tofile[9] = "Test";
+    char time_diff_tofile[20] = "Systemtime: ";
+    char lign_return[2] = "\n";
+    
+    char time_diff_tofile_2[20];
+    sprintf(time_diff_tofile_2, "%g", secenstartmod);
+
+    ////
+    //// end of validation code
+    ////
+
+
     if (event.hasAttribute("image"))
     {
         VOT->RealtimeImageSerial = (VOT->RealtimeImageSerial + 1) % 32768;
@@ -389,14 +424,25 @@ void vtkIGTOpenTrackerStream::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 
-void vtkIGTOpenTrackerStream::quaternion2xyz(float* orientation, float *normal, float *transnormal) 
+int vtkIGTOpenTrackerStream::quaternion2xyz(float* orientation, float *normal, float *transnormal) 
 {
     float q0, qx, qy, qz;
-
     q0 = orientation[3];
     qx = orientation[0];
     qy = orientation[1];
     qz = orientation[2]; 
+
+    // normalize quaternion
+    double mod = sqrt(q0*q0+qx*qx+qy*qy+qz*qz);
+    if (mod < 0.0001) // if the vector is zero (invalid quaternion)
+    {
+        return NULL;
+    }
+      
+    q0 = (float)( q0 / mod );
+    qx = (float)( qx / mod );
+    qy = (float)( qy / mod );
+    qz = (float)( qz / mod );
 
     transnormal[0] = 1-2*qy*qy-2*qz*qz;
     transnormal[1] = 2*qx*qy+2*qz*q0;
@@ -405,6 +451,8 @@ void vtkIGTOpenTrackerStream::quaternion2xyz(float* orientation, float *normal, 
     normal[0] = 2*qx*qz+2*qy*q0;
     normal[1] = 2*qy*qz-2*qx*q0;
     normal[2] = 1-2*qx*qx-2*qy*qy;
+
+    return 1;
 }
 
 

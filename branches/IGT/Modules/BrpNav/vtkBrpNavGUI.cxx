@@ -1,9 +1,3 @@
-
-
-
-
-
-
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -36,15 +30,6 @@
 #include "vtkKWMultiColumnListWithScrollbars.h"
 #include "vtkKWEvent.h"
 
-//#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
-
-#ifdef USE_NAVITRACK
-//#include <OpenTracker/input/SlicerNTModule.h>
-//#include <OpenTracker/OpenTracker.h>
-//#include <OpenTracker/input/SPLModules.h>
-#endif //USE_NAVITRACK
-//#endif
-
 #include "vtkKWTkUtilities.h"
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkCylinderSource.h"
@@ -53,8 +38,7 @@
 #include "vtkProperty.h"
 #include "vtkCornerAnnotation.h"
 
-//RI
-#include "vtkImageChangeInformation.h"
+// Real-time image display
 #include "vtkSlicerColorLogic.h"
 #include "vtkSlicerVolumesGUI.h"
 
@@ -109,14 +93,6 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->O4Entry = NULL;
 
     this->ExtraFrame = NULL;
-
-    /*
-    this->RedColorScale = NULL;
-    this->GreenColorScale = NULL;
-    this->BlueColorScale = NULL;
-    */
-
- 
    
     this->ConnectCheckButtonRI = NULL;
     this->NeedleCheckButton = NULL;
@@ -183,10 +159,6 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->PointPairMultiColumnList = NULL;
     this->TargetListColumnList = NULL;
 
-    // this->LoadPointPairPushButton = NULL;
-    // this->SavePointPairPushButton = NULL;
-  
-  
     this->DeleteTargetPushButton = NULL;
     this->DeleteAllTargetPushButton = NULL;
     this->MoveBWPushButton = NULL;
@@ -204,6 +176,7 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
     this->DataCallbackCommand->SetCallback(vtkBrpNavGUI::DataCallback);
 
+
     this->Logic0 = NULL; 
     this->Logic1 = NULL; 
     this->Logic2 = NULL; 
@@ -214,18 +187,20 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->Control1 = NULL; 
     this->Control2 = NULL; 
 
-    this->VolumesLogic = NULL;
-    this->RealtimeVolumeNode = NULL;
 
+    this->VolumesLogic = NULL;
     this->NeedOrientationUpdate0 = 0;
     this->NeedOrientationUpdate1 = 0;
     this->NeedOrientationUpdate2 = 0;
-    
+
+
+    // for Real-time image display
+    this->RealtimeVolumeNode = NULL;
     this->RealtimeXsize = 0;
     this->RealtimeYsize = 0;
     this->RealtimeImageSerial = 0;
-
     this->NeedRealtimeImageUpdate = 0;
+
 
     // Widgets for Calibration Frame
     this->CalibImageFileEntry      = NULL;
@@ -633,20 +608,6 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
     this->TargetListColumnList->Delete ( );
     }
 
-    /*
-    if (this->LoadPointPairPushButton)
-    {
-    this->LoadPointPairPushButton->SetParent(NULL );
-    this->LoadPointPairPushButton->Delete ( );
-    }
-    if (this->SavePointPairPushButton)
-    {
-    this->SavePointPairPushButton->SetParent(NULL );
-    this->SavePointPairPushButton->Delete ( );
-    }
-    */
-  
-   
     if (this->DeleteTargetPushButton)
     {
     this->DeleteTargetPushButton->SetParent(NULL );
@@ -1010,7 +971,8 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
     }
     else
     {
-     
+
+      /*
         if (this->ConnectCheckButtonRI == vtkKWCheckButton::SafeDownCast(caller) 
             && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
@@ -1021,6 +983,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
             SetIGSTKConnectionParameters();
 #endif
         }
+      */
     
         if (this->ConnectCheckButtonNT == vtkKWCheckButton::SafeDownCast(caller) 
             && event == vtkKWCheckButton::SelectedStateChangedEvent )
@@ -1037,18 +1000,6 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
         }
 
      
-     // GET RI 
-
-        if (this->ConnectCheckButtonRI == vtkKWCheckButton::SafeDownCast(caller) 
-            && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {      
-      
-          /*
-            this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
-            this->OpenTrackerStream->GetImageDataforRealtimeImaging(&ImageDataRI);
-          */
-        }
-
         if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller) 
             && event == vtkKWCheckButton::SelectedStateChangedEvent  )
         {
@@ -1296,10 +1247,12 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
         {
             int checked = this->LocatorCheckButton->GetSelectedState(); 
             
-            vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
+            //vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
+            vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLModelNode1")); 
             if (model != NULL)
             {
-                vtkMRMLModelDisplayNode *disp = vtkMRMLModelDisplayNode::SafeDownCast(model->GetDisplayNode());
+              //vtkMRMLModelDisplayNode *disp = vtkMRMLModelDisplayNode::SafeDownCast(model->GetDisplayNode());
+              vtkMRMLModelDisplayNode *disp = model->GetModelDisplayNode();
                 
                 if (disp != NULL)
                 {
@@ -1473,7 +1426,6 @@ void vtkBrpNavGUI::Enter ( )
     this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
     this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
     this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
-  
     this->SliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
     this->SliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
     this->Control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
@@ -1488,7 +1440,7 @@ void vtkBrpNavGUI::Enter ( )
         this->RealtimeVolumeNode = AddVolumeNode(this->VolumesLogic, "Realtime");
     
     //Set to 1, philip 21/06/2007
-    this->Logic0->GetForegroundLayer()->SetUseReslice(0);
+    //this->Logic0->GetForegroundLayer()->SetUseReslice(0);
 
 
 
@@ -2246,27 +2198,6 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     this->LocatorCheckButton->Create();
     this->LocatorCheckButton->SelectedStateOff();
     this->LocatorCheckButton->SetText("Show Locator");
-
-    /*
-    this->HandleCheckButton = vtkKWCheckButton::New();
-    this->HandleCheckButton->SetParent(displayFrame->GetFrame());
-    this->HandleCheckButton->Create();
-    this->HandleCheckButton->SelectedStateOff();
-    this->HandleCheckButton->SetText("Show Handle");
-
-    this->GuideCheckButton = vtkKWCheckButton::New();
-    this->GuideCheckButton->SetParent(displayFrame->GetFrame());
-    this->GuideCheckButton->Create();
-    this->GuideCheckButton->SelectedStateOff();
-    this->GuideCheckButton->SetText("Show Guide");
-
-
-    this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
-        this->LocatorCheckButton->GetWidgetName(),
-        this->HandleCheckButton->GetWidgetName(),
-        this->GuideCheckButton->GetWidgetName());
-    */
-
 
     this->Script("pack %s -side left -anchor w -padx 2 -pady 2", 
         this->LocatorCheckButton->GetWidgetName());
@@ -3201,16 +3132,38 @@ void vtkBrpNavGUI::UpdateAll()
         //  std::cerr << "vid = " << vid << std::endl;
         if (vid)
         {
-            //  std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
+            std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
             int orgSerial = this->RealtimeImageSerial;
             this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
-            if (orgSerial != this->RealtimeImageSerial)
+            if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
             {
+
                 this->NeedRealtimeImageUpdate = 1;
-                //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
+                this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
                 //this->Logic0->UpdatePipeline ();
                 this->RealtimeVolumeNode->SetAndObserveImageData(vid);
                 vtkMatrix4x4* mat = vtkMatrix4x4::New();
+
+                std::cerr << "============Image info================="     << std::endl;
+                int d[3];
+                vid->GetDimensions(d);
+                std::cerr << "Dimension: (" 
+                          << d[0] << ", "
+                          << d[1] << ", "
+                          << d[2] << ")" << std::endl;
+                double v[3];
+                vid->GetSpacing(v);
+                std::cerr << "Spacing:   (" 
+                          << v[0] << ", "
+                          << v[1] << ", "
+                          << v[2] << ")" << std::endl;
+                vid->GetOrigin(v);
+                std::cerr << "Origin:    (" 
+                          << v[0] << ", "
+                          << v[1] << ", "
+                          << v[2] << ")" << std::endl;
+
+
                 this->RealtimeVolumeNode->ComputeIJKToRASFromScanOrder("IS",
                                                                        vid->GetSpacing(),
                                                                        vid->GetDimensions(),
@@ -3218,18 +3171,8 @@ void vtkBrpNavGUI::UpdateAll()
                 this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
                 mat->Delete();
 
-                //Philip Mewes: Compare Timestamp from Scanner with Slicer System time
-                /*
-                gettimeofday(&actualtime, 0);  
-                         
-
-                            cout << actualtime.tv_sec << ':' << actualtime.tv_usec << endl;
-                            double ActualtimeAsDouble = actualtime.tv_usec%100000;
-                         
-                            cout<<ActualtimeAsDouble<<endl;
-                         
-                */
-
+                this->VolumesLogic->SetActiveVolumeNode(this->RealtimeVolumeNode);
+                this->VolumesLogic->Modified();
 
             }
         }
@@ -3237,10 +3180,6 @@ void vtkBrpNavGUI::UpdateAll()
         {
           //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
         }
-        
-
-
-
 
     }
 
@@ -3262,6 +3201,12 @@ void vtkBrpNavGUI::UpdateAll()
         float tx = this->LocatorMatrix->GetElement(0, 2);
         float ty = this->LocatorMatrix->GetElement(1, 2);
         float tz = this->LocatorMatrix->GetElement(2, 2);
+
+        std::cerr << "==== Locator position ====" << std::endl;
+        std::cerr << "   " << px << ", " << py << ", " << pz << std::endl;
+        std::cerr << "   " << nx << ", " << ny << ", " << nz << std::endl;
+        std::cerr << "   " << tx << ", " << ty << ", " << tz << std::endl;
+
         
         /*
           float px = 0;
@@ -3319,8 +3264,9 @@ void vtkBrpNavGUI::UpdateAll()
         //  this->UpdateSliceDisplay(px, py, pz);     // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
         this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
         this->Logic0->UpdatePipeline ();
-  
+      
     }
+
 }
 
 
@@ -3343,7 +3289,8 @@ void vtkBrpNavGUI::UpdateLocator()
     transform = this->IGSTKStream->GetLocatorNormalTransform(); 
 #endif
 
-    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
+    //vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
+    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLModelNode1")); 
     if (model != NULL)
     {
         if (transform)
@@ -3362,39 +3309,11 @@ void vtkBrpNavGUI::UpdateLocator()
 }
 
 
+/*
 void vtkBrpNavGUI::UpdateRealtimeImg()
 {
-  /*
-  int checkedRI = this->ConnectCheckButtonRI->GetSelectedState(); 
-    if (checkedRI)
-    {
-#ifdef USE_NAVITRACK
-     
-        
-     this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
-     this->OpenTrackerStream->GetImageDataforRealtimeImaging(&ImageDataRI);
-  
-
-#endif
-      // xsizevalue = 5;
-      printf("GetRealTimeImage\n");
-      
-      cout << "xsixe:  ";
-      cout<< xsizevalueRI << endl;
-       
-       cout << "ysixe:    ";
-       cout<< xsizevalueRI << endl;
-`
-       
-       ofstream fout("output.raw");
-       fout.write((const char*)ImageDataRI.image_ptr, ImageDataRI.size());
-       fout.close();
-      
-      
-    }
-*/
 }
-
+*/
 
 
 
@@ -3403,13 +3322,12 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
                     float px, float py, float pz)
 {
 
-    int checked = this->FreezeImageCheckButton->GetSelectedState();
+    int fFreeze = this->FreezeImageCheckButton->GetSelectedState();
   
     if (this->NeedOrientationUpdate0 ||
         this->NeedOrientationUpdate1 ||
-        this->NeedOrientationUpdate2
-        //     ||   this->NeedRealtimeImageUpdate
-        )
+        this->NeedOrientationUpdate2 ||
+        this->NeedRealtimeImageUpdate )
     {
         
         vtkMatrix4x4* mat = vtkMatrix4x4::New();
@@ -3429,7 +3347,9 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
         double ns[3];
         double ts[3];
         double cx = -128;
+        //double cx = 0;
         double cy = -128;
+        //double cy = 0;
         ns[0] = cx * nx;
         ns[1] = cx * ny;
         ns[2] = cx * nz;
@@ -3443,86 +3363,80 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
         mat->SetElement(2, 3, pz + ns[2] + ts[2]);
         mat->SetElement(3, 3, 1.0);
         
-        mat->SetElement(3, 3, 1.0);
-        
         //Philip Mewes: Image can be frozen at the last updated
-       if(!checked)
-       {
-           this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
-       }
+        if(!fFreeze)
+        {
+          this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
+           std::cout <<"UpdateSliceDisplay ---- SetIJKToRASMatrix" << std::endl;
+        }
 
-       /*
-       char* order="AP";
-       double spacing[3];
-        spacing[0]=1.0;
-        spacing[1]=1.0;
-        spacing[2]=0.0;
-        int dim[3];
-         dim[0]=256;
-         dim[1]=256;
-         dim[2]=1;       
-         bool centerImage=1;       
-            this->RealtimeVolumeNode->ComputeIJKToRASFromScanOrder(order,spacing,dim,centerImage,mat);
-       */
+
        mat->Delete();
     }
 
+
+
      
-    // Axial
-    if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
+    // Axial and Real-time image
+    if (this->NeedRealtimeImageUpdate)
+      {
+        this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+        this->Control0->GetOffsetScale()->SetValue(pz);
+        this->NeedRealtimeImageUpdate = 0;
+      }
+
+    if (this->NeedOrientationUpdate0) 
     {
-        if (this->NeedOrientationUpdate0) 
-        {  
+        if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
+        {
+            //if (!fFreeze)
             this->SliceNode0->SetOrientationToAxial();
-            this->NeedOrientationUpdate0 = 0;
         }
-    }
-    else
-    {
-        if(!checked)
+        else 
         {
             this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+            this->Control0->GetOffsetScale()->SetValue(pz);
+            //this->Logic1->SetSliceOffset(pz);
         }
-        this->Control0->GetOffsetScale()->SetValue(pz);
-        //this->Logic0->SetSliceOffset(pz);
-        this->NeedOrientationUpdate0 = 1;
-        
+        this->NeedOrientationUpdate0 = 0;
+
     }
+
 
     // Sagittal
-    if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
+    if (this->NeedOrientationUpdate1)
     {
-        if (this->NeedOrientationUpdate1) 
+        if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
         {
             this->SliceNode1->SetOrientationToSagittal();
-            this->NeedOrientationUpdate1 = 0;
         }
-    }
-    else
-    {
-        this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-        this->Control1->GetOffsetScale()->SetValue(px);
-        //this->Logic1->SetSliceOffset(px);
-        this->NeedOrientationUpdate1 = 1;
+        else
+        {
+            this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+            this->Control1->GetOffsetScale()->SetValue(px);
+            //this->Logic1->SetSliceOffset(px);
+        }
+        this->NeedOrientationUpdate1 = 0;
     }
 
+
     // Coronal
-    if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
+    if (this->NeedOrientationUpdate2)
     {
-        if (this->NeedOrientationUpdate2) 
+
+        if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
         {
             this->SliceNode2->SetOrientationToCoronal();
-            this->NeedOrientationUpdate2 = 0;
         }
+        else
+        {
+            this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 3);
+            this->Control2->GetOffsetScale()->SetValue(py);
+            //this->Logic2->SetSliceOffset(py);
+        }
+        this->NeedOrientationUpdate2 = 0;
     }
-    else
-    {
-        this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 3);
-        this->Control2->GetOffsetScale()->SetValue(py);
-        //this->Logic2->SetSliceOffset(py);
-        this->NeedOrientationUpdate2 = 1;
-    }
-  
+
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -4056,9 +3970,9 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
         
         image->SetDimensions(256, 256, 1);
         image->SetExtent(0, 255, 0, 255, 0, 0 );
-        image->SetNumberOfScalarComponents( 1 );
+        //image->SetNumberOfScalarComponents( 1 );
         image->SetOrigin( 0, 0, 0 );
-        image->SetSpacing( 1, 1, 0 );
+        image->SetSpacing( 1, 1, 1 );
         image->SetScalarTypeToShort();
         image->AllocateScalars();
         
@@ -4069,10 +3983,11 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
           image->Update();
         }
         
+        /*
         vtkSlicerSliceLayerLogic *reslice = vtkSlicerSliceLayerLogic::New();
         reslice->SetUseReslice(0);
+        */
         scalarNode->SetAndObserveImageData(image);
-        
         vtkMatrix4x4* mat = vtkMatrix4x4::New();
         scalarNode->ComputeIJKToRASFromScanOrder("IS",
                                                  // possible is IS, PA, LR and inverse
@@ -4081,9 +3996,7 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
                                                  true, mat);
         scalarNode->SetIJKToRASMatrix(mat);
         mat->Delete();
-        image->Delete();
-        
-        
+        //image->Delete();
         
         /* Based on the code in vtkSlicerVolumeLogic::AddHeaderVolume() */
         
@@ -4100,7 +4013,6 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
             volumeNode->SetScene(volLogic->GetMRMLScene());
             displayNode->SetScene(volLogic->GetMRMLScene());
             
-            //should we give the user the chance to modify this?.
             double range[2];
             vtkDebugMacro("Set basic display info");
             volumeNode->GetImageData()->GetScalarRange(range);
@@ -4117,7 +4029,7 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
             //displayNode->SetDefaultColorMap();
             vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
             displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
-            colorLogic->Delete();
+            //colorLogic->Delete();
             
             volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
             
@@ -4131,12 +4043,15 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
             volLogic->Modified();
         }
 
-        scalarNode->Delete();
+        //scalarNode->Delete();
         
+        /*
         if (displayNode)
         {
             displayNode->Delete();
         }
+        */
+
     }
     return volumeNode;
 }
@@ -4269,8 +4184,6 @@ Image* vtkBrpNavGUI::DicomRead(const char* filename, int* width, int* height,
   return img;
 
 }
-
-
 
 
 
