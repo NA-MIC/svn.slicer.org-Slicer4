@@ -123,8 +123,10 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->HandleCheckButton = NULL;
     this->GuideCheckButton = NULL;
 
-    this->LocatorModeCheckButton = NULL;
-    this->UserModeCheckButton = NULL;
+    this->SetLocatorModeButton = NULL;
+    this->SetUserModeButton    = NULL;
+    //this->LocatorModeCheckButton = NULL;
+    //this->UserModeCheckButton = NULL;
 
     this->RedSliceMenu = NULL;
     this->YellowSliceMenu = NULL;
@@ -192,14 +194,18 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->NeedOrientationUpdate0 = 0;
     this->NeedOrientationUpdate1 = 0;
     this->NeedOrientationUpdate2 = 0;
+    this->NeedRealtimeImageUpdate = 0;
 
+    this->OrgNeedOrientationUpdate0 = 0;
+    this->OrgNeedOrientationUpdate1 = 0;
+    this->OrgNeedOrientationUpdate2 = 0;
+    this->OrgNeedRealtimeImageUpdate= 0;
 
     // for Real-time image display
     this->RealtimeVolumeNode = NULL;
     this->RealtimeXsize = 0;
     this->RealtimeYsize = 0;
     this->RealtimeImageSerial = 0;
-    this->NeedRealtimeImageUpdate = 0;
 
 
     // Widgets for Calibration Frame
@@ -493,6 +499,18 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
     this->GuideCheckButton->Delete ( );
     }
 
+    if (this->SetLocatorModeButton)
+    {
+        this->SetLocatorModeButton->SetParent(NULL);
+        this->SetLocatorModeButton->Delete();
+    }
+
+    if (this->SetUserModeButton)
+    {
+        this->SetUserModeButton->SetParent(NULL);
+        this->SetUserModeButton->Delete();
+    }
+    /*
     if (this->LocatorModeCheckButton)
     {
     this->LocatorModeCheckButton->SetParent(NULL );
@@ -503,6 +521,7 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
     this->UserModeCheckButton->SetParent(NULL );
     this->UserModeCheckButton->Delete ( );
     }
+    */
 
     if (this->RedSliceMenu)
     {
@@ -806,6 +825,17 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     {
     this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
+    if (this->SetLocatorModeButton)
+    {
+        this->SetLocatorModeButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,
+                                                      (vtkCommand *)this->GUICallbackCommand );
+    }
+    if (this->SetUserModeButton)
+    {
+        this->SetUserModeButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,
+                                                   (vtkCommand *)this->GUICallbackCommand );
+    }
+    /*
     if (this->LocatorModeCheckButton)
     {
     this->LocatorModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
@@ -814,6 +844,7 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     {
     this->UserModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
+    */
 }
 
 
@@ -881,8 +912,14 @@ void vtkBrpNavGUI::AddGUIObservers ( )
     
     
     this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->LocatorModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+
+
+    this->SetLocatorModeButton->AddObserver ( vtkKWPushButton::InvokedEvent,
+                                              (vtkCommand *)this->GUICallbackCommand );
+    this->SetUserModeButton->AddObserver ( vtkKWPushButton::InvokedEvent,
+                                           (vtkCommand *)this->GUICallbackCommand );
+      //this->LocatorModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+      //this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ReadCalibImageFileButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
 
 #ifdef USE_NAVITRACK
@@ -1263,83 +1300,71 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 }
             }
         }
-        /*
-          else if (this->NeedleCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-          && event == vtkKWCheckButton::SelectedStateChangedEvent )
-          {
-          
-          int checked = this->NeedleCheckButton->GetSelectedState(); 
-          
-          vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID.c_str())); 
-          if (model != NULL)
-          {
-          vtkMRMLModelDisplayNode *disp = model->GetDisplayNode();
-          
-          vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-          vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
-          disp->SetColor(color->SliceGUIGreen);
-          disp->SetVisibility(checked);
-          }
-          
-          }
-        */
-        else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+
+        //
+        // Locator Driver selection
+        //
+
+        // -- "Locator" check button 
+        else if (this->SetLocatorModeButton == vtkKWPushButton::SafeDownCast(caller) 
+                 && event == vtkKWPushButton::InvokedEvent )
+        {
+            this->NeedOrientationUpdate0 = 1;
+            this->NeedOrientationUpdate1 = 1;
+            this->NeedOrientationUpdate2 = 1;
+            this->NeedRealtimeImageUpdate = 1;
+
+            this->RedSliceMenu->SetValue("Locator");
+            this->YellowSliceMenu->SetValue("Locator");
+            this->GreenSliceMenu->SetValue("Locator");
+        }
+
+        // -- "User" check button 
+        else if (this->SetUserModeButton == vtkKWPushButton::SafeDownCast(caller) 
+                 && event == vtkKWPushButton::InvokedEvent )
+        {
+            this->SliceNode0->SetOrientationToAxial();
+            this->SliceNode1->SetOrientationToSagittal();
+            this->SliceNode2->SetOrientationToCoronal();
+            this->NeedOrientationUpdate0 = 0;
+            this->NeedOrientationUpdate1 = 0;
+            this->NeedOrientationUpdate2 = 0;
+            this->NeedRealtimeImageUpdate = 0;
+
+            this->RedSliceMenu->SetValue("User");
+            this->YellowSliceMenu->SetValue("User");
+            this->GreenSliceMenu->SetValue("User");
+        }
+
+        // -- "Freeze Image Position" check button 
+        else if (this->FreezeImageCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
                  && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
-            int checked = this->LocatorModeCheckButton->GetSelectedState(); 
-            std::string val("Locator");
-            
-            if (checked)
-            {
-                this->UserModeCheckButton->SelectedStateOff();
-            }
-            else
-            {
-                this->UserModeCheckButton->SelectedStateOn();
-                this->SliceNode0->SetOrientationToAxial();
-                this->SliceNode1->SetOrientationToSagittal();
-                this->SliceNode2->SetOrientationToCoronal();
-                this->NeedOrientationUpdate0 = 0;
-                this->NeedOrientationUpdate1 = 0;
-                this->NeedOrientationUpdate2 = 0;
-                
-                this->NeedRealtimeImageUpdate = 0;
-                
-                val = "User";
-            }
-            this->RedSliceMenu->SetValue(val.c_str());
-            this->YellowSliceMenu->SetValue(val.c_str());
-            this->GreenSliceMenu->SetValue(val.c_str());
+          //this->LocatorModeCheckButton->SetSelectedState(0);
+          //this->UserModeCheckButton->SetSelectedState(0);
+           if (this->FreezeImageCheckButton->GetSelectedState() == 1)
+           {
+               this->OrgNeedOrientationUpdate0  = this->NeedOrientationUpdate0;
+               this->OrgNeedOrientationUpdate1  = this->NeedOrientationUpdate1;
+               this->OrgNeedOrientationUpdate2  = this->NeedOrientationUpdate2;
+               this->OrgNeedRealtimeImageUpdate = this->NeedRealtimeImageUpdate;
+               
+               this->NeedOrientationUpdate0 = 0;
+               this->NeedOrientationUpdate1 = 0;
+               this->NeedOrientationUpdate2 = 0;
+               this->NeedRealtimeImageUpdate = 0;
+           }
+           else
+           {
+               this->NeedOrientationUpdate0  = this->OrgNeedOrientationUpdate0;
+               this->NeedOrientationUpdate1  = this->OrgNeedOrientationUpdate1;
+               this->NeedOrientationUpdate2  = this->OrgNeedOrientationUpdate2;
+               this->NeedRealtimeImageUpdate = this->OrgNeedRealtimeImageUpdate;
+           }
+
         }
-        else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
-            int checked = this->UserModeCheckButton->GetSelectedState(); 
-            std::string val("User");
-            
-            if (checked)
-            {
-                this->LocatorModeCheckButton->SelectedStateOff();
-                this->SliceNode0->SetOrientationToAxial();
-                this->SliceNode1->SetOrientationToSagittal();
-                this->SliceNode2->SetOrientationToCoronal();
-                
-                
-                this->NeedOrientationUpdate0 = 0;
-                this->NeedOrientationUpdate1 = 0;
-                this->NeedOrientationUpdate2 = 0;
-                
-                this->NeedRealtimeImageUpdate = 0;
-            }
-            else
-            {
-                this->LocatorModeCheckButton->SelectedStateOn();
-                val = "Locator";
-            }
-            this->RedSliceMenu->SetValue(val.c_str());
-            this->YellowSliceMenu->SetValue(val.c_str());
-            this->GreenSliceMenu->SetValue(val.c_str());
-        }
+
+
         else if (this->ReadCalibImageFileButton == vtkKWPushButton::SafeDownCast(caller) 
                  && event == vtkKWPushButton::InvokedEvent)
         {
@@ -1373,8 +1398,6 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
             }
             this->ListCalibImageFileButton->GetWidget()->SetText ("Browse Image File");
         }
-
-
     }
 } 
 
@@ -2221,17 +2244,32 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
          driverFrame->GetFrame()->GetWidgetName());
 
 
+    // "Locator All" button
+    this->SetLocatorModeButton = vtkKWPushButton::New ( );
+    this->SetLocatorModeButton->SetParent ( modeFrame );
+    this->SetLocatorModeButton->Create ( );
+    this->SetLocatorModeButton->SetText ("Locator All");
+    this->SetLocatorModeButton->SetWidth (17);
+
+    // "User All" button
+    this->SetUserModeButton = vtkKWPushButton::New ( );
+    this->SetUserModeButton->SetParent ( modeFrame );
+    this->SetUserModeButton->Create ( );
+    this->SetUserModeButton->SetText ("User All");
+    this->SetUserModeButton->SetWidth (17);
+
+    /*
     this->LocatorModeCheckButton = vtkKWCheckButton::New();
     this->LocatorModeCheckButton->SetParent(modeFrame);
     this->LocatorModeCheckButton->Create();
     this->LocatorModeCheckButton->SelectedStateOff();
     this->LocatorModeCheckButton->SetText("Locator");
-
     this->UserModeCheckButton = vtkKWCheckButton::New();
     this->UserModeCheckButton->SetParent(modeFrame);
     this->UserModeCheckButton->Create();
     this->UserModeCheckButton->SelectedStateOn();
     this->UserModeCheckButton->SetText("User");
+    */
 
     this->FreezeImageCheckButton = vtkKWCheckButton::New();
     this->FreezeImageCheckButton->SetParent(modeFrame);
@@ -2241,9 +2279,10 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
 
 
     this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
-        this->LocatorModeCheckButton->GetWidgetName(),
-        this->FreezeImageCheckButton->GetWidgetName(),
-        this->UserModeCheckButton->GetWidgetName());
+                 //this->LocatorModeCheckButton->GetWidgetName(),
+                 this->SetLocatorModeButton->GetWidgetName(),
+                 this->SetUserModeButton->GetWidgetName(),
+                 this->FreezeImageCheckButton->GetWidgetName());
 
 
     // slice frame
@@ -3206,19 +3245,6 @@ void vtkBrpNavGUI::UpdateAll()
         std::cerr << "   " << px << ", " << py << ", " << pz << std::endl;
         std::cerr << "   " << nx << ", " << ny << ", " << nz << std::endl;
         std::cerr << "   " << tx << ", " << ty << ", " << tz << std::endl;
-
-        
-        /*
-          float px = 0;
-          float py = 0;
-          float pz = 0;
-          float nx = 0;
-          float ny = 0;
-          float nz = 0;
-          float tx = 0.5;
-          float ty = 0.5;
-          float tz = 0.1;
-        */
         
         /*
           sprintf(Val, "%6.2f", px);
@@ -3255,11 +3281,12 @@ void vtkBrpNavGUI::UpdateAll()
         sprintf(orientxyz, "(%6.2f, %6.2f, %6.2f) (%6.2f, %6.2f, %6.2f)", nx, ny, nz, tx, ty, tz);
         this->OrientEntry->GetWidget()->SetValue(orientxyz);
         
-        
         // update the display of locator
-        if (this->LocatorCheckButton->GetSelectedState()) this->UpdateLocator();
-        if (this->NeedleCheckButton->GetSelectedState()) this->UpdateLocator();
-        
+        if (this->LocatorCheckButton->GetSelectedState() ||
+            this->NeedleCheckButton->GetSelectedState())
+        {
+            this->UpdateLocator();
+        }
         
         //  this->UpdateSliceDisplay(px, py, pz);     // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
         this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
@@ -3309,21 +3336,12 @@ void vtkBrpNavGUI::UpdateLocator()
 }
 
 
-/*
-void vtkBrpNavGUI::UpdateRealtimeImg()
-{
-}
-*/
-
-
-
 void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz, 
-                    float tx, float ty, float tz, 
-                    float px, float py, float pz)
+                                      float tx, float ty, float tz, 
+                                      float px, float py, float pz)
 {
+    std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() is called." << std::endl;
 
-    int fFreeze = this->FreezeImageCheckButton->GetSelectedState();
-  
     if (this->NeedOrientationUpdate0 ||
         this->NeedOrientationUpdate1 ||
         this->NeedOrientationUpdate2 ||
@@ -3363,78 +3381,63 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
         mat->SetElement(2, 3, pz + ns[2] + ts[2]);
         mat->SetElement(3, 3, 1.0);
         
-        //Philip Mewes: Image can be frozen at the last updated
-        if(!fFreeze)
-        {
-          this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
-           std::cout <<"UpdateSliceDisplay ---- SetIJKToRASMatrix" << std::endl;
-        }
-
-
-       mat->Delete();
+        mat->Delete();
     }
-
-
 
      
     // Axial and Real-time image
     if (this->NeedRealtimeImageUpdate)
       {
         this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-        this->Control0->GetOffsetScale()->SetValue(pz);
+        //this->Control0->GetOffsetScale()->SetValue(pz);
         this->NeedRealtimeImageUpdate = 0;
       }
 
     if (this->NeedOrientationUpdate0) 
     {
-        if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
-        {
-            //if (!fFreeze)
-            this->SliceNode0->SetOrientationToAxial();
-        }
-        else 
-        {
-            this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-            this->Control0->GetOffsetScale()->SetValue(pz);
-            //this->Logic1->SetSliceOffset(pz);
-        }
-        this->NeedOrientationUpdate0 = 0;
-
+        //if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
+        //{
+        //    //if (!fFreeze)
+        //    this->SliceNode0->SetOrientationToAxial();
+        //}
+        //else
+        //{
+        this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+        //this->Control0->GetOffsetScale()->SetValue(pz);
+        //    //this->Logic1->SetSliceOffset(pz);
+        //}
     }
 
 
     // Sagittal
     if (this->NeedOrientationUpdate1)
     {
-        if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
-        {
-            this->SliceNode1->SetOrientationToSagittal();
-        }
-        else
-        {
-            this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-            this->Control1->GetOffsetScale()->SetValue(px);
-            //this->Logic1->SetSliceOffset(px);
-        }
-        this->NeedOrientationUpdate1 = 0;
+        //if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
+        //{
+        //    this->SliceNode1->SetOrientationToSagittal();
+        //}
+        //else
+        //{
+        this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+        //this->Control1->GetOffsetScale()->SetValue(px);
+        //    //this->Logic1->SetSliceOffset(px);
+        //}
     }
 
 
     // Coronal
     if (this->NeedOrientationUpdate2)
     {
-
-        if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
-        {
-            this->SliceNode2->SetOrientationToCoronal();
-        }
-        else
-        {
-            this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 3);
-            this->Control2->GetOffsetScale()->SetValue(py);
-            //this->Logic2->SetSliceOffset(py);
-        }
-        this->NeedOrientationUpdate2 = 0;
+        //if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
+        //{
+        //    this->SliceNode2->SetOrientationToCoronal();
+        //}
+        //else
+        //{
+        this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 3);
+        //this->Control2->GetOffsetScale()->SetValue(py);
+        //    //this->Logic2->SetSliceOffset(py);
+        //}
     }
 
 }
@@ -3937,6 +3940,13 @@ void vtkBrpNavGUI::SetOpenTrackerforScannerControll()
            
            scancommandvalues[0] = "LOAD_PROTOCOL"; 
            scancommandvalues[1]= this->positionbrpsetprotocol->GetWidget()->GetValue ();
+       }
+
+       std::cerr << "Sending Scanner controlling command:" <<std::endl;
+       for (int i = 0; i < scancommandkeys.size(); i ++)
+       {
+           std::cerr << "    " << scancommandkeys[i] << std::endl;
+           std::cerr << "    " << scancommandvalues[i] << std::endl;
        }
        
        this->OpenTrackerStream->SetOpenTrackerforScannerControll(scancommandkeys, scancommandvalues);
