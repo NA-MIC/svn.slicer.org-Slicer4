@@ -199,8 +199,12 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *HandleCheckButton;
     vtkKWCheckButton *GuideCheckButton;
 
+    vtkKWPushButton  *SetLocatorModeButton;
+    vtkKWPushButton  *SetUserModeButton;
+    /*
     vtkKWCheckButton *LocatorModeCheckButton;
     vtkKWCheckButton *UserModeCheckButton;
+    */
 
     vtkKWMenuButton *RedSliceMenu;
     vtkKWMenuButton *YellowSliceMenu;
@@ -326,12 +330,16 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkSlicerVolumesLogic *VolumesLogic;
     vtkMRMLVolumeNode     *RealtimeVolumeNode;
 
-  
-
     int NeedOrientationUpdate0;
     int NeedOrientationUpdate1;
     int NeedOrientationUpdate2;
-   
+    int NeedRealtimeImageUpdate;
+
+    int OrgNeedOrientationUpdate0;
+    int OrgNeedOrientationUpdate1;
+    int OrgNeedOrientationUpdate2;
+    int OrgNeedRealtimeImageUpdate;
+
      int RealtimeXsize;
      int RealtimeYsize;
      
@@ -349,7 +357,6 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 
      // For Real-time image dispaly
      int RealtimeImageSerial;
-     int NeedRealtimeImageUpdate;
      
      //status check
      int var_status_scanner;
