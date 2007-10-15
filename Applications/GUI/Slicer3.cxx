@@ -99,8 +99,8 @@ extern "C" {
 #define WFENGINE_DEBUG
 //#define NEURONAV_DEBUG
 
-//#define BRPNAV_DEBUG
-//#define PROSTATENAV_DEBUG
+#define BRPNAV_DEBUG
+#define PROSTATENAV_DEBUG
 
 #ifndef USE_TEEM
 #define TRACTOGRAPHY_DEBUG
