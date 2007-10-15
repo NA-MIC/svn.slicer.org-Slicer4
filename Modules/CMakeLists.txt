@@ -1,10 +1,10 @@
 PROJECT( Modules )
 
 SUBDIRS(
-  BrpNav
+  #  BrpNav
   NeuroNav
-  ProstateNav
-#  RealTimeImaging
+  # ProstateNav
+  #  RealTimeImaging
   CommandLineModule
   ScriptedModule
   GradientAnisotropicDiffusionFilter
@@ -13,7 +13,7 @@ SUBDIRS(
   Editor
   QueryAtlas
   Python
-  #Meshing
+  # Meshing
   QdecModule
 )
 
