@@ -1,6 +1,8 @@
-NTDIR   = /home/junichi/igtdev/NaviTrack/branches/nt-brp
+#NTDIR   = /home/junichi/igtdev/NaviTrack/branches/nt-brp
+NTDIR   = /projects/igtdev/tokuda/NaviTrack/branches/nt-brp
 CXX     = g++ -g
-ITKDIR  = /home/junichi/igtdev/InsightToolkit-3.2.0
+#ITKDIR  = /home/junichi/igtdev/InsightToolkit-3.2.0
+ITKDIR  = /projects/igtdev/tokuda/Insight
 INCDIR  = -I${NTDIR}/include -I${ITKDIR} -I${ITKDIR}/Code/Common -I${ITKDIR}/Code/Numerics -I${ITKDIR}/Code/IO -I${ITKDIR}/Utilities/MetaIO -I${ITKDIR}/Utilities/NrrdIO -I${ITKDIR}/Utilities/DICOMParser -I${ITKDIR}/Utilities/expat -I${ITKDIR}/Utilities/nifti/niftilib -I${ITKDIR}/Utilities/nifti/znzlib -I${ITKDIR}/Utilities/itkExtHdrs -I${ITKDIR}/Utilities -I${ITKDIR}/Utilities/vxl/vcl -I${ITKDIR}/Utilities/vxl/core -I${ITKDIR}/Utilities/gdcm -I${ITKDIR}/Utilities/gdcm/src -I/projects/igtdev/tokuda/Insight/Utilities/vxl/v3p/netlib
 
 LIBDIR  = -L. -L${NTDIR} -L${ITKDIR}/bin
