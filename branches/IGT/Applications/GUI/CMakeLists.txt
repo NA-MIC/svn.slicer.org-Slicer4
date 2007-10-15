@@ -90,14 +90,14 @@ SET(dir_list
   ${QdecModule_Init_SOURCE_DIR}
   ${QdecModule_Init_BINARY_DIR}
   ${QueryAtlas_SOURCE_DIR}
-  ${BrpNav_SOURCE_DIR}
-  ${BrpNav_BINARY_DIR}
-  ${BrpNav_Init_SOURCE_DIR}
-  ${BrpNav_Init_BINARY_DIR}
-  ${ProstateNav_SOURCE_DIR}
-  ${ProstateNav_BINARY_DIR}
-  ${ProstateNav_Init_SOURCE_DIR}
-  ${ProstateNav_Init_BINARY_DIR}
+  # ${BrpNav_SOURCE_DIR}
+  # ${BrpNav_BINARY_DIR}
+  # ${BrpNav_Init_SOURCE_DIR}
+  # ${BrpNav_Init_BINARY_DIR}
+  # ${ProstateNav_SOURCE_DIR}
+  # ${ProstateNav_BINARY_DIR}
+  # ${ProstateNav_Init_SOURCE_DIR}
+  # ${ProstateNav_Init_BINARY_DIR}
   ${QueryAtlas_BINARY_DIR}
   ${QueryAtlas_Init_SOURCE_DIR}
   ${QueryAtlas_Init_BINARY_DIR}
@@ -160,11 +160,11 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     IGT
     GradientAnisotropicDiffusionFilter
     EMSegment
- #   RealTimeImaging
- #   MRAblation
+    # RealTimeImaging
+    # MRAblation
     NeuroNav
-    BrpNav
-    ProstateNav
+    # BrpNav
+    # ProstateNav
     QueryAtlas
     CommandLineModule
     ScriptedModule
