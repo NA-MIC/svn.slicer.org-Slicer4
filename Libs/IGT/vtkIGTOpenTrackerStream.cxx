@@ -162,41 +162,6 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
       VOT_cb2->needle_depth = (std::vector<float>)event.getAttribute <std::vector<float> >("depth", VOT_cb2->needle_depth);
     }
 
-    /*
-    VOT_cb2->position_cb2_FS[1]=(float)(event.getPosition())[1];
-    VOT_cb2->position_cb2_FS[2]=(float)(event.getPosition())[2];
-      
-    VOT_cb2->orientation_cb2_FS[0]=(float)(event.getOrientation())[0];
-    VOT_cb2->orientation_cb2_FS[1]=(float)(event.getOrientation())[1];
-    VOT_cb2->orientation_cb2_FS[2]=(float)(event.getOrientation())[2];
-    VOT_cb2->orientation_cb2_FS[3]=(float)(event.getOrientation())[3];
-    
-    std::vector<float> pos;
-    std::vector<float> quat;
-   
-    pos[0]=(float)(event.getPosition())[0] * VOT_cb2->MultiFactor;
-    pos[1]=(float)(event.getPosition())[1] * VOT_cb2->MultiFactor;
-    pos[2]=(float)(event.getPosition())[2] * VOT_cb2->MultiFactor;
-    
-    quat[0]=(float)(event.getOrientation())[0];
-    quat[1]=(float)(event.getOrientation())[1];
-    quat[2]=(float)(event.getOrientation())[2];
-    quat[3]=(float)(event.getOrientation())[3];
-
-    VOT_cb2->SetTracker(pos, quat);
-  
-    
-    cout<< position[0] <<endl;
-    cout<< position[1] <<endl; 
-    cout<< position[2] <<endl;
-
-    cout<< orientation_cb2[0] <<endl;
-    cout<< orientation_cb2[1] <<endl;
-    cout<< orientation_cb2[2] <<endl;
-    cout<< orientation_cb2[3] <<endl;
-    
-*/
-    
     
     if (VOT_cb2->quaternion2xyz(orientation_cb2, norm_cb2, transnorm_cb2) == NULL)
       {
@@ -738,11 +703,8 @@ void vtkIGTOpenTrackerStream::GetRealtimeImage(int* serial, vtkImageData* image)
     }
 }
 
-//void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(std::vector<float> OrientationForScanner, std::vector<float> PositionForScanner)
 void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* OrientationForScanner0,float* OrientationForScanner1, float* OrientationForScanner2, float* OrientationForScanner3, float* PositionForScanner0, float* PositionForScanner1, float* PositionForScanner2)
-
 {
-
    
   *OrientationForScanner0 = orientation_cb2_FS0;
   *OrientationForScanner1 = orientation_cb2_FS1;

@@ -125,8 +125,6 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
 
     this->SetLocatorModeButton = NULL;
     this->SetUserModeButton    = NULL;
-    //this->LocatorModeCheckButton = NULL;
-    //this->UserModeCheckButton = NULL;
 
     this->RedSliceMenu = NULL;
     this->YellowSliceMenu = NULL;
@@ -510,18 +508,6 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
         this->SetUserModeButton->SetParent(NULL);
         this->SetUserModeButton->Delete();
     }
-    /*
-    if (this->LocatorModeCheckButton)
-    {
-    this->LocatorModeCheckButton->SetParent(NULL );
-    this->LocatorModeCheckButton->Delete ( );
-    }
-    if (this->UserModeCheckButton)
-    {
-    this->UserModeCheckButton->SetParent(NULL );
-    this->UserModeCheckButton->Delete ( );
-    }
-    */
 
     if (this->RedSliceMenu)
     {
@@ -835,16 +821,7 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
         this->SetUserModeButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,
                                                    (vtkCommand *)this->GUICallbackCommand );
     }
-    /*
-    if (this->LocatorModeCheckButton)
-    {
-    this->LocatorModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-    if (this->UserModeCheckButton)
-    {
-    this->UserModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-    */
+
 }
 
 
@@ -918,8 +895,6 @@ void vtkBrpNavGUI::AddGUIObservers ( )
                                               (vtkCommand *)this->GUICallbackCommand );
     this->SetUserModeButton->AddObserver ( vtkKWPushButton::InvokedEvent,
                                            (vtkCommand *)this->GUICallbackCommand );
-      //this->LocatorModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-      //this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ReadCalibImageFileButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
 
 #ifdef USE_NAVITRACK
@@ -1312,7 +1287,7 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
             this->NeedOrientationUpdate0 = 1;
             this->NeedOrientationUpdate1 = 1;
             this->NeedOrientationUpdate2 = 1;
-            this->NeedRealtimeImageUpdate = 1;
+            this->NeedRealtimeImageUpdate = 0;
 
             this->RedSliceMenu->SetValue("Locator");
             this->YellowSliceMenu->SetValue("Locator");
@@ -1340,8 +1315,6 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
         else if (this->FreezeImageCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
                  && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
-          //this->LocatorModeCheckButton->SetSelectedState(0);
-          //this->UserModeCheckButton->SetSelectedState(0);
            if (this->FreezeImageCheckButton->GetSelectedState() == 1)
            {
                this->OrgNeedOrientationUpdate0  = this->NeedOrientationUpdate0;
@@ -2148,22 +2121,12 @@ void vtkBrpNavGUI::BuildGUIForDeviceFrame ()
                 RobotOrientLabel->GetWidgetName(),
                 this->OrientEntry->GetWidgetName());
 
-
+    empty1Label->Delete();
+    empty2Label->Delete();
+    xLabel->Delete();
+    yLabel->Delete();
+    zLabel->Delete();
     
-
-
-    /*
-     this->NREntry->GetWidget()->SetWidth(5);
-    this->NREntry->GetWidget()->SetValue("0");
-    */
-
-    //---------------------------------------------------------------------------------------------------------------------------
-     empty1Label->Delete();
-     empty2Label->Delete();
-     xLabel->Delete();
-     yLabel->Delete();
-     zLabel->Delete();
-
      o1Label->Delete();
      o2Label->Delete();
      o3Label->Delete();
@@ -2258,19 +2221,6 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     this->SetUserModeButton->SetText ("User All");
     this->SetUserModeButton->SetWidth (17);
 
-    /*
-    this->LocatorModeCheckButton = vtkKWCheckButton::New();
-    this->LocatorModeCheckButton->SetParent(modeFrame);
-    this->LocatorModeCheckButton->Create();
-    this->LocatorModeCheckButton->SelectedStateOff();
-    this->LocatorModeCheckButton->SetText("Locator");
-    this->UserModeCheckButton = vtkKWCheckButton::New();
-    this->UserModeCheckButton->SetParent(modeFrame);
-    this->UserModeCheckButton->Create();
-    this->UserModeCheckButton->SelectedStateOn();
-    this->UserModeCheckButton->SetText("User");
-    */
-
     this->FreezeImageCheckButton = vtkKWCheckButton::New();
     this->FreezeImageCheckButton->SetParent(modeFrame);
     this->FreezeImageCheckButton->Create();
@@ -2279,7 +2229,6 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
 
 
     this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
-                 //this->LocatorModeCheckButton->GetWidgetName(),
                  this->SetLocatorModeButton->GetWidgetName(),
                  this->SetUserModeButton->GetWidgetName(),
                  this->FreezeImageCheckButton->GetWidgetName());
@@ -2664,7 +2613,7 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
 
  //----------Orientation-----------------------------------------------------------------------------------------------------------------
     /*
-  vtkKWFrame *orientationbrpFrame = vtkKWFrame::New();
+    vtkKWFrame *orientationbrpFrame = vtkKWFrame::New();
     orientationbrpFrame->SetParent ( scancontrollbrpFrame->GetFrame() );
     orientationbrpFrame->Create ( );
     this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
@@ -2677,7 +2626,6 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->orientationbrpo1->SetLabelWidth(25);
     this->orientationbrpo1->SetLabelText("O1-Orientation: ");
     this->orientationbrpo1->GetWidget()->SetValue ("");     
-
 
     this->Script(
       "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
@@ -2734,26 +2682,19 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->ConnectCheckButtonPASSROBOTCOORDS->SetParent(sendNTFrame);
     this->ConnectCheckButtonPASSROBOTCOORDS->Create();
     this->ConnectCheckButtonPASSROBOTCOORDS->SelectedStateOff();
-    this->ConnectCheckButtonPASSROBOTCOORDS->SetText("Switch (Manual / Robot)");
-
+    this->ConnectCheckButtonPASSROBOTCOORDS->SetText("Imaging orientation Control ");
 
 
     this->Script("pack %s %s -side top -anchor w -padx 2 -pady 2", 
                  this->ConnectCheckButtonSEND->GetWidgetName(),
                  this->ConnectCheckButtonPASSROBOTCOORDS->GetWidgetName());
     
-   
-
-
-
-    //---------------------------------------------------------------------------------------------------------------------------
-   
-     maincontroll->Delete();
-     connectNTFrame->Delete();
-     configNTFrame->Delete();
-     sendNTFrame->Delete();
-     typecoordsorientNTFrame->Delete();
-     configcoordsorient->Delete();
+    maincontroll->Delete();
+    connectNTFrame->Delete();
+    configNTFrame->Delete();
+    sendNTFrame->Delete();
+    typecoordsorientNTFrame->Delete();
+    configcoordsorient->Delete();
     coordsbrpFrame->Delete ();    
     scancontrollbrpFrame->Delete ();
     //    orientationbrpFrame->Delete ();
@@ -2920,21 +2861,6 @@ void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
     imageorientationFrame->SetLabelText ("Image Orientation");
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
            imageorientationFrame->GetWidgetName() );
-    /*   
-    this->LocatorModeCheckButton = vtkKWCheckButton::New();
-    this->LocatorModeCheckButton->SetParent(imageorientationFrame->GetFrame());
-    this->LocatorModeCheckButton->Create();
-    this->LocatorModeCheckButton->SelectedStateOff();
-    this->LocatorModeCheckButton->SetText("Lock");
-    
-
-    this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->LocatorModeCheckButton->GetWidgetName());
-       
-    */
-
-
-
 
 
     /* 
@@ -3047,17 +2973,41 @@ void vtkBrpNavGUI::BuildGUIForCalibration()
 
 void vtkBrpNavGUI::UpdateAll()
 {
+    float px, py, pz, nx, ny, nz, tx, ty, tz;
+
     this->LocatorMatrix = NULL;
-  
 
 #ifdef USE_NAVITRACK
     this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
     //    this->OpenTrackerStream->GetSizeforRealtimeImaging(&xsizevalueRI, &ysizevalueRI);
 #endif
-        
+#ifdef USE_IGSTK
+    this->LocatorMatrix = this->IGSTKStream->GetLocatorMatrix();
+#endif
+
+    if (this->LocatorMatrix)
+    {
+        px = this->LocatorMatrix->GetElement(0, 0);
+        py = this->LocatorMatrix->GetElement(1, 0);
+        pz = this->LocatorMatrix->GetElement(2, 0);
+        nx = this->LocatorMatrix->GetElement(0, 1);
+        ny = this->LocatorMatrix->GetElement(1, 1);
+        nz = this->LocatorMatrix->GetElement(2, 1);
+        tx = this->LocatorMatrix->GetElement(0, 2);
+        ty = this->LocatorMatrix->GetElement(1, 2);
+        tz = this->LocatorMatrix->GetElement(2, 2);
+    }
+    else
+    {
+        px = py = pz = nx = ny = tx = tz = 0;
+        ty = nz = 1.0;
+    }
+    std::cerr << "==== Locator position ====" << std::endl;
+    std::cerr << "   " << px << ", " << py << ", " << pz << std::endl;
+    std::cerr << "   " << nx << ", " << ny << ", " << nz << std::endl;
+    std::cerr << "   " << tx << ", " << ty << ", " << tz << std::endl;
 
     //Philip Mewes 17.07.2007: defining and sending te workphase (WP) commands depending of requestet WP
-
     // received_robot_status = NULL;
     
     this->OpenTrackerStream->GetDevicesStatus(received_robot_status, received_scanner_status, received_error_status);
@@ -3106,68 +3056,18 @@ void vtkBrpNavGUI::UpdateAll()
     }
     
     else
-      RobotStatusLabelDisp->SetValue ( "" );
-    
-    //timer for resend workphase request
-    /*        
-              if(!received_robot_status) //|| (var_status_robot < RequestedWorkphase))
-              {
-              int i=0;
-              for (i=0; i<100; i++)
-              {
-              if(received_robot_status)
-                   i = 100;
-                 }
-               //recall Requestfunction
-               if(!received_robot_status)
-                 {
-                 ActualWorkPhase = ActualWorkPhase -1; 
-                 StateTransitionDiagramControll();     
-                 }
-          }
-        */
-
-    
-        
-    int checkedpassrobotcoords = this->ConnectCheckButtonPASSROBOTCOORDS->GetSelectedState();
-    if (checkedpassrobotcoords)
     {
-        std::vector<float> pos;
-        std::vector<float> quat;
-        
-        pos.resize(3);
-        quat.resize(4);
-        
-        float OrientationForScanner0;
-        float OrientationForScanner1;
-        float OrientationForScanner2;
-        float OrientationForScanner3;
-        float PositionForScanner0;
-        float PositionForScanner1;
-        float PositionForScanner2;
-        
-        
-        this->OpenTrackerStream->GetCoordsOrientforScanner(&OrientationForScanner0, &OrientationForScanner1, &OrientationForScanner2, &OrientationForScanner3, &PositionForScanner0, &PositionForScanner1, &PositionForScanner2);
-
-        pos[0]= PositionForScanner0;
-        pos[1]= PositionForScanner1;
-        pos[2]= PositionForScanner2;
-        quat[0]= OrientationForScanner0;
-        quat[1]= OrientationForScanner1;
-        quat[2]= OrientationForScanner2;
-        quat[3]= OrientationForScanner3;
-        
-        
-        this->OpenTrackerStream->SetTracker(pos,quat);
+        RobotStatusLabelDisp->SetValue ( "" );
     }
-      
     
     if (this->OpenTrackerStream)
     {
         vtkImageData* vid = NULL;
         if (this->RealtimeVolumeNode)
-          vid = this->RealtimeVolumeNode->GetImageData();
-        
+        {
+            vid = this->RealtimeVolumeNode->GetImageData();
+        }
+
         //  std::cerr << "vid = " << vid << std::endl;
         if (vid)
         {
@@ -3176,13 +3076,14 @@ void vtkBrpNavGUI::UpdateAll()
             this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
             if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
             {
+                vtkMatrix4x4* imageOrientation = vtkMatrix4x4::New();
 
                 this->NeedRealtimeImageUpdate = 1;
                 this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
                 //this->Logic0->UpdatePipeline ();
                 this->RealtimeVolumeNode->SetAndObserveImageData(vid);
-                vtkMatrix4x4* mat = vtkMatrix4x4::New();
-
+                
+                /*
                 std::cerr << "============Image info================="     << std::endl;
                 int d[3];
                 vid->GetDimensions(d);
@@ -3201,99 +3102,142 @@ void vtkBrpNavGUI::UpdateAll()
                           << v[0] << ", "
                           << v[1] << ", "
                           << v[2] << ")" << std::endl;
+                */
 
-
-                this->RealtimeVolumeNode->ComputeIJKToRASFromScanOrder("IS",
-                                                                       vid->GetSpacing(),
-                                                                       vid->GetDimensions(),
-                                                                       true, mat);
-                this->RealtimeVolumeNode->SetIJKToRASMatrix(mat);
-                mat->Delete();
-
+                // calculate image orientation
+                imageOrientation->SetElement(0, 0, nx);
+                imageOrientation->SetElement(0, 1, ny);
+                imageOrientation->SetElement(0, 2, nz);
+                imageOrientation->SetElement(1, 0, tx);
+                imageOrientation->SetElement(1, 1, ty);
+                imageOrientation->SetElement(1, 2, tz);
+                imageOrientation->SetElement(2, 0, ny*tz-nz*ty);
+                imageOrientation->SetElement(2, 1, nz*tx-nx*tz);
+                imageOrientation->SetElement(2, 2, nx*ty-ny*tx);
+                imageOrientation->Invert();
+                
+                double ns[3];
+                double ts[3];
+                double cx = -128;
+                //double cx = 0;
+                double cy = -128;
+                //double cy = 0;
+                ns[0] =  cx * nx;
+                ns[1] =  cx * ny;
+                ns[2] =  cx * nz;
+                
+                ts[0] =  cy * tx;
+                ts[1] =  cy * ty;
+                ts[2] =  cy * tz;
+                
+                imageOrientation->SetElement(0, 3, px + ns[0] + ts[0]);
+                imageOrientation->SetElement(1, 3, py + ns[1] + ts[1]);
+                imageOrientation->SetElement(2, 3, pz + ns[2] + ts[2]);
+                imageOrientation->SetElement(3, 3, 1.0);
+                this->RealtimeVolumeNode->SetIJKToRASMatrix(imageOrientation);
                 this->VolumesLogic->SetActiveVolumeNode(this->RealtimeVolumeNode);
                 this->VolumesLogic->Modified();
-
+                imageOrientation->Delete();
             }
+
+            
         }
         else
         {
           //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
         }
 
-    }
-
-
-#ifdef USE_IGSTK
-    this->LocatorMatrix = this->IGSTKStream->GetLocatorMatrix();
-#endif
-
-    if (this->LocatorMatrix)
-    {
-        char Val[10];
-    
-        float px = this->LocatorMatrix->GetElement(0, 0);
-        float py = this->LocatorMatrix->GetElement(1, 0);
-        float pz = this->LocatorMatrix->GetElement(2, 0);
-        float nx = this->LocatorMatrix->GetElement(0, 1);
-        float ny = this->LocatorMatrix->GetElement(1, 1);
-        float nz = this->LocatorMatrix->GetElement(2, 1);
-        float tx = this->LocatorMatrix->GetElement(0, 2);
-        float ty = this->LocatorMatrix->GetElement(1, 2);
-        float tz = this->LocatorMatrix->GetElement(2, 2);
-
-        std::cerr << "==== Locator position ====" << std::endl;
-        std::cerr << "   " << px << ", " << py << ", " << pz << std::endl;
-        std::cerr << "   " << nx << ", " << ny << ", " << nz << std::endl;
-        std::cerr << "   " << tx << ", " << ty << ", " << tz << std::endl;
-        
-        /*
-          sprintf(Val, "%6.2f", px);
-          this->PREntry->SetValue(Val);
-          sprintf(Val, "%6.2f", py);
-          this->PAEntry->SetValue(Val);
-          sprintf(Val, "%6.2f", pz);
-          this->PSEntry->SetValue(Val);
-          
-          sprintf(Val, "%6.2f", nx);
-          this->NREntry->SetValue(Val);
-          sprintf(Val, "%6.2f", ny);
-          this->NAEntry->SetValue(Val);
-          sprintf(Val, "%6.2f", nz);
-          this->NSEntry->SetValue(Val);
-          
-          sprintf(Val, "%6.2f", tx);
-          this->TREntry->SetValue(Val);
-          sprintf(Val, "%6.2f", ty);
-          this->TAEntry->SetValue(Val);
-          sprintf(Val, "UI6.2f", tz);
-          this->TSEntry->SetValue(Val);
-        */
-
-        //Philip Mewes: For better debugging reasons and verification
-        //in clinic workflow Needle tipp position, normal and transnormal vector
-        //are going to be displayed here
-        
-        char coordsxyz[512];
-        sprintf(coordsxyz, "%6.2f, %6.2f, %6.2f", px, py, pz);
-        this->PositionEntry->GetWidget()->SetValue(coordsxyz);
-        
-        char orientxyz[512];
-        sprintf(orientxyz, "(%6.2f, %6.2f, %6.2f) (%6.2f, %6.2f, %6.2f)", nx, ny, nz, tx, ty, tz);
-        this->OrientEntry->GetWidget()->SetValue(orientxyz);
-        
         // update the display of locator
         if (this->LocatorCheckButton->GetSelectedState() ||
             this->NeedleCheckButton->GetSelectedState())
         {
             this->UpdateLocator();
         }
-        
-        //  this->UpdateSliceDisplay(px, py, pz);     // RSierra 3/9/07: This line is redundant. If you remove it the slice views are still updated.
         this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
         this->Logic0->UpdatePipeline ();
       
-    }
 
+        // Pass needle position/orientation to image orientation to the scanner 
+        
+        if (this->ConnectCheckButtonPASSROBOTCOORDS->GetSelectedState())
+        {
+            std::vector<float> pos;
+            std::vector<float> quat;
+            pos.resize(3);
+            quat.resize(4);
+
+            float imgNorm[3][3];
+            
+            /*
+            imgNorm[0][0] = tx;
+            imgNorm[0][1] = ty;
+            imgNorm[0][2] = tz;
+
+            imgNorm[1][0] = nx;
+            imgNorm[1][1] = ny;
+            imgNorm[1][2] = nz;
+
+            imgNorm[2][0] = -(ny*tz-nz*ty);
+            imgNorm[2][1] = -(nz*tx-nx*tz);
+            imgNorm[2][2] = -(nx*ty-ny*tx);
+            */
+
+            /*
+            imgNorm[2][0] = tx;
+            imgNorm[2][1] = ty;
+            imgNorm[2][2] = tz;
+
+            imgNorm[0][0] = (ny*tz-nz*ty);
+            imgNorm[0][1] = (nz*tx-nx*tz);
+            imgNorm[0][2] = (nx*ty-ny*tx);
+
+            imgNorm[1][0] = nx;
+            imgNorm[1][1] = ny;
+            imgNorm[1][2] = nz;
+            */
+
+            float sx, sy, sz;
+            sx = (ny*tz-nz*ty);
+            sy = (nz*tx-nx*tz);
+            sz = (nx*ty-ny*tx);
+
+            imgNorm[0][0] = nx;
+            imgNorm[0][1] = tx;
+            imgNorm[0][2] = sx;
+
+            imgNorm[1][0] = ny;
+            imgNorm[1][1] = ty;
+            imgNorm[1][2] = sy;
+
+            imgNorm[2][0] = nz;
+            imgNorm[2][1] = tz;
+            imgNorm[2][2] = sz;
+
+            /*
+              float ori0, ori1, ori2, ori3;
+              float pos0, pos1, pos2;
+              
+              this->OpenTrackerStream->
+              GetCoordsOrientforScanner(&ori0, &ori1, &ori2, &ori3, &pos0, &pos1, &pos2);
+              
+              pos[0]= pos0;
+              pos[1]= pos1;
+              pos[2]= pos2;
+              quat[0]= ori0;
+              quat[1]= ori1;
+              quat[2]= ori2;
+              quat[3]= ori3;
+            */
+            
+            MathUtils::matrixToQuaternion(imgNorm, quat);
+            pos[0] = px;
+            pos[1] = py;
+            pos[2] = pz;
+            
+            // send coordinate to the scanner
+            this->OpenTrackerStream->SetTracker(pos,quat);
+        }
+    }
 }
 
 
@@ -3347,7 +3291,7 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
         this->NeedOrientationUpdate2 ||
         this->NeedRealtimeImageUpdate )
     {
-        
+      /*
         vtkMatrix4x4* mat = vtkMatrix4x4::New();
         cout<<"UpdateSliceDisplay" <<endl;
 
@@ -3382,6 +3326,7 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
         mat->SetElement(3, 3, 1.0);
         
         mat->Delete();
+      */
     }
 
      
