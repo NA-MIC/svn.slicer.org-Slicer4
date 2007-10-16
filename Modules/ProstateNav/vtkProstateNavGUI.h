@@ -57,8 +57,11 @@ class vtkKWLoadSaveButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
 
 class vtkKWWizardWidget;
-class vtkProstateNavConfigFileStep;
+class vtkProstateNavConfigurationStep;
 class vtkProstateNavScanControlStep;
+class vtkProstateNavCalibrationStep;
+class vtkProstateNavTargetingStep;
+class vtkProstateNavManualControlStep;
 
 // Description:    
 // This class implements Slicer's Volumes GUI
@@ -281,8 +284,11 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
     // Wizard and wizard steps
     vtkKWWizardWidget *WizardWidget;
-    vtkProstateNavConfigFileStep *ConfigFileStep;
+    vtkProstateNavConfigurationStep *ConfigurationStep;
     vtkProstateNavScanControlStep *ScanControlStep;
+    vtkProstateNavCalibrationStep *CalibrationStep;
+    vtkProstateNavTargetingStep *TargetingStep;
+    vtkProstateNavManualControlStep *ManualControlStep;
 
     // int StopTimer;
     vtkMatrix4x4 *LocatorMatrix;

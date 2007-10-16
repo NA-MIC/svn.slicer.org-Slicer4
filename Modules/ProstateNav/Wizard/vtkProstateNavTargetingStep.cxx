@@ -1,4 +1,4 @@
-#include "vtkProstateNavScanControlStep.h"
+#include "vtkProstateNavTargetingStep.h"
 
 #include "vtkProstateNavGUI.h"
 #include "vtkProstateNavLogic.h"
@@ -9,24 +9,24 @@
 #include "vtkKWWizardWorkflow.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkProstateNavScanControlStep);
-vtkCxxRevisionMacro(vtkProstateNavScanControlStep, "$Revision: 1.1 $");
+vtkStandardNewMacro(vtkProstateNavTargetingStep);
+vtkCxxRevisionMacro(vtkProstateNavTargetingStep, "$Revision: 1.1 $");
 
 //----------------------------------------------------------------------------
-vtkProstateNavScanControlStep::vtkProstateNavScanControlStep()
+vtkProstateNavTargetingStep::vtkProstateNavTargetingStep()
 {
-  this->SetName("2/5. Set Scanner Parameters");
-  this->SetDescription("Operate the MRI scanner.");
+  this->SetName("4/5. Targeting");
+  this->SetDescription("Set target points.");
 
 }
 
 //----------------------------------------------------------------------------
-vtkProstateNavScanControlStep::~vtkProstateNavScanControlStep()
+vtkProstateNavTargetingStep::~vtkProstateNavTargetingStep()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkProstateNavScanControlStep::ShowUserInterface()
+void vtkProstateNavTargetingStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
 
@@ -37,7 +37,7 @@ void vtkProstateNavScanControlStep::ShowUserInterface()
 }
 
 //----------------------------------------------------------------------------
-void vtkProstateNavScanControlStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkProstateNavTargetingStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }

@@ -1,4 +1,4 @@
-#include "vtkProstateNavConfigFileStep.h"
+#include "vtkProstateNavConfigurationStep.h"
 
 #include "vtkProstateNavGUI.h"
 #include "vtkProstateNavLogic.h"
@@ -13,14 +13,14 @@
 #include "vtkKWLoadSaveButtonWithLabel.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkProstateNavConfigFileStep);
-vtkCxxRevisionMacro(vtkProstateNavConfigFileStep, "$Revision: 1.1 $");
+vtkStandardNewMacro(vtkProstateNavConfigurationStep);
+vtkCxxRevisionMacro(vtkProstateNavConfigurationStep, "$Revision: 1.1 $");
 
 //----------------------------------------------------------------------------
-vtkProstateNavConfigFileStep::vtkProstateNavConfigFileStep()
+vtkProstateNavConfigurationStep::vtkProstateNavConfigurationStep()
 {
-  this->SetName("1/2. Load Configuration File (Not Functional Yet)");
-  this->SetDescription("Load the configuration file used by NaviTrack.");
+  this->SetName("1/5. Configuration");
+  this->SetDescription("Perform system configuration.");
 
   this->ConfigNTFrame = NULL;
   this->ConnectNTFrame = NULL;
@@ -30,7 +30,7 @@ vtkProstateNavConfigFileStep::vtkProstateNavConfigFileStep()
 }
 
 //----------------------------------------------------------------------------
-vtkProstateNavConfigFileStep::~vtkProstateNavConfigFileStep()
+vtkProstateNavConfigurationStep::~vtkProstateNavConfigurationStep()
 {
   if (this->LoadConfigButtonNT)
     {
@@ -55,7 +55,7 @@ vtkProstateNavConfigFileStep::~vtkProstateNavConfigFileStep()
 }
 
 //----------------------------------------------------------------------------
-void vtkProstateNavConfigFileStep::ShowUserInterface()
+void vtkProstateNavConfigurationStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
 
@@ -131,7 +131,7 @@ void vtkProstateNavConfigFileStep::ShowUserInterface()
 }
 
 //----------------------------------------------------------------------------
-void vtkProstateNavConfigFileStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkProstateNavConfigurationStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }

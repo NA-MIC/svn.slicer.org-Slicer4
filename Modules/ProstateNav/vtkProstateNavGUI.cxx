@@ -11,8 +11,11 @@
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
-#include "vtkProstateNavConfigFileStep.h"
+#include "vtkProstateNavConfigurationStep.h"
 #include "vtkProstateNavScanControlStep.h"
+#include "vtkProstateNavCalibrationStep.h"
+#include "vtkProstateNavTargetingStep.h"
+#include "vtkProstateNavManualControlStep.h"
 
 #include "vtkKWRenderWidget.h"
 #include "vtkKWWidget.h"
@@ -76,8 +79,11 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
     this->Logic = NULL;
 
     this->WizardWidget = vtkKWWizardWidget::New();
-    this->ConfigFileStep = NULL;
+    this->ConfigurationStep = NULL;
     this->ScanControlStep = NULL;
+    this->CalibrationStep = NULL;
+    this->TargetingStep = NULL;
+    this->ManualControlStep = NULL;
 
     this->NormalOffsetEntry = NULL; 
     this->TransOffsetEntry = NULL;
@@ -1456,12 +1462,12 @@ void vtkProstateNavGUI::BuildGUI ( )
     // -----------------------------------------------------------------
     // Config File step
 
-    if (!this->ConfigFileStep)
+    if (!this->ConfigurationStep)
       {
-      this->ConfigFileStep = vtkProstateNavConfigFileStep::New();
-      this->ConfigFileStep->SetGUI(this);
+      this->ConfigurationStep = vtkProstateNavConfigurationStep::New();
+      this->ConfigurationStep->SetGUI(this);
       }
-    wizard_workflow->AddStep(this->ConfigFileStep);
+    wizard_workflow->AddStep(this->ConfigurationStep);
 
     // -----------------------------------------------------------------
     // Scan Control step
@@ -1474,11 +1480,41 @@ void vtkProstateNavGUI::BuildGUI ( )
     wizard_workflow->AddNextStep(this->ScanControlStep);
 
     // -----------------------------------------------------------------
+    // Calibration step
+
+    if (!this->CalibrationStep)
+      {
+      this->CalibrationStep = vtkProstateNavCalibrationStep::New();
+      this->CalibrationStep->SetGUI(this);
+      }
+    wizard_workflow->AddNextStep(this->CalibrationStep);
+
+    // -----------------------------------------------------------------
+    // Targeting step
+
+    if (!this->TargetingStep)
+      {
+      this->TargetingStep = vtkProstateNavTargetingStep::New();
+      this->TargetingStep->SetGUI(this);
+      }
+    wizard_workflow->AddNextStep(this->TargetingStep);
+
+    // -----------------------------------------------------------------
+    // ManualControl step
+
+    if (!this->ManualControlStep)
+      {
+      this->ManualControlStep = vtkProstateNavManualControlStep::New();
+      this->ManualControlStep->SetGUI(this);
+      }
+    wizard_workflow->AddNextStep(this->ManualControlStep);
+
+    // -----------------------------------------------------------------
     // Initial and finish step
 
-    wizard_workflow->SetFinishStep(this->ScanControlStep);
+    wizard_workflow->SetFinishStep(this->ManualControlStep);
     wizard_workflow->CreateGoToTransitionsToFinishStep();
-    wizard_workflow->SetInitialStep(this->ConfigFileStep);
+    wizard_workflow->SetInitialStep(this->ConfigurationStep);
 
     // -----------------------------------------------------------------
     // Show the user interface

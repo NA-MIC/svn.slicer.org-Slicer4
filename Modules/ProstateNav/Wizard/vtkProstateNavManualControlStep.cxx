@@ -1,4 +1,4 @@
-#include "vtkProstateNavScanControlStep.h"
+#include "vtkProstateNavManualControlStep.h"
 
 #include "vtkProstateNavGUI.h"
 #include "vtkProstateNavLogic.h"
@@ -9,24 +9,24 @@
 #include "vtkKWWizardWorkflow.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkProstateNavScanControlStep);
-vtkCxxRevisionMacro(vtkProstateNavScanControlStep, "$Revision: 1.1 $");
+vtkStandardNewMacro(vtkProstateNavManualControlStep);
+vtkCxxRevisionMacro(vtkProstateNavManualControlStep, "$Revision: 1.1 $");
 
 //----------------------------------------------------------------------------
-vtkProstateNavScanControlStep::vtkProstateNavScanControlStep()
+vtkProstateNavManualControlStep::vtkProstateNavManualControlStep()
 {
-  this->SetName("2/5. Set Scanner Parameters");
-  this->SetDescription("Operate the MRI scanner.");
+  this->SetName("5/5. Manual Control");
+  this->SetDescription("Insert the needle.");
 
 }
 
 //----------------------------------------------------------------------------
-vtkProstateNavScanControlStep::~vtkProstateNavScanControlStep()
+vtkProstateNavManualControlStep::~vtkProstateNavManualControlStep()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkProstateNavScanControlStep::ShowUserInterface()
+void vtkProstateNavManualControlStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
 
@@ -37,7 +37,7 @@ void vtkProstateNavScanControlStep::ShowUserInterface()
 }
 
 //----------------------------------------------------------------------------
-void vtkProstateNavScanControlStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkProstateNavManualControlStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
