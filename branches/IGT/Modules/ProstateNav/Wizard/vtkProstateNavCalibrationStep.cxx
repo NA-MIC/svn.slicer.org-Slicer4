@@ -1,4 +1,4 @@
-#include "vtkProstateNavScanControlStep.h"
+#include "vtkProstateNavCalibrationStep.h"
 
 #include "vtkProstateNavGUI.h"
 #include "vtkProstateNavLogic.h"
@@ -9,24 +9,24 @@
 #include "vtkKWWizardWorkflow.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkProstateNavScanControlStep);
-vtkCxxRevisionMacro(vtkProstateNavScanControlStep, "$Revision: 1.1 $");
+vtkStandardNewMacro(vtkProstateNavCalibrationStep);
+vtkCxxRevisionMacro(vtkProstateNavCalibrationStep, "$Revision: 1.1 $");
 
 //----------------------------------------------------------------------------
-vtkProstateNavScanControlStep::vtkProstateNavScanControlStep()
+vtkProstateNavCalibrationStep::vtkProstateNavCalibrationStep()
 {
-  this->SetName("2/5. Set Scanner Parameters");
-  this->SetDescription("Operate the MRI scanner.");
+  this->SetName("3/5. Calibration");
+  this->SetDescription("Perform Z-frame calibration.");
 
 }
 
 //----------------------------------------------------------------------------
-vtkProstateNavScanControlStep::~vtkProstateNavScanControlStep()
+vtkProstateNavCalibrationStep::~vtkProstateNavCalibrationStep()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkProstateNavScanControlStep::ShowUserInterface()
+void vtkProstateNavCalibrationStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
 
@@ -37,7 +37,7 @@ void vtkProstateNavScanControlStep::ShowUserInterface()
 }
 
 //----------------------------------------------------------------------------
-void vtkProstateNavScanControlStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkProstateNavCalibrationStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }

@@ -1,5 +1,5 @@
-#ifndef __vtkProstateNavConfigFileStep_h
-#define __vtkProstateNavConfigFileStep_h
+#ifndef __vtkProstateNavConfigurationStep_h
+#define __vtkProstateNavConfigurationStep_h
 
 #include "vtkProstateNavStep.h"
 
@@ -8,12 +8,12 @@ class vtkKWFrame;
 class vtkKWEntry;
 class vtkKWCheckButton;
 
-class VTK_PROSTATENAV_EXPORT vtkProstateNavConfigFileStep :
+class VTK_PROSTATENAV_EXPORT vtkProstateNavConfigurationStep :
   public vtkProstateNavStep
 {
 public:
-  static vtkProstateNavConfigFileStep *New();
-  vtkTypeRevisionMacro(vtkProstateNavConfigFileStep,vtkProstateNavStep);
+  static vtkProstateNavConfigurationStep *New();
+  vtkTypeRevisionMacro(vtkProstateNavConfigurationStep,vtkProstateNavStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -21,8 +21,8 @@ public:
   virtual void ShowUserInterface();
 
 protected:
-  vtkProstateNavConfigFileStep();
-  ~vtkProstateNavConfigFileStep();
+  vtkProstateNavConfigurationStep();
+  ~vtkProstateNavConfigurationStep();
 
   vtkKWFrame *ConfigNTFrame;
   vtkKWFrame *ConnectNTFrame;
@@ -31,8 +31,8 @@ protected:
   vtkKWCheckButton *ConnectCheckButtonNT;
 
 private:
-  vtkProstateNavConfigFileStep(const vtkProstateNavConfigFileStep&);
-  void operator=(const vtkProstateNavConfigFileStep&);
+  vtkProstateNavConfigurationStep(const vtkProstateNavConfigurationStep&);
+  void operator=(const vtkProstateNavConfigurationStep&);
 };
 
 #endif
