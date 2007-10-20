@@ -92,7 +92,7 @@ extern "C" {
 //#define QDEC_DEBUG
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
-#define MESHING_DEBUG
+//#define MESHING_DEBUG
 //#define VOLUME_MATH
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
