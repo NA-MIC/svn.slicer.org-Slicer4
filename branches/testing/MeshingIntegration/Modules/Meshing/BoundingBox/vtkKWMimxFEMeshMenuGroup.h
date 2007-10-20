@@ -41,13 +41,14 @@ public:
   static vtkKWMimxFEMeshMenuGroup* New();
   vtkTypeRevisionMacro(vtkKWMimxFEMeshMenuGroup,vtkKWMimxMainMenuGroup);
   void PrintSelf(ostream& os, vtkIndent indent);
+  
   virtual void Update();
   virtual void UpdateEnableState();
-  void BBMenuCallback();
+  virtual void BBMenuCallback();
   void FEMeshMenuCallback();
   void LoadFEMeshCallback();
   void LoadBBCallback();
-  void CreateBBCallback();
+  virtual void CreateBBCallback();
   void DeleteBBCallback();
   void CreateFEMeshCallback();
   void DeleteFEMeshCallback();
@@ -69,10 +70,15 @@ public:
   vtkSetObjectMacro(FEMeshList, vtkLinkedListWrapper);
   void HideAllDialogBoxes();
   void SmoothLaplacianFEMeshCallback();
-protected:
-        vtkKWMimxFEMeshMenuGroup();
-        ~vtkKWMimxFEMeshMenuGroup();
+  
+  // *** moved to public to allow invocation
+  virtual void CreateWidget();
+  
 
+
+protected:
+    vtkKWMimxFEMeshMenuGroup();
+    ~vtkKWMimxFEMeshMenuGroup();
   vtkKWMimxCreateBBFromBoundsGroup *CreateBBFromBounds;
   vtkKWMimxCreateBBMeshSeedGroup *CreateBBMeshSeed;
   vtkKWMimxEditBBGroup *EditBB;
@@ -81,7 +87,7 @@ protected:
   vtkKWMimxSaveVTKBBGroup *SaveVTKBBGroup;
   vtkKWMimxEditBBMeshSeedGroup *EditBBMeshSeedGroup;
   vtkKWMimxSaveVTKFEMeshGroup *SaveVTKFEMeshGroup;
-        virtual void CreateWidget();
+  
 vtkKWLoadSaveDialog *FileBrowserDialog;
 vtkKWMimxDeleteObjectGroup *DeleteObjectGroup;
 vtkKWMimxEditFEMeshLaplacianSmoothGroup *FEMeshLaplacianSmooth;

@@ -37,9 +37,9 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
   virtual void Update();
   virtual void UpdateEnableState();
-  void CreateBBFromBoundsCallback();
-  void CreateBBFromBoundsCancelCallback();
-  void UpdateObjectLists();
+  virtual void CreateBBFromBoundsCallback();
+  virtual void CreateBBFromBoundsCancelCallback();
+  virtual void UpdateObjectLists();
 protected:
         vtkKWMimxCreateBBFromBoundsGroup();
         ~vtkKWMimxCreateBBFromBoundsGroup();

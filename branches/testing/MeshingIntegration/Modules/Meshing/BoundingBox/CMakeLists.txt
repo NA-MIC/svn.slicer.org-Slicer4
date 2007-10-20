@@ -66,14 +66,20 @@ SET(LIB_SRCS
   vtkMimxAbaqusFileWriter.cxx
   )
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE("${KWWidgets_CMAKE_DIR}/KWWidgetsWrappingMacros.cmake")
-KWWidgets_WRAP_TCL(${LIB_NAME} LIB_TCL_SRCS "${LIB_SRCS}" "")
+#INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+#INCLUDE("${KWWidgets_CMAKE_DIR}/KWWidgetsWrappingMacros.cmake")
+#KWWidgets_WRAP_TCL(${LIB_NAME} LIB_TCL_SRCS "${LIB_SRCS}" "")
 
-# Create the library. The library is built in static mode for convenience. 
-# Check the 'Callbacks' example for more information about building it in
-# shared mode, i.e. without the STATIC keyword (Win32 compilers requires
-# an additional header file to setup DLL export symbols correctly).
+
+# --------------------------------------------------------------------------
+# Wrapping
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+VTK_WRAP_TCL3(BoundingBox BoundingBox_TCL_SRCS "${LIB_SRCS}" "")
+
+
+# Create the library. 
 
 ADD_LIBRARY(${LIB_NAME} ${LIB_TCL_SRCS} ${LIB_SRCS})
 

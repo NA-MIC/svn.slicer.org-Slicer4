@@ -44,6 +44,7 @@
 #include "vtkSlicerROILogic.h"
 #include "vtkSlicerROIGUI.h"
 
+
 #ifdef USE_PYTHON
 // If debug, Python wants pythonxx_d.lib, so fake it out
 #ifdef _DEBUG
@@ -76,10 +77,10 @@ extern "C" {
 //#define CLIMODULES_DEBUG
 //#define TCLMODULES_DEBUG
 //#define SLICES_DEBUG
-//#define GAD_DEBUG
+#define GAD_DEBUG
 //#define MODELS_DEBUG
 //#define VOLUMES_DEBUG
-//#define QUERYATLAS_DEBUG
+#define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
 //#define FIDUCIALS_DEBUG
 //#define CAMERA_DEBUG
@@ -87,10 +88,11 @@ extern "C" {
 #define REALTIMEIMAGING_DEBUG
 #define MRABLATION_DEBUG
 //#define NEURONAV_DEBUG
-//#define TRACTOGRAPHY_DEBUG
+#define TRACTOGRAPHY_DEBUG
 //#define QDEC_DEBUG
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
+#define MESHING_DEBUG
 //#define VOLUME_MATH
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
@@ -134,6 +136,11 @@ extern "C" {
 #include "vtkQdecModuleGUI.h"
 #endif
 
+#ifndef MESHING_DEBUG
+#include "vtkMeshingWorkflowLogic.h"
+#include "vtkMeshingWorkflowGUI.h"
+#endif
+
 #if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
 #include "vtkScriptedModuleLogic.h"
 #include "vtkScriptedModuleGUI.h"
@@ -155,9 +162,10 @@ extern "C" {
 #include "vtkVolumeRenderingModuleLogic.h"
 #endif
 
+
 #if !defined(VOLUMEMATH_DEBUG) && defined(BUILD_MODULES)
-#include "vtkVolumeMathGUI.h"
-#include "vtkVolumeMathLogic.h"
+#include "vtkSlicerVolumeMathGUI.h"
+#include "vtkSlicerVolumeMathLogic.h"
 #endif
 //
 // note: always write to cout rather than cerr so log messages will
@@ -212,6 +220,7 @@ extern "C" int Qdecmodule_Init(Tcl_Interp *interp);
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Gradientanisotropicdiffusionfilter_Init(Tcl_Interp *interp);
 #endif
+
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
 #endif
@@ -233,6 +242,12 @@ extern "C" int Scriptedmodule_Init(Tcl_Interp *interp);
 #ifndef VOLUMEMATH_DEBUG
 extern "C" int Volumemath_Init(Tcl_Interp *interp);
 #endif
+
+
+#ifndef MESHING_DEBUG
+extern "C" int Meshingworkflow_Init(Tcl_Interp *interp);
+#endif
+
 
 struct SpacesToUnderscores
 {
@@ -704,6 +719,8 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     Qdecmodule_Init(interp);
 #endif
+
+
  #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
     Volumerenderingmodule_Init(interp);
 #endif
@@ -727,9 +744,13 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
     Scriptedmodule_Init(interp);
 #endif
+#if !defined(MESHING_DEBUG) && defined(BUILD_MODULES)
+    Meshingworkflow_Init(interp);
+#endif
 #if !defined(VOLUMEMATH_DEBUG) && defined(BUILD_MODULES)
     Volumemath_Init(interp);
 #endif
+
 
   // first call to GetInstance will create the Application
   // 
@@ -1208,6 +1229,7 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
+
     // --- Tractography Display module
     slicerApp->SplashMessage("Initializing Tractography Display Module...");
     vtkSlicerTractographyDisplayGUI *slicerTractographyDisplayGUI = vtkSlicerTractographyDisplayGUI::New ( );
@@ -1221,7 +1243,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerFiberBundleLogic->SetAndObserveMRMLSceneEvents ( scene , events );
     events->Delete();
 
-    slicerFiberBundleLogic->SetApplicationLogic ( appLogic );
+   slicerFiberBundleLogic->SetApplicationLogic ( appLogic );
     slicerTractographyDisplayGUI->SetLogic ( slicerFiberBundleLogic );
     slicerTractographyDisplayGUI->SetApplication ( slicerApp );
     slicerTractographyDisplayGUI->SetApplicationLogic ( appLogic );
@@ -1389,8 +1411,8 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(VOLUMEMATH_DEBUG) && defined(BUILD_MODULES)
     // --- VolumeMath  module
     slicerApp->SplashMessage("Initializing VolumeMath Module...");
-    vtkVolumeMathGUI *volumeMathGUI = vtkVolumeMathGUI::New ( );
-    vtkVolumeMathLogic *volumeMathLogic  = vtkVolumeMathLogic::New ( );
+    vtkSlicerVolumeMathGUI *volumeMathGUI = vtkSlicerVolumeMathGUI::New ( );
+    vtkSlicerVolumeMathLogic *volumeMathLogic  = vtkSlicerVolumeMathLogic::New ( );
     volumeMathLogic->SetAndObserveMRMLScene ( scene );
     volumeMathLogic->SetApplicationLogic ( appLogic );
     //    volumeMathLogic->SetMRMLScene(scene);
@@ -1425,7 +1447,33 @@ int Slicer3_main(int argc, char *argv[])
       }
 #endif
 
+
+
+
+#ifndef MESHING_DEBUG
+    // --- Meshing Workflow filter module
+    slicerApp->SplashMessage("Initializing Meshing Workflow Module...");
+    vtkMeshingWorkflowGUI *meshingWorkflowGUI = vtkMeshingWorkflowGUI::New ( );
+    vtkMeshingWorkflowLogic *meshingWorkflowLogic  = vtkMeshingWorkflowLogic::New ( );
+    meshingWorkflowLogic->SetAndObserveMRMLScene ( scene );
+    meshingWorkflowLogic->SetApplicationLogic ( appLogic );
+    meshingWorkflowGUI->SetLogic ( meshingWorkflowLogic );
+    meshingWorkflowGUI->SetApplication ( slicerApp );
+    meshingWorkflowGUI->SetApplicationLogic ( appLogic );
+    meshingWorkflowGUI->SetApplicationGUI ( appGUI );
+    meshingWorkflowGUI->SetGUIName( "MeshingWorkflow" );
+    meshingWorkflowGUI->GetUIPanel()->SetName ( meshingWorkflowGUI->GetGUIName ( ) );
+    meshingWorkflowGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    meshingWorkflowGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( meshingWorkflowGUI );
+    meshingWorkflowGUI->BuildGUI ( );
+    meshingWorkflowGUI->AddGUIObservers ( );
+#endif
+
+
+
 #if !defined(CLIMODULES_DEBUG) && defined(BUILD_MODULES)
+
     std::vector<std::string> moduleNames;
     std::vector<std::string>::const_iterator mit;
     if ( slicerApp->GetLoadCommandLineModules() && !NoModules )
@@ -2288,7 +2336,6 @@ int main(int argc, char *argv[])
     return Slicer3_main(argc, argv);
 }
 #endif
-
 
 
 

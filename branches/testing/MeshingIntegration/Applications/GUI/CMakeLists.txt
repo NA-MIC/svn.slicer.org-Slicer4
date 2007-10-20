@@ -70,6 +70,10 @@ SET(dir_list
   ${EMSegment_BINARY_DIR}
   ${EMSegment_Init_SOURCE_DIR}
   ${EMSegment_Init_BINARY_DIR}
+  ${MimxMeshing_SOURCE_DIR}/MeshingWorkflow
+  ${MimxMeshing_BINARY_DIR}/MeshingWorkflow
+  ${MimxMeshing_Init_SOURCE_DIR}/MeshingWorkflow
+  ${MimxMeshing_Init_BINARY_DIR}/MeshingWorkflow
   ${RealTimeImaging_SOURCE_DIR}
   ${RealTimeImaging_BINARY_DIR}
   ${RealTimeImaging_Init_SOURCE_DIR}
@@ -200,6 +204,10 @@ IF(BUILD_MODULES)
   TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     GradientAnisotropicDiffusionFilter
     EMSegment
+    mimxCommon
+    mimxFilter
+    mimxWidgets
+    MeshingWorkflow
     #   RealTimeImaging
     #   MRAblation
     ${VOLUMERENDERINGMODULE_LINK_LIB}
