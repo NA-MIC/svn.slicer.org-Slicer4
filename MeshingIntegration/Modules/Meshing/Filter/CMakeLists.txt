@@ -46,7 +46,7 @@ SET ( FILTER_SRCS
     vtkMimxButterflyMeshFromBounds.cxx
     vtkMimxGenerateIntervertebralDisc.cxx
     vtkMimxUnstructuredToStructuredGrid.cxx
-    vtkMimxRebinMaterialProperty.cxx
+    #vtkMimxRebinMaterialProperty.cxx
     vtkMimxMeshSeed.cxx
     vtkMimxBoundingBoxFromBounds.cxx
 )

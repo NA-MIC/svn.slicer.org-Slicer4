@@ -61,9 +61,25 @@
 vtkStandardNewMacro(vtkKWMimxFEMeshMenuGroup);
 vtkCxxRevisionMacro(vtkKWMimxFEMeshMenuGroup, "$Revision: 1.9 $");
 
+
+//vtkKWMimxFEMeshMenuGroup* vtkKWMimxFEMeshMenuGroup::New()
+//{
+//  // First try to create the object from the vtkObjectFactory
+//  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkKWMimxFEMeshMenuGroup");
+//  if(ret)
+//    {
+//      return (vtkKWMimxFEMeshMenuGroup*)ret;
+//    }
+//  // If the factory was unable to create the object, then create it here.
+//  return new vtkKWMimxFEMeshMenuGroup;
+//}
+
+
+
 //----------------------------------------------------------------------------
 vtkKWMimxFEMeshMenuGroup::vtkKWMimxFEMeshMenuGroup()
 {
+ cout << "vtkKWMimxFEMeshMenuGroup constructor" << endl;
   this->ObjectMenuButton = vtkKWMenuButtonWithLabel::New();
   this->OperationMenuButton = NULL;
   this->TypeMenuButton = NULL;
@@ -216,6 +232,7 @@ void vtkKWMimxFEMeshMenuGroup::UpdateEnableState()
 //----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::BBMenuCallback()
 {
+ cout << "BBMenuCallback" << endl;
   this->HideAllDialogBoxes();
   this->OperationMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->OperationMenuButton->GetWidget()->SetValue("");
@@ -255,6 +272,7 @@ void vtkKWMimxFEMeshMenuGroup::BBMenuCallback()
 //----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::LoadBBCallback()
 {
+ cout << "LoadBBCallback" << endl;
   this->HideAllDialogBoxes();
   this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->SetValue("");
@@ -265,6 +283,7 @@ void vtkKWMimxFEMeshMenuGroup::LoadBBCallback()
 //----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::CreateBBCallback()
 {
+ cout << "CreateBBCallback" << endl;
   this->HideAllDialogBoxes();
   this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->SetValue("");
@@ -275,6 +294,7 @@ void vtkKWMimxFEMeshMenuGroup::CreateBBCallback()
 //----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::LoadVTKBBCallback()
 {
+ cout << "LoadVTKBBCallback" << endl;
   this->HideAllDialogBoxes();
   if(!this->FileBrowserDialog)
   {
@@ -322,12 +342,14 @@ void vtkKWMimxFEMeshMenuGroup::PrintSelf(ostream& os, vtkIndent indent)
 //---------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::CreateBBFromBoundsCallback()
 {
+ cout << "CreateBBFromBoundsCallback" << endl;
    if (this->CreateBBFromBounds)
   {
     this->CreateBBFromBounds->Delete();
   }
 
       this->CreateBBFromBounds = vtkKWMimxCreateBBFromBoundsGroup::New();
+   cout << "CreateBBFromBoundsCallback: new CreateBBFromBoundsGroup New" << endl;
        this->CreateBBFromBounds->SetApplication(this->GetApplication());
        CreateBBFromBounds->SetParent(this->MainFrame->GetFrame());
        this->CreateBBFromBounds->SetSurfaceList(this->SurfaceList);
@@ -336,14 +358,18 @@ void vtkKWMimxFEMeshMenuGroup::CreateBBFromBoundsCallback()
     this->CreateBBFromBounds->SetViewProperties(this->BBViewProperties);
     this->CreateBBFromBounds->SetMenuGroup(this);
     this->SetMenuButtonsEnabled(0);
-       CreateBBFromBounds->Create();
+   cout << "CreateBBFromBoundsCallback:  Create script starting" << endl;
+
+    this->CreateBBFromBounds->Create();
+    cout << "CreateBBFromBoundsCallback create method completed" << endl;
       this->GetApplication()->Script(
         "pack %s -side bottom -anchor nw -expand y -padx 0 -pady 2", 
-        CreateBBFromBounds->GetWidgetName()); 
+        this->CreateBBFromBounds->GetWidgetName()); 
  }
 //----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::BBMeshSeedMenuCallback()
 {
+ cout << "BBMeshSeedMenuCallback" << endl;
   this->HideAllDialogBoxes();
   this->OperationMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->OperationMenuButton->GetWidget()->SetValue("");
@@ -358,6 +384,7 @@ void vtkKWMimxFEMeshMenuGroup::BBMeshSeedMenuCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::FEMeshMenuCallback()
 {
+ cout << "FEMeshMenuCallback" << endl;
   this->HideAllDialogBoxes();
   this->OperationMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
@@ -396,6 +423,7 @@ void vtkKWMimxFEMeshMenuGroup::FEMeshMenuCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::CreateBBMeshSeedCallback()
 {
+ cout << "CreateBBMeshSeedCallback" << endl;
   this->HideAllDialogBoxes();
   if (this->CreateBBMeshSeed)
   {
@@ -421,6 +449,7 @@ void vtkKWMimxFEMeshMenuGroup::CreateBBMeshSeedCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::EditBBMeshSeedCallback()
 {
+ cout << "EditBBMeshSeedCallback" << endl;
   if (this->EditBBMeshSeedGroup)
   {
     //this->GetApplication()->Script("pack forget %s", 
@@ -444,6 +473,7 @@ void vtkKWMimxFEMeshMenuGroup::EditBBMeshSeedCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::EditBBCallback()
 {
+ cout << "EditBBCallback" << endl;
   this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->SetValue("");
   this->TypeMenuButton->SetEnabled(0);
@@ -473,6 +503,7 @@ void vtkKWMimxFEMeshMenuGroup::EditBBCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::HideAllDialogBoxes()
 {
+ cout << "HideAllDialogBoxes" << endl;
   if(this->CreateBBFromBounds)
   {
     this->GetApplication()->Script("pack forget %s", 
@@ -497,6 +528,7 @@ void vtkKWMimxFEMeshMenuGroup::HideAllDialogBoxes()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::CreateFEMeshCallback()
 {
+ cout << "CreateFEMeshCallback" << endl;
   this->HideAllDialogBoxes();
   this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->SetValue("");
@@ -508,6 +540,7 @@ void vtkKWMimxFEMeshMenuGroup::CreateFEMeshCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::CreateFEMeshFromBBCallback()
 {
+ cout << "CreateFEMeshFromBBCallback" << endl;
   this->HideAllDialogBoxes();
   if (this->FEMeshFromBB)
   {
@@ -537,7 +570,8 @@ void vtkKWMimxFEMeshMenuGroup::CreateFEMeshFromBBCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::SaveBBCallback()
 {
-  this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
+ cout << "SaveBBCallback" << endl;
+ this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->SetValue("");
   this->TypeMenuButton->GetWidget()->GetMenu()->AddRadioButton(
     "VTK",this, "SaveVTKBBCallback");
@@ -546,7 +580,8 @@ void vtkKWMimxFEMeshMenuGroup::SaveBBCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::SaveVTKBBCallback()
 {
-  if(this->SaveVTKBBGroup)
+ cout << "SaveVTKBBCallback" << endl;
+ if(this->SaveVTKBBGroup)
   {
     this->SaveVTKBBGroup->Delete();
   }
@@ -562,7 +597,8 @@ void vtkKWMimxFEMeshMenuGroup::SaveVTKBBCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::EditFEMeshCallback()
 {
-  this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
+ cout << "EditFEMeshCallback" << endl;
+ this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->GetMenu()->AddRadioButton(
     "Smooth - Laplacian",this, "SmoothLaplacianFEMeshCallback");
 
@@ -571,6 +607,7 @@ void vtkKWMimxFEMeshMenuGroup::EditFEMeshCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::LoadFEMeshCallback()
 {
+ cout << "LoadFEMeshCallback" << endl;
   this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->SetValue("");
   this->TypeMenuButton->GetWidget()->GetMenu()->AddRadioButton(
@@ -581,6 +618,7 @@ void vtkKWMimxFEMeshMenuGroup::LoadFEMeshCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::SaveFEMeshCallback()
 {
+ cout << "SaveFEMeshCallback" << endl;
   this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->SetValue("");
   this->TypeMenuButton->GetWidget()->GetMenu()->AddRadioButton(
@@ -591,6 +629,7 @@ void vtkKWMimxFEMeshMenuGroup::SaveFEMeshCallback()
 //-----------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::LoadVTKFEMeshCallback()
 {
+ cout << "LoadVTKFEMeshCallback" << endl;
   if(!this->FileBrowserDialog)
   {
     this->FileBrowserDialog = vtkKWLoadSaveDialog::New() ;
@@ -644,6 +683,7 @@ void vtkKWMimxFEMeshMenuGroup::LoadVTKFEMeshCallback()
 //---------------------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::DeleteBBCallback()
 {
+ cout << "DeleteBBCallback" << endl;
   if(this->DeleteObjectGroup)
   {
     this->DeleteObjectGroup->Delete();
@@ -665,6 +705,7 @@ void vtkKWMimxFEMeshMenuGroup::DeleteBBCallback()
 //---------------------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::DeleteFEMeshCallback()
 {
+ cout << "DeleteFEMeshCallback" << endl;
   if(this->DeleteObjectGroup)
   {
     this->DeleteObjectGroup->Delete();
@@ -686,6 +727,7 @@ void vtkKWMimxFEMeshMenuGroup::DeleteFEMeshCallback()
 //---------------------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::SaveVTKFEMeshCallback()
 {
+ cout << "SaveVTKFEMeshCallback" << endl;
   if(this->SaveVTKFEMeshGroup)
   {
     this->SaveVTKFEMeshGroup->Delete();
@@ -702,6 +744,7 @@ void vtkKWMimxFEMeshMenuGroup::SaveVTKFEMeshCallback()
 //------------------------------------------------------------------------------------------
 void vtkKWMimxFEMeshMenuGroup::SmoothLaplacianFEMeshCallback()
 {
+ cout << "SmoothLaplacianFEMeshCallback" << endl;
   if(this->FEMeshLaplacianSmooth)
   {
     this->FEMeshLaplacianSmooth->Delete();

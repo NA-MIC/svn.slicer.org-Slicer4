@@ -1,12 +1,18 @@
 PROJECT( MimxMeshing )
  
 SUBDIRS(
-  IO
+  #IO
+  Common
   Filter
-  CommandLine
+  Widgets
+  
+  ## Methods:
+  #CommandLine
+  BoundingBox
+  MeshingWorkflow
 )
 
 
-IF (Slicer3_BUILD_TESTING)
-    SUBDIRS( Testing )
-ENDIF (Slicer3_BUILD_TESTING)
+#IF (Slicer3_BUILD_TESTING)
+#    SUBDIRS( Testing )
+#ENDIF (Slicer3_BUILD_TESTING)

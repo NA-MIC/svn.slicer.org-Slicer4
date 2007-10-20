@@ -816,7 +816,7 @@ void vtkMimxCylindricalMesh::ClosestPointProjection(vtkPoints *Points, vtkCellLo
         for(int i=0; i<Points->GetNumberOfPoints(); i++)
         {
                 Points->GetPoint(i,x);
-                Locator->FindClosestPoint(x,ClosestPoint,CellId,SubId,dist);
+                Locator->FindClosestPoint(x,&(ClosestPoint[0]),CellId,SubId,dist);
                 Points->SetPoint(i,ClosestPoint);
         }}
 //----------------------------------------------------------------------------
@@ -1195,9 +1195,10 @@ void vtkMimxCylindricalMesh::DivideCurve(int CurveNum, vtkPolyData *PolyData, vt
                 //normal[0] = sin(theta);
                 // to store two possible intersection points and the line id on which
                 // the point lies
-                vtkIdType cellid, subid;
+                vtkIdType cellid;
+                int subid;
                 double closestpoint[3], distance;
-                locator->FindClosestPoint(UGrid->GetPoint(i),closestpoint, 
+                locator->FindClosestPoint(UGrid->GetPoint(i),&(closestpoint[0]), 
                         cellid, subid, distance);
 
                 // check which line segment intersects

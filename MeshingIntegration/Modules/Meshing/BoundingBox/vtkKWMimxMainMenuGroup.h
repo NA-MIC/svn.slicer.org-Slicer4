@@ -52,7 +52,7 @@ public:
   vtkGetObjectMacro(FEMeshList, vtkLinkedListWrapper);
   //
   virtual void SetMenuButtonsEnabled(int);
- protected:
+ //protected:
         vtkKWMimxMainMenuGroup();
         virtual ~vtkKWMimxMainMenuGroup();
 
