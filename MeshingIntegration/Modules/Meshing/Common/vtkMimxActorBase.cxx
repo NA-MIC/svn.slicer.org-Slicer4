@@ -32,7 +32,7 @@ PURPOSE.  See the above copyright notices for more information.
 vtkCxxRevisionMacro(vtkMimxActorBase, "$Revision: 1.8 $");
 
 
-//vtkStandardNewMacro(vtkActorBase);
+vtkStandardNewMacro(vtkActorBase);
 
 vtkMimxActorBase::vtkMimxActorBase()
 {

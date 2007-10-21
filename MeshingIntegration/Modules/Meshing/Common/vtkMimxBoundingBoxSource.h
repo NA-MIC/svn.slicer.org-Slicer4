@@ -32,12 +32,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxBoundingBoxSource_h
 
 #include "vtkCommon.h"
+#include "vtkPolyData.h"
 
 #include "vtkUnstructuredGridAlgorithm.h"
 
 class vtkActor;
 class vtkDataSetMapper;
-class vtkPolyData;
 
 class VTK_MIMXCOMMON_EXPORT vtkMimxBoundingBoxSource : public vtkUnstructuredGridAlgorithm 
 {
@@ -49,8 +49,8 @@ public:
   // Construct a bounding box
   static vtkMimxBoundingBoxSource *New();
   void SetBounds(double bounds[6]);
-  vtkSetMacro(Source, vtkPolyData*);
-  vtkGetMacro(Source,vtkPolyData*);
+  vtkSetObjectMacro(Source, vtkPolyData);
+  vtkGetObjectMacro(Source, vtkPolyData);
  
 protected:
   vtkMimxBoundingBoxSource();

@@ -66,12 +66,14 @@ private:
   void EstimateMeshSeedsBasedOnAverageElementLength(double);
   //  the common edge could be x, y, z on the cell being compared
   int WhichEdgeOfCellBeingCompared(vtkIdType, vtkIdType);
+//BTX
   // mesh seed links
   // size is determined by numberofcells in the unstructuredgrid*3
   // matrix to store cell connectivity information
   CMatrix<int> MeshSeedLinks;
   // matrix for book keeping on cell neighbors visited
   CMatrix<int> MeshSeedCheck;
+//ETX
   // to be used when mesh seeding on average element length is concidered
   void SetHigherNumberedBBoxMeshSeed(int , int );
 };

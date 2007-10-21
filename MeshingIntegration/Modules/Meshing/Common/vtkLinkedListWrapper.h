@@ -60,7 +60,9 @@ class VTK_MIMXCOMMON_EXPORT vtkLinkedListWrapper : public vtkObject
 public:
   static vtkLinkedListWrapper *New();
   vtkTypeMacro(vtkLinkedListWrapper, vtkObject);
+//BTX
   vtkLinkedList<vtkMimxActorBase*> *List;
+//ETX
   int AppendItem(vtkMimxActorBase*);
   vtkMimxActorBase* GetItem(vtkIdType);
   int GetNumberOfItems();

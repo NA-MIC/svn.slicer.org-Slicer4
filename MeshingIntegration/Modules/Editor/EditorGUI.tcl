@@ -9,6 +9,7 @@ proc EditorDestructor {this} {
 
   set boxes [itcl::find objects -isa Box]
   foreach b $boxes {
+    tk_messageBox -message "Deleting $b"
     itcl::delete object $b
   }
 }

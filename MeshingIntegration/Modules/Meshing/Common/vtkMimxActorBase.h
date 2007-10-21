@@ -48,11 +48,13 @@ public:
   // Description: 
   //virtual vtkDataSet* GetDataSet() = 0;
   vtkGetMacro(DataType, int);
-  vtkGetMacro(Actor, vtkActor*);
+  vtkGetObjectMacro(Actor, vtkActor);
+//BTX
   virtual double *GetBounds() {return NULL;}
   virtual void SetDataType(int ) = 0;
-  vtkGetMacro(FilePath, char*);
-  vtkGetMacro(FileName, char*);
+//ETX
+  vtkGetStringMacro(FilePath);
+  vtkGetStringMacro(FileName);
   void SetFilePath(const char *InputFilePath);
   void SetFileName(const char *InputFileName);
   void SetObjectName(const char *FilterName, vtkIdType Count);

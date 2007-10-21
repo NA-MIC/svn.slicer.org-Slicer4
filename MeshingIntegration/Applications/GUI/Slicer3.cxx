@@ -246,6 +246,7 @@ extern "C" int Volumemath_Init(Tcl_Interp *interp);
 
 #ifndef MESHING_DEBUG
 extern "C" int Meshingworkflow_Init(Tcl_Interp *interp);
+extern "C" int Mimxcommon_Init(Tcl_Interp *interp);
 #endif
 
 
@@ -746,6 +747,7 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 #if !defined(MESHING_DEBUG) && defined(BUILD_MODULES)
     Meshingworkflow_Init(interp);
+    Mimxcommon_Init(interp);
 #endif
 #if !defined(VOLUMEMATH_DEBUG) && defined(BUILD_MODULES)
     Volumemath_Init(interp);
