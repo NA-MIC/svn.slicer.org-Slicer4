@@ -29,7 +29,9 @@ PURPOSE.  See the above copyright notices for more information.
 // file that contains all the header file names
 // custom written non-vtk files
 #include "vtkMimxApplyNodeElementNumbers.h"
+//BTX
 #include "mimxCheckTypeOfFile.h"
+//ETX
 #include "mimxCommonDefine.h"
 #include "mimxLinkedList.h"
 #include "vtkMimxMergeNodesPointAndCellData.h"
