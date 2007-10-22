@@ -58,6 +58,11 @@ void vtkMimxCurve::Execute()
 {
 }
 
+vtkPolyDataMapper* vtkMimxCurve::GetPolyDataMapper()
+{
+  return this->PolyDataMapper;
+}
+
 vtkActor* vtkMimxCurve::GetActor()
 {
   return this->Actor;
