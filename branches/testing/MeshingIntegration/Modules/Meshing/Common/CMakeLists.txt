@@ -34,6 +34,14 @@ INCLUDE_DIRECTORIES( ${MIMXCommon_SOURCE_DIR} ${MIMXCommon_BINARY_DIR} )
 
 SET_SOURCE_FILES_PROPERTIES(
   mimxCheckTypeOfFile.cxx
+  vtkMimxActorBase.cxx
+  vtkMimxMeshSeed.cxx
+  vtkMimxMergeNodesPointAndCellData.cxx
+  vtkMimxCreateIntervertebralDiscElementSets.cxx
+  vtkMimxApplyNodeElementNumbers.cxx
+  vtkContainer.cxx
+  vtkMimxSurfacePolyDataActor.cxx
+  vtkMimxUnstructuredGridActor.cxx
   WRAP_EXCLUDE
   )
 

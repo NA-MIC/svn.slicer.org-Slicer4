@@ -48,7 +48,7 @@ public:
  //vtkDataSet* GetDataSet();
   vtkUnstructuredGrid* GetDataSet();
  // functions related to mesh seeding
- void ComputeMeshSeed(double AvElLength);
+ void ComputeMeshSeed(double AvElLength) {};
  int MeshSeedFromAverageElementLength(double);
  void ChangeMeshSeed(int, int, int);  // to change mesh seed and propagate the change
  // through all the cells whose mesh seed is changed
