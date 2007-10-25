@@ -104,6 +104,11 @@ extern "C" {
 #include "vtkEMSegmentMRMLManager.h"
 #endif
 
+#if !defined(TUMORGROWTH_DEBUG) && defined(BUILD_MODULES)
+#include "vtkTumorGrowthLogic.h"
+#include "vtkTumorGrowthGUI.h"
+#endif
+
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
 #include "vtkGradientAnisotropicDiffusionFilterLogic.h"
 #include "vtkGradientAnisotropicDiffusionFilterGUI.h"
@@ -159,6 +164,7 @@ extern "C" {
 #include "vtkVolumeMathGUI.h"
 #include "vtkVolumeMathLogic.h"
 #endif
+
 //
 // note: always write to cout rather than cerr so log messages will
 // appear in the correct order when running tests.  Normally cerr preempts cout
@@ -196,6 +202,9 @@ extern "C" int Vtkteem_Init(Tcl_Interp *interp);
 //TODO added temporary
 #if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Emsegment_Init(Tcl_Interp *interp);
+#endif
+#if !defined(TUMORGROWTH_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Tumorgrowth_Init(Tcl_Interp *interp);
 #endif
 #if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Neuronav_Init(Tcl_Interp *interp);
@@ -691,6 +700,9 @@ int Slicer3_main(int argc, char *argv[])
 
 #if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
     Emsegment_Init(interp);
+#endif
+#if !defined(TUMORGROWTH_DEBUG) && defined(BUILD_MODULES)
+    Tumorgrowth_Init(interp);
 #endif
 #if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     Neuronav_Init(interp);
@@ -1271,6 +1283,40 @@ int Slicer3_main(int argc, char *argv[])
     emSegmentGUI->AddGUIObservers();
     //
     // --- END EMSegment Template builder module
+    //
+#endif
+
+#if !defined(TUMORGROWTH_DEBUG) && defined(BUILD_MODULES)
+    //
+    // --- TumorGrowth Template builder module
+    //
+    vtkTumorGrowthGUI *tumorGrowthGUI = 
+      vtkTumorGrowthGUI::New ( );
+    vtkTumorGrowthLogic *tumorGrowthLogic = 
+      vtkTumorGrowthLogic::New ( );
+
+    tumorGrowthLogic->SetAndObserveMRMLScene(scene);
+    vtkIntArray *tgEvents = vtkIntArray::New();
+    tgEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+    tgEvents->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+    tumorGrowthLogic->SetAndObserveMRMLSceneEvents(scene, tgEvents);
+    tgEvents->Delete();
+    tumorGrowthLogic->SetApplicationLogic(appLogic);
+
+    tumorGrowthGUI->SetAndObserveMRMLScene (scene);
+    tumorGrowthGUI->SetLogic(tumorGrowthLogic);
+    tumorGrowthGUI->SetApplication(slicerApp);
+    tumorGrowthGUI->SetApplicationLogic(appLogic);
+    tumorGrowthGUI->SetApplicationGUI(appGUI);
+    tumorGrowthGUI->SetGUIName("TumorGrowth");
+    tumorGrowthGUI->GetUIPanel()->SetName(tumorGrowthGUI->GetGUIName());
+    tumorGrowthGUI->GetUIPanel()->SetUserInterfaceManager(appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager());
+    tumorGrowthGUI->GetUIPanel()->Create();
+    slicerApp->AddModuleGUI(tumorGrowthGUI);
+    tumorGrowthGUI->BuildGUI();
+    tumorGrowthGUI->AddGUIObservers();
+    //
+    // --- END TumorGrowth Template builder module
     //
 #endif
 
@@ -1922,6 +1968,12 @@ int Slicer3_main(int argc, char *argv[])
     emSegmentGUI->RemoveGUIObservers();
 #endif
 
+#if !defined(TUMORGROWTH_DEBUG) && defined(BUILD_MODULES)
+    tumorGrowthGUI->TearDownGUI();
+    tumorGrowthGUI->RemoveGUIObservers();
+#endif
+
+
 #ifndef QUERYATLAS_DEBUG
     queryAtlasGUI->RemoveGUIObservers ( );
 #endif
@@ -2044,6 +2096,10 @@ int Slicer3_main(int argc, char *argv[])
     emSegmentGUI->Delete();
 #endif
 
+#if !defined(TUMORGROWTH_DEBUG) && defined(BUILD_MODULES)
+    tumorGrowthGUI->Delete();
+#endif
+
 #ifndef QUERYATLAS_DEBUG
     queryAtlasGUI->Delete ( );
 #endif
@@ -2153,7 +2209,12 @@ int Slicer3_main(int argc, char *argv[])
     emSegmentLogic->SetAndObserveMRMLScene ( NULL );
     emSegmentLogic->Delete();
 #endif
-        
+       
+ #if !defined(TUMORGROWTH_DEBUG) && defined(BUILD_MODULES)
+    tumorGrowthLogic->SetAndObserveMRMLScene ( NULL );
+    tumorGrowthLogic->Delete();
+#endif
+
 #ifndef QUERYATLAS_DEBUG
     queryAtlasLogic->SetAndObserveMRMLScene ( NULL );
     queryAtlasLogic->Delete ( );
