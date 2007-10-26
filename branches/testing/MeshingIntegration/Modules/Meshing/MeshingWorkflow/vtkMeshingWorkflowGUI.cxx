@@ -39,8 +39,10 @@ Version:   $Revision: 1.2 $
 #include "vtkKWPushButton.h"
 
 // include declarations from Univ. of Iowa standalone meshing workflow GUI class hierarchy
-#include "vtkKWMimxFEMeshMenuGroup.h"
+//#include "vtkKWMimxFEMeshMenuGroup.h"
+#include "vtkKWMimxMainNotebook.h"
 #include "vtkKWMenuButtonWithLabel.h"
+#include "vtkKWMimxViewWindow.h"
 
 //------------------------------------------------------------------------------
 vtkMeshingWorkflowGUI* vtkMeshingWorkflowGUI::New()
@@ -86,10 +88,13 @@ void vtkMeshingWorkflowGUI::PrintSelf(ostream& os, vtkIndent indent)
 void vtkMeshingWorkflowGUI::AddGUIObservers ( ) 
 {
 
-    // look in the menu and add callbacks 
-    this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    // look in the menu and add callbacks     
+    // these observers don't have to be added anymore because the existing BoundingBox GUI management code handles callbacks directly. Callbacks
+    // are wrapped with the libmimxBoundingBox library and are invoked automatically
+
+//    this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+//    this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+//    this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 //    this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 //    this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 //    this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -110,59 +115,59 @@ void vtkMeshingWorkflowGUI::ProcessGUIEvents ( vtkObject *caller,
                                            unsigned long event,
                                            void *callData ) 
 {
-  char tempstr[256], commandStr[128];
-  vtkKWMenu *m = vtkKWMenu::SafeDownCast(caller);
-  cout << "FE callback received!" << endl;
-    
-  // process events on the object menu
-  if ( m == this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu() ) 
-  {
-      cout << "callback on FE ObjectMenuButton item " << endl;
-      for (int i=0; i<m->GetNumberOfItems(); i++)
-      {
-          cout << "item " << i << "has value: " << m->GetItemSelectedState(i) << "command: " << m->GetItemCommand(i) << endl;
-          strncpy(tempstr,m->GetItemCommand(i),255); 
-          strtok(tempstr," "); 
-          strncpy(commandStr,strtok(NULL,"\0"),127);
-          cout << "command isolated was:" << commandStr << endl;
-          if(!(strcmp(commandStr,"BBMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->BBMenuCallback(); break;}
-          if(!(strcmp(commandStr,"BBMeshSeedMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->BBMeshSeedMenuCallback(); break;}
-          if(!(strcmp(commandStr,"FEMeshMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->FEMeshMenuCallback(); break;}
-      }
-    
-  // process events on the operation menu       
-  } else if (m == this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu() )
-  {
-     
-      cout << "callback on FE OperationMenuButton item " << endl;
-      for (int i=0; i<m->GetNumberOfItems(); i++)
-      {
-          strncpy(tempstr,m->GetItemCommand(i),255); 
-          strtok(tempstr," "); 
-          strncpy(commandStr,strtok(NULL,"\0"),127);
-          if(!(strcmp(commandStr,"LoadBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->LoadBBCallback(); break;}
-          if(!(strcmp(commandStr,"SaveBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SaveBBCallback(); break;}
-          if(!(strcmp(commandStr,"CreateBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateBBCallback(); break;}
-          if(!(strcmp(commandStr,"DeleteBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->DeleteBBCallback(); break;}
-          if(!(strcmp(commandStr,"EditBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->EditBBCallback(); break;}
-      }
-
-  // process operations on the type menu
-  } else if (m == this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu() )
-  {
-      cout << "callback on FE TypeMenuButton item " << endl;
-      for (int i=0; i<m->GetNumberOfItems(); i++)
-      {
-          strncpy(tempstr,m->GetItemCommand(i),255); 
-          strtok(tempstr," "); 
-          strncpy(commandStr,strtok(NULL,"\0"),127);
-          if(!(strcmp(commandStr,"LoadVTKBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->LoadVTKBBCallback(); break;}
-          if(!(strcmp(commandStr,"CreateBBFromBoundsCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateBBFromBoundsCallback(); break;}
-          if(!(strcmp(commandStr,"CreateFEMeshFromBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateFEMeshFromBBCallback(); break;}
-          if(!(strcmp(commandStr,"SaveVTKBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SaveVTKBBCallback(); break;}
-          if(!(strcmp(commandStr,"SmoothLaplacianFEMeshCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SmoothLaplacianFEMeshCallback(); break;}
-      }
-  }
+//  char tempstr[256], commandStr[128];
+//  vtkKWMenu *m = vtkKWMenu::SafeDownCast(caller);
+//  cout << "FE callback received!" << endl;
+//    
+//  // process events on the object menu
+//  if ( m == this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu() ) 
+//  {
+//      cout << "callback on FE ObjectMenuButton item " << endl;
+//      for (int i=0; i<m->GetNumberOfItems(); i++)
+//      {
+//          cout << "item " << i << "has value: " << m->GetItemSelectedState(i) << "command: " << m->GetItemCommand(i) << endl;
+//          strncpy(tempstr,m->GetItemCommand(i),255); 
+//          strtok(tempstr," "); 
+//          strncpy(commandStr,strtok(NULL,"\0"),127);
+//          cout << "command isolated was:" << commandStr << endl;
+//          if(!(strcmp(commandStr,"BBMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->BBMenuCallback(); break;}
+//          if(!(strcmp(commandStr,"BBMeshSeedMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->BBMeshSeedMenuCallback(); break;}
+//          if(!(strcmp(commandStr,"FEMeshMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->FEMeshMenuCallback(); break;}
+//      }
+//    
+//  // process events on the operation menu       
+//  } else if (m == this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu() )
+//  {
+//     
+//      cout << "callback on FE OperationMenuButton item " << endl;
+//      for (int i=0; i<m->GetNumberOfItems(); i++)
+//      {
+//          strncpy(tempstr,m->GetItemCommand(i),255); 
+//          strtok(tempstr," "); 
+//          strncpy(commandStr,strtok(NULL,"\0"),127);
+//          if(!(strcmp(commandStr,"LoadBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->LoadBBCallback(); break;}
+//          if(!(strcmp(commandStr,"SaveBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SaveBBCallback(); break;}
+//          if(!(strcmp(commandStr,"CreateBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateBBCallback(); break;}
+//          if(!(strcmp(commandStr,"DeleteBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->DeleteBBCallback(); break;}
+//          if(!(strcmp(commandStr,"EditBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->EditBBCallback(); break;}
+//      }
+//
+//  // process operations on the type menu
+//  } else if (m == this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu() )
+//  {
+//      cout << "callback on FE TypeMenuButton item " << endl;
+//      for (int i=0; i<m->GetNumberOfItems(); i++)
+//      {
+//          strncpy(tempstr,m->GetItemCommand(i),255); 
+//          strtok(tempstr," "); 
+//          strncpy(commandStr,strtok(NULL,"\0"),127);
+//          if(!(strcmp(commandStr,"LoadVTKBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->LoadVTKBBCallback(); break;}
+//          if(!(strcmp(commandStr,"CreateBBFromBoundsCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateBBFromBoundsCallback(); break;}
+//          if(!(strcmp(commandStr,"CreateFEMeshFromBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateFEMeshFromBBCallback(); break;}
+//          if(!(strcmp(commandStr,"SaveVTKBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SaveVTKBBCallback(); break;}
+//          if(!(strcmp(commandStr,"SmoothLaplacianFEMeshCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SmoothLaplacianFEMeshCallback(); break;}
+//      }
+//  }
 
 }
 
@@ -213,9 +218,25 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
   app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                 moduleFrame->GetWidgetName(), this->UIPanel->GetPageWidget("MeshingWorkflow")->GetWidgetName());
 
-  this->SavedMimxFEMenuGroup = vtkKWMimxFEMeshMenuGroup::New();
-  this->SavedMimxFEMenuGroup->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
-  this->SavedMimxFEMenuGroup->Create ( );
+  // create a schell of the MimxViewWindow for class compability.  This class only
+  // points to an instance of the slicer viewer, but encapsulates the integration with 
+  // the slicer viewer.  The renderWindow is initialized to be the main 3D window from slicer.
+  // Examine how to replace this with storage in the MRML tree later. 
   
+  vtkKWMimxViewWindow *viewwin = vtkKWMimxViewWindow::New();
+  viewwin->SetRenderWidget(this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer());
+  
+  // create the notebook which is the root of the pre-developed meshing workflow
+  this->SavedMimxNotebook = vtkKWMimxMainNotebook::New();
+  this->SavedMimxNotebook->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
+  this->SavedMimxNotebook->SetApplication(this->GetApplication());
+  this->SavedMimxNotebook->SetMimxViewWindow(viewwin);
+  this->SavedMimxNotebook->Create ( );
+  this->SavedMimxNotebook->SetWidth(200);
+  app->Script (
+       "pack %s -side top -anchor nw  -expand y -padx 0 -pady 1", 
+       this->SavedMimxNotebook->GetWidgetName());
+  
+
 
 }

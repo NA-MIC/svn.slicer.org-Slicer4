@@ -1,7 +1,5 @@
 PROJECT(MeshingWorkflow)
 
-
-
 # directories for vtkMIMX
 INCLUDE_DIRECTORIES( ${BOUNDINGBOX_SOURCE_DIR}/../Common ${BOUNDINGBOX_BINARY_DIR}/../Common ) 
 INCLUDE_DIRECTORIES( ${BOUNDINGBOX_SOURCE_DIR}/../Filter ${BOUNDINGBOX_BINARY_DIR}/../Filter ) 
@@ -74,7 +72,7 @@ TARGET_LINK_LIBRARIES(${LIB_NAME}
   mimxWidgets
   mimxFilter
   mimxCommon
-  BoundingBox
+  mimxBoundingBox
   )
 
 CONFIGURE_FILE(

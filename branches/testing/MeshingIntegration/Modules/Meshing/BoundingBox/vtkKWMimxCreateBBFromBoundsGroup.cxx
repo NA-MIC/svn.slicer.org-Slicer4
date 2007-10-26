@@ -100,14 +100,14 @@ void vtkKWMimxCreateBBFromBoundsGroup::CreateWidget()
   ObjectListComboBox->SetLabelText("Object Selection : ");
   ObjectListComboBox->GetWidget()->ReadOnlyOn();
 
-  // Slicer - the lines below caused a crash because the list was empty or NULL;  need to reference the MRML tree 
-  // either directly or via an alternate implementation of the lists.  
-  //  int i;
-  //  for (i = 0; i < this->SurfaceList->GetNumberOfItems(); i++)
-  //  {
-  //    ObjectListComboBox->GetWidget()->AddValue(
-  //      this->SurfaceList->GetItem(i)->GetFileName());
-  //  }
+//   Slicer - the lines below caused a crash because the list was empty or NULL;  need to reference the MRML tree 
+//   either directly or via an alternate implementation of the lists.  
+    int i;
+    for (i = 0; i < this->SurfaceList->GetNumberOfItems(); i++)
+    {
+      ObjectListComboBox->GetWidget()->AddValue(
+        this->SurfaceList->GetItem(i)->GetFileName());
+    }
 
   this->GetApplication()->Script(
     "pack %s -side top -anchor nw -expand y -padx 2 -pady 6", 
@@ -149,31 +149,31 @@ void vtkKWMimxCreateBBFromBoundsGroup::CreateBBFromBoundsCallback()
    
    cout << "got here: vtkKWMimxCreateBBFromBoundsGroup::CreateBBFromBoundsCallback" << endl;
    
-//    vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
-//    const char *name = combobox->GetValue();
-//    vtkPolyData *polydata = vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList
-//     ->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
-//    vtkMimxBoundingBoxSource *bbox = vtkMimxBoundingBoxSource::New();
-//    bbox->SetSource(polydata);
-//    bbox->Update();
-//    if (bbox->GetOutput())
-//    {
-//      this->BBoxList->AppendItem(vtkMimxUnstructuredGridActor::New());
-//      vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
-//        this->BBoxList->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(bbox->GetOutput());
-//      this->Count++;
-//      vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
-//        this->BBoxList->GetNumberOfItems()-1))->SetObjectName("BBFromBounds_",Count);
-//      vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
-//        this->BBoxList->GetNumberOfItems()-1))->GetDataSet()->Modified();
-//      this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-//        this->BBoxList->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetActor());
-//      this->GetMimxViewWindow()->GetRenderWidget()->Render();
-//      this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
-//    this->ViewProperties->AddObjectList();
-//    this->CreateBBFromBoundsCancelCallback();
-//    }
-//    bbox->Delete();
+    vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
+    const char *name = combobox->GetValue();
+    vtkPolyData *polydata = vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList
+     ->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+    vtkMimxBoundingBoxSource *bbox = vtkMimxBoundingBoxSource::New();
+    bbox->SetSource(polydata);
+    bbox->Update();
+    if (bbox->GetOutput())
+    {
+      this->BBoxList->AppendItem(vtkMimxUnstructuredGridActor::New());
+      vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+        this->BBoxList->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(bbox->GetOutput());
+      this->Count++;
+      vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+        this->BBoxList->GetNumberOfItems()-1))->SetObjectName("BBFromBounds_",Count);
+      vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+        this->BBoxList->GetNumberOfItems()-1))->GetDataSet()->Modified();
+      this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+        this->BBoxList->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetActor());
+      this->GetMimxViewWindow()->GetRenderWidget()->Render();
+      this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+    this->ViewProperties->AddObjectList();
+    this->CreateBBFromBoundsCancelCallback();
+    }
+    bbox->Delete();
   }
 }
 //----------------------------------------------------------------------------

@@ -98,7 +98,7 @@ const char* vtkKWMimxMainMenuGroup::ExtractFileName(const char* FName)
 {
 //  string trial = SystemTools::ConvertToUnixOutputPath(FName);
 //  const char* ptr = strrchr(SystemTools::ConvertToUnixOutputPath(FName).c_str(), '/');
-  const char *ptr = strrchr(FName, '\\');
+  const char *ptr = strrchr(FName, '/');
    if(ptr)
   {
     if(ptr[1]!='\0')

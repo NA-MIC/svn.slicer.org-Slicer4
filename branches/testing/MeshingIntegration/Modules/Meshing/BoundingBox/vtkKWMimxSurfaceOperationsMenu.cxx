@@ -108,7 +108,7 @@ void vtkKWMimxSurfaceOperationsMenu::PrintSelf(ostream& os, vtkIndent indent)
   this->Superclass::PrintSelf(os,indent);
 }
 //----------------------------------------------------------------------------
-void vtkKWMimxSurfaceOperationsMenu::LoadFileCallback()
+void vtkKWMimxSvtkMimxBoundingBoxSourceurfaceOperationsMenu::LoadFileCallback()
 {
   vtkKWFileBrowserDialog *filebrowser = vtkKWFileBrowserDialog::New();
   filebrowser->SetApplication(this->GetApplication());

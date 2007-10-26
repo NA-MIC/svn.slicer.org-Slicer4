@@ -4,6 +4,7 @@
 #include "vtkBoundingBox.h"
 
 #include "vtkKWWindowBase.h"
+#include "vtkKWRenderWidget.h"
 
 class vtkCallbackCommand;
 class vtkRenderer;
@@ -16,9 +17,11 @@ class VTK_BOUNDINGBOX_EXPORT vtkKWMimxViewWindow : public vtkKWWindowBase
 {
 public:
   static vtkKWMimxViewWindow* New();
+  vtkKWRenderWidget *RenderWidget;
   vtkTypeRevisionMacro(vtkKWMimxViewWindow,vtkKWWindowBase);
   vtkGetObjectMacro(RenderWidget, vtkKWRenderWidget);
-  vtkKWRenderWidget *RenderWidget;
+  vtkSetObjectMacro(RenderWidget, vtkKWRenderWidget);
+
   vtkRenderer *AxesRenderer;
   vtkPVAxesActor *PVAxesActor;
   vtkCallbackCommand *CallbackCommand;
