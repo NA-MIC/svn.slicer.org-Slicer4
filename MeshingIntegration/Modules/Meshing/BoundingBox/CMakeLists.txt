@@ -41,8 +41,9 @@ INCLUDE_DIRECTORIES(
   ${MRML_BINARY_DIR}
   )
 
-SET(LIB_NAME "BoundingBox")
-SET(LIB_SRCS 
+SET(LIB_NAME "mimxBoundingBox")
+
+SET(BoundingBox_SRCS 
   vtkKWMimxApplication.cxx
   vtkKWMimxFEMeshMenuGroup.cxx
   vtkKWMimxGroupBase.cxx
@@ -66,28 +67,38 @@ SET(LIB_SRCS
   vtkMimxAbaqusFileWriter.cxx
   )
 
-#INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-#INCLUDE("${KWWidgets_CMAKE_DIR}/KWWidgetsWrappingMacros.cmake")
-#KWWidgets_WRAP_TCL(${LIB_NAME} LIB_TCL_SRCS "${LIB_SRCS}" "")
-
 
 # --------------------------------------------------------------------------
 # Wrapping
 
+SET_SOURCE_FILES_PROPERTIES(
+    vtkKWMimxMainNotebook.cxx
+  WRAP_EXCLUDE
+  )
+
+SET_SOURCE_FILES_PROPERTIES(
+  vtkKWMimxMainMenuGroup.cxx
+  vtkKWMimxApplication.cxx
+  vtkKWMimxMainMenuGroup.cxx
+  ABSTRACT
+  )
+
+
+
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(BoundingBox BoundingBox_TCL_SRCS "${LIB_SRCS}" "")
+VTK_WRAP_TCL3(MIMXBoundingBox BOUNDINGBOX_TCL_SRCS "${BoundingBox_SRCS}" "")
 
 
 # Create the library. 
 
-ADD_LIBRARY(${LIB_NAME} ${LIB_TCL_SRCS} ${LIB_SRCS})
+ADD_LIBRARY( mimxBoundingBox ${BOUNDINGBOX_TCL_SRCS} ${BoundingBox_SRCS} )
 
 IF(BUILD_SHARED_LIBS)
   INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} ${LIB_NAME})
 ENDIF(BUILD_SHARED_LIBS)
 
-TARGET_LINK_LIBRARIES(${LIB_NAME}
+TARGET_LINK_LIBRARIES(mimxBoundingBox
   SlicerBaseLogic 
   SlicerBaseGUI 
   MRML

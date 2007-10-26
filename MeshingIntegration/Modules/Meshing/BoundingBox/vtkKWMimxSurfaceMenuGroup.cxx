@@ -221,33 +221,41 @@ void vtkKWMimxSurfaceMenuGroup::LoadSTLSurfaceCallback()
   this->FileBrowserDialog->SetDefaultExtension(".stl");
   this->FileBrowserDialog->SetFileTypes("{{STL files} {.stl}}");
   this->FileBrowserDialog->Invoke();
+  
+
   if(this->FileBrowserDialog->GetStatus() == vtkKWDialog::StatusOK)
   {
     if(this->FileBrowserDialog->GetFileName())
     {
       const char *filename = this->FileBrowserDialog->GetFileName();
+      cout << "*** surface filename was: " << filename << endl;
       vtkSTLReader *reader = vtkSTLReader::New();
       reader->SetFileName(this->FileBrowserDialog->GetFileName());
       reader->Update();
+      cout << "*** reader completed successfully" << endl;
       if(reader->GetOutput())
       {
 //        vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
+ 
         this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
+ 
         this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFilePath(
           this->FileBrowserDialog->GetFileName());
+ 
         this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFileName(
           this->ExtractFileName(this->FileBrowserDialog->GetFileName()));
 //        vtkMimxSurfacePolyDataActor *actor = NULL;
 //        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1);
         vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
           this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(reader->GetOutput());
+ 
         vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
-          this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->Modified();
+        this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->Modified();         
         this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-          this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->GetActor());
+        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->GetActor());
         this->GetMimxViewWindow()->GetRenderWidget()->Render();
         this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
-        this->MimxViewProperties->AddObjectList();
+        this->MimxViewProperties->AddObjectList(); 
       }
       reader->Delete();
     }

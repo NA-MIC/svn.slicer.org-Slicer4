@@ -28,7 +28,7 @@ class vtkKWPushButton;
 class vtkSlicerNodeSelectorWidget;
 
 // added for UIowa Mimx integration
-class vtkKWMimxFEMeshMenuGroup;
+class vtkKWMimxMainNotebook;
 
 class VTK_SLICERDAEMON_EXPORT vtkMeshingWorkflowGUI : public vtkSlicerModuleGUI
 {
@@ -64,7 +64,7 @@ protected:
   vtkMeshingWorkflowGUI(const vtkMeshingWorkflowGUI&);
   void operator=(const vtkMeshingWorkflowGUI&);
 
-  vtkKWMimxFEMeshMenuGroup *SavedMimxFEMenuGroup;
+  vtkKWMimxMainNotebook *SavedMimxNotebook;
   
   vtkMeshingWorkflowLogic *Logic;
 
