@@ -158,8 +158,6 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWScaleWithEntry* GreenColorScale;
     vtkKWScaleWithEntry* BlueColorScale;    
     */
-    
-
 
     vtkKWMenuButtonWithLabel *ServerMenu;
     vtkKWMenuButtonWithLabel *PauseCheckButton;
@@ -167,11 +165,10 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
    
   
     vtkKWCheckButton *ConnectCheckButton;
-    vtkKWCheckButton *ConnectCheckButtonRI;
     vtkKWCheckButton *ConnectCheckButtonNT;
 
     vtkKWCheckButton *ConnectCheckButtonSEND;
-    vtkKWCheckButton *ConnectCheckButtonPASSROBOTCOORDS;
+    //vtkKWCheckButton *ConnectCheckButtonPASSROBOTCOORDS;
     vtkKWCheckButton *ConnectCheckButtonStartScanner;
     vtkKWCheckButton *ConnectCheckButtonStopScanner;
     vtkKWCheckButton *ConnectCheckButtonprepScanner;
@@ -179,14 +176,12 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *ConnectCheckButtonresumeScanner;
    
 
-
-
     vtkKWCheckButton *ConnectCheckButtonnewexam;
     vtkKWCheckButton *ConnectCheckButtonsetprotocol;
 
     vtkKWCheckButton *LocatorCheckButton;
     vtkKWCheckButton *FreezeImageCheckButton;
-    vtkKWCheckButton *NeedleCheckButton;
+    //vtkKWCheckButton *NeedleCheckButton;
     
     vtkKWCheckButton *WorkPhaseStartUpButton;
     vtkKWCheckButton *WorkPhasePlanningButton;
@@ -201,14 +196,15 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
 
     vtkKWPushButton  *SetLocatorModeButton;
     vtkKWPushButton  *SetUserModeButton;
-    /*
-    vtkKWCheckButton *LocatorModeCheckButton;
-    vtkKWCheckButton *UserModeCheckButton;
-    */
 
     vtkKWMenuButton *RedSliceMenu;
     vtkKWMenuButton *YellowSliceMenu;
     vtkKWMenuButton *GreenSliceMenu;
+
+    // Realtime Imaging Orientation Control
+    vtkKWCheckButton *ImagingControlCheckButton;
+    vtkKWMenuButton  *ImagingMenu;
+
 
     //#ifdef USE_NAVITRACK
     vtkKWLoadSaveButtonWithLabel *LoadConfigButton;
@@ -223,7 +219,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWEntry *ConfigFileEntryRI;
 
 
-      vtkKWEntryWithLabel *positionbrpy;
+    vtkKWEntryWithLabel *positionbrpy;
     vtkKWEntryWithLabel *positionbrpz;
     vtkKWEntryWithLabel *positionbrpx;
     
@@ -249,10 +245,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkKWMenuButtonWithLabel *HandShakeMenuButton;
 #endif
 
-    vtkKWEntryWithLabel *UpdateRateEntry;
-    vtkKWEntryWithLabel *GetImageSize;
     vtkKWEntryWithLabel * MultiFactorEntry;
-
     vtkKWEntryWithLabel *PatCoordinatesEntry;
     vtkKWEntryWithLabel *SlicerCoordinatesEntry;
     vtkKWPushButton *GetPatCoordinatesPushButton;
@@ -330,67 +323,94 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     vtkSlicerVolumesLogic *VolumesLogic;
     vtkMRMLVolumeNode     *RealtimeVolumeNode;
 
-    int NeedOrientationUpdate0;
-    int NeedOrientationUpdate1;
-    int NeedOrientationUpdate2;
-    int NeedRealtimeImageUpdate;
 
-    int OrgNeedOrientationUpdate0;
-    int OrgNeedOrientationUpdate1;
-    int OrgNeedOrientationUpdate2;
-    int OrgNeedRealtimeImageUpdate;
+    // Slice Driver
 
-     int RealtimeXsize;
-     int RealtimeYsize;
-     
-     //Workphase State Transition Controll
-     
-     int WorkFlowProcessStart;
+    //BTX
+    enum {
+      SLICE_DRIVER_USER    = 0,
+      SLICE_DRIVER_LOCATOR = 1,
+      SLICE_DRIVER_RTIMAGE = 2
+    };
+    enum {
+      SLICE_PLANE_RED    = 0,
+      SLICE_PLANE_YELLOW = 1,
+      SLICE_PLANE_GREEN  = 2
+    };
+    enum {
+      SLICE_RTIMAGE_PERP      = 0,
+      SLICE_RTIMAGE_INPLANE90 = 1,
+      SLICE_RTIMAGE_INPLANE   = 2
+    };
+
+    //ETX
+
+    int SliceDriver0;
+    int SliceDriver1;
+    int SliceDriver2;
+
+    int NeedRealtimeImageUpdate0;
+    int NeedRealtimeImageUpdate1;
+    int NeedRealtimeImageUpdate2;
+    int FreezeOrientationUpdate;
+
+    int RealtimeImageOrient;
     
-     int WorkphaseClearanceSOFT;
-     int checkedPhase1;
-     int checkedPhase2;
-     int checkedPhase3;
-     int checkedPhase4;
-     int checkedPhase5;
-     int checkedPhase6;
 
-     // For Real-time image dispaly
-     int RealtimeImageSerial;
-     
-     //status check
-     int var_status_scanner;
-     int var_status_soft;
-     int var_status_robot;
-     
-     //BTX
-     std::string received_scanner_status;
-     std::string received_error_status;
-     std::string received_robot_status;
-     //ETX
-     int RequestedWorkphase;
-     int ProcessClearance; 
-     
-     int ActualWorkPhase;
-     
-     
-     char xmlpathfilename[256];
-     char xcoordsrobot[12];
-     char ycoordsrobot[12];
-     char zcoordsrobot[12];
-     
-     char o1coordsrobot[12];
-     char o2coordsrobot[12];
-     char o3coordsrobot[12];
-     char o4coordsrobot[12];
-     
-     float brptmp;
-     void UpdateAll();
-     void UpdateLocator();
-     void UpdateSliceDisplay(float nx, float ny, float nz, 
-                             float tx, float ty, float tz, 
-                             float px, float py, float pz);
+    int RealtimeXsize;
+    int RealtimeYsize;
+    
+    //Workphase State Transition Controll
+    
+    int WorkFlowProcessStart;
+   
+    int WorkphaseClearanceSOFT;
+    int checkedPhase1;
+    int checkedPhase2;
+    int checkedPhase3;
+    int checkedPhase4;
+    int checkedPhase5;
+    int checkedPhase6;
 
+    // For Real-time image dispaly
+    int RealtimeImageSerial;
+    
+    //status check
+    int var_status_scanner;
+    int var_status_soft;
+    int var_status_robot;
+    
+    //BTX
+    std::string received_scanner_status;
+    std::string received_error_status;
+    std::string received_robot_status;
+    //ETX
+    int RequestedWorkphase;
+    int ProcessClearance; 
+    
+    int ActualWorkPhase;
+    
+    
+    char xmlpathfilename[256];
+    char xcoordsrobot[12];
+    char ycoordsrobot[12];
+    char zcoordsrobot[12];
+    
+    char o1coordsrobot[12];
+    char o2coordsrobot[12];
+    char o3coordsrobot[12];
+    char o4coordsrobot[12];
+    
+    float brptmp;
+    void UpdateAll();
+    void UpdateLocator();
+    void UpdateSliceDisplay(float nx, float ny, float nz, 
+                            float tx, float ty, float tz, 
+                            float px, float py, float pz);
+
+    void ChangeSlicePlaneDriver(int slice, const char* driver);
+
+     
     void brpxml(const char* xmlpathfilename);
 
  private:

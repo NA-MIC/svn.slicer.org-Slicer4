@@ -68,8 +68,6 @@ vtkCxxRevisionMacro ( vtkBrpNavGUI, "$Revision: 1.0 $");
 
 vtkBrpNavGUI::vtkBrpNavGUI ( )
 {
- 
-
     this->Logic = NULL;
 
     this->NormalOffsetEntry = NULL; 
@@ -94,11 +92,10 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
 
     this->ExtraFrame = NULL;
    
-    this->ConnectCheckButtonRI = NULL;
-    this->NeedleCheckButton = NULL;
+    //this->NeedleCheckButton = NULL;
     this->ConnectCheckButtonNT = NULL;
     this->ConnectCheckButtonSEND = NULL;
-    this->ConnectCheckButtonPASSROBOTCOORDS = NULL;
+    //this->ConnectCheckButtonPASSROBOTCOORDS = NULL;
     this->ConnectCheckButtonStartScanner = NULL;
     this->ConnectCheckButtonStopScanner = NULL;
     this->ConnectCheckButtonsetprotocol = NULL;
@@ -119,7 +116,7 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->ClearWorkPhasecontrollButton = NULL;
 
 
-    this->NeedleCheckButton = NULL;
+    //this->NeedleCheckButton = NULL;
     this->HandleCheckButton = NULL;
     this->GuideCheckButton = NULL;
 
@@ -129,6 +126,9 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->RedSliceMenu = NULL;
     this->YellowSliceMenu = NULL;
     this->GreenSliceMenu = NULL;
+
+    this->ImagingControlCheckButton = NULL;
+    this->ImagingMenu = NULL;
 
 #ifdef USE_NAVITRACK
   
@@ -147,11 +147,6 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     this->HandShakeMenuButton = NULL;
 #endif
 
-   
-
-    this->UpdateRateEntry = NULL;
-    this->GetImageSize = NULL;
- 
     this->AddCoordsandOrientTarget = NULL;
     this->SetOrientButton = NULL;
    
@@ -189,15 +184,27 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
 
 
     this->VolumesLogic = NULL;
-    this->NeedOrientationUpdate0 = 0;
-    this->NeedOrientationUpdate1 = 0;
-    this->NeedOrientationUpdate2 = 0;
-    this->NeedRealtimeImageUpdate = 0;
+    //this->NeedOrientationUpdate0 = 0;
+    //this->NeedOrientationUpdate1 = 0;
+    //this->NeedOrientationUpdate2 = 0;
 
-    this->OrgNeedOrientationUpdate0 = 0;
-    this->OrgNeedOrientationUpdate1 = 0;
-    this->OrgNeedOrientationUpdate2 = 0;
-    this->OrgNeedRealtimeImageUpdate= 0;
+    this->SliceDriver0 = 0;
+    this->SliceDriver1 = 0;
+    this->SliceDriver2 = 0;
+
+    this->NeedRealtimeImageUpdate0 = 0;
+    this->NeedRealtimeImageUpdate1 = 0;
+    this->NeedRealtimeImageUpdate2 = 0;
+
+    this->FreezeOrientationUpdate  = 0;
+    //this->OrgNeedOrientationUpdate0 = 0;
+    //this->OrgNeedOrientationUpdate1 = 0;
+    //this->OrgNeedOrientationUpdate2 = 0;
+    //this->OrgNeedRealtimeImageUpdate0 = 0;
+    //this->OrgNeedRealtimeImageUpdate1 = 0;
+    //this->OrgNeedRealtimeImageUpdate2 = 0;
+
+    this->RealtimeImageOrient = vtkBrpNavGUI::SLICE_RTIMAGE_PERP;
 
     // for Real-time image display
     this->RealtimeVolumeNode = NULL;
@@ -339,37 +346,13 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
         this->O4Entry->SetParent(NULL );
         this->O4Entry->Delete ( );
     }
-    /*
-    if (this->RedColorScale)
-    {
-    this->RedColorScale->SetParent(NULL );
-    this->RedColorScale->Delete ( );
-    }
-    if (this->GreenColorScale)
-    {
-    this->GreenColorScale->SetParent(NULL );
-    this->GreenColorScale->Delete ( );
-    }
-    if (this->BlueColorScale)
-    {
-    this->BlueColorScale->SetParent(NULL );
-    this->BlueColorScale->Delete ( );
-    }
-    */
-    
 
-  
-    if (this->ConnectCheckButtonRI)
-    {
-        this->ConnectCheckButtonRI->SetParent(NULL );
-        this->ConnectCheckButtonRI->Delete ( );
-    }
+//    if (this->NeedleCheckButton)
+//    {
+//        this->NeedleCheckButton->SetParent(NULL );
+//        this->NeedleCheckButton->Delete ( );
+//    }
 
-    if (this->NeedleCheckButton)
-    {
-        this->NeedleCheckButton->SetParent(NULL );
-        this->NeedleCheckButton->Delete ( );
-    }
      if (this->ConnectCheckButtonNT)
     {
         this->ConnectCheckButtonNT->SetParent(NULL );
@@ -382,11 +365,11 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
         this->ConnectCheckButtonSEND->Delete ( );
     }
        
-      if (this->ConnectCheckButtonPASSROBOTCOORDS)
-    {
-        this->ConnectCheckButtonPASSROBOTCOORDS->SetParent(NULL );
-        this->ConnectCheckButtonPASSROBOTCOORDS->Delete ( );
-    }
+    //if (this->ConnectCheckButtonPASSROBOTCOORDS)
+    //{
+    //    this->ConnectCheckButtonPASSROBOTCOORDS->SetParent(NULL );
+    //    this->ConnectCheckButtonPASSROBOTCOORDS->Delete ( );
+    //}
 
  
     if (this->ConnectCheckButtonStopScanner)
@@ -481,11 +464,11 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
 
 
 
-    if (this->NeedleCheckButton)
-    {
-    this->NeedleCheckButton->SetParent(NULL );
-    this->NeedleCheckButton->Delete ( );
-    }
+//    if (this->NeedleCheckButton)
+//    {
+//    this->NeedleCheckButton->SetParent(NULL );
+//    this->NeedleCheckButton->Delete ( );
+//    }
     if (this->HandleCheckButton)
     {
     this->HandleCheckButton->SetParent(NULL );
@@ -511,19 +494,32 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
 
     if (this->RedSliceMenu)
     {
-    this->RedSliceMenu->SetParent(NULL );
-    this->RedSliceMenu->Delete ( );
+        this->RedSliceMenu->SetParent(NULL );
+        this->RedSliceMenu->Delete ( );
     }
     if (this->YellowSliceMenu)
     {
-    this->YellowSliceMenu->SetParent(NULL );
-    this->YellowSliceMenu->Delete ( );
+        this->YellowSliceMenu->SetParent(NULL );
+        this->YellowSliceMenu->Delete ( );
     }
     if (this->GreenSliceMenu)
     {
-    this->GreenSliceMenu->SetParent(NULL );
-    this->GreenSliceMenu->Delete ( );
+        this->GreenSliceMenu->SetParent(NULL );
+        this->GreenSliceMenu->Delete ( );
     }
+
+    if ( this->ImagingControlCheckButton )
+    {
+        this->ImagingControlCheckButton->SetParent(NULL);
+        this->ImagingControlCheckButton->Delete();
+    }
+
+    if ( this->ImagingMenu )
+    {
+        this->ImagingMenu->SetParent(NULL);
+        this->ImagingMenu->Delete();
+    }
+
 
 #ifdef USE_NAVITRACK
    
@@ -578,19 +574,7 @@ vtkBrpNavGUI::~vtkBrpNavGUI ( )
 
 #endif
 
-
-    if (this->UpdateRateEntry)
-    {
-    this->UpdateRateEntry->SetParent(NULL );
-    this->UpdateRateEntry->Delete ( );
-    }
-
-    if (this->GetImageSize)
-    {
-    this->GetImageSize->SetParent(NULL );
-    this->GetImageSize->Delete ( );
-    }
-     if (this->SetOrientButton)
+    if (this->SetOrientButton)
     {
     this->SetOrientButton->SetParent(NULL );
     this->SetOrientButton->Delete ( );
@@ -681,14 +665,10 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
 #endif
 
   
-    if (this->ConnectCheckButtonRI)
-    {
-    this->ConnectCheckButtonRI->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-    if (this->NeedleCheckButton)
-    {
-    this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
+//    if (this->NeedleCheckButton)
+//    {
+//    this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+//    }
      if (this->ConnectCheckButtonnewexam)
     {
     this->ConnectCheckButtonnewexam->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,     (vtkCommand *)this->GUICallbackCommand );
@@ -703,10 +683,10 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     {
     this->ConnectCheckButtonSEND->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-      if (this->ConnectCheckButtonPASSROBOTCOORDS)
-    {
-    this->ConnectCheckButtonPASSROBOTCOORDS->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }  
+//      if (this->ConnectCheckButtonPASSROBOTCOORDS)
+//    {
+//    this->ConnectCheckButtonPASSROBOTCOORDS->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+//    }  
 
       if (this->ConnectCheckButtonStartScanner)
     {
@@ -807,10 +787,10 @@ void vtkBrpNavGUI::RemoveGUIObservers ( )
     this->ClearWorkPhasecontrollButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
      }
     
-    if (this->NeedleCheckButton)
-    {
-    this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
+//    if (this->NeedleCheckButton)
+//    {
+//    this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+//    }
     if (this->SetLocatorModeButton)
     {
         this->SetLocatorModeButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,
@@ -840,15 +820,21 @@ void vtkBrpNavGUI::AddGUIObservers ( )
     appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
 
 
+    // Driver selections
+    this->RedSliceMenu->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->YellowSliceMenu->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->GreenSliceMenu->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+
+    // Real-time imaging
+    this->ImagingControlCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ImagingMenu->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+
     // Fill in
     // observer load volume button
-    this->ConnectCheckButtonRI->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+    //this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     
     this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButtonSEND->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->ConnectCheckButtonPASSROBOTCOORDS->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButtonStartScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ConnectCheckButtonStopScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -888,9 +874,6 @@ void vtkBrpNavGUI::AddGUIObservers ( )
     
     
     
-    this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-
-
     this->SetLocatorModeButton->AddObserver ( vtkKWPushButton::InvokedEvent,
                                               (vtkCommand *)this->GUICallbackCommand );
     this->SetUserModeButton->AddObserver ( vtkKWPushButton::InvokedEvent,
@@ -899,7 +882,6 @@ void vtkBrpNavGUI::AddGUIObservers ( )
 
 #ifdef USE_NAVITRACK
     this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-   
     this->LoadConfigButtonNT->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 #endif
 #ifdef USE_IGSTK
@@ -984,19 +966,6 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
     else
     {
 
-      /*
-        if (this->ConnectCheckButtonRI == vtkKWCheckButton::SafeDownCast(caller) 
-            && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
-#ifdef USE_NAVITRACK
-            UpdateRealtimeImg();
-#endif
-#ifdef USE_IGSTK
-            SetIGSTKConnectionParameters();
-#endif
-        }
-      */
-    
         if (this->ConnectCheckButtonNT == vtkKWCheckButton::SafeDownCast(caller) 
             && event == vtkKWCheckButton::SelectedStateChangedEvent )
         {
@@ -1275,40 +1244,48 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
                 }
             }
         }
-
+        
         //
-        // Locator Driver selection
+        // Slice Plane Driver selection
         //
 
-        // -- "Locator" check button 
-        else if (this->SetLocatorModeButton == vtkKWPushButton::SafeDownCast(caller) 
-                 && event == vtkKWPushButton::InvokedEvent )
+        else if ( this->RedSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
+                  && event == vtkKWMenu::MenuItemInvokedEvent )
         {
-            this->NeedOrientationUpdate0 = 1;
-            this->NeedOrientationUpdate1 = 1;
-            this->NeedOrientationUpdate2 = 1;
-            this->NeedRealtimeImageUpdate = 0;
-
-            this->RedSliceMenu->SetValue("Locator");
-            this->YellowSliceMenu->SetValue("Locator");
-            this->GreenSliceMenu->SetValue("Locator");
+            const char* selected = this->RedSliceMenu->GetValue();
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_RED, selected);
         }
 
-        // -- "User" check button 
+        else if ( this->YellowSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
+                  && event == vtkKWMenu::MenuItemInvokedEvent )
+        {
+            const char* selected = this->YellowSliceMenu->GetValue();
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_YELLOW, selected);
+        }
+
+        else if ( this->GreenSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
+                  && event == vtkKWMenu::MenuItemInvokedEvent )
+        {
+          const char* selected = this->GreenSliceMenu->GetValue();
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_GREEN, selected);
+        }
+
+        // -- "Locator" button 
+        else if ( this->SetLocatorModeButton == vtkKWPushButton::SafeDownCast(caller) 
+                  && event == vtkKWPushButton::InvokedEvent )
+        {
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_RED, "Locator");
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_YELLOW, "Locator");
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_GREEN, "Locator");
+        }
+
+        // -- "User" button 
         else if (this->SetUserModeButton == vtkKWPushButton::SafeDownCast(caller) 
                  && event == vtkKWPushButton::InvokedEvent )
         {
-            this->SliceNode0->SetOrientationToAxial();
-            this->SliceNode1->SetOrientationToSagittal();
-            this->SliceNode2->SetOrientationToCoronal();
-            this->NeedOrientationUpdate0 = 0;
-            this->NeedOrientationUpdate1 = 0;
-            this->NeedOrientationUpdate2 = 0;
-            this->NeedRealtimeImageUpdate = 0;
-
-            this->RedSliceMenu->SetValue("User");
-            this->YellowSliceMenu->SetValue("User");
-            this->GreenSliceMenu->SetValue("User");
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_RED, "User");
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_YELLOW, "User");
+            ChangeSlicePlaneDriver(vtkBrpNavGUI::SLICE_PLANE_GREEN, "User");
         }
 
         // -- "Freeze Image Position" check button 
@@ -1317,26 +1294,62 @@ void vtkBrpNavGUI::ProcessGUIEvents ( vtkObject *caller,
         {
            if (this->FreezeImageCheckButton->GetSelectedState() == 1)
            {
+               this->FreezeOrientationUpdate = 1;
+             /*
                this->OrgNeedOrientationUpdate0  = this->NeedOrientationUpdate0;
                this->OrgNeedOrientationUpdate1  = this->NeedOrientationUpdate1;
                this->OrgNeedOrientationUpdate2  = this->NeedOrientationUpdate2;
-               this->OrgNeedRealtimeImageUpdate = this->NeedRealtimeImageUpdate;
+               this->OrgNeedRealtimeImageUpdate0 = this->NeedRealtimeImageUpdate0;
+               this->OrgNeedRealtimeImageUpdate1 = this->NeedRealtimeImageUpdate1;
+               this->OrgNeedRealtimeImageUpdate2 = this->NeedRealtimeImageUpdate2;
                
                this->NeedOrientationUpdate0 = 0;
                this->NeedOrientationUpdate1 = 0;
                this->NeedOrientationUpdate2 = 0;
-               this->NeedRealtimeImageUpdate = 0;
+               this->NeedRealtimeImageUpdate0 = 0;
+               this->NeedRealtimeImageUpdate1 = 0;
+               this->NeedRealtimeImageUpdate2 = 0;
+             */
            }
            else
            {
+               this->FreezeOrientationUpdate = 0;
+               /*
                this->NeedOrientationUpdate0  = this->OrgNeedOrientationUpdate0;
                this->NeedOrientationUpdate1  = this->OrgNeedOrientationUpdate1;
                this->NeedOrientationUpdate2  = this->OrgNeedOrientationUpdate2;
-               this->NeedRealtimeImageUpdate = this->OrgNeedRealtimeImageUpdate;
+               this->NeedRealtimeImageUpdate0 = this->OrgNeedRealtimeImageUpdate0;
+               this->NeedRealtimeImageUpdate1 = this->OrgNeedRealtimeImageUpdate1;
+               this->NeedRealtimeImageUpdate2 = this->OrgNeedRealtimeImageUpdate2;
+               */
            }
+        }
+        else if (this->ImagingMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
+                 && event == vtkKWMenu::MenuItemInvokedEvent )
+        {
+
+            const char* selected = this->ImagingMenu->GetValue();
+            if ( strcmp(selected, "Perpendicular") == 0 )
+            {
+                this->RealtimeImageOrient = vtkBrpNavGUI::SLICE_RTIMAGE_PERP;
+            }
+            else if ( strcmp(selected, "In-plane 90") == 0 )
+            {
+                this->RealtimeImageOrient = vtkBrpNavGUI::SLICE_RTIMAGE_INPLANE90;
+            }
+            else //if ( strcmp(selected, "In-plane") == 0 )
+            {
+                this->RealtimeImageOrient = vtkBrpNavGUI::SLICE_RTIMAGE_INPLANE;
+            }
+
+            std::cerr << "ImagingMenu =======> " << selected << "  :  " << this->RealtimeImageOrient << std::endl;
 
         }
 
+
+        //
+        // Z-frame calibration control
+        //
 
         else if (this->ReadCalibImageFileButton == vtkKWPushButton::SafeDownCast(caller) 
                  && event == vtkKWPushButton::InvokedEvent)
@@ -2206,21 +2219,22 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
          modeFrame->GetWidgetName(),
          driverFrame->GetFrame()->GetWidgetName());
 
-
     // "Locator All" button
     this->SetLocatorModeButton = vtkKWPushButton::New ( );
     this->SetLocatorModeButton->SetParent ( modeFrame );
     this->SetLocatorModeButton->Create ( );
     this->SetLocatorModeButton->SetText ("Locator All");
-    this->SetLocatorModeButton->SetWidth (17);
+    this->SetLocatorModeButton->SetWidth (12);
 
     // "User All" button
     this->SetUserModeButton = vtkKWPushButton::New ( );
     this->SetUserModeButton->SetParent ( modeFrame );
     this->SetUserModeButton->Create ( );
     this->SetUserModeButton->SetText ("User All");
-    this->SetUserModeButton->SetWidth (17);
+    this->SetUserModeButton->SetWidth (12);
 
+
+    // "Freeze" check button
     this->FreezeImageCheckButton = vtkKWCheckButton::New();
     this->FreezeImageCheckButton->SetParent(modeFrame);
     this->FreezeImageCheckButton->Create();
@@ -2254,6 +2268,7 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     this->RedSliceMenu->SetActiveBackgroundColor(color->SliceGUIRed);
     this->RedSliceMenu->GetMenu()->AddRadioButton ("User");
     this->RedSliceMenu->GetMenu()->AddRadioButton ("Locator");
+    this->RedSliceMenu->GetMenu()->AddRadioButton ("RT Image");
     this->RedSliceMenu->SetValue ("User");
 
     this->YellowSliceMenu = vtkKWMenuButton::New();
@@ -2264,6 +2279,7 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     this->YellowSliceMenu->SetActiveBackgroundColor(color->SliceGUIYellow);
     this->YellowSliceMenu->GetMenu()->AddRadioButton ("User");
     this->YellowSliceMenu->GetMenu()->AddRadioButton ("Locator");
+    this->YellowSliceMenu->GetMenu()->AddRadioButton ("RT Image");
     this->YellowSliceMenu->SetValue ("User");
 
     this->GreenSliceMenu = vtkKWMenuButton::New();
@@ -2274,12 +2290,42 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
     this->GreenSliceMenu->SetActiveBackgroundColor(color->SliceGUIGreen);
     this->GreenSliceMenu->GetMenu()->AddRadioButton ("User");
     this->GreenSliceMenu->GetMenu()->AddRadioButton ("Locator");
+    this->GreenSliceMenu->GetMenu()->AddRadioButton ("RT Image");
     this->GreenSliceMenu->SetValue ("User");
 
     this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
                  this->RedSliceMenu->GetWidgetName(),
                  this->YellowSliceMenu->GetWidgetName(),
                  this->GreenSliceMenu->GetWidgetName());
+
+
+    // Scanner: Scanner controled by the locator
+    // -----------------------------------------
+    vtkKWFrameWithLabel *imagingFrame = vtkKWFrameWithLabel::New ( );
+    imagingFrame->SetParent ( trackingFrame->GetFrame() );
+    imagingFrame->Create ( );
+    imagingFrame->SetLabelText ("Real-time Imaging");
+    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+                   imagingFrame->GetWidgetName() );
+    
+    this->ImagingControlCheckButton = vtkKWCheckButton::New();
+    this->ImagingControlCheckButton->SetParent(imagingFrame->GetFrame());
+    this->ImagingControlCheckButton->Create();
+    this->ImagingControlCheckButton->SelectedStateOff();
+    this->ImagingControlCheckButton->SetText("Imaging Orientation Control");
+
+    this->ImagingMenu = vtkKWMenuButton::New();
+    this->ImagingMenu->SetParent(imagingFrame->GetFrame());
+    this->ImagingMenu->Create();
+    this->ImagingMenu->SetWidth(10);
+    this->ImagingMenu->GetMenu()->AddRadioButton ("Perpendicular");
+    this->ImagingMenu->GetMenu()->AddRadioButton ("In-plane 90");
+    this->ImagingMenu->GetMenu()->AddRadioButton ("In-plane");
+    this->ImagingMenu->SetValue("Perpendicular");
+
+    this->Script( "pack %s %s -side left -anchor w -padx 2 -pady 2", 
+                  this->ImagingControlCheckButton->GetWidgetName(),
+                  this->ImagingMenu->GetWidgetName() );
 
     trackingFrame->Delete();
     displayFrame->Delete();
@@ -2290,9 +2336,15 @@ void vtkBrpNavGUI::BuildGUIForTrackingFrame ()
 
 
 
-    // ----------------------------------------------------------------
-    // Scanner Controll FRAME      START          
-    // ----------------------------------------------------------------
+void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame()
+{
+
+}
+
+
+// ----------------------------------------------------------------
+// Scanner Controll FRAME      START          
+// ----------------------------------------------------------------
 
 
 void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
@@ -2545,7 +2597,7 @@ void vtkBrpNavGUI::BuildGUIForscancontrollFrame ()
     /////////////////////////////////////////////////////////////////////
    
  
- vtkKWFrameWithLabel *coordsbrpFrame = vtkKWFrameWithLabel::New();
+    vtkKWFrameWithLabel *coordsbrpFrame = vtkKWFrameWithLabel::New();
     coordsbrpFrame->SetParent ( scancontrollbrpFrame->GetFrame() );
     coordsbrpFrame->Create ( );
     coordsbrpFrame->CollapseFrame ( );
@@ -2678,16 +2730,19 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     this->ConnectCheckButtonSEND->SelectedStateOff();
     this->ConnectCheckButtonSEND->SetText("Send");
     
-    this->ConnectCheckButtonPASSROBOTCOORDS = vtkKWCheckButton::New();
-    this->ConnectCheckButtonPASSROBOTCOORDS->SetParent(sendNTFrame);
-    this->ConnectCheckButtonPASSROBOTCOORDS->Create();
-    this->ConnectCheckButtonPASSROBOTCOORDS->SelectedStateOff();
-    this->ConnectCheckButtonPASSROBOTCOORDS->SetText("Imaging orientation Control ");
+    //this->ConnectCheckButtonPASSROBOTCOORDS = vtkKWCheckButton::New();
+    //this->ConnectCheckButtonPASSROBOTCOORDS->SetParent(sendNTFrame);
+    //this->ConnectCheckButtonPASSROBOTCOORDS->Create();
+    //this->ConnectCheckButtonPASSROBOTCOORDS->SelectedStateOff();
+    //this->ConnectCheckButtonPASSROBOTCOORDS->SetText("Imaging orientation Control ");
+    //
+    //
+    //this->Script("pack %s %s -side top -anchor w -padx 2 -pady 2", 
+    //             this->ConnectCheckButtonSEND->GetWidgetName(),
+    //             this->ConnectCheckButtonPASSROBOTCOORDS->GetWidgetName());
+    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
+                 this->ConnectCheckButtonSEND->GetWidgetName());
 
-
-    this->Script("pack %s %s -side top -anchor w -padx 2 -pady 2", 
-                 this->ConnectCheckButtonSEND->GetWidgetName(),
-                 this->ConnectCheckButtonPASSROBOTCOORDS->GetWidgetName());
     
     maincontroll->Delete();
     connectNTFrame->Delete();
@@ -2700,199 +2755,6 @@ this->positionbrpz = vtkKWEntryWithLabel::New();
     //    orientationbrpFrame->Delete ();
 #endif
 }
-
-    // ----------------------------------------------------------------
-    // Scanner Controll FRAME  END        
-    // ----------------------------------------------------------------
-
-
-
-
-
-void vtkBrpNavGUI::BuildGUIForRealtimeacqFrame ()
-{
-    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "BrpNav" );
-
-    // ----------------------------------------------------------------
-    // REALTIME FRAME         
-    // ----------------------------------------------------------------
-    
-    
-    vtkSlicerModuleCollapsibleFrame *realtimeacqFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    realtimeacqFrame->SetParent ( page );
-    realtimeacqFrame->Create ( );
-    realtimeacqFrame->SetLabelText ("Realtime Imaging");
-    realtimeacqFrame->CollapseFrame ( );
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        realtimeacqFrame->GetWidgetName(), page->GetWidgetName());
-
-#ifdef USE_NAVITRACK 
-   //------------------------------------Content--------------*
-    
-    
-    //------------------------------- SERVER FRAME-------------*        
-    
-    /*
-    // Active server frame: Server options 
-    // -----------------------------------------
-
-
-
-    vtkKWFrame *activeServerFrame = vtkKWFrame::New();
-    activeServerFrame->SetParent ( realtimeacqFrame->GetFrame() );
-    activeServerFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
-           activeServerFrame->GetWidgetName(),
-         realtimeacqFrame->GetFrame()->GetWidgetName());
-
-
-      
-
-    // active server 
-    this->ServerMenu = vtkKWMenuButtonWithLabel::New();
-    this->ServerMenu->SetParent(activeServerFrame);
-    this->ServerMenu->Create();
-    this->ServerMenu->SetWidth(25);
-    this->ServerMenu->SetLabelWidth(12);
-    this->ServerMenu->SetLabelText("Active Server:");
-    // this->ServerMenu->GetWidget()->GetMenu()->AddRadioButton ( "None");
-    this->ServerMenu->GetWidget()->GetMenu()->AddRadioButton ( "SPL Open Tracker");
-    this->ServerMenu->GetWidget()->SetValue ( "SPL Open Tracker" );
-    this->Script(
-        "pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
-        this->ServerMenu->GetWidgetName());
-    */
-     
-    // Setup frame: Config file and update rate 
-    // -----------------------------------------
-    vtkKWFrameWithLabel *setupFrame = vtkKWFrameWithLabel::New ( );
-    setupFrame->SetParent ( realtimeacqFrame->GetFrame() );
-    setupFrame->Create ( );
-    setupFrame->SetLabelText ("Setup");
-    setupFrame->CollapseFrame ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
-         setupFrame->GetWidgetName(),
-         realtimeacqFrame->GetFrame()->GetWidgetName());
-
-    
-    
-    // add a file browser 
-    vtkKWFrame *fileFrame = vtkKWFrame::New();
-    fileFrame->SetParent ( realtimeacqFrame->GetFrame() );
-   
-    fileFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-          fileFrame->GetWidgetName());
-
-    /* 
-    this->PAEntry = vtkKWEntry::New();
-    PAEntry->SetParent(setupFrame);
-    PAEntry->Create();
-    PAEntry->SetWidth(10);
-    PAEntry->SetValue("");
-
-    */
-       // update rate 
-    vtkKWFrame *rateFrame = vtkKWFrame::New();
-    rateFrame->SetParent ( setupFrame->GetFrame() );
-    rateFrame->Create ( );
-   
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-          rateFrame->GetWidgetName());
-
-    this->UpdateRateEntry = vtkKWEntryWithLabel::New();
-    this->UpdateRateEntry->SetParent(rateFrame);
-    this->UpdateRateEntry->Create();
-    this->UpdateRateEntry->SetWidth(25);
-    this->UpdateRateEntry->SetLabelWidth(15);
-    this->UpdateRateEntry->SetLabelText("Update Rate (ms):");
-    this->UpdateRateEntry->GetWidget()->SetValue ( "200" );
-    this->Script(
-      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-      this->UpdateRateEntry->GetWidgetName());
-    
-
-    this->GetImageSize = vtkKWEntryWithLabel::New();
-    this->GetImageSize->SetParent(rateFrame);
-    this->GetImageSize->Create();
-    this->GetImageSize->SetWidth(25);
-    this->GetImageSize->SetLabelWidth(15);
-    this->GetImageSize->SetLabelText("Size");
-    this->GetImageSize->GetWidget()->SetValue ("");
-    this->Script(
-      "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-      this->GetImageSize->GetWidgetName());
-    
-
-   
-    // Connect frame: Connects to server 
-    // -----------------------------------------
-    vtkKWFrameWithLabel *connectFrame = vtkKWFrameWithLabel::New ( );
-    connectFrame->SetParent ( realtimeacqFrame->GetFrame() );
-    connectFrame->Create ( );
-    connectFrame->SetLabelText ("Connection to server and Needle-Display");
-    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-           connectFrame->GetWidgetName() );
-    
-    this->ConnectCheckButtonRI = vtkKWCheckButton::New();
-    this->ConnectCheckButtonRI->SetParent(connectFrame->GetFrame());
-    this->ConnectCheckButtonRI->Create();
-    this->ConnectCheckButtonRI->SelectedStateOff();
-    this->ConnectCheckButtonRI->SetText("Connect");
- 
-
-
-    this->NeedleCheckButton = vtkKWCheckButton::New();
-    this->NeedleCheckButton->SetParent(connectFrame->GetFrame());
-    this->NeedleCheckButton->Create();
-    this->NeedleCheckButton->SelectedStateOff();
-    this->NeedleCheckButton->SetText("Show Needle");
-    
-
-    this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->ConnectCheckButtonRI->GetWidgetName(),
-        this->NeedleCheckButton->GetWidgetName());
-
-
-    vtkKWFrameWithLabel *imageorientationFrame = vtkKWFrameWithLabel::New ( );
-    imageorientationFrame->SetParent ( realtimeacqFrame->GetFrame() );
-    imageorientationFrame->Create ( );
-    imageorientationFrame->SetLabelText ("Image Orientation");
-    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-           imageorientationFrame->GetWidgetName() );
-
-
-    /* 
-vtkKWFrameWithLabel *tempFrame = vtkKWFrameWithLabel::New ( );
-    connectFrame->SetParent ( realtimeacqFrame->GetFrame() );
-    connectFrame->Create ( );
-    connectFrame->SetLabelText ("test");
-    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-           connectFrame->GetWidgetName() );
-    
-
-
-    
-    this->PAEntry = vtkKWEntry::New();
-    PAEntry->SetParent(tempFrame);
-    PAEntry->Create();
-    PAEntry->SetWidth(13);
-    PAEntry->SetValue("");
-    */
-
-    realtimeacqFrame->Delete ();
-    //  activeServerFrame->Delete ();
-     setupFrame->Delete ();
-     fileFrame->Delete ();
-     rateFrame->Delete ();
-    connectFrame->Delete ();
-    // tempFrame->Delete ();
-   
-#endif
-
-}
-
 
 
 void vtkBrpNavGUI::BuildGUIForCalibration()
@@ -2973,7 +2835,15 @@ void vtkBrpNavGUI::BuildGUIForCalibration()
 
 void vtkBrpNavGUI::UpdateAll()
 {
+
+    // Position / orientation parameters:
+    //   (px, py, pz) : position
+    //   (nx, ny, nz) : normal vector
+    //   (tx, ty, tz) : transverse vector
+    //   (sx, sy, sz) : vector orthogonal to n and t ( n x t )
+
     float px, py, pz, nx, ny, nz, tx, ty, tz;
+    float sx, sy, sz;
 
     this->LocatorMatrix = NULL;
 
@@ -2990,22 +2860,43 @@ void vtkBrpNavGUI::UpdateAll()
         px = this->LocatorMatrix->GetElement(0, 0);
         py = this->LocatorMatrix->GetElement(1, 0);
         pz = this->LocatorMatrix->GetElement(2, 0);
+
         nx = this->LocatorMatrix->GetElement(0, 1);
         ny = this->LocatorMatrix->GetElement(1, 1);
         nz = this->LocatorMatrix->GetElement(2, 1);
+
         tx = this->LocatorMatrix->GetElement(0, 2);
         ty = this->LocatorMatrix->GetElement(1, 2);
         tz = this->LocatorMatrix->GetElement(2, 2);
+
+        sx = ny*tz-nz*ty;
+        sy = nz*tx-nx*tz;
+        sz = nx*ty-ny*tx;
     }
     else
     {
-        px = py = pz = nx = ny = tx = tz = 0;
-        ty = nz = 1.0;
+        px = 0.0;
+        py = 0.0;
+        pz = 0.0;
+
+        nx = 0.0;
+        ny = 0.0;
+        nz = 1.0;
+
+        tx = 1.0;
+        ty = 0.0;
+        tz = 0.0;
+
+        sx = 0.0;
+        sy = 1.0;
+        sz = 0.0;
     }
+
     std::cerr << "==== Locator position ====" << std::endl;
-    std::cerr << "   " << px << ", " << py << ", " << pz << std::endl;
-    std::cerr << "   " << nx << ", " << ny << ", " << nz << std::endl;
-    std::cerr << "   " << tx << ", " << ty << ", " << tz << std::endl;
+    std::cerr << "  (px, py, pz) =  ( " << px << ", " << py << ", " << pz << " )" << std::endl;
+    std::cerr << "  (nx, ny, nz) =  ( " << nx << ", " << ny << ", " << nz << " )" << std::endl;
+    std::cerr << "  (tx, ty, tz) =  ( " << tx << ", " << ty << ", " << tz << " )" << std::endl;
+
 
     //Philip Mewes 17.07.2007: defining and sending te workphase (WP) commands depending of requestet WP
     // received_robot_status = NULL;
@@ -3059,85 +2950,165 @@ void vtkBrpNavGUI::UpdateAll()
     {
         RobotStatusLabelDisp->SetValue ( "" );
     }
-    
+
+
+    // Get real-time image orientation
+    int rtimgslice = this->RealtimeImageOrient;
+
     if (this->OpenTrackerStream)
     {
+
+        // Junichi Tokuda 10/18/2007: Definition of scan plane (for scanner) and
+        //  display (for Slicer) plane
+        //
+        //  Normal (N_l) and Transverse (T_l) vectors of locator are givien.
+        //     M_p       : IJK to RAS matrix
+        //     N_l x T_l : cross product of N_l and T_l
+        //     M_s       : scan plane rotation matrix (transformation from axial plane to scan plane)
+        //
+        //   1) Perpendicular (Plane perpendicular to the locator)
+        //
+        //     M_p   = ( T_l, N_l x T_l, N_l )
+        //
+        //     #         / tx ty tz \  / 1  0  0 \       / tx ty tz \ 
+        //     #        |            ||           |     |            |
+        //     #M_s  =  |  sx sy sz  ||  0  1  0  |  =  |  sx sy sz  |
+        //     #        |            ||           |     |            |
+        //     #         \ nx ny nz /  \ 0  0  1 /       \ nx ny nz / 
+        //
+        //
+        //              / tx sx nx \  / 1  0  0 \       / tx -sx -nx \ 
+        //             |            ||           |     |              |
+        //     M_s  =  |  ty sy ny  ||  0 -1  0  |  =  |  ty -sy -ny  |
+        //             |            ||           |     |              |
+        //              \ tz sz nz /  \ 0  0 -1 /       \ tz -sz -nz / 
+        //
+        //
+        //   2) In-plane 90  (plane along the locator: perpendicular to In-plane)
+        //
+        //     M_p  = ( N_l x T_l, N_l, T_l )
+        //
+        //     #         / tx ty tz \  / 0  0  1 \       / ty tz tx \ 
+        //     #        |            ||           |     |            |
+        //     #M_s  =  |  sx sy sz  ||  1  0  0  |  =  |  sy sz sx  |
+        //     #        |            ||           |     |            |
+        //     #         \ nx ny nz /  \ 0  1  0 /       \ ny nz nx / 
+        // 
+        //
+        //              / tx sx nx \  /  0  0 -1 \       / sx -nx -tx \ 
+        //             |            ||            |     |              |
+        //     M_s  =  |  ty sy ny  ||   1  0  0  |  =  |  sy -ny -ty  |
+        //             |            ||            |     |              |
+        //              \ tz sz nz /  \  0 -1  0 /       \ sz -nz -tz / 
+        //
+        // 
+        //   3) In-Plane     (plane along the locator)
+        //
+        //     M_p  = ( N_l, T_l, N_l x T_l )
+        //
+        //     #         / tx ty tz \  / 0  1  0 \       / tz tx ty \ 
+        //     #        |            ||           |     |            |
+        //     #M_s  =  |  sx sy sz  ||  0  0  1  |  =  |  sz sx sy  |
+        //     #        |            ||           |     |            |
+        //     #         \ nx ny nz /  \ 1  0  0 /       \ nz nx ny / 
+        //
+        //
+        //              / tx sx nx \  /  0 -1  0 \       / nx -tx -sx \ 
+        //             |            ||            |     |              |
+        //     M_s  =  |  ty sy ny  ||   0  0 -1  |  =  |  ny -ty -sy  |
+        //             |            ||            |     |              |
+        //              \ tz sz nz /  \  1  0  0 /       \ nz -tz -sz / 
+        //
+        //
+
+        //
+        // Real-time image display plane transformation 
+        //
+        
+        // Junichi Tokuda 10/16/2007:
+        // Since the position/orientation for the real-time image is not available,
+        // the transformation is calculated based on the locator matrix.
+        // This must be fixed, when the image information become available.
+
         vtkImageData* vid = NULL;
         if (this->RealtimeVolumeNode)
         {
             vid = this->RealtimeVolumeNode->GetImageData();
         }
 
-        //  std::cerr << "vid = " << vid << std::endl;
-        if (vid)
+        if (vid && !this->FreezeOrientationUpdate)
         {
             std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
+
             int orgSerial = this->RealtimeImageSerial;
             this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
             if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
             {
-                vtkMatrix4x4* imageOrientation = vtkMatrix4x4::New();
+                vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
 
-                this->NeedRealtimeImageUpdate = 1;
                 this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
-                //this->Logic0->UpdatePipeline ();
                 this->RealtimeVolumeNode->SetAndObserveImageData(vid);
-                
-                /*
-                std::cerr << "============Image info================="     << std::endl;
-                int d[3];
-                vid->GetDimensions(d);
-                std::cerr << "Dimension: (" 
-                          << d[0] << ", "
-                          << d[1] << ", "
-                          << d[2] << ")" << std::endl;
-                double v[3];
-                vid->GetSpacing(v);
-                std::cerr << "Spacing:   (" 
-                          << v[0] << ", "
-                          << v[1] << ", "
-                          << v[2] << ")" << std::endl;
-                vid->GetOrigin(v);
-                std::cerr << "Origin:    (" 
-                          << v[0] << ", "
-                          << v[1] << ", "
-                          << v[2] << ")" << std::endl;
-                */
 
-                // calculate image orientation
-                imageOrientation->SetElement(0, 0, nx);
-                imageOrientation->SetElement(0, 1, ny);
-                imageOrientation->SetElement(0, 2, nz);
-                imageOrientation->SetElement(1, 0, tx);
-                imageOrientation->SetElement(1, 1, ty);
-                imageOrientation->SetElement(1, 2, tz);
-                imageOrientation->SetElement(2, 0, ny*tz-nz*ty);
-                imageOrientation->SetElement(2, 1, nz*tx-nx*tz);
-                imageOrientation->SetElement(2, 2, nx*ty-ny*tx);
-                imageOrientation->Invert();
+                // One of NeedRealtimeImageUpdate0 - 2 is chosen based on the scan plane.
                 
-                double ns[3];
-                double ts[3];
-                double cx = -128;
-                //double cx = 0;
-                double cy = -128;
-                //double cy = 0;
-                ns[0] =  cx * nx;
-                ns[1] =  cx * ny;
-                ns[2] =  cx * nz;
-                
-                ts[0] =  cy * tx;
-                ts[1] =  cy * ty;
-                ts[2] =  cy * tz;
-                
-                imageOrientation->SetElement(0, 3, px + ns[0] + ts[0]);
-                imageOrientation->SetElement(1, 3, py + ns[1] + ts[1]);
-                imageOrientation->SetElement(2, 3, pz + ns[2] + ts[2]);
-                imageOrientation->SetElement(3, 3, 1.0);
-                this->RealtimeVolumeNode->SetIJKToRASMatrix(imageOrientation);
+                if (rtimgslice == vtkBrpNavGUI::SLICE_RTIMAGE_PERP)  /* Perpendicular */
+                {
+                    this->NeedRealtimeImageUpdate0 = 1;
+
+                    rtimgTransform->SetElement(0, 0, tx);
+                    rtimgTransform->SetElement(1, 0, ty);
+                    rtimgTransform->SetElement(2, 0, tz);
+                    
+                    rtimgTransform->SetElement(0, 1, sx);
+                    rtimgTransform->SetElement(1, 1, sy);
+                    rtimgTransform->SetElement(2, 1, sz);
+                    
+                    rtimgTransform->SetElement(0, 2, nx);
+                    rtimgTransform->SetElement(1, 2, ny);
+                    rtimgTransform->SetElement(2, 2, nz);
+                }
+                else if (rtimgslice == vtkBrpNavGUI::SLICE_RTIMAGE_INPLANE90)  /* In-plane 90 */
+                {
+                    this->NeedRealtimeImageUpdate1 = 1;
+
+                    rtimgTransform->SetElement(0, 0, sx);
+                    rtimgTransform->SetElement(1, 0, sy);
+                    rtimgTransform->SetElement(2, 0, sz);
+                    
+                    rtimgTransform->SetElement(0, 1, nx);
+                    rtimgTransform->SetElement(1, 1, ny);
+                    rtimgTransform->SetElement(2, 1, nz);
+                    
+                    rtimgTransform->SetElement(0, 2, tx);
+                    rtimgTransform->SetElement(1, 2, ty);
+                    rtimgTransform->SetElement(2, 2, tz);
+                }
+                else // if (rtimgslice == vtkBrpNavGUI::SLICE_RTIMAGE_INPLANE)   /* In-Plane */
+                  {
+                    this->NeedRealtimeImageUpdate2 = 1;
+
+                    rtimgTransform->SetElement(0, 0, nx);
+                    rtimgTransform->SetElement(1, 0, ny);
+                    rtimgTransform->SetElement(2, 0, nz);
+                    
+                    rtimgTransform->SetElement(0, 1, tx);
+                    rtimgTransform->SetElement(1, 1, ty);
+                    rtimgTransform->SetElement(2, 1, tz);
+                    
+                    rtimgTransform->SetElement(0, 2, sx);
+                    rtimgTransform->SetElement(1, 2, sy);
+                    rtimgTransform->SetElement(2, 2, sz);
+                }
+
+                rtimgTransform->SetElement(0, 3, px);
+                rtimgTransform->SetElement(1, 3, py);
+                rtimgTransform->SetElement(2, 3, pz);
+                rtimgTransform->SetElement(3, 3, 1.0);
+
+                this->RealtimeVolumeNode->SetIJKToRASMatrix(rtimgTransform);
                 this->VolumesLogic->SetActiveVolumeNode(this->RealtimeVolumeNode);
                 this->VolumesLogic->Modified();
-                imageOrientation->Delete();
+                rtimgTransform->Delete();
             }
 
             
@@ -3147,97 +3118,88 @@ void vtkBrpNavGUI::UpdateAll()
           //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
         }
 
-        // update the display of locator
-        if (this->LocatorCheckButton->GetSelectedState() ||
-            this->NeedleCheckButton->GetSelectedState())
-        {
-            this->UpdateLocator();
-        }
-        this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
-        this->Logic0->UpdatePipeline ();
-      
+        //
+        // Imaging plane transformation 
+        //
 
-        // Pass needle position/orientation to image orientation to the scanner 
-        
-        if (this->ConnectCheckButtonPASSROBOTCOORDS->GetSelectedState())
+        //if (this->ConnectCheckButtonPASSROBOTCOORDS->GetSelectedState())
+        if (this->ImagingControlCheckButton->GetSelectedState())
         {
             std::vector<float> pos;
             std::vector<float> quat;
             pos.resize(3);
             quat.resize(4);
 
-            float imgNorm[3][3];
+            float scanTrans[3][3];  // Rotation matrix from axial plane to scan plane
             
-            /*
-            imgNorm[0][0] = tx;
-            imgNorm[0][1] = ty;
-            imgNorm[0][2] = tz;
+            /* Parpendicular */
+            if (rtimgslice == vtkBrpNavGUI::SLICE_RTIMAGE_PERP)
+            {
+                scanTrans[0][0] = tx;
+                scanTrans[1][0] = ty;
+                scanTrans[2][0] = tz;
+                scanTrans[0][1] = -sx;
+                scanTrans[1][1] = -sy;
+                scanTrans[2][1] = -sz;
+                scanTrans[0][2] = -nx;
+                scanTrans[1][2] = -ny;
+                scanTrans[2][2] = -nz;
+            }
+            /* In-plane 90 */
+            else if (rtimgslice == vtkBrpNavGUI::SLICE_RTIMAGE_INPLANE90)
+            {
+                scanTrans[0][0] = sx;
+                scanTrans[1][0] = sy;
+                scanTrans[2][0] = sz;
+                scanTrans[0][1] = -nx;
+                scanTrans[1][1] = -ny;
+                scanTrans[2][1] = -nz;
+                scanTrans[0][2] = -tx;
+                scanTrans[1][2] = -ty;
+                scanTrans[2][2] = -tz;
+            }
+            /* In-Plane */
+            else // if (rtimgslice == vtkBrpNavGUI::SLICE_RTIMAGE_INPLANE)
+            {
+                scanTrans[0][0] = nx;
+                scanTrans[1][0] = ny;
+                scanTrans[2][0] = nz;
+                scanTrans[0][1] = -tx;
+                scanTrans[1][1] = -ty;
+                scanTrans[2][1] = -tz;
+                scanTrans[0][2] = -sx;
+                scanTrans[1][2] = -sy;
+                scanTrans[2][2] = -sz;
+            }
 
-            imgNorm[1][0] = nx;
-            imgNorm[1][1] = ny;
-            imgNorm[1][2] = nz;
-
-            imgNorm[2][0] = -(ny*tz-nz*ty);
-            imgNorm[2][1] = -(nz*tx-nx*tz);
-            imgNorm[2][2] = -(nx*ty-ny*tx);
-            */
-
-            /*
-            imgNorm[2][0] = tx;
-            imgNorm[2][1] = ty;
-            imgNorm[2][2] = tz;
-
-            imgNorm[0][0] = (ny*tz-nz*ty);
-            imgNorm[0][1] = (nz*tx-nx*tz);
-            imgNorm[0][2] = (nx*ty-ny*tx);
-
-            imgNorm[1][0] = nx;
-            imgNorm[1][1] = ny;
-            imgNorm[1][2] = nz;
-            */
-
-            float sx, sy, sz;
-            sx = (ny*tz-nz*ty);
-            sy = (nz*tx-nx*tz);
-            sz = (nx*ty-ny*tx);
-
-            imgNorm[0][0] = nx;
-            imgNorm[0][1] = tx;
-            imgNorm[0][2] = sx;
-
-            imgNorm[1][0] = ny;
-            imgNorm[1][1] = ty;
-            imgNorm[1][2] = sy;
-
-            imgNorm[2][0] = nz;
-            imgNorm[2][1] = tz;
-            imgNorm[2][2] = sz;
-
-            /*
-              float ori0, ori1, ori2, ori3;
-              float pos0, pos1, pos2;
-              
-              this->OpenTrackerStream->
-              GetCoordsOrientforScanner(&ori0, &ori1, &ori2, &ori3, &pos0, &pos1, &pos2);
-              
-              pos[0]= pos0;
-              pos[1]= pos1;
-              pos[2]= pos2;
-              quat[0]= ori0;
-              quat[1]= ori1;
-              quat[2]= ori2;
-              quat[3]= ori3;
-            */
-            
-            MathUtils::matrixToQuaternion(imgNorm, quat);
+            MathUtils::matrixToQuaternion(scanTrans, quat);
             pos[0] = px;
             pos[1] = py;
             pos[2] = pz;
             
+            std::cerr << "    " << scanTrans[0][0] << ", " << scanTrans[0][1] << ", " << scanTrans[0][2] << std::endl;
+            std::cerr << "    " << scanTrans[1][0] << ", " << scanTrans[1][1] << ", " << scanTrans[1][2] << std::endl;
+            std::cerr << "    " << scanTrans[2][0] << ", " << scanTrans[2][1] << ", " << scanTrans[2][2] << std::endl;
+            
             // send coordinate to the scanner
             this->OpenTrackerStream->SetTracker(pos,quat);
         }
+
+        // update the display of locator
+        if (this->LocatorCheckButton->GetSelectedState())
+        {
+            this->UpdateLocator();
+        }
+        if (!this->FreezeOrientationUpdate)
+        {
+            this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
+        }
     }
+
+    this->NeedRealtimeImageUpdate0 = 0;
+    this->NeedRealtimeImageUpdate1 = 0;
+    this->NeedRealtimeImageUpdate2 = 0;
+
 }
 
 
@@ -3286,106 +3248,132 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
 {
     std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() is called." << std::endl;
 
-    if (this->NeedOrientationUpdate0 ||
-        this->NeedOrientationUpdate1 ||
-        this->NeedOrientationUpdate2 ||
-        this->NeedRealtimeImageUpdate )
+    // Reslice -- Perpendicular
+    if ( this->SliceDriver0 == vtkBrpNavGUI::SLICE_DRIVER_USER )
     {
-      /*
-        vtkMatrix4x4* mat = vtkMatrix4x4::New();
-        cout<<"UpdateSliceDisplay" <<endl;
-
-        mat->SetElement(0, 0, nx);
-        mat->SetElement(0, 1, ny);
-        mat->SetElement(0, 2, nz);
-        mat->SetElement(1, 0, tx);
-        mat->SetElement(1, 1, ty);
-        mat->SetElement(1, 2, tz);
-        mat->SetElement(2, 0, ny*tz-nz*ty);
-        mat->SetElement(2, 1, nz*tx-nx*tz);
-        mat->SetElement(2, 2, nx*ty-ny*tx);
-        mat->Invert();
-        
-        double ns[3];
-        double ts[3];
-        double cx = -128;
-        //double cx = 0;
-        double cy = -128;
-        //double cy = 0;
-        ns[0] = cx * nx;
-        ns[1] = cx * ny;
-        ns[2] = cx * nz;
-        
-        ts[0] = cy * tx;
-        ts[1] = cy * ty;
-        ts[2] = cy * tz;
-        
-        mat->SetElement(0, 3, px + ns[0] + ts[0]);
-        mat->SetElement(1, 3, py + ns[1] + ts[1]);
-        mat->SetElement(2, 3, pz + ns[2] + ts[2]);
-        mat->SetElement(3, 3, 1.0);
-        
-        mat->Delete();
-      */
+        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_USER" << std::endl;
     }
-
-     
-    // Axial and Real-time image
-    if (this->NeedRealtimeImageUpdate)
-      {
-        this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-        //this->Control0->GetOffsetScale()->SetValue(pz);
-        this->NeedRealtimeImageUpdate = 0;
-      }
-
-    if (this->NeedOrientationUpdate0) 
+    else if ( this->SliceDriver0 == vtkBrpNavGUI::SLICE_DRIVER_LOCATOR )
     {
-        //if (strcmp(this->RedSliceMenu->GetValue(), "Locator"))
-        //{
-        //    //if (!fFreeze)
-        //    this->SliceNode0->SetOrientationToAxial();
-        //}
-        //else
-        //{
-        this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-        //this->Control0->GetOffsetScale()->SetValue(pz);
-        //    //this->Logic1->SetSliceOffset(pz);
-        //}
+        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_LOCATOR" << std::endl;
+        this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+        this->Logic0->UpdatePipeline ();
+    }
+    else if ( this->SliceDriver0 == vtkBrpNavGUI::SLICE_DRIVER_RTIMAGE )
+    {
+        if (this->NeedRealtimeImageUpdate0)
+        {
+            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_RTIMAGE" << std::endl;
+            this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+            this->Logic0->UpdatePipeline ();
+        }
     }
 
 
-    // Sagittal
-    if (this->NeedOrientationUpdate1)
+    // Reslice -- In-plane 90
+    if ( this->SliceDriver1 == vtkBrpNavGUI::SLICE_DRIVER_USER )
     {
-        //if (strcmp(this->YellowSliceMenu->GetValue(), "Locator"))
-        //{
-        //    this->SliceNode1->SetOrientationToSagittal();
-        //}
-        //else
-        //{
+        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_USER" << std::endl;
+    }
+    else if ( this->SliceDriver1 == vtkBrpNavGUI::SLICE_DRIVER_LOCATOR )
+    {
+        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_LOCATOR" << std::endl;
         this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-        //this->Control1->GetOffsetScale()->SetValue(px);
-        //    //this->Logic1->SetSliceOffset(px);
-        //}
+        this->Logic1->UpdatePipeline ();
     }
-
-
-    // Coronal
-    if (this->NeedOrientationUpdate2)
+    else if ( this->SliceDriver1 == vtkBrpNavGUI::SLICE_DRIVER_RTIMAGE )
     {
-        //if (strcmp(this->GreenSliceMenu->GetValue(), "Locator"))
-        //{
-        //    this->SliceNode2->SetOrientationToCoronal();
-        //}
-        //else
-        //{
-        this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 3);
-        //this->Control2->GetOffsetScale()->SetValue(py);
-        //    //this->Logic2->SetSliceOffset(py);
-        //}
+        if (this->NeedRealtimeImageUpdate1)
+        {
+            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_RTIMAGE" << std::endl;
+            this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+            this->Logic1->UpdatePipeline ();
+        }
     }
 
+
+    // Reslice -- In-plane
+    if ( this->SliceDriver2 == vtkBrpNavGUI::SLICE_DRIVER_USER )
+    {
+        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_USER" << std::endl;
+    }
+    else if ( this->SliceDriver2 == vtkBrpNavGUI::SLICE_DRIVER_LOCATOR )
+    {
+        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_LOCATOR" << std::endl;
+        this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+        this->Logic2->UpdatePipeline ();
+    }
+    else if ( this->SliceDriver2 == vtkBrpNavGUI::SLICE_DRIVER_RTIMAGE )
+    {
+        if (this->NeedRealtimeImageUpdate2)
+        {
+            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_RTIMAGE" << std::endl;
+            this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+            this->Logic2->UpdatePipeline ();
+        }
+    }
 }
+
+
+void vtkBrpNavGUI::ChangeSlicePlaneDriver(int slice, const char* driver)
+{
+  std::cerr << "ChangeSlicePlaneDriver -- Slice: " << slice << ", Driver: " << driver << std::endl;
+
+    if ( slice == vtkBrpNavGUI::SLICE_PLANE_RED )
+    {
+        this->RedSliceMenu->SetValue(driver);
+        if ( strcmp(driver, "User") == 0 )
+        {
+            this->SliceNode0->SetOrientationToAxial();
+            this->SliceDriver0 = vtkBrpNavGUI::SLICE_DRIVER_USER;
+        }
+        else if ( strcmp(driver, "Locator") == 0 )
+        {
+            this->SliceDriver0 = vtkBrpNavGUI::SLICE_DRIVER_LOCATOR;
+        }
+        else if ( strcmp(driver, "RT Image") == 0 )
+        {
+            this->SliceDriver0 = vtkBrpNavGUI::SLICE_DRIVER_RTIMAGE;
+        }
+    }
+    else if ( slice == vtkBrpNavGUI::SLICE_PLANE_YELLOW )
+    {
+        this->YellowSliceMenu->SetValue(driver);
+        if ( strcmp(driver, "User") == 0 )
+        {
+            this->SliceNode1->SetOrientationToSagittal();
+            this->SliceDriver1 = vtkBrpNavGUI::SLICE_DRIVER_USER;
+        }
+        else if ( strcmp(driver, "Locator") == 0 )
+        {
+            this->SliceDriver1 = vtkBrpNavGUI::SLICE_DRIVER_LOCATOR;
+        }
+        else if ( strcmp(driver, "RT Image") == 0 )
+        {
+            this->SliceDriver1 = vtkBrpNavGUI::SLICE_DRIVER_RTIMAGE;
+        }
+    }
+    else //if ( slice == vtkBrpNavGUI::SLICE_PLANE_GREEN )
+    {
+        this->GreenSliceMenu->SetValue(driver);
+        if ( strcmp(driver, "User") == 0 )
+        {
+            this->SliceNode2->SetOrientationToCoronal();
+            this->SliceDriver2 = vtkBrpNavGUI::SLICE_DRIVER_USER;
+        }
+        else if ( strcmp(driver, "Locator") == 0 )
+        {
+            this->SliceDriver2 = vtkBrpNavGUI::SLICE_DRIVER_LOCATOR;
+        }
+        else if ( strcmp(driver, "RT Image") == 0 )
+        {
+            this->SliceDriver2 = vtkBrpNavGUI::SLICE_DRIVER_RTIMAGE;
+        }
+    }
+}
+
+
+
 
 ////////////////////////////////////////////////////////////////////
 ////////////////if for Checkbutton to XML+Coordinates send//////////////////////
@@ -3905,10 +3893,6 @@ void vtkBrpNavGUI::SetOpenTrackerforScannerControll()
 
 
 #endif
-
-
-
-
 vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, const char* volumeNodeName)
 {
 
@@ -3922,12 +3906,15 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
         vtkMRMLVolumeDisplayNode *displayNode = NULL;
         vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
         vtkImageData* image = vtkImageData::New();
-        
+
+        float fov = 300;
         image->SetDimensions(256, 256, 1);
         image->SetExtent(0, 255, 0, 255, 0, 0 );
+        image->SetSpacing( fov/256, fov/256, 10 );
         //image->SetNumberOfScalarComponents( 1 );
-        image->SetOrigin( 0, 0, 0 );
-        image->SetSpacing( 1, 1, 1 );
+        //image->SetOrigin( -127.5, -127.5, 0.5 );
+        image->SetOrigin( -fov/2, -fov/2, 0.5 );
+        //image->SetOrigin( 0.0, 0.0, 0.5 );
         image->SetScalarTypeToShort();
         image->AllocateScalars();
         
