@@ -36,6 +36,9 @@
 #include "vtkTransform.h"
 #include "vtkUnstructuredGrid.h"
 
+// Added to catch Slicer Interactor resizing problem, temporary
+#include "vtkRenderWindow.h"
+
 vtkCxxRevisionMacro(vtkMimxExtractEdgeWidget, "$Revision: 1.3 $");
 vtkStandardNewMacro(vtkMimxExtractEdgeWidget);
 
@@ -354,6 +357,12 @@ void vtkMimxExtractEdgeWidget::PrintSelf(ostream& os, vtkIndent indent)
 
 void vtkMimxExtractEdgeWidget::OnLeftButtonDown()
 {
+  // *** force an update for the interactor since it doesn't have the right size
+  // in Slicer as of 10/31/07. 
+  int rwSizeX = this->Interactor->GetRenderWindow()->GetSize()[0];
+  int rwSizeY = this->Interactor->GetRenderWindow()->GetSize()[1];
+  this->Interactor->UpdateSize(rwSizeX,rwSizeY);
+  
   int X = this->Interactor->GetEventPosition()[0];
   int Y = this->Interactor->GetEventPosition()[1];
 
