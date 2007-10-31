@@ -43,6 +43,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkRenderer.h"
 #include "vtkSphereSource.h"
 #include "vtkTransform.h"
+#include "vtkRenderWindow.h"
 
 vtkCxxRevisionMacro(vtkMimxUnstructuredGridWidget, "$Revision: 1.13 $");
 vtkStandardNewMacro(vtkMimxUnstructuredGridWidget);
@@ -434,8 +435,20 @@ void vtkMimxUnstructuredGridWidget::HighlightOutline(int highlight)
 
 void vtkMimxUnstructuredGridWidget::OnLeftButtonDown()
 {
+  // *** force an update for the interactor since it doesn't have the right size
+  // in Slicer as of 10/19/07. 
+
+  int rwSizeX = this->Interactor->GetRenderWindow()->GetSize()[0];
+  int rwSizeY = this->Interactor->GetRenderWindow()->GetSize()[1];
+  this->Interactor->UpdateSize(rwSizeX,rwSizeY);
+
   int X = this->Interactor->GetEventPosition()[0];
   int Y = this->Interactor->GetEventPosition()[1];
+  
+//  // *** debugging widget picks
+//  int sizeX = this->Interactor->GetSize()[0];
+//  int sizeY = this->Interactor->GetSize()[1];
+//  cout << "size: (" << sizeX << "," << sizeY << ") X: " << X << "Y: " << Y << endl;
 
   // Okay, we can process this. Try to pick handles first;
   // if no handles picked, then pick the bounding box.
