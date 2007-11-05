@@ -48,6 +48,10 @@
 #include "vtkLinkedListWrapper.h"
 #include "vtkMath.h"
 
+// included temporarily to fix interactor scaling problem
+#include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
+
 #include "vtkObjectFactory.h"
 #include "vtkKWPushButton.h"
 #include "vtkKWComboBoxWithLabel.h"
@@ -92,6 +96,13 @@ vtkKWMimxEditBBGroup::vtkKWMimxEditBBGroup()
   this->AddCount = 0;
   this->DeleteCount = 0;
   this->DeleteButtonState = 0;
+  
+//  // *** entered to cause recalibration of the render window interactor temporarily 
+//  // Until we find the right place within the slicer GUI instantiation.  Window sizing and
+//  // resizing are not strobing the renderWindowInteractor.
+//  int rwSizeX = this->MimxViewWindow->GetRenderWidget()->GetRenderWindow()->GetSize()[0];
+//  int rwSizeY = this->MimxViewWindow->GetRenderWidget()->GetRenderWindow()->GetSize()[1];
+//  this->MimxViewWindow->GetRenderWidget()->GetRenderWindow()->GetInteractor()->UpdateSize(rwSizeX,rwSizeY);
 }
 
 //----------------------------------------------------------------------------
@@ -254,21 +265,26 @@ void vtkKWMimxEditBBGroup::CreateWidget()
     this->VtkInteractionButton->GetWidgetName());
   this->VtkInteractionButton->SelectedStateOn();
 
+  // changed to bottom so the buttons are not as far to the right.  They didn't
+  // show on some systems because the width of the panel in slicer was not dynamic
+  
+  this->CancelButton->SetParent(this->MainFrame->GetFrame());
+  this->CancelButton->Create();
+  this->CancelButton->SetText("Close");
+  this->CancelButton->SetCommand(this, "EditBBCancelCallback");
+  this->GetApplication()->Script(
+    "pack %s -side bottom -anchor w  -padx 2 -pady 6", 
+    this->CancelButton->GetWidgetName());
+  
   this->DoneButton->SetParent(this->MainFrame->GetFrame());
   this->DoneButton->Create();
   this->DoneButton->SetText("Done");
   this->DoneButton->SetCommand(this, "EditBBDoneCallback");
   this->GetApplication()->Script(
-    "pack %s -side left -anchor nw -expand n -padx 6 -pady 6", 
+    "pack %s -side bottom -anchor w  -padx 2 -pady 6", 
     this->DoneButton->GetWidgetName());
 
-  this->CancelButton->SetParent(this->MainFrame->GetFrame());
-  this->CancelButton->Create();
-  this->CancelButton->SetText("Cancel");
-  this->CancelButton->SetCommand(this, "EditBBCancelCallback");
-  this->GetApplication()->Script(
-    "pack %s -side left -anchor nw -expand n -padx 2 -pady 6", 
-    this->CancelButton->GetWidgetName());
+
 
 }
 //----------------------------------------------------------------------------
