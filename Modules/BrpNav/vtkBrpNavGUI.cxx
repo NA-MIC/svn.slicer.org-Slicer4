@@ -1448,11 +1448,6 @@ void vtkBrpNavGUI::Enter ( )
     if (this->RealtimeVolumeNode == NULL)
         this->RealtimeVolumeNode = AddVolumeNode(this->VolumesLogic, "Realtime");
     
-    //Set to 1, philip 21/06/2007
-    //this->Logic0->GetForegroundLayer()->SetUseReslice(0);
-
-
-
 }
 
 //---------------------------------------------------------------------------
@@ -2892,11 +2887,10 @@ void vtkBrpNavGUI::UpdateAll()
         sz = 0.0;
     }
 
-    std::cerr << "==== Locator position ====" << std::endl;
-    std::cerr << "  (px, py, pz) =  ( " << px << ", " << py << ", " << pz << " )" << std::endl;
-    std::cerr << "  (nx, ny, nz) =  ( " << nx << ", " << ny << ", " << nz << " )" << std::endl;
-    std::cerr << "  (tx, ty, tz) =  ( " << tx << ", " << ty << ", " << tz << " )" << std::endl;
-
+    //std::cerr << "==== Locator position ====" << std::endl;
+    //std::cerr << "  (px, py, pz) =  ( " << px << ", " << py << ", " << pz << " )" << std::endl;
+    //std::cerr << "  (nx, ny, nz) =  ( " << nx << ", " << ny << ", " << nz << " )" << std::endl;
+    //std::cerr << "  (tx, ty, tz) =  ( " << tx << ", " << ty << ", " << tz << " )" << std::endl;
 
     //Philip Mewes 17.07.2007: defining and sending te workphase (WP) commands depending of requestet WP
     // received_robot_status = NULL;
@@ -3038,15 +3032,16 @@ void vtkBrpNavGUI::UpdateAll()
 
         if (vid && !this->FreezeOrientationUpdate)
         {
-            std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
+            //std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
 
             int orgSerial = this->RealtimeImageSerial;
             this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
             if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
             {
+
                 vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
 
-                this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
+                //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
                 this->RealtimeVolumeNode->SetAndObserveImageData(vid);
 
                 // One of NeedRealtimeImageUpdate0 - 2 is chosen based on the scan plane.
@@ -3104,9 +3099,12 @@ void vtkBrpNavGUI::UpdateAll()
                 rtimgTransform->SetElement(1, 3, py);
                 rtimgTransform->SetElement(2, 3, pz);
                 rtimgTransform->SetElement(3, 3, 1.0);
-
+                
                 this->RealtimeVolumeNode->SetIJKToRASMatrix(rtimgTransform);
+
+                this->RealtimeVolumeNode->UpdateScene(this->VolumesLogic->GetMRMLScene());
                 this->VolumesLogic->SetActiveVolumeNode(this->RealtimeVolumeNode);
+
                 this->VolumesLogic->Modified();
                 rtimgTransform->Delete();
             }
@@ -3177,10 +3175,6 @@ void vtkBrpNavGUI::UpdateAll()
             pos[1] = py;
             pos[2] = pz;
             
-            std::cerr << "    " << scanTrans[0][0] << ", " << scanTrans[0][1] << ", " << scanTrans[0][2] << std::endl;
-            std::cerr << "    " << scanTrans[1][0] << ", " << scanTrans[1][1] << ", " << scanTrans[1][2] << std::endl;
-            std::cerr << "    " << scanTrans[2][0] << ", " << scanTrans[2][1] << ", " << scanTrans[2][2] << std::endl;
-            
             // send coordinate to the scanner
             this->OpenTrackerStream->SetTracker(pos,quat);
         }
@@ -3246,16 +3240,16 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
                                       float tx, float ty, float tz, 
                                       float px, float py, float pz)
 {
-    std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() is called." << std::endl;
+  //std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() is called." << std::endl;
 
     // Reslice -- Perpendicular
     if ( this->SliceDriver0 == vtkBrpNavGUI::SLICE_DRIVER_USER )
     {
-        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_USER" << std::endl;
+      //        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_USER" << std::endl;
     }
     else if ( this->SliceDriver0 == vtkBrpNavGUI::SLICE_DRIVER_LOCATOR )
     {
-        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_LOCATOR" << std::endl;
+      //        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_LOCATOR" << std::endl;
         this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
         this->Logic0->UpdatePipeline ();
     }
@@ -3263,7 +3257,7 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
     {
         if (this->NeedRealtimeImageUpdate0)
         {
-            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_RTIMAGE" << std::endl;
+          //            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_RTIMAGE" << std::endl;
             this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
             this->Logic0->UpdatePipeline ();
         }
@@ -3273,11 +3267,11 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
     // Reslice -- In-plane 90
     if ( this->SliceDriver1 == vtkBrpNavGUI::SLICE_DRIVER_USER )
     {
-        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_USER" << std::endl;
+      //        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_USER" << std::endl;
     }
     else if ( this->SliceDriver1 == vtkBrpNavGUI::SLICE_DRIVER_LOCATOR )
     {
-        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_LOCATOR" << std::endl;
+      //        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_LOCATOR" << std::endl;
         this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
         this->Logic1->UpdatePipeline ();
     }
@@ -3285,7 +3279,7 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
     {
         if (this->NeedRealtimeImageUpdate1)
         {
-            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_RTIMAGE" << std::endl;
+          //            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_RTIMAGE" << std::endl;
             this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
             this->Logic1->UpdatePipeline ();
         }
@@ -3295,11 +3289,11 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
     // Reslice -- In-plane
     if ( this->SliceDriver2 == vtkBrpNavGUI::SLICE_DRIVER_USER )
     {
-        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_USER" << std::endl;
+      //        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_USER" << std::endl;
     }
     else if ( this->SliceDriver2 == vtkBrpNavGUI::SLICE_DRIVER_LOCATOR )
     {
-        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_LOCATOR" << std::endl;
+      //        std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_LOCATOR" << std::endl;
         this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
         this->Logic2->UpdatePipeline ();
     }
@@ -3307,7 +3301,7 @@ void vtkBrpNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
     {
         if (this->NeedRealtimeImageUpdate2)
         {
-            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_RTIMAGE" << std::endl;
+          //            std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_RTIMAGE" << std::endl;
             this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
             this->Logic2->UpdatePipeline ();
         }
@@ -3414,21 +3408,14 @@ void vtkBrpNavGUI::SetOpenTrackerConnectionParameters()
 
       this->OpenTrackerStream->Init(xmlpathfilename); 
         
-      cout << "=====================1GUI " << endl; 
-
       //int sp = atoi(this->UpdateRateEntry->GetWidget()->GetValue());
       int sp = 100;
       //float multi = atof(this->MultiFactorEntry->GetWidget()->GetValue());
         float multi = 1.0;
-      cout << "=====================2GUI " << endl; 
       this->OpenTrackerStream->SetSpeed(sp);
-      cout << "=====================3GUI " << endl; 
       this->OpenTrackerStream->SetMultiFactor(multi);
-      cout << "=====================4GUI " << endl; 
       this->OpenTrackerStream->SetStartTimer(1);
-      cout << "=====================5GUI " << endl; 
       this->OpenTrackerStream->ProcessTimerEvents();    
-      cout << "=====================6GUI " << endl; 
        
     }
     else
@@ -3888,12 +3875,10 @@ void vtkBrpNavGUI::SetOpenTrackerforScannerControll()
 }
 
 
-
-
-
-
 #endif
-vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, const char* volumeNodeName)
+
+vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic,
+                                               const char* volumeNodeName)
 {
 
     std::cerr << "AddVolumeNode(): called." << std::endl;
@@ -3907,13 +3892,14 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
         vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
         vtkImageData* image = vtkImageData::New();
 
-        float fov = 300;
+        float fov = 300.0;
         image->SetDimensions(256, 256, 1);
         image->SetExtent(0, 255, 0, 255, 0, 0 );
         image->SetSpacing( fov/256, fov/256, 10 );
         //image->SetNumberOfScalarComponents( 1 );
         //image->SetOrigin( -127.5, -127.5, 0.5 );
-        image->SetOrigin( -fov/2, -fov/2, 0.5 );
+        //image->SetOrigin( -fov/2, -fov/2, -5.0 );
+        image->SetOrigin( -fov/2, -fov/2, -0.0 );
         //image->SetOrigin( 0.0, 0.0, 0.5 );
         image->SetScalarTypeToShort();
         image->AllocateScalars();
@@ -3930,15 +3916,7 @@ vtkMRMLVolumeNode* vtkBrpNavGUI::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, 
         reslice->SetUseReslice(0);
         */
         scalarNode->SetAndObserveImageData(image);
-        vtkMatrix4x4* mat = vtkMatrix4x4::New();
-        scalarNode->ComputeIJKToRASFromScanOrder("IS",
-                                                 // possible is IS, PA, LR and inverse
-                                                 image->GetSpacing(),
-                                                 image->GetDimensions(),
-                                                 true, mat);
-        scalarNode->SetIJKToRASMatrix(mat);
-        mat->Delete();
-        //image->Delete();
+
         
         /* Based on the code in vtkSlicerVolumeLogic::AddHeaderVolume() */
         
