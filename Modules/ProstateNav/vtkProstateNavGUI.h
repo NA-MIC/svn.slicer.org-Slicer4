@@ -126,6 +126,26 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
  protected:
     vtkProstateNavGUI ( );
     virtual ~vtkProstateNavGUI ( );
+
+    //
+    // GUI widgets
+    //
+
+    // Workphase Frame
+
+    vtkKWPushButton *WorkPhaseStartUpButton;
+    vtkKWPushButton *WorkPhasePlanningButton;
+    vtkKWPushButton *WorkPhaseCalibrationButton;
+    vtkKWPushButton *WorkPhaseTargetingButton;
+    vtkKWPushButton *WorkPhaseManualButton;
+    vtkKWPushButton *WorkPhaseEmergencyButton;
+    vtkKWPushButton *ClearWorkPhasecontrollButton;
+    
+
+
+
+
+
     vtkKWEntryWithLabel *NormalOffsetEntry;
     vtkKWEntryWithLabel *TransOffsetEntry;
     vtkKWEntryWithLabel *NXTOffsetEntry;
@@ -189,14 +209,16 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *LocatorCheckButton;
     vtkKWCheckButton *FreezeImageCheckButton;
     vtkKWCheckButton *NeedleCheckButton;
-    
+
+    /*
     vtkKWCheckButton *WorkPhaseStartUpButton;
     vtkKWCheckButton *WorkPhasePlanningButton;
     vtkKWCheckButton *WorkPhaseCalibarationButton;
     vtkKWCheckButton *WorkPhaseTargetingButton;
     vtkKWCheckButton *WorkPhaseManualButton;
     vtkKWCheckButton *WorkPhaseEmergencyButton;
-     vtkKWCheckButton *ClearWorkPhasecontrollButton;
+    vtkKWCheckButton *ClearWorkPhasecontrollButton;
+    */
 
     vtkKWCheckButton *HandleCheckButton;
     vtkKWCheckButton *GuideCheckButton;
@@ -402,13 +424,15 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     void operator = ( const vtkProstateNavGUI& ); //Not implemented.
 
     // void BuildGUIForHandPieceFrame ();
-    void BuildGUIForTrackingFrame();
-    void BuildGUIForDeviceFrame(); 
-    void BuildGUIForRealtimeacqFrame();
     void BuildGUIForWorkPhaseFrame();
+    void BuildGUIForWizardFrame();
+    void BuildGUIForHelpFrame();
+    void BuildGUIForTrackingFrame();
+    void BuildGUIForDeviceFrame();
+    void BuildGUIForRealtimeacqFrame();
     void BuildGUIForscancontrollFrame();
     void BuildGUIForCalibration();
-    
+
     //void TrackerLoop();
 
 #ifdef USE_NAVITRACK
