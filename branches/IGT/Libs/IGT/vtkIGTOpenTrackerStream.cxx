@@ -58,11 +58,13 @@ vtkIGTOpenTrackerStream::vtkIGTOpenTrackerStream()
     this->RegMatrix = NULL;
     this->RegMatrix_cb2 = NULL;
     this->context = NULL;
+
 }
 
 
 vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream()
 {
+
     this->LocatorNormalTransform->Delete();
     this->LocatorMatrix->Delete();
 
@@ -225,7 +227,9 @@ void vtkIGTOpenTrackerStream::callbackF_cb2(Node&, Event &event, void *data_cb2)
     VOT_cb2->LocatorMatrix->SetElement(0,0,VOT_cb2->needle_tip_cb2_FS0);
     VOT_cb2->LocatorMatrix->SetElement(1,0,VOT_cb2->needle_tip_cb2_FS1);
     VOT_cb2->LocatorMatrix->SetElement(2,0,VOT_cb2->needle_tip_cb2_FS2);
+
 }
+
 
 void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
 {
@@ -251,46 +255,6 @@ void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
     
     VOT->quaternion2xyz(orientation, norm, transnorm);
     
-   
-    ////
-    ////Philip Mewes: Only for validation, can be removed 
-    ////
-
-    timeval systemtime;
-    sleep(1);
-    gettimeofday(&systemtime, 0);
-    cout << systemtime.tv_sec << ':' << systemtime.tv_usec << endl; 
-   
-    //VOT->time_stamp_scanner = event->time();   
-    
- 
-    float secenstart = systemtime.tv_usec/100000;
-    float secenstartmod = systemtime.tv_usec%1000000;
-   
-    //Calculation of the delay
-
-    double secend_event;
-    double usecent_event;
-
-    double time_diff_sec = secenstart - secend_event;
-    double time_diff_usec = secenstartmod - usecent_event;
-
-    //write to file
-    
-
-    // char time_diff_tofile[80] = {time_diff_sec, time_diff_usec};
-    // char time_diff_tofile[9] = "Test";
-    char time_diff_tofile[20] = "Systemtime: ";
-    char lign_return[2] = "\n";
-    
-    char time_diff_tofile_2[20];
-    sprintf(time_diff_tofile_2, "%g", secenstartmod);
-
-    ////
-    //// end of validation code
-    ////
-
-
     if (event.hasAttribute("image"))
     {
         VOT->RealtimeImageSerial = (VOT->RealtimeImageSerial + 1) % 32768;
@@ -318,6 +282,7 @@ void vtkIGTOpenTrackerStream::callbackF(Node&, Event &event, void *data)
         } else {
             std::cerr << "No slice thickness information." << std::endl;
         }
+
     }
     
     // For debug 
@@ -703,17 +668,17 @@ void vtkIGTOpenTrackerStream::GetRealtimeImage(int* serial, vtkImageData* image)
     }
 }
 
-void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* OrientationForScanner0,float* OrientationForScanner1, float* OrientationForScanner2, float* OrientationForScanner3, float* PositionForScanner0, float* PositionForScanner1, float* PositionForScanner2)
+void vtkIGTOpenTrackerStream::GetCoordsOrientforScanner(float* Orientation0, float* Orientation1, float* Orientation2, float* Orientation3, float* Position0, float* Position1, float* Position2)
 {
    
-  *OrientationForScanner0 = orientation_cb2_FS0;
-  *OrientationForScanner1 = orientation_cb2_FS1;
-  *OrientationForScanner2 = orientation_cb2_FS2;
-  *OrientationForScanner3 = orientation_cb2_FS3;
+  *Orientation0 = orientation_cb2_FS0;
+  *Orientation1 = orientation_cb2_FS1;
+  *Orientation2 = orientation_cb2_FS2;
+  *Orientation3 = orientation_cb2_FS3;
   
-  *PositionForScanner0 = position_cb2_FS0;
-  *PositionForScanner1 = position_cb2_FS1;
-  *PositionForScanner2 = position_cb2_FS2;
+  *Position0 = position_cb2_FS0;
+  *Position1 = position_cb2_FS1;
+  *Position2 = position_cb2_FS2;
   
 }
 

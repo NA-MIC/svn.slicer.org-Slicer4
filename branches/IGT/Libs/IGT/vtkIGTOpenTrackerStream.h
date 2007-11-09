@@ -154,7 +154,7 @@ private:
     int   RealtimeImageY;                // (pixel)
     float RealtimeImageFov;              // (mm)
     float RealtimeImageSlthick;          // (mm)
-    
+
 
     void Normalize(float *a);
     void Cross(float *a, float *b, float *c);
