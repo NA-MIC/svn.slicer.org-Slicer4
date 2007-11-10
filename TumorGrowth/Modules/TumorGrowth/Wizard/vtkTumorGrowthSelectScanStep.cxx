@@ -83,6 +83,14 @@ void vtkTumorGrowthSelectScanStep::RemoveGUIObservers()
     }
 }
 
+void vtkTumorGrowthSelectScanStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) { 
+  vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
+  if (this->VolumeMenuButton && selector == this->VolumeMenuButton && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent && this->VolumeMenuButton->GetSelected() != NULL) 
+  { 
+    this->GetGUI()->UpdateMRML();
+  }
+}
+
 //----------------------------------------------------------------------------
 void vtkTumorGrowthSelectScanStep::PrintSelf(ostream& os, vtkIndent indent)
 {

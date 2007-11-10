@@ -5,6 +5,7 @@
 #include "vtkKWWizardWorkflow.h"
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkKWMessageDialog.h"
+#include "vtkMRMLTumorGrowthNode.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthSecondScanStep);
@@ -59,6 +60,14 @@ void vtkTumorGrowthSecondScanStep::ProcessGUIEvents(vtkObject *caller, void *cal
     cout << " >>>>>>>>>>>>>>> Debugging <<<<<<<<" << endl; 
     this->TransitionCallback(0);
 }
+
+void vtkTumorGrowthSecondScanStep::UpdateGUI() {
+  vtkMRMLTumorGrowthNode* n = this->GetGUI()->GetNode();
+  if (n != NULL)
+  {
+    this->VolumeMenuButton->SetSelected(this->VolumeMenuButton->GetMRMLScene()->GetNodeByID(n->GetSecondScanRef()));
+  }
+} 
 
 // Call from Cancel button (which is now analyze) or by selecting volume 
 void vtkTumorGrowthSecondScanStep::TransitionCallback(int Flag) 

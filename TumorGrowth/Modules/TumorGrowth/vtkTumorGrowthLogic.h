@@ -8,6 +8,9 @@
 #include <string>
 #include <map>
 
+class vtkMRMLScene;
+
+
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthLogic : 
   public vtkSlicerModuleLogic
 {
@@ -17,8 +20,12 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
  // TODO: do we need to observe MRML here?
-  virtual void ProcessMrmlEvents ( vtkObject *caller, unsigned long event,
-                                   void *callData ){};
+ // pohl: I so not I follow example vtkGradnientAnisotrpoicDiffusionoFilterGUI
+ // virtual void ProcessMrmlEvents ( vtkObject *caller, unsigned long event,
+ //                                  void *callData ){};
+ // void ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData);
+
+
 
   // Description: The name of the Module---this is used to construct
   // the proc invocations
@@ -41,6 +48,7 @@ public:
   vtkGetMacro(ProgressGlobalFractionCompleted, double);
   vtkGetMacro(ProgressCurrentFractionCompleted, double);
 
+  void RegisterMRMLNodesWithScene(); 
 
   // special testing functions
   virtual void      PopulateTestingData();

@@ -28,7 +28,6 @@ vtkTumorGrowthFirstScanStep::~vtkTumorGrowthFirstScanStep() {
 
 void vtkTumorGrowthFirstScanStep::UpdateMRML() 
 {
-  cout <<  "vtkTumorGrowthFirstScanStep::UpdateMrml" << endl;
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
 
   if (!node) return;
@@ -38,6 +37,13 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
   }
 }
 
+void vtkTumorGrowthFirstScanStep::UpdateGUI() {
+  vtkMRMLTumorGrowthNode* n = this->GetGUI()->GetNode();
+  if (n != NULL)
+  {
+    this->VolumeMenuButton->SetSelected(this->VolumeMenuButton->GetMRMLScene()->GetNodeByID(n->GetFirstScanRef()));
+  }
+} 
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthFirstScanStep::ShowUserInterface()
@@ -67,7 +73,6 @@ void vtkTumorGrowthFirstScanStep::WizardGUICallback(vtkObject *caller, unsigned 
     }
 }
 
-
 void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *callData) {
     // This just has to be donw if you use the same Callbakc function for severall calls 
     vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
@@ -77,6 +82,7 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *call
       this->TransitionCallback(0);
     }
 }
+
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthFirstScanStep::TransitionCallback(int Flag) 

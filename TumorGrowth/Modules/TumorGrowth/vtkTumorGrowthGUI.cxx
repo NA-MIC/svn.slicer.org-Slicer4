@@ -152,13 +152,11 @@ void vtkTumorGrowthGUI::AddGUIObservers()
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::RemoveGUIObservers()
 {
-#if 0
-  this->ApplyButton->RemoveObservers(vtkKWPushButton::InvokedEvent,  
-                                     (vtkCommand *)this->GUICallbackCommand);
-#endif
-
-  if (this->FirstScanStep) this->FirstScanStep->RemoveGUIObservers();
-  if (this->SecondScanStep) this->SecondScanStep->RemoveGUIObservers();
+  if (this->FirstScanStep)    this->FirstScanStep->RemoveGUIObservers();
+  if (this->ROIStep)          this->ROIStep->RemoveGUIObservers();
+  if (this->SegmentationStep) this->SegmentationStep->RemoveGUIObservers();
+  if (this->SecondScanStep)   this->SecondScanStep->RemoveGUIObservers();
+  if (this->AnalysisStep)     this->AnalysisStep->RemoveGUIObservers();
 }
 
 //---------------------------------------------------------------------------
@@ -166,11 +164,13 @@ void vtkTumorGrowthGUI::ProcessGUIEvents(vtkObject *caller,
                                                       unsigned long event,
                                                       void *callData) 
 {
-//   this->IntensityDistributionsStep->ProcessManualIntensitySamplingGUIEvents(
-//     caller, event, callData);
-//   this->RunSegmentationStep->ProcessRunRegistrationOutputGUIEvents(
-//     caller, event, callData);
+  if (this->FirstScanStep)    this->FirstScanStep->ProcessGUIEvents(caller, event, callData); 
+  if (this->ROIStep)          this->ROIStep->ProcessGUIEvents(caller, event, callData); 
+  if (this->SegmentationStep) this->SegmentationStep->ProcessGUIEvents(caller, event, callData); 
+  if (this->SecondScanStep)   this->SecondScanStep->ProcessGUIEvents(caller, event, callData); 
+  if (this->AnalysisStep)     this->AnalysisStep->ProcessGUIEvents(caller, event, callData); 
 }
+
 
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::ProcessLogicEvents (
@@ -216,10 +216,9 @@ void vtkTumorGrowthGUI::UpdateMRML()
     //    no parameter node selected yet, create new
     vtkMRMLTumorGrowthNode* TumorGrowthNode = vtkMRMLTumorGrowthNode::New();
     n = TumorGrowthNode;
-
-    //set an observe new node in Logic
-    // this->Logic->SetAndObserveSlicerVolumeMathNode(volumeMathNode);
-    vtkSetAndObserveMRMLNodeMacro(this->Node, TumorGrowthNode);
+    this->GetMRMLScene()->AddNode(n);
+    this->Logic->SetAndObserveTumorGrowthNode(n);
+    vtkSetAndObserveMRMLNodeMacro(this->Node, n);
   }
 
   // save node parameters for Undo
@@ -233,52 +232,47 @@ void vtkTumorGrowthGUI::UpdateMRML()
   if (this->AnalysisStep)     this->AnalysisStep->UpdateMRML(); 
 }
 
-
+// according to vtkGradnientAnisotrpoicDiffusionoFilterGUI
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::UpdateGUI()
 {
+  cout << "------------ vtkTumorGrowthGUI::UpdateGUI ==========" << endl;
+
+  vtkMRMLTumorGrowthNode* n = this->GetNode();
+  if (n != NULL)
+    {
+      // This might have to be changed bc instances might not yet be created 
+      if (this->FirstScanStep)    this->FirstScanStep->UpdateGUI(); 
+      if (this->ROIStep)          this->ROIStep->UpdateGUI(); 
+      if (this->SegmentationStep) this->SegmentationStep->UpdateGUI(); 
+      if (this->SecondScanStep)   this->SecondScanStep->UpdateGUI(); 
+      if (this->AnalysisStep)     this->AnalysisStep->UpdateGUI(); 
+    }
 }
+
+
+//  according to vtkGradnientAnisotrpoicDiffusionoFilterGUI
 
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::ProcessMRMLEvents(vtkObject *caller,
                                        unsigned long event,
                                        void *callData) 
 {
+
+  cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents ==========" << endl;
+
   // TODO: map the object and event to strings for tcl
   
   //vtksys_stl::cout << "ProcessMRMLEvents()" << vtksys_stl::endl;
   // if parameter node has been changed externally, update GUI widgets
   // with new values 
-  vtkMRMLTumorGrowthNode* node
-    = vtkMRMLTumorGrowthNode::SafeDownCast(caller);
+  vtkMRMLTumorGrowthNode* node = vtkMRMLTumorGrowthNode::SafeDownCast(caller);
+  cout << "blub " << node << " dsfdffd " << this->GetNode() << endl;  
   if (node != NULL && this->GetNode() == node) 
-    {
-    this->UpdateGUI();
-    }
+  {
+     this->UpdateGUI();
+  }
 
-  // If there is an TumorGrowth MRML node changed event, the wizard should
-  // update right away on any step
-  if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene 
-    && (event == vtkMRMLScene::NodeAddedEvent 
-    || event == vtkMRMLScene::NodeRemovedEvent ) )
-    {
-    vtkMRMLNode *node = (vtkMRMLNode*)(callData);
-    if (node != NULL && node->IsA("vtkMRMLTumorGrowthNode"))
-      {
-      // current node removed
-      if(node == this->GetNode() && event == vtkMRMLScene::NodeRemovedEvent)
-        {
-        vtkKWMessageDialog::PopupMessage( 
-          this->GetApplication(), 
-          this->GetApplicationGUI()->GetMainSlicerWindow(),
-          "EM Segment", "Current MRML node is removed!",
-          vtkKWMessageDialog::WarningIcon);
-        }
-      // this->ParametersSetStep->UpdateLoadedParameterSets();
-      // cout << "Kilian Make sure this is going to be fixed" << endl;
-      this->WizardWidget->GetWizardWorkflow()->GetCurrentStep()->ShowUserInterface();
-      }
-    }
 }
 
 //---------------------------------------------------------------------------
@@ -289,7 +283,7 @@ void vtkTumorGrowthGUI::BuildGUI()
   const char *help = 
     "**TumorGrowth Module:** **Under Construction** ";
   
-  // this->Logic->RegisterMRMLNodesWithScene();
+  this->Logic->RegisterMRMLNodesWithScene();
 
   this->UIPanel->AddPage("TumorGrowth", 
                          "TumorGrowth", NULL);

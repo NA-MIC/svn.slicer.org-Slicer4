@@ -39,6 +39,7 @@ vtkTumorGrowthLogic::vtkTumorGrowthLogic()
   //this->DebugOn();
 
   this->TumorGrowthNode = NULL; 
+
 }
 
 //----------------------------------------------------------------------------
@@ -151,4 +152,65 @@ PopulateTestingData()
 
   vtkDebugMacro("Done populating test data");
 }
+
+void vtkTumorGrowthLogic::RegisterMRMLNodesWithScene() {
+   vtkMRMLTumorGrowthNode* tmNode =  vtkMRMLTumorGrowthNode::New();
+   this->GetMRMLScene()->RegisterNodeClass(tmNode);
+   tmNode->Delete();
+}
+
+
+// according to vtkGradnientAnisotrpoicDiffusionoFilterGUI
+// 
+//void vtkTumorGrowthLogic::ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData) {
+//  vtkMRMLTumorGrowthNode* node = vtkMRMLTumorGrowthNode::SafeDownCast(caller);
+//  cout << " vtkTumorGrowthLogic::ProcessMRMLEvents " << endl;
+  //if (node != NULL && this->GetTumorGrowthNode() == node) 
+  //  {
+  //  this->UpdateGUI();
+  //  }
+// }
+
+
+// This function is automatically called as part of the pipeline 
+// According to EMSegment
+// void vtkTumorGrowthLogic::ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData) {
+//   if (vtkMRMLScene::SafeDownCast(caller) != this->MRMLScene) {
+//     return;
+//   }
+// 
+//   vtkMRMLNode *node = (vtkMRMLNode*)(callData);
+//   if (node == NULL)
+//     {
+//     return;
+//     }
+// 
+//   if (event == vtkMRMLScene::NodeAddedEvent)
+//   {
+//       if (node->IsA("vtkMRMLTumorGrowthNode"))  
+//       {
+//      // update node in GUI   
+//      this->NODE = (vtkMRMLTumorGrowthNode*) node;
+//      Update 
+// 
+//   ///   
+//   look at vtkGradnientAnisotrpoicDiffusionoFilterGUI
+// 
+//   vtkSetAndObserveMRMLNodeMacro( this->GradientAnisotropicDiffusionFilterNode, n);
+//      (vtkMRMLTumorGrowthNode* node);
+//
+//         cout << "Update Now" << endl;
+//       
+//       }
+//   }
+//   else if (event == vtkMRMLScene::NodeRemovedEvent)
+//   {
+//     if (node->IsA("vtkMRMLTumorGrowthNode"))  
+//       {
+//        cout << "Remove Now" << endl;
+//       }
+//   }
+// }
+
+
 
