@@ -38,6 +38,11 @@ public:
 
   virtual void UpdateMRML() { }
 
+  virtual void UpdateGUI() { } 
+  virtual void RemoveGUIObservers() { } 
+
+  virtual void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) { }
+
 protected:
   vtkTumorGrowthStep();
   ~vtkTumorGrowthStep();

@@ -20,6 +20,10 @@ public:
   void TransitionCallback() {this->TransitionCallback(1);}
 
   virtual void UpdateMRML();
+  virtual void UpdateGUI();
+
+  void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
+    this->vtkTumorGrowthSelectScanStep::ProcessGUIEvents(caller, event, callData); }
 
 protected:
   vtkTumorGrowthFirstScanStep();

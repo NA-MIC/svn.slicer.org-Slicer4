@@ -73,7 +73,7 @@ void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
   Superclass::WriteXML(of, nIndent);
 
   // Write all MRML node attributes into output stream
-
+  cout << "vtkMRMLTumorGrowthNode::WriteXML" << endl;
   vtkIndent indent(nIndent);
 
   {
@@ -168,5 +168,4 @@ void vtkMRMLTumorGrowthNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "OutputVolumeRef:   " << 
    (this->SecondScanRef ? this->SecondScanRef : "(none)") << "\n";
 }
-
 

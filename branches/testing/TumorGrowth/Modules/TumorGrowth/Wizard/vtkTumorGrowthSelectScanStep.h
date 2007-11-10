@@ -19,6 +19,7 @@ public:
 
   virtual void AddGUIObservers();
   virtual void RemoveGUIObservers(); 
+  void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);
 
 protected:
   vtkTumorGrowthSelectScanStep();
