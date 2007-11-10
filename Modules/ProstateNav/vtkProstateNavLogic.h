@@ -35,7 +35,37 @@ public:
     vtkTypeRevisionMacro(vtkProstateNavLogic,vtkObject);
     void PrintSelf(ostream& os, vtkIndent indent);
 
+    vtkGetMacro ( CurrentPhase, int );
+    vtkGetMacro ( PrevPhase, int );
+    vtkGetMacro ( PhaseTransitionCheck, bool );
+    vtkSetMacro ( PhaseTransitionCheck, bool );
 
+    int  SwitchWorkPhase(int newwp);
+    int  IsPhaseTransitable(int nextwp);
+
+public:
+    //BTX
+    enum WorkPhase {
+      StartUp = 0,
+      Planning,
+      Calibration,
+      Targeting,
+      Manual,
+      Emergency,
+      NumPhases,
+    };
+    //ETX
+    
+private:
+
+    int   CurrentPhase;
+    int   PrevPhase;
+    int   PhaseComplete;
+    bool  PhaseTransitionCheck;
+
+    static const int PhaseTransitionMatrix[NumPhases][NumPhases];
+
+    
 protected:
 
     vtkProstateNavLogic();

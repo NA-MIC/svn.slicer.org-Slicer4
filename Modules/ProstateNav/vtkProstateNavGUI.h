@@ -45,6 +45,7 @@
 #endif
 
 class vtkKWPushButton;
+class vtkKWPushButtonSet;
 class vtkKWEntryWithLabel;
 class vtkKWMenuButtonWithLabel;
 class vtkKWMenuButton;
@@ -133,16 +134,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
     // Workphase Frame
 
-    vtkKWPushButton *WorkPhaseStartUpButton;
-    vtkKWPushButton *WorkPhasePlanningButton;
-    vtkKWPushButton *WorkPhaseCalibrationButton;
-    vtkKWPushButton *WorkPhaseTargetingButton;
-    vtkKWPushButton *WorkPhaseManualButton;
-    vtkKWPushButton *WorkPhaseEmergencyButton;
-    vtkKWPushButton *ClearWorkPhasecontrollButton;
-    
-
-
+    vtkKWPushButtonSet *WorkPhaseButtonSet;
 
 
 
@@ -177,14 +169,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
     vtkKWFrame *ExtraFrame;
 
-    /*
-    vtkKWScaleWithEntry* RedColorScale;
-    vtkKWScaleWithEntry* GreenColorScale;
-    vtkKWScaleWithEntry* BlueColorScale;    
-    */
-    
-
-
     vtkKWMenuButtonWithLabel *ServerMenu;
     vtkKWMenuButtonWithLabel *PauseCheckButton;
     vtkKWMenuButtonWithLabel *SetText;
@@ -209,16 +193,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     vtkKWCheckButton *LocatorCheckButton;
     vtkKWCheckButton *FreezeImageCheckButton;
     vtkKWCheckButton *NeedleCheckButton;
-
-    /*
-    vtkKWCheckButton *WorkPhaseStartUpButton;
-    vtkKWCheckButton *WorkPhasePlanningButton;
-    vtkKWCheckButton *WorkPhaseCalibarationButton;
-    vtkKWCheckButton *WorkPhaseTargetingButton;
-    vtkKWCheckButton *WorkPhaseManualButton;
-    vtkKWCheckButton *WorkPhaseEmergencyButton;
-    vtkKWCheckButton *ClearWorkPhasecontrollButton;
-    */
 
     vtkKWCheckButton *HandleCheckButton;
     vtkKWCheckButton *GuideCheckButton;
@@ -432,6 +406,8 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     void BuildGUIForRealtimeacqFrame();
     void BuildGUIForscancontrollFrame();
     void BuildGUIForCalibration();
+
+    int  ChangeWorkPhase(int phase, int fChangeWizard=0);
 
     //void TrackerLoop();
 
