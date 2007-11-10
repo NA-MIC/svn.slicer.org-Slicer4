@@ -1,3 +1,17 @@
+/*=auto=========================================================================
+
+  Portions (c) Copyright 2006 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: $
+  Date:      $Date: $
+  Version:   $Revision: $
+
+=========================================================================auto=*/
+
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
@@ -22,6 +36,7 @@
 #include "vtkKWMenuButton.h"
 #include "vtkKWCheckButton.h"
 #include "vtkKWPushButton.h"
+#include "vtkKWPushButtonSet.h"
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWFrame.h"
 #include "vtkKWLoadSaveButton.h"
@@ -37,6 +52,8 @@
 #include "vtkKWMessageDialog.h"
 #include "vtkKWMultiColumnListWithScrollbars.h"
 #include "vtkKWEvent.h"
+#include "vtkKWOptions.h"
+
 
 //#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
 
@@ -78,12 +95,22 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
 
     this->Logic = NULL;
 
+    // Workphase Frame
+
+    this->WorkPhaseButtonSet = NULL;
+    //this->ClearWorkPhasecontrollButton = NULL;
+
+
+    // Wizard Frame
     this->WizardWidget = vtkKWWizardWidget::New();
     this->ConfigurationStep = NULL;
     this->ScanControlStep = NULL;
     this->CalibrationStep = NULL;
     this->TargetingStep = NULL;
     this->ManualControlStep = NULL;
+
+
+
 
     this->NormalOffsetEntry = NULL; 
     this->TransOffsetEntry = NULL;
@@ -122,14 +149,6 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
 
     this->LocatorCheckButton = NULL;
     this->FreezeImageCheckButton = NULL;
-
-    this->WorkPhaseStartUpButton = NULL;
-    this->WorkPhasePlanningButton = NULL;
-    this->WorkPhaseCalibrationButton = NULL;
-    this->WorkPhaseTargetingButton = NULL;
-    this->WorkPhaseManualButton = NULL;
-    this->WorkPhaseEmergencyButton = NULL;
-    //this->ClearWorkPhasecontrollButton = NULL;
 
     this->NeedleCheckButton = NULL;
     this->HandleCheckButton = NULL;
@@ -257,6 +276,30 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
     }
 
     this->RemoveGUIObservers();
+
+
+    //
+    // Workphase Frame
+    //
+
+    if (this->WorkPhaseButtonSet)
+    {
+        this->WorkPhaseButtonSet->SetParent(NULL);
+        this->WorkPhaseButtonSet->Delete();
+    }
+
+    /*
+    if (this->ClearWorkPhasecontrollButton)
+    {
+    this->ClearWorkPhasecontrollButton->SetParent(NULL );
+    this->ClearWorkPhasecontrollButton->Delete ( );
+    }
+    */
+
+    //
+    // Wizard Frame
+    //
+
 
     if (this->NormalOffsetEntry)
     {
@@ -408,18 +451,18 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
     }
     if (this->ConnectCheckButtonprepScanner)
     {
-    this->ConnectCheckButtonprepScanner->SetParent(NULL );
-    this->ConnectCheckButtonprepScanner->Delete ( );
+        this->ConnectCheckButtonprepScanner->SetParent(NULL );
+        this->ConnectCheckButtonprepScanner->Delete ( );
     }
     if (this->ConnectCheckButtonpauseScanner)
     {
-    this->ConnectCheckButtonpauseScanner->SetParent(NULL );
-    this->ConnectCheckButtonpauseScanner->Delete ( );
+        this->ConnectCheckButtonpauseScanner->SetParent(NULL );
+        this->ConnectCheckButtonpauseScanner->Delete ( );
     }
     if (this->ConnectCheckButtonresumeScanner)
     {
-    this->ConnectCheckButtonresumeScanner->SetParent(NULL );
-    this->ConnectCheckButtonresumeScanner->Delete ( );
+        this->ConnectCheckButtonresumeScanner->SetParent(NULL );
+        this->ConnectCheckButtonresumeScanner->Delete ( );
     }
 
     if (this->ConnectCheckButtonnewexam)
@@ -440,46 +483,6 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
     this->FreezeImageCheckButton->Delete ( );
     }
 
-
-    if (this->WorkPhaseStartUpButton)
-    {
-    this->WorkPhaseStartUpButton->SetParent(NULL );
-    this->WorkPhaseStartUpButton->Delete ( );
-    }
-
-    if (this->WorkPhasePlanningButton)
-    {
-    this->WorkPhasePlanningButton->SetParent(NULL );
-    this->WorkPhasePlanningButton->Delete ( );
-    }
-    if (this->WorkPhaseCalibrationButton)
-    {
-    this->WorkPhaseCalibrationButton->SetParent(NULL );
-    this->WorkPhaseCalibrationButton->Delete ( );
-    }
-    if (this->WorkPhaseTargetingButton)
-    {
-    this->WorkPhaseTargetingButton->SetParent(NULL );
-    this->WorkPhaseTargetingButton->Delete ( );
-    }
-    if (this->WorkPhaseManualButton)
-    {
-    this->WorkPhaseManualButton->SetParent(NULL );
-    this->WorkPhaseManualButton->Delete ( );
-    }
-    if (this->WorkPhaseEmergencyButton)
-    {
-    this->WorkPhaseEmergencyButton->SetParent(NULL );
-    this->WorkPhaseEmergencyButton->Delete ( );
-    }
-
-    /*
-    if (this->ClearWorkPhasecontrollButton)
-    {
-    this->ClearWorkPhasecontrollButton->SetParent(NULL );
-    this->ClearWorkPhasecontrollButton->Delete ( );
-    }
-    */
 
 
     if (this->NeedleCheckButton)
@@ -686,7 +689,37 @@ void vtkProstateNavGUI::RemoveGUIObservers ( )
     this->DeviceMenuButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
 #endif
 
-  
+
+    //
+    // Workphase Frame
+    //
+    if (this->WorkPhaseButtonSet)
+    {
+        for (int i = 0; i < this->WorkPhaseButtonSet->GetNumberOfWidgets(); i ++)
+        {
+            this->WorkPhaseButtonSet->GetWidget(i)->AddObserver(vtkKWPushButton::InvokedEvent,
+                                                                (vtkCommand *)this->GUICallbackCommand );
+        }
+    }
+
+    /*
+     if (this->ClearWorkPhasecontrollButton)
+     {
+    this->ClearWorkPhasecontrollButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+     }
+    */
+    
+
+    //
+    // Wizard Frame
+    //
+
+
+
+
+
+
+
     if (this->ConnectCheckButtonRI)
     {
     this->ConnectCheckButtonRI->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
@@ -779,42 +812,9 @@ void vtkProstateNavGUI::RemoveGUIObservers ( )
     {
     this->FreezeImageCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->WorkPhaseStartUpButton)
-    {
-    this->WorkPhaseStartUpButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
 
-    if (this->WorkPhasePlanningButton)
-    {
-    this->WorkPhasePlanningButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
 
-    if (this->WorkPhaseCalibrationButton)
-    {
-    this->WorkPhaseCalibrationButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
 
-    if (this->WorkPhaseTargetingButton)
-    {
-    this->WorkPhaseTargetingButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-
-    if (this->WorkPhaseManualButton)
-    {
-    this->WorkPhaseManualButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-
-    if (this->WorkPhaseEmergencyButton)
-    {
-    this->WorkPhaseEmergencyButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-    /*
-     if (this->ClearWorkPhasecontrollButton)
-     {
-    this->ClearWorkPhasecontrollButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-     }
-    */
-    
     if (this->NeedleCheckButton)
     {
     this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
@@ -840,24 +840,36 @@ void vtkProstateNavGUI::AddGUIObservers ( )
 
     vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
 
-    appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
-    appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
-    appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle()->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+    appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()
+      ->GetRenderWindowInteractor()->GetInteractorStyle()
+      ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+    appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()
+      ->GetRenderWindowInteractor()->GetInteractorStyle()
+      ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+    appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()
+      ->GetRenderWindowInteractor()->GetInteractorStyle()
+      ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
 
 
-    // Widgets in Workphase Frame
+    //
+    // Workphase Frame
+    //
+    for (int i = 0; i < this->WorkPhaseButtonSet->GetNumberOfWidgets(); i ++)
+    {
+        this->WorkPhaseButtonSet->GetWidget(i)->AddObserver( vtkKWPushButton::InvokedEvent,
+                                                            (vtkCommand *)this->GUICallbackCommand );
+    }
 
-    this->WorkPhaseStartUpButton->AddObserver      ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->WorkPhasePlanningButton->AddObserver     ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->WorkPhaseCalibrationButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->WorkPhaseTargetingButton->AddObserver    ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->WorkPhaseManualButton->AddObserver       ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->WorkPhaseEmergencyButton->AddObserver    ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    //this->ClearWorkPhasecontrollButton->AddObserver ( vtkKWCheckButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
-    //this->ClearWorkPhasecontrollButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+    //
+    // Wizard Frame
+    //
+    // 11/09/2007 J. Tokuda: Should it be registered to LogicCallback?
+    this->WizardWidget->GetWizardWorkflow()->AddObserver(vtkKWWizardWorkflow::CurrentStateChangedEvent,
+                                                         (vtkCommand *)this->GUICallbackCommand);
 
 
-    // Fill in
     // observer load volume button
     this->ConnectCheckButtonRI->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -920,23 +932,29 @@ void vtkProstateNavGUI::AddGUIObservers ( )
 void vtkProstateNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
 {
     vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-    vtkSlicerInteractorStyle *istyle0 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
-    vtkSlicerInteractorStyle *istyle1 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
-    vtkSlicerInteractorStyle *istyle2 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
-
+    vtkSlicerInteractorStyle *istyle0 
+      = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI0()->GetSliceViewer()
+                                               ->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
+    vtkSlicerInteractorStyle *istyle1 
+      = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI1()->GetSliceViewer()
+                                               ->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
+    vtkSlicerInteractorStyle *istyle2 
+      = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI2()->GetSliceViewer()
+                                               ->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
 
     vtkCornerAnnotation *anno = NULL;
+
     if (style == istyle0)
     {
-    anno = appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+        anno = appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
     }
     else if (style == istyle1)
     {
-    anno = appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+        anno = appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
     }
     else if (style == istyle2)
     {
-    anno = appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
+        anno = appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
     }
 
     if (anno)
@@ -1016,7 +1034,6 @@ void vtkProstateNavGUI::ProcessGUIEvents ( vtkObject *caller,
         if (this->ConnectCheckButtonSEND == vtkKWCheckButton::SafeDownCast(caller) 
             && event == vtkKWCheckButton::SelectedStateChangedEvent  )
         {
-      
 
 #ifdef USE_IGSTK
          SetIGSTKConnectionParameters();
@@ -1063,26 +1080,29 @@ void vtkProstateNavGUI::ProcessGUIEvents ( vtkObject *caller,
             this->SoftwareStatusLabelDisp->SetValue("CLEARED");
         }
         */
- 
 
-        if ((this->WorkPhaseStartUpButton == vtkKWPushButton::SafeDownCast(caller) 
-             && event == vtkKWPushButton::InvokedEvent)
-            ||(
-               this->WorkPhasePlanningButton == vtkKWPushButton::SafeDownCast(caller) 
-               && event == vtkKWPushButton::InvokedEvent)
-            ||(
-               this->WorkPhaseCalibrationButton == vtkKWPushButton::SafeDownCast(caller) 
-               && event == vtkKWPushButton::InvokedEvent)
-            ||(
-               this->WorkPhaseTargetingButton == vtkKWPushButton::SafeDownCast(caller) 
-               && event == vtkKWPushButton::InvokedEvent)
-            ||(
-               this->WorkPhaseManualButton == vtkKWPushButton::SafeDownCast(caller) 
-               && event == vtkKWPushButton::InvokedEvent)
-            ||(
-               this->WorkPhaseEmergencyButton == vtkKWPushButton::SafeDownCast(caller) 
-               && event == vtkKWPushButton::InvokedEvent))
+
+
+        //
+        // Check Work Phase Transition Buttons
+        //
+        if ( event == vtkKWPushButton::InvokedEvent)
         {
+            int phase;
+            for (phase = 0; phase < this->WorkPhaseButtonSet->GetNumberOfWidgets(); phase ++)
+            {
+                if (this->WorkPhaseButtonSet->GetWidget(phase) == vtkKWPushButton::SafeDownCast(caller))
+                {
+                    break;
+                }
+            }
+            if (phase < vtkProstateNavLogic::NumPhases) // if pressed one of them
+            {
+                ChangeWorkPhase(phase, 1);
+            }
+        }
+
+
             
 #ifdef USE_NAVITRACK
 
@@ -1130,9 +1150,46 @@ void vtkProstateNavGUI::ProcessGUIEvents ( vtkObject *caller,
             }
           */
 #endif
-            
-        }
 
+          //
+          // Wizard Frame
+          //
+
+          if (this->WizardWidget->GetWizardWorkflow() == vtkKWWizardWorkflow::SafeDownCast(caller) &&
+              event == vtkKWWizardWorkflow::CurrentStateChangedEvent)
+          {
+
+              int phase;
+              vtkKWWizardStep* step =  this->WizardWidget->GetWizardWorkflow()->GetCurrentStep();
+              if (step == vtkKWWizardStep::SafeDownCast(this->ConfigurationStep))
+              {
+                  phase = vtkProstateNavLogic::StartUp;
+              }
+              else if (step == vtkKWWizardStep::SafeDownCast(this->ScanControlStep))
+              {
+                  phase = vtkProstateNavLogic::Planning;
+              }
+              else if (step == vtkKWWizardStep::SafeDownCast(this->CalibrationStep))
+              {
+                  phase = vtkProstateNavLogic::Calibration;
+              }
+              else if (step == vtkKWWizardStep::SafeDownCast(this->TargetingStep))
+              {
+                  phase = vtkProstateNavLogic::Targeting;
+              }
+              else if (step == vtkKWWizardStep::SafeDownCast(this->ManualControlStep))
+              {
+                  phase = vtkProstateNavLogic::Manual;
+              }
+              else
+              {
+                  phase = vtkProstateNavLogic::Emergency;
+              }
+
+              ChangeWorkPhase(phase);
+          }
+
+            
 
 #ifdef USE_NAVITRACK
         else if (this->LoadConfigButtonNT->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
@@ -1361,10 +1418,6 @@ void vtkProstateNavGUI::DataCallback(vtkObject *caller,
 void vtkProstateNavGUI::ProcessLogicEvents ( vtkObject *caller,
     unsigned long event, void *callData )
 {
-    if ( !caller || !this->WizardWidget)
-      {
-      return;
-      }
 
     // Fill in
 }
@@ -1609,178 +1662,61 @@ void vtkProstateNavGUI::BuildGUIForWorkPhaseFrame ()
     app->Script("pack %s -side top -anchor center -fill x -padx 2 -pady 2 -in %s",
     workphaseFrame->GetWidgetName(), page->GetWidgetName());
 
-    vtkKWFrame *buttonFrame1 = vtkKWFrame::New();
-    buttonFrame1->SetParent( workphaseFrame->GetFrame());
-    buttonFrame1->Create();
-    vtkKWFrame *buttonFrame2 = vtkKWFrame::New();
-    buttonFrame2->SetParent( workphaseFrame->GetFrame());
-    buttonFrame2->Create();
+    vtkKWFrame *buttonFrame = vtkKWFrame::New();
+    buttonFrame->SetParent( workphaseFrame->GetFrame());
+    buttonFrame->Create();
 
     vtkKWFrame *workphaseStatusFrame = vtkKWFrame::New ( );
     workphaseStatusFrame->SetParent ( workphaseFrame->GetFrame() );
     workphaseStatusFrame->Create ( );
-    app->Script ( "pack %s %s %s -side top -anchor center -fill x -padx 2 -pady 1",
-                  buttonFrame1->GetWidgetName(),
-                  buttonFrame2->GetWidgetName(),
+    app->Script ( "pack %s %s -side top -anchor center -fill x -padx 2 -pady 1",
+                  buttonFrame->GetWidgetName(),
                   workphaseStatusFrame->GetWidgetName());
-      
-    this->WorkPhaseStartUpButton = vtkKWPushButton::New();
-    this->WorkPhaseStartUpButton->SetParent(buttonFrame1);
-    this->WorkPhaseStartUpButton->Create();
-    this->WorkPhaseStartUpButton->SetWidth(16);
-    this->WorkPhaseStartUpButton->SetText("Start Up");
 
-    this->WorkPhasePlanningButton = vtkKWPushButton::New();
-    this->WorkPhasePlanningButton->SetParent(buttonFrame1);
-    this->WorkPhasePlanningButton->Create();
-    this->WorkPhasePlanningButton->SetWidth(16);
-    this->WorkPhasePlanningButton->SetText("Planning");
+    //
+    // Work Phase Transition Buttons
+    //
 
-    this->WorkPhaseCalibrationButton = vtkKWPushButton::New();
-    this->WorkPhaseCalibrationButton->SetParent(buttonFrame1);
-    this->WorkPhaseCalibrationButton->Create();
-    this->WorkPhaseCalibrationButton->SetWidth(16);
-    this->WorkPhaseCalibrationButton->SetText("Calibration");
+    this->WorkPhaseButtonSet = vtkKWPushButtonSet::New();
+    this->WorkPhaseButtonSet->SetParent(buttonFrame);
+    this->WorkPhaseButtonSet->Create();
+    this->WorkPhaseButtonSet->PackHorizontallyOn();
+    this->WorkPhaseButtonSet->SetMaximumNumberOfWidgetsInPackingDirection(3);
+    this->WorkPhaseButtonSet->SetWidgetsPadX(2);
+    this->WorkPhaseButtonSet->SetWidgetsPadY(2);
+    this->WorkPhaseButtonSet->UniformColumnsOn();
+    this->WorkPhaseButtonSet->UniformRowsOn();
 
-    this->WorkPhaseTargetingButton = vtkKWPushButton::New();
-    this->WorkPhaseTargetingButton->SetParent(buttonFrame2);
-    this->WorkPhaseTargetingButton->Create();
-    this->WorkPhaseTargetingButton->SetWidth(16);
-    this->WorkPhaseTargetingButton->SetText("Targeting");
+    for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
+    {
+        this->WorkPhaseButtonSet->AddWidget(i);
+        this->WorkPhaseButtonSet->GetWidget(i)->SetWidth(16);
+    }
 
-    this->WorkPhaseManualButton = vtkKWPushButton::New();
-    this->WorkPhaseManualButton->SetParent(buttonFrame2);
-    this->WorkPhaseManualButton->Create();
-    this->WorkPhaseManualButton->SetWidth(16);
-    this->WorkPhaseManualButton->SetText("Manual");
+    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::StartUp    )->SetText("Start Up");
+    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Planning   )->SetText("Planning");
+    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Calibration)->SetText("Calibration");
+    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Targeting  )->SetText("Targeting");
+    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Manual     )->SetText("Manual");
+    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Emergency  )->SetText("Emergency");
 
-    this->WorkPhaseEmergencyButton = vtkKWPushButton::New();
-    this->WorkPhaseEmergencyButton->SetParent(buttonFrame2);
-    this->WorkPhaseEmergencyButton->Create();
-    this->WorkPhaseEmergencyButton->SetWidth(16);
-    this->WorkPhaseEmergencyButton->SetText("Emergency");
+    this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
+                 this->WorkPhaseButtonSet->GetWidgetName()
+                 );
 
-    this->Script("pack %s %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->WorkPhaseStartUpButton->GetWidgetName(),
-                 this->WorkPhasePlanningButton->GetWidgetName(),
-                 this->WorkPhaseCalibrationButton->GetWidgetName());
-
-    this->Script("pack %s %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->WorkPhaseTargetingButton->GetWidgetName(),
-                 this->WorkPhaseManualButton->GetWidgetName(),
-                 this->WorkPhaseEmergencyButton->GetWidgetName());
-
-
-
-
-//    vtkKWFrameWithLabel *filterFrame = vtkKWFrameWithLabel::New ( );
-//    filterFrame->SetParent ( workphaseFrame->GetFrame() );
-//    filterFrame->Create ( );
-//    filterFrame->SetLabelText ("Connection to server and Needle-Display");
-//    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-//           filterFrame->GetWidgetName() );
-
-/*
-    vtkKWFrame *filter2Frame = vtkKWFrame::New ( );
-    filter2Frame->SetParent ( filterFrame->GetFrame() );
-    filter2Frame->Create ( );
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   filter2Frame->GetWidgetName(),
-                   filterFrame->GetFrame()->GetWidgetName());
-
-    vtkKWFrame *filter3Frame = vtkKWFrame::New ( );
-    filter3Frame->SetParent ( filterFrame->GetFrame() );
-    filter3Frame->Create ( );
-      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   filter3Frame->GetWidgetName(),
-                   filterFrame->GetFrame()->GetWidgetName());
-
-
-      vtkKWFrame *workphasestatusFrame = vtkKWFrame::New ( );
-    workphasestatusFrame->SetParent ( filterFrame->GetFrame() );
-    workphasestatusFrame->Create ( );
-      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   workphasestatusFrame->GetWidgetName(),
-                   filterFrame->GetFrame()->GetWidgetName());
-
-      vtkKWFrame *workphasestatus2Frame = vtkKWFrame::New ( );
-    workphasestatus2Frame->SetParent ( filterFrame->GetFrame() );
-    workphasestatus2Frame->Create ( );
-      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   workphasestatus2Frame->GetWidgetName(),
-                   filterFrame->GetFrame()->GetWidgetName());
-
-      vtkKWFrame *workphasestatus3Frame = vtkKWFrame::New ( );
-    workphasestatus3Frame->SetParent ( filterFrame->GetFrame() );
-    workphasestatus3Frame->Create ( );
-      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   workphasestatus3Frame->GetWidgetName(),
-                   filterFrame->GetFrame()->GetWidgetName());
-      
-      vtkKWFrame *ClearWorkphaseButtonFrame = vtkKWFrame::New ( );
-    ClearWorkphaseButtonFrame->SetParent ( filterFrame->GetFrame() );
-    ClearWorkphaseButtonFrame->Create ( );
-      app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   ClearWorkphaseButtonFrame->GetWidgetName(),
-                   filterFrame->GetFrame()->GetWidgetName());
-
-      
-
-    this->WorkPhaseStartUpButton = vtkKWCheckButton::New();
-    this->WorkPhaseStartUpButton->SetParent(filter2Frame);
-    this->WorkPhaseStartUpButton->Create();
-    this->WorkPhaseStartUpButton->SelectedStateOff();
-    this->WorkPhaseStartUpButton->SetText("Start Up Phase");
- 
-    this->WorkPhasePlanningButton = vtkKWCheckButton::New();
-    this->WorkPhasePlanningButton->SetParent(filter2Frame);
-    this->WorkPhasePlanningButton->Create();
-    this->WorkPhasePlanningButton->SelectedStateOff();
-    this->WorkPhasePlanningButton->SetText("Planning Phase");
-    
-    this->WorkPhaseCalibarationButton = vtkKWCheckButton::New();
-    this->WorkPhaseCalibarationButton->SetParent(filter2Frame);
-    this->WorkPhaseCalibarationButton->Create();
-    this->WorkPhaseCalibarationButton->SelectedStateOff();
-    this->WorkPhaseCalibarationButton->SetText("Calibration Phase");
-    
-    this->Script("pack %s %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-        this->WorkPhaseStartUpButton->GetWidgetName(),
-        this->WorkPhasePlanningButton->GetWidgetName(),
-        this->WorkPhaseCalibarationButton->GetWidgetName());
-
-
-    this->WorkPhaseTargetingButton = vtkKWCheckButton::New();
-    this->WorkPhaseTargetingButton->SetParent(filter3Frame);
-    this->WorkPhaseTargetingButton->Create();
-    this->WorkPhaseTargetingButton->SelectedStateOff();
-    this->WorkPhaseTargetingButton->SetText("Targeting Phase");
- 
-    this->WorkPhaseManualButton = vtkKWCheckButton::New();
-    this->WorkPhaseManualButton->SetParent(filter3Frame);
-    this->WorkPhaseManualButton->Create();
-    this->WorkPhaseManualButton->SelectedStateOff();
-    this->WorkPhaseManualButton->SetText("Manual Controll Phase");
-    
-    this->WorkPhaseEmergencyButton = vtkKWCheckButton::New();
-    this->WorkPhaseEmergencyButton->SetParent(filter3Frame);
-    this->WorkPhaseEmergencyButton->Create();
-    this->WorkPhaseEmergencyButton->SelectedStateOff();
-    this->WorkPhaseEmergencyButton->SetText("EMERGENCY");
-    
-    this->Script("pack %s %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-        this->WorkPhaseTargetingButton->GetWidgetName(),
-        this->WorkPhaseManualButton->GetWidgetName(),
-        this->WorkPhaseEmergencyButton->GetWidgetName());
-
-*/    
-
+                 
+    //    vtkKWFrameWithLabel *filterFrame = vtkKWFrameWithLabel::New ( );
+    //    filterFrame->SetParent ( workphaseFrame->GetFrame() );
+    //    filterFrame->Create ( );
+    //    filterFrame->SetLabelText ("Connection to server and Needle-Display");
+    //    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+    //           filterFrame->GetWidgetName() );
 
     vtkKWLabel *SoftwareStatusLabel = vtkKWLabel::New();
     SoftwareStatusLabel->SetParent(workphaseStatusFrame);
     SoftwareStatusLabel->Create();
     SoftwareStatusLabel->SetWidth(15);
-    SoftwareStatusLabel->SetText("Software Status:");
+    SoftwareStatusLabel->SetText("Software:");
 
     this->SoftwareStatusLabelDisp = vtkKWEntry::New();
     this->SoftwareStatusLabelDisp->SetParent(workphaseStatusFrame);
@@ -1792,7 +1728,7 @@ void vtkProstateNavGUI::BuildGUIForWorkPhaseFrame ()
     ScannerStatusLabel->SetParent(workphaseStatusFrame);
     ScannerStatusLabel->Create();
     ScannerStatusLabel->SetWidth(15);
-    ScannerStatusLabel->SetText("Scanner Status:");
+    ScannerStatusLabel->SetText("Scanner:");
     
     this->ScannerStatusLabelDisp = vtkKWEntry::New();
     this->ScannerStatusLabelDisp->SetParent(workphaseStatusFrame);
@@ -1804,7 +1740,7 @@ void vtkProstateNavGUI::BuildGUIForWorkPhaseFrame ()
     RobotStatusLabel->SetParent(workphaseStatusFrame);
     RobotStatusLabel->Create();
     RobotStatusLabel->SetWidth(15);
-    RobotStatusLabel->SetText("Robot Status:");
+    RobotStatusLabel->SetText("Robot:");
     
     this->RobotStatusLabelDisp = vtkKWEntry::New();
     this->RobotStatusLabelDisp->SetParent(workphaseStatusFrame);
@@ -1834,8 +1770,7 @@ void vtkProstateNavGUI::BuildGUIForWorkPhaseFrame ()
     */
     
     workphaseFrame->Delete ();
-    buttonFrame1->Delete ();
-    buttonFrame2->Delete ();
+    buttonFrame->Delete ();
     workphaseStatusFrame->Delete ();
   
 }
@@ -3056,6 +2991,76 @@ void vtkProstateNavGUI::BuildGUIForCalibration()
 
 }
 
+
+int vtkProstateNavGUI::ChangeWorkPhase(int phase, int fChangeWizard)
+{
+
+    if (!this->Logic->SwitchWorkPhase(phase)) // Set next phase
+    {
+        return 0;
+    }
+  
+    for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
+    {
+        vtkKWPushButton *pb = this->WorkPhaseButtonSet->GetWidget(i);
+        if (i == this->Logic->GetCurrentPhase())
+        {
+            pb->SetReliefToSunken();
+        }
+        else if (this->Logic->IsPhaseTransitable(i))
+        {
+            pb->SetReliefToGroove();
+            pb->SetStateToNormal();
+        }
+        else
+        {
+            pb->SetReliefToGroove();
+            pb->SetStateToDisabled();
+        }
+    }
+
+    // Switch Wizard Frame
+    // 11/09/2007 Junichi Tokuda -- This part looks agry. Will be fixed later.
+
+    if (fChangeWizard)
+    {
+        vtkKWWizardWorkflow *wizard = 
+          this->WizardWidget->GetWizardWorkflow();
+        
+        int step_from;
+        int step_to;
+        
+        step_to = this->Logic->GetCurrentPhase();
+        step_from = this->Logic->GetPrevPhase();
+        if (step_to == vtkProstateNavLogic::Emergency)
+        {
+            step_to = vtkProstateNavLogic::Manual;
+        }
+        if (step_from == vtkProstateNavLogic::Emergency)
+        {
+            step_from = vtkProstateNavLogic::Manual;
+        }
+        
+        int steps =  step_to - step_from;
+        if (steps > 0)
+        {
+            for (int i = 0; i < steps; i ++) 
+            {
+                wizard->AttemptToGoToNextStep();
+            }
+        }
+        else
+        {
+            steps = -steps;
+            for (int i = 0; i < steps; i ++)
+            {
+                wizard->AttemptToGoToPreviousStep();
+            }
+        }
+        wizard->GetCurrentStep()->ShowUserInterface();
+    }
+    return 1;
+}
 
 
 
