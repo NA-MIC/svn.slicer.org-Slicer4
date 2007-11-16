@@ -1,7 +1,16 @@
-// .NAME vtkProstateNavGUI 
-// .SECTION Description
-// Main Volumes GUI and mediator methods for slicer3. 
+/*=auto=========================================================================
 
+  Portions (c) Copyright 2007 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $RCSfile: $
+  Date:      $Date: $
+  Version:   $Revision: $
+
+=========================================================================auto=*/
 
 #ifndef __vtkProstateNavGUI_h
 #define __vtkProstateNavGUI_h
@@ -29,15 +38,6 @@
 
 #ifdef USE_NAVITRACK
 #include "vtkIGTOpenTrackerStream.h"
-
-/*
-#define PREP_PHASE     1
-#define PLANNING_PHASE 2
-#define CALIB_PHASE    3
-#define TARG_PHASE     4
-#define MANU_PHASE     5
-#define EMER_PHASE     6
-*/
 
 #endif
 #ifdef USE_IGSTK
@@ -69,6 +69,26 @@ class vtkProstateNavManualControlStep;
 //
 class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 {
+ public:
+    //BTX
+    enum {
+      SLICE_DRIVER_USER    = 0,
+      SLICE_DRIVER_LOCATOR = 1,
+      SLICE_DRIVER_RTIMAGE = 2
+    };
+    enum {
+      SLICE_PLANE_RED    = 0,
+      SLICE_PLANE_YELLOW = 1,
+      SLICE_PLANE_GREEN  = 2
+    };
+    enum {
+      SLICE_RTIMAGE_PERP      = 0,
+      SLICE_RTIMAGE_INPLANE90 = 1,
+      SLICE_RTIMAGE_INPLANE   = 2
+    };
+    //ETX
+
+
  public:
     // Description:    
     // Usual vtk class functions
@@ -133,20 +153,17 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     //
 
     // Workphase Frame
-
     vtkKWPushButtonSet *WorkPhaseButtonSet;
 
 
+    // Wizard Frame
+    vtkKWWizardWidget *WizardWidget;
+    vtkProstateNavConfigurationStep *ConfigurationStep;
+    vtkProstateNavScanControlStep *ScanControlStep;
+    vtkProstateNavCalibrationStep *CalibrationStep;
+    vtkProstateNavTargetingStep *TargetingStep;
+    vtkProstateNavManualControlStep *ManualControlStep;
 
-    vtkKWEntryWithLabel *NormalOffsetEntry;
-    vtkKWEntryWithLabel *TransOffsetEntry;
-    vtkKWEntryWithLabel *NXTOffsetEntry;
-
-    vtkKWEntryWithLabel *NormalSizeEntry;
-    vtkKWEntryWithLabel *TransSizeEntry;
-    vtkKWEntryWithLabel *RadiusEntry;
-
-    vtkKWEntryWithLabel *setSpeedEntry;
     //Philip Mewes: To show Robots Coordinates and Orientation
     //as a Feedback for the develp core
     vtkKWEntryWithLabel *PositionEntry;
@@ -155,47 +172,30 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     vtkKWEntryWithLabel *OrientEntry;
     vtkKWLabel *RobotOrientLabel;
 
-
     vtkKWEntryWithLabel *NREntry;    
     vtkKWEntryWithLabel *NAEntry;
     vtkKWEntryWithLabel *NSEntry;
-    vtkKWEntry *TREntry;
-    vtkKWEntry *TAEntry;
-    vtkKWEntry *TSEntry;
+    vtkKWEntry          *TREntry;
+    vtkKWEntry          *TAEntry;
+    vtkKWEntry          *TSEntry;
     vtkKWEntryWithLabel *PREntry;
     vtkKWEntryWithLabel *PAEntry;
     vtkKWEntryWithLabel *PSEntry;
     vtkKWEntryWithLabel *O4Entry;
 
-    vtkKWFrame *ExtraFrame;
-
-    vtkKWMenuButtonWithLabel *ServerMenu;
-    vtkKWMenuButtonWithLabel *PauseCheckButton;
-    vtkKWMenuButtonWithLabel *SetText;
-   
-  
     vtkKWCheckButton *ConnectCheckButton;
     vtkKWCheckButton *ConnectCheckButtonRI;
     vtkKWCheckButton *ConnectCheckButtonNT;
 
-    vtkKWCheckButton *ConnectCheckButtonSEND;
-    vtkKWCheckButton *ConnectCheckButtonPASSROBOTCOORDS;
     vtkKWCheckButton *ConnectCheckButtonStartScanner;
     vtkKWCheckButton *ConnectCheckButtonStopScanner;
     vtkKWCheckButton *ConnectCheckButtonprepScanner;
     vtkKWCheckButton *ConnectCheckButtonpauseScanner;
     vtkKWCheckButton *ConnectCheckButtonresumeScanner;
 
-
-    vtkKWCheckButton *ConnectCheckButtonnewexam;
-    vtkKWCheckButton *ConnectCheckButtonsetprotocol;
-
     vtkKWCheckButton *LocatorCheckButton;
     vtkKWCheckButton *FreezeImageCheckButton;
     vtkKWCheckButton *NeedleCheckButton;
-
-    vtkKWCheckButton *HandleCheckButton;
-    vtkKWCheckButton *GuideCheckButton;
 
     vtkKWCheckButton *LocatorModeCheckButton;
     vtkKWCheckButton *UserModeCheckButton;
@@ -204,53 +204,17 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     vtkKWMenuButton *YellowSliceMenu;
     vtkKWMenuButton *GreenSliceMenu;
 
-    //#ifdef USE_NAVITRACK
     vtkKWLoadSaveButtonWithLabel *LoadConfigButton;
-    vtkKWLoadSaveButtonWithLabel *LoadConfigButton2;
     vtkKWLoadSaveButtonWithLabel *LoadConfigButtonNT;
-    vtkKWLoadSaveButtonWithLabel *LoadConfigButtonRI;
+
     vtkKWEntry *ConfigFileEntry;
     vtkKWEntry *ScannerStatusLabelDisp;
     vtkKWEntry *SoftwareStatusLabelDisp;
     vtkKWEntry *RobotStatusLabelDisp;
-    vtkKWEntry *ConfigFileEntry2;
-    vtkKWEntry *ConfigFileEntryRI;
 
-
-      vtkKWEntryWithLabel *positionbrpy;
-    vtkKWEntryWithLabel *positionbrpz;
-    vtkKWEntryWithLabel *positionbrpx;
-    
-    vtkKWEntryWithLabel *positionbrppatientweight;
-    vtkKWEntryWithLabel *positionbrppatientid;
-    vtkKWEntryWithLabel *positionbrppatientname;
-    vtkKWEntryWithLabel *positionbrpsetprotocol;
-
-    vtkKWEntryWithLabel *orientationbrpo1;
-    vtkKWEntryWithLabel *orientationbrpo2;
-    vtkKWEntryWithLabel *orientationbrpo3;
-    vtkKWEntryWithLabel *orientationbrpo4;
-
-
-    //#endif
-#ifdef USE_IGSTK
-    vtkKWMenuButtonWithLabel *DeviceMenuButton;
-    vtkKWMenuButtonWithLabel *PortNumberMenuButton;
-    vtkKWMenuButtonWithLabel *BaudRateMenuButton;
-    vtkKWMenuButtonWithLabel *DataBitsMenuButton;
-    vtkKWMenuButtonWithLabel *ParityTypeMenuButton;
-    vtkKWMenuButtonWithLabel *StopBitsMenuButton;
-    vtkKWMenuButtonWithLabel *HandShakeMenuButton;
-#endif
-
-    vtkKWEntryWithLabel *UpdateRateEntry;
     vtkKWEntryWithLabel *GetImageSize;
-    vtkKWEntryWithLabel * MultiFactorEntry;
+    vtkKWEntryWithLabel *MultiFactorEntry;
 
-    vtkKWEntryWithLabel *PatCoordinatesEntry;
-    vtkKWEntryWithLabel *SlicerCoordinatesEntry;
-    vtkKWPushButton *GetPatCoordinatesPushButton;
-    vtkKWPushButton *AddPointPairPushButton;
     vtkKWPushButton *AddCoordsandOrientTarget;
 
     vtkKWMultiColumnListWithScrollbars *PointPairMultiColumnList;
@@ -258,62 +222,43 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
     //    vtkKWPushButton *LoadPointPairPushButton;
     //    vtkKWPushButton *SavePointPairPushButton;
-    vtkKWPushButton *DeletePointPairPushButton;
     vtkKWPushButton *DeleteTargetPushButton;
     vtkKWPushButton *DeleteAllTargetPushButton;
-    vtkKWPushButton *DeleteAllPointPairPushButton;
     vtkKWPushButton *MoveBWPushButton;
     vtkKWPushButton *MoveFWPushButton;
     vtkKWPushButton *SetOrientButton;
-    vtkKWPushButton *RegisterPushButton;
-    vtkKWPushButton *ResetPushButton;
-
 
     // Widgets for Calibration Frame
     vtkKWEntry               *CalibImageFileEntry;
     vtkKWPushButton          *ReadCalibImageFileButton;
     vtkKWLoadSaveButtonWithLabel *ListCalibImageFileButton;
     
-
     // Module logic and mrml pointers
     vtkProstateNavLogic *Logic;
 
-    // Wizard and wizard steps
-    vtkKWWizardWidget *WizardWidget;
-    vtkProstateNavConfigurationStep *ConfigurationStep;
-    vtkProstateNavScanControlStep *ScanControlStep;
-    vtkProstateNavCalibrationStep *CalibrationStep;
-    vtkProstateNavTargetingStep *TargetingStep;
-    vtkProstateNavManualControlStep *ManualControlStep;
+    int SliceDriver0;
+    int SliceDriver1;
+    int SliceDriver2;
 
-    // int StopTimer;
-    vtkMatrix4x4 *LocatorMatrix;
-      
     //Robotcontrollvector
     //BTX
-
-    typedef std::vector<float> FloatVector;
    
     std::vector<float> xsendrobotcoords;
     std::vector<float> ysendrobotcoords;
     std::vector<float> zsendrobotcoords;
-    
     std::vector<float> osendrobotcoords;
 
+    typedef std::vector<float> FloatVector;
     std::vector<FloatVector> sendrobotcoordsvector;
-      //ETX
-    //RI
-
-
-    vtkMRMLModelNode *LocatorModelNode;
+    //ETX
 
     //BTX
     std::string LocatorModelID;
     std::string LocatorModelID_new;
     //ETX
+
     vtkIGTDataManager *DataManager;
     vtkIGTPat2ImgRegistration *Pat2ImgReg;
-
     vtkCallbackCommand *DataCallbackCommand;
 
     // Access the slice windows
@@ -328,66 +273,23 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     vtkSlicerSliceControllerWidget *Control2;
 
     vtkSlicerVolumesLogic *VolumesLogic;
-    vtkMRMLVolumeNode     *RealtimeVolumeNode;
-
-  
+    //vtkMRMLVolumeNode     *RealtimeVolumeNode;
 
     int NeedOrientationUpdate0;
     int NeedOrientationUpdate1;
     int NeedOrientationUpdate2;
    
-     int RealtimeXsize;
-     int RealtimeYsize;
-     
-     // int RealtimeImageData;
-      float  xsizevalueRI;
-     float  ysizevalueRI;
-
-     //Workphase State Transition Controll
-     
-     int WorkFlowProcessStart;
+    int RealtimeXsize;
+    int RealtimeYsize;
     
-     int WorkphaseClearanceSOFT;
-     int checkedPhase1;
-     int checkedPhase2;
-     int checkedPhase3;
-     int checkedPhase4;
-     int checkedPhase5;
-     int checkedPhase6;
-
-  
-    int RealtimeImageSerial;
+    //Workphase State Transition Controll
+    
     int NeedRealtimeImageUpdate;
 
-    //status check
-    int var_status_scanner;
-    int var_status_soft;
-    int var_status_robot;
-    
-    //BTX
-    std::string received_scanner_status;
-    std::string received_error_status;
-    std::string received_robot_status;
-    //ETX
     int RequestedWorkphase;
-    int ProcessClearance; 
 
-    int ActualWorkPhase;
-    
-
-    char xmlpathfilename[256];
-    char xcoordsrobot[12];
-    char ycoordsrobot[12];
-    char zcoordsrobot[12];
-
-    char o1coordsrobot[12];
-    char o2coordsrobot[12];
-    char o3coordsrobot[12];
-    char o4coordsrobot[12];
-
-    float brptmp;
     void UpdateAll();
-    void UpdateLocator();
+    void UpdateLocator(vtkTransform *, vtkTransform *);
     void UpdateSliceDisplay(float nx, float ny, float nz, 
                             float tx, float ty, float tz, 
                             float px, float py, float pz);
@@ -411,18 +313,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
     //void TrackerLoop();
 
-#ifdef USE_NAVITRACK
-    vtkIGTOpenTrackerStream *OpenTrackerStream;
-    void SetOpenTrackerConnectionParameters();
 
-#endif
-
-#ifdef USE_IGSTK    
-    vtkIGTIGSTKStream *IGSTKStream;
-    void SetIGSTKConnectionParameters();
-#endif
-
-    vtkMRMLVolumeNode* AddVolumeNode(vtkSlicerVolumesLogic*, const char*);
 };
 
 

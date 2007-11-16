@@ -1,4 +1,3 @@
-
 #ifndef __vtkProstateNavWin32Header_h
 #define __vtkProstateNavWin32Header_h
 

@@ -1,6 +1,6 @@
 /*=auto=========================================================================
 
-  Portions (c) Copyright 2006 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2007 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
@@ -24,24 +24,23 @@
 #include "vtkProstateNavWin32Header.h"
 #include "vtkSlicerBaseLogic.h"
 #include "vtkSlicerLogic.h"
+#include "vtkSlicerVolumesLogic.h"
+
+#include "vtkCallbackCommand.h"
+
+
+// This will be removed.
+#ifndef USE_NAVITRACK
+#define USE_NAVITRACK
+#endif
+
+#ifdef USE_NAVITRACK
+  #include "vtkIGTOpenTrackerStream.h"
+#endif
 
 
 class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic 
 {
-public:
-
-    // The Usual vtk class functions
-    static vtkProstateNavLogic *New();
-    vtkTypeRevisionMacro(vtkProstateNavLogic,vtkObject);
-    void PrintSelf(ostream& os, vtkIndent indent);
-
-    vtkGetMacro ( CurrentPhase, int );
-    vtkGetMacro ( PrevPhase, int );
-    vtkGetMacro ( PhaseTransitionCheck, bool );
-    vtkSetMacro ( PhaseTransitionCheck, bool );
-
-    int  SwitchWorkPhase(int newwp);
-    int  IsPhaseTransitable(int nextwp);
 
 public:
     //BTX
@@ -54,17 +53,76 @@ public:
       Emergency,
       NumPhases,
     };
+    enum ImageOrient{
+      SLICE_RTIMAGE_PERP      = 0,
+      SLICE_RTIMAGE_INPLANE90 = 1,
+      SLICE_RTIMAGE_INPLANE   = 2
+    };
     //ETX
-    
+
+public:
+
+    static vtkProstateNavLogic *New();
+
+    vtkTypeRevisionMacro(vtkProstateNavLogic,vtkObject);
+
+    vtkGetMacro ( CurrentPhase,         int );
+    vtkGetMacro ( PrevPhase,            int );
+    vtkGetMacro ( PhaseTransitionCheck, bool );
+    vtkSetMacro ( PhaseTransitionCheck, bool );
+    vtkGetMacro ( RealtimeImageOrient,  int  );
+    vtkSetMacro ( RealtimeImageOrient,  int  );
+
+    vtkSetMacro ( NeedRealtimeImageUpdate0, int );
+    vtkGetMacro ( NeedRealtimeImageUpdate0, int );
+    vtkSetMacro ( NeedRealtimeImageUpdate1, int );
+    vtkGetMacro ( NeedRealtimeImageUpdate1, int );
+    vtkSetMacro ( NeedRealtimeImageUpdate2, int );
+    vtkGetMacro ( NeedRealtimeImageUpdate2, int );
+    vtkSetMacro ( ImagingControl,          bool );
+    vtkGetMacro ( ImagingControl,          bool );
+    vtkSetMacro ( UpdateLocator,           bool );
+    vtkGetMacro ( UpdateLocator,           bool );
+
+
+    void PrintSelf(ostream&, vtkIndent);
+
+    void AddRealtimeVolumeNode(vtkSlicerVolumesLogic*, const char*);
+    int  SwitchWorkPhase(int);
+    int  IsPhaseTransitable(int);
+
+#ifdef USE_NAVITRACK
+    int  ConnectNaviTrack(const char*);
+    int  DisconnectNaviTrack();
+#endif //USE_NAVITRACK
+
 private:
+
+    static const int PhaseTransitionMatrix[NumPhases][NumPhases];
 
     int   CurrentPhase;
     int   PrevPhase;
     int   PhaseComplete;
     bool  PhaseTransitionCheck;
+    bool  OrientationUpdate;
 
-    static const int PhaseTransitionMatrix[NumPhases][NumPhases];
+    int   NeedRealtimeImageUpdate0;
+    int   NeedRealtimeImageUpdate1;
+    int   NeedRealtimeImageUpdate2;
 
+    bool  ImagingControl;
+    bool  UpdateLocator;
+
+    int   RealtimeImageSerial;
+    int   RealtimeImageOrient;
+
+    vtkMatrix4x4            *LocatorMatrix;
+    vtkMRMLVolumeNode       *RealtimeVolumeNode;
+    vtkSlicerVolumesLogic   *VolumesLogic;
+
+#ifdef USE_NAVITRACK
+    vtkIGTOpenTrackerStream *OpenTrackerStream;
+#endif
     
 protected:
 
@@ -72,6 +130,12 @@ protected:
     ~vtkProstateNavLogic();
     vtkProstateNavLogic(const vtkProstateNavLogic&);
     void operator=(const vtkProstateNavLogic&);
+
+    static void DataCallback(vtkObject*, unsigned long, void *, void *);
+    void UpdateAll();
+    vtkMRMLVolumeNode* AddVolumeNode(vtkSlicerVolumesLogic*, const char*);
+
+    vtkCallbackCommand *DataCallbackCommand;
 
 };
 
