@@ -34,6 +34,7 @@ vtkProstateNavConfigurationStep::~vtkProstateNavConfigurationStep()
 {
   if (this->LoadConfigButtonNT)
     {
+    this->LoadConfigButtonNT->GetWidget()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     this->LoadConfigButtonNT->SetParent(NULL );
     this->LoadConfigButtonNT->Delete();
     }
@@ -52,6 +53,13 @@ vtkProstateNavConfigurationStep::~vtkProstateNavConfigurationStep()
     this->ConfigNTFrame->SetParent(NULL);
     this->ConfigNTFrame->Delete();
     }
+
+  if (this->ConnectCheckButtonNT)
+    {
+    this->ConnectCheckButtonNT->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->ConnectCheckButtonNT->SetParent(NULL);
+    this->ConnectCheckButtonNT->Delete();
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -65,28 +73,19 @@ void vtkProstateNavConfigurationStep::ShowUserInterface()
   vtkKWWidget *parent = wizardWidget->GetClientArea();
 
   // Create the frame
-
   if (!this->ConfigNTFrame)
     {
     this->ConfigNTFrame = vtkKWFrame::New();
     this->ConfigNTFrame->SetParent ( parent );
     this->ConfigNTFrame->Create ( );
     }
-
-  this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                this->ConfigNTFrame->GetWidgetName());
-    
+  
   if (!this->ConnectNTFrame)
     {
     this->ConnectNTFrame = vtkKWFrame::New();
     this->ConnectNTFrame->SetParent ( parent );
     this->ConnectNTFrame->Create ( );
     }
-
-  this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                this->ConnectNTFrame->GetWidgetName());
-
-  // Create the file entry and load button
 
   if (!this->LoadConfigButtonNT)
     {
@@ -100,10 +99,11 @@ void vtkProstateNavConfigurationStep::ShowUserInterface()
     this->LoadConfigButtonNT->GetWidget()->GetLoadSaveDialog()
       ->RetrieveLastPathFromRegistry("OpenPath");
 
-    this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->LoadConfigButtonNT->GetWidgetName());
+    this->LoadConfigButtonNT->GetWidget()
+      ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
     }
 
+  // Create the file entry and load button
   if (!this->ConfigFileEntryNT)
     {
     this->ConfigFileEntryNT = vtkKWEntry::New();
@@ -112,12 +112,9 @@ void vtkProstateNavConfigurationStep::ShowUserInterface()
     this->ConfigFileEntryNT->SetWidth(50);
     this->ConfigFileEntryNT->SetValue ("");
     
-    this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->ConfigFileEntryNT->GetWidgetName());
     }
 
   // The connnect button 
-  
   if (!this->ConnectCheckButtonNT)
     {
     this->ConnectCheckButtonNT = vtkKWCheckButton::New();
@@ -125,9 +122,27 @@ void vtkProstateNavConfigurationStep::ShowUserInterface()
     this->ConnectCheckButtonNT->Create();
     this->ConnectCheckButtonNT->SelectedStateOff();
     this->ConnectCheckButtonNT->SetText("Connect");
-    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                 this->ConnectCheckButtonNT->GetWidgetName());
+
+    this->ConnectCheckButtonNT
+      ->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand);
+
     }
+
+
+
+  this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+                this->ConfigNTFrame->GetWidgetName());
+    
+  this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+                this->ConnectNTFrame->GetWidgetName());
+
+
+  this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
+               this->LoadConfigButtonNT->GetWidgetName());
+
+  this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
+               this->ConnectCheckButtonNT->GetWidgetName());
+
 }
 
 //----------------------------------------------------------------------------
@@ -135,3 +150,45 @@ void vtkProstateNavConfigurationStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
+
+//----------------------------------------------------------------------------
+void vtkProstateNavConfigurationStep::ProcessGUIEvents( vtkObject *caller,
+                                         unsigned long event, void *callData )
+{
+  std::cerr << "ConfigurationStep: ProcessGUIEvents()" << std::endl;
+
+  if (this->LoadConfigButtonNT->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
+           && event == vtkKWPushButton::InvokedEvent )
+    {
+    const char* filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
+    if (filename)
+      {
+      const vtksys_stl::string fname(filename);
+      this->ConfigFileEntryNT->SetValue(fname.c_str());
+      }
+    else
+      {
+      this->ConfigFileEntryNT->SetValue("");
+      }
+    this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
+    }
+
+  else if (this->ConnectCheckButtonNT == vtkKWCheckButton::SafeDownCast(caller) 
+           && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+
+    if (this->ConnectCheckButtonNT->GetSelectedState())
+      {
+      // Activate NaviTrack Stream
+      if (this->Logic)
+        {
+        const char* filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
+        this->Logic->ConnectNaviTrack(filename);
+        }
+      }
+    }
+
+}
+
+
+

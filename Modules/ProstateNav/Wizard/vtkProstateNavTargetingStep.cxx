@@ -41,3 +41,10 @@ void vtkProstateNavTargetingStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
+
+//----------------------------------------------------------------------------
+void vtkProstateNavTargetingStep::ProcessGUIEvents(vtkObject *caller,
+                                          unsigned long event, void *callData)
+{
+}
+

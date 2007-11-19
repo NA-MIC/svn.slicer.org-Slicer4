@@ -33,7 +33,6 @@
 #include "vtkSlicerInteractorStyle.h"
 #include "vtkSlicerVolumesLogic.h"
 
-
 #include <string>
 
 #ifdef USE_NAVITRACK
@@ -56,13 +55,9 @@ class vtkKWFrame;
 class vtkKWEntryWithLabel;
 class vtkKWLoadSaveButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
-
 class vtkKWWizardWidget;
-class vtkProstateNavConfigurationStep;
-class vtkProstateNavScanControlStep;
-class vtkProstateNavCalibrationStep;
-class vtkProstateNavTargetingStep;
-class vtkProstateNavManualControlStep;
+
+class vtkProstateNavStep;
 
 // Description:    
 // This class implements Slicer's Volumes GUI
@@ -138,8 +133,8 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
     void Init();
 
-  //BTX
-  static void DataCallback(vtkObject *caller, 
+    //BTX
+    static void DataCallback(vtkObject *caller, 
                 unsigned long eid, void *clientData, void *callData);
 
   //ETX
@@ -158,11 +153,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
     // Wizard Frame
     vtkKWWizardWidget *WizardWidget;
-    vtkProstateNavConfigurationStep *ConfigurationStep;
-    vtkProstateNavScanControlStep *ScanControlStep;
-    vtkProstateNavCalibrationStep *CalibrationStep;
-    vtkProstateNavTargetingStep *TargetingStep;
-    vtkProstateNavManualControlStep *ManualControlStep;
+    vtkProstateNavStep **WizardSteps;
 
     //Philip Mewes: To show Robots Coordinates and Orientation
     //as a Feedback for the develp core

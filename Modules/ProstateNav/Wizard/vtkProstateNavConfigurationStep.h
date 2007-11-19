@@ -2,6 +2,7 @@
 #define __vtkProstateNavConfigurationStep_h
 
 #include "vtkProstateNavStep.h"
+#include "vtkCommand.h"
 
 class vtkKWLoadSaveButtonWithLabel;
 class vtkKWFrame;
@@ -16,9 +17,8 @@ public:
   vtkTypeRevisionMacro(vtkProstateNavConfigurationStep,vtkProstateNavStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  // Description:
-  // Reimplement the superclass's method (see vtkKWWizardStep).
   virtual void ShowUserInterface();
+  virtual void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);  
 
 protected:
   vtkProstateNavConfigurationStep();

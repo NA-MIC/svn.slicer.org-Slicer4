@@ -10,9 +10,8 @@ public:
   vtkTypeRevisionMacro(vtkProstateNavScanControlStep,vtkProstateNavStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  // Description:
-  // Reimplement the superclass's method (see vtkKWWizardStep).
   virtual void ShowUserInterface();
+  virtual void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);
 
 protected:
   vtkProstateNavScanControlStep();
