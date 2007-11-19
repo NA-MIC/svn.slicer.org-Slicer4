@@ -3,6 +3,11 @@
 
 #include "vtkProstateNavStep.h"
 
+#include "vtkKWPushButton.h"
+#include "vtkKWLoadSaveButtonWithLabel.h"
+#include "vtkKWFrame.h"
+
+
 class VTK_PROSTATENAV_EXPORT vtkProstateNavCalibrationStep : public vtkProstateNavStep
 {
 public:
@@ -10,13 +15,16 @@ public:
   vtkTypeRevisionMacro(vtkProstateNavCalibrationStep,vtkProstateNavStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  // Description:
-  // Reimplement the superclass's method (see vtkKWWizardStep).
   virtual void ShowUserInterface();
+  virtual void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);  
 
 protected:
   vtkProstateNavCalibrationStep();
   ~vtkProstateNavCalibrationStep();
+
+  vtkKWFrame *SelectImageFrame;
+  vtkKWLoadSaveButtonWithLabel *SelectImageButton;
+  vtkKWPushButton *CalibrateButton;
 
 private:
   vtkProstateNavCalibrationStep(const vtkProstateNavCalibrationStep&);

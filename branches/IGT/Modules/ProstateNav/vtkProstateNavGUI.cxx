@@ -25,6 +25,7 @@
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
+#include "vtkProstateNavStep.h"
 #include "vtkProstateNavConfigurationStep.h"
 #include "vtkProstateNavScanControlStep.h"
 #include "vtkProstateNavCalibrationStep.h"
@@ -103,11 +104,11 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
     // Wizard Frame
 
     this->WizardWidget = vtkKWWizardWidget::New();
-    this->ConfigurationStep = NULL;
-    this->ScanControlStep = NULL;
-    this->CalibrationStep = NULL;
-    this->TargetingStep = NULL;
-    this->ManualControlStep = NULL;
+    this->WizardSteps = new vtkProstateNavStep*[vtkProstateNavLogic::NumPhases];
+    for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
+      {
+      this->WizardSteps[i] = NULL;
+      }
 
 
     //
@@ -206,311 +207,264 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
 vtkProstateNavGUI::~vtkProstateNavGUI ( )
 {
 
-
-    if (this->DataManager)
+  if (this->DataManager)
     {
     // If we don't set the scence to NULL for DataManager,
     // Slicer will report a lot leak when it is closed.
     this->DataManager->SetMRMLScene(NULL);
     this->DataManager->Delete();
     }
-    if (this->Pat2ImgReg)
+  if (this->Pat2ImgReg)
     {
-        this->Pat2ImgReg->Delete();
+    this->Pat2ImgReg->Delete();
     }
-    if (this->DataCallbackCommand)
+  if (this->DataCallbackCommand)
     {
-        this->DataCallbackCommand->Delete();
-    }
-
-    this->RemoveGUIObservers();
-
-
-    //
-    // Workphase Frame
-    //
-
-    if (this->WorkPhaseButtonSet)
-    {
-        this->WorkPhaseButtonSet->SetParent(NULL);
-        this->WorkPhaseButtonSet->Delete();
+    this->DataCallbackCommand->Delete();
     }
 
-    //
-    // Wizard Frame
-    //
+  this->RemoveGUIObservers();
 
 
-    if (this->NREntry)
+  //
+  // Workphase Frame
+  //
+
+  if (this->WorkPhaseButtonSet)
     {
-        this->NREntry->SetParent(NULL );
-        this->NREntry->Delete ( );
+    this->WorkPhaseButtonSet->SetParent(NULL);
+    this->WorkPhaseButtonSet->Delete();
     }
+
+  //
+  // Wizard Frame
+  //
+
+
+  if (this->NREntry)
+  {
+      this->NREntry->SetParent(NULL );
+      this->NREntry->Delete ( );
+  }
+
+  if (this->NAEntry)
+  {
+      this->NAEntry->SetParent(NULL );
+      this->NAEntry->Delete ( );
+  }
+  if (this->NSEntry)
+  {
+      this->NSEntry->SetParent(NULL );
+      this->NSEntry->Delete ( );
+  }
+  if (this->TREntry)
+  {
+      this->TREntry->SetParent(NULL );
+      this->TREntry->Delete ( );
+  }
+  if (this->TAEntry)
+  {
+      this->TAEntry->SetParent(NULL );
+      this->TAEntry->Delete ( );
+  }
+  if (this->TSEntry)
+  {
+      this->TSEntry->SetParent(NULL );
+      this->TSEntry->Delete ( );
+  }
+  if (this->PREntry)
+  {
+      this->PREntry->SetParent(NULL );
+      this->PREntry->Delete ( );
+  }
+  if (this->PAEntry)
+  {
+      this->PAEntry->SetParent(NULL );
+      this->PAEntry->Delete ( );
+  }
+  if (this->PSEntry)
+  {
+      this->PSEntry->SetParent(NULL );
+      this->PSEntry->Delete ( );
+  }
+  if (this->O4Entry)
+  {
+      this->O4Entry->SetParent(NULL );
+      this->O4Entry->Delete ( );
+  }
+  /*
+  if (this->RedColorScale)
+  {
+  this->RedColorScale->SetParent(NULL );
+  this->RedColorScale->Delete ( );
+  }
+  if (this->GreenColorScale)
+  {
+  this->GreenColorScale->SetParent(NULL );
+  this->GreenColorScale->Delete ( );
+  }
+  if (this->BlueColorScale)
+  {
+  this->BlueColorScale->SetParent(NULL );
+  this->BlueColorScale->Delete ( );
+  }
+  */
   
-    if (this->NAEntry)
-    {
-        this->NAEntry->SetParent(NULL );
-        this->NAEntry->Delete ( );
-    }
-    if (this->NSEntry)
-    {
-        this->NSEntry->SetParent(NULL );
-        this->NSEntry->Delete ( );
-    }
-    if (this->TREntry)
-    {
-        this->TREntry->SetParent(NULL );
-        this->TREntry->Delete ( );
-    }
-    if (this->TAEntry)
-    {
-        this->TAEntry->SetParent(NULL );
-        this->TAEntry->Delete ( );
-    }
-    if (this->TSEntry)
-    {
-        this->TSEntry->SetParent(NULL );
-        this->TSEntry->Delete ( );
-    }
-    if (this->PREntry)
-    {
-        this->PREntry->SetParent(NULL );
-        this->PREntry->Delete ( );
-    }
-    if (this->PAEntry)
-    {
-        this->PAEntry->SetParent(NULL );
-        this->PAEntry->Delete ( );
-    }
-    if (this->PSEntry)
-    {
-        this->PSEntry->SetParent(NULL );
-        this->PSEntry->Delete ( );
-    }
-    if (this->O4Entry)
-    {
-        this->O4Entry->SetParent(NULL );
-        this->O4Entry->Delete ( );
-    }
-    /*
-    if (this->RedColorScale)
-    {
-    this->RedColorScale->SetParent(NULL );
-    this->RedColorScale->Delete ( );
-    }
-    if (this->GreenColorScale)
-    {
-    this->GreenColorScale->SetParent(NULL );
-    this->GreenColorScale->Delete ( );
-    }
-    if (this->BlueColorScale)
-    {
-    this->BlueColorScale->SetParent(NULL );
-    this->BlueColorScale->Delete ( );
-    }
-    */
+  if (this->ConnectCheckButtonRI)
+  {
+      this->ConnectCheckButtonRI->SetParent(NULL );
+      this->ConnectCheckButtonRI->Delete ( );
+  }
+
+  if (this->NeedleCheckButton)
+  {
+      this->NeedleCheckButton->SetParent(NULL );
+      this->NeedleCheckButton->Delete ( );
+  }
+   if (this->ConnectCheckButtonNT)
+  {
+      this->ConnectCheckButtonNT->SetParent(NULL );
+      this->ConnectCheckButtonNT->Delete ( );
+  }
+     
+
+  if (this->ConnectCheckButtonStopScanner)
+  {
+      this->ConnectCheckButtonStopScanner->SetParent(NULL );
+      this->ConnectCheckButtonStopScanner->Delete ( );
+  }
+
+  if (this->ConnectCheckButtonStartScanner)
+  {
+      this->ConnectCheckButtonStartScanner->SetParent(NULL );
+      this->ConnectCheckButtonStartScanner->Delete ( );
+  }
     
+  if (this->ConnectCheckButtonprepScanner)
+  {
+      this->ConnectCheckButtonprepScanner->SetParent(NULL );
+      this->ConnectCheckButtonprepScanner->Delete ( );
+  }
+  if (this->ConnectCheckButtonpauseScanner)
+  {
+      this->ConnectCheckButtonpauseScanner->SetParent(NULL );
+      this->ConnectCheckButtonpauseScanner->Delete ( );
+  }
+  if (this->ConnectCheckButtonresumeScanner)
+  {
+      this->ConnectCheckButtonresumeScanner->SetParent(NULL );
+      this->ConnectCheckButtonresumeScanner->Delete ( );
+  }
 
-  
-    if (this->ConnectCheckButtonRI)
-    {
-        this->ConnectCheckButtonRI->SetParent(NULL );
-        this->ConnectCheckButtonRI->Delete ( );
-    }
+  if (this->LocatorCheckButton)
+  {
+  this->LocatorCheckButton->SetParent(NULL );
+  this->LocatorCheckButton->Delete ( );
+  }
 
-    if (this->NeedleCheckButton)
-    {
-        this->NeedleCheckButton->SetParent(NULL );
-        this->NeedleCheckButton->Delete ( );
-    }
-     if (this->ConnectCheckButtonNT)
-    {
-        this->ConnectCheckButtonNT->SetParent(NULL );
-        this->ConnectCheckButtonNT->Delete ( );
-    }
+  if (this->FreezeImageCheckButton)
+  {
+  this->FreezeImageCheckButton->SetParent(NULL );
+  this->FreezeImageCheckButton->Delete ( );
+  }
 
-       
- 
-    if (this->ConnectCheckButtonStopScanner)
-    {
-        this->ConnectCheckButtonStopScanner->SetParent(NULL );
-        this->ConnectCheckButtonStopScanner->Delete ( );
-    }
+  if (this->NeedleCheckButton)
+  {
+  this->NeedleCheckButton->SetParent(NULL );
+  this->NeedleCheckButton->Delete ( );
+  }
 
-    if (this->ConnectCheckButtonStartScanner)
-    {
-        this->ConnectCheckButtonStartScanner->SetParent(NULL );
-        this->ConnectCheckButtonStartScanner->Delete ( );
-    }
-      
-    if (this->ConnectCheckButtonprepScanner)
-    {
-        this->ConnectCheckButtonprepScanner->SetParent(NULL );
-        this->ConnectCheckButtonprepScanner->Delete ( );
-    }
-    if (this->ConnectCheckButtonpauseScanner)
-    {
-        this->ConnectCheckButtonpauseScanner->SetParent(NULL );
-        this->ConnectCheckButtonpauseScanner->Delete ( );
-    }
-    if (this->ConnectCheckButtonresumeScanner)
-    {
-        this->ConnectCheckButtonresumeScanner->SetParent(NULL );
-        this->ConnectCheckButtonresumeScanner->Delete ( );
-    }
+  if (this->LocatorModeCheckButton)
+  {
+  this->LocatorModeCheckButton->SetParent(NULL );
+  this->LocatorModeCheckButton->Delete ( );
+  }
+  if (this->UserModeCheckButton)
+  {
+  this->UserModeCheckButton->SetParent(NULL );
+  this->UserModeCheckButton->Delete ( );
+  }
 
-    if (this->LocatorCheckButton)
-    {
-    this->LocatorCheckButton->SetParent(NULL );
-    this->LocatorCheckButton->Delete ( );
-    }
-
-    if (this->FreezeImageCheckButton)
-    {
-    this->FreezeImageCheckButton->SetParent(NULL );
-    this->FreezeImageCheckButton->Delete ( );
-    }
-
-
-
-    if (this->NeedleCheckButton)
-    {
-    this->NeedleCheckButton->SetParent(NULL );
-    this->NeedleCheckButton->Delete ( );
-    }
-
-    if (this->LocatorModeCheckButton)
-    {
-    this->LocatorModeCheckButton->SetParent(NULL );
-    this->LocatorModeCheckButton->Delete ( );
-    }
-    if (this->UserModeCheckButton)
-    {
-    this->UserModeCheckButton->SetParent(NULL );
-    this->UserModeCheckButton->Delete ( );
-    }
-
-    if (this->RedSliceMenu)
-    {
-    this->RedSliceMenu->SetParent(NULL );
-    this->RedSliceMenu->Delete ( );
-    }
-    if (this->YellowSliceMenu)
-    {
-    this->YellowSliceMenu->SetParent(NULL );
-    this->YellowSliceMenu->Delete ( );
-    }
-    if (this->GreenSliceMenu)
-    {
-    this->GreenSliceMenu->SetParent(NULL );
-    this->GreenSliceMenu->Delete ( );
-    }
+  if (this->RedSliceMenu)
+  {
+  this->RedSliceMenu->SetParent(NULL );
+  this->RedSliceMenu->Delete ( );
+  }
+  if (this->YellowSliceMenu)
+  {
+  this->YellowSliceMenu->SetParent(NULL );
+  this->YellowSliceMenu->Delete ( );
+  }
+  if (this->GreenSliceMenu)
+  {
+  this->GreenSliceMenu->SetParent(NULL );
+  this->GreenSliceMenu->Delete ( );
+  }
 
 #ifdef USE_NAVITRACK
-   
-    if (this->LoadConfigButtonNT)
-    {
-    this->LoadConfigButtonNT->SetParent(NULL );
-    this->LoadConfigButtonNT->Delete ( );
-    }
-    if (this->ConfigFileEntry)
-    {
-    this->ConfigFileEntry->SetParent(NULL );
-    this->ConfigFileEntry->Delete ( );
-    }
-
-#endif
-#ifdef USE_IGSTK
-    if (this->DeviceMenuButton) 
-    {
-    this->DeviceMenuButton->SetParent(NULL);
-    this->DeviceMenuButton->Delete();
-    }
-    if (this->PortNumberMenuButton) 
-    {
-    this->PortNumberMenuButton->SetParent(NULL);
-    this->PortNumberMenuButton->Delete();
-    }
-    if (this->BaudRateMenuButton) 
-    {
-    this->BaudRateMenuButton->SetParent(NULL);
-    this->BaudRateMenuButton->Delete();
-    }
-    if (this->DataBitsMenuButton) 
-    {
-    this->DataBitsMenuButton->SetParent(NULL);
-    this->DataBitsMenuButton->Delete();
-    }
-    if (this->ParityTypeMenuButton) 
-    {
-    this->ParityTypeMenuButton->SetParent(NULL);
-    this->ParityTypeMenuButton->Delete();
-    }
-    if (this->StopBitsMenuButton) 
-    {
-    this->StopBitsMenuButton->SetParent(NULL);
-    this->StopBitsMenuButton->Delete();
-    }
-    if (this->HandShakeMenuButton) 
-    {
-    this->HandShakeMenuButton->SetParent(NULL);
-    this->HandShakeMenuButton->Delete();
-    }
-
+  if (this->LoadConfigButtonNT)
+  {
+  this->LoadConfigButtonNT->SetParent(NULL );
+  this->LoadConfigButtonNT->Delete ( );
+  }
+  if (this->ConfigFileEntry)
+  {
+  this->ConfigFileEntry->SetParent(NULL );
+  this->ConfigFileEntry->Delete ( );
+  }
 #endif
 
+  if (this->SetOrientButton)
+  {
+  this->SetOrientButton->SetParent(NULL );
+  this->SetOrientButton->Delete ( );
+  }
 
-     if (this->SetOrientButton)
-    {
-    this->SetOrientButton->SetParent(NULL );
-    this->SetOrientButton->Delete ( );
-    }
+  if (this->AddCoordsandOrientTarget)
+  {
+  this->AddCoordsandOrientTarget->SetParent(NULL );
+  this->AddCoordsandOrientTarget->Delete ( );
+  }
 
-    if (this->AddCoordsandOrientTarget)
-    {
-    this->AddCoordsandOrientTarget->SetParent(NULL );
-    this->AddCoordsandOrientTarget->Delete ( );
-    }
-  
-    if (this->PointPairMultiColumnList)
-    {
-    this->PointPairMultiColumnList->SetParent(NULL );
-    this->PointPairMultiColumnList->Delete ( );
-    }
-    if (this->TargetListColumnList)
-    {
-    this->TargetListColumnList->SetParent(NULL );
-    this->TargetListColumnList->Delete ( );
-    }
+  if (this->PointPairMultiColumnList)
+  {
+  this->PointPairMultiColumnList->SetParent(NULL );
+  this->PointPairMultiColumnList->Delete ( );
+  }
+  if (this->TargetListColumnList)
+  {
+  this->TargetListColumnList->SetParent(NULL );
+  this->TargetListColumnList->Delete ( );
+  }
 
-    if (this->DeleteTargetPushButton)
-    {
-    this->DeleteTargetPushButton->SetParent(NULL );
-    this->DeleteTargetPushButton->Delete ( );
-    }
-    if (this->DeleteAllTargetPushButton)
-    {
-    this->DeleteAllTargetPushButton->SetParent(NULL );
-    this->DeleteAllTargetPushButton->Delete ( );
-    }   
-    if (this->MoveBWPushButton)
-    {
-    this->MoveBWPushButton->SetParent(NULL );
-    this->MoveBWPushButton->Delete ( );
-    }
-    if (this->MoveFWPushButton)
-    {
-    this->MoveFWPushButton->SetParent(NULL );
-    this->MoveFWPushButton->Delete ( );
-    }
+  if (this->DeleteTargetPushButton)
+  {
+  this->DeleteTargetPushButton->SetParent(NULL );
+  this->DeleteTargetPushButton->Delete ( );
+  }
+  if (this->DeleteAllTargetPushButton)
+  {
+  this->DeleteAllTargetPushButton->SetParent(NULL );
+  this->DeleteAllTargetPushButton->Delete ( );
+  }   
+  if (this->MoveBWPushButton)
+  {
+  this->MoveBWPushButton->SetParent(NULL );
+  this->MoveBWPushButton->Delete ( );
+  }
+  if (this->MoveFWPushButton)
+  {
+  this->MoveFWPushButton->SetParent(NULL );
+  this->MoveFWPushButton->Delete ( );
+  }
 
-    if (this->WizardWidget)
-    {
-    this->WizardWidget->Delete();
-    this->WizardWidget = NULL;
-    }
+  if (this->WizardWidget)
+  {
+  this->WizardWidget->Delete();
+  this->WizardWidget = NULL;
+  }
 
-    this->SetModuleLogic ( NULL );
+  this->SetModuleLogic ( NULL );
 
 }
 
@@ -534,128 +488,126 @@ void vtkProstateNavGUI::PrintSelf ( ostream& os, vtkIndent indent )
 //---------------------------------------------------------------------------
 void vtkProstateNavGUI::RemoveGUIObservers ( )
 {
-    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-
-    appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()
-      ->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
-    appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()
-      ->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
-    appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()
-      ->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
-
-    //
-    // Workphase Frame
-    //
-    if (this->WorkPhaseButtonSet)
+  vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+  
+  appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()
+    ->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+  appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()
+    ->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+  appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()
+    ->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+  
+  //
+  // Workphase Frame
+  //
+  if (this->WorkPhaseButtonSet)
     {
-        for (int i = 0; i < this->WorkPhaseButtonSet->GetNumberOfWidgets(); i ++)
-        {
-            this->WorkPhaseButtonSet->GetWidget(i)->AddObserver(vtkKWPushButton::InvokedEvent,
-                                                                (vtkCommand *)this->GUICallbackCommand );
-        }
+    for (int i = 0; i < this->WorkPhaseButtonSet->GetNumberOfWidgets(); i ++)
+      {
+      this->WorkPhaseButtonSet->GetWidget(i)->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+      }
     }
-
     
+  //
+  // Wizard Frame
+  //
+  this->WizardWidget->GetWizardWorkflow()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
 
-    //
-    // Wizard Frame
-    //
-
-
-
-
-
-
-
-
-    if (this->ConnectCheckButtonRI)
+  if (this->ConnectCheckButtonRI)
     {
-    this->ConnectCheckButtonRI->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonRI->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                (vtkCommand *)this->GUICallbackCommand);
     }
-    if (this->NeedleCheckButton)
+  if (this->NeedleCheckButton)
     {
-    this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->NeedleCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                             (vtkCommand *)this->GUICallbackCommand );
     }
-     
-    if (this->ConnectCheckButtonNT)
+  if (this->ConnectCheckButtonNT)
     {
-    this->ConnectCheckButtonNT->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonNT->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                (vtkCommand *)this->GUICallbackCommand );
     }
-
-    if (this->ConnectCheckButtonStartScanner)
+  if (this->ConnectCheckButtonStartScanner)
     {
-    this->ConnectCheckButtonStartScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-     
-    if (this->ConnectCheckButtonStopScanner)
-    {
-    this->ConnectCheckButtonStopScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-
-    if (this->ConnectCheckButtonprepScanner)
-    {
-    this->ConnectCheckButtonprepScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-
-     if (this->ConnectCheckButtonpauseScanner)
-    {
-    this->ConnectCheckButtonpauseScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
-    }
-
-      if (this->ConnectCheckButtonresumeScanner)
-    {
-    this->ConnectCheckButtonresumeScanner->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonStartScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                          (vtkCommand *)this->GUICallbackCommand );
     }
    
-    if (this->SetOrientButton)
+  if (this->ConnectCheckButtonStopScanner)
     {
-    this->SetOrientButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonStopScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                         (vtkCommand *)this->GUICallbackCommand );
     }
-    
-    if (this->AddCoordsandOrientTarget)
+  if (this->ConnectCheckButtonprepScanner)
     {
-    this->AddCoordsandOrientTarget->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonprepScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                         (vtkCommand *)this->GUICallbackCommand );
     }
- 
-    if (this->DeleteTargetPushButton)
+  if (this->ConnectCheckButtonpauseScanner)
     {
-    this->DeleteTargetPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonpauseScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                          (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->MoveFWPushButton)
+  if (this->ConnectCheckButtonresumeScanner)
     {
-    this->MoveFWPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ConnectCheckButtonresumeScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                           (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->MoveBWPushButton)
+  if (this->SetOrientButton)
     {
-    this->MoveBWPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->SetOrientButton->RemoveObservers(vtkKWPushButton::InvokedEvent,
+                                           (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->DeleteAllTargetPushButton)
+  if (this->AddCoordsandOrientTarget)
     {
-    this->DeleteAllTargetPushButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->AddCoordsandOrientTarget->RemoveObservers(vtkKWPushButton::InvokedEvent,
+                                                    (vtkCommand *)this->GUICallbackCommand );
     }
-  
-    if (this->LocatorCheckButton)
+  if (this->DeleteTargetPushButton)
     {
-    this->LocatorCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->DeleteTargetPushButton->RemoveObservers(vtkKWPushButton::InvokedEvent,
+                                                  (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->FreezeImageCheckButton)
+  if (this->MoveFWPushButton)
     {
-    this->FreezeImageCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->MoveFWPushButton->RemoveObservers(vtkKWPushButton::InvokedEvent,
+                                            (vtkCommand *)this->GUICallbackCommand );
     }
-
-
-
-    if (this->NeedleCheckButton)
+  if (this->MoveBWPushButton)
     {
-    this->NeedleCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->MoveBWPushButton->RemoveObservers(vtkKWPushButton::InvokedEvent,
+                                             (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->LocatorModeCheckButton)
+  if (this->DeleteAllTargetPushButton)
     {
-    this->LocatorModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->DeleteAllTargetPushButton->RemoveObservers(vtkKWPushButton::InvokedEvent,
+                                                     (vtkCommand *)this->GUICallbackCommand );
     }
-    if (this->UserModeCheckButton)
+  if (this->LocatorCheckButton)
     {
-    this->UserModeCheckButton->RemoveObservers ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->LocatorCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                              (vtkCommand *)this->GUICallbackCommand );
+    }
+  if (this->FreezeImageCheckButton)
+    {
+    this->FreezeImageCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                  (vtkCommand *)this->GUICallbackCommand );
+    }
+  if (this->NeedleCheckButton)
+    {
+    this->NeedleCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                             (vtkCommand *)this->GUICallbackCommand );
+    }
+  if (this->LocatorModeCheckButton)
+    {
+    this->LocatorModeCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                  (vtkCommand *)this->GUICallbackCommand );
+    }
+  if (this->UserModeCheckButton)
+    {
+    this->UserModeCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                               (vtkCommand *)this->GUICallbackCommand );
     }
 }
 
@@ -663,92 +615,87 @@ void vtkProstateNavGUI::RemoveGUIObservers ( )
 //---------------------------------------------------------------------------
 void vtkProstateNavGUI::AddGUIObservers ( )
 {
-    this->RemoveGUIObservers();
+  this->RemoveGUIObservers();
 
-    // make a user interactor style to process our events
-    // look at the InteractorStyle to get our events
-
-    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-
-    appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()
-      ->GetRenderWindowInteractor()->GetInteractorStyle()
-      ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
-    appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()
-      ->GetRenderWindowInteractor()->GetInteractorStyle()
-      ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
-    appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()
-      ->GetRenderWindowInteractor()->GetInteractorStyle()
-      ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
-
-
-    //
-    // Workphase Frame
-    //
-    for (int i = 0; i < this->WorkPhaseButtonSet->GetNumberOfWidgets(); i ++)
+  // make a user interactor style to process our events
+  // look at the InteractorStyle to get our events
+  
+  vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+  
+  appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()
+    ->GetRenderWindowInteractor()->GetInteractorStyle()
+    ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+  appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()
+    ->GetRenderWindowInteractor()->GetInteractorStyle()
+    ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+  appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()
+    ->GetRenderWindowInteractor()->GetInteractorStyle()
+    ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
+  
+  //
+  // Workphase Frame
+  //
+  for (int i = 0; i < this->WorkPhaseButtonSet->GetNumberOfWidgets(); i ++)
     {
-        this->WorkPhaseButtonSet->GetWidget(i)->AddObserver( vtkKWPushButton::InvokedEvent,
-                                                            (vtkCommand *)this->GUICallbackCommand );
+    this->WorkPhaseButtonSet->GetWidget(i)
+      ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
     }
+  
+  
+  //
+  // Wizard Frame
+  //
+  this->WizardWidget->GetWizardWorkflow()->AddObserver(vtkKWWizardWorkflow::CurrentStateChangedEvent,
+                                                       (vtkCommand *)this->GUICallbackCommand);
 
+  // observer load volume button
+  this->ConnectCheckButtonRI->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->ConnectCheckButtonStartScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->ConnectCheckButtonStopScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->ConnectCheckButtonprepScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->ConnectCheckButtonpauseScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->ConnectCheckButtonresumeScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->SetOrientButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->AddCoordsandOrientTarget->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  
+  
+  this->DeleteTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->DeleteAllTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  
+  
+  this->MoveBWPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->MoveFWPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->LocatorCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->FreezeImageCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->LocatorModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->ReadCalibImageFileButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
 
-    //
-    // Wizard Frame
-    //
-    // 11/09/2007 J. Tokuda: Should it be registered to LogicCallback?
-    this->WizardWidget->GetWizardWorkflow()->AddObserver(vtkKWWizardWorkflow::CurrentStateChangedEvent,
-                                                         (vtkCommand *)this->GUICallbackCommand);
-
-
-    // observer load volume button
-    this->ConnectCheckButtonRI->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    
-    this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->ConnectCheckButtonStartScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->ConnectCheckButtonStopScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-
-    this->ConnectCheckButtonprepScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    
-    this->ConnectCheckButtonpauseScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    
-    this->ConnectCheckButtonresumeScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    
-    this->SetOrientButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    
-    this->AddCoordsandOrientTarget->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    
-    
-    
-    this->DeleteTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->DeleteAllTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    
-    
-
-    this->MoveBWPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->MoveFWPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-
-    this->LocatorCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->FreezeImageCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-
-   
-    
-    this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->LocatorModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->ReadCalibImageFileButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
-
-    /*
-#ifdef USE_NAVITRACK
+  /*
+    #ifdef USE_NAVITRACK
     this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-   
+    
     this->LoadConfigButtonNT->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-#endif
-#ifdef USE_IGSTK
+    #endif
+    #ifdef USE_IGSTK
     this->IGSTKStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
     this->DeviceMenuButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-#endif
-    */
+    #endif
+  */
 
 }
 
@@ -820,286 +767,274 @@ void vtkProstateNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
 
 
 //---------------------------------------------------------------------------
-void vtkProstateNavGUI::ProcessGUIEvents ( vtkObject *caller,
-    unsigned long event, void *callData )
+void vtkProstateNavGUI::ProcessGUIEvents(vtkObject *caller,
+                                         unsigned long event, void *callData)
 {
-    const char *eventName = vtkCommand::GetStringFromEventId(event);
-    if (strcmp(eventName, "LeftButtonPressEvent") == 0)
+
+  const char *eventName = vtkCommand::GetStringFromEventId(event);
+
+  if (strcmp(eventName, "LeftButtonPressEvent") == 0)
     {
-        vtkSlicerInteractorStyle *style = vtkSlicerInteractorStyle::SafeDownCast(caller);
-        HandleMouseEvent(style);
+    vtkSlicerInteractorStyle *style = vtkSlicerInteractorStyle::SafeDownCast(caller);
+    HandleMouseEvent(style);
+    return;
     }
-    else
+
+  //
+  // Check Work Phase Transition Buttons
+  //
+  if ( event == vtkKWPushButton::InvokedEvent)
     {
-
-        //
-        // Check Work Phase Transition Buttons
-        //
-        if ( event == vtkKWPushButton::InvokedEvent)
+    int phase;
+    for (phase = 0; phase < this->WorkPhaseButtonSet->GetNumberOfWidgets(); phase ++)
+      {
+      if (this->WorkPhaseButtonSet->GetWidget(phase) == vtkKWPushButton::SafeDownCast(caller))
         {
-            int phase;
-            for (phase = 0; phase < this->WorkPhaseButtonSet->GetNumberOfWidgets(); phase ++)
-            {
-                if (this->WorkPhaseButtonSet->GetWidget(phase) == vtkKWPushButton::SafeDownCast(caller))
-                {
-                    break;
-                }
-            }
-            if (phase < vtkProstateNavLogic::NumPhases) // if pressed one of them
-            {
-                ChangeWorkPhase(phase, 1);
-            }
+        break;
         }
+      }
+    if (phase < vtkProstateNavLogic::NumPhases) // if pressed one of them
+      {
+      ChangeWorkPhase(phase, 1);
+      }
+    }
 
+  //
+  // Wizard Frame
+  //
 
-          //
-          // Wizard Frame
-          //
+  if (this->WizardWidget->GetWizardWorkflow() == vtkKWWizardWorkflow::SafeDownCast(caller) &&
+      event == vtkKWWizardWorkflow::CurrentStateChangedEvent)
+    {
+          
+    int phase = vtkProstateNavLogic::Emergency;
+    vtkKWWizardStep* step =  this->WizardWidget->GetWizardWorkflow()->GetCurrentStep();
 
-          if (this->WizardWidget->GetWizardWorkflow() == vtkKWWizardWorkflow::SafeDownCast(caller) &&
-              event == vtkKWWizardWorkflow::CurrentStateChangedEvent)
-          {
+    for (int i = 0; i < vtkProstateNavLogic::NumPhases-1; i ++)
+      {
+      if (step == vtkKWWizardStep::SafeDownCast(this->WizardSteps[i]))
+        {
+        phase = i;
+        }
+      }
+    
+    ChangeWorkPhase(phase);
+    }
 
-              int phase;
-              vtkKWWizardStep* step =  this->WizardWidget->GetWizardWorkflow()->GetCurrentStep();
-              if (step == vtkKWWizardStep::SafeDownCast(this->ConfigurationStep))
-              {
-                  phase = vtkProstateNavLogic::StartUp;
-              }
-              else if (step == vtkKWWizardStep::SafeDownCast(this->ScanControlStep))
-              {
-                  phase = vtkProstateNavLogic::Planning;
-              }
-              else if (step == vtkKWWizardStep::SafeDownCast(this->CalibrationStep))
-              {
-                  phase = vtkProstateNavLogic::Calibration;
-              }
-              else if (step == vtkKWWizardStep::SafeDownCast(this->TargetingStep))
-              {
-                  phase = vtkProstateNavLogic::Targeting;
-              }
-              else if (step == vtkKWWizardStep::SafeDownCast(this->ManualControlStep))
-              {
-                  phase = vtkProstateNavLogic::Manual;
-              }
-              else
-              {
-                  phase = vtkProstateNavLogic::Emergency;
-              }
-
-              ChangeWorkPhase(phase);
-          }
-
-            
-
+          
 #ifdef USE_NAVITRACK
-        else if (this->LoadConfigButtonNT->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-              && event == vtkKWPushButton::InvokedEvent )
-        {
-            const char * filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
-            if (filename)
-            {
-                const vtksys_stl::string fname(filename);
-                this->ConfigFileEntry->SetValue(fname.c_str());
-            }
-            else
-            {
-                this->ConfigFileEntry->SetValue("");
-            }
-            this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
-        }
+  else if (this->LoadConfigButtonNT->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
+           && event == vtkKWPushButton::InvokedEvent )
+    {
+    const char * filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
+    if (filename)
+      {
+      const vtksys_stl::string fname(filename);
+      this->ConfigFileEntry->SetValue(fname.c_str());
+      }
+    else
+      {
+      this->ConfigFileEntry->SetValue("");
+      }
+    //this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
+    }
 #endif
 
-        else if (this->AddCoordsandOrientTarget == vtkKWPushButton::SafeDownCast(caller) 
-              && event == vtkKWPushButton::InvokedEvent)
-       
-        {
-            int row = this->TargetListColumnList->GetWidget()->GetNumberOfRows();
-            int rownumber = row + 1; 
-
-            char xcoordsrobot[12];
-            char ycoordsrobot[12];
-            char zcoordsrobot[12];
-            char o1coordsrobot[12];
-            char o2coordsrobot[12];
-            char o3coordsrobot[12];
-            char o4coordsrobot[12];
-            
-            strncpy(xcoordsrobot, this->NREntry->GetWidget()->GetValue(), 12);
-            strncpy(ycoordsrobot, this->NAEntry->GetWidget()->GetValue(), 12);
-            strncpy(zcoordsrobot, this->NSEntry->GetWidget()->GetValue(), 12);
-            
-            strncpy(o1coordsrobot, this->PREntry->GetWidget()->GetValue(), 12);
-            strncpy(o2coordsrobot, this->PAEntry->GetWidget()->GetValue(), 12);
-            strncpy(o3coordsrobot, this->PSEntry->GetWidget()->GetValue(), 12);
-            strncpy(o4coordsrobot, this->O4Entry->GetWidget()->GetValue(), 12);
-            
-            //merge coordinates of the same type in on vector
-            float xcoordsrobotforsend = atof(this->NREntry->GetWidget()->GetValue());
-            xsendrobotcoords.push_back(xcoordsrobotforsend );
-            float ycoordsrobotforsend = atof(this->NAEntry->GetWidget()->GetValue());
-            ysendrobotcoords.push_back(ycoordsrobotforsend );
-            float zcoordsrobotforsend = atof(this->NSEntry->GetWidget()->GetValue());
-            zsendrobotcoords.push_back(zcoordsrobotforsend );
-            
-            float o1coordsrobotforsend = atof(this->PREntry->GetWidget()->GetValue());
-            osendrobotcoords.push_back(o1coordsrobotforsend );
-            float o2coordsrobotforsend = atof(this->PAEntry->GetWidget()->GetValue());
-            osendrobotcoords.push_back(o2coordsrobotforsend );
-            float o3coordsrobotforsend = atof(this->PSEntry->GetWidget()->GetValue());
-            osendrobotcoords.push_back(o3coordsrobotforsend );
-            float o4coordsrobotforsend = atof(this->O4Entry->GetWidget()->GetValue());
-            osendrobotcoords.push_back(o4coordsrobotforsend );
-            
-            
-            sendrobotcoordsvector.push_back(osendrobotcoords);   
-            
-            osendrobotcoords.clear();
-            
-            char coordsxyz[512]; 
-            sprintf(coordsxyz, "%s, %s, %s", xcoordsrobot, ycoordsrobot, zcoordsrobot);
-            char orientsxyz[512]; 
-            sprintf(orientsxyz, "%s, %s, %s, %s", o1coordsrobot, o2coordsrobot, o3coordsrobot, o4coordsrobot);
-            
-            /*
-              int CountTarget;   
-              CountTarget = 1;
-              char DispCountTarget[512];
-              sprintf(DispCountTarget,"%s", CountTarget); 
-            */
-            this->TargetListColumnList->GetWidget()->AddRow();
-            // this->TargetListColumnList->GetWidget()->SetCellText(row, 0,DispCountTarget);
-            this->TargetListColumnList->GetWidget()->SetCellText(row, 1,coordsxyz);
-            this->TargetListColumnList->GetWidget()->SetCellText(row, 2,orientsxyz);
-            
-        }
-
-        else if (this->SetOrientButton == vtkKWPushButton::SafeDownCast(caller) 
-                 && event == vtkKWPushButton::InvokedEvent)
-        {      
-            vtkSlicerApplication::GetInstance()->ErrorMessage("xsendrobotcoords[sendindex]"); 
-            
-            std::string robotcommandkey;
-            std::string robotcommandvalue;  
-            robotcommandkey = "command";
-            robotcommandvalue = BRPTPR_TARGET;
-            
-            
-            int sendindex = this->TargetListColumnList->GetWidget()->GetIndexOfFirstSelectedRow();
-            
-        }
-        else if (this->DeleteTargetPushButton == vtkKWPushButton::SafeDownCast(caller) 
-                 && event == vtkKWPushButton::InvokedEvent)
-        {
-            int numOfRows = this->TargetListColumnList->GetWidget()->GetNumberOfSelectedRows();
-            if (numOfRows == 1)
-            {
-                int index[2];
-                this->TargetListColumnList->GetWidget()->GetSelectedRows(index);
-                this->TargetListColumnList->GetWidget()->DeleteRow(index[0]);
-            }
-        }
-        else if (this->DeleteAllTargetPushButton == vtkKWPushButton::SafeDownCast(caller) 
-                 && event == vtkKWPushButton::InvokedEvent)
-        {
-            this->TargetListColumnList->GetWidget()->DeleteAllRows();
-        }
-
-        else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
-            int checked = this->LocatorCheckButton->GetSelectedState(); 
-            
-            vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
-            if (model != NULL)
-            {
-                vtkMRMLModelDisplayNode *disp = vtkMRMLModelDisplayNode::SafeDownCast(model->GetDisplayNode());
-                
-                if (disp != NULL)
-                {
-                    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-                    vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
-                    disp->SetColor(color->SliceGUIGreen);
-                    disp->SetVisibility(checked);
-                }
-            }
-        }
-
-        else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
-            int checked = this->LocatorModeCheckButton->GetSelectedState(); 
-            std::string val("Locator");
-            
-            if (checked)
-            {
-                this->UserModeCheckButton->SelectedStateOff();
-            }
-            else
-            {
-                this->UserModeCheckButton->SelectedStateOn();
-                this->SliceNode0->SetOrientationToAxial();
-                this->SliceNode1->SetOrientationToSagittal();
-                this->SliceNode2->SetOrientationToCoronal();
-                this->NeedOrientationUpdate0 = 0;
-                this->NeedOrientationUpdate1 = 0;
-                this->NeedOrientationUpdate2 = 0;
-                
-                this->NeedRealtimeImageUpdate = 0;
-                
-                val = "User";
-            }
-            this->RedSliceMenu->SetValue(val.c_str());
-            this->YellowSliceMenu->SetValue(val.c_str());
-            this->GreenSliceMenu->SetValue(val.c_str());
-        }
-        else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-                 && event == vtkKWCheckButton::SelectedStateChangedEvent )
-        {
-            int checked = this->UserModeCheckButton->GetSelectedState(); 
-            std::string val("User");
-            
-            if (checked)
-            {
-                this->LocatorModeCheckButton->SelectedStateOff();
-                this->SliceNode0->SetOrientationToAxial();
-                this->SliceNode1->SetOrientationToSagittal();
-                this->SliceNode2->SetOrientationToCoronal();
-                
-                
-                this->NeedOrientationUpdate0 = 0;
-                this->NeedOrientationUpdate1 = 0;
-                this->NeedOrientationUpdate2 = 0;
-                
-                this->NeedRealtimeImageUpdate = 0;
-            }
-            else
-            {
-                this->LocatorModeCheckButton->SelectedStateOn();
-                val = "Locator";
-            }
-            this->RedSliceMenu->SetValue(val.c_str());
-            this->YellowSliceMenu->SetValue(val.c_str());
-            this->GreenSliceMenu->SetValue(val.c_str());
-        }
-        else if (this->ListCalibImageFileButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-              && event == vtkKWPushButton::InvokedEvent )
-        {
-            const char * filename = this->ListCalibImageFileButton->GetWidget()->GetFileName();
-            if (filename)
-            {
-                const vtksys_stl::string fname(filename);
-                this->CalibImageFileEntry->SetValue(fname.c_str());
-            }
-            else
-            {
-                this->CalibImageFileEntry->SetValue("");
-            }
-            this->ListCalibImageFileButton->GetWidget()->SetText ("Browse Image File");
-        }
-
-
+  else if (this->AddCoordsandOrientTarget == vtkKWPushButton::SafeDownCast(caller) 
+           && event == vtkKWPushButton::InvokedEvent)
+    
+    {
+    int row = this->TargetListColumnList->GetWidget()->GetNumberOfRows();
+    int rownumber = row + 1; 
+    
+    char xcoordsrobot[12];
+    char ycoordsrobot[12];
+    char zcoordsrobot[12];
+    char o1coordsrobot[12];
+    char o2coordsrobot[12];
+    char o3coordsrobot[12];
+    char o4coordsrobot[12];
+    
+    strncpy(xcoordsrobot, this->NREntry->GetWidget()->GetValue(), 12);
+    strncpy(ycoordsrobot, this->NAEntry->GetWidget()->GetValue(), 12);
+    strncpy(zcoordsrobot, this->NSEntry->GetWidget()->GetValue(), 12);
+    
+    strncpy(o1coordsrobot, this->PREntry->GetWidget()->GetValue(), 12);
+    strncpy(o2coordsrobot, this->PAEntry->GetWidget()->GetValue(), 12);
+    strncpy(o3coordsrobot, this->PSEntry->GetWidget()->GetValue(), 12);
+    strncpy(o4coordsrobot, this->O4Entry->GetWidget()->GetValue(), 12);
+    
+    //merge coordinates of the same type in on vector
+    float xcoordsrobotforsend = atof(this->NREntry->GetWidget()->GetValue());
+    xsendrobotcoords.push_back(xcoordsrobotforsend );
+    float ycoordsrobotforsend = atof(this->NAEntry->GetWidget()->GetValue());
+    ysendrobotcoords.push_back(ycoordsrobotforsend );
+    float zcoordsrobotforsend = atof(this->NSEntry->GetWidget()->GetValue());
+    zsendrobotcoords.push_back(zcoordsrobotforsend );
+    
+    float o1coordsrobotforsend = atof(this->PREntry->GetWidget()->GetValue());
+    osendrobotcoords.push_back(o1coordsrobotforsend );
+    float o2coordsrobotforsend = atof(this->PAEntry->GetWidget()->GetValue());
+    osendrobotcoords.push_back(o2coordsrobotforsend );
+    float o3coordsrobotforsend = atof(this->PSEntry->GetWidget()->GetValue());
+    osendrobotcoords.push_back(o3coordsrobotforsend );
+    float o4coordsrobotforsend = atof(this->O4Entry->GetWidget()->GetValue());
+    osendrobotcoords.push_back(o4coordsrobotforsend );
+    
+    
+    sendrobotcoordsvector.push_back(osendrobotcoords);   
+    
+    osendrobotcoords.clear();
+    
+    char coordsxyz[512]; 
+    sprintf(coordsxyz, "%s, %s, %s", xcoordsrobot, ycoordsrobot, zcoordsrobot);
+    char orientsxyz[512]; 
+    sprintf(orientsxyz, "%s, %s, %s, %s", o1coordsrobot, o2coordsrobot, o3coordsrobot, o4coordsrobot);
+    
+    /*
+      int CountTarget;   
+      CountTarget = 1;
+      char DispCountTarget[512];
+      sprintf(DispCountTarget,"%s", CountTarget); 
+    */
+    this->TargetListColumnList->GetWidget()->AddRow();
+    // this->TargetListColumnList->GetWidget()->SetCellText(row, 0,DispCountTarget);
+    this->TargetListColumnList->GetWidget()->SetCellText(row, 1,coordsxyz);
+    this->TargetListColumnList->GetWidget()->SetCellText(row, 2,orientsxyz);
+    
     }
+
+  else if (this->SetOrientButton == vtkKWPushButton::SafeDownCast(caller) 
+               && event == vtkKWPushButton::InvokedEvent)
+    {      
+    vtkSlicerApplication::GetInstance()->ErrorMessage("xsendrobotcoords[sendindex]"); 
+          
+    std::string robotcommandkey;
+    std::string robotcommandvalue;  
+    robotcommandkey = "command";
+    robotcommandvalue = BRPTPR_TARGET;
+    
+    
+    int sendindex = this->TargetListColumnList->GetWidget()->GetIndexOfFirstSelectedRow();
+    
+    }
+  else if (this->DeleteTargetPushButton == vtkKWPushButton::SafeDownCast(caller) 
+           && event == vtkKWPushButton::InvokedEvent)
+    {
+    int numOfRows = this->TargetListColumnList->GetWidget()->GetNumberOfSelectedRows();
+    if (numOfRows == 1)
+      {
+      int index[2];
+      this->TargetListColumnList->GetWidget()->GetSelectedRows(index);
+      this->TargetListColumnList->GetWidget()->DeleteRow(index[0]);
+      }
+    }
+  else if (this->DeleteAllTargetPushButton == vtkKWPushButton::SafeDownCast(caller) 
+           && event == vtkKWPushButton::InvokedEvent)
+    {
+    this->TargetListColumnList->GetWidget()->DeleteAllRows();
+    }
+  
+  else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+           && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+    int checked = this->LocatorCheckButton->GetSelectedState(); 
+      
+    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
+    if (model != NULL)
+      {
+      vtkMRMLModelDisplayNode *disp = vtkMRMLModelDisplayNode::SafeDownCast(model->GetDisplayNode());
+      
+      if (disp != NULL)
+        {
+        vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+        vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
+        disp->SetColor(color->SliceGUIGreen);
+        disp->SetVisibility(checked);
+        }
+      }
+    }
+  
+  else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+           && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+      int checked = this->LocatorModeCheckButton->GetSelectedState(); 
+      std::string val("Locator");
+      
+      if (checked)
+        {
+          this->UserModeCheckButton->SelectedStateOff();
+        }
+      else
+        {
+          this->UserModeCheckButton->SelectedStateOn();
+          this->SliceNode0->SetOrientationToAxial();
+          this->SliceNode1->SetOrientationToSagittal();
+          this->SliceNode2->SetOrientationToCoronal();
+          this->NeedOrientationUpdate0 = 0;
+          this->NeedOrientationUpdate1 = 0;
+          this->NeedOrientationUpdate2 = 0;
+          
+          this->NeedRealtimeImageUpdate = 0;
+          
+          val = "User";
+        }
+      this->RedSliceMenu->SetValue(val.c_str());
+      this->YellowSliceMenu->SetValue(val.c_str());
+      this->GreenSliceMenu->SetValue(val.c_str());
+    }
+  else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+           && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+      int checked = this->UserModeCheckButton->GetSelectedState(); 
+      std::string val("User");
+      
+      if (checked)
+        {
+        this->LocatorModeCheckButton->SelectedStateOff();
+        this->SliceNode0->SetOrientationToAxial();
+        this->SliceNode1->SetOrientationToSagittal();
+        this->SliceNode2->SetOrientationToCoronal();
+        
+          
+        this->NeedOrientationUpdate0 = 0;
+        this->NeedOrientationUpdate1 = 0;
+        this->NeedOrientationUpdate2 = 0;
+        
+        this->NeedRealtimeImageUpdate = 0;
+        }
+      else
+        {
+        this->LocatorModeCheckButton->SelectedStateOn();
+        val = "Locator";
+        }
+      this->RedSliceMenu->SetValue(val.c_str());
+      this->YellowSliceMenu->SetValue(val.c_str());
+      this->GreenSliceMenu->SetValue(val.c_str());
+    }
+  else if (this->ListCalibImageFileButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
+            && event == vtkKWPushButton::InvokedEvent )
+    {
+    const char * filename = this->ListCalibImageFileButton->GetWidget()->GetFileName();
+    if (filename)
+      {
+      const vtksys_stl::string fname(filename);
+      this->CalibImageFileEntry->SetValue(fname.c_str());
+      }
+    else
+      {
+      this->CalibImageFileEntry->SetValue("");
+      }
+    this->ListCalibImageFileButton->GetWidget()->SetText ("Browse Image File");
+    }
+
+  // Process Wizard GUI (Active step only)
+  else
+    {
+    int phase = this->Logic->GetCurrentPhase();
+    this->WizardSteps[phase]->ProcessGUIEvents(caller, event, callData);
+    }
+
 } 
 
 
@@ -1246,65 +1181,70 @@ void vtkProstateNavGUI::BuildGUIForWizardFrame()
     // -----------------------------------------------------------------
     // Config File step
 
-    if (!this->ConfigurationStep)
+    if (!this->WizardSteps[vtkProstateNavLogic::StartUp])
       {
-      this->ConfigurationStep = vtkProstateNavConfigurationStep::New();
-      this->ConfigurationStep->SetGUI(this);
+      this->WizardSteps[vtkProstateNavLogic::StartUp] = vtkProstateNavConfigurationStep::New();
       }
-    wizard_workflow->AddStep(this->ConfigurationStep);
 
     // -----------------------------------------------------------------
     // Scan Control step
 
-    if (!this->ScanControlStep)
+    if (!this->WizardSteps[vtkProstateNavLogic::Planning])
       {
-      this->ScanControlStep = vtkProstateNavScanControlStep::New();
-      this->ScanControlStep->SetGUI(this);
+      this->WizardSteps[vtkProstateNavLogic::Planning] = vtkProstateNavScanControlStep::New();
       }
-    wizard_workflow->AddNextStep(this->ScanControlStep);
 
     // -----------------------------------------------------------------
     // Calibration step
 
-    if (!this->CalibrationStep)
+    if (!this->WizardSteps[vtkProstateNavLogic::Calibration])
       {
-      this->CalibrationStep = vtkProstateNavCalibrationStep::New();
-      this->CalibrationStep->SetGUI(this);
+      this->WizardSteps[vtkProstateNavLogic::Calibration] = vtkProstateNavCalibrationStep::New();
       }
-    wizard_workflow->AddNextStep(this->CalibrationStep);
 
     // -----------------------------------------------------------------
     // Targeting step
 
-    if (!this->TargetingStep)
+    if (!this->WizardSteps[vtkProstateNavLogic::Targeting])
       {
-      this->TargetingStep = vtkProstateNavTargetingStep::New();
-      this->TargetingStep->SetGUI(this);
+      this->WizardSteps[vtkProstateNavLogic::Targeting] = vtkProstateNavTargetingStep::New();
       }
-    wizard_workflow->AddNextStep(this->TargetingStep);
 
     // -----------------------------------------------------------------
     // ManualControl step
 
-    if (!this->ManualControlStep)
+    if (!this->WizardSteps[vtkProstateNavLogic::Manual])
       {
-      this->ManualControlStep = vtkProstateNavManualControlStep::New();
-      this->ManualControlStep->SetGUI(this);
+      this->WizardSteps[vtkProstateNavLogic::Manual] = vtkProstateNavManualControlStep::New();
       }
-    wizard_workflow->AddNextStep(this->ManualControlStep);
+
+
+    // -----------------------------------------------------------------
+    // Set GUI/Logic to each step and add to workflow
+
+    for (int i = 0; i < vtkProstateNavLogic::NumPhases-1; i ++)
+      {
+      this->WizardSteps[i]->SetGUI(this);
+      this->WizardSteps[i]->SetLogic(this->Logic);
+      wizard_workflow->AddNextStep(this->WizardSteps[i]);
+      }
+
 
     // -----------------------------------------------------------------
     // Initial and finish step
 
-    wizard_workflow->SetFinishStep(this->ManualControlStep);
+    //wizard_workflow->SetFinishStep(this->ManualControlStep);
+    wizard_workflow->SetFinishStep(this->WizardSteps[vtkProstateNavLogic::Manual]);
     wizard_workflow->CreateGoToTransitionsToFinishStep();
-    wizard_workflow->SetInitialStep(this->ConfigurationStep);
+    //wizard_workflow->SetInitialStep(this->ConfigurationStep);
+    wizard_workflow->SetInitialStep(this->WizardSteps[vtkProstateNavLogic::StartUp]);
 
     // -----------------------------------------------------------------
     // Show the user interface
 
     this->WizardWidget->GetWizardWorkflow()->
       GetCurrentStep()->ShowUserInterface();
+
 }
 
 
@@ -1876,13 +1816,6 @@ void vtkProstateNavGUI::BuildGUIForDeviceFrame ()
                 RobotOrientLabel->GetWidgetName(),
                 this->OrientEntry->GetWidgetName());
 
-
-
-    /*
-     this->NREntry->GetWidget()->SetWidth(5);
-    this->NREntry->GetWidget()->SetValue("0");
-    */
-
     //---------------------------------------------------------------------------------------------------------------------------
      empty1Label->Delete();
      empty2Label->Delete();
@@ -1896,8 +1829,6 @@ void vtkProstateNavGUI::BuildGUIForDeviceFrame ()
      
      oLabel->Delete();
      nLabel->Delete();
-
-   
 
      deviceFrame->Delete();
      OrientMoveFrame->Delete();
@@ -2394,8 +2325,10 @@ void vtkProstateNavGUI::BuildGUIForCalibration()
 int vtkProstateNavGUI::ChangeWorkPhase(int phase, int fChangeWizard)
 {
 
+  cerr << "ChangeWorkPhase: started" << endl;
     if (!this->Logic->SwitchWorkPhase(phase)) // Set next phase
     {
+      cerr << "ChangeWorkPhase: Cannot make transition!" << endl;
         return 0;
     }
   
@@ -2419,8 +2352,7 @@ int vtkProstateNavGUI::ChangeWorkPhase(int phase, int fChangeWizard)
     }
 
     // Switch Wizard Frame
-    // 11/09/2007 Junichi Tokuda -- This part looks agry. Will be fixed later.
-
+    // 11/09/2007 Junichi Tokuda -- This part looks ugly. Will be fixed later.
     if (fChangeWizard)
     {
         vtkKWWizardWorkflow *wizard = 

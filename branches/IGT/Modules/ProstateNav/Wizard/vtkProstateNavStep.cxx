@@ -1,5 +1,6 @@
 #include "vtkProstateNavStep.h"
 #include "vtkProstateNavGUI.h"
+#include "vtkProstateNavLogic.h"
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
@@ -8,17 +9,25 @@
 vtkStandardNewMacro(vtkProstateNavStep);
 vtkCxxRevisionMacro(vtkProstateNavStep, "$Revision: 1.2 $");
 vtkCxxSetObjectMacro(vtkProstateNavStep,GUI,vtkProstateNavGUI);
+vtkCxxSetObjectMacro(vtkProstateNavStep,Logic,vtkProstateNavLogic);
 
 //----------------------------------------------------------------------------
 vtkProstateNavStep::vtkProstateNavStep()
 {
   this->GUI = NULL;
+  this->Logic = NULL;
+
+  GUICallbackCommand = vtkCallbackCommand::New();
+  GUICallbackCommand->SetClientData(this);
+  GUICallbackCommand->SetCallback(&vtkProstateNavStep::GUICallback);
+
 }
 
 //----------------------------------------------------------------------------
 vtkProstateNavStep::~vtkProstateNavStep()
 {
   this->SetGUI(NULL);
+  this->SetLogic(NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -54,4 +63,26 @@ int vtkProstateNavStep::CanGoToSelf()
 void vtkProstateNavStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
+}
+
+//----------------------------------------------------------------------------
+void vtkProstateNavStep::GUICallback( vtkObject *caller,
+                           unsigned long eid, void *clientData, void *callData )
+{
+
+  vtkProstateNavStep *self = reinterpret_cast<vtkProstateNavStep *>(clientData);
+  
+  if (self->GetInGUICallbackFlag())
+    {
+#ifdef _DEBUG
+    vtkDebugWithObjectMacro(self, "vtkProstateNavStep *********GUICallback called recursively?");
+#endif
+    }
+
+  vtkDebugWithObjectMacro(self, "In vtkProstateNavStep GUICallback");
+  
+  self->SetInGUICallbackFlag(1);
+  self->ProcessGUIEvents(caller, eid, callData);
+  self->SetInGUICallbackFlag(0);
+  
 }

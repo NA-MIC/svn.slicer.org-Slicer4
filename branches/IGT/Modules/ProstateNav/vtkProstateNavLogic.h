@@ -96,6 +96,11 @@ public:
     int  DisconnectNaviTrack();
 #endif //USE_NAVITRACK
 
+    //BTX
+    Image* ReadCalibrationImage(const char* filename, int* width, int* height,
+                                std::vector<float>& position, std::vector<float>& orientation);
+    //ETX
+
 private:
 
     static const int PhaseTransitionMatrix[NumPhases][NumPhases];
