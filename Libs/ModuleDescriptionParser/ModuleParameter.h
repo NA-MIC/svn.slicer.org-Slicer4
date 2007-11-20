@@ -68,7 +68,17 @@ public:
   {
     return this->Type;
   }
-  
+
+  virtual void SetReference(const std::string &ref)
+  {
+    this->Reference = ref;
+  }
+
+  virtual std::string GetReference() const
+  {
+    return this->Reference;
+  }
+
   virtual void SetArgType(const std::string &argType)
   {
     this->ArgType = argType;
@@ -259,6 +269,7 @@ private:
   std::string Label;
   std::string CPPType;
   std::string Type;
+  std::string Reference;
   std::string ArgType;
   std::string StringToType;
   std::string Default;

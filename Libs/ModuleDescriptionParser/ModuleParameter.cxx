@@ -38,6 +38,7 @@ ModuleParameter::ModuleParameter()
     this->Label = "";
     this->CPPType = "";
     this->Type = "";
+    this->Reference = "";
     this->ArgType = "";
     this->StringToType = "";
     this->Default = "";
@@ -62,6 +63,7 @@ ModuleParameter::ModuleParameter(const ModuleParameter& parameter)
   this->Label = parameter.Label;
   this->CPPType = parameter.CPPType;
   this->Type = parameter.Type;
+  this->Reference = parameter.Reference;
   this->ArgType = parameter.ArgType;
   this->StringToType = parameter.StringToType;
   this->Default = parameter.Default;
@@ -88,6 +90,7 @@ void ModuleParameter::operator=(const ModuleParameter& parameter)
   this->Label = parameter.Label;
   this->CPPType = parameter.CPPType;
   this->Type = parameter.Type;
+  this->Reference = parameter.Reference;
   this->ArgType = parameter.ArgType;
   this->StringToType = parameter.StringToType;
   this->Default = parameter.Default;
@@ -129,6 +132,7 @@ std::ostream & operator<<(std::ostream &os, const ModuleParameter &parameter)
   os << "      " << "Description: " << parameter.GetDescription() << std::endl;
   os << "      " << "Label: " << parameter.GetLabel() << std::endl;
   os << "      " << "Type: " << parameter.GetType() << std::endl;
+  os << "      " << "Reference: " << parameter.GetReference() << std::endl;
   os << "      " << "CPPType: " << parameter.GetCPPType() << std::endl;
   os << "      " << "ArgType: " << parameter.GetArgType() << std::endl;
   os << "      " << "StringToType: " << parameter.GetStringToType() << std::endl;

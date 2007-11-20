@@ -32,6 +32,7 @@ SET(MRML_SRCS
         vtkMRMLVolumeGlyphDisplayNode.cxx
         vtkMRMLTransformableNode.cxx
         vtkMRMLTransformNode.cxx
+        vtkMRMLTransformStorageNode.cxx
         vtkMRMLLinearTransformNode.cxx
         vtkMRMLFiducial.cxx
         vtkMRMLFiducialListNode.cxx
