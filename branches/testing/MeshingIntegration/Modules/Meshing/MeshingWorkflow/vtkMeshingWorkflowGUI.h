@@ -20,7 +20,6 @@
 #include "vtkMRMLScene.h"
 #include "vtkMeshingWorkflowLogic.h"
 
-
 class vtkSlicerSliceWidget;
 class vtkKWFrame;
 class vtkKWScaleWithEntry;

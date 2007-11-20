@@ -35,7 +35,11 @@ SET(LIB_SRCS
   vtkMeshingWorkflowGUI.cxx
   vtkMeshingWorkflowLogic.cxx
   vtkMRMLMeshingWorkflowNode.cxx
+  vtkMRMLFESurfaceNode.cxx
+  vtkFESurfaceList.cxx
   )
+  
+
 
 #INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 #INCLUDE("${KWWidgets_CMAKE_DIR}/KWWidgetsWrappingMacros.cmake")
