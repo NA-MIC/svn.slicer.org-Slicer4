@@ -33,6 +33,7 @@
 #include "vtkMRMLScene.h"
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkMRMLModelStorageNode.h"
+#include "vtkMRMLTransformStorageNode.h"
 #include "vtkMRMLFiberBundleStorageNode.h"
 #include "vtkMRMLColorTableStorageNode.h"
 #include "vtkMRMLColorTableNode.h"
@@ -755,9 +756,12 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
     else if (ltnd)
       {
       // Load a linear transform node
-      
-      // no storage node for transforms, need to read a scene (should
-      // have been in ProcessReadSceneData()
+
+      // transforms can be communicated either using storage nodes or
+      // in scenes.  we handle the former here.  the latter is handled
+      // by ProcessReadSceneData()
+
+      in = vtkMRMLTransformStorageNode::New();
       }
     
     // Have the storage node read the data into the current node

@@ -630,6 +630,8 @@ if { ![file exists $::ITK_TEST_FILE] || $::GENLIB(update) } {
         -DCMAKE_SKIP_RPATH:BOOL=OFF \
         -DBUILD_EXAMPLES:BOOL=OFF \
         -DBUILD_TESTING:BOOL=OFF \
+        -DITK_USE_REVIEW:BOOL=ON \
+        -DITK_USE_TRANSFORM_IO_FACTORIES:BOOL=ON \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         ../Insight
     } else {
@@ -641,6 +643,8 @@ if { ![file exists $::ITK_TEST_FILE] || $::GENLIB(update) } {
         -DCMAKE_SKIP_RPATH:BOOL=ON \
         -DBUILD_EXAMPLES:BOOL=OFF \
         -DBUILD_TESTING:BOOL=OFF \
+        -DITK_USE_REVIEW:BOOL=ON \
+        -DITK_USE_TRANSFORM_IO_FACTORIES:BOOL=ON \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         ../Insight
     }
