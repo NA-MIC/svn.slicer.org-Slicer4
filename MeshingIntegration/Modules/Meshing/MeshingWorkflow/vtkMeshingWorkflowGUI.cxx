@@ -38,9 +38,14 @@ Version:   $Revision: 1.2 $
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWPushButton.h"
 
-// include declarations from Univ. of Iowa standalone meshing workflow GUI class hierarchy
-//#include "vtkKWMimxFEMeshMenuGroup.h"
-#include "vtkKWMimxMainNotebook.h"
+// include declarations from Univ. of Iowa standalone meshing workflow GUI class hierarchy.  The
+// original notebook uses locally-maintained linked lists.  The MRML notebook moves the storage into
+// the MRML tree and keeps the same API for the client module. Change of code is minimized betweeen
+// the standalone application and the slicer module. 
+
+//#include "vtkKWMimxMainNotebook.h"
+#include "vtkMeshingWorkflowMRMLNotebook.h"
+
 #include "vtkKWMenuButtonWithLabel.h"
 #include "vtkKWMimxViewWindow.h"
 
@@ -87,6 +92,7 @@ void vtkMeshingWorkflowGUI::PrintSelf(ostream& os, vtkIndent indent)
 //---------------------------------------------------------------------------
 void vtkMeshingWorkflowGUI::AddGUIObservers ( ) 
 {
+
 
     // look in the menu and add callbacks     
     // these observers don't have to be added anymore because the existing BoundingBox GUI management code handles callbacks directly. Callbacks
@@ -227,7 +233,8 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
   viewwin->SetRenderWidget(this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer());
   
   // create the notebook which is the root of the pre-developed meshing workflow
-  this->SavedMimxNotebook = vtkKWMimxMainNotebook::New();
+//  this->SavedMimxNotebook = vtkKWMimxMainNotebook::New();
+  this->SavedMimxNotebook = vtkMeshingWorkflowMRMLNotebook::New();
   this->SavedMimxNotebook->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
   this->SavedMimxNotebook->SetApplication(this->GetApplication());
   this->SavedMimxNotebook->SetMimxViewWindow(viewwin);
