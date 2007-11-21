@@ -37,6 +37,8 @@ SET(LIB_SRCS
   vtkMRMLMeshingWorkflowNode.cxx
   vtkMRMLFESurfaceNode.cxx
   vtkFESurfaceList.cxx
+  vtkMeshingWorkflowMRMLNotebook.cxx
+  vtkFESurfaceMRMLMenuGroup.cxx
   )
   
 
