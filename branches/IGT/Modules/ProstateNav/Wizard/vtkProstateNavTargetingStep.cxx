@@ -34,6 +34,25 @@ void vtkProstateNavTargetingStep::ShowUserInterface()
   wizardWidget->GetCancelButton()->SetEnabled(0);
 
   vtkKWWidget *parent = wizardWidget->GetClientArea();
+
+  /*
+  if (!this->MainFrame)
+    {
+    this->MainFrame = vtkKWFrame::New();
+    this->MainFrame->SetParent(parent);
+    this->MainFrame->Create();
+    }
+
+  this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+                this->MainFrame->GetWidgetName());
+    
+  if (!this->TargetListFrame)
+    {
+    this->TargetListFrame = vtkKWFrame::New();
+    this->TargetListFrame->SetParent(this->MainFrame);
+    this->TargetListFrame->Create();
+    }
+  */
 }
 
 //----------------------------------------------------------------------------

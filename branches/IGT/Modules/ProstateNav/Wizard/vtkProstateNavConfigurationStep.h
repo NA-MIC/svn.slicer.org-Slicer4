@@ -24,6 +24,7 @@ protected:
   vtkProstateNavConfigurationStep();
   ~vtkProstateNavConfigurationStep();
 
+  // GUI Widgets
   vtkKWFrame *ConfigNTFrame;
   vtkKWFrame *ConnectNTFrame;
   vtkKWLoadSaveButtonWithLabel *LoadConfigButtonNT;
