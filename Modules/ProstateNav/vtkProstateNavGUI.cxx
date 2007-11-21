@@ -55,7 +55,6 @@
 #include "vtkKWEvent.h"
 #include "vtkKWOptions.h"
 
-
 //#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
 
 #ifdef USE_NAVITRACK
@@ -94,24 +93,44 @@ vtkCxxRevisionMacro ( vtkProstateNavGUI, "$Revision: 1.0 $");
 vtkProstateNavGUI::vtkProstateNavGUI ( )
 {
 
-    this->Logic = NULL;
+  this->Logic = NULL;
+  
+  //----------------------------------------------------------------
+  // Workphase Frame
+  
+  this->WorkPhaseButtonSet = NULL;
+  
 
-    // Workphase Frame
+  //----------------------------------------------------------------  
+  // Wizard Frame
+  
+  this->WizardWidget = vtkKWWizardWidget::New();
+  this->WizardSteps = new vtkProstateNavStep*[vtkProstateNavLogic::NumPhases];
+  for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
+    {
+    this->WizardSteps[i] = NULL;
+    }
+  
 
-    this->WorkPhaseButtonSet = NULL;
+  //----------------------------------------------------------------
+  // Visualization Control Frame
+  
+  this->FreezeImageCheckButton = NULL;
+  this->SetLocatorModeButton   = NULL;
+  this->SetUserModeButton      = NULL;
+  this->RedSliceMenu           = NULL;
+  this->YellowSliceMenu        = NULL;
+  this->GreenSliceMenu         = NULL;
+
+  this->StartScanButton        = NULL;
+  this->StopScanButton         = NULL;
+
+  this->FreezeImageCheckButton = NULL;
 
 
-    // Wizard Frame
-
-    this->WizardWidget = vtkKWWizardWidget::New();
-    this->WizardSteps = new vtkProstateNavStep*[vtkProstateNavLogic::NumPhases];
-    for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
-      {
-      this->WizardSteps[i] = NULL;
-      }
 
 
-    //
+  this->LocatorCheckButton = NULL;
 
     this->NREntry = NULL;
     this->NAEntry = NULL;
@@ -125,26 +144,7 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
     this->PSEntry = NULL;
     this->O4Entry = NULL;
 
-    this->ConnectCheckButtonRI = NULL;
-    this->NeedleCheckButton = NULL;
-    this->ConnectCheckButtonNT = NULL;
-    this->ConnectCheckButtonStartScanner = NULL;
-    this->ConnectCheckButtonStopScanner = NULL;
-    this->ConnectCheckButtonprepScanner = NULL;
-    this->ConnectCheckButtonpauseScanner = NULL;
-    this->ConnectCheckButtonresumeScanner = NULL;
 
-    this->LocatorCheckButton = NULL;
-    this->FreezeImageCheckButton = NULL;
-
-    this->NeedleCheckButton = NULL;
-
-    this->LocatorModeCheckButton = NULL;
-    this->UserModeCheckButton = NULL;
-
-    this->RedSliceMenu = NULL;
-    this->YellowSliceMenu = NULL;
-    this->GreenSliceMenu = NULL;
 
 #ifdef USE_NAVITRACK
   
@@ -190,12 +190,7 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
     this->NeedOrientationUpdate2 = 0;
 
     this->NeedRealtimeImageUpdate = 0;
-
-    // Widgets for Calibration Frame
-    this->CalibImageFileEntry      = NULL;
-    this->ReadCalibImageFileButton = NULL;
-    this->ListCalibImageFileButton = NULL;
-    
+    this->FreezeOrientationUpdate = 0;
 
     this->SliceDriver0 = 0;
     this->SliceDriver1 = 0;
@@ -226,9 +221,8 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
   this->RemoveGUIObservers();
 
 
-  //
+  //----------------------------------------------------------------
   // Workphase Frame
-  //
 
   if (this->WorkPhaseButtonSet)
     {
@@ -236,9 +230,74 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
     this->WorkPhaseButtonSet->Delete();
     }
 
-  //
+
+  //----------------------------------------------------------------
   // Wizard Frame
-  //
+
+  if (this->WizardWidget)
+    {
+    this->WizardWidget->Delete();
+    this->WizardWidget = NULL;
+    }
+
+  this->SetModuleLogic ( NULL );
+
+
+  //----------------------------------------------------------------
+  // Visualization Control Frame
+
+  if (this->FreezeImageCheckButton)
+    {
+    this->FreezeImageCheckButton->SetParent(NULL );
+    this->FreezeImageCheckButton->Delete ( );
+    }
+
+  if (this->SetLocatorModeButton)
+    {
+    this->SetLocatorModeButton->SetParent(NULL);
+    this->SetLocatorModeButton->Delete();
+    }
+  
+  if (this->SetUserModeButton)
+    {
+    this->SetUserModeButton->SetParent(NULL);
+    this->SetUserModeButton->Delete();
+    }
+
+  if (this->RedSliceMenu)
+    {
+    this->RedSliceMenu->SetParent(NULL );
+    this->RedSliceMenu->Delete ( );
+    }
+
+  if (this->YellowSliceMenu)
+    {
+    this->YellowSliceMenu->SetParent(NULL );
+    this->YellowSliceMenu->Delete ( );
+    }
+
+  if (this->GreenSliceMenu)
+    {
+    this->GreenSliceMenu->SetParent(NULL );
+    this->GreenSliceMenu->Delete ( );
+    }
+
+  if (this->StartScanButton)
+    {
+    this->StartScanButton->SetParent(NULL);
+    this->StartScanButton->Delete();
+    }
+
+  if (this->StopScanButton)
+    {
+    this->StopScanButton->SetParent(NULL);
+    this->StartScanButton->Delete();
+    }
+
+
+  //----------------------------------------------------------------
+  // Etc Frame
+
 
 
   if (this->NREntry)
@@ -310,95 +369,10 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
   }
   */
   
-  if (this->ConnectCheckButtonRI)
-  {
-      this->ConnectCheckButtonRI->SetParent(NULL );
-      this->ConnectCheckButtonRI->Delete ( );
-  }
-
-  if (this->NeedleCheckButton)
-  {
-      this->NeedleCheckButton->SetParent(NULL );
-      this->NeedleCheckButton->Delete ( );
-  }
-   if (this->ConnectCheckButtonNT)
-  {
-      this->ConnectCheckButtonNT->SetParent(NULL );
-      this->ConnectCheckButtonNT->Delete ( );
-  }
-     
-
-  if (this->ConnectCheckButtonStopScanner)
-  {
-      this->ConnectCheckButtonStopScanner->SetParent(NULL );
-      this->ConnectCheckButtonStopScanner->Delete ( );
-  }
-
-  if (this->ConnectCheckButtonStartScanner)
-  {
-      this->ConnectCheckButtonStartScanner->SetParent(NULL );
-      this->ConnectCheckButtonStartScanner->Delete ( );
-  }
-    
-  if (this->ConnectCheckButtonprepScanner)
-  {
-      this->ConnectCheckButtonprepScanner->SetParent(NULL );
-      this->ConnectCheckButtonprepScanner->Delete ( );
-  }
-  if (this->ConnectCheckButtonpauseScanner)
-  {
-      this->ConnectCheckButtonpauseScanner->SetParent(NULL );
-      this->ConnectCheckButtonpauseScanner->Delete ( );
-  }
-  if (this->ConnectCheckButtonresumeScanner)
-  {
-      this->ConnectCheckButtonresumeScanner->SetParent(NULL );
-      this->ConnectCheckButtonresumeScanner->Delete ( );
-  }
-
   if (this->LocatorCheckButton)
   {
   this->LocatorCheckButton->SetParent(NULL );
   this->LocatorCheckButton->Delete ( );
-  }
-
-  if (this->FreezeImageCheckButton)
-  {
-  this->FreezeImageCheckButton->SetParent(NULL );
-  this->FreezeImageCheckButton->Delete ( );
-  }
-
-  if (this->NeedleCheckButton)
-  {
-  this->NeedleCheckButton->SetParent(NULL );
-  this->NeedleCheckButton->Delete ( );
-  }
-
-  if (this->LocatorModeCheckButton)
-  {
-  this->LocatorModeCheckButton->SetParent(NULL );
-  this->LocatorModeCheckButton->Delete ( );
-  }
-  if (this->UserModeCheckButton)
-  {
-  this->UserModeCheckButton->SetParent(NULL );
-  this->UserModeCheckButton->Delete ( );
-  }
-
-  if (this->RedSliceMenu)
-  {
-  this->RedSliceMenu->SetParent(NULL );
-  this->RedSliceMenu->Delete ( );
-  }
-  if (this->YellowSliceMenu)
-  {
-  this->YellowSliceMenu->SetParent(NULL );
-  this->YellowSliceMenu->Delete ( );
-  }
-  if (this->GreenSliceMenu)
-  {
-  this->GreenSliceMenu->SetParent(NULL );
-  this->GreenSliceMenu->Delete ( );
   }
 
 #ifdef USE_NAVITRACK
@@ -458,14 +432,6 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
   this->MoveFWPushButton->Delete ( );
   }
 
-  if (this->WizardWidget)
-  {
-  this->WizardWidget->Delete();
-  this->WizardWidget = NULL;
-  }
-
-  this->SetModuleLogic ( NULL );
-
 }
 
 
@@ -497,9 +463,9 @@ void vtkProstateNavGUI::RemoveGUIObservers ( )
   appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()
     ->GetRenderWindowInteractor()->GetInteractorStyle()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
   
-  //
+  //----------------------------------------------------------------
   // Workphase Frame
-  //
+
   if (this->WorkPhaseButtonSet)
     {
     for (int i = 0; i < this->WorkPhaseButtonSet->GetNumberOfWidgets(); i ++)
@@ -508,57 +474,43 @@ void vtkProstateNavGUI::RemoveGUIObservers ( )
       }
     }
     
-  //
+
+  //----------------------------------------------------------------
   // Wizard Frame
-  //
+
   this->WizardWidget->GetWizardWorkflow()->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
 
-  if (this->ConnectCheckButtonRI)
-    {
-    this->ConnectCheckButtonRI->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                (vtkCommand *)this->GUICallbackCommand);
-    }
-  if (this->NeedleCheckButton)
-    {
-    this->NeedleCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                             (vtkCommand *)this->GUICallbackCommand );
-    }
-  if (this->ConnectCheckButtonNT)
-    {
-    this->ConnectCheckButtonNT->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                (vtkCommand *)this->GUICallbackCommand );
-    }
-  if (this->ConnectCheckButtonStartScanner)
-    {
-    this->ConnectCheckButtonStartScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                          (vtkCommand *)this->GUICallbackCommand );
-    }
-   
-  if (this->ConnectCheckButtonStopScanner)
-    {
-    this->ConnectCheckButtonStopScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                         (vtkCommand *)this->GUICallbackCommand );
-    }
-  if (this->ConnectCheckButtonprepScanner)
-    {
-    this->ConnectCheckButtonprepScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                         (vtkCommand *)this->GUICallbackCommand );
-    }
-  if (this->ConnectCheckButtonpauseScanner)
-    {
-    this->ConnectCheckButtonpauseScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                          (vtkCommand *)this->GUICallbackCommand );
-    }
-  if (this->ConnectCheckButtonresumeScanner)
-    {
-    this->ConnectCheckButtonresumeScanner->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                           (vtkCommand *)this->GUICallbackCommand );
-    }
   if (this->SetOrientButton)
     {
     this->SetOrientButton->RemoveObservers(vtkKWPushButton::InvokedEvent,
                                            (vtkCommand *)this->GUICallbackCommand );
     }
+
+
+  //----------------------------------------------------------------
+  // Visualization Control Frame
+
+  if (this->FreezeImageCheckButton)
+    {
+    this->FreezeImageCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
+                                                  (vtkCommand *)this->GUICallbackCommand );
+    }
+
+  if (this->SetLocatorModeButton)
+    {
+    this->SetLocatorModeButton->RemoveObservers (vtkKWPushButton::InvokedEvent,
+                                                  (vtkCommand *)this->GUICallbackCommand );
+    }
+
+  if (this->SetUserModeButton)
+    {
+    this->SetUserModeButton->RemoveObservers (vtkKWPushButton::InvokedEvent,
+                                              (vtkCommand *)this->GUICallbackCommand );
+    }
+  
+  
+
+
   if (this->AddCoordsandOrientTarget)
     {
     this->AddCoordsandOrientTarget->RemoveObservers(vtkKWPushButton::InvokedEvent,
@@ -589,26 +541,6 @@ void vtkProstateNavGUI::RemoveGUIObservers ( )
     this->LocatorCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
                                               (vtkCommand *)this->GUICallbackCommand );
     }
-  if (this->FreezeImageCheckButton)
-    {
-    this->FreezeImageCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                  (vtkCommand *)this->GUICallbackCommand );
-    }
-  if (this->NeedleCheckButton)
-    {
-    this->NeedleCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                             (vtkCommand *)this->GUICallbackCommand );
-    }
-  if (this->LocatorModeCheckButton)
-    {
-    this->LocatorModeCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                  (vtkCommand *)this->GUICallbackCommand );
-    }
-  if (this->UserModeCheckButton)
-    {
-    this->UserModeCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                               (vtkCommand *)this->GUICallbackCommand );
-    }
 }
 
 
@@ -632,9 +564,9 @@ void vtkProstateNavGUI::AddGUIObservers ( )
     ->GetRenderWindowInteractor()->GetInteractorStyle()
     ->AddObserver(vtkCommand::LeftButtonPressEvent, (vtkCommand *)this->GUICallbackCommand);
   
-  //
+  //----------------------------------------------------------------
   // Workphase Frame
-  //
+
   for (int i = 0; i < this->WorkPhaseButtonSet->GetNumberOfWidgets(); i ++)
     {
     this->WorkPhaseButtonSet->GetWidget(i)
@@ -642,60 +574,48 @@ void vtkProstateNavGUI::AddGUIObservers ( )
     }
   
   
-  //
+  //----------------------------------------------------------------
   // Wizard Frame
-  //
+
   this->WizardWidget->GetWizardWorkflow()->AddObserver(vtkKWWizardWorkflow::CurrentStateChangedEvent,
                                                        (vtkCommand *)this->GUICallbackCommand);
 
-  // observer load volume button
-  this->ConnectCheckButtonRI->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  this->ConnectCheckButtonNT->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->ConnectCheckButtonStartScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->ConnectCheckButtonStopScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  this->ConnectCheckButtonprepScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  this->ConnectCheckButtonpauseScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  this->ConnectCheckButtonresumeScanner->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  this->SetOrientButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  this->AddCoordsandOrientTarget->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  
-  
-  this->DeleteTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->DeleteAllTargetPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  
-  
-  this->MoveBWPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->MoveFWPushButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  this->LocatorCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->FreezeImageCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  
-  this->NeedleCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->LocatorModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->UserModeCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->ReadCalibImageFileButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
 
-  /*
-    #ifdef USE_NAVITRACK
-    this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-    
-    this->LoadConfigButtonNT->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    #endif
-    #ifdef USE_IGSTK
-    this->IGSTKStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-    this->DeviceMenuButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    #endif
-  */
+  //----------------------------------------------------------------
+  // Visualization Control Frame
+
+  this->FreezeImageCheckButton
+    ->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+  this->SetLocatorModeButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->SetUserModeButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->StartScanButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->StopScanButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+
+
+  //----------------------------------------------------------------
+  // Etc Frame
+
+  // observer load volume button
+  
+  //this->SetOrientButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+  
+  this->AddCoordsandOrientTarget
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+  this->DeleteTargetPushButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+  this->DeleteAllTargetPushButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+  
+  this->MoveBWPushButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+  this->MoveFWPushButton
+    ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+  this->LocatorCheckButton
+    ->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand);
 
 }
 
@@ -715,7 +635,6 @@ void vtkProstateNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
                                                ->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
 
     vtkCornerAnnotation *anno = NULL;
-
     if (style == istyle0)
     {
         anno = appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
@@ -728,7 +647,6 @@ void vtkProstateNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
     {
         anno = appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetCornerAnnotation();
     }
-
     if (anno)
     {
         const char *rasText = anno->GetText(1);
@@ -780,9 +698,9 @@ void vtkProstateNavGUI::ProcessGUIEvents(vtkObject *caller,
     return;
     }
 
-  //
+  //----------------------------------------------------------------
   // Check Work Phase Transition Buttons
-  //
+
   if ( event == vtkKWPushButton::InvokedEvent)
     {
     int phase;
@@ -799,9 +717,9 @@ void vtkProstateNavGUI::ProcessGUIEvents(vtkObject *caller,
       }
     }
 
-  //
+
+  //----------------------------------------------------------------
   // Wizard Frame
-  //
 
   if (this->WizardWidget->GetWizardWorkflow() == vtkKWWizardWorkflow::SafeDownCast(caller) &&
       event == vtkKWWizardWorkflow::CurrentStateChangedEvent)
@@ -820,6 +738,123 @@ void vtkProstateNavGUI::ProcessGUIEvents(vtkObject *caller,
     
     ChangeWorkPhase(phase);
     }
+
+
+  //----------------------------------------------------------------
+  // Visualization Control Frame
+  
+  else if (this->RedSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
+            && event == vtkKWMenu::MenuItemInvokedEvent)
+    {
+    const char* selected = this->RedSliceMenu->GetValue();
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_RED, selected);
+    }
+
+  else if (this->YellowSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
+            && event == vtkKWMenu::MenuItemInvokedEvent)
+    {
+    const char* selected = this->YellowSliceMenu->GetValue();
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_YELLOW, selected);
+    }
+
+  else if (this->GreenSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
+          && event == vtkKWMenu::MenuItemInvokedEvent)
+    {
+    const char* selected = this->GreenSliceMenu->GetValue();
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_GREEN, selected);
+    }
+
+  // -- "Locator" button 
+  else if (this->SetLocatorModeButton == vtkKWPushButton::SafeDownCast(caller) 
+            && event == vtkKWPushButton::InvokedEvent)
+    {
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_RED, "Locator");
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_YELLOW, "Locator");
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_GREEN, "Locator");
+    }
+  
+  // -- "User" button 
+  else if (this->SetUserModeButton == vtkKWPushButton::SafeDownCast(caller) 
+           && event == vtkKWPushButton::InvokedEvent)
+    {
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_RED, "User");
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_YELLOW, "User");
+    ChangeSlicePlaneDriver(vtkProstateNavGUI::SLICE_PLANE_GREEN, "User");
+    }
+  
+  // -- "Freeze Image Position" check button 
+  else if (this->FreezeImageCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
+           && event == vtkKWCheckButton::SelectedStateChangedEvent )
+    {
+    if (this->FreezeImageCheckButton->GetSelectedState() == 1)
+      {
+      this->FreezeOrientationUpdate = 1;
+      /*
+        this->OrgNeedOrientationUpdate0  = this->NeedOrientationUpdate0;
+        this->OrgNeedOrientationUpdate1  = this->NeedOrientationUpdate1;
+        this->OrgNeedOrientationUpdate2  = this->NeedOrientationUpdate2;
+        this->OrgNeedRealtimeImageUpdate0 = this->NeedRealtimeImageUpdate0;
+        this->OrgNeedRealtimeImageUpdate1 = this->NeedRealtimeImageUpdate1;
+        this->OrgNeedRealtimeImageUpdate2 = this->NeedRealtimeImageUpdate2;
+        
+        this->NeedOrientationUpdate0 = 0;
+        this->NeedOrientationUpdate1 = 0;
+        this->NeedOrientationUpdate2 = 0;
+        this->NeedRealtimeImageUpdate0 = 0;
+        this->NeedRealtimeImageUpdate1 = 0;
+        this->NeedRealtimeImageUpdate2 = 0;
+      */
+      }
+    else
+      {
+      this->FreezeOrientationUpdate = 0;
+      /*
+        this->NeedOrientationUpdate0  = this->OrgNeedOrientationUpdate0;
+        this->NeedOrientationUpdate1  = this->OrgNeedOrientationUpdate1;
+        this->NeedOrientationUpdate2  = this->OrgNeedOrientationUpdate2;
+        this->NeedRealtimeImageUpdate0 = this->OrgNeedRealtimeImageUpdate0;
+        this->NeedRealtimeImageUpdate1 = this->OrgNeedRealtimeImageUpdate1;
+        this->NeedRealtimeImageUpdate2 = this->OrgNeedRealtimeImageUpdate2;
+      */
+      }
+    }
+  else if (this->ImagingMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
+           && event == vtkKWMenu::MenuItemInvokedEvent )
+    {
+      
+    const char* selected = this->ImagingMenu->GetValue();
+    if (strcmp(selected, "Perpendicular") == 0)
+      {
+      this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_PERP;
+      }
+    else if (strcmp(selected, "In-plane 90") == 0)
+      {
+      this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_INPLANE90;
+      }
+    else //if ( strcmp(selected, "In-plane") == 0 )
+      {
+      this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_INPLANE;
+      }
+    
+    std::cerr << "ImagingMenu =======> " << selected << "  :  " << this->RealtimeImageOrient << std::endl;
+    
+    }
+
+  else if (this->StartScanButton == vtkKWPushButton::SafeDownCast(caller) 
+           && event == vtkKWPushButton::InvokedEvent)
+    {
+    this->Logic->ScanStart();
+    }
+  else if (this->StopScanButton == vtkKWPushButton::SafeDownCast(caller) 
+           && event == vtkKWPushButton::InvokedEvent)
+    {
+    this->Logic->ScanStop();
+    }
+  
+
+
+  //----------------------------------------------------------------
+  // Etc Frame
 
           
 #ifdef USE_NAVITRACK
@@ -935,99 +970,6 @@ void vtkProstateNavGUI::ProcessGUIEvents(vtkObject *caller,
     this->TargetListColumnList->GetWidget()->DeleteAllRows();
     }
   
-  else if (this->LocatorCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-           && event == vtkKWCheckButton::SelectedStateChangedEvent )
-    {
-    int checked = this->LocatorCheckButton->GetSelectedState(); 
-      
-    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
-    if (model != NULL)
-      {
-      vtkMRMLModelDisplayNode *disp = vtkMRMLModelDisplayNode::SafeDownCast(model->GetDisplayNode());
-      
-      if (disp != NULL)
-        {
-        vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-        vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
-        disp->SetColor(color->SliceGUIGreen);
-        disp->SetVisibility(checked);
-        }
-      }
-    }
-  
-  else if (this->LocatorModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-           && event == vtkKWCheckButton::SelectedStateChangedEvent )
-    {
-      int checked = this->LocatorModeCheckButton->GetSelectedState(); 
-      std::string val("Locator");
-      
-      if (checked)
-        {
-          this->UserModeCheckButton->SelectedStateOff();
-        }
-      else
-        {
-          this->UserModeCheckButton->SelectedStateOn();
-          this->SliceNode0->SetOrientationToAxial();
-          this->SliceNode1->SetOrientationToSagittal();
-          this->SliceNode2->SetOrientationToCoronal();
-          this->NeedOrientationUpdate0 = 0;
-          this->NeedOrientationUpdate1 = 0;
-          this->NeedOrientationUpdate2 = 0;
-          
-          this->NeedRealtimeImageUpdate = 0;
-          
-          val = "User";
-        }
-      this->RedSliceMenu->SetValue(val.c_str());
-      this->YellowSliceMenu->SetValue(val.c_str());
-      this->GreenSliceMenu->SetValue(val.c_str());
-    }
-  else if (this->UserModeCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
-           && event == vtkKWCheckButton::SelectedStateChangedEvent )
-    {
-      int checked = this->UserModeCheckButton->GetSelectedState(); 
-      std::string val("User");
-      
-      if (checked)
-        {
-        this->LocatorModeCheckButton->SelectedStateOff();
-        this->SliceNode0->SetOrientationToAxial();
-        this->SliceNode1->SetOrientationToSagittal();
-        this->SliceNode2->SetOrientationToCoronal();
-        
-          
-        this->NeedOrientationUpdate0 = 0;
-        this->NeedOrientationUpdate1 = 0;
-        this->NeedOrientationUpdate2 = 0;
-        
-        this->NeedRealtimeImageUpdate = 0;
-        }
-      else
-        {
-        this->LocatorModeCheckButton->SelectedStateOn();
-        val = "Locator";
-        }
-      this->RedSliceMenu->SetValue(val.c_str());
-      this->YellowSliceMenu->SetValue(val.c_str());
-      this->GreenSliceMenu->SetValue(val.c_str());
-    }
-  else if (this->ListCalibImageFileButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-            && event == vtkKWPushButton::InvokedEvent )
-    {
-    const char * filename = this->ListCalibImageFileButton->GetWidget()->GetFileName();
-    if (filename)
-      {
-      const vtksys_stl::string fname(filename);
-      this->CalibImageFileEntry->SetValue(fname.c_str());
-      }
-    else
-      {
-      this->CalibImageFileEntry->SetValue("");
-      }
-    this->ListCalibImageFileButton->GetWidget()->SetText ("Browse Image File");
-    }
-
   // Process Wizard GUI (Active step only)
   else
     {
@@ -1120,20 +1062,16 @@ void vtkProstateNavGUI::BuildGUI ( )
     // create a page
     this->UIPanel->AddPage ( "ProstateNav", "ProstateNav", NULL );
 
+    BuildGUIForHelpFrame();
     BuildGUIForWorkPhaseFrame ();
     BuildGUIForWizardFrame();
-    BuildGUIForHelpFrame();
-    BuildGUIForDeviceFrame ();
-    BuildGUIForTrackingFrame ();
-    BuildGUIForscancontrollFrame ();
-    BuildGUIForRealtimeacqFrame ();
-    BuildGUIForCalibration();
+    BuildGUIForVisualizationControlFrame();
+    BuildGUIForDeviceFrame();
 
-    //    BuildGUIForHandPieceFrame ();
 }
 
 
-
+//---------------------------------------------------------------------------
 void vtkProstateNavGUI::BuildGUIForWizardFrame()
 {
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "ProstateNav" );
@@ -1259,7 +1197,7 @@ void vtkProstateNavGUI::BuildGUIForHelpFrame ()
     const char *help = 
       "The **ProstateNav Module** helps you to do prostate Biopsy and Treatment by:"
       " getting Realtime Images from MR-Scanner into Slicer3, control Scanner with Slicer 3,"
-      " determinate fiducial detection and control the Robot."
+      " determin fiducial detection and control the Robot."
       " Module and Logic mainly coded by Junichi Tokuda, David Gobbi and Philip Mewes"; 
 
     // ----------------------------------------------------------------
@@ -1843,7 +1781,7 @@ void vtkProstateNavGUI::BuildGUIForDeviceFrame ()
 }
 
 
-
+/*
 void vtkProstateNavGUI::BuildGUIForTrackingFrame ()
 {
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
@@ -1978,350 +1916,210 @@ void vtkProstateNavGUI::BuildGUIForTrackingFrame ()
     modeFrame->Delete();
     sliceFrame->Delete();
 }
+*/
 
 
-
-    // ----------------------------------------------------------------
-    // Scanner Controll FRAME      START          
-    // ----------------------------------------------------------------
-
-
-void vtkProstateNavGUI::BuildGUIForscancontrollFrame ()
+//---------------------------------------------------------------------------
+void vtkProstateNavGUI::BuildGUIForVisualizationControlFrame ()
 {
-    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "ProstateNav" );
-
-   
-    vtkSlicerModuleCollapsibleFrame *scancontrollbrpFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    scancontrollbrpFrame->SetParent ( page );
-    scancontrollbrpFrame->Create ( );
-    scancontrollbrpFrame->SetLabelText ("Config-File + Scan Controll");
-
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        scancontrollbrpFrame->GetWidgetName(), page->GetWidgetName());
-
-    /////////////////////////////////////////////////////////////////////
-    /// Main Controlle frame 
-    /////////////////////////////////////////////////////////////////////
-    
-#ifdef USE_NAVITRACK
-    
-    vtkKWFrameWithLabel *maincontroll = vtkKWFrameWithLabel::New();
-    maincontroll->SetParent ( scancontrollbrpFrame->GetFrame() );
-    maincontroll->Create ( );
-    maincontroll->CollapseFrame ( );
-    maincontroll->SetLabelText ("Main Controll Functions");
-    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-          maincontroll->GetWidgetName());
-
-    vtkKWFrame *maincontrollsetpatientNTFrame = vtkKWFrame::New();
-    maincontrollsetpatientNTFrame->SetParent ( maincontroll->GetFrame() );
-    maincontrollsetpatientNTFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-          maincontrollsetpatientNTFrame->GetWidgetName());
+  vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+  vtkKWWidget *page = this->UIPanel->GetPageWidget ("ProstateNav");
   
-    vtkKWFrame *maincontrollsetprotocolNTFrame = vtkKWFrame::New();
-    maincontrollsetprotocolNTFrame->SetParent ( maincontroll->GetFrame() );
-    maincontrollsetprotocolNTFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-          maincontrollsetprotocolNTFrame->GetWidgetName());
-    
-    vtkKWFrame *maincontrollsetscannerNTFrame = vtkKWFrame::New();
-    maincontrollsetscannerNTFrame->SetParent ( maincontroll->GetFrame() );
-    maincontrollsetscannerNTFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-          maincontrollsetscannerNTFrame->GetWidgetName());
-    
+  vtkSlicerModuleCollapsibleFrame *visCtrlFrame = vtkSlicerModuleCollapsibleFrame::New();
+  visCtrlFrame->SetParent(page);
+  visCtrlFrame->Create();
+  visCtrlFrame->SetLabelText("Visualization / Scanner Control");
+  visCtrlFrame->CollapseFrame();
+  app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+               visCtrlFrame->GetWidgetName(), page->GetWidgetName());
 
-    /////////////////////////////////////main function Scanner/////////////////
-    
-    this->ConnectCheckButtonprepScanner = vtkKWCheckButton::New();
-    this->ConnectCheckButtonprepScanner->SetParent(maincontrollsetscannerNTFrame);
-    this->ConnectCheckButtonprepScanner->Create();
-    this->ConnectCheckButtonprepScanner->SelectedStateOff();
-    this->ConnectCheckButtonprepScanner->SetText("PreScan");
-    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-        this->ConnectCheckButtonprepScanner->GetWidgetName());
-    
-    this->ConnectCheckButtonStartScanner = vtkKWCheckButton::New();
-    this->ConnectCheckButtonStartScanner->SetParent(maincontrollsetscannerNTFrame);
-    this->ConnectCheckButtonStartScanner->Create();
-    this->ConnectCheckButtonStartScanner->SelectedStateOff();
-    this->ConnectCheckButtonStartScanner->SetText("Start Scanner");
-    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-        this->ConnectCheckButtonStartScanner->GetWidgetName());
-    
-    this->ConnectCheckButtonStopScanner = vtkKWCheckButton::New();
-    this->ConnectCheckButtonStopScanner->SetParent(maincontrollsetscannerNTFrame);
-    this->ConnectCheckButtonStopScanner->Create();
-    this->ConnectCheckButtonStopScanner->SelectedStateOff();
-    this->ConnectCheckButtonStopScanner->SetText("Stop Scanner");
-    this->Script("pack %s -side right -anchor w -padx 2 -pady 2", 
-        this->ConnectCheckButtonStopScanner->GetWidgetName());
-    
-    this->ConnectCheckButtonpauseScanner = vtkKWCheckButton::New();
-    this->ConnectCheckButtonpauseScanner->SetParent(maincontrollsetscannerNTFrame);
-    this->ConnectCheckButtonpauseScanner->Create();
-    this->ConnectCheckButtonpauseScanner->SelectedStateOff();
-    this->ConnectCheckButtonpauseScanner->SetText("Pause Scanner");
-    this->Script("pack %s -side right -anchor w -padx 2 -pady 2", 
-        this->ConnectCheckButtonpauseScanner->GetWidgetName());
-    
-    this->ConnectCheckButtonresumeScanner = vtkKWCheckButton::New();
-    this->ConnectCheckButtonresumeScanner->SetParent(maincontrollsetscannerNTFrame);
-    this->ConnectCheckButtonresumeScanner->Create();
-    this->ConnectCheckButtonresumeScanner->SelectedStateOff();
-    this->ConnectCheckButtonresumeScanner->SetText("Resume Scanner");
-    this->Script("pack %s -side right -anchor w -padx 2 -pady 2", 
-        this->ConnectCheckButtonresumeScanner->GetWidgetName());
-    
+  // -----------------------------------------
+  // Locator Display frame: Options to locator display 
 
-
-    /////////////////////////////////////////////////////////////////////
-    /// Config file frame
-    /////////////////////////////////////////////////////////////////////
-   
-
-    vtkKWFrameWithLabel *configcoordsorient = vtkKWFrameWithLabel::New();
-    configcoordsorient->SetParent ( scancontrollbrpFrame->GetFrame() );
-    configcoordsorient->Create ( );
-    configcoordsorient->SetLabelText ("Config File + Connect");
-    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-          configcoordsorient->GetWidgetName());
-    
-   
-    vtkKWFrame *configNTFrame = vtkKWFrame::New();
-    configNTFrame->SetParent ( configcoordsorient->GetFrame() );
-    configNTFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-          configNTFrame->GetWidgetName());
-    
-    vtkKWFrame *connectNTFrame = vtkKWFrame::New();
-    connectNTFrame->SetParent ( configcoordsorient->GetFrame() );
-    connectNTFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-          connectNTFrame->GetWidgetName());
-
-    
-    this->ConfigFileEntry = vtkKWEntry::New();
-    this->ConfigFileEntry->SetParent(configNTFrame);
-    this->ConfigFileEntry->Create();
-    this->ConfigFileEntry->SetWidth(50);
-    this->ConfigFileEntry->SetValue ( "" );
-
-    this->LoadConfigButtonNT = vtkKWLoadSaveButtonWithLabel::New ( );
-    this->LoadConfigButtonNT->SetParent (configNTFrame);
-    this->LoadConfigButtonNT->Create ( );
-    this->LoadConfigButtonNT->SetWidth(15);
-    this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
-    this->LoadConfigButtonNT->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
-                                  "{ {ProstateNav} {*.xml} }");
-    this->LoadConfigButtonNT->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
-      "OpenPath");
-
-    this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-        this->LoadConfigButtonNT->GetWidgetName(),
-        this->ConfigFileEntry->GetWidgetName());
-
-
-    /// Connnect button 
+  vtkKWFrameWithLabel *displayFrame = vtkKWFrameWithLabel::New ( );
+  displayFrame->SetParent(visCtrlFrame->GetFrame());
+  displayFrame->Create();
+  displayFrame->SetLabelText("Locator Display");
+  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+               displayFrame->GetWidgetName());
   
-    this->ConnectCheckButtonNT = vtkKWCheckButton::New();
-    this->ConnectCheckButtonNT->SetParent(connectNTFrame);
-    this->ConnectCheckButtonNT->Create();
-    this->ConnectCheckButtonNT->SelectedStateOff();
-    this->ConnectCheckButtonNT->SetText("Connect");
+  this->LocatorCheckButton = vtkKWCheckButton::New();
+  this->LocatorCheckButton->SetParent(displayFrame->GetFrame());
+  this->LocatorCheckButton->Create();
+  this->LocatorCheckButton->SelectedStateOff();
+  this->LocatorCheckButton->SetText("Show Locator");
+  
+  this->Script("pack %s -side left -anchor w -padx 2 -pady 2", 
+               this->LocatorCheckButton->GetWidgetName());
+  
+  
+  // -----------------------------------------
+  // Driver frame: Locator can drive slices 
 
-    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-        this->ConnectCheckButtonNT->GetWidgetName());
+  vtkKWFrameWithLabel *driverFrame = vtkKWFrameWithLabel::New();
+  driverFrame->SetParent(visCtrlFrame->GetFrame());
+  driverFrame->Create();
+  driverFrame->SetLabelText ("Driver");
+  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+               driverFrame->GetWidgetName());
+  
+  // slice frame
+  vtkKWFrame *sliceFrame = vtkKWFrame::New();
+  sliceFrame->SetParent(driverFrame->GetFrame());
+  sliceFrame->Create();
+  app->Script("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
+              sliceFrame->GetWidgetName(),
+              driverFrame->GetFrame()->GetWidgetName());
+  
+  
+  // Contents in slice frame 
+  vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
+  
+  this->RedSliceMenu = vtkKWMenuButton::New();
+  this->RedSliceMenu->SetParent(sliceFrame);
+  this->RedSliceMenu->Create();
+  this->RedSliceMenu->SetWidth(10);
+  this->RedSliceMenu->SetBackgroundColor(color->SliceGUIRed);
+  this->RedSliceMenu->SetActiveBackgroundColor(color->SliceGUIRed);
+  this->RedSliceMenu->GetMenu()->AddRadioButton ("User");
+  this->RedSliceMenu->GetMenu()->AddRadioButton ("Locator");
+  this->RedSliceMenu->GetMenu()->AddRadioButton ("RT Image");
+  this->RedSliceMenu->SetValue ("User");
+  
+  this->YellowSliceMenu = vtkKWMenuButton::New();
+  this->YellowSliceMenu->SetParent(sliceFrame);
+  this->YellowSliceMenu->Create();
+  this->YellowSliceMenu->SetWidth(10);
+  this->YellowSliceMenu->SetBackgroundColor(color->SliceGUIYellow);
+  this->YellowSliceMenu->SetActiveBackgroundColor(color->SliceGUIYellow);
+  this->YellowSliceMenu->GetMenu()->AddRadioButton ("User");
+  this->YellowSliceMenu->GetMenu()->AddRadioButton ("Locator");
+  this->YellowSliceMenu->GetMenu()->AddRadioButton ("RT Image");
+  this->YellowSliceMenu->SetValue ("User");
+  
+  this->GreenSliceMenu = vtkKWMenuButton::New();
+  this->GreenSliceMenu->SetParent(sliceFrame);
+  this->GreenSliceMenu->Create();
+  this->GreenSliceMenu->SetWidth(10);
+  this->GreenSliceMenu->SetBackgroundColor(color->SliceGUIGreen);
+  this->GreenSliceMenu->SetActiveBackgroundColor(color->SliceGUIGreen);
+  this->GreenSliceMenu->GetMenu()->AddRadioButton ("User");
+  this->GreenSliceMenu->GetMenu()->AddRadioButton ("Locator");
+  this->GreenSliceMenu->GetMenu()->AddRadioButton ("RT Image");
+  this->GreenSliceMenu->SetValue ("User");
+  
+  this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
+               this->RedSliceMenu->GetWidgetName(),
+               this->YellowSliceMenu->GetWidgetName(),
+               this->GreenSliceMenu->GetWidgetName());
+  
+  
+  // Mode frame
+  vtkKWFrame *modeFrame = vtkKWFrame::New();
+  modeFrame->SetParent ( driverFrame->GetFrame() );
+  modeFrame->Create ( );
+  app->Script ("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
+               modeFrame->GetWidgetName(),
+               driverFrame->GetFrame()->GetWidgetName());
+  
+  // "Locator All" button
+  this->SetLocatorModeButton = vtkKWPushButton::New ( );
+  this->SetLocatorModeButton->SetParent ( modeFrame );
+  this->SetLocatorModeButton->Create ( );
+  this->SetLocatorModeButton->SetText ("Locator All");
+  this->SetLocatorModeButton->SetWidth (12);
+  
+  // "User All" button
+  this->SetUserModeButton = vtkKWPushButton::New ( );
+  this->SetUserModeButton->SetParent ( modeFrame );
+  this->SetUserModeButton->Create ( );
+  this->SetUserModeButton->SetText ("User All");
+  this->SetUserModeButton->SetWidth (12);
+  
+  
+  // "Freeze" check button
+  this->FreezeImageCheckButton = vtkKWCheckButton::New();
+  this->FreezeImageCheckButton->SetParent(modeFrame);
+  this->FreezeImageCheckButton->Create();
+  this->FreezeImageCheckButton->SelectedStateOff();
+  this->FreezeImageCheckButton->SetText("Freeze Image Position");
+  this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
+               this->SetLocatorModeButton->GetWidgetName(),
+               this->SetUserModeButton->GetWidgetName(),
+               this->FreezeImageCheckButton->GetWidgetName());
+  
+  
+  // -----------------------------------------
+  // Real-time imaging: Scanner controled
+
+  vtkKWFrameWithLabel *rtImageFrame = vtkKWFrameWithLabel::New ( );
+  rtImageFrame->SetParent(visCtrlFrame->GetFrame());
+  rtImageFrame->Create();
+  rtImageFrame->SetLabelText("Real-time Imaging");
+  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+               rtImageFrame->GetWidgetName());
+
+  // Scan start/stop frame
+  vtkKWFrame *scanFrame = vtkKWFrame::New();
+  scanFrame->SetParent (rtImageFrame->GetFrame());
+  scanFrame->Create();
+  app->Script("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
+              scanFrame->GetWidgetName(),
+              rtImageFrame->GetFrame()->GetWidgetName());
+  
+  this->StartScanButton = vtkKWPushButton::New();
+  this->StartScanButton->SetParent(scanFrame);
+  this->StartScanButton->Create();
+  this->StartScanButton->SetText("Start Scan");
+  this->StartScanButton->SetWidth(12);
+  
+  this->StopScanButton = vtkKWPushButton::New();
+  this->StopScanButton->SetParent(scanFrame);
+  this->StopScanButton->Create();
+  this->StopScanButton->SetText("Stop Scan");
+  this->StopScanButton->SetWidth(12);
+
+  this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
+               StartScanButton->GetWidgetName(),
+               StopScanButton->GetWidgetName());
 
 
-    //--------------------------------------------------------------------------------------
-   
-     maincontroll->Delete();
-     connectNTFrame->Delete();
-     configNTFrame->Delete();
-     configcoordsorient->Delete();
-     scancontrollbrpFrame->Delete ();
-     //    orientationbrpFrame->Delete ();
-#endif
-}
+  // Orientation control frame
+  vtkKWFrame *orientationFrame = vtkKWFrame::New();
+  modeFrame->SetParent(rtImageFrame);
+  modeFrame->Create();
+  app->Script("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
+              orientationFrame->GetWidgetName(),
+              rtImageFrame->GetFrame()->GetWidgetName());
 
-    // ----------------------------------------------------------------
-    // Scanner Controll FRAME  END        
-    // ----------------------------------------------------------------
-
-
-
-
-
-void vtkProstateNavGUI::BuildGUIForRealtimeacqFrame ()
-{
-    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "ProstateNav" );
-
-    // ----------------------------------------------------------------
-    // REALTIME FRAME         
-    // ----------------------------------------------------------------
-    
-    
-    vtkSlicerModuleCollapsibleFrame *realtimeacqFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    realtimeacqFrame->SetParent ( page );
-    realtimeacqFrame->Create ( );
-    realtimeacqFrame->SetLabelText ("Realtime Imaging");
-    realtimeacqFrame->CollapseFrame ( );
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        realtimeacqFrame->GetWidgetName(), page->GetWidgetName());
-
-#ifdef USE_NAVITRACK 
-   //------------------------------------Content--------------*
-    
-    
-    //------------------------------- SERVER FRAME-------------*        
-    
-    // Setup frame: Config file and update rate 
-    // -----------------------------------------
-    vtkKWFrameWithLabel *setupFrame = vtkKWFrameWithLabel::New ( );
-    setupFrame->SetParent ( realtimeacqFrame->GetFrame() );
-    setupFrame->Create ( );
-    setupFrame->SetLabelText ("Setup");
-    setupFrame->CollapseFrame ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 1 -in %s",
-         setupFrame->GetWidgetName(),
-         realtimeacqFrame->GetFrame()->GetWidgetName());
-
-    // add a file browser 
-    vtkKWFrame *fileFrame = vtkKWFrame::New();
-    fileFrame->SetParent ( realtimeacqFrame->GetFrame() );
-   
-    fileFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-          fileFrame->GetWidgetName());
-
-   
-    // Connect frame: Connects to server 
-    // -----------------------------------------
-    vtkKWFrameWithLabel *connectFrame = vtkKWFrameWithLabel::New ( );
-    connectFrame->SetParent ( realtimeacqFrame->GetFrame() );
-    connectFrame->Create ( );
-    connectFrame->SetLabelText ("Connection to server and Needle-Display");
-    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-           connectFrame->GetWidgetName() );
-    
-    this->ConnectCheckButtonRI = vtkKWCheckButton::New();
-    this->ConnectCheckButtonRI->SetParent(connectFrame->GetFrame());
-    this->ConnectCheckButtonRI->Create();
-    this->ConnectCheckButtonRI->SelectedStateOff();
-    this->ConnectCheckButtonRI->SetText("Connect");
- 
-
-
-    this->NeedleCheckButton = vtkKWCheckButton::New();
-    this->NeedleCheckButton->SetParent(connectFrame->GetFrame());
-    this->NeedleCheckButton->Create();
-    this->NeedleCheckButton->SelectedStateOff();
-    this->NeedleCheckButton->SetText("Show Needle");
-    
-
-    this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->ConnectCheckButtonRI->GetWidgetName(),
-        this->NeedleCheckButton->GetWidgetName());
-
-
-    vtkKWFrameWithLabel *imageorientationFrame = vtkKWFrameWithLabel::New ( );
-    imageorientationFrame->SetParent ( realtimeacqFrame->GetFrame() );
-    imageorientationFrame->Create ( );
-    imageorientationFrame->SetLabelText ("Image Orientation");
-    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-           imageorientationFrame->GetWidgetName() );
-
-    realtimeacqFrame->Delete ();
-    //  activeServerFrame->Delete ();
-     setupFrame->Delete ();
-     fileFrame->Delete ();
-    connectFrame->Delete ();
-    // tempFrame->Delete ();
-   
-#endif
-
-}
-
-
-
-void vtkProstateNavGUI::BuildGUIForCalibration()
-{
-
-    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "ProstateNav" );
-
-    // ----------------------------------------------------------------
-    // CALIBRATION FRAME         
-    // ----------------------------------------------------------------
-    
-    vtkSlicerModuleCollapsibleFrame *calibrationFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    calibrationFrame->SetParent ( page );
-    calibrationFrame->Create ( );
-    calibrationFrame->SetLabelText ("Calibration");
-    calibrationFrame->CollapseFrame ( );
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  calibrationFrame->GetWidgetName(), page->GetWidgetName());
-
-    vtkKWFrameWithLabel *calibImageFrame = vtkKWFrameWithLabel::New ( );
-    calibImageFrame->SetParent ( calibrationFrame->GetFrame() );
-    calibImageFrame->Create ( );
-    calibImageFrame->SetLabelText ("Z Frame Calibration");
-    //setupFrame->CollapseFrame ( );
-    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  calibImageFrame->GetWidgetName());
-
-    vtkKWFrame *calibImageFileFrame = vtkKWFrame::New();
-    calibImageFileFrame->SetParent ( calibImageFrame->GetFrame() );
-    calibImageFileFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  calibImageFileFrame->GetWidgetName());
-    
-    vtkKWFrame *calibImageButtonsFrame = vtkKWFrame::New();
-    calibImageButtonsFrame->SetParent ( calibImageFrame->GetFrame() );
-    calibImageButtonsFrame->Create ( );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  calibImageButtonsFrame->GetWidgetName());
-
-    this->CalibImageFileEntry = vtkKWEntry::New();
-    this->CalibImageFileEntry->SetParent(calibImageFileFrame);
-    this->CalibImageFileEntry->Create();
-    this->CalibImageFileEntry->SetWidth(50);
-    this->CalibImageFileEntry->SetValue ( "" );
-
-    this->ListCalibImageFileButton = vtkKWLoadSaveButtonWithLabel::New ( );
-    this->ListCalibImageFileButton->SetParent (calibImageFileFrame);
-    this->ListCalibImageFileButton->Create ( );
-    this->ListCalibImageFileButton->SetWidth(15);
-    this->ListCalibImageFileButton->GetWidget()->SetText ("Browse Image File");
-    this->ListCalibImageFileButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
-                                  "{ {ProstateNav} {*.*} }");
-    this->ListCalibImageFileButton->GetWidget()->
-      GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
-    this->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->ListCalibImageFileButton->GetWidgetName(),
-                 this->CalibImageFileEntry->GetWidgetName());
-    
-    this->ReadCalibImageFileButton = vtkKWPushButton::New ( );
-    this->ReadCalibImageFileButton->SetParent (calibImageButtonsFrame);
-    this->ReadCalibImageFileButton->Create ( );
-    this->ReadCalibImageFileButton->SetText (" Read Z-Frame Image ");
-    this->ReadCalibImageFileButton->SetBalloonHelpString(" Read Z-Frame Image ");
-    
-    this->Script("pack %s -side top -anchor w -padx 2 -pady 2", 
-                this->ReadCalibImageFileButton->GetWidgetName());
-    
-    calibrationFrame->Delete ();
-    calibImageFrame->Delete ();
-    calibImageFileFrame->Delete ();
-    calibImageButtonsFrame->Delete ();
-
+  this->ImagingControlCheckButton = vtkKWCheckButton::New();
+  this->ImagingControlCheckButton->SetParent(orientationFrame);
+  this->ImagingControlCheckButton->Create();
+  this->ImagingControlCheckButton->SelectedStateOff();
+  this->ImagingControlCheckButton->SetText("Imaging Orientation Control:");
+  
+  this->ImagingMenu = vtkKWMenuButton::New();
+  this->ImagingMenu->SetParent(orientationFrame);
+  this->ImagingMenu->Create();
+  this->ImagingMenu->SetWidth(10);
+  this->ImagingMenu->GetMenu()->AddRadioButton ("Perpendicular");
+  this->ImagingMenu->GetMenu()->AddRadioButton ("In-plane 90");
+  this->ImagingMenu->GetMenu()->AddRadioButton ("In-plane");
+  this->ImagingMenu->SetValue("Perpendicular");
+  
+  this->Script( "pack %s %s -side left -anchor w -padx 2 -pady 2", 
+                this->ImagingControlCheckButton->GetWidgetName(),
+                this->ImagingMenu->GetWidgetName());
+  
+  displayFrame->Delete();
+  driverFrame->Delete();
+  modeFrame->Delete();
+  sliceFrame->Delete();
+  visCtrlFrame->Delete();
 }
 
 
+//----------------------------------------------------------------------------
 int vtkProstateNavGUI::ChangeWorkPhase(int phase, int fChangeWizard)
 {
 
@@ -2390,6 +2188,7 @@ int vtkProstateNavGUI::ChangeWorkPhase(int phase, int fChangeWizard)
         }
         wizard->GetCurrentStep()->ShowUserInterface();
     }
+
     return 1;
 }
 
@@ -2554,4 +2353,61 @@ void vtkProstateNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
     }
 }
 
+
+void vtkProstateNavGUI::ChangeSlicePlaneDriver(int slice, const char* driver)
+{
+  std::cerr << "ChangeSlicePlaneDriver -- Slice: " << slice << ", Driver: " << driver << std::endl;
+  
+  if (slice == vtkProstateNavGUI::SLICE_PLANE_RED)
+    {
+    this->RedSliceMenu->SetValue(driver);
+    if (strcmp(driver, "User") == 0)
+      {
+      this->SliceNode0->SetOrientationToAxial();
+      this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      }
+    else if (strcmp(driver, "Locator") == 0)
+      {
+      this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      }
+    else if (strcmp(driver, "RT Image") == 0)
+      {
+      this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      }
+    }
+  else if (slice == vtkProstateNavGUI::SLICE_PLANE_YELLOW)
+    {
+    this->YellowSliceMenu->SetValue(driver);
+    if (strcmp(driver, "User") == 0)
+      {
+      this->SliceNode1->SetOrientationToSagittal();
+      this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      }
+    else if (strcmp(driver, "Locator") == 0)
+      {
+      this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      }
+    else if (strcmp(driver, "RT Image") == 0)
+      {
+      this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      }
+    }
+  else //if ( slice == vtkProstateNavGUI::SLICE_PLANE_GREEN )
+    {
+    this->GreenSliceMenu->SetValue(driver);
+    if (strcmp(driver, "User") == 0)
+      {
+      this->SliceNode2->SetOrientationToCoronal();
+      this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      }
+    else if (strcmp(driver, "Locator") == 0)
+      {
+      this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      }
+    else if (strcmp(driver, "RT Image") == 0)
+      {
+      this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      }
+    }
+}
 

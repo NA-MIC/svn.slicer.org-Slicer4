@@ -155,7 +155,6 @@ void vtkProstateNavConfigurationStep::PrintSelf(ostream& os, vtkIndent indent)
 void vtkProstateNavConfigurationStep::ProcessGUIEvents( vtkObject *caller,
                                          unsigned long event, void *callData )
 {
-  std::cerr << "ConfigurationStep: ProcessGUIEvents()" << std::endl;
 
   if (this->LoadConfigButtonNT->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
            && event == vtkKWPushButton::InvokedEvent )
@@ -183,7 +182,14 @@ void vtkProstateNavConfigurationStep::ProcessGUIEvents( vtkObject *caller,
       if (this->Logic)
         {
         const char* filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
-        this->Logic->ConnectNaviTrack(filename);
+        this->Logic->ConnectTracker(filename);
+        }
+      }
+    else
+      {
+      if (this->Logic)
+        {
+        this->Logic->DisconnectTracker();
         }
       }
     }

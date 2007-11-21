@@ -31,6 +31,8 @@
 #include "itkGDCMImageIO.h"
 #include "itkSpatialOrientationAdapter.h"
 
+// for communication with robot and scanner
+#include "BRPTPRInterface.h"
 
 vtkCxxRevisionMacro(vtkProstateNavLogic, "$Revision: 1.9.12.1 $");
 vtkStandardNewMacro(vtkProstateNavLogic);
@@ -72,8 +74,7 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->OpenTrackerStream = vtkIGTOpenTrackerStream::New();
 
     this->RealtimeVolumeNode = NULL;
- #endif
-
+#endif
 
     // Timer Handling
 
@@ -479,10 +480,9 @@ int vtkProstateNavLogic::IsPhaseTransitable(int nextwp)
 }
 
 //---------------------------------------------------------------------------
-#ifdef USE_NAVITRACK
-int vtkProstateNavLogic::ConnectNaviTrack(const char* filename)
+int vtkProstateNavLogic::ConnectTracker(const char* filename)
 {
-
+#ifdef USE_NAVITRACK
     int   speed = 100;         // speed
     float multi = 1.0;         // mutlti factor
 
@@ -491,21 +491,128 @@ int vtkProstateNavLogic::ConnectNaviTrack(const char* filename)
     this->OpenTrackerStream->SetMultiFactor(multi);
     this->OpenTrackerStream->SetStartTimer(1);
     this->OpenTrackerStream->ProcessTimerEvents();    
-}
 #endif //USE_NAVITRACK
+}
+
 
 //---------------------------------------------------------------------------
+int vtkProstateNavLogic::DisconnectTracker()
+{
 #ifdef USE_NAVITRACK
-int vtkProstateNavLogic::DisconnectNaviTrack()
+    this->OpenTrackerStream->StopPolling();
+#endif // USE_NAVITRACK
+}
+
+
+//---------------------------------------------------------------------------
+int vtkProstateNavLogic::RobotStop()
 {
 
-    this->OpenTrackerStream->StopPolling();
+  std::cerr << "vtkProstateNavLogic::RobotStop()" << std::endl;
 
-}
+#ifdef USE_NAVITRACK
 #endif // USE_NAVITRACK
+}
+
 
 //---------------------------------------------------------------------------
-vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(vtkSlicerVolumesLogic* volLogic, const char* volumeNodeName)
+int vtkProstateNavLogic::RobotMoveTo(float px, float py, float pz,
+                                     float nx, float ny, float nz,
+                                     float tx, float ty, float tz)
+{
+
+  std::cerr << "vtkProstateNavLogic::RobotMoveTo()" << std::endl;
+
+#ifdef USE_NAVITRACK
+
+  if (this->OpenTrackerStream)
+    {
+    // temporally, orientation set to [0, 0, 0, 1];
+    std::vector<float> orientation;
+    orientation.clear();
+    
+    orientation.push_back(0.0);
+    orientation.push_back(0.0);
+    orientation.push_back(0.0);
+    orientation.push_back(1.0);
+    
+    this->OpenTrackerStream->SetOrientationforRobot(px, py, pz,
+                                                    orientation,
+                                                    BRPTPR_TARGET, "command");
+    }
+
+#endif // USE_NAVITRACK
+}
+
+//---------------------------------------------------------------------------
+int vtkProstateNavLogic::ScanStart()
+{
+
+  std::cerr << "vtkProstateNavLogic::ScanStart()" << std::endl;
+
+#ifdef USE_NAVITRACK
+  if (this->OpenTrackerStream)
+    {
+    std::vector<std::string> keys;
+    std::vector<std::string> values;
+    keys.resize(1);
+    keys[0] = "mrctrl_cmd";
+    values.resize(1);
+    values[0] = "START_SCAN";
+    
+    this->OpenTrackerStream->SetOpenTrackerforScannerControll(keys, values);
+    }
+#endif // USE_NAVITRACK
+  
+}
+
+//---------------------------------------------------------------------------
+int vtkProstateNavLogic::ScanPause()
+{
+
+  std::cerr << "vtkProstateNavLogic::ScanPause()" << std::endl;
+
+#ifdef USE_NAVITRACK
+  if (this->OpenTrackerStream)
+    {
+    std::vector<std::string> keys;
+    std::vector<std::string> values;
+    keys.resize(1);
+    keys[0] = "mrctrl_cmd";
+    values.resize(1);
+    values[0] = "PAUSE_SCAN";
+    
+    this->OpenTrackerStream->SetOpenTrackerforScannerControll(keys, values);
+    }
+#endif // USE_NAVITRACK
+  
+}
+
+//---------------------------------------------------------------------------
+int vtkProstateNavLogic::ScanStop()
+{
+
+  std::cerr << "vtkProstateNavLogic::ScanStop()" << std::endl;
+
+#ifdef USE_NAVITRACK
+  if (this->OpenTrackerStream)
+    {
+    std::vector<std::string> keys;
+    std::vector<std::string> values;
+    keys.resize(1);
+    keys[0] = "mrctrl_cmd";
+    values.resize(1);
+    values[0] = "STOP_SCAN";
+    
+    this->OpenTrackerStream->SetOpenTrackerforScannerControll(keys, values);
+    }
+#endif // USE_NAVITRACK
+  
+}
+
+//---------------------------------------------------------------------------
+vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(vtkSlicerVolumesLogic* volLogic,
+                                                      const char* volumeNodeName)
 {
 
     std::cerr << "AddVolumeNode(): called." << std::endl;
