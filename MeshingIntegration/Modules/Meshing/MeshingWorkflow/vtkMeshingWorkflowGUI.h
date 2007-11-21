@@ -26,8 +26,11 @@ class vtkKWScaleWithEntry;
 class vtkKWPushButton;
 class vtkSlicerNodeSelectorWidget;
 
-// added for UIowa Mimx integration
-class vtkKWMimxMainNotebook;
+// added for UIowa Mimx integration.  Using MRML-based notebook instead of
+// local list-based notebook. 
+
+//class vtkKWMimxMainNotebook;
+class vtkMeshingWorkflowMRMLNotebook;
 
 class VTK_SLICERDAEMON_EXPORT vtkMeshingWorkflowGUI : public vtkSlicerModuleGUI
 {
@@ -63,7 +66,7 @@ protected:
   vtkMeshingWorkflowGUI(const vtkMeshingWorkflowGUI&);
   void operator=(const vtkMeshingWorkflowGUI&);
 
-  vtkKWMimxMainNotebook *SavedMimxNotebook;
+  vtkMeshingWorkflowMRMLNotebook *SavedMimxNotebook;
   
   vtkMeshingWorkflowLogic *Logic;
 
