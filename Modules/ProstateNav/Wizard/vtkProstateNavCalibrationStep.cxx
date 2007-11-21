@@ -44,7 +44,7 @@ void vtkProstateNavCalibrationStep::ShowUserInterface()
   // Create frame
   if (!this->SelectImageFrame)
     {
-    vtkKWFrame *SelectImageFrame = vtkKWFrame::New();
+    this->SelectImageFrame = vtkKWFrame::New();
     this->SelectImageFrame->SetParent(parent);
     this->SelectImageFrame->Create();
     }
@@ -57,7 +57,7 @@ void vtkProstateNavCalibrationStep::ShowUserInterface()
     this->SelectImageButton = vtkKWLoadSaveButtonWithLabel::New();
     this->SelectImageButton->SetParent(this->SelectImageFrame);
     this->SelectImageButton->Create();
-    this->SelectImageButton->SetWidth(15);
+    this->SelectImageButton->SetWidth(50);
     this->SelectImageButton->GetWidget()->SetText ("Browse Image File");
     this->SelectImageButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
       "{ {ProstateNav} {*.dcm} }");

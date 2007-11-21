@@ -108,6 +108,7 @@ private:
     int   CurrentPhase;
     int   PrevPhase;
     int   PhaseComplete;
+    bool  Connected;
     bool  PhaseTransitionCheck;
     bool  OrientationUpdate;
 
