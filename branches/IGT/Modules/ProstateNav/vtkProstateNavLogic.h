@@ -91,10 +91,17 @@ public:
     int  SwitchWorkPhase(int);
     int  IsPhaseTransitable(int);
 
-#ifdef USE_NAVITRACK
-    int  ConnectNaviTrack(const char*);
-    int  DisconnectNaviTrack();
-#endif //USE_NAVITRACK
+    int  ConnectTracker(const char* filename);
+    int  DisconnectTracker();
+
+    int  RobotStop();
+    int  RobotMoveTo(float px, float py, float pz,
+                     float nx, float ny, float nz,
+                     float tx, float ty, float tz);
+
+    int  ScanStart();
+    int  ScanPause();
+    int  ScanStop();
 
     //BTX
     Image* ReadCalibrationImage(const char* filename, int* width, int* height,
@@ -122,9 +129,9 @@ private:
     int   RealtimeImageSerial;
     int   RealtimeImageOrient;
 
-    vtkMatrix4x4            *LocatorMatrix;
-    vtkMRMLVolumeNode       *RealtimeVolumeNode;
-    vtkSlicerVolumesLogic   *VolumesLogic;
+    vtkMatrix4x4          *LocatorMatrix;
+    vtkMRMLVolumeNode     *RealtimeVolumeNode;
+    vtkSlicerVolumesLogic *VolumesLogic;
 
 #ifdef USE_NAVITRACK
     vtkIGTOpenTrackerStream *OpenTrackerStream;

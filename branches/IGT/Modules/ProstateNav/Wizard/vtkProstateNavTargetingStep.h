@@ -4,10 +4,10 @@
 #include "vtkProstateNavStep.h"
 
 class vtkKWFrame;
-class vtkKWEntry;
-class vtkKWCheckButton;
+class vtkKWPushButton;
 class vtkKWEntryWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
+class vtkKWMatrixWidgetWithLabel;
 
 class VTK_PROSTATENAV_EXPORT vtkProstateNavTargetingStep : public vtkProstateNavStep
 {
@@ -26,15 +26,13 @@ protected:
   // GUI Widgets
   vtkKWFrame *MainFrame;
   vtkKWFrame *TargetListFrame;
-  vtkKWEntryWithLabel *PosREntry;
-  vtkKWEntryWithLabel *PosAEntry;
-  vtkKWEntryWithLabel *PosSEntry;
-  vtkKWEntryWithLabel *NormREntry;
-  vtkKWEntryWithLabel *NormAEntry;
-  vtkKWEntryWithLabel *NormSEntry;
+  vtkKWFrame *TargetControlFrame;
 
-  vtkKWMultiColumnListWithScrollbars*  TargetListColumnList;
-  
+  vtkKWMultiColumnListWithScrollbars* TargetListColumnList;
+  vtkKWMatrixWidgetWithLabel* NeedlePositionMatrix;
+  vtkKWMatrixWidgetWithLabel* NeedleNormalMatrix;
+  vtkKWPushButton *MoveButton;
+  vtkKWPushButton *StopButton;
 
 private:
   vtkProstateNavTargetingStep(const vtkProstateNavTargetingStep&);
