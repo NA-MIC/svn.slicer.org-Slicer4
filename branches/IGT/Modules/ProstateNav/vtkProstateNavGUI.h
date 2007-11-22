@@ -81,6 +81,11 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     SLICE_RTIMAGE_INPLANE90 = 1,
     SLICE_RTIMAGE_INPLANE   = 2
   };
+  
+  static const double WorkPhaseColor[vtkProstateNavLogic::NumPhases][3];
+  static const double WorkPhaseColorActive[vtkProstateNavLogic::NumPhases][3];
+  static const double WorkPhaseColorDisabled[vtkProstateNavLogic::NumPhases][3];
+  static const char* WorkPhaseStr[vtkProstateNavLogic::NumPhases];
   //ETX
   
  public:
@@ -183,7 +188,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   
   // Module logic and mrml pointers
 
-  
   //----------------------------------------------------------------
   // Logic Values
   //----------------------------------------------------------------
@@ -233,6 +237,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
                           float px, float py, float pz);
   
  private:
+
   vtkProstateNavGUI ( const vtkProstateNavGUI& ); // Not implemented.
   void operator = ( const vtkProstateNavGUI& ); //Not implemented.
   
