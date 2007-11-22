@@ -35,7 +35,12 @@ vtkProstateNavTargetingStep::vtkProstateNavTargetingStep()
   this->MoveButton = NULL;
   this->StopButton = NULL;
 
+  this->TitleBackgroundColor[0] = 0.8;
+  this->TitleBackgroundColor[1] = 0.8;
+  this->TitleBackgroundColor[2] = 0.8;
+
 }
+
 //----------------------------------------------------------------------------
 vtkProstateNavTargetingStep::~vtkProstateNavTargetingStep()
 {
@@ -47,10 +52,8 @@ void vtkProstateNavTargetingStep::ShowUserInterface()
   this->Superclass::ShowUserInterface();
 
   vtkKWWizardWidget *wizardWidget = this->GetGUI()->GetWizardWidget();
-  wizardWidget->GetCancelButton()->SetEnabled(0);
-
   vtkKWWidget *parent = wizardWidget->GetClientArea();
-
+  
   if (!this->MainFrame)
     {
     this->MainFrame = vtkKWFrame::New();
@@ -58,7 +61,7 @@ void vtkProstateNavTargetingStep::ShowUserInterface()
     this->MainFrame->Create();
     }
 
-  this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                 this->MainFrame->GetWidgetName());
     
   if (!this->TargetListFrame)
@@ -68,7 +71,7 @@ void vtkProstateNavTargetingStep::ShowUserInterface()
     this->TargetListFrame->Create();
     }
 
-  this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                 this->TargetListFrame->GetWidgetName());
   
   if (!this->TargetListColumnList)

@@ -66,6 +66,19 @@ void vtkProstateNavStep::PrintSelf(ostream& os, vtkIndent indent)
 }
 
 //----------------------------------------------------------------------------
+void vtkProstateNavStep::ShowUserInterface()
+{
+  this->Superclass::ShowUserInterface();
+
+  vtkKWWizardWidget *wizardWidget = this->GetGUI()->GetWizardWidget();
+  wizardWidget->GetCancelButton()->SetEnabled(0);
+  wizardWidget->SetTitleAreaBackgroundColor(this->TitleBackgroundColor[0],
+                                            this->TitleBackgroundColor[1],
+                                            this->TitleBackgroundColor[2]);
+
+}
+
+//----------------------------------------------------------------------------
 void vtkProstateNavStep::GUICallback( vtkObject *caller,
                            unsigned long eid, void *clientData, void *callData )
 {

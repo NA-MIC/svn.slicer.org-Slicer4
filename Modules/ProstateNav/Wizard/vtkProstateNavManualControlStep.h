@@ -3,6 +3,9 @@
 
 #include "vtkProstateNavStep.h"
 
+class vtkKWFrame;
+class vtkKWScaleWithEntry;
+
 class VTK_PROSTATENAV_EXPORT vtkProstateNavManualControlStep : public vtkProstateNavStep
 {
 public:
@@ -16,6 +19,17 @@ public:
 protected:
   vtkProstateNavManualControlStep();
   ~vtkProstateNavManualControlStep();
+
+  // GUI Widgets
+  vtkKWFrame *MainFrame;
+  vtkKWFrame *ControlFrame;
+
+  vtkKWScaleWithEntry* PRScale;
+  vtkKWScaleWithEntry* PAScale;
+  vtkKWScaleWithEntry* PSScale;
+  vtkKWScaleWithEntry* NRScale;
+  vtkKWScaleWithEntry* NAScale;
+  vtkKWScaleWithEntry* NSScale;
 
 private:
   vtkProstateNavManualControlStep(const vtkProstateNavManualControlStep&);

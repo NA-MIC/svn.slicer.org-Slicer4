@@ -26,12 +26,18 @@ public:
   void SetInGUICallbackFlag (int flag) {
     this->InGUICallbackFlag = flag;
   };
+  void SetTitleBackgroundColor (double r, double g, double b) {
+    this->TitleBackgroundColor[0] = r;
+    this->TitleBackgroundColor[1] = g;
+    this->TitleBackgroundColor[2] = b;
+  };
 
   // Description:
   // Reimplement the superclass's method (see vtkKWWizardStep).
   virtual void HideUserInterface();
   virtual void Validate();
   virtual int CanGoToSelf();
+  virtual void ShowUserInterface();
   virtual void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {};
 
 protected:
@@ -47,9 +53,12 @@ protected:
   vtkProstateNavLogic *Logic;
   vtkCallbackCommand  *GUICallbackCommand;
 
+  double TitleBackgroundColor[3];
+
 private:
   vtkProstateNavStep(const vtkProstateNavStep&);
   void operator=(const vtkProstateNavStep&);
+
 };
 
 #endif

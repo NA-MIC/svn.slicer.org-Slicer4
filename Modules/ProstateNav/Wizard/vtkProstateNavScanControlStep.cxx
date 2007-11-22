@@ -31,8 +31,6 @@ void vtkProstateNavScanControlStep::ShowUserInterface()
   this->Superclass::ShowUserInterface();
 
   vtkKWWizardWidget *wizardWidget = this->GetGUI()->GetWizardWidget();
-  wizardWidget->GetCancelButton()->SetEnabled(0);
-
   vtkKWWidget *parent = wizardWidget->GetClientArea();
 }
 

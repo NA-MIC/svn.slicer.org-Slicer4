@@ -77,7 +77,6 @@
 #include "vtkSlicerColorLogic.h"
 #include "vtkSlicerVolumesGUI.h"
 
-
 #include "vtkIGTDataStream.h"
 #include "vtkCylinderSource.h"
 #include "vtkMRMLLinearTransformNode.h"
@@ -90,6 +89,50 @@ vtkStandardNewMacro (vtkProstateNavGUI );
 vtkCxxRevisionMacro ( vtkProstateNavGUI, "$Revision: 1.0 $");
 //---------------------------------------------------------------------------
 
+
+//---------------------------------------------------------------------------
+// Button Colors and Labels for Work Phase Control
+const double vtkProstateNavGUI::WorkPhaseColor[vtkProstateNavLogic::NumPhases][3] =
+  {
+  /* St */ { 1.0, 0.6, 1.0 },
+  /* Pl */ { 0.6, 1.0, 0.6 },
+  /* Cl */ { 1.0, 1.0, 0.6 },
+  /* Tg */ { 0.6, 0.6, 1.0 },
+  /* Mn */ { 0.6, 1.0, 1.0 },
+  /* Em */ { 1.0, 0.0, 0.0 },
+  };
+
+const double vtkProstateNavGUI::WorkPhaseColorActive[vtkProstateNavLogic::NumPhases][3] =
+  {
+  /* St */ { 1.0, 0.4, 1.0 },
+  /* Pl */ { 0.4, 1.0, 0.4 },
+  /* Cl */ { 1.0, 1.0, 0.4 },
+  /* Tg */ { 0.4, 0.4, 1.0 },
+  /* Mn */ { 0.4, 1.0, 1.0 },
+  /* Em */ { 1.0, 0.0, 0.0 },
+  };
+
+const double vtkProstateNavGUI::WorkPhaseColorDisabled[vtkProstateNavLogic::NumPhases][3] =
+  {
+  /* St */ { 1.0, 0.95, 1.0 },
+  /* Pl */ { 0.95, 1.0, 0.95 },
+  /* Cl */ { 1.0, 1.0, 0.95 },
+  /* Tg */ { 0.95, 0.95, 1.0 },
+  /* Mn */ { 0.95, 1.0, 1.0 },
+  /* Em */ { 1.0, 0.0, 0.0 },
+  };
+
+const char *vtkProstateNavGUI::WorkPhaseStr[vtkProstateNavLogic::NumPhases] =
+  {
+  /* Su */ "Start Up",
+  /* Pl */ "Planning",
+  /* Cl */ "Calibration",
+  /* Tg */ "Targeting",
+  /* Mn */ "Manual",
+  /* Em */ "Emergency",
+  };
+
+//---------------------------------------------------------------------------
 vtkProstateNavGUI::vtkProstateNavGUI ( )
 {
 
@@ -749,6 +792,8 @@ void vtkProstateNavGUI::Enter ( )
 
     this->GetLogic()->AddRealtimeVolumeNode(VolumesLogic, "Realtime");
 
+    ChangeWorkPhase(vtkProstateNavLogic::StartUp, 1);
+
     // neccessary?
     //this->Logic0->GetForegroundLayer()->SetUseReslice(0);
 
@@ -872,6 +917,9 @@ void vtkProstateNavGUI::BuildGUIForWizardFrame()
       {
       this->WizardSteps[i]->SetGUI(this);
       this->WizardSteps[i]->SetLogic(this->Logic);
+      this->WizardSteps[i]->SetTitleBackgroundColor(WorkPhaseColor[i][0],
+                                                    WorkPhaseColor[i][1],
+                                                    WorkPhaseColor[i][2]);
       wizard_workflow->AddNextStep(this->WizardSteps[i]);
       }
 
@@ -937,531 +985,109 @@ void vtkProstateNavGUI::BuildGUIForHelpFrame ()
 
 }
 
-
+//---------------------------------------------------------------------------
 void vtkProstateNavGUI::BuildGUIForWorkPhaseFrame ()
 {
-    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "ProstateNav" );
 
-    //----------------------------------------------------------------
-    // WORKPHASE FRAME         
-    //----------------------------------------------------------------
-    vtkSlicerModuleCollapsibleFrame *workphaseFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    workphaseFrame->SetParent(page);
-    workphaseFrame->Create();
-    workphaseFrame->SetLabelText("Workphase Frame");
-    workphaseFrame->ExpandFrame();
-    app->Script("pack %s -side top -anchor center -fill x -padx 2 -pady 2 -in %s",
-    workphaseFrame->GetWidgetName(), page->GetWidgetName());
+  vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+  vtkKWWidget *page = this->UIPanel->GetPageWidget ( "ProstateNav" );
+  
+  vtkSlicerModuleCollapsibleFrame *workphaseFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+  workphaseFrame->SetParent(page);
+  workphaseFrame->Create();
+  workphaseFrame->SetLabelText("Workphase Frame");
+  workphaseFrame->ExpandFrame();
+  app->Script("pack %s -side top -anchor center -fill x -padx 2 -pady 2 -in %s",
+              workphaseFrame->GetWidgetName(), page->GetWidgetName());
+  
 
-    vtkKWFrame *buttonFrame = vtkKWFrame::New();
-    buttonFrame->SetParent( workphaseFrame->GetFrame());
-    buttonFrame->Create();
+  // -----------------------------------------
+  // Frames
 
-    vtkKWFrame *workphaseStatusFrame = vtkKWFrame::New ( );
-    workphaseStatusFrame->SetParent ( workphaseFrame->GetFrame() );
-    workphaseStatusFrame->Create ( );
-    app->Script ( "pack %s %s -side top -anchor center -fill x -padx 2 -pady 1",
-                  buttonFrame->GetWidgetName(),
-                  workphaseStatusFrame->GetWidgetName());
+  vtkKWFrame *workphaseStatusFrame = vtkKWFrame::New ( );
+  workphaseStatusFrame->SetParent ( workphaseFrame->GetFrame() );
+  workphaseStatusFrame->Create ( );
+  workphaseStatusFrame->SetReliefToRaised();
+  workphaseStatusFrame->SetBackgroundColor(0.9, 0.9, 0.9);
+  
+  vtkKWFrame *buttonFrame = vtkKWFrame::New();
+  buttonFrame->SetParent( workphaseFrame->GetFrame());
+  buttonFrame->Create();
 
-    //
-    // Work Phase Transition Buttons
-    //
+  app->Script ( "pack %s %s -side top -anchor center -fill x -padx 2 -pady 1",
+                workphaseStatusFrame->GetWidgetName(),
+                buttonFrame->GetWidgetName());
+  
 
-    this->WorkPhaseButtonSet = vtkKWPushButtonSet::New();
-    this->WorkPhaseButtonSet->SetParent(buttonFrame);
-    this->WorkPhaseButtonSet->Create();
-    this->WorkPhaseButtonSet->PackHorizontallyOn();
-    this->WorkPhaseButtonSet->SetMaximumNumberOfWidgetsInPackingDirection(3);
-    this->WorkPhaseButtonSet->SetWidgetsPadX(2);
-    this->WorkPhaseButtonSet->SetWidgetsPadY(2);
-    this->WorkPhaseButtonSet->UniformColumnsOn();
-    this->WorkPhaseButtonSet->UniformRowsOn();
+  // -----------------------------------------
+  // Work Phase Display Frame
 
-    for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
+  this->SoftwareStatusLabelDisp = vtkKWEntry::New();
+  this->SoftwareStatusLabelDisp->SetParent(workphaseStatusFrame);
+  this->SoftwareStatusLabelDisp->Create();
+  this->SoftwareStatusLabelDisp->SetWidth(18);
+  this->SoftwareStatusLabelDisp->SetReliefToFlat();
+  this->SoftwareStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
+  this->SoftwareStatusLabelDisp->SetValue (" NETWORK: OFF ");
+  
+  this->RobotStatusLabelDisp = vtkKWEntry::New();
+  this->RobotStatusLabelDisp->SetParent(workphaseStatusFrame);
+  this->RobotStatusLabelDisp->Create();
+  this->RobotStatusLabelDisp->SetWidth(18);
+  this->RobotStatusLabelDisp->SetReliefToFlat();
+  this->RobotStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
+  this->RobotStatusLabelDisp->SetValue (" ROBOT: OFF ");
+  
+  this->ScannerStatusLabelDisp = vtkKWEntry::New();
+  this->ScannerStatusLabelDisp->SetParent(workphaseStatusFrame);
+  this->ScannerStatusLabelDisp->Create();
+  this->ScannerStatusLabelDisp->SetWidth(18);
+  this->ScannerStatusLabelDisp->SetReliefToFlat();
+  this->ScannerStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
+  this->ScannerStatusLabelDisp->SetValue (" SCANNER: OFF ");
+  
+  this->Script("pack %s %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
+               SoftwareStatusLabelDisp->GetWidgetName(),
+               ScannerStatusLabelDisp->GetWidgetName(),
+               RobotStatusLabelDisp->GetWidgetName()
+               );
+  
+  // -----------------------------------------
+  // Work Phase Transition Buttons Frame
+
+  this->WorkPhaseButtonSet = vtkKWPushButtonSet::New();
+  this->WorkPhaseButtonSet->SetParent(buttonFrame);
+  this->WorkPhaseButtonSet->Create();
+  this->WorkPhaseButtonSet->PackHorizontallyOn();
+  this->WorkPhaseButtonSet->SetMaximumNumberOfWidgetsInPackingDirection(3);
+  this->WorkPhaseButtonSet->SetWidgetsPadX(2);
+  this->WorkPhaseButtonSet->SetWidgetsPadY(2);
+  this->WorkPhaseButtonSet->UniformColumnsOn();
+  this->WorkPhaseButtonSet->UniformRowsOn();
+  
+  for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
     {
-        this->WorkPhaseButtonSet->AddWidget(i);
-        this->WorkPhaseButtonSet->GetWidget(i)->SetWidth(16);
+    this->WorkPhaseButtonSet->AddWidget(i);
+    this->WorkPhaseButtonSet->GetWidget(i)->SetWidth(16);
+    this->WorkPhaseButtonSet->GetWidget(i)->SetText(WorkPhaseStr[i]);
+    this->WorkPhaseButtonSet->GetWidget(i)
+      ->SetBackgroundColor(WorkPhaseColor[i][0], WorkPhaseColor[i][1], WorkPhaseColor[i][2]);
+    this->WorkPhaseButtonSet->GetWidget(i)
+      ->SetActiveBackgroundColor(WorkPhaseColor[i][0], WorkPhaseColor[i][1], WorkPhaseColor[i][2]);
+    /*
+    this->WorkPhaseButtonSet->GetWidget(i)
+      ->SetDisabledBackgroundColor(WorkPhaseColor[i][0], WorkPhaseColor[i][1], WorkPhaseColor[i][2]);
+    */
     }
-
-    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::StartUp    )->SetText("Start Up");
-    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Planning   )->SetText("Planning");
-    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Calibration)->SetText("Calibration");
-    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Targeting  )->SetText("Targeting");
-    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Manual     )->SetText("Manual");
-    this->WorkPhaseButtonSet->GetWidget(vtkProstateNavLogic::Emergency  )->SetText("Emergency");
-
-    this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 this->WorkPhaseButtonSet->GetWidgetName()
-                 );
-
-                 
-    //    vtkKWFrameWithLabel *filterFrame = vtkKWFrameWithLabel::New ( );
-    //    filterFrame->SetParent ( workphaseFrame->GetFrame() );
-    //    filterFrame->Create ( );
-    //    filterFrame->SetLabelText ("Connection to server and Needle-Display");
-    //    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-    //           filterFrame->GetWidgetName() );
-
-    vtkKWLabel *SoftwareStatusLabel = vtkKWLabel::New();
-    SoftwareStatusLabel->SetParent(workphaseStatusFrame);
-    SoftwareStatusLabel->Create();
-    SoftwareStatusLabel->SetWidth(15);
-    SoftwareStatusLabel->SetText("Software:");
-
-    this->SoftwareStatusLabelDisp = vtkKWEntry::New();
-    this->SoftwareStatusLabelDisp->SetParent(workphaseStatusFrame);
-    this->SoftwareStatusLabelDisp->Create();
-    this->SoftwareStatusLabelDisp->SetWidth(10);
-    this->SoftwareStatusLabelDisp->SetValue ( "" );
-
-    vtkKWLabel *ScannerStatusLabel = vtkKWLabel::New();
-    ScannerStatusLabel->SetParent(workphaseStatusFrame);
-    ScannerStatusLabel->Create();
-    ScannerStatusLabel->SetWidth(15);
-    ScannerStatusLabel->SetText("Scanner:");
-    
-    this->ScannerStatusLabelDisp = vtkKWEntry::New();
-    this->ScannerStatusLabelDisp->SetParent(workphaseStatusFrame);
-    this->ScannerStatusLabelDisp->Create();
-    this->ScannerStatusLabelDisp->SetWidth(10);
-    this->ScannerStatusLabelDisp->SetValue ( "" );
-
-    vtkKWLabel *RobotStatusLabel = vtkKWLabel::New();
-    RobotStatusLabel->SetParent(workphaseStatusFrame);
-    RobotStatusLabel->Create();
-    RobotStatusLabel->SetWidth(15);
-    RobotStatusLabel->SetText("Robot:");
-    
-    this->RobotStatusLabelDisp = vtkKWEntry::New();
-    this->RobotStatusLabelDisp->SetParent(workphaseStatusFrame);
-    this->RobotStatusLabelDisp->Create();
-    this->RobotStatusLabelDisp->SetWidth(10);
-    this->RobotStatusLabelDisp->SetValue ( "" );
-
-    this->Script("pack %s %s %s %s %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
-                 SoftwareStatusLabel->GetWidgetName(),
-                 SoftwareStatusLabelDisp->GetWidgetName(),
-                 ScannerStatusLabel->GetWidgetName(),
-                 ScannerStatusLabelDisp->GetWidgetName(),
-                 RobotStatusLabel->GetWidgetName(),
-                 RobotStatusLabelDisp->GetWidgetName()
-                 );
-
-    workphaseFrame->Delete ();
-    buttonFrame->Delete ();
-    workphaseStatusFrame->Delete ();
+  
+  this->Script("pack %s -side left -anchor w -fill x -padx 2 -pady 2", 
+               this->WorkPhaseButtonSet->GetWidgetName());
+  
+  workphaseFrame->Delete ();
+  buttonFrame->Delete ();
+  workphaseStatusFrame->Delete ();
   
 }
-
-/*
-void vtkProstateNavGUI::BuildGUIForDeviceFrame ()
-{
-    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "ProstateNav" );
-
-    // ----------------------------------------------------------------
-    // ROBOT DEVICE FRAME           
-    // ----------------------------------------------------------------
-    vtkSlicerModuleCollapsibleFrame *deviceFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    deviceFrame->SetParent ( page );
-    deviceFrame->Create ( );
-    deviceFrame->SetLabelText ("Robot Controll (Coordinates, Speed, Feeding)");
-    deviceFrame->CollapseFrame ( );
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        deviceFrame->GetWidgetName(), page->GetWidgetName());
-
-    /////////////////////////////////////////////////////////////////////
-    /// Robot Controll frame 
-    /////////////////////////////////////////////////////////////////////
-
-    
-    vtkKWFrameWithLabel *controllrobotFrame = vtkKWFrameWithLabel::New();
-    controllrobotFrame->SetParent ( deviceFrame->GetFrame() );
-    controllrobotFrame->Create ( );
-    controllrobotFrame->CollapseFrame ( );
-    controllrobotFrame->SetLabelText ("Type and Send to Robot");
-    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-          controllrobotFrame->GetWidgetName());
-     
-
-    // Header 1 frame
-    vtkKWFrame *header1robotFrame = vtkKWFrame::New();
-    header1robotFrame->SetParent ( controllrobotFrame->GetFrame() );
-    header1robotFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                 header1robotFrame->GetWidgetName(),
-                 controllrobotFrame->GetFrame()->GetWidgetName());
-    
-    
-    // Coordinates frame
-    vtkKWFrame *coordinatesrobotFrame = vtkKWFrame::New();
-    coordinatesrobotFrame->SetParent ( controllrobotFrame->GetFrame() );
-    coordinatesrobotFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                 coordinatesrobotFrame->GetWidgetName(),
-                 controllrobotFrame->GetFrame()->GetWidgetName());
-    
-    // Header 2 frame
-    vtkKWFrame *header2robotFrame = vtkKWFrame::New();
-    header2robotFrame->SetParent ( controllrobotFrame->GetFrame() );
-    header2robotFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                 header2robotFrame->GetWidgetName(),
-                 controllrobotFrame->GetFrame()->GetWidgetName());
-    // Orientations frame
-    vtkKWFrame *orientationsrobotFrame = vtkKWFrame::New();
-    orientationsrobotFrame->SetParent ( controllrobotFrame->GetFrame() );
-    orientationsrobotFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                 orientationsrobotFrame->GetWidgetName(),
-                 controllrobotFrame->GetFrame()->GetWidgetName());
-
-    vtkKWFrame *orientationsrobotADDFrame = vtkKWFrame::New();
-    orientationsrobotADDFrame->SetParent ( controllrobotFrame->GetFrame() );
-    orientationsrobotADDFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                 orientationsrobotADDFrame->GetWidgetName(),
-                 controllrobotFrame->GetFrame()->GetWidgetName());
-
-    
-    // Contents in header 1 frame
-    vtkKWLabel *empty1Label = vtkKWLabel::New();
-    empty1Label->SetParent(header1robotFrame);
-    empty1Label->Create();
-    empty1Label->SetWidth(5);
-    empty1Label->SetText("");
-
-    vtkKWLabel *xLabel = vtkKWLabel::New();
-    xLabel->SetParent(header1robotFrame);
-    xLabel->Create();
-    xLabel->SetWidth(5);
-    xLabel->SetText("X");
-
-    vtkKWLabel *yLabel = vtkKWLabel::New();
-    yLabel->SetParent(header1robotFrame);
-    yLabel->Create();
-    yLabel->SetWidth(5);
-    yLabel->SetText("Y");
-
-    vtkKWLabel *zLabel = vtkKWLabel::New();
-    zLabel->SetParent(header1robotFrame);
-    zLabel->Create();
-    zLabel->SetWidth(5);
-    zLabel->SetText("Z");
-  
-    this->Script("pack %s %s %s %s -side left -anchor w -padx 2 -pady 2", 
-                empty1Label->GetWidgetName(),
-                  xLabel->GetWidgetName(),
-                yLabel->GetWidgetName(),
-                 zLabel->GetWidgetName());
-            
-    
-        // Contents in C frame 
-    vtkKWLabel *nLabel = vtkKWLabel::New();
-    nLabel->SetParent(coordinatesrobotFrame);
-    nLabel->Create();
-    nLabel->SetWidth(5);
-    nLabel->SetText("C:");
-   
-    // Contents in header 1 frame
-    vtkKWLabel *empty2Label = vtkKWLabel::New();
-    empty2Label->SetParent(header2robotFrame);
-    empty2Label->Create();
-    empty2Label->SetWidth(5);
-    empty2Label->SetText("");
-
-    vtkKWLabel *o1Label = vtkKWLabel::New();
-    o1Label->SetParent(header2robotFrame);
-    o1Label->Create();
-    o1Label->SetWidth(5);
-    o1Label->SetText("O-1");
-
-    vtkKWLabel *o2Label = vtkKWLabel::New();
-    o2Label->SetParent(header2robotFrame);
-    o2Label->Create();
-    o2Label->SetWidth(5);
-    o2Label->SetText("O-2");
-
-    vtkKWLabel *o3Label = vtkKWLabel::New();
-    o3Label->SetParent(header2robotFrame);
-    o3Label->Create();
-    o3Label->SetWidth(5);
-    o3Label->SetText("O-3");
-    
-    vtkKWLabel *o4Label = vtkKWLabel::New();
-    o4Label->SetParent(header2robotFrame);
-    o4Label->Create();
-    o4Label->SetWidth(5);
-    o4Label->SetText("O-4");
-
-    this->Script("pack %s %s %s %s %s  -side left -anchor w -padx 2 -pady 2", 
-                empty2Label->GetWidgetName(),
-               o1Label->GetWidgetName(),
-               o2Label->GetWidgetName(),
-               o3Label->GetWidgetName(),
-               o4Label->GetWidgetName());
-   
-
-    // Contents in P frame
-    vtkKWLabel *oLabel = vtkKWLabel::New();
-    oLabel->SetParent(orientationsrobotFrame);
-    oLabel->Create();
-    oLabel->SetWidth(5);
-    oLabel->SetText("O:");
-   
-    this->PREntry = vtkKWEntryWithLabel::New();
-    this->PREntry->SetParent(orientationsrobotFrame);
-    this->PREntry->Create();
-    this->PREntry->GetWidget()->SetWidth(5);
-    this->PREntry->GetWidget()->SetValue("0");
-
-    this->PAEntry = vtkKWEntryWithLabel::New();
-    this->PAEntry->SetParent(orientationsrobotFrame);
-    this->PAEntry->Create();
-    this->PAEntry->GetWidget()->SetWidth(5);
-    this->PAEntry->GetWidget()->SetValue("0");
-
-    this->PSEntry = vtkKWEntryWithLabel::New();
-    this->PSEntry->SetParent(orientationsrobotFrame);
-    this->PSEntry->Create();
-    this->PSEntry->GetWidget()->SetWidth(5);
-    this->PSEntry->GetWidget()->SetValue("0");
-
-    this->O4Entry = vtkKWEntryWithLabel::New();
-    this->O4Entry->SetParent(orientationsrobotFrame);
-    this->O4Entry->Create();
-    this->O4Entry->GetWidget()->SetWidth(5);
-    this->O4Entry->GetWidget()->SetValue("0");
-
-    this->Script("pack %s %s %s %s %s -side left -anchor w -padx 2 -pady 2", 
-               oLabel->GetWidgetName(),
-               this->PREntry->GetWidgetName(),
-               this->PAEntry->GetWidgetName(),
-               this->PSEntry->GetWidgetName(),
-              this->O4Entry->GetWidgetName());
-
-  
-
-    this->AddCoordsandOrientTarget = vtkKWPushButton::New();
-    this->AddCoordsandOrientTarget->SetParent(orientationsrobotADDFrame);
-    this->AddCoordsandOrientTarget->Create();
-    this->AddCoordsandOrientTarget->SetText( "OK" );
-    this->AddCoordsandOrientTarget->SetWidth ( 12 );
-    this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
-                  this->AddCoordsandOrientTarget->GetWidgetName());
-
-
-    vtkKWFrameWithLabel *targetlistFrame = vtkKWFrameWithLabel::New();
-    targetlistFrame->SetParent ( deviceFrame->GetFrame() );
-    targetlistFrame->Create ( );
-    targetlistFrame->CollapseFrame ( );
-    targetlistFrame->SetLabelText ("Defined Target Points");
-    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  targetlistFrame->GetWidgetName());
-
-    
-    // add the multicolumn list to show the points
-    this->TargetListColumnList = vtkKWMultiColumnListWithScrollbars::New ( );
-    this->TargetListColumnList->SetParent ( targetlistFrame->GetFrame() );
-    this->TargetListColumnList->Create ( );
-    this->TargetListColumnList->SetHeight(1);
-    this->TargetListColumnList->GetWidget()->SetSelectionTypeToRow();
-    this->TargetListColumnList->GetWidget()->MovableRowsOff();
-    this->TargetListColumnList->GetWidget()->MovableColumnsOff();
-    // set up the columns of data for each point
-    // refer to the header file for order
-      this->TargetListColumnList->GetWidget()->AddColumn("T#");
-    this->TargetListColumnList->GetWidget()->AddColumn("Target Coords. (x,y,z)");
-    this->TargetListColumnList->GetWidget()->AddColumn("Target Orient. ()");
-  
-    
-    // now set the attributes that are equal across the columns
-    for (int col = 0; col < 3; col++)
-    {
-      if(col==0)
-   {
-        this->TargetListColumnList->GetWidget()->SetColumnWidth(col, 7);
-   }
-      else
-   {
-   this->TargetListColumnList->GetWidget()->SetColumnWidth(col, 22);
-   }
-
-        this->TargetListColumnList->GetWidget()->SetColumnAlignmentToLeft(col);
-        this->TargetListColumnList->GetWidget()->ColumnEditableOff(col);
-    }
-
-    app->Script ( "pack %s -fill both -expand true",
-                  this->TargetListColumnList->GetWidgetName());
-
-    
-    vtkKWFrame *targetbuttonFrame = vtkKWFrame::New();
-    targetbuttonFrame->SetParent ( targetlistFrame->GetFrame() );
-    targetbuttonFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                 targetbuttonFrame->GetWidgetName(),
-                 targetlistFrame->GetFrame()->GetWidgetName());
-
-    // add a delete button 
-    this->DeleteTargetPushButton = vtkKWPushButton::New ( );
-    this->DeleteTargetPushButton->SetParent ( targetbuttonFrame );
-    this->DeleteTargetPushButton->Create ( );
-    this->DeleteTargetPushButton->SetText ("Delete Target");
-    this->DeleteTargetPushButton->SetWidth (12);
-    this->DeleteTargetPushButton->SetBalloonHelpString("Delete the selected Target.");
-
-    // add a delete button 
-    this->DeleteAllTargetPushButton = vtkKWPushButton::New ( );
-    this->DeleteAllTargetPushButton->SetParent ( targetbuttonFrame );
-    this->DeleteAllTargetPushButton->Create ( );
-    this->DeleteAllTargetPushButton->SetText ("Delete All Targets");
-    this->DeleteAllTargetPushButton->SetWidth (12);
-    this->DeleteAllTargetPushButton->SetBalloonHelpString("Delete all Target Points.");
-
-    app->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->DeleteTargetPushButton->GetWidgetName(),
-                this->DeleteAllTargetPushButton->GetWidgetName());
-
-    vtkKWFrameWithLabel *SetOrientandMoveFrame = vtkKWFrameWithLabel::New();
-    SetOrientandMoveFrame->SetParent ( deviceFrame->GetFrame() );
-    SetOrientandMoveFrame->Create ( );
-    SetOrientandMoveFrame->CollapseFrame ( );
-    SetOrientandMoveFrame->SetLabelText ("Command Frame (Speed, Orientation, Feed)");
-    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  SetOrientandMoveFrame->GetWidgetName());
-
-    vtkKWFrame *RobotSpeedFrame = vtkKWFrame::New();
-    RobotSpeedFrame->SetParent ( SetOrientandMoveFrame->GetFrame() );
-    RobotSpeedFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                  RobotSpeedFrame->GetWidgetName(),
-                  SetOrientandMoveFrame->GetFrame()->GetWidgetName());
-    
-
-    vtkKWFrame *OrientMoveFrame = vtkKWFrame::New();
-    OrientMoveFrame->SetParent ( SetOrientandMoveFrame->GetFrame() );
-    OrientMoveFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                  OrientMoveFrame->GetWidgetName(),
-                  SetOrientandMoveFrame->GetFrame()->GetWidgetName());
-    
-    
-    // BW button 
-    this->MoveFWPushButton = vtkKWPushButton::New ( );
-    this->MoveFWPushButton->SetParent ( OrientMoveFrame );
-    this->MoveFWPushButton->Create ( );
-    this->MoveFWPushButton->SetText ("<--Move(BW)");
-    this->MoveFWPushButton->SetWidth (12);
-    this->MoveFWPushButton->SetBalloonHelpString("Delete the selected Target.");
-    
-    // FW  button 
-    this->MoveBWPushButton = vtkKWPushButton::New ( );
-    this->MoveBWPushButton->SetParent ( OrientMoveFrame );
-    this->MoveBWPushButton->Create ( );
-    this->MoveBWPushButton->SetText ("Move(FW)-->");
-    this->MoveBWPushButton->SetWidth (12);
-    this->MoveBWPushButton->SetBalloonHelpString("Delete all Target Points.");
-    
-    // Set Orientation button 
-    this->SetOrientButton = vtkKWPushButton::New ( );
-    this->SetOrientButton->SetParent ( OrientMoveFrame );
-    this->SetOrientButton->Create ( );
-    this->SetOrientButton->SetText ("Set Orientation");
-    this->SetOrientButton->SetWidth (17);
-    
-    app->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->MoveFWPushButton->GetWidgetName(),
-                this->MoveBWPushButton->GetWidgetName(),     
-                this->SetOrientButton->GetWidgetName());
-
-    
-
-    vtkKWFrameWithLabel *DisplayRobotCoordsLabelFrame = vtkKWFrameWithLabel::New();
-    DisplayRobotCoordsLabelFrame->SetParent ( deviceFrame->GetFrame() );
-    DisplayRobotCoordsLabelFrame->Create ( );
-    DisplayRobotCoordsLabelFrame->CollapseFrame ( );
-    DisplayRobotCoordsLabelFrame->SetLabelText ("Show Robot Coords. and Orient.");
-    this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  DisplayRobotCoordsLabelFrame->GetWidgetName());
-
-
-    vtkKWFrame *DisplayRobotCoordsFrame = vtkKWFrame::New();
-    DisplayRobotCoordsFrame->SetParent (DisplayRobotCoordsLabelFrame->GetFrame() );
-    DisplayRobotCoordsFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                  DisplayRobotCoordsFrame->GetWidgetName(),
-                  DisplayRobotCoordsLabelFrame->GetFrame()->GetWidgetName());
-
-    vtkKWFrame *DisplayRobotOrientFrame = vtkKWFrame::New();
-    DisplayRobotOrientFrame->SetParent (DisplayRobotCoordsLabelFrame->GetFrame() );
-    DisplayRobotOrientFrame->Create ( );
-    app->Script ("pack %s -side top -anchor nw -fill x -pady 0 -in %s",
-                  DisplayRobotOrientFrame->GetWidgetName(),
-                  DisplayRobotCoordsLabelFrame->GetFrame()->GetWidgetName());
-
-    
-   
-    vtkKWLabel *RobotPositionLabel = vtkKWLabel::New();
-    RobotPositionLabel->SetParent(DisplayRobotCoordsFrame);
-    RobotPositionLabel->Create();
-    RobotPositionLabel->SetWidth(20);
-    RobotPositionLabel->SetText("Position: ");
-
-    this->PositionEntry = vtkKWEntryWithLabel::New();
-    this->PositionEntry->SetParent(DisplayRobotCoordsFrame);
-    this->PositionEntry->Create();
-    this->PositionEntry->GetWidget()->SetWidth(23);
-    this->PositionEntry->GetWidget()->SetValue("0.0, 0.0 ,0.0");
-    
-    this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                RobotPositionLabel->GetWidgetName(),
-                this->PositionEntry->GetWidgetName());
-
-
-    vtkKWLabel *RobotOrientLabel = vtkKWLabel::New();
-    RobotOrientLabel->SetParent(DisplayRobotOrientFrame);
-    RobotOrientLabel->Create();
-    RobotOrientLabel->SetWidth(20);
-    RobotOrientLabel->SetText("Normal / Transnormal: ");
-
-    this->OrientEntry = vtkKWEntryWithLabel::New();
-    this->OrientEntry->SetParent(DisplayRobotOrientFrame);
-    this->OrientEntry->Create();
-    this->OrientEntry->GetWidget()->SetWidth(40);
-    this->OrientEntry->GetWidget()->SetValue("0.0, 0.0, 0.0");
-    
-    this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                RobotOrientLabel->GetWidgetName(),
-                this->OrientEntry->GetWidgetName());
-
-    //---------------------------------------------------------------------------------------------------------------------------
-     empty1Label->Delete();
-     empty2Label->Delete();
-     xLabel->Delete();
-     yLabel->Delete();
-     zLabel->Delete();
-
-     o1Label->Delete();
-     o2Label->Delete();
-     o3Label->Delete();
-     
-     oLabel->Delete();
-     nLabel->Delete();
-
-     deviceFrame->Delete();
-     OrientMoveFrame->Delete();
-     targetbuttonFrame->Delete();
-     targetlistFrame->Delete();
-     controllrobotFrame->Delete();
-     header1robotFrame->Delete();
-     header2robotFrame->Delete();
-     coordinatesrobotFrame->Delete();
-     orientationsrobotFrame->Delete();
-
-}
-*/
 
 //---------------------------------------------------------------------------
 void vtkProstateNavGUI::BuildGUIForVisualizationControlFrame ()
@@ -1685,11 +1311,17 @@ int vtkProstateNavGUI::ChangeWorkPhase(int phase, int fChangeWizard)
         {
             pb->SetReliefToGroove();
             pb->SetStateToNormal();
+            pb->SetBackgroundColor(WorkPhaseColor[i][0],
+                                   WorkPhaseColor[i][1],
+                                   WorkPhaseColor[i][2]);
         }
         else
         {
             pb->SetReliefToGroove();
             pb->SetStateToDisabled();
+            pb->SetBackgroundColor(WorkPhaseColorDisabled[i][0],
+                                   WorkPhaseColorDisabled[i][1],
+                                   WorkPhaseColorDisabled[i][2]);
         }
     }
 
