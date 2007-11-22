@@ -174,80 +174,30 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   
   vtkKWPushButton  *StartScanButton;
   vtkKWPushButton  *StopScanButton;
-  
-  
-  //Philip Mewes: To show Robots Coordinates and Orientation
-  //as a Feedback for the develp core
-  vtkKWEntryWithLabel *PositionEntry;
-  vtkKWLabel *RobotPositionLabel;
-  
-  vtkKWEntryWithLabel *OrientEntry;
-  vtkKWLabel *RobotOrientLabel;
-  
-  vtkKWEntryWithLabel *NREntry;    
-  vtkKWEntryWithLabel *NAEntry;
-  vtkKWEntryWithLabel *NSEntry;
-  vtkKWEntry          *TREntry;
-  vtkKWEntry          *TAEntry;
-  vtkKWEntry          *TSEntry;
-  vtkKWEntryWithLabel *PREntry;
-  vtkKWEntryWithLabel *PAEntry;
-  vtkKWEntryWithLabel *PSEntry;
-  vtkKWEntryWithLabel *O4Entry;
-  
+
   vtkKWCheckButton *LocatorCheckButton;
   
-  vtkKWLoadSaveButtonWithLabel *LoadConfigButton;
-  vtkKWLoadSaveButtonWithLabel *LoadConfigButtonNT;
-  
-  vtkKWEntry *ConfigFileEntry;
   vtkKWEntry *ScannerStatusLabelDisp;
   vtkKWEntry *SoftwareStatusLabelDisp;
   vtkKWEntry *RobotStatusLabelDisp;
   
-  vtkKWEntryWithLabel *GetImageSize;
-  vtkKWEntryWithLabel *MultiFactorEntry;
-  
-  vtkKWPushButton *AddCoordsandOrientTarget;
-  
-  vtkKWMultiColumnListWithScrollbars *PointPairMultiColumnList;
-  vtkKWMultiColumnListWithScrollbars *TargetListColumnList;
-  
-  //    vtkKWPushButton *LoadPointPairPushButton;
-  //    vtkKWPushButton *SavePointPairPushButton;
-  vtkKWPushButton *DeleteTargetPushButton;
-  vtkKWPushButton *DeleteAllTargetPushButton;
-  vtkKWPushButton *MoveBWPushButton;
-  vtkKWPushButton *MoveFWPushButton;
-  vtkKWPushButton *SetOrientButton;
-  
   // Module logic and mrml pointers
+
+  
+  //----------------------------------------------------------------
+  // Logic Values
+  //----------------------------------------------------------------
+
   vtkProstateNavLogic *Logic;
-  
-  int SliceDriver0;
-  int SliceDriver1;
-  int SliceDriver2;
-  
-  //Robotcontrollvector
-  //BTX
-  std::vector<float> xsendrobotcoords;
-  std::vector<float> ysendrobotcoords;
-  std::vector<float> zsendrobotcoords;
-  std::vector<float> osendrobotcoords;
-  
-  typedef std::vector<float> FloatVector;
-  std::vector<FloatVector> sendrobotcoordsvector;
-  //ETX
-  
-  //BTX
-  std::string LocatorModelID;
-  std::string LocatorModelID_new;
-  //ETX
-  
+
   vtkIGTDataManager *DataManager;
   vtkIGTPat2ImgRegistration *Pat2ImgReg;
   vtkCallbackCommand *DataCallbackCommand;
-  
+
+  int SliceDriver0;
+  int SliceDriver1;
+  int SliceDriver2;
+
   // Access the slice windows
   vtkSlicerSliceLogic *Logic0;
   vtkSlicerSliceLogic *Logic1;
@@ -258,9 +208,14 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   vtkSlicerSliceControllerWidget *Control0;
   vtkSlicerSliceControllerWidget *Control1;
   vtkSlicerSliceControllerWidget *Control2;
-  
+
   vtkSlicerVolumesLogic *VolumesLogic;
-  //vtkMRMLVolumeNode     *RealtimeVolumeNode;
+
+  //BTX
+  std::string LocatorModelID;
+  std::string LocatorModelID_new;
+  //ETX
+  
   
   int NeedOrientationUpdate0;
   int NeedOrientationUpdate1;
@@ -270,15 +225,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   int FreezeOrientationUpdate;
 
   int RealtimeImageOrient;
-  
-  int RequestedWorkphase;
 
-  int RealtimeXsize;
-  int RealtimeYsize;
-  
-  //Workphase State Transition Controll
-  
-  
   void UpdateAll();
   void UpdateLocator(vtkTransform *, vtkTransform *);
   void UpdateSliceDisplay(float nx, float ny, float nz, 
@@ -292,16 +239,12 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   void BuildGUIForWorkPhaseFrame();
   void BuildGUIForWizardFrame();
   void BuildGUIForHelpFrame();
-  //void BuildGUIForTrackingFrame();
   void BuildGUIForDeviceFrame();
-  //void BuildGUIForRealtimeImageFrame();
   void BuildGUIForVisualizationControlFrame();
   
   int  ChangeWorkPhase(int phase, int fChangeWizard=0);
   void ChangeSlicePlaneDriver(int slice, const char* driver);
   
-  //void TrackerLoop();
-
 };
 
 
