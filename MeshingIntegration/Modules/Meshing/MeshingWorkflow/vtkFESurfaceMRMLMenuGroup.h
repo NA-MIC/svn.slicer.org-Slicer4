@@ -27,6 +27,7 @@ class vtkKWFileBrowserDialog;
 class vtkKWMimxSaveSTLSurfaceGroup;
 class vtkKWMimxSaveVTKSurfaceGroup;
 class vtkKWMimxDeleteObjectGroup;
+class vtkMRMLScene; 
 
 class VTK_BOUNDINGBOX_EXPORT vtkFESurfaceMRMLMenuGroup : public vtkKWMimxSurfaceMenuGroup
 {
@@ -36,18 +37,21 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
   virtual void Update();
   virtual void UpdateEnableState();
-  void SurfaceMenuCallback();
-  void LoadSurfaceCallback();
-  void LoadSTLSurfaceCallback();
-  void LoadVTKSurfaceCallback();
-  void SaveSurfaceCallback();
-  void SaveSTLSurfaceCallback();
-  void SaveVTKSurfaceCallback();
-  void DeleteSurfaceCallback();
+  virtual void SurfaceMenuCallback();
+  virtual void LoadSurfaceCallback();
+  virtual void LoadSTLSurfaceCallback();
+  virtual void LoadVTKSurfaceCallback();
+  virtual void SaveSurfaceCallback();
+  virtual void SaveSTLSurfaceCallback();
+  virtual void SaveVTKSurfaceCallback();
+  virtual void DeleteSurfaceCallback();
 
   vtkSetObjectMacro(BBoxList, vtkLinkedListWrapper);
   vtkSetObjectMacro(FEMeshList, vtkLinkedListWrapper);
 
+  // save reference to the scene to be used for storage 
+   void SetMRMLSceneForStorage(vtkMRMLScene* scene);
+   
 protected:
         vtkFESurfaceMRMLMenuGroup();
         ~vtkFESurfaceMRMLMenuGroup();
@@ -55,7 +59,8 @@ protected:
         virtual void CreateWidget();
         vtkKWMimxSaveSTLSurfaceGroup *SaveSTLGroup;
         vtkKWMimxSaveVTKSurfaceGroup *SaveVTKGroup;
-        vtkKWMimxDeleteObjectGroup *DeleteObjectGroup;
+        vtkKWMimxDeleteObjectGroup   *DeleteObjectGroup;
+        vtkMRMLScene                 *savedMRMLScene;
 private:
   vtkFESurfaceMRMLMenuGroup(const vtkFESurfaceMRMLMenuGroup&); // Not implemented
   void operator=(const vtkFESurfaceMRMLMenuGroup&); // Not implemented

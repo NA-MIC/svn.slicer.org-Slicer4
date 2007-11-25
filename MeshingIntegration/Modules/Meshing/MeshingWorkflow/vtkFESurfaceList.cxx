@@ -14,7 +14,8 @@
 =========================================================================*/
 
 #include "vtkFESurfaceList.h"
-
+#include "vtkMRMLFESurfaceNode.h"
+#include "vtkMRMLScene.h"
 #include "vtkDebugLeaks.h"
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
@@ -25,7 +26,8 @@ vtkStandardNewMacro(vtkFESurfaceList);
 
 vtkFESurfaceList::vtkFESurfaceList() 
 { 
-    InternalMimxObjectList = vtkLinkedList<vtkMimxActorBase*>::New();
+    this->savedMRMLScene = NULL;
+    InternalMimxObjectList = vtkLinkedList<vtkMimxSurfacePolyDataActor*>::New();
 }
 
 vtkFESurfaceList::~vtkFESurfaceList() 
@@ -33,12 +35,33 @@ vtkFESurfaceList::~vtkFESurfaceList()
     InternalMimxObjectList->Delete();
 }
 
-int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
+// save reference to the scene to be used for storage 
+void vtkFESurfaceList::SetMRMLSceneForStorage(vtkMRMLScene* scene) 
 {
-  return this->InternalMimxObjectList->AppendItem(actor);
+    this->savedMRMLScene = scene;
 }
 
-vtkMimxActorBase* vtkFESurfaceList::GetItem(vtkIdType id)
+
+int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
+{
+   this->InternalMimxObjectList->AppendItem(actor);
+  
+  // allocate a new MRML node for this item and add it to the scene
+   if (this->savedMRMLScene)
+   {
+     vtkMRMLFESurfaceNode* newMRMLNode = vtkMRMLFESurfaceNode::New();
+     // copy the state variables to the MRML node
+     //newMRMLNode->SetSurfaceFileName(actor->GetFileName());
+     //newMRMLNode->SetSurfaceFilePath(actor->GetFilePath());
+     newMRMLNode->SetSurfaceDataType(actor->GetDataType());
+     this->savedMRMLScene->AddNode(newMRMLNode);
+     
+     cout << "copied data to MRML node " << endl;
+   }
+  return 0;
+}
+
+vtkMimxSurfacePolyDataActor* vtkFESurfaceList::GetItem(vtkIdType id)
 {
   return this->InternalMimxObjectList->GetItem(id);
 }

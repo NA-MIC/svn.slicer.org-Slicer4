@@ -13,6 +13,7 @@
 =========================================================================*/
 #include "vtkMeshingWorkflowMRMLNotebook.h"
 #include "vtkFESurfaceMRMLMenuGroup.h"
+#include "vtkMRMLScene.h"
 
 #include "vtkActor.h"
 #include "vtkPolyDataMapper.h"
@@ -66,6 +67,13 @@ vtkMeshingWorkflowMRMLNotebook::~vtkMeshingWorkflowMRMLNotebook()
   if(this->FEMeshMenuGroup)
     this->FEMeshMenuGroup->Delete();
 }
+
+// save reference to the scene to be used for storage 
+ void vtkMeshingWorkflowMRMLNotebook::SetMRMLSceneForStorage(vtkMRMLScene* scene)
+ {
+    this->savedMRMLScene = scene;
+ }
+
 //----------------------------------------------------------------------------
 void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
 {
@@ -86,10 +94,23 @@ void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
   this->Notebook->AddPage("Surface");
   this->Notebook->AddPage("F E Mesh");
   this->Notebook->AddPage("Mesh Quality");
-
-//  if(!this->SurfaceMenuGroup)  this->SurfaceMenuGroup = vtkKWMimxSurfaceMenuGroup::New();
+  
+  // instead of the local storage (commented out), instantiate a MRML-based list and pass the pointer to the 
+  // current MRML scene to it, so it can manage the FE Surface Nodes in the current scene. 
+  
+  //  if(!this->SurfaceMenuGroup)  this->SurfaceMenuGroup = vtkKWMimxSurfaceMenuGroup::New();
   if(!this->SurfaceMenuGroup)  this->SurfaceMenuGroup = vtkFESurfaceMRMLMenuGroup::New();
-
+  
+  if(this->savedMRMLScene)
+  {
+    cout << "setting MRML scene for Surface storage\n";
+    ((vtkFESurfaceMRMLMenuGroup*)this->SurfaceMenuGroup)->SetMRMLSceneForStorage(this->savedMRMLScene);
+  }
+  else 
+  {
+    cerr << "Tried to initialize Surface List with null MRML scene" << endl;
+  }
+  
   this->SurfaceMenuGroup->SetParent(this->Notebook->GetFrame("Surface"));
   this->SurfaceMenuGroup->SetMimxViewWindow(this->GetMimxViewWindow());
   this->SurfaceMenuGroup->SetApplication(this->GetApplication());

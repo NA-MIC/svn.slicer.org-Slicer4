@@ -29,6 +29,8 @@
 
 #include "vtkMRMLFESurfaceNode.h"
 
+// pointer to the scene to use for storage
+class vtkMRMLScene;
 
 #ifndef __vtkFESurfaceList_h
 #define __vtkFESurfaceList_h
@@ -37,20 +39,25 @@ class VTK_MIMXCOMMON_EXPORT vtkFESurfaceList : public vtkLinkedListWrapper
 {
 public:
   static vtkFESurfaceList *New();
-  vtkTypeMacro(vtkFESurfaceList, vtkObject);
+  vtkTypeMacro(vtkFESurfaceList, vtkLinkedListWrapper);
 //BTX
-  vtkLinkedList<vtkMimxActorBase*> *InternalMimxObjectList;
+  vtkLinkedList<vtkMimxSurfacePolyDataActor*> *InternalMimxObjectList;
 //ETX
-  int AppendItem(vtkMimxSurfacePolyDataActor*);
-  vtkMimxActorBase* GetItem(vtkIdType);
-  int GetNumberOfItems();
-  int RemoveItem(int );
+
+  // save reference to the scene to be used for storage 
+  void SetMRMLSceneForStorage(vtkMRMLScene* scene);
+  
+  virtual int AppendItem(vtkMimxSurfacePolyDataActor*);
+  virtual vtkMimxSurfacePolyDataActor* GetItem(vtkIdType);
+  virtual int GetNumberOfItems();
+  virtual int RemoveItem(int );
 protected:
+    vtkMRMLScene* savedMRMLScene; 
     vtkFESurfaceList();
   virtual ~vtkFESurfaceList();
 private:
     vtkFESurfaceList(const vtkFESurfaceList&); // Not implemented
-  void operator=(const vtkFESurfaceList&); // Not implemented
+   void operator=(const vtkFESurfaceList&); // Not implemented
 };
 #endif 
 
