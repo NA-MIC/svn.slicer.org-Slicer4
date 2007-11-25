@@ -21,7 +21,9 @@
 #include "vtkKWMimxViewProperties.h"
 #include "vtkKWMimxDeleteObjectGroup.h"
 
+// declarations to interact with the MRML tree
 #include "vtkFESurfaceList.h"
+#include "vtkMRMLScene.h"
 
 #include "vtkActor.h"
 #include "vtkMath.h"
@@ -81,7 +83,8 @@ vtkFESurfaceMRMLMenuGroup::~vtkFESurfaceMRMLMenuGroup()
     }
     this->SurfaceList->Delete();
   }
-  this->ObjectMenuButton->Delete();
+  if(this->ObjectMenuButton)
+    this->ObjectMenuButton->Delete();
   if(this->OperationMenuButton)
     this->OperationMenuButton->Delete();
   if(this->TypeMenuButton)
@@ -98,6 +101,18 @@ vtkFESurfaceMRMLMenuGroup::~vtkFESurfaceMRMLMenuGroup()
     this->DeleteObjectGroup->Delete();
 }
 
+
+// save reference to the scene to be used for storage.  Pass the reference onto the list.
+// We are using a cast here because the parent for all lists doesn't have the MRML scene method
+// defined. 
+
+ void vtkFESurfaceMRMLMenuGroup::SetMRMLSceneForStorage(vtkMRMLScene* scene)
+ {
+    this->savedMRMLScene = scene; 
+    ((vtkFESurfaceList*)this->SurfaceList)->SetMRMLSceneForStorage(scene);
+ }
+ 
+ 
 //----------------------------------------------------------------------------
 void vtkFESurfaceMRMLMenuGroup::CreateWidget()
 {
@@ -241,27 +256,56 @@ void vtkFESurfaceMRMLMenuGroup::LoadSTLSurfaceCallback()
       cout << "*** Surface MRML menu reader completed successfully" << endl;
       if(reader->GetOutput())
       {
-//        vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
- 
-        this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
- 
-        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFilePath(
-          this->FileBrowserDialog->GetFileName());
- 
-        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFileName(
-          this->ExtractFileName(this->FileBrowserDialog->GetFileName()));
-//        vtkMimxSurfacePolyDataActor *actor = NULL;
-//        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1);
-        vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
-          this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(reader->GetOutput());
- 
-        vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
-        this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->Modified();         
-        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->GetActor());
+
+        
+//        this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
+//        ((vtkFESurfaceList*)this->SurfaceList)->AppendItem(actor);
+//  
+//        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFilePath(
+//          this->FileBrowserDialog->GetFileName());
+// 
+//        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFileName(
+//          this->ExtractFileName(this->FileBrowserDialog->GetFileName()));
+////        vtkMimxSurfacePolyDataActor *actor = NULL;
+////        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1);
+//        vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
+//          this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(reader->GetOutput());
+// 
+//        vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
+//        this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->Modified();         
+//        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+//        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->GetActor());
+//        this->GetMimxViewWindow()->GetRenderWidget()->Render();
+//        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+//        this->MimxViewProperties->AddObjectList(); 
+        
+    // *** original code created the entry, then retreived it and filled it.  Our initial solution
+    // will be to fill the records before adding them to MRML, since this avoids the 
+    // complexity of adding observers to the MimxActor records.  A more robust solution needs
+    // to be considered. 
+
+        vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
+        vtkFESurfaceList *surflist = (vtkFESurfaceList*)(this->SurfaceList);
+
+        // set the filename and path in the actor, then copy the dataset from the reader
+        actor->SetFilePath(this->FileBrowserDialog->GetFileName());
+        // defeat extractfilename for now, as the function doesn't work.
+        actor->SetFileName(this->ExtractFileName(this->FileBrowserDialog->GetFileName()));
+        //actor->SetFileName(this->FileBrowserDialog->GetFileName());
+        
+        // copy the dataset over to MRML node
+        vtkMimxSurfacePolyDataActor::SafeDownCast(actor)->GetDataSet()->DeepCopy(reader->GetOutput());
+        vtkMimxSurfacePolyDataActor::SafeDownCast(actor)->GetDataSet()->Modified();       
+
+        // now add this to the MRML tree
+        surflist->AppendItem(actor);
+        
+        // add actor to the slicer viewer (unnecessary because of presence in MRML?) and force a redraw
+        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
         this->GetMimxViewWindow()->GetRenderWidget()->Render();
-        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+        //this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
         this->MimxViewProperties->AddObjectList(); 
+
       }
       reader->Delete();
     }
@@ -289,23 +333,47 @@ void vtkFESurfaceMRMLMenuGroup::LoadVTKSurfaceCallback()
       reader->Update();
       if(reader->GetOutput())
       {
-//        vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
-        this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
-        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFilePath(
-          this->FileBrowserDialog->GetFileName());
-        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFileName(
-          this->ExtractFileName(this->FileBrowserDialog->GetFileName()));
-//        vtkMimxSurfacePolyDataActor *actor = NULL;
-//        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1);
-        vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
-          this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(reader->GetOutput());
-        vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
-          this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->Modified();
-        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-          this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->GetActor());
-        this->GetMimxViewWindow()->GetRenderWidget()->Render();
-        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
-        this->MimxViewProperties->AddObjectList();
+////        vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
+//        this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
+//        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFilePath(
+//          this->FileBrowserDialog->GetFileName());
+//        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFileName(
+//          this->ExtractFileName(this->FileBrowserDialog->GetFileName()));
+////        vtkMimxSurfacePolyDataActor *actor = NULL;
+////        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1);
+//        vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
+//          this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(reader->GetOutput());
+//        vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceList->GetItem(
+//          this->SurfaceList->GetNumberOfItems()-1))->GetDataSet()->Modified();
+//        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+//          this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->GetActor());
+//        this->GetMimxViewWindow()->GetRenderWidget()->Render();
+//        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+//        this->MimxViewProperties->AddObjectList();
+        
+
+  // *** original code created the entry, then retreived it and filled it.  Our initial solution
+  // will be to fill the records before adding them to MRML, since this avoids the 
+  // complexity of adding observers to the MimxActor records.  A more robust solution needs
+  // to be considered. 
+
+        //        vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
+          vtkFESurfaceList *surflist = (vtkFESurfaceList*)(this->SurfaceList);
+
+          surflist->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFilePath(
+                 this->FileBrowserDialog->GetFileName());
+          surflist->GetItem(surflist->GetNumberOfItems()-1)->SetFileName(
+                  this->ExtractFileName(this->FileBrowserDialog->GetFileName()));
+          vtkMimxSurfacePolyDataActor::SafeDownCast(surflist->GetItem(
+                surflist->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(reader->GetOutput());
+          vtkMimxSurfacePolyDataActor::SafeDownCast(surflist->GetItem(
+             surflist->GetNumberOfItems()-1))->GetDataSet()->Modified();
+          this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+            surflist->GetItem(surflist->GetNumberOfItems()-1)->GetActor());
+          surflist->AppendItem(vtkMimxSurfacePolyDataActor::New());
+          this->GetMimxViewWindow()->GetRenderWidget()->Render();
+          this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+          this->MimxViewProperties->AddObjectList();
       }
       reader->Delete();
     }
@@ -320,7 +388,11 @@ void vtkFESurfaceMRMLMenuGroup::SaveSTLSurfaceCallback()
   }
   this->SaveSTLGroup = vtkKWMimxSaveSTLSurfaceGroup::New();
   this->SaveSTLGroup->SetParent(this->MainFrame->GetFrame());
-  this->SaveSTLGroup->SetSurfaceList(this->SurfaceList);
+
+  // downcast to use the MRML-based list
+  vtkFESurfaceList *surflist = (vtkFESurfaceList*)(this->SurfaceList);
+
+  this->SaveSTLGroup->SetSurfaceList(surflist);
   this->SaveSTLGroup->SetMenuGroup(this);
   this->SaveSTLGroup->Create();
   this->SetMenuButtonsEnabled(0);
@@ -336,7 +408,10 @@ void vtkFESurfaceMRMLMenuGroup::SaveVTKSurfaceCallback()
   }
     this->SaveVTKGroup = vtkKWMimxSaveVTKSurfaceGroup::New();
     this->SaveVTKGroup->SetParent(this->MainFrame->GetFrame());
-    this->SaveVTKGroup->SetSurfaceList(this->SurfaceList);
+    // downcast to use the MRML-based list
+    vtkFESurfaceList *surflist = (vtkFESurfaceList*)(this->SurfaceList);
+    this->SaveVTKGroup->SetSurfaceList(surflist);
+    
     this->SaveVTKGroup->SetMenuGroup(this);
     this->SaveVTKGroup->Create();
 
@@ -353,7 +428,8 @@ void vtkFESurfaceMRMLMenuGroup::DeleteSurfaceCallback()
   }
   this->DeleteObjectGroup = vtkKWMimxDeleteObjectGroup::New();
   this->DeleteObjectGroup->SetParent(this->MainFrame->GetFrame());
-  this->DeleteObjectGroup->SetSurfaceList(this->SurfaceList);
+  vtkFESurfaceList *surflist = (vtkFESurfaceList*)(this->SurfaceList);
+  this->DeleteObjectGroup->SetSurfaceList(surflist);
   this->DeleteObjectGroup->SetMenuGroup(this);
   this->DeleteObjectGroup->SetViewProperties(this->MimxViewProperties);
   this->DeleteObjectGroup->Create();

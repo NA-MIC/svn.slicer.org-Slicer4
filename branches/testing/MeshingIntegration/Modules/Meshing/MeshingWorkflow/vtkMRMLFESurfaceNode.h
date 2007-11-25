@@ -50,6 +50,9 @@ class VTK_MRML_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
   vtkGetStringMacro(SurfaceFileName);
   vtkSetStringMacro(SurfaceFileName);
   
+  vtkGetStringMacro(SurfaceFilePath);
+  vtkSetStringMacro(SurfaceFilePath);
+  
 protected:
   vtkMRMLFESurfaceNode();
   ~vtkMRMLFESurfaceNode();
@@ -58,7 +61,7 @@ protected:
 
   int   SurfaceDataType;  
   char* SurfaceFileName;
-
+  char* SurfaceFilePath;
 };
 
 #endif

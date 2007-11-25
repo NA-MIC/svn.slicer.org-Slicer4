@@ -25,11 +25,12 @@
 #include "vtkKWCompositeWidget.h"
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxViewWindow.h"
-#include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkFESurfaceMRMLMenuGroup.h"
 
 class vtkKWNotebook;
 class vtkKWFrameWithScrollbar;
 class vtkKWMenuButtonWithLabel;
+class vtkMRMLScene;
 
 class VTK_BOUNDINGBOX_EXPORT vtkMeshingWorkflowMRMLNotebook : public vtkKWCompositeWidget
 {
@@ -44,6 +45,9 @@ public:
   vtkSetObjectMacro(MimxViewWindow, vtkKWMimxViewWindow);
   vtkGetObjectMacro(MimxViewWindow, vtkKWMimxViewWindow);
 
+  // save reference to the scene to be used for storage 
+   void SetMRMLSceneForStorage(vtkMRMLScene* scene);
+   
 protected:
         vtkMeshingWorkflowMRMLNotebook();
         ~vtkMeshingWorkflowMRMLNotebook();
@@ -51,8 +55,9 @@ protected:
         virtual void CreateWidget();
         vtkKWNotebook *Notebook;
         vtkKWMimxViewWindow *MimxViewWindow;
-        vtkKWMimxSurfaceMenuGroup *SurfaceMenuGroup;
+        vtkFESurfaceMRMLMenuGroup *SurfaceMenuGroup;
         vtkKWMimxFEMeshMenuGroup *FEMeshMenuGroup;
+        vtkMRMLScene             *savedMRMLScene;
 private:
   vtkMeshingWorkflowMRMLNotebook(const vtkMeshingWorkflowMRMLNotebook&); // Not implemented
   void operator=(const vtkMeshingWorkflowMRMLNotebook&); // Not implemented

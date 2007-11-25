@@ -235,6 +235,8 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
   // create the notebook which is the root of the pre-developed meshing workflow
 //  this->SavedMimxNotebook = vtkKWMimxMainNotebook::New();
   this->SavedMimxNotebook = vtkMeshingWorkflowMRMLNotebook::New();
+  // pass in the current application MRML scene, so the nodes for storage will be stored in the scene
+  this->SavedMimxNotebook->SetMRMLSceneForStorage(this->ApplicationLogic->GetMRMLScene());
   this->SavedMimxNotebook->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
   this->SavedMimxNotebook->SetApplication(this->GetApplication());
   this->SavedMimxNotebook->SetMimxViewWindow(viewwin);
