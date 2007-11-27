@@ -63,7 +63,7 @@ void vtkTumorGrowthSecondScanStep::ProcessGUIEvents(vtkObject *caller, void *cal
 
 void vtkTumorGrowthSecondScanStep::UpdateGUI() {
   vtkMRMLTumorGrowthNode* n = this->GetGUI()->GetNode();
-  if (n != NULL)
+  if (n != NULL && this->VolumeMenuButton)
   {
     this->VolumeMenuButton->SetSelected(this->VolumeMenuButton->GetMRMLScene()->GetNodeByID(n->GetSecondScanRef()));
   }

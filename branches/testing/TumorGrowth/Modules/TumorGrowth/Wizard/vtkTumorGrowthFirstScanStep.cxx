@@ -39,7 +39,7 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
 
 void vtkTumorGrowthFirstScanStep::UpdateGUI() {
   vtkMRMLTumorGrowthNode* n = this->GetGUI()->GetNode();
-  if (n != NULL)
+  if (n != NULL &&  this->VolumeMenuButton)
   {
     this->VolumeMenuButton->SetSelected(this->VolumeMenuButton->GetMRMLScene()->GetNodeByID(n->GetFirstScanRef()));
   }
@@ -120,9 +120,11 @@ void vtkTumorGrowthFirstScanStep::TransitionCallback(int Flag)
      }
      wizard_widget->GetCancelButton()->EnabledOff();
    }
-   cout << "Debugging:vtkTumorGrowthSelectScanStep::TransitionCallback " << endl;
+   cout << "Debugging:vtkTumorGrowthFirstScanStep::TransitionCallback Start" << endl;
    wizard_widget->GetCancelButton()->EnabledOn();
    wizard_workflow->AttemptToGoToNextStep();
+   // cout << "vtkTumorGrowthFirstScanStep::TransitionCallback End" << endl;
+
 }
 
 //----------------------------------------------------------------------------
