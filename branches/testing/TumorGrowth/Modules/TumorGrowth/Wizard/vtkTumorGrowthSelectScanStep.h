@@ -27,8 +27,6 @@ protected:
 
   vtkSlicerNodeSelectorWidget *VolumeMenuButton;
 
-  vtkCallbackCommand *WizardGUICallbackCommand;
-
 private:
   vtkTumorGrowthSelectScanStep(const vtkTumorGrowthSelectScanStep&);
   void operator=(const vtkTumorGrowthSelectScanStep&);
