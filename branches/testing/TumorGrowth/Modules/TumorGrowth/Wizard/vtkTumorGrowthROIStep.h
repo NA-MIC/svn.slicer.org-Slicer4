@@ -7,6 +7,8 @@ class vtkKWFrame;
 class vtkKWMatrixWidgetWithLabel;
 class vtkKWPushButton;
 class vtkSlicerModuleCollapsibleFrame;
+class vtkSlicerSliceGUI;
+class vtkRenderWindowInteractor;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthROIStep : public vtkTumorGrowthStep
 {
@@ -18,13 +20,20 @@ public:
   // Description:
   // Reimplement the superclass's method (see vtkKWWizardStep).
   virtual void ShowUserInterface();
+  virtual void HideUserInterface();
 
   // Description:
   // Callbacks.
-  void ROIMaxChangedCallback(vtkIdType sel_vol_id, double value);
-  void ROIMinChangedCallback(vtkIdType sel_vol_id, double value);
+  void ROIMaxChangedCallback(int row, int col, const char *value); 
+  void ROIMinChangedCallback(int row, int col, const char *value); 
   virtual void TransitionCallback(); 
-  
+
+  // Description:
+  // Callback functions for buttons
+  void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);
+  void AddGUIObservers();
+  void RemoveGUIObservers();
+ 
 protected:
   vtkTumorGrowthROIStep();
   ~vtkTumorGrowthROIStep();
@@ -36,10 +45,19 @@ protected:
   vtkKWPushButton           *ButtonsReset;
   vtkKWMatrixWidgetWithLabel *ROIMinVector;
   vtkKWMatrixWidgetWithLabel *ROIMaxVector;
+  static void WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
  
 private:
   vtkTumorGrowthROIStep(const vtkTumorGrowthROIStep&);
   void operator=(const vtkTumorGrowthROIStep&);
+ 
+  void ROIReset();
+  void AddROISamplingGUIObservers();
+  void RemoveROISamplingGUIObservers();
+ 
+  void RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *sliceGUI, vtkRenderWindowInteractor *rwi,int coords[3]);
+
+  int ShowROIFlag;
 };
 
 #endif
