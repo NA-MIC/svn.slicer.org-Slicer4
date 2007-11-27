@@ -144,6 +144,7 @@ void vtkTumorGrowthGUI::AddGUIObservers()
   // The wizrad creates them once they are shown on the gui for the first time - and does not delete them afterwards - strange 
   // Have to list them here so if they are all deleted and this function is called afterwards the missing ones are created again 
   if (this->FirstScanStep) this->FirstScanStep->AddGUIObservers();
+  if (this->ROIStep) this->ROIStep->AddGUIObservers();
   if (this->SecondScanStep) this->SecondScanStep->AddGUIObservers();
 
   events->Delete();
@@ -207,7 +208,7 @@ void vtkTumorGrowthGUI::UpdateRegistrationProgress()
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::UpdateMRML()
 {
-  std::cout <<"UpdateMRML gets called!" << "\n";
+  // std::cout <<"UpdateMRML gets called!" << "\n";
   vtkMRMLTumorGrowthNode* n = this->GetNode();
 
   if (n == NULL) {
@@ -236,8 +237,6 @@ void vtkTumorGrowthGUI::UpdateMRML()
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::UpdateGUI()
 {
-  cout << "------------ vtkTumorGrowthGUI::UpdateGUI ==========" << endl;
-
   vtkMRMLTumorGrowthNode* n = this->GetNode();
   if (n != NULL)
     {
@@ -259,7 +258,7 @@ void vtkTumorGrowthGUI::ProcessMRMLEvents(vtkObject *caller,
                                        void *callData) 
 {
 
-  cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents ==========" << endl;
+  // cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents Start ==========" << endl;
 
   // TODO: map the object and event to strings for tcl
   
@@ -267,12 +266,12 @@ void vtkTumorGrowthGUI::ProcessMRMLEvents(vtkObject *caller,
   // if parameter node has been changed externally, update GUI widgets
   // with new values 
   vtkMRMLTumorGrowthNode* node = vtkMRMLTumorGrowthNode::SafeDownCast(caller);
-  cout << "blub " << node << " dsfdffd " << this->GetNode() << endl;  
   if (node != NULL && this->GetNode() == node) 
   {
      this->UpdateGUI();
   }
 
+  // cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents End ==========" << endl;
 }
 
 //---------------------------------------------------------------------------
@@ -410,9 +409,9 @@ void vtkTumorGrowthGUI::BuildGUI()
   wizard_workflow->SetFinishStep(this->AnalysisStep);
   wizard_workflow->CreateGoToTransitionsToFinishStep();
   wizard_workflow->SetInitialStep(this->FirstScanStep);
+  this->ROIStep->GetInteractionState();
   // This way we can restart the machine - did not work 
   // wizard_workflow->CreateGoToTransitions(wizard_workflow->GetInitialStep());
-  
 }
 
 //---------------------------------------------------------------------------
