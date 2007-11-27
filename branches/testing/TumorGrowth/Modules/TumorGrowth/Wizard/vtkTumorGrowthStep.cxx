@@ -5,6 +5,7 @@
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
 #include "vtkKWFrameWithLabel.h"
+#include "vtkCallbackCommand.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthStep);
@@ -16,6 +17,8 @@ vtkTumorGrowthStep::vtkTumorGrowthStep()
 {
   this->GUI = NULL;
   this->Frame           = NULL;
+  this->WizardGUICallbackCommand = vtkCallbackCommand::New();
+  this->WizardGUICallbackCommand->SetClientData(reinterpret_cast<void *>(this));
 }
 
 //----------------------------------------------------------------------------
@@ -26,6 +29,12 @@ vtkTumorGrowthStep::~vtkTumorGrowthStep()
   {
     this->Frame->Delete();
     this->Frame = NULL;
+  }
+
+  if(this->WizardGUICallbackCommand) 
+  {
+        this->WizardGUICallbackCommand->Delete();
+        this->WizardGUICallbackCommand=NULL;
   }
 }
 

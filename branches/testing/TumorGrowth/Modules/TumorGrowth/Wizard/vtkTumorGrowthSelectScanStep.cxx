@@ -11,8 +11,6 @@
 #include "vtkKWWizardWorkflow.h"
 
 #include "vtkTumorGrowthSelectScanStep.h"
-
-#include "vtkCallbackCommand.h"
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthSelectScanStep);
 vtkCxxRevisionMacro(vtkTumorGrowthSelectScanStep, "$Revision: 1.0 $");
@@ -21,9 +19,6 @@ vtkCxxRevisionMacro(vtkTumorGrowthSelectScanStep, "$Revision: 1.0 $");
 vtkTumorGrowthSelectScanStep::vtkTumorGrowthSelectScanStep()
 {
   this->VolumeMenuButton = NULL;
-
-  this->WizardGUICallbackCommand = vtkCallbackCommand::New();
-  this->WizardGUICallbackCommand->SetClientData(reinterpret_cast<void *>(this));
 }
 
 //----------------------------------------------------------------------------
@@ -34,14 +29,6 @@ vtkTumorGrowthSelectScanStep::~vtkTumorGrowthSelectScanStep()
     this->VolumeMenuButton->Delete();
     this->VolumeMenuButton = NULL;
   }
-
-  if(this->WizardGUICallbackCommand) 
-  {
-        this->WizardGUICallbackCommand->Delete();
-        this->WizardGUICallbackCommand=NULL;
-  }
-
-  cout << "==== Deleting vtkTumorGrowthSelectScanStep::~vtkTumorGrowthSelectScanStep" << endl;
 }
 
 //----------------------------------------------------------------------------
@@ -72,7 +59,7 @@ void vtkTumorGrowthSelectScanStep::AddGUIObservers()
   if (this->VolumeMenuButton && (!this->VolumeMenuButton->HasObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, this->WizardGUICallbackCommand))) 
     {
       this->VolumeMenuButton->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, this->WizardGUICallbackCommand );  
-    }
+    } 
 }
 
 void vtkTumorGrowthSelectScanStep::RemoveGUIObservers() 
