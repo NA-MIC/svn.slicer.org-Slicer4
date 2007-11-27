@@ -49,6 +49,7 @@ protected:
 
   vtkTumorGrowthGUI *GUI;
   vtkKWFrameWithLabel               *Frame;
+  vtkCallbackCommand *WizardGUICallbackCommand;
   
 private:
   vtkTumorGrowthStep(const vtkTumorGrowthStep&);
