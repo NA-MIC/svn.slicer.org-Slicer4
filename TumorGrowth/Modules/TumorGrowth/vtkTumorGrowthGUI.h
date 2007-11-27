@@ -97,6 +97,8 @@ public:
   // Updates parameters values in MRML node based on GUI widgets 
   void UpdateMRML();
   
+  vtkTumorGrowthFirstScanStep* GetFirstScanStep() {return this->FirstScanStep;}
+
 protected:
 
 private:
