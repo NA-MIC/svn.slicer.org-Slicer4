@@ -4,6 +4,8 @@
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
+#include "vtkObserverManager.h"
+#include "vtkMRMLFiducialListNode.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkProstateNavStep);
@@ -16,18 +18,41 @@ vtkProstateNavStep::vtkProstateNavStep()
 {
   this->GUI = NULL;
   this->Logic = NULL;
+  this->MRMLScene = NULL;
 
-  GUICallbackCommand = vtkCallbackCommand::New();
-  GUICallbackCommand->SetClientData(this);
-  GUICallbackCommand->SetCallback(&vtkProstateNavStep::GUICallback);
+  this->GUICallbackCommand = vtkCallbackCommand::New();
+  this->GUICallbackCommand->SetClientData( reinterpret_cast<void *>(this) );
+  this->GUICallbackCommand->SetCallback(&vtkProstateNavStep::GUICallback);
+
+  this->MRMLObserverManager = vtkObserverManager::New();
+  this->MRMLObserverManager->GetCallbackCommand()->SetClientData( reinterpret_cast<void *> (this) );
+  this->MRMLObserverManager->GetCallbackCommand()->SetCallback(vtkProstateNavStep::MRMLCallback);
+  this->MRMLCallbackCommand = this->MRMLObserverManager->GetCallbackCommand();
+
+  this->InGUICallbackFlag = 0;
+  this->InMRMLCallbackFlag = 0;
 
 }
 
 //----------------------------------------------------------------------------
 vtkProstateNavStep::~vtkProstateNavStep()
 {
+  this->SetAndObserveMRMLScene ( NULL );
+
+  if (this->MRMLObserverManager)
+    {
+    this->MRMLObserverManager->Delete();
+    }    
+
+  if ( this->GUICallbackCommand != NULL )
+    {
+    this->GUICallbackCommand->Delete ( );
+    this->GUICallbackCommand = NULL;
+    }
+
   this->SetGUI(NULL);
   this->SetLogic(NULL);
+
 }
 
 //----------------------------------------------------------------------------
@@ -69,6 +94,11 @@ void vtkProstateNavStep::PrintSelf(ostream& os, vtkIndent indent)
 void vtkProstateNavStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
+  
+  if (!this->MRMLScene)
+    {
+    this->MRMLScene = this->GetGUI()->GetMRMLScene();
+    }
 
   vtkKWWizardWidget *wizardWidget = this->GetGUI()->GetWizardWidget();
   wizardWidget->GetCancelButton()->SetEnabled(0);
@@ -87,9 +117,6 @@ void vtkProstateNavStep::GUICallback( vtkObject *caller,
   
   if (self->GetInGUICallbackFlag())
     {
-#ifdef _DEBUG
-    vtkDebugWithObjectMacro(self, "vtkProstateNavStep *********GUICallback called recursively?");
-#endif
     }
 
   vtkDebugWithObjectMacro(self, "In vtkProstateNavStep GUICallback");
@@ -99,3 +126,22 @@ void vtkProstateNavStep::GUICallback( vtkObject *caller,
   self->SetInGUICallbackFlag(0);
   
 }
+
+void vtkProstateNavStep::MRMLCallback(vtkObject *caller, 
+                                    unsigned long eid, void *clientData, void *callData)
+{
+
+  vtkProstateNavStep *self = reinterpret_cast<vtkProstateNavStep *>(clientData);
+  
+  if (self->GetInMRMLCallbackFlag())
+    {
+    return;
+    }
+
+  vtkDebugWithObjectMacro(self, "In vtkProstateNavStep MRMLCallback");
+  
+  self->SetInMRMLCallbackFlag(1);
+  self->ProcessMRMLEvents(caller, eid, callData);
+  self->SetInMRMLCallbackFlag(0);
+}
+
