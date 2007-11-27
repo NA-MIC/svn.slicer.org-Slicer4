@@ -183,7 +183,7 @@ void vtkProstateNavLogic::UpdateAll()
     int rtimgslice = this->RealtimeImageOrient;
 
     if (this->OpenTrackerStream)
-    {
+      {
 
         // Junichi Tokuda 10/18/2007: Definition of scan plane (for scanner) and
         //  display (for Slicer) plane

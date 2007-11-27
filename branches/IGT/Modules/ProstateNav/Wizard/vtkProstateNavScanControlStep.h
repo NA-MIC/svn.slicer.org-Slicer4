@@ -25,6 +25,10 @@ public:
   virtual void ProcessMRMLEvents(vtkObject *caller, unsigned long event, void *callData);
 
   void UpdateMRMLObserver(vtkMRMLSelectionNode* selnode);
+  //void UpdateElement(int row, int col, char * str);
+  void OnMultiColumnListUpdate(int row, int col, char * str);
+  void OnMultiColumnListSelectionChanged();
+
   void SetGUIFromList(vtkMRMLFiducialListNode * activeFiducialListNode);
 
   //vtkGetStringMacro(FiducialListNodeID);
@@ -45,9 +49,9 @@ protected:
   vtkKWPushButton *RemoveButton;
   vtkKWPushButton *RemoveAllButton;
 
-  char *FiducialListNodeID;
-  vtkMRMLFiducialListNode *FiducialListNode;
 
+//  char *FiducialListNodeID;
+//  vtkMRMLFiducialListNode *FiducialListNode;
 
 private:
   vtkProstateNavScanControlStep(const vtkProstateNavScanControlStep&);
