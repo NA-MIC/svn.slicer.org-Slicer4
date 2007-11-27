@@ -110,7 +110,13 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   // Description: 
   // Get wizard widget
   vtkGetObjectMacro(WizardWidget, vtkKWWizardWidget);
-  
+
+  // Get Target Fiducials (used in the wizard steps)
+  vtkGetStringMacro ( FiducialListNodeID );
+  vtkSetStringMacro ( FiducialListNodeID );
+  vtkGetObjectMacro ( FiducialListNode, vtkMRMLFiducialListNode );
+  vtkSetObjectMacro ( FiducialListNode, vtkMRMLFiducialListNode );
+
   // Description:    
   // This method builds the IGTDemo module GUI
   virtual void BuildGUI ( );
@@ -229,6 +235,15 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   int FreezeOrientationUpdate;
 
   int RealtimeImageOrient;
+
+  //----------------------------------------------------------------
+  // Target Fiducials
+  //----------------------------------------------------------------
+
+  char *FiducialListNodeID;
+  vtkMRMLFiducialListNode *FiducialListNode;
+
+
 
   void UpdateAll();
   void UpdateLocator(vtkTransform *, vtkTransform *);

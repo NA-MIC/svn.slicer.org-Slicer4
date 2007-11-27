@@ -32,6 +32,9 @@
 #include "vtkProstateNavTargetingStep.h"
 #include "vtkProstateNavManualControlStep.h"
 
+#include "vtkSlicerFiducialsGUI.h"
+#include "vtkSlicerFiducialsLogic.h"
+
 #include "vtkKWRenderWidget.h"
 #include "vtkKWWidget.h"
 #include "vtkKWMenuButton.h"
@@ -208,10 +211,18 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   // Control Frame
 
 #ifdef USE_NAVITRACK
-    this->ScannerStatusLabelDisp = NULL;
-    this->SoftwareStatusLabelDisp = NULL;
+  this->ScannerStatusLabelDisp  = NULL;
+  this->SoftwareStatusLabelDisp = NULL;
 #endif
 
+
+  //----------------------------------------------------------------
+  // Target Fiducials List (MRML)
+
+  this->FiducialListNodeID = NULL;
+  this->FiducialListNode   = NULL;
+  
+  
 }
 
 //---------------------------------------------------------------------------
@@ -770,34 +781,74 @@ void vtkProstateNavGUI::ProcessMRMLEvents ( vtkObject *caller,
 
 
 //---------------------------------------------------------------------------
-void vtkProstateNavGUI::Enter ( )
+void vtkProstateNavGUI::Enter()
 {
-    // Fill in
-    vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
-
-    this->Logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
-    this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
-    this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
-    this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+  // Fill in
+  vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
   
-    this->SliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
-    this->SliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
-    this->Control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
-    this->Control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
-    this->Control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
+  this->Logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
+  this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
+  this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
+  this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
+  
+  this->SliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
+  this->SliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
+  this->Control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
+  this->Control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
+  this->Control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
+  
+  vtkSlicerApplication  *app          = (vtkSlicerApplication *)this->GetApplication();
+  vtkSlicerVolumesGUI   *volGui       = (vtkSlicerVolumesGUI*)app->GetModuleGUIByName("Volumes");
+  vtkSlicerVolumesLogic *VolumesLogic = (vtkSlicerVolumesLogic*)(volGui->GetLogic());
+  
+  this->GetLogic()->AddRealtimeVolumeNode(VolumesLogic, "Realtime");
+  
+  ChangeWorkPhase(vtkProstateNavLogic::StartUp, 1);
+  
+  // neccessary?
+  //this->Logic0->GetForegroundLayer()->SetUseReslice(0);
+  
+  //----------------------------------------------------------------
+  // Target Fiducials
+  // Junichi Tokuda 11/27/2007: Should it be in the Logic class ?
+  
+  if (!this->FiducialListNodeID)
+    {
+    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
 
-    vtkSlicerApplication  *app          = (vtkSlicerApplication *)this->GetApplication();
-    vtkSlicerVolumesGUI   *volGui       = (vtkSlicerVolumesGUI*)app->GetModuleGUIByName("Volumes");
-    vtkSlicerVolumesLogic *VolumesLogic = (vtkSlicerVolumesLogic*)(volGui->GetLogic());
+    // Get a pointer to the Fiducials module
+    vtkSlicerFiducialsGUI *fidGUI
+      = (vtkSlicerFiducialsGUI*)app->GetModuleGUIByName("Fiducials");
+    fidGUI->Enter();
 
-    this->GetLogic()->AddRealtimeVolumeNode(VolumesLogic, "Realtime");
+    // Create New Fiducial list for Prostate Module
+    vtkSlicerFiducialsLogic *fidLogic = (vtkSlicerFiducialsLogic*)(fidGUI->GetLogic());
+    vtkMRMLFiducialListNode *newList = fidLogic->AddFiducialList();
 
-    ChangeWorkPhase(vtkProstateNavLogic::StartUp, 1);
+    if (newList != NULL)
+      {
+      // Change the name of the list
+      newList->SetName(this->GetMRMLScene()->GetUniqueNameByString("PM"));
 
-    // neccessary?
-    //this->Logic0->GetForegroundLayer()->SetUseReslice(0);
-
+      fidGUI->SetFiducialListNodeID(newList->GetID());
+      newList->Delete();
+      }
+    else
+      {
+        vtkErrorMacro("Unable to add a new fid list via the logic\n");
+      }
+    // now get the newly active node 
+    this->FiducialListNodeID = fidGUI->GetFiducialListNodeID();
+    this->FiducialListNode 
+      = (vtkMRMLFiducialListNode *)this->GetMRMLScene()->GetNodeByID(this->FiducialListNodeID);
+    if (this->FiducialListNode == NULL)
+      {
+      vtkErrorMacro ("ERROR adding a new fiducial list for the point...\n");
+      return;
+      }
+    }
 }
+
 
 //---------------------------------------------------------------------------
 void vtkProstateNavGUI::Exit ( )
