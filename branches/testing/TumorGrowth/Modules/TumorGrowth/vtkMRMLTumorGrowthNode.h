@@ -59,12 +59,21 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   // Get/Set time step (module parameter)
   vtkGetMacro(TimeStep, double);
   vtkSetMacro(TimeStep, double);
+
  
   // Description:
   // Get/Set input volume MRML Id
   vtkGetStringMacro(FirstScanRef);
   vtkSetStringMacro(FirstScanRef);
   
+  // Description:
+  // Get/Set for SegmenterClass
+  void SetROIMin(int index, int val) {this->ROIMin[index] = val ; }
+  int GetROIMin(int index) {return this->ROIMin[index]; } 
+
+  void SetROIMax(int index, int val) {this->ROIMax[index] = val ; }
+  int GetROIMax(int index) {return this->ROIMax[index]; } 
+
   // Description:
   // Get/Set output volume MRML Id
   vtkGetStringMacro(SecondScanRef);
@@ -87,6 +96,11 @@ protected:
   char* FirstScanRef;
   char* SecondScanRef;
 
+
+  //BTX
+  vtkstd::vector<int>  ROIMin; 
+  vtkstd::vector<int>  ROIMax; 
+  //ETX 
 };
 
 #endif

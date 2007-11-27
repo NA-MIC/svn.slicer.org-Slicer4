@@ -58,6 +58,9 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
 
    this->FirstScanRef = NULL;
    this->SecondScanRef = NULL;
+   // this->ROIMin[0] = this->ROIMin[1] = this->ROIMin[2] = this->ROIMax[0] = this->ROIMax[1] = this->ROIMax[2] = -1;
+   this->ROIMin.resize(3,-1); 
+   this->ROIMax.resize(3,-1); 
 }
 
 //----------------------------------------------------------------------------
@@ -102,6 +105,9 @@ void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
       of << indent << " SecondScanRef=\"" << ss.str() << "\"";
       }
   }
+
+  of << indent << "ROIMin=\""<< this->ROIMin[0] << " "<< this->ROIMin[1] << " "<< this->ROIMin[2] <<"\" ";
+  of << indent << "ROIMax=\""<< this->ROIMax[0] << " "<< this->ROIMax[1] << " "<< this->ROIMax[2] <<"\" ";
 }
 
 //----------------------------------------------------------------------------
@@ -138,8 +144,23 @@ void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
       this->SetSecondScanRef(attValue);
       this->Scene->AddReferencedNodeID(this->SecondScanRef, this);
       }
+    else if (!strcmp(attName, "ROIMin"))
+      {
+      // read data into a temporary vector
+      vtksys_stl::stringstream ss;
+      ss << attValue;
+      ss >> this->ROIMin[0] >> this->ROIMin[1] >> this->ROIMin[2];
+      }
+    else if (!strcmp(attName, "ROIMax"))
+      {
+      // read data into a temporary vector
+      vtksys_stl::stringstream ss;
+      ss << attValue;
+      ss >> this->ROIMax[0] >> this->ROIMax[1] >> this->ROIMax[2];
+      }
     }
 }
+
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
@@ -153,6 +174,8 @@ void vtkMRMLTumorGrowthNode::Copy(vtkMRMLNode *anode)
   this->SetTimeStep(node->TimeStep);
   this->SetFirstScanRef(node->FirstScanRef);
   this->SetSecondScanRef(node->SecondScanRef);
+  this->ROIMin = node->ROIMin; 
+  this->ROIMax = node->ROIMax; 
 }
 
 //----------------------------------------------------------------------------
@@ -161,11 +184,13 @@ void vtkMRMLTumorGrowthNode::PrintSelf(ostream& os, vtkIndent indent)
   
   vtkMRMLNode::PrintSelf(os,indent);
 
-  os << indent << "Conductance:   " << this->Conductance << "\n";
-  os << indent << "TimeStep:   " << this->TimeStep << "\n";
-  os << indent << "FirstScanRef:   " << 
+  os << indent << "Conductance:       " << this->Conductance << "\n";
+  os << indent << "TimeStep:          " << this->TimeStep << "\n";
+  os << indent << "FirstScanRef:      " << 
    (this->FirstScanRef ? this->FirstScanRef : "(none)") << "\n";
   os << indent << "OutputVolumeRef:   " << 
    (this->SecondScanRef ? this->SecondScanRef : "(none)") << "\n";
+  os << indent << "ROIMin:            "<< this->ROIMin[0] << " "<< this->ROIMin[1] << " "<< this->ROIMin[2] <<"\n";
+  os << indent << "ROIMax:            "<< this->ROIMax[0] << " "<< this->ROIMax[1] << " "<< this->ROIMax[2] <<"\n";
 }
 
