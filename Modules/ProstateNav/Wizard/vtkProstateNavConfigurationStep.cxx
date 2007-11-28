@@ -90,7 +90,8 @@ void vtkProstateNavConfigurationStep::ShowUserInterface()
     this->LoadConfigButtonNT = vtkKWLoadSaveButtonWithLabel::New();
     this->LoadConfigButtonNT->SetParent(this->ConfigNTFrame);
     this->LoadConfigButtonNT->Create();
-    this->LoadConfigButtonNT->SetWidth(15);
+    this->LoadConfigButtonNT->SetWidth(30);
+    this->LoadConfigButtonNT->SetLabelText("Config. File:");
     this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
     this->LoadConfigButtonNT->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
       "{ {ProstateNav} {*.xml} }");
@@ -167,7 +168,6 @@ void vtkProstateNavConfigurationStep::ProcessGUIEvents( vtkObject *caller,
       {
       this->ConfigFileEntryNT->SetValue("");
       }
-    this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
     }
 
   else if (this->ConnectCheckButtonNT == vtkKWCheckButton::SafeDownCast(caller) 

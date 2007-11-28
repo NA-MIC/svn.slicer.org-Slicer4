@@ -60,8 +60,17 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
     SLICE_RTIMAGE_INPLANE90 = 1,
     SLICE_RTIMAGE_INPLANE   = 2
   };
+  enum {  // Events
+    LocatorUpdateEvent      = 50000,
+    StatusUpdateEvent       = 50001,
+    SliceUpdateEvent        = 50002,
+  };
+
   //ETX
   
+  // Work phase keywords used in NaviTrack (defined in BRPTPRInterface.h)
+  static const char* WorkPhaseKey[vtkProstateNavLogic::NumPhases];
+
  public:
   
   static vtkProstateNavLogic *New();
@@ -85,7 +94,15 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   vtkGetMacro ( ImagingControl,          bool );
   vtkSetMacro ( UpdateLocator,           bool );
   vtkGetMacro ( UpdateLocator,           bool );
-  
+
+  vtkGetMacro ( Connection,              bool );
+  vtkGetMacro ( RobotWorkPhase,           int );
+  vtkGetMacro ( ScannerWorkPhase,         int );
+
+  vtkGetObjectMacro ( LocatorTransform, vtkTransform );
+  vtkGetObjectMacro ( LocatorMatrix,    vtkMatrix4x4 );
+
+
   void PrintSelf(ostream&, vtkIndent);
   
   void AddRealtimeVolumeNode(vtkSlicerVolumesLogic*, const char*);
@@ -109,6 +126,9 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
                               std::vector<float>& position, std::vector<float>& orientation);
   //ETX
   
+  int WorkPhaseStringToID(const char* string);
+
+
  private:
   
   static const int PhaseTransitionMatrix[NumPhases][NumPhases];
@@ -129,16 +149,23 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   
   int   RealtimeImageSerial;
   int   RealtimeImageOrient;
-  
-  vtkMatrix4x4          *LocatorMatrix;
+
+  // Junichi Tokuda on 11/27/2007:
+  // What's a difference between LocatorMatrix and Locator Transform???
+  vtkMatrix4x4*         LocatorMatrix;
+  vtkTransform*         LocatorTransform;
+
   vtkMRMLVolumeNode     *RealtimeVolumeNode;
   vtkSlicerVolumesLogic *VolumesLogic;
-  
+
+  bool  Connection;  
+  int   RobotWorkPhase;
+  int   ScannerWorkPhase;
   
 #ifdef USE_NAVITRACK
   vtkIGTOpenTrackerStream *OpenTrackerStream;
 #endif
-  
+
  protected:
   
   vtkProstateNavLogic();

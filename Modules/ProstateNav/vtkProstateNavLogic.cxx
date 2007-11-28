@@ -51,6 +51,17 @@ const int vtkProstateNavLogic::PhaseTransitionMatrix[vtkProstateNavLogic::NumPha
   };
 
 //---------------------------------------------------------------------------
+const char *vtkProstateNavLogic::WorkPhaseKey[vtkProstateNavLogic::NumPhases] =
+  { /* define in BRPTPRInterface.h */
+  /* Su */ BRPTPR_START_UP   ,
+  /* Pl */ BRPTPR_PLANNING   ,
+  /* Cl */ BRPTPR_CALIBRATION,
+  /* Tg */ BRPTPR_TARGETING  ,
+  /* Mn */ BRPTPR_MANUAL     ,
+  /* Em */ BRPTPR_EMERGENCY  ,
+  };
+
+//---------------------------------------------------------------------------
 vtkProstateNavLogic::vtkProstateNavLogic()
 {
 #ifndef IGSTK_OFF
@@ -61,10 +72,15 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->PrevPhase            = StartUp;
     this->PhaseComplete        = false;
     this->PhaseTransitionCheck = true;
-    this->OrientationUpdate    = false;
+
+    this->RobotWorkPhase       = -1;
+    this->ScannerWorkPhase     = -1;
+    this->Connection           = false;
 
     this->RealtimeImageSerial = 0;
     this->RealtimeImageOrient = vtkProstateNavLogic::SLICE_RTIMAGE_PERP;
+
+    this->LocatorTransform     = NULL;
 
 //    this->NeedRealtimeImageUpdate0 = 0;
 //    this->NeedRealtimeImageUpdate1 = 0;
@@ -130,352 +146,410 @@ void vtkProstateNavLogic::DataCallback(vtkObject *caller,
 void vtkProstateNavLogic::UpdateAll()
 {
 
-    // Position / orientation parameters:
-    //   (px, py, pz) : position
-    //   (nx, ny, nz) : normal vector
-    //   (tx, ty, tz) : transverse vector
-    //   (sx, sy, sz) : vector orthogonal to n and t ( n x t )
+  //----------------------------------------------------------------
+  // Get Needle Position
 
-    float px, py, pz, nx, ny, nz, tx, ty, tz;
-    float sx, sy, sz;
-
-    this->LocatorMatrix = NULL;
-
+  // Position / orientation parameters:
+  //   (px, py, pz) : position
+  //   (nx, ny, nz) : normal vector
+  //   (tx, ty, tz) : transverse vector
+  //   (sx, sy, sz) : vector orthogonal to n and t ( n x t )
+  
+  float px, py, pz, nx, ny, nz, tx, ty, tz;
+  float sx, sy, sz;
+  
+  this->LocatorMatrix = NULL;
+  
 #ifdef USE_NAVITRACK
-    this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
+  this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
 #endif
 
-    if (this->LocatorMatrix)
+  if (!this->LocatorMatrix)
     {
-        px = this->LocatorMatrix->GetElement(0, 0);
-        py = this->LocatorMatrix->GetElement(1, 0);
-        pz = this->LocatorMatrix->GetElement(2, 0);
+    this->LocatorMatrix = vtkMatrix4x4::New();
 
-        nx = this->LocatorMatrix->GetElement(0, 1);
-        ny = this->LocatorMatrix->GetElement(1, 1);
-        nz = this->LocatorMatrix->GetElement(2, 1);
+    this->LocatorMatrix->SetElement(0, 0, 0.0);  // px
+    this->LocatorMatrix->SetElement(1, 0, 0.0);  // py
+    this->LocatorMatrix->SetElement(2, 0, 0.0);  // pz
 
-        tx = this->LocatorMatrix->GetElement(0, 2);
-        ty = this->LocatorMatrix->GetElement(1, 2);
-        tz = this->LocatorMatrix->GetElement(2, 2);
+    this->LocatorMatrix->SetElement(0, 1, 0.0);  // nx
+    this->LocatorMatrix->SetElement(1, 1, 0.0);  // ny
+    this->LocatorMatrix->SetElement(2, 1, 1.0);  // nz
 
-        sx = ny*tz-nz*ty;
-        sy = nz*tx-nx*tz;
-        sz = nx*ty-ny*tx;
+    this->LocatorMatrix->SetElement(0, 2, 1.0);  // tx
+    this->LocatorMatrix->SetElement(1, 2, 0.0);  // ty
+    this->LocatorMatrix->SetElement(2, 2, 0.0);  // tz
+
     }
-    else
+  
+  px = this->LocatorMatrix->GetElement(0, 0);
+  py = this->LocatorMatrix->GetElement(1, 0);
+  pz = this->LocatorMatrix->GetElement(2, 0);
+  
+  nx = this->LocatorMatrix->GetElement(0, 1);
+  ny = this->LocatorMatrix->GetElement(1, 1);
+  nz = this->LocatorMatrix->GetElement(2, 1);
+  
+  tx = this->LocatorMatrix->GetElement(0, 2);
+  ty = this->LocatorMatrix->GetElement(1, 2);
+  tz = this->LocatorMatrix->GetElement(2, 2);
+  
+  sx = ny*tz-nz*ty;
+  sy = nz*tx-nx*tz;
+  sz = nx*ty-ny*tx;
+  
+  std::cerr << "==== Locator position ====" << std::endl;
+  std::cerr << "  (px, py, pz) =  ( " << px << ", " << py << ", " << pz << " )" << std::endl;
+  std::cerr << "  (nx, ny, nz) =  ( " << nx << ", " << ny << ", " << nz << " )" << std::endl;
+  std::cerr << "  (tx, ty, tz) =  ( " << tx << ", " << ty << ", " << tz << " )" << std::endl;
+  
+
+  //----------------------------------------------------------------
+  // Get real-time image orientation
+  //
+  // Note by Junichi Tokuda on 11/27/2007:
+  // Image orientation should be based on the image header info.
+  // However, image header is not available in the current real-time
+  // image transfer framework.
+
+  int rtimgslice = this->RealtimeImageOrient;
+  
+  if (this->OpenTrackerStream)
     {
-        px = 0.0;  py = 0.0;  pz = 0.0;
-        nx = 0.0;  ny = 0.0;  nz = 1.0;
-        tx = 1.0;  ty = 0.0;  tz = 0.0;
-        sx = 0.0;  sy = 1.0;  sz = 0.0;
-    }
 
-    //std::cerr << "==== Locator position ====" << std::endl;
-    //std::cerr << "  (px, py, pz) =  ( " << px << ", " << py << ", " << pz << " )" << std::endl;
-    //std::cerr << "  (nx, ny, nz) =  ( " << nx << ", " << ny << ", " << nz << " )" << std::endl;
-    //std::cerr << "  (tx, ty, tz) =  ( " << tx << ", " << ty << ", " << tz << " )" << std::endl;
+    //----------------------------------------------------------------
+    // Get Real-time Image
+    //
+    // Junichi Tokuda 10/18/2007: Definition of scan plane (for scanner)
+    //  and display (for Slicer) plane
+    //
+    //  Normal (N_l) and Transverse (T_l) vectors of locator are givien.
+    //     M_p       : IJK to RAS matrix
+    //     N_l x T_l : cross product of N_l and T_l
+    //     M_s       : scan plane rotation matrix (transformation from
+    //                  axial plane to scan plane)
+    //
+    //   1) Perpendicular (Plane perpendicular to the locator)
+    //
+    //     M_p   = ( T_l, N_l x T_l, N_l )
+    //
+    //     #         / tx ty tz \  / 1  0  0 \       / tx ty tz \ 
+    //     #        |            ||           |     |            |
+    //     #M_s  =  |  sx sy sz  ||  0  1  0  |  =  |  sx sy sz  |
+    //     #        |            ||           |     |            |
+    //     #         \ nx ny nz /  \ 0  0  1 /       \ nx ny nz / 
+    //
+    //
+    //              / tx sx nx \  / 1  0  0 \       / tx -sx -nx \ 
+    //             |            ||           |     |              |
+    //     M_s  =  |  ty sy ny  ||  0 -1  0  |  =  |  ty -sy -ny  |
+    //             |            ||           |     |              |
+    //              \ tz sz nz /  \ 0  0 -1 /       \ tz -sz -nz / 
+    //
+    //
+    //   2) In-plane 90  (plane along the locator: perpendicular to In-plane)
+    //
+    //     M_p  = ( N_l x T_l, N_l, T_l )
+    //
+    //     #         / tx ty tz \  / 0  0  1 \       / ty tz tx \ 
+    //     #        |            ||           |     |            |
+    //     #M_s  =  |  sx sy sz  ||  1  0  0  |  =  |  sy sz sx  |
+    //     #        |            ||           |     |            |
+    //     #         \ nx ny nz /  \ 0  1  0 /       \ ny nz nx / 
+    // 
+    //
+    //              / tx sx nx \  /  0  0 -1 \       / sx -nx -tx \ 
+    //             |            ||            |     |              |
+    //     M_s  =  |  ty sy ny  ||   1  0  0  |  =  |  sy -ny -ty  |
+    //             |            ||            |     |              |
+    //              \ tz sz nz /  \  0 -1  0 /       \ sz -nz -tz / 
+    //
+    // 
+    //   3) In-Plane     (plane along the locator)
+    //
+    //     M_p  = ( N_l, T_l, N_l x T_l )
+    //
+    //     #         / tx ty tz \  / 0  1  0 \       / tz tx ty \ 
+    //     #        |            ||           |     |            |
+    //     #M_s  =  |  sx sy sz  ||  0  0  1  |  =  |  sz sx sy  |
+    //     #        |            ||           |     |            |
+    //     #         \ nx ny nz /  \ 1  0  0 /       \ nz nx ny / 
+    //
+    //
+    //              / tx sx nx \  /  0 -1  0 \       / nx -tx -sx \ 
+    //             |            ||            |     |              |
+    //     M_s  =  |  ty sy ny  ||   0  0 -1  |  =  |  ny -ty -sy  |
+    //             |            ||            |     |              |
+    //              \ tz sz nz /  \  1  0  0 /       \ nz -tz -sz / 
+    //
+    //
 
-    //Philip Mewes 17.07.2007: defining and sending te workphase (WP) commands depending of requestet WP
-    // received_robot_status = NULL;
-    
-    // Get real-time image orientation
-    int rtimgslice = this->RealtimeImageOrient;
+    // Junichi Tokuda on 10/16/2007:
+    // Since the position/orientation for the real-time image is not available,
+    // the transformation is calculated based on the locator matrix.
+    // This must be fixed, when the image information become available.
 
-    if (this->OpenTrackerStream)
+    vtkImageData* vid = NULL;
+    if (this->RealtimeVolumeNode)
       {
+      vid = this->RealtimeVolumeNode->GetImageData();
+      }
 
-        // Junichi Tokuda 10/18/2007: Definition of scan plane (for scanner) and
-        //  display (for Slicer) plane
-        //
-        //  Normal (N_l) and Transverse (T_l) vectors of locator are givien.
-        //     M_p       : IJK to RAS matrix
-        //     N_l x T_l : cross product of N_l and T_l
-        //     M_s       : scan plane rotation matrix (transformation from axial plane to scan plane)
-        //
-        //   1) Perpendicular (Plane perpendicular to the locator)
-        //
-        //     M_p   = ( T_l, N_l x T_l, N_l )
-        //
-        //     #         / tx ty tz \  / 1  0  0 \       / tx ty tz \ 
-        //     #        |            ||           |     |            |
-        //     #M_s  =  |  sx sy sz  ||  0  1  0  |  =  |  sx sy sz  |
-        //     #        |            ||           |     |            |
-        //     #         \ nx ny nz /  \ 0  0  1 /       \ nx ny nz / 
-        //
-        //
-        //              / tx sx nx \  / 1  0  0 \       / tx -sx -nx \ 
-        //             |            ||           |     |              |
-        //     M_s  =  |  ty sy ny  ||  0 -1  0  |  =  |  ty -sy -ny  |
-        //             |            ||           |     |              |
-        //              \ tz sz nz /  \ 0  0 -1 /       \ tz -sz -nz / 
-        //
-        //
-        //   2) In-plane 90  (plane along the locator: perpendicular to In-plane)
-        //
-        //     M_p  = ( N_l x T_l, N_l, T_l )
-        //
-        //     #         / tx ty tz \  / 0  0  1 \       / ty tz tx \ 
-        //     #        |            ||           |     |            |
-        //     #M_s  =  |  sx sy sz  ||  1  0  0  |  =  |  sy sz sx  |
-        //     #        |            ||           |     |            |
-        //     #         \ nx ny nz /  \ 0  1  0 /       \ ny nz nx / 
-        // 
-        //
-        //              / tx sx nx \  /  0  0 -1 \       / sx -nx -tx \ 
-        //             |            ||            |     |              |
-        //     M_s  =  |  ty sy ny  ||   1  0  0  |  =  |  sy -ny -ty  |
-        //             |            ||            |     |              |
-        //              \ tz sz nz /  \  0 -1  0 /       \ sz -nz -tz / 
-        //
-        // 
-        //   3) In-Plane     (plane along the locator)
-        //
-        //     M_p  = ( N_l, T_l, N_l x T_l )
-        //
-        //     #         / tx ty tz \  / 0  1  0 \       / tz tx ty \ 
-        //     #        |            ||           |     |            |
-        //     #M_s  =  |  sx sy sz  ||  0  0  1  |  =  |  sz sx sy  |
-        //     #        |            ||           |     |            |
-        //     #         \ nx ny nz /  \ 1  0  0 /       \ nz nx ny / 
-        //
-        //
-        //              / tx sx nx \  /  0 -1  0 \       / nx -tx -sx \ 
-        //             |            ||            |     |              |
-        //     M_s  =  |  ty sy ny  ||   0  0 -1  |  =  |  ny -ty -sy  |
-        //             |            ||            |     |              |
-        //              \ tz sz nz /  \  1  0  0 /       \ nz -tz -sz / 
-        //
-        //
+    if (vid && this->OrientationUpdate)
+      {
+      //std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
 
-        //
-        // Real-time image display plane transformation 
-        //
+      int orgSerial = this->RealtimeImageSerial;
+      this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
+      if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
+        {
+          
+        vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
+
+        //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
+        this->RealtimeVolumeNode->SetAndObserveImageData(vid);
         
-        // Junichi Tokuda 10/16/2007:
-        // Since the position/orientation for the real-time image is not available,
-        // the transformation is calculated based on the locator matrix.
-        // This must be fixed, when the image information become available.
-
-        vtkImageData* vid = NULL;
-        if (this->RealtimeVolumeNode)
-        {
-            vid = this->RealtimeVolumeNode->GetImageData();
-        }
-
-        if (vid && this->OrientationUpdate)
-        {
-            //std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
-
-            int orgSerial = this->RealtimeImageSerial;
-            this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
-            if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
-            {
-
-                vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
-
-                //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
-                this->RealtimeVolumeNode->SetAndObserveImageData(vid);
-
-                // One of NeedRealtimeImageUpdate0 - 2 is chosen based on the scan plane.
-                
-                if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_PERP)  /* Perpendicular */
-                {
-                    this->NeedRealtimeImageUpdate0 = 1;
-                    rtimgTransform->SetElement(0, 0, tx);
-                    rtimgTransform->SetElement(1, 0, ty);
-                    rtimgTransform->SetElement(2, 0, tz);
-                    
-                    rtimgTransform->SetElement(0, 1, sx);
-                    rtimgTransform->SetElement(1, 1, sy);
-                    rtimgTransform->SetElement(2, 1, sz);
-                    
-                    rtimgTransform->SetElement(0, 2, nx);
-                    rtimgTransform->SetElement(1, 2, ny);
-                    rtimgTransform->SetElement(2, 2, nz);
-                }
-                else if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_INPLANE90)  /* In-plane 90 */
-                {
-                    this->NeedRealtimeImageUpdate1 = 1;
-
-                    rtimgTransform->SetElement(0, 0, sx);
-                    rtimgTransform->SetElement(1, 0, sy);
-                    rtimgTransform->SetElement(2, 0, sz);
-                    
-                    rtimgTransform->SetElement(0, 1, nx);
-                    rtimgTransform->SetElement(1, 1, ny);
-                    rtimgTransform->SetElement(2, 1, nz);
-                    
-                    rtimgTransform->SetElement(0, 2, tx);
-                    rtimgTransform->SetElement(1, 2, ty);
-                    rtimgTransform->SetElement(2, 2, tz);
-                }
-                else // if (rtimgslice == vtkBrpNavGUI::SLICE_RTIMAGE_INPLANE)   /* In-Plane */
-                {
-                    this->NeedRealtimeImageUpdate2 = 1;
-
-                    rtimgTransform->SetElement(0, 0, nx);
-                    rtimgTransform->SetElement(1, 0, ny);
-                    rtimgTransform->SetElement(2, 0, nz);
-                    
-                    rtimgTransform->SetElement(0, 1, tx);
-                    rtimgTransform->SetElement(1, 1, ty);
-                    rtimgTransform->SetElement(2, 1, tz);
-                    
-                    rtimgTransform->SetElement(0, 2, sx);
-                    rtimgTransform->SetElement(1, 2, sy);
-                    rtimgTransform->SetElement(2, 2, sz);
-                }
-
-                rtimgTransform->SetElement(0, 3, px);
-                rtimgTransform->SetElement(1, 3, py);
-                rtimgTransform->SetElement(2, 3, pz);
-                rtimgTransform->SetElement(3, 3, 1.0);
-                
-                this->RealtimeVolumeNode->SetIJKToRASMatrix(rtimgTransform);
-
-                this->RealtimeVolumeNode->UpdateScene(this->VolumesLogic->GetMRMLScene());
-                this->VolumesLogic->SetActiveVolumeNode(this->RealtimeVolumeNode);
-
-                this->VolumesLogic->Modified();
-                rtimgTransform->Delete();
-            }
-
-            
-        }
-        else
-        {
-          //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
-        }
-
-        //
-        // Imaging plane transformation 
-        //
-
-        if (this->ImagingControl)
-        {
-            std::vector<float> pos;
-            std::vector<float> quat;
-            pos.resize(3);
-            quat.resize(4);
-
-            float scanTrans[3][3];  // Rotation matrix from axial plane to scan plane
-            
-            /* Parpendicular */
-            if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_PERP)
-            {
-                scanTrans[0][0] = tx;
-                scanTrans[1][0] = ty;
-                scanTrans[2][0] = tz;
-                scanTrans[0][1] = -sx;
-                scanTrans[1][1] = -sy;
-                scanTrans[2][1] = -sz;
-                scanTrans[0][2] = -nx;
-                scanTrans[1][2] = -ny;
-                scanTrans[2][2] = -nz;
-            }
-            /* In-plane 90 */
-            else if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_INPLANE90)
-            {
-                scanTrans[0][0] = sx;
-                scanTrans[1][0] = sy;
-                scanTrans[2][0] = sz;
-                scanTrans[0][1] = -nx;
-                scanTrans[1][1] = -ny;
-                scanTrans[2][1] = -nz;
-                scanTrans[0][2] = -tx;
-                scanTrans[1][2] = -ty;
-                scanTrans[2][2] = -tz;
-            }
-            /* In-Plane */
-            else // if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_INPLANE)
-            {
-                scanTrans[0][0] = nx;
-                scanTrans[1][0] = ny;
-                scanTrans[2][0] = nz;
-                scanTrans[0][1] = -tx;
-                scanTrans[1][1] = -ty;
-                scanTrans[2][1] = -tz;
-                scanTrans[0][2] = -sx;
-                scanTrans[1][2] = -sy;
-                scanTrans[2][2] = -sz;
-            }
-
-            MathUtils::matrixToQuaternion(scanTrans, quat);
-            pos[0] = px;
-            pos[1] = py;
-            pos[2] = pz;
-            
-            // send coordinate to the scanner
-            this->OpenTrackerStream->SetTracker(pos,quat);
-        }
-
-        // update the display of locator
-        if (this->UpdateLocator)
+        // One of NeedRealtimeImageUpdate0 - 2 is chosen based on the scan plane.
+        
+        if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_PERP)  /* Perpendicular */
           {
-            vtkTransform *transform = NULL;
-            vtkTransform *transform_cb2 = NULL;
-
-            this->OpenTrackerStream->SetLocatorTransforms();
-            transform = this->OpenTrackerStream->GetLocatorNormalTransform();
-            transform_cb2 = this->OpenTrackerStream->GetLocatorNormalTransform();
-            //this->GUI->UpdateLocator(transform, transform_cb2);  // MOVE TO GUI
-
+          this->NeedRealtimeImageUpdate0 = 1;
+          rtimgTransform->SetElement(0, 0, tx);
+          rtimgTransform->SetElement(1, 0, ty);
+          rtimgTransform->SetElement(2, 0, tz);
+          
+          rtimgTransform->SetElement(0, 1, sx);
+          rtimgTransform->SetElement(1, 1, sy);
+          rtimgTransform->SetElement(2, 1, sz);
+          
+          rtimgTransform->SetElement(0, 2, nx);
+          rtimgTransform->SetElement(1, 2, ny);
+          rtimgTransform->SetElement(2, 2, nz);
           }
+        else if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_INPLANE90)  /* In-plane 90 */
+          {
+          this->NeedRealtimeImageUpdate1 = 1;
+          
+          rtimgTransform->SetElement(0, 0, sx);
+          rtimgTransform->SetElement(1, 0, sy);
+          rtimgTransform->SetElement(2, 0, sz);
+          
+          rtimgTransform->SetElement(0, 1, nx);
+          rtimgTransform->SetElement(1, 1, ny);
+          rtimgTransform->SetElement(2, 1, nz);
+          
+          rtimgTransform->SetElement(0, 2, tx);
+          rtimgTransform->SetElement(1, 2, ty);
+          rtimgTransform->SetElement(2, 2, tz);
+          }
+        else // if (rtimgslice == vtkBrpNavGUI::SLICE_RTIMAGE_INPLANE)   /* In-Plane */
+          {
+          this->NeedRealtimeImageUpdate2 = 1;
 
-        //if (!this->GUI->FreezeOrientationUpdate)
-        if (this->OrientationUpdate)
-        {
-          //this->GUI->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);  //MOVE TO GUI
+          rtimgTransform->SetElement(0, 0, nx);
+          rtimgTransform->SetElement(1, 0, ny);
+          rtimgTransform->SetElement(2, 0, nz);
+          
+          rtimgTransform->SetElement(0, 1, tx);
+          rtimgTransform->SetElement(1, 1, ty);
+          rtimgTransform->SetElement(2, 1, tz);
+          
+          rtimgTransform->SetElement(0, 2, sx);
+          rtimgTransform->SetElement(1, 2, sy);
+          rtimgTransform->SetElement(2, 2, sz);
+          }
+        
+        rtimgTransform->SetElement(0, 3, px);
+        rtimgTransform->SetElement(1, 3, py);
+        rtimgTransform->SetElement(2, 3, pz);
+        rtimgTransform->SetElement(3, 3, 1.0);
+        
+        this->RealtimeVolumeNode->SetIJKToRASMatrix(rtimgTransform);
+        
+        this->RealtimeVolumeNode->UpdateScene(this->VolumesLogic->GetMRMLScene());
+        this->VolumesLogic->SetActiveVolumeNode(this->RealtimeVolumeNode);
+        
+        this->VolumesLogic->Modified();
+        rtimgTransform->Delete();
         }
-    }
+      
+      } //  if (vid && this->OrientationUpdate)
+    else
+      {
+      //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
+      }
+
+
+    //----------------------------------------------------------------
+    // Imaging Plane Control
+
+    if (this->ImagingControl)
+      {
+      std::vector<float> pos;
+      std::vector<float> quat;
+      pos.resize(3);
+      quat.resize(4);
+
+      float scanTrans[3][3];  // Rotation matrix from axial plane to scan plane
+      
+      /* Parpendicular */
+      if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_PERP)
+        {
+        scanTrans[0][0] = tx;
+        scanTrans[1][0] = ty;
+        scanTrans[2][0] = tz;
+        scanTrans[0][1] = -sx;
+        scanTrans[1][1] = -sy;
+        scanTrans[2][1] = -sz;
+        scanTrans[0][2] = -nx;
+        scanTrans[1][2] = -ny;
+        scanTrans[2][2] = -nz;
+        }
+      /* In-plane 90 */
+      else if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_INPLANE90)
+        {
+        scanTrans[0][0] = sx;
+        scanTrans[1][0] = sy;
+        scanTrans[2][0] = sz;
+        scanTrans[0][1] = -nx;
+        scanTrans[1][1] = -ny;
+        scanTrans[2][1] = -nz;
+        scanTrans[0][2] = -tx;
+        scanTrans[1][2] = -ty;
+        scanTrans[2][2] = -tz;
+        }
+      /* In-Plane */
+      else // if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_INPLANE)
+        {
+        scanTrans[0][0] = nx;
+        scanTrans[1][0] = ny;
+        scanTrans[2][0] = nz;
+        scanTrans[0][1] = -tx;
+        scanTrans[1][1] = -ty;
+        scanTrans[2][1] = -tz;
+        scanTrans[0][2] = -sx;
+        scanTrans[1][2] = -sy;
+        scanTrans[2][2] = -sz;
+        }
+
+      MathUtils::matrixToQuaternion(scanTrans, quat);
+      pos[0] = px;
+      pos[1] = py;
+      pos[2] = pz;
+      
+      // send coordinate to the scanner
+      this->OpenTrackerStream->SetTracker(pos,quat);
+      } // if (this->ImagingControl)
+
+    // update the display of locator
+    if (this->UpdateLocator)
+      {
+      vtkTransform *transform = NULL;
+      vtkTransform *transform_cb2 = NULL;
+
+      this->OpenTrackerStream->SetLocatorTransforms();
+      /*
+      transform = this->OpenTrackerStream->GetLocatorNormalTransform();
+      transform_cb2 = this->OpenTrackerStream->GetLocatorNormalTransform();
+      */
+      //this->GUI->UpdateLocator(transform, transform_cb2);  // MOVE TO GUI
+      this->LocatorTransform = this->OpenTrackerStream->GetLocatorNormalTransform();
+      this->InvokeEvent(vtkProstateNavLogic::LocatorUpdateEvent);
+      }
+
+    //if (!this->GUI->FreezeOrientationUpdate)
+    if (this->OrientationUpdate)
+      {
+      //this->GUI->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);  //MOVE TO GUI
+      this->InvokeEvent(vtkProstateNavLogic::SliceUpdateEvent);
+      }
 
     this->NeedRealtimeImageUpdate0 = 0;
     this->NeedRealtimeImageUpdate1 = 0;
     this->NeedRealtimeImageUpdate2 = 0;
+
+
+    //----------------------------------------------------------------
+    // Check status
+
+    std::string robotStatus;
+    std::string scannerStatus;
+    std::string errorStatus;
+
+    this->OpenTrackerStream->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
+
+    int OldRobotWorkPhase   = this->RobotWorkPhase;
+    int OldScannerWorkPhase = this->ScannerWorkPhase;
+      
+    this->RobotWorkPhase   = this->WorkPhaseStringToID(robotStatus.c_str());
+    this->ScannerWorkPhase = this->WorkPhaseStringToID(scannerStatus.c_str());
+
+    if (OldRobotWorkPhase != this->RobotWorkPhase ||
+        OldScannerWorkPhase != this->ScannerWorkPhase)
+      {
+      this->InvokeEvent(vtkProstateNavLogic::StatusUpdateEvent);
+      }
+
+    } // if (this->OpenTrackerStream)
 
 }
 
 //---------------------------------------------------------------------------
 void vtkProstateNavLogic::AddRealtimeVolumeNode(vtkSlicerVolumesLogic* volLogic, const char* name)
 {
-    if (this->RealtimeVolumeNode == NULL)
-        this->RealtimeVolumeNode = AddVolumeNode(volLogic, name);
+  if (this->RealtimeVolumeNode == NULL)
+    {
+    this->RealtimeVolumeNode = AddVolumeNode(volLogic, name);
+    }
 }
 
 //---------------------------------------------------------------------------
 int vtkProstateNavLogic::SwitchWorkPhase(int newwp)
 {
-    if (IsPhaseTransitable(newwp))
+  if (IsPhaseTransitable(newwp))
     {
-        PrevPhase     = CurrentPhase;
-        CurrentPhase  = newwp;
-        PhaseComplete = false;
+    this->PrevPhase     = this->CurrentPhase;
+    this->CurrentPhase  = newwp;
+    this->PhaseComplete = false;
 
-        return 1;
+    if (this->OpenTrackerStream && this->Connection)
+      {
+      // Switch work phases for the subsystems
+      std::vector<std::string> keys;
+      std::vector<std::string> values;
+      keys.resize(1);
+      values.resize(1);
+
+      keys[0]   = "workphase";
+      values[0] = vtkProstateNavLogic::WorkPhaseKey[newwp];
+
+      this->OpenTrackerStream->SetOpenTrackerforBRPDataFlowValveFilter(keys, values);
+      }
+    
+    return 1;
     }
 }
 
 //---------------------------------------------------------------------------
 int vtkProstateNavLogic::IsPhaseTransitable(int nextwp)
 {
-    if (nextwp < 0 || nextwp > NumPhases)
+  if (nextwp < 0 || nextwp > NumPhases)
     {
-        return 0;
+    return 0;
     }
-    
-    if (PhaseTransitionCheck == 0)
+  
+  if (PhaseTransitionCheck == 0)
     {
-        return 1;
+    return 1;
     }
-
-    if (PhaseComplete)
+  
+  if (PhaseComplete)
     {
-        return PhaseTransitionMatrix[CurrentPhase][nextwp];
+    return PhaseTransitionMatrix[CurrentPhase][nextwp];
     }
-    else
+  else
     {
-        return PhaseTransitionMatrix[PrevPhase][nextwp];
+    return PhaseTransitionMatrix[PrevPhase][nextwp];
     }
 }
 
@@ -491,6 +565,12 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
     this->OpenTrackerStream->SetMultiFactor(multi);
     this->OpenTrackerStream->SetStartTimer(1);
     this->OpenTrackerStream->ProcessTimerEvents();    
+
+    this->Connection = true;
+    this->SwitchWorkPhase(this->CurrentPhase); // To send workphase command
+
+    this->InvokeEvent(vtkProstateNavLogic::StatusUpdateEvent);
+
 #endif //USE_NAVITRACK
 }
 
@@ -500,6 +580,13 @@ int vtkProstateNavLogic::DisconnectTracker()
 {
 #ifdef USE_NAVITRACK
     this->OpenTrackerStream->StopPolling();
+
+    this->RobotWorkPhase       = -1;
+    this->ScannerWorkPhase     = -1;
+    this->Connection           = false;
+
+    this->InvokeEvent(vtkProstateNavLogic::StatusUpdateEvent);
+
 #endif // USE_NAVITRACK
 }
 
@@ -609,6 +696,20 @@ int vtkProstateNavLogic::ScanStop()
 #endif // USE_NAVITRACK
   
 }
+
+//---------------------------------------------------------------------------
+int vtkProstateNavLogic::WorkPhaseStringToID(const char* string)
+{
+  for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
+    {
+    if (strcmp(vtkProstateNavLogic::WorkPhaseKey[i], string) == 0)
+      {
+      return i;
+      }
+    }
+  return -1; // Nothing found.
+}
+
 
 //---------------------------------------------------------------------------
 vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(vtkSlicerVolumesLogic* volLogic,

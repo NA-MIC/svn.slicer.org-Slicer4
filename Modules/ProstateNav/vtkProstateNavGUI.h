@@ -59,6 +59,8 @@ class vtkKWWizardWidget;
 
 class vtkProstateNavStep;
 
+class vtkTransform;
+
 // Description:    
 // This class implements Slicer's Volumes GUI
 //
@@ -125,6 +127,9 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   // Add/Remove observers on widgets in the GUI
   virtual void AddGUIObservers ( );
   virtual void RemoveGUIObservers ( );
+
+  void AddLogicObservers ( );
+  void RemoveLogicObservers ( );
   
   
   // Description:
@@ -161,14 +166,16 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   // Workphase Frame
   
   vtkKWPushButtonSet *WorkPhaseButtonSet;
-  
+
+  vtkKWEntry *ScannerStatusLabelDisp;
+  vtkKWEntry *SoftwareStatusLabelDisp;
+  vtkKWEntry *RobotStatusLabelDisp;
   
   //----------------------------------------------------------------
   // Wizard Frame
   
   vtkKWWizardWidget *WizardWidget;
   vtkProstateNavStep **WizardSteps;
-  
   
   //----------------------------------------------------------------
   // Visualization Control Frame
@@ -187,10 +194,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   vtkKWPushButton  *StopScanButton;
 
   vtkKWCheckButton *LocatorCheckButton;
-  
-  vtkKWEntry *ScannerStatusLabelDisp;
-  vtkKWEntry *SoftwareStatusLabelDisp;
-  vtkKWEntry *RobotStatusLabelDisp;
   
   // Module logic and mrml pointers
 
@@ -226,7 +229,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   std::string LocatorModelID_new;
   //ETX
   
-  
   int NeedOrientationUpdate0;
   int NeedOrientationUpdate1;
   int NeedOrientationUpdate2;
@@ -246,10 +248,15 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
 
 
   void UpdateAll();
+  /*
   void UpdateLocator(vtkTransform *, vtkTransform *);
   void UpdateSliceDisplay(float nx, float ny, float nz, 
                           float tx, float ty, float tz, 
                           float px, float py, float pz);
+  */
+  void UpdateLocator();
+  void UpdateSliceDisplay();
+  void UpdateDeviceStatus();
   
  private:
 
