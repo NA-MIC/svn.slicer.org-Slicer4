@@ -37,9 +37,6 @@ Version:   $Revision: 1.2 $
 #include "vtkSlicerApplication.h"
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWPushButton.h"
-#include "vtkKWPushButton.h"
-#include "vtkKWLoadSaveButtonWithLabel.h"
-#include "vtkKWLoadSaveButton.h"
 #include "vtkKWLoadSaveDialog.h"
 #include "vtkKWEntryWithLabel.h"
 
@@ -218,7 +215,7 @@ void vtkMRAblationGUI::ProcessGUIEvents ( vtkObject *caller,
     vtkSlicerApplication *slicerApp = (vtkSlicerApplication *)this->GetApplication();
     if (slicerApp != NULL)
     {
-      vtkSlicerVolumesGUI* volumesGUI = (vtkSlicerVolumesGUI *)slicerApp->GetModuleGUIByName("Volumes");
+      vtkSlicerVolumesGUI* volumesGUI = (vtkSlicerVolumesGUI *)slicerApp->GetModuleGUIByName("Volume");
       this->Logic->Apply(volumesGUI);
     }
     }
