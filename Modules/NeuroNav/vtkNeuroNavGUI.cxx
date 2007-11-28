@@ -495,7 +495,8 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
 
 #ifdef USE_NAVITRACK
     this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-    this->LoadConfigButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->LoadConfigButton->GetWidget()->GetLoadSaveDialog()->RemoveObservers (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+//    this->LoadConfigButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
 #endif
 #ifdef USE_IGSTK
     this->IGSTKStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
@@ -577,7 +578,8 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
 #ifdef USE_NAVITRACK
     this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-    this->LoadConfigButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    // this->LoadConfigButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->LoadConfigButton->GetWidget()->GetLoadSaveDialog()->AddObserver (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
 #endif
 #ifdef USE_IGSTK
     this->IGSTKStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
@@ -671,8 +673,8 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
 #endif
         }
 #ifdef USE_NAVITRACK
-        else if (this->LoadConfigButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent )
+        else if (this->LoadConfigButton->GetWidget()->GetLoadSaveDialog() == vtkKWLoadSaveDialog::SafeDownCast(caller) 
+                && event == vtkKWTopLevel::WithdrawEvent)
         {
             const char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
             if (filename)
