@@ -58,15 +58,6 @@
 #include "vtkKWEvent.h"
 #include "vtkKWOptions.h"
 
-//#if defined(OT_VERSION_20) || defined(OT_VERSION_13)
-
-#ifdef USE_NAVITRACK
-//#include <OpenTracker/input/SlicerNTModule.h>
-//#include <OpenTracker/OpenTracker.h>
-//#include <OpenTracker/input/SPLModules.h>
-#endif //USE_NAVITRACK
-//#endif
-
 #include "vtkKWTkUtilities.h"
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkCylinderSource.h"
@@ -174,7 +165,11 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   // Workphase Frame
   
   this->WorkPhaseButtonSet = NULL;
-  
+
+#ifdef USE_NAVITRACK
+  this->ScannerStatusLabelDisp  = NULL;
+  this->SoftwareStatusLabelDisp = NULL;
+#endif
 
   //----------------------------------------------------------------  
   // Wizard Frame
@@ -207,14 +202,6 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   this->SliceDriver1 = 0;
   this->SliceDriver2 = 0;
   
-  //----------------------------------------------------------------
-  // Control Frame
-
-#ifdef USE_NAVITRACK
-  this->ScannerStatusLabelDisp  = NULL;
-  this->SoftwareStatusLabelDisp = NULL;
-#endif
-
 
   //----------------------------------------------------------------
   // Target Fiducials List (MRML)
@@ -402,14 +389,25 @@ void vtkProstateNavGUI::RemoveGUIObservers ( )
     this->SetUserModeButton->RemoveObservers (vtkKWPushButton::InvokedEvent,
                                               (vtkCommand *)this->GUICallbackCommand );
     }
-  
-  
-
 
   if (this->LocatorCheckButton)
     {
     this->LocatorCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
                                               (vtkCommand *)this->GUICallbackCommand );
+    }
+
+  this->RemoveLogicObservers();
+}
+
+
+//---------------------------------------------------------------------------
+void vtkProstateNavGUI::RemoveLogicObservers ( )
+{
+  vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
+  if (this->GetLogic())
+    {
+    this->GetLogic()->RemoveObservers(vtkCommand::ModifiedEvent,
+                                      (vtkCommand *)this->LogicCallbackCommand);
     }
 }
 
@@ -471,12 +469,30 @@ void vtkProstateNavGUI::AddGUIObservers ( )
   // Etc Frame
 
   // observer load volume button
+
+  this->AddLogicObservers();
   
   
 }
 
 
+//---------------------------------------------------------------------------
+void vtkProstateNavGUI::AddLogicObservers ( )
+{
+  this->RemoveLogicObservers();  
 
+  if (this->GetLogic())
+    {
+    this->GetLogic()->AddObserver(vtkProstateNavLogic::LocatorUpdateEvent,
+                                  (vtkCommand *)this->LogicCallbackCommand);
+    this->GetLogic()->AddObserver(vtkProstateNavLogic::StatusUpdateEvent,
+                                  (vtkCommand *)this->LogicCallbackCommand);
+    this->GetLogic()->AddObserver(vtkProstateNavLogic::SliceUpdateEvent,
+                                  (vtkCommand *)this->LogicCallbackCommand);
+    }
+}
+
+//---------------------------------------------------------------------------
 void vtkProstateNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
 {
 
@@ -767,7 +783,21 @@ void vtkProstateNavGUI::ProcessLogicEvents ( vtkObject *caller,
     unsigned long event, void *callData )
 {
 
-    // Fill in
+  if (this->GetLogic() == vtkProstateNavLogic::SafeDownCast(caller))
+    {
+    if (event == vtkProstateNavLogic::LocatorUpdateEvent)
+      {
+      this->UpdateLocator();
+      }
+    if (event == vtkProstateNavLogic::StatusUpdateEvent)
+      {
+      this->UpdateDeviceStatus();
+      }
+    if (event == vtkProstateNavLogic::SliceUpdateEvent)
+      {
+      this->UpdateSliceDisplay();
+      }
+    }
 }
 
 
@@ -777,7 +807,6 @@ void vtkProstateNavGUI::ProcessMRMLEvents ( vtkObject *caller,
 {
     // Fill in
 }
-
 
 
 //---------------------------------------------------------------------------
@@ -1420,7 +1449,7 @@ int vtkProstateNavGUI::ChangeWorkPhase(int phase, int fChangeWizard)
 }
 
 
-
+//----------------------------------------------------------------------------
 void vtkProstateNavGUI::UpdateAll()
 {
 
@@ -1433,108 +1462,187 @@ void vtkProstateNavGUI::UpdateAll()
       //this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
     }
 
-  //
-  // should check robot and scanner status here
-  //
-
 }
 
 
-void vtkProstateNavGUI::UpdateLocator(vtkTransform *transform, vtkTransform *transform_cb2)
+//----------------------------------------------------------------------------
+void vtkProstateNavGUI::UpdateLocator()
+//void vtkProstateNavGUI::UpdateLocator(vtkTransform *transform, vtkTransform *transform_cb2)
 {
 
-    //vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
-    vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLModelNode1")); 
-    if (model != NULL)
+  //vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
+  vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLModelNode1")); 
+  if (model != NULL)
     {
-        if (transform)
-        {
-            vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
-            lnode->SetAndObserveMatrixTransformToParent(transform->GetMatrix());
-            this->GetMRMLScene()->Modified();
-        }
-        if (transform_cb2)
-        {
-            vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
-            lnode->SetAndObserveMatrixTransformToParent(transform_cb2->GetMatrix());
-            this->GetMRMLScene()->Modified();
-        }
+      /*
+    if (transform)
+      {
+      vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
+      lnode->SetAndObserveMatrixTransformToParent(this->GetLogic()->GetLocatorTransform()->GetMatrix());
+      this->GetMRMLScene()->Modified();
+      }
+      */
+    if (this->GetLogic()->GetLocatorTransform())
+      {
+      vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
+      lnode->SetAndObserveMatrixTransformToParent(this->GetLogic()->GetLocatorTransform()->GetMatrix());
+      this->GetMRMLScene()->Modified();
+      }
     }
 
 }
 
 
+//----------------------------------------------------------------------------
+void vtkProstateNavGUI::UpdateSliceDisplay()
+/*
 void vtkProstateNavGUI::UpdateSliceDisplay(float nx, float ny, float nz, 
-                    float tx, float ty, float tz, 
-                    float px, float py, float pz)
+                                           float tx, float ty, float tz, 
+                                           float px, float py, float pz)
+*/
 {
+  float px, py, pz, nx, ny, nz, tx, ty, tz;
+
+  vtkMatrix4x4* matrix = this->GetLogic()->GetLocatorMatrix();
+  if (matrix)
+    {
+    px = matrix->GetElement(0, 0);
+    py = matrix->GetElement(1, 0);
+    pz = matrix->GetElement(2, 0);
+
+    nx = matrix->GetElement(0, 1);
+    ny = matrix->GetElement(1, 1);
+    nz = matrix->GetElement(2, 1);
+
+    tx = matrix->GetElement(0, 2);
+    ty = matrix->GetElement(1, 2);
+    tz = matrix->GetElement(2, 2);
+    }
+  else
+    {
+    px =  py = pz = 0.0;
+    nx =  ny = 0.0; nz = 1.0;
+    ty =  tz = 0.0; tx = 1.0;
+    }
 
   //std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() is called." << std::endl;
 
-    // Reslice -- Perpendicular
-    if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_USER )
+  // Reslice -- Perpendicular
+  if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_USER )
     {
       //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_USER" << std::endl;
     }
-    else if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
+  else if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
     {
       //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_LOCATOR" << std::endl;
-        this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-        this->Logic0->UpdatePipeline ();
+    this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+    this->Logic0->UpdatePipeline ();
     }
-    else if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
+  else if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
     {
-        if (this->Logic->GetNeedRealtimeImageUpdate0())
-        {
-          //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_RTIMAGE" << std::endl;
-            this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-            this->Logic0->UpdatePipeline ();
-        }
+    if (this->Logic->GetNeedRealtimeImageUpdate0())
+      {
+      //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_RTIMAGE" << std::endl;
+      this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+      this->Logic0->UpdatePipeline ();
+      }
     }
 
 
-    // Reslice -- In-plane 90
-    if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_USER )
+  // Reslice -- In-plane 90
+  if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_USER )
     {
-      //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_USER" << std::endl;
+    //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_USER" << std::endl;
     }
-    else if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
+  else if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
     {
-      //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_LOCATOR" << std::endl;
-        this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-        this->Logic1->UpdatePipeline ();
+    //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_LOCATOR" << std::endl;
+    this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+    this->Logic1->UpdatePipeline ();
     }
-    else if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
+  else if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
     {
-        if (this->Logic->GetNeedRealtimeImageUpdate1())
-        {
-          //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_RTIMAGE" << std::endl;
-            this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-            this->Logic1->UpdatePipeline ();
-        }
+    if (this->Logic->GetNeedRealtimeImageUpdate1())
+      {
+      //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_RTIMAGE" << std::endl;
+      this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+      this->Logic1->UpdatePipeline ();
+      }
     }
+  
+
+  // Reslice -- In-plane
+  if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_USER )
+    {
+    //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_USER" << std::endl;
+    }
+  else if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
+    {
+    //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_LOCATOR" << std::endl;
+    this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+    this->Logic2->UpdatePipeline ();
+    }
+  else if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
+    {
+    if (this->Logic->GetNeedRealtimeImageUpdate2())
+      {
+      //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_RTIMAGE" << std::endl;
+      this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+      this->Logic2->UpdatePipeline ();
+      }
+    }
+}
 
 
-    // Reslice -- In-plane
-    if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_USER )
+void vtkProstateNavGUI::UpdateDeviceStatus()
+{
+
+  int status;
+  char label[128];
+
+  bool network = this->GetLogic()->GetConnection();
+  if (!network)
     {
-      //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_USER" << std::endl;
+    this->SoftwareStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
+    this->SoftwareStatusLabelDisp->SetValue (" NETWORK: OFF ");
     }
-    else if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
+  else
     {
-      //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_LOCATOR" << std::endl;
-        this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-        this->Logic2->UpdatePipeline ();
+    this->SoftwareStatusLabelDisp->SetBackgroundColor(0.0, 0.5, 1.0);
+    this->SoftwareStatusLabelDisp->SetValue (" NETWORK: ON ");
     }
-    else if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
+
+  status = this->GetLogic()->GetRobotWorkPhase();
+  if (status < 0)
     {
-        if (this->Logic->GetNeedRealtimeImageUpdate2())
-        {
-          //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_RTIMAGE" << std::endl;
-            this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-            this->Logic2->UpdatePipeline ();
-        }
+    this->RobotStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
+    this->RobotStatusLabelDisp->SetValue (" ROBOT: OFF ");
     }
+  else
+    {
+    sprintf(label, "RBT: %s", vtkProstateNavGUI::WorkPhaseStr[status]);
+    this->RobotStatusLabelDisp->SetValue(label);
+    this->RobotStatusLabelDisp->SetBackgroundColor(vtkProstateNavGUI::WorkPhaseColorActive[status][0],
+                                                   vtkProstateNavGUI::WorkPhaseColorActive[status][1],
+                                                   vtkProstateNavGUI::WorkPhaseColorActive[status][2]);
+    }
+
+  status = this->GetLogic()->GetScannerWorkPhase();
+  if (status < 0)
+    {
+    this->ScannerStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
+    this->ScannerStatusLabelDisp->SetValue (" SCANNER: OFF ");
+    }
+  else
+    {
+    sprintf(label, "SCNR: %s", vtkProstateNavGUI::WorkPhaseStr[status]);
+    this->ScannerStatusLabelDisp->SetValue(label);
+    this->ScannerStatusLabelDisp->SetBackgroundColor(vtkProstateNavGUI::WorkPhaseColorActive[status][0],
+                                                     vtkProstateNavGUI::WorkPhaseColorActive[status][1],
+                                                     vtkProstateNavGUI::WorkPhaseColorActive[status][2]);
+
+    }
+
 }
 
 
