@@ -7,6 +7,8 @@ SET(TumorGrowth_SRCS
   # module
   vtkTumorGrowthGUI.cxx
   vtkTumorGrowthLogic.cxx 
+  # Filters
+  ${CMAKE_CURRENT_SOURCE_DIR}/Filters/vtkImageRectangularSource.cxx
   # wizard
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthSelectScanStep.cxx
@@ -31,6 +33,7 @@ INCLUDE_DIRECTORIES(
   ${TumorGrowth_SOURCE_DIR}
   ${TumorGrowth_BINARY_DIR}
   ${TumorGrowth_SOURCE_DIR}/Wizard
+  ${TumorGrowth_SOURCE_DIR}/Filters
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
