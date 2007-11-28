@@ -9,6 +9,7 @@ class vtkKWPushButton;
 class vtkSlicerModuleCollapsibleFrame;
 class vtkSlicerSliceGUI;
 class vtkRenderWindowInteractor;
+class vtkImageRectangularSource;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthROIStep : public vtkTumorGrowthStep
 {
@@ -52,12 +53,20 @@ private:
   void operator=(const vtkTumorGrowthROIStep&);
  
   void ROIReset();
+  void ROIUpdateWithNewSample(int ijkSample[3]);
+  void ROIUpdateWithNode();
+  int  ROICheck();
+
+  int ROIMapShow();
+  void ROIMapRemove();
+
   void AddROISamplingGUIObservers();
   void RemoveROISamplingGUIObservers();
  
   void RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *sliceGUI, vtkRenderWindowInteractor *rwi,int coords[3]);
 
-  int ShowROIFlag;
+  vtkImageRectangularSource *ROILabelMap;
+
 };
 
 #endif
