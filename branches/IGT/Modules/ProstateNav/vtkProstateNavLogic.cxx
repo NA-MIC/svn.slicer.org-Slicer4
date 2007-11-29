@@ -20,7 +20,11 @@
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLLinearTransformNode.h"
+#include "vtkSlicerApplication.h"
+#include "vtkSlicerVolumesGUI.h"
+#include "vtkSlicerVolumesLogic.h"
 #include "vtkSlicerColorLogic.h"
+
 
 // for DICOM read
 #include "itkImageFileReader.h"
@@ -77,19 +81,25 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->ScannerWorkPhase     = -1;
     this->Connection           = false;
 
-    this->RealtimeImageSerial = 0;
-    this->RealtimeImageOrient = vtkProstateNavLogic::SLICE_RTIMAGE_PERP;
+    this->RealtimeImageSerial  = 0;
+    this->RealtimeImageOrient  = vtkProstateNavLogic::SLICE_RTIMAGE_PERP;
 
     this->LocatorTransform     = NULL;
+    this->LocatorMatrix        = NULL;
 
+    //this->RealtimeImageUpdate  = false;
+    this->RealtimeImageUpdate  = true;
+    this->UpdateLocator        = true;
+
+                                         
 //    this->NeedRealtimeImageUpdate0 = 0;
 //    this->NeedRealtimeImageUpdate1 = 0;
 //    this->NeedRealtimeImageUpdate2 = 0;
 
 #ifdef USE_NAVITRACK
-    this->OpenTrackerStream = vtkIGTOpenTrackerStream::New();
-
+    this->OpenTrackerStream  = vtkIGTOpenTrackerStream2::New();
     this->RealtimeVolumeNode = NULL;
+    this->VolumesLogic       = NULL;
 #endif
 
     // Timer Handling
@@ -295,7 +305,7 @@ void vtkProstateNavLogic::UpdateAll()
       vid = this->RealtimeVolumeNode->GetImageData();
       }
 
-    if (vid && this->OrientationUpdate)
+    if (vid && this->RealtimeImageUpdate)
       {
       //std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
 
@@ -372,8 +382,11 @@ void vtkProstateNavLogic::UpdateAll()
         this->VolumesLogic->Modified();
         rtimgTransform->Delete();
         }
+
+      // Invoke Event for display
+      this->InvokeEvent(vtkProstateNavLogic::SliceUpdateEvent);
       
-      } //  if (vid && this->OrientationUpdate)
+      } //  if (vid && this->RealtimeImageUpdate)
     else
       {
       //std::cerr << "BrpNavGUI::UpdateAll(): no realtime image" << std::endl;
@@ -439,9 +452,12 @@ void vtkProstateNavLogic::UpdateAll()
       
       // send coordinate to the scanner
       this->OpenTrackerStream->SetTracker(pos,quat);
+
       } // if (this->ImagingControl)
 
+    //----------------------------------------------------------------
     // update the display of locator
+
     if (this->UpdateLocator)
       {
       vtkTransform *transform = NULL;
@@ -457,13 +473,6 @@ void vtkProstateNavLogic::UpdateAll()
       this->InvokeEvent(vtkProstateNavLogic::LocatorUpdateEvent);
       }
 
-    //if (!this->GUI->FreezeOrientationUpdate)
-    if (this->OrientationUpdate)
-      {
-      //this->GUI->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);  //MOVE TO GUI
-      this->InvokeEvent(vtkProstateNavLogic::SliceUpdateEvent);
-      }
-
     this->NeedRealtimeImageUpdate0 = 0;
     this->NeedRealtimeImageUpdate1 = 0;
     this->NeedRealtimeImageUpdate2 = 0;
@@ -475,14 +484,21 @@ void vtkProstateNavLogic::UpdateAll()
     std::string robotStatus;
     std::string scannerStatus;
     std::string errorStatus;
-
-    this->OpenTrackerStream->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
-
     int OldRobotWorkPhase   = this->RobotWorkPhase;
     int OldScannerWorkPhase = this->ScannerWorkPhase;
-      
-    this->RobotWorkPhase   = this->WorkPhaseStringToID(robotStatus.c_str());
-    this->ScannerWorkPhase = this->WorkPhaseStringToID(scannerStatus.c_str());
+
+    if (this->GetConnection())
+      {
+      this->OpenTrackerStream->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
+
+      this->RobotWorkPhase   = this->WorkPhaseStringToID(robotStatus.c_str());
+      this->ScannerWorkPhase = this->WorkPhaseStringToID(scannerStatus.c_str());
+      }
+    else
+      {
+      this->RobotWorkPhase   = -1;
+      this->ScannerWorkPhase = -1;
+      }
 
     if (OldRobotWorkPhase != this->RobotWorkPhase ||
         OldScannerWorkPhase != this->ScannerWorkPhase)
@@ -495,10 +511,14 @@ void vtkProstateNavLogic::UpdateAll()
 }
 
 //---------------------------------------------------------------------------
-void vtkProstateNavLogic::AddRealtimeVolumeNode(vtkSlicerVolumesLogic* volLogic, const char* name)
+void vtkProstateNavLogic::AddRealtimeVolumeNode(vtkSlicerApplication* app, const char* name)
 {
+  vtkSlicerVolumesGUI   *volGui   = (vtkSlicerVolumesGUI*)app->GetModuleGUIByName("Volumes");
+  vtkSlicerVolumesLogic* volLogic = (vtkSlicerVolumesLogic*)(volGui->GetLogic());
+
   if (this->RealtimeVolumeNode == NULL)
     {
+    this->VolumesLogic = volLogic;
     this->RealtimeVolumeNode = AddVolumeNode(volLogic, name);
     }
 }
@@ -569,6 +589,14 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
     this->Connection = true;
     this->SwitchWorkPhase(this->CurrentPhase); // To send workphase command
 
+    // Check status for robot and scanner
+    std::string robotStatus;
+    std::string scannerStatus;
+    std::string errorStatus;
+    this->OpenTrackerStream->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
+    this->RobotWorkPhase   = this->WorkPhaseStringToID(robotStatus.c_str());
+    this->ScannerWorkPhase = this->WorkPhaseStringToID(scannerStatus.c_str());
+
     this->InvokeEvent(vtkProstateNavLogic::StatusUpdateEvent);
 
 #endif //USE_NAVITRACK
@@ -630,6 +658,38 @@ int vtkProstateNavLogic::RobotMoveTo(float px, float py, float pz,
 
 #endif // USE_NAVITRACK
 }
+
+
+//---------------------------------------------------------------------------
+int vtkProstateNavLogic::RobotMoveTo(float position[3], float orientation[3])
+{
+  std::cerr << "vtkProstateNavLogic::RobotMoveTo()" << std::endl;
+
+#ifdef USE_NAVITRACK
+
+  if (this->OpenTrackerStream )
+    {
+    float px, py, pz;
+    px = position[0];
+    py = position[1];
+    pz = position[2];
+
+    // temporally, orientation set to [0, 0, 0, 1];
+    std::vector<float> ori;
+    ori.clear();
+    
+    ori.push_back(orientation[0]);
+    ori.push_back(orientation[1]);
+    ori.push_back(orientation[2]);
+    ori.push_back(orientation[3]);
+    
+    this->OpenTrackerStream->SetOrientationforRobot(px, py, pz, ori,
+                                                    BRPTPR_TARGET, "command");
+    }
+
+#endif // USE_NAVITRACK
+}
+
 
 //---------------------------------------------------------------------------
 int vtkProstateNavLogic::ScanStart()

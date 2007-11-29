@@ -151,8 +151,6 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   this->Control1 = NULL; 
   this->Control2 = NULL; 
   
-  this->VolumesLogic = NULL;
-  
   this->NeedOrientationUpdate0 = 0;
   this->NeedOrientationUpdate1 = 0;
   this->NeedOrientationUpdate2 = 0;
@@ -789,11 +787,11 @@ void vtkProstateNavGUI::ProcessLogicEvents ( vtkObject *caller,
       {
       this->UpdateLocator();
       }
-    if (event == vtkProstateNavLogic::StatusUpdateEvent)
+    else if (event == vtkProstateNavLogic::StatusUpdateEvent)
       {
       this->UpdateDeviceStatus();
       }
-    if (event == vtkProstateNavLogic::SliceUpdateEvent)
+    else if (event == vtkProstateNavLogic::SliceUpdateEvent)
       {
       this->UpdateSliceDisplay();
       }
@@ -826,11 +824,7 @@ void vtkProstateNavGUI::Enter()
   this->Control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
   this->Control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
   
-  vtkSlicerApplication  *app          = (vtkSlicerApplication *)this->GetApplication();
-  vtkSlicerVolumesGUI   *volGui       = (vtkSlicerVolumesGUI*)app->GetModuleGUIByName("Volumes");
-  vtkSlicerVolumesLogic *VolumesLogic = (vtkSlicerVolumesLogic*)(volGui->GetLogic());
-  
-  this->GetLogic()->AddRealtimeVolumeNode(VolumesLogic, "Realtime");
+  this->GetLogic()->AddRealtimeVolumeNode((vtkSlicerApplication *)this->GetApplication(), "Realtime");
   
   ChangeWorkPhase(vtkProstateNavLogic::StartUp, 1);
   
@@ -997,9 +991,13 @@ void vtkProstateNavGUI::BuildGUIForWizardFrame()
       {
       this->WizardSteps[i]->SetGUI(this);
       this->WizardSteps[i]->SetLogic(this->Logic);
-      this->WizardSteps[i]->SetTitleBackgroundColor(WorkPhaseColor[i][0],
-                                                    WorkPhaseColor[i][1],
-                                                    WorkPhaseColor[i][2]);
+
+      // Set color for the wizard title:
+      // J.T. 11/28/2007: Commented out. It was too colorful...
+
+      //this->WizardSteps[i]->SetTitleBackgroundColor(WorkPhaseColor[i][0],
+      //                                              WorkPhaseColor[i][1],
+      //                                              WorkPhaseColor[i][2]);
       wizard_workflow->AddNextStep(this->WizardSteps[i]);
       }
 
@@ -1467,7 +1465,6 @@ void vtkProstateNavGUI::UpdateAll()
 
 //----------------------------------------------------------------------------
 void vtkProstateNavGUI::UpdateLocator()
-//void vtkProstateNavGUI::UpdateLocator(vtkTransform *transform, vtkTransform *transform_cb2)
 {
 
   //vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
@@ -1486,7 +1483,7 @@ void vtkProstateNavGUI::UpdateLocator()
       {
       vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
       lnode->SetAndObserveMatrixTransformToParent(this->GetLogic()->GetLocatorTransform()->GetMatrix());
-      this->GetMRMLScene()->Modified();
+      //this->GetMRMLScene()->Modified();   // J.T. 11/28/07: Commented out to improve performance (seems working without this)
       }
     }
 
@@ -1495,12 +1492,8 @@ void vtkProstateNavGUI::UpdateLocator()
 
 //----------------------------------------------------------------------------
 void vtkProstateNavGUI::UpdateSliceDisplay()
-/*
-void vtkProstateNavGUI::UpdateSliceDisplay(float nx, float ny, float nz, 
-                                           float tx, float ty, float tz, 
-                                           float px, float py, float pz)
-*/
 {
+
   float px, py, pz, nx, ny, nz, tx, ty, tz;
 
   vtkMatrix4x4* matrix = this->GetLogic()->GetLocatorMatrix();
@@ -1596,6 +1589,8 @@ void vtkProstateNavGUI::UpdateSliceDisplay(float nx, float ny, float nz,
 
 void vtkProstateNavGUI::UpdateDeviceStatus()
 {
+  
+  std::cerr << "Updating Device Status Display .........." << std::endl;
 
   int status;
   char label[128];
@@ -1604,19 +1599,19 @@ void vtkProstateNavGUI::UpdateDeviceStatus()
   if (!network)
     {
     this->SoftwareStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
-    this->SoftwareStatusLabelDisp->SetValue (" NETWORK: OFF ");
+    this->SoftwareStatusLabelDisp->SetValue(" NETWORK: OFF ");
     }
   else
     {
     this->SoftwareStatusLabelDisp->SetBackgroundColor(0.0, 0.5, 1.0);
-    this->SoftwareStatusLabelDisp->SetValue (" NETWORK: ON ");
+    this->SoftwareStatusLabelDisp->SetValue(" NETWORK: ON ");
     }
 
   status = this->GetLogic()->GetRobotWorkPhase();
   if (status < 0)
     {
     this->RobotStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
-    this->RobotStatusLabelDisp->SetValue (" ROBOT: OFF ");
+    this->RobotStatusLabelDisp->SetValue(" ROBOT: OFF ");
     }
   else
     {
@@ -1630,8 +1625,8 @@ void vtkProstateNavGUI::UpdateDeviceStatus()
   status = this->GetLogic()->GetScannerWorkPhase();
   if (status < 0)
     {
+    this->ScannerStatusLabelDisp->SetValue(" SCANNER: OFF ");
     this->ScannerStatusLabelDisp->SetBackgroundColor(0.9, 0.9, 0.9);
-    this->ScannerStatusLabelDisp->SetValue (" SCANNER: OFF ");
     }
   else
     {

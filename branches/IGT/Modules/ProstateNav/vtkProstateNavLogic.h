@@ -22,10 +22,11 @@
 #define __vtkProstateNavLogic_h
 
 #include "vtkProstateNavWin32Header.h"
+
 #include "vtkSlicerBaseLogic.h"
 #include "vtkSlicerLogic.h"
 #include "vtkSlicerVolumesLogic.h"
-
+#include "vtkSlicerApplication.h"
 #include "vtkCallbackCommand.h"
 
 #include "vtkMRMLFiducialListNode.h"
@@ -37,7 +38,7 @@
 #endif
 
 #ifdef USE_NAVITRACK
-  #include "vtkIGTOpenTrackerStream.h"
+  #include "vtkIGTOpenTrackerStream2.h"
 #endif
 
 
@@ -105,7 +106,9 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
 
   void PrintSelf(ostream&, vtkIndent);
   
-  void AddRealtimeVolumeNode(vtkSlicerVolumesLogic*, const char*);
+  void AddRealtimeVolumeNode(vtkSlicerApplication* app, const char* name);
+
+  //void AddRealtimeVolumeNode(vtkSlicerVolumesLogic*, const char*);
   int  SwitchWorkPhase(int);
   int  IsPhaseTransitable(int);
   
@@ -116,6 +119,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   int  RobotMoveTo(float px, float py, float pz,
                    float nx, float ny, float nz,
                    float tx, float ty, float tz);
+  int  RobotMoveTo(float position[3], float orientation[4]);
   
   int  ScanStart();
   int  ScanPause();
@@ -138,7 +142,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   int   PhaseComplete;
   bool  Connected;
   bool  PhaseTransitionCheck;
-  bool  OrientationUpdate;
+  bool  RealtimeImageUpdate;
   
   int   NeedRealtimeImageUpdate0;
   int   NeedRealtimeImageUpdate1;
@@ -163,7 +167,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   int   ScannerWorkPhase;
   
 #ifdef USE_NAVITRACK
-  vtkIGTOpenTrackerStream *OpenTrackerStream;
+  vtkIGTOpenTrackerStream2 *OpenTrackerStream;
 #endif
 
  protected:

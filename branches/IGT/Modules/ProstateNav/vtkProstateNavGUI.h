@@ -31,7 +31,6 @@
 #include "vtkIGTPat2ImgRegistration.h"
 #include "vtkCallbackCommand.h"
 #include "vtkSlicerInteractorStyle.h"
-#include "vtkSlicerVolumesLogic.h"
 
 #include <string>
 
@@ -221,8 +220,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   vtkSlicerSliceControllerWidget *Control0;
   vtkSlicerSliceControllerWidget *Control1;
   vtkSlicerSliceControllerWidget *Control2;
-
-  vtkSlicerVolumesLogic *VolumesLogic;
 
   //BTX
   std::string LocatorModelID;

@@ -90,7 +90,7 @@ void vtkProstateNavConfigurationStep::ShowUserInterface()
     this->LoadConfigButtonNT = vtkKWLoadSaveButtonWithLabel::New();
     this->LoadConfigButtonNT->SetParent(this->ConfigNTFrame);
     this->LoadConfigButtonNT->Create();
-    this->LoadConfigButtonNT->SetWidth(30);
+    //this->LoadConfigButtonNT->SetWidth(30);
     this->LoadConfigButtonNT->SetLabelText("Config. File:");
     this->LoadConfigButtonNT->GetWidget()->SetText ("Browse Config File");
     this->LoadConfigButtonNT->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
@@ -126,7 +126,6 @@ void vtkProstateNavConfigurationStep::ShowUserInterface()
       ->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand);
 
     }
-
 
 
   this->Script( "pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
@@ -174,21 +173,16 @@ void vtkProstateNavConfigurationStep::ProcessGUIEvents( vtkObject *caller,
            && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
 
-    if (this->ConnectCheckButtonNT->GetSelectedState())
+    if (this->ConnectCheckButtonNT->GetSelectedState() && this->Logic)
       {
       // Activate NaviTrack Stream
-      if (this->Logic)
-        {
-        const char* filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
-        this->Logic->ConnectTracker(filename);
-        }
+      const char* filename = this->LoadConfigButtonNT->GetWidget()->GetFileName();
+      this->Logic->ConnectTracker(filename);
       }
     else
       {
-      if (this->Logic)
-        {
-        this->Logic->DisconnectTracker();
-        }
+      // Deactivate NaviTrack Stream
+      this->Logic->DisconnectTracker();
       }
     }
 
