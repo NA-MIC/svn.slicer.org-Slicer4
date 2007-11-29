@@ -4,10 +4,11 @@
 #include "vtkProstateNavStep.h"
 
 class vtkKWFrame;
-class vtkKWPushButton;
-class vtkKWEntryWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
 class vtkKWMatrixWidgetWithLabel;
+class vtkKWPushButton;
+class vtkMRMLSelectionNode;
+class vtkMRMLFiducialListNode;
 
 class VTK_PROSTATENAV_EXPORT vtkProstateNavTargetingStep : public vtkProstateNavStep
 {
@@ -18,6 +19,12 @@ public:
 
   virtual void ShowUserInterface();
   virtual void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);  
+  virtual void ProcessMRMLEvents(vtkObject *caller, unsigned long event, void *callData);
+
+  void UpdateMRMLObserver(vtkMRMLSelectionNode* selnode);
+  void OnMultiColumnListUpdate(int row, int col, char * str);
+  void OnMultiColumnListSelectionChanged();
+  void SetGUIFromList(vtkMRMLFiducialListNode * activeFiducialListNode);
 
 protected:
   vtkProstateNavTargetingStep();
@@ -28,9 +35,9 @@ protected:
   vtkKWFrame *TargetListFrame;
   vtkKWFrame *TargetControlFrame;
 
-  vtkKWMultiColumnListWithScrollbars* TargetListColumnList;
+  vtkKWMultiColumnListWithScrollbars* MultiColumnList;
   vtkKWMatrixWidgetWithLabel* NeedlePositionMatrix;
-  vtkKWMatrixWidgetWithLabel* NeedleNormalMatrix;
+  vtkKWMatrixWidgetWithLabel* NeedleOrientationMatrix;
   vtkKWPushButton *MoveButton;
   vtkKWPushButton *StopButton;
 

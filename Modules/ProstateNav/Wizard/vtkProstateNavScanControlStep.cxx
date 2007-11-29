@@ -169,6 +169,7 @@ void vtkProstateNavScanControlStep::ShowUserInterface()
       selnode = this->GetGUI()->GetApplicationLogic()->GetSelectionNode();
       }
     this->UpdateMRMLObserver(selnode);
+    this->SetGUIFromList(this->GetGUI()->GetFiducialListNode());
     }
   else
     {
@@ -319,7 +320,6 @@ void vtkProstateNavScanControlStep::ProcessMRMLEvents(vtkObject *caller,
   else if (node == this->GetGUI()->GetFiducialListNode() 
            && event == vtkMRMLFiducialListNode::FiducialModifiedEvent)
     {
-    // Update table here !!!
     SetGUIFromList(this->GetGUI()->GetFiducialListNode());
     }
   
