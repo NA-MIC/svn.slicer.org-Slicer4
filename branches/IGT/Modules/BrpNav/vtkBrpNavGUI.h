@@ -28,7 +28,7 @@
 #include <string>
 
 #ifdef USE_NAVITRACK
-#include "vtkIGTOpenTrackerStream.h"
+#include "vtkIGTOpenTrackerStream2.h"
 
 /*
 #define PREP_PHASE     1
@@ -428,7 +428,7 @@ class VTK_BRPNAV_EXPORT vtkBrpNavGUI : public vtkSlicerModuleGUI
     void TrackerLoop();
 
 #ifdef USE_NAVITRACK
-    vtkIGTOpenTrackerStream *OpenTrackerStream;
+    vtkIGTOpenTrackerStream2 *OpenTrackerStream;
     void SetOpenTrackerConnectionParameters();
  
     void SetOpenTrackerConnectionCoordandOrient();
