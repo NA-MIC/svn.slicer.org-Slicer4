@@ -220,7 +220,7 @@ vtkBrpNavGUI::vtkBrpNavGUI ( )
     
 
 #ifdef USE_NAVITRACK
-    this->OpenTrackerStream = vtkIGTOpenTrackerStream::New();
+    this->OpenTrackerStream = vtkIGTOpenTrackerStream2::New();
 #endif
 #ifdef USE_IGSTK
     this->IGSTKStream = vtkIGTIGSTKStream::New();
