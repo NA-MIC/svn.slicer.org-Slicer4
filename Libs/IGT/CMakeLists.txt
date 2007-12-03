@@ -25,6 +25,10 @@ IF(USE_NAVITRACK)
     vtkIGTPat2ImgRegistration.cxx
     vtkIGTOpenTrackerStream.cxx
     vtkIGTOpenTrackerStream2.cxx
+    vtkIGTMessageAttributeBase.cxx
+    vtkIGTMessageAttributeSet.cxx
+#    vtkIGTMessageGenericAttribute.cxx
+    vtkIGTMessageImageDataAttribute.cxx
   )
   SET(TRACKING_INTERFACE_INCLUDE_DIR
     ${NAVITRACK_INC}
