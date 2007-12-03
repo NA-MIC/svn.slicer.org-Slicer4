@@ -91,6 +91,7 @@ extern "C" {
 //#define QDEC_DEBUG
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
+//#define STEREOOPTIMIZER_DEBUG
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 #include "vtkSlicerFiberBundleLogic.h"
@@ -158,6 +159,11 @@ extern "C" {
 #if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
 #include "vtkLabelStatisticsGUI.h"
 #include "vtkLabelStatisticsLogic.h"
+#endif
+
+#if !defined(STEREOOPTIMIZER_DEBUG) && defined(BUILD_MODULES)
+#include "vtkStereoOptimizerGUI.h"
+#include "vtkStereoOptimizerLogic.h"
 #endif
 
 
@@ -235,6 +241,9 @@ extern "C" int Scriptedmodule_Init(Tcl_Interp *interp);
 #endif
 #ifndef LABELSTATISTICS_DEBUG
 extern "C" int Labelstatistics_Init(Tcl_Interp *interp);
+#endif
+#ifndef STEREOOPTIMIZER_DEBUG
+extern "C" int Stereooptimizer_Init(Tcl_Interp *interp);
 #endif
 
 struct SpacesToUnderscores
@@ -733,6 +742,9 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 #if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
     Labelstatistics_Init(interp);
+#endif
+#if !defined(STEREOOPTIMIZER_DEBUG) && defined(BUILD_MODULES)
+    Stereooptimizer_Init(interp);
 #endif
 
   // first call to GetInstance will create the Application
@@ -1429,6 +1441,28 @@ int Slicer3_main(int argc, char *argv[])
     labelStatsGUI->AddGUIObservers ( );
 #endif
 
+#if !defined(STEREOOPTIMIZER_DEBUG) && defined(BUILD_MODULES)
+    // --- StereoOptimizer  module
+    slicerApp->SplashMessage("Initializing StereoOptimizer Module...");
+    vtkStereoOptimizerGUI *stereoOptGUI = vtkStereoOptimizerGUI::New ( );
+    vtkStereoOptimizerLogic *stereoOptLogic  = vtkStereoOptimizerLogic::New ( );
+    stereoOptLogic->SetAndObserveMRMLScene ( scene );
+    stereoOptLogic->SetApplicationLogic ( appLogic );
+    //    stereoOptLogic->SetMRMLScene(scene);
+    stereoOptGUI->SetLogic ( stereoOptLogic );
+    stereoOptGUI->SetApplication ( slicerApp );
+    stereoOptGUI->SetApplicationLogic ( appLogic );
+    stereoOptGUI->SetApplicationGUI ( appGUI );
+    stereoOptGUI->SetGUIName( "StereoOptimizer" );
+    stereoOptGUI->GetUIPanel()->SetName ( stereoOptGUI->GetGUIName ( ) );
+    stereoOptGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    stereoOptGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( stereoOptGUI );
+    stereoOptGUI->BuildGUI ( );
+    stereoOptGUI->AddGUIObservers ( );
+#endif
+
+
 #if !defined(DAEMON_DEBUG) && defined(BUILD_MODULES)
     //
     // --- SlicerDaemon Module
@@ -1993,6 +2027,11 @@ int Slicer3_main(int argc, char *argv[])
     labelStatsGUI->TearDownGUI ( );
 #endif
 
+#if !defined(STEREOOPTIMIZER_DEBUG) && defined(BUILD_MODULES)
+    stereoOptGUI->RemoveGUIObservers ( );
+    stereoOptGUI->TearDownGUI ( );
+#endif
+
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     qdecModuleGUI->TearDownGUI ( );
 #endif
@@ -2112,6 +2151,10 @@ int Slicer3_main(int argc, char *argv[])
 
 #if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
     labelStatsGUI->Delete ( );
+#endif
+
+#if !defined(STEREOOPTIMIZER_DEBUG) && defined(BUILD_MODULES)
+    stereoOptGUI->Delete ( );
 #endif
 
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
@@ -2235,6 +2278,11 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
     labelStatsLogic->SetAndObserveMRMLScene ( NULL );
     labelStatsLogic->Delete ( );
+#endif
+
+#if !defined(STEREOOPTIMIZER_DEBUG) && defined(BUILD_MODULES)
+    stereoOptLogic->SetAndObserveMRMLScene ( NULL );
+    stereoOptLogic->Delete ( );
 #endif
 
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)

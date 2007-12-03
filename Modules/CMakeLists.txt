@@ -17,6 +17,7 @@ SUBDIRS(
   Tractography
   VolumeRendering
   Statistics   
+  StereoOptimizer
 )
 
 
