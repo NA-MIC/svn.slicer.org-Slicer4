@@ -104,6 +104,10 @@ SET(dir_list
   ${LabelStatistics_BINARY_DIR}
   ${LabelStatistics_Init_SOURCE_DIR}
   ${LabelStatistics_Init_BINARY_DIR}
+  ${StereoOptimizer_SOURCE_DIR}       
+  ${StereoOptimizer_BINARY_DIR}
+  ${StereoOptimizer_Init_SOURCE_DIR}
+  ${StereoOptimizer_Init_BINARY_DIR}
   ${WFEngineModule_SOURCE_DIR}
   ${WFEngineModule_BINARY_DIR}
   ${WFEngineModule_Init_SOURCE_DIR}
@@ -187,6 +191,13 @@ ELSE(LABELSTATISTICS)
  ADD_DEFINITIONS(-DLABELSTATISTICS_DEBUG)
 ENDIF(LABELSTATISTICS)
 
+# Option for StereoOptimizer
+IF(STEREOOPTIMIZER)
+ SET(STEREOOPTIMIZER_LINK_LIB StereoOptimizer)
+ELSE(STEREOOPTIMIZER)
+ ADD_DEFINITIONS(-DSTEREOOPTIMIZER_DEBUG)
+ENDIF(STEREOOPTIMIZER)
+
 TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     SlicerBaseLogic
     SlicerBaseGUI
@@ -208,6 +219,7 @@ IF(BUILD_MODULES)
     #   MRAblation
     ${VOLUMERENDERINGMODULE_LINK_LIB}
     ${LABELSTATISTICS_LINK_LIB} 
+    ${STEREOOPTIMIZER_LINK_LIB}    
     NeuroNav
     QueryAtlas
     CommandLineModule
