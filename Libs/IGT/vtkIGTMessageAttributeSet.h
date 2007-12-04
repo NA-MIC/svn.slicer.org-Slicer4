@@ -82,6 +82,11 @@ public:
     return AttributeMap.end();
   }
 
+  vtkIGTOpenTrackerStream* GetOpenTrackerStream(void)
+  {
+    return this->OpenTrackerStream;
+  }
+
 protected:
 
   void SetHandlerFunction(MessageHandlingFunction* func, void* argument);
@@ -93,11 +98,6 @@ protected:
     this->OpenTrackerStream = ptr;
   }
 
-  vtkIGTOpenTrackerStream* GetOpenTrackerStream(void)
-  {
-    return this->OpenTrackerStream;
-  }
-    
 private:
 
   vtkIGTOpenTrackerStream* OpenTrackerStream;
@@ -113,5 +113,8 @@ private:
 
 };
 
+//#ifdef VTK_NO_EXPLICIT_TEMPLATE_INSTANTIATION
+#include "vtkIGTMessageAttributeSet.txx"
+//#endif 
 
 #endif // IGTMESSAGEATTRIBUTESET_H

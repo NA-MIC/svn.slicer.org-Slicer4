@@ -12,13 +12,13 @@ Version:   $Revision: $
 
 =========================================================================auto=*/
 
-#include "vtkObjectFactory.h"
+#include <typeinfo>
 
+#include "vtkObjectFactory.h"
 #include "vtkIGTMessageGenericAttribute.h"
 
-
-
-vtkCxxRevisionMacro(vtkIGTMessageGenericAttribute, "$Revision: 1.0 $");
+template <class T>
+vtkCxxRevisionMacro(vtkIGTMessageGenericAttribute<T>, "$Revision: 1.0 $");
 //vtkInstantiatorNewMacro(vtkIGTMessageGenericAttribute);
 //vtkStandardNewMacro(vtkIGTMessageGenericAttribute<T>);
 
@@ -29,11 +29,11 @@ vtkIGTMessageGenericAttribute<T>* vtkIGTMessageGenericAttribute<T>::New()
   return new vtkIGTMessageGenericAttribute<T>;
 }
 
-template <class T>
-vtkIGTMessageGenericAttribute<T>* vtkIGTMessageGenericAttribute::vtkIGTMessageGenericAttribute()
-{
-  return new vtkIGTMessageGenericAttribute<T>;
-}
+//template <class T>
+//vtkIGTMessageGenericAttribute<T>* vtkIGTMessageGenericAttribute::vtkIGTMessageGenericAttribute()
+//{
+//  return new vtkIGTMessageGenericAttribute<T>;
+//}
 
 template <class T>
 vtkIGTMessageGenericAttribute<T>::vtkIGTMessageGenericAttribute()
@@ -47,7 +47,7 @@ vtkIGTMessageGenericAttribute<T>::~vtkIGTMessageGenericAttribute()
 }
 
 template <class T>
-void vtkIGTMessageGenericAttribute<T>::PrintSelf(ostream& os, vtkIndent indent);
+void vtkIGTMessageGenericAttribute<T>::PrintSelf(ostream& os, vtkIndent indent)
 {
 }
 
@@ -77,38 +77,38 @@ virtual int vtkIGTMessageGenericAttribute<T>::GetAttribute(T2* ptr)
 */
 
 template <class T> 
-virtual int vtkIGTMessageGenericAttribute<T>::SetAttribute(void* ptr)
+int vtkIGTMessageGenericAttribute<T>::SetAttribute(void* ptr)
 {
   T* attr = static_cast<T*>(ptr);
-  *(this->data) = *attr
+  this->data = *attr;
 
   return 0;
 }
 
 
 template <class T>
-virtual int vtkIGTMessageGenericAttribute<T>::GetAttribute(void* ptr)
+int vtkIGTMessageGenericAttribute<T>::GetAttribute(void* ptr)
 {
   T* attr = static_cast<T*>(ptr);
-  *attr = *(this->data);
+  *attr = this->data;
 
   return 0;
 }
 
 
 template <class T>
-virtual void vtkIGTMessageGenericAttribute<T>::ClearAttribute()
+void vtkIGTMessageGenericAttribute<T>::ClearAttribute()
 {
-  data = dynamic_cast<T> 0;
+  this->data = static_cast<T>(0);
 }
 
 template <class T>
-virtual int vtkIGTMessageGenericAttribute<T>::Alloc()
+int vtkIGTMessageGenericAttribute<T>::Alloc()
 {
 }
 
 template <class T>
-virtual int vtkIGTMessageGenericAttribute<T>::Free()
+int vtkIGTMessageGenericAttribute<T>::Free()
 {
 }
 

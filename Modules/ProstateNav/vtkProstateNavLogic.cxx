@@ -97,7 +97,8 @@ vtkProstateNavLogic::vtkProstateNavLogic()
 //    this->NeedRealtimeImageUpdate2 = 0;
 
 #ifdef USE_NAVITRACK
-    this->OpenTrackerStream  = vtkIGTOpenTrackerStream2::New();
+    this->OpenTrackerStream   = vtkIGTOpenTrackerStream::New();
+    this->OpenTrackerStream2  = vtkIGTOpenTrackerStream2::New();
     this->RealtimeVolumeNode = NULL;
     this->VolumesLogic       = NULL;
 #endif
@@ -108,8 +109,8 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
     this->DataCallbackCommand->SetCallback(vtkProstateNavLogic::DataCallback);
 #ifdef USE_NAVITRACK
-    //this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-    this->OpenTrackerStream->AddObserver(vtkCommand::ModifiedEvent, this->DataCallbackCommand);
+    //this->OpenTrackerStream2->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+    this->OpenTrackerStream2->AddObserver(vtkCommand::ModifiedEvent, this->DataCallbackCommand);
 #endif 
 
 }
@@ -125,10 +126,10 @@ vtkProstateNavLogic::~vtkProstateNavLogic()
     }
 
 #ifdef USE_NAVITRACK
-    if (this->OpenTrackerStream)
+    if (this->OpenTrackerStream2)
     {
-        this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-        this->OpenTrackerStream->Delete();
+        this->OpenTrackerStream2->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+        this->OpenTrackerStream2->Delete();
     }
 #endif
 
@@ -171,7 +172,7 @@ void vtkProstateNavLogic::UpdateAll()
   this->LocatorMatrix = NULL;
   
 #ifdef USE_NAVITRACK
-  this->LocatorMatrix = this->OpenTrackerStream->GetLocatorMatrix();
+  this->LocatorMatrix = this->OpenTrackerStream2->GetLocatorMatrix();
 #endif
 
   if (!this->LocatorMatrix)
@@ -224,7 +225,7 @@ void vtkProstateNavLogic::UpdateAll()
 
   int rtimgslice = this->RealtimeImageOrient;
   
-  if (this->OpenTrackerStream)
+  if (this->OpenTrackerStream2)
     {
 
     //----------------------------------------------------------------
@@ -310,7 +311,7 @@ void vtkProstateNavLogic::UpdateAll()
       //std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
 
       int orgSerial = this->RealtimeImageSerial;
-      this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
+      this->OpenTrackerStream2->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
       if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
         {
           
@@ -451,7 +452,7 @@ void vtkProstateNavLogic::UpdateAll()
       pos[2] = pz;
       
       // send coordinate to the scanner
-      this->OpenTrackerStream->SetTracker(pos,quat);
+      this->OpenTrackerStream2->SetTracker(pos,quat);
 
       } // if (this->ImagingControl)
 
@@ -463,13 +464,13 @@ void vtkProstateNavLogic::UpdateAll()
       vtkTransform *transform = NULL;
       vtkTransform *transform_cb2 = NULL;
 
-      this->OpenTrackerStream->SetLocatorTransforms();
+      this->OpenTrackerStream2->SetLocatorTransforms();
       /*
-      transform = this->OpenTrackerStream->GetLocatorNormalTransform();
-      transform_cb2 = this->OpenTrackerStream->GetLocatorNormalTransform();
+      transform = this->OpenTrackerStream2->GetLocatorNormalTransform();
+      transform_cb2 = this->OpenTrackerStream2->GetLocatorNormalTransform();
       */
       //this->GUI->UpdateLocator(transform, transform_cb2);  // MOVE TO GUI
-      this->LocatorTransform = this->OpenTrackerStream->GetLocatorNormalTransform();
+      this->LocatorTransform = this->OpenTrackerStream2->GetLocatorNormalTransform();
       this->InvokeEvent(vtkProstateNavLogic::LocatorUpdateEvent);
       }
 
@@ -489,7 +490,7 @@ void vtkProstateNavLogic::UpdateAll()
 
     if (this->GetConnection())
       {
-      this->OpenTrackerStream->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
+      this->OpenTrackerStream2->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
 
       this->RobotWorkPhase   = this->WorkPhaseStringToID(robotStatus.c_str());
       this->ScannerWorkPhase = this->WorkPhaseStringToID(scannerStatus.c_str());
@@ -506,7 +507,7 @@ void vtkProstateNavLogic::UpdateAll()
       this->InvokeEvent(vtkProstateNavLogic::StatusUpdateEvent);
       }
 
-    } // if (this->OpenTrackerStream)
+    } // if (this->OpenTrackerStream2)
 
 }
 
@@ -532,7 +533,7 @@ int vtkProstateNavLogic::SwitchWorkPhase(int newwp)
     this->CurrentPhase  = newwp;
     this->PhaseComplete = false;
 
-    if (this->OpenTrackerStream && this->Connection)
+    if (this->OpenTrackerStream2 && this->Connection)
       {
       // Switch work phases for the subsystems
       std::vector<std::string> keys;
@@ -543,7 +544,7 @@ int vtkProstateNavLogic::SwitchWorkPhase(int newwp)
       keys[0]   = "workphase";
       values[0] = vtkProstateNavLogic::WorkPhaseKey[newwp];
 
-      this->OpenTrackerStream->SetOpenTrackerforBRPDataFlowValveFilter(keys, values);
+      this->OpenTrackerStream2->SetOpenTrackerforBRPDataFlowValveFilter(keys, values);
       }
     
     return 1;
@@ -580,10 +581,16 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
     int   speed = 100;         // speed
     float multi = 1.0;         // mutlti factor
 
+    //this->OpenTrackerStream2->Init(filename);
+    //this->OpenTrackerStream2->SetSpeed(speed);
+    //this->OpenTrackerStream2->SetMultiFactor(multi);
+    //this->OpenTrackerStream2->SetStartTimer(1);
+    //this->OpenTrackerStream2->ProcessTimerEvents();    
+
     this->OpenTrackerStream->Init(filename);
     this->OpenTrackerStream->SetSpeed(speed);
     this->OpenTrackerStream->SetMultiFactor(multi);
-    this->OpenTrackerStream->SetStartTimer(1);
+    //this->OpenTrackerStream->SetStartTimer(1);
     this->OpenTrackerStream->ProcessTimerEvents();    
 
     this->Connection = true;
@@ -593,7 +600,7 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
     std::string robotStatus;
     std::string scannerStatus;
     std::string errorStatus;
-    this->OpenTrackerStream->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
+    this->OpenTrackerStream2->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
     this->RobotWorkPhase   = this->WorkPhaseStringToID(robotStatus.c_str());
     this->ScannerWorkPhase = this->WorkPhaseStringToID(scannerStatus.c_str());
 
@@ -607,7 +614,7 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
 int vtkProstateNavLogic::DisconnectTracker()
 {
 #ifdef USE_NAVITRACK
-    this->OpenTrackerStream->StopPolling();
+    this->OpenTrackerStream2->StopPolling();
 
     this->RobotWorkPhase       = -1;
     this->ScannerWorkPhase     = -1;
@@ -640,7 +647,7 @@ int vtkProstateNavLogic::RobotMoveTo(float px, float py, float pz,
 
 #ifdef USE_NAVITRACK
 
-  if (this->OpenTrackerStream)
+  if (this->OpenTrackerStream2)
     {
     // temporally, orientation set to [0, 0, 0, 1];
     std::vector<float> orientation;
@@ -651,7 +658,7 @@ int vtkProstateNavLogic::RobotMoveTo(float px, float py, float pz,
     orientation.push_back(0.0);
     orientation.push_back(1.0);
     
-    this->OpenTrackerStream->SetOrientationforRobot(px, py, pz,
+    this->OpenTrackerStream2->SetOrientationforRobot(px, py, pz,
                                                     orientation,
                                                     BRPTPR_TARGET, "command");
     }
@@ -667,7 +674,7 @@ int vtkProstateNavLogic::RobotMoveTo(float position[3], float orientation[3])
 
 #ifdef USE_NAVITRACK
 
-  if (this->OpenTrackerStream )
+  if (this->OpenTrackerStream2 )
     {
     float px, py, pz;
     px = position[0];
@@ -683,7 +690,7 @@ int vtkProstateNavLogic::RobotMoveTo(float position[3], float orientation[3])
     ori.push_back(orientation[2]);
     ori.push_back(orientation[3]);
     
-    this->OpenTrackerStream->SetOrientationforRobot(px, py, pz, ori,
+    this->OpenTrackerStream2->SetOrientationforRobot(px, py, pz, ori,
                                                     BRPTPR_TARGET, "command");
     }
 
@@ -698,7 +705,7 @@ int vtkProstateNavLogic::ScanStart()
   std::cerr << "vtkProstateNavLogic::ScanStart()" << std::endl;
 
 #ifdef USE_NAVITRACK
-  if (this->OpenTrackerStream)
+  if (this->OpenTrackerStream2)
     {
     std::vector<std::string> keys;
     std::vector<std::string> values;
@@ -707,7 +714,7 @@ int vtkProstateNavLogic::ScanStart()
     values.resize(1);
     values[0] = "START_SCAN";
     
-    this->OpenTrackerStream->SetOpenTrackerforScannerControll(keys, values);
+    this->OpenTrackerStream2->SetOpenTrackerforScannerControll(keys, values);
     }
 #endif // USE_NAVITRACK
   
@@ -720,7 +727,7 @@ int vtkProstateNavLogic::ScanPause()
   std::cerr << "vtkProstateNavLogic::ScanPause()" << std::endl;
 
 #ifdef USE_NAVITRACK
-  if (this->OpenTrackerStream)
+  if (this->OpenTrackerStream2)
     {
     std::vector<std::string> keys;
     std::vector<std::string> values;
@@ -729,7 +736,7 @@ int vtkProstateNavLogic::ScanPause()
     values.resize(1);
     values[0] = "PAUSE_SCAN";
     
-    this->OpenTrackerStream->SetOpenTrackerforScannerControll(keys, values);
+    this->OpenTrackerStream2->SetOpenTrackerforScannerControll(keys, values);
     }
 #endif // USE_NAVITRACK
   
@@ -742,7 +749,7 @@ int vtkProstateNavLogic::ScanStop()
   std::cerr << "vtkProstateNavLogic::ScanStop()" << std::endl;
 
 #ifdef USE_NAVITRACK
-  if (this->OpenTrackerStream)
+  if (this->OpenTrackerStream2)
     {
     std::vector<std::string> keys;
     std::vector<std::string> values;
@@ -751,7 +758,7 @@ int vtkProstateNavLogic::ScanStop()
     values.resize(1);
     values[0] = "STOP_SCAN";
     
-    this->OpenTrackerStream->SetOpenTrackerforScannerControll(keys, values);
+    this->OpenTrackerStream2->SetOpenTrackerforScannerControll(keys, values);
     }
 #endif // USE_NAVITRACK
   

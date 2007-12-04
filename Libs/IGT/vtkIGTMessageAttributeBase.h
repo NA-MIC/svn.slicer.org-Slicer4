@@ -22,6 +22,8 @@ Version:   $Revision: $
 #include "vtkObject.h"
 //#include "vtkIGTMessageGenericAttribute.h"
 
+class vtkIGTMessageAttributeSet;
+
 //BTX
 template <class T> class vtkIGTMessageGenericAttribute;
 //ETX
@@ -103,6 +105,9 @@ private:
   int     type_id;     // this may be redundant; 
                        // used in vtkIGTMessageAttributeSet class to improve searching performance
 
+  //BTX
+  friend class vtkIGTMessageAttributeSet;
+  //ETX
 };
 
 
