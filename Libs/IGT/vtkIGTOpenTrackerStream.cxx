@@ -6,10 +6,16 @@
 #include "vtkKWApplication.h"
 #include "vtkCommand.h"
 
-
-
 #include <vtksys/SystemTools.hxx>
 #include "vtkCallbackCommand.h"
+
+#include "OpenTracker/OpenTracker.h"
+#include "OpenTracker/common/CallbackModule.h"
+#include "OpenTracker/types/Image.h"
+
+#include "vtkIGTMessageGenericAttribute.h"
+#include "vtkIGTMessageImageDataAttribute.h"
+#include "vtkImageData.h"
 
 
 vtkStandardNewMacro(vtkIGTOpenTrackerStream);
@@ -144,6 +150,7 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
           }                                                   \
         break;
       //============================================================
+
       std::vector<float> fvec;
       switch(attr->GetTypeID())
         {
@@ -162,118 +169,41 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
         CASE_GETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_FLOAT,          float              );//(float*)         0.0);
         CASE_GETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_STRING,         std::string        );//(char*)NULL);
         CASE_GETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_VECTOR_FLOAT,   std::vector<float> );//fvec);
-        case vtkIGTMessageAttributeSet::TYPE_VTK_IMAGE_DATA:// vtkImageData
+        case vtkIGTMessageAttributeSet::TYPE_VTK_IMAGE_DATA:
           {
+          // Since NaviTrack Image class doesn't have size information,
+          // we suppose following size parameters:
+          float spacing[3] = {1.0, 1.0, 1.0};
+          int res[3];
+          res[0] = 256;
+          res[1] = 256;
+          res[2] = 1;
+
+          Image image = (Image)event.getAttribute((Image*)NULL, key);
+          
+          vtkImageData* vid = vtkImageData::New();
+          vid->SetDimensions(res[0], res[1], res[2]);
+          vid->SetExtent(0, res[0]-1, 0, res[1]-1, 0, 0 );
+          vid->SetNumberOfScalarComponents( 1 );
+          vid->SetOrigin( 0, 0, 0 );
+          vid->SetSpacing( spacing[0], spacing[1], spacing[2] );
+          vid->SetScalarTypeToShort();
+          vid->AllocateScalars();
+          attr->SetAttribute(vid);
           }
           break;
 
-        /*
-        case vtkIGTMessageAttributeSet::TYPE_BOOL:          // bool
-          {
-          bool data = (bool)event.getAttribute(key, false);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_CHAR:          // char
-          {
-          char data = (char)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_SIGNED_CHAR:   // signed char
-          {
-          signed char data = (signed char)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_UNSIGNED_CHAR: // unsigned char
-          {
-          unsigned char data = (unsigned char)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_INT:           // int
-          {
-          int data = (int)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_LONG:          // long
-          {
-          long data = (long)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_SHORT:         // short
-          {
-          short data = (short)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_UNSIGNED_INT:  // unsigned int
-          {
-          unsigned int data = (unsigned int)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_UNSIGNED_LONG: // unsigned long
-          {
-          unsigned long data = (unsigned long)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_UNSIGNED_SHORT:// unsigned short
-          {
-          unsigned short data = (unsigned short)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_DOUBLE:        // double
-          {
-          double data = (double)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_LONG_DOUBLE:   // long double
-          {
-          long double data = (long double)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_FLOAT:         // float
-          {
-          float data = (float)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_STRING:        // std::string
-          {
-          std::string data = (std::string)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_VECTOR_FLOAT:  // std::vector<float>
-          {
-          std::vector<float> data = (std::vector<float>)event.getAttribute(key, 0);
-          attr->SetAttribute(&data);
-          }
-          break;
-        case vtkIGTMessageAttributeSet::TYPE_VTK_IMAGE_DATA:// vtkImageData
-          {
-          }
-          break;
-        */
         default:
           break;
         }
-
       }
     }
   
   vtkIGTMessageAttributeSet::MessageHandlingFunction* handler = attrSet->GetHandlerFunction();
+  void* argument = attrSet->GetHandlerArgument();
   if (handler)
     {
-    handler(attrSet);
+      handler(attrSet, argument);
     }
 
 }
@@ -281,10 +211,11 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
 
 void vtkIGTOpenTrackerStream::AddCallback(const char* cbname,
                                           vtkIGTMessageAttributeSet::MessageHandlingFunction* func,
-                                          vtkIGTMessageAttributeSet* attrSet)
+                                          vtkIGTMessageAttributeSet* attrSet,
+                                          void* arg)
 {
     attrSet->SetOpenTrackerStream(this);
-    attrSet->SetHandlerFunction(func);
+    attrSet->SetHandlerFunction(func, arg);
     this->AttributeSetMap[cbname] = attrSet;
 }
 

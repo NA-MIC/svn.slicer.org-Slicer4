@@ -45,7 +45,8 @@ public:
     //BTX
     void AddCallback(const char* cbname,
                      vtkIGTMessageAttributeSet::MessageHandlingFunction* func,
-                     vtkIGTMessageAttributeSet* attrSet);
+                     vtkIGTMessageAttributeSet* attrSet,
+                     void* arg);
     //ETX
 
     void StopPulling();

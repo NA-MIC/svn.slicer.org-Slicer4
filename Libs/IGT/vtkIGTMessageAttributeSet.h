@@ -52,7 +52,7 @@ public:
   //BTX
   typedef std::map<std::string, vtkIGTMessageAttributeBase*> AttributeMapType;
   typedef std::map<std::string, vtkIGTMessageAttributeSet*>  AttributeSetMap;
-  typedef void MessageHandlingFunction(vtkIGTMessageAttributeSet*);
+  typedef void MessageHandlingFunction(vtkIGTMessageAttributeSet*, void*);
   typedef AttributeMapType::iterator iterator;
   //ETX
 
@@ -67,7 +67,7 @@ public:
 
   //BTX
   template <typename T>
-  void AddAttribute(const char* key, const char* type_name);
+  void AddAttribute(const char* key, T* dummy);
   
   template <typename T>
   int GetAttribute(const char* key, T* ptr);
@@ -84,8 +84,9 @@ public:
 
 protected:
 
-  void SetHandlerFunction(MessageHandlingFunction* func);
+  void SetHandlerFunction(MessageHandlingFunction* func, void* argument);
   MessageHandlingFunction* GetHandlerFunction();
+  void* GetHandlerArgument();
 
   void SetOpenTrackerStream(vtkIGTOpenTrackerStream* ptr)
   {
@@ -101,9 +102,11 @@ private:
 
   vtkIGTOpenTrackerStream* OpenTrackerStream;
   MessageHandlingFunction* HandlerFunction;
+  void*                    HandlerArgument;
 
   //BTX
   AttributeMapType         AttributeMap;
+
   friend class vtkIGTOpenTrackerStream;
   //ETX
 
