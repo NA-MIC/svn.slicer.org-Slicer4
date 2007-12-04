@@ -59,6 +59,7 @@ vtkSlicerVolumesGUI::vtkSlicerVolumesGUI ( )
     this->InfoFrame = NULL;
     this->OptionFrame = NULL;
     this->SaveFrame = NULL;
+    this->GradientFrame = NULL;
 
     this->ScalarDisplayFrame = NULL;
     this->LabelMapDisplayFrame = NULL;
@@ -73,6 +74,7 @@ vtkSlicerVolumesGUI::vtkSlicerVolumesGUI ( )
     this->ApplyButton=NULL;
 
     this->VolumeFileHeaderWidget = NULL;
+    this->GradientEditorWidget = NULL;
 
     NACLabel = NULL;
     NAMICLabel = NULL;
@@ -208,6 +210,19 @@ vtkSlicerVolumesGUI::~vtkSlicerVolumesGUI ( )
     this->DisplayFrame->Delete ( );
     this->DisplayFrame = NULL;
     }
+  if ( this->GradientFrame )
+    {
+    this->GradientFrame->SetParent ( NULL );
+    this->GradientFrame->Delete ( );
+    this->GradientFrame = NULL;
+    }
+  
+      if ( this->GradientEditorWidget )
+    {
+    this->GradientEditorWidget->SetParent ( NULL );
+    this->GradientEditorWidget->Delete ( );
+    this->GradientEditorWidget = NULL;
+    }
   if ( this->InfoFrame )
     {
     this->InfoFrame->SetParent ( NULL );
@@ -264,6 +279,7 @@ void vtkSlicerVolumesGUI::PrintSelf ( ostream& os, vtkIndent indent )
     os << indent << "DisplayFrame: " << this->GetDisplayFrame ( ) << "\n";    
     os << indent << "OptionFrame: " << this->GetOptionFrame ( ) << "\n";
     os << indent << "SaveFrame: " << this->GetSaveFrame ( ) << "\n";
+    //os << indent << "GradientFrame: " << this->GradientFrame ( ) << "\n";
     // print widgets?
 }
 
@@ -957,6 +973,25 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
                  dtiVDW->GetWidgetName(), this->DTIDisplayFrame->GetWidgetName());
 
     this->VolumeDisplayWidget = this->scalarVDW;
+
+
+    // ---
+    // Gradient FRAME
+    this->GradientFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+    this->GradientFrame->SetParent ( page );
+    this->GradientFrame->Create ( );
+    this->GradientFrame->SetLabelText ("DWI Gradient Editor");
+    this->GradientFrame->CollapseFrame ( );
+    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+                  this->GradientFrame->GetWidgetName(), page->GetWidgetName());
+
+    this->GradientEditorWidget = vtkSlicerGradientEditorWidget::New ( );
+    //this->GradientEditorWidget->AddNodeSelectorWidgetOff();
+    this->GradientEditorWidget->SetMRMLScene(this->GetMRMLScene() );
+    this->GradientEditorWidget->SetParent ( this->GradientFrame->GetFrame() );
+    this->GradientEditorWidget->Create ( );
+    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+                  this->GradientEditorWidget->GetWidgetName(), this->GradientFrame->GetFrame()->GetWidgetName());
 
     // ---
     // Info FRAME            

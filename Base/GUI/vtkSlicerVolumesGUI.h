@@ -18,6 +18,7 @@
 #include "vtkSlicerDiffusionTensorVolumeDisplayWidget.h"
 #include "vtkSlicerScalarVolumeDisplayWidget.h"
 #include "vtkSlicerLabelMapVolumeDisplayWidget.h"
+#include "vtkSlicerGradientEditorWidget.h"
 
 #include "vtkSlicerVolumeHeaderWidget.h"
 
@@ -26,7 +27,6 @@ class vtkKWLoadSaveButtonWithLabel;
 class vtkKWLoadSaveButton;
 class vtkKWEntryWithLabel;
 class vtkSlicerModuleCollapsibleFrame;
-class vtkSlicerVolumeFileHeaderWidget;
 class vtkSlicerVolumeFileHeaderWidget;
 
 // Description:
@@ -128,6 +128,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     vtkSlicerModuleCollapsibleFrame *InfoFrame;
     vtkSlicerModuleCollapsibleFrame *OptionFrame;
     vtkSlicerModuleCollapsibleFrame *SaveFrame;
+    vtkSlicerModuleCollapsibleFrame *GradientFrame;
 
     vtkKWFrame *LabelMapDisplayFrame;
     vtkKWFrame *ScalarDisplayFrame;
@@ -144,7 +145,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     vtkSlicerDiffusionTensorVolumeDisplayWidget *dtiVDW;
     vtkSlicerVolumeHeaderWidget *VolumeHeaderWidget;
     vtkSlicerVolumeFileHeaderWidget *VolumeFileHeaderWidget;
-
+    vtkSlicerGradientEditorWidget *GradientEditorWidget;
 
     vtkKWLabel *NACLabel;
     vtkKWLabel *NAMICLabel;
