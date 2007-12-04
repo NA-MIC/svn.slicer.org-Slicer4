@@ -11,6 +11,7 @@ SET(ProstateNav_SRCS
   # module
   vtkProstateNavLogic.cxx
   vtkProstateNavGUI.cxx
+  vtkProstateNavDataStream.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavConfigurationStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavScanControlStep.cxx

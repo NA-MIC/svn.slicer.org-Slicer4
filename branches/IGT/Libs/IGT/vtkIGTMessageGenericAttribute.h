@@ -62,9 +62,9 @@ private:
 
 };
 
-#ifdef VTK_NO_EXPLICIT_TEMPLATE_INSTANTIATION
+//#ifdef VTK_NO_EXPLICIT_TEMPLATE_INSTANTIATION
 #include "vtkIGTMessageGenericAttribute.txx"
-#endif 
+//#endif 
 
 
 #endif //IGTMESSAGEGENERICATTRIBUTE_H
