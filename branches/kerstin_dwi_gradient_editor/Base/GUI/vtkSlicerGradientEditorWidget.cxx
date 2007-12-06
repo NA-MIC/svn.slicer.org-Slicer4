@@ -12,8 +12,11 @@
 #include "vtkKWEntry.h"
 #include "vtkKWLabel.h"
 #include "vtkKWComboBox.h"
+#include "vtkKWTextWithScrollbars.h"
 #include "vtkKWText.h"
 #include "vtkKWCheckButton.h"
+#include "vtkKWLoadSaveButtonWithLabel.h"
+#include "vtkKWLoadSaveDialog.h"
 
 #include "vtkSlicerGradientEditorWidget.h"
 #include "vtkSlicerNodeSelectorWidget.h"
@@ -187,12 +190,19 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
         this->MeasurementFrame->GetWidgetName());
 
+    // Create Checkbutton1
+    this->EnableMatrix = vtkKWCheckButton::New();
+    this->EnableMatrix->SetParent(this->MeasurementFrame->GetFrame());
+    this->EnableMatrix->SetText("Enable Matrix");
+    this->EnableMatrix->Create();
+
     // Create matrix for measurement frame
     this->Matrix = vtkKWEntrySet::New();
     this->Matrix->SetParent(this->MeasurementFrame->GetFrame());
     this->Matrix->Create();
     this->Matrix->SetMaximumNumberOfWidgetsInPackingDirection(3);
-    this->Matrix->SetPadX(6);
+    this->Matrix->SetPadX(10);
+    this->Matrix->SetWidgetsPadX(4);
 
     for (int i=0; i<9; i++){
         this->Matrix->AddWidget(i);
@@ -266,23 +276,26 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
     this->Angle->AddValue("+180");
     this->Angle->AddValue("-180");
 
-    this->Script("grid %s -row 0 -column 0 -columnspan 3 -rowspan 3 -sticky nes", 
+    
+    this->Script("grid %s -row 0 -column 0 -columnspan 3 -sticky n", 
+        this->EnableMatrix->GetWidgetName());
+    this->Script("grid %s -row 1 -column 0 -columnspan 3 -rowspan 3 -sticky nes", 
         this->Matrix->GetWidgetName());
-    this->Script("grid %s -row 3 -column 0 -sticky n", 
+    this->Script("grid %s -row 4 -column 0 -sticky n", 
         this->Checkbutton1->GetWidgetName());
-    this->Script("grid %s -row 3 -column 1 -sticky n", 
+    this->Script("grid %s -row 4 -column 1 -sticky n", 
         this->Checkbutton2->GetWidgetName());
-    this->Script("grid %s -row 3 -column 2 -sticky n", 
+    this->Script("grid %s -row 4 -column 2 -sticky n", 
         this->Checkbutton3->GetWidgetName());
-    this->Script("grid %s -row 2 -column 3 -sticky ne", 
+    this->Script("grid %s -row 3 -column 3 -sticky ne", 
         this->Negative->GetWidgetName());
-    this->Script("grid %s -row 1 -column 3 -sticky ne", 
+    this->Script("grid %s -row 2 -column 3 -sticky ne", 
         this->Swap->GetWidgetName());
-    this->Script("grid %s -row 0 -column 3 -sticky ne", 
+    this->Script("grid %s -row 1 -column 3 -sticky ne", 
         this->Rotate->GetWidgetName());
-    this->Script("grid %s -row 0 -column 4 -sticky ne", 
+    this->Script("grid %s -row 1 -column 4 -sticky ne", 
         this->LabelAngle->GetWidgetName());
-    this->Script("grid %s -row 0 -column 5 -sticky ne", 
+    this->Script("grid %s -row 1 -column 5 -sticky ne", 
         this->Angle->GetWidgetName());
 
     //Create gradient frame 
@@ -296,11 +309,22 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
 
     //#$GradientsFrame CollapseFrame
 
+     //Create load button
+    this->LoadGradientsButton = vtkKWLoadSaveButtonWithLabel::New();
+    this->LoadGradientsButton->SetParent(this->GradientsFrame->GetFrame());
+    this->LoadGradientsButton->Create();
+    this->LoadGradientsButton->SetLabelText("Load Gradients from .txt/.nrrd File");
+    this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open .txt/.nrrd File");
+    this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {Textfile} {.txt} } { {NHRDfile} {.nrrd} }");
+    this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
+    this->Script("pack %s -side top -anchor ne -padx 2 -pady 2", 
+        this->LoadGradientsButton->GetWidgetName());
+
     //Create textfield for Gradients
-    this->Gradients = vtkKWText::New();
+    this->Gradients = vtkKWTextWithScrollbars::New();
     this->Gradients->SetParent(this->GradientsFrame->GetFrame());
     this->Gradients->Create();
-    this->Gradients->SetText("DWMRI_gradient_0000:= 0 0 0 0\nDWMRI_gradient_0001:= 0 0 0 0\nDWMRI_gradient_0002:= -0.8238094 -0.4178235 -0.3830949\nDWMRI_gradient_0003:= -0.5681645 0.5019867 -0.6520725\n...");
+    this->Gradients->GetWidget()->SetText("DWMRI_b-value:=800\nDWMRI_gradient_0000:= 0 0 0 0\nDWMRI_gradient_0001:= 0 0 0 0\nDWMRI_gradient_0002:= -0.8238094 -0.4178235 -0.3830949\nDWMRI_gradient_0003:= -0.5681645 0.5019867 -0.6520725\n...");
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
         this->Gradients->GetWidgetName());
 
@@ -338,20 +362,23 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
         this->LoadsaveFrame->GetWidgetName());
 
     //Create save button
-    this->SaveButton = vtkKWLoadSaveButton::New();
+    this->SaveButton = vtkKWLoadSaveButtonWithLabel::New();
     this->SaveButton->SetParent(this->LoadsaveFrame->GetFrame());
     this->SaveButton->Create();
-    this->SaveButton->SetText("Save parameters to NHDR");
+    this->SaveButton->SetLabelText("Save parameters to NHDR");
     this->SaveButton->SetWidth(150);
     this->Script("pack %s -side top -anchor ne -padx 2 -pady 2", 
         this->SaveButton->GetWidgetName());
 
     //Create load button
-    this->LoadButton = vtkKWLoadSaveButton::New();
+    this->LoadButton = vtkKWLoadSaveButtonWithLabel::New();
     this->LoadButton->SetParent(this->LoadsaveFrame->GetFrame());
     this->LoadButton->Create();
-    this->LoadButton->SetText("Load existing NHDR");
-    this->LoadButton->SetWidth(150);
+    this->LoadButton->SetLabelText("Load existing NHDR");
+    this->LoadButton->SetWidth(150);    
+    this->LoadButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open .nrrd File");
+    this->LoadButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {NHRDfile} {.nrrd} }");
+    this->LoadButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
     this->Script("pack %s -side top -anchor ne -padx 2 -pady 2", 
         this->LoadButton->GetWidgetName());
 } 

@@ -10,9 +10,10 @@ class vtkKWCheckButtonSet;
 class vtkKWPushButton;
 class vtkKWLabel;
 class vtkKWComboBox;
-class vtkKWText;
+class vtkKWTextWithScrollbars;
 class vtkSlicerNodeSelectorWidget;
 class vtkKWCheckButton;
+class vtkKWLoadSaveButtonWithLabel;
 
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerGradientEditorWidget : public vtkSlicerWidget
 {
@@ -29,8 +30,9 @@ protected:
     // Create the widget.
     virtual void CreateWidget();
 
-    vtkKWLoadSaveButton *SaveButton;
-    vtkKWLoadSaveButton *LoadButton;
+    vtkKWLoadSaveButtonWithLabel *SaveButton;
+    vtkKWLoadSaveButtonWithLabel *LoadButton;
+    vtkKWLoadSaveButtonWithLabel *LoadGradientsButton;
     vtkKWFrameWithLabel *MeasurementFrame;
     vtkKWFrameWithLabel *TestFrame;
     vtkKWFrameWithLabel *GradientsFrame;
@@ -43,11 +45,12 @@ protected:
     vtkKWPushButton *Run;
     vtkKWLabel *LabelAngle;
     vtkKWComboBox *Angle;
-    vtkKWText *Gradients;
+    vtkKWTextWithScrollbars *Gradients;
     vtkSlicerNodeSelectorWidget *Mask;
     vtkKWCheckButton *Checkbutton1;
     vtkKWCheckButton *Checkbutton2;
     vtkKWCheckButton *Checkbutton3;
+    vtkKWCheckButton *EnableMatrix;
 
 private:
     vtkSlicerGradientEditorWidget ( const vtkSlicerGradientEditorWidget& ); // Not implemented.
