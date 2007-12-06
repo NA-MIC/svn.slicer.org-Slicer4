@@ -6,27 +6,27 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $RCSfile: vtkMRMLFESurfaceNode.h,v $
+  Module:    $RCSfile: vtkMRMLFiniteElementBoundingBoxNode.h,v $
   Date:      $Date: 2006/03/19 17:12:29 $
   Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
-#ifndef __vtkMRMLFESurfaceNode_h
-#define __vtkMRMLFESurfaceNode_h
+#ifndef __vtkMRMLFiniteElementBoundingBoxNode_h
+#define __vtkMRMLFiniteElementBoundingBoxNode_h
 
-#include "vtkMRML.h"
-#include "vtkMRMLModelNode.h"
-//#include "vtkMRMLStorageNode.h"
+//#include "vtkMRML.h"
+#include "vtkMRMLUnstructuredGridNode.h"
 
 
-class VTK_MRML_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
+
+class VTK_MRML_EXPORT vtkMRMLFiniteElementBoundingBoxNode : public vtkMRMLUnstructuredGridNode
 {
   public:
-  static vtkMRMLFESurfaceNode *New();
-  vtkTypeMacro(vtkMRMLFESurfaceNode,vtkMRMLModelNode);
+  static vtkMRMLFiniteElementBoundingBoxNode *New();
+  vtkTypeMacro(vtkMRMLFiniteElementBoundingBoxNode,vtkMRMLUnstructuredGridNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  virtual vtkMRMLModelNode* CreateNodeInstance();
+  virtual vtkMRMLFiniteElementBoundingBoxNode* CreateNodeInstance();
 
   // Description:
   // Set node attributes
@@ -44,24 +44,24 @@ class VTK_MRML_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "FESurface";};
 
-  vtkGetMacro(SurfaceDataType, int);
-  vtkSetMacro(SurfaceDataType, int);
+  vtkGetMacro(DataType, int);
+  vtkSetMacro(DataType, int);
 
-  vtkGetStringMacro(SurfaceFileName);
-  vtkSetStringMacro(SurfaceFileName);
+  vtkGetStringMacro(FileName);
+  vtkSetStringMacro(FileName);
   
-  vtkGetStringMacro(SurfaceFilePath);
-  vtkSetStringMacro(SurfaceFilePath);
+  vtkGetStringMacro(FilePath);
+  vtkSetStringMacro(FilePath);
   
 protected:
-  vtkMRMLFESurfaceNode();
-  ~vtkMRMLFESurfaceNode();
-  vtkMRMLFESurfaceNode(const vtkMRMLFESurfaceNode&);
-  void operator=(const vtkMRMLFESurfaceNode&);
+  vtkMRMLFiniteElementBoundingBoxNode();
+  ~vtkMRMLFiniteElementBoundingBoxNode();
+  vtkMRMLFiniteElementBoundingBoxNode(const vtkMRMLFiniteElementBoundingBoxNode&);
+  void operator=(const vtkMRMLFiniteElementBoundingBoxNode&);
 
-  int   SurfaceDataType;  
-  char* SurfaceFileName;
-  char* SurfaceFilePath;
+  int   DataType;  
+  char* FileName;
+  char* FilePath;
 };
 
 #endif

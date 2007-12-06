@@ -55,6 +55,7 @@ vtkMRMLFESurfaceNode::vtkMRMLFESurfaceNode()
 
    this->SurfaceDataType = 1;
    this->SurfaceFileName = NULL;
+   this->SurfaceFilePath = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -77,6 +78,11 @@ Superclass::WriteXML(of, nIndent);
     std::stringstream ss;
     ss << this->SurfaceFileName;
     of << indent << "SurfaceFileName='" << ss.str() << "' ";
+  }
+  {
+    std::stringstream ss;
+    ss << this->SurfaceFilePath;
+    of << indent << "SurfaceFilePath='" << ss.str() << "' ";
   }
 }
 
@@ -105,6 +111,12 @@ void vtkMRMLFESurfaceNode::ReadXMLAttributes(const char** atts)
       ss << attValue;
       ss >> this->SurfaceFileName;
       }
+    else if (!strcmp(attName, "SurfaceFilePath"))
+      {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> this->SurfaceFilePath;
+      }
     }
 }
 
@@ -118,7 +130,7 @@ void vtkMRMLFESurfaceNode::Copy(vtkMRMLNode *anode)
 
   this->SetSurfaceDataType(node->SurfaceDataType);
   this->SetSurfaceFileName(node->SurfaceFileName);
-
+  this->SetSurfaceFilePath(node->SurfaceFilePath);
 }
 
 //----------------------------------------------------------------------------
@@ -129,6 +141,6 @@ void vtkMRMLFESurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "SurfaceDataType:   " << this->SurfaceDataType << "\n";
   os << indent << "SurfaceFileName:   " << this->SurfaceFileName << "\n";
-
+  os << indent << "SurfaceFilePath:   " << this->SurfaceFilePath << "\n";
 }
 

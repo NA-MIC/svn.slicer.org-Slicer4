@@ -121,6 +121,7 @@ void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
     this->SurfaceMenuGroup->GetWidgetName());
 
   // generate menu items for FEMesh (which includes the mesh and bounding box)
+//  if(!this->FEMeshMenuGroup)  this->FEMeshMenuGroup = vtkKWMimxFEMeshMenuGroup::New();
   if(!this->FEMeshMenuGroup)  this->FEMeshMenuGroup = vtkKWMimxFEMeshMenuGroup::New();
 
   this->FEMeshMenuGroup->SetParent(this->Notebook->GetFrame("F E Mesh"));
