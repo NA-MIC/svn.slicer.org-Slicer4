@@ -13,6 +13,7 @@
 =========================================================================*/
 #include "vtkMeshingWorkflowMRMLNotebook.h"
 #include "vtkFESurfaceMRMLMenuGroup.h"
+#include "vtkFiniteElementMRMLMeshMenuGroup.h"
 #include "vtkMRMLScene.h"
 
 #include "vtkActor.h"
@@ -98,6 +99,7 @@ void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
   // instead of the local storage (commented out), instantiate a MRML-based list and pass the pointer to the 
   // current MRML scene to it, so it can manage the FE Surface Nodes in the current scene. 
   
+  // ---------- Setup the FE Surface Tab in the Notebook -------
   //  if(!this->SurfaceMenuGroup)  this->SurfaceMenuGroup = vtkKWMimxSurfaceMenuGroup::New();
   if(!this->SurfaceMenuGroup)  this->SurfaceMenuGroup = vtkFESurfaceMRMLMenuGroup::New();
   
@@ -120,16 +122,30 @@ void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
   this->GetApplication()->Script("pack %s -side top -anchor nw -expand y -padx 2 -pady 5", 
     this->SurfaceMenuGroup->GetWidgetName());
 
+  // ---------- Setup the FE Surface Tab in the Notebook -------
   // generate menu items for FEMesh (which includes the mesh and bounding box)
+  
 //  if(!this->FEMeshMenuGroup)  this->FEMeshMenuGroup = vtkKWMimxFEMeshMenuGroup::New();
-  if(!this->FEMeshMenuGroup)  this->FEMeshMenuGroup = vtkKWMimxFEMeshMenuGroup::New();
+  if(!this->FEMeshMenuGroup)  this->FEMeshMenuGroup = vtkFiniteElementMRMLMeshMenuGroup::New();
 
   this->FEMeshMenuGroup->SetParent(this->Notebook->GetFrame("F E Mesh"));
   this->FEMeshMenuGroup->SetMimxViewWindow(this->GetMimxViewWindow());
   this->FEMeshMenuGroup->SetApplication(this->GetApplication());
 
+  // since we are using the MRML-based version, check for the existance of the MRML scene and attach
+  // to it
+  
+  if(this->savedMRMLScene)
+  {
+    cout << "setting MRML scene for BBox and Mesh storage\n";
+    ((vtkFiniteElementMRMLMeshMenuGroup*)this->FEMeshMenuGroup)->SetMRMLSceneForStorage(this->savedMRMLScene);
+  }
+  else 
+  {
+    cerr << "Tried to initialize Surface List with null MRML scene" << endl;
+  }
+  
   this->FEMeshMenuGroup->Create();
-
   this->FEMeshMenuGroup->SetMimxViewWindow(this->GetMimxViewWindow());
 
   this->GetApplication()->Script("pack %s -side top -anchor nw  -expand y -padx 2 -pady 5", 
