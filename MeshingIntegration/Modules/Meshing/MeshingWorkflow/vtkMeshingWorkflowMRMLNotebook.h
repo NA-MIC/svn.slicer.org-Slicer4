@@ -27,10 +27,12 @@
 #include "vtkKWMimxViewWindow.h"
 #include "vtkFESurfaceMRMLMenuGroup.h"
 
+
 class vtkKWNotebook;
 class vtkKWFrameWithScrollbar;
 class vtkKWMenuButtonWithLabel;
 class vtkMRMLScene;
+class vtkFiniteElementMRMLMeshMenuGroup;
 
 class VTK_BOUNDINGBOX_EXPORT vtkMeshingWorkflowMRMLNotebook : public vtkKWCompositeWidget
 {
@@ -56,7 +58,7 @@ protected:
         vtkKWNotebook *Notebook;
         vtkKWMimxViewWindow *MimxViewWindow;
         vtkFESurfaceMRMLMenuGroup *SurfaceMenuGroup;
-        vtkKWMimxFEMeshMenuGroup *FEMeshMenuGroup;
+        vtkFiniteElementMRMLMeshMenuGroup *FEMeshMenuGroup;
         vtkMRMLScene             *savedMRMLScene;
 private:
   vtkMeshingWorkflowMRMLNotebook(const vtkMeshingWorkflowMRMLNotebook&); // Not implemented
