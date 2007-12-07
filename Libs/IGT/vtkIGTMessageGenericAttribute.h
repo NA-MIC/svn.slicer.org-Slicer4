@@ -50,6 +50,9 @@ public:
   virtual int SetAttribute(void* ptr);
   virtual int GetAttribute(void* ptr);
 
+  int SetAttribute(T* ptr);
+  int GetAttribute(T* ptr);
+
   virtual void ClearAttribute();
 
 private:

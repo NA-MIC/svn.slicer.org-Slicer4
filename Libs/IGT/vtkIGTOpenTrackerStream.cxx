@@ -11,6 +11,8 @@
 
 #include "OpenTracker/OpenTracker.h"
 #include "OpenTracker/common/CallbackModule.h"
+#include "OpenTracker/input/SlicerModule.h"
+//#include "OpenTracker/input/SlicerSource.h"
 #include "OpenTracker/types/Image.h"
 
 #include "vtkIGTMessageGenericAttribute.h"
@@ -39,6 +41,10 @@ vtkIGTOpenTrackerStream::~vtkIGTOpenTrackerStream()
 void vtkIGTOpenTrackerStream::Init(const char *configFile)
 {
     fprintf(stderr,"config file: %s\n",configFile);
+
+    // Register NaviTrack module
+    addSPLModules();
+
     this->context = new Context(1); 
     // get callback module from the context
     CallbackModule * callbackMod = (CallbackModule *)context->getModule("CallbackConfig");
@@ -57,8 +63,12 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
       {
       const char* cbname                 = iter->first.c_str();
       vtkIGTMessageAttributeSet* attrSet = iter->second;
+      std::cerr << "Adding Callback: " << cbname << std::endl;
+
       callbackMod->setCallback(cbname, (OTCallbackFunction*)&GenericCallback, (void*)attrSet);
       }
+
+    
 
     context->start();
 }
@@ -143,9 +153,10 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
 
       //========== Macro for switch(attr->GetTypeID()) {} ==========
       #define CASE_GETATTRIB_TYPE(TYPE_ID, TYPE)       \
-        case TYPE_ID:                                         \
+        case TYPE_ID:            \
           {                                                   \
-          TYPE data = (TYPE)event.getAttribute<TYPE>((TYPE*)NULL, key); \
+          TYPE data = static_cast<TYPE >(event.getAttribute<TYPE >((TYPE*)NULL, key)); \
+          std::cout << "GET ATTRIBUTE:  TYPE= " << TYPE_ID << "  key = " << key <<  "data=" << data << std::endl; \
           attr->SetAttribute(&data);                          \
           }                                                   \
         break;
@@ -220,8 +231,74 @@ void vtkIGTOpenTrackerStream::AddCallback(const char* cbname,
 }
 
 
+void vtkIGTOpenTrackerStream::SetAttributes(const char* srcName, vtkIGTMessageAttributeSet* attrSet)
+{
+  SlicerModule* module = (SlicerModule *)context->getModule("SlicerConfig");
+  //SlicerSource* source = module->getSource(srcName);
+
+  if (module != NULL)
+    {
+    ot::Event* event;
+    event = new ot::Event();   // memo by Junichi : where it deleted ?
+    
+    vtkIGTMessageAttributeSet::iterator iter;
+    for (iter = attrSet->begin(); iter != attrSet->end(); iter ++)
+      {
+      std::string key = iter->first;
+      vtkIGTMessageAttributeBase* attr = iter->second;
+      
+      //========== Macro for switch(attr->GetTypeID()) {} ==========
+      #define CASE_SETATTRIB_TYPE(TYPE_ID, TYPE)       \
+        case TYPE_ID:                      \
+          {                                                                            \
+          TYPE arg;                                                                    \
+          dynamic_cast<vtkIGTMessageGenericAttribute<TYPE>*>(attr)->GetAttribute(&arg); \
+          event->setAttribute(key, arg);                                  \
+          std::cout << "SET ATTRIBUTE:  TYPE= " << TYPE_ID << "  key = " << key <<  "vlue=" << arg << std::endl; \
+          break;\
+          }
+      //============================================================
+        
+      switch(attr->GetTypeID())
+        {
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_BOOL,           bool               );//(bool*)          false);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_CHAR,           char               );//(char*)          0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_SIGNED_CHAR,    signed char        );//(signed char*)   0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_UNSIGNED_CHAR,  unsigned char      );//(unsigned char*) 0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_INT,            int                );//(int*)           0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_LONG,           long               );//(long*)          0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_SHORT,          short              );//(short*)         0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_UNSIGNED_INT,   unsigned int       );//(unsigned int*)  0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_UNSIGNED_LONG,  unsigned long      );//(unsigned long*) 0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_UNSIGNED_SHORT, unsigned short     );//(unsigned short*)0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_DOUBLE,         double             );//(double*)        0.0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_LONG_DOUBLE,    long double        );//(long double*)   0.0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_FLOAT,          float              );//(float*)         0.0);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_STRING,         std::string        );//(char*)NULL);
+        CASE_SETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_VECTOR_FLOAT,   std::vector<float> );//fvec);
+        case vtkIGTMessageAttributeSet::TYPE_VTK_IMAGE_DATA:
+          {
+          vtkImageData* arg;
+          dynamic_cast<vtkIGTMessageImageDataAttribute*>(attr)->GetAttribute(&arg);
+          event->setAttribute(key, arg);
+          }
+          break;
+        default:
+          break;
+        }
+      }
+    event->getButton()=0;
+    event->getConfidence()=1.0;
+    module->setData(srcName, event);
+    }
+    
+}
+
+
+
 void vtkIGTOpenTrackerStream::StopPulling()
 {
+    context->stop();
     context->close();
 }
 
@@ -229,9 +306,12 @@ void vtkIGTOpenTrackerStream::StopPulling()
 
 void vtkIGTOpenTrackerStream::PullRealTime()
 {
+  if (context)
+    {
     context->pushEvents();       // push event and
     context->pullEvents();       // pull event 
-    context->stop();
+    //context->stop();
+    }
 }
 
 

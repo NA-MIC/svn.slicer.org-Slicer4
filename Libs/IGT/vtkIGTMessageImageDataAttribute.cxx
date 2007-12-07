@@ -59,18 +59,56 @@ int vtkIGTMessageImageDataAttribute::GetAttribute(T* ptr)
 
 int vtkIGTMessageImageDataAttribute::SetAttribute(void* ptr)
 {
-  vtkImageData* attr = static_cast<vtkImageData*>(ptr);
-  this->data->DeepCopy(attr);
+  if (ptr)
+    {
+    vtkImageData* attr = static_cast<vtkImageData*>(ptr);
+    this->data->DeepCopy(attr);
+    }
 
-  return 0;
+  return 1;
 }
 
 int vtkIGTMessageImageDataAttribute::GetAttribute(void* ptr)
 {
-  vtkImageData* attr = static_cast<vtkImageData*>(ptr);
-  attr->DeepCopy(this->data);
+  if (ptr)
+    {
+    vtkImageData* attr = static_cast<vtkImageData*>(ptr);
+    attr->DeepCopy(this->data);
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
+}
 
-  return 0;
+
+int vtkIGTMessageImageDataAttribute::SetAttribute(vtkImageData* ptr)
+{
+  if (ptr)
+    {
+    this->data->DeepCopy(ptr);
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
+}
+
+
+int vtkIGTMessageImageDataAttribute::GetAttribute(vtkImageData* ptr)
+{
+  if (ptr)
+    {
+    ptr->DeepCopy(this->data);
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
+
 }
 
 

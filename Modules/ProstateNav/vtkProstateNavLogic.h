@@ -40,6 +40,7 @@
 #ifdef USE_NAVITRACK
   #include "vtkIGTOpenTrackerStream2.h"
   #include "vtkIGTOpenTrackerStream.h"
+  #include "vtkProstateNavDataStream.h"
 #endif
 
 
@@ -169,7 +170,8 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   
 #ifdef USE_NAVITRACK
   vtkIGTOpenTrackerStream2 *OpenTrackerStream2;
-  vtkIGTOpenTrackerStream *OpenTrackerStream;
+  //vtkIGTOpenTrackerStream *OpenTrackerStream;
+  vtkProstateNavDataStream *OpenTrackerStream;
 #endif
 
  protected:

@@ -29,6 +29,10 @@ vtkProstateNavStep::vtkProstateNavStep()
   this->MRMLObserverManager->GetCallbackCommand()->SetCallback(vtkProstateNavStep::MRMLCallback);
   this->MRMLCallbackCommand = this->MRMLObserverManager->GetCallbackCommand();
 
+  this->TitleBackgroundColor[0] = 0.8;
+  this->TitleBackgroundColor[1] = 0.8;
+  this->TitleBackgroundColor[2] = 1.0;
+
   this->InGUICallbackFlag = 0;
   this->InMRMLCallbackFlag = 0;
 

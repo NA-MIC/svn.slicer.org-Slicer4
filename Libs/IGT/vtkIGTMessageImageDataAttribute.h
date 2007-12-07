@@ -45,6 +45,10 @@ public:
   virtual int SetAttribute(void* ptr);
   virtual int GetAttribute(void* ptr);
 
+  int SetAttribute(vtkImageData* ptr);
+  int GetAttribute(vtkImageData* ptr);
+
+
   virtual void ClearAttribute();
 
 private:

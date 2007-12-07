@@ -18,6 +18,8 @@ public:
   vtkTypeRevisionMacro(vtkProstateNavDataStream,vtkIGTOpenTrackerStream);
   void PrintSelf(ostream& os, vtkIndent indent);
 
+  vtkGetObjectMacro(NeedleMatrix,vtkMatrix4x4);
+
   //Description:
   //Constructor
   vtkProstateNavDataStream();
@@ -27,32 +29,37 @@ public:
   virtual ~vtkProstateNavDataStream();
   
   void Init(const char *configFile);
-  static void callbackF(const Node&, const Event &event, void *data);
-  static void GenericCallback(const Node &node, const Event &event, void *data);
   
-  // Register callback functions which were called from GenericCallback().
-  // AddCallback() should be called before Init();
-  //BTX
   void AddCallbacks();
-  //ETX
-
-  /*
-  void StopPulling();
-  void PullRealTime();
-  */
-
   static void OnRecieveMessageFromRobot(vtkIGTMessageAttributeSet* data, void* arg);
   static void OnRecieveMessageFromScanner(vtkIGTMessageAttributeSet* data, void* arg);
+
+  //BTX
+  std::string GetRobotStatus();
+  std::string GetScanStatus();
   
+  void SetRobotPosition(std::vector<float> pos, std::vector<float> ori);
+  void SetRobotCommand(std::string key, std::string value);
+
+  void SetScanPosition(std::vector<float> pos, std::vector<float> ori);
+  void SetScanCommand(std::string key, std::string value);
+  //ETX
+
+  vtkTransform* GetNeedleTransform();
+
+  void Normalize(float *a);  
+  void Cross(float *a, float *b, float *c);
+
 private:
 
   //Context *context;
   
   //void CloseConnection();
-  vtkIGTMessageAttributeSet* AttrSetRobot;
-  vtkIGTMessageAttributeSet* AttrSetScanner;
+  vtkIGTMessageAttributeSet* AttrSetRobot;    // <- Should it be a circular buffer?
+  vtkIGTMessageAttributeSet* AttrSetScanner;  // <- Should it be a circular buffer?
 
   vtkMatrix4x4* NeedleMatrix;
+  vtkTransform* NeedleTransform;
 
 };
 
