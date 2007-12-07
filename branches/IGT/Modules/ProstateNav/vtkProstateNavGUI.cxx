@@ -993,8 +993,8 @@ void vtkProstateNavGUI::BuildGUIForWizardFrame()
       this->WizardSteps[i]->SetLogic(this->Logic);
 
       // Set color for the wizard title:
-      // J.T. 11/28/2007: Commented out. It was too colorful...
 
+      this->WizardSteps[i]->SetTitleBackgroundColor(0.8, 0.8, 1.0);
       //this->WizardSteps[i]->SetTitleBackgroundColor(WorkPhaseColor[i][0],
       //                                              WorkPhaseColor[i][1],
       //                                              WorkPhaseColor[i][2]);

@@ -13,6 +13,7 @@ Version:   $Revision: $
 =========================================================================auto=*/
 
 #include <typeinfo>
+#include <iostream>
 
 #include "vtkObjectFactory.h"
 #include "vtkIGTMessageGenericAttribute.h"
@@ -79,20 +80,66 @@ virtual int vtkIGTMessageGenericAttribute<T>::GetAttribute(T2* ptr)
 template <class T> 
 int vtkIGTMessageGenericAttribute<T>::SetAttribute(void* ptr)
 {
-  T* attr = static_cast<T*>(ptr);
-  this->data = *attr;
+  if (ptr)
+    {
+    T* attr = static_cast<T*>(ptr);
+    this->data = *attr;
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
 
-  return 0;
+ 
 }
 
 
 template <class T>
 int vtkIGTMessageGenericAttribute<T>::GetAttribute(void* ptr)
 {
-  T* attr = static_cast<T*>(ptr);
-  *attr = this->data;
+  if (ptr)
+    {
+    T* attr = static_cast<T*>(ptr);
+    *attr = this->data;
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
+}
 
-  return 0;
+
+template <class T>
+int vtkIGTMessageGenericAttribute<T>::SetAttribute(T* ptr)
+{
+  if (ptr)
+    {
+    this->data = *ptr;
+    std::cerr << "vtkIGTMessageGenericAttribute::SetAttribute() data = " << this->data << std::endl;
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
+}
+
+
+template <class T>
+int vtkIGTMessageGenericAttribute<T>::GetAttribute(T* ptr)
+{
+  if (ptr)
+    {
+    std::cerr << "vtkIGTMessageGenericAttribute::GetAttribute() data = " << this->data << std::endl;;
+    *ptr = this->data;
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
 }
 
 

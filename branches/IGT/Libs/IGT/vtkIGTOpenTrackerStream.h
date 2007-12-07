@@ -40,15 +40,18 @@ public:
     static void callbackF(const Node&, const Event &event, void *data);
     static void GenericCallback(const Node &node, const Event &event, void *data);
  
-    // Register callback functions which were called from GenericCallback().
-    // AddCallback() should be called before Init();
     //BTX
+    // Register callback functions to process data from NaviTrack data stream.
+    // AddCallback() should be called before Init();
     void AddCallback(const char* cbname,
                      vtkIGTMessageAttributeSet::MessageHandlingFunction* func,
                      vtkIGTMessageAttributeSet* attrSet,
                      void* arg);
-    //ETX
 
+    // Send data to NaviTrack data stream.
+    void SetAttributes(const char* srcName, vtkIGTMessageAttributeSet* attrSet);
+
+    //ETX
     void StopPulling();
     void PullRealTime();    
 

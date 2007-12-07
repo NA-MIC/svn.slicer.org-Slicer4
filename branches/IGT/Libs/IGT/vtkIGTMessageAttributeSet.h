@@ -67,7 +67,7 @@ public:
 
   //BTX
   template <typename T>
-  void AddAttribute(const char* key, T* dummy);
+  void AddAttribute(const char* key, T* ptr);
   
   template <typename T>
   int GetAttribute(const char* key, T* ptr);
