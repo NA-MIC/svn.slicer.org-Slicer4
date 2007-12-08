@@ -72,8 +72,8 @@ void vtkProstateNavDataStream::AddCallbacks()
 
 void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeSet* attrSet, void* arg)
 {
-  std::vector<float> position;
-  std::vector<float> orientation;
+  std::vector<float> position(3, 0.0);
+  std::vector<float> orientation(4, 0.0);
 
   attrSet->GetAttribute("position", &position);
   attrSet->GetAttribute("orientation", &orientation);
@@ -87,14 +87,6 @@ void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeS
   ori[3] = orientation[3];
 
   vtkProstateNavDataStream* ds = dynamic_cast<vtkProstateNavDataStream*>(attrSet->GetOpenTrackerStream());
-
-  ds->QuaternionToXYZ(ori, norm, transnorm);
-  std::cerr << " ORIENTATION = ( " 
-            << ori[0] << ", "
-            << ori[1] << ", "
-            << ori[2] << ", "
-            << ori[3] << ") " << std::endl;
-  return;
 
   int j;
   for (j=0; j<3; j++)
@@ -127,7 +119,7 @@ void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeS
   // get the "needle depth" vector(3,1) and multiply it by the robot orientation,
   // this will give the offsets in Slicer coordinates
 
-  std::vector<float> depth;
+  std::vector<float> depth(3,);
   attrSet->GetAttribute("depth", &depth);
 
   float needle_offset[3];
@@ -143,6 +135,7 @@ void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeS
   ds->NeedleMatrix->SetElement(0, 0, position[0] + needle_offset[0]);
   ds->NeedleMatrix->SetElement(1, 0, position[1] + needle_offset[1]);
   ds->NeedleMatrix->SetElement(2, 0, position[2] + needle_offset[2]);
+
 }
 
 

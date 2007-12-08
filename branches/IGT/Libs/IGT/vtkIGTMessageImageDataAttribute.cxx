@@ -22,11 +22,13 @@ vtkCxxRevisionMacro(vtkIGTMessageImageDataAttribute, "$Revision: 1.0 $");
 
 vtkIGTMessageImageDataAttribute::vtkIGTMessageImageDataAttribute()
 {
+  Alloc();
   this->type_name = typeid(vtkImageData).name();
 }
 
 vtkIGTMessageImageDataAttribute::~vtkIGTMessageImageDataAttribute()
 {
+  Free();
 }
 
 void vtkIGTMessageImageDataAttribute::PrintSelf(ostream& os, vtkIndent indent)
