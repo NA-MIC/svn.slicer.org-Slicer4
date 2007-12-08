@@ -147,22 +147,23 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
     {
     std::string key = iter->first;
     vtkIGTMessageAttributeBase* attr = iter->second;
+    std::cout << "Searching ATTRIBUTE:  NAME = " << key << std::endl;
 
     if (event.hasAttribute(key))
       {
+        std::cout << " ====== found ATTRIBUTE:  NAME = " << key << std::endl;
 
       //========== Macro for switch(attr->GetTypeID()) {} ==========
       #define CASE_GETATTRIB_TYPE(TYPE_ID, TYPE)       \
         case TYPE_ID:            \
           {                                                   \
           TYPE data = static_cast<TYPE >(event.getAttribute<TYPE >((TYPE*)NULL, key)); \
-          std::cout << "GET ATTRIBUTE:  TYPE= " << TYPE_ID << "  key = " << key <<  "data=" << data << std::endl; \
+          std::cout << "GET ATTRIBUTE:  TYPE= " << TYPE_ID << "  key = " << key <<  " data = " << data << std::endl; \
           attr->SetAttribute(&data);                          \
           }                                                   \
         break;
       //============================================================
 
-      std::vector<float> fvec;
       switch(attr->GetTypeID())
         {
         CASE_GETATTRIB_TYPE(vtkIGTMessageAttributeSet::TYPE_BOOL,           bool               );//(bool*)          false);

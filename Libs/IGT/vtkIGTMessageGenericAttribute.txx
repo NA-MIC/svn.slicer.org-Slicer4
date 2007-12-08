@@ -39,6 +39,7 @@ vtkIGTMessageGenericAttribute<T>* vtkIGTMessageGenericAttribute<T>::New()
 template <class T>
 vtkIGTMessageGenericAttribute<T>::vtkIGTMessageGenericAttribute()
 {
+  Superclass::vtkIGTMessageAttributeBase();
   this->type_name = typeid(T).name();
 }
 
