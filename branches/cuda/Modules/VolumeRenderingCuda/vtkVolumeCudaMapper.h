@@ -25,8 +25,8 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolum
     };
 
 //ETX
-    int GetSupportedCudaVersion();
-    static int SetPreferedCudaSupport();
+    // int GetSupportedCudaVersion();
+    // int SetPreferedCudaSupport();
 
   protected:
     vtkVolumeCudaMapper();

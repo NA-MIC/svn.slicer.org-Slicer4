@@ -11,9 +11,10 @@ INCLUDE(${VolumeRenderingCudaModule_SOURCE_DIR}/cuda/FindCuda.cmake)
     vtkCudaDevice.cxx
     vtkVolumeCudaMapper.cxx
     vtkVolumeRenderingCudaFactory.cxx
-    vtkVolumeRenderingCudaGUI.cxx
+    vtkVolumeRenderingCudaModuleGUI.cxx
   )
   SET(VolumeRenderingCudaModule_CUDA_SRCS
+      CUDA_renderAlgo.cu
   )
 
 #-----------------------------------------------
@@ -76,6 +77,8 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   ITKIO
   ITKDICOMParser
   ${KWWidgets_LIBRARIES} 
+  
+  ${CUDA_TARGET_LINK}
  )
 
 ## Build the Cuda Library first
