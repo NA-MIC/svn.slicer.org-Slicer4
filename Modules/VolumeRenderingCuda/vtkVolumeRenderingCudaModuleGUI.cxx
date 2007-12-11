@@ -47,6 +47,14 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, uns
 {
 }
   
+
+void vtkVolumeRenderingCudaModuleGUI::SetViewerWidget(vtkSlicerViewerWidget *viewerWidget)
+{
+}
+void vtkVolumeRenderingCudaModuleGUI::SetInteractorStyle(vtkSlicerViewerInteractorStyle *interactorStyle)
+{
+}
+
   
 void vtkVolumeRenderingCudaModuleGUI::Enter ( )
 {
