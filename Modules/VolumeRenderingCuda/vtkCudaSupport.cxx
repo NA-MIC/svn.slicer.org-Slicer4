@@ -11,6 +11,12 @@ vtkCxxRevisionMacro(vtkCudaSupport, "$Revision: 1.6 $");
 // Needed when we don't use the vtkStandardNewMacro.
 vtkInstantiatorNewMacro(vtkCudaSupport);
 
+vtkCudaSupport* vtkCudaSupport::New()
+{
+
+    return new vtkCudaSupport();
+}
+
 vtkCudaSupport::vtkCudaSupport()
 {
 }
@@ -21,12 +27,20 @@ vtkCudaSupport::~vtkCudaSupport()
 
 int vtkCudaSupport::CheckSupportedCudaVersion(int cudaVersion)
 {
-        int deviceCount = 0;
-        cudaGetDeviceCount(&deviceCount);
-        int device;
-        for (device = 0; device < deviceCount; ++device)
-        {
-                cudaDeviceProp deviceProperty;
-                cudaGetDeviceProperties(&deviceProperty, device);
-        }
+    int deviceCount = 0;
+    cudaGetDeviceCount(&deviceCount);
+    int device;
+    for (device = 0; device < deviceCount; ++device)
+    {
+        cudaDeviceProp deviceProperty;
+        cudaGetDeviceProperties(&deviceProperty, device);
+    }
+
+    /// HACK BY NOW
+    return 0;
+}
+
+void vtkCudaSupport::PrintSelf(ostream& os, vtkIndent indent)
+{
+
 }

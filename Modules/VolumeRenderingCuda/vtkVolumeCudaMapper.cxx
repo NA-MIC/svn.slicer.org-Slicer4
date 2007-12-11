@@ -44,5 +44,8 @@ int vtkVolumeCudaMapper::CheckSupportedCudaVersion(int cudaVersion)
     cudaDeviceProp deviceProperty;
     cudaGetDeviceProperties(&deviceProperty, device);
   }
+
+  /// HACK
+  return 0;
 }
 
