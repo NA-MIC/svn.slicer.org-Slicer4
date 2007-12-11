@@ -1,9 +1,10 @@
 #ifndef VTKSLICERVOLUMERENDERINGCUDA_H_
 #define VTKSLICERVOLUMERENDERINGCUDA_H_
 
-#include "vtkSlicerModuleGui.h"
+#include "vtkSlicerModuleGUI.h"
+#include "vtkVolumeRenderingCudaModule.h"
 
-class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaGUI : vtkSlicerModuleGui
+class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
 {
  public:
   static vtkVolumeRenderingCudaModuleGUI* New();
