@@ -100,6 +100,10 @@ SET(dir_list
   ${VolumeRenderingModule_BINARY_DIR}
   ${VolumeRenderingModule_Init_SOURCE_DIR}
   ${VolumeRenderingModule_Init_BINARY_DIR}
+  ${VolumeRenderingCudaModule_SOURCE_DIR}
+  ${VolumeRenderingCudaModule_BINARY_DIR}
+  ${VolumeRenderingCudaModule_Init_SOURCE_DIR}
+  ${VolumeRenderingCudaModule_Init_BINARY_DIR}
   ${LabelStatistics_SOURCE_DIR}       
   ${LabelStatistics_BINARY_DIR}
   ${LabelStatistics_Init_SOURCE_DIR}
@@ -180,6 +184,14 @@ ELSE(VOLUMERENDERINGMODULE)
  ADD_DEFINITIONS(-DVOLUMERENDERINGMODULE_DEBUG)
 ENDIF(VOLUMERENDERINGMODULE)
 
+# Option for VolumeRenderingCuda
+IF(VOLUMERENDERINGCUDAMODULE)
+ SET(VOLUMERENDERINGCUDAMODULE_LINK_LIB VolumeRenderingCudaModule)
+ELSE(VOLUMERENDERINGCUDAMODULE)
+ ADD_DEFINITIONS(-DVOLUMERENDERINGCUDAMODULE_DEBUG)
+ENDIF(VOLUMERENDERINGCUDAMODULE)
+
+
 # Option for LabelStatistics
 IF(LABELSTATISTICS)
  SET(LABELSTATISTICS_LINK_LIB LabelStatistics)
@@ -207,6 +219,7 @@ IF(BUILD_MODULES)
     #   RealTimeImaging
     #   MRAblation
     ${VOLUMERENDERINGMODULE_LINK_LIB}
+    ${VOLUMERENDERINGCUDAMODULE_LINK_LIB}
     ${LABELSTATISTICS_LINK_LIB} 
     NeuroNav
     QueryAtlas
