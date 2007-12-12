@@ -2,15 +2,23 @@
 #include "vtkVolumeRenderingCudaModuleLogic.h"
 #include "vtkSlicerApplication.h"
 #include "vtkKWWidget.h"
+#include "vtkKWPushButton.h"
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkMRMLScene.h"
 
 vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
+    this->LoadButton = NULL;
 }
 vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
 {
+    if (this->LoadButton != NULL)
+    {
+        this->LoadButton->SetParent(NULL);
+        this->LoadButton->Delete();
+        this->LoadButton = NULL; 
+    }
 }
 
 vtkVolumeRenderingCudaModuleGUI* vtkVolumeRenderingCudaModuleGUI::New()
@@ -42,7 +50,14 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     loadSaveDataFrame->ExpandFrame();
     loadSaveDataFrame->SetLabelText("Load and Save");
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        loadSaveDataFrame->GetWidgetName(), this->UIPanel->GetPageWidget("VolumeRendering")->GetWidgetName());
+        loadSaveDataFrame->GetWidgetName(), page->GetWidgetName());
+
+    this->LoadButton = vtkKWPushButton::New();
+    this->LoadButton->SetParent(loadSaveDataFrame->GetFrame());
+    this->LoadButton->Create();
+    this->LoadButton->SetText("Load new Model");
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->LoadButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
 
     ////Testing Pushbutton
     //this->PB_Testing= vtkKWPushButton::New();
@@ -138,10 +153,12 @@ void vtkVolumeRenderingCudaModuleGUI::ReleaseModuleEventBindings ( )
 
 void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
+    this->LoadButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
+    this->LoadButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
@@ -153,6 +170,9 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
 {
+    vtkDebugMacro("vtkVolumeRenderingModuleGUI::ProcessGUIEvents: event = " << event);
+
+
 }
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
@@ -172,6 +192,15 @@ void vtkVolumeRenderingCudaModuleGUI::SetInteractorStyle(vtkSlicerViewerInteract
 void vtkVolumeRenderingCudaModuleGUI::Enter ( )
 {
     vtkDebugMacro("Enter Volume Rendering Cuda Module");
+
+
+    if ( this->Built == false )
+    {
+        this->BuildGUI();
+        this->AddGUIObservers();
+    }
+    this->CreateModuleEventBindings();
+    //this->UpdateGUI();
 }
 void vtkVolumeRenderingCudaModuleGUI::Exit ( )
 {
