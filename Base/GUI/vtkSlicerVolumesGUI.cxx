@@ -315,7 +315,6 @@ void vtkSlicerVolumesGUI::RemoveGUIObservers ( )
 //---------------------------------------------------------------------------
 void vtkSlicerVolumesGUI::AddGUIObservers ( )
 {
-
     // Fill in
     // observer load volume button    
     this->VolumeSelectorWidget->AddObserver ( vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -331,7 +330,7 @@ void vtkSlicerVolumesGUI::AddGUIObservers ( )
 void vtkSlicerVolumesGUI::ProcessGUIEvents ( vtkObject *caller,
                                              unsigned long event, void *callData )
 {
-  if (event == vtkKWCheckButton::SelectedStateChangedEvent && 
+    if (event == vtkKWCheckButton::SelectedStateChangedEvent && 
       this->UseCompressionCheckButton == vtkKWCheckButton::SafeDownCast(caller))
     {
     vtkMRMLVolumeNode *refNode = 
@@ -707,6 +706,8 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
         tearDown = 1;
         this->VolumeDisplayWidget = this->dwiVDW;
         this->VolumeDisplayFrame = this->DWIDisplayFrame;
+        this->GradientFrame->EnabledOn();
+        this->GradientFrame->SetAllowFrameToCollapse(1);
         }
       }
     else if ( refNode->IsA("vtkMRMLDiffusionTensorVolumeNode") )
@@ -818,8 +819,8 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
     this->BIRNLabel->SetParent ( this->GetLogoFrame() );
     this->BIRNLabel->Create();
     this->BIRNLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetBIRNLogo() );
-    app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky w", this->NAMICLabel->GetWidgetName());
-    app->Script ("grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w",  this->NACLabel->GetWidgetName());
+    app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky w",  this->NAMICLabel->GetWidgetName());
+    app->Script ( "grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w",  this->NACLabel->GetWidgetName());
     app->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky w",  this->BIRNLabel->GetWidgetName());
     app->Script ( "grid %s -row 1 -column 1 -padx 2 -pady 2 -sticky w",  this->NCIGTLabel->GetWidgetName());                  
     
@@ -982,11 +983,12 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
     this->GradientFrame->Create ( );
     this->GradientFrame->SetLabelText ("DWI Gradient Editor");
     this->GradientFrame->CollapseFrame ( );
+    //this->GradientFrame->EnabledOff();
+    //this->GradientFrame->SetAllowFrameToCollapse(0);
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->GradientFrame->GetWidgetName(), page->GetWidgetName());
 
     this->GradientEditorWidget = vtkSlicerGradientEditorWidget::New ( );
-    //this->GradientEditorWidget->AddNodeSelectorWidgetOff();
     this->GradientEditorWidget->SetMRMLScene(this->GetMRMLScene() );
     this->GradientEditorWidget->SetParent ( this->GradientFrame->GetFrame() );
     this->GradientEditorWidget->Create ( );

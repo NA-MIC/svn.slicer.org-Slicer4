@@ -1,10 +1,10 @@
 #ifndef __vtkSlicerGradientEditorWidget_h
 #define __vtkSlicerGradientEditorWidget_h
 
+#define ARRAY_LENGTH 3
+#define NUMBER_MATRIX_VALUES 9
 #include "vtkSlicerWidget.h"
-
 class vtkKWFrameWithLabel;
-class vtkKWLoadSaveButton;
 class vtkKWEntrySet;
 class vtkKWCheckButtonSet;
 class vtkKWPushButton;
@@ -19,8 +19,17 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerGradientEditorWidget : public vtkSlice
 {
 public:
     static vtkSlicerGradientEditorWidget* New();
-    vtkTypeRevisionMacro(vtkSlicerGradientEditorWidget,vtkKWCompositeWidget);
+    vtkTypeRevisionMacro(vtkSlicerGradientEditorWidget,vtkSlicerWidget);
     //void PrintSelf(ostream& os, vtkIndent indent);
+
+    // Description:
+    // Add/Remove observers on widgets in the GUI
+    virtual void AddWidgetObservers ( );
+    virtual void RemoveWidgetObservers ( );
+
+    // Description:
+    // Method to propagate events generated in GUI to logic / mrml
+    virtual void ProcessWidgetEvents(vtkObject *caller, unsigned long event, void *callData );
 
 protected:
     vtkSlicerGradientEditorWidget(void);
@@ -38,19 +47,16 @@ protected:
     vtkKWFrameWithLabel *GradientsFrame;
     vtkKWFrameWithLabel *LoadsaveFrame;
     vtkKWEntrySet *Matrix;
-    vtkKWCheckButtonSet *Checkbuttons;
-    vtkKWPushButton *Negative;
-    vtkKWPushButton *Swap;
-    vtkKWPushButton *Rotate;
-    vtkKWPushButton *Run;
+    vtkKWPushButton *NegativeButton;
+    vtkKWPushButton *SwapButton;    
+    vtkKWPushButton *RunButton;
+    vtkKWPushButton *RotateButton;
     vtkKWLabel *LabelAngle;
     vtkKWComboBox *Angle;
     vtkKWTextWithScrollbars *Gradients;
     vtkSlicerNodeSelectorWidget *Mask;
-    vtkKWCheckButton *Checkbutton1;
-    vtkKWCheckButton *Checkbutton2;
-    vtkKWCheckButton *Checkbutton3;
-    vtkKWCheckButton *EnableMatrix;
+    vtkKWCheckButton *EnableMatrixButton;
+    vtkKWCheckButton* Checkbuttons[ARRAY_LENGTH];
 
 private:
     vtkSlicerGradientEditorWidget ( const vtkSlicerGradientEditorWidget& ); // Not implemented.
