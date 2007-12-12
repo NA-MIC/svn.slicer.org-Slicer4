@@ -26,7 +26,6 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   virtual void ProcessLogicEvents ( vtkObject *caller, unsigned long event,
                                     void *callData ){};
 
-
   /// GUI part
   virtual void BuildGUI ( );
   // This method releases references and key-bindings,
@@ -93,6 +92,8 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
 
   vtkSlicerViewerWidget *ViewerWidget;
   vtkSlicerViewerInteractorStyle *InteractorStyle;
+
+  vtkKWPushButton* LoadButton;
 };
 
 #endif /*VTKSLICERVOLUMERENDERINGCUDA_H_*/
