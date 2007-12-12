@@ -1426,7 +1426,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->SplashMessage("Initializing Volume Rendering CUDA Module...");
     //VolumeRenderingModule
     vtkVolumeRenderingCudaModuleGUI *vrcModuleGUI = vtkVolumeRenderingCudaModuleGUI::New ( );
-    vtkVolumeRenderingCudaModuleLogic *vrcModuleLogic  = vtkVolumeRenderingCudaModuleLogic::New ( );
+    vtkVolumeRenderingCudaModuleLogic *vrcModuleLogic = vtkVolumeRenderingCudaModuleLogic::New ( );
     vrcModuleLogic->SetAndObserveMRMLScene ( scene );
     vrcModuleLogic->SetApplicationLogic ( appLogic );
     vrcModuleLogic->SetMRMLScene(scene);

@@ -12,6 +12,7 @@ INCLUDE(${VolumeRenderingCudaModule_SOURCE_DIR}/cuda/FindCuda.cmake)
     vtkVolumeCudaMapper.cxx
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
+    vtkVolumeRenderingCudaModuleLogic.cxx
   )
   SET(VolumeRenderingCudaModule_CUDA_SRCS
       CUDA_renderAlgo.cu

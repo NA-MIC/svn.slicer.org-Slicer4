@@ -2,12 +2,6 @@
 #include "vtkObjectFactory.h"
 #include "vtkObject.h"
 
-vtkVolumeRenderingCudaModuleLogig* vtkVolumeRenderingCudaModuleLogic::New()
-{
-///HACK
-    return new vtkVolumeRenderingCudaModuleLogic();
-}
-
 vtkVolumeRenderingCudaModuleLogic::vtkVolumeRenderingCudaModuleLogic(void)
 {
 }
