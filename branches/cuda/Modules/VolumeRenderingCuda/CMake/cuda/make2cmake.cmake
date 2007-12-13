@@ -1,4 +1,3 @@
-#################################################################
 #  For more information, please see: http://software.sci.utah.edu
 #
 #  The MIT License
@@ -34,12 +33,12 @@ FILE(READ ${input_file} depend_text)
 
 IF (${depend_text} MATCHES ".+")
 
-# MESSAGE("FOUND DEPENDS")
+  # MESSAGE("FOUND DEPENDS")
 
-# Remember, four backslashes is escaped to one backslash in the string.
+  # Remember, four backslashes is escaped to one backslash in the string.
   STRING(REGEX REPLACE "\\\\ " " " depend_text ${depend_text})
-
-# This works for the nvcc -M generated dependency files.
+  
+  # This works for the nvcc -M generated dependency files.
   STRING(REGEX REPLACE "^.* : " "" depend_text ${depend_text})
   STRING(REGEX REPLACE "[ \\\\]*\n" ";" depend_text ${depend_text})
 
@@ -47,18 +46,18 @@ IF (${depend_text} MATCHES ".+")
 
     STRING(REGEX REPLACE "^ +" "" file ${file})
 
-# IF (EXISTS ${file})
-#   MESSAGE("DEPEND = ${file}")
-# ELSE (EXISTS ${file})
-#   MESSAGE("ERROR = ${file}")
-# ENDIF(EXISTS ${file})
-
+    # IF (EXISTS ${file})
+    #   MESSAGE("DEPEND = ${file}")    
+    # ELSE (EXISTS ${file})
+    #   MESSAGE("ERROR = ${file}")
+    # ENDIF(EXISTS ${file})
+  
     SET(cuda_nvcc_depend "${cuda_nvcc_depend} \"${file}\"\n")
+  
+  ENDFOREACH(file) 
 
-  ENDFOREACH(file)
-
-ELSE(${depend_text} MATCHES ".+")
-# MESSAGE("FOUND NO DEPENDS")
+ELSE(${depend_text} MATCHES ".+") 
+  # MESSAGE("FOUND NO DEPENDS")
 ENDIF(${depend_text} MATCHES ".+")
 
 
