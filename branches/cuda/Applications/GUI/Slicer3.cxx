@@ -2166,7 +2166,11 @@ int Slicer3_main(int argc, char *argv[])
     qdecModuleGUI->Delete ( );
 #endif
 
-#if !defined(VOLUMERENDERCUDAINGMODULE_DEBUG) && defined(BUILD_MODULES)
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+    vrModuleGUI->Delete ( );
+#endif
+
+#if !defined(VOLUMERENDERINGCUDAMODULE_DEBUG) && defined(BUILD_MODULES)
     vrcModuleGUI->Delete ( );
 #endif
 
@@ -2289,7 +2293,11 @@ int Slicer3_main(int argc, char *argv[])
     qdecModuleLogic->SetAndObserveMRMLScene ( NULL );
     qdecModuleLogic->Delete ( );
 #endif
-    #if !defined(VOLUMERENDERCUDAINGMODULE_DEBUG) && defined(BUILD_MODULES)
+   #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+    vrModuleLogic->SetAndObserveMRMLScene ( NULL );
+    vrModuleLogic->Delete ( );
+#endif
+    #if !defined(VOLUMERENDERINGCUDAMODULE_DEBUG) && defined(BUILD_MODULES)
     vrcModuleLogic->SetAndObserveMRMLScene ( NULL );
     vrcModuleLogic->Delete ( );
 #endif
