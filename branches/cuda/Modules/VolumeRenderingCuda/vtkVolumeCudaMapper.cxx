@@ -14,7 +14,7 @@ vtkInstantiatorNewMacro(vtkVolumeCudaMapper);
 
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
-  this->inputBuffer= new char[256*256*256];
+  this->inputBuffer= new unsigned char[256*256*256];
 
   FILE *fp;
   fp=fopen("heart256.raw","r");
@@ -36,7 +36,7 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
   
   // Do rendering. 
   CUDArenderAlgo_doRender((float*)rotationMatrix, color, minmax, lightVec, 
-              256,256,256,    //3D data size
+        256,256,256,    //3D data size
         1024,768,       //result image size
         0,0,0,          //translation of data in x,y,z direction
         1, 1, 1,        //voxel dimension
