@@ -2,7 +2,7 @@ PROJECT(VolumeRenderingCudaModule)
 OPTION(VOLUMERENDERINGCUDAMODULE "Would you like to build Volume Rendering with CUDA support" OFF)
 if(VOLUMERENDERINGCUDAMODULE)
 
-INCLUDE(${VolumeRenderingCudaModule_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
+INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 
 # --------------------------------------------------------------------------
 # Sources

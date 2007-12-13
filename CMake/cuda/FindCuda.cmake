@@ -79,7 +79,7 @@
 
 SET(CMAKE_BACKWARDS_COMPATIBILITY 2.2)
 
-INCLUDE(${CMAKE_CURRENT_SOURCE_DIR}/CMake/cuda/CudaDependency.cmake)
+INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/CudaDependency.cmake)
 
 ###############################################################################
 ###############################################################################
