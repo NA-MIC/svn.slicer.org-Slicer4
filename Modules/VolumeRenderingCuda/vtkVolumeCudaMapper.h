@@ -32,12 +32,15 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolum
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
 
+    int CheckSupportedCudaVersion(int cudaVersion = 0);
+    
+    unsigned char* inputBuffer;
+    unsigned char* outputBuffer;
+
+  private:
     vtkVolumeCudaMapper operator=(const vtkVolumeCudaMapper&);
     vtkVolumeCudaMapper(const vtkVolumeCudaMapper&);
 
-    int CheckSupportedCudaVersion(int cudaVersion = 0);
-
-  private:
     int CudaVersion;
     int PreferedCudaVersion;
 };
