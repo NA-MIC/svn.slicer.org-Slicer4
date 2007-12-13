@@ -58,6 +58,11 @@ VTK_WRAP_TCL3(VolumeRenderingCudaModule
 # --------------------------------------------------------------------------
 # Build the library
 
+## Build the Cuda Library first
+CUDA_ADD_LIBRARY(VolumeRenderingCudaModule_CudaLibrary
+  ${VolumeRenderingCudaModule_CUDA_SRCS}
+  )
+
 ## Set the Libraries we link
 SET(VolumeRenderingCudaModule_LIBRARIES
   SlicerBaseLogic 
@@ -80,12 +85,10 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   ${KWWidgets_LIBRARIES} 
   
   ${CUDA_TARGET_LINK}
+  ${VolumeRenderingCudaModule_CudaLibrary}
  )
 
-## Build the Cuda Library first
-CUDA_ADD_LIBRARY(VolumeRenderingCudaModule_CudaLibrary
-  ${VolumeRenderingCudaModule_CUDA_SRCS}
-  )
+
 
 ADD_LIBRARY(VolumeRenderingCudaModule
   ${VolumeRenderingCudaModule_SRCS}

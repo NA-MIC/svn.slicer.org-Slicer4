@@ -130,7 +130,7 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     //    this->GetApplicationGUI()->GetMRMLScene()->AddObserver( vtkMRMLScene::SceneCloseEvent, this->MRMLCallbackCommand );
     //}
     //loadSaveDataFrame->Delete();
-    //this->Built=true;
+    this->Built=true;
 }
 
 void vtkVolumeRenderingCudaModuleGUI::TearDownGUI ( )
