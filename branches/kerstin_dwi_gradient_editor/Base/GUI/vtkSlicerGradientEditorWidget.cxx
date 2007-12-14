@@ -22,7 +22,6 @@
 #include "vtkSlicerNodeSelectorWidget.h"
 #include <sstream>
 
-
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerGradientEditorWidget);
 vtkCxxRevisionMacro (vtkSlicerGradientEditorWidget, "$Revision: 1.0 $");
@@ -51,6 +50,12 @@ void vtkSlicerGradientEditorWidget::RemoveWidgetObservers( )
 }
 
 
+void vtkSlicerGradientEditorWidget::PrintSelf ( ostream& os, vtkIndent indent )
+{
+    this->vtkObject::PrintSelf ( os, indent );
+
+    os << indent << "vtkSlicerGradientEditorWidget: " << this->GetClassName ( ) << "\n";
+}
 void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, unsigned long event, void *callData )
 {
     if(event == vtkKWCheckButton::SelectedStateChangedEvent 
@@ -60,11 +65,11 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
             //check how many Checkbuttons are selected
             int numberSelected = 0;
             for(int i=0; i<ARRAY_LENGTH;i++){
-                if(this->Checkbuttons[i]->GetSelectedState() == 1){
+                if(this->Checkbuttons[i]->GetSelectedState()){
                     numberSelected++;
                 }
             }
-            //enable Buttons
+            //enable/disable buttons
             if (numberSelected >= 1){
                 this->NegativeButton->SetEnabled(1);
                 if(numberSelected == 2){
@@ -72,9 +77,8 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
                 else {this->SwapButton->SetEnabled(0);}
                 if(numberSelected == 1){
                     this->RotateButton->SetEnabled(1);
-                    this->Angle->SetEnabled(1);
                     this->LabelAngle->SetEnabled(1);
-                }
+                    this->Angle->SetEnabled(1);                }
                 else {
                     this->RotateButton->SetEnabled(0);
                     this->Angle->SetEnabled(0);
@@ -84,6 +88,8 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
             else {
                 this->NegativeButton->SetEnabled(0);
                 this->RotateButton->SetEnabled(0);
+                this->LabelAngle->SetEnabled(0);
+                this->Angle->SetEnabled(0);
             }
     }
     else if(this->EnableMatrixButton == vtkKWCheckButton::SafeDownCast(caller) && event == vtkKWCheckButton::SelectedStateChangedEvent){
@@ -92,48 +98,75 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
         }
     }
     else if (this->RotateButton == vtkKWPushButton::SafeDownCast(caller)  && event == vtkKWPushButton::InvokedEvent){
-
+        vtkMatrix4x4 *vtkMatrixIn = vtkMatrix4x4::New();
+        int n=0;
+        vtkMatrixIn->Zero();
+        //fill the vtkMatrix with the values from the gui
+        for(int i=0;i<3;i++){
+            for(int j=0;j<3;j++){
+                vtkMatrixIn->SetElement(i,j, this->Matrix->GetWidget(n)->GetValueAsDouble());
+                n++;
+            }            
+        }
+        vtkTransform* transform = vtkTransform::New();
+        transform->SetMatrix(vtkMatrixIn);
+        //rotate
+        if(this->Checkbuttons[0]->GetSelectedState()){
+            transform->RotateX(this->Angle->GetValueAsDouble());
+        }
+        if(this->Checkbuttons[1]->GetSelectedState()){
+            transform->RotateY(this->Angle->GetValueAsDouble());
+        }
+        if(this->Checkbuttons[2]->GetSelectedState()){
+            transform->RotateZ(this->Angle->GetValueAsDouble());
+        }  
+        vtkMatrix4x4 *vtkMatrixOut = transform->GetMatrix();
+        int m=0;
+        //fill the guiMatrix with the new values
+        for(int i=0;i<3;i++){
+            for(int j=0;j<3;j++){
+                this->Matrix->GetWidget(m)->SetValueAsDouble(vtkMatrixOut->GetElement(i,j));
+                m++;
+            }
+        }
+        int k=1;
     }
     else if (this->SwapButton == vtkKWPushButton::SafeDownCast(caller)  && event == vtkKWPushButton::InvokedEvent){
         int firstSelectedCheckbox  = -1;        
         int secondSelectedCheckbox = -1;
         //seek for selected checkboxes
-        for(unsigned int i=0; i<ARRAY_LENGTH;i++){
-            if(this->Checkbuttons[i]->GetSelectedState() == 1){
+        for(int i=0; i<ARRAY_LENGTH;i++){
+            if(this->Checkbuttons[i]->GetSelectedState()){
                 firstSelectedCheckbox = i;
                 break;
             }
         }
-        for(unsigned int i=ARRAY_LENGTH-1; i>=0;i--){
-            if(this->Checkbuttons[i]->GetSelectedState() == 1){
+        for(int i=ARRAY_LENGTH-1; i>=0;i--){
+            if(this->Checkbuttons[i]->GetSelectedState()){
                 secondSelectedCheckbox = i;
                 break;
             }
         }
-        int firstValue = firstSelectedCheckbox*3;
-        int secondValue = secondSelectedCheckbox*3;
+        int firstPosition = firstSelectedCheckbox*3;
+        int secondPosition = secondSelectedCheckbox*3;
         //swap values
-        for(int j=secondValue; j<secondValue+3; j++){
+        for(int j=secondPosition; j<secondPosition+3; j++){
             const char* value = this->Matrix->GetWidget(j)->GetValue();
-            this->Matrix->GetWidget(j)->SetValue(this->Matrix->GetWidget(firstValue)->GetValue());
-            this->Matrix->GetWidget(firstValue)->SetValue(value);
-            firstValue++;
+            this->Matrix->GetWidget(j)->SetValue(this->Matrix->GetWidget(firstPosition)->GetValue());
+            this->Matrix->GetWidget(firstPosition)->SetValue(value);
+            firstPosition++;
         }
     }
     else if (this->NegativeButton == vtkKWPushButton::SafeDownCast(caller)  && event == vtkKWPushButton::InvokedEvent){
         for(unsigned int j=0;j<ARRAY_LENGTH;j++){
-            if(this->Checkbuttons[j]->GetSelectedState() == 1){            
+            //seek selected checkbuttons
+            if(this->Checkbuttons[j]->GetSelectedState()){            
                 for(unsigned int i=0+j*3;i<3+j*3;i++){
-                    std::stringstream value;
-                    value<<this->Matrix->GetWidget(i)->GetValue();
-                    int currentValue = 0;
-                    value>>currentValue;
-                    //change sign of all values != 0
+                    int currentValue = this->Matrix->GetWidget(i)->GetValueAsInt();
+                    //change sign of values != 0
                     if(currentValue != 0){
                         currentValue = currentValue-(2*currentValue);
-                        std::stringstream valueOut;
-                        valueOut<<currentValue;
-                        this->Matrix->GetWidget(i)->SetValue(valueOut.str().c_str());
+                        this->Matrix->GetWidget(i)->SetValueAsInt(currentValue);
                     }
                 }//end for2
             }// end if selected
