@@ -30,10 +30,10 @@ void CUDArenderAlgo_init(int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY
 void CUDArenderAlgo_loadData(unsigned char* sourceData, int sizeX, int sizeY, int sizeZ);
 
 /**
- * Execute volume rendering. There are also a lot of parameters here. Please ask me for more details
+ * Execute volume rendering. There are also a lot of parameters here.
  */
 
-void CUDArenderAlgo_doRender(float* rotationMatrix, float* color, float* minmax, float* lightVec, int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY, float dispX, float dispY, float dispZ, float voxelSizeX, float voxelSizeY, float voxelSizeZ, int minThreshold, int maxThreshold, int sliceDistance, unsigned char* resultImage);
+void CUDArenderAlgo_doRender(float* rotationMatrix, float* color, float* minmax, float* lightVec, int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY, float dispX, float dispY, float dispZ, float voxelSizeX, float voxelSizeY, float voxelSizeZ, int minThreshold, int maxThreshold, int sliceDistance);
 
 /**
  * Copy the result from GPU memory to CPU memory. The resulted image is RGBA image of size (dsizeX, dsizeY)
