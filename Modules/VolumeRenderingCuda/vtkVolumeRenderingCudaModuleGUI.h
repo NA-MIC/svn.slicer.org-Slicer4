@@ -6,6 +6,8 @@
 
 class vtkVolumeRenderingCudaModuleLogic;
 
+class vtkVolumeCudaMapper;
+
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
 {
  public:
@@ -89,6 +91,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   // Description:
   // Pointer to the module's logic class
   vtkVolumeRenderingCudaModuleLogic *Logic;
+  vtkVolumeCudaMapper* CudaMapper;
 
   vtkSlicerViewerWidget *ViewerWidget;
   vtkSlicerViewerInteractorStyle *InteractorStyle;

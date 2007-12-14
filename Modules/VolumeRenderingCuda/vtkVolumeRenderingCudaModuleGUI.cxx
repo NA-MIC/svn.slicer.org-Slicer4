@@ -7,9 +7,12 @@
 #include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkMRMLScene.h"
 
+#include "vtkVolumeCudaMapper.h"
+
 vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
     this->LoadButton = NULL;
+    this->CudaMapper = NULL;
 }
 vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
 {
@@ -18,6 +21,10 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
         this->LoadButton->SetParent(NULL);
         this->LoadButton->Delete();
         this->LoadButton = NULL; 
+    }
+    if (this->CudaMapper != NULL)
+    {
+       this->CudaMapper->Delete();
     }
 }
 
@@ -130,6 +137,8 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     //    this->GetApplicationGUI()->GetMRMLScene()->AddObserver( vtkMRMLScene::SceneCloseEvent, this->MRMLCallbackCommand );
     //}
     //loadSaveDataFrame->Delete();
+    
+    this->CudaMapper = vtkVolumeCudaMapper::New();
     this->Built=true;
 }
 
@@ -172,6 +181,12 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 {
     vtkDebugMacro("vtkVolumeRenderingModuleGUI::ProcessGUIEvents: event = " << event);
 
+   if (caller == this->LoadButton)
+   {
+     if (this->CudaMapper == NULL)
+       this->CudaMapper == vtkVolumeCudaMapper::New();
+    this->CudaMapper->Render(NULL, NULL);
+   }
 
 }
 

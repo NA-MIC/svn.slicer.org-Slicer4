@@ -25,6 +25,7 @@
 #include "stdlib.h"
 #include "vtkVolumeCudaMapper.h"
 #include "vtkCudaSupport.h"
+#include "vtkVolumeRenderingCudaModuleGUI.h"
 
 vtkCxxRevisionMacro(vtkVolumeRenderingCudaFactory, "$Revision: 1.7 $");
 vtkStandardNewMacro(vtkVolumeRenderingCudaFactory);
@@ -51,6 +52,11 @@ vtkObject* vtkVolumeRenderingCudaFactory::CreateInstance(const char* vtkclassnam
 
   if (!strcmp("vtkCudaSupport", vtkclassname))
     return vtkCudaSupport::New();
+
+  
+  if (!strcmp("vtkVolumeRenderingCudaModuleGUI", vtkclassname))
+    return vtkVolumeRenderingCudaModuleGUI::New();
+
   return 0;
 }
 

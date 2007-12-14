@@ -13,7 +13,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolum
 
     static vtkVolumeCudaMapper *New();
 
-    virtual void Render(vtkRenderer *, vtkVolume *) {};
+    virtual void Render(vtkRenderer *, vtkVolume *);
 
 //BTX
     enum
@@ -33,6 +33,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolum
     virtual ~vtkVolumeCudaMapper();
 
     int CheckSupportedCudaVersion(int cudaVersion = 0);
+    void PrepareRender();
     
     unsigned char* inputBuffer;
     unsigned char* outputBuffer;
