@@ -38,6 +38,7 @@ protected:
     // Description:
     // Create the widget.
     virtual void CreateWidget();
+    void PrintSelf (ostream& os, vtkIndent indent );
 
     vtkKWLoadSaveButtonWithLabel *SaveButton;
     vtkKWLoadSaveButtonWithLabel *LoadButton;
