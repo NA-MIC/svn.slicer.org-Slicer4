@@ -21,8 +21,6 @@
 #include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkSlicerApplication.h"
-#include "vtkSlicerVolumesGUI.h"
-#include "vtkSlicerVolumesLogic.h"
 #include "vtkSlicerColorLogic.h"
 
 
@@ -102,7 +100,6 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->OpenTrackerStream   = vtkProstateNavDataStream::New();
     this->OpenTrackerStream2  = vtkIGTOpenTrackerStream2::New();
     this->RealtimeVolumeNode = NULL;
-    this->VolumesLogic       = NULL;
 #endif
 
     // Timer Handling
@@ -327,7 +324,6 @@ void vtkProstateNavLogic::UpdateAll()
       //this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
       //if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
 
-      std::cerr << "ProstateNavLogic::UpdateAll(): Comparing time stamp.." << std::endl;
       if (this->RealtimeImageTimeStamp < this->OpenTrackerStream->GetImageTimeStamp()->GetMTime())
         {
         std::cerr << "ProstateNavLogic::UpdateAll(): update realtime image" << std::endl;
@@ -399,10 +395,9 @@ void vtkProstateNavLogic::UpdateAll()
         
         this->RealtimeVolumeNode->SetIJKToRASMatrix(rtimgTransform);
         
-        this->RealtimeVolumeNode->UpdateScene(this->VolumesLogic->GetMRMLScene());
-        this->VolumesLogic->SetActiveVolumeNode(this->RealtimeVolumeNode);
-        
-        this->VolumesLogic->Modified();
+        this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());
+        this->GetMRMLScene()->Modified();
+
         rtimgTransform->Delete();
         }
 
@@ -534,15 +529,11 @@ void vtkProstateNavLogic::UpdateAll()
 }
 
 //---------------------------------------------------------------------------
-void vtkProstateNavLogic::AddRealtimeVolumeNode(vtkSlicerApplication* app, const char* name)
+void vtkProstateNavLogic::AddRealtimeVolumeNode(const char* name)
 {
-  vtkSlicerVolumesGUI   *volGui   = (vtkSlicerVolumesGUI*)app->GetModuleGUIByName("Volumes");
-  vtkSlicerVolumesLogic* volLogic = (vtkSlicerVolumesLogic*)(volGui->GetLogic());
-
   if (this->RealtimeVolumeNode == NULL)
     {
-    this->VolumesLogic = volLogic;
-    this->RealtimeVolumeNode = AddVolumeNode(volLogic, name);
+    this->RealtimeVolumeNode = AddVolumeNode(name);
     }
 }
 
@@ -824,8 +815,7 @@ int vtkProstateNavLogic::WorkPhaseStringToID(const char* string)
 
 
 //---------------------------------------------------------------------------
-vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(vtkSlicerVolumesLogic* volLogic,
-                                                      const char* volumeNodeName)
+vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(const char* volumeNodeName)
 {
 
     std::cerr << "AddVolumeNode(): called." << std::endl;
@@ -869,11 +859,12 @@ vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(vtkSlicerVolumesLogic* vol
         if (volumeNode != NULL)
         {
             volumeNode->SetName(volumeNodeName);
-            volLogic->GetMRMLScene()->SaveStateForUndo();
+            this->GetMRMLScene()->SaveStateForUndo();
             
             vtkDebugMacro("Setting scene info");
-            volumeNode->SetScene(volLogic->GetMRMLScene());
-            displayNode->SetScene(volLogic->GetMRMLScene());
+            volumeNode->SetScene(this->GetMRMLScene());
+            displayNode->SetScene(this->GetMRMLScene());
+            
             
             double range[2];
             vtkDebugMacro("Set basic display info");
@@ -886,7 +877,7 @@ vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(vtkSlicerVolumesLogic* vol
             displayNode->SetLevel(0.5 * (range[1] - range[0]) );
             
             vtkDebugMacro("Adding node..");
-            volLogic->GetMRMLScene()->AddNode(displayNode);
+            this->GetMRMLScene()->AddNode(displayNode);
             
             //displayNode->SetDefaultColorMap();
             vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
@@ -898,11 +889,8 @@ vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(vtkSlicerVolumesLogic* vol
             vtkDebugMacro("Name vol node "<<volumeNode->GetClassName());
             vtkDebugMacro("Display node "<<displayNode->GetClassName());
             
-            volLogic->GetMRMLScene()->AddNode(volumeNode);
+            this->GetMRMLScene()->AddNode(volumeNode);
             vtkDebugMacro("Node added to scene");
-            
-            volLogic->SetActiveVolumeNode(volumeNode);
-            volLogic->Modified();
         }
 
         //scalarNode->Delete();

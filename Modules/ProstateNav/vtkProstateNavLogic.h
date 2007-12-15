@@ -25,7 +25,6 @@
 
 #include "vtkSlicerBaseLogic.h"
 #include "vtkSlicerLogic.h"
-#include "vtkSlicerVolumesLogic.h"
 #include "vtkSlicerApplication.h"
 #include "vtkCallbackCommand.h"
 
@@ -108,9 +107,8 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
 
   void PrintSelf(ostream&, vtkIndent);
   
-  void AddRealtimeVolumeNode(vtkSlicerApplication* app, const char* name);
+  void AddRealtimeVolumeNode(const char* name);
 
-  //void AddRealtimeVolumeNode(vtkSlicerVolumesLogic*, const char*);
   int  SwitchWorkPhase(int);
   int  IsPhaseTransitable(int);
   
@@ -164,7 +162,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   vtkTransform*         LocatorTransform;
 
   vtkMRMLVolumeNode     *RealtimeVolumeNode;
-  vtkSlicerVolumesLogic *VolumesLogic;
 
   bool  Connection;  
   int   RobotWorkPhase;
@@ -185,7 +182,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   
   static void DataCallback(vtkObject*, unsigned long, void *, void *);
   void UpdateAll();
-  vtkMRMLVolumeNode* AddVolumeNode(vtkSlicerVolumesLogic*, const char*);
+  vtkMRMLVolumeNode* AddVolumeNode(const char*);
   
   vtkCallbackCommand *DataCallbackCommand;
 
