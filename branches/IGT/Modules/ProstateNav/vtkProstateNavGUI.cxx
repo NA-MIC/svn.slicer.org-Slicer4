@@ -824,7 +824,7 @@ void vtkProstateNavGUI::Enter()
   this->Control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
   this->Control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
   
-  this->GetLogic()->AddRealtimeVolumeNode((vtkSlicerApplication *)this->GetApplication(), "Realtime");
+  this->GetLogic()->AddRealtimeVolumeNode("Realtime");
   
   ChangeWorkPhase(vtkProstateNavLogic::StartUp, 1);
   
