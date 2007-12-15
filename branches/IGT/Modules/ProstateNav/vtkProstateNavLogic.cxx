@@ -81,7 +81,8 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->ScannerWorkPhase     = -1;
     this->Connection           = false;
 
-    this->RealtimeImageSerial  = 0;
+    //this->RealtimeImageSerial  = 0;
+    this->RealtimeImageTimeStamp = 0;
     this->RealtimeImageOrient  = vtkProstateNavLogic::SLICE_RTIMAGE_PERP;
 
     this->LocatorTransform     = NULL;
@@ -311,6 +312,8 @@ void vtkProstateNavLogic::UpdateAll()
     // the transformation is calculated based on the locator matrix.
     // This must be fixed, when the image information become available.
 
+    std::cerr << "ProstateNavLogic::UpdateAll().." << std::endl;
+
     vtkImageData* vid = NULL;
     if (this->RealtimeVolumeNode)
       {
@@ -319,14 +322,21 @@ void vtkProstateNavLogic::UpdateAll()
 
     if (vid && this->RealtimeImageUpdate)
       {
-      //std::cerr << "BrpNavGUI::UpdateAll(): update realtime image" << std::endl;
-
-      int orgSerial = this->RealtimeImageSerial;
+      //int orgSerial = this->RealtimeImageSerial;
       //this->OpenTrackerStream2->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
       //this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
-      if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
+      //if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
+
+      std::cerr << "ProstateNavLogic::UpdateAll(): Comparing time stamp.." << std::endl;
+      if (this->RealtimeImageTimeStamp < this->OpenTrackerStream->GetImageTimeStamp()->GetMTime())
         {
-          
+        std::cerr << "ProstateNavLogic::UpdateAll(): update realtime image" << std::endl;
+    
+        this->RealtimeImageTimeStamp = this->OpenTrackerStream->GetImageTimeStamp()->GetMTime();
+        if (this->OpenTrackerStream->GetRealtimeImage())
+          {
+          vid->ShallowCopy(this->OpenTrackerStream->GetRealtimeImage());
+          }
         vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
 
         //this->RealtimeVolumeNode->UpdateScene(this->GetMRMLScene());

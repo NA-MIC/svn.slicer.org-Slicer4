@@ -18,6 +18,8 @@ vtkProstateNavDataStream::vtkProstateNavDataStream()
   this->AttrSetScanner  = NULL;
   this->NeedleMatrix    = vtkMatrix4x4::New();
   this->NeedleTransform = vtkTransform::New();
+  this->ImageTimeStamp  = vtkTimeStamp::New();
+  this->RealtimeImage   = vtkImageData::New();
 
   AddCallbacks();
   
@@ -33,9 +35,11 @@ void vtkProstateNavDataStream::Init(const char *configFile)
   Superclass::Init(configFile);
 }
 
+
 void vtkProstateNavDataStream::PrintSelf(ostream& os, vtkIndent indent)
 {
 }
+
 
 void vtkProstateNavDataStream::AddCallbacks()
 {
@@ -119,7 +123,7 @@ void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeS
   // get the "needle depth" vector(3,1) and multiply it by the robot orientation,
   // this will give the offsets in Slicer coordinates
 
-  std::vector<float> depth(3,);
+  std::vector<float> depth(3,0.0);
   attrSet->GetAttribute("depth", &depth);
 
   float needle_offset[3];
@@ -141,7 +145,9 @@ void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeS
 
 void vtkProstateNavDataStream::OnRecieveMessageFromScanner(vtkIGTMessageAttributeSet* attrSet, void* arg)
 {
-  
+  vtkProstateNavDataStream* ds = dynamic_cast<vtkProstateNavDataStream*>(attrSet->GetOpenTrackerStream());
+  attrSet->GetAttribute("image", ds->RealtimeImage);
+  ds->ImageTimeStamp->Modified();
 }
 
 
@@ -276,8 +282,6 @@ vtkTransform* vtkProstateNavDataStream::GetNeedleTransform()
 }
 
 
-
-
 std::string vtkProstateNavDataStream::GetScanStatus()
 {
   /*
@@ -308,7 +312,6 @@ void vtkProstateNavDataStream::SetRobotCommand(std::string key, std::string valu
 
 void vtkProstateNavDataStream::SetScanPosition(std::vector<float> pos, std::vector<float> ori)
 {
-  
 }
 
 

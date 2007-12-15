@@ -22,6 +22,7 @@ Version:   $Revision: $
 #include "vtkObject.h"
 
 #include "vtkIGTMessageAttributeBase.h"
+#include "vtkTimeStamp.h"
 
 class vtkIGTOpenTrackerStream;
 
@@ -87,6 +88,12 @@ public:
     return this->OpenTrackerStream;
   }
 
+  vtkTimeStamp* GetTimeStamp()
+  {
+    return this->TimeStamp;
+  }
+  
+
 protected:
 
   void SetHandlerFunction(MessageHandlingFunction* func, void* argument);
@@ -109,6 +116,8 @@ private:
 
   friend class vtkIGTOpenTrackerStream;
   //ETX
+
+  vtkTimeStamp *TimeStamp;
 
 
 };

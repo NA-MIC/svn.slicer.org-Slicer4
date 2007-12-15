@@ -118,7 +118,6 @@ int vtkIGTMessageGenericAttribute<T>::SetAttribute(T* ptr)
   if (ptr)
     {
     this->data = *ptr;
-    std::cerr << "vtkIGTMessageGenericAttribute::SetAttribute() data = " << this->data << std::endl;
     return 1;
     }
   else
@@ -133,7 +132,6 @@ int vtkIGTMessageGenericAttribute<T>::GetAttribute(T* ptr)
 {
   if (ptr)
     {
-    std::cerr << "vtkIGTMessageGenericAttribute::GetAttribute() data = " << this->data << std::endl;;
     *ptr = this->data;
     return 1;
     }
