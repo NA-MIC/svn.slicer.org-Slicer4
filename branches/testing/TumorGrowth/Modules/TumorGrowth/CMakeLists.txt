@@ -9,6 +9,7 @@ SET(TumorGrowth_SRCS
   vtkTumorGrowthLogic.cxx 
   # Filters
   ${CMAKE_CURRENT_SOURCE_DIR}/Filters/vtkImageRectangularSource.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Filters/vtkImageIslandFilter.cxx
   # wizard
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthSelectScanStep.cxx

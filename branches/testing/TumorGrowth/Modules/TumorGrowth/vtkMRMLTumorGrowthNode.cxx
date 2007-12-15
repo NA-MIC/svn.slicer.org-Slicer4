@@ -56,18 +56,29 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
    this->TimeStep = 0.1;
    this->HideFromEditors = true;
 
-   this->FirstScanRef = NULL;
-   this->SecondScanRef = NULL;
+   this->Scan1_Ref = NULL;
+   this->Scan2_Ref = NULL;
+   this->Scan1_SuperSampleRef = NULL;
+   this->Scan1_SegmentRef = NULL;
+
    // this->ROIMin[0] = this->ROIMin[1] = this->ROIMin[2] = this->ROIMax[0] = this->ROIMax[1] = this->ROIMax[2] = -1;
    this->ROIMin.resize(3,-1); 
    this->ROIMax.resize(3,-1); 
+
+   this->SuperSampled_Spacing = -1;
+   this->SuperSampled_VoxelVolume = -1;
+   this->SuperSampled_RatioNewOldSpacing = -1;
+
+   this->SegmentThreshold=-1;
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLTumorGrowthNode::~vtkMRMLTumorGrowthNode()
 {
-   this->SetFirstScanRef( NULL );
-   this->SetSecondScanRef( NULL );
+   this->SetScan1_Ref( NULL );
+   this->SetScan2_Ref( NULL );
+   this->SetScan1_SuperSampleRef( NULL);
+   this->SetScan1_SegmentRef(NULL);
 }
 
 //----------------------------------------------------------------------------
@@ -91,23 +102,30 @@ void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
   }
   {
     std::stringstream ss;
-    if ( this->FirstScanRef )
+    if ( this->Scan1_Ref )
       {
-      ss << this->FirstScanRef;
-      of << indent << " FirstScanRef=\"" << ss.str() << "\"";
+      ss << this->Scan1_Ref;
+      of << indent << " Scan1_Ref=\"" << ss.str() << "\"";
      }
   }
   {
     std::stringstream ss;
-    if ( this->SecondScanRef )
+    if ( this->Scan2_Ref )
       {
-      ss << this->SecondScanRef;
-      of << indent << " SecondScanRef=\"" << ss.str() << "\"";
+      ss << this->Scan2_Ref;
+      of << indent << " Scan2_Ref=\"" << ss.str() << "\"";
       }
   }
 
-  of << indent << "ROIMin=\""<< this->ROIMin[0] << " "<< this->ROIMin[1] << " "<< this->ROIMin[2] <<"\" ";
-  of << indent << "ROIMax=\""<< this->ROIMax[0] << " "<< this->ROIMax[1] << " "<< this->ROIMax[2] <<"\" ";
+  of << indent << " ROIMin=\""<< this->ROIMin[0] << " "<< this->ROIMin[1] << " "<< this->ROIMin[2] <<"\"";
+  of << indent << " ROIMax=\""<< this->ROIMax[0] << " "<< this->ROIMax[1] << " "<< this->ROIMax[2] <<"\"";
+
+  // Do not write out the following parameters bc they are defined by rest
+  // of << indent << " SuperSampled_Spacing=\""<< this->SuperSampled_Spacing  << "\"";
+  // of << indent << " SuperSampled_VoxelVolume=\""<< this->SuperSampled_VoxelVolume  << "\"";
+  // of << indent << " SuperSampled_RatioNewOldSpacing=\""<< this->SuperSampled_RatioNewOldSpacing  << "\"";
+
+  of << indent << " SegmentThreshold=\""<< this->SegmentThreshold  << "\"";
 }
 
 //----------------------------------------------------------------------------
@@ -134,15 +152,15 @@ void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
       ss << attValue;
       ss >> this->TimeStep;
       }
-    else if (!strcmp(attName, "FirstScanRef"))
+    else if (!strcmp(attName, "Scan1_Ref"))
       {
-      this->SetFirstScanRef(attValue);
-      this->Scene->AddReferencedNodeID(this->FirstScanRef, this);
+      this->SetScan1_Ref(attValue);
+      this->Scene->AddReferencedNodeID(this->Scan1_Ref, this);
       }
-    else if (!strcmp(attName, "SecondScanRef"))
+    else if (!strcmp(attName, "Scan2_Ref"))
       {
-      this->SetSecondScanRef(attValue);
-      this->Scene->AddReferencedNodeID(this->SecondScanRef, this);
+      this->SetScan2_Ref(attValue);
+      this->Scene->AddReferencedNodeID(this->Scan2_Ref, this);
       }
     else if (!strcmp(attName, "ROIMin"))
       {
@@ -158,7 +176,13 @@ void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
       ss << attValue;
       ss >> this->ROIMax[0] >> this->ROIMax[1] >> this->ROIMax[2];
       }
-    }
+    else if (!strcmp(attName, "SegmentThreshold"))
+      {
+    vtksys_stl::stringstream ss;
+    ss << attValue;
+    ss >>  this->SegmentThreshold; 
+      }
+     }
 }
 
 
@@ -172,10 +196,12 @@ void vtkMRMLTumorGrowthNode::Copy(vtkMRMLNode *anode)
 
   this->SetConductance(node->Conductance);
   this->SetTimeStep(node->TimeStep);
-  this->SetFirstScanRef(node->FirstScanRef);
-  this->SetSecondScanRef(node->SecondScanRef);
+  this->SetScan1_Ref(node->Scan1_Ref);
+  this->SetScan2_Ref(node->Scan2_Ref);
   this->ROIMin = node->ROIMin; 
   this->ROIMax = node->ROIMax; 
+  this->SegmentThreshold = node->SegmentThreshold; 
+
 }
 
 //----------------------------------------------------------------------------
@@ -186,11 +212,13 @@ void vtkMRMLTumorGrowthNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "Conductance:       " << this->Conductance << "\n";
   os << indent << "TimeStep:          " << this->TimeStep << "\n";
-  os << indent << "FirstScanRef:      " << 
-   (this->FirstScanRef ? this->FirstScanRef : "(none)") << "\n";
+  os << indent << "Scan1_Ref:      " << 
+   (this->Scan1_Ref ? this->Scan1_Ref : "(none)") << "\n";
   os << indent << "OutputVolumeRef:   " << 
-   (this->SecondScanRef ? this->SecondScanRef : "(none)") << "\n";
+   (this->Scan2_Ref ? this->Scan2_Ref : "(none)") << "\n";
   os << indent << "ROIMin:            "<< this->ROIMin[0] << " "<< this->ROIMin[1] << " "<< this->ROIMin[2] <<"\n";
   os << indent << "ROIMax:            "<< this->ROIMax[0] << " "<< this->ROIMax[1] << " "<< this->ROIMax[2] <<"\n";
+  os << indent << "SegmentThreshold:  "<< this->SegmentThreshold << "\n";
+
 }
 
