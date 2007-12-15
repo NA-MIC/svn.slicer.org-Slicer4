@@ -9,7 +9,9 @@
 #include <map>
 
 class vtkMRMLScene;
-
+class vtkMRMLScalarNode;
+class vtkMRMLVolumeNode;
+class vtkSlicerApplication;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthLogic : 
   public vtkSlicerModuleLogic
@@ -52,6 +54,15 @@ public:
 
   // special testing functions
   virtual void      PopulateTestingData();
+  vtkMRMLScalarVolumeNode* CreateSuperSample(int ScanNum, vtkSlicerApplication *application);
+
+  int CheckROI(vtkMRMLVolumeNode* volumeNode);
+
+  // copied from vtkMRMLScalarVolumeNode* vtkSlicerVolumesLogic::CloneVolume without deep copy
+  vtkMRMLScalarVolumeNode* CreateVolumeNode(vtkMRMLVolumeNode *volumeNode, char *name);
+
+  // Main Growth Function 
+  void AnalyzeGrowth(vtkSlicerApplication *application);
 
 private:
   vtkTumorGrowthLogic();

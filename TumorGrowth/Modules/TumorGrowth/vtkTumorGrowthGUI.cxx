@@ -279,13 +279,11 @@ void vtkTumorGrowthGUI::BuildGUI()
 {
   vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
 
-  const char *help = 
-    "**TumorGrowth Module:** **Under Construction** ";
+  const char *help = "**TumorGrowth Module:** **Under Construction** ";
   
   this->Logic->RegisterMRMLNodesWithScene();
 
-  this->UIPanel->AddPage("TumorGrowth", 
-                         "TumorGrowth", NULL);
+  this->UIPanel->AddPage("TumorGrowth", "TumorGrowth", NULL);
   vtkKWWidget *module_page = 
     this->UIPanel->GetPageWidget("TumorGrowth");
 

@@ -61,10 +61,18 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   vtkSetMacro(TimeStep, double);
 
  
+  // ------------------------------
+  // -- First Step 
+  // ------------------------------
+  
   // Description:
   // Get/Set input volume MRML Id
-  vtkGetStringMacro(FirstScanRef);
-  vtkSetStringMacro(FirstScanRef);
+  vtkGetStringMacro(Scan1_Ref);
+  vtkSetStringMacro(Scan1_Ref);
+
+  // ------------------------------
+  // -- Second Step 
+  // ------------------------------
   
   // Description:
   // Get/Set for SegmenterClass
@@ -75,15 +83,41 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   int GetROIMax(int index) {return this->ROIMax[index]; } 
 
   // Description:
-  // Get/Set output volume MRML Id
-  vtkGetStringMacro(SecondScanRef);
-  vtkSetStringMacro(SecondScanRef);
-
-  // Description:
   // Update the stored reference to another node in the scene
   // virtual void UpdateReferenceID(const char *oldID, const char *newID);
 
- 
+  vtkGetMacro(SuperSampled_Spacing,double);
+  vtkSetMacro(SuperSampled_Spacing,double);
+
+  vtkGetMacro(SuperSampled_VoxelVolume,double);
+  vtkSetMacro(SuperSampled_VoxelVolume,double);
+
+  vtkGetMacro(SuperSampled_RatioNewOldSpacing,double);
+  vtkSetMacro(SuperSampled_RatioNewOldSpacing,double);
+
+  // Description:
+  // Result transfered to second step 
+  vtkGetStringMacro(Scan1_SuperSampleRef);
+  vtkSetStringMacro(Scan1_SuperSampleRef);
+
+  // ------------------------------
+  // -- Third Step 
+  // ------------------------------
+  vtkGetMacro(SegmentThreshold,double);
+  vtkSetMacro(SegmentThreshold,double);
+
+  vtkGetStringMacro(Scan1_SegmentRef);
+  vtkSetStringMacro(Scan1_SegmentRef);
+
+  // ------------------------------
+  // -- Fourth Step 
+  // ------------------------------
+
+  // Description:
+  // Get/Set output volume MRML Id
+  vtkGetStringMacro(Scan2_Ref);
+  vtkSetStringMacro(Scan2_Ref);
+
 protected:
   vtkMRMLTumorGrowthNode();
   ~vtkMRMLTumorGrowthNode();
@@ -93,14 +127,20 @@ protected:
   double Conductance;
   double TimeStep;
   
-  char* FirstScanRef;
-  char* SecondScanRef;
-
+  char* Scan1_Ref;
+  char* Scan2_Ref;
+  char* Scan1_SuperSampleRef;
+  char* Scan1_SegmentRef;
 
   //BTX
   vtkstd::vector<int>  ROIMin; 
   vtkstd::vector<int>  ROIMax; 
   //ETX 
+  double SuperSampled_Spacing;
+  double SuperSampled_VoxelVolume;
+  double SuperSampled_RatioNewOldSpacing;
+
+  double SegmentThreshold ;
 };
 
 #endif

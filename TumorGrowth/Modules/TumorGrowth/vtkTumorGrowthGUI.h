@@ -12,6 +12,7 @@ class vtkTumorGrowthROIStep;
 class vtkTumorGrowthSegmentationStep;
 class vtkTumorGrowthSecondScanStep;
 class vtkTumorGrowthAnalysisStep;
+class  vtkImageData;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthGUI : 
   public vtkSlicerModuleGUI
