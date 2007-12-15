@@ -19,6 +19,7 @@ public:
   virtual void TransitionCallback(int Flag);
   void TransitionCallback() {this->TransitionCallback(1);}
   void UpdateGUI();
+  void UpdateMRML();
 
   void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
     this->vtkTumorGrowthSelectScanStep::ProcessGUIEvents(caller, event, callData); }

@@ -4,6 +4,8 @@
 #include "vtkTumorGrowthStep.h"
 
 class vtkKWThumbWheel;
+class vtkImageThreshold;
+class vtkMRMLScalarVolumeNode;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthSegmentationStep : public vtkTumorGrowthStep
 {
@@ -18,7 +20,7 @@ public:
 
   // Description:
   // Callbacks.
-  virtual void ThresholdChangedCallback(vtkIdType, double value);
+  virtual void ThresholdChangedCallback(double value);
   virtual void TransitionCallback(); 
 
 protected:
@@ -30,6 +32,16 @@ protected:
 private:
   vtkTumorGrowthSegmentationStep(const vtkTumorGrowthSegmentationStep&);
   void operator=(const vtkTumorGrowthSegmentationStep&);
+
+  void PreSegmentScan1Remove();
+  void PreSegmentScan1Define();
+
+  void SegmentScan1Remove();
+  int SegmentScan1Define();
+  
+  vtkImageThreshold *PreSegment;
+  vtkMRMLScalarVolumeNode *PreSegmentNode; 
+  vtkMRMLScalarVolumeNode *SegmentNode; 
 };
 
 #endif

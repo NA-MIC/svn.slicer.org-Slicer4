@@ -6,9 +6,12 @@
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkKWMessageDialog.h"
 #include "vtkMRMLTumorGrowthNode.h"
-
+#include "vtkTumorGrowthLogic.h"
 #include "vtkSlicerSliceControllerWidget.h"
 
+#include "vtkSlicerVolumesLogic.h"
+#include "vtkSlicerVolumesGUI.h"
+#include "vtkSlicerApplication.h" 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthFirstScanStep);
 vtkCxxRevisionMacro(vtkTumorGrowthFirstScanStep, "$Revision: 1.0 $");
@@ -33,7 +36,7 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
   if (!node) return;
   if (this->VolumeMenuButton && this->VolumeMenuButton->GetSelected() ) 
   {
-    node->SetFirstScanRef(this->VolumeMenuButton->GetSelected()->GetID());
+    node->SetScan1_Ref(this->VolumeMenuButton->GetSelected()->GetID());
   }
 }
 
@@ -41,7 +44,7 @@ void vtkTumorGrowthFirstScanStep::UpdateGUI() {
   vtkMRMLTumorGrowthNode* n = this->GetGUI()->GetNode();
   if (n != NULL &&  this->VolumeMenuButton)
   {
-    this->VolumeMenuButton->SetSelected(this->VolumeMenuButton->GetMRMLScene()->GetNodeByID(n->GetFirstScanRef()));
+    this->VolumeMenuButton->SetSelected(this->VolumeMenuButton->GetMRMLScene()->GetNodeByID(n->GetScan1_Ref()));
   }
 } 
 
@@ -63,6 +66,15 @@ void vtkTumorGrowthFirstScanStep::ShowUserInterface()
     wizard_widget->GetCancelButton()->EnabledOff();
   }
 
+  cout << "DEBUGGING" << endl;
+  vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
+  if (!applicationGUI) return; 
+  char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
+
+  std::string fl(fileName);
+  applicationGUI->GetMRMLScene()->SetURL(fileName);
+  applicationGUI->GetMRMLScene()->Connect();
+  this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID("vtkMRMLScalarVolumeNode1")); 
 }
 
 void vtkTumorGrowthFirstScanStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
@@ -79,6 +91,13 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *call
 
     if (this->VolumeMenuButton && (selector == this->VolumeMenuButton)) 
     { 
+      vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+      if (!node) {
+    // Create Node 
+    this->GetGUI()->UpdateMRML();
+      } else {
+    this->UpdateMRML();
+      }
       this->TransitionCallback(0);
     }
 }
@@ -91,40 +110,17 @@ void vtkTumorGrowthFirstScanStep::TransitionCallback(int Flag)
 
 
    vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
-   vtkKWWizardWorkflow *wizard_workflow = wizard_widget->GetWizardWorkflow();
 
    if (this->VolumeMenuButton->GetSelected()) { 
+     
      wizard_widget->GetCancelButton()->EnabledOn();
-     vtkTumorGrowthGUI *GUI = this->GetGUI();
-
-     vtkSlicerApplicationGUI *AppGUI = GUI->GetApplicationGUI();
-
-     // .. MainSliceGUI0->GetSliceController() =  vtkSlicerSliceControllerWidget
-     // .. GetMainSliceGUI0()->GetSliceController()->GetForegroundSelector() = vtkSlicerNodeSelectorWidget
-      AppGUI->GetMainSliceGUI0()->GetSliceController()->GetForegroundSelector()->SetSelected(this->VolumeMenuButton->GetSelected());
-      AppGUI->GetMainSliceGUI0()->GetSliceController()->GetBackgroundSelector()->SetSelected(this->VolumeMenuButton->GetSelected());
-      AppGUI->GetMainSliceGUI1()->GetSliceController()->GetForegroundSelector()->ProcessCommand("None");
-      AppGUI->GetMainSliceGUI1()->GetSliceController()->GetBackgroundSelector()->ProcessCommand("None");
-      AppGUI->GetMainSliceGUI2()->GetSliceController()->GetForegroundSelector()->ProcessCommand("None");
-      AppGUI->GetMainSliceGUI2()->GetSliceController()->GetBackgroundSelector()->ProcessCommand("None");
-
-      // Update entire MRML node bc if it was deleted should be created 
-      GUI->UpdateMRML(); 
-
-      // wizard_workflow->AttemptToGoToNextStep();
-      // Jumps over two steps ! 
-
+     wizard_widget->GetWizardWorkflow()->AttemptToGoToNextStep();
    } else {
      if (Flag) {
        vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Please define first scan before proceeding", vtkKWMessageDialog::ErrorIcon);
      }
      wizard_widget->GetCancelButton()->EnabledOff();
    }
-   cout << "Debugging:vtkTumorGrowthFirstScanStep::TransitionCallback Start" << endl;
-   wizard_widget->GetCancelButton()->EnabledOn();
-   wizard_workflow->AttemptToGoToNextStep();
-   // cout << "vtkTumorGrowthFirstScanStep::TransitionCallback End" << endl;
-
 }
 
 //----------------------------------------------------------------------------
