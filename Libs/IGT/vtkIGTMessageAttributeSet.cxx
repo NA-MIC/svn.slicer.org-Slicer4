@@ -29,6 +29,7 @@ vtkIGTMessageAttributeSet::vtkIGTMessageAttributeSet()
 {
   this->AttributeMap.clear();
   this->OpenTrackerStream = NULL;
+  this->TimeStamp = vtkTimeStamp::New();
 }
 
 

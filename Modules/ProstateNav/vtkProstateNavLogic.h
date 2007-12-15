@@ -153,7 +153,9 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerLogic
   bool  ImagingControl;
   bool  UpdateLocator;
   
-  int   RealtimeImageSerial;
+
+  long  RealtimeImageTimeStamp;
+  //int   RealtimeImageSerial;
   int   RealtimeImageOrient;
 
   // Junichi Tokuda on 11/27/2007:

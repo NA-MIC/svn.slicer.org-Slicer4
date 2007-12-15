@@ -63,7 +63,7 @@ void vtkIGTOpenTrackerStream::Init(const char *configFile)
       {
       const char* cbname                 = iter->first.c_str();
       vtkIGTMessageAttributeSet* attrSet = iter->second;
-      std::cerr << "Adding Callback: " << cbname << std::endl;
+      //std::cerr << "Adding Callback: " << cbname << std::endl;
 
       callbackMod->setCallback(cbname, (OTCallbackFunction*)&GenericCallback, (void*)attrSet);
       }
@@ -147,18 +147,17 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
     {
     std::string key = iter->first;
     vtkIGTMessageAttributeBase* attr = iter->second;
-    std::cout << "Searching ATTRIBUTE:  NAME = " << key << std::endl;
+    //std::cout << "Searching ATTRIBUTE:  NAME = " << key << std::endl;
 
     if (event.hasAttribute(key))
       {
-        std::cout << " ====== found ATTRIBUTE:  NAME = " << key << std::endl;
+        //std::cout << " ====== found ATTRIBUTE:  NAME = " << key << std::endl;
 
       //========== Macro for switch(attr->GetTypeID()) {} ==========
       #define CASE_GETATTRIB_TYPE(TYPE_ID, TYPE)       \
         case TYPE_ID:            \
           {                                                   \
           TYPE data = static_cast<TYPE >(event.getAttribute<TYPE >((TYPE*)NULL, key)); \
-          std::cout << "GET ATTRIBUTE:  TYPE= " << TYPE_ID << "  key = " << key <<  " data = " << data << std::endl; \
           attr->SetAttribute(&data);                          \
           }                                                   \
         break;
@@ -192,7 +191,7 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
           res[2] = 1;
 
           Image image = (Image)event.getAttribute((Image*)NULL, key);
-          
+
           vtkImageData* vid = vtkImageData::New();
           vid->SetDimensions(res[0], res[1], res[2]);
           vid->SetExtent(0, res[0]-1, 0, res[1]-1, 0, 0 );
@@ -202,6 +201,12 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
           vid->SetScalarTypeToShort();
           vid->AllocateScalars();
           attr->SetAttribute(vid);
+          short* dest = (short*) vid->GetScalarPointer();
+          if (dest)
+            {
+            memcpy(dest, image.image_ptr, image.size());
+            vid->Update();
+            }
           }
           break;
 
@@ -211,6 +216,8 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
       }
     }
   
+  attrSet->GetTimeStamp()->Modified();
+
   vtkIGTMessageAttributeSet::MessageHandlingFunction* handler = attrSet->GetHandlerFunction();
   void* argument = attrSet->GetHandlerArgument();
   if (handler)
@@ -255,7 +262,6 @@ void vtkIGTOpenTrackerStream::SetAttributes(const char* srcName, vtkIGTMessageAt
           TYPE arg;                                                                    \
           dynamic_cast<vtkIGTMessageGenericAttribute<TYPE>*>(attr)->GetAttribute(&arg); \
           event->setAttribute(key, arg);                                  \
-          std::cout << "SET ATTRIBUTE:  TYPE= " << TYPE_ID << "  key = " << key <<  "vlue=" << arg << std::endl; \
           break;\
           }
       //============================================================

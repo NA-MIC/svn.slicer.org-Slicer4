@@ -8,6 +8,8 @@
 
 #include "vtkIGTOpenTrackerStream.h"
 #include "vtkIGTMessageAttributeSet.h"
+#include "vtkImageData.h"
+#include "vtkTimeStamp.h"
 
 
 class VTK_IGT_EXPORT vtkProstateNavDataStream : public vtkIGTOpenTrackerStream
@@ -19,6 +21,8 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
   vtkGetObjectMacro(NeedleMatrix,vtkMatrix4x4);
+  vtkGetObjectMacro(RealtimeImage, vtkImageData);
+  vtkGetObjectMacro(ImageTimeStamp, vtkTimeStamp)
 
   //Description:
   //Constructor
@@ -60,6 +64,9 @@ private:
 
   vtkMatrix4x4* NeedleMatrix;
   vtkTransform* NeedleTransform;
+  vtkImageData* RealtimeImage;
+  vtkTimeStamp* ImageTimeStamp;
+
 
 };
 
