@@ -9,7 +9,7 @@ class vtkKWPushButton;
 class vtkSlicerModuleCollapsibleFrame;
 class vtkSlicerSliceGUI;
 class vtkRenderWindowInteractor;
-class vtkImageRectangularSource;
+class vtkMRMLScalarVolumeNode;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthROIStep : public vtkTumorGrowthStep
 {
@@ -65,8 +65,7 @@ private:
  
   void RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *sliceGUI, vtkRenderWindowInteractor *rwi,int coords[3]);
 
-  vtkImageRectangularSource *ROILabelMap;
-
+  vtkMRMLScalarVolumeNode *ROILabelMapNode;
 };
 
 #endif
