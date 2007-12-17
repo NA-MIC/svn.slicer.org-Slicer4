@@ -128,10 +128,20 @@ void vtkTumorGrowthSecondScanStep::TransitionCallback(int Flag)
   if (this->VolumeMenuButton->GetSelected()) { 
      wizard_widget->GetCancelButton()->EnabledOn();
      // ============================
-     // Kilian: Process images 
-     this->GetGUI()->GetLogic()->AnalyzeGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
-     // ============================
+     // make sure that analyze related nodes are empty 
+     // Delete old attached node first 
+     vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+     if (!Node) return;
+              
+     vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan2_SuperSampleRef()));
+     if (currentNode) { this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); }
 
+     //  Process images 
+     vtkMRMLScalarVolumeNode* analyzeOutput = this->GetGUI()->GetLogic()->AnalyzeGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
+     if (!analyzeOutput) return; 
+
+     // ============================
+     cout << "Debugging so that I can try it out " << endl;
      wizard_workflow->AttemptToGoToNextStep();
   } else {
      if (Flag) {
@@ -139,8 +149,6 @@ void vtkTumorGrowthSecondScanStep::TransitionCallback(int Flag)
      }
      wizard_widget->GetCancelButton()->EnabledOff();
   }
-  cout << "Debugging:vtkTumorGrowthSelectScanStep::TransitionCallback " << endl;
-  wizard_workflow->AttemptToGoToNextStep();
 }
 
 //----------------------------------------------------------------------------
