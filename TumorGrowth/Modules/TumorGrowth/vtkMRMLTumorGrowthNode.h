@@ -70,6 +70,9 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   vtkGetStringMacro(Scan1_Ref);
   vtkSetStringMacro(Scan1_Ref);
 
+  vtkSetStringMacro(WorkingDir);
+  vtkGetStringMacro(WorkingDir);
+
   // ------------------------------
   // -- Second Step 
   // ------------------------------
@@ -118,6 +121,24 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   vtkGetStringMacro(Scan2_Ref);
   vtkSetStringMacro(Scan2_Ref);
 
+  vtkGetStringMacro(Scan2_GlobalRef);
+  vtkSetStringMacro(Scan2_GlobalRef);
+
+  vtkGetStringMacro(Scan2_LocalRef);
+  vtkSetStringMacro(Scan2_LocalRef);
+
+  vtkSetStringMacro(Scan2_SuperSampleRef);
+  vtkGetStringMacro(Scan2_SuperSampleRef);
+
+  vtkSetStringMacro(Scan2_NormedRef);
+  vtkGetStringMacro(Scan2_NormedRef);
+
+  vtkSetStringMacro(Scan1_ThreshRef);
+  vtkGetStringMacro(Scan1_ThreshRef);
+
+  vtkSetStringMacro(Scan2_ThreshRef);
+  vtkGetStringMacro(Scan2_ThreshRef);
+
 protected:
   vtkMRMLTumorGrowthNode();
   ~vtkMRMLTumorGrowthNode();
@@ -128,9 +149,17 @@ protected:
   double TimeStep;
   
   char* Scan1_Ref;
-  char* Scan2_Ref;
   char* Scan1_SuperSampleRef;
   char* Scan1_SegmentRef;
+  char* Scan1_ThreshRef;
+  char* Scan2_Ref;
+  char* Scan2_GlobalRef;
+  char* Scan2_LocalRef;
+  char* Scan2_SuperSampleRef;
+  char* Scan2_NormedRef;
+  char* Scan2_ThreshRef;
+
+  char* WorkingDir;
 
   //BTX
   vtkstd::vector<int>  ROIMin; 

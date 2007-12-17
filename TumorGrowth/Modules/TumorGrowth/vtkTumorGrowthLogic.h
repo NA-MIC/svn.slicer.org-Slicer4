@@ -4,6 +4,7 @@
 #include "vtkSlicerModuleLogic.h"
 #include "vtkTumorGrowth.h"
 #include "vtkMRMLTumorGrowthNode.h"
+#include "vtkGeneralTransform.h"
 
 #include <string>
 #include <map>
@@ -12,6 +13,7 @@ class vtkMRMLScene;
 class vtkMRMLScalarNode;
 class vtkMRMLVolumeNode;
 class vtkSlicerApplication;
+
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthLogic : 
   public vtkSlicerModuleLogic
@@ -35,6 +37,11 @@ public:
   vtkSetStringMacro (ModuleName);
 
   virtual void      StartAnalysis(); 
+
+  vtkGetObjectMacro (GlobalTransform, vtkGeneralTransform);
+  vtkGeneralTransform* CreateGlobalTransform();
+  vtkGetObjectMacro (LocalTransform,  vtkGeneralTransform);
+  vtkGeneralTransform* CreateLocalTransform();
 
   vtkGetObjectMacro (TumorGrowthNode, vtkMRMLTumorGrowthNode);
   void SetAndObserveTumorGrowthNode(vtkMRMLTumorGrowthNode *n) 
@@ -62,7 +69,7 @@ public:
   vtkMRMLScalarVolumeNode* CreateVolumeNode(vtkMRMLVolumeNode *volumeNode, char *name);
 
   // Main Growth Function 
-  void AnalyzeGrowth(vtkSlicerApplication *application);
+  vtkMRMLScalarVolumeNode* AnalyzeGrowth(vtkSlicerApplication *application);
 
 private:
   vtkTumorGrowthLogic();
@@ -88,6 +95,9 @@ private:
   char*  ProgressCurrentAction;
   double ProgressGlobalFractionCompleted;
   double ProgressCurrentFractionCompleted;
+
+  vtkGeneralTransform* GlobalTransform; 
+  vtkGeneralTransform* LocalTransform; 
 };
 
 #endif

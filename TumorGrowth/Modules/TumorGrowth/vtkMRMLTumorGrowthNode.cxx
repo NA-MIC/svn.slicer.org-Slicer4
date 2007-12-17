@@ -60,6 +60,7 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
    this->Scan2_Ref = NULL;
    this->Scan1_SuperSampleRef = NULL;
    this->Scan1_SegmentRef = NULL;
+   this->WorkingDir= NULL;
 
    // this->ROIMin[0] = this->ROIMin[1] = this->ROIMin[2] = this->ROIMax[0] = this->ROIMax[1] = this->ROIMax[2] = -1;
    this->ROIMin.resize(3,-1); 
@@ -70,6 +71,15 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
    this->SuperSampled_RatioNewOldSpacing = -1;
 
    this->SegmentThreshold=-1;
+
+   this->Scan2_GlobalRef = NULL;
+   this->Scan2_SuperSampleRef = NULL;
+
+   this->Scan2_LocalRef = NULL;
+   this->Scan2_NormedRef = NULL;
+
+   this->Scan1_ThreshRef = NULL;
+   this->Scan2_ThreshRef = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -79,6 +89,14 @@ vtkMRMLTumorGrowthNode::~vtkMRMLTumorGrowthNode()
    this->SetScan2_Ref( NULL );
    this->SetScan1_SuperSampleRef( NULL);
    this->SetScan1_SegmentRef(NULL);
+   this->SetWorkingDir(NULL);
+   this->SetScan2_GlobalRef(NULL);
+   this->SetScan2_SuperSampleRef(NULL);
+   this->SetScan2_LocalRef(NULL);
+   this->SetScan2_NormedRef(NULL);
+   this->SetScan1_ThreshRef(NULL);
+   this->SetScan2_ThreshRef(NULL);
+
 }
 
 //----------------------------------------------------------------------------

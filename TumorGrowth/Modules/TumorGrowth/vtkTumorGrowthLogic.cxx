@@ -43,10 +43,13 @@ vtkTumorGrowthLogic::vtkTumorGrowthLogic()
   this->ProgressCurrentFractionCompleted = 0.0;
 
   //this->DebugOn();
-
   this->TumorGrowthNode = NULL; 
+  this->LocalTransform = NULL; 
+  this->GlobalTransform = NULL; 
+
 
 }
+
 
 //----------------------------------------------------------------------------
 vtkTumorGrowthLogic::~vtkTumorGrowthLogic()
@@ -54,6 +57,17 @@ vtkTumorGrowthLogic::~vtkTumorGrowthLogic()
   vtkSetMRMLNodeMacro(this->TumorGrowthNode, NULL);
   this->SetProgressCurrentAction(NULL);
   this->SetModuleName(NULL);
+
+  if (this->LocalTransform) {
+    this->LocalTransform->Delete();
+    this->LocalTransform = NULL;
+  }
+
+  if (this->GlobalTransform) {
+    this->LocalTransform->Delete();
+    this->LocalTransform = NULL;
+  }
+
 }
 
 //----------------------------------------------------------------------------
@@ -61,6 +75,18 @@ void vtkTumorGrowthLogic::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
   // !!! todo
+}
+
+vtkGeneralTransform* vtkTumorGrowthLogic::CreateGlobalTransform() 
+{
+  this->GlobalTransform = vtkGeneralTransform::New();
+  return this->GlobalTransform;
+}
+
+vtkGeneralTransform* vtkTumorGrowthLogic::CreateLocalTransform() 
+{
+  this->LocalTransform = vtkGeneralTransform::New();
+  return this->LocalTransform;
 }
 
 
@@ -191,7 +217,7 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
   // Initialize Variables 
   if (!this->TumorGrowthNode)  return NULL;
 
-  char *VolumeRef = (ScanNum > 1 ? this->TumorGrowthNode->GetScan2_Ref() : this->TumorGrowthNode->GetScan1_Ref()); 
+  char *VolumeRef = (ScanNum > 1 ? this->TumorGrowthNode->GetScan2_GlobalRef() : this->TumorGrowthNode->GetScan1_Ref()); 
   vtkMRMLVolumeNode* volumeNode = vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(VolumeRef));
   if (!this->CheckROI(volumeNode)) return NULL;
 
@@ -258,7 +284,7 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
   // ---------------------------------
   // Now return results and clean up 
   char VolumeOutputName[1024];
-  if (ScanNum > 1) sprintf(VolumeOutputName, "TG_scan2_SuperSampled");
+  if (ScanNum > 1) sprintf(VolumeOutputName, "TG_scan2_Global_SuperSampled");
   else sprintf(VolumeOutputName, "TG_scan1_SuperSampled");
 
   vtkMRMLScalarVolumeNode *VolumeOutputNode = vtkMRMLScalarVolumeNode::New();
@@ -277,25 +303,28 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
 }
 
 
-void vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
+vtkMRMLScalarVolumeNode*  vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
 
   // This is for testing how to start a tcl script 
   cout << "=== Start ANALYSIS ===" << endl;
   char TCL_FILE[1024]; 
+  // Kilian: Can we copy this over to the build directory
   sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthFct.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
   app->LoadScript(TCL_FILE); 
+  sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthReg.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+  app->LoadScript(TCL_FILE); 
+
   app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Global");
-  this->CreateSuperSample(2,app);
+  vtkMRMLScalarVolumeNode *outputNode = this->CreateSuperSample(2,app);
   app->Script("::TumorGrowthTcl::HistogramNormalization_GUI"); 
   app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Local"); 
   app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 1"); 
   app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 2"); 
+  app->Script("::TumorGrowthTcl::AnalysisIntensity_GUI"); 
 
-  // set SCAN1 [TumorGrowth(Scan1,ROIThreshold) GetOutput]
-  // set SCAN2 [TumorGrowth(Scan2,ROIThreshold) GetOutput]
-  // set SEGMENT [TumorGrowth(Scan1,Segment) GetOutput]
-  app->Script("::TumorGrowthTcl::AnalysisIntensity $SCAN1 $SEGMENT $SCAN2 2"); 
   cout << "=== End ANALYSIS ===" << endl;
+  return NULL;
+
 }
 
 
