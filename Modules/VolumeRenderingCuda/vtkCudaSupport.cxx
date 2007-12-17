@@ -1,4 +1,5 @@
 #include "vtkCudaSupport.h"
+#include "vtkCudaDevice.h"
 
 #include "vtkVolumeRenderingCudaFactory.h"
 
@@ -19,21 +20,26 @@ vtkCudaSupport* vtkCudaSupport::New()
 
 vtkCudaSupport::vtkCudaSupport()
 {
+  CheckSupportedCudaVersion();
 }
 
 vtkCudaSupport::~vtkCudaSupport()
 {
+  for (unsigned int i = 0; i < this->GetDeviceCount(); i++)
+    this->Devices[i]->Delete();
 }
 
-int vtkCudaSupport::CheckSupportedCudaVersion(int cudaVersion)
+int vtkCudaSupport::CheckSupportedCudaVersion()
 {
     int deviceCount = 0;
     cudaGetDeviceCount(&deviceCount);
     int device;
     for (device = 0; device < deviceCount; ++device)
     {
-        cudaDeviceProp deviceProperty;
-        cudaGetDeviceProperties(&deviceProperty, device);
+      vtkCudaDevice* CudaDevice = vtkCudaDevice::New();
+      CudaDevice->SetDeviceNumber(device);
+      
+      this->Devices.push_back(CudaDevice);
     }
 
     /// HACK BY NOW
@@ -42,5 +48,9 @@ int vtkCudaSupport::CheckSupportedCudaVersion(int cudaVersion)
 
 void vtkCudaSupport::PrintSelf(ostream& os, vtkIndent indent)
 {
-
+  os << "Cuda Support Listing all Children: "<< std::endl;
+  for (unsigned int i = 0; i < this->GetDeviceCount(); ++i)
+    {
+      this->Devices[i]->PrintSelf(os, indent.GetNextIndent());
+    }
 }

@@ -6,6 +6,7 @@
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkMRMLScene.h"
+#include "vtkVolume.h"
 
 #include "vtkVolumeCudaMapper.h"
 
@@ -13,6 +14,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
     this->LoadButton = NULL;
     this->CudaMapper = NULL;
+    this->CudaActor = NULL;
 }
 vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
 {
@@ -25,6 +27,10 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     if (this->CudaMapper != NULL)
     {
        this->CudaMapper->Delete();
+    }
+    if (this->CudaActor != NULL)
+    {
+      this->CudaActor->Delete();  
     }
 }
 
@@ -138,7 +144,6 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     //}
     //loadSaveDataFrame->Delete();
     
-    this->CudaMapper = vtkVolumeCudaMapper::New();
     this->Built=true;
 }
 
@@ -184,9 +189,18 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
    if (caller == this->LoadButton)
    {
      if (this->CudaMapper == NULL)
-       this->CudaMapper == vtkVolumeCudaMapper::New();
+       this->CudaMapper = vtkVolumeCudaMapper::New();
+     if (this->CudaActor == NULL)
+       {
+         this->CudaActor = vtkVolume::New();
+         this->CudaActor->SetMapper(this->CudaMapper);
+       }
+       
+       
     this->CudaMapper->Render(NULL, NULL);
    }
+   
+   printf ("%p\n", caller);
 
 }
 
@@ -207,7 +221,6 @@ void vtkVolumeRenderingCudaModuleGUI::SetInteractorStyle(vtkSlicerViewerInteract
 void vtkVolumeRenderingCudaModuleGUI::Enter ( )
 {
     vtkDebugMacro("Enter Volume Rendering Cuda Module");
-
 
     if ( this->Built == false )
     {
@@ -232,4 +245,5 @@ void vtkVolumeRenderingCudaModuleGUI::PrintSelf(ostream& os, vtkIndent indent)
     {
         this->GetLogic()->PrintSelf(os,indent.GetNextIndent());
     }
+    this->SuperClass::PrintSelf(os, indent);
 }

@@ -13,6 +13,9 @@
 #include "vtkFloatArray.h"
 #include "vtkPointData.h"
 #include "vtkDataSetReader.h"
+#include "vtkImageReader.h"
+#include "vtkPNGReader.h"
+#include "vtkImageViewer.h"
 
 vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
 
@@ -23,18 +26,38 @@ vtkInstantiatorNewMacro(vtkVolumeCudaMapper);
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
   
+  
   this->inputBuffer= (unsigned char*)malloc(256*256*256*sizeof(unsigned char));
 
   FILE *fp;
   fp=fopen("/projects/igtdev/bensch/svn/volrenSample/heart256.raw","r");
   fread(this->inputBuffer, sizeof(unsigned char), 256*256*256, fp);
+  fread(this->inputBuffer, sizeof(unsigned char), 256*256*256, fp);
+  fread(this->inputBuffer, sizeof(unsigned char), 256*256*256, fp);
   fclose(fp);
 
-  vtkDataSetReader* reader = vtkDataSetReader::New();
-  reader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/heart256.raw");
+
+  printf("START CREATING WINDOW\n");
+
+  vtkImageReader* reader = vtkImageReader::New();
+  reader->SetFileDimensionality(2);
+  reader->SetDataScalarTypeToUnsignedChar();
+  reader->SetNumberOfScalarComponents(4);
+  reader->SetHeaderSize(0);
+  reader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
   
-  vtkDataSet* data = reader->GetOutput();
+  this->ImageViewer = vtkImageViewer::New();
+  PNGReader = vtkPNGReader::New();
+  PNGReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/test.png");
   
+  this->ImageViewer->SetInputConnection(reader->GetOutputPort());
+  
+  this->ImageViewer->SetColorWindow(255);
+  this->ImageViewer->SetColorLevel(128);
+  
+  //this->ImageViewer->Render();
+  
+  printf("Stop Creating Window\n");
   CUDArenderAlgo_init(256,256,256,1024,768);
 
   // Load 3D data into GPU memory.
@@ -48,17 +71,21 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
   // Free allocated GPU memory.
   CUDArenderAlgo_delete();
   free(inputBuffer);  
+  
+  this->ImageViewer->Delete();
+
 }
 
 
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
    // Setting transformation matrix. This matrix will be used to do rotation and translation on ray tracing.
-float color[6]={255,255,255,1,1,1};
+  float color[6]={255,255,255,1,1,1};
   float minmax[6]={0,255,0,255,0,255};
   float lightVec[3]={0, 0, 1};
   float rotationMatrix[4][4]={{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
   
+  /*
     // Do rendering. 
   CUDArenderAlgo_doRender((float*)rotationMatrix, color, minmax, lightVec, 
         256,256,256,    //3D data size
@@ -74,6 +101,18 @@ float color[6]={255,255,255,1,1,1};
   FILE* fp=fopen("output.raw","w");
   fwrite(outputBuffer, sizeof(unsigned char), 1024*768*4, fp);
   fclose(fp);
+  */
+  
+  /*
+  outputBuffer = (unsigned char*) malloc(1024 * 786 * 4 * sizeof(unsigned char));
+  FILE* fp = fopen ("output.raw", "r");
+  fread(this->outputBuffer, sizeof(unsigned char), 1024 * 786 * 4, fp);
+  fclose(fp);
+  */
+  
+  
+  this->ImageViewer->Render();
+  printf ("Testing the CUDA STUFF\n");
   
 };
 
