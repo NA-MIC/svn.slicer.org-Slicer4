@@ -475,6 +475,68 @@ vtkTclHelper::ReceiveImageDataTensors(char *sockname)
   }  
 }
 
+// Read a stream of numbers from vtkSocketCommunicator::SendTagged 
+// and put it int the Matrix ivar
+void 
+vtkTclHelper::ReceiveMatrix(char *sockname)
+{
+  int mode;
+
+  Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
+    
+  if ( ! (mode & TCL_READABLE) )
+    {   vtkErrorMacro ("Socket " << sockname << " is not readable" << "\n");
+      return;
+    }
+
+  if ( this->Matrix == NULL )
+    {   vtkErrorMacro ("Matrix is NULL");
+      return;
+    }
+
+  // read the tag, but ignore it
+  int tag;
+  int bytes = sizeof(int);
+  int read = Tcl_Read(channel, (char *) &tag, bytes);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+
+  // read the number of elements
+  int length;
+  bytes = sizeof(int);
+  read = Tcl_Read(channel, (char *) &length, bytes);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+
+  if ( length != 12*8 )
+    {   vtkErrorMacro ("Packet of " << length << " sent, but expected " << 12*8 << "\n");
+      return;
+    }
+
+  // read the actual elements
+  double elements[12*8];
+  read = Tcl_Read(channel, (char *) &elements, 12*8);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+
+  int row = 0;
+  for (row = 0; row < 3; row++)
+    {
+    this->Matrix->SetElement(row,0, elements[row+0]);
+    this->Matrix->SetElement(row,1, elements[row+1]);
+    this->Matrix->SetElement(row,2, elements[row+2]);
+    }
+}
+
 /*Meeting with Steve and Raul (05-26-07): decision that the measurement frame
   reduce and space directions reduce transformations that slicer does with
   tensordata has to be handled by the volume node. The plan is to have a method
