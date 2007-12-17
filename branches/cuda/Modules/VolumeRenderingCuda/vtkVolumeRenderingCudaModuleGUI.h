@@ -7,10 +7,14 @@
 class vtkVolumeRenderingCudaModuleLogic;
 
 class vtkVolumeCudaMapper;
+class vtkVolume;
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
 {
  public:
+ //BTX
+  typedef vtkSlicerModuleGUI SuperClass;
+ //ETX
   static vtkVolumeRenderingCudaModuleGUI* New();
   vtkTypeMacro(vtkVolumeRenderingCudaModuleGUI, vtkSlicerModuleGUI);
 
@@ -92,7 +96,8 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   // Pointer to the module's logic class
   vtkVolumeRenderingCudaModuleLogic *Logic;
   vtkVolumeCudaMapper* CudaMapper;
-
+  vtkVolume* CudaActor;
+  
   vtkSlicerViewerWidget *ViewerWidget;
   vtkSlicerViewerInteractorStyle *InteractorStyle;
 
