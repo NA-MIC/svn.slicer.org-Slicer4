@@ -37,6 +37,9 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
   if (this->VolumeMenuButton && this->VolumeMenuButton->GetSelected() ) 
   {
     node->SetScan1_Ref(this->VolumeMenuButton->GetSelected()->GetID());
+    // Kilian Set working directory - cut off file name 
+    // node->SetWorkgingDir(vtkMRMLVolumeNode::SafeDownCast(this->VolumeMenuButton->GetSelected()->GetID())->GetStorageNode()->GetFileName());
+    node->SetWorkingDir("blub");
   }
 }
 
@@ -93,10 +96,10 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *call
     { 
       vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
       if (!node) {
-    // Create Node 
-    this->GetGUI()->UpdateMRML();
+         // Create Node 
+         this->GetGUI()->UpdateMRML();
       } else {
-    this->UpdateMRML();
+         this->UpdateMRML();
       }
       this->TransitionCallback(0);
     }
