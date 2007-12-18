@@ -1,6 +1,7 @@
 #include "vtkCudaBase.h"
 
 #include "cuda_runtime_api.h"
+#include "vtkSetGet.h"
 
 cudaError_t vtkCudaBase::GetLastError()
 {
@@ -19,7 +20,7 @@ const char* vtkCudaBase::GetErrorString(cudaError_t error)
 
 void vtkCudaBase::PrintError(cudaError_t error)
 {
-  vtkDebug(vtkCudaBase::GetErrorString(error));
+  printf(vtkCudaBase::GetErrorString(error));
 }
   
 
