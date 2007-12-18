@@ -8,7 +8,7 @@
 #include "vtkMRMLTumorGrowthNode.h"
 #include "vtkTumorGrowthLogic.h"
 #include "vtkSlicerSliceControllerWidget.h"
-
+ 
 #include "vtkSlicerVolumesLogic.h"
 #include "vtkSlicerVolumesGUI.h"
 #include "vtkSlicerApplication.h" 
@@ -32,28 +32,60 @@ vtkTumorGrowthFirstScanStep::~vtkTumorGrowthFirstScanStep() {
 void vtkTumorGrowthFirstScanStep::UpdateMRML() 
 {
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
-
-  if (!node) return;
+  if (!node) { return; }
   if (this->VolumeMenuButton && this->VolumeMenuButton->GetSelected() ) 
   {
     node->SetScan1_Ref(this->VolumeMenuButton->GetSelected()->GetID());
-    // Kilian Set working directory - cut off file name 
-    // node->SetWorkgingDir(vtkMRMLVolumeNode::SafeDownCast(this->VolumeMenuButton->GetSelected()->GetID())->GetStorageNode()->GetFileName());
-    node->SetWorkingDir("blub");
+    vtkMRMLVolumeNode *VolNode = vtkMRMLVolumeNode::SafeDownCast(this->VolumeMenuButton->GetSelected());
+    if (!VolNode && !VolNode->GetStorageNode() && !VolNode->GetStorageNode()->GetFileName()) {return; }
+    
+    char DIR[1024];
+    char CMD[2024];
+    vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
+    sprintf(DIR,"%s-TG",vtksys::SystemTools::GetParentDirectory(VolNode->GetStorageNode()->GetFileName()).c_str());
+    sprintf(CMD,"file isdirectory %s",DIR); 
+    if (!atoi(application->Script(CMD))) { 
+      sprintf(CMD,"file mkdir %s",DIR); 
+      application->Script(CMD); 
+    }
+    if (!node->GetWorkingDir() ||  !strcmp(DIR,node->GetWorkingDir())) {
+      cout << "Working directory is " <<  DIR << endl;
+      node->SetWorkingDir(DIR);
+    }
   }
 }
 
 void vtkTumorGrowthFirstScanStep::UpdateGUI() {
   vtkMRMLTumorGrowthNode* n = this->GetGUI()->GetNode();
+  if (!n) {
+    this->GetGUI()->UpdateNode();
+    n = this->GetGUI()->GetNode();
+  }
   if (n != NULL &&  this->VolumeMenuButton)
   {
-    this->VolumeMenuButton->SetSelected(this->VolumeMenuButton->GetMRMLScene()->GetNodeByID(n->GetScan1_Ref()));
+    vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
+    this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID(n->GetScan1_Ref()));
   }
 } 
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthFirstScanStep::ShowUserInterface()
 {
+  {
+    cout << "====================" << endl;
+    cout << "DEBUGGING" << endl;
+    vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
+    if (!applicationGUI) return; 
+  
+    char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
+    std::string fl(fileName);
+    applicationGUI->GetMRMLScene()->SetURL(fileName);
+    applicationGUI->GetMRMLScene()->Connect();
+    cout << "====================" << endl;
+    // this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID("vtkMRMLScalarVolumeNode1")); 
+
+  }
+
   this->vtkTumorGrowthSelectScanStep::ShowUserInterface();
 
   this->Frame->SetLabelText("First Scan");
@@ -69,15 +101,8 @@ void vtkTumorGrowthFirstScanStep::ShowUserInterface()
     wizard_widget->GetCancelButton()->EnabledOff();
   }
 
-  cout << "DEBUGGING" << endl;
-  vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
-  if (!applicationGUI) return; 
-  char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
-
-  std::string fl(fileName);
-  applicationGUI->GetMRMLScene()->SetURL(fileName);
-  applicationGUI->GetMRMLScene()->Connect();
-  this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID("vtkMRMLScalarVolumeNode1")); 
+  this->UpdateGUI();
+  this->TransitionCallback(0);
 }
 
 void vtkTumorGrowthFirstScanStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
@@ -101,7 +126,12 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *call
       } else {
          this->UpdateMRML();
       }
-      this->TransitionCallback(0);
+      if (this->VolumeMenuButton->GetSelected()) { 
+
+    // this->TransitionCallback(0);
+    vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
+    wizard_widget->GetCancelButton()->EnabledOn();
+      }
     }
 }
 

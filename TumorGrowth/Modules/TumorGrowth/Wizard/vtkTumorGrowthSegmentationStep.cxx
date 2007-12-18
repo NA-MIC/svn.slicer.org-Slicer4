@@ -53,8 +53,6 @@ vtkTumorGrowthSegmentationStep::~vtkTumorGrowthSegmentationStep()
 //----------------------------------------------------------------------------
 void vtkTumorGrowthSegmentationStep::ShowUserInterface()
 {
-  cout << "ShowUserInterface Start "<< endl;
-
   // ----------------------------------------
   // Display Super Sampled Volume 
   // ----------------------------------------
@@ -130,6 +128,9 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   // Show segmentation 
   // ----------------------------------------
   this->PreSegmentScan1Define();
+  // Necesary in order to transfere results from above lines  
+  this->ThresholdChangedCallback(0);
+
   // this->TransitionCallback();   
 }
 
@@ -226,15 +227,26 @@ int vtkTumorGrowthSegmentationStep::SegmentScan1Define() {
 //----------------------------------------------------------------------------
 void vtkTumorGrowthSegmentationStep::ThresholdChangedCallback(double value)
 {
-  cout << "vtkTumorGrowthSegmentationStep::ThresholdChangedCallback " << value << endl;
-  if (this->ThresholdScale) return; 
+  if (!this->ThresholdScale || !this->PreSegment) return;
   PreSegment->ThresholdByUpper(this->ThresholdScale->GetValue()); 
   PreSegment->Update();
-  // Kilian: No change in image 
+  // PreSegment->GetOutput()->Modified();
+  this->PreSegmentNode->Modified();
+
 
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
   if (!mrmlNode) return;
   mrmlNode->SetSegmentThreshold(this->ThresholdScale->GetValue());
+
+  // set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+  // set STEP [$GUI GetSegmentationStep]
+  // set FILT [$STEP GetPreSegment]
+
+  // You can also watch MRML by doing 
+  // MRMLWatcher m
+  // parray MRML
+  // $MRML(TG_scan1_SuperSampled) Print
+
 }
 
 //----------------------------------------------------------------------------

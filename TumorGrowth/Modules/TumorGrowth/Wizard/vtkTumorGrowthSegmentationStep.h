@@ -23,6 +23,8 @@ public:
   virtual void ThresholdChangedCallback(double value);
   virtual void TransitionCallback(); 
 
+  vtkGetObjectMacro(PreSegment,vtkImageThreshold);
+
 protected:
   vtkTumorGrowthSegmentationStep();
   ~vtkTumorGrowthSegmentationStep();

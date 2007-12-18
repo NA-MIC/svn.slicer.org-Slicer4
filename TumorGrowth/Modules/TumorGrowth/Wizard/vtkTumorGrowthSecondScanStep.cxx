@@ -70,8 +70,10 @@ void vtkTumorGrowthSecondScanStep::ShowUserInterface()
 
   // For debugging 
   vtkSlicerApplicationGUI *applicationGUI     = this->GetGUI()->GetApplicationGUI();
+
+  // Kilian : Has to be replaced with what ever MRML file says 
   this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID("vtkMRMLScalarVolumeNode2")); 
-  this->TransitionCallback(1);  
+  // this->TransitionCallback(1);  
 } 
 
 void vtkTumorGrowthSecondScanStep::UpdateMRML() 
@@ -132,17 +134,14 @@ void vtkTumorGrowthSecondScanStep::TransitionCallback(int Flag)
      // Delete old attached node first 
      vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
      if (!Node) return;
-              
-     vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan2_SuperSampleRef()));
-     if (currentNode) { this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); }
+     {
+       vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetAnalysis_Ref()));
+       if (currentNode) { this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); }
+     }
 
      //  Process images 
-     vtkMRMLScalarVolumeNode* analyzeOutput = this->GetGUI()->GetLogic()->AnalyzeGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
-     if (!analyzeOutput) return; 
-
-     // ============================
-     cout << "Debugging so that I can try it out " << endl;
-     wizard_workflow->AttemptToGoToNextStep();
+     if (this->GetGUI()->GetLogic()->AnalyzeGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication())))      
+       wizard_workflow->AttemptToGoToNextStep();
   } else {
      if (Flag) {
        vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Please define scan before proceeding", vtkKWMessageDialog::ErrorIcon);

@@ -4,6 +4,7 @@
 #include "vtkTumorGrowthStep.h"
 
 class vtkKWThumbWheel;
+class vtkKWLabel;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthAnalysisStep : public vtkTumorGrowthStep
 {
@@ -18,7 +19,7 @@ public:
 
   // Description:
   // Callbacks.
-  virtual void SensitivityChangedCallback(vtkIdType, double value);
+  virtual void SensitivityChangedCallback(double value);
 
   void ResetPipelineCallback();
 
@@ -27,7 +28,8 @@ protected:
   ~vtkTumorGrowthAnalysisStep();
 
   // vtkKWScaleWithEntry      *SensitivetyScale;
-  vtkKWThumbWheel          *SensitivityScale;
+  vtkKWThumbWheel            *SensitivityScale;
+  vtkKWLabel                 *GrowthLabel;
 
 private:
   vtkTumorGrowthAnalysisStep(const vtkTumorGrowthAnalysisStep&);
