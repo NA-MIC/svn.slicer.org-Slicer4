@@ -32,17 +32,17 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaDevice : public vtkObject
   size_t GetMemPitch() const { return DeviceProp.memPitch; }
   /** @returns the maximum numbers of threads that can be run in parallel on this CUDA device */
   int GetMaxThreadsPerBlock() const { return DeviceProp.maxThreadsPerBlock; }
-  /** @returns the maximum dimensionality of the threads of this CUDA device as int[3] */
+  /** @returns the maximum sizes of each dimension of a block for the CUDA device as int[3] */
   const int* GetMaxThreadsDim() const { return DeviceProp.maxThreadsDim; } // [3]
-  /** @returns the maximum grid size of this CUDA device as int[3] */
+  /** @returns the maximum sizes of each dimension of a grid for this CUDA device as int[3] */
   const int* GetMaxGridSize() const { return DeviceProp.maxGridSize; }  // [3]
-  /** @returns the tatal amount of constant memory of this CUDA device */
+  /** @returns the tatal amount (in bytes) of constant memory of this CUDA device */
   size_t GetTotalConstMem() const { return DeviceProp.totalConstMem; }
-  /** @reuturns The major version number of the CUDA device */
+  /** @reuturns The major revision number of the CUDA device */
   int GetMajor() const { return DeviceProp.major; }
-  /** @returns the minor version number of the CUDA device */
+  /** @returns the minor revision number of the CUDA device */
   int GetMinor() const { return DeviceProp.minor; }
-  /** @reuturns the clock rate of the CUDA device */
+  /** @reuturns the clock rate in kiloherz of the CUDA device */
   int GetClockRate() const { return DeviceProp.clockRate; }
   /** @returns the texture alignment of the CUDA device */
   size_t GetTextureAlignment() const { return DeviceProp.textureAlignment; }
@@ -50,7 +50,10 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaDevice : public vtkObject
   const cudaDeviceProp& GetCudaDeviceProperty() const { return this->DeviceProp; }
   
   
+  
   void MakeActive();
+  void SynchronizeThread();
+  void ExitThread();
 
   /// Memory Management
   bool AllocateMemory();
