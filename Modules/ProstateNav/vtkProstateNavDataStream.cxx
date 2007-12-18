@@ -147,7 +147,9 @@ void vtkProstateNavDataStream::OnRecieveMessageFromScanner(vtkIGTMessageAttribut
 {
   vtkProstateNavDataStream* ds = dynamic_cast<vtkProstateNavDataStream*>(attrSet->GetOpenTrackerStream());
   attrSet->GetAttribute("image", ds->RealtimeImage);
+  ds->RealtimeImage->Update();
   ds->ImageTimeStamp->Modified();
+
 }
 
 

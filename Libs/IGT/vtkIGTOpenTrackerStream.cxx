@@ -200,14 +200,15 @@ void vtkIGTOpenTrackerStream::GenericCallback(const Node &node, const Event &eve
           vid->SetSpacing( spacing[0], spacing[1], spacing[2] );
           vid->SetScalarTypeToShort();
           vid->AllocateScalars();
-          attr->SetAttribute(vid);
           short* dest = (short*) vid->GetScalarPointer();
           if (dest)
             {
             memcpy(dest, image.image_ptr, image.size());
             vid->Update();
             }
+          attr->SetAttribute(vid);
           }
+
           break;
 
         default:
@@ -247,7 +248,7 @@ void vtkIGTOpenTrackerStream::SetAttributes(const char* srcName, vtkIGTMessageAt
   if (module != NULL)
     {
     ot::Event* event;
-    event = new ot::Event();   // memo by Junichi : where it deleted ?
+    event = new ot::Event();   // memo by Junichi : where is it deleted ?
     
     vtkIGTMessageAttributeSet::iterator iter;
     for (iter = attrSet->begin(); iter != attrSet->end(); iter ++)
