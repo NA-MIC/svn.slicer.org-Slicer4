@@ -54,6 +54,16 @@ void vtkCudaDevice::MakeActive()
   this->Initialized = true;
 }
 
+void vtkCudaDevice::SynchronizeThread()
+{
+  cudaThreadSynchronize();
+}
+void vtkCudaDevice::ExitThread()
+{
+  
+}
+
+
 void vtkCudaDevice::PrintSelf(ostream& os, vtkIndent indent)
 {
   os << this->GetName();

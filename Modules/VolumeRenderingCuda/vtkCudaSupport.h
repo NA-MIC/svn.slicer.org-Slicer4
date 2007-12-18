@@ -16,6 +16,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaSupport : public vtkObject
         static vtkCudaSupport *New();
         
         int GetDeviceCount() const { return Devices.size(); }
+        
 //BTX
     const vtkstd::vector<vtkCudaDevice*> GetDevices() { return Devices; }
     vtkCudaDevice* operator[](int deviceNumber) const { return Devices[deviceNumber]; }
