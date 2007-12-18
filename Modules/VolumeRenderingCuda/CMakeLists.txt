@@ -9,6 +9,9 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
   SET(VolumeRenderingCudaModule_SRCS
     vtkCudaSupport.cxx
     vtkCudaDevice.cxx
+    vtkCudaEvent.cxx
+    vtkCudaBase.cxx
+    vtkCudaStream.cxx
     vtkVolumeCudaMapper.cxx
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
