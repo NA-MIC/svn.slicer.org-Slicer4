@@ -99,6 +99,9 @@ public:
   void UpdateMRML();
   
   vtkTumorGrowthFirstScanStep* GetFirstScanStep() {return this->FirstScanStep;}
+  void UpdateNode();
+
+  vtkGetObjectMacro(SegmentationStep,vtkTumorGrowthSegmentationStep);
 
 protected:
 
@@ -130,9 +133,6 @@ private:
   vtkTumorGrowthSecondScanStep       *SecondScanStep;
   vtkTumorGrowthAnalysisStep         *AnalysisStep;
 
-  // Description:
-  // Populate the logic with testing data, load some volumes
-  virtual void PopulateTestingData();
 };
 
 #endif

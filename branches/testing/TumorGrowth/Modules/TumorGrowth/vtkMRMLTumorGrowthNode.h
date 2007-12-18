@@ -22,6 +22,8 @@
 #include "vtkTumorGrowth.h"
 
 class vtkImageData;
+class vtkImageThreshold;
+class vtkImageSumOverVoxels;
 
 class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
 {
@@ -139,6 +141,12 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   vtkSetStringMacro(Scan2_ThreshRef);
   vtkGetStringMacro(Scan2_ThreshRef);
 
+  vtkSetStringMacro(Analysis_Ref);
+  vtkGetStringMacro(Analysis_Ref);
+
+  vtkGetMacro(Analysis_Sensitivity,double);
+  vtkSetMacro(Analysis_Sensitivity,double);
+
 protected:
   vtkMRMLTumorGrowthNode();
   ~vtkMRMLTumorGrowthNode();
@@ -158,6 +166,7 @@ protected:
   char* Scan2_SuperSampleRef;
   char* Scan2_NormedRef;
   char* Scan2_ThreshRef;
+  char* Analysis_Ref;
 
   char* WorkingDir;
 
@@ -170,6 +179,8 @@ protected:
   double SuperSampled_RatioNewOldSpacing;
 
   double SegmentThreshold ;
+  double Analysis_Sensitivity;  
+  
 };
 
 #endif

@@ -13,7 +13,7 @@ class vtkMRMLScene;
 class vtkMRMLScalarNode;
 class vtkMRMLVolumeNode;
 class vtkSlicerApplication;
-
+class vtkImageMathematics;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthLogic : 
   public vtkSlicerModuleLogic
@@ -35,8 +35,6 @@ public:
   // the proc invocations
   vtkGetStringMacro (ModuleName);
   vtkSetStringMacro (ModuleName);
-
-  virtual void      StartAnalysis(); 
 
   vtkGetObjectMacro (GlobalTransform, vtkGeneralTransform);
   vtkGeneralTransform* CreateGlobalTransform();
@@ -60,7 +58,6 @@ public:
   void RegisterMRMLNodesWithScene(); 
 
   // special testing functions
-  virtual void      PopulateTestingData();
   vtkMRMLScalarVolumeNode* CreateSuperSample(int ScanNum, vtkSlicerApplication *application);
 
   int CheckROI(vtkMRMLVolumeNode* volumeNode);
@@ -69,7 +66,23 @@ public:
   vtkMRMLScalarVolumeNode* CreateVolumeNode(vtkMRMLVolumeNode *volumeNode, char *name);
 
   // Main Growth Function 
-  vtkMRMLScalarVolumeNode* AnalyzeGrowth(vtkSlicerApplication *application);
+  int AnalyzeGrowth(vtkSlicerApplication *application);
+
+  double MeassureGrowth(vtkSlicerApplication *app);
+
+  vtkImageThreshold* CreateAnalysis_Final();
+  vtkImageThreshold* CreateAnalysis_ROINegativeBin();
+  vtkImageThreshold* CreateAnalysis_ROIPositiveBin();
+  vtkImageMathematics* CreateAnalysis_ROIBinReal();
+
+  vtkImageSumOverVoxels* CreateAnalysis_ROITotal();
+
+  vtkSetMacro(Analysis_Mean,double);
+  vtkGetMacro(Analysis_Mean,double);
+  vtkSetMacro(Analysis_Variance,double);
+  vtkGetMacro(Analysis_Variance,double);
+  vtkSetMacro(Analysis_Threshold,double);
+  vtkGetMacro(Analysis_Threshold,double);
 
 private:
   vtkTumorGrowthLogic();
@@ -98,6 +111,16 @@ private:
 
   vtkGeneralTransform* GlobalTransform; 
   vtkGeneralTransform* LocalTransform; 
+
+  double Analysis_Mean;
+  double Analysis_Variance;
+  double Analysis_Threshold;
+
+  vtkImageThreshold     *Analysis_Final;
+  vtkImageThreshold     *Analysis_ROINegativeBin;
+  vtkImageThreshold     *Analysis_ROIPositiveBin;
+  vtkImageMathematics   *Analysis_ROIBinReal;
+  vtkImageSumOverVoxels *Analysis_ROITotal;
 };
 
 #endif

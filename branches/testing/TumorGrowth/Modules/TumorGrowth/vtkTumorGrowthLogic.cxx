@@ -11,6 +11,8 @@
 #include "vtkImageChangeInformation.h"
 #include "vtkImageResample.h"
 #include "vtkSlicerApplication.h"
+#include "vtkImageMathematics.h"
+#include "vtkImageSumOverVoxels.h"
 
 //#include "vtkSlicerVolumesLogic.h"
 //#include "vtkSlicerVolumesGUI.h"
@@ -47,7 +49,16 @@ vtkTumorGrowthLogic::vtkTumorGrowthLogic()
   this->LocalTransform = NULL; 
   this->GlobalTransform = NULL; 
 
+  this->Analysis_Mean      = 0.0;
+  this->Analysis_Variance  = 0.0;
+  this->Analysis_Threshold = 0.0;
 
+  this->Analysis_Final          = NULL;
+  this->Analysis_ROINegativeBin = NULL;
+  this->Analysis_ROIPositiveBin = NULL;
+  this->Analysis_ROIBinReal     = NULL;
+  this->Analysis_ROITotal       = NULL;
+  
 }
 
 
@@ -66,6 +77,31 @@ vtkTumorGrowthLogic::~vtkTumorGrowthLogic()
   if (this->GlobalTransform) {
     this->LocalTransform->Delete();
     this->LocalTransform = NULL;
+  }
+  
+  if (this->Analysis_Final) {
+    this->Analysis_Final->Delete();
+    this->Analysis_Final= NULL;
+  }
+
+  if (this->Analysis_ROINegativeBin) {
+    this->Analysis_ROINegativeBin->Delete();
+    this->Analysis_ROINegativeBin = NULL;
+  }
+
+  if (this->Analysis_ROIPositiveBin) {
+    this->Analysis_ROIPositiveBin->Delete();
+    this->Analysis_ROIPositiveBin = NULL;
+  }
+
+  if (this->Analysis_ROIBinReal) {
+    this->Analysis_ROIBinReal->Delete();
+    this->Analysis_ROIBinReal = NULL;
+  }
+
+  if (this->Analysis_ROITotal) {
+    this->Analysis_ROITotal->Delete();
+    this->Analysis_ROITotal = NULL;
   }
 
 }
@@ -87,75 +123,6 @@ vtkGeneralTransform* vtkTumorGrowthLogic::CreateLocalTransform()
 {
   this->LocalTransform = vtkGeneralTransform::New();
   return this->LocalTransform;
-}
-
-
-//----------------------------------------------------------------------------
-void
-vtkTumorGrowthLogic::
-StartAnalysis()
-{
-  //
-  // make sure preprocessing is up to date
-  //
-  std::cerr << "Start preprocessing..." << std::endl;
-  // this->StartPreprocessing();
-  std::cerr << "Done preprocessing." << std::endl;
-
-  //
-  // make sure we're ready to start
-  //
-
-  // find output volume
-  if (!this->TumorGrowthNode) 
-    {
-    vtkErrorMacro("Segmenter node is null---aborting segmentation.");
-    return;
-    }
-//   vtkMRMLScalarVolumeNode *outVolume =  this->TumorGrowthNode->GetOutputVolumeNode();
-//   if (outVolume == NULL)
-//     {
-//     vtkErrorMacro("No output volume found---aborting segmentation.");
-//     return;
-//     }
-// 
-//   //
-//   // Copy RASToIJK matrix, and other attributes from input to
-//   // output. Use first target volume as source for this data.
-//   //
-//   
-//   // get attributes from first target input volume
-//   const char* inMRLMID = 
-//     this->TumorGrowthNode->GetTargetNode()->GetNthVolumeNodeID(0);
-//   vtkMRMLScalarVolumeNode *inVolume = vtkMRMLScalarVolumeNode::
-//     SafeDownCast(this->GetMRMLScene()->GetNodeByID(inMRLMID));
-//   if (inVolume == NULL)
-//     {
-//     vtkErrorMacro("Can't get first target image.");
-//     return;
-//     }
-// 
-//   outVolume->CopyOrientation(inVolume);
-//   outVolume->SetAndObserveTransformNodeID(inVolume->GetTransformNodeID());
-//   outVolume->SetName("Segmentation_Result");
-
-
-  // PERFORM ANALYSIS
-
-  // Copy Results to output volume 
-  //vtkImageData* image = vtkImageData::New(); 
-  //image->DeepCopy(segmenter->GetOutput());
-  //outVolume->SetAndObserveImageData(image);
-  //image->Delete();
-  //outVolume->SetModifiedSinceRead(1);
-
-  // Originally had this here 
-  //outVolume-
-  //SetImageData(segmenter->GetOutput());
-
-  //
-  // save template file if desired
-  //
 }
 
 int vtkTumorGrowthLogic::CheckROI(vtkMRMLVolumeNode* volumeNode) {
@@ -217,8 +184,14 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
   // Initialize Variables 
   if (!this->TumorGrowthNode)  return NULL;
 
-  char *VolumeRef = (ScanNum > 1 ? this->TumorGrowthNode->GetScan2_GlobalRef() : this->TumorGrowthNode->GetScan1_Ref()); 
-  vtkMRMLVolumeNode* volumeNode = vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(VolumeRef));
+  vtkMRMLVolumeNode* volumeNode = NULL;
+
+  if (ScanNum > 1)  {
+    volumeNode = vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(this->TumorGrowthNode->GetScan2_GlobalRef()));
+  } else {
+    volumeNode = vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(this->TumorGrowthNode->GetScan1_Ref()));
+  }
+
   if (!this->CheckROI(volumeNode)) return NULL;
 
   double SuperSampleSpacing = -1;
@@ -242,8 +215,9 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
   // In old version we saved the file here 
 
   // Determine Coeficients for resampling   
+  double *Spacing = volumeNode->GetSpacing();
   if (ScanNum == 1) {
-    double *Spacing = volumeNode->GetImageData()->GetSpacing(); 
+    cout << "Spacing :" <<    Spacing[0]  << " " << Spacing[1]  << " " << Spacing[2]  << endl;
     int size = this->TumorGrowthNode->GetROIMax(0) - this->TumorGrowthNode->GetROIMin(0) + 1;
     double TempSpacing = double(size) * Spacing[0] / 100.0;
     SuperSampleSpacing = (TempSpacing < 0.3 ?  0.3 : TempSpacing);
@@ -273,12 +247,18 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
      ROISuperSample->SetDimensionality(3);
      ROISuperSample->SetInterpolationModeToLinear();
      ROISuperSample->SetInput(ROIExtent->GetOutput());
-     ROISuperSample->SetAxisOutputSpacing(0,SuperSampleSpacing);
-     ROISuperSample->SetAxisOutputSpacing(1,SuperSampleSpacing);
-     ROISuperSample->SetAxisOutputSpacing(2,SuperSampleSpacing);
+     ROISuperSample->SetAxisOutputSpacing(0,SuperSampleSpacing/Spacing[0]);
+     ROISuperSample->SetAxisOutputSpacing(1,SuperSampleSpacing/Spacing[1]);
+     ROISuperSample->SetAxisOutputSpacing(2,SuperSampleSpacing/Spacing[2]);
      ROISuperSample->ReleaseDataFlagOff();
   ROISuperSample->Update();
-       
+
+
+  vtkImageChangeInformation *ROISuperSampleExtent = vtkImageChangeInformation::New();
+     ROISuperSampleExtent->SetInput(ROISuperSample->GetOutput());
+     ROISuperSampleExtent->SetOutputSpacing(1,1,1);
+  ROISuperSampleExtent->Update();
+
   //  set TumorGrowth(scan${ID},save,Name) "$TumorGrowth(scan${ID},save,Name)_SuperSample" 
  
   // ---------------------------------
@@ -287,13 +267,38 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
   if (ScanNum > 1) sprintf(VolumeOutputName, "TG_scan2_Global_SuperSampled");
   else sprintf(VolumeOutputName, "TG_scan1_SuperSampled");
 
-  vtkMRMLScalarVolumeNode *VolumeOutputNode = vtkMRMLScalarVolumeNode::New();
-  VolumeOutputNode->SetName(VolumeOutputName);
-  VolumeOutputNode->SetAndObserveImageData(ROISuperSample->GetOutput());
-  this->TumorGrowthNode->GetScene()->AddNode(VolumeOutputNode);
-  // KILIAN: image is not correctly displayed later - what should we do ? 
+  vtkMRMLScalarVolumeNode *VolumeOutputNode = this->CreateVolumeNode(volumeNode,VolumeOutputName);
+  // VolumeOutputNode->SetAndObserveImageData(ROIExtent->GetOutput());
 
-  VolumeOutputNode->Delete();
+  VolumeOutputNode->SetAndObserveImageData(ROISuperSampleExtent->GetOutput());
+  VolumeOutputNode->SetSpacing(SuperSampleSpacing,SuperSampleSpacing,SuperSampleSpacing); 
+
+  // Compute new rjk matrix 
+  // double IJKToRASDirections[3][3];
+
+  // Set new orgin
+  vtkMatrix4x4 *ijkToRAS=vtkMatrix4x4::New();
+  volumeNode->GetIJKToRASMatrix(ijkToRAS);
+  double newIJKOrigin[4] = {this->TumorGrowthNode->GetROIMin(0),this->TumorGrowthNode->GetROIMin(1), this->TumorGrowthNode->GetROIMin(2), 1.0 };
+  double newRASOrigin[4];
+  ijkToRAS->MultiplyPoint(newIJKOrigin,newRASOrigin);
+  VolumeOutputNode->SetOrigin(newRASOrigin[0],newRASOrigin[1],newRASOrigin[2]);
+
+
+  // In tcl
+  // set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+  //    set NODE [$GUI  GetNode]
+  //    set SCENE [$NODE GetScene]
+  // set VolumeOutputNode [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
+  // set VolumeOutputDisplayNode [$VolumeOutputNode GetScalarVolumeDisplayNode]
+  // Important files  
+  // ~/Slicer/Slicer3/Base/Logic/vtkSlicerVolumesLogic
+  // ~/Slicer/Slicer3/Libs/MRML/vtkMRMLVolumeNode.h
+  
+  // this->TumorGrowthNode->GetScene()->AddNode(VolumeOutputNode);
+  // VolumeOutputNode->Delete();
+
+  ROISuperSampleExtent->Delete();
   ROISuperSample->Delete();
   ROIExtent->Delete();
   ROI->Delete();
@@ -303,7 +308,7 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
 }
 
 
-vtkMRMLScalarVolumeNode*  vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
+int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
 
   // This is for testing how to start a tcl script 
   cout << "=== Start ANALYSIS ===" << endl;
@@ -315,44 +320,35 @@ vtkMRMLScalarVolumeNode*  vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplicatio
   app->LoadScript(TCL_FILE); 
 
   app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Global");
-  vtkMRMLScalarVolumeNode *outputNode = this->CreateSuperSample(2,app);
-  app->Script("::TumorGrowthTcl::HistogramNormalization_GUI"); 
-  app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Local"); 
-  app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 1"); 
-  app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 2"); 
-  app->Script("::TumorGrowthTcl::AnalysisIntensity_GUI"); 
-
-  cout << "=== End ANALYSIS ===" << endl;
-  return NULL;
-
-}
-
-
-//-----------------------------------------------------------------------------
-void
-vtkTumorGrowthLogic::
-PopulateTestingData()
-{
-  vtkDebugMacro("Begin populating test data");
-
-  //
-  // add some nodes to the hierarchy
-  //
-  vtkDebugMacro("Setting parameters for root node");
-  // vtkIdType rootNodeID         = this->MRMLManager->GetTreeRootNodeID();
-  //this->MRMLManager->SetTreeNodeLabel(rootNodeID, "Root");
-  //this->MRMLManager->SetTreeNodeName(rootNodeID, "Root");
-
-  // vtkDebugMacro("Setting save parameters");
-  // this->MRMLManager->SetSaveWorkingDirectory("/tmp");
-  // this->MRMLManager->SetSaveTemplateFilename("/tmp/TumorGrowthTemplate.mrml");
-  // this->MRMLManager->SetSaveTemplateAfterSegmentation(1);
-  // this->MRMLManager->SetSaveIntermediateResults(1);
-  // this->MRMLManager->SetSaveSurfaceModels(1);
   
-  // this->SetProgressGlobalFractionCompleted(0.9);
+  //----------------------------------------------
+  // Second step -> Save the outcome
+  if (!this->TumorGrowthNode) {return 0;}
 
-  vtkDebugMacro("Done populating test data");
+  {
+     // Delete old attached node first 
+     vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(this->TumorGrowthNode->GetScan2_SuperSampleRef()));
+     if (currentNode) { this->TumorGrowthNode->GetScene()->RemoveNode(currentNode); }
+  }
+
+  vtkMRMLScalarVolumeNode *outputNode = this->CreateSuperSample(2,app);
+  if (!outputNode) {return 0;} 
+  this->TumorGrowthNode->SetScan2_SuperSampleRef(outputNode->GetID());
+
+  //----------------------------------------------
+
+  cout << "=== 2 ===" << endl;
+  app->Script("::TumorGrowthTcl::HistogramNormalization_GUI"); 
+  cout << "=== 3 ===" << endl;
+  app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Local"); 
+  cout << "=== 4 ===" << endl;
+  if (!atoi(app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 1"))) return 0; 
+  cout << "=== 5 ===" << endl;
+  if (!atoi(app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 2"))) return 0; 
+  cout << "=== 6 ===" << endl;
+  if (!atoi(app->Script("::TumorGrowthTcl::AnalysisIntensity_GUI"))) return 0; 
+  cout << "=== End ANALYSIS ===" << endl;
+  return 1;
 }
 
 void vtkTumorGrowthLogic::RegisterMRMLNodesWithScene() {
@@ -361,58 +357,54 @@ void vtkTumorGrowthLogic::RegisterMRMLNodesWithScene() {
    tmNode->Delete();
 }
 
+vtkImageThreshold* vtkTumorGrowthLogic::CreateAnalysis_Final() {
+  if (this->Analysis_Final) { this->Analysis_Final->Delete(); }
+  this->Analysis_Final = vtkImageThreshold::New();
+  return this->Analysis_Final;
+}
 
-// according to vtkGradnientAnisotrpoicDiffusionoFilterGUI
-// 
-//void vtkTumorGrowthLogic::ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData) {
-//  vtkMRMLTumorGrowthNode* node = vtkMRMLTumorGrowthNode::SafeDownCast(caller);
-//  cout << " vtkTumorGrowthLogic::ProcessMRMLEvents " << endl;
-  //if (node != NULL && this->GetTumorGrowthNode() == node) 
-  //  {
-  //  this->UpdateGUI();
-  //  }
-// }
+vtkImageThreshold* vtkTumorGrowthLogic::CreateAnalysis_ROINegativeBin() {
+  if (this->Analysis_ROINegativeBin) { this->Analysis_ROINegativeBin->Delete(); }
+  this->Analysis_ROINegativeBin = vtkImageThreshold::New();
+  return this->Analysis_ROINegativeBin;
+}
+
+vtkImageThreshold* vtkTumorGrowthLogic::CreateAnalysis_ROIPositiveBin() {
+  if (this->Analysis_ROIPositiveBin) { this->Analysis_ROIPositiveBin->Delete(); }
+  this->Analysis_ROIPositiveBin = vtkImageThreshold::New();
+  return this->Analysis_ROIPositiveBin;
+}
+
+vtkImageMathematics* vtkTumorGrowthLogic::CreateAnalysis_ROIBinReal() {
+  if (this->Analysis_ROIBinReal) { this->Analysis_ROIBinReal->Delete(); }
+  this->Analysis_ROIBinReal = vtkImageMathematics::New();
+  return this->Analysis_ROIBinReal;
+}
+
+vtkImageSumOverVoxels* vtkTumorGrowthLogic::CreateAnalysis_ROITotal() {
+  if (this->Analysis_ROITotal) { this->Analysis_ROITotal->Delete(); }
+  this->Analysis_ROITotal = vtkImageSumOverVoxels::New();
+  return this->Analysis_ROITotal;
+}
+
+double vtkTumorGrowthLogic::MeassureGrowth(vtkSlicerApplication *app) {
+  
+  if (!this->Analysis_Final || !this->Analysis_ROINegativeBin || !this->Analysis_ROIPositiveBin || !this->Analysis_ROITotal || !this->TumorGrowthNode ) return -1;
+  app->Script("::TumorGrowthTcl::Analysis_UpdateThreshold_GUI");
+  // Just for display 
+  this->Analysis_Final->ThresholdByUpper(this->Analysis_Threshold); 
+  this->Analysis_Final->Update();
+  this->Analysis_ROINegativeBin->ThresholdByLower(-this->Analysis_Threshold); 
+  this->Analysis_ROINegativeBin->Update(); 
+  this->Analysis_ROIPositiveBin->ThresholdByLower(this->Analysis_Threshold); 
+  this->Analysis_ROIPositiveBin->Update(); 
+  this->Analysis_ROITotal->Update(); 
+  return this->Analysis_ROITotal->GetVoxelSum(); 
+}
 
 
-// This function is automatically called as part of the pipeline 
-// According to EMSegment
-// void vtkTumorGrowthLogic::ProcessMRMLEvents(vtkObject* caller, unsigned long event, void* callData) {
-//   if (vtkMRMLScene::SafeDownCast(caller) != this->MRMLScene) {
-//     return;
-//   }
-// 
-//   vtkMRMLNode *node = (vtkMRMLNode*)(callData);
-//   if (node == NULL)
-//     {
-//     return;
-//     }
-// 
-//   if (event == vtkMRMLScene::NodeAddedEvent)
-//   {
-//       if (node->IsA("vtkMRMLTumorGrowthNode"))  
-//       {
-//      // update node in GUI   
-//      this->NODE = (vtkMRMLTumorGrowthNode*) node;
-//      Update 
-// 
-//   ///   
-//   look at vtkGradnientAnisotrpoicDiffusionoFilterGUI
-// 
-//   vtkSetAndObserveMRMLNodeMacro( this->GradientAnisotropicDiffusionFilterNode, n);
-//      (vtkMRMLTumorGrowthNode* node);
-//
-//         cout << "Update Now" << endl;
-//       
-//       }
-//   }
-//   else if (event == vtkMRMLScene::NodeRemovedEvent)
-//   {
-//     if (node->IsA("vtkMRMLTumorGrowthNode"))  
-//       {
-//        cout << "Remove Now" << endl;
-//       }
-//   }
-// }
-
+// Kilian:
+// - How to save a volume 
+// copy over tcl files by define in cmakelocal file - look at other modules like Editor
 
 
