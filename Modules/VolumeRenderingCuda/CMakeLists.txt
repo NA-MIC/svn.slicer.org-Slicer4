@@ -139,9 +139,9 @@ TARGET_LINK_LIBRARIES(VolumeRenderingCudaModule
 # --------------------------------------------------------------------------
 # Testing (requires some of the examples)
 
-#IF(BUILD_TESTING)
-#  SUBDIRS(Testing)
-#ENDIF(BUILD_TESTING)
+IF(BUILD_TESTING)
+  SUBDIRS(Testing)
+ENDIF(BUILD_TESTING)
 
 CONFIGURE_FILE(
   ${VolumeRenderingCudaModule_SOURCE_DIR}/vtkVolumeRenderingCudaModuleConfigure.h.in 
