@@ -192,21 +192,21 @@ __global__ void CUDAkernel_renderAlgo_doRender(unsigned char* d_sourceData, unsi
       tempz2 = (int)( s_rayMap[tempacc*6+2]+((int)s_minmaxTrace[tempacc].x+pos-1)*s_rayMap[tempacc*6+5]);
       
       if(tempx2 >= s_minmax[0] && tempx2 <= s_minmax[1] && tempy2 >= s_minmax[2] && tempy2 <= s_minmax[3] && tempz2 >= s_minmax[4] && tempz2 <= s_minmax[5]
-	 && d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)] >=minThreshold && d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)] <= maxThreshold && pos-1+s_minmaxTrace[tempacc].x >=sliceDistance){
-	
-	if(__float2int_rd(pos-1+s_minmaxTrace[tempacc].x) == sliceDistance)val=d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)];  //this is to enable original grayscale to be displayed on slice plane
+   && d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)] >=minThreshold && d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)] <= maxThreshold && pos-1+s_minmaxTrace[tempacc].x >=sliceDistance){
+  
+  if(__float2int_rd(pos-1+s_minmaxTrace[tempacc].x) == sliceDistance)val=d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)];  //this is to enable original grayscale to be displayed on slice plane
 
-	s_shadeField.x = ((float)d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2+1)]-(float)d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2-1)]);
-	s_shadeField.y = ((float)d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+(tempy2+1)*s_size[0]+tempx2)]-(float)d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+(tempy2-1)*s_size[0]+tempx2)]);
-	s_shadeField.z = ((float)d_sourceData[(int)((tempz2+1)*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)]-(float)d_sourceData[(int)((tempz2-1)*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)]);
-	
+  s_shadeField.x = ((float)d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2+1)]-(float)d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2-1)]);
+  s_shadeField.y = ((float)d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+(tempy2+1)*s_size[0]+tempx2)]-(float)d_sourceData[(int)(tempz2*s_size[0]*s_size[1]+(tempy2-1)*s_size[0]+tempx2)]);
+  s_shadeField.z = ((float)d_sourceData[(int)((tempz2+1)*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)]-(float)d_sourceData[(int)((tempz2-1)*s_size[0]*s_size[1]+tempy2*s_size[0]+tempx2)]);
+  
       }else{
 
-	if(__float2int_rd(pos+s_minmaxTrace[tempacc].x) == sliceDistance)val=d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)]; 
-	
-	s_shadeField.x = ((float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx+1)]-(float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx-1)]);
-	s_shadeField.y = ((float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+(tempy+1)*s_size[0]+tempx)]-(float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+(tempy-1)*s_size[0]+tempx)]);
-	s_shadeField.z = ((float)d_sourceData[(int)((tempz+1)*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)]-(float)d_sourceData[(int)((tempz-1)*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)]);
+  if(__float2int_rd(pos+s_minmaxTrace[tempacc].x) == sliceDistance)val=d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)]; 
+  
+  s_shadeField.x = ((float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx+1)]-(float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx-1)]);
+  s_shadeField.y = ((float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+(tempy+1)*s_size[0]+tempx)]-(float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+(tempy-1)*s_size[0]+tempx)]);
+  s_shadeField.z = ((float)d_sourceData[(int)((tempz+1)*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)]-(float)d_sourceData[(int)((tempz-1)*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)]);
       }
 
       tempf = 1.0/sqrt(SQR(s_shadeField.x) + SQR(s_shadeField.y) + SQR(s_shadeField.z));
@@ -215,20 +215,20 @@ __global__ void CUDAkernel_renderAlgo_doRender(unsigned char* d_sourceData, unsi
       s_shadeField.z = tempf * s_shadeField.z;
 
       if(val==0.0){
-	val = (s_shadeField.x*s_lightVec[0]+s_shadeField.y*s_lightVec[1]+s_shadeField.z*s_lightVec[2]);
+  val = (s_shadeField.x*s_lightVec[0]+s_shadeField.y*s_lightVec[1]+s_shadeField.z*s_lightVec[2]);
       }
 
       if(val<0)val=1;
       
       if(val<=1.0){
-	s_resultImage[tempacc]=make_uchar4((unsigned char)( s_color[3]+(s_color[0]-s_color[3])*val),
-					   (unsigned char)( s_color[4]+(s_color[1]-s_color[4])*val), 
-					   (unsigned char)( s_color[5]+(s_color[2]-s_color[5])*val), 
-					   255);
+  s_resultImage[tempacc]=make_uchar4((unsigned char)( s_color[3]+(s_color[0]-s_color[3])*val),
+             (unsigned char)( s_color[4]+(s_color[1]-s_color[4])*val), 
+             (unsigned char)( s_color[5]+(s_color[2]-s_color[5])*val), 
+             255);
       }else{
-	s_resultImage[tempacc]=make_uchar4((unsigned char)val, (unsigned char)val, (unsigned char)val, 255 );
+  s_resultImage[tempacc]=make_uchar4((unsigned char)val, (unsigned char)val, (unsigned char)val, 255 );
       }
-	
+  
       break;
       
     }
@@ -393,9 +393,9 @@ __global__ void CUDAkernel_renderAlgo_doMIPRender(unsigned char* d_sourceData, u
   val=s_maxVal[tempacc]/255.0;
   
   s_resultImage[tempacc]=make_uchar4((unsigned char)( s_color[3]+(s_color[0]-s_color[3])*val),
-				     (unsigned char)( s_color[4]+(s_color[1]-s_color[4])*val), 
-				     (unsigned char)( s_color[5]+(s_color[2]-s_color[5])*val), 
-				     255);
+             (unsigned char)( s_color[4]+(s_color[1]-s_color[4])*val), 
+             (unsigned char)( s_color[5]+(s_color[2]-s_color[5])*val), 
+             255);
   
   d_resultImage[(int)(xIndex+yIndex*c_renderAlgo_dsize[0])]=s_resultImage[tempacc];
 
@@ -555,7 +555,7 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(unsigned char* d_sourceData
       if(temp>s_maxVal[tempacc])s_maxVal[tempacc]=temp;
 
       if(s_pos[tempacc]==-1 && temp >=minThreshold && temp <= maxThreshold  && pos+s_minmaxTrace[tempacc].x >=sliceDistance){
-	s_pos[tempacc]=pos;
+  s_pos[tempacc]=pos;
       }
                   
     }
@@ -595,9 +595,9 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(unsigned char* d_sourceData
 
       val=(transparencyLevel*val+(1.0-transparencyLevel)*s_maxVal[tempacc]/255.0);
       s_resultImage[tempacc]=make_uchar4((unsigned char)( s_color[3]+(s_color[0]-s_color[3])*val),
-					 (unsigned char)( s_color[4]+(s_color[1]-s_color[4])*val), 
-					 (unsigned char)( s_color[5]+(s_color[2]-s_color[5])*val), 
-					 255);
+           (unsigned char)( s_color[4]+(s_color[1]-s_color[4])*val), 
+           (unsigned char)( s_color[5]+(s_color[2]-s_color[5])*val), 
+           255);
       }else{
       s_resultImage[tempacc]=make_uchar4((unsigned char)val, (unsigned char)val, (unsigned char)val, 255 );
     }

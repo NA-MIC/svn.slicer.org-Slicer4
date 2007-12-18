@@ -118,8 +118,8 @@ runTest(const int argc, const char** argv, char* data, int2* data_int2, unsigned
     for( int i = 0; i < len; i++ )
     {
         if( reference[i] != data[i] || 
-	    reference2[i].x != data_int2[i].x || 
-	    reference2[i].y != data_int2[i].y)
+      reference2[i].x != data_int2[i].x || 
+      reference2[i].y != data_int2[i].y)
             success = false;
     }
     printf("Test %s\n", success ? "PASSED" : "FAILED");
