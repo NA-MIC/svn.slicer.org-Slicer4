@@ -236,7 +236,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // You only want to add the observers below when the step is active 
   this->AddROISamplingGUIObservers();
 
-  this->TransitionCallback();
+  // this->TransitionCallback();
 }
 
 
@@ -422,9 +422,9 @@ void vtkTumorGrowthROIStep::ROIUpdateWithNode() {
       matrix->SetElementValue(0,i,buffer);
     }
     // For Debugging
-    matrix->SetElementValue(0,0,"72");
-    matrix->SetElementValue(0,1,"128");
-    matrix->SetElementValue(0,2,"95");
+    //matrix->SetElementValue(0,0,"72");
+    //matrix->SetElementValue(0,1,"128");
+    //matrix->SetElementValue(0,2,"95");
   }
   if (this->ROIMaxVector) {
     vtkKWMatrixWidget *matrix = this->ROIMaxVector->GetWidget();
@@ -434,9 +434,9 @@ void vtkTumorGrowthROIStep::ROIUpdateWithNode() {
       matrix->SetElementValue(0,i,buffer);
     }
     // For Debugging
-    matrix->SetElementValue(0,0,"92");
-    matrix->SetElementValue(0,1,"161");
-    matrix->SetElementValue(0,2,"104");
+    //matrix->SetElementValue(0,0,"92");
+    //matrix->SetElementValue(0,1,"161");
+    //matrix->SetElementValue(0,2,"104");
   }
 }
 
@@ -450,7 +450,6 @@ int vtkTumorGrowthROIStep::ROICheck() {
 
   vtkMRMLVolumeNode* volumeNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_Ref()));
   if (!volumeNode) return 0;
-
   return this->GetGUI()->GetLogic()->CheckROI(volumeNode);
 }
 
@@ -628,7 +627,6 @@ void vtkTumorGrowthROIStep::TransitionCallback()
   if (this->ROICheck()) { 
      // ----------------------------
      // Create SuperSampledVolume 
-     // Kilian - create function here
     vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
     vtkMRMLScalarVolumeNode *outputNode = this->GetGUI()->GetLogic()->CreateSuperSample(1,application);
      if (outputNode) {

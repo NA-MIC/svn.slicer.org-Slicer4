@@ -10,6 +10,11 @@
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWLabel.h"
 #include "vtkKWEntry.h"
+#include "vtkSlicerApplicationLogic.h"
+#include "vtkTumorGrowthLogic.h"
+#include "vtkSlicerSliceControllerWidget.h"
+#include "vtkKWScale.h"
+#include "vtkSlicerApplication.h"
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthAnalysisStep);
 vtkCxxRevisionMacro(vtkTumorGrowthAnalysisStep, "$Revision: 1.2 $");
@@ -21,6 +26,8 @@ vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
   this->SetDescription("Analysis of Tumor Growth"); 
 
   this->SensitivityScale = NULL;
+  this->GrowthLabel = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -31,11 +38,43 @@ vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
     this->SensitivityScale->Delete();
     this->SensitivityScale = NULL;
     }
+  if (this->GrowthLabel) 
+    {
+      this->GrowthLabel->Delete();
+      this->GrowthLabel = NULL;
+    }
+
+
 }
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthAnalysisStep::ShowUserInterface()
 {
+  // ----------------------------------------
+  // Display Analysis Volume 
+  // ----------------------------------------  
+  vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+  if (node) { 
+    vtkMRMLVolumeNode *volumeSampleNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SuperSampleRef()));
+    vtkMRMLVolumeNode *volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Ref()));
+    if (volumeSampleNode && volumeAnalysisNode) {
+      vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
+      applicationLogic->GetSelectionNode()->SetActiveVolumeID(volumeSampleNode->GetID());
+
+      vtkSlicerApplicationGUI *applicationGUI     = this->GetGUI()->GetApplicationGUI();
+      applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeAnalysisNode);
+      applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeAnalysisNode);
+      applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeAnalysisNode);
+      applicationGUI->GetSlicesControlGUI()->GetSliceFadeScale()->SetValue(0.6);
+
+      applicationLogic->PropagateVolumeSelection();
+    } 
+  }
+
+  // ----------------------------------------
+  // Build GUI 
+  // ----------------------------------------
+
   this->vtkTumorGrowthStep::ShowUserInterface();
 
   this->Frame->SetLabelText("Tumor Growth");
@@ -49,12 +88,12 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   {
     this->SensitivityScale->SetParent(this->Frame->GetFrame());
     this->SensitivityScale->Create();
-    this->SensitivityScale->SetRange(0.0, 60.0);
+    this->SensitivityScale->SetRange(0.0,1.0);
     this->SensitivityScale->SetMinimumValue(0.0);
     this->SensitivityScale->ClampMinimumValueOn(); 
-    this->SensitivityScale->SetMaximumValue(60.0);
+    this->SensitivityScale->SetMaximumValue(1.0);
     this->SensitivityScale->ClampMaximumValueOn(); 
-    this->SensitivityScale->SetResolution(50);
+    this->SensitivityScale->SetResolution(0.75);
     this->SensitivityScale->SetLinearThreshold(1);
     this->SensitivityScale->SetThumbWheelSize (TUMORGROWTH_WIDGETS_SLIDER_WIDTH,TUMORGROWTH_WIDGETS_SLIDER_HEIGHT);
     this->SensitivityScale->DisplayEntryOn();
@@ -67,8 +106,24 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
     // this->SensitivityScale->GetEntry()->SetCommandTriggerToAnyChange();
   }
 
+  // Initial value 
+  vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
+  if (mrmlNode) this->SensitivityScale->SetValue(mrmlNode->GetAnalysis_Sensitivity());
+
   this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->SensitivityScale->GetWidgetName());
-  // this->Script("grid %s -column 0 -row 0 -sticky nw -padx 2 -pady 2", this->SensitivityScale->GetWidgetName());
+
+
+  if (!this->GrowthLabel)
+    {
+    this->GrowthLabel = vtkKWLabel::New();
+    }
+  if (!this->GrowthLabel->IsCreated())
+  {
+    this->GrowthLabel->SetParent(this->Frame->GetFrame());
+    this->GrowthLabel->Create();
+  }
+  this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->GrowthLabel->GetWidgetName());
+
 
   {
     vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
@@ -80,15 +135,28 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
 
   }
 
+  // Show results 
+  this->SensitivityChangedCallback(0.0);
 }
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(vtkIdType sel_vol_id, double value)
+void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(double value)
 {
-  // Sensitivity has changed because of user interaction 
+  // Sensitivity has changed because of user interaction
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  cout << "vtkTumorGrowthAnalysisStep::SensitivityChangedCallback ---- Please set correctly" << endl;
+  if (!this->SensitivityScale || !mrmlNode || !this->GrowthLabel ) return;
+  mrmlNode->SetAnalysis_Sensitivity(this->SensitivityScale->GetValue());
+  double Growth = this->GetGUI()->GetLogic()->MeassureGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
+  // show here 
+  char TEXT[1024];
+  // cout << "---------- " << Growth << " " << mrmlNode->GetSuperSampled_VoxelVolume() << " " << mrmlNode->GetSuperSampled_RatioNewOldSpacing() << endl;;
+  sprintf(TEXT,"Growth: %.3f mm^3 (%d Voxels)", Growth*mrmlNode->GetSuperSampled_VoxelVolume(),int(Growth*mrmlNode->GetSuperSampled_RatioNewOldSpacing()));
+
+  this->GrowthLabel->SetText(TEXT);
+  // Show updated results 
+  vtkMRMLVolumeNode *analysisNode = vtkMRMLVolumeNode::SafeDownCast(mrmlNode->GetScene()->GetNodeByID(mrmlNode->GetAnalysis_Ref()));
+  if (analysisNode) analysisNode->Modified();
 }
 
 //----------------------------------------------------------------------------
