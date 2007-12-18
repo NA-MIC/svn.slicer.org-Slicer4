@@ -68,11 +68,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
  public:
   //BTX
   enum {
-    SLICE_DRIVER_USER    = 0,
-    SLICE_DRIVER_LOCATOR = 1,
-    SLICE_DRIVER_RTIMAGE = 2
-  };
-  enum {
     SLICE_PLANE_RED    = 0,
     SLICE_PLANE_YELLOW = 1,
     SLICE_PLANE_GREEN  = 2
@@ -206,10 +201,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   vtkIGTPat2ImgRegistration *Pat2ImgReg;
   vtkCallbackCommand *DataCallbackCommand;
 
-  int SliceDriver0;
-  int SliceDriver1;
-  int SliceDriver2;
-
   // Access the slice windows
   vtkSlicerSliceLogic *Logic0;
   vtkSlicerSliceLogic *Logic1;
@@ -230,7 +221,7 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   int NeedOrientationUpdate1;
   int NeedOrientationUpdate2;
   
-  int NeedRealtimeImageUpdate;
+  //int NeedRealtimeImageUpdate;
   int FreezeOrientationUpdate;
 
   int RealtimeImageOrient;
@@ -242,17 +233,17 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
   char *FiducialListNodeID;
   vtkMRMLFiducialListNode *FiducialListNode;
 
-
-
   void UpdateAll();
   /*
   void UpdateLocator(vtkTransform *, vtkTransform *);
   void UpdateSliceDisplay(float nx, float ny, float nz, 
                           float tx, float ty, float tz, 
                           float px, float py, float pz);
-  */
+
   void UpdateLocator();
   void UpdateSliceDisplay();
+  */
+
   void UpdateDeviceStatus();
   
  private:

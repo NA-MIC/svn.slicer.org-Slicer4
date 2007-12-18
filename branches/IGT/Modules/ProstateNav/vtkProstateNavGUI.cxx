@@ -141,21 +141,25 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
   this->DataCallbackCommand->SetCallback(vtkProstateNavGUI::DataCallback);
   
+  /*
   this->Logic0 = NULL; 
   this->Logic1 = NULL; 
   this->Logic2 = NULL; 
+  */
   this->SliceNode0 = NULL; 
   this->SliceNode1 = NULL; 
   this->SliceNode2 = NULL; 
+  /*
   this->Control0 = NULL; 
   this->Control1 = NULL; 
   this->Control2 = NULL; 
+  */
   
   this->NeedOrientationUpdate0 = 0;
   this->NeedOrientationUpdate1 = 0;
   this->NeedOrientationUpdate2 = 0;
   
-  this->NeedRealtimeImageUpdate = 0;
+  //this->NeedRealtimeImageUpdate = 0;
   this->FreezeOrientationUpdate = 0;
   
   
@@ -196,9 +200,11 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   this->FreezeImageCheckButton = NULL;
   this->LocatorCheckButton     = NULL;
 
+  /*
   this->SliceDriver0 = 0;
   this->SliceDriver1 = 0;
   this->SliceDriver2 = 0;
+  */
   
 
   //----------------------------------------------------------------
@@ -481,12 +487,17 @@ void vtkProstateNavGUI::AddLogicObservers ( )
 
   if (this->GetLogic())
     {
+    /*
     this->GetLogic()->AddObserver(vtkProstateNavLogic::LocatorUpdateEvent,
                                   (vtkCommand *)this->LogicCallbackCommand);
-    this->GetLogic()->AddObserver(vtkProstateNavLogic::StatusUpdateEvent,
-                                  (vtkCommand *)this->LogicCallbackCommand);
+    */
+    /*
     this->GetLogic()->AddObserver(vtkProstateNavLogic::SliceUpdateEvent,
                                   (vtkCommand *)this->LogicCallbackCommand);
+    */
+    this->GetLogic()->AddObserver(vtkProstateNavLogic::StatusUpdateEvent,
+                                  (vtkCommand *)this->LogicCallbackCommand);
+
     }
 }
 
@@ -678,33 +689,10 @@ void vtkProstateNavGUI::ProcessGUIEvents(vtkObject *caller,
     if (this->FreezeImageCheckButton->GetSelectedState() == 1)
       {
       this->FreezeOrientationUpdate = 1;
-      /*
-        this->OrgNeedOrientationUpdate0  = this->NeedOrientationUpdate0;
-        this->OrgNeedOrientationUpdate1  = this->NeedOrientationUpdate1;
-        this->OrgNeedOrientationUpdate2  = this->NeedOrientationUpdate2;
-        this->OrgNeedRealtimeImageUpdate0 = this->NeedRealtimeImageUpdate0;
-        this->OrgNeedRealtimeImageUpdate1 = this->NeedRealtimeImageUpdate1;
-        this->OrgNeedRealtimeImageUpdate2 = this->NeedRealtimeImageUpdate2;
-        
-        this->NeedOrientationUpdate0 = 0;
-        this->NeedOrientationUpdate1 = 0;
-        this->NeedOrientationUpdate2 = 0;
-        this->NeedRealtimeImageUpdate0 = 0;
-        this->NeedRealtimeImageUpdate1 = 0;
-        this->NeedRealtimeImageUpdate2 = 0;
-      */
       }
     else
       {
       this->FreezeOrientationUpdate = 0;
-      /*
-        this->NeedOrientationUpdate0  = this->OrgNeedOrientationUpdate0;
-        this->NeedOrientationUpdate1  = this->OrgNeedOrientationUpdate1;
-        this->NeedOrientationUpdate2  = this->OrgNeedOrientationUpdate2;
-        this->NeedRealtimeImageUpdate0 = this->OrgNeedRealtimeImageUpdate0;
-        this->NeedRealtimeImageUpdate1 = this->OrgNeedRealtimeImageUpdate1;
-        this->NeedRealtimeImageUpdate2 = this->OrgNeedRealtimeImageUpdate2;
-      */
       }
     }
   else if (this->ImagingMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
@@ -783,17 +771,9 @@ void vtkProstateNavGUI::ProcessLogicEvents ( vtkObject *caller,
 
   if (this->GetLogic() == vtkProstateNavLogic::SafeDownCast(caller))
     {
-    if (event == vtkProstateNavLogic::LocatorUpdateEvent)
-      {
-      this->UpdateLocator();
-      }
-    else if (event == vtkProstateNavLogic::StatusUpdateEvent)
+    if (event == vtkProstateNavLogic::StatusUpdateEvent)
       {
       this->UpdateDeviceStatus();
-      }
-    else if (event == vtkProstateNavLogic::SliceUpdateEvent)
-      {
-      this->UpdateSliceDisplay();
       }
     }
 }
@@ -813,16 +793,14 @@ void vtkProstateNavGUI::Enter()
   // Fill in
   vtkSlicerApplicationGUI *appGUI = this->GetApplicationGUI();
   
-  this->Logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
-  this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
-  this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
   this->SliceNode0 = appGUI->GetMainSliceGUI0()->GetLogic()->GetSliceNode();
-  
   this->SliceNode1 = appGUI->GetMainSliceGUI1()->GetLogic()->GetSliceNode();
   this->SliceNode2 = appGUI->GetMainSliceGUI2()->GetLogic()->GetSliceNode();
+  /*
   this->Control0 = appGUI->GetMainSliceGUI0()->GetSliceController();
   this->Control1 = appGUI->GetMainSliceGUI1()->GetSliceController();
   this->Control2 = appGUI->GetMainSliceGUI2()->GetSliceController();
+  */
   
   this->GetLogic()->AddRealtimeVolumeNode("Realtime");
   
@@ -1464,129 +1442,6 @@ void vtkProstateNavGUI::UpdateAll()
 
 
 //----------------------------------------------------------------------------
-void vtkProstateNavGUI::UpdateLocator()
-{
-
-  //vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
-  vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLModelNode1")); 
-  if (model != NULL)
-    {
-      /*
-    if (transform)
-      {
-      vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
-      lnode->SetAndObserveMatrixTransformToParent(this->GetLogic()->GetLocatorTransform()->GetMatrix());
-      this->GetMRMLScene()->Modified();
-      }
-      */
-    if (this->GetLogic()->GetLocatorTransform())
-      {
-      vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
-      lnode->SetAndObserveMatrixTransformToParent(this->GetLogic()->GetLocatorTransform()->GetMatrix());
-      //this->GetMRMLScene()->Modified();   // J.T. 11/28/07: Commented out to improve performance (seems working without this)
-      }
-    }
-
-}
-
-
-//----------------------------------------------------------------------------
-void vtkProstateNavGUI::UpdateSliceDisplay()
-{
-
-  float px, py, pz, nx, ny, nz, tx, ty, tz;
-
-  vtkMatrix4x4* matrix = this->GetLogic()->GetLocatorMatrix();
-  if (matrix)
-    {
-    px = matrix->GetElement(0, 0);
-    py = matrix->GetElement(1, 0);
-    pz = matrix->GetElement(2, 0);
-
-    nx = matrix->GetElement(0, 1);
-    ny = matrix->GetElement(1, 1);
-    nz = matrix->GetElement(2, 1);
-
-    tx = matrix->GetElement(0, 2);
-    ty = matrix->GetElement(1, 2);
-    tz = matrix->GetElement(2, 2);
-    }
-  else
-    {
-    px =  py = pz = 0.0;
-    nx =  ny = 0.0; nz = 1.0;
-    ty =  tz = 0.0; tx = 1.0;
-    }
-
-  //std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() is called." << std::endl;
-
-  // Reslice -- Perpendicular
-  if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_USER )
-    {
-      //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_USER" << std::endl;
-    }
-  else if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
-    {
-      //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_LOCATOR" << std::endl;
-    this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-    this->Logic0->UpdatePipeline ();
-    }
-  else if ( this->SliceDriver0 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
-    {
-    if (this->Logic->GetNeedRealtimeImageUpdate0())
-      {
-      //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : Perp: SLICE_DRIVER_RTIMAGE" << std::endl;
-      this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-      this->Logic0->UpdatePipeline ();
-      }
-    }
-
-
-  // Reslice -- In-plane 90
-  if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_USER )
-    {
-    //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_USER" << std::endl;
-    }
-  else if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
-    {
-    //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_LOCATOR" << std::endl;
-    this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-    this->Logic1->UpdatePipeline ();
-    }
-  else if ( this->SliceDriver1 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
-    {
-    if (this->Logic->GetNeedRealtimeImageUpdate1())
-      {
-      //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_RTIMAGE" << std::endl;
-      this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
-      this->Logic1->UpdatePipeline ();
-      }
-    }
-  
-
-  // Reslice -- In-plane
-  if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_USER )
-    {
-    //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_USER" << std::endl;
-    }
-  else if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_LOCATOR )
-    {
-    //        std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_LOCATOR" << std::endl;
-    this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-    this->Logic2->UpdatePipeline ();
-    }
-  else if ( this->SliceDriver2 == vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE )
-    {
-    if (this->Logic->GetNeedRealtimeImageUpdate2())
-      {
-      //            std::cerr << "vtkProstateNavGUI::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_RTIMAGE" << std::endl;
-      this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
-      this->Logic2->UpdatePipeline ();
-      }
-    }
-}
-
-
 void vtkProstateNavGUI::UpdateDeviceStatus()
 {
   
@@ -1651,15 +1506,18 @@ void vtkProstateNavGUI::ChangeSlicePlaneDriver(int slice, const char* driver)
     if (strcmp(driver, "User") == 0)
       {
       this->SliceNode0->SetOrientationToAxial();
-      this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      //this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      this->GetLogic()->SetSliceDriver0(vtkProstateNavLogic::SLICE_DRIVER_USER);
       }
     else if (strcmp(driver, "Locator") == 0)
       {
-      this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      //this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      this->GetLogic()->SetSliceDriver0(vtkProstateNavLogic::SLICE_DRIVER_LOCATOR);
       }
     else if (strcmp(driver, "RT Image") == 0)
       {
-      this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      //this->SliceDriver0 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      this->GetLogic()->SetSliceDriver0(vtkProstateNavLogic::SLICE_DRIVER_RTIMAGE);
       }
     }
   else if (slice == vtkProstateNavGUI::SLICE_PLANE_YELLOW)
@@ -1668,15 +1526,18 @@ void vtkProstateNavGUI::ChangeSlicePlaneDriver(int slice, const char* driver)
     if (strcmp(driver, "User") == 0)
       {
       this->SliceNode1->SetOrientationToSagittal();
-      this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      //this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      this->GetLogic()->SetSliceDriver1(vtkProstateNavLogic::SLICE_DRIVER_USER);
       }
     else if (strcmp(driver, "Locator") == 0)
       {
-      this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      //this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      this->GetLogic()->SetSliceDriver1(vtkProstateNavLogic::SLICE_DRIVER_LOCATOR);
       }
     else if (strcmp(driver, "RT Image") == 0)
       {
-      this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      //this->SliceDriver1 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      this->GetLogic()->SetSliceDriver1(vtkProstateNavLogic::SLICE_DRIVER_RTIMAGE);
       }
     }
   else //if ( slice == vtkProstateNavGUI::SLICE_PLANE_GREEN )
@@ -1685,15 +1546,18 @@ void vtkProstateNavGUI::ChangeSlicePlaneDriver(int slice, const char* driver)
     if (strcmp(driver, "User") == 0)
       {
       this->SliceNode2->SetOrientationToCoronal();
-      this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      //this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_USER;
+      this->GetLogic()->SetSliceDriver2(vtkProstateNavLogic::SLICE_DRIVER_USER);
       }
     else if (strcmp(driver, "Locator") == 0)
       {
-      this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      //this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_LOCATOR;
+      this->GetLogic()->SetSliceDriver2(vtkProstateNavLogic::SLICE_DRIVER_LOCATOR);
       }
     else if (strcmp(driver, "RT Image") == 0)
       {
-      this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      //this->SliceDriver2 = vtkProstateNavGUI::SLICE_DRIVER_RTIMAGE;
+      this->GetLogic()->SetSliceDriver2(vtkProstateNavLogic::SLICE_DRIVER_RTIMAGE);
       }
     }
 }

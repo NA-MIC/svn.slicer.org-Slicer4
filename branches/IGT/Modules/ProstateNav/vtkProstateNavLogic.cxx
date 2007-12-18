@@ -21,6 +21,7 @@
 #include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkSlicerApplication.h"
+#include "vtkSlicerApplicationGUI.h"
 #include "vtkSlicerColorLogic.h"
 
 
@@ -88,12 +89,32 @@ vtkProstateNavLogic::vtkProstateNavLogic()
 
     //this->RealtimeImageUpdate  = false;
     this->RealtimeImageUpdate  = true;
-    this->UpdateLocator        = true;
+    this->NeedUpdateLocator    = true;
 
+    this->SliceDriver0 = vtkProstateNavLogic::SLICE_DRIVER_USER;
+    this->SliceDriver1 = vtkProstateNavLogic::SLICE_DRIVER_USER;
+    this->SliceDriver2 = vtkProstateNavLogic::SLICE_DRIVER_USER;
+
+
+    // If the following code doesn't work, slice nodes should be obtained from application GUI
+    this->SliceNode0 = NULL;
+    this->SliceNode1 = NULL;
+    this->SliceNode2 = NULL;
+
+    /*
+    this->SliceNode0 = this->GetApplication()->GetApplicationGUI()->GetMainSliceLogic0()->GetSliceNode();
+    this->SliceNode1 = this->GetApplication()->GetApplicationGUI()->GetMainSliceLogic1()->GetSliceNode();
+    this->SliceNode2 = this->GetApplication()->GetApplicationGUI()->GetMainSliceLogic2()->GetSliceNode();
+    */
+    /*
+    this->Logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
+    this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
+    this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
+    */
                                          
-//    this->NeedRealtimeImageUpdate0 = 0;
-//    this->NeedRealtimeImageUpdate1 = 0;
-//    this->NeedRealtimeImageUpdate2 = 0;
+    this->NeedRealtimeImageUpdate0 = 0;
+    this->NeedRealtimeImageUpdate1 = 0;
+    this->NeedRealtimeImageUpdate2 = 0;
 
 #ifdef USE_NAVITRACK
     //this->OpenTrackerStream   = vtkIGTOpenTrackerStream::New();
@@ -402,7 +423,8 @@ void vtkProstateNavLogic::UpdateAll()
         }
 
       // Invoke Event for display
-      this->InvokeEvent(vtkProstateNavLogic::SliceUpdateEvent);
+      //this->InvokeEvent(vtkProstateNavLogic::SliceUpdateEvent);
+      UpdateSliceDisplay();
       
       } //  if (vid && this->RealtimeImageUpdate)
     else
@@ -477,7 +499,7 @@ void vtkProstateNavLogic::UpdateAll()
     //----------------------------------------------------------------
     // update the display of locator
 
-    if (this->UpdateLocator)
+    if (this->NeedUpdateLocator)
       {
       vtkTransform *transform = NULL;
       vtkTransform *transform_cb2 = NULL;
@@ -492,12 +514,14 @@ void vtkProstateNavLogic::UpdateAll()
       */
       //this->GUI->UpdateLocator(transform, transform_cb2);  // MOVE TO GUI
       //this->LocatorTransform = this->OpenTrackerStream2->GetLocatorNormalTransform();
-      this->InvokeEvent(vtkProstateNavLogic::LocatorUpdateEvent);
+      //this->InvokeEvent(vtkProstateNavLogic::LocatorUpdateEvent);
+      UpdateLocator();
       }
 
     this->NeedRealtimeImageUpdate0 = 0;
     this->NeedRealtimeImageUpdate1 = 0;
     this->NeedRealtimeImageUpdate2 = 0;
+
 
 
     //----------------------------------------------------------------
@@ -528,6 +552,135 @@ void vtkProstateNavLogic::UpdateAll()
 
 }
 
+//----------------------------------------------------------------------------
+void vtkProstateNavLogic::UpdateSliceDisplay()
+{
+
+  float px, py, pz, nx, ny, nz, tx, ty, tz;
+
+  vtkMatrix4x4* matrix = this->LocatorMatrix;
+  if (matrix)
+    {
+    px = matrix->GetElement(0, 0);
+    py = matrix->GetElement(1, 0);
+    pz = matrix->GetElement(2, 0);
+
+    nx = matrix->GetElement(0, 1);
+    ny = matrix->GetElement(1, 1);
+    nz = matrix->GetElement(2, 1);
+
+    tx = matrix->GetElement(0, 2);
+    ty = matrix->GetElement(1, 2);
+    tz = matrix->GetElement(2, 2);
+    }
+  else
+    {
+    px =  py = pz = 0.0;
+    nx =  ny = 0.0; nz = 1.0;
+    ty =  tz = 0.0; tx = 1.0;
+    }
+
+
+  // The Slicer nodes cannot be obtained in the constructor of this class...
+  if (!this->SliceNode0)
+    {
+    this->SliceNode0 = vtkMRMLSliceNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLSliceNode1"));
+    }
+  if (!this->SliceNode1)
+    {
+    this->SliceNode1 = vtkMRMLSliceNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLSliceNode2"));
+    }
+  if (!this->SliceNode2)
+    {
+    this->SliceNode2 = vtkMRMLSliceNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLSliceNode3"));
+    }
+
+  //std::cerr << "vtkBrpNavGUI::UpdateSliceDisplay() is called." << std::endl;
+
+  // Reslice -- Perpendicular
+  if ( this->SliceDriver0 == vtkProstateNavLogic::SLICE_DRIVER_USER )
+    {
+    //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : Perp: SLICE_DRIVER_USER" << std::endl;
+    }
+  else if ( this->SliceDriver0 == vtkProstateNavLogic::SLICE_DRIVER_LOCATOR )
+    {
+    //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : Perp: SLICE_DRIVER_LOCATOR" << std::endl;
+    this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+    //this->Logic0->UpdatePipeline ();
+    }
+  else if ( this->SliceDriver0 == vtkProstateNavLogic::SLICE_DRIVER_RTIMAGE )
+    {
+    if (this->NeedRealtimeImageUpdate0)
+      {
+      //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : Perp: SLICE_DRIVER_RTIMAGE" << std::endl;
+      this->SliceNode0->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 0);
+      //this->Logic0->UpdatePipeline ();
+      }
+    }
+
+
+  // Reslice -- In-plane 90
+  if ( this->SliceDriver1 == vtkProstateNavLogic::SLICE_DRIVER_USER )
+    {
+    //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_USER" << std::endl;
+    }
+  else if ( this->SliceDriver1 == vtkProstateNavLogic::SLICE_DRIVER_LOCATOR )
+    {
+    //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_LOCATOR" << std::endl;
+    this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+    //this->Logic1->UpdatePipeline ();
+    }
+  else if ( this->SliceDriver1 == vtkProstateNavLogic::SLICE_DRIVER_RTIMAGE )
+    {
+    if (this->NeedRealtimeImageUpdate1)
+      {
+      //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : In-plane 90: SLICE_DRIVER_RTIMAGE" << std::endl;
+      this->SliceNode1->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 1);
+      //this->Logic1->UpdatePipeline ();
+      }
+    }
+  
+
+  // Reslice -- In-plane
+  if ( this->SliceDriver2 == vtkProstateNavLogic::SLICE_DRIVER_USER )
+    {
+    //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_USER" << std::endl;
+    }
+  else if ( this->SliceDriver2 == vtkProstateNavLogic::SLICE_DRIVER_LOCATOR )
+    {
+    //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_LOCATOR" << std::endl;
+    this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+    //this->Logic2->UpdatePipeline ();
+    }
+  else if ( this->SliceDriver2 == vtkProstateNavLogic::SLICE_DRIVER_RTIMAGE )
+    {
+    if (this->NeedRealtimeImageUpdate2)
+      {
+      //std::cerr << "vtkProstateNavLogic::UpdateSliceDisplay() : In-plane: SLICE_DRIVER_RTIMAGE" << std::endl;
+      this->SliceNode2->SetSliceToRASByNTP( nx, ny, nz, tx, ty, tz, px, py, pz, 2);
+      //this->Logic2->UpdatePipeline ();
+      }
+    }
+}
+
+
+//----------------------------------------------------------------------------
+void vtkProstateNavLogic::UpdateLocator()
+{
+  //vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->LocatorModelID_new.c_str())); 
+  vtkMRMLModelNode *model = vtkMRMLModelNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID("vtkMRMLModelNode1")); 
+  if (model != NULL)
+    {
+    if (this->LocatorTransform)
+      {
+      vtkMRMLLinearTransformNode *lnode = (vtkMRMLLinearTransformNode *)model->GetParentTransformNode();
+      lnode->SetAndObserveMatrixTransformToParent(this->LocatorTransform->GetMatrix());
+      //this->GetMRMLScene()->Modified();   // J.T. 11/28/07: Commented out to improve performance (seems working without this)
+      }
+    }
+}
+
+
 //---------------------------------------------------------------------------
 void vtkProstateNavLogic::AddRealtimeVolumeNode(const char* name)
 {
@@ -546,21 +699,8 @@ int vtkProstateNavLogic::SwitchWorkPhase(int newwp)
     this->CurrentPhase  = newwp;
     this->PhaseComplete = false;
 
-    //if (this->OpenTrackerStream2 && this->Connection)
     if (this->OpenTrackerStream && this->Connection)
       {
-      // Switch work phases for the subsystems
-      /*
-      std::vector<std::string> keys;
-      std::vector<std::string> values;
-      keys.resize(1);
-      values.resize(1);
-
-      keys[0]   = "workphase";
-      values[0] = vtkProstateNavLogic::WorkPhaseKey[newwp];
-      */
-
-      //this->OpenTrackerStream2->SetOpenTrackerforBRPDataFlowValveFilter(keys, values);
       this->OpenTrackerStream->SetRobotCommand("workphase", WorkPhaseKey[newwp]);
       }
     
@@ -598,12 +738,6 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
     int   speed = 100;         // speed
     float multi = 1.0;         // mutlti factor
 
-    //this->OpenTrackerStream2->Init(filename);
-    //this->OpenTrackerStream2->SetSpeed(speed);
-    //this->OpenTrackerStream2->SetMultiFactor(multi);
-    //this->OpenTrackerStream2->SetStartTimer(1);
-    //this->OpenTrackerStream2->ProcessTimerEvents();    
-
     this->OpenTrackerStream->Init(filename);
     this->OpenTrackerStream->SetSpeed(speed);
     this->OpenTrackerStream->SetMultiFactor(multi);
@@ -613,13 +747,6 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
     this->Connection = true;
     this->SwitchWorkPhase(this->CurrentPhase); // To send workphase command
 
-    // Check status for robot and scanner
-    //std::string robotStatus;
-    //std::string scannerStatus;
-    //std::string errorStatus;
-    //this->OpenTrackerStream2->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
-    //this->RobotWorkPhase   = this->WorkPhaseStringToID(robotStatus.c_str());
-    //this->ScannerWorkPhase = this->WorkPhaseStringToID(scannerStatus.c_str());
     this->RobotWorkPhase   = this->WorkPhaseStringToID(this->OpenTrackerStream->GetRobotStatus().c_str());
     this->ScannerWorkPhase = this->WorkPhaseStringToID(this->OpenTrackerStream->GetScanStatus().c_str());
 
