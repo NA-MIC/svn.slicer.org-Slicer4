@@ -205,25 +205,47 @@ void vtkTumorGrowthGUI::UpdateRegistrationProgress()
     }
 }
 
+//----------------------------------------------------------------------------
+void  vtkTumorGrowthGUI::UpdateNode()
+{
+  if (this->GetMRMLScene() == NULL)
+    {
+    vtkSetMRMLNodeMacro(this->Node, NULL);
+    return;
+    }
+
+  vtkMRMLTumorGrowthNode *tmpNode = vtkMRMLTumorGrowthNode::SafeDownCast(this->GetMRMLScene()->GetNthNodeByClass(0, "vtkMRMLTumorGrowthNode"));
+  if (this->GetNode() != NULL && tmpNode != NULL && strcmp(tmpNode->GetID(), this->Node->GetID()) )
+    {
+    vtkSetAndObserveMRMLNodeMacro(this->Node, tmpNode);
+    }
+  
+  if (this->Node == NULL && tmpNode != NULL)
+    {
+    vtkSetAndObserveMRMLNodeMacro(this->Node, tmpNode);
+    }
+  if (this->Node == NULL)
+    {
+    std::cout <<"UpdateMRML: n is null, create new one?!" << "\n";
+    //    no parameter node selected yet, create new    
+    tmpNode = vtkMRMLTumorGrowthNode::New();
+    this->GetMRMLScene()->AddNode(tmpNode);
+    this->Logic->SetAndObserveTumorGrowthNode(tmpNode);
+    vtkSetAndObserveMRMLNodeMacro(this->Node, tmpNode);
+    tmpNode->Delete();
+   }
+  // save node parameters for Undo
+  this->GetLogic()->SetAndObserveTumorGrowthNode(this->Node);
+  this->GetLogic()->GetMRMLScene()->SaveStateForUndo(this->Node);
+
+
+}
+
+
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::UpdateMRML()
 {
-  // std::cout <<"UpdateMRML gets called!" << "\n";
-  vtkMRMLTumorGrowthNode* n = this->GetNode();
-
-  if (n == NULL) {
-    std::cout <<"UpdateMRML: n is null, create new one?!" << "\n";
-
-    //    no parameter node selected yet, create new
-    vtkMRMLTumorGrowthNode* TumorGrowthNode = vtkMRMLTumorGrowthNode::New();
-    n = TumorGrowthNode;
-    this->GetMRMLScene()->AddNode(n);
-    this->Logic->SetAndObserveTumorGrowthNode(n);
-    vtkSetAndObserveMRMLNodeMacro(this->Node, n);
-  }
-
-  // save node parameters for Undo
-  this->GetLogic()->GetMRMLScene()->SaveStateForUndo(n);
+  this->UpdateNode();
 
   // Update individual entries 
   if (this->FirstScanStep)    this->FirstScanStep->UpdateMRML(); 
@@ -237,16 +259,13 @@ void vtkTumorGrowthGUI::UpdateMRML()
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::UpdateGUI()
 {
-  vtkMRMLTumorGrowthNode* n = this->GetNode();
-  if (n != NULL)
-    {
-      // This might have to be changed bc instances might not yet be created 
-      if (this->FirstScanStep)    this->FirstScanStep->UpdateGUI(); 
-      if (this->ROIStep)          this->ROIStep->UpdateGUI(); 
-      if (this->SegmentationStep) this->SegmentationStep->UpdateGUI(); 
-      if (this->SecondScanStep)   this->SecondScanStep->UpdateGUI(); 
-      if (this->AnalysisStep)     this->AnalysisStep->UpdateGUI(); 
-    }
+  this->UpdateNode();
+  // This might have to be changed bc instances might not yet be created 
+  if (this->FirstScanStep)    this->FirstScanStep->UpdateGUI(); 
+  if (this->ROIStep)          this->ROIStep->UpdateGUI(); 
+  if (this->SegmentationStep) this->SegmentationStep->UpdateGUI(); 
+  if (this->SecondScanStep)   this->SecondScanStep->UpdateGUI(); 
+  if (this->AnalysisStep)     this->AnalysisStep->UpdateGUI(); 
 }
 
 
@@ -286,8 +305,6 @@ void vtkTumorGrowthGUI::BuildGUI()
   this->UIPanel->AddPage("TumorGrowth", "TumorGrowth", NULL);
   vtkKWWidget *module_page = 
     this->UIPanel->GetPageWidget("TumorGrowth");
-
-  //this->PopulateTestingData();
 
   // -----------------------------------------------------------------------
   // Help
@@ -451,80 +468,3 @@ AddObserverByNumber(vtkObject *observee, unsigned long event)
 } 
 
 
-//---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::PopulateTestingData() 
-{
-  this->Logic->PopulateTestingData();
-
-  vtkSlicerModuleGUI *m = vtkSlicerApplication::SafeDownCast(
-    this->GetApplication())->GetModuleGUIByName("Volumes"); 
-
-  if ( m != NULL ) 
-    {
-    vtkSlicerVolumesLogic* volume_logic = 
-      vtkSlicerVolumesGUI::SafeDownCast(m)->GetLogic();
-    vtksys_stl::string file_path = vtksys::SystemTools::GetEnv("HOME");
-#ifdef _WIN32
-    file_path.append("\\tmp\\TumorGrowthTestImages");
-    if (!vtksys::SystemTools::FileIsDirectory(file_path.c_str()))
-      {
-      file_path = vtksys::SystemTools::GetEnv("HOME");
-      file_path.append("\\temp\\TumorGrowthTestImages");
-      }
-    file_path.append("\\");
-#else
-    file_path.append("/tmp/TumorGrowthTestImages/");
-#endif
-    
-    vtkDirectory *dir = vtkDirectory::New();
-    if (!dir->Open(file_path.c_str()))
-      {
-      dir->Delete();
-      return;
-      }
-    
-    for (int i = 0; i < dir->GetNumberOfFiles(); i++)
-      {
-      vtksys_stl::string filename = dir->GetFile(i);
-      //skip . and ..
-      if (strcmp(filename.c_str(), ".") == 0)
-        {
-        continue;
-        }
-      else if (strcmp(filename.c_str(), "..") == 0)
-        {
-        continue;
-        }
-
-      vtksys_stl::string fullName = file_path;
-      fullName.append(filename.c_str());
-      if (strcmp(vtksys::SystemTools::
-                 GetFilenameExtension(fullName.c_str()).c_str(), ".mhd") != 0)
-        {
-        continue;
-        }
-
-      if (vtksys::SystemTools::FileExists(fullName.c_str()) &&
-          !vtksys::SystemTools::FileIsDirectory(fullName.c_str()))
-        {
-        volume_logic->AddArchetypeVolume((char*)(fullName.c_str()), 1, 0, 
-                                         filename.c_str()); 
-        }
-      }
-    dir->Delete();
-       
-//     this->MRMLManager->SetTreeNodeSpatialPriorVolumeID(
-//       this->MRMLManager->GetTreeRootNodeID(), 
-//       this->MRMLManager->GetVolumeNthID(0));
-// 
-//     this->MRMLManager->SetRegistrationAtlasVolumeID(
-//       this->MRMLManager->GetVolumeNthID(0));
-//     this->MRMLManager->AddTargetSelectedVolume(
-//       this->MRMLManager->GetVolumeNthID(1));
-//     this->MRMLManager->SetRegistrationTargetVolumeID(
-//       this->MRMLManager->GetVolumeNthID(1));
-
-    // this->MRMLManager->SetSaveWorkingDirectory(file_path.c_str());
-    // this->MRMLManager->SetSaveTemplateFilename(file_path.append("TumorGrowthSTemplate.mrml").c_str());
-    }
-} 
