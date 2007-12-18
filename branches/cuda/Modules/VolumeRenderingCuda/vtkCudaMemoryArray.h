@@ -6,43 +6,46 @@
 template<typename T>
 class vtkCudaMemoryArray
 {
-  public:
-  vtkCudaMemoryArray* New();
+public:
+  static vtkCudaMemoryArray* New();
   
   void Allocate(size_t width, size_t height);
   void Free();
   
-  const cudaChannelFormatDescriptor& GetDescriptor() const { return this->Descriptor; } 
-  cudaArray* GetArray() const { return this->Array; }
+  void DeepCopy(vtkCudaMemoryArray<T>* source); 
   
+  const cudaChannelFormatDesc& GetDescriptor() const { return this->Descriptor; } 
+  cudaArray* GetArray() const { return this->Array; }
+  size_t GetWidth() const { return this->Width; }
+  size_t GetHeight() const { return this->Height; }
 protected:
   vtkCudaMemoryArray();
   virtual ~vtkCudaMemoryArray();
   vtkCudaMemoryArray(const vtkCudaMemoryArray&);
   vtkCudaMemoryArray operator=(const vtkCudaMemoryArray&);
   
-  cudaChannelFormatDescriptor Descriptor; //!< The Descriptor used to allocate memory
+  cudaChannelFormatDesc Descriptor; //!< The Descriptor used to allocate memory
   cudaArray* Array; //!< The Array with the memory that was allocated.
   size_t Width; //!< The Width of the Array
   size_t Height; //!< The Height of the Array
 };
 
 template<typename T>
-vtkCudaMemoryArray::vtkCudaMemoryArray()
+vtkCudaMemoryArray<T>::vtkCudaMemoryArray()
 {
   this->Array = NULL;
   this->Width = this->Height = 0;
-  this->Descriptor = cudaCreateFormatDescriptor<T>();
+  this->Descriptor = cudaCreateChannelDesc<T>();
 }
 
 template<typename T>
-vtkCudaMemoryArray::~vtkCudaMemoryArray()
+vtkCudaMemoryArray<T>::~vtkCudaMemoryArray()
 {
   this->Free();
 }
 
 template<typename T>
-vtkCudaMemoryArray* vtkCudaMemoryArray::New()
+vtkCudaMemoryArray<T>* vtkCudaMemoryArray<T>::New()
 {
   return new vtkCudaMemoryArray();
 }
@@ -55,7 +58,7 @@ vtkCudaMemoryArray* vtkCudaMemoryArray::New()
  * @note if there was already allocated data in this instance the data will be erased.
  */
 template<typename T>
-void vtkCudaMemoryArray::Allocate(size_t width, size_t height)
+void vtkCudaMemoryArray<T>::Allocate(size_t width, size_t height)
 {
   this->Free();
   
@@ -65,13 +68,23 @@ void vtkCudaMemoryArray::Allocate(size_t width, size_t height)
 }
 
 /**
+ * @brief frees all the resources needed for the Array
+ */
 template<typename T>
-void vtkCudaMemoryArray::Free()
+void vtkCudaMemoryArray<T>::Free()
 {
   if (this->Array != NULL) {
     cudaFreeArray(this->Array);  
     this->Array = NULL;
   }
 }
+
+template<typename T>
+void vtkCudaMemoryArray<T>::DeepCopy(vtkCudaMemoryArray<T>* source)
+{
+  this->Allocate(source->GetWidth(), source->Getheight());
+    cudaMemcpyArrayToArray(this->Array, 0, 0, source->Array, 0, 0, sizeOf(source->Array));
+}
+
 
 #endif /*VTKCUDAMEMORYARRAY_H_*/
