@@ -199,9 +199,9 @@ namespace eval TumorGrowthTcl {
          
     $VOL2_input Delete
     $VOL1_input Delete
-
-        # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
-        ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
+        puts ">>>>>>>>>>>>>> [$NODE GetWorkingDir]" 
+        ::TumorGrowthReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
+        # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
         catch { exec mv [$NODE GetWorkingDir]/LinearRegistration.txt [$NODE GetWorkingDir]/${TYPE}LinearRegistration.txt }
  
     } else {
