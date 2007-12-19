@@ -2,7 +2,6 @@
 #define __vtkSlicerGradientEditorWidget_h
 
 #define ARRAY_LENGTH 3
-#define NUMBER_MATRIX_VALUES 9
 #include "vtkSlicerWidget.h"
 class vtkKWFrameWithLabel;
 class vtkKWEntrySet;
@@ -14,6 +13,7 @@ class vtkKWTextWithScrollbars;
 class vtkSlicerNodeSelectorWidget;
 class vtkKWCheckButton;
 class vtkKWLoadSaveButtonWithLabel;
+class vtkMatrix4x4;
 
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerGradientEditorWidget : public vtkSlicerWidget
 {
@@ -38,6 +38,7 @@ protected:
     // Description:
     // Create the widget.
     virtual void CreateWidget();
+    void updateMatrix();
     void PrintSelf (ostream& os, vtkIndent indent );
 
     vtkKWLoadSaveButtonWithLabel *SaveButton;
@@ -46,18 +47,21 @@ protected:
     vtkKWFrameWithLabel *MeasurementFrame;
     vtkKWFrameWithLabel *TestFrame;
     vtkKWFrameWithLabel *GradientsFrame;
-    vtkKWFrameWithLabel *LoadsaveFrame;
-    vtkKWEntrySet *Matrix;
+    vtkKWFrameWithLabel *LoadSaveFrame;
+    vtkKWFrame *ButtonsFrame;
+    vtkKWEntrySet *MatrixGUI;
     vtkKWPushButton *NegativeButton;
     vtkKWPushButton *SwapButton;    
     vtkKWPushButton *RunButton;
     vtkKWPushButton *RotateButton;
-    vtkKWLabel *LabelAngle;
-    vtkKWComboBox *Angle;
-    vtkKWTextWithScrollbars *Gradients;
-    vtkSlicerNodeSelectorWidget *Mask;
+    vtkKWLabel *AngleLabel;
+    vtkKWComboBox *AngleCombobox;
+    vtkKWTextWithScrollbars *GradientsTextfield;
+    vtkSlicerNodeSelectorWidget *ROIMenu;
     vtkKWCheckButton *EnableMatrixButton;
+    vtkKWCheckButton *EnableGradientsButton;
     vtkKWCheckButton* Checkbuttons[ARRAY_LENGTH];
+    vtkMatrix4x4 *Matrix;
 
 private:
     vtkSlicerGradientEditorWidget ( const vtkSlicerGradientEditorWidget& ); // Not implemented.
