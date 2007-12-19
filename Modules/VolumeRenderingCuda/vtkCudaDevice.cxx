@@ -34,7 +34,6 @@ vtkCudaDevice::~vtkCudaDevice()
  */
 bool vtkCudaDevice::AllocateMemory()
 {
-  vtkCudaMemoryArray<float>* array = vtkCudaMemoryArray<float>::New();
 }
 
 void vtkCudaDevice::SetDeviceNumber(int deviceNumber)

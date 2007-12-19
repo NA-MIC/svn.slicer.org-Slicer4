@@ -10,7 +10,7 @@ public:
 
   virtual void* AllocateBytes(size_t count);
   //BTX
-    template<typename T> T* Allocate(size_t count) 
+  template<typename T> T* Allocate(size_t count) 
     { return (T*)this->AllocateBytes(count * sizeof(T)); }
   virtual void Free();
   
