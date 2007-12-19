@@ -20,7 +20,6 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerGradientEditorWidget : public vtkSlice
 public:
     static vtkSlicerGradientEditorWidget* New();
     vtkTypeRevisionMacro(vtkSlicerGradientEditorWidget,vtkSlicerWidget);
-    //void PrintSelf(ostream& os, vtkIndent indent);
 
     // Description:
     // Add/Remove observers on widgets in the GUI
@@ -38,7 +37,11 @@ protected:
     // Description:
     // Create the widget.
     virtual void CreateWidget();
+
+    // Description:
+    // Update the GUI Matrix.
     void updateMatrix();
+
     void PrintSelf (ostream& os, vtkIndent indent );
 
     vtkKWLoadSaveButtonWithLabel *SaveButton;
