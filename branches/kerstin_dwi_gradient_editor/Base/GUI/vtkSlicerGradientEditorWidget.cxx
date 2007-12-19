@@ -17,6 +17,7 @@
 #include "vtkKWCheckButton.h"
 #include "vtkKWLoadSaveButtonWithLabel.h"
 #include "vtkKWLoadSaveDialog.h"
+#include "vtkMatrix4x4.h"
 
 #include "vtkSlicerGradientEditorWidget.h"
 #include "vtkSlicerNodeSelectorWidget.h"
@@ -30,6 +31,7 @@ vtkCxxRevisionMacro (vtkSlicerGradientEditorWidget, "$Revision: 1.0 $");
 void vtkSlicerGradientEditorWidget::AddWidgetObservers ( )
 {    
     this->EnableMatrixButton->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand);
+    this->EnableGradientsButton->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand);
     this->RotateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->NegativeButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
     this->SwapButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
@@ -41,6 +43,7 @@ void vtkSlicerGradientEditorWidget::AddWidgetObservers ( )
 void vtkSlicerGradientEditorWidget::RemoveWidgetObservers( )
 {
     this->EnableMatrixButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand);
+    this->EnableGradientsButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand);
     this->RotateButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->NegativeButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
     this->SwapButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
@@ -58,6 +61,18 @@ void vtkSlicerGradientEditorWidget::PrintSelf ( ostream& os, vtkIndent indent )
 }
 void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, unsigned long event, void *callData )
 {
+    //import the values, when the matrix is enabled, as the user could have changed it
+    if(this->EnableMatrixButton->GetSelectedState()){
+        int m=0;
+        for(int i=0;i<3;i++){
+            for(int j=0;j<3;j++){
+                this->Matrix->SetElement(j,i,this->MatrixGUI->GetWidget(m)->GetValueAsDouble()); 
+                m++;                
+            }
+        }
+        this->updateMatrix();
+    }
+    //enable/disable buttons depending on how many checkbuttons are selected
     if(event == vtkKWCheckButton::SelectedStateChangedEvent 
         && (this->Checkbuttons[0] == vtkKWCheckButton::SafeDownCast(caller)
         ||  this->Checkbuttons[1] == vtkKWCheckButton::SafeDownCast(caller)
@@ -77,60 +92,52 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
                 else {this->SwapButton->SetEnabled(0);}
                 if(numberSelected == 1){
                     this->RotateButton->SetEnabled(1);
-                    this->LabelAngle->SetEnabled(1);
-                    this->Angle->SetEnabled(1);                }
+                    this->AngleLabel->SetEnabled(1);
+                    this->AngleCombobox->SetEnabled(1);                
+                }
                 else {
                     this->RotateButton->SetEnabled(0);
-                    this->Angle->SetEnabled(0);
-                    this->LabelAngle->SetEnabled(0);
+                    this->AngleCombobox->SetEnabled(0);
+                    this->AngleLabel->SetEnabled(0);
                 }
             }
             else {
                 this->NegativeButton->SetEnabled(0);
                 this->RotateButton->SetEnabled(0);
-                this->LabelAngle->SetEnabled(0);
-                this->Angle->SetEnabled(0);
+                this->AngleLabel->SetEnabled(0);
+                this->AngleCombobox->SetEnabled(0);
             }
     }
+    //enable the gradients textbox
+    else if(this->EnableGradientsButton == vtkKWCheckButton::SafeDownCast(caller) && event == vtkKWCheckButton::SelectedStateChangedEvent){
+        this->GradientsTextfield->SetEnabled(this->EnableGradientsButton->GetSelectedState());
+    }
+    //enable the matrix
     else if(this->EnableMatrixButton == vtkKWCheckButton::SafeDownCast(caller) && event == vtkKWCheckButton::SelectedStateChangedEvent){
-        for (int i=0; i<NUMBER_MATRIX_VALUES; i++){
-            this->Matrix->GetWidget(i)->SetEnabled(this->EnableMatrixButton->GetSelectedState());
+        for (int i=0; i<9; i++){
+            this->MatrixGUI->GetWidget(i)->SetEnabled(this->EnableMatrixButton->GetSelectedState());
         }
     }
+    //rotate matrix
     else if (this->RotateButton == vtkKWPushButton::SafeDownCast(caller)  && event == vtkKWPushButton::InvokedEvent){
-        vtkMatrix4x4 *vtkMatrixIn = vtkMatrix4x4::New();
-        int n=0;
-        vtkMatrixIn->Zero();
-        //fill the vtkMatrix with the values from the gui
-        for(int i=0;i<3;i++){
-            for(int j=0;j<3;j++){
-                vtkMatrixIn->SetElement(i,j, this->Matrix->GetWidget(n)->GetValueAsDouble());
-                n++;
-            }            
-        }
         vtkTransform* transform = vtkTransform::New();
-        transform->SetMatrix(vtkMatrixIn);
+        transform->SetMatrix(this->Matrix);
         //rotate
         if(this->Checkbuttons[0]->GetSelectedState()){
-            transform->RotateX(this->Angle->GetValueAsDouble());
+            transform->RotateX(this->AngleCombobox->GetValueAsDouble());
         }
         if(this->Checkbuttons[1]->GetSelectedState()){
-            transform->RotateY(this->Angle->GetValueAsDouble());
+            transform->RotateY(this->AngleCombobox->GetValueAsDouble());
         }
         if(this->Checkbuttons[2]->GetSelectedState()){
-            transform->RotateZ(this->Angle->GetValueAsDouble());
-        }  
-        vtkMatrix4x4 *vtkMatrixOut = transform->GetMatrix();
-        int m=0;
-        //fill the guiMatrix with the new values
-        for(int i=0;i<3;i++){
-            for(int j=0;j<3;j++){
-                this->Matrix->GetWidget(m)->SetValueAsDouble(vtkMatrixOut->GetElement(i,j));
-                m++;
-            }
+            transform->RotateZ(this->AngleCombobox->GetValueAsDouble());
         }
-        int k=1;
+        //copy transformed matriy back
+        this->Matrix->DeepCopy(transform->GetMatrix());
+        this->updateMatrix();
+        transform->Delete();
     }
+    //swap columns
     else if (this->SwapButton == vtkKWPushButton::SafeDownCast(caller)  && event == vtkKWPushButton::InvokedEvent){
         int firstSelectedCheckbox  = -1;        
         int secondSelectedCheckbox = -1;
@@ -147,52 +154,55 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
                 break;
             }
         }
-        int firstPosition = firstSelectedCheckbox*3;
-        int secondPosition = secondSelectedCheckbox*3;
         //swap values
-        for(int j=secondPosition; j<secondPosition+3; j++){
-            const char* value = this->Matrix->GetWidget(j)->GetValue();
-            this->Matrix->GetWidget(j)->SetValue(this->Matrix->GetWidget(firstPosition)->GetValue());
-            this->Matrix->GetWidget(firstPosition)->SetValue(value);
-            firstPosition++;
+        for(int j=0; j<3; j++){
+            double value = this->Matrix->GetElement(j, firstSelectedCheckbox);
+            this->Matrix->SetElement(j, firstSelectedCheckbox, this->Matrix->GetElement(j, secondSelectedCheckbox));
+            this->Matrix->SetElement(j, secondSelectedCheckbox, value);
         }
+        this->updateMatrix();
     }
+    //negative columns
     else if (this->NegativeButton == vtkKWPushButton::SafeDownCast(caller)  && event == vtkKWPushButton::InvokedEvent){
         for(unsigned int j=0;j<ARRAY_LENGTH;j++){
             //seek selected checkbuttons
             if(this->Checkbuttons[j]->GetSelectedState()){            
-                for(unsigned int i=0+j*3;i<3+j*3;i++){
-                    int currentValue = this->Matrix->GetWidget(i)->GetValueAsInt();
+                for(unsigned int i=0;i<3;i++){
+                    double currentValue = this->Matrix->GetElement(i,j);
                     //change sign of values != 0
                     if(currentValue != 0){
                         currentValue = currentValue-(2*currentValue);
-                        this->Matrix->GetWidget(i)->SetValueAsInt(currentValue);
+                        this->Matrix->SetElement(i,j,currentValue);
                     }
                 }//end for2
             }// end if selected
         }//end for1
+        this->updateMatrix();
     }
 }
 
 vtkSlicerGradientEditorWidget::vtkSlicerGradientEditorWidget(void)
 {
     this->EnableMatrixButton = NULL;
+    this->MatrixGUI = NULL;
     this->Matrix = NULL;
     this->RotateButton = NULL;
     this->NegativeButton = NULL;
     this->SwapButton = NULL;
-    this->Angle = NULL;
-    this->LabelAngle = NULL;
+    this->AngleCombobox = NULL;
+    this->AngleLabel = NULL;
     this->RunButton = NULL;
-    this->Mask = NULL;
-    this->Gradients = NULL;
+    this->ROIMenu = NULL;
+    this->GradientsTextfield = NULL;
     this->TestFrame = NULL;
     this->MeasurementFrame = NULL;
     this->GradientsFrame = NULL;
-    this->LoadsaveFrame = NULL;
+    this->LoadSaveFrame = NULL;
     this->LoadButton = NULL;
     this->SaveButton = NULL;
     this->LoadGradientsButton = NULL;
+    this->ButtonsFrame = NULL;
+    this->EnableGradientsButton = NULL;
 }
 
 vtkSlicerGradientEditorWidget::~vtkSlicerGradientEditorWidget(void)
@@ -203,17 +213,17 @@ vtkSlicerGradientEditorWidget::~vtkSlicerGradientEditorWidget(void)
         this->GradientsFrame->Delete();
         this->GradientsFrame = NULL;
     }
-    if (this->Gradients)
+    if (this->GradientsTextfield)
     {
-        this->Gradients->SetParent (NULL);
-        this->Gradients->Delete();
-        this->Gradients = NULL;
+        this->GradientsTextfield->SetParent (NULL);
+        this->GradientsTextfield->Delete();
+        this->GradientsTextfield = NULL;
     }
-    if (this->Mask)
+    if (this->ROIMenu)
     {
-        this->Mask->SetParent (NULL);
-        this->Mask->Delete();
-        this->Mask = NULL;
+        this->ROIMenu->SetParent (NULL);
+        this->ROIMenu->Delete();
+        this->ROIMenu = NULL;
     }
     if (this->RunButton)
     {
@@ -233,11 +243,11 @@ vtkSlicerGradientEditorWidget::~vtkSlicerGradientEditorWidget(void)
         this->LoadButton->Delete();
         this->LoadButton = NULL;
     }
-    if (this->LoadsaveFrame)
+    if (this->LoadSaveFrame)
     {
-        this->LoadsaveFrame->SetParent (NULL);
-        this->LoadsaveFrame->Delete();
-        this->LoadsaveFrame = NULL;
+        this->LoadSaveFrame->SetParent (NULL);
+        this->LoadSaveFrame->Delete();
+        this->LoadSaveFrame = NULL;
     }
     if (this->GradientsFrame)
     {
@@ -257,17 +267,17 @@ vtkSlicerGradientEditorWidget::~vtkSlicerGradientEditorWidget(void)
         this->TestFrame->Delete();
         this->TestFrame = NULL;
     }
-    if (this->LabelAngle)
+    if (this->AngleLabel)
     {
-        this->LabelAngle->SetParent (NULL);
-        this->LabelAngle->Delete();
-        this->LabelAngle = NULL;
+        this->AngleLabel->SetParent (NULL);
+        this->AngleLabel->Delete();
+        this->AngleLabel = NULL;
     }
-    if (this->Angle)
+    if (this->AngleCombobox)
     {
-        this->Angle->SetParent (NULL);
-        this->Angle->Delete();
-        this->Angle = NULL;
+        this->AngleCombobox->SetParent (NULL);
+        this->AngleCombobox->Delete();
+        this->AngleCombobox = NULL;
     }
     if (this->SwapButton)
     {
@@ -287,9 +297,14 @@ vtkSlicerGradientEditorWidget::~vtkSlicerGradientEditorWidget(void)
         this->RotateButton->Delete();
         this->RotateButton = NULL;
     }
+    if (this->MatrixGUI)
+    {
+        this->MatrixGUI->SetParent (NULL);
+        this->MatrixGUI->Delete();
+        this->MatrixGUI = NULL;
+    }
     if (this->Matrix)
     {
-        this->Matrix->SetParent (NULL);
         this->Matrix->Delete();
         this->Matrix = NULL;
     }
@@ -310,21 +325,46 @@ vtkSlicerGradientEditorWidget::~vtkSlicerGradientEditorWidget(void)
         this->Checkbuttons[i]->Delete();
         this->Checkbuttons[i] = NULL;
     }
+    if (this->ButtonsFrame)
+    {
+        this->ButtonsFrame->SetParent (NULL);
+        this->ButtonsFrame->Delete();
+        this->ButtonsFrame = NULL;
+    }
+    if (this->EnableGradientsButton)
+    {
+        this->EnableGradientsButton->SetParent (NULL);
+        this->EnableGradientsButton->Delete();
+        this->EnableGradientsButton = NULL;
+    }
     this->RemoveWidgetObservers();
 }
 //---------------------------------------------------------------------------
+
+void vtkSlicerGradientEditorWidget::updateMatrix(){
+    if(this->Matrix == NULL){
+        this->Matrix = vtkMatrix4x4::New();
+    }
+    int m=0;
+    for(int i=0;i<3;i++){
+        for(int j=0;j<3;j++){
+            this->MatrixGUI->GetWidget(m)->SetValueAsDouble(this->Matrix->GetElement(j,i));
+            m++;
+        }
+    }
+}
 void vtkSlicerGradientEditorWidget::CreateWidget ( )
 {
-    // Check if already created
+    //check if already created
     if (this->IsCreated()){
         vtkErrorMacro(<< this->GetClassName() << " already created");
         return;
     }
 
-    // Call the superclass to create the whole widget
+    //call the superclass to create the whole widget
     this->Superclass::CreateWidget();
 
-    //Create the measurement frame
+    //create the measurement frame
     this->MeasurementFrame = vtkKWFrameWithLabel::New ( );
     this->MeasurementFrame->SetParent ( this->GetParent() );
     this->MeasurementFrame->Create ( );
@@ -333,29 +373,28 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
         this->MeasurementFrame->GetWidgetName());
 
-    // Create Checkbutton1
+    //create enable MatrixGUI button
     this->EnableMatrixButton = vtkKWCheckButton::New();
     this->EnableMatrixButton->SetParent(this->MeasurementFrame->GetFrame());
     this->EnableMatrixButton->SetText("Enable Matrix");
     this->EnableMatrixButton->SelectedStateOn();
     this->EnableMatrixButton->Create();
 
-    // Create matrix for measurement frame
-    this->Matrix = vtkKWEntrySet::New();
-    this->Matrix->SetParent(this->MeasurementFrame->GetFrame());
-    this->Matrix->Create();
-    this->Matrix->SetMaximumNumberOfWidgetsInPackingDirection(3);
-    this->Matrix->SetPadX(10);
-    this->Matrix->SetWidgetsPadX(4);
+    //create MatrixGUI for measurement frame
+    this->MatrixGUI = vtkKWEntrySet::New();
+    this->MatrixGUI->SetParent(this->MeasurementFrame->GetFrame());
+    this->MatrixGUI->Create();
+    this->MatrixGUI->SetMaximumNumberOfWidgetsInPackingDirection(3);
+    this->MatrixGUI->SetPadX(10);
+    this->MatrixGUI->SetWidgetsPadX(4);
 
-    const char *matrixValues [NUMBER_MATRIX_VALUES] = {"1", "0", "0", "0", "1", "0", "0", "0", "1"};
-
-    for (int i=0; i<NUMBER_MATRIX_VALUES; i++){
-        this->Matrix->AddWidget(i);
-        this->Matrix->GetWidget(i)->SetWidth(3);
-        this->Matrix->GetWidget(i)->SetEnabled(0);
-        this->Matrix->GetWidget(i)->SetValue(matrixValues[i]);
+    for (int i=0; i<9; i++){
+        this->MatrixGUI->AddWidget(i);
+        this->MatrixGUI->GetWidget(i)->SetWidth(5);
+        this->MatrixGUI->GetWidget(i)->SetEnabled(0);
     }
+    //initialize with default values
+    this->updateMatrix();
 
     for(int i=0; i< ARRAY_LENGTH; i++){
         vtkKWCheckButton* checkButton = vtkKWCheckButton::New();
@@ -366,7 +405,7 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
             checkButton->GetWidgetName(), i);
     }
 
-    // buttons for options
+    //buttons for options
     this->NegativeButton = vtkKWPushButton::New();
     this->NegativeButton->SetParent(this->MeasurementFrame->GetFrame());
     this->NegativeButton->Create();
@@ -388,29 +427,32 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
     this->RotateButton->SetWidth(15);
     this->RotateButton->SetEnabled(0);
 
-    //Create Angle label
-    this->LabelAngle = vtkKWLabel::New();
-    this->LabelAngle->SetParent(this->MeasurementFrame->GetFrame());
-    this->LabelAngle->Create();
-    this->LabelAngle->SetText("Angle: ");
+    //create AngleCombobox label
+    this->AngleLabel = vtkKWLabel::New();
+    this->AngleLabel->SetParent(this->MeasurementFrame->GetFrame());
+    this->AngleLabel->Create();
+    this->AngleLabel->SetEnabled(0);
+    this->AngleLabel->SetText("Angle: ");
 
-    //Create Angle combobox
-    this->Angle = vtkKWComboBox::New();
-    this->Angle->SetParent(this->MeasurementFrame->GetFrame());
-    this->Angle->Create();
-    this->Angle->SetWidth(4);
-    this->Angle->SetValue("+90");
+    //create AngleCombobox combobox
+    this->AngleCombobox = vtkKWComboBox::New();
+    this->AngleCombobox->SetParent(this->MeasurementFrame->GetFrame());
+    this->AngleCombobox->Create();
+    this->AngleCombobox->SetEnabled(0);
+
+    this->AngleCombobox->SetWidth(4);
+    this->AngleCombobox->SetValue("+90");
 
     const char *angleValues [] = {"+90", "-90", "+180", "-180", "+30", "-30"};
     for (int i=0; i<sizeof(angleValues)/sizeof(angleValues[0]); i++){
-        this->Angle->AddValue(angleValues[i]);
+        this->AngleCombobox->AddValue(angleValues[i]);
     }
 
     //pack all elements
     this->Script("grid %s -row 0 -column 0 -columnspan 3 -sticky n", 
         this->EnableMatrixButton->GetWidgetName());
     this->Script("grid %s -row 1 -column 0 -columnspan 3 -rowspan 3 -sticky nes", 
-        this->Matrix->GetWidgetName());
+        this->MatrixGUI->GetWidgetName());
     this->Script("grid %s -row 3 -column 3 -sticky ne", 
         this->NegativeButton->GetWidgetName());
     this->Script("grid %s -row 2 -column 3 -sticky ne", 
@@ -418,41 +460,55 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
     this->Script("grid %s -row 1 -column 3 -sticky ne", 
         this->RotateButton->GetWidgetName());
     this->Script("grid %s -row 1 -column 4 -sticky ne", 
-        this->LabelAngle->GetWidgetName());
+        this->AngleLabel->GetWidgetName());
     this->Script("grid %s -row 1 -column 5 -sticky ne", 
-        this->Angle->GetWidgetName());
+        this->AngleCombobox->GetWidgetName());
 
-    //Create gradient frame 
+    //create gradient frame 
     this->GradientsFrame = vtkKWFrameWithLabel::New ( );
     this->GradientsFrame->SetParent ( this->GetParent() );
     this->GradientsFrame->Create ( );
-    this->GradientsFrame->SetLabelText ("Gradients");
-
+    this->GradientsFrame->SetLabelText ("Gradients Frame");
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
         this->GradientsFrame->GetWidgetName());
 
-    //#$GradientsFrame CollapseFrame
+    //create gradient frame 
+    this->ButtonsFrame = vtkKWFrame::New ( );
+    this->ButtonsFrame->SetParent (this->GradientsFrame->GetFrame());
+    this->ButtonsFrame->Create ( );
+    this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
+        this->ButtonsFrame->GetWidgetName());
 
-    //Create load button
+    //create textfield for GradientsTextfield
+    this->GradientsTextfield = vtkKWTextWithScrollbars::New();
+    this->GradientsTextfield->SetParent(this->GradientsFrame->GetFrame());
+    this->GradientsTextfield->Create();
+    this->GradientsTextfield->SetEnabled(0);
+    this->GradientsTextfield->GetWidget()->SetText("DWMRI_b-value:=800\nDWMRI_gradient_0000:= 0 0 0 0\nDWMRI_gradient_0001:= 0 0 0 0\nDWMRI_gradient_0002:= -0.8238094 -0.4178235 -0.3830949\nDWMRI_gradient_0003:= -0.5681645 0.5019867 -0.6520725\n...");
+    this->Script("pack %s -side top -anchor s -fill x -padx 2 -pady 2", 
+        this->GradientsTextfield->GetWidgetName());
+
+    //create enable gradients textfield button
+    this->EnableGradientsButton = vtkKWCheckButton::New();
+    this->EnableGradientsButton->SetParent(this->ButtonsFrame);
+    this->EnableGradientsButton->SetText("Enable Textbox");
+    this->EnableGradientsButton->Create();
+    this->Script("pack %s -side left -anchor nw -padx 2 -pady 2", 
+        this->EnableGradientsButton->GetWidgetName());
+
+    //create load button
     this->LoadGradientsButton = vtkKWLoadSaveButtonWithLabel::New();
-    this->LoadGradientsButton->SetParent(this->GradientsFrame->GetFrame());
+    this->LoadGradientsButton->SetParent(this->ButtonsFrame);
     this->LoadGradientsButton->Create();
-    this->LoadGradientsButton->SetLabelText("Load Gradients from .txt/.nrrd File");
+    this->LoadGradientsButton->SetLabelText("Load GradientsTextfield from .txt/.nrrd File");
     this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open .txt/.nrrd File");
     this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {Textfile} {.txt} } { {NHRDfile} {.nrrd} }");
     this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
-    this->Script("pack %s -side top -anchor ne -padx 2 -pady 2", 
+    this->Script("pack %s -side right -anchor ne -padx 2 -pady 2", 
         this->LoadGradientsButton->GetWidgetName());
 
-    //Create textfield for Gradients
-    this->Gradients = vtkKWTextWithScrollbars::New();
-    this->Gradients->SetParent(this->GradientsFrame->GetFrame());
-    this->Gradients->Create();
-    this->Gradients->GetWidget()->SetText("DWMRI_b-value:=800\nDWMRI_gradient_0000:= 0 0 0 0\nDWMRI_gradient_0001:= 0 0 0 0\nDWMRI_gradient_0002:= -0.8238094 -0.4178235 -0.3830949\nDWMRI_gradient_0003:= -0.5681645 0.5019867 -0.6520725\n...");
-    this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
-        this->Gradients->GetWidgetName());
 
-    //Create test frame 
+    //create test frame 
     this->TestFrame = vtkKWFrameWithLabel::New ( );
     this->TestFrame->SetParent ( this->GetParent() );
     this->TestFrame->Create ( );
@@ -460,15 +516,15 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
         this->TestFrame->GetWidgetName());
 
-    //Create ROI menu
-    this->Mask = vtkSlicerNodeSelectorWidget::New();
-    this->Mask->SetParent(this->TestFrame->GetFrame());
-    this->Mask->Create();
-    this->Mask->SetLabelText("Input ROI: ");
+    //create ROI menu
+    this->ROIMenu = vtkSlicerNodeSelectorWidget::New();
+    this->ROIMenu->SetParent(this->TestFrame->GetFrame());
+    this->ROIMenu->Create();
+    this->ROIMenu->SetLabelText("Input ROI: ");
     this->Script("pack %s -side top -anchor ne -padx 2 -pady 2", 
-        this->Mask->GetWidgetName());
+        this->ROIMenu->GetWidgetName());
 
-    //Create Run button
+    //create run button
     this->RunButton = vtkKWPushButton::New();
     this->RunButton->SetParent(this->TestFrame->GetFrame());
     this->RunButton->Create();
@@ -477,26 +533,26 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
     this->Script("pack %s -side top -anchor ne -padx 2 -pady 2", 
         this->RunButton->GetWidgetName());
 
-    //Create load/save frame 
-    this->LoadsaveFrame = vtkKWFrameWithLabel::New ( );
-    this->LoadsaveFrame->SetParent ( this->GetParent() );
-    this->LoadsaveFrame->Create ( );
-    this->LoadsaveFrame->SetLabelText ("Load/Save");
+    //create load/save frame 
+    this->LoadSaveFrame = vtkKWFrameWithLabel::New ( );
+    this->LoadSaveFrame->SetParent ( this->GetParent() );
+    this->LoadSaveFrame->Create ( );
+    this->LoadSaveFrame->SetLabelText ("Load/Save");
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
-        this->LoadsaveFrame->GetWidgetName());
+        this->LoadSaveFrame->GetWidgetName());
 
-    //Create save button
+    //create save button
     this->SaveButton = vtkKWLoadSaveButtonWithLabel::New();
-    this->SaveButton->SetParent(this->LoadsaveFrame->GetFrame());
+    this->SaveButton->SetParent(this->LoadSaveFrame->GetFrame());
     this->SaveButton->Create();
     this->SaveButton->SetLabelText("Save parameters to NHDR");
     this->SaveButton->SetWidth(150);
     this->Script("pack %s -side top -anchor ne -padx 2 -pady 2", 
         this->SaveButton->GetWidgetName());
 
-    //Create load button
+    //create load button
     this->LoadButton = vtkKWLoadSaveButtonWithLabel::New();
-    this->LoadButton->SetParent(this->LoadsaveFrame->GetFrame());
+    this->LoadButton->SetParent(this->LoadSaveFrame->GetFrame());
     this->LoadButton->Create();
     this->LoadButton->SetLabelText("Load existing NHDR");
     this->LoadButton->SetWidth(150);    
