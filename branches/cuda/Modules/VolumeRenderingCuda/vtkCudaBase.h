@@ -18,9 +18,9 @@ class vtkCudaBase
     static vtkCudaBase* New() { return NULL; }
   
    static cudaError_t GetLastError();
-    static const char* GetLastErrorString();
-      static const char* GetErrorString(cudaError_t error);
-      static void PrintError(cudaError_t error);
+   static const char* GetLastErrorString();
+   static const char* GetErrorString(cudaError_t error);
+   static void PrintError(cudaError_t error);
   
 private:
   virtual ~vtkCudaBase();

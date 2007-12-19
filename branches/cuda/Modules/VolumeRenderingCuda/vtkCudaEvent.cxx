@@ -4,6 +4,11 @@
 
 #include "cuda_runtime_api.h"
 
+vtkCudaEvent* vtkCudaEvent::New()
+{
+  return new vtkCudaEvent();  
+}
+
 vtkCudaEvent::vtkCudaEvent()
 {
   cudaEventCreate(&this->Event);
