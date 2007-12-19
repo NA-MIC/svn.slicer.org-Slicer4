@@ -77,6 +77,13 @@ proc trackerd_sock_cb { sock addr port } {
     set tag [$_tcl AddObserver ModifiedEvent ""]
     $_tcl SetInterpFromCommand $tag
 
+    set oldMode [fconfigure $sock -buffering]
+    fconfigure $sock -buffering none
+    fconfigure $sock -translation binary
+    ::tcl_$sock PerformVTKSocketHandshake $sock
+    fconfigure $sock -translation auto
+    fconfigure $sock -buffering $oldMode
+
     fileevent $sock readable "trackerd_sock_fileevent $sock"
 }
 
@@ -92,8 +99,6 @@ proc trackerd_sock_fileevent {sock} {
         return
     }
 
-puts "reading..."
-
     set nodes [$::slicer3::MRMLScene GetNodesByName "tracker"]
     set transformNode [$nodes GetItemAsObject 0]
     if { $transformNode == "" } {
@@ -104,11 +109,6 @@ puts "reading..."
     
     ::tcl_$sock SetMatrix $matrix
 
-    fconfigure $sock -translation binary
     ::tcl_$sock ReceiveMatrix $sock
-    fconfigure $sock -translation auto
-
-puts "finished reading!"
-
 }
 
