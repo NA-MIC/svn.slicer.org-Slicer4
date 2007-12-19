@@ -40,6 +40,7 @@ vtkTclHelper::vtkTclHelper()
   this->Interp = NULL;
   this->ImageData = NULL;
   this->VolumeNode = NULL;
+  this->Matrix = NULL;
   this->MeasurementFrame = vtkMatrix4x4::New();
   this->MeasurementFrame->Identity();
 }
@@ -475,6 +476,42 @@ vtkTclHelper::ReceiveImageDataTensors(char *sockname)
   }  
 }
 
+
+// Read a stream of numbers from vtkSocketCommunicator::SendTagged 
+// and put it int the Matrix ivar
+void 
+vtkTclHelper::PerformVTKSocketHandshake(char *sockname)
+{
+
+  int mode;
+
+  Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
+
+  if ( ! (mode & TCL_READABLE) )
+    {   vtkErrorMacro ("Socket " << sockname << " is not readable" << "\n");
+      return;
+    }
+
+  // read the tag, but ignore it
+  int bytes = 9;
+  char handshake[9];
+  int read = Tcl_Read(channel, (char *) &handshake, bytes);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+
+  int written = Tcl_WriteRaw(channel, (char *) handshake, bytes);
+  Tcl_Flush(channel);
+
+  if ( written != bytes )
+    {   vtkErrorMacro ("Only wrote " << written << " but expected to write " << bytes << "\n");
+      return;
+    }
+
+}
+
 // Read a stream of numbers from vtkSocketCommunicator::SendTagged 
 // and put it int the Matrix ivar
 void 
@@ -520,20 +557,22 @@ vtkTclHelper::ReceiveMatrix(char *sockname)
     }
 
   // read the actual elements
-  double elements[12*8];
+  double elements[12];
+  bytes = 12*8;
   read = Tcl_Read(channel, (char *) &elements, 12*8);
 
   if ( read != bytes )
     {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
       return;
     }
-
-  int row = 0;
-  for (row = 0; row < 3; row++)
+  
+  unsigned int counter = 0;
+  for (unsigned int i = 0; i < 4; i++)
     {
-    this->Matrix->SetElement(row,0, elements[row+0]);
-    this->Matrix->SetElement(row,1, elements[row+1]);
-    this->Matrix->SetElement(row,2, elements[row+2]);
+    for (unsigned int j = 0; j < 3; j++)
+      {
+      this->Matrix->SetElement( j, i, elements[counter++] );
+      }
     }
 }
 

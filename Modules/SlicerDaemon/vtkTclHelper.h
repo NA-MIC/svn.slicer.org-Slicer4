@@ -62,6 +62,8 @@ public:
 
     void ReceiveMatrix(char *sockname);
 
+    void PerformVTKSocketHandshake(char *sockname);
+
 protected:
     vtkTclHelper();
     ~vtkTclHelper(); 
