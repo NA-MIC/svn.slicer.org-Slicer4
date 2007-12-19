@@ -64,9 +64,10 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerModuleLogic
     SLICE_DRIVER_RTIMAGE = 2
   };
   enum ImageOrient{
-    SLICE_RTIMAGE_PERP      = 0,
-    SLICE_RTIMAGE_INPLANE90 = 1,
-    SLICE_RTIMAGE_INPLANE   = 2
+    SLICE_RTIMAGE_NONE      = 0,
+    SLICE_RTIMAGE_PERP      = 1,
+    SLICE_RTIMAGE_INPLANE90 = 2,
+    SLICE_RTIMAGE_INPLANE   = 3
   };
   enum {  // Events
     LocatorUpdateEvent      = 50000,
@@ -98,8 +99,10 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerModuleLogic
   vtkGetMacro ( NeedRealtimeImageUpdate1, int );
   vtkSetMacro ( NeedRealtimeImageUpdate2, int );
   vtkGetMacro ( NeedRealtimeImageUpdate2, int );
+  /*
   vtkSetMacro ( ImagingControl,          bool );
   vtkGetMacro ( ImagingControl,          bool );
+  */
   vtkSetMacro ( NeedUpdateLocator,       bool );
   vtkGetMacro ( NeedUpdateLocator,       bool );
 

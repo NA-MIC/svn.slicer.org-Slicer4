@@ -200,6 +200,8 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   this->FreezeImageCheckButton = NULL;
   this->LocatorCheckButton     = NULL;
 
+  this->ImagingMenu            = NULL;
+
   /*
   this->SliceDriver0 = 0;
   this->SliceDriver1 = 0;
@@ -312,6 +314,12 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
     this->StartScanButton->Delete();
     }
 
+  if ( this->ImagingMenu )
+    {
+    this->ImagingMenu->SetParent(NULL);
+    this->ImagingMenu->Delete();
+    }
+
 
   //----------------------------------------------------------------
   // Etc Frame
@@ -378,28 +386,45 @@ void vtkProstateNavGUI::RemoveGUIObservers ( )
 
   if (this->FreezeImageCheckButton)
     {
-    this->FreezeImageCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                                  (vtkCommand *)this->GUICallbackCommand );
+    this->FreezeImageCheckButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand );
     }
 
   if (this->SetLocatorModeButton)
     {
-    this->SetLocatorModeButton->RemoveObservers (vtkKWPushButton::InvokedEvent,
-                                                  (vtkCommand *)this->GUICallbackCommand );
+    this->SetLocatorModeButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand );
     }
 
   if (this->SetUserModeButton)
     {
-    this->SetUserModeButton->RemoveObservers (vtkKWPushButton::InvokedEvent,
-                                              (vtkCommand *)this->GUICallbackCommand );
+    this->SetUserModeButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand );
     }
 
   if (this->LocatorCheckButton)
     {
-    this->LocatorCheckButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,
-                                              (vtkCommand *)this->GUICallbackCommand );
+    this->LocatorCheckButton->RemoveObserver((vtkCommand *)this->GUICallbackCommand );
     }
 
+  if (this->RedSliceMenu)
+    {
+    this->RedSliceMenu->GetMenu()
+      ->RemoveObserver((vtkCommand*)this->GUICallbackCommand);
+    }
+  if (this->YellowSliceMenu)
+    {
+    this->YellowSliceMenu->GetMenu()
+      ->RemoveObserver((vtkCommand*)this->GUICallbackCommand);
+    }
+  if (this->GreenSliceMenu)
+    {
+    this->GreenSliceMenu->GetMenu()
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    }
+  if (this->ImagingMenu)
+    {
+    this->ImagingMenu->GetMenu()
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    }
+  
   this->RemoveLogicObservers();
 }
 
@@ -468,6 +493,16 @@ void vtkProstateNavGUI::AddGUIObservers ( )
     ->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
   this->LocatorCheckButton
     ->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand);
+
+  this->RedSliceMenu->GetMenu()
+    ->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+  this->YellowSliceMenu->GetMenu()
+    ->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+  this->GreenSliceMenu->GetMenu()
+    ->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+  this->ImagingMenu->GetMenu()
+    ->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+
 
   //----------------------------------------------------------------
   // Etc Frame
@@ -700,17 +735,25 @@ void vtkProstateNavGUI::ProcessGUIEvents(vtkObject *caller,
     {
       
     const char* selected = this->ImagingMenu->GetValue();
-    if (strcmp(selected, "Perpendicular") == 0)
+    if (strcmp(selected, "None") == 0)
       {
-      this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_PERP;
+      //this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_NONE;
+      this->GetLogic()->SetRealtimeImageOrient(vtkProstateNavLogic::SLICE_RTIMAGE_NONE);
+      }
+    else if (strcmp(selected, "Perpendicular") == 0)
+      {
+      //this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_PERP;
+      this->GetLogic()->SetRealtimeImageOrient(vtkProstateNavLogic::SLICE_RTIMAGE_PERP);
       }
     else if (strcmp(selected, "In-plane 90") == 0)
       {
-      this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_INPLANE90;
+      //this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_INPLANE90;
+      this->GetLogic()->SetRealtimeImageOrient(vtkProstateNavLogic::SLICE_RTIMAGE_INPLANE90);
       }
     else //if ( strcmp(selected, "In-plane") == 0 )
       {
-      this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_INPLANE;
+      //this->RealtimeImageOrient = vtkProstateNavGUI::SLICE_RTIMAGE_INPLANE;
+      this->GetLogic()->SetRealtimeImageOrient(vtkProstateNavLogic::SLICE_RTIMAGE_INPLANE);
       }
     
     std::cerr << "ImagingMenu =======> " << selected << "  :  " << this->RealtimeImageOrient << std::endl;
@@ -1305,38 +1348,22 @@ void vtkProstateNavGUI::BuildGUIForVisualizationControlFrame ()
   this->StopScanButton->SetText("Stop Scan");
   this->StopScanButton->SetWidth(12);
 
-  this->Script("pack %s %s -side left -anchor w -padx 2 -pady 2", 
-               StartScanButton->GetWidgetName(),
-               StopScanButton->GetWidgetName());
-
-
-  // Orientation control frame
-  vtkKWFrame *orientationFrame = vtkKWFrame::New();
-  modeFrame->SetParent(rtImageFrame);
-  modeFrame->Create();
-  app->Script("pack %s -side top -anchor nw -fill x -pady 1 -in %s",
-              orientationFrame->GetWidgetName(),
-              rtImageFrame->GetFrame()->GetWidgetName());
-
-  this->ImagingControlCheckButton = vtkKWCheckButton::New();
-  this->ImagingControlCheckButton->SetParent(orientationFrame);
-  this->ImagingControlCheckButton->Create();
-  this->ImagingControlCheckButton->SelectedStateOff();
-  this->ImagingControlCheckButton->SetText("Imaging Orientation Control:");
-  
   this->ImagingMenu = vtkKWMenuButton::New();
-  this->ImagingMenu->SetParent(orientationFrame);
+  this->ImagingMenu->SetParent(scanFrame);
   this->ImagingMenu->Create();
   this->ImagingMenu->SetWidth(10);
+  this->ImagingMenu->GetMenu()->AddRadioButton ("None");
   this->ImagingMenu->GetMenu()->AddRadioButton ("Perpendicular");
   this->ImagingMenu->GetMenu()->AddRadioButton ("In-plane 90");
   this->ImagingMenu->GetMenu()->AddRadioButton ("In-plane");
-  this->ImagingMenu->SetValue("Perpendicular");
-  
-  this->Script( "pack %s %s -side left -anchor w -padx 2 -pady 2", 
-                this->ImagingControlCheckButton->GetWidgetName(),
-                this->ImagingMenu->GetWidgetName());
-  
+  this->ImagingMenu->SetValue("None");
+
+  this->Script("pack %s %s %s -side left -anchor w -padx 2 -pady 2", 
+               StartScanButton->GetWidgetName(),
+               StopScanButton->GetWidgetName(),
+               ImagingMenu->GetWidgetName());
+
+
   displayFrame->Delete();
   driverFrame->Delete();
   modeFrame->Delete();

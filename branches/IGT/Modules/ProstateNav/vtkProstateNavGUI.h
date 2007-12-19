@@ -73,9 +73,10 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavGUI : public vtkSlicerModuleGUI
     SLICE_PLANE_GREEN  = 2
   };
   enum {
-    SLICE_RTIMAGE_PERP      = 0,
-    SLICE_RTIMAGE_INPLANE90 = 1,
-    SLICE_RTIMAGE_INPLANE   = 2
+    SLICE_RTIMAGE_NONE      = 0,
+    SLICE_RTIMAGE_PERP      = 1,
+    SLICE_RTIMAGE_INPLANE90 = 2,
+    SLICE_RTIMAGE_INPLANE   = 3
   };
   
   static const double WorkPhaseColor[vtkProstateNavLogic::NumPhases][3];

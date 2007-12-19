@@ -17,7 +17,6 @@ vtkProstateNavDataStream::vtkProstateNavDataStream()
   this->AttrSetRobot    = NULL;
   this->AttrSetScanner  = NULL;
   this->NeedleMatrix    = vtkMatrix4x4::New();
-  this->NeedleTransform = vtkTransform::New();
   this->ImageTimeStamp  = vtkTimeStamp::New();
   this->RealtimeImage   = vtkImageData::New();
 
@@ -82,6 +81,17 @@ void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeS
   attrSet->GetAttribute("position", &position);
   attrSet->GetAttribute("orientation", &orientation);
 
+  std::cerr << "position = ("
+            << position[0] << ", "
+            << position[1] << ", "
+            << position[2] << ")" << std::endl;
+
+  std::cerr << "orientation = ("
+            << orientation[0] << ", "
+            << orientation[1] << ", "
+            << orientation[2] << ", "
+            << orientation[3] << ")" << std::endl;
+
   float ori[4];
   float norm[3];
   float transnorm[3];
@@ -91,6 +101,7 @@ void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeS
   ori[3] = orientation[3];
 
   vtkProstateNavDataStream* ds = dynamic_cast<vtkProstateNavDataStream*>(attrSet->GetOpenTrackerStream());
+  ds->QuaternionToXYZ(ori, norm, transnorm);
 
   int j;
   for (j=0; j<3; j++)
@@ -161,7 +172,7 @@ std::string vtkProstateNavDataStream::GetRobotStatus()
 }
 
 
-vtkTransform* vtkProstateNavDataStream::GetNeedleTransform()
+void vtkProstateNavDataStream::GetNeedleTransform(vtkTransform* dest)
 {
   // this part should be integrated to vtkIGTDataStream
 
@@ -275,12 +286,11 @@ vtkTransform* vtkProstateNavDataStream::GetNeedleTransform()
   // T:
   locator_transform->Translate(x0, y0, z0);
 
-  this->NeedleTransform->DeepCopy(locator_transform);
+  dest->DeepCopy(locator_transform);
   
   locator_matrix->Delete();
   locator_transform->Delete();
-  
-  return this->NeedleTransform;
+
 }
 
 
