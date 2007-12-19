@@ -17,6 +17,7 @@
 #include "vtkImageShrink3D.h"
 #include "vtkMath.h"
 #include "vtkObjectFactory.h"
+#include "vtkImageChangeInformation.h"
 
 #include <cmath>
 #include <iomanip>
@@ -32,6 +33,13 @@ using namespace std;
 //   writer->Write();
 //   writer->Delete();
 // }
+
+
+void  _Print(vtkImageData *DATA,::ostream& os, vtkIndent indent)  {
+ // DATA->PrintSelf(os,indent.GetNextIndent());
+  os << indent <<  DATA->GetOrigin()[0] << " "  <<  DATA->GetOrigin()[1] << " "  <<  DATA->GetOrigin()[2] << endl;
+
+}
 
 float* vtkImageGCR::vector(int nl,int nh)
 {
@@ -1335,19 +1343,24 @@ void vtkImageGCR::NormalizeImages()
     }
   
   // normalize source
+
   Extract->SetInput(s);
-  Normalized->SetInput(Extract->GetOutput());
+  vtkImageChangeInformation *Extract_ = vtkImageChangeInformation::New();
+  Extract_->SetOutputOrigin(s->GetOrigin());
+  Extract_->SetInput(Extract->GetOutput());
+  Extract_->Update();
+
+  Normalized->SetInput(Extract_->GetOutput());
+
   Normalized->SetOutput(this->WorkSource);
 
   this->WorkSource->Update();
   this->WorkSource->SetSource(0);
 
-//   Write(this->WorkTarget,"/tmp/t.vtk"); 
-//   Write(this->WorkSource,"/tmp/s.vtk");
-
   Shrink->Delete();
   Normalized->Delete();
   Extract->Delete();
+ Extract_->Delete();
 }
 
 
@@ -1368,37 +1381,40 @@ void vtkImageGCR::PrintSelf(::ostream& os, vtkIndent indent)
   os << indent << "Interpolation: " << this->Interpolation << "\n";
   os << indent << "Criterion: " << this->Criterion << "\n";
   os << indent << "Verbose: " << this->Verbose << "\n";
-  
+
+  os << indent << "\n";
   os << indent << "Target: " << this->Target << "\n";
   if(this->Target)
     {
-    this->Target->PrintSelf(os,indent.GetNextIndent());
+      _Print(this->Target,os,indent.GetNextIndent());
     }
   os << indent << "Source: " << this->Source << "\n";
   if(this->Source)
     {
-    this->Source->PrintSelf(os,indent.GetNextIndent());
+      _Print(this->Source,os,indent.GetNextIndent());
     }
   os << indent << "Mask: " << this->Mask << "\n";
   if(this->Mask)
     {
-    this->Mask->PrintSelf(os,indent.GetNextIndent());
+      _Print(this->Mask,os,indent.GetNextIndent());
     }
   os << indent << "WorkTarget: " << this->WorkTarget << "\n";
   if(this->WorkTarget)
     {
-    this->WorkTarget->PrintSelf(os,indent.GetNextIndent());
+      _Print(this->WorkTarget,os,indent.GetNextIndent());
     }
   os << indent << "WorkSource: " << this->WorkSource << "\n";
   if(this->WorkSource)
     {
-    this->WorkSource->PrintSelf(os,indent.GetNextIndent());
+      _Print(this->WorkSource,os,indent.GetNextIndent());      
     }
   os << indent << "WorkMask: " << this->WorkMask << "\n";
   if(this->WorkMask)
     {
-    this->WorkMask->PrintSelf(os,indent.GetNextIndent());
+      _Print(this->WorkMask,os,indent.GetNextIndent());      
     }
+  os << indent << "\n";
+
   os << indent << "GeneralTransform: " << this->GeneralTransform << "\n";
   if(this->GeneralTransform)
     {

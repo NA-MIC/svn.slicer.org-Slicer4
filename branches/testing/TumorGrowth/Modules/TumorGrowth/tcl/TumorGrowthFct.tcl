@@ -164,8 +164,8 @@ namespace eval TumorGrowthTcl {
     set VOL1 [$SCAN1_NODE GetImageData]
     set VOL2 [$SCAN2_NODE GetImageData]
     
-       ::TumorGrowthReg::DeleteTransformAG [$LOGIC Get${TYPE}Transform]
-        set TRANSFORM [$LOGIC Create${TYPE}Transform]
+    ::TumorGrowthReg::DeleteTransformAG [$LOGIC Get${TYPE}Transform]
+    set TRANSFORM [$LOGIC Create${TYPE}Transform]
          
     set OUTPUT_VOL [vtkImageData New]
 
@@ -175,13 +175,31 @@ namespace eval TumorGrowthTcl {
     if { 1 } {
         # Set it automatcally later 
         set ScanOrder IS
-        if {[::TumorGrowthReg::RegistrationAG $VOL1 $ScanOrder $VOL2 $ScanOrder 1 0 0 $MaxNum mono 3 $TRANSFORM ] == 0 }  {
-        puts "Error:  TumorGrowthScan2ToScan1Registration: $TYPE  could not perform registration"
-        return
+
+    set VOL1_input [vtkImageChangeInformation New]
+      $VOL1_input SetInput $VOL1
+      eval $VOL1_input SetOutputSpacing [$SCAN1_NODE GetSpacing]
+      eval $VOL1_input SetOutputSpacing [$SCAN1_NODE GetSpacing]
+    $VOL1_input Update
+
+    set VOL2_input [vtkImageChangeInformation New]
+      $VOL2_input SetInput $VOL2
+      eval $VOL2_input SetOutputSpacing [$SCAN2_NODE GetSpacing]
+    $VOL2_input Update
+
+    
+        if {[::TumorGrowthReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_input GetOutput] $ScanOrder 1 0 0 $MaxNum mono 3 $TRANSFORM ] == 0 }  {
+          puts "Error:  TumorGrowthScan2ToScan1Registration: $TYPE  could not perform registration"
+      $VOL2_input Delete
+          $VOL1_input Delete
+          return
         }
-   
-        ::TumorGrowthReg::TumorGrowthAGResample $VOL2 $VOL1 $TRANSFORM $OUTPUT_VOL  
+        
+        ::TumorGrowthReg::ResampleAG_GUI [$VOL2_input GetOutput]  [$VOL1_input GetOutput] $TRANSFORM $OUTPUT_VOL  
          
+    $VOL2_input Delete
+    $VOL1_input Delete
+
         # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
         ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
         catch { exec mv [$NODE GetWorkingDir]/LinearRegistration.txt [$NODE GetWorkingDir]/${TYPE}LinearRegistration.txt }
@@ -191,21 +209,30 @@ namespace eval TumorGrowthTcl {
         $OUTPUT_VOL  DeepCopy $VOL1
     }
   
+    
+    set OUTPUT_VOL_EXT [vtkImageChangeInformation New]
+      $OUTPUT_VOL_EXT SetInput $OUTPUT_VOL
+      $OUTPUT_VOL_EXT SetOutputSpacing 1 1 1 
+    $OUTPUT_VOL_EXT Update
+
         # -------------------------------------
         # Transfere output 
         # -------------------------------------
         puts "========================= "
+       
         set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan2_${TYPE}Ref]]
         if {$OUTPUT_NODE != "" } {  [$GUI GetMRMLScene] RemoveNode $OUTPUT_NODE }
 
         set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN1_NODE  "TG_scan2_${TYPE}" ]
-        $OUTPUT_NODE SetAndObserveImageData $OUTPUT_VOL 
-    
+        $OUTPUT_NODE SetAndObserveImageData [$OUTPUT_VOL_EXT GetOutput]
+    ::TumorGrowthReg::TumorGrowthImageDataWriter [$OUTPUT_VOL_EXT GetOutput] newresult
+
         $NODE SetScan2_${TYPE}Ref [$OUTPUT_NODE GetID]
 
         # -------------------------------------
         # Clean up 
         # -------------------------------------
+    $OUTPUT_VOL_EXT Delete
         $OUTPUT_VOL Delete
 
         puts "TumorGrowthScan2ToScan1Registration $TYPE End"
@@ -319,7 +346,7 @@ namespace eval TumorGrowthTcl {
         # Run Analysis and Save output
         # -------------------------------------
 
-        set result "[AnalysisIntensity_Fct [$SCAN1_NODE GetImageData] [$SEGM_NODE GetImageData] [$SCAN1_NODE GetImageData] $AnalysisSensitivity \
+        set result "[AnalysisIntensity_Fct [$SCAN1_NODE GetImageData] [$SEGM_NODE GetImageData] [$SCAN2_NODE GetImageData] $AnalysisSensitivity \
                               $AnalysisFinal $AnalysisROINegativeBin $AnalysisROIPositiveBin $AnalysisROIBinReal $AnalysisROITotal ]"
 
     $NODE  SetAnalysis_Sensitivity $AnalysisSensitivity
@@ -346,6 +373,8 @@ namespace eval TumorGrowthTcl {
          TumorGrowth(FinalSubtract) SetOperationToSubtract  
        TumorGrowth(FinalSubtract) Update
 
+       # puts "    ScalarRange:     [[TumorGrowth(FinalSubtract) GetOutput] GetScalarRange]"
+
        # do a little bit of smoothing 
        catch {TumorGrowth(FinalSubtractSmooth) Delete}
        vtkImageMedian3D TumorGrowth(FinalSubtractSmooth)
@@ -353,6 +382,8 @@ namespace eval TumorGrowthTcl {
         TumorGrowth(FinalSubtractSmooth) SetKernelSize 3 3 3
         TumorGrowth(FinalSubtractSmooth) ReleaseDataFlagOff
        TumorGrowth(FinalSubtractSmooth) Update
+
+       # puts "    ScalarRange:     [[TumorGrowth(FinalSubtractSmooth) GetOutput] GetScalarRange]"
 
        set result [Analysis_ComputeThreshold [TumorGrowth(FinalSubtractSmooth) GetOutput] $Scan1Segment $AnalysisSensitivity]
        set FinalThreshold [lindex $result 2]
@@ -393,7 +424,7 @@ namespace eval TumorGrowthTcl {
 
        # Initializing tumor growth prediction
        # catch { TumorGrowth(FinalROIBin) Delete}
-         $AnalysisROIPositiveBin  SetInput [$AnalysisFinal GetOutput] 
+         $AnalysisROIPositiveBin  SetInput [TumorGrowth(FinalMultiply) GetOutput] 
          $AnalysisROIPositiveBin  SetInValue 1
          $AnalysisROIPositiveBin  SetOutValue 0
          $AnalysisROIPositiveBin  ThresholdByUpper  $FinalThreshold

@@ -115,3 +115,24 @@ CONFIGURE_FILE(
   ${TumorGrowth_SOURCE_DIR}/vtkTumorGrowthConfigure.h.in 
   ${TumorGrowth_BINARY_DIR}/vtkTumorGrowthConfigure.h
   )
+
+#
+# copy over the tcl files
+#
+SET (TCL_DIR ${TumorGrowth_BINARY_DIR}/tcl)
+IF (NOT EXISTS ${TCL_DIR})
+  FILE(MAKE_DIRECTORY ${TCL_DIR})
+ENDIF (NOT EXISTS ${TCL_DIR})
+
+SET(TCLFILES
+  TumorGrowthFct.tcl 
+  TumorGrowthReg.tcl
+)
+
+FOREACH(tclfile ${TCLFILES})
+  CONFIGURE_FILE(
+    ${Slicer3_SOURCE_DIR}/Modules/TumorGrowth/tcl/${tclfile}
+    ${TCL_DIR}/${tclfile}
+    COPYONLY
+  )
+ENDFOREACH(tclfile)
