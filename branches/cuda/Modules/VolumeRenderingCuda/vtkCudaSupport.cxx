@@ -14,8 +14,7 @@ vtkInstantiatorNewMacro(vtkCudaSupport);
 
 vtkCudaSupport* vtkCudaSupport::New()
 {
-
-    return new vtkCudaSupport();
+  return new vtkCudaSupport();
 }
 
 vtkCudaSupport::vtkCudaSupport()
