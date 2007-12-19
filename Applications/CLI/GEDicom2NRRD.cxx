@@ -299,7 +299,7 @@ int main(int argc, char* argv[])
 // There should be a better way using itkNRRDImageIO.
 
   std::ofstream header;
-  std::string headerFileName = outputDir + "\\" + outputFileName;
+  std::string headerFileName = outputDir + "/" + outputFileName;
 
   header.open (headerFileName.c_str());
   header << "NRRD0005" << std::endl;
