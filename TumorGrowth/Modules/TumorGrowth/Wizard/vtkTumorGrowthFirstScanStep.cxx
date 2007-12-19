@@ -102,7 +102,7 @@ void vtkTumorGrowthFirstScanStep::ShowUserInterface()
   }
 
   this->UpdateGUI();
-  this->TransitionCallback(0);
+  // this->TransitionCallback(0);
 }
 
 void vtkTumorGrowthFirstScanStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )

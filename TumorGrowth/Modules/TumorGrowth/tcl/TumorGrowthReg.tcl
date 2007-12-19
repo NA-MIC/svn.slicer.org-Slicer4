@@ -18,7 +18,7 @@ if {0} { ;# comment
 
 namespace eval TumorGrowthReg {
 
-  proc TumorGrowthAGResample {SOURCE TARGET TRANSFORM OUTPUT}  {
+  proc ResampleAG_GUI {SOURCE TARGET TRANSFORM OUTPUT}  {
       eval $OUTPUT  SetExtent  [$TARGET GetExtent]
       eval $OUTPUT  SetSpacing [$TARGET GetSpacing]
       $OUTPUT SetScalarType    [$TARGET GetScalarType]
@@ -30,11 +30,13 @@ namespace eval TumorGrowthReg {
   }
 
   proc ResampleAG { origSource SourceScanOrder  Transform bgValue interpolation outResampled OutResampledScanOrder } {
+           catch { ResampleSource Delete}
            vtkImageData ResampleSource  
            ResampleSource DeepCopy $origSource
   
-       # Needs to be done this wars bc otherwise input of vtkImageResample and output of this function would be the same
-       vtkImageData ResampleTarget
+           # Needs to be done this wars bc otherwise input of vtkImageResample and output of this function would be the same
+           catch { ResampleTarget Delete}
+           vtkImageData ResampleTarget
        ResampleTarget DeepCopy  $outResampled 
        # PreprocessAG $interpolation Source Target  $SourceScanOrder $OutResampledScanOrder
            # so it is the same as slicer
@@ -43,14 +45,21 @@ namespace eval TumorGrowthReg {
   
            ResampleSource SetUpdateExtentToWholeExtent
            ResampleTarget SetUpdateExtentToWholeExtent
-  
+     
+       catch { ResampleCast Delete}
        vtkImageCast ResampleCast
        ResampleCast SetInput ResampleSource
        ResampleCast SetOutputScalarType [ResampleTarget GetScalarType] 
-           ResampleCast Update
-  
+       ResampleCast Update
+       
+       catch { ResampleCast_ Delete}
+       vtkImageChangeInformation ResampleCast_
+        ResampleCast_ SetInput [ResampleCast GetOutput]
+        eval ResampleCast_ SetOutputOrigin     [ResampleSource GetOrigin] 
+      ResampleCast_ Update
+
        vtkImageReslice Reslicer
-       Reslicer SetInput [ResampleCast GetOutput]
+       Reslicer SetInput [ResampleCast_ GetOutput]
   
        Reslicer SetInterpolationMode  $interpolation 
   
@@ -88,16 +97,17 @@ namespace eval TumorGrowthReg {
            puts "    ScanOrder:       $OutResampledScanOrder"
        }
   
-  
-       # Results 
-           ThresholdedOutputAG [ResampleCast GetOutput] [Reslicer GetOutput] $outResampled
+      # TumorGrowthImageDataWriter [ResampleCast GetOutput] AG_Cast
+        # Results 
+           ThresholdedOutputAG [ResampleCast_ GetOutput] [Reslicer GetOutput] $outResampled
            $outResampled SetOrigin 0 0 0
            $outResampled Update
-  
+
        # Delete everything
            ResampleSource Delete
        ResampleTarget Delete
        ResampleCast Delete
+       ResampleCast_ Delete
        Reslicer Delete
            return 1
   }
@@ -599,7 +609,6 @@ proc WriteTransformationAG {gt directory} {
   }
 
   proc RegistrationAG {initTarget TargetScanOrder initSource SourceScanOrder  LinearCostFunctionType LinearRegistrationType NonRigidRegistrationFlag MaxNumIteration IntensityTransform InterpolationMode Transform } {
-
        # Initial transform stuff
       $Transform PostMultiply 
   
@@ -613,7 +622,7 @@ proc WriteTransformationAG {gt directory} {
       # Kilian April06:
       #  We make here the assumption that we register intensity images with each other where the background is 0 - change last value if this is not the case
       PreprocessAG $InterpolationMode RegisterSource RegisterTarget  $SourceScanOrder $TargetScanOrder 0
-      
+
       # Kilian: currently vtkImageWarp and vtkImageGCR are not adjusted to InterpolationMode - always linear
       if { [info commands __dummy_transform] == ""} {
               vtkTransform __dummy_transform
@@ -651,6 +660,7 @@ proc WriteTransformationAG {gt directory} {
          GCR SetVerbose 0
       
         # Set i/o
+
         GCR SetTarget RegisterTarget
         GCR SetSource RegisterSource
         GCR PostMultiply 
@@ -671,7 +681,7 @@ proc WriteTransformationAG {gt directory} {
         # Do it!
         GCR Update     
         
-        
+
         $Transform Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
   
 
@@ -680,5 +690,32 @@ proc WriteTransformationAG {gt directory} {
 
       return 1 
   }
+
+proc TumorGrowthImageDataWriter {ImageData Name} {
+
+    set extents [$ImageData GetExtent]
+    # Has to be defined otherwise it does not work - I do not know why 
+    catch {export_matrix Delete}
+    vtkMatrix4x4 export_matrix
+
+    catch {exec mkdir ~/temp}
+
+    catch {export_iwriter Delete}
+
+    vtkITKImageWriter export_iwriter 
+      export_iwriter SetInput $ImageData
+      export_iwriter SetFileName /home/pohl/temp/${Name}.nhdr
+    
+      export_iwriter SetRasToIJKMatrix export_matrix 
+      export_iwriter SetUseCompression 1
+                      
+      # Write volume data
+      export_iwriter Write
+
+    export_iwriter Delete
+    export_matrix Delete 
+    
+}
+
 
 } 

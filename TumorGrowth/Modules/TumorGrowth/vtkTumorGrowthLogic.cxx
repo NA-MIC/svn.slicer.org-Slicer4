@@ -217,7 +217,6 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
   // Determine Coeficients for resampling   
   double *Spacing = volumeNode->GetSpacing();
   if (ScanNum == 1) {
-    cout << "Spacing :" <<    Spacing[0]  << " " << Spacing[1]  << " " << Spacing[2]  << endl;
     int size = this->TumorGrowthNode->GetROIMax(0) - this->TumorGrowthNode->GetROIMin(0) + 1;
     double TempSpacing = double(size) * Spacing[0] / 100.0;
     SuperSampleSpacing = (TempSpacing < 0.3 ?  0.3 : TempSpacing);
@@ -314,13 +313,20 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
   cout << "=== Start ANALYSIS ===" << endl;
   char TCL_FILE[1024]; 
   // Kilian: Can we copy this over to the build directory
-  sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthFct.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+  // cout - later, when it works do it this way bc more 
+  sprintf(TCL_FILE,"%s/Modules/TumorGrowth/tcl/TumorGrowthFct.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+  // sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthFct.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+
+
   app->LoadScript(TCL_FILE); 
-  sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthReg.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+  // later do it this way 
+  sprintf(TCL_FILE,"%s/Modules/TumorGrowth/tcl/TumorGrowthReg.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+  // sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthReg.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
   app->LoadScript(TCL_FILE); 
 
+  cout << "=== 1 ===" << endl;
   app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Global");
-  
+
   //----------------------------------------------
   // Second step -> Save the outcome
   if (!this->TumorGrowthNode) {return 0;}
@@ -396,7 +402,7 @@ double vtkTumorGrowthLogic::MeassureGrowth(vtkSlicerApplication *app) {
   this->Analysis_Final->Update();
   this->Analysis_ROINegativeBin->ThresholdByLower(-this->Analysis_Threshold); 
   this->Analysis_ROINegativeBin->Update(); 
-  this->Analysis_ROIPositiveBin->ThresholdByLower(this->Analysis_Threshold); 
+  this->Analysis_ROIPositiveBin->ThresholdByUpper(this->Analysis_Threshold); 
   this->Analysis_ROIPositiveBin->Update(); 
   this->Analysis_ROITotal->Update(); 
   return this->Analysis_ROITotal->GetVoxelSum(); 
