@@ -49,7 +49,8 @@ public:
   void SetScanCommand(std::string key, std::string value);
   //ETX
 
-  vtkTransform* GetNeedleTransform();
+  //vtkTransform* GetNeedleTransform();
+  void GetNeedleTransform(vtkTransform* dest);
 
   void Normalize(float *a);  
   void Cross(float *a, float *b, float *c);
@@ -63,7 +64,6 @@ private:
   vtkIGTMessageAttributeSet* AttrSetScanner;  // <- Should it be a circular buffer?
 
   vtkMatrix4x4* NeedleMatrix;
-  vtkTransform* NeedleTransform;
   vtkImageData* RealtimeImage;
   vtkTimeStamp* ImageTimeStamp;
 

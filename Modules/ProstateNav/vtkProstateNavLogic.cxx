@@ -82,9 +82,9 @@ vtkProstateNavLogic::vtkProstateNavLogic()
 
     //this->RealtimeImageSerial  = 0;
     this->RealtimeImageTimeStamp = 0;
-    this->RealtimeImageOrient  = vtkProstateNavLogic::SLICE_RTIMAGE_PERP;
+    this->RealtimeImageOrient  = vtkProstateNavLogic::SLICE_RTIMAGE_NONE;
 
-    this->LocatorTransform     = NULL;
+    this->LocatorTransform     = vtkTransform::New();
     this->LocatorMatrix        = NULL;
 
     //this->RealtimeImageUpdate  = false;
@@ -115,6 +115,8 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->NeedRealtimeImageUpdate0 = 0;
     this->NeedRealtimeImageUpdate1 = 0;
     this->NeedRealtimeImageUpdate2 = 0;
+
+    this->ImagingControl = 0;
 
 #ifdef USE_NAVITRACK
     //this->OpenTrackerStream   = vtkIGTOpenTrackerStream::New();
@@ -237,12 +239,12 @@ void vtkProstateNavLogic::UpdateAll()
   sy = nz*tx-nx*tz;
   sz = nx*ty-ny*tx;
 
-  /*  
+
   std::cerr << "==== Locator position ====" << std::endl;
   std::cerr << "  (px, py, pz) =  ( " << px << ", " << py << ", " << pz << " )" << std::endl;
   std::cerr << "  (nx, ny, nz) =  ( " << nx << ", " << ny << ", " << nz << " )" << std::endl;
   std::cerr << "  (tx, ty, tz) =  ( " << tx << ", " << ty << ", " << tz << " )" << std::endl;
-  */
+
 
   //----------------------------------------------------------------
   // Get real-time image orientation
@@ -361,7 +363,10 @@ void vtkProstateNavLogic::UpdateAll()
         
         // One of NeedRealtimeImageUpdate0 - 2 is chosen based on the scan plane.
         
-        if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_PERP)  /* Perpendicular */
+        if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_NONE)
+          {
+          }
+        else if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_PERP)  /* Perpendicular */
           {
           this->NeedRealtimeImageUpdate0 = 1;
           rtimgTransform->SetElement(0, 0, tx);
@@ -436,6 +441,15 @@ void vtkProstateNavLogic::UpdateAll()
     //----------------------------------------------------------------
     // Imaging Plane Control
 
+    if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_NONE)
+      {
+      this->ImagingControl = false;
+      }
+    else
+      {
+      this->ImagingControl = true;
+      }
+
     if (this->ImagingControl)
       {
       std::vector<float> pos;
@@ -444,7 +458,7 @@ void vtkProstateNavLogic::UpdateAll()
       quat.resize(4);
 
       float scanTrans[3][3];  // Rotation matrix from axial plane to scan plane
-      
+
       /* Parpendicular */
       if (rtimgslice == vtkProstateNavLogic::SLICE_RTIMAGE_PERP)
         {
@@ -493,7 +507,7 @@ void vtkProstateNavLogic::UpdateAll()
       // send coordinate to the scanner
       //this->OpenTrackerStream2->SetTracker(pos,quat);
       this->OpenTrackerStream->SetScanPosition(pos, quat);
-
+      
       } // if (this->ImagingControl)
 
     //----------------------------------------------------------------
@@ -506,7 +520,7 @@ void vtkProstateNavLogic::UpdateAll()
 
       //this->OpenTrackerStream2->SetLocatorTransforms();  // <- this is just converting LocatorMatrix to Locator Transform
       
-      this->LocatorTransform = this->OpenTrackerStream->GetNeedleTransform();
+      this->OpenTrackerStream->GetNeedleTransform(this->LocatorTransform);
       
       /*
       transform = this->OpenTrackerStream2->GetLocatorNormalTransform();
