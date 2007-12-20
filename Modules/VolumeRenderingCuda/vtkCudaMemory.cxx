@@ -11,6 +11,7 @@ vtkCudaMemory* vtkCudaMemory::New()
 
 vtkCudaMemory::vtkCudaMemory()
 {
+  this->Type = vtkCudaMemoryBase::Memory;
   this->MemPointer = NULL;
   this->Size = 0;
 }
