@@ -1,10 +1,10 @@
 #ifndef VTKCUDAMEMORYARRAY_H_
 #define VTKCUDAMEMORYARRAY_H_
 
-#include "vtkCudaMemory.h"
+#include "vtkCudaMemoryBase.h"
 #include "channel_descriptor.h"
 
-class vtkCudaMemoryArray : public vtkCudaMemory
+class vtkCudaMemoryArray : public vtkCudaMemoryBase
 {
 public:
   static vtkCudaMemoryArray* New();
@@ -17,6 +17,7 @@ public:
   
   void Allocate(size_t width, size_t height);
   virtual void Free();
+  virtual void MemSet(int value) {}
   
   void DeepCopy(vtkCudaMemoryArray* source); 
   

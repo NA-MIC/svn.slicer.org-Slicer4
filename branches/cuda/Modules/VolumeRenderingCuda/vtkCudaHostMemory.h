@@ -23,6 +23,8 @@ public:
 
 protected:
   vtkCudaHostMemory();
+  vtkCudaHostMemory(const vtkCudaHostMemory&);
+  vtkCudaHostMemory& operator=(const vtkCudaHostMemory&);
 };
 
 #endif /*VTKCUDAHOSTMEMORY_H_*/
