@@ -13,6 +13,7 @@ vtkCudaHostMemory* vtkCudaHostMemory::New()
 
 vtkCudaHostMemory::vtkCudaHostMemory()
 {
+  this->Type = vtkCudaMemoryBase::HostMemory;
 }
 
 vtkCudaHostMemory::~vtkCudaHostMemory()

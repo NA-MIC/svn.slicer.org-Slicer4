@@ -8,6 +8,7 @@ vtkCudaMemoryPitch* vtkCudaMemoryPitch::New()
 }
 vtkCudaMemoryPitch::vtkCudaMemoryPitch()
 {
+  this->Type = vtkCudaMemoryBase::PitchMemory;
   this->Pitch = 0;
 }
 
