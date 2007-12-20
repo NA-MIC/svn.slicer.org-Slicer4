@@ -29,6 +29,8 @@ public:
   virtual ~vtkCudaMemoryPitch();
 protected:
   vtkCudaMemoryPitch();
+  vtkCudaMemoryPitch(const vtkCudaMemoryPitch&);
+  vtkCudaMemoryPitch& operator=(const vtkCudaMemoryPitch&);
 
   size_t Pitch;
   size_t Width;

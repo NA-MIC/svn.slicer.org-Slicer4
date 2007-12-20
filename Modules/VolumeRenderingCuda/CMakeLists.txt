@@ -12,11 +12,14 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
     vtkCudaEvent.cxx
     vtkCudaBase.cxx
     vtkCudaStream.cxx
-    vtkVolumeCudaMapper.cxx
+    
+    vtkCudaMemoryBase.cxx
     vtkCudaMemory.cxx
     vtkCudaMemoryPitch.cxx
     vtkCudaHostMemory.cxx
     vtkCudaMemoryArray.cxx
+
+    vtkVolumeCudaMapper.cxx    
     vtkCudaOpenGLBufferObject.cxx
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
