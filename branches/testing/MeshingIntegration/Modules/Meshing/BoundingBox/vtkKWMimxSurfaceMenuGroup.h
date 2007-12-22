@@ -36,14 +36,14 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
   virtual void Update();
   virtual void UpdateEnableState();
-  void SurfaceMenuCallback();
-  void LoadSurfaceCallback();
-  void LoadSTLSurfaceCallback();
-  void LoadVTKSurfaceCallback();
-  void SaveSurfaceCallback();
-  void SaveSTLSurfaceCallback();
-  void SaveVTKSurfaceCallback();
-  void DeleteSurfaceCallback();
+  virtual void SurfaceMenuCallback();
+  virtual void LoadSurfaceCallback();
+  virtual void LoadSTLSurfaceCallback();
+  virtual void LoadVTKSurfaceCallback();
+  virtual void SaveSurfaceCallback();
+  virtual void SaveSTLSurfaceCallback();
+  virtual void SaveVTKSurfaceCallback();
+  virtual void DeleteSurfaceCallback();
 
   vtkSetObjectMacro(BBoxList, vtkLinkedListWrapper);
   vtkSetObjectMacro(FEMeshList, vtkLinkedListWrapper);

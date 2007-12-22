@@ -63,16 +63,16 @@ public:
 //BTX
   vtkLinkedList<vtkMimxActorBase*> *List;
 //ETX
-  int AppendItem(vtkMimxActorBase*);
-  vtkMimxActorBase* GetItem(vtkIdType);
-  int GetNumberOfItems();
-  int RemoveItem(int );
+  virtual int AppendItem(vtkMimxActorBase*);
+  virtual vtkMimxActorBase* GetItem(vtkIdType);
+  virtual int GetNumberOfItems();
+  virtual int RemoveItem(int );
 protected:
-  vtkLinkedListWrapper();
+     vtkLinkedListWrapper();
   virtual ~vtkLinkedListWrapper();
 private:
-  vtkLinkedListWrapper(const vtkLinkedListWrapper&); // Not implemented
-  void operator=(const vtkLinkedListWrapper&); // Not implemented
+    vtkLinkedListWrapper(const vtkLinkedListWrapper&); // Not implemented
+    void operator=(const vtkLinkedListWrapper&); // Not implemented
 };
 #endif 
 
