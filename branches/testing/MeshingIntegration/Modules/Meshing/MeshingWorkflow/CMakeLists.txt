@@ -37,8 +37,10 @@ SET(LIB_SRCS
   vtkMRMLMeshingWorkflowNode.cxx
   vtkMRMLFESurfaceNode.cxx
   vtkMRMLFiniteElementBoundingBoxNode.cxx
+  vtkMRMLFiniteElementMeshNode.cxx
   vtkFESurfaceList.cxx
   vtkFiniteElementBoundingBoxList.cxx
+  vtkFiniteElementMeshList.cxx
   vtkMeshingWorkflowMRMLNotebook.cxx
   vtkFESurfaceMRMLMenuGroup.cxx
   vtkFiniteElementMRMLMeshMenuGroup.cxx
