@@ -6,7 +6,7 @@ See Doc/copyright/copyright.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLFESurfaceNode.cxx,v $
+Module:    $RCSfile: vtkMRMLFiniteElementMeshNode.cxx,v $
 Date:      $Date: 2006/03/17 15:10:10 $
 Version:   $Revision: 1.2 $
 
@@ -18,76 +18,76 @@ Version:   $Revision: 1.2 $
 
 #include "vtkObjectFactory.h"
 
-#include "vtkMRMLFESurfaceNode.h"
+#include "vtkMRMLFiniteElementMeshNode.h"
 #include "vtkMRMLScene.h"
 
 
 //------------------------------------------------------------------------------
-vtkMRMLFESurfaceNode* vtkMRMLFESurfaceNode::New()
+vtkMRMLFiniteElementMeshNode* vtkMRMLFiniteElementMeshNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFESurfaceNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFiniteElementMeshNode");
   if(ret)
     {
-      return (vtkMRMLFESurfaceNode*)ret;
+      return (vtkMRMLFiniteElementMeshNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFESurfaceNode;
+  return new vtkMRMLFiniteElementMeshNode;
 }
 
 //----------------------------------------------------------------------------
 
-vtkMRMLModelNode* vtkMRMLFESurfaceNode::CreateNodeInstance()
+vtkMRMLFiniteElementMeshNode* vtkMRMLFiniteElementMeshNode::CreateNodeInstance()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFESurfaceNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFiniteElementMeshNode");
   if(ret)
     {
-      return (vtkMRMLFESurfaceNode*)ret;
+      return (vtkMRMLFiniteElementMeshNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFESurfaceNode;
+  return new vtkMRMLFiniteElementMeshNode;
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLFESurfaceNode::vtkMRMLFESurfaceNode()
+vtkMRMLFiniteElementMeshNode::vtkMRMLFiniteElementMeshNode()
 {
 
-   this->SurfaceDataType = 2;
-   this->SurfaceFileName = NULL;
-   this->SurfaceFilePath = NULL;
+   this->DataType = 5;
+   this->FileName = NULL;
+   this->FilePath = NULL;
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLFESurfaceNode::~vtkMRMLFESurfaceNode()
+vtkMRMLFiniteElementMeshNode::~vtkMRMLFiniteElementMeshNode()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFESurfaceNode::WriteXML(ostream& of, int nIndent)
+void vtkMRMLFiniteElementMeshNode::WriteXML(ostream& of, int nIndent)
 {
 Superclass::WriteXML(of, nIndent);
 
   vtkIndent indent(nIndent);
   {
     std::stringstream ss;
-    ss << this->SurfaceDataType;
-    of << indent << "SurfaceDataType='" << ss.str() << "' ";
+    ss << this->DataType;
+    of << indent << "DataType='" << ss.str() << "' ";
   }
   {
     std::stringstream ss;
-    ss << this->SurfaceFileName;
-    of << indent << "SurfaceFileName='" << ss.str() << "' ";
+    ss << this->FileName;
+    of << indent << "FileName='" << ss.str() << "' ";
   }
   {
-    std::stringstream ss;
-    ss << this->SurfaceFilePath;
-    of << indent << "SurfaceFilePath='" << ss.str() << "' ";
-  }
+     std::stringstream ss;
+     ss << this->FilePath;
+     of << indent << "FilePath='" << ss.str() << "' ";
+   }
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFESurfaceNode::ReadXMLAttributes(const char** atts)
+void vtkMRMLFiniteElementMeshNode::ReadXMLAttributes(const char** atts)
 {
 
   vtkMRMLNode::ReadXMLAttributes(atts);
@@ -99,48 +99,49 @@ void vtkMRMLFESurfaceNode::ReadXMLAttributes(const char** atts)
     attName = *(atts++);
     attValue = *(atts++);
 
-     if (!strcmp(attName, "SurfaceDataType")) 
+     if (!strcmp(attName, "DataType")) 
       {
       std::stringstream ss;
       ss << attValue;
-      ss >> this->SurfaceDataType;
+      ss >> this->DataType;
       }
-    else if (!strcmp(attName, "SurfaceFileName"))
+    else if (!strcmp(attName, "FileName"))
       {
       std::stringstream ss;
       ss << attValue;
-      ss >> this->SurfaceFileName;
+      ss >> this->FileName;
       }
-    else if (!strcmp(attName, "SurfaceFilePath"))
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->SurfaceFilePath;
-      }
+    else if (!strcmp(attName, "FilePath"))
+       {
+       std::stringstream ss;
+       ss << attValue;
+       ss >> this->FileName;
+       }
     }
 }
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, VolumeID
-void vtkMRMLFESurfaceNode::Copy(vtkMRMLNode *anode)
+void vtkMRMLFiniteElementMeshNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-  vtkMRMLFESurfaceNode *node = (vtkMRMLFESurfaceNode *) anode;
+  vtkMRMLFiniteElementMeshNode *node = (vtkMRMLFiniteElementMeshNode *) anode;
 
-  this->SetSurfaceDataType(node->SurfaceDataType);
-  this->SetSurfaceFileName(node->SurfaceFileName);
-  this->SetSurfaceFilePath(node->SurfaceFilePath);
+  this->SetDataType(node->DataType);
+  this->SetFileName(node->FileName);
+  this->SetFilePath(node->FilePath);
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFESurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLFiniteElementMeshNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
   vtkMRMLNode::PrintSelf(os,indent);
 
-  os << indent << "SurfaceDataType:   " << this->SurfaceDataType << "\n";
-  os << indent << "SurfaceFileName:   " << this->SurfaceFileName << "\n";
-  os << indent << "SurfaceFilePath:   " << this->SurfaceFilePath << "\n";
+  os << indent << "DataType:   " << this->DataType << "\n";
+  os << indent << "FileName:   " << this->FileName << "\n";
+  os << indent << "FilePath:   " << this->FilePath << "\n";
+
 }
 

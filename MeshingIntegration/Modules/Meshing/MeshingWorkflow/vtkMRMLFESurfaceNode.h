@@ -42,16 +42,19 @@ class VTK_MRML_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
 
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() {return "FESurface";};
+  virtual const char* GetNodeTagName() {return "FiniteElementSurface";};
 
   vtkGetMacro(SurfaceDataType, int);
   vtkSetMacro(SurfaceDataType, int);
 
   vtkGetStringMacro(SurfaceFileName);
-  vtkSetStringMacro(SurfaceFileName);
+  //vtkSetStringMacro(SurfaceFileName);
   
   vtkGetStringMacro(SurfaceFilePath);
-  vtkSetStringMacro(SurfaceFilePath);
+  //vtkSetStringMacro(SurfaceFilePath);
+  
+  void  SetSurfaceFileName(char* aString) { strcpy(SurfaceFileName,aString); }
+  void  SetSurfaceFilePath(char* aString) { strcpy(SurfaceFilePath,aString); }
   
 protected:
   vtkMRMLFESurfaceNode();
@@ -60,8 +63,8 @@ protected:
   void operator=(const vtkMRMLFESurfaceNode&);
 
   int   SurfaceDataType;  
-  char* SurfaceFileName;
-  char* SurfaceFilePath;
+  char *SurfaceFileName;
+  char *SurfaceFilePath;
 };
 
 #endif
