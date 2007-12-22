@@ -10,7 +10,7 @@
 
 =========================================================================*/
 #include "vtkFiniteElementMRMLMeshMenuGroup.h"
-#include "vtkKWMimxCreateBBFromBoundsGroup.h"
+#include "vtkFiniteElementMRMLCreateBBFromBoundsGroup.h"
 #include "vtkKWMimxCreateBBMeshSeedGroup.h"
 #include "vtkKWMimxEditBBGroup.h"
 #include "vtkKWMimxCreateFEMeshFromBBGroup.h"
@@ -158,6 +158,23 @@ vtkFiniteElementMRMLMeshMenuGroup::~vtkFiniteElementMRMLMeshMenuGroup()
   if(this->FEMeshLaplacianSmooth)
     this->FEMeshLaplacianSmooth->Delete();
 }
+
+
+
+// save reference to the scene to be used for storage.  Pass the reference onto the list.
+// We are using a cast here because the parent for all lists doesn't have the MRML scene method
+// defined. 
+
+ void vtkFiniteElementMRMLMeshMenuGroup::SetMRMLSceneForStorage(vtkMRMLScene* scene)
+ {
+    this->savedMRMLScene = scene; 
+    ((vtkFiniteElementBoundingBoxList*)this->BBoxList)->SetMRMLSceneForStorage(scene);
+    //((vtkFiniteElementMeshList*)this->FEMeshList)->SetMRMLSceneForStorage(scene);
+ }
+ 
+
+
+
 //----------------------------------------------------------------------------
 void vtkFiniteElementMRMLMeshMenuGroup::CreateWidget()
 {
@@ -166,7 +183,8 @@ void vtkFiniteElementMRMLMeshMenuGroup::CreateWidget()
     vtkErrorMacro("class already created");
     return;
   }
-  this->Superclass::CreateWidget();
+  // *** Why superclass create invoked explicitly
+  //this->Superclass::CreateWidget();
   // add menu button with options for various Object
   // for surface
   if(!this->MainFrame)
@@ -351,8 +369,9 @@ void vtkFiniteElementMRMLMeshMenuGroup::CreateBBFromBoundsCallback()
     this->CreateBBFromBounds->Delete();
   }
 
-      this->CreateBBFromBounds = vtkKWMimxCreateBBFromBoundsGroup::New();
-   cout << "CreateBBFromBoundsCallback: new CreateBBFromBoundsGroup New" << endl;
+      //this->CreateBBFromBounds = vtkKWMimxCreateBBFromBoundsGroup::New();
+      this->CreateBBFromBounds = vtkFiniteElementMRMLCreateBBFromBoundsGroup::New();
+      cout << "vtkFiniteElementMRMLMeshMenuGroup: MRMLCreateBBFromBoundsGroup New returned" << endl;
        this->CreateBBFromBounds->SetApplication(this->GetApplication());
        CreateBBFromBounds->SetParent(this->MainFrame->GetFrame());
        this->CreateBBFromBounds->SetSurfaceList(this->SurfaceList);
@@ -361,10 +380,11 @@ void vtkFiniteElementMRMLMeshMenuGroup::CreateBBFromBoundsCallback()
     this->CreateBBFromBounds->SetViewProperties(this->BBViewProperties);
     this->CreateBBFromBounds->SetMenuGroup(this);
     this->SetMenuButtonsEnabled(0);
-   cout << "CreateBBFromBoundsCallback:  Create script starting" << endl;
+   cout << "vtkFiniteElementMRMLMeshMenuGroup:  Create script starting" << endl;
 
-    this->CreateBBFromBounds->Create();
-    cout << "CreateBBFromBoundsCallback create method completed" << endl;
+    // *** had to put downcast here to force correct subclass method invocation (sigh)
+    ((vtkFiniteElementMRMLCreateBBFromBoundsGroup*)(this->CreateBBFromBounds))->Create();
+    cout << "MRMLCreateBBFromBoundsCallback create method completed" << endl;
       this->GetApplication()->Script(
         "pack %s -side bottom -anchor nw -expand y -padx 0 -pady 2", 
         this->CreateBBFromBounds->GetWidgetName()); 

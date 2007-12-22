@@ -42,6 +42,7 @@ SET(LIB_SRCS
   vtkMeshingWorkflowMRMLNotebook.cxx
   vtkFESurfaceMRMLMenuGroup.cxx
   vtkFiniteElementMRMLMeshMenuGroup.cxx
+  vtkFiniteElementMRMLCreateBBFromBoundsGroup.cxx
   )
   
 
