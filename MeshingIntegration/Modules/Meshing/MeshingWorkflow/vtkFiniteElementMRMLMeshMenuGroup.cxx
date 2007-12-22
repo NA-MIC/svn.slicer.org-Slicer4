@@ -27,6 +27,7 @@
 #include "vtkMimxActorBase.h"
 #include "vtkMimxUnstructuredGridActor.h"
 #include "vtkFiniteElementBoundingBoxList.h"
+#include "vtkFiniteElementMeshList.h"
 
 #include "vtkActor.h"
 #include "vtkDataSet.h"
@@ -84,10 +85,14 @@ vtkFiniteElementMRMLMeshMenuGroup::vtkFiniteElementMRMLMeshMenuGroup()
   this->ObjectMenuButton = vtkKWMenuButtonWithLabel::New();
   this->OperationMenuButton = NULL;
   this->TypeMenuButton = NULL;
-  //this->BBoxList = vtkLinkedListWrapper::New();
-  this->BBoxList = vtkFiniteElementBoundingBoxList::New();
 
-  this->FEMeshList = vtkLinkedListWrapper::New();
+  // replace the standard list declarations with the MRML-based storage lists
+  
+  //this->BBoxList = vtkLinkedListWrapper::New();
+  //this->FEMeshList = vtkLinkedListWrapper::New();
+  this->BBoxList = vtkFiniteElementBoundingBoxList::New();
+  this->FEMeshList = vtkFiniteElementMeshList::New();
+  
   this->CreateBBFromBounds = NULL;
   this->CreateBBMeshSeed = NULL;
   this->EditBB = NULL;
@@ -160,7 +165,6 @@ vtkFiniteElementMRMLMeshMenuGroup::~vtkFiniteElementMRMLMeshMenuGroup()
 }
 
 
-
 // save reference to the scene to be used for storage.  Pass the reference onto the list.
 // We are using a cast here because the parent for all lists doesn't have the MRML scene method
 // defined. 
@@ -169,12 +173,9 @@ vtkFiniteElementMRMLMeshMenuGroup::~vtkFiniteElementMRMLMeshMenuGroup()
  {
     this->savedMRMLScene = scene; 
     ((vtkFiniteElementBoundingBoxList*)this->BBoxList)->SetMRMLSceneForStorage(scene);
-    //((vtkFiniteElementMeshList*)this->FEMeshList)->SetMRMLSceneForStorage(scene);
+    ((vtkFiniteElementMeshList*)this->FEMeshList)->SetMRMLSceneForStorage(scene);
  }
  
-
-
-
 //----------------------------------------------------------------------------
 void vtkFiniteElementMRMLMeshMenuGroup::CreateWidget()
 {
