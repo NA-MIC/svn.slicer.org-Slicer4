@@ -51,8 +51,8 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
    {
      vtkMRMLFESurfaceNode* newMRMLNode = vtkMRMLFESurfaceNode::New();
      // copy the state variables to the MRML node
-     //newMRMLNode->SetSurfaceFileName(actor->GetFileName());
-     //newMRMLNode->SetSurfaceFilePath(actor->GetFilePath());
+     newMRMLNode->SetSurfaceFileName(actor->GetFileName());
+     newMRMLNode->SetSurfaceFilePath(actor->GetFilePath());
      newMRMLNode->SetSurfaceDataType(actor->GetDataType());
      this->savedMRMLScene->AddNode(newMRMLNode);
      

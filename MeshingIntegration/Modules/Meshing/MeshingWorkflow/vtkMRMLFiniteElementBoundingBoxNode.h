@@ -48,10 +48,14 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementBoundingBoxNode : public vtkMRMLUnstru
   vtkSetMacro(DataType, int);
 
   vtkGetStringMacro(FileName);
-  vtkSetStringMacro(FileName);
+ // vtkSetStringMacro(FileName);
   
   vtkGetStringMacro(FilePath);
-  vtkSetStringMacro(FilePath);
+//  vtkSetStringMacro(FilePath);
+  
+  void  SetFileName(char* aString) { strcpy(FileName,aString); }
+  void  SetFilePath(char* aString) { strcpy(FilePath,aString); }
+ 
   
 protected:
   vtkMRMLFiniteElementBoundingBoxNode();
