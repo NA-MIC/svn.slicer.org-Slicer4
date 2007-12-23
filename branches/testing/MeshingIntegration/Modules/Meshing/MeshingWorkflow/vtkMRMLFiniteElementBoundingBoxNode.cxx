@@ -56,6 +56,8 @@ vtkMRMLFiniteElementBoundingBoxNode::vtkMRMLFiniteElementBoundingBoxNode()
    this->DataType = 1;
    this->FileName = NULL;
    this->FilePath = NULL;
+   this->FileName = new char[1024];
+   this->FilePath = new char[1024];
 }
 
 //----------------------------------------------------------------------------

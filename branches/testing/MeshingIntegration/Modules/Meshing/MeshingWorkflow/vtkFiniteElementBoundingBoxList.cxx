@@ -88,8 +88,9 @@ vtkMimxUnstructuredGridActor* vtkFiniteElementBoundingBoxList::GetItem(vtkIdType
   }
   // copy MRML values to the node which we will return to the client
   returnNode->SetFileName(requestedMrmlNode->GetFileName());
-  returnNode->SetFileName(requestedMrmlNode->GetFilePath());
-  vtkErrorMacro("need to copy vtkPolyData here");
+  returnNode->SetFilePath(requestedMrmlNode->GetFilePath());
+  
+  //vtkErrorMacro("need to copy vtkPolyData here");
   return returnNode;
 }
 

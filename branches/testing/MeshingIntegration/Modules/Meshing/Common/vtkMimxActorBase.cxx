@@ -38,6 +38,7 @@ vtkMimxActorBase::vtkMimxActorBase()
 {
   this->FileName = new char[1024];
   this->FilePath = new char[1024];
+  
 }
 
 vtkMimxActorBase::~vtkMimxActorBase()

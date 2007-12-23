@@ -33,6 +33,8 @@ vtkMRMLFESurfaceNode* vtkMRMLFESurfaceNode::New()
     }
   // If the factory was unable to create the object, then create it here.
   return new vtkMRMLFESurfaceNode;
+  
+
 }
 
 //----------------------------------------------------------------------------
@@ -56,6 +58,8 @@ vtkMRMLFESurfaceNode::vtkMRMLFESurfaceNode()
    this->SurfaceDataType = 2;
    this->SurfaceFileName = NULL;
    this->SurfaceFilePath = NULL;
+   this->SurfaceFileName = new char[1024];
+   this->SurfaceFilePath = new char[1024];
 }
 
 //----------------------------------------------------------------------------
