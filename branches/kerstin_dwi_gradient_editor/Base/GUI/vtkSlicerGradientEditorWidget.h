@@ -3,6 +3,7 @@
 
 #define ARRAY_LENGTH 3
 #include "vtkSlicerWidget.h"
+#include "vtkMRMLDiffusionWeightedVolumeNode.h"
 class vtkKWFrameWithLabel;
 class vtkKWEntrySet;
 class vtkKWCheckButtonSet;
@@ -30,6 +31,8 @@ public:
     // Method to propagate events generated in GUI to logic / mrml
     virtual void ProcessWidgetEvents(vtkObject *caller, unsigned long event, void *callData );
 
+    virtual void UpdateWidget(vtkMRMLVolumeNode *node);
+
 protected:
     vtkSlicerGradientEditorWidget(void);
     virtual ~vtkSlicerGradientEditorWidget(void);
@@ -40,7 +43,7 @@ protected:
 
     // Description:
     // Update the GUI Matrix.
-    void updateMatrix();
+    void UpdateMatrix();
 
     void PrintSelf (ostream& os, vtkIndent indent );
 

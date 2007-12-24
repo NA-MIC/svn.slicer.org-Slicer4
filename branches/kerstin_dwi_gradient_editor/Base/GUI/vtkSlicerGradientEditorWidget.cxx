@@ -1,4 +1,4 @@
-#include "vtkObject.h"
+﻿#include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
 #include "vtkMRMLVolumeNode.h"
@@ -21,7 +21,10 @@
 
 #include "vtkSlicerGradientEditorWidget.h"
 #include "vtkSlicerNodeSelectorWidget.h"
+#include "vtkDoubleArray.h"
 #include <sstream>
+#include <iostream>
+#include <string>
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerGradientEditorWidget);
@@ -229,7 +232,7 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
                 m++;                
             }
         }
-        this->updateMatrix();
+        this->UpdateMatrix();
     }
     //enable/disable buttons depending on how many checkbuttons are selected 
     if(event == vtkKWCheckButton::SelectedStateChangedEvent 
@@ -293,7 +296,7 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
         }
         //copy transformed matriy back
         this->Matrix->DeepCopy(transform->GetMatrix());
-        this->updateMatrix();
+        this->UpdateMatrix();
         transform->Delete();
     }
     //swap columns
@@ -319,7 +322,7 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
             this->Matrix->SetElement(j, firstSelectedCheckbox, this->Matrix->GetElement(j, secondSelectedCheckbox));
             this->Matrix->SetElement(j, secondSelectedCheckbox, value);
         }
-        this->updateMatrix();
+        this->UpdateMatrix();
     }
     //negative columns
     else if (this->NegativeButton == vtkKWPushButton::SafeDownCast(caller)  && event == vtkKWPushButton::InvokedEvent){
@@ -336,11 +339,58 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents ( vtkObject *caller, uns
                 }//end for2
             }// end if selected
         }//end for1
-        this->updateMatrix();
+        this->UpdateMatrix();
     }
 }
 
-void vtkSlicerGradientEditorWidget::updateMatrix(){
+void vtkSlicerGradientEditorWidget::UpdateWidget(vtkMRMLVolumeNode *node){
+
+    if (node != NULL)
+      {
+      // updates the measurement frame when the active node changes
+      vtkMatrix4x4 *testMatrix = vtkMatrix4x4::New();
+      vtkMRMLDiffusionWeightedVolumeNode *diffNode = vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(node);
+      diffNode->GetMeasurementFrameMatrix(testMatrix);
+      this->Matrix = testMatrix;
+      this->UpdateMatrix();
+
+      cout << "number of gradients:";
+      std::cerr << "number of gradients:" << std::endl;
+      std::cout << diffNode->GetNumberOfGradients() << std::endl;
+      
+      double grad[3];
+      diffNode->GetDiffusionGradient(0,grad);  
+      vtkDoubleArray *gradi = diffNode->GetDiffusionGradients();
+      vtkDataArray *gradi2 = vtkDataArray::SafeDownCast(gradi);
+      if(gradi2->GetNumberOfComponents()==NULL){
+        cout << "number of gradients:";
+      }
+       if(gradi2->GetNumberOfComponents()==3){
+        cout << "number of gradients:";
+      }
+
+      std::stringstream value;
+      value<<"DWMRI_gradient_0000:=";
+      //value<<gradi->GetValue(0);
+
+       const char* test = value.str().c_str();
+
+      this->GradientsTextfield->GetWidget()->SetText(value.str().c_str());
+      
+      vtkDoubleArray *bValues = diffNode->GetBValues();
+      bValues->GetNumberOfComponents();
+      gradi->GetNumberOfComponents();
+      /*this->MatrixWidget->EnabledOn();
+      this->MatrixWidget->SetAndObserveMatrix4x4(matrix);
+      this->MatrixWidget->UpdateWidget();
+      this->MatrixWidget->GetMatrix4x4()->AddObserver (vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand );
+      this->UpdateTranslationSliders();
+      this->ResetRotationSliders(-1);*/
+      this->UpdateMatrix();
+      }
+}
+
+void vtkSlicerGradientEditorWidget::UpdateMatrix(){
     if(this->Matrix == NULL){
         this->Matrix = vtkMatrix4x4::New();
     }
@@ -394,7 +444,7 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
         this->MatrixGUI->GetWidget(i)->SetRestrictValueToDouble();
     }
     //initialize with default values
-    this->updateMatrix();
+    this->UpdateMatrix();
 
     for(int i=0; i< ARRAY_LENGTH; i++){
         vtkKWCheckButton* checkButton = vtkKWCheckButton::New();
@@ -500,7 +550,7 @@ void vtkSlicerGradientEditorWidget::CreateWidget ( )
     this->LoadGradientsButton = vtkKWLoadSaveButtonWithLabel::New();
     this->LoadGradientsButton->SetParent(this->ButtonsFrame);
     this->LoadGradientsButton->Create();
-    this->LoadGradientsButton->SetLabelText("Load GradientsTextfield from .txt/.nrrd File");
+    this->LoadGradientsButton->SetLabelText("Load Gradients from .txt/.nrrd File");
     this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open .txt/.nrrd File");
     this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {Textfile} {.txt} } { {NHRDfile} {.nrrd} }");
     this->LoadGradientsButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");

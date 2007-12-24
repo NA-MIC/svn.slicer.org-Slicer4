@@ -706,9 +706,10 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
         tearDown = 1;
         this->VolumeDisplayWidget = this->dwiVDW;
         this->VolumeDisplayFrame = this->DWIDisplayFrame;
+        }      
         this->GradientFrame->EnabledOn();
         this->GradientFrame->SetAllowFrameToCollapse(1);
-        }
+        this->GradientEditorWidget->UpdateWidget(refNode);
       }
     else if ( refNode->IsA("vtkMRMLDiffusionTensorVolumeNode") )
       { 
@@ -989,7 +990,6 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
                   this->GradientFrame->GetWidgetName(), page->GetWidgetName());
 
     this->GradientEditorWidget = vtkSlicerGradientEditorWidget::New ( );
-    this->GradientEditorWidget->SetMRMLScene(this->GetMRMLScene() );
     this->GradientEditorWidget->SetParent ( this->GradientFrame->GetFrame() );
     this->GradientEditorWidget->Create ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
