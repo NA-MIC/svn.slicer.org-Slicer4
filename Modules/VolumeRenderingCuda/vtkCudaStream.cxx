@@ -27,9 +27,9 @@ void vtkCudaStream::Synchronize()
  * @brief Creates and returns a new vtkCudaEvent that triggers when the Stream is finished.
  * @returns a new vtkCudaEvent triggering on this Stream.
  */
-vtkCudaEvent* vtkCudaStream::GetStreamEvent() const
+vtkCudaEvent* vtkCudaStream::GetStreamEvent()
 {
-vtkCudaEvent* event = vtkCudaEvent::New();
-event->Record(this);
-return event;  
+ vtkCudaEvent* event = vtkCudaEvent::New();
+ event->Record(this);
+ return event;  
 }

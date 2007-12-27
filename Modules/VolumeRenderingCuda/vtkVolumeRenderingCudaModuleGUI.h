@@ -76,6 +76,9 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
     virtual void SetInteractorStyle(vtkSlicerViewerInteractorStyle *interactorStyle);
 
 
+  /// TESTING FUNCTIONS:
+  void CreatePipelineTest();
+
 
   // Description:
   // Methods describe behavior at module enter and exit.
@@ -102,6 +105,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkSlicerViewerInteractorStyle *InteractorStyle;
 
   vtkKWPushButton* LoadButton;
+  vtkKWPushButton* CreatePiplineTestButton;
 };
 
 #endif /*VTKSLICERVOLUMERENDERINGCUDA_H_*/

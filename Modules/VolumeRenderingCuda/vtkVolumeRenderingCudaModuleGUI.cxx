@@ -13,6 +13,7 @@
 vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
     this->LoadButton = NULL;
+    this->CreatePiplineTestButton = NULL;
     this->CudaMapper = NULL;
     this->CudaActor = NULL;
 }
@@ -23,6 +24,12 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
         this->LoadButton->SetParent(NULL);
         this->LoadButton->Delete();
         this->LoadButton = NULL; 
+    }
+    if (this->CreatePiplineTestButton != NULL)
+    {
+      this->CreatePiplineTestButton->SetParent(NULL);
+      this->CreatePiplineTestButton->Delete();
+      this->CreatePiplineTestButton = NULL;  
     }
     if (this->CudaMapper != NULL)
     {
@@ -72,6 +79,15 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->LoadButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
 
+
+    this->CreatePiplineTestButton = vtkKWPushButton::New();
+    this->CreatePiplineTestButton->SetParent(loadSaveDataFrame->GetFrame());
+    this->CreatePiplineTestButton->Create();
+    this->CreatePiplineTestButton->SetText("Test Creating the pipeline");
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->CreatePiplineTestButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
+
+  
     ////Testing Pushbutton
     //this->PB_Testing= vtkKWPushButton::New();
     //this->PB_Testing->SetParent(loadSaveDataFrame->GetFrame());
@@ -168,11 +184,13 @@ void vtkVolumeRenderingCudaModuleGUI::ReleaseModuleEventBindings ( )
 void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
     this->LoadButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->CreatePiplineTestButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
     this->LoadButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->CreatePiplineTestButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
@@ -200,8 +218,21 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
     this->CudaMapper->Render(NULL, NULL);
    }
    
+   if (caller == this->CreatePiplineTestButton)
+   {
+      this->CreatePipelineTest();
+   }
+   
    printf ("%p\n", caller);
 
+}
+
+#include "vtkImageReader.h"
+
+void vtkVolumeRenderingCudaModuleGUI::CreatePipelineTest()
+{
+  vtkImageReader* reader = vtkImageReader::New();
+  
 }
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
