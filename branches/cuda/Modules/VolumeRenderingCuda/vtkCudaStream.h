@@ -16,7 +16,7 @@ class vtkCudaStream
   
   cudaStream_t GetStream() const { return this->Stream; }
   
-  vtkCudaEvent* GetStreamEvent() const;
+  vtkCudaEvent* GetStreamEvent();
   
 protected:
   vtkCudaStream();
