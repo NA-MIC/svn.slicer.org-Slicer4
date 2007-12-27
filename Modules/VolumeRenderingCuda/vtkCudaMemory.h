@@ -22,6 +22,12 @@ public:
   template<typename T> T* GetMemPointerAs() const { return (T*)this->GetMemPointer(); }
   //ETX
   
+  virtual vtkCudaMemory* CopyToMemory() const;
+  virtual vtkCudaHostMemory* CopyToHostMemory() const;
+  virtual vtkCudaMemoryArray* CopyToMemoryArray() const;
+  virtual vtkCudaMemoryPitch* CopyToMemoryPitch() const;
+  
+  
   ~vtkCudaMemory();
 protected:
   vtkCudaMemory();

@@ -20,16 +20,19 @@ public:
     //ETX
     size_t GetSize() const { return Size; }
     
-//BTX
-  typedef enum {
-    Undefined,
     
-    Memory,
-    HostMemory,
-    ArrayMemory,
-    PitchMemory,
+//BTX
+//! Type identifier. This gives us information on what type of Memory we are accessing.
+  typedef enum {
+    Undefined       = 0,
+    
+    Memory          = 1,
+    HostMemory      = 2,
+    ArrayMemory     = 4,
+    PitchMemory     = 8,
   } MemoryType;
 //ETX
+
     MemoryType GetType() const { return this->Type; }
     
     virtual vtkCudaMemory* CopyToMemory() const { return NULL; }
