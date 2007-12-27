@@ -3,6 +3,9 @@
 #include "cuda_runtime_api.h"
 #include "vtkCudaBase.h"
 
+#include "vtkCudaHostMemory.h"
+#include "vtkCudaMemoryArray.h"
+
 vtkCudaMemory* vtkCudaMemory::New()
 {
   return new vtkCudaMemory();
@@ -48,3 +51,34 @@ void vtkCudaMemory::MemSet(int value)
 {
   cudaMemset(this->MemPointer, value, this->Size);
 }
+
+///// COPY FUNCTIONS //////
+vtkCudaMemory* vtkCudaMemory::CopyToMemory() const
+{
+   vtkCudaMemory* dest = vtkCudaMemory::New();
+   dest->AllocateBytes(this->GetSize());
+   cudaMemcpy(dest->GetMemPointer(), 
+    this->GetMemPointer(),
+        this->GetSize(),
+        cudaMemcpyDeviceToDevice
+        );
+}
+
+vtkCudaHostMemory* vtkCudaMemory::CopyToHostMemory() const
+{
+   vtkCudaHostMemory* dest = vtkCudaHostMemory::New();
+   dest->AllocateBytes(this->GetSize());
+   cudaMemcpy(dest->GetMemPointer(), 
+        this->GetMemPointer(),
+        this->GetSize(),
+        cudaMemcpyDeviceToHost
+        );
+}
+
+vtkCudaMemoryArray* vtkCudaMemory::CopyToMemoryArray() const
+{
+
+}
+
+vtkCudaMemoryPitch* vtkCudaMemory::CopyToMemoryPitch() const
+{}

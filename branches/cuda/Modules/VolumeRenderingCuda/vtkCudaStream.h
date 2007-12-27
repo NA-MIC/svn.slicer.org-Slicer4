@@ -3,16 +3,20 @@
 
 #include "vtkCudaBase.h"
 
+class vtkCudaEvent;
+
 class vtkCudaStream
 {
   public:
   static vtkCudaStream* New();
   //BTX
-  vtkCudaBase::State Query();
+  vtkCudaBase::State e();
   //ETX
   void Synchronize();
   
   cudaStream_t GetStream() const { return this->Stream; }
+  
+  vtkCudaEvent* GetStreamEvent() const;
   
 protected:
   vtkCudaStream();
