@@ -7,13 +7,13 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 # --------------------------------------------------------------------------
 # Sources
   SET(VolumeRenderingCudaModule_SRCS
-  ## BASIC CUDA RUNTIME API  CLASSES
+  ### BASIC CUDA RUNTIME API  CLASSES ###
     vtkCudaSupport.cxx
     vtkCudaDevice.cxx
     vtkCudaEvent.cxx
     vtkCudaBase.cxx
     vtkCudaStream.cxx
-  ## CUDA MEMORY RUNTIME CLASSES 
+  #### CUDA MEMORY RUNTIME CLASSES ####
     vtkCudaMemoryBase.cxx
     vtkCudaMemory.cxx
     vtkCudaMemoryPitch.cxx
@@ -21,13 +21,13 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
     vtkCudaMemoryArray.cxx
     vtkCudaMemoryCopy.cxx
 
-  ## CUDA Volume Rendering Integration Classes
+  ### CUDA Volume Rendering Integration Classes ###
     vtkVolumeCudaMapper.cxx    
     vtkCudaOpenGLBufferObject.cxx
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
     vtkVolumeRenderingCudaModuleLogic.cxx
-    
+  #### CUDA Pipeline Classes ####
     vtkCudaImageDataFilter.cxx
     vtkCudaImageData.cxx
   )

@@ -17,6 +17,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->CudaMapper = NULL;
     this->CudaActor = NULL;
 }
+
 vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
 {
     if (this->LoadButton != NULL)
@@ -223,6 +224,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
       this->CreatePipelineTest();
    }
    
+   printf ("%p\n", caller);
    printf ("%p\n", caller);
 
 }
