@@ -18,6 +18,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->CudaActor = NULL;
 }
 
+
 vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
 {
     if (this->LoadButton != NULL)
@@ -234,6 +235,9 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 void vtkVolumeRenderingCudaModuleGUI::CreatePipelineTest()
 {
   vtkImageReader* reader = vtkImageReader::New();
+  reader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/heart256.raw");
+  
+  
   
 }
 

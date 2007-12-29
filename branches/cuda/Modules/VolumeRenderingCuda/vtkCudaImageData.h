@@ -2,12 +2,14 @@
 #define VTKCUDAIMAGEDATA_H_
 
 #include "vtkDataSet.h"
+#include "vtkVolumeRenderingCudaModule.h"
 
 class vtkCudaMemoryBase;
 
-class vtkCudaImageData : public vtkDataSet
+class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaImageData : public vtkDataSet
 {
 public:
+  vtkTypeRevisionMacro(vtkCudaImageData, vtkDataSet);
   static vtkCudaImageData* New();
 
 protected:
