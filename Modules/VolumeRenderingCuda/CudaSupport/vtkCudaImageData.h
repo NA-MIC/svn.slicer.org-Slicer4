@@ -12,11 +12,14 @@ public:
   vtkTypeRevisionMacro(vtkCudaImageData, vtkDataSet);
   static vtkCudaImageData* New();
 
+  virtual void   PrintSelf (ostream &os, vtkIndent indent)
+
+
 protected:
   vtkCudaImageData();
   virtual ~vtkCudaImageData();
   
-  vtkCudaMemoryBase*   data;
+  vtkCudaMemoryBase*   Data;
 };
 
 #endif /*VTKCUDAIMAGEDATA_H_*/
