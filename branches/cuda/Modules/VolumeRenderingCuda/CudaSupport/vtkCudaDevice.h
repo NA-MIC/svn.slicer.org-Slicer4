@@ -2,11 +2,11 @@
 #define VTKCUDADEVICE_H_
 
 #include "vtkObject.h"
-#include "vtkVolumeRenderingCudaModule.h"
+#include "vtkCudaSupportModule.h"
 
 #include "driver_types.h"
 
-class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaDevice : public vtkObject
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaDevice : public vtkObject
 {
   vtkTypeRevisionMacro(vtkCudaDevice, vtkObject);
   

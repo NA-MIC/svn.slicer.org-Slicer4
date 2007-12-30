@@ -3,6 +3,7 @@
 
 
 #include "vtkObject.h"
+#include "vtkCudaSupportModule.h"
 #include <stddef.h>
 
 class vtkCudaMemory;
@@ -10,7 +11,7 @@ class vtkCudaMemoryArray;
 class vtkCudaMemoryPitch;
 class vtkCudaHostMemory;
 
-class vtkCudaMemoryBase
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaMemoryBase
 {
 public:
  static vtkCudaMemoryBase* New();

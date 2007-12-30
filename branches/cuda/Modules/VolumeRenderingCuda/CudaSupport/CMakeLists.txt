@@ -43,7 +43,7 @@ CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(VolumeRenderingCudaModule
+VTK_WRAP_TCL3(CudaSupportModule
          CudaSupportModule_TCL_SRCS 
          "${CudaSupportModule_SRCS}" 
          "")
@@ -52,7 +52,7 @@ VTK_WRAP_TCL3(VolumeRenderingCudaModule
 # Build the library
 
 ## Set the Libraries we link
-SET(VolumeRenderingCudaModule_LIBRARIES
+SET(CudaSupportModule_LIBRARIES
   SlicerBaseLogic 
   SlicerBaseGUI 
   MRML

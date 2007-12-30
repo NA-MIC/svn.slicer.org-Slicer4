@@ -2,8 +2,9 @@
 #define VTKCUDABASE_H_
 
 #include "driver_types.h"
+#include "vtkCudaSupportModule.h"
 
-class vtkCudaBase
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaBase
 {
   public:
   //BTX

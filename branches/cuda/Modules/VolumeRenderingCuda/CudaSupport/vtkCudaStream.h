@@ -5,7 +5,7 @@
 
 class vtkCudaEvent;
 
-class vtkCudaStream
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaStream
 {
   public:
   static vtkCudaStream* New();
