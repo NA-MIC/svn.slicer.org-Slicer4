@@ -3,10 +3,10 @@
 
 #include "vtkCudaMemoryBase.h"
 
-class vtkCudaMemory : public vtkCudaMemoryBase
+class VTK_CUDASUPPORTMODULE_EXPORT  vtkCudaMemory : public vtkCudaMemoryBase
 {
 public:
-  static vtkCudaMemory* New();
+  static  vtkCudaMemory* New();
 
   virtual void* AllocateBytes(size_t count);
   //BTX

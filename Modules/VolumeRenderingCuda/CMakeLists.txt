@@ -92,9 +92,8 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   ${CudaSupportModule}
   ${CUDA_TARGET_LINK}
   ${VolumeRenderingCudaModule_CudaLibrary}
+  CudaSupportModule
  )
-
-
 
 ADD_LIBRARY(VolumeRenderingCudaModule
   ${VolumeRenderingCudaModule_SRCS}

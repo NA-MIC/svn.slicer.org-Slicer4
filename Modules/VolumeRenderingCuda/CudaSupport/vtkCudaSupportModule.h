@@ -28,4 +28,4 @@
 #define SLICER_VTK5
 #endif
 
-#include "vtkCudaModuleWin32Header.h"
+#include "vtkCudaSupportModuleWin32Header.h"

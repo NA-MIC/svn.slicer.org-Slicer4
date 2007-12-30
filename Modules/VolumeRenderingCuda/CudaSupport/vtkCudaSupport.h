@@ -2,12 +2,12 @@
 #define VTKCUDASUPPORT_H_
 
 #include "vtkObject.h"
-#include "vtkVolumeRenderingCudaModule.h"
+#include "vtkCudaSupportModule.h"
 #include "vtkstd/vector"
 class vtkCudaDevice;
 
 
-class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaSupport : public vtkObject
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaSupport : public vtkObject
 {
         vtkTypeRevisionMacro(vtkCudaSupport, vtkObject);
 //BTX

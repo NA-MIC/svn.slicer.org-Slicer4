@@ -3,7 +3,7 @@
 
 #include "vtkCudaMemory.h"
 
-class vtkCudaMemoryPitch : public vtkCudaMemory
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaMemoryPitch : public vtkCudaMemory
 {
 public:
   //BTX

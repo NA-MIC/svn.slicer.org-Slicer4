@@ -2,11 +2,11 @@
 #define VTKCUDAIMAGEDATAFILTER_H_
 
 #include "vtkImageAlgorithm.h"
-#include "vtkVolumeRenderingCudaModule.h"
+#include "vtkCudaSupportModule.h"
 
 class vtkCudaImageData;
 
-class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaImageDataFilter : public vtkImageAlgorithm
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaImageDataFilter : public vtkImageAlgorithm
 {
 public:
   vtkTypeRevisionMacro(vtkCudaImageDataFilter, vtkImageAlgorithm);

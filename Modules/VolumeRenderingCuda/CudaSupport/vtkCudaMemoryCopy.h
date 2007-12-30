@@ -8,7 +8,7 @@ class vtkCudaHostMemory;
 class vtkCudaMemoryArray;
 class vtkCudaMemoryPitch;
 
-class vtkCudaMemoryCopy
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaMemoryCopy
 {
 public:
   static vtkCudaMemoryCopy* New();

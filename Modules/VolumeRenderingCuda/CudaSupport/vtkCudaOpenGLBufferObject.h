@@ -2,8 +2,9 @@
 #define VTKCUDAOPENGLBUFFEROBJECT_H_
 
 #include <GL/gl.h>
+#include "vtkCudaSupportModule.h"
 
-class vtkCudaOpenGLBufferObject
+class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaOpenGLBufferObject
 {
   public:
   static vtkCudaOpenGLBufferObject* New();
