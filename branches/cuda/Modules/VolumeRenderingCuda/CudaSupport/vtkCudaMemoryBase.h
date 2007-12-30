@@ -1,6 +1,8 @@
 #ifndef VTKCUDAMEMORYBASE_H_
 #define VTKCUDAMEMORYBASE_H_
 
+
+#include "vtkObject.h"
 #include <stddef.h>
 
 class vtkCudaMemory;

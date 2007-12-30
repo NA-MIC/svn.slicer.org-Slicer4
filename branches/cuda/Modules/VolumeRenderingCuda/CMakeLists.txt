@@ -2,34 +2,21 @@ PROJECT(VolumeRenderingCudaModule)
 OPTION(VOLUMERENDERINGCUDAMODULE "Would you like to build Volume Rendering with CUDA support" OFF)
 if(VOLUMERENDERINGCUDAMODULE)
 
+SUBDIRS(
+  CudaSupport
+)
+
 INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 
 # --------------------------------------------------------------------------
 # Sources
   SET(VolumeRenderingCudaModule_SRCS
-  ### BASIC CUDA RUNTIME API  CLASSES ###
-    vtkCudaSupport.cxx
-    vtkCudaDevice.cxx
-    vtkCudaEvent.cxx
-    vtkCudaBase.cxx
-    vtkCudaStream.cxx
-  #### CUDA MEMORY RUNTIME CLASSES ####
-    vtkCudaMemoryBase.cxx
-    vtkCudaMemory.cxx
-    vtkCudaMemoryPitch.cxx
-    vtkCudaHostMemory.cxx
-    vtkCudaMemoryArray.cxx
-    vtkCudaMemoryCopy.cxx
 
   ### CUDA Volume Rendering Integration Classes ###
     vtkVolumeCudaMapper.cxx    
-    vtkCudaOpenGLBufferObject.cxx
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
     vtkVolumeRenderingCudaModuleLogic.cxx
-  #### CUDA Pipeline Classes ####
-    vtkCudaImageDataFilter.cxx
-    vtkCudaImageData.cxx
   )
   SET(VolumeRenderingCudaModule_CUDA_SRCS
       CUDA_renderAlgo.cu
@@ -41,6 +28,8 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 INCLUDE_DIRECTORIES(
   ${FOUND_CUT_INCLUDE}
   ${CUDA_INSTALL_PREFIX}/include
+  ${CudaSupportModule_SOURCE_DIR}
+  ${CudaSupportModule_BINARY_DIR}
   ${VolumeRenderingCudaModule_SOURCE_DIR}
   ${VolumeRenderingCudaModule_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
@@ -100,7 +89,7 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   ITKIO
   ITKDICOMParser
   ${KWWidgets_LIBRARIES} 
-  
+  ${CudaSupportModule}
   ${CUDA_TARGET_LINK}
   ${VolumeRenderingCudaModule_CudaLibrary}
  )
