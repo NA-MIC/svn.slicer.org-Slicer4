@@ -1,17 +1,19 @@
-PROJECT(CudaSupportModule)
+PROJECT(CudaSupport)
 
+IF(VOLUMERENDERINGCUDAMODULE)
 
 INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 
 # --------#
 # Sources #
 #---------#
- SET(CudaSupportModule_SRC
+ SET(CudaSupport_SRC
   ### BASIC CUDA RUNTIME API  CLASSES ###
+    vtkCudaBase.cxx
     vtkCudaSupport.cxx
+
     vtkCudaDevice.cxx
     vtkCudaEvent.cxx
-    vtkCudaBase.cxx
     vtkCudaStream.cxx
     vtkCudaOpenGLBufferObject.cxx
 
@@ -23,10 +25,10 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
     vtkCudaMemoryArray.cxx
     vtkCudaMemoryCopy.cxx
 
+
   #### CUDA Pipeline Classes ####
     vtkCudaImageDataFilter.cxx
     vtkCudaImageData.cxx
-
 )
 
 INCLUDE_DIRECTORIES(
@@ -43,16 +45,16 @@ CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(CudaSupportModule
-         CudaSupportModule_TCL_SRCS 
-         "${CudaSupportModule_SRCS}" 
+VTK_WRAP_TCL3(CudaSupport
+         CudaSupport_TCL_SRCS 
+         "${CudaSupport_SRCS}" 
          "")
 
 # --------------------------------------------------------------------------
 # Build the library
 
 ## Set the Libraries we link
-SET(CudaSupportModule_LIBRARIES
+SET(CudaSupport_LIBRARIES
   SlicerBaseLogic 
   SlicerBaseGUI 
   MRML
@@ -63,21 +65,21 @@ SET(CudaSupportModule_LIBRARIES
   ${CUDA_TARGET_LINK}
  )
 
-ADD_LIBRARY(CudaSupportModule
-  ${CudaSupportModule_SRCS}
-  ${CudaSupportModule_TCL_SRCS}
+ADD_LIBRARY(CudaSupport
+  ${CudaSupport_SRCS}
+  ${CudaSupport_TCL_SRCS}
   )
 
 IF(BUILD_SHARED_LIBS)
-  INSTALL(TARGETS CudaSupportModule
+  INSTALL(TARGETS CudaSupport
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
       LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
       ARCHIVE DESTINATION lib COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
-TARGET_LINK_LIBRARIES(CudaSupportModule
-  ${CudaSupportModule_LIBRARIES}
-  ${CudaSupportModule_CudaLibrary}
+TARGET_LINK_LIBRARIES(CudaSupport
+  ${CudaSupport_LIBRARIES}
+  ${CudaSupport_CudaLibrary}
   )
 
 
@@ -90,11 +92,13 @@ TARGET_LINK_LIBRARIES(CudaSupportModule
 
 
 CONFIGURE_FILE(
-  ${CudaSupportModule_SOURCE_DIR}/vtkCudaSupportModuleConfigure.h.in 
-  ${CudaSupportModule_BINARY_DIR}/vtkCudaSupportModuleConfigure.h
+  ${CudaSupport_SOURCE_DIR}/vtkCudaSupportConfigure.h.in 
+  ${CudaSupport_BINARY_DIR}/vtkCudaSupportConfigure.h
 )
 CONFIGURE_FILE(
-  ${CudaSupportModule_SOURCE_DIR}/presets.xml
-  ${CudaSupportModule_BINARY_DIR}/presets.xml
+  ${CudaSupport_SOURCE_DIR}/presets.xml
+  ${CudaSupport_BINARY_DIR}/presets.xml
   COPYONLY
 )
+
+ENDIF(VOLUMERENDERINGCUDAMODULE)

@@ -16,7 +16,7 @@ class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaBase
   //ETX
   
   
-    static vtkCudaBase* New() { return NULL; }
+   static vtkCudaBase* New();
   
    static cudaError_t GetLastError();
    static const char* GetLastErrorString();

@@ -24,6 +24,11 @@ void vtkCudaBase::PrintError(cudaError_t error)
 }
   
 
+vtkCudaBase* vtkCudaBase::New() 
+{
+  return NULL;
+}
+
 vtkCudaBase::~vtkCudaBase()
 {
 }
