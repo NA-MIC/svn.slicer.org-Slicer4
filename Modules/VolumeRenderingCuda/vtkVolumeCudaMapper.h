@@ -4,15 +4,9 @@
 #include "vtkVolumeMapper.h"
 #include "vtkVolumeRenderingCudaModule.h"
 
-class vtkPNGReader;
-class vtkImageViewer;
-
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolumeMapper
 {
   public:
-//BTX
-    typedef vtkVolumeMapper SuperClass;
-//ETX
     vtkTypeRevisionMacro(vtkVolumeCudaMapper,vtkVolumeMapper);
     void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -20,24 +14,11 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolum
 
     virtual void Render(vtkRenderer *, vtkVolume *);
 
-//BTX
-    enum
-    {
-      CUDA_VERSION_SUPPORT=0,
-      CUDA_VERSION_1_0=1,
-      CUDA_VERSION_1_1=2,
-      CUDA_NO_SUPPORT=3,
-    };
-
-//ETX
-    // int GetSupportedCudaVersion();
-    // int SetPreferedCudaSupport();
 
   protected:
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
 
-    int CheckSupportedCudaVersion(int cudaVersion = 0);
     void PrepareRender();
     
     unsigned char* inputBuffer;
@@ -47,11 +28,6 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolum
     vtkVolumeCudaMapper operator=(const vtkVolumeCudaMapper&);
     vtkVolumeCudaMapper(const vtkVolumeCudaMapper&);
 
-    int CudaVersion;
-    int PreferedCudaVersion;
-
-    vtkImageViewer* ImageViewer;
-    vtkPNGReader* PNGReader;
 };
 
 #endif /* __vtkVolumeCudaMapper_h */

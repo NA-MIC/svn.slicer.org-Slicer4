@@ -8,6 +8,8 @@ class vtkVolumeRenderingCudaModuleLogic;
 
 class vtkVolumeCudaMapper;
 class vtkVolume;
+class vtkPNGReader;
+class vtkImageViewer;
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
 {
@@ -77,6 +79,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
 
 
   /// TESTING FUNCTIONS:
+  void TestCudaViewer();
   void CreatePipelineTest();
 
 
@@ -106,6 +109,9 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
 
   vtkKWPushButton* LoadButton;
   vtkKWPushButton* CreatePiplineTestButton;
+  
+  vtkImageViewer* ImageViewer;
+  vtkPNGReader* PNGReader;
 };
 
 #endif /*VTKSLICERVOLUMERENDERINGCUDA_H_*/

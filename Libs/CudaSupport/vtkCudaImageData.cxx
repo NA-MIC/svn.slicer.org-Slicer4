@@ -1,13 +1,12 @@
 #include "vtkCudaImageData.h"
 
+#include "vtkObjectFactory.h"
+
 #include "vtkCudaMemoryBase.h"
 
-vtkCxxRevisionMacro(vtkCudaImageData, "$ Revision: 1.0 $");
 
-vtkCudaImageData* vtkCudaImageData::New()
-{
-  return new vtkCudaImageData();
-}
+vtkCxxRevisionMacro(vtkCudaImageData, "$ Revision: 1.0 $");
+vtkStandardNewMacro(vtkCudaImageData);
 
 
 vtkCudaImageData::vtkCudaImageData()
@@ -30,6 +29,7 @@ void vtkCudaImageData::PrintSelf (ostream &os, vtkIndent indent)
 
 void vtkCudaImageData::CopyStructure (vtkDataSet *ds)
 {
+  
 }
 
 vtkIdType vtkCudaImageData::GetNumberOfPoints ()

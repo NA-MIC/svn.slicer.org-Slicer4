@@ -1,6 +1,7 @@
 #include "vtkCudaImageDataFilter.h"
 #include "vtkCudaImageData.h"
 
+#include "vtkObjectFactory.h"
 #include "vtkCellData.h"
 #include "vtkPointData.h"
 #include "vtkImageData.h"
@@ -10,11 +11,7 @@
 
 
 vtkCxxRevisionMacro(vtkCudaImageDataFilter, "$Revision: 1.0 $");
-
-vtkCudaImageDataFilter* vtkCudaImageDataFilter::New()
-{
-  return new vtkCudaImageDataFilter();  
-}
+vtkStandardNewMacro(vtkCudaImageDataFilter);
 
 vtkCudaImageDataFilter::vtkCudaImageDataFilter()
 {
