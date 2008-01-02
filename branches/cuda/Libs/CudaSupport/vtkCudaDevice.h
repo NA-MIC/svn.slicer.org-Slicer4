@@ -6,7 +6,7 @@
 
 #include "driver_types.h"
 
-class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaDevice : public vtkObject
+class VTK_CUDASUPPORT_EXPORT vtkCudaDevice : public vtkObject
 {
   vtkTypeRevisionMacro(vtkCudaDevice, vtkObject);
   

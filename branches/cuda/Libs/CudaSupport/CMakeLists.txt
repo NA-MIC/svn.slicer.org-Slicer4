@@ -1,13 +1,13 @@
 PROJECT(CudaSupport)
 
-IF(VOLUMERENDERINGCUDAMODULE)
+##IF(VOLUMERENDERINGCUDAMODULE)
 
 INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 
 # --------#
 # Sources #
 #---------#
- SET(CudaSupport_SRC
+ SET(CudaSupport_SRCS
   ### BASIC CUDA RUNTIME API  CLASSES ###
     vtkCudaBase.cxx
     vtkCudaSupport.cxx
@@ -43,7 +43,10 @@ CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}
 # --------------------------------------------------------------------------
 # Wrapping
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(
+  ${CudaSupport_SOURCE_DIR}
+  ${CudaSupport_BINARY_DIR}
+  )
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
 VTK_WRAP_TCL3(CudaSupport
          CudaSupport_TCL_SRCS 
@@ -101,4 +104,4 @@ CONFIGURE_FILE(
   COPYONLY
 )
 
-ENDIF(VOLUMERENDERINGCUDAMODULE)
+##ENDIF(VOLUMERENDERINGCUDAMODULE)
