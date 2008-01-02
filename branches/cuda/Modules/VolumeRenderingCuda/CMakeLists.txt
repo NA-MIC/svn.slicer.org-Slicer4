@@ -2,10 +2,6 @@ PROJECT(VolumeRenderingCudaModule)
 OPTION(VOLUMERENDERINGCUDAMODULE "Would you like to build Volume Rendering with CUDA support" OFF)
 if(VOLUMERENDERINGCUDAMODULE)
 
-SUBDIRS(
-  CudaSupport
-)
-
 INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 
 # --------------------------------------------------------------------------
@@ -28,8 +24,8 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 INCLUDE_DIRECTORIES(
   ${FOUND_CUT_INCLUDE}
   ${CUDA_INSTALL_PREFIX}/include
-  ${CudaSupportModule_SOURCE_DIR}
-  ${CudaSupportModule_BINARY_DIR}
+  ${CudaSupport_SOURCE_DIR}
+  ${CudaSupport_BINARY_DIR}
   ${VolumeRenderingCudaModule_SOURCE_DIR}
   ${VolumeRenderingCudaModule_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
@@ -68,6 +64,10 @@ VTK_WRAP_TCL3(VolumeRenderingCudaModule
 CUDA_ADD_LIBRARY(VolumeRenderingCudaModule_CudaLibrary
   ${VolumeRenderingCudaModule_CUDA_SRCS}
   )
+  
+TARGET_LINK_LIBRARIES(VolumeRenderingCudaModule_CudaLibrary
+  ${CudaSupport}
+)
 
 ## Set the Libraries we link
 SET(VolumeRenderingCudaModule_LIBRARIES
@@ -89,10 +89,9 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   ITKIO
   ITKDICOMParser
   ${KWWidgets_LIBRARIES} 
-  ${CudaSupportModule}
+  ${CudaSupport}
   ${CUDA_TARGET_LINK}
   ${VolumeRenderingCudaModule_CudaLibrary}
-  CudaSupportModule
  )
 
 ADD_LIBRARY(VolumeRenderingCudaModule
