@@ -3,7 +3,7 @@ PROJECT( Modules )
 SUBDIRS(
   #  BrpNav
   NeuroNav
-  # ProstateNav
+  ProstateNav
   #  RealTimeImaging
   CommandLineModule
   ScriptedModule

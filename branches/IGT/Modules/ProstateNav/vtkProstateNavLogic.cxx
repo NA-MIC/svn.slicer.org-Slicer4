@@ -119,9 +119,7 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->ImagingControl = 0;
 
 #ifdef USE_NAVITRACK
-    //this->OpenTrackerStream   = vtkIGTOpenTrackerStream::New();
     this->OpenTrackerStream   = vtkProstateNavDataStream::New();
-    this->OpenTrackerStream2  = vtkIGTOpenTrackerStream2::New();
     this->RealtimeVolumeNode = NULL;
 #endif
 
@@ -132,8 +130,6 @@ vtkProstateNavLogic::vtkProstateNavLogic()
     this->DataCallbackCommand->SetCallback(vtkProstateNavLogic::DataCallback);
 
 #ifdef USE_NAVITRACK
-    //this->OpenTrackerStream2->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-    //this->OpenTrackerStream2->AddObserver(vtkCommand::ModifiedEvent, this->DataCallbackCommand);
     this->OpenTrackerStream->AddObserver(vtkCommand::ModifiedEvent, this->DataCallbackCommand);
 #endif 
 
@@ -150,10 +146,8 @@ vtkProstateNavLogic::~vtkProstateNavLogic()
     }
 
 #ifdef USE_NAVITRACK
-    if (this->OpenTrackerStream2)
+    if (this->OpenTrackerStream)
     {
-      //this->OpenTrackerStream2->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-      //this->OpenTrackerStream2->Delete();
       this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
       this->OpenTrackerStream->Delete();
     }
@@ -198,7 +192,6 @@ void vtkProstateNavLogic::UpdateAll()
   this->LocatorMatrix = NULL;
   
 #ifdef USE_NAVITRACK
-  //this->LocatorMatrix = this->OpenTrackerStream2->GetLocatorMatrix();
   if (this->OpenTrackerStream)
     {
     this->LocatorMatrix = this->OpenTrackerStream->GetNeedleMatrix();
@@ -255,8 +248,8 @@ void vtkProstateNavLogic::UpdateAll()
   // image transfer framework.
 
   int rtimgslice = this->RealtimeImageOrient;
-  
-  //if (this->OpenTrackerStream2)
+
+#ifdef USE_NAVITRACK
   if (this->OpenTrackerStream)
     {
 
@@ -343,7 +336,6 @@ void vtkProstateNavLogic::UpdateAll()
     if (vid && this->RealtimeImageUpdate)
       {
       //int orgSerial = this->RealtimeImageSerial;
-      //this->OpenTrackerStream2->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
       //this->OpenTrackerStream->GetRealtimeImage(&(this->RealtimeImageSerial), vid);
       //if (orgSerial != this->RealtimeImageSerial)  // if new image has been arrived
 
@@ -505,7 +497,6 @@ void vtkProstateNavLogic::UpdateAll()
       pos[2] = pz;
       
       // send coordinate to the scanner
-      //this->OpenTrackerStream2->SetTracker(pos,quat);
       this->OpenTrackerStream->SetScanPosition(pos, quat);
       
       } // if (this->ImagingControl)
@@ -518,16 +509,9 @@ void vtkProstateNavLogic::UpdateAll()
       vtkTransform *transform = NULL;
       vtkTransform *transform_cb2 = NULL;
 
-      //this->OpenTrackerStream2->SetLocatorTransforms();  // <- this is just converting LocatorMatrix to Locator Transform
-      
       this->OpenTrackerStream->GetNeedleTransform(this->LocatorTransform);
       
-      /*
-      transform = this->OpenTrackerStream2->GetLocatorNormalTransform();
-      transform_cb2 = this->OpenTrackerStream2->GetLocatorNormalTransform();
-      */
       //this->GUI->UpdateLocator(transform, transform_cb2);  // MOVE TO GUI
-      //this->LocatorTransform = this->OpenTrackerStream2->GetLocatorNormalTransform();
       //this->InvokeEvent(vtkProstateNavLogic::LocatorUpdateEvent);
       UpdateLocator();
       }
@@ -546,7 +530,6 @@ void vtkProstateNavLogic::UpdateAll()
 
     if (this->GetConnection())
       {
-      //this->OpenTrackerStream2->GetDevicesStatus(robotStatus, scannerStatus, errorStatus);
       this->RobotWorkPhase   = this->WorkPhaseStringToID(this->OpenTrackerStream->GetRobotStatus().c_str());
       this->ScannerWorkPhase = this->WorkPhaseStringToID(this->OpenTrackerStream->GetScanStatus().c_str());
       }
@@ -562,7 +545,8 @@ void vtkProstateNavLogic::UpdateAll()
       this->InvokeEvent(vtkProstateNavLogic::StatusUpdateEvent);
       }
 
-    } // if (this->OpenTrackerStream2)
+    } // if (this->OpenTrackerStream)
+#endif // ifdef USE_NAVITRACK
 
 }
 
@@ -713,10 +697,12 @@ int vtkProstateNavLogic::SwitchWorkPhase(int newwp)
     this->CurrentPhase  = newwp;
     this->PhaseComplete = false;
 
+#ifdef USE_NAVITRACK
     if (this->OpenTrackerStream && this->Connection)
       {
       this->OpenTrackerStream->SetRobotCommand("workphase", WorkPhaseKey[newwp]);
       }
+#endif // USE_NAVITRACK
     
     return 1;
     }
@@ -748,6 +734,7 @@ int vtkProstateNavLogic::IsPhaseTransitable(int nextwp)
 //---------------------------------------------------------------------------
 int vtkProstateNavLogic::ConnectTracker(const char* filename)
 {
+
 #ifdef USE_NAVITRACK
     int   speed = 100;         // speed
     float multi = 1.0;         // mutlti factor
@@ -767,6 +754,8 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
     this->InvokeEvent(vtkProstateNavLogic::StatusUpdateEvent);
 
 #endif //USE_NAVITRACK
+
+    return 1;
 }
 
 
@@ -774,7 +763,6 @@ int vtkProstateNavLogic::ConnectTracker(const char* filename)
 int vtkProstateNavLogic::DisconnectTracker()
 {
 #ifdef USE_NAVITRACK
-  //this->OpenTrackerStream2->StopPolling();
     this->OpenTrackerStream->StopPulling();
     this->OpenTrackerStream->SetTracking(0);
   
@@ -785,6 +773,8 @@ int vtkProstateNavLogic::DisconnectTracker()
     this->InvokeEvent(vtkProstateNavLogic::StatusUpdateEvent);
 
 #endif // USE_NAVITRACK
+
+    return 1;
 }
 
 
@@ -793,9 +783,8 @@ int vtkProstateNavLogic::RobotStop()
 {
 
   std::cerr << "vtkProstateNavLogic::RobotStop()" << std::endl;
+  return 1;
 
-#ifdef USE_NAVITRACK
-#endif // USE_NAVITRACK
 }
 
 
@@ -809,7 +798,6 @@ int vtkProstateNavLogic::RobotMoveTo(float px, float py, float pz,
 
 #ifdef USE_NAVITRACK
 
-  //if (this->OpenTrackerStream2)
   if (this->OpenTrackerStream)
     {
     // temporally, orientation set to [0, 0, 0, 1];
@@ -825,16 +813,13 @@ int vtkProstateNavLogic::RobotMoveTo(float px, float py, float pz,
     ori[2] = 0.0;
     ori[3] = 1.0;
     
-    /*
-    this->OpenTrackerStream2->SetOrientationforRobot(px, py, pz,
-                                                    orientation,
-                                                    BRPTPR_TARGET, "command");
-    */
     this->OpenTrackerStream->SetRobotPosition(pos, ori);
 
     }
 
 #endif // USE_NAVITRACK
+
+  return 1;
 }
 
 
@@ -845,7 +830,6 @@ int vtkProstateNavLogic::RobotMoveTo(float position[3], float orientation[3])
 
 #ifdef USE_NAVITRACK
 
-  //if (this->OpenTrackerStream2 )
   if (this->OpenTrackerStream)
     {
     // temporally, orientation set to [0, 0, 0, 1];
@@ -861,13 +845,12 @@ int vtkProstateNavLogic::RobotMoveTo(float position[3], float orientation[3])
     ori[2] = orientation[2];
     ori[3] = orientation[3];
     
-    //this->OpenTrackerStream2->SetOrientationforRobot(px, py, pz, ori,
-    //BRPTPR_TARGET, "command");
-
     this->OpenTrackerStream->SetRobotPosition(pos, ori);
     }
 
 #endif // USE_NAVITRACK
+
+  return 1;
 }
 
 
@@ -878,7 +861,6 @@ int vtkProstateNavLogic::ScanStart()
 //  std::cerr << "vtkProstateNavLogic::ScanStart()" << std::endl;
 //
 //#ifdef USE_NAVITRACK
-//  //if (this->OpenTrackerStream2)
 //  if (this->OpenTrackerStream)
 //    {
 //    std::vector<std::string> keys;
@@ -888,12 +870,12 @@ int vtkProstateNavLogic::ScanStart()
 //    values.resize(1);
 //    values[0] = "START_SCAN";
 //    
-//    //this->OpenTrackerStream2->SetOpenTrackerforScannerControll(keys, values);
 //    this->OpenTrackerStream->SetScanCommand(key, value);
 //    
 //    }
 //#endif // USE_NAVITRACK
 //  
+  return 1;
 }
 
 //---------------------------------------------------------------------------
@@ -903,7 +885,6 @@ int vtkProstateNavLogic::ScanPause()
 //  std::cerr << "vtkProstateNavLogic::ScanPause()" << std::endl;
 //
 //#ifdef USE_NAVITRACK
-//  if (this->OpenTrackerStream2)
 //    {
 //    std::vector<std::string> keys;
 //    std::vector<std::string> values;
@@ -912,11 +893,11 @@ int vtkProstateNavLogic::ScanPause()
 //    values.resize(1);
 //    values[0] = "PAUSE_SCAN";
 //    
-//    this->OpenTrackerStream2->SetOpenTrackerforScannerControll(keys, values);
 //    this->OpenTrackerStream->SetScanCommand(key, value);
 //    }
 //#endif // USE_NAVITRACK
 //  
+  return 1;
 }
 
 //---------------------------------------------------------------------------
@@ -926,7 +907,7 @@ int vtkProstateNavLogic::ScanStop()
 //  std::cerr << "vtkProstateNavLogic::ScanStop()" << std::endl;
 //
 //#ifdef USE_NAVITRACK
-//  if (this->OpenTrackerStream2)
+//  if (this->OpenTrackerStream)
 //    {
 //    std::vector<std::string> keys;
 //    std::vector<std::string> values;
@@ -935,10 +916,11 @@ int vtkProstateNavLogic::ScanStop()
 //    values.resize(1);
 //    values[0] = "STOP_SCAN";
 //    
-//    this->OpenTrackerStream2->SetOpenTrackerforScannerControll(keys, values);
+//    this->OpenTrackerStream->SetOpenTrackerforScannerControll(keys, values);
 //    }
 //#endif // USE_NAVITRACK
 //  
+  return 1;
 }
 
 //---------------------------------------------------------------------------
@@ -966,7 +948,8 @@ vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(const char* volumeNodeName
     if (volumeNode == NULL)  // if real-time volume node has not been created
     {
 
-        vtkMRMLVolumeDisplayNode *displayNode = NULL;
+        //vtkMRMLVolumeDisplayNode *displayNode = NULL;
+        vtkMRMLScalarVolumeDisplayNode *displayNode = NULL;
         vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
         vtkImageData* image = vtkImageData::New();
 
@@ -993,7 +976,8 @@ vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(const char* volumeNodeName
 
         
         /* Based on the code in vtkSlicerVolumeLogic::AddHeaderVolume() */
-        displayNode = vtkMRMLVolumeDisplayNode::New();
+        //displayNode = vtkMRMLVolumeDisplayNode::New();
+        displayNode = vtkMRMLScalarVolumeDisplayNode::New();
         scalarNode->SetLabelMap(0);
         volumeNode = scalarNode;
         
@@ -1047,127 +1031,127 @@ vtkMRMLVolumeNode* vtkProstateNavLogic::AddVolumeNode(const char* volumeNodeName
 }
 
 //---------------------------------------------------------------------------
-Image* vtkProstateNavLogic::ReadCalibrationImage(const char* filename, int* width, int* height,
-                 std::vector<float>& position, std::vector<float>& orientation)
-{
-  position.resize(3, 0.0);
-  orientation.resize(4, 0.0);
-
-  const   unsigned int   Dimension = 2;
-  typedef unsigned short InputPixelType;
-  typedef itk::Image< InputPixelType, Dimension > InputImageType;
-  typedef itk::ImageFileReader< InputImageType > ReaderType;
-
-  ReaderType::Pointer reader = ReaderType::New();
-  reader->SetFileName(filename);
-
-  typedef itk::GDCMImageIO           ImageIOType;
-  ImageIOType::Pointer gdcmImageIO = ImageIOType::New();
-  reader->SetImageIO( gdcmImageIO );
-
-  try {
-    reader->Update();
-  } catch (itk::ExceptionObject & e) {
-    std::cerr << "exception in file reader " << std::endl;
-    std::cerr << e.GetDescription() << std::endl;
-    std::cerr << e.GetLocation() << std::endl;
-    return NULL;
-  }
-
-  char name[100];
-  gdcmImageIO->GetPatientName(name);
-  std::cerr << name << std::endl;
-
-  double origin[3];
-  double center[3];
-  int    size[3];
-  double spacing[3];
-
-  for (int i = 0; i < 3;i ++) {
-    origin[i]  = gdcmImageIO->GetOrigin(i);
-    size[i]    = gdcmImageIO->GetDimensions(i);
-    spacing[i] = gdcmImageIO->GetSpacing(i);
-  }
-
-  float imageDir[3][3];
-  for (int i = 0; i < 3; i ++) {
-    std::vector<double> v;
-    v = gdcmImageIO->GetDirection(i);
-    imageDir[i][0] = v[0];
-    imageDir[i][1] = v[1];
-    imageDir[i][2] = v[2];
-  }
-
-  // LPS to RAS
-  origin[0] *= -1.0;
-  origin[1] *= -1.0;
-  imageDir[0][0] *= -1.0;
-  imageDir[0][1] *= -1.0;
-  imageDir[0][2] *= -1.0;
-  imageDir[1][0] *= -1.0;
-  imageDir[1][1] *= -1.0;
-  imageDir[1][2] *= -1.0;
-
-  std::cerr << "DICOM IMAGE:" << std::endl;
-  std::cerr << " Dimension = ( "
-            << size[0] << ", " << size[1] << ", " << size[2] << " )" << std::endl;
-  std::cerr << " Origin    = ( "
-            << origin[0] << ", " << origin[1] << ", " << origin[2] << " )" << std::endl;
-  std::cerr << " Spacing   = ( "
-            << spacing[0] << ", " << spacing[1] << ", " << spacing[2] << " )" << std::endl;
-
-  std::cerr << " Orientation: " << std::endl;
-  std::cerr << "   " << imageDir[0][0] << ", " << imageDir[0][1] << ", " 
-            << imageDir[0][2] << std::endl;
-  std::cerr << "   " << imageDir[1][0] << ", " << imageDir[1][1] << ", "
-            << imageDir[1][2] << std::endl;
-  std::cerr << "   " << imageDir[2][0] << ", " << imageDir[2][1] << ", "
-            << imageDir[2][2] << std::endl;
-
-  InputImageType::Pointer    inputImage = reader->GetOutput();
-  InputImageType::RegionType region   = inputImage->GetLargestPossibleRegion();
-
-
-  // position is the center of the image
-  double coffset[3];
-  for (int i = 0; i < 3; i ++) {
-    coffset[i] = ((size[i]-1)*spacing[i])/2.0;
-  }
-
-  for (int i = 0; i < 3; i ++) {
-    position[i] = origin[i] + (coffset[0]*imageDir[i][0] + coffset[1]*imageDir[i][1]
-                               + coffset[2]*imageDir[i][2]);
-  }
-  std::cerr << " Center   =  ( "
-            << position[0] << ", " << position[1] << ", " << position[2] << " )" << std::endl;
-
-
-  float matrix[3][3];
-  float quat[4];
-  MathUtils::matrixToQuaternion(imageDir, quat);
-  for (int i = 0; i < 4; i ++) {
-    orientation[i] = quat[i];
-  }
-
-
-  int w = size[0];
-  int h = size[1];
-
-  short* data = new short[w*h];
-  InputImageType::IndexType index;
-
-  for (int j = 0; j < h; j ++) {
-    index[1] = j;
-    for (int i = 0; i < w; i ++) {
-      index[0] = w-i;
-      data[j*w+i] = (short) inputImage->GetPixel(index);
-    }
-  }
-
-  *width = w;
-  *height = h;
-  Image* img = new Image(size[0], size[1], sizeof(short), (void*)data);
-
-  return img;
-
-}
+//Image* vtkProstateNavLogic::ReadCalibrationImage(const char* filename, int* width, int* height,
+//                 std::vector<float>& position, std::vector<float>& orientation)
+//{
+//  position.resize(3, 0.0);
+//  orientation.resize(4, 0.0);
+//
+//  const   unsigned int   Dimension = 2;
+//  typedef unsigned short InputPixelType;
+//  typedef itk::Image< InputPixelType, Dimension > InputImageType;
+//  typedef itk::ImageFileReader< InputImageType > ReaderType;
+//
+//  ReaderType::Pointer reader = ReaderType::New();
+//  reader->SetFileName(filename);
+//
+//  typedef itk::GDCMImageIO           ImageIOType;
+//  ImageIOType::Pointer gdcmImageIO = ImageIOType::New();
+//  reader->SetImageIO( gdcmImageIO );
+//
+//  try {
+//    reader->Update();
+//  } catch (itk::ExceptionObject & e) {
+//    std::cerr << "exception in file reader " << std::endl;
+//    std::cerr << e.GetDescription() << std::endl;
+//    std::cerr << e.GetLocation() << std::endl;
+//    return NULL;
+//  }
+//
+//  char name[100];
+//  gdcmImageIO->GetPatientName(name);
+//  std::cerr << name << std::endl;
+//
+//  double origin[3];
+//  double center[3];
+//  int    size[3];
+//  double spacing[3];
+//
+//  for (int i = 0; i < 3;i ++) {
+//    origin[i]  = gdcmImageIO->GetOrigin(i);
+//    size[i]    = gdcmImageIO->GetDimensions(i);
+//    spacing[i] = gdcmImageIO->GetSpacing(i);
+//  }
+//
+//  float imageDir[3][3];
+//  for (int i = 0; i < 3; i ++) {
+//    std::vector<double> v;
+//    v = gdcmImageIO->GetDirection(i);
+//    imageDir[i][0] = v[0];
+//    imageDir[i][1] = v[1];
+//    imageDir[i][2] = v[2];
+//  }
+//
+//  // LPS to RAS
+//  origin[0] *= -1.0;
+//  origin[1] *= -1.0;
+//  imageDir[0][0] *= -1.0;
+//  imageDir[0][1] *= -1.0;
+//  imageDir[0][2] *= -1.0;
+//  imageDir[1][0] *= -1.0;
+//  imageDir[1][1] *= -1.0;
+//  imageDir[1][2] *= -1.0;
+//
+//  std::cerr << "DICOM IMAGE:" << std::endl;
+//  std::cerr << " Dimension = ( "
+//            << size[0] << ", " << size[1] << ", " << size[2] << " )" << std::endl;
+//  std::cerr << " Origin    = ( "
+//            << origin[0] << ", " << origin[1] << ", " << origin[2] << " )" << std::endl;
+//  std::cerr << " Spacing   = ( "
+//            << spacing[0] << ", " << spacing[1] << ", " << spacing[2] << " )" << std::endl;
+//
+//  std::cerr << " Orientation: " << std::endl;
+//  std::cerr << "   " << imageDir[0][0] << ", " << imageDir[0][1] << ", " 
+//            << imageDir[0][2] << std::endl;
+//  std::cerr << "   " << imageDir[1][0] << ", " << imageDir[1][1] << ", "
+//            << imageDir[1][2] << std::endl;
+//  std::cerr << "   " << imageDir[2][0] << ", " << imageDir[2][1] << ", "
+//            << imageDir[2][2] << std::endl;
+//
+//  InputImageType::Pointer    inputImage = reader->GetOutput();
+//  InputImageType::RegionType region   = inputImage->GetLargestPossibleRegion();
+//
+//
+//  // position is the center of the image
+//  double coffset[3];
+//  for (int i = 0; i < 3; i ++) {
+//    coffset[i] = ((size[i]-1)*spacing[i])/2.0;
+//  }
+//
+//  for (int i = 0; i < 3; i ++) {
+//    position[i] = origin[i] + (coffset[0]*imageDir[i][0] + coffset[1]*imageDir[i][1]
+//                               + coffset[2]*imageDir[i][2]);
+//  }
+//  std::cerr << " Center   =  ( "
+//            << position[0] << ", " << position[1] << ", " << position[2] << " )" << std::endl;
+//
+//
+//  float matrix[3][3];
+//  float quat[4];
+//  MathUtils::matrixToQuaternion(imageDir, quat);
+//  for (int i = 0; i < 4; i ++) {
+//    orientation[i] = quat[i];
+//  }
+//
+//
+//  int w = size[0];
+//  int h = size[1];
+//
+//  short* data = new short[w*h];
+//  InputImageType::IndexType index;
+//
+//  for (int j = 0; j < h; j ++) {
+//    index[1] = j;
+//    for (int i = 0; i < w; i ++) {
+//      index[0] = w-i;
+//      data[j*w+i] = (short) inputImage->GetPixel(index);
+//    }
+//  }
+//
+//  *width = w;
+//  *height = h;
+//  Image* img = new Image(size[0], size[1], sizeof(short), (void*)data);
+//
+//  return img;
+//
+//}
