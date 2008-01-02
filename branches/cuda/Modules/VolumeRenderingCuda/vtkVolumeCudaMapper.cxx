@@ -16,17 +16,14 @@
 #include "vtkImageReader.h"
 #include "vtkPNGReader.h"
 #include "vtkImageViewer.h"
+#include "vtkObjectFactory.h"
+
 
 vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
-
-//----------------------------------------------------------------------------
-// Needed when we don't use the vtkStandardNewMacro.
-vtkInstantiatorNewMacro(vtkVolumeCudaMapper);
+vtkStandardNewMacro(vtkVolumeCudaMapper);
 
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
-  
-  
   this->inputBuffer= (unsigned char*)malloc(256*256*256*sizeof(unsigned char));
 
   FILE *fp;
@@ -35,29 +32,8 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
   fread(this->inputBuffer, sizeof(unsigned char), 256*256*256, fp);
   fread(this->inputBuffer, sizeof(unsigned char), 256*256*256, fp);
   fclose(fp);
-
-
-  printf("START CREATING WINDOW\n");
-
-  vtkImageReader* reader = vtkImageReader::New();
-  reader->SetFileDimensionality(2);
-  reader->SetDataScalarTypeToUnsignedChar();
-  reader->SetNumberOfScalarComponents(4);
-  reader->SetHeaderSize(0);
-  reader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
   
-  this->ImageViewer = vtkImageViewer::New();
-  PNGReader = vtkPNGReader::New();
-  PNGReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/test.png");
-  
-  this->ImageViewer->SetInputConnection(reader->GetOutputPort());
-  
-  this->ImageViewer->SetColorWindow(255);
-  this->ImageViewer->SetColorLevel(128);
-  
-  //this->ImageViewer->Render();
-  
-  printf("Stop Creating Window\n");
+  printf("FINISHED CREATING WINDOW\n");
   CUDArenderAlgo_init(256,256,256,1024,768);
 
   // Load 3D data into GPU memory.
@@ -71,9 +47,6 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
   // Free allocated GPU memory.
   CUDArenderAlgo_delete();
   free(inputBuffer);  
-  
-  this->ImageViewer->Delete();
-
 }
 
 
@@ -111,8 +84,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
   */
   
   
-  this->ImageViewer->Render();
-  printf ("Testing the CUDA STUFF\n");
+  //printf ("Testing the CUDA implementation here\n");
   
 };
 
@@ -120,37 +92,6 @@ void vtkVolumeCudaMapper::PrintSelf(ostream& os, vtkIndent indent)
 {
   vtkVolumeMapper::PrintSelf(os, indent);
 }
-
-vtkVolumeCudaMapper *vtkVolumeCudaMapper::New()
-{
-  // First try to create the object from the vtkObjectFactory
-  /*
-  vtkObject* ret =
-      vtkVolumeRenderingCudaFactory::CreateInstance("vtkVolumeCudaMapper");
-  if (ret != NULL)
-    return (vtkVolumeCudaMapper*)ret;
-  else
-  */
-    return new vtkVolumeCudaMapper();
-}
-
-
-int vtkVolumeCudaMapper::CheckSupportedCudaVersion(int cudaVersion)
-{
-  int deviceCount = 0;
-  cudaGetDeviceCount(&deviceCount);
-
-  int device;
-  for (device = 0; device < deviceCount; ++device)
-  {
-    cudaDeviceProp deviceProperty;
-    cudaGetDeviceProperties(&deviceProperty, device);
-  }
-
-  /// HACK
-  return 0;
-}
-
 
 void vtkVolumeCudaMapper::PrepareRender()
 {

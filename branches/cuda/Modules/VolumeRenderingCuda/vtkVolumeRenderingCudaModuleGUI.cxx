@@ -8,7 +8,11 @@
 #include "vtkMRMLScene.h"
 #include "vtkVolume.h"
 
+#include "vtkPNGReader.h"
+#include "vtkImageViewer.h"
+
 #include "vtkVolumeCudaMapper.h"
+
 
 vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
@@ -16,6 +20,8 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->CreatePiplineTestButton = NULL;
     this->CudaMapper = NULL;
     this->CudaActor = NULL;
+    
+    this->ImageViewer = NULL;
 }
 
 
@@ -41,6 +47,9 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     {
       this->CudaActor->Delete();  
     }
+    
+    if (this->ImageViewer != NULL)
+      this->ImageViewer->Delete();
 }
 
 vtkVolumeRenderingCudaModuleGUI* vtkVolumeRenderingCudaModuleGUI::New()
@@ -216,7 +225,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
          this->CudaActor->SetMapper(this->CudaMapper);
        }
        
-       
+    this->TestCudaViewer();
     this->CudaMapper->Render(NULL, NULL);
    }
    
@@ -224,13 +233,38 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
    {
       this->CreatePipelineTest();
    }
-   
-   printf ("%p\n", caller);
-   printf ("%p\n", caller);
-
 }
 
 #include "vtkImageReader.h"
+
+void vtkVolumeRenderingCudaModuleGUI::TestCudaViewer()
+{
+if (ImageViewer == NULL)
+ {
+  printf("START CREATING WINDOW\n");
+
+  vtkImageReader* reader = vtkImageReader::New();
+  reader->SetFileDimensionality(2);
+  reader->SetDataScalarTypeToUnsignedChar();
+  reader->SetNumberOfScalarComponents(4);
+  reader->SetHeaderSize(0);
+  reader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
+  
+  this->ImageViewer = vtkImageViewer::New();
+  PNGReader = vtkPNGReader::New();
+  PNGReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/test.png");
+  
+  this->ImageViewer->SetInputConnection(reader->GetOutputPort());
+  
+  this->ImageViewer->SetColorWindow(255);
+  this->ImageViewer->SetColorLevel(128);
+  
+  //this->ImageViewer->Render();
+  
+  printf("FINISHED CREATING WINDOW\n");
+ }
+  this->ImageViewer->Render();
+}
 
 void vtkVolumeRenderingCudaModuleGUI::CreatePipelineTest()
 {
@@ -239,6 +273,8 @@ void vtkVolumeRenderingCudaModuleGUI::CreatePipelineTest()
   
   
   
+  
+  reader->Delete();
 }
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
@@ -276,11 +312,12 @@ void vtkVolumeRenderingCudaModuleGUI::Exit ( )
 
 void vtkVolumeRenderingCudaModuleGUI::PrintSelf(ostream& os, vtkIndent indent)
 {
+    this->SuperClass::PrintSelf(os, indent);
+
     os<<indent<<"vtkVolumeRenderingCudaModuleGUI"<<endl;
     os<<indent<<"vtkVolumeRenderingCudaModuleLogic"<<endl;
     if(this->GetLogic())
     {
         this->GetLogic()->PrintSelf(os,indent.GetNextIndent());
     }
-    this->SuperClass::PrintSelf(os, indent);
 }
