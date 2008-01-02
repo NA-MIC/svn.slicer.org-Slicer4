@@ -566,14 +566,18 @@ vtkTclHelper::ReceiveMatrix(char *sockname)
       return;
     }
   
+  vtkMatrix4x4 *localMatrix = vtkMatrix4x4::New();
+  localMatrix->Identity();
   unsigned int counter = 0;
   for (unsigned int i = 0; i < 4; i++)
     {
     for (unsigned int j = 0; j < 3; j++)
       {
-      this->Matrix->SetElement( j, i, elements[counter++] );
+      localMatrix->SetElement( j, i, elements[counter++] );
       }
     }
+  this->Matrix->DeepCopy(localMatrix);
+  localMatrix->Delete();
 }
 
 /*Meeting with Steve and Raul (05-26-07): decision that the measurement frame
