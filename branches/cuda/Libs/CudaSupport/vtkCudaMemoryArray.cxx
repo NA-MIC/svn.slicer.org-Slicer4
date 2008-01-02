@@ -1,6 +1,11 @@
 #include "vtkCudaMemoryArray.h"
 #include "vtkCudaBase.h"
 
+#include "vtkObjectFactory.h"
+
+vtkCxxRevisionMacro(vtkCudaMemoryArray, "$Revision: 1.0");
+vtkStandardNewMacro(vtkCudaMemoryArray);
+
 vtkCudaMemoryArray::vtkCudaMemoryArray()
 {
   this->Type = vtkCudaMemoryBase::ArrayMemory;
@@ -13,11 +18,6 @@ vtkCudaMemoryArray::vtkCudaMemoryArray()
 vtkCudaMemoryArray::~vtkCudaMemoryArray()
 {
   this->Free();
-}
-
-vtkCudaMemoryArray* vtkCudaMemoryArray::New()
-{
-  return new vtkCudaMemoryArray();
 }
 
 /**
@@ -54,4 +54,12 @@ void vtkCudaMemoryArray::DeepCopy(vtkCudaMemoryArray* source)
 {
   this->Allocate(source->GetWidth(), source->GetHeight());
     cudaMemcpyArrayToArray(this->Array, 0, 0, source->Array, 0, 0, sizeof(source->Array));
+}
+
+
+void vtkCudaMemoryArray::PrintSelf(ostream &os, vtkIndent indent)
+{
+this->Superclass::PrintSelf(os, indent);
+  os << " Width: "<< this->GetWidth() << 
+  " Height: " << this->GetHeight();
 }

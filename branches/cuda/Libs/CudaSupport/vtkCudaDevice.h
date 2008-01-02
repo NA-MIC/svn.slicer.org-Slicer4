@@ -18,6 +18,9 @@ class VTK_CUDASUPPORT_EXPORT vtkCudaDevice : public vtkObject
   void SetDeviceNumber(int deviceNumber);
   vtkGetMacro(DeviceNumber, int);
   
+  //////////////////////////////////////////////////////////////////////
+  // Wrapped Functions to retrieve all Information about a CUDA card ///
+  //////////////////////////////////////////////////////////////////////
   /** @returns the name of the CUDA device */
   const char* GetName() const { return DeviceProp.name; }
   /** @returns the global memory size of the CUDA device */

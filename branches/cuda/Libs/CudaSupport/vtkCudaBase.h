@@ -5,6 +5,7 @@
 #include "driver_types.h"
 #include "vtkCudaSupportModule.h"
 
+/// THIS IS A STATIC CLASS USED FOR BASIC CUDA FUNCTIONALITY!!
 class VTK_CUDASUPPORT_EXPORT vtkCudaBase : public vtkObject
 {
   vtkTypeRevisionMacro(vtkCudaBase, vtkObject);
@@ -16,8 +17,7 @@ class VTK_CUDASUPPORT_EXPORT vtkCudaBase : public vtkObject
     InvalidValueError,
   } State;
   //ETX
-  
-  
+
    static vtkCudaBase* New();
   
    static cudaError_t GetLastError();

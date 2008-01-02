@@ -8,6 +8,8 @@ class vtkCudaHostMemory;
 class vtkCudaMemoryArray;
 class vtkCudaMemoryPitch;
 
+
+/// OBSOLETE BEFORE USED ONCE....
 class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryCopy
 {
 public:

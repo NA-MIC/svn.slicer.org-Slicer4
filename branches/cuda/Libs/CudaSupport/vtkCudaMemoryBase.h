@@ -45,6 +45,8 @@ public:
     virtual vtkCudaMemoryArray* CopyToMemoryArray() const { return NULL; }
     virtual vtkCudaMemoryPitch* CopyToMemoryPitch() const { return NULL; }
   
+  virtual void PrintSelf (ostream &os, vtkIndent indent);
+  
 protected:
   vtkCudaMemoryBase();
   virtual ~vtkCudaMemoryBase();

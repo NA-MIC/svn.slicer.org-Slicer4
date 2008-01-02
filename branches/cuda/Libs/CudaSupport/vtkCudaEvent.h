@@ -5,13 +5,15 @@
 
 class vtkCudaStream;
 
-class VTK_CUDASUPPORT_EXPORT vtkCudaEvent
+class VTK_CUDASUPPORT_EXPORT vtkCudaEvent : public vtkObject
 {
+  vtkTypeRevisionMacro(vtkCudaEvent, vtkObject);
 public:
   static vtkCudaEvent* New();
   
   //BTX
-  void Record(vtkCudaStream* stream = NULL);
+  void Record();
+  void Record(vtkCudaStream* stream);
   vtkCudaBase::State Query();
   //ETX
   void Synchronize();
@@ -20,10 +22,11 @@ public:
   /** @returns the Event */
   cudaEvent_t GetEvent() { return this->Event; }
   
-  /// public for now.  
-  virtual ~vtkCudaEvent();
+  void PrintSelf(ostream& os, vtkIndent indent);
+  
 protected:
   vtkCudaEvent();
+  virtual ~vtkCudaEvent();
   
   cudaEvent_t Event;
 };

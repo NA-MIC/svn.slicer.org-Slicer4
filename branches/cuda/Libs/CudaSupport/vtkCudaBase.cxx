@@ -5,7 +5,6 @@
 
 vtkCxxRevisionMacro(vtkCudaBase, "$Revision: 1.0 $");
 
-
 cudaError_t vtkCudaBase::GetLastError()
 {
   return cudaGetLastError();
@@ -26,7 +25,6 @@ void vtkCudaBase::PrintError(cudaError_t error)
   printf(vtkCudaBase::GetErrorString(error));
 }
   
-
 vtkCudaBase* vtkCudaBase::New() 
 {
   return NULL;

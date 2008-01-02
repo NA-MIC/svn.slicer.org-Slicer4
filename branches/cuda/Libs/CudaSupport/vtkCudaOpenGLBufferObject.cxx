@@ -4,6 +4,10 @@
 #include "cuda_gl_interop.h"
 
 #include "vtkCudaBase.h"
+#include "vtkObjectFactory.h"
+
+vtkCxxRevisionMacro(vtkCudaOpenGLBufferObject, "$Revision: 1.0 $");
+vtkStandardNewMacro(vtkCudaOpenGLBufferObject);
 
 vtkCudaOpenGLBufferObject::vtkCudaOpenGLBufferObject()
 {
@@ -15,15 +19,6 @@ vtkCudaOpenGLBufferObject::~vtkCudaOpenGLBufferObject()
 {
   this->Unmap();
   this->Unregister();
-}
-
-/**
- * TODO reimplement in Vtk-style
- * @returns a new instance of a vtkCudaOpenGLBufferObject*
- */
-vtkCudaOpenGLBufferObject* vtkCudaOpenGLBufferObject::New()
-{
-  return new vtkCudaOpenGLBufferObject();
 }
 
 void vtkCudaOpenGLBufferObject::Register(GLuint bufferObject)
@@ -77,3 +72,11 @@ void vtkCudaOpenGLBufferObject::Unmap()
     this->DevPointer = NULL;
   }
 }
+
+void vtkCudaOpenGLBufferObject::PrintSelf(ostream &os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os, indent);
+  if (this->GetBufferObject() == 0)
+    os << "Not yet initialized Buffer Object";
+}
+

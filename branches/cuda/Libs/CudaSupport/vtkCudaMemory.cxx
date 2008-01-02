@@ -6,11 +6,10 @@
 #include "vtkCudaHostMemory.h"
 #include "vtkCudaMemoryArray.h"
 
-vtkCudaMemory* vtkCudaMemory::New()
-{
-  return new vtkCudaMemory();
-}
+#include "vtkObjectFactory.h"
 
+vtkCxxRevisionMacro(vtkCudaMemory, "$Revision: 1.0 $");
+vtkStandardNewMacro(vtkCudaMemory);
 
 vtkCudaMemory::vtkCudaMemory()
 {
@@ -82,3 +81,11 @@ vtkCudaMemoryArray* vtkCudaMemory::CopyToMemoryArray() const
 
 vtkCudaMemoryPitch* vtkCudaMemory::CopyToMemoryPitch() const
 {}
+
+
+void vtkCudaMemory::PrintSelf (ostream &os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os, indent);
+  if (this->GetMemPointer() == NULL)
+    os << "Not yet allocated";
+}

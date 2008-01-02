@@ -1,15 +1,14 @@
 #include "vtkCudaHostMemory.h"
 
 #include "vtkCudaBase.h"
+#include "vtkObjectFactory.h"
 
 #include <string.h>
 #include "cuda_runtime_api.h"
 
 
-vtkCudaHostMemory* vtkCudaHostMemory::New()
-{
-  return new vtkCudaHostMemory();  
-}
+vtkCxxRevisionMacro(vtkCudaHostMemory, "$Revision 1.0 $");
+vtkStandardNewMacro(vtkCudaHostMemory);
 
 vtkCudaHostMemory::vtkCudaHostMemory()
 {
@@ -48,4 +47,9 @@ void vtkCudaHostMemory::Free()
 void vtkCudaHostMemory::MemSet(int value)
 {
   memset(this->MemPointer, value, Size);
+}
+
+void vtkCudaHostMemory::PrintSelf(ostream& os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os, indent);
 }

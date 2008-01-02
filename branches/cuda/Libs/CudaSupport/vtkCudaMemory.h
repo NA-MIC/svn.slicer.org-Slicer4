@@ -5,6 +5,7 @@
 
 class VTK_CUDASUPPORT_EXPORT  vtkCudaMemory : public vtkCudaMemoryBase
 {
+  vtkTypeRevisionMacro(vtkCudaMemory, vtkCudaMemoryBase);
 public:
   static  vtkCudaMemory* New();
 
@@ -27,10 +28,11 @@ public:
   virtual vtkCudaMemoryArray* CopyToMemoryArray() const;
   virtual vtkCudaMemoryPitch* CopyToMemoryPitch() const;
   
+  virtual void PrintSelf (ostream &os, vtkIndent indent);
   
-  ~vtkCudaMemory();
 protected:
   vtkCudaMemory();
+  virtual ~vtkCudaMemory();
   vtkCudaMemory(const vtkCudaMemory&);
   vtkCudaMemory& operator=(const vtkCudaMemory&);
 

@@ -6,6 +6,7 @@
 
 class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryArray : public vtkCudaMemoryBase
 {
+  vtkTypeRevisionMacro(vtkCudaMemoryArray, vtkCudaMemoryBase);
 public:
   static vtkCudaMemoryArray* New();
   
@@ -26,6 +27,8 @@ public:
 
   size_t GetWidth() const { return this->Width; }
   size_t GetHeight() const { return this->Height; }
+
+  virtual void PrintSelf(ostream &os, vtkIndent indent);
 
 protected:
   vtkCudaMemoryArray();
