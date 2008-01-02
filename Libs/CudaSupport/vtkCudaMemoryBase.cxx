@@ -17,3 +17,9 @@ vtkCudaMemoryBase::vtkCudaMemoryBase()
 {
   this->Type = vtkCudaMemoryBase::Undefined;
 }
+
+void vtkCudaMemoryBase::PrintSelf (ostream &os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os, indent);
+  os << "Size = " << this->GetSize();  
+}

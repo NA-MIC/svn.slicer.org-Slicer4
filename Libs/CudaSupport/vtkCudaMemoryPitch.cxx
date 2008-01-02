@@ -2,10 +2,11 @@
 #include "cuda_runtime_api.h"
 #include "vtkCudaBase.h"
 
-vtkCudaMemoryPitch* vtkCudaMemoryPitch::New()
-{
-  return new vtkCudaMemoryPitch();
-}
+#include "vtkObjectFactory.h"
+
+vtkCxxRevisionMacro(vtkCudaMemoryPitch, "$Revision: 1.0 $");
+vtkStandardNewMacro(vtkCudaMemoryPitch);
+
 vtkCudaMemoryPitch::vtkCudaMemoryPitch()
 {
   this->Type = vtkCudaMemoryBase::PitchMemory;
@@ -31,7 +32,7 @@ void* vtkCudaMemoryPitch::AllocatePitchBytes(size_t width, size_t height, size_t
 
 void vtkCudaMemoryPitch::Free()
 {  
-  this->SuperClass::Free();
+  this->Superclass::Free();
   this->Pitch = 0;
 }
 
@@ -39,4 +40,12 @@ void vtkCudaMemoryPitch::Free()
 void vtkCudaMemoryPitch::MemSet(int value)
 {
   cudaMemset2D(this->MemPointer, this->Pitch, value, this->Width, this->Height);  
+}
+
+void vtkCudaMemoryPitch::PrintSelf(ostream &os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os, indent);
+  os << " Width: "<< this->GetWidth() << 
+  " Height: " << this->GetHeight() <<
+  " Pitch: " << this->GetPitch();
 }

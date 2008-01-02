@@ -1,5 +1,9 @@
 PROJECT(VolumeRenderingCudaModule)
-OPTION(VOLUMERENDERINGCUDAMODULE "Would you like to build Volume Rendering with CUDA support" OFF)
+
+## ONLY BUILD THIS IF YOU WANT CUDA SUPPORT TO BE ENABLED
+IF(CUDA_SUPPORT_ENABLED)
+
+OPTION(VOLUMERENDERINGCUDAMODULE "Would you like to build Volume Rendering with CUDA support" ON)
 if(VOLUMERENDERINGCUDAMODULE)
 
 INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
@@ -79,16 +83,7 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   vtkImagingTCL
   vtkFilteringTCL
   vtkIOTCL
-  ITKAlgorithms
-  ITKNumerics 
-  ITKCommon
-  ITKBasicFilters
-  ITKNumerics
-  ITKStatistics
-  ITKBasicFilters
-  ITKIO
-  ITKDICOMParser
-  ${KWWidgets_LIBRARIES} 
+  ${KWWidgets_LIBRARIES}
   ${CUDA_TARGET_LINK}
   ${VolumeRenderingCudaModule_CudaLibrary}
   ${CudaSupport}
@@ -156,3 +151,4 @@ CONFIGURE_FILE(
   COPYONLY
 )
 ENDIF(VOLUMERENDERINGCUDAMODULE)
+ENDIF(CUDA_SUPPORT_ENABLED)

@@ -5,9 +5,10 @@
 
 class vtkCudaEvent;
 
-class VTK_CUDASUPPORT_EXPORT vtkCudaStream
+class VTK_CUDASUPPORT_EXPORT vtkCudaStream : public vtkObject
 {
-  public:
+  vtkTypeRevisionMacro(vtkCudaStream, vtkObject);
+public:
   static vtkCudaStream* New();
   //BTX
   vtkCudaBase::State e();

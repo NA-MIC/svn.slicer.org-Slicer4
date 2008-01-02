@@ -3,11 +3,10 @@
 #include "vtkCudaBase.h"
 
 #include "cuda_runtime_api.h"
+#include "vtkObjectFactory.h"
 
-vtkCudaEvent* vtkCudaEvent::New()
-{
-  return new vtkCudaEvent();  
-}
+vtkCxxRevisionMacro(vtkCudaEvent, "$Revision: 1.0 $");
+vtkStandardNewMacro(vtkCudaEvent);
 
 vtkCudaEvent::vtkCudaEvent()
 {
@@ -19,10 +18,15 @@ vtkCudaEvent::~vtkCudaEvent()
   cudaEventDestroy(this->Event);
 }
 
+void vtkCudaEvent::Record()
+{
+  cudaEventRecord(this->Event, 0);  
+}
+
 void vtkCudaEvent::Record(vtkCudaStream* stream)
 {
   if (stream == NULL)
-   cudaEventRecord(this->Event, 0);
+   this->Record();
   else
    cudaEventRecord(this->Event, stream->GetStream());
 }
@@ -56,4 +60,10 @@ float vtkCudaEvent::ElapsedTime(vtkCudaEvent* otherEvent)
   float elapsedTime = 0.0;
   cudaEventElapsedTime(&elapsedTime, this->Event, otherEvent->GetEvent());
   return elapsedTime;
+}
+
+void vtkCudaEvent::PrintSelf(ostream& os, vtkIndent indent)
+{
+  this->Superclass::PrintSelf(os, indent);
+    
 }

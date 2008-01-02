@@ -2,18 +2,10 @@
 #include "cuda_runtime_api.h"
 #include "vtkCudaMemoryArray.h"
 
+#include "vtkObjectFactory.h"
+
 vtkCxxRevisionMacro(vtkCudaDevice, "$Revision: 1.6 $");
-
-//----------------------------------------------------------------------------
-// Needed when we don't use the vtkStandardNewMacro.
-vtkInstantiatorNewMacro(vtkCudaDevice);
-
-vtkCudaDevice* vtkCudaDevice::New()
-{
-    /// HACK
-    return new vtkCudaDevice();
-}
-
+vtkStandardNewMacro(vtkCudaDevice);
 
 vtkCudaDevice::vtkCudaDevice()
 {
@@ -65,5 +57,19 @@ void vtkCudaDevice::ExitThread()
 
 void vtkCudaDevice::PrintSelf(ostream& os, vtkIndent indent)
 {
-  os << this->GetName();
+  this->Superclass::PrintSelf(os, indent);
+  os << "Device Name = " << this->GetName() << 
+     "DeviceNumber = " << this->GetDeviceNumber() <<
+     "Version = " << this->GetMajor() << "." << this->GetMinor() <<
+     "Memory: Global = " << this->GetTotalGlobalMem() <<
+      " Shared Per Block = " << this->GetSharedMemPerBlock() <<
+     " Regisers Per Block = " << this->GetRegsPerBlock() << 
+     " Wrap Size " << this->GetWrapSize() <<
+     " Pitch Size = " << this->GetMemPitch() <<
+     " Threads Per Block = " << this->GetMaxThreadsPerBlock() <<
+     " Max Threads Dimension = " << this->GetMaxThreadsDim()[0] << "x" << this->GetMaxThreadsDim()[1] << "x" << this->GetMaxThreadsDim()[2] <<
+     " Max Grid Size = " << this->GetMaxGridSize()[0] << "x" << this->GetMaxGridSize()[1] << "x" << this->GetMaxGridSize()[2] <<
+     " Total Constant Memory = " << this->GetTotalConstMem() << 
+     " Clock Rate = " << this->GetClockRate() << "kHz" << 
+     " Texture Alignment = " << this->GetTextureAlignment();
 }

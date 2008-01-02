@@ -3,10 +3,10 @@
 
 #include "vtkCudaEvent.h"
 
-vtkCudaStream* vtkCudaStream::New()
-{
-  return new vtkCudaStream();  
-}
+#include "vtkObjectFactory.h"
+
+vtkCxxRevisionMacro(vtkCudaStream, "$Revision: 1.0 $");
+vtkStandardNewMacro(vtkCudaStream);
 
 vtkCudaStream::vtkCudaStream()
 {

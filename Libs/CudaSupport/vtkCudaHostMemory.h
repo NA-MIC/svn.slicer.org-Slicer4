@@ -11,12 +11,15 @@
  */
 class VTK_CUDASUPPORT_EXPORT  vtkCudaHostMemory : public vtkCudaMemory
 {
+  vtkTypeRevisionMacro(vtkCudaHostMemory, vtkCudaMemory);
 public:
   static vtkCudaHostMemory* New();
 
   virtual void* AllocateBytes(size_t count);
   virtual void Free();
   virtual void MemSet(int value); 
+
+  void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
   vtkCudaHostMemory();

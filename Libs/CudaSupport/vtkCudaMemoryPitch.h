@@ -5,13 +5,10 @@
 
 class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryPitch : public vtkCudaMemory
 {
+  vtkTypeRevisionMacro(vtkCudaMemoryPitch, vtkCudaMemory);
 public:
-  //BTX
-  typedef vtkCudaMemory SuperClass;
-  //ETX
   static vtkCudaMemoryPitch* New();
-
-
+  
   void* AllocatePitchBytes(size_t width, size_t height, size_t typeSize);
     virtual void Free();
     
@@ -25,10 +22,10 @@ public:
   size_t GetWidth() const { return this->Width; } 
   size_t GetHeight() const { return this->Height; }
 
-//TODO make protected
-  virtual ~vtkCudaMemoryPitch();
+  virtual void PrintSelf (ostream &os, vtkIndent indent);
 protected:
   vtkCudaMemoryPitch();
+  virtual ~vtkCudaMemoryPitch();
   vtkCudaMemoryPitch(const vtkCudaMemoryPitch&);
   vtkCudaMemoryPitch& operator=(const vtkCudaMemoryPitch&);
 
