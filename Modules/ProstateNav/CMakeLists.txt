@@ -11,7 +11,6 @@ SET(ProstateNav_SRCS
   # module
   vtkProstateNavLogic.cxx
   vtkProstateNavGUI.cxx
-  vtkProstateNavDataStream.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavConfigurationStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavScanControlStep.cxx
@@ -19,6 +18,13 @@ SET(ProstateNav_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavTargetingStep.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkProstateNavManualControlStep.cxx
   )
+
+IF(USE_NAVITRACK)
+  SET(ProstateNav_SRCS
+    ${ProstateNav_SRCS}
+    vtkProstateNavDataStream.cxx
+    )
+ENDIF(USE_NAVITRACK)
 
 #
 # Include dirs

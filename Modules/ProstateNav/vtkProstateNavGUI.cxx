@@ -791,7 +791,7 @@ void vtkProstateNavGUI::Init()
 {
     this->DataManager->SetMRMLScene(this->GetMRMLScene());
     //   this->LocatorModelID = std::string(this->DataManager->RegisterStream(0));
-    this->LocatorModelID_new = std::string(this->DataManager->RegisterStream_new(0));
+    //this->LocatorModelID_new = std::string(this->DataManager->RegisterStream_new(0));
     
 }
 

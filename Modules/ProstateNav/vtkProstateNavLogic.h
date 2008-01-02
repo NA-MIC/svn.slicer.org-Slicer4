@@ -31,15 +31,7 @@
 #include "vtkMRMLFiducialListNode.h"
 #include "vtkMRMLSliceNode.h"
 
-
-// This will be removed.
-#ifndef USE_NAVITRACK
-#define USE_NAVITRACK
-#endif
-
 #ifdef USE_NAVITRACK
-  #include "vtkIGTOpenTrackerStream2.h"
-  #include "vtkIGTOpenTrackerStream.h"
   #include "vtkProstateNavDataStream.h"
 #endif
 
@@ -142,8 +134,8 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerModuleLogic
   int  ScanStop();
   
   //BTX
-  Image* ReadCalibrationImage(const char* filename, int* width, int* height,
-                              std::vector<float>& position, std::vector<float>& orientation);
+  //Image* ReadCalibrationImage(const char* filename, int* width, int* height,
+  //                            std::vector<float>& position, std::vector<float>& orientation);
   //ETX
   
   int WorkPhaseStringToID(const char* string);
@@ -201,8 +193,6 @@ class VTK_PROSTATENAV_EXPORT vtkProstateNavLogic : public vtkSlicerModuleLogic
   int   ScannerWorkPhase;
   
 #ifdef USE_NAVITRACK
-  vtkIGTOpenTrackerStream2 *OpenTrackerStream2;
-  //vtkIGTOpenTrackerStream *OpenTrackerStream;
   vtkProstateNavDataStream *OpenTrackerStream;
 #endif
 

@@ -15,11 +15,6 @@
 #ifndef __vtkProstateNavGUI_h
 #define __vtkProstateNavGUI_h
 
-#ifndef USE_NAVITRACK
-#define USE_NAVITRACK
-#endif
-
-
 #ifdef WIN32
 #include "vtkProstateNavWin32Header.h"
 #endif
@@ -34,10 +29,6 @@
 
 #include <string>
 
-#ifdef USE_NAVITRACK
-#include "vtkIGTOpenTrackerStream.h"
-
-#endif
 #ifdef USE_IGSTK
 #include "vtkIGTIGSTKStream.h"
 #endif
