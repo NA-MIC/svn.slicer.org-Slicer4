@@ -3,6 +3,9 @@
 #include "cuda_runtime_api.h"
 #include "vtkSetGet.h"
 
+vtkCxxRevisionMacro(vtkCudaBase, "$Revision: 1.0 $");
+
+
 cudaError_t vtkCudaBase::GetLastError()
 {
   return cudaGetLastError();

@@ -2,6 +2,8 @@
 
 #include "vtkCudaMemory.h"
 
+vtkCxxRevisionMacro(vtkCudaMemoryBase, "$Revision: 1.0$");
+
 vtkCudaMemoryBase* vtkCudaMemoryBase::New()
 {
   return vtkCudaMemory::New();

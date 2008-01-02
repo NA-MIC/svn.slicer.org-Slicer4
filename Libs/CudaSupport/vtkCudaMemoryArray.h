@@ -4,7 +4,7 @@
 #include "vtkCudaMemoryBase.h"
 #include "channel_descriptor.h"
 
-class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaMemoryArray : public vtkCudaMemoryBase
+class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryArray : public vtkCudaMemoryBase
 {
 public:
   static vtkCudaMemoryArray* New();

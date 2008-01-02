@@ -11,9 +11,11 @@ class vtkCudaMemoryArray;
 class vtkCudaMemoryPitch;
 class vtkCudaHostMemory;
 
-class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaMemoryBase
+class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryBase : public vtkObject
 {
 public:
+ vtkTypeRevisionMacro(vtkCudaMemoryBase, vtkObject);
+
  static vtkCudaMemoryBase* New();
   
   /** @brief frees the memory (this must be called in each of the derived destructors) */

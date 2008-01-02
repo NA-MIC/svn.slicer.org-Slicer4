@@ -104,10 +104,10 @@ SET(dir_list
   ${VolumeRenderingCudaModule_BINARY_DIR}
   ${VolumeRenderingCudaModule_Init_SOURCE_DIR}
   ${VolumeRenderingCudaModule_Init_BINARY_DIR}
-  ${CudaSupportModule_SOURCE_DIR}
-  ${CudaSupportModule_BINARY_DIR}
-  ${CudaSupportModule_Init_SOURCE_DIR}
-  ${CudaSupportModule_Init_BINARY_DIR}
+  ${CudaSupport_SOURCE_DIR}
+  ${CudaSupport_BINARY_DIR}
+  ${CudaSupport_Init_SOURCE_DIR}
+  ${CudaSupport_Init_BINARY_DIR}
   ${LabelStatistics_SOURCE_DIR}       
   ${LabelStatistics_BINARY_DIR}
   ${LabelStatistics_Init_SOURCE_DIR}
@@ -193,7 +193,7 @@ IF(VOLUMERENDERINGCUDAMODULE)
  SET(VOLUMERENDERINGCUDAMODULE_LINK_LIB 
    VolumeRenderingCudaModule 
    VolumeRenderingCudaModule_CudaLibrary
-   CudaSupportModule)
+   CudaSupport)
 ELSE(VOLUMERENDERINGCUDAMODULE)
  ADD_DEFINITIONS(-DVOLUMERENDERINGCUDAMODULE_DEBUG)
 ENDIF(VOLUMERENDERINGCUDAMODULE)

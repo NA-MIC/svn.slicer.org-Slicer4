@@ -89,9 +89,9 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   ITKIO
   ITKDICOMParser
   ${KWWidgets_LIBRARIES} 
-  ${CudaSupport}
   ${CUDA_TARGET_LINK}
   ${VolumeRenderingCudaModule_CudaLibrary}
+  ${CudaSupport}
  )
 
 ADD_LIBRARY(VolumeRenderingCudaModule
@@ -110,7 +110,6 @@ TARGET_LINK_LIBRARIES(VolumeRenderingCudaModule
   ${VolumeRenderingCudaModule_LIBRARIES}
   ${VolumeRenderingCudaModule_CudaLibrary}
   )
-
 
 ##########################
 ## TO BE DELETED AGAIN ###

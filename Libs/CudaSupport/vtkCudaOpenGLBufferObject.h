@@ -4,7 +4,7 @@
 #include <GL/gl.h>
 #include "vtkCudaSupportModule.h"
 
-class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaOpenGLBufferObject
+class VTK_CUDASUPPORT_EXPORT vtkCudaOpenGLBufferObject
 {
   public:
   static vtkCudaOpenGLBufferObject* New();

@@ -1,11 +1,13 @@
 #ifndef VTKCUDABASE_H_
 #define VTKCUDABASE_H_
 
+#include "vtkObject.h"
 #include "driver_types.h"
 #include "vtkCudaSupportModule.h"
 
-class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaBase
+class VTK_CUDASUPPORT_EXPORT vtkCudaBase : public vtkObject
 {
+  vtkTypeRevisionMacro(vtkCudaBase, vtkObject);
   public:
   //BTX
   typedef enum {

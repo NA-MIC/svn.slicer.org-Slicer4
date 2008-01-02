@@ -4,22 +4,18 @@
 #include "vtkObject.h"
 #include "vtkCudaSupportModule.h"
 #include "vtkstd/vector"
+
 class vtkCudaDevice;
 
-
-class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaSupport : public vtkObject
+class VTK_CUDASUPPORT_EXPORT vtkCudaSupport : public vtkObject
 {
-        vtkTypeRevisionMacro(vtkCudaSupport, vtkObject);
-//BTX
-        typedef vtkObject SuperClass;
-//ETX
-        static vtkCudaSupport *New();
-        
-        int GetDeviceCount() const { return Devices.size(); }
+    vtkTypeRevisionMacro(vtkCudaSupport, vtkObject);
+    static vtkCudaSupport *New();
         
 //BTX
-    const vtkstd::vector<vtkCudaDevice*> GetDevices() { return Devices; }
-    vtkCudaDevice* operator[](int deviceNumber) const { return Devices[deviceNumber]; }
+    int GetDeviceCount() const { return this->Devices.size(); }        
+    const vtkstd::vector<vtkCudaDevice*> GetDevices() { return this->Devices; }
+    vtkCudaDevice* operator[](int deviceNumber) const { return this->Devices[deviceNumber]; }
 //ETX
 
         void PrintSelf(ostream& os, vtkIndent indent);

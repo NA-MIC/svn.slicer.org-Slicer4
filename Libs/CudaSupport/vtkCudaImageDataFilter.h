@@ -6,7 +6,7 @@
 
 class vtkCudaImageData;
 
-class VTK_CUDASUPPORTMODULE_EXPORT vtkCudaImageDataFilter : public vtkImageAlgorithm
+class VTK_CUDASUPPORT_EXPORT vtkCudaImageDataFilter : public vtkImageAlgorithm
 {
 public:
   vtkTypeRevisionMacro(vtkCudaImageDataFilter, vtkImageAlgorithm);

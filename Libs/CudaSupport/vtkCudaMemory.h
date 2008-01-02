@@ -3,7 +3,7 @@
 
 #include "vtkCudaMemoryBase.h"
 
-class VTK_CUDASUPPORTMODULE_EXPORT  vtkCudaMemory : public vtkCudaMemoryBase
+class VTK_CUDASUPPORT_EXPORT  vtkCudaMemory : public vtkCudaMemoryBase
 {
 public:
   static  vtkCudaMemory* New();

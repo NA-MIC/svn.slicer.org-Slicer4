@@ -1,12 +1,10 @@
 #include "vtkCudaSupport.h"
 #include "vtkCudaDevice.h"
 
-#include "vtkVolumeRenderingCudaFactory.h"
-
 #include <cutil.h>
 #include <cuda_runtime_api.h>
 
-vtkCxxRevisionMacro(vtkCudaSupport, "$Revision: 1.6 $");
+vtkCxxRevisionMacro(vtkCudaSupport, "$Revision: 1.6$");
 
 //----------------------------------------------------------------------------
 // Needed when we don't use the vtkStandardNewMacro.
