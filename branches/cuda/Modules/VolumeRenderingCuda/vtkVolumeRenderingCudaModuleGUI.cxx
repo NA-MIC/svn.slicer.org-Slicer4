@@ -17,7 +17,7 @@
 #include "vtkKWTypeChooserBox.h"
 #include "vtkKWMatrixWidget.h"
 
-
+#include "CUDA_renderAlgo.h"
 
 /// TEMPORARY
 #include <stdio.h>
@@ -142,13 +142,36 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     this->InputResolutionMatrix->SetRestrictElementValueToInteger();
     this->InputResolutionMatrix->SetNumberOfColumns(4);
     this->InputResolutionMatrix->SetNumberOfRows(1);
-    this->InputResolutionMatrix->SetElementValueAsInt(0,0,256);
-    this->InputResolutionMatrix->SetElementValueAsInt(0,1,256);
+    this->InputResolutionMatrix->SetElementValueAsInt(0,0,128);
+    this->InputResolutionMatrix->SetElementValueAsInt(0,1,128);
     this->InputResolutionMatrix->SetElementValueAsInt(0,2,1);    
     this->InputResolutionMatrix->SetElementValueAsInt(0,3,4);
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->InputResolutionMatrix->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
   
+  
+  /// CameraPosition
+    this->CameraPosition = vtkKWMatrixWidget::New();
+    this->CameraPosition->SetParent(loadSaveDataFrame->GetFrame());
+    this->CameraPosition->Create();
+    this->CameraPosition->SetRestrictElementValueToDouble();
+    this->CameraPosition->SetNumberOfColumns(3);
+    this->CameraPosition->SetNumberOfRows(3);
+    this->CameraPosition->SetElementValueAsDouble(0,0, 10);
+    this->CameraPosition->SetElementValueAsDouble(0,1, 10);
+    this->CameraPosition->SetElementValueAsDouble(0,2, 10);
+    
+    this->CameraPosition->SetElementValueAsDouble(1,0, 0);
+    this->CameraPosition->SetElementValueAsDouble(1,1, 0);
+    this->CameraPosition->SetElementValueAsDouble(1,2, 0);
+    
+    this->CameraPosition->SetElementValueAsDouble(2,0, 0);
+    this->CameraPosition->SetElementValueAsDouble(2,1, 1);
+    this->CameraPosition->SetElementValueAsDouble(2,2, 0);
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->CameraPosition->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
+        
+        
     ////Testing Pushbutton
     //this->PB_Testing= vtkKWPushButton::New();
     //this->PB_Testing->SetParent(loadSaveDataFrame->GetFrame());
@@ -310,13 +333,15 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
      try {
        cerr << "ALLOCATE" << endl;  
      //this->ImageData->SetScalarType(this->InputTypeChooser->GetSelectedType());
-     this->ImageData->SetExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0), 
-         0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 
+     this->ImageData->SetExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0) - 1, 
+         0, this->InputResolutionMatrix->GetElementValueAsInt(0,1) - 1, 
          0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
      this->ImageData->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
      this->ImageData->SetScalarTypeToUnsignedChar();
      this->ImageData->AllocateScalars();
      
+     this->RenderWithCUDA("/projects/igtdev/bensch/svn/volrenSample/heart256.raw", 256, 256, 256);
+     /*
       cerr << "READ" << endl;
        FILE *fp;
       fp=fopen("/projects/igtdev/bensch/svn/volrenSample/output.raw","r");
@@ -326,8 +351,9 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         this->InputResolutionMatrix->GetElementValueAsInt(0,2) * 
         this->InputResolutionMatrix->GetElementValueAsInt(0,3), fp);
       fclose(fp);
-      this->ImageViewer->SetInput(this->ImageData);
       
+      */
+      this->ImageViewer->SetInput(this->ImageData);
       cerr << "FINISHED" << endl;
      }
      catch (...)
@@ -336,6 +362,69 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
      }
      this->ImageViewer->Render();
    }
+}
+
+
+void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int inX, int inY, int inZ)
+{  
+  int outX = this->InputResolutionMatrix->GetElementValueAsInt(0,0);
+  int outY = this->InputResolutionMatrix->GetElementValueAsInt(0,1);
+  
+
+  printf("Input '%s' rendered to 'output.raw' with resolution of %dx%d\n", inputFile, outX, outY);
+  
+  unsigned char* inputBuffer=(unsigned char*)malloc(inX*inY*inZ*sizeof(unsigned char));
+  unsigned char* outputBuffer;
+
+  FILE *fp;
+  fp=fopen(inputFile,"r");
+  fread(inputBuffer, sizeof(unsigned char), inX*inY*inZ, fp);
+  fclose(fp);
+
+  // Setting transformation matrix. This matrix will be used to do rotation and translation on ray tracing.
+
+  float color[6]={255,255,255,1,1,1};
+  float minmax[6]={0,255,0,255,0,255};
+  float lightVec[3]={0, 0, 1};
+  float rotationMatrix[4][4]={{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
+
+  // Initialization. Prepare and allocate GPU memory to accomodate 3D data and Result image.
+
+ CUDArenderAlgo_init(inX, inY, inZ, outX,outY);
+  cerr << "Initialization.\n";
+
+  // Load 3D data into GPU memory.
+
+  CUDArenderAlgo_loadData(inputBuffer, inX, inY, inZ);
+  cerr << "Load data from CPU to GPU.\n";
+  
+  // Do rendering. 
+ CUDArenderAlgo_doRender((float*)rotationMatrix, color, minmax, lightVec, 
+        inX, inY, inZ,    //3D data size
+        outX, outY,     //result image size
+        0,0,0,          //translation of data in x,y,z direction
+        1, 1, 1,        //voxel dimension
+        90, 255,        //min and max threshold
+        -100);          //slicing distance from center of 3D data
+        
+  cerr << "Volume rendering.\n";
+
+  // Get the resulted image.
+
+  CUDArenderAlgo_getResult((unsigned char**)&outputBuffer, outX,outY);
+
+  cerr << "Copy result from GPU to CPU.\n";
+
+  memcpy(this->ImageData->GetScalarPointer(), outputBuffer,
+      sizeof(unsigned char) *
+        this->InputResolutionMatrix->GetElementValueAsInt(0,0) *
+        this->InputResolutionMatrix->GetElementValueAsInt(0,1) *
+        this->InputResolutionMatrix->GetElementValueAsInt(0,2) * 
+        this->InputResolutionMatrix->GetElementValueAsInt(0,3));
+        
+  // Free allocated GPU memory.
+  CUDArenderAlgo_delete();
+  free(inputBuffer);
 }
 
 
