@@ -10,7 +10,10 @@ class vtkVolumeCudaMapper;
 class vtkVolume;
 class vtkPNGReader;
 class vtkImageReader;
+class vtkImageData;
+
 class vtkImageViewer;
+
 
 class vtkKWWidget;
 class vtkKWTypeChooserBox;
@@ -121,9 +124,12 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkImageReader* ImageReader;
   vtkImageViewer* ImageViewer;
   vtkPNGReader* PNGReader;
+  vtkImageData*  ImageData;
   
   vtkKWTypeChooserBox*   InputTypeChooser;
   vtkKWMatrixWidget* InputResolutionMatrix;
+  
+  vtkKWMatrixWidget* CameraPosition; // position, target and up vector
 };
 
 #endif /*VTKSLICERVOLUMERENDERINGCUDA_H_*/
