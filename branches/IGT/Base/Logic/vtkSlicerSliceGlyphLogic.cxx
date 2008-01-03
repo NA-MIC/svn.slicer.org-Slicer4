@@ -132,15 +132,9 @@ vtkSlicerSliceGlyphLogic::~vtkSlicerSliceGlyphLogic()
     {
     this->DWIExtractComponent->Delete();
     }
-#ifdef USE_TEEM
   if (this->DTIMathematics)
     {
     this->DTIMathematics->Delete();
-    }
-#endif
-  if (this->LookupTable)
-    {
-    this->LookupTable->Delete();
     }
   if (this->AssignAttributeTensorsFromScalars)
     {
@@ -278,10 +272,8 @@ void vtkSlicerSliceGlyphLogic::UpdateNodeReferences ()
         displayNode->SetAndObserveColorNodeID(propNode->GetID());
         }
 
-      if (isLabelMap)
-        {
-        displayNode->SetDefaultColorMap(isLabelMap);
-        }
+      displayNode->SetDefaultColorMap();
+        
       this->VolumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
       displayNode->Delete();
       }
@@ -317,6 +309,9 @@ void vtkSlicerSliceGlyphLogic::UpdatePipeline()
 
     if ( this->GetVolumeNode()->IsA("vtkMRMLDiffusionTensorVolumeNode") )
     {
+      // TODO: return for now since it crashes
+        return;
+
       imageData->PrintSelf(std::cout,indent);
 
       vtkErrorMacro("Starting interchange and reslice pipeline");
@@ -447,7 +442,7 @@ void vtkSlicerSliceGlyphLogic::ScalarVolumeNodeUpdateTransforms()
     labelMap = 0;
     }
 
-  vtkMRMLVolumeDisplayNode *scalarVolumeDisplayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
+  vtkMRMLScalarVolumeDisplayNode *scalarVolumeDisplayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
 
   if (scalarVolumeDisplayNode)
     {
@@ -474,7 +469,7 @@ void vtkSlicerSliceGlyphLogic::VectorVolumeNodeUpdateTransforms()
 
   if (vectorVolumeDisplayNode)
     {
-    interpolate = vectorVolumeDisplayNode->GetInterpolate();
+    //interpolate = vectorVolumeDisplayNode->GetInterpolate();
     }
 
 //  this->VectorSlicePipeline(vectorVolumeNode->GetImageData(), interpolate);
@@ -535,12 +530,10 @@ void vtkSlicerSliceGlyphLogic::DiffusionTensorVolumeNodeUpdateTransforms()
     {
      inVol = this->VolumeNode->GetImageData();
      this->DTIMathematics->SetInput(0,inVol);
-     this->DTIMathematics->SetInput(1,inVol);
     }
   else
     {
     this->DTIMathematics->SetInput(0,NULL);
-    this->DTIMathematics->SetInput(1,NULL);
     }
 
   vtkMRMLDiffusionTensorVolumeDisplayNode *dtiVolumeDisplayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);

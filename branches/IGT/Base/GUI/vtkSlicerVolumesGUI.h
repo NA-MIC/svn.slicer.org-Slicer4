@@ -17,6 +17,7 @@
 #include "vtkSlicerDiffusionWeightedVolumeDisplayWidget.h"
 #include "vtkSlicerDiffusionTensorVolumeDisplayWidget.h"
 #include "vtkSlicerScalarVolumeDisplayWidget.h"
+#include "vtkSlicerLabelMapVolumeDisplayWidget.h"
 
 #include "vtkSlicerVolumeHeaderWidget.h"
 
@@ -57,6 +58,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     vtkGetObjectMacro (SaveFrame, vtkSlicerModuleCollapsibleFrame );
 
     vtkGetObjectMacro ( VolumeDisplayWidget, vtkSlicerVolumeDisplayWidget );
+    vtkGetObjectMacro ( VolumeSelectorWidget, vtkSlicerNodeSelectorWidget );
 
     // Description:
     // API for setting VolumeNode, VolumeLogic and
@@ -127,6 +129,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     vtkSlicerModuleCollapsibleFrame *OptionFrame;
     vtkSlicerModuleCollapsibleFrame *SaveFrame;
 
+    vtkKWFrame *LabelMapDisplayFrame;
     vtkKWFrame *ScalarDisplayFrame;
     vtkKWFrame *DWIDisplayFrame;
     vtkKWFrame *DTIDisplayFrame;
@@ -135,6 +138,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerVolumesGUI : public vtkSlicerModuleGUI
     vtkSlicerNodeSelectorWidget* VolumeSelectorWidget;
     vtkKWLoadSaveButton *SaveVolumeButton;
     vtkSlicerVolumeDisplayWidget *VolumeDisplayWidget;
+    vtkSlicerLabelMapVolumeDisplayWidget *labelVDW;
     vtkSlicerScalarVolumeDisplayWidget *scalarVDW;
     vtkSlicerDiffusionWeightedVolumeDisplayWidget *dwiVDW;
     vtkSlicerDiffusionTensorVolumeDisplayWidget *dtiVDW;

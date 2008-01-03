@@ -3,7 +3,9 @@
 #include <string>
 
 #include "vtkMRMLScene.h"
+#include "vtkSlicerColorLogic.h"
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
+#include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentMRMLManager.h"
 #include "vtkMRMLEMSSegmenterNode.h"
@@ -23,6 +25,8 @@
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
 #include "vtkImageData.h"
 
+// does not acctually read an image from disk, this is intended for
+// creating an image that you will later want to write to
 vtkMRMLVolumeNode*
 AddNewScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
                             const char* filename, 
@@ -30,7 +34,6 @@ AddNewScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
                             int labelMap, 
                             const char* volname)
 {
-  vtkMRMLVolumeDisplayNode *displayNode  = vtkMRMLVolumeDisplayNode::New();
   vtkMRMLScalarVolumeNode  *scalarNode   = vtkMRMLScalarVolumeNode::New();
   scalarNode->SetLabelMap(labelMap);
   vtkMRMLVolumeNode        *volumeNode   = scalarNode;
@@ -54,17 +57,10 @@ AddNewScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
     }
 
   // add nodes to scene
-  volumeNode->SetScene(mrmlScene);  
-  storageNode->SetScene(mrmlScene); 
-  displayNode->SetScene(mrmlScene); 
-
-  mrmlScene->AddNode(storageNode);  
-  mrmlScene->AddNode(displayNode);  
+  mrmlScene->AddNodeNoNotify(storageNode);  
+  mrmlScene->AddNodeNoNotify(volumeNode);
 
   volumeNode->SetStorageNodeID(storageNode->GetID());
-  volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
-
-  mrmlScene->AddNode(volumeNode);
 
   if (scalarNode)
     {
@@ -73,10 +69,6 @@ AddNewScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
   if (storageNode)
     {
     storageNode->Delete();
-    }
-  if (displayNode)
-    {
-    displayNode->Delete();
     }
   return volumeNode;    
 }
@@ -89,7 +81,7 @@ AddScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
                          const char* volname)
 {
   vtkMRMLVolumeNode        *volumeNode   = NULL;
-  vtkMRMLVolumeDisplayNode *displayNode  = NULL;
+  vtkMRMLScalarVolumeDisplayNode *displayNode  = NULL;
   vtkMRMLScalarVolumeNode  *scalarNode   = vtkMRMLScalarVolumeNode::New();
 
   // i/o mechanism
@@ -101,7 +93,7 @@ AddScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
   // try to read the image
   if (storageNode->ReadData(scalarNode))
     {
-    displayNode = vtkMRMLVolumeDisplayNode::New();
+    displayNode = vtkMRMLScalarVolumeDisplayNode::New();
     scalarNode->SetLabelMap(labelMap);
     volumeNode  = scalarNode;
     }
@@ -120,10 +112,6 @@ AddScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
       volumeNode->SetName(volname);
       }
 
-    volumeNode->SetScene(mrmlScene);  
-    storageNode->SetScene(mrmlScene); 
-    displayNode->SetScene(mrmlScene); 
-
     // set basic display info
     double range[2];
     volumeNode->GetImageData()->GetScalarRange(range);
@@ -131,16 +119,15 @@ AddScalarArchetypeVolume(vtkMRMLScene* mrmlScene,
     displayNode->SetUpperThreshold(range[1]);
     displayNode->SetWindow(range[1] - range[0]);
     displayNode->SetLevel(0.5 * (range[1] + range[0]) );
+    displayNode->SetAndObserveColorNodeID("vtkMRMLColorTableNodeGrey");
 
     // add nodes to scene
-    mrmlScene->AddNode(storageNode);  
-    mrmlScene->AddNode(displayNode);  
+    mrmlScene->AddNodeNoNotify(storageNode);  
+    mrmlScene->AddNodeNoNotify(displayNode);  
+    mrmlScene->AddNodeNoNotify(volumeNode);
 
     volumeNode->SetStorageNodeID(storageNode->GetID());
     volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
-
-    mrmlScene->AddNode(volumeNode);
-
     }
 
   scalarNode->Delete();
@@ -340,12 +327,19 @@ int main(int argc, char** argv)
   std::string resultStandardVolumeFileName = "";
   std::string generateEmptyMRMLSceneAndQuit = "";
   bool dontWriteResults = false;
+  bool dontUpdateIntermediateData = false;
+  std::string parametersMRMLNodeName = "";
+  std::vector<std::string> atlasVolumeFileNames;
+  std::string intermediateResultsDirectory = "";
+  bool disableCompression = false;
+  std::string resultMRMLSceneFileName = "";
 #endif
 
   bool useDefaultParametersNode = parametersMRMLNodeName.empty();
   bool useDefaultTarget         = targetVolumeFileNames.empty();
   bool useDefaultAtlas          = atlasVolumeFileNames.empty();
   bool useDefaultOutput         = resultVolumeFileName.empty();
+  bool writeIntermediateResults = !intermediateResultsDirectory.empty();
   bool segmentationSucceeded    = true;
 
   if (verbose) std::cerr << "Starting EMSegment Command Line." << std::endl;
@@ -378,6 +372,15 @@ int main(int argc, char** argv)
 
   //
   // make sure files exist
+  if (writeIntermediateResults &&
+      !vtksys::SystemTools::FileExists(intermediateResultsDirectory.c_str()))
+    {
+    std::cerr << "Error: intermediate results directory does not exist." 
+              << std::endl;
+    std::cerr << intermediateResultsDirectory << std::endl;      
+    exit(EXIT_FAILURE);
+    }
+
   if (!vtksys::SystemTools::FileExists(mrmlSceneFileName.c_str()))
     {
     std::cerr << "Error: MRML scene file does not exist." << std::endl;
@@ -423,6 +426,12 @@ int main(int argc, char** argv)
   vtkMRMLScene* mrmlScene = vtkMRMLScene::New();
   vtkMRMLScene::SetActiveScene(mrmlScene);
   mrmlScene->SetURL(mrmlSceneFileName.c_str());
+
+  vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New ( );
+  colorLogic->SetMRMLScene(mrmlScene);
+  colorLogic->AddDefaultColorNodes();
+  colorLogic->SetMRMLScene(NULL);
+  colorLogic->Delete();
 
   //
   // create an instance of vtkEMSegmentLogic and connect it with the
@@ -534,6 +543,11 @@ int main(int argc, char** argv)
       }
 
     //
+    // don't use manual sampling because the target images might change
+    // this is a hack; do better !!!
+    emMRMLManager->ChangeTreeNodeDistributionsFromManualSamplingToManual();
+
+    //
     // make sure the basic parameters are available
     if (!emMRMLManager->GetSegmenterNode())
       {
@@ -570,7 +584,10 @@ int main(int argc, char** argv)
 
         // create target node
         vtkMRMLEMSTargetNode* targetNode = vtkMRMLEMSTargetNode::New();
-        mrmlScene->AddNode(targetNode);        
+        mrmlScene->AddNodeNoNotify(targetNode);        
+
+        // remove default target node
+        mrmlScene->RemoveNode(emMRMLManager->GetTargetNode());
 
         // connect target node to segmenter
         emMRMLManager->GetSegmenterNode()->
@@ -670,13 +687,14 @@ int main(int argc, char** argv)
       }
     else
       {
-
       if (!emMRMLManager->GetAtlasNode())
         {
-        throw std::runtime_error("ERROR: parameters must already contain an atlas node if you wish to speficy atlas volumes.");
+        throw std::runtime_error("ERROR: parameters must already "
+                                 "contain an atlas node if you wish "
+                                 "to speficy atlas volumes.");
         }
       vtkMRMLEMSAtlasNode* oldAtlasNode = emMRMLManager->GetAtlasNode();
-        
+      
       try 
         {
         if (verbose) 
@@ -684,6 +702,8 @@ int main(int argc, char** argv)
 
         // create atlas node
         vtkMRMLEMSAtlasNode* atlasNode = vtkMRMLEMSAtlasNode::New();
+        atlasNode->SetNumberOfTrainingSamples
+          (oldAtlasNode->GetNumberOfTrainingSamples());
         mrmlScene->AddNode(atlasNode);        
 
         // connect atlas node to segmenter
@@ -741,6 +761,31 @@ int main(int argc, char** argv)
           throw std::runtime_error(ss.str());
           }
         }
+
+      //
+      // make sure the number of atlas volumes matches the expected
+      // value in the parameters
+      if (oldAtlasNode->GetNumberOfVolumes() !=
+          emMRMLManager->GetAtlasNode()->GetNumberOfVolumes())
+        {
+        vtkstd::stringstream ss;
+        ss << "ERROR: Number of atlas volumes (" << 
+          emMRMLManager->GetAtlasNode()->GetNumberOfVolumes()
+           << ") does not match expected value from parameters (" << 
+          oldAtlasNode->GetNumberOfVolumes() << ")";
+        throw std::runtime_error(ss.str());
+        }
+      else
+        {
+        if (verbose)
+          std::cerr << "Number of atlas volumes (" <<
+            emMRMLManager->GetAtlasNode()->GetNumberOfVolumes()
+                    << ") matches expected value from parameters (" <<
+            oldAtlasNode->GetNumberOfVolumes() << ")" << std::endl;
+        }
+
+      // remove default atlas node
+      mrmlScene->RemoveNode(oldAtlasNode);
       }
 
     //
@@ -764,9 +809,21 @@ int main(int argc, char** argv)
         {
         // create volume node
         if (verbose) std::cerr << "Creating output volume node...";
+
+        //
+        // Set up the filename so that a relative filename will be
+        // relative to the current directory, not relative to the mrml
+        // scene's path.
+        vtkstd::string absolutePath = resultVolumeFileName;
+        if (!vtksys::SystemTools::FileIsFullPath(resultVolumeFileName.c_str()))
+          {
+          absolutePath = vtksys::SystemTools::
+            CollapseFullPath(resultVolumeFileName.c_str());
+          }
+
         vtkMRMLVolumeNode* outputNode = 
           AddNewScalarArchetypeVolume(mrmlScene,
-                                      resultVolumeFileName.c_str(),
+                                      absolutePath.c_str(),
                                       true,
                                       true,
                                       NULL);
@@ -797,6 +854,12 @@ int main(int argc, char** argv)
                 << (disableMultithreading ? "disabled." : "enabled.")
                 << std::endl;
 
+    emMRMLManager->SetUpdateIntermediateData(!dontUpdateIntermediateData);
+    if (verbose) 
+      std::cerr << "Update intermediate data: " 
+                << (dontUpdateIntermediateData ? "disabled." : "enabled.")
+                << std::endl;
+
     int segmentationBoundaryMin[3];
     int segmentationBoundaryMax[3];
     emMRMLManager->GetSegmentationBoundaryMin(segmentationBoundaryMin);
@@ -809,6 +872,23 @@ int main(int argc, char** argv)
       << segmentationBoundaryMax[0] << ", "
       << segmentationBoundaryMax[1] << ", "
       << segmentationBoundaryMax[2] << "]" << std::endl;
+    
+    //
+    // set intermediate results directory
+    if (writeIntermediateResults)
+      {
+      emMRMLManager->SetSaveIntermediateResults(true);
+      vtkstd::string absolutePath = vtksys::SystemTools::
+        CollapseFullPath(intermediateResultsDirectory.c_str());
+      emMRMLManager->
+        SetSaveWorkingDirectory(absolutePath.c_str());
+      std::cerr << "Intermediate results will be written to: "
+                << absolutePath << std::endl;
+      }
+    else
+      {
+      emMRMLManager->SetSaveIntermediateResults(false);
+      }
 
     //
     // check parameters' node structure
@@ -844,13 +924,16 @@ int main(int argc, char** argv)
     segmentationSucceeded = false;
     }
 
-  if (!dontWriteResults)
+  if (segmentationSucceeded && !dontWriteResults)
     {
     //
     // save the results
-    if (verbose) std::cerr << "Saving segmentation result...";
+    if (verbose) std::cerr << "Saving segmentation results..." << std::endl;
     try
       {
+      vtkstd::cerr << "Writing segmentation result: " << 
+        emMRMLManager->GetOutputVolumeNode()->GetStorageNode()->GetFileName()
+                   << vtkstd::endl;
       emMRMLManager->GetOutputVolumeNode()->GetStorageNode()->
         SetUseCompression(!disableCompression);
       emMRMLManager->GetOutputVolumeNode()->GetStorageNode()->
@@ -877,7 +960,7 @@ int main(int argc, char** argv)
 
   //
   // compare results to standard image
-  if (!resultStandardVolumeFileName.empty())
+  if (segmentationSucceeded && !resultStandardVolumeFileName.empty())
     {
     if (verbose) 
       cerr << "Comparing results with standard..." << std::endl;
@@ -922,6 +1005,15 @@ int main(int argc, char** argv)
       std::cerr << "Unknown error detected.  Comparison failed." << std::endl;
       segmentationSucceeded = false;
       }
+    }
+
+  //
+  // write the final mrml scene file
+  if (segmentationSucceeded && !resultMRMLSceneFileName.empty())
+    {
+    if (verbose) std::cerr << "Writing mrml scene...";
+    mrmlScene->Commit(resultMRMLSceneFileName.c_str());
+    if (verbose) std::cerr << "DONE" << std::endl;
     }
 
   //

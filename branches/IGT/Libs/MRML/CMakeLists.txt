@@ -27,6 +27,8 @@ SET(MRML_SRCS
         vtkMRMLVolumeArchetypeStorageNode.cxx
         vtkMRMLVolumeHeaderlessStorageNode.cxx
         vtkMRMLVolumeDisplayNode.cxx
+        vtkMRMLScalarVolumeDisplayNode.cxx
+        vtkMRMLLabelMapVolumeDisplayNode.cxx
         vtkMRMLVolumeGlyphDisplayNode.cxx
         vtkMRMLTransformableNode.cxx
         vtkMRMLTransformNode.cxx
@@ -39,6 +41,7 @@ SET(MRML_SRCS
         vtkMRMLInteractionNode.cxx
         vtkObserverManager.cxx
         vtkMRMLColorNode.cxx
+        vtkMRMLColorTableStorageNode.cxx
         vtkMRMLColorTableNode.cxx
         vtkMRMLProceduralColorNode.cxx
         vtkMRMLFreeSurferProceduralColorNode.cxx
@@ -54,6 +57,9 @@ SET(MRML_SRCS
         vtkMRMLVectorVolumeDisplayNode.cxx
         vtkMRMLFiberBundleNode.cxx
         vtkMRMLFiberBundleDisplayNode.cxx
+        vtkMRMLFiberBundleGlyphDisplayNode.cxx
+        vtkMRMLFiberBundleTubeDisplayNode.cxx
+        vtkMRMLFiberBundleLineDisplayNode.cxx
         vtkMRMLFiberBundleStorageNode.cxx
         vtkMRMLHierarchyNode.cxx
         vtkMRMLModelHierarchyNode.cxx
@@ -85,6 +91,7 @@ SET_SOURCE_FILES_PROPERTIES(
   vtkMRMLTransformNode.cxx
   vtkMRMLDisplayNode.cxx
   vtkMRMLDisplayableNode.cxx
+  vtkMRMLVolumeDisplayNode.cxx
   ABSTRACT
   )
 
@@ -119,7 +126,10 @@ ADD_LIBRARY(MRML
   ${MRML_SRCS} ${MRML_TCL_SRCS}
   )
 IF(BUILD_SHARED_LIBS)
-  INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} MRML)
+  INSTALL(TARGETS MRML
+      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(MRML
@@ -156,3 +166,6 @@ IF(BUILD_TESTING)
   SUBDIRS(Testing)
 ENDIF(BUILD_TESTING)
 
+FILE(GLOB __files1 "${MRML_SOURCE_DIR}/*.h")
+INSTALL(FILES ${__files1} DESTINATION include/MRML COMPONENT Development)
+INSTALL(FILES ${MRML_BINARY_DIR}/vtkMRMLConfigure.h DESTINATION include/MRML COMPONENT Development)

@@ -47,8 +47,8 @@ if { [itcl::find class EffectSWidget] == "" } {
     variable _cursorAnimationState 0
 
     # methods
-    method processEvent {} {}
-    method preProcessEvent {} {}
+    method processEvent {{caller ""} {event ""}} {}
+    method preProcessEvent {{caller ""} {event ""}} {}
     method positionCursor {} {}
     method createCursor {} {}
     method setCursor {imageData} { $o(cursorMapper) SetInput $imageData }
@@ -63,6 +63,8 @@ if { [itcl::find class EffectSWidget] == "" } {
     method tearDownOptions {} {}
     method previewOptions {} {}
     method applyOptions {} {}
+    method setMRMLDefaults {} {}
+    method updateGUIFromMRML {} {}
     method flashCursor { {repeat 1} {delay 50} } {}
     method animateCursor { {onOff "on"} } {}
     method setAnimationState { p } {}
@@ -88,13 +90,18 @@ itcl::body EffectSWidget::constructor {sliceGUI} {
 
   set _guiObserverTags ""
   lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-  foreach event "LeftButtonPressEvent LeftButtonReleaseEvent MouseMoveEvent EnterEvent LeaveEvent" {
+  foreach event "LeftButtonPressEvent LeftButtonReleaseEvent MouseMoveEvent KeyPressEvent EnterEvent LeaveEvent" {
     lappend _guiObserverTags \
-              [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent"]
+              [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI"]
   }
+
   set node [[$sliceGUI GetLogic] GetSliceNode]
   lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent"]
+  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent $node"]
+
+  set node [EditorGetParameterNode]
+  lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
+  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent $node"]
 }
 
 itcl::body EffectSWidget::destructor {} {
@@ -124,6 +131,9 @@ itcl::body EffectSWidget::destructor {} {
 
   if { [info command $_renderer] != "" } {
     foreach a $_cursorActors {
+      $_renderer RemoveActor2D $a
+    }
+    foreach a $_actors {
       $_renderer RemoveActor2D $a
     }
     [$sliceGUI GetSliceViewer] RequestRender
@@ -170,6 +180,12 @@ itcl::body EffectSWidget::createCursor {} {
 itcl::body EffectSWidget::positionCursor {} {
   set xyzw [$this rasToXY $_currentPosition]
   foreach {x y z w} $xyzw {}
+
+  if { $x == "nan" } {
+    puts "Bad cursor position in $this"
+    return
+  }
+
   set x [expr $x + 16]
   set y [expr $y - 32]
   foreach actor $_cursorActors {
@@ -228,8 +244,8 @@ itcl::body EffectSWidget::animateCursor { {onOff "on"} } {
   $this setAnimationState $p
 
   # force a render
-  #[$sliceGUI GetSliceViewer] RequestRender
-  [$sliceGUI GetSliceViewer] Render
+  [$sliceGUI GetSliceViewer] RequestRender
+  #[$sliceGUI GetSliceViewer] Render
 
   incr _cursorAnimationState
   set _cursorAnimationTag [after $animationDelay "$this animateCursor on"]
@@ -254,7 +270,7 @@ itcl::body EffectSWidget::setAnimationState { p } {
 # the superclass, otherwise returns 0 and the
 # subclass should do normal processing
 #
-itcl::body EffectSWidget::preProcessEvent { } {
+itcl::body EffectSWidget::preProcessEvent { {caller ""} {event ""} } {
 
   if { [info command $sliceGUI] == "" } {
     # the sliceGUI was deleted behind our back, so we need to 
@@ -270,6 +286,37 @@ itcl::body EffectSWidget::preProcessEvent { } {
     $this positionCursor
     [$sliceGUI GetSliceViewer] RequestRender
     return 1
+  }
+
+  #
+  # if the caller was the parameter node, invoke the subclass's 
+  # updateGUIFromMRML method which will copy the parameters into the 
+  # GUI and into the configuration options of the effect
+  #
+  if { $caller == [EditorGetParameterNode] } {
+    $this updateGUIFromMRML
+    return 1
+  }
+
+
+  set event [$sliceGUI GetCurrentGUIEvent] 
+
+  switch $event {
+    "KeyPressEvent" {
+      set key [$_interactor GetKeySym]
+      if { [lsearch "Escape" $key] != -1 } {
+        $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
+        $sliceGUI SetGUICommandAbortFlag 1
+        switch [$_interactor GetKeySym] {
+          "Escape" {
+            after idle ::EffectSWidget::RemoveAll
+            return 1
+          }
+        }
+      } else {
+        # puts "effect ignoring $key"
+      }
+    }
   }
 
   return 0
@@ -352,7 +399,7 @@ itcl::body EffectSWidget::preview {} {
 }
 
 
-itcl::body EffectSWidget::processEvent { } {
+itcl::body EffectSWidget::processEvent { {caller ""} {event ""} } {
   # to be overridden by subclass
   # - should include call to superclass preProcessEvent
   #   to handle 'friendly' interaction with other SWidgets

@@ -55,6 +55,7 @@ Version:   $Revision$
 #include "vtkStringArray.h"
 
 #include "itkNumericTraits.h"
+#include "itksys/DynamicLoader.hxx" 
 
 // Private implementaton of an std::map
 class ModuleWidgetMap : public std::map<std::string, vtkSmartPointer<vtkKWCoreWidget> > {};
@@ -280,7 +281,7 @@ void vtkCommandLineModuleGUI::AddGUIObservers ( )
       }
     else if (lsb)
       {
-      lsb->GetWidget()->AddObserver(vtkKWPushButton::InvokedEvent,
+      lsb->GetWidget()->GetLoadSaveDialog()->AddObserver (vtkKWTopLevel::WithdrawEvent,
                        (vtkCommand *) this->GUICallbackCommand);
       }
     else if (rbs)
@@ -378,7 +379,7 @@ void vtkCommandLineModuleGUI::RemoveGUIObservers ( )
       }
     else if (lsb)
       {
-      lsb->GetWidget()->RemoveObservers(vtkKWPushButton::InvokedEvent,
+      lsb->GetWidget()->GetLoadSaveDialog()->RemoveObservers (vtkKWTopLevel::WithdrawEvent,
                        (vtkCommand *) this->GUICallbackCommand);
       }
     else if (rbs)
@@ -442,6 +443,46 @@ void vtkCommandLineModuleGUI::ProcessGUIEvents ( vtkObject *caller,
     this->UpdateMRML();
     this->Logic->SetTemporaryDirectory( ((vtkSlicerApplication*)this->GetApplication())->GetTemporaryDirectory() );
 
+    // Lazy evaluation of module target
+    if (this->ModuleDescriptionObject.GetTarget() == "Unknown")
+      {
+      // What about python targets?
+      if (this->ModuleDescriptionObject.GetType() == "SharedObjectModule")
+        {
+        typedef int (*ModuleEntryPoint)(int argc, char* argv[]);
+        
+        itksys::DynamicLoader::LibraryHandle lib
+          = itksys::DynamicLoader::OpenLibrary(this->ModuleDescriptionObject.GetLocation().c_str());
+        if ( lib )
+          {
+          ModuleEntryPoint entryPoint
+            = (ModuleEntryPoint)itksys::DynamicLoader::GetSymbolAddress(lib, "ModuleEntryPoint");
+
+          if (entryPoint)
+            {
+            char entryPointAsText[256];
+            std::string entryPointAsString;
+            
+            sprintf(entryPointAsText, "%p", entryPoint);
+            entryPointAsString = std::string("slicer:") + entryPointAsText;
+            
+            this->ModuleDescriptionObject.SetTarget( entryPointAsString );
+            }
+          else
+            {
+            // can't find entry point, eject.
+            itksys::DynamicLoader::CloseLibrary(lib);
+
+            vtkErrorMacro(<< "Cannot find entry point for " << this->ModuleDescriptionObject.GetLocation() << "\nCannot run module." );
+            return;
+            }
+          }
+        }
+      }
+    // make sure the entry point is set on the node
+    this->GetCommandLineModuleNode()->GetModuleDescription()
+      .SetTarget( this->ModuleDescriptionObject.GetTarget() );
+    
     // apply
     this->Logic->Apply();
     }
@@ -1390,6 +1431,12 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         else //   "model"
           nodeClass = "vtkMRMLModelNode";
 
+        if ((*pit).GetMultiple() == "true" && (*pit).GetAggregate() == "true")
+          {
+          nodeClass = "vtkMRMLModelHierarchyNode";
+          tparameter->ShowHiddenOn();
+          }
+        
         tparameter->SetNodeClass(nodeClass.c_str(),
                                  NULL,
                                  NULL,
@@ -1415,6 +1462,12 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         else // "model"
           nodeClass = "vtkMRMLModelNode";
 
+        if ((*pit).GetMultiple() == "true" && (*pit).GetAggregate() == "true")
+          {
+          nodeClass = "vtkMRMLModelHierarchyNode";
+          tparameter->ShowHiddenOn();
+          }
+
         tparameter->SetNodeClass(nodeClass.c_str(),
                                  NULL,
                                  NULL,
@@ -1431,6 +1484,81 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         tparameter->SetReliefToFlat();
         tparameter->SetLabelText( (*pit).GetLabel().c_str());
         parameter = tparameter;
+        }
+      else if ((*pit).GetTag() == "table" && (*pit).GetChannel() == "input")
+        {
+        if ((*pit).GetHidden() != "true")
+          {
+          vtkSlicerNodeSelectorWidget *tparameter
+            = vtkSlicerNodeSelectorWidget::New();
+          
+          std::string nodeClass;
+          if((*pit).GetType() == "color")
+            nodeClass = "vtkMRMLColorNode";
+          else
+            {
+            vtkErrorMacro(<< "Only color tables are currently supported.");
+            }
+          // else 
+          //  nodeClass = "vtkMRMLTableNode";
+          
+          tparameter->SetNodeClass(nodeClass.c_str(),
+                                   NULL,
+                                   NULL,
+                                   (title + " Table").c_str());
+          tparameter->SetParent( parameterGroupFrame->GetFrame() );
+          tparameter->Create();
+          tparameter->SetMRMLScene(this->Logic->GetMRMLScene());
+          tparameter->UpdateMenu();
+          
+          tparameter->SetBorderWidth(2);
+          tparameter->SetReliefToFlat();
+          tparameter->SetLabelText( (*pit).GetLabel().c_str());
+          parameter = tparameter;
+          }
+        else
+          {
+          parameter = 0;
+          }
+        }
+      else if ((*pit).GetTag() == "table" && (*pit).GetChannel() == "output")
+        {
+        if ((*pit).GetHidden() != "true")
+          {
+          vtkSlicerNodeSelectorWidget *tparameter
+            = vtkSlicerNodeSelectorWidget::New();
+          
+          std::string nodeClass;
+          if((*pit).GetType() == "color")
+            nodeClass = "vtkMRMLColorNode";
+          else
+            {
+            vtkErrorMacro(<< "Only color tables are currently supported.");
+            }
+          // else 
+          //  nodeClass = "vtkMRMLTableNode";
+          
+          tparameter->SetNodeClass(nodeClass.c_str(),
+                                   NULL,
+                                   NULL,
+                                   (title + " Table").c_str());
+          tparameter->SetNewNodeEnabled(1);
+          tparameter->SetNoneEnabled(1);
+          // tparameter->SetNewNodeName((title+" output").c_str());
+          tparameter->SetParent( parameterGroupFrame->GetFrame() );
+          tparameter->Create();
+          tparameter->SetMRMLScene(this->Logic->GetMRMLScene());
+          tparameter->UpdateMenu();
+          
+          tparameter->SetBorderWidth(2);
+          tparameter->SetReliefToFlat();
+          tparameter->SetLabelText( (*pit).GetLabel().c_str());
+          parameter = tparameter;
+          }
+        else
+          {
+          parameter = 0;
+          }
         }
       else if ((*pit).GetTag() == "transform" && (*pit).GetChannel() == "input")
         {
@@ -1511,6 +1639,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         tparameter->SetLabelText( (*pit).GetLabel().c_str() );
         tparameter->GetWidget()->GetLoadSaveDialog()->ChooseDirectoryOn();
         tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialFileName( (*pit).GetDefault().c_str() );
+        tparameter->GetWidget()->SetText( (*pit).GetDefault().c_str() );
         parameter = tparameter;
         }
       else if ((*pit).GetTag() == "file")
@@ -1528,7 +1657,9 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
           }
         tparameter->Create();
         tparameter->SetLabelText( (*pit).GetLabel().c_str() );
-
+        tparameter->GetWidget()->SetText( (*pit).GetDefault().c_str() );
+        tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialFileName( (*pit).GetDefault().c_str() );
+        
         vtkSmartPointer<vtkStringArray> names = vtkStringArray::New();
         splitFilenames(&(*pit).GetDefault(), names);
         tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialSelectedFileNames( names );
@@ -1609,18 +1740,22 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         parameter = tparameter;
         }
 
-      // build the balloon help for the parameter
-      std::string parameterBalloonHelp = (*pit).GetDescription();
-      parameter->SetBalloonHelpString(parameterBalloonHelp.c_str());
+      // parameter is set iff hidden != true
+      if (parameter)
+        {
+        // build the balloon help for the parameter
+        std::string parameterBalloonHelp = (*pit).GetDescription();
+        parameter->SetBalloonHelpString(parameterBalloonHelp.c_str());
 
-      // pack the parameter. if the parameter has a separate label and
-      // widget, then pack both side by side.
-      app->Script ( "pack %s -side top -anchor ne -padx 2 -pady 2",
-                    parameter->GetWidgetName() );
+        // pack the parameter. if the parameter has a separate label and
+        // widget, then pack both side by side.
+        app->Script ( "pack %s -side top -anchor ne -padx 2 -pady 2",
+                      parameter->GetWidgetName() );
 
-      // Store the parameter widget in a SmartPointer
-      (*this->InternalWidgetMap)[(*pit).GetName()] = parameter;
-      parameter->Delete();
+        // Store the parameter widget in a SmartPointer
+        (*this->InternalWidgetMap)[(*pit).GetName()] = parameter;
+        parameter->Delete();
+        }
       }
     }
   

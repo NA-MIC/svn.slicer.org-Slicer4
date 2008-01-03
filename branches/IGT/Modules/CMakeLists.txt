@@ -11,10 +11,13 @@ SUBDIRS(
   EMSegment
   SlicerDaemon
   Editor
-  QueryAtlas
   Python
-  # Meshing
+  Meshing
   QdecModule
+  QueryAtlas
+  Tractography
+  VolumeRendering
+  Statistics   
 )
 
 

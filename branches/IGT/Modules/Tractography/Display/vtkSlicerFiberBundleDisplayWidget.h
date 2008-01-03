@@ -31,6 +31,8 @@
 #include "vtkKWCheckButtonWithLabel.h"
 #include "vtkKWScaleWithLabel.h"
 #include "vtkKWChangeColorButton.h"
+#include "vtkKWMenuButtonWithLabel.h"
+#include "vtkKWFrameWithLabel.h"
 
 #include "vtkMRMLFiberBundleNode.h"
 #include "vtkMRMLFiberBundleDisplayNode.h"
@@ -49,14 +51,6 @@ public:
   // Internally this method sets the FiberBundleNodeID and FiberBundleDisplayNodeID,
   // and sets up observers.
   void SetFiberBundleNode ( vtkMRMLFiberBundleNode *node );
-
-  // Description:
-  // Get MRML FiberBundleNodeID.
-  vtkGetStringMacro ( FiberBundleNodeID );
-  
-  // Description:
-  // Get MRML FiberBundleDisplayNodeID.
-  vtkGetStringMacro ( FiberBundleDisplayNodeID );
 
   // Description:
   // alternative method to propagate events generated in GUI to logic / mrml
@@ -84,14 +78,6 @@ public:
   virtual void RemoveWidgetObservers ( );
 
   // Description:
-  // Set MRML FiberBundleDisplayNodeID.
-  vtkSetStringMacro ( FiberBundleDisplayNodeID );
-  
-  // Description:
-  // Set MRML FiberBundleNodeID.
-  vtkSetStringMacro ( FiberBundleNodeID );
-
-  // Description:
   // Create the widget.
   virtual void CreateWidget();
 
@@ -103,14 +89,8 @@ public:
   // Update the display node's values to correspond to the widget
   void UpdateMRML();
   
-  // Description:
-  // ID in the MRML scene of the current fiber bundle node
-  char* FiberBundleNodeID;
-
-  // Description:
-  // ID in the MRML scene of the current fiber bundle node's display node
-  char* FiberBundleDisplayNodeID;
-  
+  bool SyncSceneNodes();
+    
   // Description:
   // All of the widgets used in this widget
   vtkSlicerNodeSelectorWidget* FiberBundleSelectorWidget;
@@ -119,12 +99,32 @@ public:
   vtkKWScaleWithLabel  *OpacityScale;
   vtkKWChangeColorButton *ChangeColorButton;
 
-  vtkKWCheckButtonWithLabel *LineVisibilityButton;
-  vtkKWCheckButtonWithLabel *TubeVisibilityButton;
-  vtkKWCheckButtonWithLabel *GlyphVisibilityButton;
+  vtkKWCheckButtonWithLabel *VisibilityButton;
 
   vtkSlicerDiffusionTensorGlyphDisplayWidget *GlyphDisplayWidget;
 
+  int UpdatingMRML;
+  int UpdatingWidget;
+  
+  vtkMRMLFiberBundleNode* FiberBundleNode;
+  
+  vtkMRMLFiberBundleDisplayNode* FiberBundleLineDisplayNode;
+  vtkMRMLFiberBundleDisplayNode* FiberBundleTubeDisplayNode;
+  vtkMRMLFiberBundleDisplayNode* FiberBundleGlyphDisplayNode;
+
+  vtkMRMLFiberBundleDisplayNode* GetCurrentDisplayNode();
+  vtkMRMLDiffusionTensorDisplayPropertiesNode* GetCurrentDTDisplayPropertyNode();
+
+  vtkKWMenuButtonWithLabel *GeometryMenu;
+  vtkKWFrameWithLabel *DisplayFrame;
+  vtkKWMenuButtonWithLabel  *GeometryColorMenu;
+
+  
+//BTX
+  std::string CurrentGeometry;
+  std::map <std::string, int> GeometryColorMap;
+//ETX
+  
 private:
 
 

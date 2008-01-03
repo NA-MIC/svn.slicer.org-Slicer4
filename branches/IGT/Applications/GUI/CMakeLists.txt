@@ -67,6 +67,10 @@ SET(dir_list
   ${SlicerTractographyDisplay_BINARY_DIR}
   ${SlicerTractographyDisplay_Init_SOURCE_DIR}
   ${SlicerTractographyDisplay_Init_BINARY_DIR}
+  ${SlicerTractographyFiducialSeeding_SOURCE_DIR}
+  ${SlicerTractographyFiducialSeeding_BINARY_DIR}
+  ${SlicerTractographyFiducialSeeding_Init_SOURCE_DIR}
+  ${SlicerTractographyFiducialSeeding_Init_BINARY_DIR}
   ${EMSegment_SOURCE_DIR}
   ${EMSegment_BINARY_DIR}
   ${EMSegment_Init_SOURCE_DIR}
@@ -101,7 +105,19 @@ SET(dir_list
   ${QueryAtlas_BINARY_DIR}
   ${QueryAtlas_Init_SOURCE_DIR}
   ${QueryAtlas_Init_BINARY_DIR}
-   ${CommandLineModule_SOURCE_DIR}
+  ${VolumeRenderingModule_SOURCE_DIR}
+  ${VolumeRenderingModule_BINARY_DIR}
+  ${VolumeRenderingModule_Init_SOURCE_DIR}
+  ${VolumeRenderingModule_Init_BINARY_DIR}
+  ${LabelStatistics_SOURCE_DIR}       
+  ${LabelStatistics_BINARY_DIR}
+  ${LabelStatistics_Init_SOURCE_DIR}
+  ${LabelStatistics_Init_BINARY_DIR}
+  ${WFEngineModule_SOURCE_DIR}
+  ${WFEngineModule_BINARY_DIR}
+  ${WFEngineModule_Init_SOURCE_DIR}
+  ${WFEngineModule_Init_BINARY_DIR}
+  ${CommandLineModule_SOURCE_DIR}
   ${CommandLineModule_BINARY_DIR}
   ${CommandLineModule_Init_SOURCE_DIR}
   ${CommandLineModule_Init_BINARY_DIR}
@@ -117,9 +133,17 @@ SET(dir_list
   ${IGSTK_INCLUDE_DIRS}
   )
 
+IF(BUILD_MODULES)
+  ADD_DEFINITIONS(-DBUILD_MODULES)
+ENDIF(BUILD_MODULES)
+
+IF(BUILD_CLI)
+  ADD_DEFINITIONS(-DBUILD_CLI)
+ENDIF(BUILD_CLI)
+
 IF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
   SET(dir_list ${dir_list} ${PYTHON_INCLUDE_PATH})
-  SET_SOURCE_FILES_PROPERTIES(Slicer3.cxx PROPERTIES COMPILE_FLAGS -DUSE_PYTHON)
+  ADD_DEFINITIONS(-DUSE_PYTHON)
 ENDIF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
 
 INCLUDE_DIRECTORIES(${dir_list})
@@ -153,15 +177,41 @@ ELSE ( Slicer3_BUILD_WIN32_CONSOLE )
 ENDIF ( Slicer3_BUILD_WIN32_CONSOLE )
 
 
+# Option for VolumeRendering
+IF(VOLUMERENDERINGMODULE)
+ SET(VOLUMERENDERINGMODULE_LINK_LIB VolumeRenderingModule)
+ELSE(VOLUMERENDERINGMODULE)
+ ADD_DEFINITIONS(-DVOLUMERENDERINGMODULE_DEBUG)
+ENDIF(VOLUMERENDERINGMODULE)
+
+# Option for LabelStatistics
+IF(LABELSTATISTICS)
+ SET(LABELSTATISTICS_LINK_LIB LabelStatistics)
+ELSE(LABELSTATISTICS)
+ ADD_DEFINITIONS(-DLABELSTATISTICS_DEBUG)
+ENDIF(LABELSTATISTICS)
+
 TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     SlicerBaseLogic
     SlicerBaseGUI
     MRML
     IGT
+    ModuleDescriptionParser
+    vtkITK
+    ITKCommon 
+    ITKIO
+    ${KWWidgets_LIBRARIES}
+    Qdec
+)
+
+IF(BUILD_MODULES)
+  TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     GradientAnisotropicDiffusionFilter
     EMSegment
-    # RealTimeImaging
-    # MRAblation
+    #   RealTimeImaging
+    #   MRAblation
+    ${VOLUMERENDERINGMODULE_LINK_LIB}
+    ${LABELSTATISTICS_LINK_LIB} 
     NeuroNav
     # BrpNav
     # ProstateNav
@@ -169,15 +219,11 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     CommandLineModule
     ScriptedModule
     SlicerDaemon
-    ModuleDescriptionParser
-    vtkITK
-    ITKCommon 
-    ITKIO
     ${WFENGINE_LINK_LIB}
-    ${KWWidgets_LIBRARIES}
-    Qdec
     QdecModule
-)
+    SlicerTractographyFiducialSeeding
+    )
+ENDIF(BUILD_MODULES)
 
 IF(USE_TEEM)
   TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}

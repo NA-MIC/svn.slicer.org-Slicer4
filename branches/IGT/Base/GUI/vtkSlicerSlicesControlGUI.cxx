@@ -23,6 +23,8 @@
 #include "vtkKWTopLevel.h"
 #include "vtkKWTkUtilities.h"
 
+#include "vtkRenderer.h"
+
 // uncomment in order to stub out the FOV Entries.
 //#define FOV_ENTRIES_DEBUG
 
@@ -724,17 +726,21 @@ void vtkSlicerSlicesControlGUI::FitFOVToBackground( double fov, int viewer )
         {
         return;
         }
-
-      // get viewer's wid and height
-      int width, height;
-      sscanf(this->Script("winfo width %s", sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()),"%d", &width);
-      sscanf(this->Script("winfo height %s",sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()),"%d", &height);
-
+      
       if ( !sliceNode || !compositeNode )
         {
         return;
         }
   
+      // get viewer's width and height. we may be using a LightBox
+      // display, so base width and height on renderer0 in the SliceViewer.
+      int width, height;
+
+      vtkRenderer *ren=sgui->GetSliceViewer()->GetRenderWidget()->GetRenderer();
+      width = ren->GetSize()[0];
+      height = ren->GetSize()[1];
+
+      
       // get backgroundNode  and imagedata
       backgroundNode =
         vtkMRMLScalarVolumeNode::SafeDownCast (
@@ -789,11 +795,9 @@ void vtkSlicerSlicesControlGUI::FitFOVToBackground( double fov, int viewer )
         }
       
       // we want to compute the slice dimensions of the
-      // user-specified fov.
-      double absSliceDimensions;
-      // user specified FOV in mm units (RAS)
-      absSliceDimensions = fabs(sliceDimensions[2]);
-      sliceNode->SetFieldOfView(fovh, fovv, absSliceDimensions );
+      // user-specified fov (note that the slice node's z field of
+      // view is NOT changed)
+      sliceNode->SetFieldOfView(fovh, fovv, sliceNode->GetFieldOfView()[2] );
 
       vtkMatrix4x4 *sliceToRAS = vtkMatrix4x4::New();
       sliceToRAS->DeepCopy(sliceNode->GetSliceToRAS());
@@ -1181,7 +1185,7 @@ void vtkSlicerSlicesControlGUI::FitSlicesToBackground ( )
           this->Script("winfo height %s", 
               sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
           "%d", &h);
-        sgui->GetLogic()->FitSliceToBackground ( w, h );
+        sgui->GetLogic()->FitSliceToAll ( w, h );
         sgui->GetSliceNode()->UpdateMatrices( );
         this->RequestFOVEntriesUpdate();
         sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );

@@ -24,12 +24,14 @@ PURPOSE.  See the above copyright notices for more information.
 #include <vtkInformationVector.h>
 #include <vtkObjectFactory.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkCellLinks.h>
 #include <vtkFieldData.h>
 #include <vtkDataArray.h>
 #include <vtkDoubleArray.h>
 #include <vtkAbstractArray.h>
 #include <vtkUnstructuredGridAlgorithm.h>
-#include <vtkTable.h>
+//#include <vtkTable.h>
+#include <vtkFieldData.h>
 
 #include "vtkMimxRebinMaterialProperty.h"
 
@@ -103,16 +105,25 @@ int vtkMimxRebinMaterialProperty::RequestData(
   
 
   out->DeepCopy( in );
+  // the following line should fix leak, but vtkCellLinks::DeepCopy does a memcopy of 
+  // pointers to allocate memory, meaning that they get double-freed by the destructor
+  //out->GetCellLinks()->Delete(); // need to do this because BuildLinks will create a new vtkCellLinks
+  out->BuildLinks( );
   
   /* Get the Grid Field Data - Material Property */
   vtkFieldData *gridFieldData = in->GetFieldData();
-  vtkDoubleArray *materialPropertyArray = NULL;
-  vtkAbstractArray *tmpArray = gridFieldData->GetAbstractArray("Material_Properties");
-  if (tmpArray->IsA("vtkDoubleArray"))
-    {
-    materialPropertyArray = vtkDoubleArray::SafeDownCast(tmpArray);
-    }
-
+  //vtkDoubleArray *materialPropertyArray = NULL;
+  //vtkAbstractArray *tmpArray = gridFieldData->GetAbstractArray("Material_Properties");
+  //vtkAbstractArray *tmpArray = vtkAbstractArray::SafeDownCast( gridFieldData->GetArray("Material_Properties") );
+  //if (tmpArray->IsA("vtkDoubleArray"))
+  //  {
+  //  materialPropertyArray = vtkDoubleArray::SafeDownCast(tmpArray);
+  //  }
+  vtkDoubleArray *materialPropertyArray = vtkDoubleArray::New();
+  materialPropertyArray->SetNumberOfComponents(1);
+  int fieldDataSize = gridFieldData->GetArray("Material_Properties")->GetNumberOfTuples();
+  materialPropertyArray->SetNumberOfTuples( fieldDataSize );
+  gridFieldData->GetArray("Material_Properties")->GetData(0, fieldDataSize-1, 0, 0, materialPropertyArray);
   if ( materialPropertyArray == NULL)
   {
     vtkErrorMacro(<< "vtkRebinMaterialProperty::RequestData - Grid does not contain 'Material_Properties' array");
@@ -128,12 +139,14 @@ int vtkMimxRebinMaterialProperty::RequestData(
   /* Determine the Histogram Bins - 1) From user or 2) from the data */
   if ( ! this->GeneratePropertyBins )
     {
-    if ( this->PropertyTable->GetColumnByName("Histogram") == NULL )
+    if ( this->PropertyTable->GetArray("Histogram") == NULL )
+    //if ( this->PropertyTable->GetColumnByName("Histogram") == NULL )
       {
       vtkErrorMacro(<< "vtkRebinMaterialProperty::RequestData - Defined Property Table must have field data named 'Histogram'");
       return 0;
       }
-    this->NumberOfHistogramBins = this->PropertyTable->GetColumnByName("Histogram")->GetNumberOfTuples();
+    this->NumberOfHistogramBins = this->PropertyTable->GetArray("Histogram")->GetNumberOfTuples();
+    //this->NumberOfHistogramBins = this->PropertyTable->GetColumnByName("Histogram")->GetNumberOfTuples();
     }
   else
     {
@@ -154,11 +167,26 @@ int vtkMimxRebinMaterialProperty::RequestData(
     ComputeHistogramBins( ); 
     }
     
-  vtkDoubleArray* histogramArray = NULL;
-  vtkAbstractArray *tableArray = this->PropertyTable->GetColumnByName("Histogram");
-  if (tableArray->IsA("vtkDoubleArray"))
+  //vtkDoubleArray* histogramArray = NULL;
+  //vtkAbstractArray *tableArray =  vtkAbstractArray::SafeDownCast( this->PropertyTable->GetArray("Histogram") ); 
+  //vtkAbstractArray *tableArray = this->PropertyTable->GetColumnByName("Histogram");
+  //if (tableArray->IsA("vtkDoubleArray"))
+  //  {
+  //  histogramArray = vtkDoubleArray::SafeDownCast(tableArray);
+  //  if ( ! this->GeneratePropertyBins )
+  //    {
+  //    this->BinUpperBound = histogramArray->GetValue( this->NumberOfHistogramBins-1 );
+  //    this->BinLowerBound = histogramArray->GetValue( 0 );
+  //    }
+  //  }
+  vtkDoubleArray *histogramArray = vtkDoubleArray::New();
+  histogramArray->SetNumberOfComponents(1);
+  this->NumberOfHistogramBins = this->PropertyTable->GetArray("Histogram")->GetNumberOfTuples();
+  histogramArray->SetNumberOfTuples( this->NumberOfHistogramBins );
+  
+  this->PropertyTable->GetArray("Histogram")->GetData(0, this->NumberOfHistogramBins-1, 0, 0, histogramArray);
+  if (histogramArray->IsA("vtkDoubleArray"))
     {
-    histogramArray = vtkDoubleArray::SafeDownCast(tableArray);
     if ( ! this->GeneratePropertyBins )
       {
       this->BinUpperBound = histogramArray->GetValue( this->NumberOfHistogramBins-1 );
@@ -198,11 +226,13 @@ int vtkMimxRebinMaterialProperty::RequestData(
         }
       }
     }
-    
+  histogramArray->Delete( );  
+  materialPropertyArray->Delete( );
+  
   gridFieldData->RemoveArray( "Material_Properties" );
   gridFieldData->AddArray( binPropertyArray );
   out->SetFieldData( gridFieldData );
-  
+  //binPropertyArray->Delete( );
 
   return 1;
 }
@@ -210,7 +240,8 @@ int vtkMimxRebinMaterialProperty::RequestData(
 void vtkMimxRebinMaterialProperty::ComputeHistogramBins(  ) 
 {
   //Calculating and setting the bin ranges and bin values
-  this->PropertyTable = vtkTable::New();
+  // this->PropertyTable = vtkTable::New();
+  this->PropertyTable = vtkFieldData::New();
   
   if ( this->NumberOfHistogramBins > 1 )
   {
@@ -224,7 +255,8 @@ void vtkMimxRebinMaterialProperty::ComputeHistogramBins(  )
       histogramArray->InsertValue( i, this->BinLowerBound + 
           static_cast<double> ( i )* binSize );
     } 
-    this->PropertyTable->AddColumn( histogramArray );
+    // this->PropertyTable->AddColumn( histogramArray );
+    this->PropertyTable->AddArray( histogramArray );
   }
 }
 

@@ -35,7 +35,7 @@ if { [itcl::find class ThresholdEffect] == "" } {
     public variable label "1"
 
     # methods
-    method processEvent {} {}
+    method processEvent {{caller ""} {event ""}} {}
     method preview {} {}
     method apply {} {}
     method positionCursor {} {}
@@ -63,9 +63,9 @@ itcl::body ThresholdEffect::destructor {} {
 #                             METHODS
 # ------------------------------------------------------------------
 
-itcl::body ThresholdEffect::processEvent { } {
+itcl::body ThresholdEffect::processEvent { {caller ""} {event ""} } {
 
-  if { [$this preProcessEvent] } {
+  if { [$this preProcessEvent $caller $event] } {
     # superclass processed the event, so we don't
     return
   }
@@ -76,7 +76,7 @@ itcl::body ThresholdEffect::apply {} {
 
   $this configure -scope "all"
 
-  if { [$this getInputBackground] == "" || [$this getOutputLabel] == "" } {
+  if { [$this getInputBackground] == "" || [$this getInputLabel] == "" } {
     $this errorDialog "Background and Label map needed for Threshold"
     return
   }
@@ -99,7 +99,7 @@ itcl::body ThresholdEffect::preview {} {
 
   $this configure -scope "visible"
 
-  if { [$this getInputBackground] == "" || [$this getOutputLabel] == "" } {
+  if { [$this getInputBackground] == "" || [$this getInputLabel] == "" } {
     $this errorDialog "Background and Label map needed for Threshold"
     return
   }
@@ -141,13 +141,13 @@ itcl::body ThresholdEffect::preview {} {
 }
 
 #
-# p will be 0 to 1 loop
+# p will be a floating point number 
 #
 itcl::body ThresholdEffect::setAnimationState { p } {
 
   if { [info exists o(lut)] } {
-    set amt [expr 0.2 + 0.75 * (1 + cos(6.2831852 * ($p - floor($p)))) ]
-    set color [$o(lut) GetTableValue 1]
+    set amt [expr 0.5 + 0.25 * (1 + cos(6.2831852 * ($p - floor($p)))) ]
+    set color [::EditorGetPaintColor $::Editor(singleton)]
     eval $o(lut) SetTableValue 1 [lreplace $color 3 3 $amt]
   }
 }
@@ -167,8 +167,7 @@ itcl::body ThresholdEffect::buildOptions { } {
   set o(range) [vtkNew vtkKWRange]
   $o(range) SetParent [$this getOptionsFrame]
   $o(range) Create
-  $o(range) SetLabelText "Threshold Range"
-  $o(range) SetWholeRange 0 2000
+  $o(range) SetLabelText "Range"
   $o(range) SetReliefToGroove
   $o(range) SetBalloonHelpString "Set the range of the background values that should be labeled."
 
@@ -263,7 +262,6 @@ itcl::body ThresholdEffect::applyOptions { } {
 
 itcl::body ThresholdEffect::setPaintThreshold {} {
 
-  set editor $::Editor(singleton)
-  eval EditorSetPaintThreshold $editor [$o(range) GetRange]
-  EditorSetPaintThresholdState $editor 1
+  eval EditorSetPaintThreshold [$o(range) GetRange]
+  EditorSetPaintThresholdState 1
 }

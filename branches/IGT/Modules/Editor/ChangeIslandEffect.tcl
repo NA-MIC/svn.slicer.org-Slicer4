@@ -32,7 +32,7 @@ if { [itcl::find class ChangeIslandEffect] == "" } {
     destructor {}
 
     # methods
-    method processEvent {} {}
+    method processEvent {{caller ""} {event ""}} {}
     method preview {} {}
     method apply {} {}
     method buildOptions {} {}
@@ -54,9 +54,9 @@ itcl::body ChangeIslandEffect::destructor {} {
 #                             METHODS
 # ------------------------------------------------------------------
 
-itcl::body ChangeIslandEffect::processEvent { } {
+itcl::body ChangeIslandEffect::processEvent { {caller ""} {event ""} } {
 
-  if { [$this preProcessEvent] } {
+  if { [$this preProcessEvent $caller $event] } {
     # superclass processed the event, so we don't
     return
   }
@@ -86,7 +86,7 @@ itcl::body ChangeIslandEffect::apply {} {
   foreach {x y} [$_interactor GetEventPosition] {}
   $this queryLayers $x $y
 
-  if { [$this getInputLabel] == "" || [$this getOutputLabel] == "" } {
+  if { [$this getInputLabel] == "" || [$this getInputLabel] == "" } {
     $this flashCursor 3
     return
   }
@@ -94,7 +94,7 @@ itcl::body ChangeIslandEffect::apply {} {
   set conn [vtkImageConnectivity New]
   $conn SetFunctionToChangeIsland
   $conn SetSeed $_layers(label,i) $_layers(label,j) $_layers(label,k) 
-  $conn SetOutputLabel [EditorGetPaintLabel $::Editor(singleton)]
+  $conn SetOutputLabel [EditorGetPaintLabel]
   $conn SetInput [$this getInputLabel]
   $conn SetOutput [$this getOutputLabel]
 

@@ -61,7 +61,6 @@ vtkMRMLVolumeGlyphDisplayNode::vtkMRMLVolumeGlyphDisplayNode()
 
   this->GlyphColorNodeID = NULL;
   this->GlyphColorNode = NULL;
-  this->SlicedImageData = NULL;
   // try setting a default greyscale color map
   //this->SetDefaultColorMap(0);
 }
@@ -138,7 +137,7 @@ void vtkMRMLVolumeGlyphDisplayNode::ReadXMLAttributes(const char** atts)
     if (!strcmp(attName, "glyphColorNodeRef")) 
       {
       this->SetGlyphColorNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->GlyphColorNodeID, this);
+      //this->Scene->AddReferencedNodeID(this->GlyphColorNodeID, this);
       }
     if (!strcmp(attName, "visualizationMode")) 
       {

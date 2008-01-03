@@ -204,8 +204,12 @@ proc launch_ParseArgs {argv} {
   set newargs ""
   foreach arg $::argv {
     switch -- $arg {
+      "--help" -
+      "-h" -
+      "--no_splash" -
       "--no-splash" {
           set ::LAUNCH(showSplash) 0
+          lappend newargs $arg ;# pass arg to Slicer3-real
       }
       "--detach" {
         set ::LAUNCH(detach) 1
@@ -220,27 +224,12 @@ proc launch_ParseArgs {argv} {
 
 proc launch_InitEnvironment {} {
 
-    # if it is an empty string or doesn't exist, set the LD_LIBRARY_PATH 
-    if { ![info exists ::env(LD_LIBRARY_PATH)] ||
-            $::env(LD_LIBRARY_PATH) == "" } {
-        set ::env(LD_LIBRARY_PATH) " "
+  foreach var {LD_LIBRARY_PATH TCLLIBPATH DYLD_LIBRARY_PATH PATH} {
+    # if it is an empty string or doesn't exist, set the environment variable
+    if { ![info exists ::env($var)] || $::env($var) == "" } {
+        set ::env($var) " "
     }
-
-    # if it is an empty string or doesn't exist, set the TCLLIBPATH 
-    if {[catch {
-        if {$::env(TCLLIBPATH) == ""} { 
-            set ::env(TCLLIBPATH) " " 
-        }} ex]} {
-        set ::env(TCLLIBPATH) " " 
-    }
-
-    # if it is an empty string or doesn't exist, set the DYLD_LIBRARY_PATH 
-    if { ($::env(BUILD) == $::DARWIN || $::env(BUILD) == $::DARWIN_X86) && [catch {
-        if {$::env(DYLD_LIBRARY_PATH) == ""} { 
-            set ::env(DYLD_LIBRARY_PATH) " " 
-        }} ex]} {
-        set ::env(DYLD_LIBRARY_PATH) " "
-    }
+  }
 }
 
 
@@ -262,6 +251,9 @@ proc launch_SetPaths {} {
             set ::env(LD_LIBRARY_PATH) $::env(TCL_DIR)/lib:$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(TEEM_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(SLICER_BIN_DIR):$::env(LD_LIBRARY_PATH)
+            set ::env(PATH) "$::env(PATH):$::env(TEEM_DIR)"
+            set ::env(PATH) "$::env(SLICER_BIN_DIR):$::env(PATH)"
+            set ::env(PATH) "$::SLICER_HOME/lib/Slicer3/Plugins:$::env(PATH)"
         } elseif {$::env(BUILD) ==  $::DARWIN || $::env(BUILD) == $::DARWIN_X86} { 
             # add vtk, slicer, and tcl bins
             set ::env(DYLD_LIBRARY_PATH) $::env(VTK_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
@@ -270,6 +262,9 @@ proc launch_SetPaths {} {
             set ::env(DYLD_LIBRARY_PATH) $::env(TCL_DIR)/lib:$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(TEEM_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(SLICER_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
+            set ::env(PATH) $::env(PATH):$::env(TEEM_DIR)
+            set ::env(PATH) "$::env(SLICER_BIN_DIR):$::env(PATH)"
+            set ::env(PATH) "$::SLICER_HOME/lib/Slicer3/Plugins:$::env(PATH)"
         } elseif {$::env(BUILD) == $::WINDOWS} {
             # add vtk, slicer, and tcl bins
             set ::env(Path) $::env(VTK_BIN_DIR)\;$::env(Path)
@@ -288,35 +283,38 @@ proc launch_SetPaths {} {
 
     #
     # add the default search locations for tcl packages
-    #  (window has special tcl packages depending on build type)
     #
-    if {$::env(BUILD) == $::SOLARIS || 
-        $::env(BUILD) == $::LINUX ||
-        $::env(BUILD) == $::LINUX_64 ||
-        $::env(BUILD) == $::DARWIN_X86 ||
-        $::env(BUILD) == $::DARWIN} {
-            set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
-            set ::env(TCLLIBPATH) "$::env(KWWidgets_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
-    } elseif {$::env(BUILD) == $::WINDOWS} {
-        set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl/$::BUILD_SUBDIR $::env(TCLLIBPATH)"
-        set ::env(TCLLIBPATH) "$::env(KWWidgets_DIR)/Wrapping/Tcl/$::BUILD_SUBDIR $::env(TCLLIBPATH)"
-    } else {
-        puts stderr "TCLLIBPATH: Invalid build $::env(BUILD)"
-        exit
-    }
-
-    # same for all platforms
+    set ::env(TCLLIBPATH) "$::env(VTK_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(KWWidgets_DIR)/Wrapping/Tcl $::env(TCLLIBPATH)"
     set ::env(TCLLIBPATH) "$::env(SLICER_HOME)/Base/Wrapping/Tcl/vtkSlicerBase $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(TCL_DIR)/lib/itcl3.2 $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(TCL_DIR)/lib/itk3.2 $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(TCL_DIR)/lib/iwidgets4.0.1 $::env(TCLLIBPATH)"
+    set ::env(TCLLIBPATH) "$::env(TCL_DIR)/lib/blt2.4 $::env(TCLLIBPATH)"
 }
 
 #
 # optional - show splash screen
 #
 proc launch_SplashScreen {} {
+
   if { $::LAUNCH(showSplash) } {
-    package require Tk
+
+    if { [catch "package require Tk"] } {
+      # if we can't open Tk, there's 
+      puts "\nWarning: cannot open DISPLAY.  This is likely to be an X Server issue."
+      puts "Slicer will attempt to launch, but may fail.\n"
+      set $::LAUNCH(showSplash) 0
+      return
+    }
+
     wm withdraw .
     launch_SplashShow
+  }
+  
+  # windows always has a display, so get rid of the default window
+  if { [string match -nocase "windows*" $::tcl_platform(os)] } {
+    wm withdraw .
   }
 }
 
@@ -475,7 +473,7 @@ proc launch_RunProgram {} {
     if {$::env(BUILD) == $::WINDOWS} {
         set fp [open "| \"$::LAUNCH(launchCommand)\" $::argv" r]
     } else {
-        set fp [open "| csh -f -c \"$::LAUNCH(launchCommand) $::argv \" |& cat" r]
+        set fp [open "| sh -c \"$::LAUNCH(launchCommand) $::argv \" |& cat" r]
     }
 
     #
@@ -502,6 +500,7 @@ proc launch_RunProgram {} {
 
     set codeString [lindex $::saved_errorCode 0]
     switch $codeString {
+      "" -
       "NONE" { 
         set code 0 
       }
@@ -514,7 +513,7 @@ proc launch_RunProgram {} {
       }
       default {
         set code -1
-        set result "Exceptional errorCode: $::saved_errorCode\n$::saved_errorInfo"
+        set result "Exceptional errorCode: $::saved_errorCode, $::saved_errorCode\n$::saved_errorInfo"
       }
     }
 

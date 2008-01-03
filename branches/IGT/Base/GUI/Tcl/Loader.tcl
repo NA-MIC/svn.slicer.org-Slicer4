@@ -38,7 +38,9 @@ namespace eval Loader {
       set loader [Loader #auto]
     }
     if { $path != "" } {
-      $loader add $path
+      # deal with spaces in a path name
+      lappend pathList $path
+      $loader add $pathList
     }
   }
 
@@ -48,7 +50,7 @@ namespace eval Loader {
   # - or a directory, from which the first file is selected
   #   (assumes only one set of files in the directory)
   #
-  proc LoadArchetype { path {centered 1} {labelMap 0} {name ""} } {
+  proc LoadArchetype { path {centered 0} {labelMap 0} {name ""} } {
 
     if { ![file exists $path] } {
       error "path does not exist: $path"
@@ -72,7 +74,11 @@ namespace eval Loader {
     if { $node == "" } {
       error "Could not open $archetype"
     } else {
-      $selNode SetReferenceActiveVolumeID [$node GetID]
+      if { $labelMap } {
+        $selNode SetReferenceActiveLabelVolumeID [$node GetID]
+      } else {
+        $selNode SetReferenceActiveVolumeID [$node GetID]
+      }
       $::slicer3::ApplicationLogic PropagateVolumeSelection
     }
   }
@@ -87,7 +93,7 @@ if { [itcl::find class Loader] == "" } {
 
   itcl::class Loader {
 
-    constructor  { {root ""} } {
+    constructor  { } {
     }
 
     destructor {
@@ -95,23 +101,28 @@ if { [itcl::find class Loader] == "" } {
     }
 
     # configure options
-    public variable root ""  ;# the root to scan from
+    public variable recurse 1  ;# recurse into directories when adding 
+    public variable filter "*"  ;# filter for which files to chose when adding directory
 
     variable _vtkObjects ""
 
     variable o ;# array of the objects for this widget, for convenient access
     variable col ;# array of the column indices for easy (and readable) access
 
-    variable _volumeExtensions ".hdr .nhdr .nrrd .mhd .mha .vti .mgz"
-    variable _modelExtensions ".vtk .vtp"
+    variable _volumeExtensions ".hdr .nhdr .nrrd .mhd .mha .vti .nii .mgz"
+    variable _modelExtensions ".vtk .vtp .pial .inflated"
+    variable _qdecExtensions ".qdec"
+    variable _xcedeExtensions ".xcat"
     variable _observerRecords ""
     variable _cleanupDirs ""
+    variable browserResult ""
 
     # methods
     method clear {} {}
     method add {paths} {}
     method addRow { path type } {}
-    method processEvents {caller} {}
+    method processEvent {{caller ""} {event ""}} {}
+    method setAll { field value } {}
     method apply {} {}
     method errorDialog {errorText} {}
     method status {message} {}
@@ -141,9 +152,7 @@ if { [itcl::find class Loader] == "" } {
 # ------------------------------------------------------------------
 #                        CONSTRUCTOR/DESTRUCTOR
 # ------------------------------------------------------------------
-itcl::body Loader::constructor { {root ""} } {
-
-  $this configure -root ""
+itcl::body Loader::constructor { } {
 
   #
   # make the toplevel 
@@ -157,6 +166,35 @@ itcl::body Loader::constructor { {root ""} } {
   wm protocol [$o(toplevel) GetWidgetName] \
     WM_DELETE_WINDOW "itcl::delete object $this"
 
+  #
+  # actions buttons
+  #
+  set o(actionFrame) [vtkNew vtkKWFrame]
+  $o(actionFrame) SetParent $o(toplevel)
+  $o(actionFrame) Create
+  pack [$o(actionFrame) GetWidgetName] -side top -anchor nw -fill x
+
+  set actions { 
+    "Clear Entries"
+    "Select All" "Select None"
+    "Label All" "Label None"
+    "Centered All" "Centered None"
+  }
+  set widgets ""
+  foreach a $actions {
+    set aa [string tolower [string index $a 0]]
+    regsub -all " " $a "" nospace
+    set aa $aa[string range $nospace 1 end]
+    set o($aa) [vtkNew vtkKWPushButton]
+    $o($aa) SetParent $o(actionFrame)
+    $o($aa) Create
+    $o($aa) SetText $a
+    set tag [$o($aa) AddObserver ModifiedEvent "$this processEvent $o($aa)"]
+    lappend _observerRecords [list $o($aa) $tag]
+    $o($aa) SetCommand $o($aa) Modified
+    lappend widgets [$o($aa) GetWidgetName]
+  }
+  eval pack $widgets -side left 
 
   #
   # the listbox of data to load
@@ -216,7 +254,7 @@ itcl::body Loader::constructor { {root ""} } {
   $o(addDir) Create
   $o(addDir) SetText "Add Directory"
   $o(addDir) SetBalloonHelpString "Add all contents of a directory to the list of files to load"
-  set tag [$o(addDir) AddObserver ModifiedEvent "$this processEvents $o(addDir)"]
+  set tag [$o(addDir) AddObserver ModifiedEvent "$this processEvent $o(addDir)"]
   lappend _observerRecords [list $o(addDir) $tag]
   $o(addDir) SetCommand $o(addDir) Modified
 
@@ -225,7 +263,7 @@ itcl::body Loader::constructor { {root ""} } {
   $o(addFile) Create
   $o(addFile) SetText "Add File(s)"
   $o(addFile) SetBalloonHelpString "Add a file or multiple files to the list of files to load"
-  set tag [$o(addFile) AddObserver ModifiedEvent "$this processEvents $o(addFile)"]
+  set tag [$o(addFile) AddObserver ModifiedEvent "$this processEvent $o(addFile)"]
   lappend _observerRecords [list $o(addFile) $tag]
   $o(addFile) SetCommand $o(addFile) Modified
 
@@ -234,7 +272,7 @@ itcl::body Loader::constructor { {root ""} } {
   $o(apply) Create
   $o(apply) SetText "Apply"
   $o(apply) SetBalloonHelpString "Load the listed files into slicer"
-  set tag [$o(apply) AddObserver ModifiedEvent "$this processEvents $o(apply)"]
+  set tag [$o(apply) AddObserver ModifiedEvent "$this processEvent $o(apply)"]
   lappend _observerRecords [list $o(apply) $tag]
   $o(apply) SetCommand $o(apply) Modified
 
@@ -243,7 +281,7 @@ itcl::body Loader::constructor { {root ""} } {
   $o(cancel) Create
   $o(cancel) SetText "Cancel"
   $o(cancel) SetBalloonHelpString "Close window without loading files"
-  set tag [$o(cancel) AddObserver ModifiedEvent "$this processEvents $o(cancel)"]
+  set tag [$o(cancel) AddObserver ModifiedEvent "$this processEvent $o(cancel)"]
   lappend _observerRecords [list $o(cancel) $tag]
   $o(cancel) SetCommand $o(cancel) Modified
 
@@ -281,11 +319,9 @@ itcl::body Loader::destructor {} {
 }
 
 
-itcl::configbody Loader::root {
-}
-
 # remove entries from the list box
 itcl::body Loader::clear { } {
+  [$o(list) GetWidget] DeleteAllRows
 }
 
 itcl::body Loader::addRow { path type } {
@@ -300,7 +336,7 @@ itcl::body Loader::addRow { path type } {
   $w InsertCellText $i $col(Name) [file tail [file root $path]]
 
   if { $type == "Volume" } {
-    $w InsertCellTextAsInt $i $col(Centered) 1
+    $w InsertCellTextAsInt $i $col(Centered) 0
     $w SetCellWindowCommandToCheckButton $i $col(Centered)
 
     set seg [string match -nocase "*seg*" $path] 
@@ -351,14 +387,14 @@ itcl::body Loader::add { paths } {
       if { [file exists $unzip] } {
         set cwd [pwd]
         cd $tmp
-        set fp [open "| $unzip $path" "r"]
+        set fp [open "| $unzip \"$path\"" "r"]
         while { ![eof $fp] } {
           set line [read $fp]
           $this status $line
           after 50 update
         }
         catch "close $fp"
-        $this add $tmp
+        $this add [list $tmp]
         lappend _cleanupDirs $tmp
         cd $cwd
       } else {
@@ -374,33 +410,43 @@ itcl::body Loader::add { paths } {
           # TODO: let user pick the destination to save the unzipped data
           set fd [::vfs::zip::Mount $path /zipfile]
           file copy -force /zipfile $tmp
-          $this add $tmp
+          $this add [list $tmp]
           ::vfs::zip::Unmount $fd /zipfile
           lappend _cleanupDirs $tmp
         }
       }
+      continue
     }
 
     # 
     # if it's a directory, look at each element (recurse)
     #
-    if { [file isdir $path] } {
+    if { [file isdir $path] && $recurse} {
       foreach item [glob -nocomplain $path/*] {
-        $this add $item
+        $this add [list $item]
       }
     } else {
       #
       # if it's a file, see if it's something we know how to load
       #
-      $this status "Adding $path"
-      if { [lsearch $_volumeExtensions $ext] != -1 } {
-        $this addRow $path "Volume"
-        $this status ""
-      } elseif { [lsearch $_modelExtensions $ext] != -1 } {
-        $this addRow $path "Model"
-        $this status ""
-      } else {
-        $this status "Cannot read file $path"
+
+      if { [string match $filter $path] } {
+        $this status "Adding $path"
+        if { [lsearch $_volumeExtensions $ext] != -1 } {
+          $this addRow $path "Volume"
+          $this status ""
+        } elseif { [lsearch $_modelExtensions $ext] != -1 } {
+          $this addRow $path "Model"
+          $this status ""
+        } elseif { [lsearch $_xcedeExtensions $ext] != -1 } {
+            $this addRow $path "XCEDE"
+            $this status ""
+        } elseif { [lsearch $_qdecExtensions $ext] != -1 } {
+          $this addRow $path "QDEC"
+          $this status ""
+        } else {
+          $this status "Cannot read file $path"
+        }
       }
     }
   }
@@ -455,6 +501,22 @@ itcl::body Loader::apply { } {
             $node SetName $name
           }
         }
+        "XCEDE" {
+          set pass [ XcedeCatalogImport $path ]
+          if { $pass == 0 } {
+            $this errorDialog "Could not load XCEDE catalog at $path."
+          }
+        }
+        "QDEC" {
+          if {[info exists ::slicer3::QdecModuleGUI]} {
+            set err [$::slicer3::QdecModuleGUI LoadProjectFile $path]
+            if {$err == -1} {
+              $this errorDialog "Could not load QDEC project $path (using $tmp to unpack into)"
+            }
+          } else {
+              $this errorDialog "QDEC module not present, cannot open $path"
+          }
+        }
       }
     }
   }
@@ -467,11 +529,12 @@ itcl::body Loader::apply { } {
 # handle gui events
 # -basically just map button events onto methods
 #
-itcl::body Loader::processEvents { caller } {
+itcl::body Loader::processEvent { {caller ""} {event ""} } {
 
   if { $caller == $o(addDir) } {
     # TODO: switch to kwwidgets directory browser
-    $this add [$this chooseDirectory]
+    set paths [$this chooseDirectory]
+    $this add $paths
     return
   }
 
@@ -492,10 +555,61 @@ itcl::body Loader::processEvents { caller } {
     return
   }
   
-  puts "unknown event from $caller"
+  if { $caller == $o(clearEntries) } {
+    $this clear
+    return
+  }
+
+  if { $caller == $o(selectAll) } {
+    $this setAll Select 1
+    return
+  }
+
+  if { $caller == $o(selectNone) } {
+    $this setAll Select 0
+    return
+  }
+
+  if { $caller == $o(centeredAll) } {
+    $this setAll Centered 1
+    return
+  }
+
+  if { $caller == $o(centeredNone) } {
+    $this setAll Centered 0
+    return
+  }
+
+  if { $caller == $o(labelAll) } {
+    $this setAll LabelMap 1
+    return
+  }
+
+  if { $caller == $o(labelNone) } {
+    $this setAll LabelMap 0
+    return
+  }
+
+  puts "$this: unknown event from $caller"
+}
+
+itcl::body Loader::setAll { field value } {
+  set w [$o(list) GetWidget] 
+  set rows [$w GetNumberOfRows]
+  for {set row 0} {$row < $rows} {incr row} {
+    $w SetCellTextAsInt $row $col($field) $value
+    $w SetCellWindowCommandToCheckButton $row $col($field)
+  }
 }
 
 itcl::body Loader::errorDialog { errorText } {
+  set dialog [vtkKWMessageDialog New]
+  $dialog SetParent $o(toplevel)
+  $dialog SetStyleToMessage
+  $dialog SetText $errorText
+  $dialog Create
+  $dialog Invoke
+  $dialog Delete
 }
 
 itcl::body Loader::status { message } {
@@ -504,24 +618,52 @@ itcl::body Loader::status { message } {
 
 itcl::body Loader::chooseDirectory {} {
 
-  set dialog [vtkKWLoadSaveDialog New]
-  $dialog ChooseDirectoryOn
-  $dialog SetParent $o(toplevel)
-  $dialog Create
-  $dialog RetrieveLastPathFromRegistry "OpenPath"
-  $dialog Invoke
-  set dir ""
-  if { [[$dialog GetFileNames] GetNumberOfValues] } {
-    set dir [[$dialog GetFileNames] GetValue 0]
-  }
+  if { 0 } {
+    #
+    # use the kwwidgets load/save dialog
+    #
+    set dialog [vtkKWLoadSaveDialog New]
+    $dialog ChooseDirectoryOn
+    $dialog SetParent $o(toplevel)
+    $dialog Create
+    $dialog RetrieveLastPathFromRegistry "OpenPath"
+    $dialog Invoke
+    set dir ""
+    if { [[$dialog GetFileNames] GetNumberOfValues] } {
+      set dir [[$dialog GetFileNames] GetValue 0]
+    }
 
-  if { $dir != "" } {
-    $dialog SaveLastPathToRegistry "OpenPath"
-  }
+    if { $dir != "" } {
+      $dialog SaveLastPathToRegistry "OpenPath"
+    }
 
-  $dialog Delete
+    $dialog Delete
+
+    return $dir
+
+  } else {
+    #
+    # use a custom dialog with filtering and recursion options
+    #
+    set var ::Loader::browserSync_[namespace tail $this]
+    set $var ""
+    set browser [FilteredDirectoryDialog #auto]
+    $browser configure -ok_command "set $var ok"
+    $browser configure -cancel_command "set $var cancel"
+    vwait $var
+
+    if { [set $var] == "ok" } {
+      $this configure -recurse [$browser getRecurse]
+      $this configure -filter [$browser getFilter]
+      set paths [$browser getPaths]
+    } else {
+      set paths ""
+    }
+    itcl::delete object $browser
+
+    return $paths
+  }
   
-  return $dir
 }
 
 itcl::body Loader::getOpenFile {} {

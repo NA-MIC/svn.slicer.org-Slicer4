@@ -69,7 +69,6 @@ vtkMRMLProceduralColorNode::~vtkMRMLProceduralColorNode()
   if (this->ColorTransferFunction)
     {
     this->ColorTransferFunction->Delete();
-    this->ColorTransferFunction = NULL;
     }
 }
 
@@ -131,7 +130,7 @@ void vtkMRMLProceduralColorNode::ProcessMRMLEvents ( vtkObject *caller,
 //---------------------------------------------------------------------------
 void vtkMRMLProceduralColorNode::SetType(int type)
 {
-  vtkErrorMacro("Subclass didn't define SetType!");
+  vtkWarningMacro("Subclass didn't define SetType!");
 
   this->Type = type;
 
@@ -149,6 +148,6 @@ void vtkMRMLProceduralColorNode::SetType(int type)
 //---------------------------------------------------------------------------
 int vtkMRMLProceduralColorNode::ReadFile()
 {
-  vtkErrorMacro("Subclass didn't define ReadFile!");
+  vtkWarningMacro("Subclass didn't define ReadFile!");
   return 0;
 }

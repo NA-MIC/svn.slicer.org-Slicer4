@@ -44,8 +44,9 @@ IF (USE_TEEM)
 SET ( ${CLP}_SOURCE ${CLP}.cxx)
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/ITKLogo.h)
 ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
-LINK_DIRECTORIES(${MRML_LIB_DIR} ${vtkTeem_LIB_DIR})
-TARGET_LINK_LIBRARIES (${CLP} ITKBasicFilters MRML vtkTeem)
+LINK_DIRECTORIES(${MRML_LIB_DIR} ${vtkTeem_LIB_DIR} ${SlicerBaseLogic_SOURCE_DIR}
+  ${SlicerBaseLogic_BINARY_DIR})
+TARGET_LINK_LIBRARIES (${CLP} ITKBasicFilters MRML vtkTeem SlicerBaseLogic)
 INCLUDE_DIRECTORIES(
         ${vtkITK_SOURCE_DIR} 
         ${vtkITK_BINARY_DIR} 
@@ -66,6 +67,18 @@ INCLUDE_DIRECTORIES(
         ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
         ${vtkTeem_SOURCE_DIR}  ${vtkTeem_BINARY_DIR})
 ENDIF(USE_TEEM)
+
+#####################
+SET (CLP OrientImage)
+
+SET ( ${CLP}_SOURCE ${CLP}.cxx)
+GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
+ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters ITKNumerics)
+
+ADD_LIBRARY(${CLP}Lib SHARED ${${CLP}_SOURCE})
+SET_TARGET_PROPERTIES (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
+TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
 
 #####################
 SET (CLP LinearRegistration)
@@ -102,6 +115,18 @@ TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
 
 #####################
 SET (CLP ResampleVolume)
+
+SET ( ${CLP}_SOURCE ${CLP}.cxx)
+GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/ITKLogo.h)
+ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters)
+
+ADD_LIBRARY(${CLP}Lib SHARED ${${CLP}_SOURCE})
+SET_TARGET_PROPERTIES (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
+TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
+
+#####################
+SET (CLP GaussianBlurImageFilter)
 
 SET ( ${CLP}_SOURCE ${CLP}.cxx)
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/ITKLogo.h)
@@ -289,6 +314,29 @@ INCLUDE_DIRECTORIES(
         ${SlicerBaseLogic_SOURCE_DIR}  ${SlicerBaseLogic_BINARY_DIR})
 
 #####################
+
+SET (CLP MultipleModelsExample)
+
+SET ( ${CLP}_SOURCE ${CLP}.cxx vtkPluginFilterWatcher.cxx )
+GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
+LINK_DIRECTORIES(${vtkITK_LIB_DIR})
+ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+# TODO: remove SlicerBaseLogic once pass in color node information
+TARGET_LINK_LIBRARIES (${CLP}
+    vtkITK vtkImaging vtkGraphics vtkIO
+    ITKIO
+    ModuleDescriptionParser
+    MRML
+    SlicerBaseLogic
+)
+INCLUDE_DIRECTORIES(
+        ${vtkITK_SOURCE_DIR} 
+        ${vtkITK_BINARY_DIR} 
+        ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
+        ${SlicerBaseLogic_SOURCE_DIR}  ${SlicerBaseLogic_BINARY_DIR})
+
+
+#####################
 SET (CLP GrayscaleModelMaker)
 
 SET ( ${CLP}_SOURCE ${CLP}.cxx vtkPluginFilterWatcher.cxx)
@@ -370,12 +418,17 @@ TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
 #####################
 
 
-#IF (Slicer3_BUILD_TESTING)
-#  SUBDIRS( Testing )
-#ENDIF (Slicer3_BUILD_TESTING)
-
 SUBDIRS ( Realign )
 SUBDIRS( DiffusionApplications )
+SUBDIRS( ExtractSkeleton )
+
+IF(USE_MIDAS)
+  SUBDIRS( MIDASApplications )
+ENDIF(USE_MIDAS)
+
+IF(USE_BatchMake)
+  SUBDIRS( BatchMakeApplications )
+ENDIF(USE_BatchMake)
 
 IF (Slicer3_SOURCE_DIR)
   # install each target in the production area (where it would appear in an 
@@ -418,12 +471,20 @@ IF (Slicer3_SOURCE_DIR)
         AffineRegistration
         BSplineDeformableRegistration
         LabelMapSmoothing
+        OrientImage
+        OrientImageLib
   )
 
-  FOREACH(target ${TARGETS})
-    INSTALL(TARGETS ${target}
-      RUNTIME DESTINATION ${SLICER_INSTALL_LIBRARIES_DIR}/Plugins
-      LIBRARY DESTINATION ${SLICER_INSTALL_LIBRARIES_DIR}/Plugins)
-  ENDFOREACH(target)
+  INSTALL(TARGETS ${TARGETS}
+    RUNTIME DESTINATION ${SLICER_INSTALL_LIBRARIES_DIR}/Plugins COMPONENT RuntimeLibraries
+    LIBRARY DESTINATION ${SLICER_INSTALL_LIBRARIES_DIR}/Plugins COMPONENT RuntimeLibraries)
+
+  INSTALL(FILES itkPluginFilterWatcher.h vtkPluginFilterWatcher.h itkPluginUtilities.h DESTINATION include/Slicer3 COMPONENT Development)
 
 ENDIF (Slicer3_SOURCE_DIR)
+
+#
+
+IF(BUILD_TESTING)
+  SUBDIRS(Testing)
+ENDIF(BUILD_TESTING)

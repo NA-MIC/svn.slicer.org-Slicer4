@@ -22,12 +22,7 @@
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRMLStorageNode.h"
-#include "vtkMRMLColorNode.h"
 #include "vtkMRMLDisplayNode.h"
-
-#include "vtkMatrix4x4.h"
-#include "vtkTransform.h"
-#include "vtkImageData.h"
 
 class vtkImageData;
 
@@ -54,59 +49,7 @@ class VTK_MRML_EXPORT vtkMRMLVolumeDisplayNode : public vtkMRMLDisplayNode
 
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() {return "VolumeDisplay";};
-
-  // Description:
-  // Update the stored reference to another node in the scene
-  virtual void UpdateReferenceID(const char *oldID, const char *newID);
-
-  //--------------------------------------------------------------------------
-  // Display Information
-  //--------------------------------------------------------------------------
-  
-  // Description:
-  // Specifies whether windowing and leveling are to be performed automatically
-  vtkBooleanMacro(AutoWindowLevel, int);
-  vtkGetMacro(AutoWindowLevel, int);
-  vtkSetMacro(AutoWindowLevel, int);
-
-  // Description:
-  // The window value to use when autoWindowLevel is 'no'
-  vtkGetMacro(Window, double);
-  vtkSetMacro(Window, double);
-
-  // Description:
-  // The level value to use when autoWindowLevel is 'no'
-  vtkGetMacro(Level, double);
-  vtkSetMacro(Level, double);
-
-  // Description:
-  // Specifies whether to apply the threshold
-  vtkBooleanMacro(ApplyThreshold, int);
-  vtkGetMacro(ApplyThreshold, int);
-  vtkSetMacro(ApplyThreshold, int);
-
-  // Description:
-  // Specifies whether the threshold should be set automatically
-  vtkBooleanMacro(AutoThreshold, int);
-  vtkGetMacro(AutoThreshold, int);
-  vtkSetMacro(AutoThreshold, int);
-
-  // Description:
-  // The upper threshold value to use when autoThreshold is 'no'
-  vtkGetMacro(UpperThreshold, double);
-  vtkSetMacro(UpperThreshold, double);
-
-  // Description:
-  // The lower threshold value to use when autoThreshold is 'no'
-  vtkGetMacro(LowerThreshold, double);
-  vtkSetMacro(LowerThreshold, double);
-
-  // Description:
-  // Set/Get interpolate reformated slices
-  vtkGetMacro(Interpolate, int);
-  vtkSetMacro(Interpolate, int);
-  vtkBooleanMacro(Interpolate, int);
+  virtual const char* GetNodeTagName() = 0;
 
   // Description:
   // Updates this node if it depends on other nodes 
@@ -116,18 +59,22 @@ class VTK_MRML_EXPORT vtkMRMLVolumeDisplayNode : public vtkMRMLDisplayNode
   // Description:
   // Finds the storage node and read the data
   virtual void UpdateScene(vtkMRMLScene *scene);
-  
-  // Description:
-  // String ID of the color MRML node
-  void SetAndObserveColorNodeID(const char *ColorNodeID);
-  //BTX
-  void SetAndObserveColorNodeID(std::string ColorNodeID);
-  //ETX
-  vtkGetStringMacro(ColorNodeID);
 
   // Description:
-  // Get associated color MRML node
-  vtkMRMLColorNode* GetColorNode();
+  // Sets vtkImageData to be converted to displayable vtkImageData
+  virtual void SetImageData(vtkImageData *imageData) {};
+
+  // Description:
+  // Sets ImageData for background mask 
+  virtual void SetBackgroundImageData(vtkImageData *imageData) {};
+
+  // Description:
+  // Gets ImageData converted from the real data in the node
+  virtual vtkImageData* GetImageData() {return NULL;};
+
+  // Description:
+  // Update the pipeline based on this node attributes
+  virtual void UpdateImageDataPipeline() {};
 
   // Description:
   // alternative method to propagate events generated in Display nodes
@@ -135,32 +82,13 @@ class VTK_MRML_EXPORT vtkMRMLVolumeDisplayNode : public vtkMRMLDisplayNode
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
   // Description:
-  // set gray colormap
-  void SetDefaultColorMap(int isLabelMap);
- 
+  // set gray colormap or override in subclass
+  virtual void SetDefaultColorMap();
 protected:
   vtkMRMLVolumeDisplayNode();
   ~vtkMRMLVolumeDisplayNode();
   vtkMRMLVolumeDisplayNode(const vtkMRMLVolumeDisplayNode&);
   void operator=(const vtkMRMLVolumeDisplayNode&);
-
-  char *ColorNodeID;
-
-  vtkSetReferenceStringMacro(ColorNodeID);
-
-  vtkMRMLColorNode *ColorNode;
-
-  double Window;
-  double Level;
-  double UpperThreshold;
-  double LowerThreshold;
-
-
-  // Booleans
-  int Interpolate;
-  int AutoWindowLevel;
-  int ApplyThreshold;
-  int AutoThreshold;
 
 };
 

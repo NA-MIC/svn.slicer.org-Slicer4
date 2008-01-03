@@ -78,9 +78,9 @@ set ::SLICER_TAG "http://www.na-mic.org/svn/Slicer3/trunk"
 set ::CMAKE_TAG "CMake-2-4-2"
 #set ::TEEM_TAG "HEAD"
 set ::TEEM_TAG "Teem-1-9-0-patches"
-set ::KWWidgets_TAG "HEAD"
+set ::KWWidgets_TAG "Slicer-3-0"
 set ::VTK_TAG "VTK-5-0"
-set ::ITK_TAG ITK-3-2
+set ::ITK_TAG ITK-3-4
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
@@ -94,7 +94,8 @@ set ::PYTHON_TAG "http://svn.python.org/projects/python/branches/release25-maint
 set ::NUMPY_TAG "http://svn.scipy.org/svn/numpy/trunk"
 set ::SCIPY_TAG "http://svn.scipy.org/svn/scipy/trunk"
 set ::BatchMake_TAG "HEAD"
-set ::LIBCURL_TAG "HEAD"
+set ::SLICERLIBCURL_TAG "HEAD"
+set ::USE_SIGN 0
 
 
 # Set library, binary, etc. paths...
@@ -120,6 +121,7 @@ set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE "Debug"
+set ::CMAKE_CXX_FLAGS_DEBUG "-g"
 set ::VTK_BUILD_SUBDIR ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWidgets_BUILD_DIR  $::SLICER_LIB/KWWidgets-build
@@ -137,8 +139,8 @@ set ::NaviTrack_DIR $::SLICER_LIB/NaviTrack-build
 set ::dcmtk_DIR $::SLICER_LIB/dcmtk-build
 set ::BatchMake_SRC_DIR $::SLICER_LIB/BatchMake
 set ::BatchMake_BUILD_DIR $::SLICER_LIB/BatchMake-build
-set ::LIBCURL_SRC_DIR $::SLICER_LIB/cmcurl
-set ::LIBCURL_BUILD_DIR $::SLICER_LIB/cmcurl-build
+set ::SLICERLIBCURL_SRC_DIR $::SLICER_LIB/cmcurl
+set ::SLICERLIBCURL_BUILD_DIR $::SLICER_LIB/cmcurl-build
 
 
 
@@ -187,6 +189,7 @@ switch $::tcl_platform(os) {
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
         set ::PYTHON_TEST_FILE $::SLICER_LIB/python-build/bin/python
+        set ::MATPLOTLIB_TEST_FILE $::SLICER_LIB/python-build/bin/bar
         set ::NUMPY_TEST_FILE $::SLICER_LIB/python-build/lib/python2.5/site-packages/numpy/lib/_compiled_base.$shared_lib_ext
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
@@ -203,9 +206,8 @@ switch $::tcl_platform(os) {
         set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.$shared_lib_ext
         set ::NaviTrack_TEST_FILE $::NaviTrack_DIR/libNaviTrack.$shared_lib_ext
         set ::dcmtk_TEST_FILE $::dcmtk_DIR/dcmnet/libsrc/libdcmnet.a
-        set ::BatchMake_TEST_FILE $::BatchMake_BUILD_DIR/bin/BatchMake.exe
-        set ::LIBCURL_TEST_FILE $::LIBCURL_BUILD_DIR/bin/cmcurl.a
-
+        set ::BatchMake_TEST_FILE $::BatchMake_BUILD_DIR/bin/BatchMake
+        set ::SLICERLIBCURL_TEST_FILE $::SLICERLIBCURL_BUILD_DIR/bin/libslicerlibcurl.a
     }
     "Linux" {
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
@@ -232,8 +234,8 @@ switch $::tcl_platform(os) {
         set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.so
         set ::NaviTrack_TEST_FILE $::NaviTrack_DIR/libNaviTrack.$shared_lib_ext
         set ::dcmtk_TEST_FILE $::dcmtk_DIR/dcmnet/libsrc/libdcmnet.a
-        set ::BatchMake_TEST_FILE $::BatchMake_BUILD_DIR/bin/BatchMake.exe
-        set ::LIBCURL_TEST_FILE $::LIBCURL_BUILD_DIR/bin/cmcurl.a
+        set ::BatchMake_TEST_FILE $::BatchMake_BUILD_DIR/bin/BatchMake
+        set ::SLICERLIBCURL_TEST_FILE $::SLICERLIBCURL_BUILD_DIR/bin/libslicerlibcurl.a
 
     }
     "Windows NT" {
@@ -269,8 +271,8 @@ switch $::tcl_platform(os) {
         set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/$::VTK_BUILD_TYPE/IGSTK.lib
         set ::NaviTrack_TEST_FILE $::NaviTrack_DIR/$::VTK_BUILD_TYPE//libNaviTrack.lib
         set ::dcmtk_TEST_FILE $::dcmtk_DIR/bin/$::VTK_BUILD_TYPE/libdcmdata.lib
-        set ::BatchMake_TEST_FILE $::BatchMake_BUILD_DIR/bin/$::VTK_BUILD_TYPE/BatchMake.exe
-        set ::LIBCURL_TEST_FILE $::LIBCURL_BUILD_DIR/bin/$::VTK_BUILD_TYPE/cmcurl.lib
+        set ::BatchMake_TEST_FILE $::BatchMake_BUILD_DIR/bin/$::VTK_BUILD_TYPE/BatchMake.lib
+        set ::SLICERLIBCURL_TEST_FILE $::SLICERLIBCURL_BUILD_DIR/bin/$::VTK_BUILD_TYPE/slicerlibcurl.lib
 
     }
     default {
@@ -310,9 +312,9 @@ switch $::tcl_platform(os) {
         set ::COMPILER_PATH "/usr/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        set ::MAKE make
-        set ::SERIAL_MAKE make
-    }
+        set numCPUs [exec sysctl -n hw.ncpu ]
+        set ::MAKE "make -j [expr $numCPUs * 2]"
+        set ::SERIAL_MAKE "make"}
     default {
         # different windows machines say different things, so assume
         # that if it doesn't match above it must be windows

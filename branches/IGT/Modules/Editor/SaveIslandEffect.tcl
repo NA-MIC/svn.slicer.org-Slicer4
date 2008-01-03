@@ -32,7 +32,7 @@ if { [itcl::find class SaveIslandEffect] == "" } {
     destructor {}
 
     # methods
-    method processEvent {} {}
+    method processEvent {{caller ""} {event ""}} {}
     method preview {} {}
     method apply {} {}
     method buildOptions {} {}
@@ -54,9 +54,9 @@ itcl::body SaveIslandEffect::destructor {} {
 #                             METHODS
 # ------------------------------------------------------------------
 
-itcl::body SaveIslandEffect::processEvent { } {
+itcl::body SaveIslandEffect::processEvent { {caller ""} {event ""} } {
 
-  if { [$this preProcessEvent] } {
+  if { [$this preProcessEvent $caller $event] } {
     # superclass processed the event, so we don't
     return
   }
@@ -86,7 +86,7 @@ itcl::body SaveIslandEffect::apply {} {
   foreach {x y} [$_interactor GetEventPosition] {}
   $this queryLayers $x $y
 
-  if { [$this getInputLabel] == "" || [$this getOutputLabel] == "" } {
+  if { [$this getInputLabel] == "" || [$this getInputLabel] == "" } {
     $this flashCursor 3
     return
   }

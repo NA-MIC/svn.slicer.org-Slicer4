@@ -18,6 +18,7 @@
 #include "vtkPoints.h"
 
 #include "vtkMRMLModelDisplayNode.h"
+#include "vtkMRMLLinearTransformNode.h"
 
 #include "vtkSlicerSliceLogic.h"
 
@@ -40,11 +41,14 @@ vtkSlicerSliceLogic::vtkSlicerSliceLogic()
   this->ForegroundOpacity = 0.5; // Start by blending fg/bg
   this->LabelOpacity = 1.0;
   this->Blend = vtkImageBlend::New();
+  this->ExtractModelTexture = vtkImageReslice::New();
+  this->ExtractModelTexture->SetOutputDimensionality (2);
   this->PolyDataCollection = vtkPolyDataCollection::New();
   this->LookupTableCollection = vtkCollection::New();
   this->SetForegroundOpacity(this->ForegroundOpacity);
   this->SetLabelOpacity(this->LabelOpacity);
   this->SliceModelNode = NULL;
+  this->SliceModelTransformNode = NULL;
   this->Name = NULL;
   this->SliceModelDisplayNode = NULL;
   this->ImageData = vtkImageData::New();
@@ -65,6 +69,11 @@ vtkSlicerSliceLogic::~vtkSlicerSliceLogic()
     {
     this->Blend->Delete();
     this->Blend = NULL;
+    }
+  if ( this->ExtractModelTexture ) 
+    {
+    this->ExtractModelTexture->Delete();
+    this->ExtractModelTexture = NULL;
     }
   this->PolyDataCollection->Delete();
   this->LookupTableCollection->Delete();
@@ -319,10 +328,35 @@ void vtkSlicerSliceLogic::ProcessLogicEvents()
       && this->MRMLScene->GetNodeByID( this->SliceModelNode->GetID() ) != NULL && 
         this->SliceModelNode->GetPolyData() != NULL )
     {
+
+
     vtkPoints *points = this->SliceModelNode->GetPolyData()->GetPoints();
     unsigned int *dims = this->SliceNode->GetDimensions();
     vtkMatrix4x4 *xyToRAS = this->SliceNode->GetXYToRAS();
 
+
+#ifdef USE_IMAGE_ACTOR
+    // set the transform for the slice model for use by an image actor in the viewer
+    this->SliceModelTransformNode->GetMatrixTransformToParent()->DeepCopy( xyToRAS );
+
+    // set the plane corner point for use in a model (deprecated)
+    // TODO: remove this block
+    double pt[3]={0,0,0};
+    points->SetPoint(0, pt);
+    pt[0] = dims[0];
+    points->SetPoint(1, pt);
+    pt[0] = 0;
+    pt[1] = dims[1];
+    points->SetPoint(2, pt);
+    pt[0] = dims[0];
+    pt[1] = dims[1];
+    points->SetPoint(3, pt);
+#else
+    // set the transform for the slice model for use by an image actor in the viewer
+    this->SliceModelTransformNode->GetMatrixTransformToParent()->Identity();
+
+    // set the plane corner point for use in a model (deprecated)
+    // TODO: remove this block
     double inPt[4]={0,0,0,1};
     double outPt[4];
     double *outPt3 = outPt;
@@ -343,6 +377,7 @@ void vtkSlicerSliceLogic::ProcessLogicEvents()
     inPt[1] = dims[1];
     xyToRAS->MultiplyPoint(inPt, outPt);
     points->SetPoint(3, outPt3);
+#endif
 
     this->UpdateImageData();
     this->SliceModelNode->GetPolyData()->Modified();
@@ -755,9 +790,9 @@ void vtkSlicerSliceLogic::UpdatePipeline()
         {
         this->SliceModelNode->GetModelDisplayNode()->SetVisibility( this->SliceNode->GetSliceVisible() );
         }
-      if (this->SliceModelNode->GetModelDisplayNode()->GetTextureImageData() != this->GetImageData())
+      if (this->SliceModelNode->GetModelDisplayNode()->GetTextureImageData() != this->ExtractModelTexture->GetOutput())
         {
-        this->SliceModelNode->GetModelDisplayNode()->SetAndObserveTextureImageData(this->GetImageData());
+        this->SliceModelNode->GetModelDisplayNode()->SetAndObserveTextureImageData(this->ExtractModelTexture->GetOutput());
         }
       }
 
@@ -819,6 +854,11 @@ void vtkSlicerSliceLogic::DeleteSliceModel()
     this->SliceModelDisplayNode->Delete();
     this->SliceModelDisplayNode = NULL;
     }
+  if (this->SliceModelTransformNode != NULL)
+    {
+    this->SliceModelTransformNode->Delete();
+    this->SliceModelTransformNode = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -854,32 +894,28 @@ void vtkSlicerSliceLogic::CreateSliceModel()
     this->SliceModelDisplayNode->SetColor(1,1,1);
     this->SliceModelDisplayNode->SetAmbient(1);
     this->SliceModelDisplayNode->SetDiffuse(0);
-    this->SliceModelDisplayNode->SetAndObserveTextureImageData(this->GetImageData());
+    this->SliceModelDisplayNode->SetAndObserveTextureImageData(this->ExtractModelTexture->GetOutput());
     this->SliceModelDisplayNode->SetSaveWithScene(0);
 
-    std::stringstream ss;
-    char name[256];
-    ss << this->Name << " Volume Slice";
-    ss.getline(name,256);
-    this->SliceModelNode->SetName(name);
+    std::string name = std::string(this->Name) + " Volume Slice";
+    this->SliceModelNode->SetName (name.c_str());
 
-
-    this->SliceModelNode->SetAndObserveDisplayNodeID(this->SliceModelDisplayNode->GetID());
+    // make the xy to RAS transform
+    this->SliceModelTransformNode = vtkMRMLLinearTransformNode::New();
+    this->SliceModelTransformNode->SetScene(this->GetMRMLScene());
+    this->SliceModelTransformNode->SetHideFromEditors(1);
+    this->SliceModelTransformNode->SetSelectable(0);
+    this->SliceModelTransformNode->SetSaveWithScene(0);
   }
 
   if (this->SliceModelNode != NULL && this->MRMLScene->GetNodeByID( this->GetSliceModelNode()->GetID() ) == NULL )
     {
-    vtkIntArray *events = vtkIntArray::New();
-    //this->GetMRMLEvents(this->GetMRMLScene(), events);
-    //this->SetMRMLScene(this->GetMRMLScene());
     this->MRMLScene->AddNodeNoNotify(this->SliceModelDisplayNode);
+    this->MRMLScene->AddNodeNoNotify(this->SliceModelTransformNode);
     this->MRMLScene->AddNode(this->SliceModelNode);
     this->SliceModelNode->SetAndObserveDisplayNodeID(this->SliceModelDisplayNode->GetID());
-    this->SliceModelDisplayNode->SetAndObserveTextureImageData(this->GetImageData());
-    //this->SetAndObserveMRMLSceneEvents(this->GetMRMLScene(), events);
-    events->Delete();
-    //this->SliceModelNode->Delete();
-    //this->SliceModelDisplayNode->Delete();
+    this->SliceModelDisplayNode->SetAndObserveTextureImageData(this->ExtractModelTexture->GetOutput());
+    this->SliceModelNode->SetAndObserveTransformNodeID(this->SliceModelTransformNode->GetID());
     }
 
   // update the description to refer back to the slice and composite nodes
@@ -904,27 +940,50 @@ void vtkSlicerSliceLogic::CreateSliceModel()
   }
 }
 
-// Get the size of the volume, transformed to RAS space
-void vtkSlicerSliceLogic::GetBackgroundRASBox(double rasDimensions[3], double rasCenter[3])
-{
-  rasCenter[0] = rasDimensions[0] = 0.0;
-  rasCenter[1] = rasDimensions[1] = 0.0;
-  rasCenter[2] = rasDimensions[2] = 0.0;
 
+vtkMRMLVolumeNode *vtkSlicerSliceLogic::GetLayerVolumeNode(int layer)
+{
   vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
   vtkMRMLSliceCompositeNode *compositeNode = this->GetSliceCompositeNode();
   vtkMRMLVolumeNode *backgroundNode = NULL;
 
   if ( !sliceNode || !compositeNode )
     {
-    return;
+    return (NULL);
     }
   
-  backgroundNode = vtkMRMLVolumeNode::SafeDownCast (
-      this->MRMLScene->GetNodeByID( compositeNode->GetBackgroundVolumeID() ));
+  char *id = NULL;
+  switch (layer)
+    {
+    case 0:
+      {
+      id = compositeNode->GetBackgroundVolumeID();
+      break;
+      }
+    case 1:
+      {
+      id = compositeNode->GetForegroundVolumeID();
+      break;
+      }
+    case 2:
+      {
+      id = compositeNode->GetLabelVolumeID();
+      break;
+      }
+    }
+  return ( vtkMRMLVolumeNode::SafeDownCast ( this->MRMLScene->GetNodeByID( id )) );
+}
 
-  vtkImageData *backgroundImage;
-  if ( !backgroundNode || ! (backgroundImage = backgroundNode->GetImageData()) )
+// Get the size of the volume, transformed to RAS space
+void vtkSlicerSliceLogic::GetVolumeRASBox(vtkMRMLVolumeNode *volumeNode, double rasDimensions[3], double rasCenter[3])
+{
+  rasCenter[0] = rasDimensions[0] = 0.0;
+  rasCenter[1] = rasDimensions[1] = 0.0;
+  rasCenter[2] = rasDimensions[2] = 0.0;
+
+
+  vtkImageData *volumeImage;
+  if ( !volumeNode || ! (volumeImage = volumeNode->GetImageData()) )
     {
     return;
     }
@@ -937,13 +996,21 @@ void vtkSlicerSliceLogic::GetBackgroundRASBox(double rasDimensions[3], double ra
   //
   vtkMatrix4x4 *ijkToRAS = vtkMatrix4x4::New();
   int dimensions[3];
-  backgroundImage->GetDimensions(dimensions);
+  volumeImage->GetDimensions(dimensions);
   double doubleDimensions[4], rasHDimensions[4], rasHCenter[4];
   doubleDimensions[0] = dimensions[0] - 1;
   doubleDimensions[1] = dimensions[1] - 1;
   doubleDimensions[2] = dimensions[2] - 1;
   doubleDimensions[3] = 0;
-  backgroundNode->GetIJKToRASMatrix (ijkToRAS);
+  volumeNode->GetIJKToRASMatrix (ijkToRAS);
+  vtkMRMLTransformNode *transformNode = volumeNode->GetParentTransformNode();
+  if ( transformNode )
+    {
+    vtkMatrix4x4 *rasToRAS = vtkMatrix4x4::New();
+    transformNode->GetMatrixTransformToWorld(rasToRAS);
+    vtkMatrix4x4::Multiply4x4 (ijkToRAS, rasToRAS, ijkToRAS);
+    rasToRAS->Delete();
+    }
   ijkToRAS->MultiplyPoint( doubleDimensions, rasHDimensions );
   doubleDimensions[0] = (dimensions[0]-1)/2.;
   doubleDimensions[1] = (dimensions[1]-1)/2.;
@@ -963,7 +1030,7 @@ void vtkSlicerSliceLogic::GetBackgroundRASBox(double rasDimensions[3], double ra
 }
 
 // Get the size of the volume, transformed to RAS space
-void vtkSlicerSliceLogic::GetBackgroundSliceDimensions(double sliceDimensions[3], double sliceCenter[3])
+void vtkSlicerSliceLogic::GetVolumeSliceDimensions(vtkMRMLVolumeNode *volumeNode, double sliceDimensions[3], double sliceCenter[3])
 {
   sliceCenter[0] = sliceDimensions[0] = 0.0;
   sliceCenter[1] = sliceDimensions[1] = 0.0;
@@ -980,7 +1047,7 @@ void vtkSlicerSliceLogic::GetBackgroundSliceDimensions(double sliceDimensions[3]
   // for doing matrix transforms
   double rasDimensions[3], rasHDimensions[4], sliceHDimensions[4];
   double rasCenter[3], rasHCenter[4], sliceHCenter[4];
-  this->GetBackgroundRASBox(rasDimensions, rasCenter);
+  this->GetVolumeRASBox(volumeNode, rasDimensions, rasCenter);
   rasHDimensions[0] = rasDimensions[0];
   rasHDimensions[1] = rasDimensions[1];
   rasHDimensions[2] = rasDimensions[2];
@@ -1013,22 +1080,17 @@ void vtkSlicerSliceLogic::GetBackgroundSliceDimensions(double sliceDimensions[3]
 }
 
 // Get the spacing of the volume, transformed to slice space
-double *vtkSlicerSliceLogic::GetBackgroundSliceSpacing()
+double *vtkSlicerSliceLogic::GetVolumeSliceSpacing(vtkMRMLVolumeNode *volumeNode)
 {
 
-  vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
-  vtkMRMLSliceCompositeNode *compositeNode = this->GetSliceCompositeNode();
-  vtkMRMLVolumeNode *backgroundNode = NULL;
-
-  if ( !sliceNode || !compositeNode )
+  if ( !volumeNode )
     {
     return (this->SliceSpacing);
     }
-  
-  backgroundNode = vtkMRMLVolumeNode::SafeDownCast (
-      this->MRMLScene->GetNodeByID( compositeNode->GetBackgroundVolumeID() ));
 
-  if ( !backgroundNode )
+  vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
+
+  if ( !sliceNode )
     {
     return (this->SliceSpacing);
     }
@@ -1037,7 +1099,7 @@ double *vtkSlicerSliceLogic::GetBackgroundSliceSpacing()
   vtkMatrix4x4 *rasToSlice = vtkMatrix4x4::New();
   vtkMatrix4x4 *ijkToSlice = vtkMatrix4x4::New();
 
-  backgroundNode->GetIJKToRASMatrix(ijkToRAS);
+  volumeNode->GetIJKToRASMatrix(ijkToRAS);
   rasToSlice->DeepCopy(sliceNode->GetSliceToRAS());
   rasToSlice->Invert();
 
@@ -1061,7 +1123,7 @@ double *vtkSlicerSliceLogic::GetBackgroundSliceSpacing()
   return (this->SliceSpacing);
 }
 
-void vtkSlicerSliceLogic::GetBackgroundSliceBounds(double sliceBounds[6])
+void vtkSlicerSliceLogic::GetVolumeSliceBounds(vtkMRMLVolumeNode *volumeNode, double sliceBounds[6])
 {
   sliceBounds[0] = sliceBounds[1] = 0.0;
   sliceBounds[2] = sliceBounds[3] = 0.0;
@@ -1077,7 +1139,7 @@ void vtkSlicerSliceLogic::GetBackgroundSliceBounds(double sliceBounds[6])
   double rasDimensions[3], rasCenter[3];
   double rasHMin[4], rasHMax[4]; 
   double sliceHMin[4], sliceHMax[4]; 
-  this->GetBackgroundRASBox(rasDimensions, rasCenter);
+  this->GetVolumeRASBox(volumeNode, rasDimensions, rasCenter);
   rasHMin[0] = rasCenter[0] - rasDimensions[0] / 2.;
   rasHMin[1] = rasCenter[1] - rasDimensions[1] / 2.;
   rasHMin[2] = rasCenter[2] - rasDimensions[2] / 2.;
@@ -1109,37 +1171,31 @@ void vtkSlicerSliceLogic::GetBackgroundSliceBounds(double sliceBounds[6])
   sliceBounds[5] = sliceHMax[2];
 }
 
-// adjust the node's field of view to match the extent of current background volume
-void vtkSlicerSliceLogic::FitSliceToBackground(int width, int height)
+// adjust the node's field of view to match the extent of current volume
+void vtkSlicerSliceLogic::FitSliceToVolume(vtkMRMLVolumeNode *volumeNode, int width, int height)
 {
-  vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
-  vtkMRMLSliceCompositeNode *compositeNode = this->GetSliceCompositeNode();
-  vtkMRMLVolumeNode *backgroundNode = NULL;
-
-  if ( !sliceNode || !compositeNode )
+  vtkImageData *volumeImage;
+  if ( !volumeNode || ! (volumeImage = volumeNode->GetImageData()) )
     {
     return;
     }
-  
-  backgroundNode = vtkMRMLVolumeNode::SafeDownCast (
-      this->MRMLScene->GetNodeByID( compositeNode->GetBackgroundVolumeID() ));
 
-  vtkImageData *backgroundImage;
-  if ( !backgroundNode || ! (backgroundImage = backgroundNode->GetImageData()) )
+  vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
+
+  if ( !sliceNode )
     {
     return;
     }
 
   double rasDimensions[3], rasCenter[3];
-  this->GetBackgroundRASBox (rasDimensions, rasCenter);
+  this->GetVolumeRASBox (volumeNode, rasDimensions, rasCenter);
   double sliceDimensions[3], sliceCenter[3];
-  this->GetBackgroundSliceDimensions (sliceDimensions, sliceCenter);
+  this->GetVolumeSliceDimensions (volumeNode, sliceDimensions, sliceCenter);
 
-  double absSliceDimensions[4];
   double fitX, fitY, fitZ, displayX, displayY;
-  displayX = fitX = absSliceDimensions[0] = fabs(sliceDimensions[0]);
-  displayY = fitY = absSliceDimensions[1] = fabs(sliceDimensions[1]);
-  fitZ = absSliceDimensions[2] = fabs(sliceDimensions[2]);
+  displayX = fitX = fabs(sliceDimensions[0]);
+  displayY = fitY = fabs(sliceDimensions[1]);
+  fitZ = this->GetVolumeSliceSpacing(volumeNode)[2] * sliceNode->GetDimensions()[2];
 
 
   // fit fov to min dimension of window
@@ -1178,15 +1234,93 @@ void vtkSlicerSliceLogic::FitSliceToBackground(int width, int height)
   sliceToRAS->SetElement(1, 3, rasCenter[1]);
   sliceToRAS->SetElement(2, 3, rasCenter[2]);
   sliceNode->GetSliceToRAS()->DeepCopy(sliceToRAS);
+  sliceNode->UpdateMatrices( );
   sliceToRAS->Delete();
 
+}
+
+
+// Get the size of the volume, transformed to RAS space
+void vtkSlicerSliceLogic::GetBackgroundRASBox(double rasDimensions[3], double rasCenter[3])
+{
+  vtkMRMLVolumeNode *backgroundNode = NULL;
+  backgroundNode = this->GetLayerVolumeNode (0);
+  this->GetVolumeRASBox( backgroundNode, rasDimensions, rasCenter );
+}
+
+// Get the size of the volume, transformed to RAS space
+void vtkSlicerSliceLogic::GetBackgroundSliceDimensions(double sliceDimensions[3], double sliceCenter[3])
+{
+  vtkMRMLVolumeNode *backgroundNode = NULL;
+  backgroundNode = this->GetLayerVolumeNode (0);
+  this->GetVolumeSliceDimensions( backgroundNode, sliceDimensions, sliceCenter );
+}
+
+// Get the spacing of the volume, transformed to slice space
+double *vtkSlicerSliceLogic::GetBackgroundSliceSpacing()
+{
+  vtkMRMLVolumeNode *backgroundNode = NULL;
+  backgroundNode = this->GetLayerVolumeNode (0);
+  return (this->GetVolumeSliceSpacing( backgroundNode ));
+}
+
+void vtkSlicerSliceLogic::GetBackgroundSliceBounds(double sliceBounds[6])
+{
+  vtkMRMLVolumeNode *backgroundNode = NULL;
+  backgroundNode = this->GetLayerVolumeNode (0);
+  this->GetVolumeSliceBounds(backgroundNode, sliceBounds);
+}
+
+// adjust the node's field of view to match the extent of current background volume
+void vtkSlicerSliceLogic::FitSliceToBackground(int width, int height)
+{
+  vtkMRMLVolumeNode *backgroundNode = NULL;
+  backgroundNode = this->GetLayerVolumeNode (0);
+  this->FitSliceToVolume( backgroundNode, width, height );
 }
 
 // adjust the node's field of view to match the extent of all volume layers
 void vtkSlicerSliceLogic::FitSliceToAll(int width, int height)
 {
-  // TODO...
-  vtkErrorMacro ("not yet implemented");
+  vtkMRMLVolumeNode *volumeNode;
+  for ( int layer=0; layer < 3; layer++ )
+    {
+    volumeNode = this->GetLayerVolumeNode (layer);
+    if (volumeNode)
+      {
+      this->FitSliceToVolume( volumeNode, width, height );
+      return;
+      }
+    }
+}
+
+double *vtkSlicerSliceLogic::GetLowestVolumeSliceSpacing()
+{
+  vtkMRMLVolumeNode *volumeNode;
+  for ( int layer=0; layer < 3; layer++ )
+    {
+    volumeNode = this->GetLayerVolumeNode (layer);
+    if (volumeNode)
+      {
+      return this->GetVolumeSliceSpacing( volumeNode );
+      }
+    }
+  return (this->SliceSpacing);
+}
+
+void vtkSlicerSliceLogic::GetLowestVolumeSliceBounds(double sliceBounds[6])
+{
+  vtkMRMLVolumeNode *volumeNode;
+  for ( int layer=0; layer < 3; layer++ )
+    {
+    volumeNode = this->GetLayerVolumeNode (layer);
+    if (volumeNode)
+      {
+      return this->GetVolumeSliceBounds( volumeNode, sliceBounds );
+      }
+    }
+  // return the default values
+  return this->GetVolumeSliceBounds( NULL, sliceBounds );
 }
 
 // Get/Set the current distance from the origin to the slice plane

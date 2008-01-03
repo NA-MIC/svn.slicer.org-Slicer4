@@ -22,7 +22,10 @@ namespace eval SWidget {
 namespace eval SWidget {
   proc ProtectedCallback {instance args} {
     if { [info command $instance] != "" } {
-      eval $instance $args
+      if { [catch "eval $instance $args" res] } {
+        puts $res
+        puts $::errorInfo
+      }
     }
   }
 }
@@ -84,11 +87,14 @@ if { [itcl::find class SWidget] == "" } {
 
     # methods
     method rasToXY {rasPoint} {}
+    method rasToXYZ {rasPoint} {}
     method xyToRAS {xyPoint} {}
+    method xyzToRAS {xyPoint} {}
+    method dcToXYZ { x y } {}
     method queryLayers { x y {z 0} } {}
     method getLayers {} {return [array get _layers]}
     method getObjects {} {return [array get o]}
-    method processEvent {} {}
+    method processEvent {{caller ""} {event ""}} {}
     method pick {} {}
     method highlight {} {}
     method place {x y z} {}
@@ -149,10 +155,50 @@ itcl::body SWidget::rasToXY { rasPoint } {
   return [lrange $xyzw 0 1]
 }
 
+# return x y z for a give r a s
+itcl::body SWidget::rasToXYZ { rasPoint } {
+  set rasToXY [vtkMatrix4x4 New]
+  $rasToXY DeepCopy [$_sliceNode GetXYToRAS]
+  $rasToXY Invert
+  set xyzw [eval $rasToXY MultiplyPoint $rasPoint 1]
+  $rasToXY Delete
+  return [lrange $xyzw 0 2]
+}
+
 # return r a s for a given x y
 itcl::body SWidget::xyToRAS { xyPoint } {
   set rast [eval [$_sliceNode GetXYToRAS] MultiplyPoint $xyPoint 0 1]
   return [lrange $rast 0 2]
+}
+
+# return r a s for a given x y z
+itcl::body SWidget::xyzToRAS { xyPoint } {
+  set rast [eval [$_sliceNode GetXYToRAS] MultiplyPoint $xyPoint 1]
+  return [lrange $rast 0 2]
+}
+
+# return xyz for a given device coordinate (x y).  THe device coordinate (xy)
+# is a position in the window, the returned xyz is a position in a viewport, 
+# with z corresonding to a slice in the slice volume
+itcl::body SWidget::dcToXYZ { wx wy } {
+  set wx [expr int($wx)]
+  set wy [expr int($wy)]
+
+  foreach {windoww windowh} [[$_interactor GetRenderWindow] GetSize] {}
+  set numRows [$_sliceNode GetLayoutGridRows]
+  set numCols [$_sliceNode GetLayoutGridColumns]
+
+  set tx [expr $wx / double($windoww)]
+  set ty [expr ($windowh - $wy) / double($windowh)]
+
+  set z [expr (floor($ty*$numRows)*$numCols + floor($tx*$numCols))]
+  
+  set pokedRenderer [$_interactor FindPokedRenderer $wx $wy]
+  foreach {rox roy} [$pokedRenderer GetOrigin] {}
+  set x [expr $wx - $rox]
+  set y [expr $wy - $roy]
+
+  return "$x $y $z"
 }
 
 itcl::body SWidget::queryLayers { x y {z 0} } {
@@ -191,7 +237,7 @@ itcl::body SWidget::getPixel { image i j k } {
   if { $image == "" } { return "" }
   foreach index "i j k" dimension [$image GetDimensions] {
     set ind [set $index]
-    if { $ind < 0 || $ind >= $dimension } {return "Unknown"}
+    if { $ind < 0 || $ind >= $dimension } {return "Out of Frame"}
   }
   set n [$image GetNumberOfScalarComponents]
 

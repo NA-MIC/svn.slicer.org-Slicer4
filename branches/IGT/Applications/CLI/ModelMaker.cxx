@@ -43,6 +43,8 @@ Version:   $Revision$
 #include "vtkMRMLModelStorageNode.h"
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLColorTableNode.h"
+#include "vtkMRMLModelHierarchyNode.h"
+#include "vtkMRMLColorTableStorageNode.h"
 #include "vtkSlicerColorLogic.h"
 
 #include <fstream>
@@ -61,51 +63,108 @@ int main(int argc, char * argv[])
     if (debug) 
       {
       std::cout << "The input volume is: " << InputVolume << std::endl;
-      std::cout << "The output directory is: " << OutputDirectory << std::endl;
+      std::cout << "The labels are: " << std::endl;
+      for (int l = 0; l < Labels.size(); l++)
+        {
+        std::cout << "\tList element " << l << " = " << Labels[l] << std::endl;
+        }
       std::cout << "The starting label is: " << StartLabel << std::endl;
       std::cout << "The ending label is: " << EndLabel << std::endl;
-      if (EndLabel <= StartLabel) 
-        {
-        std::cout << "The model name is: " << Name << std::endl;
-        }
-      else 
-        {
-        // will make multiple
-        std::cout << "Do joint smoothing flag is: " << JointSmoothing << std::endl;
-        }
+      std::cout << "The model name is: " << Name << std::endl;
+      std::cout << "Do joint smoothing flag is: " << JointSmoothing << std::endl;
       std::cout << "Number of smoothing iterations: " << Smooth << std::endl;
       std::cout << "Number of decimate iterations: " << Decimate << std::endl;
       std::cout << "Split normals? " << SplitNormals << std::endl;
       std::cout << "Calculate point normals? " << PointNormals << std::endl;
       std::cout << "Filter type: " << FilterType << std::endl;
-      std::cout << "Output model scene file: " << ModelSceneFile << std::endl;
+      std::cout << "Output model scene file: " << (ModelSceneFile.size() > 0 ? ModelSceneFile[0].c_str() : "None") << std::endl;
+      std::cout << "Color table file : " << ColorTable.c_str() << std::endl;
       std::cout << "\nStarting..." << std::endl;
       }
 
+    // get the model hierarchy id from the scene file
+    std::string::size_type loc;
+    std::string sceneFilename;
+    std::string modelHierarchyID;
+
+    if (ModelSceneFile.size() == 0)
+      {
+      std::cerr << "ERROR: no model hierarchy node defined!" << endl;
+      return EXIT_FAILURE;
+      }
+    
+    loc = ModelSceneFile[0].find_last_of("#");
+    if (loc != std::string::npos)
+      {
+      sceneFilename = std::string(ModelSceneFile[0].begin(),
+                                  ModelSceneFile[0].begin() + loc);
+      loc++;
+      
+      modelHierarchyID = std::string(ModelSceneFile[0].begin()+loc, ModelSceneFile[0].end());
+      }
+
+    if (debug)
+      {
+      std::cout << "Models file: " << sceneFilename << std::endl;
+      std::cout << "Model Hierarchy ID: " << modelHierarchyID << std::endl;
+      }
+
+     // check for the model mrml file
+    if (sceneFilename == "")
+      {
+      std::cout << "No file to store models!" << std::endl;
+      return EXIT_FAILURE;
+      }
+
+    // get the directory of the scene file
+    std::string rootDir
+      = vtksys::SystemTools::GetParentDirectory( sceneFilename.c_str() );
+    
+    vtkMRMLScene *modelScene = NULL;
+    modelScene = vtkMRMLScene::New();
+
+    modelScene->SetURL(sceneFilename.c_str());
+    modelScene->Import();
+    
+    // make sure we have a model hierarchy node
+    vtkMRMLNode *rnd = modelScene->GetNodeByID( modelHierarchyID );
+    
+    if (!rnd)
+      {
+      std::cerr << "Error: no model hierarchy node at ID \""
+                << modelHierarchyID << "\"" << std::endl;
+      return EXIT_FAILURE;
+      }
+    
+
+    vtkMRMLModelHierarchyNode *rtnd = vtkMRMLModelHierarchyNode::SafeDownCast(rnd);
+  
     LabelAnatomyContainer labelToAnatomy;
 
-    int useColorNode = 0;
     vtkMRMLColorTableNode *colorNode = NULL;
+    vtkMRMLColorTableStorageNode *colorStorageNode = NULL;
+    
+    int useColorNode = 0;
+    if (ColorTable !=  "")
+      {      
+      useColorNode = 1;
+      }
+    else if (AnatomyLabelFile != "" && AnatomyLabelFile != "NoneSpecified")
+      {
+      // if an anatomy label file is specified, populate a map with its contents
+      if (ImportAnatomyLabelFile( AnatomyLabelFile, labelToAnatomy ))
+        {
+        return EXIT_FAILURE;
+        }
+      }
 
-    // if an anatomy label file is specified, populate a map with its contents
-    if (AnatomyLabelFile != "" && AnatomyLabelFile != "NoneSpecified")
-      {
-        if (ImportAnatomyLabelFile( AnatomyLabelFile, labelToAnatomy ))
-          {
-          return EXIT_FAILURE;
-          }
-      }
-    else
-      {
-      // use a color node
-      useColorNode = 1;     
-      }
     // vtk and helper variables
     vtkITKArchetypeImageSeriesReader* reader = NULL;
     vtkImageData * image;
     vtkDiscreteMarchingCubes  * cubes = NULL;
     vtkWindowedSincPolyDataFilter *smoother = NULL;
-    bool makeMultiple;
+    bool makeMultiple = false;
+    bool useStartEnd = false;
     vtkImageAccumulate *hist = NULL;
     std::vector<int> skippedModels;
     std::vector<int> madeModels;
@@ -125,7 +184,6 @@ int main(int argc, char * argv[])
     vtkStripper * stripper = NULL;
     vtkPolyDataWriter * writer = NULL;
 
-    vtkMRMLScene *modelScene = NULL;
     vtkSlicerColorLogic *colorLogic = NULL;
     // keep track of number of models that will be generated, for filter
     // watcher reporting
@@ -135,16 +193,32 @@ int main(int argc, char * argv[])
     float numFilterSteps;
     // increment after each filter is run
     float currentFilterOffset = 0.0;
+    // if using the labels vector, get out the min/max
+    int labelsMin = 0, labelsMax = 0;
 
     // figure out if we're making multiple models
-    if (GenerateAll)
+    if (Labels.size() > 0)
+      {
+      makeMultiple = true;
+      // sort the vector
+      std::sort(Labels.begin(), Labels.end()); 
+      labelsMin = Labels[0];
+      labelsMax = Labels[Labels.size()-1];
+      if (debug)
+        {
+        cout << "Set labels min to " << labelsMin << ", labels max = " << labelsMax << ", labels vector size = " << Labels.size() << endl;
+        }
+      }    
+    else if (GenerateAll)
       {
       makeMultiple = true;
       }
-    else
+    else if (EndLabel >= StartLabel && (EndLabel != -1 && StartLabel != -1))
       {
-      makeMultiple = (EndLabel > StartLabel ? true : false);
+      makeMultiple = true;
+      useStartEnd = true;
       }
+    
     if (makeMultiple) 
       {
       numSingletonFilterSteps = 4;
@@ -156,7 +230,21 @@ int main(int argc, char * argv[])
         {
         numRepeatedFilterSteps = 9;
         }
-      numModelsToGenerate = EndLabel - StartLabel +1;
+      if (useStartEnd)
+        {
+        numModelsToGenerate = EndLabel - StartLabel +1;
+        }
+      else
+        {
+        if (GenerateAll)
+          {
+          // this will be calculated later from the histogram output
+          }
+        else
+          {
+          numModelsToGenerate = Labels.size();
+          }
+        }
       }
     else
       {
@@ -166,28 +254,23 @@ int main(int argc, char * argv[])
     numFilterSteps = numSingletonFilterSteps + (numRepeatedFilterSteps * numModelsToGenerate);
     if (debug)
       {
-      std::cout << "numModelsToGenerate = "<< numModelsToGenerate << ", numFilterSteps " << numFilterSteps << endl;
+      std::cout << "useStartEnd = " << useStartEnd << ", numModelsToGenerate = "<< numModelsToGenerate << ", numFilterSteps " << numFilterSteps << endl;
       }
     // check for the input file
     FILE * infile;
     infile = fopen(InputVolume.c_str(),"r");
     if (infile == NULL)
       {
-      std::cerr << "ERROR: cannot open input volume file " << InputVolume << endl;
-      if (debug)
-        {
-        char waiting;
-        std::cout << "Press a key and hit return: ";
-        std::cin >> waiting;
-        }
+      std::cerr << "ERROR: cannot open input volume file " << InputVolume << endl;     
       return EXIT_FAILURE;
       }
     fclose(infile);
 
     // Read the file
     reader = vtkITKArchetypeImageSeriesScalarReader::New();
+    std::string comment = "Read Volume";
     vtkPluginFilterWatcher watchReader(reader,
-                                       "Read Volume",
+                                       comment.c_str(),
                                        CLPProcessInformation,
                                        1.0/numFilterSteps, currentFilterOffset/numFilterSteps);
     if (debug)
@@ -200,7 +283,6 @@ int main(int argc, char * argv[])
     reader->SetDesiredCoordinateOrientationToNative();
     reader->SetUseNativeOriginOn();
     reader->Update();
-
     vtkImageChangeInformation *ici = vtkImageChangeInformation::New();
     ici->SetInput (reader->GetOutput());
     ici->SetOutputSpacing( 1, 1, 1 );
@@ -209,50 +291,48 @@ int main(int argc, char * argv[])
 
     image = ici->GetOutput();
     image->Update();
-
-    // check for the model mrml file
-    FILE *modelSceneFile;
-    if (ModelSceneFile != "")
+    
+    if (useColorNode)
       {
-      // make a scene
-      modelScene = vtkMRMLScene::New();
+      colorNode = vtkMRMLColorTableNode::New();
+      modelScene->AddNode(colorNode);
+
+      // read the colour file
       if (debug)
         {
-        std::cout << "Opening model scene file " << ModelSceneFile << endl;
+        std::cout << "Colour table file name = " << ColorTable.c_str() << std::endl;
         }
-      modelSceneFile = fopen(ModelSceneFile.c_str(), "w");
-      if (modelSceneFile == NULL)
+      colorStorageNode = vtkMRMLColorTableStorageNode::New();
+      colorStorageNode->SetFileName(ColorTable.c_str());
+      modelScene->AddNode(colorStorageNode);
+      
+      if (debug)
         {
-        std::cerr << "ERROR: cannot open the model scene file " << ModelSceneFile << endl;
+        std::cout << "Setting the colour node's storage node id to " << colorStorageNode->GetID() << ", it's file name = " << colorStorageNode->GetFileName() << std::endl;
+        }
+      colorNode->SetStorageNodeID(colorStorageNode->GetID());
+      if (!colorStorageNode->ReadData(colorNode))
+        {
+        std::cerr << "Error reading colour file " << colorStorageNode->GetFileName() << endl;
+        return EXIT_FAILURE;
         }
       else
         {
-        modelScene->SetURL(ModelSceneFile.c_str());
-        }
-      if (useColorNode)
-        {
-        // add default color nodes to it so can point into it later
-        colorLogic = vtkSlicerColorLogic::New();        
-        if (colorLogic == NULL)
+        if (debug)
           {
-          std::cerr << "ERROR: Unable to get color logic and add default color nodes" << endl;
-          useColorNode = 0;
-          }
-        else
-          {
-          if (debug)
-            {
-            std::cout << "Color Logic setting mrml scene" << endl;
-            }
-          colorLogic->SetMRMLScene(modelScene);
-          if (debug)
-            {
-            std::cout << "Adding default color nodes" << endl;
-            }
-          colorLogic->AddDefaultColorNodes();
+          std::cout << "Read colour file  " << colorStorageNode->GetFileName() << endl;
           }
         }
+      colorStorageNode->Delete();
       }
+
+    // each hierarchy node needs a display node
+    vtkMRMLModelDisplayNode *dnd = vtkMRMLModelDisplayNode::New();
+    dnd->SetVisibility(1);
+    modelScene->AddNode(dnd);
+    rtnd->SetAndObserveDisplayNodeID( dnd->GetID() );
+    dnd->Delete();
+
     // If making mulitple models, figure out which labels have voxels
     if (makeMultiple) 
       {
@@ -261,7 +341,61 @@ int main(int argc, char * argv[])
       hist->SetComponentExtent(0, 1023, 0, 0, 0, 0);
       hist->SetComponentOrigin(0, 0, 0);
       hist->SetComponentSpacing(1,1,1);      
+      // try and update and get the min/max here, as need them for the
+      // marching cubes
+      comment = "Histogram All Models";
+      vtkPluginFilterWatcher watchImageAccumulate(hist,
+                                                  comment.c_str(),
+                                                 CLPProcessInformation,
+                                                 1.0/numFilterSteps,
+                                                 currentFilterOffset/numFilterSteps);
+      currentFilterOffset += 1.0;
+      if (debug)
+        {
+        watchImageAccumulate.QuietOn();
+        }
+      hist->Update();
+      double *max = hist->GetMax();
+      double *min = hist->GetMin();
+      if (min[0] == 0)
+        {
+        if (debug)
+          {
+          std::cout << "Skipping 0" << endl;
+          }
+        min[0]++;
+        }
+      if (debug)
+        {
+        std::cout << "Hist: Min = " << min[0] << " and max = " << max[0] << endl;
+        }
+      if (GenerateAll)
+        {
+        if (debug)
+          {
+          std::cout << "GenerateAll flag is true, resetting the start and end labels from: " << StartLabel << " and " << EndLabel << " to " << min[0] << " and " << max[0] << endl;
+          }
+        StartLabel = (int)floor(min[0]);
+        EndLabel = (int)floor(max[0]);
+        // recalculate the number of filter steps, discount the labels with no
+        // voxels       
+        numModelsToGenerate = 0;
+        for (int i = StartLabel; i <= EndLabel; i++)
+          {
+          if((int)floor((((hist->GetOutput())->GetPointData())->GetScalars())->GetTuple1(i)) > 0)
+            {
+            if (debug && i < 0 && i > -100) { std::cout << i << " "; }
+            numModelsToGenerate++;
+            }
+          }
+        if (debug)
+          {
+          std::cout << endl << "GenerateAll: there are " << numModelsToGenerate << " models to be generated." << endl;
+          }
+        numFilterSteps = numSingletonFilterSteps + (numRepeatedFilterSteps * numModelsToGenerate);
+        }
       
+       
       cubes = vtkDiscreteMarchingCubes::New();
       std::string comment = "Discrete Marching Cubes";
       vtkPluginFilterWatcher watchDMCubes(cubes,
@@ -275,7 +409,22 @@ int main(int argc, char * argv[])
         }
       currentFilterOffset += 1.0;
       cubes->SetInput(image);
-      cubes->GenerateValues((EndLabel-StartLabel +1), StartLabel, EndLabel);
+      if (useStartEnd)
+        {
+        if (debug)
+          {
+          std::cout << "Using end label = " << EndLabel << ", start label = " << StartLabel << endl;
+          }
+        cubes->GenerateValues((EndLabel-StartLabel +1), StartLabel, EndLabel);
+        }
+      else
+        {
+        if (debug)
+          {
+          std::cout << "Using max = " << labelsMax << ", min = " << labelsMin << endl;
+          }
+        cubes->GenerateValues((labelsMax - labelsMin + 1), labelsMin, labelsMax);
+        }
       cubes->Update();
       
       if (JointSmoothing)
@@ -306,7 +455,7 @@ int main(int argc, char * argv[])
         smoother->Update();
         //        smoother->ReleaseDataFlagOn();
         }
-
+/*
       vtkPluginFilterWatcher watchImageAccumulate(hist,
                                                  "Histogram All Models",
                                                  CLPProcessInformation,
@@ -320,6 +469,14 @@ int main(int argc, char * argv[])
       hist->Update();
       double *max = hist->GetMax();
       double *min = hist->GetMin();
+      if (min[0] == 0)
+        {
+        if (debug)
+          {
+          std::cout << "Skipping 0" << endl;
+          }
+        min[0]++;
+        }
        if (debug)
          {
          std::cout << "Min = " << min[0] << " and max = " << max[0] << endl;
@@ -350,54 +507,23 @@ int main(int argc, char * argv[])
           }
         numFilterSteps = numSingletonFilterSteps + (numRepeatedFilterSteps * numModelsToGenerate);
         }
+*/    
       if (useColorNode)
         {
-        if (max != NULL)
-          {          
-          // check the max value in the input label map against number of
-          // colours in the default colour label nodes
-          // should be 20, or 714 if it's the SPL atlas
-          int numDefaultLabelMapColor = 
-            vtkMRMLColorTableNode::SafeDownCast(modelScene->GetNodeByID(colorLogic->GetDefaultLabelMapColorNodeID()))->GetLookupTable()->GetNumberOfColors();
-          // should be 5003, may have failed if it couldn't read in the file
-          int numDefaultFSLabelMapColor = 0;
-          if (modelScene->GetNodeByID(colorLogic->GetDefaultFreeSurferLabelMapColorNodeID()) != NULL)
-            {
-            numDefaultFSLabelMapColor = vtkMRMLColorTableNode::SafeDownCast(modelScene->GetNodeByID(colorLogic->GetDefaultFreeSurferLabelMapColorNodeID()))->GetLookupTable()->GetNumberOfColors();
-            }
-          if (debug)
-            {
-            std::cout << "\tmax = " << max[0] << ", " << max[1] << ", " << max[2] << endl;
-            std::cout << "\tnumDefaultLabelMapColor = " << numDefaultLabelMapColor << ", numDefaultFSLabelMapColor = " << numDefaultFSLabelMapColor << endl;
-            }
-          if (max[0] <= numDefaultLabelMapColor)
-            {
-            if (debug) { std::cout << "Using default label map colour node" << endl; }
-            colorNode = vtkMRMLColorTableNode::SafeDownCast(modelScene->GetNodeByID(colorLogic->GetDefaultLabelMapColorNodeID()));
-            }          
-          else if (max[0] < numDefaultFSLabelMapColor)
-            {
-            // use the freesurfer one
-            if (debug) { std::cout << "Using default freesurfer colour node" << endl; }
-            colorNode =  vtkMRMLColorTableNode::SafeDownCast(modelScene->GetNodeByID(colorLogic->GetDefaultFreeSurferLabelMapColorNodeID()));
-            }
-          else
-            {
-            // default to the default label map one
-            if (debug) { std::cout << "Using default label map colour node as a last resort" << endl; }
-            colorNode = vtkMRMLColorTableNode::SafeDownCast(modelScene->GetNodeByID(colorLogic->GetDefaultLabelMapColorNodeID()));
-            }
-          }
-        else
+        // but if we didn't get a named color node, try to guess
+        if (colorNode == NULL)
           {
-          // invalid max on the file, use the default
-          colorNode = vtkMRMLColorTableNode::SafeDownCast(modelScene->GetNodeByID(colorLogic->GetDefaultLabelMapColorNodeID()));
+          std::cerr << "ERROR: must have a color node! Should be associated with the input label map volume.\n";
+          return EXIT_FAILURE;
           }
         }
-      }
+      } // end of make multiple
     else 
       {
-      EndLabel = StartLabel;
+      if (useStartEnd)
+        {
+        EndLabel = StartLabel;
+        }
       }
 
     // ModelMakerMarch
@@ -434,9 +560,29 @@ int main(int argc, char * argv[])
 
     //
     // Loop through all the labels
-    //    
-    for (int i = StartLabel; i <= EndLabel; i++)
+    //
+    std::vector<int> loopLabels;
+    if (useStartEnd || GenerateAll)
       {
+      // set up the loop list with all the labels between start and end
+      for (int i = StartLabel; i <= EndLabel; i++)
+        {
+        loopLabels.push_back(i);
+        }
+      }
+    else
+      {      
+      // just copy the list of labels into the new var
+      for (int i = 0; i < Labels.size(); i++)
+        {
+        loopLabels.push_back(Labels[i]);
+        }
+      }
+    for (int l = 0; l < loopLabels.size(); l++)
+      {
+      // get the label out of the vector
+      int i = loopLabels[l];
+      
       if (makeMultiple)
         {
         labelFrequency = (int)floor((((hist->GetOutput())->GetPointData())->GetScalars())->GetTuple1(i));
@@ -464,12 +610,12 @@ int main(int argc, char * argv[])
         std::string stringI =    stream.str();
         if (colorNode != NULL)
           {
-          if (colorNode->GetColorNameWithoutSpaces(i, "_") != NULL)
+          if (colorNode->GetColorNameWithoutSpaces(i, "_").c_str() != NULL)
             {
             labelName = Name + std::string("_") + stringI + std::string("_") + std::string(colorNode->GetColorNameWithoutSpaces(i, "_"));
             if (debug)
               {
-              std::cout << "Got color name, set label name = " << labelName.c_str() << endl;
+              std::cout << "Got color name, set label name = " << labelName.c_str() << " (color name w/o spaces = " << colorNode->GetColorNameWithoutSpaces(i, "_") << endl;
               }
             }
           else
@@ -502,7 +648,7 @@ int main(int argc, char * argv[])
         // just make one
         if (colorNode != NULL)
           {
-          if (colorNode->GetColorNameWithoutSpaces(i, "_") != NULL)
+          if (colorNode->GetColorNameWithoutSpaces(i, "_").c_str() != NULL)
             {
             std::stringstream    stream;
             stream <<    i;
@@ -518,7 +664,7 @@ int main(int argc, char * argv[])
       
       // threshold
       if (JointSmoothing == 0)
-        {    
+        {        
         imageThreshold = vtkImageThreshold::New();
         std::string comment = "Threshold " + labelName;
         vtkPluginFilterWatcher watchImageThreshold(imageThreshold,
@@ -898,9 +1044,9 @@ int main(int argc, char * argv[])
       writer->SetInput(stripper->GetOutput());
       writer->SetFileType(2);
       std::string fileName;
-      if (OutputDirectory != "")
+      if (rootDir != "")
         {
-        fileName = OutputDirectory + std::string("/") + labelName + std::string(".vtk");
+        fileName = rootDir + std::string("/") + labelName + std::string(".vtk");
         }
       else
         {
@@ -927,6 +1073,7 @@ int main(int argc, char * argv[])
         // each model needs a mrml node, a storage node and a display node
         vtkMRMLModelNode *mnode = vtkMRMLModelNode::New();
         mnode->SetScene(modelScene);
+        mnode->SetName(labelName.c_str());
         
         vtkMRMLModelStorageNode *snode = vtkMRMLModelStorageNode::New();
         snode->SetFileName(fileName.c_str());
@@ -948,6 +1095,10 @@ int main(int argc, char * argv[])
               }
             dnode->SetColor(rgba[0], rgba[1], rgba[2]);
             }
+          else
+            {
+            std::cerr << "Couldn't get look up table value for " << i << ", display node colour is not set (grey)" << endl;
+            }
           }
           
         dnode->SetVisibility(1);
@@ -960,6 +1111,13 @@ int main(int argc, char * argv[])
         mnode->SetReferenceStorageNodeID(snode->GetID());        
         mnode->SetAndObserveDisplayNodeID(dnode->GetID());
         modelScene->AddNode(mnode);
+
+        // put it in the hierarchy
+        vtkMRMLModelHierarchyNode *mhnd = vtkMRMLModelHierarchyNode::New();
+        modelScene->AddNode(mhnd);
+        mhnd->SetParentNodeID( rnd->GetID() );
+        mhnd->SetModelNodeID( mnode->GetID() );
+    
         if (debug)
           {
           std::cout << "...done adding model to output scene" << endl;
@@ -971,6 +1129,8 @@ int main(int argc, char * argv[])
         snode = NULL;
         mnode->Delete();
         mnode = NULL;
+        mhnd->Delete();
+        mhnd = NULL;
         }
         } // end of skipping an empty label
       } // end of loop over labels
@@ -997,15 +1157,14 @@ int main(int argc, char * argv[])
         }
       std::cout << endl;
       }
-    if (ModelSceneFile != "")
+    if (ModelSceneFile[0] != "")
       {
       if (debug)
         {
-        std::cout << "Writing to model scene output file: " << ModelSceneFile;
+        std::cout << "Writing to model scene output file: " << ModelSceneFile[0].c_str();
         std::cout << ", to url: " << modelScene->GetURL() << std::endl;
         }
       modelScene->Commit();
-      fclose(modelSceneFile);
       }
     
     // Clean up
@@ -1021,6 +1180,12 @@ int main(int argc, char * argv[])
         }
       cubes->SetInput(NULL);
       cubes->Delete();
+      cubes = NULL;
+      }
+    if (colorNode)
+      {
+      colorNode->Delete();
+      colorNode = NULL;
       }
     if (smoother)
       {
@@ -1039,6 +1204,7 @@ int main(int argc, char * argv[])
         }
       hist->SetInput(NULL);
       hist->Delete();
+      hist = NULL;
       }
     if (smootherSinc)
       {
@@ -1048,6 +1214,7 @@ int main(int argc, char * argv[])
         }
       smootherSinc->SetInput(NULL);
       smootherSinc->Delete();
+      smootherSinc = NULL;
       }
     if (smootherPoly)
       {
@@ -1057,6 +1224,7 @@ int main(int argc, char * argv[])
         }
       smootherPoly->SetInput(NULL);
       smootherPoly->Delete();
+      smootherPoly = NULL;
       }
     if (decimator)
       {
@@ -1066,6 +1234,7 @@ int main(int argc, char * argv[])
         }
       decimator->SetInput(NULL);
       decimator->Delete();
+      decimator = NULL;
       }
     if (mcubes)
       {
@@ -1075,6 +1244,7 @@ int main(int argc, char * argv[])
         }
       mcubes->SetInput(NULL);
       mcubes->Delete();
+      mcubes = NULL;
       }
     if (imageThreshold)
       {
@@ -1085,6 +1255,7 @@ int main(int argc, char * argv[])
       imageThreshold->SetInput(NULL);
       imageThreshold->RemoveAllInputs();
       imageThreshold->Delete();
+      imageThreshold = NULL;
       if (debug)
         {
         std::cout << "... done deleting image threshold" << endl;
@@ -1098,6 +1269,7 @@ int main(int argc, char * argv[])
         }
       threshold->SetInput(NULL);
       threshold->Delete();
+      threshold = NULL;
       }
     if (imageToStructuredPoints)
       {
@@ -1107,6 +1279,7 @@ int main(int argc, char * argv[])
         }
       imageToStructuredPoints->SetInput(NULL);
       imageToStructuredPoints->Delete();
+      imageToStructuredPoints = NULL;
       }
     if (geometryFilter)
       {
@@ -1116,6 +1289,7 @@ int main(int argc, char * argv[])
         }
       geometryFilter->SetInput(NULL);
       geometryFilter->Delete();
+      geometryFilter = NULL;
       }
     if (transformIJKtoRAS)
       {
@@ -1125,6 +1299,7 @@ int main(int argc, char * argv[])
         }
       transformIJKtoRAS->SetInput(NULL);
       transformIJKtoRAS->Delete();
+      transformIJKtoRAS = NULL;
       }
     if (reverser)
       {
@@ -1134,6 +1309,7 @@ int main(int argc, char * argv[])
         }
       reverser->SetInput(NULL);
       reverser->Delete();
+      reverser = NULL;
       }
     if (transformer)
       {
@@ -1143,6 +1319,7 @@ int main(int argc, char * argv[])
         }
       transformer->SetInput(NULL);
       transformer->Delete();
+      transformer = NULL;
       }
     if (normals)
       {
@@ -1152,6 +1329,7 @@ int main(int argc, char * argv[])
         }
       normals->SetInput(NULL);
       normals->Delete();
+      normals = NULL;
       }
     if (stripper)
       {
@@ -1161,6 +1339,7 @@ int main(int argc, char * argv[])
         }
       stripper->SetInput(NULL);
       stripper->Delete();
+      stripper = NULL;
       }
     if (ici)
       {
@@ -1170,22 +1349,15 @@ int main(int argc, char * argv[])
         }
       ici->SetInput(NULL);
       ici->Delete();
+      ici = NULL;
       }
     if (debug)
       {
       std::cout << "Deleting reader" << endl;
       }
     reader->Delete();
+    reader = NULL;
     
-    if (colorLogic)
-      {
-      if (debug)
-        {
-        std::cout << "Deleting color logic" << endl;
-        }
-      colorLogic->Delete();
-      colorLogic = NULL;
-      }
     if (modelScene)
       {
       if (debug)
@@ -1196,13 +1368,6 @@ int main(int argc, char * argv[])
       modelScene->Delete();
       modelScene = NULL;
       }
-    if (debug)
-      {
-      char waiting;
-      std::cout << "Press a key and hit return: ";
-      std::cin >> waiting;
-      }
-    // return
     return EXIT_SUCCESS;
 }
 

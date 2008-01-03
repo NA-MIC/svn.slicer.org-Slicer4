@@ -30,6 +30,7 @@ vtkIGTDataManager::~vtkIGTDataManager()
 
 const char *vtkIGTDataManager::RegisterStream(int streamType)
 {
+
     this->StreamID = "";
 
     // streamType: 0 - matrix; 1 - image 

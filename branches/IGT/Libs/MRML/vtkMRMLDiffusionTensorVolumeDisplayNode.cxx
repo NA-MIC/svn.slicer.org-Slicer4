@@ -22,7 +22,11 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLScene.h"
 
+#include "vtkDiffusionTensorGlyph.h"
+
 #include "vtkSphereSource.h"
+
+#include "vtkDiffusionTensorMathematicsSimple.h"
 
 //------------------------------------------------------------------------------
 vtkMRMLDiffusionTensorVolumeDisplayNode* vtkMRMLDiffusionTensorVolumeDisplayNode::New()
@@ -54,13 +58,15 @@ vtkMRMLNode* vtkMRMLDiffusionTensorVolumeDisplayNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLDiffusionTensorVolumeDisplayNode::vtkMRMLDiffusionTensorVolumeDisplayNode()
 {
-#ifdef USE_TEEM
+ this->DTIMathematics = vtkDiffusionTensorMathematicsSimple::New();
+ this->Threshold->SetInput( this->DTIMathematics->GetOutput());
+ this->MapToWindowLevelColors->SetInput( this->DTIMathematics->GetOutput());
+
  this->DiffusionTensorGlyphFilter = vtkDiffusionTensorGlyph::New();
  vtkSphereSource *sphere = vtkSphereSource::New();
  sphere->Update();
  this->DiffusionTensorGlyphFilter->SetSource( sphere->GetOutput() );
  sphere->Delete();
-#endif
 
  this->VisualizationMode = 0;
  this->DiffusionTensorDisplayPropertiesNode = NULL;
@@ -70,6 +76,8 @@ vtkMRMLDiffusionTensorVolumeDisplayNode::vtkMRMLDiffusionTensorVolumeDisplayNode
 //----------------------------------------------------------------------------
 vtkMRMLDiffusionTensorVolumeDisplayNode::~vtkMRMLDiffusionTensorVolumeDisplayNode()
 {
+  this->DTIMathematics->Delete();
+
   this->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(NULL); 
 #ifdef USE_TEEM
   this->DiffusionTensorGlyphFilter->Delete();
@@ -88,7 +96,7 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::WriteXML(ostream& of, int nIndent)
  if (this->DiffusionTensorDisplayPropertiesNodeID != NULL)
     {
     ss << this->DiffusionTensorDisplayPropertiesNodeID;
-    of << indent << " diffussionTensorDisplayPropertiesNodeID=\"" << ss.str() << "\"";
+    of << indent << " diffusionTensorDisplayPropertiesNodeID=\"" << ss.str() << "\"";
     }
 }
 
@@ -107,7 +115,7 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::ReadXMLAttributes(const char** att
     if (!strcmp(attName, "diffusionTensorDisplayPropertiesNodeID"))
       {
       this->SetDiffusionTensorDisplayPropertiesNodeID(attValue);
-      this->Scene->AddReferencedNodeID(this->DiffusionTensorDisplayPropertiesNodeID, this);
+      //this->Scene->AddReferencedNodeID(this->DiffusionTensorDisplayPropertiesNodeID, this);
       }
     }
 }
@@ -130,7 +138,15 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::PrintSelf(ostream& os, vtkIndent i
   Superclass::PrintSelf(os,indent);
 
 
-  os << indent << "DiffusionTensorDisplayPropertiesNodeID:   " << this->DiffusionTensorDisplayPropertiesNodeID << "\n";
+  os << indent << "DiffusionTensorDisplayPropertiesNodeID:  ";
+  if ( this->DiffusionTensorDisplayPropertiesNodeID )
+    {
+    os << indent << this->DiffusionTensorDisplayPropertiesNodeID << "\n";
+    }
+  else
+    {
+    os << indent << "NULL\n";
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -241,3 +257,18 @@ vtkMRMLDiffusionTensorDisplayPropertiesNode* vtkMRMLDiffusionTensorVolumeDisplay
   return node;
 }
 
+//----------------------------------------------------------------------------
+void vtkMRMLDiffusionTensorVolumeDisplayNode::SetImageData(vtkImageData *imageData)
+{
+  this->DTIMathematics->SetInput(0, imageData);
+}
+//----------------------------------------------------------------------------
+void vtkMRMLDiffusionTensorVolumeDisplayNode::UpdateImageDataPipeline()
+{
+  if (this->GetDiffusionTensorDisplayPropertiesNode())
+    {
+    this->DTIMathematics->SetOperation(this->GetDiffusionTensorDisplayPropertiesNode()->
+                                   GetScalarInvariant());
+    }
+  Superclass::UpdateImageDataPipeline();
+}

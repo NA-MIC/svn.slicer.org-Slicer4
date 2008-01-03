@@ -68,7 +68,9 @@ SET(LIB_SRCS
   vtkKWMatrix4x4.cxx
   vtkKWScriptedWidget.cxx
   vtkKWWindowLevelThresholdEditor.cxx
+  vtkKWProgressDialog.cxx
   vtkSlicerVolumeDisplayWidget.cxx
+  vtkSlicerLabelMapVolumeDisplayWidget.cxx
   vtkSlicerScalarVolumeDisplayWidget.cxx
   vtkSlicerDiffusionWeightedVolumeDisplayWidget.cxx
   vtkSlicerDiffusionTensorVolumeDisplayWidget.cxx
@@ -112,6 +114,9 @@ INCLUDE_DIRECTORIES(
   ${MRML_BINARY_DIR}
   ${VTKITK_SOURCE_DIR}/Libs/vtkITK
   ${VTK_INCLUDE_DIR}
+  ${TEEM_INCLUDE_DIR}
+  ${vtkTeem_SOURCE_DIR}
+  ${vtkTeem_BINARY_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
   ${ModuleDescriptionParser_BINARY_DIR}
   ${FreeSurfer_SOURCE_DIR}
@@ -133,7 +138,10 @@ TARGET_LINK_LIBRARIES(${LIB_NAME}
   FreeSurfer)
 
 IF(BUILD_SHARED_LIBS)
-  INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} ${LIB_NAME})
+  INSTALL(TARGETS ${LIB_NAME}
+      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 # The name of our executable and the corresponding source file.
@@ -162,6 +170,10 @@ ENDIF(WIN32 AND NOT BORLAND AND NOT CYGWIN)
 ####   ADD_TEST(Test${EXE_NAME} ${EXECUTABLE_OUTPUT_PATH}/${EXE_NAME} --test)
 #### ENDIF(BUILD_TESTING)
 
+IF(BUILD_TESTING)
+  ADD_TEST(Slicer3GUITest1 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --script ${Slicer3_SOURCE_DIR}/Base/GUI/Testing/TestSliceController.tcl)
+  ADD_TEST(Slicer3GUITest2 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --script ${Slicer3_SOURCE_DIR}/Base/GUI/Testing/TestProgressDialog.tcl)
+ENDIF(BUILD_TESTING)
 
 # If needed, copy the Tcl/Tk support files required at run-time 
 # to initialize Tcl/Tk. This is only triggered if VTK was built
@@ -202,9 +214,9 @@ FILE(MAKE_DIRECTORY ${SlicerBaseGUITcl_DIR})
 SET(TCLFILES
   pkgIndex.tcl SliceViewerInteractor.tcl
   SWidget.tcl SliceSWidget.tcl SeedSWidget.tcl CsysSWidget.tcl
-  FiducialsSWidget.tcl GridSWidget.tcl CrosshairSWidget.tcl
-  RegionsSWidget.tcl Slicer2Import.tcl 
-  Loader.tcl LoadVolume.tcl
+  FiducialsSWidget.tcl GridSWidget.tcl CrosshairSWidget.tcl RegionsSWidget.tcl 
+  Slicer2Import.tcl XcedeCatalogImport.tcl
+  Loader.tcl LoadVolume.tcl FilteredDirectoryDialog.tcl
   MRMLWatcher.tcl
 )
 
@@ -227,12 +239,15 @@ IF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
                             debug ${PYTHON_DEBUG_LIBRARIES}
                             optimized ${PYTHON_LIBRARIES})
   ELSE (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+     TARGET_LINK_LIBRARIES( ${LIB_NAME} ${PYTHON_LIBRARIES})
+  ENDIF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+  IF(NOT WIN32)
     IF (APPLE)
      TARGET_LINK_LIBRARIES( ${LIB_NAME} ${PYTHON_LIBRARIES} )
     ELSE (APPLE)
      TARGET_LINK_LIBRARIES( ${LIB_NAME} ${PYTHON_LIBRARIES} util)
     ENDIF (APPLE)
-  ENDIF (WIN32 AND PYTHON_DEBUG_LIBRARIES)
+  ENDIF(NOT WIN32)
 ENDIF(USE_PYTHON AND PYTHON_INCLUDE_PATH)
 
 # CMAke 2.4 does not have INSTALL(DIRECTORY ...) do it manually

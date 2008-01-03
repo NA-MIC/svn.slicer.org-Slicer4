@@ -39,6 +39,26 @@ IF(USE_NAVITRACK)
   )
 ENDIF(USE_NAVITRACK)
 
+
+#--- NH took out the following section in an effot to remove Navitrak
+#--- 10/16/07
+
+#IF(USE_NAVITRACK)
+#  SET(IGT_SRCS
+#    vtkIGTDataManager.cxx
+#    vtkIGTDataStream.cxx
+#    vtkIGTMatrixState.cxx
+#    vtkIGTPat2ImgRegistration.cxx
+#    vtkIGTOpenTrackerStream.cxx
+#  )
+#  SET(TRACKING_INTERFACE_INCLUDE_DIR
+#    ${NAVITRACK_INC}
+#  )
+#  SET(TRACKING_INTERFACE_LIB  
+#    ${NAVITRACK_LIB}
+#  )
+#ENDIF(USE_NAVITRACK)
+
 IF(USE_IGSTK)
   SET(IGT_SRCS
     vtkIGTDataManager.cxx
@@ -82,7 +102,10 @@ ADD_LIBRARY(IGT
   ${IGT_SRCS} ${IGT_TCL_SRCS}
   )
 IF(BUILD_SHARED_LIBS)
-  INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} IGT)
+  INSTALL(TARGETS IGT
+      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(IGT

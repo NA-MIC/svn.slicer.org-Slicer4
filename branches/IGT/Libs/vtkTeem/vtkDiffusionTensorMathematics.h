@@ -27,15 +27,15 @@
 #define __vtkDiffusionTensorMathematics_h
 
 #include "vtkTeemConfigure.h"
-#include "vtkImageTwoInputFilter.h"
+#include "vtkThreadedImageAlgorithm.h"
 
 class vtkMatrix4x4;
 class vtkImageData;
-class VTK_TEEM_EXPORT vtkDiffusionTensorMathematics : public vtkImageTwoInputFilter
+class VTK_TEEM_EXPORT vtkDiffusionTensorMathematics : public vtkThreadedImageAlgorithm
 {
 public:
   static vtkDiffusionTensorMathematics *New();
-  vtkTypeMacro(vtkDiffusionTensorMathematics,vtkImageTwoInputFilter);
+  vtkTypeMacro(vtkDiffusionTensorMathematics,vtkThreadedImageAlgorithm);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -208,6 +208,10 @@ public:
   virtual void SetScalarMask(vtkImageData*);
   vtkGetObjectMacro(ScalarMask, vtkImageData);
   
+  // Description:
+  // Label value defining ROI for mask  
+  vtkSetMacro(MaskLabelValue, int);
+  vtkGetMacro(MaskLabelValue, int);
 
   // Public for access from threads
   static void ModeToRGB(double Mode, double FA,
@@ -242,6 +246,7 @@ public:
   //Description
   //Wrap function to teem eigen solver
   static int TeemEigenSolver(double **m, double *w, double **v);
+  void ComputeTensorIncrements(vtkImageData *imageData, vtkIdType incr[3]);
 
 protected:
   vtkDiffusionTensorMathematics();
@@ -253,14 +258,25 @@ protected:
 
   int MaskWithScalars;
   vtkImageData *ScalarMask;
-
+  int MaskLabelValue;
+  
   vtkMatrix4x4 *TensorRotationMatrix;
   int FixNegativeEigenvalues;
 
-  void ExecuteInformation(vtkImageData **inDatas, vtkImageData *outData);
-  void ExecuteInformation(){this->Superclass::ExecuteInformation();};
-  void ThreadedExecute(vtkImageData **inDatas, vtkImageData *outData,
-        int extent[6], int id);
+  virtual int RequestInformation (vtkInformation*,
+                                  vtkInformationVector**,
+                                  vtkInformationVector*);
+
+  virtual void ThreadedRequestData(vtkInformation *request,
+                                   vtkInformationVector **inputVector,
+                                   vtkInformationVector *outputVector,
+                                   vtkImageData ***inData,
+                                   vtkImageData **outData,
+                                   int extent[6], int threadId);
+
+  int FillInputPortInformation(int port, vtkInformation* info);
+
+
 private:
   vtkDiffusionTensorMathematics(const vtkDiffusionTensorMathematics&);
   void operator=(const vtkDiffusionTensorMathematics&);

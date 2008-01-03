@@ -7,6 +7,7 @@
 #include "itkConstNeighborhoodIterator.h"
 #include "itkConstantBoundaryCondition.h"
 #include "itkImageFunction.h"
+#include "itkNumericTraits.h"
 
 namespace itk
 {
@@ -249,7 +250,7 @@ LevelTracingImageFilter<TInputImage,TOutputImage>
     }
   else
     {
-    itkWarningMacro(<< "Seed point " << m_Seed << " is outside the image.");
+    //itkWarningMacro(<< "Seed point " << m_Seed << " is outside the image.");
     }
 }
 
@@ -301,7 +302,14 @@ LevelTracingImageFilter<TInputImage,TOutputImage>
 
 
   // 8 connected neighbor offsets
-  int neighbors[8][2]= {-1, -1, -1, 0, -1, 1, 0, 1, 1,1, 1,0, 1,-1, 0,-1};
+  int neighbors[8][2]= {{-1, -1}, 
+                        {-1,  0}, 
+                        {-1,  1}, 
+                        { 0,  1}, 
+                        { 1,  1},
+                        { 1,  0}, 
+                        { 1, -1}, 
+                        { 0, -1}};
   
   int noOfPixels = 0;
 

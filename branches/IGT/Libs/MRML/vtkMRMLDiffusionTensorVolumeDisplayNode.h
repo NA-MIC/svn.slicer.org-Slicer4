@@ -28,11 +28,8 @@
 #include "vtkMRMLVolumeGlyphDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 
-#ifdef USE_TEEM
-#include "vtkDiffusionTensorGlyph.h"
-#endif
-
-
+class vtkDiffusionTensorMathematicsSimple;
+class vtkDiffusionTensorGlyph;
 class vtkImageData;
 
 class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLVolumeGlyphDisplayNode
@@ -101,6 +98,13 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLVo
   // Get ID of diffusion tensor display MRML object for fiber line.
   vtkGetStringMacro(DiffusionTensorDisplayPropertiesNodeID);
 
+    // Description:
+  // Sets vtkImageData to be converted to displayable vtkImageData
+  virtual void SetImageData(vtkImageData *imageData);
+
+  virtual void UpdateImageDataPipeline();
+
+
 protected:
   vtkMRMLDiffusionTensorVolumeDisplayNode();
   ~vtkMRMLDiffusionTensorVolumeDisplayNode();
@@ -112,9 +116,10 @@ protected:
 
   vtkSetReferenceStringMacro(DiffusionTensorDisplayPropertiesNodeID);
 
-#ifdef USE_TEEM
   vtkDiffusionTensorGlyph* DiffusionTensorGlyphFilter;
-#endif
+
+  vtkDiffusionTensorMathematicsSimple *DTIMathematics;
+
 };
 
 #endif

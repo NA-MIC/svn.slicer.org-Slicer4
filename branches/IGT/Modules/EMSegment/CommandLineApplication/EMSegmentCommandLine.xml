@@ -57,6 +57,15 @@
       <channel>input</channel>
     </file>
 
+    <directory multiple="false">
+      <name>intermediateResultsDirectory</name>
+      <longflag>intermediateResultsDirectory</longflag>
+
+      <description>Directory where EMSegmenter will write intermediate data (e.g., aligned atlas data).</description>
+      <label>Intermediate Results Directory</label>      
+      <channel>input</channel>
+    </directory>
+
   </parameters>
 
   <parameters advanced="true">
@@ -77,6 +86,14 @@
       <longflag>disableMultithreading</longflag>
       <description>Disable multithreading.</description>
       <label>Disable Multithreading</label>
+      <default>false</default>
+    </boolean>
+
+    <boolean>
+      <name>dontUpdateIntermediateData</name>
+      <longflag>dontUpdateIntermediateData</longflag>
+      <description>Disable update of intermediate results.</description>
+      <label>Skip Intermediate Data Update</label>
       <default>false</default>
     </boolean>
 
@@ -117,6 +134,14 @@
       <longflag>generateEmptyMRMLSceneAndQuit</longflag>
       <description>Used for testing.  Only write a scene with default mrml parameters.</description>
       <label>Write default scene.</label>
+      <channel>output</channel>
+    </file>
+
+    <file>
+      <name>resultMRMLSceneFileName</name>
+      <longflag>resultMRMLSceneFileName</longflag>
+      <description>Write out the MRML scene after command line substitutions have been made.</description>
+      <label>Output MRML scene filename.</label>
       <channel>output</channel>
     </file>
 

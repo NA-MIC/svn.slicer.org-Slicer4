@@ -25,6 +25,7 @@
 #include "vtkMath.h"
 
 #include "vtkSlicerVolumesLogic.h"
+#include "vtkMRMLVolumeArchetypeStorageNode.h"
 
 // needed to translate between enums
 #include "EMLocalInterface.h"
@@ -104,7 +105,6 @@ ProcessMRMLEvents(vtkObject* caller,
     {
     if (node->IsA("vtkMRMLEMSTreeNode"))
       {
-      vtkIdType   vtkID  = this->MapMRMLNodeIDToVTKNodeID(node->GetID());
       this->IDMapRemovePair(node->GetID());
       }
     else if (node->IsA("vtkMRMLVolumeNode"))
@@ -150,7 +150,6 @@ GetTreeRootNodeID()
   vtkMRMLEMSTreeNode* rootNode = this->GetTreeRootNode();
   if (rootNode == NULL)
     {
-    //vtkErrorMacro("Tree root node is NULL");
     return ERROR_NODE_VTKID;
     }
 
@@ -251,8 +250,7 @@ SetTreeNodeParentNodeID(vtkIdType childNodeID, vtkIdType newParentNodeID)
     return;
     }
 
-  // remove the entry for this node in the old parent's class
-  // interaction matrix
+  // remove the reference from the old parent
   vtkMRMLEMSTreeNode* oldParentNode = childNode->GetParentNode();
   if (oldParentNode)
     {
@@ -264,44 +262,21 @@ SetTreeNodeParentNodeID(vtkIdType childNodeID, vtkIdType newParentNodeID)
                     << newParentNodeID);
       return;    
       }
-    
-    vtkMRMLEMSClassInteractionMatrixNode* oldMatrixNode = 
-      this->GetTreeClassInteractionNode(oldParentID);
-    if (oldMatrixNode)
+
+    int childIndex = oldParentNode->GetChildIndexByMRMLID(childNode->GetID());
+    if (childIndex < 0)
       {
-      int childIndex = 
-        childNode->GetParentNode()->GetChildIndexByMRMLID(childNode->GetID());
-      if (childIndex < 0)
-        {
-        vtkErrorMacro("ERROR: can't find child's index in old parent node.");
-        }
-      else
-        {
-        oldMatrixNode->RemoveNthClass(childIndex);
-        }
+      vtkErrorMacro("ERROR: can't find child's index in old parent node.");
       }
-    else
-      {
-      vtkErrorMacro("Error: parent node doesn't have a matrix node for node ID:"
-                    << childNodeID);
-      }
-    }
+
+    oldParentNode->RemoveNthChildNode(childIndex);
+    }  
 
   // point the child to the new parent
   childNode->SetParentNodeID(parentNode->GetID());
 
-  // add entry in CIM matrix for new parent
-  vtkMRMLEMSClassInteractionMatrixNode* newMatrixNode = 
-    this->GetTreeClassInteractionNode(newParentNodeID);
-  if (newMatrixNode)
-    {
-    newMatrixNode->AddClass();
-    }
-  else
-    {
-    vtkErrorMacro("Error: new parent node doesn't have a matrix for node ID:"
-                  << childNodeID);
-    }
+  // point parent to this child node
+  parentNode->AddChildNode(childNode->GetID());
 }
 
 //----------------------------------------------------------------------------
@@ -351,33 +326,21 @@ RemoveTreeNode(vtkIdType removedNodeID)
   // remove parameters nodes associated with this node
   this->RemoveTreeNodeParametersNodes(removedNodeID);
 
-  // remove the entry for this node in the old parent's class
-  // interaction matrix
+  // remove reference to this node from it's parent node
   vtkMRMLEMSTreeNode* parentNode = node->GetParentNode();
   if (parentNode)
     {
     vtkIdType parentID = this->MapMRMLNodeIDToVTKNodeID(parentNode->GetID());
     if (parentID != ERROR_NODE_VTKID)
       {
-      vtkMRMLEMSClassInteractionMatrixNode* matrixNode = 
-        this->GetTreeClassInteractionNode(parentID);
-      if (matrixNode)
+      int childIndex = parentNode->GetChildIndexByMRMLID(node->GetID());
+
+      if (childIndex < 0)
         {
-        int childIndex = parentNode->GetChildIndexByMRMLID(node->GetID());
-        if (childIndex < 0)
-          {
-          vtkErrorMacro("ERROR: can't find child's index in parent node.");
-          }
-        else
-          {
-          matrixNode->RemoveNthClass(childIndex);
-          }
+        vtkErrorMacro("ERROR: can't find child's index in old parent node.");
         }
-      else
-        {
-        vtkErrorMacro("Error: parent node doesn't have a matrix node for node ID:"
-                      << removedNodeID);
-        }  
+
+      parentNode->RemoveNthChildNode(childIndex);
       }
     }
  
@@ -729,10 +692,36 @@ UpdateIntensityDistributions()
 //-----------------------------------------------------------------------------
 void
 vtkEMSegmentMRMLManager::
+ChangeTreeNodeDistributionsFromManualSamplingToManual()
+{
+  // iterate over tree nodes
+  typedef vtkstd::vector<vtkIdType>  NodeIDList;
+  typedef NodeIDList::const_iterator NodeIDListIterator;
+  NodeIDList nodeIDList;
+  this->GetListOfTreeNodeIDs(this->GetTreeRootNodeID(), nodeIDList);
+  for (NodeIDListIterator i = nodeIDList.begin(); i != nodeIDList.end(); ++i)
+    {
+    if (this->GetTreeParametersLeafNode(*i)->
+        GetDistributionSpecificationMethod() == 
+        vtkMRMLEMSTreeParametersLeafNode::
+        DistributionSpecificationManuallySample)
+      {
+      this->SetTreeNodeDistributionSpecificationMethod
+        (*i, DistributionSpecificationManual);
+      }
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
 UpdateIntensityDistributionFromSample(vtkIdType nodeID)
 {
-  unsigned int numVolumes = 
-    this->GetTargetNumberOfSelectedVolumes();
+  // get working node @@@
+  vtkMRMLEMSTargetNode* workingTarget = 
+    this->GetWorkingDataNode()->GetWorkingTargetNode();
+  unsigned int numTargetImages = workingTarget->GetNumberOfVolumes();
+
   unsigned int numPoints  = 
     this->GetTreeNodeDistributionNumberOfSamples(nodeID);
   unsigned int r, c, p;
@@ -740,9 +729,9 @@ UpdateIntensityDistributionFromSample(vtkIdType nodeID)
   //
   // the default is mean 0, zero covariance
   //
-  vtkstd::vector<double> logMean(numVolumes, 0.0);
+  vtkstd::vector<double> logMean(numTargetImages, 0.0);
   vtkstd::vector<vtkstd::vector<double> > 
-    logCov(numVolumes, vtkstd::vector<double>(numVolumes, 0.0));
+    logCov(numTargetImages, vtkstd::vector<double>(numTargetImages, 0.0));
 
   if (numPoints > 0)
     {
@@ -750,12 +739,13 @@ UpdateIntensityDistributionFromSample(vtkIdType nodeID)
     // get all the intensities and compute the means
     //
     vtkstd::vector<vtkstd::vector<double> > 
-      logSamples(numVolumes, vtkstd::vector<double>(numPoints, 0));
+      logSamples(numTargetImages, vtkstd::vector<double>(numPoints, 0));
     
-    for (unsigned int imageIndex = 0; imageIndex < numVolumes; ++imageIndex)
+    for (unsigned int imageIndex = 0; imageIndex < numTargetImages; 
+         ++imageIndex)
       {
-      vtkIdType volumeID = 
-        this->GetTargetSelectedVolumeNthID(imageIndex);
+      vtkstd::string mrmlID = workingTarget->GetNthVolumeNodeID(imageIndex);
+      vtkIdType volumeID = this->MapMRMLNodeIDToVTKNodeID(mrmlID.c_str());
       
       for (unsigned int sampleIndex = 0; sampleIndex < numPoints; 
            ++sampleIndex)
@@ -777,9 +767,9 @@ UpdateIntensityDistributionFromSample(vtkIdType nodeID)
     //
     // compute covariance
     //
-    for (r = 0; r < numVolumes; ++r)
+    for (r = 0; r < numTargetImages; ++r)
       {
-      for (c = 0; c < numVolumes; ++c)
+      for (c = 0; c < numTargetImages; ++c)
         {
         for (p = 0; p < numPoints; ++p)
           {
@@ -802,11 +792,11 @@ UpdateIntensityDistributionFromSample(vtkIdType nodeID)
     this->
     GetTreeNode(nodeID)->GetParametersNode()->GetLeafParametersNode();
 
-  for (r = 0; r < numVolumes; ++r)
+  for (r = 0; r < numTargetImages; ++r)
     {
     leafNode->SetLogMean(r, logMean[r]);
     
-    for (c = 0; c < numVolumes; ++c)
+    for (c = 0; c < numTargetImages; ++c)
       {
       leafNode->SetLogCovariance(r, c, logCov[r][c]);
       }
@@ -1738,7 +1728,6 @@ int
 vtkEMSegmentMRMLManager::
 GetTargetNumberOfSelectedVolumes()
 {
-  
   if (this->GetTargetNode())
     {
     return this->GetTargetNode()->GetNumberOfVolumes();
@@ -1795,6 +1784,61 @@ GetTargetSelectedVolumeNthMRMLID(int n)
 //----------------------------------------------------------------------------
 void
 vtkEMSegmentMRMLManager::
+ResetTargetSelectedVolumes(const std::vector<vtkIdType>& volumeIDs)
+{
+  int targetOldNumImages = this->GetTargetNode()->GetNumberOfVolumes();
+
+  //
+  // remove the old volumes from the target node and add the new volumes
+  this->GetTargetNode()->RemoveAllVolumes();
+  for (unsigned int i = 0; i < volumeIDs.size(); ++i)
+    {
+    vtkMRMLVolumeNode* volumeNode = this->GetVolumeNode(volumeIDs[i]);
+    if (volumeNode == NULL)
+      {
+      vtkErrorMacro("Invalid volume ID: " << volumeIDs[i]);
+      return;
+      }
+
+    vtkstd::string name = volumeNode->GetName();
+    if (name.empty())
+      {
+      name = volumeNode->GetID();
+      }
+    this->GetTargetNode()->AddVolume(name.c_str(), volumeNode->GetID());
+    }
+
+  //
+  // propogate change if the number of channels is different
+  int targetNewNumImages = this->GetTargetNode()->GetNumberOfVolumes();
+
+  if (targetNewNumImages > targetOldNumImages)
+    {
+    int numAddedImages = targetNewNumImages - targetOldNumImages;
+    for (int i = 0; i < numAddedImages; ++i)
+      {
+      this->PropogateAdditionOfSelectedTargetImage();
+      }
+    }
+  else if (targetNewNumImages < targetOldNumImages)
+    {
+    int numRemovedImages = targetOldNumImages - targetNewNumImages;
+    for (int i = 0; i < numRemovedImages; ++i)
+      {
+      this->PropogateRemovalOfSelectedTargetImage(targetOldNumImages-1-i);
+      }
+    }
+  else
+    {
+    // order may have changed, need to update distros
+    std::cerr << "Updating distros..." << std::endl;
+    this->UpdateIntensityDistributions();
+    }
+}
+
+//----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
 AddTargetSelectedVolume(vtkIdType volumeID)
 {
   vtkMRMLVolumeNode* volumeNode = this->GetVolumeNode(volumeID);
@@ -1813,7 +1857,7 @@ AddTargetSelectedVolume(vtkIdType volumeID)
     }
 
   // get volume name
-  std::string name = volumeNode->GetName();
+  vtkstd::string name = volumeNode->GetName();
   if (name.empty())
     {
     name = volumeNode->GetID();
@@ -2546,6 +2590,27 @@ SetRegistrationInterpolationType(int interpolationType)
     }
 }
 
+//----------------------------------------------------------------------------  
+int
+vtkEMSegmentMRMLManager::
+GetEnableTargetToTargetRegistration()
+{
+  return this->GetGlobalParametersNode() ? this->GetGlobalParametersNode()->
+    GetEnableTargetToTargetRegistration() : 0;
+}
+
+//----------------------------------------------------------------------------  
+void
+vtkEMSegmentMRMLManager::
+SetEnableTargetToTargetRegistration(int enable)
+{
+  if (this->GetGlobalParametersNode())
+    {
+    this->GetGlobalParametersNode()->
+      SetEnableTargetToTargetRegistration(enable);
+    }
+}
+
 //----------------------------------------------------------------------------
 const char*
 vtkEMSegmentMRMLManager::
@@ -2719,25 +2784,6 @@ SetOutputVolumeMRMLID(const char* mrmlID)
   else
     {
     this->GetSegmenterNode()->SetOutputVolumeNodeID(mrmlID);
-
-    // !!! this should be moved to the acutual segmentation or something...
-
-    //
-    // the output volume is a segmentation: make sure it is a labelmap
-    //
-    vtkMRMLScalarVolumeNode *outVolume = vtkMRMLScalarVolumeNode::
-      SafeDownCast(this->GetMRMLScene()->GetNodeByID(mrmlID));
-    if (outVolume == NULL)
-      {
-      vtkErrorMacro("Output volume is null");
-      }
-
-    bool isLabelMap = outVolume->GetLabelMap();
-    if (!isLabelMap)
-      {
-      vtkWarningMacro("Changing output image to labelmap");
-      outVolume->LabelMapOn();
-      }
     }
 }
 
@@ -2787,6 +2833,36 @@ SetEnableMultithreading(int isEnabled)
   if (this->GetGlobalParametersNode())
     {
     this->GetGlobalParametersNode()->SetMultithreadingEnabled(isEnabled);
+    }
+  else
+    {
+    vtkErrorMacro("Attempt to access null global parameter node.");
+    }
+}
+
+//----------------------------------------------------------------------------
+int
+vtkEMSegmentMRMLManager::
+GetUpdateIntermediateData()
+{
+  if (this->GetGlobalParametersNode())
+    {
+    return this->GetGlobalParametersNode()->GetUpdateIntermediateData();
+    }
+  else
+    {
+    return 0;
+    }
+}
+
+//----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
+SetUpdateIntermediateData(int shouldUpdate)
+{
+  if (this->GetGlobalParametersNode())
+    {
+    this->GetGlobalParametersNode()->SetUpdateIntermediateData(shouldUpdate);
     }
   else
     {
@@ -3138,9 +3214,19 @@ GetSegmenterNode()
 }
 
 //----------------------------------------------------------------------------
+vtkMRMLEMSNode*
+vtkEMSegmentMRMLManager::
+GetEMSNode()
+{
+  return this->Node;
+}
+
+
+
+//----------------------------------------------------------------------------
 vtkMRMLEMSTargetNode*
 vtkEMSegmentMRMLManager::
-CloneTargetNode(vtkMRMLEMSTargetNode* targetNode, char* name)
+CloneTargetNode(vtkMRMLEMSTargetNode* targetNode, const char* name)
 {
   if (targetNode == NULL)
     {
@@ -3156,10 +3242,13 @@ CloneTargetNode(vtkMRMLEMSTargetNode* targetNode, char* name)
   vtkSlicerVolumesLogic* volumeLogic = vtkSlicerVolumesLogic::New();
   for (int i = 0; i < clonedTarget->GetNumberOfVolumes(); ++i)
   {    
+    vtksys_stl::stringstream volumeName;
+    volumeName << clonedTarget->GetNthVolumeNode(i)->GetName()
+               << " (" << name << ")";
     vtkMRMLScalarVolumeNode* clonedVolume = 
       volumeLogic->CloneVolume(this->MRMLScene,
                                clonedTarget->GetNthVolumeNode(i),
-                               clonedTarget->GetNthVolumeNode(i)->GetName());
+                               (char*) volumeName.str().c_str());
     clonedTarget->SetNthVolumeNodeID(i, clonedVolume->GetID());
   }
 
@@ -3176,7 +3265,7 @@ CloneTargetNode(vtkMRMLEMSTargetNode* targetNode, char* name)
 //----------------------------------------------------------------------------
 vtkMRMLEMSAtlasNode*
 vtkEMSegmentMRMLManager::
-CloneAtlasNode(vtkMRMLEMSAtlasNode* atlasNode, char* name)
+CloneAtlasNode(vtkMRMLEMSAtlasNode* atlasNode, const char* name)
 {
   if (atlasNode == NULL)
     {
@@ -3192,10 +3281,13 @@ CloneAtlasNode(vtkMRMLEMSAtlasNode* atlasNode, char* name)
   vtkSlicerVolumesLogic* volumeLogic = vtkSlicerVolumesLogic::New();
   for (int i = 0; i < clonedAtlas->GetNumberOfVolumes(); ++i)
   {
+    vtksys_stl::stringstream volumeName;
+    volumeName << clonedAtlas->GetNthVolumeNode(i)->GetName()
+               << " (" << name << ")";
     vtkMRMLScalarVolumeNode* clonedVolume = 
       volumeLogic->CloneVolume(this->MRMLScene,
                                clonedAtlas->GetNthVolumeNode(i),
-                               clonedAtlas->GetNthVolumeNode(i)->GetName());
+                               (char*) volumeName.str().c_str());
     clonedAtlas->SetNthVolumeNodeID(i, clonedVolume->GetID());
   }
 
@@ -3301,6 +3393,10 @@ CreateAndObserveNewParameterSet()
   workingNode->SetHideFromEditors(this->HideNodesFromEditors);
   this->GetMRMLScene()->AddNode(workingNode);
   
+  // make connections
+  workingNode->SetInputTargetNodeID(targetNode->GetID());
+  workingNode->SetInputAtlasNodeID(atlasNode->GetID());
+
   // create global parameters node
   vtkMRMLEMSGlobalParametersNode* globalParametersNode = 
     vtkMRMLEMSGlobalParametersNode::New();
@@ -3360,7 +3456,7 @@ CreateAndObserveNewParameterSet()
   segmenterNode->SetAtlasNodeID(atlasNode->GetID());
   segmenterNode->SetTargetNodeID(targetNode->GetID());
   segmenterNode->SetWorkingDataNodeID(workingNode->GetID());
-
+  
   // create template builder node
   vtkMRMLEMSNode* templateBuilderNode = vtkMRMLEMSNode::New();
   templateBuilderNode->SetHideFromEditors(this->HideNodesFromEditors);
@@ -3425,12 +3521,6 @@ AddNewTreeNode()
   treeParametersNode->SetParentParametersNodeID(parentParametersNode->GetID());
 
   // update memory
-  leafParametersNode->
-    SetNumberOfTargetInputChannels(this->GetTargetNode()->
-                                   GetNumberOfVolumes());
-  parentParametersNode->
-    SetNumberOfTargetInputChannels(this->GetTargetNode()->
-                                   GetNumberOfVolumes());
   treeParametersNode->
     SetNumberOfTargetInputChannels(this->GetTargetNode()->
                                    GetNumberOfVolumes());
@@ -3663,11 +3753,6 @@ PropogateAdditionOfSelectedTargetImage()
     {
     this->GetTreeParametersNode(*i)->
       AddTargetInputChannel();
-    this->GetTreeParametersLeafNode(*i)->
-      AddTargetInputChannel();
-    this->GetTreeParametersParentNode(*i)->
-      AddTargetInputChannel();
-    
 
     if (this->GetTreeParametersLeafNode(*i)->
         GetDistributionSpecificationMethod() == 
@@ -3695,10 +3780,6 @@ PropogateRemovalOfSelectedTargetImage(int imageIndex)
     {
     this->GetTreeParametersNode(*i)->
       RemoveNthTargetInputChannel(imageIndex);
-    this->GetTreeParametersLeafNode(*i)->
-      RemoveNthTargetInputChannel(imageIndex);
-    this->GetTreeParametersParentNode(*i)->
-      RemoveNthTargetInputChannel(imageIndex);
     }
 }
 
@@ -3718,10 +3799,6 @@ PropogateMovementOfSelectedTargetImage(int fromIndex, int toIndex)
   for (NodeIDListIterator i = nodeIDList.begin(); i != nodeIDList.end(); ++i)
     {
     this->GetTreeParametersNode(*i)->
-      MoveNthTargetInputChannel(fromIndex, toIndex);
-    this->GetTreeParametersLeafNode(*i)->
-      MoveNthTargetInputChannel(fromIndex, toIndex);
-    this->GetTreeParametersParentNode(*i)->
       MoveNthTargetInputChannel(fromIndex, toIndex);
     }
 }
@@ -3827,7 +3904,7 @@ UpdateMapsFromMRML()
 
     if (node != NULL)
       {
-      std::string mrmlID = node->GetID();
+      vtkstd::string mrmlID = node->GetID();
       
       if (oldMRMLtoVTKMap.count(mrmlID) > 0)
         {
@@ -3858,7 +3935,7 @@ UpdateMapsFromMRML()
 
     if (node != NULL)
       {
-      std::string mrmlID = node->GetID();
+      vtkstd::string mrmlID = node->GetID();
       
       if (oldMRMLtoVTKMap.count(mrmlID) > 0)
         {
@@ -3985,6 +4062,14 @@ CheckMRMLNodeStructure()
 //-----------------------------------------------------------------------------
 void
 vtkEMSegmentMRMLManager::
+PrintTree()
+{
+  this->PrintTree(this->GetTreeRootNodeID(), 0);
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
 PrintTree(vtkIdType rootID, vtkIndent indent)
 {
   vtkstd::string mrmlID = this->MapVTKNodeIDToMRMLNodeID(rootID);
@@ -4009,6 +4094,18 @@ PrintTree(vtkIdType rootID, vtkIndent indent)
                  << vtkstd::endl;
     int numChildren = this->GetTreeNodeNumberOfChildren(rootID); 
     vtkstd::cerr << indent << "Num. Children: " << numChildren << vtkstd::endl;
+    vtkstd::cerr << indent << "Child IDs from parent: ";
+    for (int i = 0; i < numChildren; ++i)
+      {
+      vtkstd::cerr << rnode->GetNthChildNodeID(i) << " ";
+      }
+    vtkstd::cerr << vtkstd::endl;
+    vtkstd::cerr << indent << "Child IDs from children: ";
+    for (int i = 0; i < numChildren; ++i)
+      {
+      vtkstd::cerr << rnode->GetNthChildNode(i)->GetID() << " ";
+      }
+    vtkstd::cerr << vtkstd::endl;
 
     indent = indent.GetNextIndent();
     for (int i = 0; i < numChildren; ++i)
@@ -4019,4 +4116,585 @@ PrintTree(vtkIdType rootID, vtkIndent indent)
       this->PrintTree(childID, indent);
       }
     }
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
+PrintVolumeInfo()
+{
+  // for every volume node
+  int numVolumes = 
+    this->GetMRMLScene()->GetNumberOfNodesByClass("vtkMRMLVolumeNode");
+  for (int i = 0; i < numVolumes; ++i)
+    {
+    vtkMRMLNode* node = this->GetMRMLScene()->
+      GetNthNodeByClass(i, "vtkMRMLVolumeNode");
+    vtkMRMLVolumeNode* volumeNode = vtkMRMLVolumeNode::SafeDownCast(node);
+
+    // print volume node ID and name
+    vtkstd::cerr << "Volume Node ID / Name: " << volumeNode->GetID()
+              << " / " << volumeNode->GetName() << vtkstd::endl;
+    // print display node id
+    vtkstd::cerr << " Display Node ID: " 
+              << (volumeNode->GetDisplayNode() ?
+                  volumeNode->GetDisplayNode()->GetID() : "NULL")
+              << vtkstd::endl;
+
+    // print storage node id and filename
+    vtkstd::cerr << " Storage Node ID / Filename: " 
+              << (volumeNode->GetStorageNode() ?
+                  volumeNode->GetStorageNode()->GetID() : "NULL")
+              << " / "
+              << (volumeNode->GetStorageNode() ?
+                  volumeNode->GetStorageNode()->GetFileName() : "NULL")
+              << vtkstd::endl;
+    }
+}
+
+//-----------------------------------------------------------------------------
+bool
+vtkEMSegmentMRMLManager::
+PackageAndWriteData(const char* packageDirectory)
+{
+  //
+  // create a scene and copy the EMSeg related nodes to it
+  //
+  vtkMRMLScene* newScene = vtkMRMLScene::New();
+  std::string outputDirectory(packageDirectory);
+
+  if (!outputDirectory.empty() && 
+      outputDirectory[outputDirectory.size()-1] != '/')
+    {
+    // make sure directory ends in seperator
+    outputDirectory = outputDirectory + "/";
+    }
+
+  std::string mrmlURL(outputDirectory + "EMSegmenterScene.mrml");
+  newScene->SetRootDirectory(outputDirectory.c_str());
+  newScene->SetURL(mrmlURL.c_str());
+  this->CopyEMRelatedNodesToMRMLScene(newScene);
+  
+  //
+  // update filenames to match standardized package structure
+  this->CreatePackageFilenames(newScene, packageDirectory);
+
+  //
+  // create directory structure on disk
+  bool createdDirectories = this->CreatePackageDirectories(packageDirectory);
+  if (!createdDirectories)
+    {
+    vtkErrorMacro("PackageAndWriteData: failed to create directories");
+    newScene->Delete();
+    return false;
+    }
+
+  //
+  // write the scene out to disk
+  bool wroteScene = this->WritePackagedScene(newScene);
+
+  // clean up
+  newScene->Delete();
+  
+  if (!wroteScene)
+    {
+    vtkErrorMacro("PackageAndWrite: failed to write scene");
+    return false;
+    }  
+
+  return true;
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
+CopyEMRelatedNodesToMRMLScene(vtkMRMLScene* newScene)
+{
+  //
+  // clear scene
+  //
+  newScene->Clear(1);
+
+  //
+  // copy over nodes from the current scene to the new scene
+  //
+
+  vtkMRMLScene*   currentScene = this->GetMRMLScene();
+  vtkMRMLEMSNode* emNode       = this->GetEMSNode();
+  if (currentScene == NULL || emNode == NULL)
+    {
+    return;
+    }
+
+  // get all nodes associated with this EMSeg parameter set
+  vtkCollection* emNodeCollection = this->GetMRMLScene()->
+    GetReferencedNodes(emNode);  
+
+  // add the nodes to the scene
+  emNodeCollection->InitTraversal();
+  vtkObject* currentObject = NULL;
+  while ((currentObject = emNodeCollection->GetNextItemAsObject()) &&
+         (currentObject != NULL))
+    {
+    vtkMRMLNode* n = dynamic_cast<vtkMRMLNode*>(currentObject);
+    if (n == NULL)
+      {
+      continue;
+      }
+
+    vtkMRMLNode* node = n->CreateNodeInstance();
+
+    node->CopyWithScene(n);
+    newScene->AddNodeNoNotify(node);
+    node->Delete();
+    }
+
+  // clean up
+  emNodeCollection->Delete();
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkEMSegmentMRMLManager::
+CreatePackageFilenames(vtkMRMLScene* scene, 
+                       const char* packageDirectoryName)
+{
+  //
+  // set up mrml manager for this new scene
+  vtkEMSegmentMRMLManager* newSceneManager = vtkEMSegmentMRMLManager::New();
+  newSceneManager->SetMRMLScene(scene);
+  vtkMRMLEMSNode* newEMSNode = dynamic_cast<vtkMRMLEMSNode*>
+    (scene->GetNthNodeByClass(0, "vtkMRMLEMSNode"));
+  if (newEMSNode == NULL)
+    {
+    vtkWarningMacro("CreatePackageFilenames: no EMS node!");
+    newSceneManager->Delete();
+    return;
+    }
+  else
+    {
+    newSceneManager->SetNode(newEMSNode);
+    }
+  vtkMRMLEMSWorkingDataNode* workingDataNode = 
+    newSceneManager->GetWorkingDataNode();
+
+  //
+  // We might be creating volume storage nodes.  We must decide if the
+  // images should be automatically centered when they are read.  Look
+  // at the original input target node zero to decide if we will use
+  // centering.
+  bool centerImages = false;
+  if (workingDataNode && workingDataNode->GetInputTargetNode())
+    {
+    if (workingDataNode->GetInputTargetNode()->GetNumberOfVolumes() > 0)
+      {
+      vtkMRMLStorageNode* firstTargetStorageNode =
+        workingDataNode->GetInputTargetNode()->GetNthVolumeNode(0)->
+        GetStorageNode();
+      vtkMRMLVolumeArchetypeStorageNode* firstTargetVolumeStorageNode =
+        dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*>
+        (firstTargetStorageNode);
+      if (firstTargetVolumeStorageNode != NULL)
+        {
+        centerImages = firstTargetVolumeStorageNode->GetCenterImage();
+        }
+      }
+    }
+
+  //
+  // change the storage file for the segmentation result
+    {
+    vtkMRMLVolumeNode* volumeNode = newSceneManager->GetOutputVolumeNode();
+    if (volumeNode != NULL)
+      {
+      vtkMRMLStorageNode* storageNode = volumeNode->GetStorageNode();
+      vtkMRMLVolumeArchetypeStorageNode* volumeStorageNode = 
+        dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*>(storageNode);
+      if (volumeStorageNode == NULL)
+      {
+      // create a new storage node for this volume
+      volumeStorageNode = vtkMRMLVolumeArchetypeStorageNode::New();
+      scene->AddNodeNoNotify(volumeStorageNode);
+      volumeNode->SetStorageNodeID(volumeStorageNode->GetID());
+      std::cerr << "Added storage node : " << volumeStorageNode->GetID() 
+                << std::endl;
+      volumeStorageNode->Delete();
+      storageNode = volumeStorageNode;
+      }
+      volumeStorageNode->SetCenterImage(centerImages);
+    
+      // create new filename
+      std::string oldFilename       = 
+        (storageNode->GetFileName() ? storageNode->GetFileName() :
+         "SegmentationResult.mhd");
+      std::string oldFlienameNoPath = 
+        vtksys::SystemTools::GetFilenameName(oldFilename);
+      std::vector<std::string> pathComponents;
+      pathComponents.push_back("");
+      pathComponents.push_back("Segmentation");
+      pathComponents.push_back(oldFlienameNoPath);
+      std::string newFilename = 
+        vtksys::SystemTools::JoinPath(pathComponents);
+      storageNode->SetFileName(newFilename.c_str());
+      }
+    }
+
+  //
+  // change the storage file for the targets
+  int numTargets = newSceneManager->GetTargetNumberOfSelectedVolumes();
+
+  // input target volumes
+  if (workingDataNode->GetInputTargetNode())
+    {
+    for (int i = 0; i < numTargets; ++i)
+      {
+      vtkMRMLVolumeNode* volumeNode =
+        workingDataNode->GetInputTargetNode()->GetNthVolumeNode(i);
+      if (volumeNode != NULL)
+        {
+        vtkMRMLStorageNode* storageNode = volumeNode->GetStorageNode();
+        vtkMRMLVolumeArchetypeStorageNode* volumeStorageNode = 
+          dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*>(storageNode);
+        if (volumeStorageNode == NULL)
+          {
+          // create a new storage node for this volume
+          volumeStorageNode = vtkMRMLVolumeArchetypeStorageNode::New();
+          scene->AddNodeNoNotify(volumeStorageNode);
+          volumeNode->SetStorageNodeID(volumeStorageNode->GetID());
+          std::cerr << "Added storage node : " << storageNode->GetID() 
+                    << std::endl;
+          volumeStorageNode->Delete();
+          storageNode = volumeStorageNode;
+          }
+        volumeStorageNode->SetCenterImage(centerImages);
+      
+        // create new filename
+        vtkstd::stringstream defaultFilename;
+        defaultFilename << "Target" << i << "_Input.mhd";
+        std::string oldFilename       = 
+          (storageNode->GetFileName() ? storageNode->GetFileName() :
+           defaultFilename.str().c_str());
+        std::string oldFlienameNoPath = 
+          vtksys::SystemTools::GetFilenameName(oldFilename);
+        std::vector<std::string> pathComponents;
+        pathComponents.push_back("");
+        pathComponents.push_back("Target");
+        pathComponents.push_back("Input");
+        pathComponents.push_back(oldFlienameNoPath);
+        std::string newFilename = 
+          vtksys::SystemTools::JoinPath(pathComponents);
+        
+        storageNode->SetFileName(newFilename.c_str());
+        }
+      }  
+    }
+
+  // normalized target volumes
+  if (workingDataNode->GetNormalizedTargetNode())
+    {
+    for (int i = 0; i < numTargets; ++i)
+      {
+      vtkMRMLVolumeNode* volumeNode =
+        workingDataNode->GetNormalizedTargetNode()->GetNthVolumeNode(i);
+      if (volumeNode != NULL)
+        {
+        vtkMRMLStorageNode* storageNode = volumeNode->GetStorageNode();
+        vtkMRMLVolumeArchetypeStorageNode* volumeStorageNode = 
+          dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*>(storageNode);
+        if (volumeStorageNode == NULL)
+          {
+          // create a new storage node for this volume
+          volumeStorageNode = vtkMRMLVolumeArchetypeStorageNode::New();
+          scene->AddNodeNoNotify(volumeStorageNode);
+          volumeNode->SetStorageNodeID(volumeStorageNode->GetID());
+          std::cerr << "Added storage node : " << volumeStorageNode->GetID() 
+                    << std::endl;
+          volumeStorageNode->Delete();
+          storageNode = volumeStorageNode;
+          }
+        volumeStorageNode->SetCenterImage(centerImages);
+          
+        // create new filename
+        vtkstd::stringstream defaultFilename;
+        defaultFilename << "Target" << i << "_Normalized.mhd";
+        std::string oldFilename       = 
+          (storageNode->GetFileName() ? storageNode->GetFileName() :
+           defaultFilename.str().c_str());
+        std::string oldFlienameNoPath = 
+          vtksys::SystemTools::GetFilenameName(oldFilename);
+        std::vector<std::string> pathComponents;
+        pathComponents.push_back("");
+        pathComponents.push_back("Target");
+        pathComponents.push_back("Normalized");
+        pathComponents.push_back(oldFlienameNoPath);
+        std::string newFilename = 
+          vtksys::SystemTools::JoinPath(pathComponents);
+        
+        storageNode->SetFileName(newFilename.c_str());
+        }
+      }  
+    }
+
+  // aligned target volumes
+  if (workingDataNode->GetAlignedTargetNode())
+    {
+    for (int i = 0; i < numTargets; ++i)
+      {
+      vtkMRMLVolumeNode* volumeNode =
+        workingDataNode->GetAlignedTargetNode()->GetNthVolumeNode(i);
+      if (volumeNode != NULL)
+        {
+        vtkMRMLStorageNode* storageNode = volumeNode->GetStorageNode();
+        vtkMRMLVolumeArchetypeStorageNode* volumeStorageNode = 
+          dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*>(storageNode);
+        if (volumeStorageNode == NULL)
+          {
+          // create a new storage node for this volume
+          volumeStorageNode = vtkMRMLVolumeArchetypeStorageNode::New();
+          scene->AddNodeNoNotify(volumeStorageNode);
+          volumeNode->SetStorageNodeID(volumeStorageNode->GetID());
+          std::cerr << "Added storage node : " << volumeStorageNode->GetID() 
+                    << std::endl;
+          volumeStorageNode->Delete();
+          storageNode = volumeStorageNode;
+          }
+        volumeStorageNode->SetCenterImage(centerImages);
+          
+        // create new filename
+        vtkstd::stringstream defaultFilename;
+        defaultFilename << "Target" << i << "_Aligned.mhd";
+        std::string oldFilename       = 
+          (storageNode->GetFileName() ? storageNode->GetFileName() :
+           defaultFilename.str().c_str());
+        std::string oldFlienameNoPath = 
+          vtksys::SystemTools::GetFilenameName(oldFilename);
+        std::vector<std::string> pathComponents;
+        pathComponents.push_back("");
+        pathComponents.push_back("Target");
+        pathComponents.push_back("Aligned");
+        pathComponents.push_back(oldFlienameNoPath);
+        std::string newFilename = 
+          vtksys::SystemTools::JoinPath(pathComponents);
+        
+        storageNode->SetFileName(newFilename.c_str());
+        }
+      }  
+    }
+
+  //
+  // change the storage file for the atlas
+  int numAtlasVolumes = newSceneManager->GetAtlasNode()->GetNumberOfVolumes();
+
+  // input atlas volumes
+  if (workingDataNode->GetInputAtlasNode())
+    {
+    for (int i = 0; i < numAtlasVolumes; ++i)
+      {
+      vtkMRMLVolumeNode* volumeNode =
+        workingDataNode->GetInputAtlasNode()->GetNthVolumeNode(i);
+      if (volumeNode != NULL)
+        {
+        vtkMRMLStorageNode* storageNode = volumeNode->GetStorageNode();
+        vtkMRMLVolumeArchetypeStorageNode* volumeStorageNode = 
+          dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*>(storageNode);
+        if (volumeStorageNode == NULL)
+          {
+          // create a new storage node for this volume
+          volumeStorageNode = vtkMRMLVolumeArchetypeStorageNode::New();
+          scene->AddNodeNoNotify(volumeStorageNode);
+          volumeNode->SetStorageNodeID(volumeStorageNode->GetID());
+          std::cerr << "Added storage node : " << volumeStorageNode->GetID() 
+                    << std::endl;
+          volumeStorageNode->Delete();
+          storageNode = volumeStorageNode;
+          }
+        volumeStorageNode->SetCenterImage(centerImages);
+      
+        // create new filename
+        vtkstd::stringstream defaultFilename;
+        defaultFilename << "Atlas" << i << "_Input.mhd";
+        std::string oldFilename       = 
+          (storageNode->GetFileName() ? storageNode->GetFileName() :
+           defaultFilename.str().c_str());
+        std::string oldFlienameNoPath = 
+          vtksys::SystemTools::GetFilenameName(oldFilename);
+        std::vector<std::string> pathComponents;
+        pathComponents.push_back("");
+        pathComponents.push_back("Atlas");
+        pathComponents.push_back("Input");
+        pathComponents.push_back(oldFlienameNoPath);
+        std::string newFilename = 
+          vtksys::SystemTools::JoinPath(pathComponents);
+        
+        storageNode->SetFileName(newFilename.c_str());
+        }
+      }  
+    }
+
+  // aligned atlas volumes
+  if (workingDataNode->GetAlignedAtlasNode())
+    {
+    for (int i = 0; i < numAtlasVolumes; ++i)
+      {
+      vtkMRMLVolumeNode* volumeNode =
+        workingDataNode->GetAlignedAtlasNode()->GetNthVolumeNode(i);
+      if (volumeNode != NULL)
+        {
+        vtkMRMLStorageNode* storageNode = volumeNode->GetStorageNode();
+        vtkMRMLVolumeArchetypeStorageNode* volumeStorageNode = 
+          dynamic_cast<vtkMRMLVolumeArchetypeStorageNode*>(storageNode);
+        if (volumeStorageNode == NULL)
+          {
+          // create a new storage node for this volume
+          volumeStorageNode = vtkMRMLVolumeArchetypeStorageNode::New();
+          scene->AddNodeNoNotify(volumeStorageNode);
+          volumeNode->SetStorageNodeID(volumeStorageNode->GetID());
+          std::cerr << "Added storage node : " << volumeStorageNode->GetID() 
+                    << std::endl;
+          volumeStorageNode->Delete();
+          storageNode = volumeStorageNode;
+          }
+        volumeStorageNode->SetCenterImage(centerImages);
+        
+        // create new filename
+        vtkstd::stringstream defaultFilename;
+        defaultFilename << "Atlas" << i << "_Aligned.mhd";
+        std::string oldFilename       = 
+          (storageNode->GetFileName() ? storageNode->GetFileName() :
+           defaultFilename.str().c_str());
+        std::string oldFlienameNoPath = 
+          vtksys::SystemTools::GetFilenameName(oldFilename);
+        std::vector<std::string> pathComponents;
+        pathComponents.push_back("");
+        pathComponents.push_back("Atlas");
+        pathComponents.push_back("Aligned");
+        pathComponents.push_back(oldFlienameNoPath);
+        std::string newFilename = 
+          vtksys::SystemTools::JoinPath(pathComponents);
+        
+        storageNode->SetFileName(newFilename.c_str());
+        }
+      }  
+    }
+
+  // clean up
+  newSceneManager->Delete();
+}
+
+//-----------------------------------------------------------------------------
+bool
+vtkEMSegmentMRMLManager::
+CreatePackageDirectories(const char* packageDirectoryName)
+{
+  vtkstd::string packageDirectory(packageDirectoryName);
+  
+  // check that parent directory exists
+  std::string parentDirectory = 
+    vtksys::SystemTools::GetParentDirectory(packageDirectory.c_str());
+  if (!vtksys::SystemTools::FileExists(parentDirectory.c_str()))
+    {
+    vtkWarningMacro
+      ("CreatePackageDirectories: Parent directory does not exist!");
+    return false;
+    }
+  
+  // create package directories
+  bool createdOK = true;
+  std::string newDir = packageDirectory + "/Atlas/Input";
+  createdOK = createdOK &&
+    vtksys::SystemTools::MakeDirectory(newDir.c_str());  
+  newDir = packageDirectory + "/Atlas/Aligned";
+  createdOK = createdOK &&
+    vtksys::SystemTools::MakeDirectory(newDir.c_str());  
+  newDir = packageDirectory + "/Target/Input";
+  createdOK = createdOK &&
+    vtksys::SystemTools::MakeDirectory(newDir.c_str());  
+  newDir = packageDirectory + "/Target/Normalized";
+  createdOK = createdOK &&
+    vtksys::SystemTools::MakeDirectory(newDir.c_str());  
+  newDir = packageDirectory + "/Target/Aligned";
+  createdOK = createdOK &&
+    vtksys::SystemTools::MakeDirectory(newDir.c_str());  
+  newDir = packageDirectory + "/Segmentation";
+  createdOK = createdOK &&
+    vtksys::SystemTools::MakeDirectory(newDir.c_str());  
+
+  if (!createdOK)
+    {
+    vtkWarningMacro("CreatePackageDirectories: Could not create directories!");
+    return false;
+    }
+
+  return true;
+}
+
+//-----------------------------------------------------------------------------
+bool
+vtkEMSegmentMRMLManager::
+WritePackagedScene(vtkMRMLScene* scene)
+{
+  //
+  // write the volumes
+  scene->InitTraversal();
+  vtkMRMLNode* currentNode;
+  bool allOK = true;
+  while ((currentNode = scene->GetNextNodeByClass("vtkMRMLVolumeNode")) &&
+         (currentNode != NULL))
+    {
+    vtkMRMLVolumeNode* volumeNode = 
+      dynamic_cast<vtkMRMLVolumeNode*>(currentNode);
+
+    if (volumeNode == NULL)
+      {
+      vtkWarningMacro("Volume node is null for node: " 
+                    << currentNode->GetID());
+      scene->RemoveNode(currentNode);
+      allOK = false;
+      continue;
+      }
+    if (volumeNode->GetImageData() == NULL)
+      {
+      vtkWarningMacro("Volume data is null for volume node: " 
+                    << currentNode->GetID());
+      scene->RemoveNode(currentNode);
+      allOK = false;
+      continue;
+      }
+    if (volumeNode->GetStorageNode() == NULL)
+      {
+      vtkWarningMacro("Volume storage node is null for volume node: " 
+                    << currentNode->GetID());
+      scene->RemoveNode(currentNode);
+      allOK = false;
+      continue;
+      }
+
+    try
+      {
+      std::cerr << "Writing volume: " << volumeNode->GetName() 
+                << ": " << volumeNode->GetStorageNode()->GetFileName() << "...";
+      volumeNode->GetStorageNode()->SetUseCompression(0);
+      volumeNode->GetStorageNode()->WriteData(volumeNode);
+      std::cerr << "DONE" << std::endl;
+      }
+    catch (...)
+      {
+      vtkErrorMacro("Problem writing volume: " << volumeNode->GetID());
+      allOK = false;
+      }
+    }
+  
+  //
+  // write the MRML scene file
+  try 
+    {
+    scene->Commit();
+    }
+  catch (...)
+    {
+    vtkErrorMacro("Problem writing scene.");
+    allOK = false;
+    }  
+
+  return allOK;
 }

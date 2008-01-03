@@ -38,6 +38,22 @@
       </boolean>
 
       <boolean>
+      <name>NoModuleCache</name>
+      <longflag>--no_module_cache</longflag>
+      <description>Disables the loading of Command Line Modules from the cache</description>
+      <default>false</default>
+      <label>Command Line Modules Caching On/Off</label>
+      </boolean>
+
+      <boolean>
+      <name>ClearModuleCache</name>
+      <longflag>--clear_module_cache</longflag>
+      <description>Clear the module cache file</description>
+      <default>false</default>
+      <label>Delete the Command Line Module Cache On/Off</label>
+      </boolean>
+
+      <boolean>
       <name>Daemon</name>
       <longflag>--daemon</longflag>
       <description>Turns on the Slicer Daemon (open listening socket port)</description>
@@ -149,15 +165,6 @@
       <description>Like --exec, but doesn't load slicer first</description>
       <label>Some code to execute (don't load slicer)</label>
       </string>
-
-      <boolean>
-      <name>AllInfo</name>
-      <longflag>--all_info</longflag>
-      <flag>-a</flag>
-      <description>Print out all of the version info and continue</description>
-      <label>Print all info</label>
-      <default>false</default>
-      </boolean>
 
       <boolean>
       <name>Stereo</name>

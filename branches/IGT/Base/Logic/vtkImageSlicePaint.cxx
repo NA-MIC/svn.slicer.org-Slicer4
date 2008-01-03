@@ -146,7 +146,7 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *ptr)
   int extracting = 0;
   if ( extractImage != NULL )
     {
-    extractImage->SetDimensions(maxColumnDelta, maxRowDelta, 1);
+    extractImage->SetDimensions(maxColumnDelta+1, maxRowDelta+1, 1);
     extractImage->SetScalarType( self->GetWorkingImage()->GetScalarType() );
     extractImage->AllocateScalars();
     extracting = 1;
@@ -214,11 +214,19 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *ptr)
     for (int column = 0; column <= maxColumnDelta; column++)
       {
       // get coordinates in Working IJK space (intIJK)
-      for (int i = 0; i < 3; i++) { intIJK[i] = paintRound (ijk[i]); }
+      for (int i = 0; i < 3; i++) 
+        { 
+        intIJK[i] = paintRound (ijk[i]); 
+        if ( intIJK[i] < 0 )
+          {
+          intIJK[i] = 0;
+          }
+        }
 
       workingPtr = (T *)(self->GetWorkingImage()->GetScalarPointer(intIJK));
       if ( workingPtr ) 
         {
+
         oldValue = *workingPtr;
 
         double workingWorld[3]; // world coordinates of current pixel
@@ -226,57 +234,78 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *ptr)
 
         int pixelToPaint = 0;  // is this location something we should consider painting
 
-        if ( self->GetMaskImage() == NULL )
+        if ( self->GetReplaceImage() ) 
           {
-          // no mask, so check brush radius
-          double distSquared = ((workingWorld[0] - brushCenter[0]) * 
-                                (workingWorld[0] - brushCenter[0])) +
-                               ((workingWorld[1] - brushCenter[1]) * 
-                                (workingWorld[1] - brushCenter[1])) +
-                               ((workingWorld[2] - brushCenter[2]) * 
-                                (workingWorld[2] - brushCenter[2]));
-          if ( distSquared < radiusSquared )
-            {
-            pixelToPaint = 1; // Now we're inside the brush
-            }
+          // with replace image, just copy value into the working label map
+          T *replacePtr = NULL;
+          replacePtr = (T *)(self->GetReplaceImage()->GetScalarPointer(column, row, 0));
+          *workingPtr = *replacePtr;
           }
-        else
+        else // no replace image, so paint with mask or brush
           {
-          // check the mask image
-          // note: k will always be zero for the mask since it is 2D...
-          transform3(maskWorldToIJK, workingWorld, maskIJK);
-          for (int i = 0; i < 2; i++) { intMaskIJK[i] = paintRound(maskIJK[i]); }
-          intMaskIJK[2] = 0;
 
-          void *ptr = self->GetMaskImage()->GetScalarPointer ( 
-                          intMaskIJK[0], intMaskIJK[1], intMaskIJK[2] );
-
-          if ( ptr == NULL ) 
+          if ( self->GetMaskImage() == NULL )
             {
-            int dimensions[3];
-            self->GetMaskImage()->GetDimensions(dimensions);
-            // TODO: this will leak matrices...
-            vtkErrorWithObjectMacro ( self, << "vtkImageSlicePaintPaint:\nCannot get mask pointer for pixel\n"
-              << "workingWorld = " << 
-              workingWorld[0] << " " <<  workingWorld[1] << " " << workingWorld[2] << "\n"
-              << "intMaskIJK = " << 
-              intMaskIJK[0] << " " <<  intMaskIJK[1] << " " << intMaskIJK[2] << "\n" 
-              << "maskDimensions = " << 
-              dimensions[0] << " " <<  dimensions[1] << " " << dimensions[2] << "\n" 
-              );
-            return;
+            // no mask, so check brush radius
+            double distSquared = ((workingWorld[0] - brushCenter[0]) * 
+                                  (workingWorld[0] - brushCenter[0])) +
+                                 ((workingWorld[1] - brushCenter[1]) * 
+                                  (workingWorld[1] - brushCenter[1])) +
+                                 ((workingWorld[2] - brushCenter[2]) * 
+                                  (workingWorld[2] - brushCenter[2]));
+            if ( distSquared < radiusSquared )
+              {
+              pixelToPaint = 1; // Now we're inside the brush
+              }
+            }
+          else
+            {
+            // check the mask image
+            // note: k will always be zero for the mask since it is 2D...
+            transform3(maskWorldToIJK, workingWorld, maskIJK);
+            for (int i = 0; i < 2; i++) 
+              { 
+              intMaskIJK[i] = paintRound(maskIJK[i]); 
+              if ( intMaskIJK[i] < 0 )
+                {
+                intMaskIJK[i] = 0;
+                }
+              }
+            intMaskIJK[2] = 0;
+
+            void *ptr = self->GetMaskImage()->GetScalarPointer ( 
+                            intMaskIJK[0], intMaskIJK[1], intMaskIJK[2] );
+
+            if ( ptr == NULL ) 
+              {
+              int dimensions[3];
+              self->GetMaskImage()->GetDimensions(dimensions);
+              // TODO: this will leak matrices...
+              vtkErrorWithObjectMacro ( self, << "vtkImageSlicePaintPaint:\nCannot get mask pointer for pixel\n"
+                << "workingWorld = " << 
+                workingWorld[0] << " " <<  workingWorld[1] << " " << workingWorld[2] << "\n"
+                << "intMaskIJK = " << 
+                intMaskIJK[0] << " " <<  intMaskIJK[1] << " " << intMaskIJK[2] << "\n" 
+                << "maskDimensions = " << 
+                dimensions[0] << " " <<  dimensions[1] << " " << dimensions[2] << "\n" 
+                );
+              return;
+              }
+
+            double maskValue = self->GetMaskImage()->GetScalarComponentAsDouble (
+                                    intMaskIJK[0], intMaskIJK[1], intMaskIJK[2], 0 );
+            if ( maskValue )
+              {
+              pixelToPaint = 1; // mask is non-zero, so paint
+              }
             }
 
-          double maskValue = self->GetMaskImage()->GetScalarComponentAsDouble (
-                                  intMaskIJK[0], intMaskIJK[1], intMaskIJK[2], 0 );
-          if ( maskValue )
-            {
-            pixelToPaint = 1; // mask is non-zero, so paint
-            }
-          }
+          }  
 
         if ( pixelToPaint )
           {
+          // get here if there's no replace image and the pixel is in the brush radius
+          // or corresponds to a non-zero mask value
           // - apply paintOver rule to avoid overwriting existing data
           // - apply threshold rule to only paint where backround fits constraints
           if ( !paintOver && oldValue != 0 )
@@ -292,7 +321,14 @@ void vtkImageSlicePaintPaint(vtkImageSlicePaint *self, T *ptr)
 
               // get the background pixel
               transform3(backgroundWorldToIJK, workingWorld, bgIJK);
-              for (int i = 0; i < 3; i++) { intbgIJK[i] = paintRound(bgIJK[i]); }
+              for (int i = 0; i < 3; i++) 
+                { 
+                intbgIJK[i] = paintRound(bgIJK[i]); 
+                if ( intbgIJK[i] < 0 )
+                  {
+                  intbgIJK[i] = 0;
+                  }
+                }
               // TODO: bg may not be of type T
               T *bgPtr = (T *) background->GetScalarPointer(intbgIJK);
 
@@ -381,18 +417,6 @@ void vtkImageSlicePaint::Paint()
       }
     }
   return;
-}
-
-//----------------------------------------------------------------------------
-void vtkImageSlicePaint::Extract()
-{
-  // TODO: this will pull out the image to save
-}
-
-//----------------------------------------------------------------------------
-void vtkImageSlicePaint::Replace()
-{
-  // TODO: this will put the image back into the volume
 }
 
 //----------------------------------------------------------------------------

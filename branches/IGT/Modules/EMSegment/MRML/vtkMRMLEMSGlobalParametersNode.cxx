@@ -48,11 +48,14 @@ vtkMRMLEMSGlobalParametersNode::vtkMRMLEMSGlobalParametersNode()
   this->RegistrationAtlasVolumeKey = NULL;
   this->RegistrationTargetVolumeKey = NULL;
 
+  this->EnableTargetToTargetRegistration = 0;
+
   this->WorkingDirectory = NULL;
 
   this->SaveIntermediateResults       = 0;
   this->SaveSurfaceModels             = 0;
   this->MultithreadingEnabled         = 0;
+  this->UpdateIntermediateData        = 1;
 
   this->SegmentationBoundaryMin[0] = 0;
   this->SegmentationBoundaryMin[1] = 0;
@@ -149,12 +152,17 @@ void vtkMRMLEMSGlobalParametersNode::WriteXML(ostream& of, int nIndent)
            ? this->RegistrationTargetVolumeKey 
            : "") << "\" ";
 
+    of << indent << "EnableTargetToTargetRegistration=\""
+       << this->EnableTargetToTargetRegistration << "\" ";
+
     of << indent << "SaveIntermediateResults=\"" 
        << this->SaveIntermediateResults << "\" ";
     of << indent << "SaveSurfaceModels=\"" 
        << this->SaveSurfaceModels << "\" ";
     of << indent << "MultithreadingEnabled=\"" 
        << this->MultithreadingEnabled << "\" ";
+    of << indent << "UpdateIntermediateData=\"" 
+       << this->UpdateIntermediateData << "\" ";
 
     of << indent << "IntensityNormalizationParameterNodeIDs=\"";
     vtksys_stl::copy(this->IntensityNormalizationParameterList.begin(),
@@ -182,6 +190,12 @@ void vtkMRMLEMSGlobalParametersNode::ReadXMLAttributes(const char** attrs)
         vtksys_stl::stringstream ss;
         ss << val;
         ss >> this->NumberOfTargetInputChannels;
+      }
+    else if (!strcmp(key, "EnableTargetToTargetRegistration"))
+      {
+        vtksys_stl::stringstream ss;
+        ss << val;
+        ss >> this->EnableTargetToTargetRegistration;
       }
     else if (!strcmp(key, "WorkingDirectory"))
       {
@@ -257,6 +271,12 @@ void vtkMRMLEMSGlobalParametersNode::ReadXMLAttributes(const char** attrs)
       ss << val;
       ss >> this->MultithreadingEnabled;
       }
+    else if (!strcmp(key, "UpdateIntermediateData"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << val;
+      ss >> this->UpdateIntermediateData;
+      }
     if (!strcmp(key, "IntensityNormalizationParameterNodeIDs"))
       {
       vtksys_stl::stringstream ss;
@@ -285,6 +305,7 @@ void vtkMRMLEMSGlobalParametersNode::Copy(vtkMRMLNode *rhs)
     (vtkMRMLEMSGlobalParametersNode*) rhs;
 
   this->NumberOfTargetInputChannels = node->NumberOfTargetInputChannels;
+  this->SetEnableTargetToTargetRegistration(node->EnableTargetToTargetRegistration);
   this->SetWorkingDirectory(node->WorkingDirectory);
 
   this->SetSegmentationBoundaryMin(node->SegmentationBoundaryMin);
@@ -299,6 +320,7 @@ void vtkMRMLEMSGlobalParametersNode::Copy(vtkMRMLNode *rhs)
   this->SetSaveIntermediateResults(node->SaveIntermediateResults);
   this->SetSaveSurfaceModels(node->SaveSurfaceModels);
   this->SetMultithreadingEnabled(node->MultithreadingEnabled);
+  this->SetUpdateIntermediateData(node->UpdateIntermediateData);
 
   this->IntensityNormalizationParameterList = 
     node->IntensityNormalizationParameterList;
@@ -312,6 +334,9 @@ void vtkMRMLEMSGlobalParametersNode::PrintSelf(ostream& os,
 
   os << indent << "NumberOfTargetInputChannels: "
      << this->NumberOfTargetInputChannels << "\n";
+
+  os << indent << "EnableTargetToTargetRegistration: "
+     << (this->EnableTargetToTargetRegistration ? "true" : "false") << "\n";
 
   os << indent << "WorkingDirectory: " 
      << (this->WorkingDirectory ? this->WorkingDirectory : "(none)") << "\n";
@@ -347,6 +372,8 @@ void vtkMRMLEMSGlobalParametersNode::PrintSelf(ostream& os,
      << this->SaveSurfaceModels << "\n";
   os << indent << "MultithreadingEnabled: " 
      << this->MultithreadingEnabled << "\n";
+  os << indent << "UpdateIntermediateData: " 
+     << this->UpdateIntermediateData << "\n";
 
   os << indent << "IntensityNormalizationParameterNodeIDs: ";
   vtksys_stl::copy(this->IntensityNormalizationParameterList.begin(),

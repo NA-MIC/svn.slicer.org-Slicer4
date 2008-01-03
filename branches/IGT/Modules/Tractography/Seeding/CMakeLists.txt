@@ -4,17 +4,7 @@ PROJECT(SlicerTractographySeeding)
 # Sources
 
 SET(SlicerTractographySeeding_SRCS
-  vtkBSplineInterpolateImageFunction.cxx
-  vtkHyperPointandArray.cxx
-  vtkHyperStreamlineDTMRI.cxx
-  vtkHyperStreamlineTeem.cxx
-  #vtkImageGetTensorComponents.cxx
-  #vtkImageSetTensorComponents.cxx
-  vtkPreciseHyperStreamline.cxx
-  vtkPreciseHyperStreamlinePoints.cxx
-  vtkSeedTracts.cxx
-  vtkTensorImplicitFunctionToFunctionSet.cxx
-  vtkTractographyPointAndArray.cxx
+# Seeding.cxx
 )  
 
 # Abstract/pure virtual classes
@@ -27,12 +17,10 @@ SET(SlicerTractographySeeding_SRCS
 
 # Helper classes
 
-SET_SOURCE_FILES_PROPERTIES(
-  vtkHyperPointandArray.cxx
-  vtkTractographyPointAndArray.cxx
-  PROPERTIES
-  WRAP_EXCLUDE "TRUE"
-  )
+#SET_SOURCE_FILES_PROPERTIES(
+#  PROPERTIES
+#  WRAP_EXCLUDE "TRUE"
+#  )
 
 # --------------------------------------------------------------------------
 # Include dirs
@@ -74,7 +62,10 @@ ADD_LIBRARY(SlicerTractographySeeding
   )
 
 IF(BUILD_SHARED_LIBS)
-  INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} SlicerTractographySeeding)
+  INSTALL(TARGETS SlicerTractographySeeding
+      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(SlicerTractographySeeding

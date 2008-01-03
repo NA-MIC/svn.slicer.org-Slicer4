@@ -28,8 +28,11 @@
 #include "vtkMRMLNode.h"
 #include "vtkMRMLColorNode.h"
 #include "vtkLookupTable.h"
+#include "vtkMRMLScene.h"
 
 class vtkLookupTable;
+class vtkMRMLStorageNode;
+class vtkMRMLScene;
 class VTK_MRML_EXPORT vtkMRMLColorTableNode : public vtkMRMLColorNode
 {
 public:
@@ -51,17 +54,20 @@ public:
   // Write this node's information to a MRML file in XML format.
   virtual void WriteXML(ostream& of, int indent);
 
+  // Description:
+  // Set the storage node id, used for reading files
+  vtkSetReferenceStringMacro(StorageNodeID);
+  void SetReferenceStorageNodeID(const char *id) { this->SetStorageNodeID(id); }
+  vtkGetStringMacro(StorageNodeID);
 
   // Description:
-  // Read in a text file holding colour table elements
-  // id name r g b a
-  // comments start with a hash mark
-  virtual int ReadFile ();
-  
+  // Get associated storage MRML node
+  vtkMRMLStorageNode* GetStorageNode();
+
   // Description:
   // Copy the node's attributes to this object
   virtual void Copy(vtkMRMLNode *node);
-  
+
   // Description:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "ColorTable";};
@@ -164,9 +170,17 @@ public:
   // Set a colour into the User colour table
   void SetColor(int entry, const char* name, double r, double g, double b);
 
+  // Description:
+  // clear out the names list
+  void ClearNames();
+
+  // Description:
+  // reset when close the scene
+  virtual void Reset();
+  
 protected:
   vtkMRMLColorTableNode();
-  ~vtkMRMLColorTableNode();
+  virtual ~vtkMRMLColorTableNode();
   vtkMRMLColorTableNode(const vtkMRMLColorTableNode&);
   void operator=(const vtkMRMLColorTableNode&);
 
@@ -178,6 +192,11 @@ protected:
   // Description: 
   // The look up table, constructed according to the Type
   vtkLookupTable *LookupTable;
+
+  // Description:
+  // id of the storage node
+  char *StorageNodeID;
+
 };
 
 #endif

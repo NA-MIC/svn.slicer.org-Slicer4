@@ -293,7 +293,6 @@ void vtkSlicerRecordSnapshotWidget::CreateWidget ( )
   this->ClipSelectorWidget->SetBalloonHelpString("select a scene snapshot.");
   this->Script ( "pack %s -side left -anchor nw -fill x -padx 2 -pady 2",
                  this->ClipSelectorWidget->GetWidgetName());
-  this->ClipSelectorWidget->SetWidgetName("SnapshotSelector");
 
 
 
@@ -329,7 +328,8 @@ void vtkSlicerRecordSnapshotWidget::AddMRMLObservers()
   for (int n=0; n<nnodes; n++)
     {    
     node = this->MRMLScene->GetNthNode(n);
-    if (node && !node->IsA("vtkMRMLSceneSnapshotNode"))
+    if (node && !node->IsA("vtkMRMLSceneSnapshotNode") &&
+        !node->HasObserver(vtkCommand::AnyEvent, (vtkCommand *)this->MRMLCallbackCommand ))
       {
       node->AddObserver(vtkCommand::AnyEvent, (vtkCommand *)this->MRMLCallbackCommand );
       }
