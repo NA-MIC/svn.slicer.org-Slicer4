@@ -11,10 +11,19 @@
 #include "vtkImageReader.h"
 #include "vtkPNGReader.h"
 #include "vtkImageViewer.h"
+#include "vtkImageData.h"
 
 #include "vtkVolumeCudaMapper.h"
 #include "vtkKWTypeChooserBox.h"
 #include "vtkKWMatrixWidget.h"
+
+
+
+/// TEMPORARY
+#include <stdio.h>
+#include <stdlib.h>
+#include <cutil.h>
+
 
 vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
@@ -295,6 +304,36 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
          0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 
          0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
      this->ImageReader->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
+     
+     
+  
+     try {
+       cerr << "ALLOCATE" << endl;  
+     //this->ImageData->SetScalarType(this->InputTypeChooser->GetSelectedType());
+     this->ImageData->SetExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0), 
+         0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 
+         0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
+     this->ImageData->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
+     this->ImageData->SetScalarTypeToUnsignedChar();
+     this->ImageData->AllocateScalars();
+     
+      cerr << "READ" << endl;
+       FILE *fp;
+      fp=fopen("/projects/igtdev/bensch/svn/volrenSample/output.raw","r");
+      fread(this->ImageData->GetScalarPointer(), sizeof(unsigned char), 
+        this->InputResolutionMatrix->GetElementValueAsInt(0,0) *
+        this->InputResolutionMatrix->GetElementValueAsInt(0,1) *
+        this->InputResolutionMatrix->GetElementValueAsInt(0,2) * 
+        this->InputResolutionMatrix->GetElementValueAsInt(0,3), fp);
+      fclose(fp);
+      this->ImageViewer->SetInput(this->ImageData);
+      
+      cerr << "FINISHED" << endl;
+     }
+     catch (...)
+     {
+       cerr << "ERROR READING" << endl;  
+     }
      this->ImageViewer->Render();
    }
 }
@@ -308,6 +347,8 @@ if (ImageViewer == NULL)
  {
   printf("START CREATING WINDOW\n");
 
+
+/// ImageReader from a File
   ImageReader = vtkImageReader::New();
   ImageReader->SetFileDimensionality(2);
   ImageReader->SetDataScalarTypeToUnsignedChar();
@@ -315,17 +356,18 @@ if (ImageViewer == NULL)
   ImageReader->SetHeaderSize(0);
   ImageReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
   
-  
-  this->ImageViewer = vtkImageViewer::New();
-  PNGReader = vtkPNGReader::New();
-  PNGReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/test.png");
-  
-  this->ImageViewer->SetInputConnection(ImageReader->GetOutputPort());
+/// ImageData (from File) in Memory.
+  this->ImageData = vtkImageData::New();
+  //this->ImageData->SetDimensions(256, 256, 1);
+  this->ImageData->SetScalarTypeToUnsignedChar();
+  this->ImageData->SetNumberOfScalarComponents(4);
+
+/// Setup the ImageViewer  
+  this->ImageViewer = vtkImageViewer::New();  
+  //this->ImageViewer->SetInputConnection(ImageReader->GetOutputPort());
   
   this->ImageViewer->SetColorWindow(255);
   this->ImageViewer->SetColorLevel(128);
-  
-  //this->ImageViewer->Render();
   
   printf("FINISHED CREATING WINDOW\n");
  }
