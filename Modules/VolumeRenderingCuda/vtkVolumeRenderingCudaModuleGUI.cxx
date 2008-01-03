@@ -131,10 +131,12 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     this->InputResolutionMatrix->SetParent(loadSaveDataFrame->GetFrame());
     this->InputResolutionMatrix->Create();
     this->InputResolutionMatrix->SetRestrictElementValueToInteger();
-    this->InputResolutionMatrix->SetNumberOfColumns(2);
+    this->InputResolutionMatrix->SetNumberOfColumns(4);
     this->InputResolutionMatrix->SetNumberOfRows(1);
     this->InputResolutionMatrix->SetElementValueAsInt(0,0,256);
     this->InputResolutionMatrix->SetElementValueAsInt(0,1,256);
+    this->InputResolutionMatrix->SetElementValueAsInt(0,2,1);    
+    this->InputResolutionMatrix->SetElementValueAsInt(0,3,4);
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->InputResolutionMatrix->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
   
@@ -256,7 +258,7 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
 {
-    vtkDebugMacro("vtkVolumeRenderingModuleGUI::ProcessGUIEvents: event = " << event);
+   vtkDebugMacro("vtkVolumeRenderingModuleGUI::ProcessGUIEvents: event = " << event);
 
    if (caller == this->LoadButton)
    {
@@ -283,12 +285,16 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
    {
      cerr << "Type" << this->InputTypeChooser->GetSelectedName() << " " << this->InputTypeChooser->GetSelectedType() << 
      " X:" << this->InputResolutionMatrix->GetElementValueAsInt(0,0) << 
-     " Y:" << this->InputResolutionMatrix->GetElementValueAsInt(0,1) << endl;
+     " Y:" << this->InputResolutionMatrix->GetElementValueAsInt(0,1) <<
+     " Z:" << this->InputResolutionMatrix->GetElementValueAsInt(0,2) <<
+     " A:" << this->InputResolutionMatrix->GetElementValueAsInt(0,3) << endl;
      
      TestCudaViewer();
      this->ImageReader->SetDataScalarType(this->InputTypeChooser->GetSelectedType());
-     this->ImageReader->SetDataExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0), 0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 0, 1);
-     
+     this->ImageReader->SetDataExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0), 
+         0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 
+         0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
+     this->ImageReader->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
      this->ImageViewer->Render();
    }
 }
