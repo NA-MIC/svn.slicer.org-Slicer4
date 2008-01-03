@@ -90,6 +90,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
 
 
   /// TESTING FUNCTIONS:
+  void RenderWithCUDA(const char* inputFile, int inX, int inY, int inZ);
   void TestCudaViewer();
   void CreatePipelineTest();
 
