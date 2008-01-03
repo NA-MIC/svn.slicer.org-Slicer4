@@ -3,7 +3,7 @@
 XML = """<?xml version="1.0" encoding="utf-8"?>
 <executable>
   <category>Filtering.Denoising</category>
-  <title>Gradient Anisotropic Diffusion (Python)</title>
+  <title>Python Gradient Anisotropic Diffusion</title>
   <description>
 Runs gradient anisotropic diffusion on a volume.
 
@@ -98,16 +98,16 @@ N-dimensions.
 
 
 def Execute ( inputVolume, outputVolume, conductance=1.0, timeStep=0.0625, iterations=1 ):
-    print "Executing Python Demo Application!"
     Slicer = __import__ ( "Slicer" );
     slicer = Slicer.Slicer()
     scene = slicer.MRMLScene
-    print "Input: ", inputVolume
-    print "Output: ", outputVolume
     inputVolume = scene.GetNodeByID ( inputVolume );
     outputVolume = scene.GetNodeByID ( outputVolume );
 
     filter = slicer.vtkITKGradientAnisotropicDiffusionImageFilter.New()
+    filter.SetConductanceParameter ( conductance )
+    filter.SetTimeStep ( timeStep )
+    filter.SetNumberOfIterations ( iterations )
     filter.SetInput ( inputVolume.GetImageData() )
     filter.Update()
     outputVolume.SetAndObserveImageData(filter.GetOutput())
@@ -115,5 +115,3 @@ def Execute ( inputVolume, outputVolume, conductance=1.0, timeStep=0.0625, itera
     inputVolume.GetIJKToRASMatrix ( matrix )
     outputVolume.SetIJKToRASMatrix ( matrix )
     return
-
-print "Loaded SliceOfPy"

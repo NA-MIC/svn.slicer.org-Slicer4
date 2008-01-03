@@ -22,9 +22,9 @@
 
 #include <string>
 
-#ifdef USE_NAVITRACK
-#include "vtkIGTOpenTrackerStream.h"
-#endif
+//#ifdef USE_NAVITRACK
+//#include "vtkIGTOpenTrackerStream.h"
+//#endif
 #ifdef USE_IGSTK
 #include "vtkIGTIGSTKStream.h"
 #endif
@@ -44,7 +44,7 @@ class vtkKWMultiColumnListWithScrollbars;
 
 
 // Description:    
-// This class implements Slicer's Volumes GUI
+// This class implements Slicer's Volumes GUI.
 //
 class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
 {
@@ -223,10 +223,10 @@ class VTK_NEURONAV_EXPORT vtkNeuroNavGUI : public vtkSlicerModuleGUI
     void TrackerLoop();
 
 
-#ifdef USE_NAVITRACK
-    vtkIGTOpenTrackerStream *OpenTrackerStream;
-    void SetOpenTrackerConnectionParameters();
-#endif
+//#ifdef USE_NAVITRACK
+//    vtkIGTOpenTrackerStream *OpenTrackerStream;
+//    void SetOpenTrackerConnectionParameters();
+//#endif
 
 #ifdef USE_IGSTK    
     vtkIGTIGSTKStream *IGSTKStream;

@@ -18,7 +18,8 @@ INCLUDE(${ITK_USE_FILE})
 SET(vtkITK_SRCS
     vtkITKArchetypeImageSeriesReader.cxx
     vtkITKArchetypeImageSeriesScalarReader.cxx
-    vtkITKArchetypeImageSeriesVectorReader.cxx
+    vtkITKArchetypeImageSeriesVectorReaderFile.cxx
+    vtkITKArchetypeImageSeriesVectorReaderSeries.cxx
     vtkITKImageWriter.cxx
     vtkITKImageToImageFilter.h
     vtkITKImageToImageFilter2DFF.h
@@ -30,6 +31,9 @@ SET(vtkITK_SRCS
     vtkITKImageToImageFilterSS.h
     vtkITKGradientAnisotropicDiffusionImageFilter.cxx
     # vtkITKLevelTracingImageFilter.cxx
+    vtkITKLevelTracing3DImageFilter.cxx
+    vtkITKWandImageFilter.cxx
+    vtkITKNewOtsuThresholdImageFilter.cxx
 )
 
 # Abstract/pure virtual classes
@@ -71,7 +75,10 @@ ADD_LIBRARY(vtkITK
 
 IF(Slicer3_SOURCE_DIR)
   IF(BUILD_SHARED_LIBS)
-  INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} vtkITK)
+  INSTALL(TARGETS vtkITK
+      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib COMPONENT Development)
   ENDIF(BUILD_SHARED_LIBS)
 ENDIF(Slicer3_SOURCE_DIR)
 

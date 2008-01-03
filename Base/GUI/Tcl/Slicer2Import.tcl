@@ -255,9 +255,10 @@ proc ImportNodeVolume {node} {
 
       if { [info exists n(labelMap)] && ($n(labelMap) == "yes"  || $n(labelMap) == "true") } {
           $volumeNode SetLabelMap 1
+          set volumeDisplayNode [vtkMRMLLabelMapVolumeDisplayNode New]
+      } else {
+          set volumeDisplayNode [vtkMRMLScalarVolumeDisplayNode New]
       }
-
-      set volumeDisplayNode [vtkMRMLVolumeDisplayNode New]
 
       #
       # add nodes to the scene
@@ -266,6 +267,7 @@ proc ImportNodeVolume {node} {
       $::slicer3::MRMLScene AddNode $volumeDisplayNode
       $::slicer3::MRMLScene AddNode $volumeNode
       $volumeNode SetAndObserveDisplayNodeID [$volumeDisplayNode GetID]
+      $volumeNode SetModifiedSinceRead 1
 
       # use the RASToIJK information from the file, to override what the 
       # archetype reader might have set
@@ -305,12 +307,18 @@ proc ImportNodeVolume {node} {
   }
 
   if { [info exists n(applyThreshold)] && ( $n(applyThreshold) == "yes" || $n(applyThreshold) == "true" ) } {
-    $volumeDisplayNode SetApplyThreshold 1
+      if { [$volumeDisplayNode IsA "vtkMRMLScalarVolumeDisplayNode"] } {
+          $volumeDisplayNode SetApplyThreshold 1
+      } else {
+          puts "Slicer2Import.tcl: ImportNodeVolume Can't set apply threshold, $volumeDisplayNode is a [$volumeDisplayNode GetClassName] rather than a vtkMRMLScalarVolumeDisplayNode"
+      }
   }
-  $volumeDisplayNode SetWindow $n(window)
-  $volumeDisplayNode SetLevel $n(level)
-  $volumeDisplayNode SetLowerThreshold $n(lowerThreshold)
-  $volumeDisplayNode SetUpperThreshold $n(upperThreshold)
+  if { [$volumeDisplayNode IsA "vtkMRMLScalarVolumeDisplayNode"] } {
+    $volumeDisplayNode SetWindow $n(window)
+    $volumeDisplayNode SetLevel $n(level)
+    $volumeDisplayNode SetLowerThreshold $n(lowerThreshold)
+    $volumeDisplayNode SetUpperThreshold $n(upperThreshold)
+  }
 
   set logic [$::slicer3::VolumesGUI GetLogic]
   $logic SetActiveVolumeNode $volumeNode
@@ -472,8 +480,18 @@ proc ImportNodeFiducials {node} {
     foreach {c0 c1 c2} $n(color) {}
     $fiducialNode SetColor $c0 $c1 $c2
   }
+  if { [info exists n(name)] } {
+    $fiducialNode SetName $n(name)
+  } 
   $::slicer3::MRMLScene AddNode $fiducialNode
   set ::S2(fiducialListNode) $fiducialNode
+
+  # set it to be the selected one, last one imported will stick
+  set selNode [$::slicer3::ApplicationLogic GetSelectionNode]
+  if { $selNode != "" } {
+     $selNode SetReferenceActiveFiducialListID [$fiducialNode GetID]
+     $::slicer3::ApplicationLogic PropagateFiducialListSelection
+  }
 }
 
 proc ImportNodePoint {node} {
@@ -484,6 +502,9 @@ proc ImportNodePoint {node} {
     foreach {x y z} $n(xyz) {}
     $::S2(fiducialListNode) SetNthFiducialXYZ $f $x $y $z
   }
+  if { [info exists n(name)] } {
+    $::S2(fiducialListNode) SetNthFiducialLabelText $f $n(name)
+  } 
 }
 
 proc ImportNodeColor {node} {

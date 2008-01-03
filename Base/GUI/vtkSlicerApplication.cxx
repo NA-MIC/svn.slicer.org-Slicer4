@@ -36,9 +36,15 @@
 
 #include "itksys/SystemTools.hxx"
 #include <queue>
+#include "vtkKWMessageDialog.h"
 
 const char *vtkSlicerApplication::ModulePathRegKey = "ModulePath";
+const char *vtkSlicerApplication::ModuleCachePathRegKey = "ModuleCachePath";
 const char *vtkSlicerApplication::TemporaryDirectoryRegKey = "TemporaryDirectory";
+const char *vtkSlicerApplication::WebBrowserRegKey = "WebBrowser";
+const char *vtkSlicerApplication::UnzipRegKey = "Unzip";
+const char *vtkSlicerApplication::ZipRegKey = "Zip";
+const char *vtkSlicerApplication::RmRegKey = "Rm";
 const char *vtkSlicerApplication::ConfirmDeleteRegKey = "ConfirmDelete";
 const char *vtkSlicerApplication::HomeModuleRegKey = "HomeModule";
 const char *vtkSlicerApplication::LoadCommandLineModulesRegKey = "LoadCommandLineModules";
@@ -179,6 +185,7 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     strcpy(this->ConfirmDelete, "");
     
     strcpy(this->ModulePath, "");
+    strcpy(this->ModuleCachePath, "");
     strcpy ( this->HomeModule, "");
     this->LoadCommandLineModules = 1;
     this->EnableDaemon = 0;
@@ -252,6 +259,9 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     // Use the splash screen by default - needs to be overridden before
     // the splash is first used
     this->UseSplashScreen = 1;
+
+    // Disable stereo render capability by default
+    this->SetStereoEnabled(0);
 }
 
 //---------------------------------------------------------------------------
@@ -449,6 +459,7 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
   strcpy(this->TemporaryDirectory, "/tmp");
 #endif
 
+
   // Tk does not understand Windows short path names, so convert to
   // long path names and unix slashes
   std::string temporaryDirectory = this->TemporaryDirectory;
@@ -492,9 +503,36 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
                     << this->TemporaryDirectory);
     }
 
-    
-  Superclass::RestoreApplicationSettingsFromRegistry();
 
+  //--- web browser
+  // start with no browser...
+  strcpy(this->WebBrowser, "");
+  // Tk does not understand Windows short path names, so convert to
+  // long path names and unix slashes
+  std::string webBrowser = this->WebBrowser;
+/*
+  webBrowser 
+    = itksys::SystemTools::GetActualCaseForPath(webBrowser.c_str());
+  itksys::SystemTools::ConvertToUnixSlashes( webBrowser );
+    strcpy(this->WebBrowser, webBrowser.c_str());
+  if (webBrowser.size() > vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+    {
+    vtkWarningMacro("Path to firefox: " << this->WebBrowser
+                    << " is too long to be stored in the registry."
+                    << " You will have to set the browser location each time you launch Slicer to use modules that require it.");
+    }
+*/  
+
+  //--- unzip
+  strcpy(this->Unzip, "");
+  //--- zip
+  strcpy(this->Zip, "");
+  //--- rm
+  strcpy(this->Rm, "");
+  
+  Superclass::RestoreApplicationSettingsFromRegistry();
+  
+  
   if (this->HasRegistryValue(
     2, "RunTime", vtkSlicerApplication::ConfirmDeleteRegKey))
     {
@@ -520,6 +558,14 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
     }
 
   if (this->HasRegistryValue(
+    2, "RunTime", vtkSlicerApplication::ModuleCachePathRegKey))
+    {
+    this->GetRegistryValue(
+      2, "RunTime", vtkSlicerApplication::ModuleCachePathRegKey,
+      this->ModuleCachePath);
+    }
+
+  if (this->HasRegistryValue(
     2, "RunTime", vtkSlicerApplication::TemporaryDirectoryRegKey))
     {
     this->GetRegistryValue(
@@ -527,6 +573,30 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
       this->TemporaryDirectory);
     }
 
+  if (this->HasRegistryValue(
+    2, "RunTime", vtkSlicerApplication::WebBrowserRegKey))
+    {
+    this->GetRegistryValue(
+      2, "RunTime", vtkSlicerApplication::WebBrowserRegKey,
+      this->WebBrowser);
+    }
+
+  if (this->HasRegistryValue(2, "RunTime", vtkSlicerApplication::UnzipRegKey))
+    {
+    this->GetRegistryValue(2, "RunTime", vtkSlicerApplication::UnzipRegKey,
+                           this->Unzip);
+    }
+  if (this->HasRegistryValue(2, "RunTime", vtkSlicerApplication::ZipRegKey))
+    {
+    this->GetRegistryValue(2, "RunTime", vtkSlicerApplication::ZipRegKey,
+                           this->Zip);
+    }
+  if (this->HasRegistryValue(2, "RunTime", vtkSlicerApplication::RmRegKey))
+    {
+    this->GetRegistryValue(2, "RunTime", vtkSlicerApplication::RmRegKey,
+                           this->Rm);
+    }
+      
   if (this->HasRegistryValue(
     2, "RunTime", vtkSlicerApplication::LoadCommandLineModulesRegKey))
     {
@@ -617,8 +687,26 @@ void vtkSlicerApplication::SaveApplicationSettingsToRegistry()
     this->ModulePath);
 
   this->SetRegistryValue(
+    2, "RunTime", vtkSlicerApplication::ModuleCachePathRegKey, "%s", 
+    this->ModuleCachePath);
+  
+  this->SetRegistryValue(
     2, "RunTime", vtkSlicerApplication::TemporaryDirectoryRegKey, "%s", 
     this->TemporaryDirectory);
+
+  this->SetRegistryValue(
+    2, "RunTime", vtkSlicerApplication::WebBrowserRegKey, "%s", 
+    this->WebBrowser);
+
+  this->SetRegistryValue(
+    2, "RunTime", vtkSlicerApplication::UnzipRegKey, "%s", 
+    this->Unzip);
+  this->SetRegistryValue(
+    2, "RunTime", vtkSlicerApplication::ZipRegKey, "%s", 
+    this->Zip);
+  this->SetRegistryValue(
+    2, "RunTime", vtkSlicerApplication::RmRegKey, "%s", 
+    this->Rm);
 
   this->SetRegistryValue(
     2, "RunTime", vtkSlicerApplication::LoadCommandLineModulesRegKey, "%d", 
@@ -759,6 +847,112 @@ const char* vtkSlicerApplication::GetModulePath() const
 }
 
 //----------------------------------------------------------------------------
+void vtkSlicerApplication::SetModuleCachePath(const char* path)
+{
+  if (path)
+    {
+    if (strcmp(this->ModuleCachePath, path) != 0
+        && strlen(path) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+      {
+      strcpy(this->ModuleCachePath, path);
+      this->Modified();
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
+const char* vtkSlicerApplication::GetModuleCachePath() const
+{
+  return this->ModuleCachePath;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetWebBrowser(const char* path)
+{
+  if (path)
+    {
+    if (strcmp(this->WebBrowser, path) != 0
+        && strlen(path) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+      {
+      strcpy(this->WebBrowser, path);
+      this->Modified();
+      }
+    }
+
+}
+
+//----------------------------------------------------------------------------
+const char* vtkSlicerApplication::GetWebBrowser() const
+{
+  // should check if this is an executable file...
+  return this->WebBrowser;
+}
+
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetUnzip(const char* path)
+{
+  if (path)
+    {
+    if (strcmp(this->Unzip, path) != 0
+        && strlen(path) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+      {
+      strcpy(this->Unzip, path);
+      this->Modified();
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
+const char* vtkSlicerApplication::GetUnzip() const
+{
+  // should check if this is an executable file...
+  return this->Unzip;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetZip(const char* path)
+{
+  if (path)
+    {
+    if (strcmp(this->Zip, path) != 0
+        && strlen(path) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+      {
+      strcpy(this->Zip, path);
+      this->Modified();
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
+const char* vtkSlicerApplication::GetZip() const
+{
+  // should check if this is an executable file...
+  return this->Zip;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetRm(const char* path)
+{
+  if (path)
+    {
+    if (strcmp(this->Rm, path) != 0
+        && strlen(path) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+      {
+      strcpy(this->Rm, path);
+      this->Modified();
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
+const char* vtkSlicerApplication::GetRm() const
+{
+  // should check if this is an executable file...
+  return this->Rm;
+}
+
+//----------------------------------------------------------------------------
 void vtkSlicerApplication::SetTemporaryDirectory(const char* path)
 {
   if (path)
@@ -775,6 +969,64 @@ void vtkSlicerApplication::SetTemporaryDirectory(const char* path)
 //----------------------------------------------------------------------------
 const char* vtkSlicerApplication::GetTemporaryDirectory() const
 {
+  if (this->TemporaryDirectory)
+    {
+    // does the path exist?
+    if (!itksys::SystemTools::MakeDirectory(this->TemporaryDirectory))
+      {
+      // error making sure that the dir exists
+      std::cout << "vtkSlicerApplication::GetTemporaryDirectory: Unable to make temporary directory: " << this->TemporaryDirectory << "\n\tYou can change the Temporary Directory under View->Application Settings->Module Settings." << std::endl;
+      // pop up a window if we've got something to set for the parent
+      if (this->ApplicationGUI && this->ApplicationGUI->GetViewerWidget())
+        {
+        std::string msg = std::string("ERROR\nUnable to make temporary directory: ") + std::string(this->TemporaryDirectory) + std::string("\nYou can change the Temporary Directory under View->Application Settings->Module Settings.");
+        vtkKWMessageDialog *message = vtkKWMessageDialog::New();
+        message->SetParent(this->ApplicationGUI->GetViewerWidget());
+        message->SetOptions(vtkKWMessageDialog::ErrorIcon);
+        message->SetIcon();
+        message->SetStyleToCancel();
+        message->SetText(msg.c_str());
+        message->Create();
+        message->Invoke();
+        message->Delete();
+        }
+      }
+    else
+      {
+      // check that can write to it
+      std::vector<std::string> tempPath;
+      tempPath.push_back("");
+      // no slash between first two elements
+      tempPath.push_back(this->TemporaryDirectory);
+      tempPath.push_back("testWrite.txt");
+      std::string tempFile = itksys::SystemTools::JoinPath(tempPath);
+      FILE *fp = fopen(tempFile.c_str(), "w");
+      if (!fp)
+        {
+        std::cerr << "WARNING: Unable to write files in TemporaryDirectory: " << this->TemporaryDirectory << std::endl;
+        // pop up a window if we've got something to set for the parent
+        if (this->ApplicationGUI && this->ApplicationGUI->GetViewerWidget())
+          {
+          std::string msg = std::string("WARNING\nUnable to write files in TemporaryDirectory:\n") + std::string(this->TemporaryDirectory);
+          vtkKWMessageDialog *message = vtkKWMessageDialog::New();
+          message->SetParent(this->ApplicationGUI->GetViewerWidget());
+          message->SetOptions(vtkKWMessageDialog::ErrorIcon);
+          message->SetIcon();
+          message->SetStyleToCancel();
+          message->SetText(msg.c_str());
+          message->Create();
+          message->Invoke();
+          message->Delete();
+          }
+        }
+      else
+        {
+        fclose(fp);
+        // delete it
+        remove(tempFile.c_str());
+        }
+      }
+    }
   return this->TemporaryDirectory;
 }
 

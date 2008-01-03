@@ -42,6 +42,21 @@ namespace eval Box {
   }
 }
 
+# 
+# utility to run method only if instance hasn't already been deleted
+# (this is useful in event handling)
+#
+namespace eval Box {
+  proc ProtectedCallback {instance args} {
+    if { [info command $instance] != "" } {
+      if { [catch "eval $instance $args" res] } {
+        puts $res
+        puts $::errorInfo
+      }
+    }
+  }
+}
+
 
 #
 # The partent class definition - define if needed (not when re-sourcing)
@@ -76,7 +91,7 @@ if { [itcl::find class Box] == "" } {
     method hide {} {}
     method setMode {mode} {}
     method togglePin {} {}
-    method processEvents {caller} {}
+    method processEvent {{caller ""} {event ""}} {}
     method errorDialog {errorText} {}
 
     method objects {} {return [array get o]}
@@ -91,6 +106,9 @@ if { [itcl::find class Box] == "" } {
     # clean up the vtk classes instanced by this Box
     method vtkDelete {} {
       foreach object $_vtkObjects {
+        if { [$object IsA "vtkKWWidget"] } {
+          $object SetParent ""
+        }
         if { [catch "$object Delete" res] } {
           tk_messageBox -message "cleaning box, got:\n\n$res"
         }
@@ -253,7 +271,7 @@ itcl::body Box::togglePin {} {
 # handle gui events
 # -basically just map button events onto methods
 #
-itcl::body Box::processEvents { caller } {
+itcl::body Box::processEvent { {caller ""} {event ""} } {
 
   puts "unknown event from $caller"
 }

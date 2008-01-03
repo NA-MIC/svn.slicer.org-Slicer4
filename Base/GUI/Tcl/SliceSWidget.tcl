@@ -40,7 +40,7 @@ if { [itcl::find class SliceSWidget] == "" } {
 
     # methods
     method resizeSliceNode {} {}
-    method processEvent {} {}
+    method processEvent {{caller ""} {event ""}} {}
     method updateAnnotation {x y r a s} {}
     method incrementSlice {} {}
     method decrementSlice {} {}
@@ -151,40 +151,71 @@ itcl::body SliceSWidget::destructor {} {
 # make sure the size of the slice matches the window size of the widget
 #
 itcl::body SliceSWidget::resizeSliceNode {} {
+#  puts "[$_sliceNode Print]"
+
+  set epsilon 1.0e-6
+
   if { $_layers(background,node) != "" } {
     set logic [$sliceGUI GetLogic]
-    set sliceSpacing [$logic GetBackgroundSliceSpacing]
+    set sliceSpacing [$logic GetLowestVolumeSliceSpacing]
 
     $this configure -sliceStep [lindex $sliceSpacing 2]
   }
 
-  set renderer [$_renderWidget GetRenderer]
-  foreach {w h} [$renderer GetSize] {}
+  foreach {windoww windowh} [[$_interactor GetRenderWindow] GetSize] {}
+  foreach {windowx windowy} [$_interactor GetEventPosition] {}
+  # We should really use the pokedrenderer's size for these calculations.
+  # However, viewerports in the LightBox can differ in size by a pixel.  So 
+  # set the image size based on the size of renderer zero.
+  #
+  ###set pokedRenderer [$_interactor FindPokedRenderer $windowx $windowy]
+  set pokedRenderer [$_renderWidget GetRenderer]  
+  foreach {w h} [$pokedRenderer GetSize] {}
 
   foreach {nodeW nodeH nodeD} [$_sliceNode GetDimensions] {}
-  if { $w == $nodeW && $h == $nodeH } {
+  foreach {nodefovx nodefovy nodefovz} [$_sliceNode GetFieldOfView] {}
+  if { $w == $nodeW && $h == $nodeH && [expr abs($sliceStep - ($nodefovz / (1. * $nodeD)))] < $epsilon} {
     return
   }
 
-  if { $w == "10" && $h == "10" } {
+  if { $windoww == "10" && $windowh == "10" } {
     puts "ignoring bogus resize"
   } else {
-    set oldFOV [$_sliceNode GetFieldOfView]
-    set oldDim [$_sliceNode GetDimensions]
-    set oldPixelSize0 [expr [lindex $oldFOV 0] / (1. * [lindex $oldDim 0])]
-    set oldPixelSize1 [expr [lindex $oldFOV 1] / (1. * [lindex $oldDim 1])]
-    set oldPixelSize2 $sliceStep  
-    $_sliceNode SetDimensions $w $h [lindex $oldDim 2]    
-    $_sliceNode SetFieldOfView \
-        [expr $oldPixelSize0 * $w] [expr $oldPixelSize1 * $h] [expr [lindex $oldDim 2]*$oldPixelSize2]
+    set scaling0 [expr $w / (1. * $nodeW)]
+    set scaling1 [expr $h / (1. * $nodeH)]
 
+    set sMagnitude0 $scaling0
+    if { $sMagnitude0 < 1.0 } {
+       set sMagnitude0 [expr 1. / $sMagnitude0]
+    }
+
+    set sMagnitude1 $scaling1
+    if { $sMagnitude1 < 1.0 } {
+       set sMagnitude1 [expr 1. / $sMagnitude1]
+    }
+
+    if {$sMagnitude0 < $sMagnitude1} {
+       # keep x fov the same, adjust y
+       set fovx $nodefovx
+       set fovy [expr $nodefovy * $scaling1 / $scaling0]
+       set fovz [expr $sliceStep * $nodeD]
+    } else {
+       # keep y fov the same, adjust x
+       set fovx [expr $nodefovx * $scaling0 / $scaling1]
+       set fovy $nodefovy
+       set fovz [expr $sliceStep * $nodeD]
+    }
+
+    $_sliceNode SetDimensions $w $h $nodeD
+    $_sliceNode SetFieldOfView $fovx $fovy $fovz
   }
 }
 
 #
 # handle interactor events
 #
-itcl::body SliceSWidget::processEvent { } {
+itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
+
 
   if { [info command $sliceGUI] == "" } {
     # the sliceGUI was deleted behind our back, so we need to 
@@ -213,6 +244,7 @@ itcl::body SliceSWidget::processEvent { } {
     $_interactor UpdateSize [winfo width $tkwindow] [winfo height $tkwindow]
   }
 
+
   #
   # if another widget has the grab, let this go unless
   # it is a focus event, in which case we want to update
@@ -225,27 +257,33 @@ itcl::body SliceSWidget::processEvent { } {
     }
   }
 
+  # To support the LightBox, the event locations sometimes need to be
+  # relative to a renderer (or viewport or pane of the lightbox).
+  # Currently, these are relative to the viewport of the "start" action. 
+  # We may need to change this in some cases to be relative to an "active" 
+  # viewport.
+
+
   #
-  # get the event position and make it relative to a renderer
+  # get the event position and make it relative to a renderer/viewport
   #
   foreach {windowx windowy} [$_interactor GetEventPosition] {}
-  set pokedRenderer [$_interactor FindPokedRenderer $windowx $windowy]
-
-
-  # figure out which slice corresponds to the viewer
+  foreach {lastwindowx lastwindowy} [$_interactor GetLastEventPosition] {}
   foreach {windoww windowh} [[$_interactor GetRenderWindow] GetSize] {}
-  set numRows [[$sliceGUI GetSliceViewer] GetLayoutGridRows]
-  set numCols [[$sliceGUI GetSliceViewer] GetLayoutGridColumns]
 
-  set tx [expr $windowx / double($windoww)]
-  set ty [expr ($windowh - $windowy) / double($windowh)]
+  set pokedRenderer [$_interactor FindPokedRenderer $windowx $windowy]
+  set renderer0 [$_renderWidget GetRenderer]
 
-  set z [expr (floor($ty*$numRows)*$numCols + floor($tx*$numCols))]
+  foreach {x y z} [$this dcToXYZ $windowx $windowy] {}
 
-  foreach {w h} [$pokedRenderer GetSize] {}
+  # We should really use the pokedrenderer's size for these calculations.
+  # However, viewports in the LightBox can differ in size by a pixel.  So 
+  # set the image size based on the size of renderer zero.
+  #
+  ###foreach {w h} [$pokedRenderer GetSize] {}
+  foreach {w h} [$renderer0 GetSize] {}
   foreach {rox roy} [$pokedRenderer GetOrigin] {}
-  set x [expr $windowx - $rox]
-  set y [expr $windowy - $roy]
+
   $this queryLayers $x $y $z
   set xyToRAS [$_sliceNode GetXYToRAS]
   set ras [$xyToRAS MultiplyPoint $x $y $z 1]
@@ -257,6 +295,7 @@ itcl::body SliceSWidget::processEvent { } {
   #
   $this resizeSliceNode
 
+
   switch $event {
 
     "MouseMoveEvent" {
@@ -265,7 +304,6 @@ itcl::body SliceSWidget::processEvent { } {
       # - first update the annotation
       # - then handle modifying the view
       #
-
       $this updateAnnotation $x $y $r $a $s
 
       if { [$_interactor GetShiftKey] } {
@@ -278,6 +316,7 @@ itcl::body SliceSWidget::processEvent { } {
             #
             # Translate
             # TODO: move calculation to vtkSlicerSliceLogic
+            $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
             set tx [expr $windowx - [lindex $_actionStartViewportOrigin 0]]
             set ty [expr $windowy - [lindex $_actionStartViewportOrigin 1]]
             
@@ -293,14 +332,16 @@ itcl::body SliceSWidget::processEvent { } {
             [$_sliceNode GetSliceToRAS] DeepCopy $o(scratchMatrix)
             $_sliceNode UpdateMatrices
             $sliceGUI SetGUICommandAbortFlag 1
+            $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
           }
           "Zoom" {
             #
             # Zoom
             # TODO: move calculation to vtkSlicerSliceLogic
+            $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
             set deltay [expr $windowy - [lindex $_actionStartWindowXY 1]]
 
-            set percent [expr ($h + $deltay) / (1.0 * $h)]
+            set percent [expr ($windowh + $deltay) / (1.0 * $windowh)]
 
             # the factor operation is so 'z' isn't changed and the 
             # slider can still move through the full range
@@ -310,11 +351,40 @@ itcl::body SliceSWidget::processEvent { } {
                 lappend newFOV [expr $f * $factor]
               }
               eval $_sliceNode SetFieldOfView $newFOV
- 
+
               $_sliceNode UpdateMatrices
             }
             $sliceGUI SetGUICommandAbortFlag 1
           }
+          "Rotate" {
+            #
+            # Rotate
+            # TODO: move calculation to vtkSlicerSliceLogic
+            $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
+            set dx [expr $windowx - $lastwindowx]
+            set dy [expr $windowy - $lastwindowy]
+
+            set dazimuth   [expr 20.0 / $w]
+            set delevation [expr 20.0 / $h]
+
+            set rx [expr $dx * $dazimuth * 10.0]
+            set ry [expr $dy * $delevation * 10.0]
+
+            # puts "rx = $rx"
+
+            set tfm [$this vtkNew vtkTransform]
+            $tfm PreMultiply
+            $tfm Identity
+            $tfm SetMatrix [$_sliceNode GetSliceToRAS] 
+            $tfm RotateX $ry
+            $tfm RotateY $rx
+
+            [$_sliceNode GetSliceToRAS] DeepCopy [$tfm GetMatrix]
+            $tfm Delete
+
+            $_sliceNode UpdateMatrices
+            $sliceGUI SetGUICommandAbortFlag 1
+           }
           default {
             # need to render to show the annotation
             [$sliceGUI GetSliceViewer] RequestRender
@@ -324,7 +394,11 @@ itcl::body SliceSWidget::processEvent { } {
     }
 
     "RightButtonPressEvent" {
-      set _actionState "Zoom"
+        if { [$_sliceNode GetOrientationString] == "Reformat" && [$_interactor GetControlKey] } {
+        set _actionState "Rotate"
+      } else {
+        set _actionState "Zoom"
+      }
       set _actionStartXY "$x $y"
       set _actionStartWindowXY "$windowx $windowy"
       set _actionStartViewportOrigin "$rox $roy"
@@ -332,6 +406,7 @@ itcl::body SliceSWidget::processEvent { } {
       $sliceGUI SetGrabID $this
       $sliceGUI SetGUICommandAbortFlag 1
       set _actionStartFOV [$_sliceNode GetFieldOfView]
+
       $::slicer3::MRMLScene SaveStateForUndo $_sliceNode
     }
     "RightButtonReleaseEvent" { 
@@ -372,10 +447,12 @@ itcl::body SliceSWidget::processEvent { } {
     "MouseWheelForwardEvent" { 
       $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
       $this incrementSlice 
+      $this updateAnnotation $x $y $r $a $s
     }
     "MouseWheelBackwardEvent" {
       $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
       $this decrementSlice 
+      $this updateAnnotation $x $y $r $a $s
     }
     "ExposeEvent" { }
     "ConfigureEvent" {
@@ -391,50 +468,43 @@ itcl::body SliceSWidget::processEvent { } {
       [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText ""
     }
     "TimerEvent" { }
-    "CharEvent" - 
     "KeyPressEvent" { 
-      $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
-      $sliceGUI SetGUICommandAbortFlag 1
-      switch [$_interactor GetKeySym] {
-        "v" {
-          $_sliceNode SetSliceVisible [expr ![$_sliceNode GetSliceVisible]]
+      set key [$_interactor GetKeySym]
+      if { [lsearch "v r b f space c Up Down Left Right" $key] != -1 } {
+        $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
+        $sliceGUI SetGUICommandAbortFlag 1
+        switch [$_interactor GetKeySym] {
+          "v" {
+            $_sliceNode SetSliceVisible [expr ![$_sliceNode GetSliceVisible]]
+          }
+          "r" {
+            # use c++ version of calculation
+            [$sliceGUI GetLogic] FitSliceToBackground $w $h
+            $_sliceNode UpdateMatrices
+          }
+          "b" - "Left" - "Down" {
+            $this decrementSlice
+            $this updateAnnotation $x $y $r $a $s
+          }
+          "f" - "Right" - "Up" {
+            $this incrementSlice
+            $this updateAnnotation $x $y $r $a $s
+          }
+          "space" {
+            ::Box::ShowDialog EditBox
+          }
+          "c" {
+            ::Box::ShowDialog ColorBox
+          }
+          default {
+            set capture 0
+          }
         }
-        "r" {
-          # use c++ version of calculation
-          [$sliceGUI GetLogic] FitSliceToBackground $w $h
-          $_sliceNode UpdateMatrices
-          $sliceGUI SetGUICommandAbortFlag 1
-        }
-        "b" - "Left" - "Down" {
-          $this decrementSlice
-        }
-        "f" - "Right" - "Up" {
-          $this incrementSlice
-        }
-        "space" {
-          ::EditBox::ShowDialog
-        }
-        "c" {
-          ::Box::ShowDialog ColorBox
-        }
-        default {
-          puts "[$_interactor GetKeyCode], [$_interactor GetKeySym]"
-        }
+      } else {
+        # puts "slice ignoring $key"
       }
     }
     "KeyReleaseEvent" { 
-    }
-    "CharEvent" {
-      if { 0 } { 
-        puts -nonewline "char event [$_interactor GetKeyCode]"
-        if { [$_interactor GetControlKey] } {
-          puts -nonewline " with control"
-        }
-        if { [$_interactor GetShiftKey] } {
-          puts -nonewline " with shift"
-        }
-        puts ""
-      }
     }
     "FocusInEvent" {
       $o(focusActor) VisibilityOn
@@ -460,7 +530,8 @@ itcl::body SliceSWidget::updateAnnotation {x y r a s} {
   if {[info command $_layers(label,node)] != "" && \
       $_layers(label,node) != "" && \
       $_layers(label,pixel) != "" && \
-      $_layers(label,pixel) != "Unknown"} {
+      $_layers(label,pixel) != "Unknown" && \
+      $_layers(label,pixel) != "Out of Frame"} {
       set labelDisplayNode [$_layers(label,node) GetDisplayNode]
       if {$labelDisplayNode != "" && [$labelDisplayNode GetColorNodeID] != ""} {
           set colorNode [$labelDisplayNode GetColorNode]

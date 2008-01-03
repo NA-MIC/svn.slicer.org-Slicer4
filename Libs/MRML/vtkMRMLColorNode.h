@@ -66,6 +66,11 @@ public:
   virtual const char* GetNodeTagName() {return "Color";};
 
   // Description:
+  // Reset node attributes to the initilal state as defined in the constructor.
+  // NOTE:   it preserves values several dynamic attributes that may be set by an application: type, name
+  virtual void Reset();
+  
+  // Description:
   // 
   virtual void UpdateScene(vtkMRMLScene *scene);
 
@@ -103,7 +108,9 @@ public:
   // Description:
   // Get the 0th based nth name of this colour, replacing the spaces with
   // subst
-  const char *GetColorNameWithoutSpaces(int ind, const char *subst);
+  //BTX
+  std::string GetColorNameWithoutSpaces(int ind, const char *subst);
+  //ETX
   
   // Description:
   // Add a color name to the vector
@@ -130,10 +137,16 @@ public:
   // get/set the string used for an unnamed colour
   vtkGetStringMacro(NoName);
   vtkSetStringMacro(NoName);
+
+  // Description:
+  // Get/Set for the flag on names array having been initalised
+  vtkGetMacro(NamesInitialised, int);
+  vtkSetMacro(NamesInitialised, int);
+  vtkBooleanMacro(NamesInitialised, int);
   
 protected:
   vtkMRMLColorNode();
-  ~vtkMRMLColorNode();
+  virtual ~vtkMRMLColorNode();
   vtkMRMLColorNode(const vtkMRMLColorNode&);
   void operator=(const vtkMRMLColorNode&);
 
@@ -159,6 +172,10 @@ protected:
   // Description:
   // the string used for an unnamed colour
   char *NoName;
+
+  // Description:
+  // Have the colour names been set? Used to do lazy copy of the Names array.
+  int NamesInitialised;
 };
 
 #endif

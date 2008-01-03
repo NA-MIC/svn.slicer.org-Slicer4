@@ -45,7 +45,7 @@ if { [itcl::find class EditBox] == "" } {
     method createButtonRow {parent effects} {}
     method findEffects { {path ""} } {}
     method selectEffect {effect} {}
-    method processEvents {caller} {}
+    method processEvent {{caller ""} {event ""}} {}
 
     method effects {} {return [array get _effects]}
   }
@@ -69,9 +69,9 @@ itcl::body EditBox::findEffects { {path ""} } {
   set _effects(list,mouseTools) {
     ChangeIsland ChooseColor 
     ImplicitCube ImplicitEllipse ImplicitRectangle 
-    FreehandDrawLabel EraseLabel RemoveIslands ConnectedComponents 
-    ThresholdBucket ThresholdPaintLabel SaveIsland SlurpColor PaintLabel
-    DefaultTool
+    Draw EraseLabel RemoveIslands ConnectedComponents 
+    ThresholdBucket ThresholdPaintLabel SaveIsland SlurpColor Paint
+    DefaultTool LevelTracing Wand
   }
 
   # effects that operate from the menu
@@ -88,16 +88,16 @@ itcl::body EditBox::findEffects { {path ""} } {
 
   set _effects(list,disabled) {
     ChooseColor 
-    ImplicitCube ImplicitEllipse ImplicitRectangle 
+    ImplicitCube ImplicitEllipse 
     ConnectedComponents 
-    SlurpColor 
+    SlurpColor  Wand
     DeleteFiducials LabelOpacity
     FiducialVisibilityOff
     FiducialVisibilityOn 
     IdentifyIslands
-    LabelVisibilityOff LabelVisibilityOn NextFiducial 
+    LabelVisibilityOff LabelVisibilityOn 
     SnapToGridOff SnapToGridOn
-    PreviousFiducial  InterpolateLabels LabelOpacity
+    InterpolateLabels LabelOpacity
     ToggleLabelOutline Watershed
   }
 
@@ -105,6 +105,9 @@ itcl::body EditBox::findEffects { {path ""} } {
   # combined list of all effects
   set _effects(list) [concat $_effects(list,mouseTools) $_effects(list,operations)]
 
+  # for each effect
+  # - look for implementation class of pattern *Effect
+  # - get an icon  for the pushbutton
   set iconDir $::env(SLICER_HOME)/lib/Slicer3/Modules/Packages/Editor/ImageData
   set reader [vtkPNGReader New]
   foreach effect $_effects(list) {
@@ -113,7 +116,6 @@ itcl::body EditBox::findEffects { {path ""} } {
     } else {
       set _effects($effect,class) EffectSWidget
     }
-    set _effects($effect,icon) [vtkNew vtkKWIcon]
     foreach iconType { "" Selected Disabled} {
       set _effects($effect,imageData$iconType) [vtkNew vtkImageData]
       $reader SetFileName $iconDir/$effect$iconType.png
@@ -125,6 +127,7 @@ itcl::body EditBox::findEffects { {path ""} } {
     if { [lsearch $_effects(list,disabled) $effect] != -1 } {
       set iconMode "Disabled"
     }
+    set _effects($effect,icon) [vtkNew vtkKWIcon]
     $::slicer3::ApplicationGUI SetIconImage \
         $_effects($effect,icon) $_effects($effect,imageData$iconMode)
   }
@@ -162,7 +165,7 @@ itcl::body EditBox::createButtonRow {parent effects} {
     #
     # TODO: would prefer to use the events for consistency, but apparently
     # there is no way to observe the InvokedEvent from wrapped languages
-    #set tag [$pushButton AddObserver ModifiedEvent "$this processEvents $pushButton"]
+    #set tag [$pushButton AddObserver ModifiedEvent "$this processEvent $pushButton"]
     #lappend _observerRecords [list $pushButton $tag]
     #$pushButton SetCommand $pushButton Modified
     ## AND there is no way to pass a script to the command
@@ -215,16 +218,16 @@ itcl::body EditBox::create { } {
   #
 
   $this createButtonRow $parent {DefaultTool SnapToGridOn ChooseColor SlurpColor}
-  $this createButtonRow $parent {LabelOpacity ToggleLabelOutline LabelVisibilityOn}
-  $this createButtonRow $parent {PaintLabel ThresholdPaintLabel FreehandDrawLabel ThresholdBucket}
+  $this createButtonRow $parent {LabelOpacity ToggleLabelOutline LabelVisibilityOn Wand}
+  $this createButtonRow $parent {Paint ThresholdPaintLabel Draw ThresholdBucket}
   $this createButtonRow $parent {EraseLabel ImplicitEllipse ImplicitRectangle ImplicitCube}
   $this createButtonRow $parent {IdentifyIslands ChangeIsland RemoveIslands SaveIsland}
   $this createButtonRow $parent {ErodeLabel DilateLabel Threshold ChangeLabel}
-  $this createButtonRow $parent {InterpolateLabels MakeModel Watershed ConnectedComponents}
+  $this createButtonRow $parent {InterpolateLabels MakeModel Watershed LevelTracing}
   $this createButtonRow $parent {PreviousFiducial NextFiducial FiducialVisibilityOn DeleteFiducials}
-  $this createButtonRow $parent {GoToEditorModule PinOpen}
+  $this createButtonRow $parent {GoToEditorModule PinOpen }
  
-  $this setMode $mode
+  $this setMode $mode 
 
   if { $frame != "" } {
     # nothing, calling code will pack the frame
@@ -264,6 +267,14 @@ itcl::body EditBox::selectEffect { effect } {
       #TODO: invoke the real modelmaker.  Figure out which label map to use (each slice
       # could have a different label layer -- for now use the red one...
       EditorTestQuickModel
+      EditorSetActiveToolLabel DefaultTool
+    }
+    "PreviousFiducial" {
+      ::FiducialsSWidget::JumpAllToNextFiducial -1
+      EditorSetActiveToolLabel DefaultTool
+    }
+    "NextFiducial" {
+      ::FiducialsSWidget::JumpAllToNextFiducial 1
       EditorSetActiveToolLabel DefaultTool
     }
     default {
@@ -312,7 +323,7 @@ itcl::body EditBox::selectEffect { effect } {
 # -basically just map button events onto methods
 # - not used due to KWWidgets limitations
 #
-itcl::body EditBox::processEvents { caller } {
+itcl::body EditBox::processEvent { {caller ""} {event ""} } {
 
 }
 
@@ -320,15 +331,36 @@ itcl::body EditBox::processEvents { caller } {
 # TODO: this little helper reloads the editor functionality
 #
 proc eeeee {} {
+
+  EffectSWidget::RemoveAll
+
+  if { ![info exists ::Editor(singleton)] } {
+    error "editor not yet loaded"
+  }
+  set editor $::Editor(singleton)
+
+  EditorTearDownGUI $::Editor(singleton)
+
+  foreach eff [itcl::find objects -isa EffectSWidget] {
+    itcl::delete object $eff
+  }
+  foreach box [itcl::find objects -isa Box] {
+    itcl::delete object $box
+  }
+
   itcl::delete class Box
   itcl::delete class EffectSWidget
 
   source $::env(SLICER_HOME)/../Slicer3/Modules/Editor/Box.tcl
   source $::env(SLICER_HOME)/../Slicer3/Modules/Editor/EffectSWidget.tcl
+  source $::env(SLICER_HOME)/../Slicer3/Modules/Editor/Labeler.tcl
   foreach eff [glob $::env(SLICER_HOME)/../Slicer3/Modules/Editor/*Effect.tcl] {
     source $eff
   }
   foreach box [glob $::env(SLICER_HOME)/../Slicer3/Modules/Editor/*Box.tcl] {
     source $box
   }
+  source $::env(SLICER_HOME)/../Slicer3/Modules/Editor/EditColor.tcl
+
+  EditorBuildGUI $editor
 }

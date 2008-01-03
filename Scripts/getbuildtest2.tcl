@@ -281,30 +281,24 @@ if { $::GETBUILDTEST(test-type) != "Continuous" } {
 
 
 # svn checkout of SIGN
-cd $::SLICER_HOME/Libs
-if { [file exists SIGN] } {
-  cd SIGN
-  runcmd echo t | svn --username ivs --password ivs switch $::SIGN_TAG
-} else {
-  runcmd echo t | svn --username ivs --password ivs checkout $::SIGN_TAG SIGN
+if { $::USE_SIGN } {
+  cd $::SLICER_HOME/Libs
+  if { [file exists SIGN] } {
+    cd SIGN
+    runcmd echo t | svn --username ivs --password ivs switch $::SIGN_TAG
+  } else {
+    runcmd echo t | svn --username ivs --password ivs checkout $::SIGN_TAG SIGN
+  }
+
+  cd $::SLICER_HOME/Applications
+  if { [file exists SIGN] } {
+    cd SIGN
+    runcmd echo t | svn --username ivs --password ivs switch $::SIGN_APP_TAG
+  } else {
+    runcmd echo t | svn --username ivs --password ivs checkout $::SIGN_APP_TAG SIGN
+  }
 }
 
-cd $::SLICER_HOME/Applications
-if { [file exists SIGN] } {
-  cd SIGN
-  runcmd echo t | svn --username ivs --password ivs switch $::SIGN_APP_TAG
-} else {
-  runcmd echo t | svn --username ivs --password ivs checkout $::SIGN_APP_TAG SIGN
-}
-
-
-if { $::GETBUILDTEST(doxy) } {
-    # just run doxygen and exit
-    puts "Creating documenation files in $::env(SLICER_DOC)"
-    set cmd "doxygen $::SLICER_HOME/Doxyfile"
-    eval runcmd $cmd
-    return
-}
 
 
 # build the lib with options
@@ -349,6 +343,12 @@ if {$isDarwin} {
   set ::GETBUILDTEST(shared-lib-extension) ".dylib"
 }
 
+# Build Python everywhere but Windows
+set BuildPython ON
+if {$isWindows} {
+    set BuildPython OFF
+}
+
 # build the slicer
 cd $::SLICER_BUILD
 runcmd $::CMAKE \
@@ -362,11 +362,11 @@ runcmd $::CMAKE \
         -DIGSTK_DIR:FILEPATH=$SLICER_LIB/IGSTK-build \
         -DSandBox_DIR:FILEPATH=$SLICER_LIB/NAMICSandBox \
         -DCMAKE_BUILD_TYPE=$::VTK_BUILD_TYPE \
+        -DCMAKE_CXX_FLAGS_DEBUG:STRING=$::CMAKE_CXX_FLAGS_DEBUG \
         -DSlicer3_VERSION_PATCH:STRING=$::GETBUILDTEST(version-patch) \
         -DCPACK_GENERATOR:STRING=$::GETBUILDTEST(cpack-generator) \
         -DCPACK_PACKAGE_FILE_NAME:STRING=$::GETBUILDTEST(binary-filename) \
-        -DUSE_TEEM=ON \
-        -DUSE_PYTHON=OFF \
+        -DUSE_PYTHON=$BuildPython \
         -DPYTHON_INCLUDE_PATH:PATH=$::SLICER_LIB/python-build/include/python2.5 \
         -DPYTHON_LIBRARY:FILEPATH=$::SLICER_LIB/python-build/lib/libpython2.5$::GETBUILDTEST(shared-lib-extension) \
         -DUSE_IGSTK=$::IGSTK \
@@ -379,9 +379,17 @@ runcmd $::CMAKE \
         -Ddcmtk_SOURCE_DIR:FILEPATH=$SLICER_LIB/dcmtk \
         -DBatchMake_DIR:FILEPATH=$SLICER_LIB/BatchMake-build \
         -DUSE_BatchMake=ON \
-        -DLIBCURL_DIR:FILEPATH=$SLICER_LIB/cmcurl-build \
+        -DSLICERLIBCURL_DIR:FILEPATH=$SLICER_LIB/cmcurl-build \
         -DUSE_MIDAS=ON \
         $SLICER_HOME
+
+if { $::GETBUILDTEST(doxy) } {
+    # just run doxygen and exit
+    runcmd $::CMAKE -DBUILD_DOCUMENTATION=ON $SLICER_HOME
+    cd $::SLICER_BUILD/Utilities/Doxygen
+    eval runcmd make Slicer3DoxygenDoc
+    return
+}
 
 if { $isWindows } {
     if { $MSVC6 } {

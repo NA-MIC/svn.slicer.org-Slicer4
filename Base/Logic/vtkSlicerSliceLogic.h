@@ -47,6 +47,8 @@
 
 class vtkImageData;
 class vtkMRMLModelDisplayNode;
+class vtkMRMLLinearTransformNode;
+class vtkImageReslice;
 
 class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic 
 {
@@ -116,6 +118,14 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
   vtkGetObjectMacro (SliceModelNode, vtkMRMLModelNode);
 
   // Description:
+  // Model slice plane display props
+  vtkGetObjectMacro (SliceModelDisplayNode, vtkMRMLModelDisplayNode);
+
+  // Description:
+  // Model slice plane transform from xy to RAS
+  vtkGetObjectMacro (SliceModelTransformNode, vtkMRMLLinearTransformNode);
+
+  // Description:
   // The compositing filter
   // TODO: this will eventually be generalized to a per-layer compositing function
   vtkGetObjectMacro (Blend, vtkImageBlend);
@@ -127,6 +137,11 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
   // Description:
   // All the LookupTable objects to color the PolyData object
   vtkGetObjectMacro (LookupTableCollection, vtkCollection);
+
+  // Description:
+  // An image reslice instance to pull a single slice from the volume that 
+  // represents the filmsheet display output
+  vtkGetObjectMacro (ExtractModelTexture, vtkImageReslice);
 
   // Description:
   // the tail of the pipeline
@@ -149,10 +164,14 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
          (this->GetForegroundLayer() != NULL && this->GetForegroundLayer()->GetImageData() != NULL) ||
          (this->GetLabelLayer() != NULL && this->GetLabelLayer()->GetImageData() != NULL) ) 
       {     
-      this->Blend->Update(); 
+      if ( this->Blend->GetInput(0) != NULL ) 
+        {
+        this->Blend->Update(); 
+        }
       if (this->Blend->GetOutput()->GetMTime() > this->ImageData->GetMTime())
         {
         this->ImageData->DeepCopy( this->Blend->GetOutput()); 
+        this->ExtractModelTexture->SetInput( this->ImageData );
         }
       }
   };
@@ -190,6 +209,35 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
   void UpdateSliceCompositeNode();
 
   // Description:
+  // Get the volume node corresponding to layer
+  // (0=background, 1=foreground, 2=label)
+  vtkMRMLVolumeNode *GetLayerVolumeNode(int layer);
+
+  // Description:
+  // Get the size of the volume, transformed to RAS space
+  void GetVolumeRASBox(vtkMRMLVolumeNode *volumeNode, double rasDimensions[3], double rasCenter[3]);
+
+  // Description:
+  // Get the size of the volume, transformed to slice space
+  void GetVolumeSliceDimensions(vtkMRMLVolumeNode *volumeNode, double sliceDimensions[3], double sliceCenter[3]);
+
+  // Description:
+  // Get the spacing of the volume, transformed to slice space 
+  // - to be used, for example, to set the slice increment for stepping a single 
+  //   voxel relative to the current slice view
+  double *GetVolumeSliceSpacing(vtkMRMLVolumeNode *volumeNode);
+
+  // Description:
+  // Get the min/max bounds of the volume
+  // - note these are not translated by the current slice offset so they can
+  //   be used to calculate the range (e.g. of a slider) that operates in slice space
+  void GetVolumeSliceBounds(vtkMRMLVolumeNode *volumeNode, double sliceBounds[6]);
+
+  // Description:
+  // adjust the node's field of view to match the extent of current background volume
+  void FitSliceToVolume(vtkMRMLVolumeNode *volumeNode, int width, int height);
+
+  // Description:
   // Get the size of the volume, transformed to RAS space
   void GetBackgroundRASBox(double rasDimensions[3], double rasCenter[3]);
 
@@ -215,8 +263,22 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
 
   // Description:
   // adjust the node's field of view to match the extent of all volume layers
-  // TODO: not yet implemented
+  //  (fits to first non-null layer)
   void FitSliceToAll(int width, int height);
+
+  // Description:
+  // Get the spacing of the volume, transformed to slice space 
+  // - to be used, for example, to set the slice increment for stepping a single 
+  //   voxel relative to the current slice view
+  // - returns first non-null layer
+  double *GetLowestVolumeSliceSpacing();
+
+  // Description:
+  // Get the min/max bounds of the volume
+  // - note these are not translated by the current slice offset so they can
+  //   be used to calculate the range (e.g. of a slider) that operates in slice space
+  // - returns first non-null layer
+  void GetLowestVolumeSliceBounds(double sliceBounds[6]);
 
   // Description:
   // Get/Set the current distance from the origin to the slice plane
@@ -249,12 +311,14 @@ protected:
   double LabelOpacity;
   vtkImageBlend *Blend;
   vtkImageData *ImageData;
+  vtkImageReslice *ExtractModelTexture;
 
   vtkPolyDataCollection *PolyDataCollection;
   vtkCollection *LookupTableCollection;
 
   vtkMRMLModelNode *SliceModelNode;
   vtkMRMLModelDisplayNode *SliceModelDisplayNode;
+  vtkMRMLLinearTransformNode *SliceModelTransformNode;
   double SliceSpacing[3];
 
 };

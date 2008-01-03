@@ -17,6 +17,7 @@
 #include "vtkSlicerApplicationLogic.h"
 
 #include "vtkSlicerColorLogic.h"
+#include "vtkSlicerVolumesLogic.h"
 
 #include "vtkKWTkUtilities.h"
 #include "vtkKWApplication.h"
@@ -26,6 +27,7 @@
 #include "vtkMRMLDiffusionTensorVolumeNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeNode.h"
 #include "vtkMRMLModelNode.h"
+#include "vtkMRMLModelHierarchyNode.h"
 #include "vtkMRMLTransformNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLFiberBundleNode.h"
@@ -33,16 +35,20 @@
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkMRMLModelStorageNode.h"
 #include "vtkMRMLFiberBundleStorageNode.h"
+#include "vtkMRMLColorTableStorageNode.h"
+#include "vtkMRMLColorTableNode.h"
 #include "vtkMRMLVolumeDisplayNode.h"
+#include "vtkMRMLScalarVolumeDisplayNode.h"
+#include "vtkMRMLLabelMapVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeDisplayNode.h"
+#include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 #include "vtkMRMLModelDisplayNode.h"
-#include "vtkMRMLFiberBundleDisplayNode.h"
+#include "vtkMRMLFiberBundleLineDisplayNode.h"
+#include "vtkMRMLFiberBundleTubeDisplayNode.h"
+#include "vtkMRMLFiberBundleGlyphDisplayNode.h"
 #include "vtkSlicerTask.h"
-
-#ifdef USE_TEEM
 #include "vtkMRMLNRRDStorageNode.h"
-#endif
 
 #ifdef linux 
 #include "unistd.h"
@@ -140,9 +146,9 @@ class ReadDataQueue : public std::queue<ReadDataRequest> {} ;
 //----------------------------------------------------------------------------
 vtkSlicerApplicationLogic::vtkSlicerApplicationLogic()
 {
-    this->Views = NULL;
-    this->Slices = NULL;
-    this->Modules = NULL;
+    this->Views = vtkCollection::New();
+    this->Slices = vtkCollection::New();
+    this->Modules = vtkCollection::New();
     this->ActiveSlice = NULL;
     this->SelectionNode = NULL;
     this->InteractionNode = NULL;
@@ -314,6 +320,15 @@ void vtkSlicerApplicationLogic::PropagateVolumeSelection()
     cnode->SetBackgroundVolumeID( ID );
     cnode->SetLabelVolumeID( labelID );
     }
+
+  int nitems = this->GetSlices()->GetNumberOfItems();
+  for (i = 0; i < nitems; i++)
+    {
+    vtkSlicerSliceLogic *sliceLogic = vtkSlicerSliceLogic::SafeDownCast(this->GetSlices()->GetItemAsObject(i));
+    vtkMRMLSliceNode *sliceNode = sliceLogic->GetSliceNode();
+    unsigned int *dims = sliceNode->GetDimensions();
+    sliceLogic->FitSliceToAll(dims[0], dims[1]);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -323,44 +338,10 @@ void vtkSlicerApplicationLogic::PropagateFiducialListSelection()
     {
     return;
     }
-  char *ID = this->SelectionNode->GetActiveFiducialListID();
+  //char *ID = this->SelectionNode->GetActiveFiducialListID();
 
   // set the Fiducials GUI to show the active list? it's watching the node for
   // now
-}
-
-//----------------------------------------------------------------------------
-// Create a new Slice with it's associated class instances
-vtkSlicerSliceLogic *vtkSlicerApplicationLogic::CreateSlice ()
-{
-    // Create the logic instances
-    vtkSlicerSliceLogic *sliceLogic = vtkSlicerSliceLogic::New();
-    vtkSlicerSliceLayerLogic *bg = vtkSlicerSliceLayerLogic::New();
-    vtkSlicerSliceLayerLogic *fg = vtkSlicerSliceLayerLogic::New();
-
-    // Create the mrml nodes to store state
-    vtkMRMLSliceNode *sliceNode = vtkMRMLSliceNode::New();
-    vtkMRMLSliceNode *sliceNode1 = vtkMRMLSliceNode::SafeDownCast(this->MRMLScene->AddNode(sliceNode));
-
-    // Configure the logic
-    sliceLogic->SetBackgroundLayer(bg);
-    sliceLogic->SetForegroundLayer(fg);
-    sliceLogic->SetSliceNode(sliceNode1);
-
-    // Update internal state
-    this->Slices->AddItem(sliceLogic);
-    this->SetActiveSlice(sliceLogic);
-
-    // Since they were New(), they should be Deleted(). If it crashes
-    // then something is not ref-counted properly and should be fixed
-    // (otherwise you are just leaking)
-
-    sliceLogic->Delete();
-    bg->Delete();
-    fg->Delete();
-    sliceNode->Delete();
-
-    return (sliceLogic);
 }
 
 //----------------------------------------------------------------------------
@@ -677,13 +658,16 @@ void vtkSlicerApplicationLogic::ProcessReadData()
       }
     this->ReadDataQueueLock->Unlock();
 
-    if (req.GetIsScene())
+    if (!req.GetNode().empty())
       {
-      this->ProcessReadSceneData(req);
-      }
-    else
-      {
-      this->ProcessReadNodeData(req);
+      if (req.GetIsScene())
+        {
+        this->ProcessReadSceneData(req);
+        }
+      else
+        {
+        this->ProcessReadNodeData(req);
+        }
       }
     }
   
@@ -707,15 +691,17 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
 {
   // What type of node is the data really? Or is it a scene
   vtkMRMLNode *nd = 0;
-  vtkMRMLNode *disp = 0;
+  vtkMRMLDisplayNode *disp = 0;
   vtkMRMLStorageNode *in = 0;
   vtkMRMLScalarVolumeNode *svnd = 0;
   vtkMRMLVectorVolumeNode *vvnd = 0;
   vtkMRMLDiffusionTensorVolumeNode *dtvnd = 0;
+  vtkMRMLDiffusionTensorDisplayPropertiesNode *dwdpn = NULL;
   vtkMRMLDiffusionWeightedVolumeNode *dwvnd = 0;
   vtkMRMLModelNode *mnd = 0;
   vtkMRMLLinearTransformNode *ltnd = 0;
   vtkMRMLFiberBundleNode *fbnd = 0;
+  vtkMRMLColorTableNode *cnd = 0;
   
   nd = this->MRMLScene->GetNodeByID( req.GetNode().c_str() );
   
@@ -725,7 +711,8 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
   dwvnd = vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(nd);
   mnd   = vtkMRMLModelNode::SafeDownCast(nd);
   ltnd  = vtkMRMLLinearTransformNode::SafeDownCast(nd);
-  fbnd  = vtkMRMLFiberBundleNode::SafeDownCast(fbnd);
+  fbnd  = vtkMRMLFiberBundleNode::SafeDownCast(nd);
+  cnd = vtkMRMLColorTableNode::SafeDownCast(nd);
   
   // Read the data into the referenced node
   if (itksys::SystemTools::FileExists( req.GetFilename().c_str() ))
@@ -740,8 +727,6 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
         = vtkMRMLVolumeArchetypeStorageNode::New();
       vin->SetCenterImage(0);
       in = vin;
-      
-      disp = vtkMRMLVolumeDisplayNode::New();
       }
     else if (dtvnd || dwvnd)
       {
@@ -749,31 +734,24 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
       //
       // Need to maintain the original coordinate frame established by 
       // the images sent to the execution model 
-#if USE_TEEM
       vtkMRMLNRRDStorageNode *nin = vtkMRMLNRRDStorageNode::New();
       nin->SetCenterImage(0);
       in = nin;
-#endif
-      if (dtvnd)
-        {
-        disp = vtkMRMLDiffusionTensorVolumeDisplayNode::New();
-        }
-      else
-        {
-        disp = vtkMRMLDiffusionWeightedVolumeDisplayNode::New();
-        }
       }
     else if (fbnd)
       {
       // Load a fiber bundle node
       in = vtkMRMLFiberBundleStorageNode::New();
-      disp = vtkMRMLFiberBundleDisplayNode::New();
+      }
+    else if (cnd)
+      {
+      // load in a color node
+      in = vtkMRMLColorTableStorageNode::New();
       }
     else if (mnd)
       {
       // Load a model node
       in = vtkMRMLModelStorageNode::New();
-      disp = vtkMRMLModelDisplayNode::New();
       }
     else if (ltnd)
       {
@@ -788,8 +766,19 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
       {
       try
         {
+        vtkMRMLDisplayableNode *displayableNode = 
+          vtkMRMLDisplayableNode::SafeDownCast(nd);
+        if (displayableNode)
+          {
+          this->MRMLScene->AddNode( in );
+          displayableNode->SetReferenceStorageNodeID( in->GetID() );
+          }
         in->SetFileName( req.GetFilename().c_str() );
         in->ReadData( nd );
+        in->SetFileName( NULL ); // clear temp file name
+        // since this was read from a temp location, 
+        // mark it as needing to be saved when the scene is saved
+        nd->SetModifiedSinceRead(1); 
         }
       catch (itk::ExceptionObject& exc)
         {
@@ -823,64 +812,127 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
       }
     }
 
-  // Display the data if requested
+
+  // Get the right type of display node. Only create a display node
+  // if one does not exist already
   //
+  if ((svnd && !svnd->GetDisplayNode())
+      || (vvnd && !vvnd->GetDisplayNode()))
+    {
+    // Scalar or vector volume node
+    if (svnd->GetLabelMap()) 
+      {
+      disp = vtkMRMLLabelMapVolumeDisplayNode::New();
+      }
+    else
+      {
+      disp = vtkMRMLScalarVolumeDisplayNode::New();
+      }
+    }
+  else if ((dtvnd && !dtvnd->GetDisplayNode())
+           || (dwvnd && !dwvnd->GetDisplayNode()))
+    {
+    // Diffusion tensor or a diffusion weighted node
+    if (dtvnd)
+      {
+      vtkMRMLDiffusionTensorVolumeDisplayNode *dtvdn = vtkMRMLDiffusionTensorVolumeDisplayNode::New();
+      disp = dtvdn; // assign to superclass pointer
+      dwdpn = vtkMRMLDiffusionTensorDisplayPropertiesNode::New();
+      this->MRMLScene->AddNode( dwdpn );
+      dtvdn->SetAutoWindowLevel(0);
+      dtvdn->SetWindow(0);
+      dtvdn->SetLevel(0);
+      dtvdn->SetUpperThreshold(0);
+      dtvdn->SetLowerThreshold(0);
+      dtvdn->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(dwdpn->GetID());
+      dwdpn->Delete();
+      }
+    else
+      {
+      disp = vtkMRMLDiffusionWeightedVolumeDisplayNode::New();
+      }
+    }
+  else if (fbnd)
+    {
+    // Fiber bundle node
+    disp = NULL;
+    vtkMRMLFiberBundleDisplayNode *fbdn = fbnd->AddLineDisplayNode();
+    fbdn->SetVisibility(1);
+    fbdn = fbnd->AddTubeDisplayNode();
+    fbdn->SetVisibility(0);
+    fbdn = fbnd->AddGlyphDisplayNode();
+    fbdn->SetVisibility(0);
+    }
+  else if (mnd && !mnd->GetDisplayNode())
+    {
+    // Model node
+    disp = vtkMRMLModelDisplayNode::New();
+    }
+  else if (ltnd)
+    {
+    // Linear transform node
+    // (no display node)  
+    }
+  
+  // Set up the display node.  If we already have a display node,
+  // just use that one.
+  //
+  if (disp)
+    {
+    vtkMRMLNode *dnode = this->MRMLScene->AddNode( disp );
+    disp = vtkMRMLDisplayNode::SafeDownCast(dnode);
+    int isLabelMap = 0;
+    vtkMRMLVolumeDisplayNode *displayNode = NULL;
+    if (svnd)
+      {
+      isLabelMap = svnd->GetLabelMap();
+      if (isLabelMap)
+        {
+        displayNode = vtkMRMLLabelMapVolumeDisplayNode::SafeDownCast(disp);
+        }
+      else
+        {
+        displayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(disp);
+        }
+      }
+    else
+      {
+      displayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(disp);
+      }
+    if (displayNode)
+      {
+      displayNode->SetDefaultColorMap();
+      vtkMRMLVolumeNode *vnd = vtkMRMLVolumeNode::SafeDownCast(nd);
+      vtkMRMLScalarVolumeDisplayNode *svdnd = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(displayNode);
+      if ( vnd )
+        {
+          vtkSlicerVolumesLogic *volumesLogic = vtkSlicerVolumesLogic::New();
+          volumesLogic->CalculateAutoLevels (vnd->GetImageData(), svdnd);
+          volumesLogic->Delete();
+        }
+      } 
+    if (svnd) svnd->SetAndObserveDisplayNodeID( disp->GetID() );
+    else if (vvnd) vvnd->SetAndObserveDisplayNodeID( disp->GetID() );
+    else if (dtvnd) dtvnd->SetAndObserveDisplayNodeID( disp->GetID() );
+    else if (dwvnd) dwvnd->SetAndObserveDisplayNodeID( disp->GetID() );
+    else if (mnd) mnd->SetAndObserveDisplayNodeID( disp->GetID() );
+    
+    disp->Delete();
+    }
+    
+  // Cause the any observers to fire (we may have avoided calling
+  // modified on the node)
+  //
+  nd->Modified();
+
+  // If scalar volume, set the volume as the active volume and
+  // propagate selection.
+  //
+  // Models are always displayed when loaded above.
+  // 
+  // Tensors? Vectors?
   if (req.GetDisplayData())
     {
-    // Set up the display node.  What if the node already had a
-    // display node?
-    if (disp)
-      {
-//        std::cout << " vtkSlicerApplicationLogic::ProcessReadData\n";
-      disp->SetScene( this->MRMLScene );
-      disp = this->MRMLScene->AddNode( disp );
-      int isLabelMap = 0;
-      if (svnd)
-        {
-        isLabelMap = svnd->GetLabelMap();
-        }
-      vtkMRMLVolumeDisplayNode *displayNode = vtkMRMLVolumeDisplayNode::SafeDownCast(disp);
-      if (displayNode)
-        {
-        //  int isLabelMap = svnd->GetLabelMap();            
-        //std::cout << "vtkSlicerApplicationLogic: setting the volume display node default color, islabelmap = " << isLabelMap << "\n";
-        //displayNode->SetDefaultColorMap(isLabelMap);
-        //std::cout << "\tdisp color node id = " <<
-        //(displayNode->GetColorNodeID() == NULL ? "NULL" :
-        //displayNode->GetColorNodeID()) << endl;
-        vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
-        //vtkSlicerColorGUI::SafeDownCast(vtkSlicerApplication::SafeDownCast(this->GetApplication())->GetModuleGUIByName("Color"))->GetLogic();
-        if (colorLogic)
-          {
-          if (isLabelMap)
-            {
-            displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultLabelMapColorNodeID());
-            }
-          else
-            {
-            displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
-            }
-          colorLogic->Delete();
-          }
-        } 
-      if (svnd)
-        {
-        svnd->SetAndObserveDisplayNodeID( disp->GetID() );
-        }
-      else if (vvnd) vvnd->SetAndObserveDisplayNodeID( disp->GetID() );
-      else if (dtvnd) dtvnd->SetAndObserveDisplayNodeID( disp->GetID() );
-      else if (dwvnd) dwvnd->SetAndObserveDisplayNodeID( disp->GetID() );
-      else if (mnd) mnd->SetAndObserveDisplayNodeID( disp->GetID() );
-      
-      disp->Delete();
-      }
-    
-    // If scalar volume, set the volume as the active volume and
-    // propagate selection.
-    //
-    // Models are always displayed when loaded above.
-    // 
-    // Tensors? Vectors?
     if (svnd)
       {
       if (svnd->GetLabelMap())
@@ -896,7 +948,6 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
       this->PropagateVolumeSelection();
       }
     }
-  
 }
 
 void vtkSlicerApplicationLogic::ProcessReadSceneData(ReadDataRequest& req)
@@ -950,6 +1001,108 @@ void vtkSlicerApplicationLogic::ProcessReadSceneData(ReadDataRequest& req)
     if (source && target)
       {
       target->Copy(source);
+
+      // if the source node is a model hierachy node, then also copy
+      // and remap any child nodes of the target that are not in the
+      // target list (nodes that had no source equivalent before the
+      // module ran).
+      vtkMRMLModelHierarchyNode *smhnd
+        = vtkMRMLModelHierarchyNode::SafeDownCast(source);
+      vtkMRMLModelHierarchyNode *tmhnd
+        = vtkMRMLModelHierarchyNode::SafeDownCast(target);
+      if (smhnd && tmhnd)
+        {
+        // get the model node and display node BEFORE we add nodes to
+        // the target scene
+        vtkMRMLModelNode *smnd = smhnd->GetModelNode();
+        vtkMRMLDisplayNode *sdnd = smhnd->GetDisplayNode();
+        
+        // add the model and display referenced by source model hierarchy node
+        if (smnd)
+          {
+          // set the model node to be modified, as it was read from a temp
+          // location
+          smnd->SetModifiedSinceRead(1); 
+          // get display node BEFORE we add nodes to the target scene
+          vtkMRMLDisplayNode *sdnd = smnd->GetDisplayNode();
+          
+          vtkMRMLNode *tmodel = this->MRMLScene->CopyNode(smnd);
+          vtkMRMLModelNode *mnd = vtkMRMLModelNode::SafeDownCast( tmodel );
+          tmhnd->SetModelNodeID( mnd->GetID() );
+
+          if (sdnd)
+            {
+            vtkMRMLNode *tdnd = this->MRMLScene->CopyNode(sdnd);
+            mnd->SetAndObserveDisplayNodeID( tdnd->GetID() );
+            }
+          }
+        
+        if (sdnd)
+          {
+          vtkMRMLNode *dnd = this->MRMLScene->CopyNode(sdnd);
+          tmhnd->SetAndObserveDisplayNodeID( dnd->GetID() );
+          }
+        
+        // add any children model hierarchy nodes, rinse, repeat
+        //
+        // need a way to recurse - JVM
+        for (int n=0;
+             n<miniscene->GetNumberOfNodesByClass("vtkMRMLModelHierarchyNode");
+             n++)
+          {
+          vtkMRMLModelHierarchyNode * mhnd = vtkMRMLModelHierarchyNode
+            ::SafeDownCast(miniscene->GetNthNodeByClass(n,
+                                                "vtkMRMLModelHierarchyNode"));
+          if (mhnd)
+            {
+            // is this model hierarchy node in our source list
+            // already? if so skip it
+            std::vector<std::string>::const_iterator ssit
+              = std::find(req.GetSourceNodes().begin(),
+                          req.GetSourceNodes().end(), mhnd->GetID());
+            if (ssit == req.GetSourceNodes().end())
+              {
+              // not in source list, so we may need to add it
+              if (mhnd->GetParentNode() == smhnd)
+                {
+                // get the model and display node BEFORE we add nodes
+                // to the target scene
+                vtkMRMLModelNode *smnd = mhnd->GetModelNode();
+                vtkMRMLDisplayNode *sdnd = mhnd->GetDisplayNode();
+                
+                vtkMRMLNode *tchild = this->MRMLScene->CopyNode(mhnd);
+                vtkMRMLModelHierarchyNode *tcmhd
+                  = vtkMRMLModelHierarchyNode::SafeDownCast( tchild );
+                tcmhd->SetParentNodeID( tmhnd->GetID() );
+                
+                if (smnd)
+                  {
+                  // set it as modified
+                  smnd->SetModifiedSinceRead(1);
+                  // get display node BEFORE we add nodes to the target scene
+                  vtkMRMLDisplayNode *sdnd = smnd->GetDisplayNode();
+
+                  vtkMRMLNode *tmodel = this->MRMLScene->CopyNode(smnd);
+                  vtkMRMLModelNode *mnd =vtkMRMLModelNode::SafeDownCast(tmodel);
+                  tcmhd->SetModelNodeID( mnd->GetID() );
+
+                  if (sdnd)
+                    {
+                    vtkMRMLNode *tdnd = this->MRMLScene->CopyNode(sdnd);
+                    mnd->SetAndObserveDisplayNodeID( tdnd->GetID() );
+                    }
+                  }
+                
+                if (sdnd)
+                  {
+                  vtkMRMLNode *tdnd = this->MRMLScene->CopyNode(sdnd);
+                  tcmhd->SetAndObserveDisplayNodeID( tdnd->GetID() );
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     else if (!source)
       {

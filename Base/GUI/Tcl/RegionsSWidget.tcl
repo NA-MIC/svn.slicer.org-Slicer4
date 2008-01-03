@@ -30,7 +30,7 @@ if { [itcl::find class RegionsSWidget] == "" } {
     variable _roiListObserverTagPairs ""
 
     # methods
-    method processEvent { caller } {}
+    method processEvent {{caller ""} {event ""}} {}
     method seedMovedCallback {seed roiListNode roiIndex} {}
     method seedMovingCallback {seed roiListNode roiIndex} {}
     method addROIListObserver {roiListNode} {}
@@ -115,7 +115,7 @@ itcl::body RegionsSWidget::destructor {} {
 # - create SeedSWidgets for any Regions that are close enough to slice
 #
 
-itcl::body RegionsSWidget::processEvent { caller } {
+itcl::body RegionsSWidget::processEvent { {caller ""} {event ""} } {
 
     if { [info command $caller] == ""} {
         return
@@ -130,16 +130,22 @@ itcl::body RegionsSWidget::processEvent { caller } {
 
   if { $caller == $sliceGUI } {
     set event [$sliceGUI GetCurrentGUIEvent] 
+    set capture 1
     switch $event {
       "KeyPressEvent" {
-
-        $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
         switch [$_interactor GetKeySym] {
           "grave" -
           "quoteleft" {
           }
+          default {
+            set capture 0
+          }
         }
       }
+    }
+    if { $capture } {
+      $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
+      $sliceGUI SetGUICommandAbortFlag 1
     }
   }
 

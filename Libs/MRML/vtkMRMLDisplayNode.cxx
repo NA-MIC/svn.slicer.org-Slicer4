@@ -57,6 +57,10 @@ vtkMRMLDisplayNode::vtkMRMLDisplayNode()
   this->ColorNode = NULL;
 
   this->ActiveScalarName = NULL;
+
+  // add observer to process visulization pipeline
+  this->AddObserver ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
+
 }
 
 //----------------------------------------------------------------------------
@@ -406,7 +410,11 @@ void vtkMRMLDisplayNode::SetAndObserveColorNodeID(const char *colorNodeID)
   vtkMRMLNode *cnode = this->GetColorNode();
 
   vtkSetAndObserveMRMLObjectMacro(this->ColorNode, cnode);
+}
 
+void vtkMRMLDisplayNode::SetAndObserveColorNodeID(const std::string& colorNodeID)
+{
+  this->SetAndObserveColorNodeID( colorNodeID.c_str() );
 }
 
 //---------------------------------------------------------------------------
@@ -416,11 +424,10 @@ void vtkMRMLDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);
 
-  if (this->TextureImageData == vtkImageData::SafeDownCast(caller) &&
+  if (this->TextureImageData != NULL && this->TextureImageData == vtkImageData::SafeDownCast(caller) &&
     event ==  vtkCommand::ModifiedEvent)
     {
     this->InvokeEvent(vtkCommand::ModifiedEvent, NULL);
-    return;
     }
 
   vtkMRMLColorNode *cnode = this->GetColorNode();
@@ -430,7 +437,12 @@ void vtkMRMLDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
     {
     this->InvokeEvent(vtkCommand::ModifiedEvent, NULL);
     }
-  return;
+  if (event ==  vtkCommand::ModifiedEvent)
+    {
+    this->UpdatePolyDataPipeline();
+    this->UpdateImageDataPipeline();
+    this->Modified();
+    }
 }
 
 //---------------------------------------------------------------------------

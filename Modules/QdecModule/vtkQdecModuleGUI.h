@@ -21,6 +21,8 @@
 #include "vtkMRMLScene.h"
 #include "vtkQdecModuleLogic.h"
 
+#define QdecModule_ESCAPE_CHARS " (){}[]$\"\\"
+
 class vtkKWFrame;
 class vtkKWScaleWithEntry;
 class vtkKWPushButton;
@@ -36,7 +38,7 @@ class VTK_QDECMODULE_EXPORT vtkQdecModuleGUI : public vtkSlicerModuleGUI
 public:
 
   static vtkQdecModuleGUI *New();
- // vtkTypeMacro(vtkQdecModuleGUI,vtkSlicerModuleGUI);
+  vtkTypeMacro(vtkQdecModuleGUI,vtkSlicerModuleGUI);
 
   void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -92,6 +94,7 @@ public:
   // Description:
   // Get methods on class members ( no Set methods required. )
   vtkGetObjectMacro ( LoadTableButton, vtkKWLoadSaveButtonWithLabel );
+  vtkGetObjectMacro ( LoadResultsButton, vtkKWLoadSaveButtonWithLabel );
   vtkGetObjectMacro ( ContinuousFactorsListBox, vtkKWListBoxWithScrollbarsWithLabel );
   vtkGetObjectMacro ( DiscreteFactorsListBox, vtkKWListBoxWithScrollbarsWithLabel );
 
@@ -113,6 +116,12 @@ public:
   // Get/Set the slicer interactorstyle, for picking
   vtkGetObjectMacro(InteractorStyle, vtkSlicerViewerInteractorStyle);
   virtual void SetInteractorStyle(vtkSlicerViewerInteractorStyle *interactorStyle);
+
+  // Description:
+  // Call the Logic's method to unpack and set up a QDEC Project from the
+  // *.qdec project file, then call the Logic's method to load the results
+  // into Slicer. Returns 0 on error, 1 on success
+  int LoadProjectFile(const char *fileName);
   
 protected:
   vtkQdecModuleGUI();
@@ -131,13 +140,16 @@ protected:
   // Description:
   // GUI elements
   vtkKWLabel *NAMICLabel;
+  vtkKWLoadSaveButtonWithLabel* SubjectsDirectoryButton;
   vtkKWLoadSaveButtonWithLabel* LoadTableButton;
+  vtkKWLoadSaveButtonWithLabel* LoadResultsButton;
+  vtkKWEntryWithLabel *DesignEntry;
   vtkKWListBoxWithScrollbarsWithLabel *DiscreteFactorsListBox;
   vtkKWListBoxWithScrollbarsWithLabel *ContinuousFactorsListBox;
   vtkKWPushButton* ApplyButton;
   vtkKWMultiColumnListWithScrollbars *MultiColumnList;
-  vtkKWLoadSaveButtonWithLabel* SubjectsDirectoryButton;
-  vtkKWEntryWithLabel *DesignEntry;
+  
+  
   vtkKWLabel *MeasureLabel;
   vtkKWMenuButton *MeasureMenu;
 
@@ -156,8 +168,13 @@ protected:
   vtkSlicerViewerWidget *ViewerWidget;
 
   // Description:
-  // A poitner to the interactor style, useful for picking
+  // A pointer to the interactor style, useful for picking
   vtkSlicerViewerInteractorStyle *InteractorStyle;
+
+  // Description:
+  // A menu populated by display overlay options
+  vtkKWLabel *QuestionLabel;
+  vtkKWMenuButton *QuestionMenu;
 };
 
 #endif

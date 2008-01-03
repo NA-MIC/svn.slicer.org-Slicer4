@@ -109,7 +109,8 @@ void vtkMRMLDisplayableNode::ReadXMLAttributes(const char** atts)
 
 //----------------------------------------------------------------------------
 void vtkMRMLDisplayableNode::UpdateReferenceID(const char *oldID, const char *newID)
-{
+{ 
+  Superclass::UpdateReferenceID(oldID, newID);
   for (unsigned int i=0; i<this->DisplayNodeIDs.size(); i++)
     {
     if ( std::string(oldID) == this->DisplayNodeIDs[i])
@@ -152,10 +153,10 @@ void vtkMRMLDisplayableNode::PrintSelf(ostream& os, vtkIndent indent)
   Superclass::PrintSelf(os,indent);
   for (unsigned int i=0; i<this->DisplayNodeIDs.size(); i++)
     {
-    os << indent << "DisplayNodeIDs[" << i << "]" <<
+    os << indent << "DisplayNodeIDs[" << i << "]: " <<
       this->DisplayNodeIDs[i] << "\n";
     }
-  os << "\nPoly Data:\n";
+  os << indent << "\nPoly Data:\n";
   if (this->PolyData) 
     {
     this->PolyData->PrintSelf(os, indent.GetNextIndent());
@@ -311,7 +312,7 @@ void vtkMRMLDisplayableNode::SetAndObserveDisplayNodeID(const char *displayNodeI
   this->SetDisplayNodeID(displayNodeID);
 
   vtkMRMLDisplayNode *dnode = this->GetDisplayNode();
-  this->AddAndObseveDisplayNode(dnode);
+  this->AddAndObserveDisplayNode(dnode);
 
   this->Modified(); 
 
@@ -345,13 +346,13 @@ void vtkMRMLDisplayableNode::AddAndObserveDisplayNodeID(const char *displayNodeI
 
   this->AddDisplayNodeID(displayNodeID);
 
-  vtkMRMLDisplayNode *dnode = this->GetDisplayNode();
-  this->AddAndObseveDisplayNode(dnode);
+  vtkMRMLDisplayNode *dnode = vtkMRMLDisplayNode::SafeDownCast(this->GetScene()->GetNodeByID(displayNodeID));
+  this->AddAndObserveDisplayNode(dnode);
   this->Modified(); 
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLDisplayableNode::AddAndObseveDisplayNode(vtkMRMLDisplayNode *dnode)
+void vtkMRMLDisplayableNode::AddAndObserveDisplayNode(vtkMRMLDisplayNode *dnode)
 {
   if (dnode) 
     {
@@ -413,7 +414,7 @@ void vtkMRMLDisplayableNode::ProcessMRMLEvents ( vtkObject *caller,
       this->InvokeEvent(vtkMRMLDisplayableNode::DisplayModifiedEvent, NULL);
       }
     }
-  if (this->PolyData == vtkPolyData::SafeDownCast(caller) &&
+  if (this->PolyData && this->PolyData == vtkPolyData::SafeDownCast(caller) &&
     event ==  vtkCommand::ModifiedEvent)
     {
     this->ModifiedSinceRead = true;

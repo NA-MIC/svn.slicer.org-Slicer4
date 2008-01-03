@@ -101,6 +101,9 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->FOVBox = NULL;
   this->FOVBoxMapper = NULL;
   this->FOVBoxActor = NULL;
+
+  //Enable/Disable navigation window
+  this->EnableDisableNavButton;
   
   this->ViewNode = NULL;
   this->RedSliceNode = NULL;
@@ -291,6 +294,12 @@ vtkSlicerViewControlGUI::~vtkSlicerViewControlGUI ( )
     this->NavigationWidget->Delete ();
     this->NavigationWidget = NULL;
     }
+  if( this->EnableDisableNavButton)
+  {
+      this->EnableDisableNavButton->SetParent ( NULL );
+      this->EnableDisableNavButton->Delete ();
+      this->EnableDisableNavButton = NULL;
+  }
   if ( this->ZoomWidget )
     {
     this->ZoomWidget->SetParent ( NULL );
@@ -636,7 +645,7 @@ void vtkSlicerViewControlGUI::UpdateViewFromMRML()
 
     vtkIntArray  *events = vtkIntArray::New();
     events->InsertNextValue( vtkMRMLViewNode::AnimationModeEvent);
-    events->InsertNextValue( vtkMRMLViewNode::RenderModeEvent);
+    events->InsertNextValue( vtkMRMLViewNode::RenderModeEvent); 
     events->InsertNextValue( vtkMRMLViewNode::StereoModeEvent);
     events->InsertNextValue( vtkMRMLViewNode::VisibilityEvent);
     events->InsertNextValue( vtkMRMLViewNode::BackgroundColorEvent);    
@@ -708,7 +717,15 @@ void vtkSlicerViewControlGUI::UpdateSlicesFromMRML()
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::RequestNavigationRender()
 {
+
+
 #ifndef NAVZOOMWIDGET_DEBUG
+  if(!this->EnableDisableNavButton->GetSelectedState())
+  {
+          this->NavigationWidget->RemoveAllViewProps();
+          this->NavigationWidget->Render();
+          return;
+  }
   if (this->GetNavigationRenderPending())
     {
     return;
@@ -927,21 +944,25 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
           appGUI->GetMRMLScene()->SaveStateForUndo( vn );
           if ( m == this->StereoButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent )
             {
-            if ( !strcmp (this->StereoButton->GetValue(), "NoStereo"))
+            if ( !strcmp (this->StereoButton->GetValue(), "No stereo"))
               {
-              vn->SetStereoType( vtkMRMLViewNode::NoStereo);
+              vn->SetStereoType( vtkMRMLViewNode::NoStereo );
               }
             else if (!strcmp (this->StereoButton->GetValue(), "Red/Blue"))
               {
-              vn->SetStereoType( vtkMRMLViewNode::RedBlue);
+              vn->SetStereoType( vtkMRMLViewNode::RedBlue );
+              }
+            else if (!strcmp (this->StereoButton->GetValue(), "Anaglyph"))
+              {
+              vn->SetStereoType( vtkMRMLViewNode::Anaglyph );
               }
             else if (!strcmp (this->StereoButton->GetValue(), "CrystalEyes"))
               {
-              vn->SetStereoType( vtkMRMLViewNode::CrystalEyes);
+              vn->SetStereoType( vtkMRMLViewNode::CrystalEyes );
               }
             else if (!strcmp (this->StereoButton->GetValue(), "Interlaced"))
               {
-              vn->SetStereoType( vtkMRMLViewNode::Interlaced);            
+              vn->SetStereoType( vtkMRMLViewNode::Interlaced );            
               }
             }
           else if ( m == this->VisibilityButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent )
@@ -1091,7 +1112,7 @@ void vtkSlicerViewControlGUI::MainViewZoom(double factor )
     ren->ResetCameraClippingRange();
     ren->UpdateLightsGeometryToFollowCamera();
     }
-  ren->Render();
+  appGUI->GetViewerWidget()->GetMainViewer()->Render();
   this->RequestNavigationRender();
 
   cam = NULL;
@@ -1400,41 +1421,64 @@ void vtkSlicerViewControlGUI::UpdateNavigationWidgetViewActors ( )
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::MainViewSetStereo ( )
 {
-  // TODO: check whether stereo is enabled.
-  int stereoEnabled = 0;
-  if ( stereoEnabled )
+  if ( this->GetApplicationGUI() != NULL )
     {
-      if ( this->GetApplicationGUI() != NULL )
+    vtkSlicerApplicationGUI *p = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( )); 
+    vtkMRMLViewNode *vn = this->GetActiveView();
+    if ( vn != NULL )
+      {
+      int s = vn->GetStereoType();
+      switch ( s )
         {
-        vtkSlicerApplicationGUI *p = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( ));    
-        vtkMRMLViewNode *vn = this->GetActiveView();
-        if ( vn != NULL )
-          {
-          int s = vn->GetStereoType();
-          switch ( s )
-            {
-            case vtkMRMLViewNode::NoStereo:
-              p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOff ( );
-              break;
-            case vtkMRMLViewNode::RedBlue:
-              p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->SetStereoTypeToRedBlue();
-              p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOn ( );
-              break;
-            case vtkMRMLViewNode::CrystalEyes:
-              p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->SetStereoTypeToCrystalEyes();
-              p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOn ( );
-              break;
-            case vtkMRMLViewNode::Interlaced:
-              p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->SetStereoTypeToInterlaced();
-              p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOn ( );
-              break;
-            default:
-              p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOff ( );
-              break;
-            }
-          }
-        }  
-    }
+        case vtkMRMLViewNode::NoStereo:
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOff ( );
+          break;
+        case vtkMRMLViewNode::RedBlue:
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->SetStereoTypeToRedBlue();
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOn ( );
+          break;
+        case vtkMRMLViewNode::Anaglyph:
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->SetStereoTypeToAnaglyph();
+          //p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->SetAnaglyphColorSaturation(0.1);
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOn ( );
+          break;
+        case vtkMRMLViewNode::CrystalEyes:
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->SetStereoTypeToCrystalEyes();
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOn ( );
+          break;
+        case vtkMRMLViewNode::Interlaced:
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->SetStereoTypeToInterlaced();
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOn ( );
+          break;
+        default:
+          p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOff ( );
+          break;
+        }
+      p->GetViewerWidget()->GetMainViewer()->Render();
+      }
+    } 
+}
+
+
+void vtkSlicerViewControlGUI::DeviceCoordinatesToXYZ(vtkSlicerSliceGUI *sgui, int x, int y, int xyz[3] )
+{
+  vtkMRMLSliceNode *snode = sgui->GetSliceNode();
+  
+  vtkRenderWindowInteractor *iren
+    = sgui->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
+  int *windowSize = iren->GetRenderWindow()->GetSize();
+
+  double tx = x / (double) windowSize[0];
+  double ty = (windowSize[1] - y) / (double) windowSize[1];
+  
+  vtkRenderer *ren = iren->FindPokedRenderer(x, y);
+  int *origin = ren->GetOrigin();
+  
+  xyz[0] = x - origin[0];
+  xyz[1] = y - origin[1];
+  xyz[2] = static_cast<int> ( floor(ty*snode->GetLayoutGridRows())
+                              *snode->GetLayoutGridColumns()
+                              + floor(tx*snode->GetLayoutGridColumns()) );
 }
 
 
@@ -1457,18 +1501,34 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             // configure zoom
             x = this->RedSliceEvents->GetLastPos ()[0];
             y = this->RedSliceEvents->GetLastPos ()[1];
-            if ( x > 0 && y > 0 )
+
+            // check that the event position is in the window
+            int *windowSize =
+              appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
+            if ( x >= 0 && y >= 0 && x < windowSize[0] && y < windowSize[1] )
               {
-              this->SliceMagnifier->SetX ( x );
-              this->SliceMagnifier->SetY ( y );
-              this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI0()->GetLogic()->GetImageData());
-              this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
-              this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
-              this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
-              this->ZoomWidget->GetRenderer()->AddActor2D ( this->SliceMagnifierActor );
-              this->RequestZoomRender();
-              this->PackZoomWidget();            
+              int xyz[3];
+              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI0(),
+                                           x, y, xyz);
+
+              this->SliceMagnifier->SetX ( xyz[0] );
+              this->SliceMagnifier->SetY ( xyz[1] );
+              this->SliceMagnifier->SetZ ( xyz[2] );
               }
+            else
+              {
+              // event position is not in the window, punt
+              this->SliceMagnifier->SetX( 0 );
+              this->SliceMagnifier->SetY( 0 );
+              this->SliceMagnifier->SetZ( 0 );
+              }
+            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI0()->GetLogic()->GetImageData());
+            this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
+            this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
+            this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
+            this->ZoomWidget->GetRenderer()->AddActor2D ( this->SliceMagnifierActor );
+            this->RequestZoomRender();
+            this->PackZoomWidget();
             }
           else if (event == vtkCommand::LeaveEvent )
             {
@@ -1483,8 +1543,14 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             // configure zoom
             x = this->RedSliceEvents->GetLastPos ()[0];
             y = this->RedSliceEvents->GetLastPos ()[1];
-            this->SliceMagnifier->SetX ( x );
-            this->SliceMagnifier->SetY ( y );
+
+            int xyz[3];
+            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI0(),
+                                           x, y, xyz);
+            this->SliceMagnifier->SetX ( xyz[0] );
+            this->SliceMagnifier->SetY ( xyz[1] );
+            this->SliceMagnifier->SetZ ( xyz[2] );
+
             this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI0()->GetLogic()->GetImageData());
             this->RequestZoomRender();
             }
@@ -1503,18 +1569,33 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             // configure zoom
             x = this->YellowSliceEvents->GetLastPos ()[0];
             y = this->YellowSliceEvents->GetLastPos ()[1];
-            if ( x > 0 && y > 0 )
+
+            // check that the event position is in the window
+            int *windowSize =
+              appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
+            if ( x >= 0 && y >= 0 && x < windowSize[0] && y < windowSize[1] )
               {
-              this->SliceMagnifier->SetX ( x );
-              this->SliceMagnifier->SetY ( y );
-              this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI1()->GetLogic()->GetImageData());
-              this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
-              this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
-              this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
-              this->ZoomWidget->GetRenderer()->AddActor2D ( this->SliceMagnifierActor );
-              this->RequestZoomRender();
-              this->PackZoomWidget();
+              int xyz[3];
+              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI1(),
+                                           x, y, xyz);
+              this->SliceMagnifier->SetX ( xyz[0] );
+              this->SliceMagnifier->SetY ( xyz[1] );
+              this->SliceMagnifier->SetZ ( xyz[2] );
               }
+            else
+              {
+              // event position is not in the window, punt
+              this->SliceMagnifier->SetX( 0 );
+              this->SliceMagnifier->SetY( 0 );
+              this->SliceMagnifier->SetZ( 0 );
+              }
+            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI1()->GetLogic()->GetImageData());
+            this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
+            this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
+            this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
+            this->ZoomWidget->GetRenderer()->AddActor2D ( this->SliceMagnifierActor );
+            this->RequestZoomRender();
+            this->PackZoomWidget();
             }
           else if (event == vtkCommand::LeaveEvent )
             {
@@ -1529,8 +1610,14 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             // configure zoom
             x = this->YellowSliceEvents->GetLastPos ()[0];
             y = this->YellowSliceEvents->GetLastPos ()[1];
-            this->SliceMagnifier->SetX ( x );
-            this->SliceMagnifier->SetY ( y );
+
+            int xyz[3];
+            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI1(),
+                                           x, y, xyz);
+            this->SliceMagnifier->SetX ( xyz[0] );
+            this->SliceMagnifier->SetY ( xyz[1] );
+            this->SliceMagnifier->SetZ ( xyz[2] );
+
             this->SliceMagnifier->SetInput (appGUI->GetMainSliceGUI1()->GetLogic()->GetImageData());
             this->RequestZoomRender();
             }
@@ -1548,18 +1635,33 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             // configure zoom
             x = this->GreenSliceEvents->GetLastPos ()[0];
             y = this->GreenSliceEvents->GetLastPos ()[1];
-            if ( x > 0 && y > 0 )
+
+            // check that the event position is in the window
+            int *windowSize =
+              appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
+            if ( x >= 0 && y >= 0 && x < windowSize[0] && y < windowSize[1] )
               {
-              this->SliceMagnifier->SetX ( x );
-              this->SliceMagnifier->SetY ( y );
-              this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI2()->GetLogic()->GetImageData());
-              this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
-              this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
-              this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
-              this->ZoomWidget->GetRenderer()->AddActor2D ( this->SliceMagnifierActor );
-              this->RequestZoomRender();
-              this->PackZoomWidget();
+              int xyz[3];
+              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI2(),
+                                           x, y, xyz);
+              this->SliceMagnifier->SetX ( xyz[0] );
+              this->SliceMagnifier->SetY ( xyz[1] );
+              this->SliceMagnifier->SetZ ( xyz[2] );
               }
+            else
+              {
+              // event position is not in the window, punt
+              this->SliceMagnifier->SetX( 0 );
+              this->SliceMagnifier->SetY( 0 );
+              this->SliceMagnifier->SetZ( 0 );
+              }
+            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI2()->GetLogic()->GetImageData());
+            this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
+            this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
+            this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
+            this->ZoomWidget->GetRenderer()->AddActor2D ( this->SliceMagnifierActor );
+            this->RequestZoomRender();
+            this->PackZoomWidget();
             }
           else if (event == vtkCommand::LeaveEvent )
             {
@@ -1574,8 +1676,14 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             // configure zoom
             x = this->GreenSliceEvents->GetLastPos ()[0];
             y = this->GreenSliceEvents->GetLastPos ()[1];
-            this->SliceMagnifier->SetX ( x );
-            this->SliceMagnifier->SetY ( y );
+
+            int xyz[3];
+            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI2(),
+                                           x, y, xyz);
+            this->SliceMagnifier->SetX ( xyz[0] );
+            this->SliceMagnifier->SetY ( xyz[1] );
+            this->SliceMagnifier->SetZ ( xyz[2] );
+
             this->SliceMagnifier->SetInput (appGUI->GetMainSliceGUI2()->GetLogic()->GetImageData());
             this->RequestZoomRender();
             }
@@ -1616,7 +1724,7 @@ void vtkSlicerViewControlGUI::MainViewSetFocalPoint ( double x, double y, double
         cam->ComputeViewPlaneNormal ( );
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
+        p->GetViewerWidget()->GetMainViewer()->Render();
         }
       }
     }
@@ -1671,7 +1779,7 @@ void vtkSlicerViewControlGUI::RockView ( )
         
         //Make the lighting follow the camera to avoid illumination changes
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
+        p->GetViewerWidget()->GetMainViewer()->Render();
         }
       }
     }
@@ -1737,7 +1845,7 @@ void vtkSlicerViewControlGUI::SpinView ( int dir, double degrees )
 
         //Make the lighting follow the camera to avoid illumination changes
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
+        p->GetViewerWidget()->GetMainViewer()->Render();
         }
       }  
     }
@@ -1817,7 +1925,7 @@ void vtkSlicerViewControlGUI::MainViewSetProjection ( )
           cam->SetParallelScale ( vn->GetFieldOfView() );
           this->OrthoButton->SetImageToIcon ( this->SlicerViewControlIcons->GetPerspectiveButtonIcon() );
           }
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render(); 
+        p->GetViewerWidget()->GetMainViewer()->Render();
         }
       }
     }
@@ -1871,7 +1979,7 @@ void vtkSlicerViewControlGUI::MainViewRotateAround ( int axis )
           }
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
+        p->GetViewerWidget()->GetMainViewer()->Render();
         this->RequestNavigationRender();
         }
       }
@@ -1944,7 +2052,7 @@ void vtkSlicerViewControlGUI::MainViewLookFrom ( const char *dir )
         cam->ComputeViewPlaneNormal();
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();      
+        p->GetViewerWidget()->GetMainViewer()->Render();      
         this->RequestNavigationRender();
         }
        }
@@ -1999,21 +2107,29 @@ void vtkSlicerViewControlGUI::BuildStereoSelectMenu ( )
   this->StereoButton->GetMenu()->DeleteAllItems ( );
   this->StereoButton->GetMenu()->AddRadioButton ( "No stereo" );
   this->StereoButton->GetMenu()->AddRadioButton ( "Red/Blue" );
+  this->StereoButton->GetMenu()->AddRadioButton ( "Anaglyph" );
+  this->StereoButton->GetMenu()->AddRadioButton ( "Interlaced" );  
   this->StereoButton->GetMenu()->AddRadioButton ( "CrystalEyes" );
-  this->StereoButton->GetMenu()->AddRadioButton ( "Interlaced" );
   this->StereoButton->GetMenu()->AddSeparator();
   this->StereoButton->GetMenu()->AddCommand ( "close");
   this->StereoButton->GetMenu()->SelectItem ( "No stereo");
-  // TODO: check whether stereo is enabled.
-  int stereoEnabled = 0;
-  if ( !stereoEnabled )
-    {
-    this->StereoButton->GetMenu()->SetItemStateToDisabled ( "No stereo" );
-    this->StereoButton->GetMenu()->SetItemStateToDisabled ( "Red/Blue" );
-    this->StereoButton->GetMenu()->SetItemStateToDisabled ( "CrystalEyes" );
-    this->StereoButton->GetMenu()->SetItemStateToDisabled ( "Interlaced" );
-    }
   
+  int enableStereoCapableWindow = 0;
+  // check whether stereo is enabled.
+  if ( this->GetApplicationGUI() != NULL )
+    {
+    vtkSlicerApplication *slicerApp = vtkSlicerApplication::SafeDownCast( this->GetApplicationGUI()->GetApplication() ); 
+    if ( slicerApp->GetStereoEnabled() )
+      {
+      enableStereoCapableWindow = 1;
+      }
+    }
+ if ( !enableStereoCapableWindow )
+   {
+     // let always enabled Red/Blue, Anaglyph, and Interlaced since those modes don't need the
+     // special enabled stereo window
+     this->StereoButton->GetMenu()->SetItemStateToDisabled ( "CrystalEyes" );
+   }
 }
 
 
@@ -2835,7 +2951,12 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       this->BuildStereoSelectMenu ( );
       this->BuildVisibilityMenu ( );
 
-      
+      //Create the Enable/Disable BUtton for the navigation widget but don't pack it
+      this->EnableDisableNavButton=vtkKWCheckButton::New();
+      this->EnableDisableNavButton->SetParent(f0);
+      this->EnableDisableNavButton->Create();
+      this->EnableDisableNavButton->SelectedStateOn();
+    
       // clean up
       f0->Delete ( );
       f1->Delete ( );

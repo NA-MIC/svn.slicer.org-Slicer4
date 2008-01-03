@@ -1,4 +1,4 @@
-
+#include "vtkOpenGLRenderWindow.h"
 #include "vtkRenderWindow.h"
 
 #include "vtkKWApplication.h"
@@ -36,19 +36,8 @@
 #include "vtkSlicerWindow.h"
 #include "vtkSlicerApplicationSettingsInterface.h"
 
+
 #include "vtkSlicerConfigure.h" // for VTKSLICER_CONFIGURATION_TYPES
-
-#include "vtkGradientAnisotropicDiffusionFilterLogic.h"
-#include "vtkGradientAnisotropicDiffusionFilterGUI.h"
-
-#include "vtkQueryAtlasLogic.h"
-#include "vtkQueryAtlasGUI.h"
-
-#include "vtkCommandLineModuleLogic.h"
-#include "vtkCommandLineModuleGUI.h"
-
-#include "vtkScriptedModuleLogic.h"
-#include "vtkScriptedModuleGUI.h"
 
 #include "ModuleFactory.h"
 
@@ -74,6 +63,7 @@ extern "C" {
 #endif
 
 #include <vtksys/SystemTools.hxx>
+#include <vtksys/Directory.hxx>
 #include <vtksys/stl/string>
 
 // for data prov
@@ -92,7 +82,7 @@ extern "C" {
 //#define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
 //#define FIDUCIALS_DEBUG
-//#define CAMERA_DEBUG
+#define CAMERA_DEBUG
 //#define EMSEG_DEBUG
 #define REALTIMEIMAGING_DEBUG
 #define MRABLATION_DEBUG
@@ -107,52 +97,86 @@ extern "C" {
 #else
 //#define TRACTOGRAPHY_DEBUG
 #endif
-#define QDEC_DEBUG
+//#define QDEC_DEBUG
+//#define COMMANDLINE_DEBUG
+//#define DEAMON_DEBUG
 
-#ifndef TRACTOGRAPHY_DEBUG
+#if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 #include "vtkSlicerFiberBundleLogic.h"
 #include "vtkSlicerTractographyDisplayGUI.h"
+#include "vtkSlicerTractographyFiducialSeedingGUI.h"
 #endif
 
-#ifndef EMSEG_DEBUG
+#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
 #include "vtkEMSegmentLogic.h"
 #include "vtkEMSegmentGUI.h"
 #include "vtkEMSegmentMRMLManager.h"
 #endif
 
-#ifndef REALTIMEIMAGING_DEBUG
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
+#include "vtkGradientAnisotropicDiffusionFilterLogic.h"
+#include "vtkGradientAnisotropicDiffusionFilterGUI.h"
+#endif
+
+#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
 #include "vtkRealTimeImagingLogic.h"
 #include "vtkRealTimeImagingGUI.h"
 #endif
 
-#ifndef MRABLATION_DEBUG
+#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
 #include "vtkMRAblationLogic.h"
 #include "vtkMRAblationGUI.h"
 #endif
 
-#ifndef NEURONAV_DEBUG
+#if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
 #include "vtkNeuroNavLogic.h"
 #include "vtkNeuroNavGUI.h"
 #endif
 
-#ifndef BRPNAV_DEBUG
+#if !defined(BRPNAV_DEBUG) && defined(BUILD_MODULES)
 #include "vtkBrpNavLogic.h"
 #include "vtkBrpNavGUI.h"
 #endif
 
-#ifndef PROSTATENAV_DEBUG
+#if !defined(PROSTATENAV_DEBUG) && defined(BUILD_MODULES)
 #include "vtkProstateNavLogic.h"
 #include "vtkProstateNavGUI.h"
 #endif
 
-#ifndef WFENGINE_DEBUG
+#if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
 #include "vtkWFEngineModuleLogic.h"
 #include "vtkWFEngineModuleGUI.h"
 #endif
 
-#ifndef QDEC_DEBUG
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
 #include "vtkQdecModuleLogic.h"
 #include "vtkQdecModuleGUI.h"
+#endif
+
+#if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
+#include "vtkScriptedModuleLogic.h"
+#include "vtkScriptedModuleGUI.h"
+#endif
+
+#if !defined(COMMANDLINE_DEBUG) && defined(BUILD_MODULES)
+#include "vtkCommandLineModuleLogic.h"
+#include "vtkCommandLineModuleGUI.h"
+#endif
+
+#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
+#include "vtkQueryAtlasLogic.h"
+#include "vtkQueryAtlasGUI.h"
+#endif
+
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+#include "vtkMRMLVolumeRenderingNode.h"
+#include "vtkVolumeRenderingModuleGUI.h"
+#include "vtkVolumeRenderingModuleLogic.h"
+#endif
+
+#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
+#include "vtkLabelStatisticsGUI.h"
+#include "vtkLabelStatisticsLogic.h"
 #endif
 
 //
@@ -186,37 +210,57 @@ extern "C" int Mrml_Init(Tcl_Interp *interp);
 extern "C" int Vtkitk_Init(Tcl_Interp *interp);
 extern "C" int Freesurfer_Init(Tcl_Interp *interp);
 extern "C" int Igt_Init(Tcl_Interp *interp);
+extern "C" int Vtkteem_Init(Tcl_Interp *interp);
 
 
 //TODO added temporary
-#ifndef EMSEG_DEBUG
+#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Emsegment_Init(Tcl_Interp *interp);
 #endif
-#ifndef NEURONAV_DEBUG
+#if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Neuronav_Init(Tcl_Interp *interp);
 #endif
-#ifndef BRPNAV_DEBUG
+
+#if !defined(BRPNAV_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Brpnav_Init(Tcl_Interp *interp);
 #endif
-#ifndef PROSTATENAV_DEBUG
+#if !defined(PROSTATENAV_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Prostatenav_Init(Tcl_Interp *interp);
 #endif
-#ifndef REALTIMEIMAGING_DEBUG
+#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
 #endif
-
-#ifndef QDEC_DEBUG
+#if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Wfenginemodule_Init(Tcl_Interp *interp);
+#endif
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Qdecmodule_Init(Tcl_Interp *interp);
 #endif
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Gradientanisotropicdiffusionfilter_Init(Tcl_Interp *interp);
-#ifndef TRACTOGRAPHY_DEBUG
-extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
 #endif
+#if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
+extern "C" int Slicertractographyfiducialseeding_Init(Tcl_Interp *interp);
+#endif
+#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Queryatlas_Init(Tcl_Interp *interp);
+#endif
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Volumerenderingmodule_Init(Tcl_Interp *interp);
+#endif
+#if !defined(DAEMON_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Slicerdaemon_Init(Tcl_Interp *interp);
+#endif
+#if !defined(COMMANDLINE_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
+#endif
+#if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Scriptedmodule_Init(Tcl_Interp *interp);
-
+#endif
+#ifndef LABELSTATISTICS_DEBUG
+extern "C" int Labelstatistics_Init(Tcl_Interp *interp);
+#endif
 
 struct SpacesToUnderscores
 {
@@ -255,14 +299,14 @@ void printAllInfo(int argc, char **argv)
   // plus one for 3 char time zone
   char timeStr[27];
 
-  fprintf(stdout, "<processStep>\n");
-  fprintf(stdout, "<program version=\"$Revision$\">%s</programName>\n", argv[0]);
-  fprintf(stdout, "<programArguments>");
+  fprintf(stdout, "<ProcessStep>\n");
+  fprintf(stdout, "<ProgramName version=\"$Revision$\">%s</ProgramName>\n", argv[0]);
+  fprintf(stdout, "<ProgramArguments>");
   for (i = 1; i < argc; i++)
     {
     fprintf(stdout, " %s", argv[i]);
     }
-  fprintf(stdout, "</programArguments>\n");
+  fprintf(stdout, "</ProgramArguments>\n");
   fprintf(stdout, "<CVS>$Id$</CVS> <TimeStamp>");
   time ( &rawtime );
   timeInfo = localtime (&rawtime);
@@ -361,11 +405,11 @@ void printAllInfo(int argc, char **argv)
 #ifdef USE_PYTHON
   fprintf(stdout, "<library version=\"%s\">Python</library>\n", PY_VERSION);
 #endif
-  fprintf(stdout, "<repository>$HeadURL$</repository>\n");
-  fprintf(stdout, "<processStep>\n");
+  fprintf(stdout, "<Repository>$HeadURL$</Repository>\n");
+  fprintf(stdout, "<ProcessStep>\n");
   fprintf(stdout, "\n");
-  
-}
+  }
+
 
 
 static void WarningMessage(const char *msg)
@@ -462,7 +506,18 @@ int Slicer3_main(int argc, char *argv[])
 #if WIN32
   itkAutoLoadPath = ptemp + ";" + itkAutoLoadPath;
 #else
-  itkAutoLoadPath = ptemp + ":" + itkAutoLoadPath;
+  // shared libs are in bin dir in the build tree, but get
+  // moved to the lib directory in the INSTALL, so put
+  // both paths into the path
+  if ( itkAutoLoadPath.size() == 0 )
+    {
+    itkAutoLoadPath = ptemp; // add the bin dir
+    }
+  else 
+    {
+    itkAutoLoadPath = ptemp + ":" + itkAutoLoadPath; // add the bin dir
+    }
+  itkAutoLoadPath = ptemp + "/../lib:" + itkAutoLoadPath; // add the lib dir
 #endif
   itkAutoLoadPath = "ITK_AUTOLOAD_PATH=" + itkAutoLoadPath;
   int putSuccess = 
@@ -486,6 +541,12 @@ int Slicer3_main(int argc, char *argv[])
     return 1;
     }
 
+  //
+  // turn off hardware antialiasing by default
+  // - the QueryAtlas picker relies on this
+  //   
+  vtkOpenGLRenderWindow::SetGlobalMaximumNumberOfMultiSamples(0);
+
 #ifdef USE_PYTHON
 
 #if WIN32
@@ -505,6 +566,7 @@ int Slicer3_main(int argc, char *argv[])
       }
 
     pythonEnv += slicerBinDir + "/../../Slicer3/Base/GUI/Python" + PathSep;
+    pythonEnv += slicerBinDir + "/../lib/Slicer3/Plugins" + PathSep;
     pythonEnv += slicerBinDir + "/../Base/GUI/Python";
     vtkKWApplication::PutEnv(const_cast <char *> (pythonEnv.c_str()));
   
@@ -530,6 +592,9 @@ int Slicer3_main(int argc, char *argv[])
       "sys.path.append ( \""
       + slicerBinDir + "/../Base/GUI/Python"
       + "\" );\n";
+      "sys.path.append ( \""
+      + slicerBinDir + "/../lib/Slicer3/Plugins"
+      + "\" );\n";
   
     v = PyRun_String( TkinitString.c_str(),
                       Py_file_input,
@@ -548,6 +613,13 @@ int Slicer3_main(int argc, char *argv[])
       }
 #endif
 
+    // TODO: get rid of fixed size buffer
+    char cmd[2048];
+
+    // Make sure SLICER_HOME is available
+
+    sprintf(cmd, "set ::env(SLICER_HOME) {%s};", slicerHome.c_str());
+    Slicer3_Tcl_Eval(interp, cmd);
   
     // Tell KWWidgets to make names like .vtkKWPushButton10 instead of .10 
     vtkKWWidget::UseClassNameInWidgetNameOn();
@@ -562,7 +634,6 @@ int Slicer3_main(int argc, char *argv[])
       {
       one_up = "/..";
       }
-    char cmd[2048];
     sprintf(cmd, "                                                   \
       set ::SLICER_BIN [file dirname [info nameofexecutable]];       \
       if { $::tcl_platform(platform) == \"windows\"} {               \
@@ -648,34 +719,58 @@ int Slicer3_main(int argc, char *argv[])
     Vtkitk_Init(interp);
     Freesurfer_Init(interp);
     Igt_Init(interp);
+    Vtkteem_Init(interp);
 
-#ifndef EMSEG_DEBUG
+#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
     Emsegment_Init(interp);
 #endif
-#ifndef NEURONAV_DEBUG
+#if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     Neuronav_Init(interp);
 #endif
-#ifndef BRPNAV_DEBUG
+
+#if !defined(BRPNAV_DEBUG) && defined(BUILD_MODULES)
     Brpnav_Init(interp);
 #endif
-#ifndef PROSTATENAV_DEBUG
+#if !defined(PROSTATENAV_DEBUG) && defined(BUILD_MODULES)
     Prostatenav_Init(interp);
 #endif
-#ifndef REALTIMEIMAGING_DEBUG
+#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
     Realtimeimaging_Init(interp);
 #endif
-#ifndef QDEC_DEBUG
+
+#if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
+    Wfenginemodule_Init(interp);
+#endif
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     Qdecmodule_Init(interp);
 #endif
-    
-    Gradientanisotropicdiffusionfilter_Init(interp);
-#ifndef TRACTOGRAPHY_DEBUG
-    Slicertractographydisplay_Init(interp);
+ #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+    Volumerenderingmodule_Init(interp);
 #endif
+    
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
+    Gradientanisotropicdiffusionfilter_Init(interp);
+#endif
+
+#if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
+    Slicertractographydisplay_Init(interp);
+    Slicertractographyfiducialseeding_Init(interp);
+#endif
+#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
     Queryatlas_Init(interp);
+#endif
+#if !defined(DAEMON_DEBUG) && defined(BUILD_MODULES)
     Slicerdaemon_Init(interp);
+#endif
+#if !defined(COMMANDLINE_DEBUG) && defined(BUILD_MODULES)
     Commandlinemodule_Init(interp);
+#endif
+#if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
     Scriptedmodule_Init(interp);
+#endif
+#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
+    Labelstatistics_Init(interp);
+#endif
 
   // first call to GetInstance will create the Application
   // 
@@ -729,14 +824,6 @@ int Slicer3_main(int argc, char *argv[])
       Slicer3_Tcl_Eval( interp, "update" );
       slicerApp->Delete();
       return ( returnCode );
-      }
-
-    //
-    // print out data provenance information if requested
-    //
-    if (AllInfo != 0)
-      {
-      printAllInfo(argc, argv);
       }
     
     //
@@ -799,6 +886,16 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->SplashMessage("Initializing Window...");
 
     cout << "Starting Slicer: " << slicerHome.c_str() << endl;
+
+    if ( Stereo )
+      {
+      slicerApp->SetStereoEnabled(1);
+      } 
+    else 
+      {
+      slicerApp->SetStereoEnabled(0);
+      }
+    
 
     // Create MRML scene
     vtkMRMLScene *scene = vtkMRMLScene::New();
@@ -960,10 +1057,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->AddModuleGUI ( colorGUI );
 #endif
 
-
-
-
-#ifndef REALTIMEIMAGING_DEBUG
+#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
     // -- Real Time Imaging module
     vtkRealTimeImagingLogic *realtimeimagingLogic = vtkRealTimeImagingLogic::New ( );
     realtimeimagingLogic->SetAndObserveMRMLScene ( scene );
@@ -984,7 +1078,7 @@ int Slicer3_main(int argc, char *argv[])
     realtimeimagingGUI->AddGUIObservers ( );
 #endif 
 
-#ifndef MRABLATION_DEBUG
+#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
     // -- MRAblation module
     vtkMRAblationLogic *ablationLogic = vtkMRAblationLogic::New(); 
     ablationLogic->SetAndObserveMRMLScene ( scene );
@@ -1005,7 +1099,7 @@ int Slicer3_main(int argc, char *argv[])
 #endif 
 
 
-#ifndef NEURONAV_DEBUG
+#if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     // -- NeuroNav module
     vtkNeuroNavLogic *neuronavLogic = vtkNeuroNavLogic::New(); 
     neuronavLogic->SetAndObserveMRMLScene ( scene );
@@ -1026,7 +1120,7 @@ int Slicer3_main(int argc, char *argv[])
     neuronavGUI->Init();
 #endif 
 
-#ifndef BRPNAV_DEBUG
+#if !defined(BRPNAV_DEBUG) && defined(BUILD_MODULES)
     // -- Brpnav module
     vtkBrpNavLogic *brpnavLogic = vtkBrpNavLogic::New(); 
     brpnavLogic->SetAndObserveMRMLScene ( scene );
@@ -1047,7 +1141,7 @@ int Slicer3_main(int argc, char *argv[])
     brpnavGUI->Init();
 #endif 
 
-#ifndef PROSTATENAV_DEBUG
+#if !defined(BRPNAV_DEBUG) && defined(BUILD_MODULES)
     // -- Prostatenav module
     vtkProstateNavLogic *prostatenavLogic = vtkProstateNavLogic::New(); 
     prostatenavLogic->SetAndObserveMRMLScene ( scene );
@@ -1149,6 +1243,12 @@ int Slicer3_main(int argc, char *argv[])
     sliceLogic2->ProcessMRMLEvents (scene, vtkCommand::ModifiedEvent, NULL);
     sliceLogic2->SetAndObserveMRMLSceneEvents ( scene, events );
     events->Delete();
+    if (appLogic->GetSlices())
+      {
+      appLogic->GetSlices()->AddItem(sliceLogic0);
+      appLogic->GetSlices()->AddItem(sliceLogic1);
+      appLogic->GetSlices()->AddItem(sliceLogic2);
+      }
 
 #ifndef SLICES_DEBUG
     vtkSlicerSlicesGUI *slicesGUI = vtkSlicerSlicesGUI::New ();
@@ -1169,7 +1269,7 @@ int Slicer3_main(int argc, char *argv[])
     appGUI->InitializeViewControlGUI();
 //    appGUI->InitializeNavigationWidget();
 
-#ifndef GAD_DEBUG
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     // --- Gradient anisotropic diffusion filter module
     slicerApp->SplashMessage("Initializing Gradient Anisotropic Module...");
     vtkGradientAnisotropicDiffusionFilterGUI *gradientAnisotropicDiffusionFilterGUI = vtkGradientAnisotropicDiffusionFilterGUI::New ( );
@@ -1190,7 +1290,7 @@ int Slicer3_main(int argc, char *argv[])
     gradientAnisotropicDiffusionFilterGUI->AddGUIObservers ( );
 #endif
 
-#ifndef TRACTOGRAPHY_DEBUG
+#if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     // --- Tractography Display module
     slicerApp->SplashMessage("Initializing Tractography Display Module...");
     vtkSlicerTractographyDisplayGUI *slicerTractographyDisplayGUI = vtkSlicerTractographyDisplayGUI::New ( );
@@ -1218,8 +1318,26 @@ int Slicer3_main(int argc, char *argv[])
     slicerTractographyDisplayGUI->AddGUIObservers ( );
 #endif
 
+#if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
+    // --- Tractography Fiducail Seeding module
+    slicerApp->SplashMessage("Initializing Tractography Fiducail Seeding Module...");
+    vtkSlicerTractographyFiducialSeedingGUI *slicerTractographyFiducialSeedingGUI = vtkSlicerTractographyFiducialSeedingGUI::New ( );
 
-#ifndef EMSEG_DEBUG
+
+    slicerFiberBundleLogic->SetApplicationLogic ( appLogic );
+    slicerTractographyFiducialSeedingGUI->SetApplication ( slicerApp );
+    slicerTractographyFiducialSeedingGUI->SetApplicationLogic ( appLogic );
+    slicerTractographyFiducialSeedingGUI->SetApplicationGUI ( appGUI );
+    slicerTractographyFiducialSeedingGUI->SetGUIName( "FiducialSeeding" );
+    slicerTractographyFiducialSeedingGUI->GetUIPanel()->SetName ( slicerTractographyFiducialSeedingGUI->GetGUIName ( ) );
+    slicerTractographyFiducialSeedingGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    slicerTractographyFiducialSeedingGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( slicerTractographyFiducialSeedingGUI );
+    slicerTractographyFiducialSeedingGUI->BuildGUI ( );
+    slicerTractographyFiducialSeedingGUI->AddGUIObservers ( );
+#endif
+
+#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
     //
     // --- EMSegment Template builder module
     //
@@ -1259,12 +1377,22 @@ int Slicer3_main(int argc, char *argv[])
 
 #ifndef QUERYATLAS_DEBUG
     slicerApp->SplashMessage("Initializing Query Atlas Module...");
+
+    //--- Incorporate the tcl QueryAtlas components
+    std::string qaTclCommand = "set ::QA_PACKAGE {};";
+    qaTclCommand += "set dir \"" + slicerBinDir + "/../" +
+      SLICER_INSTALL_LIBRARIES_DIR + "/Modules/Packages/QueryAtlas/Tcl\" ; ";
+    qaTclCommand += "  if { [ file exists $dir/pkgIndex.tcl ] } {";
+    qaTclCommand += "    lappend ::QA_PACKAGE [ file tail $dir ];";
+    qaTclCommand += "    lappend ::auto_path $dir;";
+    qaTclCommand += "    package require $::QA_PACKAGE;";
+    qaTclCommand += "  }";
+    Slicer3_Tcl_Eval( interp, qaTclCommand.c_str() );
+
     //--- Query Atlas Module
     vtkQueryAtlasGUI *queryAtlasGUI = vtkQueryAtlasGUI::New ( );
     vtkQueryAtlasLogic *queryAtlasLogic  = vtkQueryAtlasLogic::New ( );
-    queryAtlasLogic->SetAndObserveMRMLScene ( scene );
     queryAtlasLogic->SetApplicationLogic ( appLogic );
-    queryAtlasLogic->SetMRMLScene(scene);
     queryAtlasGUI->SetApplication ( slicerApp );
     queryAtlasGUI->SetApplicationLogic ( appLogic );
     queryAtlasGUI->SetApplicationGUI ( appGUI );
@@ -1273,11 +1401,19 @@ int Slicer3_main(int argc, char *argv[])
     queryAtlasGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
     queryAtlasGUI->GetUIPanel()->Create ( );
     slicerApp->AddModuleGUI ( queryAtlasGUI );
+    // add mrml observers
+    vtkIntArray *qaEvents = vtkIntArray::New();
+    qaEvents->InsertNextValue ( vtkMRMLScene::SceneCloseEvent );
+    qaEvents->InsertNextValue ( vtkMRMLScene::NodeAddedEvent );
+    qaEvents->InsertNextValue ( vtkMRMLScene::NodeRemovedEvent );
+    queryAtlasGUI->SetAndObserveMRMLSceneEvents (scene, qaEvents );
+    qaEvents->Delete();
     queryAtlasGUI->BuildGUI ( );
     queryAtlasGUI->AddGUIObservers ( );
+
 #endif
 
-#ifndef WFENGINE_DEBUG
+#if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
     slicerApp->SplashMessage("Initializing WFEngine Module...");
     //--- WFEngine Module
     vtkWFEngineModuleGUI *wfEngineModuleGUI = vtkWFEngineModuleGUI::New ( );
@@ -1298,7 +1434,7 @@ int Slicer3_main(int argc, char *argv[])
     wfEngineModuleGUI->AddGUIObservers ( );
 #endif
 
-#ifndef QDEC_DEBUG
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     slicerApp->SplashMessage("Initializing Qdec Module...");
     //--- QDEC Module
     vtkQdecModuleGUI *qdecModuleGUI = vtkQdecModuleGUI::New ( );
@@ -1322,6 +1458,57 @@ int Slicer3_main(int argc, char *argv[])
     qdecModuleGUI->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
 #endif
 
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+
+    slicerApp->SplashMessage("Initializing Volume Rendering Module...");
+    //VolumeRenderingModule
+    vtkVolumeRenderingModuleGUI *vrModuleGUI = vtkVolumeRenderingModuleGUI::New ( );
+    vtkVolumeRenderingModuleLogic *vrModuleLogic  = vtkVolumeRenderingModuleLogic::New ( );
+    vrModuleLogic->SetAndObserveMRMLScene ( scene );
+    vrModuleLogic->SetApplicationLogic ( appLogic );
+    vrModuleLogic->SetMRMLScene(scene);
+        //TODO Quick and dirty
+     vtkMRMLVolumeRenderingNode *vrNode=vtkMRMLVolumeRenderingNode::New();
+     scene->RegisterNodeClass(vrNode);
+  vrNode->Delete();
+    vrModuleGUI->SetLogic(vrModuleLogic);
+    vrModuleGUI->SetApplication ( slicerApp );
+    vrModuleGUI->SetApplicationLogic ( appLogic );
+    vrModuleGUI->SetApplicationGUI ( appGUI );
+    vrModuleGUI->SetGUIName( "VolumeRendering" );
+    vrModuleGUI->GetUIPanel()->SetName ( vrModuleGUI->GetGUIName ( ) );
+    vrModuleGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    vrModuleGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( vrModuleGUI );
+    vrModuleGUI->BuildGUI ( );
+    vrModuleGUI->AddGUIObservers ( );
+    // add the pointer to the viewer widget, for observing pick events
+    vrModuleGUI->SetViewerWidget(appGUI->GetViewerWidget());
+    vrModuleGUI->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
+#endif
+
+#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
+    // --- LabelStatistics  module
+    slicerApp->SplashMessage("Initializing LabelStatistics Module...");
+    vtkLabelStatisticsGUI *labelStatsGUI = vtkLabelStatisticsGUI::New ( );
+    vtkLabelStatisticsLogic *labelStatsLogic  = vtkLabelStatisticsLogic::New ( );
+    labelStatsLogic->SetAndObserveMRMLScene ( scene );
+    labelStatsLogic->SetApplicationLogic ( appLogic );
+    //    labelStatsLogic->SetMRMLScene(scene);
+    labelStatsGUI->SetLogic ( labelStatsLogic );
+    labelStatsGUI->SetApplication ( slicerApp );
+    labelStatsGUI->SetApplicationLogic ( appLogic );
+    labelStatsGUI->SetApplicationGUI ( appGUI );
+    labelStatsGUI->SetGUIName( "LabelStatistics" );
+    labelStatsGUI->GetUIPanel()->SetName ( labelStatsGUI->GetGUIName ( ) );
+    labelStatsGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    labelStatsGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( labelStatsGUI );
+    labelStatsGUI->BuildGUI ( );
+    labelStatsGUI->AddGUIObservers ( );
+#endif
+
+#if !defined(DAEMON_DEBUG) && defined(BUILD_MODULES)
     //
     // --- SlicerDaemon Module
     // need to source the slicerd.tcl script here
@@ -1337,9 +1524,9 @@ int Slicer3_main(int argc, char *argv[])
         SLICER_INSTALL_LIBRARIES_DIR "/slicerd.tcl\"; slicerd_start; ";
       Slicer3_Tcl_Eval(interp, cmd.c_str());
       }
+#endif
 
-
-#ifndef CLIMODULES_DEBUG
+#if !defined(CLIMODULES_DEBUG) && defined(BUILD_MODULES)
     std::vector<std::string> moduleNames;
     std::vector<std::string>::const_iterator mit;
     if ( slicerApp->GetLoadCommandLineModules() && !NoModules )
@@ -1371,7 +1558,7 @@ int Slicer3_main(int argc, char *argv[])
         defaultPackageDir += "/" + intDir;
         }
     
-      // get the path of that the user has configured
+      // get the path that the user has configured
       if (slicerApp->GetModulePath())
         {
         userPackagePath = slicerApp->GetModulePath();
@@ -1381,10 +1568,88 @@ int Slicer3_main(int argc, char *argv[])
       // installation or build tree) to the user path
       packagePath = userPackagePath + delim + defaultPackageDir;
 
+      std::string cachePath;
+      std::string defaultCachePath;
+      std::string userCachePath;
+
+      // define a default cache for module information
+      defaultCachePath = slicerBinDir + "/../lib/Slicer3/PluginsCache";
+      if (hasIntDir)
+        {
+        defaultCachePath += "/" + intDir;
+        }
+      
+      // get the cache path that the user has configured
+      if (slicerApp->GetModuleCachePath())
+        {
+        userCachePath = slicerApp->GetModuleCachePath();
+        }
+
+      // if user cache path is set and we can write to it, use it.
+      // if user cache path is not set or we cannot write to it, try
+      // the default cache path.
+      // if we cannot write to the default cache path, then warn and
+      // don't use a cache.
+      vtksys::Directory directory;
+      if (userCachePath != "")
+        {
+        if (!vtksys::SystemTools::FileExists(userCachePath.c_str()))
+          {
+          vtksys::SystemTools::MakeDirectory(userCachePath.c_str());
+          }
+        if (vtksys::SystemTools::FileExists(userCachePath.c_str())
+            && vtksys::SystemTools::FileIsDirectory(userCachePath.c_str()))
+          {
+          std::ofstream tst((userCachePath + "/tstCache.txt").c_str());
+          if (tst)
+            {
+            cachePath = userCachePath;
+            }
+          }
+        }
+      if (cachePath == "")
+        {
+        if (!vtksys::SystemTools::FileExists(defaultCachePath.c_str()))
+          {
+          vtksys::SystemTools::MakeDirectory(defaultCachePath.c_str());
+          }
+        if (vtksys::SystemTools::FileExists(defaultCachePath.c_str())
+            && vtksys::SystemTools::FileIsDirectory(defaultCachePath.c_str()))
+          {
+          std::ofstream tst((defaultCachePath + "/tstCache.txt").c_str());
+          if (tst)
+            {
+            cachePath = defaultCachePath;
+            }
+          }
+        }
+      if (ClearModuleCache)
+        {
+        std::string cacheFile = cachePath + "/ModuleCache.csv";
+        vtksys::SystemTools::RemoveFile(cacheFile.c_str());
+        }
+      if (NoModuleCache)
+        {
+        cachePath = "";
+        }
+      if (cachePath == "")
+        {
+        if (NoModuleCache)
+          {
+          std::cout << "Module cache disabled by command line argument."
+                    << std::endl;
+          }
+        else
+          {
+          std::cout << "Module cache disabled. Slicer application directory may not be writable, a user level cache directory may not be set, or the user level cache directory may not be writable." << std::endl;
+          }
+        }
+
       // Search for modules
       ModuleFactory moduleFactory;
       moduleFactory.SetName("Slicer");
       moduleFactory.SetSearchPath( packagePath );
+      moduleFactory.SetCachePath( cachePath );
       moduleFactory.SetWarningMessageCallback( WarningMessage );
       moduleFactory.SetErrorMessageCallback( ErrorMessage );
       moduleFactory.SetInformationMessageCallback( InformationMessage );
@@ -1430,27 +1695,8 @@ int Slicer3_main(int argc, char *argv[])
 
         ++mit;
         }
-      // -- Build the factory discovered modules gui and observers
-      mit = moduleNames.begin();
-      while ( mit != moduleNames.end() )
-        {
-        std::string progress_msg("Initializing ");
-        progress_msg +=  (*mit) ;
-        progress_msg += " Module...";
-        slicerApp->SplashMessage(progress_msg.c_str());
-
-        vtkSlicerModuleGUI *module;
-        module = slicerApp->GetModuleGUIByName( (*mit).c_str() );
-/*
-        module->BuildGUI();
-        module->AddGUIObservers();
-*/
-        ++mit;
-        }
       }
-#endif
-    
-    
+#endif // CLIMODULES_DEBUG
 
     //
     // get the Tcl name so the vtk class will be registered in the interpreter
@@ -1490,26 +1736,26 @@ int Slicer3_main(int argc, char *argv[])
     name = colorGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ColorGUI %s", name);
 #endif
-#ifndef REALTIMEIMAGING_DEBUG
+#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
     name = realtimeimagingGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set RealTimeImagingGUI %s", name);
 #endif
-#ifndef MRABLATION_DEBUG
+#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
     name = ablationGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set MRAblationGUI %s", name);
 #endif
 
-#ifndef NEURONAV_DEBUG
+#if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     name = neuronavGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set NeuroNavGUI %s", name);
 #endif
 
-#ifndef BRPNAV_DEBUG
+#if !defined(BRPNAV_DEBUG) && defined(BUILD_MODULES)
     name = brpnavGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set BrpnavGUI %s", name);
 #endif
 
-#ifndef PROSTATENAV_DEBUG
+#if !defined(PROSTATENAV_DEBUG) && defined(BUILD_MODULES)
     name = prostatenavGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ProstatenavGUI %s", name);
 #endif
@@ -1520,10 +1766,20 @@ int Slicer3_main(int argc, char *argv[])
     name = queryAtlasGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set QueryAtlasGUI %s", name);
 #endif
+   
     
-#ifndef QDEC_DEBUG
+#if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
+    name = wfEngineModuleGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set WFEngineModuleGUI %s", name);
+#endif
+
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     name = qdecModuleGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set QdecModuleGUI %s", name);
+#endif
+#if !defined (VOLUMERENDERINGMODULE_DEBUG) && defined (BUILD_MODULES)
+    name = vrModuleGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set VRModuleGUI %s", name);
 #endif
     
     if ( appGUI->GetViewerWidget() )
@@ -1535,7 +1791,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->Script ("namespace eval slicer3 set ApplicationLogic [$::slicer3::ApplicationGUI GetApplicationLogic]");
     slicerApp->Script ("namespace eval slicer3 set MRMLScene [$::slicer3::ApplicationLogic GetMRMLScene]");
 
-#ifndef QDEC_DEBUG
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     if ( appGUI->GetViewerWidget() &&
          appGUI->GetViewerWidget()->GetMainViewer() &&
          appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor() &&
@@ -1551,16 +1807,16 @@ int Slicer3_main(int argc, char *argv[])
       }
 #endif
 
-
-#ifndef CLIMODULES_DEBUG
+#if !defined(CLIMODULES_DEBUG) && defined(BUILD_MODULES)
     mit = moduleNames.begin();
     while ( mit != moduleNames.end() )
       {
       vtkSlicerModuleGUI *module;
       module = slicerApp->GetModuleGUIByName( (*mit).c_str() );
-
-      name = module->GetTclName();
-
+      if (module) 
+        {
+        name = module->GetTclName();
+        }
       std::string title = *mit;
       std::transform(
         title.begin(), title.end(), title.begin(), SpacesToUnderscores());
@@ -1571,7 +1827,7 @@ int Slicer3_main(int argc, char *argv[])
       }
 #endif
 
-#ifndef TCLMODULES_DEBUG
+#if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
     //
     // process any ScriptedModules
     // - scan for pkgIndex.tcl files 
@@ -1641,7 +1897,7 @@ int Slicer3_main(int argc, char *argv[])
     // DISPLAY WINDOW AND RUN
     slicerApp->SplashMessage("Finalizing Startup...");
     appGUI->DisplayMainSlicerWindow ( );
-
+    
     // More command line arguments:
     // use the startup script passed on command line if it exists
     if ( Script != "" )
@@ -1675,22 +1931,52 @@ int Slicer3_main(int argc, char *argv[])
       std::vector<std::string>::const_iterator argit = Args.begin();
       while (argit != Args.end())
         {
-        cout << "Arg =  " << *argit << endl;
         std::string fileName;
-        fileName.append(*argit);
-        // is it a MRML or XML file?
-        if (fileName.find(".mrml",0) != std::string::npos ||
-            fileName.find(".xml",0) != std::string::npos)
+        // strip backslashes
+        char buffer[2]; buffer[1] = '\0';
+        for (unsigned int i = 0; i < (*argit).size(); i++)
           {
-          cout << fileName << " is a MRML or XML file, setting MRML scene file name and connecting\n";
+          buffer[0] = (*argit)[i];
+          if ( buffer[0] != '\\' )
+            {
+            fileName.append(std::string(buffer));
+            }
+          }
+        // is it a MRML or XML file?
+        if (fileName.find(".mrml",0) != std::string::npos
+            || fileName.find(".MRML",0) != std::string::npos)
+          {
           appLogic->GetMRMLScene()->SetURL(fileName.c_str());
           // and then load it
+          slicerApp->SplashMessage("Set scene url, connecting...");
           int errorCode = appLogic->GetMRMLScene()->Connect();
           if (errorCode != 1)
             {
             slicerCerr("ERROR loading MRML file " << fileName << ", error code = " << errorCode << endl);
             }
+          else
+            {
+            slicerApp->SplashMessage("Connected to scene.");
+            }
           }                    
+        else if (fileName.find(".xml",0) != std::string::npos
+                 || fileName.find(".XML",0) != std::string::npos)
+          {
+          // if it's an xml file, load it
+          std::string cmd = "after idle {ImportSlicer2Scene \"" + *argit + "\"}";
+          slicerApp->SplashMessage("Importing Slicer2 scene...");
+          res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
+          slicerApp->SplashMessage("Imported scene.");
+          }
+        else if (fileName.find(".xcat",0) != std::string::npos
+                 || fileName.find(".XCAT",0) != std::string::npos)
+          {
+          // if it's an xcede file, load it
+          slicerApp->SplashMessage("Importing Xcede catalog ...");
+          std::string cmd = "after idle {XcedeCatalogImport \"" + *argit + "\"}";
+          res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
+          slicerApp->SplashMessage("Imported catalog.");
+          }
         else if (fileName.find(".tcl",0) != std::string::npos)
           {
           // if it's a tcl file source it after the app starts
@@ -1700,7 +1986,7 @@ int Slicer3_main(int argc, char *argv[])
         else
           {
           // if we're not sure, assume it is data to load...
-          std::string cmd = "::Loader::ShowDialog " + *argit;
+          std::string cmd = "::Loader::ShowDialog \"" + *argit + "\"";
           res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
           }
         ++argit;
@@ -1742,15 +2028,16 @@ int Slicer3_main(int argc, char *argv[])
 
     // ------------------------------
     // REMOVE OBSERVERS and references to MRML and Logic
-#ifndef GAD_DEBUG
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterGUI->RemoveGUIObservers ( );
 #endif
     
-#ifndef TRACTOGRAPHY_DEBUG
+#if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerTractographyDisplayGUI->RemoveGUIObservers ( );
+    slicerTractographyFiducialSeedingGUI->RemoveGUIObservers ( );
 #endif
 
-#ifndef EMSEG_DEBUG
+#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
     emSegmentGUI->TearDownGUI();
     emSegmentGUI->RemoveGUIObservers();
 #endif
@@ -1775,20 +2062,32 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorGUI->TearDownGUI ( );
 #endif
-#ifndef REALTIMEIMAGING_DEBUG
+#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
     realtimeimagingGUI->TearDownGUI ( );
 #endif
-#ifndef MRABLATION_DEBUG
+#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
     ablationGUI->TearDownGUI ( );
 #endif
-#ifndef NEURONAV_DEBUG
+#if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     neuronavGUI->TearDownGUI ( );
 #endif
     
+#if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
+    wfEngineModuleGUI->TearDownGUI ( );
+#endif
 
-#ifndef QDEC_DEBUG
+#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
+    labelStatsGUI->RemoveGUIObservers ( );
+    labelStatsGUI->TearDownGUI ( );
+#endif
+
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     qdecModuleGUI->TearDownGUI ( );
 #endif
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+    vrModuleGUI->TearDownGUI ( );
+#endif
+
 
     transformsGUI->TearDownGUI ( );
 #ifndef CAMERA_DEBUG
@@ -1809,7 +2108,7 @@ int Slicer3_main(int argc, char *argv[])
     appGUI->SetSliceGUICollection ( NULL );
 #endif
 
-#ifndef CLIMODULES_DEBUG
+#if !defined(CLIMODULES_DEBUG) && defined(BUILD_MODULES)
     // remove the observers from the factory discovered modules
     // (as we remove the observers, cache the GUIs in a vector so we
     // can delete them later).
@@ -1829,7 +2128,7 @@ int Slicer3_main(int argc, char *argv[])
       }
 #endif    
 
-#ifndef TCLMODULES_DEBUG
+#if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
     // remove the observers from the scripted modules
     tclCommand = "";
     tclCommand += "foreach package $::SLICER_PACKAGES(list) { ";
@@ -1853,15 +2152,16 @@ int Slicer3_main(int argc, char *argv[])
     // DELETE 
     
     //--- delete gui first, removing Refs to Logic and MRML
-#ifndef GAD_DEBUG
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterGUI->Delete ();
 #endif
     
-#ifndef TRACTOGRAPHY_DEBUG
+#if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerTractographyDisplayGUI->Delete ();
+    slicerTractographyFiducialSeedingGUI->Delete ();
 #endif
 
-#ifndef EMSEG_DEBUG
+#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
     emSegmentGUI->Delete();
 #endif
 
@@ -1884,20 +2184,32 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorGUI->Delete();
 #endif
-#ifndef REALTIMEIMAGING_DEBUG
+#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
     realtimeimagingGUI->Delete();
 #endif    
-#ifndef MRABLATION_DEBUG
+#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
     ablationGUI->Delete();
 #endif    
-#ifndef NEURONAV_DEBUG
+#if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     neuronavGUI->Delete();
 #endif
     
+#if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
+    wfEngineModuleGUI->Delete ( );
+#endif
 
-#ifndef QDEC_DEBUG
+#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
+    labelStatsGUI->Delete ( );
+#endif
+
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     qdecModuleGUI->Delete ( );
 #endif
+
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+    vrModuleGUI->Delete ( );
+#endif
+
 
     
     transformsGUI->Delete ();
@@ -1909,7 +2221,7 @@ int Slicer3_main(int argc, char *argv[])
     slicesGUI->Delete ();
 #endif
 
-#ifndef TCLMODULES_DEBUG
+#if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
     tclCommand = "";
     tclCommand += "foreach package $::SLICER_PACKAGES(list) { ";
     tclCommand += "  $::SLICER_PACKAGES($package,gui) Delete;";
@@ -1924,7 +2236,7 @@ int Slicer3_main(int argc, char *argv[])
 //cout << "vtkSlicerApplicationGUI deleting app GUI\n";
 //   appGUI->Delete ();
 
-#ifndef CLIMODULES_DEBUG
+#if !defined(CLIMODULES_DEBUG) && defined(BUILD_MODULES)
     // delete the factory discovered module GUIs (as we delete the
     // GUIs, cache the associated logic instances so we can delete
     std::vector<vtkSlicerModuleGUI*>::iterator git;
@@ -1948,17 +2260,17 @@ int Slicer3_main(int argc, char *argv[])
     //--- delete logic next, removing Refs to MRML
     appLogic->ClearCollections ( );
 
-#ifndef GAD_DEBUG
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( NULL );
     gradientAnisotropicDiffusionFilterLogic->Delete ();
 #endif
 
-#ifndef TRACTOGRAPHY_DEBUG
+#if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerFiberBundleLogic->SetAndObserveMRMLScene ( NULL );
     slicerFiberBundleLogic->Delete ();
 #endif
         
-#ifndef EMSEG_DEBUG
+#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
     emSegmentLogic->SetAndObserveMRMLScene ( NULL );
     emSegmentLogic->Delete();
 #endif
@@ -1989,25 +2301,37 @@ int Slicer3_main(int argc, char *argv[])
     colorLogic->Delete();
 #endif
 
-#ifndef REALTIMEIMAGING_DEBUG
+#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
     realtimeimagingLogic->SetAndObserveMRMLScene ( NULL );
     realtimeimagingLogic->Delete();
 #endif
 
-#ifndef MRABLATION_DEBUG
+#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
     ablationLogic->SetAndObserveMRMLScene ( NULL );
     ablationLogic->Delete();
 #endif    
-#ifndef NEURONAV_DEBUG
+#if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     neuronavLogic->SetAndObserveMRMLScene ( NULL );
     neuronavLogic->Delete();
 #endif
     
+#if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
+    wfEngineModuleLogic->SetAndObserveMRMLScene ( NULL );
+    wfEngineModuleLogic->Delete ( );
+#endif
+ 
+#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
+    labelStatsLogic->SetAndObserveMRMLScene ( NULL );
+    labelStatsLogic->Delete ( );
+#endif
 
-  
-#ifndef QDEC_DEBUG
+#if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     qdecModuleLogic->SetAndObserveMRMLScene ( NULL );
     qdecModuleLogic->Delete ( );
+#endif
+    #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+    vrModuleLogic->SetAndObserveMRMLScene ( NULL );
+    vrModuleLogic->Delete ( );
 #endif
 
     sliceLogic2->SetAndObserveMRMLScene ( NULL );
@@ -2022,7 +2346,7 @@ int Slicer3_main(int argc, char *argv[])
     appLogic->TerminateProcessingThread();
     appLogic->Delete ();
 
-#ifndef CLIMODULES_DEBUG
+#if !defined(CLIMODULES_DEBUG) && defined(BUILD_MODULES)
     // delete the factory discovered module Logics
     std::vector<vtkSlicerModuleLogic*>::iterator lit;
     for (lit = moduleLogics.begin(); lit != moduleLogics.end(); ++lit)
@@ -2033,7 +2357,7 @@ int Slicer3_main(int argc, char *argv[])
     moduleLogics.clear();
 #endif
 
-#ifndef TCLMODULES_DEBUG
+#if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
     // delete the scripted logics
     tclCommand = "";
     tclCommand += "foreach package $::SLICER_PACKAGES(list) { ";

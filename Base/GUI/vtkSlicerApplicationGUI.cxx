@@ -45,6 +45,7 @@
 #include "vtkKWMessageDialog.h"
 #include "vtkKWToolbarSet.h"
 #include "vtkKWMessageDialog.h"
+#include "vtkKWProgressDialog.h"
 
 #include "vtkSlicerWindow.h"
 #include "vtkSlicerApplication.h"
@@ -60,6 +61,8 @@
 #include "vtkSlicerApplicationSettingsInterface.h"
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkSlicerViewerInteractorStyle.h"
+
+#include "vtkSlicerFiducialListWidget.h"
 
 #ifdef USE_PYTHON
 #ifdef _DEBUG
@@ -307,13 +310,32 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
         std::string fl(fileName);
         if (this->GetMRMLScene() && fl.find(".mrml") != std::string::npos ) 
           {
+          vtkKWProgressDialog *progressDialog = vtkKWProgressDialog::New();
+          progressDialog->SetParent( this->MainSlicerWindow );
+          progressDialog->SetMasterWindow( this->MainSlicerWindow );
+          progressDialog->Create();
+          std::string message("Loading Scene...\n");
+          message += std::string(fileName);
+          progressDialog->SetMessageText( message.c_str() );
+          // don't observe the scene, to avoid getting render updates
+          // during load.  TODO: make a vtk-based progress bar that doesn't
+          // call the tcl update method
+          //progressDialog->SetObservedObject( this->GetMRMLScene() );
+          progressDialog->Display();
           this->GetMRMLScene()->SetURL(fileName);
           this->GetMRMLScene()->Connect();
+          progressDialog->SetParent(NULL);
+          progressDialog->Delete();
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
         else if (this->GetMRMLScene() && fl.find(".xml") != std::string::npos ) 
           {
-          this->Script ( "ImportSlicer2Scene %s", fileName);
+          this->Script ( "ImportSlicer2Scene \"%s\"", fileName);
+          this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
+          }
+        else if ( this->GetMRMLScene() && fl.find(".xcat") != std::string::npos )
+          {
+          this->Script ( "XcedeCatalogImport %s", fileName);
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
 
@@ -355,6 +377,12 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
           this->Script ( "ImportSlicer2Scene %s", fileName);
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
+        else if ( this->GetMRMLScene() && fl.find(".xcat") != std::string::npos )
+          {
+          this->Script ( "XcedeCatalogImport %s", fileName);
+          this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
+          }
+
 
         if (  this->GetMRMLScene()->GetErrorCode() != 0 ) 
           {
@@ -793,6 +821,15 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             this->MainSlicerWindow->GetWindowMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 #endif
 
+#ifndef FIDUCIALS_DEBUG
+            this->GetMainSlicerWindow()->GetEditMenu()->InsertSeparator (this->GetMainSlicerWindow()->GetEditMenu()->GetNumberOfItems());
+            // make the new fiducial list, but delete the returned node as
+            // it's held onto by the scene
+            i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "New Fiducial List", NULL, "[$::slicer3::FiducialsGUI GetLogic] AddFiducialListSelected" );
+            this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+L");
+            this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+#endif
+
             //
             // View Menu
             //
@@ -854,7 +891,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             
             this->LoadSceneDialog->SetParent ( this->MainSlicerWindow );
             this->LoadSceneDialog->Create ( );
-            this->LoadSceneDialog->SetFileTypes("{ {MRML Scene} {*.mrml} } { {Slicer2 Scene} {*.xml} }");
+            this->LoadSceneDialog->SetFileTypes("{ {Scenes} {.mrml .xml} } { {MRML Scene} {.mrml} } { {Slicer2 Scene} {.xml} } { {Xcede Catalog} {.xcat} } { {All} {.*} }");
             this->LoadSceneDialog->RetrieveLastPathFromRegistry("OpenPath");
 
 #endif
@@ -1270,8 +1307,17 @@ void vtkSlicerApplicationGUI::DisplayMainSlicerWindow ( )
     {
       vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
       
+      this->MainSlicerWindow->Display ( );
+      int w = this->MainSlicerWindow->GetWidth ( );
+      int h = this->MainSlicerWindow->GetHeight ( );
+      int vh = app->GetMainLayout()->GetDefault3DViewerHeight();
+      int sh = app->GetMainLayout()->GetDefaultSliceGUIFrameHeight();
+      int sfh = this->MainSlicerWindow->GetSecondarySplitFrame()->GetFrame1Size();
+      int sf2h = this->MainSlicerWindow->GetSecondarySplitFrame()->GetFrame2Size();
+      
       // pop up a warning dialog here if the computer's
       // display resolution in x is less than 1000 pixels.
+      /*
       const char *wstr = app->Script ("winfo screenwidth .");
       const char *hstr = app->Script ("winfo screenheight .");
       int screenwidth = atoi (wstr);
@@ -1281,20 +1327,13 @@ void vtkSlicerApplicationGUI::DisplayMainSlicerWindow ( )
         vtkKWMessageDialog *message = vtkKWMessageDialog::New();
         message->SetParent ( this->MainSlicerWindow );
         message->SetStyleToMessage();
+        message->SetDialogName("WarningScreenResolution");
         message->SetText ("Slicer requires a horizontal screen resolution of at least 1024 pixels to display it's user interface. Some GUI elements may not be visible.");
         message->Create();
         message->Invoke();
         message->Delete();
         }
-      
-      this->MainSlicerWindow->Display ( );
-
-      int w = this->MainSlicerWindow->GetWidth ( );
-      int h = this->MainSlicerWindow->GetHeight ( );
-      int vh = app->GetMainLayout()->GetDefault3DViewerHeight();
-      int sh = app->GetMainLayout()->GetDefaultSliceGUIFrameHeight();
-      int sfh = this->MainSlicerWindow->GetSecondarySplitFrame()->GetFrame1Size();
-      int sf2h = this->MainSlicerWindow->GetSecondarySplitFrame()->GetFrame2Size();
+      */
     }
 }
 

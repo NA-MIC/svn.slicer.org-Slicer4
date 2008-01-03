@@ -203,11 +203,13 @@ void vtkMRMLVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     {
     os << indent << " " << this->Origin[j];
     }
+  os << "\n";
   os << "Spacing:";
   for(j=0; j<3; j++) 
     {
     os << indent << " " << this->Spacing[j];
     }
+  os << "\n";
 
   if (this->ImageData != NULL) 
     {
@@ -382,6 +384,18 @@ void vtkMRMLVolumeNode::GetRASToIJKMatrix(vtkMatrix4x4* mat)
 }
 
 //----------------------------------------------------------------------------
+void vtkMRMLVolumeNode::GetIJKToRASDirections(double dirs[3][3])
+{
+  for (int i=0; i<3; i++)
+    {
+    for (int j=0; j<3; j++)
+      {
+      dirs[i][j] = IJKToRASDirections[i][j];
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
 void vtkMRMLVolumeNode::ComputeIJKToRASFromScanOrder(char *order, 
                                                      double* spacing, int *dims,
                                                      bool centerImage,
@@ -535,6 +549,8 @@ const char* vtkMRMLVolumeNode::ComputeScanOrderFromIJKToRAS(vtkMatrix4x4 *ijkToR
 //----------------------------------------------------------------------------
 void vtkMRMLVolumeNode::SetAndObserveImageData(vtkImageData *ImageData)
 {
+  vtkImageData *oldImageData = this->ImageData;
+
   if (this->ImageData != NULL)
     {
     this->ImageData->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
@@ -544,6 +560,21 @@ void vtkMRMLVolumeNode::SetAndObserveImageData(vtkImageData *ImageData)
   if (ImageData != NULL)
     {
     ImageData->AddObserver ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
+    }
+
+  if ( this->ImageData != oldImageData )
+    {
+    this->Modified();
+    }
+    
+  int ndisp = this->GetNumberOfDisplayNodes();
+  for (int n=0; n<ndisp; n++) 
+    {
+    vtkMRMLVolumeDisplayNode *dnode = vtkMRMLVolumeDisplayNode::SafeDownCast(this->GetNthDisplayNode(n));
+    if (dnode)
+      {
+      dnode->SetImageData(ImageData);
+      }
     }
   //vtkSetAndObserveMRMLObjectMacro(this->ImageData, ImageData);
 }
@@ -566,7 +597,7 @@ void vtkMRMLVolumeNode::ProcessMRMLEvents ( vtkObject *caller,
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);
 
-  if (this->ImageData == vtkImageData::SafeDownCast(caller) &&
+  if (this->ImageData && this->ImageData == vtkImageData::SafeDownCast(caller) &&
     event ==  vtkCommand::ModifiedEvent)
     {
     this->ModifiedSinceRead = true;
@@ -575,3 +606,15 @@ void vtkMRMLVolumeNode::ProcessMRMLEvents ( vtkObject *caller,
   return;
 }
 
+void vtkMRMLVolumeNode::SetMetaDataDictionary( const itk::MetaDataDictionary& dictionary )
+{
+  this->Dictionary = dictionary;
+  this->Modified();
+}
+
+const
+itk::MetaDataDictionary&
+vtkMRMLVolumeNode::GetMetaDataDictionary() const
+{
+  return this->Dictionary;
+}

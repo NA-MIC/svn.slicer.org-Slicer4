@@ -270,8 +270,8 @@ void GeneratePre(std::ofstream &sout, ModuleDescription &module, int argc, char 
 void GenerateSplitString(std::ofstream &sout)
 {
   sout << "void" << std::endl;
-  sout << "splitString (std::string &text," << std::endl;
-  sout << "             std::string &separators," << std::endl;
+  sout << "splitString (const std::string &text," << std::endl;
+  sout << "             const std::string &separators," << std::endl;
   sout << "             std::vector<std::string> &words)" << std::endl;
   sout << "{" << std::endl;
   sout << "  int n = text.length();" << std::endl;
@@ -291,11 +291,11 @@ void GenerateSplitString(std::ofstream &sout)
 void GenerateSplitFilenames(std::ofstream &sout)
 {
   sout << "void" << std::endl;
-  sout << "splitFilenames (std::string &text," << std::endl;
-  sout << "             std::vector<std::string> &words)" << std::endl;
+  sout << "splitFilenames (const std::string &text," << std::endl;
+  sout << "                std::vector<std::string> &words)" << std::endl;
   sout << "{" << std::endl;
-  sout << "  int n = text.length();" << std::endl;
-  sout << "  int start, stop, startq, stopq;" << std::endl;
+  sout << "  size_t n = text.length();" << std::endl;
+  sout << "  size_t start, stop, startq, stopq;" << std::endl;
   sout << "  bool quoted;" << std::endl;
   sout << "  std::string comma(\",\");" << std::endl;
   sout << "  std::string quote(\"\\\"\");" << std::endl;
@@ -403,7 +403,7 @@ void GeneratePluginDataSymbols(std::ofstream &sout, std::vector<std::string>& lo
 
 void GeneratePluginEntryPoints(std::ofstream &sout, std::vector<std::string> &logos)
 {
-  sout << "#ifdef main" << std::endl;
+  sout << "#if defined(main) && !defined(REGISTER_TEST)" << std::endl;
   sout << "// If main defined as a preprocessor symbol, redefine it to the expected entry point." << std::endl;
   sout << "#undef main" << std::endl;
   sout << "#define main ModuleEntryPoint" << std::endl;
@@ -772,11 +772,11 @@ void GenerateTCLAP(std::ofstream &sout, ModuleDescription &module)
   sout << "  {" << EOL << std::endl;
   sout << "    std::string fullDescription(\"Description: \");" << EOL << std::endl;
   sout << "    fullDescription += \"" << module.GetDescription() << "\";" << EOL << std::endl;
-  sout << "    if (\"" << module.GetContributor() << "\" != \"\")" << EOL << std::endl;
+  sout << "    if (!std::string(\"" << module.GetContributor() << "\").empty())" << EOL << std::endl;
   sout << "      {" << EOL << std::endl;
   sout << "      fullDescription += \"\\nAuthor(s): " << module.GetContributor() << "\";" << EOL << std::endl;
   sout << "      }" << EOL << std::endl;
-  sout << "    if (\"" << module.GetAcknowledgements() << "\" != \"\")" << EOL << std::endl;
+  sout << "    if (!std::string(\"" << module.GetAcknowledgements() << "\").empty())" << EOL << std::endl;
   sout << "      {" << EOL << std::endl;
   sout << "      fullDescription += \"\\nAcknowledgements: " << module.GetAcknowledgements() << "\";" << EOL << std::endl;
   sout << "      }" << EOL << std::endl;

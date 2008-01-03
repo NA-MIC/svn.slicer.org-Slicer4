@@ -39,7 +39,7 @@ Version:   $Revision: 1.18 $
 
 class vtkGeneralTransform;
 
-class VTK_MRML_EXPORT vtkMRMLScene : public vtkObject
+class VTK_MRML_EXPORT vtkMRMLScene : public vtkCollection
 {
 public:
   static vtkMRMLScene *New();
@@ -263,7 +263,7 @@ public:
 
   void AddReferencedNodeID(const char *id, vtkMRMLNode *refrencingNode)
   {
-    if (id && refrencingNode) 
+    if (id && refrencingNode && refrencingNode->GetScene() && refrencingNode->GetID()) 
       {
       this->ReferencedIDs.push_back(id);
       this->ReferencingNodes.push_back(refrencingNode);
@@ -297,6 +297,7 @@ public:
       NodeRemovedEvent = 66001,
       NewSceneEvent = 66002,
       SceneCloseEvent = 66003,
+      SceneClosingEvent = 66004,
     };
 //ETX
 
@@ -371,6 +372,7 @@ protected:
   //ETX
   
   void UpdateNodeReferences();
+  void UpdateNodeReferences(vtkCollection* chekNodes);
 
   void UpdateNodeIDs();
 

@@ -28,6 +28,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <fstream>
 
 #include "QdecGlmFit.h"
 #include "QdecUtilities.h"
@@ -118,7 +119,8 @@ int QdecGlmFit::Run ( QdecGlmDesign* iGlmDesign )
 //     throw runtime_error( "command failed: " + ssCommand.str() );
 //   free( sCommand );
 
-  if( rRun == 0 ) {
+  if( rRun == 0 )
+    {
 
     //
     // Concatenate the output.
@@ -130,31 +132,31 @@ int QdecGlmFit::Run ( QdecGlmDesign* iGlmDesign )
     // First check if the output files exist. Add the filenames to a vector.
     if( iGlmDesign->GetProgressUpdateGUI() )
       {
-    iGlmDesign->GetProgressUpdateGUI()->UpdateProgressMessage
-      ( "Finding output..." );
-    iGlmDesign->GetProgressUpdateGUI()->UpdateProgressPercent( 80 );
+      iGlmDesign->GetProgressUpdateGUI()->UpdateProgressMessage
+        ( "Finding output..." );
+      iGlmDesign->GetProgressUpdateGUI()->UpdateProgressPercent( 80 );
       }
     vector< string > contrastNames = iGlmDesign->GetContrastNames();
     vector< string > lfnSigFiles;
     for ( unsigned int i=0; i < iGlmDesign->GetContrastNames().size(); i++ )
       {
-    string sigFile = iGlmDesign->GetWorkingDir();
-    sigFile += "/";
-    sigFile += contrastNames[i];
-    sigFile += "/sig.mgh";
-    
-    // Check if it exists and is readable.
-    QdecUtilities::AssertFileIsReadable( sigFile.c_str() );
-    
-    lfnSigFiles.push_back( sigFile );
+      string sigFile = iGlmDesign->GetWorkingDir();
+      sigFile += "/";
+      sigFile += contrastNames[i];
+      sigFile += "/sig.mgh";
+      
+      // Check if it exists and is readable.
+      QdecUtilities::AssertFileIsReadable( sigFile.c_str() );
+      
+      lfnSigFiles.push_back( sigFile );
       }
     
     // Go through and concatenate copy all the volumes.
     if( iGlmDesign->GetProgressUpdateGUI() )
       {
-    iGlmDesign->GetProgressUpdateGUI()->UpdateProgressMessage
-      ( "Concatenating output scalars..." );
-    iGlmDesign->GetProgressUpdateGUI()->UpdateProgressPercent( 90 );
+      iGlmDesign->GetProgressUpdateGUI()->UpdateProgressMessage
+        ( "Concatenating output scalars..." );
+      iGlmDesign->GetProgressUpdateGUI()->UpdateProgressPercent( 90 );
       }
     
     // form output filename
@@ -167,7 +169,7 @@ int QdecGlmFit::Run ( QdecGlmDesign* iGlmDesign )
     // subject inputs...
     for ( unsigned int i=0; i < lfnSigFiles.size(); i++ )
       {
-    ssCommand2 << lfnSigFiles[i] << " ";
+      ssCommand2 << lfnSigFiles[i] << " ";
       }
     // and the output filename...
     ssCommand2 << "--o " << fnContrastsOutput;
@@ -196,15 +198,18 @@ int QdecGlmFit::Run ( QdecGlmDesign* iGlmDesign )
                  fnResidualErrorStdDevFile,
                  fnRegressionCoefficientsFile,
                  fnFsgdFile );
-    assert( glmFitResults );
+    if (!glmFitResults )
+      {
+      fprintf(stderr,"\nERROR: QdecGlmFit::Run: glm fit results are invalid!");
+      return -2;
+      }
     this->mGlmFitResults = glmFitResults;
     
     if( iGlmDesign->GetProgressUpdateGUI() )
       {
-    iGlmDesign->GetProgressUpdateGUI()->EndActionWithProgress();
+      iGlmDesign->GetProgressUpdateGUI()->EndActionWithProgress();
       }
-
-  } 
+    }
   else 
     {
     // =======================================================================
@@ -257,17 +262,77 @@ int QdecGlmFit::Run ( QdecGlmDesign* iGlmDesign )
                              fnFsgdFile );
     
     // Check it.
-    assert( glmFitResults );
+    if (!glmFitResults)
+      {
+      fprintf(stderr,"\nERROR: QdecGlmFit::Run: Unable to load demo data");
+      return -3;
+      }
 
     // Make it ours.
     this->mGlmFitResults = glmFitResults;
-    
+
+    // return a code to advertise that loaded demo data
+    return 1;
     // =======================================================================
     }
+return 0;
+}
 
+int QdecGlmFit::CreateResultsFromCachedData ( QdecGlmDesign* iGlmDesign )
+{
+
+  // Build contrast filenames from our contrast names.
+  vector<string> lContrastNames = iGlmDesign->GetContrastNames();
+  vector<string> lfnSigFiles;
+  vector<string>::iterator tContrastName;
+  for( tContrastName = lContrastNames.begin();
+       tContrastName != lContrastNames.end(); ++tContrastName )
+    {
+
+    // Build the name.
+    string fnSigFile = iGlmDesign->GetWorkingDir();
+    fnSigFile += "/";
+    fnSigFile += *tContrastName;
+    fnSigFile += "/sig.mgh";
+
+    // Check if it exists and is readable.
+    ifstream fInput( fnSigFile.c_str(), std::ios::in );
+    if( !fInput || fInput.bad() )
+      throw runtime_error( string("Couldn't open file " ) + fnSigFile );
+
+    lfnSigFiles.push_back( fnSigFile );
+    }
+
+  // Make our other filenames.
+  string fnContrastsOutput;
+  fnContrastsOutput = iGlmDesign->GetWorkingDir();
+  fnContrastsOutput += "/contrasts.sig.mgh";
+
+  string fnResidualErrorStdDevFile = iGlmDesign->GetWorkingDir();
+  fnResidualErrorStdDevFile += "/rstd.mgh";
+
+  string fnRegressionCoefficientsFile = iGlmDesign->GetWorkingDir();
+  fnRegressionCoefficientsFile += "/beta.mgh";
+
+  string fnFsgdFile = iGlmDesign->GetWorkingDir();
+  fnFsgdFile += "/y.fsgd";
+
+  // Now write the result information to a GlmFitResults object
+  QdecGlmFitResults* glmFitResults =
+    new QdecGlmFitResults( iGlmDesign,
+                           lfnSigFiles,
+                           fnContrastsOutput,
+                           fnResidualErrorStdDevFile,
+                           fnRegressionCoefficientsFile,
+                           fnFsgdFile );
+  assert( glmFitResults );
+
+  delete this->mGlmFitResults;
+  this->mGlmFitResults = glmFitResults;
 
   return 0;
 }
+
 
 
 /**

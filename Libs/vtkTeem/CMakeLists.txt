@@ -16,8 +16,21 @@ SET(vtkTeem_SRCS
   vtkNRRDReader.cxx
   vtkNRRDWriter.cxx
   vtkDiffusionTensorMathematics.cxx
+  vtkDiffusionTensorMathematicsSimple.cxx
   vtkTeemEstimateDiffusionTensor.cxx
   vtkDiffusionTensorGlyph.cxx
+  vtkPolyDataTensorToColor.cxx
+
+  vtkBSplineInterpolateImageFunction.cxx
+  vtkHyperPointandArray.cxx
+  vtkHyperStreamlineDTMRI.cxx
+  vtkHyperStreamlineTeem.cxx
+  vtkPreciseHyperStreamline.cxx
+  vtkPreciseHyperStreamlinePoints.cxx
+  vtkSeedTracts.cxx
+  vtkTensorImplicitFunctionToFunctionSet.cxx
+  vtkTractographyPointAndArray.cxx
+  vtkTensorMask.cxx
 )
 
 # Abstract/pure virtual classes
@@ -28,9 +41,11 @@ SET(vtkTeem_SRCS
 
 # Helper classes
 
-#SET_SOURCE_FILES_PROPERTIES(
-#  WRAP_EXCLUDE
-#  )
+SET_SOURCE_FILES_PROPERTIES(
+  vtkHyperPointandArray.cxx
+  vtkTractographyPointAndArray.cxx
+  WRAP_EXCLUDE
+  )
 
 # --------------------------------------------------------------------------
 # Include dirs
@@ -59,7 +74,10 @@ ADD_LIBRARY(vtkTeem
 
 IF(Slicer3_SOURCE_DIR)
   IF(BUILD_SHARED_LIBS)
-  INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} vtkTeem)
+  INSTALL(TARGETS vtkTeem
+      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib COMPONENT Development)
   ENDIF(BUILD_SHARED_LIBS)
 ENDIF(Slicer3_SOURCE_DIR)
 
@@ -77,7 +95,7 @@ ENDIF ( ${TEEM_VERSION_MAJOR} GREATER 1 )
 TARGET_LINK_LIBRARIES(vtkTeem 
   vtkCommon
   vtkFiltering
-  vtkImaging
+  vtkImagingTCL
   vtkIOTCL
   vtkGraphicsTCL
   ${TEEM_LIBRARIES}

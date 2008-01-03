@@ -23,9 +23,12 @@ SET(TCLFILES
   pkgIndex.tcl
   Editor.tcl EditorNode.tcl EditorLogic.tcl EditorGUI.tcl
   Box.tcl EditBox.tcl EditColor.tcl ColorBox.tcl
-  PaintSWidget.tcl DrawSWidget.tcl
-  EffectSWidget.tcl
+  PaintEffect.tcl DrawEffect.tcl
+  EffectSWidget.tcl Labeler.tcl
   SaveIslandEffect.tcl ThresholdEffect.tcl RemoveIslandsEffect.tcl
+  LevelTracingEffect.tcl
+  ImplicitRectangleEffect.tcl
+  WandEffect.tcl
   ChangeIslandEffect.tcl ChangeLabelEffect.tcl
 )
 
@@ -46,6 +49,8 @@ ChangeIsland.png ChangeIslandDisabled.png ChangeIslandSelected.png
 ChangeLabel.png ChangeLabelDisabled.png ChangeLabelSelected.png
 ChooseColor.png ChooseColorDisabled.png ChooseColorSelected.png
 ConnectedComponents.png ConnectedComponentsDisabled.png ConnectedComponentsSelected.png
+LevelTracing.png LevelTracingDisabled.png LevelTracingSelected.png
+Wand.png WandDisabled.png WandSelected.png
 DeleteFiducials.png DeleteFiducialsDisabled.png DeleteFiducialsSelected.png
 RemoveIslands.png RemoveIslandsDisabled.png RemoveIslandsSelected.png
 DilateLabel.png DilateLabelDisabled.png DilateLabelSelected.png
@@ -53,7 +58,7 @@ EraseLabel.png EraseLabelDisabled.png EraseLabelSelected.png
 ErodeLabel.png ErodeLabelDisabled.png ErodeLabelSelected.png
 FiducialVisibilityOff.png FiducialVisibilityOffDisabled.png FiducialVisibilityOffSelected.png
 FiducialVisibilityOn.png FiducialVisibilityOnDisabled.png FiducialVisibilityOnSelected.png
-FreehandDrawLabel.png FreehandDrawLabelDisabled.png FreehandDrawLabelSelected.png
+Draw.png DrawDisabled.png DrawSelected.png
 GoToEditorModule.png GoToEditorModuleDisabled.png GoToEditorModuleSelected.png
 IdentifyIslands.png IdentifyIslandsDisabled.png IdentifyIslandsSelected.png
 ImplicitCube.png ImplicitCubeDisabled.png ImplicitCubeSelected.png
@@ -65,7 +70,7 @@ LabelVisibilityOn.png LabelVisibilityOnDisabled.png LabelVisibilityOnSelected.pn
 LabelVisibilityOff.png LabelVisibilityOffDisabled.png LabelVisibilityOffSelected.png
 MakeModel.png MakeModelDisabled.png MakeModelSelected.png
 NextFiducial.png NextFiducialDisabled.png NextFiducialSelected.png
-PaintLabel.png PaintLabelDisabled.png PaintLabelSelected.png
+Paint.png PaintSelected.png PaintDisabled.png
 PinOpen.png PinOpenDisabled.png PinOpenSelected.png
 PreviousFiducial.png PreviousFiducialDisabled.png PreviousFiducialSelected.png
 SaveIsland.png SaveIslandDisabled.png SaveIslandSelected.png

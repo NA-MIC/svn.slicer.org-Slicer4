@@ -165,9 +165,10 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
     this->RunSegmentationSaveFrame->Create();
     this->RunSegmentationSaveFrame->SetLabelText("Save");
     }
-  this->Script(
-    "pack %s -side top -anchor nw -fill x -padx 0 -pady 2", 
-    this->RunSegmentationSaveFrame->GetWidgetName());
+  // disable this frame for now, it is not currently useful
+  //   this->Script(
+  //     "pack %s -side top -anchor nw -fill x -padx 0 -pady 2", 
+  //     this->RunSegmentationSaveFrame->GetWidgetName());
   
   // Create the "save after segmentation" checkbutton
 
@@ -329,9 +330,10 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
       GetWidget()->SetCommand(this, "GenerateSurfaceModelsCallback");
     }
 
-  this->Script(
-    "pack %s -side top -anchor nw -padx 2 -pady 2", 
-    this->RunSegmentationGenerateSurfaceCheckButton->GetWidgetName());
+  // disable for now, not used and confusing
+  //   this->Script(
+  //     "pack %s -side top -anchor nw -padx 2 -pady 2", 
+  //     this->RunSegmentationGenerateSurfaceCheckButton->GetWidgetName());
   
   this->RunSegmentationGenerateSurfaceCheckButton->
     GetWidget()->SetSelectedState(
@@ -393,7 +395,7 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
     {
     this->RunSegmentationOutputFrame->SetParent(parent);
     this->RunSegmentationOutputFrame->Create();
-    this->RunSegmentationOutputFrame->SetLabelText("Output Volume");
+    this->RunSegmentationOutputFrame->SetLabelText("Output Labelmap");
     }
   this->Script(
     "pack %s -side top -anchor nw -fill x -padx 0 -pady 2", 
@@ -408,17 +410,20 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
   if (!this->RunSegmentationOutVolumeSelector->IsCreated())
     {
     this->RunSegmentationOutVolumeSelector->SetNodeClass(
-      "vtkMRMLScalarVolumeNode", NULL, NULL, "EMSVolumeOut");
+      "vtkMRMLScalarVolumeNode", 
+      "LabelMap", "1", 
+      "EM Segmentation");
     this->RunSegmentationOutVolumeSelector->SetNewNodeEnabled(1);
     this->RunSegmentationOutVolumeSelector->SetParent(
       this->RunSegmentationOutputFrame->GetFrame());
     this->RunSegmentationOutVolumeSelector->Create();
-    this->RunSegmentationOutVolumeSelector->SetMRMLScene(mrmlManager->GetMRMLScene());
+    this->RunSegmentationOutVolumeSelector->
+      SetMRMLScene(mrmlManager->GetMRMLScene());
 
     this->RunSegmentationOutVolumeSelector->SetBorderWidth(2);
-    this->RunSegmentationOutVolumeSelector->SetLabelText( "Output Volume: ");
+    this->RunSegmentationOutVolumeSelector->SetLabelText( "Output Labelmap: ");
     this->RunSegmentationOutVolumeSelector->SetBalloonHelpString(
-      "select an output volume from the current mrml scene.");
+      "select an output labelmap from the current mrml scene.");
     }
   this->RunSegmentationOutVolumeSelector->UpdateMenu();
   if(mrmlManager->GetOutputVolumeMRMLID())
@@ -427,6 +432,10 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
       this->RunSegmentationOutVolumeSelector->GetMRMLScene()->
       GetNodeByID(mrmlManager->GetOutputVolumeMRMLID()));
     }
+
+  this->RunSegmentationOutVolumeSelector->SetEnabled(
+    mrmlManager->HasGlobalParametersNode() ? enabled : 0);
+
   this->Script(
     "pack %s -side top -anchor nw -padx 2 -pady 2", 
     this->RunSegmentationOutVolumeSelector->GetWidgetName());
@@ -450,47 +459,6 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
     "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
     this->RunSegmentationROIFrame->GetWidgetName());
 
-  // Create Max boundary matrix
-
-  if (!this->RunSegmentationROIMaxMatrix)
-    {
-    this->RunSegmentationROIMaxMatrix = 
-      vtkKWMatrixWidgetWithLabel::New();
-    }
-  if (!this->RunSegmentationROIMaxMatrix->IsCreated())
-    {
-    this->RunSegmentationROIMaxMatrix->SetParent(
-      this->RunSegmentationROIFrame->GetFrame());
-    this->RunSegmentationROIMaxMatrix->Create();
-    this->RunSegmentationROIMaxMatrix->SetLabelText("Max (i,j,k):");
-    this->RunSegmentationROIMaxMatrix->SetLabelPositionToLeft();
-    this->RunSegmentationROIMaxMatrix->ExpandWidgetOff();
-    this->RunSegmentationROIMaxMatrix->GetLabel()->
-      SetWidth(EMSEG_WIDGETS_LABEL_WIDTH - 16);
-    this->RunSegmentationROIMaxMatrix->SetBalloonHelpString(
-      "Set the segmentation boundary max.");
-    
-    vtkKWMatrixWidget *matrix = 
-      this->RunSegmentationROIMaxMatrix->GetWidget();
-    matrix->SetNumberOfColumns(3);
-    matrix->SetNumberOfRows(1);
-    matrix->SetElementWidth(4);
-    matrix->SetRestrictElementValueToInteger();
-    matrix->SetElementChangedCommand(
-      this, "RunSegmentationROIMaxChangedCallback");
-    matrix->SetElementChangedCommandTriggerToAnyChange();
-    }
-  vtkKWMatrixWidget *maxMatrix = 
-    this->RunSegmentationROIMaxMatrix->GetWidget();
-  int ijk[3] = {0, 0, 0};
-  mrmlManager->GetSegmentationBoundaryMax(ijk);
-  this->PopulateSegmentationROIMatrix(maxMatrix, ijk);
-
-  this->Script("pack %s -side left -anchor nw -padx 2 -pady 2",
-               this->RunSegmentationROIMaxMatrix->GetWidgetName());
-  this->RunSegmentationROIMaxMatrix->SetEnabled(
-    mrmlManager->HasGlobalParametersNode() ? enabled : 0);
-
   // Create Min boundary matrix
 
   if (!this->RunSegmentationROIMinMatrix)
@@ -509,7 +477,7 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
     this->RunSegmentationROIMinMatrix->GetLabel()->
       SetWidth(EMSEG_WIDGETS_LABEL_WIDTH - 18);
     this->RunSegmentationROIMinMatrix->SetBalloonHelpString(
-      "Set the segmentation boundary min.");
+      "Set the segmentation boundary min.  By default the entire image is used.");
     
     vtkKWMatrixWidget *matrix = 
       this->RunSegmentationROIMinMatrix->GetWidget();
@@ -523,12 +491,53 @@ void vtkEMSegmentRunSegmentationStep::ShowUserInterface()
     }
   vtkKWMatrixWidget *minMatrix = 
     this->RunSegmentationROIMinMatrix->GetWidget();
+  int ijk[3] = {0, 0, 0};
   mrmlManager->GetSegmentationBoundaryMin(ijk);
   this->PopulateSegmentationROIMatrix(minMatrix, ijk);
 
-  this->Script("pack %s -side right -anchor nw -padx 2 -pady 2",
+  this->Script("pack %s -side left -anchor nw -padx 2 -pady 2",
                this->RunSegmentationROIMinMatrix->GetWidgetName());
   this->RunSegmentationROIMinMatrix->SetEnabled(
+    mrmlManager->HasGlobalParametersNode() ? enabled : 0);
+
+  // Create Max boundary matrix
+
+  if (!this->RunSegmentationROIMaxMatrix)
+    {
+    this->RunSegmentationROIMaxMatrix = 
+      vtkKWMatrixWidgetWithLabel::New();
+    }
+  if (!this->RunSegmentationROIMaxMatrix->IsCreated())
+    {
+    this->RunSegmentationROIMaxMatrix->SetParent(
+      this->RunSegmentationROIFrame->GetFrame());
+    this->RunSegmentationROIMaxMatrix->Create();
+    this->RunSegmentationROIMaxMatrix->SetLabelText("Max (i,j,k):");
+    this->RunSegmentationROIMaxMatrix->SetLabelPositionToLeft();
+    this->RunSegmentationROIMaxMatrix->ExpandWidgetOff();
+    this->RunSegmentationROIMaxMatrix->GetLabel()->
+      SetWidth(EMSEG_WIDGETS_LABEL_WIDTH - 16);
+    this->RunSegmentationROIMaxMatrix->SetBalloonHelpString(
+      "Set the segmentation boundary max.  By default the entire image is used.");
+    
+    vtkKWMatrixWidget *matrix = 
+      this->RunSegmentationROIMaxMatrix->GetWidget();
+    matrix->SetNumberOfColumns(3);
+    matrix->SetNumberOfRows(1);
+    matrix->SetElementWidth(4);
+    matrix->SetRestrictElementValueToInteger();
+    matrix->SetElementChangedCommand(
+      this, "RunSegmentationROIMaxChangedCallback");
+    matrix->SetElementChangedCommandTriggerToAnyChange();
+    }
+  vtkKWMatrixWidget *maxMatrix = 
+    this->RunSegmentationROIMaxMatrix->GetWidget();
+  mrmlManager->GetSegmentationBoundaryMax(ijk);
+  this->PopulateSegmentationROIMatrix(maxMatrix, ijk);
+
+  this->Script("pack %s -side right -anchor nw -padx 2 -pady 2",
+               this->RunSegmentationROIMaxMatrix->GetWidgetName());
+  this->RunSegmentationROIMaxMatrix->SetEnabled(
     mrmlManager->HasGlobalParametersNode() ? enabled : 0);
 
   // Create the run frame

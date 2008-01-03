@@ -97,7 +97,12 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   //BTX
   static const char *ConfirmDeleteRegKey;
   static const char *ModulePathRegKey;
+  static const char *ModuleCachePathRegKey;
   static const char *TemporaryDirectoryRegKey;
+  static const char *WebBrowserRegKey;
+  static const char *UnzipRegKey;
+  static const char *ZipRegKey;
+  static const char *RmRegKey;
   static const char *HomeModuleRegKey;
   static const char *LoadCommandLineModulesRegKey;
   static const char *EnableDaemonRegKey;
@@ -131,9 +136,31 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   const char* GetModulePath() const;
 
   // Description:
+  // Set/Get the cache path for modules.
+  void SetModuleCachePath(const char *path);
+  const char* GetModuleCachePath() const;
+  
+  // Description:
   // Set/Get a user's home module.
   void SetHomeModule (const char *name);
   const char *GetHomeModule() const;
+  
+  // Description:
+  // Set/Get an executable firefox browser for modules that need one.
+  void SetWebBrowser ( const char *browser);
+  const char* GetWebBrowser () const;
+
+  // Descriptin:
+  // Set/Get an executable zip and unzip for modules that need one
+  void SetUnzip ( const char *unzip );
+  const char *GetUnzip() const;
+  void SetZip (const char *zip);
+  const char *GetZip() const;
+
+  // Description:
+  // Set/Get an executable rm for modules that need one
+  void SetRm ( const char *rm );
+  const char *GetRm() const;
   
   // Description:
   // Set/Get a directory for temporary file storage
@@ -228,9 +255,19 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   vtkGetMacro (UseSplashScreen, int);
 
   // Description:
+  // Control stereo render capability
+  vtkSetMacro (StereoEnabled, int);
+  vtkGetMacro (StereoEnabled, int);
+  
+  // Description:
   // Control the state of the splash screen
   void SplashMessage (const char * message);
 
+  // Description:
+  // Entry point to the interpreter that can be used 
+  // by an external application tro trigger
+  // performance analysis
+  const char *TraceScript (const char * script) {return (this->Script(script));};
 
  protected:
   vtkSlicerApplication ( );
@@ -250,6 +287,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   
   char ConfirmDelete[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char ModulePath[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char ModuleCachePath[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char WebBrowser [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
+  char Unzip [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
+  char Zip [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
+  char Rm [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
   char TemporaryDirectory[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char HomeModule [ vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char ApplicationFontSize [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
@@ -284,6 +326,7 @@ private:
   static vtkSlicerApplication* Instance;
 
   int UseSplashScreen;
+  int StereoEnabled;
 }; 
 
 #endif

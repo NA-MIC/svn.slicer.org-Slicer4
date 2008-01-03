@@ -329,7 +329,8 @@ void vtkEMSegmentAnatomicalStructureStep::DisplaySelectedNodeAnatomicalAttribute
       {
       vtksys_stl::string name(tree->GetNodeText(sel_node.c_str()));
       this->AnatomicalNodeAttributeNameEntry->SetEnabled(enabled);
-      sprintf(buffer, "SelectedNodeNameChangedCallback %d", sel_vol_id);
+      sprintf(buffer, "SelectedNodeNameChangedCallback %d", 
+              static_cast<int>(sel_vol_id));
       entry->SetCommand(this, buffer);
       entry->SetValue(name.c_str());
       }
@@ -351,7 +352,8 @@ void vtkEMSegmentAnatomicalStructureStep::DisplaySelectedNodeAnatomicalAttribute
       int intLabel = mrmlManager->GetTreeNodeIntensityLabel(sel_vol_id);
       this->AnatomicalNodeIntensityLabelEntry->SetEnabled(enabled);
       sprintf(buffer, 
-              "SelectedNodeIntensityLabelChangedCallback %d", sel_vol_id);
+              "SelectedNodeIntensityLabelChangedCallback %d", 
+              static_cast<int>(sel_vol_id));
       entry->SetCommand(this, buffer);
       entry->SetValueAsInt(intLabel);
       this->Script("pack %s -side top -anchor nw -padx 2 -pady 2", 
@@ -374,20 +376,29 @@ void vtkEMSegmentAnatomicalStructureStep::DisplaySelectedNodeAnatomicalAttribute
     if (has_valid_selection && sel_is_leaf_node)
       {
       this->AnatomicalNodeAttributeColorButton->SetEnabled(enabled);
-      sprintf(buffer, "SelectedNodeColorChangedCallback %d", sel_vol_id);
+      sprintf(buffer, "SelectedNodeColorChangedCallback %d", 
+              static_cast<int>(sel_vol_id));
       this->AnatomicalNodeAttributeColorButton->SetCommand(this, buffer);
       double rgb[3] = { 0.5, 0.5, 0.5 };
       mrmlManager->GetTreeNodeColor(sel_vol_id, rgb);
       this->AnatomicalNodeAttributeColorButton->SetColor(rgb);
-      this->Script("pack %s -side top -anchor nw -padx 2 -pady 2", 
-                   this->AnatomicalNodeAttributeColorButton->GetWidgetName());
+
+      //
+      // We hide the color button for now because the color that is
+      // selected here is not the color that is displayed for the
+      // segmentation later.  Colors are dealt with using the colormap
+      // mechanism and that functionality should be integrated here at
+      // some point.
+      //this->Script("pack %s -side top -anchor nw -padx 2 -pady 2", 
+      //             this->AnatomicalNodeAttributeColorButton->GetWidgetName());
       }
     else
       {
       this->AnatomicalNodeAttributeColorButton->SetEnabled(0);
       this->AnatomicalNodeAttributeColorButton->SetCommand(NULL, NULL);
-      this->Script("pack forget %s", 
-                   this->AnatomicalNodeAttributeColorButton->GetWidgetName());
+      // see comment just above
+      //this->Script("pack forget %s", 
+      //             this->AnatomicalNodeAttributeColorButton->GetWidgetName());
       }
     }
 }
@@ -592,11 +603,11 @@ void vtkEMSegmentAnatomicalStructureStep::PopupNodeContextMenuCallback(
     }
 
   this->ContextMenu->DeleteAllItems();
-  sprintf(buffer, "AddChildNodeCallback %d", vol_id);
+  sprintf(buffer, "AddChildNodeCallback %d", static_cast<int>(vol_id));
   this->ContextMenu->AddCommand("Add sub-class", this, buffer);
   if (strcmp(node, "root_node"))
     {
-    sprintf(buffer, "DeleteNodeCallback %d", vol_id);
+    sprintf(buffer, "DeleteNodeCallback %d", static_cast<int>(vol_id));
     this->ContextMenu->AddCommand("Delete sub-class", this, buffer);
     }
 
@@ -635,7 +646,7 @@ void vtkEMSegmentAnatomicalStructureStep::AddChildNodeCallback(vtkIdType sel_vol
     tree->FindNodeWithUserDataAsInt(NULL, sel_vol_id));
   char child_node[256];
   vtkIdType child_id = mrmlManager->AddTreeNode(sel_vol_id);
-  sprintf(child_node, "node_%d", child_id);
+  sprintf(child_node, "node_%d", static_cast<int>(child_id));
   tree->AddNode(sel_node.c_str(), child_node, child_node);
   tree->SetNodeUserDataAsInt(child_node, child_id); 
   tree->OpenNode(sel_node.c_str());

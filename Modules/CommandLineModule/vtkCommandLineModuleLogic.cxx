@@ -39,9 +39,9 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLFiberBundleNode.h"
 #include "vtkMRMLFiberBundleStorageNode.h"
 
-#ifdef USE_TEEM // If we have NRRD support
 #include "vtkMRMLNRRDStorageNode.h"
-#endif
+#include "vtkMRMLColorTableStorageNode.h"
+#include "vtkMRMLModelHierarchyNode.h"
 
 #include "itksys/Process.h"
 #include "itksys/SystemTools.hxx"
@@ -89,6 +89,7 @@ vtkCommandLineModuleLogic* vtkCommandLineModuleLogic::New()
 vtkCommandLineModuleLogic::vtkCommandLineModuleLogic()
 {
   this->CommandLineModuleNode = NULL;
+  this->DeleteTemporaryFiles = 1;
 }
 
 //----------------------------------------------------------------------------
@@ -270,6 +271,19 @@ vtkCommandLineModuleLogic
       }
     fname = fname + ext;
     }
+
+  if (tag == "table")
+    {
+    // tables are currently always passed via files
+
+    // Use default fname construction, tack on extension
+    std::string ext = ".ctbl";
+    if (extensions.size() != 0)
+      {
+      ext = extensions[0];
+      }
+    fname = fname + ext;
+    }
   
     
   return fname;
@@ -278,7 +292,27 @@ vtkCommandLineModuleLogic
 
 void vtkCommandLineModuleLogic::Apply()
 {
+  this->Apply ( this->CommandLineModuleNode );
+}
+
+void vtkCommandLineModuleLogic::ApplyAndWait ( vtkMRMLCommandLineModuleNode* node )
+{
+  // Just execute and wait.
+  node->Register(this);
+  vtkCommandLineModuleLogic::ApplyTask ( node );
+}
+
+void vtkCommandLineModuleLogic::Apply ( vtkMRMLCommandLineModuleNode* node )
+{
   bool ret;
+
+  if ( node->GetModuleDescription().GetType() == "PythonModule" )
+    {
+    this->ApplyAndWait ( node );
+    return;
+    }
+
+
   vtkSlicerTask* task = vtkSlicerTask::New();
 
   // Pass the current node as client data to the task.  This allows
@@ -287,12 +321,12 @@ void vtkCommandLineModuleLogic::Apply()
   // task does run, it will operate on the correct node.
   task->SetTaskFunction(this, (vtkSlicerTask::TaskFunctionPointer)
                         &vtkCommandLineModuleLogic::ApplyTask,
-                        this->CommandLineModuleNode);
+                        node);
   
   // Client data on the task is just a regular pointer, up the
   // reference count on the node, we'll decrease the reference count
   // once the task actually runs
-  this->CommandLineModuleNode->Register(this);
+  node->Register(this);
   
   // Schedule the task
   ret = this->GetApplicationLogic()->ScheduleTask( task );
@@ -303,13 +337,12 @@ void vtkCommandLineModuleLogic::Apply()
     }
   else
     {
-    this->CommandLineModuleNode
-      ->SetStatus(vtkMRMLCommandLineModuleNode::Scheduled);
+      node->SetStatus(vtkMRMLCommandLineModuleNode::Scheduled);
     }
   
   task->Delete();
-}
 
+}
 
 //
 // This routine is called in a separate thread from the main thread.
@@ -329,7 +362,6 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
     }
 
   vtkMRMLCommandLineModuleNode *node = reinterpret_cast<vtkMRMLCommandLineModuleNode*>(clientdata);
-
 
   // Check to see if this node/task has been cancelled
   if (node->GetStatus() == vtkMRMLCommandLineModuleNode::Cancelled)
@@ -409,33 +441,43 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
   std::set<std::string> filesToDelete;
 
   // iterators for parameter groups
-  std::vector<ModuleParameterGroup>::const_iterator pgbeginit
+  std::vector<ModuleParameterGroup>::iterator pgbeginit
     = node->GetModuleDescription().GetParameterGroups().begin();
-  std::vector<ModuleParameterGroup>::const_iterator pgendit
+  std::vector<ModuleParameterGroup>::iterator pgendit
     = node->GetModuleDescription().GetParameterGroups().end();
-  std::vector<ModuleParameterGroup>::const_iterator pgit;
+  std::vector<ModuleParameterGroup>::iterator pgit;
 
   
   // Make a pass over the parameters and establish which parameters
-  // have images or geometry or transforms that need to be written
+  // have images or geometry or transforms or tables that need to be written
   // before execution or loaded upon completion.
   for (pgit = pgbeginit; pgit != pgendit; ++pgit)
     {
     // iterate over each parameter in this group
-    std::vector<ModuleParameter>::const_iterator pbeginit
+    std::vector<ModuleParameter>::iterator pbeginit
       = (*pgit).GetParameters().begin();
-    std::vector<ModuleParameter>::const_iterator pendit
+    std::vector<ModuleParameter>::iterator pendit
       = (*pgit).GetParameters().end();
-    std::vector<ModuleParameter>::const_iterator pit;
+    std::vector<ModuleParameter>::iterator pit;
 
     for (pit = pbeginit; pit != pendit; ++pit)
       {
       if ((*pit).GetTag() == "image" || (*pit).GetTag() == "geometry"
-        || (*pit).GetTag() == "transform" )
+          || (*pit).GetTag() == "transform" || (*pit).GetTag() == "table")
         {
+        std::string id = (*pit).GetDefault();
+
+        // if the parameter is hidden, then deduce its value/id
+        if ((*pit).GetHidden() == "true")
+          {
+          id = this->FindHiddenNodeID(node->GetModuleDescription(), *pit);
+
+          // cache the id so we don't have to look for it later
+          (*pit).SetDefault( id );
+          }
+        
         // only keep track of objects associated with real nodes
-        if (!this->MRMLScene->GetNodeByID((*pit).GetDefault().c_str())
-            || (*pit).GetDefault() == "None")
+        if (!this->MRMLScene->GetNodeByID(id.c_str()) || id == "None")
           {
           continue;
           }
@@ -443,7 +485,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
         std::string fname
           = this->ConstructTemporaryFileName((*pit).GetTag(),
                                              (*pit).GetType(),
-                                             (*pit).GetDefault(),
+                                             id,
                                              (*pit).GetFileExtensions(),
                                              commandType);
 
@@ -451,11 +493,11 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
 
         if ((*pit).GetChannel() == "input")
           {
-          nodesToWrite[(*pit).GetDefault()] = fname;
+          nodesToWrite[id] = fname;
           }
         else if ((*pit).GetChannel() == "output")
           {
-          nodesToReload[(*pit).GetDefault()] = fname;
+          nodesToReload[id] = fname;
           }
         }
       }
@@ -488,7 +530,12 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       = vtkMRMLFiberBundleNode::SafeDownCast(nd);
     vtkMRMLTransformNode *tnd
       = vtkMRMLTransformNode::SafeDownCast(nd);
+    vtkMRMLColorTableNode *ctnd
+      = vtkMRMLColorTableNode::SafeDownCast(nd);
+    vtkMRMLModelHierarchyNode *mhnd
+      = vtkMRMLModelHierarchyNode::SafeDownCast(nd);
 
+    
     vtkMRMLStorageNode *out = 0;
 
     // Determine if and how a node is to be written.  If we update the
@@ -534,6 +581,32 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       // Keep track what scene node corresponds to what miniscene node
       sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
       }
+    else if (ctnd)
+      {
+      // always write out color table nodes
+      out = vtkMRMLColorTableStorageNode::New();
+      }
+    else if (mhnd)
+      {
+      // model hierarchy nodes need to get put in a scene
+      vtkMRMLNode *cp = miniscene->CopyNode(nd);
+
+      // keep track of scene node corresponds to what the miniscene node
+      sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+
+      // also add any display node
+      vtkMRMLDisplayNode *dnd = mhnd->GetDisplayNode();
+      if (dnd)
+        {
+        vtkMRMLNode *dcp = miniscene->CopyNode(dnd);
+
+        vtkMRMLModelHierarchyNode *mhcp
+          = vtkMRMLModelHierarchyNode::SafeDownCast(cp);
+        vtkMRMLDisplayNode *d = vtkMRMLDisplayNode::SafeDownCast(dcp);
+        
+        mhcp->SetAndObserveDisplayNodeID( d->GetID() );
+        }
+      }
 
     // if the file is to be written, then write it
     if (out)
@@ -559,14 +632,42 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
     
     vtkMRMLTransformNode *tnd
       = vtkMRMLTransformNode::SafeDownCast(nd);
+    vtkMRMLModelHierarchyNode *mhnd
+      = vtkMRMLModelHierarchyNode::SafeDownCast(nd);
   
-    if (tnd)
+    if (tnd || mhnd)
       {
       // always put transform nodes in the miniscene
       vtkMRMLNode *cp = miniscene->CopyNode(nd);
       
       // Keep track what scene node corresponds to what miniscene node
       sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+      }
+    else if (mhnd)
+      {
+      // always put model hierarchy nodes in the miniscene
+      vtkMRMLNode *cp = miniscene->CopyNode(nd);
+      
+      // Keep track what scene node corresponds to what miniscene node
+      sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+
+      // try casting to a DisplayableNode, if successful, add the
+      // display node if there is one
+      vtkMRMLDisplayableNode *dable = vtkMRMLDisplayableNode::SafeDownCast(nd);
+      if (dable)
+        {
+        vtkMRMLDisplayNode *dnd = dable->GetDisplayNode();
+        if (dnd)
+          {
+          vtkMRMLNode *dcp = miniscene->CopyNode(dnd);
+
+          vtkMRMLDisplayableNode *dablecp
+            = vtkMRMLDisplayableNode::SafeDownCast(cp);
+          vtkMRMLDisplayNode *d = vtkMRMLDisplayNode::SafeDownCast(dcp);
+
+          dablecp->SetAndObserveDisplayNodeID( d->GetID() );
+          }
+        }
       }
     }
   
@@ -638,7 +739,8 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
             && (*pit).GetTag() != "point"
             && (*pit).GetTag() != "region"
             && (*pit).GetTag() != "transform"
-            && (*pit).GetTag() != "geometry")
+            && (*pit).GetTag() != "geometry"
+            && (*pit).GetTag() != "table")
           {
           // simple parameter, write flag and value
           commandLineAsString.push_back(prefix + flag);
@@ -647,15 +749,19 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
           }
         if ((*pit).GetTag() == "boolean")
           {
-          // booleans only have a flag (no value)
-          if ((*pit).GetDefault() == "true")
+          // booleans only have a flag (no value) in non-Python modules
+          if ( commandType != PythonModule )
             {
-            commandLineAsString.push_back(prefix + flag);
+            if ((*pit).GetDefault() == "true")
+              {
+              commandLineAsString.push_back(prefix + flag);
+              }
             }
-          if ( commandType == PythonModule )
+          else
             {
-            // For Python, if the flag is true, specify that
-            commandLineAsString.push_back ( "true" );
+            // For Python, if the flag is true or false, specify that
+            commandLineAsString.push_back ( prefix + flag );
+            commandLineAsString.push_back ( (*pit).GetDefault() );
             }
           continue;
           }
@@ -675,7 +781,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
           continue;
           }
         if ((*pit).GetTag() == "image" || (*pit).GetTag() == "geometry"
-            || (*pit).GetTag() == "transform")
+            || (*pit).GetTag() == "transform" || (*pit).GetTag() == "table")
           {
           std::string fname;
 
@@ -850,6 +956,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
     if ((*iit).second.GetTag() != "image"
         && (*iit).second.GetTag() != "geometry"
         && (*iit).second.GetTag() != "transform"
+        && (*iit).second.GetTag() != "table"
         && (*iit).second.GetTag() != "file"
         && (*iit).second.GetTag() != "directory"
         && (*iit).second.GetTag() != "string"
@@ -894,7 +1001,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       }
     else
       {
-      // image or geometry or transform index parameter
+      // image or geometry or transform or table index parameter
 
       std::string fname;
       
@@ -1261,7 +1368,9 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       std::cerr.rdbuf( cerrstringstream.rdbuf() );
 
       // run the module
-      (*entryPoint)(commandLineAsString.size(), command);
+      if ( entryPoint != NULL ) {
+        (*entryPoint)(commandLineAsString.size(), command);
+      }
 
       // report the output
       if (coutstringstream.str().size() > 0)
@@ -1418,7 +1527,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
         // now, he/she will still be looking at the node by the time the
         // data is reloaded by the main thread.
         bool displayData = false;
-        bool deleteFile = true;
+        bool deleteFile = this->GetDeleteTemporaryFiles();
         displayData = (node == this->GetCommandLineModuleNode());
         this->GetApplicationLogic()
           ->RequestReadData((*id2fn).first.c_str(), (*id2fn).second.c_str(),
@@ -1436,7 +1545,7 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
   if (miniscene->GetNumberOfNodes() > 0)
     {
     bool displayData = false;
-    bool deleteFile = true;
+    bool deleteFile = this->GetDeleteTemporaryFiles();
     displayData = (node == this->GetCommandLineModuleNode());
 
     // Convert the index map to two vectors so that we can pass it to
@@ -1471,24 +1580,28 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
 
   // Remove any remaining temporary files.  At this point, these files
   // should be the files written as inputs to the module
-  bool removed;
-  std::set<std::string>::iterator fit;
-  for (fit = filesToDelete.begin(); fit != filesToDelete.end(); ++fit)
+  if ( this->GetDeleteTemporaryFiles() )
     {
-    if (itksys::SystemTools::FileExists((*fit).c_str()))
+    bool removed;
+    std::set<std::string>::iterator fit;
+    for (fit = filesToDelete.begin(); fit != filesToDelete.end(); ++fit)
       {
-      removed = itksys::SystemTools::RemoveFile((*fit).c_str());
-      if (!removed)
+      if (itksys::SystemTools::FileExists((*fit).c_str()))
         {
-        std::stringstream information;
-        information << "Unable to delete temporary file " << *fit << std::endl;
-        vtkWarningMacro( << information.str().c_str() );
+        removed = itksys::SystemTools::RemoveFile((*fit).c_str());
+        if (!removed)
+          {
+          std::stringstream information;
+          information << "Unable to delete temporary file " << *fit << std::endl;
+          vtkWarningMacro( << information.str().c_str() );
+          }
         }
       }
     }
 
   // node was registered when the task was scheduled so unregister now
   node->UnRegister(this);
+  miniscene->Delete();
 
 }
 
@@ -1500,4 +1613,88 @@ void vtkCommandLineModuleLogic::ProgressCallback ( void *who )
   // All we need to do is tell the node that it was Modified.  The
   // shared object plugin modifies fields in the ProcessInformation directly.
   lnp->first->GetApplicationLogic()->RequestModified(lnp->second);
+}
+
+std::string
+vtkCommandLineModuleLogic::FindHiddenNodeID(const ModuleDescription& d,
+                                            const ModuleParameter& p)
+{
+  std::string id = "None";
+  
+  if (p.GetHidden() == "true")
+    {
+    if (p.GetReference().size() > 0)
+      {
+      std::string reference;
+      if (d.HasParameter(p.GetReference()))
+        {
+        reference = d.GetParameterDefaultValue(p.GetReference());
+
+        if (p.GetTag() == "table")
+          {
+          if (p.GetType() == "color")
+            {
+            // go to the display node for the reference parameter and
+            // get its color node 
+            vtkMRMLDisplayableNode *rn
+              = vtkMRMLDisplayableNode::SafeDownCast(this->MRMLScene
+                                            ->GetNodeByID(reference.c_str()));
+            if (rn)
+              {
+              vtkMRMLDisplayNode *dn = rn->GetDisplayNode();
+              if (dn)
+                {
+                // get the id of the color node
+                if (dn->GetColorNode())
+                  {
+                  id = dn->GetColorNode()->GetID();
+                  }
+                else
+                  {
+                  vtkErrorMacro(<< "Display node of the reference node does not have a color node. No value for \"table\" parameter.");
+                  }
+                }
+              else
+                {
+                vtkErrorMacro(<< "Reference node \"" << reference.c_str()
+                              << "\" does not have a display node which is needed to find the color node.");
+                }
+              }
+            else
+              {
+              vtkErrorMacro(<< "Reference node \"" << reference.c_str()
+                            << "\" does not exist in the scene.");
+              }
+            }
+          else
+            {
+            vtkErrorMacro(<< "Hidden \"table\" parameters must be of type \"color\"");
+            }
+          }
+        else
+          {
+          vtkErrorMacro(<< "Hidden parameters not supported on \""
+                        << p.GetType().c_str() << "\"");
+          }
+        }
+      else
+        {
+        vtkErrorMacro(<< "Reference parameter \"" << p.GetReference().c_str()
+                      << "\" not found.");
+        }
+      }
+    else
+      {
+      // no reference node
+      vtkErrorMacro(<< "Hidden parameter \"" << p.GetName().c_str()
+                    << "\" but no reference parameter.");
+      }
+    }
+  else
+    {
+    // not a hidden node, just return the default
+    id = p.GetDefault();
+    }
+
+  return id;
 }

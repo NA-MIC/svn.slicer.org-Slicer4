@@ -256,7 +256,12 @@ void vtkSlicerSliceGUI::ProcessLogicEvents ( vtkObject *caller,
     // sliceLogic contains the pipeline that create viewer's input, so
     // assume we need to set the image data and render
     vtkSlicerSliceViewer *sliceViewer = this->GetSliceViewer( );
-    sliceViewer->ChangeLayout( snode->GetLayoutGridRows(), snode->GetLayoutGridColumns() );
+
+    if (snode != NULL)
+      {
+      sliceViewer->ChangeLayout( snode->GetLayoutGridRows(), 
+                                 snode->GetLayoutGridColumns() );
+      }
 
     vtkKWRenderWidget *rw = sliceViewer->GetRenderWidget ();
     //sliceViewer->GetImageMapper()->SetInput ( sliceLogic->GetImageData( ) );
@@ -368,6 +373,11 @@ void vtkSlicerSliceGUI::BuildGUI ( vtkKWFrame *f, double *c )
       this->SliceViewer->SetApplication ( app );
       this->SliceViewer->SetParent ( this->SliceGUIFrame );
       this->SliceViewer->Create (  );
+
+      this->SliceGUIFrame
+        ->SetConfigurationOptionAsInt("-highlightthickness", 2);
+      this->SliceGUIFrame
+        ->SetConfigurationOptionAsColor("-highlightcolor", c[0], c[1], c[2]);
     }
 }
 

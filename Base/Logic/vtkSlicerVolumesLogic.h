@@ -30,6 +30,7 @@
 #include "vtkMRMLVolumeNode.h"
 
 class vtkMRMLScalarVolumeNode;
+class vtkMRMLScalarVolumeDisplayNode;
 class vtkMRMLVolumeHeaderlessStorageNode;
 
 class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic 
@@ -52,6 +53,11 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
   vtkMRMLVolumeNode* AddArchetypeVolume (const char* filename, int centerImage, int labelMap, const char* volname);
 
   // Description:
+  // Calculate good deafult viewing parameters 
+  static void CalculateAutoLevels(vtkImageData *imageData, vtkMRMLScalarVolumeDisplayNode *displayNode);
+  static void CalculateScalarAutoLevels(vtkImageData *imageData, vtkMRMLScalarVolumeDisplayNode *displayNode);
+
+  // Description:
   // Create new mrml node and associated storage node.
   // Read image data from a specified file
   vtkMRMLVolumeNode* AddHeaderVolume (const char* filename, int centerImage, int labelMap, const char* volname, 
@@ -68,7 +74,9 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
 
   // Description:
   // Create a deep copy of a volume and add it to the scene
-  vtkMRMLScalarVolumeNode *CloneVolume (vtkMRMLScene *scene, vtkMRMLVolumeNode *volumeNode, char *name);
+  vtkMRMLScalarVolumeNode *CloneVolume (vtkMRMLScene *scene, 
+                                        vtkMRMLVolumeNode *volumeNode, 
+                                        const char *name);
 
   // Description:
   // Update MRML events
@@ -80,6 +88,20 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
   virtual void ProcessLogicEvents ( vtkObject * /*caller*/, 
                                   unsigned long /*event*/, 
                                   void * /*callData*/ );  
+
+  // Description:
+  // Computes matrix we need to register
+  // V1Node to V2Node given the
+  // "register.dat" matrix from tkregister2 (FreeSurfer)
+  void TranslateFreeSurferRegistrationMatrixIntoSlicerRASToRASMatrix( vtkMRMLVolumeNode *V1Node,
+                             vtkMRMLVolumeNode *V2Node,
+                             vtkMatrix4x4 *FSRegistrationMatrix,
+                             vtkMatrix4x4 *ResultsMatrix);
+  // Description:
+  // Convenience method to compute
+  // a volume's Vox2RAS-tkreg Matrix
+  void ComputeTkRegVox2RASMatrix ( vtkMRMLVolumeNode *VNode,
+                                   vtkMatrix4x4 *M );
 
 protected:
   vtkSlicerVolumesLogic();
