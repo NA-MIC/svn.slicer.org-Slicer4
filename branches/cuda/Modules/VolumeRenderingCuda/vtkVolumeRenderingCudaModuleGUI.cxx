@@ -8,11 +8,13 @@
 #include "vtkMRMLScene.h"
 #include "vtkVolume.h"
 
+#include "vtkImageReader.h"
 #include "vtkPNGReader.h"
 #include "vtkImageViewer.h"
 
 #include "vtkVolumeCudaMapper.h"
-
+#include "vtkKWTypeChooserBox.h"
+#include "vtkKWMatrixWidget.h"
 
 vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
@@ -21,7 +23,10 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->CudaMapper = NULL;
     this->CudaActor = NULL;
     
+    this->ImageReader = NULL;
     this->ImageViewer = NULL;
+    this->InputTypeChooser = NULL;
+    this->InputResolutionMatrix = NULL;
 }
 
 
@@ -33,12 +38,14 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
         this->LoadButton->Delete();
         this->LoadButton = NULL; 
     }
+    
     if (this->CreatePiplineTestButton != NULL)
     {
       this->CreatePiplineTestButton->SetParent(NULL);
       this->CreatePiplineTestButton->Delete();
       this->CreatePiplineTestButton = NULL;  
     }
+    
     if (this->CudaMapper != NULL)
     {
        this->CudaMapper->Delete();
@@ -48,8 +55,23 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
       this->CudaActor->Delete();  
     }
     
+    if (this->ImageReader != NULL)
+     this->ImageReader->Delete();
+    
     if (this->ImageViewer != NULL)
       this->ImageViewer->Delete();
+    
+    DeleteWidget(this->InputTypeChooser);
+    DeleteWidget(this->InputResolutionMatrix);
+}
+
+void vtkVolumeRenderingCudaModuleGUI::DeleteWidget(vtkKWWidget* widget)
+{
+  if (widget != NULL)
+  {
+    widget->SetParent(NULL);
+      widget->Delete();
+  }
 }
 
 vtkVolumeRenderingCudaModuleGUI* vtkVolumeRenderingCudaModuleGUI::New()
@@ -98,6 +120,23 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->CreatePiplineTestButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
 
+
+    this->InputTypeChooser = vtkKWTypeChooserBox::New();
+    this->InputTypeChooser->SetParent(loadSaveDataFrame->GetFrame());
+    this->InputTypeChooser->Create();
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->InputTypeChooser->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
+  
+    this->InputResolutionMatrix = vtkKWMatrixWidget::New();
+    this->InputResolutionMatrix->SetParent(loadSaveDataFrame->GetFrame());
+    this->InputResolutionMatrix->Create();
+    this->InputResolutionMatrix->SetRestrictElementValueToInteger();
+    this->InputResolutionMatrix->SetNumberOfColumns(2);
+    this->InputResolutionMatrix->SetNumberOfRows(1);
+    this->InputResolutionMatrix->SetElementValueAsInt(0,0,256);
+    this->InputResolutionMatrix->SetElementValueAsInt(0,1,256);
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->InputResolutionMatrix->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
   
     ////Testing Pushbutton
     //this->PB_Testing= vtkKWPushButton::New();
@@ -196,12 +235,16 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
     this->LoadButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CreatePiplineTestButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
     this->LoadButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CreatePiplineTestButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->InputTypeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
@@ -233,7 +276,23 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
    {
       this->CreatePipelineTest();
    }
+   
+   
+   /// INPUT TYPE OR SIZE CHANGED CHANGED
+   if (caller == this->InputTypeChooser->GetMenu() || caller == this->InputResolutionMatrix)
+   {
+     cerr << "Type" << this->InputTypeChooser->GetSelectedName() << " " << this->InputTypeChooser->GetSelectedType() << 
+     " X:" << this->InputResolutionMatrix->GetElementValueAsInt(0,0) << 
+     " Y:" << this->InputResolutionMatrix->GetElementValueAsInt(0,1) << endl;
+     
+     TestCudaViewer();
+     this->ImageReader->SetDataScalarType(this->InputTypeChooser->GetSelectedType());
+     this->ImageReader->SetDataExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0), 0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 0, 1);
+     
+     this->ImageViewer->Render();
+   }
 }
+
 
 #include "vtkImageReader.h"
 
@@ -243,18 +302,19 @@ if (ImageViewer == NULL)
  {
   printf("START CREATING WINDOW\n");
 
-  vtkImageReader* reader = vtkImageReader::New();
-  reader->SetFileDimensionality(2);
-  reader->SetDataScalarTypeToUnsignedChar();
-  reader->SetNumberOfScalarComponents(4);
-  reader->SetHeaderSize(0);
-  reader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
+  ImageReader = vtkImageReader::New();
+  ImageReader->SetFileDimensionality(2);
+  ImageReader->SetDataScalarTypeToUnsignedChar();
+  ImageReader->SetNumberOfScalarComponents(4);
+  ImageReader->SetHeaderSize(0);
+  ImageReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
+  
   
   this->ImageViewer = vtkImageViewer::New();
   PNGReader = vtkPNGReader::New();
   PNGReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/test.png");
   
-  this->ImageViewer->SetInputConnection(reader->GetOutputPort());
+  this->ImageViewer->SetInputConnection(ImageReader->GetOutputPort());
   
   this->ImageViewer->SetColorWindow(255);
   this->ImageViewer->SetColorLevel(128);

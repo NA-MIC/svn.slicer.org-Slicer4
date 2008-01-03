@@ -17,6 +17,9 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
     vtkVolumeRenderingCudaModuleLogic.cxx
+    
+  ## WIDGETS ##
+    vtkKWTypeChooserBox.cxx
   )
   SET(VolumeRenderingCudaModule_CUDA_SRCS
       CUDA_renderAlgo.cu
