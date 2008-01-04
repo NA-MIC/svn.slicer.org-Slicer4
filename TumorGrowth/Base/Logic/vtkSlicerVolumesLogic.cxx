@@ -530,21 +530,26 @@ void vtkSlicerVolumesLogic::CalculateScalarAutoLevels(vtkImageData *imageData, v
     bimodal->SetInput(accumulate->GetOutput());
     bimodal->Update();
 
-    // Workaround DT case that does not work with DTMath
+    // Workaround for image data where all accumulate samples fall
+    // within the same histogram bin
     if (bimodal->GetWindow() == 0.0 && bimodal->GetLevel() == 0.0) 
       {
-      double min = bimodal->GetMin();
-      double max = bimodal->GetMax();
+      double range[2];
+      imageDataScalar->GetScalarRange(range);
+      double min = range[0];
+      double max = range[1];
       displayNode->SetWindow (max-min);
       displayNode->SetLevel (0.5*(max+min));
+      displayNode->SetLowerThreshold (displayNode->GetLevel());
+      displayNode->SetUpperThreshold (range[1]);
       }
     else
       {
       displayNode->SetWindow (bimodal->GetWindow());
       displayNode->SetLevel (bimodal->GetLevel());
+      displayNode->SetLowerThreshold (bimodal->GetThreshold());
+      displayNode->SetUpperThreshold (bimodal->GetMax());
       }
-    displayNode->SetLowerThreshold (bimodal->GetThreshold());
-    displayNode->SetUpperThreshold (bimodal->GetMax());
 
     accumulate->Delete();
     bimodal->Delete();
@@ -602,7 +607,9 @@ vtkMRMLScalarVolumeNode *vtkSlicerVolumesLogic::CreateLabelVolume (vtkMRMLScene 
 //----------------------------------------------------------------------------
 vtkMRMLScalarVolumeNode*
 vtkSlicerVolumesLogic::
-CloneVolume (vtkMRMLScene *scene, vtkMRMLVolumeNode *volumeNode, char *name)
+CloneVolume (vtkMRMLScene *scene, 
+             vtkMRMLVolumeNode *volumeNode, 
+             const char *name)
 {
   if ( volumeNode == NULL ) 
     {

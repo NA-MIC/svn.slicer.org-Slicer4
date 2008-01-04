@@ -52,6 +52,7 @@ if { [itcl::find class SeedSWidget] == "" } {
     method place {x y z} {}
     method setRASPosition {r a s} { $this place $x $y $z }
     method getRASPosition {} { return $_currentPosition }
+    method getPickState {} { return $_pickState }
     method highlight {} {}
     method createGlyph { {type "StarBurst"} } {}
   }
@@ -99,6 +100,10 @@ itcl::body SeedSWidget::constructor {sliceGUI} {
 }
 
 itcl::body SeedSWidget::destructor {} {
+
+  $o(glyphTransformFilter) SetInput ""
+  $o(glyphTransformFilter) SetTransform ""
+  $o(glyph) Delete
 
   if { [info command $sliceGUI] != "" } {
     foreach tag $_guiObserverTags {
@@ -188,6 +193,7 @@ itcl::body SeedSWidget::createGlyph { {type "StarBurst"} } {
   $polyData Register ""
   $polyData Update
   [$polyData GetCellData] SetScalars ""
+  $glyphSource SetOutput ""
   $glyphSource Delete
   return $polyData
 }
@@ -212,6 +218,7 @@ itcl::body SeedSWidget::place {x y z} {
 
 itcl::body SeedSWidget::positionActors { } {
 
+  # determine the xyz location of the fiducial
   set xyzw [$this rasToXYZ $_currentPosition]
   foreach {x y z w} $xyzw {}
   $o(actor) SetPosition $x $y
@@ -219,8 +226,10 @@ itcl::body SeedSWidget::positionActors { } {
   set y [expr $y + $scale]
   $o(textActor) SetPosition $x $y
 
+  # determine which renderer based on z position
   set k [expr int($z + 0.5)]
 
+  # remove the seed from the old renderer and add it to the new one
   if { [info command $_renderer] != ""} {
     $_renderer RemoveActor2D $o(actor)
     $_renderer RemoveActor2D $o(textActor)
@@ -231,7 +240,6 @@ itcl::body SeedSWidget::positionActors { } {
     if { [info command $_renderer] != ""} {
       $_renderer AddActor2D $o(actor)
       $_renderer AddActor2D $o(textActor)
-    } else {
     }
   }
 }

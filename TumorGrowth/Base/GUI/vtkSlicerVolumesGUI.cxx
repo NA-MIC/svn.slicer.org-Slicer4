@@ -23,6 +23,7 @@
 #include "vtkKWLoadSaveButton.h"
 #include "vtkKWLoadSaveButtonWithLabel.h"
 #include "vtkKWLoadSaveDialog.h"
+#include "vtkKWTopLevel.h"
 #include "vtkKWEntry.h"
 #include "vtkKWEntryWithLabel.h"
 #include "vtkKWMessageDialog.h"
@@ -278,11 +279,11 @@ void vtkSlicerVolumesGUI::RemoveGUIObservers ( )
       }
     if (this->LoadVolumeButton)
       {
-      this->LoadVolumeButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+      this->LoadVolumeButton->GetWidget()->GetLoadSaveDialog()->RemoveObservers (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
       }
     if (this->SaveVolumeButton)
       {
-      this->SaveVolumeButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+      this->SaveVolumeButton->GetLoadSaveDialog()->RemoveObservers (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
       }
     if (this->ApplyButton)
       {
@@ -302,8 +303,8 @@ void vtkSlicerVolumesGUI::AddGUIObservers ( )
     // Fill in
     // observer load volume button    
     this->VolumeSelectorWidget->AddObserver ( vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->LoadVolumeButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->SaveVolumeButton->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->LoadVolumeButton->GetWidget()->GetLoadSaveDialog()->AddObserver (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->SaveVolumeButton->GetLoadSaveDialog()->AddObserver (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ApplyButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->UseCompressionCheckButton->AddObserver ( vtkKWCheckButton::SelectedStateChangedEvent,  (vtkCommand *)this->GUICallbackCommand );
 }
@@ -383,7 +384,7 @@ void vtkSlicerVolumesGUI::ProcessGUIEvents ( vtkObject *caller,
                                                     this->NameEntry->GetWidget()->GetValue(), snode);
     return;
     }
-  if (this->LoadVolumeButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) && event == vtkKWPushButton::InvokedEvent )
+  if (this->LoadVolumeButton->GetWidget()->GetLoadSaveDialog() == vtkKWLoadSaveDialog::SafeDownCast(caller) && event == vtkKWTopLevel::WithdrawEvent )
     {
     const char * filename = this->LoadVolumeButton->GetWidget()->GetFileName();
     if (filename)
@@ -494,10 +495,9 @@ void vtkSlicerVolumesGUI::ProcessGUIEvents ( vtkObject *caller,
           }
         return;
       }
-    else if (this->SaveVolumeButton == vtkKWLoadSaveButton::SafeDownCast(caller) && event == vtkKWPushButton::InvokedEvent )
+    else if (this->SaveVolumeButton->GetLoadSaveDialog() == vtkKWLoadSaveDialog::SafeDownCast(caller) && event == vtkKWTopLevel::WithdrawEvent )
       {
-      // If a file has been selected for saving...
-      const char *fileName = this->SaveVolumeButton->GetFileName();
+      const char * fileName = this->SaveVolumeButton->GetFileName();
       if ( fileName ) 
       {
         vtkSlicerVolumesLogic* volumeLogic = this->Logic;
@@ -601,6 +601,22 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
         snode->Delete();
         }
       this->UseCompressionCheckButton->SetSelectedState(snode->GetUseCompression());
+
+      // update the load frame
+      if (snode->GetCenterImage())
+        {
+        if (strcmp("Centered", this->CenterImageMenu->GetWidget()->GetValue ()) != 0)
+          {
+          this->CenterImageMenu->GetWidget()->SetValue ( "Centered" );
+          }
+        }
+      else
+        {
+        if (strcmp("From File", this->CenterImageMenu->GetWidget()->GetValue ()) != 0)
+          {
+          this->CenterImageMenu->GetWidget()->SetValue ( "From File" );
+          }
+        }
       }
     else 
       {
@@ -616,6 +632,21 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
         snode->Delete();
         }
       this->UseCompressionCheckButton->SetSelectedState(snode->GetUseCompression());
+      // update the load frame
+      if (snode->GetCenterImage())
+        {
+        if (strcmp("Centered", this->CenterImageMenu->GetWidget()->GetValue ()) != 0)
+          {
+          this->CenterImageMenu->GetWidget()->SetValue ( "Centered" );
+          }
+        }
+      else
+        {
+        if (strcmp("From File", this->CenterImageMenu->GetWidget()->GetValue ()) != 0)
+          {
+          this->CenterImageMenu->GetWidget()->SetValue ( "From File" );
+          }
+        }
       }
     
     if ( refNode->IsA("vtkMRMLScalarVolumeNode") ) 
@@ -635,6 +666,10 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
         this->VolumeDisplayWidget = this->labelVDW;
         this->VolumeDisplayFrame = this->LabelMapDisplayFrame;
         }
+       if (svol->GetLabelMap() != this->LabelMapCheckButton->GetSelectedState())
+         {
+         this->LabelMapCheckButton->SetSelectedState(svol->GetLabelMap());
+         }
       }
     else if ( refNode->IsA("vtkMRMLVectorVolumeNode") ) 
       {
@@ -703,7 +738,18 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
       // trigger a modified event that triggers update widget from mrml
       this->VolumeDisplayWidget->UpdateWidgetFromMRML();
       }
+     const char * currentVolName = this->NameEntry->GetWidget()->GetValue();
+     const char * volName = refNode->GetName();
+     if (currentVolName && volName)
+       {
+       if (strcmp(currentVolName, volName) != 0)
+         {
+         this->NameEntry->GetWidget()->SetValue(volName);
+         }       
+       }
     }
+
+  // update the image origin
 }
 
 //---------------------------------------------------------------------------
