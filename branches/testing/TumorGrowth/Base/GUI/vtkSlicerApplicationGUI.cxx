@@ -45,6 +45,7 @@
 #include "vtkKWMessageDialog.h"
 #include "vtkKWToolbarSet.h"
 #include "vtkKWMessageDialog.h"
+#include "vtkKWProgressDialog.h"
 
 #include "vtkSlicerWindow.h"
 #include "vtkSlicerApplication.h"
@@ -60,6 +61,8 @@
 #include "vtkSlicerApplicationSettingsInterface.h"
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkSlicerViewerInteractorStyle.h"
+
+#include "vtkSlicerFiducialListWidget.h"
 
 #ifdef USE_PYTHON
 #ifdef _DEBUG
@@ -307,8 +310,22 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
         std::string fl(fileName);
         if (this->GetMRMLScene() && fl.find(".mrml") != std::string::npos ) 
           {
+          vtkKWProgressDialog *progressDialog = vtkKWProgressDialog::New();
+          progressDialog->SetParent( this->MainSlicerWindow );
+          progressDialog->SetMasterWindow( this->MainSlicerWindow );
+          progressDialog->Create();
+          std::string message("Loading Scene...\n");
+          message += std::string(fileName);
+          progressDialog->SetMessageText( message.c_str() );
+          // don't observe the scene, to avoid getting render updates
+          // during load.  TODO: make a vtk-based progress bar that doesn't
+          // call the tcl update method
+          //progressDialog->SetObservedObject( this->GetMRMLScene() );
+          progressDialog->Display();
           this->GetMRMLScene()->SetURL(fileName);
           this->GetMRMLScene()->Connect();
+          progressDialog->SetParent(NULL);
+          progressDialog->Delete();
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
         else if (this->GetMRMLScene() && fl.find(".xml") != std::string::npos ) 
@@ -804,6 +821,15 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             this->MainSlicerWindow->GetWindowMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 #endif
 
+#ifndef FIDUCIALS_DEBUG
+            this->GetMainSlicerWindow()->GetEditMenu()->InsertSeparator (this->GetMainSlicerWindow()->GetEditMenu()->GetNumberOfItems());
+            // make the new fiducial list, but delete the returned node as
+            // it's held onto by the scene
+            i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "New Fiducial List", NULL, "[$::slicer3::FiducialsGUI GetLogic] AddFiducialListSelected" );
+            this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+L");
+            this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+#endif
+
             //
             // View Menu
             //
@@ -865,7 +891,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             
             this->LoadSceneDialog->SetParent ( this->MainSlicerWindow );
             this->LoadSceneDialog->Create ( );
-            this->LoadSceneDialog->SetFileTypes("{ {MRML Scene} {*.mrml} } { {Slicer2 Scene} {*.xml} } { {Xcede Catalog} {*.xcat} }");
+            this->LoadSceneDialog->SetFileTypes("{ {Scenes} {.mrml .xml} } { {MRML Scene} {.mrml} } { {Slicer2 Scene} {.xml} } { {Xcede Catalog} {.xcat} } { {All} {.*} }");
             this->LoadSceneDialog->RetrieveLastPathFromRegistry("OpenPath");
 
 #endif

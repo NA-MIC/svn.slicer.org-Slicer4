@@ -117,3 +117,28 @@ CONFIGURE_FILE(
   ${SlicerBaseLogic_SOURCE_DIR}/vtkSlicerBaseLogicConfigure.h.in 
   ${SlicerBaseLogic_BINARY_DIR}/vtkSlicerBaseLogicConfigure.h
 )
+
+# --------------------------------------------------------------------------
+# Resources
+SET (COLORFILES
+    ./Resources/ColorFiles/PelvisColor.txt
+    ./Resources/ColorFiles/64Color-Nonsemantic.txt 
+    ./Resources/ColorFiles/SPL-BrainAtlas-ColorFile.txt
+)
+
+SET (Color_DIR ${SLICER_LIBRARIES_DIR}/Base/Logic)
+IF (NOT EXISTS ${Color_DIR})
+   FILE(MAKE_DIRECTORY ${Color_DIR})
+ENDIF (NOT EXISTS ${Color_DIR})
+
+FOREACH ( colorfile ${COLORFILES})
+   CONFIGURE_FILE(
+        ${SlicerBaseLogic_SOURCE_DIR}/${colorfile}
+        ${Color_DIR}/${colorfile}
+        COPYONLY
+)
+   INSTALL(
+        FILES ${Color_DIR}/${colorfile}
+        DESTINATION lib/Slicer3/Base/Logic/Resources/ColorFiles
+)
+ENDFOREACH(colorfile)

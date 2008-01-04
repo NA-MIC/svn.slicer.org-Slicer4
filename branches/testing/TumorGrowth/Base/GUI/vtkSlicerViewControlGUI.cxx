@@ -101,6 +101,9 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->FOVBox = NULL;
   this->FOVBoxMapper = NULL;
   this->FOVBoxActor = NULL;
+
+  //Enable/Disable navigation window
+  this->EnableDisableNavButton;
   
   this->ViewNode = NULL;
   this->RedSliceNode = NULL;
@@ -291,6 +294,12 @@ vtkSlicerViewControlGUI::~vtkSlicerViewControlGUI ( )
     this->NavigationWidget->Delete ();
     this->NavigationWidget = NULL;
     }
+  if( this->EnableDisableNavButton)
+  {
+      this->EnableDisableNavButton->SetParent ( NULL );
+      this->EnableDisableNavButton->Delete ();
+      this->EnableDisableNavButton = NULL;
+  }
   if ( this->ZoomWidget )
     {
     this->ZoomWidget->SetParent ( NULL );
@@ -708,7 +717,15 @@ void vtkSlicerViewControlGUI::UpdateSlicesFromMRML()
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::RequestNavigationRender()
 {
+
+
 #ifndef NAVZOOMWIDGET_DEBUG
+  if(!this->EnableDisableNavButton->GetSelectedState())
+  {
+          this->NavigationWidget->RemoveAllViewProps();
+          this->NavigationWidget->Render();
+          return;
+  }
   if (this->GetNavigationRenderPending())
     {
     return;
@@ -1095,7 +1112,7 @@ void vtkSlicerViewControlGUI::MainViewZoom(double factor )
     ren->ResetCameraClippingRange();
     ren->UpdateLightsGeometryToFollowCamera();
     }
-  ren->Render();
+  appGUI->GetViewerWidget()->GetMainViewer()->Render();
   this->RequestNavigationRender();
 
   cam = NULL;
@@ -1707,7 +1724,7 @@ void vtkSlicerViewControlGUI::MainViewSetFocalPoint ( double x, double y, double
         cam->ComputeViewPlaneNormal ( );
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
+        p->GetViewerWidget()->GetMainViewer()->Render();
         }
       }
     }
@@ -1762,7 +1779,7 @@ void vtkSlicerViewControlGUI::RockView ( )
         
         //Make the lighting follow the camera to avoid illumination changes
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
+        p->GetViewerWidget()->GetMainViewer()->Render();
         }
       }
     }
@@ -1828,7 +1845,7 @@ void vtkSlicerViewControlGUI::SpinView ( int dir, double degrees )
 
         //Make the lighting follow the camera to avoid illumination changes
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
+        p->GetViewerWidget()->GetMainViewer()->Render();
         }
       }  
     }
@@ -1908,7 +1925,7 @@ void vtkSlicerViewControlGUI::MainViewSetProjection ( )
           cam->SetParallelScale ( vn->GetFieldOfView() );
           this->OrthoButton->SetImageToIcon ( this->SlicerViewControlIcons->GetPerspectiveButtonIcon() );
           }
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render(); 
+        p->GetViewerWidget()->GetMainViewer()->Render();
         }
       }
     }
@@ -1962,7 +1979,7 @@ void vtkSlicerViewControlGUI::MainViewRotateAround ( int axis )
           }
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
+        p->GetViewerWidget()->GetMainViewer()->Render();
         this->RequestNavigationRender();
         }
       }
@@ -2035,7 +2052,7 @@ void vtkSlicerViewControlGUI::MainViewLookFrom ( const char *dir )
         cam->ComputeViewPlaneNormal();
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();      
+        p->GetViewerWidget()->GetMainViewer()->Render();      
         this->RequestNavigationRender();
         }
        }
@@ -2934,7 +2951,12 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       this->BuildStereoSelectMenu ( );
       this->BuildVisibilityMenu ( );
 
-      
+      //Create the Enable/Disable BUtton for the navigation widget but don't pack it
+      this->EnableDisableNavButton=vtkKWCheckButton::New();
+      this->EnableDisableNavButton->SetParent(f0);
+      this->EnableDisableNavButton->Create();
+      this->EnableDisableNavButton->SelectedStateOn();
+    
       // clean up
       f0->Delete ( );
       f1->Delete ( );

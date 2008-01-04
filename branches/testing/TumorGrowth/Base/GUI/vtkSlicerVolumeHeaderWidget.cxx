@@ -7,6 +7,8 @@
 #include "vtkKWMenu.h"
 #include "vtkKWMenuButton.h"
 
+#include <itksys/SystemTools.hxx> 
+
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerVolumeHeaderWidget );
@@ -271,9 +273,21 @@ void vtkSlicerVolumeHeaderWidget::UpdateWidgetFromMRML ()
     }
 
   vtkMRMLStorageNode *storageNode = this->GetVolumeStorageNode();
-  if (storageNode != NULL) 
+  if (storageNode != NULL && storageNode->GetFileName() != NULL) 
     {
-    this->FileNameEntry->GetWidget()->SetValue(storageNode->GetFileName());
+    itksys_stl::string dir =  
+          itksys::SystemTools::GetParentDirectory(storageNode->GetFileName());   
+    if (dir[dir.size()-1] != '/')
+      {
+      dir = dir + vtksys_stl::string("/");
+      }
+    itksys_stl::string name = itksys::SystemTools::GetFilenameName(storageNode->GetFileName());
+    dir = dir+name;
+    this->FileNameEntry->GetWidget()->SetValue(dir.c_str());
+    }
+  else
+    {
+    this->FileNameEntry->GetWidget()->SetValue("");
     }
   return;
 }
@@ -341,7 +355,6 @@ void vtkSlicerVolumeHeaderWidget::CreateWidget ( )
     this->VolumeSelectorWidget->SetBalloonHelpString("select a volume from the current mrml scene.");
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                  this->VolumeSelectorWidget->GetWidgetName());
-    this->VolumeSelectorWidget->SetWidgetName("DisplayVolumeSelector");
     }
   else
     {

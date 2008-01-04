@@ -91,6 +91,7 @@ vtkSlicerViewerWidget::vtkSlicerViewerWidget ( )
   this->WorldPointPicker = vtkWorldPointPicker::New();
   this->PropPicker = vtkPropPicker::New();
   this->CellPicker = vtkCellPicker::New();
+  this->CellPicker->SetTolerance(0.00001);
   this->PointPicker = vtkPointPicker::New();
   this->ResetPick();
 
@@ -954,7 +955,12 @@ void vtkSlicerViewerWidget::UpdateModelsFromMRML()
 
   if (clearDisplayedModels)
     {
-    this->MainViewer->RemoveAllViewProps();
+    std::map<std::string, vtkProp3D *>::iterator iter;
+    for (iter = this->DisplayedActors.begin(); iter != this->DisplayedActors.end(); iter++)
+      {
+      this->MainViewer->RemoveViewProp(iter->second);
+      }
+    //this->MainViewer->RemoveAllViewProps();
     this->RemoveModelObservers(1);
     this->RemoveHierarchyObservers(1);
     this->DisplayedActors.clear();
@@ -971,7 +977,7 @@ void vtkSlicerViewerWidget::UpdateModelsFromMRML()
     vtkMRMLDisplayableNode *model = slices[i];
     // add nodes that are not in the list yet
     vtkMRMLDisplayNode *dnode = model->GetDisplayNode();
-    if (this->DisplayedActors.find(dnode->GetID()) == this->DisplayedActors.end() )
+    if (dnode && this->DisplayedActors.find(dnode->GetID()) == this->DisplayedActors.end() )
       {
       this->UpdateModel(model);
       } 
@@ -984,13 +990,16 @@ void vtkSlicerViewerWidget::UpdateModelsFromMRML()
     {
     vtkMRMLDisplayableNode *model = vtkMRMLDisplayableNode::SafeDownCast(scene->GetNthNodeByClass(n, "vtkMRMLDisplayableNode"));
     // render slices last so that transparent objects are rendered in fron of them
-    if (!strcmp(model->GetName(), "Red Volume Slice") ||
-        !strcmp(model->GetName(), "Green Volume Slice") ||
-        !strcmp(model->GetName(), "Yellow Volume Slice"))
+    if (model)
       {
-      continue;
+      if (!strcmp(model->GetName(), "Red Volume Slice") ||
+          !strcmp(model->GetName(), "Green Volume Slice") ||
+          !strcmp(model->GetName(), "Yellow Volume Slice"))
+        {
+        continue;
+        }
+      this->UpdateModifiedModel(model);
       }
-    this->UpdateModifiedModel(model);
     } // end while
 
 }
@@ -1045,7 +1054,8 @@ void vtkSlicerViewerWidget::UpdateModelPolyData(vtkMRMLDisplayableNode *model)
   vtkActor *actor;
   vtkClipPolyData *clipper = NULL;
   bool hasPolyData = true;
-  if ( actor = vtkActor::SafeDownCast(prop) )
+  actor = vtkActor::SafeDownCast(prop);
+  if ( actor )
     {
     if (this->ClippingOn && modelDisplayNode != NULL && modelDisplayNode->GetClipping())
       {
@@ -1376,17 +1386,24 @@ void vtkSlicerViewerWidget::RemoveModelProps()
 //---------------------------------------------------------------------------
 void vtkSlicerViewerWidget::RemoveDisplayable(vtkMRMLDisplayableNode* model)
 {
+  if (!model)
+    {
+    return;
+    }  
   int ndnodes = model->GetNumberOfDisplayNodes();
   std::map<std::string, vtkProp3D *>::iterator iter;
   std::vector<std::string> removedIDs;
   for (int i=0; i<ndnodes; i++)
     {
     vtkMRMLDisplayNode *displayNode = model->GetNthDisplayNode(i);
-    iter = this->DisplayedActors.find(displayNode->GetID());
-    if (iter != this->DisplayedActors.end())
+    if (displayNode)
       {
-      this->MainViewer->RemoveViewProp(iter->second);
-      removedIDs.push_back(iter->first);
+      iter = this->DisplayedActors.find(displayNode->GetID());
+      if (iter != this->DisplayedActors.end())
+        {
+        this->MainViewer->RemoveViewProp(iter->second);
+        removedIDs.push_back(iter->first);
+        }
       }
     }
 
@@ -1539,17 +1556,67 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
               actor->GetMapper()->SetLookupTable((vtkScalarsToColors*)(vtkMRMLProceduralColorNode::SafeDownCast(dnode->GetColorNode())->GetColorTransferFunction()));
               }
             }
-          
+
+          int cellScalarsActive = 0;
+          if (dnode->GetActiveScalarName() == NULL)
+            {
+            // see if there are scalars on the poly data that are not set as
+            // active on the display node
+            vtkMRMLModelNode *mnode = vtkMRMLModelNode::SafeDownCast(model);
+            if (mnode)
+              {
+              std::string pointScalarName = std::string(mnode->GetActivePointScalarName("scalars"));
+              std::string cellScalarName = std::string(mnode->GetActiveCellScalarName("scalars"));
+              vtkDebugMacro("Display node active scalar name was null, but the node says active point scalar name = '" << pointScalarName.c_str() << "', cell = '" << cellScalarName.c_str() << "'");
+              if (pointScalarName.compare("") != 0)
+                {
+                vtkWarningMacro("Setting the display node's active scalar to " << pointScalarName.c_str());
+                dnode->SetActiveScalarName(pointScalarName.c_str());
+                }
+              else
+                {
+                if (cellScalarName.compare("") != 0)
+                  {
+                  vtkWarningMacro("Setting the display node's active scalar to " << cellScalarName.c_str());
+                  dnode->SetActiveScalarName(cellScalarName.c_str());
+                  }
+                else
+                  {
+                  vtkDebugMacro("No active scalars");
+                  }
+                }
+              }
+            }
           if (dnode->GetActiveScalarName() != NULL)
             {
             vtkMRMLModelNode *mnode = vtkMRMLModelNode::SafeDownCast(model);
             if (mnode)
               {
               mnode->SetActiveScalars(dnode->GetActiveScalarName(), "Scalars");
+              if (strcmp(dnode->GetActiveScalarName(), mnode->GetActiveCellScalarName("scalars")) == 0)
+                {
+                cellScalarsActive = 1;
+                }
               }
+            actor->GetMapper()->SelectColorArray(dnode->GetActiveScalarName());
             }
-          // set the scalar range
-          actor->GetMapper()->SetScalarRange(dnode->GetScalarRange());
+          if (!(dnode->IsA("vtkMRMLFiberBundleDisplayNode")))
+            {
+            // still debugging fibre bundle display nodes
+          if (!cellScalarsActive)
+            {
+            // set the scalar range
+            actor->GetMapper()->SetScalarRange(dnode->GetScalarRange());
+            actor->GetMapper()->SetScalarModeToUsePointFieldData();
+            actor->GetMapper()->SetColorModeToMapScalars();            
+            }
+          else
+            {
+            actor->GetMapper()->SetScalarModeToUseCellFieldData();
+            actor->GetMapper()->SetColorModeToDefault();
+            actor->GetMapper()->UseLookupTableScalarRangeOff();
+            }
+            }
           }
         
         actor->GetProperty()->SetColor(dnode->GetColor());

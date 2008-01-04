@@ -10,6 +10,8 @@
 
 #include "vtkKWMessage.h"
 
+#include "vtkKWTopLevel.h"
+
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWLabel.h"
 
@@ -21,6 +23,11 @@
 #include "vtkKWMessageDialog.h"
 
 #include "vtkSlicerColorGUI.h"
+
+#include "vtkKWPushButton.h"
+#include "vtkKWLoadSaveButton.h"
+#include "vtkKWLoadSaveButtonWithLabel.h"
+#include "vtkKWLoadSaveDialog.h"
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerColorGUI );
@@ -36,6 +43,7 @@ vtkSlicerColorGUI::vtkSlicerColorGUI ( )
   NCIGTLabel = NULL;
   BIRNLabel = NULL;
   this->ColorDisplayWidget = NULL;
+  this->LoadColorFileButton = NULL;
 }
 
 
@@ -74,7 +82,11 @@ vtkSlicerColorGUI::~vtkSlicerColorGUI ( )
     this->BIRNLabel->Delete();
     this->BIRNLabel = NULL;
     }
-
+  if (this->LoadColorFileButton )
+    {
+    this->LoadColorFileButton->SetParent(NULL );
+    this->LoadColorFileButton->Delete ( );
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -91,6 +103,10 @@ void vtkSlicerColorGUI::PrintSelf ( ostream& os, vtkIndent indent )
 void vtkSlicerColorGUI::RemoveGUIObservers ( )
 {
   vtkDebugMacro("vtkSlicerColorGUI: RemoveGUIObservers\n");
+  if (this->LoadColorFileButton)
+    {
+    this->LoadColorFileButton->GetWidget()->GetLoadSaveDialog()->RemoveObservers ( vtkKWTopLevel::WithdrawEvent,  (vtkCommand *)this->GUICallbackCommand );
+    }
 }
 
 
@@ -98,6 +114,7 @@ void vtkSlicerColorGUI::RemoveGUIObservers ( )
 void vtkSlicerColorGUI::AddGUIObservers ( )
 {
   vtkDebugMacro("vtkSlicerColorGUI: AddGUIObservers\n");
+  this->LoadColorFileButton->GetWidget()->GetLoadSaveDialog()->AddObserver (vtkKWTopLevel::WithdrawEvent , (vtkCommand *)this->GUICallbackCommand );
 }
 
 
@@ -106,6 +123,25 @@ void vtkSlicerColorGUI::AddGUIObservers ( )
 void vtkSlicerColorGUI::ProcessGUIEvents ( vtkObject *caller,
                                             unsigned long event, void *callData )
 {
+  if (this->LoadColorFileButton->GetWidget()->GetLoadSaveDialog() == vtkKWLoadSaveDialog::SafeDownCast(caller) && event ==  vtkKWTopLevel::WithdrawEvent )
+    {
+    // If a file has been selected for loading...
+    const char *fileName = this->LoadColorFileButton->GetWidget()->GetFileName();
+    if ( fileName )
+      {
+      vtkMRMLColorNode *node = this->Logic->LoadColorFile(fileName);
+      if (!node)
+        {
+        vtkErrorMacro("ProcessGUIEvents: unable to read file " << fileName);
+        }
+      else
+        {
+        this->ColorDisplayWidget->SetColorNode(node);
+        node->Delete();
+        }
+      this->LoadColorFileButton->GetWidget()->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
+      }
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -210,6 +246,30 @@ void vtkSlicerColorGUI::BuildGUI ( )
   app->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky w",  this->BIRNLabel->GetWidgetName());
   app->Script ( "grid %s -row 1 -column 1 -padx 2 -pady 2 -sticky w",  this->NCIGTLabel->GetWidgetName());                  
 
+  // --
+  // LOAD FRAME
+  vtkSlicerModuleCollapsibleFrame *loadFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+  loadFrame->SetParent (page);
+  loadFrame->Create();
+  loadFrame->SetLabelText("Load");
+  app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+              loadFrame->GetWidgetName(),
+              this->UIPanel->GetPageWidget("Color")->GetWidgetName());
+
+  // add a file browser 
+  this->LoadColorFileButton = vtkKWLoadSaveButtonWithLabel::New ( );
+  this->LoadColorFileButton->SetParent ( loadFrame->GetFrame() );
+  this->LoadColorFileButton->Create ( );
+  this->LoadColorFileButton->SetWidth(20);
+  this->LoadColorFileButton->GetWidget()->SetText ("Select Color File");
+  this->LoadColorFileButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open Color File");
+  this->LoadColorFileButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes(
+                                                                         "{ {Color text} {*.txt} }");
+  this->LoadColorFileButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
+                                                                                         "OpenPath");
+  app->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+              this->LoadColorFileButton->GetWidgetName());
+  
   // ---
   // DISPLAY FRAME            
   vtkSlicerModuleCollapsibleFrame *displayFrame = vtkSlicerModuleCollapsibleFrame::New ( );
@@ -231,4 +291,5 @@ void vtkSlicerColorGUI::BuildGUI ( )
                 displayFrame->GetFrame()->GetWidgetName());
   
   displayFrame->Delete ( );
+  loadFrame->Delete();
 }
