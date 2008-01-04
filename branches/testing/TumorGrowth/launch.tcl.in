@@ -204,6 +204,8 @@ proc launch_ParseArgs {argv} {
   set newargs ""
   foreach arg $::argv {
     switch -- $arg {
+      "--help" -
+      "-h" -
       "--no_splash" -
       "--no-splash" {
           set ::LAUNCH(showSplash) 0
@@ -250,6 +252,8 @@ proc launch_SetPaths {} {
             set ::env(LD_LIBRARY_PATH) $::env(TEEM_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(SLICER_BIN_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(PATH) "$::env(PATH):$::env(TEEM_DIR)"
+            set ::env(PATH) "$::env(SLICER_BIN_DIR):$::env(PATH)"
+            set ::env(PATH) "$::SLICER_HOME/lib/Slicer3/Plugins:$::env(PATH)"
         } elseif {$::env(BUILD) ==  $::DARWIN || $::env(BUILD) == $::DARWIN_X86} { 
             # add vtk, slicer, and tcl bins
             set ::env(DYLD_LIBRARY_PATH) $::env(VTK_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
@@ -259,6 +263,8 @@ proc launch_SetPaths {} {
             set ::env(DYLD_LIBRARY_PATH) $::env(TEEM_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(SLICER_BIN_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(PATH) $::env(PATH):$::env(TEEM_DIR)
+            set ::env(PATH) "$::env(SLICER_BIN_DIR):$::env(PATH)"
+            set ::env(PATH) "$::SLICER_HOME/lib/Slicer3/Plugins:$::env(PATH)"
         } elseif {$::env(BUILD) == $::WINDOWS} {
             # add vtk, slicer, and tcl bins
             set ::env(Path) $::env(VTK_BIN_DIR)\;$::env(Path)
@@ -291,11 +297,22 @@ proc launch_SetPaths {} {
 # optional - show splash screen
 #
 proc launch_SplashScreen {} {
+
   if { $::LAUNCH(showSplash) } {
-    package require Tk
+
+    if { [catch "package require Tk"] } {
+      # if we can't open Tk, there's 
+      puts "\nWarning: cannot open DISPLAY.  This is likely to be an X Server issue."
+      puts "Slicer will attempt to launch, but may fail.\n"
+      set $::LAUNCH(showSplash) 0
+      return
+    }
+
     wm withdraw .
     launch_SplashShow
   }
+  
+  # windows always has a display, so get rid of the default window
   if { [string match -nocase "windows*" $::tcl_platform(os)] } {
     wm withdraw .
   }

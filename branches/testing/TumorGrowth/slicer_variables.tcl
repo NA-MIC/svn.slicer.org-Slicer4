@@ -77,9 +77,9 @@ set ::SLICER_TAG "http://www.na-mic.org/svn/Slicer3/trunk"
 set ::CMAKE_TAG "CMake-2-4-2"
 #set ::TEEM_TAG "HEAD"
 set ::TEEM_TAG "Teem-1-9-0-patches"
-set ::KWWidgets_TAG "HEAD"
+set ::KWWidgets_TAG "Slicer-3-0"
 set ::VTK_TAG "VTK-5-0"
-set ::ITK_TAG ITK-3-2
+set ::ITK_TAG ITK-3-4
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
@@ -109,8 +109,11 @@ set ::TEEM_SRC_DIR  $::SLICER_LIB/teem
 set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
-set ::VTK_BUILD_TYPE "Debug" ;# options: Release, RelWithDebInfo, Debug
-set ::VTK_BUILD_SUBDIR ""
+if { ![info exists ::VTK_BUILD_TYPE] } {
+  # set a default if it hasn't already been specified
+  set ::VTK_BUILD_TYPE "Debug" ;# options: Release, RelWithDebInfo, Debug
+}
+set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE 
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWidgets_BUILD_DIR  $::SLICER_LIB/KWWidgets-build
 set ::KWWIDGETS_DIR  $::SLICER_LIB/KWWidgets
@@ -157,6 +160,7 @@ switch $::tcl_platform(os) {
 switch $::tcl_platform(os) {
     "SunOS" -
     "Darwin" {
+        set ::VTK_BUILD_SUBDIR ""
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
 
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
@@ -176,10 +180,11 @@ switch $::tcl_platform(os) {
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.so
+        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.$shared_lib_ext
 
     }
     "Linux" {
+        set ::VTK_BUILD_SUBDIR ""
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
 
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
@@ -199,7 +204,7 @@ switch $::tcl_platform(os) {
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.so
+        set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/libIGSTK.$shared_lib_ext
 
     }
     "Windows NT" {
@@ -325,6 +330,7 @@ switch $::tcl_platform(os) {
         ## for Visual Studio 8
         # - automatically use newest if available
         # - use full if available, otherwise express
+        # - use the 64 bit version if available
         #
         if { [file exists "c:/Program Files/Microsoft Visual Studio 8/Common7/IDE/VCExpress.exe"] } {
             set ::GENERATOR "Visual Studio 8 2005" 
@@ -340,7 +346,8 @@ switch $::tcl_platform(os) {
         }
 
         if { [file exists "c:/Program Files (x86)/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"] } {
-            set ::GENERATOR "Visual Studio 8 2005" 
+            #set ::GENERATOR "Visual Studio 8 2005 Win64"
+            set ::GENERATOR "Visual Studio 8 2005"   ;# do NOT use the 64 bit target
             set ::MAKE "c:/Program Files (x86)/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"
             set ::COMPILER_PATH "c:/Program Files (x86)/Microsoft Visual Studio 8/VC/bin"
         }
