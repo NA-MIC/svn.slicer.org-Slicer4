@@ -147,7 +147,7 @@ void vtkMRMLEMSTreeParametersLeafNode::ReadXMLAttributes(const char** attrs)
       {
       // remove visual row seperators
       std::string valStr(val);
-      for (int i = 0; i < valStr.size(); ++i)
+      for (unsigned int i = 0; i < valStr.size(); ++i)
         {
         if (valStr[i] == '|')
           {
@@ -262,6 +262,30 @@ void vtkMRMLEMSTreeParametersLeafNode::PrintSelf(ostream& os,
     {
     os << (*i)[0] << " " << (*i)[1] << " " << (*i)[2] << "\n";
     }
+}
+
+//-----------------------------------------------------------------------------
+void 
+vtkMRMLEMSTreeParametersLeafNode::
+AddChildNode(const char* childNodeID)
+{
+  // nothing to do here...
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkMRMLEMSTreeParametersLeafNode::
+RemoveNthChildNode(int n)
+{
+  // nothing to do here...
+}
+
+//-----------------------------------------------------------------------------
+void 
+vtkMRMLEMSTreeParametersLeafNode::
+MoveNthChildNode(int fromIndex, int toIndex)
+{
+  // nothing to do here...
 }
 
 //-----------------------------------------------------------------------------

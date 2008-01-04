@@ -32,7 +32,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include <math.h>
 #include <time.h>
-#include <itkArray.h>
+
 #include <itkImage.h>
 #include <itkOrientedImage.h>
 #include <itkImageRegionIteratorWithIndex.h>
@@ -56,8 +56,9 @@ PURPOSE.  See the above copyright notices for more information.
 #include <itkFlipImageFilter.h>
 #include <itksys/Directory.hxx>
 #include <vtkXMLUnstructuredGridWriter.h>
-#include <vtkTable.h>
-#include <vtkTableReader.h>
+//#include <vtkTable.h>
+//#include <vtkTableReader.h>
+#include <vtkDataArray.h>
 #include <vtkAbstractArray.h>
 #include <vtkDoubleArray.h>
 #include <vtkUnsignedLongArray.h>
@@ -175,15 +176,17 @@ int main( int argc, char * argv[] )
   /****************** Check Cell Data ****************************/
   vtkFieldData *gridFieldData = grid->GetFieldData();
   vtkDoubleArray *materialPropertyArray = NULL;
-  vtkAbstractArray *tmpArray = gridFieldData->GetAbstractArray("Material_Properties");
-  if ( ! tmpArray->IsA("vtkDoubleArray") )
+//  vtkAbstractArray *tmpArray = gridFieldData->GetAbstractArray("Material_Properties");
+  //vtkAbstractArray *tmpArray = vtkAbstractArray::SafeDownCast( gridFieldData->GetArray("Material_Properties") );
+  materialPropertyArray = (vtkDoubleArray *) gridFieldData->GetArray("Material_Properties");
+  if ( ! materialPropertyArray->IsA("vtkDoubleArray") )
     {
     std::cerr << "Error: Test 1" << std::endl;
     std::cerr << "Failed to obtain 'Material_Properties' Field Data" << std::endl;
     return EXIT_FAILURE;
     }
     
-  materialPropertyArray = vtkDoubleArray::SafeDownCast(tmpArray);
+  //materialPropertyArray = vtkDoubleArray::SafeDownCast(tmpArray);
   
   for (int i=0;i<numberOfCells;i++)
     {
@@ -198,13 +201,15 @@ int main( int argc, char * argv[] )
  
   /****************** Check Node Data ****************************/
   vtkUnsignedLongArray *nodexIndexArray = NULL;
-  tmpArray = grid->GetPointData()->GetAbstractArray("Node_Numbers");
-  if ( ! tmpArray->IsA("vtkUnsignedLongArray") )
+  //tmpArray = grid->GetPointData()->GetAbstractArray("Node_Numbers");
+  //tmpArray = vtkAbstractArray::SafeDownCast( grid->GetPointData()->GetArray("Node_Numbers") );
+  nodexIndexArray = (vtkUnsignedLongArray *) grid->GetPointData()->GetArray("Node_Numbers");
+  if ( ! nodexIndexArray->IsA("vtkUnsignedLongArray") )
     {
     std::cerr << "Error: Test 1 - Failed to obtain 'Node_Numbers' Field Data" << std::endl;
     return EXIT_FAILURE;
     }
-  nodexIndexArray = vtkUnsignedLongArray::SafeDownCast(tmpArray);
+  //nodexIndexArray = vtkUnsignedLongArray::SafeDownCast(tmpArray);
   unsigned long index0 = nodexIndexArray->GetValue(0);
   unsigned long indexLast = nodexIndexArray->GetValue( numberOfPoints-1 );
   
@@ -219,7 +224,8 @@ int main( int argc, char * argv[] )
     std::cerr << "Error: Test 1 - Invalid last node index value" << std::endl;
     return EXIT_FAILURE;
     }
-  
+    
+  grid->Delete();
   
   /*********************** Test 2 - Build Mesh with Mask ***********************/
   InputImageType::Pointer maskImage = InputImageType::New();
@@ -288,9 +294,9 @@ int main( int argc, char * argv[] )
   // writer2->Update();
   
   
-  grid = imageToHexMeshFilter1->GetOutput();
-  numberOfCells = grid->GetNumberOfCells();
-  numberOfPoints = grid->GetNumberOfPoints();
+  vtkUnstructuredGrid *grid2 = imageToHexMeshFilter1->GetOutput();
+  numberOfCells = grid2->GetNumberOfCells();
+  numberOfPoints = grid2->GetNumberOfPoints();
   if ( numberOfCells != 27 )
     {
     std::cerr << "Error: Test 2 - Invalid number of cells in unstructured grid. " << std::endl;
@@ -305,16 +311,19 @@ int main( int argc, char * argv[] )
     return EXIT_FAILURE;
     }
   
+  
   /****************** Check Cell Data ****************************/
-  gridFieldData = grid->GetFieldData();
+  gridFieldData = grid2->GetFieldData();
   materialPropertyArray = NULL;
-  tmpArray = gridFieldData->GetAbstractArray("Material_Properties");
-  if ( ! tmpArray->IsA("vtkDoubleArray") )
+  //tmpArray = gridFieldData->GetAbstractArray("Material_Properties");
+  //tmpArray = vtkAbstractArray::SafeDownCast( gridFieldData->GetArray("Material_Properties") );
+  materialPropertyArray = (vtkDoubleArray *) gridFieldData->GetArray("Material_Properties");
+  if ( ! materialPropertyArray->IsA("vtkDoubleArray") )
     {
     std::cerr << "Error: Test 2 - Failed to obtain 'Material_Properties' Field Data" << std::endl;
     return EXIT_FAILURE;
     }
-  materialPropertyArray = vtkDoubleArray::SafeDownCast(tmpArray);
+  //materialPropertyArray = vtkDoubleArray::SafeDownCast(tmpArray);
   
   for (int i=0;i<numberOfCells;i++)
     {
@@ -328,13 +337,15 @@ int main( int argc, char * argv[] )
   
   /****************** Check Cell Data ****************************/
   nodexIndexArray = NULL;
-  tmpArray = grid->GetPointData()->GetAbstractArray("Node_Numbers");
-  if ( ! tmpArray->IsA("vtkUnsignedLongArray") )
+  //tmpArray = grid->GetPointData()->GetAbstractArray("Node_Numbers");
+  //tmpArray = vtkAbstractArray::SafeDownCast( grid->GetPointData()->GetArray("Node_Numbers") );
+  nodexIndexArray = (vtkUnsignedLongArray *) grid2->GetPointData()->GetArray("Node_Numbers");
+  if ( ! nodexIndexArray->IsA("vtkUnsignedLongArray") )
     {
     std::cerr << "Error: Test 2 - Failed to obtain 'Node_Numbers' Field Data" << std::endl;
     return EXIT_FAILURE;
     }
-  nodexIndexArray = vtkUnsignedLongArray::SafeDownCast(tmpArray);
+  //nodexIndexArray = vtkUnsignedLongArray::SafeDownCast(tmpArray);
   index0 = nodexIndexArray->GetValue(0);
   indexLast = nodexIndexArray->GetValue( numberOfPoints-1 );
   
@@ -349,7 +360,7 @@ int main( int argc, char * argv[] )
     std::cerr << "Error: Test 2 - Invalid last node index value" << std::endl;
     return EXIT_FAILURE;
     }
-
+  grid2->Delete();
   //std::cout << "Test 2" << std::endl;
   /********************* Check Conversion Function ******************/
   ImageToMeshFilterType::Pointer imageToHexMeshFilter2 = 
@@ -375,9 +386,9 @@ int main( int argc, char * argv[] )
     return EXIT_FAILURE;
     }
   
-  grid = imageToHexMeshFilter2->GetOutput();
-  numberOfCells = grid->GetNumberOfCells();
-  numberOfPoints = grid->GetNumberOfPoints();
+  vtkUnstructuredGrid *grid3 = imageToHexMeshFilter2->GetOutput();
+  numberOfCells = grid3->GetNumberOfCells();
+  numberOfPoints = grid3->GetNumberOfPoints();
   if ( numberOfCells != 27 )
     {
     std::cerr << "Error: Test 3 - Invalid number of cells in unstructured grid. " << std::endl;
@@ -393,15 +404,17 @@ int main( int argc, char * argv[] )
     }
   //std::cout << "Check Cell" << std::endl;
   /****************** Check Cell Data ****************************/
-  gridFieldData = grid->GetFieldData();
+  gridFieldData = grid3->GetFieldData();
   materialPropertyArray = NULL;
-  tmpArray = gridFieldData->GetAbstractArray("Material_Properties");
-  if ( ! tmpArray->IsA("vtkDoubleArray") )
+  //tmpArray = gridFieldData->GetAbstractArray("Material_Properties");
+  //tmpArray = vtkAbstractArray::SafeDownCast( gridFieldData->GetArray("Material_Properties") );
+  materialPropertyArray = (vtkDoubleArray *) gridFieldData->GetArray("Material_Properties");
+  if ( ! materialPropertyArray->IsA("vtkDoubleArray") )
     {
     std::cerr << "Error: Test 3 - Failed to obtain 'Material_Properties' Field Data" << std::endl;
     return EXIT_FAILURE;
     }
-  materialPropertyArray = vtkDoubleArray::SafeDownCast(tmpArray);
+  //materialPropertyArray = vtkDoubleArray::SafeDownCast(tmpArray);
   
   for (int i=0;i<numberOfCells;i++)
     {
@@ -412,6 +425,8 @@ int main( int argc, char * argv[] )
       return EXIT_FAILURE;
       }
     }
-  
+ 
+  grid3->Delete();
+   
   return EXIT_SUCCESS;
 }

@@ -26,11 +26,11 @@ vtkSlicerDiffusionTensorGlyphDisplayWidget::vtkSlicerDiffusionTensorGlyphDisplay
 
     //this->VisibilityButton = NULL;
     this->GlyphGeometryMenu = NULL;
-    this->GlyphColorMenu = NULL;
     this->LineGlyphEigenvectorMenu = NULL;
     this->TubeGlyphEigenvectorMenu = NULL;
 
     this->GlyphScale = NULL;
+    this->GlyphResolutionScale = NULL;
 
     this->TubeNumberOfSidesScale = NULL;
 }
@@ -54,12 +54,6 @@ vtkSlicerDiffusionTensorGlyphDisplayWidget::~vtkSlicerDiffusionTensorGlyphDispla
     this->GlyphGeometryMenu->Delete();
     this->GlyphGeometryMenu = NULL;
     }
-  if (this->GlyphColorMenu)
-    {
-    this->GlyphColorMenu->SetParent(NULL);
-    this->GlyphColorMenu->Delete();
-    this->GlyphColorMenu = NULL;
-    }
   if (this->LineGlyphEigenvectorMenu)
     {
     this->LineGlyphEigenvectorMenu->SetParent(NULL);
@@ -77,6 +71,13 @@ vtkSlicerDiffusionTensorGlyphDisplayWidget::~vtkSlicerDiffusionTensorGlyphDispla
     this->GlyphScale->SetParent(NULL);
     this->GlyphScale->Delete();
     this->GlyphScale = NULL;
+    }
+    
+  if (this->GlyphResolutionScale)
+    {
+    this->GlyphResolutionScale->SetParent(NULL);
+    this->GlyphResolutionScale->Delete();
+    this->GlyphResolutionScale = NULL;
     }
 
   if (this->TubeNumberOfSidesScale)
@@ -147,7 +148,6 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::ProcessWidgetEvents ( vtkObject
                                                this->DiffusionTensorDisplayPropertiesNodeID));
   if (displayNode == NULL)
     {
-    vtkErrorWithObjectMacro(this,"Process WIDGET Events null display node  ;)");
     return;
     }
 
@@ -163,36 +163,22 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::ProcessWidgetEvents ( vtkObject
         event == vtkKWMenu::MenuItemInvokedEvent)
     {
     displayNode->SetGlyphGeometry(this->GlyphGeometryMap[std::string(this->GlyphGeometryMenu->GetWidget()->GetValue())]);
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, display node glyph set!  ;)");
     return;
     }
-
-  // process glyph color menu events
-  vtkKWMenu *colorMenuButton = 
-      vtkKWMenu::SafeDownCast(caller);
-  if (colorMenuButton == this->GlyphColorMenu->GetWidget()->GetMenu())
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, color menu event!  ;)" << event);
-
-  if (colorMenuButton == this->GlyphColorMenu->GetWidget()->GetMenu() && 
-        event == vtkKWMenu::MenuItemInvokedEvent)
-    {
-    displayNode->SetColorGlyphBy(this->GlyphColorMap[std::string(this->GlyphColorMenu->GetWidget()->GetValue())]);
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, display node glyph color set!  ;)");
-    return;
-    }
-
-  // advanced frame
 
   // process glyph scale events
-  vtkKWScale *glyphScale = vtkKWScale::SafeDownCast(caller);
-  if (glyphScale == this->GlyphScale->GetWidget() )
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, glyph scale event!  ;)" << event);
-
-  if (glyphScale == this->GlyphScale->GetWidget() && 
+  if (vtkKWScale::SafeDownCast(caller) == this->GlyphScale->GetWidget() && 
         event == vtkKWScale::ScaleValueChangedEvent)
     {
     displayNode->SetGlyphScaleFactor(this->GlyphScale->GetWidget()->GetValue());
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, glyph scale factor set!  ;)");
+    return;
+    }
+
+  // process glyph reolution events
+  if ( vtkKWScale::SafeDownCast(caller) == this->GlyphResolutionScale->GetWidget() && 
+        event == vtkKWScale::ScaleValueChangedEvent)
+    {
+    displayNode->SetLineGlyphResolution(this->GlyphResolutionScale->GetWidget()->GetValue());
     return;
     }
 
@@ -217,25 +203,18 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::ProcessWidgetEvents ( vtkObject
   // process eigenvector menu events
   vtkKWMenu *tubeEigMenuButton = 
       vtkKWMenu::SafeDownCast(caller);
-  if (tubeEigMenuButton == this->TubeGlyphEigenvectorMenu->GetWidget()->GetMenu())
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, tube eig menu event!  ;)" << event);
-
   if (tubeEigMenuButton == this->TubeGlyphEigenvectorMenu->GetWidget()->GetMenu() && 
         event == vtkKWMenu::MenuItemInvokedEvent)
     {
     displayNode->SetGlyphEigenvector(this->GlyphEigenvectorMap[std::string(this->TubeGlyphEigenvectorMenu->GetWidget()->GetValue())]);
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, display node glyph set!  ;)");
     return;
     }
   // process number of sides scale events
   vtkKWScale *tubeSidesScale = vtkKWScale::SafeDownCast(caller);
-  if (tubeSidesScale == this->TubeNumberOfSidesScale->GetWidget() )
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, tubeSides scale event!  ;)" << event);
 
   if (tubeSidesScale == this->TubeNumberOfSidesScale->GetWidget() && 
         event == vtkKWScale::ScaleValueChangedEvent)
     {
-    vtkErrorWithObjectMacro(this,"Process WIDGET... Events, number of tube sides set!  ;)");
     displayNode->SetTubeGlyphNumberOfSides((int) this->TubeNumberOfSidesScale->GetWidget()->GetValue());
     return;
     }
@@ -347,12 +326,13 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::UpdateWidget()
       {
       //this->VisibilityButton->GetWidget()->SetSelectedState(displayNode->GetVisibility());
       this->GlyphGeometryMenu->GetWidget()->SetValue(displayNode->GetGlyphGeometryAsString());
-      this->GlyphColorMenu->GetWidget()->SetValue(displayNode->GetColorGlyphByAsString());
       this->LineGlyphEigenvectorMenu->GetWidget()->SetValue(displayNode->GetGlyphEigenvectorAsString());
 
       this->TubeGlyphEigenvectorMenu->GetWidget()->SetValue(displayNode->GetGlyphEigenvectorAsString());
 
       this->GlyphScale->GetWidget()->SetValue(displayNode->GetGlyphScaleFactor());
+
+      this->GlyphResolutionScale->GetWidget()->SetValue(displayNode->GetLineGlyphResolution());
 
       this->TubeNumberOfSidesScale->GetWidget()->SetValue(displayNode->GetTubeGlyphNumberOfSides());
 
@@ -383,9 +363,9 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::UpdateMRML()
       {
       //displayNode->SetVisibility(this->VisibilityButton->GetWidget()->GetSelectedState());
       displayNode->SetGlyphGeometry(this->GlyphGeometryMap[std::string(this->GlyphGeometryMenu->GetWidget()->GetValue())]);
-      displayNode->SetColorGlyphBy(this->GlyphColorMap[std::string(this->GlyphColorMenu->GetWidget()->GetValue())]);
       displayNode->SetGlyphEigenvector(this->GlyphEigenvectorMap[std::string(this->LineGlyphEigenvectorMenu->GetWidget()->GetValue())]);
       displayNode->SetGlyphScaleFactor(this->GlyphScale->GetWidget()->GetValue());
+      displayNode->SetLineGlyphResolution(this->GlyphResolutionScale->GetWidget()->GetValue());
       displayNode->SetTubeGlyphNumberOfSides((int) this->TubeNumberOfSidesScale->GetWidget()->GetValue());
       }
     else 
@@ -403,7 +383,6 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::AddWidgetObservers ( ) {
   //this->Superclass::AddWidgetObservers();
 
   this->GlyphGeometryMenu->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->GlyphColorMenu->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
   this->LineGlyphEigenvectorMenu->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
   this->TubeGlyphEigenvectorMenu->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -411,6 +390,7 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::AddWidgetObservers ( ) {
   //this->GlyphScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueStartChangingEvent, (vtkCommand *)this->GUICallbackCommand );
   //this->GlyphScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand *)this->GUICallbackCommand );
   this->GlyphScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->GlyphResolutionScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
   this->TubeNumberOfSidesScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -422,7 +402,6 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::RemoveWidgetObservers ( ) {
   //this->Superclass::RemoveWidgetObservers();
 
   this->GlyphGeometryMenu->GetWidget()->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->GlyphColorMenu->GetWidget()->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
   this->LineGlyphEigenvectorMenu->GetWidget()->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
   this->TubeGlyphEigenvectorMenu->GetWidget()->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -431,6 +410,7 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::RemoveWidgetObservers ( ) {
   //this->GlyphScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangingEvent, (vtkCommand *)this->GUICallbackCommand );
   //this->GlyphScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueStartChangingEvent, (vtkCommand *)this->GUICallbackCommand );
   this->GlyphScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->GlyphResolutionScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
   this->TubeNumberOfSidesScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -508,35 +488,25 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::CreateWidget ( )
   this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                glyphMenuButton->GetWidgetName());
 
+  this->GlyphScale = vtkKWScaleWithLabel::New();
+  this->GlyphScale->SetParent ( frame->GetFrame() );
+  this->GlyphScale->Create ( );
+  this->GlyphScale->SetLabelText("Scale Factor");
+  this->GlyphScale->GetWidget()->SetRange(0,200);
+  this->GlyphScale->GetWidget()->SetResolution(1);
+  this->GlyphScale->SetBalloonHelpString("set glyph scale value.");
+  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+                 this->GlyphScale->GetWidgetName() );
 
-  // glyph color menu
-  vtkKWMenuButtonWithLabel *colorMenuButton = 
-    vtkKWMenuButtonWithLabel::New();
-
-  this->GlyphColorMenu = colorMenuButton;
-  colorMenuButton->SetParent( frame->GetFrame() );
-  colorMenuButton->Create();
-
-  // initialize color menu
-  initIdx = propNode->GetFirstColorGlyphBy();
-  endIdx = propNode->GetLastColorGlyphBy();
-  currentVal = propNode->GetColorGlyphBy();
-  this->GlyphColorMap.clear();
-  for (k=initIdx ; k<=endIdx ; k++)
-    {
-    propNode->SetColorGlyphBy(k);
-    const char *tag = propNode->GetColorGlyphByAsString();
-    this->GlyphColorMap[std::string(tag)]=k;
-    colorMenuButton->GetWidget()->GetMenu()->AddRadioButton(tag);
-    }
-  // init to class default value
-  propNode->SetColorGlyphBy(currentVal);
-  colorMenuButton->GetWidget()->SetValue(propNode->GetColorGlyphByAsString());
-
-  // pack color menu
-  colorMenuButton->SetLabelText("Glyph Color");
-  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-               colorMenuButton->GetWidgetName());
+  this->GlyphResolutionScale = vtkKWScaleWithLabel::New();
+  this->GlyphResolutionScale->SetParent ( frame->GetFrame() );
+  this->GlyphResolutionScale->Create ( );
+  this->GlyphResolutionScale->SetLabelText("Resolution");
+  this->GlyphResolutionScale->GetWidget()->SetRange(1,50);
+  this->GlyphResolutionScale->GetWidget()->SetResolution(1);
+  this->GlyphResolutionScale->SetBalloonHelpString("skip step for glyphs.");
+  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+                 this->GlyphResolutionScale->GetWidgetName() );
 
 
   // ---
@@ -549,18 +519,6 @@ void vtkSlicerDiffusionTensorGlyphDisplayWidget::CreateWidget ( )
 
   this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                  advFrame->GetWidgetName() );
-
-  this->GlyphScale = vtkKWScaleWithLabel::New();
-  this->GlyphScale->SetParent ( advFrame->GetFrame() );
-  this->GlyphScale->Create ( );
-  this->GlyphScale->SetLabelText("Scale Factor");
-  this->GlyphScale->GetWidget()->SetRange(0,200);
-  this->GlyphScale->GetWidget()->SetResolution(1);
-  this->GlyphScale->SetBalloonHelpString("set glyph opacity value.");
-  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
-                 this->GlyphScale->GetWidgetName() );
-
-
 
 
   // ---

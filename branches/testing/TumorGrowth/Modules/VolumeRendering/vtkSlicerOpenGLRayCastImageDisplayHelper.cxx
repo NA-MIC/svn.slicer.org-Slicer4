@@ -37,8 +37,7 @@ vtkStandardNewMacro(vtkSlicerOpenGLRayCastImageDisplayHelper);
 // Construct a new vtkSlicerOpenGLRayCastImageDisplayHelper with default values
 vtkSlicerOpenGLRayCastImageDisplayHelper::vtkSlicerOpenGLRayCastImageDisplayHelper()
 {
-    this->PreviousImage=NULL;
-    this->PreviousImageSize=0;
+
 }
 
 // Destruct a vtkSlicerOpenGLRayCastImageDisplayHelper - clean up any memory used
@@ -105,10 +104,6 @@ void vtkSlicerOpenGLRayCastImageDisplayHelper::RenderTextureInternal( vtkVolume 
                                                                 void *image )
 {
 
- //SLICERADD
- this->MergeWithExistingImage(image,imageInUseSize[0]);
- 
- //ENDSLICERADD
 
   int i;
   float offsetX, offsetY;
@@ -257,7 +252,7 @@ void vtkSlicerOpenGLRayCastImageDisplayHelper::RenderTextureInternal( vtkVolume 
     glTexImage2D( GL_PROXY_TEXTURE_2D, 0, GL_RGBA8, 
                   imageMemorySize[0], imageMemorySize[1], 
                   0, GL_RGBA, GL_UNSIGNED_BYTE, 
-                  static_cast<unsigned char *>(this->PreviousImage) );
+                  static_cast<unsigned char *>(image) );
     }
   else
     {
@@ -265,7 +260,7 @@ void vtkSlicerOpenGLRayCastImageDisplayHelper::RenderTextureInternal( vtkVolume 
     glTexImage2D( GL_PROXY_TEXTURE_2D, 0, GL_RGBA8, 
                   imageMemorySize[0], imageMemorySize[1], 
                   0, GL_RGBA, GL_UNSIGNED_SHORT, 
-                  static_cast<unsigned short *>(this->PreviousImage) );
+                  static_cast<unsigned short *>(image) );
     }
   
   GLint params[1];
@@ -280,14 +275,14 @@ void vtkSlicerOpenGLRayCastImageDisplayHelper::RenderTextureInternal( vtkVolume 
       glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, 
                     imageMemorySize[0], imageMemorySize[1], 
                     0, GL_RGBA, GL_UNSIGNED_BYTE, 
-                    static_cast<unsigned char *>(this->PreviousImage) );
+                    static_cast<unsigned char *>(image) );
       }
     else
       {
       glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, 
                     imageMemorySize[0], imageMemorySize[1], 
                     0, GL_RGBA, GL_UNSIGNED_SHORT, 
-                    static_cast<unsigned short *>(this->PreviousImage) );
+                    static_cast<unsigned short *>(image) );
       }
     }
   // if it doesn't, we are going to break it up now and render it.
@@ -317,14 +312,14 @@ void vtkSlicerOpenGLRayCastImageDisplayHelper::RenderTextureInternal( vtkVolume 
         glTexImage2D( GL_PROXY_TEXTURE_2D, 0, GL_RGBA8, 
                       newTextureSize[0], newTextureSize[1],
                       0, GL_RGBA, GL_UNSIGNED_BYTE, 
-                      static_cast<unsigned char *>(this->PreviousImage) );
+                      static_cast<unsigned char *>(image) );
         }
       else
         {
         glTexImage2D( GL_PROXY_TEXTURE_2D, 0, GL_RGBA8, 
                       newTextureSize[0], newTextureSize[1],
                       0, GL_RGBA, GL_UNSIGNED_SHORT, 
-                      static_cast<unsigned short *>(this->PreviousImage) );
+                      static_cast<unsigned short *>(image) );
         }
       glGetTexLevelParameteriv ( GL_PROXY_TEXTURE_2D, 0, 
                                  GL_TEXTURE_WIDTH, params );
@@ -561,55 +556,4 @@ void vtkSlicerOpenGLRayCastImageDisplayHelper::RenderTextureInternal( vtkVolume 
 void vtkSlicerOpenGLRayCastImageDisplayHelper::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
-}
-
-void vtkSlicerOpenGLRayCastImageDisplayHelper::MergeWithExistingImage(void *image,int scalarType)
-{
-    if(this->PreviousScalarType!=scalarType)
-    {
-        vtkErrorMacro("The scalarType has changed, merge is not possible");
-        return;
-    }
-    int size=(Limit[3]-Limit[2])*(Limit[1]*Limit[0]);
-    //We obviously changed the size
-    if(this->PreviousSize<size)
-    {
-        delete[] this->PreviousImage;
-    }
-    if(scalarType==VTK_UNSIGNED_SHORT)
-    {
-        this->PreviousImage=new unsigned short[4*size];
-    }
-    else
-    {
-        this->PreviousImage=new unsigned char[4*size];
-    }
-
-    if(scalarType==VTK_UNSIGNED_SHORT)
-    {
-        unsigned short *previous=static_cast<unsigned short*>(this->PreviousImage);
-        unsigned short *current=static_cast<unsigned short*>(image);
-        for(int i=Limit[0];i<Limit[1];i++)
-        {
-            for(int j=Limit[2];j<Limit[3];j++)
-            {
-               previous[i*j]=current[i*j];
-            }
-        }
-
-    }
-    else
-    {
-        unsigned char *previous=static_cast<unsigned char*>(this->PreviousImage);
-        unsigned char *current=static_cast<unsigned char*>(image);
-        for(int i=Limit[0];i<Limit[1];i++)
-        {
-            for(int j=Limit[2];j<Limit[3];j++)
-            {
-                previous[i*j]=current[i*j];
-            }
-        }
-
-    }
-
 }

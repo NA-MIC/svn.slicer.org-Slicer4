@@ -884,7 +884,6 @@
 
 //BTX
 #define VTKKWRCHelper_OuterInitialization()                             \
-    VTKKWRCHelper_SLICER_LimitRaysJ                                     \
     if ( j%threadCount != threadID )                                    \
       {                                                                 \
       continue;                                                         \
@@ -906,7 +905,6 @@
 
 //BTX
 #define VTKKWRCHelper_InnerInitialization()             \
-  VTKKWRCHelper_SLICER_LimitRaysI                       \
   unsigned int   numSteps;                              \
   unsigned int   pos[3];                                \
   unsigned int   dir[3];                                \
@@ -1177,15 +1175,13 @@
 //BTX
 #define VTKKWRCHelper_IncrementAndLoopEnd()                                     \
       imagePtr+=4;                                                              \
-      VTKKWRCHelper_SLICER_CloseLimitBrace                                      \
       }                                                                         \
-    if ( j%32 == 31 )                                                           \
+    if ( j%32 == 0 && threadID==0 )                                                           \
       {                                                                         \
       float fargs[1];                                                           \
       fargs[0] = static_cast<float>(j)/static_cast<float>(imageInUseSize[1]-1); \
       mapper->InvokeEvent( vtkCommand::ProgressEvent, fargs );                  \
       }                                                                         \
-    VTKKWRCHelper_SLICER_CloseLimitBrace                                        \
     }
 //ETX
 
@@ -1286,27 +1282,6 @@
 
 //BTX 
 #define VTKKWRCHelper_MIPSpaceLeapCheckMulti( COMP )  mmvalid[COMP]
-//ETX
-
-
-//Additional Macros to Limit the Rays for incremental Updates
-//BTX
-#define VTKKWRCHelper_SLICER_LimitRaysI                                         \
-    int positionI=i+imageOrigin[0];                                             \
-    if(positionI>=mapper->Getlimit()[0]||positionI<=mapper->Getlimit()[1])                                \
-    {
-//ETX
-
-//BTX
-#define VTKKWRCHelper_SLICER_LimitRaysJ                                         \
-    int positionJ=j+imageOrigin[1];                                             \
-    if(positionJ>=mapper->Getlimit()[2]||positionJ<=mapper->Getlimit()[3])                    \
-    {
-//ETX
-
-//BTX
-#define VTKKWRCHelper_SLICER_CloseLimitBrace                                   \
-        }                                                                  
 //ETX
 
 #include "vtkObject.h"

@@ -26,13 +26,14 @@
       <description>Input DTI volume</description>
     </image>
     
-    <!-- <image type ="label">
+    <image type ="label">
       <name>InputROI</name>
       <label>Input ROI</label>
       <channel>input</channel>
       <index>1</index>
       <description>Label map with seeding ROIs</description>
-    </image> -->
+    </image> 
+
     <geometry type = "fiberbundle">
       <name>OutputFibers</name>
       <label>Output Fiber bundle</label>
@@ -40,6 +41,32 @@
       <index>2</index>
       <description>Tractography result</description>
     </geometry>
+
+   <boolean>
+     <name>WriteToFile</name>
+     <label>Write Fibers To Disk</label>
+     <longflag>--writetofile</longflag>
+     <description>Write fibers to disk or create in the scene?</description>
+     <default>false</default>
+   </boolean>
+
+    <directory>
+      <name>OutputDirectory</name>
+      <label>Output Directory</label>
+      <channel>output</channel>
+      <longflag>--outputdirectory</longflag>
+      <description>Directory in which to save fiber(s)</description>
+    </directory>  
+
+   <string>
+     <name>FilePrefix</name>
+     <label>File Prefix Name</label>
+     <flag>-n</flag>
+     <longflag>--name</longflag>
+     <description>Name to use for fiber files</description>
+     <default>line</default>
+   </string>
+
   </parameters>
   <parameters>
     <label>Seed Placement Options</label>
@@ -51,7 +78,7 @@
       <flag>-s</flag>
       <longflag>--seedspacing</longflag>
       <description>Spacing (in mm) between seed points</description>
-      <default>1</default>
+      <default>5</default>
       <constraints>
       	<minimum>0.1</minimum>
 	<maximum>10</maximum>
@@ -70,7 +97,7 @@
       
     <double>
       <name>ClTh</name>
-      <label>Cl Threshold</label>
+      <label>Linear Measurement Start Threshold</label>
       <flag>-c</flag>
       <longflag>--clthreshold</longflag>
       <description>Minimum Linear Measurement for the seeding to start.</description>
@@ -123,7 +150,6 @@
       <longflag>--stoppingmode</longflag>      	
       <default>LinearMeasurement</default>
       <element>LinearMeasurement</element>
-      <element>PlanarMeasurement</element>
       <element>FractionalAnisotropy</element>
     </string-enumeration>
     
@@ -137,6 +163,20 @@
       <constraints>
         <minimum>0</minimum>
 	<maximum>1</maximum>
+	<step>0.1</step>
+      </constraints>
+    </double>  	
+
+    <double>
+      <name>StoppingCurvature</name>
+      <label>Stopping Track Curvature</label>
+      <description>Tractography will stop if radius of curvature becomes smaller than this number units are degrees per mm</description>
+      <flag>-t</flag>
+      <longflag>--stoppingcurvature</longflag>
+      <default>0.8</default>
+      <constraints>
+        <minimum>0</minimum>
+	<maximum>10</maximum>
 	<step>0.1</step>
       </constraints>
     </double>  	

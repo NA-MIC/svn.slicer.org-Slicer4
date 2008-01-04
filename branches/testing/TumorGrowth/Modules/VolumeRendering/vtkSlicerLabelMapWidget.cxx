@@ -7,98 +7,127 @@
 #include "vtkKWPushButton.h"
 #include "vtkKWLabel.h"
 #include "vtkSlicerApplication.h"
+#include "vtkSlicerLabelmapTree.h"
+#include "vtkSlicerLabelmapElement.h"
+#include "vtkKWVolumeMaterialPropertyWidget.h"
+#include "vtkMRMLVolumeRenderingNode.h"
+
 
 vtkStandardNewMacro (vtkSlicerLabelMapWidget);
-//vtkCxxRevisionMacro (vtkSlicerLabelMapWidget, "$Revision: 1.0 $");
+vtkCxxRevisionMacro (vtkSlicerLabelMapWidget, "$Revision: 1.0 $");
 vtkSlicerLabelMapWidget::vtkSlicerLabelMapWidget(void)
 {
+    this->Tree=NULL;
+    this->ChangeAll=NULL;
+    this->VolumeRenderingNode=NULL;
+    this->Node=NULL;
+    this->VMPW_Shading=NULL;
 }
 
 vtkSlicerLabelMapWidget::~vtkSlicerLabelMapWidget(void)
 {
+    if(this->ChangeAll!=NULL)
+    {
+        this->Script("pack forget %s",this->ChangeAll->GetWidgetName());
+        this->ChangeAll->RemoveObservers(vtkCommand::AnyEvent);
+        this->ChangeAll->SetParent(NULL);
+        this->ChangeAll->Delete();
+        this->ChangeAll=NULL;
+    }
+    if(this->Tree!=NULL)
+    {
+        this->Script("pack forget %s",this->Tree->GetWidgetName());
+        this->Tree->RemoveObservers(vtkSlicerLabelmapTree::SingleLabelEdited);
+        this->Tree->SetParent(NULL);
+        this->Tree->Delete();
+        this->Tree=NULL;
+    }
+
+    if(this->VMPW_Shading!=NULL)
+    {
+        this->Script("pack forget %s",this->VMPW_Shading->GetWidgetName());
+        this->VMPW_Shading->SetParent(NULL);
+        this->VMPW_Shading->Delete();
+        this->VMPW_Shading=NULL;
+    }
+
 }
 
 void vtkSlicerLabelMapWidget::CreateWidget(void)
 {
     this->Superclass::CreateWidget();
-     vtkKWLabel *label=vtkKWLabel::New();
-    label->SetParent(this);
-    label->SetText("LabelmapWidget");
-    label->Create();
 
-    this->Script("pack %s -side right -anchor nw -fill x -padx 2 -pady 2",label->GetWidgetName());
-    label->Delete();
+    //Shading
+    this->VMPW_Shading=vtkKWVolumeMaterialPropertyWidget::New();
+    this->VMPW_Shading->SetParent(this);
+    this->VMPW_Shading->Create();
+    //Invoke a needForRenderEvent
+    this->VMPW_Shading->SetPropertyChangingCommand(this,"InvokeEvent 30000");
+    this->VMPW_Shading->SetPropertyChangedCommand(this,"InvokeEvent 30000");;
+    this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->VMPW_Shading->GetWidgetName());
 
-      this->widgets_tree =vtkKWTreeWithScrollbars::New();
-     this->widgets_tree->SetParent(this);
-    this->widgets_tree->Create();
-    this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->widgets_tree->GetWidgetName());
-    vtkKWTree *tree=this->widgets_tree->GetWidget();
-    tree->RedrawOnIdleOn();
-    tree->SelectionFillOn();
-    tree->SetDeltaY(30);
-    for(int i=1;i<50;i++)
-    {
-        std::stringstream str;
-        std::stringstream str1;
-        str1<<i;
-        str<<"test"<<i;
-        tree->AddNode("",str1.str().c_str(),str.str().c_str());
-        tree->OpenNode(str1.str().c_str());
-        tree->SetNodeSelectableFlag(str1.str().c_str(),0);
-        tree->SetNodeFontWeightToBold(str1.str().c_str());
-        vtkKWCompositeWidget *frame=vtkKWCompositeWidget::New();
-        frame->SetParent(tree);
-        frame->Create();
-        vtkKWPushButton *pushB=vtkKWPushButton::New();
-        pushB->SetParent(frame);
-        pushB->SetText(str.str().c_str());
-        pushB->Create();
-        this->Script("pack %s -side left -anchor nw -fill x -padx 2 -pady 2",pushB->GetWidgetName());
+    //Change all opacities
+    this->ChangeAll=vtkSlicerLabelmapElement::New();
+    this->ChangeAll->SetParent(this);
+    this->ChangeAll->Create();
+    double color[3];
+    color[0]=0.5;
+    color[1]=0.5;
+    color[2]=0.5;
+    this->ChangeAll->Init(INT_MIN,"ALL COLORS",color,-1,20);
+    this->ChangeAll->ChangeOpacity(-1);
+    this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->ChangeAll->GetWidgetName());
+    this->ChangeAll->AddObserver(vtkCommand::AnyEvent,(vtkCommand *)this->GUICallbackCommand);
 
-        vtkKWLabel *label=vtkKWLabel::New();
-        label->SetParent(frame);
-        label->SetText(str.str().c_str());
-        label->Create();
-        label->SetBackgroundColor(1-i/100.,1-i/100.,1-i/100.);
-
-        this->Script("pack %s -side right -anchor nw -fill x -padx 2 -pady 2",label->GetWidgetName());
-        tree->SetNodeWindow(str1.str().c_str(),frame);
-        pushB->Delete();
-        label->Delete();
-        frame->Delete();
-        for(int j=i*1000;j<(i*1000+3);j++)
-        {
-            std::stringstream Cstr;
-            std::stringstream Cstr1;
-            Cstr1<<j;
-            Cstr<<"testChild"<<j;
-            tree->AddNode(str1.str().c_str(),Cstr1.str().c_str(),Cstr.str().c_str());
-            tree->OpenNode(Cstr1.str().c_str());
-            tree->SetNodeSelectableFlag(Cstr1.str().c_str(),0);
-            tree->SetNodeFontWeightToBold(Cstr1.str().c_str());
-            vtkKWCompositeWidget *frameA=vtkKWCompositeWidget::New();
-            frameA->SetParent(tree);
-            frameA->Create();
-            vtkKWPushButton *pushBA=vtkKWPushButton::New();
-            pushBA->SetParent(frameA);
-            pushBA->SetText(Cstr.str().c_str());
-            pushBA->Create();
-            this->Script("pack %s -side left -anchor nw -fill x -padx 2 -pady 2",pushBA->GetWidgetName());
-
-            vtkKWLabel *labelA=vtkKWLabel::New();
-            labelA->SetParent(frameA);
-            labelA->SetText(Cstr.str().c_str());
-            labelA->Create();
-            labelA->SetBackgroundColor(1-i/100.,1-i/100.,1-i/100.);
-
-            this->Script("pack %s -side right -anchor nw -fill x -padx 2 -pady 2",labelA->GetWidgetName());
-            tree->SetNodeWindow(Cstr1.str().c_str(),frameA);
-            pushBA->Delete();
-            labelA->Delete();
-            frameA->Delete();
-        }
-    }
-    //widgets_tree->Delete();
-    ////end test of widgets_tree
+    //Tree with all opacities
+    this->Tree=vtkSlicerLabelmapTree::New();
+    this->Tree->SetParent(this);
+    this->Tree->Create();
+    this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->Tree->GetWidgetName());
+    this->Tree->AddObserver(vtkSlicerLabelmapTree::SingleLabelEdited,(vtkCommand *) this->GUICallbackCommand);
 }
+
+void vtkSlicerLabelMapWidget::ProcessWidgetEvents(vtkObject *caller, unsigned long event, void *callData)
+{
+    vtkSlicerLabelmapElement *callerLabelmap=vtkSlicerLabelmapElement::SafeDownCast(caller);
+
+    if(callerLabelmap==this->ChangeAll)
+    {
+        int *opacities=(int*) callData;
+        this->Tree->ChangeAllOpacities(opacities[1]);
+        this->InvokeEvent(vtkSlicerLabelMapWidget::NeedForRenderEvent);
+        return;
+    }
+    vtkSlicerLabelmapTree *callerLabelmapTree=vtkSlicerLabelmapTree::SafeDownCast(caller);
+    if(callerLabelmapTree==this->Tree&&event==vtkSlicerLabelmapTree::SingleLabelEdited)
+    {
+
+        this->ChangeAll->ChangeOpacity(-1);
+        this->InvokeEvent(vtkSlicerLabelMapWidget::NeedForRenderEvent);
+        return;
+    }
+}
+
+void vtkSlicerLabelMapWidget::UpdateGuiElements(void)
+{
+    //Update the tree
+    if(this->Tree==NULL)
+    {
+        vtkErrorMacro("Call Init before updating GUI Elements");
+    }
+    else
+    {
+        this->Tree->UpdateGuiElements();
+    }
+
+    //Update the shading
+    if(this->VolumeRenderingNode==NULL)
+    {
+        vtkErrorMacro("Attention Volume Rendering is NULL");
+    }
+    else
+    {
+        this->VMPW_Shading->SetVolumeProperty(this->VolumeRenderingNode->GetVolumeProperty());
+    }
+}
+

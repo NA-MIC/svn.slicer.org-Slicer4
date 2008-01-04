@@ -13,23 +13,25 @@
 #include "itkPluginFilterWatcher.h"
 #include "itkPluginUtilities.h"
 
-#include "vtkDiffusionTensorMathematics.h"
+#include "vtkDiffusionTensorMathematicsSimple.h"
 
 #include "vtkNRRDReader.h"
 #include "vtkNRRDWriter.h"
 #include "vtkImageData.h"
 #include "SeedingCLP.h"
 #include "vtkSeedTracts.h"
-#include "vtkPolyDataWriter.h"
+#include "vtkXMLPolyDataWriter.h"
 #include "vtkMath.h"
 #include "vtkImageThreshold.h"
-
+#include "vtkImageWriter.h"
+#include "vtkNRRDWriter.h"
+#include "vtkImageCast.h"
 
 int main( int argc, const char * argv[] )
 {
 
   PARSE_ARGS;
-
+  try {
   vtkNRRDReader *reader = vtkNRRDReader::New();
   reader->SetFileName(InputVolume.c_str());
   reader->Update();
@@ -39,7 +41,25 @@ int main( int argc, const char * argv[] )
     std::cerr << argv[0] << ": No tensor data" << std::endl;
     return EXIT_FAILURE;
     }
-    
+
+  vtkNRRDReader *reader2 = vtkNRRDReader::New();
+  reader2->SetFileName(InputROI.c_str());
+  reader2->Update();
+  
+  /*
+  vtkNRRDWriter *iwriter = vtkNRRDWriter::New();
+  iwriter->SetInput(reader->GetOutput());
+  iwriter->SetFileName("C:/Temp/helix.nhdr");
+  iwriter->Write();
+  iwriter->Delete();
+  **/
+
+  if ( reader2->GetOutput()->GetPointData()->GetScalars() == NULL )
+    {
+    std::cerr << argv[0] << ": No roi data" << std::endl;
+    return EXIT_FAILURE;
+    }
+  
   vtkSeedTracts *seed = vtkSeedTracts::New();
   
   //1. Set Input
@@ -90,15 +110,37 @@ int main( int argc, const char * argv[] )
   }
   TensorRASToIJKRotation->Invert();
   seed->SetTensorRotationMatrix(TensorRASToIJKRotation);  
+
+
+  //vtkNRRDWriter *iwriter = vtkNRRDWriter::New();
   
   // 3. Set up ROI based on Cl mask
   //Create Cl mask
-  vtkDiffusionTensorMathematics *math = vtkDiffusionTensorMathematics::New();
+
+  vtkImageCast *imageCast = vtkImageCast::New();
+  imageCast->SetOutputScalarTypeToShort();
+  imageCast->SetInput(reader2->GetOutput());
+  imageCast->Update();
+
+  /**
+  iwriter->SetInput(imageCast->GetOutput());
+  iwriter->SetFileName("C:/Temp/cast.nhdr");
+  iwriter->Write();
+
+
+  vtkDiffusionTensorMathematicsSimple *math = vtkDiffusionTensorMathematicsSimple::New();
   math->SetInput(0, reader->GetOutput());
-  math->SetInput(1, reader->GetOutput());
+  // math->SetInput(1, reader->GetOutput());
+  math->SetScalarMask(imageCast->GetOutput());
+  math->MaskWithScalarsOn();
+  math->SetMaskLabelValue(ROIlabel);
   math->SetOperationToLinearMeasure();
   math->Update();
   
+  iwriter->SetInput(math->GetOutput());
+  iwriter->SetFileName("C:/Temp/math.nhdr");
+  iwriter->Write();
+
   vtkImageThreshold *th = vtkImageThreshold::New();
   th->SetInput(math->GetOutput());
   th->ThresholdBetween(ClTh,1);
@@ -108,11 +150,19 @@ int main( int argc, const char * argv[] )
   th->ReplaceOutOn();
   th->SetOutputScalarTypeToShort();
   th->Update();
+
+  iwriter->SetInput(th->GetOutput());
+  iwriter->SetFileName("C:/Temp/th.nhdr");
+  iwriter->Write();
+  **/
   
   //PENDING: Do merging with input ROI
   
-  seed->SetInputROI(th->GetOutput());
-  seed->SetInputROIValue(1);
+  seed->SetInputROI(imageCast->GetOutput());
+  seed->SetInputROIValue(ROIlabel);
+  seed->UseStartingThresholdOn();
+  seed->SetStartingThreshold(ClTh);
+
   //ROI comes from tensor, IJKToRAS is the same
   // as the tensor
   vtkTransform *trans2 = vtkTransform::New();
@@ -122,6 +172,16 @@ int main( int argc, const char * argv[] )
   seed->SetROIToWorld(trans2);
   
   //4. Set Tractography specific parameters
+  
+  if (WriteToFile) 
+    {
+    seed->SetFileDirectoryName(OutputDirectory.c_str());
+    if (FilePrefix.length() > 0)
+      {
+      seed->SetFilePrefix(FilePrefix.c_str());
+      }
+    }
+  
   seed->SetIsotropicSeeding(1);
   seed->SetIsotropicSeedingResolution(SeedSpacing);
   seed->SetMinimumPathLength(MinimumLength);
@@ -149,25 +209,47 @@ int main( int argc, const char * argv[] )
       
   streamer->SetStoppingThreshold(StoppingValue);
   streamer->SetMaximumPropagationDistance(MaximumLength);
+  streamer->SetRadiusOfCurvature(StoppingCurvature);
   
   // Temp fix to provide a scalar
-  seed->GetInputTensorField()->GetPointData()->SetScalars(math->GetOutput()->GetPointData()->GetScalars());
+  //seed->GetInputTensorField()->GetPointData()->SetScalars(math->GetOutput()->GetPointData()->GetScalars());
 
   //5. Run the thing
   seed->SeedStreamlinesInROI();
   
-  //6. Extract PolyData in RAS
+  //6. Extra5ct PolyData in RAS
   vtkPolyData *outFibers = vtkPolyData::New();
-  seed->TransformStreamlinesToRASAndAppendToPolyData(outFibers);
   
   //Save result
-  vtkPolyDataWriter *writer = vtkPolyDataWriter::New();
-  writer->SetFileName(OutputFibers.c_str());
-  writer->SetFileTypeToBinary();
-  writer->SetInput(outFibers);
-  writer->Write();
-
+  vtkXMLPolyDataWriter *writer = vtkXMLPolyDataWriter::New();
+  if (!WriteToFile) 
+    {
+    seed->TransformStreamlinesToRASAndAppendToPolyData(outFibers);
+    writer->SetFileName(OutputFibers.c_str());
+    //writer->SetFileTypeToBinary();
+    writer->SetInput(outFibers);
+    writer->Write();
+    }
   // Delete everything: Still trying to figure out what is going on
+  reader->Delete();
+  outFibers->Delete();
+  seed->Delete();
+  TensorRASToIJK->Delete();
+  TensorRASToIJKRotation->Delete();
+  //math->Delete();
+  //th->Delete();
+  trans2->Delete();
+  trans->Delete();
+  streamer->Delete();
+  reader2->Delete();
+  writer->Delete();
+  imageCast->Delete();
+  }
+  catch (...) 
+    { 
+    cout << "default exception"; 
+    return EXIT_FAILURE;
+    }
 
   return EXIT_SUCCESS;
 }
