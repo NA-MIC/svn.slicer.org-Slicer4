@@ -16,6 +16,7 @@
 #include "vtkVolumeCudaMapper.h"
 #include "vtkKWTypeChooserBox.h"
 #include "vtkKWMatrixWidget.h"
+#include "vtkKWMatrixWidgetWithLabel.h"
 
 #include "CUDA_renderAlgo.h"
 
@@ -36,6 +37,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->ImageViewer = NULL;
     this->InputTypeChooser = NULL;
     this->InputResolutionMatrix = NULL;
+    this->Color = NULL;
 }
 
 
@@ -72,6 +74,7 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     
     DeleteWidget(this->InputTypeChooser);
     DeleteWidget(this->InputResolutionMatrix);
+    DeleteWidget(this->Color);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::DeleteWidget(vtkKWWidget* widget)
@@ -172,6 +175,21 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
         this->CameraPosition->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
         
         
+    this->Color = vtkKWMatrixWidgetWithLabel::New();
+    this->Color->SetLabelText("Color R/G/B:");
+    this->Color->SetParent(loadSaveDataFrame->GetFrame());
+    this->Color->GetWidget()->Create();
+    this->Color->LabelVisibilityOn();
+    this->Color->GetWidget()->SetRestrictElementValueToInteger();
+    this->Color->GetWidget()->SetNumberOfColumns(3);
+    this->Color->GetWidget()->SetNumberOfRows(1);
+    this->Color->GetWidget()->SetElementValueAsInt(0,0,255);
+    this->Color->GetWidget()->SetElementValueAsInt(0,1,255);
+    this->Color->GetWidget()->SetElementValueAsInt(0,2,255);
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->Color->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
+        
+        
     ////Testing Pushbutton
     //this->PB_Testing= vtkKWPushButton::New();
     //this->PB_Testing->SetParent(loadSaveDataFrame->GetFrame());
@@ -269,16 +287,20 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
     this->LoadButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CreatePiplineTestButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+    
     this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->Color->GetWidget()->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
     this->LoadButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CreatePiplineTestButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+    
     this->InputTypeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->Color->GetWidget()->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
@@ -313,7 +335,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
    
    
    /// INPUT TYPE OR SIZE CHANGED CHANGED
-   if (caller == this->InputTypeChooser->GetMenu() || caller == this->InputResolutionMatrix)
+   if (caller == this->InputTypeChooser->GetMenu() || caller == this->InputResolutionMatrix || caller == this->Color)
    {
      cerr << "Type" << this->InputTypeChooser->GetSelectedName() << " " << this->InputTypeChooser->GetSelectedType() << 
      " X:" << this->InputResolutionMatrix->GetElementValueAsInt(0,0) << 
@@ -383,7 +405,9 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
 
   // Setting transformation matrix. This matrix will be used to do rotation and translation on ray tracing.
 
-  float color[6]={255,255,255,1,1,1};
+  float color[6]={this->Color->GetWidget()->GetElementValueAsInt(0,0),
+    this->Color->GetWidget()->GetElementValueAsInt(0,1), 
+    this->Color->GetWidget()->GetElementValueAsInt(0,2),1,1,1};
   float minmax[6]={0,255,0,255,0,255};
   float lightVec[3]={0, 0, 1};
   float rotationMatrix[4][4]={{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
