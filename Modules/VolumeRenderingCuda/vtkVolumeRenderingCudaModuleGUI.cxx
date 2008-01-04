@@ -453,11 +453,13 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
     {0,0,1,0},
     {0,0,0,1}};
     
+    /*
     for (unsigned int i = 0; i < 4; i++)
     {
       for (unsigned int j = 0; j < 4; j++)
         rotationMatrix[i][j] = viewMat->GetElement(i,j);
     }
+    */
   // Initialization. Prepare and allocate GPU memory to accomodate 3D data and Result image.
 
   cerr << "CUDA Initialization.\n";
@@ -470,15 +472,14 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
   
   cerr << "Volume rendering.\n";
   // Do rendering. 
-/*
- CUDArenderAlgo_doRender((float*)viewMat, color, minmax, lightVec, 
+
+ CUDArenderAlgo_doRender((float*)rotationMatrix, color, minmax, lightVec, 
         inX, inY, inZ,    //3D data size
         outX, outY,     //result image size
         0,0,0,          //translation of data in x,y,z direction
         1, 1, 1,        //voxel dimension
         90, 255,        //min and max threshold
         -100);          //slicing distance from center of 3D data
-*/
   // Get the resulted image.
 
   cerr << "Copy result from GPU to CPU.\n";
