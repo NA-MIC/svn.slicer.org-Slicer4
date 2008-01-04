@@ -6,11 +6,6 @@ proc EditorConstructor {this} {
 }
 
 proc EditorDestructor {this} {
-
-  set boxes [itcl::find objects -isa Box]
-  foreach b $boxes {
-    itcl::delete object $b
-  }
 }
 
 
@@ -24,17 +19,20 @@ proc EditorTearDownGUI {this} {
   # nodeSelector  ;# disabled for now
   set widgets {
     volumesCreate volumeName volumesSelect
-    volumesFrame paintThreshold paintOver paintDropper
-    paintRadius paintRange paintEnable paintLabel
-    paintPaint paintDraw 
+    volumesFrame 
     optionsSpacer optionsFrame
-    paintFrame 
     toolsActiveTool toolsEditFrame toolsColorFrame
     toolsFrame 
   }
 
   itcl::delete object $::Editor($this,editColor)
   itcl::delete object $::Editor($this,editBox)
+
+  # kill any remaining boxes (popup)
+  set boxes [itcl::find objects -isa Box]
+  foreach b $boxes {
+    itcl::delete object $b
+  }
 
   foreach w $widgets {
     $::Editor($this,$w) SetParent ""
@@ -45,6 +43,8 @@ proc EditorTearDownGUI {this} {
     set pageWidget [[$this GetUIPanel] GetPageWidget "Editor"]
     [$this GetUIPanel] RemovePage "Editor"
   }
+
+  unset ::Editor(singleton)
 
 }
 
@@ -111,7 +111,7 @@ proc EditorBuildGUI {this} {
   $::Editor($this,volumesSelect) SetParent [$::Editor($this,volumesFrame) GetFrame]
   $::Editor($this,volumesSelect) Create
   $::Editor($this,volumesSelect) SetMRMLScene [[$this GetLogic] GetMRMLScene]
-  $::Editor($this,volumesSelect) SetNodeClass "vtkMRMLVolumeNode" "" "" ""
+  $::Editor($this,volumesSelect) SetNodeClass "vtkMRMLScalarVolumeNode" "" "" ""
   $::Editor($this,volumesSelect) UpdateMenu
   $::Editor($this,volumesSelect) SetLabelText "Source Volume:"
   $::Editor($this,volumesSelect) SetBalloonHelpString "The Source Volume will define the dimensions and directions for the new label map"
@@ -131,106 +131,6 @@ proc EditorBuildGUI {this} {
   $::Editor($this,volumesCreate) SetText "Create Label Map"
   $::Editor($this,volumesCreate) SetBalloonHelpString "Create a new label map based on the source."
   pack [$::Editor($this,volumesCreate) GetWidgetName] -side top -anchor e -padx 2 -pady 2 
-
-
-  #
-  # Editor Paint
-  #
-  set ::Editor($this,paintFrame) [vtkSlicerModuleCollapsibleFrame New]
-  $::Editor($this,paintFrame) SetParent $pageWidget
-  $::Editor($this,paintFrame) Create
-  $::Editor($this,paintFrame) SetLabelText "Tool"
-  pack [$::Editor($this,paintFrame) GetWidgetName] \
-    -side top -anchor nw -fill x -padx 2 -pady 2 -in [$pageWidget GetWidgetName]
-
-
-  set ::Editor($this,paintEnable) [vtkKWCheckButtonWithLabel New]
-  $::Editor($this,paintEnable) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintEnable) Create
-  $::Editor($this,paintEnable) SetLabelText "Enable: "
-  pack [$::Editor($this,paintEnable) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
-
-  set ::Editor($this,paintPaint) [vtkKWRadioButton New]
-  $::Editor($this,paintPaint) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintPaint) Create
-  $::Editor($this,paintPaint) SetText "Paint"
-  $::Editor($this,paintPaint) SetValue "Paint"
-  pack [$::Editor($this,paintPaint) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
-
-  set ::Editor($this,paintDraw) [vtkKWRadioButton New]
-  $::Editor($this,paintDraw) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintDraw) Create
-  $::Editor($this,paintDraw) SetText "Draw"
-  $::Editor($this,paintDraw) SetValue "Draw"
-  pack [$::Editor($this,paintDraw) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
-
-  $::Editor($this,paintPaint) SetSelectedState 1
-  set ::Editor($this,paintMode) "Paint"
-  $::Editor($this,paintPaint) SetVariableName ::Editor($this,paintMode)
-  $::Editor($this,paintDraw) SetVariableName ::Editor($this,paintMode)
-
-
-  set ::Editor($this,paintRadius) [vtkKWThumbWheel New]
-  $::Editor($this,paintRadius) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintRadius) PopupModeOn
-  $::Editor($this,paintRadius) Create
-  $::Editor($this,paintRadius) DisplayEntryAndLabelOnTopOn
-  $::Editor($this,paintRadius) DisplayEntryOn
-  $::Editor($this,paintRadius) DisplayLabelOn
-  $::Editor($this,paintRadius) SetValue 10
-  [$::Editor($this,paintRadius) GetLabel] SetText "Radius: "
-  $::Editor($this,paintRadius) SetBalloonHelpString "Set the radius of the paint brush in screen space pixels"
-  pack [$::Editor($this,paintRadius) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
-
-  set ::Editor($this,paintLabel) [vtkKWThumbWheel New]
-  $::Editor($this,paintLabel) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintLabel) PopupModeOn
-  $::Editor($this,paintLabel) Create
-  $::Editor($this,paintLabel) DisplayEntryAndLabelOnTopOn
-  $::Editor($this,paintLabel) DisplayEntryOn
-  $::Editor($this,paintLabel) DisplayLabelOn
-  $::Editor($this,paintLabel) SetValue 1
-  [$::Editor($this,paintLabel) GetLabel] SetText "Label: "
-#  pack [$::Editor($this,paintLabel) GetWidgetName] \
-#    -side top -anchor e -fill x -padx 2 -pady 2 
-
-  set ::Editor($this,paintOver) [vtkKWCheckButtonWithLabel New]
-  $::Editor($this,paintOver) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintOver) Create
-  $::Editor($this,paintOver) SetLabelText "Paint Over: "
-  $::Editor($this,paintOver) SetBalloonHelpString "Allow brush to paint over non-zero labels."
-  pack [$::Editor($this,paintOver) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
-
-  set ::Editor($this,paintDropper) [vtkKWCheckButtonWithLabel New]
-  $::Editor($this,paintDropper) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintDropper) Create
-  $::Editor($this,paintDropper) SetLabelText "Eye Dropper: "
-  $::Editor($this,paintDropper) SetBalloonHelpString "Set the label number automatically by sampling the pixel location where the brush stroke starts."
-  pack [$::Editor($this,paintDropper) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
-
-  set ::Editor($this,paintThreshold) [vtkKWCheckButtonWithLabel New]
-  $::Editor($this,paintThreshold) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintThreshold) Create
-  $::Editor($this,paintThreshold) SetLabelText "Threshold Painting: "
-  $::Editor($this,paintThreshold) SetBalloonHelpString "Enable/Disable threshold mode for painting."
-  pack [$::Editor($this,paintThreshold) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
-
-  set ::Editor($this,paintRange) [vtkKWRange New]
-  $::Editor($this,paintRange) SetParent [$::Editor($this,paintFrame) GetFrame]
-  $::Editor($this,paintRange) Create
-  $::Editor($this,paintRange) SetLabelText "Min/Max for Threshold Paint"
-  $::Editor($this,paintRange) SetWholeRange 0 2000
-  $::Editor($this,paintRange) SetRange 50 2000
-  $::Editor($this,paintRange) SetReliefToGroove
-  $::Editor($this,paintRange) SetBalloonHelpString "In threshold mode, the label will only be set if the background value is within this range."
-  # don't pack this, it gets conditionally packed below
 
 
   #
@@ -288,6 +188,7 @@ proc EditorBuildGUI {this} {
     -side left -anchor nw -fill both -padx 2 -pady 2 
 
   # one pixel label to keep the option panel expanded
+    # TODO: doesn't work as intended
   set ::Editor($this,optionsSpacer) [vtkKWLabel New]
   $::Editor($this,optionsSpacer) SetParent $::Editor($this,optionsFrame)
   $::Editor($this,optionsSpacer) Create
@@ -298,29 +199,20 @@ proc EditorBuildGUI {this} {
 
 proc EditorAddGUIObservers {this} {
   $this AddObserverByNumber $::Editor($this,volumesCreate) 10000 
-  $this AddObserverByNumber [$::Editor($this,paintEnable) GetWidget] 10000 
-  $this AddObserverByNumber $::Editor($this,paintDraw) 10000 
-  $this AddObserverByNumber $::Editor($this,paintPaint) 10000 
-  $this AddObserverByNumber $::Editor($this,paintLabel) 10001 
-  $this AddObserverByNumber $::Editor($this,paintRange) 10001 
-  $this AddObserverByNumber [$::Editor($this,paintThreshold) GetWidget] 10000 
-  $this AddObserverByNumber [$::Editor($this,paintOver) GetWidget] 10000 
-  $this AddObserverByNumber [$::Editor($this,paintDropper) GetWidget] 10000 
-  $this AddObserverByNumber $::Editor($this,paintRadius) 10001 
     
 # $this DebugOn
-    if {[$this GetDebug]} {
-        puts "Adding mrml observer to selection node, modified event"
-    }
-    $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] 31
+  if {[$this GetDebug]} {
+    puts "Adding mrml observer to selection node, modified event"
+  }
+  $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] 31
     
 }
 
 proc EditorRemoveGUIObservers {this} {
-    if {[$this GetDebug]} {
-        puts "Removing mrml observer on selection node, modified event"
-    }
-    $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] 31
+  if {[$this GetDebug]} {
+    puts "Removing mrml observer on selection node, modified event"
+  }
+  $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] 31
 }
 
 proc EditorRemoveLogicObservers {this} {
@@ -340,96 +232,10 @@ proc EditorProcessGUIEvents {this caller event} {
         EditorCreateLabelVolume $this
       }
     }
-  } elseif { $caller == [$::Editor($this,paintEnable) GetWidget] ||
-             $caller == $::Editor($this,paintPaint) ||
-             $caller == $::Editor($this,paintDraw) } {
-    switch $event {
-      "10000" {
-        ::PaintSWidget::RemovePaint
-        ::DrawSWidget::RemoveDraw
-        set checkButton [$::Editor($this,paintEnable) GetWidget]
-        if { [$checkButton GetSelectedState] } {
-          switch $::Editor($this,paintMode) {
-            "Paint" {
-              ::PaintSWidget::AddPaint
-              $::Editor($this,paintDropper) SetEnabled 1
-              $::Editor($this,paintRadius) SetEnabled 1
-            }
-            "Draw" {
-              ::DrawSWidget::AddDraw
-              $::Editor($this,paintDropper) SetEnabled 0
-              $::Editor($this,paintRadius) SetEnabled 0
-            }
-          }
-        } 
-      }
-    }
-    EditorUpdateSWidgets $this
-  } elseif { $caller == $::Editor($this,paintLabel) } {
-    switch $event {
-      "10001" {
-        EditorUpdateSWidgets $this
-      }
-    }
-  } elseif { $caller == $::Editor($this,paintRadius) } {
-    switch $event {
-      "10001" {
-        EditorUpdateSWidgets $this
-      }
-    }
-  } elseif { $caller == [$::Editor($this,paintOver) GetWidget] } {
-    switch $event {
-      "10000" {
-        EditorUpdateSWidgets $this
-      }
-    }
-  } elseif { $caller == [$::Editor($this,paintDropper) GetWidget] } {
-    switch $event {
-      "10000" {
-        EditorUpdateSWidgets $this
-      }
-    }
-  } elseif { $caller == [$::Editor($this,paintThreshold) GetWidget] } {
-    switch $event {
-      "10000" {
-        EditorUpdateSWidgets $this
-        if { [[$::Editor($this,paintThreshold) GetWidget] GetSelectedState] } {
-          pack [$::Editor($this,paintRange) GetWidgetName] -side top -anchor e -fill x -padx 2 -pady 2 
-        } else {
-          pack forget [$::Editor($this,paintRange) GetWidgetName]
-        }
-      }
-    }
-  } elseif { $caller == $::Editor($this,paintRange) } {
-    switch $event {
-      "10001" {
-        EditorUpdateSWidgets $this
-      }
-    }
-  }
+  } 
 
   EditorUpdateMRML $this
 }
-
-proc EditorUpdateSWidgets {this} {
-
-  ::PaintSWidget::ConfigureAll -radius [$::Editor($this,paintRadius) GetValue]
-  foreach {lo hi} [$::Editor($this,paintRange) GetRange] {}
-
-  set cmd ::PaintSWidget::ConfigureAll
-    $cmd -paintColor [EditorGetPaintLabel]
-    $cmd -paintOver [[$::Editor($this,paintOver) GetWidget] GetSelectedState]
-    $cmd -paintDropper [[$::Editor($this,paintDropper) GetWidget] GetSelectedState]
-    $cmd -thresholdPaint [[$::Editor($this,paintThreshold) GetWidget] GetSelectedState]
-    $cmd -thresholdMin $lo -thresholdMax $hi
-
-  set cmd ::DrawSWidget::ConfigureAll
-    $cmd -drawColor [EditorGetPaintLabel]
-    $cmd -drawOver [[$::Editor($this,paintOver) GetWidget] GetSelectedState]
-    $cmd -thresholdPaint [[$::Editor($this,paintThreshold) GetWidget] GetSelectedState]
-    $cmd -thresholdMin $lo -thresholdMax $hi
-}
-
 
 #
 # Accessors to editor state
@@ -624,17 +430,17 @@ proc EditorProcessMRMLEvents {this callerID event} {
 }
 
 proc EditorEnter {this} {
-    if {[$this GetDebug]} {
-        puts "EditorEnter: Adding mrml observer on selection node, modified event"
-    }
-    $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] 31
+  if {[$this GetDebug]} {
+    puts "EditorEnter: Adding mrml observer on selection node, modified event"
+  }
+  $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] 31
 }
 
 proc EditorExit {this} {
-    if {[$this GetDebug]} {
-        puts "EditorExit: Removing mrml observer on selection node modified event"
-    }
-    $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] 31
+  if {[$this GetDebug]} {
+    puts "EditorExit: Removing mrml observer on selection node modified event"
+  }
+  $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] 31
 }
 
 # TODO: there might be a better place to put this for general use...  
@@ -665,9 +471,5 @@ proc EditorCreateLabelVolume {this} {
 
   # update the editor range to be the full range of the background image
   set range [[$volumeNode GetImageData] GetScalarRange]
-  eval $::Editor($this,paintRange) SetWholeRange $range
-  eval $::Editor($this,paintRange) SetRange $range
-
-  
+  eval ::Labler::SetPaintRange $range
 }
-

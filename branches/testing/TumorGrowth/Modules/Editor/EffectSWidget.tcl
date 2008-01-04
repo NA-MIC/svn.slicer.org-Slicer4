@@ -92,7 +92,7 @@ itcl::body EffectSWidget::constructor {sliceGUI} {
   lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
   foreach event "LeftButtonPressEvent LeftButtonReleaseEvent MouseMoveEvent KeyPressEvent EnterEvent LeaveEvent" {
     lappend _guiObserverTags \
-              [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent"]
+              [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI"]
   }
 
   set node [[$sliceGUI GetLogic] GetSliceNode]
@@ -181,10 +181,10 @@ itcl::body EffectSWidget::positionCursor {} {
   set xyzw [$this rasToXY $_currentPosition]
   foreach {x y z w} $xyzw {}
 
-if { $x == "nan" } {
-  puts "skip $x"
-  return
-}
+  if { $x == "nan" } {
+    puts "Bad cursor position in $this"
+    return
+  }
 
   set x [expr $x + 16]
   set y [expr $y - 32]
@@ -244,8 +244,8 @@ itcl::body EffectSWidget::animateCursor { {onOff "on"} } {
   $this setAnimationState $p
 
   # force a render
-  #[$sliceGUI GetSliceViewer] RequestRender
-  [$sliceGUI GetSliceViewer] Render
+  [$sliceGUI GetSliceViewer] RequestRender
+  #[$sliceGUI GetSliceViewer] Render
 
   incr _cursorAnimationState
   set _cursorAnimationTag [after $animationDelay "$this animateCursor on"]

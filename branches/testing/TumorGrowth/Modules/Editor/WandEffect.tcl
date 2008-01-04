@@ -39,6 +39,7 @@ if { [itcl::find class WandEffect] == "" } {
     method apply {} {}
     method buildOptions {} {}
     method updateMRMLFromGUI {} {}
+    method setMRMLDefaults { } {}
     method updateGUIFromMRML {} {}
     method tearDownOptions {} {}
   }
@@ -116,7 +117,7 @@ itcl::body WandEffect::processEvent { {caller ""} {event ""} } {
 
 itcl::body WandEffect::apply {} {
 
-  if { [$this getInputLabel] == "" || [$this getOutputLabel] == "" } {
+  if { [$this getInputLabel] == "" || [$this getInputLabel] == "" } {
     $this flashCursor 3
     return
   }
@@ -126,9 +127,8 @@ itcl::body WandEffect::apply {} {
 
 itcl::body WandEffect::preview {} {
 
-return
 
-  # first try to undo - removes las apply
+  # first try to undo - removes last apply
   $this undoLastApply
 
   # 
@@ -148,7 +148,8 @@ return
 
 
   set extents [[$this getInputBackground] GetExtent]
-  set ijkToXY [[$_layers(background,logic) GetXYToIJKTransform] GetMatrix]
+  set ijkToXY [vtkMatrix4x4 New]
+  $ijkToXY DeepCopy [[$_layers(background,logic) GetXYToIJKTransform] GetMatrix]
   $ijkToXY Invert
 
 
@@ -159,6 +160,11 @@ return
   set x1 [expr $x + 1]; set y1 [expr $y + 1]
   foreach {i1 j1 k1 l1} [$_layers(background,xyToIJK) MultiplyPoint $x1 $y1 0 1] {}
 
+  #
+  # Note there seems to be a bug (ITK smart pointer crash)
+  # for some slice planes.  This Effect is disabled in EditBox for now.
+  #
+puts "orig extents: $extents"
   if { $i0 == $i1 } { 
     $o(wandFilter) SetPlaneToJK
     set extents [lreplace $extents 0 1 $i0 $i0]
@@ -173,15 +179,26 @@ return
   }
 
   foreach {ilo ihi jlo jhi klo khi} $extents {}
+puts "extents: $extents"
   set xylo [$ijkToXY MultiplyPoint $ilo $jlo $klo 1]
   set xyhi [$ijkToXY MultiplyPoint $ihi $jhi $khi 1]
   foreach {xlo ylo zlo wlo} $xylo {}
   foreach {xhi yhi zhi whi} $xyhi {}
+  if { $xlo > $xhi } { set tmp $xhi; set xhi $xlo; set xlo $tmp }
+  if { $ylo > $yhi } { set tmp $yhi; set yhi $ylo; set ylo $tmp }
   set bounds "$xlo $xhi $ylo $yhi 0 0"
+puts "bounds: $bounds"
+  $ijkToXY Delete
 
 
   $this setProgressFilter $o(wandFilter) "Magic Wand Connected Components"
   $o(wandFilter) Update
+
+  puts "$this applyImageMask \
+    [$_sliceNode GetXYToRAS]  \
+    [ $o(wandFilter) GetOutput] \
+    $bounds"
+return
 
   $this applyImageMask \
     [$_sliceNode GetXYToRAS]  \
@@ -230,7 +247,7 @@ itcl::body WandEffect::buildOptions {} {
   set tag [$o(cancel) AddObserver AnyEvent "after idle ::EffectSWidget::RemoveAll"]
   lappend _observerRecords "$o(cancel) $tag"
 
-  if { [$this getInputBackground] == "" || [$this getOutputLabel] == "" } {
+  if { [$this getInputBackground] == "" || [$this getInputLabel] == "" } {
     $this errorDialog "Background and Label map needed for wand"
     after idle ::EffectSWidget::RemoveAll
   }
@@ -250,18 +267,26 @@ itcl::body WandEffect::updateMRMLFromGUI { } {
   $node SetParameter "Wand,percentage" [$o(percentage) GetValue]
 }
 
+itcl::body WandEffect::setMRMLDefaults { } {
+  chain
+  set node [EditorGetParameterNode]
+  foreach {param default} {
+    percentage 0.1
+  } {
+    set pvalue [$node GetParameter Wand,$param] 
+    if { $pvalue == "" } {
+      $node SetParameter Wand,$param $default
+    } 
+  }
+}
+
+
 itcl::body WandEffect::updateGUIFromMRML { } {
   #
   # get the parameter from the node
   # - set default value if it doesn't exist
   #
   chain
-  set node [EditorGetParameterNode]
-  set percentage [$node GetParameter "Wand,percentage"] 
-  if { $percentage == "" } {
-    set percentage 0.1
-    $node SetParameter "Wand,percentage" $percentage
-  }
 
   # set the GUI and effect parameters to match node
   # (only if this is the instance that "owns" the GUI
