@@ -143,28 +143,6 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     {
       return 0;
     }
-  vtkMRMLVolumeNode *volNode;
-
-  vtkITKArchetypeImageSeriesReader* reader;
-  
-  if ( refNode->IsA("vtkMRMLScalarVolumeNode") ) 
-    {
-    volNode = dynamic_cast <vtkMRMLScalarVolumeNode *> (refNode);
-    reader = vtkITKArchetypeImageSeriesScalarReader::New();  
-    }
-  else if ( refNode->IsA("vtkMRMLVectorVolumeNode") ) 
-    {
-    volNode = dynamic_cast <vtkMRMLVectorVolumeNode *> (refNode);
-    // TODO: deal with series of vectors
-    reader = vtkITKArchetypeImageSeriesVectorReaderFile::New();
-    }
-
-  reader->AddObserver( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
-
-  if (volNode->GetImageData()) 
-    {
-    volNode->SetAndObserveImageData (NULL);
-    }
 
   std::string fullName;
   if (this->SceneRootDir != NULL && this->Scene->IsFilePathRelative(this->GetFileName())) 
@@ -179,9 +157,50 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   if (fullName == std::string("")) 
     {
     vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
-    reader->Delete();
     return 0;
     }
+
+  vtkMRMLVolumeNode *volNode;
+  vtkITKArchetypeImageSeriesReader* reader;
+  
+  if ( refNode->IsA("vtkMRMLScalarVolumeNode") ) 
+    {
+    volNode = dynamic_cast <vtkMRMLScalarVolumeNode *> (refNode);
+    reader = vtkITKArchetypeImageSeriesScalarReader::New();  
+    }
+  else if ( refNode->IsA("vtkMRMLVectorVolumeNode") ) 
+    {
+    volNode = dynamic_cast <vtkMRMLVectorVolumeNode *> (refNode);
+    // 
+    // decide if we want to use a vector file reader (e.g. for multi-component nrrd)
+    // or a vector series reader (e.g. for a sequence of rgb image files)
+    // - note these are different classes because they are too big to compile
+    //   as a single class on some systems
+    //
+    vtkITKArchetypeImageSeriesVectorReaderFile *readerFile = vtkITKArchetypeImageSeriesVectorReaderFile::New();
+    vtkITKArchetypeImageSeriesVectorReaderSeries *readerSeries = vtkITKArchetypeImageSeriesVectorReaderSeries::New();
+
+    readerFile->SetArchetype(fullName.c_str());
+    readerFile->UpdateInformation();
+    if ( readerFile->GetNumberOfFileNames() == 1 )
+      {
+      reader = readerFile;
+      readerSeries->Delete();
+      }
+    else
+      {
+      reader = readerSeries;
+      readerFile->Delete();
+      }
+    }
+
+  reader->AddObserver( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
+
+  if (volNode->GetImageData()) 
+    {
+    volNode->SetAndObserveImageData (NULL);
+    }
+
 
   reader->SetArchetype(fullName.c_str());
   reader->SetOutputScalarTypeToNative();
@@ -216,6 +235,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     }
   // set volume attributes
   volNode->SetStorageNodeID(this->GetID());
+  volNode->SetMetaDataDictionary( reader->GetMetaDataDictionary() );
   //TODO update scene to send Modified event
  
   vtkImageChangeInformation *ici = vtkImageChangeInformation::New();

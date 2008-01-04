@@ -76,6 +76,7 @@ vtkDiffusionTensorMathematicsSimple::vtkDiffusionTensorMathematicsSimple()
   this->TensorRotationMatrix = NULL;
   this->ScalarMask = NULL;
   this->MaskWithScalars = 0;
+  this->MaskLabelValue = 1;
   this->FixNegativeEigenvalues = 1;
 }
 
@@ -192,8 +193,6 @@ static void vtkDiffusionTensorMathematicsSimpleExecute1(vtkDiffusionTensorMathem
   // scaling
   double scaleFactor = self->GetScaleFactor();
   // transformation of tensor orientations for coloring
-  vtkTransform *trans = vtkTransform::New();
-  int useTransform = 0;
 
   // map 0..1 values into the range a char takes on
   // but use scaleFactor so user can bump up the brightness
@@ -211,6 +210,15 @@ static void vtkDiffusionTensorMathematicsSimpleExecute1(vtkDiffusionTensorMathem
     vtkGenericWarningMacro(<<"No input tensor data to filter!");
     return;
     }
+    
+  if (self->GetScalarMask() && self->GetScalarMask()->GetScalarType() != VTK_SHORT)
+    {
+    vtkGenericWarningMacro(<<"scalr type for mask must be short!");
+    return;
+    }
+
+  vtkTransform *trans = vtkTransform::New();
+  int useTransform = 0;
 
   int doMasking = 0;
   vtkDataArray *inMask = NULL;
@@ -234,7 +242,7 @@ static void vtkDiffusionTensorMathematicsSimpleExecute1(vtkDiffusionTensorMathem
   int inPtId = 0;
   for(int n=0; n<size; n++) {
     inPtId = n;
-    if (doMasking && inMask->GetTuple1(inPtId)==0) {
+    if (doMasking && inMask->GetTuple1(inPtId) != self->GetMaskLabelValue()) {
       *outPtr = 0;
     }
     else {   
@@ -272,6 +280,7 @@ static void vtkDiffusionTensorMathematicsSimpleExecute1(vtkDiffusionTensorMathem
     }
     outPtr++;
   }
+  trans->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -317,9 +326,6 @@ static void vtkDiffusionTensorMathematicsSimpleExecute1Eigen(vtkDiffusionTensorM
   double cl;
   // scaling
   double scaleFactor = self->GetScaleFactor();
-  // transformation of tensor orientations for coloring
-  vtkTransform *trans = vtkTransform::New();
-  int useTransform = 0;
 
   // map 0..1 values into the range a char takes on
   // but use scaleFactor so user can bump up the brightness
@@ -337,6 +343,16 @@ static void vtkDiffusionTensorMathematicsSimpleExecute1Eigen(vtkDiffusionTensorM
     vtkGenericWarningMacro(<<"No input tensor data to filter!");
     return;
     }
+    
+  if (self->GetScalarMask() && self->GetScalarMask()->GetScalarType() != VTK_SHORT)
+    {
+    vtkGenericWarningMacro(<<"scalr type for mask must be short!");
+    return;
+    }
+
+  // transformation of tensor orientations for coloring
+  vtkTransform *trans = vtkTransform::New();
+  int useTransform = 0;
 
   // Check for masking
   int doMasking = 0;
@@ -362,7 +378,7 @@ static void vtkDiffusionTensorMathematicsSimpleExecute1Eigen(vtkDiffusionTensorM
   int inPtId = 0;
   for(int n=0; n<size; n++) {
     inPtId = n;
-    if (doMasking && inMask->GetTuple1(inPtId)==0) {
+    if (doMasking && inMask->GetTuple1(inPtId) != self->GetMaskLabelValue()) {
       *outPtr = 0;
       
       if (op ==  vtkDiffusionTensorMathematicsSimple::VTK_TENS_COLOR_MODE || 
@@ -541,7 +557,7 @@ static void vtkDiffusionTensorMathematicsSimpleExecute1Eigen(vtkDiffusionTensorM
     
     outPtr++;
   } 
-  
+  trans->Delete();
 }
 
 
@@ -561,7 +577,7 @@ void vtkDiffusionTensorMathematicsSimple::SimpleExecute(vtkImageData* input,
     case VTK_TENS_D33:
     case VTK_TENS_TRACE:
     case VTK_TENS_DETERMINANT:
-      switch (input->GetScalarType())
+      switch (output->GetScalarType())
       {
       // we set the output data scalar type depending on the op
       // already.  And we only access the input tensors
@@ -595,7 +611,7 @@ void vtkDiffusionTensorMathematicsSimple::SimpleExecute(vtkImageData* input,
     case VTK_TENS_COLOR_MODE:
     case VTK_TENS_PARALLEL_DIFFUSIVITY:
     case VTK_TENS_PERPENDICULAR_DIFFUSIVITY:
-      switch (input->GetScalarType())
+      switch (output->GetScalarType())
       {
         vtkTemplateMacro4(vtkDiffusionTensorMathematicsSimpleExecute1Eigen,
                           this, input, output, (VTK_TT *)(outPtr));

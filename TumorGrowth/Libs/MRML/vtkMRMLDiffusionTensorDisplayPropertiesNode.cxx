@@ -69,7 +69,7 @@ vtkMRMLDiffusionTensorDisplayPropertiesNode::vtkMRMLDiffusionTensorDisplayProper
   this->GlyphEigenvector = this->Major;
 
   // Line Glyph parameters
-  this->LineGlyphResolution = 5;  // was 10 in dtmri.tcl
+  this->LineGlyphResolution = 20;  // was 10 in dtmri.tcl
 
   // Tube Glyph parameters
   this->TubeGlyphRadius = 0.1;
@@ -137,9 +137,11 @@ void vtkMRMLDiffusionTensorDisplayPropertiesNode::ReadXMLAttributes(const char**
       attValue = *(atts++);
       if (!strcmp(attName, "glyphGeometry")) 
       {
+      int glyphGeometry;
       std::stringstream ss;
       ss << attValue;
-      ss >> GlyphGeometry;
+      ss >> glyphGeometry;
+      this->SetGlyphGeometry(glyphGeometry);
       }
       else if (!strcmp(attName, "colorGlyphBy")) 
       {

@@ -32,11 +32,14 @@ vtkMRMLParser* vtkMRMLParser::New()
 //------------------------------------------------------------------------------
 void vtkMRMLParser::StartElement(const char* tagName, const char** atts)
 {
+  // cout << "vtkMRMLParser::StartElement" << endl;
   if (!strcmp(tagName, "MRML")) 
     {
     return;
     }
   const char* className = this->MRMLScene->GetClassNameByTag(tagName);
+
+  // cout << tagName << endl;
 
   if (className == NULL) 
     {

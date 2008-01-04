@@ -29,6 +29,7 @@ Version:   $Revision: 1.3 $
 #include "vtkFloatArray.h"
 
 #include "vtkMRMLProceduralColorNode.h"
+#include "vtkMRMLFreeSurferProceduralColorNode.h"
 #include "vtkColorTransferFunction.h"
 
 //------------------------------------------------------------------------------
@@ -117,6 +118,21 @@ void vtkMRMLModelNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
   Superclass::PrintSelf(os,indent);
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLModelNode::SetAndObservePolyData(vtkPolyData *polyData)
+{
+  int ndisp = this->GetNumberOfDisplayNodes();
+  for (int n=0; n<ndisp; n++) 
+    {
+    vtkMRMLModelDisplayNode *dnode = vtkMRMLModelDisplayNode::SafeDownCast(this->GetNthDisplayNode(n));
+    if (dnode)
+      {
+      dnode->SetPolyData(polyData);
+      }
+    }
+  Superclass::SetAndObservePolyData(polyData);
 }
 
 //---------------------------------------------------------------------------
@@ -316,7 +332,7 @@ const char * vtkMRMLModelNode::GetActiveCellScalarName(const char *type)
     vtkErrorMacro("Unknown point scalar type " << type);
     return "";
     }
-  vtkErrorMacro("GetActiveCellScalarName: unable to get " << type << " data to get the name");
+  vtkDebugMacro("GetActiveCellScalarName: unable to get " << type << " data to get the name");
   return "";
 }
 
@@ -342,7 +358,7 @@ int vtkMRMLModelNode::SetActiveScalars(const char *scalarName, const char *typeN
     {
     return retval;
     }
-  
+
   int attribute =  vtkDataSetAttributes::SCALARS;
   if (typeName != NULL && (strcmp(typeName, "") != 0))
     {
@@ -400,7 +416,7 @@ int vtkMRMLModelNode::SetActivePointScalars(const char *scalarName, int attribut
   // is this array present?
   if (this->PolyData->GetPointData()->HasArray(scalarName) == 0)
     {
-    vtkDebugMacro("Model " << this->GetName() << " doesn't have an array named " << scalarName);
+    vtkDebugMacro("Model " << this->GetName() << " doesn't have a point data array named " << scalarName);
     return -1;
     }
 
@@ -447,7 +463,7 @@ int vtkMRMLModelNode::SetActiveCellScalars(const char *scalarName, int attribute
   // is this array present?
   if (this->PolyData->GetCellData()->HasArray(scalarName) == 0)
     {
-    vtkDebugMacro("Model " << this->GetName() << " doesn't have an array named " << scalarName);
+    vtkDebugMacro("Model " << this->GetName() << " doesn't have a cell array named " << scalarName);
     return -1;
     }
 
@@ -580,6 +596,8 @@ int vtkMRMLModelNode::CompositeScalars(const char* backgroundName, const char* o
     // set up a colour node
     vtkMRMLProceduralColorNode *colorNode = vtkMRMLProceduralColorNode::New();
     colorNode->SetName(composedName.c_str());
+    // set the type to avoid error messages when copy it, as the default is -1
+    colorNode->SetType(vtkMRMLFreeSurferProceduralColorNode::Custom);
     vtkColorTransferFunction *func = colorNode->GetColorTransferFunction();
 
     // adapted from FS code that assumed that one scalar was curvature, the
@@ -655,3 +673,4 @@ int vtkMRMLModelNode::CompositeScalars(const char* backgroundName, const char* o
     
     return 1;
 }
+
