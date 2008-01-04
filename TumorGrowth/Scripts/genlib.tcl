@@ -77,6 +77,7 @@ for {set i 0} {$i < $argc} {incr i} {
         }
         "--release" {
             set isRelease 1
+            set ::VTK_BUILD_TYPE "Release"
         }
         "--help" -
         "-h" {
@@ -350,8 +351,8 @@ if { ![file exists $::TK_TEST_FILE] || $::GENLIB(update) } {
         eval runcmd $::MAKE
         eval runcmd $::MAKE install
 
-        file copy $SLICER_LIB/tcl/tk/generic/default.h $SLICER_LIB/tcl-build/include
-        file copy $SLICER_LIB/tcl/tk/unix/tkUnixDefault.h $SLICER_LIB/tcl-build/include
+        file copy -force $SLICER_LIB/tcl/tk/generic/default.h $SLICER_LIB/tcl-build/include
+        file copy -force $SLICER_LIB/tcl/tk/unix/tkUnixDefault.h $SLICER_LIB/tcl-build/include
     }
 }
 
@@ -509,6 +510,8 @@ if { ![file exists $::VTK_TEST_FILE] || $::GENLIB(update) } {
             -DCMAKE_SKIP_RPATH:BOOL=OFF \
             -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
             -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+            -DCMAKE_SHARED_LINKER_FLAGS:STRING="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib" \
+            -DCMAKE_EXE_LINKER_FLAGS="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib" \
             -DBUILD_TESTING:BOOL=OFF \
             -DVTK_USE_CARBON:BOOL=OFF \
             -DVTK_USE_X:BOOL=ON \
@@ -587,6 +590,13 @@ if { ![file exists $::KWWidgets_TEST_FILE] || $::GENLIB(update) } {
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         ../KWWidgets
 
+    if { $isDarwin } {
+      runcmd $::CMAKE \
+          -DCMAKE_SHARED_LINKER_FLAGS:STRING="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib" \
+          -DCMAKE_EXE_LINKER_FLAGS="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib" \
+          ../KWWidgets
+    }
+
     if {$isWindows} {
         if { $MSVC6 } {
             runcmd $::MAKE KWWidgets.dsw /MAKE "ALL_BUILD - $::VTK_BUILD_TYPE"
@@ -645,6 +655,34 @@ if { ![file exists $::ITK_TEST_FILE] || $::GENLIB(update) } {
     } else {
         eval runcmd $::MAKE 
     }
+
+    puts "Patching ITK..."
+
+    set fp1 [open "$SLICER_LIB/Insight-build/Utilities/nifti/niftilib/cmake_install.cmake" r]
+    set fp2 [open "$SLICER_LIB/Insight-build/Utilities/nifti/znzlib/cmake_install.cmake" r]
+    set data1 [read $fp1]
+#    puts "data1 is $data1"
+    set data2 [read $fp2]
+#    puts "data2 is $data2"
+
+    close $fp1
+    close $fp2
+
+    regsub -all /usr/local/lib $data1 \${CMAKE_INSTALL_PREFIX}/lib data1
+    regsub -all /usr/local/include $data1 \${CMAKE_INSTALL_PREFIX}/include data1
+    regsub -all /usr/local/lib $data2 \${CMAKE_INSTALL_PREFIX}/lib data2
+    regsub -all /usr/local/include $data2 \${CMAKE_INSTALL_PREFIX}/include data2
+
+    set fw1 [open "$SLICER_LIB/Insight-build/Utilities/nifti/niftilib/cmake_install.cmake" w]
+    set fw2 [open "$SLICER_LIB/Insight-build/Utilities/nifti/znzlib/cmake_install.cmake" w]
+
+    puts -nonewline $fw1 $data1
+#    puts "data1out is $data1"
+    puts -nonewline $fw2 $data2
+#    puts "data2out is $data2"
+ 
+    close $fw1
+    close $fw2
 }
 
 
@@ -850,6 +888,13 @@ if { ![file exists $::IGSTK_TEST_FILE] || $::GENLIB(update) } {
         -DIGSTK_BUILD_TESTING:BOOL=OFF \
         -DCMAKE_BUILD_TYPE:STRING=$::VTK_BUILD_TYPE \
         ../IGSTK
+    }
+
+    if { $isDarwin } {
+      runcmd $::CMAKE \
+          -DCMAKE_SHARED_LINKER_FLAGS:STRING="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib" \
+          -DCMAKE_EXE_LINKER_FLAGS="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib" \
+          ../IGSTK
     }
 
     if {$isWindows} {
