@@ -27,7 +27,6 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolum
   private:
     vtkVolumeCudaMapper operator=(const vtkVolumeCudaMapper&);
     vtkVolumeCudaMapper(const vtkVolumeCudaMapper&);
-
 };
 
 #endif /* __vtkVolumeCudaMapper_h */

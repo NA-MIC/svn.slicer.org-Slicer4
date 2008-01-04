@@ -16,7 +16,9 @@
 #include "vtkVolumeCudaMapper.h"
 #include "vtkKWTypeChooserBox.h"
 #include "vtkKWMatrixWidget.h"
-#include "vtkKWMatrixWidgetWithLabel.h"
+#include "vtkKWLabel.h"
+
+#include "vtkRenderer.h"
 
 #include "CUDA_renderAlgo.h"
 
@@ -174,18 +176,23 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->CameraPosition->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
         
-        
-    this->Color = vtkKWMatrixWidgetWithLabel::New();
-    this->Color->SetLabelText("Color R/G/B:");
+    vtkKWLabel* label = vtkKWLabel::New();
+    label->SetParent(loadSaveDataFrame->GetFrame());
+    label->Create();
+    label->SetText("Color:");
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        label->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
+    
+    
+    this->Color = vtkKWMatrixWidget::New();
     this->Color->SetParent(loadSaveDataFrame->GetFrame());
-    this->Color->GetWidget()->Create();
-    this->Color->LabelVisibilityOn();
-    this->Color->GetWidget()->SetRestrictElementValueToInteger();
-    this->Color->GetWidget()->SetNumberOfColumns(3);
-    this->Color->GetWidget()->SetNumberOfRows(1);
-    this->Color->GetWidget()->SetElementValueAsInt(0,0,255);
-    this->Color->GetWidget()->SetElementValueAsInt(0,1,255);
-    this->Color->GetWidget()->SetElementValueAsInt(0,2,255);
+    this->Color->Create();
+    this->Color->SetRestrictElementValueToInteger();
+    this->Color->SetNumberOfColumns(3);
+    this->Color->SetNumberOfRows(1);
+    this->Color->SetElementValueAsInt(0,0,255);
+    this->Color->SetElementValueAsInt(0,1,255);
+    this->Color->SetElementValueAsInt(0,2,255);
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->Color->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
         
@@ -290,7 +297,8 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
     
     this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->Color->GetWidget()->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->CameraPosition->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->Color->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
@@ -300,7 +308,8 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
     
     this->InputTypeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->Color->GetWidget()->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->CameraPosition->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->Color->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
@@ -335,7 +344,10 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
    
    
    /// INPUT TYPE OR SIZE CHANGED CHANGED
-   if (caller == this->InputTypeChooser->GetMenu() || caller == this->InputResolutionMatrix || caller == this->Color)
+   if (caller == this->InputTypeChooser->GetMenu() ||
+       caller == this->InputResolutionMatrix ||
+       caller == this->Color ||
+       caller == this->CameraPosition)
    {
      cerr << "Type" << this->InputTypeChooser->GetSelectedName() << " " << this->InputTypeChooser->GetSelectedType() << 
      " X:" << this->InputResolutionMatrix->GetElementValueAsInt(0,0) << 
@@ -405,40 +417,72 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
 
   // Setting transformation matrix. This matrix will be used to do rotation and translation on ray tracing.
 
-  float color[6]={this->Color->GetWidget()->GetElementValueAsInt(0,0),
-    this->Color->GetWidget()->GetElementValueAsInt(0,1), 
-    this->Color->GetWidget()->GetElementValueAsInt(0,2),1,1,1};
+  float color[6]={this->Color->GetElementValueAsInt(0,0),
+    this->Color->GetElementValueAsInt(0,1), 
+    this->Color->GetElementValueAsInt(0,2),1,1,1};
   float minmax[6]={0,255,0,255,0,255};
   float lightVec[3]={0, 0, 1};
-  float rotationMatrix[4][4]={{1,0,0,0},{0,1,0,0},{0,0,1,0},{0,0,0,1}};
+  
+  vtkCamera* cam =
+  this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->GetActiveCamera();
+  
+  
+  
+  cam = vtkCamera::New();
+  cam->SetPosition(  this->CameraPosition->GetElementValueAsDouble(0,0),
+                     this->CameraPosition->GetElementValueAsDouble(0,1),
+                     this->CameraPosition->GetElementValueAsDouble(0,2));
+  cam->SetViewUp(    this->CameraPosition->GetElementValueAsDouble(1,0),
+                     this->CameraPosition->GetElementValueAsDouble(1,1),
+                     this->CameraPosition->GetElementValueAsDouble(1,2));
+  cam->SetFocalPoint(this->CameraPosition->GetElementValueAsDouble(2,0),
+                     this->CameraPosition->GetElementValueAsDouble(2,1),
+                     this->CameraPosition->GetElementValueAsDouble(2,2));
+  
+  vtkMatrix4x4*  viewMat = vtkMatrix4x4::New();
+  //cam->GetPerspectiveTransformMatrix(1.0,.1,1000);
+  viewMat->DeepCopy(cam->GetViewTransformMatrix());//1.0, .1, 1000));
+//  viewMat->Invert();
+  //viewMat->Invert();
+  cerr << *viewMat;
 
+
+  float rotationMatrix[4][4]=
+    {{1,0,0,0},
+    {0,1,0,0},
+    {0,0,1,0},
+    {0,0,0,1}};
+    
+    for (unsigned int i = 0; i < 4; i++)
+    {
+      for (unsigned int j = 0; j < 4; j++)
+        rotationMatrix[i][j] = viewMat->GetElement(i,j);
+    }
   // Initialization. Prepare and allocate GPU memory to accomodate 3D data and Result image.
 
- CUDArenderAlgo_init(inX, inY, inZ, outX,outY);
-  cerr << "Initialization.\n";
+  cerr << "CUDA Initialization.\n";
+  CUDArenderAlgo_init(inX, inY, inZ, outX,outY);
 
   // Load 3D data into GPU memory.
 
-  CUDArenderAlgo_loadData(inputBuffer, inX, inY, inZ);
   cerr << "Load data from CPU to GPU.\n";
+  CUDArenderAlgo_loadData(inputBuffer, inX, inY, inZ);
   
+  cerr << "Volume rendering.\n";
   // Do rendering. 
- CUDArenderAlgo_doRender((float*)rotationMatrix, color, minmax, lightVec, 
+/*
+ CUDArenderAlgo_doRender((float*)viewMat, color, minmax, lightVec, 
         inX, inY, inZ,    //3D data size
         outX, outY,     //result image size
         0,0,0,          //translation of data in x,y,z direction
         1, 1, 1,        //voxel dimension
         90, 255,        //min and max threshold
         -100);          //slicing distance from center of 3D data
-        
-  cerr << "Volume rendering.\n";
-
+*/
   // Get the resulted image.
 
-  CUDArenderAlgo_getResult((unsigned char**)&outputBuffer, outX,outY);
-
   cerr << "Copy result from GPU to CPU.\n";
-
+  CUDArenderAlgo_getResult((unsigned char**)&outputBuffer, outX,outY);
   memcpy(this->ImageData->GetScalarPointer(), outputBuffer,
       sizeof(unsigned char) *
         this->InputResolutionMatrix->GetElementValueAsInt(0,0) *
