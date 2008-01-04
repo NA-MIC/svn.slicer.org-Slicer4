@@ -78,9 +78,9 @@ set ::SLICER_TAG "http://www.na-mic.org/svn/Slicer3/trunk"
 set ::CMAKE_TAG "CMake-2-4-2"
 #set ::TEEM_TAG "HEAD"
 set ::TEEM_TAG "Teem-1-9-0-patches"
-set ::KWWidgets_TAG "HEAD"
+set ::KWWidgets_TAG "Slicer-3-0"
 set ::VTK_TAG "VTK-5-0"
-set ::ITK_TAG ITK-3-2
+set ::ITK_TAG ITK-3-4
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
@@ -121,6 +121,7 @@ set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::VTK_BUILD_TYPE "Debug"
+set ::CMAKE_CXX_FLAGS_DEBUG "-g"
 set ::VTK_BUILD_SUBDIR ""
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWidgets_BUILD_DIR  $::SLICER_LIB/KWWidgets-build
@@ -188,6 +189,7 @@ switch $::tcl_platform(os) {
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
         set ::PYTHON_TEST_FILE $::SLICER_LIB/python-build/bin/python
+        set ::MATPLOTLIB_TEST_FILE $::SLICER_LIB/python-build/bin/bar
         set ::NUMPY_TEST_FILE $::SLICER_LIB/python-build/lib/python2.5/site-packages/numpy/lib/_compiled_base.$shared_lib_ext
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
@@ -310,9 +312,9 @@ switch $::tcl_platform(os) {
         set ::COMPILER_PATH "/usr/bin"
         set ::COMPILER "g++"
         set ::CMAKE $::CMAKE_PATH/bin/cmake
-        set ::MAKE make
-        set ::SERIAL_MAKE make
-    }
+        set numCPUs [exec sysctl -n hw.ncpu ]
+        set ::MAKE "make -j [expr $numCPUs * 2]"
+        set ::SERIAL_MAKE "make"}
     default {
         # different windows machines say different things, so assume
         # that if it doesn't match above it must be windows
