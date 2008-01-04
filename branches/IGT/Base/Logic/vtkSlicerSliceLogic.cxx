@@ -18,6 +18,7 @@
 #include "vtkPoints.h"
 
 #include "vtkMRMLModelDisplayNode.h"
+#include "vtkMRMLTransformNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 
 #include "vtkSlicerSliceLogic.h"
@@ -27,6 +28,14 @@
 
 vtkCxxRevisionMacro(vtkSlicerSliceLogic, "$Revision: 1.9.12.1 $");
 vtkStandardNewMacro(vtkSlicerSliceLogic);
+
+#ifndef max
+#define max(a,b)            (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+#define min(a,b)            (((a) < (b)) ? (a) : (b))
+#endif
 
 //----------------------------------------------------------------------------
 vtkSlicerSliceLogic::vtkSlicerSliceLogic()
@@ -759,13 +768,13 @@ void vtkSlicerSliceLogic::UpdatePipeline()
     PolyDataCollection->RemoveAllItems();
     LookupTableCollection->RemoveAllItems();
 
-
+    /* ++++ Remove Glyphs for now untill they work correctly
     if ( this->BackgroundGlyphLayer && this->BackgroundGlyphLayer->GetPolyData() )
     {
       if (this->BackgroundGlyphLayer->GetPolyData())
         PolyDataCollection->AddItem(this->BackgroundGlyphLayer->GetPolyData());
       if (this->BackgroundGlyphLayer->GetLookupTable()) 
-  LookupTableCollection->AddItem(this->BackgroundGlyphLayer->GetLookupTable());
+        LookupTableCollection->AddItem(this->BackgroundGlyphLayer->GetLookupTable());
     }
 
 
@@ -776,6 +785,7 @@ void vtkSlicerSliceLogic::UpdatePipeline()
       if (this->ForegroundGlyphLayer->GetLookupTable())
         LookupTableCollection->AddItem(this->ForegroundGlyphLayer->GetLookupTable());
     }
+    ---- Remove Glyphs for now untill they work correctly */
 
 
 
@@ -1163,12 +1173,12 @@ void vtkSlicerSliceLogic::GetVolumeSliceBounds(vtkMRMLVolumeNode *volumeNode, do
   rasToSlice->Delete();
 
   // ignore homogeneous coordinate
-  sliceBounds[0] = sliceHMin[0];
-  sliceBounds[1] = sliceHMax[0];
-  sliceBounds[2] = sliceHMin[1];
-  sliceBounds[3] = sliceHMax[1];
-  sliceBounds[4] = sliceHMin[2];
-  sliceBounds[5] = sliceHMax[2];
+  sliceBounds[0] = min(sliceHMin[0],sliceHMax[0]);
+  sliceBounds[1] = max(sliceHMin[0],sliceHMax[0]);
+  sliceBounds[2] = min(sliceHMin[1],sliceHMax[1]);
+  sliceBounds[3] = max(sliceHMin[1],sliceHMax[1]);
+  sliceBounds[4] = min(sliceHMin[2],sliceHMax[2]);
+  sliceBounds[5] = max(sliceHMin[2],sliceHMax[2]);
 }
 
 // adjust the node's field of view to match the extent of current volume

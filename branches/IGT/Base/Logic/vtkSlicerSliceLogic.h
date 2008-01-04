@@ -168,6 +168,7 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
         {
         this->Blend->Update(); 
         }
+      //this->ImageData = this->Blend->GetOutput();
       if (this->Blend->GetOutput()->GetMTime() > this->ImageData->GetMTime())
         {
         this->ImageData->DeepCopy( this->Blend->GetOutput()); 

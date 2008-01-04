@@ -123,7 +123,9 @@ itcl::body ColorBox::processEvent { {caller ""} {event ""} } {
     if { $selectCommand != "" } {
       eval $selectCommand
     } else {
-      EditorSetPaintLabel [$o(colors) GetSelectedColorIndex]
+      if { [$o(colors) GetClassName] != "vtkKWPushButton" } {
+        EditorSetPaintLabel [$o(colors) GetSelectedColorIndex]
+      }
     }
     $this hide
   }

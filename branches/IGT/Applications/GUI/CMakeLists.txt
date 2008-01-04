@@ -1,4 +1,3 @@
-
 PROJECT( GUI )
 
 #########################################################################
@@ -176,6 +175,11 @@ ELSE ( Slicer3_BUILD_WIN32_CONSOLE )
   ADD_EXECUTABLE (Slicer3${SLICER_EXE_SUFFIX} WIN32 ${SRC} ${RC_FILENAME})
 ENDIF ( Slicer3_BUILD_WIN32_CONSOLE )
 
+IF(WFENGINEMODULE)
+SET(WFENGINE_LINK_LIB ${WFENGINE_LINK_LIB} WFEngineModule)
+ELSE(WFENGINEMODULE)
+ADD_DEFINITIONS(-DWFENGINE_DEBUG)
+ENDIF(WFENGINEMODULE)
 
 # Option for VolumeRendering
 IF(VOLUMERENDERINGMODULE)
@@ -221,15 +225,10 @@ IF(BUILD_MODULES)
     SlicerDaemon
     ${WFENGINE_LINK_LIB}
     QdecModule
+    SlicerTractographyDisplay
     SlicerTractographyFiducialSeeding
     )
 ENDIF(BUILD_MODULES)
-
-IF(USE_TEEM)
-  TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
-    SlicerTractographyDisplay
-    )
-ENDIF(USE_TEEM)
 
 IF(USE_PYTHON AND PYTHON_LIBRARIES)
   ADD_DEFINITIONS(-DUSE_PYTHON)
@@ -281,11 +280,6 @@ KWWidgets_INSTALL_TCL_TK_SUPPORT_FILES("/lib")
 INCLUDE(${Slicer3_SOURCE_DIR}/Libs/GenerateCLP/UseGenerateCLP.cmake)
 
 GENERATECLP(${SRC} Slicer3.xml)
-
-# set up teem variable in order to enable tractography if teem is present
-IF( TEEM_FOUND )
-  ADD_DEFINITIONS(-DUSE_TEEM)
-ENDIF( TEEM_FOUND )
 
 #
 # Command line parsing tests

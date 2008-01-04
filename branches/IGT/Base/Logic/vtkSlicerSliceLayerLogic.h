@@ -60,6 +60,7 @@
 #include "vtkImageCast.h"
 #include "vtkLookupTable.h"
 
+
 class vtkDiffusionTensorMathematics;
 
 class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLayerLogic : public vtkSlicerLogic 

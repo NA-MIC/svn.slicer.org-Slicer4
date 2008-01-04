@@ -84,6 +84,7 @@ class VTK_MRML_EXPORT vtkMRMLVolumeDisplayNode : public vtkMRMLDisplayNode
   // Description:
   // set gray colormap or override in subclass
   virtual void SetDefaultColorMap();
+
 protected:
   vtkMRMLVolumeDisplayNode();
   ~vtkMRMLVolumeDisplayNode();

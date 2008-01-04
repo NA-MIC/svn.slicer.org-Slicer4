@@ -92,6 +92,7 @@ TARGET_LINK_LIBRARIES(CommandLineModule
   ITKBasicFilters
   ITKIO
   ITKDICOMParser
+  vtkTeem
   ${KWWidgets_LIBRARIES} )
 
 IF ( USE_PYTHON )
@@ -99,12 +100,6 @@ IF ( USE_PYTHON )
   INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 ENDIF ( USE_PYTHON )
 
-IF( TEEM_FOUND )
-  ADD_DEFINITIONS(-DUSE_TEEM)
-  TARGET_LINK_LIBRARIES(CommandLineModule
-    vtkTeem
-  )
-ENDIF( TEEM_FOUND )
 
 # --------------------------------------------------------------------------
 # Testing (requires some of the examples)

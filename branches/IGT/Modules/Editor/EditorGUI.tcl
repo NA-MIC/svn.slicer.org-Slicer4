@@ -195,18 +195,6 @@ proc EditorBuildGUI {this} {
   pack [$::Editor($this,optionsSpacer) GetWidgetName] \
     -fill both -expand true 
 
-  set ::Editor($this,colorsColor) [vtkSlicerColorDisplayWidget New]
-  $::Editor($this,colorsColor) SetParent [$::Editor($this,colorsFrame) GetFrame]
-  $::Editor($this,colorsColor) SetMRMLScene  [[$this GetLogic] GetMRMLScene]
-  $::Editor($this,colorsColor) Create
-  # set it up with the labels color node. 
-  # TODO: here and in vtkSlicerVolumesLogic::CreateLabelVolume, use the color logic to get a default color node id
-  set colorNode [vtkMRMLColorTableNode New]
-  $colorNode SetTypeToLabels
-  $::Editor($this,colorsColor) SetColorNode [[[$this GetLogic] GetMRMLScene] GetNodeByID [$colorNode GetTypeAsIDString]]
-  $colorNode Delete
-  pack [$::Editor($this,colorsColor) GetWidgetName] \
-    -side top -anchor e -fill x -padx 2 -pady 2 
 }
 
 proc EditorAddGUIObservers {this} {
@@ -255,6 +243,18 @@ proc EditorProcessGUIEvents {this caller event} {
 
 
 # get the editor parameter node, or create one if it doesn't exist
+proc EditorCreateParameterNode {} {
+  set node [vtkMRMLScriptedModuleNode New]
+  $node SetModuleName "Editor"
+
+  # set node defaults
+  $node SetParameter label 1
+
+  $::slicer3::MRMLScene AddNode $node
+  $node Delete
+}
+
+# get the editor parameter node, or create one if it doesn't exist
 proc EditorGetParameterNode {} {
 
   set node ""
@@ -268,9 +268,8 @@ proc EditorGetParameterNode {} {
   }
 
   if { $node == "" } {
-    set node [vtkMRMLScriptedModuleNode New]
-    $node SetModuleName "Editor"
-    $::slicer3::MRMLScene AddNode $node
+    EditorCreateParameterNode
+    set node [EditorGetParameterNode]
   }
 
   return $node
