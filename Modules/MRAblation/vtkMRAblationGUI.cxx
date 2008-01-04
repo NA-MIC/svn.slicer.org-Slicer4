@@ -37,6 +37,9 @@ Version:   $Revision: 1.2 $
 #include "vtkSlicerApplication.h"
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWPushButton.h"
+#include "vtkKWPushButton.h"
+#include "vtkKWLoadSaveButtonWithLabel.h"
+#include "vtkKWLoadSaveButton.h"
 #include "vtkKWLoadSaveDialog.h"
 #include "vtkKWEntryWithLabel.h"
 

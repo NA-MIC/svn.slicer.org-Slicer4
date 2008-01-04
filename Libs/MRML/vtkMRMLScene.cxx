@@ -241,12 +241,9 @@ vtkMRMLScene::vtkMRMLScene()
   this->RegisterNodeClass ( unstgs );
   unstgs->Delete();
 
-
-#ifdef USE_TEEM
   vtkMRMLNRRDStorageNode *nrrd = vtkMRMLNRRDStorageNode::New();
   this->RegisterNodeClass ( nrrd );
   nrrd->Delete();
-#endif
 
   vtkMRMLColorTableStorageNode *ctsn = vtkMRMLColorTableStorageNode::New();
   this->RegisterNodeClass ( ctsn );

@@ -40,7 +40,6 @@ TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters)
 #####################
 SET (CLP DiffusionTensorEstimation)
 
-IF (USE_TEEM)
 SET ( ${CLP}_SOURCE ${CLP}.cxx)
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/ITKLogo.h)
 ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
@@ -52,12 +51,10 @@ INCLUDE_DIRECTORIES(
         ${vtkITK_BINARY_DIR} 
         ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
         ${vtkTeem_SOURCE_DIR}  ${vtkTeem_BINARY_DIR})
-ENDIF(USE_TEEM)
 
 #####################
 SET (CLP DiffusionTensorMathematics)
 
-IF (USE_TEEM)
 SET ( ${CLP}_SOURCE ${CLP}.cxx)
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/ITKLogo.h)
 ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
@@ -66,7 +63,6 @@ TARGET_LINK_LIBRARIES (${CLP} MRML vtkTeem)
 INCLUDE_DIRECTORIES(
         ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
         ${vtkTeem_SOURCE_DIR}  ${vtkTeem_BINARY_DIR})
-ENDIF(USE_TEEM)
 
 #####################
 SET (CLP OrientImage)
@@ -390,7 +386,6 @@ TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKAlgorithms ITKBasicFilters)
 #####################
 SET (CLP ProbeVolumeWithModel)
 
-IF (USE_TEEM)
 SET ( ${CLP}_SOURCE ${CLP}.cxx)
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/ITKLogo.h)
 ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
@@ -401,7 +396,6 @@ INCLUDE_DIRECTORIES(
         ${vtkITK_BINARY_DIR} 
         ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
         ${vtkTeem_SOURCE_DIR}  ${vtkTeem_BINARY_DIR})
-ENDIF(USE_TEEM)
 
 #####################
 SET (CLP ZeroCrossingBasedEdgeDetectionImageFilter)

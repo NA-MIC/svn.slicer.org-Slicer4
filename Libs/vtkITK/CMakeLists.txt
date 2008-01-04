@@ -16,6 +16,7 @@ INCLUDE(${ITK_USE_FILE})
 
 
 SET(vtkITK_SRCS
+    vtkITKNumericTraits.cxx
     vtkITKArchetypeImageSeriesReader.cxx
     vtkITKArchetypeImageSeriesScalarReader.cxx
     vtkITKArchetypeImageSeriesVectorReaderFile.cxx
@@ -30,7 +31,7 @@ SET(vtkITK_SRCS
     vtkITKImageToImageFilterUSUS.h
     vtkITKImageToImageFilterSS.h
     vtkITKGradientAnisotropicDiffusionImageFilter.cxx
-    # vtkITKLevelTracingImageFilter.cxx
+    vtkITKLevelTracingImageFilter.cxx
     vtkITKLevelTracing3DImageFilter.cxx
     vtkITKWandImageFilter.cxx
     vtkITKNewOtsuThresholdImageFilter.cxx
@@ -44,9 +45,10 @@ SET(vtkITK_SRCS
 
 # Helper classes
 
-#SET_SOURCE_FILES_PROPERTIES(
-#  WRAP_EXCLUDE
-#  )
+SET_SOURCE_FILES_PROPERTIES(
+  vtkITKNumericTraits.cxx
+  WRAP_EXCLUDE
+)
 
 # --------------------------------------------------------------------------
 # Include dirs

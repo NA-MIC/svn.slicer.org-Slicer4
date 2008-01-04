@@ -86,17 +86,12 @@ extern "C" {
 //#define EMSEG_DEBUG
 #define REALTIMEIMAGING_DEBUG
 #define MRABLATION_DEBUG
-#define WFENGINE_DEBUG
 //#define NEURONAV_DEBUG
 
 #define BRPNAV_DEBUG
 #define PROSTATENAV_DEBUG
 
-#ifndef USE_TEEM
-#define TRACTOGRAPHY_DEBUG
-#else
 //#define TRACTOGRAPHY_DEBUG
-#endif
 //#define QDEC_DEBUG
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
@@ -178,6 +173,7 @@ extern "C" {
 #include "vtkLabelStatisticsGUI.h"
 #include "vtkLabelStatisticsLogic.h"
 #endif
+
 
 //
 // note: always write to cout rather than cerr so log messages will
@@ -737,7 +733,6 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
     Realtimeimaging_Init(interp);
 #endif
-
 #if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
     Wfenginemodule_Init(interp);
 #endif
@@ -1412,7 +1407,7 @@ int Slicer3_main(int argc, char *argv[])
     queryAtlasGUI->AddGUIObservers ( );
 
 #endif
-
+    
 #if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
     slicerApp->SplashMessage("Initializing WFEngine Module...");
     //--- WFEngine Module
@@ -1772,6 +1767,7 @@ int Slicer3_main(int argc, char *argv[])
     name = wfEngineModuleGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set WFEngineModuleGUI %s", name);
 #endif
+
 
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     name = qdecModuleGUI->GetTclName();

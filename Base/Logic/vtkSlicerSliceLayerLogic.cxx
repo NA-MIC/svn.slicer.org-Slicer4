@@ -28,9 +28,7 @@
 
 #include "vtkPointData.h"
 
-#ifdef USE_TEEM
-  #include "vtkDiffusionTensorMathematics.h"
-#endif
+#include "vtkDiffusionTensorMathematics.h"
 
 vtkCxxRevisionMacro(vtkSlicerSliceLayerLogic, "$Revision: 1.9.12.1 $");
 vtkStandardNewMacro(vtkSlicerSliceLayerLogic);
@@ -72,11 +70,7 @@ vtkSlicerSliceLayerLogic::vtkSlicerSliceLayerLogic()
 
   // Create the components for the DTI layer pipeline
   this->DTIReslice = vtkImageReslice::New();
-  #ifdef USE_TEEM
-    this->DTIMathematics = vtkDiffusionTensorMathematics::New();
-  #else
-    this->DTIMathematics = NULL;
-  #endif 
+  this->DTIMathematics = vtkDiffusionTensorMathematics::New();
   // Set parameters that won't change based on input
   this->DTIReslice->SetBackgroundColor(128, 0, 0, 0); // only first two are used
   this->DTIReslice->AutoCropOutputOff();
@@ -144,9 +138,7 @@ vtkSlicerSliceLayerLogic::~vtkSlicerSliceLayerLogic()
   this->Reslice->Delete();
   this->DTIReslice->Delete();
   this->DWIExtractComponent->Delete();
-#ifdef USE_TEEM
   this->DTIMathematics->Delete();
-#endif
   this->MapToColors->Delete();
   this->Threshold->Delete();
   this->AppendComponents->Delete();
@@ -202,9 +194,7 @@ void vtkSlicerSliceLayerLogic::ProcessMRMLEvents(vtkObject * caller,
       {
       if (dtiVDN->GetDiffusionTensorDisplayPropertiesNode())
         {
-#if USE_TEEM        
         this->DTIMathematics->SetOperation(dtiVDN->GetDiffusionTensorDisplayPropertiesNode()->GetScalarInvariant());
-#endif
         }
       }
     else
@@ -629,8 +619,6 @@ void vtkSlicerSliceLayerLogic::DiffusionWeightedVolumeNodeUpdateTransforms()
 void vtkSlicerSliceLayerLogic::DiffusionTensorVolumeNodeUpdateTransforms()
 {
 
-#ifdef USE_TEEM
-
   double window = 0;
   double level = 0;
   int interpolate = 0;
@@ -669,9 +657,14 @@ void vtkSlicerSliceLayerLogic::DiffusionTensorVolumeNodeUpdateTransforms()
     applyThreshold = dtiVolumeDisplayNode->GetApplyThreshold();
     lowerThreshold = dtiVolumeDisplayNode->GetLowerThreshold();
     upperThreshold = dtiVolumeDisplayNode->GetUpperThreshold();
+
+    if (dtiVolumeDisplayNode->GetDiffusionTensorDisplayPropertiesNode())
+      {
+      this->DTIMathematics->SetOperation(dtiVolumeDisplayNode->GetDiffusionTensorDisplayPropertiesNode()->GetScalarInvariant());
+      }
     }
 
-    this->DTIMathematics->Update();
+   //this->DTIMathematics->Update();
    cout<<"DTIMathematics Number Scalar components: "<<this->DTIMathematics->GetOutput()->GetNumberOfScalarComponents()<<endl;
   //this->DTIMathematics->GetOutput()->SetNumberOfScalarComponents(1);
   this->ScalarSlicePipeline(this->DTIMathematics->GetOutput(),0,window,level,interpolate, lookupTable, applyThreshold,lowerThreshold,upperThreshold);
@@ -680,8 +673,6 @@ void vtkSlicerSliceLayerLogic::DiffusionTensorVolumeNodeUpdateTransforms()
   this->DTIReslice->SetResliceTransform(this->XYToIJKTransform );
   this->Slice->SetSliceTransform(this->XYToIJKTransform); 
   this->Reslice->SetResliceTransform(this->XYToIJKTransform); 
-
-#endif
 
 }
 

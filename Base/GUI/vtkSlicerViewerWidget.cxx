@@ -94,6 +94,10 @@ vtkSlicerViewerWidget::vtkSlicerViewerWidget ( )
   this->CellPicker->SetTolerance(0.00001);
   this->PointPicker = vtkPointPicker::New();
   this->ResetPick();
+
+  this->PickedCellID = 0;
+  this->PickedPointID = 0;
+
 }
 
 
@@ -951,7 +955,12 @@ void vtkSlicerViewerWidget::UpdateModelsFromMRML()
 
   if (clearDisplayedModels)
     {
-    this->MainViewer->RemoveAllViewProps();
+    std::map<std::string, vtkProp3D *>::iterator iter;
+    for (iter = this->DisplayedActors.begin(); iter != this->DisplayedActors.end(); iter++)
+      {
+      this->MainViewer->RemoveViewProp(iter->second);
+      }
+    //this->MainViewer->RemoveAllViewProps();
     this->RemoveModelObservers(1);
     this->RemoveHierarchyObservers(1);
     this->DisplayedActors.clear();
@@ -1078,12 +1087,6 @@ void vtkSlicerViewerWidget::UpdateModelPolyData(vtkMRMLDisplayableNode *model)
       {
       mapper->SetInput ( poly );
       }
-#ifdef _DEBUG
-    if (model->GetPolyData() != modelDisplayNode->GetPolyData())
-      {
-      std::cerr << "HERE1";
-      }
-#endif
 
    
     actor->SetMapper( mapper );

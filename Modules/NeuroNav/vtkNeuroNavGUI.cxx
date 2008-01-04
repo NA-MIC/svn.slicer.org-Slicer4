@@ -501,6 +501,7 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
 //    this->LoadConfigButton->GetWidget()->GetLoadSaveDialog()->RemoveObservers (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
 //#endif
 
+
 #ifdef USE_IGSTK
     this->IGSTKStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
     this->DeviceMenuButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
