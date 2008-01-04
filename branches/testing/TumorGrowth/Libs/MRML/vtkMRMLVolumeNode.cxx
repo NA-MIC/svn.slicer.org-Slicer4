@@ -203,11 +203,13 @@ void vtkMRMLVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
     {
     os << indent << " " << this->Origin[j];
     }
+  os << "\n";
   os << "Spacing:";
   for(j=0; j<3; j++) 
     {
     os << indent << " " << this->Spacing[j];
     }
+  os << "\n";
 
   if (this->ImageData != NULL) 
     {
@@ -564,7 +566,16 @@ void vtkMRMLVolumeNode::SetAndObserveImageData(vtkImageData *ImageData)
     {
     this->Modified();
     }
-
+    
+  int ndisp = this->GetNumberOfDisplayNodes();
+  for (int n=0; n<ndisp; n++) 
+    {
+    vtkMRMLVolumeDisplayNode *dnode = vtkMRMLVolumeDisplayNode::SafeDownCast(this->GetNthDisplayNode(n));
+    if (dnode)
+      {
+      dnode->SetImageData(ImageData);
+      }
+    }
   //vtkSetAndObserveMRMLObjectMacro(this->ImageData, ImageData);
 }
 
@@ -586,7 +597,7 @@ void vtkMRMLVolumeNode::ProcessMRMLEvents ( vtkObject *caller,
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);
 
-  if (this->ImageData == vtkImageData::SafeDownCast(caller) &&
+  if (this->ImageData && this->ImageData == vtkImageData::SafeDownCast(caller) &&
     event ==  vtkCommand::ModifiedEvent)
     {
     this->ModifiedSinceRead = true;
@@ -595,3 +606,15 @@ void vtkMRMLVolumeNode::ProcessMRMLEvents ( vtkObject *caller,
   return;
 }
 
+void vtkMRMLVolumeNode::SetMetaDataDictionary( const itk::MetaDataDictionary& dictionary )
+{
+  this->Dictionary = dictionary;
+  this->Modified();
+}
+
+const
+itk::MetaDataDictionary&
+vtkMRMLVolumeNode::GetMetaDataDictionary() const
+{
+  return this->Dictionary;
+}

@@ -80,12 +80,12 @@ vtkMRMLFreeSurferProceduralColorNode::vtkMRMLFreeSurferProceduralColorNode()
   vtksys_stl::vector<vtksys_stl::string> filesVector;
   filesVector.push_back(""); // for relative path
   filesVector.push_back(slicerHome);
-  filesVector.push_back(vtksys_stl::string("Libs/FreeSurfer/FreeSurferColorLUT.txt"));
+  filesVector.push_back(vtksys_stl::string("lib/Slicer3/Libs/FreeSurfer/FreeSurferColorLUT.txt"));
   vtksys_stl::string colorFileName = vtksys::SystemTools::JoinPath(filesVector);
   this->SetLabelsFileName(colorFileName.c_str());
 
   filesVector.pop_back();
-  filesVector.push_back("Libs/FreeSurfer/Simple_surface_labels2002.txt");
+  filesVector.push_back("lib/Slicer3/Libs/FreeSurfer/Simple_surface_labels2002.txt");
   colorFileName = vtksys::SystemTools::JoinPath(filesVector);
   this->SetSurfaceLabelsFileName(colorFileName.c_str());
   
@@ -98,7 +98,6 @@ vtkMRMLFreeSurferProceduralColorNode::~vtkMRMLFreeSurferProceduralColorNode()
   if (this->LookupTable)
     {
     this->LookupTable->Delete();
-    this->LookupTable = NULL;
     }
 
   if (this->LabelsFileName)
@@ -292,10 +291,17 @@ void vtkMRMLFreeSurferProceduralColorNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLFreeSurferProceduralColorNode *node = (vtkMRMLFreeSurferProceduralColorNode *) anode;
 
-  this->SetName(node->Name);
-  this->SetLookupTable(node->LookupTable);
-  this->SetType(node->Type);
-  this->SetFileName(node->FileName);
+  if (node != NULL)
+    {
+    this->SetName(node->Name);
+    this->SetLookupTable(node->LookupTable);
+    this->SetType(node->Type);
+    this->SetFileName(node->FileName);
+    }
+  else
+    {
+    vtkErrorMacro("Copy: unable to cast a vtkMRMLNode to a vtkMRMLFreeSurferProceduralColorNode for node id = " << anode->GetID());
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -384,6 +390,12 @@ void vtkMRMLFreeSurferProceduralColorNode::SetTypeToSurfaceLabels()
 }
 
 //----------------------------------------------------------------------------
+void vtkMRMLFreeSurferProceduralColorNode::SetTypeToCustom()
+{
+  this->SetType(this->Custom);
+}
+
+//----------------------------------------------------------------------------
 const char* vtkMRMLFreeSurferProceduralColorNode::GetTypeAsString()
 {
   if (this->Type == this->Heat)
@@ -413,6 +425,10 @@ const char* vtkMRMLFreeSurferProceduralColorNode::GetTypeAsString()
   if (this->Type == this->SurfaceLabels)
     {
     return "SurfaceLabels";
+    }
+  if (this->Type == this->Custom)
+    {
+    return "Custom";
     }
   return "(unknown)";
 }
@@ -449,6 +465,7 @@ const char* vtkMRMLFreeSurferProceduralColorNode::GetTypeAsIDString()
     {
     return "vtkMRMLFreeSurferColorNodeSurfaceLabels";
     }
+  // custom will have a unique id
   return "(unknown)";
 }
 
@@ -530,7 +547,8 @@ void vtkMRMLFreeSurferProceduralColorNode::SetType(int type)
       this->SetNamesFromColors();
       }
     else if (this->Type == this->Labels ||
-             this->Type == this->SurfaceLabels)
+             this->Type == this->SurfaceLabels ||
+             this->Type == this->Custom)
       {
       // do nothing
       }

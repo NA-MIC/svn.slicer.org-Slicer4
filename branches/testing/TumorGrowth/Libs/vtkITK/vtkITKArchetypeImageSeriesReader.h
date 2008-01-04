@@ -33,6 +33,8 @@
 #include <vector>
 #include <string>
 
+#include "itkMetaDataDictionary.h"
+
 #include "vtkITK.h"
 
 class VTK_ITK_EXPORT vtkITKArchetypeImageSeriesReader : public vtkImageSource
@@ -50,6 +52,13 @@ public:
   // Specify the archetype filename for the series.
   vtkSetStringMacro(Archetype);
   vtkGetStringMacro(Archetype);
+
+  // Description:
+  // See how many file names were generated during ExecuteInformation
+  int GetNumberOfFileNames()
+    {
+    return this->FileNames.size();
+    };
 
   // Description:
   // Set/Get the default spacing of the data in the file. This will be
@@ -214,6 +223,12 @@ public:
   //
   void RegisterExtraBuiltInFactories();
 
+//BTX
+  // Description:
+  // Return the MetaDataDictionary from the ITK layer
+  const itk::MetaDataDictionary &GetMetaDataDictionary() const;
+//ETX
+  
 protected:
   vtkITKArchetypeImageSeriesReader();
   ~vtkITKArchetypeImageSeriesReader();
@@ -245,6 +260,10 @@ protected:
   // defined in the subclasses
   virtual void ExecuteData(vtkDataObject *data);
 
+//BTX
+  itk::MetaDataDictionary Dictionary;
+//ETX
+  
 private:
   vtkITKArchetypeImageSeriesReader(const vtkITKArchetypeImageSeriesReader&);  // Not implemented.
   void operator=(const vtkITKArchetypeImageSeriesReader&);  // Not implemented.

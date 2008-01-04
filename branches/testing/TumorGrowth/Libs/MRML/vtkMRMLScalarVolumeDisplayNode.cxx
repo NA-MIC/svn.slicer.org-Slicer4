@@ -22,11 +22,6 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkMRMLScene.h"
 
-// Initialize static member that controls resampling -- 
-// old comment: "This offset will be changed to 0.5 from 0.0 per 2/8/2002 Slicer 
-// development meeting, to move ijk coordinates to voxel centers."
-
-
 //------------------------------------------------------------------------------
 vtkMRMLScalarVolumeDisplayNode* vtkMRMLScalarVolumeDisplayNode::New()
 {
@@ -127,7 +122,7 @@ void vtkMRMLScalarVolumeDisplayNode::UpdateImageDataPipeline()
     lookupTable = this->GetColorNode()->GetLookupTable();
     }
 
-  if (lookupTable != this->MapToColors->GetLookupTable())
+  if ( this->MapToColors && (lookupTable != this->MapToColors->GetLookupTable()) )
     {
     this->MapToColors->SetLookupTable(lookupTable);
     }

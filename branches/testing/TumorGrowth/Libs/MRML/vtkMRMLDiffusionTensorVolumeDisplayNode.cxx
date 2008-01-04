@@ -59,6 +59,7 @@ vtkMRMLNode* vtkMRMLDiffusionTensorVolumeDisplayNode::CreateNodeInstance()
 vtkMRMLDiffusionTensorVolumeDisplayNode::vtkMRMLDiffusionTensorVolumeDisplayNode()
 {
  this->DTIMathematics = vtkDiffusionTensorMathematicsSimple::New();
+ this->DTIMathematicsAlpha = vtkDiffusionTensorMathematicsSimple::New();
  this->Threshold->SetInput( this->DTIMathematics->GetOutput());
  this->MapToWindowLevelColors->SetInput( this->DTIMathematics->GetOutput());
 
@@ -77,6 +78,7 @@ vtkMRMLDiffusionTensorVolumeDisplayNode::vtkMRMLDiffusionTensorVolumeDisplayNode
 vtkMRMLDiffusionTensorVolumeDisplayNode::~vtkMRMLDiffusionTensorVolumeDisplayNode()
 {
   this->DTIMathematics->Delete();
+  this->DTIMathematicsAlpha->Delete();
 
   this->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(NULL); 
   this->DiffusionTensorGlyphFilter->Delete();
@@ -94,7 +96,7 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::WriteXML(ostream& of, int nIndent)
  if (this->DiffusionTensorDisplayPropertiesNodeID != NULL)
     {
     ss << this->DiffusionTensorDisplayPropertiesNodeID;
-    of << indent << " diffussionTensorDisplayPropertiesNodeID=\"" << ss.str() << "\"";
+    of << indent << " diffusionTensorDisplayPropertiesNodeID=\"" << ss.str() << "\"";
     }
 }
 
@@ -136,7 +138,15 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::PrintSelf(ostream& os, vtkIndent i
   Superclass::PrintSelf(os,indent);
 
 
-  os << indent << "DiffusionTensorDisplayPropertiesNodeID:   " << this->DiffusionTensorDisplayPropertiesNodeID << "\n";
+  os << indent << "DiffusionTensorDisplayPropertiesNodeID:  ";
+  if ( this->DiffusionTensorDisplayPropertiesNodeID )
+    {
+    os << indent << this->DiffusionTensorDisplayPropertiesNodeID << "\n";
+    }
+  else
+    {
+    os << indent << "NULL\n";
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -249,15 +259,40 @@ vtkMRMLDiffusionTensorDisplayPropertiesNode* vtkMRMLDiffusionTensorVolumeDisplay
 void vtkMRMLDiffusionTensorVolumeDisplayNode::SetImageData(vtkImageData *imageData)
 {
   this->DTIMathematics->SetInput(0, imageData);
-  this->DTIMathematics->SetInput(1, imageData);
+  this->DTIMathematicsAlpha->SetInput(0, imageData);
 }
 //----------------------------------------------------------------------------
 void vtkMRMLDiffusionTensorVolumeDisplayNode::UpdateImageDataPipeline()
 {
   if (this->GetDiffusionTensorDisplayPropertiesNode())
     {
-    this->DTIMathematics->SetOperation(this->GetDiffusionTensorDisplayPropertiesNode()->
-                                   GetScalarInvariant());
+    int operation = this->GetDiffusionTensorDisplayPropertiesNode()->GetScalarInvariant();
+    this->DTIMathematics->SetOperation(operation);
+    switch (operation)
+      {
+      case vtkMRMLDiffusionTensorDisplayPropertiesNode::ColorOrientation:
+      case vtkMRMLDiffusionTensorDisplayPropertiesNode::ColorMode:
+      case vtkMRMLDiffusionTensorDisplayPropertiesNode::ColorOrientationMiddleEigenvector:
+      case vtkMRMLDiffusionTensorDisplayPropertiesNode::ColorOrientationMinEigenvector:
+        this->DTIMathematics->SetScaleFactor(1000.0);
+        this->DTIMathematicsAlpha->SetOperation(
+          vtkMRMLDiffusionTensorDisplayPropertiesNode::FractionalAnisotropy);
+        this->Threshold->SetInput( this->DTIMathematicsAlpha->GetOutput());
+        this->AppendComponents->RemoveAllInputs();
+        this->AppendComponents->SetInputConnection(0, this->DTIMathematics->GetOutput()->GetProducerPort() );
+        //this->AppendComponents->AddInputConnection(0, this->AlphaLogic->GetOutput()->GetProducerPort() );
+        break;
+
+      default:
+        this->DTIMathematics->SetScaleFactor(1.0);
+        this->Threshold->SetInput( this->DTIMathematics->GetOutput());
+        this->MapToWindowLevelColors->SetInput( this->DTIMathematics->GetOutput());
+        this->AppendComponents->RemoveAllInputs();
+        this->AppendComponents->SetInputConnection(0, this->MapToColors->GetOutput()->GetProducerPort() );
+        this->AppendComponents->AddInputConnection(0, this->AlphaLogic->GetOutput()->GetProducerPort() );
+        break;
+      }
+
     }
   Superclass::UpdateImageDataPipeline();
 }

@@ -23,7 +23,8 @@ Version:   $Revision: 1.0 $
 
 #include "vtkLookupTable.h"
 //#include "vtkFSLookupTable.h"
-
+#include "vtkMRMLStorageNode.h"
+#include "vtkMRMLColorTableStorageNode.h"
 //------------------------------------------------------------------------------
 vtkMRMLColorTableNode* vtkMRMLColorTableNode::New()
 {
@@ -59,8 +60,8 @@ vtkMRMLColorTableNode::vtkMRMLColorTableNode()
   this->Name = NULL;
   this->SetName("");
   this->LookupTable = NULL;
-  this->FileName = NULL;
   this->LastAddedColor = -1;
+  this->StorageNodeID = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -69,12 +70,11 @@ vtkMRMLColorTableNode::~vtkMRMLColorTableNode()
   if (this->LookupTable)
     {
     this->LookupTable->Delete();
-    this->LookupTable = NULL;
     }
-  if (this->FileName)
-    {  
-    delete [] this->FileName;
-    this->FileName = NULL;
+  if (this->StorageNodeID)
+    {
+    delete [] this->StorageNodeID;
+    this->StorageNodeID = NULL;
     }
 }
 
@@ -166,10 +166,18 @@ void vtkMRMLColorTableNode::ReadXMLAttributes(const char** atts)
       }
       else if (!strcmp(attName, "filename"))
         {
-        this->SetFileName(attValue);
-        // read in the file with the colours
-        std::cout << "Reading file " << this->FileName << endl;
-        this->ReadFile();
+        vtkMRMLStorageNode *storageNode = this->GetStorageNode();
+        if (!storageNode)
+          {
+          vtkErrorMacro("ReadFile: unable to get storage node to read file");
+          }
+        else
+          {
+          storageNode->SetFileName(attValue);
+          // read in the file with the colours
+          std::cout << "Reading file " << storageNode->GetFileName() << endl;
+          storageNode->ReadData(this);
+          }
         }
       else
       {
@@ -179,100 +187,6 @@ void vtkMRMLColorTableNode::ReadXMLAttributes(const char** atts)
   vtkDebugMacro("Finished reading in xml attributes, list id = " << this->GetID() << " and name = " << this->GetName() << endl);
 }
 
-//----------------------------------------------------------------------------
-int vtkMRMLColorTableNode::ReadFile ()
-{
-
-  // open the file for reading input
-  fstream fstr;
-
-  fstr.open(this->FileName, fstream::in);
-
-  if (fstr.is_open())
-    {
-    // clear out the table
-    this->SetTypeToFile();
-    this->LookupTable->SetNumberOfTableValues(0);
-    this->Names.clear();
-    char line[1024];
-    // save the valid lines in a vector, parse them once know the max id
-    std::vector<std::string>lines;
-    int maxID = 0;
-    while (fstr.good())
-      {
-      fstr.getline(line, 1024);
-      
-      // does it start with a #?
-      if (line[0] == '#')
-        {
-        vtkDebugMacro("Comment line, skipping:\n\"" << line << "\"");
-        }
-      else
-        {
-        // is it empty?
-        if (line[0] == '\0')
-          {
-          vtkDebugMacro("Empty line, skipping:\n\"" << line << "\"");
-          }
-        else
-          {
-          vtkDebugMacro("got a line: \n\"" << line << "\"");
-          lines.push_back(std::string(line));
-          std::stringstream ss;
-          ss << line;
-          int id;
-          ss >> id;
-          if (id > maxID)
-            {
-            maxID = id;
-            }
-          }
-        }
-      }
-    fstr.close();
-    // now parse out the valid lines and set up the colour lookup table
-    vtkDebugMacro("The largest id is " << maxID);
-    this->LookupTable->SetNumberOfTableValues(maxID + 1); // for zero
-    this->LookupTable->SetNumberOfColors(maxID + 1);
-    this->LookupTable->SetTableRange(0, maxID);
-    // init the table to black/opactity 0, just in case we're missing values
-    for (int i = 0; i < maxID+1; i++)
-      {
-      this->LookupTable->SetTableValue(i, 0.0, 0.0, 0.0, 0.0);
-      } 
-    this->Names.resize(maxID + 1);
-    for (unsigned int i = 0; i < lines.size(); i++)
-      {
-      std::stringstream ss;
-      ss << lines[i];
-      int id;
-      std::string name;
-      double r, g, b, a;
-      ss >> id;
-      ss >> name;
-      ss >> r;
-      ss >> g;
-      ss >> b;
-      ss >> a;
-      vtkDebugMacro("id " << id << ", name = " << name.c_str() << ", r = " << r << ", g = " << g << ", b = " << b << ", a = " << a);
-      // the file values are 0-255, colour look up table needs 0-1
-      r = r / 255.0;
-      g = g / 255.0;
-      b = b / 255.0;
-      a = a / 255.0;
-      vtkDebugMacro("Adding colour at id " << id << " and then pushing name " << name.c_str());
-      this->LookupTable->SetTableValue(id, r, g, b, a);
-      this->SetColorName(id, name.c_str());
-      }
-    this->NamesInitialisedOn();
-    }
-  else
-    {
-    vtkErrorMacro("ERROR opening colour file " << this->FileName << endl);
-    return 0;
-    }
-  return 1;
-}
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, ID
@@ -315,6 +229,11 @@ void vtkMRMLColorTableNode::PrintSelf(ostream& os, vtkIndent indent)
     for (unsigned int i = 0; (int)i < this->Names.size(); i++)
       {
       os << indent << indent << i << " " << this->GetColorName(i) << endl;
+      if ( i > 10 )
+        {
+        os << indent << indent << "..." << endl;
+        break;
+        }
       }
     }
 }
@@ -1139,7 +1058,7 @@ void vtkMRMLColorTableNode::SetType(int type)
 
     else if (this->Type == this->File)
       {
-      vtkDebugMacro("Set type to file, call SetFileName and ReadFile next...");
+      vtkDebugMacro("Set type to file, set up a storage node, set it's FileName and call ReadData on it...");
       }
     
     else
@@ -1157,6 +1076,11 @@ void vtkMRMLColorTableNode::SetType(int type)
 //---------------------------------------------------------------------------
 void vtkMRMLColorTableNode::SetNamesFromColors()
 {
+  if (this->GetNamesInitialised())
+    {
+    vtkWarningMacro("SetNamesFromColors is over riding already set names for node " << this->GetName());
+    }
+  
   int size = this->GetLookupTable()->GetNumberOfColors();
   double *rgba;
   // reset the names
@@ -1188,9 +1112,10 @@ void vtkMRMLColorTableNode::SetNumberOfColors(int n)
     vtkErrorMacro("SetNumberofColors: lookup table is null, set the type first.");
     return;
     }
-  if (this->GetType() != this->User)
+  if (this->GetType() != this->User &&
+      this->GetType() != this->File)
     {
-      vtkErrorMacro("vtkMRMLColorTableNode::SetNumberOfColors: ERROR: can't set number of colours if not a user defined colour table, reset the type first to User\n");
+      vtkErrorMacro("vtkMRMLColorTableNode::SetNumberOfColors: ERROR: can't set number of colours if not a user defined colour table, reset the type first to User or File\n");
       return;
     }
 
@@ -1255,3 +1180,36 @@ void vtkMRMLColorTableNode::SetColor(int entry, const char *name, double r, doub
   this->InvokeEvent (vtkCommand::ModifiedEvent);
 }
 
+
+//---------------------------------------------------------------------------
+void vtkMRMLColorTableNode::ClearNames()
+{
+  this->Names.clear();
+  this->NamesInitialisedOff();
+}
+
+//---------------------------------------------------------------------------
+vtkMRMLStorageNode* vtkMRMLColorTableNode::GetStorageNode()
+{
+  vtkMRMLStorageNode* node = NULL;
+  if (this->GetScene() && this->GetStorageNodeID() )
+    {
+    vtkMRMLNode* snode = this->GetScene()->GetNodeByID(this->StorageNodeID);
+    node = vtkMRMLStorageNode::SafeDownCast(snode);
+    }
+  return node;
+}
+
+//---------------------------------------------------------------------------
+void vtkMRMLColorTableNode::Reset()
+{
+  // only call reset if this is a user node
+  if (this->GetType() == vtkMRMLColorTableNode::User)
+    {
+    int type = this->GetType();
+    Superclass::Reset();
+    this->DisableModifiedEventOn();
+    this->SetType(type);
+    this->DisableModifiedEventOff();
+    }
+}

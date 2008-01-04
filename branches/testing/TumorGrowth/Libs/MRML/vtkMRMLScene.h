@@ -39,7 +39,7 @@ Version:   $Revision: 1.18 $
 
 class vtkGeneralTransform;
 
-class VTK_MRML_EXPORT vtkMRMLScene : public vtkObject
+class VTK_MRML_EXPORT vtkMRMLScene : public vtkCollection
 {
 public:
   static vtkMRMLScene *New();
@@ -372,6 +372,7 @@ protected:
   //ETX
   
   void UpdateNodeReferences();
+  void UpdateNodeReferences(vtkCollection* chekNodes);
 
   void UpdateNodeIDs();
 
