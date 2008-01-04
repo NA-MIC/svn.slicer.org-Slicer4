@@ -32,6 +32,7 @@ int vtkKWTypeChooserBox::GetSelectedType()
       return (*it).Type;
   return VTK_VOID;
 }
+
 const char* vtkKWTypeChooserBox::GetSelectedName()
 {
   return this->GetValue();  

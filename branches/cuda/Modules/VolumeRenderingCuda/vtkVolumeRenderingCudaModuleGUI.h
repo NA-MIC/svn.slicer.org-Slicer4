@@ -18,6 +18,7 @@ class vtkImageViewer;
 class vtkKWWidget;
 class vtkKWTypeChooserBox;
 class vtkKWMatrixWidget;
+class vtkKWMatrixWidgetWithLabel;
 
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
@@ -131,6 +132,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkKWMatrixWidget* InputResolutionMatrix;
   
   vtkKWMatrixWidget* CameraPosition; // position, target and up vector
+  vtkKWMatrixWidgetWithLabel* Color;
 };
 
 #endif /*VTKSLICERVOLUMERENDERINGCUDA_H_*/
