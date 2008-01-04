@@ -33,10 +33,18 @@ int vtkKWTypeChooserBox::GetSelectedType()
   return VTK_VOID;
 }
 
+void vtkKWTypeChooserBox::SetSelectedType(int vtk_type)
+{
+    for (int i = 0 ; i <  vtkKWTypeChooserBox::Values.size(); i ++)
+      if (vtkKWTypeChooserBox::Values[i].Type == vtk_type)
+        this->GetMenu()->SelectItem(i);
+}
+
 const char* vtkKWTypeChooserBox::GetSelectedName()
 {
   return this->GetValue();  
 }
+
 
 void vtkKWTypeChooserBox::CreateWidget()
 {
@@ -49,7 +57,7 @@ void vtkKWTypeChooserBox::CreateWidget()
     this->GetMenu()->AddRadioButton((*it).Name);
   }
   
-  this->GetMenu()->SelectItem(0);
+  this->SetSelectedType(VTK_UNSIGNED_CHAR);
 }
 
 const vtkKWTypeChooserBox::TypeList vtkKWTypeChooserBox::Values = vtkKWTypeChooserBox::CreateValues();

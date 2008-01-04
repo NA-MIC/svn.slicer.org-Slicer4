@@ -12,6 +12,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkKWTypeChooserBox : public vtkKWMen
   static vtkKWTypeChooserBox* New();
 
     int GetSelectedType();
+    void SetSelectedType(int vtk_type);
     const char* GetSelectedName();
 
     virtual void PrintSelf(ostream& os, vtkIndent indent);
