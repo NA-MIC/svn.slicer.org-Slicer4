@@ -17,7 +17,6 @@ Version:   $Revision: 3328 $
 #include "vtkITKArchetypeImageSeriesScalarReader.h"
 #include "vtkITKImageWriter.h"
 #include "vtkImageData.h"
-#include "vtkImageChangeInformation.h"
 #include "vtkTransform.h"
 #include "vtkPolyData.h"
 #include "vtkMath.h"
@@ -39,9 +38,9 @@ Version:   $Revision: 3328 $
 int main(int argc, char * argv[])
 {
     PARSE_ARGS;
-    bool debug = false;
+//    bool debug = true;
 
-    if (debug)
+    if (debugSwitch)
       {
       std::cout << "Trying to get transforms out...\n";
       std::cout << "transform1 = " << transform1.c_str() << std::endl;
@@ -73,10 +72,11 @@ int main(int argc, char * argv[])
       transform2ID = std::string(transform2.begin()+loc, transform2.end());     
       }
     
-    if (debug) 
+    if (debugSwitch) 
       {
       std::cout << "The input volume is " << InputVolume.c_str() << std::endl;
       std::cout << "The output volume is " << OutputVolume.c_str() << std::endl;
+      std::cout << "The reference volume is " << ReferenceVolume.c_str() << std::endl;
       std::cout << "The ACPC fiducial list is " <<  std::endl;
       for (int i = 0; i<ACPC.size(); i++)
         {
@@ -130,36 +130,40 @@ int main(int argc, char * argv[])
 
     // set up filter watcher
     float numFilterSteps = 2.0;
+    if (strcmp(ReferenceVolume.c_str(), "") != 0)
+      {
+      // add a filter step for reading the reference volume
+      numFilterSteps++;
+      }
     // increment after each filter is run
     float currentFilterOffset = 0.0;
+
+    // used to pass the space directiosn matrix to the writer
+    vtkMatrix4x4 *RasToIjkOut = vtkMatrix4x4::New();
     
-    // read in the input volume
-    reader = vtkITKArchetypeImageSeriesScalarReader::New();
-    vtkPluginFilterWatcher watchReader(reader,
-                                       "Read Volume",
-                                       CLPProcessInformation,
-                                       1.0/numFilterSteps,
-                                       currentFilterOffset/numFilterSteps);
-    if (debug)
+    if (strcmp(InputVolume.c_str(), "") != 0)
       {
-      watchReader.QuietOn();
+      reader = vtkITKArchetypeImageSeriesScalarReader::New();
+      vtkPluginFilterWatcher watchReader(reader,
+                                         "Read Volume",
+                                         CLPProcessInformation,
+                                         1.0/numFilterSteps,
+                                         currentFilterOffset/numFilterSteps);
+      if (debugSwitch)
+        {
+        watchReader.QuietOn();
+        }
+      currentFilterOffset++;
+      reader->SetArchetype(InputVolume.c_str());
+      reader->SetOutputScalarTypeToNative();
+      reader->SetDesiredCoordinateOrientationToNative();
+      reader->SetUseNativeOriginOn();
+      reader->Update();
+      
+      image = reader->GetOutput();
+      image->Update();
       }
-    currentFilterOffset++;
-    reader->SetArchetype(InputVolume.c_str());
-    reader->SetOutputScalarTypeToNative();
-    reader->SetDesiredCoordinateOrientationToNative();
-    reader->SetUseNativeOriginOn();
-    reader->Update();
-
-    vtkImageChangeInformation *ici = vtkImageChangeInformation::New();
-    ici->SetInput (reader->GetOutput());
-    ici->SetOutputSpacing( 1, 1, 1 );
-    ici->SetOutputOrigin( 0, 0, 0 );
-    ici->Update();
-
-    image = ici->GetOutput();
-    image->Update();
-   
+    
     // RealignCalculate
     vtkTransform *trans = vtkTransform::New();
     trans->Identity();
@@ -168,157 +172,254 @@ int main(int argc, char * argv[])
     // check to see if had no input points
     if (Midline.size() == 0 && ACPC.size() == 0)
       {
+      if (debugSwitch)
+        {
+        std::cout << "Both fid lists are empty (need to select points on the lists), using the input transform" << std::endl;
+        }
       // use the input matrix
       vtkMRMLLinearTransformNode *transformNode = vtkMRMLLinearTransformNode::SafeDownCast(node);
       if (transformNode != NULL)
         {
         trans->SetMatrix(transformNode->GetMatrixTransformToParent());
+        if (debugSwitch)
+          {
+          std::cout << "Set the matrix to:" << std::endl;
+          trans->GetMatrix()->Print(std::cout);
+          }
         }
       }
     else
       {
-    if (Midline.size() > 0)
-      {
-      vtkMath *math = vtkMath::New();
-      vtkPolyData *polydata = vtkPolyData::New();
-      vtkPolyData *output = vtkPolyData::New();
-      vtkPoints *points = vtkPoints::New();
-      int x = Midline.size();
-      if (debug)
+      if (Midline.size() > 0)
         {
-        std::cout << "Total number of midline points " << x << std::endl;
-        }
-      points->SetNumberOfPoints(x);
-      for (int i = 0; i < x; i++)
-        {
-        points->SetPoint(i, Midline[i][0], Midline[i][1], Midline[i][2]);
-        }
-      polydata->SetPoints(points);
-      
-      vtkPrincipalAxesAlign *pa = vtkPrincipalAxesAlign::New();
-      if (debug)
-        {        
-        std::cout << "Set Input to PrincipalAxesAlign\n";
-        }
-      pa->SetInput(polydata);
-      if (debug)
-        {        
-        std::cout << "Executing PrincipalAxesAlign\n";
-        }
-      vtkPluginFilterWatcher watchPA(pa,
+        if (debugSwitch)
+          {
+          std::cout << "Doing Midline..." << std::endl;
+          }
+        vtkMath *math = vtkMath::New();
+        vtkPolyData *polydata = vtkPolyData::New();
+        vtkPolyData *output = vtkPolyData::New();
+        vtkPoints *points = vtkPoints::New();
+        points->SetDataTypeToDouble();
+        int x = Midline.size();
+        if (debugSwitch)
+          {
+          std::cout << "Total number of midline points " << x << ", points data type = " << points->GetDataType() << std::endl;
+          }
+        points->SetNumberOfPoints(x);
+        for (int i = 0; i < x; i++)
+          {
+          points->SetPoint(i, Midline[i][0], Midline[i][1], Midline[i][2]);
+          if (debugSwitch)
+            {
+            double pt[3];
+            points->GetPoint(i, pt);
+            std::cout << "Set midline point " << i << " to " <<pt[0] << ", " << pt[1] << "," <<pt[2] << "\n";
+            }
+          }
+        polydata->SetPoints(points);
+        
+        vtkPrincipalAxesAlign *pa = vtkPrincipalAxesAlign::New();
+        if (debugSwitch)
+          {        
+          std::cout << "Set Input to PrincipalAxesAlign\n";
+          }
+        pa->SetInput(polydata);
+        if (debugSwitch)
+          {        
+          std::cout << "Executing PrincipalAxesAlign\n";
+          }
+        vtkPluginFilterWatcher watchPA(pa,
                                        "Principle Axes Align",
                                        CLPProcessInformation,
                                        1.0/numFilterSteps,
                                        currentFilterOffset/numFilterSteps);
-      currentFilterOffset++;
-      pa->Update();
-      
-      vtkFloatingPointType *normal = pa->GetZAxis();
-      vtkFloatingPointType nx = normal[0];
-      vtkFloatingPointType ny = normal[1];
-      vtkFloatingPointType nz = normal[2];
-      if (debug)
-        {
-        std::cout << "Normal " << nx << " " << ny << " " << nz << std::endl;
-        }
+        currentFilterOffset++;
+        pa->Update();
+        
+        vtkFloatingPointType *normal = pa->GetZAxis();
+        vtkFloatingPointType nx = normal[0];
+        vtkFloatingPointType ny = normal[1];
+        vtkFloatingPointType nz = normal[2];
+        if (debugSwitch)
+          {
+          std::cout << "Normal " << nx << " " << ny << " " << nz << std::endl;
+          }
+        
+        vtkFloatingPointType Max = nx;
+        if (ny*ny > Max*Max)
+          {
+          Max = ny;
+          }
+        if (nz*nz > Max*Max)
+          {
+          Max = nz;
+          }
+        vtkFloatingPointType sign = 1.0;
+        if (Max < 0)
+          {
+          sign = -1.0;
+          }
+        
+        // prepare the rotation matrix
+        vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+        mat->Identity();
+        int i = 0;
+        for (int p = 0; p < 4; p++)
+          {
+          vtkFloatingPointType point = normal[p];
+          mat->SetElement(i, 0, (sign*point));
+          i++;
+          }
+        vtkFloatingPointType oneAndAlpha = 1.0 + mat->GetElement(0,0);
+        mat->SetElement(0, 1, -1.0 * mat->GetElement(1,0));
+        mat->SetElement(0, 2, (-1.0 * (mat->GetElement(2, 0)))); 
+        mat->SetElement(2, 1, (-1.0 * (mat->GetElement(1, 0) * (mat->GetElement(2, 0) / oneAndAlpha))));
+        mat->SetElement(1, 2, (-1.0 * (mat->GetElement(1, 0) * (mat->GetElement(2, 0) / oneAndAlpha))));
+        mat->SetElement(1, 1, (1.0  - (mat->GetElement(1, 0) * (mat->GetElement(1, 0) / oneAndAlpha))));
+        mat->SetElement(2, 2, (1.0  - (mat->GetElement(2, 0) * (mat->GetElement(2, 0) / oneAndAlpha))));
+        
+        // Check the sign of the determinant
+        double det = mat->Determinant();
+        if (debugSwitch)
+          {
+          std::cout << "Determinant " << det << endl;
+          }
+        vtkMatrix4x4 *matInverse = vtkMatrix4x4::New();
+        matInverse->DeepCopy(mat);
+        matInverse->Invert();
+        trans->SetMatrix(matInverse);
+        
+        // clean up
+        mat->Delete();
+        matInverse->Delete();
+        pa->Delete();
+        points->Delete();
+        polydata->Delete();
+        output->Delete();
+        math->Delete();
+        }        
 
-      vtkFloatingPointType Max = nx;
-      if (ny*ny > Max*Max)
+      // need at least two points
+      if (ACPC.size() > 1)
         {
-        Max = ny;
+        if (debugSwitch)
+          {
+          std::cout << "Doing ACPC, size = " << ACPC.size() << "\n";
+          }
+        int y = ACPC.size();
+        vtkFloatingPointType top = ACPC[0][2] - ACPC[1][2];
+        vtkFloatingPointType bot = ACPC[0][1] - ACPC[1][1];
+        vtkFloatingPointType tangent = atan(top/bot) * (180.0/(4.0*atan(1.0)));
+        if (debugSwitch)
+          {
+          std::cout << "Tangent (top = " << top << ", bot = " << bot << ") = " << tangent << endl;
+          }
+        trans->RotateX(tangent * -1.0);
         }
-      if (nz*nz > Max*Max)
-        {
-        Max = nz;
-        }
-      vtkFloatingPointType sign = 1.0;
-      if (Max < 0)
-        {
-        sign = -1.0;
-        }
-
-      // prepare the rotation matrix
-      vtkMatrix4x4 *mat = vtkMatrix4x4::New();
-      mat->Identity();
-      int i = 0;
-      for (int p = 0; p < 4; p++)
-        {
-        vtkFloatingPointType point = normal[p];
-        mat->SetElement(i, 0, (sign*point));
-        i++;
-        }
-      vtkFloatingPointType oneAndAlpha = 1.0 + mat->GetElement(0,0);
-      mat->SetElement(0, 1, -1.0 * mat->GetElement(1,0));
-      mat->SetElement(0, 2, (-1.0 * (mat->GetElement(2, 0)))); 
-      mat->SetElement(2, 1, (-1.0 * (mat->GetElement(1, 0) * (mat->GetElement(2, 0) / oneAndAlpha))));
-      mat->SetElement(1, 2, (-1.0 * (mat->GetElement(1, 0) * (mat->GetElement(2, 0) / oneAndAlpha))));
-      mat->SetElement(1, 1, (1.0  - (mat->GetElement(1, 0) * (mat->GetElement(1, 0) / oneAndAlpha))));
-      mat->SetElement(2, 2, (1.0  - (mat->GetElement(2, 0) * (mat->GetElement(2, 0) / oneAndAlpha))));
-
-      // Check the sign of the determinant
-      double det = mat->Determinant();
-      if (debug)
-        {
-        std::cout << "Determinant " << det << endl;
-        }
-      vtkMatrix4x4 *matInverse = vtkMatrix4x4::New();
-      matInverse->DeepCopy(mat);
-      matInverse->Invert();
-      trans->SetMatrix(matInverse);
-      
-      // clean up
-      mat->Delete();
-      matInverse->Delete();
-      pa->Delete();
-      points->Delete();
-      polydata->Delete();
-      output->Delete();
-      math->Delete();
-      }        
-    
-    if (ACPC.size() > 0)
-      {
-      if (debug)
-        {
-        std::cout << "Doing ACPC\n";
-        }
-      int y = ACPC.size();
-      vtkFloatingPointType top = ACPC[0][2] - ACPC[1][2];
-      vtkFloatingPointType bot = ACPC[0][1] - ACPC[1][1];
-      vtkFloatingPointType tangent = atan(top/bot) * (180.0/(4.0*atan(1.0)));
-      if (debug)
-        {
-        std::cout << "Tangent = " << tangent << endl;
-        }
-      trans->RotateX(tangent - 1.0);
-      }
       }
     
     double det = trans->GetMatrix()->Determinant();
-    if (debug)
+    if (debugSwitch)
       {
       std::cout << "Determinant " << det << std::endl;
       }
-    std::cout << "Output Matrix = " << std::endl;
+    std::cout << "RAS to RAS Matrix to apply = " << std::endl;
     trans->GetMatrix()->Print(std::cout);
-
 
     // transform and save to output volume if requested
     if (OutputVolume.length() > 0)
       {
-      if (debug)
+      if (debugSwitch)
         {
-        std::cout << "Doing resample...\n";
+        std::cout << "Doing resample...copying image and changing information\n";
         }
       vtkImageData *Target = vtkImageData::New();
       Target->DeepCopy(image);
-      vtkImageChangeInformation *iciOut = vtkImageChangeInformation::New();
-      iciOut->CenterImageOn();
-      iciOut->SetInput(Target);
+      
+      // space directions vector is encoded in here
+      vtkMatrix4x4 *RasToIjkIn = reader->GetRasToIjkMatrix();
+      vtkMatrix4x4 *IjkToRasIn  = vtkMatrix4x4::New();
+      IjkToRasIn->DeepCopy(RasToIjkIn);;
+      IjkToRasIn->Invert();
+
+      vtkTransform *IjkToRasInTransform = vtkTransform::New();
+      IjkToRasInTransform->SetMatrix(IjkToRasIn);
+      
+      // for now until get a reference transform
+      if (strcmp(ReferenceVolume.c_str(), "") != 0)
+        {
+        vtkITKArchetypeImageSeriesReader* refReader = vtkITKArchetypeImageSeriesScalarReader::New();
+        vtkPluginFilterWatcher watchReader(refReader,
+                                           "Read Volume",
+                                           CLPProcessInformation,
+                                           1.0/numFilterSteps,
+                                           currentFilterOffset/numFilterSteps);
+        if (debugSwitch)
+          {
+          watchReader.QuietOn();
+          }
+        currentFilterOffset++;
+        refReader->SetArchetype(ReferenceVolume.c_str());
+        refReader->SetOutputScalarTypeToNative();
+        refReader->SetDesiredCoordinateOrientationToNative();
+        refReader->SetUseNativeOriginOn();
+        refReader->Update();
+        // then get the matrix
+        RasToIjkOut = refReader->GetRasToIjkMatrix();
+        if (debugSwitch)
+          {
+          std::cout << "Got the reference volume " << ReferenceVolume.c_str() << " ras to ijk matrix:\n";
+          RasToIjkOut->Print(std::cout);
+          }
+        refReader->Delete();
+        }
+      else
+        {
+        RasToIjkOut->DeepCopy(RasToIjkIn);
+         if (debugSwitch)
+          {
+          std::cout << "No reference volume, using the input volume's ras to ijk matrix.\n";
+          }
+        }
+      
+      vtkTransform *RasToIjkOutTransform = vtkTransform::New();
+      RasToIjkOutTransform->SetMatrix(RasToIjkOut);
+      vtkTransform *ResliceTransform = vtkTransform::New();
+      //ResliceTransform->PostMultiply();
+      
+      // build up the reslice transform from the calculated or passed in
+      // transform,  the IJK to RAS transform from the input volume, and the
+      // RAS to IJK transform from either the input volume or the reference
+      // volume, if using it.
+      // reslice transfrom = RAS to IJK out . RAS to RAS . IJK to RAS in
+      
+      // the main transform that we wish to apply is an RAS->RAS transform, so
+      // first put the input image data into RAS space
+      ResliceTransform->SetMatrix(IjkToRasIn);
+      // then apply the transform
+      ResliceTransform->Concatenate(trans);
+      // now apply the out transform to put the image back into IJK space
+      ResliceTransform->Concatenate(RasToIjkOut);
+      
+      if (debugSwitch)
+        {        
+        std::cout << "Input volume's RAS to IJK matrix = " << std:: endl;
+        RasToIjkIn->Print(std::cout);
+        std::cout << "Input volume's inverted matrix, IJK to RAS: \n";
+        IjkToRasIn->Print(std::cout);
+        std::cout << "trans = " << std::endl;
+        trans->GetMatrix()->Print(std::cout);
+        std::cout << "Reslice transform = " << std::endl;
+        ResliceTransform->GetMatrix()->Print(std::cout);
+        }
+
+     
+      
       // Set the input of the vtkImageReslice
       vtkImageReslice *reslice = vtkImageReslice::New();
-      reslice->SetInput(iciOut->GetOutput());
-      reslice->SetResliceTransform(trans);
+      reslice->SetInput(Target);
+      
       // if doing a full resample, would set the output spacing to user
       // entered values, as well as the extent
       if (InterpolationType.length() > 0)
@@ -336,36 +437,28 @@ int main(int argc, char * argv[])
           reslice->SetInterpolationModeToLinear();
           }
         }
+
+      
+       reslice->SetResliceTransform(ResliceTransform);
+
       // reslice!
       reslice->Update();
 
       // save, use the itk writer so that memory mapping works
       vtkITKImageWriter *writer = vtkITKImageWriter::New();
-      if (debug)
-        {
-        writer->DebugOn();
-        }
+      writer->SetRasToIJKMatrix(RasToIjkOut);
       writer->SetFileName(OutputVolume.c_str());
       writer->SetInput(reslice->GetOutput());
       writer->Write();
-
+        
       writer->Delete();
       reslice->Delete();
-      iciOut->Delete();
       Target->Delete();
+      
       }
 
-    // clean up
-    if (ici)
-      {
-      if (debug)
-        {
-        std::cout << "Deleting ici" << endl;
-        }
-      ici->SetInput(NULL);
-      ici->Delete();
-      }
-    if (debug)
+    // clean up   
+    if (debugSwitch)
       {
       std::cout << "Deleting reader" << endl;
       }
