@@ -11,12 +11,12 @@ SUBDIRS(
   SlicerDaemon
   Editor
   Python
-  #Meshing
+  Meshing
   QdecModule
   QueryAtlas
   Tractography
   VolumeRendering
-  VolumeMath
+  Statistics   
   TumorGrowth
 )
 

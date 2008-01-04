@@ -34,8 +34,6 @@ class vtkSlicerFixedPointRayCastImage;
 class VTK_VOLUMERENDERINGMODULE_EXPORT vtkSlicerOpenGLRayCastImageDisplayHelper : public vtkSlicerRayCastImageDisplayHelper
 {
 public:
-    vtkGetVectorMacro(Limit,int,4);
-    vtkSetVector4Macro(Limit,int);
   static vtkSlicerOpenGLRayCastImageDisplayHelper *New();
   vtkTypeRevisionMacro(vtkSlicerOpenGLRayCastImageDisplayHelper,vtkSlicerRayCastImageDisplayHelper);
   virtual void PrintSelf(ostream& os, vtkIndent indent);
@@ -74,19 +72,8 @@ protected:
                               void *image );
 
 private:
-  void MergeWithExistingImage(void *image,int scalarType);
+
   void *PreviousImage;
-
-
-
-  int PreviousSize;
-
-
-
-
-  int PreviousScalarType;
-  int Limit[4];
-  int PreviousImageSize;
   vtkSlicerOpenGLRayCastImageDisplayHelper(const vtkSlicerOpenGLRayCastImageDisplayHelper&);  // Not implemented.
   void operator=(const vtkSlicerOpenGLRayCastImageDisplayHelper&);  // Not implemented.
 };

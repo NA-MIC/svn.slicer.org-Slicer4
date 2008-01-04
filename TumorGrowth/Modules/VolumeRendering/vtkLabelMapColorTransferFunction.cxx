@@ -1,4 +1,6 @@
 #include "vtkLabelMapColorTransferFunction.h"
+
+#include "vtkMRMLScalarVolumeNode.h"
 #include "vtkObjectFactory.h"
 #include "vtkTimerLog.h"
 
@@ -19,6 +21,13 @@ vtkLabelMapColorTransferFunction::vtkLabelMapColorTransferFunction(void)
 
 vtkLabelMapColorTransferFunction::~vtkLabelMapColorTransferFunction(void)
 {
+}
+
+//----------------------------------------------------------------------------
+void vtkLabelMapColorTransferFunction::PrintSelf(ostream& os, vtkIndent indent)
+{
+  
+    Superclass::PrintSelf(os,indent);
 }
 void vtkLabelMapColorTransferFunction::Init(vtkMRMLScalarVolumeNode *node)
 {
@@ -51,7 +60,7 @@ void vtkLabelMapColorTransferFunction::Init(vtkMRMLScalarVolumeNode *node)
         vtkErrorMacro("No LookupTable");
         return;
     }
-    this->AdjustRange(lookup->GetTableRange());
+    //this->AdjustRange(lookup->GetTableRange());
     double color[3];
 
     for (int i=(int)lookup->GetTableRange()[0];i<lookup->GetTableRange()[1];i++)
@@ -62,7 +71,7 @@ void vtkLabelMapColorTransferFunction::Init(vtkMRMLScalarVolumeNode *node)
 
     }
     timer1->StopTimer();
-    vtkErrorMacro("Init Labelmap Colortransfer calculated in "<<timer1->GetElapsedTime()<<"seconds");
+    vtkDebugMacro("Init Labelmap Colortransfer calculated in "<<timer1->GetElapsedTime()<<"seconds");
     timer1->Delete();
 }
 

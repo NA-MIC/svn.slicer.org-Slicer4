@@ -40,9 +40,15 @@ public:
   vtkGetObjectMacro (CommandLineModuleNode, vtkMRMLCommandLineModuleNode);
   vtkSetObjectMacro (CommandLineModuleNode, vtkMRMLCommandLineModuleNode);
 
+  // Description: For debugging, control deletion of temp files
+  vtkBooleanMacro (DeleteTemporaryFiles, int);
+  vtkSetMacro (DeleteTemporaryFiles, int);
+  vtkGetMacro (DeleteTemporaryFiles, int);
   
   // The method that schedules the command line module to run
   void Apply();
+  void Apply( vtkMRMLCommandLineModuleNode* node );
+  void ApplyAndWait ( vtkMRMLCommandLineModuleNode* node );
 
   // Set/Get the directory to use for temporary files
   void SetTemporaryDirectory(const char *tempdir)
@@ -58,6 +64,8 @@ protected:
                                      const std::vector<std::string>& extensions,
                                      CommandLineModuleType commandType) const;
   std::string ConstructTemporarySceneFileName(vtkMRMLScene *scene);
+  std::string FindHiddenNodeID(const ModuleDescription& d,
+                               const ModuleParameter& p);
   //ETX
 
   // The method that runs the command line module
@@ -71,6 +79,8 @@ private:
   virtual ~vtkCommandLineModuleLogic();
   vtkCommandLineModuleLogic(const vtkCommandLineModuleLogic&);
   void operator=(const vtkCommandLineModuleLogic&);
+
+  int DeleteTemporaryFiles;
 
   vtkMRMLCommandLineModuleNode* CommandLineModuleNode;
 //BTX

@@ -88,6 +88,9 @@ public:
   vtkSetMacro(MultithreadingEnabled, int);
   vtkGetMacro(MultithreadingEnabled, int);
 
+  vtkSetMacro(UpdateIntermediateData, int);
+  vtkGetMacro(UpdateIntermediateData, int);
+
   vtkGetStringMacro(WorkingDirectory);
   vtkSetStringMacro(WorkingDirectory);
 
@@ -100,6 +103,9 @@ public:
   virtual void 
     SetNthIntensityNormalizationParametersNodeID(int n, 
                                                  const char* nodeID);
+
+  vtkSetMacro(EnableTargetToTargetRegistration, int);
+  vtkGetMacro(EnableTargetToTargetRegistration, int);
 
 protected:
   vtkMRMLEMSGlobalParametersNode();
@@ -120,11 +126,14 @@ protected:
   int                                 SaveSurfaceModels;
 
   int                                 MultithreadingEnabled;
+  int                                 UpdateIntermediateData;
 
   int                                 SegmentationBoundaryMin[3];
   int                                 SegmentationBoundaryMax[3];
 
   int                                 NumberOfTargetInputChannels;
+
+  int                                 EnableTargetToTargetRegistration;
 
   //BTX
   typedef vtkstd::vector<std::string>  IntensityNormalizationParameterListType;

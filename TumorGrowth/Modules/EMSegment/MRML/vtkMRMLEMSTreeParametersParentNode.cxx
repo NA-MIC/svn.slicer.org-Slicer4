@@ -39,7 +39,7 @@ vtkMRMLEMSTreeParametersParentNode::vtkMRMLEMSTreeParametersParentNode()
 {
   this->ClassInteractionMatrixNodeID  = NULL;
   
-  this->Alpha                         = 0.7;
+  this->Alpha                         = 0.99;
 
   this->PrintBias                     = 0;
   this->BiasCalculationMaxIterations  = -1;
@@ -47,11 +47,11 @@ vtkMRMLEMSTreeParametersParentNode::vtkMRMLEMSTreeParametersParentNode()
   this->SmoothingKernelSigma          = 5.0;
 
   this->StopEMType                    = 0;
-  this->StopEMMaxIterations           = 0;
+  this->StopEMMaxIterations           = 4;
   this->StopEMValue                   = 0.0;
 
   this->StopMFAType                   = 0;
-  this->StopMFAMaxIterations          = 0;
+  this->StopMFAMaxIterations          = 2;
   this->StopMFAValue                  = 0.0;
 
   this->PrintFrequency                = 0;
@@ -62,6 +62,8 @@ vtkMRMLEMSTreeParametersParentNode::vtkMRMLEMSTreeParametersParentNode()
   this->PrintMFAWeightsConvergence    = 0;
 
   this->GenerateBackgroundProbability = 0;
+
+  this->NumberOfTargetInputChannels   = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -167,8 +169,8 @@ void vtkMRMLEMSTreeParametersParentNode::ReadXMLAttributes(const char** attrs)
     if (!strcmp(key, "ClassInteractionMatrixNodeID"))
       {
       this->SetClassInteractionMatrixNodeID(val);
-      this->Scene->AddReferencedNodeID(this->ClassInteractionMatrixNodeID, 
-                                       this);   
+      //this->Scene->AddReferencedNodeID(this->ClassInteractionMatrixNodeID, 
+      //                                 this);   
       }    
     else if (!strcmp(key, "Alpha"))
       {
@@ -373,4 +375,37 @@ GetClassInteractionMatrixNode()
     node = vtkMRMLEMSClassInteractionMatrixNode::SafeDownCast(snode);
     }
   return node;
+}
+
+//-----------------------------------------------------------------------------
+void 
+vtkMRMLEMSTreeParametersParentNode::
+AddChildNode(const char* childNodeID)
+{
+  if (this->GetClassInteractionMatrixNode() != NULL)
+    {
+    this->GetClassInteractionMatrixNode()->AddClass();
+    }
+}
+
+//-----------------------------------------------------------------------------
+void
+vtkMRMLEMSTreeParametersParentNode::
+RemoveNthChildNode(int n)
+{
+  if (this->GetClassInteractionMatrixNode() != NULL)
+    {
+    this->GetClassInteractionMatrixNode()->RemoveNthClass(n);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void 
+vtkMRMLEMSTreeParametersParentNode::
+MoveNthChildNode(int fromIndex, int toIndex)
+{
+  if (this->GetClassInteractionMatrixNode() != NULL)
+    {
+    this->GetClassInteractionMatrixNode()->MoveNthClass(fromIndex, toIndex);
+    }
 }

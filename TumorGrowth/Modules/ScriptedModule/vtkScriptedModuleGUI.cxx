@@ -219,7 +219,7 @@ unsigned long vtkScriptedModuleGUI::AddMRMLObserverByNumber ( vtkObject *observe
 {
   if (observee == NULL)
     {
-    vtkErrorMacro("AddMRMLObserverByNumber: observee is null, returning -1");
+    vtkErrorMacro("AddMRMLObserverByNumber: observee is null, returning invalid event tag");
     return VTK_UNSIGNED_LONG_MAX;
     }
   if (observee->HasObserver(event, (vtkCommand *)this->MRMLCallbackCommand) )
@@ -235,6 +235,7 @@ void vtkScriptedModuleGUI::RemoveMRMLObserverByNumber ( vtkObject *observee, uns
   if (observee == NULL)
     {
     vtkErrorMacro("RemoveMRMLObserverByNumber: observee is null");
+    return;
     }
   vtkDebugMacro("RemoveMRMLObserverByNumber: event = " << event);
   if (observee->HasObserver(event, (vtkCommand *)this->MRMLCallbackCommand))

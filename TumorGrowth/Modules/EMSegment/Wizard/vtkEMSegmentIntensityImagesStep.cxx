@@ -4,11 +4,15 @@
 #include "vtkEMSegmentLogic.h"
 
 #include "vtkKWFrame.h"
+#include "vtkKWLabel.h"
+#include "vtkKWCheckButton.h"
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWListBoxToListBoxSelectionEditor.h"
+#include "vtkKWMessageDialog.h"
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
 #include "vtkKWListBoxWithScrollbarsWithLabel.h"
+#include "vtkKWCheckButtonWithLabel.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentIntensityImagesStep);
@@ -20,8 +24,10 @@ vtkEMSegmentIntensityImagesStep::vtkEMSegmentIntensityImagesStep()
   this->SetName("4/9. Select Target Images");
   this->SetDescription("Choose the set of images that will be segmented.");
 
-  this->IntensityImagesTargetSelectorFrame  = NULL;
-  this->IntensityImagesTargetVolumeSelector = NULL;
+  this->IntensityImagesTargetSelectorFrame          = NULL;
+  this->IntensityImagesTargetVolumeSelector         = NULL;
+  this->TargetToTargetRegistrationFrame             = NULL;
+  this->IntensityImagesAlignTargetImagesCheckButton = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -38,6 +44,18 @@ vtkEMSegmentIntensityImagesStep::~vtkEMSegmentIntensityImagesStep()
     this->IntensityImagesTargetSelectorFrame->Delete();
     this->IntensityImagesTargetSelectorFrame = NULL;
     }
+
+  if (this->TargetToTargetRegistrationFrame)
+    {
+    this->TargetToTargetRegistrationFrame->Delete();
+    this->TargetToTargetRegistrationFrame = NULL;
+    }
+
+  if (this->IntensityImagesAlignTargetImagesCheckButton)
+    {
+    this->IntensityImagesAlignTargetImagesCheckButton->Delete();
+    this->IntensityImagesAlignTargetImagesCheckButton = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -45,10 +63,12 @@ void vtkEMSegmentIntensityImagesStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
 
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
   vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
   wizard_widget->GetCancelButton()->SetEnabled(0);
 
   vtkKWWidget *parent = wizard_widget->GetClientArea();
+  int enabled = parent->GetEnabled();
 
   // Create the frame
 
@@ -100,6 +120,51 @@ void vtkEMSegmentIntensityImagesStep::ShowUserInterface()
 
   this->PopulateIntensityImagesTargetVolumeSelector();
 
+  // Create the target-to-target registration frame
+
+  if (!this->TargetToTargetRegistrationFrame)
+    {
+    this->TargetToTargetRegistrationFrame = vtkKWFrameWithLabel::New();
+    }
+  if (!this->TargetToTargetRegistrationFrame->IsCreated())
+    {
+    this->TargetToTargetRegistrationFrame->SetParent(parent);
+    this->TargetToTargetRegistrationFrame->Create();
+    this->TargetToTargetRegistrationFrame->SetLabelText("Target-to-target Registration");
+    }
+
+  this->Script(
+    "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
+    this->TargetToTargetRegistrationFrame->GetWidgetName());
+
+  if (!this->IntensityImagesAlignTargetImagesCheckButton)
+    {
+    this->IntensityImagesAlignTargetImagesCheckButton = 
+      vtkKWCheckButtonWithLabel::New();
+    }
+  if (!this->IntensityImagesAlignTargetImagesCheckButton->IsCreated())
+    {
+    this->IntensityImagesAlignTargetImagesCheckButton->SetParent(
+      this->TargetToTargetRegistrationFrame->GetFrame());
+    this->IntensityImagesAlignTargetImagesCheckButton->Create();
+    this->IntensityImagesAlignTargetImagesCheckButton->GetLabel()->
+      SetWidth(EMSEG_WIDGETS_LABEL_WIDTH);
+    this->IntensityImagesAlignTargetImagesCheckButton->
+      SetLabelText("Align Target Images:");
+    this->IntensityImagesAlignTargetImagesCheckButton->
+      GetWidget()->SetCommand(this, "AlignTargetImagesCallback");
+    }
+  this->IntensityImagesAlignTargetImagesCheckButton->SetEnabled(
+    mrmlManager->HasGlobalParametersNode() ? enabled : 0);
+
+  this->Script(
+    "pack %s -side top -anchor nw -padx 2 -pady 2", 
+    this->IntensityImagesAlignTargetImagesCheckButton->GetWidgetName());
+
+  this->IntensityImagesAlignTargetImagesCheckButton->
+    GetWidget()->SetSelectedState(
+      mrmlManager->GetEnableTargetToTargetRegistration());
+
   wizard_widget->SetErrorText(
     "Please note that the order of the images is important.");
 }
@@ -115,9 +180,11 @@ void vtkEMSegmentIntensityImagesStep::PopulateIntensityImagesTargetVolumeSelecto
   int nb_of_volumes = mrmlManager->GetVolumeNumberOfChoices();
   int nb_of_target_volumes = mrmlManager->GetTargetNumberOfSelectedVolumes();
   
-  // Update the source volume list 
-
+  // clear the lists 
   this->IntensityImagesTargetVolumeSelector->RemoveItemsFromSourceList();
+  this->IntensityImagesTargetVolumeSelector->RemoveItemsFromFinalList();
+
+  // Update the source volume list 
   for (int index = 0; index < nb_of_volumes; index++)
     {
     vol_id = mrmlManager->GetVolumeNthID(index);
@@ -136,21 +203,20 @@ void vtkEMSegmentIntensityImagesStep::PopulateIntensityImagesTargetVolumeSelecto
       const char *name = mrmlManager->GetVolumeName(vol_id);
       if (name)
         {
-        sprintf(buffer, "%s (%d)", name, vol_id);
+        sprintf(buffer, "%s (%d)", name, static_cast<int>(vol_id));
         this->IntensityImagesTargetVolumeSelector->AddSourceElement(buffer);
         }
       }
     }
 
   // Update the target volume list
-
   for(int i = 0; i < nb_of_target_volumes; i++)
     {
     target_vol_id = mrmlManager->GetTargetSelectedVolumeNthID(i);
     const char *name = mrmlManager->GetVolumeName(target_vol_id);
     if (name)
       {
-      sprintf(buffer, "%s (%d)", name, target_vol_id);
+      sprintf(buffer, "%s (%d)", name, static_cast<int>(target_vol_id));
       this->IntensityImagesTargetVolumeSelector->AddFinalElement(buffer);
       }
     }
@@ -160,103 +226,73 @@ void vtkEMSegmentIntensityImagesStep::PopulateIntensityImagesTargetVolumeSelecto
 void vtkEMSegmentIntensityImagesStep::
   IntensityImagesTargetSelectionChangedCallback()
 {
-  // The target volumes have changed because of user interaction
+  // nothing for now; changes are made on transitions
+  // (see svn revisions)
+}
 
+//----------------------------------------------------------------------------
+void vtkEMSegmentIntensityImagesStep::
+AlignTargetImagesCallback(int state)
+{
+  // The align target images checkbutton has changed because of user
+  // interaction
+  
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  vtkIdType vol_id, target_vol_id;
+  mrmlManager->SetEnableTargetToTargetRegistration(state);
+}
 
-  vtksys_stl::string targettext;
-  vtksys_stl::string::size_type pos1, pos2;
+//----------------------------------------------------------------------------
+void vtkEMSegmentIntensityImagesStep::Validate()
+{
+  vtkKWWizardWorkflow *wizard_workflow = 
+    this->GetGUI()->GetWizardWidget()->GetWizardWorkflow();
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
   
-  // First, remove any target volumes that are not in the 
-  // selected target list anymore
-
-  bool found = false;
-  unsigned int i, iTarget;
-  vtksys_stl::vector<vtkIdType> remVec, selVec, addVec;
-
-  unsigned int size = this->IntensityImagesTargetVolumeSelector->
-    GetNumberOfElementsOnFinalList();
-  for(i = 0; i < size; i++) 
+  if (mrmlManager->GetTargetNode() != NULL)
     {
-    targettext = 
-      this->IntensityImagesTargetVolumeSelector->GetElementFromFinalList(i);
-    pos1 = targettext.rfind("(");
-    pos2 = targettext.rfind(")");
-    if (pos1 != vtksys_stl::string::npos && pos2 != vtksys_stl::string::npos)
+    // decide if the number of target volumes changed
+    unsigned int nb_of_parameter_target_volumes = 
+      mrmlManager->GetTargetNumberOfSelectedVolumes();
+    unsigned int nb_of_currently_selected_target_volumes = 
+      this->IntensityImagesTargetVolumeSelector->
+      GetNumberOfElementsOnFinalList();
+    bool number_of_target_images_changed = 
+      nb_of_parameter_target_volumes != nb_of_currently_selected_target_volumes;
+    
+    if (number_of_target_images_changed &&
+        !vtkKWMessageDialog::PopupYesNo
+        (this->GetApplication(), 
+         NULL, 
+         "Change the number of target images?",
+         "Are you sure you want to change the number of target images?",
+         vtkKWMessageDialog::WarningIcon | vtkKWMessageDialog::InvokeAtPointer))
       {
-      vol_id = atoi(targettext.substr(pos1+1, pos2-pos1-1).c_str());
-      selVec.push_back(vol_id);
+      // don't change number of volumes; stay on this step
+      wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+      wizard_workflow->ProcessInputs();
       }
-    }
-
-  unsigned int nb_of_target_volumes = 
-    mrmlManager->GetTargetNumberOfSelectedVolumes();
-  for(iTarget = 0; iTarget < nb_of_target_volumes; iTarget++)
-    {
-    target_vol_id = mrmlManager->GetTargetSelectedVolumeNthID(iTarget);
-    found = false;
-    for(i = 0; i < selVec.size(); i++) 
+    else
       {
-      if(target_vol_id == selVec[i])
+      // record indices of currently selected volumes
+      std::vector<vtkIdType> selectedIDs;
+      for(unsigned int i = 0; i < nb_of_currently_selected_target_volumes; ++i) 
         {
-        found = true;
-        break;
-        }
-      }
-    if(!found)
-      {
-      remVec.push_back(target_vol_id);
-      }
-    }
-
-  if(remVec.size()>0)
-    {
-    for(i=0; i<remVec.size(); i++)
-      {
-      mrmlManager->RemoveTargetSelectedVolume(remVec[i]);
-      }
-    }
-  
-  // Then, add the target volume list according to the selected list 
-
-  nb_of_target_volumes = mrmlManager->GetTargetNumberOfSelectedVolumes();
-  if(selVec.size() > nb_of_target_volumes)
-    {
-    for(i = 0; i < selVec.size(); i++) 
-      {
-      found = false;
-      for(iTarget = 0; iTarget < nb_of_target_volumes; iTarget++)
-        {
-        target_vol_id = mrmlManager->GetTargetSelectedVolumeNthID(iTarget);
-        if (selVec[i] == target_vol_id)
+        std::string targettext = 
+          this->IntensityImagesTargetVolumeSelector->GetElementFromFinalList(i);
+        std::string::size_type pos1 = targettext.rfind("(");
+        std::string::size_type pos2 = targettext.rfind(")");
+        if (pos1 != vtksys_stl::string::npos && pos2 != vtksys_stl::string::npos)
           {
-          found = true;
-          break;
+          vtkIdType vol_id = atoi(targettext.substr(pos1+1, pos2-pos1-1).c_str());
+          selectedIDs.push_back(vol_id);
           }
         }
-      if (!found)
-        {
-        mrmlManager->AddTargetSelectedVolume(selVec[i]);
-        }
+      mrmlManager->ResetTargetSelectedVolumes(selectedIDs);
       }
     }
-
-  // Finally, adjusting selected volume orders
-
-  nb_of_target_volumes = mrmlManager->GetTargetNumberOfSelectedVolumes();
-  if(selVec.size() == nb_of_target_volumes)
-    {
-    for(i = 0; i < selVec.size(); i++) 
-      {
-      target_vol_id = mrmlManager->GetTargetSelectedVolumeNthID(i);
-      if (selVec[i] != target_vol_id)
-        { 
-        mrmlManager->MoveTargetSelectedVolume(selVec[i], i);
-        }
-      }
-    }
+  this->Superclass::Validate();
 }
+
 
 //----------------------------------------------------------------------------
 void vtkEMSegmentIntensityImagesStep::PrintSelf(ostream& os, vtkIndent indent)

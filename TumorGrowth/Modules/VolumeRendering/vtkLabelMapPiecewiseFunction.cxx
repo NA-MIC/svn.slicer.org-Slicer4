@@ -1,8 +1,10 @@
 #include "vtkLabelMapPiecewiseFunction.h"
+
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 #include "vtkPointData.h"
 #include "vtkTimerLog.h"
+#include "vtkMRMLScalarVolumeNode.h"
 #include <sstream>
 
 vtkLabelMapPiecewiseFunction::vtkLabelMapPiecewiseFunction(void)
@@ -18,11 +20,6 @@ vtkLabelMapPiecewiseFunction::~vtkLabelMapPiecewiseFunction(void)
         delete[] this->Opacities;
         this->Opacities=NULL;
     }
-    if(this->ColorNode)
-    {
-        this->ColorNode->Delete();
-        this->ColorNode=NULL;
-    }
 }
 
 vtkLabelMapPiecewiseFunction* vtkLabelMapPiecewiseFunction::New(void)
@@ -37,14 +34,19 @@ vtkLabelMapPiecewiseFunction* vtkLabelMapPiecewiseFunction::New(void)
     // If the factory was unable to create the object, then create it here.
     return new vtkLabelMapPiecewiseFunction;
 }
-void vtkLabelMapPiecewiseFunction::Init(vtkMRMLScalarVolumeNode *node,double opacity, int treshold)
+
+void vtkLabelMapPiecewiseFunction::PrintSelf(ostream& os, vtkIndent indent)
+{
+    Superclass::PrintSelf(os,indent);
+}
+void vtkLabelMapPiecewiseFunction::Init(vtkMRMLScalarVolumeNode *node,double opacity, int threshold)
 {   
     vtkTimerLog *timer1=vtkTimerLog::New();
     timer1->StartTimer();
 
-    vtkErrorMacro("treshold without effect at the moment");
+    vtkDebugMacro("threshold without effect at the moment");
     //test if inputdata is valid
-    if(node==NULL||opacity<0||opacity>1||treshold<0)
+    if(node==NULL||opacity<0||opacity>1||threshold<0)
     {
         vtkErrorMacro("Input is not valid");
         return;
@@ -89,7 +91,7 @@ void vtkLabelMapPiecewiseFunction::Init(vtkMRMLScalarVolumeNode *node,double opa
     this->AdjustRange(lookup->GetTableRange());
     Opacities=new double[lookup->GetNumberOfTableValues()];
     this->ColorNode=node->GetVolumeDisplayNode()->GetColorNode();
-    this->Size=lookup->GetTableRange()[1]-lookup->GetTableRange()[0];
+    this->Size=(int) (lookup->GetTableRange()[1]-lookup->GetTableRange()[0]);
     int index=0;
     for (int i=(int)lookup->GetTableRange()[0];i<lookup->GetTableRange()[1];i++)
     {
@@ -101,7 +103,7 @@ void vtkLabelMapPiecewiseFunction::Init(vtkMRMLScalarVolumeNode *node,double opa
 
     }
     timer1->StopTimer();
-    vtkErrorMacro("Init Labelmap Piecewise calculated in "<<timer1->GetElapsedTime()<<"seconds");
+    vtkDebugMacro("Init Labelmap Piecewise calculated in "<<timer1->GetElapsedTime()<<"seconds");
     timer1->Delete();
 
 }
@@ -112,6 +114,10 @@ void vtkLabelMapPiecewiseFunction::EditLabel(int index,double opacity)
         return;
     }
     this->Opacities[index]=opacity;
+            this->AddPoint(index-.5,0);
+        this->AddPoint(index-.49,opacity);
+        this->AddPoint(index+.5,0);
+        this->AddPoint(index+.49,opacity);
 
 }
 double vtkLabelMapPiecewiseFunction::GetLabel(int index)
@@ -134,57 +140,21 @@ std::string vtkLabelMapPiecewiseFunction::GetSaveString()
 }
 void vtkLabelMapPiecewiseFunction::FillFromString(std::string str)
 {
+    if(this->Opacities!=NULL)
+    {
+        vtkErrorMacro("Fill from String is not allowed when you already used the opacities");
+        return;
+    }
     std::stringstream ss;
     ss<<str;
     ss>>this->Size;
     int tmp=0;
+    this->Opacities=new double[this->Size];
+
     for(int i=0;i<this->Size;i++)
     {
         ss>>tmp;
         this->Opacities[i]=tmp*100.;
+        this->EditLabel(i,tmp);
     }
 }
-void vtkLabelMapPiecewiseFunction::UpdateFromOpacities(vtkMRMLScalarVolumeNode *node)
-{
-     vtkErrorMacro("treshold without effect at the moment");
-    //test if inputdata is valid
-    if(node==NULL)
-    {
-        vtkErrorMacro("Input is not valid");
-        return;
-    }
-    if (node->GetLabelMap()==0)
-    {
-        vtkErrorMacro("this is not a labelMap");
-        return;
-    }
-    if(node->GetVolumeDisplayNode()==NULL)
-    {
-        vtkErrorMacro("No Volume Display Node");
-        return;
-    }
-    if(node->GetVolumeDisplayNode()->GetColorNode()==NULL)
-    {
-        vtkErrorMacro("No Color Node");
-        return;
-    }
-    vtkLookupTable *lookup=node->GetVolumeDisplayNode()->GetColorNode()->GetLookupTable();
-    if(lookup==NULL)
-    {
-        vtkErrorMacro("No LookupTable");
-        return;
-    }
-    this->AdjustRange(lookup->GetTableRange());
-    this->ColorNode=node->GetVolumeDisplayNode()->GetColorNode();
-    int index=0;
-    for (int i=(int)lookup->GetTableRange()[0];i<lookup->GetTableRange()[1];i++)
-    {
-        this->AddPoint(i-.5,0);
-        this->AddPoint(i-.49,this->Opacities[i]);
-        this->AddPoint(i+.5,0);
-        this->AddPoint(i+.49,this->Opacities[i]);
-        this->Opacities[index++];
-
-    }
-
-};

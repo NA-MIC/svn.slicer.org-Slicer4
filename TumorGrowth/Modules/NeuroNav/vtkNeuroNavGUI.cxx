@@ -49,6 +49,9 @@ vtkStandardNewMacro (vtkNeuroNavGUI );
 vtkCxxRevisionMacro ( vtkNeuroNavGUI, "$Revision: 1.0 $");
 
 
+/* go redsox */
+
+
 //---------------------------------------------------------------------------
 vtkNeuroNavGUI::vtkNeuroNavGUI ( )
 {
@@ -495,8 +498,10 @@ void vtkNeuroNavGUI::RemoveGUIObservers ( )
 
 //#ifdef USE_NAVITRACK
 //    this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-//    this->LoadConfigButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+//    this->LoadConfigButton->GetWidget()->GetLoadSaveDialog()->RemoveObservers (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
 //#endif
+
+
 #ifdef USE_IGSTK
     this->IGSTKStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
     this->DeviceMenuButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
@@ -577,8 +582,11 @@ void vtkNeuroNavGUI::AddGUIObservers ( )
 
 //#ifdef USE_NAVITRACK
 //    this->OpenTrackerStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-//    this->LoadConfigButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+//    this->LoadConfigButton->GetWidget()->GetLoadSaveDialog()->AddObserver (vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
 //#endif
+
+
+
 #ifdef USE_IGSTK
     this->IGSTKStream->AddObserver( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
     this->DeviceMenuButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -594,6 +602,14 @@ void vtkNeuroNavGUI::HandleMouseEvent(vtkSlicerInteractorStyle *style)
     vtkSlicerInteractorStyle *istyle0 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
     vtkSlicerInteractorStyle *istyle1 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
     vtkSlicerInteractorStyle *istyle2 = vtkSlicerInteractorStyle::SafeDownCast(appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle());
+
+    
+    //
+    //
+    // So easy, a caveman can do it!
+    //
+    //
+
 
 
     vtkCornerAnnotation *anno = NULL;
@@ -670,10 +686,11 @@ void vtkNeuroNavGUI::ProcessGUIEvents ( vtkObject *caller,
             SetIGSTKConnectionParameters();
 #endif
         }
+
 /*
 #ifdef USE_NAVITRACK
-        else if (this->LoadConfigButton->GetWidget() == vtkKWLoadSaveButton::SafeDownCast(caller) 
-                && event == vtkKWPushButton::InvokedEvent )
+        else if (this->LoadConfigButton->GetWidget()->GetLoadSaveDialog() == vtkKWLoadSaveDialog::SafeDownCast(caller) 
+                && event == vtkKWTopLevel::WithdrawEvent)
         {
             const char * filename = this->LoadConfigButton->GetWidget()->GetFileName();
             if (filename)

@@ -49,6 +49,10 @@ public:
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
                                    void *callData );
 
+  // 
+  // copy all nodes relating to the EMSegmenter into newScene
+  virtual bool PackageAndWriteData(const char* packageDirectoryName);
+
   //
   // functions for getting and setting the current template builder
   // node (i.e. the set of parameters to edit and use)
@@ -112,6 +116,7 @@ public:
   virtual int   GetTreeNodeDistributionSpecificationMethod(vtkIdType nodeID);
   virtual void  SetTreeNodeDistributionSpecificationMethod(vtkIdType nodeID, 
                                                            int method);
+  virtual void  ChangeTreeNodeDistributionsFromManualSamplingToManual();
 
   virtual double   GetTreeNodeDistributionLogMean(vtkIdType nodeID, 
                                                   int volumeNumber);
@@ -288,6 +293,10 @@ public:
   // index in [0, #selected volumes)
   virtual vtkIdType   GetTargetSelectedVolumeNthID(int n); 
   virtual const char* GetTargetSelectedVolumeNthMRMLID(int n); 
+  //BTX
+  virtual void
+    ResetTargetSelectedVolumes(const std::vector<vtkIdType>& volumeID);
+  //ETX
   virtual void        AddTargetSelectedVolume(vtkIdType volumeID);
   virtual void        AddTargetSelectedVolumeByMRMLID(char* mrmlID);
   virtual void        RemoveTargetSelectedVolume(vtkIdType volumeID);
@@ -378,11 +387,40 @@ public:
   //
   // registration parameters
   //
+
+  //BTX
+  enum
+    {
+    AtlasToTargetAffineRegistrationOff          = 0,
+    AtlasToTargetAffineRegistrationCenters      = 1,
+    AtlasToTargetAffineRegistrationRigidMMI     = 2,
+    AtlasToTargetAffineRegistrationRigidNCC     = 3,
+    AtlasToTargetAffineRegistrationRigidMMIFast = 4,
+    AtlasToTargetAffineRegistrationRigidNCCFast = 5,
+    AtlasToTargetAffineRegistrationRigidMMISlow = 6,
+    AtlasToTargetAffineRegistrationRigidNCCSlow = 7
+    };
+  //ETX
   virtual int       GetRegistrationAffineType();
   virtual void      SetRegistrationAffineType(int affineType);
 
+  //BTX
+  enum
+    {
+    AtlasToTargetDeformableRegistrationOff            = 0,
+    AtlasToTargetDeformableRegistrationBSplineMMI     = 1,
+    AtlasToTargetDeformableRegistrationBSplineNCC     = 2,
+    AtlasToTargetDeformableRegistrationBSplineMMIFast = 3,
+    AtlasToTargetDeformableRegistrationBSplineNCCFast = 4,
+    AtlasToTargetDeformableRegistrationBSplineMMISlow = 5,
+    AtlasToTargetDeformableRegistrationBSplineNCCSlow = 6
+    };
+  //ETX
   virtual int       GetRegistrationDeformableType();
   virtual void      SetRegistrationDeformableType(int deformableType);
+
+  virtual int       GetEnableTargetToTargetRegistration();
+  virtual void      SetEnableTargetToTargetRegistration(int enable);
 
   //BTX
   enum
@@ -430,6 +468,9 @@ public:
   virtual int       GetEnableMultithreading();
   virtual void      SetEnableMultithreading(int isEnabled);
 
+  virtual int       GetUpdateIntermediateData();
+  virtual void      SetUpdateIntermediateData(int shouldUpdate);
+
   virtual int       GetAtlasNumberOfTrainingSamples();
 
   virtual void      GetSegmentationBoundaryMin(int minPoint[3]);
@@ -449,7 +490,10 @@ public:
   // Return if we have a global parameters node
   virtual int HasGlobalParametersNode();
 
+  virtual void PrintTree();
   virtual void PrintTree(vtkIdType rootID, vtkIndent indent);
+
+  virtual void PrintVolumeInfo();
 
   //
   // convienince functions for managing MRML nodes
@@ -468,15 +512,16 @@ public:
     GetTreeParametersParentNode(vtkIdType);  
   virtual vtkMRMLEMSClassInteractionMatrixNode* 
     GetTreeClassInteractionNode(vtkIdType);  
+  virtual vtkMRMLEMSNode*                 GetEMSNode();
   virtual vtkMRMLEMSSegmenterNode*        GetSegmenterNode();
   virtual vtkMRMLVolumeNode*              GetVolumeNode(vtkIdType);
   virtual vtkMRMLEMSWorkingDataNode*      GetWorkingDataNode();
 
   virtual vtkMRMLEMSTargetNode* CloneTargetNode(vtkMRMLEMSTargetNode* target,
-                                                char* name);
+                                                const char* name);
 
   virtual vtkMRMLEMSAtlasNode*  CloneAtlasNode(vtkMRMLEMSAtlasNode* target,
-                                               char* name);
+                                               const char* name);
 
 private:
   vtkEMSegmentMRMLManager();
@@ -493,6 +538,14 @@ private:
   virtual void           PropogateRemovalOfSelectedTargetImage(int index);
   virtual void           PropogateMovementOfSelectedTargetImage(int fromIndex,
                                                                 int toIndex);
+
+  //
+  // functions for packaging and writing intermediate results
+  virtual void CopyEMRelatedNodesToMRMLScene(vtkMRMLScene* newScene);
+  virtual void CreatePackageFilenames(vtkMRMLScene* scene, 
+                                      const char* packageDirectoryName);
+  virtual bool CreatePackageDirectories(const char* packageDirectoryName);
+  virtual bool WritePackagedScene(vtkMRMLScene* scene);
 
   // Update intensity statistics for a particular tissue type.
   virtual void      UpdateIntensityDistributionFromSample(vtkIdType nodeID);

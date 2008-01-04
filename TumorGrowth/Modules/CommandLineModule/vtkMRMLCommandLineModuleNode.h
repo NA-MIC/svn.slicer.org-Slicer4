@@ -66,7 +66,7 @@ class VTK_COMMANDLINEMODULE_EXPORT vtkMRMLCommandLineModuleNode : public vtkMRML
 
 
   //BTX
-  typedef enum { Idle=0, Scheduled, Running, Completed, CompletedWithErrors, Cancelled } StatusType;
+  typedef enum { Idle=0, Scheduled=1, Running=2, Completed=3, CompletedWithErrors=4, Cancelled=5 } StatusType;
   //ETX
 
   // Description:
@@ -77,6 +77,19 @@ class VTK_COMMANDLINEMODULE_EXPORT vtkMRMLCommandLineModuleNode : public vtkMRML
   void SetStatus(StatusType status, bool modify=true);
   StatusType GetStatus();
   //ETX
+  const char* GetStatusString() {
+    switch (this->m_Status)
+      {
+      case Idle: return "Idle";
+      case Scheduled: return "Scheduled";
+      case Running: return "Running";
+      case Completed: return "Completed";
+      case CompletedWithErrors: return "CompletedWithErrors";
+      case Cancelled: return "Cancelled";
+      }
+    return "Unknown";
+  }
+    
 
 
   // Description:
@@ -89,7 +102,9 @@ class VTK_COMMANDLINEMODULE_EXPORT vtkMRMLCommandLineModuleNode : public vtkMRML
   void SetParameterAsFloat(const std::string& name, float value);
 
   std::string GetParameterAsString(const std::string &name) const;
-//ETX  
+//ETX
+
+  // Some functions to make CommandLineModuleNodes useful from Tcl and Python
   void SetParameterAsString(const char *name, const char *value)
     {this->SetParameterAsString(std::string(name), std::string(value));}
   void SetParameterAsInt(const char *name, const int value)
@@ -100,6 +115,40 @@ class VTK_COMMANDLINEMODULE_EXPORT vtkMRMLCommandLineModuleNode : public vtkMRML
     {this->SetParameterAsDouble(std::string(name), value);}
   void SetParameterAsFloat(const char *name, const float value)
     {this->SetParameterAsFloat(std::string(name), value);}
+  int GetNumberOfRegisteredModules ();
+  void AbortProcess () { 
+    this->GetModuleDescription().GetProcessInformation()->Abort = 1; 
+  }
+  const char* GetRegisteredModuleNameByIndex ( int idx );
+  void SetModuleDescription ( const char *name ) { this->SetModuleDescription ( this->GetRegisteredModuleDescription ( name ) ); }
+  const char* GetModuleVersion () { return this->GetModuleDescription().GetVersion().c_str(); };
+  const char* GetModuleTitle () { return this->GetModuleDescription().GetTitle().c_str(); };
+  unsigned int GetNumberOfParameterGroups () { return this->GetModuleDescription().GetParameterGroups().size(); }
+  unsigned int GetNumberOfParametersInGroup ( unsigned int group ) { 
+    if ( group >= this->GetModuleDescription().GetParameterGroups().size() ) { return -1; }
+    return this->GetModuleDescription().GetParameterGroups()[group].GetParameters().size();
+  }
+  const char* GetParameterGroupLabel ( unsigned int group ) { return this->GetModuleDescription().GetParameterGroups()[group].GetLabel().c_str(); }
+  const char* GetParameterGroupDescription ( unsigned int group ) { return this->GetModuleDescription().GetParameterGroups()[group].GetDescription().c_str(); }
+  const char* GetParameterGroupAdvanced ( unsigned int group ) { return this->GetModuleDescription().GetParameterGroups()[group].GetAdvanced().c_str(); }
+
+  const char* GetParameterTag ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetTag().c_str(); }
+  const char* GetParameterType ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetType().c_str(); }
+  const char* GetParameterArgType ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetArgType().c_str(); }
+  const char* GetParameterName ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetName().c_str(); }
+  const char* GetParameterLongFlag ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetLongFlag().c_str(); }
+  const char* GetParameterLabel ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetLabel().c_str(); }
+  const char* GetParameterConstraints ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetConstraints().c_str(); }
+  const char* GetParameterMaximum ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetMaximum().c_str(); }
+  const char* GetParameterMinimum ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetMinimum().c_str(); }
+  const char* GetParameterDescription ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetDescription().c_str(); }
+  const char* GetParameterChannel ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetChannel().c_str(); }
+  const char* GetParameterIndex ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetIndex().c_str(); }
+  const char* GetParameterDefault ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetDefault().c_str(); }
+  const char* GetParameterFlag ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetFlag().c_str(); }
+  const char* GetParameterMultiple ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetMultiple().c_str(); }
+  const char* GetParameterFileExtensions ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetFileExtensionsAsString().c_str(); }
+  const char* GetParameterCoordinateSystem ( unsigned int group, unsigned int param ) { return this->GetModuleDescription().GetParameterGroups()[group].GetParameters()[param].GetCoordinateSystem().c_str(); }
   
   // Description:
   // Methods to manage the master list of module description prototypes

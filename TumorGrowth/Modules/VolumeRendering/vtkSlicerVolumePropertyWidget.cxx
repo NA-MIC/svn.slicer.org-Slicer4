@@ -281,6 +281,7 @@ void vtkSlicerVolumePropertyWidget::CreateWidget()
 
   this->EditorFrame->SetParent(this);
   this->EditorFrame->Create();
+  this->EditorFrame->AllowFrameToCollapseOff();
   this->EditorFrame->SetLabelText(
     ks_("Volume Property Editor|Title|Volume Appearance Settings"));
 
@@ -1375,9 +1376,7 @@ void vtkSlicerVolumePropertyWidget::Update()
     }
 
   // Execute (if any)
-
-  const char* tmp = tk_cmd.str().c_str();
-  if (*tmp)
+  if (!tk_cmd.str().empty())
     {
     this->Script(tk_cmd.str().c_str());
     }
