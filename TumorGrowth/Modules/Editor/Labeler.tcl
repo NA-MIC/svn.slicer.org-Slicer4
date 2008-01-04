@@ -81,7 +81,8 @@ itcl::body Labeler::destructor {} {
 
 itcl::body Labeler::processEvent { {caller ""} {event ""} } {
   
-  chain $caller $event
+  # don't chain this method - superclass method is meant 
+  # to be overridden and not chained.
 
   if { $caller != "" && [$caller IsA "vtkKWWidget"] } {
     $this updateMRMLFromGUI
@@ -111,9 +112,9 @@ itcl::body Labeler::makeMaskImage {polyData} {
   #
   set maskIJKToRAS [vtkMatrix4x4 New]
   $maskIJKToRAS DeepCopy [$_sliceNode GetXYToRAS]
-  $o(xyPoints) Modified
-  set xyBounds [$o(xyPoints) GetBounds]
-  foreach {xlo xhi ylo yhi zlo zhi} $xyBounds {}
+  [$polyData GetPoints] Modified
+  set bounds [$polyData GetBounds]
+  foreach {xlo xhi ylo yhi zlo zhi} $bounds {}
   set xlo [expr $xlo - 1]
   set ylo [expr $ylo - 1]
   set originRAS [$this xyToRAS "$xlo $ylo"]
@@ -126,9 +127,6 @@ itcl::body Labeler::makeMaskImage {polyData} {
   # - needs to include the full region of the polygon
   # - plus a little extra 
   #
-  [$polyData GetPoints] Modified
-  set bounds [$polyData GetBounds]
-  foreach {xlo xhi ylo yhi zlo zhi} $bounds {}
   # round to int and add extra pixel for both sides
   # -- TODO: figure out why we need to add buffer pixels on each 
   #    side for the width in order to end up with a single extra
@@ -153,7 +151,7 @@ itcl::body Labeler::makeMaskImage {polyData} {
   $translate Translate [expr 2 + -1. * $xlo] [expr 1 + -1. * $ylo] 0
   set drawPoints [vtkPoints New]
   $drawPoints Reset
-  $translate TransformPoints $o(xyPoints) $drawPoints
+  $translate TransformPoints [$polyData GetPoints] $drawPoints
   $translate Delete
   $drawPoints Modified
 
@@ -345,7 +343,7 @@ itcl::body Labeler::undoLastApply { } {
 itcl::body Labeler::buildOptions { } {
 
   $this setMRMLDefaults
-  
+
   set o(paintOver) [vtkKWCheckButtonWithLabel New]
   $o(paintOver) SetParent [$this getOptionsFrame]
   $o(paintOver) Create
@@ -362,16 +360,20 @@ itcl::body Labeler::buildOptions { } {
   pack [$o(paintThreshold) GetWidgetName] \
     -side top -anchor e -fill x -padx 2 -pady 2 
 
+
   set o(paintRange) [vtkKWRange New]
   $o(paintRange) SetParent [$this getOptionsFrame]
   $o(paintRange) Create
-  $o(paintRange) SetLabelText "Threshold Range"
-  $o(paintRange) SetWholeRange 0 2000
-  $o(paintRange) SetRange 50 2000
+  $o(paintRange) SetLabelText "Threshold"
   $o(paintRange) SetReliefToGroove
   $o(paintRange) SetBalloonHelpString "In threshold mode, the label will only be set if the background value is within this range."
   pack [$o(paintRange) GetWidgetName] \
     -side top -anchor e -fill x -padx 2 -pady 2 
+
+  if { [$this getInputBackground] != "" } {
+    set range [[$this getInputBackground] GetScalarRange]
+    eval $o(paintRange) SetWholeRange $range
+  }
 
   #
   # event observers - TODO: if there were a way to make these more specific, I would...
@@ -382,6 +384,7 @@ itcl::body Labeler::buildOptions { } {
   lappend _observerRecords "$o(paintThreshold) $tag"
   set tag [$o(paintRange) AddObserver AnyEvent "$this processEvent $o(paintRange)"]
   lappend _observerRecords "$o(paintRange) $tag"
+
 }
 
 itcl::body Labeler::tearDownOptions { } {
@@ -416,8 +419,8 @@ itcl::body Labeler::updateMRMLFromGUI { } {
 }
 
 itcl::body Labeler::setMRMLDefaults { } {
+  chain
   set node [EditorGetParameterNode]
-  $node DisableModifiedEventOn
   foreach {param default} {
     paintOver 1
     paintThreshold 0
@@ -425,21 +428,16 @@ itcl::body Labeler::setMRMLDefaults { } {
     paintThresholdMax 1000
   } {
     set pvalue [$node GetParameter Labeler,$param] 
-    if { $pvalue != $default } {
+    if { $pvalue == "" } {
       $node SetParameter Labeler,$param $default
-      #puts "got $pvalue"
-      ##puts " want to do: $node SetParameter Labeler,$param $default"
     } 
   }
-  $node DisableModifiedEventOff
-  $node InvokePendingModifiedEvent 
 }
 
 itcl::body Labeler::updateGUIFromMRML { } {
 
   #
   # get the gui to the parameter from the node
-  # - set default value if it doesn't exist
   #
   chain
 
@@ -461,6 +459,7 @@ itcl::body Labeler::updateGUIFromMRML { } {
       [$o(paintThreshold) GetWidget] SetSelectedState $paintThreshold
     }
   }
+
   set paintThresholdMin [$node GetParameter "Labeler,paintThresholdMin"]
   $this configure -paintThresholdMin $paintThresholdMin
   set paintThresholdMax [$node GetParameter "Labeler,paintThresholdMax"]
@@ -468,7 +467,16 @@ itcl::body Labeler::updateGUIFromMRML { } {
   if { [info exists o(paintRange)] } {
     if { [$o(paintRange) GetRange] != "$paintThresholdMin $paintThresholdMax" } {
       $o(paintRange) SetRange $paintThresholdMin $paintThresholdMax
-      $o(paintRange) SetEnabled $paintThreshold
     }
+    $o(paintRange) SetEnabled $paintThreshold
+  }
+}
+
+
+namespace eval Labler {
+  proc SetPaintRange {min max} {
+    set node [EditorGetParameterNode]
+    $node SetParameter Labeler,paintThresholdMin $min
+    $node SetParameter Labeler,paintThresholdMax $max
   }
 }
