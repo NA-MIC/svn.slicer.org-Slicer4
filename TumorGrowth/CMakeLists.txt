@@ -9,6 +9,16 @@ IF(CMAKE_COMPILER_2005)
   ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE)
 ENDIF(CMAKE_COMPILER_2005)
 
+#
+# avoid linker bug in Mac OS 10.5
+# see:
+# http://wiki.finkproject.org/index.php/Fink:Packaging:Preparing_for_10.5#OpenGL_Bug
+#
+IF(APPLE)
+  SET (CMAKE_SHARED_LINKER_FLAGS "-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib")
+  SET (CMAKE_EXE_LINKER_FLAGS "-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib")
+ENDIF(APPLE)
+
 #-----------------------------------------------------------------------------
 # Slicer version number.
 SET(Slicer3_VERSION_MAJOR "3")
@@ -155,7 +165,7 @@ ENDIF(USE_NAVITRACK)
 # IGSTK
 # Built in Slicer3-lib
 #
-OPTION(USE_IGSTK "Build Slicer3 with IGSTK support." ON)
+OPTION(USE_IGSTK "Build Slicer3 with IGSTK support." OFF)
 IF(USE_IGSTK)
   FIND_PACKAGE(IGSTK REQUIRED)
   INCLUDE(${IGSTK_USE_FILE})
@@ -208,7 +218,7 @@ ENDIF(VTKsource_revision LESS 1.2196)
 SET(GenerateCLP_DIR ${Slicer3_BINARY_DIR}/Libs/GenerateCLP)
 SET(ModuleDescriptionParser_DIR ${Slicer3_BINARY_DIR}/Libs/ModuleDescriptionParser)
 SET(vtkITK_DIR ${Slicer3_BINARY_DIR}/Libs/vtkITK)
-SET(tclap_DIR ${Slicer3_BINARY_DIR}/Libs/tclap)
+SET(TCLAP_DIR ${Slicer3_BINARY_DIR}/Libs/tclap)
 
 
 #
@@ -265,3 +275,25 @@ INSTALL(
   FILES ${Slicer3_BINARY_DIR}/lib/launch.tcl
   DESTINATION lib
 )
+
+# setup file for setting custom ctest vars
+CONFIGURE_FILE(${Slicer3_SOURCE_DIR}/CTestCustom.cmake.in
+  ${Slicer3_BINARY_DIR}/CTestCustom.cmake @ONLY)
+
+# Set up for building against a Slicer3 build tree and a Slicer3 installation 
+#
+#
+INCLUDE( ${Slicer3_SOURCE_DIR}/GenerateSlicer3Config.cmake)
+
+CONFIGURE_FILE(${Slicer3_SOURCE_DIR}/UseSlicer3.cmake.in
+               ${Slicer3_BINARY_DIR}/UseSlicer3.cmake COPYONLY IMMEDIATE)
+
+INSTALL(FILES
+#   ${Slicer3_BINARY_DIR}/Slicer3BuildSettings.cmake
+   ${Slicer3_BINARY_DIR}/UseSlicer3.cmake
+   ${Slicer3_BINARY_DIR}/Utilities/Slicer3Config.cmake
+   DESTINATION lib
+   COMPONENT Development
+)
+
+
