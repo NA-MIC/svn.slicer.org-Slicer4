@@ -1136,7 +1136,7 @@ int Slicer3_main(int argc, char *argv[])
     brpnavGUI->Init();
 #endif 
 
-#if !defined(BRPNAV_DEBUG) && defined(BUILD_MODULES)
+#if !defined(PROSTATENAV_DEBUG) && defined(BUILD_MODULES)
     // -- Prostatenav module
     vtkProstateNavLogic *prostatenavLogic = vtkProstateNavLogic::New(); 
     prostatenavLogic->SetAndObserveMRMLScene ( scene );
