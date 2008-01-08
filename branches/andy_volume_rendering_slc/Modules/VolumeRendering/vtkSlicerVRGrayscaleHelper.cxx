@@ -319,8 +319,8 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     }
     //Start dialog right here
     Superclass::Init(gui);
-    this->Gui->Script("bind all <Any-ButtonPress> {if {[info command %s] != {}} {%s SetButtonDown 1}}",this->GetTclName(), this->GetTclName());
-    this->Gui->Script("bind all <Any-ButtonRelease> {if {[info command %s] != {}} {%s SetButtonDown 0}}",this->GetTclName(), this->GetTclName());
+    this->Gui->Script("bind all <Any-ButtonPress> {%s SetButtonDown 1}",this->GetTclName());
+    this->Gui->Script("bind all <Any-ButtonRelease> {%s SetButtonDown 0}",this->GetTclName());
 
     //Create a notebook
     this->NB_Details=vtkKWNotebook::New();
@@ -488,9 +488,19 @@ void vtkSlicerVRGrayscaleHelper::InitializePipelineNewCurrentNode()
     this->Gui->GetcurrentNode()->GetVolumeProperty()->SetSpecular(.50);
     this->Gui->GetcurrentNode()->GetVolumeProperty()->SetSpecularPower(40);//this is really weird
 
+    //Set cropping
+    this->Gui->GetcurrentNode()->CroppingEnabledOff();
+
+    vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
+
+    this->Gui->GetcurrentNode()->SetCroppingRegionPlanes(iData->GetOrigin()[0],iData->GetDimensions()[0],
+                                                         iData->GetOrigin()[1],iData->GetDimensions()[1],
+                                                         iData->GetOrigin()[2],iData->GetDimensions()[2]);
+
     //Disable Gradient Opacity
 
-    this->UpdateSVP();
+    this->UpdateGUIElements();
+    //this->UpdateSVP();
 }
 
 void vtkSlicerVRGrayscaleHelper::Rendering(void)
@@ -519,6 +529,10 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
         this->MapperRaycast->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
         this->MapperRaycast->SetAutoAdjustSampleDistances(0);
         this->MapperRaycast->SetSampleDistance(0.1);
+        this->MapperTexture->SetCropping(this->CB_Cropping->GetWidget()->GetSelectedState());
+        this->MapperRaycast->SetCropping(this->CB_Cropping->GetWidget()->GetSelectedState());
+        this->MapperTexture->SetCroppingRegionFlagsToSubVolume();
+        this->MapperRaycast->SetCroppingRegionFlagsToSubVolume();
     }
 
     //Try to load from the registry; do it here to ensure all objects are there
@@ -1074,6 +1088,7 @@ void vtkSlicerVRGrayscaleHelper::ScheduleRender(void)
 
 void vtkSlicerVRGrayscaleHelper::UpdateSVP(void)
 {
+    //TODO really dirty here
     //First check if we have a SVP
     if(this->SVP_VolumeProperty==NULL)
     {
@@ -1088,10 +1103,21 @@ void vtkSlicerVRGrayscaleHelper::UpdateSVP(void)
         this->SVP_VolumeProperty->Update();
         //Set Treshold to none
         this->MB_ThresholdMode->GetWidget()->GetMenu()->SelectItem("None");
-        //Reset cropping
-        this->CB_Cropping->GetWidget()->SetSelectedState(0);
         this->ProcessThresholdModeEvents(0);
+        //Reset cropping
+        //Get Cropping from node
+
     }
+    //else
+    //{
+    //
+    //    for(int i=0;i<3;i++)
+    //    {
+    //        this->RA_Cropping[i]->SetRange(this->Gui->GetcurrentNode()->GetCroppingRegionPlanes()[2*i],this->Gui->GetcurrentNode()->GetCroppingRegionPlanes()[2*i+1]);
+    //    }
+    //    this->CB_Cropping->GetWidget()->SetSelectedState(this->Gui->GetcurrentNode()->GetCroppingEnabled());
+    //    this->ProcessEnableDisableCropping(this->Gui->GetcurrentNode()->GetCroppingEnabled());
+    //}
     this->SVP_VolumeProperty->SetVolumeProperty(this->Gui->GetcurrentNode()->GetVolumeProperty());
     this->SVP_VolumeProperty->SetHSVColorSelectorVisibility(1);
     this->SVP_VolumeProperty->Update();
@@ -1101,6 +1127,13 @@ void vtkSlicerVRGrayscaleHelper::UpdateGUIElements(void)
 {
     Superclass::UpdateGUIElements();
     this->UpdateSVP();
+    for(int i=0;i<3;i++)
+    {
+        this->RA_Cropping[i]->SetRange(this->Gui->GetcurrentNode()->GetCroppingRegionPlanes()[2*i],this->Gui->GetcurrentNode()->GetCroppingRegionPlanes()[2*i+1]);    
+    }
+    this->CB_Cropping->GetWidget()->SetSelectedState(this->Gui->GetcurrentNode()->GetCroppingEnabled());
+
+    //Add update of gui here
 }
 void vtkSlicerVRGrayscaleHelper::CheckAbort(void)
 {
@@ -1215,13 +1248,18 @@ void vtkSlicerVRGrayscaleHelper::Cropping(int index, double min,double max)
     //oldCropping[2*index]=min;
     //oldCropping[2*index+1]=max;
     double oldCropping[6];
-    for(int i=0;i<3;i++)
-    {
-        oldCropping[2*i]=this->RA_Cropping[i]->GetRange()[0];
-        oldCropping[2*i+1]=this->RA_Cropping[i]->GetRange()[1];
-    }
+    this->Gui->GetcurrentNode()->GetCroppingRegionPlanes(oldCropping);
+    //for(int i=0;i<3;i++)
+    //{
+    //    oldCropping[2*i]=this->RA_Cropping[i]->GetRange()[0];
+    //    oldCropping[2*i+1]=this->RA_Cropping[i]->GetRange()[1];
+    //}
+    oldCropping[2*index]=min;
+    oldCropping[2*index+1]=max;
     this->MapperRaycast->SetCroppingRegionPlanes(oldCropping);
     this->MapperTexture->SetCroppingRegionPlanes(oldCropping);
+    this->Gui->GetcurrentNode()->SetCroppingRegionPlanes(oldCropping);
+    //Save the cropping region planes in mrml node
     this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
 }
 
@@ -1508,18 +1546,20 @@ void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableCropping(int cbSelectedStat
         this->MapperRaycast->SetCropping(cbSelectedState);
         this->MapperTexture->SetCroppingRegionFlagsToSubVolume();
         this->MapperRaycast->SetCroppingRegionFlagsToSubVolume();
+        this->Gui->GetcurrentNode()->SetCroppingEnabled(cbSelectedState);
     }
     //Reset range
-    if(!cbSelectedState)
-    {
-            vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
-            this->RA_Cropping[0]->SetRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
-            this->RA_Cropping[1]->SetRange(iData->GetOrigin()[1],iData->GetDimensions()[1]);
-            this->RA_Cropping[2]->SetRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
-    }
+    //Don't reset for now
+    //if(!cbSelectedState)
+    //{
+    //        vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
+    //        this->RA_Cropping[0]->SetRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
+    //        this->RA_Cropping[1]->SetRange(iData->GetOrigin()[1],iData->GetDimensions()[1]);
+    //        this->RA_Cropping[2]->SetRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
+    //}
     for(int i=0;i<3;i++)
     {
         this->RA_Cropping[i]->SetEnabled(cbSelectedState);
     }
-    this->Cropping(0,0,0);
+    //this->Cropping(0,0,0);
 }
