@@ -88,7 +88,7 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   ${KWWidgets_LIBRARIES}
   ${CUDA_TARGET_LINK}
 #  ${VolumeRenderingCudaModule_CudaLibrary}
-  ${CudaSupport}
+  CudaSupport
  )
 
 CUDA_ADD_LIBRARY(VolumeRenderingCudaModule

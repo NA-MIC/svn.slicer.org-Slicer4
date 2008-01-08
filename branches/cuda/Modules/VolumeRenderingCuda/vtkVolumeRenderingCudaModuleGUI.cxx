@@ -18,7 +18,14 @@
 #include "vtkKWMatrixWidget.h"
 #include "vtkKWLabel.h"
 
+#include "vtkCellArray.h"
+#include "vtkFloatArray.h"
+#include "vtkPointData.h"
+#include "vtkTexture.h"
+
 #include "vtkRenderer.h"
+
+#include "vtkCudaMemory.h"
 
 extern "C" {
 #include "CUDA_renderAlgo.h"
@@ -41,6 +48,8 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->InputTypeChooser = NULL;
     this->InputResolutionMatrix = NULL;
     this->Color = NULL;
+
+    this->CudaInputMemoryCache = NULL;
 }
 
 
@@ -78,6 +87,9 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     DeleteWidget(this->InputTypeChooser);
     DeleteWidget(this->InputResolutionMatrix);
     DeleteWidget(this->Color);
+
+    if (this->CudaInputMemoryCache != NULL)
+        this->CudaInputMemoryCache->Delete();
 }
 
 void vtkVolumeRenderingCudaModuleGUI::DeleteWidget(vtkKWWidget* widget)
@@ -357,20 +369,14 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             " A:" << this->InputResolutionMatrix->GetElementValueAsInt(0,3) << endl;
 
         TestCudaViewer();
-        this->ImageReader->SetDataScalarType(this->InputTypeChooser->GetSelectedType());
-        this->ImageReader->SetDataExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0), 
-            0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 
-            0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
-        this->ImageReader->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
-
-
 
         try {
             cerr << "ALLOCATE" << endl;  
             //this->ImageData->SetScalarType(this->InputTypeChooser->GetSelectedType());
+            this->ImageData->SetDimensions(this->InputResolutionMatrix->GetElementValueAsInt(0,0), this->InputResolutionMatrix->GetElementValueAsInt(0,0), 1);
             this->ImageData->SetExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0) - 1, 
                 0, this->InputResolutionMatrix->GetElementValueAsInt(0,1) - 1, 
-                0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
+                0, this->InputResolutionMatrix->GetElementValueAsInt(0,2) - 1);
             this->ImageData->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
             this->ImageData->SetScalarTypeToUnsignedChar();
             this->ImageData->AllocateScalars();
@@ -411,10 +417,23 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
     unsigned char* inputBuffer=(unsigned char*)malloc(inX*inY*inZ*sizeof(unsigned char));
     unsigned char* outputBuffer;
 
-    FILE *fp;
-    fp=fopen(inputFile,"r");
-    fread(inputBuffer, sizeof(unsigned char), inX*inY*inZ, fp);
-    fclose(fp);
+
+
+    if (this->CudaInputMemoryCache == NULL)
+    {
+        FILE *fp;
+        fp=fopen(inputFile,"r");
+        fread(inputBuffer, sizeof(unsigned char), inX*inY*inZ, fp);
+        fclose(fp);
+
+        // Initialization. Prepare and allocate GPU memory to accomodate 3D data and Result image.
+        cerr << "CUDA Initialization.\n";
+        CUDArenderAlgo_init(inX, inY, inZ, outX,outY);
+
+        this->CudaInputMemoryCache = vtkCudaMemory::New();
+        //Allocate and Copy
+        this->CudaInputMemoryCache->CopyFromMemory(inputBuffer, sizeof(unsigned char) * inX * inY * inZ);
+    }
 
     // Setting transformation matrix. This matrix will be used to do rotation and translation on ray tracing.
 
@@ -426,8 +445,6 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
 
     vtkCamera* cam =
         this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->GetActiveCamera();
-
-
 
     cam = vtkCamera::New();
     cam->SetPosition(  this->CameraPosition->GetElementValueAsDouble(0,0),
@@ -461,20 +478,13 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
     rotationMatrix[i][j] = viewMat->GetElement(i,j);
     }
     */
-    // Initialization. Prepare and allocate GPU memory to accomodate 3D data and Result image.
 
-    cerr << "CUDA Initialization.\n";
-    CUDArenderAlgo_init(inX, inY, inZ, outX,outY);
-
-    // Load 3D data into GPU memory.
-
-    cerr << "Load data from CPU to GPU.\n";
-    CUDArenderAlgo_loadData(inputBuffer, inX, inY, inZ);
 
     cerr << "Volume rendering.\n";
     // Do rendering. 
 
-    CUDArenderAlgo_doRender((float*)rotationMatrix, color, minmax, lightVec, 
+    CUDArenderAlgo_doRender(this->CudaInputMemoryCache->GetMemPointerAs<unsigned char>(),
+        (float*)rotationMatrix, color, minmax, lightVec, 
         inX, inY, inZ,    //3D data size
         outX, outY,     //result image size
         0,0,0,          //translation of data in x,y,z direction
@@ -492,9 +502,119 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
         this->InputResolutionMatrix->GetElementValueAsInt(0,2) * 
         this->InputResolutionMatrix->GetElementValueAsInt(0,3));
 
+    this->RenderToScreen(this->ImageData);
+
     // Free allocated GPU memory.
     CUDArenderAlgo_delete();
+    this->CudaInputMemoryCache->Delete();
+    this->CudaInputMemoryCache = NULL;
     free(inputBuffer);
+}
+
+
+void vtkVolumeRenderingCudaModuleGUI::RenderToScreen(vtkImageData* imageData)
+{
+vtkImageExtractComponents *components=vtkImageExtractComponents::New();
+        components->SetInput(imageData);
+        components->SetComponents(0,1,2);
+
+    vtkRenderer* renPlane = this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer();
+
+    vtkRenderWindow *renWin=this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow();
+        //Get current size of window
+        int *size=renWin->GetSize();
+    
+    //renPlane->SetBackground(this->renViewport->GetBackground());
+    //renPlane->SetActiveCamera(this->renViewport->GetActiveCamera());
+
+    renPlane->SetDisplayPoint(0,0,0.5);
+    renPlane->DisplayToWorld();
+    double coordinatesA[4];
+    renPlane->GetWorldPoint(coordinatesA);
+
+    renPlane->SetDisplayPoint(size[0],0,0.5);
+    renPlane->DisplayToWorld();
+    double coordinatesB[4];
+    renPlane->GetWorldPoint(coordinatesB);
+
+    renPlane->SetDisplayPoint(size[0],size[1],0.5);
+    renPlane->DisplayToWorld();
+    double coordinatesC[4];
+    renPlane->GetWorldPoint(coordinatesC);
+
+    renPlane->SetDisplayPoint(0,size[1],0.5);
+    renPlane->DisplayToWorld();
+    double coordinatesD[4];
+    renPlane->GetWorldPoint(coordinatesD);
+
+    //Create the Polydata
+    vtkPoints *points=vtkPoints::New();
+    points->InsertPoint(0,coordinatesA);
+    points->InsertPoint(1,coordinatesB);
+    points->InsertPoint(2,coordinatesC);
+    points->InsertPoint(3,coordinatesD);
+
+    vtkCellArray *polygon=vtkCellArray::New();
+    polygon->InsertNextCell(4);
+    polygon->InsertCellPoint(0);
+    polygon->InsertCellPoint(1);
+    polygon->InsertCellPoint(2);
+    polygon->InsertCellPoint(3);
+    //Take care about Texture coordinates
+    vtkFloatArray *textCoords=vtkFloatArray::New();
+    textCoords->SetNumberOfComponents(2);
+    textCoords->Allocate(8);
+    float tc[2];
+    tc[0]=0;
+    tc[1]=0;
+    textCoords->InsertNextTuple(tc);
+    tc[0]=1;
+    tc[1]=0;
+    textCoords->InsertNextTuple(tc);
+    tc[0]=1;
+    tc[1]=1;
+    textCoords->InsertNextTuple(tc);
+    tc[0]=0;
+    tc[1]=1;
+    textCoords->InsertNextTuple(tc);
+
+    vtkPolyData *polydata=vtkPolyData::New();
+    polydata->SetPoints(points);
+    polydata->SetPolys(polygon);
+    polydata->GetPointData()->SetTCoords(textCoords);
+
+    vtkPolyDataMapper *polyMapper=vtkPolyDataMapper::New();
+    polyMapper->SetInput(polydata);
+
+    vtkActor *actor=vtkActor::New(); 
+    actor->SetMapper(polyMapper);
+
+    //Take care about the texture
+    vtkTexture *atext=vtkTexture::New();
+    atext->SetInput(components->GetOutput());
+    atext->SetInterpolate(1);
+    actor->SetTexture(atext);
+
+    //Remove all old Actors
+    renPlane->RemoveAllViewProps();
+
+    renPlane->AddActor(actor);
+    //Remove the old Renderer
+
+    renWin->SwapBuffersOn();
+
+
+    //Delete everything we have done
+    components->Delete();
+    points->Delete();
+    polygon->Delete();
+    textCoords->Delete();
+    polydata->Delete();
+    polyMapper->Delete();
+    actor->Delete();
+    atext->Delete();
+    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->Render();
+
 }
 
 

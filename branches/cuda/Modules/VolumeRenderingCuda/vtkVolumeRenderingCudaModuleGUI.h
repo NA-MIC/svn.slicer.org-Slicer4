@@ -12,6 +12,8 @@ class vtkPNGReader;
 class vtkImageReader;
 class vtkImageData;
 
+class vtkCudaMemory;
+
 class vtkImageViewer;
 
 
@@ -93,6 +95,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   void RenderWithCUDA(const char* inputFile, int inX, int inY, int inZ);
   void TestCudaViewer();
   void CreatePipelineTest();
+  void RenderToScreen(vtkImageData* image);
 
 
   // Description:
@@ -123,10 +126,9 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkKWPushButton* CreatePiplineTestButton;
   
   vtkImageReader* ImageReader;
-  vtkImageViewer* ImageViewer;
   vtkPNGReader* PNGReader;
   vtkImageData*  ImageData;
-  
+  vtkCudaMemory*  CudaInputMemoryCache;
   vtkKWTypeChooserBox*   InputTypeChooser;
   vtkKWMatrixWidget* InputResolutionMatrix;
   
