@@ -9,10 +9,10 @@ class VTK_CUDASUPPORT_EXPORT  vtkCudaMemory : public vtkCudaMemoryBase
 public:
   static  vtkCudaMemory* New();
 
-  virtual void* AllocateBytes(size_t count);
+  virtual void* AllocateBytes(size_t byte_count);
   //BTX
   template<typename T> T* Allocate(size_t count) 
-    { return (T*)this->AllocateBytes(count * sizeof(T)); }
+  { return (T*)this->AllocateBytes(count * sizeof(T)); }
   //ETX
 
   virtual void Free();
@@ -23,6 +23,8 @@ public:
   template<typename T> T* GetMemPointerAs() const { return (T*)this->GetMemPointer(); }
   //ETX
   
+  void* CopyFromMemory(void* source, size_t byte_count);
+
   virtual vtkCudaMemory* CopyToMemory() const;
   virtual vtkCudaHostMemory* CopyToHostMemory() const;
   virtual vtkCudaMemoryArray* CopyToMemoryArray() const;

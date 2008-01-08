@@ -12,7 +12,7 @@ extern "C" {
 #include "CUDA_renderAlgo.h"
 }
 
-#define BLOCK_DIM2D 16 // this must be set to 4 or more
+#define BLOCK_DIM2D 4 // this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
 
 __constant__ float c_renderAlgo_size[3];
@@ -618,7 +618,8 @@ void CUDArenderAlgo_init(int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY
 
   // allocate device memory
 
-  CUDA_SAFE_CALL( cudaMalloc( (void**) &d_renderAlgo_sourceData, sizeof(unsigned char)*sizeX*sizeY*sizeZ));
+  /// WE DO THIS INSIDE OF THE MAIN LIB
+  //CUDA_SAFE_CALL( cudaMalloc( (void**) &d_renderAlgo_sourceData, sizeof(unsigned char)*sizeX*sizeY*sizeZ));
   CUDA_SAFE_CALL( cudaMalloc( (void**) &d_renderAlgo_resultImage, sizeof(uchar4)*dsizeX*dsizeY));
    
   float size[3]={sizeX, sizeY, sizeZ};
@@ -636,7 +637,7 @@ void CUDArenderAlgo_loadData(unsigned char* sourceData, int sizeX, int sizeY, in
   return;
 }
 
-void CUDArenderAlgo_doRender(float* rotationMatrix, float* color, float* minmax, float* lightVec, int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY, float dispX, float dispY, float dispZ, float voxelSizeX, float voxelSizeY, float voxelSizeZ, int minThreshold, int maxThreshold, int sliceDistance)
+void CUDArenderAlgo_doRender(unsigned char* renderData, float* rotationMatrix, float* color, float* minmax, float* lightVec, int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY, float dispX, float dispY, float dispZ, float voxelSizeX, float voxelSizeY, float voxelSizeZ, int minThreshold, int maxThreshold, int sliceDistance)
 {
   // setup execution parameters
 
@@ -677,9 +678,9 @@ void CUDArenderAlgo_doRender(float* rotationMatrix, float* color, float* minmax,
 
   float transparencyLevel=0.2;
 
-  //CUDAkernel_renderAlgo_doRender<<< grid, threads >>>(d_renderAlgo_sourceData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
-  //CUDAkernel_renderAlgo_doMIPRender<<< grid, threads >>>(d_renderAlgo_sourceData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
-  CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>(d_renderAlgo_sourceData, minThreshold, maxThreshold, sliceDistance, transparencyLevel, d_renderAlgo_resultImage);
+  //CUDAkernel_renderAlgo_doRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
+  //CUDAkernel_renderAlgo_doMIPRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
+  CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, transparencyLevel, d_renderAlgo_resultImage);
   
   CUT_CHECK_ERROR("Kernel execution failed");
 
@@ -702,6 +703,6 @@ void CUDArenderAlgo_delete(){
 
   // cleanup memory
 
-  CUDA_SAFE_CALL(cudaFree(d_renderAlgo_sourceData));
+  //CUDA_SAFE_CALL(cudaFree(d_renderAlgo_sourceData));
   CUDA_SAFE_CALL(cudaFree(d_renderAlgo_resultImage));
 }

@@ -36,16 +36,24 @@ void vtkCudaMemory::Free()
   }
 }
 
-void* vtkCudaMemory::AllocateBytes(size_t count)
+void* vtkCudaMemory::AllocateBytes(size_t byte_count)
 {
   this->Free();
   cudaError_t error = 
-    cudaMalloc(&this->MemPointer, count);
-  this->Size = count;
+    cudaMalloc(&this->MemPointer, byte_count);
+  this->Size = byte_count;
   if (error != cudaSuccess)
     vtkCudaBase::PrintError(error);
 
   return (void*) this->MemPointer;
+}
+
+void* vtkCudaMemory::CopyFromMemory(void *source, size_t byte_count)
+{
+    this->AllocateBytes(byte_count);
+    //CUDA_SAFE_CALL(
+    cudaMemcpy(this->MemPointer, source, byte_count, cudaMemcpyHostToDevice);
+    return this->MemPointer;
 }
 
 void vtkCudaMemory::MemSet(int value)
