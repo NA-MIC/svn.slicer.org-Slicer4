@@ -1,10 +1,12 @@
 #include "vtkVolumeCudaMapper.h"
 #include "vtkVolumeRenderingCudaFactory.h"
 
-#include <cutil.h>
 #include <cuda_runtime_api.h>
 
+extern "C" {
 #include "CUDA_renderAlgo.h"
+}
+
 #include "vtkActor.h"
 #include "vtkPolyDataMapper.h"
 #include "vtkPolyData.h"

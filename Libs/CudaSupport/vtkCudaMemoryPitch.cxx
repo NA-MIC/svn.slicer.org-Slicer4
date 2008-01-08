@@ -28,6 +28,8 @@ void* vtkCudaMemoryPitch::AllocatePitchBytes(size_t width, size_t height, size_t
     this->Height = height;
   if (error != cudaSuccess)
     vtkCudaBase::PrintError(error);
+
+  return (void*)this->MemPointer;
 }
 
 void vtkCudaMemoryPitch::Free()

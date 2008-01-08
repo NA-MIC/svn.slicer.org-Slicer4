@@ -22,7 +22,7 @@ vtkCudaSupport::vtkCudaSupport()
 
 vtkCudaSupport::~vtkCudaSupport()
 {
-  for (unsigned int i = 0; i < this->GetDeviceCount(); i++)
+  for (int i = 0; i < this->GetDeviceCount(); i++)
     this->Devices[i]->Delete();
 }
 
@@ -46,7 +46,7 @@ int vtkCudaSupport::CheckSupportedCudaVersion()
 void vtkCudaSupport::PrintSelf(ostream& os, vtkIndent indent)
 {
   os << "Cuda Support Listing all Children: "<< std::endl;
-  for (unsigned int i = 0; i < this->GetDeviceCount(); ++i)
+  for (int i = 0; i < this->GetDeviceCount(); ++i)
     {
       this->Devices[i]->PrintSelf(os, indent.GetNextIndent());
     }

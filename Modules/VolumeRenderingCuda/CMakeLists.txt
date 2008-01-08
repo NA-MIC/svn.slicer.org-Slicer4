@@ -68,13 +68,12 @@ VTK_WRAP_TCL3(VolumeRenderingCudaModule
 # Build the library
 
 ## Build the Cuda Library first
-CUDA_ADD_LIBRARY(VolumeRenderingCudaModule_CudaLibrary
-  ${VolumeRenderingCudaModule_CUDA_SRCS}
-  )
+#CUDA_ADD_LIBRARY(VolumeRenderingCudaModule_CudaLibrary  
+#  )
   
-TARGET_LINK_LIBRARIES(VolumeRenderingCudaModule_CudaLibrary
-  ${CudaSupport}
-)
+#TARGET_LINK_LIBRARIES(VolumeRenderingCudaModule_CudaLibrary
+#  ${CudaSupport}
+#)
 
 ## Set the Libraries we link
 SET(VolumeRenderingCudaModule_LIBRARIES
@@ -88,13 +87,14 @@ SET(VolumeRenderingCudaModule_LIBRARIES
   vtkIOTCL
   ${KWWidgets_LIBRARIES}
   ${CUDA_TARGET_LINK}
-  ${VolumeRenderingCudaModule_CudaLibrary}
+#  ${VolumeRenderingCudaModule_CudaLibrary}
   ${CudaSupport}
  )
 
-ADD_LIBRARY(VolumeRenderingCudaModule
+CUDA_ADD_LIBRARY(VolumeRenderingCudaModule
   ${VolumeRenderingCudaModule_SRCS}
   ${VolumeRenderingCudaModule_TCL_SRCS}
+  ${VolumeRenderingCudaModule_CUDA_SRCS}
   )
 
 IF(BUILD_SHARED_LIBS)
@@ -106,35 +106,8 @@ ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(VolumeRenderingCudaModule
   ${VolumeRenderingCudaModule_LIBRARIES}
-  ${VolumeRenderingCudaModule_CudaLibrary}
+#  ${VolumeRenderingCudaModule_CudaLibrary}
   )
-
-##########################
-## TO BE DELETED AGAIN ###
-##########################
-# CUDA_ADD_LIBRARY( test_lib
-#${VolumeRenderingCudaModule_CUDA_SRCS}
-# )
-#
-# CUDA_ADD_EXECUTABLE(lib_example
-#${VolumeRenderingCudaModule_CUDA_SRCS}
-#${VolumeRenderingCudaModule_SRCS}
-#main.cpp
-# )
-#
-# CUDA_ADD_LIBRARY( test_lib
-#${VolumeRenderingCudaModule_CUDA_SRCS}
-#${VolumeRenderingCudaModule_SRCS}
-#)
-#
-# TARGET_LINK_LIBRARIES(lib_example
-##       test_lib
-#GL
-#GLU
-#${FOUND_CUT}
-#${VolumeRenderingCudaModule_LIBRARIES}
-# )
-##########################
 
 
 # --------------------------------------------------------------------------

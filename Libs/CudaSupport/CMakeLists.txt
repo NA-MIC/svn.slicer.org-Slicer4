@@ -18,7 +18,7 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
     vtkCudaDevice.cxx
     vtkCudaEvent.cxx
     vtkCudaStream.cxx
-    vtkCudaOpenGLBufferObject.cxx
+##    vtkCudaOpenGLBufferObject.cxx
 
   #### CUDA MEMORY RUNTIME CLASSES ####
     vtkCudaMemoryBase.cxx

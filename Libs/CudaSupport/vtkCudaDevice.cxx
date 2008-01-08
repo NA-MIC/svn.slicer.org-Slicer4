@@ -26,6 +26,7 @@ vtkCudaDevice::~vtkCudaDevice()
  */
 bool vtkCudaDevice::AllocateMemory()
 {
+  return false;
 }
 
 void vtkCudaDevice::SetDeviceNumber(int deviceNumber)
