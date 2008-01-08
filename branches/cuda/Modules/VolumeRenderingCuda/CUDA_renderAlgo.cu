@@ -8,7 +8,9 @@
 #include <cutil.h>
 
 // includes, kernels
+extern "C" {
 #include "CUDA_renderAlgo.h"
+}
 
 #define BLOCK_DIM2D 16 // this must be set to 4 or more
 #define SQR(X) ((X) * (X) )

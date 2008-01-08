@@ -34,6 +34,7 @@ void vtkCudaImageData::CopyStructure (vtkDataSet *ds)
 
 vtkIdType vtkCudaImageData::GetNumberOfPoints ()
 {
+  return 0;
 }
 
 vtkIdType vtkCudaImageData::GetNumberOfCells ()
@@ -43,6 +44,7 @@ vtkIdType vtkCudaImageData::GetNumberOfCells ()
 
 double* vtkCudaImageData::GetPoint (vtkIdType ptId)
 {
+  return NULL;
 }
 
 void vtkCudaImageData::GetPoint (vtkIdType id, double x[3])
@@ -51,6 +53,7 @@ void vtkCudaImageData::GetPoint (vtkIdType id, double x[3])
  /// Not necessary
 vtkCell* vtkCudaImageData::GetCell (vtkIdType cellId)
 {
+  return 0;
 }
 
 void vtkCudaImageData::GetCell (vtkIdType cellId, vtkGenericCell *cell)
@@ -64,6 +67,7 @@ void vtkCudaImageData::GetCellBounds (vtkIdType cellId, double bounds[6])
 
 int vtkCudaImageData::GetCellType (vtkIdType cellId)
 {
+  return 0;
 }
 
 void vtkCudaImageData::GetCellTypes (vtkCellTypes *types)
@@ -91,6 +95,7 @@ void vtkCudaImageData::GetScalarRange (double range[2])
 
 int vtkCudaImageData::GetMaxCellSize ()
 {
+  return 0;
 }
 
 void vtkCudaImageData::GetPointCells (vtkIdType ptId, vtkIdList *cellIds)
@@ -103,18 +108,21 @@ void vtkCudaImageData::GetCellNeighbors (vtkIdType cellId, vtkIdList *ptIds, vtk
 }
 vtkIdType vtkCudaImageData::FindPoint (double x[3])
 {
+    return 0;
 }
 
 vtkIdType vtkCudaImageData::FindCell (double x[3], vtkCell *cell, vtkIdType cellId, double tol2, int &subId, double pcoords[3], double *weights)
 {
+   return 0;
 }
 
 vtkIdType vtkCudaImageData::FindCell (double x[3], vtkCell *cell, vtkGenericCell *gencell, vtkIdType cellId, double tol2, int &subId, double pcoords[3], double *weights)
 {
+   return 0;
 }
 
 //// Not Necessary
 vtkCell* vtkCudaImageData::FindAndGetCell (double x[3], vtkCell *cell, vtkIdType cellId, double tol2, int &subId, double pcoords[3], double *weights)
 {
+   return NULL;
 }
-

@@ -29,6 +29,8 @@ void* vtkCudaHostMemory::AllocateBytes(size_t count)
   this->Size = count;
   if (error != cudaSuccess)
     vtkCudaBase::PrintError(error);
+
+  return (void*) this->MemPointer;
 }
 
 void vtkCudaHostMemory::Free()

@@ -4,9 +4,8 @@ ADD_EXECUTABLE(VolumeRenderingCudaTest
   ntkTimer.cxx
 )
 
-TARGET_LINK_LIBRARIES(VolumeRenderingCudaTest
-  VolumeRenderingCudaModule_CudaLibrary
-)
+#TARGET_LINK_LIBRARIES(VolumeRenderingCudaTest
+#)
 
-ADD_TEST(VolumeRenderingCudaTest
-  ${EXECUTABLE_OUTPUT_PATH}/VolumeRenderingCudaTest ${CMAKE_CURRENT_SOURCE_DIR}/heart256.raw)
+#ADD_TEST(VolumeRenderingCudaTest
+#  ${EXECUTABLE_OUTPUT_PATH}/VolumeRenderingCudaTest ${CMAKE_CURRENT_SOURCE_DIR}/heart256.raw)

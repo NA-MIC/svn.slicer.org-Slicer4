@@ -35,7 +35,7 @@ int vtkKWTypeChooserBox::GetSelectedType()
 
 void vtkKWTypeChooserBox::SetSelectedType(int vtk_type)
 {
-    for (int i = 0 ; i <  vtkKWTypeChooserBox::Values.size(); i ++)
+    for (unsigned int i = 0 ; i <  vtkKWTypeChooserBox::Values.size(); i ++)
       if (vtkKWTypeChooserBox::Values[i].Type == vtk_type)
         this->GetMenu()->SelectItem(i);
 }

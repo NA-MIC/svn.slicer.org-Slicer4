@@ -4,7 +4,7 @@
         #include <vtkCudaSupportConfigure.h>
 
         #if defined(WIN32) && !defined(VTKSLICER_STATIC)
-                #if defined(CUDASUPPORT_EXPORTS)
+                #if defined(CudaSupport_EXPORTS)
                         #define VTK_CUDASUPPORT_EXPORT __declspec( dllexport ) 
                 #else
                         #define VTK_CUDASUPPORT_EXPORT __declspec( dllimport ) 

@@ -12,7 +12,7 @@ cudaError_t vtkCudaBase::GetLastError()
 
 const char* vtkCudaBase::GetLastErrorString()
 {
-  vtkCudaBase::GetErrorString(vtkCudaBase::GetLastError());
+  return vtkCudaBase::GetErrorString(vtkCudaBase::GetLastError());
 }
 
 const char* vtkCudaBase::GetErrorString(cudaError_t error)

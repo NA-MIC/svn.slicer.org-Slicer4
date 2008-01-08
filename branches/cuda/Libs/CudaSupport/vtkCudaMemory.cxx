@@ -44,6 +44,8 @@ void* vtkCudaMemory::AllocateBytes(size_t count)
   this->Size = count;
   if (error != cudaSuccess)
     vtkCudaBase::PrintError(error);
+
+  return (void*) this->MemPointer;
 }
 
 void vtkCudaMemory::MemSet(int value)
@@ -61,6 +63,7 @@ vtkCudaMemory* vtkCudaMemory::CopyToMemory() const
         this->GetSize(),
         cudaMemcpyDeviceToDevice
         );
+   return dest;
 }
 
 vtkCudaHostMemory* vtkCudaMemory::CopyToHostMemory() const
@@ -72,15 +75,18 @@ vtkCudaHostMemory* vtkCudaMemory::CopyToHostMemory() const
         this->GetSize(),
         cudaMemcpyDeviceToHost
         );
+   return dest;
 }
 
 vtkCudaMemoryArray* vtkCudaMemory::CopyToMemoryArray() const
 {
-
+  return NULL;
 }
 
 vtkCudaMemoryPitch* vtkCudaMemory::CopyToMemoryPitch() const
-{}
+{
+  return NULL;
+}
 
 
 void vtkCudaMemory::PrintSelf (ostream &os, vtkIndent indent)

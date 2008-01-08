@@ -20,8 +20,9 @@
 
 #include "vtkRenderer.h"
 
+extern "C" {
 #include "CUDA_renderAlgo.h"
-
+}
 /// TEMPORARY
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +35,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->CreatePiplineTestButton = NULL;
     this->CudaMapper = NULL;
     this->CudaActor = NULL;
-    
+
     this->ImageReader = NULL;
     this->ImageViewer = NULL;
     this->InputTypeChooser = NULL;
@@ -51,29 +52,29 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
         this->LoadButton->Delete();
         this->LoadButton = NULL; 
     }
-    
+
     if (this->CreatePiplineTestButton != NULL)
     {
-      this->CreatePiplineTestButton->SetParent(NULL);
-      this->CreatePiplineTestButton->Delete();
-      this->CreatePiplineTestButton = NULL;  
+        this->CreatePiplineTestButton->SetParent(NULL);
+        this->CreatePiplineTestButton->Delete();
+        this->CreatePiplineTestButton = NULL;  
     }
-    
+
     if (this->CudaMapper != NULL)
     {
-       this->CudaMapper->Delete();
+        this->CudaMapper->Delete();
     }
     if (this->CudaActor != NULL)
     {
-      this->CudaActor->Delete();  
+        this->CudaActor->Delete();  
     }
-    
+
     if (this->ImageReader != NULL)
-     this->ImageReader->Delete();
-    
+        this->ImageReader->Delete();
+
     if (this->ImageViewer != NULL)
-      this->ImageViewer->Delete();
-    
+        this->ImageViewer->Delete();
+
     DeleteWidget(this->InputTypeChooser);
     DeleteWidget(this->InputResolutionMatrix);
     DeleteWidget(this->Color);
@@ -81,11 +82,11 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
 
 void vtkVolumeRenderingCudaModuleGUI::DeleteWidget(vtkKWWidget* widget)
 {
-  if (widget != NULL)
-  {
-    widget->SetParent(NULL);
-      widget->Delete();
-  }
+    if (widget != NULL)
+    {
+        widget->SetParent(NULL);
+        widget->Delete();
+    }
 }
 
 vtkVolumeRenderingCudaModuleGUI* vtkVolumeRenderingCudaModuleGUI::New()
@@ -140,7 +141,7 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     this->InputTypeChooser->Create();
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->InputTypeChooser->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-  
+
     this->InputResolutionMatrix = vtkKWMatrixWidget::New();
     this->InputResolutionMatrix->SetParent(loadSaveDataFrame->GetFrame());
     this->InputResolutionMatrix->Create();
@@ -153,9 +154,9 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     this->InputResolutionMatrix->SetElementValueAsInt(0,3,4);
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->InputResolutionMatrix->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-  
-  
-  /// CameraPosition
+
+
+    /// CameraPosition
     this->CameraPosition = vtkKWMatrixWidget::New();
     this->CameraPosition->SetParent(loadSaveDataFrame->GetFrame());
     this->CameraPosition->Create();
@@ -165,25 +166,25 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     this->CameraPosition->SetElementValueAsDouble(0,0, 10);
     this->CameraPosition->SetElementValueAsDouble(0,1, 10);
     this->CameraPosition->SetElementValueAsDouble(0,2, 10);
-    
+
     this->CameraPosition->SetElementValueAsDouble(1,0, 0);
     this->CameraPosition->SetElementValueAsDouble(1,1, 0);
     this->CameraPosition->SetElementValueAsDouble(1,2, 0);
-    
+
     this->CameraPosition->SetElementValueAsDouble(2,0, 0);
     this->CameraPosition->SetElementValueAsDouble(2,1, 1);
     this->CameraPosition->SetElementValueAsDouble(2,2, 0);
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->CameraPosition->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-        
+
     vtkKWLabel* label = vtkKWLabel::New();
     label->SetParent(loadSaveDataFrame->GetFrame());
     label->Create();
     label->SetText("Color:");
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         label->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-    
-    
+
+
     this->Color = vtkKWMatrixWidget::New();
     this->Color->SetParent(loadSaveDataFrame->GetFrame());
     this->Color->Create();
@@ -195,8 +196,8 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     this->Color->SetElementValueAsInt(0,2,255);
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->Color->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
-        
-        
+
+
     ////Testing Pushbutton
     //this->PB_Testing= vtkKWPushButton::New();
     //this->PB_Testing->SetParent(loadSaveDataFrame->GetFrame());
@@ -268,7 +269,7 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     //    this->GetApplicationGUI()->GetMRMLScene()->AddObserver( vtkMRMLScene::SceneCloseEvent, this->MRMLCallbackCommand );
     //}
     //loadSaveDataFrame->Delete();
-    
+
     this->Built=true;
 }
 
@@ -294,7 +295,7 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
     this->LoadButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CreatePiplineTestButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-    
+
     this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CameraPosition->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
@@ -305,7 +306,7 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
     this->LoadButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CreatePiplineTestButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-    
+
     this->InputTypeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CameraPosition->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
@@ -321,179 +322,179 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
 {
-   vtkDebugMacro("vtkVolumeRenderingModuleGUI::ProcessGUIEvents: event = " << event);
+    vtkDebugMacro("vtkVolumeRenderingModuleGUI::ProcessGUIEvents: event = " << event);
 
-   if (caller == this->LoadButton)
-   {
-     if (this->CudaMapper == NULL)
-       this->CudaMapper = vtkVolumeCudaMapper::New();
-     if (this->CudaActor == NULL)
-       {
-         this->CudaActor = vtkVolume::New();
-         this->CudaActor->SetMapper(this->CudaMapper);
-       }
-       
-    this->TestCudaViewer();
-    this->CudaMapper->Render(NULL, NULL);
-   }
-   
-   if (caller == this->CreatePiplineTestButton)
-   {
-      this->CreatePipelineTest();
-   }
-   
-   
-   /// INPUT TYPE OR SIZE CHANGED CHANGED
-   if (caller == this->InputTypeChooser->GetMenu() ||
-       caller == this->InputResolutionMatrix ||
-       caller == this->Color ||
-       caller == this->CameraPosition)
-   {
-     cerr << "Type" << this->InputTypeChooser->GetSelectedName() << " " << this->InputTypeChooser->GetSelectedType() << 
-     " X:" << this->InputResolutionMatrix->GetElementValueAsInt(0,0) << 
-     " Y:" << this->InputResolutionMatrix->GetElementValueAsInt(0,1) <<
-     " Z:" << this->InputResolutionMatrix->GetElementValueAsInt(0,2) <<
-     " A:" << this->InputResolutionMatrix->GetElementValueAsInt(0,3) << endl;
-     
-     TestCudaViewer();
-     this->ImageReader->SetDataScalarType(this->InputTypeChooser->GetSelectedType());
-     this->ImageReader->SetDataExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0), 
-         0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 
-         0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
-     this->ImageReader->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
-     
-     
-  
-     try {
-       cerr << "ALLOCATE" << endl;  
-     //this->ImageData->SetScalarType(this->InputTypeChooser->GetSelectedType());
-     this->ImageData->SetExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0) - 1, 
-         0, this->InputResolutionMatrix->GetElementValueAsInt(0,1) - 1, 
-         0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
-     this->ImageData->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
-     this->ImageData->SetScalarTypeToUnsignedChar();
-     this->ImageData->AllocateScalars();
-     
-     this->RenderWithCUDA("/projects/igtdev/bensch/svn/volrenSample/heart256.raw", 256, 256, 256);
-     /*
-      cerr << "READ" << endl;
-       FILE *fp;
-      fp=fopen("/projects/igtdev/bensch/svn/volrenSample/output.raw","r");
-      fread(this->ImageData->GetScalarPointer(), sizeof(unsigned char), 
-        this->InputResolutionMatrix->GetElementValueAsInt(0,0) *
-        this->InputResolutionMatrix->GetElementValueAsInt(0,1) *
-        this->InputResolutionMatrix->GetElementValueAsInt(0,2) * 
-        this->InputResolutionMatrix->GetElementValueAsInt(0,3), fp);
-      fclose(fp);
-      
-      */
-      this->ImageViewer->SetInput(this->ImageData);
-      cerr << "FINISHED" << endl;
-     }
-     catch (...)
-     {
-       cerr << "ERROR READING" << endl;  
-     }
-     this->ImageViewer->Render();
-   }
+    if (caller == this->LoadButton)
+    {
+        if (this->CudaMapper == NULL)
+            this->CudaMapper = vtkVolumeCudaMapper::New();
+        if (this->CudaActor == NULL)
+        {
+            this->CudaActor = vtkVolume::New();
+            this->CudaActor->SetMapper(this->CudaMapper);
+        }
+
+        this->TestCudaViewer();
+        this->CudaMapper->Render(NULL, NULL);
+    }
+
+    if (caller == this->CreatePiplineTestButton)
+    {
+        this->CreatePipelineTest();
+    }
+
+
+    /// INPUT TYPE OR SIZE CHANGED CHANGED
+    if (caller == this->InputTypeChooser->GetMenu() ||
+        caller == this->InputResolutionMatrix ||
+        caller == this->Color ||
+        caller == this->CameraPosition)
+    {
+        cerr << "Type" << this->InputTypeChooser->GetSelectedName() << " " << this->InputTypeChooser->GetSelectedType() << 
+            " X:" << this->InputResolutionMatrix->GetElementValueAsInt(0,0) << 
+            " Y:" << this->InputResolutionMatrix->GetElementValueAsInt(0,1) <<
+            " Z:" << this->InputResolutionMatrix->GetElementValueAsInt(0,2) <<
+            " A:" << this->InputResolutionMatrix->GetElementValueAsInt(0,3) << endl;
+
+        TestCudaViewer();
+        this->ImageReader->SetDataScalarType(this->InputTypeChooser->GetSelectedType());
+        this->ImageReader->SetDataExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0), 
+            0, this->InputResolutionMatrix->GetElementValueAsInt(0,1), 
+            0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
+        this->ImageReader->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
+
+
+
+        try {
+            cerr << "ALLOCATE" << endl;  
+            //this->ImageData->SetScalarType(this->InputTypeChooser->GetSelectedType());
+            this->ImageData->SetExtent(0, this->InputResolutionMatrix->GetElementValueAsInt(0,0) - 1, 
+                0, this->InputResolutionMatrix->GetElementValueAsInt(0,1) - 1, 
+                0, this->InputResolutionMatrix->GetElementValueAsInt(0,2));
+            this->ImageData->SetNumberOfScalarComponents(this->InputResolutionMatrix->GetElementValueAsInt(0,3));
+            this->ImageData->SetScalarTypeToUnsignedChar();
+            this->ImageData->AllocateScalars();
+
+            this->RenderWithCUDA("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw", 256, 256, 256);
+            /*
+            cerr << "READ" << endl;
+            FILE *fp;
+            fp=fopen("/projects/igtdev/bensch/svn/volrenSample/output.raw","r");
+            fread(this->ImageData->GetScalarPointer(), sizeof(unsigned char), 
+            this->InputResolutionMatrix->GetElementValueAsInt(0,0) *
+            this->InputResolutionMatrix->GetElementValueAsInt(0,1) *
+            this->InputResolutionMatrix->GetElementValueAsInt(0,2) * 
+            this->InputResolutionMatrix->GetElementValueAsInt(0,3), fp);
+            fclose(fp);
+
+            */
+            this->ImageViewer->SetInput(this->ImageData);
+            cerr << "FINISHED" << endl;
+        }
+        catch (...)
+        {
+            cerr << "ERROR READING" << endl;  
+        }
+        this->ImageViewer->Render();
+    }
 }
 
 
 void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int inX, int inY, int inZ)
 {  
-  int outX = this->InputResolutionMatrix->GetElementValueAsInt(0,0);
-  int outY = this->InputResolutionMatrix->GetElementValueAsInt(0,1);
-  
-
-  printf("Input '%s' rendered to 'output.raw' with resolution of %dx%d\n", inputFile, outX, outY);
-  
-  unsigned char* inputBuffer=(unsigned char*)malloc(inX*inY*inZ*sizeof(unsigned char));
-  unsigned char* outputBuffer;
-
-  FILE *fp;
-  fp=fopen(inputFile,"r");
-  fread(inputBuffer, sizeof(unsigned char), inX*inY*inZ, fp);
-  fclose(fp);
-
-  // Setting transformation matrix. This matrix will be used to do rotation and translation on ray tracing.
-
-  float color[6]={this->Color->GetElementValueAsInt(0,0),
-    this->Color->GetElementValueAsInt(0,1), 
-    this->Color->GetElementValueAsInt(0,2),1,1,1};
-  float minmax[6]={0,255,0,255,0,255};
-  float lightVec[3]={0, 0, 1};
-  
-  vtkCamera* cam =
-  this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->GetActiveCamera();
-  
-  
-  
-  cam = vtkCamera::New();
-  cam->SetPosition(  this->CameraPosition->GetElementValueAsDouble(0,0),
-                     this->CameraPosition->GetElementValueAsDouble(0,1),
-                     this->CameraPosition->GetElementValueAsDouble(0,2));
-  cam->SetViewUp(    this->CameraPosition->GetElementValueAsDouble(1,0),
-                     this->CameraPosition->GetElementValueAsDouble(1,1),
-                     this->CameraPosition->GetElementValueAsDouble(1,2));
-  cam->SetFocalPoint(this->CameraPosition->GetElementValueAsDouble(2,0),
-                     this->CameraPosition->GetElementValueAsDouble(2,1),
-                     this->CameraPosition->GetElementValueAsDouble(2,2));
-  
-  vtkMatrix4x4*  viewMat = vtkMatrix4x4::New();
-  //cam->GetPerspectiveTransformMatrix(1.0,.1,1000);
-  viewMat->DeepCopy(cam->GetViewTransformMatrix());//1.0, .1, 1000));
-//  viewMat->Invert();
-  //viewMat->Invert();
-  cerr << *viewMat;
+    int outX = this->InputResolutionMatrix->GetElementValueAsInt(0,0);
+    int outY = this->InputResolutionMatrix->GetElementValueAsInt(0,1);
 
 
-  float rotationMatrix[4][4]=
+    printf("Input '%s' rendered to 'output.raw' with resolution of %dx%d\n", inputFile, outX, outY);
+
+    unsigned char* inputBuffer=(unsigned char*)malloc(inX*inY*inZ*sizeof(unsigned char));
+    unsigned char* outputBuffer;
+
+    FILE *fp;
+    fp=fopen(inputFile,"r");
+    fread(inputBuffer, sizeof(unsigned char), inX*inY*inZ, fp);
+    fclose(fp);
+
+    // Setting transformation matrix. This matrix will be used to do rotation and translation on ray tracing.
+
+    float color[6]={this->Color->GetElementValueAsInt(0,0),
+        this->Color->GetElementValueAsInt(0,1), 
+        this->Color->GetElementValueAsInt(0,2),1,1,1};
+    float minmax[6]={0,255,0,255,0,255};
+    float lightVec[3]={0, 0, 1};
+
+    vtkCamera* cam =
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->GetActiveCamera();
+
+
+
+    cam = vtkCamera::New();
+    cam->SetPosition(  this->CameraPosition->GetElementValueAsDouble(0,0),
+        this->CameraPosition->GetElementValueAsDouble(0,1),
+        this->CameraPosition->GetElementValueAsDouble(0,2));
+    cam->SetViewUp(    this->CameraPosition->GetElementValueAsDouble(1,0),
+        this->CameraPosition->GetElementValueAsDouble(1,1),
+        this->CameraPosition->GetElementValueAsDouble(1,2));
+    cam->SetFocalPoint(this->CameraPosition->GetElementValueAsDouble(2,0),
+        this->CameraPosition->GetElementValueAsDouble(2,1),
+        this->CameraPosition->GetElementValueAsDouble(2,2));
+
+    vtkMatrix4x4*  viewMat = vtkMatrix4x4::New();
+    //cam->GetPerspectiveTransformMatrix(1.0,.1,1000);
+    viewMat->DeepCopy(cam->GetViewTransformMatrix());//1.0, .1, 1000));
+    //  viewMat->Invert();
+    //viewMat->Invert();
+    cerr << *viewMat;
+
+
+    float rotationMatrix[4][4]=
     {{1,0,0,0},
     {0,1,0,0},
     {0,0,1,0},
     {0,0,0,1}};
-    
+
     /*
     for (unsigned int i = 0; i < 4; i++)
     {
-      for (unsigned int j = 0; j < 4; j++)
-        rotationMatrix[i][j] = viewMat->GetElement(i,j);
+    for (unsigned int j = 0; j < 4; j++)
+    rotationMatrix[i][j] = viewMat->GetElement(i,j);
     }
     */
-  // Initialization. Prepare and allocate GPU memory to accomodate 3D data and Result image.
+    // Initialization. Prepare and allocate GPU memory to accomodate 3D data and Result image.
 
-  cerr << "CUDA Initialization.\n";
-  CUDArenderAlgo_init(inX, inY, inZ, outX,outY);
+    cerr << "CUDA Initialization.\n";
+    CUDArenderAlgo_init(inX, inY, inZ, outX,outY);
 
-  // Load 3D data into GPU memory.
+    // Load 3D data into GPU memory.
 
-  cerr << "Load data from CPU to GPU.\n";
-  CUDArenderAlgo_loadData(inputBuffer, inX, inY, inZ);
-  
-  cerr << "Volume rendering.\n";
-  // Do rendering. 
+    cerr << "Load data from CPU to GPU.\n";
+    CUDArenderAlgo_loadData(inputBuffer, inX, inY, inZ);
 
- CUDArenderAlgo_doRender((float*)rotationMatrix, color, minmax, lightVec, 
+    cerr << "Volume rendering.\n";
+    // Do rendering. 
+
+    CUDArenderAlgo_doRender((float*)rotationMatrix, color, minmax, lightVec, 
         inX, inY, inZ,    //3D data size
         outX, outY,     //result image size
         0,0,0,          //translation of data in x,y,z direction
         1, 1, 1,        //voxel dimension
         90, 255,        //min and max threshold
         -100);          //slicing distance from center of 3D data
-  // Get the resulted image.
+    // Get the resulted image.
 
-  cerr << "Copy result from GPU to CPU.\n";
-  CUDArenderAlgo_getResult((unsigned char**)&outputBuffer, outX,outY);
-  memcpy(this->ImageData->GetScalarPointer(), outputBuffer,
-      sizeof(unsigned char) *
+    cerr << "Copy result from GPU to CPU.\n";
+    CUDArenderAlgo_getResult((unsigned char**)&outputBuffer, outX,outY);
+    memcpy(this->ImageData->GetScalarPointer(), outputBuffer,
+        sizeof(unsigned char) *
         this->InputResolutionMatrix->GetElementValueAsInt(0,0) *
         this->InputResolutionMatrix->GetElementValueAsInt(0,1) *
         this->InputResolutionMatrix->GetElementValueAsInt(0,2) * 
         this->InputResolutionMatrix->GetElementValueAsInt(0,3));
-        
-  // Free allocated GPU memory.
-  CUDArenderAlgo_delete();
-  free(inputBuffer);
+
+    // Free allocated GPU memory.
+    CUDArenderAlgo_delete();
+    free(inputBuffer);
 }
 
 
@@ -501,46 +502,46 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
 
 void vtkVolumeRenderingCudaModuleGUI::TestCudaViewer()
 {
-if (ImageViewer == NULL)
- {
-  printf("START CREATING WINDOW\n");
+    if (ImageViewer == NULL)
+    {
+        printf("START CREATING WINDOW\n");
 
 
-/// ImageReader from a File
-  ImageReader = vtkImageReader::New();
-  ImageReader->SetFileDimensionality(2);
-  ImageReader->SetDataScalarTypeToUnsignedChar();
-  ImageReader->SetNumberOfScalarComponents(4);
-  ImageReader->SetHeaderSize(0);
-  ImageReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
-  
-/// ImageData (from File) in Memory.
-  this->ImageData = vtkImageData::New();
-  //this->ImageData->SetDimensions(256, 256, 1);
-  this->ImageData->SetScalarTypeToUnsignedChar();
-  this->ImageData->SetNumberOfScalarComponents(4);
+        /// ImageReader from a File
+        ImageReader = vtkImageReader::New();
+        ImageReader->SetFileDimensionality(2);
+        ImageReader->SetDataScalarTypeToUnsignedChar();
+        ImageReader->SetNumberOfScalarComponents(4);
+        ImageReader->SetHeaderSize(0);
+        ImageReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
 
-/// Setup the ImageViewer  
-  this->ImageViewer = vtkImageViewer::New();  
-  //this->ImageViewer->SetInputConnection(ImageReader->GetOutputPort());
-  
-  this->ImageViewer->SetColorWindow(255);
-  this->ImageViewer->SetColorLevel(128);
-  
-  printf("FINISHED CREATING WINDOW\n");
- }
-  this->ImageViewer->Render();
+        /// ImageData (from File) in Memory.
+        this->ImageData = vtkImageData::New();
+        //this->ImageData->SetDimensions(256, 256, 1);
+        this->ImageData->SetScalarTypeToUnsignedChar();
+        this->ImageData->SetNumberOfScalarComponents(4);
+
+        /// Setup the ImageViewer  
+        this->ImageViewer = vtkImageViewer::New();  
+        //this->ImageViewer->SetInputConnection(ImageReader->GetOutputPort());
+
+        this->ImageViewer->SetColorWindow(255);
+        this->ImageViewer->SetColorLevel(128);
+
+        printf("FINISHED CREATING WINDOW\n");
+    }
+    this->ImageViewer->Render();
 }
 
 void vtkVolumeRenderingCudaModuleGUI::CreatePipelineTest()
 {
-  vtkImageReader* reader = vtkImageReader::New();
-  reader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/heart256.raw");
-  
-  
-  
-  
-  reader->Delete();
+    vtkImageReader* reader = vtkImageReader::New();
+    reader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/heart256.raw");
+
+
+
+
+    reader->Delete();
 }
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
