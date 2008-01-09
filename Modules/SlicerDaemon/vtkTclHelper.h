@@ -61,6 +61,7 @@ public:
     const char *Execute (char *Command);
 
     void ReceiveMatrix(char *sockname);
+    void SendMessage(char *sockname);
 
     void PerformVTKSocketHandshake(char *sockname);
 

@@ -512,13 +512,42 @@ vtkTclHelper::PerformVTKSocketHandshake(char *sockname)
 
 }
 
+
+void 
+vtkTclHelper::SendMessage(char *sockname)
+{
+  int mode;
+  Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
+  if ( ! (mode & TCL_WRITABLE) )
+    {   vtkErrorMacro ("Socket " << sockname << " is not writable\n");
+      return;
+    }
+
+  char m = 1;
+  int tag = 17;
+  int bytes = 1; 
+  // all messages share the same tag: 17
+  int written = Tcl_WriteRaw(channel, (char *)&tag, sizeof(int));
+  // bytes to be sent for the message
+  written = Tcl_WriteRaw(channel, (char *)&bytes, sizeof(bytes));
+  // the one byte message
+  written = Tcl_WriteRaw(channel, &m, bytes);
+
+  Tcl_Flush(channel);
+
+  if ( written != bytes )
+    {   vtkErrorMacro ("Only wrote " << written << " but expected to write " << bytes << "\n");
+      return;
+    }
+}
+
+
 // Read a stream of numbers from vtkSocketCommunicator::SendTagged 
 // and put it int the Matrix ivar
 void 
 vtkTclHelper::ReceiveMatrix(char *sockname)
 {
   int mode;
-
   Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
     
   if ( ! (mode & TCL_READABLE) )
