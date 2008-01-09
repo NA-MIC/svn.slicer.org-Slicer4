@@ -108,7 +108,7 @@ proc trackerd_sock_fileevent {sock} {
     set matrix [$transformNode GetMatrixTransformToParent]
     
     ::tcl_$sock SetMatrix $matrix
+    ::tcl_$sock SendMessage $sock
 
     ::tcl_$sock ReceiveMatrix $sock
 }
-
