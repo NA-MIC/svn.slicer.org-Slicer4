@@ -416,10 +416,10 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
     {0,1,0,0},
     {0,0,1,0},
     {0,0,0,1}};*/
-    {{ax,bx,cx,0},
-     {ay,by,cy,0},
-     {az,bz,cz,0},
-     {0,0,0,4}};
+    {{ax,bx,cx,2},
+     {ay,by,cy,2},
+     {az,bz,cz,2},
+     {0,0,0,1}};
     /*
     for (unsigned int i = 0; i < 4; i++)
     {
