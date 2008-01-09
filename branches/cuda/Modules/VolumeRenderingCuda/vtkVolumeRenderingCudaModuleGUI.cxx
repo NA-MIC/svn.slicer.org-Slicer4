@@ -8,9 +8,6 @@
 #include "vtkMRMLScene.h"
 #include "vtkVolume.h"
 
-#include "vtkImageReader.h"
-#include "vtkPNGReader.h"
-#include "vtkImageViewer.h"
 #include "vtkImageData.h"
 
 #include "vtkVolumeCudaMapper.h"
@@ -43,8 +40,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->CudaMapper = NULL;
     this->CudaActor = NULL;
 
-    this->ImageReader = NULL;
-    this->ImageViewer = NULL;
+    this->ImageData = NULL;
     this->InputTypeChooser = NULL;
     this->InputResolutionMatrix = NULL;
     this->Color = NULL;
@@ -77,12 +73,6 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     {
         this->CudaActor->Delete();  
     }
-
-    if (this->ImageReader != NULL)
-        this->ImageReader->Delete();
-
-    if (this->ImageViewer != NULL)
-        this->ImageViewer->Delete();
 
     DeleteWidget(this->InputTypeChooser);
     DeleteWidget(this->InputResolutionMatrix);
@@ -210,77 +200,12 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
         this->Color->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
 
 
-    ////Testing Pushbutton
-    //this->PB_Testing= vtkKWPushButton::New();
-    //this->PB_Testing->SetParent(loadSaveDataFrame->GetFrame());
-    //this->PB_Testing->Create();
-    //this->PB_Testing->SetText("Make All Models Invisible");
-    //app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->PB_Testing->GetWidgetName());
-
-
-    ////NodeSelector  for Node from MRML Scene
-    //this->NS_ImageData=vtkSlicerNodeSelectorWidget::New();
-    //this->NS_ImageData->SetParent(loadSaveDataFrame->GetFrame());
-    //this->NS_ImageData->Create();
-    //this->NS_ImageData->NoneEnabledOn();
-    //this->NS_ImageData->SetLabelText("Source Volume: ");
-    //this->NS_ImageData->SetNodeClass("vtkMRMLScalarVolumeNode","LabelMap","0","");
-    //app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->NS_ImageData->GetWidgetName());
-
-    ////NodeSelector for VolumeRenderingNode Preset
-    //this->NS_VolumeRenderingDataSlicer=vtkSlicerNodeSelectorVolumeRenderingWidget::New();
-    //this->NS_VolumeRenderingDataSlicer->SetParent(loadSaveDataFrame->GetFrame());
-    //this->NS_VolumeRenderingDataSlicer->Create();
-    //this->NS_VolumeRenderingDataSlicer->SetLabelText("Use Existing Visualization Parameterset: ");
-    //this->NS_VolumeRenderingDataSlicer->EnabledOff();//By default off
-    //this->NS_VolumeRenderingDataSlicer->NoneEnabledOn();
-    //this->NS_VolumeRenderingDataSlicer->SetNodeClass("vtkMRMLVolumeRenderingNode","","","");
-    //app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->NS_VolumeRenderingDataSlicer->GetWidgetName());
-
-    ////NodeSelector for VolumeRenderingNode Scene
-    //this->NS_VolumeRenderingDataScene=vtkSlicerNodeSelectorVolumeRenderingWidget::New();
-    //this->NS_VolumeRenderingDataScene->SetParent(loadSaveDataFrame->GetFrame());
-    //this->NS_VolumeRenderingDataScene->Create();
-    //this->NS_VolumeRenderingDataScene->NoneEnabledOn();
-    //this->NS_VolumeRenderingDataScene->SetLabelText("Current Visualization Parameterset: ");
-    //this->NS_VolumeRenderingDataScene->EnabledOff();//By default off
-    //this->NS_VolumeRenderingDataScene->SetNodeClass("vtkMRMLVolumeRenderingNode","","","");
-    //app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->NS_VolumeRenderingDataScene->GetWidgetName());
-    ////Missing: Load from file
-
-    ////Create New Volume Rendering Node
-    ////Entry With Label
-    //this->EWL_CreateNewVolumeRenderingNode=vtkKWEntryWithLabel::New();
-    //this->EWL_CreateNewVolumeRenderingNode->SetParent(loadSaveDataFrame->GetFrame());
-    //this->EWL_CreateNewVolumeRenderingNode->Create();
-    //this->EWL_CreateNewVolumeRenderingNode->SetLabelText("Name for Visualization Parameterset: ");
-    //this->EWL_CreateNewVolumeRenderingNode->EnabledOff();
-    //app->Script("pack %s -side top -anchor e -padx 2 -pady 2", this->EWL_CreateNewVolumeRenderingNode->GetWidgetName());
-
-
-    //this->PB_CreateNewVolumeRenderingNode=vtkKWPushButton::New();
-    //this->PB_CreateNewVolumeRenderingNode->SetParent(loadSaveDataFrame->GetFrame());
-    //this->PB_CreateNewVolumeRenderingNode->Create();
-    //this->PB_CreateNewVolumeRenderingNode->SetText("Create Visualization Parameterset");
-    //app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->PB_CreateNewVolumeRenderingNode->GetWidgetName());
-
-    ////Details frame
-    //this->detailsFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    //this->detailsFrame->SetParent (this->UIPanel->GetPageWidget("VolumeRendering"));
-    //this->detailsFrame->Create();
-    //this->detailsFrame->ExpandFrame();
-    //this->detailsFrame->SetLabelText("Details");
-    //app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-    //    this->detailsFrame->GetWidgetName(), this->UIPanel->GetPageWidget("VolumeRendering")->GetWidgetName());
-
-
-    ////set subnodes
-    ////Delete frames
-    //if ( this->GetApplicationGUI() &&  this->GetApplicationGUI()->GetMRMLScene())
-    //{
-    //    this->GetApplicationGUI()->GetMRMLScene()->AddObserver( vtkMRMLScene::SceneCloseEvent, this->MRMLCallbackCommand );
-    //}
-    //loadSaveDataFrame->Delete();
+    this->UpdateButton = vtkKWPushButton::New();
+    this->UpdateButton->SetParent(loadSaveDataFrame->GetFrame());
+    this->UpdateButton->Create();
+    this->UpdateButton->SetText("Update Renderer");
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->UpdateButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
 
     this->Built=true;
 }
@@ -312,6 +237,7 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CameraPosition->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->Color->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->UpdateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
@@ -323,6 +249,7 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->CameraPosition->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->Color->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->UpdateButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
@@ -357,10 +284,15 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
 
     /// INPUT TYPE OR SIZE CHANGED CHANGED
-    if (caller == this->InputTypeChooser->GetMenu() ||
+    if (
+        /*
+        caller == this->InputTypeChooser->GetMenu() ||
         caller == this->InputResolutionMatrix ||
         caller == this->Color ||
-        caller == this->CameraPosition)
+        caller == this->CameraPosition
+        */
+        caller == this->UpdateButton
+        )
     {
         cerr << "Type" << this->InputTypeChooser->GetSelectedName() << " " << this->InputTypeChooser->GetSelectedType() << 
             " X:" << this->InputResolutionMatrix->GetElementValueAsInt(0,0) << 
@@ -382,28 +314,16 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->ImageData->AllocateScalars();
 
             this->RenderWithCUDA("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw", 256, 256, 256);
-            /*
-            cerr << "READ" << endl;
-            FILE *fp;
-            fp=fopen("/projects/igtdev/bensch/svn/volrenSample/output.raw","r");
-            fread(this->ImageData->GetScalarPointer(), sizeof(unsigned char), 
-            this->InputResolutionMatrix->GetElementValueAsInt(0,0) *
-            this->InputResolutionMatrix->GetElementValueAsInt(0,1) *
-            this->InputResolutionMatrix->GetElementValueAsInt(0,2) * 
-            this->InputResolutionMatrix->GetElementValueAsInt(0,3), fp);
-            fclose(fp);
-
-            */
-            this->ImageViewer->SetInput(this->ImageData);
+            
             cerr << "FINISHED" << endl;
         }
         catch (...)
         {
             cerr << "ERROR READING" << endl;  
         }
-        this->ImageViewer->Render();
     }
 }
+
 
 
 void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int inX, int inY, int inZ)
@@ -418,7 +338,7 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
     unsigned char* outputBuffer;
 
 
-
+    /// LOAD THE DATA ONCE!
     if (this->CudaInputMemoryCache == NULL)
     {
         FILE *fp;
@@ -445,17 +365,43 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
 
     vtkCamera* cam =
         this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->GetActiveCamera();
+    
+    cerr << cam->GetViewTransformMatrix();
 
-    cam = vtkCamera::New();
-    cam->SetPosition(  this->CameraPosition->GetElementValueAsDouble(0,0),
-        this->CameraPosition->GetElementValueAsDouble(0,1),
-        this->CameraPosition->GetElementValueAsDouble(0,2));
-    cam->SetViewUp(    this->CameraPosition->GetElementValueAsDouble(1,0),
-        this->CameraPosition->GetElementValueAsDouble(1,1),
-        this->CameraPosition->GetElementValueAsDouble(1,2));
-    cam->SetFocalPoint(this->CameraPosition->GetElementValueAsDouble(2,0),
-        this->CameraPosition->GetElementValueAsDouble(2,1),
-        this->CameraPosition->GetElementValueAsDouble(2,2));
+    double ax,ay,az;
+    double bx,by,bz;
+    double cx,cy,cz;
+
+    ax = cam->GetFocalPoint()[0] - cam->GetPosition()[0];
+    ay = cam->GetFocalPoint()[1] - cam->GetPosition()[1];
+    az = cam->GetFocalPoint()[2] - cam->GetPosition()[2];
+    cam->GetViewUp(bx, by, bz);
+    cx = ay*bz-az*by;
+    cy = az*bx-ax*bz;
+    cz = ax*by-ay*bx;
+    
+    bx = cy*az-cz*ay;
+    by = cz*ax-cx*az;
+    bz = cx*ay-cy*ax;
+
+    double len = sqrt(ax*ax + ay*ay + az*az);
+    ax /= len; ay /= len; az /= len;
+
+    len = sqrt(bx*bx + by*by + bz*bz);
+    bx /= len; by /= len; bz /= len;
+
+    len = sqrt(cx*cx + cy*cy + cz*cz);
+    cx /= len; cy /= len; cz /= len;
+    //cam = vtkCamera::New();
+    //cam->SetPosition(  this->CameraPosition->GetElementValueAsDouble(0,0),
+    //    this->CameraPosition->GetElementValueAsDouble(0,1),
+    //    this->CameraPosition->GetElementValueAsDouble(0,2));
+    //cam->SetViewUp(    this->CameraPosition->GetElementValueAsDouble(1,0),
+    //    this->CameraPosition->GetElementValueAsDouble(1,1),
+    //    this->CameraPosition->GetElementValueAsDouble(1,2));
+    //cam->SetFocalPoint(this->CameraPosition->GetElementValueAsDouble(2,0),
+    //    this->CameraPosition->GetElementValueAsDouble(2,1),
+    //    this->CameraPosition->GetElementValueAsDouble(2,2));
 
     vtkMatrix4x4*  viewMat = vtkMatrix4x4::New();
     //cam->GetPerspectiveTransformMatrix(1.0,.1,1000);
@@ -466,11 +412,14 @@ void vtkVolumeRenderingCudaModuleGUI::RenderWithCUDA(const char* inputFile, int 
 
 
     float rotationMatrix[4][4]=
-    {{1,0,0,0},
+   /* {{1,0,0,0},
     {0,1,0,0},
     {0,0,1,0},
-    {0,0,0,1}};
-
+    {0,0,0,1}};*/
+    {{ax,bx,cx,0},
+     {ay,by,cy,0},
+     {az,bz,cz,0},
+     {0,0,0,4}};
     /*
     for (unsigned int i = 0; i < 4; i++)
     {
@@ -622,18 +571,8 @@ vtkImageExtractComponents *components=vtkImageExtractComponents::New();
 
 void vtkVolumeRenderingCudaModuleGUI::TestCudaViewer()
 {
-    if (ImageViewer == NULL)
-    {
-        printf("START CREATING WINDOW\n");
-
-
-        /// ImageReader from a File
-        ImageReader = vtkImageReader::New();
-        ImageReader->SetFileDimensionality(2);
-        ImageReader->SetDataScalarTypeToUnsignedChar();
-        ImageReader->SetNumberOfScalarComponents(4);
-        ImageReader->SetHeaderSize(0);
-        ImageReader->SetFileName("/projects/igtdev/bensch/svn/volrenSample/output.raw");
+    if (this->ImageData == NULL) { 
+    printf("START CREATING WINDOW\n");
 
         /// ImageData (from File) in Memory.
         this->ImageData = vtkImageData::New();
@@ -641,16 +580,8 @@ void vtkVolumeRenderingCudaModuleGUI::TestCudaViewer()
         this->ImageData->SetScalarTypeToUnsignedChar();
         this->ImageData->SetNumberOfScalarComponents(4);
 
-        /// Setup the ImageViewer  
-        this->ImageViewer = vtkImageViewer::New();  
-        //this->ImageViewer->SetInputConnection(ImageReader->GetOutputPort());
-
-        this->ImageViewer->SetColorWindow(255);
-        this->ImageViewer->SetColorLevel(128);
-
         printf("FINISHED CREATING WINDOW\n");
     }
-    this->ImageViewer->Render();
 }
 
 void vtkVolumeRenderingCudaModuleGUI::CreatePipelineTest()
