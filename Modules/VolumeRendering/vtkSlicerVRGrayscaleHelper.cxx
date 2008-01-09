@@ -16,6 +16,7 @@
 #include "vtkTexture.h"
 #include "vtkImageGradientMagnitude.h"
 #include "vtkInteractorStyle.h"
+#include "vtkBoxWidget.h"
 
 //KWWidgets
 #include "vtkKWHistogram.h"
@@ -38,6 +39,20 @@
 //Compiler
 #include <math.h>
 
+class vtkMyCallback : public vtkCommand
+{
+public:
+  static vtkMyCallback *New() 
+    { return new vtkMyCallback; }
+  virtual void Execute(vtkObject *caller, unsigned long, void*)
+    {
+      vtkTransform *t = vtkTransform::New();
+      vtkBoxWidget *widget = reinterpret_cast<vtkBoxWidget*>(caller);
+      widget->GetTransform(t);
+      widget->GetProp3D()->SetUserTransform(t);
+      t->Delete();
+    }
+};
 
 
 vtkCxxRevisionMacro(vtkSlicerVRGrayscaleHelper, "$Revision: 1.46 $");
@@ -103,6 +118,9 @@ vtkSlicerVRGrayscaleHelper::vtkSlicerVRGrayscaleHelper(void)
     this->ThresholdMode=0;
     this->PB_Reset=NULL;
     this->PB_ThresholdZoomIn=NULL;
+
+    //Clipping
+    this->BW_Clipping=NULL;
 
 
 }
@@ -319,8 +337,8 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     }
     //Start dialog right here
     Superclass::Init(gui);
-    this->Gui->Script("bind all <Any-ButtonPress> {%s SetButtonDown 1}",this->GetTclName());
-    this->Gui->Script("bind all <Any-ButtonRelease> {%s SetButtonDown 0}",this->GetTclName());
+    //this->Gui->Script("bind all <Any-ButtonPress> {%s SetButtonDown 1}",this->GetTclName());
+    //this->Gui->Script("bind all <Any-ButtonRelease> {%s SetButtonDown 0}",this->GetTclName());
 
     //Create a notebook
     this->NB_Details=vtkKWNotebook::New();
@@ -426,6 +444,26 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->SVP_VolumeProperty->GetWidgetName());
 
     this->CreateCropping();
+
+    //Clipping
+    vtkKWFrameWithLabel *croppingFrame=vtkKWFrameWithLabel::New();
+    croppingFrame->SetParent(this->NB_Details->GetFrame("Cropping"));
+    croppingFrame->Create();
+    croppingFrame->AllowFrameToCollapseOff();
+    croppingFrame->SetLabelText("Cropping (IJK coordinates)");
+    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        croppingFrame->GetWidgetName() );
+
+    //Build GUI
+
+    this->CB_Clipping=vtkKWCheckButtonWithLabel::New();
+    this->CB_Clipping->SetParent(croppingFrame->GetFrame());
+    this->CB_Clipping->Create();
+    this->CB_Clipping->GetWidget()->SetSelectedState(0);
+    this->CB_Clipping->SetLabelText("Enable /Disable Clipping Box");
+    this->CB_Clipping->GetWidget()->SetCommand(this, "ProcessEnableDisableClippingPlanes");
+    this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
+        this->CB_Clipping->GetWidgetName());
 
 }
 void vtkSlicerVRGrayscaleHelper::InitializePipelineNewCurrentNode()
@@ -1563,3 +1601,98 @@ void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableCropping(int cbSelectedStat
     }
     //this->Cropping(0,0,0);
 }
+
+void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableClippingPlanes(int clippingEnabled)
+{
+    if(this->BW_Clipping==NULL)
+    {
+        this->BW_Clipping=vtkBoxWidget::New();
+        this->BW_Clipping->SetInteractor(this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetInteractor());
+        this->BW_Clipping->SetPlaceFactor(1);
+        this->BW_Clipping->SetProp3D(this->Volume);//(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
+        this->BW_Clipping->PlaceWidget();
+        this->BW_Clipping->InsideOutOn();
+        /*vtkMatrix4x4 *matrix=vtkMatrix4x4::New();
+        this->CalculateMatrix(matrix);
+        vtkTransform *transform=vtkTransform::New();
+        transform->SetMatrix(matrix);
+        this->BW_Clipping->SetTransform(transform);*/
+        this->BW_Clipping->AddObserver(vtkCommand::InteractionEvent,(vtkCommand*) this->VolumeRenderingCallbackCommand);
+        this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetInteractor()->ReInitialize();
+        //this->renViewport->AddActor(this->BW_Clipping);
+    
+    }
+    if(clippingEnabled)
+    {
+        this->BW_Clipping->On();
+        //vtkMyCallback *callback = vtkMyCallback::New();
+  //this->BW_Clipping->AddObserver(vtkCommand::InteractionEvent, callback);
+
+    }
+    else
+    {
+        this->BW_Clipping->Off();
+    }
+//    # The SetInteractor method is how 3D widgets are associated with the render
+//# window interactor. Internally, SetInteractor sets up a bunch of callbacks
+//# using the Command/Observer mechanism (AddObserver()).
+//vtkBoxWidget boxWidget
+//    boxWidget SetInteractor iren
+//    boxWidget SetPlaceFactor 1.0
+//
+//# Add the actors to the renderer, set the background and size
+//#
+//ren1 AddActor outlineActor
+//ren1 AddVolume newvol
+//
+//ren1 SetBackground 0 0 0
+//renWin SetSize 300 300
+//
+//# Place the interactor initially. The output of the reader is used to place
+//# the box widget.
+//boxWidget SetInput [v16 GetOutput]
+//boxWidget PlaceWidget
+//boxWidget InsideOutOn
+//boxWidget AddObserver StartInteractionEvent StartInteraction
+//boxWidget AddObserver InteractionEvent ClipVolumeRender
+//boxWidget AddObserver EndInteractionEvent EndInteraction
+//set outlineProperty [boxWidget GetOutlineProperty]
+//    $outlineProperty SetRepresentationToWireframe
+//    $outlineProperty SetAmbient 1.0
+//    $outlineProperty SetAmbientColor 1 1 1
+//    $outlineProperty SetLineWidth 3
+//set selectedOutlineProperty [boxWidget GetSelectedOutlineProperty]
+//    $selectedOutlineProperty SetRepresentationToWireframe
+//    $selectedOutlineProperty SetAmbient 1.0
+//    $selectedOutlineProperty SetAmbientColor 1 0 0
+//    $selectedOutlineProperty SetLineWidth 3
+//
+//# This adds the "u" keypress event...it pops up a Tcl interpreter.
+//#
+//iren AddObserver UserEvent {wm deiconify .vtkInteract}
+//iren Initialize
+//
+//# Prevent the tk window from showing up then start the event loop.
+//wm withdraw .
+//
+//# When interaction starts, the requested frame rate is increased.
+//proc StartInteraction {} {
+//   renWin SetDesiredUpdateRate 10
+//}
+//
+//# When interaction ends, the requested frame rate is decreased to
+//# normal levels. This causes a full resolution render to occur.
+//proc EndInteraction {} {
+//   renWin SetDesiredUpdateRate 0.001
+//}
+//
+//# The implicit function vtkPlanes is used in conjunction with the
+//# volume ray cast mapper to limit which portion of the volume is
+//# volume rendered.
+//vtkPlanes planes
+//proc ClipVolumeRender {} {
+//   boxWidget GetPlanes planes
+//   volumeMapper SetClippingPlanes planes
+//}
+}
+
