@@ -58,6 +58,7 @@ public:
     void ProcessThresholdReset(void);
     void ProcessEnableDisableCropping(int cbSelectedState);
     void ProcessEnableDisableClippingPlanes(int clippingEnabled);
+    void ProcessSelection(void);
 
 protected:
     vtkSlicerVRGrayscaleHelper(void);
