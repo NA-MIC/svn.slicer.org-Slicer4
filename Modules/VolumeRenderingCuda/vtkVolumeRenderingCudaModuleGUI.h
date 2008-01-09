@@ -124,9 +124,9 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
 
   vtkKWPushButton* LoadButton;
   vtkKWPushButton* CreatePiplineTestButton;
-  
-  vtkImageReader* ImageReader;
-  vtkPNGReader* PNGReader;
+  vtkKWPushButton* UpdateButton;
+
+
   vtkImageData*  ImageData;
   vtkCudaMemory*  CudaInputMemoryCache;
   vtkKWTypeChooserBox*   InputTypeChooser;
