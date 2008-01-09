@@ -21,6 +21,7 @@ class vtkKWNotebook;
 class vtkKWMenuButtonWithLabel;
 class vtkKWPushButton;
 class vtkBoxWidget;
+class vtkSlicerColorDisplayWidget;
 
 class VTK_VOLUMERENDERINGMODULE_EXPORT vtkSlicerVRGrayscaleHelper :public vtkSlicerVRHelper
 {
@@ -83,6 +84,9 @@ protected:
 
     vtkBoxWidget *BW_Clipping;
     vtkKWCheckButtonWithLabel *CB_Clipping;
+
+    //ColorDisplay Widget
+    vtkSlicerColorDisplayWidget *ColorDisplay;
 
 
     //ThresholdGUI

@@ -4,6 +4,7 @@
 #include "vtkSlicerVRGrayscaleHelper.h"
 #include "vtkVolumeRenderingModuleGUI.h"
 #include "vtkSlicerApplication.h"
+#include "vtkSlicerColorDisplayWidget.h"
 
 //VTK
 #include "vtkObjectFactory.h"
@@ -16,6 +17,7 @@
 #include "vtkTexture.h"
 #include "vtkImageGradientMagnitude.h"
 #include "vtkInteractorStyle.h"
+#include "vtkRenderWindowInteractor.h"
 #include "vtkBoxWidget.h"
 
 //KWWidgets
@@ -347,6 +349,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->NB_Details->AddPage("Mapping");
     this->NB_Details->AddPage("Performance");
     this->NB_Details->AddPage("Cropping");
+    this->NB_Details->AddPage("Labelmaps");
     this->Script("pack %s -side top -anchor nw -fill both -expand y -padx 0 -pady 2", 
         this->NB_Details->GetWidgetName());
 
@@ -464,6 +467,13 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->CB_Clipping->GetWidget()->SetCommand(this, "ProcessEnableDisableClippingPlanes");
     this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
         this->CB_Clipping->GetWidgetName());
+
+    this->ColorDisplay=vtkSlicerColorDisplayWidget::New();
+    this->ColorDisplay->SetMRMLScene(this->Gui->GetMRMLScene() );
+    this->ColorDisplay->SetParent(this->NB_Details->GetFrame("Labelmaps"));
+    this->ColorDisplay->Create();
+    this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
+        this->ColorDisplay->GetWidgetName()); 
 
 }
 void vtkSlicerVRGrayscaleHelper::InitializePipelineNewCurrentNode()
@@ -1607,11 +1617,15 @@ void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableClippingPlanes(int clipping
     if(this->BW_Clipping==NULL)
     {
         this->BW_Clipping=vtkBoxWidget::New();
-        this->BW_Clipping->SetInteractor(this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetInteractor());
+        vtkRenderWindowInteractor *interactor=this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetInteractor();
+        this->BW_Clipping->SetInteractor(interactor);
         this->BW_Clipping->SetPlaceFactor(1);
         this->BW_Clipping->SetProp3D(this->Volume);//(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
         this->BW_Clipping->PlaceWidget();
         this->BW_Clipping->InsideOutOn();
+        interactor->UpdateSize(this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetSize()[0],
+            this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetSize()[1]);
+
         /*vtkMatrix4x4 *matrix=vtkMatrix4x4::New();
         this->CalculateMatrix(matrix);
         vtkTransform *transform=vtkTransform::New();
