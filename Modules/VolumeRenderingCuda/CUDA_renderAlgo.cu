@@ -679,8 +679,8 @@ void CUDArenderAlgo_doRender(unsigned char* renderData, float* rotationMatrix, f
   float transparencyLevel=0.2;
 
   //CUDAkernel_renderAlgo_doRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
-  //CUDAkernel_renderAlgo_doMIPRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
-  CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, transparencyLevel, d_renderAlgo_resultImage);
+  CUDAkernel_renderAlgo_doMIPRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
+  //CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, transparencyLevel, d_renderAlgo_resultImage);
   
   CUT_CHECK_ERROR("Kernel execution failed");
 
