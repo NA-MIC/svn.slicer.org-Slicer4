@@ -35,8 +35,6 @@ extern "C" {
 
 vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
-    this->LoadButton = NULL;
-    this->CreatePiplineTestButton = NULL;
     this->CudaMapper = NULL;
     this->CudaActor = NULL;
 
@@ -48,20 +46,6 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 
 vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
 {
-    if (this->LoadButton != NULL)
-    {
-        this->LoadButton->SetParent(NULL);
-        this->LoadButton->Delete();
-        this->LoadButton = NULL; 
-    }
-
-    if (this->CreatePiplineTestButton != NULL)
-    {
-        this->CreatePiplineTestButton->SetParent(NULL);
-        this->CreatePiplineTestButton->Delete();
-        this->CreatePiplineTestButton = NULL;  
-    }
-
     if (this->CudaMapper != NULL)
     {
         this->CudaMapper->Delete();
@@ -115,22 +99,6 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     loadSaveDataFrame->SetLabelText("Load and Save");
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         loadSaveDataFrame->GetWidgetName(), page->GetWidgetName());
-
-    this->LoadButton = vtkKWPushButton::New();
-    this->LoadButton->SetParent(loadSaveDataFrame->GetFrame());
-    this->LoadButton->Create();
-    this->LoadButton->SetText("Load new Model");
-    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        this->LoadButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-
-
-    this->CreatePiplineTestButton = vtkKWPushButton::New();
-    this->CreatePiplineTestButton->SetParent(loadSaveDataFrame->GetFrame());
-    this->CreatePiplineTestButton->Create();
-    this->CreatePiplineTestButton->SetText("Test Creating the pipeline");
-    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        this->CreatePiplineTestButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-
 
     this->InputTypeChooser = vtkKWTypeChooserBox::New();
     this->InputTypeChooser->SetParent(loadSaveDataFrame->GetFrame());
@@ -203,9 +171,6 @@ void vtkVolumeRenderingCudaModuleGUI::ReleaseModuleEventBindings ( )
 
 void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
-    this->LoadButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->CreatePiplineTestButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-
     this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->Color->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
@@ -214,9 +179,6 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
-    this->LoadButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->CreatePiplineTestButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-
     this->InputTypeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->Color->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
@@ -234,22 +196,6 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 {
     vtkDebugMacro("vtkVolumeRenderingModuleGUI::ProcessGUIEvents: event = " << event);
 
-    if (caller == this->LoadButton)
-    {
-        if (this->CudaMapper == NULL)
-            this->CudaMapper = vtkVolumeCudaMapper::New();
-        if (this->CudaActor == NULL)
-        {
-            this->CudaActor = vtkVolume::New();
-            this->CudaActor->SetMapper(this->CudaMapper);
-        }
-        
-
-        this->CudaMapper->Render(
-            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
-            NULL);
-    }
-
     /// INPUT TYPE OR SIZE CHANGED CHANGED
     if (
         /*
@@ -265,6 +211,21 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             " Y:" << this->InputResolutionMatrix->GetElementValueAsInt(0,1) <<
             " Z:" << this->InputResolutionMatrix->GetElementValueAsInt(0,2) <<
             " A:" << this->InputResolutionMatrix->GetElementValueAsInt(0,3) << endl;
+
+
+        // create required objects
+        if (this->CudaMapper == NULL)
+            this->CudaMapper = vtkVolumeCudaMapper::New();
+        if (this->CudaActor == NULL)
+        {
+            this->CudaActor = vtkVolume::New();
+            this->CudaActor->SetMapper(this->CudaMapper);
+        }
+
+        this->CudaMapper->Render(
+            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
+            this->CudaActor);
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
     }
 }
 
