@@ -8,13 +8,6 @@ class vtkVolumeRenderingCudaModuleLogic;
 
 class vtkVolumeCudaMapper;
 class vtkVolume;
-class vtkPNGReader;
-class vtkImageReader;
-class vtkImageData;
-
-class vtkCudaMemory;
-
-class vtkImageViewer;
 
 
 class vtkKWWidget;
@@ -90,14 +83,6 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
     vtkGetObjectMacro(InteractorStyle, vtkSlicerViewerInteractorStyle);
     virtual void SetInteractorStyle(vtkSlicerViewerInteractorStyle *interactorStyle);
 
-
-  /// TESTING FUNCTIONS:
-  void RenderWithCUDA(const char* inputFile, int inX, int inY, int inZ);
-  void TestCudaViewer();
-  void CreatePipelineTest();
-  void RenderToScreen(vtkImageData* image);
-
-
   // Description:
   // Methods describe behavior at module enter and exit.
   virtual void Enter ( );
@@ -116,6 +101,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   // Description:
   // Pointer to the module's logic class
   vtkVolumeRenderingCudaModuleLogic *Logic;
+
   vtkVolumeCudaMapper* CudaMapper;
   vtkVolume* CudaActor;
   
@@ -126,13 +112,9 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkKWPushButton* CreatePiplineTestButton;
   vtkKWPushButton* UpdateButton;
 
-
-  vtkImageData*  ImageData;
-  vtkCudaMemory*  CudaInputMemoryCache;
   vtkKWTypeChooserBox*   InputTypeChooser;
   vtkKWMatrixWidget* InputResolutionMatrix;
   
-  vtkKWMatrixWidget* CameraPosition; // position, target and up vector
   vtkKWMatrixWidget* Color;
 };
 

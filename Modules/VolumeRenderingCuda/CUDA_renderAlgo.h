@@ -16,6 +16,7 @@
 #include <math.h>
 
 #include <cutil.h>
+#include <vector_types.h>
 
 /**
  * Initialization. This function prepare GPU memory for rendering 3D data of size (sizeX, sizeY, sizeZ) on display size of (dsizeX, dsizeY)
@@ -33,13 +34,22 @@ void CUDArenderAlgo_loadData(unsigned char* sourceData, int sizeX, int sizeY, in
  * Execute volume rendering. There are also a lot of parameters here.
  */
 
-void CUDArenderAlgo_doRender(unsigned char* sourceData, float* rotationMatrix, float* color, float* minmax, float* lightVec, int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY, float dispX, float dispY, float dispZ, float voxelSizeX, float voxelSizeY, float voxelSizeZ, int minThreshold, int maxThreshold, int sliceDistance);
+void CUDArenderAlgo_doRender(uchar4* outputData, unsigned char* sourceData, 
+                             float* rotationMatrix, 
+                             float* color, float* minmax, float* lightVec, 
+                             int sizeX, int sizeY, int sizeZ, 
+                             int dsizeX, int dsizeY, 
+                             float dispX, float dispY, float dispZ, 
+                             float voxelSizeX, float voxelSizeY, float voxelSizeZ, 
+                             int minThreshold, int maxThreshold, 
+                             int sliceDistance);
 
 /**
  * Copy the result from GPU memory to CPU memory. The resulted image is RGBA image of size (dsizeX, dsizeY)
  */
 
-void CUDArenderAlgo_getResult(unsigned char** resultImagePointer, int dsizeX, int dsizeY);
+void CUDArenderAlgo_getResult(unsigned char* resultImagePointer, unsigned char* output,
+                              int dsizeX, int dsizeY);
 
 /**
  * Free GPU memories.
