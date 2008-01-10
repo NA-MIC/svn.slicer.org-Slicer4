@@ -248,6 +248,9 @@ extern "C" int Volumerenderingmodule_Init(Tcl_Interp *interp);
 #if !defined(DAEMON_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Slicerdaemon_Init(Tcl_Interp *interp);
 #endif
+#if !defined(OPENIGTLINKDAEMON_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Openigtlinkdaemon_Init(Tcl_Interp *interp);
+#endif
 #if !defined(COMMANDLINE_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
 #endif
@@ -756,6 +759,9 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 #if !defined(DAEMON_DEBUG) && defined(BUILD_MODULES)
     Slicerdaemon_Init(interp);
+#endif
+#if !defined(OPENIGTLINKDAEMON_DEBUG) && defined(BUILD_MODULES)
+    Openigtlinkdaemon_Init(interp);
 #endif
 #if !defined(COMMANDLINE_DEBUG) && defined(BUILD_MODULES)
     Commandlinemodule_Init(interp);
@@ -1520,6 +1526,19 @@ int Slicer3_main(int argc, char *argv[])
       Slicer3_Tcl_Eval(interp, cmd.c_str());
       }
 #endif
+
+
+#if !defined(OPENIGTLINKDAEMON_DEBUG) && defined(BUILD_MODULES)
+    if ( Daemon || slicerApp->GetEnableDaemon() )
+      {
+      slicerApp->SplashMessage("Initializing OpenIGTLink Daemon...");
+      std::string cmd;
+      cmd =  "source \"" + slicerBinDir + "/../"
+        SLICER_INSTALL_LIBRARIES_DIR "/openigtlinkd.tcl\"; openigtlinkd_start; ";
+      Slicer3_Tcl_Eval(interp, cmd.c_str());
+      }
+#endif
+
 
 #if !defined(CLIMODULES_DEBUG) && defined(BUILD_MODULES)
     std::vector<std::string> moduleNames;

@@ -10,6 +10,7 @@ SUBDIRS(
   GradientAnisotropicDiffusionFilter
   EMSegment
   SlicerDaemon
+  OpenIGTLinkDaemon
   Editor
   ProstateNav
   Python
