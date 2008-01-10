@@ -6,7 +6,7 @@ vtkCxxRevisionMacro(vtkCudaMemoryBase, "$Revision: 1.0$");
 
 vtkCudaMemoryBase* vtkCudaMemoryBase::New()
 {
-  return vtkCudaMemory::New();
+    return vtkCudaMemory::New();
 }
 
 vtkCudaMemoryBase::~vtkCudaMemoryBase()
@@ -15,11 +15,11 @@ vtkCudaMemoryBase::~vtkCudaMemoryBase()
 
 vtkCudaMemoryBase::vtkCudaMemoryBase()
 {
-  this->Type = vtkCudaMemoryBase::Undefined;
+    this->Type = vtkCudaMemoryBase::Undefined;
 }
 
 void vtkCudaMemoryBase::PrintSelf (ostream &os, vtkIndent indent)
 {
-  this->Superclass::PrintSelf(os, indent);
-  os << "Size = " << this->GetSize();  
+    this->Superclass::PrintSelf(os, indent);
+    os << "Size = " << this->GetSize();  
 }

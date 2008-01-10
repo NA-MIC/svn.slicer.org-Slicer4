@@ -5,21 +5,21 @@
 
 class VTK_CUDASUPPORT_EXPORT vtkCudaLocalMemory : public vtkCudaMemory
 {
-  vtkTypeRevisionMacro(vtkCudaLocalMemory, vtkCudaMemory);
+    vtkTypeRevisionMacro(vtkCudaLocalMemory, vtkCudaMemory);
 public:
-  static vtkCudaLocalMemory* New();
+    static vtkCudaLocalMemory* New();
 
-  virtual void* AllocateBytes(size_t count);
-  virtual void Free();
-  virtual void MemSet(int value); 
+    virtual void* AllocateBytes(size_t count);
+    virtual void Free();
+    virtual void MemSet(int value); 
 
-  void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
-  vtkCudaLocalMemory();
-  virtual ~vtkCudaLocalMemory();
-  vtkCudaLocalMemory(const vtkCudaLocalMemory&);
-  vtkCudaLocalMemory& operator=(const vtkCudaLocalMemory&);
+    vtkCudaLocalMemory();
+    virtual ~vtkCudaLocalMemory();
+    vtkCudaLocalMemory(const vtkCudaLocalMemory&);
+    vtkCudaLocalMemory& operator=(const vtkCudaLocalMemory&);
 };
 
 #endif /* VTKCUDALOCALMEMORY_H_ */

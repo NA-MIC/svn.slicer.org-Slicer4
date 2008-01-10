@@ -13,26 +13,26 @@ class vtkCudaMemoryPitch;
 class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryCopy
 {
 public:
-  static vtkCudaMemoryCopy* New();
+    static vtkCudaMemoryCopy* New();
 
-  void SetSource(vtkCudaMemoryBase* source) { this->Source = source; }
-  
-  vtkCudaMemory* CopyToMemory();
-  vtkCudaHostMemory* CopyToHostMemory();
-  vtkCudaMemoryPitch* CopyToMemoryPitch();
-  vtkCudaMemoryArray* CopyToMemoryArray();
+    void SetSource(vtkCudaMemoryBase* source) { this->Source = source; }
 
-  virtual ~vtkCudaMemoryCopy();
+    vtkCudaMemory* CopyToMemory();
+    vtkCudaHostMemory* CopyToHostMemory();
+    vtkCudaMemoryPitch* CopyToMemoryPitch();
+    vtkCudaMemoryArray* CopyToMemoryArray();
+
+    virtual ~vtkCudaMemoryCopy();
 protected:
-  vtkCudaMemoryCopy();
-  vtkCudaMemoryCopy(const vtkCudaMemoryCopy&);
-  vtkCudaMemoryCopy operator=(const vtkCudaMemoryCopy&);
-  
-  //BTX
-  vtkCudaMemoryBase::MemoryType GetSourceType() const;
-  //ETX
-  vtkCudaMemoryBase* Source;
-  vtkCudaMemoryBase* Destination;
+    vtkCudaMemoryCopy();
+    vtkCudaMemoryCopy(const vtkCudaMemoryCopy&);
+    vtkCudaMemoryCopy operator=(const vtkCudaMemoryCopy&);
+
+    //BTX
+    vtkCudaMemoryBase::MemoryType GetSourceType() const;
+    //ETX
+    vtkCudaMemoryBase* Source;
+    vtkCudaMemoryBase* Destination;
 };
 
 #endif /*VTKCUDAMEMORYCOPY_H_*/

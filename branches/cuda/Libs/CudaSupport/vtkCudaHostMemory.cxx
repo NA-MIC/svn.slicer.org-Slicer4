@@ -12,46 +12,46 @@ vtkStandardNewMacro(vtkCudaHostMemory);
 
 vtkCudaHostMemory::vtkCudaHostMemory()
 {
-  this->Type = vtkCudaMemoryBase::HostMemory;
+    this->Type = vtkCudaMemoryBase::HostMemory;
 }
 
 vtkCudaHostMemory::~vtkCudaHostMemory()
 {
-  this->Free();
+    this->Free();
 }
 
 
 void* vtkCudaHostMemory::AllocateBytes(size_t count)
 {
-  this->Free();
-  cudaError_t error = 
-    cudaMallocHost(&this->MemPointer, count);
-  this->Size = count;
-  if (error != cudaSuccess)
-    vtkCudaBase::PrintError(error);
+    this->Free();
+    cudaError_t error = 
+        cudaMallocHost(&this->MemPointer, count);
+    this->Size = count;
+    if (error != cudaSuccess)
+        vtkCudaBase::PrintError(error);
 
-  return (void*) this->MemPointer;
+    return (void*) this->MemPointer;
 }
 
 void vtkCudaHostMemory::Free()
 {
-  if (this->MemPointer != NULL)
-  {
-    cudaFreeHost(this->MemPointer);
-    this->MemPointer = NULL;  
-    this->Size = 0;
-  }
+    if (this->MemPointer != NULL)
+    {
+        cudaFreeHost(this->MemPointer);
+        this->MemPointer = NULL;  
+        this->Size = 0;
+    }
 }
 
 /**
- * @brief host implementation of the MemorySetter Value
- */
+* @brief host implementation of the MemorySetter Value
+*/
 void vtkCudaHostMemory::MemSet(int value)
 {
-  memset(this->MemPointer, value, Size);
+    memset(this->MemPointer, value, Size);
 }
 
 void vtkCudaHostMemory::PrintSelf(ostream& os, vtkIndent indent)
 {
-  this->Superclass::PrintSelf(os, indent);
+    this->Superclass::PrintSelf(os, indent);
 }
