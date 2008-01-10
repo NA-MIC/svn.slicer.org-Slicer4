@@ -12,7 +12,7 @@ public:
     virtual void* AllocateBytes(size_t byte_count);
     //BTX
     template<typename T> T* Allocate(size_t count) 
-    { return (T*)this->AllocateBytes(count * sizeof(T)); }
+        { return (T*)this->AllocateBytes(count * sizeof(T)); }
     //ETX
 
     virtual void Free();
@@ -23,12 +23,8 @@ public:
     template<typename T> T* GetMemPointerAs() const { return (T*)this->GetMemPointer(); }
     //ETX
 
-    void* CopyFromMemory(void* source, size_t byte_count);
-
-    virtual vtkCudaMemory* CopyToMemory() const;
-    virtual vtkCudaHostMemory* CopyToHostMemory() const;
-    virtual vtkCudaMemoryArray* CopyToMemoryArray() const;
-    virtual vtkCudaMemoryPitch* CopyToMemoryPitch() const;
+    virtual bool CopyTo(vtkCudaMemory* other);
+    virtual bool CopyTo(vtkCudaLocalMemory* other);
 
     virtual void PrintSelf (ostream &os, vtkIndent indent);
 

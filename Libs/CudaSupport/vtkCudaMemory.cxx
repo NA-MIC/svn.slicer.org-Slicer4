@@ -3,6 +3,7 @@
 #include "cuda_runtime_api.h"
 #include "vtkCudaBase.h"
 
+#include "vtkCudaLocalMemory.h"
 #include "vtkCudaHostMemory.h"
 #include "vtkCudaMemoryArray.h"
 
@@ -13,7 +14,6 @@ vtkStandardNewMacro(vtkCudaMemory);
 
 vtkCudaMemory::vtkCudaMemory()
 {
-    this->Type = vtkCudaMemoryBase::Memory;
     this->MemPointer = NULL;
     this->Size = 0;
 }
@@ -52,54 +52,36 @@ void* vtkCudaMemory::AllocateBytes(size_t byte_count)
     return (void*) this->MemPointer;
 }
 
-void* vtkCudaMemory::CopyFromMemory(void *source, size_t byte_count)
-{
-    this->AllocateBytes(byte_count);
-    //CUDA_SAFE_CALL(
-    cudaMemcpy(this->MemPointer, source, byte_count, cudaMemcpyHostToDevice);
-    return this->MemPointer;
-}
-
 void vtkCudaMemory::MemSet(int value)
 {
     cudaMemset(this->MemPointer, value, this->Size);
 }
 
-///// COPY FUNCTIONS //////
-vtkCudaMemory* vtkCudaMemory::CopyToMemory() const
+bool vtkCudaMemory::CopyTo(vtkCudaMemory* other)
 {
-    vtkCudaMemory* dest = vtkCudaMemory::New();
-    dest->AllocateBytes(this->GetSize());
-    cudaMemcpy(dest->GetMemPointer(), 
+    other->AllocateBytes(this->GetSize());
+    if(cudaMemcpy(other->GetMemPointer(), 
         this->GetMemPointer(),
         this->GetSize(),
         cudaMemcpyDeviceToDevice
-        );
-    return dest;
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
 }
 
-vtkCudaHostMemory* vtkCudaMemory::CopyToHostMemory() const
+bool vtkCudaMemory::CopyTo(vtkCudaLocalMemory* other)
 {
-    vtkCudaHostMemory* dest = vtkCudaHostMemory::New();
-    dest->AllocateBytes(this->GetSize());
-    cudaMemcpy(dest->GetMemPointer(), 
+    other->AllocateBytes(this->GetSize());
+    if(cudaMemcpy(other->GetMemPointer(), 
         this->GetMemPointer(),
         this->GetSize(),
         cudaMemcpyDeviceToHost
-        );
-    return dest;
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
 }
-
-vtkCudaMemoryArray* vtkCudaMemory::CopyToMemoryArray() const
-{
-    return NULL;
-}
-
-vtkCudaMemoryPitch* vtkCudaMemory::CopyToMemoryPitch() const
-{
-    return NULL;
-}
-
 
 void vtkCudaMemory::PrintSelf (ostream &os, vtkIndent indent)
 {

@@ -7,6 +7,7 @@
 class vtkCudaMemory;
 class vtkImageData;
 class vtkCudaHostMemory;
+class vtkCudaLocalMemory;
 
 class vtkCamera;
 
@@ -16,7 +17,7 @@ public:
     vtkTypeRevisionMacro(vtkVolumeCudaMapper,vtkVolumeMapper);
     void PrintSelf(ostream& os, vtkIndent indent);
 
-    virtual void SetInput(unsigned char*, unsigned int x, unsigned int y, unsigned int z);
+    virtual void SetInput(vtkCudaLocalMemory*, unsigned int x, unsigned int y, unsigned int z);
     //virtual void SetInput( vtkImageData * );
     //virtual void SetInput( vtkDataSet * );
     vtkImageData *GetInput() { return this->LocalOutputImage; }
@@ -41,7 +42,7 @@ protected:
     unsigned int  InputDataSize[3];
     unsigned int OutputDataSize[2];
 
-    unsigned char* LocalInputBuffer;
+    vtkCudaLocalMemory* LocalInputBuffer;
     vtkCudaHostMemory* LocalOutputBuffer;
 
     vtkImageData* LocalOutputImage;

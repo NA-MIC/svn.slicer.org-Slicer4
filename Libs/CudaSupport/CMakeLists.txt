@@ -28,7 +28,6 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 
     vtkCudaMemoryPitch.cxx
     vtkCudaMemoryArray.cxx
-    vtkCudaMemoryCopy.cxx
 
 
   #### CUDA Pipeline Classes ####

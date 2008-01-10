@@ -34,7 +34,7 @@ vtkStandardNewMacro(vtkVolumeCudaMapper);
 
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
-    this->LocalInputBuffer = NULL;
+    this->LocalInputBuffer = vtkCudaLocalMemory::New();
     this->LocalOutputBuffer = vtkCudaHostMemory::New();
     this->CudaInputBuffer = vtkCudaMemory::New();
     this->CudaOutputBuffer = vtkCudaMemory::New();
@@ -63,7 +63,7 @@ void vtkVolumeCudaMapper::InitializeInternal()
     unsigned int height = 128;
     unsigned int width = 128;
 
-    this->LocalInputBuffer = (unsigned char*)malloc(x*y*z*sizeof(unsigned char));
+    this->LocalInputBuffer->Allocate<unsigned char>(x*y*z);
     /*
     vtkImageData* inputData = vtkImageData::New();
     inputData->SetScalarTypeToUnsignedChar();
@@ -81,7 +81,7 @@ void vtkVolumeCudaMapper::InitializeInternal()
     try {
     FILE *fp;
         fp=fopen("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw","r");
-        fread(this->LocalInputBuffer, sizeof(unsigned char), x*y*z, fp);
+        fread(this->LocalInputBuffer->GetMemPointer(), sizeof(unsigned char), x*y*z, fp);
         fclose(fp);}
     catch (...)
     {}
@@ -96,7 +96,7 @@ void vtkVolumeCudaMapper::InitializeInternal()
     CUDArenderAlgo_init(x,y,z, width, height);
 }
 
-void vtkVolumeCudaMapper::SetInput(unsigned char* input,
+void vtkVolumeCudaMapper::SetInput(vtkCudaLocalMemory* input,
                                    unsigned int x, unsigned int y, unsigned int z)
 {
     this->LocalInputBuffer = input;
@@ -106,7 +106,7 @@ void vtkVolumeCudaMapper::SetInput(unsigned char* input,
     this->InputDataSize[2] = z;
 
     //this->CudaInputBuffer->Allocate<uchar4>(x,y,z);
-    this->CudaInputBuffer->CopyFromMemory(this->LocalInputBuffer, sizeof(unsigned char) * x * y * z);
+    this->LocalInputBuffer->CopyTo(this->CudaInputBuffer);
 }
 
 

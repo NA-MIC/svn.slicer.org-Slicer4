@@ -15,7 +15,6 @@ vtkCudaMemoryBase::~vtkCudaMemoryBase()
 
 vtkCudaMemoryBase::vtkCudaMemoryBase()
 {
-    this->Type = vtkCudaMemoryBase::Undefined;
 }
 
 void vtkCudaMemoryBase::PrintSelf (ostream &os, vtkIndent indent)

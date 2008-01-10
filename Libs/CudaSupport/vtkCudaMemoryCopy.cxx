@@ -32,6 +32,7 @@ vtkCudaMemoryBase::MemoryType vtkCudaMemoryCopy::GetSourceType() const
 
 vtkCudaMemory* vtkCudaMemoryCopy::CopyToMemory()
 {
+    /*
     vtkCudaMemory* dest = NULL;
     switch (this->GetSourceType())
     {
@@ -69,6 +70,7 @@ vtkCudaMemory* vtkCudaMemoryCopy::CopyToMemory()
 
     }
     return dest;
+    */
 }
 
 vtkCudaHostMemory* vtkCudaMemoryCopy::CopyToHostMemory()

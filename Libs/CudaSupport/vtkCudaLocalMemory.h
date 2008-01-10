@@ -13,8 +13,10 @@ public:
     virtual void Free();
     virtual void MemSet(int value); 
 
-    void PrintSelf(ostream& os, vtkIndent indent);
+    virtual bool CopyTo(vtkCudaMemory* other);
+    virtual bool CopyTo(vtkCudaLocalMemory* other);
 
+    void PrintSelf(ostream& os, vtkIndent indent);
 protected:
     vtkCudaLocalMemory();
     virtual ~vtkCudaLocalMemory();
