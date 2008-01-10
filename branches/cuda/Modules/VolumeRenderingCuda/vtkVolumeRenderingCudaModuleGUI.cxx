@@ -221,7 +221,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->CudaActor = vtkVolume::New();
             this->CudaActor->SetMapper(this->CudaMapper);
         }
-
+        this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
         this->CudaMapper->Render(
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
             this->CudaActor);

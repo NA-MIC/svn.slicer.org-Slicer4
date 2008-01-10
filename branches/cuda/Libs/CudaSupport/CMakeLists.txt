@@ -23,8 +23,10 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
   #### CUDA MEMORY RUNTIME CLASSES ####
     vtkCudaMemoryBase.cxx
     vtkCudaMemory.cxx
-    vtkCudaMemoryPitch.cxx
     vtkCudaHostMemory.cxx
+    vtkCudaLocalMemory.cxx
+
+    vtkCudaMemoryPitch.cxx
     vtkCudaMemoryArray.cxx
     vtkCudaMemoryCopy.cxx
 
