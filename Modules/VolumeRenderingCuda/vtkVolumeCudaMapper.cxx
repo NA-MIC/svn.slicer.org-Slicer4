@@ -144,6 +144,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     vtkCamera* cam =
         renderer->GetActiveCamera();
 
+    cerr << *cam;
+
     // Build the Rotation Matrix
     double ax,ay,az;
     double bx,by,bz;
@@ -161,7 +163,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     by = cz*ax-cx*az;
     bz = cx*ay-cy*ax;
 
-    double distance = sqrt(ax*ax + ay*ay + az*az);
+    double distance = cam->GetDistance();
     ax /= distance; ay /= distance; az /= distance;
 
     double len = sqrt(bx*bx + by*by + bz*bz);
@@ -171,14 +173,14 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     cx /= len; cy /= len; cz /= len;
 
     float rotationMatrix[4][4]=
-         {{1,0,0,0},
+       /*  {{1,0,0,0},
         {0,1,0,0},
         {0,0,1,0},
-        {0,0,0,1}};
-    /*    {{ax,bx,cx,0},
+        {0,0,0,1}};*/
+        {{ax,bx,cx,0},
         {ay,by,cy,0},
         {az,bz,cz,0},
-        {0,0,0,1}};*/
+        {0,0,0,1}};
 
     cerr << "Volume rendering.\n";
     // Do rendering. 

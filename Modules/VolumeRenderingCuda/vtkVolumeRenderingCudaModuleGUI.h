@@ -108,8 +108,6 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkSlicerViewerWidget *ViewerWidget;
   vtkSlicerViewerInteractorStyle *InteractorStyle;
 
-  vtkKWPushButton* LoadButton;
-  vtkKWPushButton* CreatePiplineTestButton;
   vtkKWPushButton* UpdateButton;
 
   vtkKWTypeChooserBox*   InputTypeChooser;
