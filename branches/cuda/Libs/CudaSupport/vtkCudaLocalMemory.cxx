@@ -11,7 +11,6 @@ vtkStandardNewMacro(vtkCudaLocalMemory);
 
 vtkCudaLocalMemory::vtkCudaLocalMemory()
 {
-    this->Type = vtkCudaMemoryBase::HostMemory;
 }
 
 vtkCudaLocalMemory::~vtkCudaLocalMemory()
@@ -46,6 +45,32 @@ void vtkCudaLocalMemory::Free()
 void vtkCudaLocalMemory::MemSet(int value)
 {
     memset(this->MemPointer, value, Size);
+}
+
+bool vtkCudaLocalMemory::CopyTo(vtkCudaMemory* other)
+{
+    other->AllocateBytes(this->GetSize());
+    if(cudaMemcpy(other->GetMemPointer(), 
+        this->GetMemPointer(),
+        this->GetSize(),
+        cudaMemcpyHostToDevice
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
+}
+
+bool vtkCudaLocalMemory::CopyTo(vtkCudaLocalMemory* other)
+{
+    other->AllocateBytes(this->GetSize());
+    if(cudaMemcpy(other->GetMemPointer(), 
+        this->GetMemPointer(),
+        this->GetSize(),
+        cudaMemcpyHostToHost
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
 }
 
 void vtkCudaLocalMemory::PrintSelf(ostream& os, vtkIndent indent)

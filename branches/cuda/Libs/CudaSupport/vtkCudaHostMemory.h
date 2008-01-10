@@ -1,7 +1,7 @@
 #ifndef VTKCUDAHOSTMEMORY_H_
 #define VTKCUDAHOSTMEMORY_H_
 
-#include "vtkCudaMemory.h"
+#include "vtkCudaLocalMemory.h"
 
 //! Cuda Host Memory is page-locked host memory that is directly accesible from the cuda device
 /**
@@ -9,15 +9,14 @@
 * 
 * @note to much host memory in page locked mode can reduce overall system performance.
 */
-class VTK_CUDASUPPORT_EXPORT vtkCudaHostMemory : public vtkCudaMemory
+class VTK_CUDASUPPORT_EXPORT vtkCudaHostMemory : public vtkCudaLocalMemory
 {
-    vtkTypeRevisionMacro(vtkCudaHostMemory, vtkCudaMemory);
+    vtkTypeRevisionMacro(vtkCudaHostMemory, vtkCudaLocalMemory);
 public:
     static vtkCudaHostMemory* New();
 
     virtual void* AllocateBytes(size_t count);
     virtual void Free();
-    virtual void MemSet(int value); 
 
     void PrintSelf(ostream& os, vtkIndent indent);
 

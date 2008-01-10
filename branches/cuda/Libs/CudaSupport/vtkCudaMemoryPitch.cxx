@@ -9,7 +9,6 @@ vtkStandardNewMacro(vtkCudaMemoryPitch);
 
 vtkCudaMemoryPitch::vtkCudaMemoryPitch()
 {
-    this->Type = vtkCudaMemoryBase::PitchMemory;
     this->Pitch = 0;
 }
 

@@ -12,7 +12,6 @@ vtkStandardNewMacro(vtkCudaHostMemory);
 
 vtkCudaHostMemory::vtkCudaHostMemory()
 {
-    this->Type = vtkCudaMemoryBase::HostMemory;
 }
 
 vtkCudaHostMemory::~vtkCudaHostMemory()
@@ -41,14 +40,6 @@ void vtkCudaHostMemory::Free()
         this->MemPointer = NULL;  
         this->Size = 0;
     }
-}
-
-/**
-* @brief host implementation of the MemorySetter Value
-*/
-void vtkCudaHostMemory::MemSet(int value)
-{
-    memset(this->MemPointer, value, Size);
 }
 
 void vtkCudaHostMemory::PrintSelf(ostream& os, vtkIndent indent)
