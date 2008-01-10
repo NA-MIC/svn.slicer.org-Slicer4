@@ -9,7 +9,7 @@
  * 
  * @note to much host memory in page locked mode can reduce overall system performance.
  */
-class VTK_CUDASUPPORT_EXPORT  vtkCudaHostMemory : public vtkCudaMemory
+class VTK_CUDASUPPORT_EXPORT vtkCudaHostMemory : public vtkCudaMemory
 {
   vtkTypeRevisionMacro(vtkCudaHostMemory, vtkCudaMemory);
 public:

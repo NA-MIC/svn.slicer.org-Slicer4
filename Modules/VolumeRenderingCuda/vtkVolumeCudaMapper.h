@@ -8,6 +8,8 @@ class vtkCudaMemory;
 class vtkImageData;
 class vtkCudaHostMemory;
 
+class vtkCamera;
+
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolumeMapper
 {
 public:
@@ -23,6 +25,9 @@ public:
 
     virtual void Render(vtkRenderer *, vtkVolume *);
 
+    void SetColor(double r, double g, double b) { Color[0] = r; Color[1] = g; Color[2] = b; }
+    void SetColor(const double c[3]) { this->SetColor(c[0], c[1], c[2]); };
+    vtkGetVector3Macro(Color,double);
 
 protected:
     vtkVolumeCudaMapper();
@@ -43,6 +48,8 @@ protected:
 
     vtkCudaMemory* CudaInputBuffer;
     vtkCudaMemory* CudaOutputBuffer;
+
+    double Color[3];
 
 private:
     vtkVolumeCudaMapper operator=(const vtkVolumeCudaMapper&);
