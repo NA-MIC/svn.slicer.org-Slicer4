@@ -13,39 +13,43 @@ vtkStandardNewMacro(vtkCudaMemory);
 
 vtkCudaMemory::vtkCudaMemory()
 {
-  this->Type = vtkCudaMemoryBase::Memory;
-  this->MemPointer = NULL;
-  this->Size = 0;
+    this->Type = vtkCudaMemoryBase::Memory;
+    this->MemPointer = NULL;
+    this->Size = 0;
 }
 
 vtkCudaMemory::~vtkCudaMemory()
 {
-  // so the virtual function call will not be false.
-  // each subclass must call free by its own and set MemPointer to NULL in its Destructor!
-  if (this->MemPointer != NULL)
-    this->Free();
+    // so the virtual function call will not be false.
+    // each subclass must call free by its own and set MemPointer to NULL in its Destructor!
+    if (this->MemPointer != NULL)
+        this->Free();
 }
 
 void vtkCudaMemory::Free()
 {
-  if (this->MemPointer != NULL)
-  {
-    cudaFree(this->MemPointer);  
-    this->MemPointer = NULL;
-    this->Size = 0;
-  }
+    if (this->MemPointer != NULL)
+    {
+        cudaFree(this->MemPointer);  
+        this->MemPointer = NULL;
+        this->Size = 0;
+    }
 }
 
 void* vtkCudaMemory::AllocateBytes(size_t byte_count)
 {
-  this->Free();
-  cudaError_t error = 
-    cudaMalloc(&this->MemPointer, byte_count);
-  this->Size = byte_count;
-  if (error != cudaSuccess)
-    vtkCudaBase::PrintError(error);
+    // do nothing in case we already allocated the desired size.
+    if (this->GetSize() == byte_count)
+        return this->MemPointer;
 
-  return (void*) this->MemPointer;
+    this->Free();
+    cudaError_t error = 
+        cudaMalloc(&this->MemPointer, byte_count);
+    this->Size = byte_count;
+    if (error != cudaSuccess)
+        vtkCudaBase::PrintError(error);
+
+    return (void*) this->MemPointer;
 }
 
 void* vtkCudaMemory::CopyFromMemory(void *source, size_t byte_count)
@@ -58,48 +62,48 @@ void* vtkCudaMemory::CopyFromMemory(void *source, size_t byte_count)
 
 void vtkCudaMemory::MemSet(int value)
 {
-  cudaMemset(this->MemPointer, value, this->Size);
+    cudaMemset(this->MemPointer, value, this->Size);
 }
 
 ///// COPY FUNCTIONS //////
 vtkCudaMemory* vtkCudaMemory::CopyToMemory() const
 {
-   vtkCudaMemory* dest = vtkCudaMemory::New();
-   dest->AllocateBytes(this->GetSize());
-   cudaMemcpy(dest->GetMemPointer(), 
-    this->GetMemPointer(),
+    vtkCudaMemory* dest = vtkCudaMemory::New();
+    dest->AllocateBytes(this->GetSize());
+    cudaMemcpy(dest->GetMemPointer(), 
+        this->GetMemPointer(),
         this->GetSize(),
         cudaMemcpyDeviceToDevice
         );
-   return dest;
+    return dest;
 }
 
 vtkCudaHostMemory* vtkCudaMemory::CopyToHostMemory() const
 {
-   vtkCudaHostMemory* dest = vtkCudaHostMemory::New();
-   dest->AllocateBytes(this->GetSize());
-   cudaMemcpy(dest->GetMemPointer(), 
+    vtkCudaHostMemory* dest = vtkCudaHostMemory::New();
+    dest->AllocateBytes(this->GetSize());
+    cudaMemcpy(dest->GetMemPointer(), 
         this->GetMemPointer(),
         this->GetSize(),
         cudaMemcpyDeviceToHost
         );
-   return dest;
+    return dest;
 }
 
 vtkCudaMemoryArray* vtkCudaMemory::CopyToMemoryArray() const
 {
-  return NULL;
+    return NULL;
 }
 
 vtkCudaMemoryPitch* vtkCudaMemory::CopyToMemoryPitch() const
 {
-  return NULL;
+    return NULL;
 }
 
 
 void vtkCudaMemory::PrintSelf (ostream &os, vtkIndent indent)
 {
-  this->Superclass::PrintSelf(os, indent);
-  if (this->GetMemPointer() == NULL)
-    os << "Not yet allocated";
+    this->Superclass::PrintSelf(os, indent);
+    if (this->GetMemPointer() == NULL)
+        os << "Not yet allocated";
 }

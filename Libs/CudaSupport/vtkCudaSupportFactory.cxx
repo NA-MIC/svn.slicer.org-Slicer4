@@ -6,9 +6,9 @@ vtkStandardNewMacro(vtkCudaSupportFactory);
 
 vtkObject* vtkCudaSupportFactory::CreateInstance(const char* vtkclassname)
 {
-  vtkObject *ret = vtkObjectFactory::CreateInstance(vtkclassname);
-  if (ret != NULL)
-    return ret;  
-  else 
-    return NULL;
+    vtkObject *ret = vtkObjectFactory::CreateInstance(vtkclassname);
+    if (ret != NULL)
+        return ret;  
+    else 
+        return NULL;
 }

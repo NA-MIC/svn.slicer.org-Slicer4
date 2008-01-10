@@ -9,13 +9,13 @@
 
 vtkCudaMemoryCopy* vtkCudaMemoryCopy::New()
 {
-  return new vtkCudaMemoryCopy();  
+    return new vtkCudaMemoryCopy();  
 }
 
 vtkCudaMemoryCopy::vtkCudaMemoryCopy()
 {
-  this->Source = NULL;
-  this->Destination = NULL;
+    this->Source = NULL;
+    this->Destination = NULL;
 }
 
 vtkCudaMemoryCopy::~vtkCudaMemoryCopy()
@@ -24,121 +24,121 @@ vtkCudaMemoryCopy::~vtkCudaMemoryCopy()
 
 vtkCudaMemoryBase::MemoryType vtkCudaMemoryCopy::GetSourceType() const
 {
-  if (Source != NULL)
-    return Source->GetType();
-  else
-    return vtkCudaMemoryBase::Undefined;  
+    if (Source != NULL)
+        return Source->GetType();
+    else
+        return vtkCudaMemoryBase::Undefined;  
 }
 
 vtkCudaMemory* vtkCudaMemoryCopy::CopyToMemory()
 {
-  vtkCudaMemory* dest = NULL;
-  switch (this->GetSourceType())
-  {
+    vtkCudaMemory* dest = NULL;
+    switch (this->GetSourceType())
+    {
     default:
-       break;
+        break;
     case vtkCudaMemoryBase::Memory:
-      //Copy Memory to Memory:
-      dest = vtkCudaMemory::New();
-      dest->AllocateBytes(this->Source->GetSize());
-      cudaMemcpy(dest->GetMemPointer(), 
-          ((vtkCudaMemory*)this->Source)->GetMemPointer(),
-          this->Source->GetSize(),
-          cudaMemcpyDeviceToDevice
-          );
-      break;
+        //Copy Memory to Memory:
+        dest = vtkCudaMemory::New();
+        dest->AllocateBytes(this->Source->GetSize());
+        cudaMemcpy(dest->GetMemPointer(), 
+            ((vtkCudaMemory*)this->Source)->GetMemPointer(),
+            this->Source->GetSize(),
+            cudaMemcpyDeviceToDevice
+            );
+        break;
     case vtkCudaMemoryBase::HostMemory:
-      dest = vtkCudaMemory::New();
-      dest->AllocateBytes(this->Source->GetSize());
-      cudaMemcpy(dest->GetMemPointer(), 
-          ((vtkCudaMemory*)this->Source)->GetMemPointer(),
-          this->Source->GetSize(),
-          cudaMemcpyHostToDevice
-          );
-      break;
+        dest = vtkCudaMemory::New();
+        dest->AllocateBytes(this->Source->GetSize());
+        cudaMemcpy(dest->GetMemPointer(), 
+            ((vtkCudaMemory*)this->Source)->GetMemPointer(),
+            this->Source->GetSize(),
+            cudaMemcpyHostToDevice
+            );
+        break;
     case vtkCudaMemoryBase::ArrayMemory:
-      dest = vtkCudaMemory::New();
-      dest->AllocateBytes(this->Source->GetSize());
-      cudaMemcpyFromArray(dest->GetMemPointer(), ((vtkCudaMemoryArray*)this->Source)->GetArray(), 
-      0, 0,this->Source->GetSize(),
-      cudaMemcpyDeviceToDevice);
-      break;
+        dest = vtkCudaMemory::New();
+        dest->AllocateBytes(this->Source->GetSize());
+        cudaMemcpyFromArray(dest->GetMemPointer(), ((vtkCudaMemoryArray*)this->Source)->GetArray(), 
+            0, 0,this->Source->GetSize(),
+            cudaMemcpyDeviceToDevice);
+        break;
     case vtkCudaMemoryBase::PitchMemory:
 
-      break;
-    
-  }
-  return dest;
+        break;
+
+    }
+    return dest;
 }
 
 vtkCudaHostMemory* vtkCudaMemoryCopy::CopyToHostMemory()
 {
     vtkCudaHostMemory* retVal = NULL;
-  switch (this->GetSourceType())
-  {
+    switch (this->GetSourceType())
+    {
     default:
-       break;
+        break;
     case vtkCudaMemoryBase::Memory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::HostMemory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::ArrayMemory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::PitchMemory:
-      
-      break;
-    
-  }
-  return retVal;
+
+        break;
+
+    }
+    return retVal;
 }
 
 vtkCudaMemoryPitch* vtkCudaMemoryCopy::CopyToMemoryPitch()
 {
     vtkCudaMemoryPitch* retVal = NULL;
-  switch (this->GetSourceType())
-  {
+    switch (this->GetSourceType())
+    {
     default:
-       break;
+        break;
     case vtkCudaMemoryBase::Memory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::HostMemory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::ArrayMemory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::PitchMemory:
-      
-      break;
-    
-  }
-  return retVal;
+
+        break;
+
+    }
+    return retVal;
 }
 
 vtkCudaMemoryArray* vtkCudaMemoryCopy::CopyToMemoryArray()
 {
     vtkCudaMemoryArray* retVal = NULL;
-  switch (this->GetSourceType())
-  {
+    switch (this->GetSourceType())
+    {
     default:
-       break;
+        break;
     case vtkCudaMemoryBase::Memory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::HostMemory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::ArrayMemory:
-      
-      break;
+
+        break;
     case vtkCudaMemoryBase::PitchMemory:
-      
-      break;
-    
-  }
-  return retVal;
+
+        break;
+
+    }
+    return retVal;
 }

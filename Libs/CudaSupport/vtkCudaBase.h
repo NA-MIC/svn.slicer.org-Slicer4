@@ -8,26 +8,26 @@
 /// THIS IS A STATIC CLASS USED FOR BASIC CUDA FUNCTIONALITY!!
 class VTK_CUDASUPPORT_EXPORT vtkCudaBase : public vtkObject
 {
-  vtkTypeRevisionMacro(vtkCudaBase, vtkObject);
-  public:
-  //BTX
-  typedef enum {
-    Success,
-    NotReadyError,
-    InvalidValueError,
-  } State;
-  //ETX
+    vtkTypeRevisionMacro(vtkCudaBase, vtkObject);
+public:
+    //BTX
+    typedef enum {
+        Success,
+        NotReadyError,
+        InvalidValueError,
+    } State;
+    //ETX
 
-   static vtkCudaBase* New();
-  
-   static cudaError_t GetLastError();
-   static const char* GetLastErrorString();
-   static const char* GetErrorString(cudaError_t error);
-   static void PrintError(cudaError_t error);
-  
+    static vtkCudaBase* New();
+
+    static cudaError_t GetLastError();
+    static const char* GetLastErrorString();
+    static const char* GetErrorString(cudaError_t error);
+    static void PrintError(cudaError_t error);
+
 private:
-  virtual ~vtkCudaBase();
-  vtkCudaBase();
+    virtual ~vtkCudaBase();
+    vtkCudaBase();
 };
 
 #endif /*VTKCUDABASE_H_*/

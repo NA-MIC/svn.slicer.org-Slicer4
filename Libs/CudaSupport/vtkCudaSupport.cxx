@@ -12,18 +12,18 @@ vtkInstantiatorNewMacro(vtkCudaSupport);
 
 vtkCudaSupport* vtkCudaSupport::New()
 {
-  return new vtkCudaSupport();
+    return new vtkCudaSupport();
 }
 
 vtkCudaSupport::vtkCudaSupport()
 {
-  CheckSupportedCudaVersion();
+    CheckSupportedCudaVersion();
 }
 
 vtkCudaSupport::~vtkCudaSupport()
 {
-  for (int i = 0; i < this->GetDeviceCount(); i++)
-    this->Devices[i]->Delete();
+    for (int i = 0; i < this->GetDeviceCount(); i++)
+        this->Devices[i]->Delete();
 }
 
 int vtkCudaSupport::CheckSupportedCudaVersion()
@@ -33,10 +33,10 @@ int vtkCudaSupport::CheckSupportedCudaVersion()
     int device;
     for (device = 0; device < deviceCount; ++device)
     {
-      vtkCudaDevice* CudaDevice = vtkCudaDevice::New();
-      CudaDevice->SetDeviceNumber(device);
-      
-      this->Devices.push_back(CudaDevice);
+        vtkCudaDevice* CudaDevice = vtkCudaDevice::New();
+        CudaDevice->SetDeviceNumber(device);
+
+        this->Devices.push_back(CudaDevice);
     }
 
     /// HACK BY NOW
@@ -45,9 +45,9 @@ int vtkCudaSupport::CheckSupportedCudaVersion()
 
 void vtkCudaSupport::PrintSelf(ostream& os, vtkIndent indent)
 {
-  os << "Cuda Support Listing all Children: "<< std::endl;
-  for (int i = 0; i < this->GetDeviceCount(); ++i)
+    os << "Cuda Support Listing all Children: "<< std::endl;
+    for (int i = 0; i < this->GetDeviceCount(); ++i)
     {
-      this->Devices[i]->PrintSelf(os, indent.GetNextIndent());
+        this->Devices[i]->PrintSelf(os, indent.GetNextIndent());
     }
 }

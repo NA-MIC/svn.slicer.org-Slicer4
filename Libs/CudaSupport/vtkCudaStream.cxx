@@ -10,26 +10,26 @@ vtkStandardNewMacro(vtkCudaStream);
 
 vtkCudaStream::vtkCudaStream()
 {
-  cudaStreamCreate(&this->Stream);
+    cudaStreamCreate(&this->Stream);
 }
 
 vtkCudaStream::~vtkCudaStream()
 {
-  cudaStreamDestroy(this->Stream);
+    cudaStreamDestroy(this->Stream);
 }
 
 void vtkCudaStream::Synchronize()
 {
-  cudaStreamSynchronize(this->Stream);  
+    cudaStreamSynchronize(this->Stream);  
 }
 
 /**
- * @brief Creates and returns a new vtkCudaEvent that triggers when the Stream is finished.
- * @returns a new vtkCudaEvent triggering on this Stream.
- */
+* @brief Creates and returns a new vtkCudaEvent that triggers when the Stream is finished.
+* @returns a new vtkCudaEvent triggering on this Stream.
+*/
 vtkCudaEvent* vtkCudaStream::GetStreamEvent()
 {
- vtkCudaEvent* event = vtkCudaEvent::New();
- event->Record(this);
- return event;  
+    vtkCudaEvent* event = vtkCudaEvent::New();
+    event->Record(this);
+    return event;  
 }
