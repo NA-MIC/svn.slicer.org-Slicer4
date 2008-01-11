@@ -473,6 +473,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   double SliceMagnification;
   int SliceInteracting;
 
+  void CheckAbort(void);
+
  private:
   vtkSlicerViewControlGUI ( const vtkSlicerViewControlGUI& ); // Not implemented.
   void operator = ( const vtkSlicerViewControlGUI& ); //Not implemented.
