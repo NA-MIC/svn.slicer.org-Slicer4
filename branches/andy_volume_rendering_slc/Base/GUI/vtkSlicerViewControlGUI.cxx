@@ -714,6 +714,16 @@ void vtkSlicerViewControlGUI::UpdateSlicesFromMRML()
 
 
 
+void vtkSlicerViewControlGUI::CheckAbort(void)
+{
+    int pending=this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetEventPending();
+    int pendingGUI=vtkKWTkUtilities::CheckForPendingInteractionEvents(this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow());
+    if(pending!=0)//||pendingGUI!=0)
+    {
+        this->NavigationWidget->GetRenderWindow()->SetAbortRender(1);
+        return;
+    }
+}
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::RequestNavigationRender()
 {
@@ -878,6 +888,11 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
 
   if ( this->GetApplicationGUI() != NULL )
     {
+        if(caller==this->NavigationWidget->GetRenderWindow()&&event==vtkCommand::AbortCheckEvent)
+    {
+        this->CheckAbort();
+        return;
+    }
     vtkSlicerApplicationGUI *appGUI = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( ));
     vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast( appGUI->GetApplication() );
     if ( app != NULL )
@@ -1232,6 +1247,10 @@ void vtkSlicerViewControlGUI::ConfigureNavigationWidgetRender ( )
   // MainViewer's window on the scene.
   if ( this->GetApplicationGUI() != NULL )
     {
+        if(!this->NavigationWidget->GetRenderWindow()->HasObserver(vtkCommand::AbortCheckEvent,(vtkCommand*)this->GUICallbackCommand))
+        {
+            this->NavigationWidget->GetRenderWindow()->AddObserver(vtkCommand::AbortCheckEvent,(vtkCommand*)this->GUICallbackCommand);
+        }
 
     vtkSlicerApplicationGUI *p = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( ));    
     // 3DViewer's renderer and its camera
@@ -2957,6 +2976,7 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       this->EnableDisableNavButton->Create();
       this->EnableDisableNavButton->SelectedStateOn();
     
+      
       // clean up
       f0->Delete ( );
       f1->Delete ( );
