@@ -18,17 +18,6 @@
 #include <cutil.h>
 #include <vector_types.h>
 
-/**
- * Initialization. This function prepare GPU memory for rendering 3D data of size (sizeX, sizeY, sizeZ) on display size of (dsizeX, dsizeY)
- */
-
-void CUDArenderAlgo_init(int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY);
-
-/**
- * Load data from CPU into GPU. There are a lot of parameters here. Please ask me for more details
- */
-
-void CUDArenderAlgo_loadData(unsigned char* sourceData, int sizeX, int sizeY, int sizeZ);
 
 /**
  * Execute volume rendering. There are also a lot of parameters here.
@@ -43,18 +32,4 @@ void CUDArenderAlgo_doRender(uchar4* outputData, unsigned char* sourceData,
                              float voxelSizeX, float voxelSizeY, float voxelSizeZ, 
                              int minThreshold, int maxThreshold, 
                              int sliceDistance);
-
-/**
- * Copy the result from GPU memory to CPU memory. The resulted image is RGBA image of size (dsizeX, dsizeY)
- */
-
-void CUDArenderAlgo_getResult(unsigned char* resultImagePointer, unsigned char* output,
-                              int dsizeX, int dsizeY);
-
-/**
- * Free GPU memories.
- */
-
-void CUDArenderAlgo_delete();
-
 #endif
