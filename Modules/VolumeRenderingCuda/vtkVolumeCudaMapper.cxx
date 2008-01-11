@@ -29,6 +29,7 @@ extern "C" {
 }
 
 
+
 vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
 vtkStandardNewMacro(vtkVolumeCudaMapper);
 
@@ -46,6 +47,8 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 }  
 
 
+
+
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
     free(this->LocalInputBuffer);
@@ -55,6 +58,8 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
     this->LocalOutputImage->Delete();
 }
 
+#include "vtkImageReader.h"
+
 void vtkVolumeCudaMapper::InitializeInternal()
 {
     unsigned int x = 256,
@@ -63,28 +68,32 @@ void vtkVolumeCudaMapper::InitializeInternal()
     unsigned int height = 128;
     unsigned int width = 128;
 
+
+    vtkImageReader* reader = vtkImageReader::New();
+    reader->SetDataScalarTypeToUnsignedChar();
+    reader->SetNumberOfScalarComponents(1);
+    reader->SetDataExtent(0, x - 1, 
+                          0, y - 1, 
+                          0, z - 1);
+    reader->SetFileDimensionality(3);
+   // reader->SetNumberOfScalarComponents(1);
+    
+    reader->SetFileName("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw");
+    reader->Update();
+    
+    vtkImageData* data = reader->GetOutput();
+
     this->LocalInputBuffer->Allocate<unsigned char>(x*y*z);
-    /*
-    vtkImageData* inputData = vtkImageData::New();
-    inputData->SetScalarTypeToUnsignedChar();
-    inputData->SetNumberOfScalarComponents(4);
-    inputData->SetDimensions(width, height, 1);
-    inputData->SetExtent(0, width - 1, 
-        0, height - 1, 
-        0, 1 - 1);
-    inputData->SetNumberOfScalarComponents(colors);
-    inputData->SetScalarTypeToUnsignedChar();
-    inputData->AllocateScalars();*/
-
-
-    // HERE WE READ IN SOME DATA
-    try {
-    FILE *fp;
-        fp=fopen("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw","r");
-        fread(this->LocalInputBuffer->GetMemPointer(), sizeof(unsigned char), x*y*z, fp);
-        fclose(fp);}
-    catch (...)
-    {}
+    memcpy(this->LocalInputBuffer->GetMemPointer(),
+        data->GetScalarPointer(), sizeof(unsigned char) * x*y*z);
+    //// HERE WE READ IN SOME DATA
+    //try {
+    //FILE *fp;
+    //    fp=fopen("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw","r");
+    //    fread(this->LocalInputBuffer->GetMemPointer(), sizeof(unsigned char), x*y*z, fp);
+    //    fclose(fp);}
+    //catch (...)
+    //{}
 
     this->SetInput(this->LocalInputBuffer, x, y, z);
 
@@ -132,8 +141,6 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     this->LocalOutputImage->AllocateScalars();
 }
 
-
-#include "cuda_runtime_api.h"
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
     float color[6]={this->Color[0],this->Color[1],this->Color[2], 1,1,1};
@@ -195,8 +202,9 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     // Get the resulted image.
 
     cerr << "Copy result from GPU to CPU.\n";
-    cudaMemcpy(this->LocalOutputBuffer->GetMemPointerAs<unsigned char>(), this->CudaOutputBuffer->GetMemPointerAs<unsigned char>(),
-        sizeof(uchar4)*this->OutputDataSize[0]*this->OutputDataSize[1], cudaMemcpyDeviceToHost);
+
+    this->CudaOutputBuffer->CopyTo(this->LocalOutputBuffer);
+
     memcpy(this->LocalOutputImage->GetScalarPointer(), this->LocalOutputBuffer->GetMemPointer(),
         sizeof(unsigned char) *
         this->OutputDataSize[0] *
