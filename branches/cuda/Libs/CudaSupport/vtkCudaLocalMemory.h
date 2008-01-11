@@ -13,6 +13,9 @@ public:
     virtual void Free();
     virtual void MemSet(int value); 
 
+    virtual bool CopyFrom(vtkImageData* data);
+    virtual bool CopyTo(vtkImageData* data);
+
     virtual bool CopyTo(vtkCudaMemory* other);
     virtual bool CopyTo(vtkCudaLocalMemory* other);
 

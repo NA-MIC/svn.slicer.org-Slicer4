@@ -8,6 +8,7 @@
 #include "vtkCudaMemoryArray.h"
 
 #include "vtkObjectFactory.h"
+#include "vtkImageData.h"
 
 vtkCxxRevisionMacro(vtkCudaMemory, "$Revision: 1.0 $");
 vtkStandardNewMacro(vtkCudaMemory);
@@ -55,6 +56,38 @@ void* vtkCudaMemory::AllocateBytes(size_t byte_count)
 void vtkCudaMemory::MemSet(int value)
 {
     cudaMemset(this->MemPointer, value, this->Size);
+}
+
+bool vtkCudaMemory::CopyFrom(vtkImageData* data)
+{
+    this->AllocateBytes(data->GetActualMemorySize()*1024);
+
+    if(cudaMemcpy(this->GetMemPointer(),
+        data->GetScalarPointer(),
+        this->GetSize(),
+        cudaMemcpyHostToDevice
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
+}
+
+bool vtkCudaMemory::CopyTo(vtkImageData* data)
+{
+    if(data->GetActualMemorySize() * 1024 < this->GetSize())
+    {
+        vtkErrorWithObjectMacro(this, "The vtkImageData has to little Memory to store memory inside");
+        return false;
+    }
+    // we cannot say the XYZ extent so we just write into the memory area
+    if(cudaMemcpy(data->GetScalarPointer(),
+        this->GetMemPointer(),
+        this->GetSize(),
+        cudaMemcpyDeviceToHost
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
 }
 
 bool vtkCudaMemory::CopyTo(vtkCudaMemory* other)
