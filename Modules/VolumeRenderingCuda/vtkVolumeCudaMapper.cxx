@@ -35,7 +35,6 @@ vtkStandardNewMacro(vtkVolumeCudaMapper);
 
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
-    this->LocalInputImage = NULL;
     this->LocalOutputImage = vtkImageData::New();
 
     this->CudaInputBuffer = vtkCudaMemory::New();
@@ -45,20 +44,16 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     this->UpdateOutputResolution(128, 128, 4);
 }  
 
-
-
-
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
     this->CudaInputBuffer->Delete();
     this->CudaOutputBuffer->Delete();
     this->LocalOutputImage->Delete();
-    this->LocalInputImage = NULL;
 }
 
 void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
 {
-    this->LocalInputImage = input;
+    this->Superclass::SetInput(input);
 
     if (input != NULL)
     {
@@ -139,12 +134,14 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     {0,0,0,1}};*/
 
     cerr << "Volume rendering.\n";
-    // Do rendering. 
+    // Do rendering.
+
+    int* dims = this->GetInput()->GetDimensions();
 
     CUDArenderAlgo_doRender(this->CudaOutputBuffer->GetMemPointerAs<uchar4>(),
         this->CudaInputBuffer->GetMemPointerAs<unsigned char>(),
         (float*)rotationMatrix, color, minmax, lightVec, 
-        this->LocalInputImage->GetDimensions()[0], this->LocalInputImage->GetDimensions()[1], this->LocalInputImage->GetDimensions()[2],    //3D data size
+        dims[0], dims[1], dims[2],    //3D data size
         this->OutputDataSize[0], this->OutputDataSize[1],     //result image size
         0,0,0,          //translation of data in x,y,z direction
         1, 1, 1,        //voxel dimension

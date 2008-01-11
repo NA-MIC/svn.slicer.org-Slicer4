@@ -18,8 +18,6 @@ public:
     void PrintSelf(ostream& os, vtkIndent indent);
 
     virtual void SetInput( vtkImageData * );
-    //virtual void SetInput( vtkDataSet * );
-    vtkImageData *GetInput() { return this->LocalOutputImage; }
 
     static vtkVolumeCudaMapper *New();
 
@@ -37,7 +35,6 @@ protected:
 
     unsigned int OutputDataSize[2];
 
-    vtkImageData* LocalInputImage;
     vtkImageData* LocalOutputImage;
 
     vtkCudaMemory* CudaInputBuffer;

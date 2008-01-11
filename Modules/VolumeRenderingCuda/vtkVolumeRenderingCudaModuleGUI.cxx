@@ -245,6 +245,8 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
             this->CudaActor);
         this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+
+     //   this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddActor(this->CudaActor);
     }
 }
 
