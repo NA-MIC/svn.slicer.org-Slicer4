@@ -157,6 +157,10 @@ protected:
 
     void CreateThreshold(void);
 
+    double ColorsClippingHandles[6][3];
+
+    int NoSetRangeNeeded;
+
 
 
 };

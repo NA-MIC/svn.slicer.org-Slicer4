@@ -112,7 +112,30 @@ vtkSlicerVRGrayscaleHelper::vtkSlicerVRGrayscaleHelper(void)
     //Clipping
     this->BW_Clipping=NULL;
 
+    //Set Standard Clipping Colors
+    ColorsClippingHandles[0][0]=1;
+    ColorsClippingHandles[0][1]=0;
+    ColorsClippingHandles[0][2]=1;
 
+    ColorsClippingHandles[1][0]=1;
+    ColorsClippingHandles[1][1]=0;
+    ColorsClippingHandles[1][2]=0;
+
+    ColorsClippingHandles[2][0]=1;
+    ColorsClippingHandles[2][1]=1;
+    ColorsClippingHandles[2][2]=1;
+
+    ColorsClippingHandles[3][0]=0;
+    ColorsClippingHandles[3][1]=1;
+    ColorsClippingHandles[3][2]=0;
+
+    ColorsClippingHandles[4][0]=0;
+    ColorsClippingHandles[4][1]=0;
+    ColorsClippingHandles[4][2]=1;
+
+    ColorsClippingHandles[5][0]=0;
+    ColorsClippingHandles[5][1]=0;
+    ColorsClippingHandles[5][2]=0;
 }
 
 vtkSlicerVRGrayscaleHelper::~vtkSlicerVRGrayscaleHelper(void)
@@ -451,7 +474,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->ColorDisplay->GetMultiColumnList()->GetWidget()->SetSelectionChangedCommand(this,"ProcessSelection");
     this->ColorDisplay->AddObserver(vtkSlicerColorDisplayWidget::ColorIDModifiedEvent,(vtkCommand*) this->VolumeRenderingCallbackCommand);
     this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
-    this->ColorDisplay->GetWidgetName()); 
+        this->ColorDisplay->GetWidgetName()); 
 
 }
 void vtkSlicerVRGrayscaleHelper::InitializePipelineNewCurrentNode()
@@ -685,45 +708,28 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
         this->MapperTexture->SetClippingPlanes(planes);
         this->MapperRaycast->SetClippingPlanes(planes);
 
-        vtkPolyData *vertices=vtkPolyData::New();
+        //Decide if this event is triggered by the vtkBoxWidget or by the sliders
+        //if sliders don't trigger setRange->this would lead to an endless loop
+        if(!this->NoSetRangeNeeded)
+        {
 
-        callerBox->GetPolyData(vertices);
-        double pointA[3];
-        double pointB[3];
-        vertices->GetPoint(0,pointA);
-        vertices->GetPoint(6,pointB);
-        vtkTransform *transform=vtkTransform::New();
-        callerBox->GetTransform(transform);
-        vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
-        double origin[4];
-        origin[0]=iData->GetOrigin()[0];
-        origin[1]=iData->GetOrigin()[1];
-        origin[2]=iData->GetOrigin()[2];
-        origin[3]=0;
+            vtkPolyData *vertices=vtkPolyData::New();
 
-        transform->MultiplyPoint(origin,origin);
-        
-        double dimension[4];
-        dimension[0]=iData->GetDimensions()[0];
-        dimension[1]=iData->GetDimensions()[1];
-        dimension[2]=iData->GetDimensions()[2];
-        dimension[3]=0;
-        transform->MultiplyPoint(dimension,dimension);
-        this->RA_Cropping[0]->SetRange(pointA[0],pointB[0]);
-        this->RA_Cropping[1]->SetRange(pointA[1],pointB[1]);
-        this->RA_Cropping[2]->SetRange(pointA[2],pointB[2]);
-
-
-
-
-    //    this->RA_Cropping[0]->SetLabelText("I");
-    //this->RA_Cropping[0]->SetWholeRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
-
+            callerBox->GetPolyData(vertices);
+            double pointA[3];
+            double pointB[3];
+            vertices->GetPoint(0,pointA);
+            vertices->GetPoint(6,pointB);
+            this->RA_Cropping[0]->SetRange(pointA[0],pointB[0]);
+            this->RA_Cropping[1]->SetRange(pointA[1],pointB[1]);
+            this->RA_Cropping[2]->SetRange(pointA[2],pointB[2]);
+        }
+        this->NoSetRangeNeeded=0;
         return;
     }
     //Check the checkbuttons
     vtkKWCheckButton *callerObjectCheckButton=vtkKWCheckButton::SafeDownCast(caller);
-   if(callerObjectCheckButton==this->CB_TextureLow->GetWidget()&&eid==vtkKWCheckButton::SelectedStateChangedEvent)
+    if(callerObjectCheckButton==this->CB_TextureLow->GetWidget()&&eid==vtkKWCheckButton::SelectedStateChangedEvent)
     {
         this->ScheduleMask[0]=callerObjectCheckButton->GetSelectedState();
         this->UpdateQualityCheckBoxes();
@@ -1335,33 +1341,26 @@ void vtkSlicerVRGrayscaleHelper::UpdateQualityCheckBoxes(void)
 
 void vtkSlicerVRGrayscaleHelper::Cropping(int index, double min,double max)
 {
+
     if(this->MapperTexture==NULL||this->MapperRaycast==NULL)
     {
         return;
     }
-
-    //double *oldCropping=this->MapperTexture->GetCroppingRegionPlanes();
-    //oldCropping[2*index]=min;
-    //oldCropping[2*index+1]=max;
-    double oldCropping[6];
-    this->Gui->GetcurrentNode()->GetCroppingRegionPlanes(oldCropping);
-    //for(int i=0;i<3;i++)
-    //{
-    //    oldCropping[2*i]=this->RA_Cropping[i]->GetRange()[0];
-    //    oldCropping[2*i+1]=this->RA_Cropping[i]->GetRange()[1];
-    //}
-    oldCropping[2*index]=min;
-    oldCropping[2*index+1]=max;
-    this->MapperRaycast->SetCroppingRegionPlanes(oldCropping);
-    this->MapperTexture->SetCroppingRegionPlanes(oldCropping);
-    this->Gui->GetcurrentNode()->SetCroppingRegionPlanes(oldCropping);
-    //Save the cropping region planes in mrml node
+    this->BW_Clipping->PlaceWidget(
+        this->RA_Cropping[0]->GetRange()[0],
+        this->RA_Cropping[0]->GetRange()[1],
+        this->RA_Cropping[1]->GetRange()[0],
+        this->RA_Cropping[1]->GetRange()[1],
+        this->RA_Cropping[2]->GetRange()[0],
+        this->RA_Cropping[2]->GetRange()[1]);
+    this->NoSetRangeNeeded=1;
+    this->ProcessVolumeRenderingEvents(this->BW_Clipping,vtkCommand::InteractionEvent,0);
     this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
 }
 
 void vtkSlicerVRGrayscaleHelper::CreateCropping()
 {
-        vtkKWFrameWithLabel *croppingFrame=vtkKWFrameWithLabel::New();
+    vtkKWFrameWithLabel *croppingFrame=vtkKWFrameWithLabel::New();
     croppingFrame->SetParent(this->NB_Details->GetFrame("Cropping"));
     croppingFrame->Create();
     croppingFrame->AllowFrameToCollapseOff();
@@ -1381,7 +1380,7 @@ void vtkSlicerVRGrayscaleHelper::CreateCropping()
     this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
         this->CB_Cropping->GetWidgetName());
 
-    
+
     this->CB_Clipping=vtkKWCheckButtonWithLabel::New();
     this->CB_Clipping->SetParent(croppingFrame->GetFrame());
     this->CB_Clipping->Create();
@@ -1406,12 +1405,18 @@ void vtkSlicerVRGrayscaleHelper::CreateCropping()
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
     this->RA_Cropping[0]->SetLabelText("I");
     this->RA_Cropping[0]->SetWholeRange(-500,500);
+    this->RA_Cropping[0]->SetSlider1Color(this->ColorsClippingHandles[0]);
+    this->RA_Cropping[0]->SetSlider2Color(this->ColorsClippingHandles[1]);
     this->RA_Cropping[0]->SetRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
     this->RA_Cropping[1]->SetLabelText("J");
     this->RA_Cropping[1]->SetWholeRange(-500,500);
+    this->RA_Cropping[1]->SetSlider1Color(this->ColorsClippingHandles[2]);
+    this->RA_Cropping[1]->SetSlider2Color(this->ColorsClippingHandles[3]);
     this->RA_Cropping[1]->SetRange(iData->GetOrigin()[1],iData->GetDimensions()[1]);
     this->RA_Cropping[2]->SetLabelText("K");
     this->RA_Cropping[2]->SetWholeRange(-500,500);
+    this->RA_Cropping[2]->SetSlider1Color(this->ColorsClippingHandles[4]);
+    this->RA_Cropping[2]->SetSlider2Color(this->ColorsClippingHandles[5]);
     this->RA_Cropping[2]->SetRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
 
     //Now we have the cropping ranges
@@ -1649,28 +1654,39 @@ void vtkSlicerVRGrayscaleHelper::ProcessThresholdReset(void)
 
 void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableCropping(int cbSelectedState)
 {
-    if(this->MapperTexture!=NULL&&this->MapperRaycast!=NULL)
+    if(this->MapperTexture==NULL||this->MapperRaycast==NULL)
     {
-        this->MapperTexture->SetCropping(cbSelectedState);
-        this->MapperRaycast->SetCropping(cbSelectedState);
-        this->MapperTexture->SetCroppingRegionFlagsToSubVolume();
-        this->MapperRaycast->SetCroppingRegionFlagsToSubVolume();
-        this->Gui->GetcurrentNode()->SetCroppingEnabled(cbSelectedState);
+        return;
     }
-    //Reset range
-    //Don't reset for now
-    //if(!cbSelectedState)
-    //{
-    //        vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
-    //        this->RA_Cropping[0]->SetRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
-    //        this->RA_Cropping[1]->SetRange(iData->GetOrigin()[1],iData->GetDimensions()[1]);
-    //        this->RA_Cropping[2]->SetRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
-    //}
     for(int i=0;i<3;i++)
     {
         this->RA_Cropping[i]->SetEnabled(cbSelectedState);
     }
-    //this->Cropping(0,0,0);
+    //There is not automatical enabling when
+    //this->ProcessEnableDisableClippingPlanes(cbSelectedState);
+    this->CB_Clipping->SetEnabled(cbSelectedState);
+    if(this->Gui->GetcurrentNode()!=NULL)
+    {
+        this->Gui->GetcurrentNode()->SetCroppingEnabled(cbSelectedState);
+    }
+    if(cbSelectedState)
+    {
+        //If we enable clipping we choose the current state of CB_Clipping
+        this->ProcessEnableDisableClippingPlanes(this->CB_Clipping->GetWidget()->GetSelectedState());
+        this->Cropping(0,0,0);
+        //PlaceWidget
+
+    }
+    else
+    {
+        this->ProcessEnableDisableClippingPlanes(0);
+        this->MapperTexture->RemoveAllClippingPlanes();
+        this->MapperRaycast->RemoveAllClippingPlanes();
+    }
+
+    //Trigger a Render
+    this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+    
 }
 
 void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableClippingPlanes(int clippingEnabled)
@@ -1684,7 +1700,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableClippingPlanes(int clipping
         this->BW_Clipping->SetProp3D(this->Volume);
         this->BW_Clipping->PlaceWidget();
         this->BW_Clipping->InsideOutOn();
-        this->BW_Clipping->RotationEnabledOff();
+        this->BW_Clipping->RotationEnabledOn();
         this->BW_Clipping->GetSelectedHandleProperty()->SetColor(0.2,0.6,0.15);
         interactor->UpdateSize(this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetSize()[0],
             this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetSize()[1]);
