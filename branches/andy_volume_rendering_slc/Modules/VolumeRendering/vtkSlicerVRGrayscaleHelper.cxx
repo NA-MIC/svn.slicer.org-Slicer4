@@ -20,6 +20,7 @@
 #include "vtkRenderWindowInteractor.h"
 #include "vtkBoxWidget.h"
 #include "vtkPlanes.h"
+#include "vtkProperty.h"
 
 //KWWidgets
 #include "vtkKWHistogram.h"
@@ -43,22 +44,6 @@
 
 //Compiler
 #include <math.h>
-
-class vtkMyCallback : public vtkCommand
-{
-public:
-    static vtkMyCallback *New() 
-    { return new vtkMyCallback; }
-    virtual void Execute(vtkObject *caller, unsigned long, void*)
-    {
-        vtkTransform *t = vtkTransform::New();
-        vtkBoxWidget *widget = reinterpret_cast<vtkBoxWidget*>(caller);
-        widget->GetTransform(t);
-        widget->GetProp3D()->SetUserTransform(t);
-        t->Delete();
-    }
-};
-
 
 vtkCxxRevisionMacro(vtkSlicerVRGrayscaleHelper, "$Revision: 1.46 $");
 vtkStandardNewMacro(vtkSlicerVRGrayscaleHelper);
@@ -457,26 +442,6 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
 
     this->CreateCropping();
 
-    //Clipping
-    vtkKWFrameWithLabel *croppingFrame=vtkKWFrameWithLabel::New();
-    croppingFrame->SetParent(this->NB_Details->GetFrame("Cropping"));
-    croppingFrame->Create();
-    croppingFrame->AllowFrameToCollapseOff();
-    croppingFrame->SetLabelText("Cropping (IJK coordinates)");
-    this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-        croppingFrame->GetWidgetName() );
-
-    //Build GUI
-
-    this->CB_Clipping=vtkKWCheckButtonWithLabel::New();
-    this->CB_Clipping->SetParent(croppingFrame->GetFrame());
-    this->CB_Clipping->Create();
-    this->CB_Clipping->GetWidget()->SetSelectedState(0);
-    this->CB_Clipping->SetLabelText("Enable /Disable Clipping Box");
-    this->CB_Clipping->GetWidget()->SetCommand(this, "ProcessEnableDisableClippingPlanes");
-    this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
-        this->CB_Clipping->GetWidgetName());
-
     this->ColorDisplay=vtkSlicerColorDisplayWidget::New();
     this->ColorDisplay->SetMRMLScene(this->Gui->GetLogic()->GetMRMLScene() );
     this->ColorDisplay->SetParent(this->NB_Details->GetFrame("Labelmaps"));
@@ -719,11 +684,46 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
         callerBox->GetPlanes(planes);
         this->MapperTexture->SetClippingPlanes(planes);
         this->MapperRaycast->SetClippingPlanes(planes);
+
+        vtkPolyData *vertices=vtkPolyData::New();
+
+        callerBox->GetPolyData(vertices);
+        double pointA[3];
+        double pointB[3];
+        vertices->GetPoint(0,pointA);
+        vertices->GetPoint(6,pointB);
+        vtkTransform *transform=vtkTransform::New();
+        callerBox->GetTransform(transform);
+        vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
+        double origin[4];
+        origin[0]=iData->GetOrigin()[0];
+        origin[1]=iData->GetOrigin()[1];
+        origin[2]=iData->GetOrigin()[2];
+        origin[3]=0;
+
+        transform->MultiplyPoint(origin,origin);
+        
+        double dimension[4];
+        dimension[0]=iData->GetDimensions()[0];
+        dimension[1]=iData->GetDimensions()[1];
+        dimension[2]=iData->GetDimensions()[2];
+        dimension[3]=0;
+        transform->MultiplyPoint(dimension,dimension);
+        this->RA_Cropping[0]->SetRange(pointA[0],pointB[0]);
+        this->RA_Cropping[1]->SetRange(pointA[1],pointB[1]);
+        this->RA_Cropping[2]->SetRange(pointA[2],pointB[2]);
+
+
+
+
+    //    this->RA_Cropping[0]->SetLabelText("I");
+    //this->RA_Cropping[0]->SetWholeRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
+
         return;
     }
     //Check the checkbuttons
     vtkKWCheckButton *callerObjectCheckButton=vtkKWCheckButton::SafeDownCast(caller);
-    if(callerObjectCheckButton==this->CB_TextureLow->GetWidget()&&eid==vtkKWCheckButton::SelectedStateChangedEvent)
+   if(callerObjectCheckButton==this->CB_TextureLow->GetWidget()&&eid==vtkKWCheckButton::SelectedStateChangedEvent)
     {
         this->ScheduleMask[0]=callerObjectCheckButton->GetSelectedState();
         this->UpdateQualityCheckBoxes();
@@ -1361,7 +1361,7 @@ void vtkSlicerVRGrayscaleHelper::Cropping(int index, double min,double max)
 
 void vtkSlicerVRGrayscaleHelper::CreateCropping()
 {
-    vtkKWFrameWithLabel *croppingFrame=vtkKWFrameWithLabel::New();
+        vtkKWFrameWithLabel *croppingFrame=vtkKWFrameWithLabel::New();
     croppingFrame->SetParent(this->NB_Details->GetFrame("Cropping"));
     croppingFrame->Create();
     croppingFrame->AllowFrameToCollapseOff();
@@ -1369,16 +1369,28 @@ void vtkSlicerVRGrayscaleHelper::CreateCropping()
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         croppingFrame->GetWidgetName() );
 
+
     //Build GUI
 
     this->CB_Cropping=vtkKWCheckButtonWithLabel::New();
     this->CB_Cropping->SetParent(croppingFrame->GetFrame());
     this->CB_Cropping->Create();
     this->CB_Cropping->GetWidget()->SetSelectedState(0);
-    this->CB_Cropping->SetLabelText("Enable /Disable Cropping");
+    this->CB_Cropping->SetLabelText("Enable /Disable Clipping in general");
     this->CB_Cropping->GetWidget()->SetCommand(this, "ProcessEnableDisableCropping");
     this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
         this->CB_Cropping->GetWidgetName());
+
+    
+    this->CB_Clipping=vtkKWCheckButtonWithLabel::New();
+    this->CB_Clipping->SetParent(croppingFrame->GetFrame());
+    this->CB_Clipping->Create();
+    this->CB_Clipping->GetWidget()->SetSelectedState(0);
+    this->CB_Clipping->SetLabelText("Enable /Disable Clipping Box");
+    this->CB_Clipping->GetWidget()->SetCommand(this, "ProcessEnableDisableClippingPlanes");
+    this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
+        this->CB_Clipping->GetWidgetName());
+
     for(int i=0;i<3;i++)
     {
         this->RA_Cropping[i]=vtkKWRange::New();
@@ -1393,17 +1405,18 @@ void vtkSlicerVRGrayscaleHelper::CreateCropping()
     }
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
     this->RA_Cropping[0]->SetLabelText("I");
-    this->RA_Cropping[0]->SetWholeRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
+    this->RA_Cropping[0]->SetWholeRange(-500,500);
     this->RA_Cropping[0]->SetRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
     this->RA_Cropping[1]->SetLabelText("J");
-    this->RA_Cropping[1]->SetWholeRange(iData->GetOrigin()[1],iData->GetDimensions()[1]);
+    this->RA_Cropping[1]->SetWholeRange(-500,500);
     this->RA_Cropping[1]->SetRange(iData->GetOrigin()[1],iData->GetDimensions()[1]);
     this->RA_Cropping[2]->SetLabelText("K");
-    this->RA_Cropping[2]->SetWholeRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
+    this->RA_Cropping[2]->SetWholeRange(-500,500);
     this->RA_Cropping[2]->SetRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
 
     //Now we have the cropping ranges
     this->ProcessEnableDisableCropping(0);
+    croppingFrame->Delete();
 }
 
 void vtkSlicerVRGrayscaleHelper::CreateThreshold()
@@ -1668,95 +1681,26 @@ void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableClippingPlanes(int clipping
         vtkRenderWindowInteractor *interactor=this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetInteractor();
         this->BW_Clipping->SetInteractor(interactor);
         this->BW_Clipping->SetPlaceFactor(1);
-        this->BW_Clipping->SetProp3D(this->Volume);//(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
+        this->BW_Clipping->SetProp3D(this->Volume);
         this->BW_Clipping->PlaceWidget();
         this->BW_Clipping->InsideOutOn();
+        this->BW_Clipping->RotationEnabledOff();
+        this->BW_Clipping->GetSelectedHandleProperty()->SetColor(0.2,0.6,0.15);
         interactor->UpdateSize(this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetSize()[0],
             this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetSize()[1]);
 
-        /*vtkMatrix4x4 *matrix=vtkMatrix4x4::New();
-        this->CalculateMatrix(matrix);
-        vtkTransform *transform=vtkTransform::New();
-        transform->SetMatrix(matrix);
-        this->BW_Clipping->SetTransform(transform);*/
-
         this->BW_Clipping->AddObserver(vtkCommand::InteractionEvent,(vtkCommand*) this->VolumeRenderingCallbackCommand);
         this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->GetInteractor()->ReInitialize();
-        //this->renViewport->AddActor(this->BW_Clipping);
-
     }
     if(clippingEnabled)
     {
         this->BW_Clipping->On();
-        //vtkMyCallback *callback = vtkMyCallback::New();
-        //this->BW_Clipping->AddObserver(vtkCommand::InteractionEvent, callback);
-
     }
     else
     {
         this->BW_Clipping->Off();
     }
-    //    # The SetInteractor method is how 3D widgets are associated with the render
-    //# window interactor. Internally, SetInteractor sets up a bunch of callbacks
-    //# using the Command/Observer mechanism (AddObserver()).
-    //vtkBoxWidget boxWidget
-    //    boxWidget SetInteractor iren
-    //    boxWidget SetPlaceFactor 1.0
-    //
-    //# Add the actors to the renderer, set the background and size
-    //#
-    //ren1 AddActor outlineActor
-    //ren1 AddVolume newvol
-    //
-    //ren1 SetBackground 0 0 0
-    //renWin SetSize 300 300
-    //
-    //# Place the interactor initially. The output of the reader is used to place
-    //# the box widget.
-    //boxWidget SetInput [v16 GetOutput]
-    //boxWidget PlaceWidget
-    //boxWidget InsideOutOn
-    //boxWidget AddObserver StartInteractionEvent StartInteraction
-    //boxWidget AddObserver InteractionEvent ClipVolumeRender
-    //boxWidget AddObserver EndInteractionEvent EndInteraction
-    //set outlineProperty [boxWidget GetOutlineProperty]
-    //    $outlineProperty SetRepresentationToWireframe
-    //    $outlineProperty SetAmbient 1.0
-    //    $outlineProperty SetAmbientColor 1 1 1
-    //    $outlineProperty SetLineWidth 3
-    //set selectedOutlineProperty [boxWidget GetSelectedOutlineProperty]
-    //    $selectedOutlineProperty SetRepresentationToWireframe
-    //    $selectedOutlineProperty SetAmbient 1.0
-    //    $selectedOutlineProperty SetAmbientColor 1 0 0
-    //    $selectedOutlineProperty SetLineWidth 3
-    //
-    //# This adds the "u" keypress event...it pops up a Tcl interpreter.
-    //#
-    //iren AddObserver UserEvent {wm deiconify .vtkInteract}
-    //iren Initialize
-    //
-    //# Prevent the tk window from showing up then start the event loop.
-    //wm withdraw .
-    //
-    //# When interaction starts, the requested frame rate is increased.
-    //proc StartInteraction {} {
-    //   renWin SetDesiredUpdateRate 10
-    //}
-    //
-    //# When interaction ends, the requested frame rate is decreased to
-    //# normal levels. This causes a full resolution render to occur.
-    //proc EndInteraction {} {
-    //   renWin SetDesiredUpdateRate 0.001
-    //}
-    //
-    //# The implicit function vtkPlanes is used in conjunction with the
-    //# volume ray cast mapper to limit which portion of the volume is
-    //# volume rendered.
-    //vtkPlanes planes
-    //proc ClipVolumeRender {} {
-    //   boxWidget GetPlanes planes
-    //   volumeMapper SetClippingPlanes planes
-    //}
+    this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
 }
 
 void vtkSlicerVRGrayscaleHelper::ProcessSelection(void)
