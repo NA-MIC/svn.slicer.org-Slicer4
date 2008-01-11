@@ -36,15 +36,13 @@ vtkStandardNewMacro(vtkVolumeCudaMapper);
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
     this->LocalInputImage = NULL;
-    this->LocalInputBuffer = vtkCudaLocalMemory::New();
-    this->LocalOutputBuffer = vtkCudaHostMemory::New();
+    this->LocalOutputImage = vtkImageData::New();
+
     this->CudaInputBuffer = vtkCudaMemory::New();
     this->CudaOutputBuffer = vtkCudaMemory::New();
 
-    this->LocalOutputImage = vtkImageData::New();
-
-    this->InitializeInternal();
     this->SetColor(255, 255, 255);
+    this->UpdateOutputResolution(128, 128, 4);
 }  
 
 
@@ -52,52 +50,10 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
-    free(this->LocalInputBuffer);
-    this->LocalOutputBuffer->Delete();
     this->CudaInputBuffer->Delete();
     this->CudaOutputBuffer->Delete();
     this->LocalOutputImage->Delete();
     this->LocalInputImage = NULL;
-}
-
-
-void vtkVolumeCudaMapper::InitializeInternal()
-{
-    unsigned int height = 128;
-    unsigned int width = 128;
-
-
-    //this->LocalInputBuffer->Allocate<unsigned char>(x*y*z);
-    //memcpy(this->LocalInputBuffer->GetMemPointer(),
-    //    data->GetScalarPointer(), sizeof(unsigned char) * x*y*z);
-    //// HERE WE READ IN SOME DATA
-    //try {
-    //FILE *fp;
-    //    fp=fopen("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw","r");
-    //    fread(this->LocalInputBuffer->GetMemPointer(), sizeof(unsigned char), x*y*z, fp);
-    //    fclose(fp);}
-    //catch (...)
-    //{}
-
-    //this->SetInput(this->LocalInputBuffer, x, y, z);
-
-
-    //  cudaMallocHost( (void**) &h_renderAlgo_resultImage, sizeof(uchar4)*dsizeX*dsizeY));
-
-    this->UpdateOutputResolution(width, height, 4);
-}
-
-void vtkVolumeCudaMapper::SetInput(vtkCudaLocalMemory* input,
-                                   unsigned int x, unsigned int y, unsigned int z)
-{
-    this->LocalInputBuffer = input;
-
-    this->InputDataSize[0] = x;
-    this->InputDataSize[1] = y;
-    this->InputDataSize[2] = z;
-
-    //this->CudaInputBuffer->Allocate<uchar4>(x,y,z);
-    this->LocalInputBuffer->CopyTo(this->CudaInputBuffer);
 }
 
 void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
@@ -106,16 +62,11 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
 
     if (input != NULL)
     {
-        int* dims = input->GetDimensions();
-        this->InputDataSize[0] = dims[0];
-        this->InputDataSize[1] = dims[1];
-        this->InputDataSize[2] = dims[2];
-
         this->CudaInputBuffer->CopyFrom(input);
     }
     else
     {
-
+        this->CudaInputBuffer->Free();
     }
 }
 
@@ -128,7 +79,6 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
 
     // Re-allocate the memory
     this->CudaOutputBuffer->Allocate<uchar4>(width * height);
-    this->LocalOutputBuffer->Allocate<uchar4>(width * height);
 
     // Allocate the Image Data
     this->LocalOutputImage->SetScalarTypeToUnsignedChar();
@@ -194,7 +144,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     CUDArenderAlgo_doRender(this->CudaOutputBuffer->GetMemPointerAs<uchar4>(),
         this->CudaInputBuffer->GetMemPointerAs<unsigned char>(),
         (float*)rotationMatrix, color, minmax, lightVec, 
-        this->InputDataSize[0], this->InputDataSize[1], this->InputDataSize[2],    //3D data size
+        this->LocalInputImage->GetDimensions()[0], this->LocalInputImage->GetDimensions()[1], this->LocalInputImage->GetDimensions()[2],    //3D data size
         this->OutputDataSize[0], this->OutputDataSize[1],     //result image size
         0,0,0,          //translation of data in x,y,z direction
         1, 1, 1,        //voxel dimension

@@ -17,7 +17,6 @@ public:
     vtkTypeRevisionMacro(vtkVolumeCudaMapper,vtkVolumeMapper);
     void PrintSelf(ostream& os, vtkIndent indent);
 
-    virtual void SetInput(vtkCudaLocalMemory*, unsigned int x, unsigned int y, unsigned int z);
     virtual void SetInput( vtkImageData * );
     //virtual void SetInput( vtkDataSet * );
     vtkImageData *GetInput() { return this->LocalOutputImage; }
@@ -34,15 +33,9 @@ protected:
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
 
-    void InitializeInternal();
-    //void UpdateInputResolution(unsigned int x, unsigned int y, unsigned int z);
     void UpdateOutputResolution(unsigned int width, unsigned int height, unsigned int colors);
 
-    unsigned int InputDataSize[3];
     unsigned int OutputDataSize[2];
-
-    vtkCudaLocalMemory* LocalInputBuffer;
-    vtkCudaHostMemory* LocalOutputBuffer;
 
     vtkImageData* LocalInputImage;
     vtkImageData* LocalOutputImage;
