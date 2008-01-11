@@ -38,7 +38,7 @@ protected:
     //void UpdateInputResolution(unsigned int x, unsigned int y, unsigned int z);
     void UpdateOutputResolution(unsigned int width, unsigned int height, unsigned int colors);
 
-    unsigned int  InputDataSize[3];
+    unsigned int InputDataSize[3];
     unsigned int OutputDataSize[2];
 
     vtkCudaLocalMemory* LocalInputBuffer;

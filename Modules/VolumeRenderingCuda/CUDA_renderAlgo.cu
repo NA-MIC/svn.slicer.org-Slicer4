@@ -241,14 +241,6 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(unsigned char* d_sourceData
 
 }
 
-void CUDArenderAlgo_init(int sizeX, int sizeY, int sizeZ, int dsizeX, int dsizeY){
-  float size[3]={sizeX, sizeY, sizeZ};
-  float dsize[2]={dsizeX, dsizeY};
-
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_size, size, sizeof(float)*3, 0));
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_dsize, dsize, sizeof(float)*2, 0));
-}
-
 void CUDArenderAlgo_doRender(uchar4* outputData,
                              unsigned char* renderData,
                              float* rotationMatrix, 
@@ -260,6 +252,13 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
                              int minThreshold, int maxThreshold, 
                              int sliceDistance)
 {
+  float size[3]={sizeX, sizeY, sizeZ};
+  float dsize[2]={dsizeX, dsizeY};
+
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_size, size, sizeof(float)*3, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_dsize, dsize, sizeof(float)*2, 0));
+
+
   // setup execution parameters
 
   dim3 grid(dsizeX / BLOCK_DIM2D, dsizeY / BLOCK_DIM2D, 1);
@@ -306,24 +305,4 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
   CUT_CHECK_ERROR("Kernel execution failed");
 
   return;
-}
-
-void CUDArenderAlgo_getResult(unsigned char* resultImagePointer, unsigned char* output, int dsizeX, int dsizeY){
-  // copy data from device
-
-  CUDA_SAFE_CALL( cudaMemcpy(resultImagePointer, output, sizeof(uchar4)*dsizeX*dsizeY,cudaMemcpyDeviceToHost));
-  
-  //*resultImagePointer = (unsigned char*)h_renderAlgo_resultImage;
-
-  return;
-}
-
-void CUDArenderAlgo_delete(){
-
-  //CUDA_SAFE_CALL(cudaFreeHost(h_renderAlgo_resultImage));
-
-  // cleanup memory
-
-  //CUDA_SAFE_CALL(cudaFree(d_renderAlgo_sourceData));
-  //CUDA_SAFE_CALL(cudaFree(d_renderAlgo_resultImage));
 }

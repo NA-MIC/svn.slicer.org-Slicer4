@@ -60,31 +60,12 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
     this->LocalInputImage = NULL;
 }
 
-#include "vtkImageReader.h"
 
 void vtkVolumeCudaMapper::InitializeInternal()
 {
-    unsigned int x = 256,
-        y = 256,
-        z = 256;
     unsigned int height = 128;
     unsigned int width = 128;
 
-
-    vtkImageReader* reader = vtkImageReader::New();
-    reader->SetDataScalarTypeToUnsignedChar();
-    reader->SetNumberOfScalarComponents(1);
-    reader->SetDataExtent(0, x - 1, 
-        0, y - 1, 
-        0, z - 1);
-    reader->SetFileDimensionality(3);
-    // reader->SetNumberOfScalarComponents(1);
-
-    reader->SetFileName("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw");
-    reader->Update();
-
-    vtkImageData* data = reader->GetOutput();
-    this->SetInput(data);
 
     //this->LocalInputBuffer->Allocate<unsigned char>(x*y*z);
     //memcpy(this->LocalInputBuffer->GetMemPointer(),
@@ -104,8 +85,6 @@ void vtkVolumeCudaMapper::InitializeInternal()
     //  cudaMallocHost( (void**) &h_renderAlgo_resultImage, sizeof(uchar4)*dsizeX*dsizeY));
 
     this->UpdateOutputResolution(width, height, 4);
-
-    CUDArenderAlgo_init(x,y,z, width, height);
 }
 
 void vtkVolumeCudaMapper::SetInput(vtkCudaLocalMemory* input,

@@ -191,6 +191,7 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 {
 }
 
+#include "vtkImageReader.h"
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
 {
@@ -215,7 +216,25 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
         // create required objects
         if (this->CudaMapper == NULL)
+        {
             this->CudaMapper = vtkVolumeCudaMapper::New();
+
+            // Reading in the Data using a ImageReader
+            vtkImageReader* reader = vtkImageReader::New();
+            reader->SetDataScalarTypeToUnsignedChar();
+            reader->SetNumberOfScalarComponents(1);
+            reader->SetDataExtent(0, 255, 
+                0, 255, 
+                0, 255);
+            reader->SetFileDimensionality(3);
+            // reader->SetNumberOfScalarComponents(1);
+
+            reader->SetFileName("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw");
+            reader->Update();
+
+            vtkImageData* data = reader->GetOutput();
+            this->CudaMapper->SetInput(data);
+        }
         if (this->CudaActor == NULL)
         {
             this->CudaActor = vtkVolume::New();
