@@ -47,6 +47,15 @@ void vtkCudaLocalMemory::MemSet(int value)
     memset(this->MemPointer, value, Size);
 }
 
+bool vtkCudaLocalMemory::CopyFrom(vtkImageData* data)
+{
+    return false;
+}
+
+bool vtkCudaLocalMemory::CopyTo(vtkImageData* data)
+{
+    return false;
+}
 bool vtkCudaLocalMemory::CopyTo(vtkCudaMemory* other)
 {
     other->AllocateBytes(this->GetSize());

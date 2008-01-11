@@ -12,6 +12,8 @@ class vtkCudaMemoryPitch;
 class vtkCudaHostMemory;
 class vtkCudaLocalMemory;
 
+class vtkImageData;
+
 class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryBase : public vtkObject
 {
 public:
@@ -26,10 +28,14 @@ public:
     //ETX
     size_t GetSize() const { return Size; }
 
+    virtual bool CopyFrom(vtkImageData* data) { return false; }
+    virtual bool CopyTo(vtkImageData* data) { return false; }
+
     virtual bool CopyTo(vtkCudaMemory* other){ return false; }
     virtual bool CopyTo(vtkCudaLocalMemory* other) { return false; }
     virtual bool CopyTo(vtkCudaMemoryArray* other) { return false; }
     virtual bool CopyTo(vtkCudaMemoryPitch* other) { return false; }
+
 
     virtual void PrintSelf (ostream &os, vtkIndent indent);
 

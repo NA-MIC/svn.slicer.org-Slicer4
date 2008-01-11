@@ -23,6 +23,8 @@ public:
     template<typename T> T* GetMemPointerAs() const { return (T*)this->GetMemPointer(); }
     //ETX
 
+    virtual bool CopyFrom(vtkImageData* data);
+    virtual bool CopyTo(vtkImageData* data);
     virtual bool CopyTo(vtkCudaMemory* other);
     virtual bool CopyTo(vtkCudaLocalMemory* other);
 
