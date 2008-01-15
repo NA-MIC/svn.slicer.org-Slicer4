@@ -15,23 +15,29 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolum
 {
 public:
     vtkTypeRevisionMacro(vtkVolumeCudaMapper,vtkVolumeMapper);
-    void PrintSelf(ostream& os, vtkIndent indent);
+    static vtkVolumeCudaMapper *New();
 
     virtual void SetInput( vtkImageData * );
 
-    static vtkVolumeCudaMapper *New();
-
+    virtual void Update();
     virtual void Render(vtkRenderer *, vtkVolume *);
 
     void SetColor(double r, double g, double b) { Color[0] = r; Color[1] = g; Color[2] = b; }
     void SetColor(const double c[3]) { this->SetColor(c[0], c[1], c[2]); };
     vtkGetVector3Macro(Color,double);
 
+   void PrintSelf(ostream& os, vtkIndent indent);
+
+    vtkRenderer* ren;
+    vtkVolume* actor;
+
 protected:
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
 
     void UpdateOutputResolution(unsigned int width, unsigned int height, unsigned int colors);
+
+    void UpdateRenderPlane(vtkRenderer *, vtkVolume *);
 
     unsigned int OutputDataSize[2];
 
