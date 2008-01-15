@@ -87,7 +87,25 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     this->LocalOutputImage->AllocateScalars();
 }
 
+void vtkVolumeCudaMapper::Update()
+{
+    cerr << "TEST\n";
+    cout << "TEST2\n";
+
+
+    this->Modified();
+}
+
+
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
+{
+    cerr << "TEST\n";
+    cout << "TEST2\n";
+    this->UpdateRenderPlane(this->ren, this->actor);
+}
+
+
+void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* volume)
 {
     float color[6]={this->Color[0],this->Color[1],this->Color[2], 1,1,1};
     float minmax[6]={0,255,0,255,0,255};

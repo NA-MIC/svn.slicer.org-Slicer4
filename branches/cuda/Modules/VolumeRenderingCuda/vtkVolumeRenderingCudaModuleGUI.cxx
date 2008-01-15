@@ -241,12 +241,12 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->CudaActor->SetMapper(this->CudaMapper);
         }
         this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
-        this->CudaMapper->Render(
+       /* this->CudaMapper->Render(
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
-            this->CudaActor);
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+            this->CudaActor);*/
+        //this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
 
-     //   this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddActor(this->CudaActor);
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaActor);
     }
 }
 
