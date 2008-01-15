@@ -24,7 +24,7 @@
 
 #include <string>
 
-#include "vtkPolyData.h"
+#include "vtkUnstructuredGrid.h"
 #include "vtkShrinkPolyData.h"
 #include "vtkGeometryFilter.h"
 
@@ -68,30 +68,9 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementBoundingBoxDisplayNode : public vtkMRM
   virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
-  // Description:
-  // Sets UnstructuredGrid from UnstructuredGrid model node
-  void SetUnstructuredGrid(vtkUnstructuredGrid *grid)
-  {
-    if (this->GeometryFilter)
-      {
-      this->GeometryFilter->SetInput(grid);
-      }
-  }
+ 
 
-  // Description:
-  // Gets PlyData converted from UnstructuredGrid 
-  virtual vtkPolyData* GetPolyData()
-  {
-    if (this->ShrinkPolyData)
-      {
-      this->ShrinkPolyData->Update();
-      return this->ShrinkPolyData->GetOutput();
-      }
-    else
-      {
-      return NULL;
-      }
-  }
+ 
    
   // Description:
   // Update the pipeline based on this node attributes
@@ -105,21 +84,18 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementBoundingBoxDisplayNode : public vtkMRM
   //--------------------------------------------------------------------------
 
   // Description:
-  // cell shrink factor
-  vtkSetMacro ( ShrinkFactor, double );
-  vtkGetMacro ( ShrinkFactor, double );
-
+ 
+    
  protected:
      vtkMRMLFiniteElementBoundingBoxDisplayNode ( );
   ~vtkMRMLFiniteElementBoundingBoxDisplayNode ( );
   vtkMRMLFiniteElementBoundingBoxDisplayNode ( const vtkMRMLFiniteElementBoundingBoxDisplayNode& );
   void operator= ( const vtkMRMLFiniteElementBoundingBoxDisplayNode& );
 
-  double ShrinkFactor;
+ 
 
-  // dispaly pipeline
-  vtkGeometryFilter *GeometryFilter;
-  vtkShrinkPolyData *ShrinkPolyData;
+  // dispaly pipeline components declared here
+
 };
 
 #endif
