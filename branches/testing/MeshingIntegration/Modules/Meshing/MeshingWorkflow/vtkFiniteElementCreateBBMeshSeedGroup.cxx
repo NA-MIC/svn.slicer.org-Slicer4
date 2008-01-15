@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Module:    $RCSfile: vtkKWMimxCreateBBMeshSeedGroup.cxx,v $
+  Module:    $RCSfile: vtkFiniteElementCreateBBMeshSeedGroup.cxx,v $
 
   Copyright (c) Kitware, Inc.
   All rights reserved.
@@ -11,10 +11,11 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-#include "vtkKWMimxCreateBBMeshSeedGroup.h"
+#include "vtkFiniteElementCreateBBMeshSeedGroup.h"
 #include "vtkKWMimxViewWindow.h"
 
 #include "vtkMimxUnstructuredGridWidget.h"
+#include "vtkFiniteElementBoundingBoxList.h"
 
 #include "vtkActor.h"
 #include "vtkCellData.h"
@@ -55,11 +56,11 @@
 #define VTK_KW_OPTION_LOAD       1
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkKWMimxCreateBBMeshSeedGroup);
-vtkCxxRevisionMacro(vtkKWMimxCreateBBMeshSeedGroup, "$Revision: 1.5 $");
+vtkStandardNewMacro(vtkFiniteElementCreateBBMeshSeedGroup);
+vtkCxxRevisionMacro(vtkFiniteElementCreateBBMeshSeedGroup, "$Revision: 1.5 $");
 
 //----------------------------------------------------------------------------
-vtkKWMimxCreateBBMeshSeedGroup::vtkKWMimxCreateBBMeshSeedGroup()
+vtkFiniteElementCreateBBMeshSeedGroup::vtkFiniteElementCreateBBMeshSeedGroup()
 {
   //this->MainFrame = NULL;
 //  this->BBoxList = vtkLinkedListWrapper::New();
@@ -69,7 +70,7 @@ vtkKWMimxCreateBBMeshSeedGroup::vtkKWMimxCreateBBMeshSeedGroup()
 }
 
 //----------------------------------------------------------------------------
-vtkKWMimxCreateBBMeshSeedGroup::~vtkKWMimxCreateBBMeshSeedGroup()
+vtkFiniteElementCreateBBMeshSeedGroup::~vtkFiniteElementCreateBBMeshSeedGroup()
 {
   if(this->ObjectListComboBox)  
     this->ObjectListComboBox->Delete();
@@ -79,7 +80,7 @@ vtkKWMimxCreateBBMeshSeedGroup::~vtkKWMimxCreateBBMeshSeedGroup()
     this->ObjectListComboBox->Delete();
 }
 //--------------------------------------------------------------------------
-void vtkKWMimxCreateBBMeshSeedGroup::CreateWidget()
+void vtkFiniteElementCreateBBMeshSeedGroup::CreateWidget()
 {
   if(this->IsCreated())
   {
@@ -146,40 +147,50 @@ void vtkKWMimxCreateBBMeshSeedGroup::CreateWidget()
 
 }
 //----------------------------------------------------------------------------
-void vtkKWMimxCreateBBMeshSeedGroup::Update()
+void vtkFiniteElementCreateBBMeshSeedGroup::Update()
 {
   this->UpdateEnableState();
 }
 //---------------------------------------------------------------------------
-void vtkKWMimxCreateBBMeshSeedGroup::UpdateEnableState()
+void vtkFiniteElementCreateBBMeshSeedGroup::UpdateEnableState()
 {
   this->Superclass::UpdateEnableState();
 }
 //----------------------------------------------------------------------------
-void vtkKWMimxCreateBBMeshSeedGroup::CreateBBMeshSeedCallback()
+void vtkFiniteElementCreateBBMeshSeedGroup::CreateBBMeshSeedCallback()
 {
   if(strcmp(this->ObjectListComboBox->GetWidget()->GetValue(),""))
   {
     vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
     const char *name = combobox->GetValue();
+    
+    // subcast to make sure we are using the MRML-based storage
+    vtkFiniteElementBoundingBoxList *bblist = (vtkFiniteElementBoundingBoxList*)(this->BBoxList);
+    cout << "calling MRML mesh sheed create" << endl;
+  
     vtkMimxUnstructuredGridActor *ugridactor = vtkMimxUnstructuredGridActor::
-      SafeDownCast(this->BBoxList->GetItem(combobox->GetValueIndex(name)));
+      SafeDownCast(bblist->GetItem(combobox->GetValueIndex(name)));
     vtkUnstructuredGrid *ugrid = ugridactor->GetDataSet();
     if(!ugrid->GetCellData()->GetArray("Mesh_Seed"))
     {
+      vtkWarningMacro("mesh seeds being created now...");
       ugridactor->MeshSeedFromAverageElementLength(
         this->AvElementLength->GetWidget()->GetValueAsDouble());
-    }
+      // since the ugrid was modified, we need to update the MRML tree
+      // by invoking the modify method on the list element
+      bblist->ModifyItem(combobox->GetValueIndex(name),ugridactor);
+    } else 
+      vtkWarningMacro("seeds were already present");
   }
   this->CreateBBMeshSeedCancelCallback();
 }
 //----------------------------------------------------------------------------
-void vtkKWMimxCreateBBMeshSeedGroup::PrintSelf(ostream& os, vtkIndent indent)
+void vtkFiniteElementCreateBBMeshSeedGroup::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
 //----------------------------------------------------------------------------
-void vtkKWMimxCreateBBMeshSeedGroup::CreateBBMeshSeedCancelCallback()
+void vtkFiniteElementCreateBBMeshSeedGroup::CreateBBMeshSeedCancelCallback()
 {
   this->GetApplication()->Script("pack forget %s", this->MainFrame->GetWidgetName());
   this->MenuGroup->SetMenuButtonsEnabled(1);

@@ -12,8 +12,11 @@
 #include "vtkFiniteElementMRMLMeshMenuGroup.h"
 #include "vtkFiniteElementMRMLCreateBBFromBoundsGroup.h"
 #include "vtkKWMimxCreateBBMeshSeedGroup.h"
-#include "vtkKWMimxEditBBGroup.h"
-#include "vtkKWMimxCreateFEMeshFromBBGroup.h"
+#include "vtkFiniteElementCreateBBMeshSeedGroup.h"
+#include "vtkFiniteElementCreateFEMeshFromBBGroup.h"
+#include "vtkFiniteElementEditBBGroup.h"
+//#include "vtkKWMimxEditBBGroup.h"
+
 #include "vtkKWMimxViewProperties.h"
 #include "vtkKWMimxSaveVTKBBGroup.h"
 #include "vtkKWMimxEditBBMeshSeedGroup.h"
@@ -455,7 +458,8 @@ void vtkFiniteElementMRMLMeshMenuGroup::CreateBBMeshSeedCallback()
       this->CreateBBMeshSeed->GetMainFrame()->GetWidgetName());*/
     this->CreateBBMeshSeed->Delete();
   }
-  this->CreateBBMeshSeed = vtkKWMimxCreateBBMeshSeedGroup::New();
+  //this->CreateBBMeshSeed = vtkKWMimxCreateBBMeshSeedGroup::New();
+  this->CreateBBMeshSeed = vtkFiniteElementCreateBBMeshSeedGroup::New();
 
   this->CreateBBMeshSeed->SetApplication(this->GetApplication());
   this->CreateBBMeshSeed->SetParent(this->MainFrame->GetFrame());
@@ -497,7 +501,7 @@ void vtkFiniteElementMRMLMeshMenuGroup::EditBBMeshSeedCallback()
 //-----------------------------------------------------------------------------
 void vtkFiniteElementMRMLMeshMenuGroup::EditBBCallback()
 {
- cout << "EditBBCallback" << endl;
+ cout << "MRMLEditBBCallback" << endl;
   this->TypeMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
   this->TypeMenuButton->GetWidget()->SetValue("");
   this->TypeMenuButton->SetEnabled(0);
@@ -508,8 +512,9 @@ void vtkFiniteElementMRMLMeshMenuGroup::EditBBCallback()
     //  this->EditBB->GetMainFrame()->GetWidgetName());
     this->EditBB->Delete();
   }
-  this->EditBB = vtkKWMimxEditBBGroup::New();
-
+  // *** this->EditBB = vtkKWMimxEditBBGroup::New();
+  this->EditBB = vtkFiniteElementEditBBGroup::New();
+  
   this->EditBB->SetApplication(this->GetApplication());
   this->EditBB->SetParent(this->MainFrame->GetFrame());
   this->EditBB->SetBBoxList(this->BBoxList);
@@ -575,7 +580,7 @@ void vtkFiniteElementMRMLMeshMenuGroup::CreateFEMeshFromBBCallback()
     this->FEMeshFromBB->Delete();
   }
 
-    this->FEMeshFromBB = vtkKWMimxCreateFEMeshFromBBGroup::New();
+    this->FEMeshFromBB = vtkFiniteElementCreateFEMeshFromBBGroup::New();
     this->FEMeshFromBB->SetApplication(this->GetApplication());
     this->FEMeshFromBB->SetParent(this->MainFrame->GetFrame());
     this->FEMeshFromBB->SetSurfaceList(this->SurfaceList);

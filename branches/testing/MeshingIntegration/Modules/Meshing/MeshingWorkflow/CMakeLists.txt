@@ -45,6 +45,10 @@ SET(LIB_SRCS
   vtkFESurfaceMRMLMenuGroup.cxx
   vtkFiniteElementMRMLMeshMenuGroup.cxx
   vtkFiniteElementMRMLCreateBBFromBoundsGroup.cxx
+  vtkFiniteElementCreateBBMeshSeedGroup.cxx
+  vtkFiniteElementEditBBGroup.cxx
+  vtkFiniteElementCreateFEMeshFromBBGroup.cxx
+  vtkMRMLFiniteElementBoundingBoxDisplayNode.cxx
   )
   
 

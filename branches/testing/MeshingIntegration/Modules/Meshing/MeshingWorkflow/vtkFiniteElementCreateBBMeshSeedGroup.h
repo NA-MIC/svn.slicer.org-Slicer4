@@ -59,7 +59,7 @@ protected:
   vtkKWEntryWithLabel *AvElementLength;
 private:
   vtkFiniteElementCreateBBMeshSeedGroup(const vtkFiniteElementCreateBBMeshSeedGroup&); // Not implemented
-  void operator=(const vtkFiniteElementBBMeshSeedGroup&); // Not implemented
+  void operator=(const vtkFiniteElementCreateBBMeshSeedGroup&); // Not implemented
  };
 
 #endif

@@ -49,13 +49,16 @@ public:
   void SetMRMLSceneForStorage(vtkMRMLScene* scene);
   
   virtual int AppendItem(vtkMimxUnstructuredGridActor*);
+  virtual int ModifyItem(vtkIdType, vtkMimxUnstructuredGridActor*);
   virtual vtkMimxUnstructuredGridActor* GetItem(vtkIdType);
   virtual int GetNumberOfItems();
   virtual int RemoveItem(int );
+  
 protected:
     vtkMRMLScene* savedMRMLScene; 
     vtkFiniteElementBoundingBoxList();
-  virtual ~vtkFiniteElementBoundingBoxList();
+    virtual ~vtkFiniteElementBoundingBoxList();
+    //bool ItemMatchesMRMLNode(vtkMimxUnstructuredGridActor* actor, vtkMRMLFiniteElementBoundingBoxNode* testMRMLNode);
 private:
     vtkFiniteElementBoundingBoxList(const vtkFiniteElementBoundingBoxList&); // Not implemented
    void operator=(const vtkFiniteElementBoundingBoxList&); // Not implemented

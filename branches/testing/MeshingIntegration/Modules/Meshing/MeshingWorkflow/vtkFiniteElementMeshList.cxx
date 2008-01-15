@@ -39,8 +39,9 @@ vtkFiniteElementMeshList::~vtkFiniteElementMeshList()
 void vtkFiniteElementMeshList::SetMRMLSceneForStorage(vtkMRMLScene* scene) 
 {
     this->savedMRMLScene = scene;
-    cout << "*** do we need to register the MRML node classes?" << endl;
-    //this->savedMRMLScene->RegisterNodeClass(this);
+    // each MRML class type needs to be registeredv
+    vtkMRMLFiniteElementMeshNode* meshListNode = vtkMRMLFiniteElementMeshNode::New();
+    this->savedMRMLScene->RegisterNodeClass(meshListNode);
 }
 
 
@@ -56,6 +57,9 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxUnstructuredGridActor* actor)
      newMRMLNode->SetFileName(actor->GetFileName());
      newMRMLNode->SetFilePath(actor->GetFilePath());
      newMRMLNode->SetDataType(actor->GetDataType());
+     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
+     ugrid->DeepCopy(actor->GetDataSet());
+     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
      this->savedMRMLScene->AddNode(newMRMLNode);
      cout << "copied data to MRML bbox node " << endl;
    } else 
@@ -68,9 +72,9 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxUnstructuredGridActor* actor)
 
 vtkMimxUnstructuredGridActor* vtkFiniteElementMeshList::GetItem(vtkIdType id)
 {
-    vtkMimxUnstructuredGridActor* returnNode;
     //return this->InternalMimxObjectList->GetItem(id);
-    
+    vtkMimxUnstructuredGridActor* returnNode;
+     
   // first fetch the MRML node that has been requested
   vtkMRMLFiniteElementMeshNode* requestedMrmlNode = 
       (vtkMRMLFiniteElementMeshNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFiniteElementMeshNode"));
@@ -88,8 +92,9 @@ vtkMimxUnstructuredGridActor* vtkFiniteElementMeshList::GetItem(vtkIdType id)
   }
   // copy MRML values to the node which we will return to the client
   returnNode->SetFileName(requestedMrmlNode->GetFileName());
-  returnNode->SetFileName(requestedMrmlNode->GetFilePath());
-  vtkErrorMacro("need to copy vtkPolyData here");
+  returnNode->SetFilePath(requestedMrmlNode->GetFilePath());
+  returnNode->SetDataType(requestedMrmlNode->GetDataType());
+  returnNode->GetDataSet()->DeepCopy(requestedMrmlNode->GetUnstructuredGrid());
   return returnNode;
 }
 
