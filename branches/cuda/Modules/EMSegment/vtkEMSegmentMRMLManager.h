@@ -391,8 +391,14 @@ public:
   //BTX
   enum
     {
-    AtlasToTargetAffineRegistrationOff     = 0,
-    AtlasToTargetAffineRegistrationRigidMI = 1
+    AtlasToTargetAffineRegistrationOff          = 0,
+    AtlasToTargetAffineRegistrationCenters      = 1,
+    AtlasToTargetAffineRegistrationRigidMMI     = 2,
+    AtlasToTargetAffineRegistrationRigidNCC     = 3,
+    AtlasToTargetAffineRegistrationRigidMMIFast = 4,
+    AtlasToTargetAffineRegistrationRigidNCCFast = 5,
+    AtlasToTargetAffineRegistrationRigidMMISlow = 6,
+    AtlasToTargetAffineRegistrationRigidNCCSlow = 7
     };
   //ETX
   virtual int       GetRegistrationAffineType();
@@ -401,8 +407,13 @@ public:
   //BTX
   enum
     {
-    AtlasToTargetDeformableRegistrationOff        = 0,
-    AtlasToTargetDeformableRegistrationBSplineMMI = 1
+    AtlasToTargetDeformableRegistrationOff            = 0,
+    AtlasToTargetDeformableRegistrationBSplineMMI     = 1,
+    AtlasToTargetDeformableRegistrationBSplineNCC     = 2,
+    AtlasToTargetDeformableRegistrationBSplineMMIFast = 3,
+    AtlasToTargetDeformableRegistrationBSplineNCCFast = 4,
+    AtlasToTargetDeformableRegistrationBSplineMMISlow = 5,
+    AtlasToTargetDeformableRegistrationBSplineNCCSlow = 6
     };
   //ETX
   virtual int       GetRegistrationDeformableType();
@@ -456,6 +467,9 @@ public:
   //
   virtual int       GetEnableMultithreading();
   virtual void      SetEnableMultithreading(int isEnabled);
+
+  virtual int       GetUpdateIntermediateData();
+  virtual void      SetUpdateIntermediateData(int shouldUpdate);
 
   virtual int       GetAtlasNumberOfTrainingSamples();
 

@@ -13,17 +13,22 @@
 #include "itkPluginFilterWatcher.h"
 #include "itkPluginUtilities.h"
 #include "vtkSmartPointer.h"
-#include "vtkTeemEstimateDiffusionTensor.h"
 #include "vtkMatrix4x4.h"
 #include "vtkNRRDReader.h"
 #include "vtkNRRDWriter.h"
 #include "vtkMRMLNRRDStorageNode.h"
 #include "vtkMath.h"
-#include "vtkImageData.h"
 #include "vtkDoubleArray.h"
+#include "vtkTensorMask.h"
+#include "vtkTeemEstimateDiffusionTensor.h"
+
+#include "vtkImageData.h"
+#include "vtkImageCast.h"
+#include "vtkImageSeedConnectivity.h"
+#include "vtkImageConnectivity.h"
+#include "vtkITKNewOtsuThresholdImageFilter.h"
 
 #include "DiffusionTensorEstimationCLP.h"
-
 
 int main( int argc, const char * argv[] )
 {
@@ -102,8 +107,84 @@ int main( int argc, const char * argv[] )
   vtkImageData *tensorImage = estim->GetOutput();
   tensorImage->GetPointData()->SetScalars(NULL);
 
+  //compute tenor mask
+  
+  vtkSmartPointer<vtkITKNewOtsuThresholdImageFilter> otsu = vtkITKNewOtsuThresholdImageFilter::New();
+  otsu->SetInput(estim->GetBaseline());
+  otsu->SetOmega (1 + otsuOmegaThreshold);
+  otsu->SetOutsideValue(1);
+  otsu->SetInsideValue(0);
+  otsu->Update();
+  
+  vtkImageData *mask = vtkImageData::New();
+  mask->DeepCopy(otsu->GetOutput());
+  
+  int *dims = mask->GetDimensions();
+  int px = dims[0]/2;
+  int py = dims[1]/2;
+  int pz = dims[2]/2;
+
+  vtkSmartPointer<vtkImageCast> cast = vtkImageCast::New();
+  cast->SetInput(mask);
+  cast->SetOutputScalarTypeToUnsignedChar();
+  cast->Update();
+
+  vtkSmartPointer<vtkImageSeedConnectivity> con = vtkImageSeedConnectivity::New();
+  con->SetInput(cast->GetOutput());
+  con->SetInputConnectValue(1);
+  con->SetOutputConnectedValue(1);
+  con->SetOutputUnconnectedValue(0);
+  con->AddSeed(px, py, pz);
+  con->Update();
+
+  vtkSmartPointer<vtkImageCast> cast1 = vtkImageCast::New();
+  cast1->SetInput(con->GetOutput());
+  cast1->SetOutputScalarTypeToShort();
+  cast1->Update();
+
+
+  vtkSmartPointer<vtkImageConnectivity> conn = vtkImageConnectivity::New();
+  if (removeIslands)  
+    {
+    conn->SetBackground(1);
+    conn->SetMinForeground( -32768);
+    conn->SetMaxForeground( 32767);
+    conn->SetFunctionToRemoveIslands();
+    conn->SetMinSize(10000);
+    conn->SliceBySliceOn();
+    conn->SetInput(cast1->GetOutput());
+    conn->Update();
+   } 
+
+  // Maks tensor
+  //TODO: fix tenosr mask
+  /**/
+  //vtkSmartPointer<vtkTensorMask> tensorMask = vtkTensorMask::New();
+  vtkTensorMask *tensorMask = vtkTensorMask::New();
+  vtkSmartPointer<vtkImageCast> cast2 = vtkImageCast::New();
+  cast2->SetOutputScalarTypeToUnsignedChar();
+  if (applyMask)
+    {  
+
+    tensorMask->SetMaskAlpha(0.0);
+    tensorMask->SetInput(tensorImage);
+    if (removeIslands)  
+      {
+      cast2->SetInput(conn->GetOutput());
+      }
+    else
+      {
+      cast2->SetInput(cast1->GetOutput());
+      }
+     tensorMask->SetMaskInput(cast2->GetOutput());
+     tensorMask->Update();
+     tensorImage = tensorMask->GetOutput();
+    }
+  /**/
+  
   //Save tensor
   vtkSmartPointer<vtkNRRDWriter> writer = vtkNRRDWriter::New();
+  tensorImage->GetPointData()->SetScalars(NULL);
   writer->SetInput(tensorImage);
   writer->SetFileName( outputTensor.c_str() );
   writer->UseCompressionOn();
@@ -123,6 +204,33 @@ int main( int argc, const char * argv[] )
   writer2->UseCompressionOn();
   writer2->SetIJKToRASMatrix( reader->GetRasToIjkMatrix() );
   writer2->Write();
+
+  //Save mask
+  vtkSmartPointer<vtkNRRDWriter> writer3 = vtkNRRDWriter::New();
+  if (removeIslands)  
+    {
+    writer3->SetInput(conn->GetOutput());
+    }
+  else
+    {
+    writer3->SetInput(cast1->GetOutput());
+    }
+  writer3->SetFileName( thresholdMask.c_str() );
+  writer3->UseCompressionOn();
+  writer3->SetIJKToRASMatrix( reader->GetRasToIjkMatrix() );
+  writer3->Write();
+  
+  estim->SetInput(NULL);
+  otsu->SetInput(NULL);
+  cast->SetInput(NULL);
+  cast1->SetInput(NULL);
+  con->SetInput(NULL);
+  conn->SetInput(NULL);
+  writer->SetInput(NULL);
+  writer2->SetInput(NULL);
+  writer3->SetInput(NULL);
+  mask->Delete();    
   }
+
   return EXIT_SUCCESS;
 }

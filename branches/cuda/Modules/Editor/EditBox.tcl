@@ -67,9 +67,9 @@ itcl::body EditBox::findEffects { {path ""} } {
 
   # effects that change the mouse cursor
   set _effects(list,mouseTools) {
-    ChangeIsland ChooseColor GoToEditorModule 
+    ChangeIsland ChooseColor 
     ImplicitCube ImplicitEllipse ImplicitRectangle 
-    Draw EraseLabel RemoveIslands ConnectedComponents 
+    Draw RemoveIslands ConnectedComponents 
     ThresholdBucket ThresholdPaintLabel SaveIsland SlurpColor Paint
     DefaultTool LevelTracing Wand
   }
@@ -82,15 +82,17 @@ itcl::body EditBox::findEffects { {path ""} } {
     IdentifyIslands
     LabelVisibilityOff LabelVisibilityOn MakeModel NextFiducial 
     SnapToGridOff SnapToGridOn
-    Threshold PinOpen PreviousFiducial  InterpolateLabels LabelOpacity
+    EraseLabel Threshold PinOpen PreviousFiducial  InterpolateLabels LabelOpacity
     ToggleLabelOutline Watershed
   }
 
   set _effects(list,disabled) {
     ChooseColor 
-    ImplicitCube ImplicitEllipse ImplicitRectangle 
+    ImplicitCube ImplicitEllipse 
     ConnectedComponents 
-    SlurpColor  Wand
+    SlurpColor  Wand 
+    ThresholdPaintLabel ThresholdBucket
+    ErodeLabel DilateLabel
     DeleteFiducials LabelOpacity
     FiducialVisibilityOff
     FiducialVisibilityOn 
@@ -105,6 +107,9 @@ itcl::body EditBox::findEffects { {path ""} } {
   # combined list of all effects
   set _effects(list) [concat $_effects(list,mouseTools) $_effects(list,operations)]
 
+  # for each effect
+  # - look for implementation class of pattern *Effect
+  # - get an icon  for the pushbutton
   set iconDir $::env(SLICER_HOME)/lib/Slicer3/Modules/Packages/Editor/ImageData
   set reader [vtkPNGReader New]
   foreach effect $_effects(list) {
@@ -113,7 +118,6 @@ itcl::body EditBox::findEffects { {path ""} } {
     } else {
       set _effects($effect,class) EffectSWidget
     }
-    set _effects($effect,icon) [vtkNew vtkKWIcon]
     foreach iconType { "" Selected Disabled} {
       set _effects($effect,imageData$iconType) [vtkNew vtkImageData]
       $reader SetFileName $iconDir/$effect$iconType.png
@@ -125,6 +129,7 @@ itcl::body EditBox::findEffects { {path ""} } {
     if { [lsearch $_effects(list,disabled) $effect] != -1 } {
       set iconMode "Disabled"
     }
+    set _effects($effect,icon) [vtkNew vtkKWIcon]
     $::slicer3::ApplicationGUI SetIconImage \
         $_effects($effect,icon) $_effects($effect,imageData$iconMode)
   }
@@ -266,6 +271,11 @@ itcl::body EditBox::selectEffect { effect } {
       EditorTestQuickModel
       EditorSetActiveToolLabel DefaultTool
     }
+    "LabelCheckpoint" {
+      # save a copy of the current label layer into the scene
+      EditorLabelCheckpoint
+      EditorSetActiveToolLabel DefaultTool
+    }
     "PreviousFiducial" {
       ::FiducialsSWidget::JumpAllToNextFiducial -1
       EditorSetActiveToolLabel DefaultTool
@@ -273,6 +283,9 @@ itcl::body EditBox::selectEffect { effect } {
     "NextFiducial" {
       ::FiducialsSWidget::JumpAllToNextFiducial 1
       EditorSetActiveToolLabel DefaultTool
+    }
+    "EraseLabel" {
+      EditorToggleErasePaintLabel
     }
     default {
 

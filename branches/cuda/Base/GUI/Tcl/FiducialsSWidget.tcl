@@ -140,7 +140,8 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
     switch $event {
       "KeyPressEvent" { 
         set key [$_interactor GetKeySym]
-        if { [lsearch "grave quoteleft " $key] != -1 } {
+        set activeKeys "grave quoteleft BackSpace Delete p"
+        if { [lsearch $activeKeys $key] != -1 } {
           $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
           $sliceGUI SetGUICommandAbortFlag 1
           switch [$_interactor GetKeySym] {
@@ -163,6 +164,39 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
                 set direction 1
               }
               ::FiducialsSWidget::JumpToNextFiducial $sliceNode $jumpMode $direction
+            }
+            "BackSpace" -
+            "Delete" {
+              # delete the fiducial if you are over it
+              foreach seed $_seedSWidgets {
+                if { [$seed getPickState] == "over" } {
+                  set cmd [$seed cget -movedCommand]
+                  foreach {fid tag seed fidListNode fidIndex} $cmd {}
+                  $fidListNode RemoveFiducial $fidIndex
+                  return
+                }
+              }
+            }
+            "p" {
+              # add a fiducial to the current list
+
+              #
+              # get the event position and make it relative to a renderer/viewport
+              #
+              foreach {windowx windowy} [$_interactor GetEventPosition] {}
+              foreach {lastwindowx lastwindowy} [$_interactor GetLastEventPosition] {}
+              foreach {windoww windowh} [[$_interactor GetRenderWindow] GetSize] {}
+
+              set pokedRenderer [$_interactor FindPokedRenderer $windowx $windowy]
+              set renderer0 [$_renderWidget GetRenderer]
+
+              foreach {x y z} [$this dcToXYZ $windowx $windowy] {}
+              $this queryLayers $x $y $z
+              set xyToRAS [$_sliceNode GetXYToRAS]
+              set ras [$xyToRAS MultiplyPoint $x $y $z 1]
+
+              foreach {r a s t} $ras {}
+              FiducialsSWidget::AddFiducial $r $a $s
             }
           }
         }
@@ -192,7 +226,7 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
       foreach {fidListNode tag} $pair {}
       if { [info command $fidListNode] != "" } {
         after idle "::SWidget::ProtectedCallback $fidListNode RemoveObserver $tag"
-      }
+      } 
     }
   }
 
@@ -211,22 +245,29 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
   # are close enough to the current slice node; create seed widgets
   # for those and give them a "moved command" that will set the position of the fiducial
   #
-
   set scene [$sliceGUI GetMRMLScene]
   set nLists [$scene GetNumberOfNodesByClass "vtkMRMLFiducialListNode"]
+
+  set rasToRAS [vtkMatrix4x4 New]
 
   for {set i 0} {$i < $nLists} {incr i} {
     set fidListNode [$scene GetNthNodeByClass $i "vtkMRMLFiducialListNode"]
 
     # add an observer on this fiducial list
     if { [$caller IsA "vtkMRMLScene"] } {
-      after idle "$this addFiducialListObserver $fidListNode"
+      $this addFiducialListObserver $fidListNode
     }
 
     if { ![$fidListNode GetVisibility] } {
       continue
     }
     
+    $rasToRAS Identity
+    set transformNode [$::slicer3::MRMLScene GetNodeByID [$fidListNode GetTransformNodeID]]
+    if { $transformNode != "" } {
+      $transformNode GetMatrixTransformToWorld $rasToRAS
+    }
+
     set glyphType [$fidListNode GetGlyphTypeAsString]
     set indexOf2D [string last "2D" $glyphType]
     if { $indexOf2D != -1 } {
@@ -240,6 +281,7 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
     set nFids [$fidListNode GetNumberOfFiducials]
     for {set f 0} {$f < $nFids} {incr f} {
       foreach {r a s} [$fidListNode GetNthFiducialXYZ $f] {}
+      foreach {r a s t} [$rasToRAS MultiplyPoint $r $a $s 1] {}
       set xyz [$this rasToXYZ "$r $a $s"]
       foreach {x y z} $xyz {}
       if { $z >= -0.5 && $z < [expr 0.5+[lindex [$node GetDimensions] 2]-1]} {
@@ -262,6 +304,7 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
     }
   }
 
+  $rasToRAS Delete
   $rasToSlice Delete
 }
 
@@ -305,6 +348,9 @@ proc FiducialsSWidget::AddFiducial { r a s } {
   # the logic handles saving the state for undo
   set fidIndex [$fidLogic AddFiducialSelected $r $a $s 1]
   $::slicer3::MRMLScene Modified
+
+  # make sure everything gets updated before adding another fiducial
+  update
 }
 
 #

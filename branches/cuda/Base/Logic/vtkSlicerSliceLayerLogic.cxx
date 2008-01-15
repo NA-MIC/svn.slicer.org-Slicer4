@@ -165,6 +165,7 @@ void vtkSlicerSliceLayerLogic::ProcessMRMLEvents(vtkObject * caller,
                                             unsigned long event, 
                                             void *callData)
 {
+  // ignore node events that aren't volumes or slice nodes
   if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene 
     && (event == vtkMRMLScene::NodeAddedEvent || event == vtkMRMLScene::NodeRemovedEvent ) )
     {
@@ -173,6 +174,13 @@ void vtkSlicerSliceLayerLogic::ProcessMRMLEvents(vtkObject * caller,
       {
       return;
       }
+    }
+
+  // ignore unimportant scene events
+  if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene 
+    && (event == vtkMRMLScene::NewSceneEvent) )
+    {
+    return;
     }
 
   if (this->VolumeDisplayNodeObserved == vtkMRMLVolumeDisplayNode::SafeDownCast(caller) &&
@@ -510,7 +518,12 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
     this->Reslice->Update();
 
     //Fixing horrible bug of the vtkSetAttributes Filter it doesn't copy attributes without name
-    if ( this->Reslice->GetOutput() && this->Reslice->GetOutput()->GetPointData()->GetScalars() )
+    if ( this->Reslice->GetOutput() && 
+         this->Reslice->GetOutput()->GetPointData() && 
+         this->Reslice->GetOutput()->GetPointData()->GetScalars() &&
+         volumeNode->GetImageData() &&
+         volumeNode->GetImageData()->GetPointData() && 
+         volumeNode->GetImageData()->GetPointData()->GetTensors())
       {
       this->Reslice->GetOutput()->GetPointData()->GetScalars()->SetName(volumeNode->GetImageData()->GetPointData()->GetTensors()->GetName());
       }
@@ -527,8 +540,11 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
 
   if (volumeDisplayNode)
     {
-    volumeDisplayNode->SetImageData(slicedImageData);
-    volumeDisplayNode->SetBackgroundImageData(this->Reslice->GetBackgroundMask());
+    if (volumeNode != NULL && volumeNode->GetImageData() != NULL)
+      {
+      volumeDisplayNode->SetImageData(slicedImageData);
+      volumeDisplayNode->SetBackgroundImageData(this->Reslice->GetBackgroundMask());
+      }
     }
 
   if (scalarVolumeDisplayNode && scalarVolumeDisplayNode->GetInterpolate() == 0  )

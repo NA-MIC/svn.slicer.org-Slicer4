@@ -356,6 +356,8 @@ ModuleFactory
   numberOfPeekedExecutables = this->ScanForCommandLineModulesByPeeking();
   numberOfExecutables = this->ScanForCommandLineModulesByExecuting();
 #ifdef USE_PYTHON
+  // Be sure that python is initialized
+  Py_Initialize();
   numberOfPython = this->ScanForPythonModulesByLoading();
 #endif
 
@@ -1693,6 +1695,7 @@ ModuleFactory
   long numberFound = 0;
   
 #ifdef USE_PYTHON
+
   double t0, t1;
   // add any of the self-describing Python modules available
   if (this->SearchPath == "")
@@ -1792,7 +1795,7 @@ ModuleFactory
             "if 'toXML' in dir ( Module ):\n"
             "    XML = Module.ToXML()\n"
             "if not 'Execute' in dir ( Module ):\n"
-            "    XML = None\n";
+            "    XML = ''\n";
 
           PyObject* v;
       

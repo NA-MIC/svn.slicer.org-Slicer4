@@ -134,6 +134,7 @@ void vtkMRMLNode::Copy(vtkMRMLNode *node)
     this->SetName(node->GetName());
     }
   this->HideFromEditors = node->HideFromEditors;
+  this->ModifiedSinceRead = node->ModifiedSinceRead;
   this->SaveWithScene = node->SaveWithScene ;
   this->Selectable = node->Selectable;
   this->AddToScene = node->AddToScene;
@@ -145,6 +146,27 @@ void vtkMRMLNode::Copy(vtkMRMLNode *node)
   this->SetDescription(node->GetDescription());
 }
 
+//----------------------------------------------------------------------------
+void vtkMRMLNode::Reset()
+{    
+  vtkMRMLNode *newNode = this->CreateNodeInstance();
+    
+  int save = this->GetSaveWithScene();
+  int hide = this->GetHideFromEditors();
+  int select = this->GetSelectable();
+  char *tag = this->GetSingletonTag();
+
+  this->DisableModifiedEventOn();
+  this->CopyWithSceneWithoutModifiedEvent(newNode);
+  
+  this->SetSaveWithScene(save);
+  this->SetHideFromEditors(hide);
+  this->SetSelectable(select);
+  this->SetSingletonTag(tag);
+  this->DisableModifiedEventOff(); // does not invoke Modified()
+  
+  newNode->Delete();
+}
 //----------------------------------------------------------------------------
 void vtkMRMLNode::PrintSelf(ostream& os, vtkIndent indent)
 {
@@ -271,7 +293,7 @@ void vtkMRMLNode::MRMLCallback(vtkObject *caller,
 
   if ( self == NULL )
     {
-    vtkDebugWithObjectMacro(self, "In vtkMRMLNode *********MRMLCallback called after delete!");
+    //vtkDebugMacro(self, "In vtkMRMLNode *********MRMLCallback called after delete!");
     return;
     }
 

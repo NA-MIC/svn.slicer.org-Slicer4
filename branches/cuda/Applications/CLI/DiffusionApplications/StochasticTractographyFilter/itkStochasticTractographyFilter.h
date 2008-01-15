@@ -138,11 +138,27 @@ public:
   /** Get TensorImage **/
   itkGetObjectMacro( OutputTensorImage, OutputTensorImageType );
   
+  /** Set/Get NearestNeighborInterpolation flag
+      true: Use NN voxel interpolation
+      false (default): Use Stochastic(Probabilistic) Interpolation
+  **/
+  itkSetMacro( NearestNeighborInterpolation, bool );
+  itkGetMacro( NearestNeighborInterpolation, bool );
+  
+  /** Set/Get StreamlineTractography flag
+      true: Perform simple major Eigenvector following streamline tractography
+      false (default): Perform Stochastic Tractography
+  **/
+  itkSetMacro( StreamlineTractography, bool );
+  itkGetMacro( StreamlineTractography, bool );
 
+  /** Entry Point For the Algorithm:  Is invoked when Update() is called
+      either directly or through itk pipeline propagation
+  **/
   void GenerateData();
   void GenerateTensorImageOutput( void );
   
-  /** override the Proccess Object Update because we don't have a
+  /** override the Process Object Update because we don't have a
       dataobject as an output.  We can change this later by wrapping the
       tractcontainer in a dataobject decorator and letting the Superclass
       know about it.
@@ -173,6 +189,14 @@ protected:
   /** Types for the Image of Mutexes of the Likelihood distribution **/
   typedef Image< SimpleFastMutexLock, 3 > LikelihoodCacheMutexImageType;
   
+  /** Type to store the rotation matrix for each voxel.
+      This matrix rotates the grid of sampled directions so that at least
+      one of the vectors points in the same direction as the estimated
+      eigenvector.  This is neccessary in situations of extremely low
+      residual variance, otherwise all sampled directions will have
+      zero likelihood which results in inappropriate behavior **/
+  typedef Image< vnl_matrix< double >, 3 > RotationImageType;
+  
   StochasticTractographyFilter();
   virtual ~StochasticTractographyFilter();
   
@@ -184,6 +208,10 @@ protected:
     const TractType::ContinuousIndexType& cindex,
     typename InputDWIImageType::IndexType& index);
                       
+  /** Chose the nearest neighboring pixel **/
+  void NearestNeighborInterpolate( const TractType::ContinuousIndexType& cindex,
+    typename InputDWIImageType::IndexType& index);
+
   /** Functions and data related to fitting the tensor model at each pixel **/
   void UpdateGradientDirections(void);
   void UpdateTensorModelFittingMatrices( void );
@@ -202,6 +230,7 @@ protected:
     ConstrainedModelParamType& constrainedmodelparams);
   
   void CalculateNoiseFreeDWIFromConstrainedModel( const ConstrainedModelParamType& constrainedmodelparams,
+    const GradientDirectionContainerType::Pointer gradients,
     DWIVectorImageType::PixelType& noisefreedwi);
   
   void CalculateResidualVariance( const DWIVectorImageType::PixelType& noisydwi,
@@ -212,10 +241,12 @@ protected:
   
   void CalculateLikelihood( const DWIVectorImageType::PixelType &dwipixel, 
     TractOrientationContainerType::ConstPointer orientations,
-    ProbabilityDistributionImageType::PixelType& likelihood);
+    ProbabilityDistributionImageType::PixelType& likelihood,
+    RotationImageType::PixelType& rotation);
   
-  void CalculatePrior( TractOrientationContainerType::Element v_prev, 
+  void CalculatePrior( const TractOrientationContainerType::Element& v_prev, 
     TractOrientationContainerType::ConstPointer orientations,
+    const RotationImageType::PixelType& rotation,
     ProbabilityDistributionImageType::PixelType& prior );
   
   void CalculatePosterior( const ProbabilityDistributionImageType::PixelType& likelihood,
@@ -225,14 +256,15 @@ protected:
   void SampleTractOrientation( vnl_random& randomgenerator, 
     const ProbabilityDistributionImageType::PixelType& posterior,
     TractOrientationContainerType::ConstPointer orientations,
+    const RotationImageType::PixelType& rotation,
     TractOrientationContainerType::Element& choosendirection );
   
   void StochasticTractGeneration( typename InputDWIImageType::ConstPointer dwiimagePtr,
     typename InputWhiteMatterProbabilityImageType::ConstPointer maskimagePtr,
     typename InputDWIImageType::IndexType index,
     unsigned long randomseed,
-    TractType::Pointer conttract,
-    TractType::Pointer discretetract );
+    TractType::Pointer conttracts[2],
+    TractType::Pointer discretetracts[2] );
     
   void CalculateNuisanceParameters( const DWIVectorImageType::PixelType& dwivalues,
     const vnl_diag_matrix< double >& W,
@@ -250,9 +282,9 @@ protected:
   /** Allocates the tract output container **/
   void AllocateOutputs();
   
-  /** Thread Safe Function to check/update an entry in the likelihood cache **/
+  /** Thread Safe Function to check/update an entry in the likelihood cache (also updates the rotation image) **/
   ProbabilityDistributionImageType::PixelType& 
-    AccessLikelihoodCache( typename InputDWIImageType::IndexType index );
+    AccessLikelihoodCache( const typename InputDWIImageType::IndexType index );
     
   /** Thread Safe Function to delegate a tract and obtain a randomseed to start tracking **/
   bool DelegateTract(unsigned long& randomseed, typename InputDWIImageType::IndexType& index);
@@ -267,6 +299,10 @@ protected:
   bool FiberExistenceTest( vnl_random& randomgenerator,
     typename InputWhiteMatterProbabilityImageType::ConstPointer wmpimage,
     typename InputWhiteMatterProbabilityImageType::IndexType index );
+  /** Picks the eigenvector associated with the largest eigenvalue that is in the direction of v_prev**/
+  void PickLargestEigenvector( const DWIVectorImageType::PixelType &dwipixel,
+    TractOrientationContainerType::Element v_prev,
+    TractOrientationContainerType::Element& v_curr);
   
   GradientDirectionContainerType::ConstPointer m_Gradients;
   GradientDirectionContainerType::Pointer m_TransformedGradients;
@@ -304,6 +340,11 @@ protected:
   
   std::vector< typename InputDWIImageType::IndexType > m_SeedIndices;
   ProgressReporter* m_progress;
+  
+  bool m_NearestNeighborInterpolation;
+  bool m_StreamlineTractography;
+  
+  RotationImageType::Pointer m_RotationImagePtr;
 };
 
 }

@@ -45,6 +45,7 @@
 #include "vtkKWMessageDialog.h"
 #include "vtkKWToolbarSet.h"
 #include "vtkKWMessageDialog.h"
+#include "vtkKWProgressDialog.h"
 
 #include "vtkSlicerWindow.h"
 #include "vtkSlicerApplication.h"
@@ -309,8 +310,22 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
         std::string fl(fileName);
         if (this->GetMRMLScene() && fl.find(".mrml") != std::string::npos ) 
           {
+          vtkKWProgressDialog *progressDialog = vtkKWProgressDialog::New();
+          progressDialog->SetParent( this->MainSlicerWindow );
+          progressDialog->SetMasterWindow( this->MainSlicerWindow );
+          progressDialog->Create();
+          std::string message("Loading Scene...\n");
+          message += std::string(fileName);
+          progressDialog->SetMessageText( message.c_str() );
+          // don't observe the scene, to avoid getting render updates
+          // during load.  TODO: make a vtk-based progress bar that doesn't
+          // call the tcl update method
+          //progressDialog->SetObservedObject( this->GetMRMLScene() );
+          progressDialog->Display();
           this->GetMRMLScene()->SetURL(fileName);
           this->GetMRMLScene()->Connect();
+          progressDialog->SetParent(NULL);
+          progressDialog->Delete();
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
         else if (this->GetMRMLScene() && fl.find(".xml") != std::string::npos ) 
@@ -876,7 +891,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             
             this->LoadSceneDialog->SetParent ( this->MainSlicerWindow );
             this->LoadSceneDialog->Create ( );
-            this->LoadSceneDialog->SetFileTypes("{ {MRML Scene} {*.mrml} } { {Slicer2 Scene} {*.xml} } { {Xcede Catalog} {*.xcat} }");
+            this->LoadSceneDialog->SetFileTypes("{ {Scenes} {.mrml .xml} } { {MRML Scene} {.mrml} } { {Slicer2 Scene} {.xml} } { {Xcede Catalog} {.xcat} } { {All} {.*} }");
             this->LoadSceneDialog->RetrieveLastPathFromRegistry("OpenPath");
 
 #endif

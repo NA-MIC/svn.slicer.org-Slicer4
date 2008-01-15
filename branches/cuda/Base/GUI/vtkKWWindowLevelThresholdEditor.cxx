@@ -342,12 +342,7 @@ void vtkKWWindowLevelThresholdEditor::CreateWidget()
   this->ColorTransferFunctionEditor->SetCanvasHeight(126);
   this->ColorTransferFunctionEditor->LabelVisibilityOff ();
   this->ColorTransferFunctionEditor->SetBalloonHelpString(
-    "Another color transfer function editor. The point position is now on "
-    "top, the point style is an arrow down, guidelines are shown for each "
-    "point (useful when combined with an histogram), point indices are "
-    "hidden, ticks are displayed in the parameter space, the label "
-    "and the parameter range are on top, its width is set explicitly. "
-    "The range and histogram are based on a real image data.");
+    "The range and histogram of the currently selected volume.");
   this->ColorTransferFunctionEditor->SetWholeParameterRangeToFunctionRange();
   this->ColorTransferFunctionEditor->SetVisibleParameterRangeToWholeParameterRange();
   
@@ -420,7 +415,7 @@ void vtkKWWindowLevelThresholdEditor::UpdateFromImage()
       
       this->ThresholdRange->SetWholeRange(range[0], range[1]);
       this->WindowLevelRange->SetWholeRange(range[0] - 0.5 * (range[0] + range[1]), range[1] + 0.5 * (range[0] + range[1]));
-      if (this->GetAutoWindowLevel() == 1 || range[0] < r0 || range[1] > r1) 
+      if (this->GetAutoWindowLevel() == 1 || range[0] > r0 || range[1] < r1) 
         {
         this->SetWindowLevel(range[1] - range[0], 0.5 * (range[0] + range[1]) );
         }

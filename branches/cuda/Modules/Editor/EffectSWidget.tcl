@@ -92,7 +92,7 @@ itcl::body EffectSWidget::constructor {sliceGUI} {
   lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
   foreach event "LeftButtonPressEvent LeftButtonReleaseEvent MouseMoveEvent KeyPressEvent EnterEvent LeaveEvent" {
     lappend _guiObserverTags \
-              [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent"]
+              [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI"]
   }
 
   set node [[$sliceGUI GetLogic] GetSliceNode]
@@ -244,8 +244,8 @@ itcl::body EffectSWidget::animateCursor { {onOff "on"} } {
   $this setAnimationState $p
 
   # force a render
-  #[$sliceGUI GetSliceViewer] RequestRender
-  [$sliceGUI GetSliceViewer] Render
+  [$sliceGUI GetSliceViewer] RequestRender
+  #[$sliceGUI GetSliceViewer] Render
 
   incr _cursorAnimationState
   set _cursorAnimationTag [after $animationDelay "$this animateCursor on"]
@@ -376,8 +376,9 @@ itcl::body EffectSWidget::postApply {} {
   switch $scope {
     "all" {
       set node [$logic GetVolumeNode]
-      $node SetAndObserveImageData $_outputLabel
+      [$node GetImageData] DeepCopy $_outputLabel
       $node SetModifiedSinceRead 1
+      $node Modified
     }
     "visible" {
       # TODO: need to use vtkImageSlicePaint to insert visible
