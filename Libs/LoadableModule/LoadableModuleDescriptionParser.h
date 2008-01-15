@@ -5,31 +5,29 @@
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
 
-  Program:   Module Description Parser
+  Program:   Loadable Module
   Module:    $HeadURL$
   Date:      $Date$
   Version:   $Revision$
 
 ==========================================================================*/
-#ifndef __ModuleDescriptionParser_h
-#define __ModuleDescriptionParser_h
+#ifndef __LoadableModuleDescriptionParser_h
+#define __LoadableModuleDescriptionParser_h
 
 #include <string>
 #include <vector>
 
-#include "ModuleDescriptionParserWin32Header.h"
+#include "LoadableModuleWin32Header.h"
 
-class ModuleDescription;
-class ModuleParameterGroup;
+class LoadableModuleDescription;
 
-
-class ModuleDescriptionParser_EXPORT ModuleDescriptionParser
+class LoadableModule_EXPORT LoadableModuleDescriptionParser
 {
 public:
-  ModuleDescriptionParser() {};
-  ~ModuleDescriptionParser() {};
+  LoadableModuleDescriptionParser() {};
+  ~LoadableModuleDescriptionParser() {};
 
-  int Parse( const std::string& xml, ModuleDescription& description);
+  int Parse( const std::string& xml, LoadableModuleDescription& description);
 };
 
 #endif

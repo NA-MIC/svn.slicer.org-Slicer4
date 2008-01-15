@@ -11,24 +11,24 @@
   Version:   $Revision$
 
 ==========================================================================*/
-// .NAME ModuleDescriptionParserWin32Header - manage Windows system differences
+// .NAME LoadableModuleWin32Header - manage Windows system differences
 // .SECTION Description
-// The ModuleDescriptionParserWin32Header captures some system differences between Unix
+// The LoadableModuleWin32Header captures some system differences between Unix
 // and Windows operating systems. 
 
-#ifndef __ModuleDescriptionParserWin32Header_h
-#define __ModuleDescriptionParserWin32Header_h
+#ifndef __LoadableModuleWin32Header_h
+#define __LoadableModuleWin32Header_h
 
-#include <ModuleDescriptionParserConfigure.h>
+#include <LoadableModuleConfigure.h>
 
-#if defined(WIN32) && !defined(ModuleDescriptionParser_STATIC)
-#if defined(ModuleDescriptionParser_EXPORTS)
-#define ModuleDescriptionParser_EXPORT __declspec( dllexport ) 
+#if defined(WIN32) && !defined(LoadableModule_STATIC)
+#if defined(LoadableModule_EXPORTS)
+#define LoadableModule_EXPORT __declspec( dllexport ) 
 #else
-#define ModuleDescriptionParser_EXPORT __declspec( dllimport ) 
+#define LoadableModule_EXPORT __declspec( dllimport ) 
 #endif
 #else
-#define ModuleDescriptionParser_EXPORT 
+#define LoadableModule_EXPORT 
 #endif
 
 #if defined(_MSC_VER)

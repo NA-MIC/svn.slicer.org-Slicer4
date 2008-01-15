@@ -39,6 +39,7 @@
 
 #include "vtkSlicerConfigure.h" // for VTKSLICER_CONFIGURATION_TYPES
 
+#include "LoadableModuleFactory.h"
 #include "ModuleFactory.h"
 
 #include "vtkSlicerROILogic.h"
@@ -856,11 +857,11 @@ int Slicer3_main(int argc, char *argv[])
 
     if ( Stereo )
       {
-      slicerApp->SetStereoEnabled(1);
+        slicerApp->SetStereoEnabled(1);
       } 
     else 
       {
-      slicerApp->SetStereoEnabled(0);
+        slicerApp->SetStereoEnabled(0);
       }
     
 
@@ -890,18 +891,97 @@ int Slicer3_main(int argc, char *argv[])
     appGUI->SetAndObserveMRMLScene ( scene );
 
     // set fonts from registry before building GUI...
-/*
-    if ( appGUI->GetMainSlicerWindow()->GetApplicationSettingsInterface() )
+    /*
+      if ( appGUI->GetMainSlicerWindow()->GetApplicationSettingsInterface() )
       {
       slicerApp->GetSlicerTheme()->InstallFonts();
       }
-*/
+    */
     slicerApp->SaveUserInterfaceGeometryOn();
 
     appGUI->BuildGUI ( );
     appGUI->AddGUIObservers ( );
     slicerApp->SetApplicationGUI ( appGUI );
 
+    // Set cache paths for modules
+
+
+    std::string cachePath;
+    std::string defaultCachePath;
+    std::string userCachePath;
+
+    // define a default cache for module information
+    defaultCachePath = slicerBinDir + "/../lib/Slicer3/PluginsCache";
+    if (hasIntDir)
+      {
+        defaultCachePath += "/" + intDir;
+      }
+      
+    // get the cache path that the user has configured
+    if (slicerApp->GetModuleCachePath())
+      {
+        userCachePath = slicerApp->GetModuleCachePath();
+      }
+
+    // if user cache path is set and we can write to it, use it.
+    // if user cache path is not set or we cannot write to it, try
+    // the default cache path.
+    // if we cannot write to the default cache path, then warn and
+    // don't use a cache.
+    vtksys::Directory directory;
+    if (userCachePath != "")
+      {
+        if (!vtksys::SystemTools::FileExists(userCachePath.c_str()))
+          {
+            vtxksys::SystemTools::MakeDirectory(userCachePath.c_str());
+          }
+        if (vtksys::SystemTools::FileExists(userCachePath.c_str())
+            && vtksys::SystemTools::FileIsDirectory(userCachePath.c_str()))
+          {
+            std::ofstream tst((userCachePath + "/tstCache.txt").c_str());
+            if (tst)
+              {
+                cachePath = userCachePath;
+              }
+          }
+      }
+    if (cachePath == "")
+      {
+        if (!vtksys::SystemTools::FileExists(defaultCachePath.c_str()))
+          {
+            vtksys::SystemTools::MakeDirectory(defaultCachePath.c_str());
+          }
+        if (vtksys::SystemTools::FileExists(defaultCachePath.c_str())
+            && vtksys::SystemTools::FileIsDirectory(defaultCachePath.c_str()))
+          {
+            std::ofstream tst((defaultCachePath + "/tstCache.txt").c_str());
+            if (tst)
+              {
+                cachePath = defaultCachePath;
+              }
+          }
+      }
+    if (ClearModuleCache)
+      {
+        std::string cacheFile = cachePath + "/ModuleCache.csv";
+        vtksys::SystemTools::RemoveFile(cacheFile.c_str());
+      }
+    if (NoModuleCache)
+      {
+        cachePath = "";
+      }
+    if (cachePath == "")
+      {
+        if (NoModuleCache)
+          {
+            std::cout << "Module cache disabled by command line argument."
+                      << std::endl;
+          }
+        else
+          {
+            std::cout << "Module cache disabled. Slicer application directory may not be writable, a user level cache directory may not be set, or the user level cache directory may not be writable." << std::endl;
+          }
+      }
 
     
     // ------------------------------
@@ -918,6 +998,40 @@ int Slicer3_main(int argc, char *argv[])
     // creates toplevel widgets are not added to this collection.
     // If we need to collect them at some point, we should define 
     // other collections in the vtkSlicerApplication class.
+
+#ifndef LOADABLEMODULES_DEBUG
+    {
+
+    std::string slicerModulePath = slicerBinDir;
+
+        if (hasIntDir)
+          {
+            slicerModulePath += "/" + intDir;
+          }
+
+    LoadableModuleFactory loadableModuleFactory;
+    loadableModuleFactory.SetName("Slicer");
+    loadableModuleFactory.SetSearchPath( slicerModulePath );
+    loadableModuleFactory.SetWarningMessageCallback( WarningMessage );
+    loadableModuleFactory.SetErrorMessageCallback( ErrorMessage );
+    loadableModuleFactory.SetInformationMessageCallback( InformationMessage );
+    loadableModuleFactory.SetModuleDiscoveryMessageCallback( SplashMessage );
+    loadableModuleFactory.Scan();
+    
+    std::vector<std::string> loadableModuleNames = 
+      loadableModuleFactory.GetModuleNames();
+    std::vector<std::string>::const_iterator lmit =
+      loadableModuleNames.begin();
+    
+    while (lmit != loadableModuleNames.end())
+      {
+        LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+        lmit++;
+      }
+
+    }
+#endif // LOADABLEMODULES_DEBUG
+
 
     // ADD INDIVIDUAL MODULES
     // (these require appGUI to be built):
@@ -1492,83 +1606,6 @@ int Slicer3_main(int argc, char *argv[])
       // add the default plugin directory (based on the slicer
       // installation or build tree) to the user path
       packagePath = userPackagePath + delim + defaultPackageDir;
-
-      std::string cachePath;
-      std::string defaultCachePath;
-      std::string userCachePath;
-
-      // define a default cache for module information
-      defaultCachePath = slicerBinDir + "/../lib/Slicer3/PluginsCache";
-      if (hasIntDir)
-        {
-        defaultCachePath += "/" + intDir;
-        }
-      
-      // get the cache path that the user has configured
-      if (slicerApp->GetModuleCachePath())
-        {
-        userCachePath = slicerApp->GetModuleCachePath();
-        }
-
-      // if user cache path is set and we can write to it, use it.
-      // if user cache path is not set or we cannot write to it, try
-      // the default cache path.
-      // if we cannot write to the default cache path, then warn and
-      // don't use a cache.
-      vtksys::Directory directory;
-      if (userCachePath != "")
-        {
-        if (!vtksys::SystemTools::FileExists(userCachePath.c_str()))
-          {
-          vtksys::SystemTools::MakeDirectory(userCachePath.c_str());
-          }
-        if (vtksys::SystemTools::FileExists(userCachePath.c_str())
-            && vtksys::SystemTools::FileIsDirectory(userCachePath.c_str()))
-          {
-          std::ofstream tst((userCachePath + "/tstCache.txt").c_str());
-          if (tst)
-            {
-            cachePath = userCachePath;
-            }
-          }
-        }
-      if (cachePath == "")
-        {
-        if (!vtksys::SystemTools::FileExists(defaultCachePath.c_str()))
-          {
-          vtksys::SystemTools::MakeDirectory(defaultCachePath.c_str());
-          }
-        if (vtksys::SystemTools::FileExists(defaultCachePath.c_str())
-            && vtksys::SystemTools::FileIsDirectory(defaultCachePath.c_str()))
-          {
-          std::ofstream tst((defaultCachePath + "/tstCache.txt").c_str());
-          if (tst)
-            {
-            cachePath = defaultCachePath;
-            }
-          }
-        }
-      if (ClearModuleCache)
-        {
-        std::string cacheFile = cachePath + "/ModuleCache.csv";
-        vtksys::SystemTools::RemoveFile(cacheFile.c_str());
-        }
-      if (NoModuleCache)
-        {
-        cachePath = "";
-        }
-      if (cachePath == "")
-        {
-        if (NoModuleCache)
-          {
-          std::cout << "Module cache disabled by command line argument."
-                    << std::endl;
-          }
-        else
-          {
-          std::cout << "Module cache disabled. Slicer application directory may not be writable, a user level cache directory may not be set, or the user level cache directory may not be writable." << std::endl;
-          }
-        }
 
       // Search for modules
       ModuleFactory moduleFactory;

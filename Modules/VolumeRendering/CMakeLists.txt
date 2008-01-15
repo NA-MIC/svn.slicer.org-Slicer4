@@ -70,7 +70,8 @@ VTK_WRAP_TCL3(VolumeRenderingModule VolumeRenderingModule_TCL_SRCS "${VolumeRend
 ADD_LIBRARY(VolumeRenderingModule
   ${VolumeRenderingModule_SRCS}
   ${VolumeRenderingModule_TCL_SRCS}
-  )
+  #loadable module support
+  VolumeRenderingModuleLib.cxx )
 
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS VolumeRenderingModule
