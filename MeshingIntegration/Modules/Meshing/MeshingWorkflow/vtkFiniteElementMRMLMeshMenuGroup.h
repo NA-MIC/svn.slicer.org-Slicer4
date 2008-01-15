@@ -26,8 +26,9 @@
 
 class vtkKWMimxCreateBBFromBoundsGroup;
 class vtkKWMimxCreateBBMeshSeedGroup;
+class vtkFiniteElementCreateBBMeshSeedGroup;
 class vtkKWMimxEditBBGroup;
-class vtkKWMimxCreateFEMeshFromBBGroup;
+class vtkFiniteElementCreateFEMeshFromBBGroup;
 class vtkKWMimxViewProperties;
 class vtkKWMimxSaveVTKBBGroup;
 class vtkKWMimxEditBBMeshSeedGroup;
@@ -85,9 +86,9 @@ protected:
     vtkFiniteElementMRMLMeshMenuGroup();
     ~vtkFiniteElementMRMLMeshMenuGroup();
   vtkKWMimxCreateBBFromBoundsGroup *CreateBBFromBounds;
-  vtkKWMimxCreateBBMeshSeedGroup *CreateBBMeshSeed;
+  vtkFiniteElementCreateBBMeshSeedGroup *CreateBBMeshSeed;
   vtkKWMimxEditBBGroup *EditBB;
-  vtkKWMimxCreateFEMeshFromBBGroup *FEMeshFromBB;
+  vtkFiniteElementCreateFEMeshFromBBGroup *FEMeshFromBB;
   vtkKWMimxViewProperties *BBViewProperties;
   vtkKWMimxSaveVTKBBGroup *SaveVTKBBGroup;
   vtkKWMimxEditBBMeshSeedGroup *EditBBMeshSeedGroup;

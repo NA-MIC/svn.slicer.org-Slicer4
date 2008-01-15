@@ -15,6 +15,8 @@
 
 #include "vtkFiniteElementBoundingBoxList.h"
 #include "vtkMRMLFiniteElementBoundingBoxNode.h"
+#include "vtkMRMLFiniteElementBoundingBoxDisplayNode.h"
+#include "vtkMRMLUnstructuredGridStorageNode.h"
 #include "vtkMRMLScene.h"
 #include "vtkDebugLeaks.h"
 #include "vtkObject.h"
@@ -39,8 +41,11 @@ vtkFiniteElementBoundingBoxList::~vtkFiniteElementBoundingBoxList()
 void vtkFiniteElementBoundingBoxList::SetMRMLSceneForStorage(vtkMRMLScene* scene) 
 {
     this->savedMRMLScene = scene;
-    cout << "*** do we need to register the MRML node classes?" << endl;
-    //this->savedMRMLScene->RegisterNodeClass(this);
+    // each node type should be registered once in the MRML scene, so we do it here when the 
+    // MRML scene is set, which is called only once per slicer session. 
+    vtkMRMLFiniteElementBoundingBoxNode* feBBNode = vtkMRMLFiniteElementBoundingBoxNode::New();
+    this->savedMRMLScene->RegisterNodeClass(feBBNode);
+    feBBNode->Delete();
 }
 
 
@@ -56,7 +61,25 @@ int vtkFiniteElementBoundingBoxList::AppendItem(vtkMimxUnstructuredGridActor* ac
      newMRMLNode->SetFileName(actor->GetFileName());
      newMRMLNode->SetFilePath(actor->GetFilePath());
      newMRMLNode->SetDataType(actor->GetDataType());
+     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
+     ugrid->DeepCopy(actor->GetDataSet());
+     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
+     // *** delete the extra pointer to the ugrid, since MRML node has a reference to it
+     //ugrid->Delete();
      this->savedMRMLScene->AddNode(newMRMLNode);
+     
+     // now add the display and storage nodes
+     vtkMRMLFiniteElementBoundingBoxDisplayNode* dispNode = vtkMRMLFiniteElementBoundingBoxDisplayNode::New();
+     vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
+      
+     // Establish linkage between the surface
+     // node and its display and storage nodes, so the viewer will be updated when data
+     // or attributes change
+     this->savedMRMLScene->AddNode(dispNode);
+     this->savedMRMLScene->AddNode(storeNode);
+     newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
+     newMRMLNode->SetStorageNodeID(storeNode->GetID());   
+
      cout << "copied data to MRML bbox node " << endl;
    } else 
    {
@@ -65,11 +88,55 @@ int vtkFiniteElementBoundingBoxList::AppendItem(vtkMimxUnstructuredGridActor* ac
   return 0;
 }
 
+//-------------------------------------------------------------------------
+// This method returns TRUE if the instance variables between an actor and 
+// the MRML node match.  This test is run to see if this is the correct MRML
+// node to correspond to a modify event. 
+//-------------------------------------------------------------------------
+/***
+bool vtkFiniteElementBoundingBoxList::ItemMatchesMRMLNode(vtkMimxUnstructuredGridActor* actor,
+                                vtkMRMLFiniteElementBoundingBoxNode* testMRMLNode)
+{
+    bool nameMatches = !strcmp(actor->GetFileName(),testMRMLNode->GetFileName());
+    bool pathMatches = !strcmp(actor->GetFilePath(),testMRMLNode->GetFilePath());
+    bool dataTypeMatches = (actor->GetDataType() == testMRMLNode->GetDataType());
+    return nameMatches && pathMatches && dataTypeMatches;
+}
+****/
+
+int vtkFiniteElementBoundingBoxList::ModifyItem(vtkIdType index, vtkMimxUnstructuredGridActor* actor)
+{
+  
+   if (this->savedMRMLScene)
+   {
+       // first fetch the MRML node that has been requested
+        vtkMRMLFiniteElementBoundingBoxNode* requestedMrmlNode = 
+            (vtkMRMLFiniteElementBoundingBoxNode*)(this->savedMRMLScene->GetNthNodeByClass(index,"vtkMRMLFiniteElementBoundingBoxNode"));
+             
+    // copy the state variables to the MRML node
+     requestedMrmlNode->SetFileName(actor->GetFileName());
+     requestedMrmlNode->SetFilePath(actor->GetFilePath());
+     requestedMrmlNode->SetDataType(actor->GetDataType());
+     // delete the old ugrid
+     requestedMrmlNode->GetUnstructuredGrid()->Delete();
+     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
+     ugrid->DeepCopy(actor->GetDataSet());
+     requestedMrmlNode->SetAndObserveUnstructuredGrid(ugrid);
+     // *** delete this reference? 
+     //ugrid->Delete();
+     cout << "modified MRML bbox node: " << index << endl;
+   } else 
+   {
+       vtkErrorMacro("MeshingWorkflow: modifying uninitialized MRML Scene");
+   }
+  return 0;
+}
+
 
 vtkMimxUnstructuredGridActor* vtkFiniteElementBoundingBoxList::GetItem(vtkIdType id)
 {
-    vtkMimxUnstructuredGridActor* returnNode;
     //return this->InternalMimxObjectList->GetItem(id);
+    vtkMimxUnstructuredGridActor* returnNode;
     
   // first fetch the MRML node that has been requested
   vtkMRMLFiniteElementBoundingBoxNode* requestedMrmlNode = 
@@ -89,8 +156,9 @@ vtkMimxUnstructuredGridActor* vtkFiniteElementBoundingBoxList::GetItem(vtkIdType
   // copy MRML values to the node which we will return to the client
   returnNode->SetFileName(requestedMrmlNode->GetFileName());
   returnNode->SetFilePath(requestedMrmlNode->GetFilePath());
+  returnNode->SetDataType(requestedMrmlNode->GetDataType()); 
+  returnNode->GetDataSet()->DeepCopy(requestedMrmlNode->GetUnstructuredGrid());
   
-  //vtkErrorMacro("need to copy vtkPolyData here");
   return returnNode;
 }
 
