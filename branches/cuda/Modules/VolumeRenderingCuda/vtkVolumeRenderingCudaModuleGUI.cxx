@@ -229,7 +229,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             reader->SetFileDimensionality(3);
             // reader->SetNumberOfScalarComponents(1);
 
-            reader->SetFileName("C:\\Documents and Settings\\bensch\\Desktop\\svn\\orxonox\\subprojects\\volrenSample\\heart256.raw");
+            reader->SetFileName("C:\\heart256.raw");
             reader->Update();
 
             vtkImageData* data = reader->GetOutput();
@@ -241,12 +241,12 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->CudaActor->SetMapper(this->CudaMapper);
         }
         this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
-       /* this->CudaMapper->Render(
+       this->CudaMapper->Render(
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
-            this->CudaActor);*/
-        //this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+            this->CudaActor);
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
 
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaActor);
+        //this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaActor);
     }
 }
 
