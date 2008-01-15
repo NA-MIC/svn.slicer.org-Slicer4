@@ -15,6 +15,7 @@ SUBDIRS(
       MRML
       tclap
       ModuleDescriptionParser
+      LoadableModule
       GenerateCLP
       SlicerIO
       ITKCommandIO

@@ -267,7 +267,7 @@ if { $::GETBUILDTEST(doxy) && ![file exists $::env(SLICER_DOC)] } {
 # svn checkout (does an update if it already exists)
 cd $::SLICER_HOME/..
 if { [file exists Slicer3] } {
-    cd Slicer3
+    cd
     runcmd svn switch $::SLICER_TAG
 } else {
     runcmd svn checkout $::SLICER_TAG Slicer3

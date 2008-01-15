@@ -12,26 +12,21 @@
 
 ==========================================================================*/
 
-#ifndef __ModuleDescription_h
-#define __ModuleDescription_h
+#ifndef __LoadableModuleDescription_h
+#define __LoadableModuleDescription_h
 
-#include "ModuleDescriptionParserWin32Header.h"
-
-#include "ModuleParameterGroup.h"
-
-#include "ModuleProcessInformation.h"
-#include "ModuleLogo.h"
+#include "LoadableModuleWin32Header.h"
 
 #include <string>
 #include <vector>
 
-class ModuleDescriptionParser_EXPORT ModuleDescription
+class LoadableModule_EXPORT LoadableModuleDescription
 {
 public:
-  ModuleDescription();
-  ModuleDescription(const ModuleDescription &md);
+  LoadableModuleDescription();
+  LoadableModuleDescription(const LoadableModuleDescription &md);
 
-  void operator=(const ModuleDescription &md);
+  void operator=(const LoadableModuleDescription &md);
 
   void SetCategory(const std::string &cat)
   {
@@ -43,6 +38,26 @@ public:
     return this->Category;
   }
   
+  void SetName(const std::string &name)
+  {
+    this->Name = name;
+  }
+
+  const std::string& GetName() const
+  {
+    return this->Name;
+  }
+
+  void SetMessage(const std::string &message)
+  {
+    this->Message = message;
+  }
+
+  const std::string& GetMessage() const
+  {
+    return this->Message;
+  }
+
   void SetTitle(const std::string &title)
   {
     this->Title = title;
@@ -224,45 +239,10 @@ public:
   {
     return this->AlternativeLocation;
   }
-  
-  void SetLogo(const ModuleLogo& logo);
-  const ModuleLogo& GetLogo() const;
-  
-  void AddParameterGroup(const ModuleParameterGroup &group)
-  {
-    this->ParameterGroups.push_back(group);
-  }
+  private:
+  std::string Name;
+  std::string Message;
 
-  const std::vector<ModuleParameterGroup>& GetParameterGroups() const
-  {
-    return this->ParameterGroups;
-  }
-
-  std::vector<ModuleParameterGroup>& GetParameterGroups()
-  {
-    return this->ParameterGroups;
-  }
-  
-  void SetParameterGroups(const std::vector<ModuleParameterGroup>& groups)
-  {
-      this->ParameterGroups = groups;
-  }
-
-  bool HasParameter(const std::string& name) const;
-
-  bool SetParameterDefaultValue(const std::string& name,
-                                const std::string& value);
-
-  std::string GetParameterDefaultValue(const std::string& name) const;
-
-  const ModuleProcessInformation* GetProcessInformation() const
-    {return &ProcessInformation;}
-  
-  ModuleProcessInformation* GetProcessInformation()
-    {return &ProcessInformation;}
-  
-  
-private:
   std::string Title;
   std::string Category;
   std::string Description;
@@ -277,12 +257,8 @@ private:
   std::string AlternativeType;
   std::string AlternativeTarget;
   std::string AlternativeLocation;
-  std::vector<ModuleParameterGroup> ParameterGroups;  
-
-  ModuleProcessInformation ProcessInformation;
-  ModuleLogo Logo;
 };
 
-ModuleDescriptionParser_EXPORT std::ostream & operator<<(std::ostream &os, const ModuleDescription &module);
+LoadableModule_EXPORT std::ostream & operator<<(std::ostream &os, const LoadableModuleDescription &module);
 
 #endif

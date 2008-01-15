@@ -1,25 +1,20 @@
-PROJECT(ModuleDescriptionParser)
+PROJECT(LoadableModule)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
 
 CONFIGURE_FILE(
-  ${ModuleDescriptionParser_SOURCE_DIR}/ModuleDescriptionParserConfigure.h.in 
-  ${ModuleDescriptionParser_BINARY_DIR}/ModuleDescriptionParserConfigure.h
+  ${LoadableModule_SOURCE_DIR}/LoadableModuleConfigure.h.in 
+  ${LoadableModule_BINARY_DIR}/LoadableModuleConfigure.h
 )
 
 ## ITK is required for expat.h
 FIND_PACKAGE(ITK REQUIRED)
 INCLUDE(${ITK_USE_FILE})
 
-SET(ModuleDescriptionParser_SRCS
-  ModuleParameter.cxx
-  ModuleParameterGroup.cxx
-  ModuleDescription.cxx
-  ModuleDescriptionParser.cxx
-  ModuleProcessInformation.cxx
-  ModuleLogo.cxx
-  ModuleFactory.cxx
-  BatchMakeUtilities.cxx
+SET(LoadableModule_SRCS
+  LoadableModuleDescription.cxx
+  LoadableModuleDescriptionParser.cxx
+  LoadableModuleFactory.cxx
 )
 
 IF (USE_BFD)
@@ -31,8 +26,8 @@ IF (USE_BFD)
        # make sure we can build with libbfd
        MESSAGE(STATUS "Testing libbfd")
        TRY_COMPILE(HAVE_BFD
-                   ${ModuleDescriptionParser_BINARY_DIR}/CMake
-                   ${ModuleDescriptionParser_SOURCE_DIR}/CMake
+                   ${LoadableModule_BINARY_DIR}/CMake
+                   ${LoadableModule_SOURCE_DIR}/CMake
                    TestBFD
                    CMAKE_FLAGS 
                       -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS}
@@ -47,8 +42,8 @@ IF (USE_BFD)
     ENDIF (HAVE_BFD_HEADER)
 
     IF (HAVE_BFD)
-      SET(ModuleDescriptionParser_SRCS 
-            ${ModuleDescriptionParser_SRCS} 
+      SET(LoadableModule_SRCS 
+            ${LoadableModule_SRCS} 
             BinaryFileDescriptor.cxx)
     ENDIF (HAVE_BFD)
   ENDIF (NOT WIN32)
@@ -56,8 +51,8 @@ ENDIF (USE_BFD)
 
 
 INCLUDE_DIRECTORIES(
-  ${ModuleDescriptionParser_BINARY_DIR}
-  ${ModuleDescriptionParser_SOURCE_DIR} 
+  ${LoadableModule_BINARY_DIR}
+  ${LoadableModule_SOURCE_DIR} 
 )
 
 IF(USE_PYTHON)
@@ -71,30 +66,30 @@ INCLUDE_DIRECTORIES(
 )
 ENDIF(USE_PYTHON)
 
-ADD_LIBRARY(ModuleDescriptionParser ${ModuleDescriptionParser_SRCS})
+ADD_LIBRARY(LoadableModule ${LoadableModule_SRCS})
 IF(USE_PYTHON)
 ADD_DEFINITIONS(-DUSE_PYTHON)
 ENDIF(USE_PYTHON)
 
 IF ( NOT WIN32 )
   IF(NOT APPLE)
-    TARGET_LINK_LIBRARIES( ModuleDescriptionParser util)
+    TARGET_LINK_LIBRARIES( LoadableModule util)
   ENDIF(NOT APPLE)
 ENDIF ( NOT WIN32 )
 
-TARGET_LINK_LIBRARIES(ModuleDescriptionParser
+TARGET_LINK_LIBRARIES(LoadableModule
   ITKEXPAT
   itksys
 )
 IF(USE_PYTHON)
-   TARGET_LINK_LIBRARIES(ModuleDescriptionParser
+   TARGET_LINK_LIBRARIES(LoadableModule
      ${PYTHON_LIBRARIES}
   )
 ENDIF(USE_PYTHON)
 
 IF (NOT WIN32)
   IF (HAVE_BFD)
-    TARGET_LINK_LIBRARIES(ModuleDescriptionParser bfd iberty)
+    TARGET_LINK_LIBRARIES(LoadableModule bfd iberty)
   ENDIF(HAVE_BFD)
 ENDIF (NOT WIN32)
 
@@ -103,22 +98,22 @@ IF(BUILD_TESTING)
 ENDIF(BUILD_TESTING)
 
 
-INCLUDE (GenerateModuleDescriptionParserConfig.cmake) 
+INCLUDE (GenerateLoadableModuleConfig.cmake) 
 
-CONFIGURE_FILE(${ModuleDescriptionParser_SOURCE_DIR}/UseModuleDescriptionParser.cmake.in
-               ${ModuleDescriptionParser_BINARY_DIR}/UseModuleDescriptionParser.cmake COPYONLY IMMEDIATE)
+CONFIGURE_FILE(${LoadableModule_SOURCE_DIR}/UseLoadableModule.cmake.in
+               ${LoadableModule_BINARY_DIR}/UseLoadableModule.cmake COPYONLY IMMEDIATE)
 
 
-INSTALL(TARGETS ModuleDescriptionParser 
+INSTALL(TARGETS LoadableModule 
     RUNTIME DESTINATION bin COMPONENT RuntimeLibraries
     LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
     ARCHIVE DESTINATION lib COMPONENT Development)
 
-FILE(GLOB __files1 "${ModuleDescriptionParser_SOURCE_DIR}/*.h")
-INSTALL(FILES ${__files1} DESTINATION include/ModuleDescriptionParser COMPONENT Development)
-INSTALL(FILES ${ModuleDescriptionParser_BINARY_DIR}/ModuleDescriptionParserConfigure.h DESTINATION include/ModuleDescriptionParser COMPONENT Development)
+FILE(GLOB __files1 "${LoadableModule_SOURCE_DIR}/*.h")
+INSTALL(FILES ${__files1} DESTINATION include/LoadableModule COMPONENT Development)
+INSTALL(FILES ${LoadableModule_BINARY_DIR}/LoadableModuleConfigure.h DESTINATION include/LoadableModule COMPONENT Development)
 
 INSTALL(FILES 
-     ${ModuleDescriptionParser_BINARY_DIR}/UseModuleDescriptionParser.cmake 
-     ${ModuleDescriptionParser_BINARY_DIR}/install/ModuleDescriptionParserConfig.cmake 
-     DESTINATION lib/ModuleDescriptionParser COMPONENT Development)
+     ${LoadableModule_BINARY_DIR}/UseLoadableModule.cmake 
+     ${LoadableModule_BINARY_DIR}/install/LoadableModuleConfig.cmake 
+     DESTINATION lib/LoadableModule COMPONENT Development)
