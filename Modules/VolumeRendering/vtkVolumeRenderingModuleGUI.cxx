@@ -167,6 +167,8 @@ void vtkVolumeRenderingModuleGUI::PrintSelf(ostream& os, vtkIndent indent)
 }
 void vtkVolumeRenderingModuleGUI::BuildGUI(void)
 {
+
+    int labelWidth=20;
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
     this->GetUIPanel()->AddPage("VolumeRendering","VolumeRendering",NULL);
 
@@ -191,7 +193,8 @@ void vtkVolumeRenderingModuleGUI::BuildGUI(void)
     this->PB_Testing->SetParent(loadSaveDataFrame->GetFrame());
     this->PB_Testing->Create();
     this->PB_Testing->SetText("Make All Models Invisible");
-    app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->PB_Testing->GetWidgetName());
+    this->PB_Testing->SetWidth(labelWidth);
+    app->Script("pack %s -side top -anchor ne -padx 2 -pady 2",this->PB_Testing->GetWidgetName());
 
     //NodeSelector  for Node from MRML Scene
     this->NS_ImageData=vtkSlicerNodeSelectorWidget::New();
@@ -199,28 +202,31 @@ void vtkVolumeRenderingModuleGUI::BuildGUI(void)
     this->NS_ImageData->Create();
     this->NS_ImageData->NoneEnabledOn();
     this->NS_ImageData->SetLabelText("Source Volume: ");
-    this->NS_ImageData->SetNodeClass("vtkMRMLScalarVolumeNode","LabelMap","0","");
-    app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->NS_ImageData->GetWidgetName());
+    this->NS_ImageData->SetLabelWidth(labelWidth);
+    this->NS_ImageData->SetNodeClass("vtkMRMLScalarVolumeNode","","","");
+    app->Script("pack %s -side top -fill x -anchor nw -padx 2 -pady 2",this->NS_ImageData->GetWidgetName());
 
     //NodeSelector for VolumeRenderingNode Preset
     this->NS_VolumeRenderingDataSlicer=vtkSlicerNodeSelectorVolumeRenderingWidget::New();
     this->NS_VolumeRenderingDataSlicer->SetParent(loadSaveDataFrame->GetFrame());
     this->NS_VolumeRenderingDataSlicer->Create();
-    this->NS_VolumeRenderingDataSlicer->SetLabelText("Use Existing Visualization Parameterset: ");
+    this->NS_VolumeRenderingDataSlicer->SetLabelText("Existing Parametersets: ");
+    this->NS_VolumeRenderingDataSlicer->SetLabelWidth(labelWidth);
     this->NS_VolumeRenderingDataSlicer->EnabledOff();//By default off
     this->NS_VolumeRenderingDataSlicer->NoneEnabledOn();
     this->NS_VolumeRenderingDataSlicer->SetNodeClass("vtkMRMLVolumeRenderingNode","","","");
-    app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->NS_VolumeRenderingDataSlicer->GetWidgetName());
+    app->Script("pack %s -side top -fill x -anchor nw -padx 2 -pady 2",this->NS_VolumeRenderingDataSlicer->GetWidgetName());
 
     //NodeSelector for VolumeRenderingNode Scene
     this->NS_VolumeRenderingDataScene=vtkSlicerNodeSelectorVolumeRenderingWidget::New();
     this->NS_VolumeRenderingDataScene->SetParent(loadSaveDataFrame->GetFrame());
     this->NS_VolumeRenderingDataScene->Create();
     this->NS_VolumeRenderingDataScene->NoneEnabledOn();
-    this->NS_VolumeRenderingDataScene->SetLabelText("Current Visualization Parameterset: ");
+    this->NS_VolumeRenderingDataScene->SetLabelText("Current Parametersets: ");
+    this->NS_VolumeRenderingDataScene->SetLabelWidth(labelWidth);
     this->NS_VolumeRenderingDataScene->EnabledOff();//By default off
     this->NS_VolumeRenderingDataScene->SetNodeClass("vtkMRMLVolumeRenderingNode","","","");
-    app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->NS_VolumeRenderingDataScene->GetWidgetName());
+    app->Script("pack %s -side top -fill x -anchor nw -padx 2 -pady 2",this->NS_VolumeRenderingDataScene->GetWidgetName());
     //Missing: Load from file
 
     //Create New Volume Rendering Node
@@ -228,16 +234,17 @@ void vtkVolumeRenderingModuleGUI::BuildGUI(void)
     this->EWL_CreateNewVolumeRenderingNode=vtkKWEntryWithLabel::New();
     this->EWL_CreateNewVolumeRenderingNode->SetParent(loadSaveDataFrame->GetFrame());
     this->EWL_CreateNewVolumeRenderingNode->Create();
-    this->EWL_CreateNewVolumeRenderingNode->SetLabelText("Name for Visualization Parameterset: ");
+    this->EWL_CreateNewVolumeRenderingNode->SetLabelText("Name New Parameterset: ");
+    this->EWL_CreateNewVolumeRenderingNode->SetLabelWidth(labelWidth);
     this->EWL_CreateNewVolumeRenderingNode->EnabledOff();
-    app->Script("pack %s -side top -anchor e -padx 2 -pady 2", this->EWL_CreateNewVolumeRenderingNode->GetWidgetName());
+    app->Script("pack %s -side top -fill x -anchor nw -padx 2 -pady 2", this->EWL_CreateNewVolumeRenderingNode->GetWidgetName());
 
 
     this->PB_CreateNewVolumeRenderingNode=vtkKWPushButton::New();
     this->PB_CreateNewVolumeRenderingNode->SetParent(loadSaveDataFrame->GetFrame());
     this->PB_CreateNewVolumeRenderingNode->Create();
     this->PB_CreateNewVolumeRenderingNode->SetText("Create Visualization Parameterset");
-    app->Script("pack %s -side top -anchor e -padx 2 -pady 2",this->PB_CreateNewVolumeRenderingNode->GetWidgetName());
+    app->Script("pack %s -side top -anchor ne -padx 2 -pady 2",this->PB_CreateNewVolumeRenderingNode->GetWidgetName());
 
     //Details frame
     this->detailsFrame = vtkSlicerModuleCollapsibleFrame::New ( );
@@ -372,28 +379,34 @@ void vtkVolumeRenderingModuleGUI::ProcessGUIEvents(vtkObject *caller, unsigned l
             vtkMRMLScalarVolumeNode *selectedImageData=vtkMRMLScalarVolumeNode::SafeDownCast(this->NS_ImageData->GetSelected());
             //Add observer to trigger update of transform
             selectedImageData->AddObserver(vtkMRMLTransformableNode::TransformModifiedEvent,(vtkCommand *) this->MRMLCallbackCommand);
-            //This is a LabelMap
-            if(selectedImageData->GetLabelMap()==1)
-            {
-                this->UnpackLabelMapGUI();
-                this->PackLabelMapGUI();
+            this->UnpackSvpGUI();
+            this->PackSvpGUI();
+                        
+
+            //Change here for different Helper classes
+            ////This is a LabelMap
+            //if(selectedImageData->GetLabelMap()==1)
+            //{
+            //    this->UnpackLabelMapGUI();
+            //    this->PackLabelMapGUI();
 
 
-            }
-            //This is NO LabelMap
-            else
-            {
-                this->UnpackSvpGUI();
-                this->PackSvpGUI();
+            //}
+            ////This is NO LabelMap
+            //else
+            //{
+            //    this->UnpackSvpGUI();
+            //    this->PackSvpGUI();
 
 
-            }
+            //}
             //Initialize the Pipeline
             this->InitializePipelineFromImageData();
 
             //update previous:
             this->PreviousNS_ImageData=this->NS_ImageData->GetSelected()->GetID();//only when not "None"
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->Enable();
+            this->Helper->WithdrawProgressDialog();
 
 
         }//else if
@@ -409,6 +422,7 @@ void vtkVolumeRenderingModuleGUI::ProcessGUIEvents(vtkObject *caller, unsigned l
         //Only proceed event,if new Node
         else if(strcmp(this->NS_VolumeRenderingDataScene->GetSelected()->GetID(),this->PreviousNS_VolumeRenderingDataScene.c_str())!=0)
         {
+            this->currentNode=vtkMRMLVolumeRenderingNode::SafeDownCast(this->NS_VolumeRenderingDataScene->GetSelected());
             this->InitializePipelineFromMRMLScene();
             this->PreviousNS_VolumeRenderingDataScene=this->NS_VolumeRenderingDataScene->GetSelected()->GetID();
         }
@@ -618,7 +632,7 @@ void vtkVolumeRenderingModuleGUI::SetInteractorStyle(vtkSlicerViewerInteractorSt
 
 void vtkVolumeRenderingModuleGUI::InitializePipelineFromMRMLScene()
 {
-    this->currentNode=vtkMRMLVolumeRenderingNode::SafeDownCast(this->NS_VolumeRenderingDataScene->GetSelected());
+    
     vtkImageData* imageData=vtkMRMLScalarVolumeNode::SafeDownCast(this->NS_ImageData->GetSelected())->GetImageData();
     this->Helper->UpdateGUIElements();
     this->Helper->UpdateRendering();
@@ -696,6 +710,7 @@ void vtkVolumeRenderingModuleGUI::InitializePipelineFromImageData()
             //Select first found Node
             //So everyting will be treated when InitializeFromMRMLScene
             this->PreviousNS_VolumeRenderingDataScene=tmp->GetID();
+            this->currentNode=tmp;
             this->NS_VolumeRenderingDataScene->SetSelected(tmp);
             //We will call the initialize on our own.
             this->InitializePipelineFromMRMLScene();

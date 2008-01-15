@@ -73,6 +73,18 @@ vtkMRMLSliceCompositeNode::vtkMRMLSliceCompositeNode()
 //----------------------------------------------------------------------------
 vtkMRMLSliceCompositeNode::~vtkMRMLSliceCompositeNode()
 {
+  if (this->BackgroundVolumeID)
+    {
+    this->SetBackgroundVolumeID(NULL);
+    }
+  if (this->ForegroundVolumeID)
+    {
+    this->SetForegroundVolumeID(NULL);
+    }
+  if (this->LabelVolumeID)
+    {
+    this->SetLabelVolumeID(NULL);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -402,7 +414,7 @@ void vtkMRMLSliceCompositeNode::UpdateScene(vtkMRMLScene* scene)
     }
   if (node != NULL)
     {
-    scene->RemoveNode(node);
+    scene->RemoveNodeNoNotify(node);
     }
 }
 // End

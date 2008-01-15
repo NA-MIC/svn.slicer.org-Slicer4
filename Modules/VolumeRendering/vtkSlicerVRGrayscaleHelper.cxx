@@ -94,15 +94,15 @@ vtkSlicerVRGrayscaleHelper::vtkSlicerVRGrayscaleHelper(void)
         this->RA_Cropping[i]=NULL;
     }
 
-    //TresholdGUI
-    this->MB_TresholdMode=NULL;
+    //ThresholdGUI
+    this->MB_ThresholdMode=NULL;
     this->MB_ColorMode=NULL;
     this->RA_RampRectangleHorizontal=NULL;
     this->RA_RampRectangleVertical=NULL;
     this->ColorMode=0;
-    this->TresholdMode=0;
+    this->ThresholdMode=0;
     this->PB_Reset=NULL;
-    this->PB_TresholdZoomIn=NULL;
+    this->PB_ThresholdZoomIn=NULL;
 
 
 }
@@ -270,12 +270,12 @@ vtkSlicerVRGrayscaleHelper::~vtkSlicerVRGrayscaleHelper(void)
         this->NB_Details=NULL;
     }
 
-    //TresholdGUI
-    if(this->MB_TresholdMode)
+    //ThresholdGUI
+    if(this->MB_ThresholdMode)
     {
-        this->MB_TresholdMode->SetParent(NULL);
-        this->MB_TresholdMode->Delete();
-        this->MB_TresholdMode=NULL;
+        this->MB_ThresholdMode->SetParent(NULL);
+        this->MB_ThresholdMode->Delete();
+        this->MB_ThresholdMode=NULL;
 
     }
     if(this->MB_ColorMode)
@@ -302,11 +302,11 @@ vtkSlicerVRGrayscaleHelper::~vtkSlicerVRGrayscaleHelper(void)
         this->PB_Reset->Delete();
         this->PB_Reset=NULL;
     }
-    if(this->PB_TresholdZoomIn)
+    if(this->PB_ThresholdZoomIn)
     {
-        this->PB_TresholdZoomIn->SetParent(NULL);
-        this->PB_TresholdZoomIn->Delete();
-        this->PB_TresholdZoomIn=NULL;
+        this->PB_ThresholdZoomIn->SetParent(NULL);
+        this->PB_ThresholdZoomIn->Delete();
+        this->PB_ThresholdZoomIn=NULL;
     }
 }
 void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
@@ -317,9 +317,10 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
         this->UpdateGUIElements();
         return;
     }
+    //Start dialog right here
     Superclass::Init(gui);
-    this->Gui->Script("bind all <Any-ButtonPress> {%s SetButtonDown 1}",this->GetTclName());
-    this->Gui->Script("bind all <Any-ButtonRelease> {%s SetButtonDown 0}",this->GetTclName());
+    this->Gui->Script("bind all <Any-ButtonPress> {if {[info command %s] != {}} {%s SetButtonDown 1}}",this->GetTclName(), this->GetTclName());
+    this->Gui->Script("bind all <Any-ButtonRelease> {if {[info command %s] != {}} {%s SetButtonDown 0}}",this->GetTclName(), this->GetTclName());
 
     //Create a notebook
     this->NB_Details=vtkKWNotebook::New();
@@ -334,6 +335,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->SVP_VolumeProperty=vtkSlicerVolumePropertyWidget::New();
     this->SVP_VolumeProperty->SetParent(this->NB_Details->GetFrame("Mapping"));
     this->SVP_VolumeProperty->Create();
+    this->SVP_VolumeProperty->ScalarOpacityUnitDistanceVisibilityOff ();
     this->SVP_VolumeProperty->SetDataSet(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
     this->Histograms=vtkKWHistogramSet::New();
 
@@ -355,7 +357,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->SVP_VolumeProperty->AddObserver(vtkKWEvent::VolumePropertyChangingEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
     grad->Delete();
     gradHisto->Delete(); 
-
+    int labelWidth=15;
     this->MappersFrame=vtkKWFrameWithLabel::New();
     this->MappersFrame->SetParent(this->NB_Details->GetFrame("Performance"));
     this->MappersFrame->Create();
@@ -368,6 +370,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->CB_TextureLow->SetParent(this->MappersFrame->GetFrame());
     this->CB_TextureLow->Create();
     this->CB_TextureLow->SetLabelText("Use Texture Low");
+    this->CB_TextureLow->SetLabelWidth(labelWidth);
     this->CB_TextureLow->GetWidget()->SetSelectedState(1);
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->CB_TextureLow->GetWidgetName() );
@@ -378,6 +381,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->CB_TextureHigh->SetParent(this->MappersFrame->GetFrame());
     this->CB_TextureHigh->Create();
     this->CB_TextureHigh->SetLabelText("Use Texture High");
+    this->CB_TextureHigh->SetLabelWidth(labelWidth);
     this->CB_TextureHigh->GetWidget()->SetSelectedState(1);
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->CB_TextureHigh->GetWidgetName() );
@@ -387,6 +391,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->CB_RayCast->SetParent(this->MappersFrame->GetFrame());
     this->CB_RayCast->Create();
     this->CB_RayCast->SetLabelText("Use Raycast      ");
+    this->CB_RayCast->SetLabelWidth(labelWidth);
     this->CB_RayCast->GetWidget()->SetSelectedState(1);
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->CB_RayCast->GetWidgetName() );
@@ -396,6 +401,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->CB_InteractiveFrameRate->SetParent(this->MappersFrame->GetFrame());
     this->CB_InteractiveFrameRate->Create();
     this->CB_InteractiveFrameRate->SetLabelText("Raycast interactive?!");
+    this->CB_InteractiveFrameRate->SetLabelWidth(labelWidth);
     this->CB_InteractiveFrameRate->EnabledOff();
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->CB_InteractiveFrameRate->GetWidgetName() );
     this->CB_InteractiveFrameRate->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent,(vtkCommand*) this->VolumeRenderingCallbackCommand);
@@ -407,6 +413,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->SC_Framerate->SetParent(this->MappersFrame->GetFrame());
     this->SC_Framerate->Create();
     this->SC_Framerate->SetLabelText("FPS (Interactive):");
+    this->SC_Framerate->SetLabelWidth(labelWidth);
     this->SC_Framerate->GetWidget()->SetRange(1,20);
     this->SC_Framerate->GetWidget()->SetResolution(1);
     this->SC_Framerate->GetWidget()->SetValue(1./this->GoalLowResTime);
@@ -415,7 +422,7 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingModuleGUI *gui)
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->SC_Framerate->GetWidgetName() );
 
-    this->CreateTreshold();
+    this->CreateThreshold();
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->SVP_VolumeProperty->GetWidgetName());
 
     this->CreateCropping();
@@ -435,42 +442,54 @@ void vtkSlicerVRGrayscaleHelper::InitializePipelineNewCurrentNode()
         return;
     }
     double totalOccurance=histogram->GetTotalOccurence();
-    double tresholdLow=totalOccurance*0.2;
-    double tresholdHigh=totalOccurance*0.8;
+    double thresholdLow=totalOccurance*0.2;
+    double thresholdHigh=totalOccurance*0.8;
     double range[2];
 
     histogram->GetRange(range);
-    double tresholdLowIndex=range[0];
+    double thresholdLowIndex=range[0];
     double sumLowIndex=0;
-    double tresholdHighIndex=range[0];
+    double thresholdHighIndex=range[0];
     double sumHighIndex=0;
     //calculate distance
     double bin_width = (range[1] == range[0] ? 1 : (range[1] - range[0])/(double)histogram->GetNumberOfBins());
-    while (sumLowIndex<tresholdLow)
+    while (sumLowIndex<thresholdLow)
     {
-        sumLowIndex+=histogram->GetOccurenceAtValue(tresholdLowIndex);
-        tresholdLowIndex+=bin_width;
+        sumLowIndex+=histogram->GetOccurenceAtValue(thresholdLowIndex);
+        thresholdLowIndex+=bin_width;
     }
-    while(sumHighIndex<tresholdHigh)
+    while(sumHighIndex<thresholdHigh)
     {
-        sumHighIndex+=histogram->GetOccurenceAtValue(tresholdHighIndex);
-        tresholdHighIndex+=bin_width;
+        sumHighIndex+=histogram->GetOccurenceAtValue(thresholdHighIndex);
+        thresholdHighIndex+=bin_width;
 
     }
     this->Gui->GetcurrentNode()->GetVolumeProperty()->SetInterpolationTypeToLinear();
     vtkPiecewiseFunction *opacity=this->Gui->GetcurrentNode()->GetVolumeProperty()->GetScalarOpacity();
     opacity->RemoveAllPoints();
     opacity->AddPoint(range[0],0.);
-    opacity->AddPoint(tresholdLowIndex,0.0);
-    opacity->AddPoint(tresholdHighIndex,0.2);
+    opacity->AddPoint(thresholdLowIndex,0.0);
+    opacity->AddPoint(thresholdHighIndex,0.2);
     opacity->AddPoint(range[1],0.2);
     vtkColorTransferFunction *colorTransfer=this->Gui->GetcurrentNode()->GetVolumeProperty()->GetRGBTransferFunction();
     colorTransfer->RemoveAllPoints();
     colorTransfer->AddRGBPoint(range[0],.3,.3,1.);
-    colorTransfer->AddRGBPoint(tresholdLowIndex,.3,.3,1.);
-    colorTransfer->AddRGBPoint(tresholdLowIndex+.5*(tresholdHighIndex-tresholdLowIndex),.3,1.,.3);
-    colorTransfer->AddRGBPoint(tresholdHighIndex,1.,.3,.3);
+    colorTransfer->AddRGBPoint(thresholdLowIndex,.3,.3,1.);
+    colorTransfer->AddRGBPoint(thresholdLowIndex+.5*(thresholdHighIndex-thresholdLowIndex),.3,1.,.3);
+    colorTransfer->AddRGBPoint(thresholdHighIndex,1.,.3,.3);
     colorTransfer->AddRGBPoint(range[1],1,.3,.3);
+
+
+    //Enable shading as default
+
+    this->Gui->GetcurrentNode()->GetVolumeProperty()->ShadeOn();
+    this->Gui->GetcurrentNode()->GetVolumeProperty()->SetAmbient(.30);
+    this->Gui->GetcurrentNode()->GetVolumeProperty()->SetDiffuse(.60);
+    this->Gui->GetcurrentNode()->GetVolumeProperty()->SetSpecular(.50);
+    this->Gui->GetcurrentNode()->GetVolumeProperty()->SetSpecularPower(40);//this is really weird
+
+    //Disable Gradient Opacity
+
     this->UpdateSVP();
 }
 
@@ -479,6 +498,11 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
     if(this->Volume!=NULL)
     {
         vtkErrorMacro("Rendering already called, use update Rendering instead");
+        return;
+    }
+    if(this->Gui==NULL)
+    {
+        vtkErrorMacro("Call init before calling rendering");
         return;
     }
 
@@ -695,7 +719,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
             //Decide if we REnder plane or not
             if(this->RenderPlane==1)
             {
-                return;
+              return;
             }
             //Time to adjust our Factor
             if(this->LastTimeLowRes<(1-this->PercentageNoChange)*this->GoalLowResTime)
@@ -839,6 +863,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
             this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->GetProgressGauge()->SetNthValue(0,100);
             this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->GetProgressGauge()->SetNthValue(1,1);
             this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->GetProgressGauge()->SetNthValue(2,1);
+            this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->Enable();
             return;
         }
 
@@ -868,6 +893,8 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
         }
 
         this->renPlane->SetBackground(this->renViewport->GetBackground());
+        this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->Disable();
+
         this->renPlane->SetActiveCamera(this->renViewport->GetActiveCamera());
 
         //Get Our Renderer Up
@@ -977,27 +1004,22 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
     }
     if(eid==vtkCommand::VolumeMapperComputeGradientsStartEvent)
     {
-        this->GradientDialog = vtkKWProgressDialog::New();
-        this->GradientDialog->SetParent (  this->Gui->GetApplicationGUI()->GetMainSlicerWindow());
-        this->GradientDialog->SetDisplayPositionToMasterWindowCenter();
-        this->GradientDialog->Create ( );
-        this->GradientDialog->SetMessageText("Please standby: Gradients are calculated");
-        this->GradientDialog->Display();
+        this->DisplayProgressDialog("Please standby: Gradients are calculated");
         return;
     }
     else if(eid==vtkCommand::VolumeMapperComputeGradientsEndEvent)
     {
-        this->GradientDialog->Withdraw();
-        this->GradientDialog->SetParent(NULL);
-        this->GradientDialog->Delete();
-        this->GradientDialog=NULL;
+        this->WithdrawProgressDialog();
         return;
 
     }
     else if(eid==vtkCommand::VolumeMapperComputeGradientsProgressEvent)
     {
         float *progress=(float*)callData;
+        if(this->GradientDialog!=NULL)
+        {
         this->GradientDialog->UpdateProgress(*progress);
+        }
         return;
     }
     else if (eid==vtkCommand::VolumeMapperRenderProgressEvent&&this->currentStage==1)
@@ -1056,6 +1078,7 @@ void vtkSlicerVRGrayscaleHelper::UpdateSVP(void)
     if(this->SVP_VolumeProperty==NULL)
     {
         vtkErrorMacro("SVP does not exist");
+        return;
     }
     //First of all set New Property, Otherwise all Histograms will be overwritten
     //First check if we really need to update
@@ -1063,7 +1086,11 @@ void vtkSlicerVRGrayscaleHelper::UpdateSVP(void)
     {
         this->AdjustMapping();
         this->SVP_VolumeProperty->Update();
-        return;
+        //Set Treshold to none
+        this->MB_ThresholdMode->GetWidget()->GetMenu()->SelectItem("None");
+        //Reset cropping
+        this->CB_Cropping->GetWidget()->SetSelectedState(0);
+        this->ProcessThresholdModeEvents(0);
     }
     this->SVP_VolumeProperty->SetVolumeProperty(this->Gui->GetcurrentNode()->GetVolumeProperty());
     this->SVP_VolumeProperty->SetHSVColorSelectorVisibility(1);
@@ -1183,10 +1210,7 @@ void vtkSlicerVRGrayscaleHelper::Cropping(int index, double min,double max)
     {
         return;
     }
-    this->MapperTexture->CroppingOn();
-    this->MapperTexture->SetCroppingRegionFlagsToSubVolume();
-    this->MapperRaycast->CroppingOn();
-    this->MapperRaycast->SetCroppingRegionFlagsToSubVolume();
+
     //double *oldCropping=this->MapperTexture->GetCroppingRegionPlanes();
     //oldCropping[2*index]=min;
     //oldCropping[2*index+1]=max;
@@ -1212,6 +1236,15 @@ void vtkSlicerVRGrayscaleHelper::CreateCropping()
         croppingFrame->GetWidgetName() );
 
     //Build GUI
+
+    this->CB_Cropping=vtkKWCheckButtonWithLabel::New();
+    this->CB_Cropping->SetParent(croppingFrame->GetFrame());
+    this->CB_Cropping->Create();
+    this->CB_Cropping->GetWidget()->SetSelectedState(0);
+    this->CB_Cropping->SetLabelText("Enable /Disable Cropping");
+    this->CB_Cropping->GetWidget()->SetCommand(this, "ProcessEnableDisableCropping");
+    this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",
+        this->CB_Cropping->GetWidgetName());
     for(int i=0;i<3;i++)
     {
         this->RA_Cropping[i]=vtkKWRange::New();
@@ -1222,9 +1255,9 @@ void vtkSlicerVRGrayscaleHelper::CreateCropping()
         str<<"Cropping ";
         str<<i;
         this->RA_Cropping[i]->SetCommand(this,str.str().c_str());
-        this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->RA_Cropping[i]->GetWidgetName());
+        this->Script("pack %s -side top -anchor nw -fill x -padx 10 -pady 10",this->RA_Cropping[i]->GetWidgetName());
     }
-        vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
+    vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
     this->RA_Cropping[0]->SetLabelText("I");
     this->RA_Cropping[0]->SetWholeRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
     this->RA_Cropping[0]->SetRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
@@ -1234,35 +1267,40 @@ void vtkSlicerVRGrayscaleHelper::CreateCropping()
     this->RA_Cropping[2]->SetLabelText("K");
     this->RA_Cropping[2]->SetWholeRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
     this->RA_Cropping[2]->SetRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
+
+    //Now we have the cropping ranges
+    this->ProcessEnableDisableCropping(0);
 }
 
-void vtkSlicerVRGrayscaleHelper::CreateTreshold()
+void vtkSlicerVRGrayscaleHelper::CreateThreshold()
 {
-    vtkKWFrameWithLabel *tresholdFrame=vtkKWFrameWithLabel::New();
-    tresholdFrame->SetParent(this->NB_Details->GetFrame("Mapping"));
-    tresholdFrame->Create();
-    tresholdFrame->SetLabelText("Treshold");
-    this->Script("pack %s -side top -anchor nw -fill both -expand y -padx 0 -pady 2", 
-        tresholdFrame->GetWidgetName());
+    vtkKWFrameWithLabel *thresholdFrame=vtkKWFrameWithLabel::New();
+    thresholdFrame->SetParent(this->NB_Details->GetFrame("Mapping"));
+    thresholdFrame->Create();
+    thresholdFrame->SetLabelText("Threshold");
+    this->Script("pack %s -side top -anchor nw -fill both -expand yes -padx 0 -pady 2", 
+        thresholdFrame->GetWidgetName());
 
-    this->MB_TresholdMode=vtkKWMenuButtonWithLabel::New();
-    this->MB_TresholdMode->SetParent(tresholdFrame->GetFrame());
-    this->MB_TresholdMode->Create();
-    this->MB_TresholdMode->SetLabelText("Treshold");
-    this->MB_TresholdMode->GetWidget()->GetMenu()->AddRadioButton("None");
-    this->MB_TresholdMode->GetWidget()->GetMenu()->SetItemCommand(0, this,"ProcessTresholdModeEvents 0");
-    this->MB_TresholdMode->GetWidget()->GetMenu()->AddRadioButton("Ramp");
-    this->MB_TresholdMode->GetWidget()->GetMenu()->SetItemCommand(1, this,"ProcessTresholdModeEvents 1");
-    this->MB_TresholdMode->GetWidget()->GetMenu()->AddRadioButton("Rectangle");
-    this->MB_TresholdMode->GetWidget()->GetMenu()->SetItemCommand(2, this,"ProcessTresholdModeEvents 2");
-    this->MB_TresholdMode->GetWidget()->GetMenu()->SelectItem("None");
-    this->Script("pack %s -side top -anchor nw -fill both -expand y -padx 0 -pady 2", 
-        this->MB_TresholdMode->GetWidgetName());
+    this->MB_ThresholdMode=vtkKWMenuButtonWithLabel::New();
+    this->MB_ThresholdMode->SetParent(thresholdFrame->GetFrame());
+    this->MB_ThresholdMode->Create();
+    this->MB_ThresholdMode->SetLabelText("Threshold:");
+    this->MB_ThresholdMode->SetLabelWidth(10);
+    this->MB_ThresholdMode->GetWidget()->GetMenu()->AddRadioButton("None");
+    this->MB_ThresholdMode->GetWidget()->GetMenu()->SetItemCommand(0, this,"ProcessThresholdModeEvents 0");
+    this->MB_ThresholdMode->GetWidget()->GetMenu()->AddRadioButton("Ramp");
+    this->MB_ThresholdMode->GetWidget()->GetMenu()->SetItemCommand(1, this,"ProcessThresholdModeEvents 1");
+    this->MB_ThresholdMode->GetWidget()->GetMenu()->AddRadioButton("Rectangle");
+    this->MB_ThresholdMode->GetWidget()->GetMenu()->SetItemCommand(2, this,"ProcessThresholdModeEvents 2");
+    this->MB_ThresholdMode->GetWidget()->GetMenu()->SelectItem("None");
+    this->Script("pack %s -side top -anchor nw -fill both -expand y -padx 2 -pady 2", 
+        this->MB_ThresholdMode->GetWidgetName());
 
     this->MB_ColorMode=vtkKWMenuButtonWithLabel::New();
-    this->MB_ColorMode->SetParent(tresholdFrame->GetFrame());
+    this->MB_ColorMode->SetParent(thresholdFrame->GetFrame());
     this->MB_ColorMode->Create();
-    this->MB_ColorMode->SetLabelText("Color mode"); 
+    this->MB_ColorMode->SetLabelText("Color Mode:"); 
+    this->MB_ColorMode->SetLabelWidth(10);
     this->MB_ColorMode->GetWidget()->GetMenu()->AddRadioButton("Grayscale dynamic");
     this->MB_ColorMode->GetWidget()->GetMenu()->SetItemCommand(0,this,"ProcessColorModeEvents 0");
     this->MB_ColorMode->GetWidget()->GetMenu()->AddRadioButton("Grayscale static");
@@ -1270,60 +1308,61 @@ void vtkSlicerVRGrayscaleHelper::CreateTreshold()
     this->MB_ColorMode->GetWidget()->GetMenu()->AddRadioButton("Rainbow");
     this->MB_ColorMode->GetWidget()->GetMenu()->SetItemCommand(2,this,"ProcessColorModeEvents 2");
     this->MB_ColorMode->GetWidget()->GetMenu()->SelectItem("Grayscale static");
+    this->ProcessColorModeEvents(1);
     this->MB_ColorMode->EnabledOff();
-    this->Script("pack %s -side top -anchor nw -fill both -expand y -padx 0 -pady 2", 
+    this->Script("pack %s -side top -anchor nw -fill both -expand y -padx 2 -pady 2", 
         this->MB_ColorMode->GetWidgetName());
 
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
     this->RA_RampRectangleHorizontal=vtkKWRange::New();
-    this->RA_RampRectangleHorizontal->SetParent(tresholdFrame->GetFrame());
+    this->RA_RampRectangleHorizontal->SetParent(thresholdFrame->GetFrame());
     this->RA_RampRectangleHorizontal->Create();
-    this->RA_RampRectangleHorizontal->SetLabelText("Treshold");
+    this->RA_RampRectangleHorizontal->SetLabelText("Threshold");
     this->RA_RampRectangleHorizontal->SetWholeRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
     this->RA_RampRectangleHorizontal->SetRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
-    this->RA_RampRectangleHorizontal->SetCommand(this, "ProcessTresholdRange");
+    this->RA_RampRectangleHorizontal->SetCommand(this, "ProcessThresholdRange");
     this->RA_RampRectangleHorizontal->EnabledOff();
-    this->Script("pack %s -side top -anchor nw -expand y -padx 0 -pady 2", 
+    this->Script("pack %s -side left -anchor nw -expand no -fill x -padx 2 -pady 2", 
         this->RA_RampRectangleHorizontal->GetWidgetName());
 
-    this->PB_TresholdZoomIn=vtkKWPushButton::New();
-    this->PB_TresholdZoomIn->SetParent(tresholdFrame->GetFrame());
-    this->PB_TresholdZoomIn->Create();
-    this->PB_TresholdZoomIn->SetText("+");
-    this->PB_TresholdZoomIn->EnabledOff();
-    this->PB_TresholdZoomIn->SetCommand(this,"ProcessTresholdZoomIn");
-    this->Script("pack %s -side top -anchor nw -padx 0 -pady 2",
-        this->PB_TresholdZoomIn->GetWidgetName());
+    this->PB_ThresholdZoomIn=vtkKWPushButton::New();
+    this->PB_ThresholdZoomIn->SetParent(thresholdFrame->GetFrame());
+    this->PB_ThresholdZoomIn->Create();
+    this->PB_ThresholdZoomIn->SetText("Zoom In");
+    this->PB_ThresholdZoomIn->EnabledOff();
+    this->PB_ThresholdZoomIn->SetCommand(this,"ProcessThresholdZoomIn");
+    this->Script("pack %s -side top -anchor nw -expand n -fill x -padx 2 -pady 2",
+        this->PB_ThresholdZoomIn->GetWidgetName());
 
     this->PB_Reset=vtkKWPushButton::New();
-    this->PB_Reset->SetParent(tresholdFrame->GetFrame());
+    this->PB_Reset->SetParent(thresholdFrame->GetFrame());
     this->PB_Reset->Create();
-    this->PB_Reset->SetText("R");
+    this->PB_Reset->SetText("Reset");
     this->PB_Reset->EnabledOff();
-    this->PB_Reset->SetCommand(this,"ProcessTresholdReset");
-    this->Script("pack %s -side top -anchor nw -padx 0 -pady 2",
+    this->PB_Reset->SetCommand(this,"ProcessThresholdReset");
+    this->Script("pack %s -side top -anchor nw -fill x -expand n -padx 2 -pady 2",
         this->PB_Reset->GetWidgetName());
 
     this->RA_RampRectangleVertical=vtkKWRange::New();
-    this->RA_RampRectangleVertical->SetParent(tresholdFrame->GetFrame());
+    this->RA_RampRectangleVertical->SetParent(thresholdFrame->GetFrame());
     this->RA_RampRectangleVertical->Create();
     this->RA_RampRectangleVertical->SetLabelText("Opacity");
     this->RA_RampRectangleVertical->SetOrientationToVertical();
     this->RA_RampRectangleVertical->SetWholeRange(1,0);
     this->RA_RampRectangleVertical->SetRange(1,0);
     this->RA_RampRectangleVertical->EnabledOff();
-    this->RA_RampRectangleVertical->SetCommand(this, "ProcessTresholdRange");
-    this->Script("pack %s -side top -anchor nw -expand y -padx 0 -pady 2", 
+    this->RA_RampRectangleVertical->SetCommand(this, "ProcessThresholdRange");
+    this->Script("pack %s -side left -anchor w -expand n -padx 2 -pady 2", 
         this->RA_RampRectangleVertical->GetWidgetName());
 
 
-    tresholdFrame->Delete();
+    thresholdFrame->Delete();
 }
 
-void vtkSlicerVRGrayscaleHelper::ProcessTresholdModeEvents(int id)
+void vtkSlicerVRGrayscaleHelper::ProcessThresholdModeEvents(int id)
 {
 
-    this->TresholdMode=id;
+    this->ThresholdMode=id;
     //Disable Everything and go back to standard
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
     if(id==0)
@@ -1335,7 +1374,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessTresholdModeEvents(int id)
         this->RA_RampRectangleVertical->SetRange(1,0);
         this->RA_RampRectangleVertical->EnabledOff();
         this->PB_Reset->EnabledOff();
-        this->PB_TresholdZoomIn->EnabledOff();
+        this->PB_ThresholdZoomIn->EnabledOff();
         return;
     }
     //Before we continue enabled everything
@@ -1343,8 +1382,8 @@ void vtkSlicerVRGrayscaleHelper::ProcessTresholdModeEvents(int id)
     this->RA_RampRectangleHorizontal->EnabledOn();
     this->RA_RampRectangleVertical->EnabledOn();
     this->PB_Reset->EnabledOn();
-    this->PB_TresholdZoomIn->EnabledOn();
-    this->ProcessTresholdRange(.0,.0);
+    this->PB_ThresholdZoomIn->EnabledOn();
+    this->ProcessThresholdRange(.0,.0);
 
 
 
@@ -1357,12 +1396,12 @@ void vtkSlicerVRGrayscaleHelper::ProcessTresholdModeEvents(int id)
 void vtkSlicerVRGrayscaleHelper::ProcessColorModeEvents(int id)
 {
     this->ColorMode=id;
-    this->ProcessTresholdRange(0.,0.);
+    this->ProcessThresholdRange(0.,0.);
 }
 
-void vtkSlicerVRGrayscaleHelper::ProcessTresholdRange(double notUsed,double notUsedA)
+void vtkSlicerVRGrayscaleHelper::ProcessThresholdRange(double notUsed,double notUsedA)
 {
-    if(this->TresholdMode==0)
+    if(this->ThresholdMode==0)
     {
         return;
     }
@@ -1378,7 +1417,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessTresholdRange(double notUsed,double notU
 
     opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleVertical->GetRange()[1]);
     opacity->AddPoint(iData->GetScalarRange()[1],this->RA_RampRectangleVertical->GetRange()[1]);
-    if(this->TresholdMode==1)
+    if(this->ThresholdMode==1)
     {
         opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleVertical->GetRange()[1]);
         opacity->AddPoint(iData->GetScalarRange()[1],this->RA_RampRectangleVertical->GetRange()[0]);
@@ -1386,7 +1425,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessTresholdRange(double notUsed,double notU
         opacity->AddPoint(this->RA_RampRectangleHorizontal->GetRange()[1],this->RA_RampRectangleVertical->GetRange()[0]);
 
     }
-    else if(this->TresholdMode==2)
+    else if(this->ThresholdMode==2)
     {
 
         opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleVertical->GetRange()[1]);
@@ -1407,9 +1446,9 @@ void vtkSlicerVRGrayscaleHelper::ProcessTresholdRange(double notUsed,double notU
         colorTransfer->AddRGBPoint(this->RA_RampRectangleHorizontal->GetRange()[0],.5,.5,.5);
         colorTransfer->AddRGBPoint(this->RA_RampRectangleHorizontal->GetRange()[1],1,1,1);
     }
-    else if(this->ColorMode)
+    else if(this->ColorMode==1)
     {
-         colorTransfer->AddRGBPoint(iData->GetScalarRange()[0],.5,.5,.5);
+        colorTransfer->AddRGBPoint(iData->GetScalarRange()[0],.5,.5,.5);
         colorTransfer->AddRGBPoint(iData->GetScalarRange()[1],.5,.5,.5);
 
         colorTransfer->AddRGBPoint(this->RA_RampRectangleHorizontal->GetRange()[0],.5,.5,.5);
@@ -1429,7 +1468,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessTresholdRange(double notUsed,double notU
     this->SVP_VolumeProperty->Update();
     this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->Render();
 }
-void vtkSlicerVRGrayscaleHelper::ProcessTresholdZoomIn(void)
+void vtkSlicerVRGrayscaleHelper::ProcessThresholdZoomIn(void)
 {
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
     double leftBorder=this->RA_RampRectangleHorizontal->GetRange()[0];
@@ -1451,11 +1490,36 @@ void vtkSlicerVRGrayscaleHelper::ProcessTresholdZoomIn(void)
     this->SVP_VolumeProperty->GetScalarOpacityFunctionEditor()->SetVisibleParameterRange(leftBorderWholeRange,rightBorderWholeRange);
 
 }
-void vtkSlicerVRGrayscaleHelper::ProcessTresholdReset(void)
+void vtkSlicerVRGrayscaleHelper::ProcessThresholdReset(void)
 {
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
 
     this->RA_RampRectangleHorizontal->SetWholeRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
-        this->SVP_VolumeProperty->GetScalarColorFunctionEditor()->SetVisibleParameterRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
+    this->SVP_VolumeProperty->GetScalarColorFunctionEditor()->SetVisibleParameterRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
     this->SVP_VolumeProperty->GetScalarOpacityFunctionEditor()->SetVisibleParameterRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
+}
+
+
+void vtkSlicerVRGrayscaleHelper::ProcessEnableDisableCropping(int cbSelectedState)
+{
+    if(this->MapperTexture!=NULL&&this->MapperRaycast!=NULL)
+    {
+        this->MapperTexture->SetCropping(cbSelectedState);
+        this->MapperRaycast->SetCropping(cbSelectedState);
+        this->MapperTexture->SetCroppingRegionFlagsToSubVolume();
+        this->MapperRaycast->SetCroppingRegionFlagsToSubVolume();
+    }
+    //Reset range
+    if(!cbSelectedState)
+    {
+            vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
+            this->RA_Cropping[0]->SetRange(iData->GetOrigin()[0],iData->GetDimensions()[0]);
+            this->RA_Cropping[1]->SetRange(iData->GetOrigin()[1],iData->GetDimensions()[1]);
+            this->RA_Cropping[2]->SetRange(iData->GetOrigin()[2],iData->GetDimensions()[2]);
+    }
+    for(int i=0;i<3;i++)
+    {
+        this->RA_Cropping[i]->SetEnabled(cbSelectedState);
+    }
+    this->Cropping(0,0,0);
 }

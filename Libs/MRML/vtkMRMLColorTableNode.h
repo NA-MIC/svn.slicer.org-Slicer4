@@ -54,13 +54,6 @@ public:
   // Write this node's information to a MRML file in XML format.
   virtual void WriteXML(ostream& of, int indent);
 
-
-  // Description:
-  // Read in a text file holding colour table elements
-  // id name r g b a
-  // comments start with a hash mark
-  virtual int ReadFile ();
-
   // Description:
   // Set the storage node id, used for reading files
   vtkSetReferenceStringMacro(StorageNodeID);
@@ -74,7 +67,7 @@ public:
   // Description:
   // Copy the node's attributes to this object
   virtual void Copy(vtkMRMLNode *node);
-  
+
   // Description:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "ColorTable";};
@@ -180,10 +173,14 @@ public:
   // Description:
   // clear out the names list
   void ClearNames();
+
+  // Description:
+  // reset when close the scene
+  virtual void Reset();
   
 protected:
   vtkMRMLColorTableNode();
-  ~vtkMRMLColorTableNode();
+  virtual ~vtkMRMLColorTableNode();
   vtkMRMLColorTableNode(const vtkMRMLColorTableNode&);
   void operator=(const vtkMRMLColorTableNode&);
 

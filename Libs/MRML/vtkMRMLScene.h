@@ -131,6 +131,12 @@ public:
   // Description:
   // Remove a path from the list.
   void RemoveNode(vtkMRMLNode *n); 
+
+  // Description:
+  // Remove a path from the list without invoking NodeRemovedEvent
+  // - use this when there are no references to the passed node (e.g. singletons 
+  //   on scene load)
+  void RemoveNodeNoNotify(vtkMRMLNode *n); 
   
   // Description:
   // Determine whether a particular node is present. Returns its position
@@ -372,6 +378,7 @@ protected:
   //ETX
   
   void UpdateNodeReferences();
+  void UpdateNodeReferences(vtkCollection* chekNodes);
 
   void UpdateNodeIDs();
 

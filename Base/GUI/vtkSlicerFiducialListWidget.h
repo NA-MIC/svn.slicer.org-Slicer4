@@ -42,6 +42,7 @@ class vtkTransform;
 class vtkCollection;
 class vtkSlicerViewerWidget;
 class vtkSlicerViewerInteractorStyle;
+class vtkPointWidget;
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerFiducialListWidget : public vtkSlicerWidget
 {
 public:
@@ -104,6 +105,10 @@ public:
   vtkActor * GetFiducialActorByID (const char *id);
 
   // Description:
+  // return the current point widget corresponding to a given MRML ID
+  vtkPointWidget * GetPointWidgetByID (const char *id);
+
+  // Description:
   // Get/Set the main slicer viewer widget, for picking
   vtkGetObjectMacro(ViewerWidget, vtkSlicerViewerWidget);
   virtual void SetViewerWidget(vtkSlicerViewerWidget *viewerWidget);
@@ -112,7 +117,7 @@ public:
   // Get/Set the slicer interactorstyle, for picking
   vtkGetObjectMacro(InteractorStyle, vtkSlicerViewerInteractorStyle);
   virtual void SetInteractorStyle(vtkSlicerViewerInteractorStyle *interactorStyle);
-  
+
 protected:
   vtkSlicerFiducialListWidget();
   virtual ~vtkSlicerFiducialListWidget();
@@ -125,6 +130,10 @@ protected:
   // Update the properties of the text actor
   void UpdateTextActor(vtkMRMLFiducialListNode *flist, int f);
   
+  // Description:
+  // Update the properties of the point widget
+  void UpdatePointWidget(vtkMRMLFiducialListNode *flist, int f);
+
   // Description:
   // Remove fiducial properties from the main viewer
   void RemoveFiducialProps();
@@ -156,15 +165,19 @@ protected:
   // Description:
   // Keep track of the actors that represent each fiducial point
   //BTX
-  std::map<const char *, vtkActor *> DisplayedFiducials;
-  std::map<const char *, vtkFollower *> DisplayedTextFiducials;
-  
+  std::map<std::string, vtkActor *> DisplayedFiducials;
+  std::map<std::string, vtkFollower *> DisplayedTextFiducials;
+ 
   std::string GetFiducialActorID (const char *id, int index);
   // Description:
   // returns the fiducial list's id from the fiducial point's id
   std::string GetFiducialNodeID (const char *actorid, int &index);
-  //ETX
 
+  // Description:
+  // encapsulates the vtk 3d widgets for each fiducial, indexed by fiducial id
+  std::map<std::string, vtkPointWidget*> DisplayedPointWidgets; 
+  //ETX
+  
   // Description:
   // Flag set to 1 when processing mrml events
   int ProcessingMRMLEvent;
@@ -180,40 +193,40 @@ protected:
   //BTX
   // Description:
   // the transforms applied to the 3d diamond glyphs, indexed by fiducial list id
-  std::map< const char *, vtkTransform * > DiamondTransformMap;
+  std::map< std::string, vtkTransform * > DiamondTransformMap;
   // Description:
   // encapsulates the vtkPoints for each list, indexed by fiducial list id
-  std::map< const char *, vtkPoints * > GlyphPointsMap;
+  std::map< std::string, vtkPoints * > GlyphPointsMap;
   // Description:
   // encapsulates the scalars for each list, indexed by fiducial list id
-  std::map< const char *, vtkFloatArray * > GlyphScalarsMap;
+  std::map< std::string, vtkFloatArray * > GlyphScalarsMap;
   // Description:
   // encapsulates the glyph points and the glyph scalars, indexed by fiducial list id
-  std::map< const char *, vtkPolyData * > GlyphPolyDataMap;
+  std::map< std::string, vtkPolyData * > GlyphPolyDataMap;
 
   // Description:
   // encapsulates the transforms applied to the text for each list, indexed by fiducial list id
-  std::map< const char *, vtkTransform * > TextTransformMap;
+  std::map< std::string, vtkTransform * > TextTransformMap;
   // Description:
   // encapsulates the transforms applied to the symbols for each list, indexed by fiducial list id
-  std::map< const char *, vtkTransform * > SymbolTransformMap;
+  std::map< std::string, vtkTransform * > SymbolTransformMap;
 
   // Description:
   // encapsulates the filter that takes in the shape for each glyph, for each
   // list, indexed by fiducial list id
-  std::map< const char *, vtkTransformPolyDataFilter * > TransformFilterMap;
+  std::map< std::string, vtkTransformPolyDataFilter * > TransformFilterMap;
 
   // Description:
   // encapsulates the glyphs that are used to display each list, indexed by
   // fiducial list id
-  std::map< const char *, vtkGlyph3D * > Glyph3DMap;
+  std::map< std::string, vtkGlyph3D * > Glyph3DMap;
   //std::vector< vtkGlyph3D * > Glyph3DVector;
   //std::vector< int > GlyphSymbolVector;
   
 
   // Description:
   // encapsulates the data mappers for each list, indexed by fiducial list id
-  std::map< const char *, vtkMapper * > GlyphMapperMap;
+  std::map< std::string, vtkMapper * > GlyphMapperMap;
   //ETX
 
   // Description:

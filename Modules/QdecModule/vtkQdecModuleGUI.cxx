@@ -627,7 +627,7 @@ void vtkQdecModuleGUI::ProcessGUIEvents ( vtkObject *caller,
       }
     if (this->LoadProjectFile(fileName) == 0)
       {
-      vtkWarningMacro("Loaded project file from " << fileName << ", widget text = " << this->LoadResultsButton->GetWidget()->GetText());
+      vtkDebugMacro("Loaded project file from " << fileName << ", widget text = " << this->LoadResultsButton->GetWidget()->GetText());
       browse->SaveLastPathToRegistry("OpenPath");
       }
     else
@@ -822,7 +822,7 @@ void vtkQdecModuleGUI::UpdateGUI ()
         }
       // set up the correct number of columns
       if ((1 + discreteFactors.size() + continuousFactors.size()) !=
-          this->MultiColumnList->GetWidget()->GetNumberOfColumns())
+          (unsigned int)this->MultiColumnList->GetWidget()->GetNumberOfColumns())
         {
         this->MultiColumnList->GetWidget()->DeleteAllColumns();
         this->MultiColumnList->GetWidget()->AddColumn("Subject");
@@ -885,7 +885,7 @@ void vtkQdecModuleGUI::UpdateGUI ()
       {
       // update the questions menu
       unsigned int numQuestions = this->GetLogic()->GetNumberOfQuestions();
-      if (numQuestions != this->QuestionMenu->GetMenu()->GetNumberOfItems())
+      if (numQuestions != (unsigned int)(this->QuestionMenu->GetMenu()->GetNumberOfItems()))
         {
         // clear out the questions menu and reset the text
         this->QuestionLabel->SetText("Question: ");
@@ -1249,7 +1249,7 @@ void vtkQdecModuleGUI::BuildGUI ( )
   if (this->GetLogic() && !this->GetLogic()->GetTclScriptLoaded())
     {
       const char *tclScript = this->GetLogic()->GetPlotTclScript();
-      vtkWarningMacro("Loading: " << tclScript);
+      vtkDebugMacro("Loading: " << tclScript);
       if (app->LoadScript(tclScript) == 0)
         {
         vtkErrorMacro("vtkQdecModuleGUI::BuildGUI: unable to load in tcl script " << tclScript);
@@ -1393,7 +1393,7 @@ int vtkQdecModuleGUI::LoadProjectFile(const char *fileName)
   vtkDebugMacro("vtkQdecModuleGUI:ProcessGUIEvents: was able to load file " << newFileName.c_str());
   
   // load the results
-  vtkWarningMacro("Reading QDEC results that were in the file " << fileName);
+  vtkDebugMacro("Reading QDEC results that were in the file " << fileName);
   // get the models logic to use to load the models and scalars (can't access
   // it in the Logic class)
   vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
