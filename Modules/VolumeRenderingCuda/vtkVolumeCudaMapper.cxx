@@ -91,9 +91,6 @@ void vtkVolumeCudaMapper::Update()
 {
     cerr << "TEST\n";
     cout << "TEST2\n";
-
-
-    this->Modified();
 }
 
 
@@ -101,7 +98,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
     cerr << "TEST\n";
     cout << "TEST2\n";
-    this->UpdateRenderPlane(this->ren, this->actor);
+    this->UpdateRenderPlane(renderer, volume);
 }
 
 
