@@ -211,11 +211,11 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
     /// INPUT TYPE OR SIZE CHANGED CHANGED
     if (
-        /*
+        
         caller == this->InputTypeChooser->GetMenu() ||
         caller == this->InputResolutionMatrix ||
         caller == this->Color ||
-        */
+        
         caller == this->UpdateButton
         )
     {
@@ -254,23 +254,27 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->CudaVolumeProperty = vtkVolumeProperty::New();
             this->CudaVolume->SetProperty(this->CudaVolumeProperty);
 
-            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->AddViewProp(this->CudaVolume);
+           // this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->AddViewProp(this->CudaVolume);
         }
 
         this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
-        /*this->CudaMapper->Render(
-            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
-            this->CudaVolume);
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();*/
+
+        this->UpdateVolume();
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
     }
     if (caller == this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow() && 
         event == vtkCommand::StartEvent)
     {
-        if (this->CudaMapper != NULL)
+        UpdateVolume();
+    }
+}
+
+void vtkVolumeRenderingCudaModuleGUI::UpdateVolume()
+{
+if (this->CudaMapper != NULL && this->CudaVolume != NULL)
         this->CudaMapper->Render(
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
             this->CudaVolume);
-    }
 }
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event,

@@ -8,6 +8,7 @@ class vtkCudaMemory;
 class vtkImageData;
 class vtkCudaHostMemory;
 class vtkCudaLocalMemory;
+class vtkCudaMemoryArray;
 
 class vtkCamera;
 
@@ -42,6 +43,8 @@ protected:
 
     vtkCudaMemory* CudaInputBuffer;
     vtkCudaMemory* CudaOutputBuffer;
+    
+    vtkCudaMemoryArray* Test;
 
     double Color[3];
 
