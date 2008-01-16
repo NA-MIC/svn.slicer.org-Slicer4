@@ -204,6 +204,8 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 }
 
 #include "vtkImageReader.h"
+#include "vtkOpenGLExtensionManager.h"
+
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
 {
@@ -254,18 +256,18 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->CudaVolumeProperty = vtkVolumeProperty::New();
             this->CudaVolume->SetProperty(this->CudaVolumeProperty);
 
-           // this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->AddViewProp(this->CudaVolume);
+            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
         }
 
         this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
 
-        this->UpdateVolume();
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+       // this->UpdateVolume();
+        //this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
     }
     if (caller == this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow() && 
         event == vtkCommand::StartEvent)
     {
-        UpdateVolume();
+      //  UpdateVolume();
     }
 }
 

@@ -12,6 +12,8 @@ class vtkCudaMemoryArray;
 
 class vtkCamera;
 
+class vtkRenderWindow;
+
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolumeMapper
 {
 public:
@@ -34,6 +36,8 @@ protected:
     virtual ~vtkVolumeCudaMapper();
 
     void UpdateOutputResolution(unsigned int width, unsigned int height, unsigned int colors);
+
+    void TEST(int width, int height, vtkRenderWindow* win);
 
     void UpdateRenderPlane(vtkRenderer *, vtkVolume *);
 
