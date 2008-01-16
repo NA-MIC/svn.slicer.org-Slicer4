@@ -114,9 +114,45 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
 #include "vtkTimerLog.h"
 #include "texture_types.h"
+#include "vtkgl.h"
+#include "cuda_gl_interop.h"
+#include "vtkOpenGLExtensionManager.h"
+GLuint gl_Tex=0, gl_PBO;
+void vtkVolumeCudaMapper::TEST(int width, int height, vtkRenderWindow* win)
+{
+   vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();
+ extensions->SetRenderWindow(NULL);
+ if (extensions->ExtensionSupported("GL_ARB_vertex_buffer_object"))
+    extensions->LoadExtension("GL_ARB_vertex_buffer_object");
+      
+// TEXTURE CODE
+        printf("Creating GL texture...\n");
+        glEnable(GL_TEXTURE_2D);
+        glGenTextures(1, &gl_Tex);
+        glBindTexture(GL_TEXTURE_2D, gl_Tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
+    printf("Texture created.\n");
+
+    printf("Creating PBO...\n");
+    vtkgl::GenBuffersARB(1, &gl_PBO);
+    vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, gl_PBO);
+    vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, width * height * 4, this->LocalOutputImage->GetScalarPointer(), vtkgl::STREAM_COPY);
+       /* While a PBO is registered to CUDA, it can't be used 
+        as the destination for OpenGL drawing calls.
+        But in our particular case OpenGL is only used 
+        to display the content of the PBO, specified by CUDA kernels,
+        so we need to register/unregister it only once.*/
+        CUDA_SAFE_CALL( cudaGLRegisterBufferObject(gl_PBO) );
+    printf("PBO created.\n");
+}
 
 void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* volume)
 {
+
     float color[6]={this->Color[0],this->Color[1],this->Color[2], 1,1,1};
     float minmax[6]={0,255,0,255,0,255};
     float lightVec[3]={0, 0, 1};
@@ -127,6 +163,8 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
 
     int width = size[0], height = size[1];
     this->UpdateOutputResolution(width, height, 4);
+if (gl_Tex == 0)
+TEST(width, height, renWin);
 
     vtkCamera* cam =
         renderer->GetActiveCamera();
@@ -169,12 +207,15 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
 
     vtkErrorMacro( << "Volume rendering.\n");
     // Do rendering.
-
+    glEnable(GL_TEXTURE_2D);
+glBindTexture(GL_TEXTURE_2D, gl_Tex);
+vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, gl_PBO);
+    void * d_dst;
     int* dims = this->GetInput()->GetDimensions();
-
+    CUDA_SAFE_CALL(cudaGLMapBufferObject((void**)&d_dst, gl_PBO));
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
-    CUDArenderAlgo_doRender(this->CudaOutputBuffer->GetMemPointerAs<uchar4>(),
+    CUDArenderAlgo_doRender((uchar4*)d_dst, //this->CudaOutputBuffer->GetMemPointerAs<uchar4>(),
         this->CudaInputBuffer->GetMemPointerAs<unsigned char>(),
         (float*)rotationMatrix, color, minmax, lightVec, 
         dims[0], dims[1], dims[2],    //3D data size
@@ -185,66 +226,16 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
         -100);          //slicing distance from center of 3D data
     // Get the resulted image.
     log->StopTimer();
-
+    CUDA_SAFE_CALL(cudaGLUnmapBufferObject(gl_PBO));
     vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
+
     log->StartTimer();
-    this->CudaOutputBuffer->CopyTo(this->LocalOutputImage);
+    //this->CudaOutputBuffer->CopyTo(this->LocalOutputImage);
+     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
     log->StopTimer();
     vtkErrorMacro(<< "Elapsed Time to Copy Memory:: " << log->GetElapsedTime());
 
     log->StartTimer();
-
-    /// EXPERIMENTAL BEGIN
-
-    //textureReference tex;
-
-    //tex.channelDesc = cudaCreateChannelDesc<uchar4>();
-    //tex.addressMode[0] = cudaAddressModeWrap;
-    //tex.addressMode[1] = cudaAddressModeWrap;
-    //tex.filterMode = cudaFilterModeLinear;
-    //tex.normalized = true;
-
-    //log->StartTimer();
-    //this->CudaOutputBuffer->CopyTo(this->Test);
-    //cudaBindTextureToArray(&tex, this->Test->GetArray(), &tex.channelDesc);
-    //log->StopTimer();
-    //vtkErrorMacro(<< "Elapsed Time to Copy Memory on Device:: " << log->GetElapsedTime());
-    //
-
-
-
-//      
-//// TEXTURE CODE
-//        printf("Creating GL texture...\n");
-//        glEnable(GL_TEXTURE_2D);
-//        glGenTextures(1, &gl_Tex);
-//        glBindTexture(GL_TEXTURE_2D, gl_Tex);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputBuffer);
-//    printf("Texture created.\n");
-//
-//    printf("Creating PBO...\n");
-//        glGenBuffers(1, &gl_PBO);
-//        glBindBuffer(GL_PIXEL_UNPACK_BUFFER_ARB, gl_PBO);
-//        glBufferData(GL_PIXEL_UNPACK_BUFFER_ARB, width * height * 4, h_Src, GL_STREAM_COPY);
-//        While a PBO is registered to CUDA, it can't be used 
-//        as the destination for OpenGL drawing calls.
-//        But in our particular case OpenGL is only used 
-//        to display the content of the PBO, specified by CUDA kernels,
-//        so we need to register/unregister it only once.
-//        CUDA_SAFE_CALL( cudaGLRegisterBufferObject(gl_PBO) );
-//    printf("PBO created.\n");
-
-    /// EXPERIMENTAL END
-
-    vtkImageExtractComponents *components = vtkImageExtractComponents::New();
-    components->SetInput(this->LocalOutputImage);
-    components->SetComponents(0,1,2);
-
-    
 
     //renderer->SetBackground(this->renViewport->GetBackground());
     //renderer->SetActiveCamera(this->renViewport->GetActiveCamera());
@@ -269,6 +260,21 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
     double coordinatesD[4];
     renderer->GetWorldPoint(coordinatesD);
 
+
+    glBegin(GL_QUADS);
+    glTexCoord2i(0,0);
+    glVertex4dv(coordinatesA);
+    glTexCoord2i(1,0);
+    glVertex4dv(coordinatesB);
+    glTexCoord2i(1,1);
+    glVertex4dv(coordinatesC);
+    glTexCoord2i(0,1);
+    glVertex4dv(coordinatesD);
+    glEnd();
+
+return;
+
+    //
     //Create the Polydata
     vtkPoints *points=vtkPoints::New();
     points->InsertPoint(0,coordinatesA);
@@ -311,6 +317,11 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
     vtkActor *actor=vtkActor::New(); 
     actor->SetMapper(polyMapper);
 
+    vtkImageExtractComponents *components = vtkImageExtractComponents::New();
+    components->SetInput(this->LocalOutputImage);
+    components->SetComponents(0,1,2);
+
+
     //Take care about the texture
     vtkTexture *atext=vtkTexture::New();
     atext->SetInput(components->GetOutput());
@@ -318,14 +329,9 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
 
     actor->SetTexture(atext);
 
-    //Remove all old Actors
-    renderer->RemoveAllViewProps();
-
     renderer->AddActor(actor);
-    //Remove the old Renderer
-
+    
     renWin->SwapBuffersOn();
-
 
     //Delete everything we have done
     components->Delete();
