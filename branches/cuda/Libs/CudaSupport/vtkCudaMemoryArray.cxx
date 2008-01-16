@@ -33,7 +33,7 @@ void vtkCudaMemoryArray::Allocate(size_t width, size_t height)
     cudaMallocArray(&this->Array, &this->Descriptor, width, height);
     this->Width = width;
     this->Height = height;
-    this->Size = width*height;
+    this->Size = width*height * /* HACK */ sizeof(uchar4);
 }
 
 /**

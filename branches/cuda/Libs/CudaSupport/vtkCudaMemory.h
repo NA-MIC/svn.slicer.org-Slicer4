@@ -27,6 +27,7 @@ public:
     virtual bool CopyTo(vtkImageData* data);
     virtual bool CopyTo(vtkCudaMemory* other);
     virtual bool CopyTo(vtkCudaLocalMemory* other);
+    virtual bool CopyTo(vtkCudaMemoryArray* other);
 
     virtual void PrintSelf (ostream &os, vtkIndent indent);
 

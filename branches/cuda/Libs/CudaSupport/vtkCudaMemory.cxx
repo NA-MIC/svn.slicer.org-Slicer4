@@ -76,7 +76,7 @@ bool vtkCudaMemory::CopyTo(vtkImageData* data)
 {
     if(data->GetActualMemorySize() * 1024 < this->GetSize())
     {
-        vtkErrorWithObjectMacro(this, "The vtkImageData has to little Memory to store memory inside");
+        vtkErrorMacro("The vtkImageData has to little Memory to store memory inside");
         return false;
     }
     // we cannot say the XYZ extent so we just write into the memory area
@@ -110,6 +110,25 @@ bool vtkCudaMemory::CopyTo(vtkCudaLocalMemory* other)
         this->GetMemPointer(),
         this->GetSize(),
         cudaMemcpyDeviceToHost
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
+}
+
+bool vtkCudaMemory::CopyTo(vtkCudaMemoryArray* other)
+{
+    if (other->GetSize() < this->GetSize())
+    {
+        vtkErrorMacro("The vtkCudaMemoryArray has to little Memory to store memory inside");
+        return false;
+    }
+    // we cannot say the XYZ extent so we just write into the memory area
+    if(cudaMemcpyToArray(other->GetArray(),
+        0, 0,
+        this->GetMemPointer(),
+        this->GetSize(),
+        cudaMemcpyDeviceToDevice
         ) == cudaSuccess)
         return true;
     else 
