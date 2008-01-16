@@ -8,6 +8,7 @@ class vtkVolumeRenderingCudaModuleLogic;
 
 class vtkVolumeCudaMapper;
 class vtkVolume;
+class vtkVolumeProperty;
 
 
 class vtkKWWidget;
@@ -103,7 +104,8 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkVolumeRenderingCudaModuleLogic *Logic;
 
   vtkVolumeCudaMapper* CudaMapper;
-  vtkVolume* CudaActor;
+  vtkVolume* CudaVolume;
+  vtkVolumeProperty* CudaVolumeProperty;
   
   vtkSlicerViewerWidget *ViewerWidget;
   vtkSlicerViewerInteractorStyle *InteractorStyle;

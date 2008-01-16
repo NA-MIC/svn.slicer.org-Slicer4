@@ -40,6 +40,7 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     this->CudaInputBuffer = vtkCudaMemory::New();
     this->CudaOutputBuffer = vtkCudaMemory::New();
 
+    this->OutputDataSize[0] = this->OutputDataSize[1] = 0;
     this->SetColor(255, 255, 255);
     this->UpdateOutputResolution(128, 128, 4);
 }  
@@ -68,6 +69,9 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
 
 void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned int height, unsigned int colors)
 {
+    if (this->OutputDataSize[0] == width &&
+        this->OutputDataSize[1] == height )
+        return;
     // Set the data Size
     this->OutputDataSize[0] = width;
     this->OutputDataSize[1] = height;
@@ -108,6 +112,12 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
     float minmax[6]={0,255,0,255,0,255};
     float lightVec[3]={0, 0, 1};
 
+    vtkRenderWindow *renWin= renderer->GetRenderWindow();
+    //Get current size of window
+    int *size=renWin->GetSize();
+
+    int width = size[0], height = size[1];
+    this->UpdateOutputResolution(width, height, 4);
 
     vtkCamera* cam =
         renderer->GetActiveCamera();
@@ -180,9 +190,6 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
     components->SetComponents(0,1,2);
 
 
-    vtkRenderWindow *renWin= renderer->GetRenderWindow();
-    //Get current size of window
-    int *size=renWin->GetSize();
 
     //renderer->SetBackground(this->renViewport->GetBackground());
     //renderer->SetActiveCamera(this->renViewport->GetActiveCamera());
