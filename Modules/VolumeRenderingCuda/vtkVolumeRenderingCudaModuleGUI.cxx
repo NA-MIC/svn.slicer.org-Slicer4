@@ -7,6 +7,7 @@
 #include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkMRMLScene.h"
 #include "vtkVolume.h"
+#include "vtkVolumeProperty.h"
 
 #include "vtkImageData.h"
 
@@ -36,7 +37,8 @@ extern "C" {
 vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 {
     this->CudaMapper = NULL;
-    this->CudaActor = NULL;
+    this->CudaVolume = NULL;
+    this->CudaVolumeProperty = NULL;
 
     this->InputTypeChooser = NULL;
     this->InputResolutionMatrix = NULL;
@@ -50,10 +52,12 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     {
         this->CudaMapper->Delete();
     }
-    if (this->CudaActor != NULL)
+    if (this->CudaVolume != NULL)
     {
-        this->CudaActor->Delete();  
+        this->CudaVolume->Delete();  
     }
+if (this->CudaVolumeProperty != NULL)
+    this->CudaVolumeProperty->Delete();
 
     DeleteWidget(this->InputTypeChooser);
     DeleteWidget(this->InputResolutionMatrix);
@@ -112,8 +116,8 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     this->InputResolutionMatrix->SetRestrictElementValueToInteger();
     this->InputResolutionMatrix->SetNumberOfColumns(4);
     this->InputResolutionMatrix->SetNumberOfRows(1);
-    this->InputResolutionMatrix->SetElementValueAsInt(0,0,128);
-    this->InputResolutionMatrix->SetElementValueAsInt(0,1,128);
+    this->InputResolutionMatrix->SetElementValueAsInt(0,0,256);
+    this->InputResolutionMatrix->SetElementValueAsInt(0,1,256);
     this->InputResolutionMatrix->SetElementValueAsInt(0,2,1);    
     this->InputResolutionMatrix->SetElementValueAsInt(0,3,4);
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
@@ -175,6 +179,10 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->Color->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->UpdateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+
+    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
+    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
+
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
@@ -183,6 +191,10 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->Color->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->UpdateButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+
+    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->RemoveObservers(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
+    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->RemoveObservers(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
+
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
@@ -235,18 +247,29 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             vtkImageData* data = reader->GetOutput();
             this->CudaMapper->SetInput(data);
         }
-        if (this->CudaActor == NULL)
+        if (this->CudaVolume == NULL)
         {
-            this->CudaActor = vtkVolume::New();
-            this->CudaActor->SetMapper(this->CudaMapper);
-        }
-        this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
-       this->CudaMapper->Render(
-            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
-            this->CudaActor);
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+            this->CudaVolume = vtkVolume::New();
+            this->CudaVolume->SetMapper(this->CudaMapper);
+            this->CudaVolumeProperty = vtkVolumeProperty::New();
+            this->CudaVolume->SetProperty(this->CudaVolumeProperty);
 
-        //this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaActor);
+            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->AddViewProp(this->CudaVolume);
+        }
+
+        this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
+        /*this->CudaMapper->Render(
+            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
+            this->CudaVolume);
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();*/
+    }
+    if (caller == this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow() && 
+        event == vtkCommand::StartEvent)
+    {
+        if (this->CudaMapper != NULL)
+        this->CudaMapper->Render(
+            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
+            this->CudaVolume);
     }
 }
 
