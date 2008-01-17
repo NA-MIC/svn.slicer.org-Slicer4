@@ -10,9 +10,7 @@ class vtkCudaHostMemory;
 class vtkCudaLocalMemory;
 class vtkCudaMemoryArray;
 
-class vtkCamera;
-
-class vtkRenderWindow;
+class vtkVolumeProperty;
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolumeMapper
 {
@@ -46,6 +44,7 @@ protected:
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
 
+    void UpdateVolumeProperties(vtkVolumeProperty* property);
     void UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged = false);
 
     unsigned int OutputDataSize[2];
@@ -58,8 +57,11 @@ protected:
 //ETX
     vtkImageData* LocalOutputImage;
 
-    unsigned int  BufferObject;
-    unsigned int  Texture;
+    vtkCudaHostMemory* LocalColorTransferFunction;
+    vtkCudaMemory* CudaColorTransferFunction;
+
+    unsigned int BufferObject;
+    unsigned int Texture;
 
     bool GLBufferObjectsAvailiable;
 

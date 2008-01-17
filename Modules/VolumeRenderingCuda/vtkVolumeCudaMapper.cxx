@@ -1,9 +1,14 @@
+// Type
 #include "vtkVolumeCudaMapper.h"
 #include "vtkVolumeRenderingCudaFactory.h"
-
-#include "vtkActor.h"
+#include "vtkObjectFactory.h"
+// Extended Type
+#include "vtkVolume.h"
 #include "vtkPolyDataMapper.h"
+#include "vtkVolumeProperty.h"
+#include "vtkColorTransferFunction.h"
 
+//Data Types
 #include "vtkPolyData.h"
 #include "vtkTexture.h"
 #include "vtkCellArray.h"
@@ -11,23 +16,23 @@
 #include "vtkPointData.h"
 #include "vtkImageExtractComponents.h"
 
+// Rendering
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
 #include "vtkCamera.h"
 
+
+
+// CUDA
 #include "vtkImageData.h"
 #include "vtkCudaMemory.h"
 #include "vtkCudaHostMemory.h"
 #include "vtkCudaMemoryArray.h"
 
-#include "vtkObjectFactory.h"
-
-#include "vtkCudaMemory.h"
 #include <vector_types.h>
 
-//#include "vtkgl.h"
+// openGL
 #include "vtkOpenGLExtensionManager.h"
-
 #include "vtkgl.h"
 #include "cuda_gl_interop.h"
 
@@ -69,6 +74,10 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     }
     extensions->Delete();
 
+    this->CudaColorTransferFunction = vtkCudaMemory::New();
+    this->CudaColorTransferFunction->Allocate<float3>(256);
+    this->LocalColorTransferFunction = vtkCudaHostMemory::New();
+    this->LocalColorTransferFunction->Allocate<float3>(256);
 }  
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
@@ -122,6 +131,8 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     this->OutputDataSize[0] = width;
     this->OutputDataSize[1] = height;
 
+    this->CudaInputBuffer->CopyFrom(this->GetInput());
+
     // Re-allocate the memory
     this->CudaOutputBuffer->Allocate<uchar4>(width * height);
 
@@ -161,6 +172,15 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     }
 }
 
+void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
+{
+    double range[2];
+    property->GetRGBTransferFunction()->GetRange(range);
+    property->GetRGBTransferFunction()->GetTable(range[0], range[1], 256, this->LocalColorTransferFunction->GetMemPointerAs<float>());
+    
+    LocalColorTransferFunction->CopyTo(CudaColorTransferFunction);
+}
+
 #include "vtkTimerLog.h"
 #include "texture_types.h"
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
@@ -175,6 +195,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
     int width = size[0], height = size[1];
     this->UpdateOutputResolution(width, height);
+
+    this->UpdateVolumeProperties(volume->GetProperty());
 
     vtkCamera* cam =
         renderer->GetActiveCamera();
@@ -239,13 +261,16 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
     CUDArenderAlgo_doRender(RenderDestination,
         this->CudaInputBuffer->GetMemPointerAs<unsigned char>(),
-        (float*)rotationMatrix, color, minmax, lightVec, 
-        dims[0], dims[1], dims[2],    //3D data size
+        (float*)rotationMatrix,
+        this->CudaColorTransferFunction->GetMemPointerAs<float>(),
+        minmax, lightVec, 
+        dims[0], dims[1], dims[2],                            //3D data size
         this->OutputDataSize[0], this->OutputDataSize[1],     //result image size
-        0,0,0,          //translation of data in x,y,z direction
-        1, 1, 1,        //voxel dimension
-        90, 255,        //min and max threshold
-        -100);          //slicing distance from center of 3D data
+        0,0,0,                                                //translation of data in x,y,z direction
+        1, 1, 1,                                              //voxel dimension
+        90, 255,                                              //min and max threshold
+        -100                                                  //slicing distance from center of 3D data
+        );         
 
     // Get the resulted image.
     log->StopTimer();
