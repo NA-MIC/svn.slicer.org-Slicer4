@@ -296,10 +296,8 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
 
   // Switch to various rendering methods.
 
-  float transparencyLevel=1;
+  float transparencyLevel=0;
 
-  //CUDAkernel_renderAlgo_doRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
-  //CUDAkernel_renderAlgo_doMIPRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, d_renderAlgo_resultImage);
   CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, transparencyLevel, outputData);
   
   CUT_CHECK_ERROR("Kernel execution failed");

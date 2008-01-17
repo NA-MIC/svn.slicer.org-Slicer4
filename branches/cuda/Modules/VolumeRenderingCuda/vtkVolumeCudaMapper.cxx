@@ -25,6 +25,12 @@
 #include "vtkCudaMemory.h"
 #include <vector_types.h>
 
+//#include "vtkgl.h"
+#include "vtkOpenGLExtensionManager.h"
+
+#include "vtkgl.h"
+#include "cuda_gl_interop.h"
+
 extern "C" {
 #include "CUDA_renderAlgo.h"
 }
@@ -40,12 +46,29 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 
     this->CudaInputBuffer = vtkCudaMemory::New();
     this->CudaOutputBuffer = vtkCudaMemory::New();
-    
-    this->Test = vtkCudaMemoryArray::New();
+
+    this->Texture = 0;
+    this->BufferObject = 0;
 
     this->OutputDataSize[0] = this->OutputDataSize[1] = 0;
     this->SetColor(255, 255, 255);
-    this->UpdateOutputResolution(128, 128, 4);
+
+    // check for the RenderMode
+    vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();
+    extensions->SetRenderWindow(NULL);
+    if (extensions->ExtensionSupported("GL_ARB_vertex_buffer_object"))
+    {
+        extensions->LoadExtension("GL_ARB_vertex_buffer_object");
+        this->GLBufferObjectsAvailiable = true;
+        this->SetRenderMode(ToTexture);
+    }
+    else
+    {
+        this->GLBufferObjectsAvailiable = false;
+        this->SetRenderMode(ToMemory);
+    }
+    extensions->Delete();
+
 }  
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
@@ -53,7 +76,6 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
     this->CudaInputBuffer->Delete();
     this->CudaOutputBuffer->Delete();
     this->LocalOutputImage->Delete();
-    this->Test->Delete();
 }
 
 void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
@@ -70,89 +92,83 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
     }
 }
 
+void vtkVolumeCudaMapper::SetRenderMode(vtkVolumeCudaMapper::RenderMode mode)
+{
+    if (mode == ToTexture && this->GLBufferObjectsAvailiable)
+    {
+        this->CurrentRenderMode = mode;        
+    }
+    else
+    {
+        this->CurrentRenderMode = ToMemory;
+    }
+}
 
-void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned int height, unsigned int colors)
+void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned int height)
 {
     if (this->OutputDataSize[0] == width &&
         this->OutputDataSize[1] == height )
         return;
+
     // Set the data Size
     this->OutputDataSize[0] = width;
     this->OutputDataSize[1] = height;
 
     // Re-allocate the memory
     this->CudaOutputBuffer->Allocate<uchar4>(width * height);
-    this->Test->SetFormat<uchar4>();
-    this->Test->Allocate(width, height);
-
-    // Allocate the Image Data
-    this->LocalOutputImage->SetScalarTypeToUnsignedChar();
-    this->LocalOutputImage->SetNumberOfScalarComponents(4);
-    this->LocalOutputImage->SetDimensions(width, height, 1);
-    this->LocalOutputImage->SetExtent(0, width - 1, 
-        0, height - 1, 
-        0, 1 - 1);
-    this->LocalOutputImage->SetNumberOfScalarComponents(colors);
-    this->LocalOutputImage->SetScalarTypeToUnsignedChar();
-    this->LocalOutputImage->AllocateScalars();
-}
-
-void vtkVolumeCudaMapper::Update()
-{
-    cerr << "TEST\n";
-    cout << "TEST2\n";
-}
 
 
-void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
-{
-    cerr << "TEST\n";
-    cout << "TEST2\n";
-    this->UpdateRenderPlane(renderer, volume);
-}
-
-
-#include "vtkTimerLog.h"
-#include "texture_types.h"
-#include "vtkgl.h"
-#include "cuda_gl_interop.h"
-#include "vtkOpenGLExtensionManager.h"
-GLuint gl_Tex=0, gl_PBO;
-void vtkVolumeCudaMapper::TEST(int width, int height, vtkRenderWindow* win)
-{
-   vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();
- extensions->SetRenderWindow(NULL);
- if (extensions->ExtensionSupported("GL_ARB_vertex_buffer_object"))
-    extensions->LoadExtension("GL_ARB_vertex_buffer_object");
-      
-// TEXTURE CODE
-        printf("Creating GL texture...\n");
+    if (this->CurrentRenderMode == ToMemory)
+    {
+        // Allocate the Image Data
+        this->LocalOutputImage->SetScalarTypeToUnsignedChar();
+        this->LocalOutputImage->SetNumberOfScalarComponents(4);
+        this->LocalOutputImage->SetDimensions(width, height, 1);
+        this->LocalOutputImage->SetExtent(0, width - 1, 
+            0, height - 1, 
+            0, 1 - 1);
+        this->LocalOutputImage->SetNumberOfScalarComponents(4);
+        this->LocalOutputImage->SetScalarTypeToUnsignedChar();
+        this->LocalOutputImage->AllocateScalars();
+    }
+    else
+    {
+        // TEXTURE CODE
         glEnable(GL_TEXTURE_2D);
-        glGenTextures(1, &gl_Tex);
-        glBindTexture(GL_TEXTURE_2D, gl_Tex);
+        if (this->Texture == 0 || ! glIsTexture(this->Texture))
+            glGenTextures(1, &this->Texture);
+        glBindTexture(GL_TEXTURE_2D, this->Texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
-    printf("Texture created.\n");
 
-    printf("Creating PBO...\n");
-    vtkgl::GenBuffersARB(1, &gl_PBO);
-    vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, gl_PBO);
-    vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, width * height * 4, this->LocalOutputImage->GetScalarPointer(), vtkgl::STREAM_COPY);
-       /* While a PBO is registered to CUDA, it can't be used 
+        // OpenGL Buffer Code
+        if (this->BufferObject == 0 || !vtkgl::IsBufferARB(this->BufferObject))
+        {
+            vtkgl::GenBuffersARB(1, &this->BufferObject);
+            CUDA_SAFE_CALL( cudaGLRegisterBufferObject(this->BufferObject) );
+        }
+
+        vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObject);
+        vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, width * height * 4, this->LocalOutputImage->GetScalarPointer(), vtkgl::STREAM_COPY);
+        /* While a PBO is registered to CUDA, it can't be used 
         as the destination for OpenGL drawing calls.
         But in our particular case OpenGL is only used 
         to display the content of the PBO, specified by CUDA kernels,
         so we need to register/unregister it only once.*/
-        CUDA_SAFE_CALL( cudaGLRegisterBufferObject(gl_PBO) );
-    printf("PBO created.\n");
+    }
 }
 
-void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* volume)
-{
 
+
+
+
+#include "vtkTimerLog.h"
+#include "texture_types.h"
+void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
+{
     float color[6]={this->Color[0],this->Color[1],this->Color[2], 1,1,1};
     float minmax[6]={0,255,0,255,0,255};
     float lightVec[3]={0, 0, 1};
@@ -162,9 +178,7 @@ void vtkVolumeCudaMapper::UpdateRenderPlane(vtkRenderer* renderer, vtkVolume* vo
     int *size=renWin->GetSize();
 
     int width = size[0], height = size[1];
-    this->UpdateOutputResolution(width, height, 4);
-if (gl_Tex == 0)
-TEST(width, height, renWin);
+    this->UpdateOutputResolution(width, height);
 
     vtkCamera* cam =
         renderer->GetActiveCamera();
@@ -205,17 +219,25 @@ TEST(width, height, renWin);
     {0,0,1,0},
     {0,0,0,1}};*/
 
-    vtkErrorMacro( << "Volume rendering.\n");
-    // Do rendering.
-    glEnable(GL_TEXTURE_2D);
-glBindTexture(GL_TEXTURE_2D, gl_Tex);
-vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, gl_PBO);
-    void * d_dst;
     int* dims = this->GetInput()->GetDimensions();
-    CUDA_SAFE_CALL(cudaGLMapBufferObject((void**)&d_dst, gl_PBO));
+
+    uchar4* RenderDestination = NULL;
+    if (this->CurrentRenderMode == ToTexture)
+    {
+        // Do rendering.
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, this->Texture);
+        vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObject);
+        CUDA_SAFE_CALL(cudaGLMapBufferObject((void**)&RenderDestination, this->BufferObject));
+    }
+    else
+    {
+        RenderDestination = this->CudaOutputBuffer->GetMemPointerAs<uchar4>();
+    }
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
-    CUDArenderAlgo_doRender((uchar4*)d_dst, //this->CudaOutputBuffer->GetMemPointerAs<uchar4>(),
+
+    CUDArenderAlgo_doRender(RenderDestination,
         this->CudaInputBuffer->GetMemPointerAs<unsigned char>(),
         (float*)rotationMatrix, color, minmax, lightVec, 
         dims[0], dims[1], dims[2],    //3D data size
@@ -224,14 +246,22 @@ vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, gl_PBO);
         1, 1, 1,        //voxel dimension
         90, 255,        //min and max threshold
         -100);          //slicing distance from center of 3D data
+
     // Get the resulted image.
     log->StopTimer();
-    CUDA_SAFE_CALL(cudaGLUnmapBufferObject(gl_PBO));
     vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
 
     log->StartTimer();
-    //this->CudaOutputBuffer->CopyTo(this->LocalOutputImage);
-     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
+    if (this->CurrentRenderMode == ToTexture)
+    {
+        CUDA_SAFE_CALL(cudaGLUnmapBufferObject(this->BufferObject));
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
+    }
+    else
+    {
+        this->CudaOutputBuffer->CopyTo(this->LocalOutputImage);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
+    }
     log->StopTimer();
     vtkErrorMacro(<< "Elapsed Time to Copy Memory:: " << log->GetElapsedTime());
 
@@ -272,79 +302,79 @@ vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, gl_PBO);
     glVertex4dv(coordinatesD);
     glEnd();
 
-return;
+    return;
 
-    //
-    //Create the Polydata
-    vtkPoints *points=vtkPoints::New();
-    points->InsertPoint(0,coordinatesA);
-    points->InsertPoint(1,coordinatesB);
-    points->InsertPoint(2,coordinatesC);
-    points->InsertPoint(3,coordinatesD);
+    ////////// OLD CODE ///////////////////////
+    //////////Create the Polydata
+    ////////vtkPoints *points=vtkPoints::New();
+    ////////points->InsertPoint(0,coordinatesA);
+    ////////points->InsertPoint(1,coordinatesB);
+    ////////points->InsertPoint(2,coordinatesC);
+    ////////points->InsertPoint(3,coordinatesD);
 
-    vtkCellArray *polygon=vtkCellArray::New();
-    polygon->InsertNextCell(4);
-    polygon->InsertCellPoint(0);
-    polygon->InsertCellPoint(1);
-    polygon->InsertCellPoint(2);
-    polygon->InsertCellPoint(3);
-    //Take care about Texture coordinates
-    vtkFloatArray *textCoords = vtkFloatArray::New();
-    textCoords->SetNumberOfComponents(2);
-    textCoords->Allocate(8);
-    float tc[2];
-    tc[0]=0;
-    tc[1]=0;
-    textCoords->InsertNextTuple(tc);
-    tc[0]=1;
-    tc[1]=0;
-    textCoords->InsertNextTuple(tc);
-    tc[0]=1;
-    tc[1]=1;
-    textCoords->InsertNextTuple(tc);
-    tc[0]=0;
-    tc[1]=1;
-    textCoords->InsertNextTuple(tc);
+    ////////vtkCellArray *polygon=vtkCellArray::New();
+    ////////polygon->InsertNextCell(4);
+    ////////polygon->InsertCellPoint(0);
+    ////////polygon->InsertCellPoint(1);
+    ////////polygon->InsertCellPoint(2);
+    ////////polygon->InsertCellPoint(3);
+    //////////Take care about Texture coordinates
+    ////////vtkFloatArray *textCoords = vtkFloatArray::New();
+    ////////textCoords->SetNumberOfComponents(2);
+    ////////textCoords->Allocate(8);
+    ////////float tc[2];
+    ////////tc[0]=0;
+    ////////tc[1]=0;
+    ////////textCoords->InsertNextTuple(tc);
+    ////////tc[0]=1;
+    ////////tc[1]=0;
+    ////////textCoords->InsertNextTuple(tc);
+    ////////tc[0]=1;
+    ////////tc[1]=1;
+    ////////textCoords->InsertNextTuple(tc);
+    ////////tc[0]=0;
+    ////////tc[1]=1;
+    ////////textCoords->InsertNextTuple(tc);
 
-    vtkPolyData *polydata=vtkPolyData::New();
-    polydata->SetPoints(points);
-    polydata->SetPolys(polygon);
-    polydata->GetPointData()->SetTCoords(textCoords);
+    ////////vtkPolyData *polydata=vtkPolyData::New();
+    ////////polydata->SetPoints(points);
+    ////////polydata->SetPolys(polygon);
+    ////////polydata->GetPointData()->SetTCoords(textCoords);
 
-    vtkPolyDataMapper *polyMapper=vtkPolyDataMapper::New();
-    polyMapper->SetInput(polydata);
+    ////////vtkPolyDataMapper *polyMapper=vtkPolyDataMapper::New();
+    ////////polyMapper->SetInput(polydata);
 
-    vtkActor *actor=vtkActor::New(); 
-    actor->SetMapper(polyMapper);
+    ////////vtkActor *actor=vtkActor::New(); 
+    ////////actor->SetMapper(polyMapper);
 
-    vtkImageExtractComponents *components = vtkImageExtractComponents::New();
-    components->SetInput(this->LocalOutputImage);
-    components->SetComponents(0,1,2);
+    ////////vtkImageExtractComponents *components = vtkImageExtractComponents::New();
+    ////////components->SetInput(this->LocalOutputImage);
+    ////////components->SetComponents(0,1,2);
 
 
-    //Take care about the texture
-    vtkTexture *atext=vtkTexture::New();
-    atext->SetInput(components->GetOutput());
-    atext->SetInterpolate(1);
+    //////////Take care about the texture
+    ////////vtkTexture *atext=vtkTexture::New();
+    ////////atext->SetInput(components->GetOutput());
+    ////////atext->SetInterpolate(1);
 
-    actor->SetTexture(atext);
+    ////////actor->SetTexture(atext);
 
-    renderer->AddActor(actor);
-    
-    renWin->SwapBuffersOn();
+    ////////renderer->AddActor(actor);
 
-    //Delete everything we have done
-    components->Delete();
-    points->Delete();
-    polygon->Delete();
-    textCoords->Delete();
-    polydata->Delete();
-    polyMapper->Delete();
-    actor->Delete();
-    atext->Delete();
+    ////////renWin->SwapBuffersOn();
 
-       log->StopTimer();
-    vtkErrorMacro(<< "FINISH:: " << log->GetElapsedTime());
+    //////////Delete everything we have done
+    ////////components->Delete();
+    ////////points->Delete();
+    ////////polygon->Delete();
+    ////////textCoords->Delete();
+    ////////polydata->Delete();
+    ////////polyMapper->Delete();
+    ////////actor->Delete();
+    ////////atext->Delete();
+
+    ////////log->StopTimer();
+    ////////vtkErrorMacro(<< "FINISH:: " << log->GetElapsedTime());
 
 }
 

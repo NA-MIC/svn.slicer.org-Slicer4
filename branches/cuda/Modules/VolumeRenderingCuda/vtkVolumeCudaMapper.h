@@ -22,35 +22,46 @@ public:
 
     virtual void SetInput( vtkImageData * );
 
-    virtual void Update();
     virtual void Render(vtkRenderer *, vtkVolume *);
 
     void SetColor(double r, double g, double b) { Color[0] = r; Color[1] = g; Color[2] = b; this->Modified(); }
     void SetColor(const double c[3]) { this->SetColor(c[0], c[1], c[2]); this->Modified();};
     vtkGetVector3Macro(Color,double);
 
+   //BTX
+   typedef enum 
+   {
+     ToTexture,
+     ToMemory,
+   } RenderMode;
+   void SetRenderMode(RenderMode mode);
+   RenderMode GetCurrentRenderMode() const { return this->CurrentRenderMode; }
+   //ETX
+
+
    void PrintSelf(ostream& os, vtkIndent indent);
+
 
 protected:
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
 
-    void UpdateOutputResolution(unsigned int width, unsigned int height, unsigned int colors);
-
-    void TEST(int width, int height, vtkRenderWindow* win);
-
-    void UpdateRenderPlane(vtkRenderer *, vtkVolume *);
+    void UpdateOutputResolution(unsigned int width, unsigned int height);
 
     unsigned int OutputDataSize[2];
 
-    vtkImageData* LocalOutputImage;
-
     vtkCudaMemory* CudaInputBuffer;
     vtkCudaMemory* CudaOutputBuffer;
-    
-    vtkCudaMemoryArray* Test;
-
     double Color[3];
+//BTX
+    RenderMode CurrentRenderMode;
+//ETX
+    vtkImageData* LocalOutputImage;
+
+    unsigned int  BufferObject;
+    unsigned int  Texture;
+
+    bool GLBufferObjectsAvailiable;
 
 private:
     vtkVolumeCudaMapper operator=(const vtkVolumeCudaMapper&);
