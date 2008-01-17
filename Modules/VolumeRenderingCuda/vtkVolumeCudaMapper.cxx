@@ -76,6 +76,13 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
     this->CudaInputBuffer->Delete();
     this->CudaOutputBuffer->Delete();
     this->LocalOutputImage->Delete();
+
+    if (this->Texture == 0 || !glIsTexture(this->Texture))
+        glGenTextures(1, &this->Texture);
+
+    if (this->GLBufferObjectsAvailiable == true)
+        if (this->BufferObject != 0 && vtkgl::IsBufferARB(this->BufferObject))
+            vtkgl::DeleteBuffersARB(1, &this->BufferObject);
 }
 
 void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
@@ -146,9 +153,7 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     {
         // OpenGL Buffer Code
         if (this->BufferObject != 0 && vtkgl::IsBufferARB(this->BufferObject))
-        {
             vtkgl::DeleteBuffersARB(1, &this->BufferObject);
-        }
         vtkgl::GenBuffersARB(1, &this->BufferObject);
         vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObject);
         vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, width * height * 4, this->LocalOutputImage->GetScalarPointer(), vtkgl::STREAM_COPY);
