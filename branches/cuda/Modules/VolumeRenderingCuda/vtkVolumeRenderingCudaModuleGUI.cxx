@@ -15,11 +15,16 @@
 #include "vtkKWTypeChooserBox.h"
 #include "vtkKWMatrixWidget.h"
 #include "vtkKWLabel.h"
+#include "vtkKWVolumePropertyWidget.h"
+#include "vtkKWEvent.h"
 
 #include "vtkCellArray.h"
 #include "vtkFloatArray.h"
 #include "vtkPointData.h"
 #include "vtkTexture.h"
+
+// Transfer functions:
+#include "vtkColorTransferFunction.h"
 
 #include "vtkRenderer.h"
 
@@ -44,6 +49,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->InputResolutionMatrix = NULL;
     this->RenderModeChooser = NULL;
     this->Color = NULL;
+    this->VolumePropertyWidget = NULL;
 }
 
 
@@ -65,6 +71,7 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     DeleteWidget(this->InputResolutionMatrix);
     DeleteWidget(this->Color);
     DeleteWidget(this->RenderModeChooser);
+    DeleteWidget(this->VolumePropertyWidget);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::DeleteWidget(vtkKWWidget* widget)
@@ -148,6 +155,12 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
         this->Color->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
 
 
+    this->VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
+    this->VolumePropertyWidget->SetParent(loadSaveDataFrame->GetFrame());
+    this->VolumePropertyWidget->Create();
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->VolumePropertyWidget->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName()); 
+
     this->RenderModeChooser = vtkKWMenuButton::New();
     this->RenderModeChooser->SetParent(loadSaveDataFrame->GetFrame());
     this->RenderModeChooser->Create();
@@ -195,6 +208,9 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
     this->UpdateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 
     this->RenderModeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
+
+    this->VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
@@ -208,12 +224,14 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
 }
+
 void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 {
 }
 
 #include "vtkImageReader.h"
 #include "vtkOpenGLExtensionManager.h"
+#include <sstream>
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
@@ -262,8 +280,10 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         {
             this->CudaVolume = vtkVolume::New();
             this->CudaVolume->SetMapper(this->CudaMapper);
+
             this->CudaVolumeProperty = vtkVolumeProperty::New();
             this->CudaVolume->SetProperty(this->CudaVolumeProperty);
+            this->VolumePropertyWidget->SetVolumeProperty(this->CudaVolumeProperty);
 
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
         }
@@ -281,6 +301,30 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         else
             this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
       //  UpdateVolume();
+    }
+    
+    if (caller == this->VolumePropertyWidget)
+    {
+        if (this->CudaMapper != NULL);
+        this->CudaMapper->Update();
+
+        // TEST
+        const int size = 10;
+        double range[2];
+        float values[size * 3];
+        this->CudaVolumeProperty->GetRGBTransferFunction()->GetRange(range);
+        this->CudaVolumeProperty->GetRGBTransferFunction()->GetTable(range[0], range[1], size, values);
+
+        std::stringstream s;
+        for (unsigned int i = 0; i < size * 3; i+=3)
+            s << i / 3 << ": " 
+            << values[i]  << " "
+            << values[i+1] << " " 
+            << values[i+2] << " " 
+            << std::endl;
+
+        vtkErrorMacro(<<"TEST: " <<*this->CudaVolumeProperty->GetRGBTransferFunction() << "bla : " << s.str().c_str());
+        // TEST End
     }
 }
 

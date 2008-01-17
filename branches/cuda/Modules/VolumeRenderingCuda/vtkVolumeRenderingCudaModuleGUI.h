@@ -15,6 +15,7 @@ class vtkKWWidget;
 class vtkKWTypeChooserBox;
 class vtkKWMatrixWidget;
 class vtkKWMenuButton;
+class vtkKWVolumePropertyWidget;
 
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
@@ -113,14 +114,15 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkSlicerViewerWidget *ViewerWidget;
   vtkSlicerViewerInteractorStyle *InteractorStyle;
 
-  vtkKWPushButton* UpdateButton;
 
   vtkKWTypeChooserBox*   InputTypeChooser;
   vtkKWMatrixWidget* InputResolutionMatrix;
 
   vtkKWMenuButton* RenderModeChooser;
-  
+  vtkKWVolumePropertyWidget* VolumePropertyWidget;
   vtkKWMatrixWidget* Color;
+
+  vtkKWPushButton* UpdateButton;
 };
 
 #endif /*VTKSLICERVOLUMERENDERINGCUDA_H_*/
