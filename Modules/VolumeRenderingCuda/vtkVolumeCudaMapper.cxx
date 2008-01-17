@@ -60,12 +60,12 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     {
         extensions->LoadExtension("GL_ARB_vertex_buffer_object");
         this->GLBufferObjectsAvailiable = true;
-        this->SetRenderMode(ToTexture);
+        this->CurrentRenderMode = ToTexture;
     }
     else
     {
         this->GLBufferObjectsAvailiable = false;
-        this->SetRenderMode(ToMemory);
+        this->CurrentRenderMode = ToMemory;
     }
     extensions->Delete();
 
@@ -96,18 +96,19 @@ void vtkVolumeCudaMapper::SetRenderMode(vtkVolumeCudaMapper::RenderMode mode)
 {
     if (mode == ToTexture && this->GLBufferObjectsAvailiable)
     {
-        this->CurrentRenderMode = mode;        
+        this->CurrentRenderMode = mode;
     }
     else
     {
         this->CurrentRenderMode = ToMemory;
     }
+    this->UpdateOutputResolution(this->OutputDataSize[0], this->OutputDataSize[1], true);
 }
 
-void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned int height)
+void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged)
 {
     if (this->OutputDataSize[0] == width &&
-        this->OutputDataSize[1] == height )
+        this->OutputDataSize[1] == height && !TypeChanged)
         return;
 
     // Set the data Size
@@ -117,8 +118,6 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     // Re-allocate the memory
     this->CudaOutputBuffer->Allocate<uchar4>(width * height);
 
-
-    if (this->CurrentRenderMode == ToMemory)
     {
         // Allocate the Image Data
         this->LocalOutputImage->SetScalarTypeToUnsignedChar();
@@ -128,42 +127,32 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
             0, height - 1, 
             0, 1 - 1);
         this->LocalOutputImage->SetNumberOfScalarComponents(4);
-        this->LocalOutputImage->SetScalarTypeToUnsignedChar();
         this->LocalOutputImage->AllocateScalars();
     }
-    else
+    // TEXTURE CODE
+    glEnable(GL_TEXTURE_2D);
+    if (this->Texture != 0 && glIsTexture(this->Texture))
+        glDeleteTextures(1, &this->Texture);
+    glGenTextures(1, &this->Texture);
+    glBindTexture(GL_TEXTURE_2D, this->Texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
+
+    if (this->CurrentRenderMode == ToTexture)
     {
-        // TEXTURE CODE
-        glEnable(GL_TEXTURE_2D);
-        if (this->Texture == 0 || ! glIsTexture(this->Texture))
-            glGenTextures(1, &this->Texture);
-        glBindTexture(GL_TEXTURE_2D, this->Texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
-
         // OpenGL Buffer Code
-        if (this->BufferObject == 0 || !vtkgl::IsBufferARB(this->BufferObject))
+        if (this->BufferObject != 0 && vtkgl::IsBufferARB(this->BufferObject))
         {
-            vtkgl::GenBuffersARB(1, &this->BufferObject);
-            CUDA_SAFE_CALL( cudaGLRegisterBufferObject(this->BufferObject) );
+            vtkgl::DeleteBuffersARB(1, &this->BufferObject);
         }
-
+        vtkgl::GenBuffersARB(1, &this->BufferObject);
         vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObject);
         vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, width * height * 4, this->LocalOutputImage->GetScalarPointer(), vtkgl::STREAM_COPY);
-        /* While a PBO is registered to CUDA, it can't be used 
-        as the destination for OpenGL drawing calls.
-        But in our particular case OpenGL is only used 
-        to display the content of the PBO, specified by CUDA kernels,
-        so we need to register/unregister it only once.*/
     }
 }
-
-
-
-
 
 #include "vtkTimerLog.h"
 #include "texture_types.h"
@@ -221,12 +210,16 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
     int* dims = this->GetInput()->GetDimensions();
 
+    // Do rendering.
     uchar4* RenderDestination = NULL;
+
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, this->Texture);
+
     if (this->CurrentRenderMode == ToTexture)
     {
-        // Do rendering.
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, this->Texture);
+        CUDA_SAFE_CALL( cudaGLRegisterBufferObject(this->BufferObject) );
+
         vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObject);
         CUDA_SAFE_CALL(cudaGLMapBufferObject((void**)&RenderDestination, this->BufferObject));
     }
@@ -256,8 +249,10 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     {
         CUDA_SAFE_CALL(cudaGLUnmapBufferObject(this->BufferObject));
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
+        CUDA_SAFE_CALL( cudaGLUnregisterBufferObject(this->BufferObject) );
+        vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
     }
-    else
+    else // (this->CurrentRenderMode == ToMemory)
     {
         this->CudaOutputBuffer->CopyTo(this->LocalOutputImage);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());

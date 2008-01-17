@@ -42,6 +42,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 
     this->InputTypeChooser = NULL;
     this->InputResolutionMatrix = NULL;
+    this->RenderModeChooser = NULL;
     this->Color = NULL;
 }
 
@@ -56,12 +57,14 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     {
         this->CudaVolume->Delete();  
     }
-if (this->CudaVolumeProperty != NULL)
-    this->CudaVolumeProperty->Delete();
+
+    if (this->CudaVolumeProperty != NULL)
+        this->CudaVolumeProperty->Delete();
 
     DeleteWidget(this->InputTypeChooser);
     DeleteWidget(this->InputResolutionMatrix);
     DeleteWidget(this->Color);
+    DeleteWidget(this->RenderModeChooser);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::DeleteWidget(vtkKWWidget* widget)
@@ -145,6 +148,17 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
         this->Color->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
 
 
+    this->RenderModeChooser = vtkKWMenuButton::New();
+    this->RenderModeChooser->SetParent(loadSaveDataFrame->GetFrame());
+    this->RenderModeChooser->Create();
+    this->RenderModeChooser->GetMenu()->AddRadioButton("To Texture");
+    this->RenderModeChooser->GetMenu()->AddRadioButton("To Memory");
+    this->RenderModeChooser->GetMenu()->SelectItem(0);
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->RenderModeChooser->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
+
+
+
     this->UpdateButton = vtkKWPushButton::New();
     this->UpdateButton->SetParent(loadSaveDataFrame->GetFrame());
     this->UpdateButton->Create();
@@ -180,9 +194,7 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
     this->Color->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->UpdateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 
-    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
-    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
-
+    this->RenderModeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
@@ -191,10 +203,7 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->Color->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->UpdateButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-
-    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->RemoveObservers(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
-    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->RemoveObservers(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
-
+    this->RenderModeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
 {
@@ -264,9 +273,13 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
        // this->UpdateVolume();
         //this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
     }
-    if (caller == this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow() && 
-        event == vtkCommand::StartEvent)
+    if (caller == this->RenderModeChooser->GetMenu())
     {
+        if (this->CudaMapper != NULL)
+        if (!strcmp (this->RenderModeChooser->GetValue(), "To Texture"))
+            this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::ToTexture);
+        else
+            this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::ToMemory);
       //  UpdateVolume();
     }
 }
