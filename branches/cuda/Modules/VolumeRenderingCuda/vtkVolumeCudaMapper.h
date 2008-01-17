@@ -46,7 +46,7 @@ protected:
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
 
-    void UpdateOutputResolution(unsigned int width, unsigned int height);
+    void UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged = false);
 
     unsigned int OutputDataSize[2];
 
