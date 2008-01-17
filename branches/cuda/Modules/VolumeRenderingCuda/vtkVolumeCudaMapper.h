@@ -31,8 +31,8 @@ public:
    //BTX
    typedef enum 
    {
-     ToTexture,
-     ToMemory,
+     RenderToTexture,
+     RenderToMemory,
    } RenderMode;
    void SetRenderMode(RenderMode mode);
    RenderMode GetCurrentRenderMode() const { return this->CurrentRenderMode; }
