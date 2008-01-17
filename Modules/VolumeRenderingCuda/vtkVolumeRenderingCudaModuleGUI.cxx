@@ -277,9 +277,9 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
     {
         if (this->CudaMapper != NULL)
         if (!strcmp (this->RenderModeChooser->GetValue(), "To Texture"))
-            this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::ToTexture);
+            this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
         else
-            this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::ToMemory);
+            this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
       //  UpdateVolume();
     }
 }

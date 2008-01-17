@@ -60,12 +60,12 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     {
         extensions->LoadExtension("GL_ARB_vertex_buffer_object");
         this->GLBufferObjectsAvailiable = true;
-        this->CurrentRenderMode = ToTexture;
+        this->CurrentRenderMode = RenderToTexture;
     }
     else
     {
         this->GLBufferObjectsAvailiable = false;
-        this->CurrentRenderMode = ToMemory;
+        this->CurrentRenderMode = RenderToMemory;
     }
     extensions->Delete();
 
@@ -94,13 +94,13 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
 
 void vtkVolumeCudaMapper::SetRenderMode(vtkVolumeCudaMapper::RenderMode mode)
 {
-    if (mode == ToTexture && this->GLBufferObjectsAvailiable)
+    if (mode == RenderToTexture && this->GLBufferObjectsAvailiable)
     {
         this->CurrentRenderMode = mode;
     }
     else
     {
-        this->CurrentRenderMode = ToMemory;
+        this->CurrentRenderMode = RenderToMemory;
     }
     this->UpdateOutputResolution(this->OutputDataSize[0], this->OutputDataSize[1], true);
 }
@@ -140,8 +140,9 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
+    glBindTexture(GL_TEXTURE_2D, 0);
 
-    if (this->CurrentRenderMode == ToTexture)
+    if (this->CurrentRenderMode == RenderToTexture)
     {
         // OpenGL Buffer Code
         if (this->BufferObject != 0 && vtkgl::IsBufferARB(this->BufferObject))
@@ -151,6 +152,7 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
         vtkgl::GenBuffersARB(1, &this->BufferObject);
         vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObject);
         vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, width * height * 4, this->LocalOutputImage->GetScalarPointer(), vtkgl::STREAM_COPY);
+        vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
     }
 }
 
@@ -216,7 +218,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, this->Texture);
 
-    if (this->CurrentRenderMode == ToTexture)
+    if (this->CurrentRenderMode == RenderToTexture)
     {
         CUDA_SAFE_CALL( cudaGLRegisterBufferObject(this->BufferObject) );
 
@@ -245,14 +247,14 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
 
     log->StartTimer();
-    if (this->CurrentRenderMode == ToTexture)
+    if (this->CurrentRenderMode == RenderToTexture)
     {
         CUDA_SAFE_CALL(cudaGLUnmapBufferObject(this->BufferObject));
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
         CUDA_SAFE_CALL( cudaGLUnregisterBufferObject(this->BufferObject) );
         vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
     }
-    else // (this->CurrentRenderMode == ToMemory)
+    else // (this->CurrentRenderMode == RenderToMemory)
     {
         this->CudaOutputBuffer->CopyTo(this->LocalOutputImage);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
