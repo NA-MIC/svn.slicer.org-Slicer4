@@ -24,9 +24,8 @@
  */
 
 void CUDArenderAlgo_doRender(uchar4* outputData, unsigned char* sourceData, 
-                             float* rotationMatrix,
-                             float* colorTransferFunction,
-                             float* minmax, float* lightVec, 
+                             float* rotationMatrix, 
+                             float* color, float* minmax, float* lightVec, 
                              int sizeX, int sizeY, int sizeZ, 
                              int dsizeX, int dsizeY, 
                              float dispX, float dispY, float dispZ, 

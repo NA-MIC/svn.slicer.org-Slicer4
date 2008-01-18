@@ -266,7 +266,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     CUDArenderAlgo_doRender(RenderDestination,
         this->CudaInputBuffer->GetMemPointerAs<unsigned char>(),
         (float*)rotationMatrix,
-        this->CudaColorTransferFunction->GetMemPointerAs<float>(),
+        color, //this->CudaColorTransferFunction->GetMemPointerAs<float>(),
         minmax, lightVec, 
         dims[0], dims[1], dims[2],                            //3D data size
         this->OutputDataSize[0], this->OutputDataSize[1],     //result image size
@@ -334,79 +334,6 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glEnd();
 
     return;
-
-    ////////// OLD CODE ///////////////////////
-    //////////Create the Polydata
-    ////////vtkPoints *points=vtkPoints::New();
-    ////////points->InsertPoint(0,coordinatesA);
-    ////////points->InsertPoint(1,coordinatesB);
-    ////////points->InsertPoint(2,coordinatesC);
-    ////////points->InsertPoint(3,coordinatesD);
-
-    ////////vtkCellArray *polygon=vtkCellArray::New();
-    ////////polygon->InsertNextCell(4);
-    ////////polygon->InsertCellPoint(0);
-    ////////polygon->InsertCellPoint(1);
-    ////////polygon->InsertCellPoint(2);
-    ////////polygon->InsertCellPoint(3);
-    //////////Take care about Texture coordinates
-    ////////vtkFloatArray *textCoords = vtkFloatArray::New();
-    ////////textCoords->SetNumberOfComponents(2);
-    ////////textCoords->Allocate(8);
-    ////////float tc[2];
-    ////////tc[0]=0;
-    ////////tc[1]=0;
-    ////////textCoords->InsertNextTuple(tc);
-    ////////tc[0]=1;
-    ////////tc[1]=0;
-    ////////textCoords->InsertNextTuple(tc);
-    ////////tc[0]=1;
-    ////////tc[1]=1;
-    ////////textCoords->InsertNextTuple(tc);
-    ////////tc[0]=0;
-    ////////tc[1]=1;
-    ////////textCoords->InsertNextTuple(tc);
-
-    ////////vtkPolyData *polydata=vtkPolyData::New();
-    ////////polydata->SetPoints(points);
-    ////////polydata->SetPolys(polygon);
-    ////////polydata->GetPointData()->SetTCoords(textCoords);
-
-    ////////vtkPolyDataMapper *polyMapper=vtkPolyDataMapper::New();
-    ////////polyMapper->SetInput(polydata);
-
-    ////////vtkActor *actor=vtkActor::New(); 
-    ////////actor->SetMapper(polyMapper);
-
-    ////////vtkImageExtractComponents *components = vtkImageExtractComponents::New();
-    ////////components->SetInput(this->LocalOutputImage);
-    ////////components->SetComponents(0,1,2);
-
-
-    //////////Take care about the texture
-    ////////vtkTexture *atext=vtkTexture::New();
-    ////////atext->SetInput(components->GetOutput());
-    ////////atext->SetInterpolate(1);
-
-    ////////actor->SetTexture(atext);
-
-    ////////renderer->AddActor(actor);
-
-    ////////renWin->SwapBuffersOn();
-
-    //////////Delete everything we have done
-    ////////components->Delete();
-    ////////points->Delete();
-    ////////polygon->Delete();
-    ////////textCoords->Delete();
-    ////////polydata->Delete();
-    ////////polyMapper->Delete();
-    ////////actor->Delete();
-    ////////atext->Delete();
-
-    ////////log->StopTimer();
-    ////////vtkErrorMacro(<< "FINISH:: " << log->GetElapsedTime());
-
 }
 
 void vtkVolumeCudaMapper::PrintSelf(ostream& os, vtkIndent indent)

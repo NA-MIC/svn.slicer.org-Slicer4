@@ -29,9 +29,7 @@ __constant__ float c_renderAlgo_disp[3];
 
 // Do hybrid rendering (combination between ray tracing volume rendering and MIP rendering). Here, rendering parameter was set to (1.0-transparencyLevel) MIP and (transparencyLevel) ray tracing volume rendering. Transparency level 1 means fully oblique, and transparency level 0 means fully transparent.
 
-template <typename T>
-__global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
-													 float* colorTransferFunction,
+__global__ void CUDAkernel_renderAlgo_doHybridRender(unsigned char* d_sourceData, 
                                                      unsigned char minThreshold, 
                                                      unsigned char maxThreshold, 
                                                      int sliceDistance, 
@@ -53,6 +51,7 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
   __shared__ float s_disp[3];
   __shared__ float s_lightVec[3];
   __shared__ float s_minmax[6];
+  __shared__ float s_color[6];
   __shared__ float s_maxVal[BLOCK_DIM2D*BLOCK_DIM2D];
   __shared__ int s_pos[BLOCK_DIM2D*BLOCK_DIM2D];
   float4 s_shadeField;
@@ -77,6 +76,7 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
     s_lightVec[xIndex%3]=c_renderAlgo_lightVec[xIndex%3];
   }else if(tempacc < 13){ 
     s_minmax[xIndex%6]=c_renderAlgo_minmax[xIndex%6];
+    s_color[xIndex%6]=c_renderAlgo_color[xIndex%6];
   }
 
   s_maxVal[tempacc]=0;
@@ -218,17 +218,16 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
       val = (s_shadeField.x*s_lightVec[0]+s_shadeField.y*s_lightVec[1]+s_shadeField.z*s_lightVec[2]);
     }
     
-    if(val<0)val=0.0;
+    if(val<0)val=1;
     
     if(val<=1.0){
       
       // Set rendering parameter here: (0.2 MIP rendering and 0.8 ray casting volume rendering).
 
       val=(transparencyLevel*val+(1.0-transparencyLevel)*s_maxVal[tempacc]/255.0);
-      s_resultImage[tempacc]=make_uchar4(
-		   (unsigned char)( colorTransferFunction[(int)(255*val*3 +0) ]*255),
-           (unsigned char)( colorTransferFunction[(int)(255*val*3 +1) ]*255), 
-           (unsigned char)( colorTransferFunction[(int)(255*val*3 +2) ]*255), 
+      s_resultImage[tempacc]=make_uchar4((unsigned char)( s_color[3]+(s_color[0]-s_color[3])*val),
+           (unsigned char)( s_color[4]+(s_color[1]-s_color[4])*val), 
+           (unsigned char)( s_color[5]+(s_color[2]-s_color[5])*val), 
            255);
       }else{
       s_resultImage[tempacc]=make_uchar4((unsigned char)val, (unsigned char)val, (unsigned char)val, 255 );
@@ -245,8 +244,7 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
 void CUDArenderAlgo_doRender(uchar4* outputData,
                              unsigned char* renderData,
                              float* rotationMatrix, 
-                             float* colorTransferFunction,
-                             float* minmax, float* lightVec, 
+                             float* color, float* minmax, float* lightVec, 
                              int sizeX, int sizeY, int sizeZ, 
                              int dsizeX, int dsizeY, 
                              float dispX, float dispY, float dispZ, 
@@ -276,6 +274,7 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
   float h_disp[3]={dispX, dispY, dispZ};
   
   float h_minmax[6]={minmax[0], minmax[1], minmax[2], minmax[3], minmax[4], minmax[5]};
+  float h_color[6]={color[0], color[1], color[2], color[3], color[4], color[5]};
   float h_lightVec[3]={lightVec[0], lightVec[1], lightVec[2]};
 
   // copy host memory to device
@@ -290,15 +289,16 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
   CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_rotationMatrix3, rotationMatrix+8, sizeof(float)*4, 0));
     
   CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_minmax, h_minmax, sizeof(float)*6, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_color, h_color, sizeof(float)*6, 0));
   CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_lightVec, h_lightVec, sizeof(float)*3, 0));
 
   // execute the kernel
 
   // Switch to various rendering methods.
 
-  float transparencyLevel=1.0;
+  float transparencyLevel = 1.0;
 
-  CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>((unsigned char*)renderData, colorTransferFunction, minThreshold, maxThreshold, sliceDistance, transparencyLevel, outputData);
+  CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>(renderData, minThreshold, maxThreshold, sliceDistance, transparencyLevel, outputData);
   
   CUT_CHECK_ERROR("Kernel execution failed");
 
