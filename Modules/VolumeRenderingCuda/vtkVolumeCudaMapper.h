@@ -26,6 +26,9 @@ public:
     void SetColor(const double c[3]) { this->SetColor(c[0], c[1], c[2]); this->Modified();};
     vtkGetVector3Macro(Color,double);
 
+    void SetThreshold(unsigned int min, unsigned int max) { this->Threshold[0] = min; this->Threshold[1] = max; }
+    void SetThreshold(double* range) { SetThreshold(range[0], range[1]); }
+
    //BTX
    typedef enum 
    {
@@ -62,6 +65,8 @@ protected:
 
     vtkCudaHostMemory* LocalColorTransferFunction;
     vtkCudaMemory* CudaColorTransferFunction;
+
+    unsigned int Threshold[2];
 
     unsigned int BufferObject;
     unsigned int Texture;

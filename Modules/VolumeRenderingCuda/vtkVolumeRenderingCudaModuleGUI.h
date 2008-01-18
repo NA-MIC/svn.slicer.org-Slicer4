@@ -128,6 +128,8 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkKWVolumePropertyWidget* VolumePropertyWidget;
   vtkKWMatrixWidget* Color;
 
+  vtkKWRange* ThresholdRange;
+
   vtkKWHistogramSet* Histograms;
 
   vtkKWPushButton* UpdateButton;
