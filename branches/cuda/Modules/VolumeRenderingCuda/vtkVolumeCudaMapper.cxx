@@ -267,7 +267,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         this->CudaInputBuffer->GetMemPointer(),
         1,
         (float*)rotationMatrix,
-        color, //this->CudaColorTransferFunction->GetMemPointerAs<float>(),
+        this->CudaColorTransferFunction->GetMemPointerAs<float>(),
+        color,
         minmax, lightVec, 
         dims[0], dims[1], dims[2],                            //3D data size
         this->OutputDataSize[0], this->OutputDataSize[1],     //result image size
