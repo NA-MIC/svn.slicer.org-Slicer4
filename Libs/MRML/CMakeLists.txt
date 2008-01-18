@@ -73,6 +73,8 @@ SET(MRML_SRCS
         vtkMRMLUnstructuredGridStorageNode.cxx
         vtkMRMLDisplayNode.cxx
         vtkMRMLDisplayableNode.cxx
+        vtkMRMLNonlinearTransformNode.cxx
+        vtkMRMLGridTransformNode.cxx
         # Note: when you add new node types, add
         # register code to the vtkMRMLScene constructor
 )
@@ -141,6 +143,7 @@ TARGET_LINK_LIBRARIES(MRML
   vtkIOTCL
   vtkGraphicsTCL
   vtkRenderingTCL
+  vtkHybridTCL
   ITKAlgorithms
   ITKNumerics 
   ITKCommon

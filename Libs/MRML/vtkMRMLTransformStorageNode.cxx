@@ -20,8 +20,14 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLTransformStorageNode.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLNonlinearTransformNode.h"
+#include "vtkMRMLGridTransformNode.h"
 
 #include "vtkMatrix4x4.h"
+#include "vtkGridTransform.h"
+#include "vtkImageData.h"
+#include "vtkDoubleArray.h"
+#include "vtkPointData.h"
 
 #include "itksys/SystemTools.hxx"
 
@@ -31,6 +37,9 @@ Version:   $Revision: 1.2 $
 #include "itkIdentityTransform.h"
 #include "itkTranslationTransform.h"
 #include "itkScaleTransform.h"
+#include "itkBSplineDeformableTransform.h"
+
+#include "itkImageRegionIterator.h"
 
 
 //------------------------------------------------------------------------------
@@ -315,6 +324,98 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
       ltn->SetAndObserveMatrixTransformToParent( vtkmat );
       vtkmat->Delete();
       }
+    else if (refNode->IsA("vtkMRMLGridTransformNode"))
+      {
+      vtkMRMLGridTransformNode *gtn
+        = vtkMRMLGridTransformNode::SafeDownCast(refNode);
+      
+      static const int D = 3;
+      typedef itk::BSplineDeformableTransform<double,D,D> DoubleBSplineTransformType;
+      typedef itk::BSplineDeformableTransform<float,D,D> FloatBSplineTransformType;
+
+      vtkGridTransform* vtkgrid = vtkGridTransform::New();
+      vtkgrid->SetInterpolationModeToCubic();
+
+      vtkImageData *vtkgridimage = vtkImageData::New();
+      
+      // B-spline transform of doubles, dimension 3
+      DoubleBSplineTransformType::Pointer dbt
+        = dynamic_cast<DoubleBSplineTransformType*>( transform.GetPointer() );
+      if (dbt)
+        {
+        DoubleBSplineTransformType::ImagePointer
+          *grids = dbt->GetCoefficientImage();
+
+        itk::ImageRegionIterator<DoubleBSplineTransformType::ImageType>
+          xit( grids[0], grids[0]->GetBufferedRegion() );
+        itk::ImageRegionIterator<DoubleBSplineTransformType::ImageType>
+          yit( grids[1], grids[0]->GetBufferedRegion() );
+        itk::ImageRegionIterator<DoubleBSplineTransformType::ImageType>
+          zit( grids[2], grids[0]->GetBufferedRegion() );
+        
+        vtkDoubleArray *values = vtkDoubleArray::New();
+        values->SetNumberOfComponents( 3 );
+        values->SetNumberOfTuples( grids[0]->GetBufferedRegion().GetNumberOfPixels() );
+
+        double in[4], out[4];
+        in[3] = out[3] = 1.0;
+        
+        for (vtkIdType id=0;
+             id < grids[0]->GetBufferedRegion().GetNumberOfPixels() ; ++id)
+          {
+          // convert each control point of the B-spline grid to RAS
+          in[0] = xit.Get();
+          in[1] = yit.Get();
+          in[2] = zit.Get();
+
+          lps2ras->MultiplyPoint(in, out);
+          
+          values->SetComponent(id, 0, out[0]);
+          values->SetComponent(id, 1, out[1]);
+          values->SetComponent(id, 2, out[2]);
+          
+          ++xit;
+          ++yit;
+          ++zit;
+          }
+
+        vtkgridimage->GetPointData()->SetScalars( values );
+        values->Delete();
+
+        vtkgridimage->SetOrigin( grids[0]->GetOrigin()[0],
+                                 grids[0]->GetOrigin()[1],
+                                 grids[0]->GetOrigin()[2] );
+        vtkgridimage->SetSpacing( grids[0]->GetSpacing()[0],
+                                  grids[0]->GetSpacing()[1],
+                                  grids[0]->GetSpacing()[2]);
+
+        DoubleBSplineTransformType::ImageType::IndexType index
+          = grids[0]->GetBufferedRegion().GetIndex();
+        DoubleBSplineTransformType::ImageType::SizeType size
+          = grids[0]->GetBufferedRegion().GetSize();
+        
+        vtkgridimage->SetExtent( index[0], index[0]+size[0]-1,
+                                 index[1], index[1]+size[1]-1,
+                                 index[2], index[2]+size[2]-1 );
+
+        vtkgrid->SetDisplacementGrid( vtkgridimage );
+
+        // Set the matrix on the node
+        gtn->SetAndObserveWarpTransformToParent( vtkgrid );
+        vtkgrid->Delete();
+
+        // What about the bulk transform?
+        }
+      
+      // B-spline transform of floats, dimension 3
+      FloatBSplineTransformType::Pointer fbt
+        = dynamic_cast<FloatBSplineTransformType*>( transform.GetPointer() );
+      if (fbt)
+        {
+        }
+      
+      }
+
         
     if (transformNode->GetTransformToParent() != NULL) 
       {
