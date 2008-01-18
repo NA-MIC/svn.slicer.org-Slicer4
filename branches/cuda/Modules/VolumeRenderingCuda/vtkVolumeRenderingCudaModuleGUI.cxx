@@ -17,6 +17,7 @@
 #include "vtkKWLabel.h"
 #include "vtkKWVolumePropertyWidget.h"
 #include "vtkKWEvent.h"
+#include "vtkKWRange.h"
 
 #include "vtkKWHistogramSet.h"
 #include "vtkImageGradientMagnitude.h"
@@ -57,6 +58,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->Color = NULL;
     this->VolumePropertyWidget = NULL;
 
+    this->ThresholdRange = NULL;
 
     this->RenderScheduled = false;
 }
@@ -173,6 +175,14 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->VolumePropertyWidget->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName()); 
 
+    this->ThresholdRange = vtkKWRange::New();
+    this->ThresholdRange->SetParent(loadSaveDataFrame->GetFrame());
+    this->ThresholdRange->Create();
+    this->ThresholdRange->SetWholeRange(0, 255);
+    this->ThresholdRange->SetRange(90, 255);
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+        this->ThresholdRange->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName()); 
+
     this->RenderModeChooser = vtkKWMenuButton::New();
     this->RenderModeChooser->SetParent(loadSaveDataFrame->GetFrame());
     this->RenderModeChooser->Create();
@@ -226,6 +236,7 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
     this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
     this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
 
+    this->ThresholdRange->AddObserver(vtkKWRange::RangeValueChangingEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
@@ -259,6 +270,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         caller == this->InputTypeChooser->GetMenu() ||
         caller == this->InputResolutionMatrix ||
         caller == this->Color ||
+        caller == this->ThresholdRange ||
 
         caller == this->UpdateButton
         )
@@ -337,6 +349,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         }
 
         this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
+        this->CudaMapper->SetThreshold(this->ThresholdRange->GetRange());
 
         this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
         // this->UpdateVolume();

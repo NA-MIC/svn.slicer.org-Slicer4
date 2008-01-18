@@ -272,7 +272,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         this->OutputDataSize[0], this->OutputDataSize[1],     //result image size
         0,0,0,                                                //translation of data in x,y,z direction
         1, 1, 1,                                              //voxel dimension
-        90, 255,                                              //min and max threshold
+        this->Threshold[0], this->Threshold[1],               //min and max threshold
         -500                                                  //slicing distance from center of 3D data
         );         
 
