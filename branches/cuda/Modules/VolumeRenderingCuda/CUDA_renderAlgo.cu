@@ -218,7 +218,7 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(unsigned char* d_sourceData
       val = (s_shadeField.x*s_lightVec[0]+s_shadeField.y*s_lightVec[1]+s_shadeField.z*s_lightVec[2]);
     }
     
-    if(val<0)val=1;
+    if(val<0.0)val=0.0;
     
     if(val<=1.0){
       
