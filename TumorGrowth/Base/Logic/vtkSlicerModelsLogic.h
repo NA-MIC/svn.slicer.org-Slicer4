@@ -49,6 +49,9 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerModelsLogic : public vtkSlicerLogic
   // read it's polydata from a specified file
   vtkMRMLModelNode* AddModel (const char* filename);
 
+
+  vtkMRMLModelNode* CloneModel(vtkMRMLScene *scene, vtkMRMLModelNode *modelNode,  const char *name); 
+
   // Description:
   // Create model nodes and
   // read their polydata from a specified directory
