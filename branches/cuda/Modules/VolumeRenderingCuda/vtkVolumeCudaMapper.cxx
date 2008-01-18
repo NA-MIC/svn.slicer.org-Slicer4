@@ -264,7 +264,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     log->StartTimer();
 
     CUDArenderAlgo_doRender(RenderDestination,
-        this->CudaInputBuffer->GetMemPointerAs<unsigned char>(),
+        this->CudaInputBuffer->GetMemPointer(),
+        1,
         (float*)rotationMatrix,
         color, //this->CudaColorTransferFunction->GetMemPointerAs<float>(),
         minmax, lightVec, 
