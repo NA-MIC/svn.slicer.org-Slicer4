@@ -17,6 +17,7 @@ class vtkKWMatrixWidget;
 class vtkKWMenuButton;
 class vtkKWVolumePropertyWidget;
 class vtkKWHistogramSet;
+class vtkKWRange;
 
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
