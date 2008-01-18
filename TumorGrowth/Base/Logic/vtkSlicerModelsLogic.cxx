@@ -144,6 +144,60 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
 
   return modelNode;  
 }
+
+//----------------------------------------------------------------------------
+vtkMRMLModelNode* vtkSlicerModelsLogic::CloneModel(vtkMRMLScene *scene, vtkMRMLModelNode *modelNode,  const char *name)
+{
+
+  if ( scene == NULL || modelNode == NULL )
+    {
+    vtkErrorMacro ("need a scene and model node");
+    return NULL;
+    }
+
+  vtkMRMLModelDisplayNode *displayNode = modelNode->GetModelDisplayNode();
+  if ( displayNode == NULL )
+    {
+    vtkErrorMacro ("model has no display node");
+    }
+
+  // clone the display node
+  vtkMRMLModelDisplayNode *clonedDisplayNode =
+    vtkMRMLModelDisplayNode::New();
+  clonedDisplayNode->CopyWithScene(modelNode->GetDisplayNode());
+  scene->AddNode(clonedDisplayNode);
+  vtkImageData* clonedTexture = vtkImageData::New();
+  clonedTexture->DeepCopy(displayNode->GetTextureImageData());
+  clonedDisplayNode->SetAndObserveTextureImageData( clonedTexture );
+
+  // clone the model node
+  vtkMRMLModelNode *clonedModelNode = vtkMRMLModelNode::New();
+  clonedModelNode->CopyWithScene(modelNode);
+  clonedModelNode->SetStorageNodeID(NULL);
+  clonedModelNode->SetName(name);
+  clonedModelNode->SetAndObserveDisplayNodeID(clonedDisplayNode->GetID());
+
+  // copy over the model's data
+  vtkPolyData *clonedPolyData = vtkPolyData::New();
+  clonedPolyData->DeepCopy( modelNode->GetPolyData());
+  clonedModelNode->SetAndObservePolyData(clonedPolyData);
+  clonedModelNode->SetModifiedSinceRead(1);
+
+  // add the cloned node to the scene
+  scene->AddNode(clonedModelNode);
+
+  // remove references
+  clonedTexture->Delete();
+  clonedModelNode->Delete();
+  clonedPolyData->Delete();
+  clonedDisplayNode->Delete();
+
+  return (clonedModelNode);
+
+}
+
+
+
 //----------------------------------------------------------------------------
 int vtkSlicerModelsLogic::SaveModel (const char* filename, vtkMRMLModelNode *modelNode)
 {
