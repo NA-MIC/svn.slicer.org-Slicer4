@@ -312,7 +312,12 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->Histograms = vtkKWHistogramSet::New();
 
             //Add Histogram for image data
-            this->Histograms->AddHistograms(this->CudaMapper->GetInput()->GetPointData()->GetScalars());
+            //this->Histograms->AddHistograms(this->CudaMapper->GetInput()->GetPointData()->GetScalars());
+            vtkKWHistogram *histo = vtkKWHistogram::New();
+            histo->BuildHistogram(this->CudaMapper->GetInput()->GetPointData()->GetScalars(),0);
+            this->Histograms->AddHistogram(histo,"0");
+
+            
             //Build the gradient histogram
             vtkImageGradientMagnitude *grad = vtkImageGradientMagnitude::New();
             grad->SetDimensionality(3);
@@ -327,8 +332,6 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
             grad->Delete();
             gradHisto->Delete();
-
-
 
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
         }
