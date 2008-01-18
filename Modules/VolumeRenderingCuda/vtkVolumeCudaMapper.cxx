@@ -131,8 +131,6 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     this->OutputDataSize[0] = width;
     this->OutputDataSize[1] = height;
 
-    this->CudaInputBuffer->CopyFrom(this->GetInput());
-
     // Re-allocate the memory
     this->CudaOutputBuffer->Allocate<uchar4>(width * height);
 
@@ -188,6 +186,12 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     float color[6]={this->Color[0],this->Color[1],this->Color[2], 1,1,1};
     float minmax[6]={0,255,0,255,0,255};
     float lightVec[3]={0, 0, 1};
+
+
+    static int number = 0;
+    if (++number == 5) number = 0;
+    this->CudaInputBuffer->CopyFrom(MultiInput[number]);
+
 
     vtkRenderWindow *renWin= renderer->GetRenderWindow();
     //Get current size of window
@@ -269,12 +273,12 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         0,0,0,                                                //translation of data in x,y,z direction
         1, 1, 1,                                              //voxel dimension
         90, 255,                                              //min and max threshold
-        -100                                                  //slicing distance from center of 3D data
+        -500                                                  //slicing distance from center of 3D data
         );         
 
     // Get the resulted image.
     log->StopTimer();
-    vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
+    //vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
 
     log->StartTimer();
     if (this->CurrentRenderMode == RenderToTexture)
@@ -290,7 +294,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
     }
     log->StopTimer();
-    vtkErrorMacro(<< "Elapsed Time to Copy Memory:: " << log->GetElapsedTime());
+    //vtkErrorMacro(<< "Elapsed Time to Copy Memory:: " << log->GetElapsedTime());
 
     log->StartTimer();
 

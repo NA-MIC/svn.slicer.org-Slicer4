@@ -16,6 +16,7 @@ class vtkKWTypeChooserBox;
 class vtkKWMatrixWidget;
 class vtkKWMenuButton;
 class vtkKWVolumePropertyWidget;
+class vtkKWHistogramSet;
 
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
@@ -94,6 +95,10 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   
   void PrintSelf(ostream& os, vtkIndent indent);
   
+
+  void ScheduleRender();
+  bool RenderScheduled;
+
  protected:
   vtkVolumeRenderingCudaModuleGUI();
   virtual ~vtkVolumeRenderingCudaModuleGUI();
@@ -121,6 +126,8 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkKWMenuButton* RenderModeChooser;
   vtkKWVolumePropertyWidget* VolumePropertyWidget;
   vtkKWMatrixWidget* Color;
+
+  vtkKWHistogramSet* Histograms;
 
   vtkKWPushButton* UpdateButton;
 };

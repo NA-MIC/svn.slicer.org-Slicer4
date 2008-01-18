@@ -39,6 +39,8 @@ public:
 
    void PrintSelf(ostream& os, vtkIndent indent);
 
+    vtkImageData* MultiInput[5];
+
 
 protected:
     vtkVolumeCudaMapper();
@@ -48,6 +50,7 @@ protected:
     void UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged = false);
 
     unsigned int OutputDataSize[2];
+
 
     vtkCudaMemory* CudaInputBuffer;
     vtkCudaMemory* CudaOutputBuffer;

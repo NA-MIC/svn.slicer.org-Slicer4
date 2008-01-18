@@ -18,6 +18,10 @@
 #include "vtkKWVolumePropertyWidget.h"
 #include "vtkKWEvent.h"
 
+#include "vtkKWHistogramSet.h"
+#include "vtkImageGradientMagnitude.h"
+#include "vtkKWHistogram.h"
+
 #include "vtkCellArray.h"
 #include "vtkFloatArray.h"
 #include "vtkPointData.h"
@@ -45,11 +49,16 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->CudaVolume = NULL;
     this->CudaVolumeProperty = NULL;
 
+    this->Histograms = NULL;
+
     this->InputTypeChooser = NULL;
     this->InputResolutionMatrix = NULL;
     this->RenderModeChooser = NULL;
     this->Color = NULL;
     this->VolumePropertyWidget = NULL;
+
+
+    this->RenderScheduled = false;
 }
 
 
@@ -63,6 +72,9 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     {
         this->CudaVolume->Delete();  
     }
+
+    if (this->Histograms != NULL)
+        this->Histograms->Delete();
 
     if (this->CudaVolumeProperty != NULL)
         this->CudaVolumeProperty->Delete();
@@ -211,6 +223,9 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 
     this->VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 
+    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
+    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
+
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
@@ -240,11 +255,11 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
     /// INPUT TYPE OR SIZE CHANGED CHANGED
     if (
-        
+
         caller == this->InputTypeChooser->GetMenu() ||
         caller == this->InputResolutionMatrix ||
         caller == this->Color ||
-        
+
         caller == this->UpdateButton
         )
     {
@@ -261,19 +276,28 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->CudaMapper = vtkVolumeCudaMapper::New();
 
             // Reading in the Data using a ImageReader
-            vtkImageReader* reader = vtkImageReader::New();
-            reader->SetDataScalarTypeToUnsignedChar();
-            reader->SetNumberOfScalarComponents(1);
-            reader->SetDataExtent(0, 255,
-                0, 255, 
-                0, 255);
-            reader->SetFileDimensionality(3);
+            vtkImageReader* reader[5];
+            for (unsigned int i = 0; i < 5; i++ ) 
+            {
+                reader[i]= vtkImageReader::New();
+                reader[i]->SetDataScalarTypeToUnsignedChar();
+                reader[i]->SetNumberOfScalarComponents(1);
+                reader[i]->SetDataExtent(0, 255,
+                    0, 255, 
+                    0, 255);
+                reader[i]->SetFileDimensionality(3);
 
-            reader->SetFileName("C:\\heart256.raw");
-            reader->Update();
+                std::stringstream s;
+                s << "C:\\heart256-" << i+1 << ".raw";
 
-            vtkImageData* data = reader->GetOutput();
-            this->CudaMapper->SetInput(data);
+                reader[i]->SetFileName(s.str().c_str());
+                reader[i]->Update();
+
+                this->CudaMapper->MultiInput[i] = reader[i]->GetOutput();
+            }
+            this->CudaMapper->SetInput(reader[0]->GetOutput());
+
+
         }
         if (this->CudaVolume == NULL)
         {
@@ -283,56 +307,81 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->CudaVolumeProperty = vtkVolumeProperty::New();
             this->CudaVolume->SetProperty(this->CudaVolumeProperty);
             this->VolumePropertyWidget->SetVolumeProperty(this->CudaVolumeProperty);
+            this->VolumePropertyWidget->ScalarOpacityUnitDistanceVisibilityOff ();
+            //this->VolumePropertyWidget->SetDataSet(this->CudaMapper->GetInput()->GetImageData());
+            this->Histograms = vtkKWHistogramSet::New();
+
+            //Add Histogram for image data
+            this->Histograms->AddHistograms(this->CudaMapper->GetInput()->GetPointData()->GetScalars());
+            //Build the gradient histogram
+            vtkImageGradientMagnitude *grad = vtkImageGradientMagnitude::New();
+            grad->SetDimensionality(3);
+            grad->SetInput(this->CudaMapper->GetInput());
+            grad->Update();
+            vtkKWHistogram *gradHisto = vtkKWHistogram::New();
+            gradHisto->BuildHistogram(grad->GetOutput()->GetPointData()->GetScalars(),0);
+            this->Histograms->AddHistogram(gradHisto,"0gradient");
+
+            //Delete      
+            this->VolumePropertyWidget->SetHistogramSet(this->Histograms);
+
+            grad->Delete();
+            gradHisto->Delete();
+
+
 
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
         }
 
         this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
 
-       // this->UpdateVolume();
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+        // this->UpdateVolume();
         //this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
     }
-    if (caller == this->RenderModeChooser->GetMenu())
+    else if (caller == this->RenderModeChooser->GetMenu())
     {
         if (this->CudaMapper != NULL)
-        if (!strcmp (this->RenderModeChooser->GetValue(), "To Texture"))
-            this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
-        else
-            this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
-      //  UpdateVolume();
+            if (!strcmp (this->RenderModeChooser->GetValue(), "To Texture"))
+                this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
+            else
+                this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
     }
-    
-    if (caller == this->VolumePropertyWidget)
+
+    else if (caller == this->VolumePropertyWidget)
     {
         if (this->CudaMapper != NULL);
         this->CudaMapper->Update();
-
-        // TEST
-        const int size = 10;
-        double range[2];
-        float values[size * 3];
-        this->CudaVolumeProperty->GetRGBTransferFunction()->GetRange(range);
-        this->CudaVolumeProperty->GetRGBTransferFunction()->GetTable(range[0], range[1], size, values);
-
-        std::stringstream s;
-        for (unsigned int i = 0; i < size * 3; i+=3)
-            s << i / 3 << ": " 
-            << values[i]  << " "
-            << values[i+1] << " " 
-            << values[i+2] << " " 
-            << std::endl;
-
-        vtkErrorMacro(<<"TEST: " <<*this->CudaVolumeProperty->GetRGBTransferFunction() << "bla : " << s.str().c_str());
-        // TEST End
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
     }
+
+    else if(this->CudaMapper != NULL &&
+        caller==this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow() && event==vtkCommand::EndEvent)
+    {
+
+        if (this->RenderScheduled == false)
+        {    this->RenderScheduled=true;
+        this->Script("after 20 %s ScheduleRender",this->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
+        }
+
+    }
+
+
+}
+
+void vtkVolumeRenderingCudaModuleGUI::ScheduleRender()
+{
+    this->RenderScheduled = false;
+    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+
 }
 
 void vtkVolumeRenderingCudaModuleGUI::UpdateVolume()
 {
-if (this->CudaMapper != NULL && this->CudaVolume != NULL)
+    if (this->CudaMapper != NULL && this->CudaVolume != NULL)
         this->CudaMapper->Render(
-            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
-            this->CudaVolume);
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
+        this->CudaVolume);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
