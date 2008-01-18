@@ -175,7 +175,7 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
     double range[2];
     property->GetRGBTransferFunction()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], 256, this->LocalColorTransferFunction->GetMemPointerAs<float>());
-    
+    float* test = this->LocalColorTransferFunction->GetMemPointerAs<float>();
     LocalColorTransferFunction->CopyTo(CudaColorTransferFunction);
 }
 

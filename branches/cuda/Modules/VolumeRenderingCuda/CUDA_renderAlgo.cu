@@ -170,6 +170,7 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
   __syncthreads();
 
   float val=0;
+  float tempData=0;
   int tempx,tempy,tempz;
   int pos=0;
 
@@ -206,6 +207,8 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
     
     if(__float2int_rd(pos+s_minmaxTrace[tempacc].x) == sliceDistance)val=d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)];
     
+    tempData=d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)];
+
     s_shadeField.x = ((float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx+1)]-(float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+tempy*s_size[0]+tempx-1)]);
     s_shadeField.y = ((float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+(tempy+1)*s_size[0]+tempx)]-(float)d_sourceData[(int)(tempz*s_size[0]*s_size[1]+(tempy-1)*s_size[0]+tempx)]);
     s_shadeField.z = ((float)d_sourceData[(int)((tempz+1)*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)]-(float)d_sourceData[(int)((tempz-1)*s_size[0]*s_size[1]+tempy*s_size[0]+tempx)]);
@@ -227,10 +230,10 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
       // Set rendering parameter here: (0.2 MIP rendering and 0.8 ray casting volume rendering).
 
       val=(transparencyLevel*val+(1.0-transparencyLevel)*s_maxVal[tempacc]/255.0);
-      s_resultImage[tempacc]=make_uchar4((unsigned char)( s_color[3]+(s_color[0]-s_color[3])*val),
-           (unsigned char)( s_color[4]+(s_color[1]-s_color[4])*val), 
-           (unsigned char)( s_color[5]+(s_color[2]-s_color[5])*val), 
-           255);
+      s_resultImage[tempacc]=make_uchar4((unsigned char)( colorTransferFunction[(int)(tempData*3)]*val * 256) ,
+					 (unsigned char)( colorTransferFunction[(int)(tempData*3+1)]*val *256), 
+					 (unsigned char)( colorTransferFunction[(int)(tempData*3+2)]*val * 256), 
+					 255);
       }else{
       s_resultImage[tempacc]=make_uchar4((unsigned char)val, (unsigned char)val, (unsigned char)val, 255 );
     }
