@@ -31,6 +31,7 @@ __constant__ float c_renderAlgo_disp[3];
 
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData, 
+													 float* colorTransferFunction,
                                                      unsigned char minThreshold, 
                                                      unsigned char maxThreshold, 
                                                      int sliceDistance, 
@@ -246,6 +247,7 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
                              void* renderData,
                              int inputDataType,
                              float* rotationMatrix, 
+                             float* colorTransferFunction,
                              float* color, float* minmax, float* lightVec, 
                              int sizeX, int sizeY, int sizeZ, 
                              int dsizeX, int dsizeY, 
@@ -300,8 +302,17 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
 
   float transparencyLevel = 1.0;
 
-  if (inputDataType == 1)
-  CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>((unsigned char*)renderData, minThreshold, maxThreshold, sliceDistance, transparencyLevel, outputData);
+#define CUDA_KERNEL_CALL(ID, TYPE)   \
+	if (inputDataType == ID) \
+	 CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>( \
+	 (TYPE*)renderData, \
+	 colorTransferFunction, \
+	 minThreshold, maxThreshold, \
+	 sliceDistance, \
+	 transparencyLevel, \
+	 outputData)
+
+  CUDA_KERNEL_CALL(1, unsigned char);
   
   CUT_CHECK_ERROR("Kernel execution failed");
 

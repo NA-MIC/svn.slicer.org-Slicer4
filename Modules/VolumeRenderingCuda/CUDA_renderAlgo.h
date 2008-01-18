@@ -23,9 +23,11 @@
  * Execute volume rendering. There are also a lot of parameters here.
  */
 
-void CUDArenderAlgo_doRender(uchar4* outputData, void* sourceData,
+void CUDArenderAlgo_doRender(uchar4* outputData, 
+                             void* sourceData,
                              int inputDataType,
                              float* rotationMatrix, 
+                             float* colorTransferFunction,
                              float* color, float* minmax, float* lightVec, 
                              int sizeX, int sizeY, int sizeZ, 
                              int dsizeX, int dsizeY, 
