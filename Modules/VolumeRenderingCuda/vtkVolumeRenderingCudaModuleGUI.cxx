@@ -264,11 +264,10 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             vtkImageReader* reader = vtkImageReader::New();
             reader->SetDataScalarTypeToUnsignedChar();
             reader->SetNumberOfScalarComponents(1);
-            reader->SetDataExtent(0, 255, 
+            reader->SetDataExtent(0, 255,
                 0, 255, 
                 0, 255);
             reader->SetFileDimensionality(3);
-            // reader->SetNumberOfScalarComponents(1);
 
             reader->SetFileName("C:\\heart256.raw");
             reader->Update();

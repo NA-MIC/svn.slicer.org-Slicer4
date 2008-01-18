@@ -29,7 +29,8 @@ __constant__ float c_renderAlgo_disp[3];
 
 // Do hybrid rendering (combination between ray tracing volume rendering and MIP rendering). Here, rendering parameter was set to (1.0-transparencyLevel) MIP and (transparencyLevel) ray tracing volume rendering. Transparency level 1 means fully oblique, and transparency level 0 means fully transparent.
 
-__global__ void CUDAkernel_renderAlgo_doHybridRender(unsigned char* d_sourceData,
+template <typename T>
+__global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
 													 float* colorTransferFunction,
                                                      unsigned char minThreshold, 
                                                      unsigned char maxThreshold, 
@@ -295,9 +296,9 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
 
   // Switch to various rendering methods.
 
-  float transparencyLevel=0.0;
+  float transparencyLevel=1.0;
 
-  CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>(renderData, colorTransferFunction, minThreshold, maxThreshold, sliceDistance, transparencyLevel, outputData);
+  CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>((unsigned char*)renderData, colorTransferFunction, minThreshold, maxThreshold, sliceDistance, transparencyLevel, outputData);
   
   CUT_CHECK_ERROR("Kernel execution failed");
 

@@ -319,13 +319,13 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
 
     glBegin(GL_QUADS);
-    glTexCoord2i(0,0);
-    glVertex4dv(coordinatesA);
-    glTexCoord2i(1,0);
-    glVertex4dv(coordinatesB);
-    glTexCoord2i(1,1);
-    glVertex4dv(coordinatesC);
     glTexCoord2i(0,1);
+    glVertex4dv(coordinatesA);
+    glTexCoord2i(1,1);
+    glVertex4dv(coordinatesB);
+    glTexCoord2i(1,0);
+    glVertex4dv(coordinatesC);
+    glTexCoord2i(0,0);
     glVertex4dv(coordinatesD);
     glEnd();
 
