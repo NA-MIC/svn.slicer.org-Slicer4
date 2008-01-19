@@ -7,6 +7,7 @@
 #include "vtkPolyDataMapper.h"
 #include "vtkVolumeProperty.h"
 #include "vtkColorTransferFunction.h"
+#include "vtkPiecewiseFunction.h"
 
 //Data Types
 #include "vtkPolyData.h"
@@ -20,7 +21,6 @@
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
 #include "vtkCamera.h"
-
 
 
 // CUDA
@@ -78,6 +78,12 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     this->CudaColorTransferFunction->Allocate<float3>(256);
     this->LocalColorTransferFunction = vtkCudaHostMemory::New();
     this->LocalColorTransferFunction->Allocate<float3>(256);
+
+    this->CudaAlphaTransferFunction = vtkCudaMemory::New();
+    this->CudaAlphaTransferFunction->Allocate<float>(256);
+    this->LocalAlphaTransferFunction = vtkCudaHostMemory::New();
+    this->LocalAlphaTransferFunction->Allocate<float>(256);
+
 }  
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
@@ -175,8 +181,11 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
     double range[2];
     property->GetRGBTransferFunction()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], 256, this->LocalColorTransferFunction->GetMemPointerAs<float>());
-    float* test = this->LocalColorTransferFunction->GetMemPointerAs<float>();
     LocalColorTransferFunction->CopyTo(CudaColorTransferFunction);
+
+    property->GetScalarOpacity()->GetTable(range[0], range[1], 256, this->LocalAlphaTransferFunction->GetMemPointerAs<float>());
+    LocalAlphaTransferFunction->CopyTo(CudaAlphaTransferFunction);
+
 }
 
 #include "vtkTimerLog.h"
@@ -268,6 +277,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         1,
         (float*)rotationMatrix,
         this->CudaColorTransferFunction->GetMemPointerAs<float>(),
+        this->CudaAlphaTransferFunction->GetMemPointerAs<float>(),
         color,
         minmax, lightVec, 
         dims[0], dims[1], dims[2],                            //3D data size
