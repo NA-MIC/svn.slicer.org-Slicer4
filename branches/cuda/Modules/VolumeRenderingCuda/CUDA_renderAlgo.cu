@@ -32,6 +32,7 @@ __constant__ float c_renderAlgo_disp[3];
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData, 
 													 float* colorTransferFunction,
+													 float* alphaTransferFunction,
                                                      unsigned char minThreshold, 
                                                      unsigned char maxThreshold, 
                                                      int sliceDistance, 
@@ -233,7 +234,7 @@ __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData,
       s_resultImage[tempacc]=make_uchar4((unsigned char)( colorTransferFunction[(int)(tempData*3)]*val * 256) ,
 					 (unsigned char)( colorTransferFunction[(int)(tempData*3+1)]*val *256), 
 					 (unsigned char)( colorTransferFunction[(int)(tempData*3+2)]*val * 256), 
-					 255);
+					 (unsigned char) 255);
       }else{
       s_resultImage[tempacc]=make_uchar4((unsigned char)val, (unsigned char)val, (unsigned char)val, 255 );
     }
@@ -251,6 +252,7 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
                              int inputDataType,
                              float* rotationMatrix, 
                              float* colorTransferFunction,
+                             float* alphaTransferFunction,
                              float* color, float* minmax, float* lightVec, 
                              int sizeX, int sizeY, int sizeZ, 
                              int dsizeX, int dsizeY, 
@@ -310,6 +312,7 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
 	 CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>( \
 	 (TYPE*)renderData, \
 	 colorTransferFunction, \
+	 alphaTransferFunction, \
 	 minThreshold, maxThreshold, \
 	 sliceDistance, \
 	 transparencyLevel, \

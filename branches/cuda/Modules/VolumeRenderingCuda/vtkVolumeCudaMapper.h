@@ -65,6 +65,9 @@ protected:
 
     vtkCudaHostMemory* LocalColorTransferFunction;
     vtkCudaMemory* CudaColorTransferFunction;
+    vtkCudaHostMemory* LocalAlphaTransferFunction;
+    vtkCudaMemory* CudaAlphaTransferFunction;
+
 
     unsigned int Threshold[2];
 
