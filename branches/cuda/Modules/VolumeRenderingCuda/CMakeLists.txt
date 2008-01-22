@@ -14,6 +14,7 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 
   ### CUDA Volume Rendering Integration Classes ###
     vtkVolumeCudaMapper.cxx    
+    vtkCudaVolumeProperty.cxx    
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
     vtkVolumeRenderingCudaModuleLogic.cxx
