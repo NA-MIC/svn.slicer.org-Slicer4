@@ -35,6 +35,7 @@ public:
    RenderMode GetCurrentRenderMode() const { return this->CurrentRenderMode; }
    //ETX
 
+   vtkImageData* GetOutput() { return this->LocalOutputImage; }
 
    void PrintSelf(ostream& os, vtkIndent indent);
 

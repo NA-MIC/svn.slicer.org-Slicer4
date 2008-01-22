@@ -67,6 +67,8 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     this->Texture = 0;
     this->BufferObject = 0;
 
+    this->SetThreshold(90,255);
+
     this->OutputDataSize[0] = this->OutputDataSize[1] = 0;
 
     // check for the RenderMode
@@ -102,6 +104,11 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
     this->CudaInputBuffer->Delete();
     this->CudaOutputBuffer->Delete();
     this->LocalOutputImage->Delete();
+
+    this->CudaColorTransferFunction->Delete();
+    this->LocalColorTransferFunction->Delete();
+    this->CudaAlphaTransferFunction->Delete();
+    this->LocalAlphaTransferFunction->Delete();
 
     if (this->Texture == 0 || !glIsTexture(this->Texture))
         glGenTextures(1, &this->Texture);
@@ -201,6 +208,8 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
 
 #include "vtkTimerLog.h"
 #include "texture_types.h"
+
+#include "vtkPNGWriter.h"
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
    float minmax[6]={0,255,0,255,0,255};
@@ -344,6 +353,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
 
     glBegin(GL_QUADS);
+    glEnable(GL_BLEND);
     glTexCoord2i(0,1);
     glVertex4dv(coordinatesA);
     glTexCoord2i(1,1);
@@ -353,6 +363,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glTexCoord2i(0,0);
     glVertex4dv(coordinatesD);
     glEnd();
+
+    log->Delete();
 
     return;
 }

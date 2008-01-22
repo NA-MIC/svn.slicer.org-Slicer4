@@ -18,6 +18,8 @@
 #include "vtkVolumeProperty.h"
 
 
+#include "vtkImageViewer.h"
+
 int my_main(int argc, char *argv[])
 {
     // Initialize Tcl
@@ -70,6 +72,7 @@ int my_main(int argc, char *argv[])
     // Add a render widget, attach it to the view frame, and pack
 
     vtkKWRenderWidget *rw = vtkKWRenderWidget::New();
+    rw->SetBackgroundColor(255, 255, 255);
     rw->SetParent(win->GetViewFrame());
     rw->Create();
 
@@ -103,6 +106,7 @@ int my_main(int argc, char *argv[])
         volumeMapper->MultiInput[i] = reader[i]->GetOutput();
     }
     volumeMapper->SetInput(reader[0]->GetOutput());
+    volumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
 
     volume->SetMapper(volumeMapper);
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
@@ -141,6 +145,7 @@ int my_main(int argc, char *argv[])
     // If --test was provided, do not enter the event loop and run this example
     // as a non-interactive test for software quality purposes.
 
+
     int ret = 0;
     win->Display();
     if (!option_test)
@@ -148,6 +153,15 @@ int my_main(int argc, char *argv[])
         app->Start(argc, argv);
         ret = app->GetExitStatus();
     }
+   /*
+    vtkImageViewer* viewer = vtkImageViewer::New();
+    while (true)
+    {
+        volumeMapper->Render(rw->GetRenderer(), volume);
+        viewer->SetInput(volumeMapper->GetOutput());
+        viewer->Render();
+        Sleep(100);
+    }*/
     win->Close();
 
     // Deallocate and exit
