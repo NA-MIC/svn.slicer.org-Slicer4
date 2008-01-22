@@ -4,7 +4,7 @@ ADD_EXECUTABLE(VolumeRenderingCudaExample
 )
 
 TARGET_LINK_LIBRARIES(VolumeRenderingCudaExample
-  VolumeRenderingCuda
+  VolumeRenderingCudaModule
 )
 
 #ADD_TEST(VolumeRenderingCudaTest
