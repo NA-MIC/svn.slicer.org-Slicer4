@@ -16,6 +16,7 @@
 #include <sstream>
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
+#include "vtkKWVolumePropertyWidget.h"
 
 
 #include "vtkImageViewer.h"
@@ -85,6 +86,8 @@ int my_main(int argc, char *argv[])
     vtkVolume* volume = vtkVolume::New();
     vtkVolumeCudaMapper* volumeMapper = vtkVolumeCudaMapper::New();
 
+
+
     // Reading in the Data using a ImageReader
     vtkImageReader* reader[5];
     for (unsigned int i = 0; i < 5; i++ ) 
@@ -111,7 +114,17 @@ int my_main(int argc, char *argv[])
     volume->SetMapper(volumeMapper);
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
     volume->SetProperty(prop);
+
+    vtkKWVolumePropertyWidget* VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
+    VolumePropertyWidget->SetParent(win->GetMainPanelFrame());
+    VolumePropertyWidget->Create();
+    app->Script( "pack %s -side top -anchor nw -expand n -fill x -pady 2",
+        VolumePropertyWidget->GetWidgetName()); 
+
+    VolumePropertyWidget->SetVolumeProperty(prop);
     prop->Delete();
+
+
 
     rw->AddViewProp(volume);
 
@@ -153,14 +166,14 @@ int my_main(int argc, char *argv[])
         app->Start(argc, argv);
         ret = app->GetExitStatus();
     }
-   /*
+    /*
     vtkImageViewer* viewer = vtkImageViewer::New();
     while (true)
     {
-        volumeMapper->Render(rw->GetRenderer(), volume);
-        viewer->SetInput(volumeMapper->GetOutput());
-        viewer->Render();
-        Sleep(100);
+    volumeMapper->Render(rw->GetRenderer(), volume);
+    viewer->SetInput(volumeMapper->GetOutput());
+    viewer->Render();
+    Sleep(100);
     }*/
     win->Close();
 
@@ -174,6 +187,7 @@ int my_main(int argc, char *argv[])
 
     animation_frame->Delete();
     animation_widget->Delete();
+    VolumePropertyWidget->Delete();
     rw->Delete();
     win->Delete();
     app->Delete();
