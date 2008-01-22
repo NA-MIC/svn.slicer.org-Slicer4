@@ -32,8 +32,7 @@ template <typename T>
 __global__ void CUDAkernel_renderAlgo_doHybridRender(T* d_sourceData, 
 													 float* colorTransferFunction,
 													 float* alphaTransferFunction,
-                                                     unsigned char minThreshold, 
-                                                     unsigned char maxThreshold, 
+                                                     unsigned char minThreshold, unsigned char maxThreshold,
                                                      int sliceDistance, 
                                                      float transparencyLevel, 
                                                      uchar4* d_resultImage)
