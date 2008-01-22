@@ -192,8 +192,7 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
 #include "texture_types.h"
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
-    float color[6]={this->Color[0],this->Color[1],this->Color[2], 1,1,1};
-    float minmax[6]={0,255,0,255,0,255};
+   float minmax[6]={0,255,0,255,0,255};
     float lightVec[3]={0, 0, 1};
 
 
@@ -278,7 +277,6 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         (float*)rotationMatrix,
         this->CudaColorTransferFunction->GetMemPointerAs<float>(),
         this->CudaAlphaTransferFunction->GetMemPointerAs<float>(),
-        color,
         minmax, lightVec, 
         dims[0], dims[1], dims[2],                            //3D data size
         this->OutputDataSize[0], this->OutputDataSize[1],     //result image size

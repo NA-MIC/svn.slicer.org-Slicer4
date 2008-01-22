@@ -105,7 +105,6 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   virtual ~vtkVolumeRenderingCudaModuleGUI();
 
 
-  void UpdateVolume();
   vtkVolumeRenderingCudaModuleGUI(const vtkVolumeRenderingCudaModuleGUI&); // not implemented
   void operator=(const vtkVolumeRenderingCudaModuleGUI&); // not implemented
 
