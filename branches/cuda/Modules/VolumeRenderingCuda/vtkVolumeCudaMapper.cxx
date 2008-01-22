@@ -40,7 +40,7 @@
 extern "C" {
 #include "CUDA_renderAlgo.h"
 }
-
+#include <cutil.h>
 
 
 vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
@@ -53,7 +53,7 @@ vtkVolumeCudaMapper* vtkVolumeCudaMapper::New()
     if (cudaIsSupported)
         return new vtkVolumeCudaMapper;
     else
-        return NULL; // HACK
+        return new vtkVolumeCudaMapper; // HACK
 
 }
 
@@ -68,7 +68,6 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     this->BufferObject = 0;
 
     this->OutputDataSize[0] = this->OutputDataSize[1] = 0;
-    this->SetColor(255, 255, 255);
 
     // check for the RenderMode
     vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();

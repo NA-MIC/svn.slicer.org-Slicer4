@@ -125,7 +125,6 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
 
   vtkKWMenuButton* RenderModeChooser;
   vtkKWVolumePropertyWidget* VolumePropertyWidget;
-  vtkKWMatrixWidget* Color;
 
   vtkKWRange* ThresholdRange;
 

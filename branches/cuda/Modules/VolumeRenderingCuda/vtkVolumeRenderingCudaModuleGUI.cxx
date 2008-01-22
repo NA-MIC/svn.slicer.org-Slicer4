@@ -55,7 +55,6 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->InputTypeChooser = NULL;
     this->InputResolutionMatrix = NULL;
     this->RenderModeChooser = NULL;
-    this->Color = NULL;
     this->VolumePropertyWidget = NULL;
 
     this->ThresholdRange = NULL;
@@ -83,7 +82,6 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
 
     DeleteWidget(this->InputTypeChooser);
     DeleteWidget(this->InputResolutionMatrix);
-    DeleteWidget(this->Color);
     DeleteWidget(this->RenderModeChooser);
     DeleteWidget(this->VolumePropertyWidget);
 }
@@ -148,27 +146,6 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
         this->InputResolutionMatrix->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
 
 
-    vtkKWLabel* label = vtkKWLabel::New();
-    label->SetParent(loadSaveDataFrame->GetFrame());
-    label->Create();
-    label->SetText("Color:");
-    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        label->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-
-
-    this->Color = vtkKWMatrixWidget::New();
-    this->Color->SetParent(loadSaveDataFrame->GetFrame());
-    this->Color->Create();
-    this->Color->SetRestrictElementValueToInteger();
-    this->Color->SetNumberOfColumns(3);
-    this->Color->SetNumberOfRows(1);
-    this->Color->SetElementValueAsInt(0,0,255);
-    this->Color->SetElementValueAsInt(0,1,255);
-    this->Color->SetElementValueAsInt(0,2,255);
-    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        this->Color->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
-
-
     this->VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
     this->VolumePropertyWidget->SetParent(loadSaveDataFrame->GetFrame());
     this->VolumePropertyWidget->Create();
@@ -226,7 +203,6 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
     this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->Color->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->UpdateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 
     this->RenderModeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
@@ -243,7 +219,6 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
     this->InputTypeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->Color->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->UpdateButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->RenderModeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
@@ -269,7 +244,6 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
         caller == this->InputTypeChooser->GetMenu() ||
         caller == this->InputResolutionMatrix ||
-        caller == this->Color ||
         caller == this->ThresholdRange ||
 
         caller == this->UpdateButton
@@ -347,8 +321,6 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
         }
-
-        this->CudaMapper->SetColor(this->Color->GetElementValueAsInt(0,0), this->Color->GetElementValueAsInt(0,1), this->Color->GetElementValueAsInt(0,2));
         this->CudaMapper->SetThreshold(this->ThresholdRange->GetRange());
 
         this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();

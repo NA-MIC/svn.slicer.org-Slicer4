@@ -9,13 +9,6 @@
 
 #ifndef CUDA_RENDERALGO_H
 #define CUDA_RENDERALGO_H
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-
-#include <cutil.h>
 #include <vector_types.h>
 
 
