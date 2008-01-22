@@ -4,13 +4,8 @@
 
 
 
-vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
-vtkStandardNewMacro(vtkVolumeCudaMapper);
-
-vtkCudaVolumeProperty *vtkCudaVolumeProperty::New()
-{
-  return vtkCudaVolumeProperty::New();  
-}
+vtkCxxRevisionMacro(vtkCudaVolumeProperty, "$Revision: 1.6 $");
+vtkStandardNewMacro(vtkCudaVolumeProperty);
 
 
 vtkCudaVolumeProperty::vtkCudaVolumeProperty()

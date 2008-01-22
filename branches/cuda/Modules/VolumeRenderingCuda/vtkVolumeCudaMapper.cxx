@@ -24,6 +24,7 @@
 
 
 // CUDA
+#include "vtkCudaSupport.h"
 #include "vtkImageData.h"
 #include "vtkCudaMemory.h"
 #include "vtkCudaHostMemory.h"
@@ -43,7 +44,18 @@ extern "C" {
 
 
 vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
-vtkStandardNewMacro(vtkVolumeCudaMapper);
+
+vtkVolumeCudaMapper* vtkVolumeCudaMapper::New()
+{
+    vtkCudaSupport* support = vtkCudaSupport::New();
+    bool cudaIsSupported = support->IsSupported();
+    support->Delete();
+    if (cudaIsSupported)
+        return new vtkVolumeCudaMapper;
+    else
+        return NULL; // HACK
+
+}
 
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
