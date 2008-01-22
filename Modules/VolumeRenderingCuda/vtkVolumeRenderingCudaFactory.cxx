@@ -46,7 +46,8 @@ vtkObject* vtkVolumeRenderingCudaFactory::CreateInstance(const char* vtkclassnam
 #endif
   const char *rl = vtkGraphicsFactory::GetRenderLibrary();
 
-  if (!strcmp("vtkVolumeCudaMapper", vtkclassname))
+  if (!strcmp("vtkVolumeCudaMapper", vtkclassname) ||
+      !strcmp("vtkOpenGLVolumeTextureMapper2D", vtkclassname))
     return vtkVolumeCudaMapper::New();
 
   if (!strcmp("vtkVolumeRenderingCudaModuleGUI", vtkclassname))

@@ -9,8 +9,12 @@ class vtkCudaDevice;
 
 class VTK_CUDASUPPORT_EXPORT vtkCudaSupport : public vtkObject
 {
+public:
     vtkTypeRevisionMacro(vtkCudaSupport, vtkObject);
     static vtkCudaSupport *New();
+
+    bool IsSupported() { return (this->GetDeviceCount() > 0); }
+    bool IsSupported(const char* cudaVersion);
 
     //BTX
     int GetDeviceCount() const { return this->Devices.size(); }        
