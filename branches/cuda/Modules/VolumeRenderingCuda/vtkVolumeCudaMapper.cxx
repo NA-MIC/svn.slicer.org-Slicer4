@@ -352,8 +352,12 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     renderer->GetWorldPoint(coordinatesD);
 
 
-    glBegin(GL_QUADS);
+    glPushAttrib(GL_BLEND);
     glEnable(GL_BLEND);
+    glPushAttrib(GL_LIGHTING);
+    glDisable(GL_LIGHTING);
+
+    glBegin(GL_QUADS);
     glTexCoord2i(0,1);
     glVertex4dv(coordinatesA);
     glTexCoord2i(1,1);
@@ -363,6 +367,9 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glTexCoord2i(0,0);
     glVertex4dv(coordinatesD);
     glEnd();
+
+    glPopAttrib();
+    glPopAttrib();
 
     log->Delete();
 
