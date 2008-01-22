@@ -117,6 +117,10 @@ IF(BUILD_TESTING)
   SUBDIRS(Testing)
 ENDIF(BUILD_TESTING)
 
+IF(BUILD_EXAMPLES)
+  ADD_SUBDIRECTORY(Example)
+ENDIF(BUILD_EXAMPLES)
+
 CONFIGURE_FILE(
   ${VolumeRenderingCudaModule_SOURCE_DIR}/vtkVolumeRenderingCudaModuleConfigure.h.in 
   ${VolumeRenderingCudaModule_BINARY_DIR}/vtkVolumeRenderingCudaModuleConfigure.h
