@@ -389,19 +389,9 @@ void vtkVolumeRenderingCudaModuleGUI::ScheduleRender()
 {
     this->RenderScheduled = false;
     this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
-
 }
 
-void vtkVolumeRenderingCudaModuleGUI::UpdateVolume()
-{
-    if (this->CudaMapper != NULL && this->CudaVolume != NULL)
-        this->CudaMapper->Render(
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer(),
-        this->CudaVolume);
-}
-
-void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event,
-                                                         void *callData)
+void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData)
 {
 }
 
