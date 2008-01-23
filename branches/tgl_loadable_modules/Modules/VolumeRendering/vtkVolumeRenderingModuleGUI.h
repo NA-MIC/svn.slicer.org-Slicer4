@@ -49,6 +49,16 @@ public:
     {
         this->Logic=log;
     }
+
+    // Description:
+    // Set the logic pointer from parent class pointer.
+    // Overloads implementation in vtkSlicerModulesGUI
+    // to allow loadable modules.
+    virtual void SetModuleLogic ( vtkSlicerLogic *logic )
+    {
+      this->SetLogic(reinterpret_cast<vtkVolumeRenderingModuleLogic*> (logic)); 
+    }
+
     //vtkSetObjectMacro (Logic, vtkVolumeRenderingModuleLogic);
     // Description:
     // Create widgets

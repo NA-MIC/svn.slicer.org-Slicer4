@@ -20,6 +20,9 @@
 #include <string>
 #include <vector>
 
+class vtkSlicerModuleGUI;
+class vtkSlicerModuleLogic;
+
 class LoadableModule_EXPORT LoadableModuleDescription
 {
 public:
@@ -48,6 +51,26 @@ public:
     return this->Name;
   }
 
+  void SetShortName(const std::string &name)
+  {
+    this->ShortName = name;
+  }
+
+  const std::string& GetShortName() const
+  {
+    return this->ShortName;
+  }
+
+  void SetGUIName(const std::string &name)
+  {
+    this->GUIName = name;
+  }
+
+  const std::string& GetGUIName() const
+  {
+    return this->GUIName;
+  }
+
   void SetMessage(const std::string &message)
   {
     this->Message = message;
@@ -58,6 +81,26 @@ public:
     return this->Message;
   }
 
+  void SetGUIFunction(vtkSlicerModuleGUI* guiFunction)
+  {
+    this->GUIFunction = guiFunction;
+  }
+
+  vtkSlicerModuleGUI* GetGUIFunction() const
+  {
+    return this->GUIFunction;
+  }
+ 
+  void SetLogicFunction(vtkSlicerModuleLogic* logicFunction)
+  {
+    this->LogicFunction = logicFunction;
+  }
+
+  vtkSlicerModuleLogic* GetLogicFunction() const
+  {
+    return this->LogicFunction;
+  }
+ 
   void SetTitle(const std::string &title)
   {
     this->Title = title;
@@ -241,7 +284,12 @@ public:
   }
   private:
   std::string Name;
+  std::string ShortName;
+  std::string GUIName;
   std::string Message;
+
+  vtkSlicerModuleGUI* GUIFunction;
+  vtkSlicerModuleLogic* LogicFunction;
 
   std::string Title;
   std::string Category;

@@ -25,7 +25,12 @@ LoadableModuleDescription::LoadableModuleDescription()
 LoadableModuleDescription::LoadableModuleDescription(const LoadableModuleDescription &md)
 {
   this->Name = md.Name;
+  this->ShortName = md.ShortName;
+  this->GUIName = md.GUIName;
   this->Message = md.Message;
+  this->GUIFunction = md.GUIFunction;
+  this->LogicFunction = md.LogicFunction;
+
   this->Title = md.Title;
   this->Category = md.Category;
   this->Description = md.Description;
@@ -46,7 +51,12 @@ void
 LoadableModuleDescription::operator=(const LoadableModuleDescription &md)
 {
   this->Name = md.Name;
+  this->ShortName = md.ShortName;
+  this->GUIName = md.GUIName;
   this->Message = md.Message;
+  this->GUIFunction = md.GUIFunction;
+  this->LogicFunction = md.LogicFunction;
+
   this->Title = md.Title;
   this->Category = md.Category;
   this->Description = md.Description;
@@ -66,6 +76,8 @@ LoadableModuleDescription::operator=(const LoadableModuleDescription &md)
 std::ostream & operator<<(std::ostream &os, const LoadableModuleDescription &module)
 {
   os << "Name: " << module.GetName() << std::endl;
+  os << "ShortName: " << module.GetShortName() << std::endl;
+  os << "GUIName: " << module.GetGUIName() << std::endl;
   os << "Message: " << module.GetMessage() << std::endl;
   os << "Title: " << module.GetTitle() << std::endl;
   os << "Category: " << module.GetCategory() << std::endl;
