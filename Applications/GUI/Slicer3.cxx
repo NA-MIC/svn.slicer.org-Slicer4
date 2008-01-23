@@ -933,7 +933,7 @@ int Slicer3_main(int argc, char *argv[])
       {
         if (!vtksys::SystemTools::FileExists(userCachePath.c_str()))
           {
-            vtxksys::SystemTools::MakeDirectory(userCachePath.c_str());
+            vtksys::SystemTools::MakeDirectory(userCachePath.c_str());
           }
         if (vtksys::SystemTools::FileExists(userCachePath.c_str())
             && vtksys::SystemTools::FileIsDirectory(userCachePath.c_str()))
@@ -1000,14 +1000,12 @@ int Slicer3_main(int argc, char *argv[])
     // other collections in the vtkSlicerApplication class.
 
 #ifndef LOADABLEMODULES_DEBUG
-    {
-
     std::string slicerModulePath = slicerBinDir;
 
-        if (hasIntDir)
-          {
-            slicerModulePath += "/" + intDir;
-          }
+    if (hasIntDir)
+    {
+      slicerModulePath += "/" + intDir;
+    }
 
     LoadableModuleFactory loadableModuleFactory;
     loadableModuleFactory.SetName("Slicer");
@@ -1026,10 +1024,36 @@ int Slicer3_main(int argc, char *argv[])
     while (lmit != loadableModuleNames.end())
       {
         LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+        slicerApp->SplashMessage(desc.GetMessage().c_str());
+
+        vtkSlicerModuleGUI* gui = desc.GetGUIFunction();
+        vtkSlicerModuleLogic* logic = desc.GetLogicFunction();
+
+        logic->SetAndObserveMRMLScene( scene );
+        logic->SetApplicationLogic( appLogic );
+        // logic->SetMRMLScene( scene );
+
+        gui->SetModuleLogic ( logic );
+        gui->SetApplication( slicerApp );
+        gui->SetApplicationLogic( appLogic );
+        gui->SetApplicationGUI( appGUI );
+        gui->SetGUIName( desc.GetGUIName().c_str() );
+        gui->GetUIPanel()->SetName( gui->GetGUIName ( ) );
+        gui->GetUIPanel()->SetUserInterfaceManager( appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+        gui->GetUIPanel()->Create( );
+        
+        slicerApp->AddModuleGUI( gui );
+        
+        gui->BuildGUI ( );
+        gui->AddGUIObservers ( );
+ 
+        // add the pointer to the viewer widget, for observing pick events
+        // gui->SetViewerWidget(appGUI->GetViewerWidget());
+        // gui->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
+
         lmit++;
       }
-
-    }
 #endif // LOADABLEMODULES_DEBUG
 
 
@@ -1054,6 +1078,7 @@ int Slicer3_main(int argc, char *argv[])
     volumesGUI->GetUIPanel()->Create ( );
     slicerApp->AddModuleGUI ( volumesGUI );
 #endif
+
 
 #ifndef MODELS_DEBUG
     slicerApp->SplashMessage("Initializing Models Module...");
@@ -1497,35 +1522,6 @@ int Slicer3_main(int argc, char *argv[])
     qdecModuleGUI->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
 #endif
 
-#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
-
-    slicerApp->SplashMessage("Initializing Volume Rendering Module...");
-    //VolumeRenderingModule
-    vtkVolumeRenderingModuleGUI *vrModuleGUI = vtkVolumeRenderingModuleGUI::New ( );
-    vtkVolumeRenderingModuleLogic *vrModuleLogic  = vtkVolumeRenderingModuleLogic::New ( );
-    vrModuleLogic->SetAndObserveMRMLScene ( scene );
-    vrModuleLogic->SetApplicationLogic ( appLogic );
-    vrModuleLogic->SetMRMLScene(scene);
-        //TODO Quick and dirty
-     vtkMRMLVolumeRenderingNode *vrNode=vtkMRMLVolumeRenderingNode::New();
-     scene->RegisterNodeClass(vrNode);
-  vrNode->Delete();
-    vrModuleGUI->SetLogic(vrModuleLogic);
-    vrModuleGUI->SetApplication ( slicerApp );
-    vrModuleGUI->SetApplicationLogic ( appLogic );
-    vrModuleGUI->SetApplicationGUI ( appGUI );
-    vrModuleGUI->SetGUIName( "VolumeRendering" );
-    vrModuleGUI->GetUIPanel()->SetName ( vrModuleGUI->GetGUIName ( ) );
-    vrModuleGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    vrModuleGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( vrModuleGUI );
-    vrModuleGUI->BuildGUI ( );
-    vrModuleGUI->AddGUIObservers ( );
-    // add the pointer to the viewer widget, for observing pick events
-    vrModuleGUI->SetViewerWidget(appGUI->GetViewerWidget());
-    vrModuleGUI->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
-#endif
-
 #if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
     // --- LabelStatistics  module
     slicerApp->SplashMessage("Initializing LabelStatistics Module...");
@@ -1672,15 +1668,32 @@ int Slicer3_main(int argc, char *argv[])
     const char *name;
     name = appGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ApplicationGUI %s", name);
+
+#ifndef LOADABLEMODULES_DEBUG
+    lmit = loadableModuleNames.begin();
+    
+    while (lmit != loadableModuleNames.end())
+      {
+        LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+        vtkSlicerModuleGUI* gui = desc.GetGUIFunction();
+
+        name = gui->GetTclName();
+        std::string format("namespace eval slicer3 set ");
+        format += desc.GetShortName();
+        format += "GUI %s";
+
+        slicerApp->Script (format.c_str(), name);        
+
+        lmit++;
+      }
+#endif
+
 #ifndef SLICES_DEBUG
     name = slicesGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set SlicesGUI %s", name);
 #endif
 
-#ifndef VOLUMES_DEBUG
-    name = volumesGUI->GetTclName();
-    slicerApp->Script ("namespace eval slicer3 set VolumesGUI %s", name);
-#endif
 #ifndef MODELS_DEBUG
     name = modelsGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ModelsGUI %s", name);
@@ -1729,10 +1742,6 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     name = qdecModuleGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set QdecModuleGUI %s", name);
-#endif
-#if !defined (VOLUMERENDERINGMODULE_DEBUG) && defined (BUILD_MODULES)
-    name = vrModuleGUI->GetTclName();
-    slicerApp->Script ("namespace eval slicer3 set VRModuleGUI %s", name);
 #endif
     
     if ( appGUI->GetViewerWidget() )
@@ -1981,6 +1990,19 @@ int Slicer3_main(int argc, char *argv[])
 
     // ------------------------------
     // REMOVE OBSERVERS and references to MRML and Logic
+
+#ifndef LOADABLEMODULES_DEBUG
+  lmit = loadableModuleNames.begin();
+  while (lmit != loadableModuleNames.end()) {
+    LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+    desc.GetGUIFunction()->TearDownGUI();
+    desc.GetGUIFunction()->RemoveGUIObservers();
+
+    lmit++;
+  }
+#endif
+
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterGUI->RemoveGUIObservers ( );
 #endif
@@ -1999,10 +2021,6 @@ int Slicer3_main(int argc, char *argv[])
     queryAtlasGUI->RemoveGUIObservers ( );
 #endif
 
-#ifndef VOLUMES_DEBUG
-//    volumesGUI->RemoveGUIObservers ( );
-    volumesGUI->TearDownGUI ( );
-#endif
 #ifndef MODELS_DEBUG
     modelsGUI->TearDownGUI ( );
 #endif
@@ -2037,10 +2055,6 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     qdecModuleGUI->TearDownGUI ( );
 #endif
-#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
-    vrModuleGUI->TearDownGUI ( );
-#endif
-
 
     transformsGUI->TearDownGUI ( );
 #ifndef CAMERA_DEBUG
@@ -2103,6 +2117,17 @@ int Slicer3_main(int argc, char *argv[])
 
     // ------------------------------
     // DELETE 
+
+#ifndef LOADABLEMODULES_DEBUG
+  lmit = loadableModuleNames.begin();
+  while (lmit != loadableModuleNames.end()) {
+    LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+    desc.GetGUIFunction()->Delete();
+
+    lmit++;
+  }
+#endif
     
     //--- delete gui first, removing Refs to Logic and MRML
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
@@ -2122,9 +2147,6 @@ int Slicer3_main(int argc, char *argv[])
     queryAtlasGUI->Delete ( );
 #endif
     
-#ifndef VOLUMES_DEBUG
-    volumesGUI->Delete ();
-#endif
 #ifndef MODELS_DEBUG
     modelsGUI->Delete ();
 #endif
@@ -2159,9 +2181,6 @@ int Slicer3_main(int argc, char *argv[])
     qdecModuleGUI->Delete ( );
 #endif
 
-#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
-    vrModuleGUI->Delete ( );
-#endif
 
 
     
@@ -2213,6 +2232,20 @@ int Slicer3_main(int argc, char *argv[])
     //--- delete logic next, removing Refs to MRML
     appLogic->ClearCollections ( );
 
+#ifndef LOADABLEMODULES_DEBUG
+  lmit = loadableModuleNames.begin();
+  while (lmit != loadableModuleNames.end()) {
+    LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+    vtkSlicerModuleLogic* logic = desc.GetLogicFunction();
+
+    logic->SetAndObserveMRMLScene( NULL );
+    logic->Delete();
+
+    lmit++;
+  }
+#endif
+
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( NULL );
     gradientAnisotropicDiffusionFilterLogic->Delete ();
@@ -2233,10 +2266,6 @@ int Slicer3_main(int argc, char *argv[])
     queryAtlasLogic->Delete ( );
 #endif
     
-#ifndef VOLUMES_DEBUG
-    volumesLogic->SetAndObserveMRMLScene ( NULL );
-    volumesLogic->Delete();
-#endif
 #ifndef MODELS_DEBUG
     modelsLogic->SetAndObserveMRMLScene ( NULL );
     modelsLogic->Delete();
@@ -2281,10 +2310,6 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     qdecModuleLogic->SetAndObserveMRMLScene ( NULL );
     qdecModuleLogic->Delete ( );
-#endif
-    #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
-    vrModuleLogic->SetAndObserveMRMLScene ( NULL );
-    vrModuleLogic->Delete ( );
 #endif
 
     sliceLogic2->SetAndObserveMRMLScene ( NULL );

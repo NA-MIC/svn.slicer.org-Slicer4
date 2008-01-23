@@ -52,7 +52,9 @@ ENDIF (USE_BFD)
 
 INCLUDE_DIRECTORIES(
   ${LoadableModule_BINARY_DIR}
-  ${LoadableModule_SOURCE_DIR} 
+  ${LoadableModule_SOURCE_DIR}
+  ${SlicerBaseLogic_SOURCE_DIR}
+  ${SlicerBaseGUI_SOURCE_DIR}
 )
 
 IF(USE_PYTHON)

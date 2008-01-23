@@ -19,7 +19,9 @@ extern "C" {
   Module_EXPORT char LoadableModuleDescription[] =
 "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
 "<loadable>\n"
-"  <name>Volumes</name>\n"
-"  <message>Initializing Volumes Module...</message>\n"
+"  <name>Volume Rendering Module</name>\n"
+"  <shortname>VRModule</shortname>\n"
+"  <guiname>VolumeRendering</guiname>\n"
+"  <message>Initializing Volume Rendering Module...</message>\n"
 "</loadable>";
 }

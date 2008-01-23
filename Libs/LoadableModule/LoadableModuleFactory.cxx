@@ -406,6 +406,9 @@ LoadableModuleFactory
                 LoadableModuleDescription module;
                 module.SetType("SharedObjectModule");
 
+                module.SetLogicFunction( reinterpret_cast<vtkSlicerModuleLogic*> ((*logicFunction)()) );
+                module.SetGUIFunction( reinterpret_cast<vtkSlicerModuleGUI*> ((*guiFunction)()) );
+
                 // Set the target as the entry point to call
                 char entryPointAsText[256];
                 std::string entryPointAsString;
