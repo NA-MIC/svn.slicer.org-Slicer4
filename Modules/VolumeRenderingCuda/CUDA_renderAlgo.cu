@@ -4,13 +4,14 @@
 #include <string.h>
 #include <math.h>
 
-// includes, project
-#include <cutil.h>
-
-// includes, kernels
 extern "C" {
 #include "CUDA_renderAlgo.h"
 }
+
+// includes, project
+#include <cutil.h>
+#include "vtkType.h"
+// includes, kernels
 
 #define BLOCK_DIM2D 4 // this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
@@ -312,7 +313,14 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
 	 transparencyLevel, \
 	 outputData)
 
-  CUDA_KERNEL_CALL(1, unsigned char);
+// Add all the other types.
+  CUDA_KERNEL_CALL(VTK_UNSIGNED_CHAR, unsigned char);
+  else CUDA_KERNEL_CALL(VTK_CHAR, char);
+  else CUDA_KERNEL_CALL(VTK_SHORT, short);
+  else CUDA_KERNEL_CALL(VTK_UNSIGNED_SHORT, unsigned short);
+  else CUDA_KERNEL_CALL(VTK_FLOAT, float);
+  else CUDA_KERNEL_CALL(VTK_DOUBLE, double);
+  else CUDA_KERNEL_CALL(VTK_INT, int);
   
   CUT_CHECK_ERROR("Kernel execution failed");
 

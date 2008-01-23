@@ -108,6 +108,9 @@ int my_main(int argc, char *argv[])
 
         volumeMapper->MultiInput[i] = reader[i]->GetOutput();
     }
+
+
+
     volumeMapper->SetInput(reader[0]->GetOutput());
     volumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
 
