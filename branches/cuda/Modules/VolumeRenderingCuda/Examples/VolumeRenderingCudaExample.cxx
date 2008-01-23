@@ -20,6 +20,9 @@
 
 
 #include "vtkImageViewer.h"
+#include "vtkImageWriter.h"
+#include "vtkImageShiftScale.h"
+#include "vtkImageData.h"
 
 int my_main(int argc, char *argv[])
 {
@@ -92,6 +95,7 @@ int my_main(int argc, char *argv[])
     vtkImageReader* reader[5];
     for (unsigned int i = 0; i < 5; i++ ) 
     {
+        reader[i] = NULL;
         reader[i]= vtkImageReader::New();
         reader[i]->SetDataScalarTypeToUnsignedChar();
         reader[i]->SetNumberOfScalarComponents(1);
@@ -109,8 +113,27 @@ int my_main(int argc, char *argv[])
 //        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
     }
 
+    /*
+    reader[0]->Delete();
+        reader[0]= vtkImageReader::New();
+        reader[0]->SetDataScalarTypeToShort();
+        reader[0]->SetNumberOfScalarComponents(1);
+        reader[0]->SetDataSpacing(1, 0.65, 3.5);
+        reader[0]->SetDataExtent(0, 255,
+            0, 255, 
+            0, 53);
+        reader[0]->SetFileDimensionality(3);
 
-    volumeMapper->SetInput(reader[0]->GetOutput());
+
+        reader[0]->SetFileName("C:\\prostate.raw");
+        reader[0]->Update();
+
+
+        vtkImageShiftScale* scaler = vtkImageShiftScale::New();
+        scaler->SetOutputScalarTypeToUnsignedChar();
+        scaler->SetInput(reader[0]->GetOutput());
+*/
+        volumeMapper->SetInput(reader[0]->GetOutput());
     volumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
 
     volume->SetMapper(volumeMapper);
@@ -185,7 +208,8 @@ int my_main(int argc, char *argv[])
     volume->Delete();
     volumeMapper->Delete();
     for (unsigned int i = 0; i < 5; i++)
-        reader[i]->Delete();
+        if (reader[i] != NULL)
+            reader[i]->Delete();
 
     animation_frame->Delete();
     animation_widget->Delete();
