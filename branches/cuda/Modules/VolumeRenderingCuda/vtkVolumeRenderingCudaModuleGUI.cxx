@@ -263,7 +263,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
             // Reading in the Data using a ImageReader
             vtkImageReader* reader[5];
-            for (unsigned int i = 0; i < 5; i++ ) 
+            for (unsigned int i = 0; i < 1; i++ ) 
             {
                 reader[i]= vtkImageReader::New();
                 reader[i]->SetDataScalarTypeToUnsignedChar();
@@ -279,7 +279,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
                 reader[i]->SetFileName(s.str().c_str());
                 reader[i]->Update();
 
-                this->CudaMapper->MultiInput[i] = reader[i]->GetOutput();
+                //this->CudaMapper->MultiInput[i] = reader[i]->GetOutput();
             }
             this->CudaMapper->SetInput(reader[0]->GetOutput());
 

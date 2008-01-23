@@ -216,9 +216,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     float lightVec[3]={0, 0, 1};
 
 
-    static int number = 0;
-    if (++number == 5) number = 0;
-    this->CudaInputBuffer->CopyFrom(MultiInput[number]);
+//    this->CudaInputBuffer->CopyFrom(this->GetInput());
 
 
     vtkRenderWindow *renWin= renderer->GetRenderWindow();

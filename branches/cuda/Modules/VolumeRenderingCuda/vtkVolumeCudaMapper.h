@@ -39,9 +39,6 @@ public:
 
    void PrintSelf(ostream& os, vtkIndent indent);
 
-    vtkImageData* MultiInput[5];
-
-
 protected:
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
