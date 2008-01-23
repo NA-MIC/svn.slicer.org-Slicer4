@@ -106,9 +106,8 @@ int my_main(int argc, char *argv[])
         reader[i]->SetFileName(s.str().c_str());
         reader[i]->Update();
 
-        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
+//        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
     }
-
 
 
     volumeMapper->SetInput(reader[0]->GetOutput());
