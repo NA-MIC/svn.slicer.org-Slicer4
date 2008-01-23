@@ -60,7 +60,8 @@ void vtkCudaMemory::MemSet(int value)
 
 bool vtkCudaMemory::CopyFrom(vtkImageData* data)
 {
-    this->AllocateBytes(data->GetActualMemorySize()*1024);
+    if (!this->AllocateBytes(data->GetActualMemorySize()*1024))
+        return false;
 
     if(cudaMemcpy(this->GetMemPointer(),
         data->GetScalarPointer(),

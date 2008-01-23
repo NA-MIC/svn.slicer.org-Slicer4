@@ -52,6 +52,7 @@ INCLUDE_DIRECTORIES(
 
  CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR} 
                            ${FOUND_CUT_INCLUDE}
+                           ${VTK_INCLUDE_DIRS}
  )
 
 # --------------------------------------------------------------------------

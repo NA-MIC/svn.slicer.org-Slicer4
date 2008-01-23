@@ -293,7 +293,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
     CUDArenderAlgo_doRender(RenderDestination,
         this->CudaInputBuffer->GetMemPointer(),
-        1,
+        this->GetInput()->GetScalarType(),
         (float*)rotationMatrix,
         this->CudaColorTransferFunction->GetMemPointerAs<float>(),
         this->CudaAlphaTransferFunction->GetMemPointerAs<float>(),
