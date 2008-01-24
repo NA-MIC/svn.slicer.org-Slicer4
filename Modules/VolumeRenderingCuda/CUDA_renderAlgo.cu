@@ -13,7 +13,7 @@ extern "C" {
 #include "vtkType.h"
 // includes, kernels
 
-#define BLOCK_DIM2D 4 // this must be set to 4 or more
+#define BLOCK_DIM2D 16 // this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
 
 __constant__ float c_renderAlgo_size[3];

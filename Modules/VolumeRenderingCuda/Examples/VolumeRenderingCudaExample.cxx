@@ -7,6 +7,12 @@
 #include "vtkKWSimpleAnimationWidget.h"
 
 
+#include "vtkKWVolumePropertyWidget.h"
+#include "vtkKWRange.h"
+#include "vtkCallbackCommand.h"
+#include "vtkKWEvent.h"
+
+
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/CommandLineArguments.hxx>
 
@@ -16,13 +22,22 @@
 #include <sstream>
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
-#include "vtkKWVolumePropertyWidget.h"
-
 
 #include "vtkImageViewer.h"
 #include "vtkImageWriter.h"
 #include "vtkImageShiftScale.h"
 #include "vtkImageData.h"
+
+vtkKWRenderWidget* renderWidget;
+vtkKWRange* ThresholdRange;
+vtkKWVolumePropertyWidget* VolumePropertyWidget;
+vtkVolumeCudaMapper* VolumeMapper;
+
+void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
+{
+    VolumeMapper->SetThreshold(ThresholdRange->GetRange());
+    renderWidget->Render();
+}
 
 int my_main(int argc, char *argv[])
 {
@@ -75,20 +90,19 @@ int my_main(int argc, char *argv[])
 
     // Add a render widget, attach it to the view frame, and pack
 
-    vtkKWRenderWidget *rw = vtkKWRenderWidget::New();
-    rw->SetBackgroundColor(255, 255, 255);
-    rw->SetParent(win->GetViewFrame());
-    rw->Create();
+    renderWidget = vtkKWRenderWidget::New();
+    renderWidget->SetBackgroundColor(255, 255, 255);
+    renderWidget->SetParent(win->GetViewFrame());
+    renderWidget->Create();
 
     app->Script("pack %s -expand y -fill both -anchor c -expand y", 
-        rw->GetWidgetName());
+        renderWidget->GetWidgetName());
 
     // Create the mapper and actor
 
 
     vtkVolume* volume = vtkVolume::New();
-    vtkVolumeCudaMapper* volumeMapper = vtkVolumeCudaMapper::New();
-
+    VolumeMapper = vtkVolumeCudaMapper::New();
 
 
     // Reading in the Data using a ImageReader
@@ -113,12 +127,11 @@ int my_main(int argc, char *argv[])
 //        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
     }
 
-    /*
-    reader[0]->Delete();
+    
+        reader[0]->Delete();
         reader[0]= vtkImageReader::New();
         reader[0]->SetDataScalarTypeToShort();
         reader[0]->SetNumberOfScalarComponents(1);
-        reader[0]->SetDataSpacing(1, 0.65, 3.5);
         reader[0]->SetDataExtent(0, 255,
             0, 255, 
             0, 53);
@@ -132,30 +145,47 @@ int my_main(int argc, char *argv[])
         vtkImageShiftScale* scaler = vtkImageShiftScale::New();
         scaler->SetOutputScalarTypeToUnsignedChar();
         scaler->SetInput(reader[0]->GetOutput());
-*/
-        volumeMapper->SetInput(reader[0]->GetOutput());
-    volumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
+        scaler->Update();
 
-    volume->SetMapper(volumeMapper);
+    reader[0]->Update();
+    VolumeMapper->SetInput(scaler->GetOutput());
+
+    VolumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
+
+    volume->SetMapper(VolumeMapper);
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
     volume->SetProperty(prop);
+    renderWidget->AddViewProp(volume);
 
-    vtkKWVolumePropertyWidget* VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
+    /// GUI EVENT
+    vtkCallbackCommand* GUICallbackCommand = vtkCallbackCommand::New ( );
+    //GUICallbackCommand->SetClientData( reinterpret_cast<void *>(this) );
+    GUICallbackCommand->SetCallback( UpdateRenderer);
+
+    /// SETUP THE GUI
+    VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
     VolumePropertyWidget->SetParent(win->GetMainPanelFrame());
     VolumePropertyWidget->Create();
     app->Script( "pack %s -side top -anchor nw -expand n -fill x -pady 2",
         VolumePropertyWidget->GetWidgetName()); 
+    VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangedEvent, (vtkCommand*)GUICallbackCommand);
 
     VolumePropertyWidget->SetVolumeProperty(prop);
     prop->Delete();
 
+    ThresholdRange = vtkKWRange::New();
+    ThresholdRange->SetParent(win->GetMainPanelFrame());
+    ThresholdRange->Create();
+    ThresholdRange->SetWholeRange(0, 255);
+    ThresholdRange->SetRange(90, 255);
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        ThresholdRange->GetWidgetName()); 
+    ThresholdRange->AddObserver(vtkKWRange::RangeValueChangingEvent, (vtkCommand*)GUICallbackCommand);
 
-
-    rw->AddViewProp(volume);
 
 
     // Add the actor to the scene
-    rw->ResetCamera();
+    renderWidget->ResetCamera();
 
     // Create a material property editor
 
@@ -173,7 +203,7 @@ int my_main(int argc, char *argv[])
         vtkKWSimpleAnimationWidget::New();
     animation_widget->SetParent(animation_frame->GetFrame());
     animation_widget->Create();
-    animation_widget->SetRenderWidget(rw);
+    animation_widget->SetRenderWidget(renderWidget);
     animation_widget->SetAnimationTypeToCamera();
 
     app->Script("pack %s -side top -anchor nw -expand n -fill x",
@@ -195,7 +225,7 @@ int my_main(int argc, char *argv[])
     vtkImageViewer* viewer = vtkImageViewer::New();
     while (true)
     {
-    volumeMapper->Render(rw->GetRenderer(), volume);
+    volumeMapper->Render(renderWidget->GetRenderer(), volume);
     viewer->SetInput(volumeMapper->GetOutput());
     viewer->Render();
     Sleep(100);
@@ -206,7 +236,7 @@ int my_main(int argc, char *argv[])
 
 
     volume->Delete();
-    volumeMapper->Delete();
+    VolumeMapper->Delete();
     for (unsigned int i = 0; i < 5; i++)
         if (reader[i] != NULL)
             reader[i]->Delete();
@@ -214,7 +244,7 @@ int my_main(int argc, char *argv[])
     animation_frame->Delete();
     animation_widget->Delete();
     VolumePropertyWidget->Delete();
-    rw->Delete();
+    renderWidget->Delete();
     win->Delete();
     app->Delete();
 
