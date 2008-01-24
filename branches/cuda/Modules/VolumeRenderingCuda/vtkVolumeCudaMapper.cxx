@@ -212,7 +212,11 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
 #include "vtkPNGWriter.h"
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
-   float minmax[6]={0,255,0,255,0,255};
+    // Renice!!
+    int* minMax = this->GetInput()->GetExtent();
+    float minmax[6]; //={minMax[0],minMax[1],minMax[2],minMax[3],minMax[4],minMax[5]};
+    for (unsigned int i = 0; i < 6; i++)
+        minmax[i] = minMax[i];
     float lightVec[3]={0, 0, 1};
 
 
