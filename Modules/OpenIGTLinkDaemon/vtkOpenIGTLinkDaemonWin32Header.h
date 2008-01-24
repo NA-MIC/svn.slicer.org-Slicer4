@@ -23,12 +23,12 @@
 
 #if defined(WIN32) && !defined(VTKSLICER_STATIC)
 #if defined(OpenIGTLinkDaemon_EXPORTS)
-#define VTK_SLICERDAEMON_EXPORT __declspec( dllexport ) 
+#define VTK_OPENIGTLINKDAEMON_EXPORT __declspec( dllexport ) 
 #else
-#define VTK_SLICERDAEMON_EXPORT __declspec( dllimport ) 
+#define VTK_OPENIGTLINKDAEMON __declspec( dllimport ) 
 #endif
 #else
-#define VTK_SLICERDAEMON_EXPORT 
+#define VTK_OPENIGTLINKDAEMON_EXPORT 
 #endif
 
 #endif

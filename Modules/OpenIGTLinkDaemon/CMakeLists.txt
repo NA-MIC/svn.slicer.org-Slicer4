@@ -7,7 +7,7 @@ SET(OpenIGTLinkDaemon_SRCS
   #vtkOpenIGTLinkDaemonLogic.cxx
   #vtkOpenIGTLinkDaemonGUI.cxx
   #vtkMRMLOpenIGTLinkDaemonNode.cxx
-  vtkTclHelper.cxx
+  vtkOpenIGTLinkTclHelper.cxx
 )
 
 # Abstract/pure virtual classes
