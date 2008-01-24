@@ -19,6 +19,11 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
     vtkVolumeRenderingCudaModuleGUI.cxx
     vtkVolumeRenderingCudaModuleLogic.cxx
     
+  #### CUDA Pipeline Classes ####
+    vtkCudaImageDataFilter.cxx
+    vtkCudaImageData.cxx
+
+    
   ## WIDGETS ##
     vtkKWTypeChooserBox.cxx
   )
