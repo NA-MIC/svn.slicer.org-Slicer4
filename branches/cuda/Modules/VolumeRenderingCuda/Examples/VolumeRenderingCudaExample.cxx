@@ -11,7 +11,7 @@
 #include "vtkKWRange.h"
 #include "vtkCallbackCommand.h"
 #include "vtkKWEvent.h"
-
+#include "vtkKWCheckButton.h"
 
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/CommandLineArguments.hxx>
@@ -28,15 +28,39 @@
 #include "vtkImageShiftScale.h"
 #include "vtkImageData.h"
 
+vtkKWApplication *app;
 vtkKWRenderWidget* renderWidget;
 vtkKWRange* ThresholdRange;
 vtkKWVolumePropertyWidget* VolumePropertyWidget;
 vtkVolumeCudaMapper* VolumeMapper;
+vtkKWCheckButton* cb_Animate;
+
+int frameNumber = 0;
+vtkImageReader* reader[5];
+bool renderScheduled = false;
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
     VolumeMapper->SetThreshold(ThresholdRange->GetRange());
     renderWidget->Render();
+}
+
+void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
+{
+    int enabled = cb_Animate->GetSelectedState();
+    if (cb_Animate->GetSelectedState() == 1)
+    {
+        if (++frameNumber == 5)
+            frameNumber = 0;
+        VolumeMapper->SetInput(reader[frameNumber]->GetOutput());
+        if (renderScheduled == false)
+        {    
+            renderScheduled=true;
+            renderWidget->SetRenderModeToInteractive();
+            cerr << *renderWidget;
+            app->Script("after 100 %s Render",renderWidget->GetTclName());
+        }
+    }
 }
 
 int my_main(int argc, char *argv[])
@@ -66,7 +90,7 @@ int my_main(int argc, char *argv[])
     // Restore the settings that have been saved to the registry, like
     // the geometry of the user interface so far.
 
-    vtkKWApplication *app = vtkKWApplication::New();
+    app = vtkKWApplication::New();
     app->SetName("KWPolygonalObjectViewerExample");
     if (option_test)
     {
@@ -106,7 +130,6 @@ int my_main(int argc, char *argv[])
 
 
     // Reading in the Data using a ImageReader
-    vtkImageReader* reader[5];
     for (unsigned int i = 0; i < 5; i++ ) 
     {
         reader[i] = NULL;
@@ -128,18 +151,19 @@ int my_main(int argc, char *argv[])
     }
 
     
-        reader[0]->Delete();
-        reader[0]= vtkImageReader::New();
-        reader[0]->SetDataScalarTypeToShort();
-        reader[0]->SetNumberOfScalarComponents(1);
-        reader[0]->SetDataExtent(0, 255,
-            0, 255, 
-            0, 53);
-        reader[0]->SetFileDimensionality(3);
+        //reader[0]->Delete();
+        //reader[0]= vtkImageReader::New();
+        //reader[0]->SetDataScalarTypeToShort();
+        //reader[0]->SetNumberOfScalarComponents(1);
+        //reader[0]->SetDataExtent(0, 127,
+        //    0, 127, 
+        //    0, 29);
+        //reader[0]->SetFileDimensionality(3);
 
 
-        reader[0]->SetFileName("C:\\prostate.raw");
-        reader[0]->Update();
+        ////reader[0]->SetFilePattern("C:\\Ultrasound_Prostate\\US.*");
+        //reader[0]->SetFileName("C:\\lung128x128x30.raw");
+        //reader[0]->Update();
 
 
         vtkImageShiftScale* scaler = vtkImageShiftScale::New();
@@ -147,7 +171,6 @@ int my_main(int argc, char *argv[])
         scaler->SetInput(reader[0]->GetOutput());
         scaler->Update();
 
-    reader[0]->Update();
     VolumeMapper->SetInput(scaler->GetOutput());
 
     VolumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
@@ -159,8 +182,9 @@ int my_main(int argc, char *argv[])
 
     /// GUI EVENT
     vtkCallbackCommand* GUICallbackCommand = vtkCallbackCommand::New ( );
-    //GUICallbackCommand->SetClientData( reinterpret_cast<void *>(this) );
     GUICallbackCommand->SetCallback( UpdateRenderer);
+    vtkCallbackCommand* AnimCallbackCommand = vtkCallbackCommand::New ( );
+    AnimCallbackCommand->SetCallback( Animate);
 
     /// SETUP THE GUI
     VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
@@ -183,37 +207,17 @@ int my_main(int argc, char *argv[])
     ThresholdRange->AddObserver(vtkKWRange::RangeValueChangingEvent, (vtkCommand*)GUICallbackCommand);
 
 
+    cb_Animate = vtkKWCheckButton::New();
+    cb_Animate->SetParent(win->GetMainPanelFrame());
+    cb_Animate->Create();
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        cb_Animate->GetWidgetName());
+
 
     // Add the actor to the scene
     renderWidget->ResetCamera();
 
-    // Create a material property editor
-
-    // Create a simple animation widget
-
-    vtkKWFrameWithLabel *animation_frame = vtkKWFrameWithLabel::New();
-    animation_frame->SetParent(win->GetMainPanelFrame());
-    animation_frame->Create();
-    animation_frame->SetLabelText("Movie Creator");
-
-    app->Script("pack %s -side top -anchor nw -expand n -fill x -pady 2",
-        animation_frame->GetWidgetName());
-
-    vtkKWSimpleAnimationWidget *animation_widget = 
-        vtkKWSimpleAnimationWidget::New();
-    animation_widget->SetParent(animation_frame->GetFrame());
-    animation_widget->Create();
-    animation_widget->SetRenderWidget(renderWidget);
-    animation_widget->SetAnimationTypeToCamera();
-
-    app->Script("pack %s -side top -anchor nw -expand n -fill x",
-        animation_widget->GetWidgetName());
-
-    // Start the application
-    // If --test was provided, do not enter the event loop and run this example
-    // as a non-interactive test for software quality purposes.
-
-
+    renderWidget->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,  (vtkCommand*)AnimCallbackCommand);
     int ret = 0;
     win->Display();
     if (!option_test)
@@ -234,16 +238,18 @@ int my_main(int argc, char *argv[])
 
     // Deallocate and exit
 
-
+    AnimCallbackCommand->Delete();
+    GUICallbackCommand->Delete();
+    scaler->Delete();
     volume->Delete();
     VolumeMapper->Delete();
     for (unsigned int i = 0; i < 5; i++)
         if (reader[i] != NULL)
             reader[i]->Delete();
 
-    animation_frame->Delete();
-    animation_widget->Delete();
     VolumePropertyWidget->Delete();
+    cb_Animate->Delete();
+    ThresholdRange->Delete();
     renderWidget->Delete();
     win->Delete();
     app->Delete();
