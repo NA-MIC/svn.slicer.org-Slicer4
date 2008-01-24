@@ -93,6 +93,18 @@ vtkOpenIGTLinkTclHelper::SendImageDataScalars(char *sockname)
     }
 }
 
+
+inline int is_little_endian() {
+  short a = 1; return ((char*)&a)[0];
+}
+
+#define BYTE_SWAP_INT16(S) (((S) & 0xFF) << 8 \
+                            | (((S) >> 8) & 0xFF))
+#define BYTE_SWAP_INT32(L) ((BYTE_SWAP_INT16 ((L) & 0xFFFF) << 16) \
+                            | BYTE_SWAP_INT16 (((L) >> 16) & 0xFFFF))
+#define BYTE_SWAP_INT64(LL) ((BYTE_SWAP_INT32 ((LL) & 0xFFFFFFFF) << 32) \
+                             | BYTE_SWAP_INT32 (((LL) >> 32) & 0xFFFFFFFF))
+
 void 
 vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
 {
@@ -143,6 +155,12 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
 
   long long crc;
   memcpy((void*)&crc, &header[50], sizeof(long long));
+
+  if (is_little_endian())
+    {
+      bodySize = BYTE_SWAP_INT64(bodySize);
+      crc = BYTE_SWAP_INT64(crc);
+    }
 
   if (this->AppLogic)
     {
@@ -234,12 +252,6 @@ vtkOpenIGTLinkTclHelper::SendMessage(char *sockname)
       return;
     }
 }
-
-inline int is_little_endian() { short a = 1; return ((char*)&a)[0]; }
-inline swap_byte_longlong(long long a)
-{
-  return ((ntohl(a & 0xFFFFFFFF) << 32) | ntohl((a >> 32) & 0xFFFFFFFF));
-};
 
 void
 vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, long long bodySize, long long crc, int newNode)
