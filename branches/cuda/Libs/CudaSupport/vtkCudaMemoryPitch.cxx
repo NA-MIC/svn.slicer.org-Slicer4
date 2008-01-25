@@ -9,6 +9,9 @@ vtkStandardNewMacro(vtkCudaMemoryPitch);
 
 vtkCudaMemoryPitch::vtkCudaMemoryPitch()
 {
+  this->Location = vtkCudaMemoryBase::MemoryOnDevice;
+  this->Location = vtkCudaMemoryBase::MemoryOnDevice;
+  
     this->Pitch = 0;
 }
 
@@ -31,11 +34,7 @@ void* vtkCudaMemoryPitch::AllocatePitchBytes(size_t width, size_t height, size_t
     return (void*)this->MemPointer;
 }
 
-void* vtkCudaMemoryPitch::AllocateBytes(size_t byte_count)
-{
-    cerr << "Cannot Allocate this type of memory with a count.";
-    return this->MemPointer;
-}
+
 
 void vtkCudaMemoryPitch::Free()
 {  

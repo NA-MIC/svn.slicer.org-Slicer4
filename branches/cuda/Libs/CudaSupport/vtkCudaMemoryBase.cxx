@@ -9,11 +9,12 @@ vtkCudaMemoryBase* vtkCudaMemoryBase::New()
     return vtkCudaMemory::New();
 }
 
-vtkCudaMemoryBase::~vtkCudaMemoryBase()
+vtkCudaMemoryBase::vtkCudaMemoryBase()
 {
+  this->Location = vtkCudaMemoryBase::MemoryOnHost;
 }
 
-vtkCudaMemoryBase::vtkCudaMemoryBase()
+vtkCudaMemoryBase::~vtkCudaMemoryBase()
 {
 }
 

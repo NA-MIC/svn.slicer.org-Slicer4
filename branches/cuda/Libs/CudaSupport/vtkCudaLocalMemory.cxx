@@ -11,6 +11,7 @@ vtkStandardNewMacro(vtkCudaLocalMemory);
 
 vtkCudaLocalMemory::vtkCudaLocalMemory()
 {
+  this->Location = vtkCudaMemoryBase::MemoryOnHost;
 }
 
 vtkCudaLocalMemory::~vtkCudaLocalMemory()
@@ -47,40 +48,31 @@ void vtkCudaLocalMemory::MemSet(int value)
     memset(this->MemPointer, value, Size);
 }
 
-bool vtkCudaLocalMemory::CopyFrom(vtkImageData* data)
-{
-    return false;
-}
 
-bool vtkCudaLocalMemory::CopyTo(vtkImageData* data)
+bool vtkCudaLocalMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc)
 {
-    return false;
-}
-bool vtkCudaLocalMemory::CopyTo(vtkCudaMemory* other)
-{
-    other->AllocateBytes(this->GetSize());
-    if(cudaMemcpy(other->GetMemPointer(), 
-        this->GetMemPointer(),
-        this->GetSize(),
-        cudaMemcpyHostToDevice
+  if(cudaMemcpy(dst, 
+        this->GetMemPointer(), //HACK  + offset,
+        byte_count,
+        (dst_loc == MemoryOnHost) ? cudaMemcpyHostToHost : cudaMemcpyHostToDevice
         ) == cudaSuccess)
         return true;
     else 
         return false;
 }
 
-bool vtkCudaLocalMemory::CopyTo(vtkCudaLocalMemory* other)
+bool vtkCudaLocalMemory::CopyFrom(void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
 {
-    other->AllocateBytes(this->GetSize());
-    if(cudaMemcpy(other->GetMemPointer(), 
-        this->GetMemPointer(),
-        this->GetSize(),
-        cudaMemcpyHostToHost
+    if(cudaMemcpy(this->GetMemPointer(), //HACK  + offset, 
+        src,
+        byte_count,
+        (src_loc == MemoryOnHost) ? cudaMemcpyHostToHost : cudaMemcpyDeviceToHost
         ) == cudaSuccess)
         return true;
     else 
         return false;
 }
+
 
 void vtkCudaLocalMemory::PrintSelf(ostream& os, vtkIndent indent)
 {

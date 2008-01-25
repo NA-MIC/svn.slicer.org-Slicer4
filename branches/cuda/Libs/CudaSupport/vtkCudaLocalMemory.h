@@ -13,18 +13,21 @@ public:
     virtual void Free();
     virtual void MemSet(int value); 
 
-    virtual bool CopyFrom(vtkImageData* data);
-    virtual bool CopyTo(vtkImageData* data);
-
-    virtual bool CopyTo(vtkCudaMemory* other);
-    virtual bool CopyTo(vtkCudaLocalMemory* other);
-
+    virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost);
+    virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost);
+    virtual bool CopyTo(vtkCudaMemoryBase* other) { return this->Superclass::CopyFrom(this); }
+    
     void PrintSelf(ostream& os, vtkIndent indent);
+
 protected:
     vtkCudaLocalMemory();
     virtual ~vtkCudaLocalMemory();
     vtkCudaLocalMemory(const vtkCudaLocalMemory&);
     vtkCudaLocalMemory& operator=(const vtkCudaLocalMemory&);
+    
+  //virtual bool CopyFrom(vtkCudaMemoryPitch* mem);
+  //virtual bool CopyFrom(vtkCudaMemoryArray* mem);
+    
 };
 
 #endif /* VTKCUDALOCALMEMORY_H_ */

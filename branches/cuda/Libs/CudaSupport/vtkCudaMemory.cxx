@@ -32,3 +32,9 @@ void vtkCudaMemory::PrintSelf (ostream &os, vtkIndent indent)
     if (this->GetMemPointer() == NULL)
         os << "Not yet allocated";
 }
+
+
+bool vtkCudaMemory::CopyFrom(vtkCudaMemory* mem)
+{
+  return this->CopyFrom(mem->GetMemPointer(), mem->GetSize(), (size_t)0, mem->GetMemoryLocation());  
+}
