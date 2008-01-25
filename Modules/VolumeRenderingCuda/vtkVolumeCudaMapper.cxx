@@ -124,7 +124,8 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
 
     if (input != NULL)
     {
-        this->CudaInputBuffer->CopyFrom(input);
+      // We do this automatically
+       // this->CudaInputBuffer->CopyFrom(input);
     }
     else
     {
@@ -220,7 +221,9 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     float lightVec[3]={0, 0, 1};
 
 
-//    this->CudaInputBuffer->CopyFrom(this->GetInput());
+    // This should update the the CudaInputBuffer only when needed.
+    if (this->GetInput()->GetMTime() > this->GetMTime())
+      this->CudaInputBuffer->CopyFrom(this->GetInput());
 
 
     vtkRenderWindow *renWin= renderer->GetRenderWindow();
