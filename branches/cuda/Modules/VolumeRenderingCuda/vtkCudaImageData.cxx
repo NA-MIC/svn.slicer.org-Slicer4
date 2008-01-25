@@ -2,7 +2,7 @@
 
 #include "vtkObjectFactory.h"
 
-#include "vtkCudaMemory.h"
+#include "vtkCudaDeviceMemory.h"
 
 
 vtkCxxRevisionMacro(vtkCudaImageData, "$ Revision: 1.0 $");
@@ -11,7 +11,7 @@ vtkStandardNewMacro(vtkCudaImageData);
 
 vtkCudaImageData::vtkCudaImageData()
 {
-    this->Data = vtkCudaMemory::New();
+    this->Data = vtkCudaDeviceMemory::New();
 }
 
 vtkCudaImageData::~vtkCudaImageData()

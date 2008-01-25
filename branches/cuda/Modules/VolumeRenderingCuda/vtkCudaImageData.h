@@ -15,7 +15,7 @@ public:
     virtual void PrintSelf (ostream &os, vtkIndent indent);
 
 
-    virtual void CopyStructure (vtkDataSet *ds);
+  //  virtual void CopyStructure (vtkDataSet *ds);
 
 protected:
     vtkCudaImageData();

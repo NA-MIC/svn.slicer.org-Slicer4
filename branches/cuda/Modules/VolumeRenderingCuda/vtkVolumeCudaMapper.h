@@ -4,11 +4,10 @@
 #include "vtkVolumeMapper.h"
 #include "vtkVolumeRenderingCudaModule.h"
 
-class vtkCudaMemory;
+class vtkCudaDeviceMemory;
 class vtkImageData;
 class vtkCudaHostMemory;
 class vtkCudaLocalMemory;
-class vtkCudaMemoryArray;
 
 class vtkVolumeProperty;
 
@@ -49,17 +48,17 @@ protected:
     unsigned int OutputDataSize[2];
 
 
-    vtkCudaMemory* CudaInputBuffer;
-    vtkCudaMemory* CudaOutputBuffer;
+    vtkCudaDeviceMemory* CudaInputBuffer;
+    vtkCudaDeviceMemory* CudaOutputBuffer;
 //BTX
     RenderMode CurrentRenderMode;
 //ETX
     vtkImageData* LocalOutputImage;
 
     vtkCudaHostMemory* LocalColorTransferFunction;
-    vtkCudaMemory* CudaColorTransferFunction;
+    vtkCudaDeviceMemory* CudaColorTransferFunction;
     vtkCudaHostMemory* LocalAlphaTransferFunction;
-    vtkCudaMemory* CudaAlphaTransferFunction;
+    vtkCudaDeviceMemory* CudaAlphaTransferFunction;
 
 
     unsigned int Threshold[2];
