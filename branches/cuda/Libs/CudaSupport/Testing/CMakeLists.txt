@@ -5,7 +5,7 @@ ADD_EXECUTABLE(MemoryCopyTest
 )
 
 ADD_TEST(MemoryCopyTest
-  MemoryCopyTest
+  ${EXECUTABLE_OUTPUT_PATH}/MemoryCopyTest
 )
 
 TARGET_LINK_LIBRARIES(MemoryCopyTest
