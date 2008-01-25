@@ -25,7 +25,8 @@
 
 #include "vtkImageViewer.h"
 #include "vtkImageWriter.h"
-#include "vtkImageShiftScale.h"
+#include "vtkCudaImageDataFilter.h"
+#include "vtkCudaImageData.h"
 #include "vtkImageData.h"
 
 vtkKWApplication *app;
@@ -166,12 +167,11 @@ int my_main(int argc, char *argv[])
         //reader[0]->Update();
 
 
-        vtkImageShiftScale* scaler = vtkImageShiftScale::New();
-        scaler->SetOutputScalarTypeToUnsignedChar();
-        scaler->SetInput(reader[0]->GetOutput());
-        scaler->Update();
+    vtkCudaImageDataFilter* filter = vtkCudaImageDataFilter::New();
+    filter->SetInput(reader[0]->GetOutput());
+    filter->Update();
 
-    VolumeMapper->SetInput(scaler->GetOutput());
+    VolumeMapper->SetInput(filter->GetOutput());
 
     VolumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
 
@@ -240,7 +240,7 @@ int my_main(int argc, char *argv[])
 
     AnimCallbackCommand->Delete();
     GUICallbackCommand->Delete();
-    scaler->Delete();
+    filter->Delete();
     volume->Delete();
     VolumeMapper->Delete();
     for (unsigned int i = 0; i < 5; i++)
