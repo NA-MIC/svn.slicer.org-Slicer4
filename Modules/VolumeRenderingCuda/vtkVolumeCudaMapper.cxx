@@ -26,7 +26,7 @@
 // CUDA
 #include "vtkCudaSupport.h"
 #include "vtkImageData.h"
-#include "vtkCudaMemory.h"
+#include "vtkCudaDeviceMemory.h"
 #include "vtkCudaHostMemory.h"
 #include "vtkCudaMemoryArray.h"
 
@@ -61,8 +61,8 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
     this->LocalOutputImage = vtkImageData::New();
 
-    this->CudaInputBuffer = vtkCudaMemory::New();
-    this->CudaOutputBuffer = vtkCudaMemory::New();
+    this->CudaInputBuffer = vtkCudaDeviceMemory::New();
+    this->CudaOutputBuffer = vtkCudaDeviceMemory::New();
 
     this->Texture = 0;
     this->BufferObject = 0;
@@ -87,12 +87,12 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     }
     extensions->Delete();
 
-    this->CudaColorTransferFunction = vtkCudaMemory::New();
+    this->CudaColorTransferFunction = vtkCudaDeviceMemory::New();
     this->CudaColorTransferFunction->Allocate<float3>(256);
     this->LocalColorTransferFunction = vtkCudaHostMemory::New();
     this->LocalColorTransferFunction->Allocate<float3>(256);
 
-    this->CudaAlphaTransferFunction = vtkCudaMemory::New();
+    this->CudaAlphaTransferFunction = vtkCudaDeviceMemory::New();
     this->CudaAlphaTransferFunction->Allocate<float>(256);
     this->LocalAlphaTransferFunction = vtkCudaHostMemory::New();
     this->LocalAlphaTransferFunction->Allocate<float>(256);

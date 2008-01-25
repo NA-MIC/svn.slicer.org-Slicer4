@@ -23,6 +23,7 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
   #### CUDA MEMORY RUNTIME CLASSES ####
     vtkCudaMemoryBase.cxx
     vtkCudaMemory.cxx
+    vtkCudaDeviceMemory.cxx
     vtkCudaHostMemory.cxx
     vtkCudaLocalMemory.cxx
 
@@ -43,15 +44,16 @@ CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}
 # --------------------------------------------------------------------------
 # Wrapping
 
+##DISABLED THE TIKL Wrapper
 INCLUDE_DIRECTORIES(
   ${CudaSupport_SOURCE_DIR}
   ${CudaSupport_BINARY_DIR}
   )
-INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(CudaSupport
-         CudaSupport_TCL_SRCS 
-         "${CudaSupport_SRCS}" 
-         "")
+#INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+#VTK_WRAP_TCL3(CudaSupport
+#         CudaSupport_TCL_SRCS 
+#         "${CudaSupport_SRCS}" 
+#         "")
 
 # --------------------------------------------------------------------------
 # Build the library

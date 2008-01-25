@@ -10,6 +10,7 @@ public:
     static vtkCudaMemoryPitch* New();
 
     void* AllocatePitchBytes(size_t width, size_t height, size_t typeSize);
+    virtual void* AllocateBytes(size_t byte_count);
     virtual void Free();
 
     virtual void MemSet(int value);

@@ -31,10 +31,21 @@ void* vtkCudaMemoryPitch::AllocatePitchBytes(size_t width, size_t height, size_t
     return (void*)this->MemPointer;
 }
 
+void* vtkCudaMemoryPitch::AllocateBytes(size_t byte_count)
+{
+    cerr << "Cannot Allocate this type of memory with a count.";
+    return this->MemPointer;
+}
+
 void vtkCudaMemoryPitch::Free()
 {  
-    this->Superclass::Free();
-    this->Pitch = 0;
+    if (this->MemPointer != NULL)
+    {
+        cudaFree(this->MemPointer);  
+        this->MemPointer = NULL;
+        this->Size = 0;
+        this->Pitch = 0;
+    }
 }
 
 
