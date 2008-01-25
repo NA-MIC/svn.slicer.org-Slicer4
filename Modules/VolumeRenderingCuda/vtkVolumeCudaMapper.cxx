@@ -200,6 +200,7 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
     double range[2];
     property->GetRGBTransferFunction()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], 256, this->LocalColorTransferFunction->GetMemPointerAs<float>());
+    
     LocalColorTransferFunction->CopyTo(CudaColorTransferFunction);
 
     property->GetScalarOpacity()->GetTable(range[0], range[1], 256, this->LocalAlphaTransferFunction->GetMemPointerAs<float>());
@@ -223,7 +224,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
     // This should update the the CudaInputBuffer only when needed.
     if (this->GetInput()->GetMTime() > this->GetMTime())
-      this->CudaInputBuffer->CopyFrom(this->GetInput());
+      this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetActualMemorySize() * 1024);
 
 
     vtkRenderWindow *renWin= renderer->GetRenderWindow();
@@ -325,7 +326,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     }
     else // (this->CurrentRenderMode == RenderToMemory)
     {
-        this->CudaOutputBuffer->CopyTo(this->LocalOutputImage);
+        this->CudaOutputBuffer->CopyTo(this->LocalOutputImage->GetScalarPointer(), this->LocalOutputImage->GetActualMemorySize() * 1024);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
     }
     log->StopTimer();

@@ -12,7 +12,7 @@ public:
 
     //BTX
     template<typename T>
-    void SetFormat() { this->Descriptor = cudaCreateChannelDesc<T>(); }
+      void SetFormat() { this->Descriptor = cudaCreateChannelDesc<T>(); }
     //ETX
     void SetChannelDescriptor(const cudaChannelFormatDesc& desc) { this->Descriptor = desc; }
 
@@ -28,13 +28,17 @@ public:
     size_t GetWidth() const { return this->Width; }
     size_t GetHeight() const { return this->Height; }
 
+  //HACK    
+    virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost) { return false; }
+    virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) { return false; }
+
     virtual void PrintSelf(ostream &os, vtkIndent indent);
 
 protected:
     vtkCudaMemoryArray();
     virtual ~vtkCudaMemoryArray();
     vtkCudaMemoryArray(const vtkCudaMemoryArray&);
-    vtkCudaMemoryArray operator=(const vtkCudaMemoryArray&);
+    vtkCudaMemoryArray& operator=(const vtkCudaMemoryArray&);
 
     cudaChannelFormatDesc Descriptor; //!< The Descriptor used to allocate memory
     cudaArray* Array; //!< The Array with the memory that was allocated.

@@ -14,29 +14,25 @@ public:
         { return (T*)this->AllocateBytes(count * sizeof(T)); }
     //ETX
 
-    virtual void Free() = 0;
-    virtual void MemSet(int value) = 0;
-
     void* GetMemPointer() const { return this->MemPointer; }
     //BTX
     template<typename T> T* GetMemPointerAs() const { return (T*)this->GetMemPointer(); }
     //ETX
+   
+  virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) = 0;
+    virtual bool CopyTo(vtkCudaMemoryBase* other) { return other->CopyFrom(this); }
 
-    virtual bool CopyFrom(vtkImageData* data) { return false ; }
-    virtual bool CopyTo(vtkImageData* data) { return false; }
-    virtual bool CopyTo(vtkCudaMemory* other) { return false; }
-    virtual bool CopyTo(vtkCudaLocalMemory* other) { return false; }
-    virtual bool CopyTo(vtkCudaMemoryArray* other) { return false; }
-
-    virtual void PrintSelf (ostream &os, vtkIndent indent);
+    virtual void PrintSelf(ostream &os, vtkIndent indent);
 
 protected:
     vtkCudaMemory();
     virtual ~vtkCudaMemory();
     vtkCudaMemory(const vtkCudaMemory&);
-    vtkCudaMemory& operator=(const vtkCudaMemory&);
+    vtkCudaMemory& operator=(const vtkCudaMemory&); 
 
     void* MemPointer;
+    
+    bool CopyFrom(vtkCudaMemory* mem);
 };
 
 #endif /*VTKCUDAMEMORY_H_*/

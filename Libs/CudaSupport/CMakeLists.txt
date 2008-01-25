@@ -29,7 +29,6 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 
     vtkCudaMemoryPitch.cxx
     vtkCudaMemoryArray.cxx
-
 )
 
 INCLUDE_DIRECTORIES(

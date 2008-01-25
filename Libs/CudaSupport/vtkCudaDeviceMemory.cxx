@@ -15,6 +15,9 @@ vtkStandardNewMacro(vtkCudaDeviceMemory);
 
 vtkCudaDeviceMemory::vtkCudaDeviceMemory()
 {
+  this->Location = vtkCudaMemoryBase::MemoryOnDevice;
+  
+  
     this->MemPointer = NULL;
     this->Size = 0;
 }
@@ -58,6 +61,32 @@ void vtkCudaDeviceMemory::MemSet(int value)
     cudaMemset(this->MemPointer, value, this->Size);
 }
 
+bool vtkCudaDeviceMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc)
+{
+  if(cudaMemcpy(dst, 
+        this->GetMemPointer(), //HACK + offset,
+        byte_count,
+        (dst_loc == MemoryOnHost) ? cudaMemcpyDeviceToHost : cudaMemcpyDeviceToDevice
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
+}
+
+bool vtkCudaDeviceMemory::CopyFrom(void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
+{
+    if(cudaMemcpy(this->GetMemPointer(), //HACK + offset, 
+        src,
+        byte_count,
+        (src_loc == MemoryOnHost) ? cudaMemcpyHostToDevice : cudaMemcpyDeviceToDevice
+        ) == cudaSuccess)
+        return true;
+    else 
+        return false;
+}
+
+
+/* vtkImageData
 bool vtkCudaDeviceMemory::CopyFrom(vtkImageData* data)
 {
     if (!this->AllocateBytes(data->GetActualMemorySize()*1024))
@@ -90,33 +119,8 @@ bool vtkCudaDeviceMemory::CopyTo(vtkImageData* data)
     else 
         return false;
 }
-
-bool vtkCudaDeviceMemory::CopyTo(vtkCudaDeviceMemory* other)
-{
-    other->AllocateBytes(this->GetSize());
-    if(cudaMemcpy(other->GetMemPointer(), 
-        this->GetMemPointer(),
-        this->GetSize(),
-        cudaMemcpyDeviceToDevice
-        ) == cudaSuccess)
-        return true;
-    else 
-        return false;
-}
-
-bool vtkCudaDeviceMemory::CopyTo(vtkCudaLocalMemory* other)
-{
-    other->AllocateBytes(this->GetSize());
-    if(cudaMemcpy(other->GetMemPointer(), 
-        this->GetMemPointer(),
-        this->GetSize(),
-        cudaMemcpyDeviceToHost
-        ) == cudaSuccess)
-        return true;
-    else 
-        return false;
-}
-
+*/
+/* ARRAY
 bool vtkCudaDeviceMemory::CopyTo(vtkCudaMemoryArray* other)
 {
     if (other->GetSize() < this->GetSize())
@@ -135,10 +139,9 @@ bool vtkCudaDeviceMemory::CopyTo(vtkCudaMemoryArray* other)
     else 
         return false;
 }
+*/
 
 void vtkCudaDeviceMemory::PrintSelf (ostream &os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
-    if (this->GetMemPointer() == NULL)
-        os << "Not yet allocated";
 }

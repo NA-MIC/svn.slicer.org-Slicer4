@@ -10,24 +10,13 @@ public:
     static  vtkCudaDeviceMemory* New();
 
     virtual void* AllocateBytes(size_t byte_count);
-    //BTX
-    template<typename T> T* Allocate(size_t count) 
-        { return (T*)this->AllocateBytes(count * sizeof(T)); }
-    //ETX
 
     virtual void Free();
     virtual void MemSet(int value);
-
-    void* GetMemPointer() const { return this->MemPointer; }
-    //BTX
-    template<typename T> T* GetMemPointerAs() const { return (T*)this->GetMemPointer(); }
-    //ETX
-
-    virtual bool CopyFrom(vtkImageData* data);
-    virtual bool CopyTo(vtkImageData* data);
-    virtual bool CopyTo(vtkCudaDeviceMemory* other);
-    virtual bool CopyTo(vtkCudaLocalMemory* other);
-    virtual bool CopyTo(vtkCudaMemoryArray* other);
+    
+    virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost);
+    virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost);
+    virtual bool CopyTo(vtkCudaMemoryBase* other) { return this->Superclass::CopyFrom(this); }
 
     virtual void PrintSelf (ostream &os, vtkIndent indent);
 
@@ -37,7 +26,9 @@ protected:
     vtkCudaDeviceMemory(const vtkCudaDeviceMemory&);
     vtkCudaDeviceMemory& operator=(const vtkCudaDeviceMemory&);
 
-    void* MemPointer;
+  //virtual bool CopyFrom(vtkCudaMemoryPitch* mem);
+  //virtual bool CopyFrom(vtkCudaMemoryArray* mem);
+
 };
 
 #endif /*VTKCUDADEVICEMEMORY_H_*/

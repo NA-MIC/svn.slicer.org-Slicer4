@@ -8,6 +8,8 @@ vtkStandardNewMacro(vtkCudaMemoryArray);
 
 vtkCudaMemoryArray::vtkCudaMemoryArray()
 {
+  this->Location = vtkCudaMemoryBase::MemoryOnDevice;
+
     this->Array = NULL;
     this->Width = this->Height = 0;
     this->Descriptor.x = this->Descriptor.y = this->Descriptor.z = 0;
