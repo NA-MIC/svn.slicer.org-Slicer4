@@ -365,7 +365,7 @@ void vtkMRMLDisplayableNode::AddAndObserveDisplayNode(vtkMRMLDisplayNode *dnode)
 //----------------------------------------------------------------------------
 void vtkMRMLDisplayableNode::SetAndObservePolyData(vtkPolyData *polyData)
 {
-if (this->PolyData != NULL)
+  if (this->PolyData != NULL)
     {
     this->PolyData->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
     }
