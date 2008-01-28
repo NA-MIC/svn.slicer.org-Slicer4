@@ -184,9 +184,9 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     { 
     // foreach of the broker's observations see if it is in the list of items to be removed
-    std::vector< vtkObservation *>::iterator searchIter 
+    std::vector< vtkObservation *>::iterator searchIter;
     bool inRemoveList = false;
-    for(searchIter=observations.begin(); searchIter != observations.end(); searchItr++)  
+    for(searchIter=observations.begin(); searchIter != observations.end(); searchIter++)  
       {
       if (*obsIter == *searchIter)
         {
@@ -207,9 +207,9 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
   for(queueIter=this->EventQueue.begin(); queueIter != this->EventQueue.end(); queueIter++)  
     { 
     // foreach of the broker's observations see if it is in the list of items to be removed
-    std::vector< vtkObservation *>::iterator searchIter 
+    std::vector< vtkObservation *>::iterator searchIter;
     bool inRemoveList = false;
-    for(searchIter=observations.begin(); searchIter != observations.end(); searchItr++)  
+    for(searchIter=observations.begin(); searchIter != observations.end(); searchIter++)  
       {
       if (*queueIter == *searchIter)
         {
@@ -224,8 +224,12 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
     }
   this->EventQueue = newEventQueue;
 
-  this->DetachObservation( observation );
-  observation->Delete();
+  std::vector< vtkObservation *>::iterator removeIter;
+  for(removeIter=observations.begin(); removeIter != observations.end(); removeIter++)  
+    {
+    this->DetachObservation( *removeIter );
+    (*removeIter)->Delete();
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -236,7 +240,7 @@ void vtkEventBroker::RemoveObservations (vtkObject *observer)
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     {
-    if ( *obsIter->GetObserver() == observer )
+    if ( (*obsIter)->GetObserver() == observer )
       {
       removeList.push_back( *obsIter );
       }
@@ -252,7 +256,8 @@ void vtkEventBroker::RemoveObservations (vtkObject *subject, vtkObject *observer
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     {
-    if ( *obsIter->GetObserver() == observer && *obsIter->GetSubject == subject )
+    if ( (*obsIter)->GetObserver() == observer && 
+         (*obsIter)->GetSubject() == subject )
       {
       removeList.push_back( *obsIter );
       }
@@ -268,8 +273,9 @@ void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     {
-    if ( *obsIter->GetObserver() == observer && *obsIter->GetSubject == subject &&
-         *obsIter->GetEvent() == event )
+    if ( (*obsIter)->GetObserver() == observer && 
+         (*obsIter)->GetSubject() == subject &&
+         (*obsIter)->GetEvent() == event )
       {
       removeList.push_back( *obsIter );
       }
@@ -285,8 +291,10 @@ void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     {
-    if ( *obsIter->GetObserver() == observer && *obsIter->GetSubject == subject &&
-         *obsIter->GetEvent() == event && *obsIter->GetCallbackCommand() == notify )
+    if ( (*obsIter)->GetObserver() == observer && 
+         (*obsIter)->GetSubject() == subject &&
+         (*obsIter)->GetEvent() == event && 
+         (*obsIter)->GetObservationCallbackCommand() == notify )
       {
       removeList.push_back( *obsIter );
       }
