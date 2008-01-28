@@ -85,6 +85,17 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   // Remove observation from the broker and event queue
   void RemoveObservation (vtkObservation *observation);
 
+  // Description:
+  // Remove all observations that match
+  // - various signatures provided as helpers
+  //BTX
+  void RemoveObservations (std::vector< vtkObservation *>observations);
+  //ETX
+  void RemoveObservations (vtkObject *observer);
+  void RemoveObservations (vtkObject *subject, vtkObject *observer);
+  void RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer);
+  void RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer, vtkCallbackCommand *notify);
+
   // Description
   // Accessors for intropsection
   // Note: vtkCollection object is allocated internally 
