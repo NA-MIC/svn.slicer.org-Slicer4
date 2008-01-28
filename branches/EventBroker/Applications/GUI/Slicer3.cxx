@@ -2330,6 +2330,9 @@ int Slicer3_main(int argc, char *argv[])
     scene->Clear(1);
     scene->Delete ();
 
+    // -- event broker
+    vtkEventBroker::GetInstance()->Delete(); 
+
     //--- application last
     slicerApp->Delete ();
 
