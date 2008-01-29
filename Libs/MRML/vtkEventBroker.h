@@ -181,11 +181,6 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   void ProcessEventQueue (); 
 
   // Description:
-  // the static function used by the command callback
-  static void Callback(vtkObject *caller, 
-      unsigned long eid, void *clientData, void *callData);
-
-  // Description:
   // Sets the method pointer to be used for processing script observations
   //BTX
   void SetScriptHandler ( const char* (*scriptHandler) (const char* script) )
@@ -200,12 +195,6 @@ protected:
   virtual ~vtkEventBroker();
   vtkEventBroker(const vtkEventBroker&);
   void operator=(const vtkEventBroker&);
-
-  // Description:
-  // Holder for generic callback used by the broker
-  // - this catches all the registered events for a subject
-  // - this also catched delete events from subjects and observers
-  vtkCallbackCommand *CallbackCommand;
 
   //BTX
   std::vector< vtkObservation * > Observations;
