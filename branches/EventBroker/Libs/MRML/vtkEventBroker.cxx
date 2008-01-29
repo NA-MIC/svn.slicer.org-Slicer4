@@ -54,6 +54,7 @@ vtkEventBroker* vtkEventBroker::GetInstance()
 vtkEventBroker::vtkEventBroker()
 {
   this->EventMode = vtkEventBroker::Synchronous;
+  this->EventLogging = 0;
   this->LogFileName = NULL;
   this->ScriptHandler = NULL;
 }
@@ -529,31 +530,11 @@ void vtkEventBroker::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->vtkObject::PrintSelf(os, indent);
   
-  
-  if ( this->CallbackCommand ) os << indent << "CallbackCommand: " << this->CallbackCommand << "\n";
-  else os << indent << "CallbackCommand: " << "(none) \n";
-
   os << indent << "NumberOfObservations: " << this->GetNumberOfObservations() << "\n";
   os << indent << "NumberOfQueueObservations: " << this->GetNumberOfQueuedObservations() << "\n";
   os << indent << "EventMode: " << this->GetEventModeAsString() << "\n";
   os << indent << "EventLogging: " << this->EventLogging << "\n";
   os << indent << "LogFileName: " <<
     (this->LogFileName ? this->LogFileName : "(none)") << "\n";
-}
-
-//----------------------------------------------------------------------------
-// Description:
-// the Callback is a static function to relay events 
-//
-void 
-vtkEventBroker::Callback(vtkObject *caller, 
-            unsigned long eid, void *clientData, void *callData)
-{
-  vtkObservation *observation = reinterpret_cast<vtkObservation *>(clientData);
-  vtkEventBroker *self = observation->GetEventBroker();
-
-  vtkDebugWithObjectMacro(self, "In vtkEvenBroker Callback");
-
-  self->ProcessEvent(observation, caller, eid, callData);
 }
 
