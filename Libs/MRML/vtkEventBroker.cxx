@@ -162,7 +162,7 @@ void vtkEventBroker::DetachObservation ( vtkObservation *observation )
 
   if ( observation->GetEventTag() )
     {
-    observation->GetObserver()->RemoveObserver( observation->GetEventTag() );
+    observation->GetSubject()->RemoveObserver( observation->GetEventTag() );
     observation->SetEventTag( 0 );
     }
 }
@@ -178,7 +178,13 @@ void vtkEventBroker::RemoveObservation ( vtkObservation *observation )
 //----------------------------------------------------------------------------
 void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observations)
 {
-  // remove from observation list
+  // remove passed observations from:
+  // - brokers observation list
+  // - current event queue
+  // - detach from subject (and observer)
+  // - delete the observation
+
+  // make a new broker observation list that doesn't include the passed observations
   std::vector< vtkObservation *> newObservations;
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
@@ -224,6 +230,7 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
     }
   this->EventQueue = newEventQueue;
 
+  // detach and delete each of the observations
   std::vector< vtkObservation *>::iterator removeIter;
   for(removeIter=observations.begin(); removeIter != observations.end(); removeIter++)  
     {
@@ -294,7 +301,7 @@ void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event
     if ( (*obsIter)->GetObserver() == observer && 
          (*obsIter)->GetSubject() == subject &&
          (*obsIter)->GetEvent() == event && 
-         (*obsIter)->GetObservationCallbackCommand() == notify )
+         (*obsIter)->GetCallbackCommand() == notify )
       {
       removeList.push_back( *obsIter );
       }
