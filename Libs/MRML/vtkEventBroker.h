@@ -63,6 +63,15 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   // Get the singleton
   static vtkEventBroker* GetInstance();
 
+  // Description:
+  // the static function used by the command callback (used by vtkObservation)
+  // - each observation has a vtkCallbackCommand method which stores 
+  //   the pointer to the vtkObservation class as the clientData
+  // - the vtkObservation has a pointer to vtkEventBroker,
+  //   which knows how to process that event for that Observation
+  static void Callback(vtkObject *caller, 
+      unsigned long eid, void *clientData, void *callData);
+
   //// Adding and Removing Observation objects
 
   // Description:

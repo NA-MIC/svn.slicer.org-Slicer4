@@ -53,6 +53,8 @@ vtkEventBroker* vtkEventBroker::GetInstance()
 //----------------------------------------------------------------------------
 vtkEventBroker::vtkEventBroker()
 {
+  this->CallbackCommand = vtkCallbackCommand::New();
+  this->CallbackCommand
   this->EventMode = vtkEventBroker::Synchronous;
   this->EventLogging = 0;
   this->LogFileName = NULL;
@@ -536,5 +538,21 @@ void vtkEventBroker::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "EventLogging: " << this->EventLogging << "\n";
   os << indent << "LogFileName: " <<
     (this->LogFileName ? this->LogFileName : "(none)") << "\n";
+}
+
+//----------------------------------------------------------------------------
+// Description:
+// the Callback is a static function to relay events 
+//
+void 
+vtkEventBroker::Callback(vtkObject *caller, 
+            unsigned long eid, void *clientData, void *callData)
+{
+  vtkObservation *observation = reinterpret_cast<vtkObservation *>(clientData);
+  vtkEventBroker *self = observation->GetEventBroker();
+
+  vtkDebugWithObjectMacro(self, "In vtkEvenBroker Callback");
+
+  self->ProcessEvent(observation, caller, eid, callData);
 }
 
