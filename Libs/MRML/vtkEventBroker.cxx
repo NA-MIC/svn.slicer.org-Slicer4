@@ -53,8 +53,6 @@ vtkEventBroker* vtkEventBroker::GetInstance()
 //----------------------------------------------------------------------------
 vtkEventBroker::vtkEventBroker()
 {
-  this->CallbackCommand = vtkCallbackCommand::New();
-  this->CallbackCommand
   this->EventMode = vtkEventBroker::Synchronous;
   this->EventLogging = 0;
   this->LogFileName = NULL;
