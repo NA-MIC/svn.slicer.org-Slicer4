@@ -63,17 +63,17 @@ void vtkProstateNavDataStream::AddCallbacks()
     }
 
   this->AddCallback("cb_robot",
-                    (vtkIGTMessageAttributeSet::MessageHandlingFunction*)OnRecieveMessageFromRobot,
+                    (vtkIGTMessageAttributeSet::MessageHandlingFunction*)OnReceiveMessageFromRobot,
                     this->AttrSetRobot, NULL);
 
   this->AddCallback("cb_scanner",
-                    (vtkIGTMessageAttributeSet::MessageHandlingFunction*)OnRecieveMessageFromScanner,
+                    (vtkIGTMessageAttributeSet::MessageHandlingFunction*)OnReceiveMessageFromScanner,
                     this->AttrSetScanner, NULL);
 
 } 
 
 
-void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeSet* attrSet, void* arg)
+void vtkProstateNavDataStream::OnReceiveMessageFromRobot(vtkIGTMessageAttributeSet* attrSet, void* arg)
 {
   std::vector<float> position(3, 0.0);
   std::vector<float> orientation(4, 0.0);
@@ -154,7 +154,7 @@ void vtkProstateNavDataStream::OnRecieveMessageFromRobot(vtkIGTMessageAttributeS
 }
 
 
-void vtkProstateNavDataStream::OnRecieveMessageFromScanner(vtkIGTMessageAttributeSet* attrSet, void* arg)
+void vtkProstateNavDataStream::OnReceiveMessageFromScanner(vtkIGTMessageAttributeSet* attrSet, void* arg)
 {
   vtkProstateNavDataStream* ds = dynamic_cast<vtkProstateNavDataStream*>(attrSet->GetOpenTrackerStream());
   attrSet->GetAttribute("image", ds->RealtimeImage);
