@@ -381,7 +381,7 @@ int vtkEventBroker::GenerateGraphFile ( const char *graphFile )
         << observation->GetSubject()->GetClassName() 
         << " [ label = \"" 
         << vtkCommand::GetStringFromEventId( observation->GetEvent() )
-        << "\" ]\n;" ;
+        << "\" ];\n" ;
     }
 
 
@@ -521,7 +521,8 @@ void vtkEventBroker::ProcessEventQueue ()
 {
   while ( this->GetNumberOfQueuedObservations() > 0 )
     {
-    this->InvokeObservation( this->DequeueObservation() );
+    this->InvokeObservation( this->EventQueue.front() );
+    this->DequeueObservation();
     }
 }
 
