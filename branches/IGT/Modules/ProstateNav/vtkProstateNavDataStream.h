@@ -35,8 +35,8 @@ public:
   void Init(const char *configFile);
   
   void AddCallbacks();
-  static void OnRecieveMessageFromRobot(vtkIGTMessageAttributeSet* data, void* arg);
-  static void OnRecieveMessageFromScanner(vtkIGTMessageAttributeSet* data, void* arg);
+  static void OnReceiveMessageFromRobot(vtkIGTMessageAttributeSet* data, void* arg);
+  static void OnReceiveMessageFromScanner(vtkIGTMessageAttributeSet* data, void* arg);
 
   //BTX
   std::string GetRobotStatus();
