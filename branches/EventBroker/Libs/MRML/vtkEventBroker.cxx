@@ -391,6 +391,24 @@ int vtkEventBroker::GenerateGraphFile ( const char *graphFile )
 }
 
 //----------------------------------------------------------------------------
+void vtkEventBroker::OpenLogFile ()
+{
+  this->CloseLogFile();
+  this->LogFile.open( this->LogFileName, std::ios::out );
+  this->LogFile << "strict digraph G {\n";
+}
+
+//----------------------------------------------------------------------------
+void vtkEventBroker::CloseLogFile ()
+{
+  if ( this->LogFile.is_open() )
+    {
+    this->LogFile << "}\n";
+    this->LogFile.close();
+    }
+}
+
+//----------------------------------------------------------------------------
 void vtkEventBroker::LogEvent ( vtkObservation *observation )
 {
   if ( this->LogFileName == NULL )
@@ -402,15 +420,13 @@ void vtkEventBroker::LogEvent ( vtkObservation *observation )
   // start an event log if needed
   if ( this->EventLogging && !this->LogFile.is_open() )
     {
-    this->LogFile.open( this->LogFileName, std::ios::out );
-    this->LogFile << "strict digraph G {\n";
+    this->OpenLogFile();
     }
 
   // close the log if done
   if ( !this->EventLogging && this->LogFile.is_open() )
     {
-    this->LogFile << "}\n";
-    this->LogFile.close();
+    this->CloseLogFile();
     return;
     }
 

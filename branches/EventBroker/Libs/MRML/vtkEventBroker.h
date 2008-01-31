@@ -138,6 +138,11 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   vtkGetStringMacro (LogFileName);
 
   // Description:
+  // Open and close the log file
+  void OpenLogFile ();
+  void CloseLogFile ();
+
+  // Description:
   // actually write to the log file (also manages state of the LogFile ivar
   // based on the filename and the EventLogging variable)
   void LogEvent (vtkObservation *observation);
