@@ -73,8 +73,8 @@ vtkEventBroker::~vtkEventBroker()
   // close the event log if needed
   if ( this->LogFile.is_open() )
     {
+    this->CloseLogFile();
     this->EventLoggingOff();
-    this->LogEvent( NULL );
     }
 }
 
