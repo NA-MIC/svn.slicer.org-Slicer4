@@ -24,7 +24,7 @@ class vtkSlicerBoxWidget;
 class vtkSlicerColorDisplayWidget;
 class vtkSlicerNodeSelectorWidget;
 class vtkMRMLLinearTransformNode;
-
+class vtkTransform;
 
 
 class VTK_VOLUMERENDERINGMODULE_EXPORT vtkSlicerVRGrayscaleHelper :public vtkSlicerVRHelper
@@ -37,7 +37,6 @@ public:
     virtual void InitializePipelineNewCurrentNode(void);
     virtual void Rendering(void);
     virtual void UpdateRendering(void);
-    virtual void ShutdownPipeline(void);
     virtual void ProcessVolumeRenderingEvents(vtkObject *caller,unsigned long eid,void *callData);
     void ScheduleRender(void);
     void ScheduleStageZero(void);
@@ -96,6 +95,8 @@ protected:
     vtkKWCheckButtonWithLabel *CB_Clipping;
 
     vtkMRMLLinearTransformNode *CurrentTransformNodeCropping;
+     vtkTransform *AdditionalClippingTransform;
+     vtkTransform *InverseAdditionalClippingTransform;
 
     //ColorDisplay Widget
     vtkKWCheckButtonWithLabel *CB_LabelmapMode;
@@ -125,8 +126,8 @@ protected:
 
 
     //Render logic
-    vtkRenderer *renViewport;
-    vtkRenderer *renPlane;
+    vtkRenderer *RenViewport;
+    vtkRenderer *RenPlane;
     int RenderPlane;
     vtkSlicerVolumeTextureMapper3D *MapperTexture;
     vtkSlicerFixedPointVolumeRayCastMapper *MapperRaycast;
@@ -140,7 +141,7 @@ protected:
     //Time for the last Low Resolution Rendering
     double LastTimeLowRes;
     //Timer
-    vtkTimerLog *timer;
+    vtkTimerLog *Timer;
     //Which time would we like to achieve
     double GoalLowResTime;
     //Area in which no change in Factor will be made.
@@ -148,12 +149,12 @@ protected:
     //How long to wait, before Rendering in High Resolution
     double TimeToWaitForHigherStage;
     //0 interactive, 1 High Resolution Texture VR, 2 SW Ray Cast
-    int currentStage;
+    int CurrentStage;
 
     int Quality;
     int ButtonDown;
 
-    int scheduled;
+    int Scheduled;
     //Flag if next Render is a High Resolution Render
     int NextRenderHighResolution;
     int IgnoreStepZero;
@@ -191,6 +192,11 @@ protected:
     //Description;
     //Indicates if the VolumeRendering is Paused or not
     int RenderingPaused;
+
+    void CalculateAndSetSampleDistances();
+    double SampleDistanceHighRes;
+    double SampleDistanceHighResImage;
+    double SampleDistanceLowRes;
 
 
 };

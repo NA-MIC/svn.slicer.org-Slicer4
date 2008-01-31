@@ -36,6 +36,7 @@ This is also the space for NRRD header.
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 #include <iomanip>
 
 #include "itkXMLFilterWatcher.h"
@@ -50,6 +51,8 @@ This is also the space for NRRD header.
 
 #include "itkImageFileWriter.h"
 #include "itkRawImageIO.h"
+#include "itkVectorImage.h"
+
 #include "itkGDCMImageIO.h"
 #include "itkGDCMSeriesFileNames.h"
 #include "itkNumericSeriesFileNames.h"
@@ -74,7 +77,7 @@ This is also the space for NRRD header.
 #include "gdcmDictEntry.h"      // access to dictionary
 #include "gdcmGlobal.h"         // access to dictionary
 
-#include "DicomToNrrdConverterCLP.h"
+#include "DWIDicomLoadCLP.h"
 
 // relevant GE private tags
 const gdcm::DictEntry GEDictBValue( 0x0043, 0x1039, "IS", "1", "B Value of diffusion weighting" );
@@ -91,34 +94,19 @@ const gdcm::DictEntry SiemensDictDiffusionMatrix( 0x0019, 0x1027, "FD", "6", "Di
 
 // add relevant private tags from other vendors
 
-typedef vnl_vector_fixed<double, 3> VectorType;
-typedef itk::Vector<float, 3> OutputVectorType;
-
+const int SpaceDim = 3;
 typedef short PixelValueType;
-typedef itk::OrientedImage< PixelValueType, 3 > VolumeType;
+typedef itk::OrientedImage< PixelValueType, SpaceDim > VolumeType;
 typedef itk::ImageSeriesReader< VolumeType > ReaderType;
 typedef itk::GDCMImageIO ImageIOType;
 typedef itk::GDCMSeriesFileNames InputNamesGeneratorType;
+
+typedef itk::VectorImage< PixelValueType, SpaceDim > NRRDImageType;
 
 int main(int argc, char* argv[])
 {
 
   PARSE_ARGS;
-
-  // check if the file name is valid
-  std::string nhdrname = outputFileName;
-  std::string dataname;
-  {
-    int i;
-    i = nhdrname.find(".nhdr");
-    if (i == std::string::npos)
-    {
-      std::cerr << "Output file must be a nrrd header file.\n";
-      std::cerr << "Version:   $Revision: 1.2 $" << std::endl;
-      return EXIT_FAILURE;
-    }
-    dataname = nhdrname.substr(0, i) + ".raw";
-  }
 
   //////////////////////////////////////////////////  
   // 0a) read one slice and figure out vendor
@@ -271,7 +259,7 @@ int main(int argc, char* argv[])
     }
   }    
 
-  // check ImageOrientationPatient and figure out slice direction in
+  // check ImageOrientationPatient and figure out Slice direction in
   // L-P-I (right-handed) system.
   // In Dicom, the coordinate frame is L-P by default. Look at
   // http://medical.nema.org/dicom/2007/07_03pu.pdf ,  page 301
@@ -280,9 +268,9 @@ int main(int argc, char* argv[])
   float xRow, yRow, zRow, xCol, yCol, zCol, xSlice, ySlice, zSlice;
   sscanf( tag.c_str(), "%f\\%f\\%f\\%f\\%f\\%f", &xRow, &yRow, &zRow, &xCol, &yCol, &zCol );
   // Cross product, this gives I-axis direction
-  xSlice = (yRow*zCol-zRow*yCol)*sliceSpacing;
-  ySlice = (zRow*xCol-xRow*zCol)*sliceSpacing;
-  zSlice = (xRow*yCol-yRow*xCol)*sliceSpacing;
+  xSlice = (yRow*zCol-zRow*yCol);
+  ySlice = (zRow*xCol-xRow*zCol);
+  zSlice = (xRow*yCol-yRow*xCol);
 
   // In Dicom, the measurement frame is L-P by default. Look at
   // http://medical.nema.org/dicom/2007/07_03pu.pdf ,  page 301, in
@@ -290,13 +278,13 @@ int main(int argc, char* argv[])
   // multiply the direction cosines by the negatives of the resolution
   // (resolution is required by nrrd format). Direction cosine is not
   // affacted since the resulting frame is still a right-handed frame.
-  xRow *= -xRes;
-  yRow *= -xRes;
-  zRow *= -xRes;
+  xRow = -xRow;
+  yRow = -yRow;
+  zRow = -zRow;
 
-  xCol *= -yRes;
-  yCol *= -yRes;
-  zCol *= -yRes;
+  xCol = -xCol;
+  yCol = -yCol;
+  zCol = -zCol;
 
   // figure out slice order
   bool SliceOrderIS = true;
@@ -345,14 +333,14 @@ int main(int argc, char* argv[])
   int nBaseline = 0;
   int nMeasurement; 
   std::vector< int > idVolume;
-  std::vector< vnl_vector_fixed<double, 3> > DiffusionVectors;
+  std::vector< vnl_vector_fixed<double, SpaceDim> > DiffusionVectors;
   ////////////////////////////////////////////////////////////
   // vendor dependent tags.
   // read in gradient vectors and determin nBaseline and nMeasurement
 
   if ( vendor.find("GE") != std::string::npos )
     {
-    nSliceInVolume = static_cast<int> ((maxSliceLocation - minSliceLocation) / fabs(zSlice) + 1.5 ); 
+    nSliceInVolume = static_cast<int> ((maxSliceLocation - minSliceLocation) / fabs(zSlice*sliceSpacing) + 1.5 ); 
     // .5 is for rounding up, 1 is for adding one slice at one end.
     nVolume = nSlice/nSliceInVolume;
 
@@ -374,7 +362,7 @@ int main(int argc, char* argv[])
     nMeasurement = nVolume - nBaseline;
 
     // extract gradient vectors and form DWImages
-    vnl_vector_fixed<double, 3> vect3d;
+    vnl_vector_fixed<double, SpaceDim> vect3d;
     idVolume.resize( nMeasurement );
     int count = 0;
 
@@ -429,7 +417,7 @@ int main(int argc, char* argv[])
     nMeasurement = nVolume - nBaseline;
 
     // extract gradient vectors and form DWImages
-    vnl_vector_fixed<double, 3> vect3d;
+    vnl_vector_fixed<double, SpaceDim> vect3d;
     idVolume.resize( nMeasurement );
     int count = 0;
 
@@ -460,7 +448,7 @@ int main(int argc, char* argv[])
 
   for (int k = 0; k < nMeasurement; k++)
     {
-    vnl_vector_fixed<double, 3> vecTemp = DiffusionVectors[k];
+    vnl_vector_fixed<double, SpaceDim> vecTemp = DiffusionVectors[k];
     //                                                   Dicom   Slicer 
     DiffusionVectors[k][0] = -DiffusionVectors[k][0];    // L -> R
     DiffusionVectors[k][1] = -DiffusionVectors[k][1];    // P -> A
@@ -473,28 +461,14 @@ int main(int argc, char* argv[])
     std::cout << idVolume[k] << "\t"<< DiffusionVectors[k] << std::endl;
     }
 
-  ///////////////////////////////////////////////
-  // write volumes in raw format
-  itk::ImageFileWriter< VolumeType >::Pointer rawWriter = itk::ImageFileWriter< VolumeType >::New();
-  itk::RawImageIO<PixelValueType, 3>::Pointer rawIO = itk::RawImageIO<PixelValueType, 3>::New();
-  std::string rawFileName = outputDir + "/" + dataname;
-  rawWriter->SetFileName( rawFileName.c_str() );
-  rawWriter->SetImageIO( rawIO );
-  rawIO->SetByteOrderToLittleEndian();
 
+  // put pixels in the right places in the raw volume
+  VolumeType::Pointer rawVol;
+  
   if ( vendor.find("GE") != std::string::npos )
     {
-    rawWriter->SetInput( reader->GetOutput() );
-    try
-      {
-      rawWriter->Update();
-      }
-    catch (itk::ExceptionObject &excp)
-      {
-      std::cerr << "Exception thrown while reading the series" << std::endl;
-      std::cerr << excp << std::endl;
-      return EXIT_FAILURE;
-      }
+    rawVol = reader->GetOutput();
+    
     }
   else if ( vendor.find("SIEMENS") != std::string::npos )
     {
@@ -569,74 +543,144 @@ int main(int argc, char* argv[])
         dmIt.Set( imIt.Get() );
         }
       }
-    rawWriter->SetInput( dmImage );
-    try
-      {
-      rawWriter->Update();
-      }
-    catch (itk::ExceptionObject &excp)
-      {
-      std::cerr << "Exception thrown while reading the series" << std::endl;
-      std::cerr << excp << std::endl;
-      return EXIT_FAILURE;
-      }
+    rawVol = dmImage;
     }
   else
     {
     }
 
-  //////////////////////////////////////////////
-  // write header file
-  // This part follows a DWI NRRD file in NRRD format 5. 
-  // There should be a better way using itkNRRDImageIO.
+  // convert raw volume into nrrd image (i.e., VectorImage) and set
+  // propriate Meta Data
+  NRRDImageType::Pointer nrrdImage = NRRDImageType::New();
+  
+  // set proper regions
+  NRRDImageType::RegionType nrrdRegion;
+  NRRDImageType::IndexType nrrdIndex;
+  nrrdRegion.SetIndex( 0, 0 );
+  nrrdRegion.SetIndex( 1, 0 );
+  nrrdRegion.SetIndex( 2, 0 );
+  nrrdRegion.SetSize( 0, nRows );
+  nrrdRegion.SetSize( 1, nCols );
+  nrrdRegion.SetSize( 2, nSliceInVolume );
+  nrrdImage->SetRegions( nrrdRegion );
 
-  std::ofstream header;
-  std::string headerFileName = outputDir + "/" + outputFileName;
+  // set vector length
+  nrrdImage->SetVectorLength( nVolume );
+  nrrdImage->Allocate();
+  
+  // set origin
+  NRRDImageType::PointType nrrdOrigin;
+  nrrdOrigin[0] = xOrigin;
+  nrrdOrigin[1] = yOrigin;
+  nrrdOrigin[2] = zOrigin;
+  nrrdImage->SetOrigin( nrrdOrigin );
 
-  header.open (headerFileName.c_str());
-  header << "NRRD0005" << std::endl;
+  // set spacing
+  NRRDImageType::SpacingType nrrdSpacing;
+  nrrdSpacing[0] = xRes;
+  nrrdSpacing[1] = yRes;
+  nrrdSpacing[2] = sliceSpacing;
+  nrrdImage->SetSpacing( nrrdSpacing );
 
-  header << "content: exists(" << dataname << ",0)" << std::endl;
-  header << "type: short" << std::endl;
-  header << "dimension: 4" << std::endl;
+  // SetDirections
+  NRRDImageType::DirectionType nrrdDirection;
+  nrrdDirection[0][0] = xRow;
+  nrrdDirection[0][1] = yRow;
+  nrrdDirection[0][2] = zRow;
+  nrrdDirection[1][0] = xCol;
+  nrrdDirection[1][1] = yCol;
+  nrrdDirection[1][2] = zCol;
+  nrrdDirection[2][0] = xSlice;
+  nrrdDirection[2][1] = ySlice;
+  nrrdDirection[2][2] = zSlice;
+  nrrdImage->SetDirection( nrrdDirection );
 
-  // need to check
-  header << "space: right-anterior-superior" << std::endl;
+  // iterate to put data in rawVol into proper position in nrrdImage;
+  // rawVol is already in volume interleving form
+  itk::ImageRegionIteratorWithIndex<NRRDImageType> nrrdIt( nrrdImage, nrrdRegion );
+  for (nrrdIt.GoToBegin(); !nrrdIt.IsAtEnd(); ++nrrdIt)
+    {
+    NRRDImageType::IndexType nrrdIdx = nrrdIt.GetIndex();
+    NRRDImageType::PixelType nrrdPixel = nrrdIt.Get();
 
-  header << "sizes: " << nRows << " " << nCols << " " << nSliceInVolume << " " << nVolume << std::endl;
-  header << "thicknesses:  NaN  NaN " << sliceSpacing << " NaN" << std::endl;
+    VolumeType::IndexType volIdx;
+    volIdx[0] = nrrdIdx[0];
+    volIdx[1] = nrrdIdx[1];
+    
+    for (int k = 0; k < nVolume ; k++)
+      {
 
-  // need to check
-  header << "space directions: " 
-    << "(" << xRow << ","<< yRow << ","<< zRow << ") "
-    << "(" << xCol << ","<< yCol << ","<< zCol << ") "
-    << "(" << xSlice << ","<< ySlice << ","<< zSlice << ") none" << std::endl;
+      volIdx[2] = nrrdIdx[2]+k*nSliceInVolume;
+      nrrdPixel[k] = rawVol->GetPixel( volIdx );
+      }
 
-  header << "centerings: cell cell cell ???" << std::endl;
-  header << "kinds: space space space list" << std::endl;
-  header << "endian: little" << std::endl;
-  header << "encoding: raw" << std::endl;
-  header << "space units: \"mm\" \"mm\" \"mm\"" << std::endl;
-  header << "space origin: "
-    <<"(" << xOrigin << ","<< yOrigin << ","<< zOrigin << ") " << std::endl;
-  header << "data file: " << dataname << std::endl;
+    nrrdIt.Set( nrrdPixel );
+    }
 
-  // Need to check
-  header << "measurement frame: (1,0,0) (0,1,0) (0,0,1)" << std::endl;
+  // construct meta dictionary
+  itk::MetaDataDictionary nrrdMetaDictionary;
+  std::string metaString;
+  std::string metaKey;
 
-  header << "modality:=DWMRI" << std::endl;
-  header << "DWMRI_b-value:=" << bValue << std::endl;
-  header << "DWMRI_gradient_0000:=0  0  0" << std::endl;
-  header << "DWMRI_NEX_0000:=" << nBaseline << std::endl;
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_content", "exists(MyNrrd.raw,0)" );
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "ITK_InputFilterName", "NrrdImaheIO" );
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_space", "right-anterior-superior" );
+
+  // the following key/value pairs are for each axis
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_centerings[0]", "cell");
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_centerings[1]", "cell");
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_centerings[2]", "cell");
+  
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_kinds[0]", "space");
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_kinds[1]", "space");
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_kinds[2]", "space");
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "NRRD_kinds[3]", "list");
+
+  // for measurement frame
+  std::vector<std::vector<double> > msrFrame(SpaceDim);
+  for (unsigned int k=0; k < SpaceDim; k++) 
+    {
+    msrFrame[k].resize(SpaceDim);
+    for (unsigned int m=0; m < SpaceDim; m++)
+      {
+      msrFrame[k][m] = 0;
+      }
+    msrFrame[k][k] = 1;
+    }
+  
+  itk::EncapsulateMetaData<std::vector<std::vector<double> > > ( nrrdMetaDictionary, "NRRD_measurement frame", msrFrame );
+
+
+  // the following are key-value pairs
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "modality", "DWMRI" );
+
+  std::ostringstream nrrdValueStream;
+  nrrdValueStream << bValue;
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "DWMRI_b-value", nrrdValueStream.str() );
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "DWMRI_gradient_0000", "0   0   0" );
+  nrrdValueStream.str("");
+  nrrdValueStream << nBaseline;
+  itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, "DWMRI_NEX_0000", nrrdValueStream.str() );
+  
   // need to check
   for (int k = nBaseline; k < nVolume; k++)
-  {
-    header << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << k << ":=" 
-      << DiffusionVectors[k-nBaseline][0] << "   " << DiffusionVectors[k-nBaseline][1] << "   " << DiffusionVectors[k-nBaseline][2]
-      << std::endl;
+    {
+    nrrdValueStream.str("");
+    nrrdValueStream << DiffusionVectors[k-nBaseline][0] << "   " << DiffusionVectors[k-nBaseline][1] << "   " << DiffusionVectors[k-nBaseline][2];
+    
+    std::ostringstream nrrdKeyStream("");
+    nrrdKeyStream << "DWMRI_gradient_" << std::setw(4) << std::setfill('0') << k;
+    itk::EncapsulateMetaData<std::string> ( nrrdMetaDictionary, nrrdKeyStream.str(), nrrdValueStream.str() );
   }
-  header.close();
 
+
+  nrrdImage->SetMetaDataDictionary( nrrdMetaDictionary );
+
+  itk::ImageFileWriter<NRRDImageType>::Pointer nrrdWriter = itk::ImageFileWriter<NRRDImageType>::New();
+  nrrdWriter->SetFileName( dwiImage.c_str() );
+  nrrdWriter->SetInput( nrrdImage );
+  nrrdWriter->Update();
+  
   return EXIT_SUCCESS;  
 }
 

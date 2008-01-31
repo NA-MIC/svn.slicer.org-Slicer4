@@ -102,8 +102,8 @@ void vtkMRMLVolumeRenderingNode::WriteXML(ostream& of, int nIndent)
     //}
     //else
     //{
-        of << " scalarOpacity=\"" << this->getPiecewiseFunctionString(this->VolumeProperty->GetScalarOpacity())  << "\"";
-        of << " gradientOpacity=\"" <<this->getPiecewiseFunctionString(this->VolumeProperty->GetGradientOpacity())<< "\"";
+        of << " scalarOpacity=\"" << this->GetPiecewiseFunctionString(this->VolumeProperty->GetScalarOpacity())  << "\"";
+        of << " gradientOpacity=\"" <<this->GetPiecewiseFunctionString(this->VolumeProperty->GetGradientOpacity())<< "\"";
         of << " colorTransfer=\"" <<this->getColorTransferFunctionString(this->VolumeProperty->GetRGBTransferFunction())<< "\"";
 
    // }
@@ -313,7 +313,6 @@ void vtkMRMLVolumeRenderingNode::CopyParameterset(vtkMRMLNode *anode)
         this->VolumeProperty->SetSpecular(node->VolumeProperty->GetSpecular(i));
         this->VolumeProperty->SetSpecularPower(node->VolumeProperty->GetSpecularPower(i));
     }
-    this->SetMapper(node->Mapper);
 }
 
 //----------------------------------------------------------------------------
@@ -361,7 +360,7 @@ void vtkMRMLVolumeRenderingNode::ProcessMRMLEvents ( vtkObject *caller,
 }
 
 
-std::string vtkMRMLVolumeRenderingNode::getPiecewiseFunctionString(vtkPiecewiseFunction* function)
+std::string vtkMRMLVolumeRenderingNode::GetPiecewiseFunctionString(vtkPiecewiseFunction* function)
 {
     std::stringstream resultStream;
     int arraysize=function->GetSize()*2;
