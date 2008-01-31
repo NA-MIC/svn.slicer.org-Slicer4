@@ -1,13 +1,22 @@
 
+
+#
+# utilities for testing event broker
+#
+
+proc EventBrokerTmpDir {} {
+  return $::env(SLICER_HOME)/Testing/Temporary
+}
+
 proc EventBrokerPrint {} {
   set broker [vtkEventBroker New]
   puts [$broker Print]
   $broker Delete
 }
 
-proc EventBrokerGraph { {fileName c:/tmp/broker.dot} } {
+proc EventBrokerGraph { {fileName broker.dot} } {
   set broker [vtkEventBroker New]
-  $broker GenerateGraphFile $fileName
+  $broker GenerateGraphFile [EventBrokerTmpDir]/$fileName
   $broker Delete
 }
 
@@ -17,11 +26,11 @@ proc EventBrokerUpdate {} {
   $broker Delete
 }
 
-proc EventBrokerAsync { } {
+proc EventBrokerAsync { {fileName broker.log} } {
 
   set broker [vtkEventBroker New]
 
-  $broker SetLogFileName c:/tmp/broker.log
+  $broker SetLogFileName [EventBrokerTmpDir]/$fileName
   $broker EventLoggingOn
 
   $broker SetEventModeToAsynchronous
@@ -29,17 +38,40 @@ proc EventBrokerAsync { } {
   $broker Delete
 }
 
-proc EventBrokerLogCommand { cmd } {
+proc EventBrokerLogCommand { cmd {fileName brokercmd.log} } {
 
   set broker [vtkEventBroker New]
 
-  $broker SetLogFileName c:/tmp/brokercmd.log
+  $broker SetLogFileName [EventBrokerTmpDir]/$fileName
   $broker EventLoggingOn
   $broker OpenLogFile
 
   eval $cmd
+  set timer [time "eval $cmd"]
+
+  puts $timer
 
   $broker CloseLogFile
+  $broker EventLoggingOff
 
   $broker Delete
+}
+
+proc EventBrokerLoadSampleScene { {sceneFileName ""} } {
+  if { $sceneFileName == "" } {
+    set sceneFileName $::env(SLICER_HOME)/../Slicer3/Libs/MRML/Testing/vol_and_cube_camera.mrml
+  }
+
+  $::slicer3::MRMLScene SetURL $sceneFileName
+  $::slicer3::MRMLScene Connect
+  update
+
+}
+
+proc EventBrokerTests {} {
+
+  set broker [vtkEventBroker New]
+  EventBrokerLogCommand "$::slicer3::MRMLScene Modified" scenemod.dot
+  EventBrokerLogCommand "EventBrokerLoadSampleScene" sceneload.dot
+  puts $broker
 }
