@@ -28,3 +28,18 @@ proc EventBrokerAsync { } {
 
   $broker Delete
 }
+
+proc EventBrokerLogCommand { cmd } {
+
+  set broker [vtkEventBroker New]
+
+  $broker SetLogFileName c:/tmp/brokercmd.log
+  $broker EventLoggingOn
+  $broker OpenLogFile
+
+  eval $cmd
+
+  $broker CloseLogFile
+
+  $broker Delete
+}
