@@ -592,7 +592,7 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
 
  float transparencyLevel = 1.0;
 
- CUDAkernel_renderAlgo_doHybridRender<<< grid, threads >>>( \
+ CUDAkernel_renderAlgo_doIntegrationRender<<< grid, threads >>>( \
         (unsigned char*)renderData, \
         colorTransferFunction, \
         alphaTransferFunction, \
