@@ -15,7 +15,7 @@ public:
 
     virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost);
     virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost);
-    virtual bool CopyTo(vtkCudaMemoryBase* other) { return this->Superclass::CopyFrom(this); }
+    virtual bool CopyTo(vtkCudaMemoryBase* other) { return other->CopyFrom(this->GetMemPointer(), this->GetSize(), 0, MemoryOnHost); }
     
     void PrintSelf(ostream& os, vtkIndent indent);
 
