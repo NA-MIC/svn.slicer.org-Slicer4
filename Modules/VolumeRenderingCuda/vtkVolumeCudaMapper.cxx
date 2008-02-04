@@ -97,6 +97,14 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     this->LocalAlphaTransferFunction = vtkCudaHostMemory::New();
     this->LocalAlphaTransferFunction->Allocate<float>(256);
 
+    
+    this->CudaZBuffer = vtkCudaDeviceMemory::New();
+    this->CudaZBuffer->Allocate<float>(1600*1200);
+    float zBuffer[1600][1200];
+    for(unsigned int i = 0; i < 1600; i++)
+        for (unsigned int j = 0; j < 1200; j++)
+        zBuffer[i][j] = 100000; 
+    this->CudaZBuffer->CopyFrom(zBuffer, 1600*1200 * sizeof(float));
 }  
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
@@ -109,6 +117,8 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
     this->LocalColorTransferFunction->Delete();
     this->CudaAlphaTransferFunction->Delete();
     this->LocalAlphaTransferFunction->Delete();
+
+    this->CudaZBuffer->Delete();
 
     if (this->Texture == 0 || !glIsTexture(this->Texture))
         glGenTextures(1, &this->Texture);
@@ -124,8 +134,9 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
 
     if (input != NULL)
     {
+        this->CudaInputBuffer->AllocateBytes(input->GetActualMemorySize() * 1024);
       // We do this automatically
-       // this->CudaInputBuffer->CopyFrom(input);
+        //this->CudaInputBuffer->CopyFrom(input->GetScalarPointer(), input->GetActualMemorySize() * 1024);
     }
     else
     {
@@ -201,7 +212,7 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
     property->GetRGBTransferFunction()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], 256, this->LocalColorTransferFunction->GetMemPointerAs<float>());
     
-    LocalColorTransferFunction->CopyTo(CudaColorTransferFunction);
+    LocalColorTransferFunction->CopyTo(this->CudaColorTransferFunction);
 
     property->GetScalarOpacity()->GetTable(range[0], range[1], 256, this->LocalAlphaTransferFunction->GetMemPointerAs<float>());
     LocalAlphaTransferFunction->CopyTo(CudaAlphaTransferFunction);
@@ -210,8 +221,8 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
 
 #include "vtkTimerLog.h"
 #include "texture_types.h"
+#include "vtkMatrix4x4.h"
 
-#include "vtkPNGWriter.h"
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
     // Renice!!
@@ -220,6 +231,12 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     for (unsigned int i = 0; i < 6; i++)
         minmax[i] = minMax[i];
     float lightVec[3]={0, 0, 1};
+
+    static float zBuffer[1600][1200];
+    for(unsigned int i = 0; i < 1600; i++)
+        for (unsigned int j = 0; j < 1200; j++)
+        zBuffer[i][j] = 100000; 
+    this->CudaZBuffer->CopyFrom(zBuffer, 1600*1200 * sizeof(float));
 
 
     // This should update the the CudaInputBuffer only when needed.
@@ -238,6 +255,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
     vtkCamera* cam =
         renderer->GetActiveCamera();
+
 
     // Build the Rotation Matrix
     double ax,ay,az;
@@ -270,10 +288,14 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     {ay,by,cy,0},
     {az,bz,cz,0},
     {0,0,0,1}};
-    /*  {{1,0,0,0},
-    {0,1,0,0},
-    {0,0,1,0},
-    {0,0,0,1}};*/
+    //  {{1,0,0,0},
+    //{0,1,0,0},
+    //{0,0,1,0},
+    //{0,0,0,1}};
+
+    //for (unsigned int i = 0; i < 16; i++)
+    //    rotationMatrix[i/4][i%4] = cam->GetPerspectiveTransformMatrix(1,0,1000)->GetElement(i/4,i%4);
+    //
 
     int* dims = this->GetInput()->GetDimensions();
 
@@ -303,6 +325,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         (float*)rotationMatrix,
         this->CudaColorTransferFunction->GetMemPointerAs<float>(),
         this->CudaAlphaTransferFunction->GetMemPointerAs<float>(),
+        this->CudaZBuffer->GetMemPointerAs<float>(),
         minmax, lightVec, 
         dims[0], dims[1], dims[2],                            //3D data size
         this->OutputDataSize[0], this->OutputDataSize[1],     //result image size

@@ -60,6 +60,7 @@ protected:
     vtkCudaHostMemory* LocalAlphaTransferFunction;
     vtkCudaDeviceMemory* CudaAlphaTransferFunction;
 
+    vtkCudaDeviceMemory* CudaZBuffer;
 
     unsigned int Threshold[2];
 

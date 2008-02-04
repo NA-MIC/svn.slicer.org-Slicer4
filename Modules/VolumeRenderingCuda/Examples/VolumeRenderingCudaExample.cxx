@@ -142,8 +142,10 @@ int my_main(int argc, char *argv[])
             0, 255);
         reader[i]->SetFileDimensionality(3);
 
+
         std::stringstream s;
         s << "C:\\heart256-" << i+1 << ".raw";
+        //s << "C:\\fullhead94.raw";
 
         reader[i]->SetFileName(s.str().c_str());
         reader[i]->Update();
@@ -171,7 +173,7 @@ int my_main(int argc, char *argv[])
     filter->SetInput(reader[0]->GetOutput());
     filter->Update();
 
-    VolumeMapper->SetInput(filter->GetOutput());
+    VolumeMapper->SetInput(reader[0]->GetOutput());
 
     VolumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
 
