@@ -139,13 +139,13 @@ int my_main(int argc, char *argv[])
         reader[i]->SetNumberOfScalarComponents(1);
         reader[i]->SetDataExtent(0, 255,
             0, 255, 
-            0, 255);
+            0, 93);
         reader[i]->SetFileDimensionality(3);
 
 
         std::stringstream s;
-        s << "C:\\heart256-" << i+1 << ".raw";
-        //s << "C:\\fullhead94.raw";
+        //s << "C:\\heart256-" << i+1 << ".raw";
+        s << "C:\\fullhead94.raw";
 
         reader[i]->SetFileName(s.str().c_str());
         reader[i]->Update();

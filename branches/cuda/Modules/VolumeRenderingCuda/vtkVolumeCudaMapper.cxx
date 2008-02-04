@@ -136,7 +136,7 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
     {
         this->CudaInputBuffer->AllocateBytes(input->GetActualMemorySize() * 1024);
       // We do this automatically
-        //this->CudaInputBuffer->CopyFrom(input->GetScalarPointer(), input->GetActualMemorySize() * 1024);
+        this->CudaInputBuffer->CopyFrom(input->GetScalarPointer(), input->GetActualMemorySize() * 1024);
     }
     else
     {
@@ -208,6 +208,37 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
 
 void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
 {
+//FILE *fp;
+//  unsigned char transferFunction[256*6];
+//
+//fp=fopen("C:\\color.map","r");
+//  fread(transferFunction, sizeof(unsigned char), 256*6, fp);
+//  fclose(fp);
+//
+//  float colorTransferFunction[256*3];
+//  float alphaTransferFunction[256];
+//  float zBuffer[1024*768];
+//
+//  int i;
+//  /*
+//  for(i=0;i<256;i++){
+//    colorTransferFunction[i*3]=i/255.0;
+//    colorTransferFunction[i*3+1]=0.7;
+//    colorTransferFunction[i*3+2]=(255-i)/255.0;
+//    alphaTransferFunction[i]=0.1;
+//  }
+//  */
+//
+//  for(i=0;i<256;i++){
+//    colorTransferFunction[i*3]=transferFunction[i*3]/255.0;
+//    colorTransferFunction[i*3+1]=transferFunction[i*3+1]/255.0;
+//    colorTransferFunction[i*3+2]=transferFunction[i*3+2]/255.0;
+//    alphaTransferFunction[i]=transferFunction[i+256*3]/255.0;
+//  }
+//  this->CudaColorTransferFunction->CopyFrom(colorTransferFunction, 256*3*sizeof(float));
+//  this->CudaAlphaTransferFunction->CopyFrom(alphaTransferFunction, 256 * sizeof(float));
+//
+
     double range[2];
     property->GetRGBTransferFunction()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], 256, this->LocalColorTransferFunction->GetMemPointerAs<float>());
@@ -288,7 +319,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     {ay,by,cy,0},
     {az,bz,cz,0},
     {0,0,0,1}};
-    //  {{1,0,0,0},
+    //{{1,0,0,0},
     //{0,1,0,0},
     //{0,0,1,0},
     //{0,0,0,1}};
