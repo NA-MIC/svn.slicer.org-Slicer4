@@ -1,22 +1,21 @@
-#ifndef VTKCUDADEVICE_H_
-#define VTKCUDADEVICE_H_
+#ifndef CUDAPPDEVICE_H_
+#define CUDAPPDEVICE_H_
 
-#include "vtkObject.h"
 #include "CudappSupportModule.h"
 
 #include "driver_types.h"
 
-class VTK_CUDASUPPORT_EXPORT CudappDevice : public vtkObject
+class CUDA_SUPPORT_EXPORT CudappDevice
 {
-    vtkTypeRevisionMacro(CudappDevice, vtkObject);
-
-    static CudappDevice* New();
+public:
+    CudappDevice();
+    virtual ~CudappDevice();
 
     /// Device Information
-    vtkGetMacro(Initialized, bool);
+    bool IsInitialized() const { return this->Initialized; }
 
     void SetDeviceNumber(int deviceNumber);
-    vtkGetMacro(DeviceNumber, int);
+    int GetDeviceNumber() const { return this->DeviceNumber; }
 
     //////////////////////////////////////////////////////////////////////
     // Wrapped Functions to retrieve all Information about a CUDA card ///
@@ -52,8 +51,6 @@ class VTK_CUDASUPPORT_EXPORT CudappDevice : public vtkObject
     /** @reuturns the entire device properties of this CUDA device as cudaGetDeviceProperties(this->GetDeviceNumber()) would return it */
     const cudaDeviceProp& GetCudaDeviceProperty() const { return this->DeviceProp; }
 
-
-
     void MakeActive();
     void SynchronizeThread();
     void ExitThread();
@@ -61,12 +58,10 @@ class VTK_CUDASUPPORT_EXPORT CudappDevice : public vtkObject
     /// Memory Management
     bool AllocateMemory();
 
-    void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os);
 
 protected:
-    CudappDevice();
-    virtual ~CudappDevice();
-
+ 
     void LoadDeviceProperties();
 
     bool Initialized;
@@ -74,4 +69,4 @@ protected:
     cudaDeviceProp DeviceProp;    
 };
 
-#endif /*VTKCUDADEVICE_H_*/
+#endif /*CUDAPPDEVICE_H_*/

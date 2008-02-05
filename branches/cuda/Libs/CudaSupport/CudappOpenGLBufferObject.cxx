@@ -4,10 +4,6 @@
 #include "cuda_gl_interop.h"
 
 #include "CudappBase.h"
-#include "vtkObjectFactory.h"
-
-vtkCxxRevisionMacro(CudappOpenGLBufferObject, "$Revision: 1.0 $");
-vtkStandardNewMacro(CudappOpenGLBufferObject);
 
 CudappOpenGLBufferObject::CudappOpenGLBufferObject()
 {
@@ -73,7 +69,7 @@ void CudappOpenGLBufferObject::Unmap()
   }
 }
 
-void CudappOpenGLBufferObject::PrintSelf(ostream &os, vtkIndent indent)
+void CudappOpenGLBufferObject::PrintSelf(ostream &os)
 {
   this->Superclass::PrintSelf(os, indent);
   if (this->GetBufferObject() == 0)

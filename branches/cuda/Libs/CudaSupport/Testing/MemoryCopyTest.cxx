@@ -14,7 +14,8 @@ int main(int argc, char** argv)
   dev->Allocate<int>(1000);
   dest->Allocate<int>(1000);
   
-  local->MemSet(5);
+  for (unsigned int i = 0; i < 1000; i++)
+    local->GetMemPointerAs<int>()[i] = i;
   
   local->CopyTo(dev);
   dev->CopyTo(dest);

@@ -1,13 +1,15 @@
-#ifndef VTKCUDALOCALMEMORY_H_
-#define VTKCUDALOCALMEMORY_H_
+#ifndef CUDAPPLOCALMEMORY_H_
+#define CUDAPPLOCALMEMORY_H_
 
 #include "CudappMemory.h"
 
-class VTK_CUDASUPPORT_EXPORT CudappLocalMemory : public CudappMemory
+class CUDA_SUPPORT_EXPORT CudappLocalMemory : public CudappMemory
 {
-    vtkTypeRevisionMacro(CudappLocalMemory, CudappMemory);
 public:
-    static CudappLocalMemory* New();
+    CudappLocalMemory();
+    virtual ~CudappLocalMemory();
+    CudappLocalMemory(const CudappLocalMemory&);
+    CudappLocalMemory& operator=(const CudappLocalMemory&);
 
     virtual void* AllocateBytes(size_t count);
     virtual void Free();
@@ -17,17 +19,13 @@ public:
     virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost);
     virtual bool CopyTo(CudappMemoryBase* other) { return other->CopyFrom(this->GetMemPointer(), this->GetSize(), 0, MemoryOnHost); }
     
-    void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os);
 
 protected:
-    CudappLocalMemory();
-    virtual ~CudappLocalMemory();
-    CudappLocalMemory(const CudappLocalMemory&);
-    CudappLocalMemory& operator=(const CudappLocalMemory&);
     
   //virtual bool CopyFrom(CudappMemoryPitch* mem);
   //virtual bool CopyFrom(CudappMemoryArray* mem);
     
 };
 
-#endif /* VTKCUDALOCALMEMORY_H_ */
+#endif /* CUDAPPLOCALMEMORY_H_ */

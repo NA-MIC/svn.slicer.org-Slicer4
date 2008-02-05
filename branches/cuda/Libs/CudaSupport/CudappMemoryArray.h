@@ -1,14 +1,16 @@
-#ifndef VTKCUDAMEMORYARRAY_H_
-#define VTKCUDAMEMORYARRAY_H_
+#ifndef CUDAPPMEMORYARRAY_H_
+#define CUDAPPMEMORYARRAY_H_
 
 #include "CudappMemoryBase.h"
 #include "channel_descriptor.h"
 
-class VTK_CUDASUPPORT_EXPORT CudappMemoryArray : public CudappMemoryBase
+class CUDA_SUPPORT_EXPORT CudappMemoryArray : public CudappMemoryBase
 {
-    vtkTypeRevisionMacro(CudappMemoryArray, CudappMemoryBase);
 public:
-    static CudappMemoryArray* New();
+    CudappMemoryArray();
+    virtual ~CudappMemoryArray();
+    CudappMemoryArray(const CudappMemoryArray&);
+    CudappMemoryArray& operator=(const CudappMemoryArray&);
 
     //BTX
     template<typename T>
@@ -32,13 +34,9 @@ public:
     virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost) { return false; }
     virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) { return false; }
 
-    virtual void PrintSelf(ostream &os, vtkIndent indent);
+    virtual void PrintSelf(ostream &os);
 
 protected:
-    CudappMemoryArray();
-    virtual ~CudappMemoryArray();
-    CudappMemoryArray(const CudappMemoryArray&);
-    CudappMemoryArray& operator=(const CudappMemoryArray&);
 
     cudaChannelFormatDesc Descriptor; //!< The Descriptor used to allocate memory
     cudaArray* Array; //!< The Array with the memory that was allocated.
@@ -48,4 +46,4 @@ protected:
 
 
 
-#endif /*VTKCUDAMEMORYARRAY_H_*/
+#endif /*CUDAPPMEMORYARRAY_H_*/

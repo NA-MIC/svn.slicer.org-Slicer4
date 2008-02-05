@@ -2,11 +2,6 @@
 #include "cuda_runtime_api.h"
 #include "CudappBase.h"
 
-#include "vtkObjectFactory.h"
-
-vtkCxxRevisionMacro(CudappMemoryPitch, "$Revision: 1.0 $");
-vtkStandardNewMacro(CudappMemoryPitch);
-
 CudappMemoryPitch::CudappMemoryPitch()
 {
   this->Location = CudappMemoryBase::MemoryOnDevice;
@@ -53,7 +48,7 @@ void CudappMemoryPitch::MemSet(int value)
     cudaMemset2D(this->MemPointer, this->Pitch, value, this->Width, this->Height);  
 }
 
-void CudappMemoryPitch::PrintSelf(ostream &os, vtkIndent indent)
+void CudappMemoryPitch::PrintSelf(ostream &os)
 {
     this->Superclass::PrintSelf(os, indent);
     os << " Width: "<< this->GetWidth() << 

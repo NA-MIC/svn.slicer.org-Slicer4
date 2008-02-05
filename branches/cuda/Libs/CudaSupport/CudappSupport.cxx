@@ -4,17 +4,6 @@
 #include <cutil.h>
 #include <cuda_runtime_api.h>
 
-vtkCxxRevisionMacro(CudappSupport, "$Revision: 1.6$");
-
-//----------------------------------------------------------------------------
-// Needed when we don't use the vtkStandardNewMacro.
-vtkInstantiatorNewMacro(CudappSupport);
-
-CudappSupport* CudappSupport::New()
-{
-    return new CudappSupport();
-}
-
 CudappSupport::CudappSupport()
 {
     CheckSupportedCudaVersion();
@@ -23,7 +12,7 @@ CudappSupport::CudappSupport()
 CudappSupport::~CudappSupport()
 {
     for (int i = 0; i < this->GetDeviceCount(); i++)
-        this->Devices[i]->Delete();
+        delete this->Devices[i];
 }
 
 int CudappSupport::CheckSupportedCudaVersion()
@@ -43,11 +32,11 @@ int CudappSupport::CheckSupportedCudaVersion()
     return 0;
 }
 
-void CudappSupport::PrintSelf(ostream& os, vtkIndent indent)
+void CudappSupport::PrintSelf(ostream& os)
 {
     os << "Cuda Support Listing all Children: "<< std::endl;
     for (int i = 0; i < this->GetDeviceCount(); ++i)
     {
-        this->Devices[i]->PrintSelf(os, indent.GetNextIndent());
+        this->Devices[i]->PrintSelf(os);
     }
 }

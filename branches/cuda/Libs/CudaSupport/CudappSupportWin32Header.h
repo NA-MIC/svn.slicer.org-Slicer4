@@ -5,11 +5,11 @@
 
         #if defined(WIN32) && !defined(VTKSLICER_STATIC)
                 #if defined(CudaSupport_EXPORTS)
-                        #define VTK_CUDASUPPORT_EXPORT __declspec( dllexport ) 
+                        #define CUDA_SUPPORT_EXPORT __declspec( dllexport ) 
                 #else
-                        #define VTK_CUDASUPPORT_EXPORT __declspec( dllimport ) 
+                        #define CUDA_SUPPORT_EXPORT __declspec( dllimport ) 
                 #endif
         #else
-                #define VTK_CUDASUPPORT_EXPORT 
+                #define CUDA_SUPPORT_EXPORT 
         #endif
 #endif
