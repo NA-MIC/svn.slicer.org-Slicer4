@@ -6,6 +6,12 @@
 class vtkKWThumbWheel;
 class vtkImageThreshold;
 class vtkMRMLScalarVolumeNode;
+class vtkVolumeTextureMapper3D;
+class vtkPiecewiseFunction;
+class vtkColorTransferFunction;
+class vtkVolumeProperty;
+class vtkVolume;
+class vtkMatrix4x4;         
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthSegmentationStep : public vtkTumorGrowthStep
 {
@@ -41,9 +47,17 @@ private:
   void SegmentScan1Remove();
   int SegmentScan1Define();
   
+  void SetPreSegment_Render_BandPassFilter(double value);
+
   vtkImageThreshold *PreSegment;
   vtkMRMLScalarVolumeNode *PreSegmentNode; 
   vtkMRMLScalarVolumeNode *SegmentNode; 
+  vtkVolumeTextureMapper3D *PreSegment_Render_Mapper;
+  vtkPiecewiseFunction     *PreSegment_Render_BandPassFilter;
+  vtkColorTransferFunction *PreSegment_Render_ColorMapping;
+  vtkVolumeProperty        *PreSegment_Render_VolumeProperty;
+  vtkVolume                *PreSegment_Render_Volume;
+  vtkMatrix4x4             *PreSegment_Render_OrientationMatrix; 
 };
 
 #endif
