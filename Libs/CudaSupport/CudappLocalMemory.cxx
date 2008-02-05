@@ -70,7 +70,7 @@ bool CudappLocalMemory::CopyFrom(void* src, size_t byte_count, size_t offset, Me
 }
 
 
-void CudappLocalMemory::PrintSelf(ostream& os)
+void CudappLocalMemory::PrintSelf(std::ostream&  os)
 {
-    this->Superclass::PrintSelf(os, indent);
+    this->CudappMemory::PrintSelf(os);
 }

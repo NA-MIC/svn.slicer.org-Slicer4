@@ -22,9 +22,9 @@ CudappMemory::~CudappMemory()
     //    this->Free();
 }
 
-void CudappMemory::PrintSelf (ostream &os)
+void CudappMemory::PrintSelf (std::ostream &os)
 {
-    this->Superclass::PrintSelf(os, indent);
+    this->CudappMemoryBase::PrintSelf(os);
     if (this->GetMemPointer() == NULL)
         os << "Not yet allocated";
 }

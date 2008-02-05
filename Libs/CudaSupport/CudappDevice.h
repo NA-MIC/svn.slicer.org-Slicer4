@@ -2,8 +2,8 @@
 #define CUDAPPDEVICE_H_
 
 #include "CudappSupportModule.h"
-
 #include "driver_types.h"
+#include <ostream>
 
 class CUDA_SUPPORT_EXPORT CudappDevice
 {
@@ -58,7 +58,7 @@ public:
     /// Memory Management
     bool AllocateMemory();
 
-    void PrintSelf(ostream& os);
+    void PrintSelf(std::ostream&  os);
 
 protected:
  

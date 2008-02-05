@@ -24,7 +24,7 @@ public:
     virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) = 0;
     virtual bool CopyTo(CudappMemoryBase* other) { return other->CopyFrom(this); }
 
-    virtual void PrintSelf(ostream &os);
+    virtual void PrintSelf(std::ostream &os);
 
 protected:
     CudappMemory();

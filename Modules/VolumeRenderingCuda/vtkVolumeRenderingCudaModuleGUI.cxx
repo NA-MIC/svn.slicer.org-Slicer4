@@ -1,4 +1,7 @@
 #include "vtkVolumeRenderingCudaModuleGUI.h"
+
+#include "CudappMemory.h"
+
 #include "vtkVolumeRenderingCudaModuleLogic.h"
 #include "vtkSlicerApplication.h"
 #include "vtkKWWidget.h"
@@ -6,6 +9,7 @@
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkMRMLScene.h"
+
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 
@@ -33,7 +37,6 @@
 
 #include "vtkRenderer.h"
 
-#include "CudappMemory.h"
 
 extern "C" {
 #include "CUDA_renderAlgo.h"

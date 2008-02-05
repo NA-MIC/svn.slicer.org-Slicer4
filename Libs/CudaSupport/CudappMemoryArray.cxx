@@ -52,10 +52,9 @@ void CudappMemoryArray::DeepCopy(CudappMemoryArray* source)
     cudaMemcpyArrayToArray(this->Array, 0, 0, source->Array, 0, 0, sizeof(source->Array));
 }
 
-
-void CudappMemoryArray::PrintSelf(ostream &os)
+void CudappMemoryArray::PrintSelf(std::ostream &os)
 {
-    this->Superclass::PrintSelf(os, indent);
+    this->CudappMemoryBase::PrintSelf(os);
     os << " Width: "<< this->GetWidth() << 
         " Height: " << this->GetHeight();
 }

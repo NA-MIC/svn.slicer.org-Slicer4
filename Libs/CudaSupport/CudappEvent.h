@@ -24,7 +24,7 @@ public:
     /** @returns the Event */
     cudaEvent_t GetEvent() { return this->Event; }
 
-    void PrintSelf(ostream& os);
+    void PrintSelf(std::ostream&  os);
 };
 
 #endif /*CUDAPPEVENT_H_*/

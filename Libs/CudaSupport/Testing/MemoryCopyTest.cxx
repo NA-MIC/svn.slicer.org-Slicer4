@@ -5,10 +5,10 @@
 
 int main(int argc, char** argv)
 {
-  CudappLocalMemory* local = CudappLocalMemory::New();
-  CudappDeviceMemory* dev = CudappDeviceMemory::New();
+  CudappLocalMemory* local = new CudappLocalMemory();
+  CudappDeviceMemory* dev = new CudappDeviceMemory();
   
-  CudappLocalMemory* dest = CudappLocalMemory::New();
+  CudappLocalMemory* dest = new CudappLocalMemory();
 
   local->Allocate<int>(1000);
   dev->Allocate<int>(1000);

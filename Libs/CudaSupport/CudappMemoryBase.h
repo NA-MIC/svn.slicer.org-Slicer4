@@ -4,6 +4,7 @@
 #include "CudappBase.h"
 #include "CudappSupportModule.h"
 #include <stddef.h>
+#include <ostream>
 
 class CudappMemory;
  class CudappDeviceMemory;
@@ -41,7 +42,7 @@ public:
     // This function does a cast of this to the specified type and then a cast of the other to the specified type, so we are sure from what memory to what we are copying.
     virtual bool CopyTo(CudappMemoryBase* other) { return false; /* To give you a sense what this does:  other->CopyFrom(this); */ }
  
-    virtual void PrintSelf (ostream &os);
+    virtual void PrintSelf (std::ostream &os);
 
 protected:
     CudappMemoryBase();
