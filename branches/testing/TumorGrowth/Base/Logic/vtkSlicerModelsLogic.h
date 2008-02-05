@@ -50,7 +50,7 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerModelsLogic : public vtkSlicerLogic
   vtkMRMLModelNode* AddModel (const char* filename);
 
 
-  vtkMRMLModelNode* CloneModel(vtkMRMLScene *scene, vtkMRMLModelNode *modelNode,  const char *name); 
+  static vtkMRMLModelNode* CloneModel(vtkMRMLScene *scene, vtkMRMLModelNode *modelNode,  const char *name); 
 
   // Description:
   // Create model nodes and
