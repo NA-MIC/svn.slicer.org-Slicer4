@@ -353,7 +353,6 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     CUDArenderAlgo_doRender(RenderDestination,
         this->CudaInputBuffer->GetMemPointer(),
         this->GetInput()->GetScalarType(),
-        (float*)rotationMatrix,
         this->CudaColorTransferFunction->GetMemPointerAs<float>(),
         this->CudaAlphaTransferFunction->GetMemPointerAs<float>(),
         this->CudaZBuffer->GetMemPointerAs<float>(),
@@ -363,7 +362,10 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         0,0,0,                                                //translation of data in x,y,z direction
         1, 1, 1,                                              //voxel dimension
         this->Threshold[0], this->Threshold[1],               //min and max threshold
-        -500                                                  //slicing distance from center of 3D data
+        -500,                                                  //slicing distance from center of 3D data
+        cam->GetPosition()[0],cam->GetPosition()[1], cam->GetPosition()[2],
+        cam->GetFocalPoint()[0], cam->GetFocalPoint()[1], cam->GetFocalPoint()[2],
+        cam->GetViewUp()[0], cam->GetViewUp()[1], cam->GetViewUp()[2]
         );         
 
     // Get the resulted image.

@@ -18,7 +18,6 @@ extern "C"
 void CUDArenderAlgo_doRender(uchar4* outputData, 
                              void* sourceData,
                              int inputDataType,
-                             float* rotationMatrix, 
                              float* colorTransferFunction,
                              float* alphaTransferFunction,
                              float* zBuffer,
@@ -28,5 +27,8 @@ void CUDArenderAlgo_doRender(uchar4* outputData,
                              float dispX, float dispY, float dispZ, 
                              float voxelSizeX, float voxelSizeY, float voxelSizeZ, 
                              int minThreshold, int maxThreshold, 
-                             int sliceDistance);
+                             int sliceDistance,
+                             float posX, float posY, float posZ,    //camera position
+                             float focX, float focY, float focZ,    //focal point position
+                             float viewX, float viewY, float viewZ);  // view vector
 #endif
