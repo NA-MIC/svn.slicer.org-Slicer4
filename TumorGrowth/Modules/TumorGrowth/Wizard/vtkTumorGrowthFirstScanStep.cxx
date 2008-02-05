@@ -71,7 +71,7 @@ void vtkTumorGrowthFirstScanStep::UpdateGUI() {
 //----------------------------------------------------------------------------
 void vtkTumorGrowthFirstScanStep::ShowUserInterface()
 {
-  {
+  if ( 0 )  {
     cout << "====================" << endl;
     cout << "DEBUGGING" << endl;
     vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
