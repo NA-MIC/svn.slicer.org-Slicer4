@@ -1,27 +1,27 @@
-#include "vtkCudaMemoryPitch.h"
+#include "CudappMemoryPitch.h"
 #include "cuda_runtime_api.h"
-#include "vtkCudaBase.h"
+#include "CudappBase.h"
 
 #include "vtkObjectFactory.h"
 
-vtkCxxRevisionMacro(vtkCudaMemoryPitch, "$Revision: 1.0 $");
-vtkStandardNewMacro(vtkCudaMemoryPitch);
+vtkCxxRevisionMacro(CudappMemoryPitch, "$Revision: 1.0 $");
+vtkStandardNewMacro(CudappMemoryPitch);
 
-vtkCudaMemoryPitch::vtkCudaMemoryPitch()
+CudappMemoryPitch::CudappMemoryPitch()
 {
-  this->Location = vtkCudaMemoryBase::MemoryOnDevice;
-  this->Location = vtkCudaMemoryBase::MemoryOnDevice;
+  this->Location = CudappMemoryBase::MemoryOnDevice;
+  this->Location = CudappMemoryBase::MemoryOnDevice;
   
     this->Pitch = 0;
 }
 
-vtkCudaMemoryPitch::~vtkCudaMemoryPitch()
+CudappMemoryPitch::~CudappMemoryPitch()
 {
     this->Free();
 }
 
 
-void* vtkCudaMemoryPitch::AllocatePitchBytes(size_t width, size_t height, size_t typeSize)
+void* CudappMemoryPitch::AllocatePitchBytes(size_t width, size_t height, size_t typeSize)
 {
     this->Free();
     cudaError_t error = 
@@ -29,14 +29,14 @@ void* vtkCudaMemoryPitch::AllocatePitchBytes(size_t width, size_t height, size_t
     this->Width = width;
     this->Height = height;
     if (error != cudaSuccess)
-        vtkCudaBase::PrintError(error);
+        CudappBase::PrintError(error);
 
     return (void*)this->MemPointer;
 }
 
 
 
-void vtkCudaMemoryPitch::Free()
+void CudappMemoryPitch::Free()
 {  
     if (this->MemPointer != NULL)
     {
@@ -48,12 +48,12 @@ void vtkCudaMemoryPitch::Free()
 }
 
 
-void vtkCudaMemoryPitch::MemSet(int value)
+void CudappMemoryPitch::MemSet(int value)
 {
     cudaMemset2D(this->MemPointer, this->Pitch, value, this->Width, this->Height);  
 }
 
-void vtkCudaMemoryPitch::PrintSelf(ostream &os, vtkIndent indent)
+void CudappMemoryPitch::PrintSelf(ostream &os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
     os << " Width: "<< this->GetWidth() << 

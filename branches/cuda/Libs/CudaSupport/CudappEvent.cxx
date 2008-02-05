@@ -1,29 +1,29 @@
-#include "vtkCudaEvent.h"
-#include "vtkCudaStream.h"
-#include "vtkCudaBase.h"
+#include "CudappEvent.h"
+#include "CudappStream.h"
+#include "CudappBase.h"
 
 #include "cuda_runtime_api.h"
 #include "vtkObjectFactory.h"
 
-vtkCxxRevisionMacro(vtkCudaEvent, "$Revision: 1.0 $");
-vtkStandardNewMacro(vtkCudaEvent);
+vtkCxxRevisionMacro(CudappEvent, "$Revision: 1.0 $");
+vtkStandardNewMacro(CudappEvent);
 
-vtkCudaEvent::vtkCudaEvent()
+CudappEvent::CudappEvent()
 {
     cudaEventCreate(&this->Event);
 }
 
-vtkCudaEvent::~vtkCudaEvent()
+CudappEvent::~CudappEvent()
 {
     cudaEventDestroy(this->Event);
 }
 
-void vtkCudaEvent::Record()
+void CudappEvent::Record()
 {
     cudaEventRecord(this->Event, 0);  
 }
 
-void vtkCudaEvent::Record(vtkCudaStream* stream)
+void CudappEvent::Record(CudappStream* stream)
 {
     if (stream == NULL)
         this->Record();
@@ -31,38 +31,38 @@ void vtkCudaEvent::Record(vtkCudaStream* stream)
         cudaEventRecord(this->Event, stream->GetStream());
 }
 
-vtkCudaBase::State vtkCudaEvent::Query()
+CudappBase::State CudappEvent::Query()
 {
     switch(cudaEventQuery(this->Event))
     {
     case cudaSuccess:
-        return vtkCudaBase::Success;
+        return CudappBase::Success;
     case cudaErrorNotReady:
-        return vtkCudaBase::NotReadyError;
+        return CudappBase::NotReadyError;
     case cudaErrorInvalidValue:
     default:
-        return vtkCudaBase::InvalidValueError;    
+        return CudappBase::InvalidValueError;    
     }
 }
 
-void vtkCudaEvent::Synchronize()
+void CudappEvent::Synchronize()
 {
     if (cudaEventSynchronize(this->Event) == cudaErrorInvalidValue)
-        vtkCudaBase::PrintError(cudaErrorInvalidValue);
+        CudappBase::PrintError(cudaErrorInvalidValue);
 }
 
 /**
 * @returns the time between the finish of two events.
 * @param otherEvent the event that finished later than this event (the end event if this is the start-event.
 */
-float vtkCudaEvent::ElapsedTime(vtkCudaEvent* otherEvent)
+float CudappEvent::ElapsedTime(CudappEvent* otherEvent)
 {
     float elapsedTime = 0.0;
     cudaEventElapsedTime(&elapsedTime, this->Event, otherEvent->GetEvent());
     return elapsedTime;
 }
 
-void vtkCudaEvent::PrintSelf(ostream& os, vtkIndent indent)
+void CudappEvent::PrintSelf(ostream& os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
 

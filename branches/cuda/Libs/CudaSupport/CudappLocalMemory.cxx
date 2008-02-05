@@ -1,25 +1,25 @@
-#include "vtkCudaLocalMemory.h"
+#include "CudappLocalMemory.h"
 
-#include "vtkCudaBase.h"
+#include "CudappBase.h"
 #include "vtkObjectFactory.h"
 
 #include <string.h>
 #include "cuda_runtime_api.h"
 
-vtkCxxRevisionMacro(vtkCudaLocalMemory, "$Revision 1.0 $");
-vtkStandardNewMacro(vtkCudaLocalMemory);
+vtkCxxRevisionMacro(CudappLocalMemory, "$Revision 1.0 $");
+vtkStandardNewMacro(CudappLocalMemory);
 
-vtkCudaLocalMemory::vtkCudaLocalMemory()
+CudappLocalMemory::CudappLocalMemory()
 {
-  this->Location = vtkCudaMemoryBase::MemoryOnHost;
+  this->Location = CudappMemoryBase::MemoryOnHost;
 }
 
-vtkCudaLocalMemory::~vtkCudaLocalMemory()
+CudappLocalMemory::~CudappLocalMemory()
 {
     this->Free();
 }
 
-void* vtkCudaLocalMemory::AllocateBytes(size_t count)
+void* CudappLocalMemory::AllocateBytes(size_t count)
 {
     this->Free();
     this->MemPointer = malloc(count);
@@ -30,7 +30,7 @@ void* vtkCudaLocalMemory::AllocateBytes(size_t count)
     return (void*)this->MemPointer;
 }
 
-void vtkCudaLocalMemory::Free()
+void CudappLocalMemory::Free()
 {
     if (this->MemPointer != NULL)
     {
@@ -43,13 +43,13 @@ void vtkCudaLocalMemory::Free()
 /**
 * @brief host implementation of the MemorySetter Value
 */
-void vtkCudaLocalMemory::MemSet(int value)
+void CudappLocalMemory::MemSet(int value)
 {
     memset(this->MemPointer, value, Size);
 }
 
 
-bool vtkCudaLocalMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc)
+bool CudappLocalMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc)
 {
   if(cudaMemcpy(dst, 
         this->GetMemPointer(), //HACK  + offset,
@@ -61,7 +61,7 @@ bool vtkCudaLocalMemory::CopyTo(void* dst, size_t byte_count, size_t offset, Mem
         return false;
 }
 
-bool vtkCudaLocalMemory::CopyFrom(void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
+bool CudappLocalMemory::CopyFrom(void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
 {
     if(cudaMemcpy(this->GetMemPointer(), //HACK  + offset, 
         src,
@@ -74,7 +74,7 @@ bool vtkCudaLocalMemory::CopyFrom(void* src, size_t byte_count, size_t offset, M
 }
 
 
-void vtkCudaLocalMemory::PrintSelf(ostream& os, vtkIndent indent)
+void CudappLocalMemory::PrintSelf(ostream& os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
 }

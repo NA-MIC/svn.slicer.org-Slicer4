@@ -33,7 +33,7 @@
 
 #include "vtkRenderer.h"
 
-#include "vtkCudaMemory.h"
+#include "CudappMemory.h"
 
 extern "C" {
 #include "CUDA_renderAlgo.h"

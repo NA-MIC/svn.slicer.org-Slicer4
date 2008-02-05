@@ -4,12 +4,14 @@
 #include "vtkVolumeMapper.h"
 #include "vtkVolumeRenderingCudaModule.h"
 
-class vtkCudaDeviceMemory;
 class vtkImageData;
-class vtkCudaHostMemory;
-class vtkCudaLocalMemory;
-
 class vtkVolumeProperty;
+
+//BTX
+class CudappDeviceMemory;
+class CudappHostMemory;
+class CudappLocalMemory;
+//ETX
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolumeMapper
 {
@@ -22,7 +24,7 @@ public:
     virtual void Render(vtkRenderer *, vtkVolume *);
 
     void SetThreshold(unsigned int min, unsigned int max) { this->Threshold[0] = min; this->Threshold[1] = max; }
-    void SetThreshold(double* range) { SetThreshold(range[0], range[1]); }
+    void SetThreshold(double* range) { SetThreshold((unsigned int)range[0], (unsigned int)range[1]); }
 
    //BTX
    typedef enum 
@@ -48,19 +50,19 @@ protected:
     unsigned int OutputDataSize[2];
 
 
-    vtkCudaDeviceMemory* CudaInputBuffer;
-    vtkCudaDeviceMemory* CudaOutputBuffer;
+    CudappDeviceMemory* CudaInputBuffer;
+    CudappDeviceMemory* CudaOutputBuffer;
 //BTX
     RenderMode CurrentRenderMode;
 //ETX
     vtkImageData* LocalOutputImage;
 
-    vtkCudaHostMemory* LocalColorTransferFunction;
-    vtkCudaDeviceMemory* CudaColorTransferFunction;
-    vtkCudaHostMemory* LocalAlphaTransferFunction;
-    vtkCudaDeviceMemory* CudaAlphaTransferFunction;
+    CudappHostMemory* LocalColorTransferFunction;
+    CudappDeviceMemory* CudaColorTransferFunction;
+    CudappHostMemory* LocalAlphaTransferFunction;
+    CudappDeviceMemory* CudaAlphaTransferFunction;
 
-    vtkCudaDeviceMemory* CudaZBuffer;
+    CudappDeviceMemory* CudaZBuffer;
 
     unsigned int Threshold[2];
 

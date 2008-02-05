@@ -1,13 +1,13 @@
-#include "vtkCudaDevice.h"
+#include "CudappDevice.h"
 #include "cuda_runtime_api.h"
-#include "vtkCudaMemoryArray.h"
+#include "CudappMemoryArray.h"
 
 #include "vtkObjectFactory.h"
 
-vtkCxxRevisionMacro(vtkCudaDevice, "$Revision: 1.6 $");
-vtkStandardNewMacro(vtkCudaDevice);
+vtkCxxRevisionMacro(CudappDevice, "$Revision: 1.6 $");
+vtkStandardNewMacro(CudappDevice);
 
-vtkCudaDevice::vtkCudaDevice()
+CudappDevice::CudappDevice()
 {
     this->Initialized = false;
     this->DeviceNumber = 0;
@@ -17,46 +17,46 @@ vtkCudaDevice::vtkCudaDevice()
     this->DeviceProp = prop;
 }
 
-vtkCudaDevice::~vtkCudaDevice()
+CudappDevice::~CudappDevice()
 {
 }
 
 /**
 * TODO Remove this function. just for trial
 */
-bool vtkCudaDevice::AllocateMemory()
+bool CudappDevice::AllocateMemory()
 {
     return false;
 }
 
-void vtkCudaDevice::SetDeviceNumber(int deviceNumber)
+void CudappDevice::SetDeviceNumber(int deviceNumber)
 {
     this->DeviceNumber = deviceNumber;
     this->LoadDeviceProperties();
 }
 
-void vtkCudaDevice::LoadDeviceProperties()
+void CudappDevice::LoadDeviceProperties()
 {
     cudaGetDeviceProperties(&DeviceProp, this->DeviceNumber);
 }
 
-void vtkCudaDevice::MakeActive()
+void CudappDevice::MakeActive()
 {
     cudaSetDevice(this->DeviceNumber);
     this->Initialized = true;
 }
 
-void vtkCudaDevice::SynchronizeThread()
+void CudappDevice::SynchronizeThread()
 {
     cudaThreadSynchronize();
 }
-void vtkCudaDevice::ExitThread()
+void CudappDevice::ExitThread()
 {
 
 }
 
 
-void vtkCudaDevice::PrintSelf(ostream& os, vtkIndent indent)
+void CudappDevice::PrintSelf(ostream& os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
     os << "Device Name = " << this->GetName() << 

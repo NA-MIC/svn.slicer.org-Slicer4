@@ -11,24 +11,24 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 #---------#
  SET(CudaSupport_SRCS
   ### BASIC CUDA RUNTIME API  CLASSES ###
-    vtkCudaBase.cxx
-    vtkCudaSupport.cxx
-    vtkCudaSupportFactory.cxx
+    CudappBase.cxx
+    CudappSupport.cxx
+ ##   CudappSupportFactory.cxx
 
-    vtkCudaDevice.cxx
-    vtkCudaEvent.cxx
-    vtkCudaStream.cxx
-##    vtkCudaOpenGLBufferObject.cxx
+    CudappDevice.cxx
+    CudappEvent.cxx
+    CudappStream.cxx
+##    CudappOpenGLBufferObject.cxx
 
   #### CUDA MEMORY RUNTIME CLASSES ####
-    vtkCudaMemoryBase.cxx
-    vtkCudaMemory.cxx
-    vtkCudaDeviceMemory.cxx
-    vtkCudaHostMemory.cxx
-    vtkCudaLocalMemory.cxx
+    CudappMemoryBase.cxx
+    CudappMemory.cxx
+    CudappDeviceMemory.cxx
+    CudappHostMemory.cxx
+    CudappLocalMemory.cxx
 
-    vtkCudaMemoryPitch.cxx
-    vtkCudaMemoryArray.cxx
+    CudappMemoryPitch.cxx
+    CudappMemoryArray.cxx
 )
 
 INCLUDE_DIRECTORIES(
@@ -96,13 +96,8 @@ ENDIF(BUILD_TESTING)
 
 
 CONFIGURE_FILE(
-  ${CudaSupport_SOURCE_DIR}/vtkCudaSupportConfigure.h.in 
-  ${CudaSupport_BINARY_DIR}/vtkCudaSupportConfigure.h
-)
-CONFIGURE_FILE(
-  ${CudaSupport_SOURCE_DIR}/presets.xml
-  ${CudaSupport_BINARY_DIR}/presets.xml
-  COPYONLY
+  ${CudaSupport_SOURCE_DIR}/CudappSupportConfigure.h.in 
+  ${CudaSupport_BINARY_DIR}/CudappSupportConfigure.h
 )
 
 ENDIF(CUDA_SUPPORT_ENABLED)

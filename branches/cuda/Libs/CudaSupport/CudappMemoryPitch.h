@@ -1,13 +1,13 @@
 #ifndef VTKCUDAMEMORYPITCH_H_
 #define VTKCUDAMEMORYPITCH_H_
 
-#include "vtkCudaMemoryBase.h"
+#include "CudappMemoryBase.h"
 
-class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryPitch : public vtkCudaMemoryBase
+class VTK_CUDASUPPORT_EXPORT CudappMemoryPitch : public CudappMemoryBase
 {
-    vtkTypeRevisionMacro(vtkCudaMemoryPitch, vtkCudaMemoryBase);
+    vtkTypeRevisionMacro(CudappMemoryPitch, CudappMemoryBase);
 public:
-    static vtkCudaMemoryPitch* New();
+    static CudappMemoryPitch* New();
 
     void* AllocatePitchBytes(size_t width, size_t height, size_t typeSize);
   virtual void Free();
@@ -31,10 +31,10 @@ public:
 
     virtual void PrintSelf (ostream &os, vtkIndent indent);
 protected:
-    vtkCudaMemoryPitch();
-    virtual ~vtkCudaMemoryPitch();
-    vtkCudaMemoryPitch(const vtkCudaMemoryPitch&);
-    vtkCudaMemoryPitch& operator=(const vtkCudaMemoryPitch&);
+    CudappMemoryPitch();
+    virtual ~CudappMemoryPitch();
+    CudappMemoryPitch(const CudappMemoryPitch&);
+    CudappMemoryPitch& operator=(const CudappMemoryPitch&);
 
     size_t Pitch;
     size_t Width;

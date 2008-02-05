@@ -1,14 +1,14 @@
-#include "vtkCudaMemoryArray.h"
-#include "vtkCudaBase.h"
+#include "CudappMemoryArray.h"
+#include "CudappBase.h"
 
 #include "vtkObjectFactory.h"
 
-vtkCxxRevisionMacro(vtkCudaMemoryArray, "$Revision: 1.0");
-vtkStandardNewMacro(vtkCudaMemoryArray);
+vtkCxxRevisionMacro(CudappMemoryArray, "$Revision: 1.0");
+vtkStandardNewMacro(CudappMemoryArray);
 
-vtkCudaMemoryArray::vtkCudaMemoryArray()
+CudappMemoryArray::CudappMemoryArray()
 {
-  this->Location = vtkCudaMemoryBase::MemoryOnDevice;
+  this->Location = CudappMemoryBase::MemoryOnDevice;
 
     this->Array = NULL;
     this->Width = this->Height = 0;
@@ -16,7 +16,7 @@ vtkCudaMemoryArray::vtkCudaMemoryArray()
     this->Descriptor.f = cudaChannelFormatKindSigned;
 }
 
-vtkCudaMemoryArray::~vtkCudaMemoryArray()
+CudappMemoryArray::~CudappMemoryArray()
 {
     this->Free();
 }
@@ -28,7 +28,7 @@ vtkCudaMemoryArray::~vtkCudaMemoryArray()
 * 
 * @note if there was already allocated data in this instance the data will be erased.
 */
-void vtkCudaMemoryArray::Allocate(size_t width, size_t height)
+void CudappMemoryArray::Allocate(size_t width, size_t height)
 {
     this->Free();
 
@@ -41,7 +41,7 @@ void vtkCudaMemoryArray::Allocate(size_t width, size_t height)
 /**
 * @brief frees all the resources needed for the Array
 */
-void vtkCudaMemoryArray::Free()
+void CudappMemoryArray::Free()
 {
     if (this->Array != NULL) {
         cudaFreeArray(this->Array);  
@@ -51,14 +51,14 @@ void vtkCudaMemoryArray::Free()
     }
 }
 
-void vtkCudaMemoryArray::DeepCopy(vtkCudaMemoryArray* source)
+void CudappMemoryArray::DeepCopy(CudappMemoryArray* source)
 {
     this->Allocate(source->GetWidth(), source->GetHeight());
     cudaMemcpyArrayToArray(this->Array, 0, 0, source->Array, 0, 0, sizeof(source->Array));
 }
 
 
-void vtkCudaMemoryArray::PrintSelf(ostream &os, vtkIndent indent)
+void CudappMemoryArray::PrintSelf(ostream &os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
     os << " Width: "<< this->GetWidth() << 

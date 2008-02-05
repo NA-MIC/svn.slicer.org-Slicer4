@@ -3,12 +3,12 @@
 
 #include "vtkObject.h"
 #include "driver_types.h"
-#include "vtkCudaSupportModule.h"
+#include "CudappSupportModule.h"
 
 /// THIS IS A STATIC CLASS USED FOR BASIC CUDA FUNCTIONALITY!!
-class VTK_CUDASUPPORT_EXPORT vtkCudaBase : public vtkObject
+class VTK_CUDASUPPORT_EXPORT CudappBase : public vtkObject
 {
-    vtkTypeRevisionMacro(vtkCudaBase, vtkObject);
+    vtkTypeRevisionMacro(CudappBase, vtkObject);
 public:
     //BTX
     typedef enum {
@@ -18,7 +18,7 @@ public:
     } State;
     //ETX
 
-    static vtkCudaBase* New();
+    static CudappBase* New();
 
     static cudaError_t GetLastError();
     static const char* GetLastErrorString();
@@ -26,8 +26,8 @@ public:
     static void PrintError(cudaError_t error);
 
 private:
-    virtual ~vtkCudaBase();
-    vtkCudaBase();
+    virtual ~CudappBase();
+    CudappBase();
 };
 
 #endif /*VTKCUDABASE_H_*/

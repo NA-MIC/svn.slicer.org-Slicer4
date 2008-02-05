@@ -2,15 +2,15 @@
 #define VTKCUDADEVICE_H_
 
 #include "vtkObject.h"
-#include "vtkCudaSupportModule.h"
+#include "CudappSupportModule.h"
 
 #include "driver_types.h"
 
-class VTK_CUDASUPPORT_EXPORT vtkCudaDevice : public vtkObject
+class VTK_CUDASUPPORT_EXPORT CudappDevice : public vtkObject
 {
-    vtkTypeRevisionMacro(vtkCudaDevice, vtkObject);
+    vtkTypeRevisionMacro(CudappDevice, vtkObject);
 
-    static vtkCudaDevice* New();
+    static CudappDevice* New();
 
     /// Device Information
     vtkGetMacro(Initialized, bool);
@@ -64,8 +64,8 @@ class VTK_CUDASUPPORT_EXPORT vtkCudaDevice : public vtkObject
     void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
-    vtkCudaDevice();
-    virtual ~vtkCudaDevice();
+    CudappDevice();
+    virtual ~CudappDevice();
 
     void LoadDeviceProperties();
 

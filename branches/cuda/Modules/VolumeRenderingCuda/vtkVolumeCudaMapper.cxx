@@ -24,11 +24,11 @@
 
 
 // CUDA
-#include "vtkCudaSupport.h"
+#include "CudappSupport.h"
 #include "vtkImageData.h"
-#include "vtkCudaDeviceMemory.h"
-#include "vtkCudaHostMemory.h"
-#include "vtkCudaMemoryArray.h"
+#include "CudappDeviceMemory.h"
+#include "CudappHostMemory.h"
+#include "CudappMemoryArray.h"
 
 #include <vector_types.h>
 
@@ -47,7 +47,7 @@ vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
 
 vtkVolumeCudaMapper* vtkVolumeCudaMapper::New()
 {
-    vtkCudaSupport* support = vtkCudaSupport::New();
+    CudappSupport* support = CudappSupport::New();
     bool cudaIsSupported = support->IsSupported();
     support->Delete();
     if (cudaIsSupported)
@@ -61,8 +61,8 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
     this->LocalOutputImage = vtkImageData::New();
 
-    this->CudaInputBuffer = vtkCudaDeviceMemory::New();
-    this->CudaOutputBuffer = vtkCudaDeviceMemory::New();
+    this->CudaInputBuffer = CudappDeviceMemory::New();
+    this->CudaOutputBuffer = CudappDeviceMemory::New();
 
     this->Texture = 0;
     this->BufferObject = 0;
@@ -87,18 +87,18 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     }
     extensions->Delete();
 
-    this->CudaColorTransferFunction = vtkCudaDeviceMemory::New();
+    this->CudaColorTransferFunction = CudappDeviceMemory::New();
     this->CudaColorTransferFunction->Allocate<float3>(256);
-    this->LocalColorTransferFunction = vtkCudaHostMemory::New();
+    this->LocalColorTransferFunction = CudappHostMemory::New();
     this->LocalColorTransferFunction->Allocate<float3>(256);
 
-    this->CudaAlphaTransferFunction = vtkCudaDeviceMemory::New();
+    this->CudaAlphaTransferFunction = CudappDeviceMemory::New();
     this->CudaAlphaTransferFunction->Allocate<float>(256);
-    this->LocalAlphaTransferFunction = vtkCudaHostMemory::New();
+    this->LocalAlphaTransferFunction = CudappHostMemory::New();
     this->LocalAlphaTransferFunction->Allocate<float>(256);
 
     
-    this->CudaZBuffer = vtkCudaDeviceMemory::New();
+    this->CudaZBuffer = CudappDeviceMemory::New();
     this->CudaZBuffer->Allocate<float>(1600*1200);
     float zBuffer[1600][1200];
     for(unsigned int i = 0; i < 1600; i++)

@@ -1,11 +1,11 @@
 #ifndef VTKCUDAMEMORY_H_
 #define VTKCUDAMEMORY_H_
 
-#include "vtkCudaMemoryBase.h"
+#include "CudappMemoryBase.h"
 
-class VTK_CUDASUPPORT_EXPORT vtkCudaMemory : public vtkCudaMemoryBase
+class VTK_CUDASUPPORT_EXPORT CudappMemory : public CudappMemoryBase
 {
-    vtkTypeRevisionMacro(vtkCudaMemory, vtkCudaMemoryBase);
+    vtkTypeRevisionMacro(CudappMemory, CudappMemoryBase);
 public:
 
     virtual void* AllocateBytes(size_t byte_count) = 0;
@@ -20,19 +20,19 @@ public:
     //ETX
    
   virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) = 0;
-    virtual bool CopyTo(vtkCudaMemoryBase* other) { return other->CopyFrom(this); }
+    virtual bool CopyTo(CudappMemoryBase* other) { return other->CopyFrom(this); }
 
     virtual void PrintSelf(ostream &os, vtkIndent indent);
 
 protected:
-    vtkCudaMemory();
-    virtual ~vtkCudaMemory();
-    vtkCudaMemory(const vtkCudaMemory&);
-    vtkCudaMemory& operator=(const vtkCudaMemory&); 
+    CudappMemory();
+    virtual ~CudappMemory();
+    CudappMemory(const CudappMemory&);
+    CudappMemory& operator=(const CudappMemory&); 
 
     void* MemPointer;
     
-    bool CopyFrom(vtkCudaMemory* mem);
+    bool CopyFrom(CudappMemory* mem);
 };
 
 #endif /*VTKCUDAMEMORY_H_*/

@@ -1,14 +1,14 @@
 
 
-#include "vtkCudaDeviceMemory.h"
-#include "vtkCudaLocalMemory.h"
+#include "CudappDeviceMemory.h"
+#include "CudappLocalMemory.h"
 
 int main(int argc, char** argv)
 {
-  vtkCudaLocalMemory* local = vtkCudaLocalMemory::New();
-  vtkCudaDeviceMemory* dev = vtkCudaDeviceMemory::New();
+  CudappLocalMemory* local = CudappLocalMemory::New();
+  CudappDeviceMemory* dev = CudappDeviceMemory::New();
   
-  vtkCudaLocalMemory* dest = vtkCudaLocalMemory::New();
+  CudappLocalMemory* dest = CudappLocalMemory::New();
 
   local->Allocate<int>(1000);
   dev->Allocate<int>(1000);

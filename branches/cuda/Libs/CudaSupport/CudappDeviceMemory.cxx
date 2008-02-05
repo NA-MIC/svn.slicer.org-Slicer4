@@ -1,28 +1,28 @@
-#include "vtkCudaDeviceMemory.h"
+#include "CudappDeviceMemory.h"
 
 #include "cuda_runtime_api.h"
-#include "vtkCudaBase.h"
+#include "CudappBase.h"
 
-#include "vtkCudaLocalMemory.h"
-#include "vtkCudaHostMemory.h"
-#include "vtkCudaMemoryArray.h"
+#include "CudappLocalMemory.h"
+#include "CudappHostMemory.h"
+#include "CudappMemoryArray.h"
 
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 
-vtkCxxRevisionMacro(vtkCudaDeviceMemory, "$Revision: 1.0 $");
-vtkStandardNewMacro(vtkCudaDeviceMemory);
+vtkCxxRevisionMacro(CudappDeviceMemory, "$Revision: 1.0 $");
+vtkStandardNewMacro(CudappDeviceMemory);
 
-vtkCudaDeviceMemory::vtkCudaDeviceMemory()
+CudappDeviceMemory::CudappDeviceMemory()
 {
-  this->Location = vtkCudaMemoryBase::MemoryOnDevice;
+  this->Location = CudappMemoryBase::MemoryOnDevice;
   
   
     this->MemPointer = NULL;
     this->Size = 0;
 }
 
-vtkCudaDeviceMemory::~vtkCudaDeviceMemory()
+CudappDeviceMemory::~CudappDeviceMemory()
 {
     // so the virtual function call will not be false.
     // each subclass must call free by its own and set MemPointer to NULL in its Destructor!
@@ -30,7 +30,7 @@ vtkCudaDeviceMemory::~vtkCudaDeviceMemory()
         this->Free();
 }
 
-void vtkCudaDeviceMemory::Free()
+void CudappDeviceMemory::Free()
 {
     if (this->MemPointer != NULL)
     {
@@ -40,7 +40,7 @@ void vtkCudaDeviceMemory::Free()
     }
 }
 
-void* vtkCudaDeviceMemory::AllocateBytes(size_t byte_count)
+void* CudappDeviceMemory::AllocateBytes(size_t byte_count)
 {
     // do nothing in case we already allocated the desired size.
     if (this->GetSize() == byte_count)
@@ -51,17 +51,17 @@ void* vtkCudaDeviceMemory::AllocateBytes(size_t byte_count)
         cudaMalloc(&this->MemPointer, byte_count);
     this->Size = byte_count;
     if (error != cudaSuccess)
-        vtkCudaBase::PrintError(error);
+        CudappBase::PrintError(error);
 
     return (void*) this->MemPointer;
 }
 
-void vtkCudaDeviceMemory::MemSet(int value)
+void CudappDeviceMemory::MemSet(int value)
 {
     cudaMemset(this->MemPointer, value, this->Size);
 }
 
-bool vtkCudaDeviceMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc)
+bool CudappDeviceMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc)
 {
   if(cudaMemcpy(dst, 
         this->GetMemPointer(), //HACK + offset,
@@ -73,7 +73,7 @@ bool vtkCudaDeviceMemory::CopyTo(void* dst, size_t byte_count, size_t offset, Me
         return false;
 }
 
-bool vtkCudaDeviceMemory::CopyFrom(void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
+bool CudappDeviceMemory::CopyFrom(void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
 {
     if(cudaMemcpy(this->GetMemPointer(), //HACK + offset, 
         src,
@@ -87,7 +87,7 @@ bool vtkCudaDeviceMemory::CopyFrom(void* src, size_t byte_count, size_t offset, 
 
 
 /* vtkImageData
-bool vtkCudaDeviceMemory::CopyFrom(vtkImageData* data)
+bool CudappDeviceMemory::CopyFrom(vtkImageData* data)
 {
     if (!this->AllocateBytes(data->GetActualMemorySize()*1024))
         return false;
@@ -102,7 +102,7 @@ bool vtkCudaDeviceMemory::CopyFrom(vtkImageData* data)
         return false;
 }
 
-bool vtkCudaDeviceMemory::CopyTo(vtkImageData* data)
+bool CudappDeviceMemory::CopyTo(vtkImageData* data)
 {
     if(data->GetActualMemorySize() * 1024 < this->GetSize())
     {
@@ -121,11 +121,11 @@ bool vtkCudaDeviceMemory::CopyTo(vtkImageData* data)
 }
 */
 /* ARRAY
-bool vtkCudaDeviceMemory::CopyTo(vtkCudaMemoryArray* other)
+bool CudappDeviceMemory::CopyTo(CudappMemoryArray* other)
 {
     if (other->GetSize() < this->GetSize())
     {
-        vtkErrorMacro("The vtkCudaDeviceMemoryArray has to little Memory to store memory inside");
+        vtkErrorMacro("The CudappDeviceMemoryArray has to little Memory to store memory inside");
         return false;
     }
     // we cannot say the XYZ extent so we just write into the memory area
@@ -141,7 +141,7 @@ bool vtkCudaDeviceMemory::CopyTo(vtkCudaMemoryArray* other)
 }
 */
 
-void vtkCudaDeviceMemory::PrintSelf (ostream &os, vtkIndent indent)
+void CudappDeviceMemory::PrintSelf (ostream &os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
 }
