@@ -1,13 +1,9 @@
 #include "CudappLocalMemory.h"
 
 #include "CudappBase.h"
-#include "vtkObjectFactory.h"
 
 #include <string.h>
 #include "cuda_runtime_api.h"
-
-vtkCxxRevisionMacro(CudappLocalMemory, "$Revision 1.0 $");
-vtkStandardNewMacro(CudappLocalMemory);
 
 CudappLocalMemory::CudappLocalMemory()
 {
@@ -74,7 +70,7 @@ bool CudappLocalMemory::CopyFrom(void* src, size_t byte_count, size_t offset, Me
 }
 
 
-void CudappLocalMemory::PrintSelf(ostream& os, vtkIndent indent)
+void CudappLocalMemory::PrintSelf(ostream& os)
 {
     this->Superclass::PrintSelf(os, indent);
 }

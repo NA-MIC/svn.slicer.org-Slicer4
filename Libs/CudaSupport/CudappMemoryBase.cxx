@@ -2,8 +2,6 @@
 
 #include "CudappMemory.h"
 
-vtkCxxRevisionMacro(CudappMemoryBase, "$Revision: 1.0$");
-
 CudappMemoryBase* CudappMemoryBase::New()
 {
     return CudappMemory::New();
@@ -18,7 +16,7 @@ CudappMemoryBase::~CudappMemoryBase()
 {
 }
 
-void CudappMemoryBase::PrintSelf (ostream &os, vtkIndent indent)
+void CudappMemoryBase::PrintSelf (ostream &os)
 {
     this->Superclass::PrintSelf(os, indent);
     os << "Size = " << this->GetSize();  

@@ -1,17 +1,17 @@
-#ifndef VTKCUDASUPPORT_H_
-#define VTKCUDASUPPORT_H_
+#ifndef CUDAPPSUPPORT_H_
+#define CUDAPPSUPPORT_H_
 
 #include "vtkObject.h"
 #include "CudappSupportModule.h"
-#include "vtkstd/vector"
+#include <vector>
 
 class CudappDevice;
 
-class VTK_CUDASUPPORT_EXPORT CudappSupport : public vtkObject
+class CUDA_SUPPORT_EXPORT CudappSupport : public vtkObject
 {
 public:
-    vtkTypeRevisionMacro(CudappSupport, vtkObject);
-    static CudappSupport *New();
+    CudappSupport();
+    virtual ~CudappSupport();
 
     bool IsSupported() { return (this->GetDeviceCount() > 0); }
     bool IsSupported(const char* cudaVersion);
@@ -22,16 +22,15 @@ public:
     CudappDevice* operator[](int deviceNumber) const { return this->Devices[deviceNumber]; }
     //ETX
 
-    void PrintSelf(ostream& os, vtkIndent indent);
+    void PrintSelf(ostream& os);
 
 protected:
-    CudappSupport();
-    virtual ~CudappSupport();
+    typedef std::vector<CudappDevice*> DeviceList;
 
     int CheckSupportedCudaVersion();
     //BTX
-    vtkstd::vector<CudappDevice*> Devices;
+    DeviceList Devices;
     //ETX
 };
 
-#endif /*VTKCUDASUPPORT_H_*/
+#endif /*CUDAPPSUPPORT_H_*/

@@ -18,7 +18,3 @@
 #ifndef BUILD_SHARED_LIBS
   #define VTKSLICER_STATIC
 #endif
-
-#cmakedefine USE_NAVITRACK
-#cmakedefine USE_IGSTK
-

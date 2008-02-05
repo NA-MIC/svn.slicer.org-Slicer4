@@ -7,10 +7,6 @@
 #include "CudappHostMemory.h"
 #include "CudappMemoryArray.h"
 
-#include "vtkObjectFactory.h"
-#include "vtkImageData.h"
-
-vtkCxxRevisionMacro(CudappMemory, "$Revision: 1.0 $");
 
 CudappMemory::CudappMemory()
 {
@@ -26,7 +22,7 @@ CudappMemory::~CudappMemory()
     //    this->Free();
 }
 
-void CudappMemory::PrintSelf (ostream &os, vtkIndent indent)
+void CudappMemory::PrintSelf (ostream &os)
 {
     this->Superclass::PrintSelf(os, indent);
     if (this->GetMemPointer() == NULL)

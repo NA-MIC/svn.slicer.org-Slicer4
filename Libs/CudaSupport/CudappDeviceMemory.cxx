@@ -7,12 +7,6 @@
 #include "CudappHostMemory.h"
 #include "CudappMemoryArray.h"
 
-#include "vtkObjectFactory.h"
-#include "vtkImageData.h"
-
-vtkCxxRevisionMacro(CudappDeviceMemory, "$Revision: 1.0 $");
-vtkStandardNewMacro(CudappDeviceMemory);
-
 CudappDeviceMemory::CudappDeviceMemory()
 {
   this->Location = CudappMemoryBase::MemoryOnDevice;
@@ -141,7 +135,7 @@ bool CudappDeviceMemory::CopyTo(CudappMemoryArray* other)
 }
 */
 
-void CudappDeviceMemory::PrintSelf (ostream &os, vtkIndent indent)
+void CudappDeviceMemory::PrintSelf (ostream &os)
 {
     this->Superclass::PrintSelf(os, indent);
 }

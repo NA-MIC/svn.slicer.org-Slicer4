@@ -1,14 +1,13 @@
-#ifndef VTKCUDABASE_H_
-#define VTKCUDABASE_H_
+#ifndef CUDAPPBASE_H_
+#define CUDAPPBASE_H_
 
-#include "vtkObject.h"
+#include <ostream>
 #include "driver_types.h"
 #include "CudappSupportModule.h"
 
 /// THIS IS A STATIC CLASS USED FOR BASIC CUDA FUNCTIONALITY!!
-class VTK_CUDASUPPORT_EXPORT CudappBase : public vtkObject
+class CUDA_SUPPORT_EXPORT CudappBase 
 {
-    vtkTypeRevisionMacro(CudappBase, vtkObject);
 public:
     //BTX
     typedef enum {
@@ -28,6 +27,7 @@ public:
 private:
     virtual ~CudappBase();
     CudappBase();
+    CudappBase(const CudaBase&) {}
 };
 
-#endif /*VTKCUDABASE_H_*/
+#endif /*CUDAPPBASE_H_*/

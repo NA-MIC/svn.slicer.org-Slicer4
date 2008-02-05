@@ -1,5 +1,5 @@
-#ifndef VTKCUDAHOSTMEMORY_H_
-#define VTKCUDAHOSTMEMORY_H_
+#ifndef CUDAPPHOSTMEMORY_H_
+#define CUDAPPHOSTMEMORY_H_
 
 #include "CudappLocalMemory.h"
 
@@ -9,22 +9,18 @@
 * 
 * @note to much host memory in page locked mode can reduce overall system performance.
 */
-class VTK_CUDASUPPORT_EXPORT CudappHostMemory : public CudappLocalMemory
+class CUDA_SUPPORT_EXPORT CudappHostMemory : public CudappLocalMemory
 {
-    vtkTypeRevisionMacro(CudappHostMemory, CudappLocalMemory);
 public:
-    static CudappHostMemory* New();
-
-    virtual void* AllocateBytes(size_t count);
-    virtual void Free();
-
-    void PrintSelf(ostream& os, vtkIndent indent);
-
-protected:
     CudappHostMemory();
     virtual ~CudappHostMemory();
     CudappHostMemory(const CudappHostMemory&);
     CudappHostMemory& operator=(const CudappHostMemory&);
+
+    virtual void* AllocateBytes(size_t count);
+    virtual void Free();
+
+    void PrintSelf(ostream& os);
 };
 
-#endif /*VTKCUDAHOSTMEMORY_H_*/
+#endif /*CUDAPPHOSTMEMORY_H_*/

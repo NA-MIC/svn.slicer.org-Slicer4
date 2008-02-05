@@ -3,11 +3,6 @@
 
 #include "CudappEvent.h"
 
-#include "vtkObjectFactory.h"
-
-vtkCxxRevisionMacro(CudappStream, "$Revision: 1.0 $");
-vtkStandardNewMacro(CudappStream);
-
 CudappStream::CudappStream()
 {
     cudaStreamCreate(&this->Stream);
@@ -29,7 +24,7 @@ void CudappStream::Synchronize()
 */
 CudappEvent* CudappStream::GetStreamEvent()
 {
-    CudappEvent* event = CudappEvent::New();
+    CudappEvent* event = new CudappEvent;
     event->Record(this);
     return event;  
 }

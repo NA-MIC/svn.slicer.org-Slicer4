@@ -1,29 +1,26 @@
-#ifndef VTKCUDASTREAM_H_
-#define VTKCUDASTREAM_H_
+#ifndef CUDAPPSTREAM_H_
+#define CUDAPPSTREAM_H_
 
 #include "CudappBase.h"
 
 class CudappEvent;
 
-class VTK_CUDASUPPORT_EXPORT CudappStream : public vtkObject
+class CUDA_SUPPORT_EXPORT CudappStream
 {
-    vtkTypeRevisionMacro(CudappStream, vtkObject);
 public:
-    static CudappStream* New();
+    CudappStream();
+    virtual ~CudappStream();
+
     //BTX
     CudappBase::State e();
     //ETX
     void Synchronize();
 
     cudaStream_t GetStream() const { return this->Stream; }
-
     CudappEvent* GetStreamEvent();
 
 protected:
-    CudappStream();
-    virtual ~CudappStream();
-
     cudaStream_t Stream;
 };
 
-#endif /*VTKCUDASTREAM_H_*/
+#endif /*CUDAPPSTREAM_H_*/

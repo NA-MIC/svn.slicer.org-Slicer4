@@ -1,8 +1,7 @@
-#ifndef VTKCUDAMEMORYBASE_H_
-#define VTKCUDAMEMORYBASE_H_
+#ifndef CUDAPPMEMORYBASE_H_
+#define CUDAPPMEMORYBASE_H_
 
-
-#include "vtkObject.h"
+#include "CudappBase.h"
 #include "CudappSupportModule.h"
 #include <stddef.h>
 
@@ -13,13 +12,11 @@ class CudappMemory;
 class CudappMemoryArray;
 class CudappMemoryPitch;
 
-class VTK_CUDASUPPORT_EXPORT CudappMemoryBase : public vtkObject
+class CUDA_SUPPORT_EXPORT CudappMemoryBase
 {
   friend class CudappMemory;
 public:
-    vtkTypeRevisionMacro(CudappMemoryBase, vtkObject);
-
-    static CudappMemoryBase* New();
+    virtual ~CudappMemoryBase();
 
     /** @brief frees the memory (this must be called in each of the derived destructors) */
     //BTX
@@ -44,11 +41,10 @@ public:
     // This function does a cast of this to the specified type and then a cast of the other to the specified type, so we are sure from what memory to what we are copying.
     virtual bool CopyTo(CudappMemoryBase* other) { return false; /* To give you a sense what this does:  other->CopyFrom(this); */ }
  
-    virtual void PrintSelf (ostream &os, vtkIndent indent);
+    virtual void PrintSelf (ostream &os);
 
 protected:
     CudappMemoryBase();
-    virtual ~CudappMemoryBase();
     CudappMemoryBase(const CudappMemoryBase&);
     CudappMemoryBase& operator=(const CudappMemoryBase&);
 
@@ -61,4 +57,4 @@ protected:
   virtual bool CopyFrom(CudappMemoryArray* mem) { return false; }
 };
 
-#endif /*VTKCUDAMEMORYBASE_H_*/
+#endif /*CUDAPPMEMORYBASE_H_*/

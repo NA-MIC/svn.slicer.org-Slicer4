@@ -3,10 +3,6 @@
 #include "CudappBase.h"
 
 #include "cuda_runtime_api.h"
-#include "vtkObjectFactory.h"
-
-vtkCxxRevisionMacro(CudappEvent, "$Revision: 1.0 $");
-vtkStandardNewMacro(CudappEvent);
 
 CudappEvent::CudappEvent()
 {
@@ -62,8 +58,6 @@ float CudappEvent::ElapsedTime(CudappEvent* otherEvent)
     return elapsedTime;
 }
 
-void CudappEvent::PrintSelf(ostream& os, vtkIndent indent)
+void CudappEvent::PrintSelf(ostream& os)
 {
-    this->Superclass::PrintSelf(os, indent);
-
 }

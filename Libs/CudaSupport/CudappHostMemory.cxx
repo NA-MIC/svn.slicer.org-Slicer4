@@ -1,14 +1,8 @@
 #include "CudappHostMemory.h"
-
 #include "CudappBase.h"
-#include "vtkObjectFactory.h"
-
-#include <string.h>
 #include "cuda_runtime_api.h"
 
-
-vtkCxxRevisionMacro(CudappHostMemory, "$Revision 1.0 $");
-vtkStandardNewMacro(CudappHostMemory);
+#include <string.h>
 
 CudappHostMemory::CudappHostMemory()
 {
@@ -42,7 +36,7 @@ void CudappHostMemory::Free()
     }
 }
 
-void CudappHostMemory::PrintSelf(ostream& os, vtkIndent indent)
+void CudappHostMemory::PrintSelf(ostream& os)
 {
     this->Superclass::PrintSelf(os, indent);
 }

@@ -1,11 +1,6 @@
 #include "CudappMemoryArray.h"
 #include "CudappBase.h"
 
-#include "vtkObjectFactory.h"
-
-vtkCxxRevisionMacro(CudappMemoryArray, "$Revision: 1.0");
-vtkStandardNewMacro(CudappMemoryArray);
-
 CudappMemoryArray::CudappMemoryArray()
 {
   this->Location = CudappMemoryBase::MemoryOnDevice;
@@ -58,7 +53,7 @@ void CudappMemoryArray::DeepCopy(CudappMemoryArray* source)
 }
 
 
-void CudappMemoryArray::PrintSelf(ostream &os, vtkIndent indent)
+void CudappMemoryArray::PrintSelf(ostream &os)
 {
     this->Superclass::PrintSelf(os, indent);
     os << " Width: "<< this->GetWidth() << 

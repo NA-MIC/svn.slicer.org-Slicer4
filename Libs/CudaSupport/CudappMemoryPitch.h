@@ -1,16 +1,18 @@
-#ifndef VTKCUDAMEMORYPITCH_H_
-#define VTKCUDAMEMORYPITCH_H_
+#ifndef CUDAPPMEMORYPITCH_H_
+#define CUDAPPMEMORYPITCH_H_
 
 #include "CudappMemoryBase.h"
 
-class VTK_CUDASUPPORT_EXPORT CudappMemoryPitch : public CudappMemoryBase
+class CUDA_SUPPORT_EXPORT CudappMemoryPitch : public CudappMemoryBase
 {
-    vtkTypeRevisionMacro(CudappMemoryPitch, CudappMemoryBase);
 public:
-    static CudappMemoryPitch* New();
-
+    CudappMemoryPitch();
+    virtual ~CudappMemoryPitch();
+    CudappMemoryPitch(const CudappMemoryPitch&);
+    CudappMemoryPitch& operator=(const CudappMemoryPitch&);
+ 
     void* AllocatePitchBytes(size_t width, size_t height, size_t typeSize);
-  virtual void Free();
+    virtual void Free();
 
     virtual void MemSet(int value);
 
@@ -29,12 +31,8 @@ public:
     virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) { return false; }
     
 
-    virtual void PrintSelf (ostream &os, vtkIndent indent);
+    virtual void PrintSelf (ostream &os);
 protected:
-    CudappMemoryPitch();
-    virtual ~CudappMemoryPitch();
-    CudappMemoryPitch(const CudappMemoryPitch&);
-    CudappMemoryPitch& operator=(const CudappMemoryPitch&);
 
     size_t Pitch;
     size_t Width;
@@ -43,4 +41,4 @@ protected:
     void* MemPointer;
 };
 
-#endif /*VTKCUDAMEMORYPITCH_H_*/
+#endif /*CUDAPPMEMORYPITCH_H_*/

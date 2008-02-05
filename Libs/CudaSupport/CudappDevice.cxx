@@ -2,11 +2,6 @@
 #include "cuda_runtime_api.h"
 #include "CudappMemoryArray.h"
 
-#include "vtkObjectFactory.h"
-
-vtkCxxRevisionMacro(CudappDevice, "$Revision: 1.6 $");
-vtkStandardNewMacro(CudappDevice);
-
 CudappDevice::CudappDevice()
 {
     this->Initialized = false;
@@ -55,10 +50,8 @@ void CudappDevice::ExitThread()
 
 }
 
-
-void CudappDevice::PrintSelf(ostream& os, vtkIndent indent)
+void CudappDevice::PrintSelf(ostream& os)
 {
-    this->Superclass::PrintSelf(os, indent);
     os << "Device Name = " << this->GetName() << 
         "DeviceNumber = " << this->GetDeviceNumber() <<
         "Version = " << this->GetMajor() << "." << this->GetMinor() <<
