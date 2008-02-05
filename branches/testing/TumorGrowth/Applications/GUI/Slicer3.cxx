@@ -92,6 +92,9 @@ extern "C" {
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
 //#define VOLUME_MATH
+#define VOLUMEMATH_DEBUG
+// #undef VOLUMERENDERINGMODULE_DEBUG
+
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 #include "vtkSlicerFiberBundleLogic.h"
