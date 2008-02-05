@@ -151,14 +151,15 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::CloneModel(vtkMRMLScene *scene, vtkMRMLM
 
   if ( scene == NULL || modelNode == NULL )
     {
-    vtkErrorMacro ("need a scene and model node");
+      cout << "need a scene and model node" << endl;
     return NULL;
     }
 
   vtkMRMLModelDisplayNode *displayNode = modelNode->GetModelDisplayNode();
   if ( displayNode == NULL )
     {
-    vtkErrorMacro ("model has no display node");
+      cout << "model has no display node" << endl;
+      return NULL;
     }
 
   // clone the display node
