@@ -58,6 +58,6 @@ float CudappEvent::ElapsedTime(CudappEvent* otherEvent)
     return elapsedTime;
 }
 
-void CudappEvent::PrintSelf(ostream& os)
+void CudappEvent::PrintSelf(std::ostream&  os)
 {
 }

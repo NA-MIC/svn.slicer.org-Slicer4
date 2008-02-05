@@ -6,28 +6,24 @@
 #include "CudappSupportModule.h"
 
 /// THIS IS A STATIC CLASS USED FOR BASIC CUDA FUNCTIONALITY!!
-class CUDA_SUPPORT_EXPORT CudappBase 
+class CUDA_SUPPORT_EXPORT CudappBase
 {
 public:
-    //BTX
     typedef enum {
         Success,
         NotReadyError,
-        InvalidValueError,
+        InvalidValueError
     } State;
-    //ETX
-
-    static CudappBase* New();
 
     static cudaError_t GetLastError();
     static const char* GetLastErrorString();
     static const char* GetErrorString(cudaError_t error);
     static void PrintError(cudaError_t error);
 
-private:
+protected:
     virtual ~CudappBase();
     CudappBase();
-    CudappBase(const CudaBase&) {}
+    //CudappBase(const CudappBase&);
 };
 
 #endif /*CUDAPPBASE_H_*/

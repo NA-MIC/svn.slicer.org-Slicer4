@@ -22,7 +22,7 @@ public:
     CudappDevice* operator[](int deviceNumber) const { return this->Devices[deviceNumber]; }
     //ETX
 
-    void PrintSelf(ostream& os);
+    void PrintSelf(std::ostream&  os);
 
 protected:
     typedef std::vector<CudappDevice*> DeviceList;

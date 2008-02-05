@@ -36,7 +36,7 @@ void CudappHostMemory::Free()
     }
 }
 
-void CudappHostMemory::PrintSelf(ostream& os)
+void CudappHostMemory::PrintSelf(std::ostream&  os)
 {
-    this->Superclass::PrintSelf(os, indent);
+    this->CudappLocalMemory::PrintSelf(os);
 }

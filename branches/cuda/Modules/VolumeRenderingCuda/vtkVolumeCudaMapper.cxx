@@ -47,9 +47,9 @@ vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
 
 vtkVolumeCudaMapper* vtkVolumeCudaMapper::New()
 {
-    CudappSupport* support = CudappSupport::New();
+    CudappSupport* support = new CudappSupport();
     bool cudaIsSupported = support->IsSupported();
-    support->Delete();
+    delete support;
     if (cudaIsSupported)
         return new vtkVolumeCudaMapper;
     else
@@ -61,8 +61,8 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
     this->LocalOutputImage = vtkImageData::New();
 
-    this->CudaInputBuffer = CudappDeviceMemory::New();
-    this->CudaOutputBuffer = CudappDeviceMemory::New();
+    this->CudaInputBuffer = new CudappDeviceMemory();
+    this->CudaOutputBuffer = new CudappDeviceMemory();
 
     this->Texture = 0;
     this->BufferObject = 0;
@@ -87,18 +87,18 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     }
     extensions->Delete();
 
-    this->CudaColorTransferFunction = CudappDeviceMemory::New();
+    this->CudaColorTransferFunction = new CudappDeviceMemory;
     this->CudaColorTransferFunction->Allocate<float3>(256);
-    this->LocalColorTransferFunction = CudappHostMemory::New();
+    this->LocalColorTransferFunction = new CudappHostMemory;
     this->LocalColorTransferFunction->Allocate<float3>(256);
 
-    this->CudaAlphaTransferFunction = CudappDeviceMemory::New();
+    this->CudaAlphaTransferFunction = new CudappDeviceMemory;
     this->CudaAlphaTransferFunction->Allocate<float>(256);
-    this->LocalAlphaTransferFunction = CudappHostMemory::New();
+    this->LocalAlphaTransferFunction = new CudappHostMemory;
     this->LocalAlphaTransferFunction->Allocate<float>(256);
 
     
-    this->CudaZBuffer = CudappDeviceMemory::New();
+    this->CudaZBuffer = new CudappDeviceMemory();
     this->CudaZBuffer->Allocate<float>(1600*1200);
     float zBuffer[1600][1200];
     for(unsigned int i = 0; i < 1600; i++)
@@ -109,16 +109,16 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
-    this->CudaInputBuffer->Delete();
-    this->CudaOutputBuffer->Delete();
+    delete this->CudaInputBuffer;
+    delete this->CudaOutputBuffer;
     this->LocalOutputImage->Delete();
 
-    this->CudaColorTransferFunction->Delete();
-    this->LocalColorTransferFunction->Delete();
-    this->CudaAlphaTransferFunction->Delete();
-    this->LocalAlphaTransferFunction->Delete();
+    delete this->CudaColorTransferFunction;
+    delete this->LocalColorTransferFunction;
+    delete this->CudaAlphaTransferFunction;
+    delete this->LocalAlphaTransferFunction;
 
-    this->CudaZBuffer->Delete();
+    delete this->CudaZBuffer;
 
     if (this->Texture == 0 || !glIsTexture(this->Texture))
         glGenTextures(1, &this->Texture);

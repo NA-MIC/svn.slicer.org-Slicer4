@@ -50,7 +50,7 @@ void CudappDevice::ExitThread()
 
 }
 
-void CudappDevice::PrintSelf(ostream& os)
+void CudappDevice::PrintSelf(std::ostream&  os)
 {
     os << "Device Name = " << this->GetName() << 
         "DeviceNumber = " << this->GetDeviceNumber() <<

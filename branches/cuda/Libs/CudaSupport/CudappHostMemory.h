@@ -20,7 +20,7 @@ public:
     virtual void* AllocateBytes(size_t count);
     virtual void Free();
 
-    void PrintSelf(ostream& os);
+    void PrintSelf(std::ostream&  os);
 };
 
 #endif /*CUDAPPHOSTMEMORY_H_*/

@@ -22,7 +22,7 @@ int CudappSupport::CheckSupportedCudaVersion()
     int device;
     for (device = 0; device < deviceCount; ++device)
     {
-        CudappDevice* CudaDevice = CudappDevice::New();
+        CudappDevice* CudaDevice = new CudappDevice;
         CudaDevice->SetDeviceNumber(device);
 
         this->Devices.push_back(CudaDevice);
@@ -32,7 +32,7 @@ int CudappSupport::CheckSupportedCudaVersion()
     return 0;
 }
 
-void CudappSupport::PrintSelf(ostream& os)
+void CudappSupport::PrintSelf(std::ostream&  os)
 {
     os << "Cuda Support Listing all Children: "<< std::endl;
     for (int i = 0; i < this->GetDeviceCount(); ++i)

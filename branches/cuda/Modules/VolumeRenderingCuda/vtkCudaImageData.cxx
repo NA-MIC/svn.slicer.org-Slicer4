@@ -11,12 +11,12 @@ vtkStandardNewMacro(vtkCudaImageData);
 
 vtkCudaImageData::vtkCudaImageData()
 {
-    this->Data = CudappDeviceMemory::New();
+    this->Data = new CudappDeviceMemory;
 }
 
 vtkCudaImageData::~vtkCudaImageData()
 {
-   this->Data->Delete();
+ delete this->Data;
 }
 
 void vtkCudaImageData::PrintSelf (ostream &os, vtkIndent indent)

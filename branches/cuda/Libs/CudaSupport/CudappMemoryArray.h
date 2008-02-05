@@ -34,7 +34,7 @@ public:
     virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost) { return false; }
     virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) { return false; }
 
-    virtual void PrintSelf(ostream &os);
+    virtual void PrintSelf(std::ostream &os);
 
 protected:
 

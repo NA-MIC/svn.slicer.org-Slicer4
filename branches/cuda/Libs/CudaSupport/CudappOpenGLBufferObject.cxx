@@ -69,7 +69,7 @@ void CudappOpenGLBufferObject::Unmap()
   }
 }
 
-void CudappOpenGLBufferObject::PrintSelf(ostream &os)
+void CudappOpenGLBufferObject::PrintSelf(std::ostream &os)
 {
   this->Superclass::PrintSelf(os, indent);
   if (this->GetBufferObject() == 0)

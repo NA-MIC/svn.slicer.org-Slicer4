@@ -48,9 +48,9 @@ void CudappMemoryPitch::MemSet(int value)
     cudaMemset2D(this->MemPointer, this->Pitch, value, this->Width, this->Height);  
 }
 
-void CudappMemoryPitch::PrintSelf(ostream &os)
+void CudappMemoryPitch::PrintSelf(std::ostream &os)
 {
-    this->Superclass::PrintSelf(os, indent);
+    this->CudappMemoryBase::PrintSelf(os);
     os << " Width: "<< this->GetWidth() << 
         " Height: " << this->GetHeight() <<
         " Pitch: " << this->GetPitch();

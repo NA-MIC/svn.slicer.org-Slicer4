@@ -135,7 +135,7 @@ bool CudappDeviceMemory::CopyTo(CudappMemoryArray* other)
 }
 */
 
-void CudappDeviceMemory::PrintSelf (ostream &os)
+void CudappDeviceMemory::PrintSelf (std::ostream &os)
 {
-    this->Superclass::PrintSelf(os, indent);
+    this->CudappMemory::PrintSelf(os);
 }

@@ -20,7 +20,7 @@ public:
     virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost);
     virtual bool CopyTo(CudappMemoryBase* other) { return other->CopyFrom(this->GetMemPointer(), this->GetSize(), 0, MemoryOnDevice); }
 
-    virtual void PrintSelf (ostream &os);
+    virtual void PrintSelf (std::ostream &os);
 
 protected:
 
