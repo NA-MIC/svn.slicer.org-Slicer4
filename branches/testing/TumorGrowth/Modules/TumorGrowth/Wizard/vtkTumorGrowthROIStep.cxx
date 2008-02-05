@@ -9,8 +9,6 @@
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWPushButton.h"
 #include "vtkKWLabel.h"
-#include "vtkKWMatrixWidgetWithLabel.h"
-#include "vtkKWMatrixWidget.h"
 #include "vtkSlicerModuleCollapsibleFrame.h"
 #include "vtkKWMessageDialog.h"
 #include "vtkImageRectangularSource.h"
@@ -18,6 +16,9 @@
 #include "vtkSlicerVolumesGUI.h" 
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkKWScale.h"
+
+#include "vtkKWMatrixWidget.h"
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthROIStep);
 vtkCxxRevisionMacro(vtkTumorGrowthROIStep, "$Revision: 1.2 $");
@@ -32,11 +33,20 @@ vtkTumorGrowthROIStep::vtkTumorGrowthROIStep()
   this->FrameButtons    = NULL;
   this->FrameBlank      = NULL;
   this->FrameROI        = NULL;
+  this->FrameROIX       = NULL;
+  this->FrameROIY       = NULL;
+  this->FrameROIZ       = NULL;
   this->ButtonsShow     = NULL;
   this->ButtonsReset    = NULL;
-  this->ROIMinVector    = NULL;
-  this->ROIMaxVector    = NULL;
+  this->ROIX            = NULL;
+  this->ROIY            = NULL;
+  this->ROIZ            = NULL;
+  this->LabelROIX       = NULL;
+  this->LabelROIY       = NULL;
+  this->LabelROIZ       = NULL;
   this->ROILabelMapNode = NULL;
+  this->ROILabelMap     = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -60,19 +70,60 @@ vtkTumorGrowthROIStep::~vtkTumorGrowthROIStep()
     this->FrameROI = NULL;
   }
 
-  if (this->ROIMinVector)
+  if (this->FrameROIX)
   {
-    this->ROIMinVector->Delete();
-    this->ROIMinVector = NULL;
+    this->FrameROIX->Delete();
+    this->FrameROIX = NULL;
   }
 
-  if (this->ROIMaxVector )
+  if (this->FrameROIY)
   {
-    this->ROIMaxVector->Delete();
-    this->ROIMaxVector  = NULL;
+    this->FrameROIY->Delete();
+    this->FrameROIY = NULL;
   }
 
-  if (this->ROILabelMapNode) this->ROIMapRemove();
+  if (this->FrameROIZ)
+  {
+    this->FrameROIZ->Delete();
+    this->FrameROIZ = NULL;
+  }
+  if (this->ROIX)
+  {
+    this->ROIX->Delete();
+    this->ROIX = NULL;
+  }
+
+  if (this->ROIY)
+  {
+    this->ROIY->Delete();
+    this->ROIY = NULL;
+  }
+
+  if (this->ROIZ)
+  {
+    this->ROIZ->Delete();
+    this->ROIZ = NULL;
+  }
+
+  if (this->LabelROIX)
+  {
+    this->LabelROIX->Delete();
+    this->LabelROIX = NULL;
+  }
+
+  if (this->LabelROIY)
+  {
+    this->LabelROIY->Delete();
+    this->LabelROIY = NULL;
+  }
+
+  if (this->LabelROIZ)
+  {
+    this->LabelROIZ->Delete();
+    this->LabelROIZ = NULL;
+  }
+
+  if (this->ROILabelMapNode || this->ROILabelMap) this->ROIMapRemove();
 }
 
 //----------------------------------------------------------------------------
@@ -83,12 +134,14 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // Display Super Sampled Volume 
   // ----------------------------------------
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+  int dimensions[3]={1,1,1};
   if (node) {
     vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_Ref()));
     if (volumeNode) {
       vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
       applicationLogic->GetSelectionNode()->SetActiveVolumeID(volumeNode->GetID());
       applicationLogic->PropagateVolumeSelection();
+      memcpy(dimensions,volumeNode->GetImageData()->GetDimensions(),sizeof(int)*3);
     } 
   } else {
     cout << "no node "  << endl;
@@ -98,7 +151,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // Build GUI 
   // ----------------------------------------
 
-  // cout << "vtkTumorGrowthROIStep::ShowUserInterface()" << endl;
+  cout << "vtkTumorGrowthROIStep::ShowUserInterface()" << endl;
   this->vtkTumorGrowthStep::ShowUserInterface();
 
   // Create the frame
@@ -142,7 +195,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
       this->FrameROI->SetParent(this->Frame->GetFrame());
     this->FrameROI->Create();
     this->FrameROI->SetLabelText("Manual");
-    this->FrameROI->CollapseFrame();
+    // this->FrameROI->CollapseFrame();
   }
 
   this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 0", this->FrameROI->GetWidgetName());
@@ -171,57 +224,126 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   this->Script("pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
                 this->ButtonsShow->GetWidgetName(),this->ButtonsReset->GetWidgetName());
 
-  if (!this->ROIMaxVector)
+  if (!this->FrameROIX)
     {
-    this->ROIMaxVector = vtkKWMatrixWidgetWithLabel::New();
+    this->FrameROIX = vtkKWFrame::New();
     }
-  if (!this->ROIMaxVector->IsCreated())
+  if (!this->FrameROIX->IsCreated())
     {
-      this->ROIMaxVector->SetParent(this->FrameROI->GetFrame());
-    this->ROIMaxVector->Create();
-    this->ROIMaxVector->SetLabelText("Max :");
-    this->ROIMaxVector->SetLabelPositionToLeft();
-    this->ROIMaxVector->ExpandWidgetOff();
-    this->ROIMaxVector->GetLabel()->SetWidth(TUMORGROWTH_WIDGETS_LABEL_WIDTH - 16);
-    this->ROIMaxVector->SetBalloonHelpString("Set the upper right hand corner of region of interest.");
-    
-    vtkKWMatrixWidget *matrix = this->ROIMaxVector->GetWidget();
-      matrix->SetNumberOfColumns(3);
-      matrix->SetNumberOfRows(1);
-      matrix->SetElementWidth(4);
-      matrix->SetRestrictElementValueToInteger();
-      matrix->SetElementChangedCommand(this, "ROIMaxChangedCallback");
-      matrix->SetElementChangedCommandTriggerToAnyChange();
-    }
-    // Set it up so it has default value from MRML file 
+      this->FrameROIX->SetParent(this->FrameROI->GetFrame());
+    this->FrameROIX->Create();
+  }
 
-  if (!this->ROIMinVector)
+  if (!this->LabelROIX)
     {
-    this->ROIMinVector = vtkKWMatrixWidgetWithLabel::New();
+    this->LabelROIX = vtkKWLabel::New();
     }
-  if (!this->ROIMinVector->IsCreated())
+  if (!this->LabelROIX->IsCreated())
     {
-    this->ROIMinVector->SetParent(this->FrameROI->GetFrame());
-    this->ROIMinVector->Create();
-    this->ROIMinVector->SetLabelText("Min :");
-    this->ROIMinVector->SetLabelPositionToLeft();
-    this->ROIMinVector->ExpandWidgetOff();
-    this->ROIMinVector->GetLabel()->SetWidth(TUMORGROWTH_WIDGETS_LABEL_WIDTH - 16);
-    this->ROIMinVector->SetBalloonHelpString("Set the upper right hand corner of region of interest.");
-    
-    vtkKWMatrixWidget *matrix = this->ROIMinVector->GetWidget();
-      matrix->SetNumberOfColumns(3);
-      matrix->SetNumberOfRows(1);
-      matrix->SetElementWidth(4);
-      matrix->SetRestrictElementValueToInteger();
-      matrix->SetElementChangedCommand(this, "ROIMinChangedCallback");
-      matrix->SetElementChangedCommandTriggerToAnyChange();
-      // You do not need that bc youo only have one node 
-      // matrix->SetReadOnly(mrmlManager->GetTreeNodeDistributionSpecificationMethod(sel_vol_id) != vtkEMSegmentMRMLManager::DistributionSpecificationManual);
-      // char buffer[256];
-      // sprintf(buffer, "IntensityDistributionMeanChangedCallback %d", sel_vol_id);
+
+    this->LabelROIX->SetParent(this->FrameROIX);
+    this->LabelROIX->Create();
+    this->LabelROIX->SetText("X:");
+
     }
-  this->Script("pack %s %s -side top -anchor nw -padx 2 -pady 2",this->ROIMinVector->GetWidgetName(),this->ROIMaxVector->GetWidgetName());
+  if (!this->ROIX)
+    {
+    this->ROIX = vtkKWRange::New();
+    }
+  if (!this->ROIX->IsCreated())
+    {
+
+    this->ROIX->SetParent(this->FrameROIX);
+    this->ROIX->Create();
+    this->ROIX->SymmetricalInteractionOff();
+    this->ROIX->SetCommand(this, "ROIXChangedCallback");    
+    this->ROIX->SetWholeRange(-1, double(dimensions[0]-1));
+    this->ROIX->SetResolution(1);
+    }
+
+  if (!this->FrameROIY)
+    {
+    this->FrameROIY = vtkKWFrame::New();
+    }
+  if (!this->FrameROIY->IsCreated())
+    {
+      this->FrameROIY->SetParent(this->FrameROI->GetFrame());
+    this->FrameROIY->Create();
+  }
+
+  if (!this->LabelROIY)
+    {
+    this->LabelROIY = vtkKWLabel::New();
+    }
+  if (!this->LabelROIY->IsCreated())
+    {
+
+    this->LabelROIY->SetParent(this->FrameROIY);
+    this->LabelROIY->Create();
+    this->LabelROIY->SetText("Y:");
+
+    }
+
+ if (!this->ROIY)
+    {
+    this->ROIY = vtkKWRange::New();
+    }
+  if (!this->ROIY->IsCreated())
+    {
+
+    this->ROIY->SetParent(this->FrameROIY);
+
+    this->ROIY->Create();
+    this->ROIY->SymmetricalInteractionOff();
+    this->ROIY->SetCommand(this, "ROIYChangedCallback");    
+    this->ROIY->SetWholeRange(-1, double(dimensions[1]-1));
+    this->ROIY->SetResolution(1);
+    }
+
+  if (!this->FrameROIZ)
+    {
+    this->FrameROIZ = vtkKWFrame::New();
+    }
+  if (!this->FrameROIZ->IsCreated())
+    {
+      this->FrameROIZ->SetParent(this->FrameROI->GetFrame());
+    this->FrameROIZ->Create();
+  }
+
+  if (!this->LabelROIZ)
+    {
+    this->LabelROIZ = vtkKWLabel::New();
+    }
+  if (!this->LabelROIZ->IsCreated())
+    {
+
+    this->LabelROIZ->SetParent(this->FrameROIZ);
+    this->LabelROIZ->Create();
+    this->LabelROIZ->SetText("Z:");
+
+    }
+
+ if (!this->ROIZ)
+    {
+    this->ROIZ = vtkKWRange::New();
+    }
+  if (!this->ROIZ->IsCreated())
+    {
+
+    this->ROIZ->SetParent(this->FrameROIZ);
+
+    this->ROIZ->Create();
+    this->ROIZ->SymmetricalInteractionOff();
+    this->ROIZ->SetCommand(this, "ROIZChangedCallback");    
+    this->ROIZ->SetWholeRange(-1, double(dimensions[2]-1));
+    this->ROIZ->SetResolution(1);
+    }
+
+
+  this->Script("pack %s %s %s -side top -anchor nw -padx 0 -pady 3",this->FrameROIX->GetWidgetName(),this->FrameROIY->GetWidgetName(),this->FrameROIZ->GetWidgetName());
+  this->Script("pack %s %s -side left -anchor nw -padx 2 -pady 0",this->LabelROIX->GetWidgetName(),this->ROIX->GetWidgetName());
+  this->Script("pack %s %s -side left -anchor nw -padx 2 -pady 0",this->LabelROIY->GetWidgetName(),this->ROIY->GetWidgetName());
+  this->Script("pack %s %s -side left -anchor nw -padx 2 -pady 0",this->LabelROIZ->GetWidgetName(),this->ROIZ->GetWidgetName());
  
   // Set it up so it has default value from MRML file 
   this->ROIUpdateWithNode();
@@ -239,37 +361,40 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // this->TransitionCallback();
 }
 
+//----------------------------------------------------------------------------
+void vtkTumorGrowthROIStep::ROIXChangedCallback(double min, double max)  
+{
+  this->ROIChangedCallback(0,min, max);
+}
+
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::ROIMaxChangedCallback(int row, int col, const char *value) 
+void vtkTumorGrowthROIStep::ROIYChangedCallback(double min, double max)  
 {
-  // cout << "vtkTumorGrowthROIStep::ROIMaxChangedCallback" << endl;
-  // Threshold has changed because of user interaction 
-  // vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  if (!this->ROIMaxVector || !mrmlNode) return;
-
-  vtkKWMatrixWidget *matrix = this->ROIMaxVector->GetWidget();
-  mrmlNode->SetROIMax(col,atoi(matrix->GetElementValue(0,col)));  
-  // cout << "vtkTumorGrowthROIStep::ROIMaxChangedCallback End" << endl;
+  this->ROIChangedCallback(1,min, max);
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::ROIMinChangedCallback(int row, int col, const char *value)  
+void vtkTumorGrowthROIStep::ROIZChangedCallback(double min, double max)  
 {
-  // cout << "vtkTumorGrowthROIStep::ROIMinChangedCallback" << endl;
+  this->ROIChangedCallback(2,min, max);
+}  
 
-  // Threshold has changed because of user interaction  - this is so it is written right away to the node 
+//----------------------------------------------------------------------------
+void vtkTumorGrowthROIStep::ROIChangedCallback(int axis, double min, double max)  
+{
+  cout << "vtkTumorGrowthROIStep::ROIChangedCallback" << endl;
+
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  if (!this->ROIMinVector || !mrmlNode) return;
+  if (!mrmlNode) return;
 
-  vtkKWMatrixWidget *matrix = this->ROIMinVector->GetWidget();
-  mrmlNode->SetROIMin(col,atoi(matrix->GetElementValue(0,col)));  
+  mrmlNode->SetROIMin(axis,int(min));  
+  mrmlNode->SetROIMax(axis,int(max));  
+  this->ROIMapUpdate();
 
-  //char buffer[256];   
-  // sprintf(buffer,  "%s %s %s",matrix->GetElementValue(0,0),matrix->GetElementValue(0,1),matrix->GetElementValue(0,2));
-  // mrmlNode->SetROIMin(buffer);  
 }
+
+
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthROIStep::AddGUIObservers() 
@@ -365,79 +490,42 @@ void vtkTumorGrowthROIStep::WizardGUICallback(vtkObject *caller, unsigned long e
 }
 
 void vtkTumorGrowthROIStep::ROIReset() {
-  if (this->ROIMinVector) 
-  {
-    vtkKWMatrixWidget *matrix = this->ROIMinVector->GetWidget();
-    matrix->SetElementValue(0,0,"-1");
-    matrix->SetElementValue(0,1,"-1");
-    matrix->SetElementValue(0,2,"-1");
-  }
-  if (this->ROIMaxVector) {
-    vtkKWMatrixWidget *matrix = this->ROIMaxVector->GetWidget();
-    matrix->SetElementValue(0,0,"-1");
-    matrix->SetElementValue(0,1,"-1");
-    matrix->SetElementValue(0,2,"-1");
-  }
+  cout << "ROIReset Start" << endl;
+  if (this->ROIX) this->ROIX->SetRange(-1,-1);
+  if (this->ROIY) this->ROIY->SetRange(-1,-1);
+  if (this->ROIZ) this->ROIZ->SetRange(-1,-1);
 }
 
+
+void vtkTumorGrowthROIStep::ROIUpdateAxisWithNewSample(vtkKWRange *ROIAxis, int Sample) {
+  if (!ROIAxis) return;
+  double *oldRange = ROIAxis->GetRange();
+  double newRange[2];
+
+  if ((Sample < oldRange[0]) || (oldRange[0] < 0)) newRange[0] = Sample;
+  if ((Sample > oldRange[1]) || (oldRange[1] < 0)) newRange[1] = Sample;
+  ROIAxis->SetRange(newRange);
+}
 
 void vtkTumorGrowthROIStep::ROIUpdateWithNewSample(int ijkSample[3]) {
-  if (this->ROIMinVector) 
-  {
-    vtkKWMatrixWidget *matrix = this->ROIMinVector->GetWidget();
-    for (int i = 0; i < 3 ; i++) {
-      int val = atoi(matrix->GetElementValue(0,i));
-      if ((val < 0) || val > ijkSample[i] ) {
-        char buffer [256];
-        sprintf(buffer,"%d",ijkSample[i]);
-        matrix->SetElementValue(0,i,buffer);
-      }
-    }
-  }
-  if (this->ROIMaxVector) {
-    vtkKWMatrixWidget *matrix = this->ROIMaxVector->GetWidget();
-    for (int i = 0; i < 3 ; i++) {
-      int val = atoi(matrix->GetElementValue(0,i));
-      if ((val < 0) || val < ijkSample[i] ) {
-        char buffer [256];
-        sprintf(buffer,"%d",ijkSample[i]);
-        matrix->SetElementValue(0,i,buffer);
-      }
-    }
-  }
+  // cout << "ROIUpdateWithNewSample start " << endl;
+  this->ROIUpdateAxisWithNewSample(this->ROIX,ijkSample[0]);
+  this->ROIUpdateAxisWithNewSample(this->ROIY,ijkSample[1]);
+  this->ROIUpdateAxisWithNewSample(this->ROIZ,ijkSample[2]);
 }
 
+void vtkTumorGrowthROIStep::ROIUpdateAxisWithNode(vtkMRMLTumorGrowthNode* Node, vtkKWRange *ROIAxis, int Axis) {
+  if (!Node || !ROIAxis) return;
+  ROIAxis->SetRange(Node->GetROIMin(Axis),Node->GetROIMax(Axis));
+}
 
 void vtkTumorGrowthROIStep::ROIUpdateWithNode() {
+  // cout << "ROIUpdateWithNode Start" << endl;
   vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
-  if (!Node) return;
-  
- 
-  if (this->ROIMinVector) 
-  {
-    vtkKWMatrixWidget *matrix = this->ROIMinVector->GetWidget();
-    for (int i = 0; i < 3 ; i++) {
-      char buffer [256];
-      sprintf(buffer,"%d",Node->GetROIMin(i));
-      matrix->SetElementValue(0,i,buffer);
-    }
-    // For Debugging
-    //matrix->SetElementValue(0,0,"72");
-    //matrix->SetElementValue(0,1,"128");
-    //matrix->SetElementValue(0,2,"95");
-  }
-  if (this->ROIMaxVector) {
-    vtkKWMatrixWidget *matrix = this->ROIMaxVector->GetWidget();
-    for (int i = 0; i < 3 ; i++) {
-      char buffer [256];
-      sprintf(buffer,"%d",Node->GetROIMax(i));
-      matrix->SetElementValue(0,i,buffer);
-    }
-    // For Debugging
-    //matrix->SetElementValue(0,0,"92");
-    //matrix->SetElementValue(0,1,"161");
-    //matrix->SetElementValue(0,2,"104");
-  }
+  this->ROIUpdateAxisWithNode(Node, this->ROIX,0); 
+  this->ROIUpdateAxisWithNode(Node, this->ROIY,1); 
+  this->ROIUpdateAxisWithNode(Node, this->ROIZ,2); 
+  this->ROIMapUpdate();
 }
 
 
@@ -453,8 +541,22 @@ int vtkTumorGrowthROIStep::ROICheck() {
   return this->GetGUI()->GetLogic()->CheckROI(volumeNode);
 }
 
+void vtkTumorGrowthROIStep::ROIMapUpdate() {
+
+  vtkMRMLTumorGrowthNode* Node      =  this->GetGUI()->GetNode();
+  if (!this->ROILabelMapNode || !this->ROILabelMap || !Node || !this->ROICheck()) return;
+
+  int size[3]   = {Node->GetROIMax(0) - Node->GetROIMin(0) + 1, Node->GetROIMax(1) - Node->GetROIMin(1) + 1, Node->GetROIMax(2) - Node->GetROIMin(2) + 1};
+  int center[3] = {(Node->GetROIMax(0) + Node->GetROIMin(0))/2 ,(Node->GetROIMax(1) + Node->GetROIMin(1))/2, (Node->GetROIMax(2) + Node->GetROIMin(2))/2};
+  this->ROILabelMap->SetCenter(center);
+  this->ROILabelMap->SetSize(size);
+  this->ROILabelMap->Update();
+  this->ROILabelMapNode->Modified();
+}
+
 
 int vtkTumorGrowthROIStep::ROIMapShow() {
+  // -----
   // Initialize
   if (!this->ROICheck()) {
     vtkKWMessageDialog::PopupMessage(this->GUI->GetApplication(), this->GUI->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Please define ROI correctly before pressing button", vtkKWMessageDialog::ErrorIcon);
@@ -463,26 +565,23 @@ int vtkTumorGrowthROIStep::ROIMapShow() {
 
   vtkMRMLTumorGrowthNode* Node      =  this->GetGUI()->GetNode();
   if (!Node) return 0;
-
   vtkMRMLScene* mrmlScene           =  Node->GetScene();
   vtkMRMLNode* mrmlFristScanRefNode =  mrmlScene->GetNodeByID(Node->GetScan1_Ref());
   vtkMRMLVolumeNode* volumeNode     =  vtkMRMLVolumeNode::SafeDownCast(mrmlFristScanRefNode);
   if (!volumeNode) return 0;
-
-  int size[3]   = {Node->GetROIMax(0) - Node->GetROIMin(0) + 1, Node->GetROIMax(1) - Node->GetROIMin(1) + 1, Node->GetROIMax(2) - Node->GetROIMin(2) + 1};
-  int center[3] = {(Node->GetROIMax(0) + Node->GetROIMin(0))/2 ,(Node->GetROIMax(1) + Node->GetROIMin(1))/2, (Node->GetROIMax(2) + Node->GetROIMin(2))/2};
   int* dimensions = volumeNode->GetImageData()->GetDimensions();
 
+  if (this->ROILabelMapNode || this->ROILabelMap) this->ROIMapRemove(); 
+
+  // -----
   // Define LabelMap 
-  vtkImageRectangularSource* ROILabelMap =  vtkImageRectangularSource::New();
-  ROILabelMap->SetCenter(center);
-  ROILabelMap->SetSize(size);
-  ROILabelMap->SetWholeExtent(0,dimensions[0] -1,0,dimensions[1] -1, 0,dimensions[2] -1); 
-  ROILabelMap->SetOutputScalarTypeToShort();
-  ROILabelMap->SetInsideGraySlopeFlag(0); 
-  ROILabelMap->SetInValue(17);
-  ROILabelMap->SetOutValue(0);
-  ROILabelMap->Update();
+  this->ROILabelMap =  vtkImageRectangularSource::New();
+  this->ROILabelMap->SetWholeExtent(0,dimensions[0] -1,0,dimensions[1] -1, 0,dimensions[2] -1); 
+  this->ROILabelMap->SetOutputScalarTypeToShort();
+  this->ROILabelMap->SetInsideGraySlopeFlag(0); 
+  this->ROILabelMap->SetInValue(17);
+  this->ROILabelMap->SetOutValue(0);
+  this->ROILabelMap->Update();
 
   // Show map in Slicer 3 
   //  set scene [[$this GetLogic] GetMRMLScene]
@@ -494,9 +593,8 @@ int vtkTumorGrowthROIStep::ROIMapShow() {
   vtkSlicerVolumesGUI  *volumesGUI    = vtkSlicerVolumesGUI::SafeDownCast(application->GetModuleGUIByName("Volumes")); 
   vtkSlicerVolumesLogic *volumesLogic = volumesGUI->GetLogic();
   // set labelNode [$volumesLogic CreateLabelVolume $scene $volumeNode $name]
-  if (this->ROILabelMapNode) this->ROIMapRemove(); 
   this->ROILabelMapNode = volumesLogic->CreateLabelVolume(mrmlScene,volumeNode, "TG_ROI");
-  this->ROILabelMapNode->SetAndObserveImageData(ROILabelMap->GetOutput());
+  this->ROILabelMapNode->SetAndObserveImageData(this->ROILabelMap->GetOutput());
 
   // Now show in foreground 
   //  make the source node the active background, and the label node the active label
@@ -510,14 +608,21 @@ int vtkTumorGrowthROIStep::ROIMapShow() {
 
   //[[$this GetLogic] GetApplicationLogic]  PropagateVolumeSelection
   applicationLogic->PropagateVolumeSelection();
-  ROILabelMap->Delete();
+  this->ROIMapUpdate();
 
   return 1;
 }
 
 void vtkTumorGrowthROIStep::ROIMapRemove() {
-  this->GetGUI()->GetMRMLScene()->RemoveNode(this->ROILabelMapNode);
-  this->ROILabelMapNode = NULL;
+  if (this->ROILabelMapNode) { 
+    this->GetGUI()->GetMRMLScene()->RemoveNode(this->ROILabelMapNode);
+    this->ROILabelMapNode = NULL;
+  }
+  if (this->ROILabelMap) { 
+    this->ROILabelMap->Delete();
+    this->ROILabelMap = NULL;
+  }
+
 }
 
 

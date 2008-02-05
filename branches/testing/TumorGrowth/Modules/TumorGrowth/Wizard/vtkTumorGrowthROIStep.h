@@ -4,12 +4,15 @@
 #include "vtkTumorGrowthStep.h"
 
 class vtkKWFrame;
-class vtkKWMatrixWidgetWithLabel;
+class vtkKWRange;
 class vtkKWPushButton;
 class vtkSlicerModuleCollapsibleFrame;
 class vtkSlicerSliceGUI;
 class vtkRenderWindowInteractor;
 class vtkMRMLScalarVolumeNode;
+class vtkMRMLTumorGrowthNode;
+class vtkKWLabel;
+class vtkImageRectangularSource;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthROIStep : public vtkTumorGrowthStep
 {
@@ -25,8 +28,10 @@ public:
 
   // Description:
   // Callbacks.
-  void ROIMaxChangedCallback(int row, int col, const char *value); 
-  void ROIMinChangedCallback(int row, int col, const char *value); 
+  void ROIXChangedCallback(double min, double max); 
+  void ROIYChangedCallback(double min, double max); 
+  void ROIZChangedCallback(double min, double max); 
+
   virtual void TransitionCallback(); 
 
   // Description:
@@ -42,10 +47,22 @@ protected:
   vtkKWFrame                        *FrameButtons;
   vtkKWFrame                        *FrameBlank;
   vtkSlicerModuleCollapsibleFrame   *FrameROI;
+
+  vtkKWFrame                        *FrameROIX;
+  vtkKWFrame                        *FrameROIY;
+  vtkKWFrame                        *FrameROIZ;
+
   vtkKWPushButton           *ButtonsShow;
   vtkKWPushButton           *ButtonsReset;
-  vtkKWMatrixWidgetWithLabel *ROIMinVector;
-  vtkKWMatrixWidgetWithLabel *ROIMaxVector;
+
+  vtkKWRange *ROIX;
+  vtkKWRange *ROIY;
+  vtkKWRange *ROIZ;
+
+  vtkKWLabel *LabelROIX;
+  vtkKWLabel *LabelROIY;
+  vtkKWLabel *LabelROIZ;
+
   static void WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
  
 private:
@@ -54,18 +71,25 @@ private:
  
   void ROIReset();
   void ROIUpdateWithNewSample(int ijkSample[3]);
+  void ROIUpdateAxisWithNewSample(vtkKWRange *ROIAxis, int Sample);
   void ROIUpdateWithNode();
+  void ROIUpdateAxisWithNode(vtkMRMLTumorGrowthNode* Node, vtkKWRange *ROIAxis, int Axis);
+
   int  ROICheck();
 
-  int ROIMapShow();
+  int  ROIMapShow();
   void ROIMapRemove();
+  void ROIMapUpdate();
 
   void AddROISamplingGUIObservers();
   void RemoveROISamplingGUIObservers();
  
   void RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *sliceGUI, vtkRenderWindowInteractor *rwi,int coords[3]);
 
+  void ROIChangedCallback(int axis, double min, double max); 
+
   vtkMRMLScalarVolumeNode *ROILabelMapNode;
+  vtkImageRectangularSource *ROILabelMap;
 };
 
 #endif
