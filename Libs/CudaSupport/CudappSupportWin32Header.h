@@ -1,7 +1,7 @@
-#ifndef __vtkCudaModuleWin32Header_h
-        #define __vtkCudaModuleWin32Header_h
+#ifndef __CudappModuleWin32Header_h
+        #define __CudappModuleWin32Header_h
 
-        #include <vtkCudaSupportConfigure.h>
+        #include <CudappSupportConfigure.h>
 
         #if defined(WIN32) && !defined(VTKSLICER_STATIC)
                 #if defined(CudaSupport_EXPORTS)

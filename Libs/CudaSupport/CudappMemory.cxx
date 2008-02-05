@@ -1,24 +1,24 @@
-#include "vtkCudaMemory.h"
+#include "CudappMemory.h"
 
 #include "cuda_runtime_api.h"
-#include "vtkCudaBase.h"
+#include "CudappBase.h"
 
-#include "vtkCudaLocalMemory.h"
-#include "vtkCudaHostMemory.h"
-#include "vtkCudaMemoryArray.h"
+#include "CudappLocalMemory.h"
+#include "CudappHostMemory.h"
+#include "CudappMemoryArray.h"
 
 #include "vtkObjectFactory.h"
 #include "vtkImageData.h"
 
-vtkCxxRevisionMacro(vtkCudaMemory, "$Revision: 1.0 $");
+vtkCxxRevisionMacro(CudappMemory, "$Revision: 1.0 $");
 
-vtkCudaMemory::vtkCudaMemory()
+CudappMemory::CudappMemory()
 {
     this->MemPointer = NULL;
     this->Size = 0;
 }
 
-vtkCudaMemory::~vtkCudaMemory()
+CudappMemory::~CudappMemory()
 {
     // so the virtual function call will not be false.
     // each subclass must call free by its own and set MemPointer to NULL in its Destructor!
@@ -26,7 +26,7 @@ vtkCudaMemory::~vtkCudaMemory()
     //    this->Free();
 }
 
-void vtkCudaMemory::PrintSelf (ostream &os, vtkIndent indent)
+void CudappMemory::PrintSelf (ostream &os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
     if (this->GetMemPointer() == NULL)
@@ -34,7 +34,7 @@ void vtkCudaMemory::PrintSelf (ostream &os, vtkIndent indent)
 }
 
 
-bool vtkCudaMemory::CopyFrom(vtkCudaMemory* mem)
+bool CudappMemory::CopyFrom(CudappMemory* mem)
 {
   return this->CopyFrom(mem->GetMemPointer(), mem->GetSize(), (size_t)0, mem->GetMemoryLocation());  
 }

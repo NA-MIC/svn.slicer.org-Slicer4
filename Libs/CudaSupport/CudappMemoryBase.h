@@ -3,23 +3,23 @@
 
 
 #include "vtkObject.h"
-#include "vtkCudaSupportModule.h"
+#include "CudappSupportModule.h"
 #include <stddef.h>
 
-class vtkCudaMemory;
- class vtkCudaDeviceMemory;
- class vtkCudaLocalMemory;
-  class vtkCudaHostMemory;
-class vtkCudaMemoryArray;
-class vtkCudaMemoryPitch;
+class CudappMemory;
+ class CudappDeviceMemory;
+ class CudappLocalMemory;
+  class CudappHostMemory;
+class CudappMemoryArray;
+class CudappMemoryPitch;
 
-class VTK_CUDASUPPORT_EXPORT vtkCudaMemoryBase : public vtkObject
+class VTK_CUDASUPPORT_EXPORT CudappMemoryBase : public vtkObject
 {
-  friend class vtkCudaMemory;
+  friend class CudappMemory;
 public:
-    vtkTypeRevisionMacro(vtkCudaMemoryBase, vtkObject);
+    vtkTypeRevisionMacro(CudappMemoryBase, vtkObject);
 
-    static vtkCudaMemoryBase* New();
+    static CudappMemoryBase* New();
 
     /** @brief frees the memory (this must be called in each of the derived destructors) */
     //BTX
@@ -42,23 +42,23 @@ public:
     //ETX
     
     // This function does a cast of this to the specified type and then a cast of the other to the specified type, so we are sure from what memory to what we are copying.
-    virtual bool CopyTo(vtkCudaMemoryBase* other) { return false; /* To give you a sense what this does:  other->CopyFrom(this); */ }
+    virtual bool CopyTo(CudappMemoryBase* other) { return false; /* To give you a sense what this does:  other->CopyFrom(this); */ }
  
     virtual void PrintSelf (ostream &os, vtkIndent indent);
 
 protected:
-    vtkCudaMemoryBase();
-    virtual ~vtkCudaMemoryBase();
-    vtkCudaMemoryBase(const vtkCudaMemoryBase&);
-    vtkCudaMemoryBase& operator=(const vtkCudaMemoryBase&);
+    CudappMemoryBase();
+    virtual ~CudappMemoryBase();
+    CudappMemoryBase(const CudappMemoryBase&);
+    CudappMemoryBase& operator=(const CudappMemoryBase&);
 
     size_t Size;    //!< The size of the Allocated Memory
     //BTX
     MemoryLocation Location;
   //ETX
-  virtual bool CopyFrom(vtkCudaMemory* mem) { return false; }
-  virtual bool CopyFrom(vtkCudaMemoryPitch* mem) { return false; }
-  virtual bool CopyFrom(vtkCudaMemoryArray* mem) { return false; }
+  virtual bool CopyFrom(CudappMemory* mem) { return false; }
+  virtual bool CopyFrom(CudappMemoryPitch* mem) { return false; }
+  virtual bool CopyFrom(CudappMemoryArray* mem) { return false; }
 };
 
 #endif /*VTKCUDAMEMORYBASE_H_*/

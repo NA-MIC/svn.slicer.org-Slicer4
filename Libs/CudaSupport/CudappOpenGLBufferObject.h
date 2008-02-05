@@ -4,13 +4,13 @@
 #include "vtkObject.h"
 
 #include <GL/gl.h> // OpenGL headers used for the Buffer Reference
-#include "vtkCudaSupportModule.h"
+#include "CudappSupportModule.h"
 
-class VTK_CUDASUPPORT_EXPORT vtkCudaOpenGLBufferObject : public vtkObject
+class VTK_CUDASUPPORT_EXPORT CudappOpenGLBufferObject : public vtkObject
 {
-  vtkTypeRevisionMacro(vtkCudaOpenGLBufferObject, vtkObject);
+  vtkTypeRevisionMacro(CudappOpenGLBufferObject, vtkObject);
 public:
-  static vtkCudaOpenGLBufferObject* New();
+  static CudappOpenGLBufferObject* New();
   
   void Register(GLuint bufferObject);
   void Unregister();
@@ -22,8 +22,8 @@ public:
 
   virtual void PrintSelf(ostream &os, vtkIndent indent);
 protected:
-  vtkCudaOpenGLBufferObject();
-  virtual ~vtkCudaOpenGLBufferObject();
+  CudappOpenGLBufferObject();
+  virtual ~CudappOpenGLBufferObject();
   
   GLuint BufferObject; //!< The BufferObject
   void* DevPointer;   //!< Pointer to the Data in this Bufferobject

@@ -1,38 +1,38 @@
-#include "vtkCudaHostMemory.h"
+#include "CudappHostMemory.h"
 
-#include "vtkCudaBase.h"
+#include "CudappBase.h"
 #include "vtkObjectFactory.h"
 
 #include <string.h>
 #include "cuda_runtime_api.h"
 
 
-vtkCxxRevisionMacro(vtkCudaHostMemory, "$Revision 1.0 $");
-vtkStandardNewMacro(vtkCudaHostMemory);
+vtkCxxRevisionMacro(CudappHostMemory, "$Revision 1.0 $");
+vtkStandardNewMacro(CudappHostMemory);
 
-vtkCudaHostMemory::vtkCudaHostMemory()
+CudappHostMemory::CudappHostMemory()
 {
 }
 
-vtkCudaHostMemory::~vtkCudaHostMemory()
+CudappHostMemory::~CudappHostMemory()
 {
     this->Free();
 }
 
 
-void* vtkCudaHostMemory::AllocateBytes(size_t count)
+void* CudappHostMemory::AllocateBytes(size_t count)
 {
     this->Free();
     cudaError_t error = 
         cudaMallocHost(&this->MemPointer, count);
     this->Size = count;
     if (error != cudaSuccess)
-        vtkCudaBase::PrintError(error);
+        CudappBase::PrintError(error);
 
     return (void*) this->MemPointer;
 }
 
-void vtkCudaHostMemory::Free()
+void CudappHostMemory::Free()
 {
     if (this->MemPointer != NULL)
     {
@@ -42,7 +42,7 @@ void vtkCudaHostMemory::Free()
     }
 }
 
-void vtkCudaHostMemory::PrintSelf(ostream& os, vtkIndent indent)
+void CudappHostMemory::PrintSelf(ostream& os, vtkIndent indent)
 {
     this->Superclass::PrintSelf(os, indent);
 }
