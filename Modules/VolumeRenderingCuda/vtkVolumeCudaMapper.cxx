@@ -267,8 +267,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
 
     // This should update the the CudaInputBuffer only when needed.
-    if (this->GetInput()->GetMTime() > this->GetMTime())
-      this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetActualMemorySize() * 1024);
+    //if (this->GetInput()->GetMTime() > this->GetMTime())
+    //  this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetActualMemorySize() * 1024);
 
 
     vtkRenderWindow *renWin= renderer->GetRenderWindow();
@@ -416,13 +416,13 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glDisable(GL_LIGHTING);
 
     glBegin(GL_QUADS);
-    glTexCoord2i(0,1);
-    glVertex4dv(coordinatesA);
-    glTexCoord2i(1,1);
-    glVertex4dv(coordinatesB);
     glTexCoord2i(1,0);
-    glVertex4dv(coordinatesC);
+    glVertex4dv(coordinatesA);
     glTexCoord2i(0,0);
+    glVertex4dv(coordinatesB);
+    glTexCoord2i(0,1);
+    glVertex4dv(coordinatesC);
+    glTexCoord2i(1,1);
     glVertex4dv(coordinatesD);
     glEnd();
 
