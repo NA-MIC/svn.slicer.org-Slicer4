@@ -37,7 +37,7 @@ namespace Cudapp
         }
     }
 
-    void HostMemory::PrintSelf(std::ostream&  os)
+    void HostMemory::PrintSelf(std::ostream&  os) const
     {
         this->LocalMemory::PrintSelf(os);
     }

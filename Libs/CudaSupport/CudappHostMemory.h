@@ -22,7 +22,7 @@ namespace Cudapp
         virtual void* AllocateBytes(size_t count);
         virtual void Free();
 
-        void PrintSelf(std::ostream&  os);
+        virtual void PrintSelf(std::ostream& os) const;
     };
 }
 #endif /*CUDAPPHOSTMEMORY_H_*/

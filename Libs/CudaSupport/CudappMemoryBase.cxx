@@ -11,7 +11,7 @@ namespace Cudapp
     {
     }
 
-    void MemoryBase::PrintSelf (std::ostream &os)
+    void MemoryBase::PrintSelf (std::ostream &os) const
     {
         os << "Size = " << this->GetSize();  
     }

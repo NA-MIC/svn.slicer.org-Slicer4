@@ -59,7 +59,7 @@ namespace Cudapp
         /// Memory Management
         bool AllocateMemory();
 
-        void PrintSelf(std::ostream&  os);
+        virtual void PrintSelf(std::ostream&  os) const;
 
     protected:
         void LoadDeviceProperties();
@@ -68,5 +68,10 @@ namespace Cudapp
         int DeviceNumber;
         cudaDeviceProp DeviceProp;    
     };
+    inline std::ostream& operator<<(std::ostream& os, const Device& in){
+        in.PrintSelf(os);
+        return os; 
+    }
+
 }
 #endif /*CUDAPPDEVICE_H_*/

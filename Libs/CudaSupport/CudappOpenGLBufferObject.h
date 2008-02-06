@@ -18,7 +18,7 @@ public:
   GLuint GetBufferObject() const { return this->BufferObject; }
   void* GetDevPointer() const { return this->DevPointer; } 
 
-  virtual void PrintSelf(std::ostream &os);
+  virtual void PrintSelf(std::ostream &os) const;
 protected:
   
   GLuint BufferObject; //!< The BufferObject

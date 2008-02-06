@@ -50,7 +50,7 @@ namespace Cudapp
         cudaMemset2D(this->MemPointer, this->Pitch, value, this->Width, this->Height);  
     }
 
-    void MemoryPitch::PrintSelf(std::ostream &os)
+    void MemoryPitch::PrintSelf(std::ostream &os) const
     {
         this->MemoryBase::PrintSelf(os);
         os << " Width: "<< this->GetWidth() << 

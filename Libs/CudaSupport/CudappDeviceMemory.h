@@ -21,7 +21,7 @@ namespace Cudapp
         virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost);
         virtual bool CopyTo(MemoryBase* other) { return other->CopyFrom(this->GetMemPointer(), this->GetSize(), 0, MemoryOnDevice); }
 
-        virtual void PrintSelf (std::ostream &os);
+        virtual void PrintSelf (std::ostream &os) const;
 
     protected:
 

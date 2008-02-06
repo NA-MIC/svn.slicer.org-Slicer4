@@ -23,7 +23,7 @@ namespace Cudapp
         //    this->Free();
     }
 
-    void Memory::PrintSelf (std::ostream &os)
+    void Memory::PrintSelf (std::ostream &os) const
     {
         this->MemoryBase::PrintSelf(os);
         if (this->GetMemPointer() == NULL)

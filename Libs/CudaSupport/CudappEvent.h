@@ -22,10 +22,15 @@ namespace Cudapp
         /** @returns the Event */
         cudaEvent_t GetEvent() { return this->CudaEvent; }
 
-        void PrintSelf(std::ostream&  os);
+        virtual void PrintSelf(std::ostream&  os) const;
 
     private:
         cudaEvent_t CudaEvent;
     };
+    inline std::ostream& operator<<(std::ostream& os, const Event& in){
+        in.PrintSelf(os);
+        return os; 
+    }
+
 }
 #endif /*CUDAPPEVENT_H_*/
