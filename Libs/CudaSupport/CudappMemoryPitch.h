@@ -22,7 +22,9 @@ namespace Cudapp
         { return (T*)this->AllocatePitchBytes(width, height, sizeof(T)); }
         //ETX
 
-        void* GetMemPointer() const { return this->MemPointer; }
+        void* GetMemPointer() { return this->MemPointer; }
+        const void* GetMemPointer() const { return this->MemPointer; }
+
         size_t GetPitch() const { return this->Pitch; }
         size_t GetWidth() const { return this->Width; } 
         size_t GetHeight() const { return this->Height; }

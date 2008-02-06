@@ -23,6 +23,19 @@ namespace Cudapp
         //    this->Free();
     }
 
+    Memory::Memory(const Memory& other)
+    {
+        this->MemPointer = NULL;
+        this->Size = 0;
+        *this = other;
+    }
+
+    Memory& Memory::operator=(const Memory& other)
+    {
+        other.CopyTo(this);
+        return *this;
+    }
+
     void Memory::PrintSelf (std::ostream &os) const
     {
         this->MemoryBase::PrintSelf(os);
@@ -31,7 +44,7 @@ namespace Cudapp
     }
 
 
-    bool Memory::CopyFrom(Memory* mem)
+    bool Memory::CopyFromInternal(const Memory* mem)
     {
         return this->CopyFrom(mem->GetMemPointer(), mem->GetSize(), (size_t)0, mem->GetMemoryLocation());  
     }

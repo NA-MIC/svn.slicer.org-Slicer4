@@ -36,12 +36,12 @@ namespace Cudapp
 
         MemoryLocation GetMemoryLocation() const { return this->Location; }
 
-        virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost) = 0;
-        virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) = 0;
+        virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost) const = 0;
+        virtual bool CopyFrom(const void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost) = 0;
         //ETX
 
         // This function does a cast of this to the specified type and then a cast of the other to the specified type, so we are sure from what memory to what we are copying.
-        virtual bool CopyTo(MemoryBase* other) { return false; /* To give you a sense what this does:  other->CopyFrom(this); */ }
+        virtual bool CopyTo(MemoryBase* other) const { return false; /* To give you a sense what this does:  other->CopyFrom(this); */ }
 
         virtual void PrintSelf(std::ostream &os) const;
 
@@ -54,10 +54,11 @@ namespace Cudapp
         //BTX
         MemoryLocation Location;
         //ETX
-        virtual bool CopyFrom(Memory* mem) { return false; }
-        virtual bool CopyFrom(MemoryPitch* mem) { return false; }
-        virtual bool CopyFrom(MemoryArray* mem) { return false; }
+        virtual bool CopyFromInternal(const Memory* mem) { return false; }
+        virtual bool CopyFromInternal(const MemoryPitch* mem) { return false; }
+        virtual bool CopyFromInternal(const MemoryArray* mem) { return false; }
     };
+
     inline std::ostream& operator<<(std::ostream& os, const MemoryBase& in){
         in.PrintSelf(os);
         return os; 

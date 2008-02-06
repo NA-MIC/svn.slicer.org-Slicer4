@@ -46,9 +46,9 @@ namespace Cudapp
     }
 
 
-    bool LocalMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc)
+    bool LocalMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc) const
     {
-        if(cudaMemcpy(dst, 
+        if(cudaMemcpy(dst,
             this->GetMemPointer(), //HACK  + offset,
             byte_count,
             (dst_loc == MemoryOnHost) ? cudaMemcpyHostToHost : cudaMemcpyHostToDevice
@@ -58,7 +58,7 @@ namespace Cudapp
             return false;
     }
 
-    bool LocalMemory::CopyFrom(void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
+    bool LocalMemory::CopyFrom(const void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
     {
         if(cudaMemcpy(this->GetMemPointer(), //HACK  + offset, 
             src,
