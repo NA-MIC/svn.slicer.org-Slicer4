@@ -16,6 +16,18 @@ namespace Cudapp
         this->Free();
     }
 
+    LocalMemory::LocalMemory(const LocalMemory& other) : Memory()
+    {
+        this->Location = MemoryBase::MemoryOnHost;
+       *this = other;
+    }
+
+    LocalMemory& LocalMemory::operator=(const LocalMemory& other)
+    { 
+        other.CopyTo(this);
+        return *this;
+    }
+
     void* LocalMemory::AllocateBytes(size_t count)
     {
         this->Free();

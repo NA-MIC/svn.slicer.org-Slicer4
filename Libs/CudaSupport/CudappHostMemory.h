@@ -16,9 +16,8 @@ namespace Cudapp
     public:
         HostMemory();
         virtual ~HostMemory();
-        HostMemory(const HostMemory&);
-        HostMemory& operator=(const HostMemory&);
-
+        HostMemory(const HostMemory& other);
+        HostMemory& operator=(const HostMemory& other);
         virtual void* AllocateBytes(size_t count);
         virtual void Free();
 

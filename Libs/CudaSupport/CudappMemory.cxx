@@ -23,13 +23,6 @@ namespace Cudapp
         //    this->Free();
     }
 
-    Memory::Memory(const Memory& other)
-    {
-        this->MemPointer = NULL;
-        this->Size = 0;
-        *this = other;
-    }
-
     Memory& Memory::operator=(const Memory& other)
     {
         other.CopyTo(this);
