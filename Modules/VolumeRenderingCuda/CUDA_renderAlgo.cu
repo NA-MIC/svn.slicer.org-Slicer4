@@ -582,11 +582,13 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
 
 extern "C"
 void CUDArenderAlgo_doRender(uchar4* outputData, //output image
+							 cudaRendererInformation* rendererInfo,
+							 cudaVolumeInformation* volumeInfo,
                              void* renderData,   //input data
                              int inputDataType,  
-			     float* colorTransferFunction, //ranges from 0 to 1
+			                 float* colorTransferFunction, //ranges from 0 to 1
                              float* alphaTransferFunction, //ranges from 0 to 1
-			     float* zBuffer, 
+							 float* zBuffer, 
                              float* minmax, float* lightVec, 
                              int sizeX, int sizeY, int sizeZ, 
                              int dsizeX, int dsizeY, 
@@ -594,9 +596,9 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
                              float voxelSizeX, float voxelSizeY, float voxelSizeZ, 
                              int minThreshold, int maxThreshold, 
                              int sliceDistance,
-			     float posX, float posY, float posZ,
-			     float focX, float focY, float focZ,
-			     float viewX, float viewY, float viewZ)
+								float posX, float posY, float posZ,
+								float focX, float focY, float focZ,
+								float viewX, float viewY, float viewZ)
 {
   float size[3]={sizeX, sizeY, sizeZ};
   float dsize[2]={dsizeX, dsizeY};

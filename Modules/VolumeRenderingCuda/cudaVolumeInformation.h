@@ -2,6 +2,7 @@
 #define __CUDAVOLUMEINFORMATION_H__
 
 //! A datastructure located on the cudacard that holds the information of the volume.
+extern "C"
 typedef struct {
     void* SourceData;
     int InputDataType;
