@@ -32,7 +32,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
 							  cudaRendererInformation renInfo,
 							  cudaVolumeInformation volInfo,
 
-							  T minThreshold, T maxThreshold,
 							  int sliceDistance, 
 							  float transparencyLevel, 
 							  uchar4* d_resultImage)
@@ -232,7 +231,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
 
 	temp=d_sourceData[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
 
-	if( temp >=minThreshold && temp <= maxThreshold){ 
+	if( temp >=(T)volInfo.MinThreshold && temp <= (T)volInfo.MaxThreshold){ 
 
 	  alpha=volInfo.AlphaTransferFunction[(int)temp];
 	  
@@ -303,11 +302,10 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
   // Switch to various rendering methods.
   float transparencyLevel = 1.0;
   
-  CUDAkernel_renderAlgo_doIntegrationRender<<< grid, threads >>>( \
+  CUDAkernel_renderAlgo_doIntegrationRender<unsigned char> <<< grid, threads >>>( \
 	 (unsigned char*)volumeInfo->SourceData, \
 	 *rendererInfo,
 	 *volumeInfo,
-	 (unsigned char)volumeInfo->MinThreshold, (unsigned char)volumeInfo->MaxThreshold,	\
 	 rendererInfo->NearPlane, \
 	 transparencyLevel, \
 	 outputData);
