@@ -8,8 +8,7 @@ namespace Cudapp
     {
     public:
         virtual ~Memory();
-        Memory(const Memory&);
-        Memory& operator=(const Memory&);
+        virtual Memory& operator=(const Memory&);
 
         virtual void* AllocateBytes(size_t byte_count) = 0;
         //BTX
@@ -30,6 +29,7 @@ namespace Cudapp
 
     protected:
         Memory();
+        Memory(const Memory&); // Not Implemented (do this in the subclasses)
         virtual bool CopyFromInternal(const Memory* mem);
 
     protected:

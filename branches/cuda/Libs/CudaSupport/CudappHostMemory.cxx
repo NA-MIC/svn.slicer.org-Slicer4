@@ -14,6 +14,16 @@ namespace Cudapp
         this->Free();
     }
 
+    HostMemory::HostMemory(const HostMemory& other) : LocalMemory()
+    {
+       *this = other;
+    }
+
+    HostMemory& HostMemory::operator=(const HostMemory& other)
+    { 
+        other.CopyTo(this);
+        return *this;
+    }
 
     void* HostMemory::AllocateBytes(size_t count)
     {
