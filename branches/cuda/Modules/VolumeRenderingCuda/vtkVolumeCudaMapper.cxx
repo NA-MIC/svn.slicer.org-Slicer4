@@ -415,6 +415,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glPushAttrib(GL_LIGHTING);
     glDisable(GL_LIGHTING);
 
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glBegin(GL_QUADS);
     glTexCoord2i(1,0);
     glVertex4dv(coordinatesA);

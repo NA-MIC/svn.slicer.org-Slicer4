@@ -26,6 +26,8 @@
 #include "vtkKWHistogramSet.h"
 #include "vtkImageGradientMagnitude.h"
 #include "vtkKWHistogram.h"
+#include "vtkSlicerNodeSelectorWidget.h"
+#include "vtkMRMLScalarVolumeNode.h"
 
 #include "vtkCellArray.h"
 #include "vtkFloatArray.h"
@@ -34,7 +36,6 @@
 
 // Transfer functions:
 #include "vtkColorTransferFunction.h"
-
 #include "vtkRenderer.h"
 
 
@@ -181,6 +182,16 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->UpdateButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
 
+    //NodeSelector  for Node from MRML Scene
+    this->NS_ImageData=vtkSlicerNodeSelectorWidget::New();
+    this->NS_ImageData->SetParent(loadSaveDataFrame->GetFrame());
+    this->NS_ImageData->Create();
+    this->NS_ImageData->NoneEnabledOn();
+    this->NS_ImageData->SetLabelText("Source Volume: ");
+    this->NS_ImageData->SetNodeClass("vtkMRMLScalarVolumeNode","","","");
+    app->Script("pack %s -side top -fill x -anchor nw -padx 2 -pady 2",this->NS_ImageData->GetWidgetName());
+
+
     this->Built=true;
 }
 
@@ -204,6 +215,8 @@ void vtkVolumeRenderingCudaModuleGUI::ReleaseModuleEventBindings ( )
 
 void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
+    this->NS_ImageData->AddObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
+
     this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->UpdateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
@@ -235,6 +248,7 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 
 #include "vtkImageReader.h"
 #include "vtkOpenGLExtensionManager.h"
+#include "vtkImageShiftScale.h"
 #include <sstream>
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
@@ -338,6 +352,22 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             else
                 this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
     }
+    else if (caller == this->NS_ImageData)
+    {
+        if (this->CudaMapper != NULL)
+        {
+        vtkMRMLScalarVolumeNode *selectedImageData=vtkMRMLScalarVolumeNode::SafeDownCast(this->NS_ImageData->GetSelected());
+        if (selectedImageData != NULL && selectedImageData->GetImageData() != NULL)
+        {
+            vtkImageShiftScale* shifter = vtkImageShiftScale::New();
+            shifter->SetInput(selectedImageData->GetImageData());
+            shifter->SetOutputScalarTypeToUnsignedChar();
+            shifter->Update();
+
+            this->CudaMapper->SetInput(shifter->GetOutput());
+            }
+        }
+    }
 
     else if (caller == this->VolumePropertyWidget)
     {
@@ -368,6 +398,7 @@ void vtkVolumeRenderingCudaModuleGUI::ScheduleRender()
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData)
 {
+
 }
 
 
@@ -390,6 +421,10 @@ void vtkVolumeRenderingCudaModuleGUI::Enter ( )
     }
     this->CreateModuleEventBindings();
     //this->UpdateGUI();
+
+    this->NS_ImageData->SetMRMLScene(this->GetLogic()->GetMRMLScene());
+    this->NS_ImageData->UpdateMenu();
+
 }
 void vtkVolumeRenderingCudaModuleGUI::Exit ( )
 {
