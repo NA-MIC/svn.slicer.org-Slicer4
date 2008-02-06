@@ -18,6 +18,7 @@ class vtkKWMenuButton;
 class vtkKWVolumePropertyWidget;
 class vtkKWHistogramSet;
 class vtkKWRange;
+class vtkSlicerNodeSelectorWidget;
 
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : public vtkSlicerModuleGUI
@@ -130,6 +131,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
 
   vtkKWHistogramSet* Histograms;
 
+  vtkSlicerNodeSelectorWidget* NS_ImageData;
   vtkKWPushButton* UpdateButton;
 };
 
