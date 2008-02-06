@@ -1,7 +1,10 @@
 #ifndef __CUDARENDERERINFORMATION_H__
 #define __CUDARENDERERINFORMATION_H__
 
+#include "cuda_runtime_api.h"
+
 //! A Datastucture located on the cuda hardware that holds all the information about the renderer.
+extern "C"
 typedef struct
 {
     //! The resolution of the rendering screen.
@@ -12,9 +15,9 @@ typedef struct
     //! Count of lights in the scene
     unsigned int   LightCount;
     //! The vectors to the lights
-    float[3]*      LightVectors;
+    float3*        LightVectors;
 
-    float          CameraPosX, CameraPosY, CamerposZ;
+    float          CameraPosX, CameraPosY, CameraPosZ;
     float          TargetPosX, TargetPosY, TargetPosZ;
     float          UpX, UpY, UpZ;
 

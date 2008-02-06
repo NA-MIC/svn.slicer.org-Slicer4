@@ -29,6 +29,8 @@
 #include "CudappDeviceMemory.h"
 #include "CudappHostMemory.h"
 #include "CudappMemoryArray.h"
+#include "cudaRendererInformation.h"
+#include "cudaVolumeInformation.h"
 
 #include <vector_types.h>
 
@@ -250,6 +252,7 @@ void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
 #include "vtkTimerLog.h"
 #include "texture_types.h"
 #include "vtkMatrix4x4.h"
+#include "vector_functions.h"
 
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
@@ -283,43 +286,6 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     vtkCamera* cam =
         renderer->GetActiveCamera();
 
-
-    // Build the Rotation Matrix
-    double ax,ay,az;
-    double bx,by,bz;
-    double cx,cy,cz;
-
-    ax = cam->GetFocalPoint()[0] - cam->GetPosition()[0];
-    ay = cam->GetFocalPoint()[1] - cam->GetPosition()[1];
-    az = cam->GetFocalPoint()[2] - cam->GetPosition()[2];
-    cam->GetViewUp(bx, by, bz);
-    cx = ay*bz-az*by;
-    cy = az*bx-ax*bz;
-    cz = ax*by-ay*bx;
-
-    bx = cy*az-cz*ay;
-    by = cz*ax-cx*az;
-    bz = cx*ay-cy*ax;
-
-    double distance = cam->GetDistance();
-    ax /= distance; ay /= distance; az /= distance;
-
-    double len = sqrt(bx*bx + by*by + bz*bz);
-    bx /= len; by /= len; bz /= len;
-
-    len = sqrt(cx*cx + cy*cy + cz*cz);
-    cx /= len; cy /= len; cz /= len;
-
-    float rotationMatrix[4][4]=
-    {{ax,bx,cx,0},
-    {ay,by,cy,0},
-    {az,bz,cz,0},
-    {0,0,0,1}};
-    //{{1,0,0,0},
-    //{0,1,0,0},
-    //{0,0,1,0},
-    //{0,0,0,1}};
-
     //for (unsigned int i = 0; i < 16; i++)
     //    rotationMatrix[i/4][i%4] = cam->GetPerspectiveTransformMatrix(1,0,1000)->GetElement(i/4,i%4);
     //
@@ -346,7 +312,57 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
 
+
+    // Renderer Information Setter.
+    cudaRendererInformation rendererInfo;
+    rendererInfo.ResolutionX = this->OutputDataSize[0];
+    rendererInfo.ResolutionY = this->OutputDataSize[1];
+
+    rendererInfo.LightCount = 1;
+    std::vector<float3> lights;
+    lights.push_back(make_float3(0,0,1));
+    if (!lights.empty())
+        rendererInfo.LightVectors = &lights[0];
+
+    rendererInfo.CameraPosX = cam->GetPosition()[0];
+    rendererInfo.CameraPosY = cam->GetPosition()[1];
+    rendererInfo.CameraPosZ = cam->GetPosition()[2];
+    rendererInfo.TargetPosX = cam->GetFocalPoint()[0];
+    rendererInfo.TargetPosY = cam->GetFocalPoint()[1];
+    rendererInfo.TargetPosZ = cam->GetFocalPoint()[2];
+    rendererInfo.UpX = cam->GetViewUp()[0];
+    rendererInfo.UpY = cam->GetViewUp()[1];
+    rendererInfo.UpZ = cam->GetViewUp()[2];
+    rendererInfo.ZBuffer = this->CudaZBuffer->GetMemPointerAs<float>();
+
+
+    // Volume Information Setter.
+    cudaVolumeInformation volumeInfo;
+    volumeInfo.SourceData = this->CudaInputBuffer->GetMemPointer();
+    volumeInfo.InputDataType = this->GetInput()->GetScalarType();
+
+    volumeInfo.VoxelSizeX = volumeInfo.VolumeSizeY = volumeInfo.VolumeSizeZ = 1;
+    volumeInfo.VolumeSizeX = dims[0];
+    volumeInfo.VolumeSizeY = dims[1];
+    volumeInfo.VolumeSizeZ = dims[2];
+    volumeInfo.MinThreshold = this->Threshold[0];
+    volumeInfo.MaxThreshold = this->Threshold[1];
+    volumeInfo.AlphaTransferFunction = this->CudaAlphaTransferFunction->GetMemPointerAs<float>();
+    volumeInfo.ColorTransferFunction = this->CudaColorTransferFunction->GetMemPointerAs<float>();
+    volumeInfo.FunctionSize = 256;
+    volumeInfo.SteppingSize = 1.0;// nothing yet!!
+    
+    int* extent = this->GetInput()->GetExtent();
+    volumeInfo.MinValueX = (float)extent[0];
+    volumeInfo.MaxValueX = (float)extent[1];
+    volumeInfo.MinValueY = (float)extent[2];
+    volumeInfo.MaxValueY = (float)extent[3];
+    volumeInfo.MinValueZ = (float)extent[4];
+    volumeInfo.MaxValueZ = (float)extent[5];
+
     CUDArenderAlgo_doRender(RenderDestination,
+        &rendererInfo,
+        &volumeInfo,
         this->CudaInputBuffer->GetMemPointer(),
         this->GetInput()->GetScalarType(),
         this->CudaColorTransferFunction->GetMemPointerAs<float>(),
