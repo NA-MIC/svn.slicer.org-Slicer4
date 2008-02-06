@@ -28,17 +28,17 @@ __constant__ float c_renderAlgo_vsize[3];
 __constant__ float c_renderAlgo_disp[3];
 
 template <typename T>
-__global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData, 
+__global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
+							  cudaRendererInformation renInfo,
+							  cudaVolumeInformation volInfo,
+
 							  float* colorTransferFunction,
 							  float* alphaTransferFunction,
 							  float* zBuffer,
 							  T minThreshold, T maxThreshold,
 							  int sliceDistance, 
 							  float transparencyLevel, 
-							  uchar4* d_resultImage,
-							  float posX, float posY, float posZ,
-							  float focX, float focY, float focZ,
-							  float viewX, float viewY, float viewZ)
+							  uchar4* d_resultImage)
 {
   int xIndex = blockDim.x *blockIdx.x + threadIdx.x;
   int yIndex = blockDim.y *blockIdx.y + threadIdx.y;
@@ -89,15 +89,15 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
     camera model start here
   */
   
-  s_rayMap[tempacc*6]=posX + s_size[0]*s_vsize[0]/2.0f;
-  s_rayMap[tempacc*6+1]=posY + s_size[1]*s_vsize[1]/2.0f;
-  s_rayMap[tempacc*6+2]=posZ + s_size[2]*s_vsize[2]/2.0f;
+  s_rayMap[tempacc*6]=renInfo.CameraPos[0] + s_size[0]*s_vsize[0]/2.0f;
+  s_rayMap[tempacc*6+1]=renInfo.CameraPos[1] + s_size[1]*s_vsize[1]/2.0f;
+  s_rayMap[tempacc*6+2]=renInfo.CameraPos[2] + s_size[2]*s_vsize[2]/2.0f;
   
   float vecX, vecY, vecZ;
 
-  vecX=(focX-posX);
-  vecY=(focY-posY);
-  vecZ=(focZ-posZ);
+  vecX=(renInfo.TargetPos[0]-renInfo.CameraPos[0]);
+  vecY=(renInfo.TargetPos[1]-renInfo.CameraPos[1]);
+  vecZ=(renInfo.TargetPos[2]-renInfo.CameraPos[2]);
 
   float temp= 1.0f/sqrt(vecX*vecX+vecY*vecY+vecZ*vecZ);
   vecX*=temp;
@@ -107,11 +107,11 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
   float verX, verY, verZ;
   float horX, horY, horZ;
   
-  float dot = viewX*vecX+viewY*vecY+viewZ*vecZ;
+  float dot = renInfo.ViewUp[0]*vecX+renInfo.ViewUp[1]*vecY+renInfo.ViewUp[2]*vecZ;
 
-  verX=viewX-dot*vecX;
-  verY=viewY-dot*vecY;
-  verZ=viewZ-dot*vecZ;
+  verX=renInfo.ViewUp[0]-dot*vecX;
+  verY=renInfo.ViewUp[1]-dot*vecY;
+  verZ=renInfo.ViewUp[2]-dot*vecZ;
 
   temp= 1.0f/sqrt(verX*verX+verY*verY+verZ*verZ);
   verX*=temp;
@@ -308,16 +308,15 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
   
   CUDAkernel_renderAlgo_doIntegrationRender<<< grid, threads >>>( \
 	 (unsigned char*)volumeInfo->SourceData, \
+	 *rendererInfo,
+	 *volumeInfo,
 	 volumeInfo->ColorTransferFunction, \
 	 volumeInfo->AlphaTransferFunction, \
 	 rendererInfo->ZBuffer, \
 	 (unsigned char)volumeInfo->MinThreshold, (unsigned char)volumeInfo->MaxThreshold,	\
 	 rendererInfo->NearPlane, \
 	 transparencyLevel, \
-	 outputData,\
-	 rendererInfo->CameraPos[0], rendererInfo->CameraPos[1], rendererInfo->CameraPos[2], \
-	 rendererInfo->TargetPos[0], rendererInfo->TargetPos[1], rendererInfo->TargetPos[2], \
-     rendererInfo->ViewUp[0], rendererInfo->ViewUp[1], rendererInfo->ViewUp[2]);
+	 outputData);
   
   /*
 #define CUDA_KERNEL_CALL(ID, TYPE)   \
