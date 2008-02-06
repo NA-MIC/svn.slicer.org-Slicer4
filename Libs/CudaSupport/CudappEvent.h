@@ -2,29 +2,30 @@
 #define CUDAPPEVENT_H_
 
 #include "CudappBase.h"
-
-class CudappStream;
-
-class CUDA_SUPPORT_EXPORT CudappEvent
+namespace Cudapp
 {
-public:
-    CudappEvent();
-    virtual ~CudappEvent();
+    class Stream;
+    class CUDA_SUPPORT_EXPORT Event
+    {
+    public:
+        Event();
+        virtual ~Event();
 
-    cudaEvent_t Event;
+        //BTX
+        void Record();
+        void Record(Stream* stream);
+        Base::State Query();
+        //ETX
+        void Synchronize();
+        float ElapsedTime(Event* otherEvent);
 
-    //BTX
-    void Record();
-    void Record(CudappStream* stream);
-    CudappBase::State Query();
-    //ETX
-    void Synchronize();
-    float ElapsedTime(CudappEvent* otherEvent);
+        /** @returns the Event */
+        cudaEvent_t GetEvent() { return this->CudaEvent; }
 
-    /** @returns the Event */
-    cudaEvent_t GetEvent() { return this->Event; }
+        void PrintSelf(std::ostream&  os);
 
-    void PrintSelf(std::ostream&  os);
-};
-
+    private:
+        cudaEvent_t CudaEvent;
+    };
+}
 #endif /*CUDAPPEVENT_H_*/

@@ -7,30 +7,32 @@
 #include "CudappHostMemory.h"
 #include "CudappMemoryArray.h"
 
-
-CudappMemory::CudappMemory()
+namespace Cudapp
 {
-    this->MemPointer = NULL;
-    this->Size = 0;
-}
+    Memory::Memory()
+    {
+        this->MemPointer = NULL;
+        this->Size = 0;
+    }
 
-CudappMemory::~CudappMemory()
-{
-    // so the virtual function call will not be false.
-    // each subclass must call free by its own and set MemPointer to NULL in its Destructor!
-    //if (this->MemPointer != NULL)
-    //    this->Free();
-}
+    Memory::~Memory()
+    {
+        // so the virtual function call will not be false.
+        // each subclass must call free by its own and set MemPointer to NULL in its Destructor!
+        //if (this->MemPointer != NULL)
+        //    this->Free();
+    }
 
-void CudappMemory::PrintSelf (std::ostream &os)
-{
-    this->CudappMemoryBase::PrintSelf(os);
-    if (this->GetMemPointer() == NULL)
-        os << "Not yet allocated";
-}
+    void Memory::PrintSelf (std::ostream &os)
+    {
+        this->MemoryBase::PrintSelf(os);
+        if (this->GetMemPointer() == NULL)
+            os << "Not yet allocated";
+    }
 
 
-bool CudappMemory::CopyFrom(CudappMemory* mem)
-{
-  return this->CopyFrom(mem->GetMemPointer(), mem->GetSize(), (size_t)0, mem->GetMemoryLocation());  
+    bool Memory::CopyFrom(Memory* mem)
+    {
+        return this->CopyFrom(mem->GetMemPointer(), mem->GetSize(), (size_t)0, mem->GetMemoryLocation());  
+    }
 }

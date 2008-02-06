@@ -5,7 +5,7 @@
 #include "vtkVolumeRenderingCudaModule.h"
 
 //BTX
-class CudappMemory;
+namespace Cudapp { class Memory; }
 //ETX
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaImageData : public vtkImageData
@@ -23,7 +23,9 @@ protected:
     vtkCudaImageData();
     virtual ~vtkCudaImageData();
 
-    CudappMemory*   Data;
+    //BTX
+    Cudapp::Memory*   Data;
+    //ETX
 };
 
 #endif /*VTKCUDAIMAGEDATA_H_*/
