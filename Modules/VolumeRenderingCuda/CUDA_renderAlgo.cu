@@ -598,32 +598,22 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
 								float focX, float focY, float focZ,
 								float viewX, float viewY, float viewZ)
 {
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_size, volumeInfo->VolumeSize, sizeof(float)*3, 0));
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_dsize, rendererInfo->Resolution, sizeof(float)*2, 0));
-
-
   // setup execution parameters
 
-  dim3 grid(dsizeX / BLOCK_DIM2D, dsizeY / BLOCK_DIM2D, 1);
+  dim3 grid(rendererInfo->Resolution[0] / BLOCK_DIM2D, rendererInfo->Resolution[1]/ BLOCK_DIM2D, 1);
   dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
 
   CUT_DEVICE_INIT();
 
-  // allocate host memory
-
-  float h_vsize[3]={voxelSizeX, voxelSizeY, voxelSizeZ};
-  float h_disp[3]={dispX, dispY, dispZ};
-  
-  float h_minmax[6]={minmax[0], minmax[1], minmax[2], minmax[3], minmax[4], minmax[5]};
-  float h_lightVec[3]={lightVec[0], lightVec[1], lightVec[2]};
-
   // copy host memory to device
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_size, volumeInfo->VolumeSize, sizeof(float)*3, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_dsize, rendererInfo->Resolution, sizeof(float)*2, 0));
   
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_vsize, h_vsize, sizeof(float)*3, 0));
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_disp, h_disp, sizeof(float)*3, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_vsize, volumeInfo->VoxelSize, sizeof(float)*3, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_disp, volumeInfo->VolumeTransformation, sizeof(float)*3, 0));
 
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_minmax, h_minmax, sizeof(float)*6, 0));
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_lightVec, h_lightVec, sizeof(float)*3, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_minmax, volumeInfo->MinMaxValue, sizeof(float)*6, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_lightVec, rendererInfo->LightVectors, sizeof(float)*3 * rendererInfo->LightCount, 0));
 
   // execute the kernel
 
