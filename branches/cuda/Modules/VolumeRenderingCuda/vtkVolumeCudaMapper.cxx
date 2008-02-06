@@ -99,7 +99,7 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     this->LocalAlphaTransferFunction = new Cudapp::HostMemory;
     this->LocalAlphaTransferFunction->Allocate<float>(256);
 
-    
+
     this->LocalZBuffer = new Cudapp::LocalMemory();
     this->CudaZBuffer = new Cudapp::DeviceMemory();
 }  
@@ -132,7 +132,7 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
     if (input != NULL)
     {
         this->CudaInputBuffer->AllocateBytes(input->GetActualMemorySize() * 1024);
-      // We do this automatically
+        // We do this automatically
         this->CudaInputBuffer->CopyFrom(input->GetScalarPointer(), input->GetActualMemorySize() * 1024);
     }
     else
@@ -207,41 +207,41 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
 
 void vtkVolumeCudaMapper::UpdateVolumeProperties(vtkVolumeProperty *property)
 {
-//FILE *fp;
-//  unsigned char transferFunction[256*6];
-//
-//fp=fopen("C:\\color.map","r");
-//  fread(transferFunction, sizeof(unsigned char), 256*6, fp);
-//  fclose(fp);
-//
-//  float colorTransferFunction[256*3];
-//  float alphaTransferFunction[256];
-//  float zBuffer[1024*768];
-//
-//  int i;
-//  /*
-//  for(i=0;i<256;i++){
-//    colorTransferFunction[i*3]=i/255.0;
-//    colorTransferFunction[i*3+1]=0.7;
-//    colorTransferFunction[i*3+2]=(255-i)/255.0;
-//    alphaTransferFunction[i]=0.1;
-//  }
-//  */
-//
-//  for(i=0;i<256;i++){
-//    colorTransferFunction[i*3]=transferFunction[i*3]/255.0;
-//    colorTransferFunction[i*3+1]=transferFunction[i*3+1]/255.0;
-//    colorTransferFunction[i*3+2]=transferFunction[i*3+2]/255.0;
-//    alphaTransferFunction[i]=transferFunction[i+256*3]/255.0;
-//  }
-//  this->CudaColorTransferFunction->CopyFrom(colorTransferFunction, 256*3*sizeof(float));
-//  this->CudaAlphaTransferFunction->CopyFrom(alphaTransferFunction, 256 * sizeof(float));
-//
+    //FILE *fp;
+    //  unsigned char transferFunction[256*6];
+    //
+    //fp=fopen("C:\\color.map","r");
+    //  fread(transferFunction, sizeof(unsigned char), 256*6, fp);
+    //  fclose(fp);
+    //
+    //  float colorTransferFunction[256*3];
+    //  float alphaTransferFunction[256];
+    //  float zBuffer[1024*768];
+    //
+    //  int i;
+    //  /*
+    //  for(i=0;i<256;i++){
+    //    colorTransferFunction[i*3]=i/255.0;
+    //    colorTransferFunction[i*3+1]=0.7;
+    //    colorTransferFunction[i*3+2]=(255-i)/255.0;
+    //    alphaTransferFunction[i]=0.1;
+    //  }
+    //  */
+    //
+    //  for(i=0;i<256;i++){
+    //    colorTransferFunction[i*3]=transferFunction[i*3]/255.0;
+    //    colorTransferFunction[i*3+1]=transferFunction[i*3+1]/255.0;
+    //    colorTransferFunction[i*3+2]=transferFunction[i*3+2]/255.0;
+    //    alphaTransferFunction[i]=transferFunction[i+256*3]/255.0;
+    //  }
+    //  this->CudaColorTransferFunction->CopyFrom(colorTransferFunction, 256*3*sizeof(float));
+    //  this->CudaAlphaTransferFunction->CopyFrom(alphaTransferFunction, 256 * sizeof(float));
+    //
 
     double range[2];
     property->GetRGBTransferFunction()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], 256, this->LocalColorTransferFunction->GetMemPointerAs<float>());
-    
+
     LocalColorTransferFunction->CopyTo(this->CudaColorTransferFunction);
 
     property->GetScalarOpacity()->GetTable(range[0], range[1], 256, this->LocalAlphaTransferFunction->GetMemPointerAs<float>());
@@ -315,25 +315,28 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
     // Renderer Information Setter.
     cudaRendererInformation rendererInfo;
-    rendererInfo.ResolutionX = this->OutputDataSize[0];
-    rendererInfo.ResolutionY = this->OutputDataSize[1];
+    rendererInfo.Resolution[0] = this->OutputDataSize[0];
+    rendererInfo.Resolution[1] = this->OutputDataSize[1];
 
-    rendererInfo.LightCount = 1;
     std::vector<float3> lights;
     lights.push_back(make_float3(0,0,1));
+
+    rendererInfo.LightCount = lights.size();
     if (!lights.empty())
         rendererInfo.LightVectors = &lights[0];
 
-    rendererInfo.CameraPosX = cam->GetPosition()[0];
-    rendererInfo.CameraPosY = cam->GetPosition()[1];
-    rendererInfo.CameraPosZ = cam->GetPosition()[2];
-    rendererInfo.TargetPosX = cam->GetFocalPoint()[0];
-    rendererInfo.TargetPosY = cam->GetFocalPoint()[1];
-    rendererInfo.TargetPosZ = cam->GetFocalPoint()[2];
-    rendererInfo.UpX = cam->GetViewUp()[0];
-    rendererInfo.UpY = cam->GetViewUp()[1];
-    rendererInfo.UpZ = cam->GetViewUp()[2];
+    rendererInfo.CameraPos[0] = cam->GetPosition()[0];
+    rendererInfo.CameraPos[1] = cam->GetPosition()[1];
+    rendererInfo.CameraPos[2] = cam->GetPosition()[2];
+    rendererInfo.TargetPos[0] = cam->GetFocalPoint()[0];
+    rendererInfo.TargetPos[1] = cam->GetFocalPoint()[1];
+    rendererInfo.TargetPos[2] = cam->GetFocalPoint()[2];
+    rendererInfo.ViewUp[0] = cam->GetViewUp()[0];
+    rendererInfo.ViewUp[1] = cam->GetViewUp()[1];
+    rendererInfo.ViewUp[2] = cam->GetViewUp()[2];
     rendererInfo.ZBuffer = this->CudaZBuffer->GetMemPointerAs<float>();
+    rendererInfo.NearPlane = -500;
+    rendererInfo.FarPlane = 1000;
 
 
     // Volume Information Setter.
@@ -341,24 +344,29 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     volumeInfo.SourceData = this->CudaInputBuffer->GetMemPointer();
     volumeInfo.InputDataType = this->GetInput()->GetScalarType();
 
-    volumeInfo.VoxelSizeX = volumeInfo.VolumeSizeY = volumeInfo.VolumeSizeZ = 1;
-    volumeInfo.VolumeSizeX = dims[0];
-    volumeInfo.VolumeSizeY = dims[1];
-    volumeInfo.VolumeSizeZ = dims[2];
+    volumeInfo.VoxelSize[0] = 1;
+    volumeInfo.VoxelSize[1] = 1;
+    volumeInfo.VoxelSize[2] = 1;
+    volumeInfo.VolumeTransformation[0] =
+        volumeInfo.VolumeTransformation[1] =
+        volumeInfo.VolumeTransformation[2] = 0.0f;
+    volumeInfo.VolumeSize[0] = dims[0];
+    volumeInfo.VolumeSize[1] = dims[1];
+    volumeInfo.VolumeSize[2] = dims[2];
     volumeInfo.MinThreshold = this->Threshold[0];
     volumeInfo.MaxThreshold = this->Threshold[1];
     volumeInfo.AlphaTransferFunction = this->CudaAlphaTransferFunction->GetMemPointerAs<float>();
     volumeInfo.ColorTransferFunction = this->CudaColorTransferFunction->GetMemPointerAs<float>();
     volumeInfo.FunctionSize = 256;
     volumeInfo.SteppingSize = 1.0;// nothing yet!!
-    
+
     int* extent = this->GetInput()->GetExtent();
-    volumeInfo.MinValueX = (float)extent[0];
-    volumeInfo.MaxValueX = (float)extent[1];
-    volumeInfo.MinValueY = (float)extent[2];
-    volumeInfo.MaxValueY = (float)extent[3];
-    volumeInfo.MinValueZ = (float)extent[4];
-    volumeInfo.MaxValueZ = (float)extent[5];
+    volumeInfo.MinMaxValue[0] = volumeInfo.MinValueX = (float)extent[0];
+    volumeInfo.MinMaxValue[1] = volumeInfo.MaxValueX = (float)extent[1];
+    volumeInfo.MinMaxValue[2] = volumeInfo.MinValueY = (float)extent[2];
+    volumeInfo.MinMaxValue[3] = volumeInfo.MaxValueY = (float)extent[3];
+    volumeInfo.MinMaxValue[4] = volumeInfo.MinValueZ = (float)extent[4];
+    volumeInfo.MinMaxValue[5] = volumeInfo.MaxValueZ = (float)extent[5];
 
     CUDArenderAlgo_doRender(RenderDestination,
         &rendererInfo,
@@ -379,6 +387,11 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         cam->GetFocalPoint()[0], cam->GetFocalPoint()[1], cam->GetFocalPoint()[2],
         cam->GetViewUp()[0], cam->GetViewUp()[1], cam->GetViewUp()[2]
         );         
+
+    //CUDArenderAlgo_doRender(RenderDestination,
+    //    &rendererInfo,
+    //    &volumeInfo
+    //    );         
 
     // Get the resulted image.
     log->StopTimer();

@@ -16,8 +16,8 @@ extern "C" {
 #define BLOCK_DIM2D 16// this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
 
-__constant__ float c_renderAlgo_size[3];
-__constant__ float c_renderAlgo_dsize[2];
+__constant__ int c_renderAlgo_size[3];
+__constant__ unsigned int c_renderAlgo_dsize[2];
 __constant__ float c_renderAlgo_minmax[6];
 __constant__ float c_renderAlgo_lightVec[3];
 
@@ -346,7 +346,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
   __shared__ float s_dsize[3]; //display size (x, y, dummy)
   __shared__ float s_vsize[3]; //voxel dimension
   __shared__ float s_size[3]; //3D data size
-  __shared__ float s_disp[3]; //displacement of 3D data in (x,y,z) direction
   __shared__ float s_minmax[6]; //region of interest of 3D data (minX, maxX, minY, maxY, minZ, maxZ)
   __shared__ float s_integrationVal[BLOCK_DIM2D*BLOCK_DIM2D]; //integration value of alpha
   __shared__ unsigned char s_outputVal[BLOCK_DIM2D*BLOCK_DIM2D*3]; //output value
@@ -364,7 +363,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
     s_dsize[xIndex%2]=c_renderAlgo_dsize[xIndex%2];
     s_vsize[xIndex%3]=c_renderAlgo_vsize[xIndex%3];
     s_size[xIndex%3]=c_renderAlgo_size[xIndex%3];
-    s_disp[xIndex%3]=c_renderAlgo_disp[xIndex%3];
   }else if(tempacc < 9){ 
     s_minmax[xIndex%6]=c_renderAlgo_minmax[xIndex%6];
   }
@@ -600,11 +598,8 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
 								float focX, float focY, float focZ,
 								float viewX, float viewY, float viewZ)
 {
-  float size[3]={sizeX, sizeY, sizeZ};
-  float dsize[2]={dsizeX, dsizeY};
-
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_size, size, sizeof(float)*3, 0));
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_dsize, dsize, sizeof(float)*2, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_size, volumeInfo->VolumeSize, sizeof(float)*3, 0));
+  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_dsize, rendererInfo->Resolution, sizeof(float)*2, 0));
 
 
   // setup execution parameters

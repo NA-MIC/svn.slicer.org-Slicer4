@@ -371,8 +371,8 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
     else if (caller == this->VolumePropertyWidget)
     {
-        if (this->CudaMapper != NULL);
-        this->CudaMapper->Update();
+        if (this->CudaMapper != NULL)
+            this->CudaMapper->Update();
         this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
     }
 
