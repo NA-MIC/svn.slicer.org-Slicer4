@@ -4,14 +4,15 @@
 
 namespace Cudapp
 {
-    Device::Device()
+    Device::Device(unsigned int deviceNumber)
     {
         this->Initialized = false;
-        this->DeviceNumber = 0;
 
         // set the device properties to a 'don't care' value
         cudaDeviceProp prop = cudaDevicePropDontCare;
         this->DeviceProp = prop;
+
+        this->SetDeviceNumber(deviceNumber);
     }
 
     Device::~Device()
@@ -26,7 +27,7 @@ namespace Cudapp
         return false;
     }
 
-    void Device::SetDeviceNumber(int deviceNumber)
+    void Device::SetDeviceNumber(unsigned int deviceNumber)
     {
         this->DeviceNumber = deviceNumber;
         this->LoadDeviceProperties();

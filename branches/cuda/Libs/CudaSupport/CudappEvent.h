@@ -11,11 +11,9 @@ namespace Cudapp
         Event();
         virtual ~Event();
 
-        //BTX
         void Record();
         void Record(Stream* stream);
         Base::State Query();
-        //ETX
         void Synchronize();
         float ElapsedTime(Event* otherEvent);
 

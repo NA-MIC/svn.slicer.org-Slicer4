@@ -14,10 +14,8 @@ namespace Cudapp
         MemoryArray(const MemoryArray&);
         MemoryArray& operator=(const MemoryArray&);
 
-        //BTX
         template<typename T>
         void SetFormat() { this->Descriptor = cudaCreateChannelDesc<T>(); }
-        //ETX
         void SetChannelDescriptor(const cudaChannelFormatDesc& desc) { this->Descriptor = desc; }
 
         void Allocate(size_t width, size_t height);
