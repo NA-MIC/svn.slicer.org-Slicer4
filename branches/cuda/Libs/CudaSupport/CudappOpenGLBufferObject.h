@@ -1,16 +1,14 @@
 #ifndef CUDAPPOPENGLBUFFEROBJECT_H_
 #define CUDAPPOPENGLBUFFEROBJECT_H_
 
-#include "vtkObject.h"
-
 #include <GL/gl.h> // OpenGL headers used for the Buffer Reference
 #include "CudappSupportModule.h"
 
-class CUDA_SUPPORT_EXPORT CudappOpenGLBufferObject : public vtkObject
+class CUDA_SUPPORT_EXPORT OpenGLBufferObject
 {
 public:
-  CudappOpenGLBufferObject();
-  virtual ~CudappOpenGLBufferObject();
+  OpenGLBufferObject();
+  virtual ~OpenGLBufferObject();
   
   void Register(GLuint bufferObject);
   void Unregister();

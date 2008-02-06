@@ -2,30 +2,34 @@
 
 #include "cuda_runtime_api.h"
 
-cudaError_t CudappBase::GetLastError()
+namespace Cudapp
 {
-    return cudaGetLastError();
-}
 
-const char* CudappBase::GetLastErrorString()
-{
-    return CudappBase::GetErrorString(CudappBase::GetLastError());
-}
+    cudaError_t Base::GetLastError()
+    {
+        return cudaGetLastError();
+    }
 
-const char* CudappBase::GetErrorString(cudaError_t error)
-{
-    return cudaGetErrorString(error);
-}
+    const char* Base::GetLastErrorString()
+    {
+        return Base::GetErrorString(Base::GetLastError());
+    }
 
-void CudappBase::PrintError(cudaError_t error)
-{
-    printf(CudappBase::GetErrorString(error));
-}
+    const char* Base::GetErrorString(cudaError_t error)
+    {
+        return cudaGetErrorString(error);
+    }
 
-CudappBase::~CudappBase()
-{
-}
+    void Base::PrintError(cudaError_t error)
+    {
+        printf(Base::GetErrorString(error));
+    }
 
-CudappBase::CudappBase()
-{
+    Base::~Base()
+    {
+    }
+
+    Base::Base()
+    {
+    }
 }

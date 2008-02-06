@@ -47,7 +47,7 @@ vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
 
 vtkVolumeCudaMapper* vtkVolumeCudaMapper::New()
 {
-    CudappSupport* support = new CudappSupport();
+    Cudapp::Support* support = new Cudapp::Support();
     bool cudaIsSupported = support->IsSupported();
     delete support;
     if (cudaIsSupported)
@@ -61,8 +61,8 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
     this->LocalOutputImage = vtkImageData::New();
 
-    this->CudaInputBuffer = new CudappDeviceMemory();
-    this->CudaOutputBuffer = new CudappDeviceMemory();
+    this->CudaInputBuffer = new Cudapp::DeviceMemory();
+    this->CudaOutputBuffer = new Cudapp::DeviceMemory();
 
     this->Texture = 0;
     this->BufferObject = 0;
@@ -87,21 +87,19 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     }
     extensions->Delete();
 
-    this->CudaColorTransferFunction = new CudappDeviceMemory;
+    this->CudaColorTransferFunction = new Cudapp::DeviceMemory;
     this->CudaColorTransferFunction->Allocate<float3>(256);
-    this->LocalColorTransferFunction = new CudappHostMemory;
+    this->LocalColorTransferFunction = new Cudapp::HostMemory;
     this->LocalColorTransferFunction->Allocate<float3>(256);
 
-    this->CudaAlphaTransferFunction = new CudappDeviceMemory;
+    this->CudaAlphaTransferFunction = new Cudapp::DeviceMemory;
     this->CudaAlphaTransferFunction->Allocate<float>(256);
-    this->LocalAlphaTransferFunction = new CudappHostMemory;
+    this->LocalAlphaTransferFunction = new Cudapp::HostMemory;
     this->LocalAlphaTransferFunction->Allocate<float>(256);
 
     
-    this->LocalZBuffer = new CudappLocalMemory();
-    this->LocalZBuffer->Allocate<float>(1600*1200);
-    this->CudaZBuffer = new CudappDeviceMemory();
-    this->CudaZBuffer->Allocate<float>(1600*1200);
+    this->LocalZBuffer = new Cudapp::LocalMemory();
+    this->CudaZBuffer = new Cudapp::DeviceMemory();
 }  
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
@@ -166,6 +164,8 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
 
     // Re-allocate the memory
     this->CudaOutputBuffer->Allocate<uchar4>(width * height);
+    this->LocalZBuffer->Allocate<float>(width * height);
+    this->CudaZBuffer->Allocate<float>(width * height);
 
     {
         // Allocate the Image Data
@@ -260,7 +260,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         minmax[i] = minMax[i];
     float lightVec[3]={0, 0, 1};
 
-    for (unsigned int i = 0 ; i < 1600 * 1200; i++)
+    for (unsigned int i = 0 ; i < (this->OutputDataSize[0]) * this->OutputDataSize[1]; i++)
         this->LocalZBuffer->GetMemPointerAs<float>()[i] = 100000;
     //renderer->GetRenderWindow()->GetZbufferData(0,0,this->OutputDataSize[0]-1, this->OutputDataSize[1]-1, this->LocalZBuffer->GetMemPointerAs<float>());
     this->LocalZBuffer->CopyTo(this->CudaZBuffer);

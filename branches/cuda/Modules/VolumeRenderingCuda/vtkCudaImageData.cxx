@@ -11,7 +11,7 @@ vtkStandardNewMacro(vtkCudaImageData);
 
 vtkCudaImageData::vtkCudaImageData()
 {
-    this->Data = new CudappDeviceMemory;
+    this->Data = new Cudapp::DeviceMemory;
 }
 
 vtkCudaImageData::~vtkCudaImageData()

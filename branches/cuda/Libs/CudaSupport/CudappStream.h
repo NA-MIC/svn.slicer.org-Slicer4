@@ -2,25 +2,25 @@
 #define CUDAPPSTREAM_H_
 
 #include "CudappBase.h"
-
-class CudappEvent;
-
-class CUDA_SUPPORT_EXPORT CudappStream
+namespace Cudapp
 {
-public:
-    CudappStream();
-    virtual ~CudappStream();
+    class Event;
+    class CUDA_SUPPORT_EXPORT Stream
+    {
+    public:
+        Stream();
+        virtual ~Stream();
 
-    //BTX
-    CudappBase::State e();
-    //ETX
-    void Synchronize();
+        //BTX
+        Base::State e();
+        //ETX
+        void Synchronize();
 
-    cudaStream_t GetStream() const { return this->Stream; }
-    CudappEvent* GetStreamEvent();
+        cudaStream_t GetStream() const { return this->CudaStream; }
+        Event* GetStreamEvent();
 
-protected:
-    cudaStream_t Stream;
-};
-
+    protected:
+        cudaStream_t CudaStream;
+    };
+}
 #endif /*CUDAPPSTREAM_H_*/

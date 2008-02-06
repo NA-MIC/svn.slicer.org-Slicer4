@@ -40,6 +40,8 @@ CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}
                           ${FOUND_CUT_INCLUDE}
 )
 
+INCLUDE_REGULAR_EXPRESSION("^.h$")
+
 # --------------------------------------------------------------------------
 # Wrapping
 

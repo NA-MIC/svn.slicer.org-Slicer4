@@ -1,17 +1,18 @@
 #include "CudappMemoryBase.h"
 
-#include "CudappMemory.h"
-
-CudappMemoryBase::CudappMemoryBase()
+namespace Cudapp
 {
-  this->Location = CudappMemoryBase::MemoryOnHost;
-}
+    MemoryBase::MemoryBase()
+    {
+        this->Location = MemoryBase::MemoryOnHost;
+    }
 
-CudappMemoryBase::~CudappMemoryBase()
-{
-}
+    MemoryBase::~MemoryBase()
+    {
+    }
 
-void CudappMemoryBase::PrintSelf (std::ostream &os)
-{
-    os << "Size = " << this->GetSize();  
+    void MemoryBase::PrintSelf (std::ostream &os)
+    {
+        os << "Size = " << this->GetSize();  
+    }
 }

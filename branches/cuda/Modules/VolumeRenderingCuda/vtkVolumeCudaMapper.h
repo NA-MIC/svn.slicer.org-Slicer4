@@ -8,9 +8,10 @@ class vtkImageData;
 class vtkVolumeProperty;
 
 //BTX
-class CudappDeviceMemory;
-class CudappHostMemory;
-class CudappLocalMemory;
+namespace Cudapp {
+class DeviceMemory;
+class HostMemory;
+class LocalMemory; }
 //ETX
 
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolumeMapper
@@ -49,21 +50,22 @@ protected:
 
     unsigned int OutputDataSize[2];
 
-
-    CudappDeviceMemory* CudaInputBuffer;
-    CudappDeviceMemory* CudaOutputBuffer;
-//BTX
-    RenderMode CurrentRenderMode;
-//ETX
     vtkImageData* LocalOutputImage;
 
-    CudappHostMemory* LocalColorTransferFunction;
-    CudappDeviceMemory* CudaColorTransferFunction;
-    CudappHostMemory* LocalAlphaTransferFunction;
-    CudappDeviceMemory* CudaAlphaTransferFunction;
 
-    CudappLocalMemory* LocalZBuffer;
-    CudappDeviceMemory* CudaZBuffer;
+//BTX
+    Cudapp::DeviceMemory* CudaInputBuffer;
+    Cudapp::DeviceMemory* CudaOutputBuffer;
+    RenderMode CurrentRenderMode;
+
+    Cudapp::HostMemory* LocalColorTransferFunction;
+    Cudapp::DeviceMemory* CudaColorTransferFunction;
+    Cudapp::HostMemory* LocalAlphaTransferFunction;
+    Cudapp::DeviceMemory* CudaAlphaTransferFunction;
+
+    Cudapp::LocalMemory* LocalZBuffer;
+    Cudapp::DeviceMemory* CudaZBuffer;
+//ETX
 
     unsigned int Threshold[2];
 

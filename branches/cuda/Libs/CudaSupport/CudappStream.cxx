@@ -2,29 +2,31 @@
 #include "cuda_runtime_api.h"
 
 #include "CudappEvent.h"
-
-CudappStream::CudappStream()
+namespace Cudapp
 {
-    cudaStreamCreate(&this->Stream);
-}
+    Stream::Stream()
+    {
+        cudaStreamCreate(&this->CudaStream);
+    }
 
-CudappStream::~CudappStream()
-{
-    cudaStreamDestroy(this->Stream);
-}
+    Stream::~Stream()
+    {
+        cudaStreamDestroy(this->CudaStream);
+    }
 
-void CudappStream::Synchronize()
-{
-    cudaStreamSynchronize(this->Stream);  
-}
+    void Stream::Synchronize()
+    {
+        cudaStreamSynchronize(this->CudaStream);  
+    }
 
-/**
-* @brief Creates and returns a new CudappEvent that triggers when the Stream is finished.
-* @returns a new CudappEvent triggering on this Stream.
-*/
-CudappEvent* CudappStream::GetStreamEvent()
-{
-    CudappEvent* event = new CudappEvent;
-    event->Record(this);
-    return event;  
+    /**
+    * @brief Creates and returns a new CudappEvent that triggers when the Stream is finished.
+    * @returns a new CudappEvent triggering on this Stream.
+    */
+    Event* Stream::GetStreamEvent()
+    {
+        Event* event = new Event;
+        event->Record(this);
+        return event;  
+    }
 }
