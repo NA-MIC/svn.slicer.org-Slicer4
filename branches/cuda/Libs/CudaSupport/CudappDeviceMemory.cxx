@@ -53,7 +53,7 @@ namespace Cudapp
         cudaMemset(this->MemPointer, value, this->Size);
     }
 
-    bool DeviceMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc)
+    bool DeviceMemory::CopyTo(void* dst, size_t byte_count, size_t offset, MemoryLocation dst_loc) const
     {
         if(cudaMemcpy(dst, 
             this->GetMemPointer(), //HACK + offset,
@@ -65,7 +65,7 @@ namespace Cudapp
             return false;
     }
 
-    bool DeviceMemory::CopyFrom(void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
+    bool DeviceMemory::CopyFrom(const void* src, size_t byte_count, size_t offset, MemoryLocation src_loc)
     {
         if(cudaMemcpy(this->GetMemPointer(), //HACK + offset, 
             src,

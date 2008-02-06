@@ -17,16 +17,16 @@ namespace Cudapp
         virtual void Free();
         virtual void MemSet(int value); 
 
-        virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost);
-        virtual bool CopyFrom(void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost);
-        virtual bool CopyTo(MemoryBase* other) { return other->CopyFrom(this->GetMemPointer(), this->GetSize(), 0, MemoryOnHost); }
+        virtual bool CopyTo(void* dst, size_t byte_count, size_t offset = 0, MemoryLocation dst_loc = MemoryOnHost) const;
+        virtual bool CopyFrom(const void* src, size_t byte_count, size_t offset = 0, MemoryLocation src_loc = MemoryOnHost);
+        virtual bool CopyTo(MemoryBase* other) const { return other->CopyFrom(this->GetMemPointer(), this->GetSize(), 0, MemoryOnHost); }
 
         virtual void PrintSelf(std::ostream& os) const;
 
     protected:
 
-        //virtual bool CopyFrom(MemoryPitch* mem);
-        //virtual bool CopyFrom(MemoryArray* mem);
+        //virtual bool CopyFromInternal(MemoryPitch* mem);
+        //virtual bool CopyFromInternal(MemoryArray* mem);
 
     };
 }
