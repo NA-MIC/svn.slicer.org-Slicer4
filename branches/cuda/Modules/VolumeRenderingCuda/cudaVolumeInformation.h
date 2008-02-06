@@ -4,34 +4,37 @@
 //! A datastructure located on the cudacard that holds the information of the volume.
 extern "C"
 typedef struct {
-    void* SourceData;
-    int InputDataType;
+    void*           SourceData;
+    int             InputDataType;
     
-    int VolumeSizeX, VolumeSizeY, VolumeSizeZ;
+    // The size of the volume
+    int             VolumeSize[3];
+    float           VolumeTransformation[3];
 
 
     //! The Color Transfer Function with a size of FunctionSize * 3 (rgb)
-    float* ColorTransferFunction;
+    float*          ColorTransferFunction;
     //! The Alpha Transfer Function with a size of FunctionSize
-    float* AlphaTransferFunction;
+    float*          AlphaTransferFunction;
     //! The Size of the above Function
-    unsigned int FunctionSize;
+    unsigned int    FunctionSize;
 
     //! The minimum and Maximum Values of the Volume
+    float           MinMaxValue[6];
     float MinValueX, MaxValueX,
           MinValueY, MaxValueY,
           MinValueZ, MaxValueZ;
 
     //! The minimal Threshold of the Input Color Value     
-    int MinThreshold;
+    int             MinThreshold;
     //! The Maximum Threshold of the Input Color Value
-    int MaxThreshold;
+    int             MaxThreshold;
 
     //! The Voxel Sizes.
-    float VoxelSizeX, VoxelSizeY, VoxelSizeZ;
+    float           VoxelSize[3];
 
     //! The stepping accuracy to raster along the ray.
-    float SteppingSize;
+    float           SteppingSize;
 
 } cudaVolumeInformation;
 

@@ -8,7 +8,7 @@ extern "C"
 typedef struct
 {
     //! The resolution of the rendering screen.
-    unsigned int   ResolutionX, ResolutionY;
+    unsigned int   Resolution[2];
     //! The color depth of the rendering screen.
     unsigned int   ColorDepth;
 
@@ -17,14 +17,13 @@ typedef struct
     //! The vectors to the lights
     float3*        LightVectors;
 
-    float          CameraPosX, CameraPosY, CameraPosZ;
-    float          TargetPosX, TargetPosY, TargetPosZ;
-    float          UpX, UpY, UpZ;
+    float          CameraPos[3];
+    float          TargetPos[3];
+    float          ViewUp[3];
 
     float*         ZBuffer;
     float          NearPlane;
     float          FarPlane;
-
 } cudaRendererInformation;
 
 #endif /* __CUDARENDERERINFORMATION_H__ */
