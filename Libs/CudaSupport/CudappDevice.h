@@ -9,13 +9,13 @@ namespace Cudapp
     class CUDA_SUPPORT_EXPORT Device
     {
     public:
-        Device();
+        Device(unsigned int deviceNumber);
         virtual ~Device();
 
         /// Device Information
         bool IsInitialized() const { return this->Initialized; }
 
-        void SetDeviceNumber(int deviceNumber);
+        void SetDeviceNumber(unsigned int deviceNumber);
         int GetDeviceNumber() const { return this->DeviceNumber; }
 
         //////////////////////////////////////////////////////////////////////

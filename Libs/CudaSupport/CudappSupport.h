@@ -3,6 +3,7 @@
 
 #include "CudappSupportModule.h"
 #include <vector>
+#include "CudappDevice.h"
 
 namespace Cudapp
 {
@@ -10,28 +11,23 @@ namespace Cudapp
     class CUDA_SUPPORT_EXPORT Support
     {
     public:
-        typedef std::vector<Device*> DeviceList;
+        typedef std::vector<Device> DeviceList;
 
         Support();
         virtual ~Support();
 
-        bool IsSupported() { return (this->GetDeviceCount() > 0); }
-        bool IsSupported(const char* cudaVersion);
+        bool IsSupported() const { return (this->GetDeviceCount() > 0); }
+        bool IsSupported(const char* cudaVersion) const;
 
-        //BTX
         int GetDeviceCount() const { return this->Devices.size(); }        
-        const DeviceList GetDevices() { return this->Devices; }
-        Device* operator[](int deviceNumber) const { return this->Devices[deviceNumber]; }
-        //ETX
+        const DeviceList GetDevices() const { return this->Devices; }
+        Device operator[](int deviceNumber) const { return this->Devices[deviceNumber]; }
 
-        virtual void PrintSelf(std::ostream&  os) const;
+        virtual void PrintSelf(std::ostream& os) const;
 
     protected:
-
         int CheckSupportedCudaVersion();
-        //BTX
         DeviceList Devices;
-        //ETX
     };
     inline std::ostream& operator<<(std::ostream& os, const Support& in){
         in.PrintSelf(os);

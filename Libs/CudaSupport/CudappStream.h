@@ -11,9 +11,7 @@ namespace Cudapp
         Stream();
         virtual ~Stream();
 
-        //BTX
         Base::State e();
-        //ETX
         void Synchronize();
 
         cudaStream_t GetStream() const { return this->CudaStream; }

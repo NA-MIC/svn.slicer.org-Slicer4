@@ -13,8 +13,6 @@ namespace Cudapp
 
     Support::~Support()
     {
-        for (int i = 0; i < this->GetDeviceCount(); i++)
-            delete this->Devices[i];
     }
 
     int Support::CheckSupportedCudaVersion()
@@ -24,10 +22,8 @@ namespace Cudapp
         int device;
         for (device = 0; device < deviceCount; ++device)
         {
-            Device* CudaDevice = new Device;
-            CudaDevice->SetDeviceNumber(device);
 
-            this->Devices.push_back(CudaDevice);
+            this->Devices.push_back(Device(device));
         }
 
         /// HACK BY NOW
@@ -39,7 +35,7 @@ namespace Cudapp
         os << "Cuda Support Listing all Children: "<< std::endl;
         for (int i = 0; i < this->GetDeviceCount(); ++i)
         {
-            this->Devices[i]->PrintSelf(os);
+            this->Devices[i].PrintSelf(os);
         }
     }
 }

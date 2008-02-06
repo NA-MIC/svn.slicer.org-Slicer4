@@ -17,10 +17,8 @@ namespace Cudapp
 
         virtual void MemSet(int value);
 
-        //BTX
         template<typename T> T* AllocatePitch(size_t width, size_t height)
-        { return (T*)this->AllocatePitchBytes(width, height, sizeof(T)); }
-        //ETX
+            { return (T*)this->AllocatePitchBytes(width, height, sizeof(T)); }
 
         void* GetMemPointer() { return this->MemPointer; }
         const void* GetMemPointer() const { return this->MemPointer; }
