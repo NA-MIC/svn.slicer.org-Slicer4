@@ -581,22 +581,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
 extern "C"
 void CUDArenderAlgo_doRender(uchar4* outputData, //output image
 							 cudaRendererInformation* rendererInfo,
-							 cudaVolumeInformation* volumeInfo,
-                             void* renderData,   //input data
-                             int inputDataType,  
-			                 float* colorTransferFunction, //ranges from 0 to 1
-                             float* alphaTransferFunction, //ranges from 0 to 1
-							 float* zBuffer, 
-                             float* minmax, float* lightVec, 
-                             int sizeX, int sizeY, int sizeZ, 
-                             int dsizeX, int dsizeY, 
-                             float dispX, float dispY, float dispZ, 
-                             float voxelSizeX, float voxelSizeY, float voxelSizeZ, 
-                             int minThreshold, int maxThreshold, 
-                             int sliceDistance,
-								float posX, float posY, float posZ,
-								float focX, float focY, float focZ,
-								float viewX, float viewY, float viewZ)
+							 cudaVolumeInformation* volumeInfo)
 {
   // setup execution parameters
 
@@ -616,23 +601,21 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
   CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_lightVec, rendererInfo->LightVectors, sizeof(float)*3 * rendererInfo->LightCount, 0));
 
   // execute the kernel
-
   // Switch to various rendering methods.
-
   float transparencyLevel = 1.0;
   
   CUDAkernel_renderAlgo_doIntegrationRender<<< grid, threads >>>( \
-	 (unsigned char*)renderData, \
-	 colorTransferFunction, \
-	 alphaTransferFunction, \
-	 zBuffer, \
-	 (unsigned char)minThreshold, (unsigned char)maxThreshold,	\
-	 sliceDistance, \
+	 (unsigned char*)volumeInfo->SourceData, \
+	 volumeInfo->ColorTransferFunction, \
+	 volumeInfo->AlphaTransferFunction, \
+	 rendererInfo->ZBuffer, \
+	 (unsigned char)volumeInfo->MinThreshold, (unsigned char)volumeInfo->MaxThreshold,	\
+	 rendererInfo->NearPlane, \
 	 transparencyLevel, \
 	 outputData,\
-	 posX, posY, posZ, \
-	 focX, focY, focZ, \
-         viewX, viewY, viewZ);
+	 rendererInfo->CameraPos[0], rendererInfo->CameraPos[1], rendererInfo->CameraPos[2], \
+	 rendererInfo->TargetPos[0], rendererInfo->TargetPos[1], rendererInfo->TargetPos[2], \
+     rendererInfo->ViewUp[0], rendererInfo->ViewUp[1], rendererInfo->ViewUp[2]);
   
   /*
 #define CUDA_KERNEL_CALL(ID, TYPE)   \
