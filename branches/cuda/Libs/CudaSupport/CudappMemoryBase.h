@@ -43,7 +43,7 @@ namespace Cudapp
         // This function does a cast of this to the specified type and then a cast of the other to the specified type, so we are sure from what memory to what we are copying.
         virtual bool CopyTo(MemoryBase* other) { return false; /* To give you a sense what this does:  other->CopyFrom(this); */ }
 
-        virtual void PrintSelf (std::ostream &os);
+        virtual void PrintSelf(std::ostream &os) const;
 
     protected:
         MemoryBase();
@@ -58,5 +58,10 @@ namespace Cudapp
         virtual bool CopyFrom(MemoryPitch* mem) { return false; }
         virtual bool CopyFrom(MemoryArray* mem) { return false; }
     };
+    inline std::ostream& operator<<(std::ostream& os, const MemoryBase& in){
+        in.PrintSelf(os);
+        return os; 
+    }
+
 }
 #endif /*CUDAPPMEMORYBASE_H_*/

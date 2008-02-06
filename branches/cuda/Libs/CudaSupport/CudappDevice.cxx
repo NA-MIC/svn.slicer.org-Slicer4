@@ -52,7 +52,7 @@ namespace Cudapp
 
     }
 
-    void Device::PrintSelf(std::ostream&  os)
+    void Device::PrintSelf(std::ostream&  os) const
     {
         os << "Device Name = " << this->GetName() << 
             "DeviceNumber = " << this->GetDeviceNumber() <<

@@ -133,7 +133,7 @@ namespace Cudapp
     }
     */
 
-    void DeviceMemory::PrintSelf (std::ostream &os)
+    void DeviceMemory::PrintSelf (std::ostream &os) const
     {
         this->Memory::PrintSelf(os);
     }

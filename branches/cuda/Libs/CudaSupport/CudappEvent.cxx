@@ -59,7 +59,7 @@ namespace Cudapp
         return elapsedTime;
     }
 
-    void Event::PrintSelf(std::ostream&  os)
+    void Event::PrintSelf(std::ostream&  os) const
     {
     }
 }

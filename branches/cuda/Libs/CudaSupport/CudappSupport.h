@@ -24,7 +24,7 @@ namespace Cudapp
         Device* operator[](int deviceNumber) const { return this->Devices[deviceNumber]; }
         //ETX
 
-        void PrintSelf(std::ostream&  os);
+        virtual void PrintSelf(std::ostream&  os) const;
 
     protected:
 
@@ -33,5 +33,10 @@ namespace Cudapp
         DeviceList Devices;
         //ETX
     };
+    inline std::ostream& operator<<(std::ostream& os, const Support& in){
+        in.PrintSelf(os);
+        return os; 
+    }
+
 }
 #endif /*CUDAPPSUPPORT_H_*/

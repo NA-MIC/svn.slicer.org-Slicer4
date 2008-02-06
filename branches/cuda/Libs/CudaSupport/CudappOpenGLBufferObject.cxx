@@ -69,7 +69,7 @@ void OpenGLBufferObject::Unmap()
   }
 }
 
-void OpenGLBufferObject::PrintSelf(std::ostream &os)
+void OpenGLBufferObject::PrintSelf(std::ostream &os) const
 {
   this->Superclass::PrintSelf(os, indent);
   if (this->GetBufferObject() == 0)

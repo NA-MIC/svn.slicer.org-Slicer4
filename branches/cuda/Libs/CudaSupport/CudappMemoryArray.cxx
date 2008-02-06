@@ -54,7 +54,7 @@ namespace Cudapp
         cudaMemcpyArrayToArray(this->Array, 0, 0, source->Array, 0, 0, sizeof(source->Array));
     }
 
-    void MemoryArray::PrintSelf(std::ostream &os)
+    void MemoryArray::PrintSelf(std::ostream &os) const
     {
         this->MemoryBase::PrintSelf(os);
         os << " Width: "<< this->GetWidth() << 

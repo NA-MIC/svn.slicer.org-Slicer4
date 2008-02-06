@@ -34,7 +34,7 @@ namespace Cudapp
         return 0;
     }
 
-    void Support::PrintSelf(std::ostream&  os)
+    void Support::PrintSelf(std::ostream& os) const
     {
         os << "Cuda Support Listing all Children: "<< std::endl;
         for (int i = 0; i < this->GetDeviceCount(); ++i)
