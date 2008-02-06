@@ -62,6 +62,7 @@ protected:
     CudappHostMemory* LocalAlphaTransferFunction;
     CudappDeviceMemory* CudaAlphaTransferFunction;
 
+    CudappLocalMemory* LocalZBuffer;
     CudappDeviceMemory* CudaZBuffer;
 
     unsigned int Threshold[2];

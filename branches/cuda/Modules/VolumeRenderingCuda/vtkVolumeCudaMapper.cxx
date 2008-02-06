@@ -98,13 +98,10 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
     this->LocalAlphaTransferFunction->Allocate<float>(256);
 
     
+    this->LocalZBuffer = new CudappLocalMemory();
+    this->LocalZBuffer->Allocate<float>(1600*1200);
     this->CudaZBuffer = new CudappDeviceMemory();
     this->CudaZBuffer->Allocate<float>(1600*1200);
-    float zBuffer[1600][1200];
-    for(unsigned int i = 0; i < 1600; i++)
-        for (unsigned int j = 0; j < 1200; j++)
-        zBuffer[i][j] = 100000; 
-    this->CudaZBuffer->CopyFrom(zBuffer, 1600*1200 * sizeof(float));
 }  
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
@@ -263,11 +260,10 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         minmax[i] = minMax[i];
     float lightVec[3]={0, 0, 1};
 
-    static float zBuffer[1600][1200];
-    for(unsigned int i = 0; i < 1600; i++)
-        for (unsigned int j = 0; j < 1200; j++)
-        zBuffer[i][j] = 100000; 
-    this->CudaZBuffer->CopyFrom(zBuffer, 1600*1200 * sizeof(float));
+    for (unsigned int i = 0 ; i < 1600 * 1200; i++)
+        this->LocalZBuffer->GetMemPointerAs<float>()[i] = 100000;
+    //renderer->GetRenderWindow()->GetZbufferData(0,0,this->OutputDataSize[0]-1, this->OutputDataSize[1]-1, this->LocalZBuffer->GetMemPointerAs<float>());
+    this->LocalZBuffer->CopyTo(this->CudaZBuffer);
 
 
     // This should update the the CudaInputBuffer only when needed.
