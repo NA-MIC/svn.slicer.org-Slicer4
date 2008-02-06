@@ -32,9 +32,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
 							  cudaRendererInformation renInfo,
 							  cudaVolumeInformation volInfo,
 
-							  float* colorTransferFunction,
-							  float* alphaTransferFunction,
-							  float* zBuffer,
 							  T minThreshold, T maxThreshold,
 							  int sliceDistance, 
 							  float transparencyLevel, 
@@ -79,7 +76,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
   s_outputVal[tempacc*3]=0;
   s_outputVal[tempacc*3+1]=0;
   s_outputVal[tempacc*3+2]=0;
-  s_zBuffer[tempacc]=zBuffer[outindex];
+  s_zBuffer[tempacc]=renInfo.ZBuffer[outindex];
     
   __syncthreads();
 
@@ -237,7 +234,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
 
 	if( temp >=minThreshold && temp <= maxThreshold){ 
 
-	  alpha=alphaTransferFunction[(int)temp];
+	  alpha=volInfo.AlphaTransferFunction[(int)temp];
 	  
 	  if(s_zBuffer[tempacc] > pos+s_minmaxTrace[tempacc].x){
 	    s_zBuffer[tempacc]=pos+s_minmaxTrace[tempacc].x;
@@ -246,9 +243,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
 	  if(s_integrationVal[tempacc]<1.0){ // check if integration value has reached threshold(1.0)
 	    if(s_integrationVal[tempacc]+alpha>=1.0)alpha=1.0-s_integrationVal[tempacc]; //make sure that total alpha value does not exceed threshold
 	    s_integrationVal[tempacc]+=alpha;
-	    s_outputVal[tempacc*3]+=alpha*colorTransferFunction[(int)temp*3]*256.0;
-	    s_outputVal[tempacc*3+1]+=alpha*colorTransferFunction[(int)temp*3+1]*256.0;
-	    s_outputVal[tempacc*3+2]+=alpha*colorTransferFunction[(int)temp*3+2]*256.0;
+	    s_outputVal[tempacc*3]+=alpha*volInfo.ColorTransferFunction[(int)temp*3]*256.0;
+	    s_outputVal[tempacc*3+1]+=alpha*volInfo.ColorTransferFunction[(int)temp*3+1]*256.0;
+	    s_outputVal[tempacc*3+2]+=alpha*volInfo.ColorTransferFunction[(int)temp*3+2]*256.0;
 	    
 	  }else{
 	    pos = s_minmaxTrace[tempacc].y-s_minmaxTrace[tempacc].x;
@@ -277,7 +274,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
 				      s_outputVal[tempacc*3+1], 
 				      s_outputVal[tempacc*3+2], 
 				      255);
-  zBuffer[outindex]=s_zBuffer[tempacc];
+  renInfo.ZBuffer[outindex]=s_zBuffer[tempacc];
 }
 
 extern "C"
@@ -310,9 +307,6 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
 	 (unsigned char*)volumeInfo->SourceData, \
 	 *rendererInfo,
 	 *volumeInfo,
-	 volumeInfo->ColorTransferFunction, \
-	 volumeInfo->AlphaTransferFunction, \
-	 rendererInfo->ZBuffer, \
 	 (unsigned char)volumeInfo->MinThreshold, (unsigned char)volumeInfo->MaxThreshold,	\
 	 rendererInfo->NearPlane, \
 	 transparencyLevel, \
