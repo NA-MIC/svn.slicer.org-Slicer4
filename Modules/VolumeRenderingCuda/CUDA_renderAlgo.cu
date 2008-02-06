@@ -16,25 +16,12 @@ extern "C" {
 #define BLOCK_DIM2D 16// this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
 
-__constant__ int c_renderAlgo_size[3];
-__constant__ unsigned int c_renderAlgo_dsize[2];
-__constant__ float c_renderAlgo_minmax[6];
-__constant__ float c_renderAlgo_lightVec[3];
-
-__constant__ float c_renderAlgo_rotationMatrix1[4];
-__constant__ float c_renderAlgo_rotationMatrix2[4];
-__constant__ float c_renderAlgo_rotationMatrix3[4];
-__constant__ float c_renderAlgo_vsize[3];
-__constant__ float c_renderAlgo_disp[3];
-
 template <typename T>
-__global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
-							  cudaRendererInformation renInfo,
-							  cudaVolumeInformation volInfo,
-
-							  int sliceDistance, 
-							  float transparencyLevel, 
-							  uchar4* d_resultImage)
+__global__ void CUDAkernel_renderAlgo_doIntegrationRender(
+							  uchar4* d_resultImage,
+							  const cudaRendererInformation renInfo,
+							  const cudaVolumeInformation volInfo
+							  )
 {
   int xIndex = blockDim.x *blockIdx.x + threadIdx.x;
   int yIndex = blockDim.y *blockIdx.y + threadIdx.y;
@@ -58,11 +45,11 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
   //copying variables into shared memory
 
   if(tempacc <3){ 
-    s_dsize[xIndex%2]=c_renderAlgo_dsize[xIndex%2];
-    s_vsize[xIndex%3]=c_renderAlgo_vsize[xIndex%3];
-    s_size[xIndex%3]=c_renderAlgo_size[xIndex%3];
+    s_dsize[xIndex%2]=renInfo.Resolution[xIndex%2];
+    s_vsize[xIndex%3]=volInfo.VoxelSize[xIndex%3];
+    s_size[xIndex%3]=volInfo.VolumeSize[xIndex%3];
   }else if(tempacc < 9){ 
-    s_minmax[xIndex%6]=c_renderAlgo_minmax[xIndex%6];
+    s_minmax[xIndex%6]=volInfo.MinMaxValue[xIndex%6];
   }
 
   __syncthreads();
@@ -225,11 +212,11 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(T* d_sourceData,
     tempz /= s_vsize[2];
     
 
-    if(tempx >= s_minmax[0] && tempx <= s_minmax[1] && tempy >= s_minmax[2] && tempy <= s_minmax[3] && tempz >= s_minmax[4] && tempz <= s_minmax[5] && pos+s_minmaxTrace[tempacc].x >=sliceDistance){ // if current position is in ROI
+    if(tempx >= s_minmax[0] && tempx <= s_minmax[1] && tempy >= s_minmax[2] && tempy <= s_minmax[3] && tempz >= s_minmax[4] && tempz <= s_minmax[5] && pos+s_minmaxTrace[tempacc].x >=renInfo.NearPlane){ // if current position is in ROI
 
       if(pos+s_minmaxTrace[tempacc].x < initialZBuffer){ //check whether current position is in front of z buffer wall
 
-	temp=d_sourceData[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
+	temp=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
 
 	if( temp >=(T)volInfo.MinThreshold && temp <= (T)volInfo.MaxThreshold){ 
 
@@ -288,40 +275,25 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
 
   CUT_DEVICE_INIT();
 
-  // copy host memory to device
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_size, volumeInfo->VolumeSize, sizeof(float)*3, 0));
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_dsize, rendererInfo->Resolution, sizeof(float)*2, 0));
-  
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_vsize, volumeInfo->VoxelSize, sizeof(float)*3, 0));
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_disp, volumeInfo->VolumeTransformation, sizeof(float)*3, 0));
-
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_minmax, volumeInfo->MinMaxValue, sizeof(float)*6, 0));
-  CUDA_SAFE_CALL( cudaMemcpyToSymbol(c_renderAlgo_lightVec, rendererInfo->LightVectors, sizeof(float)*3 * rendererInfo->LightCount, 0));
-
   // execute the kernel
   // Switch to various rendering methods.
-  float transparencyLevel = 1.0;
+  //float transparencyLevel = 1.0;
   
   CUDAkernel_renderAlgo_doIntegrationRender<unsigned char> <<< grid, threads >>>( \
-	 (unsigned char*)volumeInfo->SourceData, \
+	 outputData, \
 	 *rendererInfo,
-	 *volumeInfo,
-	 rendererInfo->NearPlane, \
-	 transparencyLevel, \
-	 outputData);
-  
+	 *volumeInfo)  
   /*
 #define CUDA_KERNEL_CALL(ID, TYPE)   \
 	if (inputDataType == ID) \
 	 CUDAkernel_renderAlgo_doIntegrationRender<<< grid, threads >>>( \
-	 (TYPE*)renderData, \
+	 outputData, \
 	 colorTransferFunction, \
 	 alphaTransferFunction, \
 	 zBuffer, \
 	 minThreshold, maxThreshold, \
 	 sliceDistance, \
-	 transparencyLevel, \
-	 outputData)
+	 transparencyLevel)
 
 // Add all the other types.
   CUDA_KERNEL_CALL(VTK_UNSIGNED_CHAR, unsigned char);
