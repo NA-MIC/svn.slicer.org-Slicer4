@@ -13,8 +13,10 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
   SET(VolumeRenderingCudaModule_SRCS
 
   ### CUDA Volume Rendering Integration Classes ###
-    vtkVolumeCudaMapper.cxx    
+    vtkVolumeCudaMapper.cxx
     vtkCudaVolumeProperty.cxx    
+    vtkCudaVolumePropertyHandler.cxx
+    vtkCudaRendererInformationHandler.cxx
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
     vtkVolumeRenderingCudaModuleLogic.cxx
