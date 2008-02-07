@@ -23,7 +23,6 @@
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 
-#include "vtkImageViewer.h"
 #include "vtkImageWriter.h"
 #include "vtkCudaImageDataFilter.h"
 #include "vtkCudaImageData.h"
@@ -169,9 +168,9 @@ int my_main(int argc, char *argv[])
         //reader[0]->Update();
 
 
-    vtkCudaImageDataFilter* filter = vtkCudaImageDataFilter::New();
-    filter->SetInput(reader[0]->GetOutput());
-    filter->Update();
+    //vtkCudaImageDataFilter* filter = vtkCudaImageDataFilter::New();
+    //filter->SetInput(reader[0]->GetOutput());
+    //filter->Update();
 
     VolumeMapper->SetInput(reader[0]->GetOutput());
 
@@ -227,22 +226,13 @@ int my_main(int argc, char *argv[])
         app->Start(argc, argv);
         ret = app->GetExitStatus();
     }
-    /*
-    vtkImageViewer* viewer = vtkImageViewer::New();
-    while (true)
-    {
-    volumeMapper->Render(renderWidget->GetRenderer(), volume);
-    viewer->SetInput(volumeMapper->GetOutput());
-    viewer->Render();
-    Sleep(100);
-    }*/
     win->Close();
 
     // Deallocate and exit
 
     AnimCallbackCommand->Delete();
     GUICallbackCommand->Delete();
-    filter->Delete();
+//    filter->Delete();
     volume->Delete();
     VolumeMapper->Delete();
     for (unsigned int i = 0; i < 5; i++)
