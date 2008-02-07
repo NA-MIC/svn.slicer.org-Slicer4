@@ -278,8 +278,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     //Get current size of window
     int *size=renWin->GetSize();
 
-    int width = size[0], height = size[1];
-    this->UpdateOutputResolution(width, height);
+    //int width = size[0], height = size[1];
+    this->UpdateOutputResolution(size[0], size[1]);
 
     this->UpdateVolumeProperties(volume->GetProperty());
 
@@ -395,7 +395,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->OutputDataSize[0], this->OutputDataSize[1], GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
     }
     log->StopTimer();
-    //vtkErrorMacro(<< "Elapsed Time to Copy Memory:: " << log->GetElapsedTime());
+    vtkErrorMacro(<< "Elapsed Time to Copy Memory:: " << log->GetElapsedTime());
 
     log->StartTimer();
 
