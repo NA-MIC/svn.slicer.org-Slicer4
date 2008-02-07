@@ -106,6 +106,8 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
+    this->SetInput(NULL);
+
     delete this->CudaInputBuffer;
     delete this->CudaOutputBuffer;
     this->LocalOutputImage->Delete();
@@ -369,8 +371,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     volumeInfo.MinMaxValue[5] = volumeInfo.MaxValueZ = (float)extent[5];
 
     CUDArenderAlgo_doRender(RenderDestination,
-        &rendererInfo,
-        &volumeInfo);         
+        rendererInfo,
+        volumeInfo);         
 
     //CUDArenderAlgo_doRender(RenderDestination,
     //    &rendererInfo,

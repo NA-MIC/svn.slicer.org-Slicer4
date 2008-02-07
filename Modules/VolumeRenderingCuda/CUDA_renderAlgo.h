@@ -17,6 +17,6 @@
 
 extern "C"
 void CUDArenderAlgo_doRender(uchar4* outputData, 
-                             cudaRendererInformation* renderInfo,
-                             cudaVolumeInformation* volumeInfo);
+                             const cudaRendererInformation& renderInfo,
+                             const cudaVolumeInformation& volumeInfo);
 #endif
