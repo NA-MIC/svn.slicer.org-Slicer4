@@ -270,12 +270,12 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
 extern "C"
 void CUDArenderAlgo_doRender(uchar4* outputData, //output image
-							 cudaRendererInformation* rendererInfo,
-							 cudaVolumeInformation* volumeInfo)
+							 const cudaRendererInformation& rendererInfo,
+							 const cudaVolumeInformation& volumeInfo)
 {
   // setup execution parameters
 
-  dim3 grid(rendererInfo->Resolution[0] / BLOCK_DIM2D, rendererInfo->Resolution[1]/ BLOCK_DIM2D, 1);
+  dim3 grid(rendererInfo.Resolution[0] / BLOCK_DIM2D, rendererInfo.Resolution[1]/ BLOCK_DIM2D, 1);
   dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
 
   CUT_DEVICE_INIT();
@@ -286,8 +286,8 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
   
   CUDAkernel_renderAlgo_doIntegrationRender<unsigned char> <<< grid, threads >>>( \
 	 outputData, \
-	 *rendererInfo,
-	 *volumeInfo)  
+	 rendererInfo,
+	 volumeInfo)  
   /*
 #define CUDA_KERNEL_CALL(ID, TYPE)   \
 	if (inputDataType == ID) \
