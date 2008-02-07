@@ -14,8 +14,8 @@
 #include "vtkImageMathematics.h"
 #include "vtkImageSumOverVoxels.h"
 
-//#include "vtkSlicerVolumesLogic.h"
-//#include "vtkSlicerVolumesGUI.h"
+#include "vtkSlicerVolumesLogic.h"
+#include "vtkSlicerVolumesGUI.h"
 //#include "vtkSlicerApplication.h"
 
 #define ERROR_NODE_VTKID 0
@@ -58,7 +58,9 @@ vtkTumorGrowthLogic::vtkTumorGrowthLogic()
   this->Analysis_ROIPositiveBin = NULL;
   this->Analysis_ROIBinReal     = NULL;
   this->Analysis_ROITotal       = NULL;
-  
+
+  // if set to zero then SaveVolume will not do anything 
+  this->SaveVolumeFlag = 1;  
 }
 
 
@@ -306,30 +308,59 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateSuperSample(int ScanNum,  vt
   return VolumeOutputNode;
 }
 
+void vtkTumorGrowthLogic::SourceAnalyzeTclScripts(vtkSlicerApplication *app) {
+ char TCL_FILE[1024]; 
+ // Kilian: Can we copy this over to the build directory
+ // cout - later, when it works do it this way bc more 
+ sprintf(TCL_FILE,"%s/Modules/TumorGrowth/tcl/TumorGrowthFct.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+ // sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthFct.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+
+ app->LoadScript(TCL_FILE); 
+ // later do it this way 
+ sprintf(TCL_FILE,"%s/Modules/TumorGrowth/tcl/TumorGrowthReg.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+ // sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthReg.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+ app->LoadScript(TCL_FILE); 
+}
+
+void vtkTumorGrowthLogic::DeleteAnalyzeOutput(vtkSlicerApplication *app) {
+   // Delete old attached node first 
+  if (!TumorGrowthNode) return;
+  this->SourceAnalyzeTclScripts(app);
+
+  app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_DeleteOutput Global");
+
+  vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(this->TumorGrowthNode->GetScan2_SuperSampleRef()));
+  if (currentNode) { 
+    this->TumorGrowthNode->GetScene()->RemoveNode(currentNode); 
+    this->TumorGrowthNode->SetScan2_SuperSampleRef(NULL);
+  }
+
+  app->Script("::TumorGrowthTcl::HistogramNormalization_DeleteOutput"); 
+  app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_DeleteOutput Local"); 
+  app->Script("::TumorGrowthTcl::IntensityThresholding_DeleteOutput 1");
+  app->Script("::TumorGrowthTcl::IntensityThresholding_DeleteOutput 2");
+  app->Script("::TumorGrowthTcl::AnalysisIntensity_DeleteOutput"); 
+}
 
 int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
-
   // This is for testing how to start a tcl script 
   cout << "=== Start ANALYSIS ===" << endl;
-  char TCL_FILE[1024]; 
-  // Kilian: Can we copy this over to the build directory
-  // cout - later, when it works do it this way bc more 
-  sprintf(TCL_FILE,"%s/Modules/TumorGrowth/tcl/TumorGrowthFct.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
-  // sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthFct.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
+
+  // vtkIndent indent;
+  // this->TumorGrowthNode->PrintSelf(cout,indent);
+  // cout << " ======================" << endl;
 
 
-  app->LoadScript(TCL_FILE); 
-  // later do it this way 
-  sprintf(TCL_FILE,"%s/Modules/TumorGrowth/tcl/TumorGrowthReg.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
-  // sprintf(TCL_FILE,"%s/../Slicer3/Modules/TumorGrowth/tcl/TumorGrowthReg.tcl",vtksys::SystemTools::GetEnv("SLICER_HOME"));
-  app->LoadScript(TCL_FILE); 
+  this->SourceAnalyzeTclScripts(app);
 
   cout << "=== 1 ===" << endl;
   app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Global");
 
+
   //----------------------------------------------
   // Second step -> Save the outcome
   if (!this->TumorGrowthNode) {return 0;}
+  
 
   {
      // Delete old attached node first 
@@ -340,6 +371,7 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
   vtkMRMLScalarVolumeNode *outputNode = this->CreateSuperSample(2,app);
   if (!outputNode) {return 0;} 
   this->TumorGrowthNode->SetScan2_SuperSampleRef(outputNode->GetID());
+  this->SaveVolume(app,outputNode);
 
   //----------------------------------------------
 
@@ -408,9 +440,33 @@ double vtkTumorGrowthLogic::MeassureGrowth(vtkSlicerApplication *app) {
   return this->Analysis_ROITotal->GetVoxelSum(); 
 }
 
+void vtkTumorGrowthLogic::SaveVolume(vtkSlicerApplication *app, vtkMRMLVolumeNode *volNode) {
+ if (!this->SaveVolumeFlag) return;  
+ // Initialize
+ vtkSlicerVolumesGUI  *volumesGUI    = vtkSlicerVolumesGUI::SafeDownCast(app->GetModuleGUIByName("Volumes")); 
+ if (!volumesGUI) return;
+ vtkSlicerVolumesLogic *volumesLogic = volumesGUI->GetLogic();
 
-// Kilian:
-// - How to save a volume 
-// copy over tcl files by define in cmakelocal file - look at other modules like Editor
+ // Create Directory if necessary
+ {
+   char CMD[1024];
+   sprintf(CMD,"file isdirectory %s",this->TumorGrowthNode->GetWorkingDir()); 
+   if (!atoi(app->Script(CMD))) { 
+     sprintf(CMD,"file mkdir %s",this->TumorGrowthNode->GetWorkingDir()); 
+     app->Script(CMD); 
+   }
+ }
+
+ // Save File 
+ vtksys_stl::string fileName = vtksys_stl::string(this->TumorGrowthNode->GetWorkingDir());
+ fileName.append("/");
+ fileName.append(volNode->GetName());
+ fileName.append(".nhdr");
+
+ cout << "vtkTumorGrowthLogic::SaveVolum: Saving File :" << fileName.c_str() << endl;
+ if (!volumesLogic->SaveArchetypeVolume( fileName.c_str(), volNode ) )  {
+   cout << "Error: Could no save file " << endl;
+ }
+}
 
 

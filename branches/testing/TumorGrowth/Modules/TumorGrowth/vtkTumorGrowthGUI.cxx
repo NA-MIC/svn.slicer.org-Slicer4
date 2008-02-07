@@ -296,6 +296,7 @@ void vtkTumorGrowthGUI::ProcessMRMLEvents(vtkObject *caller,
 //---------------------------------------------------------------------------
 void vtkTumorGrowthGUI::BuildGUI() 
 {
+
   vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
 
   const char *help = "**TumorGrowth Module:** **Under Construction** ";
@@ -394,7 +395,7 @@ void vtkTumorGrowthGUI::BuildGUI()
     {
     this->ROIStep = vtkTumorGrowthROIStep::New();
     this->ROIStep->SetGUI(this);
-    
+    this->FirstScanStep->SetNextStep(this->ROIStep);
     }
   wizard_workflow->AddNextStep(this->ROIStep);
 
@@ -402,6 +403,7 @@ void vtkTumorGrowthGUI::BuildGUI()
     {
     this->SegmentationStep = vtkTumorGrowthSegmentationStep::New();
     this->SegmentationStep->SetGUI(this);
+    this->ROIStep->SetNextStep(this->SegmentationStep);
     }
   wizard_workflow->AddNextStep(this->SegmentationStep);
 
@@ -409,6 +411,7 @@ void vtkTumorGrowthGUI::BuildGUI()
     {
     this->SecondScanStep = vtkTumorGrowthSecondScanStep::New();
     this->SecondScanStep->SetGUI(this);
+    this->SegmentationStep->SetNextStep(this->SecondScanStep);
     }
   wizard_workflow->AddNextStep(this->SecondScanStep);
 
@@ -416,6 +419,7 @@ void vtkTumorGrowthGUI::BuildGUI()
     {
     this->AnalysisStep = vtkTumorGrowthAnalysisStep::New();
     this->AnalysisStep->SetGUI(this);
+    this->SecondScanStep->SetNextStep(this->AnalysisStep);
     }
   wizard_workflow->AddNextStep(this->AnalysisStep);
 
@@ -427,6 +431,22 @@ void vtkTumorGrowthGUI::BuildGUI()
   this->ROIStep->GetInteractionState();
   // This way we can restart the machine - did not work 
   // wizard_workflow->CreateGoToTransitions(wizard_workflow->GetInitialStep());
+
+ if ( 1 )  {
+    cout << "====================" << endl;
+    cout << "DEBUGGING" << endl;
+    vtkSlicerApplicationGUI *applicationGUI = this->GetApplicationGUI();
+    if (!applicationGUI) return; 
+  
+    char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
+    std::string fl(fileName);
+    applicationGUI->GetMRMLScene()->SetURL(fileName);
+    applicationGUI->GetMRMLScene()->Connect();
+    cout << "====================" << endl;
+    // this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID("vtkMRMLScalarVolumeNode1")); 
+
+  }
+
 }
 
 //---------------------------------------------------------------------------
