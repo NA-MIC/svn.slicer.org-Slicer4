@@ -22,12 +22,16 @@ public:
   virtual void UpdateMRML();
   virtual void UpdateGUI();
 
-  void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
-    this->vtkTumorGrowthSelectScanStep::ProcessGUIEvents(caller, event, callData); }
+  virtual void AddGUIObservers();
+  virtual void RemoveGUIObservers(); 
+
+  void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData); 
 
 protected:
   vtkTumorGrowthFirstScanStep();
   ~vtkTumorGrowthFirstScanStep();
+
+  vtkSlicerNodeSelectorWidget *SecondVolumeMenuButton;
 
   static void WizardGUICallback(vtkObject *caller, unsigned long eid, void *clientData, void *callData );
   void ProcessGUIEvents(vtkObject *caller, void *callData);

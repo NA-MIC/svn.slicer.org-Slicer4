@@ -5,6 +5,8 @@
 
 class vtkKWThumbWheel;
 class vtkKWLabel;
+class vtkKWFrameWithLabel; 
+class vtkKWPushButton;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthAnalysisStep : public vtkTumorGrowthStep
 {
@@ -27,6 +29,10 @@ public:
   // We call this function in order to remove nodes when going backwards 
   virtual void RemoveResults(); 
 
+  void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);
+  void RemoveGUIObservers();
+  void AddGUIObservers(); 
+
 protected:
   vtkTumorGrowthAnalysisStep();
   ~vtkTumorGrowthAnalysisStep();
@@ -34,6 +40,13 @@ protected:
   // vtkKWScaleWithEntry      *SensitivetyScale;
   vtkKWThumbWheel            *SensitivityScale;
   vtkKWLabel                 *GrowthLabel;
+
+  vtkKWFrameWithLabel       *FrameButtons;
+  vtkKWPushButton           *ButtonsSnapshot;
+  vtkKWPushButton           *ButtonsSave;
+
+  static void WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
+
 
 private:
   vtkTumorGrowthAnalysisStep(const vtkTumorGrowthAnalysisStep&);

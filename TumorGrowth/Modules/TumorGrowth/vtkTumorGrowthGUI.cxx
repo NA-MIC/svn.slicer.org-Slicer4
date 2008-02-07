@@ -19,7 +19,8 @@
 #include "vtkTumorGrowthFirstScanStep.h"
 #include "vtkTumorGrowthROIStep.h"
 #include "vtkTumorGrowthSegmentationStep.h"
-#include "vtkTumorGrowthSecondScanStep.h"
+// #include "vtkTumorGrowthSecondScanStep.h"
+#include "vtkTumorGrowthTypeStep.h"
 #include "vtkTumorGrowthAnalysisStep.h"
 
 // #include "CSAILLogo.h"
@@ -53,7 +54,7 @@ vtkTumorGrowthGUI::vtkTumorGrowthGUI()
   this->FirstScanStep    = NULL;
   this->ROIStep    = NULL;
   this->SegmentationStep = NULL;
-  this->SecondScanStep   = NULL;
+  this->TypeStep   = NULL;
   this->AnalysisStep     = NULL;
 
 //  vtkKWIcon* logo = vtkKWIcon::New();
@@ -98,10 +99,10 @@ vtkTumorGrowthGUI::~vtkTumorGrowthGUI()
     this->SegmentationStep = NULL;
   }
 
-  if (this->SecondScanStep)
+  if (this->TypeStep)
     {
-    this->SecondScanStep->Delete();
-    this->SecondScanStep = NULL;
+    this->TypeStep->Delete();
+    this->TypeStep = NULL;
   }
   if (this->AnalysisStep)
     {
@@ -145,7 +146,7 @@ void vtkTumorGrowthGUI::AddGUIObservers()
   // Have to list them here so if they are all deleted and this function is called afterwards the missing ones are created again 
   if (this->FirstScanStep) this->FirstScanStep->AddGUIObservers();
   if (this->ROIStep) this->ROIStep->AddGUIObservers();
-  if (this->SecondScanStep) this->SecondScanStep->AddGUIObservers();
+  if (this->TypeStep) this->TypeStep->AddGUIObservers();
 
   events->Delete();
 }
@@ -156,7 +157,7 @@ void vtkTumorGrowthGUI::RemoveGUIObservers()
   if (this->FirstScanStep)    this->FirstScanStep->RemoveGUIObservers();
   if (this->ROIStep)          this->ROIStep->RemoveGUIObservers();
   if (this->SegmentationStep) this->SegmentationStep->RemoveGUIObservers();
-  if (this->SecondScanStep)   this->SecondScanStep->RemoveGUIObservers();
+  if (this->TypeStep)   this->TypeStep->RemoveGUIObservers();
   if (this->AnalysisStep)     this->AnalysisStep->RemoveGUIObservers();
 }
 
@@ -168,7 +169,7 @@ void vtkTumorGrowthGUI::ProcessGUIEvents(vtkObject *caller,
   if (this->FirstScanStep)    this->FirstScanStep->ProcessGUIEvents(caller, event, callData); 
   if (this->ROIStep)          this->ROIStep->ProcessGUIEvents(caller, event, callData); 
   if (this->SegmentationStep) this->SegmentationStep->ProcessGUIEvents(caller, event, callData); 
-  if (this->SecondScanStep)   this->SecondScanStep->ProcessGUIEvents(caller, event, callData); 
+  if (this->TypeStep)   this->TypeStep->ProcessGUIEvents(caller, event, callData); 
   if (this->AnalysisStep)     this->AnalysisStep->ProcessGUIEvents(caller, event, callData); 
 }
 
@@ -226,7 +227,7 @@ void  vtkTumorGrowthGUI::UpdateNode()
     }
   if (this->Node == NULL)
     {
-    std::cout <<"UpdateMRML: n is null, create new one?!" << "\n";
+      // std::cout <<"UpdateMRML: n is null, create new one?!" << "\n";
     //    no parameter node selected yet, create new    
     tmpNode = vtkMRMLTumorGrowthNode::New();
     this->GetMRMLScene()->AddNode(tmpNode);
@@ -251,7 +252,7 @@ void vtkTumorGrowthGUI::UpdateMRML()
   if (this->FirstScanStep)    this->FirstScanStep->UpdateMRML(); 
   if (this->ROIStep)          this->ROIStep->UpdateMRML(); 
   if (this->SegmentationStep) this->SegmentationStep->UpdateMRML(); 
-  if (this->SecondScanStep)   this->SecondScanStep->UpdateMRML(); 
+  if (this->TypeStep)   this->TypeStep->UpdateMRML(); 
   if (this->AnalysisStep)     this->AnalysisStep->UpdateMRML(); 
 }
 
@@ -264,7 +265,7 @@ void vtkTumorGrowthGUI::UpdateGUI()
   if (this->FirstScanStep)    this->FirstScanStep->UpdateGUI(); 
   if (this->ROIStep)          this->ROIStep->UpdateGUI(); 
   if (this->SegmentationStep) this->SegmentationStep->UpdateGUI(); 
-  if (this->SecondScanStep)   this->SecondScanStep->UpdateGUI(); 
+  if (this->TypeStep)   this->TypeStep->UpdateGUI(); 
   if (this->AnalysisStep)     this->AnalysisStep->UpdateGUI(); 
 }
 
@@ -407,19 +408,19 @@ void vtkTumorGrowthGUI::BuildGUI()
     }
   wizard_workflow->AddNextStep(this->SegmentationStep);
 
-  if (!this->SecondScanStep)
+  if (!this->TypeStep)
     {
-    this->SecondScanStep = vtkTumorGrowthSecondScanStep::New();
-    this->SecondScanStep->SetGUI(this);
-    this->SegmentationStep->SetNextStep(this->SecondScanStep);
+    this->TypeStep = vtkTumorGrowthTypeStep::New();
+    this->TypeStep->SetGUI(this);
+    this->SegmentationStep->SetNextStep(this->TypeStep);
     }
-  wizard_workflow->AddNextStep(this->SecondScanStep);
+  wizard_workflow->AddNextStep(this->TypeStep);
 
   if (!this->AnalysisStep)
     {
     this->AnalysisStep = vtkTumorGrowthAnalysisStep::New();
     this->AnalysisStep->SetGUI(this);
-    this->SecondScanStep->SetNextStep(this->AnalysisStep);
+    this->TypeStep->SetNextStep(this->AnalysisStep);
     }
   wizard_workflow->AddNextStep(this->AnalysisStep);
 
@@ -467,9 +468,9 @@ void vtkTumorGrowthGUI::TearDownGUI()
      this->SegmentationStep->SetGUI(NULL);
    }
 
-   if (this->SecondScanStep)
+   if (this->TypeStep)
    {
-     this->SecondScanStep->SetGUI(NULL);
+     this->TypeStep->SetGUI(NULL);
    }
 
    if (this->AnalysisStep)

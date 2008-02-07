@@ -86,6 +86,9 @@ public:
   vtkSetMacro(Analysis_Threshold,double);
   vtkGetMacro(Analysis_Threshold,double);
 
+  vtkSetMacro(SaveVolumeFlag,int);
+  vtkGetMacro(SaveVolumeFlag,int);
+
   void SaveVolume(vtkSlicerApplication *app, vtkMRMLVolumeNode *volNode);
 
 private:

@@ -3,7 +3,6 @@
 
 #include "vtkTumorGrowthStep.h"
 
-class vtkKWThumbWheel;
 class vtkImageThreshold;
 class vtkMRMLScalarVolumeNode;
 class vtkVolumeTextureMapper3D;
@@ -12,6 +11,9 @@ class vtkColorTransferFunction;
 class vtkVolumeProperty;
 class vtkVolume;
 class vtkMatrix4x4;         
+class vtkKWFrame;
+class vtkKWLabel;
+class vtkKWRange;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthSegmentationStep : public vtkTumorGrowthStep
 {
@@ -26,7 +28,7 @@ public:
 
   // Description:
   // Callbacks.
-  virtual void ThresholdChangedCallback(double value);
+  virtual void ThresholdRangeChangedCallback(double min, double max);
   virtual void TransitionCallback(); 
   // We call this function in order to remove nodes when going backwards 
   virtual void RemoveResults()  { this->PreSegmentScan1Remove();}
@@ -37,7 +39,9 @@ protected:
   vtkTumorGrowthSegmentationStep();
   ~vtkTumorGrowthSegmentationStep();
 
-  vtkKWThumbWheel          *ThresholdScale;
+  vtkKWFrame *ThresholdFrame;
+  vtkKWRange *ThresholdRange;
+  vtkKWLabel *ThresholdLabel;
 
 private:
   vtkTumorGrowthSegmentationStep(const vtkTumorGrowthSegmentationStep&);
@@ -49,7 +53,7 @@ private:
   void SegmentScan1Remove();
   int SegmentScan1Define();
   
-  void SetPreSegment_Render_BandPassFilter(double value);
+  void SetPreSegment_Render_BandPassFilter(double min, double max);
 
   vtkImageThreshold *PreSegment;
   vtkMRMLScalarVolumeNode *PreSegmentNode; 

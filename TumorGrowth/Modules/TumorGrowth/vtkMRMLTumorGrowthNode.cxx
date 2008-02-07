@@ -70,7 +70,8 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
    this->SuperSampled_VoxelVolume = -1;
    this->SuperSampled_RatioNewOldSpacing = -1;
 
-   this->SegmentThreshold=-1;
+   this->SegmentThresholdMin=-1;
+   this->SegmentThresholdMax=-1;
 
    this->Scan2_GlobalRef = NULL;
    this->Scan2_SuperSampleRef = NULL;
@@ -137,7 +138,8 @@ void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
   // of << indent << " SuperSampled_VoxelVolume=\""<< this->SuperSampled_VoxelVolume  << "\"";
   // of << indent << " SuperSampled_RatioNewOldSpacing=\""<< this->SuperSampled_RatioNewOldSpacing  << "\"";
 
-  of << indent << " SegmentThreshold=\""<< this->SegmentThreshold  << "\"";
+  of << indent << " SegmentThresholdMin=\""<< this->SegmentThresholdMin  << "\"";
+  of << indent << " SegmentThresholdMax=\""<< this->SegmentThresholdMax  << "\"";
   of << indent << " Analysis_Sensitivity=\""<< this->Analysis_Sensitivity  << "\"";
 }
 
@@ -178,11 +180,17 @@ void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
       ss << attValue;
       ss >> this->ROIMax[0] >> this->ROIMax[1] >> this->ROIMax[2];
       }
-    else if (!strcmp(attName, "SegmentThreshold"))
+    else if (!strcmp(attName, "SegmentThresholdMin"))
       {
-    vtksys_stl::stringstream ss;
-    ss << attValue;
-    ss >>  this->SegmentThreshold; 
+      vtksys_stl::stringstream ss;
+      ss << attValue;
+      ss >>  this->SegmentThresholdMin; 
+      }
+    else if (!strcmp(attName, "SegmentThresholdMax"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << attValue;
+      ss >>  this->SegmentThresholdMax; 
       }
     else if (!strcmp(attName, "Analysis_Sensitivity"))
       {
@@ -206,7 +214,8 @@ void vtkMRMLTumorGrowthNode::Copy(vtkMRMLNode *anode)
   this->SetScan2_Ref(node->Scan2_Ref);
   this->ROIMin = node->ROIMin; 
   this->ROIMax = node->ROIMax; 
-  this->SegmentThreshold = node->SegmentThreshold; 
+  this->SegmentThresholdMin = node->SegmentThresholdMin; 
+  this->SegmentThresholdMax = node->SegmentThresholdMax; 
   this->Analysis_Sensitivity = node->Analysis_Sensitivity; 
 
 }
@@ -228,7 +237,8 @@ void vtkMRMLTumorGrowthNode::PrintSelf(ostream& os, vtkIndent indent)
    (this->Scan1_SegmentRef ? this->Scan1_SegmentRef : "(none)") << "\n";
   os << indent << "ROIMin:               "<< this->ROIMin[0] << " "<< this->ROIMin[1] << " "<< this->ROIMin[2] <<"\n";
   os << indent << "ROIMax:               "<< this->ROIMax[0] << " "<< this->ROIMax[1] << " "<< this->ROIMax[2] <<"\n";
-  os << indent << "SegmentThreshold:     "<< this->SegmentThreshold << "\n";
+  os << indent << "SegmentThresholdMin:     "<< this->SegmentThresholdMin << "\n";
+  os << indent << "SegmentThresholdMax:     "<< this->SegmentThresholdMax << "\n";
   os << indent << "Analysis_Sensitivity: "<< this->Analysis_Sensitivity << "\n";
   os << indent << "WorkingDir:           " <<  (this->WorkingDir ? this->WorkingDir : "(none)") << "\n";
 

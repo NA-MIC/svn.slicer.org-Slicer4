@@ -15,6 +15,9 @@
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkKWScale.h"
 #include "vtkSlicerApplication.h"
+#include "vtkKWPushButton.h"
+#include "vtkKWMessageDialog.h"
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthAnalysisStep);
 vtkCxxRevisionMacro(vtkTumorGrowthAnalysisStep, "$Revision: 1.2 $");
@@ -24,15 +27,38 @@ vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
 {
   this->SetName("Analysis"); 
   this->SetDescription("Analysis of Tumor Growth"); 
+  this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthAnalysisStep::WizardGUICallback);
 
   this->SensitivityScale = NULL;
   this->GrowthLabel = NULL;
 
+  this->ButtonsSave = NULL;
+  this->ButtonsSnapshot = NULL;
+  this->FrameButtons = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
 {
+
+  if (this->ButtonsSave)
+    {
+    this->ButtonsSave->Delete();
+    this->ButtonsSave  = NULL;
+    }
+
+  if (this->ButtonsSnapshot)
+    {
+    this->ButtonsSnapshot->Delete();
+    this->ButtonsSnapshot  = NULL;
+    }
+
+  if (this->FrameButtons)
+    {
+    this->FrameButtons->Delete();
+    this->FrameButtons  = NULL;
+    }
+  
   if (this->SensitivityScale)
     {
     this->SensitivityScale->Delete();
@@ -45,6 +71,93 @@ vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
     }
 
 
+}
+
+//----------------------------------------------------------------------------
+void vtkTumorGrowthAnalysisStep::AddGUIObservers() 
+{
+  // cout << "vtkTumorGrowthROIStep::AddGUIObservers()" << endl; 
+  // Make sure you do not add the same event twice - need to do it bc of wizrd structure
+  if (this->ButtonsSnapshot && (!this->ButtonsSnapshot->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
+    {
+      this->ButtonsSnapshot->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand );  
+    } 
+
+  if (this->ButtonsSave && (!this->ButtonsSave->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
+    {
+      this->ButtonsSave->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand );  
+    } 
+}
+
+void vtkTumorGrowthAnalysisStep::RemoveGUIObservers() 
+{
+  // cout << "vtkTumorGrowthAnalysisStep::RemoveGUIObservers" << endl;
+  if (this->ButtonsSnapshot) 
+    {
+      this->ButtonsSnapshot->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);  
+    }
+
+  if (this->ButtonsSave) 
+  {
+      this->ButtonsSave->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);  
+  }
+}
+
+void vtkTumorGrowthAnalysisStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
+{
+  // cout << "void vtkTumorGrowthAnalysisStep::WizardGUICallback" << endl;
+    vtkTumorGrowthAnalysisStep *self = reinterpret_cast<vtkTumorGrowthAnalysisStep *>(clientData);
+    if (self) { self->ProcessGUIEvents(caller, event, callData); }
+
+
+}
+
+
+void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
+
+  // cout << "vtkTumorGrowthAnalysisStep::ProcessGUIEvents" << endl;
+
+  if (event == vtkKWPushButton::InvokedEvent) {
+    vtkKWPushButton *button = vtkKWPushButton::SafeDownCast(caller);
+    if (this->ButtonsSnapshot && (button == this->ButtonsSnapshot)) 
+    { 
+      cout << "Not implemented yet Snapshot" << endl;
+    }
+    else if (this->ButtonsSave && (button == this->ButtonsSave)) 
+    { 
+      vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+      if (node) {
+    // Save Data 
+        vtkMRMLVolumeNode *volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Ref()));
+        if (volumeAnalysisNode) {
+          vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
+          int oldFlag = Logic->GetSaveVolumeFlag();
+      Logic->SetSaveVolumeFlag(1);      
+      Logic->SaveVolume(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
+      Logic->SetSaveVolumeFlag(oldFlag);      
+    }
+        // Save MRML 
+        node->GetScene()->SetRootDirectory(node->GetWorkingDir());
+
+        std::string fileName(node->GetWorkingDir());
+        fileName.append("/Data.mrml");
+        node->GetScene()->SetURL(fileName.c_str());
+
+        // Saves file  
+        node->GetScene()->Commit();
+
+    std::string infoMsg("Saved Data to ");
+    infoMsg.append(node->GetWorkingDir());
+
+        vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),
+                                         "Tumor Growth",infoMsg.c_str(), vtkKWMessageDialog::OkDefault);
+
+      } else {
+    this->GetGUI()->GetApplicationGUI()->ProcessSaveSceneAsCommand();
+      }
+
+    }
+  }
 }
 
 //----------------------------------------------------------------------------
@@ -135,6 +248,45 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   }
   this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->GrowthLabel->GetWidgetName());
 
+  // Define buttons 
+  if (!this->FrameButtons)
+  {
+    this->FrameButtons = vtkKWFrameWithLabel::New();
+  }
+  if (!this->FrameButtons->IsCreated())
+  {
+      vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
+      this->FrameButtons->SetParent(wizard_widget->GetClientArea());
+      this->FrameButtons->Create();
+      this->FrameButtons->SetLabelText("Save Analysis");
+      this->FrameButtons->AllowFrameToCollapseOff();
+  }
+  this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->FrameButtons->GetWidgetName());
+
+ if (!this->ButtonsSnapshot) {
+    this->ButtonsSnapshot = vtkKWPushButton::New();
+  }
+
+  if (!this->ButtonsSnapshot->IsCreated()) {
+    this->ButtonsSnapshot->SetParent(this->FrameButtons->GetFrame());
+    this->ButtonsSnapshot->Create();
+    this->ButtonsSnapshot->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    this->ButtonsSnapshot->SetText("Snapshot");
+    this->ButtonsSnapshot->EnabledOff();
+  }
+
+  if (!this->ButtonsSave) {
+    this->ButtonsSave = vtkKWPushButton::New();
+  }
+  if (!this->ButtonsSave->IsCreated()) {
+    this->ButtonsSave->SetParent(this->FrameButtons->GetFrame());
+    this->ButtonsSave->Create();
+    this->ButtonsSave->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    this->ButtonsSave->SetText("Data");
+  }
+
+  this->Script("pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
+                this->ButtonsSnapshot->GetWidgetName(),this->ButtonsSave->GetWidgetName());
 
   {
     vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
@@ -148,6 +300,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
 
   // Show results 
   this->SensitivityChangedCallback(0.0);
+  this->AddGUIObservers();
 }
 
 

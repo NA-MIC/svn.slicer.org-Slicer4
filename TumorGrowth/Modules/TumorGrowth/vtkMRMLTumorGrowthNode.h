@@ -97,8 +97,11 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   // ------------------------------
   // -- Third Step 
   // ------------------------------
-  vtkGetMacro(SegmentThreshold,double);
-  vtkSetMacro(SegmentThreshold,double);
+  vtkGetMacro(SegmentThresholdMin,double);
+  vtkSetMacro(SegmentThresholdMin,double);
+
+  vtkGetMacro(SegmentThresholdMax,double);
+  vtkSetMacro(SegmentThresholdMax,double);
 
   vtkGetStringMacro(Scan1_SegmentRef);
   vtkSetStringMacro(Scan1_SegmentRef);
@@ -164,7 +167,8 @@ protected:
   double SuperSampled_VoxelVolume;
   double SuperSampled_RatioNewOldSpacing;
 
-  double SegmentThreshold ;
+  double SegmentThresholdMin;
+  double SegmentThresholdMax;
   double Analysis_Sensitivity;  
   
 };

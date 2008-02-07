@@ -5,7 +5,7 @@
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
-#include "vtkKWThumbWheel.h"
+#include "vtkKWRange.h"
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWLabel.h"
 #include "vtkKWEntry.h"
@@ -37,7 +37,9 @@ vtkTumorGrowthSegmentationStep::vtkTumorGrowthSegmentationStep()
   this->SetName("3/4. Identify Tumor in First Scan"); 
   this->SetDescription("Move slider to outline boundary of tumor."); 
 
-  this->ThresholdScale = NULL;
+  this->ThresholdFrame = NULL;
+  this->ThresholdRange = NULL;
+  this->ThresholdLabel = NULL;
 
   this->PreSegment = NULL;
   this->PreSegmentNode = NULL;
@@ -54,11 +56,24 @@ vtkTumorGrowthSegmentationStep::vtkTumorGrowthSegmentationStep()
 //----------------------------------------------------------------------------
 vtkTumorGrowthSegmentationStep::~vtkTumorGrowthSegmentationStep()
 {
-  if (this->ThresholdScale)
+  if (this->ThresholdFrame)
     {
-    this->ThresholdScale->Delete();
-    this->ThresholdScale = NULL;
+    this->ThresholdFrame->Delete();
+    this->ThresholdFrame = NULL;
     }
+
+  if (this->ThresholdRange)
+    {
+    this->ThresholdRange->Delete();
+    this->ThresholdRange = NULL;
+    }
+
+  if (this->ThresholdLabel)
+    {
+    this->ThresholdLabel->Delete();
+    this->ThresholdLabel = NULL;
+    }
+
   this->PreSegmentScan1Remove();
   this->SegmentScan1Remove();
 }
@@ -102,48 +117,67 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   this->Frame->SetLabelText("Identify Tumor");
   this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());
 
-  if (!this->ThresholdScale)
+  if (!this->ThresholdFrame)
     {
-    this->ThresholdScale = vtkKWThumbWheel::New();
+    this->ThresholdFrame = vtkKWFrame::New();
     }
-  if (!this->ThresholdScale->IsCreated())
+  if (!this->ThresholdFrame->IsCreated())
+    {
+      this->ThresholdFrame->SetParent(this->Frame->GetFrame());
+     this->ThresholdFrame->Create();
+  }
+
+
+  if (!this->ThresholdLabel)
+    {
+    this->ThresholdLabel = vtkKWLabel::New();
+    }
+  if (!this->ThresholdLabel->IsCreated())
   {
-    this->ThresholdScale->SetParent(this->Frame->GetFrame());
-    this->ThresholdScale->Create();
-    this->ThresholdScale->ClampMinimumValueOn(); 
-    this->ThresholdScale->ClampMaximumValueOn(); 
-    this->ThresholdScale->SetResolution(50);
-    this->ThresholdScale->SetLinearThreshold(1);
-    this->ThresholdScale->SetThumbWheelSize(TUMORGROWTH_WIDGETS_SLIDER_WIDTH,TUMORGROWTH_WIDGETS_SLIDER_HEIGHT);
-    this->ThresholdScale->DisplayEntryOn();
-    this->ThresholdScale->DisplayLabelOn();
-    this->ThresholdScale->GetLabel()->SetText("Threshold");
-    this->ThresholdScale->SetCommand(this,"ThresholdChangedCallback");
-    this->ThresholdScale->DisplayEntryAndLabelOnTopOff(); 
-    this->ThresholdScale->SetBalloonHelpString("Move wheel to segment tumor");
-    // KLIIAN: Read from MRML File 
+    this->ThresholdLabel->SetParent(this->ThresholdFrame);
+    this->ThresholdLabel->Create();
+    this->ThresholdLabel->SetText("Threshold:");
   }
 
-  this->ThresholdScale->SetRange(intMin, intMax);
-  this->ThresholdScale->SetMinimumValue(intMin);
-  this->ThresholdScale->SetMaximumValue(intMax);
+  if (!this->ThresholdRange)
+    {
+    this->ThresholdRange = vtkKWRange::New();
+    }
+  if (!this->ThresholdRange->IsCreated())
+  {
+    this->ThresholdRange->SetParent(this->ThresholdFrame);
+    this->ThresholdRange->Create();
+    this->ThresholdRange->SymmetricalInteractionOff();
+    this->ThresholdRange->SetCommand(this, "ThresholdRangeChangedCallback"); 
+    this->ThresholdRange->SetWholeRange(intMin, intMax); 
+    this->ThresholdRange->SetResolution(1);
 
-  vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  if (mrmlNode && (mrmlNode->GetSegmentThreshold() > -1)) {
-    this->ThresholdScale->SetValue(mrmlNode->GetSegmentThreshold());
-  } else {
-    this->ThresholdScale->SetValue((intMax - intMin)/2.0);
   }
 
-  this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->ThresholdScale->GetWidgetName());
+  this->Script("pack %s -side top -anchor nw -padx 0 -pady 3",this->ThresholdFrame->GetWidgetName()); 
+  this->Script("pack %s %s -side left -anchor nw -padx 2 -pady 0",this->ThresholdLabel->GetWidgetName(),this->ThresholdRange->GetWidgetName());
 
   // ----------------------------------------
   // Show segmentation 
   // ----------------------------------------
   this->PreSegmentScan1Define();
-  // Necesary in order to transfere results from above lines  
-  this->ThresholdChangedCallback(0);
 
+  {
+    vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
+    double min, max;
+    if (mrmlNode && (mrmlNode->GetSegmentThresholdMin() > -1) && (mrmlNode->GetSegmentThresholdMax() > -1)) {
+      min =  mrmlNode->GetSegmentThresholdMin();
+      max =  mrmlNode->GetSegmentThresholdMax();
+    } else {
+      min = (intMax - intMin)/2.0;
+      max = intMax;
+    }
+    this->ThresholdRange->SetRange(min,max);
+
+    // Necesary in order to transfere results from above lines  
+    this->ThresholdRangeChangedCallback(min, max);
+  }
+    
   // Kilian
   // this->TransitionCallback();   
   //  ~/Slicer/Slicer3/Base/Logic/vtkSlicersModelsLogic Clone 
@@ -212,7 +246,7 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() {
   // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() End " << endl;
 }
 
-void vtkTumorGrowthSegmentationStep::SetPreSegment_Render_BandPassFilter(double value) {
+void vtkTumorGrowthSegmentationStep::SetPreSegment_Render_BandPassFilter(double min, double max) {
   // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
 
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
@@ -224,9 +258,15 @@ void vtkTumorGrowthSegmentationStep::SetPreSegment_Render_BandPassFilter(double 
 
   this->PreSegment_Render_BandPassFilter->RemoveAllPoints();
   this->PreSegment_Render_BandPassFilter->AddPoint(imgRange[0], 0.0);
-  this->PreSegment_Render_BandPassFilter->AddPoint(value - 1, 0.0);
-  this->PreSegment_Render_BandPassFilter->AddPoint(value, 1);
-  this->PreSegment_Render_BandPassFilter->AddPoint(imgRange[1], 1);
+  this->PreSegment_Render_BandPassFilter->AddPoint(min - 1, 0.0);
+  this->PreSegment_Render_BandPassFilter->AddPoint(min, 1);
+  this->PreSegment_Render_BandPassFilter->AddPoint(max, 1);
+  if (max < imgRange[1]) { 
+    this->PreSegment_Render_BandPassFilter->AddPoint(max + 1, 0);
+    if (max+1 < imgRange[1]) { 
+      this->PreSegment_Render_BandPassFilter->AddPoint(imgRange[1], 0);
+    }
+  }
 }
 
 void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
@@ -240,7 +280,7 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   if (!volumeNode) return;
   vtkMRMLVolumeNode *spgrNode = vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_Ref()));
   if (!spgrNode) return;
-  if (!this->ThresholdScale) return;
+  if (!this->ThresholdRange) return;
 
   vtkSlicerApplication      *application      =  vtkSlicerApplication::SafeDownCast(this->GetApplication()); 
   vtkSlicerApplicationGUI   *applicationGUI   = this->GetGUI()->GetApplicationGUI();
@@ -261,7 +301,9 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   this->PreSegment->SetOutValue(0);
   this->PreSegment->SetOutputScalarTypeToShort();
   this->PreSegment->SetInput(volumeNode->GetImageData());
-  this->PreSegment->ThresholdByUpper(this->ThresholdScale->GetValue()); 
+  // this->PreSegment->ThresholdByUpper(range[0]); 
+  double *range = this->ThresholdRange->GetRange();
+  this->PreSegment->ThresholdBetween(range[0],range[1]); 
   this->PreSegment->Update();
 
   // ---------------------------------
@@ -343,7 +385,7 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Define()" << 100 << endl;
 
   this->PreSegment_Render_BandPassFilter = vtkPiecewiseFunction::New();
-  this->SetPreSegment_Render_BandPassFilter(100);
+  this->SetPreSegment_Render_BandPassFilter(range[0],range[1]);
 
   this->PreSegment_Render_ColorMapping = vtkColorTransferFunction::New();
   this->PreSegment_Render_ColorMapping->AddRGBPoint( imgRange[0] , 0.8, 0.8, 0.0 );
@@ -417,21 +459,20 @@ int vtkTumorGrowthSegmentationStep::SegmentScan1Define() {
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthSegmentationStep::ThresholdChangedCallback(double blub)
+void vtkTumorGrowthSegmentationStep::ThresholdRangeChangedCallback(double min , double max)
 {
-  if (!this->ThresholdScale || !this->PreSegment) return;
-  double value = this->ThresholdScale->GetValue();
-  PreSegment->ThresholdByUpper(value); 
+  if (!this->ThresholdRange || !this->PreSegment) return;
+  PreSegment->ThresholdBetween(min,max); 
   PreSegment->Update();
-  // PreSegment->GetOutput()->Modified();
   this->PreSegmentNode->Modified();
 
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
   if (!mrmlNode) return;
-  mrmlNode->SetSegmentThreshold(value);
+  mrmlNode->SetSegmentThresholdMin(min);
+  mrmlNode->SetSegmentThresholdMax(max);
 
   // 3D Render 
-  this->SetPreSegment_Render_BandPassFilter(value);
+  this->SetPreSegment_Render_BandPassFilter(min,max);
   //  applicationGUI->GetViewerWidget()->GetMainViewer()->RequestRender();
 
 
