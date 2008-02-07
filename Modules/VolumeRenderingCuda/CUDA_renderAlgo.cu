@@ -37,7 +37,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   __shared__ float s_zBuffer[BLOCK_DIM2D*BLOCK_DIM2D]; // z buffer
 
   float test;
-      
+
   int tempacc=threadIdx.x+threadIdx.y*BLOCK_DIM2D; //index in grid
 
   __syncthreads();

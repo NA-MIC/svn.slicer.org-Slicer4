@@ -365,6 +365,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             shifter->Update();
 
             this->CudaMapper->SetInput(shifter->GetOutput());
+            shifter->Delete();
             }
         }
     }
