@@ -10,13 +10,6 @@ class vtkCudaRendererInformationHandler;
 class vtkCudaVolumeInformationHandler;
 class vtkCudaMemoryTexture;
 
-//BTX
-namespace Cudapp {
-class DeviceMemory;
-class HostMemory;
-class LocalMemory; }
-//ETX
-
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolumeMapper
 {
 public:
@@ -31,12 +24,7 @@ public:
     void SetThreshold(double* range) { SetThreshold((unsigned int)range[0], (unsigned int)range[1]); }
 
    //BTX
-   typedef enum 
-   {
-     RenderToTexture,
-     RenderToMemory,
-   } RenderMode;
-   void SetRenderMode(RenderMode mode);
+   void SetRenderMode(int mode);
    int GetCurrentRenderMode() const;// { return this->CurrentRenderMode; }
    //ETX
 
@@ -50,21 +38,10 @@ protected:
 
     void UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged = false);
 
-    unsigned int OutputDataSize[2];
-
     vtkImageData* LocalOutputImage;
-
 
     vtkCudaRendererInformationHandler* RendererInfoHandler;
     vtkCudaVolumeInformationHandler* VolumeInfoHandler;
-    vtkCudaMemoryTexture* MemoryTexture;
-
-//BTX
-    Cudapp::DeviceMemory* CudaOutputBuffer;
-
-    Cudapp::LocalMemory* LocalZBuffer;
-    Cudapp::DeviceMemory* CudaZBuffer;
-//ETX
 
 private:
     vtkVolumeCudaMapper operator=(const vtkVolumeCudaMapper&);

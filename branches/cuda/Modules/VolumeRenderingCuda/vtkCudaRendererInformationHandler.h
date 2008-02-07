@@ -6,6 +6,7 @@
 
 class vtkRenderer;
 
+class vtkCudaMemoryTexture;
 //BTX
 //class cudaRendererInformation;
 #include "cudaRendererInformation.h"
@@ -24,7 +25,8 @@ public:
     const cudaRendererInformation& GetRendererInfo() { return this->RendererInfo; }
     //ETX
 
-
+    void Bind();
+    void Unbind();
 
     //HACK BEGIN
     //BTX
@@ -48,8 +50,9 @@ private:
     //BTX
     cudaRendererInformation  RendererInfo;
 
-    //Cudapp::LocalMemory      LocalZBuffer;
-    //Cudapp::DeviceMemory     CudaZBuffer;
+    vtkCudaMemoryTexture*    MemoryTexture;
+    Cudapp::LocalMemory      LocalZBuffer;
+    Cudapp::DeviceMemory     CudaZBuffer;
     //ETX
 };
 

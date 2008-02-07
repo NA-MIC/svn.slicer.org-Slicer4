@@ -15,7 +15,6 @@
  * Execute volume rendering. There are also a lot of parameters here.
  */
 extern "C"
-void CUDArenderAlgo_doRender(uchar4* outputData, 
-                             const cudaRendererInformation& renderInfo,
+void CUDArenderAlgo_doRender(const cudaRendererInformation& renderInfo,
                              const cudaVolumeInformation& volumeInfo);
 #endif

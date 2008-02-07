@@ -21,6 +21,7 @@ typedef struct
     float          TargetPos[3];
     float          ViewUp[3];
 
+    uchar4*        OutputImage;
     float*         ZBuffer;
     float          NearPlane;
     float          FarPlane;

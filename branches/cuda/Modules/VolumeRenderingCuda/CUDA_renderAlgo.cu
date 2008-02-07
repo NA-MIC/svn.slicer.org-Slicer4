@@ -18,7 +18,6 @@ extern "C" {
 
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
-							  uchar4* d_resultImage,
 							  const cudaRendererInformation renInfo,
 							  const cudaVolumeInformation volInfo
 							  )
@@ -246,9 +245,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
       }else{ // current position is behind z buffer wall
 	
-	s_outputVal[tempacc*3]+=(1.0-s_integrationVal[tempacc])*d_resultImage[outindex].x;
-	s_outputVal[tempacc*3+1]+=(1.0-s_integrationVal[tempacc])*d_resultImage[outindex].y;
-	s_outputVal[tempacc*3+2]+=(1.0-s_integrationVal[tempacc])*d_resultImage[outindex].z;
+	s_outputVal[tempacc*3]+=(1.0-s_integrationVal[tempacc])*renInfo.OutputImage[outindex].x;
+	s_outputVal[tempacc*3+1]+=(1.0-s_integrationVal[tempacc])*renInfo.OutputImage[outindex].y;
+	s_outputVal[tempacc*3+2]+=(1.0-s_integrationVal[tempacc])*renInfo.OutputImage[outindex].z;
 	
 	pos = s_minmaxTrace[tempacc].y-s_minmaxTrace[tempacc].x;
 	
@@ -261,16 +260,15 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   //write to output
 
-  d_resultImage[outindex]=make_uchar4(s_outputVal[tempacc*3], 
-				      s_outputVal[tempacc*3+1], 
-				      s_outputVal[tempacc*3+2], 
-				      255);
+  renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[tempacc*3], 
+                                            s_outputVal[tempacc*3+1], 
+				                            s_outputVal[tempacc*3+2], 
+				                            255);
   renInfo.ZBuffer[outindex]=s_zBuffer[tempacc];
 }
 
 extern "C"
-void CUDArenderAlgo_doRender(uchar4* outputData, //output image
-							 const cudaRendererInformation& rendererInfo,
+void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo)
 {
   // setup execution parameters
@@ -285,7 +283,6 @@ void CUDArenderAlgo_doRender(uchar4* outputData, //output image
   //float transparencyLevel = 1.0;
   
   CUDAkernel_renderAlgo_doIntegrationRender<unsigned char> <<< grid, threads >>>( \
-	 outputData, \
 	 rendererInfo,
 	 volumeInfo)  
   /*

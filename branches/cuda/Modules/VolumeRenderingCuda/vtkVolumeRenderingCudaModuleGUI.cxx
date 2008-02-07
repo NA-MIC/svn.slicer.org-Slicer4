@@ -250,6 +250,7 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 #include "vtkOpenGLExtensionManager.h"
 #include "vtkImageShiftScale.h"
 #include <sstream>
+#include "vtkCudaMemoryTexture.h"
 
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
@@ -348,9 +349,9 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
     {
         if (this->CudaMapper != NULL)
             if (!strcmp (this->RenderModeChooser->GetValue(), "To Texture"))
-                this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
+                this->CudaMapper->SetRenderMode(vtkCudaMemoryTexture::RenderToTexture);
             else
-                this->CudaMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToMemory);
+                this->CudaMapper->SetRenderMode(vtkCudaMemoryTexture::RenderToMemory);
     }
     else if (caller == this->NS_ImageData)
     {

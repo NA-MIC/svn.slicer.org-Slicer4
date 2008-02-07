@@ -1,5 +1,5 @@
-#ifndef __CUDAPPMEMORYTEXTURE_H__
-#define __CUDAPPMEMORYTEXTURE_H__
+#ifndef __VTKCUDAMEMORYTEXTURE_H__
+#define __VTKCUDAMEMORYTEXTURE_H__
 
 #include "vtkObject.h"
 #include "vtkVolumeRenderingCudaModule.h"
@@ -73,4 +73,4 @@ private:
 
     static bool  GLBufferObjectsAvailiable;
 };
-#endif /* __CUDAPPMEMORYTEXTURE_H__ */
+#endif /* __VTKCUDAMEMORYTEXTURE_H__ */
