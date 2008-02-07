@@ -9,19 +9,10 @@
 #include "vtkColorTransferFunction.h"
 #include "vtkPiecewiseFunction.h"
 
-//Data Types
-#include "vtkPolyData.h"
-#include "vtkTexture.h"
-#include "vtkCellArray.h"
-#include "vtkFloatArray.h"
-#include "vtkPointData.h"
-#include "vtkImageExtractComponents.h"
-
 // Rendering
+#include "vtkCamera.h"
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
-#include "vtkCamera.h"
-
 
 // CUDA
 #include "CudappSupport.h"
@@ -31,8 +22,10 @@
 #include "CudappMemoryArray.h"
 #include "cudaRendererInformation.h"
 #include "cudaVolumeInformation.h"
-
 #include <vector_types.h>
+// VTKCUDA
+#include "vtkCudaVolumeInformationHandler.h"
+#include "vtkCudaRendererInformationHandler.h"
 
 // openGL
 #include "vtkOpenGLExtensionManager.h"
@@ -61,6 +54,9 @@ vtkVolumeCudaMapper* vtkVolumeCudaMapper::New()
 
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
+    this->VolumeInfoHandler = vtkCudaVolumeInformationHandler::New();
+    this->RendererInfoHandler = vtkCudaRendererInformationHandler::New();
+
     this->LocalOutputImage = vtkImageData::New();
 
     this->CudaInputBuffer = new Cudapp::DeviceMemory();
@@ -125,6 +121,9 @@ vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
     if (this->GLBufferObjectsAvailiable == true)
         if (this->BufferObject != 0 && vtkgl::IsBufferARB(this->BufferObject))
             vtkgl::DeleteBuffersARB(1, &this->BufferObject);
+
+    this->VolumeInfoHandler->Delete();
+    this->RendererInfoHandler->Delete();
 }
 
 void vtkVolumeCudaMapper::SetInput(vtkImageData * input)

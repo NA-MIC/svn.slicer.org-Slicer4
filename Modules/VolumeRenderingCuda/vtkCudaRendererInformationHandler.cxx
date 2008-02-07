@@ -35,6 +35,13 @@ void vtkCudaRendererInformationHandler::SetRenderer(vtkRenderer* renderer)
     this->Update();
 }
 
+// HACK
+void vtkCudaRendererInformationHandler::SetZBuffer(Cudapp::DeviceMemory* ZBuffer)
+{
+    this->RendererInfo.ZBuffer = ZBuffer->GetMemPointerAs<float>();
+}
+
+
 void vtkCudaRendererInformationHandler::Update()
 {
     if (this->Renderer != NULL)
@@ -45,7 +52,6 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.Resolution[0] = size[0];
         this->RendererInfo.Resolution[1] = size[1];
 
-//        this->RendererInfo.ZBuffer = this->CudaZBuffer->GetMemPointerAs<float>();
 
         vtkCamera* cam = this->Renderer->GetActiveCamera();
 
