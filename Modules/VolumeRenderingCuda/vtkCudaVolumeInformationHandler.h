@@ -35,7 +35,6 @@ protected:
     vtkCudaVolumeInformationHandler();
     ~vtkCudaVolumeInformationHandler();
 
-
     void UpdateVolumeProperties(vtkVolumeProperty *property);
 
     virtual void PrintSelf(ostream& os, vtkIndent indent);

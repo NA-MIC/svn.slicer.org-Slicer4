@@ -79,8 +79,6 @@ void vtkVolumeCudaMapper::SetThreshold(unsigned int min, unsigned int max)
 
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
-
-
     // This should update the the CudaInputBuffer only when needed.
     //if (this->GetInput()->GetMTime() > this->GetMTime())
     //  this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetActualMemorySize() * 1024);
