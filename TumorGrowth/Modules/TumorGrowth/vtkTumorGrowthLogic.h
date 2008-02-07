@@ -67,8 +67,10 @@ public:
 
   // Main Growth Function 
   int AnalyzeGrowth(vtkSlicerApplication *application);
-
   double MeassureGrowth(vtkSlicerApplication *app);
+  void DeleteAnalyzeOutput(vtkSlicerApplication *app);
+
+
 
   vtkImageThreshold* CreateAnalysis_Final();
   vtkImageThreshold* CreateAnalysis_ROINegativeBin();
@@ -84,6 +86,8 @@ public:
   vtkSetMacro(Analysis_Threshold,double);
   vtkGetMacro(Analysis_Threshold,double);
 
+  void SaveVolume(vtkSlicerApplication *app, vtkMRMLVolumeNode *volNode);
+
 private:
   vtkTumorGrowthLogic();
   ~vtkTumorGrowthLogic();
@@ -94,6 +98,9 @@ private:
   vtkSetStringMacro(ProgressCurrentAction);
   vtkSetMacro(ProgressGlobalFractionCompleted, double);
   vtkSetMacro(ProgressCurrentFractionCompleted, double);
+
+  void SourceAnalyzeTclScripts(vtkSlicerApplication *app);
+
 
   //
   // because the mrml nodes are very complicated for this module, we
@@ -121,6 +128,8 @@ private:
   vtkImageThreshold     *Analysis_ROIPositiveBin;
   vtkImageMathematics   *Analysis_ROIBinReal;
   vtkImageSumOverVoxels *Analysis_ROITotal;
+
+  int SaveVolumeFlag;
 };
 
 #endif
