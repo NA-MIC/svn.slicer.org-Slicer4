@@ -36,12 +36,18 @@ public:
 
   virtual void TransitionCallback() { };
 
+  // Note : This should be called directly from workflow->BackButton but it is not currently possible 
+  // -> That is why we use step  
+  virtual void RemoveResults() {};
+
   virtual void UpdateMRML() { }
 
   virtual void UpdateGUI() { } 
   virtual void RemoveGUIObservers() { } 
 
   virtual void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) { }
+
+  void SetNextStep(vtkTumorGrowthStep *init) { this->NextStep = init;}
 
 protected:
   vtkTumorGrowthStep();
@@ -50,6 +56,9 @@ protected:
   vtkTumorGrowthGUI *GUI;
   vtkKWFrameWithLabel               *Frame;
   vtkCallbackCommand *WizardGUICallbackCommand;
+  // Needed so we can clean up mess when going backwards 
+  vtkTumorGrowthStep *NextStep;
+
   
 private:
   vtkTumorGrowthStep(const vtkTumorGrowthStep&);

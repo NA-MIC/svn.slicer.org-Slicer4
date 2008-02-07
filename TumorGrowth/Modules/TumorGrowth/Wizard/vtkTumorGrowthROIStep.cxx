@@ -27,7 +27,7 @@ vtkCxxRevisionMacro(vtkTumorGrowthROIStep, "$Revision: 1.2 $");
 vtkTumorGrowthROIStep::vtkTumorGrowthROIStep()
 {
   this->SetName("2/4. Define Region of Interest"); 
-  this->SetDescription("Define ROI by clicking with <ctrl>-left mouse button around the tumor"); 
+  this->SetDescription("Define ROI by clicking <ctrl>-left mouse button\n around the tumor or moving sliders"); 
   this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthROIStep::WizardGUICallback);
 
   this->FrameButtons    = NULL;
@@ -126,13 +126,25 @@ vtkTumorGrowthROIStep::~vtkTumorGrowthROIStep()
   if (this->ROILabelMapNode || this->ROILabelMap) this->ROIMapRemove();
 }
 
+void vtkTumorGrowthROIStep::DeleteSuperSampleNode() {
+  vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+  if (!node) return;
+
+  vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SuperSampleRef()));
+  if (!volumeNode) return;
+
+  this->GetGUI()->GetMRMLScene()->RemoveNode(volumeNode); 
+  node->SetScan1_SuperSampleRef(NULL);
+} 
+
 //----------------------------------------------------------------------------
 void vtkTumorGrowthROIStep::ShowUserInterface()
 {
 
   // ----------------------------------------
-  // Display Super Sampled Volume 
+  // Display Scan1 and Delete Super Sampled 
   // ----------------------------------------
+  this->DeleteSuperSampleNode();
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
   int dimensions[3]={1,1,1};
   if (node) {
@@ -151,7 +163,6 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // Build GUI 
   // ----------------------------------------
 
-  cout << "vtkTumorGrowthROIStep::ShowUserInterface()" << endl;
   this->vtkTumorGrowthStep::ShowUserInterface();
 
   // Create the frame
@@ -383,8 +394,6 @@ void vtkTumorGrowthROIStep::ROIZChangedCallback(double min, double max)
 //----------------------------------------------------------------------------
 void vtkTumorGrowthROIStep::ROIChangedCallback(int axis, double min, double max)  
 {
-  cout << "vtkTumorGrowthROIStep::ROIChangedCallback" << endl;
-
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
   if (!mrmlNode) return;
 
@@ -490,7 +499,7 @@ void vtkTumorGrowthROIStep::WizardGUICallback(vtkObject *caller, unsigned long e
 }
 
 void vtkTumorGrowthROIStep::ROIReset() {
-  cout << "ROIReset Start" << endl;
+  // cout << "ROIReset Start" << endl;
   if (this->ROIX) this->ROIX->SetRange(-1,-1);
   if (this->ROIY) this->ROIY->SetRange(-1,-1);
   if (this->ROIZ) this->ROIZ->SetRange(-1,-1);
@@ -503,12 +512,14 @@ void vtkTumorGrowthROIStep::ROIUpdateAxisWithNewSample(vtkKWRange *ROIAxis, int 
   double newRange[2];
 
   if ((Sample < oldRange[0]) || (oldRange[0] < 0)) newRange[0] = Sample;
+  else  newRange[0] = oldRange[0]; 
   if ((Sample > oldRange[1]) || (oldRange[1] < 0)) newRange[1] = Sample;
+  else newRange[1] = oldRange[1]; 
   ROIAxis->SetRange(newRange);
 }
 
 void vtkTumorGrowthROIStep::ROIUpdateWithNewSample(int ijkSample[3]) {
-  // cout << "ROIUpdateWithNewSample start " << endl;
+  // cout << "ROIUpdateWithNewSample start " << ijkSample[0] << " " << ijkSample[1] << " " << ijkSample[2] << " " << endl;
   this->ROIUpdateAxisWithNewSample(this->ROIX,ijkSample[0]);
   this->ROIUpdateAxisWithNewSample(this->ROIY,ijkSample[1]);
   this->ROIUpdateAxisWithNewSample(this->ROIZ,ijkSample[2]);
@@ -600,14 +611,32 @@ int vtkTumorGrowthROIStep::ROIMapShow() {
   //  make the source node the active background, and the label node the active label
   // set selectionNode [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode]
   //$selectionNode SetReferenceActiveVolumeID [$volumeNode GetID]
-  //$selectionNode SetReferenceActiveLabelVolumeID [$labelNode GetID]
+  //$selectionNode SetReferenceActiveLabelVolumeID [$labelNode GetID] 
+  //  applicationLogic->GetSelectionNode()->SetReferenceActiveVolumeID(volumeNode->GetID());
+ 
+  // Reset to original slice location 
+  double oldSliceSetting[3];
+  oldSliceSetting[0] = double(applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale()->GetValue());
+  oldSliceSetting[1] = double(applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetOffsetScale()->GetValue());
+  oldSliceSetting[2] = double(applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetOffsetScale()->GetValue());
 
   applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetBackgroundSelector()->SetSelected(volumeNode);
   applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetForegroundSelector()->SetSelected(this->ROILabelMapNode);
-  applicationGUI->GetSlicesControlGUI()->GetSliceFadeScale()->SetValue(0.6);
 
-  //[[$this GetLogic] GetApplicationLogic]  PropagateVolumeSelection
+  applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetBackgroundSelector()->SetSelected(volumeNode);
+  applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetForegroundSelector()->SetSelected(this->ROILabelMapNode);
+
+  applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetBackgroundSelector()->SetSelected(volumeNode);
+  applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetForegroundSelector()->SetSelected(this->ROILabelMapNode);
+
+  applicationGUI->GetSlicesControlGUI()->GetSliceFadeScale()->SetValue(0.6);
   applicationLogic->PropagateVolumeSelection();
+
+  // Reset to original slice location 
+  applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[0]);
+  applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[1]);
+  applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[2]);
+
   this->ROIMapUpdate();
 
   return 1;
@@ -623,6 +652,10 @@ void vtkTumorGrowthROIStep::ROIMapRemove() {
     this->ROILabelMap = NULL;
   }
 
+  // Needs to be done otherwise when going backwards field is not correctly defined   
+  if (this->ButtonsShow && this->ButtonsShow->IsCreated())  {
+    this->ButtonsShow->SetText("Show ROI");
+  }
 }
 
 
@@ -630,12 +663,17 @@ void vtkTumorGrowthROIStep::ROIMapRemove() {
 
 void vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *sliceGUI, vtkRenderWindowInteractor *rwi,int coords[3]) {
 
+  coords[0] = coords[1] = coords[2] = -1;
   vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
   if (!Node) {
     cout << "ERROR: vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates: No Node" << endl;
     return;
   } 
 
+  if (!Node->GetScan1_Ref()) {
+    cout << "ERROR: vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates: No First Volume Defined" << endl;
+    return;
+  }
   vtkMRMLNode* mrmlNode =   Node->GetScene()->GetNodeByID(Node->GetScan1_Ref());
   vtkMRMLVolumeNode* volumeNode =  vtkMRMLVolumeNode::SafeDownCast(mrmlNode);
 
@@ -671,8 +709,9 @@ void vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *
   }
   coords[0] = int(round(ijkPt[0]));  coords[1] = int(round(ijkPt[1])); coords[2] = int(round(ijkPt[2])); 
 
-  // cout << "Sample:  " << rasPt[0] << " " <<  rasPt[1] << " " << rasPt[2] << " " << rasPt[3] << endl;
-  // cout << "Coord: " << coords[0] << " " << coords[1] << " " << coords[2] << " " << coords[3] << endl;
+  //cout << "Sample:  " << rasPt[0] << " " <<  rasPt[1] << " " << rasPt[2] << " " << rasPt[3] << endl;
+  //cout << "Coord: " << coords[0] << " " << coords[1] << " " << coords[2] << " " << coords[3] << endl;
+  //cout << "Dimen: " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << " " <<  endl;
 
 }
 void vtkTumorGrowthROIStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
@@ -734,7 +773,9 @@ void vtkTumorGrowthROIStep::TransitionCallback()
      // Create SuperSampledVolume 
     vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
     vtkMRMLScalarVolumeNode *outputNode = this->GetGUI()->GetLogic()->CreateSuperSample(1,application);
-     if (outputNode) {
+    this->GetGUI()->GetLogic()->SaveVolume(application,outputNode); 
+
+    if (outputNode) {
        // Prepare to update mrml node with results 
        vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
        if (!Node) return;
@@ -745,10 +786,8 @@ void vtkTumorGrowthROIStep::TransitionCallback()
 
        // Update node 
        Node->SetScan1_SuperSampleRef(outputNode->GetID());
-
-       // Proceed to next step 
+       
        this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep();
-
      } else {
        vtkKWMessageDialog::PopupMessage(this->GUI->GetApplication(), this->GUI->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Could not proceed to next step - scan1 might have disappeared", vtkKWMessageDialog::ErrorIcon); 
      }
@@ -758,15 +797,13 @@ void vtkTumorGrowthROIStep::TransitionCallback()
    }
 }
 
+
 //----------------------------------------------------------------------------
 void  vtkTumorGrowthROIStep::HideUserInterface()
 {
-  // cout << "vtkTumorGrowthROIStep::HideUserInterface() Start" << endl;
   this->Superclass::HideUserInterface();
   this->RemoveROISamplingGUIObservers();
-  // cout << "vtkTumorGrowthROIStep::HideUserInterface() End" << endl;
 }
-
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthROIStep::PrintSelf(ostream& os, vtkIndent indent)

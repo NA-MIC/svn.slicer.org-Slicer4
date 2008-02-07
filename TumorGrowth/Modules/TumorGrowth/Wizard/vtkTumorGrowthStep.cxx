@@ -17,6 +17,7 @@ vtkTumorGrowthStep::vtkTumorGrowthStep()
 {
   this->GUI = NULL;
   this->Frame           = NULL;
+  this->NextStep = NULL; 
   this->WizardGUICallbackCommand = vtkCallbackCommand::New();
   this->WizardGUICallbackCommand->SetClientData(reinterpret_cast<void *>(this));
 }
@@ -71,6 +72,9 @@ void vtkTumorGrowthStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
   
+  if (this->NextStep) { this->NextStep->RemoveResults(); }
+
+
   vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
      wizard_widget->GetCancelButton()->SetEnabled(0);
   vtkKWWidget *parent = wizard_widget->GetClientArea();
@@ -87,15 +91,18 @@ void vtkTumorGrowthStep::ShowUserInterface()
   }
 
   wizard_widget->NextButtonVisibilityOff();
-
   wizard_widget->CancelButtonVisibilityOn();
   wizard_widget->GetCancelButton()->SetText("Next >");
   wizard_widget->GetCancelButton()->SetCommand(this, "TransitionCallback");
   wizard_widget->GetCancelButton()->EnabledOn();
- 
+
+  // Does not work 
+  // wizard_widget->GetBackButton()->SetCommand(this, "TransitionToPreviousStep");
+  // OK Button only is shown at the end  
 }
 //----------------------------------------------------------------------------
 void vtkTumorGrowthStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
+

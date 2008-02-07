@@ -62,12 +62,23 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
       applicationLogic->GetSelectionNode()->SetActiveVolumeID(volumeSampleNode->GetID());
 
       vtkSlicerApplicationGUI *applicationGUI     = this->GetGUI()->GetApplicationGUI();
+
+      double oldSliceSetting[3];
+      oldSliceSetting[0] = double(applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale()->GetValue());
+      oldSliceSetting[1] = double(applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetOffsetScale()->GetValue());
+      oldSliceSetting[2] = double(applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetOffsetScale()->GetValue());
+
       applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeAnalysisNode);
       applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeAnalysisNode);
       applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeAnalysisNode);
       applicationGUI->GetSlicesControlGUI()->GetSliceFadeScale()->SetValue(0.6);
 
       applicationLogic->PropagateVolumeSelection();
+
+      // Return to original slice position 
+      applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[0]);
+      applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[1]);
+      applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[2]);
     } 
   }
 
@@ -177,4 +188,13 @@ void vtkTumorGrowthAnalysisStep::ResetPipelineCallback()
 void vtkTumorGrowthAnalysisStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
+}
+
+void  vtkTumorGrowthAnalysisStep::RemoveResults()  { 
+    vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+    if (!Node) return;
+    {
+       vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetAnalysis_Ref()));
+       if (currentNode) { this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); }
+    }
 }

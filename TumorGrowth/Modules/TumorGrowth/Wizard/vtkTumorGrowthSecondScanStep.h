@@ -33,6 +33,7 @@ protected:
 
 private:
   vtkTumorGrowthSecondScanStep(const vtkTumorGrowthSecondScanStep&);
+  void RemoveAnalysisOutput();
   void operator=(const vtkTumorGrowthSecondScanStep&);
 };
 
