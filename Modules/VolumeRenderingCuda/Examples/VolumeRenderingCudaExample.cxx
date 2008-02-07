@@ -16,6 +16,7 @@
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/CommandLineArguments.hxx>
 
+//#include "vtkCudaMemoryTexture.h"
 
 #include "vtkVolumeCudaMapper.h"
 #include "vtkImageReader.h"
@@ -27,6 +28,7 @@
 #include "vtkCudaImageDataFilter.h"
 #include "vtkCudaImageData.h"
 #include "vtkImageData.h"
+
 
 vtkKWApplication *app;
 vtkKWRenderWidget* renderWidget;
@@ -174,7 +176,7 @@ int my_main(int argc, char *argv[])
 
     VolumeMapper->SetInput(reader[0]->GetOutput());
 
-    VolumeMapper->SetRenderMode(vtkVolumeCudaMapper::RenderToTexture);
+    VolumeMapper->SetRenderMode(0/*vtkCudaMemoryTexture::RenderToTexture*/);
 
     volume->SetMapper(VolumeMapper);
     vtkVolumeProperty* prop = vtkVolumeProperty::New();

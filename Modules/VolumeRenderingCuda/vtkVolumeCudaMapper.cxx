@@ -36,23 +36,14 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
     this->VolumeInfoHandler = vtkCudaVolumeInformationHandler::New();
     this->RendererInfoHandler = vtkCudaRendererInformationHandler::New();
-    this->MemoryTexture = vtkCudaMemoryTexture::New();
 
     this->LocalOutputImage = vtkImageData::New();
-
-    this->OutputDataSize[0] = this->OutputDataSize[1] = 0;
-
-    this->LocalZBuffer = new Cudapp::LocalMemory();
-    this->CudaZBuffer = new Cudapp::DeviceMemory();
 }  
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
     this->LocalOutputImage->Delete();
 
-    delete this->CudaZBuffer;
-
-    this->MemoryTexture->Delete();
     this->VolumeInfoHandler->Delete();
     this->RendererInfoHandler->Delete();
 }
@@ -63,14 +54,16 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
     this->VolumeInfoHandler->SetInputData(input);
 }
 
-void vtkVolumeCudaMapper::SetRenderMode(vtkVolumeCudaMapper::RenderMode mode)
+void vtkVolumeCudaMapper::SetRenderMode(int mode)
 {
-    this->MemoryTexture->SetRenderMode(mode);
+    //HACK
+    //this->MemoryTexture->SetRenderMode(mode);
 }
 
 int vtkVolumeCudaMapper::GetCurrentRenderMode() const
 {
-    return this->MemoryTexture->GetCurrentRenderMode();
+    //HACK
+    return 0; //this->MemoryTexture->GetCurrentRenderMode();
     //TODO
 }
 
@@ -82,30 +75,10 @@ void vtkVolumeCudaMapper::SetThreshold(unsigned int min, unsigned int max)
     this->VolumeInfoHandler->SetThreshold(min, max);
 }
 
-void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged)
-{
-    if (this->OutputDataSize[0] == width &&
-        this->OutputDataSize[1] == height && !TypeChanged)
-        return;
-    // Set the data Size
-    this->OutputDataSize[0] = width;
-    this->OutputDataSize[1] = height;
-
-    // Re-allocate the memory
-    this->LocalZBuffer->Allocate<float>(this->OutputDataSize[0] * this->OutputDataSize[1]);
-    this->CudaZBuffer->Allocate<float>(this->OutputDataSize[0] * this->OutputDataSize[1]);
-
-    this->MemoryTexture->SetSize(width, height);
-}
-
 #include "vtkTimerLog.h"
 
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
-    for (unsigned int i = 0 ; i < (this->OutputDataSize[0]) * this->OutputDataSize[1]; i++)
-        this->LocalZBuffer->GetMemPointerAs<float>()[i] = 100000;
-    //renderer->GetRenderWindow()->GetZbufferData(0,0,this->OutputDataSize[0]-1, this->OutputDataSize[1]-1, this->LocalZBuffer->GetMemPointerAs<float>());
-    this->LocalZBuffer->CopyTo(this->CudaZBuffer);
 
 
     // This should update the the CudaInputBuffer only when needed.
@@ -116,36 +89,28 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     //Get current size of window
     int *size=renWin->GetSize();
     //int width = size[0], height = size[1];
-    this->UpdateOutputResolution(size[0], size[1]);
 
     // Do rendering.
-    this->MemoryTexture->BindTexture();
-    this->MemoryTexture->BindBuffer();
 
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
 
     // Renderer Information Setter.
     this->RendererInfoHandler->SetRenderer(renderer);
-    this->RendererInfoHandler->SetZBuffer(this->CudaZBuffer);
 
     this->VolumeInfoHandler->SetInputData(this->GetInput());
     this->VolumeInfoHandler->SetVolume(volume);
     this->VolumeInfoHandler->Update();
 
-    CUDArenderAlgo_doRender((uchar4*)this->MemoryTexture->GetRenderDestination(),
+    this->RendererInfoHandler->Bind();
+
+    CUDArenderAlgo_doRender(
         this->RendererInfoHandler->GetRendererInfo(),
         this->VolumeInfoHandler->GetVolumeInfo());         
 
     // Get the resulted image.
     log->StopTimer();
     //vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
-    log->StartTimer();
-    this->MemoryTexture->UnbindBuffer();
-
-    log->StopTimer();
-    //vtkErrorMacro(<< "Elapsed Time to Copy Memory:: " << log->GetElapsedTime());
-
     log->StartTimer();
 
     //renderer->SetBackground(this->renViewport->GetBackground());
@@ -190,7 +155,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glEnd();
     glPopAttrib();
     glPopAttrib();
-    this->MemoryTexture->UnbindTexture();
+    this->RendererInfoHandler->Unbind();
 
     log->Delete();
     return;

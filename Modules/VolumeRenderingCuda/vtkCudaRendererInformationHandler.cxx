@@ -13,6 +13,8 @@
 #include "vtkRenderer.h"
 #include "vtkRenderWindow.h"
 
+// vtkCuda
+#include "vtkCudaMemoryTexture.h"
 
 vtkCxxRevisionMacro(vtkCudaRendererInformationHandler, "$Revision: 1.0 $");
 vtkStandardNewMacro(vtkCudaRendererInformationHandler);
@@ -20,12 +22,13 @@ vtkStandardNewMacro(vtkCudaRendererInformationHandler);
 vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
 {
     this->Renderer = NULL;
+    this->MemoryTexture = vtkCudaMemoryTexture::New();
 }
 
 vtkCudaRendererInformationHandler::~vtkCudaRendererInformationHandler()
 {
     this->Renderer = NULL;
-
+    this->MemoryTexture->Delete();
 }
 
 
@@ -35,12 +38,18 @@ void vtkCudaRendererInformationHandler::SetRenderer(vtkRenderer* renderer)
     this->Update();
 }
 
-// HACK
-void vtkCudaRendererInformationHandler::SetZBuffer(Cudapp::DeviceMemory* ZBuffer)
+void vtkCudaRendererInformationHandler::Bind()
 {
-    this->RendererInfo.ZBuffer = ZBuffer->GetMemPointerAs<float>();
+    this->MemoryTexture->BindTexture();
+    this->MemoryTexture->BindBuffer();
+    this->RendererInfo.OutputImage = (uchar4*)this->MemoryTexture->GetRenderDestination();
 }
 
+void vtkCudaRendererInformationHandler::Unbind()
+{
+    this->MemoryTexture->UnbindBuffer();
+    this->MemoryTexture->UnbindTexture();
+}
 
 void vtkCudaRendererInformationHandler::Update()
 {
@@ -52,6 +61,17 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.Resolution[0] = size[0];
         this->RendererInfo.Resolution[1] = size[1];
 
+        // HACK -> Allocate is too slow!!
+        LocalZBuffer.Allocate<float>(this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]);
+        CudaZBuffer.Allocate<float>(this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]);
+        for (unsigned int i = 0 ; i < this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]; i++)
+            this->LocalZBuffer.GetMemPointerAs<float>()[i] = 100000;
+        //renderer->GetRenderWindow()->GetZbufferData(0,0,this->OutputDataSize[0]-1, this->OutputDataSize[1]-1, this->LocalZBuffer->GetMemPointerAs<float>());
+        this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
+        this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
+
+        this->MemoryTexture->SetSize(this->RendererInfo.Resolution[0], this->RendererInfo.Resolution[1]);
+        this->RendererInfo.OutputImage = (uchar4*)this->MemoryTexture->GetRenderDestination();
 
         vtkCamera* cam = this->Renderer->GetActiveCamera();
 
