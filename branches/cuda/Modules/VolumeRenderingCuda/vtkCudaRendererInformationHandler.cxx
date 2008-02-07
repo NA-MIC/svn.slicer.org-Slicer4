@@ -19,7 +19,7 @@ vtkStandardNewMacro(vtkCudaRendererInformationHandler);
 
 vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
 {
-
+    this->Renderer = NULL;
 }
 
 vtkCudaRendererInformationHandler::~vtkCudaRendererInformationHandler()
