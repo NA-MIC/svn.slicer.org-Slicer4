@@ -75,6 +75,18 @@ void vtkCudaMemoryTexture::SetSize(unsigned int width, unsigned int height)
 }
 void vtkCudaMemoryTexture::RebuildBuffer()
 {
+    //{
+    //    // Allocate the Image Data
+    //    this->LocalOutputImage->SetScalarTypeToUnsignedChar();
+    //    this->LocalOutputImage->SetNumberOfScalarComponents(4);
+    //    this->LocalOutputImage->SetDimensions(this->OutputDataSize[0], this->OutputDataSize[1], 1);
+    //    this->LocalOutputImage->SetExtent(0, this->OutputDataSize[0] - 1, 
+    //        0, this->OutputDataSize[1] - 1, 
+    //        0, 1 - 1);
+    //    this->LocalOutputImage->SetNumberOfScalarComponents(4);
+    //    this->LocalOutputImage->AllocateScalars();
+    //}
+
     // TEXTURE CODE
     glEnable(GL_TEXTURE_2D);
     if (this->TextureID != 0 && glIsTexture(this->TextureID))
