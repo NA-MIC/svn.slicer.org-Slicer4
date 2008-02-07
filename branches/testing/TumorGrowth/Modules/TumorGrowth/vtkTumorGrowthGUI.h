@@ -10,7 +10,7 @@ class vtkKWWizardWidget;
 class vtkTumorGrowthFirstScanStep;
 class vtkTumorGrowthROIStep;
 class vtkTumorGrowthSegmentationStep;
-class vtkTumorGrowthSecondScanStep;
+class vtkTumorGrowthTypeStep;
 class vtkTumorGrowthAnalysisStep;
 class  vtkImageData;
 
@@ -130,7 +130,7 @@ private:
   vtkTumorGrowthFirstScanStep        *FirstScanStep;
   vtkTumorGrowthROIStep              *ROIStep;
   vtkTumorGrowthSegmentationStep     *SegmentationStep;
-  vtkTumorGrowthSecondScanStep       *SecondScanStep;
+  vtkTumorGrowthTypeStep             *TypeStep;
   vtkTumorGrowthAnalysisStep         *AnalysisStep;
 
 };

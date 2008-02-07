@@ -19,26 +19,33 @@ vtkCxxRevisionMacro(vtkTumorGrowthFirstScanStep, "$Revision: 1.0 $");
 //----------------------------------------------------------------------------
 vtkTumorGrowthFirstScanStep::vtkTumorGrowthFirstScanStep()
 {
-  this->SetName("1/4. Define First Scan");
-  this->SetDescription("Select first scan of patient.");
+  this->SetName("1/4. Define Scans");
+  this->SetDescription("Select first and second scan of patient.");
   this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthFirstScanStep::WizardGUICallback);
+  this->SecondVolumeMenuButton = NULL;
 }
 
 //----------------------------------------------------------------------------
 vtkTumorGrowthFirstScanStep::~vtkTumorGrowthFirstScanStep() { 
-}
+ if (this->SecondVolumeMenuButton)
+  {
+    this->SecondVolumeMenuButton->Delete();
+    this->SecondVolumeMenuButton = NULL;
+  }
 
+}
 
 void vtkTumorGrowthFirstScanStep::UpdateMRML() 
 {
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
   if (!node) { return; }
+
   if (this->VolumeMenuButton && this->VolumeMenuButton->GetSelected() ) 
   {
     node->SetScan1_Ref(this->VolumeMenuButton->GetSelected()->GetID());
     vtkMRMLVolumeNode *VolNode = vtkMRMLVolumeNode::SafeDownCast(this->VolumeMenuButton->GetSelected());
-    if (!VolNode && !VolNode->GetStorageNode() && !VolNode->GetStorageNode()->GetFileName()) {return; }
-    
+
+    if (!VolNode && !VolNode->GetStorageNode() && !VolNode->GetStorageNode()->GetFileName()) {return; }    
     char DIR[1024];
     char CMD[2024];
     vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
@@ -53,6 +60,11 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
       node->SetWorkingDir(DIR);
     }
   }
+
+  if (this->SecondVolumeMenuButton && this->SecondVolumeMenuButton->GetSelected() ) {
+    node->SetScan2_Ref(this->SecondVolumeMenuButton->GetSelected()->GetID());
+  } 
+
 }
 
 void vtkTumorGrowthFirstScanStep::UpdateGUI() {
@@ -66,20 +78,67 @@ void vtkTumorGrowthFirstScanStep::UpdateGUI() {
     vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
     this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID(n->GetScan1_Ref()));
   }
+  if (n != NULL &&  this->SecondVolumeMenuButton)
+  {
+    vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
+    this->SecondVolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID(n->GetScan2_Ref()));
+  }
 } 
+
+//----------------------------------------------------------------------------
+void vtkTumorGrowthFirstScanStep::AddGUIObservers() 
+{
+  this->vtkTumorGrowthSelectScanStep::AddGUIObservers();
+ 
+  // Make sure you do not add the same event twice - need to do it bc of wizrd structure
+  if (this->SecondVolumeMenuButton && (!this->SecondVolumeMenuButton->HasObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, this->WizardGUICallbackCommand))) 
+    {
+      this->SecondVolumeMenuButton->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, this->WizardGUICallbackCommand );  
+    } 
+}
+
+void vtkTumorGrowthFirstScanStep::RemoveGUIObservers() 
+{
+  this->vtkTumorGrowthSelectScanStep::RemoveGUIObservers(); 
+  if ( this->SecondVolumeMenuButton) 
+    {
+      this->SecondVolumeMenuButton->RemoveObservers(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, this->WizardGUICallbackCommand );  
+    }
+}
+
+void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
+  this->vtkTumorGrowthSelectScanStep::ProcessGUIEvents(caller, event, callData); 
+  vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
+  if (this->SecondVolumeMenuButton && selector == this->SecondVolumeMenuButton && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent && this->SecondVolumeMenuButton->GetSelected() != NULL) 
+  { 
+    this->GetGUI()->UpdateMRML();
+  }
+  
+}
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthFirstScanStep::ShowUserInterface()
 {
   this->vtkTumorGrowthSelectScanStep::ShowUserInterface();
 
-
-  this->Frame->SetLabelText("First Scan");
+  this->Frame->SetLabelText("Select Scan");
   this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());
+  this->VolumeMenuButton->SetLabelText("1. Scan  ");
+  this->VolumeMenuButton->SetBalloonHelpString("Select consecutive scans of patient.");
 
-  this->VolumeMenuButton->SetBalloonHelpString("Select first scan of patient.");
-
-  this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2",  this->VolumeMenuButton->GetWidgetName());
+  if (!this->SecondVolumeMenuButton) {
+    this->SecondVolumeMenuButton=vtkSlicerNodeSelectorWidget::New();
+    this->SecondVolumeMenuButton->SetParent(this->Frame->GetFrame());
+    this->SecondVolumeMenuButton->Create();
+    this->SecondVolumeMenuButton->SetLabelText("2. Scan  ");
+    this->SecondVolumeMenuButton->NoneEnabledOn();
+    this->SecondVolumeMenuButton->SetNodeClass("vtkMRMLScalarVolumeNode","","","");
+    this->SecondVolumeMenuButton->SetMRMLScene(this->GetGUI()->GetLogic()->GetMRMLScene());
+    this->SecondVolumeMenuButton->GetWidget()->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    // If you want to attach a function once is selected 
+    // look at GrayscaleSelector vtkSlicerVolumeMathGUI::AddGUIObservers
+  }
+  this->Script( "pack %s %s -side top -anchor nw -padx 2 -pady 2",  this->VolumeMenuButton->GetWidgetName(), this->SecondVolumeMenuButton->GetWidgetName());
 
   {
     vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();  
@@ -87,7 +146,9 @@ void vtkTumorGrowthFirstScanStep::ShowUserInterface()
     wizard_widget->GetCancelButton()->EnabledOff();
   }
 
+  this->AddGUIObservers();
   this->UpdateGUI();
+
   // this->TransitionCallback(0);
 }
 
@@ -103,7 +164,7 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *call
     // This just has to be donw if you use the same Callbakc function for severall calls 
     vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
 
-    if (this->VolumeMenuButton && (selector == this->VolumeMenuButton)) 
+    if ((this->VolumeMenuButton && (selector == this->VolumeMenuButton)) || (this->SecondVolumeMenuButton && (selector == this->SecondVolumeMenuButton) )) 
     { 
       vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
       if (!node) {
@@ -112,12 +173,12 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *call
       } else {
          this->UpdateMRML();
       }
-      if (this->VolumeMenuButton->GetSelected()) { 
+    }
 
-    // this->TransitionCallback(0);
-    vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
-    wizard_widget->GetCancelButton()->EnabledOn();
-      }
+    if (this->VolumeMenuButton->GetSelected()&& this->SecondVolumeMenuButton->GetSelected()) { 
+        // this->TransitionCallback(0);
+        vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
+        wizard_widget->GetCancelButton()->EnabledOn();
     }
 }
 
@@ -125,18 +186,18 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *call
 //----------------------------------------------------------------------------
 void vtkTumorGrowthFirstScanStep::TransitionCallback(int Flag) 
 {
-   if (!this->VolumeMenuButton) return;
+   if (!this->VolumeMenuButton || !this->SecondVolumeMenuButton) return;
 
 
    vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
 
-   if (this->VolumeMenuButton->GetSelected()) { 
+   if (this->VolumeMenuButton->GetSelected() && this->SecondVolumeMenuButton->GetSelected() ) { 
      
      wizard_widget->GetCancelButton()->EnabledOn();
      wizard_widget->GetWizardWorkflow()->AttemptToGoToNextStep();
    } else {
      if (Flag) {
-       vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Please define first scan before proceeding", vtkKWMessageDialog::ErrorIcon);
+       vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Please define scans before proceeding", vtkKWMessageDialog::ErrorIcon);
      }
      wizard_widget->GetCancelButton()->EnabledOff();
    }

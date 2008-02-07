@@ -60,7 +60,7 @@ vtkTumorGrowthLogic::vtkTumorGrowthLogic()
   this->Analysis_ROITotal       = NULL;
 
   // if set to zero then SaveVolume will not do anything 
-  this->SaveVolumeFlag = 1;  
+  this->SaveVolumeFlag = 0;  
 }
 
 
@@ -441,7 +441,7 @@ double vtkTumorGrowthLogic::MeassureGrowth(vtkSlicerApplication *app) {
 }
 
 void vtkTumorGrowthLogic::SaveVolume(vtkSlicerApplication *app, vtkMRMLVolumeNode *volNode) {
- if (!this->SaveVolumeFlag) return;  
+  if (!this->SaveVolumeFlag) return;  
  // Initialize
  vtkSlicerVolumesGUI  *volumesGUI    = vtkSlicerVolumesGUI::SafeDownCast(app->GetModuleGUIByName("Volumes")); 
  if (!volumesGUI) return;
@@ -463,7 +463,7 @@ void vtkTumorGrowthLogic::SaveVolume(vtkSlicerApplication *app, vtkMRMLVolumeNod
  fileName.append(volNode->GetName());
  fileName.append(".nhdr");
 
- cout << "vtkTumorGrowthLogic::SaveVolum: Saving File :" << fileName.c_str() << endl;
+ cout << "vtkTumorGrowthLogic::SaveVolume: Saving File :" << fileName.c_str() << endl;
  if (!volumesLogic->SaveArchetypeVolume( fileName.c_str(), volNode ) )  {
    cout << "Error: Could no save file " << endl;
  }
