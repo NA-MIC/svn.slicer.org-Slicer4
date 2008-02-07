@@ -26,11 +26,11 @@ public:
 
 
 
-    //HACK
+    //HACK BEGIN
     //BTX
     void SetZBuffer(Cudapp::DeviceMemory* ZBuffer);
     //ETX
-
+    //HACK END
 
     virtual void Update();
 

@@ -47,7 +47,6 @@ protected:
     vtkVolumeCudaMapper();
     virtual ~vtkVolumeCudaMapper();
 
-    void UpdateVolumeProperties(vtkVolumeProperty* property);
     void UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged = false);
 
     unsigned int OutputDataSize[2];
@@ -59,14 +58,8 @@ protected:
     vtkCudaVolumeInformationHandler* VolumeInfoHandler;
 
 //BTX
-    Cudapp::DeviceMemory* CudaInputBuffer;
     Cudapp::DeviceMemory* CudaOutputBuffer;
     RenderMode CurrentRenderMode;
-
-    Cudapp::HostMemory* LocalColorTransferFunction;
-    Cudapp::DeviceMemory* CudaColorTransferFunction;
-    Cudapp::HostMemory* LocalAlphaTransferFunction;
-    Cudapp::DeviceMemory* CudaAlphaTransferFunction;
 
     Cudapp::LocalMemory* LocalZBuffer;
     Cudapp::DeviceMemory* CudaZBuffer;
