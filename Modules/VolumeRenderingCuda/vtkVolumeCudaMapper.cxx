@@ -120,6 +120,14 @@ void vtkVolumeCudaMapper::SetRenderMode(vtkVolumeCudaMapper::RenderMode mode)
     this->UpdateOutputResolution(this->OutputDataSize[0], this->OutputDataSize[1], true);
 }
 
+/**
+ * @brief sets the Threshold of the Input Array
+ */
+void vtkVolumeCudaMapper::SetThreshold(unsigned int min, unsigned int max)
+{
+    this->VolumeInfoHandler->SetThreshold(min, max);
+}
+
 void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged)
 {
     if (this->OutputDataSize[0] == width &&
@@ -178,13 +186,6 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
 
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
-    // Renice!!
-    int* minMax = this->GetInput()->GetExtent();
-    float minmax[6]; //={minMax[0],minMax[1],minMax[2],minMax[3],minMax[4],minMax[5]};
-    for (unsigned int i = 0; i < 6; i++)
-        minmax[i] = minMax[i];
-    float lightVec[3]={0, 0, 1};
-
     for (unsigned int i = 0 ; i < (this->OutputDataSize[0]) * this->OutputDataSize[1]; i++)
         this->LocalZBuffer->GetMemPointerAs<float>()[i] = 100000;
     //renderer->GetRenderWindow()->GetZbufferData(0,0,this->OutputDataSize[0]-1, this->OutputDataSize[1]-1, this->LocalZBuffer->GetMemPointerAs<float>());
@@ -195,17 +196,12 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     //if (this->GetInput()->GetMTime() > this->GetMTime())
     //  this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetActualMemorySize() * 1024);
 
-
     vtkRenderWindow *renWin= renderer->GetRenderWindow();
     //Get current size of window
     int *size=renWin->GetSize();
-
     //int width = size[0], height = size[1];
     this->UpdateOutputResolution(size[0], size[1]);
 
-    this->VolumeInfoHandler->SetInputData(this->GetInput());
-    this->VolumeInfoHandler->SetVolume(volume);
-    this->VolumeInfoHandler->Update();
 
     // Do rendering.
     uchar4* RenderDestination = NULL;
@@ -230,6 +226,10 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     // Renderer Information Setter.
     this->RendererInfoHandler->SetRenderer(renderer);
     this->RendererInfoHandler->SetZBuffer(this->CudaZBuffer);
+
+    this->VolumeInfoHandler->SetInputData(this->GetInput());
+    this->VolumeInfoHandler->SetVolume(volume);
+    this->VolumeInfoHandler->Update();
 
     CUDArenderAlgo_doRender(RenderDestination,
         this->RendererInfoHandler->GetRendererInfo(),

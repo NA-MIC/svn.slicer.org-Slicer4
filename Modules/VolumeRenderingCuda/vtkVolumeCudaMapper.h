@@ -26,7 +26,7 @@ public:
 
     virtual void Render(vtkRenderer *, vtkVolume *);
 
-    void SetThreshold(unsigned int min, unsigned int max) { this->Threshold[0] = min; this->Threshold[1] = max; }
+    void SetThreshold(unsigned int min, unsigned int max);
     void SetThreshold(double* range) { SetThreshold((unsigned int)range[0], (unsigned int)range[1]); }
 
    //BTX
@@ -64,8 +64,6 @@ protected:
     Cudapp::LocalMemory* LocalZBuffer;
     Cudapp::DeviceMemory* CudaZBuffer;
 //ETX
-
-    unsigned int Threshold[2];
 
     unsigned int BufferObject;
     unsigned int Texture;
