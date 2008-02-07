@@ -62,13 +62,19 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData)
     this->InputData = inputData;
 }
 
-
+/**
+ * @brief sets the threshold to min and max.
+ */
 void vtkCudaVolumeInformationHandler::SetThreshold(unsigned int min, unsigned int max)
 {
     this->VolumeInfo.MinThreshold = min;
     this->VolumeInfo.MaxThreshold = max;
 }
 
+/**
+ * @brief Updates the transfer functions on local and global memory.
+ * @param property: The property that holds the transfer function information.
+ */
 void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *property)
 {
     //FILE *fp;
@@ -115,7 +121,9 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     this->VolumeInfo.ColorTransferFunction = this->CudaColorTransferFunction.GetMemPointerAs<float>();
 }
 
-
+/**
+ * @brief Updates the volume information that is being sent to the Cuda Card.
+ */
 void vtkCudaVolumeInformationHandler::Update()
 {
     if (this->Volume != NULL && this->InputData != NULL)
@@ -125,7 +133,6 @@ void vtkCudaVolumeInformationHandler::Update()
 
         this->VolumeInfo.SourceData = this->CudaInputBuffer.GetMemPointer();
         this->VolumeInfo.InputDataType = this->InputData->GetScalarType();
-
 
         this->VolumeInfo.VoxelSize[0] = 1;
         this->VolumeInfo.VoxelSize[1] = 1;
