@@ -16,6 +16,7 @@ if {0} { ;# comment
 # namespace procs
 #
 
+# Remember to run make before executing script again so that this tcl script is copied over to slicer3-build directory 
 namespace eval TumorGrowthTcl {
 
     proc HistogramNormalization_GUI { } {
@@ -47,12 +48,13 @@ namespace eval TumorGrowthTcl {
       # -------------------------------------
       # Transfere output 
       # -------------------------------------
-      set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
-      if {$OUTPUT_NODE != "" } { $SCENE RemoveNode $OUTPUT_NODE }
+      HistogramNormalization_DeleteOutput
 
       set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN1_NODE "TG_scan2_reg_norm" ]
       $OUTPUT_NODE SetAndObserveImageData $OUTPUT
       $NODE SetScan2_NormedRef [$OUTPUT_NODE GetID]
+   
+      $LOGIC SaveVolume $::slicer3::Application $OUTPUT_NODE
 
       # -------------------------------------
       # Clean up  
@@ -134,6 +136,28 @@ namespace eval TumorGrowthTcl {
       TumorGrowth(Scan2,ROISuperSampleNormalized) Delete
     }
 
+    proc HistogramNormalization_DeleteOutput { } {
+      # -------------------------------------
+      # Define Interface Parameters 
+      # -------------------------------------
+      set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+      set NODE [$GUI  GetNode]
+      if {$NODE == ""} {return }
+
+      set SCENE [$NODE GetScene]
+
+      # -------------------------------------
+      # Delete output 
+      # -------------------------------------
+      set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
+      if {$OUTPUT_NODE != "" } { 
+      $SCENE RemoveNode $OUTPUT_NODE 
+          $NODE SetScan2_NormedRef ""
+      }
+    }
+
+
+   # -----------------------------------------------------------
     proc Scan2ToScan1Registration_GUI { TYPE } {
         puts "=============================================="
         puts "TumorGrowthScan2ToScan1Registration $TYPE Start" 
@@ -141,106 +165,127 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         # Define Interfrace Parameters 
         # -------------------------------------
-    set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
-    set NODE [$GUI  GetNode]
-    if {$NODE == ""} {return $NODE}
-
-    set SCENE [$NODE GetScene]
-    set LOGIC [$GUI GetLogic]
+        set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+        set NODE [$GUI  GetNode]
+        if {$NODE == ""} {return $NODE}
+    
+        set SCENE [$NODE GetScene]
+        set LOGIC [$GUI GetLogic]
 
         # -------------------------------------
         # Initialize Registration 
         # -------------------------------------
-    set MaxNum 50
-    if { "$TYPE" == "Global" } { 
-        # Kilian: How do you check for zero ! 
-        set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_Ref]]
-        set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_Ref]]
-    } else {
-        set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
-        set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_SuperSampleRef]]
-    }
-    if {$SCAN1_NODE == "" || $SCAN2_NODE == ""} { return }
-    set VOL1 [$SCAN1_NODE GetImageData]
-    set VOL2 [$SCAN2_NODE GetImageData]
-    
-    ::TumorGrowthReg::DeleteTransformAG [$LOGIC Get${TYPE}Transform]
-    set TRANSFORM [$LOGIC Create${TYPE}Transform]
-         
-    set OUTPUT_VOL [vtkImageData New]
+        set MaxNum 50
+        if { "$TYPE" == "Global" } { 
+            # Kilian: How do you check for zero ! 
+            set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_Ref]]
+            set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_Ref]]
+        } else {
+            set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
+            set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_SuperSampleRef]]
+        }
+        if {$SCAN1_NODE == "" || $SCAN2_NODE == ""} { return }
+
+        Scan2ToScan1Registration_DeleteOutput $TYPE 
+        set VOL1 [$SCAN1_NODE GetImageData]
+        set VOL2 [$SCAN2_NODE GetImageData]
+        
+        set TRANSFORM [$LOGIC Create${TYPE}Transform]
+             
+        set OUTPUT_VOL [vtkImageData New]
 
         # -------------------------------------
         # Register 
         # -------------------------------------
-    if { 1 } {
-        # Set it automatcally later 
-        set ScanOrder IS
-
-    set VOL1_input [vtkImageChangeInformation New]
-      $VOL1_input SetInput $VOL1
-      eval $VOL1_input SetOutputSpacing [$SCAN1_NODE GetSpacing]
-      eval $VOL1_input SetOutputSpacing [$SCAN1_NODE GetSpacing]
-    $VOL1_input Update
-
-    set VOL2_input [vtkImageChangeInformation New]
-      $VOL2_input SetInput $VOL2
-      eval $VOL2_input SetOutputSpacing [$SCAN2_NODE GetSpacing]
-    $VOL2_input Update
-
+        if { 0 } {
+            # Set it automatcally later 
+            set ScanOrder IS
     
-        if {[::TumorGrowthReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_input GetOutput] $ScanOrder 1 0 0 $MaxNum mono 3 $TRANSFORM ] == 0 }  {
-          puts "Error:  TumorGrowthScan2ToScan1Registration: $TYPE  could not perform registration"
-      $VOL2_input Delete
-          $VOL1_input Delete
-          return
-        }
+        set VOL1_input [vtkImageChangeInformation New]
+          $VOL1_input SetInput $VOL1
+          eval $VOL1_input SetOutputSpacing [$SCAN1_NODE GetSpacing]
+          eval $VOL1_input SetOutputSpacing [$SCAN1_NODE GetSpacing]
+        $VOL1_input Update
+    
+        set VOL2_input [vtkImageChangeInformation New]
+          $VOL2_input SetInput $VOL2
+          eval $VOL2_input SetOutputSpacing [$SCAN2_NODE GetSpacing]
+        $VOL2_input Update
+    
         
-        ::TumorGrowthReg::ResampleAG_GUI [$VOL2_input GetOutput]  [$VOL1_input GetOutput] $TRANSFORM $OUTPUT_VOL  
-         
-    $VOL2_input Delete
-    $VOL1_input Delete
-        puts ">>>>>>>>>>>>>> [$NODE GetWorkingDir]" 
-        ::TumorGrowthReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
-        # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
-        catch { exec mv [$NODE GetWorkingDir]/LinearRegistration.txt [$NODE GetWorkingDir]/${TYPE}LinearRegistration.txt }
- 
-    } else {
-        puts "Debugging - jump over registration $VOL1"
-        $OUTPUT_VOL  DeepCopy $VOL1
-    }
-  
-    
-    set OUTPUT_VOL_EXT [vtkImageChangeInformation New]
-      $OUTPUT_VOL_EXT SetInput $OUTPUT_VOL
-      $OUTPUT_VOL_EXT SetOutputSpacing 1 1 1 
-    $OUTPUT_VOL_EXT Update
+            if {[::TumorGrowthReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_input GetOutput] $ScanOrder 1 0 0 $MaxNum mono 3 $TRANSFORM ] == 0 }  {
+              puts "Error:  TumorGrowthScan2ToScan1Registration: $TYPE  could not perform registration"
+          $VOL2_input Delete
+              $VOL1_input Delete
+              return
+            }
+            
+            ::TumorGrowthReg::ResampleAG_GUI [$VOL2_input GetOutput]  [$VOL1_input GetOutput] $TRANSFORM $OUTPUT_VOL  
+             
+        $VOL2_input Delete
+        $VOL1_input Delete
+            puts ">>>>>>>>>>>>>> [$NODE GetWorkingDir]" 
+            ::TumorGrowthReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
+            # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
+            catch { exec mv [$NODE GetWorkingDir]/LinearRegistration.txt [$NODE GetWorkingDir]/${TYPE}LinearRegistration.txt }
+     
+        } else {
+            puts "Debugging - jump over registration $VOL1"
+            $OUTPUT_VOL  DeepCopy $VOL1
+        }
+      
+        
+        set OUTPUT_VOL_EXT [vtkImageChangeInformation New]
+          $OUTPUT_VOL_EXT SetInput $OUTPUT_VOL
+          $OUTPUT_VOL_EXT SetOutputSpacing 1 1 1 
+        $OUTPUT_VOL_EXT Update
 
         # -------------------------------------
         # Transfere output 
         # -------------------------------------
         puts "========================= "
        
-        set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan2_${TYPE}Ref]]
-        if {$OUTPUT_NODE != "" } {  [$GUI GetMRMLScene] RemoveNode $OUTPUT_NODE }
-
         set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN1_NODE  "TG_scan2_${TYPE}" ]
         $OUTPUT_NODE SetAndObserveImageData [$OUTPUT_VOL_EXT GetOutput]
-    ::TumorGrowthReg::TumorGrowthImageDataWriter [$OUTPUT_VOL_EXT GetOutput] newresult
+        ::TumorGrowthReg::TumorGrowthImageDataWriter [$OUTPUT_VOL_EXT GetOutput] newresult
 
         $NODE SetScan2_${TYPE}Ref [$OUTPUT_NODE GetID]
+
+        $LOGIC SaveVolume $::slicer3::Application $OUTPUT_NODE
 
         # -------------------------------------
         # Clean up 
         # -------------------------------------
-    $OUTPUT_VOL_EXT Delete
+        $OUTPUT_VOL_EXT Delete
         $OUTPUT_VOL Delete
 
         puts "TumorGrowthScan2ToScan1Registration $TYPE End"
-        puts "[$NODE GetScene]    [$GUI GetMRMLScene] "   
         puts "=============================================="
     }
 
+    proc Scan2ToScan1Registration_DeleteOutput { TYPE } {
+       # -------------------------------------
+       # Define Interfrace Parameters 
+       # -------------------------------------
+       set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+       set NODE [$GUI  GetNode]
+       if {$NODE == ""} {return $NODE}
+       set SCENE [$NODE GetScene]
+       set LOGIC [$GUI GetLogic]
 
+       # -------------------------------------
+       # Delete output 
+       # -------------------------------------
+       #::TumorGrowthReg::DeleteTransformAG [$LOGIC Get${TYPE}Transform]
+
+       set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan2_${TYPE}Ref]]
+       if {$OUTPUT_NODE != "" } {  
+       [$GUI GetMRMLScene] RemoveNode $OUTPUT_NODE 
+           $NODE SetScan2_${TYPE}Ref ""
+       }
+    }
+
+    #-----------------------------------------------------------------
     proc IntensityThresholding_GUI { SCAN_ID } {
         # -------------------------------------
         # Define Interface Parameters 
@@ -255,21 +300,20 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         # Initialize Thresholding
         # -------------------------------------
-        set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan${SCAN_ID}_ThreshRef]]
-        if {$OUTPUT_NODE != "" } { $SCENE RemoveNode $OUTPUT_NODE }
+        IntensityThresholding_DeleteOutput $SCAN_ID
 
         if { $SCAN_ID == 1} { 
           set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
-      if {$SCAN_NODE == ""} { 
-          puts "ERROR: IntensityThresholding_GUI: No Scan1_SuperSampleRef defined !"
-          return 0
-      }
-        } else {
-          set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
-      if {$SCAN_NODE == ""} { 
-          puts "ERROR: IntensityThresholding_GUI: No Scan2_NormedRef defined !"
-          return 0
-      }
+          if {$SCAN_NODE == ""} { 
+              puts "ERROR: IntensityThresholding_GUI: No Scan1_SuperSampleRef defined !"
+              return 0
+          }
+            } else {
+              set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
+          if {$SCAN_NODE == ""} { 
+              puts "ERROR: IntensityThresholding_GUI: No Scan2_NormedRef defined !"
+              return 0
+          }
         }
 
         set INPUT_VOL [$SCAN_NODE GetImageData]         
@@ -278,18 +322,18 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         # Run Thresholding and return results
         # -------------------------------------
-    puts "Threshold [$NODE GetSegmentThreshold]" 
+        puts "Threshold [$NODE GetSegmentThreshold]" 
         IntensityThresholding_Fct $INPUT_VOL [$NODE GetSegmentThreshold] $OUTPUT_VOL 
 
-    set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN_NODE "TG_scan${SCAN_ID}_Thr" ]
+        set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN_NODE "TG_scan${SCAN_ID}_Thr" ]
         $OUTPUT_NODE SetAndObserveImageData $OUTPUT_VOL
         $NODE SetScan${SCAN_ID}_ThreshRef [$OUTPUT_NODE GetID]
+        $LOGIC SaveVolume $::slicer3::Application $OUTPUT_NODE
 
         $OUTPUT_VOL Delete
         return  1
     }
 
-   # $TumorGrowth(Scan1,Threshold)  
     proc IntensityThresholding_Fct { INPUT THRESH OUTPUT} {
       # Eveyrthing outside below threhold is set to threshold
 
@@ -303,12 +347,30 @@ namespace eval TumorGrowthTcl {
       ROIThreshold Update
       $OUTPUT DeepCopy [ROIThreshold GetOutput]
       ROIThreshold Delete
-
-
     }
 
+    proc IntensityThresholding_DeleteOutput { SCAN_ID } {
+        # -------------------------------------
+        # Define Interface Parameters 
+        # -------------------------------------
+        set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+        set NODE [$GUI  GetNode]
+        if {$NODE == ""} {return }
+
+        set SCENE [$NODE GetScene]
+        # -------------------------------------
+        # Delete Output
+        # -------------------------------------
+        set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan${SCAN_ID}_ThreshRef]]
+        if {$OUTPUT_NODE != "" } { 
+        $SCENE RemoveNode $OUTPUT_NODE 
+            $NODE SetScan${SCAN_ID}_ThreshRef ""
+        }
+    }
+
+    # -------------------------------------------------------------
     proc AnalysisIntensity_GUI { } {
-    puts "=============================================="
+        puts "=============================================="
         puts "AnalysisIntensity Start" 
 
         # -------------------------------------
@@ -324,23 +386,22 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         # Initialize Analysis
         # -------------------------------------
-    set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetAnalysis_Ref]]
-        if {$OUTPUT_NODE != "" } { $SCENE RemoveNode $OUTPUT_NODE }
+        AnalysisIntensity_DeleteOutput 
 
-    set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_ThreshRef]]
-    set SEGM_NODE  [$SCENE GetNodeByID [$NODE GetScan1_SegmentRef]]
-    set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_ThreshRef]]
+        set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_ThreshRef]]
+        set SEGM_NODE  [$SCENE GetNodeByID [$NODE GetScan1_SegmentRef]]
+        set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_ThreshRef]]
 
         if {$SCAN1_NODE == "" || $SEGM_NODE == "" || $SCAN2_NODE == "" } { 
-        puts "ERROR:AnalysisIntensity_GUI: Incomplete Input" 
-        return 0
-    }
-    set AnalysisFinal          [$LOGIC CreateAnalysis_Final]
-    set AnalysisROINegativeBin [$LOGIC CreateAnalysis_ROINegativeBin]
-    set AnalysisROIPositiveBin [$LOGIC CreateAnalysis_ROIPositiveBin]
-    set AnalysisROIBinReal     [$LOGIC CreateAnalysis_ROIBinReal]
-    set AnalysisROITotal       [$LOGIC CreateAnalysis_ROITotal]
-    set AnalysisSensitivity    [$NODE  GetAnalysis_Sensitivity]
+           puts "ERROR:AnalysisIntensity_GUI: Incomplete Input" 
+           return 0
+        }
+        set AnalysisFinal          [$LOGIC CreateAnalysis_Final]
+        set AnalysisROINegativeBin [$LOGIC CreateAnalysis_ROINegativeBin]
+        set AnalysisROIPositiveBin [$LOGIC CreateAnalysis_ROIPositiveBin]
+        set AnalysisROIBinReal     [$LOGIC CreateAnalysis_ROIBinReal]
+        set AnalysisROITotal       [$LOGIC CreateAnalysis_ROITotal]
+        set AnalysisSensitivity    [$NODE  GetAnalysis_Sensitivity]
 
         # -------------------------------------
         # Run Analysis and Save output
@@ -349,18 +410,20 @@ namespace eval TumorGrowthTcl {
         set result "[AnalysisIntensity_Fct [$SCAN1_NODE GetImageData] [$SEGM_NODE GetImageData] [$SCAN2_NODE GetImageData] $AnalysisSensitivity \
                               $AnalysisFinal $AnalysisROINegativeBin $AnalysisROIPositiveBin $AnalysisROIBinReal $AnalysisROITotal ]"
 
-    $NODE  SetAnalysis_Sensitivity $AnalysisSensitivity
-    $LOGIC SetAnalysis_Mean [lindex $result 0]
-    $LOGIC SetAnalysis_Variance [lindex $result 1]
-    $LOGIC SetAnalysis_Threshold [lindex $result 2]
+        $NODE  SetAnalysis_Sensitivity $AnalysisSensitivity
+        $LOGIC SetAnalysis_Mean [lindex $result 0]
+        $LOGIC SetAnalysis_Variance [lindex $result 1]
+        $LOGIC SetAnalysis_Threshold [lindex $result 2]
 
         set VOLUMES_GUI  [$::slicer3::Application GetModuleGUIByName "Volumes"]
-    set VOLUMES_LOGIC [$VOLUMES_GUI GetLogic]
+        set VOLUMES_LOGIC [$VOLUMES_GUI GetLogic]
 
-    set OUTPUT_NODE [$VOLUMES_LOGIC CreateLabelVolume $SCENE $SEGM_NODE "TG_Analysis"]
+        set OUTPUT_NODE [$VOLUMES_LOGIC CreateLabelVolume $SCENE $SEGM_NODE "TG_Analysis"]
         $OUTPUT_NODE SetAndObserveImageData [$AnalysisROIBinReal GetOutput] 
         $NODE SetAnalysis_Ref [$OUTPUT_NODE GetID]
-    return 1
+        $LOGIC SaveVolume $::slicer3::Application $OUTPUT_NODE
+
+        return 1
     }
 
     proc AnalysisIntensity_Fct { Scan1Data Scan1Segment Scan2Data AnalysisSensitivity AnalysisFinal AnalysisROINegativeBin  AnalysisROIPositiveBin AnalysisROIBinReal AnalysisROITotal } {
@@ -443,6 +506,27 @@ namespace eval TumorGrowthTcl {
     return "$result"
   }   
 
+  proc AnalysisIntensity_DeleteOutput { } {
+        # -------------------------------------
+        # Define Interfrace Parameters 
+        # -------------------------------------
+        set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+        set NODE [$GUI  GetNode]
+        if {$NODE == ""} {return 0}
+
+        set SCENE [$NODE GetScene]
+ 
+        # -------------------------------------
+        # Delete Output
+        # -------------------------------------
+        set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetAnalysis_Ref]]
+        if {$OUTPUT_NODE != "" } { 
+        $SCENE RemoveNode $OUTPUT_NODE 
+            $NODE SetAnalysis_Ref ""
+    }
+    }
+
+
   proc Analysis_UpdateThreshold_GUI { } {
         # -------------------------------------
         # Define Interface Parameters 
@@ -456,16 +540,16 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         # Initialize 
         # -------------------------------------
-    set AnalysisMean           [$LOGIC GetAnalysis_Mean ]
-    set AnalysisVariance       [$LOGIC GetAnalysis_Variance ]
-    set AnalysisSensitivity    [$NODE  GetAnalysis_Sensitivity]
+        set AnalysisMean           [$LOGIC GetAnalysis_Mean ]
+        set AnalysisVariance       [$LOGIC GetAnalysis_Variance ]
+        set AnalysisSensitivity    [$NODE  GetAnalysis_Sensitivity]
 
         # -------------------------------------
         # Compute and return results 
         # -------------------------------------
-    set ThresholdValue [Analysis_InverseStandardCumulativeDistribution $AnalysisSensitivity  $AnalysisMean $AnalysisVariance]      
+        set ThresholdValue [Analysis_InverseStandardCumulativeDistribution $AnalysisSensitivity  $AnalysisMean $AnalysisVariance]      
         if { $ThresholdValue < 0.0 } { set ThresholdValue 0.0 }
-    $LOGIC SetAnalysis_Threshold $ThresholdValue
+        $LOGIC SetAnalysis_Threshold $ThresholdValue
     } 
 
 
