@@ -58,14 +58,19 @@ void vtkCudaRendererInformationHandler::Update()
         // Renderplane Update.
         vtkRenderWindow *renWin= this->Renderer->GetRenderWindow();
         int *size=renWin->GetSize();
-        this->RendererInfo.Resolution[0] = size[0];
-        this->RendererInfo.Resolution[1] = size[1];
+        if (size[0] != this->RendererInfo.Resolution[0] ||
+            size[1] != this->RendererInfo.Resolution[1])
+        {
+            this->RendererInfo.Resolution[0] = size[0];
+            this->RendererInfo.Resolution[1] = size[1];
 
-        // HACK -> Allocate is too slow!!
-        LocalZBuffer.Allocate<float>(this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]);
-        CudaZBuffer.Allocate<float>(this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]);
+            // HACK -> Allocate is too slow!!
+            LocalZBuffer.Allocate<float>(this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]);
+            CudaZBuffer.Allocate<float>(this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]);
+        }
         for (unsigned int i = 0 ; i < this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]; i++)
             this->LocalZBuffer.GetMemPointerAs<float>()[i] = 100000;
+
         //renderer->GetRenderWindow()->GetZbufferData(0,0,this->OutputDataSize[0]-1, this->OutputDataSize[1]-1, this->LocalZBuffer->GetMemPointerAs<float>());
         this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
         this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
@@ -93,7 +98,9 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.ViewUp[0] = cam->GetViewUp()[0];
         this->RendererInfo.ViewUp[1] = cam->GetViewUp()[1];
         this->RendererInfo.ViewUp[2] = cam->GetViewUp()[2];
-        this->RendererInfo.NearPlane = -500;
-        this->RendererInfo.FarPlane = 1000;
+        double clipRange[2];
+        cam->GetClippingRange(clipRange);
+        this->RendererInfo.NearPlane = (float)clipRange[0];
+        this->RendererInfo.FarPlane = (float)clipRange[1];
     }
 }

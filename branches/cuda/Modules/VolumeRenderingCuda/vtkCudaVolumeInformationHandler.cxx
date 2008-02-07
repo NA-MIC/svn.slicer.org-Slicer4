@@ -160,7 +160,6 @@ void vtkCudaVolumeInformationHandler::Update()
     }
 }
 
-
 void vtkCudaVolumeInformationHandler::PrintSelf(std::ostream& os, vtkIndent indent)
 {
 
