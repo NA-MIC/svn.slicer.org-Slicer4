@@ -85,8 +85,6 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
-    this->SetInput(NULL);
-
     delete this->CudaOutputBuffer;
     this->LocalOutputImage->Delete();
 
