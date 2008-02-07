@@ -25,12 +25,17 @@ vtkTumorGrowthSecondScanStep::vtkTumorGrowthSecondScanStep()
 //----------------------------------------------------------------------------
 vtkTumorGrowthSecondScanStep::~vtkTumorGrowthSecondScanStep() { }
 
+void vtkTumorGrowthSecondScanStep::RemoveAnalysisOutput() {
+  this->GetGUI()->GetLogic()->DeleteAnalyzeOutput(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));      
+}
+
 //----------------------------------------------------------------------------
 void vtkTumorGrowthSecondScanStep::ShowUserInterface()
 {
   // ----------------------------------------
   // Display Super Sampled Volume 
-  // ----------------------------------------  
+  // ---------------------------------------- 
+  this->RemoveAnalysisOutput();
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
   if (node) { 
     vtkMRMLVolumeNode *volumeSampleNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SuperSampleRef()));
@@ -40,12 +45,20 @@ void vtkTumorGrowthSecondScanStep::ShowUserInterface()
       applicationLogic->GetSelectionNode()->SetActiveVolumeID(volumeSampleNode->GetID());
 
       vtkSlicerApplicationGUI *applicationGUI     = this->GetGUI()->GetApplicationGUI();
+      double oldSliceSetting[3];
+      oldSliceSetting[0] = double(applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale()->GetValue());
+      oldSliceSetting[1] = double(applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetOffsetScale()->GetValue());
+      oldSliceSetting[2] = double(applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetOffsetScale()->GetValue());
+
       applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeSegmentNode);
       applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeSegmentNode);
       applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetForegroundSelector()->SetSelected(volumeSegmentNode);
       applicationGUI->GetSlicesControlGUI()->GetSliceFadeScale()->SetValue(0.6);
-
       applicationLogic->PropagateVolumeSelection();
+
+      applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[0]);
+      applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[1]);
+      applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[2]);
     } 
   }
 

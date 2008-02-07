@@ -71,22 +71,8 @@ void vtkTumorGrowthFirstScanStep::UpdateGUI() {
 //----------------------------------------------------------------------------
 void vtkTumorGrowthFirstScanStep::ShowUserInterface()
 {
-  if ( 0 )  {
-    cout << "====================" << endl;
-    cout << "DEBUGGING" << endl;
-    vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
-    if (!applicationGUI) return; 
-  
-    char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
-    std::string fl(fileName);
-    applicationGUI->GetMRMLScene()->SetURL(fileName);
-    applicationGUI->GetMRMLScene()->Connect();
-    cout << "====================" << endl;
-    // this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID("vtkMRMLScalarVolumeNode1")); 
-
-  }
-
   this->vtkTumorGrowthSelectScanStep::ShowUserInterface();
+
 
   this->Frame->SetLabelText("First Scan");
   this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());

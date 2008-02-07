@@ -33,6 +33,8 @@ public:
   void ROIZChangedCallback(double min, double max); 
 
   virtual void TransitionCallback(); 
+  // We call this function in order to remove nodes when going backwards 
+  virtual void RemoveResults()  { this->ROIMapRemove();}
 
   // Description:
   // Callback functions for buttons
@@ -87,6 +89,8 @@ private:
   void RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *sliceGUI, vtkRenderWindowInteractor *rwi,int coords[3]);
 
   void ROIChangedCallback(int axis, double min, double max); 
+
+  void DeleteSuperSampleNode();
 
   vtkMRMLScalarVolumeNode *ROILabelMapNode;
   vtkImageRectangularSource *ROILabelMap;

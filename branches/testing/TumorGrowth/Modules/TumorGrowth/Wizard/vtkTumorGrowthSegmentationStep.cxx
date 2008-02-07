@@ -70,6 +70,8 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   // Display Super Sampled Volume 
   // ----------------------------------------
   
+  // cout << "vtkTumorGrowthSegmentationStep::ShowUserInterface()" << endl;
+
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
   int intMin, intMax;
 
@@ -92,7 +94,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
       intMin = 0;
       intMax = 0;      
   }
-
+  //  cout << "What h" << endl;
   // ----------------------------------------
   // Build GUI 
   // ----------------------------------------
@@ -140,7 +142,6 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   // ----------------------------------------
   this->PreSegmentScan1Define();
   // Necesary in order to transfere results from above lines  
-
   this->ThresholdChangedCallback(0);
 
   // Kilian
@@ -164,20 +165,26 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   // after it gives a seg fault just say 
   // -> where
   
-  
+  // cout << "End Show user interface" << endl;
 }
 
 void vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() {
 
-
-  this->GetGUI()->GetMRMLScene()->RemoveNode(this->PreSegmentNode);  
-  this->GetGUI()->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->RemoveViewProp(this->PreSegment_Render_Volume);
-  this->PreSegmentNode = NULL;
+  // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() Start " << this->PreSegmentNode << endl;
+  if (this->PreSegmentNode) {
+    this->GetGUI()->GetMRMLScene()->RemoveNode(this->PreSegmentNode);  
+    this->PreSegmentNode = NULL;
+  } 
+  if (this->PreSegment_Render_Volume) {
+    this->GetGUI()->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->RemoveViewProp(this->PreSegment_Render_Volume);
+    this->PreSegment_Render_Volume = NULL; 
+  }
 
   if (this->PreSegment) {
     this->PreSegment->Delete();
     this->PreSegment = NULL;
   }
+
   if (this->PreSegment_Render_Mapper) {
     this->PreSegment_Render_Mapper->Delete();
     this->PreSegment_Render_Mapper = NULL;
@@ -202,10 +209,11 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() {
     this->PreSegment_Render_OrientationMatrix->Delete();
     this->PreSegment_Render_OrientationMatrix = NULL; 
   }
+  // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() End " << endl;
 }
 
 void vtkTumorGrowthSegmentationStep::SetPreSegment_Render_BandPassFilter(double value) {
-  cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
+  // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
 
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
   if (!mrmlNode) return;
@@ -261,54 +269,56 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   // ------------------------------
 
   // first set SPGR image in slice viewer 
-  applicationLogic->GetSelectionNode()->SetActiveVolumeID(spgrNode->GetID());
-  applicationLogic->PropagateVolumeSelection();
-
-  int nitems = applicationLogic->GetSlices()->GetNumberOfItems();
-  for (int i = 0; i < nitems; i++)
-  {
-    vtkSlicerSliceLogic *sliceLogic = vtkSlicerSliceLogic::SafeDownCast(applicationLogic->GetSlices()->GetItemAsObject(i));
-    sliceLogic->UpdatePipeline(); 
-  } 
-
-  // Then find setting of the slice viewer  copied from vtkSlicerViewerWidget)
-  int nnodes = mrmlScene->GetNumberOfNodesByClass("vtkMRMLDisplayableNode");
-  std::vector<vtkMRMLDisplayableNode *> slices;
-  
-  // cout <<  "vtkTumorGrowthSegmentationStep::PreSegmentScan1Define Number of nnodes "  << nnodes << endl; 
-  // set testNode [ $::slicer3::MRMLScene GetNthNodeByClass $zz "vtkMRMLModelNode" ] 
-
-  for (int n=0; n<nnodes; n++) {
-
-    vtkMRMLNode *mrmlDisplayNode = mrmlScene->GetNthNodeByClass(n, "vtkMRMLDisplayableNode");
-    vtkMRMLDisplayableNode *model = vtkMRMLDisplayableNode::SafeDownCast(mrmlDisplayNode);
-    // render slices last so that transparent objects are rendered in front of them
-    if (!strcmp(model->GetName(), "Red Volume Slice") ||
-        !strcmp(model->GetName(), "Green Volume Slice") ||
-        !strcmp(model->GetName(), "Yellow Volume Slice"))
-      {
-    cout << "==================> Found " << model->GetName() << endl;
-        slices.push_back(model);
-        vtkMRMLDisplayNode *displayNode = model->GetDisplayNode();
-     cout << "0000000000000000000" << endl;
-    vtkIndent indi;
-    displayNode->GetTextureImageData()->PrintSelf(cout,indi);
-     cout << "0000000000000000000" << endl;
-
-
-    vtkMRMLModelNode* copyNode  = vtkSlicerModelsLogic::CloneModel(mrmlScene,vtkMRMLModelNode::SafeDownCast(model),"blub");
-    if (!copyNode) {
-      cout << "Did not create copy of " << model->GetName() << endl;
-    } else {
+  if (0) {
+      applicationLogic->GetSelectionNode()->SetActiveVolumeID(spgrNode->GetID());
+      applicationLogic->PropagateVolumeSelection();
       
-      vtkMRMLDisplayNode *tmp = copyNode->GetDisplayNode();
-          tmp->SetVisibility(1);
-          vtkIndent ind;
-      tmp->PrintSelf(cout,ind);
-      vtkImageData *blub = tmp->GetTextureImageData();
-      blub->Update();
-    }
-    }
+      int nitems = applicationLogic->GetSlices()->GetNumberOfItems();
+      for (int i = 0; i < nitems; i++)
+      {
+        vtkSlicerSliceLogic *sliceLogic = vtkSlicerSliceLogic::SafeDownCast(applicationLogic->GetSlices()->GetItemAsObject(i));
+        sliceLogic->UpdatePipeline(); 
+      } 
+      
+      // Then find setting of the slice viewer  copied from vtkSlicerViewerWidget)
+      int nnodes = mrmlScene->GetNumberOfNodesByClass("vtkMRMLDisplayableNode");
+      std::vector<vtkMRMLDisplayableNode *> slices;
+      
+      // cout <<  "vtkTumorGrowthSegmentationStep::PreSegmentScan1Define Number of nnodes "  << nnodes << endl; 
+      // set testNode [ $::slicer3::MRMLScene GetNthNodeByClass $zz "vtkMRMLModelNode" ] 
+      
+      for (int n=0; n<nnodes; n++) {
+      
+        vtkMRMLNode *mrmlDisplayNode = mrmlScene->GetNthNodeByClass(n, "vtkMRMLDisplayableNode");
+        vtkMRMLDisplayableNode *model = vtkMRMLDisplayableNode::SafeDownCast(mrmlDisplayNode);
+        // render slices last so that transparent objects are rendered in front of them
+        if (!strcmp(model->GetName(), "Red Volume Slice") ||
+            !strcmp(model->GetName(), "Green Volume Slice") ||
+            !strcmp(model->GetName(), "Yellow Volume Slice"))
+          {
+        cout << "==================> Found " << model->GetName() << endl;
+            slices.push_back(model);
+            vtkMRMLDisplayNode *displayNode = model->GetDisplayNode();
+         cout << "0000000000000000000" << endl;
+        vtkIndent indi;
+        displayNode->GetTextureImageData()->PrintSelf(cout,indi);
+         cout << "0000000000000000000" << endl;
+      
+      
+        vtkMRMLModelNode* copyNode  = vtkSlicerModelsLogic::CloneModel(mrmlScene,vtkMRMLModelNode::SafeDownCast(model),"blub");
+        if (!copyNode) {
+          cout << "Did not create copy of " << model->GetName() << endl;
+        } else {
+          
+          vtkMRMLDisplayNode *tmp = copyNode->GetDisplayNode();
+              tmp->SetVisibility(1);
+              vtkIndent ind;
+          tmp->PrintSelf(cout,ind);
+          vtkImageData *blub = tmp->GetTextureImageData();
+          blub->Update();
+        }
+        }
+      }
   }
 
   // ---------------------------------
@@ -330,7 +340,7 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   this->PreSegment_Render_Mapper->SetInput(volumeNode->GetImageData());
 
   double* imgRange  = volumeNode->GetImageData()->GetPointData()->GetScalars()->GetRange();
-  cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Define()" << 100 << endl;
+  // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Define()" << 100 << endl;
 
   this->PreSegment_Render_BandPassFilter = vtkPiecewiseFunction::New();
   this->SetPreSegment_Render_BandPassFilter(100);
@@ -401,6 +411,7 @@ int vtkTumorGrowthSegmentationStep::SegmentScan1Define() {
   // Added it to MRML Script
   Node->SetScan1_SegmentRef(this->SegmentNode->GetID());
 
+
   return 1;
 }
 
@@ -440,6 +451,9 @@ void vtkTumorGrowthSegmentationStep::TransitionCallback()
 { 
   this->SegmentScan1Remove();
   if (!this->SegmentScan1Define()) return; 
+  vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
+  this->GetGUI()->GetLogic()->SaveVolume(application,this->SegmentNode); 
+  
   // Proceed to next step 
   this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep();
 }

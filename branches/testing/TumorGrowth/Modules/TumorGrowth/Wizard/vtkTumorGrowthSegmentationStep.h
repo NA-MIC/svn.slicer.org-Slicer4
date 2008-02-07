@@ -28,6 +28,8 @@ public:
   // Callbacks.
   virtual void ThresholdChangedCallback(double value);
   virtual void TransitionCallback(); 
+  // We call this function in order to remove nodes when going backwards 
+  virtual void RemoveResults()  { this->PreSegmentScan1Remove();}
 
   vtkGetObjectMacro(PreSegment,vtkImageThreshold);
 
