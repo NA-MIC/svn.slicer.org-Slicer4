@@ -54,10 +54,6 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
 {
    // Only one node is created 
    this->SingletonTag = "vtkMRMLTumorGrowthNode";
-   this->HideFromEditors = 0;
-
-   this->Conductance = 1.0;
-   this->TimeStep = 0.1;
    this->HideFromEditors = true;
 
    this->Scan1_Ref = NULL;
@@ -118,16 +114,6 @@ void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
 
   {
     std::stringstream ss;
-    ss << this->Conductance;
-    of << indent << " Conductance=\"" << ss.str() << "\"";
-  }
-  {
-    std::stringstream ss;
-    ss << this->TimeStep;
-    of << indent << " TimeStep=\"" << ss.str() << "\"";
-  }
-  {
-    std::stringstream ss;
     if ( this->Scan1_Ref )
       {
       ss << this->Scan1_Ref;
@@ -168,19 +154,7 @@ void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
     {
     attName = *(atts++);
     attValue = *(atts++);
-    if (!strcmp(attName, "Conductance")) 
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->Conductance;
-      }
-    else if (!strcmp(attName, "TimeStep")) 
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->TimeStep;
-      }
-    else if (!strcmp(attName, "Scan1_Ref"))
+    if (!strcmp(attName, "Scan1_Ref"))
       {
       this->SetScan1_Ref(attValue);
       this->Scene->AddReferencedNodeID(this->Scan1_Ref, this);
@@ -228,8 +202,6 @@ void vtkMRMLTumorGrowthNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLTumorGrowthNode *node = (vtkMRMLTumorGrowthNode *) anode;
 
-  this->SetConductance(node->Conductance);
-  this->SetTimeStep(node->TimeStep);
   this->SetScan1_Ref(node->Scan1_Ref);
   this->SetScan2_Ref(node->Scan2_Ref);
   this->ROIMin = node->ROIMin; 
@@ -243,17 +215,22 @@ void vtkMRMLTumorGrowthNode::Copy(vtkMRMLNode *anode)
 void vtkMRMLTumorGrowthNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
-  vtkMRMLNode::PrintSelf(os,indent);
-
-  os << indent << "Conductance:          " << this->Conductance << "\n";
-  os << indent << "TimeStep:             " << this->TimeStep << "\n";
+  // vtkMRMLNode::PrintSelf(os,indent);
+  os << indent << "ID:                   " << this->ID   << "\n";
+  os << indent << "Name:                 " << this->Name << "\n";
   os << indent << "Scan1_Ref:            " << 
    (this->Scan1_Ref ? this->Scan1_Ref : "(none)") << "\n";
-  os << indent << "OutputVolumeRef:      " << 
+  os << indent << "Scan2_Ref:            " << 
    (this->Scan2_Ref ? this->Scan2_Ref : "(none)") << "\n";
+  os << indent << "Scan1_SuperSampleRef: " << 
+   (this->Scan1_SuperSampleRef ? this->Scan1_SuperSampleRef : "(none)") << "\n";
+  os << indent << "Scan1_SegmentRef:     " << 
+   (this->Scan1_SegmentRef ? this->Scan1_SegmentRef : "(none)") << "\n";
   os << indent << "ROIMin:               "<< this->ROIMin[0] << " "<< this->ROIMin[1] << " "<< this->ROIMin[2] <<"\n";
   os << indent << "ROIMax:               "<< this->ROIMax[0] << " "<< this->ROIMax[1] << " "<< this->ROIMax[2] <<"\n";
   os << indent << "SegmentThreshold:     "<< this->SegmentThreshold << "\n";
   os << indent << "Analysis_Sensitivity: "<< this->Analysis_Sensitivity << "\n";
+  os << indent << "WorkingDir:           " <<  (this->WorkingDir ? this->WorkingDir : "(none)") << "\n";
+
 }
 

@@ -52,17 +52,6 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   // Get unique node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "TGParameters";};
 
-  // Description:
-  // Get/Set Conductance (module parameter)
-  vtkGetMacro(Conductance, double);
-  vtkSetMacro(Conductance, double);
-
-  // Description:
-  // Get/Set time step (module parameter)
-  vtkGetMacro(TimeStep, double);
-  vtkSetMacro(TimeStep, double);
-
- 
   // ------------------------------
   // -- First Step 
   // ------------------------------
@@ -153,9 +142,6 @@ protected:
   vtkMRMLTumorGrowthNode(const vtkMRMLTumorGrowthNode&);
   void operator=(const vtkMRMLTumorGrowthNode&);
 
-  double Conductance;
-  double TimeStep;
-  
   char* Scan1_Ref;
   char* Scan1_SuperSampleRef;
   char* Scan1_SegmentRef;
