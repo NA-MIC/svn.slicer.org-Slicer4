@@ -1495,7 +1495,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
           }
         else if ((*pit).GetType() == "nonlinear")
           {
-          // no nonlinear nodes are currently, so default to TransformNode
+          nodeClass = "vtkMRMLGridTransformNode";
           }
 
         tparameter->SetNodeClass(nodeClass.c_str(),
@@ -1529,7 +1529,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
           }
         else if ((*pit).GetType() == "nonlinear")
           {
-          // no nonlinear nodes are currently, default to LinearTransformNode
+          nodeClass = "vtkMRMLGridTransformNode";
           }
 
 
