@@ -60,6 +60,7 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData)
         this->CudaInputBuffer.CopyFrom(inputData->GetScalarPointer(), inputData->GetActualMemorySize() * 1024);
     }
     this->InputData = inputData;
+    this->Modified();
 }
 
 /**
@@ -69,6 +70,7 @@ void vtkCudaVolumeInformationHandler::SetThreshold(unsigned int min, unsigned in
 {
     this->VolumeInfo.MinThreshold = min;
     this->VolumeInfo.MaxThreshold = max;
+    this->Modified();
 }
 
 /**
@@ -104,17 +106,17 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     //    colorTransferFunction[i*3+2]=transferFunction[i*3+2]/255.0;
     //    alphaTransferFunction[i]=transferFunction[i+256*3]/255.0;
     //  }
-    //  this->CudaColorTransferFunction->CopyFrom(colorTransferFunction, 256*3*sizeof(float));
-    //  this->CudaAlphaTransferFunction->CopyFrom(alphaTransferFunction, 256 * sizeof(float));
+    //  this->CudaColorTransferFunction.CopyFrom(colorTransferFunction, 256*3*sizeof(float));
+    //  this->CudaAlphaTransferFunction.CopyFrom(alphaTransferFunction, 256 * sizeof(float));
     //
 
     double range[2];
     property->GetRGBTransferFunction()->GetRange(range);
-    property->GetRGBTransferFunction()->GetTable(range[0], range[1], 256, this->LocalColorTransferFunction.GetMemPointerAs<float>());
+    property->GetRGBTransferFunction()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalColorTransferFunction.GetMemPointerAs<float>());
 
     this->LocalColorTransferFunction.CopyTo(&this->CudaColorTransferFunction);
 
-    property->GetScalarOpacity()->GetTable(range[0], range[1], 256, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
+    property->GetScalarOpacity()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
     LocalAlphaTransferFunction.CopyTo(&CudaAlphaTransferFunction);
 
     this->VolumeInfo.AlphaTransferFunction = this->CudaAlphaTransferFunction.GetMemPointerAs<float>();

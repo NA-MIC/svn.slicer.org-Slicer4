@@ -8,6 +8,7 @@ class vtkImageData;
 class vtkVolumeProperty;
 class vtkCudaRendererInformationHandler;
 class vtkCudaVolumeInformationHandler;
+class vtkCudaMemoryTexture;
 
 //BTX
 namespace Cudapp {
@@ -23,9 +24,9 @@ public:
     static vtkVolumeCudaMapper *New();
 
     virtual void SetInput( vtkImageData * );
-
     virtual void Render(vtkRenderer *, vtkVolume *);
 
+    // Should be in Property??
     void SetThreshold(unsigned int min, unsigned int max);
     void SetThreshold(double* range) { SetThreshold((unsigned int)range[0], (unsigned int)range[1]); }
 
@@ -36,7 +37,7 @@ public:
      RenderToMemory,
    } RenderMode;
    void SetRenderMode(RenderMode mode);
-   RenderMode GetCurrentRenderMode() const { return this->CurrentRenderMode; }
+   int GetCurrentRenderMode() const;// { return this->CurrentRenderMode; }
    //ETX
 
    vtkImageData* GetOutput() { return this->LocalOutputImage; }
@@ -56,19 +57,14 @@ protected:
 
     vtkCudaRendererInformationHandler* RendererInfoHandler;
     vtkCudaVolumeInformationHandler* VolumeInfoHandler;
+    vtkCudaMemoryTexture* MemoryTexture;
 
 //BTX
     Cudapp::DeviceMemory* CudaOutputBuffer;
-    RenderMode CurrentRenderMode;
 
     Cudapp::LocalMemory* LocalZBuffer;
     Cudapp::DeviceMemory* CudaZBuffer;
 //ETX
-
-    unsigned int BufferObject;
-    unsigned int Texture;
-
-    bool GLBufferObjectsAvailiable;
 
 private:
     vtkVolumeCudaMapper operator=(const vtkVolumeCudaMapper&);

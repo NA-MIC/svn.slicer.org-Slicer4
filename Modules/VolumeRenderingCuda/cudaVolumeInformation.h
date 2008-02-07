@@ -1,6 +1,5 @@
 #ifndef __CUDAVOLUMEINFORMATION_H__
 #define __CUDAVOLUMEINFORMATION_H__
-
 //! A datastructure located on the cudacard that holds the information of the volume.
 extern "C"
 typedef struct {
@@ -37,5 +36,4 @@ typedef struct {
     float           SteppingSize;
 
 } cudaVolumeInformation;
-
 #endif /* __CUDAVOLUMEINFORMATION_H__ */

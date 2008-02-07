@@ -23,6 +23,7 @@
 // VTKCUDA
 #include "vtkCudaVolumeInformationHandler.h"
 #include "vtkCudaRendererInformationHandler.h"
+#include "vtkCudaMemoryTexture.h"
 
 // openGL
 #include "vtkOpenGLExtensionManager.h"
@@ -53,31 +54,11 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
     this->VolumeInfoHandler = vtkCudaVolumeInformationHandler::New();
     this->RendererInfoHandler = vtkCudaRendererInformationHandler::New();
+    this->MemoryTexture = vtkCudaMemoryTexture::New();
 
     this->LocalOutputImage = vtkImageData::New();
 
-    this->CudaOutputBuffer = new Cudapp::DeviceMemory();
-
-    this->Texture = 0;
-    this->BufferObject = 0;
-
     this->OutputDataSize[0] = this->OutputDataSize[1] = 0;
-
-    // check for the RenderMode
-    vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();
-    extensions->SetRenderWindow(NULL);
-    if (extensions->ExtensionSupported("GL_ARB_vertex_buffer_object"))
-    {
-        extensions->LoadExtension("GL_ARB_vertex_buffer_object");
-        this->GLBufferObjectsAvailiable = true;
-        this->CurrentRenderMode = RenderToTexture;
-    }
-    else
-    {
-        this->GLBufferObjectsAvailiable = false;
-        this->CurrentRenderMode = RenderToMemory;
-    }
-    extensions->Delete();
 
     this->LocalZBuffer = new Cudapp::LocalMemory();
     this->CudaZBuffer = new Cudapp::DeviceMemory();
@@ -85,18 +66,11 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
-    delete this->CudaOutputBuffer;
     this->LocalOutputImage->Delete();
 
     delete this->CudaZBuffer;
 
-    if (this->Texture == 0 || !glIsTexture(this->Texture))
-        glGenTextures(1, &this->Texture);
-
-    if (this->GLBufferObjectsAvailiable == true)
-        if (this->BufferObject != 0 && vtkgl::IsBufferARB(this->BufferObject))
-            vtkgl::DeleteBuffersARB(1, &this->BufferObject);
-
+    this->MemoryTexture->Delete();
     this->VolumeInfoHandler->Delete();
     this->RendererInfoHandler->Delete();
 }
@@ -109,15 +83,13 @@ void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
 
 void vtkVolumeCudaMapper::SetRenderMode(vtkVolumeCudaMapper::RenderMode mode)
 {
-    if (mode == RenderToTexture && this->GLBufferObjectsAvailiable)
-    {
-        this->CurrentRenderMode = mode;
-    }
-    else
-    {
-        this->CurrentRenderMode = RenderToMemory;
-    }
-    this->UpdateOutputResolution(this->OutputDataSize[0], this->OutputDataSize[1], true);
+    this->MemoryTexture->SetRenderMode(mode);
+}
+
+int vtkVolumeCudaMapper::GetCurrentRenderMode() const
+{
+    return this->MemoryTexture->GetCurrentRenderMode();
+    //TODO
 }
 
 /**
@@ -133,50 +105,26 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
     if (this->OutputDataSize[0] == width &&
         this->OutputDataSize[1] == height && !TypeChanged)
         return;
-
     // Set the data Size
     this->OutputDataSize[0] = width ;
     this->OutputDataSize[1] = height;
 
     // Re-allocate the memory
-    this->CudaOutputBuffer->Allocate<uchar4>(this->OutputDataSize[0] * this->OutputDataSize[1]);
     this->LocalZBuffer->Allocate<float>(this->OutputDataSize[0] * this->OutputDataSize[1]);
     this->CudaZBuffer->Allocate<float>(this->OutputDataSize[0] * this->OutputDataSize[1]);
 
-    {
-        // Allocate the Image Data
-        this->LocalOutputImage->SetScalarTypeToUnsignedChar();
-        this->LocalOutputImage->SetNumberOfScalarComponents(4);
-        this->LocalOutputImage->SetDimensions(this->OutputDataSize[0], this->OutputDataSize[1], 1);
-        this->LocalOutputImage->SetExtent(0, this->OutputDataSize[0] - 1, 
-            0, this->OutputDataSize[1] - 1, 
-            0, 1 - 1);
-        this->LocalOutputImage->SetNumberOfScalarComponents(4);
-        this->LocalOutputImage->AllocateScalars();
-    }
-    // TEXTURE CODE
-    glEnable(GL_TEXTURE_2D);
-    if (this->Texture != 0 && glIsTexture(this->Texture))
-        glDeleteTextures(1, &this->Texture);
-    glGenTextures(1, &this->Texture);
-    glBindTexture(GL_TEXTURE_2D, this->Texture);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, this->OutputDataSize[0], this->OutputDataSize[1], 0, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    if (this->CurrentRenderMode == RenderToTexture)
-    {
-        // OpenGL Buffer Code
-        if (this->BufferObject != 0 && vtkgl::IsBufferARB(this->BufferObject))
-            vtkgl::DeleteBuffersARB(1, &this->BufferObject);
-        vtkgl::GenBuffersARB(1, &this->BufferObject);
-        vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObject);
-        vtkgl::BufferDataARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->OutputDataSize[0] * this->OutputDataSize[1] * 4, this->LocalOutputImage->GetScalarPointer(), vtkgl::STREAM_COPY);
-        vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
-    }
+    //{
+    //    // Allocate the Image Data
+    //    this->LocalOutputImage->SetScalarTypeToUnsignedChar();
+    //    this->LocalOutputImage->SetNumberOfScalarComponents(4);
+    //    this->LocalOutputImage->SetDimensions(this->OutputDataSize[0], this->OutputDataSize[1], 1);
+    //    this->LocalOutputImage->SetExtent(0, this->OutputDataSize[0] - 1, 
+    //        0, this->OutputDataSize[1] - 1, 
+    //        0, 1 - 1);
+    //    this->LocalOutputImage->SetNumberOfScalarComponents(4);
+    //    this->LocalOutputImage->AllocateScalars();
+    //}
+    this->MemoryTexture->SetSize(width, height);
 }
 
 #include "vtkTimerLog.h"
@@ -204,21 +152,9 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
 
     // Do rendering.
-    uchar4* RenderDestination = NULL;
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, this->Texture);
+    this->MemoryTexture->BindTexture();
+    this->MemoryTexture->BindBuffer();
 
-    if (this->CurrentRenderMode == RenderToTexture)
-    {
-        CUDA_SAFE_CALL( cudaGLRegisterBufferObject(this->BufferObject) );
-
-        vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObject);
-        CUDA_SAFE_CALL(cudaGLMapBufferObject((void**)&RenderDestination, this->BufferObject));
-    }
-    else
-    {
-        RenderDestination = this->CudaOutputBuffer->GetMemPointerAs<uchar4>();
-    }
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
 
@@ -231,7 +167,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     this->VolumeInfoHandler->SetVolume(volume);
     this->VolumeInfoHandler->Update();
 
-    CUDArenderAlgo_doRender(RenderDestination,
+    CUDArenderAlgo_doRender((uchar4*)this->MemoryTexture->GetRenderDestination(),
         this->RendererInfoHandler->GetRendererInfo(),
         this->VolumeInfoHandler->GetVolumeInfo());         
 
@@ -240,18 +176,8 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     //vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
 
     log->StartTimer();
-    if (this->CurrentRenderMode == RenderToTexture)
-    {
-        CUDA_SAFE_CALL(cudaGLUnmapBufferObject(this->BufferObject));
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->OutputDataSize[0], this->OutputDataSize[1], GL_RGBA, GL_UNSIGNED_BYTE, (0));
-        CUDA_SAFE_CALL( cudaGLUnregisterBufferObject(this->BufferObject) );
-        vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
-    }
-    else // (this->CurrentRenderMode == RenderToMemory)
-    {
-        this->CudaOutputBuffer->CopyTo(this->LocalOutputImage->GetScalarPointer(), this->LocalOutputImage->GetActualMemorySize() * 1024);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->OutputDataSize[0], this->OutputDataSize[1], GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputImage->GetScalarPointer());
-    }
+    this->MemoryTexture->UnbindBuffer();
+
     log->StopTimer();
     //vtkErrorMacro(<< "Elapsed Time to Copy Memory:: " << log->GetElapsedTime());
 
@@ -302,7 +228,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glPopAttrib();
 
     log->Delete();
-
+    this->MemoryTexture->UnbindTexture();
     return;
 }
 
