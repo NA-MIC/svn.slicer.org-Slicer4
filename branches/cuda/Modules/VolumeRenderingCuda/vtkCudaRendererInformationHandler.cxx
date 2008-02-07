@@ -15,7 +15,6 @@
 
 // vtkCuda
 #include "vtkCudaMemoryTexture.h"
-
 vtkCxxRevisionMacro(vtkCudaRendererInformationHandler, "$Revision: 1.0 $");
 vtkStandardNewMacro(vtkCudaRendererInformationHandler);
 
@@ -100,7 +99,7 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.ViewUp[2] = cam->GetViewUp()[2];
         double clipRange[2];
         cam->GetClippingRange(clipRange);
-        this->RendererInfo.NearPlane = (float)clipRange[0];
-        this->RendererInfo.FarPlane = (float)clipRange[1];
+        this->RendererInfo.ClippingRange[0] = (float)clipRange[0];
+        this->RendererInfo.ClippingRange[1] = (float)clipRange[1];
     }
 }

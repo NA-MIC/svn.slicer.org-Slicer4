@@ -216,7 +216,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     tempz /= s_vsize[2];
     
 
-    if(tempx >= s_minmax[0] && tempx <= s_minmax[1] && tempy >= s_minmax[2] && tempy <= s_minmax[3] && tempz >= s_minmax[4] && tempz <= s_minmax[5] && pos+s_minmaxTrace[tempacc].x >=renInfo.NearPlane){ // if current position is in ROI
+    if(tempx >= s_minmax[0] && tempx <= s_minmax[1] && tempy >= s_minmax[2] && tempy <= s_minmax[3] && tempz >= s_minmax[4] && tempz <= s_minmax[5] && pos+s_minmaxTrace[tempacc].x >=renInfo.ClippingRange[0]){ // if current position is in ROI
 
       if(pos+s_minmaxTrace[tempacc].x < initialZBuffer){ //check whether current position is in front of z buffer wall
 

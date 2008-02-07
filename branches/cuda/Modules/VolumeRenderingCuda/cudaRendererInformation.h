@@ -23,8 +23,7 @@ typedef struct
 
     uchar4*        OutputImage;
     float*         ZBuffer;
-    float          NearPlane;
-    float          FarPlane;
+    float          ClippingRange[2];
 } cudaRendererInformation;
 
 #endif /* __CUDARENDERERINFORMATION_H__ */
