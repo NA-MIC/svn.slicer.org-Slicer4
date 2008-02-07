@@ -20,15 +20,25 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
     vtkVolumeRenderingCudaFactory.cxx
     vtkVolumeRenderingCudaModuleGUI.cxx
     vtkVolumeRenderingCudaModuleLogic.cxx
-    
+  
+  
   #### CUDA Pipeline Classes ####
     vtkCudaImageDataFilter.cxx
     vtkCudaImageData.cxx
 
+  ## Special Classes
+  vtkCudaMemoryTexture.cxx
     
   ## WIDGETS ##
     vtkKWTypeChooserBox.cxx
   )
+  SET(VolumeRenderingCudaModule_ADDITIONAL_HEADERS
+    # Cuda Classes
+      CUDA_renderAlgo.h
+      cudaRendererInformation.h
+      cudaVolumeInformation.h
+      )
+  
   SET(VolumeRenderingCudaModule_CUDA_SRCS
       CUDA_renderAlgo.cu
   )
@@ -102,6 +112,7 @@ SET(VolumeRenderingCudaModule_LIBRARIES
 
 CUDA_ADD_LIBRARY(VolumeRenderingCudaModule
   ${VolumeRenderingCudaModule_SRCS}
+  ${VolumeRenderingCudaModule_ADDITIONAL_HEADERS}
   ${VolumeRenderingCudaModule_TCL_SRCS}
   ${VolumeRenderingCudaModule_CUDA_SRCS}
   )
