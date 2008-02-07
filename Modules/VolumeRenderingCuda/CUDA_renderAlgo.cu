@@ -124,12 +124,18 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   __syncthreads();
   
   //normalize ray vector
-  
-  temp= 1.0f/sqrt((s_rayMap[tempacc*6+3]*s_rayMap[tempacc*6+3]+s_rayMap[tempacc*6+4]*s_rayMap[tempacc*6+4]+s_rayMap[tempacc*6+5]*s_rayMap[tempacc*6+5]));
-  s_rayMap[tempacc*6+3]*=temp;
-  s_rayMap[tempacc*6+4]*=temp;
-  s_rayMap[tempacc*6+5]*=temp;
 
+  float getmax = fabs(s_rayMap[tempacc*6+3]/s_vsize[0]);
+  if(fabs(s_rayMap[tempacc*6+4]/s_vsize[1])>getmax) getmax = fabs(s_rayMap[tempacc*6+4]/s_vsize[1]);
+  if(fabs(s_rayMap[tempacc*6+5]/s_vsize[2])>getmax) getmax = fabs(s_rayMap[tempacc*6+5]/s_vsize[2]);
+
+  if(getmax!=0){
+    float temp= 1.0f/getmax;
+    s_rayMap[tempacc*6+3]*=temp;
+    s_rayMap[tempacc*6+4]*=temp;
+    s_rayMap[tempacc*6+5]*=temp;
+  }
+  
   __syncthreads();
 
   //calculating starting and ending point of ray tracing
@@ -205,7 +211,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     tempx = ( s_rayMap[tempacc*6+0]+((int)s_minmaxTrace[tempacc].x+pos)*s_rayMap[tempacc*6+3]);
     tempy = ( s_rayMap[tempacc*6+1]+((int)s_minmaxTrace[tempacc].x+pos)*s_rayMap[tempacc*6+4]);
     tempz = ( s_rayMap[tempacc*6+2]+((int)s_minmaxTrace[tempacc].x+pos)*s_rayMap[tempacc*6+5]);
-    
     
     tempx /= s_vsize[0];
     tempy /= s_vsize[1];
