@@ -29,6 +29,7 @@
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLTransformNode.h"
 #include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLNonlinearTransformNode.h"
 #include "vtkMRMLFiberBundleNode.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
@@ -700,6 +701,7 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
   vtkMRMLDiffusionWeightedVolumeNode *dwvnd = 0;
   vtkMRMLModelNode *mnd = 0;
   vtkMRMLLinearTransformNode *ltnd = 0;
+  vtkMRMLNonlinearTransformNode *nltnd = 0;
   vtkMRMLFiberBundleNode *fbnd = 0;
   vtkMRMLColorTableNode *cnd = 0;
   
@@ -711,6 +713,7 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
   dwvnd = vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(nd);
   mnd   = vtkMRMLModelNode::SafeDownCast(nd);
   ltnd  = vtkMRMLLinearTransformNode::SafeDownCast(nd);
+  nltnd  = vtkMRMLNonlinearTransformNode::SafeDownCast(nd);
   fbnd  = vtkMRMLFiberBundleNode::SafeDownCast(nd);
   cnd = vtkMRMLColorTableNode::SafeDownCast(nd);
   
@@ -753,7 +756,7 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
       // Load a model node
       in = vtkMRMLModelStorageNode::New();
       }
-    else if (ltnd)
+    else if (ltnd || nltnd)
       {
       // Load a linear transform node
 
@@ -871,7 +874,7 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
     // Model node
     disp = vtkMRMLModelDisplayNode::New();
     }
-  else if (ltnd)
+  else if (ltnd || nltnd)
     {
     // Linear transform node
     // (no display node)  
