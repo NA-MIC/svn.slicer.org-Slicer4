@@ -302,28 +302,31 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         IntensityThresholding_DeleteOutput $SCAN_ID
 
-        if { $SCAN_ID == 1} { 
-          set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
-          if {$SCAN_NODE == ""} { 
+    set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
+        if {$SCAN1_NODE == ""} { 
               puts "ERROR: IntensityThresholding_GUI: No Scan1_SuperSampleRef defined !"
               return 0
-          }
-            } else {
-              set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
+        }
+        set SCAN1_VOL [$SCAN1_NODE GetImageData]         
+
+        if { $SCAN_ID == 1} { 
+        set SCAN_NODE $SCAN1_NODE
+            set INPUT_VOL $SCAN1_VOL 
+        } else {
+          set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
           if {$SCAN_NODE == ""} { 
               puts "ERROR: IntensityThresholding_GUI: No Scan2_NormedRef defined !"
               return 0
           }
+      set INPUT_VOL [$SCAN_NODE GetImageData]         
         }
-
-        set INPUT_VOL [$SCAN_NODE GetImageData]         
         set OUTPUT_VOL [vtkImageData New]
 
         # -------------------------------------
         # Run Thresholding and return results
         # -------------------------------------
-        puts "Threshold [$NODE GetSegmentThreshold]" 
-        IntensityThresholding_Fct $INPUT_VOL [$NODE GetSegmentThreshold] $OUTPUT_VOL 
+        puts "Threshold: [$NODE GetSegmentThresholdMin] [$NODE GetSegmentThresholdMax]" 
+        IntensityThresholding_Fct $INPUT_VOL $SCAN1_VOL [$NODE GetSegmentThresholdMin] [$NODE GetSegmentThresholdMax] $OUTPUT_VOL 
 
         set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN_NODE "TG_scan${SCAN_ID}_Thr" ]
         $OUTPUT_NODE SetAndObserveImageData $OUTPUT_VOL
@@ -334,19 +337,51 @@ namespace eval TumorGrowthTcl {
         return  1
     }
 
-    proc IntensityThresholding_Fct { INPUT THRESH OUTPUT} {
+    proc IntensityThresholding_Fct { INPUT SCAN1 THRESH_MIN THRESH_MAX OUTPUT} {
       # Eveyrthing outside below threhold is set to threshold
+    
+      if { $INPUT != $SCAN1 } {
+          set Scan1Range [[[$SCAN1 GetPointData] GetScalars] GetRange]
+          set InputRange [[[$INPUT GetPointData] GetScalars] GetRange]
+      if {[lindex $Scan1Range 0] >= $THRESH_MIN } {
+          set MIN [lindex $InputRange 0]
+      } else {
+          set MIN $THRESH_MIN 
+      }
 
-      catch {ROIThreshold Delete}
-      vtkImageThreshold ROIThreshold
-        ROIThreshold ThresholdByUpper $THRESH
-        ROIThreshold SetInput  $INPUT
-        ROIThreshold ReplaceInOff  
-        ROIThreshold SetOutValue $THRESH
-        ROIThreshold SetOutputScalarTypeToShort
-      ROIThreshold Update
-      $OUTPUT DeepCopy [ROIThreshold GetOutput]
-      ROIThreshold Delete
+      if {[lindex $Scan1Range 1] <= $THRESH_MAX } {
+          set MAX [lindex $InputRange 1]
+      } else {
+          set MAX $THRESH_MAX 
+      }
+        # Check if minimum / maximimum is min/max intensity of scan1 -> then set it to Min/Max  intensity of scan ID 
+      } else {
+      set MIN $THRESH_MIN
+      set MAX $THRESH_MAX
+      }
+
+      catch {ROIThresholdMin Delete}
+      vtkImageThreshold ROIThresholdMin
+        ROIThresholdMin ThresholdByUpper $MIN
+        ROIThresholdMin SetInput  $INPUT
+        ROIThresholdMin ReplaceInOff  
+        ROIThresholdMin SetOutValue $MIN
+        ROIThresholdMin SetOutputScalarTypeToShort
+      ROIThresholdMin Update
+
+
+      catch {ROIThresholdMax Delete}
+      vtkImageThreshold ROIThresholdMax
+        ROIThresholdMax ThresholdByLower $MAX
+        ROIThresholdMax SetInput [ROIThresholdMin GetOutput]
+        ROIThresholdMax ReplaceInOff  
+        ROIThresholdMax SetOutValue $MAX
+        ROIThresholdMax SetOutputScalarTypeToShort
+      ROIThresholdMax Update
+
+      $OUTPUT DeepCopy [ROIThresholdMax GetOutput]
+      ROIThresholdMax Delete
+      ROIThresholdMin Delete
     }
 
     proc IntensityThresholding_DeleteOutput { SCAN_ID } {
@@ -363,7 +398,7 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan${SCAN_ID}_ThreshRef]]
         if {$OUTPUT_NODE != "" } { 
-        $SCENE RemoveNode $OUTPUT_NODE 
+            $SCENE RemoveNode $OUTPUT_NODE 
             $NODE SetScan${SCAN_ID}_ThreshRef ""
         }
     }
@@ -451,7 +486,7 @@ namespace eval TumorGrowthTcl {
        set result [Analysis_ComputeThreshold [TumorGrowth(FinalSubtractSmooth) GetOutput] $Scan1Segment $AnalysisSensitivity]
        set FinalThreshold [lindex $result 2]
 
-       # Change label 
+       # Define ROI by assinging flipping binary map 
        catch {TumorGrowth(FinalROI) Delete } 
        vtkImageThreshold TumorGrowth(FinalROI) 
          TumorGrowth(FinalROI)  SetInput $Scan1Segment 
@@ -461,6 +496,7 @@ namespace eval TumorGrowthTcl {
          TumorGrowth(FinalROI)  SetOutputScalarTypeToShort
        TumorGrowth(FinalROI) Update
 
+       # Define image of ROI
        catch {TumorGrowth(FinalMultiply)  Delete } 
        vtkImageMathematics TumorGrowth(FinalMultiply)
          TumorGrowth(FinalMultiply) SetInput1 [TumorGrowth(FinalROI)       GetOutput] 
