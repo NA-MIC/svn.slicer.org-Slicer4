@@ -6,6 +6,8 @@
 
 class vtkImageData;
 class vtkVolumeProperty;
+class vtkCudaRendererInformationHandler;
+class vtkCudaVolumeInformationHandler;
 
 //BTX
 namespace Cudapp {
@@ -52,6 +54,9 @@ protected:
 
     vtkImageData* LocalOutputImage;
 
+
+    vtkCudaRendererInformationHandler* RendererInfoHandler;
+    vtkCudaVolumeInformationHandler* VolumeInfoHandler;
 
 //BTX
     Cudapp::DeviceMemory* CudaInputBuffer;
