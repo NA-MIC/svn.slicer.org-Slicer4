@@ -2,7 +2,8 @@
 #include "vtkVolumeCudaMapper.h"
 #include "vtkVolumeRenderingCudaFactory.h"
 #include "vtkObjectFactory.h"
-// Extended Type
+
+// Volume
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
 
@@ -16,39 +17,20 @@
 #include "vtkImageData.h"
 #include "CudappDeviceMemory.h"
 #include "CudappHostMemory.h"
-#include "CudappMemoryArray.h"
-#include "cudaRendererInformation.h"
-#include "cudaVolumeInformation.h"
-#include <vector_types.h>
+
 // VTKCUDA
 #include "vtkCudaVolumeInformationHandler.h"
 #include "vtkCudaRendererInformationHandler.h"
 #include "vtkCudaMemoryTexture.h"
 
-// openGL
-#include "vtkOpenGLExtensionManager.h"
 #include "vtkgl.h"
-#include "cuda_gl_interop.h"
-
 extern "C" {
 #include "CUDA_renderAlgo.h"
 }
-#include <cutil.h>
 
 
-vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.6 $");
-
-vtkVolumeCudaMapper* vtkVolumeCudaMapper::New()
-{
-    Cudapp::Support* support = new Cudapp::Support();
-    bool cudaIsSupported = support->IsSupported();
-    delete support;
-    if (cudaIsSupported)
-        return new vtkVolumeCudaMapper;
-    else
-        return new vtkVolumeCudaMapper; // HACK
-
-}
+vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.8 $");
+vtkStandardNewMacro(vtkVolumeCudaMapper);
 
 vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
@@ -106,31 +88,17 @@ void vtkVolumeCudaMapper::UpdateOutputResolution(unsigned int width, unsigned in
         this->OutputDataSize[1] == height && !TypeChanged)
         return;
     // Set the data Size
-    this->OutputDataSize[0] = width ;
+    this->OutputDataSize[0] = width;
     this->OutputDataSize[1] = height;
 
     // Re-allocate the memory
     this->LocalZBuffer->Allocate<float>(this->OutputDataSize[0] * this->OutputDataSize[1]);
     this->CudaZBuffer->Allocate<float>(this->OutputDataSize[0] * this->OutputDataSize[1]);
 
-    //{
-    //    // Allocate the Image Data
-    //    this->LocalOutputImage->SetScalarTypeToUnsignedChar();
-    //    this->LocalOutputImage->SetNumberOfScalarComponents(4);
-    //    this->LocalOutputImage->SetDimensions(this->OutputDataSize[0], this->OutputDataSize[1], 1);
-    //    this->LocalOutputImage->SetExtent(0, this->OutputDataSize[0] - 1, 
-    //        0, this->OutputDataSize[1] - 1, 
-    //        0, 1 - 1);
-    //    this->LocalOutputImage->SetNumberOfScalarComponents(4);
-    //    this->LocalOutputImage->AllocateScalars();
-    //}
     this->MemoryTexture->SetSize(width, height);
 }
 
 #include "vtkTimerLog.h"
-#include "texture_types.h"
-#include "vtkMatrix4x4.h"
-#include "vector_functions.h"
 
 void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
@@ -150,14 +118,12 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     //int width = size[0], height = size[1];
     this->UpdateOutputResolution(size[0], size[1]);
 
-
     // Do rendering.
     this->MemoryTexture->BindTexture();
     this->MemoryTexture->BindBuffer();
 
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
-
 
     // Renderer Information Setter.
     this->RendererInfoHandler->SetRenderer(renderer);
@@ -174,7 +140,6 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     // Get the resulted image.
     log->StopTimer();
     //vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
-
     log->StartTimer();
     this->MemoryTexture->UnbindBuffer();
 
@@ -223,12 +188,11 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glTexCoord2i(1,1);
     glVertex4dv(coordinatesD);
     glEnd();
-
     glPopAttrib();
     glPopAttrib();
+    this->MemoryTexture->UnbindTexture();
 
     log->Delete();
-    this->MemoryTexture->UnbindTexture();
     return;
 }
 
