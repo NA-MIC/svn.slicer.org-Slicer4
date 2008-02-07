@@ -215,8 +215,8 @@ itcl::body SWidget::queryLayers { x y {z 0} } {
       set _layers($layer,pixel) "None"
     } else {
       set _layers($layer,image) [$_layers($layer,node) GetImageData]
-      set _layers($layer,xyToIJK) [$_layers($layer,logic) GetXYToIJKTransform]
-      foreach {i j k l} [$_layers($layer,xyToIJK) TransformPoint $x $y $z] {}
+      set _layers($layer,xyToIJK) [[$_layers($layer,logic) GetXYToIJKTransform] GetMatrix]
+      foreach {i j k l} [$_layers($layer,xyToIJK) MultiplyPoint $x $y $z 1] {}
       foreach v {i j k} { ;# cast to integer
         if { ![string is double [set $v]] } {
           set _layers($layer,$v) 0
@@ -245,7 +245,7 @@ itcl::body SWidget::getPixel { image i j k } {
     }
   } else {
     # directly access the scalars to get pixel value
-    # - need to compensate because the increments already include the pixel size
+    # - need to compensate because increments already include the pixel size
     set scalars [[$image GetPointData] GetScalars]
     foreach "w h d" [$image GetDimensions] {}
     set sliceSize [expr $w * $h]
