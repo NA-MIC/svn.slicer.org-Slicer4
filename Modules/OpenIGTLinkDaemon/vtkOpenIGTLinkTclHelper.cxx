@@ -334,23 +334,6 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
   std::cerr << nx << ", " << ny << ", " << nz << std::endl;
   std::cerr << px << ", " << py << ", " << pz << std::endl;
 
-  float psi = sqrt(tx*tx + ty*ty + tz*tz);
-  float psj = sqrt(sx*sx + sy*sy + sz*sz);
-  float psk = sqrt(nx*nx + ny*ny + nz*nz);
-
-  tx = tx / psi;
-  ty = ty / psi;
-  tz = tz / psi;
-  sx = sx / psj;
-  sy = sy / psj;
-  sz = sz / psj;
-  nx = nx / psk;
-  ny = ny / psk;
-  nz = nz / psk;
-
-  float hfovi = psi * size[0] / 2.0;
-  float hfovj = psj * size[1] / 2.0;
-
   vtkImageData* imageData;
   if (newNode)
     {
@@ -418,6 +401,26 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
 //    lpsToRas->Multiply4x4(lpsToRas, rtimgTransform, rtimgTransform);
 //    lpsToRas->Delete();
 //  }
+
+
+  // normalize
+  float psi = sqrt(tx*tx + ty*ty + tz*tz);
+  float psj = sqrt(sx*sx + sy*sy + sz*sz);
+  float psk = sqrt(nx*nx + ny*ny + nz*nz);
+
+  tx = tx / psi;
+  ty = ty / psi;
+  tz = tz / psi;
+  sx = sx / psj;
+  sy = sy / psj;
+  sz = sz / psj;
+  nx = nx / psk;
+  ny = ny / psk;
+  nz = nz / psk;
+
+  float hfovi = psi * size[0] / 2.0;
+  float hfovj = psj * size[1] / 2.0;
+
   rtimgTransform->Invert();
   volumeNode->SetRASToIJKMatrix(rtimgTransform);
 
