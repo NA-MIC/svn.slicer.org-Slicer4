@@ -134,6 +134,8 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     s_rayMap[tempacc*6+4]*=temp;
     s_rayMap[tempacc*6+5]*=temp;
   }
+
+  float stepSize=sqrt(s_rayMap[tempacc*6+3]*s_rayMap[tempacc*6+3]+s_rayMap[tempacc*6+4]*s_rayMap[tempacc*6+4]+s_rayMap[tempacc*6+5]*s_rayMap[tempacc*6+5]);
   
   __syncthreads();
 
@@ -218,7 +220,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
     if(tempx >= s_minmax[0] && tempx <= s_minmax[1] && tempy >= s_minmax[2] && tempy <= s_minmax[3] && tempz >= s_minmax[4] && tempz <= s_minmax[5] && pos+s_minmaxTrace[tempacc].x >=renInfo.ClippingRange[0]){ // if current position is in ROI
 
-      if(pos+s_minmaxTrace[tempacc].x < initialZBuffer){ //check whether current position is in front of z buffer wall
+      if((pos+s_minmaxTrace[tempacc].x)*stepSize < initialZBuffer){ //check whether current position is in front of z buffer wall
 
 	temp=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
 
@@ -226,8 +228,8 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
 	  alpha=volInfo.AlphaTransferFunction[(int)temp];
 	  
-	  if(s_zBuffer[tempacc] > pos+s_minmaxTrace[tempacc].x){
-	    s_zBuffer[tempacc]=pos+s_minmaxTrace[tempacc].x;
+	  if(s_zBuffer[tempacc] > (pos+s_minmaxTrace[tempacc].x)*stepSize){
+	    s_zBuffer[tempacc]=(pos+s_minmaxTrace[tempacc].x)*stepSize;
 	  }
 	  
 	  if(s_integrationVal[tempacc]<1.0){ // check if integration value has reached threshold(1.0)
