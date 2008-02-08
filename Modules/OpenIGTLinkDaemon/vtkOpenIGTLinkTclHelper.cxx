@@ -31,6 +31,8 @@
 #include "vtkDoubleArray.h"
 #include "vtkMath.h"
 
+#include "arpa/inet.h"
+
 #include "vtkMRMLScalarVolumeNode.h"
 
 vtkCxxRevisionMacro(vtkOpenIGTLinkTclHelper, "$Revision: 1.4 $");
