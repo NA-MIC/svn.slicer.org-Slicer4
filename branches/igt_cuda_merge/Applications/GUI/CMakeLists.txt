@@ -126,6 +126,10 @@ SET(dir_list
   ${SlicerDaemon_BINARY_DIR}
   ${SlicerDaemon_Init_SOURCE_DIR}
   ${SlicerDaemon_Init_BINARY_DIR}
+  ${OpenIGTLinkDaemon_SOURCE_DIR}
+  ${OpenIGTLinkDaemon_BINARY_DIR}
+  ${OpenIGTLinkDaemon_Init_SOURCE_DIR}
+  ${OpenIGTLinkDaemon_Init_BINARY_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
   ${VTK_INCLUDE_DIR}
   ${NAVITRACK_INC}
@@ -233,6 +237,7 @@ IF(BUILD_MODULES)
     CommandLineModule
     ScriptedModule
     SlicerDaemon
+    OpenIGTLinkDaemon
     ${WFENGINE_LINK_LIB}
     QdecModule
     SlicerTractographyDisplay

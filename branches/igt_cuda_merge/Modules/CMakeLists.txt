@@ -9,6 +9,7 @@ SUBDIRS(
   GradientAnisotropicDiffusionFilter
   EMSegment
   SlicerDaemon
+  OpenIGTLinkDaemon
   Editor
   Python
   PythonGADScriptedModule
