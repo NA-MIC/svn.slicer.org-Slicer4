@@ -31,7 +31,11 @@
 #include "vtkDoubleArray.h"
 #include "vtkMath.h"
 
+#ifdef WIN32
+#include "Winsock2.h"
+#else
 #include "arpa/inet.h"
+#endif /* LINUX */
 
 #include "vtkMRMLScalarVolumeNode.h"
 
