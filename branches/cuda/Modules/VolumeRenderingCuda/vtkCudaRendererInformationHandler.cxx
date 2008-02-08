@@ -70,7 +70,7 @@ void vtkCudaRendererInformationHandler::Update()
         for (unsigned int i = 0 ; i < this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]; i++)
             this->LocalZBuffer.GetMemPointerAs<float>()[i] = 100000;
 
-        //renderer->GetRenderWindow()->GetZbufferData(0,0,this->OutputDataSize[0]-1, this->OutputDataSize[1]-1, this->LocalZBuffer->GetMemPointerAs<float>());
+        //renWin->GetZbufferData(0,0,this->RendererInfo.Resolution[0]-1, this->RendererInfo.Resolution[1]-1, this->LocalZBuffer.GetMemPointerAs<float>());
         this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
         this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
 

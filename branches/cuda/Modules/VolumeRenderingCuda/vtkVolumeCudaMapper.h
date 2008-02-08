@@ -4,8 +4,8 @@
 #include "vtkVolumeMapper.h"
 #include "vtkVolumeRenderingCudaModule.h"
 
-class vtkImageData;
 class vtkVolumeProperty;
+
 class vtkCudaRendererInformationHandler;
 class vtkCudaVolumeInformationHandler;
 class vtkCudaMemoryTexture;
@@ -28,7 +28,7 @@ public:
    int GetCurrentRenderMode() const;// { return this->CurrentRenderMode; }
    //ETX
 
-   vtkImageData* GetOutput() { return this->LocalOutputImage; }
+   vtkImageData* GetOutput() { return NULL; /*this->LocalOutputImage;*/ }
 
    void PrintSelf(ostream& os, vtkIndent indent);
 
@@ -37,8 +37,6 @@ protected:
     virtual ~vtkVolumeCudaMapper();
 
     void UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged = false);
-
-    vtkImageData* LocalOutputImage;
 
     vtkCudaRendererInformationHandler* RendererInfoHandler;
     vtkCudaVolumeInformationHandler* VolumeInfoHandler;

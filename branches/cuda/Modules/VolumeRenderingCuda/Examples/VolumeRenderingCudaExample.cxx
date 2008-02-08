@@ -155,26 +155,30 @@ int my_main(int argc, char *argv[])
     }
 
     
-        //reader[0]->Delete();
-        //reader[0]= vtkImageReader::New();
-        //reader[0]->SetDataScalarTypeToShort();
-        //reader[0]->SetNumberOfScalarComponents(1);
-        //reader[0]->SetDataExtent(0, 127,
-        //    0, 127, 
-        //    0, 29);
-        //reader[0]->SetFileDimensionality(3);
+        reader[0]->Delete();
+        reader[0]= vtkImageReader::New();
+        reader[0]->SetDataScalarTypeToShort();
+        reader[0]->SetNumberOfScalarComponents(1);
+        reader[0]->SetDataExtent(0, 127,
+            0, 127, 
+            0, 29);
+        reader[0]->SetFileDimensionality(3);
 
 
-        ////reader[0]->SetFilePattern("C:\\Ultrasound_Prostate\\US.*");
-        //reader[0]->SetFileName("C:\\lung128x128x30.raw");
-        //reader[0]->Update();
+        //reader[0]->SetFilePattern("C:\\Ultrasound_Prostate\\US.*");
+        reader[0]->SetFileName("C:\\lung128x128x30.raw");
+        reader[0]->Update();
 
+        vtkImageShiftScale* scaler = vtkImageShiftScale::New();
+        scaler->SetOutputScalarTypeToUnsignedChar();
+        scaler->SetInput(reader[0]->GetOutput());
+        scaler->Update();
 
     //vtkCudaImageDataFilter* filter = vtkCudaImageDataFilter::New();
     //filter->SetInput(reader[0]->GetOutput());
     //filter->Update();
 
-    VolumeMapper->SetInput(reader[0]->GetOutput());
+    VolumeMapper->SetInput(scaler->GetOutput());
 
     VolumeMapper->SetRenderMode(0/*vtkCudaMemoryTexture::RenderToTexture*/);
 

@@ -36,14 +36,10 @@ vtkVolumeCudaMapper::vtkVolumeCudaMapper()
 {
     this->VolumeInfoHandler = vtkCudaVolumeInformationHandler::New();
     this->RendererInfoHandler = vtkCudaRendererInformationHandler::New();
-
-    this->LocalOutputImage = vtkImageData::New();
 }  
 
 vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
 {
-    this->LocalOutputImage->Delete();
-
     this->VolumeInfoHandler->Delete();
     this->RendererInfoHandler->Delete();
 }

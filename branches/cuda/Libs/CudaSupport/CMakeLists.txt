@@ -11,24 +11,37 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 #---------#
  SET(CudaSupport_SRCS
   ### BASIC CUDA RUNTIME API  CLASSES ###
+    CudappBase.h
     CudappBase.cxx
+    CudappSupport.h
     CudappSupport.cxx
- ##   CudappSupportFactory.cxx
 
+    CudappDevice.h
     CudappDevice.cxx
+    CudappEvent.h
     CudappEvent.cxx
+    CudappStream.h
     CudappStream.cxx
 ##    CudappOpenGLBufferObject.cxx
 
   #### CUDA MEMORY RUNTIME CLASSES ####
+    CudappMemoryBase.h    
     CudappMemoryBase.cxx
+    CudappMemory.h
     CudappMemory.cxx
+    CudappDeviceMemory.h
     CudappDeviceMemory.cxx
+    CudappHostMemory.h
     CudappHostMemory.cxx
+    CudappLocalMemory.h
     CudappLocalMemory.cxx
 
+    CudappMemoryPitch.h
     CudappMemoryPitch.cxx
+    CudappMemoryArray.h
     CudappMemoryArray.cxx
+    
+ #### Specialized Classes ##
 )
 
 INCLUDE_DIRECTORIES(
