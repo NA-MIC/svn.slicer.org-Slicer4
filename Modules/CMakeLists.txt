@@ -17,6 +17,7 @@ SUBDIRS(
   QueryAtlas
   Tractography
   VolumeRendering
+  VolumeRenderingCuda
   Statistics   
 )
 
