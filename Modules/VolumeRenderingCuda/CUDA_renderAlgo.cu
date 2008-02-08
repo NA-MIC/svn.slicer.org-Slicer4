@@ -61,7 +61,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   s_outputVal[tempacc*3]=0;
   s_outputVal[tempacc*3+1]=0;
   s_outputVal[tempacc*3+2]=0;
-  s_zBuffer[tempacc]=renInfo.ZBuffer[outindex];
+  s_zBuffer[tempacc]=renInfo.ZBuffer[outindex]; //renInfo.ClippingRange[0] + renInfo.ZBuffer[outindex] * (renInfo.ClippingRange[1] - renInfo.ClippingRange[0]);
     
   __syncthreads();
 
@@ -218,7 +218,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     tempz /= s_vsize[2];
     
 
-    if(tempx >= s_minmax[0] && tempx <= s_minmax[1] && tempy >= s_minmax[2] && tempy <= s_minmax[3] && tempz >= s_minmax[4] && tempz <= s_minmax[5] && pos+s_minmaxTrace[tempacc].x >=renInfo.ClippingRange[0]){ // if current position is in ROI
+    if(tempx >= s_minmax[0] && tempx <= s_minmax[1] && tempy >= s_minmax[2] && tempy <= s_minmax[3] && tempz >= s_minmax[4] && tempz <= s_minmax[5] && pos+s_minmaxTrace[tempacc].x >= -500 /*renInfo.ClippingRange[0]*/){ // if current position is in ROI
 
       if((pos+s_minmaxTrace[tempacc].x)*stepSize < initialZBuffer){ //check whether current position is in front of z buffer wall
 
@@ -265,7 +265,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[tempacc*3], 
                                             s_outputVal[tempacc*3+1], 
 				                            s_outputVal[tempacc*3+2], 
-				                            255);
+				                            120);
   renInfo.ZBuffer[outindex]=s_zBuffer[tempacc];
 }
 
