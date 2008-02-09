@@ -125,8 +125,8 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
       return;
     }
 
-  unsigned char header[58];
-  int bytes = 58;
+  unsigned char header[54];
+  int bytes = 54;
   int read = Tcl_Read(channel, (char *) header, bytes);
 
   if (read != bytes)
@@ -139,13 +139,13 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
   memcpy((void*)&version, &header[0], sizeof(unsigned short));
   version = ntohs(version);
 
-  char deviceType[13];
-  deviceType[12] = 0;
-  memcpy((void*)deviceType, &header[2], 12);
+  char deviceType[9];
+  deviceType[8] = 0;
+  memcpy((void*)deviceType, &header[2], 8);
   
   char deviceName[21];
   deviceName[20] = 0;
-  memcpy((void*)deviceName, &header[14], 20);
+  memcpy((void*)deviceName, &header[10], 20);
 
   std::cerr << "deviceType  = " << deviceType << std::endl;;  
   std::cerr << "deviceName  = " << deviceName << std::endl;;  
@@ -157,10 +157,10 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
     }
 
   long long bodySize;
-  memcpy((void*)&bodySize, &header[42], sizeof(long long));
+  memcpy((void*)&bodySize, &header[38], sizeof(long long));
 
   long long crc;
-  memcpy((void*)&crc, &header[50], sizeof(long long));
+  memcpy((void*)&crc, &header[46], sizeof(long long));
 
   if (is_little_endian())
     {
