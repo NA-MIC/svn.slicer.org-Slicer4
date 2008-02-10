@@ -39,6 +39,9 @@
 
 #include "vtkMRMLScalarVolumeNode.h"
 
+#include "igtl_header.h"
+#include "igtl_image.h"
+
 vtkCxxRevisionMacro(vtkOpenIGTLinkTclHelper, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkOpenIGTLinkTclHelper);
 
@@ -51,11 +54,26 @@ vtkOpenIGTLinkTclHelper::vtkOpenIGTLinkTclHelper()
   this->Matrix = NULL;
   this->MeasurementFrame = vtkMatrix4x4::New();
   this->MeasurementFrame->Identity();
+  this->ImageReadBuffer = NULL;
+  this->ImageReadBufferSize = 0;
 }
 
 
 vtkOpenIGTLinkTclHelper::~vtkOpenIGTLinkTclHelper() 
 { 
+  if (this->Matrix)
+    {
+      this->Matrix->Delete();
+    }
+  if (this->MeasurementFrame)
+    {
+      this->MeasurementFrame->Delete();
+    }
+  if (this->ImageReadBuffer)
+    {
+      this->ImageReadBufferSize = 0;
+      delete this->ImageReadBuffer;
+    }
 }
 
 
@@ -125,47 +143,32 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
       return;
     }
 
-  unsigned char header[54];
-  int bytes = 54;
-  int read = Tcl_Read(channel, (char *) header, bytes);
+  igtl_header header;
+  int read = Tcl_Read(channel, (char *) &header, IGTL_HEADER_SIZE);
 
-  if (read != bytes)
+  if (read != IGTL_HEADER_SIZE)
     {
-      vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_HEADER_SIZE << "\n");
       return;
     }
 
-  unsigned short version;
-  memcpy((void*)&version, &header[0], sizeof(unsigned short));
-  version = ntohs(version);
+  igtl_header_convert_byte_order(&header);  
 
   char deviceType[9];
   deviceType[8] = 0;
-  memcpy((void*)deviceType, &header[2], 8);
+  memcpy((void*)deviceType, header.name, 8);
   
   char deviceName[21];
   deviceName[20] = 0;
-  memcpy((void*)deviceName, &header[10], 20);
+  memcpy((void*)deviceName, header.device_name, 20);
 
   std::cerr << "deviceType  = " << deviceType << std::endl;;  
   std::cerr << "deviceName  = " << deviceName << std::endl;;  
 
-  if (version != 1)
+  if (header.version != IGTL_HEADER_VERSION)
     {
       vtkErrorMacro("Unsupported OpenIGTLink version.");
       return;
-    }
-
-  long long bodySize;
-  memcpy((void*)&bodySize, &header[38], sizeof(long long));
-
-  long long crc;
-  memcpy((void*)&crc, &header[46], sizeof(long long));
-
-  if (is_little_endian())
-    {
-      bodySize = BYTE_SWAP_INT64(bodySize);
-      crc = BYTE_SWAP_INT64(crc);
     }
 
   if (this->AppLogic)
@@ -182,11 +185,11 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
       
       if (strcmp("IMAGE", deviceType) == 0)
         {
-          ReceiveImage(channel, deviceName, bodySize, crc, newNode);
+          ReceiveImage(channel, deviceName, header.body_size, header.crc, newNode);
         }
       else if (strcmp("tracking", deviceType))
         {
-          ReceiveTracker(channel, deviceName, bodySize, crc, newNode);
+          ReceiveTracker(channel, deviceName, header.body_size, header.crc, newNode);
         }
     }
   else
@@ -267,72 +270,43 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
 
   vtkMRMLScalarVolumeNode* volumeNode;
   
-  unsigned char imgheader[72];
-  int bytes = 72;
-  int read = Tcl_Read(channel, (char *)imgheader, bytes);
+  igtl_image_header imgheader;
+
+  int read = Tcl_Read(channel, (char *)&imgheader, IGTL_IMAGE_HEADER_SIZE);
   
-  if (read != bytes)
+  if (read != IGTL_IMAGE_HEADER_SIZE)
     {
-      vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_IMAGE_HEADER_SIZE << "\n");
       return;
     }
 
-  unsigned short version;
-  memcpy((void*)&version, &imgheader[0], 2);
-  version = ntohs(version);
+  igtl_image_convert_byte_order(&imgheader);
 
-  std::cerr << "image format version = " << version << std::endl;
+  std::cerr << "image format version = " << imgheader.version << std::endl;
 
-  unsigned char imgType = imgheader[2];
-  unsigned char scalarType = imgheader[3];
+  unsigned char imgType = imgheader.data_type;
+  unsigned char scalarType = imgheader.scalar_type;
 
   std::cerr << "scalar type = " << (int)scalarType << std::endl;
   std::cerr << "image type = " << (int)imgType << std::endl;
 
-  unsigned short ssize[3];
-  int size[3];
-  memcpy((void*)ssize, &imgheader[6], 2*3);
-  for (int i = 0; i < 3; i ++)
-    {
-      size[i] = (int)ntohs(ssize[i]);
-    }
-
-  std::cerr << "size[0] =  " << size[0] << ", "
-            << "size[1] =  " << size[1] << ", "
-            << "size[2] =  " << size[2] << ", "
+  std::cerr << "size[0] =  " << imgheader.size[0] << ", "
+            << "size[1] =  " << imgheader.size[1] << ", "
+            << "size[2] =  " << imgheader.size[2] << ", "
             << std::endl;
 
-  unsigned int imatrix[12];
-  memcpy((void*)imatrix, &imgheader[12], sizeof(unsigned int)*12);
-  for (int i = 0; i < 12; i ++)
-    {
-      imatrix[i] = ntohl(imatrix[i]);
-    }
-
-  float* matrix = (float*) imatrix;
-
-  unsigned short subpos[3];
-  unsigned short subsize[3];
-  memcpy((void*)subpos, &imgheader[60], sizeof(unsigned short)*3);
-  memcpy((void*)subsize, &imgheader[66], sizeof(unsigned short)*3);
-  for (int i = 0; i < 3; i ++)
-    {
-      subpos[i] = ntohs(subpos[i]);
-      subsize[i] = ntohs(subsize[i]);
-    }
-
-  float tx = matrix[0];
-  float ty = matrix[1];
-  float tz = matrix[2];
-  float sx = matrix[3];
-  float sy = matrix[4];
-  float sz = matrix[5];
-  float nx = matrix[6];
-  float ny = matrix[7];
-  float nz = matrix[8];
-  float px = matrix[9];
-  float py = matrix[10];
-  float pz = matrix[11];
+  float tx = imgheader.matrix[0];
+  float ty = imgheader.matrix[1];
+  float tz = imgheader.matrix[2];
+  float sx = imgheader.matrix[3];
+  float sy = imgheader.matrix[4];
+  float sz = imgheader.matrix[5];
+  float nx = imgheader.matrix[6];
+  float ny = imgheader.matrix[7];
+  float nz = imgheader.matrix[8];
+  float px = imgheader.matrix[9];
+  float py = imgheader.matrix[10];
+  float pz = imgheader.matrix[11];
 
   std::cerr << "matrix = "<< std::endl;
   std::cerr << tx << ", " << ty << ", " << tz << std::endl;
@@ -346,10 +320,39 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
       volumeNode = vtkMRMLScalarVolumeNode::New();
       volumeNode->SetName(deviceName);
       volumeNode->SetDescription("Received by OpenIGTLink");
+
       imageData = vtkImageData::New();
-      imageData->SetDimensions(size[0], size[1], size[2]);
+
+      imageData->SetDimensions(imgheader.size[0], imgheader.size[1], imgheader.size[2]);
       imageData->SetNumberOfScalarComponents(1);
-      imageData->SetScalarTypeToShort();  // should be set according to scalar type
+      
+      // Scalar type
+      //  TBD: Long might not be 32-bit in some platform.
+      switch (imgheader.scalar_type)
+        {
+        case IGTL_IMAGE_STYPE_TYPE_INT8:
+          imageData->SetScalarTypeToChar();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_UINT8:
+          imageData->SetScalarTypeToUnsignedChar();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_INT16:
+          imageData->SetScalarTypeToShort();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_UINT16:
+          imageData->SetScalarTypeToUnsignedShort();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_INT32:
+          imageData->SetScalarTypeToUnsignedLong();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_UINT32:
+          imageData->SetScalarTypeToUnsignedLong();
+          break;
+        default:
+          vtkErrorMacro ("Invalid Scalar Type\n");
+          break;
+        }
+
       imageData->AllocateScalars();
       volumeNode->SetAndObserveImageData(imageData);
       imageData->Delete();
@@ -365,19 +368,75 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
       volumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(collection->GetItemAsObject(0));
     }
 
+  // Get vtk image from MRML node
   imageData = volumeNode->GetImageData();
-  std::cerr << "size[0] =  " << size[0] << ", "
-            << "size[1] =  " << size[1] << ", "
-            << "size[2] =  " << size[2] << ", "
-            << std::endl;
-  bytes = size[0]*size[1]*size[2]*sizeof(short);
-  std::cerr << "image size  = " << bytes << std::endl;  
-  read = Tcl_Read(channel, (char *) imageData->GetScalarPointer(), bytes);
 
-  if (read != bytes)
+  // TODO:
+  // It should be checked here if the dimension of vtkImageData
+  // and arrived data is same.
+
+  int bytes = igtl_image_get_data_size(&imgheader);
+  std::cerr << "image size  = " << bytes << std::endl;
+
+  if (imgheader.size[0] == imgheader.subvol_size[0] &&
+      imgheader.size[1] == imgheader.subvol_size[1] &&
+      imgheader.size[2] == imgheader.subvol_size[2] )
     {
-      vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
-      return;
+      // In case that volume size == sub-volume size,
+      // image is read directly to the memory area of vtkImageData
+      // for better performance. 
+      read = Tcl_Read(channel, (char *) imageData->GetScalarPointer(), bytes);
+      if (read != bytes)
+        {
+          vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+          return;
+        }
+    }
+  else
+    {
+      // In case of volume size != sub-volume size,
+      // image is loaded into ImageReadBuffer, then copied to
+      // the memory area of vtkImageData.
+
+      if (bytes != this->ImageReadBufferSize)
+        {
+          if (this->ImageReadBuffer)
+            {
+              delete this->ImageReadBuffer;
+            }
+          this->ImageReadBufferSize = bytes;
+          this->ImageReadBuffer = new char[bytes];
+        }
+
+      read = Tcl_Read(channel, (char *) this->ImageReadBuffer, bytes);
+      if (read != bytes)
+        {
+          vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+          return;
+        }
+
+      char* imgPtr = (char*) imageData->GetScalarPointer();
+      char* bufPtr = this->ImageReadBuffer;
+      int sizei = imgheader.size[0];
+      int sizej = imgheader.size[1];
+      int sizek = imgheader.size[2];
+      int subsizei = imgheader.subvol_size[0];
+
+      int bg_i = imgheader.subvol_offset[0];
+      int ed_i = bg_i + imgheader.subvol_size[0];
+      int bg_j = imgheader.subvol_offset[1];
+      int ed_j = bg_j + imgheader.subvol_size[1];
+      int bg_k = imgheader.subvol_offset[2];
+      int ed_k = bg_k + imgheader.subvol_size[2];
+      
+      for (int k = bg_k; k < ed_k; k ++)
+        {
+          for (int j = bg_j; j < ed_j; j ++)
+            {
+              memcpy(&imgPtr[sizei*sizej*k + sizei*j + bg_i], &bufPtr, subsizei);
+              bufPtr += subsizei;
+            }
+        }
     }
 
   // set volume orientation
@@ -424,8 +483,9 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
   ny = ny / psk;
   nz = nz / psk;
 
-  float hfovi = psi * size[0] / 2.0;
-  float hfovj = psj * size[1] / 2.0;
+
+  float hfovi = psi * imgheader.size[0] / 2.0;
+  float hfovj = psj * imgheader.size[1] / 2.0;
 
   rtimgTransform->Invert();
   volumeNode->SetRASToIJKMatrix(rtimgTransform);
