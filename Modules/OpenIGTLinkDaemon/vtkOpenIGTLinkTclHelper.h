@@ -91,6 +91,8 @@ protected:
     vtkMatrix4x4 *MeasurementFrame;    
     vtkMatrix4x4 *Matrix;    
     Tcl_Interp *Interp;           /* Tcl interpreter */
+    char* ImageReadBuffer;
+    int   ImageReadBufferSize;
 };
 
 #endif
