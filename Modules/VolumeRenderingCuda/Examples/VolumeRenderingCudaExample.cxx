@@ -12,6 +12,9 @@
 #include "vtkCallbackCommand.h"
 #include "vtkKWEvent.h"
 #include "vtkKWCheckButton.h"
+#include "vtkKWMenuButton.h"
+#include "vtkKWMenu.h"
+
 
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/CommandLineArguments.hxx>
@@ -36,13 +39,83 @@ vtkKWRange* ThresholdRange;
 vtkKWVolumePropertyWidget* VolumePropertyWidget;
 vtkVolumeCudaMapper* VolumeMapper;
 vtkKWCheckButton* cb_Animate;
+vtkKWMenuButton*  mb_Model;
 
 int frameNumber = 0;
 vtkImageReader* reader[5];
 bool renderScheduled = false;
 
+
+void Clear()
+{
+    vtkImageData* data = vtkImageData::New();
+    data->SetNumberOfScalarComponents(1);
+    data->SetExtent(0, 255, 0, 255, 0, 255);
+    data->SetScalarTypeToUnsignedChar();
+    data->AllocateScalars();
+    for (unsigned int i = 0; i < 256*256*256 -1; i++)
+        ((unsigned char*)data->GetScalarPointer())[i] = 0;
+
+    VolumeMapper->SetInput(data);
+    data->Delete();
+}
+
+void LoadHead()
+{
+    reader[0]->Delete();
+    reader[0]= vtkImageReader::New();
+    reader[0]->SetDataScalarTypeToUnsignedChar();
+    reader[0]->SetNumberOfScalarComponents(1);
+    reader[0]->SetDataExtent(0, 255,
+        0, 255, 
+        0, 93);
+    reader[0]->SetFileDimensionality(3);
+
+
+    std::stringstream s;
+    s << "C:\\fullhead94.raw";
+
+    reader[0]->SetFileName(s.str().c_str());
+    reader[0]->Update();
+
+    VolumeMapper->SetInput(reader[0]->GetOutput());
+}
+
+void LoadHeart()
+{
+    reader[0]->Delete();
+    reader[0]= vtkImageReader::New();
+    reader[0]->SetDataScalarTypeToUnsignedChar();
+    reader[0]->SetNumberOfScalarComponents(1);
+    reader[0]->SetDataExtent(0, 255,
+        0, 255, 
+        0, 255);
+    reader[0]->SetFileDimensionality(3);
+
+
+    std::stringstream s;
+    s << "C:\\heart256-1.raw";
+
+    reader[0]->SetFileName(s.str().c_str());
+    reader[0]->Update();
+
+    VolumeMapper->SetInput(reader[0]->GetOutput());
+}
+
+void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
+{
+        if (! strcmp(mb_Model->GetValue(), "Head"))
+            LoadHead();
+        else if (!strcmp(mb_Model->GetValue(), "Heart"))
+            LoadHeart();
+        else
+            Clear();
+        renderWidget->Render();
+}
+
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
+
     VolumeMapper->SetThreshold(ThresholdRange->GetRange());
     renderWidget->Render();
 }
@@ -64,6 +137,7 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
         }
     }
 }
+
 
 int my_main(int argc, char *argv[])
 {
@@ -87,13 +161,8 @@ int my_main(int argc, char *argv[])
         "--test", vtksys::CommandLineArguments::NO_ARGUMENT, &option_test, "");
     args.Parse();
 
-    // Create the application
-    // If --test was provided, ignore all registry settings, and exit silently
-    // Restore the settings that have been saved to the registry, like
-    // the geometry of the user interface so far.
-
     app = vtkKWApplication::New();
-    app->SetName("KWPolygonalObjectViewerExample");
+    app->SetName("CUDA/VTK Volume Rendering Viewer");
     if (option_test)
     {
         app->SetRegistryLevel(0);
@@ -151,34 +220,34 @@ int my_main(int argc, char *argv[])
         reader[i]->SetFileName(s.str().c_str());
         reader[i]->Update();
 
-//        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
+        //        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
     }
 
-    
-        reader[0]->Delete();
-        reader[0]= vtkImageReader::New();
-        reader[0]->SetDataScalarTypeToShort();
-        reader[0]->SetNumberOfScalarComponents(1);
-        reader[0]->SetDataExtent(0, 127,
-            0, 127, 
-            0, 29);
-        reader[0]->SetFileDimensionality(3);
+
+    //reader[0]->Delete();
+    //reader[0]= vtkImageReader::New();
+    //reader[0]->SetDataScalarTypeToShort();
+    //reader[0]->SetNumberOfScalarComponents(1);
+    //reader[0]->SetDataExtent(0, 127,
+    //    0, 127, 
+    //    0, 29);
+    //reader[0]->SetFileDimensionality(3);
 
 
-        //reader[0]->SetFilePattern("C:\\Ultrasound_Prostate\\US.*");
-        reader[0]->SetFileName("C:\\lung128x128x30.raw");
-        reader[0]->Update();
+    //reader[0]->SetFilePattern("C:\\Ultrasound_Prostate\\US.*");
+    //reader[0]->SetFileName("C:\\lung128x128x30.raw");
+    //reader[0]->Update();
 
-        vtkImageShiftScale* scaler = vtkImageShiftScale::New();
-        scaler->SetOutputScalarTypeToUnsignedChar();
-        scaler->SetInput(reader[0]->GetOutput());
-        scaler->Update();
+    //vtkImageShiftScale* scaler = vtkImageShiftScale::New();
+    //scaler->SetOutputScalarTypeToUnsignedChar();
+    //scaler->SetInput(reader[0]->GetOutput());
+    //scaler->Update();
 
     //vtkCudaImageDataFilter* filter = vtkCudaImageDataFilter::New();
     //filter->SetInput(reader[0]->GetOutput());
     //filter->Update();
 
-    VolumeMapper->SetInput(scaler->GetOutput());
+    VolumeMapper->SetInput(reader[0]->GetOutput());
 
     VolumeMapper->SetRenderMode(0/*vtkCudaMemoryTexture::RenderToTexture*/);
 
@@ -192,14 +261,29 @@ int my_main(int argc, char *argv[])
     GUICallbackCommand->SetCallback( UpdateRenderer);
     vtkCallbackCommand* AnimCallbackCommand = vtkCallbackCommand::New ( );
     AnimCallbackCommand->SetCallback( Animate);
+    vtkCallbackCommand* ModelCallbackCommand = vtkCallbackCommand::New();
+    ModelCallbackCommand->SetCallback( ChangeModel );
 
     /// SETUP THE GUI
+    mb_Model = vtkKWMenuButton::New();
+    mb_Model->SetParent(win->GetMainPanelFrame());
+    mb_Model->Create();
+    mb_Model->GetMenu()->AddRadioButton("Heart");
+    mb_Model->GetMenu()->AddRadioButton("Head");
+    mb_Model->GetMenu()->AddRadioButton("Empty");
+    mb_Model->SetValue("Heart");
+    mb_Model->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)ModelCallbackCommand);
+
+    app->Script("pack %s -side top -anchor nw -expand n -fill x -pady 2",
+        mb_Model->GetWidgetName()); 
+    
+    //Volume Property
     VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
     VolumePropertyWidget->SetParent(win->GetMainPanelFrame());
     VolumePropertyWidget->Create();
     app->Script( "pack %s -side top -anchor nw -expand n -fill x -pady 2",
         VolumePropertyWidget->GetWidgetName()); 
-    VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangedEvent, (vtkCommand*)GUICallbackCommand);
+    VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangingEvent, (vtkCommand*)GUICallbackCommand);
 
     VolumePropertyWidget->SetVolumeProperty(prop);
     prop->Delete();
@@ -238,7 +322,7 @@ int my_main(int argc, char *argv[])
 
     AnimCallbackCommand->Delete();
     GUICallbackCommand->Delete();
-//    filter->Delete();
+    //    filter->Delete();
     volume->Delete();
     VolumeMapper->Delete();
     for (unsigned int i = 0; i < 5; i++)

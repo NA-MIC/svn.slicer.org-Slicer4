@@ -283,23 +283,23 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             vtkImageReader* reader[5];
             for (unsigned int i = 0; i < 1; i++ ) 
             {
-                reader[i]= vtkImageReader::New();
-                reader[i]->SetDataScalarTypeToUnsignedChar();
-                reader[i]->SetNumberOfScalarComponents(1);
-                reader[i]->SetDataExtent(0, 255,
-                    0, 255, 
-                    0, 255);
-                reader[i]->SetFileDimensionality(3);
+                //reader[i]= vtkImageReader::New();
+                //reader[i]->SetDataScalarTypeToUnsignedChar();
+                //reader[i]->SetNumberOfScalarComponents(1);
+                //reader[i]->SetDataExtent(0, 255,
+                //    0, 255, 
+                //    0, 255);
+                //reader[i]->SetFileDimensionality(3);
 
-                std::stringstream s;
-                s << "C:\\heart256-" << i+1 << ".raw";
+                //std::stringstream s;
+                //s << "C:\\heart256-" << i+1 << ".raw";
 
-                reader[i]->SetFileName(s.str().c_str());
-                reader[i]->Update();
+                //reader[i]->SetFileName(s.str().c_str());
+                //reader[i]->Update();
 
-                //this->CudaMapper->MultiInput[i] = reader[i]->GetOutput();
+                ////this->CudaMapper->MultiInput[i] = reader[i]->GetOutput();
             }
-            this->CudaMapper->SetInput(reader[0]->GetOutput());
+            //this->CudaMapper->SetInput(reader[0]->GetOutput());
 
 
         }
@@ -307,35 +307,6 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         {
             this->CudaVolume = vtkVolume::New();
             this->CudaVolume->SetMapper(this->CudaMapper);
-
-            this->CudaVolumeProperty = vtkVolumeProperty::New();
-            this->CudaVolume->SetProperty(this->CudaVolumeProperty);
-            this->VolumePropertyWidget->SetVolumeProperty(this->CudaVolumeProperty);
-            this->VolumePropertyWidget->ScalarOpacityUnitDistanceVisibilityOff ();
-            //this->VolumePropertyWidget->SetDataSet(this->CudaMapper->GetInput()->GetImageData());
-            this->Histograms = vtkKWHistogramSet::New();
-
-            //Add Histogram for image data
-            //this->Histograms->AddHistograms(this->CudaMapper->GetInput()->GetPointData()->GetScalars());
-            vtkKWHistogram *histo = vtkKWHistogram::New();
-            histo->BuildHistogram(this->CudaMapper->GetInput()->GetPointData()->GetScalars(),0);
-            this->Histograms->AddHistogram(histo,"0");
-
-            
-            //Build the gradient histogram
-            vtkImageGradientMagnitude *grad = vtkImageGradientMagnitude::New();
-            grad->SetDimensionality(3);
-            grad->SetInput(this->CudaMapper->GetInput());
-            grad->Update();
-            vtkKWHistogram *gradHisto = vtkKWHistogram::New();
-            gradHisto->BuildHistogram(grad->GetOutput()->GetPointData()->GetScalars(),0);
-            this->Histograms->AddHistogram(gradHisto,"0gradient");
-
-            //Delete      
-            this->VolumePropertyWidget->SetHistogramSet(this->Histograms);
-
-            grad->Delete();
-            gradHisto->Delete();
 
             this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
         }
@@ -366,6 +337,37 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             shifter->Update();
 
             this->CudaMapper->SetInput(shifter->GetOutput());
+
+
+            this->CudaVolumeProperty = vtkVolumeProperty::New();
+            this->CudaVolume->SetProperty(this->CudaVolumeProperty);
+            this->VolumePropertyWidget->SetVolumeProperty(this->CudaVolumeProperty);
+            this->VolumePropertyWidget->ScalarOpacityUnitDistanceVisibilityOff ();
+            //this->VolumePropertyWidget->SetDataSet(this->CudaMapper->GetInput()->GetImageData());
+            this->Histograms = vtkKWHistogramSet::New();
+
+            //Add Histogram for image data
+            //this->Histograms->AddHistograms(this->CudaMapper->GetInput()->GetPointData()->GetScalars());
+            vtkKWHistogram *histo = vtkKWHistogram::New();
+            histo->BuildHistogram(this->CudaMapper->GetInput()->GetPointData()->GetScalars(),0);
+            this->Histograms->AddHistogram(histo,"0");
+
+            
+            //Build the gradient histogram
+            vtkImageGradientMagnitude *grad = vtkImageGradientMagnitude::New();
+            grad->SetDimensionality(3);
+            grad->SetInput(this->CudaMapper->GetInput());
+            grad->Update();
+            vtkKWHistogram *gradHisto = vtkKWHistogram::New();
+            gradHisto->BuildHistogram(grad->GetOutput()->GetPointData()->GetScalars(),0);
+            this->Histograms->AddHistogram(gradHisto,"0gradient");
+
+            //Delete      
+            this->VolumePropertyWidget->SetHistogramSet(this->Histograms);
+
+            grad->Delete();
+            gradHisto->Delete();
+
             shifter->Delete();
             }
         }

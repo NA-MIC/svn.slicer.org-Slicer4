@@ -84,31 +84,25 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     int *size=renWin->GetSize();
     //int width = size[0], height = size[1];
 
-    // Do rendering.
-
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
-
     // Renderer Information Setter.
-    this->RendererInfoHandler->SetRenderer(renderer);
-
     this->VolumeInfoHandler->SetInputData(this->GetInput());
     this->VolumeInfoHandler->SetVolume(volume);
     this->VolumeInfoHandler->Update();
 
+    this->RendererInfoHandler->SetRenderer(renderer);
     this->RendererInfoHandler->Bind();
 
     CUDArenderAlgo_doRender(
         this->RendererInfoHandler->GetRendererInfo(),
         this->VolumeInfoHandler->GetVolumeInfo());         
 
-    // Get the resulted image.
     log->StopTimer();
     //vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
-    log->StartTimer();
 
-    //renderer->SetBackground(this->renViewport->GetBackground());
-    //renderer->SetActiveCamera(this->renViewport->GetActiveCamera());
+//    renderer->SetBackground(this->renViewport->GetBackground());
+//    renderer->SetActiveCamera(this->renViewport->GetActiveCamera());
 
     renderer->SetDisplayPoint(0,0,0.5);
     renderer->DisplayToWorld();
