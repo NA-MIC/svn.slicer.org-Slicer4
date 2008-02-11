@@ -16,6 +16,30 @@ extern "C" {
 #define BLOCK_DIM2D 16// this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
 
+__device__ unsigned char interpolate(float posX, float posY, float posZ,
+				     unsigned char val1,
+				     unsigned char val2,
+				     unsigned char val3,
+				     unsigned char val4,
+				     unsigned char val5,
+				     unsigned char val6,
+				     unsigned char val7,
+				     unsigned char val8){
+  float revX=1-posX;
+  float revY=1-posY;
+  float revZ=1-posZ;
+  
+  return ((unsigned char) (revX*revY*revZ* val1+
+			   revX*revY*posZ* val2+
+			   revX*posY*revZ* val3+
+			   revX*posY*posZ* val4+
+			   posX*revY*revZ* val5+
+			   posX*revY*posZ* val6+
+			   posX*posY*revZ* val7+
+			   posX*posY*posZ* val8)
+	  );
+}
+
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 							  const cudaRendererInformation renInfo,
@@ -71,9 +95,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     camera model start here
   */
   
-  s_rayMap[tempacc*6]=renInfo.CameraPos[0] + s_size[0]*s_vsize[0]/2.0f;
-  s_rayMap[tempacc*6+1]=renInfo.CameraPos[1] + s_size[1]*s_vsize[1]/2.0f;
-  s_rayMap[tempacc*6+2]=renInfo.CameraPos[2] + s_size[2]*s_vsize[2]/2.0f;
+  s_rayMap[tempacc*6]=renInfo.CameraPos[0] ;//+ s_size[0]*s_vsize[0]/2.0f;
+  s_rayMap[tempacc*6+1]=renInfo.CameraPos[1] ;//+ s_size[1]*s_vsize[1]/2.0f;
+  s_rayMap[tempacc*6+2]=renInfo.CameraPos[2] ;//+ s_size[2]*s_vsize[2]/2.0f;
   
   float vecX, vecY, vecZ;
 
@@ -223,6 +247,25 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
       if((pos+s_minmaxTrace[tempacc].x)*stepSize < initialZBuffer){ //check whether current position is in front of z buffer wall
 
 	temp=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
+	
+	/*interpolation start here*/
+	/*
+	float posX=tempx-(int)tempx;
+	float posY=tempy-(int)tempy;
+	float posZ=tempz-(int)tempz;
+
+	temp=interpolate(posX, posY, posZ,
+			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx))],
+			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx))],
+			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx))],
+			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx))],
+			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx+1))],
+			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx+1))],
+			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx+1))],
+			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx+1))]);
+	*/
+
+	/*interpolation end here*/
 
 	if( temp >=(T)volInfo.MinThreshold && temp <= (T)volInfo.MaxThreshold){ 
 
@@ -264,8 +307,8 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[tempacc*3], 
                                             s_outputVal[tempacc*3+1], 
-				                            s_outputVal[tempacc*3+2], 
-				                            120);
+					    s_outputVal[tempacc*3+2], 
+					    255);
   renInfo.ZBuffer[outindex]=s_zBuffer[tempacc];
 }
 
