@@ -861,6 +861,8 @@ int Slicer3_main(int argc, char *argv[])
       slicerApp->SetStereoEnabled(0);
       }
     
+    // -- event broker
+    vtkEventBroker::GetInstance()->SetEventModeToAsynchronous(); 
 
     // Create MRML scene
     vtkMRMLScene *scene = vtkMRMLScene::New();
