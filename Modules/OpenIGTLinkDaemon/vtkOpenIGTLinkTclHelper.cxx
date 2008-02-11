@@ -295,6 +295,11 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
             << "size[2] =  " << imgheader.size[2] << ", "
             << std::endl;
 
+  std::cerr << "subvol_size[0] =  " << imgheader.subvol_size[0] << ", "
+            << "subvol_size[1] =  " << imgheader.subvol_size[1] << ", "
+            << "subvol_size[2] =  " << imgheader.subvol_size[2] << ", "
+            << std::endl;
+
   float tx = imgheader.matrix[0];
   float ty = imgheader.matrix[1];
   float tz = imgheader.matrix[2];
@@ -376,7 +381,6 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
   // and arrived data is same.
 
   int bytes = igtl_image_get_data_size(&imgheader);
-  std::cerr << "image size  = " << bytes << std::endl;
 
   if (imgheader.size[0] == imgheader.subvol_size[0] &&
       imgheader.size[1] == imgheader.subvol_size[1] &&
@@ -407,7 +411,7 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
           this->ImageReadBufferSize = bytes;
           this->ImageReadBuffer = new char[bytes];
         }
-
+      
       read = Tcl_Read(channel, (char *) this->ImageReadBuffer, bytes);
       if (read != bytes)
         {
@@ -415,6 +419,28 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
           return;
         }
 
+      // Check scalar size
+      int scalarSize;
+      switch (imgheader.scalar_type)
+        {
+        case IGTL_IMAGE_STYPE_TYPE_INT8:
+        case IGTL_IMAGE_STYPE_TYPE_UINT8:
+          scalarSize = 1;
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_INT16:
+        case IGTL_IMAGE_STYPE_TYPE_UINT16:
+          scalarSize = 2;
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_INT32:
+        case IGTL_IMAGE_STYPE_TYPE_UINT32:
+          scalarSize = 4;
+          break;
+        default:
+          scalarSize = 0;
+          vtkErrorMacro ("Invalid Scalar Type\n");
+          break;
+        }
+        
       char* imgPtr = (char*) imageData->GetScalarPointer();
       char* bufPtr = this->ImageReadBuffer;
       int sizei = imgheader.size[0];
@@ -433,8 +459,9 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
         {
           for (int j = bg_j; j < ed_j; j ++)
             {
-              memcpy(&imgPtr[sizei*sizej*k + sizei*j + bg_i], &bufPtr, subsizei);
-              bufPtr += subsizei;
+              memcpy(&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
+                     bufPtr, subsizei*scalarSize);
+              bufPtr += subsizei*scalarSize;
             }
         }
     }
