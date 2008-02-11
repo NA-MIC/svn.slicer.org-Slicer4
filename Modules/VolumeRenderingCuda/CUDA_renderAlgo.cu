@@ -305,7 +305,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[tempacc*3], 
                                             s_outputVal[tempacc*3+1], 
 					    s_outputVal[tempacc*3+2], 
-					    255);
+					    (1-s_remainingOpacity[tempacc])*255.0);
   renInfo.ZBuffer[outindex]=s_zBuffer[tempacc];
 }
 
