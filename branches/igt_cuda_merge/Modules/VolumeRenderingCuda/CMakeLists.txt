@@ -34,6 +34,7 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
   )
   SET(VolumeRenderingCudaModule_ADDITIONAL_HEADERS
     # Cuda Classes
+      cudaTypeRange.h
       CUDA_renderAlgo.h
       cudaRendererInformation.h
       cudaVolumeInformation.h
