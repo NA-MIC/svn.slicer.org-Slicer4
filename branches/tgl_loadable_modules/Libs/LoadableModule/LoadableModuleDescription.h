@@ -100,16 +100,6 @@ public:
   {
     return this->LogicFunction;
   }
- 
-  void SetTitle(const std::string &title)
-  {
-    this->Title = title;
-  }
-
-  const std::string& GetTitle() const
-  {
-    return this->Title;
-  }
 
   void SetDescription(const std::string &description)
   {
@@ -291,7 +281,6 @@ public:
   vtkSlicerModuleGUI* GUIFunction;
   vtkSlicerModuleLogic* LogicFunction;
 
-  std::string Title;
   std::string Category;
   std::string Description;
   std::string Version;

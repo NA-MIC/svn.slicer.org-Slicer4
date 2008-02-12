@@ -428,22 +428,22 @@ LoadableModuleFactory
                 parser.Parse(xml, module);
 
                 // Check to make sure the module is not already in the
-                // list
+                // lists
                 LoadableModuleDescriptionMap::iterator mit
-                  = this->InternalMap->find(module.GetTitle());
+                  = this->InternalMap->find(module.GetShortName());
 
                 std::string splash_msg("Discovered ");
-                splash_msg +=  module.GetTitle();
-                splash_msg += " Module (adding to cache)...";
+                splash_msg +=  module.GetShortName();
+                splash_msg += " Loadable Module (adding to cache)...";
                 this->ModuleDiscoveryMessage(splash_msg.c_str());
                 
                 if (mit == this->InternalMap->end())
                   {
 
                   // Store the module in the list
-                  (*this->InternalMap)[module.GetTitle()] =  module ;
+                  (*this->InternalMap)[module.GetShortName()] =  module ;
                   
-                  information << "A module named \"" << module.GetName()
+                  information << "A loadable module named \"" << module.GetName()
                               << "\" has been discovered at "
                               << module.GetLocation() << "("
                               << module.GetTarget() << ")" << std::endl;
@@ -461,7 +461,7 @@ LoadableModuleFactory
                     (*mit).second.SetAlternativeTarget( module.GetTarget() );
                     }
                   
-                  information << "A module named \"" << module.GetName()
+                  information << "A loadable module named \"" << module.GetName()
                             << "\" has already been discovered." << std::endl
                             << "    First discovered at "
                             << (*mit).second.GetLocation()
@@ -471,7 +471,7 @@ LoadableModuleFactory
                             << module.GetLocation()
                             << "(" << module.GetTarget() << ")"
                             << std::endl
-                            << "    Keeping first module." << std::endl;
+                            << "    Keeping first loadable module." << std::endl;
                   }
 
                 // Put the module in the cache
@@ -497,10 +497,11 @@ LoadableModuleFactory
               }
             else
               {
-//               std::cout << "Symbols not found." << std::endl;
-//               std::cout << "xmlFunction: " << (void*)xmlFunction << std::endl;
-//               std::cout << "entryPoint: " << (void*)entryPoint <<
-//               std::endl;
+//                std::cout << "Symbols not found." << std::endl;
+//                std::cout << "descFunction: " << (void*)descFunction << std::endl;
+//                std::cout << "guiFunction: " << (void*)guiFunction << std::endl;
+//                std::cout << "logicFunction: " << (void*)logicFunction <<
+//                std::endl;
 
               // not a plugin, doesn't have the symbols, close the library
               itksys::DynamicLoader::CloseLibrary(lib);

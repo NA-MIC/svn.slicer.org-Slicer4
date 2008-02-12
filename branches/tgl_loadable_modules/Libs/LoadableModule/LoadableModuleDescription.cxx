@@ -31,7 +31,6 @@ LoadableModuleDescription::LoadableModuleDescription(const LoadableModuleDescrip
   this->GUIFunction = md.GUIFunction;
   this->LogicFunction = md.LogicFunction;
 
-  this->Title = md.Title;
   this->Category = md.Category;
   this->Description = md.Description;
   this->Version = md.Version;
@@ -57,7 +56,6 @@ LoadableModuleDescription::operator=(const LoadableModuleDescription &md)
   this->GUIFunction = md.GUIFunction;
   this->LogicFunction = md.LogicFunction;
 
-  this->Title = md.Title;
   this->Category = md.Category;
   this->Description = md.Description;
   this->Version = md.Version;
@@ -79,7 +77,7 @@ std::ostream & operator<<(std::ostream &os, const LoadableModuleDescription &mod
   os << "ShortName: " << module.GetShortName() << std::endl;
   os << "GUIName: " << module.GetGUIName() << std::endl;
   os << "Message: " << module.GetMessage() << std::endl;
-  os << "Title: " << module.GetTitle() << std::endl;
+
   os << "Category: " << module.GetCategory() << std::endl;
   os << "Description: " << module.GetDescription() << std::endl;
   os << "Version: " << module.GetVersion() << std::endl;
