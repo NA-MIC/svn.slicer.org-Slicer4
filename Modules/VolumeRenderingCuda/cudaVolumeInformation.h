@@ -7,7 +7,7 @@ typedef struct {
     int             InputDataType;
     
     // The size of the volume
-    int           VolumeSize[3];
+    int             VolumeSize[3];
     float           VolumeTransformation[3];
 
 
