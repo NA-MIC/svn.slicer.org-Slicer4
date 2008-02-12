@@ -35,7 +35,7 @@ void GetTypeRange<unsigned short>(unsigned short& min, unsigned short& max)
 }
 
 template<>
-void GetTypeRange<int>(int short& min, int& max)
+void GetTypeRange<int>(int& min, int& max)
 {
     min = INT_MIN;
     max = INT_MAX;
