@@ -30,7 +30,8 @@ void vtkSlicerGradientEditorLogic::PrintSelf ( ostream& os, vtkIndent indent )
   }
 
 //---------------------------------------------------------------------------
-void vtkSlicerGradientEditorLogic::AddGradients (const char* filename, vtkMRMLDiffusionWeightedVolumeNode *dwiNode)
+int vtkSlicerGradientEditorLogic::AddGradients (const char* filename, int numberOfGradients, vtkDoubleArray *newBValue, 
+      vtkDoubleArray *newGradients)
   {
   // format the filename
   std::string fileString(filename);
@@ -44,31 +45,70 @@ void vtkSlicerGradientEditorLogic::AddGradients (const char* filename, vtkMRMLDi
 
   // Instanciation of the I/O mechanism
   vtkMRMLNRRDStorageNode *storageNode = vtkMRMLNRRDStorageNode::New();
+  vtkMRMLDiffusionWeightedVolumeNode *dwiNode = vtkMRMLDiffusionWeightedVolumeNode::New();
+  dwiNode->SetBValues(newBValue);
+  dwiNode->SetDiffusionGradients(newGradients);
   storageNode->SetFileName(fileString.c_str());
 
   if (!storageNode->ReadData(dwiNode))
     {
-    //TODO: txt File?
+    storageNode->Delete();
+    dwiNode->Delete();
+    //check if txt file
+    std::string a(".txt");
+    std::string::size_type i = fileString.find(a);
+    if(i=0)
+      {
+      //no txt file or valid nhdr
+      vtkWarningMacro("no valid file");
+      return 0;
+      }
+     
+    ifstream file;
+    file.open(fileString.c_str(), ios::in);
+
+    if(file.good())
+      {
+      std::stringstream content;
+      file.seekg(0L, ios::beg);
+      while (!file.eof())
+        {
+        char c;
+        file.get(c);
+        content<<c;
+        }
+      vtkWarningMacro("\n"<<content.str().c_str());
+      return this->ParseGradients(content.str().c_str(), numberOfGradients, newBValue, newGradients);
+      }
+    return 0;
     }
-
-  storageNode->Delete();
+   storageNode->Delete();
+   dwiNode->Delete();
+   return 1;
   }
 
 //---------------------------------------------------------------------------
-bool StringToDouble(const std::string &s, double &result)
+int vtkSlicerGradientEditorLogic::StringToDouble(const std::string &s, double &result)
   {
-  std::istringstream stream (s);
-  return (stream >> result);
+  std::stringstream stream (s);
+  if(stream >> result)
+    {
+    if(stream.eof())
+      {
+      return 1;
+      }
+    }
+  return 0;
   }
 
 //---------------------------------------------------------------------------
-bool vtkSlicerGradientEditorLogic::ParseGradients(const char *oldGradients, int numberOfGradients,
+int vtkSlicerGradientEditorLogic::ParseGradients(const char *oldGradients, int numberOfGradients,
                                                   vtkDoubleArray *newBValues, vtkDoubleArray *newGradients)
   {
   if (oldGradients == NULL || oldGradients == "")
     {
     vtkErrorMacro(<< this->GetClassName() << ": oldGradients is NULL");
-    return false;
+    return 0;
     }
 
   // read in current gradients 
@@ -91,7 +131,8 @@ bool vtkSlicerGradientEditorLogic::ParseGradients(const char *oldGradients, int 
   // exit if too many or to less values are input
   if(vec.size() != numberOfGradients*3+1)
     {
-    return false;
+    vtkWarningMacro("given values "<<vec.size()<<" needed "<<numberOfGradients*3+1);
+    return 0;
     }
 
   vtkDoubleArray *factor = vtkDoubleArray::New();
@@ -100,9 +141,9 @@ bool vtkSlicerGradientEditorLogic::ParseGradients(const char *oldGradients, int 
   newBValues->SetNumberOfTuples(numberOfGradients);
 
   // set gradients and factor values
-  for(int j = 1; j < vec.size(); j=j+3)
+  for(unsigned int j = 1; j < vec.size(); j=j+3)
     {
-    for(int i=j; i<j+3;i++)
+    for(unsigned int i=j; i<j+3;i++)
       {
       newGradients->SetValue(i-1,vec[i]);
       }
@@ -120,6 +161,6 @@ bool vtkSlicerGradientEditorLogic::ParseGradients(const char *oldGradients, int 
     }
 
   factor->Delete();
-  return true;
+  return 1;
   }
 
