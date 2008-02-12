@@ -94,7 +94,7 @@ void LoadHeart()
 
 
     std::stringstream s;
-    s << "C:\\heart256-1.raw";
+    s << "D:\\heart512.raw";
 
     reader[0]->SetFileName(s.str().c_str());
     reader[0]->Update();

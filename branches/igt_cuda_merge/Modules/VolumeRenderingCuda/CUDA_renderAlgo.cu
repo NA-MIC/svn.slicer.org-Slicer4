@@ -72,7 +72,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   if(tempacc <3){ 
     s_dsize[xIndex%2]=renInfo.Resolution[xIndex%2];
-    s_vsize[xIndex%3]=volInfo.VoxelSize[xIndex%3];
+    s_vsize[xIndex%3]=volInfo.Spacing[xIndex%3];
     s_size[xIndex%3]=volInfo.VolumeSize[xIndex%3];
   }else if(tempacc < 9){ 
     s_minmax[xIndex%6]=volInfo.MinMaxValue[xIndex%6];
