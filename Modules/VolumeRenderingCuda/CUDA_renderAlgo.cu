@@ -275,9 +275,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	    s_zBuffer[tempacc]=(pos+s_minmaxTrace[tempacc].x)*stepSize;
 	  }
 	  if(s_remainingOpacity[tempacc]>0.02){ // check if remaining opacity has reached threshold(0.02)
-	    s_outputVal[tempacc*3]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3]*256.0;
-	    s_outputVal[tempacc*3+1]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3+1]*256.0;
-	    s_outputVal[tempacc*3+2]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3+2]*256.0;
+	    s_outputVal[tempacc*3]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3]*255.0;
+	    s_outputVal[tempacc*3+1]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3+1]*255.0;
+	    s_outputVal[tempacc*3+2]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3+2]*255.0;
 	    s_remainingOpacity[tempacc]*=(1.0-alpha);
 	  }else{
 	    pos = s_minmaxTrace[tempacc].y-s_minmaxTrace[tempacc].x;
