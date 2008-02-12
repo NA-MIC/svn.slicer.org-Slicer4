@@ -102,12 +102,35 @@ void LoadHeart()
     VolumeMapper->SetInput(reader[0]->GetOutput());
 }
 
+void LoadLung()
+{
+    reader[0]->Delete();
+    reader[0]= vtkImageReader::New();
+    reader[0]->SetDataScalarTypeToUnsignedChar();
+    reader[0]->SetNumberOfScalarComponents(1);
+    reader[0]->SetDataExtent(0, 127,
+        0, 127, 
+        0, 29);
+    reader[0]->SetFileDimensionality(3);
+
+
+    std::stringstream s;
+    s << "D:\\lung_uchar_128x128x30.raw";
+
+    reader[0]->SetFileName(s.str().c_str());
+    reader[0]->Update();
+
+    VolumeMapper->SetInput(reader[0]->GetOutput());
+}
+
 void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
         if (! strcmp(mb_Model->GetValue(), "Head"))
             LoadHead();
         else if (!strcmp(mb_Model->GetValue(), "Heart"))
             LoadHeart();
+        else if (!strcmp(mb_Model->GetValue(), "Lung"))
+            LoadLung();
         else
             Clear();
         renderWidget->Render();
@@ -115,7 +138,6 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
-
     VolumeMapper->SetThreshold(ThresholdRange->GetRange());
     renderWidget->Render();
 }
@@ -270,6 +292,7 @@ int my_main(int argc, char *argv[])
     mb_Model->Create();
     mb_Model->GetMenu()->AddRadioButton("Heart");
     mb_Model->GetMenu()->AddRadioButton("Head");
+    mb_Model->GetMenu()->AddRadioButton("Lung");
     mb_Model->GetMenu()->AddRadioButton("Empty");
     mb_Model->SetValue("Heart");
     mb_Model->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)ModelCallbackCommand);
@@ -283,7 +306,7 @@ int my_main(int argc, char *argv[])
     VolumePropertyWidget->Create();
     app->Script( "pack %s -side top -anchor nw -expand n -fill x -pady 2",
         VolumePropertyWidget->GetWidgetName()); 
-    VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangingEvent, (vtkCommand*)GUICallbackCommand);
+    VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangedEvent, (vtkCommand*)GUICallbackCommand);
 
     VolumePropertyWidget->SetVolumeProperty(prop);
     prop->Delete();
@@ -320,9 +343,11 @@ int my_main(int argc, char *argv[])
 
     // Deallocate and exit
 
+    ModelCallbackCommand->Delete();
     AnimCallbackCommand->Delete();
     GUICallbackCommand->Delete();
     //    filter->Delete();
+    mb_Model->Delete();
     volume->Delete();
     VolumeMapper->Delete();
     for (unsigned int i = 0; i < 5; i++)
