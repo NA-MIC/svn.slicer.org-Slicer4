@@ -74,7 +74,7 @@ public:
     void SendMessage(char *sockname);
 
     void ReceiveImage(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode);
-    void ReceiveTracker(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode);
+    void ReceiveTransform(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode);
 
     const char *Execute (char *Command);
 

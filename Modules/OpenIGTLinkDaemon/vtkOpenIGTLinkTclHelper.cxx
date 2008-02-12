@@ -38,9 +38,11 @@
 #endif /* LINUX */
 
 #include "vtkMRMLScalarVolumeNode.h"
+#include "vtkMRMLLinearTransformNode.h"
 
 #include "igtl_header.h"
 #include "igtl_image.h"
+#include "igtl_transform.h"
 
 vtkCxxRevisionMacro(vtkOpenIGTLinkTclHelper, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkOpenIGTLinkTclHelper);
@@ -154,8 +156,8 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
 
   igtl_header_convert_byte_order(&header);  
 
-  char deviceType[9];
-  deviceType[8] = 0;
+  char deviceType[13];
+  deviceType[12] = 0;
   memcpy((void*)deviceType, header.name, 8);
   
   char deviceName[21];
@@ -187,9 +189,9 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
         {
           ReceiveImage(channel, deviceName, header.body_size, header.crc, newNode);
         }
-      else if (strcmp("tracking", deviceType))
+      else if (strcmp("TRANSFORM", deviceType))
         {
-          ReceiveTracker(channel, deviceName, header.body_size, header.crc, newNode);
+          ReceiveTransform(channel, deviceName, header.body_size, header.crc, newNode);
         }
     }
   else
@@ -525,16 +527,86 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
   py = py + cy;
   pz = pz + cz;
 
-  volumeNode->SetAndObserveImageData(imageData);
-  vtkMRMLSliceNode* slnode = vtkMRMLSliceNode::SafeDownCast(this->Scene->GetNodeByID("vtkMRMLSliceNode1"));
+  //volumeNode->SetAndObserveImageData(imageData);
+  volumeNode->Modified();
+  vtkMRMLSliceNode* slnode = 
+    vtkMRMLSliceNode::SafeDownCast(this->Scene->GetNodeByID("vtkMRMLSliceNode1"));
   slnode->SetSliceToRASByNTP(nx, ny, nz, tx, ty, tz, px, py, pz, 0);
 }
 
 
 void
-vtkOpenIGTLinkTclHelper::ReceiveTracker(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode)
+vtkOpenIGTLinkTclHelper::ReceiveTransform(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode)
 {
+  float matrix[12];
+
+  vtkMRMLLinearTransformNode* transformNode;
+
+  int read = Tcl_Read(channel, (char *)matrix, IGTL_TRANSFORM_SIZE);
+  igtl_transform_convert_byte_order(matrix);
+
+  if (newNode)
+    {
+      transformNode = vtkMRMLLinearTransformNode::New();
+      transformNode->SetName(deviceName);
+      transformNode->SetDescription("Received by OpenIGTLink");
+
+      vtkMatrix4x4* transform = vtkMatrix4x4::New();
+      transform->Identity();
+
+      //transformNode->SetAndObserveImageData(transform);
+      transformNode->ApplyTransform(transform);
+      transform->Delete();
+
+      this->Scene->AddNode(transformNode);
+    }
+  else
+    {
+      vtkCollection* collection = this->Scene->GetNodesByName(deviceName);
+      transformNode = vtkMRMLLinearTransformNode::SafeDownCast(collection->GetItemAsObject(0));
+    }
+
+  float tx = matrix[0];
+  float ty = matrix[1];
+  float tz = matrix[2];
+  float sx = matrix[3];
+  float sy = matrix[4];
+  float sz = matrix[5];
+  float nx = matrix[6];
+  float ny = matrix[7];
+  float nz = matrix[8];
+  float px = matrix[9];
+  float py = matrix[10];
+  float pz = matrix[11];
+
+  std::cerr << "matrix = "<< std::endl;
+  std::cerr << tx << ", " << ty << ", " << tz << std::endl;
+  std::cerr << sx << ", " << sy << ", " << sz << std::endl;
+  std::cerr << nx << ", " << ny << ", " << nz << std::endl;
+  std::cerr << px << ", " << py << ", " << pz << std::endl;
   
+  // set volume orientation
+  vtkMatrix4x4* transform = vtkMatrix4x4::New();
+  vtkMatrix4x4* transformToParent = transformNode->GetMatrixTransformToParent();
+  transform->Identity();
+  transform->SetElement(0, 0, tx);
+  transform->SetElement(1, 0, ty);
+  transform->SetElement(2, 0, tz);
+
+  transform->SetElement(0, 1, sx);
+  transform->SetElement(1, 1, sy);
+  transform->SetElement(2, 1, sz);
+
+  transform->SetElement(0, 2, nx);
+  transform->SetElement(1, 2, ny);
+  transform->SetElement(2, 2, nz);
+
+  transform->SetElement(0, 3, px);
+  transform->SetElement(1, 3, py);
+  transform->SetElement(2, 3, pz);
+
+  transformToParent->DeepCopy(transform);
+  transform->Delete();
 }
 
 
@@ -555,6 +627,10 @@ vtkOpenIGTLinkTclHelper::ReceiveMatrix(char *sockname)
     }
 
   // read the tag, but ignore it
+  
+
+
+
   int tag;
   int bytes = sizeof(int);
   int read = Tcl_Read(channel, (char *) &tag, bytes);
