@@ -331,12 +331,12 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         vtkMRMLScalarVolumeNode *selectedImageData=vtkMRMLScalarVolumeNode::SafeDownCast(this->NS_ImageData->GetSelected());
         if (selectedImageData != NULL && selectedImageData->GetImageData() != NULL)
         {
-            vtkImageShiftScale* shifter = vtkImageShiftScale::New();
-            shifter->SetInput(selectedImageData->GetImageData());
-            shifter->SetOutputScalarTypeToUnsignedChar();
-            shifter->Update();
+            //vtkImageShiftScale* shifter = vtkImageShiftScale::New();
+            //shifter->SetInput(selectedImageData->GetImageData());
+            //shifter->SetOutputScalarTypeToUnsignedChar();
+            //shifter->Update();
 
-            this->CudaMapper->SetInput(shifter->GetOutput());
+            this->CudaMapper->SetInput(selectedImageData->GetImageData());
 
 
             this->CudaVolumeProperty = vtkVolumeProperty::New();
@@ -368,7 +368,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             grad->Delete();
             gradHisto->Delete();
 
-            shifter->Delete();
+            //shifter->Delete();
             }
         }
     }
