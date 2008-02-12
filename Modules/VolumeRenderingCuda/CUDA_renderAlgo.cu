@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include "cudaTypeRange.h"
 
 extern "C" {
 #include "CUDA_renderAlgo.h"
@@ -39,6 +40,8 @@ __device__ unsigned char interpolate(float posX, float posY, float posZ,
 			   posX*posY*posZ* val8)
 	  );
 }
+
+
 
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
