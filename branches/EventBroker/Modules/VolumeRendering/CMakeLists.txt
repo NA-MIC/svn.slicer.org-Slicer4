@@ -10,6 +10,7 @@ if(VOLUMERENDERINGMODULE)
   vtkSlicerNodeSelectorVolumeRenderingWidget.cxx
   vtkSlicerVRHelper.cxx
   vtkSlicerVRGrayscaleHelper.cxx
+  vtkSlicerVRMenuButtonColorMode.cxx
   #LabelmapPart
   #vtkSlicerVRLabelmapHelper.cxx
   #vtkLabelMapColorTransferFunction.cxx
@@ -64,8 +65,8 @@ ADD_LIBRARY(VolumeRenderingModule
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS VolumeRenderingModule
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(VolumeRenderingModule
@@ -104,7 +105,11 @@ CONFIGURE_FILE(
 )
 CONFIGURE_FILE(
   ${VolumeRenderingModule_SOURCE_DIR}/presets.xml
-  ${VolumeRenderingModule_BINARY_DIR}/presets.xml
+  ${Slicer3_BINARY_DIR}/lib/Slicer3/Modules/VolumeRendering/presets.xml
   COPYONLY
 )
+INSTALL(
+  FILES ${VolumeRenderingModule_SOURCE_DIR}/presets.xml
+  DESTINATION lib/Slicer3/Modules/VolumeRendering
+) 
 ENDIF(VOLUMERENDERINGMODULE)
