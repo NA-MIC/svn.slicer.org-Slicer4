@@ -104,6 +104,7 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   void RemoveObservations (vtkObject *subject, vtkObject *observer);
   void RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer);
   void RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer, vtkCallbackCommand *notify);
+  void RemoveObservationsForSubjectByTag (vtkObject *subject, unsigned long tag);
 
   // Description
   // Accessors for intropsection
