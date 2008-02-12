@@ -309,6 +309,24 @@ void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event
     }
   this->RemoveObservations( removeList );
 }
+
+//----------------------------------------------------------------------------
+void vtkEventBroker::RemoveObservationsForSubjectByTag (vtkObject *subject, unsigned long tag)
+{
+  // find matching observations to remove
+  std::vector< vtkObservation *> removeList;
+  std::vector< vtkObservation *>::iterator obsIter; 
+  for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
+    {
+    if ( (*obsIter)->GetSubject() == subject &&
+         (*obsIter)->GetEventTag() == tag )
+      {
+      removeList.push_back( *obsIter );
+      }
+    }
+  this->RemoveObservations( removeList );
+}
+
 //----------------------------------------------------------------------------
 vtkCollection *vtkEventBroker::GetObservationsForSubject ( vtkObject *subject )
 {
@@ -368,7 +386,7 @@ int vtkEventBroker::GenerateGraphFile ( const char *graphFile )
     return 1;
     }
 
-  file << "digraph G {\n";
+  file << "strict digraph G {\n";
 
   vtkObservation *observation;
   int size = this->GetNumberOfObservations();

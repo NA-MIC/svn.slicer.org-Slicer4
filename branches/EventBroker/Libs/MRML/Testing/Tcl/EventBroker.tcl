@@ -5,6 +5,9 @@
 #
 
 proc EventBrokerTmpDir {} {
+  if { [file isdirectory g:/tmp] } {
+    return g:/tmp
+  }
   return $::env(SLICER_HOME)/Testing/Temporary
 }
 
