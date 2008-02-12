@@ -130,6 +130,10 @@ void vtkCudaVolumeInformationHandler::Update()
 {
     if (this->Volume != NULL && this->InputData != NULL)
     {
+        this->CudaInputBuffer.CopyFrom(this->InputData->GetScalarPointer(),
+                                        this->InputData->GetActualMemorySize() * 1024);
+
+
         this->UpdateVolumeProperties(this->Volume->GetProperty());
         int* dims = this->InputData->GetDimensions();
 
