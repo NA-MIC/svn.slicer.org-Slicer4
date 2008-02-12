@@ -1,39 +1,38 @@
+// .NAME vtkSlicerGradientEditorWidget 
+// .SECTION Description
+// This class implements Slicer's main GradientsEditor GUI.
+// Inherits most behavior from vtkSlicerWidget.
 #ifndef __vtkSlicerGradientEditorWidget_h
 #define __vtkSlicerGradientEditorWidget_h
 
 #include "vtkSlicerWidget.h"
+#include "vtkSlicerMeasurementFrameWidget.h"
+#include "vtkSlicerGradientsWidget.h"
 
-class vtkKWFrameWithLabel;
-class vtkKWFrame;
-class vtkKWPushButton;
-class vtkKWLabel;
-class vtkKWComboBox;
-class vtkKWTextWithScrollbars;
 class vtkSlicerNodeSelectorWidget;
-class vtkKWCheckButton;
-class vtkKWLoadSaveButtonWithLabel;
-class vtkMatrix4x4;
-class vtkKWMatrixWidget;
 class vtkMRMLDiffusionWeightedVolumeNode;
+//widgets
+class vtkKWFrameWithLabel;
+class vtkKWPushButton;
 
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerGradientEditorWidget : public vtkSlicerWidget
   {
   public:
+
     // Description:
-    // Usual vtk class functions
+    // Usual vtk class functions.
     static vtkSlicerGradientEditorWidget* New();
     vtkTypeRevisionMacro(vtkSlicerGradientEditorWidget,vtkSlicerWidget);
-    void PrintSelf (ostream& os, vtkIndent indent );
+    void PrintSelf(ostream& os, vtkIndent indent);
 
     // Description:
-    // Add/Remove observers on widgets in the GUI
-    virtual void AddWidgetObservers ( );
-    virtual void RemoveWidgetObservers ( );
+    // Add/Remove observers on widgets in the GUI.
+    virtual void AddWidgetObservers();
+    virtual void RemoveWidgetObservers();
 
     // Description:
-    // Method to propagate events generated in GUI to logic / mrml
+    // Method to propagate events generated in GUI to logic / mrml.
     void ProcessWidgetEvents(vtkObject *caller, unsigned long event, void *callData );
-    void ProcessMRMLEvents(vtkObject *caller, unsigned long event, void *callData );
 
     // Description:
     // Method to update the widget when a new node is loaded.
@@ -47,37 +46,21 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerGradientEditorWidget : public vtkSlice
     // Method to create the widget.
     virtual void CreateWidget();
 
-    // Description:
-    // Method to update the GUI matrix.
-    void UpdateMatrix();
-
-    // Description:
-    // Method to update the GUI GradientsTextfield containing bValue and gradients.
-    void UpdateGradients();
-
-    vtkKWLoadSaveButtonWithLabel *LoadGradientsButton;
-    vtkKWFrameWithLabel *MeasurementFrame;
-    vtkKWFrameWithLabel *TestFrame;
-    vtkKWFrameWithLabel *GradientsFrame;
-    vtkKWFrame *ButtonsFrame;
-    vtkKWMatrixWidget *MatrixGUI;
-    vtkKWPushButton *NegativeButton;
-    vtkKWPushButton *SwapButton;    
-    vtkKWPushButton *RunButton;
-    vtkKWPushButton *RotateButton;
-    vtkKWPushButton *CancelButton;
-    vtkKWLabel *AngleLabel;
-    vtkKWComboBox *AngleCombobox;
-    vtkKWTextWithScrollbars *GradientsTextfield;
-    vtkSlicerNodeSelectorWidget *Mask;
-    vtkKWCheckButton *EnableGradientsButton;
-    vtkKWCheckButton* Checkbuttons[3];
-    vtkMatrix4x4 *Matrix;
     vtkMRMLDiffusionWeightedVolumeNode *ActiveVolumeNode;
+    vtkMRMLDiffusionWeightedVolumeNode *OriginalNode;
+    int NumberUndosAfterLoading;    
+    //widgets (GUI)
+    vtkSlicerMeasurementFrameWidget *MeasurementFrameWidget;
+    vtkSlicerGradientsWidget *GradientsWidget;
+    vtkKWFrameWithLabel *TestFrame;
+    vtkSlicerNodeSelectorWidget *FiducialSelector;
+    vtkKWPushButton *RunButton;    
+    vtkKWPushButton *RestoreButton;
+    vtkKWPushButton *UndoButton;    
 
   private:
-    vtkSlicerGradientEditorWidget ( const vtkSlicerGradientEditorWidget& ); // Not implemented.
-    void operator = ( const vtkSlicerGradientEditorWidget& ); //Not implemented.
+    vtkSlicerGradientEditorWidget (const vtkSlicerGradientEditorWidget&); // Not implemented.
+    void operator = (const vtkSlicerGradientEditorWidget&); //Not implemented.
   };
 
 #endif 

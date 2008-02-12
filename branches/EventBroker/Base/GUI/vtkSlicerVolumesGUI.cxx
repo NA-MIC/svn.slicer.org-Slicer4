@@ -502,6 +502,10 @@ void vtkSlicerVolumesGUI::ProcessGUIEvents ( vtkObject *caller,
 
         if (volume != NULL)
           {
+          // Deactivate GradientsEditor, as it should only enabled when activenode is a DWI
+          this->GradientFrame->EnabledOff();
+          this->GradientFrame->SetAllowFrameToCollapse(0);
+          this->GradientFrame->CollapseFrame();
           this->UpdateFramesFromMRML();
           }
         return;
@@ -815,7 +819,7 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
     
     // Define your help text and build the help frame here.
     const char *help = "The Volumes Module loads, saves and adjusts display parameters of volume data.";
-    const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details. ";
+    const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details. ";
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Volumes" );
     this->BuildHelpAndAboutFrame ( page, help, about );
 
@@ -961,8 +965,6 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
     this->DTIDisplayFrame->SetParent( this->DisplayFrame->GetFrame() );
     this->DTIDisplayFrame->Create( );
 
-
-
     // Assign a scalar display widget by default.
     this->CreateScalarDisplayWidget();
     this->VolumeDisplayFrame = this->ScalarDisplayFrame;
@@ -970,21 +972,20 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
 
     // ---
     // GradientEditor FRAME
-    this->GradientFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    this->GradientFrame->SetParent ( page );
-    this->GradientFrame->Create ( );
-    this->GradientFrame->SetLabelText ("DWI Gradient Editor");
-    this->GradientFrame->CollapseFrame ( );
+    this->GradientFrame = vtkSlicerModuleCollapsibleFrame::New();
+    this->GradientFrame->SetParent(page);
+    this->GradientFrame->Create();
+    this->GradientFrame->SetLabelText("DWI Gradient Editor");
+    this->GradientFrame->CollapseFrame();
     this->GradientFrame->EnabledOff();
     this->GradientFrame->SetAllowFrameToCollapse(0);
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->GradientFrame->GetWidgetName(), page->GetWidgetName());
 
-    this->GradientEditorWidget = vtkSlicerGradientEditorWidget::New ( );
-    this->GradientEditorWidget->SetParent ( this->GradientFrame->GetFrame() );
-    this->GradientEditorWidget->Create ( );
-    this->GradientEditorWidget->SetMRMLScene(this->GetMRMLScene());
+    this->GradientEditorWidget = vtkSlicerGradientEditorWidget::New();
+    this->GradientEditorWidget->SetParent(this->GradientFrame->GetFrame());
     this->GradientEditorWidget->SetAndObserveMRMLScene(this->GetMRMLScene());
+    this->GradientEditorWidget->Create();
     this->GradientEditorWidget->AddWidgetObservers();
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->GradientEditorWidget->GetWidgetName(), this->GradientFrame->GetFrame()->GetWidgetName());
@@ -999,11 +1000,11 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->InfoFrame->GetWidgetName(), page->GetWidgetName());
 
-    this->VolumeHeaderWidget = vtkSlicerVolumeHeaderWidget::New ( );
+    this->VolumeHeaderWidget = vtkSlicerVolumeHeaderWidget::New();
     this->VolumeHeaderWidget->AddNodeSelectorWidgetOff();
-    this->VolumeHeaderWidget->SetMRMLScene(this->GetMRMLScene() );
-    this->VolumeHeaderWidget->SetParent ( this->InfoFrame->GetFrame() );
-    this->VolumeHeaderWidget->Create ( );
+    this->VolumeHeaderWidget->SetMRMLScene(this->GetMRMLScene());
+    this->VolumeHeaderWidget->SetParent(this->InfoFrame->GetFrame());
+    this->VolumeHeaderWidget->Create();
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->VolumeHeaderWidget->GetWidgetName(), this->InfoFrame->GetFrame()->GetWidgetName());
     // ---
@@ -1118,3 +1119,4 @@ void vtkSlicerVolumesGUI::CreateDTIDisplayWidget ( )
     }
 
 }
+
