@@ -39,7 +39,6 @@
 
 #include "vtkSlicerConfigure.h" // for VTKSLICER_CONFIGURATION_TYPES
 
-#include "LoadableModuleFactory.h"
 #include "ModuleFactory.h"
 
 #include "vtkSlicerROILogic.h"
@@ -92,6 +91,11 @@ extern "C" {
 //#define QDEC_DEBUG
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
+//#define LOADABLEMODULES_DEBUG
+
+#if !defined(LOADABLEMODULES_DEBUG)
+#include <LoadableModuleFactory.h>
+#endif
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 #include "vtkSlicerFiberBundleLogic.h"
@@ -1032,7 +1036,7 @@ int Slicer3_main(int argc, char *argv[])
 
         logic->SetAndObserveMRMLScene( scene );
         logic->SetApplicationLogic( appLogic );
-        // logic->SetMRMLScene( scene );
+        logic->SetMRMLScene( scene );
 
         gui->SetModuleLogic ( logic );
         gui->SetApplication( slicerApp );
@@ -1054,6 +1058,32 @@ int Slicer3_main(int argc, char *argv[])
 
         lmit++;
       }
+#else
+
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+#endif
+
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
+    // --- Gradient anisotropic diffusion filter module
+    slicerApp->SplashMessage("Initializing Gradient Anisotropic Module...");
+    vtkGradientAnisotropicDiffusionFilterGUI *gradientAnisotropicDiffusionFilterGUI = vtkGradientAnisotropicDiffusionFilterGUI::New ( );
+    vtkGradientAnisotropicDiffusionFilterLogic *gradientAnisotropicDiffusionFilterLogic  = vtkGradientAnisotropicDiffusionFilterLogic::New ( );
+    gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( scene );
+    gradientAnisotropicDiffusionFilterLogic->SetApplicationLogic ( appLogic );
+    //    gradientAnisotropicDiffusionFilterLogic->SetMRMLScene(scene);
+    gradientAnisotropicDiffusionFilterGUI->SetLogic ( gradientAnisotropicDiffusionFilterLogic );
+    gradientAnisotropicDiffusionFilterGUI->SetApplication ( slicerApp );
+    gradientAnisotropicDiffusionFilterGUI->SetApplicationLogic ( appLogic );
+    gradientAnisotropicDiffusionFilterGUI->SetApplicationGUI ( appGUI );
+    gradientAnisotropicDiffusionFilterGUI->SetGUIName( "GradientAnisotropicDiffusionFilter" );
+    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->SetName ( gradientAnisotropicDiffusionFilterGUI->GetGUIName ( ) );
+    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( gradientAnisotropicDiffusionFilterGUI );
+    gradientAnisotropicDiffusionFilterGUI->BuildGUI ( );
+    gradientAnisotropicDiffusionFilterGUI->AddGUIObservers ( );
+#endif
+
 #endif // LOADABLEMODULES_DEBUG
 
 
@@ -1332,27 +1362,6 @@ int Slicer3_main(int argc, char *argv[])
     appGUI->InitializeSlicesControlGUI();
     appGUI->InitializeViewControlGUI();
 //    appGUI->InitializeNavigationWidget();
-
-#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
-    // --- Gradient anisotropic diffusion filter module
-    slicerApp->SplashMessage("Initializing Gradient Anisotropic Module...");
-    vtkGradientAnisotropicDiffusionFilterGUI *gradientAnisotropicDiffusionFilterGUI = vtkGradientAnisotropicDiffusionFilterGUI::New ( );
-    vtkGradientAnisotropicDiffusionFilterLogic *gradientAnisotropicDiffusionFilterLogic  = vtkGradientAnisotropicDiffusionFilterLogic::New ( );
-    gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( scene );
-    gradientAnisotropicDiffusionFilterLogic->SetApplicationLogic ( appLogic );
-    //    gradientAnisotropicDiffusionFilterLogic->SetMRMLScene(scene);
-    gradientAnisotropicDiffusionFilterGUI->SetLogic ( gradientAnisotropicDiffusionFilterLogic );
-    gradientAnisotropicDiffusionFilterGUI->SetApplication ( slicerApp );
-    gradientAnisotropicDiffusionFilterGUI->SetApplicationLogic ( appLogic );
-    gradientAnisotropicDiffusionFilterGUI->SetApplicationGUI ( appGUI );
-    gradientAnisotropicDiffusionFilterGUI->SetGUIName( "GradientAnisotropicDiffusionFilter" );
-    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->SetName ( gradientAnisotropicDiffusionFilterGUI->GetGUIName ( ) );
-    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( gradientAnisotropicDiffusionFilterGUI );
-    gradientAnisotropicDiffusionFilterGUI->BuildGUI ( );
-    gradientAnisotropicDiffusionFilterGUI->AddGUIObservers ( );
-#endif
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     // --- Tractography Display module
@@ -2001,12 +2010,18 @@ int Slicer3_main(int argc, char *argv[])
 
     lmit++;
   }
+#else
+
+#if !defined(VOLUMERENDERING_DEBUG) && defined(BUILD_MODULES)
+    gradientAnisotropicDiffusionFilterGUI->RemoveGUIObservers ( );
 #endif
 
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterGUI->RemoveGUIObservers ( );
 #endif
     
+#endif// LOADABLEMODULES_DEBUG
+
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerTractographyDisplayGUI->RemoveGUIObservers ( );
     slicerTractographyFiducialSeedingGUI->RemoveGUIObservers ( );
@@ -2127,12 +2142,19 @@ int Slicer3_main(int argc, char *argv[])
 
     lmit++;
   }
+#else
+
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+
 #endif
-    
-    //--- delete gui first, removing Refs to Logic and MRML
+
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterGUI->Delete ();
 #endif
+    
+#endif// LOADABLEMODULES_DEBUG
+
+//--- delete gui first, removing Refs to Logic and MRML
     
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerTractographyDisplayGUI->Delete ();
@@ -2244,12 +2266,18 @@ int Slicer3_main(int argc, char *argv[])
 
     lmit++;
   }
+#else
+
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+
 #endif
 
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( NULL );
     gradientAnisotropicDiffusionFilterLogic->Delete ();
 #endif
+
+#endif// LOADABLEMODULES_DEBUG
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerFiberBundleLogic->SetAndObserveMRMLScene ( NULL );
