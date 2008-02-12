@@ -20,17 +20,17 @@ typedef struct {
 
     //! The minimum and Maximum Values of the Volume
     float           MinMaxValue[6];
-    float MinValueX, MaxValueX,
-          MinValueY, MaxValueY,
-          MinValueZ, MaxValueZ;
+    float           MinValueX, MaxValueX,
+                    MinValueY, MaxValueY,
+                    MinValueZ, MaxValueZ;
 
     //! The minimal Threshold of the Input Color Value     
     int             MinThreshold;
     //! The Maximum Threshold of the Input Color Value
     int             MaxThreshold;
 
-    //! The Voxel Sizes.
-    float           VoxelSize[3];
+    //! The Voxel Sizes called Spacing by VTK.
+    float           Spacing[3];
 
     //! The stepping accuracy to raster along the ray.
     float           SteppingSize;

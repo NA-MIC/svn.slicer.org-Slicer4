@@ -136,13 +136,14 @@ void vtkCudaVolumeInformationHandler::Update()
 
         this->UpdateVolumeProperties(this->Volume->GetProperty());
         int* dims = this->InputData->GetDimensions();
+        double* spacing = this->InputData->GetSpacing();
 
         this->VolumeInfo.SourceData = this->CudaInputBuffer.GetMemPointer();
         this->VolumeInfo.InputDataType = this->InputData->GetScalarType();
 
-        this->VolumeInfo.VoxelSize[0] = 1;
-        this->VolumeInfo.VoxelSize[1] = 1;
-        this->VolumeInfo.VoxelSize[2] = 1;
+        this->VolumeInfo.Spacing[0] = (float)spacing[0];
+        this->VolumeInfo.Spacing[1] = (float)spacing[1];
+        this->VolumeInfo.Spacing[2] = (float)spacing[2];
 
         this->VolumeInfo.VolumeTransformation[0] = 0.0f;
         this->VolumeInfo.VolumeTransformation[1] = 0.0f;
