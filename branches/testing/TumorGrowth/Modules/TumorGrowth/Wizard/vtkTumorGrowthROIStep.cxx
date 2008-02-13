@@ -142,7 +142,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
 {
 
   // ----------------------------------------
-  // Display Scan1 and Delete Super Sampled 
+  // Display Scan1, Delete Super Sampled and Grid  
   // ----------------------------------------
   this->DeleteSuperSampleNode();
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
@@ -158,6 +158,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   } else {
     cout << "no node "  << endl;
   }
+  this->GridRemove();
 
   // ----------------------------------------
   // Build GUI 

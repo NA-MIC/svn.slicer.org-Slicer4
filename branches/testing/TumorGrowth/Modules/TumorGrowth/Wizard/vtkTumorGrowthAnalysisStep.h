@@ -47,6 +47,8 @@ protected:
 
   static void WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
 
+  void TakeScreenshot(); 
+  int SnapshotCount; 
 
 private:
   vtkTumorGrowthAnalysisStep(const vtkTumorGrowthAnalysisStep&);

@@ -136,6 +136,10 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   vtkSetStringMacro(Analysis_Ref);
   vtkGetStringMacro(Analysis_Ref);
 
+  vtkSetStringMacro(Grid_Ref);
+  vtkGetStringMacro(Grid_Ref);
+
+
   vtkGetMacro(Analysis_Sensitivity,double);
   vtkSetMacro(Analysis_Sensitivity,double);
 
@@ -156,6 +160,8 @@ protected:
   char* Scan2_NormedRef;
   char* Scan2_ThreshRef;
   char* Analysis_Ref;
+
+  char* Grid_Ref;
 
   char* WorkingDir;
 
