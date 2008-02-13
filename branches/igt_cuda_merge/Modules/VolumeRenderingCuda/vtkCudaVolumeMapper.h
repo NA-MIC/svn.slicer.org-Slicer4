@@ -13,7 +13,7 @@ class vtkCudaMemoryTexture;
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaVolumeMapper : public vtkVolumeMapper
 {
 public:
-    vtkTypeRevisionMacro(vtkCudaVolumeMapper,vtkVolumeMapper);
+    vtkTypeRevisionMacro(vtkCudaVolumeMapper, vtkVolumeMapper);
     static vtkCudaVolumeMapper *New();
 
     virtual void SetInput( vtkImageData * );
@@ -42,8 +42,8 @@ protected:
     vtkCudaVolumeInformationHandler* VolumeInfoHandler;
 
 private:
-    vtkCudaVolumeMapper operator=(const vtkVolumeCudaMapper&);
-    vtkCudaVolumeMapper(const vtkVolumeCudaMapper&);
+    vtkCudaVolumeMapper operator=(const vtkCudaVolumeMapper&);
+    vtkCudaVolumeMapper(const vtkCudaVolumeMapper&);
 };
 
 #endif /* __vtkCudaVolumeMapper_h */
