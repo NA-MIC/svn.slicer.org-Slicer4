@@ -1,13 +1,11 @@
 /*
  * Volume Rendering on CUDA.
  * Author: Nicholas Herlambang
- * 
- * 
+ * Second Author: Benjamin Grauer
  */
 
 #ifndef CUDA_RENDERALGO_H
 #define CUDA_RENDERALGO_H
-#include <vector_types.h>
 #include "cudaRendererInformation.h"
 #include "cudaVolumeInformation.h"
 

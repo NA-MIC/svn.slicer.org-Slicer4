@@ -1,18 +1,29 @@
+extern "C" {
+#include "CUDA_renderAlgo.h"
+}
+
 // includes, system
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+
+//cuda includes
 #include "cudaTypeRange.h"
-
-extern "C" {
-#include "CUDA_renderAlgo.h"
-}
-
-// includes, project
 #include <cutil.h>
+
+// vtk includes
 //#include "vtkType.h"
-// includes, kernels
+// or use these defines. they work too.
+#define VTK_CHAR            2
+#define VTK_UNSIGNED_CHAR   3
+#define VTK_SHORT           4
+#define VTK_UNSIGNED_SHORT  5
+#define VTK_INT             6
+#define VTK_UNSIGNED_INT    7
+#define VTK_FLOAT          10
+#define VTK_DOUBLE         11
+
 
 #define BLOCK_DIM2D 16// this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
@@ -333,13 +344,15 @@ void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
   // Switch to various rendering methods.
   //float transparencyLevel = 1.0;
   
-  CUDAkernel_renderAlgo_doIntegrationRender<unsigned char> <<< grid, threads >>>( \
+  /*CUDAkernel_renderAlgo_doIntegrationRender<unsigned char> <<< grid, threads >>>( \
 	 rendererInfo,
 	 volumeInfo)  
-  /*
+	 */
+
+// The CUDA Kernel Function Definition, so we do not have to write it down below
 #define CUDA_KERNEL_CALL(ID, TYPE)   \
-	if (inputDataType == ID) \
-	 CUDAkernel_renderAlgo_doIntegrationRender<TYPE><<< grid, threads >>>( \
+	if (volumeInfo.InputDataType == ID) \
+	 CUDAkernel_renderAlgo_doIntegrationRender<TYPE> <<< grid, threads >>>( \
 	 rendererInfo,							\
 	 volumeInfo)
 
@@ -351,7 +364,6 @@ void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
   else CUDA_KERNEL_CALL(VTK_FLOAT, float);
   else CUDA_KERNEL_CALL(VTK_DOUBLE, double);
   else CUDA_KERNEL_CALL(VTK_INT, int);
-  */
 
 
   CUT_CHECK_ERROR("Kernel execution failed");
