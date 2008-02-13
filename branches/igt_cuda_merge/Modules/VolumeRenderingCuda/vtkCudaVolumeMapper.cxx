@@ -1,5 +1,5 @@
 // Type
-#include "vtkVolumeCudaMapper.h"
+#include "vtkCudaVolumeMapper.h"
 #include "vtkVolumeRenderingCudaFactory.h"
 #include "vtkObjectFactory.h"
 
@@ -29,34 +29,34 @@ extern "C" {
 }
 
 
-vtkCxxRevisionMacro(vtkVolumeCudaMapper, "$Revision: 1.8 $");
-vtkStandardNewMacro(vtkVolumeCudaMapper);
+vtkCxxRevisionMacro(vtkCudaVolumeMapper, "$Revision: 1.8 $");
+vtkStandardNewMacro(vtkCudaVolumeMapper);
 
-vtkVolumeCudaMapper::vtkVolumeCudaMapper()
+vtkCudaVolumeMapper::vtkCudaVolumeMapper()
 {
     this->VolumeInfoHandler = vtkCudaVolumeInformationHandler::New();
     this->RendererInfoHandler = vtkCudaRendererInformationHandler::New();
 }  
 
-vtkVolumeCudaMapper::~vtkVolumeCudaMapper()
+vtkCudaVolumeMapper::~vtkCudaVolumeMapper()
 {
     this->VolumeInfoHandler->Delete();
     this->RendererInfoHandler->Delete();
 }
 
-void vtkVolumeCudaMapper::SetInput(vtkImageData * input)
+void vtkCudaVolumeMapper::SetInput(vtkImageData * input)
 {
     this->Superclass::SetInput(input);
     this->VolumeInfoHandler->SetInputData(input);
 }
 
-void vtkVolumeCudaMapper::SetRenderMode(int mode)
+void vtkCudaVolumeMapper::SetRenderMode(int mode)
 {
     //HACK
     //this->MemoryTexture->SetRenderMode(mode);
 }
 
-int vtkVolumeCudaMapper::GetCurrentRenderMode() const
+int vtkCudaVolumeMapper::GetCurrentRenderMode() const
 {
     //HACK
     return 0; //this->MemoryTexture->GetCurrentRenderMode();
@@ -66,14 +66,14 @@ int vtkVolumeCudaMapper::GetCurrentRenderMode() const
 /**
  * @brief sets the Threshold of the Input Array
  */
-void vtkVolumeCudaMapper::SetThreshold(unsigned int min, unsigned int max)
+void vtkCudaVolumeMapper::SetThreshold(unsigned int min, unsigned int max)
 {
     this->VolumeInfoHandler->SetThreshold(min, max);
 }
 
 #include "vtkTimerLog.h"
 
-void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
+void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
     // This should update the the CudaInputBuffer only when needed.
     //if (this->GetInput()->GetMTime() > this->GetMTime())
@@ -150,7 +150,7 @@ void vtkVolumeCudaMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     return;
 }
 
-void vtkVolumeCudaMapper::PrintSelf(ostream& os, vtkIndent indent)
+void vtkCudaVolumeMapper::PrintSelf(ostream& os, vtkIndent indent)
 {
     vtkVolumeMapper::PrintSelf(os, indent);
 }

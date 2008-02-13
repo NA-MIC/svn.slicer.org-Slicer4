@@ -15,7 +15,7 @@
 
 #include "vtkImageData.h"
 
-#include "vtkVolumeCudaMapper.h"
+#include "vtkCudaVolumeMapper.h"
 #include "vtkKWTypeChooserBox.h"
 #include "vtkKWMatrixWidget.h"
 #include "vtkKWLabel.h"
@@ -277,7 +277,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         // create required objects
         if (this->CudaMapper == NULL)
         {
-            this->CudaMapper = vtkVolumeCudaMapper::New();
+            this->CudaMapper = vtkCudaVolumeMapper::New();
 
             // Reading in the Data using a ImageReader
             //vtkImageReader* reader[5];

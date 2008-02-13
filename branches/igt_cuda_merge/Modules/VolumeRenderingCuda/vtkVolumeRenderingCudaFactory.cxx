@@ -23,7 +23,7 @@
 #include "vtkCriticalSection.h"
 
 #include "stdlib.h"
-#include "vtkVolumeCudaMapper.h"
+#include "vtkCudaVolumeMapper.h"
 #include "vtkVolumeRenderingCudaModuleGUI.h"
 
 vtkCxxRevisionMacro(vtkVolumeRenderingCudaFactory, "$Revision: 1.7 $");
@@ -46,9 +46,9 @@ vtkObject* vtkVolumeRenderingCudaFactory::CreateInstance(const char* vtkclassnam
 #endif
   const char *rl = vtkGraphicsFactory::GetRenderLibrary();
 
-  if (!strcmp("vtkVolumeCudaMapper", vtkclassname) ||
+  if (!strcmp("vtkCudaVolumeMapper", vtkclassname) ||
       !strcmp("vtkOpenGLVolumeTextureMapper2D", vtkclassname))
-    return vtkVolumeCudaMapper::New();
+    return vtkCudaVolumeMapper::New();
 
   if (!strcmp("vtkVolumeRenderingCudaModuleGUI", vtkclassname))
     return vtkVolumeRenderingCudaModuleGUI::New();
