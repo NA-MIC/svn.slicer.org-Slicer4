@@ -54,8 +54,8 @@ template <typename InType>
                unsigned int resolution[3])
 {
   unsigned long size = resolution[0] * resolution[1] * resolution[2];
-  InType inArray[size];
-  unsigned char outArray[size];
+  InType* inArray = new InType[size];
+  unsigned char* outArray = new unsigned char[size];
   
   std::cout << "Read File " << inFile << std::endl;
    FILE* InFile = fopen(inFile.c_str(), "r");
@@ -69,6 +69,7 @@ template <typename InType>
    fwrite(outArray, sizeof(unsigned char), size, OutFile);
    fclose(OutFile);
    
+   delete[] inArray;
 }
 
 int main(int argc, char** argv)
