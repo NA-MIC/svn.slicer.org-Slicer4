@@ -91,6 +91,7 @@ extern "C" {
 //#define QDEC_DEBUG
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
+
 //#define LOADABLEMODULES_DEBUG
 
 #if !defined(LOADABLEMODULES_DEBUG)
@@ -701,6 +702,20 @@ int Slicer3_main(int argc, char *argv[])
     Igt_Init(interp);
     Vtkteem_Init(interp);
 
+#if !defined(LOADABLEMODULES_DEBUG)
+
+#else
+
+ #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+    Volumerenderingmodule_Init(interp);
+#endif
+    
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
+    Gradientanisotropicdiffusionfilter_Init(interp);
+#endif
+
+#endif // LOADABLEMODULES_DEBUG
+
 #if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
     Emsegment_Init(interp);
 #endif
@@ -716,14 +731,6 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     Qdecmodule_Init(interp);
 #endif
- #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
-    Volumerenderingmodule_Init(interp);
-#endif
-    
-#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
-    Gradientanisotropicdiffusionfilter_Init(interp);
-#endif
-
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     Slicertractographydisplay_Init(interp);
     Slicertractographyfiducialseeding_Init(interp);
@@ -1003,7 +1010,7 @@ int Slicer3_main(int argc, char *argv[])
     // If we need to collect them at some point, we should define 
     // other collections in the vtkSlicerApplication class.
 
-#ifndef LOADABLEMODULES_DEBUG
+#if !defined(LOADABLEMODULES_DEBUG)
     std::string slicerModulePath = slicerBinDir;
 
     if (hasIntDir)
@@ -1061,6 +1068,31 @@ int Slicer3_main(int argc, char *argv[])
 #else
 
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+    slicerApp->SplashMessage("Initializing Volume Rendering Module...");
+    //VolumeRenderingModule
+    vtkVolumeRenderingModuleGUI *vrModuleGUI = vtkVolumeRenderingModuleGUI::New ( );
+    vtkVolumeRenderingModuleLogic *vrModuleLogic  = vtkVolumeRenderingModuleLogic::New ( );
+    vrModuleLogic->SetAndObserveMRMLScene ( scene );
+    vrModuleLogic->SetApplicationLogic ( appLogic );
+    vrModuleLogic->SetMRMLScene(scene);
+        //TODO Quick and dirty
+     vtkMRMLVolumeRenderingNode *vrNode=vtkMRMLVolumeRenderingNode::New();
+     scene->RegisterNodeClass(vrNode);
+  vrNode->Delete();
+    vrModuleGUI->SetLogic(vrModuleLogic);
+    vrModuleGUI->SetApplication ( slicerApp );
+    vrModuleGUI->SetApplicationLogic ( appLogic );
+    vrModuleGUI->SetApplicationGUI ( appGUI );
+    vrModuleGUI->SetGUIName( "VolumeRendering" );
+    vrModuleGUI->GetUIPanel()->SetName ( vrModuleGUI->GetGUIName ( ) );
+    vrModuleGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    vrModuleGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( vrModuleGUI );
+    vrModuleGUI->BuildGUI ( );
+    vrModuleGUI->AddGUIObservers ( );
+    // add the pointer to the viewer widget, for observing pick events
+    vrModuleGUI->SetViewerWidget(appGUI->GetViewerWidget());
+    vrModuleGUI->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
 #endif
 
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
@@ -1085,7 +1117,6 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
 #endif // LOADABLEMODULES_DEBUG
-
 
     // ADD INDIVIDUAL MODULES
     // (these require appGUI to be built):
@@ -2013,7 +2044,7 @@ int Slicer3_main(int argc, char *argv[])
 #else
 
 #if !defined(VOLUMERENDERING_DEBUG) && defined(BUILD_MODULES)
-    gradientAnisotropicDiffusionFilterGUI->RemoveGUIObservers ( );
+    vrModuleGUI->TearDownGUI ( );
 #endif
 
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
@@ -2145,7 +2176,7 @@ int Slicer3_main(int argc, char *argv[])
 #else
 
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
-
+    vrModuleGUI->Delete ( );
 #endif
 
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
