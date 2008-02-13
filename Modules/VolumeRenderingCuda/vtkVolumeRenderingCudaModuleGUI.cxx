@@ -367,8 +367,6 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
             grad->Delete();
             gradHisto->Delete();
-
-            //shifter->Delete();
             }
         }
     }

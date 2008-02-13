@@ -52,8 +52,6 @@ __device__ unsigned char interpolate(float posX, float posY, float posZ,
 	  );
 }
 
-
-
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 							  const cudaRendererInformation renInfo,
@@ -268,7 +266,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
 	
 	/*interpolation start here*/
-	/*
+	
 	float posX=tempx-(int)tempx;
 	float posY=tempy-(int)tempy;
 	float posZ=tempz-(int)tempz;
@@ -282,7 +280,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx+1))],
 			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx+1))],
 			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx+1))]);
-	*/
+	
 
 	/*interpolation end here*/
 
@@ -339,21 +337,12 @@ void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
   dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
 
   CUT_DEVICE_INIT();
-
-  // execute the kernel
-  // Switch to various rendering methods.
-  //float transparencyLevel = 1.0;
-  
-  /*CUDAkernel_renderAlgo_doIntegrationRender<unsigned char> <<< grid, threads >>>( \
-	 rendererInfo,
-	 volumeInfo)  
-	 */
-
+ 
 // The CUDA Kernel Function Definition, so we do not have to write it down below
 #define CUDA_KERNEL_CALL(ID, TYPE)   \
 	if (volumeInfo.InputDataType == ID) \
 	 CUDAkernel_renderAlgo_doIntegrationRender<TYPE> <<< grid, threads >>>( \
-	 rendererInfo,							\
+	 rendererInfo, \
 	 volumeInfo)
 
 // Add all the other types.
