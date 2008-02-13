@@ -27,6 +27,7 @@
 #include "vtkVolume.h"
 #include "vtkSlicerModelsLogic.h"
 
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthSegmentationStep);
 vtkCxxRevisionMacro(vtkTumorGrowthSegmentationStep, "$Revision: 1.2 $");
@@ -56,6 +57,7 @@ vtkTumorGrowthSegmentationStep::vtkTumorGrowthSegmentationStep()
 //----------------------------------------------------------------------------
 vtkTumorGrowthSegmentationStep::~vtkTumorGrowthSegmentationStep()
 {
+ 
   if (this->ThresholdFrame)
     {
     this->ThresholdFrame->Delete();
@@ -157,6 +159,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   this->Script("pack %s -side top -anchor nw -padx 0 -pady 3",this->ThresholdFrame->GetWidgetName()); 
   this->Script("pack %s %s -side left -anchor nw -padx 2 -pady 0",this->ThresholdLabel->GetWidgetName(),this->ThresholdRange->GetWidgetName());
 
+  this->CreateGridButton(); 
   // ----------------------------------------
   // Show segmentation 
   // ----------------------------------------

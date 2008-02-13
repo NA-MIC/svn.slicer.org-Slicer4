@@ -6,6 +6,7 @@
 
 class vtkKWFrameWithLabel; 
 class vtkTumorGrowthGUI;
+class vtkKWPushButton;
 
 #define TUMORGROWTH_MENU_BUTTON_WIDTH 15
 #define TUMORGROWTH_WIDGETS_LABEL_WIDTH 25
@@ -49,6 +50,8 @@ public:
 
   void SetNextStep(vtkTumorGrowthStep *init) { this->NextStep = init;}
 
+  virtual void GridCallback();
+
 protected:
   vtkTumorGrowthStep();
   ~vtkTumorGrowthStep();
@@ -59,7 +62,11 @@ protected:
   // Needed so we can clean up mess when going backwards 
   vtkTumorGrowthStep *NextStep;
 
-  
+  void GridRemove();
+  int  GridDefine();
+  void CreateGridButton(); 
+  vtkKWPushButton          *GridButton;
+
 private:
   vtkTumorGrowthStep(const vtkTumorGrowthStep&);
   void operator=(const vtkTumorGrowthStep&);

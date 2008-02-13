@@ -17,6 +17,9 @@
 #include "vtkSlicerApplication.h"
 #include "vtkKWPushButton.h"
 #include "vtkKWMessageDialog.h"
+#include "vtkWindowToImageFilter.h"
+#include "vtkPNGWriter.h"
+#include "vtkImageAppend.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthAnalysisStep);
@@ -35,6 +38,7 @@ vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
   this->ButtonsSave = NULL;
   this->ButtonsSnapshot = NULL;
   this->FrameButtons = NULL;
+  this->SnapshotCount = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -121,21 +125,21 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
     vtkKWPushButton *button = vtkKWPushButton::SafeDownCast(caller);
     if (this->ButtonsSnapshot && (button == this->ButtonsSnapshot)) 
     { 
-      cout << "Not implemented yet Snapshot" << endl;
+      this->TakeScreenshot(); 
     }
     else if (this->ButtonsSave && (button == this->ButtonsSave)) 
     { 
       vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
       if (node) {
-    // Save Data 
+        // Save Data 
         vtkMRMLVolumeNode *volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Ref()));
         if (volumeAnalysisNode) {
           vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
           int oldFlag = Logic->GetSaveVolumeFlag();
-      Logic->SetSaveVolumeFlag(1);      
-      Logic->SaveVolume(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
-      Logic->SetSaveVolumeFlag(oldFlag);      
-    }
+          Logic->SetSaveVolumeFlag(1);      
+          Logic->SaveVolume(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
+          Logic->SetSaveVolumeFlag(oldFlag);      
+        }
         // Save MRML 
         node->GetScene()->SetRootDirectory(node->GetWorkingDir());
 
@@ -146,8 +150,8 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
         // Saves file  
         node->GetScene()->Commit();
 
-    std::string infoMsg("Saved Data to ");
-    infoMsg.append(node->GetWorkingDir());
+        std::string infoMsg("Saved Data to ");
+        infoMsg.append(node->GetWorkingDir());
 
         vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),
                                          "Tumor Growth",infoMsg.c_str(), vtkKWMessageDialog::OkDefault);
@@ -272,7 +276,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
     this->ButtonsSnapshot->Create();
     this->ButtonsSnapshot->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
     this->ButtonsSnapshot->SetText("Snapshot");
-    this->ButtonsSnapshot->EnabledOff();
+    // this->ButtonsSnapshot->EnabledOff();
   }
 
   if (!this->ButtonsSave) {
@@ -298,6 +302,8 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
 
   }
 
+  this->CreateGridButton();
+
   // Show results 
   this->SensitivityChangedCallback(0.0);
   this->AddGUIObservers();
@@ -321,6 +327,45 @@ void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(double value)
   // Show updated results 
   vtkMRMLVolumeNode *analysisNode = vtkMRMLVolumeNode::SafeDownCast(mrmlNode->GetScene()->GetNodeByID(mrmlNode->GetAnalysis_Ref()));
   if (analysisNode) analysisNode->Modified();
+}
+
+//----------------------------------------------------------------------------
+void vtkTumorGrowthAnalysisStep::TakeScreenshot() {
+  vtkImageAppend *screen = vtkImageAppend::New();
+    screen->SetAppendAxis(0);
+
+  vtkWindowToImageFilter *window0 = vtkWindowToImageFilter::New();
+     window0->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
+     screen->AddInput(window0->GetOutput());
+
+  vtkWindowToImageFilter *window1 = vtkWindowToImageFilter::New();
+     window1->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
+     screen->AddInput(window1->GetOutput());
+
+  vtkWindowToImageFilter *window2 = vtkWindowToImageFilter::New();
+     window2->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
+     screen->AddInput(window2->GetOutput());
+     
+  screen->Update();
+
+  vtkPNGWriter *saveWriter = vtkPNGWriter::New();
+     saveWriter->SetInput(screen->GetOutput());
+     this->SnapshotCount ++;
+     std::stringstream ss;
+     
+     char fileName[1024];
+     sprintf(fileName,"%s/TG_Screenshot_%03d.png",this->GetGUI()->GetNode()->GetWorkingDir(),this->SnapshotCount);
+     saveWriter->SetFileName(fileName);
+     cout << "Snapshot is saved to " << fileName << endl;
+  saveWriter->Write();
+
+  saveWriter->Delete();
+ 
+  window0->Delete();
+  window1->Delete();
+  window2->Delete();
+
+  screen->Delete();
 }
 
 //----------------------------------------------------------------------------

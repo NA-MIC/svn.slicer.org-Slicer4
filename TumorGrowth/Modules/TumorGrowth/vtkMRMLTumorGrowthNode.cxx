@@ -83,6 +83,7 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
    this->Scan2_ThreshRef = NULL;
 
    this->Analysis_Ref = NULL;
+   this->Grid_Ref = NULL;
 
    this->Analysis_Sensitivity = 0.5;
 }
@@ -102,6 +103,7 @@ vtkMRMLTumorGrowthNode::~vtkMRMLTumorGrowthNode()
    this->SetScan1_ThreshRef(NULL);
    this->SetScan2_ThreshRef(NULL);
    this->SetAnalysis_Ref(NULL);
+   this->SetGrid_Ref(NULL);
 }
 
 //----------------------------------------------------------------------------

@@ -312,6 +312,8 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
     wizard_widget->GetCancelButton()->SetText("Analyze");
     // wizard_widget->GetCancelButton()->EnabledOff();
   }
+  
+  this->CreateGridButton();
 
   this->AddGUIObservers(); 
 
