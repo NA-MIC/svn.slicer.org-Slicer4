@@ -1,5 +1,5 @@
-#ifndef __vtkVolumeCudaMapper_h
-#define __vtkVolumeCudaMapper_h
+#ifndef __vtkCudaVolumeMapper_h
+#define __vtkCudaVolumeMapper_h
 
 #include "vtkVolumeMapper.h"
 #include "vtkVolumeRenderingCudaModule.h"
@@ -10,11 +10,11 @@ class vtkCudaRendererInformationHandler;
 class vtkCudaVolumeInformationHandler;
 class vtkCudaMemoryTexture;
 
-class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeCudaMapper : public vtkVolumeMapper
+class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaVolumeMapper : public vtkVolumeMapper
 {
 public:
-    vtkTypeRevisionMacro(vtkVolumeCudaMapper,vtkVolumeMapper);
-    static vtkVolumeCudaMapper *New();
+    vtkTypeRevisionMacro(vtkCudaVolumeMapper,vtkVolumeMapper);
+    static vtkCudaVolumeMapper *New();
 
     virtual void SetInput( vtkImageData * );
     virtual void Render(vtkRenderer *, vtkVolume *);
@@ -33,8 +33,8 @@ public:
    void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
-    vtkVolumeCudaMapper();
-    virtual ~vtkVolumeCudaMapper();
+    vtkCudaVolumeMapper();
+    virtual ~vtkCudaVolumeMapper();
 
     void UpdateOutputResolution(unsigned int width, unsigned int height, bool TypeChanged = false);
 
@@ -42,8 +42,8 @@ protected:
     vtkCudaVolumeInformationHandler* VolumeInfoHandler;
 
 private:
-    vtkVolumeCudaMapper operator=(const vtkVolumeCudaMapper&);
-    vtkVolumeCudaMapper(const vtkVolumeCudaMapper&);
+    vtkCudaVolumeMapper operator=(const vtkVolumeCudaMapper&);
+    vtkCudaVolumeMapper(const vtkVolumeCudaMapper&);
 };
 
-#endif /* __vtkVolumeCudaMapper_h */
+#endif /* __vtkCudaVolumeMapper_h */

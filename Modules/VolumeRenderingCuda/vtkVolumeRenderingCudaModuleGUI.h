@@ -6,7 +6,7 @@
 
 class vtkVolumeRenderingCudaModuleLogic;
 
-class vtkVolumeCudaMapper;
+class vtkCudaVolumeMapper;
 class vtkVolume;
 class vtkVolumeProperty;
 
@@ -113,7 +113,7 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   // Pointer to the module's logic class
   vtkVolumeRenderingCudaModuleLogic *Logic;
 
-  vtkVolumeCudaMapper* CudaMapper;
+  vtkCudaVolumeMapper* CudaMapper;
   vtkVolume* CudaVolume;
   vtkVolumeProperty* CudaVolumeProperty;
   

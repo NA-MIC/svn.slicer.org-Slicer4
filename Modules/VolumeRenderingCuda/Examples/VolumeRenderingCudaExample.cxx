@@ -21,7 +21,7 @@
 
 //#include "vtkCudaMemoryTexture.h"
 
-#include "vtkVolumeCudaMapper.h"
+#include "vtkCudaVolumeMapper.h"
 #include "vtkImageReader.h"
 #include <sstream>
 #include "vtkVolume.h"
@@ -37,7 +37,7 @@ vtkKWApplication *app;
 vtkKWRenderWidget* renderWidget;
 vtkKWRange* ThresholdRange;
 vtkKWVolumePropertyWidget* VolumePropertyWidget;
-vtkVolumeCudaMapper* VolumeMapper;
+vtkCudaVolumeMapper* VolumeMapper;
 vtkKWCheckButton* cb_Animate;
 vtkKWMenuButton*  mb_Model;
 
@@ -219,7 +219,7 @@ int my_main(int argc, char *argv[])
 
 
     vtkVolume* volume = vtkVolume::New();
-    VolumeMapper = vtkVolumeCudaMapper::New();
+    VolumeMapper = vtkCudaVolumeMapper::New();
 
 
     // Reading in the Data using a ImageReader
