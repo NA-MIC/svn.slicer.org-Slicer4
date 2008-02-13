@@ -80,6 +80,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   __syncthreads();
 
+  T typeMin, typeMax;
+  GetTypeRange<T>(typeMin, typeMax);  
+
   int outindex=xIndex+yIndex*s_dsize[0]; // index of result image
 
   //initialization of variables in shared memory
@@ -227,6 +230,8 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   int pos=0; //current step distance from camera
 
   //float temp; //temporary variable to store data during calculation
+  T tempValue;
+  int tempIndex;
   float alpha; //alpha value of current voxel
   float initialZBuffer=s_zBuffer[tempacc]; //initial zBuffer from input
 
@@ -249,7 +254,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
       if((pos+s_minmaxTrace[tempacc].x)*stepSize < initialZBuffer){ //check whether current position is in front of z buffer wall
 
-	temp=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
+	tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
 	
 	/*interpolation start here*/
 	/*
@@ -270,17 +275,18 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
 	/*interpolation end here*/
 
-	if( temp >=(T)volInfo.MinThreshold && temp <= (T)volInfo.MaxThreshold){ 
-
-	  alpha=volInfo.AlphaTransferFunction[(int)temp];
+	if( tempValue >=(T)volInfo.MinThreshold && tempValue <= (T)volInfo.MaxThreshold){ 
+	  
+	  tempIndex=__float2int_rn((volInfo.FunctionSize-1)*(float)(tempValue-typeMin)/(float)(typeMax-typeMin));
+	  alpha=volInfo.AlphaTransferFunction[tempIndex];
 	  
 	  if(s_zBuffer[tempacc] > (pos+s_minmaxTrace[tempacc].x)*stepSize){
 	    s_zBuffer[tempacc]=(pos+s_minmaxTrace[tempacc].x)*stepSize;
 	  }
 	  if(s_remainingOpacity[tempacc]>0.02){ // check if remaining opacity has reached threshold(0.02)
-	    s_outputVal[tempacc*3]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3]*255.0;
-	    s_outputVal[tempacc*3+1]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3+1]*255.0;
-	    s_outputVal[tempacc*3+2]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[(int)temp*3+2]*255.0;
+	    s_outputVal[tempacc*3]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[tempIndex*3]*255.0;
+	    s_outputVal[tempacc*3+1]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[tempIndex*3+1]*255.0;
+	    s_outputVal[tempacc*3+2]+=s_remainingOpacity[tempacc]*alpha*volInfo.ColorTransferFunction[tempIndex*3+2]*255.0;
 	    s_remainingOpacity[tempacc]*=(1.0-alpha);
 	  }else{
 	    pos = s_minmaxTrace[tempacc].y-s_minmaxTrace[tempacc].x;
@@ -333,14 +339,9 @@ void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
   /*
 #define CUDA_KERNEL_CALL(ID, TYPE)   \
 	if (inputDataType == ID) \
-	 CUDAkernel_renderAlgo_doIntegrationRender<<< grid, threads >>>( \
-	 outputData, \
-	 colorTransferFunction, \
-	 alphaTransferFunction, \
-	 zBuffer, \
-	 minThreshold, maxThreshold, \
-	 sliceDistance, \
-	 transparencyLevel)
+	 CUDAkernel_renderAlgo_doIntegrationRender<TYPE><<< grid, threads >>>( \
+	 rendererInfo,							\
+	 volumeInfo)
 
 // Add all the other types.
   CUDA_KERNEL_CALL(VTK_UNSIGNED_CHAR, unsigned char);
