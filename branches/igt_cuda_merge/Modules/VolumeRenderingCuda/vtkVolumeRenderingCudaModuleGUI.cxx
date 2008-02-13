@@ -280,7 +280,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             this->CudaMapper = vtkVolumeCudaMapper::New();
 
             // Reading in the Data using a ImageReader
-            vtkImageReader* reader[5];
+            //vtkImageReader* reader[5];
             for (unsigned int i = 0; i < 1; i++ ) 
             {
                 //reader[i]= vtkImageReader::New();
@@ -336,8 +336,8 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             //shifter->SetOutputScalarTypeToUnsignedChar();
             //shifter->Update();
 
-            this->CudaMapper->SetInput(selectedImageData->GetImageData());
-
+            this->CudaMapper->SetInput(/*shifter->GetOutput());*/ selectedImageData->GetImageData());
+            //shifter->Delete();
 
             this->CudaVolumeProperty = vtkVolumeProperty::New();
             this->CudaVolume->SetProperty(this->CudaVolumeProperty);

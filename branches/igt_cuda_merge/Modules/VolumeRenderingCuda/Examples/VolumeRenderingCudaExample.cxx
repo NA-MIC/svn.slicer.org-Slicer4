@@ -106,7 +106,7 @@ void LoadLung()
 {
     reader[0]->Delete();
     reader[0]= vtkImageReader::New();
-    reader[0]->SetDataScalarTypeToUnsignedChar();
+    reader[0]->SetDataScalarTypeToShort();
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 127,
         0, 127, 
@@ -115,7 +115,7 @@ void LoadLung()
 
 
     std::stringstream s;
-    s << "D:\\lung_uchar_128x128x30.raw";
+    s << "D:\\lung128x128x30.raw";
 
     reader[0]->SetFileName(s.str().c_str());
     reader[0]->Update();
