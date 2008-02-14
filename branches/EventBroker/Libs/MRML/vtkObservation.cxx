@@ -30,6 +30,7 @@ vtkObservation::vtkObservation()
   this->Event = 0;
   this->Observer = NULL;
   this->CallbackCommand = NULL;
+  this->CallData = NULL;
   this->Script = NULL;
   this->Comment = NULL;
   this->EventTag = 0;
