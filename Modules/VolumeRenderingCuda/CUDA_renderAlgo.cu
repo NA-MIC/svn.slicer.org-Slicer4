@@ -28,27 +28,28 @@ extern "C" {
 #define BLOCK_DIM2D 16// this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
 
-__device__ unsigned char interpolate(float posX, float posY, float posZ,
-				     unsigned char val1,
-				     unsigned char val2,
-				     unsigned char val3,
-				     unsigned char val4,
-				     unsigned char val5,
-				     unsigned char val6,
-				     unsigned char val7,
-				     unsigned char val8){
+template <typename T>
+__device__ T interpolate(float posX, float posY, float posZ,
+				     T val1,
+				     T val2,
+				     T val3,
+				     T val4,
+				     T val5,
+				     T val6,
+				     T val7,
+				     T val8){
   float revX=1-posX;
   float revY=1-posY;
   float revZ=1-posZ;
   
-  return ((unsigned char) (revX*revY*revZ* val1+
-			   revX*revY*posZ* val2+
-			   revX*posY*revZ* val3+
-			   revX*posY*posZ* val4+
-			   posX*revY*revZ* val5+
-			   posX*revY*posZ* val6+
-			   posX*posY*revZ* val7+
-			   posX*posY*posZ* val8)
+  return ((T) (revX*revY*revZ* val1+
+		   revX*revY*posZ* val2+
+		   revX*posY*revZ* val3+
+		   revX*posY*posZ* val4+
+		   posX*revY*revZ* val5+
+		   posX*revY*posZ* val6+
+		   posX*posY*revZ* val7+
+		   posX*posY*posZ* val8)
 	  );
 }
 
@@ -259,7 +260,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     tempz /= s_vsize[2];
     
 
-    if(tempx >= s_minmax[0] && tempx <= s_minmax[1] && tempy >= s_minmax[2] && tempy <= s_minmax[3] && tempz >= s_minmax[4] && tempz <= s_minmax[5] && pos+s_minmaxTrace[tempacc].x >= -500 /*renInfo.ClippingRange[0]*/){ // if current position is in ROI
+    if(tempx >= s_minmax[0] && tempx < s_minmax[1] && tempy >= s_minmax[2] && tempy < s_minmax[3] && tempz >= s_minmax[4] && tempz < s_minmax[5] && pos+s_minmaxTrace[tempacc].x >= -500 /*renInfo.ClippingRange[0]*/){ // if current position is in ROI
 
       if((pos+s_minmaxTrace[tempacc].x)*stepSize < initialZBuffer){ //check whether current position is in front of z buffer wall
 
@@ -267,21 +268,28 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	
 	/*interpolation start here*/
 	
-	float posX=tempx-(int)tempx;
-	float posY=tempy-(int)tempy;
-	float posZ=tempz-(int)tempz;
+	float posX=tempx-__float2int_rd(tempx);
+	float posY=tempy-__float2int_rd(tempy);
+	float posZ=tempz-__float2int_rd(tempz);
 
-	temp=interpolate(posX, posY, posZ,
-			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx))],
-			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx))],
-			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx))],
-			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx))],
-			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx+1))],
-			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx+1))],
-			 ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx+1))],
-			 ((T*)volInfo.SourceData)[(int)((int)(tempz+1)*s_size[0]*s_size[1]+(int)(tempy+1)*s_size[0]+(int)(tempx+1))]);
+	/*
+	tempValue=interpolate((float)0,(float)0,(float)0,
+			      ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx))],(T)0,(T)0,(T)0,(T)0,(T)0,(T)0,(T)0);
+	*/      
+	int base=__float2int_rd((tempz))*s_size[0]*s_size[1]+__float2int_rd((tempy))*s_size[0]+__float2int_rd((tempx));
 	
+	tempValue=interpolate(posX, posY,0.0,
+			      ((T*)volInfo.SourceData)[base],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]*s_size[1])],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size[0])],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]*s_size[1]+s_size[0])],
+			      ((T*)volInfo.SourceData)[(int)(base+1)],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]*s_size[1]+1)],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]+1)],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]*s_size[1]+s_size[0]+1)]);
 
+	
+	
 	/*interpolation end here*/
 
 	if( tempValue >=(T)volInfo.MinThreshold && tempValue <= (T)volInfo.MaxThreshold){ 
