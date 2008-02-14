@@ -43,13 +43,13 @@ __device__ T interpolate(float posX, float posY, float posZ,
   float revZ=1-posZ;
   
   return ((T) (revX*revY*revZ* val1+
-		   revX*revY*posZ* val2+
-		   revX*posY*revZ* val3+
-		   revX*posY*posZ* val4+
-		   posX*revY*revZ* val5+
-		   posX*revY*posZ* val6+
-		   posX*posY*revZ* val7+
-		   posX*posY*posZ* val8)
+	       revX*revY*posZ* val2+
+	       revX*posY*revZ* val3+
+	       revX*posY*posZ* val4+
+	       posX*revY*revZ* val5+
+	       posX*revY*posZ* val6+
+	       posX*posY*revZ* val7+
+	       posX*posY*posZ* val8)
 	  );
 }
 
@@ -101,8 +101,11 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   s_outputVal[tempacc*3]=0;
   s_outputVal[tempacc*3+1]=0;
   s_outputVal[tempacc*3+2]=0;
-  s_zBuffer[tempacc]=renInfo.ZBuffer[outindex]; //renInfo.ClippingRange[0] + renInfo.ZBuffer[outindex] * (renInfo.ClippingRange[1] - renInfo.ClippingRange[0]);
-    
+  if(xIndex < s_dsize[0] && yIndex < s_dsize[1]){
+    s_zBuffer[tempacc]=renInfo.ZBuffer[outindex]; //renInfo.ClippingRange[0] + renInfo.ZBuffer[outindex] * (renInfo.ClippingRange[1] - renInfo.ClippingRange[0]);
+  }else{
+    s_zBuffer[tempacc]=0;
+  }
   __syncthreads();
 
   // lens map for perspective projection
@@ -312,13 +315,14 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	
 
       }else{ // current position is behind z buffer wall
-	
-	s_outputVal[tempacc*3]+=(s_remainingOpacity[tempacc])*renInfo.OutputImage[outindex].x;
-	s_outputVal[tempacc*3+1]+=(s_remainingOpacity[tempacc])*renInfo.OutputImage[outindex].y;
-	s_outputVal[tempacc*3+2]+=(s_remainingOpacity[tempacc])*renInfo.OutputImage[outindex].z;
-	
-	pos = s_minmaxTrace[tempacc].y-s_minmaxTrace[tempacc].x;
-	
+	if(xIndex < s_dsize[0] && yIndex < s_dsize[1]){
+	  
+	  s_outputVal[tempacc*3]+=(s_remainingOpacity[tempacc])*renInfo.OutputImage[outindex].x;
+	  s_outputVal[tempacc*3+1]+=(s_remainingOpacity[tempacc])*renInfo.OutputImage[outindex].y;
+	  s_outputVal[tempacc*3+2]+=(s_remainingOpacity[tempacc])*renInfo.OutputImage[outindex].z;
+	  
+	}
+	  pos = s_minmaxTrace[tempacc].y-s_minmaxTrace[tempacc].x;
       }
                   
     }
@@ -328,20 +332,25 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   //write to output
 
-  renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[tempacc*3], 
-                                            s_outputVal[tempacc*3+1], 
-					    s_outputVal[tempacc*3+2], 
-					    (1-s_remainingOpacity[tempacc])*255.0);
-  renInfo.ZBuffer[outindex]=s_zBuffer[tempacc];
+  if(xIndex < s_dsize[0] && yIndex < s_dsize[1]){
+    renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[tempacc*3], 
+					      s_outputVal[tempacc*3+1], 
+					      s_outputVal[tempacc*3+2], 
+					      (1-s_remainingOpacity[tempacc])*255.0);
+    renInfo.ZBuffer[outindex]=s_zBuffer[tempacc];
+  }
 }
 
 extern "C"
 void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo)
 {
+  int blockX=((rendererInfo.Resolution[0]-1)/ BLOCK_DIM2D)+1;
+  int blockY=((rendererInfo.Resolution[1]-1)/ BLOCK_DIM2D)+1;
+
   // setup execution parameters
 
-  dim3 grid(rendererInfo.Resolution[0] / BLOCK_DIM2D, rendererInfo.Resolution[1]/ BLOCK_DIM2D, 1);
+  dim3 grid(blockX, blockY, 1);
   dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
 
   CUT_DEVICE_INIT();
