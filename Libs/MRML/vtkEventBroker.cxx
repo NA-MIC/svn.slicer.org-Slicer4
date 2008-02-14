@@ -472,6 +472,7 @@ void vtkEventBroker::ProcessEvent ( vtkObservation *observation, vtkObject *call
   //
   if ( eid == observation->GetEvent() )
     {
+    observation->SetCallData( callData );
     if ( this->EventMode == vtkEventBroker::Synchronous )
       {
       this->InvokeObservation( observation );
@@ -543,7 +544,7 @@ void vtkEventBroker::InvokeObservation ( vtkObservation *observation )
   observation->GetCallbackCommand()->Execute(
                                     observation->GetSubject(),
                                     observation->GetEvent(),
-                                    NULL);
+                                    observation->GetCallData());
 
   // Write the to the log file if enabled
   this->LogEvent (observation);
