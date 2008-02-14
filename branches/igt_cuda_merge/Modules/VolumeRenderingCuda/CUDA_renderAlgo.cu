@@ -114,9 +114,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     camera model start here
   */
   
-  s_rayMap[tempacc*6]=renInfo.CameraPos[0] ;//+ s_size[0]*s_vsize[0]/2.0f;
-  s_rayMap[tempacc*6+1]=renInfo.CameraPos[1] ;//+ s_size[1]*s_vsize[1]/2.0f;
-  s_rayMap[tempacc*6+2]=renInfo.CameraPos[2] ;//+ s_size[2]*s_vsize[2]/2.0f;
+  s_rayMap[tempacc*6]=renInfo.CameraPos[0] + s_size[0]*s_vsize[0]/2.0f;
+  s_rayMap[tempacc*6+1]=renInfo.CameraPos[1] + s_size[1]*s_vsize[1]/2.0f;
+  s_rayMap[tempacc*6+2]=renInfo.CameraPos[2] + s_size[2]*s_vsize[2]/2.0f;
   
   float vecX, vecY, vecZ;
 
