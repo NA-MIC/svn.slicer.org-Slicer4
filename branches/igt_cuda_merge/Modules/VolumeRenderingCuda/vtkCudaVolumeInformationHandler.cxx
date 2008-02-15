@@ -120,13 +120,13 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     property->GetRGBTransferFunction()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalColorTransferFunction.GetMemPointerAs<float>());
 
+    this->VolumeInfo.FunctionRange[0] = range[0];
+    this->VolumeInfo.FunctionRange[1] = range[1];
 
     property->GetScalarOpacity()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
 
     this->LocalColorTransferFunction.CopyTo(&this->CudaColorTransferFunction);
     this->LocalAlphaTransferFunction.CopyTo(&this->CudaAlphaTransferFunction);
-
-
     this->VolumeInfo.AlphaTransferFunction = this->CudaAlphaTransferFunction.GetMemPointerAs<float>();
     this->VolumeInfo.ColorTransferFunction = this->CudaColorTransferFunction.GetMemPointerAs<float>();
 }
@@ -152,12 +152,6 @@ void vtkCudaVolumeInformationHandler::Update()
 
         this->VolumeInfo.SourceData = this->CudaInputBuffer.GetMemPointer();
         this->VolumeInfo.InputDataType = this->InputData->GetScalarType();
-
-        //vtkKWHistogram *histo = vtkKWHistogram::New();
-        //histo->BuildHistogram(this->InputData->GetPointData()->GetScalars(),0);
-        //histo->GetRange(this->VolumeInfo.FunctionRange);
-
-        this->VolumeInfo.FunctionRange[0] = 0; this->VolumeInfo.FunctionRange[1] = 1000;
 
         this->VolumeInfo.Spacing.x = (float)spacing[0];
         this->VolumeInfo.Spacing.y = (float)spacing[1];
