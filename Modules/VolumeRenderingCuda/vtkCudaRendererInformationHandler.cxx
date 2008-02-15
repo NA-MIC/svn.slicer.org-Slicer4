@@ -67,12 +67,6 @@ void vtkCudaRendererInformationHandler::Update()
             LocalZBuffer.Allocate<float>(this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y);
             CudaZBuffer.Allocate<float>(this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y);
         }
-        for (unsigned int i = 0 ; i < this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y; i++)
-            this->LocalZBuffer.GetMemPointerAs<float>()[i] = 100000;
-
-        //renWin->GetZbufferData(0,0,this->RendererInfo.Resolution.x-1, this->RendererInfo.Resolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
-        this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
-        this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
 
         this->MemoryTexture->SetSize(this->RendererInfo.Resolution.x, this->RendererInfo.Resolution.y);
         this->RendererInfo.OutputImage = (uchar4*)this->MemoryTexture->GetRenderDestination();
@@ -105,5 +99,29 @@ void vtkCudaRendererInformationHandler::Update()
         cam->GetClippingRange(clipRange);
         this->RendererInfo.ClippingRange.x = (float)clipRange[0];
         this->RendererInfo.ClippingRange.y = (float)clipRange[1];
+
+
+//        for (unsigned int i = 0 ; i < this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y; i++)
+//            this->LocalZBuffer.GetMemPointerAs<float>()[i] = 100000;
+
+        renWin->GetZbufferData(0,0,this->RendererInfo.Resolution.x-1, this->RendererInfo.Resolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
+
+        for (unsigned int i = 0; i < this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y; i++)
+        {
+         //   if (this->LocalZBuffer.GetMemPointerAs<float>()[i] != 1.0f)
+            {
+                float test  = this->LocalZBuffer.GetMemPointerAs<float>()[i] ;
+               // cout << test<< "," << std::flush;
+                float a = this->RendererInfo.ClippingRange.y / (this->RendererInfo.ClippingRange.y - this->RendererInfo.ClippingRange.x);
+                float b = this->RendererInfo.ClippingRange.y * this->RendererInfo.ClippingRange.x / (this->RendererInfo.ClippingRange.x - this->RendererInfo.ClippingRange.y);
+                float bla = b/(this->LocalZBuffer.GetMemPointerAs<float>()[i] - a);
+                
+               // cout << bla;
+
+            }
+        }
+        this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
+        this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
+
     }
 }
