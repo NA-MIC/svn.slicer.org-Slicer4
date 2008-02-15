@@ -226,7 +226,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   //ray tracing start from here
 
   float tempx,tempy,tempz; // variables to store current position
-  int pos = 0; //current step distance from camera
+  float pos = 0; //current step distance from camera
 
   //float temp; //temporary variable to store data during calculation
   T tempValue;
@@ -301,7 +301,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	    s_outputVal[tempacc].x += s_remainingOpacity[tempacc] * alpha * volInfo.ColorTransferFunction[tempIndex*3];
 	    s_outputVal[tempacc].y += s_remainingOpacity[tempacc] * alpha * volInfo.ColorTransferFunction[tempIndex*3+1];
 	    s_outputVal[tempacc].z += s_remainingOpacity[tempacc] * alpha * volInfo.ColorTransferFunction[tempIndex*3+2];
-	    s_remainingOpacity[tempacc]*=(1.0-alpha);
+	    s_remainingOpacity[tempacc] *= (1.0 - alpha);
 	  }else{
 	    pos = s_minmaxTrace[tempacc].y - s_minmaxTrace[tempacc].x;
 	  }
@@ -319,7 +319,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	  pos = s_minmaxTrace[tempacc].y - s_minmaxTrace[tempacc].x;
       }
     }
-    pos++;
+    pos += volInfo.SteppingSize;
   }
 
   //write to output

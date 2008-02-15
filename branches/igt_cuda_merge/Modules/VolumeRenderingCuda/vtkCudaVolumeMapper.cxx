@@ -71,6 +71,12 @@ void vtkCudaVolumeMapper::SetThreshold(unsigned int min, unsigned int max)
     this->VolumeInfoHandler->SetThreshold(min, max);
 }
 
+void vtkCudaVolumeMapper::SetSteppingSize(float steppingSize)
+{
+    this->VolumeInfoHandler->SetSteppingSize(steppingSize);
+}
+
+
 #include "vtkTimerLog.h"
 
 void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
