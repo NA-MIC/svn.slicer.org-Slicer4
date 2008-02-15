@@ -1,5 +1,8 @@
 #ifndef __CUDAVOLUMEINFORMATION_H__
 #define __CUDAVOLUMEINFORMATION_H__
+
+#include "vector_types.h"
+
 //! A datastructure located on the cudacard that holds the information of the volume.
 extern "C"
 typedef struct {
@@ -7,8 +10,8 @@ typedef struct {
     int             InputDataType;
     
     // The size of the volume
-    int             VolumeSize[3];
-    float           VolumeTransformation[3];
+    int3            VolumeSize;
+    float3          VolumeTransformation;
 
 
     //! The Color Transfer Function with a size of FunctionSize * 3 (rgb)
@@ -17,12 +20,10 @@ typedef struct {
     float*          AlphaTransferFunction;
     //! The Size of the above Function
     unsigned int    FunctionSize;
+    double          FunctionRange[2];
 
     //! The minimum and Maximum Values of the Volume
     float           MinMaxValue[6];
-    float           MinValueX, MaxValueX,
-                    MinValueY, MaxValueY,
-                    MinValueZ, MaxValueZ;
 
     //! The minimal Threshold of the Input Color Value     
     int             MinThreshold;
@@ -30,7 +31,7 @@ typedef struct {
     int             MaxThreshold;
 
     //! The Voxel Sizes called Spacing by VTK.
-    float           Spacing[3];
+    float3          Spacing;
 
     //! The stepping accuracy to raster along the ray.
     float           SteppingSize;

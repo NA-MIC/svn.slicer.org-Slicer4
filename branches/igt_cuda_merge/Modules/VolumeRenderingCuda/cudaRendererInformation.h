@@ -1,14 +1,14 @@
 #ifndef __CUDARENDERERINFORMATION_H__
 #define __CUDARENDERERINFORMATION_H__
 
-#include "cuda_runtime_api.h"
+#include "vector_types.h"
 
 //! A Datastucture located on the cuda hardware that holds all the information about the renderer.
 extern "C"
 typedef struct
 {
     //! The resolution of the rendering screen.
-    unsigned int   Resolution[2];
+    uint2          Resolution;
     //! The color depth of the rendering screen.
     unsigned int   ColorDepth;
 
@@ -17,13 +17,14 @@ typedef struct
     //! The vectors to the lights
     float3*        LightVectors;
 
-    float          CameraPos[3];
-    float          TargetPos[3];
-    float          ViewUp[3];
+    float3         CameraPos;
+    float3         TargetPos;
+    float3         ViewUp;
+    float3         CameraDirection;
 
     uchar4*        OutputImage;
     float*         ZBuffer;
-    float          ClippingRange[2];
+    float2         ClippingRange;
 } cudaRendererInformation;
 
 #endif /* __CUDARENDERERINFORMATION_H__ */

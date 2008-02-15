@@ -82,15 +82,13 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     //FILE *fp;
     //  unsigned char transferFunction[256*6];
     //
-    //fp=fopen("C:\\color.map","r");
+    //  fp=fopen("C:\\color.map","r");
     //  fread(transferFunction, sizeof(unsigned char), 256*6, fp);
     //  fclose(fp);
-    //
-    //  float colorTransferFunction[256*3];
-    //  float alphaTransferFunction[256];
-    //  float zBuffer[1024*768];
-    //
+
     //  int i;
+    //  //for (i = 0; i < 256*6; i++)
+    //  //    cout << transferFunction[i] << " "; 
     //  /*
     //  for(i=0;i<256;i++){
     //    colorTransferFunction[i*3]=i/255.0;
@@ -99,29 +97,43 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     //    alphaTransferFunction[i]=0.1;
     //  }
     //  */
-    //
-    //  for(i=0;i<256;i++){
-    //    colorTransferFunction[i*3]=transferFunction[i*3]/255.0;
-    //    colorTransferFunction[i*3+1]=transferFunction[i*3+1]/255.0;
-    //    colorTransferFunction[i*3+2]=transferFunction[i*3+2]/255.0;
-    //    alphaTransferFunction[i]=transferFunction[i+256*3]/255.0;
+    //  for(i = 0; i < 256; i++){
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3] = ((float)transferFunction[i*3])/255.0;
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+1] = ((float)transferFunction[i*3+1])/255.0;
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+2] = ((float)transferFunction[i*3+2])/255.0;
+    //    this->LocalAlphaTransferFunction.GetMemPointerAs<float>()[i] = ((float)transferFunction[i+256*3])/255.0;
+
+
+    //    cout << i << " " << this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3] << "x"  <<
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+1] << "x" << 
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+2] << std::endl;
+
     //  }
-    //  this->CudaColorTransferFunction.CopyFrom(colorTransferFunction, 256*3*sizeof(float));
-    //  this->CudaAlphaTransferFunction.CopyFrom(alphaTransferFunction, 256 * sizeof(float));
-    //
+    //  this->VolumeInfo.FunctionSize = 12;
+
+    //for (i = 0; i < 256 ; i++)
+    //    cout << this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3] << "x"  <<
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+1] << "x" << 
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+2] << std::endl;
 
     double range[2];
     property->GetRGBTransferFunction()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalColorTransferFunction.GetMemPointerAs<float>());
 
-    this->LocalColorTransferFunction.CopyTo(&this->CudaColorTransferFunction);
 
     property->GetScalarOpacity()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
-    LocalAlphaTransferFunction.CopyTo(&CudaAlphaTransferFunction);
+
+    this->LocalColorTransferFunction.CopyTo(&this->CudaColorTransferFunction);
+    this->LocalAlphaTransferFunction.CopyTo(&this->CudaAlphaTransferFunction);
+
 
     this->VolumeInfo.AlphaTransferFunction = this->CudaAlphaTransferFunction.GetMemPointerAs<float>();
     this->VolumeInfo.ColorTransferFunction = this->CudaColorTransferFunction.GetMemPointerAs<float>();
 }
+
+
+#include "vtkKWHistogram.h"
+#include "vtkPointData.h"
 
 /**
  * @brief Updates the volume information that is being sent to the Cuda Card.
@@ -141,27 +153,33 @@ void vtkCudaVolumeInformationHandler::Update()
         this->VolumeInfo.SourceData = this->CudaInputBuffer.GetMemPointer();
         this->VolumeInfo.InputDataType = this->InputData->GetScalarType();
 
-        this->VolumeInfo.Spacing[0] = (float)spacing[0];
-        this->VolumeInfo.Spacing[1] = (float)spacing[1];
-        this->VolumeInfo.Spacing[2] = (float)spacing[2];
+        //vtkKWHistogram *histo = vtkKWHistogram::New();
+        //histo->BuildHistogram(this->InputData->GetPointData()->GetScalars(),0);
+        //histo->GetRange(this->VolumeInfo.FunctionRange);
 
-        this->VolumeInfo.VolumeTransformation[0] = 0.0f;
-        this->VolumeInfo.VolumeTransformation[1] = 0.0f;
-        this->VolumeInfo.VolumeTransformation[2] = 0.0f;
+        this->VolumeInfo.FunctionRange[0] = 0; this->VolumeInfo.FunctionRange[1] = 1000;
+
+        this->VolumeInfo.Spacing.x = (float)spacing[0];
+        this->VolumeInfo.Spacing.y = (float)spacing[1];
+        this->VolumeInfo.Spacing.z = (float)spacing[2];
+
+        this->VolumeInfo.VolumeTransformation.x= 0.0f;
+        this->VolumeInfo.VolumeTransformation.y = 0.0f;
+        this->VolumeInfo.VolumeTransformation.z = 0.0f;
         
-        this->VolumeInfo.VolumeSize[0] = dims[0];
-        this->VolumeInfo.VolumeSize[1] = dims[1];
-        this->VolumeInfo.VolumeSize[2] = dims[2];
+        this->VolumeInfo.VolumeSize.x = dims[0];
+        this->VolumeInfo.VolumeSize.y = dims[1];
+        this->VolumeInfo.VolumeSize.z = dims[2];
         
         this->VolumeInfo.SteppingSize = 1.0;// nothing yet!!
 
         int* extent = InputData->GetExtent();
-        this->VolumeInfo.MinMaxValue[0] = this->VolumeInfo.MinValueX = (float)extent[0];
-        this->VolumeInfo.MinMaxValue[1] = this->VolumeInfo.MaxValueX = (float)extent[1];
-        this->VolumeInfo.MinMaxValue[2] = this->VolumeInfo.MinValueY = (float)extent[2];
-        this->VolumeInfo.MinMaxValue[3] = this->VolumeInfo.MaxValueY = (float)extent[3];
-        this->VolumeInfo.MinMaxValue[4] = this->VolumeInfo.MinValueZ = (float)extent[4];
-        this->VolumeInfo.MinMaxValue[5] = this->VolumeInfo.MaxValueZ = (float)extent[5];
+        this->VolumeInfo.MinMaxValue[0] = (float)extent[0];
+        this->VolumeInfo.MinMaxValue[1] = (float)extent[1];
+        this->VolumeInfo.MinMaxValue[2] = (float)extent[2];
+        this->VolumeInfo.MinMaxValue[3] = (float)extent[3];
+        this->VolumeInfo.MinMaxValue[4] = (float)extent[4];
+        this->VolumeInfo.MinMaxValue[5] = (float)extent[5];
     }
 }
 
