@@ -109,6 +109,12 @@ class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkVolumeRenderingCudaModuleGUI : pub
   vtkVolumeRenderingCudaModuleGUI(const vtkVolumeRenderingCudaModuleGUI&); // not implemented
   void operator=(const vtkVolumeRenderingCudaModuleGUI&); // not implemented
 
+private:
+    void test(); // HACK to be removed
+    void CreateMapper();
+    void DeleteMapper();
+
+private:
   // Description:
   // Pointer to the module's logic class
   vtkVolumeRenderingCudaModuleLogic *Logic;

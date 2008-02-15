@@ -246,77 +246,73 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveLogicObservers ( )
 {
 }
 
-#include "vtkImageReader.h"
-#include "vtkOpenGLExtensionManager.h"
-#include "vtkImageShiftScale.h"
+
+void vtkVolumeRenderingCudaModuleGUI::test()
+{
+
+    // Reading in the Data using a ImageReader
+    //vtkImageReader* reader[5];
+    for (unsigned int i = 0; i < 1; i++ ) 
+    {
+        //reader[i]= vtkImageReader::New();
+        //reader[i]->SetDataScalarTypeToUnsignedChar();
+        //reader[i]->SetNumberOfScalarComponents(1);
+        //reader[i]->SetDataExtent(0, 255,
+        //    0, 255, 
+        //    0, 255);
+        //reader[i]->SetFileDimensionality(3);
+
+        //std::stringstream s;
+        //s << "C:\\heart256-" << i+1 << ".raw";
+
+        //reader[i]->SetFileName(s.str().c_str());
+        //reader[i]->Update();
+
+        ////this->CudaMapper->MultiInput[i] = reader[i]->GetOutput();
+    }
+    //this->CudaMapper->SetInput(reader[0]->GetOutput());
+}
+
+void vtkVolumeRenderingCudaModuleGUI::CreateMapper()
+{
+    if (this->CudaMapper == NULL)
+    {
+        this->CudaMapper = vtkCudaVolumeMapper::New();
+        this->CudaMapper->SetThreshold(this->ThresholdRange->GetRange());
+    }
+    if (this->CudaVolume == NULL)
+    {
+        this->CudaVolume = vtkVolume::New();
+        this->CudaVolume->SetMapper(this->CudaMapper);
+
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
+    }
+
+}
+
+void vtkVolumeRenderingCudaModuleGUI::DeleteMapper()
+{
+    if (this->CudaVolume != NULL)
+    {
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->RemoveVolume(this->CudaVolume);
+        this->CudaVolume->Delete();
+        this->CudaVolume = NULL;
+    }
+    if (this->CudaMapper != NULL)
+    {
+        this->CudaMapper->Delete();
+        this->CudaMapper = NULL;
+    }
+}
+
 #include <sstream>
 #include "vtkCudaMemoryTexture.h"
-
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
 {
     vtkDebugMacro("vtkVolumeRenderingModuleGUI::ProcessGUIEvents: event = " << event);
 
-    /// INPUT TYPE OR SIZE CHANGED CHANGED
-    if (
-
-        caller == this->InputTypeChooser->GetMenu() ||
-        caller == this->InputResolutionMatrix ||
-        caller == this->ThresholdRange ||
-
-        caller == this->UpdateButton
-        )
-    {
-        cerr << "Type" << this->InputTypeChooser->GetSelectedName() << " " << this->InputTypeChooser->GetSelectedType() << 
-            " X:" << this->InputResolutionMatrix->GetElementValueAsInt(0,0) << 
-            " Y:" << this->InputResolutionMatrix->GetElementValueAsInt(0,1) <<
-            " Z:" << this->InputResolutionMatrix->GetElementValueAsInt(0,2) <<
-            " A:" << this->InputResolutionMatrix->GetElementValueAsInt(0,3) << endl;
-
-
-        // create required objects
-        if (this->CudaMapper == NULL)
-        {
-            this->CudaMapper = vtkCudaVolumeMapper::New();
-
-            // Reading in the Data using a ImageReader
-            //vtkImageReader* reader[5];
-            for (unsigned int i = 0; i < 1; i++ ) 
-            {
-                //reader[i]= vtkImageReader::New();
-                //reader[i]->SetDataScalarTypeToUnsignedChar();
-                //reader[i]->SetNumberOfScalarComponents(1);
-                //reader[i]->SetDataExtent(0, 255,
-                //    0, 255, 
-                //    0, 255);
-                //reader[i]->SetFileDimensionality(3);
-
-                //std::stringstream s;
-                //s << "C:\\heart256-" << i+1 << ".raw";
-
-                //reader[i]->SetFileName(s.str().c_str());
-                //reader[i]->Update();
-
-                ////this->CudaMapper->MultiInput[i] = reader[i]->GetOutput();
-            }
-            //this->CudaMapper->SetInput(reader[0]->GetOutput());
-
-
-        }
-        if (this->CudaVolume == NULL)
-        {
-            this->CudaVolume = vtkVolume::New();
-            this->CudaVolume->SetMapper(this->CudaMapper);
-
-            this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
-        }
-        this->CudaMapper->SetThreshold(this->ThresholdRange->GetRange());
-
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
-        // this->UpdateVolume();
-        //this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
-    }
-    else if (caller == this->RenderModeChooser->GetMenu())
+    if (caller == this->RenderModeChooser->GetMenu())
     {
         if (this->CudaMapper != NULL)
             if (!strcmp (this->RenderModeChooser->GetValue(), "To Texture"))
@@ -324,13 +320,13 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             else
                 this->CudaMapper->SetRenderMode(vtkCudaMemoryTexture::RenderToMemory);
     }
+
     else if (caller == this->NS_ImageData)
     {
-        if (this->CudaMapper != NULL)
-        {
         vtkMRMLScalarVolumeNode *selectedImageData=vtkMRMLScalarVolumeNode::SafeDownCast(this->NS_ImageData->GetSelected());
         if (selectedImageData != NULL && selectedImageData->GetImageData() != NULL)
         {
+            this->CreateMapper();
             //vtkImageShiftScale* shifter = vtkImageShiftScale::New();
             //shifter->SetInput(selectedImageData->GetImageData());
             //shifter->SetOutputScalarTypeToUnsignedChar();
@@ -352,7 +348,7 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             histo->BuildHistogram(this->CudaMapper->GetInput()->GetPointData()->GetScalars(),0);
             this->Histograms->AddHistogram(histo,"0");
 
-            
+
             //Build the gradient histogram
             vtkImageGradientMagnitude *grad = vtkImageGradientMagnitude::New();
             grad->SetDimensionality(3);
@@ -367,8 +363,9 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
 
             grad->Delete();
             gradHisto->Delete();
-            }
         }
+        else
+            this->DeleteMapper();
     }
 
     else if (caller == this->VolumePropertyWidget)

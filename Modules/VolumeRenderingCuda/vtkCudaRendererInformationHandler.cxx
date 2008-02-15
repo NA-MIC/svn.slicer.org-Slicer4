@@ -57,24 +57,24 @@ void vtkCudaRendererInformationHandler::Update()
         // Renderplane Update.
         vtkRenderWindow *renWin= this->Renderer->GetRenderWindow();
         int *size=renWin->GetSize();
-        if (size[0] != this->RendererInfo.Resolution[0] ||
-            size[1] != this->RendererInfo.Resolution[1])
+        if (size[0] != this->RendererInfo.Resolution.x ||
+            size[1] != this->RendererInfo.Resolution.y)
         {
-            this->RendererInfo.Resolution[0] = size[0];
-            this->RendererInfo.Resolution[1] = size[1];
+            this->RendererInfo.Resolution.x = size[0];
+            this->RendererInfo.Resolution.y = size[1];
 
             // HACK -> Allocate is too slow!!
-            LocalZBuffer.Allocate<float>(this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]);
-            CudaZBuffer.Allocate<float>(this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]);
+            LocalZBuffer.Allocate<float>(this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y);
+            CudaZBuffer.Allocate<float>(this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y);
         }
-        for (unsigned int i = 0 ; i < this->RendererInfo.Resolution[0] * this->RendererInfo.Resolution[1]; i++)
+        for (unsigned int i = 0 ; i < this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y; i++)
             this->LocalZBuffer.GetMemPointerAs<float>()[i] = 100000;
 
-        //renWin->GetZbufferData(0,0,this->RendererInfo.Resolution[0]-1, this->RendererInfo.Resolution[1]-1, this->LocalZBuffer.GetMemPointerAs<float>());
+        //renWin->GetZbufferData(0,0,this->RendererInfo.Resolution.x-1, this->RendererInfo.Resolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
         this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
         this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
 
-        this->MemoryTexture->SetSize(this->RendererInfo.Resolution[0], this->RendererInfo.Resolution[1]);
+        this->MemoryTexture->SetSize(this->RendererInfo.Resolution.x, this->RendererInfo.Resolution.y);
         this->RendererInfo.OutputImage = (uchar4*)this->MemoryTexture->GetRenderDestination();
 
         vtkCamera* cam = this->Renderer->GetActiveCamera();
@@ -88,18 +88,22 @@ void vtkCudaRendererInformationHandler::Update()
             this->RendererInfo.LightVectors = &lights[0];
 
         // Update Camera
-        this->RendererInfo.CameraPos[0] = cam->GetPosition()[0];
-        this->RendererInfo.CameraPos[1] = cam->GetPosition()[1];
-        this->RendererInfo.CameraPos[2] = cam->GetPosition()[2];
-        this->RendererInfo.TargetPos[0] = cam->GetFocalPoint()[0];
-        this->RendererInfo.TargetPos[1] = cam->GetFocalPoint()[1];
-        this->RendererInfo.TargetPos[2] = cam->GetFocalPoint()[2];
-        this->RendererInfo.ViewUp[0] = cam->GetViewUp()[0];
-        this->RendererInfo.ViewUp[1] = cam->GetViewUp()[1];
-        this->RendererInfo.ViewUp[2] = cam->GetViewUp()[2];
+        this->RendererInfo.CameraPos.x = cam->GetPosition()[0];
+        this->RendererInfo.CameraPos.y = cam->GetPosition()[1];
+        this->RendererInfo.CameraPos.z = cam->GetPosition()[2];
+        this->RendererInfo.TargetPos.x = cam->GetFocalPoint()[0];
+        this->RendererInfo.TargetPos.y = cam->GetFocalPoint()[1];
+        this->RendererInfo.TargetPos.z = cam->GetFocalPoint()[2];
+        this->RendererInfo.ViewUp.x = cam->GetViewUp()[0];
+        this->RendererInfo.ViewUp.y = cam->GetViewUp()[1];
+        this->RendererInfo.ViewUp.z = cam->GetViewUp()[2];
+        this->RendererInfo.CameraDirection.x= cam->GetDirectionOfProjection()[0];
+        this->RendererInfo.CameraDirection.y= cam->GetDirectionOfProjection()[1];
+        this->RendererInfo.CameraDirection.z= cam->GetDirectionOfProjection()[2];
+        
         double clipRange[2];
         cam->GetClippingRange(clipRange);
-        this->RendererInfo.ClippingRange[0] = (float)clipRange[0];
-        this->RendererInfo.ClippingRange[1] = (float)clipRange[1];
+        this->RendererInfo.ClippingRange.x = (float)clipRange[0];
+        this->RendererInfo.ClippingRange.y = (float)clipRange[1];
     }
 }

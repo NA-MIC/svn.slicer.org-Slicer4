@@ -62,48 +62,51 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   int xIndex = blockDim.x *blockIdx.x + threadIdx.x;
   int yIndex = blockDim.y *blockIdx.y + threadIdx.y;
 
-  __shared__ float2 s_minmaxTrace[BLOCK_DIM2D*BLOCK_DIM2D]; //starting and ending step of ray tracing 
-  __shared__ float s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*6]; //ray map: position and orientation of ray after translation and rotation transformation
-  __shared__ float s_dsize[3]; //display size (x, y, dummy)
-  __shared__ float s_vsize[3]; //voxel dimension
-  __shared__ float s_size[3]; //3D data size
-  __shared__ float s_minmax[6]; //region of interest of 3D data (minX, maxX, minY, maxY, minZ, maxZ)
-  __shared__ float s_remainingOpacity[BLOCK_DIM2D*BLOCK_DIM2D]; //integration value of alpha
-  __shared__ unsigned char s_outputVal[BLOCK_DIM2D*BLOCK_DIM2D*3]; //output value
-  __shared__ float s_zBuffer[BLOCK_DIM2D*BLOCK_DIM2D]; // z buffer
+  __shared__ float2          s_minmaxTrace[BLOCK_DIM2D*BLOCK_DIM2D];      //starting and ending step of ray tracing 
+  __shared__ float           s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*6];         //ray map: position and orientation of ray after translation and rotation transformation
+  __shared__ float3          s_dsize;                                     //display size (x, y, dummy)
+  __shared__ float3          s_vsize;                                     //voxel size, vtk spacing
+  __shared__ float3          s_size;                                      //3D data size
+  __shared__ float           s_minmax[6];                                 //region of interest of 3D data (minX, maxX, minY, maxY, minZ, maxZ)
+  __shared__ float           s_remainingOpacity[BLOCK_DIM2D*BLOCK_DIM2D]; //integration value of alpha
+  __shared__ unsigned char   s_outputVal[BLOCK_DIM2D*BLOCK_DIM2D*3];      //output value
+  __shared__ float           s_zBuffer[BLOCK_DIM2D*BLOCK_DIM2D];          // z buffer
 
   float test;
 
   int tempacc=threadIdx.x+threadIdx.y*BLOCK_DIM2D; //index in grid
 
-  __syncthreads();
+  __syncthreads();	
 
   //copying variables into shared memory
-
   if(tempacc <3){ 
-    s_dsize[xIndex%2]=renInfo.Resolution[xIndex%2];
-    s_vsize[xIndex%3]=volInfo.Spacing[xIndex%3];
-    s_size[xIndex%3]=volInfo.VolumeSize[xIndex%3];
+    s_dsize.x = renInfo.Resolution.x;
+    s_dsize.y = renInfo.Resolution.y;
+    s_vsize = volInfo.Spacing;
+    s_size.x  =  volInfo.VolumeSize.x;
+    s_size.y  =  volInfo.VolumeSize.y;
+    s_size.z  =  volInfo.VolumeSize.z;
   }else if(tempacc < 9){ 
-    s_minmax[xIndex%6]=volInfo.MinMaxValue[xIndex%6];
+    s_minmax[xIndex%6] = volInfo.MinMaxValue[xIndex%6];
   }
 
   __syncthreads();
 
-  T typeMin, typeMax;
+  T typeMin = (T)volInfo.FunctionRange[0];
+  T typeMax = (T)volInfo.FunctionRange[1];
   GetTypeRange<T>(typeMin, typeMax);  
 
-  int outindex=xIndex+yIndex*s_dsize[0]; // index of result image
+  int outindex = xIndex + yIndex * s_dsize.x; // index of result image
 
   //initialization of variables in shared memory
 
-  s_remainingOpacity[tempacc]=1.0;
-  s_outputVal[tempacc*3]=0;
-  s_outputVal[tempacc*3+1]=0;
-  s_outputVal[tempacc*3+2]=0;
-  if(xIndex < s_dsize[0] && yIndex < s_dsize[1]){
-    s_zBuffer[tempacc]=renInfo.ZBuffer[outindex]; //renInfo.ClippingRange[0] + renInfo.ZBuffer[outindex] * (renInfo.ClippingRange[1] - renInfo.ClippingRange[0]);
-  }else{
+  s_remainingOpacity[tempacc] = 1.0;
+  s_outputVal[tempacc*3] = 0;
+  s_outputVal[tempacc*3+1] = 0;
+  s_outputVal[tempacc*3+2] = 0;
+  if(xIndex < s_dsize.x && yIndex < s_dsize.y){
+    s_zBuffer[tempacc]=renInfo.ZBuffer[outindex];
+  } else /* outside of screen */ {
     s_zBuffer[tempacc]=0;
   }
   __syncthreads();
@@ -114,45 +117,37 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     camera model start here
   */
   
-  s_rayMap[tempacc*6]=renInfo.CameraPos[0] + s_size[0]*s_vsize[0]/2.0f;
-  s_rayMap[tempacc*6+1]=renInfo.CameraPos[1] + s_size[1]*s_vsize[1]/2.0f;
-  s_rayMap[tempacc*6+2]=renInfo.CameraPos[2] + s_size[2]*s_vsize[2]/2.0f;
+  s_rayMap[tempacc*6]   = renInfo.CameraPos.x + s_size.x*s_vsize.x/2.0f;
+  s_rayMap[tempacc*6+1] = renInfo.CameraPos.y + s_size.y*s_vsize.y/2.0f;
+  s_rayMap[tempacc*6+2] = renInfo.CameraPos.z + s_size.z*s_vsize.z/2.0f;
   
-  float vecX, vecY, vecZ;
-
-  vecX=(renInfo.TargetPos[0]-renInfo.CameraPos[0]);
-  vecY=(renInfo.TargetPos[1]-renInfo.CameraPos[1]);
-  vecZ=(renInfo.TargetPos[2]-renInfo.CameraPos[2]);
-
-  float temp= 1.0f/sqrt(vecX*vecX+vecY*vecY+vecZ*vecZ);
-  vecX*=temp;
-  vecY*=temp;
-  vecZ*=temp;
 
   float verX, verY, verZ;
   float horX, horY, horZ;
   
-  float dot = renInfo.ViewUp[0]*vecX+renInfo.ViewUp[1]*vecY+renInfo.ViewUp[2]*vecZ;
+  float dot = renInfo.ViewUp.x * renInfo.CameraDirection.x +
+              renInfo.ViewUp.y * renInfo.CameraDirection.y + 
+              renInfo.ViewUp.z * renInfo.CameraDirection.z;
 
-  verX=renInfo.ViewUp[0]-dot*vecX;
-  verY=renInfo.ViewUp[1]-dot*vecY;
-  verZ=renInfo.ViewUp[2]-dot*vecZ;
+  verX = renInfo.ViewUp.x - dot * renInfo.CameraDirection.x;
+  verY = renInfo.ViewUp.y - dot * renInfo.CameraDirection.y;
+  verZ = renInfo.ViewUp.z - dot * renInfo.CameraDirection.z;
 
-  temp= 1.0f/sqrt(verX*verX+verY*verY+verZ*verZ);
+  float temp= 1.0f/sqrt(verX*verX + verY*verY + verZ*verZ);
   verX*=temp;
   verY*=temp;
   verZ*=temp;
 
-  horX=verY*vecZ-verZ*vecY;
-  horY=verZ*vecX-verX*vecZ;
-  horZ=verX*vecY-verY*vecX;
+  horX=verY * renInfo.CameraDirection.z - verZ * renInfo.CameraDirection.y;
+  horY=verZ * renInfo.CameraDirection.x - verX * renInfo.CameraDirection.z;
+  horZ=verX * renInfo.CameraDirection.y - verY * renInfo.CameraDirection.x;
 
-  float posHor=(xIndex-s_dsize[0]*0.5)/s_dsize[0]*0.27;
-  float posVer=(yIndex-s_dsize[1]*0.5)/s_dsize[0]*0.27;
+  float posHor= (xIndex-s_dsize.x*0.5) / s_dsize.x*0.27;
+  float posVer= (yIndex-s_dsize.y*0.5) / s_dsize.x*0.27;
   
-  s_rayMap[tempacc*6+3]=(vecX+posHor*horX+posVer*verX);
-  s_rayMap[tempacc*6+4]=(vecY+posHor*horY+posVer*verY);
-  s_rayMap[tempacc*6+5]=(vecZ+posHor*horZ+posVer*verZ);
+  s_rayMap[tempacc*6+3]=(renInfo.CameraDirection.x + posHor * horX + posVer * verX);
+  s_rayMap[tempacc*6+4]=(renInfo.CameraDirection.y + posHor * horY + posVer * verY);
+  s_rayMap[tempacc*6+5]=(renInfo.CameraDirection.z + posHor * horZ + posVer * verZ);
 
   /*
     camera model end here
@@ -167,9 +162,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   
   //normalize ray vector
 
-  float getmax = fabs(s_rayMap[tempacc*6+3]/s_vsize[0]);
-  if(fabs(s_rayMap[tempacc*6+4]/s_vsize[1])>getmax) getmax = fabs(s_rayMap[tempacc*6+4]/s_vsize[1]);
-  if(fabs(s_rayMap[tempacc*6+5]/s_vsize[2])>getmax) getmax = fabs(s_rayMap[tempacc*6+5]/s_vsize[2]);
+  float getmax = fabs(s_rayMap[tempacc*6+3]/s_vsize.x);
+  if(fabs(s_rayMap[tempacc*6+4]/s_vsize.y)>getmax) getmax = fabs(s_rayMap[tempacc*6+4]/s_vsize.y);
+  if(fabs(s_rayMap[tempacc*6+5]/s_vsize.z)>getmax) getmax = fabs(s_rayMap[tempacc*6+5]/s_vsize.z);
 
   if(getmax!=0){
     float temp= 1.0f/getmax;
@@ -185,30 +180,30 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   //calculating starting and ending point of ray tracing
 
  if(s_rayMap[tempacc*6+3] > 1.0e-3){
-    s_minmaxTrace[tempacc].y = ( ((s_minmax[1]-2)*s_vsize[0]-s_rayMap[tempacc*6])/s_rayMap[tempacc*6+3] );
-    s_minmaxTrace[tempacc].x = ( ((s_minmax[0]+2)*s_vsize[0]-s_rayMap[tempacc*6])/s_rayMap[tempacc*6+3] );
+    s_minmaxTrace[tempacc].y = ( ((s_minmax[1]-2)*s_vsize.x-s_rayMap[tempacc*6])/s_rayMap[tempacc*6+3] );
+    s_minmaxTrace[tempacc].x = ( ((s_minmax[0]+2)*s_vsize.x-s_rayMap[tempacc*6])/s_rayMap[tempacc*6+3] );
   }
   else if(s_rayMap[tempacc*6+3] < -1.0e-3){
-    s_minmaxTrace[tempacc].x = ( ((s_minmax[1]-2)*s_vsize[0]-s_rayMap[tempacc*6])/s_rayMap[tempacc*6+3] );
-    s_minmaxTrace[tempacc].y = ( ((s_minmax[0]+2)*s_vsize[0]-s_rayMap[tempacc*6])/s_rayMap[tempacc*6+3] );
+    s_minmaxTrace[tempacc].x = ( ((s_minmax[1]-2)*s_vsize.x-s_rayMap[tempacc*6])/s_rayMap[tempacc*6+3] );
+    s_minmaxTrace[tempacc].y = ( ((s_minmax[0]+2)*s_vsize.x-s_rayMap[tempacc*6])/s_rayMap[tempacc*6+3] );
   }
   
   if(s_rayMap[tempacc*6+4] > 1.0e-3){
-    test = ( ((s_minmax[3]-2)*s_vsize[1]-s_rayMap[tempacc*6+1])/s_rayMap[tempacc*6+4] );
+    test = ( ((s_minmax[3]-2)*s_vsize.y-s_rayMap[tempacc*6+1])/s_rayMap[tempacc*6+4] );
     if( test < s_minmaxTrace[tempacc].y){
       s_minmaxTrace[tempacc].y = test;
     }
-    test = ( ((s_minmax[2]+2)*s_vsize[1]-s_rayMap[tempacc*6+1])/s_rayMap[tempacc*6+4] );
+    test = ( ((s_minmax[2]+2)*s_vsize.y-s_rayMap[tempacc*6+1])/s_rayMap[tempacc*6+4] );
     if( test > s_minmaxTrace[tempacc].x){
       s_minmaxTrace[tempacc].x = test;
     }
   }
   else if(s_rayMap[tempacc*6+4] < -1.0e-3){
-    test = ( ((s_minmax[3]-2)*s_vsize[1]-s_rayMap[tempacc*6+1])/s_rayMap[tempacc*6+4] );
+    test = ( ((s_minmax[3]-2)*s_vsize.y-s_rayMap[tempacc*6+1])/s_rayMap[tempacc*6+4] );
     if( test > s_minmaxTrace[tempacc].x){
       s_minmaxTrace[tempacc].x = test;
     }
-    test = ( ((s_minmax[2]+2)*s_vsize[1]-s_rayMap[tempacc*6+1])/s_rayMap[tempacc*6+4] );
+    test = ( ((s_minmax[2]+2)*s_vsize.y-s_rayMap[tempacc*6+1])/s_rayMap[tempacc*6+4] );
     if( test < s_minmaxTrace[tempacc].y){
       s_minmaxTrace[tempacc].y = test;
     }
@@ -216,21 +211,21 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   
 
   if(s_rayMap[tempacc*6+5] > 1.0e-3){
-    test = ( ((s_minmax[5]-2)*s_vsize[2]-s_rayMap[tempacc*6+2])/s_rayMap[tempacc*6+5] );
+    test = ( ((s_minmax[5]-2)*s_vsize.z-s_rayMap[tempacc*6+2])/s_rayMap[tempacc*6+5] );
     if( test < s_minmaxTrace[tempacc].y){
       s_minmaxTrace[tempacc].y = test;
     }
-    test = ( ((s_minmax[4]+2)*s_vsize[2]-s_rayMap[tempacc*6+2])/s_rayMap[tempacc*6+5] );
+    test = ( ((s_minmax[4]+2)*s_vsize.z-s_rayMap[tempacc*6+2])/s_rayMap[tempacc*6+5] );
     if( test > s_minmaxTrace[tempacc].x){
       s_minmaxTrace[tempacc].x = test;
     }
   }
   else if(s_rayMap[tempacc*6+5] < -1.0e-3){
-    test = ( ((s_minmax[5]-2)*s_vsize[2]-s_rayMap[tempacc*6+2])/s_rayMap[tempacc*6+5] );
+    test = ( ((s_minmax[5]-2)*s_vsize.z-s_rayMap[tempacc*6+2])/s_rayMap[tempacc*6+5] );
     if( test > s_minmaxTrace[tempacc].x){
       s_minmaxTrace[tempacc].x = test;
     }
-    test = ( ((s_minmax[4]+2)*s_vsize[2]-s_rayMap[tempacc*6+2])/s_rayMap[tempacc*6+5] );
+    test = ( ((s_minmax[4]+2)*s_vsize.z-s_rayMap[tempacc*6+2])/s_rayMap[tempacc*6+5] );
     if( test < s_minmaxTrace[tempacc].y){
       s_minmaxTrace[tempacc].y = test;
     }
@@ -258,16 +253,16 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     tempy = ( s_rayMap[tempacc*6+1]+((int)s_minmaxTrace[tempacc].x+pos)*s_rayMap[tempacc*6+4]);
     tempz = ( s_rayMap[tempacc*6+2]+((int)s_minmaxTrace[tempacc].x+pos)*s_rayMap[tempacc*6+5]);
     
-    tempx /= s_vsize[0];
-    tempy /= s_vsize[1];
-    tempz /= s_vsize[2];
+    tempx /= s_vsize.x;
+    tempy /= s_vsize.y;
+    tempz /= s_vsize.z;
     
 
     if(tempx >= s_minmax[0] && tempx < s_minmax[1] && tempy >= s_minmax[2] && tempy < s_minmax[3] && tempz >= s_minmax[4] && tempz < s_minmax[5] && pos+s_minmaxTrace[tempacc].x >= -500 /*renInfo.ClippingRange[0]*/){ // if current position is in ROI
 
       if((pos+s_minmaxTrace[tempacc].x)*stepSize < initialZBuffer){ //check whether current position is in front of z buffer wall
 
-	tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size[0]*s_size[1]+__float2int_rn(tempy)*s_size[0]+__float2int_rn(tempx))];
+	tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size.x*s_size.y+__float2int_rn(tempy)*s_size.x+__float2int_rn(tempx))];
 	
 	/*interpolation start here*/
 	
@@ -277,19 +272,19 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
 	/*
 	tempValue=interpolate((float)0,(float)0,(float)0,
-			      ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size[0]*s_size[1]+(int)(tempy)*s_size[0]+(int)(tempx))],(T)0,(T)0,(T)0,(T)0,(T)0,(T)0,(T)0);
+			      ((T*)volInfo.SourceData)[(int)((int)(tempz)*s_size.x*s_size.y+(int)(tempy)*s_size.x+(int)(tempx))],(T)0,(T)0,(T)0,(T)0,(T)0,(T)0,(T)0);
 	*/      
-	int base=__float2int_rd((tempz))*s_size[0]*s_size[1]+__float2int_rd((tempy))*s_size[0]+__float2int_rd((tempx));
+	int base=__float2int_rd((tempz))*s_size.x*s_size.y+__float2int_rd((tempy))*s_size.x+__float2int_rd((tempx));
 	
 	tempValue=interpolate(posX, posY,0.0,
 			      ((T*)volInfo.SourceData)[base],
-			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]*s_size[1])],
-			      ((T*)volInfo.SourceData)[(int)(base+s_size[0])],
-			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]*s_size[1]+s_size[0])],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size.x*s_size.y)],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size.x)],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size.x*s_size.y+s_size.x)],
 			      ((T*)volInfo.SourceData)[(int)(base+1)],
-			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]*s_size[1]+1)],
-			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]+1)],
-			      ((T*)volInfo.SourceData)[(int)(base+s_size[0]*s_size[1]+s_size[0]+1)]);
+			      ((T*)volInfo.SourceData)[(int)(base+s_size.x*s_size.y+1)],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size.x+1)],
+			      ((T*)volInfo.SourceData)[(int)(base+s_size.x*s_size.y+s_size.x+1)]);
 
 	
 	
@@ -297,7 +292,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
 	if( tempValue >=(T)volInfo.MinThreshold && tempValue <= (T)volInfo.MaxThreshold){ 
 	  
-	  tempIndex=__float2int_rn((volInfo.FunctionSize-1)*(float)(0.4f*tempValue-0.4f*typeMin)/(float)(0.4f*typeMax-0.4f*typeMin));
+	  tempIndex=__float2int_rn((volInfo.FunctionSize-1)*(float)(tempValue-typeMin)/(float)(typeMax-typeMin));
 	  alpha=volInfo.AlphaTransferFunction[tempIndex];
 	  
 	  if(s_zBuffer[tempacc] > (pos+s_minmaxTrace[tempacc].x)*stepSize){
@@ -315,7 +310,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	
 
       }else{ // current position is behind z buffer wall
-	if(xIndex < s_dsize[0] && yIndex < s_dsize[1]){
+	if(xIndex < s_dsize.x && yIndex < s_dsize.y){
 	  
 	  s_outputVal[tempacc*3]+=(s_remainingOpacity[tempacc])*renInfo.OutputImage[outindex].x;
 	  s_outputVal[tempacc*3+1]+=(s_remainingOpacity[tempacc])*renInfo.OutputImage[outindex].y;
@@ -332,7 +327,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   //write to output
 
-  if(xIndex < s_dsize[0] && yIndex < s_dsize[1]){
+  if(xIndex < s_dsize.x && yIndex < s_dsize.y){
     renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[tempacc*3], 
 					      s_outputVal[tempacc*3+1], 
 					      s_outputVal[tempacc*3+2], 
@@ -345,8 +340,8 @@ extern "C"
 void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
 							 const cudaVolumeInformation& volumeInfo)
 {
-  int blockX=((rendererInfo.Resolution[0]-1)/ BLOCK_DIM2D)+1;
-  int blockY=((rendererInfo.Resolution[1]-1)/ BLOCK_DIM2D)+1;
+  int blockX=((rendererInfo.Resolution.x-1)/ BLOCK_DIM2D)+1;
+  int blockY=((rendererInfo.Resolution.y-1)/ BLOCK_DIM2D)+1;
 
   // setup execution parameters
 

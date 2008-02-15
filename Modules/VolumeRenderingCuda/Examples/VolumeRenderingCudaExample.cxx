@@ -68,12 +68,12 @@ void LoadHead()
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 255,
         0, 255, 
-        0, 93);
+        0, 255);
     reader[0]->SetFileDimensionality(3);
 
 
     std::stringstream s;
-    s << "C:\\fullhead94.raw";
+    s << "D:\\fullhead256.raw";
 
     reader[0]->SetFileName(s.str().c_str());
     reader[0]->Update();

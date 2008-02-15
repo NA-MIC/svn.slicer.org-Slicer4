@@ -5,7 +5,7 @@ ADD_EXECUTABLE(VolumeRenderingCudaTest
   ntkTimer.h
 )
 
-ADD_EXECUTABLE(ConvertToUnsignedCharArray,
+ADD_EXECUTABLE(ConvertToUnsignedCharArray
   ConvertToUnsignedChar.cxx
   )
 
