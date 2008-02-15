@@ -99,7 +99,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   s_outputVal[tempacc].y = 0;
   s_outputVal[tempacc].z = 0;
   if(xIndex < s_dsize.x && yIndex < s_dsize.y){
-    s_zBuffer[tempacc]=renInfo.ZBuffer[outindex];
+    s_zBuffer[tempacc] = 10000;// (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
   } else /* outside of screen */ {
     s_zBuffer[tempacc]=0;
   }
