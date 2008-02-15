@@ -22,6 +22,7 @@ public:
     // Should be in Property??
     void SetThreshold(unsigned int min, unsigned int max);
     void SetThreshold(double* range) { SetThreshold((unsigned int)range[0], (unsigned int)range[1]); }
+    void SetSteppingSize(float steppingSize);
 
    //BTX
    void SetRenderMode(int mode);

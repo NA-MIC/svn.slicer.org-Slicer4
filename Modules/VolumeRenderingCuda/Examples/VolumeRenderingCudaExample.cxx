@@ -14,7 +14,7 @@
 #include "vtkKWCheckButton.h"
 #include "vtkKWMenuButton.h"
 #include "vtkKWMenu.h"
-
+#include "vtkKWScale.h"
 
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/CommandLineArguments.hxx>
@@ -36,6 +36,7 @@
 vtkKWApplication *app;
 vtkKWRenderWidget* renderWidget;
 vtkKWRange* ThresholdRange;
+vtkKWScale* SteppingSizeScale;
 vtkKWVolumePropertyWidget* VolumePropertyWidget;
 vtkCudaVolumeMapper* VolumeMapper;
 vtkKWCheckButton* cb_Animate;
@@ -44,7 +45,6 @@ vtkKWMenuButton*  mb_Model;
 int frameNumber = 0;
 vtkImageReader* reader[5];
 bool renderScheduled = false;
-
 
 void Clear()
 {
@@ -139,6 +139,7 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
     VolumeMapper->SetThreshold(ThresholdRange->GetRange());
+    VolumeMapper->SetSteppingSize(SteppingSizeScale->GetValue());
     renderWidget->Render();
 }
 
@@ -320,6 +321,16 @@ int my_main(int argc, char *argv[])
         ThresholdRange->GetWidgetName()); 
     ThresholdRange->AddObserver(vtkKWRange::RangeValueChangingEvent, (vtkCommand*)GUICallbackCommand);
 
+    SteppingSizeScale = vtkKWScale::New();
+    SteppingSizeScale->SetParent(win->GetMainPanelFrame());
+    SteppingSizeScale->Create();
+    SteppingSizeScale->SetRange(0.1f, 3.0f);
+    SteppingSizeScale->SetResolution(.1f);
+    SteppingSizeScale->SetValue(1.0f);
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        SteppingSizeScale->GetWidgetName()); 
+    SteppingSizeScale->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)GUICallbackCommand);
+
 
     cb_Animate = vtkKWCheckButton::New();
     cb_Animate->SetParent(win->GetMainPanelFrame());
@@ -343,6 +354,7 @@ int my_main(int argc, char *argv[])
 
     // Deallocate and exit
 
+    SteppingSizeScale->Delete();
     ModelCallbackCommand->Delete();
     AnimCallbackCommand->Delete();
     GUICallbackCommand->Delete();

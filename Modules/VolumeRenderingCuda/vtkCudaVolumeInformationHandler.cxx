@@ -17,6 +17,7 @@ vtkStandardNewMacro(vtkCudaVolumeInformationHandler);
 
 vtkCudaVolumeInformationHandler::vtkCudaVolumeInformationHandler()
 {
+    this->SetSteppingSize(1.0);
     this->VolumeInfo.FunctionSize = 0;
     this->ResizeTransferFunction(256);
 
@@ -71,6 +72,14 @@ void vtkCudaVolumeInformationHandler::SetThreshold(unsigned int min, unsigned in
     this->VolumeInfo.MinThreshold = min;
     this->VolumeInfo.MaxThreshold = max;
     this->Modified();
+}
+
+void vtkCudaVolumeInformationHandler::SetSteppingSize(float steppingSize)
+{ 
+    if (steppingSize <= 0.0f)
+        steppingSize = .1f;
+    else
+        this->VolumeInfo.SteppingSize = steppingSize; 
 }
 
 /**
@@ -165,8 +174,6 @@ void vtkCudaVolumeInformationHandler::Update()
         this->VolumeInfo.VolumeSize.y = dims[1];
         this->VolumeInfo.VolumeSize.z = dims[2];
         
-        this->VolumeInfo.SteppingSize = 1.0;// nothing yet!!
-
         int* extent = InputData->GetExtent();
         this->VolumeInfo.MinMaxValue[0] = (float)extent[0];
         this->VolumeInfo.MinMaxValue[1] = (float)extent[1];
