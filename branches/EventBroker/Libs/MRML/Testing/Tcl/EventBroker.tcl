@@ -12,52 +12,37 @@ proc EventBrokerTmpDir {} {
 }
 
 proc EventBrokerPrint {} {
-  set broker [vtkEventBroker New]
-  puts [$broker Print]
-  $broker Delete
+  puts [$::slicer3::Broker Print]
 }
 
 proc EventBrokerGraph { {fileName broker.dot} } {
-  set broker [vtkEventBroker New]
-  $broker GenerateGraphFile [EventBrokerTmpDir]/$fileName
-  $broker Delete
+  $::slicer3::Broker GenerateGraphFile [EventBrokerTmpDir]/$fileName
 }
 
 proc EventBrokerUpdate {} {
-  set broker [vtkEventBroker New]
-  $broker ProcessEventQueue
-  $broker Delete
+  $::slicer3::Broker ProcessEventQueue
 }
 
 proc EventBrokerAsync { {fileName broker.log} } {
 
-  set broker [vtkEventBroker New]
-
-  $broker SetLogFileName [EventBrokerTmpDir]/$fileName
-  $broker EventLoggingOn
-
-  $broker SetEventModeToAsynchronous
-
-  $broker Delete
+  $::slicer3::Broker SetLogFileName [EventBrokerTmpDir]/$fileName
+  $::slicer3::Broker EventLoggingOn
+  $::slicer3::Broker SetEventModeToAsynchronous
 }
 
 proc EventBrokerLogCommand { cmd {fileName brokercmd.log} } {
 
-  set broker [vtkEventBroker New]
-
-  $broker SetLogFileName [EventBrokerTmpDir]/$fileName
-  $broker EventLoggingOn
-  $broker OpenLogFile
+  $::slicer3::Broker SetLogFileName [EventBrokerTmpDir]/$fileName
+  $::slicer3::Broker EventLoggingOn
+  $::slicer3::Broker OpenLogFile
 
   eval $cmd
   set timer [time "eval $cmd"]
 
   puts $timer
 
-  $broker CloseLogFile
-  $broker EventLoggingOff
-
-  $broker Delete
+  $::slicer3::Broker CloseLogFile
+  $::slicer3::Broker EventLoggingOff
 }
 
 proc EventBrokerLoadSampleScene { {sceneFileName ""} } {
@@ -73,8 +58,7 @@ proc EventBrokerLoadSampleScene { {sceneFileName ""} } {
 
 proc EventBrokerTests {} {
 
-  set broker [vtkEventBroker New]
   EventBrokerLogCommand "$::slicer3::MRMLScene Modified" scenemod.dot
   EventBrokerLogCommand "EventBrokerLoadSampleScene" sceneload.dot
-  puts $broker
+  puts $::slicer3::Broker
 }

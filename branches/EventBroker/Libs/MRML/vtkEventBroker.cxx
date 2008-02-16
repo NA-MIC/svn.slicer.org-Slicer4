@@ -134,8 +134,12 @@ void vtkEventBroker::AttachObservation ( vtkObservation *observation )
   tag = observation->GetSubject()->AddObserver( vtkCommand::DeleteEvent, observation->GetObservationCallbackCommand() );
   observation->SetSubjectDeleteEventTag( tag );
 
-  tag = observation->GetObserver()->AddObserver( vtkCommand::DeleteEvent, observation->GetObservationCallbackCommand() );
-  observation->SetObserverDeleteEventTag( tag );
+  if ( observation->GetObserver() != NULL )
+    {
+    // there may be no Oberserver (e.g. for a Script)
+    tag = observation->GetObserver()->AddObserver( vtkCommand::DeleteEvent, observation->GetObservationCallbackCommand() );
+    observation->SetObserverDeleteEventTag( tag );
+    }
 
   tag = observation->GetSubject()->AddObserver( observation->GetEvent(), observation->GetObservationCallbackCommand() );
   observation->SetEventTag( tag );
@@ -393,13 +397,26 @@ int vtkEventBroker::GenerateGraphFile ( const char *graphFile )
   for (int count = 0; count < size; count++)
     {
     observation = this->GetNthObservation( count );
-    file << " " \
-        << observation->GetObserver()->GetClassName() 
-        << " -> "
-        << observation->GetSubject()->GetClassName() 
-        << " [ label = \"" 
-        << vtkCommand::GetStringFromEventId( observation->GetEvent() )
-        << "\" ];\n" ;
+    if ( observation->GetScript() != NULL )
+      {
+      file << " " \
+          << "\"" << observation->GetScript() << "\""
+          << " -> "
+          << observation->GetSubject()->GetClassName() 
+          << " [ label = \"" 
+          << vtkCommand::GetStringFromEventId( observation->GetEvent() )
+          << "\" ];\n" ;
+      }
+    else
+      {
+      file << " " \
+          << observation->GetObserver()->GetClassName() 
+          << " -> "
+          << observation->GetSubject()->GetClassName() 
+          << " [ label = \"" 
+          << vtkCommand::GetStringFromEventId( observation->GetEvent() )
+          << "\" ];\n" ;
+      }
     }
 
 
@@ -468,12 +485,14 @@ void vtkEventBroker::ProcessEvent ( vtkObservation *observation, vtkObject *call
   // we've got an event we care about - either invoke it
   // right away, or put it on the queue for later handling
   // - check first if it's the event the observer asked for (it might
-  // be a delete event that the event broker asked for)
+  //   be a delete event that the event broker asked for)
+  // - if the observer did ask to observe delete events, pass them through
+  //   right away even in async mode - this way things can clean up
   //
-  if ( eid == observation->GetEvent() )
+  if ( eid == observation->GetEvent() || observation->GetEvent() == vtkCommand::AnyEvent )
     {
     observation->SetCallData( callData );
-    if ( this->EventMode == vtkEventBroker::Synchronous )
+    if ( this->EventMode == vtkEventBroker::Synchronous || eid == vtkCommand::DeleteEvent )
       {
       this->InvokeObservation( observation );
       }
@@ -540,11 +559,18 @@ void vtkEventBroker::InvokeObservation ( vtkObservation *observation )
 {
   // TODO record the timing before and after invocation
  
-  // Invoke the observation
-  observation->GetCallbackCommand()->Execute(
-                                    observation->GetSubject(),
-                                    observation->GetEvent(),
-                                    observation->GetCallData());
+  if ( observation->GetScript() != NULL )
+    {
+    (*(this->ScriptHandler)) ( observation->GetScript() );
+    }
+  else
+    {
+    // Invoke the observation
+    observation->GetCallbackCommand()->Execute(
+                                      observation->GetSubject(),
+                                      observation->GetEvent(),
+                                      observation->GetCallData());
+    }
 
   // Write the to the log file if enabled
   this->LogEvent (observation);

@@ -26,7 +26,6 @@ if { [itcl::find class RegionsSWidget] == "" } {
     
     # a list of seeds - the callback info includes the mapping to list and index
     variable _seedSWidgets ""
-    variable _sceneObserverTags ""
     variable _roiListObserverTagPairs ""
 
     # methods
@@ -51,21 +50,18 @@ itcl::body RegionsSWidget::constructor {sliceGUI} {
   #
   set node [[$sliceGUI GetLogic] GetSliceNode]
   set scene [$sliceGUI GetMRMLScene]
-  lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-  lappend _sceneObserverTags [$scene AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent $node"]
-  lappend _sceneObserverTags [$scene AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent $scene"]
+  $::slicer3::Broker AddObservation $node DeleteEvent "::SWidget::ProtectedDelete $this"
+  $::slicer3::Broker AddObservation $scene DeleteEvent "::SWidget::ProtectedDelete $this"
+  $::slicer3::Broker AddObservation $node AnyEvent "::SWidget::ProtectedCallback $this processEvent $node AnyEvent"
+  $::slicer3::Broker AddObservation $scene AnyEvent "::SWidget::ProtectedCallback $this processEvent $scene AnyEvent"
 
-
-  set _guiObserverTags ""
-
-  lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
+  $::slicer3::Broker AddObservation $sliceGUI DeleteEvent "::SWidget::ProtectedDelete $this"
 
   set events {  
     "KeyPressEvent" 
     }
   foreach event $events {
-    lappend _guiObserverTags [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI"]    
+    $::slicer3::Broker AddObservation $sliceGUI $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI $event"
   }
 
   $this processEvent $scene
@@ -73,32 +69,6 @@ itcl::body RegionsSWidget::constructor {sliceGUI} {
 
 
 itcl::body RegionsSWidget::destructor {} {
-
-  if { [info command $sliceGUI] != "" } {
-    foreach tag $_guiObserverTags {
-      $sliceGUI RemoveObserver $tag
-    }
-  }
-
-  foreach pair $_roiListObserverTagPairs {
-    foreach {roiListNode tag} $pair {}
-    $roiListNode RemoveObserver $tag
-  }
-
-  if { [info command $_sliceNode] != "" } {
-    foreach tag $_nodeObserverTags {
-      $_sliceNode RemoveObserver $tag
-    }
-  }
-
-  if { [info command $sliceGUI] != "" } {
-    set scene [$sliceGUI GetMRMLScene]
-    if { [info command $scene] != "" } {
-      foreach tag $_sceneObserverTags {
-        $scene RemoveObserver $tag
-      }
-    }
-  }
 }
 
 
@@ -127,7 +97,6 @@ itcl::body RegionsSWidget::processEvent { {caller ""} {event ""} } {
   }
 
   if { $caller == $sliceGUI } {
-    set event [$sliceGUI GetCurrentGUIEvent] 
     set capture 1
     switch $event {
       "KeyPressEvent" {
