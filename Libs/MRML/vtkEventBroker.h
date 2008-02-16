@@ -198,7 +198,7 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   // Description:
   // Sets the method pointer to be used for processing script observations
   //BTX
-  void SetScriptHandler ( const char* (*scriptHandler) (const char* script) )
+  void SetScriptHandler ( void (*scriptHandler) (const char* script) )
     {
     this->ScriptHandler = scriptHandler;
     }
@@ -220,7 +220,7 @@ protected:
   //ETX
   
   //BTX
-  const char* (*ScriptHandler) (const char* script);
+  void (*ScriptHandler) (const char* script);
   //ETX
 
   int EventLogging;
