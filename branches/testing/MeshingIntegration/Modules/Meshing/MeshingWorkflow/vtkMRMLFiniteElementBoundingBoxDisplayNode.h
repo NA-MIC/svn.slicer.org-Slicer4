@@ -61,7 +61,7 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementBoundingBoxDisplayNode : public vtkMRM
   
   // Description:
   // Get node XML tag name (like Volume, UnstructuredGrid)
-  virtual const char* GetNodeTagName ( ) {return "UnstructuredGridDisplay";};
+  virtual const char* GetNodeTagName ( ) {return "FiniteElementBoundingBoxDisplay";};
 
   // Description:
   // alternative method to propagate events generated in Display nodes

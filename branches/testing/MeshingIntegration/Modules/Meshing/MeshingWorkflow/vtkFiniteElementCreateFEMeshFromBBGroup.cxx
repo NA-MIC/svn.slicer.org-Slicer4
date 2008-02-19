@@ -176,22 +176,25 @@ void vtkFiniteElementCreateFEMeshFromBBGroup::CreateFEMeshFromBBCallback()
             surflist->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
 
     // get the bbox name, then get a pointer to the selected bbox
-    combobox = this->BBListComboBox->GetWidget();
-    name = combobox->GetValue();
+    vtkKWComboBox *combobox2 = this->BBListComboBox->GetWidget();
+    const char *name2 = combobox2->GetValue();
 
     // subclass to use MRML-based storage for the bbox list
     vtkFiniteElementBoundingBoxList *bblist = (vtkFiniteElementBoundingBoxList*)(this->BBoxList);
     
     // get the unstructured grid from the current bbox
-        vtkMimxUnstructuredGridActor *ugridactor = vtkMimxUnstructuredGridActor::
-          SafeDownCast(bblist->GetItem(combobox->GetValueIndex(name)));
-        vtkUnstructuredGrid *ugrid = ugridactor->GetDataSet();
+    int ugindex = combobox2->GetValueIndex(name2);
+//    vtkMimxUnstructuredGridActor *ugridactor = vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(ugindex));
+    vtkMimxUnstructuredGridActor *ugridactor = bblist->GetItem(ugindex);
+
+    vtkUnstructuredGrid *ugrid = ugridactor->GetDataSet();
     
     if(!ugrid->GetCellData()->GetScalars("Mesh_Seed"))
     {
         vtkErrorMacro("MRML didn't find Mesh_Seed scalars");
         return;
-    }
+    } else
+        cout << "MeshfromBB: found mesh seeds on dataset" << endl;
 
     vtkMimxUnstructuredGridFromBoundingBox *ugridfrombbox = 
       vtkMimxUnstructuredGridFromBoundingBox::New();
