@@ -47,6 +47,7 @@
 #include "vtkKWComboBoxWithLabel.h"
 #include "vtkKWComboBox.h"
 #include "vtkKWEntryWithLabel.h"
+#include "vtkDataSetWriter.h"
 
 #include <vtksys/stl/list>
 #include <vtksys/stl/algorithm>
@@ -178,6 +179,13 @@ void vtkFiniteElementCreateBBMeshSeedGroup::CreateBBMeshSeedCallback()
         this->AvElementLength->GetWidget()->GetValueAsDouble());
       // since the ugrid was modified, we need to update the MRML tree
       // by invoking the modify method on the list element
+      
+      vtkDataSetWriter *ugw = vtkDataSetWriter::New();
+      ugw->SetInput(ugrid);
+      ugw->SetFileName("mesh-seed-0215.vtk");
+      ugw->Write();
+      
+      
       bblist->ModifyItem(combobox->GetValueIndex(name),ugridactor);
     } else 
       vtkWarningMacro("seeds were already present");

@@ -21,6 +21,7 @@
 #include "vtkDebugLeaks.h"
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
+#include "vtkDataSetWriter.h"
 
 //vtkCxxRevisionMacro(vtkFiniteElementBoundingBoxList, "$Revision: 1.3 $");
 
@@ -112,16 +113,35 @@ int vtkFiniteElementBoundingBoxList::ModifyItem(vtkIdType index, vtkMimxUnstruct
        // first fetch the MRML node that has been requested
         vtkMRMLFiniteElementBoundingBoxNode* requestedMrmlNode = 
             (vtkMRMLFiniteElementBoundingBoxNode*)(this->savedMRMLScene->GetNthNodeByClass(index,"vtkMRMLFiniteElementBoundingBoxNode"));
-             
+        
+//        vtkDataSetWriter *oldwrite = vtkDataSetWriter::New();
+//        oldwrite->SetFileName("oldgrid.vtk");
+//        oldwrite->SetInput(requestedMrmlNode->GetUnstructuredGrid());
+//        oldwrite->Write();
+//        
+//        vtkDataSetWriter *modwrite = vtkDataSetWriter::New();
+//        modwrite->SetFileName("grid-to-modify-with.vtk");
+//        modwrite->SetInput(actor->GetDataSet());
+//        modwrite->Write();       
+//        
     // copy the state variables to the MRML node
      requestedMrmlNode->SetFileName(actor->GetFileName());
      requestedMrmlNode->SetFilePath(actor->GetFilePath());
      requestedMrmlNode->SetDataType(actor->GetDataType());
      // delete the old ugrid
-     requestedMrmlNode->GetUnstructuredGrid()->Delete();
-     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
-     ugrid->DeepCopy(actor->GetDataSet());
-     requestedMrmlNode->SetAndObserveUnstructuredGrid(ugrid);
+//     requestedMrmlNode->GetUnstructuredGrid()->Delete();
+//     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
+//     ugrid->DeepCopy(actor->GetDataSet());
+//     requestedMrmlNode->SetAndObserveUnstructuredGrid(ugrid);
+     requestedMrmlNode->GetUnstructuredGrid()->DeepCopy(actor->GetDataSet());
+
+//     vtkDataSetWriter *newwrite = vtkDataSetWriter::New();
+//     newwrite->SetFileName("modified-mrml-grid.vtk");
+//     newwrite->SetInput(requestedMrmlNode->GetUnstructuredGrid());
+//     newwrite->Write();       
+
+//     requestedMrmlNode->GetUnstructuredGrid()->DeepCopy(actor->GetDataSet());
+      
      // *** delete this reference? 
      //ugrid->Delete();
      cout << "modified MRML bbox node: " << index << endl;
@@ -157,8 +177,9 @@ vtkMimxUnstructuredGridActor* vtkFiniteElementBoundingBoxList::GetItem(vtkIdType
   returnNode->SetFileName(requestedMrmlNode->GetFileName());
   returnNode->SetFilePath(requestedMrmlNode->GetFilePath());
   returnNode->SetDataType(requestedMrmlNode->GetDataType()); 
-  returnNode->GetDataSet()->DeepCopy(requestedMrmlNode->GetUnstructuredGrid());
-  
+  vtkUnstructuredGrid *ugrid = requestedMrmlNode->GetUnstructuredGrid();
+  vtkUnstructuredGrid *actorGrid = returnNode->GetDataSet();
+  actorGrid = ugrid;
   return returnNode;
 }
 

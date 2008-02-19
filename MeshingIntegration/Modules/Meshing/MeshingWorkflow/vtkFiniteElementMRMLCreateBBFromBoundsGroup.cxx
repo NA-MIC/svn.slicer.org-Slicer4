@@ -145,6 +145,7 @@ void vtkFiniteElementMRMLCreateBBFromBoundsGroup::UpdateEnableState()
 {
   this->Superclass::UpdateEnableState();
 }
+
 //----------------------------------------------------------------------------
 void vtkFiniteElementMRMLCreateBBFromBoundsGroup::CreateBBFromBoundsCallback()
 {
