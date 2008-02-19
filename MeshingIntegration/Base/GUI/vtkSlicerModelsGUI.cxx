@@ -509,7 +509,8 @@ void vtkSlicerModelsGUI::BuildGUI ( )
     this->ModelDisplaySelectorWidget->SetParent ( this->ModelDisplayFrame->GetFrame() );
     this->ModelDisplaySelectorWidget->Create ( );
     this->ModelDisplaySelectorWidget->SetNodeClass("vtkMRMLModelNode", NULL, NULL, NULL);
-    this->ModelDisplaySelectorWidget->SetChildClassesEnabled(0);
+    // CRL - added to see the FE mesh surfaces
+    this->ModelDisplaySelectorWidget->SetChildClassesEnabled(1);
     this->ModelDisplaySelectorWidget->SetMRMLScene(this->GetMRMLScene());
     this->ModelDisplaySelectorWidget->SetBorderWidth(2);
     // this->ModelDisplaySelectorWidget->SetReliefToGroove();
