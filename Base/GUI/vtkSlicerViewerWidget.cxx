@@ -593,7 +593,7 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
     this->RequestRender();
     this->UpdateFromMRML();
     //this->MainViewer->RemoveAllViewProps();
-    this->Render();
+    this->RequestRender();
     }
   else 
     {
@@ -697,7 +697,6 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
         {
         this->UpdateClipSlicesFormMRML();
         this->UpdateModifiedModel(modelNode);
-        //this->Render();
         this->RequestRender( );
         }
       if (updateMRML)
