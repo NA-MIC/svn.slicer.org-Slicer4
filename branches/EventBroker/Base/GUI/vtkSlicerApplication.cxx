@@ -428,10 +428,13 @@ void vtkSlicerApplication::DoOneTclEvent ( )
   //
   // Then handle application-level events that were queued in 
   // response to the system events
+  // - only do this if event broker is in asynchronous mode
+  // - have tcl first handle all its pending events (e.g. click and drag events)
   //
   vtkEventBroker *broker = vtkEventBroker::GetInstance();
   if ( broker->GetEventMode() == vtkEventBroker::Asynchronous )
     {
+    Tcl_ServiceAll();
     broker->ProcessEventQueue();
     }
 }
