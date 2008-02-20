@@ -183,7 +183,10 @@ void vtkCudaVolumeInformationHandler::Update()
         this->VolumeInfo.MinMaxValue[5] = (float)extent[5];
 
 
-        this->VolumeInfo.VolumeTransform[0][0] = 1;
+        this->VolumeInfo.VolumeTransform[0][0] = 1;this->VolumeInfo.VolumeTransform[0][1] = 0;this->VolumeInfo.VolumeTransform[0][2] = 0;this->VolumeInfo.VolumeTransform[0][3] = 0;
+        this->VolumeInfo.VolumeTransform[1][0] = 0;this->VolumeInfo.VolumeTransform[1][1] = 1;this->VolumeInfo.VolumeTransform[1][2] = 0;this->VolumeInfo.VolumeTransform[1][3] = 0;
+        this->VolumeInfo.VolumeTransform[2][0] = 0;this->VolumeInfo.VolumeTransform[2][1] = 0;this->VolumeInfo.VolumeTransform[2][2] = 1;this->VolumeInfo.VolumeTransform[2][3] = 0;
+        this->VolumeInfo.VolumeTransform[3][0] = 0;this->VolumeInfo.VolumeTransform[3][1] = 0;this->VolumeInfo.VolumeTransform[3][2] = 0;this->VolumeInfo.VolumeTransform[3][3] = 1;
     }
 }
 
