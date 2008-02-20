@@ -49,6 +49,7 @@ SET(LIB_SRCS
   vtkFiniteElementEditBBGroup.cxx
   vtkFiniteElementCreateFEMeshFromBBGroup.cxx
   vtkMRMLFiniteElementBoundingBoxDisplayNode.cxx
+    vtkMRMLFiniteElementMeshDisplayNode.cxx
   )
   
 

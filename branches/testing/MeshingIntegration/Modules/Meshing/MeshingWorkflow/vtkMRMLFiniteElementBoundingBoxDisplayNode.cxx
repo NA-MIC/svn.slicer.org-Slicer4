@@ -53,7 +53,6 @@ vtkMRMLNode* vtkMRMLFiniteElementBoundingBoxDisplayNode::CreateNodeInstance()
 vtkMRMLFiniteElementBoundingBoxDisplayNode::vtkMRMLFiniteElementBoundingBoxDisplayNode()
 {
   
-  
   this->ShrinkPolyData->SetInput( this->GeometryFilter->GetOutput());
   this->ShrinkFactor = 0.5;
   this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);

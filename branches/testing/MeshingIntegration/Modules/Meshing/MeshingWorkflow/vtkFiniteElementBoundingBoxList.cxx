@@ -76,11 +76,12 @@ int vtkFiniteElementBoundingBoxList::AppendItem(vtkMimxUnstructuredGridActor* ac
      // Establish linkage between the surface
      // node and its display and storage nodes, so the viewer will be updated when data
      // or attributes change
-     this->savedMRMLScene->AddNode(dispNode);
-     this->savedMRMLScene->AddNode(storeNode);
+     dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
      newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
      newMRMLNode->SetStorageNodeID(storeNode->GetID());   
-
+     this->savedMRMLScene->AddNode(dispNode);
+     this->savedMRMLScene->AddNode(storeNode);
+     
      cout << "copied data to MRML bbox node " << endl;
    } else 
    {

@@ -20,6 +20,9 @@
 #include "vtkObject.h"
 #include "vtkObjectFactory.h"
 
+#include "vtkMRMLFiniteElementMeshDisplayNode.h"
+#include "vtkMRMLUnstructuredGridStorageNode.h"
+
 //vtkCxxRevisionMacro(vtkFiniteElementMeshList, "$Revision: 1.3 $");
 
 vtkStandardNewMacro(vtkFiniteElementMeshList);
@@ -60,6 +63,19 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxUnstructuredGridActor* actor)
      vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
      ugrid->DeepCopy(actor->GetDataSet());
      newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
+     
+     // now add the display and storage nodes
+      vtkMRMLFiniteElementMeshDisplayNode* dispNode = vtkMRMLFiniteElementMeshDisplayNode::New();
+      vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
+       
+      // Establish linkage between the surface
+      // node and its display and storage nodes, so the viewer will be updated when data
+      // or attributes change
+      this->savedMRMLScene->AddNode(dispNode);
+      this->savedMRMLScene->AddNode(storeNode);
+      newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
+      newMRMLNode->SetStorageNodeID(storeNode->GetID());  
+     
      this->savedMRMLScene->AddNode(newMRMLNode);
      cout << "copied data to MRML bbox node " << endl;
    } else 
