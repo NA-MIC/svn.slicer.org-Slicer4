@@ -184,9 +184,7 @@ void vtkFiniteElementCreateFEMeshFromBBGroup::CreateFEMeshFromBBCallback()
     
     // get the unstructured grid from the current bbox
     int ugindex = combobox2->GetValueIndex(name2);
-//    vtkMimxUnstructuredGridActor *ugridactor = vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(ugindex));
     vtkMimxUnstructuredGridActor *ugridactor = bblist->GetItem(ugindex);
-
     vtkUnstructuredGrid *ugrid = ugridactor->GetDataSet();
     
     if(!ugrid->GetCellData()->GetScalars("Mesh_Seed"))
@@ -231,19 +229,23 @@ void vtkFiniteElementCreateFEMeshFromBBGroup::CreateFEMeshFromBBCallback()
         // subcast to make sure we are using the MRML-based storage for the mesh list
        vtkFiniteElementMeshList *meshlist = (vtkFiniteElementMeshList*)(this->FEMeshList);
  
+  
          cout << "MeshList MRML node about to be created" << endl;       
-         meshlist->AppendItem(vtkMimxUnstructuredGridActor::New());
-       vtkMimxUnstructuredGridActor::SafeDownCast(meshlist->GetItem(
-         meshlist->GetNumberOfItems()-1))->GetDataSet()->
-         DeepCopy(ugridfrombbox->GetOutput());
-       this->Count++;
-       vtkMimxUnstructuredGridActor::SafeDownCast(meshlist->GetItem(
-         meshlist->GetNumberOfItems()-1))->SetObjectName("FEMeshFromBB_",Count);
-       vtkMimxUnstructuredGridActor::SafeDownCast(meshlist->GetItem(
-         meshlist->GetNumberOfItems()-1))->GetDataSet()->Modified();
+
+         vtkMimxUnstructuredGridActor *newActor = vtkMimxUnstructuredGridActor::New();
+         int sceneCount = meshlist->GetNumberOfItems()+1;
+          newActor->SetObjectName("FEMeshFromBB_",sceneCount);
+         
+         // copy the ugrid from the boundingbox algorithm output
+         vtkMimxUnstructuredGridActor::SafeDownCast(newActor)->GetDataSet()->DeepCopy(ugridfrombbox->GetOutput());
+         vtkMimxUnstructuredGridActor::SafeDownCast(newActor)->GetDataSet()->Modified();
+     
+         // add this dataset to the MRML-backed storage list
+         meshlist->AppendItem(newActor);       
+  
        this->ViewProperties->AddObjectList();
  
-       // *** change
+       //TODO
        // Add the actor to the window;  this should observe the MRML instead
        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
          meshlist->GetItem(meshlist->GetNumberOfItems()-1)->GetActor());      

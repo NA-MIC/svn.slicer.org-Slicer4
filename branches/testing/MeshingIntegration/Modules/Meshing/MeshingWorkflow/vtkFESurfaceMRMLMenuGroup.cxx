@@ -357,23 +357,26 @@ void vtkFESurfaceMRMLMenuGroup::LoadVTKSurfaceCallback()
   // complexity of adding observers to the MimxActor records.  A more robust solution needs
   // to be considered. 
 
-        //        vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
+
           vtkFESurfaceList *surflist = (vtkFESurfaceList*)(this->SurfaceList);
 
           surflist->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFilePath(
                  this->FileBrowserDialog->GetFileName());
+          
           surflist->GetItem(surflist->GetNumberOfItems()-1)->SetFileName(
                   this->ExtractFileName(this->FileBrowserDialog->GetFileName()));
           vtkMimxSurfacePolyDataActor::SafeDownCast(surflist->GetItem(
                 surflist->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(reader->GetOutput());
           vtkMimxSurfacePolyDataActor::SafeDownCast(surflist->GetItem(
              surflist->GetNumberOfItems()-1))->GetDataSet()->Modified();
-          this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-            surflist->GetItem(surflist->GetNumberOfItems()-1)->GetActor());
-          surflist->AppendItem(vtkMimxSurfacePolyDataActor::New());
-          this->GetMimxViewWindow()->GetRenderWidget()->Render();
-          this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
-          this->MimxViewProperties->AddObjectList();
+       
+//          this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+//            surflist->GetItem(surflist->GetNumberOfItems()-1)->GetActor());
+//          surflist->AppendItem(vtkMimxSurfacePolyDataActor::New());
+//          this->GetMimxViewWindow()->GetRenderWidget()->Render();
+//          this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+//          this->MimxViewProperties->AddObjectList();
+          
       }
       reader->Delete();
     }
