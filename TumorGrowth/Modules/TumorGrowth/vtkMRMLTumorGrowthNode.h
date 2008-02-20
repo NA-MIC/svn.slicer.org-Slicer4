@@ -89,6 +89,9 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   vtkGetMacro(SuperSampled_RatioNewOldSpacing,double);
   vtkSetMacro(SuperSampled_RatioNewOldSpacing,double);
 
+  vtkGetMacro(Scan1_VoxelVolume,double);
+  vtkSetMacro(Scan1_VoxelVolume,double);
+
   // Description:
   // Result transfered to second step 
   vtkGetStringMacro(Scan1_SuperSampleRef);
@@ -133,15 +136,30 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   vtkSetStringMacro(Scan2_ThreshRef);
   vtkGetStringMacro(Scan2_ThreshRef);
 
-  vtkSetStringMacro(Analysis_Ref);
-  vtkGetStringMacro(Analysis_Ref);
-
   vtkSetStringMacro(Grid_Ref);
   vtkGetStringMacro(Grid_Ref);
 
 
-  vtkGetMacro(Analysis_Sensitivity,double);
-  vtkSetMacro(Analysis_Sensitivity,double);
+  vtkGetMacro(Analysis_Intensity_Flag,int);
+  vtkSetMacro(Analysis_Intensity_Flag,int);
+
+  vtkGetMacro(Analysis_Intensity_Sensitivity,double);
+  vtkSetMacro(Analysis_Intensity_Sensitivity,double);
+
+  vtkSetStringMacro(Analysis_Intensity_Ref);
+  vtkGetStringMacro(Analysis_Intensity_Ref);
+
+  vtkGetMacro(Analysis_Deformable_Flag,int);
+  vtkSetMacro(Analysis_Deformable_Flag,int);
+
+  vtkGetMacro(Analysis_Deformable_JacobianGrowth,double);
+  vtkSetMacro(Analysis_Deformable_JacobianGrowth,double);
+
+  vtkGetMacro(Analysis_Deformable_SegmentationGrowth,double);
+  vtkSetMacro(Analysis_Deformable_SegmentationGrowth,double);
+
+  vtkSetStringMacro(Analysis_Deformable_Ref);
+  vtkGetStringMacro(Analysis_Deformable_Ref);
 
 protected:
   vtkMRMLTumorGrowthNode();
@@ -159,7 +177,9 @@ protected:
   char* Scan2_SuperSampleRef;
   char* Scan2_NormedRef;
   char* Scan2_ThreshRef;
-  char* Analysis_Ref;
+
+  char* Analysis_Intensity_Ref;
+  char* Analysis_Deformable_Ref;
 
   char* Grid_Ref;
 
@@ -172,10 +192,17 @@ protected:
   double SuperSampled_Spacing;
   double SuperSampled_VoxelVolume;
   double SuperSampled_RatioNewOldSpacing;
+  double Scan1_VoxelVolume;
 
   double SegmentThresholdMin;
   double SegmentThresholdMax;
-  double Analysis_Sensitivity;  
+
+  int    Analysis_Intensity_Flag;
+  double Analysis_Intensity_Sensitivity;  
+
+  int    Analysis_Deformable_Flag;
+  double Analysis_Deformable_JacobianGrowth;
+  double Analysis_Deformable_SegmentationGrowth;
   
 };
 

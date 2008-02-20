@@ -72,24 +72,34 @@ public:
 
 
 
-  vtkImageThreshold* CreateAnalysis_Final();
-  vtkImageThreshold* CreateAnalysis_ROINegativeBin();
-  vtkImageThreshold* CreateAnalysis_ROIPositiveBin();
-  vtkImageMathematics* CreateAnalysis_ROIBinReal();
+  vtkImageThreshold* CreateAnalysis_Intensity_Final();
+  vtkImageThreshold* CreateAnalysis_Intensity_ROINegativeBin();
+  vtkImageThreshold* CreateAnalysis_Intensity_ROIPositiveBin();
+  vtkImageMathematics* CreateAnalysis_Intensity_ROIBinReal();
 
-  vtkImageSumOverVoxels* CreateAnalysis_ROITotal();
+  vtkImageSumOverVoxels* CreateAnalysis_Intensity_ROITotal();
 
-  vtkSetMacro(Analysis_Mean,double);
-  vtkGetMacro(Analysis_Mean,double);
-  vtkSetMacro(Analysis_Variance,double);
-  vtkGetMacro(Analysis_Variance,double);
-  vtkSetMacro(Analysis_Threshold,double);
-  vtkGetMacro(Analysis_Threshold,double);
+  vtkSetMacro(Analysis_Intensity_Mean,double);
+  vtkGetMacro(Analysis_Intensity_Mean,double);
+  vtkSetMacro(Analysis_Intensity_Variance,double);
+  vtkGetMacro(Analysis_Intensity_Variance,double);
+  vtkSetMacro(Analysis_Intensity_Threshold,double);
+  vtkGetMacro(Analysis_Intensity_Threshold,double);
 
   vtkSetMacro(SaveVolumeFlag,int);
   vtkGetMacro(SaveVolumeFlag,int);
 
   void SaveVolume(vtkSlicerApplication *app, vtkMRMLVolumeNode *volNode);
+  // Save the output ignoring SaveVolumeFlag
+  void SaveVolumeForce(vtkSlicerApplication *app, vtkMRMLVolumeNode *volNode);
+
+  void SaveVolumeFileName(vtkMRMLVolumeNode *volNode, char* FileName);
+
+  vtkMRMLVolumeNode* LoadVolume(vtkSlicerApplication *app, char* fileName, int LabelMapFlag,char* volumeName);
+
+  void PrintResult(ostream& os, vtkSlicerApplication *app);
+
+  void PrintText(char *TEXT);
 
 private:
   vtkTumorGrowthLogic();
@@ -122,15 +132,15 @@ private:
   vtkGeneralTransform* GlobalTransform; 
   vtkGeneralTransform* LocalTransform; 
 
-  double Analysis_Mean;
-  double Analysis_Variance;
-  double Analysis_Threshold;
+  double Analysis_Intensity_Mean;
+  double Analysis_Intensity_Variance;
+  double Analysis_Intensity_Threshold;
 
-  vtkImageThreshold     *Analysis_Final;
-  vtkImageThreshold     *Analysis_ROINegativeBin;
-  vtkImageThreshold     *Analysis_ROIPositiveBin;
-  vtkImageMathematics   *Analysis_ROIBinReal;
-  vtkImageSumOverVoxels *Analysis_ROITotal;
+  vtkImageThreshold     *Analysis_Intensity_Final;
+  vtkImageThreshold     *Analysis_Intensity_ROINegativeBin;
+  vtkImageThreshold     *Analysis_Intensity_ROIPositiveBin;
+  vtkImageMathematics   *Analysis_Intensity_ROIBinReal;
+  vtkImageSumOverVoxels *Analysis_Intensity_ROITotal;
 
   int SaveVolumeFlag;
 };
