@@ -54,6 +54,11 @@ INCLUDE_DIRECTORIES(
   ${MRML_BINARY_DIR}
   )
 
+# Enders work 
+SUBDIRS(DeformableMetric CommandLineApplication) 
+ 
+# INCLUDE(${CMAKE_SOURCE_DIR}/IJMacros.txt)
+
 #
 # Wrapping
 #
