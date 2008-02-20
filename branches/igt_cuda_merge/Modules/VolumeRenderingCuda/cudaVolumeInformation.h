@@ -25,6 +25,8 @@ typedef struct {
     //! The minimum and Maximum Values of the Volume
     float           MinMaxValue[6];
 
+    float           VolumeTransform[4][4];
+
     //! The minimal Threshold of the Input Color Value     
     int             MinThreshold;
     //! The Maximum Threshold of the Input Color Value
