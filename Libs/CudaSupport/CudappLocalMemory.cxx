@@ -82,7 +82,6 @@ namespace Cudapp
             return false;
     }
 
-
     void LocalMemory::PrintSelf(std::ostream&  os) const
     {
         this->Memory::PrintSelf(os);
