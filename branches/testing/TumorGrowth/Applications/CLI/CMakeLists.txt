@@ -410,11 +410,42 @@ SET_TARGET_PROPERTIES (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoi
 TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
 
 #####################
+# SET (CLP HelloWorld)
+# 
+# SET ( ${CLP}_SOURCE ${CLP}.cxx)
+# GENERATECLP(${CLP}_SOURCE ${CLP}.xml)
+# 
+# ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+# TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters ITKCommon)
+# 
+# IF (WIN32) 
+#   ADD_TEST(HelloWorldTest1 ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}/${CLP} --help)
+# ELSE(WIN32) 
+#   ADD_TEST(HelloWorldTest1 ${EXECUTABLE_OUTPUT_PATH}/${CLP} --help) 
+# ENDIF (WIN32)
+# 
+#####################
 
 
-SUBDIRS ( Realign )
+#####################
+# SET (CLP  DemonsRegistration)
+#SET ( ${CLP}_SOURCE ${CLP}.cxx)
+#GENERATECLP(${CLP}_SOURCE ${CLP}.xml)
+#
+#ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+#TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKStatistics ITKCommon)
+#INCLUDE_DIRECTORIES(
+#IF (WIN32) 
+#  ADD_TEST(DemonsRegistrationTest1 ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}/${CLP} --help)
+#ELSE(WIN32) 
+#  ADD_TEST(DemonsRegistrationTest1 ${EXECUTABLE_OUTPUT_PATH}/${CLP} --help) 
+#ENDIF (WIN32)
+#####################
+
+SUBDIRS( Realign )
 SUBDIRS( DiffusionApplications )
 SUBDIRS( ExtractSkeleton )
+SUBDIRS( DiffeomorphicDemonsRegistration )
 
 IF(USE_MIDAS)
   SUBDIRS( MIDASApplications )
@@ -467,6 +498,7 @@ IF (Slicer3_SOURCE_DIR)
         LabelMapSmoothing
         OrientImage
         OrientImageLib
+       
   )
 
   INSTALL(TARGETS ${TARGETS}
