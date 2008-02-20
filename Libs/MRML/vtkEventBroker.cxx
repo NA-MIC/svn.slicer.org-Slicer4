@@ -491,7 +491,11 @@ void vtkEventBroker::ProcessEvent ( vtkObservation *observation, vtkObject *call
   //
   if ( eid == observation->GetEvent() || observation->GetEvent() == vtkCommand::AnyEvent )
     {
-    observation->SetCallData( callData );
+    if ( observation->GetCallData() != callData )
+      {
+      observation->SetCallData( callData );
+if ( observation->GetInEventQueue() && callData != NULL ) std::cerr << "setting calldata\n";
+      }
     if ( this->EventMode == vtkEventBroker::Synchronous || eid == vtkCommand::DeleteEvent )
       {
       this->InvokeObservation( observation );
@@ -559,21 +563,23 @@ void vtkEventBroker::InvokeObservation ( vtkObservation *observation )
 {
   // TODO record the timing before and after invocation
  
+  // Write the to the log file if enabled
+  this->LogEvent (observation);
+
   if ( observation->GetScript() != NULL )
     {
     (*(this->ScriptHandler)) ( observation->GetScript() );
     }
   else
     {
+    void *callData = observation->GetCallData();
+    observation->SetCallData(NULL);
     // Invoke the observation
     observation->GetCallbackCommand()->Execute(
                                       observation->GetSubject(),
                                       observation->GetEvent(),
-                                      observation->GetCallData());
+                                      callData );
     }
-
-  // Write the to the log file if enabled
-  this->LogEvent (observation);
 
 }
 
