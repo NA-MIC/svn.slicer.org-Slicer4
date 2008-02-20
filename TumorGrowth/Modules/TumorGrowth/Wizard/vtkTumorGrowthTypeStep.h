@@ -19,9 +19,9 @@ public:
 
  // Description:
   // Callback functions for buttons
-  void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);
-  void AddGUIObservers();
-  void RemoveGUIObservers();
+  // void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData);
+  // void AddGUIObservers();
+  // void RemoveGUIObservers();
 
   virtual void TransitionCallback(); 
 
@@ -33,11 +33,9 @@ protected:
   void RemoveAnalysisOutput();
 
   vtkKWFrame*FrameTypeIntensity;
-  vtkKWFrame*FrameTypeSegmentation;
   vtkKWFrame*FrameTypeJacobian;
 
   vtkKWCheckButton *TypeIntensityCheckButton;
-  vtkKWCheckButton *TypeSegmentationCheckButton; 
   vtkKWCheckButton *TypeJacobianCheckButton; 
 
 

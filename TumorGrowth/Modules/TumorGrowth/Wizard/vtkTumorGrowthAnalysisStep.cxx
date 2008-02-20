@@ -39,6 +39,13 @@ vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
   this->ButtonsSnapshot = NULL;
   this->FrameButtons = NULL;
   this->SnapshotCount = 0;
+
+  this->FrameDeformable     = NULL;
+  this->FrameDeformableCol1 = NULL;
+  this->FrameDeformableCol2 = NULL;
+  this->DeformableTextLabel = NULL;
+  this->DeformableMeassureLabel = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -74,6 +81,35 @@ vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
       this->GrowthLabel = NULL;
     }
 
+ if (this->FrameDeformable) 
+    {
+      this->FrameDeformable->Delete();
+      this->FrameDeformable = NULL;
+    }
+
+ if (this->FrameDeformableCol1) 
+    {
+      this->FrameDeformableCol1->Delete();
+      this->FrameDeformableCol1 = NULL;
+    }
+
+ if (this->FrameDeformableCol2) 
+    {
+      this->FrameDeformableCol2->Delete();
+      this->FrameDeformableCol2 = NULL;
+    }
+
+ if (this->DeformableTextLabel) 
+    {
+      this->DeformableTextLabel->Delete();
+      this->DeformableTextLabel = NULL;
+    }
+
+ if (this->DeformableMeassureLabel) 
+    {
+      this->DeformableMeassureLabel->Delete();
+      this->DeformableMeassureLabel = NULL;
+    }
 
 }
 
@@ -131,15 +167,19 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
     { 
       vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
       if (node) {
+        // Depends on analysis
         // Save Data 
-        vtkMRMLVolumeNode *volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Ref()));
-        if (volumeAnalysisNode) {
-          vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
-          int oldFlag = Logic->GetSaveVolumeFlag();
-          Logic->SetSaveVolumeFlag(1);      
-          Logic->SaveVolume(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
-          Logic->SetSaveVolumeFlag(oldFlag);      
-        }
+    vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
+        if (node->GetAnalysis_Intensity_Flag()) { 
+          volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
+    } else if (node->GetAnalysis_Deformable_Flag()) { 
+      volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
+    }
+    if (volumeAnalysisNode) {
+      vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
+      Logic->SaveVolumeForce(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
+    } 
+
         // Save MRML 
         node->GetScene()->SetRootDirectory(node->GetWorkingDir());
 
@@ -157,7 +197,21 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
                                          "Tumor Growth",infoMsg.c_str(), vtkKWMessageDialog::OkDefault);
 
       } else {
-    this->GetGUI()->GetApplicationGUI()->ProcessSaveSceneAsCommand();
+        this->GetGUI()->GetApplicationGUI()->ProcessSaveSceneAsCommand();
+        node = this->GetGUI()->GetNode();
+      }
+   
+      // Save Results to file 
+      if (node) { 
+        std::string fileName(node->GetWorkingDir());
+        fileName.append("/AnalysisOutcome.log");
+    std::ofstream outfile(fileName.c_str());
+        if (outfile.fail()) {
+      cout << "Error: vtkTumorGrowthAnalysisStep::ProcessGUIEvents: Cannot write to file " << fileName.c_str() << endl;
+    } else {     
+       this->GetGUI()->GetLogic()->PrintResult(outfile, vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
+      cout << "Wrote outcome of analysis to " << fileName.c_str() << endl;
+    }
       }
 
     }
@@ -173,7 +227,15 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
   if (node) { 
     vtkMRMLVolumeNode *volumeSampleNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SuperSampleRef()));
-    vtkMRMLVolumeNode *volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Ref()));
+    vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
+    if (node->GetAnalysis_Intensity_Flag()) {
+      volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
+    } else if (node->GetAnalysis_Deformable_Flag()) {
+      volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
+    } else {
+      volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan2_LocalRef()));
+    }
+
     if (volumeSampleNode && volumeAnalysisNode) {
       vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
       applicationLogic->GetSelectionNode()->SetActiveVolumeID(volumeSampleNode->GetID());
@@ -205,8 +267,10 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
 
   this->vtkTumorGrowthStep::ShowUserInterface();
 
-  this->Frame->SetLabelText("Tumor Growth");
-  this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());
+  this->Frame->SetLabelText("Intensity Pattern");
+  if (node->GetAnalysis_Intensity_Flag()) {
+    this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());
+  }
 
   if (!this->SensitivityScale)
     {
@@ -236,10 +300,8 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
 
   // Initial value 
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  if (mrmlNode) this->SensitivityScale->SetValue(mrmlNode->GetAnalysis_Sensitivity());
-
+  if (mrmlNode) this->SensitivityScale->SetValue(mrmlNode->GetAnalysis_Intensity_Sensitivity());
   this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->SensitivityScale->GetWidgetName());
-
 
   if (!this->GrowthLabel)
     {
@@ -251,6 +313,81 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
     this->GrowthLabel->Create();
   }
   this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->GrowthLabel->GetWidgetName());
+
+
+  if (!this->FrameDeformable)
+  {
+    this->FrameDeformable = vtkKWFrameWithLabel::New();
+  }
+  if (!this->FrameDeformable->IsCreated())
+  {
+      vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
+      this->FrameDeformable->SetParent(wizard_widget->GetClientArea());
+      this->FrameDeformable->Create();
+      this->FrameDeformable->SetLabelText("Deformable Map");
+      this->FrameDeformable->AllowFrameToCollapseOff();
+  }
+  if (node->GetAnalysis_Deformable_Flag()) {
+     this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->FrameDeformable->GetWidgetName());
+  }
+
+  if (!this->FrameDeformableCol1)
+  {
+    this->FrameDeformableCol1 = vtkKWFrame::New();
+  }
+  if (!this->FrameDeformableCol1->IsCreated())
+  {
+      this->FrameDeformableCol1->SetParent(this->FrameDeformable->GetFrame());
+      this->FrameDeformableCol1->Create();
+  }
+
+  if (!this->FrameDeformableCol2)
+  {
+    this->FrameDeformableCol2 = vtkKWFrame::New();
+  }
+  if (!this->FrameDeformableCol2->IsCreated())
+  {
+      this->FrameDeformableCol2->SetParent(this->FrameDeformable->GetFrame());
+      this->FrameDeformableCol2->Create();
+  }
+
+  this->Script("pack %s %s -side left -anchor nw -fill x -padx 0 -pady 0", this->FrameDeformableCol1->GetWidgetName(),this->FrameDeformableCol2->GetWidgetName());
+
+
+  if (!this->DeformableTextLabel)
+    {
+    this->DeformableTextLabel = vtkKWLabel::New();
+    }
+  if (!this->DeformableTextLabel->IsCreated())
+  {
+    this->DeformableTextLabel->SetParent(this->FrameDeformableCol1);
+    this->DeformableTextLabel->Create();
+  }
+
+  this->DeformableTextLabel->SetText("Segmentation Metric: \nJacobian Metric:");
+  this->Script( "pack %s -side left -anchor nw -padx 2 -pady 2", this->DeformableTextLabel->GetWidgetName());
+
+
+  if (!this->DeformableMeassureLabel)
+    {
+    this->DeformableMeassureLabel = vtkKWLabel::New();
+    }
+  if (!this->DeformableMeassureLabel->IsCreated())
+  {
+    this->DeformableMeassureLabel->SetParent(this->FrameDeformableCol2);
+    this->DeformableMeassureLabel->Create();
+  }
+
+  {
+    char TEXT[1024];
+    sprintf(TEXT,"%.3f mm%c (%d Voxels)\n%.3f mm%c (%d Voxels)", 
+        mrmlNode->GetAnalysis_Deformable_SegmentationGrowth(),179,int(mrmlNode->GetAnalysis_Deformable_SegmentationGrowth()/mrmlNode->GetScan1_VoxelVolume()), 
+        mrmlNode->GetAnalysis_Deformable_JacobianGrowth(),179,int(mrmlNode->GetAnalysis_Deformable_JacobianGrowth()/mrmlNode->GetScan1_VoxelVolume()));
+    this->DeformableMeassureLabel->SetText(TEXT);
+
+  }
+  this->Script( "pack %s -side left -anchor nw -padx 2 -pady 0", this->DeformableMeassureLabel->GetWidgetName());
+
 
   // Define buttons 
   if (!this->FrameButtons)
@@ -316,16 +453,16 @@ void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(double value)
   // Sensitivity has changed because of user interaction
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
   if (!this->SensitivityScale || !mrmlNode || !this->GrowthLabel ) return;
-  mrmlNode->SetAnalysis_Sensitivity(this->SensitivityScale->GetValue());
+  mrmlNode->SetAnalysis_Intensity_Sensitivity(this->SensitivityScale->GetValue());
   double Growth = this->GetGUI()->GetLogic()->MeassureGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
   // show here 
   char TEXT[1024];
   // cout << "---------- " << Growth << " " << mrmlNode->GetSuperSampled_VoxelVolume() << " " << mrmlNode->GetSuperSampled_RatioNewOldSpacing() << endl;;
-  sprintf(TEXT,"Growth: %.3f mm^3 (%d Voxels)", Growth*mrmlNode->GetSuperSampled_VoxelVolume(),int(Growth*mrmlNode->GetSuperSampled_RatioNewOldSpacing()));
+  sprintf(TEXT,"Intensity Metric: %.3f mm%c (%d Voxels)", Growth*mrmlNode->GetSuperSampled_VoxelVolume(),179,int(Growth*mrmlNode->GetSuperSampled_RatioNewOldSpacing()));
 
   this->GrowthLabel->SetText(TEXT);
   // Show updated results 
-  vtkMRMLVolumeNode *analysisNode = vtkMRMLVolumeNode::SafeDownCast(mrmlNode->GetScene()->GetNodeByID(mrmlNode->GetAnalysis_Ref()));
+  vtkMRMLVolumeNode *analysisNode = vtkMRMLVolumeNode::SafeDownCast(mrmlNode->GetScene()->GetNodeByID(mrmlNode->GetAnalysis_Intensity_Ref()));
   if (analysisNode) analysisNode->Modified();
 }
 
@@ -392,7 +529,7 @@ void  vtkTumorGrowthAnalysisStep::RemoveResults()  {
     vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
     if (!Node) return;
     {
-       vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetAnalysis_Ref()));
+       vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetAnalysis_Intensity_Ref()));
        if (currentNode) { this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); }
     }
 }
