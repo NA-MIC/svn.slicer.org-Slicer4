@@ -72,6 +72,9 @@ void vtkMRMLFESurfaceNode::WriteXML(ostream& of, int nIndent)
 {
 Superclass::WriteXML(of, nIndent);
 
+  // write a space between previous attribs and these new ones
+  of << " ";
+
   vtkIndent indent(nIndent);
   {
     std::stringstream ss;

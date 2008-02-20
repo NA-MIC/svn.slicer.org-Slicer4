@@ -188,10 +188,9 @@ void vtkFiniteElementMRMLCreateBBFromBoundsGroup::CreateBBFromBoundsCallback()
       // on demand.  Strobe the dataset so that a render of all observers will be forced
       vtkMimxUnstructuredGridActor::SafeDownCast(actor)->GetDataSet()->DeepCopy(bbox->GetOutput());
       vtkMimxUnstructuredGridActor::SafeDownCast(actor)->GetDataSet()->Modified();
-      
-       
-      this->Count++;
-      actor->SetObjectName("MRMLBBFromBounds_",Count);
+             
+      int sceneCount = bblist->GetNumberOfItems()+1;
+      actor->SetObjectName("MRMLBBFromBounds_",sceneCount);
 
       // add the MRML node to the scene
       // *** the intentional subclass cast (defined a few lines above for bblist) is required. Why? 
