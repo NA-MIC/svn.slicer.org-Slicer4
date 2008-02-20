@@ -29,7 +29,7 @@
 #include "vtkUnstructuredGrid.h"
 #include "vtkMimxUnstructuredGridFromBoundingBox.h"
 
-//#include "vtkUnstructuredGridWriter.h"
+#include "vtkUnstructuredGridWriter.h"
 
 #include "vtkKWApplication.h"
 #include "vtkKWFileBrowserDialog.h"
@@ -204,6 +204,12 @@ void vtkFiniteElementCreateFEMeshFromBBGroup::CreateFEMeshFromBBCallback()
        ugridfrombbox->SetBoundingBox(ugrid);
        ugridfrombbox->SetSurface(polydata);
        ugridfrombbox->Update();
+       
+//            vtkUnstructuredGridWriter *newwrite = vtkUnstructuredGridWriter::New();
+//            newwrite->SetFileName("femesh-021908.vtk");
+//            newwrite->SetInput(ugridfrombbox->GetOutput());
+//            newwrite->Write();       
+
     
     if (ugridfrombbox->GetOutput())
     {
