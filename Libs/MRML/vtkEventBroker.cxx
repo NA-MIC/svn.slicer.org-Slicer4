@@ -491,18 +491,13 @@ void vtkEventBroker::ProcessEvent ( vtkObservation *observation, vtkObject *call
   //
   if ( eid == observation->GetEvent() || observation->GetEvent() == vtkCommand::AnyEvent )
     {
-    if ( observation->GetCallData() != callData )
-      {
-      observation->SetCallData( callData );
-if ( observation->GetInEventQueue() && callData != NULL ) std::cerr << "setting calldata\n";
-      }
     if ( this->EventMode == vtkEventBroker::Synchronous || eid == vtkCommand::DeleteEvent )
       {
-      this->InvokeObservation( observation );
+      this->InvokeObservation( observation, callData );
       }
     else if ( this->EventMode == vtkEventBroker::Asynchronous )
       {
-      this->QueueObservation( observation );
+      this->QueueObservation( observation, callData );
       }
     else
       {
@@ -523,14 +518,31 @@ if ( observation->GetInEventQueue() && callData != NULL ) std::cerr << "setting 
 
 
 //----------------------------------------------------------------------------
-void vtkEventBroker::QueueObservation ( vtkObservation *observation )
+void vtkEventBroker::QueueObservation ( vtkObservation *observation, void *callData )
 {
-  if ( observation->GetInEventQueue())
+  //
+  // add the current call data to the list so that each unique combination
+  // can be invoked.
+  // If the event is not currently in the queue, add it and keep a flag.
+  //
+  std::vector< void *>::iterator dataIter; 
+  for(dataIter=observation->GetCallDataList().begin(); dataIter != observation->GetCallDataList().end(); dataIter++)  
     {
-    return;
+    if ( *dataIter == callData )
+      {
+      break;
+      }
     }
-  this->EventQueue.push_back( observation );
-  observation->SetInEventQueue(1);
+  if ( dataIter != observation->GetCallDataList().end() )
+    {
+    observation->GetCallDataList().push_back( callData );
+    }
+
+  if ( !observation->GetInEventQueue() )
+    {
+    this->EventQueue.push_back( observation );
+    observation->SetInEventQueue(1);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -559,7 +571,7 @@ vtkObservation *vtkEventBroker::DequeueObservation ()
 }
 
 //----------------------------------------------------------------------------
-void vtkEventBroker::InvokeObservation ( vtkObservation *observation )
+void vtkEventBroker::InvokeObservation ( vtkObservation *observation, void *callData )
 {
   // TODO record the timing before and after invocation
  
@@ -572,8 +584,6 @@ void vtkEventBroker::InvokeObservation ( vtkObservation *observation )
     }
   else
     {
-    void *callData = observation->GetCallData();
-    observation->SetCallData(NULL);
     // Invoke the observation
     observation->GetCallbackCommand()->Execute(
                                       observation->GetSubject(),
@@ -586,9 +596,18 @@ void vtkEventBroker::InvokeObservation ( vtkObservation *observation )
 //----------------------------------------------------------------------------
 void vtkEventBroker::ProcessEventQueue ()
 {
+  //
+  // for each observation on the event queue, 
+  // invoke it with each of the stored callData pointers
+  //
   while ( this->GetNumberOfQueuedObservations() > 0 )
     {
-    this->InvokeObservation( this->EventQueue.front() );
+    vtkObservation *observation = this->EventQueue.front();
+    std::vector< void *>::iterator iter; 
+    for(iter=observation->GetCallDataList().begin(); iter != observation->GetCallDataList().end(); iter++)  
+      {
+      this->InvokeObservation( observation, *iter );
+      }
     this->DequeueObservation();
     }
 }

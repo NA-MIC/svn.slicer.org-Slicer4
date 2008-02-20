@@ -188,11 +188,11 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   // the callData field of the event back)
   // TODO: if the callData is needed, we will need another class/struct to 
   // go into the event queue that saves them
-  void QueueObservation (vtkObservation *observation); 
+  void QueueObservation (vtkObservation *observation, void *callData); 
   int GetNumberOfQueuedObservations (); 
   vtkObservation *GetNthQueuedObservation (int n); 
   vtkObservation *DequeueObservation (); 
-  void InvokeObservation (vtkObservation *observation); 
+  void InvokeObservation (vtkObservation *observation, void *callData); 
   void ProcessEventQueue (); 
 
   // Description:

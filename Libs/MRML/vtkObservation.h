@@ -78,8 +78,7 @@ class VTK_MRML_EXPORT vtkObservation : public vtkObject
   vtkSetMacro (ObserverDeleteEventTag, unsigned long);
 
   //BTX
-  vtkSetMacro (CallData, void*);
-  vtkGetMacro (CallData, void*);
+  std::vector<void *> &GetCallDataList() {return this->CallDataList;};
   //ETX
 
 protected:
@@ -121,12 +120,9 @@ protected:
 
   // Description:
   // data passed to the observation by the subject
-  // TODO: right all tuples (subject,event,observer) are considered unique
-  // and only one instance can be in the queue at a time.  But it may be
-  // important to allow multiple values of callData per observation (i.e. 
-  // make CallData be a list of pointers) then each of these would 
-  // be invoked in sequence when the Observation is invoked
-  void *CallData;
+  //BTX
+  std::vector<void *> CallDataList;
+  //ETX
 
   // Description:
   // Holder for script as an alternative to the callback command
