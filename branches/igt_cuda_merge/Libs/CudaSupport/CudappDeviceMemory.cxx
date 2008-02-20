@@ -8,11 +8,26 @@ namespace Cudapp
     DeviceMemory::DeviceMemory()
     {
         this->Location = MemoryBase::MemoryOnDevice;
-
-
-        this->MemPointer = NULL;
-        this->Size = 0;
     }
+
+    DeviceMemory::DeviceMemory(const Memory& src) : Memory()
+    {
+        this->Location = MemoryBase::MemoryOnDevice;
+        *this = src;
+    }
+
+    DeviceMemory::DeviceMemory(const DeviceMemory& src) : Memory()
+    {
+        this->Location = MemoryBase::MemoryOnDevice;
+        *this = src;
+    }
+
+    DeviceMemory& DeviceMemory::operator=(const Memory& src)
+    {
+        src.CopyTo(this);
+        return *this;
+    }
+
 
     DeviceMemory::~DeviceMemory()
     {
@@ -76,62 +91,6 @@ namespace Cudapp
         else 
             return false;
     }
-
-
-    /* vtkImageData
-    bool DeviceMemory::CopyFrom(vtkImageData* data)
-    {
-    if (!this->AllocateBytes(data->GetActualMemorySize()*1024))
-    return false;
-
-    if(cudaMemcpy(this->GetMemPointer(),
-    data->GetScalarPointer(),
-    this->GetSize(),
-    cudaMemcpyHostToDevice
-    ) == cudaSuccess)
-    return true;
-    else 
-    return false;
-    }
-
-    bool DeviceMemory::CopyTo(vtkImageData* data)
-    {
-    if(data->GetActualMemorySize() * 1024 < this->GetSize())
-    {
-    vtkErrorMacro("The vtkImageData has to little Memory to store memory inside");
-    return false;
-    }
-    // we cannot say the XYZ extent so we just write into the memory area
-    if(cudaMemcpy(data->GetScalarPointer(),
-    this->GetMemPointer(),
-    this->GetSize(),
-    cudaMemcpyDeviceToHost
-    ) == cudaSuccess)
-    return true;
-    else 
-    return false;
-    }
-    */
-    /* ARRAY
-    bool DeviceMemory::CopyTo(MemoryArray* other)
-    {
-    if (other->GetSize() < this->GetSize())
-    {
-    vtkErrorMacro("The DeviceMemoryArray has to little Memory to store memory inside");
-    return false;
-    }
-    // we cannot say the XYZ extent so we just write into the memory area
-    if(cudaMemcpyToArray(other->GetArray(),
-    0, 0,
-    this->GetMemPointer(),
-    this->GetSize(),
-    cudaMemcpyDeviceToDevice
-    ) == cudaSuccess)
-    return true;
-    else 
-    return false;
-    }
-    */
 
     void DeviceMemory::PrintSelf (std::ostream &os) const
     {

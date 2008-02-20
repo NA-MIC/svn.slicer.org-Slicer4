@@ -28,17 +28,25 @@ namespace Cudapp
         other.CopyTo(this);
         return *this;
     }
+    
+    bool Memory::CopyFromInternal(const Memory* src)
+    {
+        if (src->GetMemPointer() != NULL)
+        {
+            this->AllocateBytes(src->GetSize());
+            return this->CopyFrom(src->GetMemPointer(), src->GetSize(), (size_t)0, src->GetMemoryLocation());
+        }
+        else
+        {
+            this->Free();
+            return true;
+        }
+    }
 
     void Memory::PrintSelf (std::ostream &os) const
     {
         this->MemoryBase::PrintSelf(os);
         if (this->GetMemPointer() == NULL)
             os << "Not yet allocated";
-    }
-
-
-    bool Memory::CopyFromInternal(const Memory* mem)
-    {
-        return this->CopyFrom(mem->GetMemPointer(), mem->GetSize(), (size_t)0, mem->GetMemoryLocation());  
     }
 }
