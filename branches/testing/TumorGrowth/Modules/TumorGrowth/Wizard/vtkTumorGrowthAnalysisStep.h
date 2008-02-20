@@ -7,6 +7,7 @@ class vtkKWThumbWheel;
 class vtkKWLabel;
 class vtkKWFrameWithLabel; 
 class vtkKWPushButton;
+class vtkKWFrame;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthAnalysisStep : public vtkTumorGrowthStep
 {
@@ -40,6 +41,12 @@ protected:
   // vtkKWScaleWithEntry      *SensitivetyScale;
   vtkKWThumbWheel            *SensitivityScale;
   vtkKWLabel                 *GrowthLabel;
+
+  vtkKWFrameWithLabel       *FrameDeformable;
+  vtkKWFrame                *FrameDeformableCol1;
+  vtkKWFrame                *FrameDeformableCol2;
+  vtkKWLabel                *DeformableTextLabel;
+  vtkKWLabel                *DeformableMeassureLabel;
 
   vtkKWFrameWithLabel       *FrameButtons;
   vtkKWPushButton           *ButtonsSnapshot;

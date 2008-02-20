@@ -179,6 +179,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
 
     // Necesary in order to transfere results from above lines  
     this->ThresholdRangeChangedCallback(min, max);
+    this->TransitionCallback();   
   }
     
   // Kilian

@@ -370,7 +370,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // You only want to add the observers below when the step is active 
   this->AddROISamplingGUIObservers();
 
-  // this->TransitionCallback();
+  this->TransitionCallback();
 }
 
 //----------------------------------------------------------------------------
