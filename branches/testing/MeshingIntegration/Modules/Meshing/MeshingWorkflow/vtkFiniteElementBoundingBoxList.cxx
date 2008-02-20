@@ -45,7 +45,10 @@ void vtkFiniteElementBoundingBoxList::SetMRMLSceneForStorage(vtkMRMLScene* scene
     // each node type should be registered once in the MRML scene, so we do it here when the 
     // MRML scene is set, which is called only once per slicer session. 
     vtkMRMLFiniteElementBoundingBoxNode* feBBNode = vtkMRMLFiniteElementBoundingBoxNode::New();
+    vtkMRMLFiniteElementBoundingBoxDisplayNode* feBBDispNode = vtkMRMLFiniteElementBoundingBoxDisplayNode::New();
+    //vtkMRMLFiniteElementBoundingBoxStorageNode* feBBStoreNode = vtkMRMLFiniteElementBoundingBoxStorageNode::New();
     this->savedMRMLScene->RegisterNodeClass(feBBNode);
+    this->savedMRMLScene->RegisterNodeClass(feBBDispNode);
     feBBNode->Delete();
 }
 
@@ -67,20 +70,24 @@ int vtkFiniteElementBoundingBoxList::AppendItem(vtkMimxUnstructuredGridActor* ac
      newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
      // *** delete the extra pointer to the ugrid, since MRML node has a reference to it
      //ugrid->Delete();
-     this->savedMRMLScene->AddNode(newMRMLNode);
      
-     // now add the display and storage nodes
+     // now add the display, storage, and displayable nodes
      vtkMRMLFiniteElementBoundingBoxDisplayNode* dispNode = vtkMRMLFiniteElementBoundingBoxDisplayNode::New();
      vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
-      
+     dispNode->SetScene(this->savedMRMLScene);
+     storeNode->SetScene(this->savedMRMLScene);
+     storeNode->SetFileName(newMRMLNode->GetFileName());
+     this->savedMRMLScene->AddNodeNoNotify(dispNode);
+     this->savedMRMLScene->AddNodeNoNotify(storeNode);
+     this->savedMRMLScene->AddNode(newMRMLNode);
+     
      // Establish linkage between the surface
      // node and its display and storage nodes, so the viewer will be updated when data
      // or attributes change
      dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
      newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
      newMRMLNode->SetStorageNodeID(storeNode->GetID());   
-     this->savedMRMLScene->AddNode(dispNode);
-     this->savedMRMLScene->AddNode(storeNode);
+
      
      cout << "copied data to MRML bbox node " << endl;
    } else 
