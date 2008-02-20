@@ -533,7 +533,7 @@ void vtkEventBroker::QueueObservation ( vtkObservation *observation, void *callD
       break;
       }
     }
-  if ( dataIter != observation->GetCallDataList().end() )
+  if ( dataIter == observation->GetCallDataList().end() )
     {
     observation->GetCallDataList().push_back( callData );
     }
