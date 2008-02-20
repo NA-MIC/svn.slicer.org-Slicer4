@@ -69,6 +69,7 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
    this->SuperSampled_Spacing = -1;
    this->SuperSampled_VoxelVolume = -1;
    this->SuperSampled_RatioNewOldSpacing = -1;
+   this->Scan1_VoxelVolume = -1;
 
    this->SegmentThresholdMin=-1;
    this->SegmentThresholdMax=-1;
@@ -82,10 +83,17 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
    this->Scan1_ThreshRef = NULL;
    this->Scan2_ThreshRef = NULL;
 
-   this->Analysis_Ref = NULL;
    this->Grid_Ref = NULL;
 
-   this->Analysis_Sensitivity = 0.5;
+   this->Analysis_Intensity_Flag = 0;
+   this->Analysis_Intensity_Sensitivity = 0.5;
+   this->Analysis_Intensity_Ref = NULL;
+
+   this->Analysis_Deformable_Flag = 0;
+   this->Analysis_Deformable_JacobianGrowth = 0.0;
+   this->Analysis_Deformable_SegmentationGrowth = 0.0;
+   this->Analysis_Deformable_Ref = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -102,7 +110,8 @@ vtkMRMLTumorGrowthNode::~vtkMRMLTumorGrowthNode()
    this->SetScan2_NormedRef(NULL);
    this->SetScan1_ThreshRef(NULL);
    this->SetScan2_ThreshRef(NULL);
-   this->SetAnalysis_Ref(NULL);
+   this->SetAnalysis_Intensity_Ref(NULL);
+   this->SetAnalysis_Deformable_Ref(NULL);
    this->SetGrid_Ref(NULL);
 }
 
@@ -142,7 +151,12 @@ void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
 
   of << indent << " SegmentThresholdMin=\""<< this->SegmentThresholdMin  << "\"";
   of << indent << " SegmentThresholdMax=\""<< this->SegmentThresholdMax  << "\"";
-  of << indent << " Analysis_Sensitivity=\""<< this->Analysis_Sensitivity  << "\"";
+  of << indent << " Analysis_Intensity_Flag=\""<< this->Analysis_Intensity_Flag  << "\"";
+  if (this->Analysis_Intensity_Flag) {
+    of << indent << " Analysis_Intensity_Sensitivity=\""<< this->Analysis_Intensity_Sensitivity  << "\"";
+  }
+  of << indent << " Analysis_Deformable_Flag=\""<< this->Analysis_Deformable_Flag  << "\"";
+
 }
 
 //----------------------------------------------------------------------------
@@ -194,13 +208,25 @@ void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
       ss << attValue;
       ss >>  this->SegmentThresholdMax; 
       }
-    else if (!strcmp(attName, "Analysis_Sensitivity"))
+    else if (!strcmp(attName, "Analysis_Intensity_Flag"))
       {
-    vtksys_stl::stringstream ss;
-    ss << attValue;
-    ss >>  this->Analysis_Sensitivity; 
+      vtksys_stl::stringstream ss;
+      ss << attValue;
+      ss >>  this->Analysis_Intensity_Flag; 
       }
-     }
+    else if (!strcmp(attName, "Analysis_Intensity_Sensitivity"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << attValue;
+      ss >>  this->Analysis_Intensity_Sensitivity; 
+      }
+    else if (!strcmp(attName, "Analysis_Deformable_Flag"))
+      {
+      vtksys_stl::stringstream ss;
+      ss << attValue;
+      ss >>  this->Analysis_Deformable_Flag; 
+      }
+    }
 }
 
 
@@ -218,8 +244,9 @@ void vtkMRMLTumorGrowthNode::Copy(vtkMRMLNode *anode)
   this->ROIMax = node->ROIMax; 
   this->SegmentThresholdMin = node->SegmentThresholdMin; 
   this->SegmentThresholdMax = node->SegmentThresholdMax; 
-  this->Analysis_Sensitivity = node->Analysis_Sensitivity; 
-
+  this->Analysis_Intensity_Flag = node->Analysis_Intensity_Flag; 
+  this->Analysis_Intensity_Sensitivity = node->Analysis_Intensity_Sensitivity; 
+  this->Analysis_Deformable_Flag = node->Analysis_Deformable_Flag; 
 }
 
 //----------------------------------------------------------------------------
@@ -241,8 +268,12 @@ void vtkMRMLTumorGrowthNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "ROIMax:               "<< this->ROIMax[0] << " "<< this->ROIMax[1] << " "<< this->ROIMax[2] <<"\n";
   os << indent << "SegmentThresholdMin:     "<< this->SegmentThresholdMin << "\n";
   os << indent << "SegmentThresholdMax:     "<< this->SegmentThresholdMax << "\n";
-  os << indent << "Analysis_Sensitivity: "<< this->Analysis_Sensitivity << "\n";
+  os << indent << "Analysis_Intensity_Flag: "<< this->Analysis_Intensity_Flag << "\n";
+  os << indent << "Analysis_Intensity_Sensitivity: "<< this->Analysis_Intensity_Sensitivity << "\n";
+  os << indent << "Analysis_Deformable_Flag: "<< this->Analysis_Deformable_Flag << "\n";
   os << indent << "WorkingDir:           " <<  (this->WorkingDir ? this->WorkingDir : "(none)") << "\n";
 
 }
+
+
 
