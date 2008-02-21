@@ -62,7 +62,7 @@ void Clear()
 
 void LoadHead()
 {
-    reader[0]->Delete();
+    //reader[0]->Delete();
     reader[0]= vtkImageReader::New();
     reader[0]->SetDataScalarTypeToUnsignedChar();
     reader[0]->SetNumberOfScalarComponents(1);
@@ -224,28 +224,28 @@ int my_main(int argc, char *argv[])
 
 
     // Reading in the Data using a ImageReader
-    for (unsigned int i = 0; i < 5; i++ ) 
-    {
-        reader[i] = NULL;
-        reader[i]= vtkImageReader::New();
-        reader[i]->SetDataScalarTypeToUnsignedChar();
-        reader[i]->SetNumberOfScalarComponents(1);
-        reader[i]->SetDataExtent(0, 255,
-            0, 255, 
-            0, 255);
-        reader[i]->SetFileDimensionality(3);
+    //for (unsigned int i = 0; i < 5; i++ ) 
+    //{
+    //    reader[i] = NULL;
+    //    reader[i]= vtkImageReader::New();
+    //    reader[i]->SetDataScalarTypeToUnsignedChar();
+    //    reader[i]->SetNumberOfScalarComponents(1);
+    //    reader[i]->SetDataExtent(0, 255,
+    //        0, 255, 
+    //        0, 255);
+    //    reader[i]->SetFileDimensionality(3);
 
 
-        std::stringstream s;
-        s << "C:\\heart256-" << i+1 << ".raw";
-        //s << "C:\\fullhead94.raw";
+    //    std::stringstream s;
+    //    s << "C:\\heart256-" << i+1 << ".raw";
+    //    //s << "C:\\fullhead94.raw";
 
-        reader[i]->SetFileName(s.str().c_str());
-        reader[i]->Update();
+    //    reader[i]->SetFileName(s.str().c_str());
+    //    reader[i]->Update();
 
-        //        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
-    }
-
+    //    //        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
+    //}
+    LoadHead();
 
     //reader[0]->Delete();
     //reader[0]= vtkImageReader::New();
