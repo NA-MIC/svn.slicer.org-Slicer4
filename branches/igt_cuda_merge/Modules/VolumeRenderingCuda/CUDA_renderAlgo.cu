@@ -68,7 +68,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   float test;
 
-  int tempacc=threadIdx.x + threadIdx.y * BLOCK_DIM2D; //index in grid
+  int tempacc = threadIdx.x + threadIdx.y * BLOCK_DIM2D; //index in grid
 
   __syncthreads();	
 
@@ -77,9 +77,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     s_dsize.x = renInfo.Resolution.x;
     s_dsize.y = renInfo.Resolution.y;
     s_vsize   = volInfo.Spacing;
-    s_size.x  =  volInfo.VolumeSize.x;
-    s_size.y  =  volInfo.VolumeSize.y;
-    s_size.z  =  volInfo.VolumeSize.z;
+    s_size.x  = volInfo.VolumeSize.x;
+    s_size.y  = volInfo.VolumeSize.y;
+    s_size.z  = volInfo.VolumeSize.z;
   }else if(tempacc < 9){ 
     s_minmax[xIndex%6] = volInfo.MinMaxValue[xIndex%6];
   }
@@ -115,28 +115,12 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   s_rayMap[tempacc*6+1] = renInfo.CameraPos.y + s_size.y * s_vsize.y / 2.0f;
   s_rayMap[tempacc*6+2] = renInfo.CameraPos.z + s_size.z * s_vsize.z / 2.0f;
   
-
-  float verX, verY, verZ;
-  float horX, horY, horZ;
+  float posHor= (xIndex - s_dsize.x*0.5) / s_dsize.x*0.27;
+  float posVer= (yIndex - s_dsize.y*0.5) / s_dsize.x*0.27;
   
-  float dot = renInfo.ViewUp.x * renInfo.CameraDirection.x +
-              renInfo.ViewUp.y * renInfo.CameraDirection.y + 
-              renInfo.ViewUp.z * renInfo.CameraDirection.z;
-
-  verX = renInfo.ViewUp.x - dot * renInfo.CameraDirection.x;
-  verY = renInfo.ViewUp.y - dot * renInfo.CameraDirection.y;
-  verZ = renInfo.ViewUp.z - dot * renInfo.CameraDirection.z;
-
-  horX=verY * renInfo.CameraDirection.z - verZ * renInfo.CameraDirection.y;
-  horY=verZ * renInfo.CameraDirection.x - verX * renInfo.CameraDirection.z;
-  horZ=verX * renInfo.CameraDirection.y - verY * renInfo.CameraDirection.x;
-
-  float posHor= (xIndex-s_dsize.x*0.5) / s_dsize.x*0.27;
-  float posVer= (yIndex-s_dsize.y*0.5) / s_dsize.x*0.27;
-  
-  s_rayMap[tempacc*6+3] = (renInfo.CameraDirection.x + posHor * horX + posVer * verX);
-  s_rayMap[tempacc*6+4] = (renInfo.CameraDirection.y + posHor * horY + posVer * verY);
-  s_rayMap[tempacc*6+5] = (renInfo.CameraDirection.z + posHor * horZ + posVer * verZ);
+  s_rayMap[tempacc*6+3] = (renInfo.CameraDirection.x + posHor * renInfo.HorizontalVec.x + posVer * renInfo.VerticalVec.x);
+  s_rayMap[tempacc*6+4] = (renInfo.CameraDirection.y + posHor * renInfo.HorizontalVec.y + posVer * renInfo.VerticalVec.y);
+  s_rayMap[tempacc*6+5] = (renInfo.CameraDirection.z + posHor * renInfo.HorizontalVec.z + posVer * renInfo.VerticalVec.z);
 
   /*
     camera model end here

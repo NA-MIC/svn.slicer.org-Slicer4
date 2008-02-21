@@ -85,16 +85,29 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.CameraPos.x = cam->GetPosition()[0];
         this->RendererInfo.CameraPos.y = cam->GetPosition()[1];
         this->RendererInfo.CameraPos.z = cam->GetPosition()[2];
-        this->RendererInfo.TargetPos.x = cam->GetFocalPoint()[0];
-        this->RendererInfo.TargetPos.y = cam->GetFocalPoint()[1];
-        this->RendererInfo.TargetPos.z = cam->GetFocalPoint()[2];
-        this->RendererInfo.ViewUp.x = cam->GetViewUp()[0];
-        this->RendererInfo.ViewUp.y = cam->GetViewUp()[1];
-        this->RendererInfo.ViewUp.z = cam->GetViewUp()[2];
         this->RendererInfo.CameraDirection.x= cam->GetDirectionOfProjection()[0];
         this->RendererInfo.CameraDirection.y= cam->GetDirectionOfProjection()[1];
         this->RendererInfo.CameraDirection.z= cam->GetDirectionOfProjection()[2];
+        this->RendererInfo.ViewUp.x = cam->GetViewUp()[0];
+        this->RendererInfo.ViewUp.y = cam->GetViewUp()[1];
+        this->RendererInfo.ViewUp.z = cam->GetViewUp()[2];
         
+        float dot = this->RendererInfo.ViewUp.x * this->RendererInfo.CameraDirection.x +
+              this->RendererInfo.ViewUp.y * this->RendererInfo.CameraDirection.y + 
+              this->RendererInfo.ViewUp.z * this->RendererInfo.CameraDirection.z;
+
+        this->RendererInfo.VerticalVec.x = this->RendererInfo.ViewUp.x - dot * this->RendererInfo.CameraDirection.x;
+        this->RendererInfo.VerticalVec.y = this->RendererInfo.ViewUp.y - dot * this->RendererInfo.CameraDirection.y;
+        this->RendererInfo.VerticalVec.z = this->RendererInfo.ViewUp.z - dot * this->RendererInfo.CameraDirection.z;
+
+        this->RendererInfo.HorizontalVec.x = this->RendererInfo.VerticalVec.y * this->RendererInfo.CameraDirection.z - 
+            this->RendererInfo.VerticalVec.z * this->RendererInfo.CameraDirection.y;
+        this->RendererInfo.HorizontalVec.y = this->RendererInfo.VerticalVec.z * this->RendererInfo.CameraDirection.x - 
+            this->RendererInfo.VerticalVec.x * this->RendererInfo.CameraDirection.z;
+        this->RendererInfo.HorizontalVec.z = this->RendererInfo.VerticalVec.x * this->RendererInfo.CameraDirection.y - 
+            this->RendererInfo.VerticalVec.y * this->RendererInfo.CameraDirection.x;
+
+
         double clipRange[2];
         cam->GetClippingRange(clipRange);
         this->RendererInfo.ClippingRange.x = (float)clipRange[0];

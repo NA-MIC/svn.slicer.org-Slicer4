@@ -18,9 +18,10 @@ typedef struct
     float3*        LightVectors;
 
     float3         CameraPos;
-    float3         TargetPos;
-    float3         ViewUp;
     float3         CameraDirection;
+    float3         ViewUp;
+    float3         HorizontalVec;  // Horizontal Vector
+    float3         VerticalVec;    // Vertical Vector
 
     uchar4*        OutputImage;
     float*         ZBuffer;
