@@ -83,7 +83,7 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
     // This should update the the CudaInputBuffer only when needed.
     //if (this->GetInput()->GetMTime() > this->GetMTime())
-    //  this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetActualMemorySize() * 1024);
+    //  this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetScalarSize());
 
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();

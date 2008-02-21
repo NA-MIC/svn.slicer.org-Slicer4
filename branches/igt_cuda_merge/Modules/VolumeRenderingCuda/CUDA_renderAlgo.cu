@@ -73,7 +73,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   __syncthreads();	
 
   //copying variables into shared memory
-  if(tempacc <3){ 
+  if(tempacc < 3){ 
     s_dsize.x = renInfo.Resolution.x;
     s_dsize.y = renInfo.Resolution.y;
     s_vsize   = volInfo.Spacing;

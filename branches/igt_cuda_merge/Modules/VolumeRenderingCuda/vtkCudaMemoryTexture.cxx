@@ -39,19 +39,19 @@ void vtkCudaMemoryTexture::Initialize()
     this->RenderDestination = NULL;
     this->CurrentRenderMode = RenderToMemory;
 
-    //if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == false)
-    //{
-    //    // check for the RenderMode
-    //    vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();
-    //    extensions->SetRenderWindow(NULL);
-    //    if (extensions->ExtensionSupported("GL_ARB_vertex_buffer_object"))
-    //    {
-    //        extensions->LoadExtension("GL_ARB_vertex_buffer_object");
-    //        vtkCudaMemoryTexture::GLBufferObjectsAvailiable = true;
-    //        this->CurrentRenderMode = RenderToTexture;
-    //    }
-    //    extensions->Delete();
-    //}
+    if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == false)
+    {
+        // check for the RenderMode
+        vtkOpenGLExtensionManager *extensions = vtkOpenGLExtensionManager::New();
+        extensions->SetRenderWindow(NULL);
+        if (extensions->ExtensionSupported("GL_ARB_vertex_buffer_object"))
+        {
+            extensions->LoadExtension("GL_ARB_vertex_buffer_object");
+            vtkCudaMemoryTexture::GLBufferObjectsAvailiable = true;
+            this->CurrentRenderMode = RenderToTexture;
+        }
+        extensions->Delete();
+    }
 }
 
 void vtkCudaMemoryTexture::SetSize(unsigned int width, unsigned int height)
@@ -72,18 +72,6 @@ void vtkCudaMemoryTexture::SetSize(unsigned int width, unsigned int height)
 }
 void vtkCudaMemoryTexture::RebuildBuffer()
 {
-    //{
-    //    // Allocate the Image Data
-    //    this->LocalOutputImage->SetScalarTypeToUnsignedChar();
-    //    this->LocalOutputImage->SetNumberOfScalarComponents(4);
-    //    this->LocalOutputImage->SetDimensions(this->OutputDataSize[0], this->OutputDataSize[1], 1);
-    //    this->LocalOutputImage->SetExtent(0, this->OutputDataSize[0] - 1, 
-    //        0, this->OutputDataSize[1] - 1, 
-    //        0, 1 - 1);
-    //    this->LocalOutputImage->SetNumberOfScalarComponents(4);
-    //    this->LocalOutputImage->AllocateScalars();
-    //}
-
     // TEXTURE CODE
     glEnable(GL_TEXTURE_2D);
     if (this->TextureID != 0 && glIsTexture(this->TextureID))
@@ -114,10 +102,10 @@ void vtkCudaMemoryTexture::SetRenderMode(int mode)
     {
         this->CurrentRenderMode = mode;
     }
-    //else
-    //{
+    else
+    {
         this->CurrentRenderMode = RenderToMemory;
-    //}
+    }
     this->RebuildBuffer();
 }
 
