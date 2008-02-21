@@ -180,6 +180,11 @@ void vtkCudaVolumeInformationHandler::Update()
         this->VolumeInfo.MinMaxValue[3] = (float)extent[3];
         this->VolumeInfo.MinMaxValue[4] = (float)extent[4];
         this->VolumeInfo.MinMaxValue[5] = (float)extent[5];
+
+        //this->VolumeInfo.Transform[0].x=1; this->VolumeInfo.Transform[0].y=0; this->VolumeInfo.Transform[0].z=0; this->VolumeInfo.Transform[0].w=0; 
+        //this->VolumeInfo.Transform[1].x=0; this->VolumeInfo.Transform[1].y=1; this->VolumeInfo.Transform[1].z=0; this->VolumeInfo.Transform[1].w=0; 
+        //this->VolumeInfo.Transform[2].x=0; this->VolumeInfo.Transform[2].y=0; this->VolumeInfo.Transform[2].z=1; this->VolumeInfo.Transform[2].w=0; 
+        //this->VolumeInfo.Transform[3].x=0; this->VolumeInfo.Transform[3].y=0; this->VolumeInfo.Transform[3].z=0; this->VolumeInfo.Transform[3].w=1; 
     }
 }
 

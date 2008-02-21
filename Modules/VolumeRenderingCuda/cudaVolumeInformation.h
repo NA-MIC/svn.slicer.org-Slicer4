@@ -12,6 +12,7 @@ typedef struct {
     // The size of the volume
     int3            VolumeSize;
     float3          VolumeTransformation;
+    //float4          Transform[4]; TOO MUCH
 
 
     //! The Color Transfer Function with a size of FunctionSize * 3 (rgb)
