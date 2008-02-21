@@ -1,7 +1,5 @@
 #include "vtkVolumeRenderingCudaModuleGUI.h"
 
-#include "CudappMemory.h"
-
 #include "vtkVolumeRenderingCudaModuleLogic.h"
 #include "vtkSlicerApplication.h"
 #include "vtkKWWidget.h"
@@ -12,6 +10,7 @@
 
 #include "vtkVolume.h"
 #include "vtkVolumeProperty.h"
+#include "vtkCudaMemoryTexture.h"
 
 #include "vtkImageData.h"
 
@@ -305,8 +304,6 @@ void vtkVolumeRenderingCudaModuleGUI::DeleteMapper()
     }
 }
 
-#include <sstream>
-#include "vtkCudaMemoryTexture.h"
 void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event,
                                                         void *callData )
 {
@@ -327,13 +324,9 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         if (selectedImageData != NULL && selectedImageData->GetImageData() != NULL)
         {
             this->CreateMapper();
-            //vtkImageShiftScale* shifter = vtkImageShiftScale::New();
-            //shifter->SetInput(selectedImageData->GetImageData());
-            //shifter->SetOutputScalarTypeToUnsignedChar();
-            //shifter->Update();
+            selectedImageData->GetImageData()->SetSpacing(selectedImageData->GetSpacing());
 
-            this->CudaMapper->SetInput(/*shifter->GetOutput());*/ selectedImageData->GetImageData());
-            //shifter->Delete();
+            this->CudaMapper->SetInput(selectedImageData->GetImageData());
 
             this->CudaVolumeProperty = vtkVolumeProperty::New();
             this->CudaVolume->SetProperty(this->CudaVolumeProperty);
