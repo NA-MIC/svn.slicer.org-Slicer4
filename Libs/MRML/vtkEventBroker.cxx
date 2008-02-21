@@ -55,6 +55,7 @@ vtkEventBroker::vtkEventBroker()
 {
   this->EventMode = vtkEventBroker::Synchronous;
   this->EventLogging = 0;
+  this->CompressCallData = 1;
   this->LogFileName = NULL;
   this->ScriptHandler = NULL;
 }
@@ -469,13 +470,27 @@ void vtkEventBroker::LogEvent ( vtkObservation *observation )
   if ( this->EventLogging && observation != NULL )
     {
     // log the actual event
-    this->LogFile << " " \
-        << observation->GetSubject()->GetClassName() 
-        << " -> "
-        << observation->GetObserver()->GetClassName() 
-        << " [ label = \"" 
-        << vtkCommand::GetStringFromEventId( observation->GetEvent() )
-        << "\" ]\n;" ;
+    if ( observation->GetScript() != NULL )
+      {
+      this->LogFile << " " \
+          << observation->GetSubject()->GetClassName() 
+          << " -> "
+          << "\"" << observation->GetScript() << "\""
+          << " [ label = \"" 
+          << vtkCommand::GetStringFromEventId( observation->GetEvent() )
+          << "\" ]\n;" ;
+      }
+    else
+      {
+      this->LogFile << " " \
+          << observation->GetSubject()->GetClassName() 
+          << " -> "
+          << observation->GetObserver()->GetClassName() 
+          << " [ label = \"" 
+          << vtkCommand::GetStringFromEventId( observation->GetEvent() )
+          << "\" ]\n;" ;
+      }
+    this->LogFile.flush();
     }
 }
 
@@ -522,27 +537,35 @@ void vtkEventBroker::ProcessEvent ( vtkObservation *observation, vtkObject *call
 void vtkEventBroker::QueueObservation ( vtkObservation *observation, void *callData )
 {
 
-std::cerr << "queuing " << observation << " with " << callData << "\n";
   //
+  // two modes - 
+  //  - CompressCallDataOn: only keep the most recent call data.  this means that if the
+  //    observation is in the queue, replace the call data with the current value
+  //  - CompressCallDataOff: maintain the list of all call data values, but only
+  //    one unique entry for each
   // it it's not there, add the current call data to the list so that each unique combination
   // can be invoked.
   // If the event is not currently in the queue, add it and keep a flag.
   //
-  std::vector< void *>::iterator dataIter; 
-  for(dataIter=observation->GetCallDataList().begin(); dataIter != observation->GetCallDataList().end(); dataIter++)  
+  if ( this->GetCompressCallData() )
     {
-    if ( *dataIter == callData )
-      {
-      break;
-      }
-    }
-  if ( dataIter == observation->GetCallDataList().end() )
-    {
+    observation->GetCallDataList().clear();
     observation->GetCallDataList().push_back( callData );
     }
   else
     {
-    std::cerr << "observation already exists\n";
+    std::vector< void *>::iterator dataIter; 
+    for(dataIter=observation->GetCallDataList().begin(); dataIter != observation->GetCallDataList().end(); dataIter++)  
+      {
+      if ( *dataIter == callData )
+        {
+        break;
+        }
+      }
+    if ( dataIter == observation->GetCallDataList().end() )
+      {
+      observation->GetCallDataList().push_back( callData );
+      }
     }
 
   if ( !observation->GetInEventQueue() )
@@ -592,10 +615,12 @@ void vtkEventBroker::InvokeObservation ( vtkObservation *observation, void *call
   else
     {
     // Invoke the observation
+    observation->Register(this);
     observation->GetCallbackCommand()->Execute(
                                       observation->GetSubject(),
                                       observation->GetEvent(),
                                       callData );
+    observation->Delete();
     }
 
 }

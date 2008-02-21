@@ -196,6 +196,17 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   void ProcessEventQueue (); 
 
   // Description:
+  // two modes - 
+  //  - CompressCallDataOn: only keep the most recent call data.  this means that if the
+  //    observation is in the queue, replace the call data with the current value
+  //  - CompressCallDataOff: maintain the list of all call data values, but only
+  //    one unique entry for each
+  //  Compression is ON by default
+  vtkBooleanMacro (CompressCallData, int);
+  vtkGetMacro (CompressCallData, int);
+  vtkSetMacro (CompressCallData, int);
+
+  // Description:
   // Sets the method pointer to be used for processing script observations
   //BTX
   void SetScriptHandler ( void (*scriptHandler) (const char* script) )
@@ -227,6 +238,7 @@ protected:
   char *LogFileName;
 
   int EventMode;
+  int CompressCallData;
 
   //BTX
   std::ofstream LogFile;
