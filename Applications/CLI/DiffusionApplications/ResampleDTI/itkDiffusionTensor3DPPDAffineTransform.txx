@@ -50,9 +50,12 @@ if( this->latestTime < Object::GetMTime() )
     e1[ i ] = eigenVectors[ 2 ][ i ] ;//eigen values sorted in ascending order, Vectors in line
     e2[ i ] = eigenVectors[ 1 ][ i ] ;     
     }
-  n1 = this->m_TransformMatrix * e1 ;
+  InternalMatrixTransformType transformMF=this->m_TransformMatrix * ( InternalMatrixTransformType ) this->m_MeasurementFrame;
+//  n1 = this->m_TransformMatrix  * e1 ;
+  n1 = transformMF  * e1 ;
   n1 /= n1.GetVnlVector().two_norm() ;
-  n2 = this->m_TransformMatrix * e2 ;
+//  n2 = this->m_TransformMatrix * e2 ;
+  n2 = transformMF * e2 ;
   n2 /= n2.GetVnlVector().two_norm() ;
   double costheta = dot_product( e1.GetVnlVector() , n1.GetVnlVector() ) ;
   VectorType axis ;
