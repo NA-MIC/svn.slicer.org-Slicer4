@@ -134,7 +134,7 @@ void vtkCudaVolumeInformationHandler::Update()
 
         this->VolumeInfo.Spacing.x = (float)spacing[0];
         this->VolumeInfo.Spacing.y = (float)spacing[1];
-        this->VolumeInfo.Spacing.z = 2.0; //(float)spacing[2];
+        this->VolumeInfo.Spacing.z = (float)spacing[2];
 
         this->VolumeInfo.VolumeTransformation.x= 0.0f;
         this->VolumeInfo.VolumeTransformation.y = 0.0f;
@@ -156,7 +156,6 @@ void vtkCudaVolumeInformationHandler::Update()
         //this->VolumeInfo.Transform[1].x=0; this->VolumeInfo.Transform[1].y=1; this->VolumeInfo.Transform[1].z=0; this->VolumeInfo.Transform[1].w=0; 
         //this->VolumeInfo.Transform[2].x=0; this->VolumeInfo.Transform[2].y=0; this->VolumeInfo.Transform[2].z=1; this->VolumeInfo.Transform[2].w=0; 
         //this->VolumeInfo.Transform[3].x=0; this->VolumeInfo.Transform[3].y=0; this->VolumeInfo.Transform[3].z=0; this->VolumeInfo.Transform[3].w=1; 
-
 
 
         unsigned long size = this->InputData->GetScalarSize() * 
