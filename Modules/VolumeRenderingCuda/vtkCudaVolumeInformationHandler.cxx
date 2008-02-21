@@ -59,8 +59,6 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData)
     else if (inputData != this->InputData)
     {
         this->CudaInputBuffer.AllocateBytes(inputData->GetActualMemorySize() * 1024);
-        // We do this automatically
-        this->CudaInputBuffer.CopyFrom(inputData->GetScalarPointer(), inputData->GetActualMemorySize() * 1024);
     }
     this->InputData = inputData;
     this->Modified();
@@ -129,16 +127,10 @@ void vtkCudaVolumeInformationHandler::Update()
 {
     if (this->Volume != NULL && this->InputData != NULL)
     {
-        this->CudaInputBuffer.CopyFrom(this->InputData->GetScalarPointer(),
-                                        this->InputData->GetActualMemorySize() * 1024);
-
 
         this->UpdateVolumeProperties(this->Volume->GetProperty());
         int* dims = this->InputData->GetDimensions();
         double* spacing = this->InputData->GetSpacing();
-
-        this->VolumeInfo.SourceData = this->CudaInputBuffer.GetMemPointer();
-        this->VolumeInfo.InputDataType = this->InputData->GetScalarType();
 
         this->VolumeInfo.Spacing.x = (float)spacing[0];
         this->VolumeInfo.Spacing.y = (float)spacing[1];
@@ -164,6 +156,23 @@ void vtkCudaVolumeInformationHandler::Update()
         //this->VolumeInfo.Transform[1].x=0; this->VolumeInfo.Transform[1].y=1; this->VolumeInfo.Transform[1].z=0; this->VolumeInfo.Transform[1].w=0; 
         //this->VolumeInfo.Transform[2].x=0; this->VolumeInfo.Transform[2].y=0; this->VolumeInfo.Transform[2].z=1; this->VolumeInfo.Transform[2].w=0; 
         //this->VolumeInfo.Transform[3].x=0; this->VolumeInfo.Transform[3].y=0; this->VolumeInfo.Transform[3].z=0; this->VolumeInfo.Transform[3].w=1; 
+
+
+
+        unsigned long size = this->InputData->GetScalarSize() * 
+            this->VolumeInfo.VolumeSize.x *
+            this->VolumeInfo.VolumeSize.y *
+            this->VolumeInfo.VolumeSize.z *
+            this->InputData->GetNumberOfScalarComponents();
+
+        this->CudaInputBuffer.CopyFrom(this->InputData->GetScalarPointer(),
+                                        size);
+
+
+        this->VolumeInfo.SourceData = this->CudaInputBuffer.GetMemPointer();
+        this->VolumeInfo.InputDataType = this->InputData->GetScalarType();
+
+
     }
 }
 
