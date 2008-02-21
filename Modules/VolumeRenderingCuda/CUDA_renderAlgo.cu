@@ -60,6 +60,64 @@ __device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cud
   raymap[index.z*6+5] = (renInfo.CameraDirection.z + posHor * renInfo.HorizontalVec.z + posVer * renInfo.VerticalVec.z);
 }
 
+__device__ void CUDAkernel_CalculateRayEnds(const int3& index, float* minmax/*[6]*/, float2* minmaxTrace, float* rayMap, const float3& voxelSize)
+{
+ float test;
+  //calculating starting and ending point of ray tracing
+ if(rayMap[index.z*6+3] > 1.0e-3){
+    minmaxTrace[index.z].y = ( ((minmax[1]-2)*voxelSize.x - rayMap[index.z*6]) / rayMap[index.z*6+3] );
+    minmaxTrace[index.z].x = ( ((minmax[0]+2)*voxelSize.x - rayMap[index.z*6]) / rayMap[index.z*6+3] );
+  }
+  else if(rayMap[index.z*6+3] < -1.0e-3){
+    minmaxTrace[index.z].x = ( ((minmax[1]-2)*voxelSize.x - rayMap[index.z*6]) / rayMap[index.z*6+3] );
+    minmaxTrace[index.z].y = ( ((minmax[0]+2)*voxelSize.x - rayMap[index.z*6]) / rayMap[index.z*6+3] );
+  }
+  
+  if(rayMap[index.z*6+4] > 1.0e-3){
+    test = ( ((minmax[3]-2)*voxelSize.y - rayMap[index.z*6+1]) / rayMap[index.z*6+4] );
+    if( test < minmaxTrace[index.z].y){
+      minmaxTrace[index.z].y = test;
+    }
+    test = ( ((minmax[2]+2)*voxelSize.y - rayMap[index.z*6+1]) / rayMap[index.z*6+4] );
+    if( test > minmaxTrace[index.z].x){
+      minmaxTrace[index.z].x = test;
+    }
+  }
+  else if(rayMap[index.z*6+4] < -1.0e-3){
+    test = ( ((minmax[3]-2)*voxelSize.y - rayMap[index.z*6+1]) / rayMap[index.z*6+4] );
+    if( test > minmaxTrace[index.z].x){
+      minmaxTrace[index.z].x = test;
+    }
+    test = ( ((minmax[2]+2)*voxelSize.y - rayMap[index.z*6+1]) / rayMap[index.z*6+4] );
+    if( test < minmaxTrace[index.z].y){
+      minmaxTrace[index.z].y = test;
+    }
+  }
+  
+
+  if(rayMap[index.z*6+5] > 1.0e-3){
+    test = ( ((minmax[5]-2)*voxelSize.z - rayMap[index.z*6+2]) / rayMap[index.z*6+5] );
+    if( test < minmaxTrace[index.z].y){
+      minmaxTrace[index.z].y = test;
+    }
+    test = ( ((minmax[4]+2)*voxelSize.z - rayMap[index.z*6+2]) / rayMap[index.z*6+5] );
+    if( test > minmaxTrace[index.z].x){
+      minmaxTrace[index.z].x = test;
+    }
+  }
+  else if(rayMap[index.z*6+5] < -1.0e-3){
+    test = ( ((minmax[5]-2)*voxelSize.z - rayMap[index.z*6+2]) / rayMap[index.z*6+5] );
+    if( test > minmaxTrace[index.z].x){
+      minmaxTrace[index.z].x = test;
+    }
+    test = ( ((minmax[4]+2)*voxelSize.z - rayMap[index.z*6+2]) / rayMap[index.z*6+5] );
+    if( test < minmaxTrace[index.z].y){
+      minmaxTrace[index.z].y = test;
+    }
+  }
+}
+
+
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 							  const cudaRendererInformation renInfo,
@@ -99,7 +157,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   __syncthreads();
 
-  float test;
   T typeMin = (T)volInfo.FunctionRange[0];
   T typeMax = (T)volInfo.FunctionRange[1];
   GetTypeRange<T>(typeMin, typeMax);  
@@ -148,59 +205,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
                          s_rayMap[index.z*6+4] * s_rayMap[index.z*6+4] + 
                          s_rayMap[index.z*6+5] * s_rayMap[index.z*6+5]);
   __syncthreads();
-
-  //calculating starting and ending point of ray tracing
- if(s_rayMap[index.z*6+3] > 1.0e-3){
-    s_minmaxTrace[index.z].y = ( ((s_minmax[1]-2)*s_vsize.x - s_rayMap[index.z*6]) / s_rayMap[index.z*6+3] );
-    s_minmaxTrace[index.z].x = ( ((s_minmax[0]+2)*s_vsize.x - s_rayMap[index.z*6]) / s_rayMap[index.z*6+3] );
-  }
-  else if(s_rayMap[index.z*6+3] < -1.0e-3){
-    s_minmaxTrace[index.z].x = ( ((s_minmax[1]-2)*s_vsize.x - s_rayMap[index.z*6]) / s_rayMap[index.z*6+3] );
-    s_minmaxTrace[index.z].y = ( ((s_minmax[0]+2)*s_vsize.x - s_rayMap[index.z*6]) / s_rayMap[index.z*6+3] );
-  }
-  
-  if(s_rayMap[index.z*6+4] > 1.0e-3){
-    test = ( ((s_minmax[3]-2)*s_vsize.y - s_rayMap[index.z*6+1]) / s_rayMap[index.z*6+4] );
-    if( test < s_minmaxTrace[index.z].y){
-      s_minmaxTrace[index.z].y = test;
-    }
-    test = ( ((s_minmax[2]+2)*s_vsize.y - s_rayMap[index.z*6+1]) / s_rayMap[index.z*6+4] );
-    if( test > s_minmaxTrace[index.z].x){
-      s_minmaxTrace[index.z].x = test;
-    }
-  }
-  else if(s_rayMap[index.z*6+4] < -1.0e-3){
-    test = ( ((s_minmax[3]-2)*s_vsize.y - s_rayMap[index.z*6+1]) / s_rayMap[index.z*6+4] );
-    if( test > s_minmaxTrace[index.z].x){
-      s_minmaxTrace[index.z].x = test;
-    }
-    test = ( ((s_minmax[2]+2)*s_vsize.y - s_rayMap[index.z*6+1]) / s_rayMap[index.z*6+4] );
-    if( test < s_minmaxTrace[index.z].y){
-      s_minmaxTrace[index.z].y = test;
-    }
-  }
-  
-
-  if(s_rayMap[index.z*6+5] > 1.0e-3){
-    test = ( ((s_minmax[5]-2)*s_vsize.z - s_rayMap[index.z*6+2]) / s_rayMap[index.z*6+5] );
-    if( test < s_minmaxTrace[index.z].y){
-      s_minmaxTrace[index.z].y = test;
-    }
-    test = ( ((s_minmax[4]+2)*s_vsize.z - s_rayMap[index.z*6+2]) / s_rayMap[index.z*6+5] );
-    if( test > s_minmaxTrace[index.z].x){
-      s_minmaxTrace[index.z].x = test;
-    }
-  }
-  else if(s_rayMap[index.z*6+5] < -1.0e-3){
-    test = ( ((s_minmax[5]-2)*s_vsize.z - s_rayMap[index.z*6+2]) / s_rayMap[index.z*6+5] );
-    if( test > s_minmaxTrace[index.z].x){
-      s_minmaxTrace[index.z].x = test;
-    }
-    test = ( ((s_minmax[4]+2)*s_vsize.z - s_rayMap[index.z*6+2]) / s_rayMap[index.z*6+5] );
-    if( test < s_minmaxTrace[index.z].y){
-      s_minmaxTrace[index.z].y = test;
-    }
-  }
+  CUDAkernel_CalculateRayEnds(index, s_minmax, s_minmaxTrace, s_rayMap, volInfo.Spacing);
   __syncthreads();
 
   //ray tracing start from here
