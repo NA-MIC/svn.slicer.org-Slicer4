@@ -64,8 +64,8 @@ int vtkCudaVolumeMapper::GetCurrentRenderMode() const
 }
 
 /**
- * @brief sets the Threshold of the Input Array
- */
+* @brief sets the Threshold of the Input Array
+*/
 void vtkCudaVolumeMapper::SetThreshold(unsigned int min, unsigned int max)
 {
     this->VolumeInfoHandler->SetThreshold(min, max);
@@ -107,50 +107,45 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     log->StopTimer();
     //vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
 
-//    renderer->SetBackground(this->renViewport->GetBackground());
-//    renderer->SetActiveCamera(this->renViewport->GetActiveCamera());
-
-    renderer->SetDisplayPoint(0,0,0.5);
-    renderer->DisplayToWorld();
-    double coordinatesA[4];
-    renderer->GetWorldPoint(coordinatesA);
-
-    renderer->SetDisplayPoint(size[0],0,0.5);
-    renderer->DisplayToWorld();
-    double coordinatesB[4];
-    renderer->GetWorldPoint(coordinatesB);
-
-    renderer->SetDisplayPoint(size[0],size[1],0.5);
-    renderer->DisplayToWorld();
-    double coordinatesC[4];
-    renderer->GetWorldPoint(coordinatesC);
-
-    renderer->SetDisplayPoint(0,size[1],0.5);
-    renderer->DisplayToWorld();
-    double coordinatesD[4];
-    renderer->GetWorldPoint(coordinatesD);
-
-
-    glPushAttrib(GL_BLEND);
-    glEnable(GL_BLEND);
-    glPushAttrib(GL_LIGHTING);
+    glPushAttrib(GL_ENABLE_BIT);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_CULL_FACE);
     glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0.0, 1.0, 1.0, 0.0, 0.0, 1.0);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
 
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glBegin(GL_QUADS);
     glTexCoord2i(1,0);
-    glVertex4dv(coordinatesA);
+    glVertex2i(1,1);
+
     glTexCoord2i(0,0);
-    glVertex4dv(coordinatesB);
+    glVertex2i(0,1);
+
     glTexCoord2i(0,1);
-    glVertex4dv(coordinatesC);
+    glVertex2i(0,0);
+
     glTexCoord2i(1,1);
-    glVertex4dv(coordinatesD);
+    glVertex2i(1,0);
     glEnd();
-    glPopAttrib();
-    glPopAttrib();
     this->RendererInfoHandler->Unbind();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glPopAttrib();
 
     log->Delete();
     return;
