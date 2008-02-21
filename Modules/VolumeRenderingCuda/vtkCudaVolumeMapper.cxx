@@ -107,6 +107,7 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     log->StopTimer();
     //vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
 
+    // Enter 2D Mode
     glPushAttrib(GL_ENABLE_BIT);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
@@ -123,6 +124,7 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glPushMatrix();
     glLoadIdentity();
 
+    // Actual Rendering
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glBegin(GL_QUADS);
     glTexCoord2i(1,0);
@@ -139,6 +141,7 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glEnd();
     this->RendererInfoHandler->Unbind();
 
+    // Leave the 2D Mode again.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 

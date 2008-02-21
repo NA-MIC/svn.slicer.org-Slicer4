@@ -9,6 +9,8 @@
 #include "vtkPiecewiseFunction.h"
 #include "vtkImageData.h"
 
+#include "ntkColorTransferFunction.h"
+
 //CUDA
 #include "vector_types.h"
 
@@ -88,42 +90,22 @@ void vtkCudaVolumeInformationHandler::SetSteppingSize(float steppingSize)
  */
 void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *property)
 {
-    //FILE *fp;
-    //  unsigned char transferFunction[256*6];
-    //
-    //  fp=fopen("C:\\color.map","r");
-    //  fread(transferFunction, sizeof(unsigned char), 256*6, fp);
-    //  fclose(fp);
+    //ntkColorTransferFunction colorMap;
+    //colorMap.addKeyColorPoint(210, 255, 255, 255);
+    //colorMap.addKeyColorPoint(120, 255, 124, 140);
+    //colorMap.addKeyColorPoint(60, 100, 124, 240);
 
-    //  int i;
-    //  //for (i = 0; i < 256*6; i++)
-    //  //    cout << transferFunction[i] << " "; 
-    //  /*
-    //  for(i=0;i<256;i++){
-    //    colorTransferFunction[i*3]=i/255.0;
-    //    colorTransferFunction[i*3+1]=0.7;
-    //    colorTransferFunction[i*3+2]=(255-i)/255.0;
-    //    alphaTransferFunction[i]=0.1;
-    //  }
-    //  */
-    //  for(i = 0; i < 256; i++){
-    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3] = ((float)transferFunction[i*3])/255.0;
-    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+1] = ((float)transferFunction[i*3+1])/255.0;
-    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+2] = ((float)transferFunction[i*3+2])/255.0;
-    //    this->LocalAlphaTransferFunction.GetMemPointerAs<float>()[i] = ((float)transferFunction[i+256*3])/255.0;
+    //colorMap.addKeyAlphaPoint(60, 2);
+    //colorMap.addKeyAlphaPoint(120, 4);
+    //colorMap.addKeyAlphaPoint(210, 100);
 
-
-    //    cout << i << " " << this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3] << "x"  <<
-    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+1] << "x" << 
-    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+2] << std::endl;
-
-    //  }
-    //  this->VolumeInfo.FunctionSize = 12;
-
-    //for (i = 0; i < 256 ; i++)
-    //    cout << this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3] << "x"  <<
-    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+1] << "x" << 
-    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[i*3+2] << std::endl;
+    //for (unsigned int i = 0; i < 256; i++)
+    //{
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[3*i] = colorMap.getColorBuffer()[3*i] /256.0;
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[3*i+1] = colorMap.getColorBuffer()[3*i+1] /256.0;
+    //    this->LocalColorTransferFunction.GetMemPointerAs<float>()[3*i+2] = colorMap.getColorBuffer()[3*i+2]/256.0;
+    //    this->LocalAlphaTransferFunction.GetMemPointerAs<float>()[i] = colorMap.getAlphaBuffer()[i]/256.0;
+    //}
 
     double range[2];
     property->GetRGBTransferFunction()->GetRange(range);
@@ -139,9 +121,6 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     this->VolumeInfo.AlphaTransferFunction = this->CudaAlphaTransferFunction.GetMemPointerAs<float>();
     this->VolumeInfo.ColorTransferFunction = this->CudaColorTransferFunction.GetMemPointerAs<float>();
 }
-
-#include "vtkKWHistogram.h"
-#include "vtkPointData.h"
 
 /**
  * @brief Updates the volume information that is being sent to the Cuda Card.
@@ -163,7 +142,7 @@ void vtkCudaVolumeInformationHandler::Update()
 
         this->VolumeInfo.Spacing.x = (float)spacing[0];
         this->VolumeInfo.Spacing.y = (float)spacing[1];
-        this->VolumeInfo.Spacing.z = (float)spacing[2];
+        this->VolumeInfo.Spacing.z = 2.0; //(float)spacing[2];
 
         this->VolumeInfo.VolumeTransformation.x= 0.0f;
         this->VolumeInfo.VolumeTransformation.y = 0.0f;
