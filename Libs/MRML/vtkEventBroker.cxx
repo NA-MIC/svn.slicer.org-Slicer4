@@ -239,6 +239,7 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
   std::vector< vtkObservation *>::iterator removeIter;
   for(removeIter=observations.begin(); removeIter != observations.end(); removeIter++)  
     {
+    (*removeIter)->SetInEventQueue( 0 );
     this->DetachObservation( *removeIter );
     (*removeIter)->Delete();
     }
@@ -520,8 +521,10 @@ void vtkEventBroker::ProcessEvent ( vtkObservation *observation, vtkObject *call
 //----------------------------------------------------------------------------
 void vtkEventBroker::QueueObservation ( vtkObservation *observation, void *callData )
 {
+
+std::cerr << "queuing " << observation << " with " << callData << "\n";
   //
-  // add the current call data to the list so that each unique combination
+  // it it's not there, add the current call data to the list so that each unique combination
   // can be invoked.
   // If the event is not currently in the queue, add it and keep a flag.
   //
@@ -536,6 +539,10 @@ void vtkEventBroker::QueueObservation ( vtkObservation *observation, void *callD
   if ( dataIter == observation->GetCallDataList().end() )
     {
     observation->GetCallDataList().push_back( callData );
+    }
+  else
+    {
+    std::cerr << "observation already exists\n";
     }
 
   if ( !observation->GetInEventQueue() )
@@ -599,16 +606,26 @@ void vtkEventBroker::ProcessEventQueue ()
   //
   // for each observation on the event queue, 
   // invoke it with each of the stored callData pointers
+  // - register your pointer to the observation in case it 
+  //   gets deleted during handling of the event
+  // - if the observation is no longer in the queue, stop processing events
+  // - unregister before after dequeing in case the observation should go away
   //
   while ( this->GetNumberOfQueuedObservations() > 0 )
     {
     vtkObservation *observation = this->EventQueue.front();
+    observation->Register( this );
     std::vector< void *>::iterator iter; 
     for(iter=observation->GetCallDataList().begin(); iter != observation->GetCallDataList().end(); iter++)  
       {
       this->InvokeObservation( observation, *iter );
+      if ( !observation->GetInEventQueue() )
+        {
+        break;
+        }
       }
     this->DequeueObservation();
+    observation->Delete();
     }
 }
 
