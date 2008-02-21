@@ -37,6 +37,7 @@ void vtkCudaMemoryTexture::Initialize()
     this->BufferObjectID = 0;
     this->Height = this->Width = 0;
     this->RenderDestination = NULL;
+    this->CurrentRenderMode = RenderToMemory;
 
     if (vtkCudaMemoryTexture::GLBufferObjectsAvailiable == false)
     {
@@ -48,10 +49,6 @@ void vtkCudaMemoryTexture::Initialize()
             extensions->LoadExtension("GL_ARB_vertex_buffer_object");
             vtkCudaMemoryTexture::GLBufferObjectsAvailiable = true;
             this->CurrentRenderMode = RenderToTexture;
-        }
-        else
-        {
-            this->CurrentRenderMode = RenderToMemory;
         }
         extensions->Delete();
     }
