@@ -85,11 +85,6 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     //if (this->GetInput()->GetMTime() > this->GetMTime())
     //  this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetActualMemorySize() * 1024);
 
-    vtkRenderWindow *renWin= renderer->GetRenderWindow();
-    //Get current size of window
-    int *size=renWin->GetSize();
-    //int width = size[0], height = size[1];
-
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
     // Renderer Information Setter.
@@ -127,27 +122,18 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     // Actual Rendering
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glBegin(GL_QUADS);
-    glTexCoord2i(1,0);
-    glVertex2i(1,1);
-
-    glTexCoord2i(0,0);
-    glVertex2i(0,1);
-
-    glTexCoord2i(0,1);
-    glVertex2i(0,0);
-
-    glTexCoord2i(1,1);
-    glVertex2i(1,0);
+    glTexCoord2i(1,0);   glVertex2i(0,1);
+    glTexCoord2i(0,0);   glVertex2i(1,1);
+    glTexCoord2i(0,1);   glVertex2i(1,0);
+    glTexCoord2i(1,1);   glVertex2i(0,0);
     glEnd();
     this->RendererInfoHandler->Unbind();
 
     // Leave the 2D Mode again.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-
     glPopAttrib();
 
     log->Delete();
