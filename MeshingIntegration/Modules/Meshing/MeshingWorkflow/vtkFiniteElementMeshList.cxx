@@ -73,13 +73,15 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxUnstructuredGridActor* actor)
       // or attributes change
       dispNode->SetScene(this->savedMRMLScene);
       storeNode->SetScene(this->savedMRMLScene);
-      storeNode->SetFileName(newMRMLNode->GetFileName());
+      //storeNode->SetFileName(newMRMLNode->GetFileName());
       this->savedMRMLScene->AddNodeNoNotify(dispNode);
       this->savedMRMLScene->AddNodeNoNotify(storeNode);
+      this->savedMRMLScene->AddNode(newMRMLNode);
+      
       dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
       newMRMLNode->SetStorageNodeID(storeNode->GetID());      
-     this->savedMRMLScene->AddNode(newMRMLNode);
+
      
      cout << "copied data to MRML bbox node " << endl;
    } else 

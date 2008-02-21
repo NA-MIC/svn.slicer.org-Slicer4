@@ -61,6 +61,7 @@ int vtkFiniteElementBoundingBoxList::AppendItem(vtkMimxUnstructuredGridActor* ac
    {
      // allocate a new MRML node for this item and add it to the scene
      vtkMRMLFiniteElementBoundingBoxNode* newMRMLNode = vtkMRMLFiniteElementBoundingBoxNode::New();
+
      // copy the state variables to the MRML node
      newMRMLNode->SetFileName(actor->GetFileName());
      newMRMLNode->SetFilePath(actor->GetFilePath());
@@ -74,14 +75,15 @@ int vtkFiniteElementBoundingBoxList::AppendItem(vtkMimxUnstructuredGridActor* ac
      // now add the display, storage, and displayable nodes
      vtkMRMLFiniteElementBoundingBoxDisplayNode* dispNode = vtkMRMLFiniteElementBoundingBoxDisplayNode::New();
      vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
+
      dispNode->SetScene(this->savedMRMLScene);
      storeNode->SetScene(this->savedMRMLScene);
-     storeNode->SetFileName(newMRMLNode->GetFileName());
+     //storeNode->SetFileName(newMRMLNode->GetFileName());
      this->savedMRMLScene->AddNodeNoNotify(dispNode);
      this->savedMRMLScene->AddNodeNoNotify(storeNode);
      this->savedMRMLScene->AddNode(newMRMLNode);
      
-     // Establish linkage between the surface
+     // Establish linkage between the bounding box
      // node and its display and storage nodes, so the viewer will be updated when data
      // or attributes change
      dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
