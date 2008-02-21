@@ -34,7 +34,7 @@ namespace Cudapp
         this->MemPointer = malloc(count);
         this->Size = count;
         if (this->MemPointer == NULL)
-            ;
+            return NULL; // HACK
 
         return (void*)this->MemPointer;
     }

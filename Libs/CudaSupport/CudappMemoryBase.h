@@ -1,7 +1,6 @@
 #ifndef CUDAPPMEMORYBASE_H_
 #define CUDAPPMEMORYBASE_H_
 
-#include "CudappBase.h"
 #include "CudappSupportModule.h"
 #include <stddef.h>
 #include <ostream>

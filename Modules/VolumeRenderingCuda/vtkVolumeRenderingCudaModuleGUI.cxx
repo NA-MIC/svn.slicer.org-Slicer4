@@ -1,17 +1,16 @@
 #include "vtkVolumeRenderingCudaModuleGUI.h"
-
-#include "CudappMemory.h"
-
 #include "vtkVolumeRenderingCudaModuleLogic.h"
 #include "vtkSlicerApplication.h"
 
-
-#include "vtkVolume.h"
+#include "vtkImageGradientMagnitude.h"
+#include "vtkColorTransferFunction.h"
 #include "vtkVolumeProperty.h"
 #include "vtkImageData.h"
+#include "vtkVolume.h"
+#include "vtkRenderer.h"
 #include "vtkPointData.h"
 
-//Widgets
+// Widgets
 #include "vtkKWPushButton.h"
 #include "vtkKWTypeChooserBox.h"
 #include "vtkKWMatrixWidget.h"
@@ -22,18 +21,13 @@
 #include "vtkKWHistogramSet.h"
 #include "vtkKWHistogram.h"
 
-#include "vtkImageGradientMagnitude.h"
+// MRML
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkMRMLScalarVolumeNode.h"
 
-
+// vtkCuda
 #include "vtkCudaVolumeMapper.h"
 #include "vtkCudaMemoryTexture.h"
-// Transfer functions:
-#include "vtkColorTransferFunction.h"
-#include "vtkRenderer.h"
-
-
 extern "C" {
 #include "CUDA_renderAlgo.h"
 }
