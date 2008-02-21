@@ -47,8 +47,8 @@ if( this->latestTime < Object::GetMTime() )
   VectorType n2 ;
   for( int i = 0 ; i < 3 ; i++ )
     {
-    e1[ i ] = eigenVectors[ i ][ 2 ] ;//eigen values sorted in ascending order
-    e2[ i ] = eigenVectors[ i ][ 1 ] ;     
+    e1[ i ] = eigenVectors[ 2 ][ i ] ;//eigen values sorted in ascending order, Vectors in line
+    e2[ i ] = eigenVectors[ 1 ][ i ] ;     
     }
   n1 = this->m_TransformMatrix * e1 ;
   n1 /= n1.GetVnlVector().two_norm() ;
