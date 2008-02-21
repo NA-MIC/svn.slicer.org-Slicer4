@@ -47,14 +47,29 @@ __device__ T interpolate(float posX, float posY, float posZ,
 	  );
 }
 
+__device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cudaRendererInformation& renInfo, const cudaVolumeInformation& volInfo)
+{
+  float posHor= (index.x - renInfo.Resolution.y*0.5) / renInfo.Resolution.x*0.27;
+  float posVer= (index.y - renInfo.Resolution.y*0.5) / renInfo.Resolution.x*0.27;
+  
+  raymap[index.z*6]   = renInfo.CameraPos.x + volInfo.VolumeSize.x * volInfo.Spacing.x / 2.0f;
+  raymap[index.z*6+1] = renInfo.CameraPos.y + volInfo.VolumeSize.y * volInfo.Spacing.y / 2.0f;
+  raymap[index.z*6+2] = renInfo.CameraPos.z + volInfo.VolumeSize.z * volInfo.Spacing.z / 2.0f;
+  raymap[index.z*6+3] = (renInfo.CameraDirection.x + posHor * renInfo.HorizontalVec.x + posVer * renInfo.VerticalVec.x);
+  raymap[index.z*6+4] = (renInfo.CameraDirection.y + posHor * renInfo.HorizontalVec.y + posVer * renInfo.VerticalVec.y);
+  raymap[index.z*6+5] = (renInfo.CameraDirection.z + posHor * renInfo.HorizontalVec.z + posVer * renInfo.VerticalVec.z);
+}
+
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 							  const cudaRendererInformation renInfo,
 							  const cudaVolumeInformation volInfo
 							  )
 {
-  int xIndex = blockDim.x *blockIdx.x + threadIdx.x;
-  int yIndex = blockDim.y *blockIdx.y + threadIdx.y;
+  int3 index;
+  index.x = blockDim.x *blockIdx.x + threadIdx.x;
+  index.y = blockDim.y *blockIdx.y + threadIdx.y;
+  index.z = threadIdx.x + threadIdx.y * BLOCK_DIM2D; //index in grid
 
   __shared__ float2          s_minmaxTrace[BLOCK_DIM2D*BLOCK_DIM2D];      //starting and ending step of ray tracing 
   __shared__ float           s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*6];         //ray map: position and orientation of ray after translation and rotation transformation
@@ -66,143 +81,124 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   __shared__ float           s_remainingOpacity[BLOCK_DIM2D*BLOCK_DIM2D]; //integration value of alpha
   __shared__ float           s_zBuffer[BLOCK_DIM2D*BLOCK_DIM2D];          // z buffer
 
-  float test;
 
-  int tempacc = threadIdx.x + threadIdx.y * BLOCK_DIM2D; //index in grid
 
   __syncthreads();	
 
   //copying variables into shared memory
-  if(tempacc < 3){ 
+  if(index.z < 3){ 
     s_dsize.x = renInfo.Resolution.x;
     s_dsize.y = renInfo.Resolution.y;
     s_vsize   = volInfo.Spacing;
     s_size.x  = volInfo.VolumeSize.x;
     s_size.y  = volInfo.VolumeSize.y;
     s_size.z  = volInfo.VolumeSize.z;
-  }else if(tempacc < 9){ 
-    s_minmax[xIndex%6] = volInfo.MinMaxValue[xIndex%6];
+  }else if(index.z < 9){ 
+    s_minmax[index.x%6] = volInfo.MinMaxValue[index.x%6];
   }
 
   __syncthreads();
 
+  float test;
   T typeMin = (T)volInfo.FunctionRange[0];
   T typeMax = (T)volInfo.FunctionRange[1];
   GetTypeRange<T>(typeMin, typeMax);  
 
-  int outindex = xIndex + yIndex * s_dsize.x; // index of result image
+  int outindex = index.x + index.y * s_dsize.x; // index of result image
 
   //initialization of variables in shared memory
 
-  s_remainingOpacity[tempacc] = 1.0;
-  s_outputVal[tempacc].x = 0;
-  s_outputVal[tempacc].y = 0;
-  s_outputVal[tempacc].z = 0;
-  if(xIndex < s_dsize.x && yIndex < s_dsize.y){
-    s_zBuffer[tempacc] = 10000;// (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
+  s_remainingOpacity[index.z] = 1.0;
+  s_outputVal[index.z].x = 0;
+  s_outputVal[index.z].y = 0;
+  s_outputVal[index.z].z = 0;
+  if(index.x < s_dsize.x && index.y < s_dsize.y){
+    s_zBuffer[index.z] = 10000;// (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
   } else /* outside of screen */ {
-    s_zBuffer[tempacc]=0;
+    s_zBuffer[index.z]=0;
   }
   __syncthreads();
 
   // lens map for perspective projection
-
-  /*
-    camera model start here
-  */
-  
-  s_rayMap[tempacc*6]   = renInfo.CameraPos.x + s_size.x * s_vsize.x / 2.0f;
-  s_rayMap[tempacc*6+1] = renInfo.CameraPos.y + s_size.y * s_vsize.y / 2.0f;
-  s_rayMap[tempacc*6+2] = renInfo.CameraPos.z + s_size.z * s_vsize.z / 2.0f;
-  
-  float posHor= (xIndex - s_dsize.x*0.5) / s_dsize.x*0.27;
-  float posVer= (yIndex - s_dsize.y*0.5) / s_dsize.x*0.27;
-  
-  s_rayMap[tempacc*6+3] = (renInfo.CameraDirection.x + posHor * renInfo.HorizontalVec.x + posVer * renInfo.VerticalVec.x);
-  s_rayMap[tempacc*6+4] = (renInfo.CameraDirection.y + posHor * renInfo.HorizontalVec.y + posVer * renInfo.VerticalVec.y);
-  s_rayMap[tempacc*6+5] = (renInfo.CameraDirection.z + posHor * renInfo.HorizontalVec.z + posVer * renInfo.VerticalVec.z);
-
-  /*
-    camera model end here
-  */
+  CUDAkernel_SetRayMap(index, s_rayMap, renInfo, volInfo);
  
   //initialize variables for calculating starting and ending point of ray tracing
 
-  s_minmaxTrace[tempacc].x = -100000.0f;
-  s_minmaxTrace[tempacc].y = 100000.0f;
+  s_minmaxTrace[index.z].x = -100000.0f;
+  s_minmaxTrace[index.z].y = 100000.0f;
 
   __syncthreads();
   
   //normalize ray vector
 
-  float getmax = fabs(s_rayMap[tempacc*6+3] / s_vsize.x);
-  if(fabs(s_rayMap[tempacc*6+4] / s_vsize.y) > getmax) 
-     getmax = fabs(s_rayMap[tempacc*6+4]/s_vsize.y);
-  if(fabs(s_rayMap[tempacc*6+5] / s_vsize.z) > getmax) 
-     getmax = fabs(s_rayMap[tempacc*6+5]/s_vsize.z);
+  float getmax = fabs(s_rayMap[index.z*6+3] / s_vsize.x);
+  if(fabs(s_rayMap[index.z*6+4] / s_vsize.y) > getmax) 
+     getmax = fabs(s_rayMap[index.z*6+4]/s_vsize.y);
+  if(fabs(s_rayMap[index.z*6+5] / s_vsize.z) > getmax) 
+     getmax = fabs(s_rayMap[index.z*6+5]/s_vsize.z);
 
   if(getmax!=0){
     float temp= 1.0f/getmax;
-    s_rayMap[tempacc*6+3] *= temp;
-    s_rayMap[tempacc*6+4] *= temp;
-    s_rayMap[tempacc*6+5] *= temp;
+    s_rayMap[index.z*6+3] *= temp;
+    s_rayMap[index.z*6+4] *= temp;
+    s_rayMap[index.z*6+5] *= temp;
   }
 
-  float stepSize = sqrtf(s_rayMap[tempacc*6+3] * s_rayMap[tempacc*6+3] + 
-                         s_rayMap[tempacc*6+4] * s_rayMap[tempacc*6+4] + 
-                         s_rayMap[tempacc*6+5] * s_rayMap[tempacc*6+5]);
+  float stepSize = sqrtf(s_rayMap[index.z*6+3] * s_rayMap[index.z*6+3] + 
+                         s_rayMap[index.z*6+4] * s_rayMap[index.z*6+4] + 
+                         s_rayMap[index.z*6+5] * s_rayMap[index.z*6+5]);
   __syncthreads();
 
   //calculating starting and ending point of ray tracing
- if(s_rayMap[tempacc*6+3] > 1.0e-3){
-    s_minmaxTrace[tempacc].y = ( ((s_minmax[1]-2)*s_vsize.x - s_rayMap[tempacc*6]) / s_rayMap[tempacc*6+3] );
-    s_minmaxTrace[tempacc].x = ( ((s_minmax[0]+2)*s_vsize.x - s_rayMap[tempacc*6]) / s_rayMap[tempacc*6+3] );
+ if(s_rayMap[index.z*6+3] > 1.0e-3){
+    s_minmaxTrace[index.z].y = ( ((s_minmax[1]-2)*s_vsize.x - s_rayMap[index.z*6]) / s_rayMap[index.z*6+3] );
+    s_minmaxTrace[index.z].x = ( ((s_minmax[0]+2)*s_vsize.x - s_rayMap[index.z*6]) / s_rayMap[index.z*6+3] );
   }
-  else if(s_rayMap[tempacc*6+3] < -1.0e-3){
-    s_minmaxTrace[tempacc].x = ( ((s_minmax[1]-2)*s_vsize.x - s_rayMap[tempacc*6]) / s_rayMap[tempacc*6+3] );
-    s_minmaxTrace[tempacc].y = ( ((s_minmax[0]+2)*s_vsize.x - s_rayMap[tempacc*6]) / s_rayMap[tempacc*6+3] );
+  else if(s_rayMap[index.z*6+3] < -1.0e-3){
+    s_minmaxTrace[index.z].x = ( ((s_minmax[1]-2)*s_vsize.x - s_rayMap[index.z*6]) / s_rayMap[index.z*6+3] );
+    s_minmaxTrace[index.z].y = ( ((s_minmax[0]+2)*s_vsize.x - s_rayMap[index.z*6]) / s_rayMap[index.z*6+3] );
   }
   
-  if(s_rayMap[tempacc*6+4] > 1.0e-3){
-    test = ( ((s_minmax[3]-2)*s_vsize.y - s_rayMap[tempacc*6+1]) / s_rayMap[tempacc*6+4] );
-    if( test < s_minmaxTrace[tempacc].y){
-      s_minmaxTrace[tempacc].y = test;
+  if(s_rayMap[index.z*6+4] > 1.0e-3){
+    test = ( ((s_minmax[3]-2)*s_vsize.y - s_rayMap[index.z*6+1]) / s_rayMap[index.z*6+4] );
+    if( test < s_minmaxTrace[index.z].y){
+      s_minmaxTrace[index.z].y = test;
     }
-    test = ( ((s_minmax[2]+2)*s_vsize.y - s_rayMap[tempacc*6+1]) / s_rayMap[tempacc*6+4] );
-    if( test > s_minmaxTrace[tempacc].x){
-      s_minmaxTrace[tempacc].x = test;
+    test = ( ((s_minmax[2]+2)*s_vsize.y - s_rayMap[index.z*6+1]) / s_rayMap[index.z*6+4] );
+    if( test > s_minmaxTrace[index.z].x){
+      s_minmaxTrace[index.z].x = test;
     }
   }
-  else if(s_rayMap[tempacc*6+4] < -1.0e-3){
-    test = ( ((s_minmax[3]-2)*s_vsize.y - s_rayMap[tempacc*6+1]) / s_rayMap[tempacc*6+4] );
-    if( test > s_minmaxTrace[tempacc].x){
-      s_minmaxTrace[tempacc].x = test;
+  else if(s_rayMap[index.z*6+4] < -1.0e-3){
+    test = ( ((s_minmax[3]-2)*s_vsize.y - s_rayMap[index.z*6+1]) / s_rayMap[index.z*6+4] );
+    if( test > s_minmaxTrace[index.z].x){
+      s_minmaxTrace[index.z].x = test;
     }
-    test = ( ((s_minmax[2]+2)*s_vsize.y - s_rayMap[tempacc*6+1]) / s_rayMap[tempacc*6+4] );
-    if( test < s_minmaxTrace[tempacc].y){
-      s_minmaxTrace[tempacc].y = test;
+    test = ( ((s_minmax[2]+2)*s_vsize.y - s_rayMap[index.z*6+1]) / s_rayMap[index.z*6+4] );
+    if( test < s_minmaxTrace[index.z].y){
+      s_minmaxTrace[index.z].y = test;
     }
   }
   
 
-  if(s_rayMap[tempacc*6+5] > 1.0e-3){
-    test = ( ((s_minmax[5]-2)*s_vsize.z - s_rayMap[tempacc*6+2]) / s_rayMap[tempacc*6+5] );
-    if( test < s_minmaxTrace[tempacc].y){
-      s_minmaxTrace[tempacc].y = test;
+  if(s_rayMap[index.z*6+5] > 1.0e-3){
+    test = ( ((s_minmax[5]-2)*s_vsize.z - s_rayMap[index.z*6+2]) / s_rayMap[index.z*6+5] );
+    if( test < s_minmaxTrace[index.z].y){
+      s_minmaxTrace[index.z].y = test;
     }
-    test = ( ((s_minmax[4]+2)*s_vsize.z - s_rayMap[tempacc*6+2]) / s_rayMap[tempacc*6+5] );
-    if( test > s_minmaxTrace[tempacc].x){
-      s_minmaxTrace[tempacc].x = test;
+    test = ( ((s_minmax[4]+2)*s_vsize.z - s_rayMap[index.z*6+2]) / s_rayMap[index.z*6+5] );
+    if( test > s_minmaxTrace[index.z].x){
+      s_minmaxTrace[index.z].x = test;
     }
   }
-  else if(s_rayMap[tempacc*6+5] < -1.0e-3){
-    test = ( ((s_minmax[5]-2)*s_vsize.z - s_rayMap[tempacc*6+2]) / s_rayMap[tempacc*6+5] );
-    if( test > s_minmaxTrace[tempacc].x){
-      s_minmaxTrace[tempacc].x = test;
+  else if(s_rayMap[index.z*6+5] < -1.0e-3){
+    test = ( ((s_minmax[5]-2)*s_vsize.z - s_rayMap[index.z*6+2]) / s_rayMap[index.z*6+5] );
+    if( test > s_minmaxTrace[index.z].x){
+      s_minmaxTrace[index.z].x = test;
     }
-    test = ( ((s_minmax[4]+2)*s_vsize.z - s_rayMap[tempacc*6+2]) / s_rayMap[tempacc*6+5] );
-    if( test < s_minmaxTrace[tempacc].y){
-      s_minmaxTrace[tempacc].y = test;
+    test = ( ((s_minmax[4]+2)*s_vsize.z - s_rayMap[index.z*6+2]) / s_rayMap[index.z*6+5] );
+    if( test < s_minmaxTrace[index.z].y){
+      s_minmaxTrace[index.z].y = test;
     }
   }
   __syncthreads();
@@ -216,17 +212,17 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   T tempValue;
   int tempIndex;
   float alpha; //alpha value of current voxel
-  float initialZBuffer=s_zBuffer[tempacc]; //initial zBuffer from input
+  float initialZBuffer=s_zBuffer[index.z]; //initial zBuffer from input
 
   //perform ray tracing until integration of alpha value reach threshold 
   
-  while((s_minmaxTrace[tempacc].y - s_minmaxTrace[tempacc].x) >= pos) {
+  while((s_minmaxTrace[index.z].y - s_minmaxTrace[index.z].x) >= pos) {
     
     //calculate current position in ray tracing
 
-    tempx = ( s_rayMap[tempacc*6+0] + ((int)s_minmaxTrace[tempacc].x + pos) * s_rayMap[tempacc*6+3]);
-    tempy = ( s_rayMap[tempacc*6+1] + ((int)s_minmaxTrace[tempacc].x + pos) * s_rayMap[tempacc*6+4]);
-    tempz = ( s_rayMap[tempacc*6+2] + ((int)s_minmaxTrace[tempacc].x + pos) * s_rayMap[tempacc*6+5]);
+    tempx = ( s_rayMap[index.z*6+0] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+3]);
+    tempy = ( s_rayMap[index.z*6+1] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+4]);
+    tempz = ( s_rayMap[index.z*6+2] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+5]);
     
     tempx /= s_vsize.x;
     tempy /= s_vsize.y;
@@ -236,10 +232,10 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
     if(tempx >= s_minmax[0] && tempx < s_minmax[1] &&
        tempy >= s_minmax[2] && tempy < s_minmax[3] &&
        tempz >= s_minmax[4] && tempz < s_minmax[5] && 
-       pos + s_minmaxTrace[tempacc].x >= -500 /*renInfo.ClippingRange[0]*/)
+       pos + s_minmaxTrace[index.z].x >= -500 /*renInfo.ClippingRange[0]*/)
        {
       //check whether current position is in front of z buffer wall
-      if((pos + s_minmaxTrace[tempacc].x)*stepSize < initialZBuffer)
+      if((pos + s_minmaxTrace[index.z].x)*stepSize < initialZBuffer)
       { 
 
 	tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempz)*s_size.x*s_size.y + 
@@ -277,30 +273,30 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	  tempIndex=__float2int_rn((volInfo.FunctionSize-1)*(float)(tempValue-typeMin)/(float)(typeMax-typeMin));
 	  alpha=volInfo.AlphaTransferFunction[tempIndex];
 	  
-	  if(s_zBuffer[tempacc] > (pos + s_minmaxTrace[tempacc].x) * stepSize)
+	  if(s_zBuffer[index.z] > (pos + s_minmaxTrace[index.z].x) * stepSize)
 	  {
-	    s_zBuffer[tempacc] = (pos + s_minmaxTrace[tempacc].x) * stepSize;
+	    s_zBuffer[index.z] = (pos + s_minmaxTrace[index.z].x) * stepSize;
 	  }
-	  if(s_remainingOpacity[tempacc] > 0.02){ // check if remaining opacity has reached threshold(0.02)
-	    s_outputVal[tempacc].x += s_remainingOpacity[tempacc] * alpha * volInfo.ColorTransferFunction[tempIndex*3];
-	    s_outputVal[tempacc].y += s_remainingOpacity[tempacc] * alpha * volInfo.ColorTransferFunction[tempIndex*3+1];
-	    s_outputVal[tempacc].z += s_remainingOpacity[tempacc] * alpha * volInfo.ColorTransferFunction[tempIndex*3+2];
-	    s_remainingOpacity[tempacc] *= (1.0 - alpha);
+	  if(s_remainingOpacity[index.z] > 0.02){ // check if remaining opacity has reached threshold(0.02)
+	    s_outputVal[index.z].x += s_remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3];
+	    s_outputVal[index.z].y += s_remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+1];
+	    s_outputVal[index.z].z += s_remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+2];
+	    s_remainingOpacity[index.z] *= (1.0 - alpha);
 	  }else{
-	    pos = s_minmaxTrace[tempacc].y - s_minmaxTrace[tempacc].x;
+	    pos = s_minmaxTrace[index.z].y - s_minmaxTrace[index.z].x;
 	  }
 	}
 	
 
       } else { // current position is behind z buffer wall
-	if(xIndex < s_dsize.x && yIndex < s_dsize.y){
+	if(index.x < s_dsize.x && index.y < s_dsize.y){
 	  
-	  s_outputVal[tempacc].x += s_remainingOpacity[tempacc] * renInfo.OutputImage[outindex].x;
-	  s_outputVal[tempacc].y += s_remainingOpacity[tempacc] * renInfo.OutputImage[outindex].y;
-	  s_outputVal[tempacc].z += s_remainingOpacity[tempacc] * renInfo.OutputImage[outindex].z;
+	  s_outputVal[index.z].x += s_remainingOpacity[index.z] * renInfo.OutputImage[outindex].x;
+	  s_outputVal[index.z].y += s_remainingOpacity[index.z] * renInfo.OutputImage[outindex].y;
+	  s_outputVal[index.z].z += s_remainingOpacity[index.z] * renInfo.OutputImage[outindex].z;
 	  
 	}
-	  pos = s_minmaxTrace[tempacc].y - s_minmaxTrace[tempacc].x;
+	  pos = s_minmaxTrace[index.z].y - s_minmaxTrace[index.z].x;
       }
     }
     pos += volInfo.SteppingSize;
@@ -308,12 +304,12 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   //write to output
 
-  if(xIndex < s_dsize.x && yIndex < s_dsize.y){
-    renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[tempacc].x * 255.0, 
-					                          s_outputVal[tempacc].y * 255.0, 
-					                          s_outputVal[tempacc].z * 255.0, 
-					                         (1 - s_remainingOpacity[tempacc])*255.0);
-    renInfo.ZBuffer[outindex]=s_zBuffer[tempacc];
+  if(index.x < s_dsize.x && index.y < s_dsize.y){
+    renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[index.z].x * 255.0, 
+					                          s_outputVal[index.z].y * 255.0, 
+					                          s_outputVal[index.z].z * 255.0, 
+					                         (1 - s_remainingOpacity[index.z])*255.0);
+    renInfo.ZBuffer[outindex]=s_zBuffer[index.z];
   }
 }
 
