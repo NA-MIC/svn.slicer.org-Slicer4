@@ -19,7 +19,7 @@ vtkStandardNewMacro(vtkCudaVolumeInformationHandler);
 
 vtkCudaVolumeInformationHandler::vtkCudaVolumeInformationHandler()
 {
-    this->SetSteppingSize(1.0);
+    this->SetSampleDistance(1.0);
     this->VolumeInfo.FunctionSize = 0;
     this->ResizeTransferFunction(256);
 
@@ -74,13 +74,15 @@ void vtkCudaVolumeInformationHandler::SetThreshold(unsigned int min, unsigned in
     this->Modified();
 }
 
-void vtkCudaVolumeInformationHandler::SetSteppingSize(float steppingSize)
+void vtkCudaVolumeInformationHandler::SetSampleDistance(float sampleDistance)
 { 
-    if (steppingSize <= 0.0f)
-        steppingSize = .1f;
+    if (sampleDistance <= 0.0f)
+        sampleDistance = .1f;
     else
-        this->VolumeInfo.SteppingSize = steppingSize; 
+        this->VolumeInfo.SampleDistance = sampleDistance; 
 }
+
+#include "vtkPointData.h"
 
 /**
  * @brief Updates the transfer functions on local and global memory.
@@ -106,13 +108,19 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     //}
 
     double range[2];
-    property->GetRGBTransferFunction()->GetRange(range);
+//    property->GetRGBTransferFunction()->GetRange(range);
+    this->InputData->GetPointData()->GetScalars()->GetRange(range);
     property->GetRGBTransferFunction()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalColorTransferFunction.GetMemPointerAs<float>());
+
+
+    property->GetScalarOpacity()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
+
 
     this->VolumeInfo.FunctionRange[0] = range[0];
     this->VolumeInfo.FunctionRange[1] = range[1];
+    unsigned char test = this->VolumeInfo.FunctionRange[1];
+    unsigned char test2 = UCHAR_MAX;
 
-    property->GetScalarOpacity()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
 
     this->LocalColorTransferFunction.CopyTo(&this->CudaColorTransferFunction);
     this->LocalAlphaTransferFunction.CopyTo(&this->CudaAlphaTransferFunction);

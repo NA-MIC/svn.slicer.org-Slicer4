@@ -71,9 +71,9 @@ void vtkCudaVolumeMapper::SetThreshold(unsigned int min, unsigned int max)
     this->VolumeInfoHandler->SetThreshold(min, max);
 }
 
-void vtkCudaVolumeMapper::SetSteppingSize(float steppingSize)
+void vtkCudaVolumeMapper::SetSampleDistance(float sampleDistance)
 {
-    this->VolumeInfoHandler->SetSteppingSize(steppingSize);
+    this->VolumeInfoHandler->SetSampleDistance(sampleDistance);
 }
 
 

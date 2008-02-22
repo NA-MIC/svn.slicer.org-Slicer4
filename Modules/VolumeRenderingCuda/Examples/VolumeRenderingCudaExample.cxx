@@ -139,7 +139,7 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
     VolumeMapper->SetThreshold(ThresholdRange->GetRange());
-    VolumeMapper->SetSteppingSize(SteppingSizeScale->GetValue());
+    VolumeMapper->SetSampleDistance(SteppingSizeScale->GetValue());
     renderWidget->Render();
 }
 
