@@ -21,7 +21,7 @@ public:
 
     //BTX
     vtkGetMacro(Volume, vtkVolume*);
-    vtkSetMacro(Volume, vtkVolume*);
+    void SetVolume(vtkVolume* Volume);
     void SetInputData(vtkImageData* inputData);
     const cudaVolumeInformation& GetVolumeInfo() const { return VolumeInfo; }
     //ETX
@@ -37,6 +37,8 @@ protected:
     ~vtkCudaVolumeInformationHandler();
 
     void UpdateVolumeProperties(vtkVolumeProperty *property);
+    void UpdateVolume();
+    void UpdateImageData();
 
     virtual void PrintSelf(ostream& os, vtkIndent indent);
 
