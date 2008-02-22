@@ -12,7 +12,7 @@ typedef struct __align__(16) {
     // The size of the volume
     int3            VolumeSize;
     float3          VolumeTransformation;
-    //float          Transform[16]; //TOO MUCH [16]
+    float           Transform[4][4];
 
 
     //! The Color Transfer Function with a size of FunctionSize * 3 (rgb)
