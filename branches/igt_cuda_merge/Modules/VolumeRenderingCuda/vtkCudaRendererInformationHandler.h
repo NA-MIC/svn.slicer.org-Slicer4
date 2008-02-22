@@ -5,7 +5,7 @@
 #include "vtkVolumeRenderingCudaModule.h"
 
 class vtkRenderer;
-
+class vtkMatrix4x4;
 class vtkCudaMemoryTexture;
 //BTX
 //class cudaRendererInformation;
@@ -31,6 +31,7 @@ public:
     //HACK BEGIN
     //BTX
     void SetZBuffer(Cudapp::DeviceMemory* ZBuffer);
+    void SetMatrix(vtkMatrix4x4* matrix);
     //ETX
     //HACK END
 
@@ -47,6 +48,7 @@ private:
 
 private:
     vtkRenderer*             Renderer;
+    vtkMatrix4x4*            mat;
     //BTX
     cudaRendererInformation  RendererInfo;
 

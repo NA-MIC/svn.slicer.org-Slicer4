@@ -5,6 +5,7 @@
 #include "vtkVolumeRenderingCudaModule.h"
 
 class vtkVolumeProperty;
+class vtkMatrix4x4;
 
 class vtkCudaRendererInformationHandler;
 class vtkCudaVolumeInformationHandler;
@@ -23,6 +24,8 @@ public:
     void SetThreshold(unsigned int min, unsigned int max);
     void SetThreshold(double* range) { SetThreshold((unsigned int)range[0], (unsigned int)range[1]); }
     void SetSampleDistance(float sampleDistance);
+
+    void SetMatrix(vtkMatrix4x4* mat);
 
    //BTX
    void SetRenderMode(int mode);
