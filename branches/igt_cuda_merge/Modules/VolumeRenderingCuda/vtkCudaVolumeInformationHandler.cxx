@@ -1,5 +1,4 @@
 #include "vtkCudaVolumeInformationHandler.h"
-
 #include "vtkObjectFactory.h"
 
 //Volume and Property
@@ -8,11 +7,10 @@
 #include "vtkColorTransferFunction.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkImageData.h"
+#include "vtkPointData.h"
 
-#include "ntkColorTransferFunction.h"
-
-//CUDA
-#include "vector_types.h"
+//Nicholas
+//#include "ntkColorTransferFunction.h"
 
 vtkCxxRevisionMacro(vtkCudaVolumeInformationHandler, "$Revision: 1.0 $");
 vtkStandardNewMacro(vtkCudaVolumeInformationHandler);
@@ -59,6 +57,13 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData)
     else if (inputData != this->InputData)
     {
         this->CudaInputBuffer.AllocateBytes(inputData->GetActualMemorySize() * 1024);
+
+            double range[2];
+        //    property->GetRGBTransferFunction()->GetRange(range);
+        inputData->GetPointData()->GetScalars()->GetRange(range);
+    this->VolumeInfo.FunctionRange[0] = range[0];
+    this->VolumeInfo.FunctionRange[1] = range[1];
+
     }
     this->InputData = inputData;
     this->Modified();
@@ -81,8 +86,6 @@ void vtkCudaVolumeInformationHandler::SetSampleDistance(float sampleDistance)
     else
         this->VolumeInfo.SampleDistance = sampleDistance; 
 }
-
-#include "vtkPointData.h"
 
 /**
  * @brief Updates the transfer functions on local and global memory.
@@ -107,17 +110,14 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     //    this->LocalAlphaTransferFunction.GetMemPointerAs<float>()[i] = colorMap.getAlphaBuffer()[i]/256.0;
     //}
 
-    double range[2];
-//    property->GetRGBTransferFunction()->GetRange(range);
-    this->InputData->GetPointData()->GetScalars()->GetRange(range);
-    property->GetRGBTransferFunction()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalColorTransferFunction.GetMemPointerAs<float>());
+    property->GetRGBTransferFunction()->GetTable(this->VolumeInfo.FunctionRange[0], this->VolumeInfo.FunctionRange[1],
+                this->VolumeInfo.FunctionSize, this->LocalColorTransferFunction.GetMemPointerAs<float>());
 
 
-    property->GetScalarOpacity()->GetTable(range[0], range[1], this->VolumeInfo.FunctionSize, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
+    property->GetScalarOpacity()->GetTable(this->VolumeInfo.FunctionRange[0], this->VolumeInfo.FunctionRange[1], 
+                this->VolumeInfo.FunctionSize, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
 
 
-    this->VolumeInfo.FunctionRange[0] = range[0];
-    this->VolumeInfo.FunctionRange[1] = range[1];
     unsigned char test = this->VolumeInfo.FunctionRange[1];
     unsigned char test2 = UCHAR_MAX;
 
