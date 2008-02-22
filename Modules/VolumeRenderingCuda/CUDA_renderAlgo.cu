@@ -131,7 +131,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 
   __shared__ float2          s_minmaxTrace[BLOCK_DIM2D*BLOCK_DIM2D];      //starting and ending step of ray tracing 
   __shared__ float           s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*6];         //ray map: position and orientation of ray after translation and rotation transformation
-  __shared__ float3          s_size;                                      //3D data size
   __shared__ float           s_minmax[6];                                 //region of interest of 3D data (minX, maxX, minY, maxY, minZ, maxZ)
   __shared__ float3          s_outputVal[BLOCK_DIM2D*BLOCK_DIM2D];        //output value
   __shared__ float           s_remainingOpacity[BLOCK_DIM2D*BLOCK_DIM2D]; //integration value of alpha
@@ -143,9 +142,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 
   //copying variables into shared memory
   if(index.z < 3){ 
-    s_size.x  = volInfo.VolumeSize.x;
-    s_size.y  = volInfo.VolumeSize.y;
-    s_size.z  = volInfo.VolumeSize.z;
   }else if(index.z < 9){ 
     s_minmax[index.x%6] = volInfo.MinMaxValue[index.x%6];
   }
@@ -232,8 +228,8 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
       if((pos + s_minmaxTrace[index.z].x)*stepSize < initialZBuffer)
       { 
 
-	tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*s_size.x*s_size.y + 
-                                             __float2int_rn(tempPos.y)*s_size.x +
+	tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+                                             __float2int_rn(tempPos.y)*volInfo.VolumeSize.x +
                                              __float2int_rn(tempPos.x))];
 	/*interpolation start here*/
 	float posX = tempPos.x-__float2int_rd(tempPos.x);
@@ -242,24 +238,24 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 
 	/*
 	tempValue=interpolate((float)0,(float)0,(float)0,
-			      ((T*)volInfo.SourceData)[(int)((int)(tempPos.z)*s_size.x*s_size.y + 
-			                                     (int)(tempPos.y)*s_size.x + 
+			      ((T*)volInfo.SourceData)[(int)((int)(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+			                                     (int)(tempPos.y)*volInfo.VolumeSize.x + 
 			                                     (int)(tempPos.x))],
 			                                     (T)0,(T)0,(T)0,(T)0,(T)0,(T)0,(T)0);
 	*/      
-	int base = __float2int_rd((tempPos.z))*s_size.x*s_size.y + 
-	           __float2int_rd((tempPos.y))*s_size.x + 
+	int base = __float2int_rd((tempPos.z))*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+	           __float2int_rd((tempPos.y))*volInfo.VolumeSize.x + 
 	           __float2int_rd((tempPos.x));
 	
 	tempValue=interpolate(posX, posY,0.0,
 			      ((T*)volInfo.SourceData)[base],
-			      ((T*)volInfo.SourceData)[(int)(base + s_size.x*s_size.y)],
-			      ((T*)volInfo.SourceData)[(int)(base + s_size.x)],
-			      ((T*)volInfo.SourceData)[(int)(base + s_size.x*s_size.y + s_size.x)],
+			      ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y)],
+			      ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x)],
+			      ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x)],
 			      ((T*)volInfo.SourceData)[(int)(base + 1)],
-			      ((T*)volInfo.SourceData)[(int)(base + s_size.x*s_size.y + 1)],
-			      ((T*)volInfo.SourceData)[(int)(base + s_size.x + 1)],
-			      ((T*)volInfo.SourceData)[(int)(base + s_size.x*s_size.y + s_size.x + 1)]);
+			      ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + 1)],
+			      ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x + 1)],
+			      ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x + 1)]);
 	/*interpolation end here*/
 
 	if( tempValue >=(T)volInfo.MinThreshold && tempValue <= (T)volInfo.MaxThreshold){ 
