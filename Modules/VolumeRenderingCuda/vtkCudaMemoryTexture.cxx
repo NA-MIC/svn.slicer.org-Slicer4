@@ -144,28 +144,6 @@ void vtkCudaMemoryTexture::UnbindBuffer()
     {
         this->CudaOutputData.CopyTo(&this->LocalOutputData);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->Width, this->Height, GL_RGBA, GL_UNSIGNED_BYTE, this->LocalOutputData.GetMemPointer());
-
-        // This will display the texture
-        //static vtkImageData* data = NULL; 
-        //static vtkImageViewer* viewer = NULL;
-        //if (data == NULL)
-        //{
-        //    data = vtkImageData::New();
-        //    viewer = vtkImageViewer::New();
-        //    viewer->SetInput(data);
-        //}
-
-        //data->SetNumberOfScalarComponents(4);
-        //data->SetDimensions(this->Width, this->Height, 1);
-        //data->SetExtent(0, this->Width - 1, 0, this->Height - 1, 0, 0);
-        //data->SetScalarTypeToUnsignedChar();
-        //data->AllocateScalars();
-        //this->LocalOutputData.CopyTo(data->GetScalarPointer(), Width* Height * 4);
-        //data->Update();
-        //viewer->SetInput(data);
-        //viewer->SetColorLevel(138.5);
-        //viewer->SetColorWindow(233);
-        //viewer->Render();
     }
     this->RenderDestination = NULL;
 }
