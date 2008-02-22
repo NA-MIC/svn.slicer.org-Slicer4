@@ -118,11 +118,11 @@ __device__ void CUDAkernel_CalculateRayEnds(const int3& index, float* minmax/*[6
 }
 
 
+__constant__ cudaVolumeInformation   volInfo;
+__constant__ cudaRendererInformation renInfo;
+
 template <typename T>
-__global__ void CUDAkernel_renderAlgo_doIntegrationRender(
-							  const cudaRendererInformation renInfo,
-							  const cudaVolumeInformation volInfo
-							  )
+__global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 {
   int3 index;
   index.x = blockDim.x *blockIdx.x + threadIdx.x;
@@ -151,8 +151,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
   }
 
   __syncthreads();
-
-
   int outindex = index.x + index.y * renInfo.Resolution.x; // index of result image
 
   //initialization of variables in shared memory
@@ -321,14 +319,15 @@ void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
   dim3 grid(blockX, blockY, 1);
   dim3 threads(BLOCK_DIM2D, BLOCK_DIM2D, 1);
 
+  CUDA_SAFE_CALL(cudaMemcpyToSymbol(volInfo, &volumeInfo, sizeof(cudaVolumeInformation)));
+  CUDA_SAFE_CALL(cudaMemcpyToSymbol(renInfo, &rendererInfo, sizeof(cudaRendererInformation)));
+
   CUT_DEVICE_INIT();
   
 // The CUDA Kernel Function Definition, so we do not have to write it down below
 #define CUDA_KERNEL_CALL(ID, TYPE)   \
 	if (volumeInfo.InputDataType == ID) \
-	 CUDAkernel_renderAlgo_doIntegrationRender<TYPE> <<< grid, threads >>>( \
-	 rendererInfo, \
-	 volumeInfo)
+	 CUDAkernel_renderAlgo_doIntegrationRender<TYPE> <<< grid, threads >>>()
 
 // Add all the other types.
   CUDA_KERNEL_CALL(VTK_UNSIGNED_CHAR, unsigned char);
