@@ -11,7 +11,7 @@ class vtkCudaMemoryTexture;
 //class cudaRendererInformation;
 #include "cudaRendererInformation.h"
 #include "CudappDeviceMemory.h"
-#include "CudappLocalMemory.h"
+#include "CudappHostMemory.h"
 //ETX
 class VTK_VOLUMERENDERINGCUDAMODULE_EXPORT vtkCudaRendererInformationHandler : public vtkObject
 {
@@ -53,7 +53,7 @@ private:
     cudaRendererInformation  RendererInfo;
 
     vtkCudaMemoryTexture*    MemoryTexture;
-    Cudapp::LocalMemory      LocalZBuffer;
+    Cudapp::HostMemory       LocalZBuffer;
     Cudapp::DeviceMemory     CudaZBuffer;
     //ETX
 };

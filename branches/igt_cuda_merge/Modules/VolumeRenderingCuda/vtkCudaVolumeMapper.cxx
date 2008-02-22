@@ -92,8 +92,8 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     vtkTimerLog* log = vtkTimerLog::New();
     log->StartTimer();
     // Renderer Information Setter.
-    this->VolumeInfoHandler->SetInputData(this->GetInput());
-    this->VolumeInfoHandler->SetVolume(volume);
+    if (volume != this->VolumeInfoHandler->GetVolume())
+        this->VolumeInfoHandler->SetVolume(volume);
     this->VolumeInfoHandler->Update();
 
     this->RendererInfoHandler->SetRenderer(renderer);
