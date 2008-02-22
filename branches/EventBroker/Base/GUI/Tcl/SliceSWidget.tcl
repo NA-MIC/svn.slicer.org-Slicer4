@@ -439,7 +439,9 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
       $this decrementSlice 
       $this updateAnnotation $x $y $r $a $s
     }
-    "ExposeEvent" { }
+    "ExposeEvent" { 
+      [$sliceGUI GetSliceViewer] RequestRender
+    }
     "ConfigureEvent" {
       $this resizeSliceNode
     }
