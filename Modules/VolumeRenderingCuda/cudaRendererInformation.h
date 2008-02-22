@@ -5,7 +5,7 @@
 
 //! A Datastucture located on the cuda hardware that holds all the information about the renderer.
 extern "C"
-typedef struct
+typedef struct __align__(16)
 {
     //! The resolution of the rendering screen.
     uint2          Resolution;

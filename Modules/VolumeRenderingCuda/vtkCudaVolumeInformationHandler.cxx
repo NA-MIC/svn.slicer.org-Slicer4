@@ -117,11 +117,6 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     property->GetScalarOpacity()->GetTable(this->VolumeInfo.FunctionRange[0], this->VolumeInfo.FunctionRange[1], 
                 this->VolumeInfo.FunctionSize, this->LocalAlphaTransferFunction.GetMemPointerAs<float>());
 
-
-    unsigned char test = this->VolumeInfo.FunctionRange[1];
-    unsigned char test2 = UCHAR_MAX;
-
-
     this->LocalColorTransferFunction.CopyTo(&this->CudaColorTransferFunction);
     this->LocalAlphaTransferFunction.CopyTo(&this->CudaAlphaTransferFunction);
     this->VolumeInfo.AlphaTransferFunction = this->CudaAlphaTransferFunction.GetMemPointerAs<float>();
@@ -178,8 +173,6 @@ void vtkCudaVolumeInformationHandler::Update()
 
         this->VolumeInfo.SourceData = this->CudaInputBuffer.GetMemPointer();
         this->VolumeInfo.InputDataType = this->InputData->GetScalarType();
-
-
     }
 }
 
@@ -187,4 +180,3 @@ void vtkCudaVolumeInformationHandler::PrintSelf(std::ostream& os, vtkIndent inde
 {
 
 }
-

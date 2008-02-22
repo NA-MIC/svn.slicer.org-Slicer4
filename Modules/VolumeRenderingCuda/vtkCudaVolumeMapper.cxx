@@ -76,6 +76,10 @@ void vtkCudaVolumeMapper::SetSampleDistance(float sampleDistance)
     this->VolumeInfoHandler->SetSampleDistance(sampleDistance);
 }
 
+void vtkCudaVolumeMapper::SetMatrix(vtkMatrix4x4* mat)
+{
+    this->RendererInfoHandler->SetMatrix(mat);
+}
 
 #include "vtkTimerLog.h"
 
@@ -94,13 +98,17 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 
     this->RendererInfoHandler->SetRenderer(renderer);
     this->RendererInfoHandler->Bind();
+    log->StopTimer();
+    std::cout << "LoadTime: " << log->GetElapsedTime() << std::flush; 
 
+    log->StartTimer();
     CUDArenderAlgo_doRender(
         this->RendererInfoHandler->GetRendererInfo(),
         this->VolumeInfoHandler->GetVolumeInfo());         
 
     log->StopTimer();
-    //vtkErrorMacro(<< "Elapsed Time to Render:: " << log->GetElapsedTime());
+    std::cout << "  RenderTime: " << (float)log->GetElapsedTime() << std::flush;
+    log->StartTimer();
 
     // Enter 2D Mode
     glPushAttrib(GL_ENABLE_BIT);
@@ -136,6 +144,8 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glPopMatrix();
     glPopAttrib();
 
+    log->StopTimer();
+    std::cout << "  Display Time: " << log->GetElapsedTime() << std::endl;
     log->Delete();
     return;
 }

@@ -5,14 +5,14 @@
 
 //! A datastructure located on the cudacard that holds the information of the volume.
 extern "C"
-typedef struct {
+typedef struct __align__(16) {
     void*           SourceData;
     int             InputDataType;
     
     // The size of the volume
     int3            VolumeSize;
     float3          VolumeTransformation;
-    //float4          Transform[4]; TOO MUCH
+    //float          Transform[16]; //TOO MUCH [16]
 
 
     //! The Color Transfer Function with a size of FunctionSize * 3 (rgb)
