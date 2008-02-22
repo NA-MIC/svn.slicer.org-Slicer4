@@ -27,7 +27,7 @@ public:
     //ETX
 
     void SetThreshold(unsigned int min, unsigned int max);
-    void SetSteppingSize(float steppingSize);
+    void SetSampleDistance(float sampleDistance);
 
     void ResizeTransferFunction(unsigned int size);
     virtual void Update();

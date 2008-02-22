@@ -21,7 +21,7 @@ typedef struct {
     float*          AlphaTransferFunction;
     //! The Size of the above Function
     unsigned int    FunctionSize;
-    double          FunctionRange[2];
+    float           FunctionRange[2];
 
     //! The minimum and Maximum Values of the Volume
     float           MinMaxValue[6];
@@ -35,7 +35,7 @@ typedef struct {
     float3          Spacing;
 
     //! The stepping accuracy to raster along the ray.
-    float           SteppingSize;
+    float           SampleDistance;
 
 } cudaVolumeInformation;
 #endif /* __CUDAVOLUMEINFORMATION_H__ */

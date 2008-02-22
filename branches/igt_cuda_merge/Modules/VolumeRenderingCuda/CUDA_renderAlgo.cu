@@ -159,7 +159,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 
   T typeMin = (T)volInfo.FunctionRange[0];
   T typeMax = (T)volInfo.FunctionRange[1];
-  GetTypeRange<T>(typeMin, typeMax);  
+  //GetTypeRange<T>(typeMin, typeMax);  
 
   int outindex = index.x + index.y * s_dsize.x; // index of result image
 
@@ -304,7 +304,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender(
 	  pos = s_minmaxTrace[index.z].y - s_minmaxTrace[index.z].x;
       }
     }
-    pos += volInfo.SteppingSize;
+    pos += volInfo.SampleDistance;
   }
 
   //write to output
