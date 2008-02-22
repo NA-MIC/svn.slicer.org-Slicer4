@@ -132,6 +132,7 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     this->VolumeInfo.ColorTransferFunction = this->CudaColorTransferFunction.GetMemPointerAs<float>();
 }
 
+#include "vtkMatrix4x4.h"
 void vtkCudaVolumeInformationHandler::UpdateVolume()
 {
   //  if (this->Volume->GetProperty()->GetMTime() > this->GetMTime())
@@ -143,16 +144,24 @@ void vtkCudaVolumeInformationHandler::UpdateVolume()
     this->VolumeInfo.VolumeTransformation.z = 0.0f;
 
 
+    // HACK EREI
+    vtkMatrix4x4* mat = vtkMatrix4x4::New();
+    if (this->Volume->GetUserMatrix() != NULL)
+    {
+        mat->DeepCopy(this->Volume->GetUserMatrix());
+    }
+    else
+        mat->Identity();
 
-    //this->VolumeInfo.Transform[0].x=1; this->VolumeInfo.Transform[0].y=0; this->VolumeInfo.Transform[0].z=0; this->VolumeInfo.Transform[0].w=0; 
-    //this->VolumeInfo.Transform[1].x=0; this->VolumeInfo.Transform[1].y=1; this->VolumeInfo.Transform[1].z=0; this->VolumeInfo.Transform[1].w=0; 
-    //this->VolumeInfo.Transform[2].x=0; this->VolumeInfo.Transform[2].y=0; this->VolumeInfo.Transform[2].z=1; this->VolumeInfo.Transform[2].w=0; 
-    //this->VolumeInfo.Transform[3].x=0; this->VolumeInfo.Transform[3].y=0; this->VolumeInfo.Transform[3].z=0; this->VolumeInfo.Transform[3].w=1; 
+    if (mat != NULL)
+    for (unsigned int i = 0; i < 4 ; i++)
+        for (unsigned int j = 0; j < 4; j++)
+            this->VolumeInfo.Transform[i][j] = mat->GetElement(i,j);
+    mat->Delete();
 }
 
 void vtkCudaVolumeInformationHandler::UpdateImageData()
 {
-
     int* dims = this->InputData->GetDimensions();
     double* spacing = this->InputData->GetSpacing();
     int* extent = this->InputData->GetExtent();
