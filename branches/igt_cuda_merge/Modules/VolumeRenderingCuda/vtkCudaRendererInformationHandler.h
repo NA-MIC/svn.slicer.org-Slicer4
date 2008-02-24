@@ -28,12 +28,6 @@ public:
     void Bind();
     void Unbind();
 
-    //HACK BEGIN
-    //BTX
-    void SetMatrix(vtkMatrix4x4* matrix);
-    //ETX
-    //HACK END
-
     void SetRenderOutputScaleFactor(float scaleFactor);
 
     virtual void Update();
@@ -49,7 +43,6 @@ private:
 
 private:
     vtkRenderer*             Renderer;
-    vtkMatrix4x4*            mat;
     //BTX
     cudaRendererInformation  RendererInfo;
 

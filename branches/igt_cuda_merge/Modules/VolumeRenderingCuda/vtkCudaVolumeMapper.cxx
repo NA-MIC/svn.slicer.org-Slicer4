@@ -76,11 +76,6 @@ void vtkCudaVolumeMapper::SetSampleDistance(float sampleDistance)
     this->VolumeInfoHandler->SetSampleDistance(sampleDistance);
 }
 
-void vtkCudaVolumeMapper::SetMatrix(vtkMatrix4x4* mat)
-{
-    this->RendererInfoHandler->SetMatrix(mat);
-}
-
 void vtkCudaVolumeMapper::SetRenderOutputScaleFactor(float scaleFactor)
 {
     this->RendererInfoHandler->SetRenderOutputScaleFactor(scaleFactor);
