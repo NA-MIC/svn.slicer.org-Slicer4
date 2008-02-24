@@ -19,8 +19,7 @@
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/CommandLineArguments.hxx>
 
-//#include "vtkCudaMemoryTexture.h"
-
+#include "vtkRenderer.h"
 #include "vtkCudaVolumeMapper.h"
 #include "vtkImageReader.h"
 #include <sstream>
@@ -37,6 +36,7 @@ vtkKWApplication *app;
 vtkKWRenderWidget* renderWidget;
 vtkKWRange* ThresholdRange;
 vtkKWScale* SteppingSizeScale;
+vtkKWScale* ScaleFactorScale;
 vtkKWVolumePropertyWidget* VolumePropertyWidget;
 vtkCudaVolumeMapper* VolumeMapper;
 vtkKWCheckButton* cb_Animate;
@@ -138,9 +138,13 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
-    VolumeMapper->SetThreshold(ThresholdRange->GetRange());
-    VolumeMapper->SetSampleDistance(SteppingSizeScale->GetValue());
-    renderWidget->Render();
+    if (caller == ThresholdRange)
+      VolumeMapper->SetThreshold(ThresholdRange->GetRange());
+    else if (caller == SteppingSizeScale)
+        VolumeMapper->SetSampleDistance(SteppingSizeScale->GetValue());
+    else if (caller == ScaleFactorScale)
+        VolumeMapper->SetRenderOutputScaleFactor(ScaleFactorScale->GetValue());
+    renderWidget->GetRenderer()->Render();
 }
 
 void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
@@ -330,6 +334,18 @@ int my_main(int argc, char *argv[])
     app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         SteppingSizeScale->GetWidgetName()); 
     SteppingSizeScale->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)GUICallbackCommand);
+
+
+    ScaleFactorScale = vtkKWScale::New();
+    ScaleFactorScale->SetParent(win->GetMainPanelFrame());
+    ScaleFactorScale->Create();
+    ScaleFactorScale->SetRange(1.0f, 10.0f);
+    ScaleFactorScale->SetResolution(.5f);
+    ScaleFactorScale->SetValue(1.0f);
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        ScaleFactorScale->GetWidgetName()); 
+    ScaleFactorScale->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)GUICallbackCommand);
+
 
 
     cb_Animate = vtkKWCheckButton::New();

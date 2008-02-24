@@ -22,7 +22,11 @@ vtkStandardNewMacro(vtkCudaRendererInformationHandler);
 vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
 {
     this->Renderer = NULL;
+    this->RendererInfo.ActualResolution.x = this->RendererInfo.ActualResolution.y = 0;
     this->MemoryTexture = vtkCudaMemoryTexture::New();
+
+    this->SetRenderOutputScaleFactor(1.0f);
+
 
     this->mat = vtkMatrix4x4::New();
     this->mat->Identity();
@@ -42,6 +46,13 @@ void vtkCudaRendererInformationHandler::SetRenderer(vtkRenderer* renderer)
     this->Renderer = renderer;
     this->Update();
 }
+
+void vtkCudaRendererInformationHandler::SetRenderOutputScaleFactor(float scaleFactor) 
+{
+    this->RenderOutputScaleFactor = (scaleFactor > 1.0) ? scaleFactor : 1.0;
+    this->Update();
+}
+
 
 void vtkCudaRendererInformationHandler::SetMatrix(vtkMatrix4x4* matrix)
 {
@@ -69,16 +80,18 @@ void vtkCudaRendererInformationHandler::Update()
         // Renderplane Update.
         vtkRenderWindow *renWin= this->Renderer->GetRenderWindow();
         int *size=renWin->GetSize();
-        if (size[0] != this->RendererInfo.Resolution.x ||
-            size[1] != this->RendererInfo.Resolution.y)
+        if (size[0] != this->RendererInfo.ActualResolution.x ||
+            size[1] != this->RendererInfo.ActualResolution.y)
         {
-            this->RendererInfo.Resolution.x = size[0];
-            this->RendererInfo.Resolution.y = size[1];
+            this->RendererInfo.ActualResolution.x = size[0];
+            this->RendererInfo.ActualResolution.y = size[1];
 
             // HACK -> Allocate is too slow!!
-            LocalZBuffer.Allocate<float>(this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y);
-            CudaZBuffer.Allocate<float>(this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y);
+            LocalZBuffer.Allocate<float>(this->RendererInfo.ActualResolution.x * this->RendererInfo.ActualResolution.y);
+            CudaZBuffer.Allocate<float>(this->RendererInfo.ActualResolution.x * this->RendererInfo.ActualResolution.y);
         }
+        this->RendererInfo.Resolution.x = this->RendererInfo.ActualResolution.x / this->RenderOutputScaleFactor;
+        this->RendererInfo.Resolution.y = this->RendererInfo.ActualResolution.y / this->RenderOutputScaleFactor;
 
         this->MemoryTexture->SetSize(this->RendererInfo.Resolution.x, this->RendererInfo.Resolution.y);
         this->RendererInfo.OutputImage = (uchar4*)this->MemoryTexture->GetRenderDestination();

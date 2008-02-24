@@ -25,6 +25,8 @@ public:
     void SetThreshold(double* range) { SetThreshold((unsigned int)range[0], (unsigned int)range[1]); }
     void SetSampleDistance(float sampleDistance);
 
+    void SetRenderOutputScaleFactor(float scaleFactor);
+
     void SetMatrix(vtkMatrix4x4* mat);
 
    //BTX

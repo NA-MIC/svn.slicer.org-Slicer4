@@ -81,6 +81,12 @@ void vtkCudaVolumeMapper::SetMatrix(vtkMatrix4x4* mat)
     this->RendererInfoHandler->SetMatrix(mat);
 }
 
+void vtkCudaVolumeMapper::SetRenderOutputScaleFactor(float scaleFactor)
+{
+    this->RendererInfoHandler->SetRenderOutputScaleFactor(scaleFactor);
+}
+
+
 #include "vtkTimerLog.h"
 
 void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
