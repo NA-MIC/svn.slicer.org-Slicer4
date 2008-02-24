@@ -26,18 +26,12 @@ vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
     this->MemoryTexture = vtkCudaMemoryTexture::New();
 
     this->SetRenderOutputScaleFactor(1.0f);
-
-
-    this->mat = vtkMatrix4x4::New();
-    this->mat->Identity();
-    this->mat->Invert();
 }
 
 vtkCudaRendererInformationHandler::~vtkCudaRendererInformationHandler()
 {
     this->Renderer = NULL;
     this->MemoryTexture->Delete();
-    this->mat->Delete();
 }
 
 
@@ -53,12 +47,6 @@ void vtkCudaRendererInformationHandler::SetRenderOutputScaleFactor(float scaleFa
     this->Update();
 }
 
-
-void vtkCudaRendererInformationHandler::SetMatrix(vtkMatrix4x4* matrix)
-{
-    //this->mat->DeepCopy(matrix);
-    //this->mat->Invert();
-}
 
 void vtkCudaRendererInformationHandler::Bind()
 {
@@ -107,33 +95,16 @@ void vtkCudaRendererInformationHandler::Update()
             this->RendererInfo.LightVectors = &lights[0];
 
         // Update Camera
+        this->RendererInfo.CameraPos.x = cam->GetPosition()[0];
+        this->RendererInfo.CameraPos.y = cam->GetPosition()[1];
+        this->RendererInfo.CameraPos.z = cam->GetPosition()[2];
+
         this->RendererInfo.CameraDirection.x= cam->GetDirectionOfProjection()[0];
         this->RendererInfo.CameraDirection.y= cam->GetDirectionOfProjection()[1];
         this->RendererInfo.CameraDirection.z= cam->GetDirectionOfProjection()[2];
         this->RendererInfo.ViewUp.x = cam->GetViewUp()[0];
         this->RendererInfo.ViewUp.y = cam->GetViewUp()[1];
         this->RendererInfo.ViewUp.z = cam->GetViewUp()[2];
-
-        float in[4];
-        float out[4];
-
-        in[3] = 0;
-
-        unsigned int i;
-        for (i = 0; i < 3; i++)
-            in[i] = cam->GetPosition()[i];
-        mat->MultiplyPoint(in, out);
-        this->RendererInfo.CameraPos.x = out[0]; this->RendererInfo.CameraPos.y = out[1]; this->RendererInfo.CameraPos.z = out[2];
-
-        for (i = 0; i < 3; i++)
-            in[i] = cam->GetDirectionOfProjection()[i];
-        mat->MultiplyPoint(in, out);
-        this->RendererInfo.CameraDirection.x = out[0]; this->RendererInfo.CameraDirection.y = out[1]; this->RendererInfo.CameraDirection.z = out[2];
-
-        for (i = 0; i < 3; i++)
-            in[i] = cam->GetViewUp()[i];
-        mat->MultiplyPoint(in, out);
-        this->RendererInfo.ViewUp.x = out[0]; this->RendererInfo.ViewUp.y = out[1]; this->RendererInfo.ViewUp.z = out[2];
 
 
         float dot = this->RendererInfo.ViewUp.x * this->RendererInfo.CameraDirection.x +

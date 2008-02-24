@@ -27,8 +27,6 @@ public:
 
     void SetRenderOutputScaleFactor(float scaleFactor);
 
-    void SetMatrix(vtkMatrix4x4* mat);
-
    //BTX
    void SetRenderMode(int mode);
    int GetCurrentRenderMode() const;// { return this->CurrentRenderMode; }
