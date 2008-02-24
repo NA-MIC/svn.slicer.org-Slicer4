@@ -44,27 +44,27 @@
      <description>Growth Metric is based on deformation map between scan1 and scan2</description> 
      <default>true</default>
     </boolean>  
-    <string>
+    <integer-vector>
      <name>tgROIMin</name>
      <longflag>roi_min</longflag>
      <description>Lower extent of region of interest</description> 
      <label>ROI Min</label>
-     <default>1 1 1</default>
-    </string> 
-    <string>
+     <default>1,1,1</default>
+    </integer-vector> 
+    <integer-vector>
      <name>tgROIMax</name>
      <longflag>roi_max</longflag>
      <description>Upper extent of region of interest</description> 
      <label>ROI Max</label>
-     <default>256 256 100</default>
-   </string> 
-   <string>
+     <default>256,256,100</default>
+   </integer-vector> 
+   <integer-vector> 
      <name>tgThreshold</name>
      <longflag>threshold</longflag>
      <description>Intensity threshold defining tumor in scan 1</description> 
      <label>Threshold</label>
-     <default>100 200</default>
-   </string> 
+     <default>100,200</default>
+   </integer-vector> 
    <double>
      <name>tgSensitivity</name>
      <longflag>sensitivity</longflag>
