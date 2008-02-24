@@ -301,14 +301,8 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   // ---------------------------------
 
   this->PreSegment = vtkImageThreshold::New(); 
-  this->PreSegment->SetInValue(10);
-  this->PreSegment->SetOutValue(0);
-  this->PreSegment->SetOutputScalarTypeToShort();
-  this->PreSegment->SetInput(volumeNode->GetImageData());
-  // this->PreSegment->ThresholdByUpper(range[0]); 
-  double *range = this->ThresholdRange->GetRange();
-  this->PreSegment->ThresholdBetween(range[0],range[1]); 
-  this->PreSegment->Update();
+  int range[2] = {int(this->ThresholdRange->GetRange()[0]),int(this->ThresholdRange->GetRange()[1])}; 
+  vtkTumorGrowthLogic::DefinePreSegment(volumeNode->GetImageData(),range,this->PreSegment);
 
   // ---------------------------------
   // show SPGR in 3D Viewer 
@@ -440,10 +434,7 @@ int vtkTumorGrowthSegmentationStep::SegmentScan1Define() {
   this->SegmentScan1Remove();
 
   vtkImageIslandFilter *RemoveIslands = vtkImageIslandFilter::New();
-  RemoveIslands->SetIslandMinSize(1000);
-    RemoveIslands->SetInput(this->PreSegment->GetOutput());
-    RemoveIslands->SetNeighborhoodDim3D();
-  RemoveIslands->Update(); 
+  vtkTumorGrowthLogic::DefineSegment(this->PreSegment->GetOutput(),RemoveIslands);
 
   // Set It up 
   vtkSlicerVolumesLogic *volumesLogic         = (vtkSlicerVolumesGUI::SafeDownCast(vtkSlicerApplication::SafeDownCast(this->GetApplication())->GetModuleGUIByName("Volumes")))->GetLogic();
