@@ -30,10 +30,11 @@ public:
 
     //HACK BEGIN
     //BTX
-    void SetZBuffer(Cudapp::DeviceMemory* ZBuffer);
     void SetMatrix(vtkMatrix4x4* matrix);
     //ETX
     //HACK END
+
+    void SetRenderOutputScaleFactor(float scaleFactor);
 
     virtual void Update();
 
@@ -51,6 +52,8 @@ private:
     vtkMatrix4x4*            mat;
     //BTX
     cudaRendererInformation  RendererInfo;
+
+    float                    RenderOutputScaleFactor;
 
     vtkCudaMemoryTexture*    MemoryTexture;
     Cudapp::HostMemory       LocalZBuffer;

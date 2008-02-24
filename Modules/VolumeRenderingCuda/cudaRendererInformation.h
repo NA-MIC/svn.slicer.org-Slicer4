@@ -9,6 +9,7 @@ typedef struct __align__(16)
 {
     //! The resolution of the rendering screen.
     uint2          Resolution;
+    uint2          ActualResolution;
     //! The color depth of the rendering screen.
     unsigned int   ColorDepth;
 
