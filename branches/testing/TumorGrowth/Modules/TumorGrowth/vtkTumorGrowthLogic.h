@@ -13,7 +13,9 @@ class vtkMRMLScene;
 class vtkMRMLScalarNode;
 class vtkMRMLVolumeNode;
 class vtkSlicerApplication;
+class vtkKWApplication;
 class vtkImageMathematics;
+class vtkImageIslandFilter;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthLogic : 
   public vtkSlicerModuleLogic
@@ -58,26 +60,29 @@ public:
   void RegisterMRMLNodesWithScene(); 
 
   // special testing functions
-  vtkMRMLScalarVolumeNode* CreateSuperSample(int ScanNum, vtkSlicerApplication *application);
+  void DeleteSuperSample(int ScanNum);
+  vtkMRMLScalarVolumeNode* CreateSuperSample(int ScanNum);
+  double DefineSuperSampleSize(const double inputSpacing[3], const int ROIMin[3], const int ROIMax[3]); 
 
   int CheckROI(vtkMRMLVolumeNode* volumeNode);
 
-  // copied from vtkMRMLScalarVolumeNode* vtkSlicerVolumesLogic::CloneVolume without deep copy
+  int CreateSuperSampleFct(vtkImageData *input, const int ROIMin[3], const int ROIMax[3], const double SuperSampleSpacing, vtkImageData *output);
   vtkMRMLScalarVolumeNode* CreateVolumeNode(vtkMRMLVolumeNode *volumeNode, char *name);
 
   // Main Growth Function 
   int AnalyzeGrowth(vtkSlicerApplication *application);
-  double MeassureGrowth(vtkSlicerApplication *app);
+  double MeassureGrowth();
   void DeleteAnalyzeOutput(vtkSlicerApplication *app);
-
-
 
   vtkImageThreshold* CreateAnalysis_Intensity_Final();
   vtkImageThreshold* CreateAnalysis_Intensity_ROINegativeBin();
   vtkImageThreshold* CreateAnalysis_Intensity_ROIPositiveBin();
   vtkImageMathematics* CreateAnalysis_Intensity_ROIBinReal();
 
+  vtkImageData   *GetAnalysis_Intensity_ROIBinReal();
+
   vtkImageSumOverVoxels* CreateAnalysis_Intensity_ROITotal();
+  double GetAnalysis_Intensity_ROITotal_VoxelSum();
 
   vtkSetMacro(Analysis_Intensity_Mean,double);
   vtkGetMacro(Analysis_Intensity_Mean,double);
@@ -101,6 +106,12 @@ public:
 
   void PrintText(char *TEXT);
 
+  void SourceAnalyzeTclScripts(vtkKWApplication *app);
+
+  // This is necessary so that we can call it from the command line module 
+  static void DefinePreSegment(vtkImageData *INPUT, const int RANGE[2], vtkImageThreshold *OUTPUT);
+  static void DefineSegment(vtkImageData *INPUT, vtkImageIslandFilter *OUTPUT);
+
 private:
   vtkTumorGrowthLogic();
   ~vtkTumorGrowthLogic();
@@ -111,8 +122,6 @@ private:
   vtkSetStringMacro(ProgressCurrentAction);
   vtkSetMacro(ProgressGlobalFractionCompleted, double);
   vtkSetMacro(ProgressCurrentFractionCompleted, double);
-
-  void SourceAnalyzeTclScripts(vtkSlicerApplication *app);
 
 
   //

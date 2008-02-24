@@ -127,14 +127,7 @@ vtkTumorGrowthROIStep::~vtkTumorGrowthROIStep()
 }
 
 void vtkTumorGrowthROIStep::DeleteSuperSampleNode() {
-  vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
-  if (!node) return;
-
-  vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SuperSampleRef()));
-  if (!volumeNode) return;
-
-  this->GetGUI()->GetMRMLScene()->RemoveNode(volumeNode); 
-  node->SetScan1_SuperSampleRef(NULL);
+  this->GetGUI()->GetLogic()->DeleteSuperSample(1);
 } 
 
 //----------------------------------------------------------------------------
@@ -773,7 +766,7 @@ void vtkTumorGrowthROIStep::TransitionCallback()
      // ----------------------------
      // Create SuperSampledVolume 
     vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
-    vtkMRMLScalarVolumeNode *outputNode = this->GetGUI()->GetLogic()->CreateSuperSample(1,application);
+    vtkMRMLScalarVolumeNode *outputNode = this->GetGUI()->GetLogic()->CreateSuperSample(1);
     this->GetGUI()->GetLogic()->SaveVolume(application,outputNode); 
 
     if (outputNode) {

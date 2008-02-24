@@ -205,7 +205,7 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
       if (node) { 
         std::string fileName(node->GetWorkingDir());
         fileName.append("/AnalysisOutcome.log");
-    std::ofstream outfile(fileName.c_str());
+        std::ofstream outfile(fileName.c_str());
         if (outfile.fail()) {
       cout << "Error: vtkTumorGrowthAnalysisStep::ProcessGUIEvents: Cannot write to file " << fileName.c_str() << endl;
     } else {     
@@ -454,7 +454,7 @@ void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(double value)
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
   if (!this->SensitivityScale || !mrmlNode || !this->GrowthLabel ) return;
   mrmlNode->SetAnalysis_Intensity_Sensitivity(this->SensitivityScale->GetValue());
-  double Growth = this->GetGUI()->GetLogic()->MeassureGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
+  double Growth = this->GetGUI()->GetLogic()->MeassureGrowth();
   // show here 
   char TEXT[1024];
   // cout << "---------- " << Growth << " " << mrmlNode->GetSuperSampled_VoxelVolume() << " " << mrmlNode->GetSuperSampled_RatioNewOldSpacing() << endl;;

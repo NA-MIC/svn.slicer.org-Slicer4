@@ -71,6 +71,8 @@ void vtkImageKilianDistanceTransform::ExecuteInformation(vtkImageData *vtkNotUse
   output->SetNumberOfScalarComponents(1);
   output->SetScalarType(VTK_FLOAT);
 }
+
+
 //----------------------------------------------------------------------------
 // This method tells the superclass that the whole input array is needed
 // to compute any output region.

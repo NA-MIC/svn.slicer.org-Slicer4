@@ -190,6 +190,10 @@ int DistanceFormat;
 private:
   vtkImageKilianDistanceTransform(const vtkImageKilianDistanceTransform&);  // Not implemented.
   void operator=(const vtkImageKilianDistanceTransform&);  // Not implemented.
+// Not Implemented
+  void ThreadedExecute( vtkImageData *vtkNotUsed(inData), vtkImageData *vtkNotUsed(outData), int extent[6], int vtkNotUsed(threadId)) {
+    printf("vtkImageKilianDistanceTransform::ThreadedExecute: if this comes up then the filter does not work - please fix !\n");  
+  } 
 };
 
 #endif
