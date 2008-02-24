@@ -123,6 +123,7 @@ namespace eval TumorGrowthReg {
       catch "g Delete"
       catch "gridImage Delete"
       catch "mat Delete"
+      catch "__dummy_transform Delete" 
   }
 
 # gt = is the Transform 
