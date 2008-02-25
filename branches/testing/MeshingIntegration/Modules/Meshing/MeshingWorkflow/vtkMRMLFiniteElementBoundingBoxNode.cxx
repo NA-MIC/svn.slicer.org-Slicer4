@@ -74,7 +74,7 @@ Superclass::WriteXML(of, nIndent);
   {
     std::stringstream ss;
     ss << this->DataType;
-    of << indent << "DataType='" << ss.str() << "' ";
+    of << indent << " DataType='" << ss.str() << "' ";
   }
   {
     std::stringstream ss;
