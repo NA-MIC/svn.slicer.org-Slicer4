@@ -105,6 +105,13 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   void RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer);
   void RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer, vtkCallbackCommand *notify);
   void RemoveObservationsForSubjectByTag (vtkObject *subject, unsigned long tag);
+  //BTX
+  std::vector< vtkObservation *> GetObservations (vtkObject *observer);
+  std::vector< vtkObservation *> GetObservations (vtkObject *subject, vtkObject *observer);
+  std::vector< vtkObservation *> GetObservations (vtkObject *subject, unsigned long event, vtkObject *observer);
+  std::vector< vtkObservation *> GetObservations (vtkObject *subject, unsigned long event, vtkObject *observer, vtkCallbackCommand *notify);
+  std::vector< vtkObservation *> GetObservationsForSubjectByTag (vtkObject *subject, unsigned long tag);
+  //ETX
 
   // Description
   // Accessors for intropsection
