@@ -206,10 +206,10 @@ void vtkFiniteElementEditBBGroup::CreateWidget()
   this->AddButton->SetValue("Add");
   this->AddButton->SetCompoundModeToLeft();
 
-  this->GetApplication()->Script(
-    "pack %s -side left -anchor nw -expand 0 -padx 6 -pady 6", 
-    this->AddButton->GetWidgetName());
-
+//  this->GetApplication()->Script(
+//    "pack %s -side left -anchor nw -expand 0 -padx 6 -pady 6", 
+//    this->AddButton->GetWidgetName());
+//
   this->DeleteButton->SetParent(this->MainFrame->GetFrame());
   this->DeleteButton->Create();
   this->DeleteButton->SetCommand(this, "EditBBDeleteCellCallback");
@@ -220,9 +220,10 @@ void vtkFiniteElementEditBBGroup::CreateWidget()
   this->DeleteButton->SetVariableName(this->AddButton->GetVariableName());
   this->DeleteButton->SetValue("Delete");
   this->DeleteButton->SetCompoundModeToLeft();
-  this->GetApplication()->Script(
-    "pack %s -side left -anchor nw -expand 0 -padx 6 -pady 6", 
-    this->DeleteButton->GetWidgetName());
+  
+//  this->GetApplication()->Script(
+//    "pack %s -side left -anchor nw -expand 0 -padx 6 -pady 6", 
+//    this->DeleteButton->GetWidgetName());
 
   this->SplitButton->SetParent(this->MainFrame->GetFrame());
   this->SplitButton->Create();

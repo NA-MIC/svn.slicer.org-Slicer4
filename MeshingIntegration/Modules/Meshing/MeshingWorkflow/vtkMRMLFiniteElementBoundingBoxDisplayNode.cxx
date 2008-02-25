@@ -76,7 +76,7 @@ void vtkMRMLFiniteElementBoundingBoxDisplayNode::WriteXML(ostream& of, int nInde
 
   vtkIndent indent(nIndent);
 
-  of << indent << " shrinkFactor =\"" << this->ShrinkFactor << "\"";
+  //of << indent << " shrinkFactor =\"" << this->ShrinkFactor << "\"";
 }
 
 
@@ -94,12 +94,12 @@ void vtkMRMLFiniteElementBoundingBoxDisplayNode::ReadXMLAttributes(const char** 
     attName = *(atts++);
     attValue = *(atts++);
 
-    if (!strcmp(attName, "shrinkFactor")) 
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> ShrinkFactor;
-      }
+//    if (!strcmp(attName, "shrinkFactor")) 
+//      {
+//      std::stringstream ss;
+//      ss << attValue;
+//      ss >> ShrinkFactor;
+//      }
     }  
 }
 
@@ -120,7 +120,7 @@ void vtkMRMLFiniteElementBoundingBoxDisplayNode::PrintSelf(ostream& os, vtkInden
   //int idx;
   
   Superclass::PrintSelf(os,indent);
-  os << indent << "ShrinkFactor:             " << this->ShrinkFactor << "\n";
+//  os << indent << "ShrinkFactor:             " << this->ShrinkFactor << "\n";
 }
 
 
