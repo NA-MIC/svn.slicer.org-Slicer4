@@ -47,7 +47,7 @@ vtkKWCheckButton* cb_Animate;
 vtkKWMenuButton*  mb_Model;
 
 int frameNumber = 0;
-vtkImageReader* reader[5];
+vtkImageReader* reader[11];
 bool renderScheduled = false;
 
 void Clear()
@@ -115,11 +115,33 @@ void LoadLung()
     reader[0]->SetDataSpacing(1.0, 1.0, 1.0);
 
     std::stringstream s;
-    s << "D:\\lung128x128x30.raw";
+    s << "D:\\Volumes\\RawLung\\92\\lung.raw";
 
     reader[0]->SetFileName(s.str().c_str());
     reader[0]->Update();
 
+    VolumeMapper->SetInput(reader[0]->GetOutput());
+}
+
+void LoadLungSeries()
+{
+        int j = 92;
+    for (unsigned int i = 0; i < 11; i ++)
+    {
+        if (reader[i] == NULL)
+            reader[i] = vtkImageReader::New();
+    reader[i]->SetDataScalarTypeToShort();
+    reader[i]->SetNumberOfScalarComponents(1);
+    reader[i]->SetDataExtent(0, 127, 0, 127, 0, 29);
+    reader[i]->SetFileDimensionality(3);
+    reader[i]->SetDataSpacing(1.0, 1.0, 1.0);
+
+    std::stringstream s;
+    s << "D:\\Volumes\\RawLung\\" << j++ << "\\lung.raw";
+
+    reader[i]->SetFileName(s.str().c_str());
+    reader[i]->Update();
+    }
     VolumeMapper->SetInput(reader[0]->GetOutput());
 }
 
@@ -143,7 +165,7 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
         else if (!strcmp(mb_Model->GetValue(), "Heart"))
             LoadHeart();
         else if (!strcmp(mb_Model->GetValue(), "Lung"))
-            LoadLung();
+            LoadLungSeries();
         else if (!strcmp(mb_Model->GetValue(), "Prostate"))
             LoadProstate();
         else
@@ -171,16 +193,16 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
     int enabled = cb_Animate->GetSelectedState();
     if (cb_Animate->GetSelectedState() == 1)
     {
-        if (++frameNumber == 5)
+        if (++frameNumber == 11)
             frameNumber = 0;
         VolumeMapper->SetInput(reader[frameNumber]->GetOutput());
-        if (renderScheduled == false)
-        {    
-            renderScheduled=true;
-            renderWidget->SetRenderModeToInteractive();
-            cerr << *renderWidget;
-            app->Script("after 100 %s Render",renderWidget->GetTclName());
-        }
+        //if (renderScheduled == false)
+        //{    
+        //    renderScheduled = true;
+        //    renderWidget->SetRenderModeToInteractive();
+        //    cerr << *renderWidget;
+        //    app->Script("after 100 %s Render", renderWidget->GetTclName());
+        //}
     }
 }
 
@@ -243,7 +265,7 @@ int my_main(int argc, char *argv[])
     vtkVolume* volume = vtkVolume::New();
     VolumeMapper = vtkCudaVolumeMapper::New();
 
-    for (unsigned int i = 0; i < 5; i++)
+    for (unsigned int i = 0; i < 10; i++)
         reader[i] = NULL;
     reader[0] = vtkImageReader::New();
     LoadHead();
