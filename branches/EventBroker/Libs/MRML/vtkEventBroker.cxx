@@ -246,44 +246,75 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
     }
 }
 
+
 //----------------------------------------------------------------------------
 void vtkEventBroker::RemoveObservations (vtkObject *observer)
 {
-  // find matching observations to remove
-  std::vector< vtkObservation *> removeList;
-  std::vector< vtkObservation *>::iterator obsIter; 
-  for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
-    {
-    if ( (*obsIter)->GetObserver() == observer )
-      {
-      removeList.push_back( *obsIter );
-      }
-    }
-  this->RemoveObservations( removeList );
+  this->RemoveObservations( this->GetObservations( observer ) );
 }
 
 //----------------------------------------------------------------------------
 void vtkEventBroker::RemoveObservations (vtkObject *subject, vtkObject *observer)
 {
+  this->RemoveObservations( this->GetObservations( subject, observer ) );
+}
+
+//----------------------------------------------------------------------------
+void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer)
+{
+  this->RemoveObservations( this->GetObservations( subject, event, observer ) );
+}
+
+//----------------------------------------------------------------------------
+void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer, vtkCallbackCommand *notify)
+{
+  this->RemoveObservations( this->GetObservations( subject, event, observer, notify ) );
+}
+
+//----------------------------------------------------------------------------
+void vtkEventBroker::RemoveObservationsForSubjectByTag (vtkObject *subject, unsigned long tag)
+{
+  this->RemoveObservations( this->GetObservationsForSubjectByTag ( subject, tag ) );
+}
+
+//----------------------------------------------------------------------------
+std::vector< vtkObservation *> vtkEventBroker::GetObservations (vtkObject *observer)
+{
   // find matching observations to remove
-  std::vector< vtkObservation *> removeList;
+  std::vector< vtkObservation *> observationList;
+  std::vector< vtkObservation *>::iterator obsIter; 
+  for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
+    {
+    if ( (*obsIter)->GetObserver() == observer )
+      {
+      observationList.push_back( *obsIter );
+      }
+    }
+  return( observationList );
+}
+
+//----------------------------------------------------------------------------
+std::vector< vtkObservation *> vtkEventBroker::GetObservations (vtkObject *subject, vtkObject *observer)
+{
+  // find matching observations to remove
+  std::vector< vtkObservation *> observationList;
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     {
     if ( (*obsIter)->GetObserver() == observer && 
          (*obsIter)->GetSubject() == subject )
       {
-      removeList.push_back( *obsIter );
+      observationList.push_back( *obsIter );
       }
     }
-  this->RemoveObservations( removeList );
+  return( observationList );
 }
 
 //----------------------------------------------------------------------------
-void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer)
+std::vector< vtkObservation *> vtkEventBroker::GetObservations (vtkObject *subject, unsigned long event, vtkObject *observer)
 {
   // find matching observations to remove
-  std::vector< vtkObservation *> removeList;
+  std::vector< vtkObservation *> observationList;
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     {
@@ -291,17 +322,17 @@ void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event
          (*obsIter)->GetSubject() == subject &&
          (*obsIter)->GetEvent() == event )
       {
-      removeList.push_back( *obsIter );
+      observationList.push_back( *obsIter );
       }
     }
-  this->RemoveObservations( removeList );
+  return( observationList );
 }
 
 //----------------------------------------------------------------------------
-void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event, vtkObject *observer, vtkCallbackCommand *notify)
+std::vector< vtkObservation *> vtkEventBroker::GetObservations (vtkObject *subject, unsigned long event, vtkObject *observer, vtkCallbackCommand *notify)
 {
   // find matching observations to remove
-  std::vector< vtkObservation *> removeList;
+  std::vector< vtkObservation *> observationList;
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     {
@@ -310,27 +341,27 @@ void vtkEventBroker::RemoveObservations (vtkObject *subject, unsigned long event
          (*obsIter)->GetEvent() == event && 
          (*obsIter)->GetCallbackCommand() == notify )
       {
-      removeList.push_back( *obsIter );
+      observationList.push_back( *obsIter );
       }
     }
-  this->RemoveObservations( removeList );
+  return( observationList );
 }
 
 //----------------------------------------------------------------------------
-void vtkEventBroker::RemoveObservationsForSubjectByTag (vtkObject *subject, unsigned long tag)
+std::vector< vtkObservation *> vtkEventBroker::GetObservationsForSubjectByTag (vtkObject *subject, unsigned long tag)
 {
   // find matching observations to remove
-  std::vector< vtkObservation *> removeList;
+  std::vector< vtkObservation *> observationList;
   std::vector< vtkObservation *>::iterator obsIter; 
   for(obsIter=this->Observations.begin(); obsIter != this->Observations.end(); obsIter++)  
     {
     if ( (*obsIter)->GetSubject() == subject &&
          (*obsIter)->GetEventTag() == tag )
       {
-      removeList.push_back( *obsIter );
+      observationList.push_back( *obsIter );
       }
     }
-  this->RemoveObservations( removeList );
+  return( observationList );
 }
 
 //----------------------------------------------------------------------------
