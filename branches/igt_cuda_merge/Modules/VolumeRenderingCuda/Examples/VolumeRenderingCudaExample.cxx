@@ -48,22 +48,11 @@ bool renderScheduled = false;
 
 void Clear()
 {
-    vtkImageData* data = vtkImageData::New();
-    data->SetNumberOfScalarComponents(1);
-    data->SetExtent(0, 255, 0, 255, 0, 255);
-    data->SetScalarTypeToUnsignedChar();
-    data->AllocateScalars();
-    for (unsigned int i = 0; i < 256*256*256 -1; i++)
-        ((unsigned char*)data->GetScalarPointer())[i] = 0;
-
-    VolumeMapper->SetInput(data);
-    data->Delete();
+    VolumeMapper->SetInput(NULL);
 }
 
 void LoadHead()
 {
-    //reader[0]->Delete();
-    reader[0]= vtkImageReader::New();
     reader[0]->SetDataScalarTypeToUnsignedChar();
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 255,
@@ -83,8 +72,6 @@ void LoadHead()
 
 void LoadHeart()
 {
-    reader[0]->Delete();
-    reader[0]= vtkImageReader::New();
     reader[0]->SetDataScalarTypeToUnsignedChar();
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 255,
@@ -102,17 +89,38 @@ void LoadHeart()
     VolumeMapper->SetInput(reader[0]->GetOutput());
 }
 
+void LoadHeartSeries()
+{
+//    Reading in the Data using a ImageReader
+    for (unsigned int i = 0; i < 5; i++ ) 
+    {
+        reader[i]->SetDataScalarTypeToUnsignedChar();
+        reader[i]->SetNumberOfScalarComponents(1);
+        reader[i]->SetDataExtent(0, 255,
+            0, 255, 
+            0, 255);
+        reader[i]->SetFileDimensionality(3);
+
+
+        std::stringstream s;
+        s << "C:\\heart256-" << i+1 << ".raw";
+        //s << "C:\\fullhead94.raw";
+
+        reader[i]->SetFileName(s.str().c_str());
+        reader[i]->Update();
+
+        //        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
+    }
+}
+
 void LoadLung()
 {
-    reader[0]->Delete();
-    reader[0]= vtkImageReader::New();
     reader[0]->SetDataScalarTypeToShort();
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 127,
         0, 127, 
         0, 29);
     reader[0]->SetFileDimensionality(3);
-
 
     std::stringstream s;
     s << "D:\\lung128x128x30.raw";
@@ -226,29 +234,9 @@ int my_main(int argc, char *argv[])
     vtkVolume* volume = vtkVolume::New();
     VolumeMapper = vtkCudaVolumeMapper::New();
 
-
-    // Reading in the Data using a ImageReader
-    //for (unsigned int i = 0; i < 5; i++ ) 
-    //{
-    //    reader[i] = NULL;
-    //    reader[i]= vtkImageReader::New();
-    //    reader[i]->SetDataScalarTypeToUnsignedChar();
-    //    reader[i]->SetNumberOfScalarComponents(1);
-    //    reader[i]->SetDataExtent(0, 255,
-    //        0, 255, 
-    //        0, 255);
-    //    reader[i]->SetFileDimensionality(3);
-
-
-    //    std::stringstream s;
-    //    s << "C:\\heart256-" << i+1 << ".raw";
-    //    //s << "C:\\fullhead94.raw";
-
-    //    reader[i]->SetFileName(s.str().c_str());
-    //    reader[i]->Update();
-
-    //    //        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
-    //}
+    for (unsigned int i = 0; i < 5; i++)
+        reader[i] = NULL;
+    reader[0] = vtkImageReader::New();
     LoadHead();
 
     //reader[0]->Delete();
@@ -281,7 +269,7 @@ int my_main(int argc, char *argv[])
     volume->SetMapper(VolumeMapper);
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
     volume->SetProperty(prop);
-    renderWidget->AddViewProp(volume);
+    renderWidget->GetRenderer()->AddVolume(volume);
 
     /// GUI EVENT
     vtkCallbackCommand* GUICallbackCommand = vtkCallbackCommand::New ( );
@@ -366,11 +354,13 @@ int my_main(int argc, char *argv[])
         app->Start(argc, argv);
         ret = app->GetExitStatus();
     }
+    renderWidget->GetRenderer()->RemoveVolume(volume);
     win->Close();
 
     // Deallocate and exit
 
     SteppingSizeScale->Delete();
+    ScaleFactorScale->Delete();
     ModelCallbackCommand->Delete();
     AnimCallbackCommand->Delete();
     GUICallbackCommand->Delete();
