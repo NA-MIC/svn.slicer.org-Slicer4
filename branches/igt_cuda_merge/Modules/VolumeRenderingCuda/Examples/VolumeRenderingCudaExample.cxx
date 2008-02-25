@@ -53,10 +53,10 @@ void Clear()
 
 void LoadHead()
 {
-    reader[0]->Delete(); reader[0] = vtkImageReader::New();
     reader[0]->SetDataScalarTypeToUnsignedChar();
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 255, 0, 255, 0, 93);
+    reader[0]->SetDataSpacing(1.0, 1.0, 1.0);
     reader[0]->SetFileDimensionality(3);
     reader[0]->SetFileName("D:\\fullhead94.raw");
     reader[0]->Update();
@@ -66,10 +66,10 @@ void LoadHead()
 
 void LoadHeart()
 {
-    reader[0]->Delete(); reader[0] = vtkImageReader::New();
     reader[0]->SetDataScalarTypeToUnsignedChar();
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 255, 0, 255, 0, 255);
+    reader[0]->SetDataSpacing(1.0, 1.0, 1.0);
     reader[0]->SetFileDimensionality(3);
     reader[0]->SetFileName("D:\\heart256.raw");
     reader[0]->Update();
@@ -79,7 +79,6 @@ void LoadHeart()
 
 void LoadHeartSeries()
 {
-    reader[0]->Delete(); reader[0] = vtkImageReader::New();
 //    Reading in the Data using a ImageReader
     for (unsigned int i = 0; i < 5; i++ ) 
     {
@@ -89,6 +88,7 @@ void LoadHeartSeries()
             0, 255, 
             0, 255);
         reader[i]->SetFileDimensionality(3);
+        reader[i]->SetDataSpacing(1.0, 1.0, 1.0);
 
 
         std::stringstream s;
@@ -104,13 +104,11 @@ void LoadHeartSeries()
 
 void LoadLung()
 {
-    reader[0]->Delete(); reader[0] = vtkImageReader::New();
     reader[0]->SetDataScalarTypeToShort();
     reader[0]->SetNumberOfScalarComponents(1);
-    reader[0]->SetDataExtent(0, 127,
-        0, 127, 
-        0, 29);
+    reader[0]->SetDataExtent(0, 127, 0, 127, 0, 29);
     reader[0]->SetFileDimensionality(3);
+    reader[0]->SetDataSpacing(1.0, 1.0, 1.0);
 
     std::stringstream s;
     s << "D:\\lung128x128x30.raw";
@@ -123,10 +121,9 @@ void LoadLung()
 
 void LoadProstate()
 {
-    reader[0]->Delete(); reader[0] = vtkImageReader::New();
     reader[0]->SetDataScalarTypeToShort();
     reader[0]->SetNumberOfScalarComponents(1);
-    reader[0]->SetDataExtent(0, 63, 0, 63, 0, 53);
+    reader[0]->SetDataExtent(0, 255, 0, 255, 0, 53);
     reader[0]->SetDataSpacing(1, 0.65, 3.5);
     reader[0]->SetFileDimensionality(3);
     reader[0]->SetFileName("D:\\prostate.raw");
