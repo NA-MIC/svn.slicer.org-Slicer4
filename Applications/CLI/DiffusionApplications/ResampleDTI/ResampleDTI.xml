@@ -111,7 +111,7 @@ of the image at non-grid positions.
       <label>Transform Type</label>
       <element>rt</element>
       <element>a</element>
-      <default>rt</default>
+      <default>a</default>
     </string-enumeration>
 </parameters>
 <parameters advanced="true">
@@ -165,12 +165,14 @@ of the image at non-grid positions.
       <name>interpolationType</name>
       <flag>-i</flag>
       <longflag>--interpolation</longflag>
-      <description>Sampling algorithm (linear , nn (nearest neighborhoor), ws (WindowedSinc), bs (BSpline) )</description>
+      <description>Sampling algorithm (linear , nn (nearest neighborhoor), ws (WindowedSinc), bs (BSpline), LoxLinear (linear Loxodrome), LoxBSpline (BSpline Loxodrome) )</description>
       <label>Interpolation</label>
       <element>linear</element>
       <element>nn</element>
       <element>ws</element>
       <element>bs</element>
+      <element>LoxLinear</element>
+      <element>LoxBSpline</element>
       <default>linear</default>
   </string-enumeration>
 </parameters>
@@ -205,7 +207,19 @@ of the image at non-grid positions.
       <default>1</default>
     </integer>
 </parameters>
-
+<parameters advanced="true">
+  <label>Loxodrome Interpolate Function Parameters</label>
+  <description>Parameters used for the Loxodrome interpolation</description>
+  <string-enumeration>
+    <name>KRConstant</name>
+    <flag>-K</flag>
+    <description>Which proprieties to interpolate constantly</description>
+    <label>K or R</label>
+    <element>K</element>
+    <element>R</element>
+    <default>K</default>
+    </string-enumeration>
+</parameters>
 
 <parameters advanced="true">
   <label>Output Parameters</label>
