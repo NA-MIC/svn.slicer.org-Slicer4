@@ -604,11 +604,11 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
     && (event == vtkMRMLScene::NodeAddedEvent || event == vtkMRMLScene::NodeRemovedEvent ) )
     {
     vtkMRMLNode *node = (vtkMRMLNode*) (callData);
-    if (node != NULL && node->IsA("vtkMRMLDisplayableNode") )
+    if (node != NULL)
       {
-      vtkMRMLDisplayableNode *dnode = vtkMRMLDisplayableNode::SafeDownCast(node);
       if (event == vtkMRMLScene::NodeRemovedEvent)
         {
+        vtkMRMLDisplayableNode *dnode = vtkMRMLDisplayableNode::SafeDownCast(node);
         this->RemoveDisplayable(dnode);
         this->UpdateFromMRML();
         }
