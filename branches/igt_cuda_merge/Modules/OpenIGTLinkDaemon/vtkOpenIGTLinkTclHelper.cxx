@@ -468,34 +468,6 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
         }
     }
 
-  // set volume orientation
-  vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
-  rtimgTransform->Identity();
-  rtimgTransform->SetElement(0, 0, tx);
-  rtimgTransform->SetElement(1, 0, ty);
-  rtimgTransform->SetElement(2, 0, tz);
-  
-  rtimgTransform->SetElement(0, 1, sx);
-  rtimgTransform->SetElement(1, 1, sy);
-  rtimgTransform->SetElement(2, 1, sz);
-  
-  rtimgTransform->SetElement(0, 2, nx);
-  rtimgTransform->SetElement(1, 2, ny);
-  rtimgTransform->SetElement(2, 2, nz);
-
-  rtimgTransform->SetElement(0, 3, px);
-  rtimgTransform->SetElement(1, 3, py);
-  rtimgTransform->SetElement(2, 3, pz);
-
-//  if (lps) { // LPS coordinate
-//    vtkMatrix4x4* lpsToRas = vtkMatrix4x4::New();
-//    lpsToRas->Identity();
-//    lpsToRas->SetElement(0, 0, -1);
-//    lpsToRas->SetElement(1, 1, -1);
-//    lpsToRas->Multiply4x4(lpsToRas, rtimgTransform, rtimgTransform);
-//    lpsToRas->Delete();
-//  }
-
 
   // normalize
   float psi = sqrt(tx*tx + ty*ty + tz*tz);
@@ -515,17 +487,55 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
 
   float hfovi = psi * imgheader.size[0] / 2.0;
   float hfovj = psj * imgheader.size[1] / 2.0;
+  float hfovk = psk * imgheader.size[2] / 2.0;
+
+  float cx = tx * hfovi + sx * hfovj + nx * hfovk;
+  float cy = ty * hfovi + sy * hfovj + ny * hfovk;
+  float cz = tz * hfovi + sz * hfovj + nz * hfovk;
+
+  px = px - cx;
+  py = py - cy;
+  pz = pz - cz;
+
+
+  // set volume orientation
+  vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
+  rtimgTransform->Identity();
+  rtimgTransform->SetElement(0, 0, tx);
+  rtimgTransform->SetElement(1, 0, ty);
+  rtimgTransform->SetElement(2, 0, tz);
+  
+  rtimgTransform->SetElement(0, 1, sx);
+  rtimgTransform->SetElement(1, 1, sy);
+  rtimgTransform->SetElement(2, 1, sz);
+  
+  rtimgTransform->SetElement(0, 2, nx);
+  rtimgTransform->SetElement(1, 2, ny);
+  rtimgTransform->SetElement(2, 2, nz);
+
+  rtimgTransform->SetElement(0, 3, px);
+  rtimgTransform->SetElement(1, 3, py);
+  rtimgTransform->SetElement(2, 3, pz);
+
 
   rtimgTransform->Invert();
   volumeNode->SetRASToIJKMatrix(rtimgTransform);
 
-  float cx = tx * hfovi + sx * hfovj;
-  float cy = ty * hfovi + sy * hfovj;
-  float cz = tz * hfovi + sz * hfovj;
+
+//  if (lps) { // LPS coordinate
+//    vtkMatrix4x4* lpsToRas = vtkMatrix4x4::New();
+//    lpsToRas->Identity();
+//    lpsToRas->SetElement(0, 0, -1);
+//    lpsToRas->SetElement(1, 1, -1);
+//    lpsToRas->Multiply4x4(lpsToRas, rtimgTransform, rtimgTransform);
+//    lpsToRas->Delete();
+//  }
+
 
   px = px + cx;
   py = py + cy;
   pz = pz + cz;
+
 
   //volumeNode->SetAndObserveImageData(imageData);
   volumeNode->Modified();
