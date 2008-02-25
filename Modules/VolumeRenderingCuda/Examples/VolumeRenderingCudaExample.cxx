@@ -19,7 +19,9 @@
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/CommandLineArguments.hxx>
 
+#include "vtkCamera.h"
 #include "vtkRenderer.h"
+#include "vtkRenderWindowInteractor.h"
 #include "vtkCudaVolumeMapper.h"
 #include "vtkImageReader.h"
 #include <sstream>
@@ -30,6 +32,8 @@
 #include "vtkCudaImageDataFilter.h"
 #include "vtkCudaImageData.h"
 #include "vtkImageData.h"
+
+#include "vtkInteractorStyleTrackballCamera.h"
 
 
 vtkKWApplication *app;
@@ -144,7 +148,8 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
             LoadProstate();
         else
             Clear();
-        renderWidget->Render();
+        renderWidget->Modified();
+
 }
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
@@ -155,6 +160,9 @@ void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void
         VolumeMapper->SetSampleDistance(SteppingSizeScale->GetValue());
     else if (caller == ScaleFactorScale)
         VolumeMapper->SetRenderOutputScaleFactor(ScaleFactorScale->GetValue());
+
+    VolumeMapper->Modified();
+    renderWidget->Modified();
     renderWidget->GetRenderer()->Render();
 }
 
@@ -224,7 +232,7 @@ int my_main(int argc, char *argv[])
     // Add a render widget, attach it to the view frame, and pack
 
     renderWidget = vtkKWRenderWidget::New();
-    renderWidget->SetBackgroundColor(255, 255, 255);
+    renderWidget->SetBackgroundColor(200, 200, 200);
     renderWidget->SetParent(win->GetViewFrame());
     renderWidget->Create();
 
@@ -232,8 +240,6 @@ int my_main(int argc, char *argv[])
         renderWidget->GetWidgetName());
 
     // Create the mapper and actor
-
-
     vtkVolume* volume = vtkVolume::New();
     VolumeMapper = vtkCudaVolumeMapper::New();
 
@@ -242,35 +248,14 @@ int my_main(int argc, char *argv[])
     reader[0] = vtkImageReader::New();
     LoadHead();
 
-    //reader[0]->Delete();
-    //reader[0]= vtkImageReader::New();
-    //reader[0]->SetDataScalarTypeToShort();
-    //reader[0]->SetNumberOfScalarComponents(1);
-    //reader[0]->SetDataExtent(0, 127,
-    //    0, 127, 
-    //    0, 29);
-    //reader[0]->SetFileDimensionality(3);
-
-
-    //reader[0]->SetFilePattern("C:\\Ultrasound_Prostate\\US.*");
-    //reader[0]->SetFileName("C:\\lung128x128x30.raw");
-    //reader[0]->Update();
-
-    //vtkImageShiftScale* scaler = vtkImageShiftScale::New();
-    //scaler->SetOutputScalarTypeToUnsignedChar();
-    //scaler->SetInput(reader[0]->GetOutput());
-    //scaler->Update();
-
-    //vtkCudaImageDataFilter* filter = vtkCudaImageDataFilter::New();
-    //filter->SetInput(reader[0]->GetOutput());
-    //filter->Update();
-
     VolumeMapper->SetRenderMode(0/*vtkCudaMemoryTexture::RenderToTexture*/);
 
     volume->SetMapper(VolumeMapper);
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
     volume->SetProperty(prop);
     renderWidget->GetRenderer()->AddVolume(volume);
+
+
 
     /// GUI EVENT
     vtkCallbackCommand* GUICallbackCommand = vtkCallbackCommand::New ( );
@@ -337,7 +322,6 @@ int my_main(int argc, char *argv[])
     ScaleFactorScale->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)GUICallbackCommand);
 
 
-
     cb_Animate = vtkKWCheckButton::New();
     cb_Animate->SetParent(win->GetMainPanelFrame());
     cb_Animate->Create();
@@ -345,8 +329,12 @@ int my_main(int argc, char *argv[])
         cb_Animate->GetWidgetName());
 
 
-    // Add the actor to the scene
-    renderWidget->ResetCamera();
+    renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 500, 500);
+    renderWidget->GetRenderer()->GetActiveCamera()->ParallelProjectionOff();
+
+    vtkInteractorStyle* interactorStyle = vtkInteractorStyleTrackballCamera::New();
+    renderWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
+    renderWidget->SetRenderModeToInteractive();
 
     renderWidget->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,  (vtkCommand*)AnimCallbackCommand);
     int ret = 0;
@@ -359,8 +347,8 @@ int my_main(int argc, char *argv[])
     renderWidget->GetRenderer()->RemoveVolume(volume);
     win->Close();
 
+    interactorStyle->Delete();
     // Deallocate and exit
-
     SteppingSizeScale->Delete();
     ScaleFactorScale->Delete();
     ModelCallbackCommand->Delete();
