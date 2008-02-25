@@ -65,7 +65,7 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData)
     }
     else if (inputData != this->InputData)
     {
-        this->CudaInputBuffer.AllocateBytes(inputData->GetActualMemorySize() * 1024);
+        this->InputData = inputData;
 
         double range[2];
         //    property->GetRGBTransferFunction()->GetRange(range);
@@ -73,7 +73,6 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData)
         this->VolumeInfo.FunctionRange[0] = range[0];
         this->VolumeInfo.FunctionRange[1] = range[1];
 
-        this->InputData = inputData;
         this->UpdateImageData();
         this->Modified();
     }
@@ -185,6 +184,9 @@ void vtkCudaVolumeInformationHandler::UpdateImageData()
         this->VolumeInfo.VolumeSize.y *
         this->VolumeInfo.VolumeSize.z *
         this->InputData->GetNumberOfScalarComponents();
+
+    if (size != this->CudaInputBuffer.GetSize())
+        this->CudaInputBuffer.AllocateBytes(size);
 
     this->CudaInputBuffer.CopyFrom(this->InputData->GetScalarPointer(),
         size);
