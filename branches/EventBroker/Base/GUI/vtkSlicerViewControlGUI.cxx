@@ -1118,7 +1118,7 @@ void vtkSlicerViewControlGUI::MainViewZoom(double factor )
     ren->ResetCameraClippingRange();
     ren->UpdateLightsGeometryToFollowCamera();
     }
-  appGUI->GetViewerWidget()->GetMainViewer()->Render();
+  appGUI->GetViewerWidget()->RequestRender();
   this->RequestNavigationRender();
 
   cam = NULL;
@@ -1465,7 +1465,7 @@ void vtkSlicerViewControlGUI::MainViewSetStereo ( )
           p->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->StereoRenderOff ( );
           break;
         }
-      p->GetViewerWidget()->GetMainViewer()->Render();
+      p->GetViewerWidget()->RequestRender();
       }
     } 
 }
@@ -1781,7 +1781,7 @@ void vtkSlicerViewControlGUI::MainViewSetFocalPoint ( double x, double y, double
         cam->ComputeViewPlaneNormal ( );
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->Render();
+        p->GetViewerWidget()->RequestRender();
         }
       }
     }
@@ -1836,7 +1836,7 @@ void vtkSlicerViewControlGUI::RockView ( )
         
         //Make the lighting follow the camera to avoid illumination changes
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->Render();
+        p->GetViewerWidget()->RequestRender();
         }
       }
     }
@@ -1902,7 +1902,7 @@ void vtkSlicerViewControlGUI::SpinView ( int dir, double degrees )
 
         //Make the lighting follow the camera to avoid illumination changes
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->Render();
+        p->GetViewerWidget()->RequestRender();
         }
       }  
     }
@@ -1982,7 +1982,7 @@ void vtkSlicerViewControlGUI::MainViewSetProjection ( )
           cam->SetParallelScale ( vn->GetFieldOfView() );
           this->OrthoButton->SetImageToIcon ( this->SlicerViewControlIcons->GetPerspectiveButtonIcon() );
           }
-        p->GetViewerWidget()->GetMainViewer()->Render();
+        p->GetViewerWidget()->RequestRender();
         }
       }
     }
@@ -2036,7 +2036,7 @@ void vtkSlicerViewControlGUI::MainViewRotateAround ( int axis )
           }
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->Render();
+        p->GetViewerWidget()->RequestRender();
         this->RequestNavigationRender();
         }
       }
@@ -2109,7 +2109,7 @@ void vtkSlicerViewControlGUI::MainViewLookFrom ( const char *dir )
         cam->ComputeViewPlaneNormal();
         cam->OrthogonalizeViewUp();
         p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
-        p->GetViewerWidget()->GetMainViewer()->Render();      
+        p->GetViewerWidget()->RequestRender();      
         this->RequestNavigationRender();
         }
        }
