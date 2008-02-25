@@ -53,18 +53,12 @@ void Clear()
 
 void LoadHead()
 {
+    reader[0]->Delete(); reader[0] = vtkImageReader::New();
     reader[0]->SetDataScalarTypeToUnsignedChar();
     reader[0]->SetNumberOfScalarComponents(1);
-    reader[0]->SetDataExtent(0, 255,
-        0, 255, 
-        0, 93);
+    reader[0]->SetDataExtent(0, 255, 0, 255, 0, 93);
     reader[0]->SetFileDimensionality(3);
-
-
-    std::stringstream s;
-    s << "D:\\fullhead94.raw";
-
-    reader[0]->SetFileName(s.str().c_str());
+    reader[0]->SetFileName("D:\\fullhead94.raw");
     reader[0]->Update();
 
     VolumeMapper->SetInput(reader[0]->GetOutput());
@@ -72,18 +66,12 @@ void LoadHead()
 
 void LoadHeart()
 {
+    reader[0]->Delete(); reader[0] = vtkImageReader::New();
     reader[0]->SetDataScalarTypeToUnsignedChar();
     reader[0]->SetNumberOfScalarComponents(1);
-    reader[0]->SetDataExtent(0, 255,
-        0, 255, 
-        0, 255);
+    reader[0]->SetDataExtent(0, 255, 0, 255, 0, 255);
     reader[0]->SetFileDimensionality(3);
-
-
-    std::stringstream s;
-    s << "D:\\heart512.raw";
-
-    reader[0]->SetFileName(s.str().c_str());
+    reader[0]->SetFileName("D:\\heart256.raw");
     reader[0]->Update();
 
     VolumeMapper->SetInput(reader[0]->GetOutput());
@@ -91,6 +79,7 @@ void LoadHeart()
 
 void LoadHeartSeries()
 {
+    reader[0]->Delete(); reader[0] = vtkImageReader::New();
 //    Reading in the Data using a ImageReader
     for (unsigned int i = 0; i < 5; i++ ) 
     {
@@ -115,6 +104,7 @@ void LoadHeartSeries()
 
 void LoadLung()
 {
+    reader[0]->Delete(); reader[0] = vtkImageReader::New();
     reader[0]->SetDataScalarTypeToShort();
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 127,
@@ -131,6 +121,20 @@ void LoadLung()
     VolumeMapper->SetInput(reader[0]->GetOutput());
 }
 
+void LoadProstate()
+{
+    reader[0]->Delete(); reader[0] = vtkImageReader::New();
+    reader[0]->SetDataScalarTypeToShort();
+    reader[0]->SetNumberOfScalarComponents(1);
+    reader[0]->SetDataExtent(0, 63, 0, 63, 0, 53);
+    reader[0]->SetDataSpacing(1, 0.65, 3.5);
+    reader[0]->SetFileDimensionality(3);
+    reader[0]->SetFileName("D:\\prostate.raw");
+    reader[0]->Update();
+
+    VolumeMapper->SetInput(reader[0]->GetOutput());
+}
+
 void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
         if (! strcmp(mb_Model->GetValue(), "Head"))
@@ -139,6 +143,8 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
             LoadHeart();
         else if (!strcmp(mb_Model->GetValue(), "Lung"))
             LoadLung();
+        else if (!strcmp(mb_Model->GetValue(), "Prostate"))
+            LoadProstate();
         else
             Clear();
         renderWidget->Render();
@@ -262,8 +268,6 @@ int my_main(int argc, char *argv[])
     //filter->SetInput(reader[0]->GetOutput());
     //filter->Update();
 
-    VolumeMapper->SetInput(reader[0]->GetOutput());
-
     VolumeMapper->SetRenderMode(0/*vtkCudaMemoryTexture::RenderToTexture*/);
 
     volume->SetMapper(VolumeMapper);
@@ -286,8 +290,9 @@ int my_main(int argc, char *argv[])
     mb_Model->GetMenu()->AddRadioButton("Heart");
     mb_Model->GetMenu()->AddRadioButton("Head");
     mb_Model->GetMenu()->AddRadioButton("Lung");
+    mb_Model->GetMenu()->AddRadioButton("Prostate");
     mb_Model->GetMenu()->AddRadioButton("Empty");
-    mb_Model->SetValue("Heart");
+    mb_Model->SetValue("Head");
     mb_Model->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)ModelCallbackCommand);
 
     app->Script("pack %s -side top -anchor nw -expand n -fill x -pady 2",
