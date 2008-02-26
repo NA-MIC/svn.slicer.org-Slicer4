@@ -16,6 +16,7 @@
 #include "vtkImageIslandFilter.h"
 #include "vtkSlicerVolumesLogic.h"
 #include "vtkSlicerVolumesGUI.h"
+#include "vtkRigidRegistrator.h"
 //#include "vtkSlicerApplication.h"
 
 #define ERROR_NODE_VTKID 0
@@ -46,8 +47,8 @@ vtkTumorGrowthLogic::vtkTumorGrowthLogic()
 
   //this->DebugOn();
   this->TumorGrowthNode = NULL; 
-  this->LocalTransform = NULL; 
-  this->GlobalTransform = NULL; 
+  // this->LocalTransform = NULL; 
+  // this->GlobalTransform = NULL; 
 
   this->Analysis_Intensity_Mean      = 0.0;
   this->Analysis_Intensity_Variance  = 0.0;
@@ -71,15 +72,15 @@ vtkTumorGrowthLogic::~vtkTumorGrowthLogic()
   this->SetProgressCurrentAction(NULL);
   this->SetModuleName(NULL);
 
-  if (this->LocalTransform) {
-    this->LocalTransform->Delete();
-    this->LocalTransform = NULL;
-  }
-
-  if (this->GlobalTransform) {
-    this->GlobalTransform->Delete();
-    this->GlobalTransform = NULL;
-  }
+  // if (this->LocalTransform) {
+  //   this->LocalTransform->Delete();
+  //   this->LocalTransform = NULL;
+  // }
+  // 
+  // if (this->GlobalTransform) {
+  //   this->GlobalTransform->Delete();
+  //   this->GlobalTransform = NULL;
+  // }
   
   if (this->Analysis_Intensity_Final) {
     this->Analysis_Intensity_Final->Delete();
@@ -115,17 +116,21 @@ void vtkTumorGrowthLogic::PrintSelf(ostream& os, vtkIndent indent)
   // !!! todo
 }
 
-vtkGeneralTransform* vtkTumorGrowthLogic::CreateGlobalTransform() 
-{
-  this->GlobalTransform = vtkGeneralTransform::New();
-  return this->GlobalTransform;
-}
-
-vtkGeneralTransform* vtkTumorGrowthLogic::CreateLocalTransform() 
-{
-  this->LocalTransform = vtkGeneralTransform::New();
-  return this->LocalTransform;
-}
+// For AG
+// vtkGeneralTransform* vtkTumorGrowthLogic::CreateGlobalTransform() 
+// vtkTransform* vtkTumorGrowthLogic::CreateGlobalTransform() 
+// {
+//   this->GlobalTransform = vtkTransform::New();
+//   return this->GlobalTransform;
+// }
+// 
+// // For AG
+// // vtkGeneralTransform* vtkTumorGrowthLogic::CreateLocalTransform() 
+// vtkTransform* vtkTumorGrowthLogic::CreateLocalTransform() 
+// {
+//   this->LocalTransform = vtkTransform::New();
+//   return this->LocalTransform;
+// }
 
 int vtkTumorGrowthLogic::CheckROI(vtkMRMLVolumeNode* volumeNode) {
   if (!volumeNode || !this->TumorGrowthNode) return 0;
@@ -594,4 +599,118 @@ void vtkTumorGrowthLogic::DefineSegment(vtkImageData *INPUT, vtkImageIslandFilte
   OUTPUT->SetInput(INPUT);
   OUTPUT->SetNeighborhoodDim3D();
   OUTPUT->Update(); 
+}
+
+// Stole it from vtkEMSegmentLogic
+void vtkTumorGrowthLogic::RigidRegistration(vtkMRMLVolumeNode* fixedVolumeNode, vtkMRMLVolumeNode* movingVolumeNode, 
+                        vtkMRMLVolumeNode* outputVolumeNode, vtkTransform* fixedRASToMovingRASTransform, 
+                        double backgroundLevel)
+{
+  vtkRigidRegistrator* registrator = vtkRigidRegistrator::New();
+
+  // set fixed image ------
+  registrator->SetFixedImage(fixedVolumeNode->GetImageData());
+  vtkMatrix4x4* IJKToRASMatrixFixed = vtkMatrix4x4::New();
+  fixedVolumeNode->GetIJKToRASMatrix(IJKToRASMatrixFixed);
+  registrator->SetFixedIJKToXYZ(IJKToRASMatrixFixed);
+  IJKToRASMatrixFixed->Delete();
+    
+  // set moving image ------
+  registrator->SetMovingImage(movingVolumeNode->GetImageData());
+  vtkMatrix4x4* IJKToRASMatrixMoving = vtkMatrix4x4::New();
+  movingVolumeNode->GetIJKToRASMatrix(IJKToRASMatrixMoving);
+  registrator->SetMovingIJKToXYZ(IJKToRASMatrixMoving);
+  IJKToRASMatrixMoving->Delete();
+
+  registrator->SetImageToImageMetricToMutualInformation();
+  registrator->SetMetricComputationSamplingRatio(0.3333);
+  registrator->SetNumberOfIterations(5);
+  // registrator->SetNumberOfLevels(2); 
+
+  registrator->SetTransformInitializationTypeToImageCenters();
+  registrator->SetIntensityInterpolationTypeToLinear();
+
+  try
+    {
+    //
+    // run registration
+    registrator->RegisterImages();
+    fixedRASToMovingRASTransform->DeepCopy(registrator->GetTransform());
+
+    if (outputVolumeNode != NULL)
+      {
+      //
+      // resample moving image
+      vtkTumorGrowthLogic::LinearResample(movingVolumeNode, outputVolumeNode, fixedVolumeNode, fixedRASToMovingRASTransform, backgroundLevel);
+      }
+    }
+  catch (...)
+    {
+    std::cerr << "Failed to register images!!!" << std::endl;
+    }
+    
+  //
+  // clean up
+  registrator->Delete();
+}
+
+void vtkTumorGrowthLogic::LinearResample (vtkMRMLVolumeNode* inputVolumeNode, vtkMRMLVolumeNode* outputVolumeNode, vtkMRMLVolumeNode* outputVolumeGeometryNode,
+                    vtkTransform* outputRASToInputRASTransform, double backgroundLevel)
+{
+  vtkImageData* inputImageData  = inputVolumeNode->GetImageData();
+  vtkImageData* outputImageData = outputVolumeNode->GetImageData();
+  vtkImageData* outputGeometryData = NULL;
+  if (outputVolumeGeometryNode != NULL)
+    {
+    outputGeometryData = outputVolumeGeometryNode->GetImageData();
+    }
+
+  vtkImageReslice* resliceFilter = vtkImageReslice::New();
+
+  //
+  // set inputs
+  resliceFilter->SetInput(inputImageData);
+
+  //
+  // set geometry
+  if (outputGeometryData != NULL)
+    {
+    resliceFilter->SetInformationInput(outputGeometryData);
+    outputVolumeNode->CopyOrientation(outputVolumeGeometryNode);
+    }
+
+  //
+  // setup total transform
+  // ijk of output -> RAS -> XFORM -> RAS -> ijk of input
+  vtkTransform* totalTransform = vtkTransform::New();
+  if (outputRASToInputRASTransform != NULL)
+    {
+    totalTransform->DeepCopy(outputRASToInputRASTransform);
+    }
+
+  vtkMatrix4x4* outputIJKToRAS  = vtkMatrix4x4::New();
+  outputVolumeNode->GetIJKToRASMatrix(outputIJKToRAS);
+  vtkMatrix4x4* inputRASToIJK = vtkMatrix4x4::New();
+  inputVolumeNode->GetRASToIJKMatrix(inputRASToIJK);
+
+  totalTransform->PreMultiply();
+  totalTransform->Concatenate(outputIJKToRAS);
+  totalTransform->PostMultiply();
+  totalTransform->Concatenate(inputRASToIJK);
+  resliceFilter->SetResliceTransform(totalTransform);
+
+  //
+  // resample the image
+  resliceFilter->SetBackgroundLevel(backgroundLevel);
+  resliceFilter->OptimizationOn();
+  resliceFilter->SetInterpolationModeToLinear();
+  resliceFilter->Update();
+  outputImageData->ShallowCopy(resliceFilter->GetOutput());
+
+  //
+  // clean up
+  outputIJKToRAS->Delete();
+  inputRASToIJK->Delete();
+  resliceFilter->Delete();
+  totalTransform->Delete();
 }
