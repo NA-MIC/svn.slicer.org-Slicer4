@@ -23,6 +23,11 @@ typedef struct __align__(16) {
     unsigned int    FunctionSize;
     float           FunctionRange[2];
 
+    float           Ambient;
+    float           Diffuse;
+    float           Specular;
+    float           SpecularPower;
+
     //! The minimum and Maximum Values of the Volume
     float           MinMaxValue[6];
 
