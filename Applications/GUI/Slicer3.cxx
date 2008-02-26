@@ -706,14 +706,14 @@ int Slicer3_main(int argc, char *argv[])
 
 #else
 
- #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
     Volumerenderingmodule_Init(interp);
 #endif
-    
+
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     Gradientanisotropicdiffusionfilter_Init(interp);
 #endif
-
+    
 #endif // LOADABLEMODULES_DEBUG
 
 #if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
@@ -1038,8 +1038,8 @@ int Slicer3_main(int argc, char *argv[])
 
         slicerApp->SplashMessage(desc.GetMessage().c_str());
 
-        vtkSlicerModuleGUI* gui = desc.GetGUIFunction();
-        vtkSlicerModuleLogic* logic = desc.GetLogicFunction();
+        vtkSlicerModuleGUI* gui = desc.GetGUIPtr();
+        vtkSlicerModuleLogic* logic = desc.GetLogicPtr();
 
         logic->SetAndObserveMRMLScene( scene );
         logic->SetApplicationLogic( appLogic );
@@ -1062,6 +1062,15 @@ int Slicer3_main(int argc, char *argv[])
         // add the pointer to the viewer widget, for observing pick events
         // gui->SetViewerWidget(appGUI->GetViewerWidget());
         // gui->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
+
+        // Initialize TCL
+
+        TclInit Tcl_Init = desc.GetTclInitFunction();
+
+        if (Tcl_Init != 0)
+        {
+          (*Tcl_Init)(interp);
+        }
 
         lmit++;
       }
@@ -1716,7 +1725,7 @@ int Slicer3_main(int argc, char *argv[])
       {
         LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
 
-        vtkSlicerModuleGUI* gui = desc.GetGUIFunction();
+        vtkSlicerModuleGUI* gui = desc.GetGUIPtr();
 
         name = gui->GetTclName();
         std::string format("namespace eval slicer3 set ");
@@ -2036,8 +2045,8 @@ int Slicer3_main(int argc, char *argv[])
   while (lmit != loadableModuleNames.end()) {
     LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
 
-    desc.GetGUIFunction()->TearDownGUI();
-    desc.GetGUIFunction()->RemoveGUIObservers();
+    desc.GetGUIPtr()->TearDownGUI();
+    desc.GetGUIPtr()->RemoveGUIObservers();
 
     lmit++;
   }
@@ -2169,7 +2178,7 @@ int Slicer3_main(int argc, char *argv[])
   while (lmit != loadableModuleNames.end()) {
     LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
 
-    desc.GetGUIFunction()->Delete();
+    desc.GetGUIPtr()->Delete();
 
     lmit++;
   }
@@ -2290,7 +2299,7 @@ int Slicer3_main(int argc, char *argv[])
   while (lmit != loadableModuleNames.end()) {
     LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
 
-    vtkSlicerModuleLogic* logic = desc.GetLogicFunction();
+    vtkSlicerModuleLogic* logic = desc.GetLogicPtr();
 
     logic->SetAndObserveMRMLScene( NULL );
     logic->Delete();

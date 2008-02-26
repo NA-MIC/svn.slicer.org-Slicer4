@@ -377,9 +377,7 @@ LoadableModuleFactory
 
               if (logicFunction)
                 {
-                
-                  guiFunction = (ModuleGUIFunction)itksys::DynamicLoader::GetSymbolAddress(lib, "GetLoadableModuleGUI");
-                
+                guiFunction = (ModuleGUIFunction)itksys::DynamicLoader::GetSymbolAddress(lib, "GetLoadableModuleGUI");
                 }
               }
 
@@ -406,8 +404,8 @@ LoadableModuleFactory
                 LoadableModuleDescription module;
                 module.SetType("SharedObjectModule");
 
-                module.SetLogicFunction( reinterpret_cast<vtkSlicerModuleLogic*> ((*logicFunction)()) );
-                module.SetGUIFunction( reinterpret_cast<vtkSlicerModuleGUI*> ((*guiFunction)()) );
+                module.SetLogicPtr( reinterpret_cast<vtkSlicerModuleLogic*> ((*logicFunction)()) );
+                module.SetGUIPtr( reinterpret_cast<vtkSlicerModuleGUI*> ((*guiFunction)()) );
 
                 // Set the target as the entry point to call
                 char entryPointAsText[256];
@@ -426,6 +424,10 @@ LoadableModuleFactory
                 // and the parameters
                 LoadableModuleDescriptionParser parser;
                 parser.Parse(xml, module);
+
+                // :KLUGE: 20080225 tlorber: The name of the TCL initializer function is in the description.
+
+                module.SetTclInitFunction( (TclInit)itksys::DynamicLoader::GetSymbolAddress(lib, module.GetTclInitName().c_str()) );
 
                 // Check to make sure the module is not already in the
                 // lists
