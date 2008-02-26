@@ -18,9 +18,6 @@ if {0} { ;# comment
 
 # Remember to run make before executing script again so that this tcl script is copied over to slicer3-build directory 
 namespace eval TumorGrowthTcl {
-    proc blub {DATA } {
-    puts [$DATA Print] 
-    }
 
     proc HistogramNormalization_GUI { } {
       # Print "HistogramNormalization_GUI Start"
@@ -201,17 +198,20 @@ namespace eval TumorGrowthTcl {
         if {$SCAN1_NODE == "" || $SCAN2_NODE == ""} { return }
 
         Scan2ToScan1Registration_DeleteOutput $TYPE 
-        set VOL1 [$SCAN1_NODE GetImageData]
-        set VOL2 [$SCAN2_NODE GetImageData]
-        
-        set TRANSFORM [$LOGIC Create${TYPE}Transform]
-             
-        set OUTPUT_VOL [vtkImageData New]
+        vtkGeneralTransform TRANSFORM 
+
+        set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN1_NODE  "TG_scan2_${TYPE}" ]
 
         # -------------------------------------
         # Register 
         # -------------------------------------
+    
+        # AG Registration of Slicer 2 - does not seem to work
         if { 1 } {
+           set VOL1 [$SCAN1_NODE GetImageData]
+           set VOL2 [$SCAN2_NODE GetImageData]                     
+           set OUTPUT_VOL [vtkImageData New]
+
           # Set it automatcally later 
           set ScanOrder IS    
           set VOL1_input [vtkImageChangeInformation New]
@@ -224,41 +224,59 @@ namespace eval TumorGrowthTcl {
           eval $VOL2_input SetOutputSpacing [$SCAN2_NODE GetSpacing]
           $VOL2_input Update
     
-          if {[::TumorGrowthReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_input GetOutput] $ScanOrder 1 0 0 50 mono 3 $TRANSFORM ] == 0 }  {
+          if {[::TumorGrowthReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_input GetOutput] $ScanOrder 1 0 0 50 mono 3 TRANSFORM ] == 0 }  {
               puts "Error:  TumorGrowthScan2ToScan1Registration: $TYPE  could not perform registration"
               $VOL2_input Delete
               $VOL1_input Delete
               return
       }
             
-         ::TumorGrowthReg::ResampleAG_GUI [$VOL2_input GetOutput]  [$VOL1_input GetOutput] $TRANSFORM $OUTPUT_VOL  
+          ::TumorGrowthReg::ResampleAG_GUI [$VOL2_input GetOutput]  [$VOL1_input GetOutput] TRANSFORM $OUTPUT_VOL  
              
-         $VOL2_input Delete
-         $VOL1_input Delete
+          $VOL2_input Delete
+          $VOL1_input Delete
 
-         ::TumorGrowthReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
-         # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
-         catch { exec mv [$NODE GetWorkingDir]/LinearRegistration.txt [$NODE GetWorkingDir]/${TYPE}LinearRegistration.txt }
+          ::TumorGrowthReg::WriteTransformationAG TRANSFORM [$NODE GetWorkingDir] 
+          # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
+          catch { exec mv [$NODE GetWorkingDir]/LinearRegistration.txt [$NODE GetWorkingDir]/${TYPE}LinearRegistration.txt }
+
+          catch {TRANSFORM Delete}
      
-        } else {
+          set OUTPUT_VOL_EXT [vtkImageChangeInformation New]
+          $OUTPUT_VOL_EXT SetInput $OUTPUT_VOL
+          $OUTPUT_VOL_EXT SetOutputSpacing 1 1 1 
+          $OUTPUT_VOL_EXT Update
+
+          $OUTPUT_NODE SetAndObserveImageData [$OUTPUT_VOL_EXT GetOutput]
+      $OUTPUT_VOL_EXT Delete
+          $OUTPUT_VOL Delete
+
+        # Alternatively - use itk rigid registration 
+        #
+        #  $LOGIC RigidRegistration $SCAN1_NODE $SCAN2_NODE $OUTPUT_NODE $TRANSFORM 0
+        #
+    } else {
             puts "Debugging - jump over registration $VOL1"
             $OUTPUT_VOL  DeepCopy $VOL1
+
+            set OUTPUT_VOL_EXT [vtkImageChangeInformation New]
+            $OUTPUT_VOL_EXT SetInput $OUTPUT_VOL
+            $OUTPUT_VOL_EXT SetOutputSpacing 1 1 1 
+            $OUTPUT_VOL_EXT Update
+
+            $OUTPUT_NODE SetAndObserveImageData [$OUTPUT_VOL_EXT GetOutput]
+            $OUTPUT_VOL_EXT Delete
+            $OUTPUT_VOL Delete
+
         }
       
         
-        set OUTPUT_VOL_EXT [vtkImageChangeInformation New]
-          $OUTPUT_VOL_EXT SetInput $OUTPUT_VOL
-          $OUTPUT_VOL_EXT SetOutputSpacing 1 1 1 
-        $OUTPUT_VOL_EXT Update
-
-        # -------------------------------------
+         # -------------------------------------
         # Transfere output 
         # -------------------------------------
         puts "========================= "
        
-        set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN1_NODE  "TG_scan2_${TYPE}" ]
-        $OUTPUT_NODE SetAndObserveImageData [$OUTPUT_VOL_EXT GetOutput]
-        ::TumorGrowthReg::TumorGrowthImageDataWriter [$OUTPUT_VOL_EXT GetOutput] newresult
+        ::TumorGrowthReg::TumorGrowthImageDataWriter [$OUTPUT_NODE  GetImageData] newresult
 
         $NODE SetScan2_${TYPE}Ref [$OUTPUT_NODE GetID]
 
@@ -267,9 +285,7 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         # Clean up 
         # -------------------------------------
-        $OUTPUT_VOL_EXT Delete
-        $OUTPUT_VOL Delete
-
+    
         puts "TumorGrowthScan2ToScan1Registration $TYPE End"
         puts "=============================================="
     }
@@ -287,7 +303,7 @@ namespace eval TumorGrowthTcl {
        # -------------------------------------
        # Delete output 
        # -------------------------------------
-       catch { ::TumorGrowthReg::DeleteTransformAG [$LOGIC Get${TYPE}Transform] }
+       ::TumorGrowthReg::DeleteTransformAG
 
        set OUTPUT_NODE [$SCENE GetNodeByID [$NODE GetScan2_${TYPE}Ref]]
        if {$OUTPUT_NODE != "" } {  
@@ -1005,12 +1021,13 @@ namespace eval TumorGrowthTcl {
       }
   } 
 
-    proc VolumeWriter {fileName Output } {
+  proc VolumeWriter {fileName Output } {
     
-        if {[catch {set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"] } ]} { return }
-    if {[catch {set NODE [$GUI  GetNode]}]} { return }
-    set DIR [$NODE GetWorkingDir] 
-  
+    # if {[catch {set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"] } ]} { return }
+    # if {[catch {set NODE [$GUI  GetNode]}]} { return }
+    # set DIR [$NODE GetWorkingDir] 
+    set DIR /home/pohl/Slicer/Slicer3/Modules/TumorGrowth/Test-TGcmd
+    puts "Write Data to  $DIR/$fileName " 
     vtkNRRDWriter iwriter
           iwriter SetInput $Output
           iwriter SetFileName $DIR/$fileName
