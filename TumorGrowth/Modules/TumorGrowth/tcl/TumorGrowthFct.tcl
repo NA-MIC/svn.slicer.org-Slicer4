@@ -198,7 +198,7 @@ namespace eval TumorGrowthTcl {
         if {$SCAN1_NODE == "" || $SCAN2_NODE == ""} { return }
 
         Scan2ToScan1Registration_DeleteOutput $TYPE 
-        vtkGeneralTransform TRANSFORM 
+        set TRANSFORM [vtkGeneralTransform New] 
 
         set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN1_NODE  "TG_scan2_${TYPE}" ]
 
@@ -224,37 +224,60 @@ namespace eval TumorGrowthTcl {
           eval $VOL2_input SetOutputSpacing [$SCAN2_NODE GetSpacing]
           $VOL2_input Update
     
-          if {[::TumorGrowthReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_input GetOutput] $ScanOrder 1 0 0 50 mono 3 TRANSFORM ] == 0 }  {
+          # Currently we assume that the scanning order is the same across scans 
+          # This has to be done bc for some reason otherwise the registration 
+          # algorithm do not work if input and output do not have exactly the same dimensi
+        set SPACING [[$VOL1_input GetOutput] GetSpacing]
+        set VOL2_INPUT_RES [vtkImageResample New] 
+            $VOL2_INPUT_RES SetDimensionality 3
+            $VOL2_INPUT_RES SetInterpolationModeToLinear
+        $VOL2_INPUT_RES SetInput  [$VOL2_input GetOutput] 
+            $VOL2_INPUT_RES SetBackgroundLevel 0
+        $VOL2_INPUT_RES SetAxisOutputSpacing 0 [lindex $SPACING 0] 
+        $VOL2_INPUT_RES SetAxisOutputSpacing 1 [lindex $SPACING 1]
+            $VOL2_INPUT_RES SetAxisOutputSpacing 2 [lindex $SPACING 2]  
+        eval $VOL2_INPUT_RES SetOutputOrigin [[$VOL1_input GetOutput] GetOrigin ]
+            $VOL2_INPUT_RES ReleaseDataFlagOff
+          $VOL2_INPUT_RES Update
+
+        set VOL2_INPUT_RES_PAD [vtkImageConstantPad New] 
+        $VOL2_INPUT_RES_PAD SetInput [$VOL2_INPUT_RES GetOutput]
+        eval $VOL2_INPUT_RES_PAD SetOutputWholeExtent [[$VOL1_input GetOutput] GetWholeExtent]
+            $VOL2_INPUT_RES_PAD SetConstant 0
+          $VOL2_INPUT_RES_PAD Update
+          
+          if {[::TumorGrowthReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_INPUT_RES_PAD GetOutput] $ScanOrder 1 0 0 50 mono 3 $TRANSFORM ] == 0 }  {
               puts "Error:  TumorGrowthScan2ToScan1Registration: $TYPE  could not perform registration"
+          VOL2_INPUT_RES_PAD Delete
+              VOL2_INPUT_RES Delete 
               $VOL2_input Delete
-              $VOL1_input Delete
+              $VOL1_input Delete              
               return
-      }
+           }
             
-          ::TumorGrowthReg::ResampleAG_GUI [$VOL2_input GetOutput]  [$VOL1_input GetOutput] TRANSFORM $OUTPUT_VOL  
-             
+          ::TumorGrowthReg::ResampleAG_GUI [$VOL2_INPUT_RES_PAD GetOutput]  [$VOL1_input GetOutput] $TRANSFORM $OUTPUT_VOL  
+          $VOL2_INPUT_RES_PAD Delete
+          $VOL2_INPUT_RES Delete 
           $VOL2_input Delete
           $VOL1_input Delete
 
-          ::TumorGrowthReg::WriteTransformationAG TRANSFORM [$NODE GetWorkingDir] 
+          ::TumorGrowthReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
           # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
           catch { exec mv [$NODE GetWorkingDir]/LinearRegistration.txt [$NODE GetWorkingDir]/${TYPE}LinearRegistration.txt }
 
-          catch {TRANSFORM Delete}
-     
+          catch {$TRANSFORM Delete}     
           set OUTPUT_VOL_EXT [vtkImageChangeInformation New]
           $OUTPUT_VOL_EXT SetInput $OUTPUT_VOL
           $OUTPUT_VOL_EXT SetOutputSpacing 1 1 1 
           $OUTPUT_VOL_EXT Update
 
           $OUTPUT_NODE SetAndObserveImageData [$OUTPUT_VOL_EXT GetOutput]
-      $OUTPUT_VOL_EXT Delete
+          $OUTPUT_VOL_EXT Delete
           $OUTPUT_VOL Delete
 
         # Alternatively - use itk rigid registration 
         #
-        #  $LOGIC RigidRegistration $SCAN1_NODE $SCAN2_NODE $OUTPUT_NODE $TRANSFORM 0
-        #
+        #  $LOGIC RigidRegistration $SCAN1_NODE $SCAN2_NODE $OUTPUT_NODE $TRANSFORM         #
     } else {
             puts "Debugging - jump over registration $VOL1"
             $OUTPUT_VOL  DeepCopy $VOL1

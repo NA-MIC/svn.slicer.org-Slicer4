@@ -16,6 +16,9 @@
 #include "vtkMatrix4x4.h"
 #include "vtkITKImageWriter.h"
 #include "vtkGeneralTransform.h"
+#include "vtkImageResample.h"
+#include "vtkImageConstantPad.h"
+
 // ./TumorGrowthCommandLine --sensitivity 0.5 --threshold 100,277 --roi_min 73,135,92 --roi_max 95,165,105 --intensity_analysis --deformable_analysis --scan1 /data/local/BrainScienceFoundation/Demo/07-INRIA/data/SILVA/2006-spgr.nhdr --scan2 /data/local/BrainScienceFoundation/Demo/07-INRIA/data/SILVA/2007-spgr-scan1.nhdr
 //
 //
@@ -155,27 +158,64 @@ int tgSetSLICER_HOME(char** argv)
   return 0;
 }
 
-int tgRegisterAG(vtkKWApplication *app, Tcl_Interp *interp, std::string Target, std::string Source, std::string WorkingDir, std::string Output) {
+int tgRegisterAG(vtkKWApplication *app, Tcl_Interp *interp, vtkImageData* Target, std::string TargetTcl, vtkImageData* Source, std::string WorkingDir, std::string Output) {
+
+  vtkImageResample *SourceRes = vtkImageResample::New();
+      SourceRes->SetDimensionality(3);
+      SourceRes->SetInterpolationModeToLinear();
+      SourceRes->SetInput(Source); 
+      SourceRes->SetBackgroundLevel(0);
+      SourceRes->SetAxisOutputSpacing(0,Target->GetSpacing()[0]);
+      SourceRes->SetAxisOutputSpacing(1,Target->GetSpacing()[1]);
+      SourceRes->SetAxisOutputSpacing(2,Target->GetSpacing()[2]);
+      SourceRes->SetOutputOrigin(Target->GetOrigin());
+      SourceRes->ReleaseDataFlagOff();
+   SourceRes->Update();
+
+   vtkImageConstantPad *SourceResPad = vtkImageConstantPad::New();
+      SourceResPad->SetInput(SourceRes->GetOutput());
+      SourceResPad->SetOutputWholeExtent(Target->GetWholeExtent());
+      SourceResPad->SetConstant(0);
+   SourceResPad->Update();
+
+   char *SourceResPadOutputTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,SourceResPad->GetOutput()));
+
+
   vtkGeneralTransform* Transform = vtkGeneralTransform::New();
   std::string TransformTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,Transform));
 
-  std::string CMD = "::TumorGrowthReg::RegistrationAG " +  Target + " IS " + Source + " IS 1 0 0 50 mono 3 " + TransformTcl;
+  std::string CMD = "::TumorGrowthReg::RegistrationAG " +  TargetTcl + " IS " + SourceResPadOutputTcl + " IS 1 0 0 50 mono 3 " + TransformTcl;
    
   if (!app->Script(CMD.c_str())) {
-    cout << "Error:  Could not perform Global Registration";
+    cout << "Error:  Could not perform Registration";
+    Transform->Delete();
+    SourceResPad->Delete();
+    SourceRes->Delete(); 
     return 1; 
-  }
+  } 
    
-  CMD = "::TumorGrowthReg::ResampleAG_GUI "+ Source + " " + Target + " " +  TransformTcl + " " + Output;
+  CMD = "::TumorGrowthReg::ResampleAG_GUI " + std::string(SourceResPadOutputTcl) + " " + TargetTcl + " " +  TransformTcl + " " + Output;
   app->Script(CMD.c_str());
    
   CMD = "::TumorGrowthReg::WriteTransformationAG "  +  TransformTcl + " " + WorkingDir;
   app->Script(CMD.c_str());
 
   Transform->Delete();
+  SourceResPad->Delete();
+  SourceRes->Delete(); 
 
   return 0; 
 }
+
+void  _Print(vtkImageData *DATA,::ostream& os)  {
+  vtkIndent indent;
+  // DATA->PrintSelf(os,indent.GetNextIndent());
+  os << indent <<  "Origin " << DATA->GetOrigin()[0] << " "  <<  DATA->GetOrigin()[1] << " "  <<  DATA->GetOrigin()[2] << endl;
+  os << indent <<  "Extent " << DATA->GetExtent()[0] << " "  <<  DATA->GetExtent()[1] << " "  <<  DATA->GetExtent()[2] << " " 
+     << DATA->GetExtent()[3] << " "  <<  DATA->GetExtent()[4] << " "  <<  DATA->GetExtent()[5] << endl; 
+  os << indent <<  "Spacing " << DATA->GetSpacing()[0] << " "  <<  DATA->GetSpacing()[1] << " "  <<  DATA->GetSpacing()[2] << endl;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -246,8 +286,8 @@ int main(int argc, char** argv)
     if (1) {
       // -------------------------------------
       cout << "=== Global Rigid Registration ===" << endl;
-
-      if (tgRegisterAG(app, interp, tg.Scan1DataTcl, tg.Scan2DataTcl , tg.GetWorkingDir(), Scan2GlobalTcl)) return EXIT_FAILURE;
+ 
+      if (tgRegisterAG(app, interp,  tg.Scan1Data, tg.Scan1DataTcl,  tg.Scan2Data , tg.GetWorkingDir(), Scan2GlobalTcl)) return EXIT_FAILURE;
 
       std::string CMD = "catch { exec mv " + tg.WorkingDir + "/LinearRegistration.txt " + tg.WorkingDir + "/GlobalLinearRegistration.txt }";
       app->Script(CMD.c_str());
@@ -349,7 +389,7 @@ int main(int argc, char** argv)
       // -------------------------------------
       cout << "=== Local Rigid Registration ===" << endl;
      
-      if (tgRegisterAG( app, interp, Scan1SuperSampleTcl, Scan2NormalizedTcl, tg.GetWorkingDir(), Scan2LocalTcl)) return EXIT_FAILURE;
+      if (tgRegisterAG( app, interp, Scan1SuperSample, Scan1SuperSampleTcl, Scan2Normalized, tg.GetWorkingDir(), Scan2LocalTcl)) return EXIT_FAILURE;
       std::string CMD = "catch { exec mv " + tg.WorkingDir + "/LinearRegistration.txt " + tg.WorkingDir + "/LocalLinearRegistration.txt }";
       app->Script(CMD.c_str());
 

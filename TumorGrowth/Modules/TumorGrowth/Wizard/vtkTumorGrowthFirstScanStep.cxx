@@ -46,18 +46,25 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
     vtkMRMLVolumeNode *VolNode = vtkMRMLVolumeNode::SafeDownCast(this->VolumeMenuButton->GetSelected());
 
     if (!VolNode && !VolNode->GetStorageNode() && !VolNode->GetStorageNode()->GetFileName()) {return; }    
-    char DIR[1024];
+
     char CMD[2024];
     vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
-    sprintf(DIR,"%s-TG",vtksys::SystemTools::GetParentDirectory(VolNode->GetStorageNode()->GetFileName()).c_str());
-    sprintf(CMD,"file isdirectory %s",DIR); 
+    std::string FilePath = vtksys::SystemTools::GetParentDirectory(VolNode->GetStorageNode()->GetFileName()) + "-TG";
+    // Check if it is a relative path !
+    sprintf(CMD,"file pathtype %s",FilePath.c_str()); 
+    if (strcmp(application->Script(CMD),"absolute")) {
+      FilePath = vtksys::SystemTools::GetParentDirectory(VolNode->GetScene()->GetURL()) + FilePath;
+    }
+    // cout << "Current Directory: " <<  FilePath.c_str() << endl;
+
+    sprintf(CMD,"file isdirectory %s",FilePath.c_str()); 
     if (!atoi(application->Script(CMD))) { 
-      sprintf(CMD,"file mkdir %s",DIR); 
+      sprintf(CMD,"file mkdir %s",FilePath.c_str()); 
       application->Script(CMD); 
     }
-    if (!node->GetWorkingDir() ||  !strcmp(DIR,node->GetWorkingDir())) {
-      cout << "Working directory is " <<  DIR << endl;
-      node->SetWorkingDir(DIR);
+    if (!node->GetWorkingDir() ||  !strcmp(FilePath.c_str(),node->GetWorkingDir())) {
+      cout << "Working directory is " <<  FilePath.c_str() << endl;
+      node->SetWorkingDir(FilePath.c_str());
     }
   }
 
