@@ -112,9 +112,7 @@ namespace eval TumorGrowthReg {
            return 1
   }
 
-  proc DeleteTransformAG { transform } {
-      catch {[$transform GetIntensityTransform] Delete }
-      catch {$transform Delete}
+  proc DeleteTransformAG { } {
       catch {RegisterSource Delete}
       catch {RegisterTarget Delete}  
       catch "GCR Delete"
@@ -662,6 +660,14 @@ proc WriteTransformationAG {gt directory} {
       
         # Set i/o
 
+        #puts " # TARGET ===================== "
+    #puts [RegisterTarget GetOrigin]
+        #::TumorGrowthTcl::VolumeWriter GCR_TARGET.nhdr RegisterTarget 
+
+    #puts  " # SOURCE ===================== "
+    #puts [RegisterSource GetOrigin]
+        #::TumorGrowthTcl::VolumeWriter GCR_SOURCE.nhdr RegisterSource 
+
         GCR SetTarget RegisterTarget
         GCR SetSource RegisterSource
         GCR PostMultiply 
@@ -678,10 +684,12 @@ proc WriteTransformationAG {gt directory} {
         
         ## 2D registration only?
         GCR SetTwoD 0
-        
+       
         # Do it!
         GCR Update     
-        
+
+        puts "======================"
+        puts "[GCR Print]" 
 
         $Transform Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
   
