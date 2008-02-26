@@ -15,13 +15,15 @@
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMatrix4x4.h"
 #include "vtkITKImageWriter.h"
-
+#include "vtkGeneralTransform.h"
 // ./TumorGrowthCommandLine --sensitivity 0.5 --threshold 100,277 --roi_min 73,135,92 --roi_max 95,165,105 --intensity_analysis --deformable_analysis --scan1 /data/local/BrainScienceFoundation/Demo/07-INRIA/data/SILVA/2006-spgr.nhdr --scan2 /data/local/BrainScienceFoundation/Demo/07-INRIA/data/SILVA/2007-spgr-scan1.nhdr
 //
 //
 // This is necessary to load in TumorGrowth package in TCL interp.
 extern "C" int Slicerbasegui_Init(Tcl_Interp *interp);
 extern "C" int Tumorgrowth_Init(Tcl_Interp *interp);
+extern "C" int Vtkteem_Init(Tcl_Interp *interp);
+extern "C" int Vtkitk_Init(Tcl_Interp *interp);
 
 #define tgVtkCreateMacro(name,type) \
   name  = type::New(); \
@@ -153,19 +155,24 @@ int tgSetSLICER_HOME(char** argv)
   return 0;
 }
 
-int tgRegisterAG(vtkKWApplication *app, std::string Target, std::string Source, std::string Transform, std::string WorkingDir, std::string Output) {
-  std::string CMD = "::TumorGrowthReg::RegistrationAG " +  Target + " IS " + Source + " IS 1 0 0 50 mono 3 " + Transform;
+int tgRegisterAG(vtkKWApplication *app, Tcl_Interp *interp, std::string Target, std::string Source, std::string WorkingDir, std::string Output) {
+  vtkGeneralTransform* Transform = vtkGeneralTransform::New();
+  std::string TransformTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,Transform));
+
+  std::string CMD = "::TumorGrowthReg::RegistrationAG " +  Target + " IS " + Source + " IS 1 0 0 50 mono 3 " + TransformTcl;
    
   if (!app->Script(CMD.c_str())) {
     cout << "Error:  Could not perform Global Registration";
     return 1; 
   }
    
-  CMD = "::TumorGrowthReg::ResampleAG_GUI "+ Source + " " + Target + " " +  Transform + " " + Output;
+  CMD = "::TumorGrowthReg::ResampleAG_GUI "+ Source + " " + Target + " " +  TransformTcl + " " + Output;
   app->Script(CMD.c_str());
    
-  CMD = "::TumorGrowthReg::WriteTransformationAG "  +  Transform + " " + WorkingDir;
+  CMD = "::TumorGrowthReg::WriteTransformationAG "  +  TransformTcl + " " + WorkingDir;
   app->Script(CMD.c_str());
+
+  Transform->Delete();
 
   return 0; 
 }
@@ -190,6 +197,8 @@ int main(int argc, char** argv)
   
     // This is necessary to load in TumorGrowth package in TCL interp.
     Tumorgrowth_Init(interp);
+    Vtkteem_Init(interp);
+    Vtkitk_Init(interp);
 
     // SLICER_HOME
     if (tgSetSLICER_HOME(argv)) {
@@ -237,15 +246,13 @@ int main(int argc, char** argv)
     if (1) {
       // -------------------------------------
       cout << "=== Global Rigid Registration ===" << endl;
-      vtkGeneralTransform* globalTransform = logic->CreateGlobalTransform(); 
-      std::string globalTransformTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,globalTransform));
 
-      if (tgRegisterAG( app, tg.Scan1DataTcl, tg.Scan2DataTcl , globalTransformTcl, tg.GetWorkingDir(), Scan2GlobalTcl)) return EXIT_FAILURE;
+      if (tgRegisterAG(app, interp, tg.Scan1DataTcl, tg.Scan2DataTcl , tg.GetWorkingDir(), Scan2GlobalTcl)) return EXIT_FAILURE;
 
       std::string CMD = "catch { exec mv " + tg.WorkingDir + "/LinearRegistration.txt " + tg.WorkingDir + "/GlobalLinearRegistration.txt }";
       app->Script(CMD.c_str());
 
-      CMD = "catch { ::TumorGrowthReg::DeleteTransformAG " + globalTransformTcl + " }";
+      CMD = "catch { ::TumorGrowthReg::DeleteTransformAG }";
       app->Script(CMD.c_str());
 
       CMD = tg.WorkingDir + "/TG_scan2_Global.nhdr";
@@ -341,14 +348,12 @@ int main(int argc, char** argv)
     if (1) {
       // -------------------------------------
       cout << "=== Local Rigid Registration ===" << endl;
-      vtkGeneralTransform* localTransform = logic->CreateLocalTransform(); 
-      std::string localTransformTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,localTransform));
-
-      if (tgRegisterAG( app, Scan1SuperSampleTcl, Scan2NormalizedTcl, localTransformTcl, tg.GetWorkingDir(), Scan2LocalTcl)) return EXIT_FAILURE;
+     
+      if (tgRegisterAG( app, interp, Scan1SuperSampleTcl, Scan2NormalizedTcl, tg.GetWorkingDir(), Scan2LocalTcl)) return EXIT_FAILURE;
       std::string CMD = "catch { exec mv " + tg.WorkingDir + "/LinearRegistration.txt " + tg.WorkingDir + "/LocalLinearRegistration.txt }";
       app->Script(CMD.c_str());
 
-      CMD = "catch { ::TumorGrowthReg::DeleteTransformAG " + localTransformTcl + " }";
+      CMD = "catch { ::TumorGrowthReg::DeleteTransformAG }";
       app->Script(CMD.c_str());
    
       tgWriteVolume(Scan2LocalFileName.c_str(),Scan2Local);
