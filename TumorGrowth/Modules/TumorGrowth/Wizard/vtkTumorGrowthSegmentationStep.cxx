@@ -179,7 +179,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
 
     // Necesary in order to transfere results from above lines  
     this->ThresholdRangeChangedCallback(min, max);
-    this->TransitionCallback();   
+    // this->TransitionCallback();   
   }
     
   // Kilian
@@ -336,27 +336,26 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
             !strcmp(model->GetName(), "Green Volume Slice") ||
             !strcmp(model->GetName(), "Yellow Volume Slice"))
           {
-        cout << "==================> Found " << model->GetName() << endl;
+            cout << "==================> Found " << model->GetName() << endl;
             slices.push_back(model);
             vtkMRMLDisplayNode *displayNode = model->GetDisplayNode();
-         cout << "0000000000000000000" << endl;
-        vtkIndent indi;
-        displayNode->GetTextureImageData()->PrintSelf(cout,indi);
-         cout << "0000000000000000000" << endl;
+    
+            vtkIndent indi;
+            displayNode->GetTextureImageData()->PrintSelf(cout,indi);
       
       
-        vtkMRMLModelNode* copyNode  = vtkSlicerModelsLogic::CloneModel(mrmlScene,vtkMRMLModelNode::SafeDownCast(model),"blub");
-        if (!copyNode) {
-          cout << "Did not create copy of " << model->GetName() << endl;
-        } else {
+            vtkMRMLModelNode* copyNode  = vtkSlicerModelsLogic::CloneModel(mrmlScene,vtkMRMLModelNode::SafeDownCast(model),"blub");
+            if (!copyNode) {
+              cout << "Did not create copy of " << model->GetName() << endl;
+            } else {
           
-          vtkMRMLDisplayNode *tmp = copyNode->GetDisplayNode();
+              vtkMRMLDisplayNode *tmp = copyNode->GetDisplayNode();
               tmp->SetVisibility(1);
               vtkIndent ind;
-          tmp->PrintSelf(cout,ind);
-          vtkImageData *blub = tmp->GetTextureImageData();
-          blub->Update();
-        }
+              tmp->PrintSelf(cout,ind);
+              vtkImageData *blub = tmp->GetTextureImageData();
+              blub->Update();
+            }
         }
       }
   }
