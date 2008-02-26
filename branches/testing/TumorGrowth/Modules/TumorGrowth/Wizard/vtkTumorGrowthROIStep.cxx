@@ -138,6 +138,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // Display Scan1, Delete Super Sampled and Grid  
   // ----------------------------------------
   this->DeleteSuperSampleNode();
+
   vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
   int dimensions[3]={1,1,1};
   if (node) {
@@ -148,6 +149,33 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
       applicationLogic->PropagateVolumeSelection();
       memcpy(dimensions,volumeNode->GetImageData()->GetDimensions(),sizeof(int)*3);
     } 
+
+    if (1) {
+      vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
+      vtkIntArray *events = vtkIntArray::New();
+      events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
+      events->InsertNextValue(vtkMRMLScene::SceneCloseEvent);
+      events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+      events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+
+      vtkSlicerSliceLogic *sliceLogicTG = vtkSlicerSliceLogic::New ( );
+      sliceLogicTG->SetName("TG");
+      sliceLogicTG->SetMRMLScene ( this->GetGUI()->GetMRMLScene());
+      sliceLogicTG->ProcessLogicEvents ();
+      sliceLogicTG->ProcessMRMLEvents (this->GetGUI()->GetMRMLScene(), vtkCommand::ModifiedEvent, NULL);
+      sliceLogicTG->SetAndObserveMRMLSceneEvents (this->GetGUI()->GetMRMLScene(), events );
+      events->Delete();
+
+      if (applicationLogic->GetSlices())
+      {
+         applicationLogic->GetSlices()->AddItem(sliceLogicTG);
+      }
+
+      // vtkSlicerSliceLogic *logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
+      sliceLogicTG->GetSliceModelNode()->GetModelDisplayNode()->SetVisibility(1);
+    }
+
+
   } else {
     cout << "no node "  << endl;
   }
@@ -363,7 +391,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // You only want to add the observers below when the step is active 
   this->AddROISamplingGUIObservers();
 
-  this->TransitionCallback();
+  // this->TransitionCallback();
 }
 
 //----------------------------------------------------------------------------

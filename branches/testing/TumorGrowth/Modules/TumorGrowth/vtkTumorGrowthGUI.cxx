@@ -433,13 +433,14 @@ void vtkTumorGrowthGUI::BuildGUI()
   // This way we can restart the machine - did not work 
   // wizard_workflow->CreateGoToTransitions(wizard_workflow->GetInitialStep());
 
- if ( 1 )  {
+ if ( 0 )  {
     cout << "====================" << endl;
     cout << "DEBUGGING" << endl;
     vtkSlicerApplicationGUI *applicationGUI = this->GetApplicationGUI();
     if (!applicationGUI) return; 
   
-    char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
+    // char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
+    char fileName[1024] = "/home/pohl/Slicer/Slicer3/Modules/TumorGrowth/Test/data2.mrml";
     std::string fl(fileName);
     applicationGUI->GetMRMLScene()->SetURL(fileName);
     applicationGUI->GetMRMLScene()->Connect();

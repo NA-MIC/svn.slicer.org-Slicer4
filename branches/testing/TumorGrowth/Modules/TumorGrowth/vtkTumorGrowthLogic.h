@@ -4,7 +4,7 @@
 #include "vtkSlicerModuleLogic.h"
 #include "vtkTumorGrowth.h"
 #include "vtkMRMLTumorGrowthNode.h"
-#include "vtkGeneralTransform.h"
+#include "vtkTransform.h"
 
 #include <string>
 #include <map>
@@ -37,11 +37,6 @@ public:
   // the proc invocations
   vtkGetStringMacro (ModuleName);
   vtkSetStringMacro (ModuleName);
-
-  vtkGetObjectMacro (GlobalTransform, vtkGeneralTransform);
-  vtkGeneralTransform* CreateGlobalTransform();
-  vtkGetObjectMacro (LocalTransform,  vtkGeneralTransform);
-  vtkGeneralTransform* CreateLocalTransform();
 
   vtkGetObjectMacro (TumorGrowthNode, vtkMRMLTumorGrowthNode);
   void SetAndObserveTumorGrowthNode(vtkMRMLTumorGrowthNode *n) 
@@ -112,6 +107,16 @@ public:
   static void DefinePreSegment(vtkImageData *INPUT, const int RANGE[2], vtkImageThreshold *OUTPUT);
   static void DefineSegment(vtkImageData *INPUT, vtkImageIslandFilter *OUTPUT);
 
+  // Stole it from vtkEMSegmentLogic
+  static void RigidRegistration(vtkMRMLVolumeNode* fixedVolumeNode, vtkMRMLVolumeNode* movingVolumeNode, 
+                    vtkMRMLVolumeNode* outputVolumeNode, vtkTransform* fixedRASToMovingRASTransform, 
+                    double backgroundLevel);
+
+  static void LinearResample (vtkMRMLVolumeNode* inputVolumeNode, vtkMRMLVolumeNode* outputVolumeNode, vtkMRMLVolumeNode* outputVolumeGeometryNode,
+                 vtkTransform* outputRASToInputRASTransform, double backgroundLevel);
+
+
+
 private:
   vtkTumorGrowthLogic();
   ~vtkTumorGrowthLogic();
@@ -138,8 +143,8 @@ private:
   double ProgressGlobalFractionCompleted;
   double ProgressCurrentFractionCompleted;
 
-  vtkGeneralTransform* GlobalTransform; 
-  vtkGeneralTransform* LocalTransform; 
+  //vtkTransform* GlobalTransform; 
+  // vtkTransform* LocalTransform; 
 
   double Analysis_Intensity_Mean;
   double Analysis_Intensity_Variance;
