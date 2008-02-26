@@ -30,20 +30,22 @@ extern "C" {
 
 template <typename T>
 __device__ T interpolate(float posX, float posY, float posZ,
-                         T val1, T val2, T val3, T val4, T val5, T val6, T val7,T val8)
+                         T val1, T val2, T val3, T val4,
+                         T val5, T val6, T val7, T val8)
 {
-    float revX= 1-posX;
-    float revY= 1-posY;
-    float revZ= 1-posZ;
+    float revX = 1-posX;
+    float revY = 1-posY;
+    float revZ = 1-posZ;
 
-    return ((T) (revX * revY * revZ * val1 +
-        revX * revY * posZ * val2 +
-        revX * posY * revZ * val3 +
-        revX * posY * posZ * val4 +
-        posX * revY * revZ * val5 +
-        posX * revY * posZ * val6 +
-        posX * posY * revZ * val7 +
-        posX * posY * posZ * val8)
+    return ((T) 
+       (revX * (revY * (revZ * val1  +
+                        posZ * val2) +
+                posY * (revZ * val3  +
+                        posZ * val4))+
+        posX * (revY * (revZ * val5  +
+                        posZ * val6)   +
+                posY * (revZ * val7 +
+                        posZ * val8)))
         );
 }
 
@@ -228,9 +230,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
             if((pos + s_minmaxTrace[index.z].x)*stepSize < initialZBuffer)
             { 
 
-                tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
-                    __float2int_rn(tempPos.y)*volInfo.VolumeSize.x +
-                    __float2int_rn(tempPos.x))];
+                //tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+                //    __float2int_rn(tempPos.y)*volInfo.VolumeSize.x +
+                //    __float2int_rn(tempPos.x))];
                 /*interpolation start here*/
                 float posX = tempPos.x-__float2int_rd(tempPos.x);
                 float posY = tempPos.y-__float2int_rd(tempPos.y);
@@ -247,7 +249,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
                     __float2int_rd((tempPos.y))*volInfo.VolumeSize.x + 
                     __float2int_rd((tempPos.x));
 
-                tempValue=interpolate(posX, posY,0.0,
+                tempValue=interpolate(posX, posY, posZ,
                     ((T*)volInfo.SourceData)[base],
                     ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y)],
                     ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x)],
