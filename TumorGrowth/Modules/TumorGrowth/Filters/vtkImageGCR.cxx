@@ -17,7 +17,7 @@
 #include "vtkImageShrink3D.h"
 #include "vtkMath.h"
 #include "vtkObjectFactory.h"
-#include "vtkImageChangeInformation.h"
+#include "vtkImageChangeInformation.h" 
 
 #include <cmath>
 #include <iomanip>
@@ -34,12 +34,27 @@ using namespace std;
 //   writer->Delete();
 // }
 
+#include "vtkNRRDWriter.h" 
+static void VolumeWriter (vtkImageData *DATA, char* fileName) {
+  char blub[1024];
+  sprintf(blub,"/home/pohl/temp/3_%s.nhdr", fileName);
+  cout << "Write " << blub << endl;  
+  vtkNRRDWriter *iwriter =  vtkNRRDWriter::New();
+  iwriter->SetInput(DATA);
+  iwriter->SetFileName(blub);
+  iwriter->Write();
+  iwriter->Delete();
+}
+
 
 void  _Print(vtkImageData *DATA,::ostream& os, vtkIndent indent)  {
- // DATA->PrintSelf(os,indent.GetNextIndent());
-  os << indent <<  DATA->GetOrigin()[0] << " "  <<  DATA->GetOrigin()[1] << " "  <<  DATA->GetOrigin()[2] << endl;
-
+  // DATA->PrintSelf(os,indent.GetNextIndent());
+  os << indent <<  "Origin " << DATA->GetOrigin()[0] << " "  <<  DATA->GetOrigin()[1] << " "  <<  DATA->GetOrigin()[2] << endl;
+  os << indent <<  "Extent " << DATA->GetExtent()[0] << " "  <<  DATA->GetExtent()[1] << " "  <<  DATA->GetExtent()[2] << " " 
+     << DATA->GetExtent()[3] << " "  <<  DATA->GetExtent()[4] << " "  <<  DATA->GetExtent()[5] << endl; 
+  os << indent <<  "Spacing " << DATA->GetSpacing()[0] << " "  <<  DATA->GetSpacing()[1] << " "  <<  DATA->GetSpacing()[2] << endl;
 }
+
 
 float* vtkImageGCR::vector(int nl,int nh)
 {
@@ -775,12 +790,23 @@ float vtkImageGCR::Compute()
   unsigned char* sptr =
     static_cast<unsigned char*>(this->WorkSource->GetScalarPointerForExtent(sExt));
 
+  // Kilian int vtkIdType tincX,tincY,tincZ;
   vtkIdType tincX,tincY,tincZ;
+  //cout << "Different From before - int before" << endl;
   this->WorkTarget->GetContinuousIncrements(tExt,tincX,tincY,tincZ);
-  vtkIdType* sInc = this->WorkSource->GetIncrements();
+  //cout << "**tincX "<< tincX << " " << tincY << " " << tincZ << endl;
+  //cout << "tExt "<< tExt[0] << " " << tExt[1] << " " << tExt[2] << " " << tExt[3] << " " << tExt[4] << " " << tExt[5] << endl;
+
+  // Kilian different
+  // int* sInc = this->WorkSource->GetIncrements();
+  vtkIdType* _sInc = this->WorkSource->GetIncrements();
+  int sInc[3] = { int(_sInc[0]),  int(_sInc[1]),  int(_sInc[2])} ;
+  // cout << "sInc "<< sInc[0] << " " << sInc[1] << " " << sInc[2] << endl;
 
   unsigned char* mptr = 0;
-  vtkIdType mincX,mincY,mincZ;
+  // int mincX,mincY,mincZ;
+  vtkIdType  mincX,mincY,mincZ;
+
   if(this->GetMask() != 0)
     {
     mptr = static_cast<unsigned char*>(this->WorkMask->GetScalarPointerForExtent(tExt));
@@ -815,9 +841,7 @@ float vtkImageGCR::Compute()
       point[1] = (point[1] - sOrigin[1])*sInvSpacing[1];
       point[2] = (point[2] - sOrigin[2])*sInvSpacing[2];
 
-      // vtkIdType *blub;
-      int intsInc[3] = {int(sInc[0]), int(sInc[1]),int(sInc[2])}; 
-      (this->*InterpolationFunction)(point,tptr,sptr,sExt,intsInc,jh);
+      (this->*InterpolationFunction)(point,tptr,sptr,sExt,sInc,jh);
       }
     ++tptr;
     if(mptr)
@@ -1315,15 +1339,17 @@ void vtkImageGCR::NormalizeImages()
   if(sz==0) sz=1;
 
   // extract first component
-  vtkImageExtractComponents* Extract = vtkImageExtractComponents::New();
-  Extract->SetComponents(0);
-  Extract->SetInput(t);
+  vtkImageExtractComponents* Extract_t = vtkImageExtractComponents::New();
+  Extract_t->SetComponents(0);
+  Extract_t->SetInput(t);
+  Extract_t->Update();
   
   // shrink target
   vtkImageShrink3D* Shrink = vtkImageShrink3D::New();
   Shrink->AveragingOff();
   Shrink->SetShrinkFactors(sx,sy,sz);
-  Shrink->SetInput(Extract->GetOutput());
+  Shrink->SetInput(Extract_t->GetOutput());
+
 
   vtkImageHistogramNormalization* Normalized = vtkImageHistogramNormalization::New();
   Normalized->SetOutputScalarTypeToUnsignedChar();
@@ -1343,24 +1369,37 @@ void vtkImageGCR::NormalizeImages()
     }
   
   // normalize source
+  vtkImageExtractComponents* Extract_s = vtkImageExtractComponents::New();
+  Extract_s->SetComponents(0);
+  Extract_s->SetInput(s);
+  Extract_s->Update();
 
-  Extract->SetInput(s);
-  vtkImageChangeInformation *Extract_ = vtkImageChangeInformation::New();
-  Extract_->SetOutputOrigin(s->GetOrigin());
-  Extract_->SetInput(Extract->GetOutput());
-  Extract_->Update();
+  // Kilian - Feb 08 : I do not know why but the output format is changed if you do not 
+  // => unreliable results - Test this is also true for slicer2 
+  vtkImageChangeInformation *Extract_si =  vtkImageChangeInformation::New();
+  Extract_si->SetInput(Extract_s->GetOutput());
+  Extract_si->SetOutputOrigin(s->GetOrigin());
+  Extract_si->SetOutputSpacing(s->GetSpacing());
+  Extract_si->Update();
 
-  Normalized->SetInput(Extract_->GetOutput());
-
+  Normalized->SetInput(Extract_si->GetOutput());
   Normalized->SetOutput(this->WorkSource);
 
   this->WorkSource->Update();
   this->WorkSource->SetSource(0);
 
+  
+  // VolumeWriter (Extract->GetOutput(),"EXTRACT_S"); 
+  //  _Print(Extract_s->GetOutput(),cout,ind);
+ 
+  //   Write(this->WorkTarget,"/tmp/t.vtk"); 
+  //   Write(this->WorkSource,"/tmp/s.vtk");
+
+  Extract_si->Delete();
+  Extract_s->Delete();
   Shrink->Delete();
   Normalized->Delete();
-  Extract->Delete();
- Extract_->Delete();
+  Extract_t->Delete();
 }
 
 
@@ -1375,53 +1414,57 @@ void vtkImageGCR::Inverse()
 //void vtkImageGCR::PrintSelf(ostream& os, vtkIndent indent)
 void vtkImageGCR::PrintSelf(::ostream& os, vtkIndent indent)
 {
-  this->vtkTransform::PrintSelf(os,indent);
+  // this->vtkTransform::PrintSelf(os,indent);
 
   os << indent << "TransformDomain: " << this->TransformDomain << "\n";
   os << indent << "Interpolation: " << this->Interpolation << "\n";
   os << indent << "Criterion: " << this->Criterion << "\n";
   os << indent << "Verbose: " << this->Verbose << "\n";
-
-  os << indent << "\n";
+  
   os << indent << "Target: " << this->Target << "\n";
   if(this->Target)
     {
+      // this->Target->PrintSelf(os,indent.GetNextIndent());
       _Print(this->Target,os,indent.GetNextIndent());
     }
   os << indent << "Source: " << this->Source << "\n";
   if(this->Source)
     {
-      _Print(this->Source,os,indent.GetNextIndent());
+      // this->Source->PrintSelf(os,indent.GetNextIndent());
+    _Print(this->Source,os,indent.GetNextIndent());
+
     }
   os << indent << "Mask: " << this->Mask << "\n";
   if(this->Mask)
     {
+      // this->Mask->PrintSelf(os,indent.GetNextIndent());
       _Print(this->Mask,os,indent.GetNextIndent());
     }
   os << indent << "WorkTarget: " << this->WorkTarget << "\n";
   if(this->WorkTarget)
     {
+      // this->WorkTarget->PrintSelf(os,indent.GetNextIndent());
       _Print(this->WorkTarget,os,indent.GetNextIndent());
     }
   os << indent << "WorkSource: " << this->WorkSource << "\n";
   if(this->WorkSource)
     {
-      _Print(this->WorkSource,os,indent.GetNextIndent());      
+      // this->WorkSource->PrintSelf(os,indent.GetNextIndent());
+      _Print(this->WorkSource,os,indent.GetNextIndent());
     }
   os << indent << "WorkMask: " << this->WorkMask << "\n";
   if(this->WorkMask)
     {
-      _Print(this->WorkMask,os,indent.GetNextIndent());      
+      // this->WorkMask->PrintSelf(os,indent.GetNextIndent());
+      _Print(this->WorkMask,os,indent.GetNextIndent());
     }
-  os << indent << "\n";
-
   os << indent << "GeneralTransform: " << this->GeneralTransform << "\n";
-  if(this->GeneralTransform)
+  if(this->GeneralTransform && 0)
     {
     this->GeneralTransform->PrintSelf(os,indent.GetNextIndent());
     }
   os << indent << "WorkTransform: " << this->WorkTransform << "\n";
-  if(this->WorkTransform)
+  if(this->WorkTransform && 0 )
     {
     this->WorkTransform->PrintSelf(os,indent.GetNextIndent());
     }
