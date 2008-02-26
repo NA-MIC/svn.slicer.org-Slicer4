@@ -52,6 +52,11 @@ INCLUDE_DIRECTORIES(
   ${VTK_INCLUDE_DIR}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
+  ${EMSegment_SOURCE_DIR}/Registration
+  ${EMSegment_SOURCE_DIR}
+  ${EMSegment_BINARY_DIR}
+  ${vtkTeem_SOURCE_DIR} 
+  ${vtkTeem_BINARY_DIR}
   )
 
 # Enders work 
@@ -82,6 +87,7 @@ IF(BUILD_SHARED_LIBS)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(TumorGrowth
+  EMSegment
   SlicerBaseLogic 
   SlicerBaseGUI 
   MRML
@@ -99,6 +105,7 @@ TARGET_LINK_LIBRARIES(TumorGrowth
   ITKBasicFilters
   ITKIO
   ITKDICOMParser
+  vtkTeem 
   ${KWWidgets_LIBRARIES} 
   )
 
