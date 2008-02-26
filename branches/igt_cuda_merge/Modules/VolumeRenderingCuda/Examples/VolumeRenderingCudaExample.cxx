@@ -47,6 +47,7 @@ vtkKWCheckButton* cb_Animate;
 vtkKWMenuButton*  mb_Model;
 
 int frameNumber = 0;
+int frameCount = 1;
 vtkImageReader* reader[11];
 bool renderScheduled = false;
 
@@ -65,6 +66,8 @@ void LoadHead()
     reader[0]->SetFileName("D:\\fullhead94.raw");
     reader[0]->Update();
 
+    frameCount = 1;
+
     VolumeMapper->SetInput(reader[0]->GetOutput());
 }
 
@@ -78,14 +81,18 @@ void LoadHeart()
     reader[0]->SetFileName("D:\\heart256.raw");
     reader[0]->Update();
 
+    frameCount = 1;
+
     VolumeMapper->SetInput(reader[0]->GetOutput());
 }
 
 void LoadHeartSeries()
 {
-//    Reading in the Data using a ImageReader
+    //    Reading in the Data using a ImageReader
     for (unsigned int i = 0; i < 5; i++ ) 
     {
+        if (reader[i] == NULL)
+            reader[i] = vtkImageReader::New();
         reader[i]->SetDataScalarTypeToUnsignedChar();
         reader[i]->SetNumberOfScalarComponents(1);
         reader[i]->SetDataExtent(0, 255,
@@ -94,16 +101,14 @@ void LoadHeartSeries()
         reader[i]->SetFileDimensionality(3);
         reader[i]->SetDataSpacing(1.0, 1.0, 1.0);
 
-
         std::stringstream s;
         s << "C:\\heart256-" << i+1 << ".raw";
-        //s << "C:\\fullhead94.raw";
 
         reader[i]->SetFileName(s.str().c_str());
         reader[i]->Update();
-
-        //        volumeMapper->MultiInput[i] = reader[i]->GetOutput();
     }
+    frameCount = 5;
+
 }
 
 void LoadLung()
@@ -112,7 +117,7 @@ void LoadLung()
     reader[0]->SetNumberOfScalarComponents(1);
     reader[0]->SetDataExtent(0, 127, 0, 127, 0, 29);
     reader[0]->SetFileDimensionality(3);
-    reader[0]->SetDataSpacing(1.0, 1.0, 1.0);
+    reader[0]->SetDataSpacing(3.125f, 3.125f, 5.000f);
 
     std::stringstream s;
     s << "D:\\Volumes\\RawLung\\92\\lung.raw";
@@ -121,28 +126,31 @@ void LoadLung()
     reader[0]->Update();
 
     VolumeMapper->SetInput(reader[0]->GetOutput());
+    frameCount = 1;
+
 }
 
 void LoadLungSeries()
 {
-        int j = 92;
+    int j = 92;
     for (unsigned int i = 0; i < 11; i ++)
     {
         if (reader[i] == NULL)
             reader[i] = vtkImageReader::New();
-    reader[i]->SetDataScalarTypeToShort();
-    reader[i]->SetNumberOfScalarComponents(1);
-    reader[i]->SetDataExtent(0, 127, 0, 127, 0, 29);
-    reader[i]->SetFileDimensionality(3);
-    reader[i]->SetDataSpacing(1.0, 1.0, 1.0);
+        reader[i]->SetDataScalarTypeToShort();
+        reader[i]->SetNumberOfScalarComponents(1);
+        reader[i]->SetDataExtent(0, 127, 0, 127, 0, 29);
+        reader[i]->SetFileDimensionality(3);
+        reader[i]->SetDataSpacing(3.125f, 3.125f, 5.000f);
 
-    std::stringstream s;
-    s << "D:\\Volumes\\RawLung\\" << j++ << "\\lung.raw";
+        std::stringstream s;
+        s << "D:\\Volumes\\RawLung\\" << j++ << "\\lung.raw";
 
-    reader[i]->SetFileName(s.str().c_str());
-    reader[i]->Update();
+        reader[i]->SetFileName(s.str().c_str());
+        reader[i]->Update();
     }
     VolumeMapper->SetInput(reader[0]->GetOutput());
+    frameCount = 11;
 }
 
 void LoadProstate()
@@ -156,44 +164,53 @@ void LoadProstate()
     reader[0]->Update();
 
     VolumeMapper->SetInput(reader[0]->GetOutput());
+    frameCount = 1;
 }
 
 void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
-        if (! strcmp(mb_Model->GetValue(), "Head"))
-            LoadHead();
-        else if (!strcmp(mb_Model->GetValue(), "Heart"))
-            LoadHeart();
-        else if (!strcmp(mb_Model->GetValue(), "Lung"))
-            LoadLungSeries();
-        else if (!strcmp(mb_Model->GetValue(), "Prostate"))
-            LoadProstate();
-        else
-            Clear();
-        renderWidget->Modified();
+    cb_Animate->SetSelectedState(0);
+    if (! strcmp(mb_Model->GetValue(), "Head"))
+        LoadHead();
+    else if (!strcmp(mb_Model->GetValue(), "Heart"))
+        LoadHeartSeries();
+    else if (!strcmp(mb_Model->GetValue(), "Lung"))
+        LoadLungSeries();
+    else if (!strcmp(mb_Model->GetValue(), "Prostate"))
+        LoadProstate();
+    else
+        Clear();
 
+    renderWidget->GetRenderer()->Render();
 }
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
     if (caller == ThresholdRange)
-      VolumeMapper->SetThreshold(ThresholdRange->GetRange());
+        VolumeMapper->SetThreshold(ThresholdRange->GetRange());
     else if (caller == SteppingSizeScale)
         VolumeMapper->SetSampleDistance(SteppingSizeScale->GetValue());
     else if (caller == ScaleFactorScale)
         VolumeMapper->SetRenderOutputScaleFactor(ScaleFactorScale->GetValue());
 
-    VolumeMapper->Modified();
-    renderWidget->Modified();
-    renderWidget->GetRenderer()->Render();
+    //renderWidget->SetRenderModeToInteractive();
+    VolumeMapper->SetInput(reader[0]->GetOutput());
+    //app->Script("after 10 %s Render", renderWidget->GetTclName());
+    //    renderWidget->Modified();
+    //renderWidget->GetRenderer()->Render();
+
+}
+
+void StartRender(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
+{
+    renderScheduled = false;
 }
 
 void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
-    int enabled = cb_Animate->GetSelectedState();
     if (cb_Animate->GetSelectedState() == 1)
     {
-        if (++frameNumber == 11)
+        if (++frameNumber == frameCount)
             frameNumber = 0;
         VolumeMapper->SetInput(reader[frameNumber]->GetOutput());
         //if (renderScheduled == false)
@@ -201,7 +218,7 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
         //    renderScheduled = true;
         //    renderWidget->SetRenderModeToInteractive();
         //    cerr << *renderWidget;
-        //    app->Script("after 100 %s Render", renderWidget->GetTclName());
+        //    //  app->Script("after 1000 %s Render", renderWidget->GetTclName());
         //}
     }
 }
@@ -282,6 +299,10 @@ int my_main(int argc, char *argv[])
     /// GUI EVENT
     vtkCallbackCommand* GUICallbackCommand = vtkCallbackCommand::New ( );
     GUICallbackCommand->SetCallback( UpdateRenderer);
+
+    vtkCallbackCommand* StartCallbackCommand = vtkCallbackCommand::New ( );
+    StartCallbackCommand->SetCallback( StartRender );
+
     vtkCallbackCommand* AnimCallbackCommand = vtkCallbackCommand::New ( );
     AnimCallbackCommand->SetCallback( Animate);
     vtkCallbackCommand* ModelCallbackCommand = vtkCallbackCommand::New();
@@ -301,7 +322,7 @@ int my_main(int argc, char *argv[])
 
     app->Script("pack %s -side top -anchor nw -expand n -fill x -pady 2",
         mb_Model->GetWidgetName()); 
-    
+
     //Volume Property
     VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
     VolumePropertyWidget->SetParent(win->GetMainPanelFrame());
@@ -358,6 +379,7 @@ int my_main(int argc, char *argv[])
     renderWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
     renderWidget->SetRenderModeToInteractive();
 
+    renderWidget->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,  (vtkCommand*)StartCallbackCommand);
     renderWidget->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,  (vtkCommand*)AnimCallbackCommand);
     int ret = 0;
     win->Display();

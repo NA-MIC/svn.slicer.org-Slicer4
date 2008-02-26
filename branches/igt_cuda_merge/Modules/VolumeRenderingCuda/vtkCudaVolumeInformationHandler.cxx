@@ -72,6 +72,8 @@ void vtkCudaVolumeInformationHandler::SetInputData(vtkImageData* inputData)
         inputData->GetPointData()->GetScalars()->GetRange(range);
         this->VolumeInfo.FunctionRange[0] = range[0];
         this->VolumeInfo.FunctionRange[1] = range[1];
+        //HACK
+        this->VolumeInfo.MaxThreshold = range[1];
 
         this->UpdateImageData();
         this->Modified();
@@ -129,6 +131,12 @@ void vtkCudaVolumeInformationHandler::UpdateVolumeProperties(vtkVolumeProperty *
     this->LocalAlphaTransferFunction.CopyTo(&this->CudaAlphaTransferFunction);
     this->VolumeInfo.AlphaTransferFunction = this->CudaAlphaTransferFunction.GetMemPointerAs<float>();
     this->VolumeInfo.ColorTransferFunction = this->CudaColorTransferFunction.GetMemPointerAs<float>();
+
+    this->VolumeInfo.Ambient = property->GetAmbient();
+    this->VolumeInfo.Diffuse = property->GetDiffuse();
+    this->VolumeInfo.Specular = property->GetSpecular();
+    this->VolumeInfo.SpecularPower = property->GetSpecularPower();
+    
 }
 
 #include "vtkMatrix4x4.h"
