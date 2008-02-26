@@ -17,11 +17,15 @@
 
 #include "LoadableModuleWin32Header.h"
 
+#include "vtkTclUtil.h"
+
 #include <string>
 #include <vector>
 
 class vtkSlicerModuleGUI;
 class vtkSlicerModuleLogic;
+
+typedef void * (*TclInit)(Tcl_Interp*);
 
 class LoadableModule_EXPORT LoadableModuleDescription
 {
@@ -71,6 +75,16 @@ public:
     return this->GUIName;
   }
 
+  void SetTclInitName(const std::string &name)
+  {
+    this->TclInitName = name;
+  }
+
+  const std::string& GetTclInitName() const
+  {
+    return this->TclInitName;
+  }
+
   void SetMessage(const std::string &message)
   {
     this->Message = message;
@@ -81,24 +95,34 @@ public:
     return this->Message;
   }
 
-  void SetGUIFunction(vtkSlicerModuleGUI* guiFunction)
+  void SetGUIPtr(vtkSlicerModuleGUI* guiPtr)
   {
-    this->GUIFunction = guiFunction;
+    this->GUIPtr = guiPtr;
   }
 
-  vtkSlicerModuleGUI* GetGUIFunction() const
+  vtkSlicerModuleGUI* GetGUIPtr() const
   {
-    return this->GUIFunction;
+    return this->GUIPtr;
   }
  
-  void SetLogicFunction(vtkSlicerModuleLogic* logicFunction)
+  void SetLogicPtr(vtkSlicerModuleLogic* logicPtr)
   {
-    this->LogicFunction = logicFunction;
+    this->LogicPtr = logicPtr;
   }
 
-  vtkSlicerModuleLogic* GetLogicFunction() const
+  vtkSlicerModuleLogic* GetLogicPtr() const
   {
-    return this->LogicFunction;
+    return this->LogicPtr;
+  }
+
+  void SetTclInitFunction(TclInit functionPtr)
+  {
+    this->TclInitFunction = functionPtr;
+  }
+
+  TclInit GetTclInitFunction() const
+  {
+    return this->TclInitFunction;
   }
 
   void SetDescription(const std::string &description)
@@ -276,10 +300,14 @@ public:
   std::string Name;
   std::string ShortName;
   std::string GUIName;
+  std::string TclInitName;
+
   std::string Message;
 
-  vtkSlicerModuleGUI* GUIFunction;
-  vtkSlicerModuleLogic* LogicFunction;
+  vtkSlicerModuleGUI* GUIPtr;
+  vtkSlicerModuleLogic* LogicPtr;
+
+  TclInit TclInitFunction;
 
   std::string Category;
   std::string Description;

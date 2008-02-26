@@ -9,6 +9,7 @@ static char GradientAnisotropicDiffusionFilterDescription[] =
 "  <name>Gradient Anisotropic Module</name>\n"
 "  <shortname>GradientAnisotropicFilter<shortname>\n"
 "  <guiname>GradientAnisotropicFilter</guiname>\n"
+"  <tclinitname>Gradientanisotropicdiffusionfilter_Init</tclinitname>\n"
 "  <message>Initializing Gradient Anisotropic Module...</message>\n"
 "</loadable>";
 

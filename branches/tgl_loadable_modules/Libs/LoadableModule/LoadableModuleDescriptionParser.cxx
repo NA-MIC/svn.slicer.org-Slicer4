@@ -214,6 +214,12 @@ endElement(void *userData, const char *element)
     trimLeadingAndTrailing(temp);
     ps->CurrentDescription.SetGUIName(temp);
     }
+  else if (name ==  "tclinitname")
+    {
+    std::string temp = ps->LastData[ps->Depth];
+    trimLeadingAndTrailing(temp);
+    ps->CurrentDescription.SetTclInitName(temp);
+    }
   else if (name ==  "message")
     {
     std::string temp = ps->LastData[ps->Depth];

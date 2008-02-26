@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Copyright 2005 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
@@ -27,9 +27,14 @@ LoadableModuleDescription::LoadableModuleDescription(const LoadableModuleDescrip
   this->Name = md.Name;
   this->ShortName = md.ShortName;
   this->GUIName = md.GUIName;
+  this->TclInitName = md.TclInitName;
+
   this->Message = md.Message;
-  this->GUIFunction = md.GUIFunction;
-  this->LogicFunction = md.LogicFunction;
+
+  this->GUIPtr = md.GUIPtr;
+  this->LogicPtr = md.LogicPtr;
+ 
+  this->TclInitFunction = md.TclInitFunction;
 
   this->Category = md.Category;
   this->Description = md.Description;
@@ -52,9 +57,14 @@ LoadableModuleDescription::operator=(const LoadableModuleDescription &md)
   this->Name = md.Name;
   this->ShortName = md.ShortName;
   this->GUIName = md.GUIName;
+  this->TclInitName = md.TclInitName;
+
   this->Message = md.Message;
-  this->GUIFunction = md.GUIFunction;
-  this->LogicFunction = md.LogicFunction;
+
+  this->GUIPtr = md.GUIPtr;
+  this->LogicPtr = md.LogicPtr;
+
+  this->TclInitFunction = md.TclInitFunction;
 
   this->Category = md.Category;
   this->Description = md.Description;
@@ -76,6 +86,8 @@ std::ostream & operator<<(std::ostream &os, const LoadableModuleDescription &mod
   os << "Name: " << module.GetName() << std::endl;
   os << "ShortName: " << module.GetShortName() << std::endl;
   os << "GUIName: " << module.GetGUIName() << std::endl;
+  os << "TclInitName: " << module.GetTclInitName() << std::endl;
+
   os << "Message: " << module.GetMessage() << std::endl;
 
   os << "Category: " << module.GetCategory() << std::endl;
