@@ -47,6 +47,8 @@ vtkTumorGrowthROIStep::vtkTumorGrowthROIStep()
   this->ROILabelMapNode = NULL;
   this->ROILabelMap     = NULL;
 
+  this->SliceLogic      = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -158,21 +160,21 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
       events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
       events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
 
-      vtkSlicerSliceLogic *sliceLogicTG = vtkSlicerSliceLogic::New ( );
-      sliceLogicTG->SetName("TG");
-      sliceLogicTG->SetMRMLScene ( this->GetGUI()->GetMRMLScene());
-      sliceLogicTG->ProcessLogicEvents ();
-      sliceLogicTG->ProcessMRMLEvents (this->GetGUI()->GetMRMLScene(), vtkCommand::ModifiedEvent, NULL);
-      sliceLogicTG->SetAndObserveMRMLSceneEvents (this->GetGUI()->GetMRMLScene(), events );
+      this->SliceLogic = vtkSlicerSliceLogic::New ( );
+      this->SliceLogic->SetName("TG");
+      this->SliceLogic->SetMRMLScene ( this->GetGUI()->GetMRMLScene());
+      this->SliceLogic->ProcessLogicEvents ();
+      this->SliceLogic->ProcessMRMLEvents (this->GetGUI()->GetMRMLScene(), vtkCommand::ModifiedEvent, NULL);
+      this->SliceLogic->SetAndObserveMRMLSceneEvents (this->GetGUI()->GetMRMLScene(), events );
       events->Delete();
 
       if (applicationLogic->GetSlices())
       {
-         applicationLogic->GetSlices()->AddItem(sliceLogicTG);
+         applicationLogic->GetSlices()->AddItem(this->SliceLogic);
       }
 
-      // vtkSlicerSliceLogic *logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
-      sliceLogicTG->GetSliceModelNode()->GetModelDisplayNode()->SetVisibility(1);
+      this->SliceLogic->GetSliceNode()->SetSliceVisible(1);
+      this->SliceLogic->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(node->GetScan1_Ref());
     }
 
 
