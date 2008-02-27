@@ -187,20 +187,19 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateVolumeNode(vtkMRMLVolumeNode
 }
 
 void vtkTumorGrowthLogic::DeleteSuperSample(int ScanNum) {
+  cout <<  "vtkTumorGrowthLogic::DeleteSuperSample " << endl;
    // Delete old attached node first 
-  char* volRef = NULL;
+  vtkMRMLVolumeNode* currentNode = NULL; 
   if (ScanNum ==1) {
-    volRef = this->TumorGrowthNode->GetScan1_SuperSampleRef();
+    currentNode =  vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(this->TumorGrowthNode->GetScan1_SuperSampleRef()));
     this->TumorGrowthNode->SetScan1_SuperSampleRef(NULL);
   } else {
-    volRef = this->TumorGrowthNode->GetScan2_SuperSampleRef();
+    currentNode =  vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(this->TumorGrowthNode->GetScan2_SuperSampleRef()));
     this->TumorGrowthNode->SetScan2_SuperSampleRef(NULL);
   } 
-
-  vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(this->TumorGrowthNode->GetScene()->GetNodeByID(volRef));
   if (currentNode) { 
     this->TumorGrowthNode->GetScene()->RemoveNode(currentNode); 
-  }
+  } 
 }
 
 double vtkTumorGrowthLogic::DefineSuperSampleSize(const double inputSpacing[3], const int ROIMin[3], const int ROIMax[3]) {
