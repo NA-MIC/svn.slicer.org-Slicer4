@@ -209,7 +209,10 @@ void vtkTumorGrowthTypeStep::TransitionCallback( )
   if (!Node) return;
   {
     vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetAnalysis_Intensity_Ref()));
-    if (currentNode) { this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); }
+    if (currentNode) { 
+      this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); 
+      Node->SetAnalysis_Intensity_Ref("");
+    }
   }
   
   //  Process images 

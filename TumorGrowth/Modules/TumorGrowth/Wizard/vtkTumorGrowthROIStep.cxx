@@ -46,9 +46,6 @@ vtkTumorGrowthROIStep::vtkTumorGrowthROIStep()
   this->LabelROIZ       = NULL;
   this->ROILabelMapNode = NULL;
   this->ROILabelMap     = NULL;
-
-  this->SliceLogic      = NULL;
-
 }
 
 //----------------------------------------------------------------------------
@@ -128,14 +125,14 @@ vtkTumorGrowthROIStep::~vtkTumorGrowthROIStep()
   if (this->ROILabelMapNode || this->ROILabelMap) this->ROIMapRemove();
 }
 
-void vtkTumorGrowthROIStep::DeleteSuperSampleNode() {
+void vtkTumorGrowthROIStep::DeleteSuperSampleNode() 
+{
   this->GetGUI()->GetLogic()->DeleteSuperSample(1);
 } 
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthROIStep::ShowUserInterface()
 {
-
   // ----------------------------------------
   // Display Scan1, Delete Super Sampled and Grid  
   // ----------------------------------------
@@ -151,33 +148,6 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
       applicationLogic->PropagateVolumeSelection();
       memcpy(dimensions,volumeNode->GetImageData()->GetDimensions(),sizeof(int)*3);
     } 
-
-    if (1) {
-      vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
-      vtkIntArray *events = vtkIntArray::New();
-      events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
-      events->InsertNextValue(vtkMRMLScene::SceneCloseEvent);
-      events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-      events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-
-      this->SliceLogic = vtkSlicerSliceLogic::New ( );
-      this->SliceLogic->SetName("TG");
-      this->SliceLogic->SetMRMLScene ( this->GetGUI()->GetMRMLScene());
-      this->SliceLogic->ProcessLogicEvents ();
-      this->SliceLogic->ProcessMRMLEvents (this->GetGUI()->GetMRMLScene(), vtkCommand::ModifiedEvent, NULL);
-      this->SliceLogic->SetAndObserveMRMLSceneEvents (this->GetGUI()->GetMRMLScene(), events );
-      events->Delete();
-
-      if (applicationLogic->GetSlices())
-      {
-         applicationLogic->GetSlices()->AddItem(this->SliceLogic);
-      }
-
-      this->SliceLogic->GetSliceNode()->SetSliceVisible(1);
-      this->SliceLogic->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(node->GetScan1_Ref());
-    }
-
-
   } else {
     cout << "no node "  << endl;
   }
@@ -805,11 +775,14 @@ void vtkTumorGrowthROIStep::TransitionCallback()
        if (!Node) return;
               
        // Delete old attached node first 
-       vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_SuperSampleRef()));
-       if (currentNode) { this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); }
+       this->GetGUI()->GetLogic()->DeleteSuperSample(1);
 
        // Update node 
+       
        Node->SetScan1_SuperSampleRef(outputNode->GetID());
+       cout << "==============================" << endl;
+       cout << "vtkTumorGrowthROIStep::TransitionCallback " << Node->GetScan1_SuperSampleRef() << " " <<  Node->GetScan1_Ref() << endl;
+       cout << "==============================" << endl;
        
        this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep();
      } else {
