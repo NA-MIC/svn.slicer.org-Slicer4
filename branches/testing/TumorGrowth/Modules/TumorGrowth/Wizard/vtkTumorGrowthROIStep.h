@@ -3,8 +3,6 @@
 
 #include "vtkTumorGrowthStep.h"
 
-#include "vtkSlicerSliceLogic.h"
-
 class vtkKWFrame;
 class vtkKWRange;
 class vtkKWPushButton;
@@ -44,10 +42,6 @@ public:
   void AddGUIObservers();
   void RemoveGUIObservers();
 
-  // Description:
-  // accessor
-  vtkGetObjectMacro (SliceLogic, vtkSlicerSliceLogic);
- 
 protected:
   vtkTumorGrowthROIStep();
   ~vtkTumorGrowthROIStep();
@@ -101,7 +95,6 @@ private:
   vtkMRMLScalarVolumeNode *ROILabelMapNode;
   vtkImageRectangularSource *ROILabelMap;
 
-  vtkSlicerSliceLogic *SliceLogic;
 };
 
 #endif
