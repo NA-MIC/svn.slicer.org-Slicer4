@@ -17,6 +17,8 @@ Version:   $Revision: 1.3 $
 
 #include "vtkObjectFactory.h"
 #include "vtkCallbackCommand.h"
+#include "vtkTubeFilter.h"
+#include "vtkFeatureEdges.h"
 
 #include "vtkMRMLFiniteElementBoundingBoxDisplayNode.h"
 #include "vtkMRMLScene.h"
@@ -52,12 +54,32 @@ vtkMRMLNode* vtkMRMLFiniteElementBoundingBoxDisplayNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLFiniteElementBoundingBoxDisplayNode::vtkMRMLFiniteElementBoundingBoxDisplayNode()
 {
-  
-  this->ShrinkPolyData->SetInput( this->GeometryFilter->GetOutput());
-  this->ShrinkFactor = 0.5;
-  this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
+  this->ShrinkFactor = 1.0;  
 }
 
+
+//----------------------------------------------------------------------------
+vtkPolyData* vtkMRMLFiniteElementBoundingBoxDisplayNode::GetPolyData()
+{
+   // we know these building blocks will always be in wireframe mode, so force outlines
+  vtkFeatureEdges* featureEdges = (vtkFeatureEdges*) vtkFeatureEdges::New();
+      featureEdges->SetInput(this->GeometryFilter->GetOutput());
+      featureEdges->BoundaryEdgesOn();
+      featureEdges->ManifoldEdgesOn();
+      featureEdges->FeatureEdgesOff();
+   vtkTubeFilter* outlineTube = (vtkTubeFilter*) vtkTubeFilter::New();
+     outlineTube->SetInput(featureEdges->GetOutput());
+     outlineTube->SetRadius(0.1);
+   return outlineTube->GetOutput();  
+}
+
+
+//----------------------------------------------------------------------------
+void vtkMRMLFiniteElementBoundingBoxDisplayNode::UpdatePolyDataPipeline() 
+{
+  this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
+};
+ 
 
 //----------------------------------------------------------------------------
 vtkMRMLFiniteElementBoundingBoxDisplayNode::~vtkMRMLFiniteElementBoundingBoxDisplayNode()

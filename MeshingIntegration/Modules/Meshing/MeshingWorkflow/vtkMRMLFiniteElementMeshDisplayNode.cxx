@@ -17,6 +17,9 @@ Version:   $Revision: 1.3 $
 
 #include "vtkObjectFactory.h"
 #include "vtkCallbackCommand.h"
+#include "vtkMeshQuality.h"
+#include "vtkDataSetWriter.h"
+#include "vtkShrinkFilter.h"
 
 #include "vtkMRMLFiniteElementMeshDisplayNode.h"
 #include "vtkMRMLScene.h"
@@ -49,24 +52,52 @@ vtkMRMLNode* vtkMRMLFiniteElementMeshDisplayNode::CreateNodeInstance()
 }
 
 
+void vtkMRMLFiniteElementMeshDisplayNode::UpdatePolyDataPipeline()
+{
+   // set the type of metric to display here and the paramters for coloring, etc. 
+   //this->ShrinkFactor = whatever-was-in-the-GUI
+   this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor); 
+}
+
 //----------------------------------------------------------------------------
 vtkMRMLFiniteElementMeshDisplayNode::vtkMRMLFiniteElementMeshDisplayNode()
 {
-  
-  
-  this->ShrinkPolyData->SetInput( this->GeometryFilter->GetOutput());
-  this->ShrinkFactor = 0.5;
-  this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
+  this->SavedMeshQualityFilter = vtkMeshQuality::New();
+  //vtkMeshQualityExtended* this->SavedMeshQualityFilter = vtkMeshQualityExtended::New();
+  this->SavedShrinkFilter = vtkShrinkFilter::New();
+  this->ShrinkFactor = 0.80;
+
 }
 
 
-//----------------------------------------------------------------------------
+
 vtkMRMLFiniteElementMeshDisplayNode::~vtkMRMLFiniteElementMeshDisplayNode()
 {
   this->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
   this->GeometryFilter->Delete();
   this->ShrinkPolyData->Delete();
+  this->SavedShrinkFilter->Delete();
 }
+
+//----------------------------------------------------------------------------
+void vtkMRMLFiniteElementMeshDisplayNode::SetUnstructuredGrid(vtkUnstructuredGrid *grid)
+{
+    // assign the filter to add mesh quality scalars to points & cells
+    this->SavedMeshQualityFilter->SetInput(grid);
+    //this->SavedMeshQualityFilter->SetHexQualityMeasureToJacobian();
+    this->SavedMeshQualityFilter->SetHexQualityMeasureToEdgeRatio();
+    this->SavedMeshQualityFilter->SaveCellQualityOn(); 
+
+    // shrink the output because the mappers will remove interior detail otherwise
+    
+    this->SavedShrinkFilter->SetInput(this->SavedMeshQualityFilter->GetOutput());
+    this->SavedShrinkFilter->SetShrinkFactor(this->ShrinkFactor);   
+    this->GeometryFilter->SetInput(this->SavedShrinkFilter->GetOutput());
+
+}
+
+
+  
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshDisplayNode::WriteXML(ostream& of, int nIndent)
@@ -102,6 +133,17 @@ void vtkMRMLFiniteElementMeshDisplayNode::ReadXMLAttributes(const char** atts)
       ss >> ShrinkFactor;
       }
     }  
+}
+
+// declare a rendering pipeline for bblock data in this class
+vtkPolyData* vtkMRMLFiniteElementMeshDisplayNode::GetPolyData()
+{
+  vtkDebugMacro("MeshDisplayNode invoked");
+//  vtkDataSetWriter *write = vtkDataSetWriter::New();
+//  write->SetInput(this->ShrinkPolyData->GetOutput());
+//  write->SetFileName("mesh-with-quality-from-display-node.vtk");
+//  write->Write();
+  return this->GeometryFilter->GetOutput();
 }
 
 
