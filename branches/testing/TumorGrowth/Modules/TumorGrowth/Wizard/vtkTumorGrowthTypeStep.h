@@ -25,6 +25,9 @@ public:
 
   virtual void TransitionCallback(); 
 
+  // We call this function in order to remove nodes when going backwards 
+  virtual void RemoveResults();
+
 protected:
   vtkTumorGrowthTypeStep();
   ~vtkTumorGrowthTypeStep();

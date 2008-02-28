@@ -55,14 +55,13 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
     if (strcmp(application->Script(CMD),"absolute")) {
       FilePath = vtksys::SystemTools::GetParentDirectory(VolNode->GetScene()->GetURL()) + FilePath;
     }
-    // cout << "Current Directory: " <<  FilePath.c_str() << endl;
 
     sprintf(CMD,"file isdirectory %s",FilePath.c_str()); 
     if (!atoi(application->Script(CMD))) { 
       sprintf(CMD,"file mkdir %s",FilePath.c_str()); 
       application->Script(CMD); 
     }
-    if (!node->GetWorkingDir() ||  !strcmp(FilePath.c_str(),node->GetWorkingDir())) {
+    if (!node->GetWorkingDir() || strcmp(FilePath.c_str(),node->GetWorkingDir())) {
       cout << "Working directory is " <<  FilePath.c_str() << endl;
       node->SetWorkingDir(FilePath.c_str());
     }
@@ -75,13 +74,16 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
 }
 
 void vtkTumorGrowthFirstScanStep::UpdateGUI() {
+
   vtkMRMLTumorGrowthNode* n = this->GetGUI()->GetNode();
   if (!n) {
     this->GetGUI()->UpdateNode();
     n = this->GetGUI()->GetNode();
   }
+
   if (n != NULL &&  this->VolumeMenuButton)
   {
+    
     vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
     this->VolumeMenuButton->SetSelected(applicationGUI->GetMRMLScene()->GetNodeByID(n->GetScan1_Ref()));
   }
@@ -170,8 +172,8 @@ void vtkTumorGrowthFirstScanStep::WizardGUICallback(vtkObject *caller, unsigned 
 void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *callData) {
     // This just has to be donw if you use the same Callbakc function for severall calls 
     vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
-
-    if ((this->VolumeMenuButton && (selector == this->VolumeMenuButton)) || (this->SecondVolumeMenuButton && (selector == this->SecondVolumeMenuButton) )) 
+    if (!this->VolumeMenuButton || !this->SecondVolumeMenuButton ) return;
+    if ((selector == this->VolumeMenuButton) || (selector == this->SecondVolumeMenuButton) ) 
     { 
       vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
       if (!node) {

@@ -20,13 +20,7 @@
 #include "vtkSlicerApplication.h"
 #include "vtkImageIslandFilter.h"
 
-#include "vtkVolumeTextureMapper3D.h"
-#include "vtkPiecewiseFunction.h"
-#include "vtkColorTransferFunction.h"
-#include "vtkVolumeProperty.h"
-#include "vtkVolume.h"
 #include "vtkSlicerModelsLogic.h"
-#include "vtkKWScaleWithEntry.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthSegmentationStep);
@@ -37,7 +31,6 @@ vtkTumorGrowthSegmentationStep::vtkTumorGrowthSegmentationStep()
 {
   this->SetName("3/4. Identify Tumor in First Scan"); 
   this->SetDescription("Move slider to outline boundary of tumor."); 
-  this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthSegmentationStep::WizardGUICallback);
 
   this->ThresholdFrame = NULL;
   this->ThresholdRange = NULL;
@@ -46,16 +39,6 @@ vtkTumorGrowthSegmentationStep::vtkTumorGrowthSegmentationStep()
   this->PreSegment = NULL;
   this->PreSegmentNode = NULL;
   this->SegmentNode = NULL;
-
-  this->PreSegment_Render_Mapper = NULL;
-  this->PreSegment_Render_BandPassFilter = NULL;
-  this->PreSegment_Render_ColorMapping = NULL;
-  this->PreSegment_Render_VolumeProperty = NULL;
-  this->PreSegment_Render_Volume = NULL;
-  this->PreSegment_Render_OrientationMatrix = NULL; 
-
-  this->SliceLogic      = NULL;
-  this->SliceController_OffsetScale = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -82,7 +65,7 @@ vtkTumorGrowthSegmentationStep::~vtkTumorGrowthSegmentationStep()
 
   this->PreSegmentScan1Remove();
   this->SegmentScan1Remove();
-  this->SliceLogicRemove();
+  this->GetGUI()->SliceLogicRemove();
 }
 
 //----------------------------------------------------------------------------
@@ -223,64 +206,15 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() {
     this->GetGUI()->GetMRMLScene()->RemoveNode(this->PreSegmentNode);  
     this->PreSegmentNode = NULL;
   } 
-  if (this->PreSegment_Render_Volume) {
-    this->GetGUI()->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->RemoveViewProp(this->PreSegment_Render_Volume);
-    this->PreSegment_Render_Volume = NULL; 
-  }
 
   if (this->PreSegment) {
     this->PreSegment->Delete();
     this->PreSegment = NULL;
   }
 
-  if (this->PreSegment_Render_Mapper) {
-    this->PreSegment_Render_Mapper->Delete();
-    this->PreSegment_Render_Mapper = NULL;
-  }
-  if (this->PreSegment_Render_BandPassFilter) {
-    this->PreSegment_Render_BandPassFilter->Delete();
-    this->PreSegment_Render_BandPassFilter = NULL;
-  }
-  if (this->PreSegment_Render_ColorMapping) {
-    this->PreSegment_Render_ColorMapping->Delete();
-    this->PreSegment_Render_ColorMapping = NULL;
-  }
-  if (this->PreSegment_Render_VolumeProperty) {
-    this->PreSegment_Render_VolumeProperty->Delete();
-    this->PreSegment_Render_VolumeProperty = NULL;
-  }
-  if (this->PreSegment_Render_Volume) {
-    this->PreSegment_Render_Volume->Delete();
-    this->PreSegment_Render_Volume = NULL;
-  }
-  if (this->PreSegment_Render_OrientationMatrix) {
-    this->PreSegment_Render_OrientationMatrix->Delete();
-    this->PreSegment_Render_OrientationMatrix = NULL; 
-  }
+  this->RenderRemove();
+
   // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() End " << endl;
-}
-
-void vtkTumorGrowthSegmentationStep::SetPreSegment_Render_BandPassFilter(double min, double max) {
-  // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
-
-  vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  if (!mrmlNode) return;
-  // 3D Render 
-  vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(mrmlNode->GetScene()->GetNodeByID(mrmlNode->GetScan1_SuperSampleRef()));
-  if (!volumeNode) return;
-  double* imgRange  = volumeNode->GetImageData()->GetPointData()->GetScalars()->GetRange();
-
-  this->PreSegment_Render_BandPassFilter->RemoveAllPoints();
-  this->PreSegment_Render_BandPassFilter->AddPoint(imgRange[0], 0.0);
-  this->PreSegment_Render_BandPassFilter->AddPoint(min - 1, 0.0);
-  this->PreSegment_Render_BandPassFilter->AddPoint(min, 1);
-  this->PreSegment_Render_BandPassFilter->AddPoint(max, 1);
-  if (max < imgRange[1]) { 
-    this->PreSegment_Render_BandPassFilter->AddPoint(max + 1, 0);
-    if (max+1 < imgRange[1]) { 
-      this->PreSegment_Render_BandPassFilter->AddPoint(imgRange[1], 0);
-    }
-  }
 }
 
 void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
@@ -314,11 +248,6 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   vtkTumorGrowthLogic::DefinePreSegment(volumeNode->GetImageData(),range,this->PreSegment);
 
   // ---------------------------------
-  // show SPGR in 3D Viewer 
-  // ------------------------------
-
-
-  // ---------------------------------
   // show segmentation in Slice view 
   // ------------------------------
   this->PreSegmentNode = volumesLogic->CreateLabelVolume(Node->GetScene(),volumeNode, "TG_Scan1_PreSegment");
@@ -331,40 +260,9 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   // ------------------------------------
   // Show Segmentation through 3D Volume Rendering
   // ------------------------------------
+  this->CreateRender(volumeNode, 0.8, 0.8, 0.0);
+  this->SetRender_BandPassFilter(range[0],range[1]);
   
-  this->PreSegment_Render_Mapper = vtkVolumeTextureMapper3D::New();
-  this->PreSegment_Render_Mapper->SetInput(volumeNode->GetImageData());
-
-  double* imgRange  = volumeNode->GetImageData()->GetPointData()->GetScalars()->GetRange();
-  // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Define()" << 100 << endl;
-
-  this->PreSegment_Render_BandPassFilter = vtkPiecewiseFunction::New();
-  this->SetPreSegment_Render_BandPassFilter(range[0],range[1]);
-
-  this->PreSegment_Render_ColorMapping = vtkColorTransferFunction::New();
-  this->PreSegment_Render_ColorMapping->AddRGBPoint( imgRange[0] , 0.8, 0.8, 0.0 );
-  this->PreSegment_Render_ColorMapping->AddRGBPoint( imgRange[1] , 0.8, 0.8, 0.0 );
-
-  this->PreSegment_Render_VolumeProperty = vtkVolumeProperty::New();
-  this->PreSegment_Render_VolumeProperty->SetShade(1);
-  this->PreSegment_Render_VolumeProperty->SetAmbient(0.3);
-  this->PreSegment_Render_VolumeProperty->SetDiffuse(0.6);
-  this->PreSegment_Render_VolumeProperty->SetSpecular(0.5);
-  this->PreSegment_Render_VolumeProperty->SetSpecularPower(40.0);
-  this->PreSegment_Render_VolumeProperty->SetScalarOpacity(this->PreSegment_Render_BandPassFilter);
-  this->PreSegment_Render_VolumeProperty->SetColor( this->PreSegment_Render_ColorMapping );
-  this->PreSegment_Render_VolumeProperty->SetInterpolationTypeToLinear();
-
-  this->PreSegment_Render_OrientationMatrix = vtkMatrix4x4::New();
-  volumeNode->GetIJKToRASMatrix(this->PreSegment_Render_OrientationMatrix);
-
-  this->PreSegment_Render_Volume = vtkVolume::New();
-  this->PreSegment_Render_Volume->SetProperty(this->PreSegment_Render_VolumeProperty);
-  this->PreSegment_Render_Volume->SetMapper(this->PreSegment_Render_Mapper);
-  this->PreSegment_Render_Volume->PokeMatrix(this->PreSegment_Render_OrientationMatrix);
-  
-  applicationGUI->GetViewerWidget()->GetMainViewer()->AddViewProp(this->PreSegment_Render_Volume);
-
   return;
 }
 
@@ -423,7 +321,7 @@ void vtkTumorGrowthSegmentationStep::ThresholdRangeChangedCallback(double min , 
   mrmlNode->SetSegmentThresholdMax(max);
 
   // 3D Render 
-  this->SetPreSegment_Render_BandPassFilter(min,max);
+  this->SetRender_BandPassFilter(min,max);
   //  applicationGUI->GetViewerWidget()->GetMainViewer()->RequestRender();
 
 
@@ -438,58 +336,6 @@ void vtkTumorGrowthSegmentationStep::ThresholdRangeChangedCallback(double min , 
 
 }
 
-void vtkTumorGrowthSegmentationStep::SliceLogicRemove() {
-  cout << "vtkTumorGrowthSegmentationStep::SliceLogicRemove" << endl;
-  if (this->SliceLogic) {
-     vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
-     applicationLogic->GetSlices()->RemoveItem(this->SliceLogic);
-     this->SliceLogic->Delete();
-     this->SliceLogic = NULL;
-  } 
-  if (this->SliceController_OffsetScale) {
-    this->SliceController_OffsetScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangedEvent, this->WizardGUICallbackCommand);
-    this->SliceController_OffsetScale = NULL;
-  }
-}
-
-void vtkTumorGrowthSegmentationStep::SliceLogicDefine() {
-  if (!this->SliceLogic) {
-      vtkIntArray *events = vtkIntArray::New();
-      events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
-      events->InsertNextValue(vtkMRMLScene::SceneCloseEvent);
-      events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-      events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-
-      this->SliceLogic = vtkSlicerSliceLogic::New ( );
-      this->SliceLogic->SetName("TG");
-
-      this->SliceLogic->SetMRMLScene ( this->GetGUI()->GetMRMLScene());
-      this->SliceLogic->ProcessLogicEvents ();
-      this->SliceLogic->ProcessMRMLEvents (this->GetGUI()->GetMRMLScene(), vtkCommand::ModifiedEvent, NULL);
-      this->SliceLogic->SetAndObserveMRMLSceneEvents (this->GetGUI()->GetMRMLScene(), events );
-      events->Delete();
-
-      vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
-      if (applicationLogic->GetSlices())
-      {
-        applicationLogic->GetSlices()->AddItem(this->SliceLogic);
-      }
-    } 
-
-    this->SliceLogic->GetSliceNode()->SetSliceVisible(1);
-    this->SliceLogic->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(this->GetGUI()->GetNode()->GetScan1_Ref());
-    this->SliceLogic->GetSliceNode()->SetFieldOfView(250,250,1);
-
-    // Link to slicer control pannel 
-    this->SliceController_OffsetScale =  this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale();
-    this->SliceLogic->SetSliceOffset(this->SliceController_OffsetScale->GetValue());
-    this->SliceController_OffsetScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangedEvent, this->WizardGUICallbackCommand);
-
-    // Note : Setting things manually in TCL 
-    // [[[vtkTumorGrowthROIStep ListInstances] GetSliceLogic] GetSliceCompositeNode] SetReferenceBackgroundVolumeID vtkMRMLScalarVolumeNode1
-    // [[[vtkTumorGrowthROIStep ListInstances] GetSliceLogic] GetSliceNode] SetFieldOfView 200 200 1
-} 
-
 //----------------------------------------------------------------------------
 void vtkTumorGrowthSegmentationStep::TransitionCallback() 
 { 
@@ -499,7 +345,7 @@ void vtkTumorGrowthSegmentationStep::TransitionCallback()
   vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
   this->GetGUI()->GetLogic()->SaveVolume(application,this->SegmentNode); 
 
-  this->SliceLogicRemove();
+  this->GetGUI()->SliceLogicRemove();
  
   // Proceed to next step 
   this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep();
@@ -512,22 +358,7 @@ void vtkTumorGrowthSegmentationStep::PrintSelf(ostream& os, vtkIndent indent)
   this->Superclass::PrintSelf(os,indent);
 }
 
-void  vtkTumorGrowthSegmentationStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
-{
-     vtkTumorGrowthSegmentationStep *self = reinterpret_cast< vtkTumorGrowthSegmentationStep *>(clientData);
-    if (self) { self->ProcessGUIEvents(caller, event, callData); }
-
-
+void vtkTumorGrowthSegmentationStep::RemoveResults()  { 
+    this->PreSegmentScan1Remove();
+    this->GetGUI()->SliceLogicRemove();
 }
-
-void vtkTumorGrowthSegmentationStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
-
-  if (event == vtkKWScale::ScaleValueChangedEvent) {
-    vtkKWScale *scale = vtkKWScale::SafeDownCast(caller);
-    if (scale && (scale == this->SliceController_OffsetScale->GetWidget())) 
-    { 
-      this->SliceLogic->SetSliceOffset(this->SliceController_OffsetScale->GetValue());
-    }
-  }
-}
- 

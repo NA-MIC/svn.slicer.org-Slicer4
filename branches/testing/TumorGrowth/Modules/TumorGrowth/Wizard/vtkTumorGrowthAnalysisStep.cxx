@@ -230,8 +230,12 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
     vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
     if (node->GetAnalysis_Intensity_Flag()) {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
+      this->CreateRender(volumeAnalysisNode, 0,0,0.8);
+      this->SetRender_HighPassFilter(1);
     } else if (node->GetAnalysis_Deformable_Flag()) {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
+      // this->CreateRender(volumeAnalysisNode);
+      // this->SetRender_HighPassFilter(10);
     } else {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan2_LocalRef()));
     }
@@ -531,9 +535,10 @@ void  vtkTumorGrowthAnalysisStep::RemoveResults()  {
     {
        vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetAnalysis_Intensity_Ref()));
        if (currentNode) { 
-     this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); 
-     Node->SetAnalysis_Intensity_Ref(NULL);
+         this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); 
+         Node->SetAnalysis_Intensity_Ref(NULL);
        }
        
     }
+    this->RenderRemove();
 }
