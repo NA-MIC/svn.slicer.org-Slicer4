@@ -7,6 +7,14 @@
 class vtkKWFrameWithLabel; 
 class vtkTumorGrowthGUI;
 class vtkKWPushButton;
+class vtkVolumeTextureMapper3D;
+class vtkPiecewiseFunction;
+class vtkColorTransferFunction;
+class vtkVolumeProperty;
+class vtkVolume;
+class vtkMatrix4x4;      
+class vtkMRMLVolumeNode;
+class vtkImageData;  
 
 #define TUMORGROWTH_MENU_BUTTON_WIDTH 15
 #define TUMORGROWTH_WIDGETS_LABEL_WIDTH 25
@@ -66,6 +74,22 @@ protected:
   int  GridDefine();
   void CreateGridButton(); 
   vtkKWPushButton          *GridButton;
+
+  void SliceLogicDefine();
+  
+
+  vtkImageData             *Render_Image;
+  vtkVolumeTextureMapper3D *Render_Mapper;
+  vtkPiecewiseFunction     *Render_Filter;
+  vtkColorTransferFunction *Render_ColorMapping;
+  vtkVolumeProperty        *Render_VolumeProperty;
+  vtkVolume                *Render_Volume;
+  vtkMatrix4x4             *Render_OrientationMatrix; 
+
+  void SetRender_BandPassFilter(double min, double max);
+  void SetRender_HighPassFilter(double min);
+  void RenderRemove();
+  void CreateRender(vtkMRMLVolumeNode *volumeNode, float colorR, float colorG, float colorB);
 
 private:
   vtkTumorGrowthStep(const vtkTumorGrowthStep&);

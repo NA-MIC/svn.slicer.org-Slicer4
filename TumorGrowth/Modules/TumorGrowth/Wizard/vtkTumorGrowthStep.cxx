@@ -12,6 +12,12 @@
 #include "vtkSlicerVolumesGUI.h" 
 #include "vtkTumorGrowthLogic.h"
 
+#include "vtkVolumeTextureMapper3D.h"
+#include "vtkPiecewiseFunction.h"
+#include "vtkColorTransferFunction.h"
+#include "vtkVolumeProperty.h"
+#include "vtkVolume.h"
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthStep);
 vtkCxxRevisionMacro(vtkTumorGrowthStep, "$Revision: 1.2 $");
@@ -26,6 +32,14 @@ vtkTumorGrowthStep::vtkTumorGrowthStep()
   this->WizardGUICallbackCommand = vtkCallbackCommand::New();
   this->WizardGUICallbackCommand->SetClientData(reinterpret_cast<void *>(this));
   this->GridButton = NULL;
+
+  this->Render_Image = NULL;
+  this->Render_Mapper = NULL;
+  this->Render_Filter = NULL;
+  this->Render_ColorMapping = NULL;
+  this->Render_VolumeProperty = NULL;
+  this->Render_Volume = NULL;
+  this->Render_OrientationMatrix = NULL; 
 }
 
 //----------------------------------------------------------------------------
@@ -49,6 +63,40 @@ vtkTumorGrowthStep::~vtkTumorGrowthStep()
       this->GridButton->Delete();
       this->GridButton = NULL;
     }
+
+  this->RenderRemove();
+
+}
+
+void vtkTumorGrowthStep::RenderRemove() { 
+  if (this->Render_Volume) {
+    this->GetGUI()->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->RemoveViewProp(this->Render_Volume);
+    this->Render_Volume->Delete();
+    this->Render_Volume = NULL; 
+  }
+
+  if (this->Render_Mapper) {
+    this->Render_Mapper->Delete();
+    this->Render_Mapper = NULL;
+  }
+  if (this->Render_Filter) {
+    this->Render_Filter->Delete();
+    this->Render_Filter = NULL;
+  }
+  if (this->Render_ColorMapping) {
+    this->Render_ColorMapping->Delete();
+    this->Render_ColorMapping = NULL;
+  }
+  if (this->Render_VolumeProperty) {
+    this->Render_VolumeProperty->Delete();
+    this->Render_VolumeProperty = NULL;
+  }
+
+  if (this->Render_OrientationMatrix) {
+    this->Render_OrientationMatrix->Delete();
+    this->Render_OrientationMatrix = NULL; 
+  }
+  this->Render_Image = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -194,4 +242,80 @@ int vtkTumorGrowthStep::GridDefine() {
   applicationLogic->GetSelectionNode()->SetReferenceActiveLabelVolumeID(GridNode->GetID());
   applicationLogic->PropagateVolumeSelection();
   return 1;
+}
+
+void vtkTumorGrowthStep::SliceLogicDefine() {
+  vtkTumorGrowthGUI *GUI  = this->GetGUI();
+  GUI->SliceLogicDefine();
+  
+  GUI->GetSliceLogic()->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(GUI->GetNode()->GetScan1_Ref());
+  GUI->GetSliceLogic()->GetSliceNode()->SetFieldOfView(250,250,1);
+  GUI->GetSliceLogic()->SetSliceOffset(GUI->GetSliceController_OffsetScale()->GetValue());
+} 
+
+
+/// For Rendering results
+void vtkTumorGrowthStep::SetRender_BandPassFilter(double min, double max) {
+  // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
+  double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
+  this->Render_Filter->RemoveAllPoints();
+  this->Render_Filter->AddPoint(imgRange[0], 0.0);
+  this->Render_Filter->AddPoint(min - 1, 0.0);
+  this->Render_Filter->AddPoint(min, 1);
+  this->Render_Filter->AddPoint(max, 1);
+  if (max < imgRange[1]) { 
+    this->Render_Filter->AddPoint(max + 1, 0);
+    if (max+1 < imgRange[1]) { 
+      this->Render_Filter->AddPoint(imgRange[1], 0);
+    }
+  }
+}
+
+void vtkTumorGrowthStep::SetRender_HighPassFilter(double min) {
+  // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
+  double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
+  this->Render_Filter->RemoveAllPoints();
+  this->Render_Filter->AddPoint(imgRange[0], 0.0);
+  this->Render_Filter->AddPoint(min - 1, 0.0);
+  this->Render_Filter->AddPoint(min, 1);
+}
+
+
+void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, float colorR, float colorG, float colorB ) {
+  this->RenderRemove();
+  if (!volumeNode) return;
+
+  this->Render_Image = volumeNode->GetImageData();
+  
+  this->Render_Mapper = vtkVolumeTextureMapper3D::New();
+  this->Render_Mapper->SetInput(this->Render_Image);
+
+  double* imgRange  = this->Render_Image->GetPointData()->GetScalars()->GetRange();
+
+  this->Render_Filter = vtkPiecewiseFunction::New();
+  // this->SetRender_BandPassFilter(range[0],range[1]);
+
+  this->Render_ColorMapping = vtkColorTransferFunction::New();
+  this->Render_ColorMapping->AddRGBPoint( imgRange[0] , colorR, colorG, colorB);
+  this->Render_ColorMapping->AddRGBPoint( imgRange[1] , colorR, colorG, colorB );
+
+  this->Render_VolumeProperty = vtkVolumeProperty::New();
+  this->Render_VolumeProperty->SetShade(1);
+  this->Render_VolumeProperty->SetAmbient(0.3);
+  this->Render_VolumeProperty->SetDiffuse(0.6);
+  this->Render_VolumeProperty->SetSpecular(0.5);
+  this->Render_VolumeProperty->SetSpecularPower(40.0);
+  this->Render_VolumeProperty->SetScalarOpacity(this->Render_Filter);
+  this->Render_VolumeProperty->SetColor( this->Render_ColorMapping );
+  this->Render_VolumeProperty->SetInterpolationTypeToLinear();
+
+  this->Render_OrientationMatrix = vtkMatrix4x4::New();
+  volumeNode->GetIJKToRASMatrix(this->Render_OrientationMatrix);
+
+  this->Render_Volume = vtkVolume::New();
+  this->Render_Volume->SetProperty(this->Render_VolumeProperty);
+  this->Render_Volume->SetMapper(this->Render_Mapper);
+  this->Render_Volume->PokeMatrix(this->Render_OrientationMatrix);
+  
+  this->GetGUI()->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->AddViewProp(this->Render_Volume);
 }

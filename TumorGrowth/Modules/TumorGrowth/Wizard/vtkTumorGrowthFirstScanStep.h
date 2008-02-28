@@ -27,6 +27,9 @@ public:
 
   void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData); 
 
+  vtkSlicerNodeSelectorWidget* GetSecondVolumeMenuButton() {return this->SecondVolumeMenuButton;} 
+  vtkSlicerNodeSelectorWidget* GetFirstVolumeMenuButton() {return this->VolumeMenuButton;} 
+
 protected:
   vtkTumorGrowthFirstScanStep();
   ~vtkTumorGrowthFirstScanStep();

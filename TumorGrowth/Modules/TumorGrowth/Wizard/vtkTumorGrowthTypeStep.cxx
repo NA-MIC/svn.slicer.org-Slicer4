@@ -111,6 +111,9 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
       applicationGUI->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[0]);
       applicationGUI->GetMainSliceGUI1()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[1]);
       applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[2]);
+      
+      this->CreateRender(volumeSegmentNode,0.8, 0.8, 0.0 );
+      this->SetRender_HighPassFilter(1);
     } 
   }
 
@@ -190,6 +193,11 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
 
   this->AddGUIObservers(); 
 
+  // Does not change anything 
+  // this->GetGUI()->GetSliceLogic()->GetSliceNode()->SetFieldOfView(250,250,1);
+
+  this->SliceLogicDefine(); 
+
 }
 
 //----------------------------------------------------------------------------
@@ -222,6 +230,7 @@ void vtkTumorGrowthTypeStep::TransitionCallback( )
   vtkTumorGrowthLogic* Logic = this->GetGUI()->GetLogic();
   if (!Logic->AnalyzeGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()))) return;
 
+  this->RemoveResults(); 
   wizard_workflow->AttemptToGoToNextStep();
 }
 
@@ -231,6 +240,11 @@ void vtkTumorGrowthTypeStep::PrintSelf(ostream& os, vtkIndent indent)
   this->Superclass::PrintSelf(os,indent);
 }
 
+
+void vtkTumorGrowthTypeStep::RemoveResults()  { 
+    this->GetGUI()->SliceLogicRemove();
+    this->RenderRemove();
+}
 
 //----------------------------------------------------------------------------
 // This function is never called bc I did not initialized observers 
