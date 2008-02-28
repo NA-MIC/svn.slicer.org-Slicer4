@@ -48,7 +48,6 @@ struct parameters
   bool centeredTransform ;
   bool ppd ;
   std::string correction;
-  std::string KRConstant;
 };
 
 
@@ -83,8 +82,7 @@ typename itk::DiffusionTensor3DInterpolateImageFunction< PixelType >
 ::Pointer
 InterpolationType( std::string interpolationType ,
                              std::string windowFunction ,
-                             unsigned int splineOrder ,
-                             std::string KRConstant)
+                             unsigned int splineOrder )
 {
   typedef itk::DiffusionTensor3DInterpolateImageFunction< PixelType >
                                                              InterpolatorType ; 
@@ -132,10 +130,6 @@ InterpolationType( std::string interpolationType ,
   typedef itk::DiffusionTensor3DBSplineInterpolateImageFunction< PixelType >
                                           BSplineInterpolateImageFunctionType ;
   typedef typename InterpolatorType::Pointer InterpolatorTypePointer ;
-  typedef itk::DiffusionTensor3DLoxLinearInterpolateFunction<PixelType,0> LoxLinearInterpolateFunctionKConstantType;
-  typedef itk::DiffusionTensor3DLoxBSplineInterpolateFunction<PixelType,0 , 3 > LoxBSplineInterpolateFunctionKConstantType;
-  typedef itk::DiffusionTensor3DLoxLinearInterpolateFunction<PixelType,1> LoxLinearInterpolateFunctionRConstantType;
-  typedef itk::DiffusionTensor3DLoxBSplineInterpolateFunction<PixelType,1 , 3 > LoxBSplineInterpolateFunctionRConstantType;
   InterpolatorTypePointer interpol ;
   if( !interpolationType.compare( "nn" ) )//nearest neighborhood
     { interpol = NearestNeighborhoodInterpolatorType::New() ; }
@@ -160,20 +154,6 @@ InterpolationType( std::string interpolationType ,
                bSplineInterpolator=BSplineInterpolateImageFunctionType::New() ;
     bSplineInterpolator->SetSplineOrder( splineOrder ) ;
     interpol = bSplineInterpolator ;
-    }
-  else if(!interpolationType.compare( "LoxLinear") ) //Linear Loxodrome
-    { 
-    if(!KRConstant.compare("K") ) 
-      { interpol = LoxLinearInterpolateFunctionKConstantType::New(); }
-    else
-      { interpol = LoxLinearInterpolateFunctionRConstantType::New(); }
-    }
-  else if(!interpolationType.compare( "LoxBSpline") ) //BSpline Loxodrome
-    { 
-    if(!KRConstant.compare("K") )
-      { interpol = LoxBSplineInterpolateFunctionKConstantType::New(); }
-    else
-      { interpol = LoxBSplineInterpolateFunctionRConstantType::New(); }
     }
   return interpol ;
 }
@@ -527,8 +507,7 @@ int Do( parameters list )
     //Select interpolation type
     interpol=InterpolationType< PixelType > ( list.interpolationType ,
                                             list.windowFunction ,
-                                            list.splineOrder ,
-                                            list.KRConstant ) ;
+                                            list.splineOrder ) ;
 
       
     //Select the transformation
@@ -643,7 +622,6 @@ int main( int argc , const char * argv[] )
   list.centeredTransform = centeredTransform ;
   list.ppd = ppd ;
   list.correction = correction ;
-  list.KRConstant = KRConstant ;
   //verify if all the vector parameters have the good length
   if( list.outputImageSpacing.size() != 3 || list.outputImageSize.size() != 3
      || ( list.outputImageOrigin.size() != 3 
