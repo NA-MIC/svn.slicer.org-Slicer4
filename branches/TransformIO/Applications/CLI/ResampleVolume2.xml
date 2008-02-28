@@ -173,7 +173,7 @@
       <longflag>--spline_order</longflag>
       <description>Spline Order</description>
       <label>Spline Order</label>
-      <default>1</default>
+      <default>3</default>
     </integer>
   </parameters>
 
