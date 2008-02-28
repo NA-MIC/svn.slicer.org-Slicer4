@@ -22,6 +22,8 @@
 // #include "vtkTumorGrowthSecondScanStep.h"
 #include "vtkTumorGrowthTypeStep.h"
 #include "vtkTumorGrowthAnalysisStep.h"
+#include "vtkKWScale.h"
+#include "vtkSlicerSliceControllerWidget.h"
 
 // #include "CSAILLogo.h"
 #include "vtkKWIcon.h"
@@ -56,6 +58,10 @@ vtkTumorGrowthGUI::vtkTumorGrowthGUI()
   this->SegmentationStep = NULL;
   this->TypeStep   = NULL;
   this->AnalysisStep     = NULL;
+
+  this->SliceLogic      = NULL;
+  this->SliceController_OffsetScale = NULL;
+  this->SliceLogicCallbackCommand= NULL;
 
 //  vtkKWIcon* logo = vtkKWIcon::New();
 //   logo->SetImage(image_CSAILLogo,
@@ -109,7 +115,6 @@ vtkTumorGrowthGUI::~vtkTumorGrowthGUI()
     this->AnalysisStep->Delete();
     this->AnalysisStep = NULL;
   }
-
 }
 
 //----------------------------------------------------------------------------
@@ -159,6 +164,7 @@ void vtkTumorGrowthGUI::RemoveGUIObservers()
   if (this->SegmentationStep) this->SegmentationStep->RemoveGUIObservers();
   if (this->TypeStep)   this->TypeStep->RemoveGUIObservers();
   if (this->AnalysisStep)     this->AnalysisStep->RemoveGUIObservers();
+  this->SliceLogicRemoveGUIObserver(); 
 }
 
 //---------------------------------------------------------------------------
@@ -278,17 +284,25 @@ void vtkTumorGrowthGUI::ProcessMRMLEvents(vtkObject *caller,
                                        void *callData) 
 {
 
-  // cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents Start ==========" << endl;
-
-  // TODO: map the object and event to strings for tcl
-  
-  //vtksys_stl::cout << "ProcessMRMLEvents()" << vtksys_stl::endl;
-  // if parameter node has been changed externally, update GUI widgets
-  // with new values 
-  vtkMRMLTumorGrowthNode* node = vtkMRMLTumorGrowthNode::SafeDownCast(caller);
-  if (node != NULL && this->GetNode() == node) 
+  // cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents Start ========== " << caller->GetClassName() << " " << event << endl;
   {
-     this->UpdateGUI();
+    vtkMRMLTumorGrowthNode* node = vtkMRMLTumorGrowthNode::SafeDownCast(caller);
+    if (node != NULL && this->GetNode() == node)  
+    {
+      this->UpdateGUI();
+      return;
+
+    }
+  }
+
+  // Make sure that if Scan*_ref are defined before volumes rae loaded then this proparly updates the GUIs after Volumes are loaded 
+  // Should do the same for NodeRemoveEvent -> update References correctly - currently not done 
+  if ((event == vtkMRMLScene::NodeAddedEvent)  && this->FirstScanStep) {
+    if (this->Node->GetScan1_Ref() && (this->Node->GetScan1_Ref() != "") && !this->FirstScanStep->GetFirstVolumeMenuButton()->GetSelected()) {
+      this->FirstScanStep->UpdateGUI();
+    } else if (this->Node->GetScan2_Ref() && (this->Node->GetScan2_Ref() != "") && !this->FirstScanStep->GetSecondVolumeMenuButton()->GetSelected()) {
+      this->FirstScanStep->UpdateGUI();
+    }
   }
 
   // cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents End ==========" << endl;
@@ -433,7 +447,7 @@ void vtkTumorGrowthGUI::BuildGUI()
   // This way we can restart the machine - did not work 
   // wizard_workflow->CreateGoToTransitions(wizard_workflow->GetInitialStep());
 
- if ( 1 )  {
+ if ( 0 )  {
     cout << "====================" << endl;
     cout << "DEBUGGING" << endl;
     vtkSlicerApplicationGUI *applicationGUI = this->GetApplicationGUI();
@@ -489,4 +503,96 @@ AddObserverByNumber(vtkObject *observee, unsigned long event)
                                 (vtkCommand *)this->GUICallbackCommand));
 } 
 
+void vtkTumorGrowthGUI::SliceLogicRemoveGUIObserver() {
+  if (this->SliceController_OffsetScale) {
+    this->SliceController_OffsetScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangedEvent, this->SliceLogicCallbackCommand);
+    this->SliceController_OffsetScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangingEvent, this->SliceLogicCallbackCommand);
+    this->SliceController_OffsetScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueStartChangingEvent, this->SliceLogicCallbackCommand);
+    this->SliceController_OffsetScale = NULL;
+  }
+}
 
+void vtkTumorGrowthGUI::SliceLogicRemove() {
+  cout << "vtkTumorGrowthGUIStep::SliceLogicRemove" << endl;
+
+  this->SliceLogicRemoveGUIObserver();
+ 
+  if (this->SliceLogicCallbackCommand) {
+    this->SliceLogicCallbackCommand->Delete();
+    this->SliceLogicCallbackCommand = NULL; 
+  }
+
+  if (this->SliceLogic) {
+     this->SliceLogic->GetSliceNode()->SetSliceVisible(0);
+     vtkSlicerApplicationLogic *applicationLogic = this->GetLogic()->GetApplicationLogic();
+     applicationLogic->GetSlices()->RemoveItem(this->SliceLogic);
+     this->SliceLogic->Delete();
+     this->SliceLogic = NULL;
+  } 
+}
+
+void vtkTumorGrowthGUI::SliceLogicDefine() {
+  if (!this->SliceLogic) {
+      vtkIntArray *events = vtkIntArray::New();
+      events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
+      events->InsertNextValue(vtkMRMLScene::SceneCloseEvent);
+      events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+      events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+
+      this->SliceLogic = vtkSlicerSliceLogic::New ( );
+      this->SliceLogic->SetName("TG");
+
+      this->SliceLogic->SetMRMLScene ( this->GetMRMLScene());
+      this->SliceLogic->ProcessLogicEvents ();
+      this->SliceLogic->ProcessMRMLEvents (this->GetMRMLScene(), vtkCommand::ModifiedEvent, NULL);
+      this->SliceLogic->SetAndObserveMRMLSceneEvents (this->GetMRMLScene(), events );
+      events->Delete();
+
+      vtkSlicerApplicationLogic *applicationLogic = this->GetLogic()->GetApplicationLogic();
+      if (applicationLogic->GetSlices())
+      {
+        applicationLogic->GetSlices()->AddItem(this->SliceLogic);
+      }
+    } 
+
+    if (!this->SliceLogicCallbackCommand) {
+       this->SliceLogicCallbackCommand=vtkCallbackCommand::New();
+       this->SliceLogicCallbackCommand->SetClientData(reinterpret_cast<void *>(this));
+       this->SliceLogicCallbackCommand->SetCallback(vtkTumorGrowthGUI::SliceLogicCallback);
+    }
+
+
+    // Link to slicer control pannel 
+    if (!this->SliceController_OffsetScale) {
+      this->SliceController_OffsetScale =  this->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceController()->GetOffsetScale();
+      this->SliceController_OffsetScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangedEvent, this->SliceLogicCallbackCommand);
+      this->SliceController_OffsetScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangingEvent, this->SliceLogicCallbackCommand);
+      this->SliceController_OffsetScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueStartChangingEvent, this->SliceLogicCallbackCommand);
+    }
+
+    this->SliceLogic->GetSliceNode()->SetSliceVisible(1);
+  
+    // Note : Setting things manually in TCL 
+    // Always do both together 
+    // [[[vtkTumorGrowthROIStep ListInstances] GetSliceLogic] GetSliceCompositeNode] SetReferenceBackgroundVolumeID vtkMRMLScalarVolumeNode1
+    // or set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+    //  [[$GUI GetSliceLogic] GetSliceCompositeNode] SetReferenceBackgroundVolumeID vtkMRMLScalarVolumeNode1
+
+    // [[[vtkTumorGrowthROIStep ListInstances] GetSliceLogic] GetSliceNode] SetFieldOfView 200 200 1
+    //[[$GUI GetSliceLogic] GetSliceNode] SetFieldOfView 200 200 1
+} 
+
+void  vtkTumorGrowthGUI::SliceLogicCallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
+{
+
+    vtkTumorGrowthGUI *self = reinterpret_cast< vtkTumorGrowthGUI *>(clientData);
+    if (self && self->GetSliceController_OffsetScale()) {
+      if (event == vtkKWScale::ScaleValueChangedEvent || event == vtkKWScale::ScaleValueStartChangingEvent || event == vtkKWScale::ScaleValueChangingEvent) {
+    vtkKWScale *scale = vtkKWScale::SafeDownCast(caller);
+    if (scale && (scale == self->GetSliceController_OffsetScale()->GetWidget())) 
+      { 
+        self->GetSliceLogic()->SetSliceOffset(self->GetSliceController_OffsetScale()->GetValue());
+      }
+      }
+    }
+}

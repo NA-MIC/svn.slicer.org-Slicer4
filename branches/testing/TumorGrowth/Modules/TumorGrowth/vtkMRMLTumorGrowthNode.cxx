@@ -162,7 +162,7 @@ void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
 //----------------------------------------------------------------------------
 void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
 {
-  cout << "vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)" << endl;
+  // cout << "vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)" << endl;
   vtkMRMLNode::ReadXMLAttributes(atts);
 
   // Read all MRML node attributes from two arrays of names and values
