@@ -171,7 +171,6 @@ of the image at non-grid positions.
   </string-enumeration>
 </parameters>
 
-
 <parameters advanced="true">
     <label>Windowed Sinc Interpolate Function Parameters</label>
     <description>Parameters used for the Windowed Sinc interpolation</description>
@@ -202,19 +201,7 @@ of the image at non-grid positions.
       <default>3</default>
     </integer>
 </parameters>
-<parameters advanced="true">
-  <label>Loxodrome Interpolate Function Parameters</label>
-  <description>Parameters used for the Loxodrome interpolation</description>
-  <string-enumeration>
-    <name>KRConstant</name>
-    <flag>-K</flag>
-    <description>Which proprieties to interpolate constantly</description>
-    <label>K or R</label>
-    <element>K</element>
-    <element>R</element>
-    <default>K</default>
-    </string-enumeration>
-</parameters>
+
 
 <parameters advanced="true">
   <label>Output Parameters</label>
