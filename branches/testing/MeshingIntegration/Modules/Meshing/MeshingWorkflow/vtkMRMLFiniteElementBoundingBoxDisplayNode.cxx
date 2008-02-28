@@ -69,7 +69,7 @@ vtkPolyData* vtkMRMLFiniteElementBoundingBoxDisplayNode::GetPolyData()
       featureEdges->FeatureEdgesOff();
    vtkTubeFilter* outlineTube = (vtkTubeFilter*) vtkTubeFilter::New();
      outlineTube->SetInput(featureEdges->GetOutput());
-     outlineTube->SetRadius(0.1);
+     outlineTube->SetRadius(0.15);
    return outlineTube->GetOutput();  
 }
 

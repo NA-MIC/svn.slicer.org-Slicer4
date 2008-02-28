@@ -70,7 +70,7 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
                                    void * /*callData*/ );
   // Description:
   // Sets UnstructuredGrid from UnstructuredGrid model node
-  void SetUnstructuredGrid(vtkUnstructuredGrid *grid)
+ virtual void SetUnstructuredGrid(vtkUnstructuredGrid *grid)
   {
     if (this->GeometryFilter)
       {

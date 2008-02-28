@@ -22,6 +22,7 @@
 
 #include "vtkMRMLFiniteElementMeshDisplayNode.h"
 #include "vtkMRMLUnstructuredGridStorageNode.h"
+#include "vtkMRMLColorTableNode.h"
 
 //vtkCxxRevisionMacro(vtkFiniteElementMeshList, "$Revision: 1.3 $");
 
@@ -67,18 +68,26 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxUnstructuredGridActor* actor)
      // now add the display and storage nodes
       vtkMRMLFiniteElementMeshDisplayNode* dispNode = vtkMRMLFiniteElementMeshDisplayNode::New();
       vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
+      vtkMRMLColorTableNode* colorNode = vtkMRMLColorTableNode::New();
+      colorNode->SetTypeToRainbow();
        
       // Establish linkage between the surface
       // node and its display and storage nodes, so the viewer will be updated when data
       // or attributes change
       dispNode->SetScene(this->savedMRMLScene);
       storeNode->SetScene(this->savedMRMLScene);
-      //storeNode->SetFileName(newMRMLNode->GetFileName());
+      colorNode->SetScene(this->savedMRMLScene);
       this->savedMRMLScene->AddNodeNoNotify(dispNode);
       this->savedMRMLScene->AddNodeNoNotify(storeNode);
+      this->savedMRMLScene->AddNodeNoNotify(colorNode);
       this->savedMRMLScene->AddNode(newMRMLNode);
-      
+      // point the display node to the proper grid
       dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
+      // set the color node to specify the color table associated with the grid
+      dispNode->SetAndObserveColorNodeID(colorNode->GetID());
+      // need to turn this on so the scalars are used to color the grid
+      dispNode->SetScalarVisibility(1);
+
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
       newMRMLNode->SetStorageNodeID(storeNode->GetID());      
 
