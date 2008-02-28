@@ -83,15 +83,6 @@ of the image at non-grid positions.
       <default></default>
       <channel>input</channel>
     </transform>
-    <string-enumeration>
-      <name>space</name>
-      <longflag>--space</longflag>
-      <description>Space Orientation: RAS/LPS</description>
-      <label>Transform Space Orientation</label>
-      <element>RAS</element>
-      <element>LPS</element>
-      <default>LPS</default>
-    </string-enumeration>
 </parameters>
 <parameters advanced="true">
     <label>Manual Transform (Used only if no transform node set)</label>
@@ -112,6 +103,15 @@ of the image at non-grid positions.
       <element>rt</element>
       <element>a</element>
       <default>a</default>
+    </string-enumeration>
+    <string-enumeration>
+      <name>space</name>
+      <longflag>--space</longflag>
+      <description>Space Orientation: RAS/LPS (warning: if the transform is a Transform Node in Slicer3, use LPS)</description>
+      <label>Transform Space Orientation</label>
+      <element>RAS</element>
+      <element>LPS</element>
+      <default>LPS</default>
     </string-enumeration>
 </parameters>
 <parameters advanced="true">
@@ -155,27 +155,22 @@ of the image at non-grid positions.
 
 
 
-
-
-
-
 <parameters>
   <label>Interpolation Type</label>
   <string-enumeration>
       <name>interpolationType</name>
       <flag>-i</flag>
       <longflag>--interpolation</longflag>
-      <description>Sampling algorithm (linear , nn (nearest neighborhoor), ws (WindowedSinc), bs (BSpline), LoxLinear (linear Loxodrome), LoxBSpline (BSpline Loxodrome) )</description>
+      <description>Sampling algorithm (linear , nn (nearest neighborhoor), ws (WindowedSinc), bs (BSpline) )</description>
       <label>Interpolation</label>
       <element>linear</element>
       <element>nn</element>
       <element>ws</element>
       <element>bs</element>
-      <element>LoxLinear</element>
-      <element>LoxBSpline</element>
       <default>linear</default>
   </string-enumeration>
 </parameters>
+
 
 <parameters advanced="true">
     <label>Windowed Sinc Interpolate Function Parameters</label>
@@ -204,7 +199,7 @@ of the image at non-grid positions.
       <longflag>--spline_order</longflag>
       <description>Spline Order</description>
       <label>Spline Order</label>
-      <default>1</default>
+      <default>3</default>
     </integer>
 </parameters>
 <parameters advanced="true">
@@ -252,7 +247,7 @@ of the image at non-grid positions.
       <name>directionMatrix</name>
       <flag>-d</flag>
       <longflag>--direction_matrix</longflag>
-      <description>9 parameters of the direction matrix by rows</description>
+      <description>9 parameters of the direction matrix by rows (ijk to LPS if LPS transform, ijk to RAS if RAS transform)</description>
       <label>Direction Matrix</label>
       <default>0,0,0,0,0,0,0,0,0</default>
     </double-vector>
