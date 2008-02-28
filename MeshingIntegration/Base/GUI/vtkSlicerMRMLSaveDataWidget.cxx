@@ -22,6 +22,8 @@
 #include "vtkMRMLStorageNode.h"
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkMRMLModelStorageNode.h"
+#include "vtkMRMLUnstructuredGridNode.h"
+#include "vtkMRMLUnstructuredGridStorageNode.h"
 
 #include <vtksys/stl/string>
 
@@ -426,6 +428,79 @@ int vtkSlicerMRMLSaveDataWidget::UpdateFromMRML()
     this->MultiColumnList->GetWidget()->SetCellWindowCommandToCheckButton(row, 2);
     row++;
     }
+  
+  
+  // added UnstructuredGrid views also so UGrid data will be savable along with volumes and models.
+  // The meshing module uses unstructured grid subclass datatypes.  Since this recovers all UGrid 
+  // classes and subclasses, it will find nodes of all subtypes of MRMLUnstructuredGridNode.
+  
+  nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLUnstructuredGridNode");
+    for (n=0; n<nnodes; n++)
+      {
+      node = this->MRMLScene->GetNthNodeByClass(n, "vtkMRMLUnstructuredGridNode");
+      if (node->GetHideFromEditors()) 
+        {
+        continue;
+        }
+      vtkMRMLUnstructuredGridNode *vnode = vtkMRMLUnstructuredGridNode::SafeDownCast(node);
+      vtkMRMLUnstructuredGridStorageNode* snode = vtkMRMLUnstructuredGridStorageNode::SafeDownCast(vnode->GetStorageNode());
+      if (snode == NULL && !node->GetModifiedSinceRead())
+        {
+        continue;
+        }
+      if (snode == NULL && node->GetModifiedSinceRead()) 
+        {
+        vtkMRMLUnstructuredGridStorageNode *storageNode = vtkMRMLUnstructuredGridStorageNode::New();
+        storageNode->SetScene(this->GetMRMLScene());
+        this->SetMRMLScene(this->GetMRMLScene());
+        this->GetMRMLScene()->AddNode(storageNode);  
+        this->SetAndObserveMRMLScene(this->GetMRMLScene());
+        vnode->SetStorageNodeID(storageNode->GetID());
+        storageNode->Delete();
+        snode = storageNode;
+        }
+      if (snode->GetFileName() == NULL && this->DataDirectoryName != NULL) {
+        std::string name (this->DataDirectoryName);
+        name += std::string(node->GetName());
+        name += std::string(".vtk");
+        snode->SetFileName(name.c_str());
+      }
+
+      // get absolute filename
+      std::string name;
+      if (this->MRMLScene->IsFilePathRelative(snode->GetFileName()))
+        {
+        name = this->MRMLScene->GetRootDirectory();
+        if (name[name.size()-1] != '/')
+          {
+          name = name + std::string("/");
+          }
+        }
+      name += snode->GetFileName();
+
+      this->Nodes.push_back(node->GetID());
+      this->StorageNodes.push_back(snode->GetID());
+      
+      this->MultiColumnList->GetWidget()->AddRow();
+      this->MultiColumnList->GetWidget()->SetCellText(row,0,node->GetName());
+      if (node->GetModifiedSinceRead()) 
+        {
+        this->MultiColumnList->GetWidget()->SetCellText(row,1,"Modified");
+        this->MultiColumnList->GetWidget()->SetCellTextAsInt(row,2,1);
+        nModified++;
+        }
+      else
+        {
+        this->MultiColumnList->GetWidget()->SetCellText(row,1,"NotModified");
+        this->MultiColumnList->GetWidget()->SetCellTextAsInt(row,2,0);
+        }
+      this->MultiColumnList->GetWidget()->SetCellText(row,3,"UnstructuredGrid");
+      this->MultiColumnList->GetWidget()->SetCellText(row,4,name.c_str());
+      this->MultiColumnList->GetWidget()->SetCellWindowCommandToCheckButton(row, 2);
+      row++;
+      }
+    
+  
   
   this->IsProcessing = false;
 

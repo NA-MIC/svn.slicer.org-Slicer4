@@ -76,16 +76,16 @@ Superclass::WriteXML(of, nIndent);
     ss << this->DataType;
     of << indent << " DataType='" << ss.str() << "' ";
   }
-  {
-    std::stringstream ss;
-    ss << this->FileName;
-    of << indent << "FileName='" << ss.str() << "' ";
-  }
-  {
-     std::stringstream ss;
-     ss << this->FilePath;
-     of << indent << "FilePath='" << ss.str() << "' ";
-   }
+//  {
+//    std::stringstream ss;
+//    ss << this->FileName;
+//    of << indent << "FileName='" << ss.str() << "' ";
+//  }
+//  {
+//     std::stringstream ss;
+//     ss << this->FilePath;
+//     of << indent << "FilePath='" << ss.str() << "' ";
+//   }
 }
 
 //----------------------------------------------------------------------------
@@ -107,18 +107,18 @@ void vtkMRMLFiniteElementBoundingBoxNode::ReadXMLAttributes(const char** atts)
       ss << attValue;
       ss >> this->DataType;
       }
-    else if (!strcmp(attName, "FileName"))
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->FileName;
-      }
-    else if (!strcmp(attName, "FilePath"))
-       {
-       std::stringstream ss;
-       ss << attValue;
-       ss >> this->FileName;
-       }
+//    else if (!strcmp(attName, "FileName"))
+//      {
+//      std::stringstream ss;
+//      ss << attValue;
+//      ss >> this->FileName;
+//      }
+//    else if (!strcmp(attName, "FilePath"))
+//       {
+//       std::stringstream ss;
+//       ss << attValue;
+//       ss >> this->FileName;
+//       }
     }
 }
 
