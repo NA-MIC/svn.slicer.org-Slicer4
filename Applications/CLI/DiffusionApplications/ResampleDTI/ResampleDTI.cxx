@@ -1,5 +1,3 @@
-#include "itkDiffusionTensor3DRead.h"
-#include "itkDiffusionTensor3DWrite.h"
 #include "itkDiffusionTensor3DResample.h"
 #include "itkDiffusionTensor3DRigidTransform.h"
 #include "itkDiffusionTensor3DFSAffineTransform.h"
@@ -21,6 +19,8 @@
 #include "itkDiffusionTensor3DZeroCorrection.h"
 #include "itkDiffusionTensor3DAbsCorrection.h"
 #include "itkDiffusionTensor3DNearestCorrection.h"
+#include "itkDiffusionTensor3DRead.h"
+#include "itkDiffusionTensor3DWrite.h"
 
 #define RADIUS 3
 
@@ -48,6 +48,7 @@ struct parameters
   bool centeredTransform ;
   bool ppd ;
   std::string correction;
+  std::string KRConstant;
 };
 
 
@@ -82,7 +83,8 @@ typename itk::DiffusionTensor3DInterpolateImageFunction< PixelType >
 ::Pointer
 InterpolationType( std::string interpolationType ,
                              std::string windowFunction ,
-                             unsigned int splineOrder)
+                             unsigned int splineOrder ,
+                             std::string KRConstant)
 {
   typedef itk::DiffusionTensor3DInterpolateImageFunction< PixelType >
                                                              InterpolatorType ; 
@@ -130,6 +132,10 @@ InterpolationType( std::string interpolationType ,
   typedef itk::DiffusionTensor3DBSplineInterpolateImageFunction< PixelType >
                                           BSplineInterpolateImageFunctionType ;
   typedef typename InterpolatorType::Pointer InterpolatorTypePointer ;
+  typedef itk::DiffusionTensor3DLoxLinearInterpolateFunction<PixelType,0> LoxLinearInterpolateFunctionKConstantType;
+  typedef itk::DiffusionTensor3DLoxBSplineInterpolateFunction<PixelType,0 , 3 > LoxBSplineInterpolateFunctionKConstantType;
+  typedef itk::DiffusionTensor3DLoxLinearInterpolateFunction<PixelType,1> LoxLinearInterpolateFunctionRConstantType;
+  typedef itk::DiffusionTensor3DLoxBSplineInterpolateFunction<PixelType,1 , 3 > LoxBSplineInterpolateFunctionRConstantType;
   InterpolatorTypePointer interpol ;
   if( !interpolationType.compare( "nn" ) )//nearest neighborhood
     { interpol = NearestNeighborhoodInterpolatorType::New() ; }
@@ -154,6 +160,20 @@ InterpolationType( std::string interpolationType ,
                bSplineInterpolator=BSplineInterpolateImageFunctionType::New() ;
     bSplineInterpolator->SetSplineOrder( splineOrder ) ;
     interpol = bSplineInterpolator ;
+    }
+  else if(!interpolationType.compare( "LoxLinear") ) //Linear Loxodrome
+    { 
+    if(!KRConstant.compare("K") ) 
+      { interpol = LoxLinearInterpolateFunctionKConstantType::New(); }
+    else
+      { interpol = LoxLinearInterpolateFunctionRConstantType::New(); }
+    }
+  else if(!interpolationType.compare( "LoxBSpline") ) //BSpline Loxodrome
+    { 
+    if(!KRConstant.compare("K") )
+      { interpol = LoxBSplineInterpolateFunctionKConstantType::New(); }
+    else
+      { interpol = LoxBSplineInterpolateFunctionRConstantType::New(); }
     }
   return interpol ;
 }
@@ -308,7 +328,7 @@ SetTransform( parameters list ,
       {
       transformMatrix4x4[ i ][ 3 ] = offset[ i ] ;
       }     
-    //If nothing set, automacally inverse the given transform.
+    //If set, inverse the given transform.
     //The given transform therefore transform the input image into the output image    
     if( list.inverseITKTransformation )
       {
@@ -455,6 +475,25 @@ void SetOutputParameters(parameters list ,
 
 
 
+template< class PixelType > void RASLPS(typename itk::OrientedImage< itk::DiffusionTensor3D< PixelType > , 3 >::Pointer image)
+{
+  typename itk::VectorImage< PixelType, 3 >::PointType m_Origin ;
+  typename itk::VectorImage< PixelType, 3 >::DirectionType m_Direction ;
+  m_Origin = image->GetOrigin() ;
+  m_Direction = image->GetDirection();
+  m_Origin[0]=-m_Origin[0];
+  m_Origin[1]=-m_Origin[1];
+  itk::Matrix< double , 3 , 3 > ras ;
+  ras.SetIdentity() ;
+  ras[ 0 ][ 0 ] = -1 ;
+  ras[ 1 ][ 1 ] = -1 ;
+  m_Direction=ras*m_Direction;
+  image->SetOrigin( m_Origin ) ;
+  image->SetDirection( m_Direction ) ; 
+}
+
+
+
 //Check all input parameters and transform the input image
 //Template over the pixeltype of the input image
 template< class PixelType >
@@ -475,6 +514,8 @@ int Do( parameters list )
       { reader->SetNumberOfThreads( list.numberOfThread ) ; }
     reader->Update( list.inputVolume.c_str() ) ;
     image=reader->GetOutput();
+    if( !list.space.compare( "RAS" ) &&  list.transformationFile.compare( "" ) )
+      { RASLPS<PixelType>(image); }
     WriterTypePointer writer = WriterType::New() ;
     if(list.numberOfThread) 
       { writer->SetNumberOfThreads( list.numberOfThread ) ; }
@@ -486,7 +527,8 @@ int Do( parameters list )
     //Select interpolation type
     interpol=InterpolationType< PixelType > ( list.interpolationType ,
                                             list.windowFunction ,
-                                            list.splineOrder ) ;
+                                            list.splineOrder ,
+                                            list.KRConstant ) ;
 
       
     //Select the transformation
@@ -494,17 +536,6 @@ int Do( parameters list )
     TransformReaderPointer transformFile ;
     ReadTransform( list , transformFile );
     //if the transform is in RAS space coordinate, add a transform to transform the image into that space 
-    if( !list.space.compare( "RAS" ) &&  list.transformationFile.compare( "" ) )
-    {
-      typedef itk::Rigid3DTransform<double> Rigid3DTransformType;
-      Rigid3DTransformType::Pointer rasTransform=Rigid3DTransformType::New();
-      itk::Matrix<double,3,3> ras;
-      ras.SetIdentity() ;
-      ras[ 0 ][ 0 ] = -1 ;
-      ras[ 1 ][ 1 ] = -1 ;
-      rasTransform->SetMatrix(ras);
-      transformFile->GetTransformList()->push_front(rasTransform.GetPointer());
-    }
     typedef itk::DiffusionTensor3DTransform< PixelType > TransformType ;
     typedef typename TransformType::Pointer TransformTypePointer ;
     //start transform
@@ -566,9 +597,9 @@ int Do( parameters list )
       image = nearestFilter->GetOutput();
     }
     //Save result
+    if( !list.space.compare( "RAS" ) &&  list.transformationFile.compare( "" ) )
+      { RASLPS<PixelType>(image); }
     writer->SetInput( image );
-    if( !list.space.compare( "RAS" ) )
-      { writer->SetSpace(nrrdSpaceRightAnteriorSuperior); }
     //Save output image
     writer->Update( list.outputVolume.c_str() ) ;
     return 0 ;
@@ -611,7 +642,8 @@ int main( int argc , const char * argv[] )
   list.space = space ;
   list.centeredTransform = centeredTransform ;
   list.ppd = ppd ;
-  list.correction = correction;
+  list.correction = correction ;
+  list.KRConstant = KRConstant ;
   //verify if all the vector parameters have the good length
   if( list.outputImageSpacing.size() != 3 || list.outputImageSize.size() != 3
      || ( list.outputImageOrigin.size() != 3 
