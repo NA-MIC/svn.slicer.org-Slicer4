@@ -3,6 +3,9 @@
 
 #include "vtkSlicerModuleGUI.h"
 #include "vtkTumorGrowth.h"
+#include "vtkSlicerSliceLogic.h"
+#include "vtkKWScaleWithEntry.h"
+
 
 class vtkTumorGrowthLogic;
 class vtkMRMLTumorGrowthNode;
@@ -12,7 +15,7 @@ class vtkTumorGrowthROIStep;
 class vtkTumorGrowthSegmentationStep;
 class vtkTumorGrowthTypeStep;
 class vtkTumorGrowthAnalysisStep;
-class  vtkImageData;
+class vtkImageData;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthGUI : 
   public vtkSlicerModuleGUI
@@ -103,8 +106,16 @@ public:
 
   vtkGetObjectMacro(SegmentationStep,vtkTumorGrowthSegmentationStep);
 
-protected:
+  void SliceLogicRemove();
+  void SliceLogicDefine();
 
+  // Description:
+  // accessor
+  vtkGetObjectMacro(SliceLogic, vtkSlicerSliceLogic);
+  vtkGetObjectMacro(SliceController_OffsetScale, vtkKWScaleWithEntry); 
+
+protected:
+   static void SliceLogicCallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
 private:
   vtkTumorGrowthGUI();
   ~vtkTumorGrowthGUI();
@@ -119,6 +130,8 @@ private:
   // Updates registration progress on the status bar of the main application. 
   virtual void UpdateRegistrationProgress();
 
+  void SliceLogicRemoveGUIObserver();
+
   vtkTumorGrowthLogic       *Logic;
   vtkMRMLTumorGrowthNode    *Node;
   
@@ -132,6 +145,10 @@ private:
   vtkTumorGrowthSegmentationStep     *SegmentationStep;
   vtkTumorGrowthTypeStep             *TypeStep;
   vtkTumorGrowthAnalysisStep         *AnalysisStep;
+
+  vtkSlicerSliceLogic *SliceLogic;
+  vtkKWScaleWithEntry *SliceController_OffsetScale;
+  vtkCallbackCommand *SliceLogicCallbackCommand;
 
 };
 
