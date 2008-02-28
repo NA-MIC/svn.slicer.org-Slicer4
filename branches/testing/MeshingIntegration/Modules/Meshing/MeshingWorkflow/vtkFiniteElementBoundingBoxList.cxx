@@ -82,7 +82,7 @@ int vtkFiniteElementBoundingBoxList::AppendItem(vtkMimxUnstructuredGridActor* ac
      this->savedMRMLScene->AddNodeNoNotify(dispNode);
      this->savedMRMLScene->AddNodeNoNotify(storeNode);
      this->savedMRMLScene->AddNode(newMRMLNode);
-     
+
      // Establish linkage between the bounding box
      // node and its display and storage nodes, so the viewer will be updated when data
      // or attributes change

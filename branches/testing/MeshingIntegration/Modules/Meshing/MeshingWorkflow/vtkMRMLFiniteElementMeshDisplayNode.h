@@ -32,6 +32,9 @@
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLUnstructuredGridNode.h"
 
+//class vtkMeshQualityExtended; 
+class vtkMeshQuality; 
+class vtkShrinkFilter;
 
 class VTK_MRML_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
 {
@@ -69,15 +72,17 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRMLUnstru
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
  
-
+   // overload the virtual placeholder in the parent class.  This one will setup
+   // the beginning of the actual pipeline for rendering an FE Mesh instead
+   virtual void SetUnstructuredGrid(vtkUnstructuredGrid *grid);
  
-   
+   // declare a rendering pipeline for bblock data in this class
+   virtual vtkPolyData* GetPolyData();
+     
+    
   // Description:
   // Update the pipeline based on this node attributes
-  virtual void UpdatePolyDataPipeline() 
-    {
-    this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
-    };
+  virtual void UpdatePolyDataPipeline();
  
   //--------------------------------------------------------------------------
   // Display Information: Geometry to display (not mutually exclusive)
@@ -85,7 +90,10 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRMLUnstru
 
   // Description:
  
-    
+   //vtkMeshQualityExtended *SavedMeshQualityFilter; 
+   vtkMeshQuality *SavedMeshQualityFilter; 
+   vtkShrinkFilter *SavedShrinkFilter;
+  
  protected:
      vtkMRMLFiniteElementMeshDisplayNode ( );
   ~vtkMRMLFiniteElementMeshDisplayNode ( );

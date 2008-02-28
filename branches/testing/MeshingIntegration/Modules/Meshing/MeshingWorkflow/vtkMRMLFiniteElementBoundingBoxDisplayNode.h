@@ -70,14 +70,13 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementBoundingBoxDisplayNode : public vtkMRM
                                    void * /*callData*/ );
  
 
- 
+  // declare a rendering pipeline for bblock data in this class
+  virtual vtkPolyData* GetPolyData();
    
   // Description:
   // Update the pipeline based on this node attributes
-  virtual void UpdatePolyDataPipeline() 
-    {
-    this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
-    };
+  virtual void UpdatePolyDataPipeline();
+  
  
   //--------------------------------------------------------------------------
   // Display Information: Geometry to display (not mutually exclusive)

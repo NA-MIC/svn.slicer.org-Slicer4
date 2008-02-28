@@ -327,23 +327,29 @@ void vtkFiniteElementEditBBGroup::EditBBDoneCallback()
       vtkIdType objnum = combobox->GetValueIndex(name);
       if (split->GetOutput())
       {
-          bblist->AppendItem(vtkMimxUnstructuredGridActor::New());
-        vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
-                bblist->GetNumberOfItems()-1))->GetDataSet()->
-          DeepCopy(split->GetOutput());
+          vtkMimxUnstructuredGridActor* newactor = vtkMimxUnstructuredGridActor::New();
+          vtkMimxUnstructuredGridActor* oldactor = 
+              vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(bblist->GetNumberOfItems()-1));
+          newactor->SetFileName(oldactor->GetFileName());
+          newactor->SetDataType(oldactor->GetDataType());
+          newactor->GetDataSet()->DeepCopy(split->GetOutput());
+          newactor->SetObjectName("Split_",bblist->GetNumberOfItems());
+          bblist->AppendItem(newactor);
         this->SplitCount++;
-        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
-                bblist->GetNumberOfItems()-1))->SetObjectName("Split_",SplitCount);
+//        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
+//                bblist->GetNumberOfItems()-1))->SetObjectName("Split_",SplitCount);
         vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
                 bblist->GetNumberOfItems()-1))->GetDataSet()->Modified();
+
+        
         this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetActor());
+                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetActor());
         this->GetMimxViewWindow()->GetRenderWidget()->RemoveViewProp(
                 bblist->GetItem(objnum)->GetActor());
         this->ObjectListComboBox->GetWidget()->SetValue(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
+                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetFileName());
         this->ObjectListComboBox->GetWidget()->AddValue(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
+                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetFileName());
          this->GetMimxViewWindow()->GetRenderWidget()->Render();
         this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
     this->ViewProperties->AddObjectList();
@@ -554,13 +560,19 @@ void vtkFiniteElementEditBBGroup::EditBBSplitCellCallback()
 {
   if(strcmp(this->ObjectListComboBox->GetWidget()->GetValue(),""))
   {
+    vtkFiniteElementBoundingBoxList* mrmlBboxList = (vtkFiniteElementBoundingBoxList*)(this->BBoxList);
+
     if(this->SplitButtonState)
     {
       vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
       const char *name = combobox->GetValue();
       int num = combobox->GetValueIndex(name);
-      vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList
-        ->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+
+//      vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList
+//        ->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+//      
+       vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(mrmlBboxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+  
       if(this->ExtractEdgeWidget)
       {
         if(this->ExtractEdgeWidget->GetEnabled())
@@ -574,8 +586,7 @@ void vtkFiniteElementEditBBGroup::EditBBSplitCellCallback()
       this->ExtractEdgeWidget->SetInteractor(this->GetMimxViewWindow()->GetRenderWidget()
         ->GetRenderWindowInteractor());
       this->ExtractEdgeWidget->SetInput(ugrid);
-    this->ExtractEdgeWidget->SetInputActor(this->BBoxList
-      ->GetItem(combobox->GetValueIndex(name))->GetActor());
+    this->ExtractEdgeWidget->SetInputActor(mrmlBboxList->GetItem(combobox->GetValueIndex(name))->GetActor());
       this->ExtractEdgeWidget->SetEnabled(1);
       this->SplitButtonState = 0;
     }
@@ -589,11 +600,9 @@ void vtkFiniteElementEditBBGroup::EditBBSplitCellCallback()
         vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
           this->BBoxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
         this->ExtractEdgeWidget = vtkMimxExtractEdgeWidget::New();
-        this->ExtractEdgeWidget->SetInteractor(this->GetMimxViewWindow()->GetRenderWidget()
-          ->GetRenderWindowInteractor());
+        this->ExtractEdgeWidget->SetInteractor(this->GetMimxViewWindow()->GetRenderWidget()->GetRenderWindowInteractor());
         this->ExtractEdgeWidget->SetInput(ugrid);
-    this->ExtractEdgeWidget->SetInputActor(this->BBoxList
-      ->GetItem(combobox->GetValueIndex(name))->GetActor());
+    this->ExtractEdgeWidget->SetInputActor(mrmlBboxList->GetItem(combobox->GetValueIndex(name))->GetActor());
         this->ExtractEdgeWidget->SetEnabled(1);
         this->SplitButtonState = 0;
       }
