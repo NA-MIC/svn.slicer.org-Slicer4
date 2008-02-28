@@ -246,11 +246,11 @@ void vtkFiniteElementCreateFEMeshFromBBGroup::CreateFEMeshFromBBCallback()
        this->ViewProperties->AddObjectList();
  
        //TODO
-       // Add the actor to the window;  this should observe the MRML instead
-       this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-         meshlist->GetItem(meshlist->GetNumberOfItems()-1)->GetActor());      
-       this->GetMimxViewWindow()->GetRenderWidget()->Render();
-       this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+//       // Add the actor to the window;  this should observe the MRML instead
+//       this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+//         meshlist->GetItem(meshlist->GetNumberOfItems()-1)->GetActor());      
+//       this->GetMimxViewWindow()->GetRenderWidget()->Render();
+//       this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
       
     }
     else {

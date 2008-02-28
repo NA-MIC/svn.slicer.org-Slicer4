@@ -154,6 +154,8 @@ int vtkFiniteElementBoundingBoxList::ModifyItem(vtkIdType index, vtkMimxUnstruct
       
      // *** delete this reference? 
      //ugrid->Delete();
+     requestedMrmlNode->Modified();
+     
      cout << "modified MRML bbox node: " << index << endl;
    } else 
    {

@@ -108,7 +108,7 @@ void vtkMRMLFiniteElementMeshDisplayNode::WriteXML(ostream& of, int nIndent)
 
   vtkIndent indent(nIndent);
 
-  of << indent << " shrinkFactor =\"" << this->ShrinkFactor << "\"";
+  //of << indent << " shrinkFactor =\"" << this->ShrinkFactor << "\"";
 }
 
 
@@ -126,12 +126,7 @@ void vtkMRMLFiniteElementMeshDisplayNode::ReadXMLAttributes(const char** atts)
     attName = *(atts++);
     attValue = *(atts++);
 
-    if (!strcmp(attName, "shrinkFactor")) 
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> ShrinkFactor;
-      }
+ 
     }  
 }
 
