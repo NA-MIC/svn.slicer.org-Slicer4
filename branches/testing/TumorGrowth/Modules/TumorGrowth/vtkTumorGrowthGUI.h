@@ -114,6 +114,7 @@ public:
   vtkGetObjectMacro(SliceLogic, vtkSlicerSliceLogic);
   vtkGetObjectMacro(SliceController_OffsetScale, vtkKWScaleWithEntry); 
 
+  void PropagateVolumeSelection();
 protected:
    static void SliceLogicCallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
 private:

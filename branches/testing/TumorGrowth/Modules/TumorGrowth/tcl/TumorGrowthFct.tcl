@@ -651,9 +651,9 @@ namespace eval TumorGrowthTcl {
     } 
 
     proc Analysis_Intensity_UpdateThreshold_Fct {LOGIC  AnalysisSensitivity } {
-    set AnalysisMean           [$LOGIC GetAnalysis_Intensity_Mean ]
+        set AnalysisMean           [$LOGIC GetAnalysis_Intensity_Mean ]
         set AnalysisVariance       [$LOGIC GetAnalysis_Intensity_Variance ]
-    set ThresholdValue         [Analysis_Intensity_InverseStandardCumulativeDistribution $AnalysisSensitivity  $AnalysisMean $AnalysisVariance]      
+        set ThresholdValue         [Analysis_Intensity_InverseStandardCumulativeDistribution $AnalysisSensitivity  $AnalysisMean $AnalysisVariance]      
         if { $ThresholdValue < 0.0 } { set ThresholdValue 0.0 }
         $LOGIC SetAnalysis_Intensity_Threshold $ThresholdValue
     }
@@ -815,7 +815,7 @@ namespace eval TumorGrowthTcl {
 
     if { $ThresholdValue < 0.0 } { set ThresholdValue 0.0 }
 
-    puts "ComputeThreshold -- Mean: $MeanNoise Variance: $Variance Threshold: $ThresholdValue"
+    # puts "ComputeThreshold -- Mean: $MeanNoise Variance: $Variance Threshold: $ThresholdValue"
     
     return "$MeanNoise $SqrtVariance $ThresholdValue"
   }
