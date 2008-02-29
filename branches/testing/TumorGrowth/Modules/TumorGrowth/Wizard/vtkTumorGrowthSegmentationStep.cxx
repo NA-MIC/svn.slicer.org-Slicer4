@@ -148,6 +148,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   this->Script("pack %s %s -side left -anchor nw -padx 2 -pady 0",this->ThresholdLabel->GetWidgetName(),this->ThresholdRange->GetWidgetName());
 
   this->CreateGridButton(); 
+  // this->CreateResetButton(); 
   // ----------------------------------------
   // Show segmentation 
   // ----------------------------------------
@@ -172,7 +173,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
    
 
   // Show Reference Image 1 in the 3D Slicer Viewer
-  this->SliceLogicDefine(); 
+  this->GetGUI()->SliceLogicDefine(); 
 
  
   // Kilian
@@ -345,7 +346,7 @@ void vtkTumorGrowthSegmentationStep::TransitionCallback()
   vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());
   this->GetGUI()->GetLogic()->SaveVolume(application,this->SegmentNode); 
 
-  this->GetGUI()->SliceLogicRemove();
+  // this->GetGUI()->SliceLogicRemove();
  
   // Proceed to next step 
   this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep();
