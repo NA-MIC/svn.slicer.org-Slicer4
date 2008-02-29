@@ -267,7 +267,7 @@ int Slicer3_Tcl_Eval ( Tcl_Interp *interp, const char *script )
   return 0;
 }
 
-void Slicer3_BrokerScriptHanlder ( const char *script )
+void Slicer3_BrokerScriptHandler ( const char *script )
 {
   vtkSlicerApplication::GetInstance()->Script( script );
 }
@@ -869,8 +869,9 @@ int Slicer3_main(int argc, char *argv[])
     // -- event broker
     // - script handler to pass callback strings to the tcl interp
     // - asynchronous mode so that redunant events get collapsed
-    vtkEventBroker::GetInstance()->SetScriptHandler( Slicer3_BrokerScriptHanlder ); 
+    vtkEventBroker::GetInstance()->SetScriptHandler( Slicer3_BrokerScriptHandler ); 
     vtkEventBroker::GetInstance()->SetEventModeToAsynchronous(); 
+
 
     // Create MRML scene
     vtkMRMLScene *scene = vtkMRMLScene::New();
