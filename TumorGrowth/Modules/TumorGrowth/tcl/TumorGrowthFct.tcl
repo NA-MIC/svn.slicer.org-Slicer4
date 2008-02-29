@@ -36,7 +36,7 @@ namespace eval TumorGrowthTcl {
       # -------------------------------------
       set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
       set SCAN1_SEGMENT_NODE [$SCENE GetNodeByID [$NODE GetScan1_SegmentRef]]
-      set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_SuperSampleRef]]
+      set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_LocalRef]]
       if { $SCAN1_NODE == "" || $SCAN1_SEGMENT_NODE == "" || $SCAN2_NODE == "" } { 
          Print "Error: Not all nodes of the pipeline are defined  $SCAN1_NODE - $SCAN1_SEGMENT_NODE - $SCAN2_NODE" 
          return
@@ -50,7 +50,7 @@ namespace eval TumorGrowthTcl {
       # -------------------------------------
       HistogramNormalization_DeleteOutput
 
-      set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN1_NODE "TG_scan2_reg_norm" ]
+      set OUTPUT_NODE [$LOGIC CreateVolumeNode  $SCAN1_NODE "TG_scan2_norm" ]
       $OUTPUT_NODE SetAndObserveImageData $OUTPUT
       $NODE SetScan2_NormedRef [$OUTPUT_NODE GetID]
    
@@ -191,9 +191,9 @@ namespace eval TumorGrowthTcl {
             set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_Ref]]
         } else {
             set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
-            # Later set to 
-            # set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_SuperSampleRef]]
-            set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
+            set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_SuperSampleRef]]
+            # you should first register and then normalize bc registration is not impacted by normalization 
+            # set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
         }
         if {$SCAN1_NODE == "" || $SCAN2_NODE == ""} { return }
 
@@ -363,9 +363,7 @@ namespace eval TumorGrowthTcl {
             set SCAN_NODE $SCAN1_NODE
             set INPUT_VOL $SCAN1_VOL 
         } else {
-          # Later Change it 
-          # set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
-          set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan2_LocalRef]]
+          set SCAN_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
           if {$SCAN_NODE == ""} { 
               puts "ERROR: IntensityThresholding_GUI: No Scan2_NormedRef defined !"
               return 0
@@ -879,9 +877,9 @@ namespace eval TumorGrowthTcl {
       $LOGIC SaveVolumeForce $::slicer3::Application  $SCAN1_SEGM_NODE  
       set SCAN1_SEGM_NAME [SaveVolumeFileName $SCAN1_SEGM_NODE]
  
-      set SCAN2_IMAGE_NODE [$SCENE GetNodeByID [$NODE GetScan2_LocalRef]]
+      set SCAN2_IMAGE_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]]
       if {$SCAN2_IMAGE_NODE == ""} { 
-      Print "--> -[$NODE GetScan2_LocalRef]- [$SCENE GetNodeByID [$NODE GetScan2_LocalRef]]"
+       # Print "--> -[$NODE GetScan2_LocalRef]- [$SCENE GetNodeByID [$NODE GetScan2_LocalRef]]"
        Print "ERROR:Analysis_Deformable_GUI: Scan2 is not defined! " 
        return 0 
       }

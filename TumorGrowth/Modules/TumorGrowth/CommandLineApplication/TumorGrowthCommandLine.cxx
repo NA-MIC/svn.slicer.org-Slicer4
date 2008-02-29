@@ -365,37 +365,21 @@ int main(int argc, char** argv)
     char *Scan1SegmentOutputTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,Scan1Segment->GetOutput()));
 
     // 
-    // ------------- NORMALIZE  --------------------
-    //
-
-    tgVtkDefineMacro(Scan2Normalized,vtkImageData);
-    if (1) {
-       // -------------------------------------
-       cout << "=== Normalize Scan2 ===" << endl;
-       std::string CMD = "::TumorGrowthTcl::HistogramNormalization_FCT " + Scan1SuperSampleTcl + " " + Scan1SegmentOutputTcl + " " 
-                                                                     + Scan2SuperSampleTcl + " " + Scan2NormalizedTcl;
-       app->Script(CMD.c_str()); 
-       std::string NAME = tg.WorkingDir + "/TG_scan2_norm.nhdr";
-       tgWriteVolume(NAME.c_str(),Scan2Normalized);
-    }
-
-    // 
     // ------------- LOCAL REGISTRATION  --------------------
     //
     tgVtkDefineMacro(Scan2Local,vtkImageData); 
-    std::string Scan2LocalFileName = tg.WorkingDir + "/TG_scan2_Local.nhdr";
-    
     if (1) {
       // -------------------------------------
       cout << "=== Local Rigid Registration ===" << endl;
      
-      if (tgRegisterAG( app, interp, Scan1SuperSample, Scan1SuperSampleTcl, Scan2Normalized, tg.GetWorkingDir(), Scan2LocalTcl)) return EXIT_FAILURE;
+      if (tgRegisterAG( app, interp, Scan1SuperSample, Scan1SuperSampleTcl, Scan2SuperSample, tg.GetWorkingDir(), Scan2LocalTcl)) return EXIT_FAILURE;
       std::string CMD = "catch { exec mv " + tg.WorkingDir + "/LinearRegistration.txt " + tg.WorkingDir + "/LocalLinearRegistration.txt }";
       app->Script(CMD.c_str());
 
       CMD = "catch { ::TumorGrowthReg::DeleteTransformAG }";
       app->Script(CMD.c_str());
-   
+
+      std::string Scan2LocalFileName = tg.WorkingDir + "/TG_scan2_Local.nhdr";
       tgWriteVolume(Scan2LocalFileName.c_str(),Scan2Local);
 
     } else {
@@ -404,11 +388,27 @@ int main(int argc, char** argv)
     }
 
     // 
+    // ------------- NORMALIZE  --------------------
+    //
+
+    tgVtkDefineMacro(Scan2LocalNormalized,vtkImageData);
+    std::string Scan2LocalNormalizedFileName = tg.WorkingDir + "/TG_scan2_norm.nhdr";
+    if (1) {
+       // -------------------------------------
+       cout << "=== Normalize Scan2 ===" << endl;
+       std::string CMD = "::TumorGrowthTcl::HistogramNormalization_FCT " + Scan1SuperSampleTcl + " " + Scan1SegmentOutputTcl + " " 
+                                                                     + Scan2LocalTcl + " " + Scan2LocalNormalizedTcl;
+       app->Script(CMD.c_str()); 
+       tgWriteVolume(Scan2LocalNormalizedFileName.c_str(),Scan2LocalNormalized);
+    }
+
+    // 
     // ------------- ANALYZE TYPE: INTENSITY  --------------------
     //
     tgVtkDefineMacro(Scan1Intensity,vtkImageData); 
     tgVtkDefineMacro(Scan2Intensity,vtkImageData); 
     double Analysis_Intensity_Growth = -1;
+
 
     if (tgIntensityAnalysisFlag) { 
       cout << "=== Intensity Based Analysis ===" << endl;
@@ -421,12 +421,11 @@ int main(int argc, char** argv)
       std::string Scan1IntensityFileName = tg.WorkingDir + "/TG_scan1_Thr.nhdr";
       tgWriteVolume(Scan1IntensityFileName.c_str(),Scan1Intensity);
 
-      CMD = "::TumorGrowthTcl::IntensityThresholding_Fct " + Scan2LocalTcl + " " + Scan1SuperSampleTcl + ThreshString + Scan2IntensityTcl;
+      CMD = "::TumorGrowthTcl::IntensityThresholding_Fct " + Scan2LocalNormalizedTcl + " " + Scan1SuperSampleTcl + ThreshString + Scan2IntensityTcl;
       app->Script(CMD.c_str());
 
       std::string Scan2IntensityFileName = tg.WorkingDir + "/TG_scan2_Thr.nhdr";
       tgWriteVolume(Scan2IntensityFileName.c_str(),Scan2Intensity);
-      cout <<  "---!!!- > "  << Scan2IntensityFileName.c_str() << endl;
 
       // ------------- ANALYSIS  --------------------
       char Sensitivity[100];
@@ -460,7 +459,7 @@ int main(int argc, char** argv)
       std::string ANALYSIS_SEGM_FILE                 = tg.WorkingDir + "/Analysis_Deformable_Sementation_Result.txt";    
       std::string ANALYSIS_JACOBIAN_FILE             = tg.WorkingDir + "/Analysis_Deformable_Jaccobian_Result.txt";  
 
-      std::string CMD =  "::TumorGrowthTcl::Analysis_Deformable_Fct " + Scan1SuperSampleFileName + " " + Scan1SegmentFileName + " " + Scan2LocalFileName + " "
+      std::string CMD =  "::TumorGrowthTcl::Analysis_Deformable_Fct " + Scan1SuperSampleFileName + " " + Scan1SegmentFileName + " " + Scan2LocalNormalizedFileName + " "
                                                                   + SCAN1_TO_SCAN2_SEGM_NAME + " " + SCAN1_TO_SCAN2_DEFORM_NAME + " " 
                                                                       + SCAN1_TO_SCAN2_DEFORM_INVERSE_NAME + " " + SCAN1_TO_SCAN2_RESAMPLED_NAME + " "  
                                                                   + ANALYSIS_SEGM_FILE + " " + ANALYSIS_JACOBIAN_FILE;
@@ -529,7 +528,7 @@ int main(int argc, char** argv)
     if (Scan1Intensity)  Scan1Intensity->Delete();
     if (Scan2Intensity)  Scan2Intensity->Delete();
     if (Scan2Local)       Scan2Local->Delete();
-    if (Scan2Normalized)  Scan2Normalized->Delete();
+    if (Scan2LocalNormalized)  Scan2LocalNormalized->Delete();
     if (Scan1PreSegment)  Scan1PreSegment->Delete();
     if (Scan1Segment)     Scan1Segment->Delete();
     if (Scan1SuperSample) Scan1SuperSample->Delete();

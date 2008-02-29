@@ -187,7 +187,7 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateVolumeNode(vtkMRMLVolumeNode
 }
 
 void vtkTumorGrowthLogic::DeleteSuperSample(int ScanNum) {
-  cout <<  "vtkTumorGrowthLogic::DeleteSuperSample " << endl;
+  // cout <<  "vtkTumorGrowthLogic::DeleteSuperSample " << endl;
    // Delete old attached node first 
   vtkMRMLVolumeNode* currentNode = NULL; 
   if (ScanNum ==1) {
@@ -389,7 +389,7 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
 
   this->SourceAnalyzeTclScripts(app);
   
-  if (0) { 
+  if (1) { 
     cout << "=== 1 ===" << endl;
     app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Global");
 
@@ -398,6 +398,7 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
     // Second step -> Save the outcome
     if (!this->TumorGrowthNode) {return 0;}
   
+    cout << "=== 2 ===" << endl;
     this->DeleteSuperSample(2);
     vtkMRMLScalarVolumeNode *outputNode = this->CreateSuperSample(2);
     if (!outputNode) {return 0;} 
@@ -405,18 +406,18 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
     this->SaveVolume(app,outputNode);
 
     //----------------------------------------------
-
-    cout << "=== 2 ===" << endl;
-    app->Script("::TumorGrowthTcl::HistogramNormalization_GUI"); 
+    // Kilian-Feb-08 you should first register and then normalize bc registration is not impacted by normalization 
     cout << "=== 3 ===" << endl;
     app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Local"); 
+    cout << "=== 4 ===" << endl;
+    app->Script("::TumorGrowthTcl::HistogramNormalization_GUI"); 
   } else {
-    if (!this->TumorGrowthNode->GetScan2_LocalRef() || !strcmp(this->TumorGrowthNode->GetScan2_LocalRef(),"")) { 
+    if (!this->TumorGrowthNode->GetScan2_NormedRef() || !strcmp(this->TumorGrowthNode->GetScan2_NormedRef(),"")) { 
       char fileName[1024];
-      sprintf(fileName,"%s/TG_scan2_Local.nhdr",this->TumorGrowthNode->GetWorkingDir());
-      vtkMRMLVolumeNode* tmp = this->LoadVolume(app,fileName,0,"TG_scan2_Local");
+      sprintf(fileName,"%s/TG_scan2_norm.nhdr",this->TumorGrowthNode->GetWorkingDir());
+      vtkMRMLVolumeNode* tmp = this->LoadVolume(app,fileName,0,"TG_scan2_norm");
       if (tmp) {
-        this->TumorGrowthNode->SetScan2_LocalRef(tmp->GetID());
+        this->TumorGrowthNode->SetScan2_NormedRef(tmp->GetID());
       } else {
          cout << "Error: Could not load " << fileName << endl;
          return 0;
@@ -424,9 +425,9 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
     }
   }
   if (this->TumorGrowthNode->GetAnalysis_Intensity_Flag()) { 
-    cout << "=== 4 ===" << endl;
-    if (!atoi(app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 1"))) return 0; 
     cout << "=== 5 ===" << endl;
+    if (!atoi(app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 1"))) return 0; 
+    cout << "=== 6 ===" << endl;
     if (!atoi(app->Script("::TumorGrowthTcl::IntensityThresholding_GUI 2"))) return 0; 
     cout << "=== INTENSITY ANALYSIS ===" << endl;
     if (!atoi(app->Script("::TumorGrowthTcl::Analysis_Intensity_GUI"))) return 0; 
