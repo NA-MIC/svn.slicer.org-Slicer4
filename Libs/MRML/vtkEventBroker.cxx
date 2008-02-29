@@ -498,8 +498,18 @@ void vtkEventBroker::LogEvent ( vtkObservation *observation )
     return;
     }
 
+  char eventString[BUFSIZ];
+  const char *eventStringPointer;
   if ( this->EventLogging && observation != NULL )
     {
+
+    eventStringPointer = vtkCommand::GetStringFromEventId( observation->GetEvent() );
+    if ( !strcmp (eventStringPointer, "NoEvent") )
+      {
+      sprintf (eventString, "%d", observation->GetEvent());
+      eventStringPointer = eventString;
+      }
+
     // log the actual event
     if ( observation->GetScript() != NULL )
       {
@@ -508,8 +518,8 @@ void vtkEventBroker::LogEvent ( vtkObservation *observation )
           << " -> "
           << "\"" << observation->GetScript() << "\""
           << " [ label = \"" 
-          << vtkCommand::GetStringFromEventId( observation->GetEvent() )
-          << "\" ]\n;" ;
+          << eventStringPointer
+          << "\" ];\n" ;
       }
     else
       {
@@ -518,8 +528,8 @@ void vtkEventBroker::LogEvent ( vtkObservation *observation )
           << " -> "
           << observation->GetObserver()->GetClassName() 
           << " [ label = \"" 
-          << vtkCommand::GetStringFromEventId( observation->GetEvent() )
-          << "\" ]\n;" ;
+          << eventStringPointer
+          << "\" ];\n" ;
       }
     this->LogFile.flush();
     }
@@ -580,22 +590,22 @@ void vtkEventBroker::QueueObservation ( vtkObservation *observation, void *callD
   //
   if ( this->GetCompressCallData() )
     {
-    observation->GetCallDataList().clear();
-    observation->GetCallDataList().push_back( callData );
+    observation->GetCallDataList()->clear();
+    observation->GetCallDataList()->push_back( callData );
     }
   else
     {
-    std::vector< void *>::iterator dataIter; 
-    for(dataIter=observation->GetCallDataList().begin(); dataIter != observation->GetCallDataList().end(); dataIter++)  
+    std::deque< void *>::iterator dataIter; 
+    for(dataIter=observation->GetCallDataList()->begin(); dataIter != observation->GetCallDataList()->end(); dataIter++)  
       {
       if ( *dataIter == callData )
         {
         break;
         }
       }
-    if ( dataIter == observation->GetCallDataList().end() )
+    if ( dataIter == observation->GetCallDataList()->end() )
       {
-      observation->GetCallDataList().push_back( callData );
+      observation->GetCallDataList()->push_back( callData );
       }
     }
 
@@ -671,12 +681,17 @@ void vtkEventBroker::ProcessEventQueue ()
     {
     vtkObservation *observation = this->EventQueue.front();
     observation->Register( this );
-    std::vector< void *>::iterator iter; 
-    for(iter=observation->GetCallDataList().begin(); iter != observation->GetCallDataList().end(); iter++)  
+    int finished = 0;
+    while ( !finished )
       {
-      this->InvokeObservation( observation, *iter );
+      void *callData = observation->GetCallDataList()->front();
+      observation->GetCallDataList()->pop_front();
+      finished = (observation->GetCallDataList()->size() == 0);
+      this->InvokeObservation( observation, callData );
       if ( !observation->GetInEventQueue() )
         {
+        observation->GetCallDataList()->clear();
+        finished = 1;
         break;
         }
       }
