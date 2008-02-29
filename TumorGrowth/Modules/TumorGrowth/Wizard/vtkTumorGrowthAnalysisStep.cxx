@@ -230,8 +230,10 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
     vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
     if (node->GetAnalysis_Intensity_Flag()) {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
-      this->CreateRender(volumeAnalysisNode, 0,0,0.8);
-      this->SetRender_HighPassFilter(1);
+      //Makes it slow and does not look good 
+      // this->CreateRender(volumeAnalysisNode, 0,0,0.8);
+      // this->SetRender_HighPassFilter(1);
+      // this->SetRender_Mapper->SetSampleDistance(0.15); 
     } else if (node->GetAnalysis_Deformable_Flag()) {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
       // this->CreateRender(volumeAnalysisNode);
@@ -448,18 +450,23 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   // Show results 
   this->SensitivityChangedCallback(0.0);
   this->AddGUIObservers();
+
+  this->GetGUI()->PropagateVolumeSelection();
 }
 
 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(double value)
 {
+  // cout << "vtkTumorGrowthAnalysisStep::SensitivityChangedCallback" << endl;
   // Sensitivity has changed because of user interaction
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
   if (!this->SensitivityScale || !mrmlNode || !this->GrowthLabel ) return;
   mrmlNode->SetAnalysis_Intensity_Sensitivity(this->SensitivityScale->GetValue());
+  vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication())->Script("::TumorGrowthTcl::Analysis_Intensity_UpdateThreshold_GUI"); 
   double Growth = this->GetGUI()->GetLogic()->MeassureGrowth();
   // show here 
+  // cout << "Growth " << Growth << " " << this->SensitivityScale->GetValue() << endl;
   char TEXT[1024];
   // cout << "---------- " << Growth << " " << mrmlNode->GetSuperSampled_VoxelVolume() << " " << mrmlNode->GetSuperSampled_RatioNewOldSpacing() << endl;;
   sprintf(TEXT,"Intensity Metric: %.3f mm%c (%d Voxels)", Growth*mrmlNode->GetSuperSampled_VoxelVolume(),179,int(Growth*mrmlNode->GetSuperSampled_RatioNewOldSpacing()));

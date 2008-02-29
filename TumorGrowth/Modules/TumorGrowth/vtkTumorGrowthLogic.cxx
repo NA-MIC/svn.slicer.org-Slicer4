@@ -389,27 +389,27 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
 
   this->SourceAnalyzeTclScripts(app);
   
-  if (1) { 
-  cout << "=== 1 ===" << endl;
-  app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Global");
+  if (0) { 
+    cout << "=== 1 ===" << endl;
+    app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Global");
 
 
-  //----------------------------------------------
-  // Second step -> Save the outcome
-  if (!this->TumorGrowthNode) {return 0;}
+    //----------------------------------------------
+    // Second step -> Save the outcome
+    if (!this->TumorGrowthNode) {return 0;}
   
-  this->DeleteSuperSample(2);
-  vtkMRMLScalarVolumeNode *outputNode = this->CreateSuperSample(2);
-  if (!outputNode) {return 0;} 
-  this->TumorGrowthNode->SetScan2_SuperSampleRef(outputNode->GetID());
-  this->SaveVolume(app,outputNode);
+    this->DeleteSuperSample(2);
+    vtkMRMLScalarVolumeNode *outputNode = this->CreateSuperSample(2);
+    if (!outputNode) {return 0;} 
+    this->TumorGrowthNode->SetScan2_SuperSampleRef(outputNode->GetID());
+    this->SaveVolume(app,outputNode);
 
-  //----------------------------------------------
+    //----------------------------------------------
 
-  cout << "=== 2 ===" << endl;
-  app->Script("::TumorGrowthTcl::HistogramNormalization_GUI"); 
-  cout << "=== 3 ===" << endl;
-  app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Local"); 
+    cout << "=== 2 ===" << endl;
+    app->Script("::TumorGrowthTcl::HistogramNormalization_GUI"); 
+    cout << "=== 3 ===" << endl;
+    app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Local"); 
   } else {
     if (!this->TumorGrowthNode->GetScan2_LocalRef() || !strcmp(this->TumorGrowthNode->GetScan2_LocalRef(),"")) { 
       char fileName[1024];
@@ -489,6 +489,7 @@ double vtkTumorGrowthLogic::MeassureGrowth() {
   
   if (!this->Analysis_Intensity_Final || !this->Analysis_Intensity_ROINegativeBin || !this->Analysis_Intensity_ROIPositiveBin || !this->Analysis_Intensity_ROITotal) return -1;
   // Just for display 
+  
   this->Analysis_Intensity_Final->ThresholdByUpper(this->Analysis_Intensity_Threshold); 
   this->Analysis_Intensity_Final->Update();
   this->Analysis_Intensity_ROINegativeBin->ThresholdByLower(-this->Analysis_Intensity_Threshold); 
@@ -566,6 +567,7 @@ void vtkTumorGrowthLogic::PrintResult(ostream& os, vtkSlicerApplication *app)
   if (this->TumorGrowthNode->GetAnalysis_Intensity_Flag()) {
     os  << "Analysis based on Intensity Pattern" << endl;
     os  << "  Sensitivity:      "<< this->TumorGrowthNode->GetAnalysis_Intensity_Sensitivity() << "\n";
+    app->Script("::TumorGrowthTcl::Analysis_Intensity_UpdateThreshold_GUI"); 
     double Growth = this->MeassureGrowth(); 
     os  << "  Intensity Metric: "<<  floor(Growth*this->TumorGrowthNode->GetSuperSampled_VoxelVolume()*1000)/1000.0 << "mm" << char(179) 
        << " (" << int(Growth*this->TumorGrowthNode->GetSuperSampled_RatioNewOldSpacing()) << " Voxels)" << "\n";

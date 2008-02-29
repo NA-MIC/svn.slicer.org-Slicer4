@@ -59,6 +59,9 @@ public:
   void SetNextStep(vtkTumorGrowthStep *init) { this->NextStep = init;}
 
   virtual void GridCallback();
+ 
+  vtkGetObjectMacro(Render_VolumeProperty, vtkVolumeProperty);
+  vtkGetObjectMacro(Render_Mapper, vtkVolumeTextureMapper3D);
 
 protected:
   vtkTumorGrowthStep();
@@ -75,7 +78,10 @@ protected:
   void CreateGridButton(); 
   vtkKWPushButton          *GridButton;
 
-  void SliceLogicDefine();
+  void CreateResetButton(); 
+  vtkKWPushButton          *ResetButton;
+
+  //void SliceLogicDefine();
   
 
   vtkImageData             *Render_Image;
