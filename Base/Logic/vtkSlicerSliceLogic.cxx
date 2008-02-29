@@ -451,7 +451,6 @@ void vtkSlicerSliceLogic::SetBackgroundLayer(vtkSlicerSliceLayerLogic *Backgroun
 {
   if (this->BackgroundLayer)
     {
-    this->BackgroundLayer->RemoveObserver( this->LogicCallbackCommand );
     this->BackgroundLayer->SetAndObserveMRMLScene( NULL );
     this->BackgroundLayer->Delete();
     }
@@ -470,7 +469,8 @@ void vtkSlicerSliceLogic::SetBackgroundLayer(vtkSlicerSliceLayerLogic *Backgroun
     events->Delete();
 
     this->BackgroundLayer->SetSliceNode(SliceNode);
-    this->BackgroundLayer->AddObserver( vtkCommand::ModifiedEvent, this->LogicCallbackCommand );
+    vtkEventBroker::GetInstance()->AddObservation(
+        this->BackgroundLayer, vtkCommand::ModifiedEvent, this, this->LogicCallbackCommand );
     }
 
   this->Modified();
@@ -481,7 +481,6 @@ void vtkSlicerSliceLogic::SetForegroundLayer(vtkSlicerSliceLayerLogic *Foregroun
 {
   if (this->ForegroundLayer)
     {
-    this->ForegroundLayer->RemoveObserver( this->LogicCallbackCommand );
     this->ForegroundLayer->SetAndObserveMRMLScene( NULL );
     this->ForegroundLayer->Delete();
     }
@@ -500,7 +499,8 @@ void vtkSlicerSliceLogic::SetForegroundLayer(vtkSlicerSliceLayerLogic *Foregroun
     events->Delete();
 
     this->ForegroundLayer->SetSliceNode(SliceNode);
-    this->ForegroundLayer->AddObserver( vtkCommand::ModifiedEvent, this->LogicCallbackCommand );
+    vtkEventBroker::GetInstance()->AddObservation(
+        this->ForegroundLayer, vtkCommand::ModifiedEvent, this, this->LogicCallbackCommand );
     }
 
   this->Modified();
@@ -511,7 +511,6 @@ void vtkSlicerSliceLogic::SetLabelLayer(vtkSlicerSliceLayerLogic *LabelLayer)
 {
   if (this->LabelLayer)
     {
-    this->LabelLayer->RemoveObserver( this->LogicCallbackCommand );
     this->LabelLayer->SetAndObserveMRMLScene( NULL );
     this->LabelLayer->Delete();
     }
@@ -530,7 +529,8 @@ void vtkSlicerSliceLogic::SetLabelLayer(vtkSlicerSliceLayerLogic *LabelLayer)
     events->Delete();
 
     this->LabelLayer->SetSliceNode(SliceNode);
-    this->LabelLayer->AddObserver( vtkCommand::ModifiedEvent, this->LogicCallbackCommand );
+    vtkEventBroker::GetInstance()->AddObservation(
+        this->LabelLayer, vtkCommand::ModifiedEvent, this, this->LogicCallbackCommand );
     }
 
   this->Modified();
@@ -540,7 +540,6 @@ void vtkSlicerSliceLogic::SetBackgroundGlyphLayer(vtkSlicerSliceGlyphLogic *Back
 {
   if (this->BackgroundGlyphLayer)
     {
-    this->BackgroundGlyphLayer->RemoveObserver( this->LogicCallbackCommand );
     this->BackgroundGlyphLayer->SetAndObserveMRMLScene( NULL );
     this->BackgroundGlyphLayer->Delete();
     }
@@ -559,7 +558,8 @@ void vtkSlicerSliceLogic::SetBackgroundGlyphLayer(vtkSlicerSliceGlyphLogic *Back
     events->Delete();
 
     this->BackgroundGlyphLayer->SetSliceNode(SliceNode);
-    this->BackgroundGlyphLayer->AddObserver( vtkCommand::ModifiedEvent, this->LogicCallbackCommand );
+    vtkEventBroker::GetInstance()->AddObservation(
+        this->BackgroundGlyphLayer, vtkCommand::ModifiedEvent, this, this->LogicCallbackCommand );
     }
 
   this->Modified();
@@ -570,7 +570,6 @@ void vtkSlicerSliceLogic::SetForegroundGlyphLayer(vtkSlicerSliceGlyphLogic *Fore
 {
   if (this->ForegroundGlyphLayer)
     {
-    this->ForegroundGlyphLayer->RemoveObserver( this->LogicCallbackCommand );
     this->ForegroundGlyphLayer->SetAndObserveMRMLScene( NULL );
     this->ForegroundGlyphLayer->Delete();
     }
@@ -589,7 +588,8 @@ void vtkSlicerSliceLogic::SetForegroundGlyphLayer(vtkSlicerSliceGlyphLogic *Fore
     events->Delete();
 
     this->ForegroundGlyphLayer->SetSliceNode(SliceNode);
-    this->ForegroundGlyphLayer->AddObserver( vtkCommand::ModifiedEvent, this->LogicCallbackCommand );
+    vtkEventBroker::GetInstance()->AddObservation(
+        this->ForegroundGlyphLayer, vtkCommand::ModifiedEvent, this, this->LogicCallbackCommand );
     }
 
   this->Modified();
