@@ -31,6 +31,8 @@
 #include "vtkMRMLModelHierarchyNode.h"
 #include "vtkMRMLModelDisplayNode.h"
 
+#include "vtkSlicerModelHierarchyLogic.h"
+
 #include <vtksys/stl/string>
 
 class vtkKWMenu;
@@ -65,6 +67,12 @@ public:
   // Callbacks
   virtual void ModelVisibiltyCallback(const char *id);
   
+  virtual void HierarchyVisibiltyCallback(const char *id);
+
+  virtual void AllVisibiltyCallback(int visibility);
+  
+  virtual void ColorCallback(const char *id);
+
   virtual void InsertHierarchyNodeCallback(const char *id);
 
   virtual void DeleteNodeCallback(const char *id);
@@ -73,6 +81,10 @@ public:
 
   virtual void SelectNodeCallback(const char *id);
 
+  virtual void SelectReparentCallback(const char *id);
+
+  virtual void ReparentCallback(const char *id);
+
   virtual void OpenHierarchyCommand(const char *id);
 
   virtual void CloseHierarchyCommand(const char *id);
@@ -80,6 +92,14 @@ public:
   virtual void NodeParentChangedCallback (const char *node, const char *new_parent, const char*);
   
   virtual void ProcessRightClick(const char *id);
+
+  virtual void SearchNodeCallback();
+ 
+  
+  // Description:
+  // get/set vtkSlicerModelHierarchyLogic
+  vtkGetObjectMacro( ModelHierarchyLogic, vtkSlicerModelHierarchyLogic );
+  vtkSetObjectMacro( ModelHierarchyLogic, vtkSlicerModelHierarchyLogic );
   
 //BTX
   enum
@@ -106,6 +126,7 @@ protected:
   
   //BTX
   std::vector<vtksys_stl::string> SelectedLeaves;
+  std::vector<vtksys_stl::string> SelectedForReparenting;
   //ETX
 
 private:

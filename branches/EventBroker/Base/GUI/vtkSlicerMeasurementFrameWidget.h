@@ -34,11 +34,18 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerMeasurementFrameWidget : public vtkSli
 
     // Description:
     // Method to propagate events generated in GUI to logic / mrml.
-    void ProcessWidgetEvents(vtkObject *caller, unsigned long event, void *callData);
+    virtual void ProcessWidgetEvents(vtkObject *caller, unsigned long event, void *callData);
 
     // Description:
     // Method to update the widget when a new node is loaded.
     void UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode *dwiNode);
+
+    //BTX
+    enum
+      {
+      ChangedEvent = 1234,
+      };
+    //ETX
 
   protected:
     vtkSlicerMeasurementFrameWidget(void);
@@ -52,6 +59,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerMeasurementFrameWidget : public vtkSli
     // Method to update the matrixWidget (GUI).
     void UpdateMatrix();
 
+    // Description:
+    // Method to save changes of the matrix to the activeVolumeNode.
+    void SaveMatrix();
+
     vtkMRMLDiffusionWeightedVolumeNode *ActiveVolumeNode;
     vtkMatrix4x4 *Matrix;
     //widgets (GUI)
@@ -60,6 +71,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerMeasurementFrameWidget : public vtkSli
     vtkKWPushButton *NegativeButton;
     vtkKWPushButton *SwapButton;    
     vtkKWPushButton *RotateButton;
+    vtkKWPushButton *IdentityButton;
     vtkKWLabel *AngleLabel;
     vtkKWComboBox *AngleCombobox;
     vtkKWCheckButton* Checkbuttons[3];
