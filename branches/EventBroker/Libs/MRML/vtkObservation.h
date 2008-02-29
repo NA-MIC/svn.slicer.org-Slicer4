@@ -78,7 +78,7 @@ class VTK_MRML_EXPORT vtkObservation : public vtkObject
   vtkSetMacro (ObserverDeleteEventTag, unsigned long);
 
   //BTX
-  std::vector<void *> &GetCallDataList() {return this->CallDataList;};
+  std::deque<void *> *GetCallDataList() {return &(this->CallDataList);};
   //ETX
 
 protected:
@@ -121,7 +121,7 @@ protected:
   // Description:
   // data passed to the observation by the subject
   //BTX
-  std::vector<void *> CallDataList;
+  std::deque<void *> CallDataList;
   //ETX
 
   // Description:
