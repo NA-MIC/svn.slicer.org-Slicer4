@@ -58,7 +58,7 @@ vtkMRMLDisplayNode::vtkMRMLDisplayNode()
 
   this->ActiveScalarName = NULL;
 
-  // add observer to process visulization pipeline
+  // add observer to process visualization pipeline
   vtkEventBroker::GetInstance()->AddObservation( 
     this, vtkCommand::ModifiedEvent, this, this->MRMLCallbackCommand );
 
