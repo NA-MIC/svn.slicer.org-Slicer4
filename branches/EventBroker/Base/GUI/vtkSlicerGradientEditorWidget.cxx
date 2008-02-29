@@ -3,15 +3,15 @@
 
 //MRML nodes
 #include "vtkMRMLNode.h"
-#include "vtkMRMLCommandLineModuleNode.h"
+//#include "vtkMRMLCommandLineModuleNode.h"
 #include "vtkMRMLDiffusionTensorVolumeNode.h"
 #include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeNode.h"
 #include "vtkMRMLFiberBundleNode.h"
 #include "vtkMRMLFiducialListNode.h"
 //logics
-#include "vtkCommandLineModuleLogic.h"
-#include "vtkSlicerTractographyFiducialSeedingLogic.h"
+//#include "vtkCommandLineModuleLogic.h"
+//#include "vtkSlicerTractographyFiducialSeedingLogic.h"
 #include "vtkSlicerGradientEditorLogic.h"
 //widgets
 #include "vtkKWFrameWithLabel.h"
@@ -175,9 +175,10 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents (vtkObject *caller, unsi
   //run test
   else if (this->RunButton == vtkKWPushButton::SafeDownCast(caller) && event == vtkKWPushButton::InvokedEvent)
     {
+#if 0
     // create a command line module node
-    vtkMRMLCommandLineModuleNode* module = vtkMRMLCommandLineModuleNode::SafeDownCast(
-      this->MRMLScene->CreateNodeByClass("vtkMRMLCommandLineModuleNode"));
+    //vtkMRMLCommandLineModuleNode* module = vtkMRMLCommandLineModuleNode::SafeDownCast(
+      //this->MRMLScene->CreateNodeByClass("vtkMRMLCommandLineModuleNode"));
 
     // set its name
     /*for(int i=0; i<=module->GetNumberOfRegisteredModules();i++)
@@ -211,6 +212,7 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents (vtkObject *caller, unsi
     mask->SetScene(this->GetMRMLScene());
     mask->SetName("Output Threshold Mask");
     this->MRMLScene->AddNode(mask);
+
     tensorNode->Copy(this->ActiveVolumeNode);
     tensorNode->SetBaselineNodeID(baseline->GetID());
     tensorNode->SetMaskNodeID(mask->GetID());
@@ -221,12 +223,9 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents (vtkObject *caller, unsi
     module->SetParameterAsString("outputBaseline", baseline->GetID());
     module->SetParameterAsString("thresholdMask", mask->GetID());
 
-    // execute the plugin
-    vtkCommandLineModuleLogic* logic = vtkCommandLineModuleLogic::New();
-    logic->SetAndObserveMRMLScene(this->GetMRMLScene());
-    logic->SetApplicationLogic(this->ApplicationGUI->GetApplicationLogic());
-    logic->SetTemporaryDirectory(this->Application->GetTemporaryDirectory());
-    logic->ApplyAndWait(module);
+    // check the status
+    const char* status = module->GetStatusString(); // if status is not "Completed", complain
+    vtkWarningMacro("status is: "<<status);
 
     // check the status
     const char* status = module->GetStatusString(); // if status is not "Completed", complain
@@ -240,12 +239,11 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents (vtkObject *caller, unsi
     fiberNode->SetScene(this->GetMRMLScene());
     fiberNode->SetName("Fiber Node");
     this->MRMLScene->AddNode(fiberNode);
+    //vtkSlicerTractographyFiducialSeedingLogic* tractLogic = vtkSlicerTractographyFiducialSeedingLogic::New();
 
-    vtkSlicerTractographyFiducialSeedingLogic* tractLogic = vtkSlicerTractographyFiducialSeedingLogic::New();
-
-    if(tensorNode != NULL && fiducialListNode != NULL && fiberNode != NULL)
+    //if(tensorNode != NULL && fiducialListNode != NULL && fiberNode != NULL)
       {
-      tractLogic->CreateTracts(tensorNode, fiducialListNode, fiberNode, "Linear Measurement", 0.1,0.8,0.5);
+      //tractLogic->CreateTracts(tensorNode, fiducialListNode, fiberNode, "Linear Measurement", 0.1,0.8,0.5);
       }
     
     //clean up
@@ -255,7 +253,8 @@ void vtkSlicerGradientEditorWidget::ProcessWidgetEvents (vtkObject *caller, unsi
     baseline->Delete();
     mask->Delete();
     fiberNode->Delete();
-    tractLogic->Delete();
+    //tractLogic->Delete();
+#endif
     }
   }
 

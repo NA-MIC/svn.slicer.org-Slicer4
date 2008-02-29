@@ -44,7 +44,6 @@ vtkSlicerModelHierarchyWidget::vtkSlicerModelHierarchyWidget ( )
   this->ModelDisplayNode = NULL;
   this->ModelHierarchyLogic = NULL;
   this->UpdatingTree = 0;
-  this->UpdatingTree = 0;
 
 }
 
@@ -258,18 +257,6 @@ void vtkSlicerModelHierarchyWidget::ProcessWidgetEvents ( vtkObject *caller,
           this->SetInWidgetCallbackFlag(0);
           this->SelectNodeCallback(this->SelectedLeaves[0].c_str());
           this->SetInWidgetCallbackFlag(1);
-          
-          dnode = mnode->GetDisplayNode();
-          if (dnode)
-            {
-            int visibility = dnode->GetVisibility();
-            sprintf(command, "ModelVisibiltyCallback {%s}", (const char *)callData);
-            int tag = this->ContextMenu->AddCheckButton ("Visibility", this, command);
-            if (visibility)
-              {
-              this->ContextMenu->SelectItem(tag);
-              }
-            }
           }
         }
       else if ( node == NULL )

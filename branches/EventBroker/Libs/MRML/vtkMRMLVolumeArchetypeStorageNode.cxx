@@ -144,22 +144,21 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
       return 0;
     }
 
-  std::string fullName;
-  if (this->SceneRootDir != NULL && this->Scene->IsFilePathRelative(this->GetFileName())) 
-    {
-    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileName());
-    }
-  else 
-    {
-    fullName = std::string(this->GetFileName());
-    }
-  
+  std::string fullName = this->GetFullNameFromFileName();
+
   if (fullName == std::string("")) 
     {
     vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
     return 0;
     }
 
+  Superclass::StageReadData(refNode);
+  if ( this->GetReadState() == this->Pending )
+    {
+    // remote file download hasn't finished
+    return 0;
+    }
+  
   vtkMRMLVolumeNode *volNode;
   vtkITKArchetypeImageSeriesReader* reader;
   
@@ -237,14 +236,14 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     }
     catch (...)
     {
-    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file");
+    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file: " << fullName.c_str() );
     reader->Delete();
     return 0;
     }
   if (reader->GetOutput() == NULL 
       || reader->GetOutput()->GetPointData()->GetScalars()->GetNumberOfTuples() == 0) 
     {
-    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file");
+    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file: " << fullName.c_str() );
     reader->Delete();
     return 0;
     }
@@ -261,7 +260,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
 
   if (ici->GetOutput() == NULL)
     {
-    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file");
+    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file: " << fullName.c_str() );
     reader->Delete();
     ici->Delete();
     return 0;
@@ -307,16 +306,7 @@ int vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
     return 0;
     }
   
-  std::string fullName;
-  if (this->SceneRootDir != NULL && this->Scene->IsFilePathRelative(this->GetFileName())) 
-    {
-    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileName());
-    }
-  else 
-    {
-    fullName = std::string(this->GetFileName());
-    }
-  
+  std::string fullName = this->GetFullNameFromFileName();  
   if (fullName == std::string("")) 
     {
     vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
@@ -344,6 +334,8 @@ int vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
     }
   mat->Delete();
   writer->Delete();    
+
+  Superclass::StageWriteData(refNode);
   
   return result;
 
