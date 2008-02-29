@@ -19,6 +19,7 @@
 #include "vtkKWText.h"
 #include "vtkKWLabel.h"
 #include "vtkKWMessageDialog.h"
+#include "vtkKWPushButton.h"
 
 //---------------------------------------------------------------------------
 vtkStandardNewMacro (vtkSlicerGradientsWidget);
@@ -117,6 +118,7 @@ void vtkSlicerGradientsWidget::ProcessWidgetEvents (vtkObject *caller, unsigned 
   if(this->EnableGradientsButton == vtkKWCheckButton::SafeDownCast(caller) && event == vtkKWCheckButton::SelectedStateChangedEvent)
     {
     this->GradientsTextbox->SetEnabled(this->EnableGradientsButton->GetSelectedState());
+    this->UpdateWidget(this->ActiveVolumeNode);
     }
 
   //load gradients from file
@@ -144,7 +146,6 @@ void vtkSlicerGradientsWidget::ProcessWidgetEvents (vtkObject *caller, unsigned 
       myLogic->Delete();
       }
     }
-
   }
 
 //---------------------------------------------------------------------------
@@ -162,7 +163,10 @@ void vtkSlicerGradientsWidget::DisplayMessageDialog(const char* message)
 //---------------------------------------------------------------------------
 void vtkSlicerGradientsWidget::UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode *dwiNode)
   {
-  vtkSetMRMLNodeMacro(this->ActiveVolumeNode, dwiNode); //set ActiveVolumeNode
+  if(this->ActiveVolumeNode != dwiNode)
+    {
+    vtkSetMRMLNodeMacro(this->ActiveVolumeNode, dwiNode); //set activeVolumeNode
+    }
   this->Gradients = dwiNode->GetDiffusionGradients(); //set internal gradients
   this->BValues = dwiNode->GetBValues(); //set internal bValues
   this->UpdateGradients(); //update GUI
@@ -203,7 +207,8 @@ void vtkSlicerGradientsWidget::UpdateGradients()
   output << "DWMRI_b-value:= " << bValue << endl; 
 
   // read in new gradients
-  for(int i=0; i < this->Gradients->GetSize(); i=i+3)
+  // (this->Gradients->GetSize() is not always correct.)
+  for(int i=0; i < this->Gradients->GetNumberOfTuples()*3; i=i+3)
     {
     output << "DWMRI_gradient_" << setfill('0') << setw(4) << i/3 << ":=" << " ";
     for(int j=i; j<i+3; j++)
@@ -222,10 +227,13 @@ void vtkSlicerGradientsWidget::UpdateGradients()
 //---------------------------------------------------------------------------
 void vtkSlicerGradientsWidget::TextFieldModifiedCallback()
   {
+  //Save and tricker changed event for undo
+  this->GetMRMLScene()->SaveStateForUndo();
+  this->InvokeEvent(this->ChangedEvent);
+
   vtkSlicerGradientEditorLogic *myLogic = vtkSlicerGradientEditorLogic::New();
   const char *oldGradients = this->GradientsTextbox->GetWidget()->GetText();
   int numberOfGradients = this->ActiveVolumeNode->GetNumberOfGradients();
-  this->GetMRMLScene()->SaveStateForUndo();
 
   //parse new gradients and update status label
   int status = myLogic->ParseGradients(oldGradients, numberOfGradients, this->BValues, this->Gradients);
@@ -236,7 +244,6 @@ void vtkSlicerGradientsWidget::TextFieldModifiedCallback()
     {
     this->SaveGradients();
     }
-
   myLogic->Delete();
   }
 
@@ -292,10 +299,10 @@ void vtkSlicerGradientsWidget::CreateWidget( )
   this->GradientsFrame->SetParent(this->GetParent());
   this->GradientsFrame->Create();
   this->GradientsFrame->SetLabelText("Gradients");
-  this->Script("pack %s -side top -anchor n -fill x -padx 2 -pady 2", 
+  this->Script("pack %s -side top -anchor n -fill both -expand true -padx 2 -pady 2", 
     this->GradientsFrame->GetWidgetName());
 
-  //create gradient frame 
+  //create button frame 
   this->ButtonsFrame = vtkKWFrame::New();
   this->ButtonsFrame->SetParent(this->GradientsFrame->GetFrame());
   this->ButtonsFrame->Create();
@@ -328,6 +335,7 @@ void vtkSlicerGradientsWidget::CreateWidget( )
   this->GradientsTextbox->SetParent(this->GradientsFrame->GetFrame());
   this->GradientsTextbox->Create();
   this->GradientsTextbox->GetWidget()->SetBinding("<KeyRelease>", this, "TextFieldModifiedCallback");
+  this->GradientsTextbox->SetHeight(100);
   this->GradientsTextbox->SetEnabled(0);
   this->Script("pack %s -side top -anchor s -fill both -expand true -padx 2 -pady 2", 
     this->GradientsTextbox->GetWidgetName());
@@ -337,7 +345,6 @@ void vtkSlicerGradientsWidget::CreateWidget( )
   this->StatusLabel->SetParent(this->GradientsFrame->GetFrame());
   this->StatusLabel->Create();
   this->StatusLabel->SetBalloonHelpString("Shows current status of the given gradients in the textbox");
-  this->Script("pack %s -side top -anchor s -fill x -padx 2 -pady 2", 
+  this->Script("pack %s -side top -anchor s -fill both -expand true -padx 2 -pady 2", 
     this->StatusLabel->GetWidgetName());
-
   }

@@ -27,6 +27,7 @@ vtkSlicerMeasurementFrameWidget::vtkSlicerMeasurementFrameWidget(void)
   this->MatrixWidget = NULL;
   this->RotateButton = NULL;
   this->NegativeButton = NULL;
+  this->IdentityButton = NULL;
   this->SwapButton = NULL;
   this->AngleCombobox = NULL;
   this->AngleLabel = NULL;
@@ -77,6 +78,12 @@ vtkSlicerMeasurementFrameWidget::~vtkSlicerMeasurementFrameWidget(void)
     this->RotateButton->Delete();
     this->RotateButton = NULL;
     }
+  if (this->IdentityButton)
+    {
+    this->IdentityButton->SetParent (NULL);
+    this->IdentityButton->Delete();
+    this->IdentityButton = NULL;
+    }
   if (this->MatrixWidget)
     {
     this->MatrixWidget->SetParent (NULL);
@@ -100,7 +107,8 @@ void vtkSlicerMeasurementFrameWidget::AddWidgetObservers ( )
   {
   this->RotateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
   this->NegativeButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
-  this->SwapButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
+  this->SwapButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);  
+  this->IdentityButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);  
   this->MatrixWidget->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand *)this->GUICallbackCommand);
   for(int i=0; i<3;i ++)
     {
@@ -113,7 +121,8 @@ void vtkSlicerMeasurementFrameWidget::RemoveWidgetObservers( )
   {
   this->RotateButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
   this->NegativeButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);
-  this->SwapButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand); 
+  this->SwapButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);   
+  this->IdentityButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand);  
   this->MatrixWidget->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand *)this->GUICallbackCommand);
   for(int i=0; i<3;i ++)
     {
@@ -129,6 +138,17 @@ void vtkSlicerMeasurementFrameWidget::PrintSelf (ostream& os, vtkIndent indent)
   }
 
 //---------------------------------------------------------------------------
+void vtkSlicerMeasurementFrameWidget::UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode *dwiNode)
+  {
+  if(this->ActiveVolumeNode != dwiNode)
+    {
+    vtkSetMRMLNodeMacro(this->ActiveVolumeNode, dwiNode); //set activeVolumeNode
+    }
+  this->ActiveVolumeNode->GetMeasurementFrameMatrix(this->Matrix); //set internal matrix
+  this->UpdateMatrix(); //update gui
+  }
+
+//---------------------------------------------------------------------------
 void vtkSlicerMeasurementFrameWidget::UpdateMatrix()
   {
   if(this->Matrix != NULL && this->ActiveVolumeNode != NULL)
@@ -141,25 +161,24 @@ void vtkSlicerMeasurementFrameWidget::UpdateMatrix()
         this->MatrixWidget->SetElementValueAsDouble(j,i, this->Matrix->GetElement(j,i));
         }
       }
-
-    // write internal matrix back to node
-    this->ActiveVolumeNode->SetMeasurementFrameMatrix(this->Matrix);
-    // mark as modified in save menu
-    this->ActiveVolumeNode->SetModifiedSinceRead(1);
-    }
+    }//end if
   }
 
 //---------------------------------------------------------------------------
-void vtkSlicerMeasurementFrameWidget::UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode *dwiNode)
+void vtkSlicerMeasurementFrameWidget::SaveMatrix()
   {
-  vtkSetMRMLNodeMacro(this->ActiveVolumeNode, dwiNode); //set activeVolumeNode
-  this->ActiveVolumeNode->GetMeasurementFrameMatrix(this->Matrix); //set internal matrix
-  this->UpdateMatrix(); //update gui
+  this->MRMLScene->SaveStateForUndo();
+  // write internal matrix back to node
+  this->ActiveVolumeNode->SetMeasurementFrameMatrix(this->Matrix);
+  // mark as modified in save menu
+  this->ActiveVolumeNode->SetModifiedSinceRead(1);
+  this->InvokeEvent(this->ChangedEvent);
   }
 
 //---------------------------------------------------------------------------
 void vtkSlicerMeasurementFrameWidget::ProcessWidgetEvents (vtkObject *caller, unsigned long event, void *callData)
   {
+
   //import current matrix values 
   if(event == vtkKWMatrixWidget::ElementChangedEvent && this->MatrixWidget == vtkKWMatrixWidget::SafeDownCast(caller))
     {
@@ -171,8 +190,7 @@ void vtkSlicerMeasurementFrameWidget::ProcessWidgetEvents (vtkObject *caller, un
         }
       }
     // write internal matrix back to node
-    this->ActiveVolumeNode->SetMeasurementFrameMatrix(this->Matrix);
-    this->ActiveVolumeNode->SetModifiedSinceRead(1);
+    this->SaveMatrix();
     }
 
   //enable/disable buttons depending on how many checkbuttons are selected 
@@ -244,8 +262,9 @@ void vtkSlicerMeasurementFrameWidget::ProcessWidgetEvents (vtkObject *caller, un
       }
     //copy transformed matrix back
     this->Matrix->DeepCopy(transform->GetMatrix());
-    this->UpdateMatrix();
     transform->Delete();
+    this->UpdateMatrix();
+    this->SaveMatrix();
     }
 
   //swap columns
@@ -278,6 +297,7 @@ void vtkSlicerMeasurementFrameWidget::ProcessWidgetEvents (vtkObject *caller, un
       this->Matrix->SetElement(j, secondSelectedCheckbox, value);
       }
     this->UpdateMatrix();
+    this->SaveMatrix();
     }
 
   //negative columns
@@ -301,8 +321,16 @@ void vtkSlicerMeasurementFrameWidget::ProcessWidgetEvents (vtkObject *caller, un
         }//end if selected
       }//end for1
     this->UpdateMatrix();
+    this->SaveMatrix();
     }
 
+  //set to identity
+  else if(event == vtkKWPushButton::InvokedEvent && this->IdentityButton == vtkKWPushButton::SafeDownCast(caller))
+    {
+    this->Matrix->Identity();
+    this->UpdateMatrix();
+    this->SaveMatrix();
+    }
   }
 
 //---------------------------------------------------------------------------
@@ -322,7 +350,7 @@ void vtkSlicerMeasurementFrameWidget::CreateWidget( )
   this->MeasurementFrame->SetParent(this->GetParent());
   this->MeasurementFrame->Create();
   this->MeasurementFrame->SetLabelText("Measurement Frame");
-  this->Script("pack %s -side top -anchor nw -fill x -padx 1 -pady 2", 
+  this->Script("pack %s -side top -anchor nw -fill x -pady 2", 
     this->MeasurementFrame->GetWidgetName());
 
   //create MatrixWidget for measurement frame
@@ -353,7 +381,7 @@ void vtkSlicerMeasurementFrameWidget::CreateWidget( )
   this->NegativeButton->SetParent(this->MeasurementFrame->GetFrame());
   this->NegativeButton->Create();
   this->NegativeButton->SetText("Negative Selected");
-  this->NegativeButton->SetWidth(14);
+  this->NegativeButton->SetWidth(15);
   this->NegativeButton->SetEnabled(0);
   this->NegativeButton->SetBalloonHelpString("Negative selected columns.");
 
@@ -362,7 +390,7 @@ void vtkSlicerMeasurementFrameWidget::CreateWidget( )
   this->SwapButton->SetParent(this->MeasurementFrame->GetFrame());
   this->SwapButton->Create();
   this->SwapButton->SetText("Swap Selected");
-  this->SwapButton->SetWidth(14);
+  this->SwapButton->SetWidth(15);
   this->SwapButton->SetEnabled(0);
   this->SwapButton->SetBalloonHelpString("Swap selected columns (two have to be selected).");
 
@@ -371,7 +399,7 @@ void vtkSlicerMeasurementFrameWidget::CreateWidget( )
   this->RotateButton->SetParent(this->MeasurementFrame->GetFrame());
   this->RotateButton->Create();
   this->RotateButton->SetText("Rotate Selected");
-  this->RotateButton->SetWidth(14);
+  this->RotateButton->SetWidth(15);
   this->RotateButton->SetEnabled(0);
   this->RotateButton->SetBalloonHelpString("Rotate selected column by angle value (one has to be selected).");
 
@@ -390,6 +418,14 @@ void vtkSlicerMeasurementFrameWidget::CreateWidget( )
   this->AngleCombobox->SetWidth(4);
   this->AngleCombobox->SetValue("+90");
   this->AngleCombobox->SetBalloonHelpString("Select given value or type in your one.");
+
+  //create identity button
+  this->IdentityButton = vtkKWPushButton::New();
+  this->IdentityButton->SetParent(this->MeasurementFrame->GetFrame());
+  this->IdentityButton->Create();
+  this->IdentityButton->SetText("Identity");
+  this->IdentityButton->SetWidth(11);
+  this->IdentityButton->SetBalloonHelpString("");
 
   //fill default angles in combobox
   const char *angleValues [] = {"+90", "-90", "+180", "-180", "+30", "-30"};
@@ -411,5 +447,7 @@ void vtkSlicerMeasurementFrameWidget::CreateWidget( )
     this->AngleLabel->GetWidgetName());
   this->Script("grid %s -row 1 -column 5 -sticky ne", 
     this->AngleCombobox->GetWidgetName());
+  this->Script("grid %s -row 2 -column 4 -columnspan 2 -sticky ne", 
+    this->IdentityButton->GetWidgetName());
   } 
 
