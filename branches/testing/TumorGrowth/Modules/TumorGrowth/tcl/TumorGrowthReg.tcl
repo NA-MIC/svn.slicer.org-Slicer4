@@ -688,8 +688,8 @@ proc WriteTransformationAG {gt directory} {
         # Do it!
         GCR Update     
 
-        puts "======================"
-        puts "[GCR Print]" 
+        # puts "======================"
+        # puts "[GCR Print]" 
 
         $Transform Concatenate [[GCR GetGeneralTransform] GetConcatenatedTransform 1]
   
