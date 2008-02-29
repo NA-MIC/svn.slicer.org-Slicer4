@@ -1482,7 +1482,7 @@ void vtkSlicerFiducialsGUI::UpdateMeasurementLabel()
   int numSelected = 0;
   int selectedIndices[2];
   std::string newLabel = "Distance: ";
-  for (int n = 0; n < numPoints; n++)
+  for (unsigned int n = 0; n < numPoints; n++)
     {
     if (activeFiducialListNode->GetNthFiducialSelected(n))
       {
