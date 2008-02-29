@@ -17,6 +17,7 @@
 #include "vtkColorTransferFunction.h"
 #include "vtkVolumeProperty.h"
 #include "vtkVolume.h"
+#include "vtkSlicerSliceControllerWidget.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthStep);
@@ -32,6 +33,7 @@ vtkTumorGrowthStep::vtkTumorGrowthStep()
   this->WizardGUICallbackCommand = vtkCallbackCommand::New();
   this->WizardGUICallbackCommand->SetClientData(reinterpret_cast<void *>(this));
   this->GridButton = NULL;
+  this->ResetButton = NULL;
 
   this->Render_Image = NULL;
   this->Render_Mapper = NULL;
@@ -63,6 +65,14 @@ vtkTumorGrowthStep::~vtkTumorGrowthStep()
       this->GridButton->Delete();
       this->GridButton = NULL;
     }
+
+
+  if (this->ResetButton)
+    {
+      this->ResetButton->Delete();
+      this->ResetButton = NULL;
+    }
+
 
   this->RenderRemove();
 
@@ -179,6 +189,7 @@ void  vtkTumorGrowthStep::GridCallback() {
   else if (this->GridDefine()) {
     this->GridButton->SetReliefToSunken();
   }
+  this->GetGUI()->PropagateVolumeSelection();
 }
 
 void vtkTumorGrowthStep::CreateGridButton() {
@@ -238,20 +249,42 @@ int vtkTumorGrowthStep::GridDefine() {
   vtkMRMLScalarVolumeNode *GridNode      = volumesLogic->CreateLabelVolume(mrmlScene,volumeNode, "TG_Grid");
   Node->SetGrid_Ref(GridNode->GetID());
 
+  vtkSlicerSliceControllerWidget *ControlWidget = this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceController();
+  double oldOffset = ControlWidget->GetOffsetScale()->GetValue(); 
   vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
   applicationLogic->GetSelectionNode()->SetReferenceActiveLabelVolumeID(GridNode->GetID());
   applicationLogic->PropagateVolumeSelection();
+  // Does not help - ask Steve
+  ControlWidget->GetOffsetScale()->SetValue(oldOffset); 
+
   return 1;
 }
 
-void vtkTumorGrowthStep::SliceLogicDefine() {
-  vtkTumorGrowthGUI *GUI  = this->GetGUI();
-  GUI->SliceLogicDefine();
-  
-  GUI->GetSliceLogic()->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(GUI->GetNode()->GetScan1_Ref());
-  GUI->GetSliceLogic()->GetSliceNode()->SetFieldOfView(250,250,1);
-  GUI->GetSliceLogic()->SetSliceOffset(GUI->GetSliceController_OffsetScale()->GetValue());
-} 
+void vtkTumorGrowthStep::CreateResetButton() {
+  // Grid Button 
+  if (!this->ResetButton) {
+     this->ResetButton = vtkKWPushButton::New();
+  }
+
+  if (!this->ResetButton->IsCreated()) {
+    vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
+    this->ResetButton->SetParent(wizard_widget->GetCancelButton()->GetParent());
+    this->ResetButton->Create();
+    this->ResetButton->SetWidth(wizard_widget->GetCancelButton()->GetWidth());
+    this->ResetButton->SetCommand(this->GetGUI(), "PropagateVolumeSelection"); 
+    this->ResetButton->SetText("Reset 3D Viewer");
+  }
+  this->Script("pack %s -side left -anchor nw -expand n -padx 0 -pady 2", this->ResetButton->GetWidgetName()); 
+}
+
+//void vtkTumorGrowthStep::SliceLogicDefine() {
+//  vtkTumorGrowthGUI *GUI  = this->GetGUI();
+//  GUI->SliceLogicDefine();
+//  
+//  GUI->GetSliceLogic()->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(GUI->GetNode()->GetScan1_Ref());
+//  GUI->GetSliceLogic()->GetSliceNode()->SetFieldOfView(250,250,1);
+//  GUI->GetSliceLogic()->SetSliceOffset(GUI->GetSliceController_OffsetScale()->GetValue());
+//} 
 
 
 /// For Rendering results
@@ -287,6 +320,7 @@ void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, float color
 
   this->Render_Image = volumeNode->GetImageData();
   
+  // set PROP [[vtkTumorGrowthAnalysisStep ListInstances] GetRender_Mapper]
   this->Render_Mapper = vtkVolumeTextureMapper3D::New();
   this->Render_Mapper->SetInput(this->Render_Image);
 
@@ -298,6 +332,8 @@ void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, float color
   this->Render_ColorMapping = vtkColorTransferFunction::New();
   this->Render_ColorMapping->AddRGBPoint( imgRange[0] , colorR, colorG, colorB);
   this->Render_ColorMapping->AddRGBPoint( imgRange[1] , colorR, colorG, colorB );
+
+  // set PROP [[vtkTumorGrowthAnalysisStep ListInstances] GetRender_VolumeProperty]
 
   this->Render_VolumeProperty = vtkVolumeProperty::New();
   this->Render_VolumeProperty->SetShade(1);

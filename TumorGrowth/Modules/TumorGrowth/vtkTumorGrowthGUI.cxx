@@ -447,7 +447,7 @@ void vtkTumorGrowthGUI::BuildGUI()
   // This way we can restart the machine - did not work 
   // wizard_workflow->CreateGoToTransitions(wizard_workflow->GetInitialStep());
 
- if ( 0 )  {
+ if ( 1 )  {
     cout << "====================" << endl;
     cout << "DEBUGGING" << endl;
     vtkSlicerApplicationGUI *applicationGUI = this->GetApplicationGUI();
@@ -572,10 +572,13 @@ void vtkTumorGrowthGUI::SliceLogicDefine() {
 
     this->SliceLogic->GetSliceNode()->SetSliceVisible(1);
   
+    this->PropagateVolumeSelection();
+
     // Note : Setting things manually in TCL 
     // Always do both together 
     // [[[vtkTumorGrowthROIStep ListInstances] GetSliceLogic] GetSliceCompositeNode] SetReferenceBackgroundVolumeID vtkMRMLScalarVolumeNode1
-    // or set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+    // or 
+    //  set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
     //  [[$GUI GetSliceLogic] GetSliceCompositeNode] SetReferenceBackgroundVolumeID vtkMRMLScalarVolumeNode1
 
     // [[[vtkTumorGrowthROIStep ListInstances] GetSliceLogic] GetSliceNode] SetFieldOfView 200 200 1
@@ -595,4 +598,13 @@ void  vtkTumorGrowthGUI::SliceLogicCallback(vtkObject *caller, unsigned long eve
       }
       }
     }
+}
+
+void vtkTumorGrowthGUI::PropagateVolumeSelection() {
+   vtkSlicerApplicationLogic *applicationLogic = this->Logic->GetApplicationLogic();
+   applicationLogic->PropagateVolumeSelection();
+   if (!this->SliceLogic) return;
+   this->SliceLogic->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(this->Node->GetScan1_Ref());
+   this->SliceLogic->FitSliceToVolume(vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(this->Node->GetScan1_Ref())),250,250); 
+   this->SliceLogic->SetSliceOffset(this->SliceController_OffsetScale->GetValue());
 }
