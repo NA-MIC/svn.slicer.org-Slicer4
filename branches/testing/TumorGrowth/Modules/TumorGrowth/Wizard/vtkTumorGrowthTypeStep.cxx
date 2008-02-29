@@ -196,8 +196,8 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
   // Does not change anything 
   // this->GetGUI()->GetSliceLogic()->GetSliceNode()->SetFieldOfView(250,250,1);
 
-  this->SliceLogicDefine(); 
-
+  // this->SliceLogicDefine(); 
+  this->GetGUI()->PropagateVolumeSelection(); 
 }
 
 //----------------------------------------------------------------------------
@@ -242,7 +242,7 @@ void vtkTumorGrowthTypeStep::PrintSelf(ostream& os, vtkIndent indent)
 
 
 void vtkTumorGrowthTypeStep::RemoveResults()  { 
-    this->GetGUI()->SliceLogicRemove();
+  // this->GetGUI()->SliceLogicRemove();
     this->RenderRemove();
 }
 
