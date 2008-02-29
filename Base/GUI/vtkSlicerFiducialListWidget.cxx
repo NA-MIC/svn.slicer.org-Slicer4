@@ -983,7 +983,7 @@ void vtkSlicerFiducialListWidget::UpdateFiducialsFromMRML()
     if (iter != this->Use3DSymbolsMap.end())
       {
       // have rendered before
-      if (iter->second != flist->GlyphTypeIs3D())
+      if (iter->second != (flist->GlyphTypeIs3D() == 0))
         {
         changeSymbolType = true;
         vtkDebugMacro("Changing symbol type between 2d and 3d!!!");
