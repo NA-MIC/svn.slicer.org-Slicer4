@@ -17,6 +17,7 @@
 #include "vtkKWLabel.h"
 #include "vtkKWVolumePropertyWidget.h"
 #include "vtkKWEvent.h"
+#include "vtkKWScale.h"
 #include "vtkKWRange.h"
 #include "vtkKWHistogramSet.h"
 #include "vtkKWHistogram.h"
@@ -47,6 +48,7 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
     this->VolumePropertyWidget = NULL;
 
     this->ThresholdRange = NULL;
+    this->ScaleFactorScale = NULL;
 
     this->RenderScheduled = false;
 }
@@ -73,6 +75,7 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     DeleteWidget(this->InputResolutionMatrix);
     DeleteWidget(this->RenderModeChooser);
     DeleteWidget(this->VolumePropertyWidget);
+    DeleteWidget(this->ScaleFactorScale);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::DeleteWidget(vtkKWWidget* widget)
@@ -158,14 +161,15 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->RenderModeChooser->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());  
 
-
-
-    this->UpdateButton = vtkKWPushButton::New();
-    this->UpdateButton->SetParent(loadSaveDataFrame->GetFrame());
-    this->UpdateButton->Create();
-    this->UpdateButton->SetText("Update Renderer");
-    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        this->UpdateButton->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
+    
+    this->ScaleFactorScale = vtkKWScale::New();
+    this->ScaleFactorScale->SetParent(loadSaveDataFrame->GetFrame());
+    this->ScaleFactorScale->Create();
+    this->ScaleFactorScale->SetRange(1.0f, 10.0f);
+    this->ScaleFactorScale->SetResolution(.5f);
+    this->ScaleFactorScale->SetValue(1.0f);
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        this->ScaleFactorScale->GetWidgetName()); 
 
     //NodeSelector  for Node from MRML Scene
     this->NS_ImageData=vtkSlicerNodeSelectorWidget::New();
@@ -204,11 +208,12 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 
     this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->UpdateButton->AddObserver(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 
     this->RenderModeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 
     this->VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+
+    this->ScaleFactorScale->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)this->GUICallbackCommand);
 
     this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
     this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
@@ -220,7 +225,6 @@ void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
     this->InputTypeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->UpdateButton->RemoveObservers(vtkKWPushButton::InvokedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->RenderModeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
@@ -303,6 +307,10 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
             else
                 this->CudaMapper->SetRenderMode(vtkCudaMemoryTexture::RenderToMemory);
     }
+
+    if (caller == this->ScaleFactorScale)
+        if (this->CudaMapper != NULL)
+            this->CudaMapper->SetRenderOutputScaleFactor(this->ScaleFactorScale->GetValue());
 
     else if (caller == this->NS_ImageData)
     {

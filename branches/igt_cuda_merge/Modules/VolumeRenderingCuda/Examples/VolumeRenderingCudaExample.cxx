@@ -108,7 +108,6 @@ void LoadHeartSeries()
         reader[i]->Update();
     }
     frameCount = 5;
-
 }
 
 void LoadLung()
@@ -372,7 +371,8 @@ int my_main(int argc, char *argv[])
         cb_Animate->GetWidgetName());
 
 
-    renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 500, 500);
+    renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 0, 0);
+    renderWidget->GetRenderer()->GetActiveCamera()->SetClippingRange(100, 1000);
     renderWidget->GetRenderer()->GetActiveCamera()->ParallelProjectionOff();
 
     vtkInteractorStyle* interactorStyle = vtkInteractorStyleTrackballCamera::New();

@@ -134,11 +134,11 @@ private:
   vtkKWVolumePropertyWidget* VolumePropertyWidget;
 
   vtkKWRange* ThresholdRange;
+  vtkKWScale* ScaleFactorScale;
 
   vtkKWHistogramSet* Histograms;
 
   vtkSlicerNodeSelectorWidget* NS_ImageData;
-  vtkKWPushButton* UpdateButton;
 };
 
 #endif /*VTKSLICERVOLUMERENDERINGCUDA_H_*/

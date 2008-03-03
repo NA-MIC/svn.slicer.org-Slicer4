@@ -10,6 +10,14 @@ typedef struct __align__(16)
     //! The resolution of the rendering screen.
     uint2          Resolution;
     uint2          ActualResolution;
+
+    float3         CameraRayStart;
+    float3         CameraRayStartX;
+    float3         CameraRayStartY;
+    float3         CameraRayEnd;
+    float3         CameraRayEndX;
+    float3         CameraRayEndY;
+
     //! The color depth of the rendering screen.
     unsigned int   ColorDepth;
 

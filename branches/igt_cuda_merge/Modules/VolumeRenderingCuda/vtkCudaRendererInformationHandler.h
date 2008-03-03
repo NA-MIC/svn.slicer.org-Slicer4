@@ -41,6 +41,7 @@ private:
     vtkCudaRendererInformationHandler& operator=(const vtkCudaRendererInformationHandler&); // not implemented
     vtkCudaRendererInformationHandler(const vtkCudaRendererInformationHandler&); // not implemented
 
+
 private:
     vtkRenderer*             Renderer;
     //BTX
