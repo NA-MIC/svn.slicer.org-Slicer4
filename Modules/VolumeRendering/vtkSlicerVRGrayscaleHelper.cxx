@@ -11,6 +11,7 @@
 #include "vtkSlicerBoxWidget.h"
 #include "vtkSlicerVisibilityIcons.h"
 #include "vtkSlicerVRMenuButtonColorMode.h"
+#include "vtkCudaVolumeMapper.h"
 
 //VTK
 #include "vtkObjectFactory.h"
@@ -49,6 +50,7 @@
 #include "vtkKWPushButtonWithLabel.h"
 //Compiler
 #include <math.h>
+
 
 vtkCxxRevisionMacro(vtkSlicerVRGrayscaleHelper, "$Revision: 1.46 $");
 vtkStandardNewMacro(vtkSlicerVRGrayscaleHelper);
@@ -434,7 +436,7 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
     this->Volume=vtkVolume::New();
 
     //Init the texture mapper
-    this->MapperTexture=vtkSlicerVolumeTextureMapper3D::New();
+    this->MapperTexture=vtkCudaVolumeMapper::New();
     this->MapperTexture->SetSampleDistance(this->SampleDistanceLowRes);
     this->MapperTexture->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
     this->Volume->SetMapper(this->MapperTexture);
@@ -472,7 +474,7 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
 
     //check if texture mapping is supported important to do it after registry
     //otherwise show textmessage
-    int supportTexture=this->MapperTexture->IsRenderSupported(this->Gui->GetCurrentNode()->GetVolumeProperty());
+    int supportTexture = true;//this->MapperTexture->IsRenderSupported(this->Gui->GetCurrentNode()->GetVolumeProperty());
 
     if(!supportTexture)
     {

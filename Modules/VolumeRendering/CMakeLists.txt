@@ -29,6 +29,8 @@ SUBDIRS(VolumeRenderingReplacements)
 INCLUDE_DIRECTORIES(
   ${VolumeRenderingModule_SOURCE_DIR}
   ${VolumeRenderingModule_BINARY_DIR}
+  ${VolumeRenderingCudaModule_SOURCE_DIR}
+  ${VolumeRenderingCudaModule_BINARY_DIR}
   ${VolumeRenderingReplacements_SOURCE_DIR}
   ${VolumeRenderingReplacements_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
@@ -88,7 +90,9 @@ TARGET_LINK_LIBRARIES(VolumeRenderingModule
   ITKBasicFilters
   ITKIO
   ITKDICOMParser
-  ${KWWidgets_LIBRARIES} )
+  ${KWWidgets_LIBRARIES} 
+  ${VolumeRenderingCudaModule_BINARY_DIR}/VolumeRenderingCudaModule
+  )
 
 
 
