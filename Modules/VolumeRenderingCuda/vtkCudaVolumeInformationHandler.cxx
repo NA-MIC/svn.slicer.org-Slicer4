@@ -24,7 +24,7 @@ vtkCudaVolumeInformationHandler::vtkCudaVolumeInformationHandler()
     this->Volume = NULL;
     this->InputData = NULL;
 
-    this->SetThreshold(90, 255);
+    this->SetThreshold(0, 255);
 }
 
 vtkCudaVolumeInformationHandler::~vtkCudaVolumeInformationHandler()
@@ -154,13 +154,10 @@ void vtkCudaVolumeInformationHandler::UpdateVolume()
     // HACK EREI
     vtkMatrix4x4* mat = vtkMatrix4x4::New();
     if (this->Volume->GetUserMatrix() != NULL)
-    {
         mat->DeepCopy(this->Volume->GetUserMatrix());
-    }
     else
         mat->Identity();
 
-    if (mat != NULL)
     for (unsigned int i = 0; i < 4 ; i++)
         for (unsigned int j = 0; j < 4; j++)
             this->VolumeInfo.Transform[i][j] = mat->GetElement(i,j);

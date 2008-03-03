@@ -49,17 +49,25 @@ __device__ T interpolate(float posX, float posY, float posZ,
         );
 }
 
+__device__ void MatMul(const float mat[4][4], const float3& in, float3* out)
+{
+    out->x = mat[0][0] * in.x + mat[0][1] * in.y + mat[0][2] * in.z + mat[0][3] * 1.0;
+    out->y = mat[1][0] * in.x + mat[1][1] * in.y + mat[1][2] * in.z + mat[1][3] * 1.0;
+    out->z = mat[2][0] * in.x + mat[2][1] * in.y + mat[2][2] * in.z + mat[2][3] * 1.0;
+}
+
 __device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cudaRendererInformation& renInfo, const cudaVolumeInformation& volInfo)
 {
-    float posHor= (index.x - renInfo.Resolution.y*0.5) / renInfo.Resolution.x*0.27;
-    float posVer= (index.y - renInfo.Resolution.y*0.5) / renInfo.Resolution.x*0.27;
+    float posHor= (float)index.x / (float)renInfo.Resolution.x;
+    float posVer= (float)index.y / (float)renInfo.Resolution.y;
 
-    raymap[index.z*6]   = renInfo.CameraPos.x + volInfo.VolumeSize.x * volInfo.Spacing.x / 2.0f;
-    raymap[index.z*6+1] = renInfo.CameraPos.y + volInfo.VolumeSize.y * volInfo.Spacing.y / 2.0f;
-    raymap[index.z*6+2] = renInfo.CameraPos.z + volInfo.VolumeSize.z * volInfo.Spacing.z / 2.0f;
-    raymap[index.z*6+3] = (renInfo.CameraDirection.x + posHor * renInfo.HorizontalVec.x + posVer * renInfo.VerticalVec.x);
-    raymap[index.z*6+4] = (renInfo.CameraDirection.y + posHor * renInfo.HorizontalVec.y + posVer * renInfo.VerticalVec.y);
-    raymap[index.z*6+5] = (renInfo.CameraDirection.z + posHor * renInfo.HorizontalVec.z + posVer * renInfo.VerticalVec.z);
+    raymap[index.z*6]   = renInfo.CameraRayStart.x  + renInfo.CameraRayStartX.x * posVer + renInfo.CameraRayStartY.x * posHor;
+    raymap[index.z*6+1] = renInfo.CameraRayStart.y  + renInfo.CameraRayStartX.y * posVer + renInfo.CameraRayStartY.y * posHor;
+    raymap[index.z*6+2] = renInfo.CameraRayStart.z  + renInfo.CameraRayStartX.z * posVer + renInfo.CameraRayStartY.z * posHor;
+
+    raymap[index.z*6+3] = (renInfo.CameraRayEnd.x  + renInfo.CameraRayEndX.x * posVer + renInfo.CameraRayEndY.x * posHor) - raymap[index.z*6];
+    raymap[index.z*6+4] = (renInfo.CameraRayEnd.y  + renInfo.CameraRayEndX.y * posVer + renInfo.CameraRayEndY.y * posHor) - raymap[index.z*6+1];
+    raymap[index.z*6+5] = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*6+2];
 }
 
 __device__ void CUDAkernel_CalculateRayEnds(const int3& index, float* minmax/*[6]*/, float2* minmaxTrace, float* rayMap, const float3& voxelSize)
@@ -169,8 +177,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 
     //initialize variables for calculating starting and ending point of ray tracing
 
-    s_minmaxTrace[index.z].x = -100000.0f;
-    s_minmaxTrace[index.z].y = 100000.0f;
 
     __syncthreads();
 
@@ -193,25 +199,26 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
         s_rayMap[index.z*6+4] * s_rayMap[index.z*6+4] + 
         s_rayMap[index.z*6+5] * s_rayMap[index.z*6+5]);
     __syncthreads();
+    s_minmaxTrace[index.z].x = -100000.0f;
+    s_minmaxTrace[index.z].y = 100000.0f;
     CUDAkernel_CalculateRayEnds(index, s_minmax, s_minmaxTrace, s_rayMap, volInfo.Spacing);
     __syncthreads();
 
 
     //ray tracing start from here
-    float3 tempPos; // variables to store current position
     float pos = 0; //current step distance from camera
 
+    float3 tempPos; // variables to store current position
+   // float3 tempPosPre;
     T tempValue;
     int tempIndex;
     float alpha; //alpha value of current voxel
     float initialZBuffer=s_zBuffer[index.z]; //initial zBuffer from input
 
     //perform ray tracing until integration of alpha value reach threshold 
-
     while((s_minmaxTrace[index.z].y - s_minmaxTrace[index.z].x) >= pos) {
 
         //calculate current position in ray tracing
-
         tempPos.x = ( s_rayMap[index.z*6+0] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+3]);
         tempPos.y = ( s_rayMap[index.z*6+1] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+4]);
         tempPos.z = ( s_rayMap[index.z*6+2] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+5]);
@@ -219,6 +226,10 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
         tempPos.x /= volInfo.Spacing.x;
         tempPos.y /= volInfo.Spacing.y;
         tempPos.z /= volInfo.Spacing.z;
+
+        //MatMul(volInfo.Transform, tempPosPre, &tempPos);
+
+        
 
         // if current position is in ROI
         if(tempPos.x >= s_minmax[0] && tempPos.x < s_minmax[1] &&

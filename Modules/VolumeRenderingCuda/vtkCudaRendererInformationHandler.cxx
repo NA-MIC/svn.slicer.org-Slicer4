@@ -122,6 +122,32 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.HorizontalVec.z = this->RendererInfo.VerticalVec.x * this->RendererInfo.CameraDirection.y - 
             this->RendererInfo.VerticalVec.y * this->RendererInfo.CameraDirection.x;
 
+        // Getting Points along the ray.
+        double Point[4];
+        double PointX[4];
+        double PointY[4];
+        this->Renderer->SetDisplayPoint(this->RendererInfo.ActualResolution.x, 0, 0); this->Renderer->DisplayToWorld();
+        this->Renderer->GetWorldPoint(Point);
+        this->Renderer->SetDisplayPoint(0, 0, 0); this->Renderer->DisplayToWorld();
+        this->Renderer->GetWorldPoint(PointY);
+        this->Renderer->SetDisplayPoint(this->RendererInfo.ActualResolution.x, this->RendererInfo.ActualResolution.y, 0); this->Renderer->DisplayToWorld();
+        this->Renderer->GetWorldPoint(PointX);
+
+        this->RendererInfo.CameraRayStart.x = Point[0]; this->RendererInfo.CameraRayStart.y = Point[1]; this->RendererInfo.CameraRayStart.z = Point[2]; 
+        this->RendererInfo.CameraRayStartX.x = (PointX[0] - Point[0]); this->RendererInfo.CameraRayStartX.y = (PointX[1] - Point[1]); this->RendererInfo.CameraRayStartX.z = (PointX[2] - Point[2]);
+        this->RendererInfo.CameraRayStartY.x = (PointY[0] - Point[0]); this->RendererInfo.CameraRayStartY.y = (PointY[1] - Point[1]); this->RendererInfo.CameraRayStartY.z = (PointY[2] - Point[2]);
+
+        // Calculate Ray end and Perpendicular Vectors
+        this->Renderer->SetDisplayPoint(this->RendererInfo.ActualResolution.x, 0, 1); this->Renderer->DisplayToWorld();
+        this->Renderer->GetWorldPoint(Point);
+        this->Renderer->SetDisplayPoint(0, 0, 1); this->Renderer->DisplayToWorld();
+        this->Renderer->GetWorldPoint(PointY);
+        this->Renderer->SetDisplayPoint(this->RendererInfo.ActualResolution.x, this->RendererInfo.ActualResolution.y, 1); this->Renderer->DisplayToWorld();
+        this->Renderer->GetWorldPoint(PointX);
+
+        this->RendererInfo.CameraRayEnd.x = Point[0]; this->RendererInfo.CameraRayEnd.y = Point[1]; this->RendererInfo.CameraRayEnd.z = Point[2]; 
+        this->RendererInfo.CameraRayEndX.x = (PointX[0] - Point[0]); this->RendererInfo.CameraRayEndX.y = (PointX[1] - Point[1]); this->RendererInfo.CameraRayEndX.z = (PointX[2] - Point[2]);
+        this->RendererInfo.CameraRayEndY.x = (PointY[0] - Point[0]); this->RendererInfo.CameraRayEndY.y = (PointY[1] - Point[1]); this->RendererInfo.CameraRayEndY.z = (PointY[2] - Point[2]);
 
         double clipRange[2];
         cam->GetClippingRange(clipRange);
