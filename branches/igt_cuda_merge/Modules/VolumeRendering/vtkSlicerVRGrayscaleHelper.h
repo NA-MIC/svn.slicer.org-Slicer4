@@ -33,7 +33,7 @@ class vtkTransform;
 class vtkSlicerVisibilityIcons;
 class vtkKWPushButtonWithLabel;
 class vtkSlicerVRMenuButtonColorMode;
-
+class vtkCudaVolumeMapper;
 
 class VTK_VOLUMERENDERINGMODULE_EXPORT vtkSlicerVRGrayscaleHelper :public vtkSlicerVRHelper
 {
@@ -378,7 +378,7 @@ protected:
 
     // Description:
     // The hardware accelerated texture mapper.
-    vtkSlicerVolumeTextureMapper3D *MapperTexture;
+    vtkCudaVolumeMapper *MapperTexture;
 
     // Description:
     // The software accelerated software mapper
