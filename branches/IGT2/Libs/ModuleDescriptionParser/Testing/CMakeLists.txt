@@ -1,0 +1,28 @@
+Project(ModuleDescriptionParserTesting)
+
+SET ( PARSER1TEST_SOURCE Parser1Test )
+ADD_EXECUTABLE ( Parser1Test ${PARSER1TEST_SOURCE})
+TARGET_LINK_LIBRARIES ( Parser1Test ModuleDescriptionParser )
+
+SET ( ModuleFactoryTest_SOURCE ModuleFactoryTest )
+ADD_EXECUTABLE ( ModuleFactoryTest ${ModuleFactoryTest_SOURCE})
+TARGET_LINK_LIBRARIES ( ModuleFactoryTest ModuleDescriptionParser )
+
+INCLUDE_DIRECTORIES(
+  ${ModuleDescriptionParser_SOURCE_DIR}
+  )
+
+SET( EXE_PREFIX ${EXECUTABLE_OUTPUT_PATH} )
+IF (WIN32)
+  SET( EXE_PREFIX ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_BUILD_TYPE})
+ENDIF (WIN32)
+
+SET (TEST_DATA ${ModuleDescriptionParserTesting_SOURCE_DIR}/TestData)
+ADD_TEST(Parser1Test1 ${LAUNCH_EXE} ${EXE_PREFIX}/Parser1Test ${TEST_DATA}/ParserTest1.xml)
+
+ADD_TEST(Parser1Test2 ${LAUNCH_EXE} ${EXE_PREFIX}/Parser1Test ${TEST_DATA}/ParserTest2.xml)
+
+IF(Slicer3_BINARY_DIR)
+ADD_TEST(ModuleFactoryTest ${LAUNCH_EXE} ${EXE_PREFIX}/ModuleFactoryTest ${Slicer3_BINARY_DIR}/${SLICER_INSTALL_LIBRARIES_DIR}/Plugins/)
+ENDIF(Slicer3_BINARY_DIR)
+
