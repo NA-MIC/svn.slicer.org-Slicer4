@@ -5,14 +5,14 @@
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
 
-  Program:   Module Description Parser
+  Program:   Loadable Module Description Parser
   Module:    $HeadURL$
   Date:      $Date$
   Version:   $Revision$
 
 ==========================================================================*/
 #include <string>
-#include "ModuleFactory.h"
+#include "LoadableModuleFactory.h"
 #include "itksys/Directory.hxx"
 #include "itksys/SystemTools.hxx"
 
@@ -41,7 +41,7 @@ int main (int argc, char *argv[])
     {
     if (strcmp (myDir.GetFile(i), "..") == 0) continue;
 
-    ModuleFactory moduleFactory;
+    LoadableModuleFactory moduleFactory;
     std::string searchPath(argv[1]);
     searchPath += myDir.GetFile(i);
     if (!itksys::SystemTools::FileIsDirectory(searchPath.c_str())) continue;
