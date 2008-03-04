@@ -308,10 +308,6 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
                 this->CudaMapper->SetRenderMode(vtkCudaMemoryTexture::RenderToMemory);
     }
 
-    if (caller == this->ScaleFactorScale)
-        if (this->CudaMapper != NULL)
-            this->CudaMapper->SetRenderOutputScaleFactor(this->ScaleFactorScale->GetValue());
-
     else if (caller == this->NS_ImageData)
     {
         vtkMRMLScalarVolumeNode *selectedImageData=vtkMRMLScalarVolumeNode::SafeDownCast(this->NS_ImageData->GetSelected());
@@ -372,8 +368,11 @@ void vtkVolumeRenderingCudaModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsi
         }
 
     }
-
-
+    else if (caller == this->ScaleFactorScale)
+    {
+        if (this->CudaMapper != NULL)
+            this->CudaMapper->SetRenderOutputScaleFactor(this->ScaleFactorScale->GetValue());
+    }
 }
 
 void vtkVolumeRenderingCudaModuleGUI::ScheduleRender()
