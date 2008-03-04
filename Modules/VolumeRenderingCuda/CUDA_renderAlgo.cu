@@ -271,11 +271,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
                     ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x + 1)]);
                 /*interpolation end here*/
 
-                if( tempValue >=(T)volInfo.MinThreshold && tempValue <= (T)volInfo.MaxThreshold){ 
-
-                    tempIndex=__float2int_rn((volInfo.FunctionSize-1)*(float)(tempValue-volInfo.FunctionRange[0])/(float)(volInfo.FunctionRange[1]-volInfo.FunctionRange[0]));
-                    alpha=volInfo.AlphaTransferFunction[tempIndex];
-
+                tempIndex=__float2int_rn((volInfo.FunctionSize-1)*(float)(tempValue-volInfo.FunctionRange[0])/(float)(volInfo.FunctionRange[1]-volInfo.FunctionRange[0]));
+                alpha=volInfo.AlphaTransferFunction[tempIndex];
+                if( alpha > 0){ 
                     if(s_zBuffer[index.z] > (pos + s_minmaxTrace[index.z].x) * stepSize)
                     {
                         s_zBuffer[index.z] = (pos + s_minmaxTrace[index.z].x) * stepSize;
