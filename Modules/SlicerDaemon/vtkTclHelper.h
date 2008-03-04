@@ -48,6 +48,8 @@ public:
     vtkGetObjectMacro(VolumeNode, vtkMRMLVolumeNode);
     vtkSetObjectMacro(MeasurementFrame, vtkMatrix4x4);
     vtkGetObjectMacro(MeasurementFrame, vtkMatrix4x4);
+    vtkSetObjectMacro(Matrix, vtkMatrix4x4);
+    vtkGetObjectMacro(Matrix, vtkMatrix4x4);
 
     void GetRASToVTKMatrix(vtkMatrix4x4 *RASToVTK);
     void SendImageDataScalars(char *sockname);
@@ -58,6 +60,10 @@ public:
     void ReceiveImageDataTensors_DoSlicerTransform(char *sockname);
     const char *Execute (char *Command);
 
+    void ReceiveMatrix(char *sockname);
+    void SendMessage(char *sockname);
+
+    void PerformVTKSocketHandshake(char *sockname);
 
 protected:
     vtkTclHelper();
@@ -66,6 +72,7 @@ protected:
     vtkMRMLVolumeNode *VolumeNode;
     vtkImageData *ImageData;    
     vtkMatrix4x4 *MeasurementFrame;    
+    vtkMatrix4x4 *Matrix;    
     Tcl_Interp *Interp;           /* Tcl interpreter */
 };
 

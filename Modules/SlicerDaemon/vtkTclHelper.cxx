@@ -40,6 +40,7 @@ vtkTclHelper::vtkTclHelper()
   this->Interp = NULL;
   this->ImageData = NULL;
   this->VolumeNode = NULL;
+  this->Matrix = NULL;
   this->MeasurementFrame = vtkMatrix4x4::New();
   this->MeasurementFrame->Identity();
 }
@@ -473,6 +474,139 @@ vtkTclHelper::ReceiveImageDataTensors(char *sockname)
       
       this->ImageData->GetPointData()->SetTensors(tensorArray);
   }  
+}
+
+
+// Read a stream of numbers from vtkSocketCommunicator::SendTagged 
+// and put it int the Matrix ivar
+void 
+vtkTclHelper::PerformVTKSocketHandshake(char *sockname)
+{
+
+  int mode;
+
+  Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
+
+  if ( ! (mode & TCL_READABLE) )
+    {   vtkErrorMacro ("Socket " << sockname << " is not readable" << "\n");
+      return;
+    }
+
+  // read the tag, but ignore it
+  int bytes = 9;
+  char handshake[9];
+  int read = Tcl_Read(channel, (char *) &handshake, bytes);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+
+  int written = Tcl_WriteRaw(channel, (char *) handshake, bytes);
+  Tcl_Flush(channel);
+
+  if ( written != bytes )
+    {   vtkErrorMacro ("Only wrote " << written << " but expected to write " << bytes << "\n");
+      return;
+    }
+
+}
+
+
+void 
+vtkTclHelper::SendMessage(char *sockname)
+{
+  int mode;
+  Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
+  if ( ! (mode & TCL_WRITABLE) )
+    {   vtkErrorMacro ("Socket " << sockname << " is not writable\n");
+      return;
+    }
+
+  char m = 1;
+  int tag = 17;
+  int bytes = 1; 
+  // all messages share the same tag: 17
+  int written = Tcl_WriteRaw(channel, (char *)&tag, sizeof(int));
+  // bytes to be sent for the message
+  written = Tcl_WriteRaw(channel, (char *)&bytes, sizeof(bytes));
+  // the one byte message
+  written = Tcl_WriteRaw(channel, &m, bytes);
+
+  Tcl_Flush(channel);
+
+  if ( written != bytes )
+    {   vtkErrorMacro ("Only wrote " << written << " but expected to write " << bytes << "\n");
+      return;
+    }
+}
+
+
+// Read a stream of numbers from vtkSocketCommunicator::SendTagged 
+// and put it int the Matrix ivar
+void 
+vtkTclHelper::ReceiveMatrix(char *sockname)
+{
+  int mode;
+  Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
+    
+  if ( ! (mode & TCL_READABLE) )
+    {   vtkErrorMacro ("Socket " << sockname << " is not readable" << "\n");
+      return;
+    }
+
+  if ( this->Matrix == NULL )
+    {   vtkErrorMacro ("Matrix is NULL");
+      return;
+    }
+
+  // read the tag, but ignore it
+  int tag;
+  int bytes = sizeof(int);
+  int read = Tcl_Read(channel, (char *) &tag, bytes);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+
+  // read the number of elements
+  int length;
+  bytes = sizeof(int);
+  read = Tcl_Read(channel, (char *) &length, bytes);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+
+  if ( length != 12*8 )
+    {   vtkErrorMacro ("Packet of " << length << " sent, but expected " << 12*8 << "\n");
+      return;
+    }
+
+  // read the actual elements
+  double elements[12];
+  bytes = 12*8;
+  read = Tcl_Read(channel, (char *) &elements, 12*8);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+  
+  vtkMatrix4x4 *localMatrix = vtkMatrix4x4::New();
+  localMatrix->Identity();
+  unsigned int counter = 0;
+  for (unsigned int i = 0; i < 4; i++)
+    {
+    for (unsigned int j = 0; j < 3; j++)
+      {
+      localMatrix->SetElement( j, i, elements[counter++] );
+      }
+    }
+  this->Matrix->DeepCopy(localMatrix);
+  localMatrix->Delete();
 }
 
 /*Meeting with Steve and Raul (05-26-07): decision that the measurement frame
