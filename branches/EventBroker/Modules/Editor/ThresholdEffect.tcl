@@ -250,7 +250,7 @@ itcl::body ThresholdEffect::previewOptions { } {
     $te configure -range [$o(range) GetRange]
     $te animateCursor off
     $te preview
-    $te animateCursor on
+    #$te animateCursor on
   }
 }
 
