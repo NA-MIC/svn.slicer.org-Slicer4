@@ -55,7 +55,7 @@ vtkEventBroker::vtkEventBroker()
 {
   this->EventMode = vtkEventBroker::Synchronous;
   this->EventLogging = 0;
-  this->CompressCallData = 1;
+  this->CompressCallData = 0;
   this->LogFileName = NULL;
   this->ScriptHandler = NULL;
 }
