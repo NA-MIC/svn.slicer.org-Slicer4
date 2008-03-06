@@ -100,7 +100,7 @@ __device__ void CUDAkernel_RayCastAlgorithm(const int3& index,
     T tempValue;        //!< A Temporary color value
     int tempIndex;      //!< Temporaty index in the 3D data
     float alpha;        //!< Alpha value of current voxel
-    float initialZBuffer = zBuffer[index.z]; //!< initial zBuffer from input
+    //float initialZBuffer = zBuffer[index.z]; //!< initial zBuffer from input
 
     float A = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
     float B = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y);
@@ -190,15 +190,18 @@ __device__ void CUDAkernel_RayCastAlgorithm(const int3& index,
     }
 }
 
-__device__ CUDAkernel_WriteData(
+__device__ void CUDAkernel_WriteData(const int3& index, int outindex,
+                                const float3* outputVal, const float* remainingOpacity,
+                                const float* zBuffer,
+                                cudaRendererInformation& renInfo)
 {
     if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y)
     {
-        renInfo.OutputImage[outindex] = make_uchar4(s_outputVal[index.z].x * 255.0, 
-                                                    s_outputVal[index.z].y * 255.0, 
-                                                    s_outputVal[index.z].z * 255.0, 
-                                                    (1 - s_remainingOpacity[index.z]) * 255.0);
-        //renInfo.ZBuffer[renInfo.Resolution.x - index.x + index.y * renInfo.Resolution.x] = s_zBuffer[index.z];
+        renInfo.OutputImage[outindex] = make_uchar4(outputVal[index.z].x * 255.0, 
+                                                    outputVal[index.z].y * 255.0, 
+                                                    outputVal[index.z].z * 255.0, 
+                                                    (1 - remainingOpacity[index.z]) * 255.0);
+        //renInfo.ZBuffer[renInfo.Resolution.x - index.x + index.y * renInfo.Resolution.x] = zBuffer[index.z];
     }
 }
 
@@ -247,6 +250,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
                                    s_outputVal, s_zBuffer, s_remainingOpacity);
 
     //write to output
+    CUDAkernel_WriteData(index, outindex, 
+                        s_outputVal, s_remainingOpacity,
+                        s_zBuffer, renInfo);
 }
 
 extern "C"
