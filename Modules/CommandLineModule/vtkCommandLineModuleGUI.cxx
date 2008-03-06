@@ -1346,7 +1346,11 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         std::string nodeClass;
         const char *attrName = 0;
         const char *attrValue = 0;
-        if ((*pit).GetType() == "label")
+        if ((*pit).GetType() == "any")
+          {
+          nodeClass = "vtkMRMLVolumeNode";
+          }
+        else if ((*pit).GetType() == "label")
           {
           nodeClass = "vtkMRMLScalarVolumeNode";
           attrName = labelAttrName.c_str();
@@ -1416,6 +1420,19 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
 
         tparameter->SetNodeClass(nodeClass.c_str(), attrName, attrValue, 
                                  (title + " Volume").c_str());
+        if ((*pit).GetType() == "any")
+          {
+          // Add all of the other concrete volume node types
+          tparameter->AddNodeClass("vtkMRMLVectorVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " VectorVolume").c_str());
+          tparameter->AddNodeClass("vtkMRMLDiffusionTensorVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " DiffusionTensorVolume").c_str());
+          tparameter->AddNodeClass("vtkMRMLDiffusionWeightedVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " DiffusionWeightedVolume").c_str());
+          }
         tparameter->SetNewNodeEnabled(1);
         tparameter->SetNoneEnabled(noneEnabled);
         // tparameter->SetNewNodeName((title+" output").c_str());
