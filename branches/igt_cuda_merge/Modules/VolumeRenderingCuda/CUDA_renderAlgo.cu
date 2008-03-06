@@ -70,6 +70,120 @@ __device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cud
     raymap[index.z*6+5] = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*6+2];
 }
 
+template <typename T>
+__device__ void CUDAkernel_RayCastAlgorithm(const int3& index,
+                                            int outindex,
+                                            const float* minmax /*[6] */,
+                                            const float* rayMap,
+                                            const cudaVolumeInformation& volInfo,
+                                            const cudaRendererInformation& renInfo,
+                                            float3* outputVal,
+                                            float* zBuffer,
+                                            float* remainingOpacity)
+{
+    //ray tracing start from here
+    float depth = 0.0;  //current step distance from camera
+
+    float rayLength = sqrtf(rayMap[index.z*6+3] * rayMap[index.z*6+3] + 
+                            rayMap[index.z*6+4] * rayMap[index.z*6+4] + 
+                            rayMap[index.z*6+5] * rayMap[index.z*6+5]);
+
+
+    float3 tempPos;     // variables to store current position
+    float  distFromCam;
+    T tempValue;
+    int tempIndex;
+    float alpha; //alpha value of current voxel
+    float initialZBuffer = zBuffer[index.z]; //initial zBuffer from input
+
+    float A = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
+    float B = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y);
+
+
+    //perform ray tracing until integration of alpha value reach threshold 
+    while(depth < 1.0) {
+        distFromCam = B / ( depth - A);
+
+        //calculate current position in ray tracing
+        MatMul(volInfo.Transform, &tempPos, 
+            (renInfo.CameraPos.x + distFromCam * rayMap[index.z*6+3] / rayLength ),
+            (renInfo.CameraPos.y + distFromCam * rayMap[index.z*6+4] / rayLength ),
+            (renInfo.CameraPos.z + distFromCam * rayMap[index.z*6+5] / rayLength ));
+
+        // if current position is in ROI
+        if(tempPos.x >= minmax[0] && tempPos.x < minmax[1] &&
+           tempPos.y >= minmax[2] && tempPos.y < minmax[3] &&
+           tempPos.z >= minmax[4] && tempPos.z < minmax[5] )
+        {
+            //check whether current position is in front of z buffer wall
+            if(depth < initialZBuffer)
+            { 
+
+                //tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+                //    __float2int_rn(tempPos.y)*volInfo.VolumeSize.x +
+                //    __float2int_rn(tempPos.x))];
+                /*interpolation start here*/
+                float posX = tempPos.x - __float2int_rd(tempPos.x);
+                float posY = tempPos.y - __float2int_rd(tempPos.y);
+                float posZ = tempPos.z - __float2int_rd(tempPos.z);
+
+
+               /* tempValue=interpolate((float)0,(float)0,(float)0,
+                    ((T*)volInfo.SourceData)[(int)((int)(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+                    (int)(tempPos.y)*volInfo.VolumeSize.x + 
+                    (int)(tempPos.x))],
+                    (T)0,(T)0,(T)0,(T)0,(T)0,(T)0,(T)0);*/
+
+                int base = __float2int_rd((tempPos.z)) * volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+                           __float2int_rd((tempPos.y)) * volInfo.VolumeSize.x + 
+                           __float2int_rd((tempPos.x));
+
+                tempValue=interpolate(posX, posY, posZ,
+                ((T*)volInfo.SourceData)[base],
+                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y)],
+                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x)],
+                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x)],
+                ((T*)volInfo.SourceData)[(int)(base + 1)],
+                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + 1)],
+                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x + 1)],
+                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x + 1)]);
+                /*interpolation end here*/
+
+                tempIndex = __float2int_rn((volInfo.FunctionSize-1) * (float)(tempValue-volInfo.FunctionRange[0]) /
+                                                                      (float)(volInfo.FunctionRange[1]-volInfo.FunctionRange[0]));
+                alpha = volInfo.AlphaTransferFunction[tempIndex];
+                if(alpha >= 0){
+
+                    if(remainingOpacity[index.z] > 0.02)  // check if remaining opacity has reached threshold(0.02)
+                    {
+                        outputVal[index.z].x += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3];
+                        outputVal[index.z].y += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+1];
+                        outputVal[index.z].z += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+2];
+                        remainingOpacity[index.z] *= (1.0 - alpha);
+                    }
+                    else
+                    { // buffer full
+                        zBuffer[index.z] = depth;
+                        break;
+                    }
+                }
+
+            } 
+            else 
+            { // current position is behind z buffer wall
+                if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y)
+                {
+                    outputVal[index.z].x += remainingOpacity[index.z] * renInfo.OutputImage[outindex].x;
+                    outputVal[index.z].y += remainingOpacity[index.z] * renInfo.OutputImage[outindex].y;
+                    outputVal[index.z].z += remainingOpacity[index.z] * renInfo.OutputImage[outindex].z;
+                }
+                break;
+            }
+        }
+        depth += .002 * volInfo.SampleDistance;
+    }
+}
+
 __constant__ cudaVolumeInformation   volInfo;
 __constant__ cudaRendererInformation renInfo;
 
@@ -92,13 +206,13 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     }else if(index.z < 9){ 
         s_minmax[index.x%6] = volInfo.MinMaxValue[index.x%6];
     }
+    s_outputVal[index.z].x = 0.0f;
+    s_outputVal[index.z].y = 0.0f;
+    s_outputVal[index.z].z = 0.0f;
 
     //initialization of variables in shared memory
     int outindex = index.x + index.y * renInfo.Resolution.x; // index of result image
     s_remainingOpacity[index.z] = 1.0;
-    s_outputVal[index.z].x = 0;
-    s_outputVal[index.z].y = 0;
-    s_outputVal[index.z].z = 0;
     if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y){
         s_zBuffer[index.z] = renInfo.ZBuffer[renInfo.Resolution.x - index.x + index.y * renInfo.Resolution.x];// (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
     } else /* outside of screen */ {
@@ -106,107 +220,12 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     }
 
     CUDAkernel_SetRayMap(index, s_rayMap, renInfo);
-    float rayLength = sqrtf(s_rayMap[index.z*6+3] * s_rayMap[index.z*6+3] + 
-        s_rayMap[index.z*6+4] * s_rayMap[index.z*6+4] + 
-        s_rayMap[index.z*6+5] * s_rayMap[index.z*6+5]);
 
     __syncthreads();
 
-
-    //ray tracing start from here
-    float depth = 0.0;  //current step distance from camera
-
-    float3 tempPos;     // variables to store current position
-    float  distFromCam;
-    T tempValue;
-    int tempIndex;
-    float alpha; //alpha value of current voxel
-    float initialZBuffer = s_zBuffer[index.z]; //initial zBuffer from input
-
-    float A = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
-    float B = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y);
-
-    //perform ray tracing until integration of alpha value reach threshold 
-    while(depth < 1.0) {
-        distFromCam = B / ( depth - A);
-
-        //calculate current position in ray tracing
-        MatMul(volInfo.Transform, &tempPos, 
-            (renInfo.CameraPos.x + distFromCam * s_rayMap[index.z*6+3] / rayLength ),
-            (renInfo.CameraPos.y + distFromCam * s_rayMap[index.z*6+4] / rayLength ),
-            (renInfo.CameraPos.z + distFromCam * s_rayMap[index.z*6+5] / rayLength ));
-
-        // if current position is in ROI
-        if(tempPos.x >= s_minmax[0] && tempPos.x < s_minmax[1] &&
-            tempPos.y >= s_minmax[2] && tempPos.y < s_minmax[3] &&
-            tempPos.z >= s_minmax[4] && tempPos.z < s_minmax[5] )
-        {
-            //check whether current position is in front of z buffer wall
-            if(depth < initialZBuffer)
-            { 
-
-                //tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
-                //    __float2int_rn(tempPos.y)*volInfo.VolumeSize.x +
-                //    __float2int_rn(tempPos.x))];
-                /*interpolation start here*/
-                float posX = tempPos.x-__float2int_rd(tempPos.x);
-                float posY = tempPos.y-__float2int_rd(tempPos.y);
-                float posZ = tempPos.z-__float2int_rd(tempPos.z);
-
-
-               /* tempValue=interpolate((float)0,(float)0,(float)0,
-                    ((T*)volInfo.SourceData)[(int)((int)(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
-                    (int)(tempPos.y)*volInfo.VolumeSize.x + 
-                    (int)(tempPos.x))],
-                    (T)0,(T)0,(T)0,(T)0,(T)0,(T)0,(T)0);*/
-
-                int base = __float2int_rd((tempPos.z)) * volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
-                __float2int_rd((tempPos.y)) * volInfo.VolumeSize.x + 
-                __float2int_rd((tempPos.x));
-
-                tempValue=interpolate(posX, posY, posZ,
-                ((T*)volInfo.SourceData)[base],
-                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y)],
-                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x)],
-                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x)],
-                ((T*)volInfo.SourceData)[(int)(base + 1)],
-                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + 1)],
-                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x + 1)],
-                ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x + 1)]);
-                /*interpolation end here*/
-
-                tempIndex = __float2int_rn((volInfo.FunctionSize-1)*(float)(tempValue-volInfo.FunctionRange[0])/(float)(volInfo.FunctionRange[1]-volInfo.FunctionRange[0]));
-                alpha = volInfo.AlphaTransferFunction[tempIndex];
-                if(alpha >= 0){
-
-                    if(s_remainingOpacity[index.z] > 0.02)  // check if remaining opacity has reached threshold(0.02)
-                    {
-                        s_outputVal[index.z].x += alpha * volInfo.ColorTransferFunction[tempIndex*3];
-                        s_outputVal[index.z].y += alpha * volInfo.ColorTransferFunction[tempIndex*3+1];
-                        s_outputVal[index.z].z += alpha * volInfo.ColorTransferFunction[tempIndex*3+2];
-                        s_remainingOpacity[index.z] *= (1.0 - alpha);
-                    }
-                    else
-                    { // buffer full
-                        s_zBuffer[index.z] = depth;
-                        break;
-                    }
-                }
-
-            } 
-            else 
-            { // current position is behind z buffer wall
-                if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y)
-                {
-                    s_outputVal[index.z].x += s_remainingOpacity[index.z] * renInfo.OutputImage[outindex].x;
-                    s_outputVal[index.z].y += s_remainingOpacity[index.z] * renInfo.OutputImage[outindex].y;
-                    s_outputVal[index.z].z += s_remainingOpacity[index.z] * renInfo.OutputImage[outindex].z;
-                }
-                break;
-            }
-        }
-        depth += .002 * volInfo.SampleDistance;
-    }
+    CUDAkernel_RayCastAlgorithm<T>(index, outindex, s_minmax /*[6] */,
+                                   s_rayMap, volInfo, renInfo,
+                                   s_outputVal, s_zBuffer, s_remainingOpacity);
 
     //write to output
 
