@@ -58,6 +58,7 @@ __device__ void MatMul(const float mat[4][4], float3* out, float inX, float inY,
 
 __device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cudaRendererInformation& renInfo)
 {
+    float rayLength;
     float posHor= (float)index.x / (float)renInfo.Resolution.x;
     float posVer= (float)index.y / (float)renInfo.Resolution.y;
 
@@ -65,9 +66,19 @@ __device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cud
     raymap[index.z*6+1] = renInfo.CameraRayStart.y  + renInfo.CameraRayStartX.y * posVer + renInfo.CameraRayStartY.y * posHor;
     raymap[index.z*6+2] = renInfo.CameraRayStart.z  + renInfo.CameraRayStartX.z * posVer + renInfo.CameraRayStartY.z * posHor;
 
+    // Ray Length
     raymap[index.z*6+3] = (renInfo.CameraRayEnd.x  + renInfo.CameraRayEndX.x * posVer + renInfo.CameraRayEndY.x * posHor) - raymap[index.z*6];
     raymap[index.z*6+4] = (renInfo.CameraRayEnd.y  + renInfo.CameraRayEndX.y * posVer + renInfo.CameraRayEndY.y * posHor) - raymap[index.z*6+1];
     raymap[index.z*6+5] = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*6+2];
+
+    rayLength = sqrtf(raymap[index.z*6+3] * raymap[index.z*6+3] + 
+                      raymap[index.z*6+4] * raymap[index.z*6+4] + 
+                      raymap[index.z*6+5] * raymap[index.z*6+5]);
+
+    // Normalize the direction vector
+    raymap[index.z*6+3] /= rayLength;
+    raymap[index.z*6+4] /= rayLength;
+    raymap[index.z*6+5] /= rayLength;
 }
 
 template <typename T>
@@ -84,17 +95,12 @@ __device__ void CUDAkernel_RayCastAlgorithm(const int3& index,
     //ray tracing start from here
     float depth = 0.0;  //current step distance from camera
 
-    float rayLength = sqrtf(rayMap[index.z*6+3] * rayMap[index.z*6+3] + 
-                            rayMap[index.z*6+4] * rayMap[index.z*6+4] + 
-                            rayMap[index.z*6+5] * rayMap[index.z*6+5]);
-
-
-    float3 tempPos;     // variables to store current position
-    float  distFromCam;
-    T tempValue;
-    int tempIndex;
-    float alpha; //alpha value of current voxel
-    float initialZBuffer = zBuffer[index.z]; //initial zBuffer from input
+    float3 tempPos;     //!< variables to store current position
+    float  distFromCam; //!< The distance from the camera to the Image
+    T tempValue;        //!< A Temporary color value
+    int tempIndex;      //!< Temporaty index in the 3D data
+    float alpha;        //!< Alpha value of current voxel
+    float initialZBuffer = zBuffer[index.z]; //!< initial zBuffer from input
 
     float A = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
     float B = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y);
@@ -106,9 +112,9 @@ __device__ void CUDAkernel_RayCastAlgorithm(const int3& index,
 
         //calculate current position in ray tracing
         MatMul(volInfo.Transform, &tempPos, 
-            (renInfo.CameraPos.x + distFromCam * rayMap[index.z*6+3] / rayLength ),
-            (renInfo.CameraPos.y + distFromCam * rayMap[index.z*6+4] / rayLength ),
-            (renInfo.CameraPos.z + distFromCam * rayMap[index.z*6+5] / rayLength ));
+            (renInfo.CameraPos.x + distFromCam * rayMap[index.z*6+3]),
+            (renInfo.CameraPos.y + distFromCam * rayMap[index.z*6+4]),
+            (renInfo.CameraPos.z + distFromCam * rayMap[index.z*6+5]));
 
         // if current position is in ROI
         if(tempPos.x >= minmax[0] && tempPos.x < minmax[1] &&
@@ -116,7 +122,7 @@ __device__ void CUDAkernel_RayCastAlgorithm(const int3& index,
            tempPos.z >= minmax[4] && tempPos.z < minmax[5] )
         {
             //check whether current position is in front of z buffer wall
-            if(depth < initialZBuffer)
+            if(depth < 1.0 )//initialZBuffer)
             { 
 
                 //tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
@@ -161,8 +167,8 @@ __device__ void CUDAkernel_RayCastAlgorithm(const int3& index,
                         outputVal[index.z].z += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+2];
                         remainingOpacity[index.z] *= (1.0 - alpha);
                     }
-                    else
-                    { // buffer full
+                    else // buffer filled to the max value
+                    { 
                         zBuffer[index.z] = depth;
                         break;
                     }
@@ -181,6 +187,18 @@ __device__ void CUDAkernel_RayCastAlgorithm(const int3& index,
             }
         }
         depth += .002 * volInfo.SampleDistance;
+    }
+}
+
+__device__ CUDAkernel_WriteData(
+{
+    if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y)
+    {
+        renInfo.OutputImage[outindex] = make_uchar4(s_outputVal[index.z].x * 255.0, 
+                                                    s_outputVal[index.z].y * 255.0, 
+                                                    s_outputVal[index.z].z * 255.0, 
+                                                    (1 - s_remainingOpacity[index.z]) * 255.0);
+        //renInfo.ZBuffer[renInfo.Resolution.x - index.x + index.y * renInfo.Resolution.x] = s_zBuffer[index.z];
     }
 }
 
@@ -223,19 +241,12 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 
     __syncthreads();
 
+    // Call the Algorithm
     CUDAkernel_RayCastAlgorithm<T>(index, outindex, s_minmax /*[6] */,
                                    s_rayMap, volInfo, renInfo,
                                    s_outputVal, s_zBuffer, s_remainingOpacity);
 
     //write to output
-
-    if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y){
-        renInfo.OutputImage[outindex]=make_uchar4(s_outputVal[index.z].x * 255.0, 
-            s_outputVal[index.z].y * 255.0, 
-            s_outputVal[index.z].z * 255.0, 
-            (1 - s_remainingOpacity[index.z])*255.0);
-        //renInfo.ZBuffer[renInfo.Resolution.x - index.x + index.y * renInfo.Resolution.x] = s_zBuffer[index.z];
-    }
 }
 
 extern "C"
