@@ -42,6 +42,7 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
   
   SET(VolumeRenderingCudaModule_CUDA_SRCS
       CUDA_renderAlgo.cu
+      CUDA_renderRayCast.h
   )
 
 #-----------------------------------------------
