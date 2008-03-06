@@ -158,6 +158,8 @@ void vtkCudaVolumeInformationHandler::UpdateVolume()
     else
         mat->Identity();
 
+    mat->Invert();
+
     for (unsigned int i = 0; i < 4 ; i++)
         for (unsigned int j = 0; j < 4; j++)
             this->VolumeInfo.Transform[i][j] = mat->GetElement(i,j);

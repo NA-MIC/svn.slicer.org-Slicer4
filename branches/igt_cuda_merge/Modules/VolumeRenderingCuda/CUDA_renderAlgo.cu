@@ -56,7 +56,7 @@ __device__ void MatMul(const float mat[4][4], const float3& in, float3* out)
     out->z = mat[2][0] * in.x + mat[2][1] * in.y + mat[2][2] * in.z + mat[2][3] * 1.0;
 }
 
-__device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cudaRendererInformation& renInfo, const cudaVolumeInformation& volInfo)
+__device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cudaRendererInformation& renInfo)
 {
     float posHor= (float)index.x / (float)renInfo.Resolution.x;
     float posVer= (float)index.y / (float)renInfo.Resolution.y;
@@ -70,64 +70,6 @@ __device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cud
     raymap[index.z*6+5] = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*6+2];
 }
 
-__device__ void CUDAkernel_CalculateRayEnds(const int3& index, float* minmax/*[6]*/, float2* minmaxTrace, float* rayMap, const float3& voxelSize)
-{
-    float test;
-    //calculating starting and ending point of ray tracing
-    if(rayMap[index.z*6+3] > 1.0e-3){
-        minmaxTrace[index.z].y = ( ((minmax[1]-2)*voxelSize.x - rayMap[index.z*6]) / rayMap[index.z*6+3] );
-        minmaxTrace[index.z].x = ( ((minmax[0]+2)*voxelSize.x - rayMap[index.z*6]) / rayMap[index.z*6+3] );
-    }
-    else if(rayMap[index.z*6+3] < -1.0e-3){
-        minmaxTrace[index.z].x = ( ((minmax[1]-2)*voxelSize.x - rayMap[index.z*6]) / rayMap[index.z*6+3] );
-        minmaxTrace[index.z].y = ( ((minmax[0]+2)*voxelSize.x - rayMap[index.z*6]) / rayMap[index.z*6+3] );
-    }
-
-    if(rayMap[index.z*6+4] > 1.0e-3){
-        test = ( ((minmax[3]-2)*voxelSize.y - rayMap[index.z*6+1]) / rayMap[index.z*6+4] );
-        if( test < minmaxTrace[index.z].y){
-            minmaxTrace[index.z].y = test;
-        }
-        test = ( ((minmax[2]+2)*voxelSize.y - rayMap[index.z*6+1]) / rayMap[index.z*6+4] );
-        if( test > minmaxTrace[index.z].x){
-            minmaxTrace[index.z].x = test;
-        }
-    }
-    else if(rayMap[index.z*6+4] < -1.0e-3){
-        test = ( ((minmax[3]-2)*voxelSize.y - rayMap[index.z*6+1]) / rayMap[index.z*6+4] );
-        if( test > minmaxTrace[index.z].x){
-            minmaxTrace[index.z].x = test;
-        }
-        test = ( ((minmax[2]+2)*voxelSize.y - rayMap[index.z*6+1]) / rayMap[index.z*6+4] );
-        if( test < minmaxTrace[index.z].y){
-            minmaxTrace[index.z].y = test;
-        }
-    }
-
-
-    if(rayMap[index.z*6+5] > 1.0e-3){
-        test = ( ((minmax[5]-2)*voxelSize.z - rayMap[index.z*6+2]) / rayMap[index.z*6+5] );
-        if( test < minmaxTrace[index.z].y){
-            minmaxTrace[index.z].y = test;
-        }
-        test = ( ((minmax[4]+2)*voxelSize.z - rayMap[index.z*6+2]) / rayMap[index.z*6+5] );
-        if( test > minmaxTrace[index.z].x){
-            minmaxTrace[index.z].x = test;
-        }
-    }
-    else if(rayMap[index.z*6+5] < -1.0e-3){
-        test = ( ((minmax[5]-2)*voxelSize.z - rayMap[index.z*6+2]) / rayMap[index.z*6+5] );
-        if( test > minmaxTrace[index.z].x){
-            minmaxTrace[index.z].x = test;
-        }
-        test = ( ((minmax[4]+2)*voxelSize.z - rayMap[index.z*6+2]) / rayMap[index.z*6+5] );
-        if( test < minmaxTrace[index.z].y){
-            minmaxTrace[index.z].y = test;
-        }
-    }
-}
-
-
 __constant__ cudaVolumeInformation   volInfo;
 __constant__ cudaRendererInformation renInfo;
 
@@ -139,7 +81,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     index.y = blockDim.y *blockIdx.y + threadIdx.y;
     index.z = threadIdx.x + threadIdx.y * BLOCK_DIM2D; //index in grid
 
-    __shared__ float2          s_minmaxTrace[BLOCK_DIM2D*BLOCK_DIM2D];      //starting and ending step of ray tracing 
     __shared__ float           s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*6];         //ray map: position and orientation of ray after translation and rotation transformation
     __shared__ float           s_minmax[6];                                 //region of interest of 3D data (minX, maxX, minY, maxY, minZ, maxZ)
     __shared__ float3          s_outputVal[BLOCK_DIM2D*BLOCK_DIM2D];        //output value
@@ -166,79 +107,59 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     s_outputVal[index.z].y = 0;
     s_outputVal[index.z].z = 0;
     if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y){
-        s_zBuffer[index.z] = 10000;// (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
+        s_zBuffer[index.z] = 1.0;// (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
     } else /* outside of screen */ {
         s_zBuffer[index.z]=0;
     }
+
+    CUDAkernel_SetRayMap(index, s_rayMap, renInfo);
     __syncthreads();
 
-    // lens map for perspective projection
-    CUDAkernel_SetRayMap(index, s_rayMap, renInfo, volInfo);
-
-    //initialize variables for calculating starting and ending point of ray tracing
-
-
-    __syncthreads();
-
-    //normalize ray vector
-
-    float getmax = fabs(s_rayMap[index.z*6+3] / volInfo.Spacing.x);
-    if(fabs(s_rayMap[index.z*6+4] / volInfo.Spacing.y) > getmax) 
-        getmax = fabs(s_rayMap[index.z*6+4]/volInfo.Spacing.y);
-    if(fabs(s_rayMap[index.z*6+5] / volInfo.Spacing.z) > getmax) 
-        getmax = fabs(s_rayMap[index.z*6+5]/volInfo.Spacing.z);
-
-    if(getmax!=0){
-        float temp= 1.0f/getmax;
-        s_rayMap[index.z*6+3] *= temp;
-        s_rayMap[index.z*6+4] *= temp;
-        s_rayMap[index.z*6+5] *= temp;
-    }
-
-    float stepSize = sqrtf(s_rayMap[index.z*6+3] * s_rayMap[index.z*6+3] + 
+    float rayLength = sqrtf(s_rayMap[index.z*6+3] * s_rayMap[index.z*6+3] + 
         s_rayMap[index.z*6+4] * s_rayMap[index.z*6+4] + 
         s_rayMap[index.z*6+5] * s_rayMap[index.z*6+5]);
-    __syncthreads();
-    s_minmaxTrace[index.z].x = -100000.0f;
-    s_minmaxTrace[index.z].y = 100000.0f;
-    CUDAkernel_CalculateRayEnds(index, s_minmax, s_minmaxTrace, s_rayMap, volInfo.Spacing);
+
     __syncthreads();
 
 
     //ray tracing start from here
-    float pos = 0; //current step distance from camera
+    float depth = 0.0;  //current step distance from camera
 
     float3 tempPos; // variables to store current position
-   // float3 tempPosPre;
+    float  distFromCam;
+    float3 tempPosPre;
     T tempValue;
     int tempIndex;
     float alpha; //alpha value of current voxel
-    float initialZBuffer=s_zBuffer[index.z]; //initial zBuffer from input
+    float initialZBuffer = s_zBuffer[index.z]; //initial zBuffer from input
+
+    float A = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
+    float B = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y);
 
     //perform ray tracing until integration of alpha value reach threshold 
-    while((s_minmaxTrace[index.z].y - s_minmaxTrace[index.z].x) >= pos) {
+    while(depth < 1.0) {
+        distFromCam = B / ( depth - A);
 
         //calculate current position in ray tracing
-        tempPos.x = ( s_rayMap[index.z*6+0] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+3]);
-        tempPos.y = ( s_rayMap[index.z*6+1] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+4]);
-        tempPos.z = ( s_rayMap[index.z*6+2] + ((int)s_minmaxTrace[index.z].x + pos) * s_rayMap[index.z*6+5]);
+        tempPosPre.x = ( renInfo.CameraPos.x + distFromCam * s_rayMap[index.z*6+3] / rayLength );
+        tempPosPre.y = ( renInfo.CameraPos.y + distFromCam * s_rayMap[index.z*6+4] / rayLength );
+        tempPosPre.z = ( renInfo.CameraPos.z + distFromCam * s_rayMap[index.z*6+5] / rayLength );
 
-        tempPos.x /= volInfo.Spacing.x;
-        tempPos.y /= volInfo.Spacing.y;
-        tempPos.z /= volInfo.Spacing.z;
+        //tempPos.x /= volInfo.Spacing.x;
+        //tempPos.y /= volInfo.Spacing.y;
+        //tempPos.z /= volInfo.Spacing.z;
 
-        //MatMul(volInfo.Transform, tempPosPre, &tempPos);
+        MatMul(volInfo.Transform, tempPosPre, &tempPos);
 
         
 
         // if current position is in ROI
         if(tempPos.x >= s_minmax[0] && tempPos.x < s_minmax[1] &&
             tempPos.y >= s_minmax[2] && tempPos.y < s_minmax[3] &&
-            tempPos.z >= s_minmax[4] && tempPos.z < s_minmax[5] && 
-            pos + s_minmaxTrace[index.z].x >= -500 /*renInfo.ClippingRange[0]*/)
+            tempPos.z >= s_minmax[4] && tempPos.z < s_minmax[5] )
         {
             //check whether current position is in front of z buffer wall
-            if((pos + s_minmaxTrace[index.z].x)*stepSize < initialZBuffer)
+            if(depth < initialZBuffer)
             { 
 
                 //tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
@@ -273,18 +194,18 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 
                 tempIndex=__float2int_rn((volInfo.FunctionSize-1)*(float)(tempValue-volInfo.FunctionRange[0])/(float)(volInfo.FunctionRange[1]-volInfo.FunctionRange[0]));
                 alpha=volInfo.AlphaTransferFunction[tempIndex];
-                if( alpha > 0){ 
-                    if(s_zBuffer[index.z] > (pos + s_minmaxTrace[index.z].x) * stepSize)
+                if( alpha >= 0){ 
+                    /*if(s_zBuffer[index.z] > (depth + s_minmaxTrace[index.z].x) * stepSize)
                     {
-                        s_zBuffer[index.z] = (pos + s_minmaxTrace[index.z].x) * stepSize;
-                    }
+                        s_zBuffer[index.z] = (depth + s_minmaxTrace[index.z].x) * stepSize;
+                    }*/
                     if(s_remainingOpacity[index.z] > 0.02){ // check if remaining opacity has reached threshold(0.02)
                         s_outputVal[index.z].x += s_remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3];
                         s_outputVal[index.z].y += s_remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+1];
                         s_outputVal[index.z].z += s_remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+2];
                         s_remainingOpacity[index.z] *= (1.0 - alpha);
                     }else{
-                        pos = s_minmaxTrace[index.z].y - s_minmaxTrace[index.z].x;
+                        depth = 1.0;
                     }
                 }
 
@@ -297,10 +218,10 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
                     s_outputVal[index.z].z += s_remainingOpacity[index.z] * renInfo.OutputImage[outindex].z;
 
                 }
-                pos = s_minmaxTrace[index.z].y - s_minmaxTrace[index.z].x;
+                depth = 1.0f;
             }
         }
-        pos += volInfo.SampleDistance;
+        depth += .01 * volInfo.SampleDistance;
     }
 
     //write to output
@@ -310,7 +231,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
             s_outputVal[index.z].y * 255.0, 
             s_outputVal[index.z].z * 255.0, 
             (1 - s_remainingOpacity[index.z])*255.0);
-        renInfo.ZBuffer[outindex]=s_zBuffer[index.z];
+        renInfo.ZBuffer[outindex] = s_zBuffer[index.z];
     }
 }
 
