@@ -20,14 +20,14 @@
   <parameters>
     <label>Input/Output</label>
     <description>Input/output parameters</description>
-    <image>
+    <image type="any">
       <name>inputVolume</name>
       <label>Input Volume</label>
       <channel>input</channel>
       <index>0</index>
       <description>Input Volume to be resampled</description>
     </image>
-    <image>
+    <image type="any">
       <name>referenceVolume</name>
       <label>Reference Volume (To Set Output Parameters)</label>
       <channel>input</channel>
@@ -36,7 +36,7 @@
       <description>Reference Volume (spacing,size,orientation,origin)</description>
       <default></default>
     </image>
-    <image>
+    <image type="any">
       <name>outputVolume</name>
       <label>Output Volume</label>
       <channel>output</channel>
