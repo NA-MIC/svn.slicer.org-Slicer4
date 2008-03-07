@@ -565,7 +565,14 @@ vtkOpenIGTLinkTclHelper::ReceiveTransform(Tcl_Channel channel, char* deviceName,
       transform->Identity();
 
       //transformNode->SetAndObserveImageData(transform);
-      transformNode->ApplyTransform(transform);
+      //transformNode->ApplyTransform(transform);
+
+      vtkMatrix4x4* matrixToParent = transformNode->GetMatrixTransformToParent();
+      vtkMatrix4x4* newMatrixToParent = vtkMatrix4x4::New();
+      vtkMatrix4x4::Multiply4x4(matrixToParent,transform,newMatrixToParent);
+      transformNode->SetAndObserveMatrixTransformToParent(newMatrixToParent);
+      newMatrixToParent->Delete();
+
       transform->Delete();
 
       this->Scene->AddNode(transformNode);
