@@ -1,0 +1,4 @@
+<MRML>
+<VolumeRenderingCuda
+ id="PRESETvtkMRMLVolumeRenderingCudaNode1" name="CT BONES +1000" hideFromEditors="false" selectable="true"  isLabelmap="0" interpolation="1" shade="1" diffuse="1" ambient="0.2" specular="0" specularPower="1" references="0" scalarOpacity="8 0 0 1152.19 0 1278.93 0.190476 3952 0.2" gradientOpacity="4 0 1 985.12 1" colorTransfer="24 0 0.3 0.3 1 1 0.3 0.3 1 502.5 0.3 1 0.3 1463.28 1 0 0 1659.15 1 0.912535 0.0374849 3953 1 0.3 0.3"></VolumeRenderingCuda>
+</MRML>
