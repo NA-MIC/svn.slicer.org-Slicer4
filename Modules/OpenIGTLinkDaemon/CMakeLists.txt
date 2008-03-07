@@ -10,6 +10,19 @@ SET(OpenIGTLinkDaemon_SRCS
   vtkOpenIGTLinkTclHelper.cxx
 )
 
+SET(OpenIGTLinkUtil_SRCS
+  igtlutil/crc32.c
+  igtlutil/crc32.h
+  igtlutil/igtl_header.c
+  igtlutil/igtl_header.h
+  igtlutil/igtl_image.c
+  igtlutil/igtl_image.h
+  igtlutil/igtl_transform.c
+  igtlutil/igtl_transform.h
+  igtlutil/igtl_util.c
+  igtlutil/igtl_util.h
+)
+
 # Abstract/pure virtual classes
 
 #SET_SOURCE_FILES_PROPERTIES(
@@ -31,6 +44,7 @@ SET(OpenIGTLinkDaemon_SRCS
 
 INCLUDE_DIRECTORIES(
   ${OpenIGTLinkDaemon_SOURCE_DIR}
+  ${OpenIGTLinkDaemon_SOURCE_DIR}/igtlutil
   ${OpenIGTLinkDaemon_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
@@ -58,6 +72,7 @@ VTK_WRAP_TCL3(OpenIGTLinkDaemon OpenIGTLinkDaemon_TCL_SRCS "${OpenIGTLinkDaemon_
 ADD_LIBRARY(OpenIGTLinkDaemon
   ${OpenIGTLinkDaemon_SRCS}
   ${OpenIGTLinkDaemon_TCL_SRCS}
+  ${OpenIGTLinkUtil_SRCS}
   )
 
 IF(BUILD_SHARED_LIBS)

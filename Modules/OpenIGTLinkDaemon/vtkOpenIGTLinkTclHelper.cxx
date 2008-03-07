@@ -38,6 +38,11 @@
 #endif /* LINUX */
 
 #include "vtkMRMLScalarVolumeNode.h"
+#include "vtkMRMLLinearTransformNode.h"
+
+#include "igtl_header.h"
+#include "igtl_image.h"
+#include "igtl_transform.h"
 
 vtkCxxRevisionMacro(vtkOpenIGTLinkTclHelper, "$Revision: 1.4 $");
 vtkStandardNewMacro(vtkOpenIGTLinkTclHelper);
@@ -51,11 +56,26 @@ vtkOpenIGTLinkTclHelper::vtkOpenIGTLinkTclHelper()
   this->Matrix = NULL;
   this->MeasurementFrame = vtkMatrix4x4::New();
   this->MeasurementFrame->Identity();
+  this->ImageReadBuffer = NULL;
+  this->ImageReadBufferSize = 0;
 }
 
 
 vtkOpenIGTLinkTclHelper::~vtkOpenIGTLinkTclHelper() 
 { 
+  if (this->Matrix)
+    {
+      this->Matrix->Delete();
+    }
+  if (this->MeasurementFrame)
+    {
+      this->MeasurementFrame->Delete();
+    }
+  if (this->ImageReadBuffer)
+    {
+      this->ImageReadBufferSize = 0;
+      delete this->ImageReadBuffer;
+    }
 }
 
 
@@ -68,6 +88,7 @@ vtkOpenIGTLinkTclHelper::SetInterpFromCommand(unsigned long tag)
   this->Interp = tc->Interp;
 }
 
+/*
 void 
 vtkOpenIGTLinkTclHelper::SendImageDataScalars(char *sockname)
 {
@@ -98,18 +119,7 @@ vtkOpenIGTLinkTclHelper::SendImageDataScalars(char *sockname)
       return;
     }
 }
-
-
-inline int is_little_endian() {
-  short a = 1; return ((char*)&a)[0];
-}
-
-#define BYTE_SWAP_INT16(S) (((S) & 0xFF) << 8 \
-                            | (((S) >> 8) & 0xFF))
-#define BYTE_SWAP_INT32(L) ((BYTE_SWAP_INT16 ((L) & 0xFFFF) << 16) \
-                            | BYTE_SWAP_INT16 (((L) >> 16) & 0xFFFF))
-#define BYTE_SWAP_INT64(LL) ((BYTE_SWAP_INT32 ((LL) & 0xFFFFFFFF) << 32) \
-                             | BYTE_SWAP_INT32 (((LL) >> 32) & 0xFFFFFFFF))
+*/
 
 void 
 vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
@@ -125,47 +135,32 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
       return;
     }
 
-  unsigned char header[54];
-  int bytes = 54;
-  int read = Tcl_Read(channel, (char *) header, bytes);
+  igtl_header header;
+  int read = Tcl_Read(channel, (char *) &header, IGTL_HEADER_SIZE);
 
-  if (read != bytes)
+  if (read != IGTL_HEADER_SIZE)
     {
-      vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_HEADER_SIZE << "\n");
       return;
     }
 
-  unsigned short version;
-  memcpy((void*)&version, &header[0], sizeof(unsigned short));
-  version = ntohs(version);
+  igtl_header_convert_byte_order(&header);  
 
-  char deviceType[9];
-  deviceType[8] = 0;
-  memcpy((void*)deviceType, &header[2], 8);
+  char deviceType[13];
+  deviceType[12] = 0;
+  memcpy((void*)deviceType, header.name, 8);
   
   char deviceName[21];
   deviceName[20] = 0;
-  memcpy((void*)deviceName, &header[10], 20);
+  memcpy((void*)deviceName, header.device_name, 20);
 
   std::cerr << "deviceType  = " << deviceType << std::endl;;  
   std::cerr << "deviceName  = " << deviceName << std::endl;;  
 
-  if (version != 1)
+  if (header.version != IGTL_HEADER_VERSION)
     {
       vtkErrorMacro("Unsupported OpenIGTLink version.");
       return;
-    }
-
-  long long bodySize;
-  memcpy((void*)&bodySize, &header[38], sizeof(long long));
-
-  long long crc;
-  memcpy((void*)&crc, &header[46], sizeof(long long));
-
-  if (is_little_endian())
-    {
-      bodySize = BYTE_SWAP_INT64(bodySize);
-      crc = BYTE_SWAP_INT64(crc);
     }
 
   if (this->AppLogic)
@@ -182,11 +177,11 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
       
       if (strcmp("IMAGE", deviceType) == 0)
         {
-          ReceiveImage(channel, deviceName, bodySize, crc, newNode);
+          ReceiveImage(channel, deviceName, header.body_size, header.crc, newNode);
         }
-      else if (strcmp("tracking", deviceType))
+      else if (strcmp("TRANSFORM", deviceType))
         {
-          ReceiveTracker(channel, deviceName, bodySize, crc, newNode);
+          ReceiveTransform(channel, deviceName, header.body_size, header.crc, newNode);
         }
     }
   else
@@ -194,43 +189,8 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
       vtkErrorMacro("Cannot get MRML Scene");
     }
 }
-  
-// Read a stream of numbers from vtkSocketCommunicator::SendTagged 
-// and put it int the Matrix ivar
-void 
-vtkOpenIGTLinkTclHelper::PerformVTKSocketHandshake(char *sockname)
-{
 
-  std::cerr << "PerformVTKSocketHandshake(char *sockname) is called " << std::endl;
-  int mode;
-
-  Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
-
-  if ( ! (mode & TCL_READABLE) )
-    {   vtkErrorMacro ("Socket " << sockname << " is not readable" << "\n");
-      return;
-    }
-
-  // read the tag, but ignore it
-  int bytes = 9;
-  char handshake[9];
-  int read = Tcl_Read(channel, (char *) &handshake, bytes);
-
-  if ( read != bytes )
-    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
-      return;
-    }
-
-  int written = Tcl_WriteRaw(channel, (char *) handshake, bytes);
-  Tcl_Flush(channel);
-
-  if ( written != bytes )
-    {   vtkErrorMacro ("Only wrote " << written << " but expected to write " << bytes << "\n");
-      return;
-    }
-
-}
-
+/*  
 void 
 vtkOpenIGTLinkTclHelper::SendMessage(char *sockname)
 {
@@ -258,6 +218,7 @@ vtkOpenIGTLinkTclHelper::SendMessage(char *sockname)
       return;
     }
 }
+*/
 
 void
 vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, long long bodySize, long long crc, int newNode)
@@ -267,72 +228,48 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
 
   vtkMRMLScalarVolumeNode* volumeNode;
   
-  unsigned char imgheader[72];
-  int bytes = 72;
-  int read = Tcl_Read(channel, (char *)imgheader, bytes);
+  igtl_image_header imgheader;
+
+  int read = Tcl_Read(channel, (char *)&imgheader, IGTL_IMAGE_HEADER_SIZE);
   
-  if (read != bytes)
+  if (read != IGTL_IMAGE_HEADER_SIZE)
     {
-      vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_IMAGE_HEADER_SIZE << "\n");
       return;
     }
 
-  unsigned short version;
-  memcpy((void*)&version, &imgheader[0], 2);
-  version = ntohs(version);
+  igtl_image_convert_byte_order(&imgheader);
 
-  std::cerr << "image format version = " << version << std::endl;
+  std::cerr << "image format version = " << imgheader.version << std::endl;
 
-  unsigned char imgType = imgheader[2];
-  unsigned char scalarType = imgheader[3];
+  unsigned char imgType = imgheader.data_type;
+  unsigned char scalarType = imgheader.scalar_type;
 
   std::cerr << "scalar type = " << (int)scalarType << std::endl;
   std::cerr << "image type = " << (int)imgType << std::endl;
 
-  unsigned short ssize[3];
-  int size[3];
-  memcpy((void*)ssize, &imgheader[6], 2*3);
-  for (int i = 0; i < 3; i ++)
-    {
-      size[i] = (int)ntohs(ssize[i]);
-    }
-
-  std::cerr << "size[0] =  " << size[0] << ", "
-            << "size[1] =  " << size[1] << ", "
-            << "size[2] =  " << size[2] << ", "
+  std::cerr << "size[0] =  " << imgheader.size[0] << ", "
+            << "size[1] =  " << imgheader.size[1] << ", "
+            << "size[2] =  " << imgheader.size[2] << ", "
             << std::endl;
 
-  unsigned int imatrix[12];
-  memcpy((void*)imatrix, &imgheader[12], sizeof(unsigned int)*12);
-  for (int i = 0; i < 12; i ++)
-    {
-      imatrix[i] = ntohl(imatrix[i]);
-    }
+  std::cerr << "subvol_size[0] =  " << imgheader.subvol_size[0] << ", "
+            << "subvol_size[1] =  " << imgheader.subvol_size[1] << ", "
+            << "subvol_size[2] =  " << imgheader.subvol_size[2] << ", "
+            << std::endl;
 
-  float* matrix = (float*) imatrix;
-
-  unsigned short subpos[3];
-  unsigned short subsize[3];
-  memcpy((void*)subpos, &imgheader[60], sizeof(unsigned short)*3);
-  memcpy((void*)subsize, &imgheader[66], sizeof(unsigned short)*3);
-  for (int i = 0; i < 3; i ++)
-    {
-      subpos[i] = ntohs(subpos[i]);
-      subsize[i] = ntohs(subsize[i]);
-    }
-
-  float tx = matrix[0];
-  float ty = matrix[1];
-  float tz = matrix[2];
-  float sx = matrix[3];
-  float sy = matrix[4];
-  float sz = matrix[5];
-  float nx = matrix[6];
-  float ny = matrix[7];
-  float nz = matrix[8];
-  float px = matrix[9];
-  float py = matrix[10];
-  float pz = matrix[11];
+  float tx = imgheader.matrix[0];
+  float ty = imgheader.matrix[1];
+  float tz = imgheader.matrix[2];
+  float sx = imgheader.matrix[3];
+  float sy = imgheader.matrix[4];
+  float sz = imgheader.matrix[5];
+  float nx = imgheader.matrix[6];
+  float ny = imgheader.matrix[7];
+  float nz = imgheader.matrix[8];
+  float px = imgheader.matrix[9];
+  float py = imgheader.matrix[10];
+  float pz = imgheader.matrix[11];
 
   std::cerr << "matrix = "<< std::endl;
   std::cerr << tx << ", " << ty << ", " << tz << std::endl;
@@ -346,10 +283,39 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
       volumeNode = vtkMRMLScalarVolumeNode::New();
       volumeNode->SetName(deviceName);
       volumeNode->SetDescription("Received by OpenIGTLink");
+
       imageData = vtkImageData::New();
-      imageData->SetDimensions(size[0], size[1], size[2]);
+
+      imageData->SetDimensions(imgheader.size[0], imgheader.size[1], imgheader.size[2]);
       imageData->SetNumberOfScalarComponents(1);
-      imageData->SetScalarTypeToShort();  // should be set according to scalar type
+      
+      // Scalar type
+      //  TBD: Long might not be 32-bit in some platform.
+      switch (imgheader.scalar_type)
+        {
+        case IGTL_IMAGE_STYPE_TYPE_INT8:
+          imageData->SetScalarTypeToChar();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_UINT8:
+          imageData->SetScalarTypeToUnsignedChar();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_INT16:
+          imageData->SetScalarTypeToShort();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_UINT16:
+          imageData->SetScalarTypeToUnsignedShort();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_INT32:
+          imageData->SetScalarTypeToUnsignedLong();
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_UINT32:
+          imageData->SetScalarTypeToUnsignedLong();
+          break;
+        default:
+          vtkErrorMacro ("Invalid Scalar Type\n");
+          break;
+        }
+
       imageData->AllocateScalars();
       volumeNode->SetAndObserveImageData(imageData);
       imageData->Delete();
@@ -365,20 +331,128 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
       volumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(collection->GetItemAsObject(0));
     }
 
+  // Get vtk image from MRML node
   imageData = volumeNode->GetImageData();
-  std::cerr << "size[0] =  " << size[0] << ", "
-            << "size[1] =  " << size[1] << ", "
-            << "size[2] =  " << size[2] << ", "
-            << std::endl;
-  bytes = size[0]*size[1]*size[2]*sizeof(short);
-  std::cerr << "image size  = " << bytes << std::endl;  
-  read = Tcl_Read(channel, (char *) imageData->GetScalarPointer(), bytes);
 
-  if (read != bytes)
+  // TODO:
+  // It should be checked here if the dimension of vtkImageData
+  // and arrived data is same.
+
+  int bytes = igtl_image_get_data_size(&imgheader);
+
+  if (imgheader.size[0] == imgheader.subvol_size[0] &&
+      imgheader.size[1] == imgheader.subvol_size[1] &&
+      imgheader.size[2] == imgheader.subvol_size[2] )
     {
-      vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
-      return;
+      // In case that volume size == sub-volume size,
+      // image is read directly to the memory area of vtkImageData
+      // for better performance. 
+      read = Tcl_Read(channel, (char *) imageData->GetScalarPointer(), bytes);
+      if (read != bytes)
+        {
+          vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+          return;
+        }
     }
+  else
+    {
+      // In case of volume size != sub-volume size,
+      // image is loaded into ImageReadBuffer, then copied to
+      // the memory area of vtkImageData.
+
+      if (bytes != this->ImageReadBufferSize)
+        {
+          if (this->ImageReadBuffer)
+            {
+              delete this->ImageReadBuffer;
+            }
+          this->ImageReadBufferSize = bytes;
+          this->ImageReadBuffer = new char[bytes];
+        }
+      
+      read = Tcl_Read(channel, (char *) this->ImageReadBuffer, bytes);
+      if (read != bytes)
+        {
+          vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+          return;
+        }
+
+      // Check scalar size
+      int scalarSize;
+      switch (imgheader.scalar_type)
+        {
+        case IGTL_IMAGE_STYPE_TYPE_INT8:
+        case IGTL_IMAGE_STYPE_TYPE_UINT8:
+          scalarSize = 1;
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_INT16:
+        case IGTL_IMAGE_STYPE_TYPE_UINT16:
+          scalarSize = 2;
+          break;
+        case IGTL_IMAGE_STYPE_TYPE_INT32:
+        case IGTL_IMAGE_STYPE_TYPE_UINT32:
+          scalarSize = 4;
+          break;
+        default:
+          scalarSize = 0;
+          vtkErrorMacro ("Invalid Scalar Type\n");
+          break;
+        }
+        
+      char* imgPtr = (char*) imageData->GetScalarPointer();
+      char* bufPtr = this->ImageReadBuffer;
+      int sizei = imgheader.size[0];
+      int sizej = imgheader.size[1];
+      int sizek = imgheader.size[2];
+      int subsizei = imgheader.subvol_size[0];
+
+      int bg_i = imgheader.subvol_offset[0];
+      int ed_i = bg_i + imgheader.subvol_size[0];
+      int bg_j = imgheader.subvol_offset[1];
+      int ed_j = bg_j + imgheader.subvol_size[1];
+      int bg_k = imgheader.subvol_offset[2];
+      int ed_k = bg_k + imgheader.subvol_size[2];
+      
+      for (int k = bg_k; k < ed_k; k ++)
+        {
+          for (int j = bg_j; j < ed_j; j ++)
+            {
+              memcpy(&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
+                     bufPtr, subsizei*scalarSize);
+              bufPtr += subsizei*scalarSize;
+            }
+        }
+    }
+
+
+  // normalize
+  float psi = sqrt(tx*tx + ty*ty + tz*tz);
+  float psj = sqrt(sx*sx + sy*sy + sz*sz);
+  float psk = sqrt(nx*nx + ny*ny + nz*nz);
+
+  tx = tx / psi;
+  ty = ty / psi;
+  tz = tz / psi;
+  sx = sx / psj;
+  sy = sy / psj;
+  sz = sz / psj;
+  nx = nx / psk;
+  ny = ny / psk;
+  nz = nz / psk;
+
+
+  float hfovi = psi * imgheader.size[0] / 2.0;
+  float hfovj = psj * imgheader.size[1] / 2.0;
+  float hfovk = psk * imgheader.size[2] / 2.0;
+
+  float cx = tx * hfovi + sx * hfovj + nx * hfovk;
+  float cy = ty * hfovi + sy * hfovj + ny * hfovk;
+  float cz = tz * hfovi + sz * hfovj + nz * hfovk;
+
+  px = px - cx;
+  py = py - cy;
+  pz = pz - cz;
+
 
   // set volume orientation
   vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
@@ -399,6 +473,11 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
   rtimgTransform->SetElement(1, 3, py);
   rtimgTransform->SetElement(2, 3, pz);
 
+
+  rtimgTransform->Invert();
+  volumeNode->SetRASToIJKMatrix(rtimgTransform);
+
+
 //  if (lps) { // LPS coordinate
 //    vtkMatrix4x4* lpsToRas = vtkMatrix4x4::New();
 //    lpsToRas->Identity();
@@ -409,45 +488,91 @@ vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, lon
 //  }
 
 
-  // normalize
-  float psi = sqrt(tx*tx + ty*ty + tz*tz);
-  float psj = sqrt(sx*sx + sy*sy + sz*sz);
-  float psk = sqrt(nx*nx + ny*ny + nz*nz);
-
-  tx = tx / psi;
-  ty = ty / psi;
-  tz = tz / psi;
-  sx = sx / psj;
-  sy = sy / psj;
-  sz = sz / psj;
-  nx = nx / psk;
-  ny = ny / psk;
-  nz = nz / psk;
-
-  float hfovi = psi * size[0] / 2.0;
-  float hfovj = psj * size[1] / 2.0;
-
-  rtimgTransform->Invert();
-  volumeNode->SetRASToIJKMatrix(rtimgTransform);
-
-  float cx = tx * hfovi + sx * hfovj;
-  float cy = ty * hfovi + sy * hfovj;
-  float cz = tz * hfovi + sz * hfovj;
-
   px = px + cx;
   py = py + cy;
   pz = pz + cz;
 
-  volumeNode->SetAndObserveImageData(imageData);
-  vtkMRMLSliceNode* slnode = vtkMRMLSliceNode::SafeDownCast(this->Scene->GetNodeByID("vtkMRMLSliceNode1"));
+
+  //volumeNode->SetAndObserveImageData(imageData);
+  volumeNode->Modified();
+  vtkMRMLSliceNode* slnode = 
+    vtkMRMLSliceNode::SafeDownCast(this->Scene->GetNodeByID("vtkMRMLSliceNode1"));
   slnode->SetSliceToRASByNTP(nx, ny, nz, tx, ty, tz, px, py, pz, 0);
 }
 
 
 void
-vtkOpenIGTLinkTclHelper::ReceiveTracker(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode)
+vtkOpenIGTLinkTclHelper::ReceiveTransform(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode)
 {
+  float matrix[12];
+
+  vtkMRMLLinearTransformNode* transformNode;
+
+  int read = Tcl_Read(channel, (char *)matrix, IGTL_TRANSFORM_SIZE);
+  igtl_transform_convert_byte_order(matrix);
+
+  if (newNode)
+    {
+      transformNode = vtkMRMLLinearTransformNode::New();
+      transformNode->SetName(deviceName);
+      transformNode->SetDescription("Received by OpenIGTLink");
+
+      vtkMatrix4x4* transform = vtkMatrix4x4::New();
+      transform->Identity();
+
+      //transformNode->SetAndObserveImageData(transform);
+      transformNode->ApplyTransform(transform);
+      transform->Delete();
+
+      this->Scene->AddNode(transformNode);
+    }
+  else
+    {
+      vtkCollection* collection = this->Scene->GetNodesByName(deviceName);
+      transformNode = vtkMRMLLinearTransformNode::SafeDownCast(collection->GetItemAsObject(0));
+    }
+
+  float tx = matrix[0];
+  float ty = matrix[1];
+  float tz = matrix[2];
+  float sx = matrix[3];
+  float sy = matrix[4];
+  float sz = matrix[5];
+  float nx = matrix[6];
+  float ny = matrix[7];
+  float nz = matrix[8];
+  float px = matrix[9];
+  float py = matrix[10];
+  float pz = matrix[11];
+
+  std::cerr << "matrix = "<< std::endl;
+  std::cerr << tx << ", " << ty << ", " << tz << std::endl;
+  std::cerr << sx << ", " << sy << ", " << sz << std::endl;
+  std::cerr << nx << ", " << ny << ", " << nz << std::endl;
+  std::cerr << px << ", " << py << ", " << pz << std::endl;
   
+  // set volume orientation
+  vtkMatrix4x4* transform = vtkMatrix4x4::New();
+  vtkMatrix4x4* transformToParent = transformNode->GetMatrixTransformToParent();
+  transform->Identity();
+  transform->SetElement(0, 0, tx);
+  transform->SetElement(1, 0, ty);
+  transform->SetElement(2, 0, tz);
+
+  transform->SetElement(0, 1, sx);
+  transform->SetElement(1, 1, sy);
+  transform->SetElement(2, 1, sz);
+
+  transform->SetElement(0, 2, nx);
+  transform->SetElement(1, 2, ny);
+  transform->SetElement(2, 2, nz);
+
+  transform->SetElement(0, 3, px);
+  transform->SetElement(1, 3, py);
+  transform->SetElement(2, 3, pz);
+
+  transformToParent->DeepCopy(transform);
+  transform->Delete();
 }
 
 
@@ -468,6 +593,10 @@ vtkOpenIGTLinkTclHelper::ReceiveMatrix(char *sockname)
     }
 
   // read the tag, but ignore it
+  
+
+
+
   int tag;
   int bytes = sizeof(int);
   int read = Tcl_Read(channel, (char *) &tag, bytes);
