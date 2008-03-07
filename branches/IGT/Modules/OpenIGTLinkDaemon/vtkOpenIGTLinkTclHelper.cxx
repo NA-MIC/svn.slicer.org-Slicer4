@@ -88,7 +88,6 @@ vtkOpenIGTLinkTclHelper::SetInterpFromCommand(unsigned long tag)
   this->Interp = tc->Interp;
 }
 
-/*
 void 
 vtkOpenIGTLinkTclHelper::SendImageDataScalars(char *sockname)
 {
@@ -119,7 +118,18 @@ vtkOpenIGTLinkTclHelper::SendImageDataScalars(char *sockname)
       return;
     }
 }
-*/
+
+
+inline int is_little_endian() {
+  short a = 1; return ((char*)&a)[0];
+}
+
+#define BYTE_SWAP_INT16(S) (((S) & 0xFF) << 8 \
+                            | (((S) >> 8) & 0xFF))
+#define BYTE_SWAP_INT32(L) ((BYTE_SWAP_INT16 ((L) & 0xFFFF) << 16) \
+                            | BYTE_SWAP_INT16 (((L) >> 16) & 0xFFFF))
+#define BYTE_SWAP_INT64(LL) ((BYTE_SWAP_INT32 ((LL) & 0xFFFFFFFF) << 32) \
+                             | BYTE_SWAP_INT32 (((LL) >> 32) & 0xFFFFFFFF))
 
 void 
 vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
@@ -189,8 +199,43 @@ vtkOpenIGTLinkTclHelper::OnReceiveOpenIGTLinkMessage(char *sockname)
       vtkErrorMacro("Cannot get MRML Scene");
     }
 }
+  
+// Read a stream of numbers from vtkSocketCommunicator::SendTagged 
+// and put it int the Matrix ivar
+void 
+vtkOpenIGTLinkTclHelper::PerformVTKSocketHandshake(char *sockname)
+{
 
-/*  
+  std::cerr << "PerformVTKSocketHandshake(char *sockname) is called " << std::endl;
+  int mode;
+
+  Tcl_Channel channel = Tcl_GetChannel(this->Interp, sockname, &mode);
+
+  if ( ! (mode & TCL_READABLE) )
+    {   vtkErrorMacro ("Socket " << sockname << " is not readable" << "\n");
+      return;
+    }
+
+  // read the tag, but ignore it
+  int bytes = 9;
+  char handshake[9];
+  int read = Tcl_Read(channel, (char *) &handshake, bytes);
+
+  if ( read != bytes )
+    {   vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
+      return;
+    }
+
+  int written = Tcl_WriteRaw(channel, (char *) handshake, bytes);
+  Tcl_Flush(channel);
+
+  if ( written != bytes )
+    {   vtkErrorMacro ("Only wrote " << written << " but expected to write " << bytes << "\n");
+      return;
+    }
+
+}
+
 void 
 vtkOpenIGTLinkTclHelper::SendMessage(char *sockname)
 {
@@ -218,7 +263,6 @@ vtkOpenIGTLinkTclHelper::SendMessage(char *sockname)
       return;
     }
 }
-*/
 
 void
 vtkOpenIGTLinkTclHelper::ReceiveImage(Tcl_Channel channel, char* deviceName, long long bodySize, long long crc, int newNode)
