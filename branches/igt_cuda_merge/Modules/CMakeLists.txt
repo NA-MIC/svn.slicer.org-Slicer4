@@ -19,7 +19,8 @@ SUBDIRS(
   Tractography
   VolumeRendering
   VolumeRenderingCuda
-  Statistics   
+  Statistics
+  RegistrationCuda
 )
 
 

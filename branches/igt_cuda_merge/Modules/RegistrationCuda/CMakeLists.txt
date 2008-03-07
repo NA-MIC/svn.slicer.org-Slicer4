@@ -1,0 +1,135 @@
+PROJECT(RegistrationCudaModule)
+
+## ONLY BUILD THIS IF YOU WANT CUDA SUPPORT TO BE ENABLED
+IF(CUDA_SUPPORT_ENABLED)
+
+OPTION(REGISTRATIONCUDAMODULE "Would you like to build Registration Module with CUDA support" ON)
+if(REGISTRATIONCUDAMODULE)
+
+INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
+
+# --------------------------------------------------------------------------
+# Sources
+  SET(RegistrationCudaModule_SRCS
+
+  )
+  SET(Registration_ADDITIONAL_HEADERS
+    # Cuda Classes
+      cudaTypeRange.h
+      CUDA_renderAlgo.h
+      cudaRendererInformation.h
+      cudaVolumeInformation.h
+      )
+  
+  SET(RegistrationCudaModule_CUDA_SRCS
+      
+  )
+
+#-----------------------------------------------
+# Include dirs
+
+INCLUDE_DIRECTORIES(
+  ${FOUND_CUT_INCLUDE}
+  ${CUDA_INSTALL_PREFIX}/include
+  ${CudaSupport_SOURCE_DIR}
+  ${CudaSupport_BINARY_DIR}
+  ${RegistrationCudaModule_SOURCE_DIR}
+  ${RegistrationCudaModule_BINARY_DIR}
+  ${SlicerBase_SOURCE_DIR}
+  ${SlicerBase_BINARY_DIR}
+  ${SlicerBaseLogic_SOURCE_DIR}
+  ${SlicerBaseLogic_BINARY_DIR}
+  ${SlicerBaseGUI_SOURCE_DIR}
+  ${SlicerBaseGUI_BINARY_DIR}
+  ${vtkITK_SOURCE_DIR}
+  ${vtkITK_BINARY_DIR}
+  ${ITK_INCLUDE_DIRS}
+  ${VTK_INCLUDE_DIRS}
+  ${MRML_SOURCE_DIR}
+  ${MRML_BINARY_DIR}
+  )
+
+ CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR} 
+                           ${FOUND_CUT_INCLUDE}
+                           ${VTK_INCLUDE_DIRS}
+ )
+
+# --------------------------------------------------------------------------
+# Wrapping
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+VTK_WRAP_TCL3(RegistrationCudaModule
+         RegistrationCudaModule_TCL_SRCS 
+         "${RegistrationCudaModule_SRCS}" 
+         "")
+
+
+# --------------------------------------------------------------------------
+# Build the library
+
+## Build the Cuda Library first
+#CUDA_ADD_LIBRARY(RegistrationCudaModule_CudaLibrary  
+#  )
+  
+#TARGET_LINK_LIBRARIES(RegistrationCudaModule_CudaLibrary
+#  ${CudaSupport}
+#)
+
+## Set the Libraries we link
+SET(RegistrationCudaModule_LIBRARIES
+  SlicerBaseLogic 
+  SlicerBaseGUI 
+  MRML
+  vtkITK
+  vtkCommonTCL
+  vtkImagingTCL
+  vtkFilteringTCL
+  vtkIOTCL
+  ${KWWidgets_LIBRARIES}
+  ${CUDA_TARGET_LINK}
+  CudaSupport
+ )
+
+CUDA_ADD_LIBRARY(RegistrationCudaModule
+  ${RegistrationCudaModule_SRCS}
+  ${RegistrationCudaModule_ADDITIONAL_HEADERS}
+  ${RegistrationCudaModule_TCL_SRCS}
+  ${RegistrationCudaModule_CUDA_SRCS}
+  )
+
+IF(BUILD_SHARED_LIBS)
+  INSTALL(TARGETS RegistrationCudaModule
+      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib COMPONENT Development)
+ENDIF(BUILD_SHARED_LIBS)
+
+TARGET_LINK_LIBRARIES(RegistrationCudaModule
+  ${RegistrationCudaModule_LIBRARIES}
+#  ${RegistrationCudaModule_CudaLibrary}
+  )
+
+
+# --------------------------------------------------------------------------
+# Testing (requires some of the examples)
+
+##IF(BUILD_TESTING)
+##  ADD_SUBDIRECTORY(Testing)
+##ENDIF(BUILD_TESTING)
+
+##IF(BUILD_EXAMPLES)
+##  ADD_SUBDIRECTORY(Examples)
+##ENDIF(BUILD_EXAMPLES)
+
+CONFIGURE_FILE(
+  ${RegistrationCudaModule_SOURCE_DIR}/vtkRegistrationCudaModuleConfigure.h.in 
+  ${RegistrationCudaModule_BINARY_DIR}/vtkRegistrationCudaModuleConfigure.h
+)
+CONFIGURE_FILE(
+  ${RegistrationCudaModule_SOURCE_DIR}/presets.xml
+  ${RegistrationCudaModule_BINARY_DIR}/presets.xml
+  COPYONLY
+)
+ENDIF(REGISTRATIONCUDAMODULE)
+ENDIF(CUDA_SUPPORT_ENABLED)
