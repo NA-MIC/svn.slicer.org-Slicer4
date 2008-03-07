@@ -301,7 +301,7 @@ void vtkSlicerApplicationLogic::ProcessMRMLEvents(vtkObject * /*caller*/,
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerApplicationLogic::PropagateVolumeSelection()
+void vtkSlicerApplicationLogic::PropagateVolumeSelection(int fit)
 {
   if ( !this->SelectionNode || !this->MRMLScene )
     {
@@ -321,13 +321,16 @@ void vtkSlicerApplicationLogic::PropagateVolumeSelection()
     cnode->SetLabelVolumeID( labelID );
     }
 
-  int nitems = this->GetSlices()->GetNumberOfItems();
-  for (i = 0; i < nitems; i++)
+  if ( fit )
     {
-    vtkSlicerSliceLogic *sliceLogic = vtkSlicerSliceLogic::SafeDownCast(this->GetSlices()->GetItemAsObject(i));
-    vtkMRMLSliceNode *sliceNode = sliceLogic->GetSliceNode();
-    unsigned int *dims = sliceNode->GetDimensions();
-    sliceLogic->FitSliceToAll(dims[0], dims[1]);
+    int nitems = this->GetSlices()->GetNumberOfItems();
+    for (i = 0; i < nitems; i++)
+      {
+      vtkSlicerSliceLogic *sliceLogic = vtkSlicerSliceLogic::SafeDownCast(this->GetSlices()->GetItemAsObject(i));
+      vtkMRMLSliceNode *sliceNode = sliceLogic->GetSliceNode();
+      unsigned int *dims = sliceNode->GetDimensions();
+      sliceLogic->FitSliceToAll(dims[0], dims[1]);
+      }
     }
 }
 

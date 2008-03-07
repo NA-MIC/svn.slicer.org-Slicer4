@@ -225,7 +225,7 @@ void vtkTumorGrowthStep::GridRemove() {
     if (currentNode) this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); 
     vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
     applicationLogic->GetSelectionNode()->SetReferenceActiveLabelVolumeID(NULL);
-    applicationLogic->PropagateVolumeSelection();
+    applicationLogic->PropagateVolumeSelection( 0 );
     Node->SetGrid_Ref(NULL);
   }
 }
@@ -253,8 +253,7 @@ int vtkTumorGrowthStep::GridDefine() {
   double oldOffset = ControlWidget->GetOffsetScale()->GetValue(); 
   vtkSlicerApplicationLogic *applicationLogic = this->GetGUI()->GetLogic()->GetApplicationLogic();
   applicationLogic->GetSelectionNode()->SetReferenceActiveLabelVolumeID(GridNode->GetID());
-  applicationLogic->PropagateVolumeSelection();
-  // Does not help - ask Steve
+  applicationLogic->PropagateVolumeSelection( 0 ); 
   ControlWidget->GetOffsetScale()->SetValue(oldOffset); 
 
   return 1;

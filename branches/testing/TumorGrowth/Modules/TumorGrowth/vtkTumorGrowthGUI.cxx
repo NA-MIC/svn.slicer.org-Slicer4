@@ -523,7 +523,7 @@ void vtkTumorGrowthGUI::SliceLogicRemove() {
   }
 
   if (this->SliceLogic) {
-     this->SliceLogic->GetSliceNode()->SetSliceVisible(0);
+    // this->SliceLogic->GetSliceNode()->SetSliceVisible(0);
      vtkSlicerApplicationLogic *applicationLogic = this->GetLogic()->GetApplicationLogic();
      applicationLogic->GetSlices()->RemoveItem(this->SliceLogic);
      this->SliceLogic->Delete();
@@ -602,7 +602,7 @@ void  vtkTumorGrowthGUI::SliceLogicCallback(vtkObject *caller, unsigned long eve
 
 void vtkTumorGrowthGUI::PropagateVolumeSelection() {
    vtkSlicerApplicationLogic *applicationLogic = this->Logic->GetApplicationLogic();
-   applicationLogic->PropagateVolumeSelection();
+   applicationLogic->PropagateVolumeSelection( 0 );
    if (!this->SliceLogic) return;
    this->SliceLogic->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(this->Node->GetScan1_Ref());
    this->SliceLogic->FitSliceToVolume(vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(this->Node->GetScan1_Ref())),250,250); 
