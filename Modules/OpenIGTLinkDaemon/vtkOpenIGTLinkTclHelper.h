@@ -67,18 +67,18 @@ public:
 
     void SetInterpFromCommand(unsigned long tag);
 
-    //void SendImageDataScalars(char *sockname);
+    void SendImageDataScalars(char *sockname);
 
     void OnReceiveOpenIGTLinkMessage(char *sockname);
     void ReceiveMatrix(char *sockname);
-    //void SendMessage(char *sockname);
+    void SendMessage(char *sockname);
 
     void ReceiveImage(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode);
     void ReceiveTransform(Tcl_Channel channel, char* deviceName, long long size, long long crc, int newNode);
 
     const char *Execute (char *Command);
 
-    //void PerformVTKSocketHandshake(char *sockname);
+    void PerformVTKSocketHandshake(char *sockname);
 
 protected:
     vtkOpenIGTLinkTclHelper();
