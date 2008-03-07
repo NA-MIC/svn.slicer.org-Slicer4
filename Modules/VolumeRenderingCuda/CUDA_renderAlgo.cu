@@ -12,8 +12,9 @@ extern "C" {
 #include "cudaTypeRange.h"
 #include <cutil.h>
 
-#include "CUDA_renderRayCast.h"
-
+#include "CUDA_renderRayCastComposite.h"
+#include "CUDA_renderRayCastMIP.h"
+#include "CUDA_renderRayCastIsosurface.h"
 
 // vtk includes
 //#include "vtkType.h"
@@ -26,7 +27,6 @@ extern "C" {
 #define VTK_UNSIGNED_INT    7
 #define VTK_FLOAT          10
 #define VTK_DOUBLE         11
-
 
 #define BLOCK_DIM2D 16// this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
@@ -117,8 +117,8 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 
     __syncthreads();
 
-    // Call the Algorithm
-    CUDAkernel_RayCastAlgorithm<T>(index, outindex, s_minmax /*[6] */,
+    // Call the Algorithm (Composite or MIP or Isosurface)
+    CUDAkernel_RayCastCompositeAlgorithm<T>(index, outindex, s_minmax /*[6] */,
                                    s_rayMap, volInfo, renInfo,
                                    s_outputVal, s_zBuffer, s_remainingOpacity);
 
