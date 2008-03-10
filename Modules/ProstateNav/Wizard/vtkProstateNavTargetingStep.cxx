@@ -94,7 +94,7 @@ void vtkProstateNavTargetingStep::ShowUserInterface()
     this->MultiColumnList->GetWidget()->MovableColumnsOff();
 
     const char* labels[] =
-      { "Name", "X", "Y", "Z", "OrW", "OrX", "OrY", "OrZ" };
+      { "Name", "R", "A", "S", "OrW", "OrR", "OrA", "OrS" };
     const int widths[] = 
       { 8, 6, 6, 6, 6, 6, 6, 6 };
 
