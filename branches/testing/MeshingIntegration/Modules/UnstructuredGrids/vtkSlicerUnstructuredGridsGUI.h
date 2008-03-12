@@ -11,10 +11,9 @@
 #include "vtkSlicerModuleLogic.h"
 #include "vtkSlicerUnstructuredGridsLogic.h"
 #include "vtkSlicerNodeSelectorWidget.h"
-#include "vtkSlicerClipModelsWidget.h"
 
 #include "vtkSlicerUnstructuredGridsLogic.h"
-//#include "vtkMRMLModelNode.h"
+//#include "vtkMRMLUnstructuredGridNode.h"
 
 #include "vtkKWLoadSaveButton.h"
 #include "vtkKWLoadSaveDialog.h"
@@ -25,8 +24,8 @@
 // Description:
 // This class implements Slicer's UGrids GUI
 //
-class vtkSlicerModelDisplayWidget;
-class vtkSlicerModelHierarchyWidget;
+class vtkSlicerUnstructuredGridDisplayWidget;
+class vtkSlicerUnstructuredGridHierarchyWidget;
 class vtkSlicerModuleCollapsibleFrame;
 
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerUnstructuredGridsGUI : public vtkSlicerModuleGUI
@@ -40,20 +39,20 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerUnstructuredGridsGUI : public vtkSlice
     
     // Description:
     // Get methods on class members ( no Set methods required. )
-    vtkGetObjectMacro ( LoadModelButton, vtkKWLoadSaveButton );
+    vtkGetObjectMacro ( LoadUnstructuredGridButton, vtkKWLoadSaveButton );
     vtkGetObjectMacro ( LoadScalarsButton, vtkKWLoadSaveButtonWithLabel);
     //vtkGetObjectMacro ( Logic, vtkSlicerUnstructuredGridsLogic);
-    //vtkGetObjectMacro ( ModelNode, vtkMRMLModelNode );
+    //vtkGetObjectMacro ( UnstructuredGridNode, vtkMRMLUnstructuredGridNode );
     
     // Description:
-    // API for setting ModelNode, Logic and
+    // API for setting UnstructuredGridNode, Logic and
     // for both setting and observing them.
     /*
       // classes not yet defined.
-    void SetMRMLNode ( vtkMRMLModelNode *node )
-        { this->SetMRML ( vtkObjectPointer( &this->MRMLModelNode), node ); }
-    void SetAndObserveMRMLNode ( vtkMRMLModelNode *node )
-        { this->SetAndObserveMRML ( vtkObjectPointer( &this->MRMLModelNode), node ); }
+    void SetMRMLNode ( vtkMRMLUnstructuredGridNode *node )
+        { this->SetMRML ( vtkObjectPointer( &this->MRMLUnstructuredGridNode), node ); }
+    void SetAndObserveMRMLNode ( vtkMRMLUnstructuredGridNode *node )
+        { this->SetAndObserveMRML ( vtkObjectPointer( &this->MRMLUnstructuredGridNode), node ); }
 
     void SetModuleLogic ( vtkSlicerUnstructuredGridsLogic *logic )
         { this->SetLogic ( vtkObjectPointer (&this->Logic), logic ) }
@@ -105,29 +104,27 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerUnstructuredGridsGUI : public vtkSlice
 
     // Module logic and mrml pointers (classes not yet built!)
     //vtkSlicerUnstructuredGridsLogic *Logic;
-    //vtkMRMLModelNode *ModelNode;
+    //vtkMRMLUnstructuredGridNode *UnstructuredGridNode;
     
     // Widgets for the UGrids module
-    vtkKWLoadSaveButton *LoadModelButton;
+    vtkKWLoadSaveButton *LoadUnstructuredGridButton;
     vtkKWLoadSaveButtonWithLabel *LoadScalarsButton;
-    vtkKWLoadSaveButton *LoadModelDirectoryButton;
-    vtkKWLoadSaveButton *SaveModelButton;
-    vtkSlicerNodeSelectorWidget* UGridselectorWidget;
-    vtkSlicerNodeSelectorWidget* ModelDisplaySelectorWidget;
+    vtkKWLoadSaveButton *LoadUnstructuredGridDirectoryButton;
+    vtkKWLoadSaveButton *SaveUnstructuredGridButton;
+    vtkSlicerNodeSelectorWidget* UnstructuredGridSelectorWidget;
+    vtkSlicerNodeSelectorWidget* UnstructuredGridDisplaySelectorWidget;
     vtkKWLabel *NACLabel;
     vtkKWLabel *NAMICLabel;
     vtkKWLabel *NCIGTLabel;
     vtkKWLabel *BIRNLabel;
 
-    vtkSlicerModelDisplayWidget *ModelDisplayWidget;
+    vtkSlicerUnstructuredGridDisplayWidget *UnstructuredGridDisplayWidget;
 
-    vtkSlicerClipModelsWidget *ClipModelsWidget;
 
-    vtkSlicerModelHierarchyWidget *ModelHierarchyWidget;
 
     vtkSlicerUnstructuredGridsLogic *Logic;
 
-    vtkSlicerModuleCollapsibleFrame *ModelDisplayFrame;
+    vtkSlicerModuleCollapsibleFrame *UnstructuredGridDisplayFrame;
 
  private:
     vtkSlicerUnstructuredGridsGUI ( const vtkSlicerUnstructuredGridsGUI& ); // Not implemented.

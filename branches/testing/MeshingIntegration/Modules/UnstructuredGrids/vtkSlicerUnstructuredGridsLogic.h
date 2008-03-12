@@ -6,13 +6,13 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $RCSfile: vtkSlicerModelsLogic.h,v $
+  Module:    $RCSfile: vtkSlicerUnstructuredGridsLogic.h,v $
   Date:      $Date: 2006/01/08 04:48:05 $
   Version:   $Revision: 1.45 $
 
-=========================================================================auto=*/
+============================f=============================================auto=*/
 
-// .NAME vtkSlicerModelsLogic - slicer logic class for volumes manipulation
+// .NAME vtkSlicerUnstructuredGridsLogic - slicer logic class for volumes manipulation
 // .SECTION Description
 // This class manages the logic associated with reading, saving,
 // and changing propertied of the volumes
@@ -30,37 +30,37 @@
 #include "vtkMRMLUnstructuredGridNode.h"
 
 
-class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerModelsLogic : public vtkSlicerLogic 
+class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerUnstructuredGridsLogic : public vtkSlicerLogic 
 {
   public:
   
   // The Usual vtk class functions
-  static vtkSlicerModelsLogic *New();
-  vtkTypeRevisionMacro(vtkSlicerModelsLogic,vtkObject);
+  static vtkSlicerUnstructuredGridsLogic *New();
+  vtkTypeRevisionMacro(vtkSlicerUnstructuredGridsLogic,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
   // The currently active mrml volume node 
-  vtkGetObjectMacro (ActiveModelNode, vtkMRMLModelNode);
-  void SetActiveModelNode (vtkMRMLModelNode *ActiveModelNode);
+  vtkGetObjectMacro (ActiveUnstructuredGridNode, vtkMRMLUnstructuredGridNode);
+  void SetActiveUnstructuredGridNode (vtkMRMLUnstructuredGridNode *ActiveUnstructuredGridNode);
 
   // Description:
-  // Create new mrml model node and
+  // Create new mrml UnstructuredGrid node and
   // read it's polydata from a specified file
-  vtkMRMLModelNode* AddModel (const char* filename);
+  vtkMRMLUnstructuredGridNode* AddUnstructuredGrid (const char* filename);
 
   // Description:
-  // Create model nodes and
+  // Create UnstructuredGrid nodes and
   // read their polydata from a specified directory
-  int AddModels (const char* dirname, const char* suffix );
+  int AddUnstructuredGrids (const char* dirname, const char* suffix );
 
   // Description:
-  // Write model's polydata  to a specified file
-  int SaveModel (const char* filename, vtkMRMLModelNode *modelNode);
+  // Write UnstructuredGrid's polydata  to a specified file
+  int SaveUnstructuredGrid (const char* filename, vtkMRMLUnstructuredGridNode *UnstructuredGridNode);
 
   // Description:
-  // Read in a scalar overlay and add it to the model node
-  int AddScalar(const char* filename, vtkMRMLModelNode *modelNode);
+  // Read in a scalar overlay and add it to the UnstructuredGrid node
+  int AddScalar(const char* filename, vtkMRMLUnstructuredGridNode *UnstructuredGridNode);
 
   // Description:
   // Update logic state when MRML scene chenges
@@ -68,14 +68,14 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerModelsLogic : public vtkSlicerLogic
                                   unsigned long /*event*/, 
                                   void * /*callData*/ );    
 protected:
-  vtkSlicerModelsLogic();
-  ~vtkSlicerModelsLogic();
-  vtkSlicerModelsLogic(const vtkSlicerModelsLogic&);
-  void operator=(const vtkSlicerModelsLogic&);
+  vtkSlicerUnstructuredGridsLogic();
+  ~vtkSlicerUnstructuredGridsLogic();
+  vtkSlicerUnstructuredGridsLogic(const vtkSlicerUnstructuredGridsLogic&);
+  void operator=(const vtkSlicerUnstructuredGridsLogic&);
 
   // Description:
   //
-  vtkMRMLModelNode *ActiveModelNode;
+  vtkMRMLUnstructuredGridNode *ActiveUnstructuredGridNode;
 };
 
 #endif

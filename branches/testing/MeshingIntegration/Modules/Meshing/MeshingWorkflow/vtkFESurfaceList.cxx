@@ -67,7 +67,6 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
      newMRMLNode->SetFilePath(actor->GetFilePath());
      newMRMLNode->SetDataType(actor->GetDataType());
      newMRMLNode->SetAndObservePolyData(actor->GetDataSet());
-     this->savedMRMLScene->AddNode(newMRMLNode);
      
      // create node to use for display and storage in slicer; use standard model
       // node initially to learn how display nodes work. Use our own 
@@ -83,7 +82,8 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
       newMRMLNode->SetStorageNodeID(storeNode->GetID());
    
-     
+      this->savedMRMLScene->AddNode(newMRMLNode);
+      
      cout << "copied data to MRML node " << endl;
    }
   return 0;
