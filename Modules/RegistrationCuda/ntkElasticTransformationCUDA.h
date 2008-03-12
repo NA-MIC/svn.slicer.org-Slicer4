@@ -1,10 +1,9 @@
 #ifndef NTKELASTICTRANSFORMATIONCUDA_H
 #define NTKELASTICTRANSFORMATIONCUDA_H
 
-#include <math.h>
+#include <cmath>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include "ntkTransformation.h"
 #include "ntkBSpline3Function.h"
 #include "ntkBSpline3Transform.h"

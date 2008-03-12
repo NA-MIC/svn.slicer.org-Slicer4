@@ -757,8 +757,8 @@ float ntkElasticRegistrationCUDA::calculateSSDGradient(ntk3DData* target, int sp
 
   /*m_targetPlusSpline is B-Spline representation of targetPlus*/
   m_targetPlusSpline=m_transform->doForwardTransform(m_targetPlus, CURRENT_RES);
-  float tempPow=pow(2, splineSizeLevel);
-  float knotDistance=pow(2, -splineSizeLevel);
+  float tempPow=pow((float)2, (float)splineSizeLevel);
+  float knotDistance=pow((float)2, (float)-splineSizeLevel);
   m_knotDistance=(int)knotDistance;
   m_splineSize= ntkIntDimension((int)(tempPow*(m_targetSize.x+1)+1), (int)(tempPow*(m_targetSize.y+1)+1), (int)(tempPow*(m_targetSize.z+1)+1));
   
