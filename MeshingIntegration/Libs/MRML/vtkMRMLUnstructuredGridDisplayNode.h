@@ -29,7 +29,7 @@
 #include "vtkGeometryFilter.h"
 
 #include "vtkMRML.h"
-#include "vtkMRMLModelDisplayNode.h"
+#include "vtkMRMLDisplayNode.h"
 #include "vtkMRMLUnstructuredGridNode.h"
 
 

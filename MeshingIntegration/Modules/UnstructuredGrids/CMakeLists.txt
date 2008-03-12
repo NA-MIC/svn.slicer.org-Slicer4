@@ -2,10 +2,11 @@ PROJECT(UnstructuredGrids)
 
 # --------------------------------------------------------------------------
 # Sources
-
+ 
 SET(UnstructuredGrids_SRCS
   vtkSlicerUnstructuredGridsLogic.cxx
   vtkSlicerUnstructuredGridsGUI.cxx
+  vtkSlicerUnstructuredGridDisplayWidget.cxx
   #vtkMRMLUnstructuredGridsNode.cxx
 )
 

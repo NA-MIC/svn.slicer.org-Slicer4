@@ -5,9 +5,8 @@
 #include "vtkSlicerUnstructuredGridsGUI.h"
 #include "vtkSlicerApplication.h"
 #include "vtkSlicerModuleLogic.h"
-//#include "vtkSlicerModelsLogic.h"
-#include "vtkSlicerModelDisplayWidget.h"
-#include "vtkSlicerModelHierarchyWidget.h"
+//#include "vtkSlicerUnstructuredGridsLogic.h"
+#include "vtkSlicerUnstructuredGridDisplayWidget.h"
 #include "vtkSlicerModuleCollapsibleFrame.h"
 
 #include "vtkKWFrameWithLabel.h"
@@ -28,17 +27,15 @@ vtkSlicerUnstructuredGridsGUI::vtkSlicerUnstructuredGridsGUI ( )
 
   // classes not yet defined!
   this->Logic = NULL;
-  //this->ModelNode = NULL;
-  this->LoadModelButton = NULL;
-  this->LoadModelDirectoryButton = NULL;
-  this->SaveModelButton = NULL;
-  this->ModelSelectorWidget = NULL;
-  this->ModelDisplayWidget = NULL;
-  this->ClipModelsWidget = NULL;
+  //this->UnstructuredGridNode = NULL;
+  this->LoadUnstructuredGridButton = NULL;
+  this->LoadUnstructuredGridDirectoryButton = NULL;
+  this->SaveUnstructuredGridButton = NULL;
+  this->UnstructuredGridSelectorWidget = NULL;
+  this->UnstructuredGridDisplayWidget = NULL;
   this->LoadScalarsButton = NULL;
-  this->ModelDisplaySelectorWidget = NULL;
-  this->ModelHierarchyWidget = NULL;
-  this->ModelDisplayFrame = NULL;
+  this->UnstructuredGridDisplaySelectorWidget = NULL;
+  this->UnstructuredGridDisplayFrame = NULL;
 
   NACLabel = NULL;
   NAMICLabel =NULL;
@@ -54,49 +51,36 @@ vtkSlicerUnstructuredGridsGUI::~vtkSlicerUnstructuredGridsGUI ( )
 
   this->SetModuleLogic ( NULL );
 
-  if (this->ModelDisplaySelectorWidget)
+  if (this->UnstructuredGridDisplaySelectorWidget)
     {
-    this->ModelDisplaySelectorWidget->SetParent(NULL);
-    this->ModelDisplaySelectorWidget->Delete();
-    this->ModelDisplaySelectorWidget = NULL;
+    this->UnstructuredGridDisplaySelectorWidget->SetParent(NULL);
+    this->UnstructuredGridDisplaySelectorWidget->Delete();
+    this->UnstructuredGridDisplaySelectorWidget = NULL;
     }
-
-  if (this->ModelHierarchyWidget)
+  if (this->LoadUnstructuredGridButton ) 
     {
-    this->ModelHierarchyWidget->SetParent(NULL);
-    this->ModelHierarchyWidget->Delete();
-    this->ModelHierarchyWidget = NULL;
-    }
-
-  if (this->LoadModelButton ) 
-    {
-    this->LoadModelButton->SetParent(NULL);
-    this->LoadModelButton->Delete ( );
+    this->LoadUnstructuredGridButton->SetParent(NULL);
+    this->LoadUnstructuredGridButton->Delete ( );
     }    
-  if (this->LoadModelDirectoryButton ) 
+  if (this->LoadUnstructuredGridDirectoryButton ) 
     {
-    this->LoadModelDirectoryButton->SetParent(NULL);
-    this->LoadModelDirectoryButton->Delete ( );
+    this->LoadUnstructuredGridDirectoryButton->SetParent(NULL);
+    this->LoadUnstructuredGridDirectoryButton->Delete ( );
     }    
-  if (this->SaveModelButton ) 
+  if (this->SaveUnstructuredGridButton ) 
     {
-    this->SaveModelButton->SetParent(NULL);
-    this->SaveModelButton->Delete ( );
+    this->SaveUnstructuredGridButton->SetParent(NULL);
+    this->SaveUnstructuredGridButton->Delete ( );
     }
-  if (this->ModelSelectorWidget ) 
+  if (this->UnstructuredGridSelectorWidget ) 
     {
-    this->ModelSelectorWidget->SetParent(NULL);
-    this->ModelSelectorWidget->Delete ( );
+    this->UnstructuredGridSelectorWidget->SetParent(NULL);
+    this->UnstructuredGridSelectorWidget->Delete ( );
     }
-  if (this->ModelDisplayWidget ) 
+  if (this->UnstructuredGridDisplayWidget ) 
     {
-    this->ModelDisplayWidget->SetParent(NULL);
-    this->ModelDisplayWidget->Delete ( );
-    }
-  if (this->ClipModelsWidget ) 
-    {
-    this->ClipModelsWidget->SetParent(NULL);
-    this->ClipModelsWidget->Delete ( );
+    this->UnstructuredGridDisplayWidget->SetParent(NULL);
+    this->UnstructuredGridDisplayWidget->Delete ( );
     }
   if (this->LoadScalarsButton )
     {
@@ -127,10 +111,10 @@ vtkSlicerUnstructuredGridsGUI::~vtkSlicerUnstructuredGridsGUI ( )
     this->BIRNLabel->Delete();
     this->BIRNLabel = NULL;
     }
-  if (this->ModelDisplayFrame)
+  if (this->UnstructuredGridDisplayFrame)
     {
-    this->ModelDisplayFrame->SetParent ( NULL );
-    this->ModelDisplayFrame->Delete();
+    this->UnstructuredGridDisplayFrame->SetParent ( NULL );
+    this->UnstructuredGridDisplayFrame->Delete();
     }
   this->Built = false;
 }
@@ -149,43 +133,37 @@ void vtkSlicerUnstructuredGridsGUI::PrintSelf ( ostream& os, vtkIndent indent )
 //---------------------------------------------------------------------------
 void vtkSlicerUnstructuredGridsGUI::RemoveGUIObservers ( )
 {
-  if (this->LoadModelButton)
+  if (this->LoadUnstructuredGridButton)
     {
-    this->LoadModelButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->LoadUnstructuredGridButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-  if (this->LoadModelDirectoryButton)
+  if (this->LoadUnstructuredGridDirectoryButton)
     {
-    this->LoadModelDirectoryButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->LoadUnstructuredGridDirectoryButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-  if (this->SaveModelButton)
+  if (this->SaveUnstructuredGridButton)
     {
-    this->SaveModelButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->SaveUnstructuredGridButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
   if (this->LoadScalarsButton)
     {
     this->LoadScalarsButton->GetWidget()->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
     }
-  if (this->ModelDisplaySelectorWidget)
+  if (this->UnstructuredGridDisplaySelectorWidget)
     {
-    this->ModelDisplaySelectorWidget->RemoveObservers (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->UnstructuredGridDisplaySelectorWidget->RemoveObservers (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
     }
-  if (this->ModelHierarchyWidget)
-    { 
-    this->ModelHierarchyWidget->RemoveObservers(vtkSlicerModelHierarchyWidget::SelectedEvent, (vtkCommand *)this->GUICallbackCommand );
-    }
-
 }
 
 
 //---------------------------------------------------------------------------
 void vtkSlicerUnstructuredGridsGUI::AddGUIObservers ( )
 {
-  this->LoadModelButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
-  this->LoadModelDirectoryButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
-  this->SaveModelButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+  this->LoadUnstructuredGridButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+  this->LoadUnstructuredGridDirectoryButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+  this->SaveUnstructuredGridButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
   this->LoadScalarsButton->GetWidget()->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
-  this->ModelDisplaySelectorWidget->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
-  this->ModelHierarchyWidget->AddObserver(vtkSlicerModelHierarchyWidget::SelectedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->UnstructuredGridDisplaySelectorWidget->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
 }
 
 
@@ -195,58 +173,43 @@ void vtkSlicerUnstructuredGridsGUI::ProcessGUIEvents ( vtkObject *caller,
                                             unsigned long event, void *callData )
 {
 
-  if (vtkSlicerModelHierarchyWidget::SafeDownCast(caller) == this->ModelHierarchyWidget && 
-      event == vtkSlicerModelHierarchyWidget::SelectedEvent)
-    {
-    vtkMRMLUnstructuredGridNode *model = reinterpret_cast<vtkMRMLUnstructuredGridNode *>(callData);
-    if (model != NULL && model->GetDisplayNode() != NULL)
-      {
-      this->ModelDisplaySelectorWidget->SetSelected(model);
-      if (this->ModelDisplayFrame)
-        {
-        this->ModelDisplayFrame->ExpandFrame();
-        this->ModelDisplayFrame->Raise();
-        }
-      }
-    return;
-    }
 
-  if (vtkSlicerNodeSelectorWidget::SafeDownCast(caller) == this->ModelDisplaySelectorWidget && 
+  if (vtkSlicerNodeSelectorWidget::SafeDownCast(caller) == this->UnstructuredGridDisplaySelectorWidget && 
         event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent ) 
     {
-    vtkMRMLUnstructuredGridNode *model = 
-        vtkMRMLUnstructuredGridNode::SafeDownCast(this->ModelDisplaySelectorWidget->GetSelected());
+    vtkMRMLUnstructuredGridNode *UnstructuredGrid = 
+        vtkMRMLUnstructuredGridNode::SafeDownCast(this->UnstructuredGridDisplaySelectorWidget->GetSelected());
 
-    if (model != NULL && model->GetDisplayNode() != NULL)
+    if (UnstructuredGrid != NULL && UnstructuredGrid->GetDisplayNode() != NULL)
       {
-      this->ModelDisplayWidget->SetModelDisplayNode(model->GetUnstructuredGridDisplayNode());
-      this->ModelDisplayWidget->SetUnstructuredGridNode(model);
+      this->UnstructuredGridDisplayWidget->SetUnstructuredGridDisplayNode(UnstructuredGrid->GetUnstructuredGridDisplayNode());
+      this->UnstructuredGridDisplayWidget->SetUnstructuredGridNode(UnstructuredGrid);
       }
     return;
     }
 
   vtkKWLoadSaveButton *filebrowse = vtkKWLoadSaveButton::SafeDownCast(caller);
-  if (filebrowse == this->LoadModelButton  && event == vtkKWPushButton::InvokedEvent )
+  if (filebrowse == this->LoadUnstructuredGridButton  && event == vtkKWPushButton::InvokedEvent )
     {
     // If a file has been selected for loading...
     const char *fileName = filebrowse->GetFileName();
     if ( fileName ) 
       {
-      vtkSlicerUnstructuredGridsLogic* modelLogic = this->Logic;
+      vtkSlicerUnstructuredGridsLogic* UnstructuredGridLogic = this->Logic;
       
-      vtkMRMLUnstructuredGridNode *modelNode = modelLogic->AddUnstructuredGrid( fileName );
-      if ( modelNode == NULL ) 
+      vtkMRMLUnstructuredGridNode *UnstructuredGridNode = UnstructuredGridLogic->AddUnstructuredGrid( fileName );
+      if ( UnstructuredGridNode == NULL ) 
         {
         vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
-        dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+        dialog->SetParent ( this->UIPanel->GetPageWidget ( "UnstructuredGrids" ) );
         dialog->SetStyleToMessage();
-        std::string msg = std::string("Unable to read model file ") + std::string(fileName);
+        std::string msg = std::string("Unable to read UnstructuredGrid file ") + std::string(fileName);
         dialog->SetText(msg.c_str());
         dialog->Create ( );
         dialog->Invoke();
         dialog->Delete();
 
-        vtkErrorMacro("Unable to read model file " << fileName);
+        vtkErrorMacro("Unable to read UnstructuredGrid file " << fileName);
         // reset the file browse button text
         }
       else
@@ -255,23 +218,23 @@ void vtkSlicerUnstructuredGridsGUI::ProcessGUIEvents ( vtkObject *caller,
         
         }
       }
-      this->LoadModelButton->SetText ("Load Model");
+      this->LoadUnstructuredGridButton->SetText ("Load UnstructuredGrid");
     return;
     }
-    else if (filebrowse == this->LoadModelDirectoryButton  && event == vtkKWPushButton::InvokedEvent )
+    else if (filebrowse == this->LoadUnstructuredGridDirectoryButton  && event == vtkKWPushButton::InvokedEvent )
     {
     // If a file has been selected for loading...
     const char *fileName = filebrowse->GetFileName();
     if ( fileName ) 
       {
-        vtkSlicerUnstructuredGridsLogic* modelLogic = this->Logic;
+        vtkSlicerUnstructuredGridsLogic* UnstructuredGridLogic = this->Logic;
       
-      if (modelLogic->AddModels( fileName, ".vtk") == 0)
+      if (UnstructuredGridLogic->AddUnstructuredGrids( fileName, ".vtk") == 0)
         {
         vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
-        dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+        dialog->SetParent ( this->UIPanel->GetPageWidget ( "UnstructuredGrids" ) );
         dialog->SetStyleToMessage();
-        std::string msg = std::string("Unable to read models directory ") + std::string(fileName);
+        std::string msg = std::string("Unable to read UnstructuredGrids directory ") + std::string(fileName);
         dialog->SetText(msg.c_str());
         dialog->Create ( );
         dialog->Invoke();
@@ -283,18 +246,18 @@ void vtkSlicerUnstructuredGridsGUI::ProcessGUIEvents ( vtkObject *caller,
         
         }
       }
-    this->LoadModelDirectoryButton->SetText ("Load Model Directory");
+    this->LoadUnstructuredGridDirectoryButton->SetText ("Load UnstructuredGrid Directory");
     return;
     }
-  else if (filebrowse == this->SaveModelButton  && event == vtkKWPushButton::InvokedEvent )
+  else if (filebrowse == this->SaveUnstructuredGridButton  && event == vtkKWPushButton::InvokedEvent )
       {
       // If a file has been selected for saving...
       const char *fileName = filebrowse->GetFileName();
       if ( fileName ) 
       {
-          vtkSlicerUnstructuredGridsLogic* ModelLogic = this->Logic;
-        vtkMRMLUnstructuredGridNode *volNode = vtkMRMLUnstructuredGridNode::SafeDownCast(this->ModelSelectorWidget->GetSelected());
-        if ( !ModelLogic->SaveModel( fileName, volNode ))
+          vtkSlicerUnstructuredGridsLogic* UnstructuredGridLogic = this->Logic;
+        vtkMRMLUnstructuredGridNode *volNode = vtkMRMLUnstructuredGridNode::SafeDownCast(this->UnstructuredGridSelectorWidget->GetSelected());
+        if ( !UnstructuredGridLogic->SaveUnstructuredGrid( fileName, volNode ))
           {
          // TODO: generate an error...
           }
@@ -311,18 +274,18 @@ void vtkSlicerUnstructuredGridsGUI::ProcessGUIEvents ( vtkObject *caller,
     const char *fileName = filebrowse->GetFileName();
     if ( fileName ) 
       {
-      // get the model from the display widget rather than this gui's save
-      // model selector
-      vtkMRMLUnstructuredGridNode *modelNode = vtkMRMLUnstructuredGridNode::SafeDownCast(this->ModelDisplaySelectorWidget->GetSelected());
-      if (modelNode != NULL)
+      // get the UnstructuredGrid from the display widget rather than this gui's save
+      // UnstructuredGrid selector
+      vtkMRMLUnstructuredGridNode *UnstructuredGridNode = vtkMRMLUnstructuredGridNode::SafeDownCast(this->UnstructuredGridDisplaySelectorWidget->GetSelected());
+      if (UnstructuredGridNode != NULL)
         {
-        vtkDebugMacro("vtkSlicerUnstructuredGridsGUI: loading scalar for model " << modelNode->GetName());
+        vtkDebugMacro("vtkSlicerUnstructuredGridsGUI: loading scalar for UnstructuredGrid " << UnstructuredGridNode->GetName());
         // load the scalars
-        vtkSlicerUnstructuredGridsLogic* modelLogic = this->Logic;
-        if (!modelLogic->AddScalar(fileName, modelNode))
+        vtkSlicerUnstructuredGridsLogic* UnstructuredGridLogic = this->Logic;
+        if (!UnstructuredGridLogic->AddScalar(fileName, UnstructuredGridNode))
           {
           vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
-          dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+          dialog->SetParent ( this->UIPanel->GetPageWidget ( "UnstructuredGrids" ) );
           dialog->SetStyleToMessage();
           std::string msg = std::string("Unable to read scalars file ") + std::string(fileName);
           dialog->SetText(msg.c_str());
@@ -337,7 +300,7 @@ void vtkSlicerUnstructuredGridsGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           filebrowse->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
           // set the active scalar in the display node to this one
-          // - is done in the model storage node         
+          // - is done in the UnstructuredGrid storage node         
           }
         }
       }
@@ -412,16 +375,16 @@ void vtkSlicerUnstructuredGridsGUI::BuildGUI ( )
   
     // ---
     // MODULE GUI FRAME 
-    // configure a page for a model loading UI for now.
+    // configure a page for a UnstructuredGrid loading UI for now.
     // later, switch on the modulesButton in the SlicerControlGUI
     // ---
     // create a page
-    this->UIPanel->AddPage ( "Models", "Models", NULL );
+    this->UIPanel->AddPage ( "UnstructuredGrids", "UnstructuredGrids", NULL );
     
     // Define your help text and build the help frame here.
-    const char *help = "The Models Module loads, saves and adjusts display parameters of models. ";
+    const char *help = "The UnstructuredGrids Module loads, saves and adjusts display parameters of UnstructuredGrids. ";
     const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details. ";
-    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Models" );
+    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "UnstructuredGrids" );
     this->BuildHelpAndAboutFrame ( page, help, about );
 
     this->NACLabel = vtkKWLabel::New();
@@ -451,46 +414,46 @@ void vtkSlicerUnstructuredGridsGUI::BuildGUI ( )
     // ---
     // LOAD FRAME            
     vtkSlicerModuleCollapsibleFrame *modLoadFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    modLoadFrame->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+    modLoadFrame->SetParent ( this->UIPanel->GetPageWidget ( "UnstructuredGrids" ) );
     modLoadFrame->Create ( );
     modLoadFrame->SetLabelText ("Load");
     modLoadFrame->ExpandFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  modLoadFrame->GetWidgetName(), this->UIPanel->GetPageWidget("Models")->GetWidgetName());
+                  modLoadFrame->GetWidgetName(), this->UIPanel->GetPageWidget("UnstructuredGrids")->GetWidgetName());
 
     // add a file browser 
-    this->LoadModelButton = vtkKWLoadSaveButton::New ( );
-    this->LoadModelButton->SetParent ( modLoadFrame->GetFrame() );
-    this->LoadModelButton->Create ( );
-    this->LoadModelButton->SetText ("Load Model");
-    this->LoadModelButton->GetLoadSaveDialog()->SetTitle("Open Model");
-    this->LoadModelButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
-    this->LoadModelButton->GetLoadSaveDialog()->SetFileTypes(
-                                                             "{ {model} {*.*} }");
+    this->LoadUnstructuredGridButton = vtkKWLoadSaveButton::New ( );
+    this->LoadUnstructuredGridButton->SetParent ( modLoadFrame->GetFrame() );
+    this->LoadUnstructuredGridButton->Create ( );
+    this->LoadUnstructuredGridButton->SetText ("Load UnstructuredGrid");
+    this->LoadUnstructuredGridButton->GetLoadSaveDialog()->SetTitle("Open UnstructuredGrid");
+    this->LoadUnstructuredGridButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
+    this->LoadUnstructuredGridButton->GetLoadSaveDialog()->SetFileTypes(
+                                                             "{ {UnstructuredGrid} {*.*} }");
     app->Script("pack %s -side left -anchor w -padx 2 -pady 4", 
-                this->LoadModelButton->GetWidgetName());
+                this->LoadUnstructuredGridButton->GetWidgetName());
 
    // add a file browser 
-    this->LoadModelDirectoryButton = vtkKWLoadSaveButton::New ( );
-    this->LoadModelDirectoryButton->SetParent ( modLoadFrame->GetFrame() );
-    this->LoadModelDirectoryButton->Create ( );
-    this->LoadModelDirectoryButton->SetText ("Load Model Directory");
-    this->LoadModelDirectoryButton->GetLoadSaveDialog()->ChooseDirectoryOn();
+    this->LoadUnstructuredGridDirectoryButton = vtkKWLoadSaveButton::New ( );
+    this->LoadUnstructuredGridDirectoryButton->SetParent ( modLoadFrame->GetFrame() );
+    this->LoadUnstructuredGridDirectoryButton->Create ( );
+    this->LoadUnstructuredGridDirectoryButton->SetText ("Load UnstructuredGrid Directory");
+    this->LoadUnstructuredGridDirectoryButton->GetLoadSaveDialog()->ChooseDirectoryOn();
     app->Script("pack %s -side left -anchor w -padx 2 -pady 4", 
-                this->LoadModelDirectoryButton->GetWidgetName());
+                this->LoadUnstructuredGridDirectoryButton->GetWidgetName());
 
   
     // DISPLAY FRAME            
-    this->ModelDisplayFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    this->ModelDisplayFrame->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
-    this->ModelDisplayFrame->Create ( );
-    this->ModelDisplayFrame->SetLabelText ("Display");
-    this->ModelDisplayFrame->CollapseFrame ( );
+    this->UnstructuredGridDisplayFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+    this->UnstructuredGridDisplayFrame->SetParent ( this->UIPanel->GetPageWidget ( "UnstructuredGrids" ) );
+    this->UnstructuredGridDisplayFrame->Create ( );
+    this->UnstructuredGridDisplayFrame->SetLabelText ("Display");
+    this->UnstructuredGridDisplayFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  this->ModelDisplayFrame->GetWidgetName(), this->UIPanel->GetPageWidget("Models")->GetWidgetName());
+                  this->UnstructuredGridDisplayFrame->GetWidgetName(), this->UIPanel->GetPageWidget("UnstructuredGrids")->GetWidgetName());
 
     this->LoadScalarsButton = vtkKWLoadSaveButtonWithLabel::New();
-    this->LoadScalarsButton->SetParent ( this->ModelDisplayFrame->GetFrame() );
+    this->LoadScalarsButton->SetParent ( this->UnstructuredGridDisplayFrame->GetFrame() );
     this->LoadScalarsButton->Create ( );
     this->LoadScalarsButton->SetLabelText ("Load FreeSurfer Overlay: ");
     this->LoadScalarsButton->GetWidget()->SetText ("None");
@@ -500,114 +463,92 @@ void vtkSlicerUnstructuredGridsGUI::BuildGUI ( )
     app->Script("pack %s -side top -anchor nw -padx 2 -pady 4", 
                 this->LoadScalarsButton->GetWidgetName());
 
-    this->ModelDisplaySelectorWidget = vtkSlicerNodeSelectorWidget::New() ;
-    this->ModelDisplaySelectorWidget->SetParent ( this->ModelDisplayFrame->GetFrame() );
-    this->ModelDisplaySelectorWidget->Create ( );
-    this->ModelDisplaySelectorWidget->SetNodeClass("vtkMRMLUnstructuredGridNode", NULL, NULL, NULL);
+    this->UnstructuredGridDisplaySelectorWidget = vtkSlicerNodeSelectorWidget::New() ;
+    this->UnstructuredGridDisplaySelectorWidget->SetParent ( this->UnstructuredGridDisplayFrame->GetFrame() );
+    this->UnstructuredGridDisplaySelectorWidget->Create ( );
+    this->UnstructuredGridDisplaySelectorWidget->SetNodeClass("vtkMRMLUnstructuredGridNode", NULL, NULL, NULL);
     // CRL - added to see the FE mesh surfaces
-    this->ModelDisplaySelectorWidget->SetChildClassesEnabled(1);
-    this->ModelDisplaySelectorWidget->SetMRMLScene(this->GetMRMLScene());
-    this->ModelDisplaySelectorWidget->SetBorderWidth(2);
-    // this->ModelDisplaySelectorWidget->SetReliefToGroove();
-    this->ModelDisplaySelectorWidget->SetPadX(2);
-    this->ModelDisplaySelectorWidget->SetPadY(2);
-    this->ModelDisplaySelectorWidget->GetWidget()->GetWidget()->IndicatorVisibilityOff();
-    this->ModelDisplaySelectorWidget->GetWidget()->GetWidget()->SetWidth(24);
-    this->ModelDisplaySelectorWidget->SetLabelText( "Model Select: ");
-    this->ModelDisplaySelectorWidget->SetBalloonHelpString("select a model from the current mrml scene.");
+    this->UnstructuredGridDisplaySelectorWidget->SetChildClassesEnabled(1);
+    this->UnstructuredGridDisplaySelectorWidget->SetMRMLScene(this->GetMRMLScene());
+    this->UnstructuredGridDisplaySelectorWidget->SetBorderWidth(2);
+    // this->UnstructuredGridDisplaySelectorWidget->SetReliefToGroove();
+    this->UnstructuredGridDisplaySelectorWidget->SetPadX(2);
+    this->UnstructuredGridDisplaySelectorWidget->SetPadY(2);
+    this->UnstructuredGridDisplaySelectorWidget->GetWidget()->GetWidget()->IndicatorVisibilityOff();
+    this->UnstructuredGridDisplaySelectorWidget->GetWidget()->GetWidget()->SetWidth(24);
+    this->UnstructuredGridDisplaySelectorWidget->SetLabelText( "UnstructuredGrid Select: ");
+    this->UnstructuredGridDisplaySelectorWidget->SetBalloonHelpString("select a UnstructuredGrid from the current mrml scene.");
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                   this->ModelDisplaySelectorWidget->GetWidgetName());
+                   this->UnstructuredGridDisplaySelectorWidget->GetWidgetName());
 
 
-    this->ModelDisplayWidget = vtkSlicerModelDisplayWidget::New ( );
-    this->ModelDisplayWidget->SetMRMLScene(this->GetMRMLScene() );
-    this->ModelDisplayWidget->SetParent ( this->ModelDisplayFrame->GetFrame() );
-    this->ModelDisplayWidget->Create ( );
+    this->UnstructuredGridDisplayWidget = vtkSlicerUnstructuredGridDisplayWidget::New ( );
+    this->UnstructuredGridDisplayWidget->SetMRMLScene(this->GetMRMLScene() );
+    this->UnstructuredGridDisplayWidget->SetParent ( this->UnstructuredGridDisplayFrame->GetFrame() );
+    this->UnstructuredGridDisplayWidget->Create ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  this->ModelDisplayWidget->GetWidgetName(), 
-                  this->ModelDisplayFrame->GetFrame()->GetWidgetName());
+                  this->UnstructuredGridDisplayWidget->GetWidgetName(), 
+                  this->UnstructuredGridDisplayFrame->GetFrame()->GetWidgetName());
 
     // Clip FRAME  
     vtkSlicerModuleCollapsibleFrame *clipFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    clipFrame->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+    clipFrame->SetParent ( this->UIPanel->GetPageWidget ( "UnstructuredGrids" ) );
     clipFrame->Create ( );
     clipFrame->SetLabelText ("Clipping");
     clipFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  clipFrame->GetWidgetName(), this->UIPanel->GetPageWidget("Models")->GetWidgetName());
+                  clipFrame->GetWidgetName(), this->UIPanel->GetPageWidget("UnstructuredGrids")->GetWidgetName());
 
-    this->ClipModelsWidget = vtkSlicerClipModelsWidget::New ( );
-    this->ClipModelsWidget->SetMRMLScene(this->GetMRMLScene() );
-    this->ClipModelsWidget->SetParent ( clipFrame->GetFrame() );
-    this->ClipModelsWidget->Create ( );
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  this->ClipModelsWidget->GetWidgetName(), 
-                  clipFrame->GetFrame()->GetWidgetName());
+
+    
 
     // ---
     // Save FRAME            
-    vtkSlicerModuleCollapsibleFrame *modelSaveFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    modelSaveFrame->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
-    modelSaveFrame->Create ( );
-    modelSaveFrame->SetLabelText ("Save");
-    modelSaveFrame->CollapseFrame ( );
+    vtkSlicerModuleCollapsibleFrame *UnstructuredGridSaveFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+    UnstructuredGridSaveFrame->SetParent ( this->UIPanel->GetPageWidget ( "UnstructuredGrids" ) );
+    UnstructuredGridSaveFrame->Create ( );
+    UnstructuredGridSaveFrame->SetLabelText ("Save");
+    UnstructuredGridSaveFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  modelSaveFrame->GetWidgetName(), 
-                  this->UIPanel->GetPageWidget ( "Models" )->GetWidgetName());
+                  UnstructuredGridSaveFrame->GetWidgetName(), 
+                  this->UIPanel->GetPageWidget ( "UnstructuredGrids" )->GetWidgetName());
 
     // selector for save
-    this->ModelSelectorWidget = vtkSlicerNodeSelectorWidget::New() ;
-    this->ModelSelectorWidget->SetParent ( modelSaveFrame->GetFrame() );
-    this->ModelSelectorWidget->Create ( );
-    this->ModelSelectorWidget->SetNodeClass("vtkMRMLUnstructuredGridNode", NULL, NULL, NULL);
-    this->ModelSelectorWidget->SetMRMLScene(this->GetMRMLScene());
-    this->ModelSelectorWidget->SetBorderWidth(2);
-    this->ModelSelectorWidget->SetPadX(2);
-    this->ModelSelectorWidget->SetPadY(2);
-    this->ModelSelectorWidget->GetWidget()->GetWidget()->IndicatorVisibilityOff();
-    this->ModelSelectorWidget->GetWidget()->GetWidget()->SetWidth(24);
-    this->ModelSelectorWidget->SetLabelText( "UnstructuredGrid To Save: ");
-    this->ModelSelectorWidget->SetBalloonHelpString("select a Model from the current  scene.");
+    this->UnstructuredGridSelectorWidget = vtkSlicerNodeSelectorWidget::New() ;
+    this->UnstructuredGridSelectorWidget->SetParent ( UnstructuredGridSaveFrame->GetFrame() );
+    this->UnstructuredGridSelectorWidget->Create ( );
+    this->UnstructuredGridSelectorWidget->SetNodeClass("vtkMRMLUnstructuredGridNode", NULL, NULL, NULL);
+    this->UnstructuredGridSelectorWidget->SetMRMLScene(this->GetMRMLScene());
+    this->UnstructuredGridSelectorWidget->SetBorderWidth(2);
+    this->UnstructuredGridSelectorWidget->SetPadX(2);
+    this->UnstructuredGridSelectorWidget->SetPadY(2);
+    this->UnstructuredGridSelectorWidget->GetWidget()->GetWidget()->IndicatorVisibilityOff();
+    this->UnstructuredGridSelectorWidget->GetWidget()->GetWidget()->SetWidth(24);
+    this->UnstructuredGridSelectorWidget->SetLabelText( "UnstructuredGrid To Save: ");
+    this->UnstructuredGridSelectorWidget->SetBalloonHelpString("select a UnstructuredGrid from the current  scene.");
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-                  this->ModelSelectorWidget->GetWidgetName());
+                  this->UnstructuredGridSelectorWidget->GetWidgetName());
 
-    this->SaveModelButton = vtkKWLoadSaveButton::New ( );
-    this->SaveModelButton->SetParent ( modelSaveFrame->GetFrame() );
-    this->SaveModelButton->Create ( );
-    this->SaveModelButton->SetText ("Save UnstructuredGrid");
-    this->SaveModelButton->GetLoadSaveDialog()->SaveDialogOn();
-    this->SaveModelButton->GetLoadSaveDialog()->SetFileTypes(
+    this->SaveUnstructuredGridButton = vtkKWLoadSaveButton::New ( );
+    this->SaveUnstructuredGridButton->SetParent ( UnstructuredGridSaveFrame->GetFrame() );
+    this->SaveUnstructuredGridButton->Create ( );
+    this->SaveUnstructuredGridButton->SetText ("Save UnstructuredGrid");
+    this->SaveUnstructuredGridButton->GetLoadSaveDialog()->SaveDialogOn();
+    this->SaveUnstructuredGridButton->GetLoadSaveDialog()->SetFileTypes(
                                                               "{ {UnstructuredGrid} {.*} }");
-    this->SaveModelButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
+    this->SaveUnstructuredGridButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
       "OpenPath");
      app->Script("pack %s -side top -anchor w -padx 2 -pady 4", 
-                this->SaveModelButton->GetWidgetName());
-
-     // Hierarchy FRAME  
-    vtkSlicerModuleCollapsibleFrame *hierFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    hierFrame->SetParent ( this->UIPanel->GetPageWidget ( "UnstructuredGrids" ) );
-    hierFrame->Create ( );
-    hierFrame->SetLabelText ("UnstructuredGrid Hierarchy");
-    hierFrame->CollapseFrame ( );
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  hierFrame->GetWidgetName(), this->UIPanel->GetPageWidget("UnstructuredGrids")->GetWidgetName());
-
-    this->ModelHierarchyWidget = vtkSlicerModelHierarchyWidget::New ( );
-    this->ModelHierarchyWidget->SetAndObserveMRMLScene(this->GetMRMLScene() );
-    this->ModelHierarchyWidget->SetParent ( hierFrame->GetFrame() );
-    this->ModelHierarchyWidget->Create ( );
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  this->ModelHierarchyWidget->GetWidgetName(), 
-                  hierFrame->GetFrame()->GetWidgetName());
+                this->SaveUnstructuredGridButton->GetWidgetName());
     
 
-   this->ProcessGUIEvents (this->ModelDisplaySelectorWidget,
+   this->ProcessGUIEvents (this->UnstructuredGridDisplaySelectorWidget,
                           vtkSlicerNodeSelectorWidget::NodeSelectedEvent, NULL );
 
 
     modLoadFrame->Delete ( );
     clipFrame->Delete ( );
-    modelSaveFrame->Delete();
+    UnstructuredGridSaveFrame->Delete();
     hierFrame->Delete ( );
 }
 

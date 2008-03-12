@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $RCSfile: vtkSlicerModelsLogic.cxx,v $
+  Module:    $RCSfile: vtkSlicerUnstructuredGridsLogic.cxx,v $
   Date:      $Date: 2006/01/06 17:56:48 $
   Version:   $Revision: 1.58 $
 
@@ -17,35 +17,34 @@
 #include <itksys/SystemTools.hxx> 
 #include <itksys/Directory.hxx> 
 
-#include "vtkSlicerModelsLogic.h"
+#include "vtkSlicerUnstructuredGridsLogic.h"
 
 #include "vtkMRMLUnstructuredGridNode.h"
 #include "vtkMRMLUnstructuredGridStorageNode.h"
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
 #include "vtkSlicerColorLogic.h"
-#include "vtkMRMLFreeSurferModelStorageNode.h"
 
-vtkCxxRevisionMacro(vtkSlicerModelsLogic, "$Revision: 1.9.12.1 $");
-vtkStandardNewMacro(vtkSlicerModelsLogic);
+vtkCxxRevisionMacro(vtkSlicerUnstructuredGridsLogic, "$Revision: 1.9.12.1 $");
+vtkStandardNewMacro(vtkSlicerUnstructuredGridsLogic);
 
 //----------------------------------------------------------------------------
-vtkSlicerModelsLogic::vtkSlicerModelsLogic()
+vtkSlicerUnstructuredGridsLogic::vtkSlicerUnstructuredGridsLogic()
 {
-  this->ActiveModelNode = NULL;
+  this->ActiveUnstructuredGridNode = NULL;
 }
 
 //----------------------------------------------------------------------------
-vtkSlicerModelsLogic::~vtkSlicerModelsLogic()
+vtkSlicerUnstructuredGridsLogic::~vtkSlicerUnstructuredGridsLogic()
 {
-  if (this->ActiveModelNode != NULL)
+  if (this->ActiveUnstructuredGridNode != NULL)
     {
-        this->ActiveModelNode->Delete();
-        this->ActiveModelNode = NULL;
+        this->ActiveUnstructuredGridNode->Delete();
+        this->ActiveUnstructuredGridNode = NULL;
     }
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerModelsLogic::ProcessMRMLEvents(vtkObject * /*caller*/, 
+void vtkSlicerUnstructuredGridsLogic::ProcessMRMLEvents(vtkObject * /*caller*/, 
                                             unsigned long /*event*/, 
                                             void * /*callData*/)
 {
@@ -53,14 +52,14 @@ void vtkSlicerModelsLogic::ProcessMRMLEvents(vtkObject * /*caller*/,
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerModelsLogic::SetActiveModelNode(vtkMRMLModelNode *activeNode)
+void vtkSlicerUnstructuredGridsLogic::SetActiveUnstructuredGridNode(vtkMRMLUnstructuredGridNode *activeNode)
 {
-  vtkSetMRMLNodeMacro(this->ActiveModelNode, activeNode );
+  vtkSetMRMLNodeMacro(this->ActiveUnstructuredGridNode, activeNode );
   this->Modified();
 }
 
 //----------------------------------------------------------------------------
-int vtkSlicerModelsLogic::AddModels (const char* dirname, const char* suffix )
+int vtkSlicerUnstructuredGridsLogic::AddUnstructuredGrids (const char* dirname, const char* suffix )
 {
   std::string ssuf = suffix;
   itksys::Directory dir;
@@ -77,7 +76,7 @@ int vtkSlicerModelsLogic::AddModels (const char* dirname, const char* suffix )
         {
         std::string fullPath = std::string(dir.GetPath())
             + "/" + filename;
-        if (this->AddModel((char *)fullPath.c_str()) == NULL) 
+        if (this->AddUnstructuredGrid((char *)fullPath.c_str()) == NULL) 
           {
           res = 0;
           }
@@ -88,89 +87,82 @@ int vtkSlicerModelsLogic::AddModels (const char* dirname, const char* suffix )
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
+vtkMRMLUnstructuredGridNode* vtkSlicerUnstructuredGridsLogic::AddUnstructuredGrid (const char* filename)
 {
-  vtkMRMLModelNode *modelNode = vtkMRMLModelNode::New();
-  vtkMRMLModelDisplayNode *displayNode = vtkMRMLModelDisplayNode::New();
-  vtkMRMLModelStorageNode *mStorageNode = vtkMRMLModelStorageNode::New();
-  vtkMRMLFreeSurferModelStorageNode *fsmStorageNode = vtkMRMLFreeSurferModelStorageNode::New();
-  fsmStorageNode->SetUseStripper(0);  // turn off stripping by default (breaks some pickers)
+  vtkMRMLUnstructuredGridNode *UnstructuredGridNode = vtkMRMLUnstructuredGridNode::New();
+  vtkMRMLUnstructuredGridDisplayNode *displayNode = vtkMRMLUnstructuredGridDisplayNode::New();
+  vtkMRMLUnstructuredGridStorageNode *mStorageNode = vtkMRMLUnstructuredGridStorageNode::New();
   vtkMRMLStorageNode *storageNode = NULL;
   
   mStorageNode->SetFileName(filename);
-  fsmStorageNode->SetFileName(filename);
-  
-  if (mStorageNode->ReadData(modelNode) != 0)
+   
+  if (mStorageNode->ReadData(UnstructuredGridNode) != 0)
     {
     storageNode = mStorageNode;
     }
-  else if (fsmStorageNode->ReadData(modelNode) != 0)
-    {
-    storageNode = fsmStorageNode;
-    }
+  
   if (storageNode != NULL)
     {
     const itksys_stl::string fname(filename);
     itksys_stl::string name = itksys::SystemTools::GetFilenameName(fname);
-    modelNode->SetName(name.c_str());
+    UnstructuredGridNode->SetName(name.c_str());
 
     this->GetMRMLScene()->SaveStateForUndo();
 
-    modelNode->SetScene(this->GetMRMLScene());
+    UnstructuredGridNode->SetScene(this->GetMRMLScene());
     storageNode->SetScene(this->GetMRMLScene());
     displayNode->SetScene(this->GetMRMLScene()); 
 
     this->GetMRMLScene()->AddNodeNoNotify(storageNode);  
     this->GetMRMLScene()->AddNodeNoNotify(displayNode);
-    modelNode->SetStorageNodeID(storageNode->GetID());
-    modelNode->SetAndObserveDisplayNodeID(displayNode->GetID());  
-    displayNode->SetPolyData(modelNode->GetPolyData());
+    UnstructuredGridNode->SetStorageNodeID(storageNode->GetID());
+    UnstructuredGridNode->SetAndObserveDisplayNodeID(displayNode->GetID());  
+    displayNode->SetUnstructuredGrid(UnstructuredGridNode->GetUnstructuredGrid());
     
-    this->GetMRMLScene()->AddNode(modelNode);  
+    this->GetMRMLScene()->AddNode(UnstructuredGridNode);  
 
     //this->Modified();  
 
-    modelNode->Delete();
+    UnstructuredGridNode->Delete();
     }
   else
     {
-    vtkDebugMacro("Couldn't read file, returning null model node: " << filename);
-    modelNode->Delete();
-    modelNode = NULL;
+    vtkDebugMacro("Couldn't read file, returning null UnstructuredGrid node: " << filename);
+    UnstructuredGridNode->Delete();
+    UnstructuredGridNode = NULL;
     }
   mStorageNode->Delete();
-  fsmStorageNode->Delete();
   displayNode->Delete();
 
-  return modelNode;  
+  return UnstructuredGridNode;  
 }
 //----------------------------------------------------------------------------
-int vtkSlicerModelsLogic::SaveModel (const char* filename, vtkMRMLModelNode *modelNode)
+int vtkSlicerUnstructuredGridsLogic::SaveUnstructuredGrid (const char* filename, vtkMRMLUnstructuredGridNode *UnstructuredGridNode)
 {
-   if (modelNode == NULL || filename == NULL)
+   if (UnstructuredGridNode == NULL || filename == NULL)
     {
     return 0;
     }
   
-  vtkMRMLModelStorageNode *storageNode = NULL;
-  vtkMRMLStorageNode *snode = modelNode->GetStorageNode();
+  vtkMRMLUnstructuredGridStorageNode *storageNode = NULL;
+  vtkMRMLStorageNode *snode = UnstructuredGridNode->GetStorageNode();
   if (snode != NULL)
     {
-    storageNode = vtkMRMLModelStorageNode::SafeDownCast(snode);
+    storageNode = vtkMRMLUnstructuredGridStorageNode::SafeDownCast(snode);
     }
   if (storageNode == NULL)
     {
-    storageNode = vtkMRMLModelStorageNode::New();
+    storageNode = vtkMRMLUnstructuredGridStorageNode::New();
     storageNode->SetScene(this->GetMRMLScene());
     this->GetMRMLScene()->AddNode(storageNode);  
-    modelNode->SetStorageNodeID(storageNode->GetID());
+    UnstructuredGridNode->SetStorageNodeID(storageNode->GetID());
     storageNode->Delete();
     }
 
   //storageNode->SetAbsoluteFileName(true);
   storageNode->SetFileName(filename);
 
-  int res = storageNode->WriteData(modelNode);
+  int res = storageNode->WriteData(UnstructuredGridNode);
 
   
   return res;
@@ -179,46 +171,46 @@ int vtkSlicerModelsLogic::SaveModel (const char* filename, vtkMRMLModelNode *mod
 
 
 //----------------------------------------------------------------------------
-void vtkSlicerModelsLogic::PrintSelf(ostream& os, vtkIndent indent)
+void vtkSlicerUnstructuredGridsLogic::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->vtkObject::PrintSelf(os, indent);
 
-  os << indent << "vtkSlicerModelsLogic:             " << this->GetClassName() << "\n";
+  os << indent << "vtkSlicerUnstructuredGridsLogic:             " << this->GetClassName() << "\n";
 
-  os << indent << "ActiveModelNode: " <<
-    (this->ActiveModelNode ? this->ActiveModelNode->GetName() : "(none)") << "\n";
+  os << indent << "ActiveUnstructuredGridNode: " <<
+    (this->ActiveUnstructuredGridNode ? this->ActiveUnstructuredGridNode->GetName() : "(none)") << "\n";
 }
 
 //----------------------------------------------------------------------------
-int vtkSlicerModelsLogic::AddScalar(const char* filename, vtkMRMLModelNode *modelNode)
+int vtkSlicerUnstructuredGridsLogic::AddScalar(const char* filename, vtkMRMLUnstructuredGridNode *UnstructuredGridNode)
 {
-  if (modelNode == NULL ||
+  if (UnstructuredGridNode == NULL ||
       filename == NULL)
     {
-    vtkErrorMacro("Model node or file name are null.");
+    vtkErrorMacro("UnstructuredGrid node or file name are null.");
     return 0;
     }  
 
    // get the storage node and use it to read the scalar file
-  vtkMRMLFreeSurferModelStorageNode *storageNode = NULL;
-  vtkMRMLStorageNode *snode = modelNode->GetStorageNode();
+  vtkMRMLUnstructuredGridStorageNode *storageNode = NULL;
+  vtkMRMLStorageNode *snode = UnstructuredGridNode->GetStorageNode();
   if (snode != NULL)
     {
-    storageNode = vtkMRMLFreeSurferModelStorageNode::SafeDownCast(snode);
+    storageNode = vtkMRMLUnstructuredGridStorageNode::SafeDownCast(snode);
     }
   if (storageNode == NULL)
     {
-    vtkErrorMacro("Model "  << modelNode->GetName() << " does not have a freesurfer storage node associated with it, cannot load scalar overlay.");
+    vtkErrorMacro("UnstructuredGrid "  << UnstructuredGridNode->GetName() << " does not have a freesurfer storage node associated with it, cannot load scalar overlay.");
     return 0;
     }
   storageNode->SetFileName(filename);
-  storageNode->ReadData(modelNode);
+  storageNode->ReadData(UnstructuredGridNode);
 
-  // check to see if the model display node has a colour node already
-  vtkMRMLModelDisplayNode *displayNode = modelNode->GetModelDisplayNode();
+  // check to see if the UnstructuredGrid display node has a colour node already
+  vtkMRMLUnstructuredGridDisplayNode *displayNode = UnstructuredGridNode->GetDisplayNode();
   if (displayNode == NULL)
     {
-    vtkWarningMacro("Model " << modelNode->GetName() << "'s display node is null\n");
+    vtkWarningMacro("UnstructuredGrid " << UnstructuredGridNode->GetName() << "'s display node is null\n");
     }
   else
     {

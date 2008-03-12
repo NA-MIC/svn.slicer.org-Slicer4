@@ -24,14 +24,13 @@
 
 #include <string>
 
-#include "vtkPolyData.h" 
 #include "vtkUnstructuredGrid.h" 
 
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
-#include "vtkMRMLModelNode.h"
-#include "vtkMRMLStorageNode.h"
+#include "vtkMRMLDisplayableNode.h"
+//#include "vtkMRMLStorageNode.h"
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
 
 class vtkCallbackCommand;
@@ -65,12 +64,12 @@ public:
 
   // Description:
   // Get associated model display MRML node
-  /**
+ 
   vtkMRMLUnstructuredGridDisplayNode* GetUnstructuredGridDisplayNode() 
   {
-    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->DisplayNode);
-  };
-  **/
+    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->GetDisplayNode());
+  }
+
 
   // Description:
   // alternative method to propagate events generated in Display nodes
