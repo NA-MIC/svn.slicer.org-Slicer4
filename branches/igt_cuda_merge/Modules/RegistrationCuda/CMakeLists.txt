@@ -11,18 +11,57 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 # --------------------------------------------------------------------------
 # Sources
   SET(RegistrationCudaModule_SRCS
-
+        ntk2DElasticRegistration.cpp
+        ntk2DElasticTransformation.cpp
+        ntkDeformationSpline.cpp
+        ntkElasticRegistration.cpp
+        ntkElasticRegistrationCUDA.cpp
+        ntkElasticTransformation.cpp
+        ntkElasticTransformationCUDA.cpp
+        ntkElasticityMap.cpp
+        ntkLinearTransformation.cpp
+        ntkLinearTransformationCUDA.cpp
+        ntkMISimilarityMeasure.cpp
+        ntkMISimilarityMeasureCUDA.cpp
+        ntkRegistration.cpp
+        ntkRigidRegistration.cpp
+        ntkRigidRegistrationCUDA.cpp
+        ntkSimilarityMeasure.cpp
+        ntkTransformation.cpp
   )
   SET(Registration_ADDITIONAL_HEADERS
-    # Cuda Classes
-      cudaTypeRange.h
-      CUDA_renderAlgo.h
-      cudaRendererInformation.h
-      cudaVolumeInformation.h
+        CUDA_calculateMI.h
+        CUDA_calculateSSD.h
+        CUDA_calculateSSDGradient.h
+        CUDA_elasticTransformation.h
+        CUDA_linearTransformation.h
+        ntk2DElasticRegistration.h
+        ntk2DElasticTransformation.h
+        ntkDeformationSpline.h
+        ntkElasticRegistration.h
+        ntkElasticRegistrationCUDA.h
+        ntkElasticTransformation.h
+        ntkElasticTransformationCUDA.h
+        ntkElasticityMap.h
+        ntkLinearTransformation.h
+        ntkLinearTransformationCUDA.h
+        ntkMISimilarityMeasure.h
+        ntkMISimilarityMeasureCUDA.h
+        ntkRegistration.h
+        ntkRigidRegistration.h
+        ntkRigidRegistrationCUDA.h
+        ntkSimilarityMeasure.h
+        ntkTransformation.h
+        vtkRegistrationCudaModule.h
+        vtkRegistrationCudaModuleWin32Header.h
       )
   
   SET(RegistrationCudaModule_CUDA_SRCS
-      
+        CUDA_calculateMI.cu
+        CUDA_calculateSSD.cu
+        CUDA_calculateSSDGradient.cu
+        CUDA_elasticTransformation.cu
+        CUDA_linearTransformation.cu
   )
 
 #-----------------------------------------------
@@ -57,12 +96,12 @@ INCLUDE_DIRECTORIES(
 # --------------------------------------------------------------------------
 # Wrapping
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(RegistrationCudaModule
-         RegistrationCudaModule_TCL_SRCS 
-         "${RegistrationCudaModule_SRCS}" 
-         "")
+#INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+#INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+#VTK_WRAP_TCL3(RegistrationCudaModule
+#         RegistrationCudaModule_TCL_SRCS 
+#         "${RegistrationCudaModule_SRCS}" 
+#         "")
 
 
 # --------------------------------------------------------------------------

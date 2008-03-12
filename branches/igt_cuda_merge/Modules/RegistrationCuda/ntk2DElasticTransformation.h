@@ -4,7 +4,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include "ntkTransformation.h"
 #include "ntkBSpline3Function.h"
 #include "ntk2DBSpline3Transform.h"

@@ -4,7 +4,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 #include <assert.h>
 
 #include "ntkProperties.h"

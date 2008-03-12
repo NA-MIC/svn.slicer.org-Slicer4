@@ -2,7 +2,7 @@
 #define NTKRIGIDREGISTRATION_H
 
 #include "ntkRegistration.h"
-#include "ntkSADSimilarityMeasure.h"
+//#include "ntkSADSimilarityMeasure.h"
 #include "ntkMISimilarityMeasure.h"
 #include "ntkLinearTransformation.h"
 #include "ntkDataAligner.h"
