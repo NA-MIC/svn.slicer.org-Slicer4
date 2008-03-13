@@ -207,7 +207,7 @@ int vtkSlicerUnstructuredGridsLogic::AddScalar(const char* filename, vtkMRMLUnst
   storageNode->ReadData(UnstructuredGridNode);
 
   // check to see if the UnstructuredGrid display node has a colour node already
-  vtkMRMLUnstructuredGridDisplayNode *displayNode = UnstructuredGridNode->GetDisplayNode();
+  vtkMRMLUnstructuredGridDisplayNode *displayNode = UnstructuredGridNode->GetUnstructuredGridDisplayNode();
   if (displayNode == NULL)
     {
     vtkWarningMacro("UnstructuredGrid " << UnstructuredGridNode->GetName() << "'s display node is null\n");
