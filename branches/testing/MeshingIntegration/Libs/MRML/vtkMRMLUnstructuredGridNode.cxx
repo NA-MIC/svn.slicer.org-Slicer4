@@ -48,6 +48,14 @@ vtkMRMLNode* vtkMRMLUnstructuredGridNode::CreateNodeInstance()
   return new vtkMRMLUnstructuredGridNode;
 }
 
+
+vtkMRMLUnstructuredGridDisplayNode* vtkMRMLUnstructuredGridNode::GetUnstructuredGridDisplayNode() 
+  {
+    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->GetDisplayNode());
+  }
+
+
+
 vtkMRMLUnstructuredGridNode::vtkMRMLUnstructuredGridNode()
 {
   this->UnstructuredGrid = NULL;

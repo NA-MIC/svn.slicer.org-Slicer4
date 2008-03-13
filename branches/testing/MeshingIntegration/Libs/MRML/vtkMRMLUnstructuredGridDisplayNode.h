@@ -18,20 +18,21 @@
 // or by scalar invariants), display on/off for tensor glyphs and display of 
 // trajectory as a line or tube.
 //
-
+ 
 #ifndef __vtkMRMLUnstructuredGridDisplayNode_h
 #define __vtkMRMLUnstructuredGridDisplayNode_h
 
 #include <string>
 
-#include "vtkPolyData.h"
+#include "vtkUnstructuredGrid.h"
 #include "vtkShrinkPolyData.h"
 #include "vtkGeometryFilter.h"
 
 #include "vtkMRML.h"
 #include "vtkMRMLDisplayNode.h"
-#include "vtkMRMLUnstructuredGridNode.h"
+//#include "vtkMRMLUnstructuredGridNode.h"
 
+class vtkMRMLUnstructuredGridNode;
 
 class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplayNode
 {
