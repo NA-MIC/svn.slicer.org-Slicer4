@@ -31,6 +31,7 @@
 #include "vtkMRML.h"
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLUnstructuredGridNode.h"
+#include "vtkMRMLUnstructuredGridDisplayNode.h"
 
 
 class VTK_MRML_EXPORT vtkMRMLFiniteElementBoundingBoxDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
