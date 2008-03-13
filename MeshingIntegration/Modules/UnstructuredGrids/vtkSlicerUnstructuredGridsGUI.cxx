@@ -549,7 +549,7 @@ void vtkSlicerUnstructuredGridsGUI::BuildGUI ( )
     modLoadFrame->Delete ( );
     clipFrame->Delete ( );
     UnstructuredGridSaveFrame->Delete();
-    hierFrame->Delete ( );
+
 }
 
 
