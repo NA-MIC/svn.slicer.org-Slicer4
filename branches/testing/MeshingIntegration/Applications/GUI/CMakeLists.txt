@@ -62,6 +62,10 @@ SET(dir_list
   ${GradientAnisotropicDiffusionFilter_BINARY_DIR}
   ${GradientAnisotropicDiffusionFilter_Init_SOURCE_DIR}
   ${GradientAnisotropicDiffusionFilter_Init_BINARY_DIR}
+  ${UnstructuredGrids_SOURCE_DIR}
+  ${UnstructuredGrids_BINARY_DIR}
+  ${UnstructuredGrids_Init_SOURCE_DIR}
+  ${UnstructuredGrids_Init_BINARY_DIR}
   ${SlicerTractographyDisplay_SOURCE_DIR}
   ${SlicerTractographyDisplay_BINARY_DIR}
   ${SlicerTractographyDisplay_Init_SOURCE_DIR}
@@ -220,6 +224,7 @@ IF(BUILD_MODULES)
     ${WFENGINE_LINK_LIB}
     QdecModule
     SlicerTractographyDisplay
+    UnstructuredGrids
     )
 ENDIF(BUILD_MODULES)
 
