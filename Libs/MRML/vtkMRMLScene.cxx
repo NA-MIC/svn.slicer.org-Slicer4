@@ -465,6 +465,10 @@ int vtkMRMLScene::Connect()
 //------------------------------------------------------------------------------
 int vtkMRMLScene::Import()
 {
+
+  int eventMode = vtkEventBroker::GetInstance()->GetEventMode();
+  vtkEventBroker::GetInstance()->SetEventModeToSynchronous();
+
   this->SetErrorCode(0);
   this->SetErrorMessage(std::string(""));
 
@@ -521,6 +525,8 @@ int vtkMRMLScene::Import()
 
   this->SetUndoFlag(undoFlag);
   //this->ClearReferencedNodeID();
+
+  vtkEventBroker::GetInstance()->SetEventMode(eventMode);
 
   return res;
 }
