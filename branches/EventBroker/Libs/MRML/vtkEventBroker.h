@@ -175,7 +175,16 @@ class VTK_MRML_EXPORT vtkEventBroker : public vtkObject
   };
   //ETX
   vtkGetMacro(EventMode, int);
-  vtkSetMacro(EventMode, int);
+  void SetEventMode(int eventMode)
+  {
+    if (eventMode != this->EventMode)
+     {
+     this->EventMode = eventMode;
+     this->ProcessEventQueue();
+     this->Modified();
+     }
+  };
+
   void SetEventModeToSynchronous() {this->SetEventMode(vtkEventBroker::Synchronous);};
   void SetEventModeToAsynchronous() {this->SetEventMode(vtkEventBroker::Asynchronous);};
   const char * GetEventModeAsString() {
