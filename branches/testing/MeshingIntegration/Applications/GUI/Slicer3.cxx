@@ -36,6 +36,8 @@
 #include "vtkSlicerWindow.h"
 #include "vtkSlicerApplicationSettingsInterface.h"
 
+#include "vtkSlicerUnstructuredGridsGUI.h"
+#include "vtkSlicerUnstructuredGridsLogic.h"
 
 #include "vtkSlicerConfigure.h" // for VTKSLICER_CONFIGURATION_TYPES
 
@@ -79,6 +81,7 @@ extern "C" {
 //#define SLICES_DEBUG
 #define GAD_DEBUG
 //#define MODELS_DEBUG
+//#define UGRIDS_DEBUG
 //#define VOLUMES_DEBUG
 #define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
@@ -109,6 +112,11 @@ extern "C" {
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
 #include "vtkGradientAnisotropicDiffusionFilterLogic.h"
 #include "vtkGradientAnisotropicDiffusionFilterGUI.h"
+#endif
+
+#if !defined(UGRIDS_DEBUG) && defined(BUILD_MODULES)
+#include "vtkSlicerUnstructuredGridsLogic.h"
+#include "vtkSlicerUnstructuredGridsGUI.h"
 #endif
 
 #if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
@@ -220,6 +228,11 @@ extern "C" int Qdecmodule_Init(Tcl_Interp *interp);
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Gradientanisotropicdiffusionfilter_Init(Tcl_Interp *interp);
 #endif
+
+#if !defined(UGRIDS_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Unstructuredgrids_Init(Tcl_Interp *interp);
+#endif
+
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
@@ -722,6 +735,10 @@ int Slicer3_main(int argc, char *argv[])
     Qdecmodule_Init(interp);
 #endif
 
+#if !defined(UGRIDS_DEBUG) && defined(BUILD_MODULES)
+    Unstructuredgrids_Init(interp);
+#endif
+
 
  #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
     Volumerenderingmodule_Init(interp);
@@ -958,6 +975,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->AddModuleGUI ( volumesGUI );
 #endif
 
+
 #ifndef MODELS_DEBUG
     slicerApp->SplashMessage("Initializing Models Module...");
 
@@ -976,6 +994,28 @@ int Slicer3_main(int argc, char *argv[])
     modelsGUI->GetUIPanel()->Create ( );
     slicerApp->AddModuleGUI ( modelsGUI );
 #endif
+    
+    
+    
+#ifndef UGRIDS_DEBUG
+    slicerApp->SplashMessage("Initializing UGrids Module...");
+
+    // --- Ugrids module    
+    vtkSlicerUnstructuredGridsLogic *ugridsLogic = vtkSlicerUnstructuredGridsLogic::New ( );
+    ugridsLogic->SetAndObserveMRMLScene ( scene );
+    vtkSlicerUnstructuredGridsGUI *ugridsGUI = vtkSlicerUnstructuredGridsGUI::New ( );
+    ugridsGUI->SetApplication ( slicerApp );
+    ugridsGUI->SetApplicationGUI ( appGUI );
+    ugridsGUI->SetAndObserveApplicationLogic ( appLogic );
+    ugridsGUI->SetAndObserveMRMLScene ( scene );
+    ugridsGUI->SetModuleLogic ( ugridsLogic );
+    ugridsGUI->SetGUIName( "UnstructuredGrids" );
+    ugridsGUI->GetUIPanel()->SetName ( ugridsGUI->GetGUIName ( ) );
+    ugridsGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    ugridsGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( ugridsGUI );
+#endif
+
 
 
 #ifndef FIDUCIALS_DEBUG
@@ -1985,6 +2025,9 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef MODELS_DEBUG
     modelsGUI->TearDownGUI ( );
 #endif
+#ifndef UGRIDS_DEBUG
+    ugridsGUI->TearDownGUI ( );
+#endif
 #ifndef FIDUCIALS_DEBUG
     fiducialsGUI->TearDownGUI ( );
 #endif
@@ -2087,7 +2130,10 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterGUI->Delete ();
 #endif
-    
+ 
+#if !defined(UGRIDS_DEBUG) && defined(BUILD_MODULES)
+    ugridsGUI->Delete ();
+#endif
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerTractographyDisplayGUI->Delete ();
 #endif
