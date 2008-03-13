@@ -1,5 +1,22 @@
 PROJECT(MeshingWorkflow)
 
+SET(VERDICT_DIR ".")
+SET(VERDICT_SRCS  
+        "${VERDICT_DIR}/V_HexMetric.cpp" 
+        "${VERDICT_DIR}/V_GaussIntegration.cpp"
+        "${VERDICT_DIR}/V_TetMetric.cpp" 
+        "${VERDICT_DIR}/VerdictVector.cpp" 
+       )
+
+   SET(VERDICT_HEADERS  
+        "${VERDICT_DIR}/verdict_defines.hpp" 
+        "${VERDICT_DIR}/verdict.h" 
+        "${VERDICT_DIR}/VerdictVector.hpp" 
+        "${VERDICT_DIR}/V_GaussIntegration.hpp" 
+        "${VERDICT_DIR}/v_vector.h" 
+        )
+
+
 # directories for vtkMIMX
 INCLUDE_DIRECTORIES( ${BOUNDINGBOX_SOURCE_DIR}/../Common ${BOUNDINGBOX_BINARY_DIR}/../Common ) 
 INCLUDE_DIRECTORIES( ${BOUNDINGBOX_SOURCE_DIR}/../Filter ${BOUNDINGBOX_BINARY_DIR}/../Filter ) 
@@ -29,6 +46,10 @@ INCLUDE_DIRECTORIES(
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
   )
+  
+ # until slicer goes to vtk5.2, we need to specially define a portion of the Verdict library to have 
+ # advanced mesh rendering functions 
+  
 
 SET(LIB_NAME "MeshingWorkflow")
 SET(LIB_SRCS 
@@ -49,7 +70,9 @@ SET(LIB_SRCS
   vtkFiniteElementEditBBGroup.cxx
   vtkFiniteElementCreateFEMeshFromBBGroup.cxx
   vtkMRMLFiniteElementBoundingBoxDisplayNode.cxx
-    vtkMRMLFiniteElementMeshDisplayNode.cxx
+  vtkMRMLFiniteElementMeshDisplayNode.cxx
+#  vtkMeshQualityExtended.cxx
+#  ${VERDICT_SOURCES}
   )
   
 
