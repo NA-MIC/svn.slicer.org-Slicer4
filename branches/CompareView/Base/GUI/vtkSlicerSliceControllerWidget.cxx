@@ -46,6 +46,7 @@ vtkSlicerSliceControllerWidget::vtkSlicerSliceControllerWidget ( ) {
   this->BackgroundMenuButton = NULL;
   this->LabelMenuButton = NULL;
   this->VisibilityToggle = NULL;
+  this->LoadDataButton = NULL;
   this->LabelOpacityButton = NULL;
   this->LabelOpacityScale = NULL;
   this->LabelOpacityTopLevel = NULL;
@@ -144,6 +145,12 @@ vtkSlicerSliceControllerWidget::~vtkSlicerSliceControllerWidget ( ){
     this->VisibilityToggle->SetParent(NULL);
     this->VisibilityToggle->Delete  ( );
     this->VisibilityToggle = NULL;
+    }
+  if ( this->LoadDataButton )
+    {
+    this->LoadDataButton->SetParent(NULL);
+    this->LoadDataButton->Delete  ( );
+    this->LoadDataButton = NULL;
     }
   if ( this->LabelOpacityButton )
     {
@@ -270,6 +277,7 @@ void vtkSlicerSliceControllerWidget::AddWidgetObservers ( )
     this->OffsetScale->GetWidget()->AddObserver( vtkKWScale::ScaleValueChangedEvent, this->GUICallbackCommand );
     this->OffsetScale->GetWidget()->AddObserver( vtkKWScale::ScaleValueStartChangingEvent, this->GUICallbackCommand );
     this->VisibilityToggle->AddObserver (vtkKWPushButton::InvokedEvent, this->GUICallbackCommand );
+        this->LoadDataButton->AddObserver (vtkKWPushButton::InvokedEvent, this->GUICallbackCommand );
     this->LabelOpacityButton->AddObserver (vtkKWPushButton::InvokedEvent, this->GUICallbackCommand );
     this->LabelOpacityScale->GetScale ( )->AddObserver( vtkKWScale::ScaleValueStartChangingEvent, this->GUICallbackCommand );
     this->LabelOpacityScale->GetScale ( )->AddObserver( vtkKWScale::ScaleValueChangingEvent, this->GUICallbackCommand );
@@ -304,6 +312,7 @@ void vtkSlicerSliceControllerWidget::RemoveWidgetObservers ( ) {
     this->OffsetScale->GetWidget()->RemoveObservers ( vtkKWScale::ScaleValueChangedEvent, this->GUICallbackCommand );
     this->OffsetScale->GetWidget()->RemoveObservers ( vtkKWScale::ScaleValueStartChangingEvent, this->GUICallbackCommand );
     this->VisibilityToggle->RemoveObservers ( vtkKWPushButton::InvokedEvent, this->GUICallbackCommand );
+        this->LoadDataButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, this->GUICallbackCommand );
     this->LabelOpacityButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, this->GUICallbackCommand );
     this->LinkButton->RemoveObservers ( vtkKWPushButton::InvokedEvent, this->GUICallbackCommand );        
     this->FitToWindowButton->RemoveObservers (vtkKWPushButton::InvokedEvent, this->GUICallbackCommand );
@@ -520,6 +529,8 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
     this->LinkButton->SetParent ( this->ContainerFrame );
     this->VisibilityToggle = vtkKWPushButton::New ( );
     this->VisibilityToggle->SetParent ( this->ContainerFrame );      
+        this->LoadDataButton = vtkKWPushButton::New ( );
+        this->LoadDataButton->SetParent ( this->ContainerFrame );      
     this->FitToWindowButton = vtkKWPushButton::New ( );
     this->FitToWindowButton->SetParent ( this->ContainerFrame );
     this->VolumeDisplayMenuButton = vtkKWMenuButton::New ( );
@@ -539,7 +550,8 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
     this->VisibilityToggle->SetImageToIcon ( this->VisibilityIcons->GetInvisibleIcon ( ) );        
     this->VisibilityToggle->SetBalloonHelpString ( "Toggles slice visibility in the MainViewer." );
 
-    //
+
+        //
     // Create a button to toggle the slice visibility in the main viewer and icons for it
     //
 
@@ -725,7 +737,7 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
     // on a single row. If resolution is there, put them
     // on the same row to save vertical space for imagedata.
     //
-    if ( (screenwidth <= screenWidthThreshold) || (app->GetApplicationWindowWidth() < screenWidthThreshold) )
+        if ( (screenwidth <= screenWidthThreshold) || (app->GetApplicationWindowWidth() < screenWidthThreshold) )
       {
       this->Script ( "grid %s -sticky ew -columnspan 4", this->IconFrame->GetWidgetName ( ) );
       this->Script ( "grid %s -sticky ew -columnspan 4", this->ScaleFrame->GetWidgetName ( ) );
@@ -760,7 +772,7 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
     this->Script ("pack %s -side left -expand n -padx 1 -in %s", 
                   this->VisibilityToggle->GetWidgetName ( ),
                   this->ScaleFrame->GetWidgetName());
-    this->Script ("pack %s -side left -expand n -padx 1 -in %s", 
+        this->Script ("pack %s -side left -expand n -padx 1 -in %s", 
                   this->FitToWindowButton->GetWidgetName ( ),
                   this->ScaleFrame->GetWidgetName());
     this->Script ("pack %s -side left -expand n -padx 1 -in %s", 
@@ -833,81 +845,80 @@ void vtkSlicerSliceControllerWidget::UpdateLayerMenus()
 //----------------------------------------------------------------------------
 void vtkSlicerSliceControllerWidget::UpdateOrientation ( int link )
 {
-  int i, nnodes;
-  vtkMRMLSliceNode *snode;
-  
-  //--- if slice viewers are linked, modify all Controller's SliceNodes;
-  //--- otherwise just update the one we know about.
-  vtkKWMenuButton *mb = this->OrientationSelector->GetWidget()->GetWidget();
-  if ( !strcmp (mb->GetValue(), "Axial") )   
-    {
-    if ( link )
-      {
-      nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");
-      for ( i=0; i<nnodes; i++)
-        {
-        snode = vtkMRMLSliceNode::SafeDownCast (
-                                                this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
-        snode->SetOrientationToAxial();
-        }
-      }
-    else
-      {
-      this->SliceNode->SetOrientationToAxial();
-      }
-    }
-  if ( !strcmp (mb->GetValue(), "Sagittal") )   
-    {
-    if ( link )
-      {
-      nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");          
-      for ( i=0; i<nnodes; i++)
-        {
-        snode = vtkMRMLSliceNode::SafeDownCast (
-                                                this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
-        snode->SetOrientationToSagittal();
-        }
-      }
-    else
-      {
-      this->SliceNode->SetOrientationToSagittal();
-      }
-    }
-  if ( !strcmp (mb->GetValue(), "Coronal") )   
-    {
-    if ( link )
-      {
-      nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");          
-      for ( i=0; i<nnodes; i++)
-        {
-        snode = vtkMRMLSliceNode::SafeDownCast (
-                                                this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
-        snode->SetOrientationToCoronal();
-        }
-      }
-    else
-      {
-      this->SliceNode->SetOrientationToCoronal();
-      }
-    }
-  if ( !strcmp (mb->GetValue(), "Reformat") )   
-    {
-    if ( link )
-      {
-      nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");          
-      for ( i=0; i<nnodes; i++)
-        {
-        snode = vtkMRMLSliceNode::SafeDownCast (
-                                                this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
-        snode->SetOrientationToReformat();
-        }
-      }
-    else
-      {
-      this->SliceNode->SetOrientationToReformat();
-      }
-    }
+        int i, nnodes;
+        vtkMRMLSliceNode *snode;
 
+        //--- if slice viewers are linked, modify all Controller's SliceNodes;
+        //--- otherwise just update the one we know about.
+        vtkKWMenuButton *mb = this->OrientationSelector->GetWidget()->GetWidget();
+        if ( !strcmp (mb->GetValue(), "Axial") )   
+        {
+                if ( link )
+                {
+                        nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");
+                        for ( i=0; i<nnodes; i++)
+                        {
+                                snode = vtkMRMLSliceNode::SafeDownCast (
+                                        this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
+                                snode->SetOrientationToAxial();
+                        }
+                }
+                else
+                {
+                        this->SliceNode->SetOrientationToAxial();
+                }
+        }
+        if ( !strcmp (mb->GetValue(), "Sagittal") )   
+        {
+                if ( link )
+                {
+                        nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");          
+                        for ( i=0; i<nnodes; i++)
+                        {
+                                snode = vtkMRMLSliceNode::SafeDownCast (
+                                        this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
+                                snode->SetOrientationToSagittal();
+                        }
+                }
+                else
+                {
+                        this->SliceNode->SetOrientationToSagittal();
+                }
+        }
+        if ( !strcmp (mb->GetValue(), "Coronal") )   
+        {
+                if ( link )
+                {
+                        nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");          
+                        for ( i=0; i<nnodes; i++)
+                        {
+                                snode = vtkMRMLSliceNode::SafeDownCast (
+                                        this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
+                                snode->SetOrientationToCoronal();
+                        }
+                }
+                else
+                {
+                        this->SliceNode->SetOrientationToCoronal();
+                }
+        }
+        if ( !strcmp (mb->GetValue(), "Reformat") )   
+        {
+                if ( link )
+                {
+                        nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");          
+                        for ( i=0; i<nnodes; i++)
+                        {
+                                snode = vtkMRMLSliceNode::SafeDownCast (
+                                        this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
+                                snode->SetOrientationToReformat();
+                        }
+                }
+                else
+                {
+                        this->SliceNode->SetOrientationToReformat();
+                }
+        }
 }
 
 
@@ -1067,98 +1078,101 @@ void vtkSlicerSliceControllerWidget::FitSliceToBackground ( int link )
   ssgui = vtkSlicerSlicesGUI::SafeDownCast ( app->GetModuleGUIByName ("Slices") );
   appGUI = ssgui->GetApplicationGUI ( );
 
-  if ( ssgui->GetSliceGUICollection() )
-    {
-    ssgui->GetSliceGUICollection()->InitTraversal();
-    sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-    while ( sgui != NULL )
+  if (ssgui)
+  {
+    char *layoutname = NULL;
+    int nSliceGUI = ssgui->GetNumberOfSliceGUI();
+    for (int i = 0; i < nSliceGUI; i++)
       {
-      if (sgui->GetSliceController() == this )
-        {
-        found = 1;
-        break;
-        }
-      sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
+        if (i == 0)
+          {
+            sgui = ssgui->GetFirstSliceGUI();
+            layoutname = ssgui->GetFirstSliceGUILayoutName();
+          }
+        else
+          {
+            sgui = ssgui->GetNextSliceGUI(layoutname);
+            layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
+          }
+        
+        if (sgui)
+          {
+            if (sgui->GetSliceController() == this )
+              {
+                found = 1;
+                break;
+              }
+          }
       }
-    }
+  }
   else
-    {
+  {
     return;
-    }
+  }
 
   if ( found )
-    {
+  {
     if ( link )
       {
-      // First save all SliceNodes for undo:
-      ssgui->GetSliceGUICollection()->InitTraversal();
-      sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-      vtkCollection *nodes = vtkCollection::New();
-      while ( sgui != NULL )
-        {
-        nodes->AddItem ( sgui->GetSliceNode ( ) );
-        sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-        }
-      this->MRMLScene->SaveStateForUndo ( nodes );
-      nodes->Delete ( );
-
-      // Now fit all Slices to background
-      ssgui->GetSliceGUICollection()->InitTraversal();
-      sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-      while ( sgui != NULL )
-        {
-//        int w, h;
-        //w = sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidth();
-        //h = sgui->GetSliceViewer()->GetRenderWidget ( )->GetHeight();
-        //
-//         sscanf(
-//           this->Script("winfo width %s", 
-//               sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
-//           "%d", &w);
-//         sscanf(
-//           this->Script("winfo height %s", 
-//               sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
-//           "%d", &h);
-//        sgui->GetLogic()->FitSliceToBackground ( w, h );
-        //
+        // First save all SliceNodes for undo:
+        vtkCollection *nodes = vtkCollection::New();
+        char *layoutname = NULL;
+        int nSliceGUI = ssgui->GetNumberOfSliceGUI();
+        for (int i = 0; i < nSliceGUI; i++)
+          {
+            if (i == 0)
+              {
+                sgui = ssgui->GetFirstSliceGUI();
+                layoutname = ssgui->GetFirstSliceGUILayoutName();
+              }
+            else
+              {
+                sgui = ssgui->GetNextSliceGUI(layoutname);
+                layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
+              }
+            
+            if (sgui)
+              nodes->AddItem ( sgui->GetSliceNode ( ) );
+          }
+        
+        this->MRMLScene->SaveStateForUndo ( nodes );
+        nodes->Delete ( );
+        
+        // Now fit all Slices to background
+        for (int i = 0; i < nSliceGUI; i++)
+          {
+            if (i == 0)
+              {
+                sgui = ssgui->GetFirstSliceGUI();
+                layoutname = ssgui->GetFirstSliceGUILayoutName();
+              }
+            else
+              {
+                sgui = ssgui->GetNextSliceGUI(layoutname);
+                layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
+              }
+            
+            if (sgui)
+              {
+                int *rSize = sgui->GetSliceViewer()->GetRenderWidget()
+                  ->GetRenderer()->GetSize();
+                sgui->GetLogic()->FitSliceToAll ( rSize[0], rSize[1] );
+                sgui->GetSliceNode()->UpdateMatrices( );
+                appGUI->GetSlicesControlGUI()->RequestFOVEntriesUpdate();
+              }
+          }
+      }
+    else
+      {
+        this->MRMLScene->SaveStateForUndo ( this->SliceNode );
         // Fit to the size of viewport 0 (for the LightBox)
         int *rSize = sgui->GetSliceViewer()->GetRenderWidget()
           ->GetRenderer()->GetSize();
         sgui->GetLogic()->FitSliceToAll ( rSize[0], rSize[1] );
-        sgui->GetSliceNode()->UpdateMatrices( );
-        appGUI->GetSlicesControlGUI()->RequestFOVEntriesUpdate();
-        sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-        }
+        this->SliceNode->UpdateMatrices( );
+        appGUI->GetSlicesControlGUI()->RequestFOVEntriesUpdate();      
       }
-    else
-      {
-      this->MRMLScene->SaveStateForUndo ( this->SliceNode );
-
-//      int w, h;
-      // gives bogus values:
-      //w = sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidth();
-      //h = sgui->GetSliceViewer()->GetRenderWidget ( )->GetHeight();
-
-//       sscanf(
-//         this->Script("winfo width %s", 
-//             sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
-//         "%d", &w);
-//       sscanf(
-//         this->Script("winfo height %s", 
-//             sgui->GetSliceViewer()->GetRenderWidget ( )->GetWidgetName()), 
-//         "%d", &h);
-
-//       sgui->GetLogic()->FitSliceToBackground ( w, h );
-
-      //
-      // Fit to the size of viewport 0 (for the LightBox)
-      int *rSize = sgui->GetSliceViewer()->GetRenderWidget()
-        ->GetRenderer()->GetSize();
-      sgui->GetLogic()->FitSliceToAll ( rSize[0], rSize[1] );
-      this->SliceNode->UpdateMatrices( );
-      appGUI->GetSlicesControlGUI()->RequestFOVEntriesUpdate();      
-      }
-    }
+  }
 }
 
 
@@ -1166,111 +1180,126 @@ void vtkSlicerSliceControllerWidget::FitSliceToBackground ( int link )
 //----------------------------------------------------------------------------
 void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, unsigned long event, void *callData ) 
 { 
-  //
-  // Is this Slice controller linked to others?
-  //
-  int link, i, nnodes;
-  vtkMRMLSliceCompositeNode *cnode;
-  vtkMRMLSliceNode *snode;
-  int numRows, numColumns;
-    
-  //
-  // --- Find out whether SliceViewers are linked or unlinked
-  // --- so we know how to handle control.
-  //
-  if ( this->SliceCompositeNode )
-    {
-    link = this->SliceCompositeNode->GetLinkedControl ( );
-    }
-  else
-    {
-    link = 0;
-    }
+        //
+        // Is this Slice controller linked to others?
+        //
+        int link, i, nnodes;
+        vtkMRMLSliceCompositeNode *cnode;
+        vtkMRMLSliceNode *snode;
+        int numRows, numColumns;
+
+        //
+        // --- Find out whether SliceViewers are linked or unlinked
+        // --- so we know how to handle control.
+        //
+        if ( this->SliceCompositeNode )
+        {
+                link = this->SliceCompositeNode->GetLinkedControl ( );
+        }
+        else
+        {
+                link = 0;
+        }
   
-  //
-  // --- Get a route to all SliceGUI's SliceNodes and SliceCompositeNodes in case of link
-  //
-  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast (this->GetApplication());
-  vtkSlicerSlicesGUI *sgui;
-  if (app)
-    {
-    sgui = vtkSlicerSlicesGUI::SafeDownCast ( app->GetModuleGUIByName("Slices"));
-    }
-  else
-    {
-    sgui = NULL;
-    }
+        //
+        // --- Get a route to all SliceGUI's SliceNodes and SliceCompositeNodes in case of link
+        //
+        vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast (this->GetApplication());
+        vtkSlicerGUILayout *layout;
+        vtkSlicerSlicesGUI *sgui;
+        if (app)
+        {
+                sgui = vtkSlicerSlicesGUI::SafeDownCast ( app->GetModuleGUIByName("Slices"));
+                layout = app->GetMainLayout();
+        }
+        else
+        {
+                sgui = NULL;
+                layout = NULL;
+        }
 
 
-  //
-  // --- Set the slice node to null if it no longer exists in the MRML scene.
-  //
-   if (this->SliceNode != NULL &&
-       this->MRMLScene->GetNodeByID(this->SliceNode->GetID()) == NULL)
-    {
-    this->SetSliceNode(NULL);
-    }
-   //
-   // --- Set the slice composite node to null if it no longer exists in the scene.
-   //
-  if (this->SliceCompositeNode != NULL &&
-      this->MRMLScene->GetNodeByID(this->SliceCompositeNode->GetID()) == NULL)
-    {
-    this->SetSliceCompositeNode(NULL);
-    }
+        //
+        // --- Set the slice node to null if it no longer exists in the MRML scene.
+        //
+        if (this->SliceNode != NULL &&
+                this->MRMLScene->GetNodeByID(this->SliceNode->GetID()) == NULL)
+        {
+                this->SetSliceNode(NULL);
+        }
+        //
+        // --- Set the slice composite node to null if it no longer exists in the scene.
+        //
+        if (this->SliceCompositeNode != NULL &&
+                this->MRMLScene->GetNodeByID(this->SliceCompositeNode->GetID()) == NULL)
+        {
+                this->SetSliceCompositeNode(NULL);
+        }
 
-  //
-  // --- Update orientation if needed
-  //
-  if ( this->SliceNode != NULL && 
-       vtkKWMenu::SafeDownCast(caller) == this->OrientationSelector->GetWidget()->GetWidget()->GetMenu() )
-    {
-    if (sgui)
-      this->UpdateOrientation ( link );
-    }
+        //
+        // --- Update orientation if needed
+        //
+        if ( this->SliceNode != NULL && 
+                vtkKWMenu::SafeDownCast(caller) == this->OrientationSelector->GetWidget()->GetWidget()->GetMenu() )
+        {
+                if (sgui)
+                        this->UpdateOrientation ( link );
+        }
 
-  //
-  // Update Foreground if needed
-  //
-  if ( vtkSlicerNodeSelectorWidget::SafeDownCast(caller) == this->ForegroundSelector )
-    {
-    if (sgui )
-      {
-      this->UpdateForegroundLayer ( link );
-      this->ForegroundSelector->SetBalloonHelpString ("Select the foreground");
-      }
-    }
+        //
+        // Update Foreground if needed
+        //
+        if ( vtkSlicerNodeSelectorWidget::SafeDownCast(caller) == this->ForegroundSelector )
+        {
+                if ( sgui )
+                {
+                        // update foreground only if the layout is not CompareView
+                        if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
+                        {
+                                this->UpdateForegroundLayer ( link );
+                                this->ForegroundSelector->SetBalloonHelpString ("Select the foreground");
+                        }
+                }
+        }
 
-  //
-  // Update Background if needed
-  //
-  if ( vtkSlicerNodeSelectorWidget::SafeDownCast(caller) == this->BackgroundSelector )
-    {
-    if (sgui )
-      {
-      this->UpdateBackgroundLayer ( link );
-      this->BackgroundSelector->SetBalloonHelpString ("Select the background");
-      }
-    }
+        //
+        // Update Background if needed
+        //
+        if ( vtkSlicerNodeSelectorWidget::SafeDownCast(caller) == this->BackgroundSelector )
+        {
+                if ( sgui )
+                {
+                        // update background only if the layout is not CompareView
+                        if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
+                        {
+                                this->UpdateBackgroundLayer ( link );
+                                this->BackgroundSelector->SetBalloonHelpString ("Select the background");
+                        }
+                }
+        }
 
-  
-  //
-  // Update Label layer if needed
-  //
-  if ( vtkSlicerNodeSelectorWidget::SafeDownCast(caller) == this->LabelSelector )
-    {
-    if (sgui)
-      {
-      this->UpdateLabelLayer ( link );
-      this->LabelSelector->SetBalloonHelpString ("Select the label map");
-      }
-    }
-  
-  if ( !this->SliceNode)
-    {
-    return;
-    }
-  
+
+        //
+        // Update Label layer if needed
+        //
+        if ( vtkSlicerNodeSelectorWidget::SafeDownCast(caller) == this->LabelSelector )
+        {
+                if (sgui)
+                {
+                        // update background only if the layout is not CompareView
+                        if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
+                        {
+                                this->UpdateLabelLayer ( link );
+                                this->LabelSelector->SetBalloonHelpString ("Select the label map");
+                        }
+                }
+        }
+
+        if ( !this->SliceNode)
+        {
+                return;
+        }
+
   //
   // Was event invoked by other widgets? (button, scale, entry, menu)?
   //
@@ -1387,248 +1416,290 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
           }
         }
       }
-      // change other slice controller widgets if linked; go thru the SlicesGUI collection
-    if ( link )
-      {
-      vtkSlicerSlicesGUI *ssgui = vtkSlicerSlicesGUI::SafeDownCast ( app->GetModuleGUIByName ("Slices") );
-      vtkSlicerSliceGUI *sgui;
-      if ( ssgui->GetSliceGUICollection() )
+      // change other slice controller widgets if linked; go thru the SlicesGUI Map
+        if ( link )
         {
-        ssgui->GetSliceGUICollection()->InitTraversal();
-        sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-        while ( sgui ) 
-          {
-          if ( sgui->GetLogic() )
-            {
-            if  ( sgui->GetLogic()->GetForegroundLayer() )
-              {
-              vtkMRMLScalarVolumeDisplayNode *displayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(sgui->GetLogic()->GetForegroundLayer()->GetVolumeDisplayNode());
-              if ( displayNode )
+                vtkSlicerSlicesGUI *ssgui = vtkSlicerSlicesGUI::SafeDownCast( app->GetModuleGUIByName("Slices") );
+                vtkSlicerSliceGUI *sgui;
+                if (ssgui)
                 {
-                if ( interp != displayNode->GetInterpolate() )
-                  {
-                  this->MRMLScene->SaveStateForUndo ( displayNode );
-                  displayNode->SetInterpolate ( interp );
-                  // need this to propagate change thru to the VolumeDisplayWidget's GUI
-                  if ( sgui->GetLogic()->GetForegroundLayer()->GetVolumeNode() )
-                    {
-                    sgui->GetLogic()->GetForegroundLayer()->GetVolumeNode()->Modified();
-                    }
-                  }
-                }
-              }
-            }
-          sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-          }
-        }
-      }
-    }  
+                        char *layoutname = NULL;
+                        int nSliceGUI = ssgui->GetNumberOfSliceGUI();
+                        for (int i = 0; i < nSliceGUI; i++)
+                        {
+                                if (i == 0)
+                                {
+                                        sgui = ssgui->GetFirstSliceGUI();
+                                        layoutname = ssgui->GetFirstSliceGUILayoutName();
+                                }
+                                else
+                                {
+                                        sgui = ssgui->GetNextSliceGUI(layoutname);
+                                        layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
+                                }
 
-  else if ( menu == this->BackgroundMenuButton->GetMenu() &&
-            event == vtkKWMenu::MenuItemInvokedEvent && app )
-    {
-    // check to see if this layer's associated VolumeDisplayNode has
-    // a different value for interpolation than checkbutton indicates.
-    //
-    int interp = this->BackgroundMenuButton->GetMenu()->GetItemSelectedState ( "interpolation" );
-    if ( this->SliceLogic )
-      {
-      if ( this->SliceLogic->GetBackgroundLayer() )
-        {
-        vtkMRMLScalarVolumeDisplayNode *displayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(this->SliceLogic->GetBackgroundLayer()->GetVolumeDisplayNode());
-        if ( displayNode )
-          {
-          if ( interp != displayNode->GetInterpolate() )
-            {
-            // save state for undo and modify the node's value to match GUI
-            this->MRMLScene->SaveStateForUndo ( displayNode );
-            displayNode->SetInterpolate ( interp );
-            // need this to propagate change thru to the VolumeDisplayWidget's GUI
-            if ( this->SliceLogic->GetBackgroundLayer()->GetVolumeNode() )
-              {
-              this->SliceLogic->GetBackgroundLayer()->GetVolumeNode()->Modified();
-              }
-            }
-          }
-        }
-      }
-      // change other slice controller widgets if linked; go thru the SlicesGUI collection
-    if ( link )
-      {
-      vtkSlicerSlicesGUI *ssgui = vtkSlicerSlicesGUI::SafeDownCast ( app->GetModuleGUIByName ("Slices") );
-      vtkSlicerSliceGUI *sgui;
-      if ( ssgui->GetSliceGUICollection() )
-        {
-        ssgui->GetSliceGUICollection()->InitTraversal();
-        sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
-        while ( sgui ) 
-          {
-          if ( sgui->GetLogic() )
-            {
-            if  ( sgui->GetLogic()->GetBackgroundLayer() )
-              {
-              vtkMRMLScalarVolumeDisplayNode *displayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(sgui->GetLogic()->GetBackgroundLayer()->GetVolumeDisplayNode());
-              if ( displayNode )
-                {
-                if ( interp != displayNode->GetInterpolate() )
-                  {
-                  this->MRMLScene->SaveStateForUndo ( displayNode );
-                  displayNode->SetInterpolate ( interp );
-                  // need this to propagate change thru to the VolumeDisplayWidget's GUI
-                  if ( sgui->GetLogic()->GetBackgroundLayer()->GetVolumeNode() )
-                    {
-                    sgui->GetLogic()->GetBackgroundLayer()->GetVolumeNode()->Modified();
-                    }
-                  }
+                                if ( sgui->GetLogic() )
+                                {
+                                        if  ( sgui->GetLogic()->GetForegroundLayer() )
+                                        {
+                                                vtkMRMLScalarVolumeDisplayNode *displayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(sgui->GetLogic()->GetForegroundLayer()->GetVolumeDisplayNode());
+                                                if ( displayNode )
+                                                {
+                                                        if ( interp != displayNode->GetInterpolate() )
+                                                        {
+                                                                this->MRMLScene->SaveStateForUndo ( displayNode );
+                                                                displayNode->SetInterpolate ( interp );
+                                                                // need this to propagate change thru to the VolumeDisplayWidget's GUI
+                                                                if ( sgui->GetLogic()->GetForegroundLayer()->GetVolumeNode() )
+                                                                {
+                                                                        sgui->GetLogic()->GetForegroundLayer()->GetVolumeNode()->Modified();
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                }
+                        }
                 }
-              }
-            }
-          sgui = vtkSlicerSliceGUI::SafeDownCast ( ssgui->GetSliceGUICollection()->GetNextItemAsObject() );
+        }
+  }  
+  else if ( menu == this->BackgroundMenuButton->GetMenu() &&
+          event == vtkKWMenu::MenuItemInvokedEvent && app )
+  {
+          // check to see if this layer's associated VolumeDisplayNode has
+          // a different value for interpolation than checkbutton indicates.
+          //
+          int interp = this->BackgroundMenuButton->GetMenu()->GetItemSelectedState ( "interpolation" );
+          if ( this->SliceLogic )
+          {
+                  if ( this->SliceLogic->GetBackgroundLayer() )
+                  {
+                          vtkMRMLScalarVolumeDisplayNode *displayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(this->SliceLogic->GetBackgroundLayer()->GetVolumeDisplayNode());
+                          if ( displayNode )
+                          {
+                                  if ( interp != displayNode->GetInterpolate() )
+                                  {
+                                          // save state for undo and modify the node's value to match GUI
+                                          this->MRMLScene->SaveStateForUndo ( displayNode );
+                                          displayNode->SetInterpolate ( interp );
+                                          // need this to propagate change thru to the VolumeDisplayWidget's GUI
+                                          if ( this->SliceLogic->GetBackgroundLayer()->GetVolumeNode() )
+                                          {
+                                                  this->SliceLogic->GetBackgroundLayer()->GetVolumeNode()->Modified();
+                                          }
+                                  }
+                          }
+                  }
+          }
+          // change other slice controller widgets if linked; go thru the SlicesGUI Map
+          if ( link )
+          {
+                  vtkSlicerSlicesGUI *ssgui = vtkSlicerSlicesGUI::SafeDownCast ( app->GetModuleGUIByName ("Slices") );
+                  vtkSlicerSliceGUI *sgui;
+                  if (ssgui)
+                  {
+                          char *layoutname = NULL;
+                          int nSliceGUI = ssgui->GetNumberOfSliceGUI();
+                          for (int i = 0; i < nSliceGUI; i++)
+                          {
+                                  if (i == 0)
+                                  {
+                                          sgui = ssgui->GetFirstSliceGUI();
+                                          layoutname = ssgui->GetFirstSliceGUILayoutName();
+                                  }
+                                  else
+                                  {
+                                          sgui = ssgui->GetNextSliceGUI(layoutname);
+                                          layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
+                                  }
+
+                                  if ( sgui->GetLogic() )
+                                  {
+                                          if  ( sgui->GetLogic()->GetBackgroundLayer() )
+                                          {
+                                                  vtkMRMLScalarVolumeDisplayNode *displayNode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(sgui->GetLogic()->GetBackgroundLayer()->GetVolumeDisplayNode());
+                                                  if ( displayNode )
+                                                  {
+                                                          if ( interp != displayNode->GetInterpolate() )
+                                                          {
+                                                                  this->MRMLScene->SaveStateForUndo ( displayNode );
+                                                                  displayNode->SetInterpolate ( interp );
+                                                                  // need this to propagate change thru to the VolumeDisplayWidget's GUI
+                                                                  if ( sgui->GetLogic()->GetBackgroundLayer()->GetVolumeNode() )
+                                                                  {
+                                                                          sgui->GetLogic()->GetBackgroundLayer()->GetVolumeNode()->Modified();
+                                                                  }
+                                                          }
+                                                  }
+                                          }
+                                  }
+                          }
+                  }
           }
         }
-      }
-    }
   else if ( menu == this->LightboxButton->GetMenu() &&
             event == vtkKWMenu::MenuItemInvokedEvent && app )
-    {
-    //
-    // Lightbox view functionality developing here.
-    //
-    if ( !strcmp ( this->LightboxButton->GetValue(), "1x1 view") )
-      {
-      if ( false && link && sgui )
-        {
-        // apply this reformat to all slice MRML
-        }
-      else
-        {
-        // apply this reformat to only this slice MRML
-        this->SliceNode->SetLayoutGrid( 1, 1 );
-        }
-      }
-    else if ( !strcmp ( this->LightboxButton->GetValue(), "2x2 view") )
-      {
-      if ( false && link && sgui )
-        {
-        // apply this reformat to all slice MRMLs
-        }
-      else
-        {
-        // apply this reformat to only this slice MRML
-        this->SliceNode->SetLayoutGrid( 2, 2 );
-        }
-      }
-    else if  ( !strcmp ( this->LightboxButton->GetValue(), "3x3 view" ) )
-      {
-      if ( false && link && sgui )
-        {
-        // apply this reformat to all slice MRMLs
-        }
-      else
-        {
-        // apply this reformat to only this slice MRML
-        this->SliceNode->SetLayoutGrid( 3, 3 );
-        }
-      }
-    else if ( !strcmp ( this->LightboxButton->GetValue (), "6x6 view") )
-      {
-      if ( false && link && sgui )
-        {
-        // apply this reformat to all slice MRMLs
-        }
-      else
-        {
-        // apply this reformat to only this slice MRML
-        this->SliceNode->SetLayoutGrid( 6, 6 );
-        }
-      }
-    else if ( !strcmp ( this->LightboxButton->GetValue (), "customized view") )
-      {
-      // pop up a toplevel to specify NXM view
-      PopUpLightboxCustomLayoutFrame();
-      }
-    }
+  {
+          //
+          // Lightbox view functionality developing here.
+          //
+          if ( !strcmp ( this->LightboxButton->GetValue(), "1x1 view") )
+          {
+                  if ( link && sgui )
+                  {
+                          // apply this reformat to all slice MRML
+                          this->SliceViewerLayoutConfig(1, 1);
+                  }
+                  else
+                  {
+                          // apply this reformat to only this slice MRML
+                          this->SliceNode->SetLayoutGrid( 1, 1 );
+                  }
+          }
+          else if ( !strcmp ( this->LightboxButton->GetValue(), "2x2 view") )
+          {
+                  if ( link && sgui )
+                  {
+                          // apply this reformat to all CompareX slice MRMLs
+                          this->SliceViewerLayoutConfig(2, 2);
+                  }
+                  else
+                  {
+                          // apply this reformat to only this slice MRML
+                          this->SliceNode->SetLayoutGrid( 2, 2 );
+                  }
+          }
+          else if  ( !strcmp ( this->LightboxButton->GetValue(), "3x3 view" ) )
+          {
+                  if ( link && sgui )
+                  {
+                          // apply this reformat to all CompareX slice MRMLs
+                          this->SliceViewerLayoutConfig(3, 3);
+                  }
+                  else
+                  {
+                          // apply this reformat to only this slice MRML
+                          this->SliceNode->SetLayoutGrid( 3, 3 );
+                  }
+          }
+          else if ( !strcmp ( this->LightboxButton->GetValue (), "6x6 view") )
+          {
+                  if ( link && sgui )
+                  {
+                          // apply this reformat to all CompareX slice MRMLs
+                          this->SliceViewerLayoutConfig(6, 6);
+                  }
+                  else
+                  {
+                          // apply this reformat to only this slice MRML
+                          this->SliceNode->SetLayoutGrid( 6, 6 );
+                  }
+          }
+          else if ( !strcmp ( this->LightboxButton->GetValue (), "customized view") )
+          {
+                  // pop up a toplevel to specify NXM view
+                  PopUpLightboxCustomLayoutFrame();
+          }
+  }
   if ( button == this->LightboxApplyButton &&
-            event == vtkKWPushButton::InvokedEvent )
-    {
-    numRows = this->LightboxRowsEntry->GetValueAsInt();
-    numColumns = this->LightboxColumnsEntry->GetValueAsInt();
-    if ( false && link && sgui )
-      {
-      // apply this reformat to all slice MRMLs
-      }
-    else
-      {
-      // apply this reformat to only this slice MRML
-      this->SliceNode->SetLayoutGrid( numRows, numColumns );
-      }
-    }
-  
+          event == vtkKWPushButton::InvokedEvent )
+  {
+          numRows = this->LightboxRowsEntry->GetValueAsInt();
+          numColumns = this->LightboxColumnsEntry->GetValueAsInt();
+          if ( link && sgui )
+          {
+                  // apply this reformat to all slice MRMLs
+                  this->SliceViewerLayoutConfig(numRows, numColumns);
+          }
+          else
+          {
+                  // apply this reformat to only this slice MRML
+                  this->SliceNode->SetLayoutGrid( numRows, numColumns );
+          }
+  }
+
   //
   // Scales starting to move? save state for undo.
   //
   if ( this->OffsetScale->GetWidget() == vtkKWScale::SafeDownCast( caller ) &&
           event == vtkKWScale::ScaleValueStartChangingEvent )
-    {
-    // set an undo state when the scale starts being dragged
-    this->MRMLScene->SaveStateForUndo( this->SliceNode );
-    }
+  {
+          // set an undo state when the scale starts being dragged
+          this->MRMLScene->SaveStateForUndo( this->SliceNode );
+  }
   else if ( scale == this->LabelOpacityScale->GetWidget() && event == vtkKWScale::ScaleValueStartChangingEvent )
-    {
-    if ( link && sgui ) 
-      {
-      nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceCompositeNode");          
-      for ( i=0; i<nnodes; i++)
-        {
-        // set an undo state when the scale starts being dragged
-        cnode = vtkMRMLSliceCompositeNode::SafeDownCast (
-                                                this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceCompositeNode"));
-        this->MRMLScene->SaveStateForUndo( cnode );
-        }
-      }
-    else
-      {
-      this->MRMLScene->SaveStateForUndo ( this->SliceCompositeNode );
-      }
-    }
+  {
+          if ( link && sgui ) 
+          {
+                  nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceCompositeNode");          
+                  for ( i=0; i<nnodes; i++)
+                  {
+                          // set an undo state when the scale starts being dragged
+                          cnode = vtkMRMLSliceCompositeNode::SafeDownCast (
+                                  this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceCompositeNode"));
+                          this->MRMLScene->SaveStateForUndo( cnode );
+                  }
+          }
+          else
+          {
+                  this->MRMLScene->SaveStateForUndo ( this->SliceCompositeNode );
+          }
+  }
 
   //
   // Scales are moving? modify MRML
   //
   int modified = 0;
   if ( (double) this->LabelOpacityScale->GetValue() != this->SliceCompositeNode->GetLabelOpacity() )
-    {
-    //--- if slice viewers are linked, modify all Controller's SliceCompositeNodes.
-    if ( link && sgui )
-      {
-      nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceCompositeNode");          
-      for ( i=0; i<nnodes; i++)
-        {
-        cnode = vtkMRMLSliceCompositeNode::SafeDownCast (
-                                                this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceCompositeNode"));
-        cnode->SetLabelOpacity ( (double) this->LabelOpacityScale->GetValue() );
-        }
-      }
-    else
-      {
-      this->SliceCompositeNode->SetLabelOpacity ( (double) this->LabelOpacityScale->GetValue() );
-//      modified = 1;
-      }
-    }
+  {
+          //--- if slice viewers are linked, modify all Controller's SliceCompositeNodes.
+          if ( link && sgui )
+          {
+                  nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceCompositeNode");          
+                  for ( i=0; i<nnodes; i++)
+                  {
+                          cnode = vtkMRMLSliceCompositeNode::SafeDownCast (
+                                  this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceCompositeNode"));
+                          cnode->SetLabelOpacity ( (double) this->LabelOpacityScale->GetValue() );
+                  }
+          }
+          else
+          {
+                  this->SliceCompositeNode->SetLabelOpacity ( (double) this->LabelOpacityScale->GetValue() );
+                  //      modified = 1;
+          }
+  }
   if ( (double) this->OffsetScale->GetValue() != this->SliceLogic->GetSliceOffset() )
-    {
-    this->SliceLogic->SetSliceOffset( (double) this->OffsetScale->GetValue() );
-    modified = 1;
-    }
+  {
+          this->SliceLogic->SetSliceOffset( (double) this->OffsetScale->GetValue() );
+          modified = 1;
+  }
 
   if ( modified )
-    {
-    this->Modified();
-    }
-
+  {
+          this->Modified();
+  }
 }
 
+void vtkSlicerSliceControllerWidget::SliceViewerLayoutConfig(int nRows, int nColumns)
+{
+        char *pTag = NULL;
+        vtkMRMLSliceNode *snode;
+        int nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");          
+        for (int i=0; i<nnodes; i++)
+        {
+                snode = vtkMRMLSliceNode::SafeDownCast (
+                        this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
 
+                pTag = snode->GetSingletonTag();
+                switch (pTag[0])
+                {
+                case 'C':
+                        snode->SetLayoutGrid( nRows, nColumns );
+                        break;
+                        //default:
+                }
+        }
+}
 
 //---------------------------------------------------------------------------
 void vtkSlicerSliceControllerWidget::HideLightboxCustomLayoutFrame ( )
@@ -1784,18 +1855,18 @@ int vtkSlicerSliceControllerWidget::AllSlicesLinked ( )
 //----------------------------------------------------------------------------
 void vtkSlicerSliceControllerWidget::ToggleSlicesLink  ( )
 {
-  // check to see what the current link status is.
-  int link = this->SliceCompositeNode->GetLinkedControl();
+        // check to see what the current link status is.
+        int link = this->SliceCompositeNode->GetLinkedControl();
 
-  if ( link==1 )
-    {
-    this->UnlinkAllSlices();
-    }
-  else
-    {
-    // slices are currently unlinked, so link them all.
-    this->LinkAllSlices();
-    }
+        if ( link==1 )
+        {
+                this->UnlinkAllSlices();
+        }
+        else
+        {
+                // slices are currently unlinked, so link them all.
+                this->LinkAllSlices();
+        }
 }
 
 
@@ -2013,4 +2084,3 @@ void vtkSlicerSliceControllerWidget::PrintSelf(ostream& os, vtkIndent indent)
   this->Superclass::PrintSelf(os, indent);
   // widgets?
 }
-

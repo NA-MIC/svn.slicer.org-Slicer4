@@ -46,6 +46,9 @@ class WriteDataRequest;
 class vtkSlicerTask;
 //ETX
 
+//BTX
+class SliceLogicMap;
+//ETX
 
 class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerApplicationLogic : public vtkSlicerLogic 
 {
@@ -123,7 +126,7 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerApplicationLogic : public vtkSlicerL
   // Slices are the 2D viewports that show composited layers
   // of volume data from a particular slice definition.
   //vtkSetObjectMacro (Slices,vtkCollection);
-  vtkGetObjectMacro (Slices,vtkCollection);
+  //vtkGetObjectMacro (Slices,vtkCollection);
 
   // Description:
   // the ActiveSlice is the default destination of UI events
@@ -172,6 +175,11 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerApplicationLogic : public vtkSlicerL
   // Description:
   // Create a thread for processing
   void CreateProcessingThread();
+
+  // Description:
+  // Create the default number (three for red, yellow, and green slice viewers) of vtkSlicerLogic objects
+  void CreateSlicerSlicesLogic();
+  void DeleteSlicerSlicesLogic();
 
   // Description:
   // Shutdown the processing thread 
@@ -238,6 +246,12 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerApplicationLogic : public vtkSlicerL
   // Process a request to write data from a referenced node.
   void ProcessWriteData();
 
+  // Description:
+  // Add slice logic to the STL::MAP
+  void AddSliceLogic(char *layoutName, vtkSlicerSliceLogic *sliceLogic);
+
+  vtkSlicerSliceLogic* GetSlicerSliceLogic(char *layoutName);
+
   //
   // Transient Application State
   // -- these are elements that are inherently part of the
@@ -295,11 +309,19 @@ protected:
   //EXT
   
 private:
+  // Description:
+  // STL::MAP to hold Logics for main slice viewers.
+  // pointers to these so that they may be reassigned
+  // if three viewers are deleted and recreated, as
+  // they are during view reconfiguration for instance.
+  //BTX
+  SliceLogicMap *InternalSliceLogicMap;
+  //ETX
   
   // for now, make these generic collections
   // - maybe they should be subclassed to be type-specific?
   vtkCollection *Views;
-  vtkCollection *Slices;
+  //vtkCollection *Slices;
   vtkCollection *Modules;
 
   //vtkSlicerViewLogic *ActiveView;

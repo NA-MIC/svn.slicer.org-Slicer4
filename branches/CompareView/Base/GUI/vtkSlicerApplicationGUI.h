@@ -41,7 +41,7 @@
 #include "vtkRenderWindowInteractor.h"
 #include "vtkSlicerViewerWidget.h"
 #include "vtkSlicerSliceGUI.h"
-#include "vtkSlicerSliceGUICollection.h"
+//#include "vtkSlicerSliceGUICollection.h"
 
 #include "vtkCacheManager.h"
 #include "vtkDataIOManager.h"
@@ -52,6 +52,7 @@ class vtkKWLabel;
 class vtkKWDialog;
 class vtkSlicerMRMLSaveDataWidget;
 class vtkSlicerFiducialListWidget;
+class vtkSlicerSlicesGUI;
 
 // Description:
 // This class implements Slicer's main Application GUI.
@@ -85,26 +86,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     // Description:
     // The Fiducial List Widget
     vtkGetObjectMacro (FiducialListWidget, vtkSlicerFiducialListWidget);
-    
-    // Description:
-    // A pointer to the SliceGUI's SliceGUICollection so
-    // the three main Slice Viewers can be added and
-    // removed from the collection as required.
-    vtkGetObjectMacro (SliceGUICollection, vtkSlicerSliceGUICollection);
-    vtkSetObjectMacro (SliceGUICollection, vtkSlicerSliceGUICollection);
-    
-    // Description:
-    // The main three Slice Viewers and temporary storage
-    // of their logic nodes used during view reconfiguration
-    vtkGetObjectMacro (MainSliceGUI0, vtkSlicerSliceGUI);
-    vtkGetObjectMacro (MainSliceGUI1, vtkSlicerSliceGUI);
-    vtkGetObjectMacro (MainSliceGUI2, vtkSlicerSliceGUI);
-    vtkGetObjectMacro (MainSliceLogic0, vtkSlicerSliceLogic);
-    vtkSetObjectMacro (MainSliceLogic0, vtkSlicerSliceLogic);
-    vtkGetObjectMacro (MainSliceLogic1, vtkSlicerSliceLogic);
-    vtkSetObjectMacro (MainSliceLogic1, vtkSlicerSliceLogic);
-    vtkGetObjectMacro (MainSliceLogic2, vtkSlicerSliceLogic);
-    vtkSetObjectMacro (MainSliceLogic2, vtkSlicerSliceLogic);
+
+        // Description:
+        // Pointers to the SlicesGUI used by the ApplicationGUI.
+        vtkGetObjectMacro (SlicesGUI, vtkSlicerSlicesGUI);
+        virtual void SetSlicesGUI(vtkSlicerSlicesGUI*);
 
     // Description:
     // Get the frames that populate the Slicer GUI
@@ -143,6 +129,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     // Description:
     // This method builds Slicer's main GUI
     virtual void BuildGUI ( );
+
+        vtkSlicerSliceGUI* GetMainSliceGUI(char *layoutName);
+        void AddMainSliceGUI(char *layoutName);
+        void CompareViewSelect();
 
     // Description:
     // Add/Remove observers on widgets in Slicer's main GUI
@@ -184,14 +174,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     virtual void PackTabbed3DView ( );
     virtual void PackTabbedSliceView ( );
     virtual void PackLightboxView ( );
+        virtual void PackCompareView();
 
     // Description:
     // Methods to manage Slice viewers
-    virtual void AddSliceGUIToCollection ( vtkSlicerSliceGUI *s );
-    virtual void RemoveSliceGUIFromCollection ( vtkSlicerSliceGUI *s);
     virtual void ConfigureMainSliceViewers ( );
-    virtual void AddMainSliceViewersToCollection ( );
-    virtual void RemoveMainSliceViewersFromCollection ( );
     virtual void AddMainSliceViewerObservers ( );
     virtual void RemoveMainSliceViewerObservers ( );
     virtual void SetAndObserveMainSliceLogic ( vtkSlicerSliceLogic *l1,
@@ -276,7 +263,11 @@ protected:
     // Main Slicer window
     vtkSlicerWindow *MainSlicerWindow;
 
-    // Description:
+        vtkKWEntry *CompareViewBoxRowEntry;
+        vtkKWEntry *CompareViewBoxColumnEntry;
+        vtkKWPushButton *CompareViewBoxApplyButton;
+
+        // Description:
     // Frames for the main Slicer UI panel    
     vtkKWFrame *TopFrame;
     vtkKWFrame *LogoFrame;
@@ -310,22 +301,9 @@ protected:
     // Fiducial List Widget
     vtkSlicerFiducialListWidget *FiducialListWidget;
     
-    // Description:
-    // Main 3 Slice Viewers
-    vtkSlicerSliceGUI *MainSliceGUI0;
-    vtkSlicerSliceGUI *MainSliceGUI1;
-    vtkSlicerSliceGUI *MainSliceGUI2;
-    // Description:
-    // Logic for three main slice viewers. We keep
-    // pointers to these so that they may be reassigned
-    // if three viewers are deleted and recreated, as
-    // they are during view reconfiguration for instance.
-    vtkSlicerSliceLogic *MainSliceLogic0;
-    vtkSlicerSliceLogic *MainSliceLogic1;    
-    vtkSlicerSliceLogic *MainSliceLogic2;
-    // Description:
-    // Collection of SliceViewers
-    vtkSlicerSliceGUICollection *SliceGUICollection;
+        // Description:
+        // use STL::Map to hold all SliceViewers where key is the layoutName
+        vtkSlicerSlicesGUI *SlicesGUI;
 
 
     // Description:

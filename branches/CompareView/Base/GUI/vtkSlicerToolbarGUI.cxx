@@ -581,6 +581,14 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             this->ChooseLayoutIconMenuButton->GetMenu()->SetItemStateToDisabled ( "Toggle bottom panel visibility" );
 //        this->ResumeViewRockOrSpin ( mode );
             }
+          else if (!strcmp ( whichLayout, "Compare layout"))
+            {
+            // First, check to see if view is spinning or rocking.
+            // If so, stop view Spin or Rock.
+            p->RepackMainViewer ( vtkSlicerGUILayout::SlicerLayoutCompareView, NULL );
+            this->ChooseLayoutIconMenuButton->GetMenu()->SetItemStateToDisabled ( "Toggle bottom panel visibility" );
+//        this->ResumeViewRockOrSpin ( mode );
+            }
           else if ( !strcmp (whichLayout, "Red slice only layout") )
             {
             // First, check to see if view is spinning or rocking.
@@ -698,6 +706,10 @@ const char* vtkSlicerToolbarGUI::GetCurrentLayoutStringName ( )
       {
       return ( "Tabbed slice layout" );
       }
+    else if ( layout == vtkSlicerGUILayout::SlicerLayoutCompareView )
+      {
+      return ( "Compare layout" );
+      }
     else if (layout == vtkSlicerGUILayout::SlicerLayoutLightboxView )
       {
       return ( "Lightbox layout" );
@@ -748,6 +760,9 @@ void vtkSlicerToolbarGUI::SetLayoutMenubuttonValueToCurrentLayout ()
         break;
       case vtkSlicerGUILayout::SlicerLayoutTabbedSliceView:
         this->ChooseLayoutIconMenuButton->SetValue ( "Tabbed slice layout" );
+        break;
+      case vtkSlicerGUILayout::SlicerLayoutCompareView:
+        this->ChooseLayoutIconMenuButton->SetValue ( "Compare layout" );
         break;
       case vtkSlicerGUILayout::SlicerLayoutLightboxView:              
         this->ChooseLayoutIconMenuButton->SetValue ( "Lightbox layout" );
@@ -1181,6 +1196,15 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
   vtkKWTkUtilities::UpdatePhotoFromIcon ( this->GetApplication(), imageName, this->SlicerToolbarIcons->GetTabbedSliceViewIcon(), 0 );
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemImage ( index, imageName);
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
+//  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemVariableValueAsInt ( "Tabbed slice layout", vtkSlicerGUILayout::SlicerLayoutTabbedSliceView);
+
+  this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ( "Compare layout" );
+  index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ( "Compare layout");
+//  imageName = "SlicerTabbedSliceLayoutImage";
+//  vtkKWTkUtilities::UpdatePhotoFromIcon ( this->GetApplication(), imageName, this->SlicerToolbarIcons->GetTabbedSliceViewIcon(), 0 );
+//  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemImage ( index, imageName);
+//  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
+  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemIndicatorVisibility ( index, 0 );
 //  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemVariableValueAsInt ( "Tabbed slice layout", vtkSlicerGUILayout::SlicerLayoutTabbedSliceView);
 
   this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ( "Toggle GUI panel visibility" );
