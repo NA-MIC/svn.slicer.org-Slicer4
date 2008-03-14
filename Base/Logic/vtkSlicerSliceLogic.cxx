@@ -171,14 +171,16 @@ void vtkSlicerSliceLogic::UpdateSliceNodeFromLayout()
     {
     this->SliceNode->SetOrientationToAxial();
     }
-  if ( !strcmp( this->GetName(), "Yellow" ) )
+  else if ( !strcmp( this->GetName(), "Yellow" ) )
     {
     this->SliceNode->SetOrientationToSagittal();
     }
-  if ( !strcmp( this->GetName(), "Green" ) )
+  else if ( !strcmp( this->GetName(), "Green" ) )
     {
     this->SliceNode->SetOrientationToCoronal();
     }
+  else
+    this->SliceNode->SetOrientationToSagittal();
 }
 
 //----------------------------------------------------------------------------

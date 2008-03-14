@@ -47,7 +47,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerGUILayout : public vtkKWObject
             SlicerLayoutOneUpGreenSliceView,
             SlicerLayoutTabbed3DView,
             SlicerLayoutTabbedSliceView,
-            SlicerLayoutLightboxView
+            SlicerLayoutLightboxView,
+                        SlicerLayoutCompareView
         };
     //ETX
     
