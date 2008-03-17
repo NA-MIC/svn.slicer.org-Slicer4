@@ -1254,11 +1254,11 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
                 if ( sgui )
                 {
                         // update foreground only if the layout is not CompareView
-                        if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
-                        {
+                        //if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
+                        //{
                                 this->UpdateForegroundLayer ( link );
                                 this->ForegroundSelector->SetBalloonHelpString ("Select the foreground");
-                        }
+                        //}
                 }
         }
 
@@ -1270,11 +1270,11 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
                 if ( sgui )
                 {
                         // update background only if the layout is not CompareView
-                        if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
-                        {
+                        //if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
+                        //{
                                 this->UpdateBackgroundLayer ( link );
                                 this->BackgroundSelector->SetBalloonHelpString ("Select the background");
-                        }
+                        //}
                 }
         }
 
@@ -1287,11 +1287,11 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
                 if (sgui)
                 {
                         // update background only if the layout is not CompareView
-                        if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
-                        {
+                        //if ( layout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView )
+                        //{
                                 this->UpdateLabelLayer ( link );
                                 this->LabelSelector->SetBalloonHelpString ("Select the label map");
-                        }
+                        //}
                 }
         }
 
@@ -1670,8 +1670,41 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
   }
   if ( (double) this->OffsetScale->GetValue() != this->SliceLogic->GetSliceOffset() )
   {
-          this->SliceLogic->SetSliceOffset( (double) this->OffsetScale->GetValue() );
-          modified = 1;
+          //--- if slice viewers are linked in CompareView layout mode, modify all slice logic 
+          // this allows to synch all CompareX Slice Viewers in the CompareView layout mode
+          if ( link && sgui && (layout->GetCurrentViewArrangement() == vtkSlicerGUILayout::SlicerLayoutCompareView))
+          {
+                  vtkSlicerSlicesGUI *ssgui = vtkSlicerSlicesGUI::SafeDownCast ( app->GetModuleGUIByName ("Slices") );
+                  vtkSlicerSliceGUI *sgui;
+                  if (ssgui)
+                  {
+                          char *layoutname = NULL;
+                          int nSliceGUI = ssgui->GetNumberOfSliceGUI();
+                          for (int i = 0; i < nSliceGUI; i++)
+                          {
+                                  if (i == 0)
+                                  {
+                                          sgui = ssgui->GetFirstSliceGUI();
+                                          layoutname = ssgui->GetFirstSliceGUILayoutName();
+                                  }
+                                  else
+                                  {
+                                          sgui = ssgui->GetNextSliceGUI(layoutname);
+                                          layoutname = ssgui->GetNextSliceGUILayoutName(layoutname);
+                                  }
+
+                                  if ( sgui->GetLogic() )
+                                  {
+                                                                          sgui->GetLogic()->SetSliceOffset( (double) this->OffsetScale->GetValue() );
+                                                                  }
+                                                  }
+                  }
+          }
+          else
+          {
+                          this->SliceLogic->SetSliceOffset( (double) this->OffsetScale->GetValue() );
+                          modified = 1;
+                  }
   }
 
   if ( modified )

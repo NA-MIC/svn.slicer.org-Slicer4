@@ -2013,6 +2013,12 @@ void vtkSlicerApplicationGUI::AddMainSliceGUI(char *layoutName)
           g->AddGUIObservers();
           g->SetAndObserveMRMLScene(this->MRMLScene);
           g->SetAndObserveModuleLogic(sliceLogic);
+
+                  // need to check the delete section to prevent memory leak
+                  g->GetSliceController()->AddObserver(vtkSlicerSliceControllerWidget::ExpandEvent, 
+                          (vtkCommand *)this->GUICallbackCommand);
+                  g->GetSliceController()->AddObserver(vtkSlicerSliceControllerWidget::ShrinkEvent, 
+                          (vtkCommand *)this->GUICallbackCommand);
         }
     }
 }
