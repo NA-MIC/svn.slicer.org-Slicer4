@@ -301,9 +301,9 @@ protected:
     // Fiducial List Widget
     vtkSlicerFiducialListWidget *FiducialListWidget;
     
-        // Description:
-        // use STL::Map to hold all SliceViewers where key is the layoutName
-        vtkSlicerSlicesGUI *SlicesGUI;
+    // Description:
+    // use STL::Map to hold all SliceViewers where key is the layoutName
+    vtkSlicerSlicesGUI *SlicesGUI;
 
 
     // Description:

@@ -964,9 +964,19 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
 
+
 #ifndef SLICES_DEBUG
     vtkSlicerSlicesGUI *slicesGUI = vtkSlicerSlicesGUI::New ();
-    // set a pointer to vtkSlicerSlicesGUI in vtkSlicerApplicationGUI
+    
+    // build the application GUI
+        appGUI->SetSlicesGUI(slicesGUI);
+    appGUI->BuildGUI ( );
+    appGUI->AddGUIObservers ( );
+    slicerApp->SetApplicationGUI ( appGUI );
+    slicerApp->ConfigureRemoteIOSettingsFromRegistry();
+
+        
+        // set a pointer to vtkSlicerSlicesGUI in vtkSlicerApplicationGUI
     slicesGUI->SetApplication ( slicerApp );
     slicesGUI->SetApplicationGUI ( appGUI );
     slicesGUI->SetAndObserveApplicationLogic ( appLogic );
@@ -979,13 +989,6 @@ int Slicer3_main(int argc, char *argv[])
     slicesGUI->BuildGUI ();
     slicesGUI->AddGUIObservers ( );
 #endif
-
-    // build the application GUI
-    appGUI->SetSlicesGUI(slicesGUI);
-    appGUI->BuildGUI ( );
-    appGUI->AddGUIObservers ( );
-    slicerApp->SetApplicationGUI ( appGUI );
-    slicerApp->ConfigureRemoteIOSettingsFromRegistry();
 
 
     // Set cache paths for modules
