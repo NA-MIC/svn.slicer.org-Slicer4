@@ -2008,7 +2008,7 @@ void vtkSlicerApplicationGUI::AddMainSliceGUI(char *layoutName)
           this->SlicesGUI->AddSliceGUI(layoutName, g);
           g->SetApplication(app);
           g->SetApplicationLogic(this->ApplicationLogic);
-          g->BuildGUI ( this->MainSlicerWindow->GetMainSplitFrame(), color->SliceGUIYellow );
+          g->BuildGUI ( this->MainSlicerWindow->GetMainSplitFrame(), color->SliceGUIOrange );
           //g->GetSliceController()->GetSliceNode()->SetOrientationToSagittal();
           g->AddGUIObservers();
           g->SetAndObserveMRMLScene(this->MRMLScene);
