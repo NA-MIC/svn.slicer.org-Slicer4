@@ -230,10 +230,12 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
     vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
     if (node->GetAnalysis_Intensity_Flag()) {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
-      //Makes it slow and does not look good 
-      // this->CreateRender(volumeAnalysisNode, 0,0,0.8);
-      // this->SetRender_HighPassFilter(1);
-      // this->SetRender_Mapper->SetSampleDistance(0.15); 
+      
+      float colorMin[3] = {0.8 , 0.0, 0.0 };
+      float colorMax[3] = {0 , 0.0, 0.8 };
+      this->CreateRender(volumeAnalysisNode, colorMin, colorMax, 1);
+      this->SetRender_BandStopFilter(-0.5,0.5);
+
     } else if (node->GetAnalysis_Deformable_Flag()) {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
       // this->CreateRender(volumeAnalysisNode);

@@ -147,6 +147,11 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
       applicationLogic->GetSelectionNode()->SetActiveVolumeID(volumeNode->GetID());
       applicationLogic->PropagateVolumeSelection();
       memcpy(dimensions,volumeNode->GetImageData()->GetDimensions(),sizeof(int)*3);
+      // Load File 
+      char fileName[1024];
+      sprintf(fileName,"%s/TG_Analysis_Intensity.nhdr",node->GetWorkingDir());
+      
+      // vtkMRMLVolumeNode* tmp =  this->GetGUI()->GetLogic()->LoadVolume(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),fileName,1,"TG_analysis");
     } 
   } else {
     cout << "no node "  << endl;

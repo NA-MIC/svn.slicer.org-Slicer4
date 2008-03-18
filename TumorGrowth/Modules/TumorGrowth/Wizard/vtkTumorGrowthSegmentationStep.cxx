@@ -261,7 +261,8 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   // ------------------------------------
   // Show Segmentation through 3D Volume Rendering
   // ------------------------------------
-  this->CreateRender(volumeNode, 0.8, 0.8, 0.0);
+  float color[3] = { 0.8, 0.8, 0.0 };
+  this->CreateRender(volumeNode, color, color, 0);
   this->SetRender_BandPassFilter(range[0],range[1]);
   
   return;

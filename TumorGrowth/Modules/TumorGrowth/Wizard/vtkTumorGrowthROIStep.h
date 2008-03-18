@@ -34,7 +34,9 @@ public:
 
   virtual void TransitionCallback(); 
   // We call this function in order to remove nodes when going backwards 
-  virtual void RemoveResults()  { this->ROIMapRemove();}
+  virtual void RemoveResults()  { 
+    this->ROIMapRemove();
+  }
 
   // Description:
   // Callback functions for buttons
