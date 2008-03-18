@@ -13,11 +13,13 @@
 #include "vtkTumorGrowthLogic.h"
 
 #include "vtkVolumeTextureMapper3D.h"
+#include "vtkFixedPointVolumeRayCastMapper.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkColorTransferFunction.h"
 #include "vtkVolumeProperty.h"
 #include "vtkVolume.h"
 #include "vtkSlicerSliceControllerWidget.h"
+#include "vtkVolumeRayCastCompositeFunction.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthStep);
@@ -37,6 +39,7 @@ vtkTumorGrowthStep::vtkTumorGrowthStep()
 
   this->Render_Image = NULL;
   this->Render_Mapper = NULL;
+  this->Render_RayCast_Mapper = NULL;
   this->Render_Filter = NULL;
   this->Render_ColorMapping = NULL;
   this->Render_VolumeProperty = NULL;
@@ -89,6 +92,12 @@ void vtkTumorGrowthStep::RenderRemove() {
     this->Render_Mapper->Delete();
     this->Render_Mapper = NULL;
   }
+
+  if (this->Render_RayCast_Mapper) {
+    this->Render_RayCast_Mapper->Delete();
+    this->Render_RayCast_Mapper = NULL;
+  }
+
   if (this->Render_Filter) {
     this->Render_Filter->Delete();
     this->Render_Filter = NULL;
@@ -312,25 +321,43 @@ void vtkTumorGrowthStep::SetRender_HighPassFilter(double min) {
   this->Render_Filter->AddPoint(min, 1);
 }
 
+void vtkTumorGrowthStep::SetRender_BandStopFilter(double min, double max) {
+  // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
+  double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
+  this->Render_Filter->RemoveAllPoints();
+  this->Render_Filter->AddPoint(imgRange[0], 0.8);
+  this->Render_Filter->AddPoint(min-0.01,0.8);
+  this->Render_Filter->AddPoint(min,0);
+  this->Render_Filter->AddPoint(max,0);
+  this->Render_Filter->AddPoint(max+0.01,0.8);
+  this->Render_Filter->AddPoint(imgRange[1],0.8);
 
-void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, float colorR, float colorG, float colorB ) {
+}
+
+
+void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, float colorMin[3], float colorMax[3], int RayCastFlag ) {
   this->RenderRemove();
   if (!volumeNode) return;
 
   this->Render_Image = volumeNode->GetImageData();
   
   // set PROP [[vtkTumorGrowthAnalysisStep ListInstances] GetRender_Mapper]
-  this->Render_Mapper = vtkVolumeTextureMapper3D::New();
-  this->Render_Mapper->SetInput(this->Render_Image);
-
   double* imgRange  = this->Render_Image->GetPointData()->GetScalars()->GetRange();
 
+  if (RayCastFlag ) {
+    this->Render_RayCast_Mapper = vtkFixedPointVolumeRayCastMapper::New();
+    this->Render_RayCast_Mapper->SetInput(this->Render_Image);
+    this->Render_RayCast_Mapper->SetAutoAdjustSampleDistances(0);
+    this->Render_RayCast_Mapper->SetSampleDistance(0.1);
+  } else {
+    this->Render_Mapper = vtkVolumeTextureMapper3D::New();
+    this->Render_Mapper->SetInput(this->Render_Image);
+  }
   this->Render_Filter = vtkPiecewiseFunction::New();
-  // this->SetRender_BandPassFilter(range[0],range[1]);
 
   this->Render_ColorMapping = vtkColorTransferFunction::New();
-  this->Render_ColorMapping->AddRGBPoint( imgRange[0] , colorR, colorG, colorB);
-  this->Render_ColorMapping->AddRGBPoint( imgRange[1] , colorR, colorG, colorB );
+  this->Render_ColorMapping->AddRGBPoint( imgRange[0] ,  colorMin[0], colorMin[1], colorMin[2]);
+  this->Render_ColorMapping->AddRGBPoint( imgRange[1] , colorMax[0], colorMax[1], colorMax[2]);
 
   // set PROP [[vtkTumorGrowthAnalysisStep ListInstances] GetRender_VolumeProperty]
 
@@ -343,13 +370,19 @@ void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, float color
   this->Render_VolumeProperty->SetScalarOpacity(this->Render_Filter);
   this->Render_VolumeProperty->SetColor( this->Render_ColorMapping );
   this->Render_VolumeProperty->SetInterpolationTypeToLinear();
+  this->Render_VolumeProperty->ShadeOn();
 
   this->Render_OrientationMatrix = vtkMatrix4x4::New();
   volumeNode->GetIJKToRASMatrix(this->Render_OrientationMatrix);
 
   this->Render_Volume = vtkVolume::New();
   this->Render_Volume->SetProperty(this->Render_VolumeProperty);
-  this->Render_Volume->SetMapper(this->Render_Mapper);
+  if (RayCastFlag) {
+    this->Render_Volume->SetMapper(this->Render_RayCast_Mapper);
+  } else {
+    this->Render_Volume->SetMapper(this->Render_Mapper);
+  }
+
   this->Render_Volume->PokeMatrix(this->Render_OrientationMatrix);
   
   this->GetGUI()->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->AddViewProp(this->Render_Volume);
