@@ -47,6 +47,7 @@ if { [itcl::find class SliceSWidget] == "" } {
     method moveSlice { delta } {}
     method jumpSlice { r a s } {}
     method jumpOtherSlices { r a s } {}
+    method getLinkedSliceLogics {} {}
   }
 }
 
@@ -329,8 +330,20 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
               set v [$o(scratchMatrix) GetElement $i 3]
               $o(scratchMatrix) SetElement $i 3 [expr $v - [set $d]]
             }
-            [$_sliceNode GetSliceToRAS] DeepCopy $o(scratchMatrix)
-            $_sliceNode UpdateMatrices
+            #[$_sliceNode GetSliceToRAS] DeepCopy $o(scratchMatrix)
+            #$_sliceNode UpdateMatrices
+
+            # get the linked logics (including self)
+            set sliceLogics [$this getLinkedSliceLogics]
+            # save state for undo
+            
+            # set the SliceToRAS on each slice node
+            foreach logic $sliceLogics {
+              set snode [$logic GetSliceNode]
+              [$snode GetSliceToRAS] DeepCopy $o(scratchMatrix)
+              $snode UpdateMatrices
+            }
+
             $sliceGUI SetGUICommandAbortFlag 1
             $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
           }
@@ -350,9 +363,19 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
               foreach f $_actionStartFOV factor "$percent $percent 1" {
                 lappend newFOV [expr $f * $factor]
               }
-              eval $_sliceNode SetFieldOfView $newFOV
+              #eval $_sliceNode SetFieldOfView $newFOV
+              #$_sliceNode UpdateMatrices
 
-              $_sliceNode UpdateMatrices
+              # get the linked logics (including self)
+              set sliceLogics [$this getLinkedSliceLogics]
+              # save state for undo
+                
+              # set the field of view on each slice node
+              foreach logic $sliceLogics {
+                  set snode [$logic GetSliceNode]
+                  eval $snode SetFieldOfView $newFOV
+                  $snode UpdateMatrices
+              }
             }
             $sliceGUI SetGUICommandAbortFlag 1
           }
@@ -379,10 +402,22 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
             $tfm RotateX $ry
             $tfm RotateY $rx
 
-            [$_sliceNode GetSliceToRAS] DeepCopy [$tfm GetMatrix]
+            #[$_sliceNode GetSliceToRAS] DeepCopy [$tfm GetMatrix]
+            #$tfm Delete
+            #$_sliceNode UpdateMatrices
+
+            # get the linked logics (including self)
+            set sliceLogics [$this getLinkedSliceLogics]
+            # save state for undo
+                
+            # set the SliceToRAS on each slice node
+            foreach logic $sliceLogics {
+              set snode [$logic GetSliceNode]
+              [$snode GetSliceToRAS] DeepCopy [$tfm GetMatrix]
+              $snode UpdateMatrices
+            }
             $tfm Delete
 
-            $_sliceNode UpdateMatrices
             $sliceGUI SetGUICommandAbortFlag 1
            }
           default {
@@ -481,8 +516,20 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
           }
           "r" {
             # use c++ version of calculation
-            [$sliceGUI GetLogic] FitSliceToBackground $w $h
-            $_sliceNode UpdateMatrices
+
+            #[$sliceGUI GetLogic] FitSliceToBackground $w $h
+            #$_sliceNode UpdateMatrices
+
+            # get the linked logics (including self)
+            set sliceLogics [$this getLinkedSliceLogics]
+            # save state for undo
+            
+            # fit the slice to the background for each logic/slice node
+            foreach logic $sliceLogics {
+              set snode [$logic GetSliceNode]
+              $logic FitSliceToBackground $w $h
+              $snode UpdateMatrices
+            }
           }
           "b" - "Left" - "Down" {
             $this decrementSlice
@@ -603,7 +650,51 @@ itcl::body SliceSWidget::decrementSlice {} {
 itcl::body SliceSWidget::moveSlice { delta } {
   set logic [$sliceGUI GetLogic]
   set offset [$logic GetSliceOffset]
-  $logic SetSliceOffset [expr $offset + $delta]
+  #this is now set in the loop
+  #$logic SetSliceOffset [expr $offset + $delta]
+
+  # get the linked logics (including self)
+  set sliceLogics [$this getLinkedSliceLogics]
+  # save state for undo
+
+  # set the slice offset for all slice logics
+  foreach logic $sliceLogics {
+    $logic SetSliceOffset [expr $offset + $delta]
+  }
+}
+
+
+# Return the SliceLogics that are linked to the current 
+# SliceNode/SliceCompositeNode.  For now, this just returns all the SliceLogics
+# but someday this will be the slice logics that are linked to the current 
+# slice. 
+#
+# The list of linked logics either contains the current slice (because 
+# linking is off) or a list of logics (one for the current slice and others 
+# for linked slices).
+#
+itcl::body SliceSWidget::getLinkedSliceLogics { } {
+  set logics ""
+  set link [$_sliceCompositeNode GetLinkedControl]
+  if { $link == 1 } {
+    set ssgui [[$::slicer3::ApplicationGUI GetApplication] GetModuleGUIByName "Slices"]
+    set numsgui [$ssgui GetNumberOfSliceGUI]
+    for { set i 0 } { $i < $numsgui } { incr i } {
+      if { $i == 0} {
+        set sgui [$ssgui GetFirstSliceGUI]
+        set lname [$ssgui GetFirstSliceGUILayoutName]
+      } else {
+        set sgui [$ssgui GetNextSliceGUI $lname]
+        set lname [$ssgui GetFirstSliceGUILayoutName]
+      }
+      
+      lappend logics [$sgui GetLogic]
+    }
+  } else {
+    lappend logics [$sliceGUI GetLogic]
+  }
+  
+  return $logics
 }
 
 itcl::body SliceSWidget::jumpSlice { r a s } {

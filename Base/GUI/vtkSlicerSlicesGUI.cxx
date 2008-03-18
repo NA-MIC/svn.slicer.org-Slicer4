@@ -28,56 +28,46 @@ vtkCxxRevisionMacro(vtkSlicerSlicesGUI, "$Revision: 1.0 $");
 //---------------------------------------------------------------------------
 vtkSlicerSlicesGUI::vtkSlicerSlicesGUI (  )
 {
-        this->InternalSliceGUIMap = new SliceGUIMap;
+  this->InternalSliceGUIMap = new SliceGUIMap;
 }
 
 
 //---------------------------------------------------------------------------
 vtkSlicerSlicesGUI::~vtkSlicerSlicesGUI ( )
 {
-        if (this->InternalSliceGUIMap)
-        {
-                vtkSlicerSliceGUI *s;
-                SliceGUIMap::iterator git;
-                for (git = this->InternalSliceGUIMap->begin(); git != this->InternalSliceGUIMap->end();)
-                {
-                        s = vtkSlicerSliceGUI::SafeDownCast((*git).second);
-                        s->Delete();
-                        s = NULL;
-                        this->InternalSliceGUIMap->erase(git++);  
-                }
-        }
-
-        delete this->InternalSliceGUIMap;
+  if (this->InternalSliceGUIMap)
+    {
+    delete this->InternalSliceGUIMap;
+    }
 }
 
 void vtkSlicerSlicesGUI::AddSliceGUI(char *layoutName, vtkSlicerSliceGUI *pSliceGUI)
 {
-        std::string sMRMLNodeLayoutName = layoutName;
-        (*this->InternalSliceGUIMap)[sMRMLNodeLayoutName] = pSliceGUI;
+  std::string sMRMLNodeLayoutName = layoutName;
+  (*this->InternalSliceGUIMap)[sMRMLNodeLayoutName] = pSliceGUI;
 }
 
 //---------------------------------------------------------------------------
 void vtkSlicerSlicesGUI::AddAndObserveSliceGUI ( char *layoutName, vtkSlicerSliceGUI *pSliceGUI )
 {
-    this->AddSliceGUI ( layoutName, pSliceGUI );
-    pSliceGUI->AddGUIObservers ( );
+  this->AddSliceGUI ( layoutName, pSliceGUI );
+  pSliceGUI->AddGUIObservers ( );
 }
 
-vtkSlicerSliceGUI* vtkSlicerSlicesGUI::GetSliceGUIInMap(char *layoutName)
+vtkSlicerSliceGUI* vtkSlicerSlicesGUI::GetSliceGUI(char *layoutName)
 {
-        if (this->InternalSliceGUIMap)
-        {
-                SliceGUIMap::const_iterator gend = (*this->InternalSliceGUIMap).end();
-                SliceGUIMap::const_iterator git =       (*this->InternalSliceGUIMap).find(layoutName);
-
-                if ( git != gend)
-                        return (vtkSlicerSliceGUI::SafeDownCast((*git).second));
-                else
-                        return NULL;
-        }
-        else
-                return NULL;
+  if (this->InternalSliceGUIMap)
+    {
+    SliceGUIMap::const_iterator gend = (*this->InternalSliceGUIMap).end();
+    SliceGUIMap::const_iterator git =       (*this->InternalSliceGUIMap).find(layoutName);
+    
+    if ( git != gend)
+      return (vtkSlicerSliceGUI::SafeDownCast((*git).second));
+    else
+      return NULL;
+    }
+  else
+    return NULL;
 }
 
 //---------------------------------------------------------------------------
