@@ -269,7 +269,8 @@ void ChangeMapper(vtkObject* caller, unsigned long eid, void* clientData, void* 
 
 
 #include "vtkTimerLog.h"
-const int sampleMax = 100;
+int clipRatio = 0;
+const int sampleMax = 10;
 vtkTimerLog* logger = vtkTimerLog::New();
 std::vector<double> vals;
 
@@ -279,8 +280,10 @@ void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void
     {
         renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 0, 500);
         vals.clear();
+        clipRatio = 1;
         if (cb_Animate->GetSelectedState() == 1)
             app->Script("after idle %s Render", renderWidget->GetTclName());
+
     }
     //if (caller == ThresholdRange)
     //    VolumeMapper->SetThreshold(ThresholdRange->GetRange());
@@ -290,7 +293,7 @@ void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void
     //    VolumeMapper->SetRenderOutputScaleFactor(ScaleFactorScale->GetValue());
 
     //renderWidget->SetRenderModeToInteractive();
-    //    VolumeMapper->SetInput(reader[0]->GetOutput());
+    //    VolumeMapper->SetInput(clippers[0]->GetOutput());
     //app->Script("after 10 %s Render", renderWidget->GetTclName());
     //    renderWidget->Modified();
     //renderWidget->GetRenderer()->Render();
@@ -311,7 +314,7 @@ void StartRender(vtkObject* caller, unsigned long eid, void* clientData, void* c
 
         logger->StartTimer();
         if (cb_Animate2->GetSelectedState() == 1)
-            VolumeMapper->SetInput(readers[frameNumber]->GetOutput());
+            VolumeMapper->SetInput(clippers[frameNumber]->GetOutput());
     }
     renderScheduled = false;
 }
@@ -335,10 +338,16 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
         deviation = sqrt(deviation / vals.size());
 
 
-        cout << vals.size() << ": Last RenderTime: " << logger->GetElapsedTime() 
+        cout << vals.size() << "::" << clipRatio << ": Last RenderTime: " << logger->GetElapsedTime() 
         << " Mean RenderTime: " << mean << " Deviation: " << deviation << endl;
-        if (vals.size() < 50)
-        app->Script("after idle %s Render", renderWidget->GetTclName());
+        if (vals.size() > sampleMax)
+        {
+            clipRatio++;
+            SetClipRatio(clipRatio);
+            vals.clear();
+        }
+        if (clipRatio < 128 )
+            app->Script("after idle %s Render", renderWidget->GetTclName());
          //if (renderScheduled == false)
          //{    
          //    renderScheduled = true;
