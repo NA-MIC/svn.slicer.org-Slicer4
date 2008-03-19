@@ -34,6 +34,7 @@
 #include "vtkImageData.h"
 
 #include "vtkInteractorStyleTrackballCamera.h"
+#include "vtkVolumeTextureMapper2D.h"
 
 
 vtkKWApplication *app;
@@ -42,8 +43,9 @@ vtkKWRange* ThresholdRange;
 vtkKWScale* SteppingSizeScale;
 vtkKWScale* ScaleFactorScale;
 vtkKWVolumePropertyWidget* VolumePropertyWidget;
-vtkCudaVolumeMapper* VolumeMapper;
+vtkVolumeTextureMapper2D* VolumeMapper;
 vtkKWCheckButton* cb_Animate;
+vtkKWCheckButton* cb_Animate2;
 vtkKWMenuButton*  mb_Model;
 
 int frameNumber = 0;
@@ -53,7 +55,7 @@ bool renderScheduled = false;
 
 void Clear()
 {
-    VolumeMapper->SetInput(NULL);
+//    VolumeMapper->SetInput(NULL);
 }
 
 void LoadHead()
@@ -70,6 +72,23 @@ void LoadHead()
 
     VolumeMapper->SetInput(reader[0]->GetOutput());
 }
+
+void LoadBunny()
+{
+    reader[0]->SetDataByteOrderToBigEndian();
+    reader[0]->SetDataScalarTypeToShort();
+    reader[0]->SetNumberOfScalarComponents(1);
+    reader[0]->SetDataExtent(0, 511, 0, 511, 0, 359);
+    reader[0]->SetDataSpacing(1.0, 1.0, 1.0);
+    reader[0]->SetFileDimensionality(3);
+    reader[0]->SetFileName("D:\\Volumes\\Bunny\\Bunny.raw");
+    reader[0]->Update();
+
+    frameCount = 1;
+
+    VolumeMapper->SetInput(reader[0]->GetOutput());
+}
+
 
 void LoadHeart()
 {
@@ -102,7 +121,7 @@ void LoadHeartSeries()
         reader[i]->SetDataSpacing(1.0, 1.0, 1.0);
 
         std::stringstream s;
-        s << "C:\\heart256-" << i+1 << ".raw";
+        s << "D:\\heart256-" << i+1 << ".raw";
 
         reader[i]->SetFileName(s.str().c_str());
         reader[i]->Update();
@@ -175,6 +194,8 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
         LoadHeartSeries();
     else if (!strcmp(mb_Model->GetValue(), "Lung"))
         LoadLungSeries();
+    else if (!strcmp(mb_Model->GetValue(), "Bunny"))
+        LoadBunny();
     else if (!strcmp(mb_Model->GetValue(), "Prostate"))
         LoadProstate();
     else
@@ -185,12 +206,6 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
-    if (caller == ThresholdRange)
-        VolumeMapper->SetThreshold(ThresholdRange->GetRange());
-    else if (caller == SteppingSizeScale)
-        VolumeMapper->SetSampleDistance(SteppingSizeScale->GetValue());
-    else if (caller == ScaleFactorScale)
-        VolumeMapper->SetRenderOutputScaleFactor(ScaleFactorScale->GetValue());
 
     //renderWidget->SetRenderModeToInteractive();
     VolumeMapper->SetInput(reader[0]->GetOutput());
@@ -270,6 +285,7 @@ int my_main(int argc, char *argv[])
     // Add a render widget, attach it to the view frame, and pack
 
     renderWidget = vtkKWRenderWidget::New();
+
     renderWidget->SetBackgroundColor(200, 200, 200);
     renderWidget->SetParent(win->GetViewFrame());
     renderWidget->Create();
@@ -279,14 +295,13 @@ int my_main(int argc, char *argv[])
 
     // Create the mapper and actor
     vtkVolume* volume = vtkVolume::New();
-    VolumeMapper = vtkCudaVolumeMapper::New();
+    VolumeMapper = vtkVolumeTextureMapper2D::New();
 
     for (unsigned int i = 0; i < 10; i++)
         reader[i] = NULL;
     reader[0] = vtkImageReader::New();
     LoadHead();
 
-    VolumeMapper->SetRenderMode(0/*vtkCudaMemoryTexture::RenderToTexture*/);
 
     volume->SetMapper(VolumeMapper);
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
@@ -314,6 +329,7 @@ int my_main(int argc, char *argv[])
     mb_Model->GetMenu()->AddRadioButton("Heart");
     mb_Model->GetMenu()->AddRadioButton("Head");
     mb_Model->GetMenu()->AddRadioButton("Lung");
+    mb_Model->GetMenu()->AddRadioButton("Bunny");
     mb_Model->GetMenu()->AddRadioButton("Prostate");
     mb_Model->GetMenu()->AddRadioButton("Empty");
     mb_Model->SetValue("Head");
@@ -369,9 +385,17 @@ int my_main(int argc, char *argv[])
     cb_Animate->Create();
     app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         cb_Animate->GetWidgetName());
+    cb_Animate->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*)GUICallbackCommand);
+
+    cb_Animate2 = vtkKWCheckButton::New();
+    cb_Animate2->SetParent(win->GetMainPanelFrame());
+    cb_Animate2->Create();
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        cb_Animate2->GetWidgetName());
+    cb_Animate2->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*)GUICallbackCommand);
 
 
-    renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 0, 0);
+    renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 500, 500);
     renderWidget->GetRenderer()->GetActiveCamera()->SetClippingRange(100, 1000);
     renderWidget->GetRenderer()->GetActiveCamera()->ParallelProjectionOff();
 

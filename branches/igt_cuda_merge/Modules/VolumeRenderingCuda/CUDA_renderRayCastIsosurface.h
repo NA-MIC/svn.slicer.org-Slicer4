@@ -46,36 +46,41 @@ __device__ void CUDAkernel_RayCastIsosurfaceAlgorithm(const int3& index,
         {
           //check whether current position is in front of z buffer wall
 
-          //tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
-          //    __float2int_rn(tempPos.y)*volInfo.VolumeSize.x +
-          //    __float2int_rn(tempPos.x))];
+          tempValue=((T*)volInfo.SourceData)[(int)(__float2int_rn(tempPos.z)*volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+              __float2int_rn(tempPos.y)*volInfo.VolumeSize.x +
+              __float2int_rn(tempPos.x))];
    /*interpolation start here*/
-   float posX = tempPos.x - __float2int_rd(tempPos.x);
-   float posY = tempPos.y - __float2int_rd(tempPos.y);
-   float posZ = tempPos.z - __float2int_rd(tempPos.z);
-   
-   int base = __float2int_rd((tempPos.z)) * volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
-     __float2int_rd((tempPos.y)) * volInfo.VolumeSize.x + 
-     __float2int_rd((tempPos.x));
-   
-   tempValue=interpolate(posX, posY, posZ,
-    ((T*)volInfo.SourceData)[base],
-    ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y)],
-    ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x)],
-    ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x)],
-    ((T*)volInfo.SourceData)[(int)(base + 1)],
-    ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + 1)],
-    ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x + 1)],
-    ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x + 1)]);
+   //float posX = tempPos.x - __float2int_rd(tempPos.x);
+   //float posY = tempPos.y - __float2int_rd(tempPos.y);
+   //float posZ = tempPos.z - __float2int_rd(tempPos.z);
+   //
+   //int base = __float2int_rd((tempPos.z)) * volInfo.VolumeSize.x*volInfo.VolumeSize.y + 
+   //  __float2int_rd((tempPos.y)) * volInfo.VolumeSize.x + 
+   //  __float2int_rd((tempPos.x));
+   //
+   //tempValue=interpolate(posX, posY, posZ,
+   // ((T*)volInfo.SourceData)[base],
+   // ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y)],
+   // ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x)],
+   // ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x)],
+   // ((T*)volInfo.SourceData)[(int)(base + 1)],
+   // ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + 1)],
+   // ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x + 1)],
+   // ((T*)volInfo.SourceData)[(int)(base + volInfo.VolumeSize.x*volInfo.VolumeSize.y + volInfo.VolumeSize.x + 1)]);
    /*interpolation end here*/
    
-   if(tempValue >= volInfo.MinThreshold && tempValue <= volInfo.MaxThreshold){
+
+    //int tempIndex = __float2int_rn((volInfo.FunctionSize-1) * (float)(tempValue-volInfo.FunctionRange[0]) /
+    //                (float)(volInfo.FunctionRange[1]-volInfo.FunctionRange[0]));
+    //            float alpha = volInfo.AlphaTransferFunction[tempIndex];
+    //            if(alpha >= 0){
+   if(tempValue >= 90 && tempValue<= 255 ){ //volInfo.MinThreshold && tempValue <= volInfo.MaxThreshold){
      zBuffer[index.z] = depth;
      surfaceFound=true;
      break;
    }
  }
-        depth += .002 * volInfo.SampleDistance;
+        depth += 1.0/256.0 * volInfo.SampleDistance;
     }
     
     if(surfaceFound){

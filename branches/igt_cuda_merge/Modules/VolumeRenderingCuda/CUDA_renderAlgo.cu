@@ -118,6 +118,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     __syncthreads();
 
     // Call the Algorithm (Composite or MIP or Isosurface)
+    //CUDAkernel_RayCastMIPAlgorithm
+    //CUDAkernel_RayCastCompositeAlgorithm
+    //CUDAkernel_RayCastIsosurfaceAlgorithm
     CUDAkernel_RayCastCompositeAlgorithm<T>(index, outindex, s_minmax /*[6] */,
                                    s_rayMap, volInfo, renInfo,
                                    s_outputVal, s_zBuffer, s_remainingOpacity);
