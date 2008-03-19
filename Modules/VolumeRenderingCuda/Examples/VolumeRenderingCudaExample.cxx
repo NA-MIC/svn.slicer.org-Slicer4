@@ -33,6 +33,8 @@
 #include "vtkCudaImageData.h"
 #include "vtkImageData.h"
 
+#include "vtkImageClip.h"
+
 #include "vtkInteractorStyleTrackballCamera.h"
 
 #include "vtkFixedPointVolumeRayCastMapper.h"
@@ -56,6 +58,7 @@ vtkKWMenuButton*  mb_Mapper;
 
 int frameNumber = 0;
 std::vector<vtkImageReader*> readers;
+std::vector<vtkImageClip*> clippers;
 bool renderScheduled = false;
 
 void Clear()
@@ -79,8 +82,6 @@ void LoadHead()
     readers[0]->SetFileDimensionality(3);
     readers[0]->SetFileName("D:\\fullhead94.raw");
     readers[0]->Update();
-
-    VolumeMapper->SetInput(readers[0]->GetOutput());
 }
 
 void LoadBunny()
@@ -96,8 +97,6 @@ void LoadBunny()
     readers[0]->SetFileDimensionality(3);
     readers[0]->SetFileName("D:\\Volumes\\Bunny\\Bunny.raw");
     readers[0]->Update();
-
-    VolumeMapper->SetInput(readers[0]->GetOutput());
 }
 
 
@@ -112,8 +111,6 @@ void LoadHeart()
     readers[0]->SetFileDimensionality(3);
     readers[0]->SetFileName("D:\\heart256.raw");
     readers[0]->Update();
-
-    VolumeMapper->SetInput(readers[0]->GetOutput());
 }
 
 void LoadHeartSeries()
@@ -156,8 +153,6 @@ void LoadLung()
 
     readers[0]->SetFileName(s.str().c_str());
     readers[0]->Update();
-
-    VolumeMapper->SetInput(readers[0]->GetOutput());
 }
 
 void LoadLungSeries()
@@ -179,7 +174,6 @@ void LoadLungSeries()
         readers[i]->SetFileName(s.str().c_str());
         readers[i]->Update();
     }
-    VolumeMapper->SetInput(readers[0]->GetOutput());
 }
 
 void LoadProstate()
@@ -194,8 +188,6 @@ void LoadProstate()
     readers[0]->SetFileDimensionality(3);
     readers[0]->SetFileName("D:\\prostate.raw");
     readers[0]->Update();
-
-    VolumeMapper->SetInput(readers[0]->GetOutput());
 }
 
 void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
@@ -214,6 +206,20 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
     else
         Clear();
 
+    unsigned int i;
+    for (i = 0; i < clippers.size(); i++)
+        clippers[i]->Delete();
+    clippers.clear();
+    for (i = 0; i < readers.size(); i++)
+    {
+        clippers.push_back(vtkImageClip::New());
+        clippers[i]->SetInput(readers[i]->GetOutput());
+        clippers[i]->SetOutputWholeExtent(readers[i]->GetOutput()->GetExtent());
+        clippers[i]->Update();
+    }
+
+    if (!readers.empty())
+        VolumeMapper->SetInput(clippers[0]->GetOutput());
     renderWidget->GetRenderer()->Render();
 }
 
@@ -222,7 +228,7 @@ void SetMapper(vtkVolumeMapper* mapper)
     VolumeMapper->Delete();
     VolumeMapper = mapper;
     if (!readers.empty())
-        VolumeMapper->SetInput(readers[0]->GetOutput());
+        VolumeMapper->SetInput(clippers[0]->GetOutput());
     Volume->SetMapper(VolumeMapper);
 }
 
@@ -247,9 +253,6 @@ std::vector<double> vals;
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
-
-
-
     if (caller == cb_Animate)
     {
         renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 0, 500);
@@ -386,6 +389,8 @@ int my_main(int argc, char *argv[])
     Volume->SetMapper(VolumeMapper);
 
     LoadHead();
+    if (!readers.empty())
+        VolumeMapper->SetInput(readers[0]->GetOutput());
 
 
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
@@ -527,8 +532,12 @@ int my_main(int argc, char *argv[])
     GUICallbackCommand->Delete();
     //    filter->Delete();
     mb_Model->Delete();
+    mb_Mapper->Delete();
+
     Volume->Delete();
     Clear();
+    for (unsigned int i = 0; i < clippers.size(); i++)
+        clippers[i]->Delete();
     VolumeMapper->Delete();
 
     VolumePropertyWidget->Delete();
