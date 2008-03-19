@@ -59,9 +59,14 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
   vtkGetMacro( Type, int );
   vtkSetMacro( Type, int );
   vtkGetMacro( State, int );
-  vtkSetMacro( State, int );
+  //vtkSetMacro( State, int );
 
   //BTX
+  void SetName (const char* str) { this->Name = str; }
+  void SetName (std::string str) { this->Name = str; }
+  const char* GetName() { return this->Name.c_str(); }
+  void SetServerHostname(const char* str) { this->ServerHostname = str; }
+  void SetServerHostname(std::string str) { this->ServerHostname = str; }
   const char* GetServerHostname() { return this->ServerHostname.c_str(); }
   //ETX
 
@@ -80,12 +85,6 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
   int SetTypeClient(char* hostname, int port);
   //BTX
   int SetTypeClient(std::string hostname, int port);
-  //ETX
-
-  //BTX
-  const char* GetName() { return this->Name.c_str(); }
-  void SetName (const char* str) { this->Name = str; }
-  void SetName (std::string str) { this->Name = str; }
   //ETX
 
   //----------------------------------------------------------------

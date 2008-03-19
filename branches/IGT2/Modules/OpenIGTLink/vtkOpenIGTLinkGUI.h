@@ -86,9 +86,6 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkGUI : public vtkSlicerModuleGUI
   static const char* ConnectorStatusStr[vtkIGTLConnector::NUM_STATE];
   //ETX
 
-  void OnConnectorListSelectionChanged();
-  void UpdateConnectorList(int updateLevel);
-  
  public:
   // Description:    
   // Usual vtk class functions
@@ -168,6 +165,8 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkGUI : public vtkSlicerModuleGUI
   vtkKWEntry*          ConnectorNameEntry;
   vtkKWRadioButtonSet* ConnectorTypeButtonSet;
   vtkKWRadioButtonSet* ConnectorStatusButtonSet;
+  vtkKWEntry*          ConnectorAddressEntry;
+  vtkKWEntry*          ConnectorPortEntry;
 
   
   //----------------------------------------------------------------
@@ -256,6 +255,14 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkGUI : public vtkSlicerModuleGUI
   
   int  ChangeWorkPhase(int phase, int fChangeWizard=0);
   void ChangeSlicePlaneDriver(int slice, const char* driver);
+
+
+  //----------------------------------------------------------------
+  // Connector List and Properties control
+  //----------------------------------------------------------------
+
+  void UpdateConnectorList(int updateLevel);
+  void UpdateConnectorPropertyFrame(int i);
   
 };
 
