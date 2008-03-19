@@ -90,6 +90,7 @@ extern "C" {
 #define REALTIMEIMAGING_DEBUG
 #define MRABLATION_DEBUG
 //#define NEURONAV_DEBUG
+//#define OPENIGTLINK_DEBUG
 //#define TRACTOGRAPHY_DEBUG
 //#define QDEC_DEBUG
 //#define COMMANDLINE_DEBUG
@@ -125,6 +126,11 @@ extern "C" {
 #if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
 #include "vtkNeuroNavLogic.h"
 #include "vtkNeuroNavGUI.h"
+#endif
+
+#if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
+#include "vtkOpenIGTLinkLogic.h"
+#include "vtkOpenIGTLinkGUI.h"
 #endif
 
 #if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
@@ -204,6 +210,9 @@ extern "C" int Emsegment_Init(Tcl_Interp *interp);
 #endif
 #if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Neuronav_Init(Tcl_Interp *interp);
+#endif
+#if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Openigtlink_Init(Tcl_Interp *interp);
 #endif
 #if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
@@ -704,6 +713,9 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     Neuronav_Init(interp);
 #endif
+#if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
+    Openigtlink_Init(interp);
+#endif
 #if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
     Realtimeimaging_Init(interp);
 #endif
@@ -1111,6 +1123,28 @@ int Slicer3_main(int argc, char *argv[])
     neuronavGUI->AddGUIObservers ( );
     neuronavGUI->Init();
 #endif 
+
+#if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
+    // -- OpenIGTLink module
+    vtkOpenIGTLinkLogic *openigtlinkLogic = vtkOpenIGTLinkLogic::New(); 
+    openigtlinkLogic->SetAndObserveMRMLScene ( scene );
+    vtkOpenIGTLinkGUI *openigtlinkGUI = vtkOpenIGTLinkGUI::New();
+
+    openigtlinkGUI->SetApplication ( slicerApp );
+    openigtlinkGUI->SetApplicationGUI ( appGUI );
+    openigtlinkGUI->SetAndObserveApplicationLogic ( appLogic );
+    openigtlinkGUI->SetAndObserveMRMLScene ( scene );
+    openigtlinkGUI->SetModuleLogic ( openigtlinkLogic );
+    openigtlinkGUI->SetGUIName( "OpenIGTLink" );
+    openigtlinkGUI->GetUIPanel()->SetName ( openigtlinkGUI->GetGUIName ( ) );
+    openigtlinkGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    openigtlinkGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( openigtlinkGUI );
+    openigtlinkGUI->BuildGUI ( );
+    openigtlinkGUI->AddGUIObservers ( );
+    openigtlinkGUI->Init();
+#endif 
+
 
     // --- Transforms module
     slicerApp->SplashMessage("Initializing Transforms Module...");
@@ -1701,6 +1735,11 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->Script ("namespace eval slicer3 set NeuroNavGUI %s", name);
 #endif
 
+#if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
+    name = openigtlinkGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set OpenIGTLinkGUI %s", name);
+#endif
+
     name = transformsGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set TransformsGUI %s", name);
 #if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
@@ -2059,6 +2098,9 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     neuronavGUI->TearDownGUI ( );
 #endif
+#if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
+    openigtlinkGUI->TearDownGUI ( );
+#endif
     
 #if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
     wfEngineModuleGUI->TearDownGUI ( );
@@ -2200,6 +2242,9 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(NEURONAV_DEBUG) && defined(BUILD_MODULES)
     neuronavGUI->Delete();
 #endif
+#if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
+    openigtlinkGUI->Delete();
+#endif
     
 #if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
     wfEngineModuleGUI->Delete ( );
@@ -2325,7 +2370,11 @@ int Slicer3_main(int argc, char *argv[])
     neuronavLogic->SetAndObserveMRMLScene ( NULL );
     neuronavLogic->Delete();
 #endif
-    
+#if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
+    openigtlinkLogic->SetAndObserveMRMLScene ( NULL );
+    openigtlinkLogic->Delete();
+#endif
+
 #if !defined(WFENGINE_DEBUG) && defined(BUILD_MODULES)
     wfEngineModuleLogic->SetAndObserveMRMLScene ( NULL );
     wfEngineModuleLogic->Delete ( );

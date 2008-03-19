@@ -10,6 +10,7 @@ SUBDIRS(
   EMSegment
   SlicerDaemon
   Editor
+  OpenIGTLink
   Python
   PythonGADScriptedModule
   Meshing
