@@ -190,6 +190,23 @@ void LoadProstate()
     readers[0]->Update();
 }
 
+void SetClipRatio(int val)
+{
+    for (unsigned int i = 0; i < clippers.size(); i++)
+    {
+        clippers[i]->SetOutputWholeExtent(
+            (readers[i]->GetOutput()->GetExtent()[1] - readers[i]->GetOutput()->GetExtent()[0]) / 2 - val,
+            (readers[i]->GetOutput()->GetExtent()[1] - readers[i]->GetOutput()->GetExtent()[0]) / 2 + val,
+            (readers[i]->GetOutput()->GetExtent()[3] - readers[i]->GetOutput()->GetExtent()[2]) / 2 - val,
+            (readers[i]->GetOutput()->GetExtent()[3] - readers[i]->GetOutput()->GetExtent()[2]) / 2 + val,
+            (readers[i]->GetOutput()->GetExtent()[5] - readers[i]->GetOutput()->GetExtent()[4]) / 2 - val,
+            (readers[i]->GetOutput()->GetExtent()[5] - readers[i]->GetOutput()->GetExtent()[4]) / 2 + val);
+        clippers[i]->ClipDataOn();
+
+        clippers[i]->Update();
+    }
+}
+
 void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
     cb_Animate->SetSelectedState(0);
@@ -206,6 +223,8 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
     else
         Clear();
 
+
+
     unsigned int i;
     for (i = 0; i < clippers.size(); i++)
         clippers[i]->Delete();
@@ -215,8 +234,10 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
         clippers.push_back(vtkImageClip::New());
         clippers[i]->SetInput(readers[i]->GetOutput());
         clippers[i]->SetOutputWholeExtent(readers[i]->GetOutput()->GetExtent());
+        clippers[i]->ClipDataOn();
         clippers[i]->Update();
     }
+    SetClipRatio(50);
 
     if (!readers.empty())
         VolumeMapper->SetInput(clippers[0]->GetOutput());
@@ -231,6 +252,7 @@ void SetMapper(vtkVolumeMapper* mapper)
         VolumeMapper->SetInput(clippers[0]->GetOutput());
     Volume->SetMapper(VolumeMapper);
 }
+
 
 void ChangeMapper(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
@@ -391,7 +413,7 @@ int my_main(int argc, char *argv[])
     LoadHead();
     if (!readers.empty())
         VolumeMapper->SetInput(readers[0]->GetOutput());
-
+    SetClipRatio(10);
 
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
     Volume->SetProperty(prop);
