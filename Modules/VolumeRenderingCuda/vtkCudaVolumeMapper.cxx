@@ -83,6 +83,7 @@ void vtkCudaVolumeMapper::SetRenderOutputScaleFactor(float scaleFactor)
 
 
 #include "vtkTimerLog.h"
+#include "cuda_runtime_api.h"
 
 void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
 {
@@ -90,26 +91,31 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     //if (this->GetInput()->GetMTime() > this->GetMTime())
     //  this->CudaInputBuffer->CopyFrom(this->GetInput()->GetScalarPointer(), this->GetInput()->GetScalarSize());
 
+    vtkTimerLog* overallTimer = vtkTimerLog::New();
     vtkTimerLog* log = vtkTimerLog::New();
+
+    overallTimer->StartTimer();
     log->StartTimer();
     // Renderer Information Setter.
     if (volume != this->VolumeInfoHandler->GetVolume())
         this->VolumeInfoHandler->SetVolume(volume);
     this->VolumeInfoHandler->Update();
-
+    cudaThreadSynchronize();
+    log->StopTimer();
+    
     this->RendererInfoHandler->SetRenderer(renderer);
     this->RendererInfoHandler->Bind();
-    log->StopTimer();
-    std::cout << "LoadTime: " << log->GetElapsedTime() << std::flush; 
+    //log->StopTimer();
+    //std::cout << "LoadTime: " << log->GetElapsedTime() << std::flush; 
 
-    log->StartTimer();
+    //log->StartTimer();
     CUDArenderAlgo_doRender(
         this->RendererInfoHandler->GetRendererInfo(),
         this->VolumeInfoHandler->GetVolumeInfo());         
 
-    log->StopTimer();
-    std::cout << "  RenderTime: " << (float)log->GetElapsedTime() << std::flush;
-    log->StartTimer();
+    //log->StopTimer();
+    //std::cout << "  RenderTime: " << (float)log->GetElapsedTime() << std::flush;
+    //log->StartTimer();
 
     // Enter 2D Mode
     glPushAttrib(GL_ENABLE_BIT);
@@ -145,9 +151,16 @@ void vtkCudaVolumeMapper::Render(vtkRenderer *renderer, vtkVolume *volume)
     glPopMatrix();
     glPopAttrib();
 
-    log->StopTimer();
-    std::cout << "  Display Time: " << log->GetElapsedTime() << std::endl;
+    cudaThreadSynchronize();
+    overallTimer->StopTimer();
+
+    //cout << "Overall Time: "<< overallTimer->GetElapsedTime()
+    //    << " Upload Time: " << log->GetElapsedTime()
+    //    << " Ration: " << log->GetElapsedTime()/ overallTimer->GetElapsedTime() << endl;
+
+    //std::cout << "  Display Time: " << log->GetElapsedTime() << std::endl;
     log->Delete();
+
     return;
 }
 

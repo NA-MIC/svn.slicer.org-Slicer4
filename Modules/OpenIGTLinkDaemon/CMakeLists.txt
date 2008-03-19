@@ -92,9 +92,9 @@ TARGET_LINK_LIBRARIES(OpenIGTLinkDaemon
 # --------------------------------------------------------------------------
 # Testing (requires some of the examples)
 
-IF(BUILD_TESTING)
-  SUBDIRS(Testing)
-ENDIF(BUILD_TESTING)
+#IF(BUILD_TESTING)
+#  SUBDIRS(Testing)
+#ENDIF(BUILD_TESTING)
 
 #
 # configure files to drop in the build directory
