@@ -39,11 +39,11 @@ vtkIGTLConnector::vtkIGTLConnector()
 
   //this->Communicator = vtkSocketCommunicator::New();
   this->Thread = vtkMultiThreader::New();
-
   this->ServerStopFlag = false;
   this->ThreadID = -1;
   this->ServerSocket = vtkServerSocket::New(); 
-  
+  this->ServerHostname = "localhost";
+  this->ServerPort = 18944;
 }
 
 vtkIGTLConnector::~vtkIGTLConnector()
@@ -78,6 +78,7 @@ int vtkIGTLConnector::SetTypeClient(std::string hostname, int port)
   return 1;
 }
 
+
 int vtkIGTLConnector::Start()
 {
   // Check if type is defined.
@@ -100,13 +101,17 @@ int vtkIGTLConnector::Start()
   return 1;
 }
 
+
 int vtkIGTLConnector::Stop()
 {
   // Check if thread exists
   if (this->ThreadID >= 0)
     {
+      // NOTE: Thread should be killed by activating ServerStopFlag.
+      //this->ServerStopFlag = true;
       this->Thread->TerminateThread(this->ThreadID);
       this->ThreadID = -1;
+      this->State = STATE_OFF;
       return 1;
     }
   else
@@ -115,13 +120,17 @@ int vtkIGTLConnector::Stop()
     }
 }
 
+
 void* vtkIGTLConnector::ThreadFunction(void* ptr)
 {
+
   //vtkIGTLConnector* igtlcon = static_cast<vtkIGTLConnector*>(ptr);
   vtkMultiThreader::ThreadInfo* vinfo = 
     static_cast<vtkMultiThreader::ThreadInfo*>(ptr);
   vtkIGTLConnector* igtlcon = static_cast<vtkIGTLConnector*>(vinfo->UserData);
   
+  igtlcon->State = STATE_WAIT_CONNECTION;
+
   // Communication -- common to both Server and Client
   while (!igtlcon->ServerStopFlag)
     {
@@ -129,11 +138,15 @@ void* vtkIGTLConnector::ThreadFunction(void* ptr)
       vtkClientSocket* socket = igtlcon->WaitForConnection();
       if (socket != NULL)
         {
+          igtlcon->State = STATE_CONNECTED;
           std::cerr << "vtkOpenIGTLinkLogic::ThreadFunction(): Client Connected." << std::endl;
           igtlcon->ReceiveController(socket);
+          igtlcon->State = STATE_WAIT_CONNECTION;
         }
     }
   igtlcon->ThreadID = -1;
+  igtlcon->State = STATE_OFF;
+
 }
 
 
@@ -203,6 +216,12 @@ int vtkIGTLConnector::ReceiveController(vtkClientSocket* socket)
   while (!this->ServerStopFlag)
     {
 
+      // check if connection is alive
+      if (!socket->GetConnected())
+        {
+          break;
+        }
+
       int r = socket->Receive(&header, IGTL_HEADER_SIZE);
 
       if (r != IGTL_HEADER_SIZE)
@@ -225,7 +244,7 @@ int vtkIGTLConnector::ReceiveController(vtkClientSocket* socket)
       if (header.version != IGTL_HEADER_VERSION)
         {
           vtkErrorMacro("Unsupported OpenIGTLink version.");
-          return 0;
+          break;
         }
 
       /*
@@ -259,6 +278,9 @@ int vtkIGTLConnector::ReceiveController(vtkClientSocket* socket)
         }
       */
     }
+
+  socket->CloseSocket();
+  return 0;
 }
 
 int vtkIGTLConnector::ReceiveImage(vtkClientSocket* socket, const char* deviceName,

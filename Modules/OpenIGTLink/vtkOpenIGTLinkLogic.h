@@ -78,9 +78,6 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   
   vtkTypeRevisionMacro(vtkOpenIGTLinkLogic,vtkObject);
 
-  vtkSetMacro ( SelectedConnectorIndex,   int );
-  vtkGetMacro ( SelectedConnectorIndex,   int );
-  
   vtkSetMacro ( NeedRealtimeImageUpdate0, int );
   vtkGetMacro ( NeedRealtimeImageUpdate0, int );
   vtkSetMacro ( NeedRealtimeImageUpdate1, int );
@@ -111,7 +108,7 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   //----------------------------------------------------------------
 
   void AddConnector();
-  void DeleteConnector();
+  void DeleteConnector(int id);
   int  GetNumberOfConnectors();
   vtkIGTLConnector* GetConnector(int id);
 
@@ -124,8 +121,6 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   //BTX
   std::vector<vtkIGTLConnector*> ConnectorList;
   //ETX
-  int SelectedConnectorIndex;
-
 
   //----------------------------------------------------------------
   // Real-time image

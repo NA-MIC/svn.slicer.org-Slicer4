@@ -36,10 +36,12 @@ vtkStandardNewMacro(vtkOpenIGTLinkLogic);
 vtkOpenIGTLinkLogic::vtkOpenIGTLinkLogic()
 {
 
+  /*
     std::cerr << "vtkOpenIGTLinkLogic::vtkOpenIGTLinkLogic() called " << std::endl;
     vtkIGTLConnector* connector = vtkIGTLConnector::New();
     connector->SetTypeServer(18944);
     connector->Start();
+  */
 
     this->SliceDriver0 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
     this->SliceDriver1 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
@@ -138,17 +140,17 @@ void vtkOpenIGTLinkLogic::AddConnector()
   vtkIGTLConnector* connector = vtkIGTLConnector::New();
   connector->SetName("connector");
   this->ConnectorList.push_back(connector);
-  this->SelectedConnectorIndex = this->ConnectorList.size();
+
+  std::cerr << "Number of Connectors: " << this->ConnectorList.size() << std::endl;
 }
 
 //---------------------------------------------------------------------------
-void vtkOpenIGTLinkLogic::DeleteConnector()
+void vtkOpenIGTLinkLogic::DeleteConnector(int id)
 {
-  this->ConnectorList[this->SelectedConnectorIndex]->Delete();
-  this->ConnectorList.erase(this->ConnectorList.begin() + this->SelectedConnectorIndex);
-  if (this->SelectedConnectorIndex > this->ConnectorList.size())
+  if (id >= 0 && id < this->ConnectorList.size())
     {
-      this->SelectedConnectorIndex = this->ConnectorList.size();
+      this->ConnectorList[id]->Delete();
+      this->ConnectorList.erase(this->ConnectorList.begin() + id);
     }
 }
 
