@@ -132,7 +132,6 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
 
         vtkSlicerSliceGUI* GetMainSliceGUI(char *layoutName);
         void AddMainSliceGUI(char *layoutName);
-        void CompareViewSelect();
 
     // Description:
     // Add/Remove observers on widgets in Slicer's main GUI
@@ -255,6 +254,9 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     //--- through the ApplicationGUI to CacheManager.
     virtual void ConfigureRemoteIOSettings();
 
+    void SetNCompareViewRows( int nrows ) { this->NCompareViewRows = nrows; }
+    void SetNCompareViewColumns( int ncolumns ) { this->NCompareViewColumns = ncolumns; }
+
 protected:
     vtkSlicerApplicationGUI ( );
     virtual ~vtkSlicerApplicationGUI ( );
@@ -262,10 +264,6 @@ protected:
     // Description:
     // Main Slicer window
     vtkSlicerWindow *MainSlicerWindow;
-
-        vtkKWEntry *CompareViewBoxRowEntry;
-        vtkKWEntry *CompareViewBoxColumnEntry;
-        vtkKWPushButton *CompareViewBoxApplyButton;
 
         // Description:
     // Frames for the main Slicer UI panel    
@@ -310,6 +308,11 @@ protected:
     // Used to tag all pages added to the tabbed notebook
     // arrangement of the main viewer.
     int ViewerPageTag;
+
+    // Description:
+    // Set number of CompareView slice viewers
+    int NCompareViewRows;
+    int NCompareViewColumns;
 
     vtkSlicerMRMLSaveDataWidget *SaveDataWidget;
     

@@ -89,6 +89,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     virtual void ProcessLogicEvents ( vtkObject *caller, unsigned long event, void *callData );
     virtual void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
     virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
+
+  virtual void PopUpCompareViewCustomLayoutFrame();
+  virtual void HideCompareViewCustomLayoutFrame();
+
     
     // Description:
     // Describe the behavior at module enter and exit.
@@ -130,6 +134,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     vtkKWToolbar *InteractionModeToolbar;
     vtkKWToolbar *UndoRedoToolbar;
 
+    vtkKWTopLevel *CompareViewBoxTopLevel;
+
     // Description:
     // Contains icons
     vtkSlicerToolbarIcons *SlicerToolbarIcons;
@@ -151,6 +157,12 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
     vtkKWPushButton *SaveSceneIconButton;
     vtkKWMenuButton *LoadSceneIconButton;
     vtkKWMenuButton *ChooseLayoutIconMenuButton;
+
+
+    vtkKWEntry *CompareViewBoxRowEntry;
+    vtkKWEntry *CompareViewBoxColumnEntry;
+    vtkKWPushButton *CompareViewBoxApplyButton;
+
 
     vtkKWRadioButton *MousePickButton;
     vtkKWRadioButton *MousePlaceButton;
