@@ -228,18 +228,20 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   if (node) { 
     vtkMRMLVolumeNode *volumeSampleNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SuperSampleRef()));
     vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
+    float colorMin[3] = {0, 0.0, 0.8 };
+    float colorMax[3] = {0.0 , 0.0, 0.8 };
+
     if (node->GetAnalysis_Intensity_Flag()) {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
-      
-      float colorMin[3] = {0.8 , 0.0, 0.0 };
-      float colorMax[3] = {0 , 0.0, 0.8 };
-      this->CreateRender(volumeAnalysisNode, colorMin, colorMax, 1);
-      this->SetRender_BandStopFilter(-0.5,0.5);
+      this->CreateRender(volumeAnalysisNode, 1);
+      this->SetRender_BandPassFilter(12, 14, colorMax, colorMax);
 
     } else if (node->GetAnalysis_Deformable_Flag()) {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
       // this->CreateRender(volumeAnalysisNode);
       // this->SetRender_HighPassFilter(10);
+      this->CreateRender(volumeAnalysisNode, 1);
+      this->SetRender_HighPassFilter(12,colorMax, colorMax);
     } else {
       volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan2_LocalRef()));
     }

@@ -58,6 +58,8 @@ vtkTumorGrowthLogic::vtkTumorGrowthLogic()
   this->Analysis_Intensity_ROINegativeBin = NULL;
   this->Analysis_Intensity_ROIPositiveBin = NULL;
   this->Analysis_Intensity_ROIBinReal     = NULL;
+  this->Analysis_Intensity_ROIBinAdd      = NULL;
+  this->Analysis_Intensity_ROIBinDisplay  = NULL;
   this->Analysis_Intensity_ROITotal       = NULL;
 
   // if set to zero then SaveVolume will not do anything 
@@ -100,6 +102,16 @@ vtkTumorGrowthLogic::~vtkTumorGrowthLogic()
   if (this->Analysis_Intensity_ROIBinReal) {
     this->Analysis_Intensity_ROIBinReal->Delete();
     this->Analysis_Intensity_ROIBinReal = NULL;
+  }
+
+  if (this->Analysis_Intensity_ROIBinAdd) {
+    this->Analysis_Intensity_ROIBinAdd->Delete();
+    this->Analysis_Intensity_ROIBinAdd = NULL;
+  }
+
+  if (this->Analysis_Intensity_ROIBinDisplay) {
+    this->Analysis_Intensity_ROIBinDisplay->Delete();
+    this->Analysis_Intensity_ROIBinDisplay = NULL;
   }
 
   if (this->Analysis_Intensity_ROITotal) {
@@ -389,7 +401,8 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
 
   this->SourceAnalyzeTclScripts(app);
   
-  if (1) { 
+  int debug =  0; 
+  if (!debug) { 
     cout << "=== 1 ===" << endl;
     app->Script("::TumorGrowthTcl::Scan2ToScan1Registration_GUI Global");
 
@@ -412,6 +425,7 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
     cout << "=== 4 ===" << endl;
     app->Script("::TumorGrowthTcl::HistogramNormalization_GUI"); 
   } else {
+    cout << "DEBUGGING " << endl;
     if (!this->TumorGrowthNode->GetScan2_NormedRef() || !strcmp(this->TumorGrowthNode->GetScan2_NormedRef(),"")) { 
       char fileName[1024];
       sprintf(fileName,"%s/TG_scan2_norm.nhdr",this->TumorGrowthNode->GetWorkingDir());
@@ -433,8 +447,22 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
     if (!atoi(app->Script("::TumorGrowthTcl::Analysis_Intensity_GUI"))) return 0; 
   } 
   if (this->TumorGrowthNode->GetAnalysis_Deformable_Flag()) {
-    cout << "=== DEFORMABLE ANALYSIS ===" << endl;
-    if (!atoi(app->Script("::TumorGrowthTcl::Analysis_Deformable_GUI"))) return 0; 
+    if (debug) {
+      if (!this->TumorGrowthNode->GetAnalysis_Deformable_Ref() || !strcmp(this->TumorGrowthNode->GetAnalysis_Deformable_Ref(),"")) { 
+    char fileName[1024];
+    sprintf(fileName,"%s/TG_Analysis_Deformable.nhdr",this->TumorGrowthNode->GetWorkingDir());
+    vtkMRMLVolumeNode* tmp = this->LoadVolume(app,fileName,0,"TG_Analysis_Deformable");
+    if (tmp) {
+      this->TumorGrowthNode->SetAnalysis_Deformable_Ref(tmp->GetID());
+    } else {
+      cout << "Error: Could not load " << fileName << endl;
+      return 0;
+    }
+      }
+    } else {
+      cout << "=== DEFORMABLE ANALYSIS ===" << endl;
+      if (!atoi(app->Script("::TumorGrowthTcl::Analysis_Deformable_GUI"))) return 0; 
+    }
   }
   cout << "=== End ANALYSIS ===" << endl;
 
@@ -471,6 +499,19 @@ vtkImageMathematics* vtkTumorGrowthLogic::CreateAnalysis_Intensity_ROIBinReal() 
   return this->Analysis_Intensity_ROIBinReal;
 }
 
+vtkImageMathematics* vtkTumorGrowthLogic::CreateAnalysis_Intensity_ROIBinAdd() {
+  if (this->Analysis_Intensity_ROIBinAdd) { this->Analysis_Intensity_ROIBinAdd->Delete(); }
+  this->Analysis_Intensity_ROIBinAdd = vtkImageMathematics::New();
+  return this->Analysis_Intensity_ROIBinAdd;
+}
+
+vtkImageThreshold* vtkTumorGrowthLogic::CreateAnalysis_Intensity_ROIBinDisplay() {
+  if (this->Analysis_Intensity_ROIBinDisplay) { this->Analysis_Intensity_ROIBinDisplay->Delete(); }
+  this->Analysis_Intensity_ROIBinDisplay = vtkImageThreshold::New();
+  return this->Analysis_Intensity_ROIBinDisplay;
+}
+
+
 vtkImageSumOverVoxels* vtkTumorGrowthLogic::CreateAnalysis_Intensity_ROITotal() {
   if (this->Analysis_Intensity_ROITotal) { this->Analysis_Intensity_ROITotal->Delete(); }
   this->Analysis_Intensity_ROITotal = vtkImageSumOverVoxels::New();
@@ -485,6 +526,10 @@ vtkImageData*  vtkTumorGrowthLogic::GetAnalysis_Intensity_ROIBinReal() {
   return (this->Analysis_Intensity_ROIBinReal ? this->Analysis_Intensity_ROIBinReal->GetOutput() : NULL);
 }
 
+vtkImageData*  vtkTumorGrowthLogic::GetAnalysis_Intensity_ROIBinDisplay() { 
+  return (this->Analysis_Intensity_ROIBinDisplay ? this->Analysis_Intensity_ROIBinDisplay->GetOutput() : NULL);
+}
+
 
 double vtkTumorGrowthLogic::MeassureGrowth() {
   
@@ -497,6 +542,9 @@ double vtkTumorGrowthLogic::MeassureGrowth() {
   this->Analysis_Intensity_ROINegativeBin->Update(); 
   this->Analysis_Intensity_ROIPositiveBin->ThresholdByUpper(this->Analysis_Intensity_Threshold); 
   this->Analysis_Intensity_ROIPositiveBin->Update(); 
+  this->Analysis_Intensity_ROIBinReal->Update();
+  this->Analysis_Intensity_ROIBinAdd->Update();
+  this->Analysis_Intensity_ROIBinDisplay->Update();
   this->Analysis_Intensity_ROITotal->Update(); 
   return this->Analysis_Intensity_ROITotal->GetVoxelSum(); 
 }

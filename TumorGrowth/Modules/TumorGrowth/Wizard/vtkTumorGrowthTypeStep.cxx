@@ -113,8 +113,8 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
       applicationGUI->GetMainSliceGUI2()->GetSliceController()->GetOffsetScale()->SetValue(oldSliceSetting[2]);
       
       float color[3] = {0.8, 0.8, 0.0};
-      this->CreateRender(volumeSegmentNode,color,color, 0);
-      this->SetRender_HighPassFilter(1);
+      this->CreateRender(volumeSegmentNode, 0);
+      this->SetRender_HighPassFilter(1,color,color);
     } 
   }
 

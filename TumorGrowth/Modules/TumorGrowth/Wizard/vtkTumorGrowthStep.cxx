@@ -296,8 +296,7 @@ void vtkTumorGrowthStep::CreateResetButton() {
 
 
 /// For Rendering results
-void vtkTumorGrowthStep::SetRender_BandPassFilter(double min, double max) {
-  // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
+void vtkTumorGrowthStep::ChangeRender_BandPassFilter(double min, double max) {
   double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
   this->Render_Filter->RemoveAllPoints();
   this->Render_Filter->AddPoint(imgRange[0], 0.0);
@@ -312,16 +311,30 @@ void vtkTumorGrowthStep::SetRender_BandPassFilter(double min, double max) {
   }
 }
 
-void vtkTumorGrowthStep::SetRender_HighPassFilter(double min) {
+void vtkTumorGrowthStep::SetRender_BandPassFilter(double min, double max, float colorMin[3], float colorMax[3]) {
+  // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
+  this->ChangeRender_BandPassFilter(min, max);
+  this->Render_ColorMapping->RemoveAllPoints();
+  // Two different colors did not work 
+  this->Render_ColorMapping->AddRGBPoint(min, colorMin[0], colorMin[1], colorMin[2]);
+  this->Render_ColorMapping->AddRGBPoint(max, colorMin[0], colorMin[1], colorMin[2]);
+}
+
+void vtkTumorGrowthStep::SetRender_HighPassFilter(double min, float colorMin[3], float colorMax[3]) {
   // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
   double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
   this->Render_Filter->RemoveAllPoints();
   this->Render_Filter->AddPoint(imgRange[0], 0.0);
   this->Render_Filter->AddPoint(min - 1, 0.0);
   this->Render_Filter->AddPoint(min, 1);
+
+  this->Render_ColorMapping->RemoveAllPoints();
+  this->Render_ColorMapping->AddRGBPoint(min,  colorMin[0], colorMin[1], colorMin[2]);
+  this->Render_ColorMapping->AddRGBPoint(imgRange[1] , colorMax[0], colorMax[1], colorMax[2]);
+
 }
 
-void vtkTumorGrowthStep::SetRender_BandStopFilter(double min, double max) {
+void vtkTumorGrowthStep::SetRender_BandStopFilter(double min, double max, float colorMin[3], float colorMax[3]) {
   // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
   double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
   this->Render_Filter->RemoveAllPoints();
@@ -332,18 +345,19 @@ void vtkTumorGrowthStep::SetRender_BandStopFilter(double min, double max) {
   this->Render_Filter->AddPoint(max+0.01,0.8);
   this->Render_Filter->AddPoint(imgRange[1],0.8);
 
+  this->Render_ColorMapping->RemoveAllPoints();
+  this->Render_ColorMapping->AddRGBPoint(imgRange[0] , colorMin[0], colorMin[1], colorMin[2]);
+  this->Render_ColorMapping->AddRGBPoint(imgRange[1] , colorMax[0], colorMax[1], colorMax[2]);
 }
 
 
-void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, float colorMin[3], float colorMax[3], int RayCastFlag ) {
+void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, int RayCastFlag ) {
   this->RenderRemove();
   if (!volumeNode) return;
 
   this->Render_Image = volumeNode->GetImageData();
   
   // set PROP [[vtkTumorGrowthAnalysisStep ListInstances] GetRender_Mapper]
-  double* imgRange  = this->Render_Image->GetPointData()->GetScalars()->GetRange();
-
   if (RayCastFlag ) {
     this->Render_RayCast_Mapper = vtkFixedPointVolumeRayCastMapper::New();
     this->Render_RayCast_Mapper->SetInput(this->Render_Image);
@@ -354,10 +368,7 @@ void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, float color
     this->Render_Mapper->SetInput(this->Render_Image);
   }
   this->Render_Filter = vtkPiecewiseFunction::New();
-
   this->Render_ColorMapping = vtkColorTransferFunction::New();
-  this->Render_ColorMapping->AddRGBPoint( imgRange[0] ,  colorMin[0], colorMin[1], colorMin[2]);
-  this->Render_ColorMapping->AddRGBPoint( imgRange[1] , colorMax[0], colorMax[1], colorMax[2]);
 
   // set PROP [[vtkTumorGrowthAnalysisStep ListInstances] GetRender_VolumeProperty]
 
