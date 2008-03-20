@@ -360,6 +360,7 @@ runcmd $::CMAKE \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=$::GETBUILDTEST(cmake-verbose) \
         $SLICER_HOME
 
+
 if { $isWindows } {
     if { $MSVC6 } {
         eval runcmd $::MAKE Slicer3.dsw /MAKE $::GETBUILDTEST(test-type)
