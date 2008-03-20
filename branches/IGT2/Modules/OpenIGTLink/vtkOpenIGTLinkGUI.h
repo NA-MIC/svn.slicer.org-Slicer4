@@ -131,7 +131,9 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkGUI : public vtkSlicerModuleGUI
   virtual void ProcessLogicEvents ( vtkObject *caller, unsigned long event, void *callData );
   virtual void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
-  
+
+  void ProcessTimerEvents();
+
   void HandleMouseEvent(vtkSlicerInteractorStyle *style);
   
   // Description:
@@ -151,6 +153,13 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkGUI : public vtkSlicerModuleGUI
   vtkOpenIGTLinkGUI ( );
   virtual ~vtkOpenIGTLinkGUI ( );
   
+  //----------------------------------------------------------------
+  // Timer
+  //----------------------------------------------------------------
+  
+  int TimerFlag;
+  int TimerInterval;
+
   //----------------------------------------------------------------
   // GUI widgets
   //----------------------------------------------------------------
@@ -263,7 +272,8 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkGUI : public vtkSlicerModuleGUI
 
   void UpdateConnectorList(int updateLevel);
   void UpdateConnectorPropertyFrame(int i);
-  
+
+ 
 };
 
 

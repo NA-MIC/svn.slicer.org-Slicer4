@@ -16,6 +16,7 @@ Version:   $Revision: $
 #define __vtkIGTLConnector_h
 
 #include <string>
+#include <map>
 
 #include "vtkObject.h"
 #include "vtkOpenIGTLinkWin32Header.h" 
@@ -24,6 +25,10 @@ Version:   $Revision: $
 class vtkMultiThreader;
 class vtkClientSocket;
 class vtkServerSocket;
+class vtkMutexLock;
+
+class vtkImageData;
+class vtkMatrix4x4;
 
 class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
 {
@@ -99,11 +104,25 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
   // OpenIGTLink Message handlers
   //----------------------------------------------------------------
   vtkClientSocket* WaitForConnection();
-  int ReceiveController(vtkClientSocket* socket);
-  int ReceiveImage(vtkClientSocket* socket, const char* deviceName,
+  int ReceiveController();
+  int ReceiveImage(const char* deviceName,
                    long long bodySize, long long crc);
-  int ReceiveTransform(vtkClientSocket* socket, const char* deviceName,
+  int ReceiveTransform(const char* deviceName,
                        long long bodySize, long long crc);
+
+
+  //----------------------------------------------------------------
+  // Circular Buffer
+  //----------------------------------------------------------------
+
+  //BTX
+  void CreateImageCircularBuffer(std::string& key);
+  void CreateTransformCircularBuffer(std::string& key);
+  void CreateCommandCircularBuffer(std::string& key);
+  //ETX
+
+  void ImportFromCircularBuffers();
+
 
  private:
   //----------------------------------------------------------------
@@ -120,13 +139,47 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
   //----------------------------------------------------------------
 
   vtkMultiThreader* Thread;
+  vtkMutexLock*     Mutex;
   vtkServerSocket*  ServerSocket;
+  vtkClientSocket*  Socket;
   int               ThreadID;
   int               ServerPort;
   int               ServerStopFlag;
   //BTX
   std::string       ServerHostname;
   //ETX
+
+
+  //----------------------------------------------------------------
+  // Data
+  //----------------------------------------------------------------
+
+  //BTX
+  typedef struct {
+    int           Last;        // updated by connector thread
+    int           InUse;       // updated by main thread
+    vtkImageData* Data[3];
+    
+  } ImageCircularBufferType;
+
+  typedef struct {
+    int           Last;        // updated by connector thread
+    int           InUse;       // updated by main thread
+    vtkMatrix4x4* Data[3];
+  } TransformCircularBufferType;
+
+  typedef struct {
+    int           Last;        // updated by connector thread
+    int           InUse;       // updated by main thread
+    std::string   Data[3];
+  } CommandCircularBufferType;
+
+  std::map<std::string, ImageCircularBufferType>     ImageBuffer;
+  std::map<std::string, TransformCircularBufferType> TransformBuffer;
+  std::map<std::string, CommandCircularBufferType>   CommandBuffer;
+  //ETX
+
+  vtkMutexLock* CircularBufferMutex;
 
 };
 

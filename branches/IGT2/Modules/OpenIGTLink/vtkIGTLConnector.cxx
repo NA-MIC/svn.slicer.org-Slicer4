@@ -20,6 +20,8 @@ Version:   $Revision: $
 #include "vtkMultiThreader.h"
 #include "vtkServerSocket.h"
 #include "vtkClientSocket.h"
+#include "vtkMutexLock.h"
+#include "vtkImageData.h"
 
 #include "igtl_util.h"
 #include "igtl_header.h"
@@ -41,9 +43,10 @@ vtkIGTLConnector::vtkIGTLConnector()
   this->Thread = vtkMultiThreader::New();
   this->ServerStopFlag = false;
   this->ThreadID = -1;
-  this->ServerSocket = vtkServerSocket::New(); 
+  this->ServerSocket = NULL;
   this->ServerHostname = "localhost";
   this->ServerPort = 18944;
+  this->Mutex = vtkMutexLock::New();
 }
 
 vtkIGTLConnector::~vtkIGTLConnector()
@@ -108,10 +111,15 @@ int vtkIGTLConnector::Stop()
   if (this->ThreadID >= 0)
     {
       // NOTE: Thread should be killed by activating ServerStopFlag.
-      //this->ServerStopFlag = true;
-      this->Thread->TerminateThread(this->ThreadID);
-      this->ThreadID = -1;
-      this->State = STATE_OFF;
+      this->ServerStopFlag = true;
+      this->Mutex->Lock();
+      if (this->Socket)
+        {
+          this->Socket->CloseSocket();
+        }
+      this->Mutex->Unlock();
+      //this->Thread->TerminateThread(this->ThreadID);
+      //this->ThreadID = -1;
       return 1;
     }
   else
@@ -130,19 +138,40 @@ void* vtkIGTLConnector::ThreadFunction(void* ptr)
   vtkIGTLConnector* igtlcon = static_cast<vtkIGTLConnector*>(vinfo->UserData);
   
   igtlcon->State = STATE_WAIT_CONNECTION;
-
+  
+  if (igtlcon->Type == TYPE_SERVER)
+    {
+      igtlcon->ServerSocket = vtkServerSocket::New();
+      igtlcon->ServerSocket->CreateServer(igtlcon->ServerPort);
+    }
+  
   // Communication -- common to both Server and Client
   while (!igtlcon->ServerStopFlag)
     {
       std::cerr << "vtkOpenIGTLinkLogic::ThreadFunction(): alive." << std::endl;
-      vtkClientSocket* socket = igtlcon->WaitForConnection();
-      if (socket != NULL)
+      igtlcon->Mutex->Lock();
+      igtlcon->Socket = igtlcon->WaitForConnection();
+      igtlcon->Mutex->Unlock();
+      if (igtlcon->Socket != NULL)
         {
           igtlcon->State = STATE_CONNECTED;
           std::cerr << "vtkOpenIGTLinkLogic::ThreadFunction(): Client Connected." << std::endl;
-          igtlcon->ReceiveController(socket);
+          igtlcon->ReceiveController();
           igtlcon->State = STATE_WAIT_CONNECTION;
         }
+    }
+
+  if (igtlcon->ServerSocket)
+    {
+      igtlcon->ServerSocket->CloseSocket();
+      igtlcon->ServerSocket->Delete();
+      igtlcon->ServerSocket = NULL;
+    }
+  if (igtlcon->Socket)
+    {
+      igtlcon->Socket->CloseSocket();
+      igtlcon->Socket->Delete();
+      igtlcon->Socket = NULL;
     }
   igtlcon->ThreadID = -1;
   igtlcon->State = STATE_OFF;
@@ -157,10 +186,6 @@ vtkClientSocket* vtkIGTLConnector::WaitForConnection()
   if (this->Type == TYPE_CLIENT)
     {
       socket = vtkClientSocket::New();
-    }
-  else
-    {
-      this->ServerSocket->CreateServer(this->ServerPort);
     }
 
   while (!this->ServerStopFlag)
@@ -197,6 +222,8 @@ vtkClientSocket* vtkIGTLConnector::WaitForConnection()
 
   if (socket != NULL)
     {
+      std::cerr << "vtkOpenIGTLinkLogic::WaitForConnection(): Socket Closed." << std::endl;
+      socket->CloseSocket();
       socket->Delete();
     }
 
@@ -204,11 +231,11 @@ vtkClientSocket* vtkIGTLConnector::WaitForConnection()
 }
 
 
-int vtkIGTLConnector::ReceiveController(vtkClientSocket* socket)
+int vtkIGTLConnector::ReceiveController()
 {
   igtl_header header;
 
-  if (!socket)
+  if (!this->Socket)
     {
       return 0;
     }
@@ -217,12 +244,12 @@ int vtkIGTLConnector::ReceiveController(vtkClientSocket* socket)
     {
 
       // check if connection is alive
-      if (!socket->GetConnected())
+      if (!this->Socket->GetConnected())
         {
           break;
         }
 
-      int r = socket->Receive(&header, IGTL_HEADER_SIZE);
+      int r = this->Socket->Receive(&header, IGTL_HEADER_SIZE);
 
       if (r != IGTL_HEADER_SIZE)
         {
@@ -263,11 +290,11 @@ int vtkIGTLConnector::ReceiveController(vtkClientSocket* socket)
  
       if (strcmp("IMAGE", deviceType) == 0)
         {
-          this->ReceiveImage(socket, deviceName, header.body_size, header.crc);
+          this->ReceiveImage(deviceName, header.body_size, header.crc);
         }
       else if (strcmp("TRANSFORM", deviceType))
         {
-          this->ReceiveTransform(socket, deviceName, header.body_size, header.crc);
+          this->ReceiveTransform(deviceName, header.body_size, header.crc);
         }
 
       /*
@@ -279,24 +306,28 @@ int vtkIGTLConnector::ReceiveController(vtkClientSocket* socket)
       */
     }
 
-  socket->CloseSocket();
+  this->Socket->CloseSocket();
   return 0;
 }
 
-int vtkIGTLConnector::ReceiveImage(vtkClientSocket* socket, const char* deviceName,
-                 long long bodySize, long long crc)
+
+int vtkIGTLConnector::ReceiveImage(const char* deviceName, long long bodySize, long long crc)
 {
 
-#if 0
+  /*
   std::cerr << "ReceiveImage  is called  " << std::endl;
 
-  vtkMRMLScalarVolumeNode* volumeNode;
-  
-  igtl_image_header imgheader;
+  std::string key = deviceName;
+  std::map<std::string, ImageCircularBufferType>::iterator iter = this->ImageBuffer.find(key);
+  if (iter == this->ImageBuffer.end()) // First time to refer the device name
+    {
+      CreateImageCircularBuffer(key);
+    }
 
-  //int read = Tcl_Read(channel, (char *)&imgheader, IGTL_IMAGE_HEADER_SIZE);
-  int read = socket->Receive(&header, IGTL_HEADER_SIZE);
-  
+  // Read from the socket
+
+  igtl_image_header imgheader;
+  int read = this->Socket->Receive(&header, IGTL_HEADER_SIZE);
   if (read != IGTL_IMAGE_HEADER_SIZE)
     {
       vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_IMAGE_HEADER_SIZE << "\n");
@@ -306,7 +337,6 @@ int vtkIGTLConnector::ReceiveImage(vtkClientSocket* socket, const char* deviceNa
   igtl_image_convert_byte_order(&imgheader);
 
   std::cerr << "image format version = " << imgheader.version << std::endl;
-
   unsigned char imgType = imgheader.data_type;
   unsigned char scalarType = imgheader.scalar_type;
 
@@ -341,6 +371,64 @@ int vtkIGTLConnector::ReceiveImage(vtkClientSocket* socket, const char* deviceNa
   std::cerr << sx << ", " << sy << ", " << sz << std::endl;
   std::cerr << nx << ", " << ny << ", " << nz << std::endl;
   std::cerr << px << ", " << py << ", " << pz << std::endl;
+
+  // Get circular buffer index
+  int index = (this->ImageBuffer[key].Last + 1) % 3;
+  if (index == this->ImageBuffer[key].InUse)
+    {
+      // if the buffer is used by the main thread,
+      // switch to the next.
+      index = (index + 1) % 3;
+    }
+
+  vtkImageData imageData = this->ImageBuffer[key].Data[index];
+  
+  imageData->SetDimensions(imgheader.size[0], imgheader.size[1], imgheader.size[2]);
+  imageData->SetNumberOfScalarComponents(1);
+  // Scalar type
+  //  TBD: Long might not be 32-bit in some platform.
+  switch (imgheader.scalar_type)
+    {
+    case IGTL_IMAGE_STYPE_TYPE_INT8:
+      imageData->SetScalarTypeToChar();
+      break;
+    case IGTL_IMAGE_STYPE_TYPE_UINT8:
+      imageData->SetScalarTypeToUnsignedChar();
+      break;
+    case IGTL_IMAGE_STYPE_TYPE_INT16:
+      imageData->SetScalarTypeToShort();
+      break;
+    case IGTL_IMAGE_STYPE_TYPE_UINT16:
+      imageData->SetScalarTypeToUnsignedShort();
+      break;
+    case IGTL_IMAGE_STYPE_TYPE_INT32:
+      imageData->SetScalarTypeToUnsignedLong();
+      break;
+    case IGTL_IMAGE_STYPE_TYPE_UINT32:
+      imageData->SetScalarTypeToUnsignedLong();
+      break;
+    default:
+      vtkErrorMacro ("Invalid Scalar Type\n");
+      break;
+    }
+  
+  // Bellow may cause performance down...
+  //  (Size change check needed?)
+  imageData->AllocateScalars();
+
+
+
+
+
+  // Now the buffer is ready to be read.
+  // -- Update last-updated buffer index information
+  this->ImageBuffer[key].Last = index;
+  */
+
+#if 0
+
+  vtkMRMLScalarVolumeNode* volumeNode;
+  
 
   vtkImageData* imageData;
   if (newNode)
@@ -563,11 +651,46 @@ int vtkIGTLConnector::ReceiveImage(vtkClientSocket* socket, const char* deviceNa
   vtkMRMLSliceNode* slnode = 
     vtkMRMLSliceNode::SafeDownCast(this->Scene->GetNodeByID("vtkMRMLSliceNode1"));
   slnode->SetSliceToRASByNTP(nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-#endif
 
+#endif
 }
 
-int vtkIGTLConnector::ReceiveTransform(vtkClientSocket* socket, const char* deviceName, long long bodySize, long long crc)
+
+int vtkIGTLConnector::ReceiveTransform(const char* deviceName, long long bodySize, long long crc)
+{
+  
+  
+}
+
+
+void vtkIGTLConnector::CreateImageCircularBuffer(std::string& key)
+{
+  this->CircularBufferMutex->Lock();
+
+  // Allocate Circular buffer for the new device
+  this->CircularBufferMutex->Lock();
+  this->ImageBuffer[key].InUse = -1;
+  this->ImageBuffer[key].Last  = -1;
+  for (int i = 0; i < 3; i ++)
+    {
+      this->ImageBuffer[key].Data[i] = vtkImageData::New();
+    }
+
+  this->CircularBufferMutex->Unlock();
+}
+
+void vtkIGTLConnector::CreateTransformCircularBuffer(std::string& key)
+{
+}
+
+void vtkIGTLConnector::CreateCommandCircularBuffer(std::string& key)
+{
+}
+
+
+void vtkIGTLConnector::ImportFromCircularBuffers()
 {
   
 }
+
+
