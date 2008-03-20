@@ -36,13 +36,6 @@ vtkStandardNewMacro(vtkOpenIGTLinkLogic);
 vtkOpenIGTLinkLogic::vtkOpenIGTLinkLogic()
 {
 
-  /*
-    std::cerr << "vtkOpenIGTLinkLogic::vtkOpenIGTLinkLogic() called " << std::endl;
-    vtkIGTLConnector* connector = vtkIGTLConnector::New();
-    connector->SetTypeServer(18944);
-    connector->Start();
-  */
-
     this->SliceDriver0 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
     this->SliceDriver1 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
     this->SliceDriver2 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
@@ -84,6 +77,9 @@ vtkOpenIGTLinkLogic::vtkOpenIGTLinkLogic()
 #ifdef USE_NAVITRACK
     this->OpenTrackerStream->AddObserver(vtkCommand::ModifiedEvent, this->DataCallbackCommand);
 #endif 
+
+    this->ConnectorList.clear();
+    this->ConnectorPrevStateList.clear();
 
 }
 
@@ -134,12 +130,39 @@ void vtkOpenIGTLinkLogic::UpdateAll()
 
 }
 
+
+//---------------------------------------------------------------------------
+int vtkOpenIGTLinkLogic::CheckConnectorsStatusUpdates()
+{
+
+  //----------------------------------------------------------------
+  // Find state change in the connectors
+
+  int nCon = GetNumberOfConnectors();
+  int updated = 0;
+
+  for (int i = 0; i < nCon; i ++)
+    {
+      if (this->ConnectorPrevStateList[i] != this->ConnectorList[i]->GetState())
+        {
+          updated = 1;
+          this->ConnectorPrevStateList[i] = this->ConnectorList[i]->GetState();
+        }
+    }
+
+  return updated;
+
+}
+
+
+
 //---------------------------------------------------------------------------
 void vtkOpenIGTLinkLogic::AddConnector()
 {
   vtkIGTLConnector* connector = vtkIGTLConnector::New();
   connector->SetName("connector");
   this->ConnectorList.push_back(connector);
+  this->ConnectorPrevStateList.push_back(-1);
 
   std::cerr << "Number of Connectors: " << this->ConnectorList.size() << std::endl;
 }
@@ -151,6 +174,7 @@ void vtkOpenIGTLinkLogic::DeleteConnector(int id)
     {
       this->ConnectorList[id]->Delete();
       this->ConnectorList.erase(this->ConnectorList.begin() + id);
+      this->ConnectorPrevStateList.erase(this->ConnectorPrevStateList.begin() + id);
     }
 }
 

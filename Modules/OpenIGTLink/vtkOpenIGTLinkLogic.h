@@ -111,16 +111,28 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   void DeleteConnector(int id);
   int  GetNumberOfConnectors();
   vtkIGTLConnector* GetConnector(int id);
+  int  CheckConnectorsStatusUpdates();
+  //int  ReadCircularBuffers();
+
 
  private:
-  
+
   //----------------------------------------------------------------
   // Connector Management
   //----------------------------------------------------------------
 
   //BTX
   std::vector<vtkIGTLConnector*> ConnectorList;
+  std::vector<int>               ConnectorPrevStateList;
   //ETX
+
+  //----------------------------------------------------------------
+  // Monitor Timer
+  //----------------------------------------------------------------
+
+  int MonitorFlag;
+  int MonitorInterval;
+  
 
   //----------------------------------------------------------------
   // Real-time image
@@ -164,6 +176,7 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   ~vtkOpenIGTLinkLogic();
   vtkOpenIGTLinkLogic(const vtkOpenIGTLinkLogic&);
   void operator=(const vtkOpenIGTLinkLogic&);
+
   
   static void DataCallback(vtkObject*, unsigned long, void *, void *);
 
@@ -173,6 +186,7 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
 
   vtkMRMLVolumeNode* AddVolumeNode(const char*);
   vtkCallbackCommand *DataCallbackCommand;
+
 
 };
 
