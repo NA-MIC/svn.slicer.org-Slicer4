@@ -236,12 +236,14 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
         clippers[i]->SetOutputWholeExtent(readers[i]->GetOutput()->GetExtent());
         clippers[i]->ClipDataOn();
         clippers[i]->Update();
+        VolumeMapper->Update();
     }
     SetClipRatio(50);
 
     if (!readers.empty())
         VolumeMapper->SetInput(clippers[0]->GetOutput());
-    renderWidget->GetRenderer()->Render();
+
+    app->Script("after idle %s Render", renderWidget->GetTclName());
 }
 
 void SetMapper(vtkVolumeMapper* mapper)
@@ -264,6 +266,7 @@ void ChangeMapper(vtkObject* caller, unsigned long eid, void* clientData, void* 
         SetMapper(vtkVolumeTextureMapper3D::New());
     else if (!strcmp(mb_Mapper->GetValue(), "Software Ray Cast"))
         SetMapper(vtkFixedPointVolumeRayCastMapper::New());
+    app->Script("after idle %s Render", renderWidget->GetTclName());
 }
 
 
@@ -273,6 +276,9 @@ int clipRatio = 0;
 const int sampleMax = 10;
 vtkTimerLog* logger = vtkTimerLog::New();
 std::vector<double> vals;
+FILE* f_means = NULL;
+FILE* f_deviations = NULL;
+FILE* f_volSizes = NULL;
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
@@ -281,10 +287,27 @@ void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void
         renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 0, 500);
         vals.clear();
         clipRatio = 1;
+        SetClipRatio(clipRatio);
         if (cb_Animate->GetSelectedState() == 1)
+        {
             app->Script("after idle %s Render", renderWidget->GetTclName());
+            std::stringstream name;
+            name << "D:\\measurements\\" << mb_Mapper->GetValue() << "_mean" << ((cb_Animate2->GetSelectedState() == 1)? "_anim" : "") << ".txt" ;
+            f_means = fopen(name.str().c_str(), "w");
+            std::stringstream devName;
+            devName << "D:\\measurements\\" << mb_Mapper->GetValue() << "_deviation" << ((cb_Animate2->GetSelectedState() == 1)? "_anim" : "") << ".txt" ;
+            f_deviations = fopen(devName.str().c_str(), "w");
+            f_volSizes = fopen("D:\\measurements\\VolSizes.txt", "w");
+        }
+        else if (f_volSizes != NULL) 
+        {
+            fclose(f_volSizes); f_volSizes = NULL;
+            fclose(f_deviations); f_deviations = NULL;
+            fclose(f_means); f_means = NULL;
+        }
 
     }
+
     //if (caller == ThresholdRange)
     //    VolumeMapper->SetThreshold(ThresholdRange->GetRange());
     //else if (caller == SteppingSizeScale)
@@ -321,9 +344,9 @@ void StartRender(vtkObject* caller, unsigned long eid, void* clientData, void* c
 
 void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
-    
-     if (cb_Animate->GetSelectedState() == 1)
-     {
+
+    if (cb_Animate->GetSelectedState() == 1)
+    {
         logger->StopTimer();
 
         vals.push_back(logger->GetElapsedTime());
@@ -339,23 +362,35 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
 
 
         cout << vals.size() << "::" << clipRatio << ": Last RenderTime: " << logger->GetElapsedTime() 
-        << " Mean RenderTime: " << mean << " Deviation: " << deviation << endl;
+            << " Mean RenderTime: " << mean << " Deviation: " << deviation << endl;
         if (vals.size() > sampleMax)
         {
+            if (f_volSizes != NULL)
+            {
+                fwrite(&clipRatio, 1, sizeof(int), f_volSizes);
+                fwrite(&deviation, 1, sizeof(double), f_deviations);
+                fwrite(&mean , 1, sizeof(double), f_means);
+            }
+            vals.clear();
             clipRatio++;
             SetClipRatio(clipRatio);
-            vals.clear();
         }
         if (clipRatio < 128 )
             app->Script("after idle %s Render", renderWidget->GetTclName());
-         //if (renderScheduled == false)
-         //{    
-         //    renderScheduled = true;
-         //    renderWidget->SetRenderModeToInteractive();
-         //    cerr << *renderWidget;
+        else if (f_volSizes != NULL) 
+        {
+            fclose(f_volSizes); f_volSizes = NULL;
+            fclose(f_deviations); f_deviations = NULL;
+            fclose(f_means); f_means = NULL;
+        }
+        //if (renderScheduled == false)
+        //{    
+        //    renderScheduled = true;
+        //    renderWidget->SetRenderModeToInteractive();
+        //    cerr << *renderWidget;
         //    //  app->Script("after 100 %s Render", renderWidget->GetTclName());
-         //}
-     }
+        //}
+    }
 }
 
 
@@ -420,8 +455,11 @@ int my_main(int argc, char *argv[])
     Volume->SetMapper(VolumeMapper);
 
     LoadHead();
+    clippers.push_back(vtkImageClip::New());
+    clippers[0]->SetInput(readers[0]->GetOutput());
+    clippers[0]->Update();
     if (!readers.empty())
-        VolumeMapper->SetInput(readers[0]->GetOutput());
+        VolumeMapper->SetInput(clippers[0]->GetOutput());
     SetClipRatio(10);
 
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
