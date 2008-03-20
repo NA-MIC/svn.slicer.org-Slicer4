@@ -260,11 +260,11 @@ void ChangeMapper(vtkObject* caller, unsigned long eid, void* clientData, void* 
 {
     if (!strcmp(mb_Mapper->GetValue(), "CUDA"))
         SetMapper(vtkCudaVolumeMapper::New());
-    else if (!strcmp(mb_Mapper->GetValue(), "Texture 2D"))
+    else if (!strcmp(mb_Mapper->GetValue(), "Texture_2D"))
         SetMapper(vtkVolumeTextureMapper2D::New());
-    else if (!strcmp(mb_Mapper->GetValue(), "Texture 3D"))
+    else if (!strcmp(mb_Mapper->GetValue(), "Texture_3D"))
         SetMapper(vtkVolumeTextureMapper3D::New());
-    else if (!strcmp(mb_Mapper->GetValue(), "Software Ray Cast"))
+    else if (!strcmp(mb_Mapper->GetValue(), "Software_Ray_Caster"))
         SetMapper(vtkFixedPointVolumeRayCastMapper::New());
     app->Script("after idle %s Render", renderWidget->GetTclName());
 }
@@ -272,8 +272,10 @@ void ChangeMapper(vtkObject* caller, unsigned long eid, void* clientData, void* 
 
 
 #include "vtkTimerLog.h"
-int clipRatio = 0;
 const int sampleMax = 10;
+const int clipStart = 1;
+const int clipStop = 10;
+int clipRatio = clipStart;
 vtkTimerLog* logger = vtkTimerLog::New();
 std::vector<double> vals;
 FILE* f_means = NULL;
@@ -286,7 +288,7 @@ void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void
     {
         renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 0, 500);
         vals.clear();
-        clipRatio = 1;
+        clipRatio = clipStart;
         SetClipRatio(clipRatio);
         if (cb_Animate->GetSelectedState() == 1)
         {
@@ -344,7 +346,6 @@ void StartRender(vtkObject* caller, unsigned long eid, void* clientData, void* c
 
 void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
-
     if (cb_Animate->GetSelectedState() == 1)
     {
         logger->StopTimer();
@@ -375,13 +376,32 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
             clipRatio++;
             SetClipRatio(clipRatio);
         }
-        if (clipRatio < 128 )
+        if (clipRatio < clipStop )
             app->Script("after idle %s Render", renderWidget->GetTclName());
-        else if (f_volSizes != NULL) 
+        else
         {
-            fclose(f_volSizes); f_volSizes = NULL;
-            fclose(f_deviations); f_deviations = NULL;
-            fclose(f_means); f_means = NULL;
+            if (f_volSizes != NULL) 
+            {
+                fclose(f_volSizes); f_volSizes = NULL;
+                fclose(f_deviations); f_deviations = NULL;
+                fclose(f_means); f_means = NULL;
+            //    cb_Animate->SetSelectedState(0);
+            }
+            if (cb_Animate2->GetSelectedState() == 0)
+                cb_Animate2->SetSelectedState(1);
+            else
+            {
+                cb_Animate2->SetSelectedState(0);
+                int val = mb_Mapper->GetMenu()->GetIndexOfItem(mb_Mapper->GetValue());
+                if (val < 3)
+                {
+                    mb_Mapper->GetMenu()->SelectItem(++val);
+                    UpdateRenderer(cb_Animate, 0, NULL, NULL);
+                        
+                }
+            }
+
+
         }
         //if (renderScheduled == false)
         //{    
@@ -504,9 +524,9 @@ int my_main(int argc, char *argv[])
     mb_Mapper->SetParent(win->GetMainPanelFrame());
     mb_Mapper->Create();
     mb_Mapper->GetMenu()->AddRadioButton("CUDA");
-    mb_Mapper->GetMenu()->AddRadioButton("Software Ray Cast");
-    mb_Mapper->GetMenu()->AddRadioButton("Texture 2D");
-    mb_Mapper->GetMenu()->AddRadioButton("Texture 3D");
+    mb_Mapper->GetMenu()->AddRadioButton("Software_Ray_Caster");
+    mb_Mapper->GetMenu()->AddRadioButton("Texture_2D");
+    mb_Mapper->GetMenu()->AddRadioButton("Texture_3D");
     mb_Mapper->SetValue("CUDA");
     mb_Mapper->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)MapperCallbackCommand);
 
