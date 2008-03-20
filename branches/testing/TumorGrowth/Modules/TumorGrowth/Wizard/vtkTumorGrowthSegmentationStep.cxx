@@ -262,8 +262,8 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   // Show Segmentation through 3D Volume Rendering
   // ------------------------------------
   float color[3] = { 0.8, 0.8, 0.0 };
-  this->CreateRender(volumeNode, color, color, 0);
-  this->SetRender_BandPassFilter(range[0],range[1]);
+  this->CreateRender(volumeNode, 0);
+  this->SetRender_BandPassFilter(range[0],range[1], color, color);
   
   return;
 }
@@ -323,7 +323,7 @@ void vtkTumorGrowthSegmentationStep::ThresholdRangeChangedCallback(double min , 
   mrmlNode->SetSegmentThresholdMax(max);
 
   // 3D Render 
-  this->SetRender_BandPassFilter(min,max);
+  this->ChangeRender_BandPassFilter(min,max);
   //  applicationGUI->GetViewerWidget()->GetMainViewer()->RequestRender();
 
 

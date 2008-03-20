@@ -4,6 +4,7 @@
 #include "itkVector.h"
 #include "itkWarpImageFilter.h"
 #include "itkLinearInterpolateImageFunction.h"
+#include "itkNearestNeighborInterpolateImageFunction.h"
 #include "itkIterativeInverseDeformationFieldImageFilter.h"
 
 int main(int argc, char* argv[])
@@ -15,7 +16,8 @@ int main(int argc, char* argv[])
       std::cerr << " <Moving Image in metafile format> ";
       std::cerr << " <Deformation Field in metafile format> ";
       std::cerr << " <Output Image in metafile format> ";
-      std::cerr << " [invert deformation field(0) OR apply deformation field (1)] " << std::endl;
+      std::cerr << " [invert deformation field(0) OR apply deformation field (1)] ";
+      std::cerr << " [use Nearest Neighbor (0) OR Linear (1) interpolation] (only important for 'apply deformation field' " << std::endl;
       return 1;
     }
 
@@ -35,20 +37,31 @@ int main(int argc, char* argv[])
   defReader->Update();
 
   std::cout << argv[4] << std::endl;
-  if( atoi(argv[4]) == 1 )
+
+   if( atoi(argv[4]) == 1 )
     {
       // APPLYING THE DEFORMATION FIELD.
-      typedef itk::LinearInterpolateImageFunction< 
-      MovingImageType,double > InterpolatorType;
-      InterpolatorType::Pointer interpolator = InterpolatorType::New();
-      
+      typedef itk::LinearInterpolateImageFunction<MovingImageType,double> LinearInterpolatorType;
+      LinearInterpolatorType::Pointer linearInterpolator = NULL;
+     
+      typedef itk::NearestNeighborInterpolateImageFunction<MovingImageType,double> NearestInterpolatorType;
+      NearestInterpolatorType::Pointer nearestInterpolator = NULL;
+
       typedef itk::WarpImageFilter< MovingImageType, 
-    MovingImageType, DeformationFieldType > WarperType;
+      MovingImageType, DeformationFieldType > WarperType;
       WarperType::Pointer warper = WarperType::New();
       std::cout << movingImage->GetSpacing() << std::endl;
       warper->SetDeformationField( defField );
       warper->SetInput( movingImage );
-      warper->SetInterpolator( interpolator );
+
+      if (atoi(argv[5]) == 1 ) {
+    linearInterpolator  = LinearInterpolatorType::New();
+    warper->SetInterpolator( linearInterpolator );
+      } else {
+    nearestInterpolator  = NearestInterpolatorType::New();
+    warper->SetInterpolator( nearestInterpolator );
+      }
+
       warper->SetOutputSpacing( movingImage->GetSpacing() );
       warper->SetOutputOrigin( movingImage->GetOrigin() );
       

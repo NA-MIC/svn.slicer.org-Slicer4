@@ -487,21 +487,31 @@ namespace eval TumorGrowthTcl {
         set VOLUMES_GUI  [$::slicer3::Application GetModuleGUIByName "Volumes"]
         set VOLUMES_LOGIC [$VOLUMES_GUI GetLogic]
 
-        set OUTPUT_NODE [$VOLUMES_LOGIC CreateLabelVolume $SCENE $SEGM_NODE "TG_Analysis_Intensity"]
+        set OUTPUT_NODE [$VOLUMES_LOGIC CreateLabelVolume $SCENE $SEGM_NODE "TG_Analysis_IntensityReal"]
+  
+    set IMAGE_DATA [$LOGIC GetAnalysis_Intensity_ROIBinReal]
         $OUTPUT_NODE SetAndObserveImageData [$LOGIC GetAnalysis_Intensity_ROIBinReal]
-        $NODE SetAnalysis_Intensity_Ref [$OUTPUT_NODE GetID]
         $LOGIC SaveVolume $::slicer3::Application $OUTPUT_NODE
+
+        set OUTPUT_NODE [$VOLUMES_LOGIC CreateLabelVolume $SCENE $SEGM_NODE "TG_Analysis_IntensityDisplay"]
+        $OUTPUT_NODE SetAndObserveImageData [$LOGIC GetAnalysis_Intensity_ROIBinDisplay]
+        $LOGIC SaveVolume $::slicer3::Application $OUTPUT_NODE
+
+        $NODE SetAnalysis_Intensity_Ref [$OUTPUT_NODE GetID]
+
 
         return 1
     }
   
     proc Analysis_Intensity_CMD {LOGIC SCAN1_ImageData SCAN1_SegmData SCAN2_ImageData AnalysisSensitivity } {
         # Print "Analysis_Intensity_CMD $LOGIC $SCAN1_ImageData $SCAN1_SegmData $SCAN2_ImageData $AnalysisSensitivity"
-        set AnalysisFinal          [$LOGIC CreateAnalysis_Intensity_Final]
-        set AnalysisROINegativeBin [$LOGIC CreateAnalysis_Intensity_ROINegativeBin]
-        set AnalysisROIPositiveBin [$LOGIC CreateAnalysis_Intensity_ROIPositiveBin]
-        set AnalysisROIBinReal     [$LOGIC CreateAnalysis_Intensity_ROIBinReal]
-        set AnalysisROITotal       [$LOGIC CreateAnalysis_Intensity_ROITotal]
+        set AnalysisFinal             [$LOGIC CreateAnalysis_Intensity_Final]
+        set AnalysisROINegativeBin    [$LOGIC CreateAnalysis_Intensity_ROINegativeBin]
+        set AnalysisROIPositiveBin    [$LOGIC CreateAnalysis_Intensity_ROIPositiveBin]
+        set AnalysisROIBinReal        [$LOGIC CreateAnalysis_Intensity_ROIBinReal]
+        set AnalysisROIBinAdd         [$LOGIC CreateAnalysis_Intensity_ROIBinAdd]
+    set AnalysisROIBinDisplay     [$LOGIC CreateAnalysis_Intensity_ROIBinDisplay]
+        set AnalysisROITotal          [$LOGIC CreateAnalysis_Intensity_ROITotal]
        
 
         # -------------------------------------
@@ -509,7 +519,7 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
 
         set result "[Analysis_Intensity_Fct $SCAN1_ImageData $SCAN1_SegmData $SCAN2_ImageData $AnalysisSensitivity \
-                              $AnalysisFinal $AnalysisROINegativeBin $AnalysisROIPositiveBin $AnalysisROIBinReal $AnalysisROITotal ]"
+                              $AnalysisFinal $AnalysisROINegativeBin $AnalysisROIPositiveBin $AnalysisROIBinReal $AnalysisROIBinAdd $AnalysisROIBinDisplay $AnalysisROITotal ]"
 
         $LOGIC SetAnalysis_Intensity_Mean [lindex $result 0]
         $LOGIC SetAnalysis_Intensity_Variance [lindex $result 1]
@@ -517,7 +527,7 @@ namespace eval TumorGrowthTcl {
     }
 
 
-    proc Analysis_Intensity_Fct { Scan1Data Scan1Segment Scan2Data AnalysisSensitivity AnalysisFinal AnalysisROINegativeBin  AnalysisROIPositiveBin AnalysisROIBinReal AnalysisROITotal } {
+    proc Analysis_Intensity_Fct { Scan1Data Scan1Segment Scan2Data AnalysisSensitivity AnalysisFinal AnalysisROINegativeBin  AnalysisROIPositiveBin AnalysisROIBinReal  AnalysisROIBinAdd AnalysisROIBinDisplay  AnalysisROITotal } {
        
        # Subtract consecutive scans from each other
        catch {TumorGrowth(FinalSubtract)  Delete } 
@@ -594,6 +604,19 @@ namespace eval TumorGrowthTcl {
 
        # vtkImageSumOverVoxels TumorGrowth(FinalROITotal) 
          $AnalysisROITotal  SetInput [$AnalysisROIBinReal GetOutput]
+
+       # Negative values are not shown in slicer 3 (for label maps) so I have to add values
+         $AnalysisROIBinAdd  SetInput [$AnalysisROIBinReal GetOutput] 
+         $AnalysisROIBinAdd  SetOperationToAddConstant 
+         $AnalysisROIBinAdd  SetConstantC 13 
+       $AnalysisROIBinAdd Update
+
+         $AnalysisROIBinDisplay  SetInput [$AnalysisROIBinAdd GetOutput] 
+         $AnalysisROIBinDisplay  SetOutputScalarTypeToShort 
+         $AnalysisROIBinDisplay  ThresholdBetween 13 13 
+         $AnalysisROIBinDisplay  SetInValue 0
+         $AnalysisROIBinDisplay  ReplaceOutOff 
+       $AnalysisROIBinDisplay Update
 
     return "$result"
   }   
@@ -903,7 +926,7 @@ namespace eval TumorGrowthTcl {
       if { !([file exists $ANALYSIS_SEGM_FILE] && [file exists $ANALYSIS_JACOBIAN_FILE] ) } {   
          Analysis_Deformable_Fct $SCAN1_IMAGE_NAME $SCAN1_SEGM_NAME $SCAN2_IMAGE_NAME $SCAN1_TO_SCAN2_SEGM_NAME $SCAN1_TO_SCAN2_DEFORM_NAME $SCAN1_TO_SCAN2_DEFORM_INVERSE_NAME $SCAN1_TO_SCAN2_RESAMPLED_NAME $ANALYSIS_SEGM_FILE $ANALYSIS_JACOBIAN_FILE
       }
-     
+
       # ======================================
       # Read Parameters and save to Node 
       set RESULT [lindex [ReadASCIIFile $ANALYSIS_SEGM_FILE ] 0] 
@@ -923,8 +946,8 @@ namespace eval TumorGrowthTcl {
 
       # could not load in result 
       if { $SCAN2_SEGM_NODE == "" } { 
-      Print "ERROR: Analysis_Deformable_GUI: Could not load $SCAN2_SEGM_NODE"  
-      return 0
+        Print "ERROR: Analysis_Deformable_GUI: Could not load $SCAN2_SEGM_NODE"  
+        return 0
       }
 
       set CAST [vtkImageCast New]
@@ -938,28 +961,36 @@ namespace eval TumorGrowthTcl {
         $SUBTRACT SetOperationToSubtract 
       $SUBTRACT Update
  
+      set MUL [vtkImageMathematics New]
+        $MUL SetInput1 [$SUBTRACT GetOutput] 
+        $MUL SetOperationToMultiplyByK
+        $MUL SetConstantK 0.1
+      $MUL Update
+
       set ADD [vtkImageMathematics New]
-        $ADD SetInput1 [$SUBTRACT GetOutput] 
-        $ADD SetOperationToAddConstant 
-        $ADD SetConstantC 8
+        $ADD SetInput1 [$MUL GetOutput] 
+        $ADD SetOperationToAddConstant
+        $ADD SetConstantC 13
       $ADD Update
 
-      set CHANGE_LABEL [vtkImageThreshold New]
-        $CHANGE_LABEL ThresholdBetween 8 8
-        $CHANGE_LABEL SetInput [$ADD GetOutput] 
-        $CHANGE_LABEL ReplaceOutOff 
-        $CHANGE_LABEL SetInValue 0
-        $CHANGE_LABEL SetOutputScalarTypeToShort
-      $CHANGE_LABEL Update
+      set THR [vtkImageThreshold New] 
+        $THR SetOutputScalarTypeToShort 
+        $THR SetInput [$ADD GetOutput]
+        $THR ThresholdBetween 13 13 
+        $THR SetInValue 0
+        $THR ReplaceOutOff 
+      $THR Update
+
 
       set VOLUMES_LOGIC [[$::slicer3::Application GetModuleGUIByName "Volumes"] GetLogic]
       set OUTPUT_NODE [$VOLUMES_LOGIC CreateLabelVolume $SCENE $SCAN1_SEGM_NODE "TG_Analysis_Deformable"]
-      $OUTPUT_NODE SetAndObserveImageData [$CHANGE_LABEL GetOutput]
+      $OUTPUT_NODE SetAndObserveImageData [$THR GetOutput]
       $NODE SetAnalysis_Deformable_Ref [$OUTPUT_NODE GetID]
       $LOGIC SaveVolume $::slicer3::Application $OUTPUT_NODE
 
-      $CHANGE_LABEL Delete
+      $THR Delete
       $ADD Delete
+      $MUL Delete
       $SUBTRACT Delete
       $CAST Delete
 
@@ -977,12 +1008,15 @@ namespace eval TumorGrowthTcl {
     set EXE_DIR "$::env(SLICER_HOME)/lib/Slicer3/Plugins"
 
     # set CMD "$EXE_DIR/DemonsRegistration --fixed_image $Scan2Image --moving_image $Scan1Image --output_image $Scan1ToScan2Image --output_field $Scan1ToScan2Deformation --num_levels 3 --num_iterations 20x20x20 --def_field_sigma 1 --use_histogram_matching --verbose"
+
     set CMD "$EXE_DIR/DemonsRegistration --fixed_image $Scan2Image --moving_image $Scan1Image --output_image $Scan1ToScan2Image --output_field $Scan1ToScan2Deformation --num_levels 3 --num_iterations 20x20x20 --def_field_sigma 1 --use_histogram_matching --verbose"
 
     Print "=== Deformable Registration ==" 
     Print "$CMD"
 
-    eval exec $CMD 
+    if {1} { 
+      eval exec $CMD 
+    }
     
 
     # ---------------------------------------------
@@ -990,9 +1024,10 @@ namespace eval TumorGrowthTcl {
     # applying the deformation field to the segmentation and computing amount of growth
     # with the user given segmentation.
     # ${scriptDirectory}/applyDeformationITK $SegmentationFilePrefix ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Field)}.mha ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Scan1SegmentationDeformed)}.nhdr 1
-    set CMD "$EXE_DIR/applyDeformationITK $Scan1Segmentation $Scan1ToScan2Deformation $Scan1ToScan2Segmentation 1"
+    set CMD "$EXE_DIR/applyDeformationITK $Scan1Segmentation $Scan1ToScan2Deformation $Scan1ToScan2Segmentation 1 0"
     Print "=== Deformable Segmentation Growth Metric ==" 
     Print "$CMD"
+    puts "$CMD"
     eval exec $CMD 
 
     #  ${scriptDirectory}/DetectGrowthSegmentation $SegmentationFilePrefix ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Scan1SegmentationDeformed)}.nhdr ${TumorGrowth(save,Dir)}/deformation_analysis_results.txt    
@@ -1034,11 +1069,15 @@ namespace eval TumorGrowthTcl {
     }
 
   proc Print { TEXT } {
-      if { [catch { set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"] }] }  {
-      puts "$TEXT" 
-      } else {
+      set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
       set LOGIC [$GUI GetLogic]
       $LOGIC PrintText "$TEXT"
+      return
+      if { [catch { set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"] }] }  {
+        puts "$TEXT" 
+      } else {
+        set LOGIC [$GUI GetLogic]
+        $LOGIC PrintText "$TEXT"
       }
   } 
 

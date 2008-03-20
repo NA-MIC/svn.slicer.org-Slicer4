@@ -73,8 +73,11 @@ public:
   vtkImageThreshold* CreateAnalysis_Intensity_ROINegativeBin();
   vtkImageThreshold* CreateAnalysis_Intensity_ROIPositiveBin();
   vtkImageMathematics* CreateAnalysis_Intensity_ROIBinReal();
-
   vtkImageData   *GetAnalysis_Intensity_ROIBinReal();
+
+  vtkImageMathematics* CreateAnalysis_Intensity_ROIBinAdd();
+  vtkImageThreshold* CreateAnalysis_Intensity_ROIBinDisplay();
+  vtkImageData   *GetAnalysis_Intensity_ROIBinDisplay();
 
   vtkImageSumOverVoxels* CreateAnalysis_Intensity_ROITotal();
   double GetAnalysis_Intensity_ROITotal_VoxelSum();
@@ -154,6 +157,8 @@ private:
   vtkImageThreshold     *Analysis_Intensity_ROINegativeBin;
   vtkImageThreshold     *Analysis_Intensity_ROIPositiveBin;
   vtkImageMathematics   *Analysis_Intensity_ROIBinReal;
+  vtkImageMathematics   *Analysis_Intensity_ROIBinAdd;
+  vtkImageThreshold     *Analysis_Intensity_ROIBinDisplay;
   vtkImageSumOverVoxels *Analysis_Intensity_ROITotal;
 
   int SaveVolumeFlag;

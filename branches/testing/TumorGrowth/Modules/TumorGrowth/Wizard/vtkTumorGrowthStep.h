@@ -93,11 +93,12 @@ protected:
   vtkMatrix4x4             *Render_OrientationMatrix; 
   vtkFixedPointVolumeRayCastMapper *Render_RayCast_Mapper;
 
-  void SetRender_BandPassFilter(double min, double max);
-  void SetRender_HighPassFilter(double min);
-  void SetRender_BandStopFilter(double min, double max);
+  void SetRender_BandPassFilter(double min, double max, float colorMin[3], float colorMax[3]);
+  void ChangeRender_BandPassFilter(double min, double max); 
+  void SetRender_HighPassFilter(double min, float colorMin[3], float colorMax[3]);
+  void SetRender_BandStopFilter(double min, double max, float colorMin[3], float colorMax[3]);
   void RenderRemove();
-  void CreateRender(vtkMRMLVolumeNode *volumeNode, float colorMin[3], float colorMax[3], int RayCastFlag);
+  void CreateRender(vtkMRMLVolumeNode *volumeNode, int RayCastFlag);
 
 private:
   vtkTumorGrowthStep(const vtkTumorGrowthStep&);
