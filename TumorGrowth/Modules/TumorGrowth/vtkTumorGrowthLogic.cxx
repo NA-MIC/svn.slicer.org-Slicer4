@@ -447,17 +447,17 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
     if (!atoi(app->Script("::TumorGrowthTcl::Analysis_Intensity_GUI"))) return 0; 
   } 
   if (this->TumorGrowthNode->GetAnalysis_Deformable_Flag()) {
-    if (debug) {
+    if (debug && 0) {
       if (!this->TumorGrowthNode->GetAnalysis_Deformable_Ref() || !strcmp(this->TumorGrowthNode->GetAnalysis_Deformable_Ref(),"")) { 
-    char fileName[1024];
-    sprintf(fileName,"%s/TG_Analysis_Deformable.nhdr",this->TumorGrowthNode->GetWorkingDir());
-    vtkMRMLVolumeNode* tmp = this->LoadVolume(app,fileName,0,"TG_Analysis_Deformable");
-    if (tmp) {
-      this->TumorGrowthNode->SetAnalysis_Deformable_Ref(tmp->GetID());
-    } else {
-      cout << "Error: Could not load " << fileName << endl;
-      return 0;
-    }
+        char fileName[1024];
+        sprintf(fileName,"%s/TG_Analysis_Deformable.nhdr",this->TumorGrowthNode->GetWorkingDir());
+        vtkMRMLVolumeNode* tmp = this->LoadVolume(app,fileName,1,"TG_Analysis_Deformable");
+        if (tmp) {
+          this->TumorGrowthNode->SetAnalysis_Deformable_Ref(tmp->GetID());
+        } else {
+         cout << "Error: Could not load " << fileName << endl;
+         return 0;
+        }
       }
     } else {
       cout << "=== DEFORMABLE ANALYSIS ===" << endl;

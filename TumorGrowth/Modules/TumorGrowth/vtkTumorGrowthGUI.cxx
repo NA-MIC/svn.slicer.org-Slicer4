@@ -447,7 +447,7 @@ void vtkTumorGrowthGUI::BuildGUI()
   // This way we can restart the machine - did not work 
   // wizard_workflow->CreateGoToTransitions(wizard_workflow->GetInitialStep());
 
- if ( 1 )  {
+ if ( 0 )  {
     cout << "====================" << endl;
     cout << "DEBUGGING" << endl;
     vtkSlicerApplicationGUI *applicationGUI = this->GetApplicationGUI();

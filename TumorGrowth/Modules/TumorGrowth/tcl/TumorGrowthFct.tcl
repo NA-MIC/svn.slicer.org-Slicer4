@@ -923,9 +923,8 @@ namespace eval TumorGrowthTcl {
       # Run Analysis and Save output
       # -------------------------------------
       # For Debugging
-      if { !([file exists $ANALYSIS_SEGM_FILE] && [file exists $ANALYSIS_JACOBIAN_FILE] ) } {   
-         Analysis_Deformable_Fct $SCAN1_IMAGE_NAME $SCAN1_SEGM_NAME $SCAN2_IMAGE_NAME $SCAN1_TO_SCAN2_SEGM_NAME $SCAN1_TO_SCAN2_DEFORM_NAME $SCAN1_TO_SCAN2_DEFORM_INVERSE_NAME $SCAN1_TO_SCAN2_RESAMPLED_NAME $ANALYSIS_SEGM_FILE $ANALYSIS_JACOBIAN_FILE
-      }
+      # !([file exists $ANALYSIS_SEGM_FILE] && [file exists $ANALYSIS_JACOBIAN_FILE] || 1)    
+      Analysis_Deformable_Fct $SCAN1_IMAGE_NAME $SCAN1_SEGM_NAME $SCAN2_IMAGE_NAME $SCAN1_TO_SCAN2_SEGM_NAME $SCAN1_TO_SCAN2_DEFORM_NAME $SCAN1_TO_SCAN2_DEFORM_INVERSE_NAME $SCAN1_TO_SCAN2_RESAMPLED_NAME $ANALYSIS_SEGM_FILE $ANALYSIS_JACOBIAN_FILE
 
       # ======================================
       # Read Parameters and save to Node 
@@ -950,13 +949,16 @@ namespace eval TumorGrowthTcl {
         return 0
       }
 
-      set CAST [vtkImageCast New]
-        $CAST SetInput [$SCAN2_SEGM_NODE GetImageData] 
-        $CAST SetOutputScalarTypeToShort 
-      $CAST Update
+      set BIN [vtkImageThreshold New] 
+        $BIN SetOutputScalarTypeToShort 
+        $BIN SetInput [$SCAN2_SEGM_NODE GetImageData]  
+        $BIN ThresholdBetween 5 10 
+        $BIN SetInValue 10
+        $BIN SetOutValue 0
+      $BIN Update
 
       set SUBTRACT [vtkImageMathematics New]
-        $SUBTRACT SetInput1 [$CAST GetOutput] 
+        $SUBTRACT SetInput1 [$BIN GetOutput] 
         $SUBTRACT SetInput2 [$SCAN1_SEGM_NODE GetImageData] 
         $SUBTRACT SetOperationToSubtract 
       $SUBTRACT Update
@@ -981,7 +983,6 @@ namespace eval TumorGrowthTcl {
         $THR ReplaceOutOff 
       $THR Update
 
-
       set VOLUMES_LOGIC [[$::slicer3::Application GetModuleGUIByName "Volumes"] GetLogic]
       set OUTPUT_NODE [$VOLUMES_LOGIC CreateLabelVolume $SCENE $SCAN1_SEGM_NODE "TG_Analysis_Deformable"]
       $OUTPUT_NODE SetAndObserveImageData [$THR GetOutput]
@@ -992,7 +993,7 @@ namespace eval TumorGrowthTcl {
       $ADD Delete
       $MUL Delete
       $SUBTRACT Delete
-      $CAST Delete
+      $BIN Delete
 
       return 1
   }
@@ -1024,7 +1025,7 @@ namespace eval TumorGrowthTcl {
     # applying the deformation field to the segmentation and computing amount of growth
     # with the user given segmentation.
     # ${scriptDirectory}/applyDeformationITK $SegmentationFilePrefix ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Field)}.mha ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Scan1SegmentationDeformed)}.nhdr 1
-    set CMD "$EXE_DIR/applyDeformationITK $Scan1Segmentation $Scan1ToScan2Deformation $Scan1ToScan2Segmentation 1 0"
+    set CMD "$EXE_DIR/applyDeformationITK $Scan1Segmentation $Scan1ToScan2Deformation $Scan1ToScan2Segmentation 1 1"
     Print "=== Deformable Segmentation Growth Metric ==" 
     Print "$CMD"
     puts "$CMD"
