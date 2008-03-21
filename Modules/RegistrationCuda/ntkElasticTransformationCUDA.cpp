@@ -17,7 +17,6 @@ void ntkElasticTransformationCUDA::loadData(ntk3DData* input){
 }
 
 ntk3DData* ntkElasticTransformationCUDA::applyTransformation(ntkDeformationSpline* splineParam, int splineSizeLevel){
-  int i,j,k,a,b,c;
   ntk3DData* output=new ntk3DData(m_inputSize);
 
   float tempPow;
