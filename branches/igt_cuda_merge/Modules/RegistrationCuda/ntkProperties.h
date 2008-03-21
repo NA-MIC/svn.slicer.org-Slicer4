@@ -238,7 +238,7 @@ typedef struct {
   int x,y,z;
 }tiVector3;
 
-const float PI = 3.14159265;
+const float PI = 3.14159265f;
 
 #define SQR(a) ((a)*(a))
 

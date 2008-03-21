@@ -176,6 +176,28 @@ void LoadLungSeries()
     }
 }
 
+void LoadUltrasoundHeartSeries()
+{
+    Clear();
+    int j = 92;
+    for (unsigned int i = 0; i < 1; i ++)
+    {
+        readers.push_back(vtkImageReader::New());
+        readers[i]->SetDataScalarTypeToUnsignedChar();
+        readers[i]->SetNumberOfScalarComponents(1);
+        readers[i]->SetDataExtent(0, 79, 0, 79, 0, 159);
+        readers[i]->SetFileDimensionality(3);
+        readers[i]->SetDataSpacing(1.0f, 1.0f, 0.74f);
+
+        std::stringstream s;
+        s << "D:\\Volumes\\4DUltrasound\\3DDCM002.raw";
+
+        readers[i]->SetFileName(s.str().c_str());
+        readers[i]->Update();
+    }
+}
+
+
 void LoadProstate()
 {
     Clear();
@@ -195,11 +217,11 @@ void SetClipRatio(int val)
     for (unsigned int i = 0; i < clippers.size(); i++)
     {
         clippers[i]->SetOutputWholeExtent(
-            (readers[i]->GetOutput()->GetExtent()[1] - readers[i]->GetOutput()->GetExtent()[0]) / 2 - val,
+            (readers[i]->GetOutput()->GetExtent()[1] - readers[i]->GetOutput()->GetExtent()[0]) / 2 -1 - val,
             (readers[i]->GetOutput()->GetExtent()[1] - readers[i]->GetOutput()->GetExtent()[0]) / 2 + val,
-            (readers[i]->GetOutput()->GetExtent()[3] - readers[i]->GetOutput()->GetExtent()[2]) / 2 - val,
+            (readers[i]->GetOutput()->GetExtent()[3] - readers[i]->GetOutput()->GetExtent()[2]) / 2 - 1 - val,
             (readers[i]->GetOutput()->GetExtent()[3] - readers[i]->GetOutput()->GetExtent()[2]) / 2 + val,
-            (readers[i]->GetOutput()->GetExtent()[5] - readers[i]->GetOutput()->GetExtent()[4]) / 2 - val,
+            (readers[i]->GetOutput()->GetExtent()[5] - readers[i]->GetOutput()->GetExtent()[4]) / 2 - 1 - val,
             (readers[i]->GetOutput()->GetExtent()[5] - readers[i]->GetOutput()->GetExtent()[4]) / 2 + val);
         clippers[i]->ClipDataOn();
 
@@ -220,6 +242,8 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
         LoadBunny();
     else if (!strcmp(mb_Model->GetValue(), "Prostate"))
         LoadProstate();
+    else if (!strcmp(mb_Model->GetValue(), "Ultrasound Heart"))
+        LoadUltrasoundHeartSeries();
     else
         Clear();
 
@@ -266,15 +290,15 @@ void ChangeMapper(vtkObject* caller, unsigned long eid, void* clientData, void* 
         SetMapper(vtkVolumeTextureMapper3D::New());
     else if (!strcmp(mb_Mapper->GetValue(), "Software_Ray_Caster"))
         SetMapper(vtkFixedPointVolumeRayCastMapper::New());
-    app->Script("after idle %s Render", renderWidget->GetTclName());
+//    app->Script("after idle %s Render", renderWidget->GetTclName());
 }
 
 
 
 #include "vtkTimerLog.h"
-const int sampleMax = 10;
-const int clipStart = 1;
-const int clipStop = 10;
+const int sampleMax = 29;
+const int clipStart = 7;
+const int clipStop = 127;
 int clipRatio = clipStart;
 vtkTimerLog* logger = vtkTimerLog::New();
 std::vector<double> vals;
@@ -373,7 +397,7 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
                 fwrite(&mean , 1, sizeof(double), f_means);
             }
             vals.clear();
-            clipRatio++;
+            clipRatio++; 
             SetClipRatio(clipRatio);
         }
         if (clipRatio < clipStop )
@@ -388,16 +412,24 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
             //    cb_Animate->SetSelectedState(0);
             }
             if (cb_Animate2->GetSelectedState() == 0)
+            {
                 cb_Animate2->SetSelectedState(1);
+                UpdateRenderer(cb_Animate, 0, NULL, NULL);
+            }
             else
             {
                 cb_Animate2->SetSelectedState(0);
                 int val = mb_Mapper->GetMenu()->GetIndexOfItem(mb_Mapper->GetValue());
-                if (val < 3)
+                if (++val < 4)
                 {
-                    mb_Mapper->GetMenu()->SelectItem(++val);
+                    mb_Mapper->GetMenu()->SelectItem(val);
+                    mb_Mapper->SetValue(mb_Mapper->GetMenu()->GetItemLabel(val));
+                    ChangeMapper(mb_Mapper, 0, NULL, NULL);
                     UpdateRenderer(cb_Animate, 0, NULL, NULL);
-                        
+                }
+                else
+                {
+                    cb_Animate->SetSelectedState(0);
                 }
             }
 
@@ -480,12 +512,11 @@ int my_main(int argc, char *argv[])
     clippers[0]->Update();
     if (!readers.empty())
         VolumeMapper->SetInput(clippers[0]->GetOutput());
-    SetClipRatio(10);
+    SetClipRatio(200);
 
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
     Volume->SetProperty(prop);
     renderWidget->GetRenderer()->AddVolume(Volume);
-
 
 
     /// GUI EVENT
@@ -512,6 +543,8 @@ int my_main(int argc, char *argv[])
     mb_Model->GetMenu()->AddRadioButton("Lung");
     mb_Model->GetMenu()->AddRadioButton("Bunny");
     mb_Model->GetMenu()->AddRadioButton("Prostate");
+    mb_Model->GetMenu()->AddRadioButton("Ultrasound Heart");
+    
     mb_Model->GetMenu()->AddRadioButton("Empty");
     mb_Model->SetValue("Head");
     mb_Model->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)ModelCallbackCommand);
@@ -523,10 +556,10 @@ int my_main(int argc, char *argv[])
     mb_Mapper = vtkKWMenuButton::New();
     mb_Mapper->SetParent(win->GetMainPanelFrame());
     mb_Mapper->Create();
-    mb_Mapper->GetMenu()->AddRadioButton("CUDA");
     mb_Mapper->GetMenu()->AddRadioButton("Software_Ray_Caster");
     mb_Mapper->GetMenu()->AddRadioButton("Texture_2D");
     mb_Mapper->GetMenu()->AddRadioButton("Texture_3D");
+    mb_Mapper->GetMenu()->AddRadioButton("CUDA");
     mb_Mapper->SetValue("CUDA");
     mb_Mapper->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)MapperCallbackCommand);
 
