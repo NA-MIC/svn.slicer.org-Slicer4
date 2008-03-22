@@ -39,6 +39,7 @@ vtkIGTLCircularBuffer::vtkIGTLCircularBuffer()
       this->Size[i]       = 0;
       this->Data[i]       = NULL;
     }
+  this->UpdateFlag = 0;
   this->Mutex->Unlock();
 
 }
@@ -148,6 +149,7 @@ void vtkIGTLCircularBuffer::EndPush()
 {
   this->Mutex->Lock();
   this->Last = this->InPush;
+  this->UpdateFlag = 1;
   this->Mutex->Unlock();
 }
 
@@ -169,6 +171,7 @@ int vtkIGTLCircularBuffer::StartPull()
 {
   this->Mutex->Lock();
   this->InUse = this->Last;
+  this->UpdateFlag = 0;
   this->Mutex->Unlock();
   return this->Last;   // return -1 if it is not available
 }

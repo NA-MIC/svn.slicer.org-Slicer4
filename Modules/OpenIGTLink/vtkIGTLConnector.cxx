@@ -290,7 +290,7 @@ int vtkIGTLConnector::ReceiveController()
       // Search Circular Buffer
 
       std::string key = deviceName;
-      std::map<std::string, vtkIGTLCircularBuffer*>::iterator iter = this->Buffer.find(key);
+      CircularBufferMap::iterator iter = this->Buffer.find(key);
       if (iter == this->Buffer.end()) // First time to refer the device name
         {
           this->CircularBufferMutex->Lock();
@@ -334,4 +334,34 @@ int vtkIGTLConnector::ReceiveController()
 
 
 //---------------------------------------------------------------------------
-//void vtkIGTLConnector::AddCircularBuffer(std::string& key)
+int vtkIGTLConnector::GetUpdatedBuffersList(NameListType& nameList)
+{
+  nameList.clear();
+
+  CircularBufferMap::iterator iter;
+  for (iter = this->Buffer.begin(); iter != this->Buffer.begin(); iter ++)
+    {
+      if (iter->second->IsUpdated())
+        {
+          nameList.push_back(iter->first);
+        }
+    }
+  return nameList.size();
+}
+
+//---------------------------------------------------------------------------
+vtkIGTLCircularBuffer* vtkIGTLConnector::GetCircularBuffer(std::string& key)
+{
+  CircularBufferMap::iterator iter = this->Buffer.find(key);
+  if (iter != this->Buffer.end())
+    {
+      return this->Buffer[key]; // the key has been found in the list
+    }
+  else
+    {
+      return NULL;  // nothing found
+    }
+}
+
+
+

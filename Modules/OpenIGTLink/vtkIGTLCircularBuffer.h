@@ -46,19 +46,21 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLCircularBuffer : public vtkObject
   int            PullSize();
   unsigned char* PullData();
   void           EndPull();
+  int            IsUpdated() { return this->UpdateFlag; };
 
  protected:
   vtkIGTLCircularBuffer();
   virtual ~vtkIGTLCircularBuffer();
-  
 
  protected:
 
   vtkMutexLock*      Mutex;
-
   int                Last;        // updated by connector thread
   int                InPush;      // updated by connector thread
   int                InUse;       // updated by main thread
+
+  int                UpdateFlag;  // non-zero if updated since StartPull() has called
+
   //BTX
   std::string        DeviceType[IGTLCB_CIRC_BUFFER_SIZE];
   //ETX

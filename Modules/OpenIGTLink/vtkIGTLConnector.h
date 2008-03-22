@@ -17,6 +17,7 @@ Version:   $Revision: $
 
 #include <string>
 #include <map>
+#include <vector>
 
 #include "vtkObject.h"
 #include "vtkOpenIGTLinkWin32Header.h" 
@@ -115,8 +116,11 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
   // Circular Buffer
   //----------------------------------------------------------------
 
-  //void ImportFromCircularBuffers();
-
+  //BTX
+  typedef std::vector<std::string> NameListType;
+  int GetUpdatedBuffersList(NameListType& nameList);
+  vtkIGTLCircularBuffer* GetCircularBuffer(std::string& key);
+  //ETX
 
  private:
   //----------------------------------------------------------------
@@ -149,7 +153,8 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
   //----------------------------------------------------------------
 
   //BTX
-  std::map<std::string, vtkIGTLCircularBuffer*>     Buffer;
+  typedef std::map<std::string, vtkIGTLCircularBuffer*> CircularBufferMap;
+  CircularBufferMap Buffer;
   //ETX
 
   vtkMutexLock* CircularBufferMutex;
