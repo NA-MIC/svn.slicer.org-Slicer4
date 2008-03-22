@@ -8,6 +8,7 @@ SET(OpenIGTLink_SRCS
   vtkOpenIGTLinkLogic.cxx
   vtkOpenIGTLinkGUI.cxx
   vtkIGTLConnector.cxx
+  vtkIGTLCircularBuffer.cxx
   vtkClientSocket.cxx
   vtkServerSocket.cxx
   vtkSocket.cxx

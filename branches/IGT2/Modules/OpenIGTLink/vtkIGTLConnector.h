@@ -21,6 +21,7 @@ Version:   $Revision: $
 #include "vtkObject.h"
 #include "vtkOpenIGTLinkWin32Header.h" 
 
+
 //class vtkSocketCommunicator;
 class vtkMultiThreader;
 class vtkClientSocket;
@@ -29,6 +30,9 @@ class vtkMutexLock;
 
 class vtkImageData;
 class vtkMatrix4x4;
+
+class vtkIGTLCircularBuffer;
+
 
 class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
 {
@@ -105,23 +109,13 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
   //----------------------------------------------------------------
   vtkClientSocket* WaitForConnection();
   int ReceiveController();
-  int ReceiveImage(const char* deviceName,
-                   long long bodySize, long long crc);
-  int ReceiveTransform(const char* deviceName,
-                       long long bodySize, long long crc);
 
 
   //----------------------------------------------------------------
   // Circular Buffer
   //----------------------------------------------------------------
 
-  //BTX
-  void CreateImageCircularBuffer(std::string& key);
-  void CreateTransformCircularBuffer(std::string& key);
-  void CreateCommandCircularBuffer(std::string& key);
-  //ETX
-
-  void ImportFromCircularBuffers();
+  //void ImportFromCircularBuffers();
 
 
  private:
@@ -155,28 +149,7 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
   //----------------------------------------------------------------
 
   //BTX
-  typedef struct {
-    int           Last;        // updated by connector thread
-    int           InUse;       // updated by main thread
-    vtkImageData* Data[3];
-    
-  } ImageCircularBufferType;
-
-  typedef struct {
-    int           Last;        // updated by connector thread
-    int           InUse;       // updated by main thread
-    vtkMatrix4x4* Data[3];
-  } TransformCircularBufferType;
-
-  typedef struct {
-    int           Last;        // updated by connector thread
-    int           InUse;       // updated by main thread
-    std::string   Data[3];
-  } CommandCircularBufferType;
-
-  std::map<std::string, ImageCircularBufferType>     ImageBuffer;
-  std::map<std::string, TransformCircularBufferType> TransformBuffer;
-  std::map<std::string, CommandCircularBufferType>   CommandBuffer;
+  std::map<std::string, vtkIGTLCircularBuffer*>     Buffer;
   //ETX
 
   vtkMutexLock* CircularBufferMutex;
