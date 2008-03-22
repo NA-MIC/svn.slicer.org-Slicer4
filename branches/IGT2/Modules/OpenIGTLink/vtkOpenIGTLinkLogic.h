@@ -114,6 +114,33 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   int  CheckConnectorsStatusUpdates();
   //int  ReadCircularBuffers();
 
+  void MonitorCircularBuffers();
+
+  //----------------------------------------------------------------
+  // MRML Management
+  //----------------------------------------------------------------
+
+  void UpdateMRMLScalarVolumeNode(const char* nodeName, int size, unsigned char* data);
+  void UpdateMRMLLinearTransfomrNode(const char* nodeName, int size, unsigned char* data);
+  void ProcCommand(const char* nodeName, int size, unsigned char* data);
+
+ protected:
+  
+  vtkOpenIGTLinkLogic();
+  ~vtkOpenIGTLinkLogic();
+  vtkOpenIGTLinkLogic(const vtkOpenIGTLinkLogic&);
+  void operator=(const vtkOpenIGTLinkLogic&);
+
+  
+  static void DataCallback(vtkObject*, unsigned long, void *, void *);
+
+  void UpdateAll();
+  void UpdateSliceDisplay();
+  void UpdateLocator();
+
+  vtkMRMLVolumeNode* AddVolumeNode(const char*);
+  vtkCallbackCommand *DataCallbackCommand;
+
 
  private:
 
@@ -122,7 +149,8 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   //----------------------------------------------------------------
 
   //BTX
-  std::vector<vtkIGTLConnector*> ConnectorList;
+  typedef std::vector<vtkIGTLConnector*> ConnectorListType;
+  ConnectorListType ConnectorList;
   std::vector<int>               ConnectorPrevStateList;
   //ETX
 
@@ -170,24 +198,6 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
 
   bool  Connection;  
   
- protected:
-  
-  vtkOpenIGTLinkLogic();
-  ~vtkOpenIGTLinkLogic();
-  vtkOpenIGTLinkLogic(const vtkOpenIGTLinkLogic&);
-  void operator=(const vtkOpenIGTLinkLogic&);
-
-  
-  static void DataCallback(vtkObject*, unsigned long, void *, void *);
-
-  void UpdateAll();
-  void UpdateSliceDisplay();
-  void UpdateLocator();
-
-  vtkMRMLVolumeNode* AddVolumeNode(const char*);
-  vtkCallbackCommand *DataCallbackCommand;
-
-
 };
 
 #endif
