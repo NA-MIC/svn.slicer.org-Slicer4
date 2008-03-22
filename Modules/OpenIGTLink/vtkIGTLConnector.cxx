@@ -29,11 +29,13 @@ Version:   $Revision: $
 #include "igtl_transform.h"
 #include "crc32.h"
 
+#include "vtkIGTLCircularBuffer.h"
 #include "vtkIGTLConnector.h"
 
 vtkStandardNewMacro(vtkIGTLConnector);
 vtkCxxRevisionMacro(vtkIGTLConnector, "$Revision: 1.0 $");
 
+//---------------------------------------------------------------------------
 vtkIGTLConnector::vtkIGTLConnector()
 {
   this->Type   = TYPE_NOT_DEFINED;
@@ -47,17 +49,20 @@ vtkIGTLConnector::vtkIGTLConnector()
   this->ServerHostname = "localhost";
   this->ServerPort = 18944;
   this->Mutex = vtkMutexLock::New();
+  this->CircularBufferMutex = vtkMutexLock::New();
 }
 
+//---------------------------------------------------------------------------
 vtkIGTLConnector::~vtkIGTLConnector()
 {
 }
 
-
+//---------------------------------------------------------------------------
 void vtkIGTLConnector::PrintSelf(ostream& os, vtkIndent indent)
 {
 }
 
+//---------------------------------------------------------------------------
 int vtkIGTLConnector::SetTypeServer(int port)
 {
   this->Type = TYPE_SERVER;
@@ -65,6 +70,7 @@ int vtkIGTLConnector::SetTypeServer(int port)
   return 1;
 }
 
+//---------------------------------------------------------------------------
 int vtkIGTLConnector::SetTypeClient(char* hostname, int port)
 {
   this->Type = TYPE_CLIENT;
@@ -73,6 +79,7 @@ int vtkIGTLConnector::SetTypeClient(char* hostname, int port)
   return 1;
 }
 
+//---------------------------------------------------------------------------
 int vtkIGTLConnector::SetTypeClient(std::string hostname, int port)
 {
   this->Type = TYPE_CLIENT;
@@ -81,7 +88,7 @@ int vtkIGTLConnector::SetTypeClient(std::string hostname, int port)
   return 1;
 }
 
-
+//---------------------------------------------------------------------------
 int vtkIGTLConnector::Start()
 {
   // Check if type is defined.
@@ -104,7 +111,7 @@ int vtkIGTLConnector::Start()
   return 1;
 }
 
-
+//---------------------------------------------------------------------------
 int vtkIGTLConnector::Stop()
 {
   // Check if thread exists
@@ -128,7 +135,7 @@ int vtkIGTLConnector::Stop()
     }
 }
 
-
+//---------------------------------------------------------------------------
 void* vtkIGTLConnector::ThreadFunction(void* ptr)
 {
 
@@ -178,7 +185,7 @@ void* vtkIGTLConnector::ThreadFunction(void* ptr)
 
 }
 
-
+//---------------------------------------------------------------------------
 vtkClientSocket* vtkIGTLConnector::WaitForConnection()
 {
   vtkClientSocket* socket = NULL;
@@ -230,7 +237,7 @@ vtkClientSocket* vtkIGTLConnector::WaitForConnection()
   return NULL;
 }
 
-
+//---------------------------------------------------------------------------
 int vtkIGTLConnector::ReceiveController()
 {
   igtl_header header;
@@ -248,6 +255,9 @@ int vtkIGTLConnector::ReceiveController()
         {
           break;
         }
+
+      //----------------------------------------------------------------
+      // Receive Header
 
       int r = this->Socket->Receive(&header, IGTL_HEADER_SIZE);
 
@@ -267,6 +277,7 @@ int vtkIGTLConnector::ReceiveController()
       
       std::cerr << "deviceType  = " << deviceType << std::endl;;  
       std::cerr << "deviceName  = " << deviceName << std::endl;;  
+      std::cerr << "size = "        << header.body_size << std::endl;;  
       
       if (header.version != IGTL_HEADER_VERSION)
         {
@@ -274,423 +285,53 @@ int vtkIGTLConnector::ReceiveController()
           break;
         }
 
-      /*
-      if (this->AppLogic)
+
+      //----------------------------------------------------------------
+      // Search Circular Buffer
+
+      std::string key = deviceName;
+      std::map<std::string, vtkIGTLCircularBuffer*>::iterator iter = this->Buffer.find(key);
+      if (iter == this->Buffer.end()) // First time to refer the device name
         {
-          this->Scene = this->AppLogic->GetMRMLScene();
-        }
-      
-      if (this->Scene)
-        {
-          vtkCollection* collection = this->Scene->GetNodesByName(deviceName);
-          int num = collection->GetNumberOfItems();
-          int newNode;
-          newNode = (num == 0)? 1:0;
-      */         
- 
-      if (strcmp("IMAGE", deviceType) == 0)
-        {
-          this->ReceiveImage(deviceName, header.body_size, header.crc);
-        }
-      else if (strcmp("TRANSFORM", deviceType))
-        {
-          this->ReceiveTransform(deviceName, header.body_size, header.crc);
+          this->CircularBufferMutex->Lock();
+          this->Buffer[key] = vtkIGTLCircularBuffer::New();
+          this->CircularBufferMutex->Unlock();
         }
 
-      /*
-        }
-        else
+
+      //----------------------------------------------------------------
+      // Load to the circular buffer
+
+      vtkIGTLCircularBuffer* buffer = this->Buffer[key];
+      if (buffer && buffer->StartPush() != -1)
         {
-        vtkErrorMacro("Cannot get MRML Scene");
+          buffer->StartPush();
+          buffer->PushDeviceType(deviceType);
+
+          unsigned char* dataPtr = buffer->GetPushDataArea(header.body_size);
+          int read = this->Socket->Receive(dataPtr, header.body_size);
+          if (read != header.body_size)
+            {
+              vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_IMAGE_HEADER_SIZE << "\n");
+              continue;
+            }
+
+          // check CRC here
+          buffer->EndPush();
         }
-      */
-    }
+      else
+        {
+          break;
+        }
+      
+    } // while (!this->ServerStopFlag)
 
   this->Socket->CloseSocket();
+
   return 0;
+
 }
 
 
-int vtkIGTLConnector::ReceiveImage(const char* deviceName, long long bodySize, long long crc)
-{
-
-  /*
-  std::cerr << "ReceiveImage  is called  " << std::endl;
-
-  std::string key = deviceName;
-  std::map<std::string, ImageCircularBufferType>::iterator iter = this->ImageBuffer.find(key);
-  if (iter == this->ImageBuffer.end()) // First time to refer the device name
-    {
-      CreateImageCircularBuffer(key);
-    }
-
-  // Read from the socket
-
-  igtl_image_header imgheader;
-  int read = this->Socket->Receive(&header, IGTL_HEADER_SIZE);
-  if (read != IGTL_IMAGE_HEADER_SIZE)
-    {
-      vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_IMAGE_HEADER_SIZE << "\n");
-      return;
-    }
-
-  igtl_image_convert_byte_order(&imgheader);
-
-  std::cerr << "image format version = " << imgheader.version << std::endl;
-  unsigned char imgType = imgheader.data_type;
-  unsigned char scalarType = imgheader.scalar_type;
-
-  std::cerr << "scalar type = " << (int)scalarType << std::endl;
-  std::cerr << "image type = " << (int)imgType << std::endl;
-
-  std::cerr << "size[0] =  " << imgheader.size[0] << ", "
-            << "size[1] =  " << imgheader.size[1] << ", "
-            << "size[2] =  " << imgheader.size[2] << ", "
-            << std::endl;
-
-  std::cerr << "subvol_size[0] =  " << imgheader.subvol_size[0] << ", "
-            << "subvol_size[1] =  " << imgheader.subvol_size[1] << ", "
-            << "subvol_size[2] =  " << imgheader.subvol_size[2] << ", "
-            << std::endl;
-
-  float tx = imgheader.matrix[0];
-  float ty = imgheader.matrix[1];
-  float tz = imgheader.matrix[2];
-  float sx = imgheader.matrix[3];
-  float sy = imgheader.matrix[4];
-  float sz = imgheader.matrix[5];
-  float nx = imgheader.matrix[6];
-  float ny = imgheader.matrix[7];
-  float nz = imgheader.matrix[8];
-  float px = imgheader.matrix[9];
-  float py = imgheader.matrix[10];
-  float pz = imgheader.matrix[11];
-
-  std::cerr << "matrix = "<< std::endl;
-  std::cerr << tx << ", " << ty << ", " << tz << std::endl;
-  std::cerr << sx << ", " << sy << ", " << sz << std::endl;
-  std::cerr << nx << ", " << ny << ", " << nz << std::endl;
-  std::cerr << px << ", " << py << ", " << pz << std::endl;
-
-  // Get circular buffer index
-  int index = (this->ImageBuffer[key].Last + 1) % 3;
-  if (index == this->ImageBuffer[key].InUse)
-    {
-      // if the buffer is used by the main thread,
-      // switch to the next.
-      index = (index + 1) % 3;
-    }
-
-  vtkImageData imageData = this->ImageBuffer[key].Data[index];
-  
-  imageData->SetDimensions(imgheader.size[0], imgheader.size[1], imgheader.size[2]);
-  imageData->SetNumberOfScalarComponents(1);
-  // Scalar type
-  //  TBD: Long might not be 32-bit in some platform.
-  switch (imgheader.scalar_type)
-    {
-    case IGTL_IMAGE_STYPE_TYPE_INT8:
-      imageData->SetScalarTypeToChar();
-      break;
-    case IGTL_IMAGE_STYPE_TYPE_UINT8:
-      imageData->SetScalarTypeToUnsignedChar();
-      break;
-    case IGTL_IMAGE_STYPE_TYPE_INT16:
-      imageData->SetScalarTypeToShort();
-      break;
-    case IGTL_IMAGE_STYPE_TYPE_UINT16:
-      imageData->SetScalarTypeToUnsignedShort();
-      break;
-    case IGTL_IMAGE_STYPE_TYPE_INT32:
-      imageData->SetScalarTypeToUnsignedLong();
-      break;
-    case IGTL_IMAGE_STYPE_TYPE_UINT32:
-      imageData->SetScalarTypeToUnsignedLong();
-      break;
-    default:
-      vtkErrorMacro ("Invalid Scalar Type\n");
-      break;
-    }
-  
-  // Bellow may cause performance down...
-  //  (Size change check needed?)
-  imageData->AllocateScalars();
-
-
-
-
-
-  // Now the buffer is ready to be read.
-  // -- Update last-updated buffer index information
-  this->ImageBuffer[key].Last = index;
-  */
-
-#if 0
-
-  vtkMRMLScalarVolumeNode* volumeNode;
-  
-
-  vtkImageData* imageData;
-  if (newNode)
-    {
-      volumeNode = vtkMRMLScalarVolumeNode::New();
-      volumeNode->SetName(deviceName);
-      volumeNode->SetDescription("Received by OpenIGTLink");
-
-      imageData = vtkImageData::New();
-
-      imageData->SetDimensions(imgheader.size[0], imgheader.size[1], imgheader.size[2]);
-      imageData->SetNumberOfScalarComponents(1);
-      
-      // Scalar type
-      //  TBD: Long might not be 32-bit in some platform.
-      switch (imgheader.scalar_type)
-        {
-        case IGTL_IMAGE_STYPE_TYPE_INT8:
-          imageData->SetScalarTypeToChar();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_UINT8:
-          imageData->SetScalarTypeToUnsignedChar();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_INT16:
-          imageData->SetScalarTypeToShort();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_UINT16:
-          imageData->SetScalarTypeToUnsignedShort();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_INT32:
-          imageData->SetScalarTypeToUnsignedLong();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_UINT32:
-          imageData->SetScalarTypeToUnsignedLong();
-          break;
-        default:
-          vtkErrorMacro ("Invalid Scalar Type\n");
-          break;
-        }
-
-      imageData->AllocateScalars();
-      volumeNode->SetAndObserveImageData(imageData);
-      imageData->Delete();
-
-      this->Scene->AddNode(volumeNode);
-      this->AppLogic->GetSelectionNode()->SetReferenceActiveVolumeID(volumeNode->GetID());
-      this->AppLogic->PropagateVolumeSelection();
-      
-    }
-  else
-    {
-      vtkCollection* collection = this->Scene->GetNodesByName(deviceName);
-      volumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(collection->GetItemAsObject(0));
-    }
-
-  // Get vtk image from MRML node
-  imageData = volumeNode->GetImageData();
-
-  // TODO:
-  // It should be checked here if the dimension of vtkImageData
-  // and arrived data is same.
-
-  int bytes = igtl_image_get_data_size(&imgheader);
-
-  if (imgheader.size[0] == imgheader.subvol_size[0] &&
-      imgheader.size[1] == imgheader.subvol_size[1] &&
-      imgheader.size[2] == imgheader.subvol_size[2] )
-    {
-      // In case that volume size == sub-volume size,
-      // image is read directly to the memory area of vtkImageData
-      // for better performance. 
-      read = Tcl_Read(channel, (char *) imageData->GetScalarPointer(), bytes);
-      if (read != bytes)
-        {
-          vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
-          return;
-        }
-    }
-  else
-    {
-      // In case of volume size != sub-volume size,
-      // image is loaded into ImageReadBuffer, then copied to
-      // the memory area of vtkImageData.
-
-      if (bytes != this->ImageReadBufferSize)
-        {
-          if (this->ImageReadBuffer)
-            {
-              delete this->ImageReadBuffer;
-            }
-          this->ImageReadBufferSize = bytes;
-          this->ImageReadBuffer = new char[bytes];
-        }
-      
-      read = Tcl_Read(channel, (char *) this->ImageReadBuffer, bytes);
-      if (read != bytes)
-        {
-          vtkErrorMacro ("Only read " << read << " but expected to read " << bytes << "\n");
-          return;
-        }
-
-      // Check scalar size
-      int scalarSize;
-      switch (imgheader.scalar_type)
-        {
-        case IGTL_IMAGE_STYPE_TYPE_INT8:
-        case IGTL_IMAGE_STYPE_TYPE_UINT8:
-          scalarSize = 1;
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_INT16:
-        case IGTL_IMAGE_STYPE_TYPE_UINT16:
-          scalarSize = 2;
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_INT32:
-        case IGTL_IMAGE_STYPE_TYPE_UINT32:
-          scalarSize = 4;
-          break;
-        default:
-          scalarSize = 0;
-          vtkErrorMacro ("Invalid Scalar Type\n");
-          break;
-        }
-        
-      char* imgPtr = (char*) imageData->GetScalarPointer();
-      char* bufPtr = this->ImageReadBuffer;
-      int sizei = imgheader.size[0];
-      int sizej = imgheader.size[1];
-      int sizek = imgheader.size[2];
-      int subsizei = imgheader.subvol_size[0];
-
-      int bg_i = imgheader.subvol_offset[0];
-      int ed_i = bg_i + imgheader.subvol_size[0];
-      int bg_j = imgheader.subvol_offset[1];
-      int ed_j = bg_j + imgheader.subvol_size[1];
-      int bg_k = imgheader.subvol_offset[2];
-      int ed_k = bg_k + imgheader.subvol_size[2];
-      
-      for (int k = bg_k; k < ed_k; k ++)
-        {
-          for (int j = bg_j; j < ed_j; j ++)
-            {
-              memcpy(&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
-                     bufPtr, subsizei*scalarSize);
-              bufPtr += subsizei*scalarSize;
-            }
-        }
-    }
-
-
-  // normalize
-  float psi = sqrt(tx*tx + ty*ty + tz*tz);
-  float psj = sqrt(sx*sx + sy*sy + sz*sz);
-  float psk = sqrt(nx*nx + ny*ny + nz*nz);
-
-  tx = tx / psi;
-  ty = ty / psi;
-  tz = tz / psi;
-  sx = sx / psj;
-  sy = sy / psj;
-  sz = sz / psj;
-  nx = nx / psk;
-  ny = ny / psk;
-  nz = nz / psk;
-
-
-  float hfovi = psi * imgheader.size[0] / 2.0;
-  float hfovj = psj * imgheader.size[1] / 2.0;
-  float hfovk = psk * imgheader.size[2] / 2.0;
-
-  float cx = tx * hfovi + sx * hfovj + nx * hfovk;
-  float cy = ty * hfovi + sy * hfovj + ny * hfovk;
-  float cz = tz * hfovi + sz * hfovj + nz * hfovk;
-
-  px = px - cx;
-  py = py - cy;
-  pz = pz - cz;
-
-
-  // set volume orientation
-  vtkMatrix4x4* rtimgTransform = vtkMatrix4x4::New();
-  rtimgTransform->Identity();
-  rtimgTransform->SetElement(0, 0, tx);
-  rtimgTransform->SetElement(1, 0, ty);
-  rtimgTransform->SetElement(2, 0, tz);
-  
-  rtimgTransform->SetElement(0, 1, sx);
-  rtimgTransform->SetElement(1, 1, sy);
-  rtimgTransform->SetElement(2, 1, sz);
-  
-  rtimgTransform->SetElement(0, 2, nx);
-  rtimgTransform->SetElement(1, 2, ny);
-  rtimgTransform->SetElement(2, 2, nz);
-
-  rtimgTransform->SetElement(0, 3, px);
-  rtimgTransform->SetElement(1, 3, py);
-  rtimgTransform->SetElement(2, 3, pz);
-
-
-  rtimgTransform->Invert();
-  volumeNode->SetRASToIJKMatrix(rtimgTransform);
-
-
-//  if (lps) { // LPS coordinate
-//    vtkMatrix4x4* lpsToRas = vtkMatrix4x4::New();
-//    lpsToRas->Identity();
-//    lpsToRas->SetElement(0, 0, -1);
-//    lpsToRas->SetElement(1, 1, -1);
-//    lpsToRas->Multiply4x4(lpsToRas, rtimgTransform, rtimgTransform);
-//    lpsToRas->Delete();
-//  }
-
-
-  px = px + cx;
-  py = py + cy;
-  pz = pz + cz;
-
-
-  //volumeNode->SetAndObserveImageData(imageData);
-  volumeNode->Modified();
-  vtkMRMLSliceNode* slnode = 
-    vtkMRMLSliceNode::SafeDownCast(this->Scene->GetNodeByID("vtkMRMLSliceNode1"));
-  slnode->SetSliceToRASByNTP(nx, ny, nz, tx, ty, tz, px, py, pz, 0);
-
-#endif
-}
-
-
-int vtkIGTLConnector::ReceiveTransform(const char* deviceName, long long bodySize, long long crc)
-{
-  
-  
-}
-
-
-void vtkIGTLConnector::CreateImageCircularBuffer(std::string& key)
-{
-  this->CircularBufferMutex->Lock();
-
-  // Allocate Circular buffer for the new device
-  this->CircularBufferMutex->Lock();
-  this->ImageBuffer[key].InUse = -1;
-  this->ImageBuffer[key].Last  = -1;
-  for (int i = 0; i < 3; i ++)
-    {
-      this->ImageBuffer[key].Data[i] = vtkImageData::New();
-    }
-
-  this->CircularBufferMutex->Unlock();
-}
-
-void vtkIGTLConnector::CreateTransformCircularBuffer(std::string& key)
-{
-}
-
-void vtkIGTLConnector::CreateCommandCircularBuffer(std::string& key)
-{
-}
-
-
-void vtkIGTLConnector::ImportFromCircularBuffers()
-{
-  
-}
-
-
+//---------------------------------------------------------------------------
+//void vtkIGTLConnector::AddCircularBuffer(std::string& key)
