@@ -303,6 +303,7 @@ int vtkIGTLConnector::ReceiveController()
       // Load to the circular buffer
 
       vtkIGTLCircularBuffer* buffer = this->Buffer[key];
+
       if (buffer && buffer->StartPush() != -1)
         {
           buffer->StartPush();
@@ -339,7 +340,7 @@ int vtkIGTLConnector::GetUpdatedBuffersList(NameListType& nameList)
   nameList.clear();
 
   CircularBufferMap::iterator iter;
-  for (iter = this->Buffer.begin(); iter != this->Buffer.begin(); iter ++)
+  for (iter = this->Buffer.begin(); iter != this->Buffer.end(); iter ++)
     {
       if (iter->second->IsUpdated())
         {

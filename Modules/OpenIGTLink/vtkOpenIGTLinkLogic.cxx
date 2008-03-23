@@ -295,7 +295,7 @@ vtkMRMLVolumeNode* vtkOpenIGTLinkLogic::AddVolumeNode(const char* volumeNodeName
 
 
 //---------------------------------------------------------------------------
-void vtkOpenIGTLinkLogic::MonitorCircularBuffers()
+void vtkOpenIGTLinkLogic::ImportFromCircularBuffers()
 {
   ConnectorListType::iterator iter;
 
@@ -306,14 +306,16 @@ void vtkOpenIGTLinkLogic::MonitorCircularBuffers()
       vtkIGTLConnector::NameListType::iterator nameIter;
       for (nameIter = nameList.begin(); nameIter != nameList.end(); nameIter ++)
         {
+          std::cerr << "####### Import Image from : " << *nameIter << std::endl;
           vtkIGTLCircularBuffer* buffer = (*iter)->GetCircularBuffer(*nameIter);
           buffer->StartPull();
           const char* type = buffer->PullDeviceType();
-          if (strcmp(type, "IMAGE"))
+          std::cerr << "############### TYPE = " << type << std::endl;
+          if (strcmp(type, "IMAGE") == 0)
             {
               UpdateMRMLScalarVolumeNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
             }
-          else if (strcmp(type, "TRANSFORM"))
+          else if (strcmp(type, "TRANSFORM") == 0)
             {
               UpdateMRMLLinearTransfomrNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
             }
@@ -378,10 +380,11 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
 
   vtkMRMLScalarVolumeNode* volumeNode;
   vtkImageData* imageData;
-  vtkMRMLScene* scene = this->ApplicationLogic->GetMRMLScene();
+
+  vtkMRMLScene* scene = this->GetApplicationLogic()->GetMRMLScene();
   vtkCollection* collection = scene->GetNodesByName(nodeName);
-  
-  if (collection->GetNumberOfItems())
+
+  if (collection->GetNumberOfItems() == 0)
     {
       volumeNode = vtkMRMLScalarVolumeNode::New();
       volumeNode->SetName(nodeName);
@@ -424,8 +427,8 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
       imageData->Delete();
 
       scene->AddNode(volumeNode);
-      this->ApplicationLogic->GetSelectionNode()->SetReferenceActiveVolumeID(volumeNode->GetID());
-      this->ApplicationLogic->PropagateVolumeSelection();
+      this->GetApplicationLogic()->GetSelectionNode()->SetReferenceActiveVolumeID(volumeNode->GetID());
+      this->GetApplicationLogic()->PropagateVolumeSelection();
       
     }
   else
@@ -437,12 +440,14 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
   // Get vtk image from MRML node
   imageData = volumeNode->GetImageData();
 
+  
   // TODO:
   // It should be checked here if the dimension of vtkImageData
   // and arrived data is same.
 
   int bytes = igtl_image_get_data_size(imgheader);
 
+  std::cerr << "IGTL image size = " << bytes << std::endl;
   if (imgheader->size[0] == imgheader->subvol_size[0] &&
       imgheader->size[1] == imgheader->subvol_size[1] &&
       imgheader->size[2] == imgheader->subvol_size[2] )
@@ -506,7 +511,6 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
         }
     }
 
-
   // normalize
   float psi = sqrt(tx*tx + ty*ty + tz*tz);
   float psj = sqrt(sx*sx + sy*sy + sz*sz);
@@ -558,7 +562,6 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
 
   rtimgTransform->Invert();
   volumeNode->SetRASToIJKMatrix(rtimgTransform);
-
 
 //  if (lps) { // LPS coordinate
 //    vtkMatrix4x4* lpsToRas = vtkMatrix4x4::New();

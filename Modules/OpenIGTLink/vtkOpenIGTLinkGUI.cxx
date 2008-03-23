@@ -940,7 +940,6 @@ void vtkOpenIGTLinkGUI::ProcessTimerEvents()
 {
   if (this->TimerFlag)
     {
-
       // -----------------------------------------
       // Check connector status
 
@@ -954,8 +953,8 @@ void vtkOpenIGTLinkGUI::ProcessTimerEvents()
 
       // -----------------------------------------
       // Check incomming new data
-      
-      //this->GetLogic()->ImportFromCircularBuffers();
+
+      this->GetLogic()->ImportFromCircularBuffers();
 
 
       vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
