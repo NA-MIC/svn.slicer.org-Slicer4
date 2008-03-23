@@ -1127,6 +1127,7 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(OPENIGTLINK_DEBUG) && defined(BUILD_MODULES)
     // -- OpenIGTLink module
     vtkOpenIGTLinkLogic *openigtlinkLogic = vtkOpenIGTLinkLogic::New(); 
+    openigtlinkLogic->SetApplicationLogic ( appLogic );
     openigtlinkLogic->SetAndObserveMRMLScene ( scene );
     vtkOpenIGTLinkGUI *openigtlinkGUI = vtkOpenIGTLinkGUI::New();
 

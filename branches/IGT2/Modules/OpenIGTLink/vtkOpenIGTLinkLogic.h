@@ -114,7 +114,7 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   int  CheckConnectorsStatusUpdates();
   //int  ReadCircularBuffers();
 
-  void MonitorCircularBuffers();
+  void ImportFromCircularBuffers();
 
   //----------------------------------------------------------------
   // MRML Management
