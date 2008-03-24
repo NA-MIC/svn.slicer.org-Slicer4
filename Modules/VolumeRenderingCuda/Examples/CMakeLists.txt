@@ -1,3 +1,5 @@
+Project(VolumeRenderingCudaExamples)
+
 
 ADD_EXECUTABLE(VolumeRenderingCudaExample
   VolumeRenderingCudaExample.cxx
@@ -7,8 +9,26 @@ TARGET_LINK_LIBRARIES(VolumeRenderingCudaExample
   VolumeRenderingCudaModule
 )
 
+
+
+
+
+SET(ULTRASOUND_EXAMPLE_SRCS
+  vtkUltrasoundGUI.cxx
+)
+
+## WRAPPING
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+VTK_WRAP_TCL3(VolumeRenderingCudaExamples
+         ULTRASOUND_EXAMPLE_TCL_SRCS 
+         "${ULTRASOUND_EXAMPLE_SRCS}" 
+         "")
+
 ADD_EXECUTABLE(UltrasoundHeartExample
   UltrasoundHeartExample.cxx
+  ${ULTRASOUND_EXAMPLE_SRCS}
+  ${ULTRASOUND_EXAMPLE_TCL_SRCS}
 )
 
 TARGET_LINK_LIBRARIES(UltrasoundHeartExample
@@ -20,8 +40,8 @@ TARGET_LINK_LIBRARIES(UltrasoundHeartExample
   ${KWWidgets_LIBRARIES}
 )
 
-#ADD_TEST(VolumeRenderingCudaTest
-#  ${EXECUTABLE_OUTPUT_PATH}/VolumeRenderingCudaTest ${CMAKE_CURRENT_SOURCE_DIR}/heart256.raw)
+
+
 
 INCLUDE_DIRECTORIES(
  ${VolumeRenderingModule_SOURCE_DIR}
@@ -29,3 +49,5 @@ INCLUDE_DIRECTORIES(
   ${CudaSupport_SOURCE_DIR}
   ${CudaSupport_BINARY_DIR}
 )
+
+
