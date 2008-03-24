@@ -180,7 +180,7 @@ void LoadUltrasoundHeartSeries()
 {
     Clear();
     int j = 92;
-    for (unsigned int i = 0; i < 1; i ++)
+    for (unsigned int i = 0; i < 50; i ++)
     {
         readers.push_back(vtkImageReader::New());
         readers[i]->SetDataScalarTypeToUnsignedChar();
@@ -188,6 +188,7 @@ void LoadUltrasoundHeartSeries()
         readers[i]->SetDataExtent(0, 79, 0, 79, 0, 159);
         readers[i]->SetFileDimensionality(3);
         readers[i]->SetDataSpacing(1.0f, 1.0f, 0.74f);
+        readers[i]->SetHeaderSize(i * 80 * 80 * 160 * sizeof(unsigned char));
 
         std::stringstream s;
         s << "D:\\Volumes\\4DUltrasound\\3DDCM002.raw";
@@ -196,7 +197,6 @@ void LoadUltrasoundHeartSeries()
         readers[i]->Update();
     }
 }
-
 
 void LoadProstate()
 {
@@ -302,9 +302,9 @@ const int clipStop = 127;
 int clipRatio = clipStart;
 vtkTimerLog* logger = vtkTimerLog::New();
 std::vector<double> vals;
-FILE* f_means = NULL;
-FILE* f_deviations = NULL;
-FILE* f_volSizes = NULL;
+ofstream f_means;
+ofstream f_deviations;
+ofstream f_volSizes;
 
 void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
@@ -319,17 +319,17 @@ void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void
             app->Script("after idle %s Render", renderWidget->GetTclName());
             std::stringstream name;
             name << "D:\\measurements\\" << mb_Mapper->GetValue() << "_mean" << ((cb_Animate2->GetSelectedState() == 1)? "_anim" : "") << ".txt" ;
-            f_means = fopen(name.str().c_str(), "w");
+            f_means.open(name.str().c_str());
             std::stringstream devName;
             devName << "D:\\measurements\\" << mb_Mapper->GetValue() << "_deviation" << ((cb_Animate2->GetSelectedState() == 1)? "_anim" : "") << ".txt" ;
-            f_deviations = fopen(devName.str().c_str(), "w");
-            f_volSizes = fopen("D:\\measurements\\VolSizes.txt", "w");
+            f_deviations.open(devName.str().c_str());
+            f_volSizes.open("D:\\measurements\\VolSizes.txt");
         }
         else if (f_volSizes != NULL) 
         {
-            fclose(f_volSizes); f_volSizes = NULL;
-            fclose(f_deviations); f_deviations = NULL;
-            fclose(f_means); f_means = NULL;
+            f_means.close(); 
+            f_deviations.close();;
+            f_means.close();
         }
 
     }
@@ -358,21 +358,31 @@ void StartRender(vtkObject* caller, unsigned long eid, void* clientData, void* c
         renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500+ sin((float)vals.size()/5.0) * 100,
             500, 
             500 +cos((float)vals.size()/5.0) * 100);
-        if (++frameNumber == readers.size())
-            frameNumber = 0;
-
-        logger->StartTimer();
-        if (cb_Animate2->GetSelectedState() == 1)
-            VolumeMapper->SetInput(clippers[frameNumber]->GetOutput());
     }
+    if (++frameNumber == readers.size())
+        frameNumber = 0;
+
+    logger->StartTimer();
+    if (cb_Animate2->GetSelectedState() == 1)
+         VolumeMapper->SetInput(clippers[frameNumber]->GetOutput());
+
+
     renderScheduled = false;
+//    cout << "begin \n";
 }
 
 void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
+    logger->StopTimer();
+//    cout << "Last RenderTime: " << logger->GetElapsedTime()  << endl;
+    //if (cb_Animate2->GetSelectedState() == 1)
+    //{
+    //    if (!renderScheduled)
+    //  //      app->Script("after 1000 %s Render", renderWidget->GetTclName());
+    //    renderScheduled = true;
+    //}
     if (cb_Animate->GetSelectedState() == 1)
     {
-        logger->StopTimer();
 
         vals.push_back(logger->GetElapsedTime());
         unsigned int i;
@@ -392,9 +402,9 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
         {
             if (f_volSizes != NULL)
             {
-                fwrite(&clipRatio, 1, sizeof(int), f_volSizes);
-                fwrite(&deviation, 1, sizeof(double), f_deviations);
-                fwrite(&mean , 1, sizeof(double), f_means);
+                f_volSizes << clipRatio << std::endl;
+                f_deviations << deviation << std::endl;
+                f_means << mean << std::endl;
             }
             vals.clear();
             clipRatio++; 
@@ -406,9 +416,9 @@ void Animate(vtkObject* caller, unsigned long eid, void* clientData, void* callD
         {
             if (f_volSizes != NULL) 
             {
-                fclose(f_volSizes); f_volSizes = NULL;
-                fclose(f_deviations); f_deviations = NULL;
-                fclose(f_means); f_means = NULL;
+                f_volSizes.close();
+                f_deviations.close();
+                f_means.close();
             //    cb_Animate->SetSelectedState(0);
             }
             if (cb_Animate2->GetSelectedState() == 0)
