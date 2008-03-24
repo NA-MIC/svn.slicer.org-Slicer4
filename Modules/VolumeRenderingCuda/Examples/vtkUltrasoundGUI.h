@@ -17,8 +17,10 @@ class vtkUltrasoundGUI : public vtkKWWindow
     vtkTypeRevisionMacro(vtkUltrasoundGUI, vtkKWWindow);
     static vtkUltrasoundGUI *New();
 
-
     void LoadUltrasoundHeartSeries(void* data);
+
+    void ScheduleRender();
+
 
     //EVENTS: VTK is not supporting Object Calls.
     void ReRender();
