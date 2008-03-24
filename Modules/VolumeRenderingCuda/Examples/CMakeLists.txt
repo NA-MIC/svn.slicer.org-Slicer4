@@ -7,6 +7,19 @@ TARGET_LINK_LIBRARIES(VolumeRenderingCudaExample
   VolumeRenderingCudaModule
 )
 
+ADD_EXECUTABLE(UltrasoundHeartExample
+  UltrasoundHeartExample.cxx
+)
+
+TARGET_LINK_LIBRARIES(UltrasoundHeartExample
+  vtkITK
+  vtkCommonTCL
+  vtkImagingTCL
+  vtkFilteringTCL
+  vtkIOTCL
+  ${KWWidgets_LIBRARIES}
+)
+
 #ADD_TEST(VolumeRenderingCudaTest
 #  ${EXECUTABLE_OUTPUT_PATH}/VolumeRenderingCudaTest ${CMAKE_CURRENT_SOURCE_DIR}/heart256.raw)
 
@@ -15,4 +28,4 @@ INCLUDE_DIRECTORIES(
  ${VolumeRenderingModule_BINARY_DIR}
   ${CudaSupport_SOURCE_DIR}
   ${CudaSupport_BINARY_DIR}
-  )
+)
