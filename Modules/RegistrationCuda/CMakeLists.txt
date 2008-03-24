@@ -3,7 +3,7 @@ PROJECT(RegistrationCudaModule)
 ## ONLY BUILD THIS IF YOU WANT CUDA SUPPORT TO BE ENABLED
 IF(CUDA_SUPPORT_ENABLED)
 
-OPTION(REGISTRATIONCUDAMODULE "Would you like to build Registration Module with CUDA support" ON)
+OPTION(REGISTRATIONCUDAMODULE "Would you like to build Registration Module with CUDA support" OFF)
 if(REGISTRATIONCUDAMODULE)
 
 INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
