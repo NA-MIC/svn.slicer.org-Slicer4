@@ -149,3 +149,29 @@ FOREACH(tclfile ${TCLFILES})
     COPYONLY
   )
 ENDFOREACH(tclfile)
+
+# 
+# Copy over Script files 
+#
+
+SET (SIMULATION_DIR ${TumorGrowth_BINARY_DIR}/Simulation)
+
+IF (NOT EXISTS ${SIMULATION_DIR})
+  FILE(MAKE_DIRECTORY ${SIMULATION_DIR})
+ENDIF (NOT EXISTS ${SIMULATION_DIR})
+
+SET(SIMULATIONFILES
+  create_artificial_growth_deformation.sh
+  spgr-2006.nhdr
+  spgr-2006.raw.gz
+  copy-deformation_vectors_base.mha
+)
+
+FOREACH(simfile ${SIMULATIONFILES})
+
+CONFIGURE_FILE(
+    ${Slicer3_SOURCE_DIR}/Modules/TumorGrowth/Simulation/${simfile}
+    ${SIMULATION_DIR}/${simfile}
+    COPYONLY
+  )
+ENDFOREACH(simfile)
