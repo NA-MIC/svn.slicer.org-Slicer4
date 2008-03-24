@@ -1222,14 +1222,12 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
 //  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemVariableValueAsInt ( "Tabbed slice layout", vtkSlicerGUILayout::SlicerLayoutTabbedSliceView);
 
-  this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ( "Compare layout" );
-  index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ( "Compare layout");
-//  imageName = "SlicerTabbedSliceLayoutImage";
-//  vtkKWTkUtilities::UpdatePhotoFromIcon ( this->GetApplication(), imageName, this->SlicerToolbarIcons->GetTabbedSliceViewIcon(), 0 );
-//  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemImage ( index, imageName);
-//  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
-  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemIndicatorVisibility ( index, 0 );
-//  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemVariableValueAsInt ( "Tabbed slice layout", vtkSlicerGUILayout::SlicerLayoutTabbedSliceView);
+   this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ("Compare layout");
+  index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ("Compare layout");
+  imageName = "SlicerCompareViewLayoutImage";
+  vtkKWTkUtilities::UpdatePhotoFromIcon ( this->GetApplication(), imageName, this->SlicerToolbarIcons->GetCompareViewIcon(), 0);
+  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemImage ( index, imageName );
+  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
 
   this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ( "Toggle GUI panel visibility" );
   index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ( "Toggle GUI panel visibility");
