@@ -206,6 +206,19 @@ void vtkUltrasoundGUI::ReRender()
 }
 
 
+void vtkUltrasoundGUI::ScheduleRender()
+{
+    if (cb_Animate->GetSelectedState() == 1)
+    {
+        if (++frameNumber >= readers.size())
+            frameNumber = 0;
+        VolumeMapper->SetInput(readers[frameNumber]->GetOutput());
+    }
+
+    this->renderScheduled = false;
+    this->renderWidget->Render();
+}
+
 void vtkUltrasoundGUI::GuiEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
     vtkUltrasoundGUI::SafeDownCast((vtkObject*)clientData)->GuiEvent(caller);
@@ -234,20 +247,13 @@ void vtkUltrasoundGUI::GuiEvent(vtkObject* caller)
 
 void vtkUltrasoundGUI::RenderBegin()
 {
-    if (isRendering == true)
-        printf("DAMN\n");
-    isRendering = true;
 }
 
 void vtkUltrasoundGUI::RenderEnd()
 {
-    renderScheduled = false;
-    if (!renderScheduled && cb_Animate->GetSelectedState() == 1)
-    {
-        if (++frameNumber >= readers.size())
-            frameNumber = 0;
-        VolumeMapper->SetInput(readers[frameNumber]->GetOutput());
-        ReRender();
-    }
-    isRendering = false;
+    if (this->renderScheduled == false)
+        {    
+            this->renderScheduled=true;
+            //this->Script("after 20 %s ScheduleRender", this->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
+        }
 }
