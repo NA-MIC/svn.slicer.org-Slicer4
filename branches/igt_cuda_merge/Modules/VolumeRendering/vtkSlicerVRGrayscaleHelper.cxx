@@ -1,5 +1,9 @@
 //Slicer
-#include "vtkSlicerVolumeTextureMapper3D.h"
+#if !defined(USE_CUDA_VOLUME_MAPPER)
+ #include "vtkCudaVolumeMapper.h"
+#else
+ #include "vtkSlicerVolumeTextureMapper3D.h"
+#endif
 #include "vtkSlicerFixedPointVolumeRayCastMapper.h"
 #include "vtkSlicerVRGrayscaleHelper.h"
 #include "vtkVolumeRenderingModuleGUI.h"
@@ -11,8 +15,6 @@
 #include "vtkSlicerBoxWidget.h"
 #include "vtkSlicerVisibilityIcons.h"
 #include "vtkSlicerVRMenuButtonColorMode.h"
-#include "vtkCudaVolumeMapper.h"
-
 //VTK
 #include "vtkObjectFactory.h"
 #include "vtkVolume.h"
@@ -436,7 +438,11 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
     this->Volume=vtkVolume::New();
 
     //Init the texture mapper
+#if !defined(VOLUMERENDERINGCUDAMODULE_DEBUG)
     this->MapperTexture=vtkCudaVolumeMapper::New();
+#else
+    this->MapperTexture=vtkSlicerVolumeTextureMapper3D::New();
+#endif
     this->MapperTexture->SetSampleDistance(this->SampleDistanceLowRes);
     this->MapperTexture->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
     this->Volume->SetMapper(this->MapperTexture);
@@ -474,8 +480,11 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
 
     //check if texture mapping is supported important to do it after registry
     //otherwise show textmessage
-    int supportTexture = true;//this->MapperTexture->IsRenderSupported(this->Gui->GetCurrentNode()->GetVolumeProperty());
-
+#if !defined(USE_CUDA_VOLUME_MAPPER)
+    int supportTexture = true;
+#else
+    int supportTexture = this->MapperTexture->IsRenderSupported(this->Gui->GetCurrentNode()->GetVolumeProperty());
+#endif
     if(!supportTexture)
     {
 

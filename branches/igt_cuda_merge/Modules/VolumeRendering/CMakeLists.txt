@@ -21,6 +21,19 @@ if(VOLUMERENDERINGMODULE)
   #vtkSlicerBaseTree.cxx
   #vtkSlicerBaseTreeElement.cxx
   )
+  
+## Case if CUDA Exists
+if(VOLUMERENDERINGCUDAMODULE)
+  SET(VOLUMERENDERINGCUDAMODULE_INCLUDES
+    ${VolumeRenderingCudaModule_SOURCE_DIR}
+    ${VolumeRenderingCudaModule_BINARY_DIR}
+  )
+  SET(VOLUMERENDERINGCUDAMODULE_LIBRARIES
+    ${VolumeRenderingCudaModule_BINARY_DIR}/VolumeRenderingCudaModule
+  )
+  ADD_DEFINITIONS(-DUSE_CUDA_VOLUME_MAPPER)
+endif(VOLUMERENDERINGCUDAMODULE)
+  
 #-----------------------------------------------
 # Include dirs
 
@@ -29,8 +42,7 @@ SUBDIRS(VolumeRenderingReplacements)
 INCLUDE_DIRECTORIES(
   ${VolumeRenderingModule_SOURCE_DIR}
   ${VolumeRenderingModule_BINARY_DIR}
-  ${VolumeRenderingCudaModule_SOURCE_DIR}
-  ${VolumeRenderingCudaModule_BINARY_DIR}
+  ${VOLUMERENDERINGCUDAMODULE_INCLUDES}
   ${VolumeRenderingReplacements_SOURCE_DIR}
   ${VolumeRenderingReplacements_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
@@ -91,7 +103,7 @@ TARGET_LINK_LIBRARIES(VolumeRenderingModule
   ITKIO
   ITKDICOMParser
   ${KWWidgets_LIBRARIES} 
-  ${VolumeRenderingCudaModule_BINARY_DIR}/VolumeRenderingCudaModule
+  ${VOLUMERENDERINGCUDAMODULE_LIBRARIES}
   )
 
 
