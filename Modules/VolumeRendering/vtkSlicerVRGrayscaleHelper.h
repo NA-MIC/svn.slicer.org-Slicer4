@@ -378,8 +378,11 @@ protected:
 
     // Description:
     // The hardware accelerated texture mapper.
+#if !defined(USE_CUDA_VOLUME_MAPPER)
     vtkCudaVolumeMapper *MapperTexture;
-
+#else
+    vtkSlicerVolumeTextureMapper3D *MapperTexture;
+#endif
     // Description:
     // The software accelerated software mapper
     vtkSlicerFixedPointVolumeRayCastMapper *MapperRaycast;
