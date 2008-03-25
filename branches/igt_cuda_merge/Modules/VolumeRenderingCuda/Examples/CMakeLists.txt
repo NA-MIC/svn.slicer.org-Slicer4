@@ -1,10 +1,8 @@
 Project(VolumeRenderingCudaExamples)
 
-
 ADD_EXECUTABLE(VolumeRenderingCudaExample
   VolumeRenderingCudaExample.cxx
 )
-
 TARGET_LINK_LIBRARIES(VolumeRenderingCudaExample
   VolumeRenderingCudaModule
 )
@@ -14,8 +12,9 @@ TARGET_LINK_LIBRARIES(VolumeRenderingCudaExample
 
 
 
-
-
+####################
+#### ULTRASOUND ####
+####################
 
 SET(ULTRASOUND_EXAMPLE_SRCS
   vtkUltrasoundGUI.cxx
