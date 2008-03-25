@@ -13,6 +13,10 @@ TARGET_LINK_LIBRARIES(VolumeRenderingCudaExample
 
 
 
+
+
+
+
 SET(ULTRASOUND_EXAMPLE_SRCS
   vtkUltrasoundGUI.cxx
 )
@@ -20,18 +24,17 @@ SET(ULTRASOUND_EXAMPLE_SRCS
 ## WRAPPING
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(UltrasoundHeartExample
+VTK_WRAP_TCL3(UltrasoundModule
          ULTRASOUND_EXAMPLE_TCL_SRCS 
          "${ULTRASOUND_EXAMPLE_SRCS}" 
          "")
 
-ADD_EXECUTABLE(UltrasoundHeartExample
-  UltrasoundHeartExample.cxx
+ADD_LIBRARY(UltrasoundModule
   ${ULTRASOUND_EXAMPLE_SRCS}
   ${ULTRASOUND_EXAMPLE_TCL_SRCS}
 )
 
-TARGET_LINK_LIBRARIES(UltrasoundHeartExample
+TARGET_LINK_LIBRARIES(UltrasoundModule
   vtkITK
   vtkCommonTCL
   vtkImagingTCL
@@ -40,8 +43,22 @@ TARGET_LINK_LIBRARIES(UltrasoundHeartExample
   ${KWWidgets_LIBRARIES}
 )
 
+IF(BUILD_SHARED_LIBS)
+  INSTALL(TARGETS UltrasoundModule
+      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib COMPONENT Development)
+ENDIF(BUILD_SHARED_LIBS)
 
 
+ADD_EXECUTABLE(UltrasoundHeartExample
+  UltrasoundHeartExample.cxx
+)
+
+TARGET_LINK_LIBRARIES(UltrasoundHeartExample
+  UltrasoundModule
+  ${KWWidgets_LIBRARIES}
+)
 
 INCLUDE_DIRECTORIES(
  ${VolumeRenderingModule_SOURCE_DIR}
