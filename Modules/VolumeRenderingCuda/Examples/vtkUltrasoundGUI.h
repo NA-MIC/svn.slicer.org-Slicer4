@@ -2,6 +2,7 @@
 #define __ULTRASOUND_EXAMPLE_GUI_H_
 
 #include "vtkKWWindow.h"
+#include "vtkUltrasoundModule.h"
 
 #include <vtkstd/vector>
 class vtkCallbackCommand;
@@ -12,7 +13,7 @@ class vtkKWVolumePropertyWidget;
 class vtkKWCheckButton;
 class vtkKWRenderWidget;
 
-class vtkUltrasoundGUI : public vtkKWWindow
+class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundGUI : public vtkKWWindow
 {
     vtkTypeRevisionMacro(vtkUltrasoundGUI, vtkKWWindow);
     static vtkUltrasoundGUI *New();
