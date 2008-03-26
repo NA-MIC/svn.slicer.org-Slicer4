@@ -11,7 +11,6 @@ typedef struct __align__(16) {
     
     // The size of the volume
     int3            VolumeSize;
-    float3          VolumeTransformation;
     float           Transform[4][4];
 
 
