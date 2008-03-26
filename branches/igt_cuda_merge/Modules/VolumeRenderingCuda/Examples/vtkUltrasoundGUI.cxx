@@ -213,10 +213,10 @@ void vtkUltrasoundGUI::ScheduleRender()
         if (++frameNumber >= readers.size())
             frameNumber = 0;
         VolumeMapper->SetInput(readers[frameNumber]->GetOutput());
+        this->renderScheduled = false;
     }
 
-    this->renderScheduled = false;
-    this->renderWidget->Render();
+    //this->renderWidget->Render();
 }
 
 void vtkUltrasoundGUI::GuiEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
@@ -247,6 +247,7 @@ void vtkUltrasoundGUI::GuiEvent(vtkObject* caller)
 
 void vtkUltrasoundGUI::RenderBegin()
 {
+    ScheduleRender();
 }
 
 void vtkUltrasoundGUI::RenderEnd()
@@ -254,6 +255,6 @@ void vtkUltrasoundGUI::RenderEnd()
     if (this->renderScheduled == false)
         {    
             this->renderScheduled=true;
-            //this->Script("after 20 %s ScheduleRender", this->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
+            this->Script("after 20 %s Render", this->renderWidget->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
         }
 }
