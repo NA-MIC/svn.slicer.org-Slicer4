@@ -5,6 +5,7 @@
 #include "ntkMatrix.h"
 #include "ntk2DData.h"
 #include "ntkBSpline3Function.h"
+#include "Matrix.h"
 
 typedef enum{
   CURRENT_RES,

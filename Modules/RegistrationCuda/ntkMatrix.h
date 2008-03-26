@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 //#include <octave/config.h>
-//#include <octave/Matrix.h>
+#include <Matrix.h>
 #include "ntkProperties.h"
 #include "ntk3DData.h"
 
@@ -44,7 +44,7 @@ class ntkMatrix{
    * Multiple tensor with matrix from left direction (Result=M*T).
    */
   
-  //ntkMatrix* multiplyMatrixLeft(Matrix matA);
+  ntkMatrix* multiplyMatrixLeft(Matrix matA);
 
   /**
    * Switch tensor axis in forward direction (x->y, y->z, z->x).

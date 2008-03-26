@@ -11,22 +11,46 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
 # --------------------------------------------------------------------------
 # Sources
   SET(RegistrationCudaModule_SRCS
+        ntk2DBSpline3Transform.cpp
+        ntk2DData.cpp
+        ntk2DData16.cpp
+        ntk2DDataResizer.cpp
         ntk2DElasticRegistration.cpp
         ntk2DElasticTransformation.cpp
+        ntk3DDSFFiltering.cpp
+        ntk3DData.cpp
+        ntk3DData16.cpp
+        ntk3DDataCropper.cpp
+        ntk3DDataResizer.cpp
+        ntk4DData.cpp
+        ntk4DData16.cpp
+        ntkBSpline3Function.cpp
+        ntkBSpline3Transform.cpp
+        ntkCudaDeviceMemory.cpp
+        ntkData.cpp
+        ntkDataAligner.cpp
         ntkDeformationSpline.cpp
         ntkElasticRegistration.cpp
         ntkElasticRegistrationCUDA.cpp
         ntkElasticTransformation.cpp
         ntkElasticTransformationCUDA.cpp
         ntkElasticityMap.cpp
+        ntkFiltering.cpp
+        ntkGaussianFiltering.cpp
         ntkLinearTransformation.cpp
         ntkLinearTransformationCUDA.cpp
         ntkMISimilarityMeasure.cpp
         ntkMISimilarityMeasureCUDA.cpp
+        ntkMatrix.cpp
+        ntkMedianFiltering.cpp
+        ntkMedianFilteringCUDA.cpp
+        ntkProperties.cpp
         ntkRegistration.cpp
         ntkRigidRegistration.cpp
         ntkRigidRegistrationCUDA.cpp
         ntkSimilarityMeasure.cpp
+        ntkTensor.cpp
+        ntkTimer.cpp
         ntkTransformation.cpp
   )
   SET(Registration_ADDITIONAL_HEADERS
