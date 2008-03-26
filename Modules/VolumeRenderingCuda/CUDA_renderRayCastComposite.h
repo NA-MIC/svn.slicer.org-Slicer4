@@ -40,7 +40,7 @@ public:
 };
 
 
-template <typename T, class InterpolationMethod> class CUDAkernel_RayCastCompositeAlgorithm
+template <class T, template<class T> class InterpolationMethod> class CUDAkernel_RayCastCompositeAlgorithm
 {
 public:
     __device__ void operator()(const int3& index,
@@ -83,7 +83,7 @@ public:
             {
                 //check whether current position is in front of z buffer wall
 
-                InterpolationMethod interpolate;
+                InterpolationMethod<T> interpolate;
                 tempValue = interpolate(volInfo.SourceData, volInfo.VolumeSize, tempPos);
                 /*interpolation start here*/
 
