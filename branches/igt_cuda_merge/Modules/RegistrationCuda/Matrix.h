@@ -11,11 +11,18 @@ public:
     Matrix(int rows, int columns);
     Matrix(int rows, int columns, double value);
 
-    int rows() const;
-    int cols() const;
+    int rows() const { return mat.size(); }
+    int cols() const { return (mat.empty()) ? 0 : mat[0].size() ; }
 
-    double& operator()(int row, int column);
+    Matrix inverse() const;
+    Matrix pseudo_inverse() const;
 
+    double& operator()(int row, int column) { return mat[row][column]; }
+    const double& operator()(int row, int column) const { return mat[row][column]; }
+    Matrix operator*(const Matrix& other) const;
+
+private:
+    std::vector<std::vector<double> > mat;
 };
 
 #endif __Matrix_h__

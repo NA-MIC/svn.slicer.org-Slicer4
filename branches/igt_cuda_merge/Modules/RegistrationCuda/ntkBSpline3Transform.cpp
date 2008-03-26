@@ -1,4 +1,5 @@
 #include "ntkBSpline3Transform.h"
+#include <cmath>
 
 ntkBSpline3Transform::ntkBSpline3Transform(){
   m_func=new ntkBSpline3Function();

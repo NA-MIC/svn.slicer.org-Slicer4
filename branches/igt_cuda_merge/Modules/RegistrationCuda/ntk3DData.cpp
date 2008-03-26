@@ -213,7 +213,7 @@ void ntk3DData::setDataContrast(double center, double window){
 }
 
 ntk3DData* ntk3DData::getDataWithNewContrast(double center, double window){
-
+    return NULL;
 }
 
 void ntk3DData::lockBuffer(bool lock){
