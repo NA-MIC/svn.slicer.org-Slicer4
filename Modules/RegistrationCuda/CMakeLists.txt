@@ -52,6 +52,7 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
         ntkTensor.cpp
         ntkTimer.cpp
         ntkTransformation.cpp
+        Matrix.cxx
   )
   SET(Registration_ADDITIONAL_HEADERS
         CUDA_calculateMI.h
