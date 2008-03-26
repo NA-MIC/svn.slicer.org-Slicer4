@@ -146,11 +146,6 @@ void vtkCudaVolumeInformationHandler::UpdateVolume()
         this->UpdateVolumeProperties(this->Volume->GetProperty());
 
 
-    this->VolumeInfo.VolumeTransformation.x= 0.0f;
-    this->VolumeInfo.VolumeTransformation.y = 0.0f;
-    this->VolumeInfo.VolumeTransformation.z = 0.0f;
-
-
     // HACK EREI
     vtkMatrix4x4* mat = vtkMatrix4x4::New();
     if (this->Volume->GetUserMatrix() != NULL)
