@@ -38,29 +38,29 @@ __device__ void MatMul(const float mat[4][4], float3* out, float inX, float inY,
     out->z = mat[2][0] * inX + mat[2][1] * inY + mat[2][2] * inZ + mat[2][3] * 1.0;
 }
 
-__device__ void CUDAkernel_SetRayMap(const int3& index, float* raymap, const cudaRendererInformation& renInfo)
+__device__ void CUDAkernel_SetRayMap(const int3& index, float3* raymap, const cudaRendererInformation& renInfo)
 {
     float rayLength;
     float posHor= (float)index.x / (float)renInfo.Resolution.x;
     float posVer= (float)index.y / (float)renInfo.Resolution.y;
 
-    raymap[index.z*6]   = renInfo.CameraRayStart.x  + renInfo.CameraRayStartX.x * posVer + renInfo.CameraRayStartY.x * posHor;
-    raymap[index.z*6+1] = renInfo.CameraRayStart.y  + renInfo.CameraRayStartX.y * posVer + renInfo.CameraRayStartY.y * posHor;
-    raymap[index.z*6+2] = renInfo.CameraRayStart.z  + renInfo.CameraRayStartX.z * posVer + renInfo.CameraRayStartY.z * posHor;
+    raymap[index.z*2].x = renInfo.CameraRayStart.x  + renInfo.CameraRayStartX.x * posVer + renInfo.CameraRayStartY.x * posHor;
+    raymap[index.z*2].y = renInfo.CameraRayStart.y  + renInfo.CameraRayStartX.y * posVer + renInfo.CameraRayStartY.y * posHor;
+    raymap[index.z*2].z = renInfo.CameraRayStart.z  + renInfo.CameraRayStartX.z * posVer + renInfo.CameraRayStartY.z * posHor;
 
     // Ray Length
-    raymap[index.z*6+3] = (renInfo.CameraRayEnd.x  + renInfo.CameraRayEndX.x * posVer + renInfo.CameraRayEndY.x * posHor) - raymap[index.z*6];
-    raymap[index.z*6+4] = (renInfo.CameraRayEnd.y  + renInfo.CameraRayEndX.y * posVer + renInfo.CameraRayEndY.y * posHor) - raymap[index.z*6+1];
-    raymap[index.z*6+5] = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*6+2];
+    raymap[index.z*2+1].x = (renInfo.CameraRayEnd.x  + renInfo.CameraRayEndX.x * posVer + renInfo.CameraRayEndY.x * posHor) - raymap[index.z*2].x;
+    raymap[index.z*2+1].y = (renInfo.CameraRayEnd.y  + renInfo.CameraRayEndX.y * posVer + renInfo.CameraRayEndY.y * posHor) - raymap[index.z*2].y;
+    raymap[index.z*2+1].z = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*2].z;
 
-    rayLength = sqrtf(raymap[index.z*6+3] * raymap[index.z*6+3] + 
-                      raymap[index.z*6+4] * raymap[index.z*6+4] + 
-                      raymap[index.z*6+5] * raymap[index.z*6+5]);
+    rayLength = sqrtf(raymap[index.z*2+1].x * raymap[index.z*2+1].x + 
+                      raymap[index.z*2+1].y * raymap[index.z*2+1].y + 
+                      raymap[index.z*2+1].z * raymap[index.z*2+1].z);
 
     // Normalize the direction vector
-    raymap[index.z*6+3] /= rayLength;
-    raymap[index.z*6+4] /= rayLength;
-    raymap[index.z*6+5] /= rayLength;
+    raymap[index.z*2+1].x /= rayLength;
+    raymap[index.z*2+1].y /= rayLength;
+    raymap[index.z*2+1].z /= rayLength;
 }
 
 __device__ void CUDAkernel_WriteData(const int3& index, int outindex,
@@ -84,7 +84,7 @@ __constant__ cudaRendererInformation renInfo;
 template <typename T>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 {
-    __shared__ float           s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*6];         //ray map: position and orientation of ray after translation and rotation transformation
+    __shared__ float3          s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*2];         //ray map: position and orientation of ray after translation and rotation transformation
     __shared__ float           s_minmax[6];                                 //region of interest of 3D data (minX, maxX, minY, maxY, minZ, maxZ)
     __shared__ float3          s_outputVal[BLOCK_DIM2D*BLOCK_DIM2D];        //output value
     __shared__ float           s_remainingOpacity[BLOCK_DIM2D*BLOCK_DIM2D]; //integration value of alpha
