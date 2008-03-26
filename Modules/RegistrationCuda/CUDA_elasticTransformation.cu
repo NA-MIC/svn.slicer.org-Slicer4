@@ -76,24 +76,24 @@ __global__ void CUDAkernel_elasticTransformation_doTransformation(unsigned char*
     for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
       if(a<0||a>=s_splineSize[0])continue;
       for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
-        if(b<0||b>=s_splineSize[1])continue;
-  for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
-    if(c<0||c>=s_splineSize[2])continue;
-    
-    if(a>=0 && a<=s_splineSize[0]-1 && b>=0 && b<=s_splineSize[1]-1 && c>=0 && c<=s_splineSize[2]-1 ){
-      functemp=getSplineValue(relPosX-(float)a)*getSplineValue(relPosY-(float)b)*getSplineValue(relPosZ-(float)c);
-      s_newX[acc]+=transSpline[c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
-      s_newY[acc]+=transSpline[(int)s_splineSize[0]*(int)s_splineSize[1]*(int)s_splineSize[2]+c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
-      s_newZ[acc]+=transSpline[2*(int)s_splineSize[0]*(int)s_splineSize[1]*(int)s_splineSize[2]+c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
-    }else{
-      functemp=0;
+          if(b<0||b>=s_splineSize[1])continue;
+    for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
+      if(c<0||c>=s_splineSize[2])continue;
+      
+      if(a>=0 && a<=s_splineSize[0]-1 && b>=0 && b<=s_splineSize[1]-1 && c>=0 && c<=s_splineSize[2]-1 ){
+        functemp=getSplineValue(relPosX-(float)a)*getSplineValue(relPosY-(float)b)*getSplineValue(relPosZ-(float)c);
+        s_newX[acc]+=transSpline[c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
+        s_newY[acc]+=transSpline[(int)s_splineSize[0]*(int)s_splineSize[1]*(int)s_splineSize[2]+c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
+        s_newZ[acc]+=transSpline[2*(int)s_splineSize[0]*(int)s_splineSize[1]*(int)s_splineSize[2]+c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
+      }else{
+        functemp=0;
+      }
+      
+      
     }
-    
-    
-  }
       }
     }
-    
+      
 
     if(s_newX[acc]>=0 && s_newX[acc]<=s_inDataSize[0]-1 && s_newY[acc]>=0 && s_newY[acc] <= s_inDataSize[1]-1 && s_newZ[acc]>=0 && s_newZ[acc] <= s_inDataSize[2]-1){
       tempValue=inputData[((int)s_newZ[acc])*(int)s_inDataSize[0]*(int)s_inDataSize[1]+((int)s_newY[acc])*(int)s_inDataSize[0]+((int)s_newX[acc])];

@@ -17,6 +17,7 @@ void ntkElasticTransformationCUDA::loadData(ntk3DData* input){
 }
 
 ntk3DData* ntkElasticTransformationCUDA::applyTransformation(ntkDeformationSpline* splineParam, int splineSizeLevel){
+  int i,j,k,a,b,c;
   ntk3DData* output=new ntk3DData(m_inputSize);
 
   float tempPow;
@@ -24,7 +25,7 @@ ntk3DData* ntkElasticTransformationCUDA::applyTransformation(ntkDeformationSplin
   if(splineSizeLevel==0){
     tempPow=1;
   }else{
-    tempPow=pow((float)2, (float)splineSizeLevel);
+    tempPow=pow(2, splineSizeLevel);
   }
 
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), (int)(tempPow*(m_inputSize.z+1)+1));
@@ -57,8 +58,8 @@ ntkFloatDimension ntkElasticTransformationCUDA::getNewPositionFromOld(ntkDeforma
     tempPow=1;
     tempSize=1;
   }else{
-    tempPow=pow((float)2,(float) splineSizeLevel);
-    tempSize=(int)pow((float)2, (float)-splineSizeLevel);
+    tempPow=pow(2, splineSizeLevel);
+    tempSize=(int)pow(2, -splineSizeLevel);
   }
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), (int)(tempPow*(m_inputSize.z+1)+1));
 
@@ -75,11 +76,11 @@ ntkFloatDimension ntkElasticTransformationCUDA::getNewPositionFromOld(ntkDeforma
     for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
       if(b<0||b>=splineSize.y)continue;
       for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
-  if(c<0||c>=splineSize.z)continue;
-  functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b)*func->getValue(relPosZ-(float)c);
-  newPosition.x+=*(splineParamBuffer+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp*weight;
-  newPosition.y+=*(splineParamBuffer+splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp*weight;
-  newPosition.z+=*(splineParamBuffer+2*splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp*weight;
+    if(c<0||c>=splineSize.z)continue;
+    functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b)*func->getValue(relPosZ-(float)c);
+    newPosition.x+=*(splineParamBuffer+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp*weight;
+    newPosition.y+=*(splineParamBuffer+splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp*weight;
+    newPosition.z+=*(splineParamBuffer+2*splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp*weight;
       }
     }
   }
@@ -103,8 +104,8 @@ ntk3DData* ntkElasticTransformationCUDA::getDeformationFieldImage(ntkDeformation
     tempPow=1;
     tempSize=1;
   }else{
-    tempPow=pow((float)2, splineSizeLevel);
-    tempSize=(int)pow((float)2, -splineSizeLevel);
+    tempPow=pow(2, splineSizeLevel);
+    tempSize=(int)pow(2, -splineSizeLevel);
   }
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), (int)(tempPow*(m_inputSize.z+1)+1));
 
@@ -130,27 +131,27 @@ ntk3DData* ntkElasticTransformationCUDA::getDeformationFieldImage(ntkDeformation
   for(i=0;i<m_inputSize.x;i++){
     for(j=0;j<m_inputSize.y;j++){
       for(k=0;k<m_inputSize.z;k++){
-  newX=0; newY=0; newZ=0;
-  relPosX=(float)i*tempPow+tempPow;
-  relPosY=(float)j*tempPow+tempPow;
-  relPosZ=(float)k*tempPow+tempPow;
-  for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
-    if(a<0||a>=splineSize.x)continue;
-    for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
-      if(b<0||b>=splineSize.y)continue;
-      for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
-        if(c<0||c>=splineSize.z)continue;
-        functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b)*func->getValue(relPosZ-(float)c);
-        newX+=*(splineParamBuffer+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
-        newY+=*(splineParamBuffer+splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
-        newZ+=*(splineParamBuffer+2*splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+    newX=0; newY=0; newZ=0;
+    relPosX=(float)i*tempPow+tempPow;
+    relPosY=(float)j*tempPow+tempPow;
+    relPosZ=(float)k*tempPow+tempPow;
+    for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
+      if(a<0||a>=splineSize.x)continue;
+      for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
+        if(b<0||b>=splineSize.y)continue;
+        for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
+          if(c<0||c>=splineSize.z)continue;
+          functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b)*func->getValue(relPosZ-(float)c);
+          newX+=*(splineParamBuffer+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+          newY+=*(splineParamBuffer+splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+          newZ+=*(splineParamBuffer+2*splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+        }
       }
     }
-  }
-  tempValue=sqrt(newX*newX+newY*newY+newZ*newZ)*weight;
-  if(tempValue<0)tempValue=0;
-  if(tempValue>255)tempValue=255;
-  *(outputBuffer+k*m_inputSize.x*m_inputSize.y+j*m_inputSize.x+i)=(unsigned char)(tempValue);
+    tempValue=sqrt(newX*newX+newY*newY+newZ*newZ)*weight;
+    if(tempValue<0)tempValue=0;
+    if(tempValue>255)tempValue=255;
+    *(outputBuffer+k*m_inputSize.x*m_inputSize.y+j*m_inputSize.x+i)=(unsigned char)(tempValue);
       }
     }
   }
@@ -179,26 +180,26 @@ ntkDeformationSpline *ntkElasticTransformationCUDA::getReverseTransformationSpli
   for(i=0;i<splineSize.x;i++){
     for(j=0;j<splineSize.y;j++){
       for(k=0;k<splineSize.z;k++){
-  *(newX+k*splineSize.x*splineSize.y+j*splineSize.x+i)=(float)i; 
-  *(newY+k*splineSize.x*splineSize.y+j*splineSize.x+i)=(float)j; 
-  *(newZ+k*splineSize.x*splineSize.y+j*splineSize.x+i)=(float)k;
-  relPosX=(float)i;
-  relPosY=(float)j;
-  relPosZ=(float)k;
-  for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
-    if(a<0||a>=splineSize.x)continue;
-    for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
-      if(b<0||b>=splineSize.y)continue;
-      for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
-        if(c<0||c>=splineSize.z)continue;
-        functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b)*func->getValue(relPosZ-(float)c);
-        *(newX+k*splineSize.x*splineSize.y+j*splineSize.x+i)+=*(inputSplineBuffer+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
-        *(newY+k*splineSize.x*splineSize.y+j*splineSize.x+i)+=*(inputSplineBuffer+splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
-        *(newZ+k*splineSize.x*splineSize.y+j*splineSize.x+i)+=*(inputSplineBuffer+2*splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+    *(newX+k*splineSize.x*splineSize.y+j*splineSize.x+i)=(float)i; 
+    *(newY+k*splineSize.x*splineSize.y+j*splineSize.x+i)=(float)j; 
+    *(newZ+k*splineSize.x*splineSize.y+j*splineSize.x+i)=(float)k;
+    relPosX=(float)i;
+    relPosY=(float)j;
+    relPosZ=(float)k;
+    for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
+      if(a<0||a>=splineSize.x)continue;
+      for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
+        if(b<0||b>=splineSize.y)continue;
+        for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
+          if(c<0||c>=splineSize.z)continue;
+          functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b)*func->getValue(relPosZ-(float)c);
+          *(newX+k*splineSize.x*splineSize.y+j*splineSize.x+i)+=*(inputSplineBuffer+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+          *(newY+k*splineSize.x*splineSize.y+j*splineSize.x+i)+=*(inputSplineBuffer+splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+          *(newZ+k*splineSize.x*splineSize.y+j*splineSize.x+i)+=*(inputSplineBuffer+2*splineSize.x*splineSize.y*splineSize.z+c*splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+        }
       }
     }
-  }
-  //printf("%d %d %d %lf %lf %lf\n", i,j,k, *(newX+k*splineSize.x*splineSize.y+j*splineSize.x+i), *(newY+k*splineSize.x*splineSize.y+j*splineSize.x+i), *(newZ+k*splineSize.x*splineSize.y+j*splineSize.x+i));
+    //printf("%d %d %d %lf %lf %lf\n", i,j,k, *(newX+k*splineSize.x*splineSize.y+j*splineSize.x+i), *(newY+k*splineSize.x*splineSize.y+j*splineSize.x+i), *(newZ+k*splineSize.x*splineSize.y+j*splineSize.x+i));
       }
     }
   }

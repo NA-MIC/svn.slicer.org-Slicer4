@@ -9,7 +9,7 @@ ntkElasticRegistrationCUDA::ntkElasticRegistrationCUDA(){
   m_maxGradient=0.0;
   m_splineSizeLevel=0;
   m_imageSizeLevel=0;
-  m_MTlevel=4;
+  m_MTlevel=1;
   m_firstScheme=NULL;
   m_lastScheme=NULL;
   m_minGradientLimit=0.0001;
@@ -123,20 +123,20 @@ ntkDeformationSpline* ntkElasticRegistrationCUDA::doRegistration(ntk3DData* refe
 
     do{
       if(maxGradient*stepOrg<m_minGradientLimit){
-  step=m_minGradientLimit/maxGradient;
+    step=m_minGradientLimit/maxGradient;
       }else{
-  step=stepOrg;
+    step=stepOrg;
       }
 
       SSDvalue=SSDvalueTemp;
       for(i=0;i<m_splineSize.x;i++){
-  for(j=0;j<m_splineSize.y;j++){
-    for(k=0;k<m_splineSize.z;k++){
-      for(n=0;n<3;n++){
-        *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)-=*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*step;
+    for(j=0;j<m_splineSize.y;j++){
+      for(k=0;k<m_splineSize.z;k++){
+        for(n=0;n<3;n++){
+          *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)-=*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*step;
+        }
       }
     }
-  }
       }
       
       transform=new ntkElasticTransformationCUDA();
@@ -144,10 +144,10 @@ ntkDeformationSpline* ntkElasticRegistrationCUDA::doRegistration(ntk3DData* refe
       result=transform->applyTransformation(outputSpline, m_splineSizeLevel);
       
       if(m_PEweight==0.0){
-  SSDvalueTemp=calculateSSD(m_reference, result);//outputSpline
-  //SSDvalueTemp=CUDAelasticRegistration_calculateSSD((unsigned char*)m_reference->getBuffer(), (unsigned char*)result->getBuffer(), m_referenceSize.x, m_referenceSize.y, m_referenceSize.z);
+    SSDvalueTemp=calculateSSD(m_reference, result);//outputSpline
+    //SSDvalueTemp=CUDAelasticRegistration_calculateSSD((unsigned char*)m_reference->getBuffer(), (unsigned char*)result->getBuffer(), m_referenceSize.x, m_referenceSize.y, m_referenceSize.z);
       }else{
-  SSDvalueTemp=calculateSSDPE(m_reference, result, outputSpline);//outputSpline
+    SSDvalueTemp=calculateSSDPE(m_reference, result, outputSpline);//outputSpline
       }
       printf("SSDvalueTemp=%lf\n", SSDvalueTemp);
       
@@ -162,9 +162,9 @@ ntkDeformationSpline* ntkElasticRegistrationCUDA::doRegistration(ntk3DData* refe
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(k=0;k<m_splineSize.z;k++){
-  for(n=0;n<3;n++){
-    *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)+=*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*step;
-  }
+    for(n=0;n<3;n++){
+      *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)+=*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*step;
+    }
       }
     }
   }
@@ -218,9 +218,9 @@ float ntkElasticRegistrationCUDA::calculateSSDPEGradient(ntkDeformationSpline *s
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(k=0;k<m_splineSize.z;k++){
-  for(n=0;n<3;n++){
-    *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)=0.0;
-  }
+    for(n=0;n<3;n++){
+      *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)=0.0;
+    }
       }
     }
   }
@@ -239,69 +239,48 @@ float ntkElasticRegistrationCUDA::calculateSSDPEGradient(ntkDeformationSpline *s
   for(i=0;i<m_targetSize.x;i++){
     for(j=0;j<m_targetSize.y;j++){
       for(k=0;k<m_targetSize.z;k++){
-  *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=i; 
-  *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=j; 
-  *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=k; 
-  relPosX=(float)(i+1)*tempPow;
-  relPosY=(float)(j+1)*tempPow;
-  relPosZ=(float)(k+1)*tempPow;
-  
-  for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-    if(d<0||d>m_splineSize.x-1)continue;
-    for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-      if(e<0||e>m_splineSize.y-1)continue;
-      for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-        if(f<0||f>m_splineSize.z-1)continue;        
-        
-        functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
-        *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
-        *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+m_splineSize.x*m_splineSize.y*m_splineSize.z+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
-        *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
+    *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=i; 
+    *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=j; 
+    *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=k; 
+    relPosX=(float)(i+1)*tempPow;
+    relPosY=(float)(j+1)*tempPow;
+    relPosZ=(float)(k+1)*tempPow;
+    
+    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+      if(d<0||d>m_splineSize.x-1)continue;
+      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+        if(e<0||e>m_splineSize.y-1)continue;
+        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+          if(f<0||f>m_splineSize.z-1)continue;          
+          
+          functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
+          *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
+          *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+m_splineSize.x*m_splineSize.y*m_splineSize.z+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
+          *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
+        }
+      }
+    }
+    tempValue=m_transform->getInterpolationValue(m_targetPlusSpline, *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0, *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0,  *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0);
+    
+    if(tempValue<0)tempValue=0;
+    if(tempValue>255)tempValue=255;
+
+    *(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=tempValue-*(m_referenceBuffer+k*m_referenceSize.x*m_referenceSize.y+j*m_referenceSize.x+i);
+    if(*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)==1 || *(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)==-1)*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=0;
       }
     }
   }
-  tempValue=m_transform->getInterpolationValue(m_targetPlusSpline, *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0, *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0,  *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0);
   
-  if(tempValue<0)tempValue=0;
-  if(tempValue>255)tempValue=255;
-
-  *(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=tempValue-*(m_referenceBuffer+k*m_referenceSize.x*m_referenceSize.y+j*m_referenceSize.x+i);
-  if(*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)==1 || *(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)==-1)*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=0;
-      }
-    }
-  }
+  this->threadCalculateSSDPEGradient(newX, newY, newZ, diff, 0);
   
-  pthread_t tid[m_MTlevel];
-
-  ntkCalculateSSDGradientThreadParam *threadParam = new ntkCalculateSSDGradientThreadParam[m_MTlevel];
- 
-  for(int i=0;i<m_MTlevel;i++){
-    threadParam[i].here=this;
-    threadParam[i].threadNumber=i;
-    threadParam[i].newX=newX;
-    threadParam[i].newY=newY;
-    threadParam[i].newZ=newZ;
-    threadParam[i].diff=diff;
-    if(pthread_create(&tid[i], NULL, startCalculateSSDPEGradientThread, &(threadParam[i]))){
-      printf("create thread %d failed\n",i);
-      exit(1);
-    }
-  }
-  for(int i=0;i<m_MTlevel;i++){
-    if(pthread_join(tid[i], NULL)){
-      printf("join thread %d failed\n",i);
-      exit(1);
-    }
-  }
-
   float max=0.0;
     
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(k=0;k<m_splineSize.z;k++){
-  for(n=0;n<3;n++){
-    *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)/=m_targetSize.x*m_targetSize.y*m_targetSize.z;
-  }
+    for(n=0;n<3;n++){
+      *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)/=m_targetSize.x*m_targetSize.y*m_targetSize.z;
+    }
       }
     }
   }
@@ -309,18 +288,17 @@ float ntkElasticRegistrationCUDA::calculateSSDPEGradient(ntkDeformationSpline *s
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(k=0;k<m_splineSize.z;k++){
-  for(n=0;n<3;n++){
-    if(fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i))>max){
-      max=fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i));
+    for(n=0;n<3;n++){
+      if(fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i))>max){
+        max=fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i));
+      }
     }
-  }
       }
     }
   }
 
   printf("Max value=%lf\n", max);
   
-  delete threadParam;
   free(diff);
   free(newX);
   free(newY);
@@ -349,114 +327,114 @@ void ntkElasticRegistrationCUDA::threadCalculateSSDGradient(float *newX, float *
   for(a=startx;a<endx;a++){
     for(b=0;b<m_splineSize.y;b++){
       for(c=0;c<m_splineSize.z;c++){
-  indexabc=c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a;
-  *(m_SSDgradient+indexabc)=0;
-  for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-    if(i<0 || i>m_targetSize.x-1) continue;
-    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-      if(j<0 || j>m_targetSize.y-1) continue;
-      for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
-        if(k<0 || k>m_targetSize.z-1) continue;
-        /*calculation of SSD gradient against x axis deformation parameter*/
-        /*val1 calculation*/
-        indexijk=k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i;
+    indexabc=c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a;
+    *(m_SSDgradient+indexabc)=0;
+    for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
+      if(i<0 || i>m_targetSize.x-1) continue;
+      for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+        if(j<0 || j>m_targetSize.y-1) continue;
+        for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
+          if(k<0 || k>m_targetSize.z-1) continue;
+          /*calculation of SSD gradient against x axis deformation parameter*/
+          /*val1 calculation*/
+          indexijk=k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i;
 
-        val1=*(diff+indexijk);
-        if(fabs(val1)>0.0001){
+          val1=*(diff+indexijk);
+          if(fabs(val1)>0.0001){
 
-  
-
-    /*val2 calculation*/
-    val2=0;    
-    relPosX=(float)*(newX+indexijk)+1.0;
-    relPosY=(float)*(newY+indexijk)+1.0;
-    relPosZ=(float)*(newZ+indexijk)+1.0;
     
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=m_targetSize.x+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=m_targetSize.y+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-          if(f<0||f>=m_targetSize.z+2)continue;   
-          val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getDifferentialValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
-        }   
-      }
-    }
-    //val2/=m_knotDistance;
-    if(fabs(val2)>0.0001){
-      
-      /*val3 calculation*/
-     
-      *(m_SSDgradient+indexabc)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
-     
-    }
+
+        /*val2 calculation*/
+        val2=0;        
+        relPosX=(float)*(newX+indexijk)+1.0;
+        relPosY=(float)*(newY+indexijk)+1.0;
+        relPosZ=(float)*(newZ+indexijk)+1.0;
+        
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+            if(e<0||e>=m_targetSize.y+2)continue;
+            for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+              if(f<0||f>=m_targetSize.z+2)continue;     
+              val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getDifferentialValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
+            }   
+          }
+        }
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0.0001){
+          
+          /*val3 calculation*/
+         
+          *(m_SSDgradient+indexabc)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
+         
+        }
+          }
+
+          
+          /*calculation of SSD gradient against y axis deformation parameter*/
+          /*val1 calculation*/
+          val1=*(diff+indexijk);
+          if(fabs(val1)>0.0001){
+        /*val2 calculation*/
+        val2=0;
+        relPosX=(float)*(newX+indexijk)+1.0;
+        relPosY=(float)*(newY+indexijk)+1.0;
+        relPosZ=(float)*(newZ+indexijk)+1.0;
+        
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+            if(e<0||e>=m_targetSize.y+2)continue;
+            for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+              if(f<0||f>=m_targetSize.z+2)continue;     
+              val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getValue(relPosX-(float)d)*m_function->getDifferentialValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
+            }   
+          }
+        }
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0.0001){
+          
+          /*val3 calculation*/
+         
+          *(m_SSDgradient+splSize+indexabc)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
+        }
+          }
+
+
+          /*calculation of SSD gradient against z axis deformation parameter*/
+          /*val1 calculation*/
+          val1=*(diff+indexijk);
+          if(fabs(val1)>0.0001){
+        /*val2 calculation*/
+        val2=0;
+        relPosX=(float)*(newX+indexijk)+1.0;
+        relPosY=(float)*(newY+indexijk)+1.0;
+        relPosZ=(float)*(newZ+indexijk)+1.0;
+        
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+            if(e<0||e>=m_targetSize.y+2)continue;
+            for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+              if(f<0||f>=m_targetSize.z+2)continue;     
+              val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getDifferentialValue(relPosZ-(float)f);
+            }   
+          }
         }
 
-        
-        /*calculation of SSD gradient against y axis deformation parameter*/
-        /*val1 calculation*/
-        val1=*(diff+indexijk);
-        if(fabs(val1)>0.0001){
-    /*val2 calculation*/
-    val2=0;
-    relPosX=(float)*(newX+indexijk)+1.0;
-    relPosY=(float)*(newY+indexijk)+1.0;
-    relPosZ=(float)*(newZ+indexijk)+1.0;
-    
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=m_targetSize.x+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=m_targetSize.y+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-          if(f<0||f>=m_targetSize.z+2)continue;   
-          val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getValue(relPosX-(float)d)*m_function->getDifferentialValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
-        }   
-      }
-    }
-    //val2/=m_knotDistance;
-    if(fabs(val2)>0.0001){
-      
-      /*val3 calculation*/
-     
-      *(m_SSDgradient+splSize+indexabc)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
-    }
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0.0001){
+          
+          /*val3 calculation*/
+          
+          *(m_SSDgradient+2*splSize+indexabc)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
         }
-
-
-        /*calculation of SSD gradient against z axis deformation parameter*/
-        /*val1 calculation*/
-        val1=*(diff+indexijk);
-        if(fabs(val1)>0.0001){
-    /*val2 calculation*/
-    val2=0;
-    relPosX=(float)*(newX+indexijk)+1.0;
-    relPosY=(float)*(newY+indexijk)+1.0;
-    relPosZ=(float)*(newZ+indexijk)+1.0;
-    
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=m_targetSize.x+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=m_targetSize.y+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-          if(f<0||f>=m_targetSize.z+2)continue;   
-          val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getDifferentialValue(relPosZ-(float)f);
-        }   
-      }
-    }
-
-    //val2/=m_knotDistance;
-    if(fabs(val2)>0.0001){
-      
-      /*val3 calculation*/
-      
-      *(m_SSDgradient+2*splSize+indexabc)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
-    }
+          }
+          
+          
         }
-        
-        
       }
     }
-  }
       }
     }
   }
@@ -482,112 +460,112 @@ void ntkElasticRegistrationCUDA::threadCalculateSSDPEGradient(float *newX, float
   for(a=startx;a<endx;a++){
     for(b=0;b<m_splineSize.y;b++){
       for(c=0;c<m_splineSize.z;c++){
-  *(m_SSDgradient+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
-  for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-    if(i<0 || i>m_targetSize.x-1) continue;
-    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-      if(j<0 || j>m_targetSize.y-1) continue;
-      for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
-        if(k<0 || k>m_targetSize.z-1) continue;
-        /*calculation of SSD gradient against x axis deformation parameter*/
-        /*val1 calculation*/
-        val1=*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        if(fabs(val1)>0.0001){
+    *(m_SSDgradient+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
+    for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
+      if(i<0 || i>m_targetSize.x-1) continue;
+      for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+        if(j<0 || j>m_targetSize.y-1) continue;
+        for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
+          if(k<0 || k>m_targetSize.z-1) continue;
+          /*calculation of SSD gradient against x axis deformation parameter*/
+          /*val1 calculation*/
+          val1=*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          if(fabs(val1)>0.0001){
 
-  
-
-    /*val2 calculation*/
-    val2=0;    
-    relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
-    relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
-    relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
     
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=m_targetSize.x+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=m_targetSize.y+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-          if(f<0||f>=m_targetSize.z+2)continue;   
-          val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getDifferentialValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
-        }   
-      }
-    }
-    //val2/=m_knotDistance;
-    if(fabs(val2)>0.0001){
-      
-      /*val3 calculation*/
-  
-      *(m_SSDgradient+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
-     
-    }
+
+        /*val2 calculation*/
+        val2=0;        
+        relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+            if(e<0||e>=m_targetSize.y+2)continue;
+            for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+              if(f<0||f>=m_targetSize.z+2)continue;     
+              val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getDifferentialValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
+            }   
+          }
+        }
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0.0001){
+          
+          /*val3 calculation*/
+    
+          *(m_SSDgradient+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
+         
+        }
+          }
+
+          
+          /*calculation of SSD gradient against y axis deformation parameter*/
+          /*val1 calculation*/
+          val1=*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          if(fabs(val1)>0.0001){
+        /*val2 calculation*/
+        val2=0;
+        relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+            if(e<0||e>=m_targetSize.y+2)continue;
+            for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+              if(f<0||f>=m_targetSize.z+2)continue;     
+              val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getValue(relPosX-(float)d)*m_function->getDifferentialValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
+            }   
+          }
+        }
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0.0001){
+          
+          /*val3 calculation*/
+        
+
+          *(m_SSDgradient+m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
+        }
+          }
+
+          /*calculation of SSD gradient against z axis deformation parameter*/
+          /*val1 calculation*/
+          val1=*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          if(fabs(val1)>0.0001){
+        /*val2 calculation*/
+        val2=0;
+        relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+            if(e<0||e>=m_targetSize.y+2)continue;
+            for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+              if(f<0||f>=m_targetSize.z+2)continue;     
+              val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getDifferentialValue(relPosZ-(float)f);
+            }   
+          }
         }
 
-        
-        /*calculation of SSD gradient against y axis deformation parameter*/
-        /*val1 calculation*/
-        val1=*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        if(fabs(val1)>0.0001){
-    /*val2 calculation*/
-    val2=0;
-    relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
-    relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
-    relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0.0001){
+          
+          /*val3 calculation*/
+          
     
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=m_targetSize.x+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=m_targetSize.y+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-          if(f<0||f>=m_targetSize.z+2)continue;   
-          val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getValue(relPosX-(float)d)*m_function->getDifferentialValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
-        }   
-      }
-    }
-    //val2/=m_knotDistance;
-    if(fabs(val2)>0.0001){
-      
-      /*val3 calculation*/
-    
-
-      *(m_SSDgradient+m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
-    }
+          *(m_SSDgradient+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
         }
-
-        /*calculation of SSD gradient against z axis deformation parameter*/
-        /*val1 calculation*/
-        val1=*(diff+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        if(fabs(val1)>0.0001){
-    /*val2 calculation*/
-    val2=0;
-    relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
-    relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
-    relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+1.0;
-    
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=m_targetSize.x+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=m_targetSize.y+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-          if(f<0||f>=m_targetSize.z+2)continue;   
-          val2+=m_targetPlusSpline->getValue(d,e,f)*m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getDifferentialValue(relPosZ-(float)f);
-        }   
-      }
-    }
-
-    //val2/=m_knotDistance;
-    if(fabs(val2)>0.0001){
-      
-      /*val3 calculation*/
-      
-  
-      *(m_SSDgradient+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)*m_function->getValue((float)k*tempPow+tempPow-(float)c)/m_knotDistance;
-    }
+          }
+          
+          
         }
-        
-        
       }
     }
-  }
       }
     }
   }
@@ -610,126 +588,114 @@ void ntkElasticRegistrationCUDA::threadCalculateSSDPEGradient(float *newX, float
   for(a=startx;a<endx;a++){
     for(b=0;b<m_splineSize.y;b++){
       for(c=0;c<m_splineSize.z;c++){
-  orgPosX=a-1;orgPosY=b-1;orgPosZ=c-1;
-  *(potEnergy+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
-  *(potEnergy+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
-  *(potEnergy+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
-  //*(m_SSDgradient+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
-  for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-    if(i<0 || i>m_targetSize.x-2) continue;
-    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-      if(j<0 || j>m_targetSize.y-1) continue;
-      for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
-        if(k<0 || k>m_targetSize.z-1) continue;
-        
-        relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+    orgPosX=a-1;orgPosY=b-1;orgPosZ=c-1;
+    *(potEnergy+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
+    *(potEnergy+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
+    *(potEnergy+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
+    //*(m_SSDgradient+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
+    for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
+      if(i<0 || i>m_targetSize.x-2) continue;
+      for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+        if(j<0 || j>m_targetSize.y-1) continue;
+        for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
+          if(k<0 || k>m_targetSize.z-1) continue;
+          
+          relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
 
-        relPos2X=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
-        relPos2Y=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
-        relPos2Z=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
-        
-        distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
-        
-        elasticity=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        elasticity2=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+(i+1));
-        
-        //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
+          relPos2X=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
+          relPos2Y=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
+          relPos2Z=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
+          
+          distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
+          
+          elasticity=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          elasticity2=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+(i+1));
+          
+          //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
 
-        *(potEnergy+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=((relPos2X-relPosX)/distance-(relPos2X-relPosX)/pow(distance,3))*(m_function->getValue(i-orgPosX+1)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ))*(elasticity+elasticity2)/2.0;
-        
-        //*(potEnergy+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2X-relPosX)/distance)*(m_function->getValue(i-orgPosX+1)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
+          *(potEnergy+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=((relPos2X-relPosX)/distance-(relPos2X-relPosX)/pow(distance,3))*(m_function->getValue(i-orgPosX+1)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ))*(elasticity+elasticity2)/2.0;
+          
+          //*(potEnergy+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2X-relPosX)/distance)*(m_function->getValue(i-orgPosX+1)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
+           
          
-       
+        }
       }
     }
-  }
-  
-  *(m_SSDgradient+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
-  
-  for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-    if(i<0 || i>m_targetSize.x-1) continue;
-    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-      if(j<0 || j>m_targetSize.y-2) continue;
-      for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
-        if(k<0 || k>m_targetSize.z-1) continue;
-        
-        relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-
-        relPos2X=(float)*(newX+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
-        relPos2Y=(float)*(newY+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
-        relPos2Z=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
-        
-        distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
-        
-        elasticity=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        elasticity2=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i));
-        
-        //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
-
-        *(potEnergy+m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=((relPos2Y-relPosY)/distance-(relPos2Y-relPosY)/pow(distance,3))*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY+1)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ))*(elasticity+elasticity2)/2.0;
-        
-        //*(potEnergy+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2Y-relPosY)/distance)*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY+1)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
-      }
-    }
-  }
-
-  *(m_SSDgradient+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
-
-  for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-    if(i<0 || i>m_targetSize.x-1) continue;
-    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-      if(j<0 || j>m_targetSize.y-1) continue;
-      for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
-        if(k<0 || k>m_targetSize.z-2) continue;
-        
-        relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-
-        relPos2X=(float)*(newX+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        relPos2Y=(float)*(newY+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        relPos2Z=(float)*(newZ+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        
-        distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
-
-        elasticity=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-        elasticity2=(*(emapBuffer+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i));
-        
-        //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
-
-        *(potEnergy+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=((relPos2Z-relPosZ)/distance-(relPos2Z-relPosZ)/pow(distance,3))*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ+1)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ))*(elasticity+elasticity2)/2.0;
-        
-        //*(potEnergy+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2Z-relPosZ)/distance)*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ+1)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
-
-      }
-    }
-  }
-  
     
-  
-  *(m_SSDgradient+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
-  
+    *(m_SSDgradient+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
+    
+    for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
+      if(i<0 || i>m_targetSize.x-1) continue;
+      for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+        if(j<0 || j>m_targetSize.y-2) continue;
+        for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
+          if(k<0 || k>m_targetSize.z-1) continue;
+          
+          relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+
+          relPos2X=(float)*(newX+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
+          relPos2Y=(float)*(newY+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
+          relPos2Z=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
+          
+          distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
+          
+          elasticity=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          elasticity2=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i));
+          
+          //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
+
+          *(potEnergy+m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=((relPos2Y-relPosY)/distance-(relPos2Y-relPosY)/pow(distance,3))*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY+1)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ))*(elasticity+elasticity2)/2.0;
+          
+          //*(potEnergy+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2Y-relPosY)/distance)*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY+1)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
+        }
+      }
+    }
+
+    *(m_SSDgradient+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
+
+    for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
+      if(i<0 || i>m_targetSize.x-1) continue;
+      for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+        if(j<0 || j>m_targetSize.y-1) continue;
+        for(k=((c-2)*m_knotDistance-1);k<((c+2)*m_knotDistance);k++){
+          if(k<0 || k>m_targetSize.z-2) continue;
+          
+          relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+
+          relPos2X=(float)*(newX+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          relPos2Y=(float)*(newY+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          relPos2Z=(float)*(newZ+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          
+          distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
+
+          elasticity=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+          elasticity2=(*(emapBuffer+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i));
+          
+          //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
+
+          *(potEnergy+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=((relPos2Z-relPosZ)/distance-(relPos2Z-relPosZ)/pow(distance,3))*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ+1)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ))*(elasticity+elasticity2)/2.0;
+          
+          //*(potEnergy+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2Z-relPosZ)/distance)*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ+1)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
+
+        }
+      }
+    }
+    
+      
+    
+    *(m_SSDgradient+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
+    
       }
     }
   }
 
   free(potEnergy);
-}
-
-void* ntkElasticRegistrationCUDA::startCalculateSSDGradientThread(void *arg){
-  ntkCalculateSSDGradientThreadParam *temp=(ntkCalculateSSDGradientThreadParam*)arg;
-  (temp->here)->threadCalculateSSDGradient(temp->newX, temp->newY, temp->newZ, temp->diff, temp->threadNumber);
-  return 0;
-}
-
-void* ntkElasticRegistrationCUDA::startCalculateSSDPEGradientThread(void *arg){
-  ntkCalculateSSDGradientThreadParam *temp=(ntkCalculateSSDGradientThreadParam*)arg;
-  (temp->here)->threadCalculateSSDPEGradient(temp->newX, temp->newY, temp->newZ, temp->diff, temp->threadNumber);
-  return 0;
 }
 
 float ntkElasticRegistrationCUDA::calculateSSDGradient(ntk3DData* target, int splineSizeLevel=0, ntkDeformationSpline *splineParam=NULL){
@@ -757,8 +723,8 @@ float ntkElasticRegistrationCUDA::calculateSSDGradient(ntk3DData* target, int sp
 
   /*m_targetPlusSpline is B-Spline representation of targetPlus*/
   m_targetPlusSpline=m_transform->doForwardTransform(m_targetPlus, CURRENT_RES);
-  float tempPow=pow((float)2, (float)splineSizeLevel);
-  float knotDistance=pow((float)2, (float)-splineSizeLevel);
+  float tempPow=pow(2, splineSizeLevel);
+  float knotDistance=pow(2, -splineSizeLevel);
   m_knotDistance=(int)knotDistance;
   m_splineSize= ntkIntDimension((int)(tempPow*(m_targetSize.x+1)+1), (int)(tempPow*(m_targetSize.y+1)+1), (int)(tempPow*(m_targetSize.z+1)+1));
   
@@ -823,7 +789,7 @@ float ntkElasticRegistrationCUDA::calculateSSDPE(ntk3DData* reference, ntk3DData
   for(i=0;i<refDim.x;i++){
     for(j=0;j<refDim.y;j++){
       for(k=0;k<refDim.z;k++){
-  value+=((int)*(refBuffer+k*refDim.x*refDim.y+j*refDim.x+i)-(int)*(tarBuffer+k*refDim.x*refDim.y+j*refDim.x+i))*((int)*(refBuffer+k*refDim.x*refDim.y+j*refDim.x+i)-(int)*(tarBuffer+k*refDim.x*refDim.y+j*refDim.x+i));
+    value+=((int)*(refBuffer+k*refDim.x*refDim.y+j*refDim.x+i)-(int)*(tarBuffer+k*refDim.x*refDim.y+j*refDim.x+i))*((int)*(refBuffer+k*refDim.x*refDim.y+j*refDim.x+i)-(int)*(tarBuffer+k*refDim.x*refDim.y+j*refDim.x+i));
       }
     }
   }
@@ -847,28 +813,28 @@ float ntkElasticRegistrationCUDA::calculateSSDPE(ntk3DData* reference, ntk3DData
   for(i=0;i<m_targetSize.x;i++){
     for(j=0;j<m_targetSize.y;j++){
       for(k=0;k<m_targetSize.z;k++){
-  *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=i; 
-  *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=j; 
-  *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=k; 
-  relPosX=(float)(i+1)*tempPow;
-  relPosY=(float)(j+1)*tempPow;
-  relPosZ=(float)(k+1)*tempPow;
-  
-  for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-    if(d<0||d>m_splineSize.x-1)continue;
-    for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-      if(e<0||e>m_splineSize.y-1)continue;
-      for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-        if(f<0||f>m_splineSize.z-1)continue;        
-        
-        functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
-        *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
-        *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+m_splineSize.x*m_splineSize.y*m_splineSize.z+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
-        *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
+    *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=i; 
+    *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=j; 
+    *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)=k; 
+    relPosX=(float)(i+1)*tempPow;
+    relPosY=(float)(j+1)*tempPow;
+    relPosZ=(float)(k+1)*tempPow;
+    
+    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+      if(d<0||d>m_splineSize.x-1)continue;
+      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+        if(e<0||e>m_splineSize.y-1)continue;
+        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+          if(f<0||f>m_splineSize.z-1)continue;          
+          
+          functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e)*m_function->getValue(relPosZ-(float)f);
+          *(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
+          *(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+m_splineSize.x*m_splineSize.y*m_splineSize.z+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
+          *(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i)+=*(splineParamBuffer+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+f*m_splineSize.x*m_splineSize.y+e*m_splineSize.x+d)*functemp;
+        }
       }
     }
-  }
-  
+    
       }
     }
   }
@@ -886,21 +852,21 @@ float ntkElasticRegistrationCUDA::calculateSSDPE(ntk3DData* reference, ntk3DData
   for(i=0;i<m_targetSize.x-1;i++){
     for(j=0;j<m_targetSize.y;j++){
       for(k=0;k<m_targetSize.z;k++){
-    relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-    relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-    relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-    
-    relPos2X=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
-    relPos2Y=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
-    relPos2Z=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
-    
-    distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
-    
-    elasticity=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-    elasticity2=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1));
-    
-    potEnergy+=((distance-1)*(distance-1))/distance*(elasticity+elasticity2)/2.0;;
-    //potEnergy+=((distance-1)*(distance-1));
+      relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+      relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+      relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+      
+      relPos2X=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
+      relPos2Y=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
+      relPos2Z=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1);
+      
+      distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
+      
+      elasticity=*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+      elasticity2=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i+1));
+      
+      potEnergy+=((distance-1)*(distance-1))/distance*(elasticity+elasticity2)/2.0;;
+      //potEnergy+=((distance-1)*(distance-1));
       }
     }
   }
@@ -908,21 +874,21 @@ float ntkElasticRegistrationCUDA::calculateSSDPE(ntk3DData* reference, ntk3DData
   for(i=0;i<m_targetSize.x;i++){
     for(j=0;j<m_targetSize.y-1;j++){
       for(k=0;k<m_targetSize.z;k++){
-  relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  
-  relPos2X=(float)*(newX+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
-  relPos2Y=(float)*(newY+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
-  relPos2Z=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
-  
-  distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
-  
-  elasticity=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i));
-  elasticity2=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i));
+    relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+    relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+    relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
     
-  potEnergy+=((distance-1)*(distance-1))/distance*(elasticity+elasticity2)/2.0;;
-  //potEnergy+=((distance-1)*(distance-1));
+    relPos2X=(float)*(newX+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
+    relPos2Y=(float)*(newY+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
+    relPos2Z=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i);
+    
+    distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
+    
+    elasticity=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i));
+    elasticity2=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+(j+1)*m_targetSize.x+i));
+        
+    potEnergy+=((distance-1)*(distance-1))/distance*(elasticity+elasticity2)/2.0;;
+    //potEnergy+=((distance-1)*(distance-1));
       }
     }
   }
@@ -930,21 +896,21 @@ float ntkElasticRegistrationCUDA::calculateSSDPE(ntk3DData* reference, ntk3DData
   for(i=0;i<m_targetSize.x;i++){
     for(j=0;j<m_targetSize.y;j++){
       for(k=0;k<m_targetSize.z-1;k++){
-  relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  
-  relPos2X=(float)*(newX+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  relPos2Y=(float)*(newY+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  relPos2Z=(float)*(newZ+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
-  
-  distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
-  
-  elasticity=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i));
-  elasticity2=(*(emapBuffer+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i));
+    relPosX=(float)*(newX+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+    relPosY=(float)*(newY+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+    relPosZ=(float)*(newZ+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
     
-  potEnergy+=((distance-1)*(distance-1))/distance*(elasticity+elasticity2)/2.0;;
-  //potEnergy+=((distance-1)*(distance-1));
+    relPos2X=(float)*(newX+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+    relPos2Y=(float)*(newY+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+    relPos2Z=(float)*(newZ+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i);
+    
+    distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY)+(relPos2Z-relPosZ)*(relPos2Z-relPosZ));
+    
+    elasticity=(*(emapBuffer+k*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i));
+    elasticity2=(*(emapBuffer+(k+1)*m_targetSize.x*m_targetSize.y+j*m_targetSize.x+i));
+        
+    potEnergy+=((distance-1)*(distance-1))/distance*(elasticity+elasticity2)/2.0;;
+    //potEnergy+=((distance-1)*(distance-1));
       }
     }
   }
@@ -1060,7 +1026,7 @@ bool ntkElasticRegistrationCUDA::checkRegistrationScheme(){
     ntkElasticRegistrationCUDAScheme *tempScheme=m_firstScheme;
     do{
       if(tempScheme->imageResLevel+tempScheme->splineResLevel>tempScheme->next->imageResLevel+tempScheme->next->splineResLevel){
-  return false;
+    return false;
       }
       tempScheme=tempScheme->next;
     }while(tempScheme->next!=NULL);
@@ -1146,7 +1112,7 @@ ntkDeformationSpline* ntkElasticRegistrationCUDA::executeRegistrationSchemes(ntk
       ntkIntDimension splineSize=outputSpline->getSize();
       
       for(i=0;i<splineSize.x*splineSize.y*splineSize.z*3;i++){
-  *(splineBuffer+i) *= pow(2, imageResLevelUp);
+    *(splineBuffer+i) *= pow(2, imageResLevelUp);
       }
     }
     
@@ -1201,7 +1167,7 @@ ntk3DData *ntkElasticRegistrationCUDA::resizeDataSmaller(ntk3DData* input, int i
   for(i=0;i<outputSize.x;i++){
     for(j=0;j<outputSize.y;j++){
       for(k=0;k<outputSize.z;k++){
-  *(outputBuffer+k*outputSize.x*outputSize.y+j*outputSize.x+i)=*(inputBuffer+(((k+1)*factor)-1)*inputSize.x*inputSize.y+(((j+1)*factor)-1)*inputSize.x+(((i+1)*factor)-1));
+    *(outputBuffer+k*outputSize.x*outputSize.y+j*outputSize.x+i)=*(inputBuffer+(((k+1)*factor)-1)*inputSize.x*inputSize.y+(((j+1)*factor)-1)*inputSize.x+(((i+1)*factor)-1));
       }
     }
   }  
@@ -1228,7 +1194,7 @@ ntkElasticityMap *ntkElasticRegistrationCUDA::resizeMapSmaller(ntkElasticityMap*
   for(i=0;i<outputSize.x;i++){
     for(j=0;j<outputSize.y;j++){
       for(k=0;k<outputSize.z;k++){
-  *(outputBuffer+k*outputSize.x*outputSize.y+j*outputSize.x+i)=*(inputBuffer+(((k+1)*factor)-1)*inputSize.x*inputSize.y+(((j+1)*factor)-1)*inputSize.x+(((i+1)*factor)-1));
+    *(outputBuffer+k*outputSize.x*outputSize.y+j*outputSize.x+i)=*(inputBuffer+(((k+1)*factor)-1)*inputSize.x*inputSize.y+(((j+1)*factor)-1)*inputSize.x+(((i+1)*factor)-1));
       }
     }
   }  

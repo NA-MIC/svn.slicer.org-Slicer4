@@ -3,7 +3,6 @@
 
 #include "ntkRegistration.h"
 #include "ntkRigidRegistration.h"
-#include "ntkSADSimilarityMeasure.h"
 #include "ntkMISimilarityMeasure.h"
 #include "ntkLinearTransformation.h"
 #include "ntkDataAligner.h"

@@ -78,13 +78,13 @@ double ntkMISimilarityMeasureCUDA::getInterpolationValue(double x, double y, dou
   pos.x=xint+1;pos.y=yint+1;pos.z=zint+1;value8=m_reference->getValue(pos);
 
   return (double)((1-xsmall)*(1-ysmall)*(1-zsmall)*value1+
-      (1-xsmall)*(1-ysmall)*zsmall*value2+
-      (1-xsmall)*ysmall*(1-zsmall)*value3+
-      (1-xsmall)*ysmall*zsmall*value4+
-      xsmall*(1-ysmall)*(1-zsmall)*value5+
-      xsmall*(1-ysmall)*zsmall*value6+
-      xsmall*ysmall*(1-zsmall)*value7+
-      xsmall*ysmall*zsmall*value8);
+          (1-xsmall)*(1-ysmall)*zsmall*value2+
+          (1-xsmall)*ysmall*(1-zsmall)*value3+
+          (1-xsmall)*ysmall*zsmall*value4+
+          xsmall*(1-ysmall)*(1-zsmall)*value5+
+          xsmall*(1-ysmall)*zsmall*value6+
+          xsmall*ysmall*(1-zsmall)*value7+
+          xsmall*ysmall*zsmall*value8);
   
 }
 

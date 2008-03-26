@@ -62,21 +62,21 @@ ntk3DData *ntkLinearTransformationCUDA::applyTransformation(ntkIntDimension outp
   for(i=0;i<outputSize.x;i++){
     for(j=0;j<outputSize.y;j++){
       for(k=0;k<outputSize.z;k++){
-  vect_out[0]=((i+0.5)*outputThickness.x)-out_origin.x;
-  vect_out[1]=((j+0.5)*outputThickness.y)-out_origin.y;
-  vect_out[2]=((k+0.5)*outputThickness.z)-out_origin.z;
-  vect_out[3]=1.0;
-  
-  inverseMatrix->MultiplyPoint(vect_out,vect_in);
-  pos_in[0]=(vect_in[0]+in_origin.x)/inputThickness.x-0.5;
-  pos_in[1]=(vect_in[1]+in_origin.y)/inputThickness.y-0.5;
-  pos_in[2]=(vect_in[2]+in_origin.z)/inputThickness.z-0.5;
-  if(pos_in[0]>=0 && pos_in[0]<inputSize.x-1 && pos_in[1]>=0 && pos_in[1]<inputSize.y-1 && pos_in[2]>=0 && pos_in[2]<inputSize.z-1){
-    *(outputBuffer+k*outputSize.x*outputSize.y+j*outputSize.x+i)=(unsigned char)getInterpolationValue(pos_in[0],pos_in[1],pos_in[2]);
+    vect_out[0]=((i+0.5)*outputThickness.x)-out_origin.x;
+    vect_out[1]=((j+0.5)*outputThickness.y)-out_origin.y;
+    vect_out[2]=((k+0.5)*outputThickness.z)-out_origin.z;
+    vect_out[3]=1.0;
     
-  }else{
-    *(outputBuffer+k*outputSize.x*outputSize.y+j*outputSize.x+i)=0;
-  }
+    inverseMatrix->MultiplyPoint(vect_out,vect_in);
+    pos_in[0]=(vect_in[0]+in_origin.x)/inputThickness.x-0.5;
+    pos_in[1]=(vect_in[1]+in_origin.y)/inputThickness.y-0.5;
+    pos_in[2]=(vect_in[2]+in_origin.z)/inputThickness.z-0.5;
+    if(pos_in[0]>=0 && pos_in[0]<inputSize.x-1 && pos_in[1]>=0 && pos_in[1]<inputSize.y-1 && pos_in[2]>=0 && pos_in[2]<inputSize.z-1){
+      *(outputBuffer+k*outputSize.x*outputSize.y+j*outputSize.x+i)=(unsigned char)getInterpolationValue(pos_in[0],pos_in[1],pos_in[2]);
+      
+    }else{
+      *(outputBuffer+k*outputSize.x*outputSize.y+j*outputSize.x+i)=0;
+    }
       } 
     }
   }
@@ -224,13 +224,13 @@ double ntkLinearTransformationCUDA::getInterpolationValue(double x, double y, do
   pos.x=xint+1;pos.y=yint+1;pos.z=zint+1;value8=m_input->getValue(pos);
 
   return (double)((1-xsmall)*(1-ysmall)*(1-zsmall)*value1+
-      (1-xsmall)*(1-ysmall)*zsmall*value2+
-      (1-xsmall)*ysmall*(1-zsmall)*value3+
-      (1-xsmall)*ysmall*zsmall*value4+
-      xsmall*(1-ysmall)*(1-zsmall)*value5+
-      xsmall*(1-ysmall)*zsmall*value6+
-      xsmall*ysmall*(1-zsmall)*value7+
-      xsmall*ysmall*zsmall*value8);
+          (1-xsmall)*(1-ysmall)*zsmall*value2+
+          (1-xsmall)*ysmall*(1-zsmall)*value3+
+          (1-xsmall)*ysmall*zsmall*value4+
+          xsmall*(1-ysmall)*(1-zsmall)*value5+
+          xsmall*(1-ysmall)*zsmall*value6+
+          xsmall*ysmall*(1-zsmall)*value7+
+          xsmall*ysmall*zsmall*value8);
   
 }
 
@@ -255,7 +255,7 @@ ntkFloatDimension ntkLinearTransformationCUDA::getNewPositionFromOld(ntkIntDimen
   vect_in[1]=((oldPosition.y+0.5)*inputThickness.y)-in_origin.y;
   vect_in[2]=((oldPosition.z+0.5)*inputThickness.z)-in_origin.z;
   vect_in[3]=1.0;
-  
+    
   m_tMatrix->MultiplyPoint(vect_in,vect_out);
 
   pos_out[0]=(vect_out[0]+out_origin.x)/outputThickness.x-0.5;

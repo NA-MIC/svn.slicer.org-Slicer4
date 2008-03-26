@@ -1,7 +1,7 @@
 #ifndef NTKELASTICTRANSFORMATIONCUDA_H
 #define NTKELASTICTRANSFORMATIONCUDA_H
 
-#include <cmath>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "ntkTransformation.h"
