@@ -69,8 +69,8 @@ ntkDeformationSpline* ntkElasticRegistrationCUDA::doRegistration(ntk3DData* refe
 
   /*m_targetPlusSpline is B-Spline representation of targetPlus*/
   m_targetPlusSpline=m_transform->doForwardTransform(m_targetPlus, CURRENT_RES);
-  float tempPow=pow(2, splineSizeLevel);
-  float knotDistance=pow(2, -splineSizeLevel);
+  float tempPow=pow((double)2, (double)splineSizeLevel);
+  float knotDistance=pow((double)2, (double)-splineSizeLevel);
   m_knotDistance=(int)knotDistance;
   m_splineSize= ntkIntDimension((int)(tempPow*(m_targetSize.x+1)+1), (int)(tempPow*(m_targetSize.y+1)+1), (int)(tempPow*(m_targetSize.z+1)+1));
   
@@ -624,7 +624,7 @@ void ntkElasticRegistrationCUDA::threadCalculateSSDPEGradient(float *newX, float
       }
     }
     
-    *(m_SSDgradient+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
+    *(m_SSDgradient+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+0*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow((double)8,(double)-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
     
     for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
       if(i<0 || i>m_targetSize.x-1) continue;
@@ -655,7 +655,7 @@ void ntkElasticRegistrationCUDA::threadCalculateSSDPEGradient(float *newX, float
       }
     }
 
-    *(m_SSDgradient+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
+    *(m_SSDgradient+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+1*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow((double)8,(double)-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
 
     for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
       if(i<0 || i>m_targetSize.x-1) continue;
@@ -689,7 +689,7 @@ void ntkElasticRegistrationCUDA::threadCalculateSSDPEGradient(float *newX, float
     
       
     
-    *(m_SSDgradient+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
+    *(m_SSDgradient+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+2*m_splineSize.x*m_splineSize.y*m_splineSize.z+c*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow((double)8,(double)-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
     
       }
     }
@@ -723,8 +723,8 @@ float ntkElasticRegistrationCUDA::calculateSSDGradient(ntk3DData* target, int sp
 
   /*m_targetPlusSpline is B-Spline representation of targetPlus*/
   m_targetPlusSpline=m_transform->doForwardTransform(m_targetPlus, CURRENT_RES);
-  float tempPow=pow(2, splineSizeLevel);
-  float knotDistance=pow(2, -splineSizeLevel);
+  float tempPow=pow((double)2, (double)splineSizeLevel);
+  float knotDistance=pow((double)2, (double)-splineSizeLevel);
   m_knotDistance=(int)knotDistance;
   m_splineSize= ntkIntDimension((int)(tempPow*(m_targetSize.x+1)+1), (int)(tempPow*(m_targetSize.y+1)+1), (int)(tempPow*(m_targetSize.z+1)+1));
   
@@ -916,14 +916,14 @@ float ntkElasticRegistrationCUDA::calculateSSDPE(ntk3DData* reference, ntk3DData
   }
   
 
-  printf("potential energy: %lf\n", potEnergy*m_PEweight*pow(8,-m_imageSizeLevel));
+  printf("potential energy: %lf\n", potEnergy*m_PEweight*pow((double)8,(double)-m_imageSizeLevel));
 
   delete newX;
   delete newY;
   delete newZ;
   delete diff;
 
-  return value/refDim.x/refDim.y/refDim.z+potEnergy*m_PEweight*pow(8,-m_imageSizeLevel);
+  return value/refDim.x/refDim.y/refDim.z+potEnergy*m_PEweight*pow((double)8,(double)-m_imageSizeLevel);
 }
 
 ntkDeformationSpline *ntkElasticRegistrationCUDA::doSplineParamTransform(ntkDeformationSpline* inputSpline){
@@ -1112,7 +1112,7 @@ ntkDeformationSpline* ntkElasticRegistrationCUDA::executeRegistrationSchemes(ntk
       ntkIntDimension splineSize=outputSpline->getSize();
       
       for(i=0;i<splineSize.x*splineSize.y*splineSize.z*3;i++){
-    *(splineBuffer+i) *= pow(2, imageResLevelUp);
+    *(splineBuffer+i) *= pow((double)2,(double) imageResLevelUp);
       }
     }
     
@@ -1162,7 +1162,7 @@ ntk3DData *ntkElasticRegistrationCUDA::resizeDataSmaller(ntk3DData* input, int i
   unsigned char* inputBuffer=(unsigned char*)input->getBuffer();
   unsigned char* outputBuffer=(unsigned char*)output->getBuffer();
   
-  int factor=(int)pow(2, -imageResLevel);
+  int factor=(int)pow((double)2, (double)-imageResLevel);
   
   for(i=0;i<outputSize.x;i++){
     for(j=0;j<outputSize.y;j++){
@@ -1189,7 +1189,7 @@ ntkElasticityMap *ntkElasticRegistrationCUDA::resizeMapSmaller(ntkElasticityMap*
   float* inputBuffer=input->getBuffer();
   float* outputBuffer=output->getBuffer();
   
-  int factor=(int)pow(2, -imageResLevel);
+  int factor=(int)pow((double)2, (double)-imageResLevel);
   
   for(i=0;i<outputSize.x;i++){
     for(j=0;j<outputSize.y;j++){

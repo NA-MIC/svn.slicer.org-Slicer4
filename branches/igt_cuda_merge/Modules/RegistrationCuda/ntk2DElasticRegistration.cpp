@@ -67,8 +67,8 @@ ntkDeformationSpline* ntk2DElasticRegistration::doRegistration(ntk2DData* refere
   /*m_targetPlusSpline is B-Spline representation of targetPlus*/
 
   m_targetPlusSpline=m_transform->doForwardTransform(m_targetPlus, CURRENT_RES);
-  float tempPow=pow(2, splineSizeLevel);
-  float knotDistance=pow(2, -splineSizeLevel);
+  float tempPow=pow((double)2, (double)splineSizeLevel);
+  float knotDistance=pow((double)2, (double)-splineSizeLevel);
   m_knotDistance=(int)knotDistance;
   m_splineSize= ntkIntDimension((int)(tempPow*(m_targetSize.x+1)+1), (int)(tempPow*(m_targetSize.y+1)+1), 1);
   
@@ -575,7 +575,7 @@ void ntk2DElasticRegistration::threadCalculateSSDPEGradient(float *newX, float *
       }
     }
     
-    *(m_SSDgradient+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
+    *(m_SSDgradient+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow((double)8,(double)-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
     
     for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
       if(i<0 || i>m_targetSize.x-1) continue;
@@ -634,8 +634,8 @@ float ntk2DElasticRegistration::calculateSSDGradient(ntk2DData* target, int spli
 
   /*m_targetPlusSpline is B-Spline representation of targetPlus*/
   m_targetPlusSpline=m_transform->doForwardTransform(m_targetPlus, CURRENT_RES);
-  float tempPow=pow(2, splineSizeLevel);
-  float knotDistance=pow(2, -splineSizeLevel);
+  float tempPow=pow((double)2, (double)splineSizeLevel);
+  float knotDistance=pow((double)2, (double)-splineSizeLevel);
   m_knotDistance=(int)knotDistance;
   m_splineSize= ntkIntDimension((int)(tempPow*(m_targetSize.x+1)+1), (int)(tempPow*(m_targetSize.y+1)+1),1);
   
@@ -786,13 +786,13 @@ float ntk2DElasticRegistration::calculateSSD(ntk2DData* reference, ntk2DData* ta
     }
   }
   
-  printf("potential energy: %lf\n", potEnergy*m_PEweight*pow(8,-m_imageSizeLevel));
+  printf("potential energy: %lf\n", potEnergy*m_PEweight*pow((double)8,(double)-m_imageSizeLevel));
   
   delete newX;
   delete newY;
   delete diff;
   
-  return value/refDim.x/refDim.y+potEnergy*m_PEweight*pow(8,-m_imageSizeLevel);
+  return value/refDim.x/refDim.y+potEnergy*m_PEweight*pow((double)8,(double)-m_imageSizeLevel);
 }
  
  ntkDeformationSpline *ntk2DElasticRegistration::doSplineParamTransform(ntkDeformationSpline* inputSpline){
@@ -978,7 +978,7 @@ bool ntk2DElasticRegistration::checkRegistrationScheme(){
       ntkIntDimension splineSize=outputSpline->getSize();
       
       for(i=0;i<splineSize.x*splineSize.y*3;i++){
-    *(splineBuffer+i) *= pow(2, imageResLevelUp);
+    *(splineBuffer+i) *= pow((double)2, (double)imageResLevelUp);
       }
     }
     //printf("4");fflush(stdout);
@@ -1028,7 +1028,7 @@ bool ntk2DElasticRegistration::checkRegistrationScheme(){
   unsigned char* inputBuffer=(unsigned char*)input->getBuffer();
   unsigned char* outputBuffer=(unsigned char*)output->getBuffer();
   
-  int factor=(int)pow(2, -imageResLevel);
+  int factor=(int)pow((double)2,(double)-imageResLevel);
   
   for(i=0;i<outputSize.x;i++){
     for(j=0;j<outputSize.y;j++){
@@ -1052,7 +1052,7 @@ bool ntk2DElasticRegistration::checkRegistrationScheme(){
   float* inputBuffer=input->getBuffer();
   float* outputBuffer=output->getBuffer();
   
-  int factor=(int)pow(2, -imageResLevel);
+  int factor=(int)pow((double)2, (double)-imageResLevel);
   
   for(i=0;i<outputSize.x;i++){
     for(j=0;j<outputSize.y;j++){

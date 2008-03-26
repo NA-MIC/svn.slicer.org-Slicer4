@@ -80,11 +80,11 @@ double ntkMISimilarityMeasure::doSimilarityMeasure(ntk3DData* temp){
   for(i=0;i<256;i++){
     if(*(m_histogramA+i)!=0){
       tempval=*(m_histogramA+i)/(double)(count);
-      value-=tempval*log(tempval)/log(10);
+      value-=tempval*log(tempval)/log((double)10);
     }
     if(*(m_histogramB+i)!=0){
       tempval=*(m_histogramB+i)/(double)(count);
-      value-=tempval*log(tempval)/log(10);
+      value-=tempval*log((double)tempval)/log((double)10);
     }
  
     for(j=0;j<256;j++){
@@ -95,7 +95,7 @@ double ntkMISimilarityMeasure::doSimilarityMeasure(ntk3DData* temp){
       */
       if(*(m_histogram+i*256+j)!=0){
     tempval=*(m_histogram+i*256+j)/(double)(count);
-    value+=tempval*log(tempval)/log(10);
+    value+=tempval*log(tempval)/log(10.0f);
       }
     }
     //printf("value:%f %d", value, i);
