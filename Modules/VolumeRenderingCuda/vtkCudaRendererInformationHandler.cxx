@@ -158,24 +158,10 @@ void vtkCudaRendererInformationHandler::Update()
 //        for (unsigned int i = 0 ; i < this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y; i++)
 //            this->LocalZBuffer.GetMemPointerAs<float>()[i] = 100000;
 
-        renWin->GetZbufferData(0,0,this->RendererInfo.Resolution.x-1, this->RendererInfo.Resolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
+        //renWin->GetZbufferData(0,0,this->RendererInfo.Resolution.x-1, this->RendererInfo.Resolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
 
-        for (unsigned int i = 0; i < this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y; i++)
-        {
-         //   if (this->LocalZBuffer.GetMemPointerAs<float>()[i] != 1.0f)
-            {
-                float test  = this->LocalZBuffer.GetMemPointerAs<float>()[i] ;
-               // cout << test<< "," << std::flush;
-                float a = this->RendererInfo.ClippingRange.y / (this->RendererInfo.ClippingRange.y - this->RendererInfo.ClippingRange.x);
-                float b = this->RendererInfo.ClippingRange.y * this->RendererInfo.ClippingRange.x / (this->RendererInfo.ClippingRange.x - this->RendererInfo.ClippingRange.y);
-                float bla = b/(this->LocalZBuffer.GetMemPointerAs<float>()[i] - a);
-                
-               // cout << bla;
-
-            }
-        }
-        this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
-        this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
+        //this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
+        //this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
 
     }
 }
