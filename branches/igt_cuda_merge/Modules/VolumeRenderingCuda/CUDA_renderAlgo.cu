@@ -81,7 +81,7 @@ __device__ void CUDAkernel_WriteData(const int3& index, int outindex,
 __constant__ cudaVolumeInformation   volInfo;
 __constant__ cudaRendererInformation renInfo;
 
-template <typename T>
+template <typename T, class ALGORITHM>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 {
     __shared__ float3          s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*2];         //ray map: position and orientation of ray after translation and rotation transformation
@@ -118,10 +118,8 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     __syncthreads();
 
     // Call the Algorithm (Composite or MIP or Isosurface)
-    //CUDAkernel_RayCastMIPAlgorithm
-    //CUDAkernel_RayCastCompositeAlgorithm
-    //CUDAkernel_RayCastIsosurfaceAlgorithm
-    CUDAkernel_RayCastCompositeAlgorithm<T>(index, outindex, s_minmax /*[6] */,
+    ALGORITHM algo;
+    algo(index, outindex, s_minmax /*[6] */,
                                    s_rayMap, volInfo, renInfo,
                                    s_outputVal, s_zBuffer, s_remainingOpacity);
 
@@ -149,18 +147,24 @@ void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
     CUT_DEVICE_INIT();
 
     // The CUDA Kernel Function Definition, so we do not have to write it down below
-#define CUDA_KERNEL_CALL(ID, TYPE)   \
+
+    //CUDAkernel_RayCastMIPAlgorithm
+    //CUDAkernel_RayCastCompositeAlgorithm
+    //CUDAkernel_RayCastIsosurfaceAlgorithm
+    // CUDAkernel_Interpolate_Trilinear
+    // CUDAkernel_Interpolate_NearestNaighbor
+  #define CUDA_KERNEL_CALL(ID, TYPE)   \
     if (volumeInfo.InputDataType == ID) \
-    CUDAkernel_renderAlgo_doIntegrationRender<TYPE> <<< grid, threads >>>()
+    CUDAkernel_renderAlgo_doIntegrationRender<TYPE, CUDAkernel_RayCastCompositeAlgorithm<TYPE, CUDAkernel_Interpolate_Trilinear<TYPE> > > <<< grid, threads >>>()
 
     // Add all the other types.
     CUDA_KERNEL_CALL(VTK_UNSIGNED_CHAR, unsigned char);
     else CUDA_KERNEL_CALL(VTK_CHAR, char);
-  else CUDA_KERNEL_CALL(VTK_SHORT, short);
-  else CUDA_KERNEL_CALL(VTK_UNSIGNED_SHORT, unsigned short);
-  else CUDA_KERNEL_CALL(VTK_FLOAT, float);
-  else CUDA_KERNEL_CALL(VTK_DOUBLE, double);
-  else CUDA_KERNEL_CALL(VTK_INT, int);
+    else CUDA_KERNEL_CALL(VTK_SHORT, short);
+    else CUDA_KERNEL_CALL(VTK_UNSIGNED_SHORT, unsigned short);
+    else CUDA_KERNEL_CALL(VTK_FLOAT, float);
+    else CUDA_KERNEL_CALL(VTK_DOUBLE, double);
+    else CUDA_KERNEL_CALL(VTK_INT, int);
 
 
   CUT_CHECK_ERROR("Kernel execution failed");
