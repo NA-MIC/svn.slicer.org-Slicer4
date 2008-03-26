@@ -27,8 +27,8 @@ ntk2DData* ntk2DElasticTransformation::applyTransformation(ntkDeformationSpline*
     tempPow=1;
     tempSize=1;
   }else{
-    tempPow=pow(2, splineSizeLevel);
-    tempSize=(int)pow(2, -splineSizeLevel);
+    tempPow=pow((double)2, (double)splineSizeLevel);
+    tempSize=(int)pow((double)2, (double)-splineSizeLevel);
   }
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), 1);
 
@@ -99,8 +99,8 @@ ntkFloatDimension ntk2DElasticTransformation::getNewPositionFromOld(ntkDeformati
     tempPow=1;
     tempSize=1;
   }else{
-    tempPow=pow(2, splineSizeLevel);
-    tempSize=(int)pow(2, -splineSizeLevel);
+    tempPow=pow((double)2, (double)splineSizeLevel);
+    tempSize=(int)pow((double)2, (double)-splineSizeLevel);
   }
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), 1);
 
@@ -142,8 +142,8 @@ ntk2DData* ntk2DElasticTransformation::getDeformationFieldImage(ntkDeformationSp
     tempPow=1;
     tempSize=1;
   }else{
-    tempPow=pow(2, splineSizeLevel);
-    tempSize=(int)pow(2, -splineSizeLevel);
+    tempPow=pow((double)2, (double)splineSizeLevel);
+    tempSize=(int)pow((double)2, (double)-splineSizeLevel);
   }
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), 1);
 
@@ -235,7 +235,8 @@ ntkDeformationSpline *ntk2DElasticTransformation::getReverseTransformationSpline
   free(newX);
   ntkMatrix* newYMatrix=new ntkMatrix(newY, splineSize);
   free(newY);
-   
+
+/*
   Matrix matTx(splineSize.x,splineSize.x,0.0);
   Matrix matTxI;
   Matrix matTy(splineSize.y,splineSize.y,0.0);
@@ -246,7 +247,7 @@ ntkDeformationSpline *ntk2DElasticTransformation::getReverseTransformationSpline
       matTx(i,j)=func->getValue(0);
     }
   }
-
+*/
   delete func;
   delete newXMatrix;
   delete newYMatrix;

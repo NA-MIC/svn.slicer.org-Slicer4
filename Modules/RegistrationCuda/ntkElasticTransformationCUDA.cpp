@@ -25,7 +25,7 @@ ntk3DData* ntkElasticTransformationCUDA::applyTransformation(ntkDeformationSplin
   if(splineSizeLevel==0){
     tempPow=1;
   }else{
-    tempPow=pow(2, splineSizeLevel);
+    tempPow=pow((double)2, (double)splineSizeLevel);
   }
 
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), (int)(tempPow*(m_inputSize.z+1)+1));
@@ -58,8 +58,8 @@ ntkFloatDimension ntkElasticTransformationCUDA::getNewPositionFromOld(ntkDeforma
     tempPow=1;
     tempSize=1;
   }else{
-    tempPow=pow(2, splineSizeLevel);
-    tempSize=(int)pow(2, -splineSizeLevel);
+    tempPow=pow((double)2, (double)splineSizeLevel);
+    tempSize=(int)pow((double)2, (double)-splineSizeLevel);
   }
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), (int)(tempPow*(m_inputSize.z+1)+1));
 
@@ -104,8 +104,8 @@ ntk3DData* ntkElasticTransformationCUDA::getDeformationFieldImage(ntkDeformation
     tempPow=1;
     tempSize=1;
   }else{
-    tempPow=pow(2, splineSizeLevel);
-    tempSize=(int)pow(2, -splineSizeLevel);
+    tempPow=pow((double)2, (double)splineSizeLevel);
+    tempSize=(int)pow((double)2, (double)-splineSizeLevel);
   }
   ntkIntDimension splineSize((int)(tempPow*(m_inputSize.x+1)+1), (int)(tempPow*(m_inputSize.y+1)+1), (int)(tempPow*(m_inputSize.z+1)+1));
 
@@ -210,7 +210,8 @@ ntkDeformationSpline *ntkElasticTransformationCUDA::getReverseTransformationSpli
   free(newY);
   ntkTensor* newZTensor=new ntkTensor(newZ, splineSize);
   free(newZ);
-  
+
+  /*
   Matrix matTx(splineSize.x,splineSize.x,0.0);
   Matrix matTxI;
   Matrix matTy(splineSize.y,splineSize.y,0.0);
@@ -223,7 +224,7 @@ ntkDeformationSpline *ntkElasticTransformationCUDA::getReverseTransformationSpli
       matTx(i,j)=func->getValue(0);
     }
   }
-
+*/
   delete func;
   delete newXTensor;
   delete newYTensor;
