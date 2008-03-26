@@ -7,7 +7,7 @@ template <typename T>
 __device__ void CUDAkernel_RayCastCompositeAlgorithm(const int3& index,
                                             int outindex,
                                             const float* minmax /*[6] */,
-                                            const float* rayMap,
+                                            const float3* rayMap,
                                             const cudaVolumeInformation& volInfo,
                                             const cudaRendererInformation& renInfo,
                                             float3* outputVal,
@@ -33,9 +33,9 @@ __device__ void CUDAkernel_RayCastCompositeAlgorithm(const int3& index,
 
         //calculate current position in ray tracing
         MatMul(volInfo.Transform, &tempPos, 
-            (renInfo.CameraPos.x + distFromCam * rayMap[index.z*6+3]),
-            (renInfo.CameraPos.y + distFromCam * rayMap[index.z*6+4]),
-            (renInfo.CameraPos.z + distFromCam * rayMap[index.z*6+5]));
+            (renInfo.CameraPos.x + distFromCam * rayMap[index.z*2+1].x),
+            (renInfo.CameraPos.y + distFromCam * rayMap[index.z*2+1].y),
+            (renInfo.CameraPos.z + distFromCam * rayMap[index.z*2+1].z));
 
         // if current position is in ROI
         if(tempPos.x >= minmax[0] && tempPos.x < minmax[1] &&
