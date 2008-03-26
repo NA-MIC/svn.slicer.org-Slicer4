@@ -137,6 +137,33 @@ void vtkMRMLSelectionNode::UpdateReferenceID(const char *oldID, const char *newI
     }
 }
 
+//-----------------------------------------------------------
+void vtkMRMLSelectionNode::UpdateReferences()
+{
+   Superclass::UpdateReferences();
+
+  if (this->ActiveVolumeID != NULL && this->Scene->GetNodeByID(this->ActiveVolumeID) == NULL)
+    {
+    this->SetActiveVolumeID(NULL);
+    }
+  if (this->ActiveLabelVolumeID != NULL && this->Scene->GetNodeByID(this->ActiveLabelVolumeID) == NULL)
+    {
+    this->SetActiveLabelVolumeID(NULL);
+    }
+  if (this->ActiveFiducialListID != NULL && this->Scene->GetNodeByID(this->ActiveFiducialListID) == NULL)
+    {
+    this->SetActiveFiducialListID(NULL);
+    }
+  if (this->ActiveViewID != NULL && this->Scene->GetNodeByID(this->ActiveViewID) == NULL)
+    {
+    this->SetActiveViewID(NULL);
+    }
+  if (this->ActiveCameraID != NULL && this->Scene->GetNodeByID(this->ActiveCameraID) == NULL)
+    {
+    this->SetActiveCameraID(NULL);
+    }
+
+}
 //----------------------------------------------------------------------------
 void vtkMRMLSelectionNode::ReadXMLAttributes(const char** atts)
 {

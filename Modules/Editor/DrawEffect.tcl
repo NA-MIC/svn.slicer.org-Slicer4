@@ -44,6 +44,7 @@ if { [itcl::find class DrawEffect] == "" } {
     method createPolyData {} {}
     method resetPolyData {} {}
     method addPoint {r a s} {}
+    method deleteLastPoint {} {}
   }
 }
 
@@ -98,6 +99,18 @@ itcl::body DrawEffect::processEvent { {caller ""} {event ""} } {
     return
   }
 
+  #
+  # if another widget has the grab, let this go unless
+  # it is a focus event, in which case we want to update
+  # out display icon
+  #
+  set grabID [$sliceGUI GetGrabID]
+  if { $grabID != "" && $grabID != $this } {
+    if { ![string match "Focus*Event" $event] } {
+      return ;# some other widget wants these events
+    }
+  }
+
   chain $caller $event
 
   set event [$sliceGUI GetCurrentGUIEvent] 
@@ -107,6 +120,7 @@ itcl::body DrawEffect::processEvent { {caller ""} {event ""} } {
     switch $event {
       "LeftButtonPressEvent" {
         set _actionState "drawing"
+        $sliceGUI SetGrabID $this
         eval $this addPoint $_currentPosition
         $sliceGUI SetGUICommandAbortFlag 1
       }
@@ -116,16 +130,20 @@ itcl::body DrawEffect::processEvent { {caller ""} {event ""} } {
             eval $this addPoint $_currentPosition
             $sliceGUI SetGUICommandAbortFlag 1
           }
+          default {
+            $sliceGUI SetGrabID ""
+          }
         }
       }
       "LeftButtonReleaseEvent" {
         set _actionState ""
-        eval $this addPoint $_currentPosition
+        $sliceGUI SetGrabID ""
+        #eval $this addPoint $_currentPosition
         $sliceGUI SetGUICommandAbortFlag 1
       }
       "KeyPressEvent" { 
         set key [$_interactor GetKeySym]
-        if { [lsearch "a" $key] != -1 } {
+        if { [lsearch "a x" $key] != -1 } {
           $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
           $sliceGUI SetGUICommandAbortFlag 1
           switch [$_interactor GetKeySym] {
@@ -133,10 +151,11 @@ itcl::body DrawEffect::processEvent { {caller ""} {event ""} } {
               $this apply
               set _actionState ""
             }
+            "x" {
+              $this deleteLastPoint
+            }
           }
-        } else {
-          # puts "wand ignoring $key"
-        }
+        } 
       }
       "EnterEvent" {
         $o(cursorActor) VisibilityOn
@@ -174,6 +193,11 @@ itcl::body DrawEffect::apply {} {
 
   if { [$this getInputLabel] == "" || [$this getInputLabel] == "" } {
     $this flashCursor 3
+    return
+  }
+
+  set lines [$o(polyData) GetLines]
+  if { [$lines GetNumberOfCells] == 0 } {
     return
   }
 
@@ -233,6 +257,25 @@ itcl::body DrawEffect::addPoint {r a s} {
   $lines SetNumberOfCells 1
 }
 
+itcl::body DrawEffect::deleteLastPoint {} {
+
+  set pcount [$o(rasPoints) GetNumberOfPoints]
+  if { $pcount <= 0 } {
+    return
+  }
+
+  set pcount [expr $pcount - 1]
+  $o(rasPoints) SetNumberOfPoints $pcount
+
+  set lines [$o(polyData) GetLines]
+  set idArray [$lines GetData]
+  $idArray SetTuple1 0 $pcount
+  $idArray SetNumberOfTuples [expr $pcount+1]
+
+  $this positionActors
+
+}
+
 itcl::body DrawEffect::buildOptions {} {
 
   # call superclass version of buildOptions
@@ -268,7 +311,7 @@ itcl::body DrawEffect::buildOptions {} {
   $o(help) SetParent [$this getOptionsFrame]
   $o(help) Create
   $o(help) SetHelpTitle "Draw"
-  $o(help) SetHelpText "Use this tool to draw an outline."
+  $o(help) SetHelpText "Use this tool to draw an outline.\n\nLeft Click: add point.\nLeft Drag: add multiple points.\nx: delete last point.\na: apply outline."
   $o(help) SetBalloonHelpString "Bring up help window."
   pack [$o(help) GetWidgetName] \
     -side right -anchor sw -padx 2 -pady 2 

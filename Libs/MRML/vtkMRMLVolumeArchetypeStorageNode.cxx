@@ -64,7 +64,7 @@ vtkMRMLNode* vtkMRMLVolumeArchetypeStorageNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLVolumeArchetypeStorageNode::vtkMRMLVolumeArchetypeStorageNode()
 {
-  this->CenterImage = 1;
+  this->CenterImage = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -144,22 +144,21 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
       return 0;
     }
 
-  std::string fullName;
-  if (this->SceneRootDir != NULL && this->Scene->IsFilePathRelative(this->GetFileName())) 
-    {
-    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileName());
-    }
-  else 
-    {
-    fullName = std::string(this->GetFileName());
-    }
-  
+  std::string fullName = this->GetFullNameFromFileName();
+
   if (fullName == std::string("")) 
     {
     vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
     return 0;
     }
 
+  Superclass::StageReadData(refNode);
+  if ( this->GetReadState() == this->Pending )
+    {
+    // remote file download hasn't finished
+    return 0;
+    }
+  
   vtkMRMLVolumeNode *volNode;
   vtkITKArchetypeImageSeriesReader* reader;
   
@@ -181,7 +180,16 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     vtkITKArchetypeImageSeriesVectorReaderSeries *readerSeries = vtkITKArchetypeImageSeriesVectorReaderSeries::New();
 
     readerFile->SetArchetype(fullName.c_str());
-    readerFile->UpdateInformation();
+    try 
+      {
+      readerFile->UpdateInformation();
+      }
+    catch ( ... )
+      {
+      readerFile->Delete();
+      readerSeries->Delete();
+      return 0;
+      }
     if ( readerFile->GetNumberOfFileNames() == 1 )
       {
       reader = readerFile;
@@ -192,6 +200,12 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
       reader = readerSeries;
       readerFile->Delete();
       }
+    if (reader->GetNumberOfComponents() < 3)
+      {
+      reader->Delete();
+      return 0;
+      }
+
     }
 
   reader->AddObserver( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
@@ -221,7 +235,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     }
     catch (...)
     {
-    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file");
+    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file: " << fullName.c_str() );
     reader->RemoveObservers( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
     reader->Delete();
     return 0;
@@ -229,7 +243,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   if (reader->GetOutput() == NULL 
       || reader->GetOutput()->GetPointData()->GetScalars()->GetNumberOfTuples() == 0) 
     {
-    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file");
+    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file: " << fullName.c_str() );
     reader->Delete();
     return 0;
     }
@@ -246,7 +260,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
 
   if (ici->GetOutput() == NULL)
     {
-    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file");
+    vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file: " << fullName.c_str() );
     reader->RemoveObservers( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
     reader->Delete();
     ici->Delete();
@@ -294,16 +308,7 @@ int vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
     return 0;
     }
   
-  std::string fullName;
-  if (this->SceneRootDir != NULL && this->Scene->IsFilePathRelative(this->GetFileName())) 
-    {
-    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileName());
-    }
-  else 
-    {
-    fullName = std::string(this->GetFileName());
-    }
-  
+  std::string fullName = this->GetFullNameFromFileName();  
   if (fullName == std::string("")) 
     {
     vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
@@ -331,6 +336,8 @@ int vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
     }
   mat->Delete();
   writer->Delete();    
+
+  Superclass::StageWriteData(refNode);
   
   return result;
 

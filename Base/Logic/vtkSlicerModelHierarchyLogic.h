@@ -39,18 +39,34 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerModelHierarchyLogic : public vtkSlic
   static vtkSlicerModelHierarchyLogic *New();
   vtkTypeRevisionMacro(vtkSlicerModelHierarchyLogic,vtkObject);
 
-  // Description:
-  // Create model to hierarchy map, 
-  // return number of model hierarchy nodes
-  int CreateModelToHierarchyMap();
   
   // Description:
   // Given model id return it's hierarchy 
   // or NULL if it does not have one
-  // Should be used after CreateModelToHierarchyMap is called
   vtkMRMLModelHierarchyNode* GetModelHierarchyNode(const char *modelNodeID);
   
+  // Description:
+  // Return number of model that are in a hierarchy 
+  int GetNumberOfModelsInHierarchy()
+    {
+    this->UpdateModelToHierarchyMap();
+    return this->ModelHierarchyNodes.size();
+    };
 
+//BTX
+  // Description:
+  // Given model hierarchy node returns all it's children recursively. 
+  void GetHierarchyChildrenNodes(vtkMRMLModelHierarchyNode *parentNode,
+                                 std::vector< vtkMRMLModelHierarchyNode *> &childrenNodes);
+//ETX
+
+  // Description:
+  // Call this to update the cache when hierarchy is modified. 
+  void HierarchyIsModified()
+    {
+    ModelHierarchyNodesMTime = 0;
+    HierarchyChildrenNodesMTime = 0;
+    }
   // Description:
   // Update logic state when MRML scene chenges
   virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
@@ -61,10 +77,22 @@ protected:
   ~vtkSlicerModelHierarchyLogic();
   vtkSlicerModelHierarchyLogic(const vtkSlicerModelHierarchyLogic&);
   void operator=(const vtkSlicerModelHierarchyLogic&);
+  
+  // Description:
+  // Create model to hierarchy map, 
+  // return number of model hierarchy nodes
+  int UpdateModelToHierarchyMap();
+  
+  void UpdateHierarchyChildrenMap();
 
   //BTX
-  std::map<std::string, vtkMRMLModelHierarchyNode *> ModeHierarchylNodes;
+  std::map<std::string, vtkMRMLModelHierarchyNode *> ModelHierarchyNodes;
+  std::map<std::string, std::vector< vtkMRMLModelHierarchyNode *> > HierarchyChildrenNodes;
   //ETX
+  
+  unsigned long ModelHierarchyNodesMTime;
+  unsigned long HierarchyChildrenNodesMTime;
+
 };
 
 #endif

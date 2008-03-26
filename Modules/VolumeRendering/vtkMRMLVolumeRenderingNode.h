@@ -16,6 +16,8 @@
 #include <string>
 #include "vtkVolumeMapper.h"
 
+#define COUNT_CROPPING_REGION_PLANES 6
+
 class VTK_VOLUMERENDERINGMODULE_EXPORT vtkMRMLVolumeRenderingNode : public vtkMRMLNode
 {
 public:
@@ -27,13 +29,13 @@ public:
     // Description:
     // Get a string representation of all points in the vtkPiecewiseFunction. 
     //format: <numberOfPoints> <XValue1> <OpacityValue1> ...<XValueN> <OpacityValueN> 
-    std::string getPiecewiseFunctionString(vtkPiecewiseFunction* function);
+    std::string GetPiecewiseFunctionString(vtkPiecewiseFunction* function);
     // Description:
     // Get a string representation of all points in the vtkColorTransferFunction. 
     //format: <numberOfPoints> <XValue1> <RValue1> <GValue1><BValue1> ...<XValueN> <RValueN> <GValueN><BValueN>
     std::string getColorTransferFunctionString(vtkColorTransferFunction* function);
     // Description:
-    // Put parameters described in a String into an existing vtkPiecewiseFunction, use together with getPiecewiseFunctionString
+    // Put parameters described in a String into an existing vtkPiecewiseFunction, use together with GetPiecewiseFunctionString
     void GetPiecewiseFunctionFromString(std::string str,vtkPiecewiseFunction* result);
     // Description:
     // Put parameters described in a String into an existing vtkColorTransferFunction, use together with getColorTransferFunctionString
@@ -52,21 +54,6 @@ public:
     //constant for software accelerated 3D raycast mapping
     static const int RayCast=1;
     //ETX
-    // Description:
-    // Set/Get mapper of this node. Use constants Texture and Raycast
-    void SetMapper(int mapper)
-    {
-        if(mapper!=0||mapper!=0)
-        {
-            vtkErrorMacro("wrong type of mapping");
-            return;
-        }
-        this->Mapper=mapper;
-    }
-    int GetMapper()
-    {
-        return this->Mapper;
-    }
     vtkGetObjectMacro(VolumeProperty,vtkVolumeProperty);
     // Description:
     // Set/get the vtkVolumeProperty of the MRML Node. The volume property holds all important visualization informations
@@ -94,6 +81,12 @@ public:
     vtkGetMacro(IsLabelMap,int);
     vtkBooleanMacro(IsLabelMap,int);
 
+    vtkSetMacro(CroppingEnabled,int);
+    vtkGetMacro(CroppingEnabled,int);
+    vtkBooleanMacro(CroppingEnabled,int);
+
+    vtkSetVector6Macro(CroppingRegionPlanes,double);
+    vtkGetVectorMacro(CroppingRegionPlanes,double,6);
 
     //--------------------------------------------------------------------------
     // MRMLNode methods
@@ -143,6 +136,14 @@ protected:
     // Description:
     //1 Yes it is a LabelMap,0 no it is not a Label Map
     int IsLabelMap;
+
+    // Description:
+    // Cropping planes from the mapper
+    double CroppingRegionPlanes[COUNT_CROPPING_REGION_PLANES];
+
+    // Description:
+    // Is cropping enabled?
+    int CroppingEnabled;
     //BTX
     // Description:
     // References to vtkMRMLScalarVolumeNodes

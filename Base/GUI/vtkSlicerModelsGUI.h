@@ -10,6 +10,7 @@
 #include "vtkSlicerModuleGUI.h"
 #include "vtkSlicerModuleLogic.h"
 #include "vtkSlicerModelsLogic.h"
+#include "vtkSlicerModelHierarchyLogic.h"
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerClipModelsWidget.h"
 
@@ -40,7 +41,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     
     // Description:
     // Get methods on class members ( no Set methods required. )
-    vtkGetObjectMacro ( LoadModelButton, vtkKWLoadSaveButton );
+    vtkGetObjectMacro ( LoadModelButton, vtkKWLoadSaveButtonWithLabel );
     vtkGetObjectMacro ( LoadScalarsButton, vtkKWLoadSaveButtonWithLabel);
     //vtkGetObjectMacro ( Logic, vtkSlicerModelsLogic);
     //vtkGetObjectMacro ( ModelNode, vtkMRMLModelNode );
@@ -66,6 +67,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     void SetAndObserveModuleLogic ( vtkSlicerModelsLogic *logic )
         { this->SetLogic ( vtkObjectPointer (&this->Logic), logic ); }
     vtkGetObjectMacro( Logic, vtkSlicerModelsLogic );
+
+    vtkGetObjectMacro( ModelHierarchyLogic, vtkSlicerModelHierarchyLogic );
+    vtkSetObjectMacro( ModelHierarchyLogic, vtkSlicerModelHierarchyLogic );
+    
+    
 
     // Description:
     // This method builds the Models module GUI
@@ -108,9 +114,9 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     //vtkMRMLModelNode *ModelNode;
     
     // Widgets for the Models module
-    vtkKWLoadSaveButton *LoadModelButton;
+    vtkKWLoadSaveButtonWithLabel *LoadModelButton;
     vtkKWLoadSaveButtonWithLabel *LoadScalarsButton;
-    vtkKWLoadSaveButton *LoadModelDirectoryButton;
+    vtkKWLoadSaveButtonWithLabel *LoadModelDirectoryButton;
     vtkKWLoadSaveButton *SaveModelButton;
     vtkSlicerNodeSelectorWidget* ModelSelectorWidget;
     vtkSlicerNodeSelectorWidget* ModelDisplaySelectorWidget;
@@ -126,6 +132,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     vtkSlicerModelHierarchyWidget *ModelHierarchyWidget;
 
     vtkSlicerModelsLogic *Logic;
+    
+    vtkSlicerModelHierarchyLogic * ModelHierarchyLogic;
 
     vtkSlicerModuleCollapsibleFrame *ModelDisplayFrame;
 

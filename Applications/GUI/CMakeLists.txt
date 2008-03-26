@@ -58,6 +58,10 @@ SET(dir_list
   ${MRML_BINARY_DIR}
   ${IGT_SOURCE_DIR}
   ${IGT_BINARY_DIR}
+  ${Volumes_SOURCE_DIR}
+  ${Volumes_BINARY_DIR}
+  ${Volumes_Init_SOURCE_DIR}
+  ${Volumes_Init_BINARY_DIR}
   ${GradientAnisotropicDiffusionFilter_SOURCE_DIR}
   ${GradientAnisotropicDiffusionFilter_BINARY_DIR}
   ${GradientAnisotropicDiffusionFilter_Init_SOURCE_DIR}
@@ -86,6 +90,10 @@ SET(dir_list
   ${NeuroNav_BINARY_DIR}
   ${NeuroNav_Init_SOURCE_DIR}
   ${NeuroNav_Init_BINARY_DIR}
+  ${OpenIGTLink_SOURCE_DIR}
+  ${OpenIGTLink_BINARY_DIR}
+  ${OpenIGTLink_Init_SOURCE_DIR}
+  ${OpenIGTLink_Init_BINARY_DIR}
   ${Qdec_SOURCE_DIR}
   ${Qdec_BINARY_DIR}
   ${QdecModule_SOURCE_DIR}
@@ -93,14 +101,6 @@ SET(dir_list
   ${QdecModule_Init_SOURCE_DIR}
   ${QdecModule_Init_BINARY_DIR}
   ${QueryAtlas_SOURCE_DIR}
-  # ${BrpNav_SOURCE_DIR}
-  # ${BrpNav_BINARY_DIR}
-  # ${BrpNav_Init_SOURCE_DIR}
-  # ${BrpNav_Init_BINARY_DIR}
-  # ${ProstateNav_SOURCE_DIR}
-  # ${ProstateNav_BINARY_DIR}
-  # ${ProstateNav_Init_SOURCE_DIR}
-  # ${ProstateNav_Init_BINARY_DIR}
   ${QueryAtlas_BINARY_DIR}
   ${QueryAtlas_Init_SOURCE_DIR}
   ${QueryAtlas_Init_BINARY_DIR}
@@ -126,10 +126,6 @@ SET(dir_list
   ${SlicerDaemon_BINARY_DIR}
   ${SlicerDaemon_Init_SOURCE_DIR}
   ${SlicerDaemon_Init_BINARY_DIR}
-  ${OpenIGTLinkDaemon_SOURCE_DIR}
-  ${OpenIGTLinkDaemon_BINARY_DIR}
-  ${OpenIGTLinkDaemon_Init_SOURCE_DIR}
-  ${OpenIGTLinkDaemon_Init_BINARY_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
   ${VTK_INCLUDE_DIR}
   ${NAVITRACK_INC}
@@ -214,6 +210,7 @@ TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
 
 IF(BUILD_MODULES)
   TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
+    Volumes
     GradientAnisotropicDiffusionFilter
     EMSegment
     #   RealTimeImaging
@@ -221,13 +218,11 @@ IF(BUILD_MODULES)
     ${VOLUMERENDERINGMODULE_LINK_LIB}
     ${LABELSTATISTICS_LINK_LIB} 
     NeuroNav
-    # BrpNav
-    # ProstateNav
+    OpenIGTLink
     QueryAtlas
     CommandLineModule
     ScriptedModule
     SlicerDaemon
-    OpenIGTLinkDaemon
     ${WFENGINE_LINK_LIB}
     QdecModule
     SlicerTractographyDisplay
@@ -282,7 +277,10 @@ KWWidgets_INSTALL_TCL_TK_SUPPORT_FILES("/lib")
 #
 # use the command line utilities
 #
-INCLUDE(${Slicer3_SOURCE_DIR}/Libs/GenerateCLP/UseGenerateCLP.cmake)
+FIND_PACKAGE(GenerateCLP REQUIRED)
+IF(GenerateCLP_FOUND)
+  INCLUDE(${GenerateCLP_USE_FILE})
+ENDIF(GenerateCLP_FOUND)
 
 GENERATECLP(${SRC} Slicer3.xml)
 

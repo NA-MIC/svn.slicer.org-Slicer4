@@ -145,6 +145,14 @@ public:
   itkSetMacro( NearestNeighborInterpolation, bool );
   itkGetMacro( NearestNeighborInterpolation, bool );
   
+  /** Set/Get RotateSampGrid flag
+      true: Rotate the sampling grid so that one of the sampling directions
+        is guaranteed to point in the principal eigenvector direction
+      false (default): Use same sampling grid orientation for every voxel
+  **/
+  itkSetMacro( RotateSampGrid, bool );
+  itkGetMacro( RotateSampGrid, bool );
+  
   /** Set/Get StreamlineTractography flag
       true: Perform simple major Eigenvector following streamline tractography
       false (default): Perform Stochastic Tractography
@@ -189,6 +197,14 @@ protected:
   /** Types for the Image of Mutexes of the Likelihood distribution **/
   typedef Image< SimpleFastMutexLock, 3 > LikelihoodCacheMutexImageType;
   
+  /** Type to store the rotation matrix for each voxel.
+      This matrix rotates the grid of sampled directions so that at least
+      one of the vectors points in the same direction as the estimated
+      eigenvector.  This is neccessary in situations of extremely low
+      residual variance, otherwise all sampled directions will have
+      zero likelihood which results in inappropriate behavior **/
+  typedef Image< vnl_matrix< double >, 3 > RotationImageType;
+  
   StochasticTractographyFilter();
   virtual ~StochasticTractographyFilter();
   
@@ -222,6 +238,7 @@ protected:
     ConstrainedModelParamType& constrainedmodelparams);
   
   void CalculateNoiseFreeDWIFromConstrainedModel( const ConstrainedModelParamType& constrainedmodelparams,
+    const GradientDirectionContainerType::Pointer gradients,
     DWIVectorImageType::PixelType& noisefreedwi);
   
   void CalculateResidualVariance( const DWIVectorImageType::PixelType& noisydwi,
@@ -232,10 +249,12 @@ protected:
   
   void CalculateLikelihood( const DWIVectorImageType::PixelType &dwipixel, 
     TractOrientationContainerType::ConstPointer orientations,
-    ProbabilityDistributionImageType::PixelType& likelihood);
+    ProbabilityDistributionImageType::PixelType& likelihood,
+    RotationImageType::PixelType& rotation);
   
-  void CalculatePrior( TractOrientationContainerType::Element v_prev, 
+  void CalculatePrior( const TractOrientationContainerType::Element& v_prev, 
     TractOrientationContainerType::ConstPointer orientations,
+    const RotationImageType::PixelType& rotation,
     ProbabilityDistributionImageType::PixelType& prior );
   
   void CalculatePosterior( const ProbabilityDistributionImageType::PixelType& likelihood,
@@ -245,6 +264,7 @@ protected:
   void SampleTractOrientation( vnl_random& randomgenerator, 
     const ProbabilityDistributionImageType::PixelType& posterior,
     TractOrientationContainerType::ConstPointer orientations,
+    const RotationImageType::PixelType& rotation,
     TractOrientationContainerType::Element& choosendirection );
   
   void StochasticTractGeneration( typename InputDWIImageType::ConstPointer dwiimagePtr,
@@ -270,9 +290,9 @@ protected:
   /** Allocates the tract output container **/
   void AllocateOutputs();
   
-  /** Thread Safe Function to check/update an entry in the likelihood cache **/
+  /** Thread Safe Function to check/update an entry in the likelihood cache (also updates the rotation image) **/
   ProbabilityDistributionImageType::PixelType& 
-    AccessLikelihoodCache( typename InputDWIImageType::IndexType index );
+    AccessLikelihoodCache( const typename InputDWIImageType::IndexType index );
     
   /** Thread Safe Function to delegate a tract and obtain a randomseed to start tracking **/
   bool DelegateTract(unsigned long& randomseed, typename InputDWIImageType::IndexType& index);
@@ -331,6 +351,9 @@ protected:
   
   bool m_NearestNeighborInterpolation;
   bool m_StreamlineTractography;
+  bool m_RotateSampGrid;
+  
+  RotationImageType::Pointer m_RotationImagePtr;
 };
 
 }

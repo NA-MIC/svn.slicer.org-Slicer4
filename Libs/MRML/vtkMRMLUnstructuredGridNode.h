@@ -31,7 +31,6 @@
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRMLModelNode.h"
-#include "vtkMRMLStorageNode.h"
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
 
 class vtkCallbackCommand;
@@ -81,6 +80,9 @@ public:
   // Set and observe UnstructuredGrid  for this model
   vtkGetObjectMacro(UnstructuredGrid, vtkUnstructuredGrid);
   void SetAndObserveUnstructuredGrid(vtkUnstructuredGrid *UnstructuredGrid);
+
+  virtual bool CanApplyNonLinearTransforms() { return true; }
+  virtual void ApplyTransform(vtkAbstractTransform* transform);
 
 protected:
   vtkMRMLUnstructuredGridNode();

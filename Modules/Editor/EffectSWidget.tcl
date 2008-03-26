@@ -376,8 +376,9 @@ itcl::body EffectSWidget::postApply {} {
   switch $scope {
     "all" {
       set node [$logic GetVolumeNode]
-      $node SetAndObserveImageData $_outputLabel
+      [$node GetImageData] DeepCopy $_outputLabel
       $node SetModifiedSinceRead 1
+      $node Modified
     }
     "visible" {
       # TODO: need to use vtkImageSlicePaint to insert visible
@@ -434,9 +435,14 @@ itcl::body EffectSWidget::apply {} {
   $this flashCursor 3
 }
 
-itcl::body EffectSWidget::errorDialog { message } {
-  # TODO: convert this to a kww dialog
-  tk_messageBox -message $message
+itcl::body EffectSWidget::errorDialog { errorText } {
+  set dialog [vtkKWMessageDialog New]
+  $dialog SetParent [$::slicer3::ApplicationGUI GetMainSlicerWindow]
+  $dialog SetStyleToMessage
+  $dialog SetText $errorText
+  $dialog Create
+  $dialog Invoke
+  $dialog Delete
 }
 
 itcl::body EffectSWidget::setProgressFilter { filter {description ""} } {

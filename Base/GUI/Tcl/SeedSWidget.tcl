@@ -39,6 +39,7 @@ if { [itcl::find class SeedSWidget] == "" } {
     public variable selectedColor "1 1 0"
     public variable opacity "1"
     public variable selected "0"
+    public variable visibility "1"
     public variable text ""
     public variable textScale "1"
 
@@ -168,6 +169,11 @@ itcl::configbody SeedSWidget::selected {
   [$sliceGUI GetSliceViewer] RequestRender
 }
 
+itcl::configbody SeedSWidget::visibility {
+  $this highlight
+  [$sliceGUI GetSliceViewer] RequestRender
+}
+
 itcl::configbody SeedSWidget::text {
   $o(textActor) SetInput $text
   [$sliceGUI GetSliceViewer] RequestRender
@@ -186,15 +192,16 @@ itcl::configbody SeedSWidget::textScale {
 # ------------------------------------------------------------------
 
 itcl::body SeedSWidget::createGlyph { {type "StarBurst"} } {
+
+  set polyData [vtkNew vtkPolyData]
   
   set glyphSource [vtkSlicerGlyphSource2D New]
   $glyphSource SetGlyphTypeTo$type
-  set polyData [$glyphSource GetOutput]
-  $polyData Register ""
-  $polyData Update
+  [$glyphSource GetOutput] Update
+  $polyData DeepCopy [$glyphSource GetOutput]
   [$polyData GetCellData] SetScalars ""
-  $glyphSource SetOutput ""
   $glyphSource Delete
+
   return $polyData
 }
 
@@ -248,6 +255,10 @@ itcl::body SeedSWidget::highlight { } {
 
   set property [$o(actor) GetProperty]
   set textProperty [$o(textActor) GetTextProperty]
+
+  $o(actor) SetVisibility $visibility
+  $o(textActor) SetVisibility $visibility
+
   if { $selected } {
     eval $property SetColor $selectedColor
     eval $textProperty SetColor $selectedColor
@@ -327,8 +338,6 @@ itcl::body SeedSWidget::processEvent { {caller ""} {event ""} } {
               set newxyz [list [expr $ex + $dx] [expr $ey + $dy] [expr $ez + $dz]]
               set _currentPosition [$this xyzToRAS $newxyz]
               eval $movingCommand
-            }
-            default {
             }
           }
         }

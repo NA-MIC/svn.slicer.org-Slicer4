@@ -87,8 +87,8 @@ ADD_LIBRARY(SlicerBaseLogic
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS SlicerBaseLogic
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(SlicerBaseLogic 
@@ -122,8 +122,9 @@ CONFIGURE_FILE(
 # Resources
 SET (COLORFILES
     ./Resources/ColorFiles/PelvisColor.txt
-    ./Resources/ColorFiles/64Color-Nonsemantic.txt 
+    ./Resources/ColorFiles/64Color-Nonsemantic.txt
     ./Resources/ColorFiles/SPL-BrainAtlas-ColorFile.txt
+    ./Resources/ColorFiles/AbdomenColors.txt
 )
 
 SET (Color_DIR ${SLICER_LIBRARIES_DIR}/Base/Logic)

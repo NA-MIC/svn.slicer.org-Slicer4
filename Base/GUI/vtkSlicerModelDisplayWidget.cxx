@@ -38,12 +38,15 @@ vtkSlicerModelDisplayWidget::vtkSlicerModelDisplayWidget ( )
 
     this->ModelDisplayNode = NULL;
     this->ModelNode = NULL;
+    this->ModelHierarchyNode = NULL;
+    this->ModelHierarchyLogic = NULL;
 
     this->VisibilityButton = NULL;
     this->ScalarVisibilityButton = NULL;
     this->ScalarMenu = NULL;
     this->ColorSelectorWidget = NULL;
     this->ClippingButton = NULL;
+    this->BackfaceCullingButton = NULL;
     this->OpacityScale = NULL;
     this->SurfaceMaterialPropertyWidget = NULL;
     this->ProcessingMRMLEvent = 0;
@@ -60,6 +63,7 @@ vtkSlicerModelDisplayWidget::~vtkSlicerModelDisplayWidget ( )
 {
   this->RemoveMRMLObservers();
   this->RemoveWidgetObservers();
+  this->SetModelHierarchyLogic(NULL);
 
   if (this->VisibilityButton)
     {
@@ -91,6 +95,12 @@ vtkSlicerModelDisplayWidget::~vtkSlicerModelDisplayWidget ( )
     this->ClippingButton->Delete();
     this->ClippingButton = NULL;
     }
+   if (this->BackfaceCullingButton)
+    {
+    this->BackfaceCullingButton->SetParent(NULL);
+    this->BackfaceCullingButton->Delete();
+    this->BackfaceCullingButton = NULL;
+    }
   if (this->OpacityScale)
     {
     this->OpacityScale->SetParent(NULL);
@@ -110,6 +120,7 @@ vtkSlicerModelDisplayWidget::~vtkSlicerModelDisplayWidget ( )
     this->ChangeColorButton= NULL;
     }
   vtkSetAndObserveMRMLNodeMacro(this->ModelNode, NULL);
+  vtkSetAndObserveMRMLNodeMacro(this->ModelHierarchyNode, NULL);
   vtkSetAndObserveMRMLNodeMacro(this->ModelDisplayNode, NULL);
   this->SetMRMLScene ( NULL );
   
@@ -146,6 +157,20 @@ void vtkSlicerModelDisplayWidget::SetModelNode ( vtkMRMLModelNode *node )
   // Set the member variables and do a first process
   //
   vtkSetAndObserveMRMLNodeMacro(this->ModelNode, node);
+
+  if ( node )
+    {
+    this->UpdateWidget();
+    }
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerModelDisplayWidget::SetModelHierarchyNode ( vtkMRMLModelHierarchyNode *node )
+{ 
+  // 
+  // Set the member variables and do a first process
+  //
+  vtkSetAndObserveMRMLNodeMacro(this->ModelHierarchyNode, node);
 
   if ( node )
     {
@@ -195,7 +220,42 @@ void vtkSlicerModelDisplayWidget::UpdateMRML()
 
   if ( this->ModelDisplayNode )
     {
-    this->ModelDisplayNode->SetVisibility(this->VisibilityButton->GetWidget()->GetSelectedState());
+    int visibility = this->VisibilityButton->GetWidget()->GetSelectedState();
+
+    this->ModelDisplayNode->SetVisibility(visibility);
+    // update hierarchy children visibility 
+    if (this->ModelHierarchyNode != NULL && this->ModelNode == NULL)
+      {
+      vtkMRMLDisplayNode *dnode = this->ModelHierarchyNode->GetDisplayNode();
+      if (dnode)
+        {
+        dnode->SetVisibility(visibility);
+        }
+      
+      // chnage children visibility 
+      std::vector< vtkMRMLModelHierarchyNode *> childrenNodes;
+      this->ModelHierarchyLogic->GetHierarchyChildrenNodes(this->ModelHierarchyNode, childrenNodes);
+      for (int i=0; i<childrenNodes.size(); i++)
+        {
+        vtkMRMLModelHierarchyNode *cnode = childrenNodes[i];
+        vtkMRMLDisplayNode *cdnode = cnode->GetDisplayNode();
+        if (cdnode)
+          {
+          cdnode->SetVisibility(visibility);
+          }
+        vtkMRMLModelNode *mnode = cnode->GetModelNode();
+        if (mnode)
+          {
+          vtkMRMLDisplayNode *mdnode = mnode->GetDisplayNode();
+          if (mdnode)
+            {
+            mdnode->SetVisibility(visibility);
+            }
+          }
+        } //for
+     } //if
+    
+    
     this->ModelDisplayNode->SetScalarVisibility(this->ScalarVisibilityButton->GetWidget()->GetSelectedState());
     // get the value of the button, it's the selected item in the menu
     this->ModelDisplayNode->SetActiveScalarName(this->ScalarMenu->GetWidget()->GetValue());
@@ -214,6 +274,7 @@ void vtkSlicerModelDisplayWidget::UpdateMRML()
         }
       }
     this->ModelDisplayNode->SetClipping(this->ClippingButton->GetWidget()->GetSelectedState());
+    this->ModelDisplayNode->SetBackfaceCulling(this->BackfaceCullingButton->GetWidget()->GetSelectedState());
     this->ModelDisplayNode->SetOpacity(this->OpacityScale->GetWidget()->GetValue());
     if (this->SurfaceMaterialPropertyWidget->GetProperty() == NULL)
       {
@@ -353,6 +414,7 @@ void vtkSlicerModelDisplayWidget::UpdateWidget()
     this->ColorSelectorWidget->SetSelected(NULL);
     }
   this->ClippingButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetClipping());
+  this->BackfaceCullingButton->GetWidget()->SetSelectedState(this->ModelDisplayNode->GetBackfaceCulling());
   this->OpacityScale->GetWidget()->SetValue(this->ModelDisplayNode->GetOpacity());
   if (this->SurfaceMaterialPropertyWidget->GetProperty() == NULL)
     {
@@ -409,6 +471,7 @@ void vtkSlicerModelDisplayWidget::RemoveWidgetObservers ( ) {
   this->ScalarVisibilityButton->GetWidget()->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
   this->ScalarMenu->GetWidget()->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand);
   this->ClippingButton->GetWidget()->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->BackfaceCullingButton->GetWidget()->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
   
   this->OpacityScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangingEvent, (vtkCommand *)this->GUICallbackCommand );
   this->OpacityScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueStartChangingEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -507,8 +570,6 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->ColorSelectorWidget->SetBalloonHelpString("select a color node from the current mrml scene.");
   this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                  this->ColorSelectorWidget->GetWidgetName());
-  // disable this until FreeSurfer nodes are supported
-//  this->ColorSelectorWidget->EnabledOff();
   
   this->ClippingButton = vtkKWCheckButtonWithLabel::New();
   this->ClippingButton->SetParent ( modelDisplayFrame );
@@ -517,6 +578,14 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->ClippingButton->SetBalloonHelpString("set model clipping with RGB slice planes.");
   this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
                  this->ClippingButton->GetWidgetName() );
+
+  this->BackfaceCullingButton = vtkKWCheckButtonWithLabel::New();
+  this->BackfaceCullingButton->SetParent ( modelDisplayFrame );
+  this->BackfaceCullingButton->Create ( );
+  this->BackfaceCullingButton->SetLabelText("Backface Culling");
+  this->BackfaceCullingButton->SetBalloonHelpString("set model back face culling.");
+  this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
+                 this->BackfaceCullingButton->GetWidgetName() );
   
   this->OpacityScale = vtkKWScaleWithLabel::New();
   this->OpacityScale->SetParent ( modelDisplayFrame );
@@ -534,14 +603,14 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->ChangeColorButton->SetColor(0.0, 1.0, 0.0);
   this->ChangeColorButton->LabelOutsideButtonOn();
   this->ChangeColorButton->SetLabelPositionToRight();
-  this->ChangeColorButton->SetBalloonHelpString("set model opacity value.");
+  this->ChangeColorButton->SetBalloonHelpString("set model color.");
   this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
                  this->ChangeColorButton->GetWidgetName() );
 
   this->SurfaceMaterialPropertyWidget = vtkKWSurfaceMaterialPropertyWidget::New();
   this->SurfaceMaterialPropertyWidget->SetParent ( modelDisplayFrame );
   this->SurfaceMaterialPropertyWidget->Create ( );
-  this->SurfaceMaterialPropertyWidget->SetBalloonHelpString("set model opacity value.");
+  this->SurfaceMaterialPropertyWidget->SetBalloonHelpString("set model surface properties.");
   this->Script ( "pack %s -side top -anchor nw -expand y -fill x -padx 2 -pady 2",
                  this->SurfaceMaterialPropertyWidget->GetWidgetName() );
 
@@ -555,6 +624,7 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->ScalarVisibilityButton->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
   this->ScalarMenu->GetWidget()->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand);
   this->ClippingButton->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->BackfaceCullingButton->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
   
   this->ChangeColorButton->AddObserver(vtkKWChangeColorButton::ColorChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 

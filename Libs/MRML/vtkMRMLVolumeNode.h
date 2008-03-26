@@ -30,7 +30,6 @@
 #include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
-#include "vtkMRMLStorageNode.h"
 #include "vtkMRMLVolumeDisplayNode.h"
 #include "vtkMRMLDisplayableNode.h"
 
@@ -116,6 +115,9 @@ class VTK_MRML_EXPORT vtkMRMLVolumeNode : public vtkMRMLDisplayableNode
   void GetIJKToRASMatrix(vtkMatrix4x4* mat);
   void GetRASToIJKMatrix(vtkMatrix4x4* mat);
 
+  void GetIJKToRASDirectionMatrix(vtkMatrix4x4* mat);
+  void SetIJKToRASDirectionMatrix(vtkMatrix4x4* mat);
+
   // Description:
   // Convenience methods to set the directions, spacing, and origin 
   // from a matrix
@@ -156,6 +158,10 @@ class VTK_MRML_EXPORT vtkMRMLVolumeNode : public vtkMRMLDisplayableNode
   void SetMetaDataDictionary( const itk::MetaDataDictionary& );
   const itk::MetaDataDictionary& GetMetaDataDictionary() const;
 //ETX
+
+  virtual bool CanApplyNonLinearTransforms() { return false; }
+  virtual void ApplyTransform(vtkMatrix4x4* transformMatrix);
+  virtual void ApplyTransform(vtkAbstractTransform* transform);
   
 protected:
   vtkMRMLVolumeNode();

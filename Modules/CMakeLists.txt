@@ -1,7 +1,6 @@
 PROJECT( Modules )
 
 SUBDIRS(
-#  BrpNav
   NeuroNav
   RealTimeImaging
   WFEngineModule
@@ -10,16 +9,17 @@ SUBDIRS(
   GradientAnisotropicDiffusionFilter
   EMSegment
   SlicerDaemon
-  OpenIGTLinkDaemon
   Editor
-  ProstateNav
+  OpenIGTLink
   Python
+  PythonGADScriptedModule
   Meshing
   QdecModule
   QueryAtlas
   Tractography
   VolumeRendering
-  Statistics   
+  Statistics
+  Volumes
 )
 
 

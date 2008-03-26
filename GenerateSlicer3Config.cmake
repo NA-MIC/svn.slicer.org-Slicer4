@@ -3,6 +3,13 @@
 # Slicer.  This provides a mechanism for third party developers to build 
 # modules against a Slicer installation.
 #
+#
+
+# The configuration process is very different for a build tree and an
+# installation. The resulting directory structures are vastly
+# different. So, the two configured files not only have different
+# settings, they have a different structure.
+
 
 # Settings that are the same for build trees and installation trees
 #
@@ -18,10 +25,11 @@ SET(Slicer3_USE_FILE_CONFIG ${Slicer3_BINARY_DIR}/UseSlicer3.cmake)
 SET(TCLAP_DIR_CONFIG ${Slicer3_BINARY_DIR}/Libs/tclap)
 SET(ModuleDescriptionParser_DIR_CONFIG ${Slicer3_BINARY_DIR}/Libs/ModuleDescriptionParser)
 SET(GenerateCLP_DIR_CONFIG ${Slicer3_BINARY_DIR}/Libs/GenerateCLP)
-SET(GenerateCLP_USE_FILE_CONFIG ${Slicer3_SOURCE_DIR}/Libs/GenerateCLP/UseGenerateCLP.cmake)
-SET(Slicer3_INCLUDE_DIRS_CONFIG ${Slicer3_SOURCE_DIR}/Applications/CLI)
+SET(GenerateCLP_USE_FILE_CONFIG ${Slicer3_BINARY_DIR}/Libs/GenerateCLP/UseGenerateCLP.cmake)
+SET(Slicer3_INCLUDE_DIRS_CONFIG ${Slicer3_BINARY_DIR}/Libs/MRML ${Slicer3_SOURCE_DIR}/Libs/MRML ${Slicer3_BINARY_DIR}/Base/CLI ${Slicer3_SOURCE_DIR}/Base/CLI)
 SET(Slicer3_LIBRARY_DIRS_CONFIG ${Slicer3_BINARY_DIR}/bin)
-
+SET(ITK_DIR_CONFIG ${ITK_DIR})
+SET(VTK_DIR_CONFIG ${VTK_DIR})
 
 # Configure Slicer3Config.cmake for the install tree.
 CONFIGURE_FILE(${Slicer3_SOURCE_DIR}/Slicer3Config.cmake.in
@@ -31,20 +39,11 @@ CONFIGURE_FILE(${Slicer3_SOURCE_DIR}/Slicer3Config.cmake.in
 
 # Settings specific for installation trees
 #
-#
-
-SET(Slicer3_USE_FILE_CONFIG ${CMAKE_INSTALL_PREFIX}/lib/UseSlicer3.cmake)
-SET(TCLAP_DIR_CONFIG ${CMAKE_INSTALL_PREFIX}/lib/tclap)
-SET(ModuleDescriptionParser_DIR_CONFIG ${CMAKE_INSTALL_PREFIX}/lib/ModuleDescriptionParser)
-SET(GenerateCLP_DIR_CONFIG ${CMAKE_INSTALL_PREFIX}/lib/GenerateCLP)
-SET(GenerateCLP_USE_FILE_CONFIG ${CMAKE_INSTALL_PREFIX}/Libs/GenerateCLP/UseGenerateCLP.cmake)
-SET(Slicer3_INCLUDE_DIRS_CONFIG ${CMAKE_INSTALL_PREFIX}/Slicer3/)
-SET(Slicer3_LIBRARY_DIRS_CONFIG ${CMAKE_INSTALL_PREFIX}/bin)
-
+# (Note we configure from a different file than use for the build tree)
 
 
 # Configure Slicer3Config.cmake for the install tree.
-CONFIGURE_FILE(${Slicer3_SOURCE_DIR}/Slicer3Config.cmake.in
+CONFIGURE_FILE(${Slicer3_SOURCE_DIR}/Slicer3InstallConfig.cmake.in
                ${Slicer3_BINARY_DIR}/Utilities/Slicer3Config.cmake @ONLY IMMEDIATE)
 
 

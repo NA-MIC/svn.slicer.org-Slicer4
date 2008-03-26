@@ -109,8 +109,8 @@ class VTK_COMMANDLINEMODULE_EXPORT vtkMRMLCommandLineModuleNode : public vtkMRML
     {this->SetParameterAsString(std::string(name), std::string(value));}
   void SetParameterAsInt(const char *name, const int value)
     {this->SetParameterAsInt(std::string(name), value);}
-  void SetParameterAsBool(const char *name, const bool value)
-    {this->SetParameterAsBool(std::string(name), value);}
+  void SetParameterAsBool(const char *name, const int value)
+    {this->SetParameterAsBool(std::string(name), (value == 0 ? false : true));}
   void SetParameterAsDouble(const char *name, const double value)
     {this->SetParameterAsDouble(std::string(name), value);}
   void SetParameterAsFloat(const char *name, const float value)
@@ -125,7 +125,7 @@ class VTK_COMMANDLINEMODULE_EXPORT vtkMRMLCommandLineModuleNode : public vtkMRML
   const char* GetModuleTitle () { return this->GetModuleDescription().GetTitle().c_str(); };
   unsigned int GetNumberOfParameterGroups () { return this->GetModuleDescription().GetParameterGroups().size(); }
   unsigned int GetNumberOfParametersInGroup ( unsigned int group ) { 
-    if ( group >= this->GetModuleDescription().GetParameterGroups().size() ) { return -1; }
+    if ( group >= this->GetModuleDescription().GetParameterGroups().size() ) { return 0; }
     return this->GetModuleDescription().GetParameterGroups()[group].GetParameters().size();
   }
   const char* GetParameterGroupLabel ( unsigned int group ) { return this->GetModuleDescription().GetParameterGroups()[group].GetLabel().c_str(); }

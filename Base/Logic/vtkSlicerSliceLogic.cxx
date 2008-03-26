@@ -134,7 +134,7 @@ void vtkSlicerSliceLogic::UpdateSliceNode()
       {
       node = vtkMRMLSliceNode::New();
       node->SetLayoutName(this->GetName());
-      //node->SetSingletonTag(this->GetName());
+      node->SetSingletonTag(this->GetName());
       this->SetSliceNode (node);
       this->UpdateSliceNodeFromLayout();
       node->Delete();
@@ -212,7 +212,7 @@ void vtkSlicerSliceLogic::UpdateSliceCompositeNode()
       {
       node = vtkMRMLSliceCompositeNode::New();
       node->SetLayoutName(this->GetName());
-      //node->SetSingletonTag(this->GetName());
+      node->SetSingletonTag(this->GetName());
       this->SetSliceCompositeNode (node);
       node->Delete();
       }
@@ -344,7 +344,7 @@ void vtkSlicerSliceLogic::ProcessLogicEvents()
     vtkMatrix4x4 *xyToRAS = this->SliceNode->GetXYToRAS();
 
 
-#ifdef USE_IMAGE_ACTOR
+#ifdef USE_IMAGE_ACTOR // not defined
     // set the transform for the slice model for use by an image actor in the viewer
     this->SliceModelTransformNode->GetMatrixTransformToParent()->DeepCopy( xyToRAS );
 
@@ -364,8 +364,7 @@ void vtkSlicerSliceLogic::ProcessLogicEvents()
     // set the transform for the slice model for use by an image actor in the viewer
     this->SliceModelTransformNode->GetMatrixTransformToParent()->Identity();
 
-    // set the plane corner point for use in a model (deprecated)
-    // TODO: remove this block
+    // set the plane corner point for use in a model
     double inPt[4]={0,0,0,1};
     double outPt[4];
     double *outPt3 = outPt;
@@ -903,6 +902,7 @@ void vtkSlicerSliceLogic::CreateSliceModel()
     this->SliceModelDisplayNode->SetOpacity(1);
     this->SliceModelDisplayNode->SetColor(1,1,1);
     this->SliceModelDisplayNode->SetAmbient(1);
+    this->SliceModelDisplayNode->SetBackfaceCulling(0);
     this->SliceModelDisplayNode->SetDiffuse(0);
     this->SliceModelDisplayNode->SetAndObserveTextureImageData(this->ExtractModelTexture->GetOutput());
     this->SliceModelDisplayNode->SetSaveWithScene(0);

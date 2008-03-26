@@ -17,27 +17,6 @@ SET(IGT_SRCS
   vtkIGTPat2ImgRegistration.cxx
 )
 SET(TRACKING_INTERFACE_LIBRARY "")
-IF(USE_NAVITRACK)
-  SET(IGT_SRCS
-    vtkIGTDataManager.cxx
-    vtkIGTDataStream.cxx
-    vtkIGTMatrixState.cxx
-    vtkIGTPat2ImgRegistration.cxx
-    vtkIGTOpenTrackerStream.cxx
-#    vtkIGTOpenTrackerStream2.cxx
-    vtkIGTMessageAttributeBase.cxx
-    vtkIGTMessageAttributeSet.cxx
-#    vtkIGTMessageGenericAttribute.cxx
-    vtkIGTMessageImageDataAttribute.cxx
-  )
-  SET(TRACKING_INTERFACE_INCLUDE_DIR
-    ${NAVITRACK_INC}
-    ${NAVITRACK_INC}/../libs
-  )
-  SET(TRACKING_INTERFACE_LIB  
-    ${NAVITRACK_LIB}
-  )
-ENDIF(USE_NAVITRACK)
 
 
 #--- NH took out the following section in an effot to remove Navitrak
@@ -104,8 +83,8 @@ ADD_LIBRARY(IGT
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS IGT
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(IGT

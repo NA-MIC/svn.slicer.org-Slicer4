@@ -51,7 +51,6 @@ public:
     //Descripton:
     //Reigster stream.  
     const char *RegisterStream(int streamType);
-    const char *RegisterStream_new(int streamType);
 
 
 private:

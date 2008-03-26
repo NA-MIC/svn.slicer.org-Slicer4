@@ -47,7 +47,6 @@ SET(LIB_SRCS
   vtkSlicerSliceViewer.cxx
   vtkSlicerSliceControllerWidget.cxx
   vtkSlicerSlicesGUI.cxx
-  vtkSlicerVolumesGUI.cxx
   vtkSlicerModelsGUI.cxx
   vtkSlicerFiducialsGUI.cxx
   vtkSlicerColorGUI.cxx
@@ -61,19 +60,17 @@ SET(LIB_SRCS
   vtkSlicerModuleChooseGUI.cxx
   vtkSlicerLogoDisplayGUI.cxx
   vtkSlicerApplicationGUI.cxx
+  vtkSlicerDataTransferIcons.cxx
+  vtkSlicerDataTransferWidget.cxx
+  vtkSlicerCacheAndDataIOManagerGUI.cxx
   # KW Widgets
+  vtkKWTextWithHyperlinksWithScrollbars.cxx
   vtkSlicerModuleCollapsibleFrame.cxx
   vtkSlicerNodeSelectorWidget.cxx
   vtkSlicerWidget.cxx
   vtkKWMatrix4x4.cxx
   vtkKWScriptedWidget.cxx
-  vtkKWWindowLevelThresholdEditor.cxx
   vtkKWProgressDialog.cxx
-  vtkSlicerVolumeDisplayWidget.cxx
-  vtkSlicerLabelMapVolumeDisplayWidget.cxx
-  vtkSlicerScalarVolumeDisplayWidget.cxx
-  vtkSlicerDiffusionWeightedVolumeDisplayWidget.cxx
-  vtkSlicerDiffusionTensorVolumeDisplayWidget.cxx
   vtkSlicerVolumeHeaderWidget.cxx
   vtkSlicerVolumeFileHeaderWidget.cxx
   vtkSlicerTransformManagerWidget.cxx
@@ -135,13 +132,14 @@ TARGET_LINK_LIBRARIES(${LIB_NAME}
   ${KWWidgets_LIBRARIES}
   ModuleDescriptionParser
   SlicerBaseLogic
-  FreeSurfer)
+  FreeSurfer
+  )
 
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS ${LIB_NAME}
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 # The name of our executable and the corresponding source file.

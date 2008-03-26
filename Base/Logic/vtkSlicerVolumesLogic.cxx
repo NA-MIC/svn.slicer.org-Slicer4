@@ -267,7 +267,7 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (const char* filena
     volumeNode = vectorNode;
     storageNode = storageNode1;
     }
-  else if (storageNode2->ReadData(vectorNode) && vectorNode->GetImageData()->GetNumberOfScalarComponents() == 3)
+  else if (storageNode2->ReadData(vectorNode))
     {
     vtkDebugMacro("Vector HAS BEEN READ WITH ARCHTYPE READER");
     vdisplayNode = vtkMRMLVectorVolumeDisplayNode::New();
@@ -590,6 +590,7 @@ vtkMRMLScalarVolumeNode *vtkSlicerVolumesLogic::CreateLabelVolume (vtkMRMLScene 
   thresh->ReplaceOutOn();
   thresh->SetInValue(0);
   thresh->SetOutValue(0);
+  thresh->SetOutputScalarType (VTK_SHORT);
   thresh->SetInput( volumeNode->GetImageData() );
   thresh->GetOutput()->Update();
   labelNode->SetAndObserveImageData( thresh->GetOutput() );
@@ -611,7 +612,7 @@ CloneVolume (vtkMRMLScene *scene,
              vtkMRMLVolumeNode *volumeNode, 
              const char *name)
 {
-  if ( volumeNode == NULL ) 
+  if ( scene == NULL || volumeNode == NULL ) 
     {
     return NULL;
     }
