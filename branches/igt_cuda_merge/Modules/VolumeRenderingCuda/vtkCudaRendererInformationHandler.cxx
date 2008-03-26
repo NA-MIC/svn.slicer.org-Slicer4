@@ -154,14 +154,9 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.ClippingRange.x = (float)clipRange[0];
         this->RendererInfo.ClippingRange.y = (float)clipRange[1];
 
-
-//        for (unsigned int i = 0 ; i < this->RendererInfo.Resolution.x * this->RendererInfo.Resolution.y; i++)
-//            this->LocalZBuffer.GetMemPointerAs<float>()[i] = 100000;
-
-        //renWin->GetZbufferData(0,0,this->RendererInfo.Resolution.x-1, this->RendererInfo.Resolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
-
-        //this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
-        //this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
-
+        // Update the Z-Buffer
+        renWin->GetZbufferData(0,0,this->RendererInfo.Resolution.x-1, this->RendererInfo.Resolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
+        this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
+        this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
     }
 }
