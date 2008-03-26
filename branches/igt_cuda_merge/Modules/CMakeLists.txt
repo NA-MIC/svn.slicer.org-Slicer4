@@ -21,6 +21,7 @@ SUBDIRS(
   VolumeRenderingCuda
   Statistics
   RegistrationCuda
+  OpenIGTLink
 )
 
 

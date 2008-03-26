@@ -103,7 +103,7 @@ class VTK_OPENIGTLINK_EXPORT vtkIGTLConnector : public vtkObject
 
   int Start();
   int Stop();
-  static void* ThreadFunction(void* ptr);
+  static VTK_THREAD_RETURN_TYPE ThreadFunction(void* ptr);
 
   //----------------------------------------------------------------
   // OpenIGTLink Message handlers
