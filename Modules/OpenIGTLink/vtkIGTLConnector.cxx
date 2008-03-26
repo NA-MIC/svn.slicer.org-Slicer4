@@ -136,7 +136,7 @@ int vtkIGTLConnector::Stop()
 }
 
 //---------------------------------------------------------------------------
-void* vtkIGTLConnector::ThreadFunction(void* ptr)
+VTK_THREAD_RETURN_TYPE vtkIGTLConnector::ThreadFunction(void* ptr)
 {
 
   //vtkIGTLConnector* igtlcon = static_cast<vtkIGTLConnector*>(ptr);
@@ -183,6 +183,7 @@ void* vtkIGTLConnector::ThreadFunction(void* ptr)
   igtlcon->ThreadID = -1;
   igtlcon->State = STATE_OFF;
 
+  return VTK_THREAD_RETURN_VALUE;
 }
 
 //---------------------------------------------------------------------------

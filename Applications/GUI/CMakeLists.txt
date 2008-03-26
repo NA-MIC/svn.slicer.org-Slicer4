@@ -86,6 +86,10 @@ SET(dir_list
   ${NeuroNav_BINARY_DIR}
   ${NeuroNav_Init_SOURCE_DIR}
   ${NeuroNav_Init_BINARY_DIR}
+  ${OpenIGTLink_SOURCE_DIR}
+  ${OpenIGTLink_BINARY_DIR}
+  ${OpenIGTLink_Init_SOURCE_DIR}
+  ${OpenIGTLink_Init_BINARY_DIR}
   ${Qdec_SOURCE_DIR}
   ${Qdec_BINARY_DIR}
   ${QdecModule_SOURCE_DIR}
@@ -233,6 +237,7 @@ IF(BUILD_MODULES)
     ${CUDASUPPORTMODULE_LINK_LIB}
     ${LABELSTATISTICS_LINK_LIB} 
     NeuroNav
+    OpenIGTLink
     QueryAtlas
     CommandLineModule
     ScriptedModule
