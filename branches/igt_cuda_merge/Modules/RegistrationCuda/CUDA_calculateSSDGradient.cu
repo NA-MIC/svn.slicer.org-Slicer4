@@ -96,23 +96,23 @@ __global__ void CUDAkernel_calculateSSDGradient_preparation(unsigned char* refer
     for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
       if(a<0||a>s_splineSize[0]-1)continue;
       for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
-        if(b<0||b>s_splineSize[1]-1)continue;
-  for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
-    if(c<0||c>s_splineSize[2]-1)continue;
-    
-    //if(a>=0 && a<=s_splineSize[0]-1 && b>=0 && b<=s_splineSize[1]-1 && c>=0 && c<=s_splineSize[2]-1 ){
-      functemp=getSplineValue(relPosX-(float)a)*getSplineValue(relPosY-(float)b)*getSplineValue(relPosZ-(float)c);
-      s_newX[acc]+=transSpline[c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
-      s_newY[acc]+=transSpline[(int)s_splineSize[0]*(int)s_splineSize[1]*(int)s_splineSize[2]+c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
-      s_newZ[acc]+=transSpline[2*(int)s_splineSize[0]*(int)s_splineSize[1]*(int)s_splineSize[2]+c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
-      //}else{
-      //functemp=0;
-      //}
-        
-  }
+          if(b<0||b>s_splineSize[1]-1)continue;
+    for(c=(int)relPosZ-1;c<(int)relPosZ+3;c++){
+      if(c<0||c>s_splineSize[2]-1)continue;
+      
+      //if(a>=0 && a<=s_splineSize[0]-1 && b>=0 && b<=s_splineSize[1]-1 && c>=0 && c<=s_splineSize[2]-1 ){
+        functemp=getSplineValue(relPosX-(float)a)*getSplineValue(relPosY-(float)b)*getSplineValue(relPosZ-(float)c);
+        s_newX[acc]+=transSpline[c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
+        s_newY[acc]+=transSpline[(int)s_splineSize[0]*(int)s_splineSize[1]*(int)s_splineSize[2]+c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
+        s_newZ[acc]+=transSpline[2*(int)s_splineSize[0]*(int)s_splineSize[1]*(int)s_splineSize[2]+c*(int)s_splineSize[1]*(int)s_splineSize[0]+b*(int)s_splineSize[0]+a]*functemp;
+        //}else{
+        //functemp=0;
+        //}
+            
+    }
       }
     }
-    
+      
 
     if(s_newX[acc]>=0 && s_newX[acc]<=s_refDataSize[0]-1 && s_newY[acc]>=0 && s_newY[acc] <= s_refDataSize[1]-1 && s_newZ[acc]>=0 && s_newZ[acc] <= s_refDataSize[2]-1){
       tempValue=targetData[(__float2int_rn(s_newZ[acc]))*(int)s_refDataSize[0]*(int)s_refDataSize[1]+(__float2int_rn(s_newY[acc]))*(int)s_refDataSize[0]+(__float2int_rn(s_newX[acc]))];
@@ -179,42 +179,42 @@ __global__ void CUDAkernel_calculateSSDGradient_doCalculation(unsigned char* ref
     for(i=((xIndex-2)*knotDistance-1);i<((xIndex+2)*knotDistance);i++){
       if(i<0 || i>s_tarDataSize[0]-1) continue;
       for(j=((yIndex-2)*knotDistance-1);j<((yIndex+2)*knotDistance);j++){
-  if(j<0 || j>s_tarDataSize[1]-1) continue;
-  for(k=((zIndex-2)*knotDistance-1);k<((zIndex+2)*knotDistance);k++){
-    if(k<0 || k>s_tarDataSize[2]-1) continue;
-    
-    //calculation of SSD gradient against x axis deformation parameter
-    
-    targetIndex=k*s_tarDataSize[0]*s_tarDataSize[1]+j*s_tarDataSize[0]+i;
-    
-    
-    val1=diff[targetIndex];
-    
-    val21=0;    
-    val22=0;    
-    val23=0;    
-    relPosX=newX[targetIndex]+1.0;
-    relPosY=newY[targetIndex]+1.0;
-    relPosZ=newZ[targetIndex]+1.0;
-    
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<1||d>s_tarDataSize[0])continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<1||e>s_tarDataSize[1])continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-    if(f<1||f>s_tarDataSize[2])continue;   
-    val21+=targetData[(f-1)*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+(e-1)*(int)s_tarDataSize[0]+d-1]*getDifferentialValue(relPosX-(float)d)*getSplineValue(relPosY-(float)e)*getSplineValue(relPosZ-(float)f);
-    val22+=targetData[(f-1)*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+(e-1)*(int)s_tarDataSize[0]+d-1]*getSplineValue(relPosX-(float)d)*getDifferentialValue(relPosY-(float)e)*getSplineValue(relPosZ-(float)f);
-    val23+=targetData[(f-1)*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+(e-1)*(int)s_tarDataSize[0]+d-1]*getSplineValue(relPosX-(float)d)*getSplineValue(relPosY-(float)e)*getDifferentialValue(relPosZ-(float)f);
-        }   
+    if(j<0 || j>s_tarDataSize[1]-1) continue;
+    for(k=((zIndex-2)*knotDistance-1);k<((zIndex+2)*knotDistance);k++){
+      if(k<0 || k>s_tarDataSize[2]-1) continue;
+      
+      //calculation of SSD gradient against x axis deformation parameter
+      
+      targetIndex=k*s_tarDataSize[0]*s_tarDataSize[1]+j*s_tarDataSize[0]+i;
+      
+      
+      val1=diff[targetIndex];
+      
+      val21=0;        
+      val22=0;        
+      val23=0;        
+      relPosX=newX[targetIndex]+1.0;
+      relPosY=newY[targetIndex]+1.0;
+      relPosZ=newZ[targetIndex]+1.0;
+      
+      for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+        if(d<1||d>s_tarDataSize[0])continue;
+        for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+          if(e<1||e>s_tarDataSize[1])continue;
+          for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+        if(f<1||f>s_tarDataSize[2])continue;     
+        val21+=targetData[(f-1)*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+(e-1)*(int)s_tarDataSize[0]+d-1]*getDifferentialValue(relPosX-(float)d)*getSplineValue(relPosY-(float)e)*getSplineValue(relPosZ-(float)f);
+        val22+=targetData[(f-1)*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+(e-1)*(int)s_tarDataSize[0]+d-1]*getSplineValue(relPosX-(float)d)*getDifferentialValue(relPosY-(float)e)*getSplineValue(relPosZ-(float)f);
+        val23+=targetData[(f-1)*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+(e-1)*(int)s_tarDataSize[0]+d-1]*getSplineValue(relPosX-(float)d)*getSplineValue(relPosY-(float)e)*getDifferentialValue(relPosZ-(float)f);
+          }   
+        }
       }
+      
+      s_SSDGradient[acc]+=val1*val21*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
+      s_SSDGradient[acc+BLOCK_DIM2D*BLOCK_DIM2D]+=val1*val22*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
+      s_SSDGradient[acc+2*BLOCK_DIM2D*BLOCK_DIM2D]+=val1*val23*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
+      
     }
-    
-    s_SSDGradient[acc]+=val1*val21*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
-    s_SSDGradient[acc+BLOCK_DIM2D*BLOCK_DIM2D]+=val1*val22*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
-    s_SSDGradient[acc+2*BLOCK_DIM2D*BLOCK_DIM2D]+=val1*val23*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
-    
-  }
       }
     }
   }
@@ -271,37 +271,37 @@ __global__ void CUDAkernel_calculateSSDGradient_doCalculationX(unsigned char* re
     for(i=((xIndex-2)*knotDistance-1);i<((xIndex+2)*knotDistance);i++){
       if(i<0 || i>s_tarDataSize[0]-1) continue;
       for(j=((yIndex-2)*knotDistance-1);j<((yIndex+2)*knotDistance);j++){
-  if(j<0 || j>s_tarDataSize[1]-1) continue;
-  for(k=((zIndex-2)*knotDistance-1);k<((zIndex+2)*knotDistance);k++){
-    if(k<0 || k>s_tarDataSize[2]-1) continue;
-    
-    //calculation of SSD gradient against x axis deformation parameter
-    
-    targetIndex=k*s_tarDataSize[0]*s_tarDataSize[1]+j*s_tarDataSize[0]+i;
-    
-    
-    val1=diff[targetIndex];
-    
-    val2=0;    
-    relPosX=newX[targetIndex];
-    relPosY=newY[targetIndex];
-    relPosZ=newZ[targetIndex];
-    
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=s_tarDataSize[0]+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=s_tarDataSize[1]+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-    if(f<0||f>=s_tarDataSize[2]+2)continue;   
-    val2+=targetData[f*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+e*(int)s_tarDataSize[0]+d]*getDifferentialValue(relPosX-(float)d)*getSplineValue(relPosY-(float)e)*getSplineValue(relPosZ-(float)f);
-        }   
+    if(j<0 || j>s_tarDataSize[1]-1) continue;
+    for(k=((zIndex-2)*knotDistance-1);k<((zIndex+2)*knotDistance);k++){
+      if(k<0 || k>s_tarDataSize[2]-1) continue;
+      
+      //calculation of SSD gradient against x axis deformation parameter
+      
+      targetIndex=k*s_tarDataSize[0]*s_tarDataSize[1]+j*s_tarDataSize[0]+i;
+      
+      
+      val1=diff[targetIndex];
+      
+      val2=0;        
+      relPosX=newX[targetIndex];
+      relPosY=newY[targetIndex];
+      relPosZ=newZ[targetIndex];
+      
+      for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+        if(d<0||d>=s_tarDataSize[0]+2)continue;
+        for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+          if(e<0||e>=s_tarDataSize[1]+2)continue;
+          for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+        if(f<0||f>=s_tarDataSize[2]+2)continue;     
+        val2+=targetData[f*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+e*(int)s_tarDataSize[0]+d]*getDifferentialValue(relPosX-(float)d)*getSplineValue(relPosY-(float)e)*getSplineValue(relPosZ-(float)f);
+          }   
+        }
       }
+      
+      s_SSDGradient[acc]+=val1*val2*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
+      
+      
     }
-    
-    s_SSDGradient[acc]+=val1*val2*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
-    
-    
-  }
       }
     }
   }
@@ -357,37 +357,37 @@ __global__ void CUDAkernel_calculateSSDGradient_doCalculationY(unsigned char* re
     for(i=((xIndex-2)*knotDistance-1);i<((xIndex+2)*knotDistance);i++){
       if(i<0 || i>s_tarDataSize[0]-1) continue;
       for(j=((yIndex-2)*knotDistance-1);j<((yIndex+2)*knotDistance);j++){
-  if(j<0 || j>s_tarDataSize[1]-1) continue;
-  for(k=((zIndex-2)*knotDistance-1);k<((zIndex+2)*knotDistance);k++){
-    if(k<0 || k>s_tarDataSize[2]-1) continue;
-    
-    //calculation of SSD gradient against x axis deformation parameter
-    
-    targetIndex=k*s_tarDataSize[0]*s_tarDataSize[1]+j*s_tarDataSize[0]+i;
-    
-    //calculation of SSD gradient against y axis deformation parameter
-    val1=diff[targetIndex];
-    
-    val2=0;
-    relPosX=newX[targetIndex];
-    relPosY=newY[targetIndex];
-    relPosZ=newZ[targetIndex];
-    
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=s_tarDataSize[0]+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=s_tarDataSize[1]+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-    if(f<0||f>=s_tarDataSize[2]+2)continue;   
-    val2+=targetData[f*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+e*(int)s_tarDataSize[0]+d]
-      *getSplineValue(relPosX-(float)d)*getDifferentialValue(relPosY-(float)e)*getSplineValue(relPosZ-(float)f);
-        }   
-      }
-    }
-    
-    s_SSDGradient[acc+BLOCK_DIM2D*BLOCK_DIM2D]+=val1*val2*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
+    if(j<0 || j>s_tarDataSize[1]-1) continue;
+    for(k=((zIndex-2)*knotDistance-1);k<((zIndex+2)*knotDistance);k++){
+      if(k<0 || k>s_tarDataSize[2]-1) continue;
       
-  }
+      //calculation of SSD gradient against x axis deformation parameter
+      
+      targetIndex=k*s_tarDataSize[0]*s_tarDataSize[1]+j*s_tarDataSize[0]+i;
+      
+      //calculation of SSD gradient against y axis deformation parameter
+      val1=diff[targetIndex];
+      
+      val2=0;
+      relPosX=newX[targetIndex];
+      relPosY=newY[targetIndex];
+      relPosZ=newZ[targetIndex];
+      
+      for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+        if(d<0||d>=s_tarDataSize[0]+2)continue;
+        for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+          if(e<0||e>=s_tarDataSize[1]+2)continue;
+          for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+        if(f<0||f>=s_tarDataSize[2]+2)continue;     
+        val2+=targetData[f*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+e*(int)s_tarDataSize[0]+d]
+          *getSplineValue(relPosX-(float)d)*getDifferentialValue(relPosY-(float)e)*getSplineValue(relPosZ-(float)f);
+          }   
+        }
+      }
+      
+      s_SSDGradient[acc+BLOCK_DIM2D*BLOCK_DIM2D]+=val1*val2*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
+          
+    }
       }
     }
   }
@@ -443,38 +443,38 @@ __global__ void CUDAkernel_calculateSSDGradient_doCalculationZ(unsigned char* re
     for(i=((xIndex-2)*knotDistance-1);i<((xIndex+2)*knotDistance);i++){
       if(i<0 || i>s_tarDataSize[0]-1) continue;
       for(j=((yIndex-2)*knotDistance-1);j<((yIndex+2)*knotDistance);j++){
-  if(j<0 || j>s_tarDataSize[1]-1) continue;
-  for(k=((zIndex-2)*knotDistance-1);k<((zIndex+2)*knotDistance);k++){
-    if(k<0 || k>s_tarDataSize[2]-1) continue;
-    
-    //calculation of SSD gradient against x axis deformation parameter
-    
-    targetIndex=k*s_tarDataSize[0]*s_tarDataSize[1]+j*s_tarDataSize[0]+i;
-    
-    //calculation of SSD gradient against z axis deformation parameter/
-    
-    val1=diff[targetIndex];
-    
-    val2=0;
-    relPosX=newX[targetIndex];
-    relPosY=newY[targetIndex];
-    relPosZ=newZ[targetIndex];
-    
-    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-      if(d<0||d>=s_tarDataSize[0]+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-        if(e<0||e>=s_tarDataSize[1]+2)continue;
-        for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
-    if(f<0||f>=s_tarDataSize[2]+2)continue;   
-    val2+=targetData[f*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+e*(int)s_tarDataSize[0]+d]
-      *getSplineValue(relPosX-(float)d)*getSplineValue(relPosY-(float)e)*getDifferentialValue(relPosZ-(float)f);
-        }   
+    if(j<0 || j>s_tarDataSize[1]-1) continue;
+    for(k=((zIndex-2)*knotDistance-1);k<((zIndex+2)*knotDistance);k++){
+      if(k<0 || k>s_tarDataSize[2]-1) continue;
+      
+      //calculation of SSD gradient against x axis deformation parameter
+      
+      targetIndex=k*s_tarDataSize[0]*s_tarDataSize[1]+j*s_tarDataSize[0]+i;
+      
+      //calculation of SSD gradient against z axis deformation parameter/
+      
+      val1=diff[targetIndex];
+      
+      val2=0;
+      relPosX=newX[targetIndex];
+      relPosY=newY[targetIndex];
+      relPosZ=newZ[targetIndex];
+      
+      for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+        if(d<0||d>=s_tarDataSize[0]+2)continue;
+        for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+          if(e<0||e>=s_tarDataSize[1]+2)continue;
+          for(f=(int)relPosZ-1;f<(int)relPosZ+3;f++){
+        if(f<0||f>=s_tarDataSize[2]+2)continue;     
+        val2+=targetData[f*(int)s_tarDataSize[0]*(int)s_tarDataSize[1]+e*(int)s_tarDataSize[0]+d]
+          *getSplineValue(relPosX-(float)d)*getSplineValue(relPosY-(float)e)*getDifferentialValue(relPosZ-(float)f);
+          }   
+        }
       }
+      
+      s_SSDGradient[acc+2*BLOCK_DIM2D*BLOCK_DIM2D]+=val1*val2*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
+      
     }
-    
-    s_SSDGradient[acc+2*BLOCK_DIM2D*BLOCK_DIM2D]+=val1*val2*getSplineValue((float)i*tempPow+tempPow-(float)xIndex)*getSplineValue((float)j*tempPow+tempPow-(float)yIndex)*getSplineValue((float)k*tempPow+tempPow-(float)zIndex)/knotDistance;
-    
-  }
       }
     }
   }
@@ -569,11 +569,11 @@ float CUDAcalculateSSDGradient_doCalculation(unsigned char* reference, unsigned 
   for(k=0;k<splineSizeZ;k++){
     for(j=0;j<splineSizeY;j++){
       for(i=0;i<splineSizeX;i++){
-  for(n=0;n<3;n++){
-    //printf("%d %d %d %d %lf \n", i,j,k,n,buffer[n*splineSizeX*splineSizeY*splineSizeZ+k*splineSizeX*splineSizeY+j*splineSizeX+i]);
-    if(fabs(buffer[n*splineSizeX*splineSizeY*splineSizeZ+k*splineSizeX*splineSizeY+j*splineSizeX+i])>max)
-      max=fabs(buffer[n*splineSizeX*splineSizeY*splineSizeZ+k*splineSizeX*splineSizeY+j*splineSizeX+i]);
-  }
+    for(n=0;n<3;n++){
+      //printf("%d %d %d %d %lf \n", i,j,k,n,buffer[n*splineSizeX*splineSizeY*splineSizeZ+k*splineSizeX*splineSizeY+j*splineSizeX+i]);
+      if(fabs(buffer[n*splineSizeX*splineSizeY*splineSizeZ+k*splineSizeX*splineSizeY+j*splineSizeX+i])>max)
+        max=fabs(buffer[n*splineSizeX*splineSizeY*splineSizeZ+k*splineSizeX*splineSizeY+j*splineSizeX+i]);
+    }
       }
     }
   }

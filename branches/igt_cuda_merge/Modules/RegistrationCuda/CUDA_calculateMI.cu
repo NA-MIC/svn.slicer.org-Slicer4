@@ -99,56 +99,56 @@ __global__ void CUDAkernel_calculateMI_fillHistogram(unsigned char* d_calculateM
       zpos=((zIndex+0.5)*s_tarDataThickness[2]+s_diff[2])/s_refDataThickness[2]-0.5;
       
       if(zpos>=0 && zpos < s_refDataSize[2]-1){
-  
-  zint=(int)zpos;
-  
-  s_zdec[acc]=zpos-zint;
-  
-  s_temp[acc]=zint*(int)s_refDataSize[0]*(int)s_refDataSize[1]+yint*(int)s_refDataSize[0]+xint;
-  
-  
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(1-s_ydec[acc])*(1-s_zdec[acc]); 
     
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(1-s_ydec[acc])*(s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(s_ydec[acc])*(1-s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(s_ydec[acc])*(s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(1-s_ydec[acc])*(1-s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(1-s_ydec[acc])*(s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(s_ydec[acc])*(1-s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(s_ydec[acc])*(s_zdec[acc]);
-  
-  /*
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp])*256+tarDataTemp]+=(1-xdec)*(1-ydec)*(1-zdec); 
-  
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+tarDataTemp]+=(1-xdec)*(1-ydec)*(zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]])*256+tarDataTemp]+=(1-xdec)*(ydec)*(1-zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+tarDataTemp]+=(1-xdec)*(ydec)*(zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+1])*256+tarDataTemp]+=(xdec)*(1-ydec)*(1-zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+tarDataTemp]+=(xdec)*(1-ydec)*(zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]+1])*256+tarDataTemp]+=(xdec)*(ydec)*(1-zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+tarDataTemp]+=(xdec)*(ydec)*(zdec);
-  */
+    zint=(int)zpos;
+    
+    s_zdec[acc]=zpos-zint;
+    
+    s_temp[acc]=zint*(int)s_refDataSize[0]*(int)s_refDataSize[1]+yint*(int)s_refDataSize[0]+xint;
+    
+    
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(1-s_ydec[acc])*(1-s_zdec[acc]); 
+        
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(1-s_ydec[acc])*(s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(s_ydec[acc])*(1-s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(s_ydec[acc])*(s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(1-s_ydec[acc])*(1-s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(1-s_ydec[acc])*(s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(s_ydec[acc])*(1-s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(s_ydec[acc])*(s_zdec[acc]);
+    
+    /*
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp])*256+tarDataTemp]+=(1-xdec)*(1-ydec)*(1-zdec); 
+    
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+tarDataTemp]+=(1-xdec)*(1-ydec)*(zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]])*256+tarDataTemp]+=(1-xdec)*(ydec)*(1-zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+tarDataTemp]+=(1-xdec)*(ydec)*(zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+1])*256+tarDataTemp]+=(xdec)*(1-ydec)*(1-zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+tarDataTemp]+=(xdec)*(1-ydec)*(zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]+1])*256+tarDataTemp]+=(xdec)*(ydec)*(1-zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+tarDataTemp]+=(xdec)*(ydec)*(zdec);
+    */
       }else{
-  s_temp[acc]=-1;
+    s_temp[acc]=-1;
       }
       /*
       __syncthreads();
       
       if(acc==0){
-  for(int i=0;i<BLOCK_DIM2D*BLOCK_DIM2D;i++){
-    if(s_temp[i]!=-1){
-      d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]])*256+s_tarDataTemp[i]]+=(1-s_xdec[i])*(1-s_ydec[i])*(1-s_zdec[i]); 
-      
-      d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+s_tarDataTemp[i]]+=(1-s_xdec[i])*(1-s_ydec[i])*(s_zdec[i]); 
-      d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]])*256+s_tarDataTemp[i]]+=(1-s_xdec[i])*(s_ydec[i])*(1-s_zdec[i]); 
-      d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+s_tarDataTemp[i]]+=(1-s_xdec[i])*(s_ydec[i])*(s_zdec[i]); 
-      d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+1])*256+s_tarDataTemp[i]]+=(s_xdec[i])*(1-s_ydec[i])*(1-s_zdec[i]); 
-      d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+s_tarDataTemp[i]]+=(s_xdec[i])*(1-s_ydec[i])*(s_zdec[i]); 
-      d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[i]]+=(s_xdec[i])*(s_ydec[i])*(1-s_zdec[i]); 
-      d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[i]]+=(s_xdec[i])*(s_ydec[i])*(s_zdec[i]);
-      
+    for(int i=0;i<BLOCK_DIM2D*BLOCK_DIM2D;i++){
+      if(s_temp[i]!=-1){
+        d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]])*256+s_tarDataTemp[i]]+=(1-s_xdec[i])*(1-s_ydec[i])*(1-s_zdec[i]); 
+        
+        d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+s_tarDataTemp[i]]+=(1-s_xdec[i])*(1-s_ydec[i])*(s_zdec[i]); 
+        d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]])*256+s_tarDataTemp[i]]+=(1-s_xdec[i])*(s_ydec[i])*(1-s_zdec[i]); 
+        d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+s_tarDataTemp[i]]+=(1-s_xdec[i])*(s_ydec[i])*(s_zdec[i]); 
+        d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+1])*256+s_tarDataTemp[i]]+=(s_xdec[i])*(1-s_ydec[i])*(1-s_zdec[i]); 
+        d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+s_tarDataTemp[i]]+=(s_xdec[i])*(1-s_ydec[i])*(s_zdec[i]); 
+        d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[i]]+=(s_xdec[i])*(s_ydec[i])*(1-s_zdec[i]); 
+        d_calculateMI_histogram[i*256*256+(d_calculateMI_refData[s_temp[i]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[i]]+=(s_xdec[i])*(s_ydec[i])*(s_zdec[i]);
+        
+      }
     }
-  }
       }
       
       __syncthreads();
@@ -223,34 +223,34 @@ __global__ void CUDAkernel_calculateMI_fillHistogram_default(unsigned char* d_ca
       zpos=((zIndex+0.5)*s_tarDataThickness[2]+s_diff[2])/s_refDataThickness[2]-0.5;
       
       if(zpos>=0 && zpos < s_refDataSize[2]-1){
-  
-  zint=(int)zpos;
-  
-  s_zdec[acc]=zpos-zint;
-  
-  s_temp[acc]=zint*(int)s_refDataSize[0]*(int)s_refDataSize[1]+yint*(int)s_refDataSize[0]+xint;
-  
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(1-s_ydec[acc])*(1-s_zdec[acc]); 
     
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(1-s_ydec[acc])*(s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(s_ydec[acc])*(1-s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(s_ydec[acc])*(s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(1-s_ydec[acc])*(1-s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(1-s_ydec[acc])*(s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(s_ydec[acc])*(1-s_zdec[acc]); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(s_ydec[acc])*(s_zdec[acc]);
-  
-  /*
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp])*256+tarDataTemp]+=(1-xdec)*(1-ydec)*(1-zdec); 
-  
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+tarDataTemp]+=(1-xdec)*(1-ydec)*(zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]])*256+tarDataTemp]+=(1-xdec)*(ydec)*(1-zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+tarDataTemp]+=(1-xdec)*(ydec)*(zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+1])*256+tarDataTemp]+=(xdec)*(1-ydec)*(1-zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+tarDataTemp]+=(xdec)*(1-ydec)*(zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]+1])*256+tarDataTemp]+=(xdec)*(ydec)*(1-zdec); 
-  d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+tarDataTemp]+=(xdec)*(ydec)*(zdec);
-  */
+    zint=(int)zpos;
+    
+    s_zdec[acc]=zpos-zint;
+    
+    s_temp[acc]=zint*(int)s_refDataSize[0]*(int)s_refDataSize[1]+yint*(int)s_refDataSize[0]+xint;
+    
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(1-s_ydec[acc])*(1-s_zdec[acc]); 
+        
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(1-s_ydec[acc])*(s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(s_ydec[acc])*(1-s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+s_tarDataTemp[acc]]+=(1-s_xdec[acc])*(s_ydec[acc])*(s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(1-s_ydec[acc])*(1-s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(1-s_ydec[acc])*(s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(s_ydec[acc])*(1-s_zdec[acc]); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[s_temp[acc]+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+s_tarDataTemp[acc]]+=(s_xdec[acc])*(s_ydec[acc])*(s_zdec[acc]);
+    
+    /*
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp])*256+tarDataTemp]+=(1-xdec)*(1-ydec)*(1-zdec); 
+    
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]])*256+tarDataTemp]+=(1-xdec)*(1-ydec)*(zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]])*256+tarDataTemp]+=(1-xdec)*(ydec)*(1-zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]])*256+tarDataTemp]+=(1-xdec)*(ydec)*(zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+1])*256+tarDataTemp]+=(xdec)*(1-ydec)*(1-zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+1])*256+tarDataTemp]+=(xdec)*(1-ydec)*(zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]+1])*256+tarDataTemp]+=(xdec)*(ydec)*(1-zdec); 
+    d_calculateMI_histogram[acc*256*256+(d_calculateMI_refData[temp+(int)s_refDataSize[0]*(int)s_refDataSize[1]+(int)s_refDataSize[0]+1])*256+tarDataTemp]+=(xdec)*(ydec)*(zdec);
+    */
       }
     }
   }

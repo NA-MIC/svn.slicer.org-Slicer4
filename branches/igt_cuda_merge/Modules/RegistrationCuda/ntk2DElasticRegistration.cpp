@@ -9,7 +9,7 @@ ntk2DElasticRegistration::ntk2DElasticRegistration(){
   m_maxGradient=0.0;
   m_splineSizeLevel=0;
   m_imageSizeLevel=0;
-  m_MTlevel=4;
+  m_MTlevel=1;
   m_firstScheme=NULL;
   m_lastScheme=NULL;
   m_minGradientLimit=0.1;
@@ -118,21 +118,21 @@ ntkDeformationSpline* ntk2DElasticRegistration::doRegistration(ntk2DData* refere
 
     do{
       if(maxGradient==0){
-  step=1;
+    step=1;
       }else if(maxGradient*stepOrg<m_minGradientLimit){
-  step=m_minGradientLimit/maxGradient;
+    step=m_minGradientLimit/maxGradient;
       }else{
-  step=stepOrg;
+    step=stepOrg;
       }
 
       SSDvalue=SSDvalueTemp;
       for(i=0;i<m_splineSize.x;i++){
-  for(j=0;j<m_splineSize.y;j++){
-    for(n=0;n<2;n++){
-        *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)-=*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*step;
-        //printf("%lf %lf\n", *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i),*(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+(m_splineSize.x-i-1)));
+    for(j=0;j<m_splineSize.y;j++){
+      for(n=0;n<2;n++){
+          *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)-=*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*step;
+          //printf("%lf %lf\n", *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i),*(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+(m_splineSize.x-i-1)));
+      }
     }
-  }
       }
             
       transform=new ntk2DElasticTransformation();
@@ -144,9 +144,9 @@ ntkDeformationSpline* ntk2DElasticRegistration::doRegistration(ntk2DData* refere
       
       
       if(m_PEweight==0.0){
-  SSDvalueTemp=calculateSSD(m_reference, result);//outputSpline
+    SSDvalueTemp=calculateSSD(m_reference, result);//outputSpline
       }else{
-  SSDvalueTemp=calculateSSDPE(m_reference, result, outputSpline);//outputSpline
+    SSDvalueTemp=calculateSSDPE(m_reference, result, outputSpline);//outputSpline
       }
       printf("SSDvalueTemp=%lf\n", SSDvalueTemp);
       
@@ -161,7 +161,7 @@ ntkDeformationSpline* ntk2DElasticRegistration::doRegistration(ntk2DData* refere
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(n=0;n<2;n++){
-    *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)+=*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*step;
+      *(outputSplineBuffer+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)+=*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*step;
       }
     }
   }
@@ -181,7 +181,7 @@ float ntk2DElasticRegistration::calculateSSDGradient(ntkDeformationSpline *splin
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(n=0;n<2;n++){
-  *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)=0.0;
+    *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)=0.0;
       }
     }
   }
@@ -198,64 +198,44 @@ float ntk2DElasticRegistration::calculateSSDGradient(ntkDeformationSpline *splin
     /*calculating difference between each pixel of reference and transformed target*/
   for(i=0;i<m_targetSize.x;i++){
     for(j=0;j<m_targetSize.y;j++){
-        *(newX+j*m_targetSize.x+i)=i; 
-  *(newY+j*m_targetSize.x+i)=j; 
-  relPosX=(float)(i+1)*tempPow;
-  relPosY=(float)(j+1)*tempPow;
+          *(newX+j*m_targetSize.x+i)=i; 
+    *(newY+j*m_targetSize.x+i)=j; 
+    relPosX=(float)(i+1)*tempPow;
+    relPosY=(float)(j+1)*tempPow;
+        
+    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+      if(d<0||d>m_splineSize.x-1)continue;
+      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+        if(e<0||e>m_splineSize.y-1)continue;
+        functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
+          *(newX+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
+          *(newY+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
+        
     
-  for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-    if(d<0||d>m_splineSize.x-1)continue;
-    for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-      if(e<0||e>m_splineSize.y-1)continue;
-      functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
-        *(newX+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
-        *(newY+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
-      
-  
+      }
     }
-  }
-  tempValue=m_transform->getInterpolationValue(m_targetPlusSpline, *(newX+j*m_targetSize.x+i)+1.0, *(newY+j*m_targetSize.x+i)+1.0);
-  
-  if(tempValue<0)tempValue=0;
-  if(tempValue>255)tempValue=255;
-  
-  *(diff+j*m_targetSize.x+i)=tempValue-*(m_referenceBuffer+j*m_referenceSize.x+i);
-  //if(*(diff+j*m_targetSize.x+i)==1 || *(diff+j*m_targetSize.x+i)==-1)*(diff+j*m_targetSize.x+i)=0;
-  
-  
+    tempValue=m_transform->getInterpolationValue(m_targetPlusSpline, *(newX+j*m_targetSize.x+i)+1.0, *(newY+j*m_targetSize.x+i)+1.0);
+    
+    if(tempValue<0)tempValue=0;
+    if(tempValue>255)tempValue=255;
+    
+    *(diff+j*m_targetSize.x+i)=tempValue-*(m_referenceBuffer+j*m_referenceSize.x+i);
+    //if(*(diff+j*m_targetSize.x+i)==1 || *(diff+j*m_targetSize.x+i)==-1)*(diff+j*m_targetSize.x+i)=0;
+    
+    
 
     }
   }
   
-  pthread_t tid[m_MTlevel];
-
-  ntkCalculateSSDGradientThreadParam *threadParam = new ntkCalculateSSDGradientThreadParam[m_MTlevel];
- 
-  for(int i=0;i<m_MTlevel;i++){
-    threadParam[i].here=this;
-    threadParam[i].threadNumber=i;
-    threadParam[i].newX=newX;
-    threadParam[i].newY=newY;
-    threadParam[i].diff=diff;
-    if(pthread_create(&tid[i], NULL, startCalculateSSDGradientThread, &(threadParam[i]))){
-      printf("create thread %d failed\n",i);
-      exit(1);
-    }
-  }
-  for(int i=0;i<m_MTlevel;i++){
-    if(pthread_join(tid[i], NULL)){
-      printf("join thread %d failed\n",i);
-      exit(1);
-    }
-  }
+  threadCalculateSSDGradient(newX, newY, diff, 0);
 
   float max=0.0;
     
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(n=0;n<2;n++){
-  *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)/=m_targetSize.x*m_targetSize.y;
-  
+    *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)/=m_targetSize.x*m_targetSize.y;
+    
       }
     }
   }
@@ -263,20 +243,19 @@ float ntk2DElasticRegistration::calculateSSDGradient(ntkDeformationSpline *splin
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(n=0;n<2;n++){
-  if(fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i))>max){
-    max=fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i));
-  }
+    if(fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i))>max){
+      max=fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i));
+    }
       }
     }
   }
 
   printf("Max value=%lf\n", max);
   
-  delete threadParam;
   free(diff);
   free(newX);
   free(newY);
-return max;
+  return max;
 }
 
 float ntk2DElasticRegistration::calculateSSDPEGradient(ntkDeformationSpline *splineParam){
@@ -289,7 +268,7 @@ float ntk2DElasticRegistration::calculateSSDPEGradient(ntkDeformationSpline *spl
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(n=0;n<2;n++){
-  *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)=0.0;
+    *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)=0.0;
       }
     }
   }
@@ -308,60 +287,40 @@ float ntk2DElasticRegistration::calculateSSDPEGradient(ntkDeformationSpline *spl
     for(j=0;j<m_targetSize.y;j++){
       *(newX+j*m_targetSize.x+i)=i; 
       *(newY+j*m_targetSize.x+i)=j; 
-  
-  relPosX=(float)(i+1)*tempPow;
-  relPosY=(float)(j+1)*tempPow;
-  
-  for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-    if(d<0||d>m_splineSize.x-1)continue;
-    for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-      if(e<0||e>m_splineSize.y-1)continue;
-        
-        functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
-        *(newX+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
-        *(newY+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
-  
+    
+    relPosX=(float)(i+1)*tempPow;
+    relPosY=(float)(j+1)*tempPow;
+    
+    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+      if(d<0||d>m_splineSize.x-1)continue;
+      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+        if(e<0||e>m_splineSize.y-1)continue;
+          
+          functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
+          *(newX+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
+          *(newY+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
+    
+      }
     }
-  }
-  tempValue=m_transform->getInterpolationValue(m_targetPlusSpline, *(newX+j*m_targetSize.x+i)+1.0, *(newY+j*m_targetSize.x+i)+1.0);
-  
-  if(tempValue<0)tempValue=0;
-  if(tempValue>255)tempValue=255;
+    tempValue=m_transform->getInterpolationValue(m_targetPlusSpline, *(newX+j*m_targetSize.x+i)+1.0, *(newY+j*m_targetSize.x+i)+1.0);
+    
+    if(tempValue<0)tempValue=0;
+    if(tempValue>255)tempValue=255;
 
-  *(diff+j*m_targetSize.x+i)=tempValue-*(m_referenceBuffer+j*m_referenceSize.x+i);
-  if(*(diff+j*m_targetSize.x+i)==1 || *(diff+j*m_targetSize.x+i)==-1)*(diff+j*m_targetSize.x+i)=0;
+    *(diff+j*m_targetSize.x+i)=tempValue-*(m_referenceBuffer+j*m_referenceSize.x+i);
+    if(*(diff+j*m_targetSize.x+i)==1 || *(diff+j*m_targetSize.x+i)==-1)*(diff+j*m_targetSize.x+i)=0;
     
     }
   }
   
-  pthread_t tid[m_MTlevel];
-
-  ntkCalculateSSDGradientThreadParam *threadParam = new ntkCalculateSSDGradientThreadParam[m_MTlevel];
- 
-  for(int i=0;i<m_MTlevel;i++){
-    threadParam[i].here=this;
-    threadParam[i].threadNumber=i;
-    threadParam[i].newX=newX;
-    threadParam[i].newY=newY;
-    threadParam[i].diff=diff;
-    if(pthread_create(&tid[i], NULL, startCalculateSSDPEGradientThread, &(threadParam[i]))){
-      printf("create thread %d failed\n",i);
-      exit(1);
-    }
-  }
-  for(int i=0;i<m_MTlevel;i++){
-    if(pthread_join(tid[i], NULL)){
-      printf("join thread %d failed\n",i);
-      exit(1);
-    }
-  }
+  threadCalculateSSDPEGradient(newX, newY, diff, 0);
 
   float max=0.0;
     
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(n=0;n<2;n++){
-  *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)/=m_targetSize.x*m_targetSize.y*1;
+    *(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)/=m_targetSize.x*m_targetSize.y*1;
       }
     }
   }
@@ -369,16 +328,15 @@ float ntk2DElasticRegistration::calculateSSDPEGradient(ntkDeformationSpline *spl
   for(i=0;i<m_splineSize.x;i++){
     for(j=0;j<m_splineSize.y;j++){
       for(n=0;n<2;n++){
-  if(fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i))>max){
-    max=fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i));
-  }
+    if(fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i))>max){
+      max=fabs(*(m_SSDgradient+n*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i));
+    }
       }
     }
   }
 
   printf("Max value=%lf\n", max);
   
-  delete threadParam;
   free(diff);
   free(newX);
   free(newY);
@@ -403,71 +361,71 @@ void ntk2DElasticRegistration::threadCalculateSSDGradient(float *newX, float *ne
     for(b=0;b<m_splineSize.y;b++){
       *(m_SSDgradient+b*m_splineSize.x+a)=0;
       for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-  if(i<0 || i>m_targetSize.x-1) continue;
-  for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-    if(j<0 || j>m_targetSize.y-1) continue;
-    
-    /*calculation of SSD gradient against x axis deformation parameter*/
-    /*val1 calculation*/
-    val1=*(diff+j*m_targetSize.x+i);
-    if(fabs(val1)>0){
+    if(i<0 || i>m_targetSize.x-1) continue;
+    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+      if(j<0 || j>m_targetSize.y-1) continue;
       
-      
-      
-      /*val2 calculation*/
-      val2=0;    
-      relPosX=(float)*(newX+j*m_targetSize.x+i)+1.0;
-      relPosY=(float)*(newY+j*m_targetSize.x+i)+1.0;
-      
-      for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-        if(d<0||d>=m_targetSize.x+2)continue;
-        for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-    if(e<0||e>=m_targetSize.y+2)continue;
-    
-    val2+=m_targetPlusSpline->getValue(d,e)*m_function->getDifferentialValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
-        }
-      }
-            
-      if(fabs(val2)>0){
+      /*calculation of SSD gradient against x axis deformation parameter*/
+      /*val1 calculation*/
+      val1=*(diff+j*m_targetSize.x+i);
+      if(fabs(val1)>0){
         
-        /*val3 calculation*/
         
-    *(m_SSDgradient+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance;
-    
-    //if((b==0 || b ==4) && a==1 )printf("inside %d, %d, %d, %d %lf\n",a, b, i, j, val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance);
-      }
-    }
-    
-    
-    
-    /*calculation of SSD gradient against y axis deformation parameter*/
-    /*val1 calculation*/
-    val1=*(diff+j*m_targetSize.x+i);
-    if(fabs(val1)>0){
-      /*val2 calculation*/
-      val2=0;
-      relPosX=(float)*(newX+j*m_targetSize.x+i)+1.0;
-      relPosY=(float)*(newY+j*m_targetSize.x+i)+1.0;
-      
-      for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-        if(d<0||d>=m_targetSize.x+2)continue;
-      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+        
+        /*val2 calculation*/
+        val2=0;        
+        relPosX=(float)*(newX+j*m_targetSize.x+i)+1.0;
+        relPosY=(float)*(newY+j*m_targetSize.x+i)+1.0;
+        
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
         if(e<0||e>=m_targetSize.y+2)continue;
         
-        val2+=m_targetPlusSpline->getValue(d,e)*m_function->getValue(relPosX-(float)d)*m_function->getDifferentialValue(relPosY-(float)e);
+        val2+=m_targetPlusSpline->getValue(d,e)*m_function->getDifferentialValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
+          }
+        }
+                
+        if(fabs(val2)>0){
+          
+          /*val3 calculation*/
+          
+        *(m_SSDgradient+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance;
         
+        //if((b==0 || b ==4) && a==1 )printf("inside %d, %d, %d, %d %lf\n",a, b, i, j, val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance);
+        }
       }
-      }
-      //val2/=m_knotDistance;
-      if(fabs(val2)>0){
       
-        /*val3 calculation*/
+      
+      
+      /*calculation of SSD gradient against y axis deformation parameter*/
+      /*val1 calculation*/
+      val1=*(diff+j*m_targetSize.x+i);
+      if(fabs(val1)>0){
+        /*val2 calculation*/
+        val2=0;
+        relPosX=(float)*(newX+j*m_targetSize.x+i)+1.0;
+        relPosY=(float)*(newY+j*m_targetSize.x+i)+1.0;
         
-        *(m_SSDgradient+m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance;
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+            if(e<0||e>=m_targetSize.y+2)continue;
+            
+            val2+=m_targetPlusSpline->getValue(d,e)*m_function->getValue(relPosX-(float)d)*m_function->getDifferentialValue(relPosY-(float)e);
+            
+          }
+        }
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0){
+          
+          /*val3 calculation*/
+          
+          *(m_SSDgradient+m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance;
+        }
       }
+      
     }
-    
-  }
       }
     }
   }
@@ -501,71 +459,71 @@ void ntk2DElasticRegistration::threadCalculateSSDPEGradient(float *newX, float *
     for(b=0;b<m_splineSize.y;b++){
       *(m_SSDgradient+b*m_splineSize.x+a)=0;
       for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-  if(i<0 || i>m_targetSize.x-1) continue;
-  for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-    if(j<0 || j>m_targetSize.y-1) continue;
-    
-    /*calculation of SSD gradient against x axis deformation parameter*/
-    /*val1 calculation*/
-    val1=*(diff+j*m_targetSize.x+i);
-    if(fabs(val1)>0.0001){
+    if(i<0 || i>m_targetSize.x-1) continue;
+    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+      if(j<0 || j>m_targetSize.y-1) continue;
       
-      
-      
-      /*val2 calculation*/
-      val2=0;    
-      relPosX=(float)*(newX+j*m_targetSize.x+i)+1.0;
-      relPosY=(float)*(newY+j*m_targetSize.x+i)+1.0;
-      
-      for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-        if(d<0||d>=m_targetSize.x+2)continue;
-        for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-    if(e<0||e>=m_targetSize.y+2)continue;
-    val2+=m_targetPlusSpline->getValue(d,e)*m_function->getDifferentialValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
-        }   
-      }
-    
-      //val2/=m_knotDistance;
-      if(fabs(val2)>0.0001){
+      /*calculation of SSD gradient against x axis deformation parameter*/
+      /*val1 calculation*/
+      val1=*(diff+j*m_targetSize.x+i);
+      if(fabs(val1)>0.0001){
         
-        /*val3 calculation*/
         
-        *(m_SSDgradient+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance;
         
-      }
-    }
-    
-    
-    /*calculation of SSD gradient against y axis deformation parameter*/
-    /*val1 calculation*/
-    val1=*(diff+j*m_targetSize.x+i);
-    if(fabs(val1)>0.0001){
-      /*val2 calculation*/
-      val2=0;
-      relPosX=(float)*(newX+j*m_targetSize.x+i)+1.0;
-      relPosY=(float)*(newY+j*m_targetSize.x+i)+1.0;
-      
-      for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-        if(d<0||d>=m_targetSize.x+2)continue;
-        for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-    if(e<0||e>=m_targetSize.y+2)continue;
-    
-    val2+=m_targetPlusSpline->getValue(d,e)*m_function->getValue(relPosX-(float)d)*m_function->getDifferentialValue(relPosY-(float)e);
-    
+        /*val2 calculation*/
+        val2=0;        
+        relPosX=(float)*(newX+j*m_targetSize.x+i)+1.0;
+        relPosY=(float)*(newY+j*m_targetSize.x+i)+1.0;
+        
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+        if(e<0||e>=m_targetSize.y+2)continue;
+        val2+=m_targetPlusSpline->getValue(d,e)*m_function->getDifferentialValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
+          }   
+        }
+        
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0.0001){
+          
+          /*val3 calculation*/
+          
+          *(m_SSDgradient+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance;
+          
         }
       }
-      //val2/=m_knotDistance;
-      if(fabs(val2)>0.0001){
+      
+      
+      /*calculation of SSD gradient against y axis deformation parameter*/
+      /*val1 calculation*/
+      val1=*(diff+j*m_targetSize.x+i);
+      if(fabs(val1)>0.0001){
+        /*val2 calculation*/
+        val2=0;
+        relPosX=(float)*(newX+j*m_targetSize.x+i)+1.0;
+        relPosY=(float)*(newY+j*m_targetSize.x+i)+1.0;
         
-        /*val3 calculation*/
+        for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+          if(d<0||d>=m_targetSize.x+2)continue;
+          for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+        if(e<0||e>=m_targetSize.y+2)continue;
         
+        val2+=m_targetPlusSpline->getValue(d,e)*m_function->getValue(relPosX-(float)d)*m_function->getDifferentialValue(relPosY-(float)e);
         
-        *(m_SSDgradient+m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance;
+          }
+        }
+        //val2/=m_knotDistance;
+        if(fabs(val2)>0.0001){
+          
+          /*val3 calculation*/
+          
+          
+          *(m_SSDgradient+m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=val1*val2*m_function->getValue((float)i*tempPow+tempPow-(float)a)*m_function->getValue((float)j*tempPow+tempPow-(float)b)/m_knotDistance;
+        }
       }
-    }
 
-   
-  
+     
+    
       }
     }
   }
@@ -587,64 +545,64 @@ void ntk2DElasticRegistration::threadCalculateSSDPEGradient(float *newX, float *
   for(a=startx;a<endx;a++){
     for(b=0;b<m_splineSize.y;b++){
       orgPosX=a-1;orgPosY=b-1;
-  *(potEnergy+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
-  *(potEnergy+1*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
-  
-  //*(m_SSDgradient+b*m_splineSize.x+a)=0;
-  for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-    if(i<0 || i>m_targetSize.x-2) continue;
-    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-      if(j<0 || j>m_targetSize.y-1) continue;
-          
-        relPosX=(float)*(newX+j*m_targetSize.x+i);
-        relPosY=(float)*(newY+j*m_targetSize.x+i);
-  
-        relPos2X=(float)*(newX+j*m_targetSize.x+i+1);
-        relPos2Y=(float)*(newY+j*m_targetSize.x+i+1);
-          
-        distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY));
-        
-        elasticity=*(emapBuffer+j*m_targetSize.x+i);
-        elasticity2=*(emapBuffer+j*m_targetSize.x+(i+1));
-        
-        //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
-
-        *(potEnergy+b*m_splineSize.x+a)+=((relPos2X-relPosX)/distance-(relPos2X-relPosX)/pow(distance,3))*(m_function->getValue(i-orgPosX+1)*m_function->getValue(j-orgPosY)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY))*(elasticity+elasticity2)/2.0;
-        
-        //*(potEnergy+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2X-relPosX)/distance)*(m_function->getValue(i-orgPosX+1)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
-         
-       
-    }
-  }
-  
-  *(m_SSDgradient+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
-  
-  for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
-    if(i<0 || i>m_targetSize.x-1) continue;
-    for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
-      if(j<0 || j>m_targetSize.y-2) continue;
-        
-        relPosX=(float)*(newX+j*m_targetSize.x+i);
-        relPosY=(float)*(newY+j*m_targetSize.x+i);
-
-        relPos2X=(float)*(newX+(j+1)*m_targetSize.x+i);
-        relPos2Y=(float)*(newY+(j+1)*m_targetSize.x+i);
-                
-        distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY));
-        
-        elasticity=*(emapBuffer+j*m_targetSize.x+i);
-        elasticity2=(*(emapBuffer+(j+1)*m_targetSize.x+i));
-        
-        //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
-
-        *(potEnergy+m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=((relPos2Y-relPosY)/distance-(relPos2Y-relPosY)/pow(distance,3))*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY+1)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY))*(elasticity+elasticity2)/2.0;
-        
-        //*(potEnergy+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2Y-relPosY)/distance)*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY+1)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
-
-        
-    }
-  }
+    *(potEnergy+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
+    *(potEnergy+1*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)=0;
     
+    //*(m_SSDgradient+b*m_splineSize.x+a)=0;
+    for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
+      if(i<0 || i>m_targetSize.x-2) continue;
+      for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+        if(j<0 || j>m_targetSize.y-1) continue;
+              
+          relPosX=(float)*(newX+j*m_targetSize.x+i);
+          relPosY=(float)*(newY+j*m_targetSize.x+i);
+    
+          relPos2X=(float)*(newX+j*m_targetSize.x+i+1);
+          relPos2Y=(float)*(newY+j*m_targetSize.x+i+1);
+              
+          distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY));
+          
+          elasticity=*(emapBuffer+j*m_targetSize.x+i);
+          elasticity2=*(emapBuffer+j*m_targetSize.x+(i+1));
+          
+          //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
+
+          *(potEnergy+b*m_splineSize.x+a)+=((relPos2X-relPosX)/distance-(relPos2X-relPosX)/pow(distance,3))*(m_function->getValue(i-orgPosX+1)*m_function->getValue(j-orgPosY)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY))*(elasticity+elasticity2)/2.0;
+          
+          //*(potEnergy+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2X-relPosX)/distance)*(m_function->getValue(i-orgPosX+1)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
+           
+         
+      }
+    }
+    
+    *(m_SSDgradient+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=*(potEnergy+0*m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)*size*m_PEweight*pow(8,-m_imageSizeLevel);//*pow(8,m_knotDistance-1);///m_knotDistance/m_knotDistance;
+    
+    for(i=((a-2)*m_knotDistance-1);i<((a+2)*m_knotDistance);i++){
+      if(i<0 || i>m_targetSize.x-1) continue;
+      for(j=((b-2)*m_knotDistance-1);j<((b+2)*m_knotDistance);j++){
+        if(j<0 || j>m_targetSize.y-2) continue;
+          
+          relPosX=(float)*(newX+j*m_targetSize.x+i);
+          relPosY=(float)*(newY+j*m_targetSize.x+i);
+
+          relPos2X=(float)*(newX+(j+1)*m_targetSize.x+i);
+          relPos2Y=(float)*(newY+(j+1)*m_targetSize.x+i);
+                    
+          distance=sqrt((relPos2X-relPosX)*(relPos2X-relPosX)+(relPos2Y-relPosY)*(relPos2Y-relPosY));
+          
+          elasticity=*(emapBuffer+j*m_targetSize.x+i);
+          elasticity2=(*(emapBuffer+(j+1)*m_targetSize.x+i));
+          
+          //printf("elasticity:%lf %lf \n", elasticity, elasticity2);
+
+          *(potEnergy+m_splineSize.x*m_splineSize.y+b*m_splineSize.x+a)+=((relPos2Y-relPosY)/distance-(relPos2Y-relPosY)/pow(distance,3))*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY+1)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY))*(elasticity+elasticity2)/2.0;
+          
+          //*(potEnergy+b*m_splineSize.x+a)+=(2*(distance-1)*(relPos2Y-relPosY)/distance)*(m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY+1)*m_function->getValue(k-orgPosZ)-m_function->getValue(i-orgPosX)*m_function->getValue(j-orgPosY)*m_function->getValue(k-orgPosZ));
+
+          
+      }
+    }
+      
     }
   }
 
@@ -652,19 +610,7 @@ void ntk2DElasticRegistration::threadCalculateSSDPEGradient(float *newX, float *
   }
 }
 
-void* ntk2DElasticRegistration::startCalculateSSDGradientThread(void *arg){
-  ntkCalculateSSDGradientThreadParam *temp=(ntkCalculateSSDGradientThreadParam*)arg;
-  (temp->here)->threadCalculateSSDGradient(temp->newX, temp->newY, temp->diff, temp->threadNumber);
-  return 0;
-}
-
- void* ntk2DElasticRegistration::startCalculateSSDPEGradientThread(void *arg){
-  ntkCalculateSSDGradientThreadParam *temp=(ntkCalculateSSDGradientThreadParam*)arg;
-  (temp->here)->threadCalculateSSDPEGradient(temp->newX, temp->newY, temp->diff, temp->threadNumber);
-  return 0;
-}
-
- float ntk2DElasticRegistration::calculateSSDGradient(ntk2DData* target, int splineSizeLevel=0, ntkDeformationSpline *splineParam=NULL){
+float ntk2DElasticRegistration::calculateSSDGradient(ntk2DData* target, int splineSizeLevel=0, ntkDeformationSpline *splineParam=NULL){
   int j,k;
   m_splineSizeLevel=splineSizeLevel;
   m_target=target;
@@ -771,22 +717,22 @@ float ntk2DElasticRegistration::calculateSSD(ntk2DData* reference, ntk2DData* ta
     /*calculating difference between each pixel of reference and transformed target*/
   for(i=0;i<m_targetSize.x;i++){
     for(j=0;j<m_targetSize.y;j++){
-       *(newX+j*m_targetSize.x+i)=i; 
-  *(newY+j*m_targetSize.x+i)=j; 
-  relPosX=(float)(i+1)*tempPow;
-  relPosY=(float)(j+1)*tempPow;
-    
-  for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
-    if(d<0||d>m_splineSize.x-1)continue;
-    for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
-      if(e<0||e>m_splineSize.y-1)continue;
-          
-        functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
-        *(newX+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
-        *(newY+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
+         *(newX+j*m_targetSize.x+i)=i; 
+    *(newY+j*m_targetSize.x+i)=j; 
+    relPosX=(float)(i+1)*tempPow;
+    relPosY=(float)(j+1)*tempPow;
+        
+    for(d=(int)relPosX-1;d<(int)relPosX+3;d++){
+      if(d<0||d>m_splineSize.x-1)continue;
+      for(e=(int)relPosY-1;e<(int)relPosY+3;e++){
+        if(e<0||e>m_splineSize.y-1)continue;
+              
+          functemp=m_function->getValue(relPosX-(float)d)*m_function->getValue(relPosY-(float)e);
+          *(newX+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
+          *(newY+j*m_targetSize.x+i)+=*(splineParamBuffer+e*m_splineSize.x+d)*functemp;
+      }
     }
-  }
-  
+    
       }
     }
 
@@ -944,7 +890,7 @@ bool ntk2DElasticRegistration::checkRegistrationScheme(){
     ntkElasticRegistrationScheme *tempScheme=m_firstScheme;
     do{
       if(tempScheme->imageResLevel+tempScheme->splineResLevel>tempScheme->next->imageResLevel+tempScheme->next->splineResLevel){
-  return false;
+    return false;
       }
       tempScheme=tempScheme->next;
     }while(tempScheme->next!=NULL);
@@ -1032,7 +978,7 @@ bool ntk2DElasticRegistration::checkRegistrationScheme(){
       ntkIntDimension splineSize=outputSpline->getSize();
       
       for(i=0;i<splineSize.x*splineSize.y*3;i++){
-  *(splineBuffer+i) *= pow(2, imageResLevelUp);
+    *(splineBuffer+i) *= pow(2, imageResLevelUp);
       }
     }
     //printf("4");fflush(stdout);

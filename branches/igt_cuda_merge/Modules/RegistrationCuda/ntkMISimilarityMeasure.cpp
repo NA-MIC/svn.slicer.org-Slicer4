@@ -59,17 +59,17 @@ double ntkMISimilarityMeasure::doSimilarityMeasure(ntk3DData* temp){
   for(i=1;i<temdim.x-1;i++){
     for(j=1;j<temdim.y-1;j++){
       for(k=1;k<temdim.z-1;k++){
-  //if(temp->getValue(i,j,k)!=0){
-    xpos=((i+0.5)*temthick.x+xdif)/refthick.x-0.5;
-    ypos=((j+0.5)*temthick.y+ydif)/refthick.y-0.5;
-    zpos=((k+0.5)*temthick.z+zdif)/refthick.z-0.5;
-    if(xpos>=0 && xpos <= refdim.x*refthick.x-1 && ypos>=0 && ypos <= refdim.y*refthick.y-1 && zpos>=0 && zpos <= refdim.z*refthick.z-1){
-      count++;
-      pos.x=i;pos.y=j;pos.z=k;tempValue=temp->getValue(pos);
-      distributeInterpolationValue(xpos, ypos, zpos, tempValue);
-      
-     }
-    //}
+    //if(temp->getValue(i,j,k)!=0){
+      xpos=((i+0.5)*temthick.x+xdif)/refthick.x-0.5;
+      ypos=((j+0.5)*temthick.y+ydif)/refthick.y-0.5;
+      zpos=((k+0.5)*temthick.z+zdif)/refthick.z-0.5;
+      if(xpos>=0 && xpos <= refdim.x*refthick.x-1 && ypos>=0 && ypos <= refdim.y*refthick.y-1 && zpos>=0 && zpos <= refdim.z*refthick.z-1){
+        count++;
+        pos.x=i;pos.y=j;pos.z=k;tempValue=temp->getValue(pos);
+        distributeInterpolationValue(xpos, ypos, zpos, tempValue);
+        
+       }
+      //}
       }
     }
   }
@@ -80,22 +80,22 @@ double ntkMISimilarityMeasure::doSimilarityMeasure(ntk3DData* temp){
   for(i=0;i<256;i++){
     if(*(m_histogramA+i)!=0){
       tempval=*(m_histogramA+i)/(double)(count);
-      value-=tempval*log((float)tempval)/log((float)10);
+      value-=tempval*log(tempval)/log(10);
     }
     if(*(m_histogramB+i)!=0){
       tempval=*(m_histogramB+i)/(double)(count);
-      value-=tempval*log((float)tempval)/log((float)10);
+      value-=tempval*log(tempval)/log(10);
     }
  
     for(j=0;j<256;j++){
       /*
-  if(*(m_histogram+i*256+j)!=1){
-  printf("%d %d %d:",i,j,*(m_histogram+i*256+j));
-  }
+    if(*(m_histogram+i*256+j)!=1){
+    printf("%d %d %d:",i,j,*(m_histogram+i*256+j));
+    }
       */
       if(*(m_histogram+i*256+j)!=0){
-  tempval=*(m_histogram+i*256+j)/(double)(count);
-  value+=tempval*log((float)tempval)/log((float)10);
+    tempval=*(m_histogram+i*256+j)/(double)(count);
+    value+=tempval*log(tempval)/log(10);
       }
     }
     //printf("value:%f %d", value, i);
@@ -135,13 +135,13 @@ double ntkMISimilarityMeasure::getInterpolationValue(double x, double y, double 
   pos.x=xint+1;pos.y=yint+1;pos.z=zint+1;value8=m_reference->getValue(pos);
 
   return (double)((1-xsmall)*(1-ysmall)*(1-zsmall)*value1+
-      (1-xsmall)*(1-ysmall)*zsmall*value2+
-      (1-xsmall)*ysmall*(1-zsmall)*value3+
-      (1-xsmall)*ysmall*zsmall*value4+
-      xsmall*(1-ysmall)*(1-zsmall)*value5+
-      xsmall*(1-ysmall)*zsmall*value6+
-      xsmall*ysmall*(1-zsmall)*value7+
-      xsmall*ysmall*zsmall*value8);
+          (1-xsmall)*(1-ysmall)*zsmall*value2+
+          (1-xsmall)*ysmall*(1-zsmall)*value3+
+          (1-xsmall)*ysmall*zsmall*value4+
+          xsmall*(1-ysmall)*(1-zsmall)*value5+
+          xsmall*(1-ysmall)*zsmall*value6+
+          xsmall*ysmall*(1-zsmall)*value7+
+          xsmall*ysmall*zsmall*value8);
   
 }
 

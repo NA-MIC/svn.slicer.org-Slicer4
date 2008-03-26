@@ -9,9 +9,9 @@ ntkDeformationSpline::ntkDeformationSpline(ntkIntDimension splineSize){
   for(n=0;n<3;n++){
     for(i=0;i<splineSize.x;i++){
       for(j=0;j<splineSize.y;j++){
-  for(k=0;k<splineSize.z;k++){
-    *(m_splineParam+n*splineSize.x*splineSize.y*splineSize.z+k*splineSize.x*splineSize.y+j*splineSize.x+i)=0.0;
-  }
+    for(k=0;k<splineSize.z;k++){
+      *(m_splineParam+n*splineSize.x*splineSize.y*splineSize.z+k*splineSize.x*splineSize.y+j*splineSize.x+i)=0.0;
+    }
       }
     }
   }
@@ -71,9 +71,9 @@ void ntkDeformationSpline::multiplyFactor(float factor){
   for(n=0;n<3;n++){
     for(i=0;i<m_splineSize.x;i++){
       for(j=0;j<m_splineSize.y;j++){
-  for(k=0;k<m_splineSize.z;k++){
-    *(m_splineParam+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*=factor;
-  }
+    for(k=0;k<m_splineSize.z;k++){
+      *(m_splineParam+n*m_splineSize.x*m_splineSize.y*m_splineSize.z+k*m_splineSize.x*m_splineSize.y+j*m_splineSize.x+i)*=factor;
+    }
       }
     }
   }

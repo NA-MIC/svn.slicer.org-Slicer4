@@ -138,10 +138,6 @@ class ntk2DElasticRegistration : public ntkRegistration{
   
   void threadCalculateSSDPEGradient(float *newX, float *newY, float *diff,  int threadNumber);
   
-  static void *startCalculateSSDGradientThread(void* threadParam);
-
-  static void *startCalculateSSDPEGradientThread(void* threadParam);
-  
 };
 
 

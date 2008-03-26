@@ -58,25 +58,25 @@ ntk2DData* ntk2DElasticTransformation::applyTransformation(ntkDeformationSpline*
 
   for(i=0;i<m_inputSize.x;i++){
     for(j=0;j<m_inputSize.y;j++){
-      newX=i; newY=j;
-  relPosX=(float)i*tempPow+tempPow;
-  relPosY=(float)j*tempPow+tempPow;
-  for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
-    if(a<0||a>=splineSize.x)continue;
-    for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
-      if(b<0||b>=splineSize.y)continue;
-        functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b);
-        newX+=*(splineParamBuffer+b*splineSize.x+a)*functemp;
-        newY+=*(splineParamBuffer+splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
-    
-        //printf("%d %d %lf %lf\n", i,j,newX, newY);
+        newX=i; newY=j;
+    relPosX=(float)i*tempPow+tempPow;
+    relPosY=(float)j*tempPow+tempPow;
+    for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
+      if(a<0||a>=splineSize.x)continue;
+      for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
+        if(b<0||b>=splineSize.y)continue;
+          functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b);
+          newX+=*(splineParamBuffer+b*splineSize.x+a)*functemp;
+          newY+=*(splineParamBuffer+splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+      
+          //printf("%d %d %lf %lf\n", i,j,newX, newY);
+      }
     }
-  }
-  
-  tempValue=trans->getInterpolationValue(splineInput, newX+1.0, newY+1.0);
-  if(tempValue<0)tempValue=0;
-  if(tempValue>255)tempValue=255;
-  *(outputBuffer+j*m_inputSize.x+i)=(unsigned char)tempValue;
+    
+    tempValue=trans->getInterpolationValue(splineInput, newX+1.0, newY+1.0);
+    if(tempValue<0)tempValue=0;
+    if(tempValue>255)tempValue=255;
+    *(outputBuffer+j*m_inputSize.x+i)=(unsigned char)tempValue;
 
     }
   }
@@ -116,10 +116,10 @@ ntkFloatDimension ntk2DElasticTransformation::getNewPositionFromOld(ntkDeformati
     if(a<0||a>=splineSize.x)continue;
     for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
       if(b<0||b>=splineSize.y)continue;
-    functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b);
-  newPosition.x+=*(splineParamBuffer+b*splineSize.x+a)*functemp;
-  newPosition.y+=*(splineParamBuffer+splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
-  
+      functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b);
+    newPosition.x+=*(splineParamBuffer+b*splineSize.x+a)*functemp;
+    newPosition.y+=*(splineParamBuffer+splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+    
     }
   }
 
@@ -171,22 +171,22 @@ ntk2DData* ntk2DElasticTransformation::getDeformationFieldImage(ntkDeformationSp
 
   for(i=0;i<m_inputSize.x;i++){
     for(j=0;j<m_inputSize.y;j++){
-        newX=0; newY=0;
-  relPosX=(float)i*tempPow+tempPow;
-  relPosY=(float)j*tempPow+tempPow;
-  for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
-    if(a<0||a>=splineSize.x)continue;
-    for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
-      if(b<0||b>=splineSize.y)continue;
-      functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b);
-      newX+=*(splineParamBuffer+b*splineSize.x+a)*functemp;
-      newY+=*(splineParamBuffer+splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+          newX=0; newY=0;
+    relPosX=(float)i*tempPow+tempPow;
+    relPosY=(float)j*tempPow+tempPow;
+    for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
+      if(a<0||a>=splineSize.x)continue;
+      for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
+        if(b<0||b>=splineSize.y)continue;
+        functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b);
+        newX+=*(splineParamBuffer+b*splineSize.x+a)*functemp;
+        newY+=*(splineParamBuffer+splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+      }
     }
-  }
-  tempValue=sqrt(newX*newX+newY*newY)*weight;
-  if(tempValue<0)tempValue=0;
-  if(tempValue>255)tempValue=255;
-  *(outputBuffer+j*m_inputSize.x+i)=(unsigned char)(tempValue);
+    tempValue=sqrt(newX*newX+newY*newY)*weight;
+    if(tempValue<0)tempValue=0;
+    if(tempValue>255)tempValue=255;
+    *(outputBuffer+j*m_inputSize.x+i)=(unsigned char)(tempValue);
     }
   }
   
@@ -214,19 +214,19 @@ ntkDeformationSpline *ntk2DElasticTransformation::getReverseTransformationSpline
     for(j=0;j<splineSize.y;j++){
       *(newX+j*splineSize.x+i)=(float)i; 
       *(newY+j*splineSize.x+i)=(float)j; 
-  relPosX=(float)i;
-  relPosY=(float)j;
-  for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
-    if(a<0||a>=splineSize.x)continue;
-    for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
-      if(b<0||b>=splineSize.y)continue;
-      functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b);
-      *(newX+j*splineSize.x+i)+=*(inputSplineBuffer+b*splineSize.x+a)*functemp;
-      *(newY+j*splineSize.x+i)+=*(inputSplineBuffer+splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
-      
+    relPosX=(float)i;
+    relPosY=(float)j;
+    for(a=(int)relPosX-1;a<(int)relPosX+3;a++){
+      if(a<0||a>=splineSize.x)continue;
+      for(b=(int)relPosY-1;b<(int)relPosY+3;b++){
+        if(b<0||b>=splineSize.y)continue;
+        functemp=func->getValue(relPosX-(float)a)*func->getValue(relPosY-(float)b);
+        *(newX+j*splineSize.x+i)+=*(inputSplineBuffer+b*splineSize.x+a)*functemp;
+        *(newY+j*splineSize.x+i)+=*(inputSplineBuffer+splineSize.x*splineSize.y+b*splineSize.x+a)*functemp;
+        
+      }
     }
-  }
-  //printf("%d %d %d %lf %lf %lf\n", i,j,k, *(newX+k*splineSize.x*splineSize.y+j*splineSize.x+i), *(newY+k*splineSize.x*splineSize.y+j*splineSize.x+i), *(newZ+k*splineSize.x*splineSize.y+j*splineSize.x+i));
+    //printf("%d %d %d %lf %lf %lf\n", i,j,k, *(newX+k*splineSize.x*splineSize.y+j*splineSize.x+i), *(newY+k*splineSize.x*splineSize.y+j*splineSize.x+i), *(newZ+k*splineSize.x*splineSize.y+j*splineSize.x+i));
     
     }
   }
