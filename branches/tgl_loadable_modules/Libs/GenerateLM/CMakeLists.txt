@@ -1,11 +1,11 @@
-PROJECT(GenerateCLP)
+PROJECT(GenerateLM)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
 
-FIND_PACKAGE(ModuleDescriptionParser REQUIRED)
-IF(ModuleDescriptionParser_FOUND)
-  INCLUDE(${ModuleDescriptionParser_USE_FILE})
-ENDIF(ModuleDescriptionParser_FOUND)
+FIND_PACKAGE(LoadableModule REQUIRED)
+IF(LoadableModule_FOUND)
+  INCLUDE(${LoadableModule_USE_FILE})
+ENDIF(LoadableModule_FOUND)
 
 FIND_PACKAGE(TCLAP REQUIRED)
 IF(TCLAP_FOUND)
@@ -17,31 +17,33 @@ IF(ITK_FOUND)
   INCLUDE(${ITK_USE_FILE})
 ENDIF(ITK_FOUND)
 
-INCLUDE(UseGenerateCLP.cmake)
+INCLUDE(UseGenerateLM.cmake)
 
-INCLUDE(GenerateGenerateCLPConfig.cmake)
+INCLUDE(GenerateGenerateLMConfig.cmake)
 
-# If we followed the standard pattern, UseGenerateCLP.cmake would be 
+# If we followed the standard pattern, UseGenerateLM.cmake would be 
 # a configured file
 #
-#CONFIGURE_FILE(${GenerateCLP_SOURCE_DIR}/UseGenerateCLP.cmake.in 
-#               ${GenerateCLP_BINARY_DIR}/UseGenerateCLP.cmake 
+#CONFIGURE_FILE(${GenerateLM_SOURCE_DIR}/UseGenerateLM.cmake.in 
+#               ${GenerateLM_BINARY_DIR}/UseGenerateLM.cmake 
 #               COPYONLY IMMEDIATE)
 
 
-SET (GENERATECLP_SOURCE GenerateCLP.cxx)
-ADD_EXECUTABLE ( GenerateCLP ${GENERATECLP_SOURCE})
-TARGET_LINK_LIBRARIES ( GenerateCLP
-  ModuleDescriptionParser
+SET (GENERATELM_SOURCE GenerateLM.cxx)
+ADD_EXECUTABLE ( GenerateLM ${GENERATELM_SOURCE})
+TARGET_LINK_LIBRARIES ( GenerateLM
+  LoadableModule
   itksys
   ITKEXPAT)
+
+GENERATECLP(GENERATELM_SOURCE GenerateLM.xml)
 
 IF(BUILD_TESTING)
   SUBDIRS(Testing)
 ENDIF(BUILD_TESTING)
 
-INSTALL(TARGETS GenerateCLP RUNTIME DESTINATION bin COMPONENT Development)
-INSTALL(FILES ${GenerateCLP_SOURCE_DIR}/UseGenerateCLP.cmake 
-              ${GenerateCLP_BINARY_DIR}/install/GenerateCLPConfig.cmake
-              DESTINATION lib/GenerateCLP
+INSTALL(TARGETS GenerateLM RUNTIME DESTINATION bin COMPONENT Development)
+INSTALL(FILES ${GenerateLM_SOURCE_DIR}/UseGenerateLM.cmake 
+              ${GenerateLM_BINARY_DIR}/install/GenerateLMConfig.cmake
+              DESTINATION lib/GenerateLM
               COMPONENT Development)
