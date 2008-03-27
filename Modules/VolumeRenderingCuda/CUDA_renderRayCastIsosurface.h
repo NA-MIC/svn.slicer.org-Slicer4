@@ -1,7 +1,8 @@
 #ifndef __CUDA_RayCastIsosurfaceAlgorithm_h__
 #define __CUDA_RayCastIsosurfaceAlgorithm_h__
 
-#include "CUDA_renderRayCast.h"
+#include "CUDA_matrix_math.h"
+#include "CUDA_interpolation.h"
 
 template <typename T>
 __device__ void CUDAkernel_RayCastIsosurfaceAlgorithm(const int3& index,
