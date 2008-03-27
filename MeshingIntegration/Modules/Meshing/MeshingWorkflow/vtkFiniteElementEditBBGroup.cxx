@@ -206,10 +206,10 @@ void vtkFiniteElementEditBBGroup::CreateWidget()
   this->AddButton->SetValue("Add");
   this->AddButton->SetCompoundModeToLeft();
 
-//  this->GetApplication()->Script(
-//    "pack %s -side left -anchor nw -expand 0 -padx 6 -pady 6", 
-//    this->AddButton->GetWidgetName());
-//
+  this->GetApplication()->Script(
+    "pack %s -side left -anchor nw -expand 0 -padx 6 -pady 6", 
+    this->AddButton->GetWidgetName());
+
   this->DeleteButton->SetParent(this->MainFrame->GetFrame());
   this->DeleteButton->Create();
   this->DeleteButton->SetCommand(this, "EditBBDeleteCellCallback");
@@ -221,9 +221,9 @@ void vtkFiniteElementEditBBGroup::CreateWidget()
   this->DeleteButton->SetValue("Delete");
   this->DeleteButton->SetCompoundModeToLeft();
   
-//  this->GetApplication()->Script(
-//    "pack %s -side left -anchor nw -expand 0 -padx 6 -pady 6", 
-//    this->DeleteButton->GetWidgetName());
+  this->GetApplication()->Script(
+    "pack %s -side left -anchor nw -expand 0 -padx 6 -pady 6", 
+    this->DeleteButton->GetWidgetName());
 
   this->SplitButton->SetParent(this->MainFrame->GetFrame());
   this->SplitButton->Create();
@@ -328,8 +328,12 @@ void vtkFiniteElementEditBBGroup::EditBBDoneCallback()
       if (split->GetOutput())
       {
           vtkMimxUnstructuredGridActor* newactor = vtkMimxUnstructuredGridActor::New();
+          
+          // *** is this a bug? should it be currently selected item, not last item? 
+//          vtkMimxUnstructuredGridActor* oldactor = 
+//              vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(bblist->GetNumberOfItems()-1));
           vtkMimxUnstructuredGridActor* oldactor = 
-              vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(bblist->GetNumberOfItems()-1));
+                      vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(combobox->GetValueIndex(name)));
           newactor->SetFileName(oldactor->GetFileName());
           newactor->SetDataType(oldactor->GetDataType());
           newactor->GetDataSet()->DeepCopy(split->GetOutput());
@@ -338,21 +342,20 @@ void vtkFiniteElementEditBBGroup::EditBBDoneCallback()
         this->SplitCount++;
 //        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
 //                bblist->GetNumberOfItems()-1))->SetObjectName("Split_",SplitCount);
-        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
-                bblist->GetNumberOfItems()-1))->GetDataSet()->Modified();
-
+//        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
+//                bblist->GetNumberOfItems()-1))->GetDataSet()->Modified();
         
-        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetActor());
-        this->GetMimxViewWindow()->GetRenderWidget()->RemoveViewProp(
-                bblist->GetItem(objnum)->GetActor());
-        this->ObjectListComboBox->GetWidget()->SetValue(
-                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetFileName());
-        this->ObjectListComboBox->GetWidget()->AddValue(
-                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetFileName());
-         this->GetMimxViewWindow()->GetRenderWidget()->Render();
-        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
-    this->ViewProperties->AddObjectList();
+//        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+//                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetActor());
+//        this->GetMimxViewWindow()->GetRenderWidget()->RemoveViewProp(
+//                bblist->GetItem(objnum)->GetActor());
+//        this->ObjectListComboBox->GetWidget()->SetValue(
+//                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetFileName());
+//        this->ObjectListComboBox->GetWidget()->AddValue(
+//                bblist->GetItem(bblist->GetNumberOfItems()-1)->GetFileName());
+//         this->GetMimxViewWindow()->GetRenderWidget()->Render();
+//        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+//    this->ViewProperties->AddObjectList();
       }
       idlist->Delete();
       split->Delete();
@@ -386,25 +389,25 @@ void vtkFiniteElementEditBBGroup::EditBBDoneCallback()
       if (add->GetOutput())
       {
         bblist->AppendItem(vtkMimxUnstructuredGridActor::New());
-        vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
-          this->BBoxList->GetNumberOfItems()-1))->GetDataSet()->
+        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
+          bblist->GetNumberOfItems()-1))->GetDataSet()->
           DeepCopy(add->GetOutput());
         this->AddCount++;
-        vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
                 bblist->GetNumberOfItems()-1))->SetObjectName("Add_",AddCount);
-        vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
                 bblist->GetNumberOfItems()-1))->GetDataSet()->Modified();
-        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetActor());
-        this->GetMimxViewWindow()->GetRenderWidget()->RemoveViewProp(
-                bblist->GetItem(objnum)->GetActor());
-        this->ObjectListComboBox->GetWidget()->SetValue(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
-        this->ObjectListComboBox->GetWidget()->AddValue(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
-        this->GetMimxViewWindow()->GetRenderWidget()->Render();
-        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
-        this->ViewProperties->AddObjectList();
+//        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+//                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetActor());
+//        this->GetMimxViewWindow()->GetRenderWidget()->RemoveViewProp(
+//                bblist->GetItem(objnum)->GetActor());
+//        this->ObjectListComboBox->GetWidget()->SetValue(
+//                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
+//        this->ObjectListComboBox->GetWidget()->AddValue(
+//                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
+//        this->GetMimxViewWindow()->GetRenderWidget()->Render();
+//        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+//        this->ViewProperties->AddObjectList();
       }
       idlist->Delete();
       add->Delete();
@@ -423,7 +426,7 @@ void vtkFiniteElementEditBBGroup::EditBBDoneCallback()
       vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
       const char *name = combobox->GetValue();
       vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
-        this->BBoxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+        bblist->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
       vtkMimxDeleteUnstructuredHexahedronGridCell *del = 
         vtkMimxDeleteUnstructuredHexahedronGridCell::New();
       del->SetInput(ugrid);
@@ -433,25 +436,25 @@ void vtkFiniteElementEditBBGroup::EditBBDoneCallback()
       if (del->GetOutput())
       {
           bblist->AppendItem(vtkMimxUnstructuredGridActor::New());
-        vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
                 bblist->GetNumberOfItems()-1))->GetDataSet()->
           DeepCopy(del->GetOutput());
         this->DeleteCount++;
-        vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
                 bblist->GetNumberOfItems()-1))->SetObjectName("Delete_",DeleteCount);
-        vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+        vtkMimxUnstructuredGridActor::SafeDownCast(bblist->GetItem(
                 bblist->GetNumberOfItems()-1))->GetDataSet()->Modified();
-        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetActor());
-        this->GetMimxViewWindow()->GetRenderWidget()->RemoveViewProp(
-                bblist->GetItem(objnum)->GetActor());
-        this->ObjectListComboBox->GetWidget()->SetValue(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
-        this->ObjectListComboBox->GetWidget()->AddValue(
-                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
-        this->GetMimxViewWindow()->GetRenderWidget()->Render();
-        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
-        this->ViewProperties->AddObjectList();
+//        this->GetMimxViewWindow()->GetRenderWidget()->AddViewProp(
+//                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetActor());
+//        this->GetMimxViewWindow()->GetRenderWidget()->RemoveViewProp(
+//                bblist->GetItem(objnum)->GetActor());
+//        this->ObjectListComboBox->GetWidget()->SetValue(
+//                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
+//        this->ObjectListComboBox->GetWidget()->AddValue(
+//                bblist->GetItem(this->BBoxList->GetNumberOfItems()-1)->GetFileName());
+//        this->GetMimxViewWindow()->GetRenderWidget()->Render();
+//        this->GetMimxViewWindow()->GetRenderWidget()->ResetCamera();
+//        this->ViewProperties->AddObjectList();
       }
       del->Delete();
       }
@@ -478,13 +481,15 @@ void vtkFiniteElementEditBBGroup::EditBBDeleteCellCallback()
 {
   if(strcmp(this->ObjectListComboBox->GetWidget()->GetValue(),""))
   {
+    vtkFiniteElementBoundingBoxList* mrmlBboxList = (vtkFiniteElementBoundingBoxList*)(this->BBoxList);
+
     if(this->DeleteButtonState)
     {
       vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
       const char *name = combobox->GetValue();
       int num = combobox->GetValueIndex(name);
-      vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList
-        ->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+      vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
+              mrmlBboxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
       if(this->ExtractCellWidget)
       {
         if(this->ExtractCellWidget->GetEnabled())
@@ -498,8 +503,7 @@ void vtkFiniteElementEditBBGroup::EditBBDeleteCellCallback()
       this->ExtractCellWidget->SetInteractor(this->GetMimxViewWindow()->GetRenderWidget()
         ->GetRenderWindowInteractor());
       this->ExtractCellWidget->SetInput(ugrid);
-      this->ExtractCellWidget->SetInputActor(this->BBoxList
-        ->GetItem(combobox->GetValueIndex(name))->GetActor());
+      this->ExtractCellWidget->SetInputActor(mrmlBboxList->GetItem(combobox->GetValueIndex(name))->GetActor());
       this->ExtractCellWidget->SetEnabled(1);
       this->DeleteButtonState = 0;
     }
@@ -511,12 +515,12 @@ void vtkFiniteElementEditBBGroup::EditBBDeleteCellCallback()
         const char *name = combobox->GetValue();
         int num = combobox->GetValueIndex(name);
         vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
-          this->BBoxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+                mrmlBboxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
         this->ExtractCellWidget = vtkMimxExtractCellWidget::New();
         this->ExtractCellWidget->SetInteractor(this->GetMimxViewWindow()->GetRenderWidget()
           ->GetRenderWindowInteractor());
         this->ExtractCellWidget->SetInput(ugrid);
-        this->ExtractCellWidget->SetInputActor(this->BBoxList
+        this->ExtractCellWidget->SetInputActor(mrmlBboxList
           ->GetItem(combobox->GetValueIndex(name))->GetActor());
         this->ExtractCellWidget->SetEnabled(1);
         this->DeleteButtonState = 0;
@@ -598,7 +602,7 @@ void vtkFiniteElementEditBBGroup::EditBBSplitCellCallback()
         const char *name = combobox->GetValue();
         int num = combobox->GetValueIndex(name);
         vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
-          this->BBoxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+                mrmlBboxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
         this->ExtractEdgeWidget = vtkMimxExtractEdgeWidget::New();
         this->ExtractEdgeWidget->SetInteractor(this->GetMimxViewWindow()->GetRenderWidget()->GetRenderWindowInteractor());
         this->ExtractEdgeWidget->SetInput(ugrid);
@@ -645,12 +649,14 @@ void vtkFiniteElementEditBBGroup::EditBBAddCellCallback()
 {
   if(strcmp(this->ObjectListComboBox->GetWidget()->GetValue(),""))
   {
+    vtkFiniteElementBoundingBoxList* mrmlBboxList = (vtkFiniteElementBoundingBoxList*)(this->BBoxList);
+
     if(this->AddButtonState)
     {
       vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
       const char *name = combobox->GetValue();
       int num = combobox->GetValueIndex(name);
-      vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList
+      vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(mrmlBboxList
         ->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
       if(this->ExtractFaceWidget)
       {
@@ -665,7 +671,7 @@ void vtkFiniteElementEditBBGroup::EditBBAddCellCallback()
       this->ExtractFaceWidget->SetInteractor(this->GetMimxViewWindow()->GetRenderWidget()
         ->GetRenderWindowInteractor());
       this->ExtractFaceWidget->SetInput(ugrid);
-    this->ExtractFaceWidget->SetInputActor(this->BBoxList
+    this->ExtractFaceWidget->SetInputActor(mrmlBboxList
       ->GetItem(combobox->GetValueIndex(name))->GetActor());
       this->ExtractFaceWidget->SetEnabled(1);
       this->AddButtonState = 0;
@@ -678,12 +684,12 @@ void vtkFiniteElementEditBBGroup::EditBBAddCellCallback()
         const char *name = combobox->GetValue();
         int num = combobox->GetValueIndex(name);
         vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
-          this->BBoxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+                mrmlBboxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
         this->ExtractFaceWidget = vtkMimxExtractFaceWidget::New();
         this->ExtractFaceWidget->SetInteractor(this->GetMimxViewWindow()->GetRenderWidget()
           ->GetRenderWindowInteractor());
         this->ExtractFaceWidget->SetInput(ugrid);
-    this->ExtractFaceWidget->SetInputActor(this->BBoxList
+    this->ExtractFaceWidget->SetInputActor(mrmlBboxList
       ->GetItem(combobox->GetValueIndex(name))->GetActor());
         this->ExtractFaceWidget->SetEnabled(1);
         this->AddButtonState = 0;
@@ -697,6 +703,16 @@ void vtkFiniteElementEditBBGroup::EditBBAddCellCallback()
       }
     }
   }
+  // *** added to try to eliminate left-over faces in slicer
+//  if(ExtractFaceWidget)
+//  {
+//    if(ExtractFaceWidget->GetEnabled())
+//    {
+//        ExtractFaceWidget->SetEnabled(0);
+//      return;
+//    }
+//  }
+  
   if(UnstructuredGridWidget)
   {
     if(UnstructuredGridWidget->GetEnabled())
@@ -726,6 +742,8 @@ void vtkFiniteElementEditBBGroup::EditBBAddCellCallback()
 void vtkFiniteElementEditBBGroup::EditBBMoveCellCallback()
 {
     vtkDebugMacro("reached vtkFiniteElementEditBBGroup::EditBBMoveCellCallback");
+    vtkFiniteElementBoundingBoxList* mrmlBboxList = (vtkFiniteElementBoundingBoxList*)(this->BBoxList);
+
     if(strcmp(this->ObjectListComboBox->GetWidget()->GetValue(),""))
     {
       if(this->MoveButtonState)
@@ -733,7 +751,7 @@ void vtkFiniteElementEditBBGroup::EditBBMoveCellCallback()
         vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
         const char *name = combobox->GetValue();
         int num = combobox->GetValueIndex(name);
-        vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList
+        vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(mrmlBboxList
           ->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
         if(this->UnstructuredGridWidget)
         {
@@ -758,7 +776,7 @@ void vtkFiniteElementEditBBGroup::EditBBMoveCellCallback()
           vtkKWComboBox *combobox = this->ObjectListComboBox->GetWidget();
           const char *name = combobox->GetValue();
           int num = combobox->GetValueIndex(name);
-          vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList
+          vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(mrmlBboxList
             ->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
           this->UnstructuredGridWidget = vtkMimxUnstructuredGridWidget::New();
           this->UnstructuredGridWidget->SetUGrid(ugrid);
