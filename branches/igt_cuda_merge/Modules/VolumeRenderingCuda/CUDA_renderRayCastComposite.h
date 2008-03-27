@@ -1,44 +1,8 @@
 #ifndef __CUDA_RayCastCompositeAlgorithm_h__
 #define __CUDA_RayCastCompositeAlgorithm_h__
 
-#include "CUDA_renderRayCast.h"
-
-template <typename T> class CUDAkernel_Interpolate_NearestNaighbor
-{
-public:
-    __device__ float operator()(const void* SourceData, const int3& VolumeSize, const float3& Pos)
-    {
-        return ((T*)SourceData)[(int)(__float2int_rn(Pos.z)*VolumeSize.x*VolumeSize.y + 
-            __float2int_rn(Pos.y)*VolumeSize.x +
-            __float2int_rn(Pos.x))];
-    }
-};
-
-template <typename T> class CUDAkernel_Interpolate_Trilinear
-{
-public:
-    __device__ float operator()(const void* SourceData, const int3& VolumeSize, const float3& Pos)
-    {
-        float posX = Pos.x - __float2int_rd(Pos.x);
-        float posY = Pos.y - __float2int_rd(Pos.y);
-        float posZ = Pos.z - __float2int_rd(Pos.z);
-
-        int base = __float2int_rd((Pos.z)) * VolumeSize.x * VolumeSize.y + 
-            __float2int_rd((Pos.y)) * VolumeSize.x +
-            __float2int_rd((Pos.x));
-
-        return interpolate(posX, posY, posZ,
-            ((T*)SourceData)[base],
-            ((T*)SourceData)[(int)(base + VolumeSize.x * VolumeSize.y)],
-            ((T*)SourceData)[(int)(base + VolumeSize.x)],
-            ((T*)SourceData)[(int)(base + VolumeSize.x * VolumeSize.y + VolumeSize.x)],
-            ((T*)SourceData)[(int)(base + 1)],
-            ((T*)SourceData)[(int)(base + VolumeSize.x * VolumeSize.y + 1)],
-            ((T*)SourceData)[(int)(base + VolumeSize.x + 1)],
-            ((T*)SourceData)[(int)(base + VolumeSize.x * VolumeSize.y + VolumeSize.x + 1)]);
-    }
-};
-
+#include "CUDA_matrix_math.h"
+#include "CUDA_interpolation.h"
 
 template <class T, template<class T> class InterpolationMethod> class CUDAkernel_RayCastCompositeAlgorithm
 {

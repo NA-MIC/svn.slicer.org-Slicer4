@@ -15,6 +15,7 @@ extern "C" {
 #include "CUDA_renderRayCastComposite.h"
 #include "CUDA_renderRayCastMIP.h"
 #include "CUDA_renderRayCastIsosurface.h"
+#include "CuVector3.h"
 
 // vtk includes
 //#include "vtkType.h"
@@ -31,12 +32,7 @@ extern "C" {
 #define BLOCK_DIM2D 16// this must be set to 4 or more
 #define SQR(X) ((X) * (X) )
 
-__device__ void MatMul(const float mat[4][4], float3* out, float inX, float inY, float inZ)
-{
-    out->x = mat[0][0] * inX + mat[0][1] * inY + mat[0][2] * inZ + mat[0][3] * 1.0;
-    out->y = mat[1][0] * inX + mat[1][1] * inY + mat[1][2] * inZ + mat[1][3] * 1.0;
-    out->z = mat[2][0] * inX + mat[2][1] * inY + mat[2][2] * inZ + mat[2][3] * 1.0;
-}
+
 
 __device__ void CUDAkernel_SetRayMap(const int3& index, float3* raymap, const cudaRendererInformation& renInfo)
 {

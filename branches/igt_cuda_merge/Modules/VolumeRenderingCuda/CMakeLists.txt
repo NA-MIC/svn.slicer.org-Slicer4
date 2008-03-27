@@ -42,10 +42,11 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
   
   SET(VolumeRenderingCudaModule_CUDA_SRCS
       CUDA_renderAlgo.cu
-      CUDA_renderRayCast.h
       CUDA_renderRayCastComposite.h
       CUDA_renderRayCastMIP.h
       CUDA_renderRayCastIsosurface.h
+      CUDA_interpolation.h
+      CUDA_matrix_math.h
   )
 
 #-----------------------------------------------
@@ -75,6 +76,8 @@ INCLUDE_DIRECTORIES(
  CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR} 
                            ${FOUND_CUT_INCLUDE}
                            ${VTK_INCLUDE_DIRS}
+                           ${CudaSupport_SOURCE_DIR}
+
  )
 
 # --------------------------------------------------------------------------
