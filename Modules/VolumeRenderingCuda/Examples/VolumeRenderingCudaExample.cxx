@@ -338,9 +338,11 @@ void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void
     //    VolumeMapper->SetThreshold(ThresholdRange->GetRange());
     //else if (caller == SteppingSizeScale)
     //    VolumeMapper->SetSampleDistance(SteppingSizeScale->GetValue());
-    //else if (caller == ScaleFactorScale)
-    //    VolumeMapper->SetRenderOutputScaleFactor(ScaleFactorScale->GetValue());
-
+    if (caller == ScaleFactorScale)
+    {
+        vtkCudaVolumeMapper* mapper = vtkCudaVolumeMapper::SafeDownCast(VolumeMapper);
+        if (mapper != NULL) mapper->SetRenderOutputScaleFactor(ScaleFactorScale->GetValue());
+    }
     //renderWidget->SetRenderModeToInteractive();
     //    VolumeMapper->SetInput(clippers[0]->GetOutput());
     //app->Script("after 10 %s Render", renderWidget->GetTclName());

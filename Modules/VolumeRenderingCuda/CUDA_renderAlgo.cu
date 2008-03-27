@@ -106,7 +106,9 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     int outindex = index.x + index.y * renInfo.Resolution.x; // index of result image
     s_remainingOpacity[index.z] = 1.0;
     if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y){
-        s_zBuffer[index.z] = renInfo.ZBuffer[renInfo.Resolution.x - index.x + index.y * renInfo.Resolution.x];// (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
+        s_zBuffer[index.z] = renInfo.ZBuffer[renInfo.ActualResolution.x - index.x * renInfo.ActualResolution.x / renInfo.Resolution.x + 
+            index.y * renInfo.ActualResolution.x * renInfo.ActualResolution.x / renInfo.Resolution.x ];
+        // (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
     } else /* outside of screen */ {
         s_zBuffer[index.z]=0;
     }

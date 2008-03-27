@@ -25,7 +25,7 @@ vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
     this->RendererInfo.ActualResolution.x = this->RendererInfo.ActualResolution.y = 0;
     this->MemoryTexture = vtkCudaMemoryTexture::New();
 
-    this->SetRenderOutputScaleFactor(1.0f);
+    this->SetRenderOutputScaleFactor(2.0f);
 }
 
 vtkCudaRendererInformationHandler::~vtkCudaRendererInformationHandler()
@@ -155,7 +155,7 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.ClippingRange.y = (float)clipRange[1];
 
         // Update the Z-Buffer
-        renWin->GetZbufferData(0,0,this->RendererInfo.Resolution.x-1, this->RendererInfo.Resolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
+        renWin->GetZbufferData(0,0,this->RendererInfo.ActualResolution.x-1, this->RendererInfo.ActualResolution.y-1, this->LocalZBuffer.GetMemPointerAs<float>());
         this->LocalZBuffer.CopyTo(&this->CudaZBuffer);
         this->RendererInfo.ZBuffer = CudaZBuffer.GetMemPointerAs<float>();
     }
