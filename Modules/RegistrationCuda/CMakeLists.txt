@@ -17,7 +17,6 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
         ntk2DDataResizer.cpp
         ntk2DElasticRegistration.cpp
         ntk2DElasticTransformation.cpp
-        ntk3DDSFFiltering.cpp
         ntk3DData.cpp
         ntk3DData16.cpp
         ntk3DDataCropper.cpp
@@ -35,15 +34,11 @@ INCLUDE(${CMAKE_SOURCE_DIR}/CMake/cuda/FindCuda.cmake)
         ntkElasticTransformation.cpp
         ntkElasticTransformationCUDA.cpp
         ntkElasticityMap.cpp
-        ntkFiltering.cpp
-        ntkGaussianFiltering.cpp
         ntkLinearTransformation.cpp
         ntkLinearTransformationCUDA.cpp
         ntkMISimilarityMeasure.cpp
         ntkMISimilarityMeasureCUDA.cpp
         ntkMatrix.cpp
-        ntkMedianFiltering.cpp
-        ntkMedianFilteringCUDA.cpp
         ntkProperties.cpp
         ntkRegistration.cpp
         ntkRigidRegistration.cpp
