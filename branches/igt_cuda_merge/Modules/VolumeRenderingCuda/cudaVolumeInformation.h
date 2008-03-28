@@ -35,9 +35,6 @@ typedef struct __align__(16) {
     //! The Maximum Threshold of the Input Color Value
     int             MaxThreshold;
 
-    //! The Voxel Sizes called Spacing by VTK.
-    float3          Spacing;
-
     //! The stepping accuracy to raster along the ray.
     float           SampleDistance;
 

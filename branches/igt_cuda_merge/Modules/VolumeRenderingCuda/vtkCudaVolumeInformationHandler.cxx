@@ -173,9 +173,6 @@ void vtkCudaVolumeInformationHandler::UpdateImageData()
     this->VolumeInfo.MinMaxValue[4] = (float)extent[4];
     this->VolumeInfo.MinMaxValue[5] = (float)extent[5];
 
-    this->VolumeInfo.Spacing.x = (float)spacing[0];
-    this->VolumeInfo.Spacing.y = (float)spacing[1];
-    this->VolumeInfo.Spacing.z = (float)spacing[2];
     this->VolumeInfo.VolumeSize.x = dims[0];
     this->VolumeInfo.VolumeSize.y = dims[1];
     this->VolumeInfo.VolumeSize.z = dims[2];
