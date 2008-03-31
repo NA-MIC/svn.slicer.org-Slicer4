@@ -173,7 +173,7 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkGUI : public vtkSlicerModuleGUI
 
   vtkKWEntry*          ConnectorNameEntry;
   vtkKWRadioButtonSet* ConnectorTypeButtonSet;
-  vtkKWRadioButtonSet* ConnectorStatusButtonSet;
+  vtkKWCheckButton*    ConnectorStatusCheckButton;
   vtkKWEntry*          ConnectorAddressEntry;
   vtkKWEntry*          ConnectorPortEntry;
 
