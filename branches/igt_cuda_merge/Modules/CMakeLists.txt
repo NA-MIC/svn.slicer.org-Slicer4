@@ -17,6 +17,7 @@ SUBDIRS(
   QdecModule
   QueryAtlas
   Tractography
+  Ultrasound
   VolumeRendering
   VolumeRenderingCuda
   Statistics
