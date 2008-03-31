@@ -7,7 +7,8 @@
 #include "vtkKWCheckButton.h"
 #include "vtkKWMenuButton.h"
 #include "vtkKWMenu.h"
-
+#include "vtkKWScaleWithLabel.h"
+#include "vtkKWLabel.h"
 
 #include "vtkSlicerApplication.h"
 #include "vtkImageData.h"
@@ -24,12 +25,21 @@ vtkStandardNewMacro(vtkUltrasoundModuleGUI);
 vtkUltrasoundModuleGUI::vtkUltrasoundModuleGUI()
 {
     // Initialize Values
-    
+    this->cb_Enabled = NULL;
+    this->sc_RefreshRate = NULL;
+    this->cb_Scanning = NULL;
+    this->Logic = NULL;
+    this->Node = NULL;
 
 }
 
 vtkUltrasoundModuleGUI::~vtkUltrasoundModuleGUI()
 {
+    if (this->cb_Enabled != NULL)
+    this->cb_Enabled->Delete();
+    if (this->sc_RefreshRate != NULL)
+        this->sc_RefreshRate->Delete();
+
 }
 
 
@@ -70,7 +80,15 @@ void vtkUltrasoundModuleGUI::BuildGUI ( )
     this->cb_Enabled->Create();
     this->cb_Enabled->SetText("Enabled");
     app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-        cb_Enabled->GetWidgetName());
+        this->cb_Enabled->GetWidgetName());
+
+    this->sc_RefreshRate = vtkKWScaleWithLabel::New();
+    this->sc_RefreshRate->SetParent(usFrame->GetFrame());
+    this->sc_RefreshRate->Create();
+
+    this->sc_RefreshRate->GetLabel()->SetText("Refresh Rate");
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        this->sc_RefreshRate->GetWidgetName());
 
 }
 

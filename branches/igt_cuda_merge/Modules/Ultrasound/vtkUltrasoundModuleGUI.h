@@ -6,7 +6,7 @@
 
 class vtkUltrasoundModuleLogic;
 class vtkKWCheckButton;
-
+class vtkKWScaleWithLabel;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundModuleGUI : public vtkSlicerModuleGUI
 {
@@ -83,9 +83,13 @@ private:
 private:
     vtkKWCheckButton*           cb_Enabled;
 
+    vtkKWScaleWithLabel*        sc_RefreshRate;
+
     vtkKWCheckButton*           cb_Scanning;
 
     vtkUltrasoundModuleLogic*   Logic;
+
+    vtkMRMLVolumeNode*          Node;
 
     
 };
