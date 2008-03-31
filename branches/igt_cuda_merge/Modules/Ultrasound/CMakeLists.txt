@@ -9,7 +9,9 @@ if(ULTRASOUNDMODULE)
   SET(UltrasoundModule_SRCS
     vtkUltrasoundModuleGUI.cxx
     vtkUltrasoundModuleLogic.cxx
-  )
+    
+    vtkMRMLUltrasoundNode.cxx
+)
 
 #-----------------------------------------------
 # Include dirs
@@ -75,7 +77,6 @@ ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(UltrasoundModule
   ${UltrasoundModule_LIBRARIES}
-#  ${UltrasoundModule_CudaLibrary}
   )
 
 
