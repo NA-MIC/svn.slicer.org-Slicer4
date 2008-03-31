@@ -480,7 +480,7 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
 
     //check if texture mapping is supported important to do it after registry
     //otherwise show textmessage
-#if !defined(USE_CUDA_VOLUME_MAPPER)
+#if !defined(VOLUMERENDERINGCUDAMODULE_DEBUG)
     int supportTexture = true;
 #else
     int supportTexture = this->MapperTexture->IsRenderSupported(this->Gui->GetCurrentNode()->GetVolumeProperty());
