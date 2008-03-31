@@ -100,6 +100,10 @@ SET(dir_list
   ${QueryAtlas_BINARY_DIR}
   ${QueryAtlas_Init_SOURCE_DIR}
   ${QueryAtlas_Init_BINARY_DIR}
+  ${UltrasoundModule_SOURCE_DIR}
+  ${UltrasoundModule_BINARY_DIR}
+  ${UltrasoundModule_Init_SOURCE_DIR}
+  ${UltrasoundModule_Init_BINARY_DIR}
   ${VolumeRenderingModule_SOURCE_DIR}
   ${VolumeRenderingModule_BINARY_DIR}
   ${VolumeRenderingModule_Init_SOURCE_DIR}
@@ -189,6 +193,15 @@ ELSE(WFENGINEMODULE)
 ADD_DEFINITIONS(-DWFENGINE_DEBUG)
 ENDIF(WFENGINEMODULE)
 
+
+# Option for Ultrasound Module
+IF(ULTRASOUNDMODULE)
+ SET(ULTRASOUNDMODULE_LINK_LIB UltrasoundModule)
+ELSE(ULTRASOUNDMODULE)
+ ADD_DEFINITIONS(-DULTRASOUNDMODULE_DEBUG)
+ENDIF(ULTRASOUNDMODULE)
+
+
 # Option for VolumeRendering
 IF(VOLUMERENDERINGMODULE)
  SET(VOLUMERENDERINGMODULE_LINK_LIB VolumeRenderingModule)
@@ -232,6 +245,7 @@ IF(BUILD_MODULES)
     EMSegment
     #   RealTimeImaging
     #   MRAblation
+    ${ULTRASOUNDMODULE_LINK_LIB}
     ${VOLUMERENDERINGMODULE_LINK_LIB}
     ${VOLUMERENDERINGCUDAMODULE_LINK_LIB}
     ${CUDASUPPORTMODULE_LINK_LIB}

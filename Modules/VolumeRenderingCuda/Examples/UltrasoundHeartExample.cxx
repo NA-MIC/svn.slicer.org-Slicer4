@@ -35,11 +35,14 @@
 #include "vtkVolumeTextureMapper3D.h"
 
 vtkKWApplication *app;
+extern "C" int Ultrasoundlibrary_Init(Tcl_Interp *interp);
 
 int my_main(int argc, char *argv[])
 {
     // Initialize Tcl
     Tcl_Interp *interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr);
+    Ultrasoundlibrary_Init(interp);
+    
     if (!interp)
     {
         cerr << "Error: InitializeTcl failed" << endl ;

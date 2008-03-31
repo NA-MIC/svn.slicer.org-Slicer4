@@ -9,7 +9,7 @@
 #include "vtkKWMenu.h"
 
 
-
+#include "vtkSlicerApplication.h"
 #include "vtkImageData.h"
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLScalarVolumeDisplayNode.h"
@@ -24,6 +24,7 @@ vtkStandardNewMacro(vtkUltrasoundModuleGUI);
 vtkUltrasoundModuleGUI::vtkUltrasoundModuleGUI()
 {
     // Initialize Values
+    
 
 }
 
@@ -44,6 +45,33 @@ void vtkUltrasoundModuleGUI::ProcessLogicEvents ( vtkObject *caller, unsigned lo
 /// GUI part
 void vtkUltrasoundModuleGUI::BuildGUI ( )
 {
+    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+    this->GetUIPanel()->AddPage("Ultrasound", "Ultrasound",NULL);
+
+    // Define your help text and build the help frame here.
+    const char *help = "Ultrasound. This is currently a prototype and will be under active development throughout 3DSlicer's Beta release.";
+    const char *about = "This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details.";
+    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Ultrasound" );
+    this->BuildHelpAndAboutFrame ( page, help, about );
+    //
+    //Ultrasound 
+    //
+    vtkSlicerModuleCollapsibleFrame *usFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+    usFrame->SetParent (page);
+    usFrame->Create();
+    usFrame->ExpandFrame();
+    usFrame->SetLabelText("Ultrasound");
+    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        usFrame->GetWidgetName());
+
+
+    this->cb_Enabled = vtkKWCheckButton::New();
+    this->cb_Enabled->SetParent(usFrame->GetFrame());
+    this->cb_Enabled->Create();
+    this->cb_Enabled->SetText("Enabled");
+    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        cb_Enabled->GetWidgetName());
+
 }
 
 // This method releases references and key-bindings,

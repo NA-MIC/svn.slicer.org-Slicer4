@@ -155,6 +155,12 @@ extern "C" {
 #include "vtkQueryAtlasGUI.h"
 #endif
 
+#if !defined(ULTRASOUNDMODULE_DEBUG) && defined(BUILD_MODULES)
+#include "vtkMRMLUltrasoundNode.h"
+#include "vtkUltrasoundModuleGUI.h"
+#include "vtkUltrasoundModuleLogic.h"
+#endif
+
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
 #include "vtkMRMLVolumeRenderingNode.h"
 #include "vtkVolumeRenderingModuleGUI.h"
@@ -235,6 +241,9 @@ extern "C" int Slicertractographyfiducialseeding_Init(Tcl_Interp *interp);
 #endif
 #if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Queryatlas_Init(Tcl_Interp *interp);
+#endif
+#if !defined(ULTRASOUNDMODULE_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Ultrasoundmodule_Init(Tcl_Interp *interp);
 #endif
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Volumerenderingmodule_Init(Tcl_Interp *interp);
@@ -731,7 +740,12 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     Qdecmodule_Init(interp);
 #endif
- #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+#if !defined(ULTRASOUNDMODULE_DEBUG) && defined(BUILD_MODULES)
+    Ultrasoundmodule_Init(interp);
+    //Also the replacements
+    //Ultrasoundreplacements_Init(interp),
+#endif
+#if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
     Volumerenderingmodule_Init(interp);
     //Also the replacements
     Volumerenderingreplacements_Init(interp),
@@ -1436,6 +1450,33 @@ int Slicer3_main(int argc, char *argv[])
     qdecModuleGUI->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
 #endif
 
+    
+#if !defined(ULTRASOUNDMODULE_DEBUG) && defined(BUILD_MODULES)
+
+    slicerApp->SplashMessage("Initializing Ultrasound Module...");
+    //VolumeRenderingModule
+    vtkUltrasoundModuleGUI *usModuleGUI = vtkUltrasoundModuleGUI::New ( );
+    vtkUltrasoundModuleLogic *usModuleLogic  = vtkUltrasoundModuleLogic::New ( );
+    usModuleLogic->SetAndObserveMRMLScene ( scene );
+    usModuleLogic->SetApplicationLogic ( appLogic );
+    usModuleLogic->SetMRMLScene(scene);
+        //TODO Quick and dirty
+    vtkMRMLUltrasoundNode *usNode=vtkMRMLUltrasoundNode::New();
+    scene->RegisterNodeClass(usNode);
+    usNode->Delete();
+    usModuleGUI->SetLogic(usModuleLogic);
+    usModuleGUI->SetApplication ( slicerApp );
+    usModuleGUI->SetApplicationLogic ( appLogic );
+    usModuleGUI->SetApplicationGUI ( appGUI );
+    usModuleGUI->SetGUIName( "Ultrasound" );
+    usModuleGUI->GetUIPanel()->SetName ( usModuleGUI->GetGUIName ( ) );
+    usModuleGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    usModuleGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( usModuleGUI );
+    usModuleGUI->BuildGUI ( );
+    //usModuleGUI->AddGUIObservers ( );
+#endif
+
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
 
     slicerApp->SplashMessage("Initializing Volume Rendering Module...");
@@ -1793,6 +1834,10 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     name = qdecModuleGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set QdecModuleGUI %s", name);
+#endif
+#if !defined (ULTRASOUNDMODULE_DEBUG) && defined (BUILD_MODULES)
+    name = usModuleGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set VRModuleGUI %s", name);
 #endif
 #if !defined (VOLUMERENDERINGMODULE_DEBUG) && defined (BUILD_MODULES)
     name = vrModuleGUI->GetTclName();
@@ -2152,6 +2197,9 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     qdecModuleGUI->TearDownGUI ( );
 #endif
+#if !defined(ULTRASOUNDMODULE_DEBUG) && defined(BUILD_MODULES)
+    usModuleGUI->TearDownGUI ( );
+#endif
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
     vrModuleGUI->TearDownGUI ( );
 #endif
@@ -2278,6 +2326,10 @@ int Slicer3_main(int argc, char *argv[])
 
 #if !defined(QDEC_DEBUG) && defined(BUILD_MODULES)
     qdecModuleGUI->Delete ( );
+#endif
+
+#if !defined(ULTRASOUNDMODULE_DEBUG) && defined(BUILD_MODULES)
+    usModuleGUI->Delete ( );
 #endif
 
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
@@ -2412,7 +2464,11 @@ int Slicer3_main(int argc, char *argv[])
     qdecModuleLogic->SetAndObserveMRMLScene ( NULL );
     qdecModuleLogic->Delete ( );
 #endif
-   #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
+   #if !defined(ULTRASOUNDMODULE_DEBUG) && defined(BUILD_MODULES)
+    usModuleLogic->SetAndObserveMRMLScene ( NULL );
+    usModuleLogic->Delete ( );
+#endif   
+    #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
     vrModuleLogic->SetAndObserveMRMLScene ( NULL );
     vrModuleLogic->Delete ( );
 #endif
