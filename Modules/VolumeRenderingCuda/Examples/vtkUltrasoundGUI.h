@@ -13,7 +13,7 @@ class vtkKWVolumePropertyWidget;
 class vtkKWCheckButton;
 class vtkKWRenderWidget;
 
-class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundGUI : public vtkKWWindow
+class VTK_ULTRASOUNDLIBRARY_EXPORT vtkUltrasoundGUI : public vtkKWWindow
 {
     vtkTypeRevisionMacro(vtkUltrasoundGUI, vtkKWWindow);
     static vtkUltrasoundGUI *New();
