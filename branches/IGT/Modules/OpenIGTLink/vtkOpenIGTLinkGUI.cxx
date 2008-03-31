@@ -1539,13 +1539,9 @@ void vtkOpenIGTLinkGUI::UpdateConnectorList(int updateLevel)
       // Adjust number of rows
       int numRows = this->ConnectorList->GetWidget()->GetNumberOfRows();
       int numConnectors = this->GetLogic()->GetNumberOfConnectors();
-      std::cerr << "***********************Number of Rows : " << numRows << std::endl;
-      std::cerr << "***********************Number of Cons : " << numConnectors << std::endl;
-
       if (numRows < numConnectors)
         {
           this->ConnectorList->GetWidget()->AddRows(numConnectors-numRows);
-          std::cerr << "***********************Rows are added : " << numConnectors-numRows << std::endl;
         }
       else
         {

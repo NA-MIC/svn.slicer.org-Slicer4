@@ -108,6 +108,14 @@ int vtkIGTLConnector::Start()
   this->ServerStopFlag = false;
   this->ThreadID = this->Thread->SpawnThread(vtkIGTLConnector::ThreadFunction, this);
 
+  // Following line is necessary in some Linux environment,
+  // since it takes for a while for the thread to update
+  // this->State to non STATE_OFF value. This causes error
+  // after calling vtkIGTLConnector::Start() in ProcessGUIEvent()
+  // in vtkOpenIGTLinkGUI class.
+  this->State = STATE_WAIT_CONNECTION;
+  
+
   return 1;
 }
 
