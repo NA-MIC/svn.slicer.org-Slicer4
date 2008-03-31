@@ -23,17 +23,17 @@ SET(ULTRASOUND_EXAMPLE_SRCS
 ## WRAPPING
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(UltrasoundModule
+VTK_WRAP_TCL3(UltrasoundLibrary
          ULTRASOUND_EXAMPLE_TCL_SRCS 
          "${ULTRASOUND_EXAMPLE_SRCS}" 
          "")
 
-ADD_LIBRARY(UltrasoundModule
+ADD_LIBRARY(UltrasoundLibrary
   ${ULTRASOUND_EXAMPLE_SRCS}
   ${ULTRASOUND_EXAMPLE_TCL_SRCS}
 )
 
-TARGET_LINK_LIBRARIES(UltrasoundModule
+TARGET_LINK_LIBRARIES(UltrasoundLibrary
   vtkITK
   vtkCommonTCL
   vtkImagingTCL
@@ -43,7 +43,7 @@ TARGET_LINK_LIBRARIES(UltrasoundModule
 )
 
 IF(BUILD_SHARED_LIBS)
-  INSTALL(TARGETS UltrasoundModule
+  INSTALL(TARGETS UltrasoundLibrary
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
       LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
       ARCHIVE DESTINATION lib COMPONENT Development)
@@ -55,7 +55,7 @@ ADD_EXECUTABLE(UltrasoundHeartExample
 )
 
 TARGET_LINK_LIBRARIES(UltrasoundHeartExample
-  UltrasoundModule
+  UltrasoundLibrary
   ${KWWidgets_LIBRARIES}
 )
 
