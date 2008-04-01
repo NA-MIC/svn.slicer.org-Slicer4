@@ -19,8 +19,8 @@
 #include "itkOrientImageFilter.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
-#include "itkTransformFileReaderWithFactory.h"
-#include "itkTransformFileWriterWithFactory.h"
+#include "itkTransformFileReader.h"
+#include "itkTransformFileWriter.h"
 
 #include "itkRegularStepGradientDescentOptimizer.h"
 #include "itkImageFileWriter.h"
