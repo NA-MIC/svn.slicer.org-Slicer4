@@ -127,12 +127,16 @@ itcl::body LoadVolume::constructor {} {
 
   set fileTable [$o(browser) GetFileListTable]
   $fileTable SetSelectionModeToSingle
+  set tag [$fileTable AddObserver DeleteEvent "itcl::delete $this"]
+  lappend _observerRecords [list $fileTable $tag]
   set tag [$fileTable AddObserver AnyEvent "$this processEvent $o(browser)"]
   lappend _observerRecords [list $fileTable $tag]
 
   set directoryExplorer [$o(browser) GetDirectoryExplorer]
+  set tag [$directoryExplorer AddObserver DeleteEvent "itcl::delete $this"]
+  lappend _observerRecords [list $directoryExplorer $tag]
   set tag [$directoryExplorer AddObserver AnyEvent "$this processEvent $o(browser)"]
-  lappend _observerRecords [list $fileTable $tag]
+  lappend _observerRecords [list $directoryExplorer $tag]
 
   #
   # the current Path
@@ -141,8 +145,10 @@ itcl::body LoadVolume::constructor {} {
   $o(path) SetParent $o(topFrame)
   $o(path) SetLabelText "Path: "
   $o(path) Create
+  set tag [[$o(path) GetWidget] AddObserver DeleteEvent "itcl::delete $this"]
+  lappend _observerRecords [list [$o(path) GetWidget] $tag]
   set tag [[$o(path) GetWidget] AddObserver AnyEvent "$this processEvent $o(path)"]
-  lappend _observerRecords [list $fileTable $tag]
+  lappend _observerRecords [list [$o(path) GetWidget] $tag]
 
 
   #
@@ -172,18 +178,26 @@ itcl::body LoadVolume::constructor {} {
   $o(label) SetText "Label Map"
   $o(label) Create
 
+  set o(singlefile) [vtkNew vtkKWCheckButton]
+  $o(singlefile) SetParent [$o(options) GetFrame]
+  $o(singlefile) SetText "Single File"
+  $o(singlefile) Create
+
   set o(name) [vtkNew vtkKWEntryWithLabel]
   $o(name) SetParent [$o(options) GetFrame]
   $o(name) SetLabelText "Name: "
   $o(name) Create
 
-  pack \
-    [$o(centered) GetWidgetName] \
-    [$o(label) GetWidgetName] \
-    [$o(name) GetWidgetName] \
+  pack [$o(centered) GetWidgetName] \
+    -side left -anchor e -padx 2 -pady 2 -expand true -fill both
+
+  pack [$o(label) GetWidgetName] \
+    -side left -anchor e -padx 2 -pady 2 -expand true -fill both
+  pack [$o(singlefile) GetWidgetName] \
+    -side left -anchor e -padx 2 -pady 2 -expand true -fill both
+
+  pack [$o(name) GetWidgetName] \
     -side top -anchor e -padx 2 -pady 2 -expand true -fill both
-
-
 
   #
   # a status label
@@ -256,6 +270,10 @@ itcl::body LoadVolume::apply { } {
 
   set centered [$o(centered) GetSelectedState]
   set labelMap [$o(label) GetSelectedState]
+  set singleFile [$o(singlefile) GetSelectedState]
+
+  set loadingOptions [expr $labelMap * 1 + $centered * 2 + $singleFile * 4]
+
   set fileTable [$o(browser) GetFileListTable]
   set fileName [$fileTable GetNthSelectedFileName 0]
   if { $fileName == "" } {
@@ -267,7 +285,7 @@ itcl::body LoadVolume::apply { } {
   }
 
   set volumeLogic [$::slicer3::VolumesGUI GetLogic]
-  set ret [catch [list $volumeLogic AddArchetypeVolume "$fileName" $centered $labelMap $name] node]
+  set ret [catch [list $volumeLogic AddArchetypeVolume "$fileName" $name $loadingOptions] node]
   if { $ret } {
     $this errorDialog "Could not load $fileName as a volume\n\nError is:\n$node"
     return

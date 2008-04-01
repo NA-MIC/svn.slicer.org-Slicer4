@@ -125,7 +125,7 @@ int vtkMRMLModelStorageNode::ReadData(vtkMRMLNode *refNode)
     }
 
   Superclass::StageReadData(refNode);
-  if ( this->GetReadState() == this->Pending )
+  if ( this->GetReadState() != this->Ready )
     {
     // remote file download hasn't finished
     return 0;
@@ -301,4 +301,49 @@ int vtkMRMLModelStorageNode::WriteData(vtkMRMLNode *refNode)
     }
   
   return result;
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLModelStorageNode::SupportedFileType(const char *fileName)
+{
+  // check to see which file name we need to check
+  std::string name;
+  if (fileName)
+    {
+    name = std::string(fileName);
+    }
+  else if (this->FileName != NULL)
+    {
+    name = std::string(this->FileName);
+    }
+  else if (this->URI != NULL)
+    {
+    name = std::string(this->URI);
+    }
+  else
+    {
+    vtkWarningMacro("SupportedFileType: no file name to check");
+    return 0;
+    }
+  
+  std::string::size_type loc = name.find_last_of(".");
+  if( loc == std::string::npos ) 
+    {
+    vtkErrorMacro("SupportedFileType: no file extension specified");
+    return 0;
+    }
+  std::string extension = name.substr(loc);
+
+  vtkDebugMacro("SupportedFileType: extension = " << extension.c_str());
+  if (extension.compare(".vtk") == 0 ||
+      extension.compare(".vtp") == 0 ||
+      extension.compare(".g") == 0 ||
+      extension.compare(".stl") == 0 )
+    {
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
 }

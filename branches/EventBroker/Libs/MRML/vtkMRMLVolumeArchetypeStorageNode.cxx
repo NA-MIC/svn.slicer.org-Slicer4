@@ -129,7 +129,6 @@ void vtkMRMLVolumeArchetypeStorageNode::ProcessParentNode(vtkMRMLNode *parentNod
 }
 
 //----------------------------------------------------------------------------
-
 int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
 {
 
@@ -139,23 +138,29 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
     return 0;         
     }
-  if (this->GetFileName() == NULL) 
+  if (this->GetFileName() == NULL && this->GetURI() == NULL) 
     {
-      return 0;
+    vtkErrorMacro("ReadData: both filename and uri are null.");
+    return 0;
     }
-
+  
+  Superclass::StageReadData(refNode);
+  if ( this->GetReadState() != this->Ready )
+    {
+    // remote file download hasn't finished
+    vtkWarningMacro("ReadData: read state is pending, remote download hasn't finished yet");
+    return 0;
+    }
+  else
+    {
+    vtkDebugMacro("ReadData: read state is ready, URI = " << (this->GetURI() == NULL ? "null" : this->GetURI()) << ", filename = " << (this->GetFileName() == NULL ? "null" : this->GetFileName()));
+    }
+  
   std::string fullName = this->GetFullNameFromFileName();
 
   if (fullName == std::string("")) 
     {
-    vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
-    return 0;
-    }
-
-  Superclass::StageReadData(refNode);
-  if ( this->GetReadState() == this->Pending )
-    {
-    // remote file download hasn't finished
+    vtkErrorMacro("ReadData: File name not specified");
     return 0;
     }
   
@@ -166,6 +171,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     {
     volNode = dynamic_cast <vtkMRMLScalarVolumeNode *> (refNode);
     reader = vtkITKArchetypeImageSeriesScalarReader::New();  
+    reader->SetSingleFile( this->GetSingleFile() );
     }
   else if ( refNode->IsA("vtkMRMLVectorVolumeNode") ) 
     {
@@ -178,6 +184,9 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     //
     vtkITKArchetypeImageSeriesVectorReaderFile *readerFile = vtkITKArchetypeImageSeriesVectorReaderFile::New();
     vtkITKArchetypeImageSeriesVectorReaderSeries *readerSeries = vtkITKArchetypeImageSeriesVectorReaderSeries::New();
+
+    readerFile->SetSingleFile( this->GetSingleFile() );
+    readerSeries->SetSingleFile( this->GetSingleFile() );
 
     readerFile->SetArchetype(fullName.c_str());
     try 
@@ -208,8 +217,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
 
     }
 
-  vtkEventBroker::GetInstance()->AddObservation( 
-    reader, vtkCommand::ProgressEvent, this, this->MRMLCallbackCommand);
+  reader->AddObserver( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
 
   if (volNode->GetImageData()) 
     {
@@ -237,6 +245,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     catch (...)
     {
     vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file: " << fullName.c_str() );
+    reader->RemoveObservers( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
     reader->Delete();
     return 0;
     }
@@ -248,7 +257,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     return 0;
     }
   // set volume attributes
-  volNode->SetStorageNodeID(this->GetID());
+  volNode->SetAndObserveStorageNodeID(this->GetID());
   volNode->SetMetaDataDictionary( reader->GetMetaDataDictionary() );
   //TODO update scene to send Modified event
  
@@ -261,6 +270,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   if (ici->GetOutput() == NULL)
     {
     vtkErrorMacro("vtkMRMLVolumeArchetypeStorageNode: Cannot read file: " << fullName.c_str() );
+    reader->RemoveObservers( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
     reader->Delete();
     ici->Delete();
     return 0;
@@ -277,6 +287,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     }
   volNode->SetRASToIJKMatrix(mat);
 
+  reader->RemoveObservers( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
   reader->Delete();
   ici->Delete();
 
@@ -309,7 +320,7 @@ int vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
   std::string fullName = this->GetFullNameFromFileName();  
   if (fullName == std::string("")) 
     {
-    vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
+    vtkErrorMacro("WriteData: File name not specified");
     return 0;
     }
   vtkITKImageWriter *writer = vtkITKImageWriter::New();
@@ -339,4 +350,31 @@ int vtkMRMLVolumeArchetypeStorageNode::WriteData(vtkMRMLNode *refNode)
   
   return result;
 
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLVolumeArchetypeStorageNode::SupportedFileType(const char *fileName)
+{
+  // check to see which file name we need to check
+  std::string name;
+  if (fileName)
+    {
+    name = std::string(fileName);
+    }
+  else if (this->FileName != NULL)
+    {
+    name = std::string(this->FileName);
+    }
+  else if (this->URI != NULL)
+    {
+    name = std::string(this->URI);
+    }
+  else
+    {
+    vtkWarningMacro("SupportedFileType: no file name to check");
+    return 0;
+    }
+
+  // for now, return 1
+  return 1;
 }

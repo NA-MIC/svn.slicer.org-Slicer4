@@ -18,6 +18,10 @@
 #include "vtkSlicerFiducialsLogic.h"
 #include "vtkSlicerColorLogic.h"
 #include "vtkMRMLScene.h"
+#include "vtkCacheManager.h"
+#include "vtkDataIOManager.h"
+#include "vtkDataIOManagerLogic.h"
+#include "vtkSlicerCacheAndDataIOManagerGUI.h"
 #include "vtkSlicerComponentGUI.h"
 #include "vtkSlicerApplicationGUI.h"
 #include "vtkSlicerSlicesGUI.h"
@@ -92,6 +96,14 @@ extern "C" {
 //#define QDEC_DEBUG
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
+//#define REMOTEIO_DEBUG
+
+// comment out next line to enable Loadable Modules support
+#define LOADABLEMODULES_DEBUG
+
+#if !defined(LOADABLEMODULES_DEBUG)
+#include <LoadableModuleFactory.h>
+#endif
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 #include "vtkSlicerFiberBundleLogic.h"
@@ -161,6 +173,10 @@ extern "C" {
 #include "vtkLabelStatisticsLogic.h"
 #endif
 
+#if !defined(REMOTEIO_DEBUG)
+#include "vtkHTTPHandler.h"
+#include "vtkSRBHandler.h"
+#endif
 
 //
 // note: always write to cout rather than cerr so log messages will
@@ -238,6 +254,9 @@ extern "C" int Scriptedmodule_Init(Tcl_Interp *interp);
 #endif
 #ifndef LABELSTATISTICS_DEBUG
 extern "C" int Labelstatistics_Init(Tcl_Interp *interp);
+#endif
+#ifndef VOLUMES_DEBUG
+extern "C" int Volumes_Init(Tcl_Interp *interp);
 #endif
 
 struct SpacesToUnderscores
@@ -698,6 +717,16 @@ int Slicer3_main(int argc, char *argv[])
     Igt_Init(interp);
     Vtkteem_Init(interp);
 
+// if defined, then call explicitly, otherwise, loadable module support
+// will handle these LM-compatible modules
+#ifdef LOADABLEMODULES_DEBUG
+
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
+    Gradientanisotropicdiffusionfilter_Init(interp);
+#endif
+    
+#endif // LOADABLEMODULES_DEBUG
+
 #if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
     Emsegment_Init(interp);
 #endif
@@ -718,11 +747,6 @@ int Slicer3_main(int argc, char *argv[])
     //Also the replacements
     Volumerenderingreplacements_Init(interp),
 #endif
-    
-#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
-    Gradientanisotropicdiffusionfilter_Init(interp);
-#endif
-
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     Slicertractographydisplay_Init(interp);
     Slicertractographyfiducialseeding_Init(interp);
@@ -741,6 +765,9 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 #if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
     Labelstatistics_Init(interp);
+#endif
+    #if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
+    Volumes_Init(interp);
 #endif
 
   // first call to GetInstance will create the Application
@@ -860,11 +887,11 @@ int Slicer3_main(int argc, char *argv[])
 
     if ( Stereo )
       {
-      slicerApp->SetStereoEnabled(1);
+        slicerApp->SetStereoEnabled(1);
       } 
     else 
       {
-      slicerApp->SetStereoEnabled(0);
+        slicerApp->SetStereoEnabled(0);
       }
     
     // -- event broker
@@ -900,18 +927,136 @@ int Slicer3_main(int argc, char *argv[])
     appGUI->SetAndObserveMRMLScene ( scene );
 
     // set fonts from registry before building GUI...
-/*
-    if ( appGUI->GetMainSlicerWindow()->GetApplicationSettingsInterface() )
+    /*
+      if ( appGUI->GetMainSlicerWindow()->GetApplicationSettingsInterface() )
       {
       slicerApp->GetSlicerTheme()->InstallFonts();
       }
-*/
+    */
     slicerApp->SaveUserInterfaceGeometryOn();
 
+
+    // Create Remote I/O and Cache handling mechanisms
+    // and configure them using Application registry values
+    vtkCacheManager *cacheManager = vtkCacheManager::New();
+    cacheManager->SetRemoteCacheLimit ( slicerApp->GetRemoteCacheLimit() );
+    cacheManager->SetRemoteCacheFreeBufferSize ( slicerApp->GetRemoteCacheFreeBufferSize() );
+    cacheManager->SetEnableForceRedownload ( slicerApp->GetEnableForceRedownload() );
+    cacheManager->SetMRMLScene ( scene );
+    //cacheManager->SetEnableRemoteCacheOverwriting ( slicerApp->GetEnableRemoteCacheOverwriting() );
+    //--- MRML collection of data transfers with access to cache manager
+    vtkDataIOManager *dataIOManager = vtkDataIOManager::New();
+    dataIOManager->SetCacheManager ( cacheManager );
+    dataIOManager->SetEnableAsynchronousIO ( slicerApp->GetEnableAsynchronousIO () );
+    //--- Data transfer logic
+    vtkDataIOManagerLogic *dataIOManagerLogic = vtkDataIOManagerLogic::New();
+    dataIOManagerLogic->SetMRMLScene ( scene );
+    dataIOManagerLogic->SetApplicationLogic ( appLogic );
+    dataIOManagerLogic->SetAndObserveDataIOManager ( dataIOManager );
+
+
+    scene->SetDataIOManager ( dataIOManager );
+    scene->SetCacheManager( cacheManager );
+    vtkCollection *URIHandlerCollection = vtkCollection::New();
+    // add some new handlers
+    
+    
+    scene->SetURIHandlerCollection( URIHandlerCollection );
+#if !defined(REMOTEIO_DEBUG)
+    // register all existing uri handlers (add to collection)
+    vtkHTTPHandler *httpHandler = vtkHTTPHandler::New();
+    scene->AddURIHandler(httpHandler);
+    httpHandler->Delete();
+
+    vtkSRBHandler *srbHandler = vtkSRBHandler::New();
+    scene->AddURIHandler(srbHandler);
+    srbHandler->Delete();
+#endif
+
+    // build the application GUI
     appGUI->BuildGUI ( );
     appGUI->AddGUIObservers ( );
     slicerApp->SetApplicationGUI ( appGUI );
+    slicerApp->ConfigureRemoteIOSettingsFromRegistry();
 
+    // Set cache paths for modules
+
+    std::string cachePath;
+    std::string defaultCachePath;
+    std::string userCachePath;
+
+    // define a default cache for module information
+    defaultCachePath = slicerBinDir + "/../lib/Slicer3/PluginsCache";
+    if (hasIntDir)
+      {
+        defaultCachePath += "/" + intDir;
+      }
+      
+    // get the cache path that the user has configured
+    if (slicerApp->GetModuleCachePath())
+      {
+        userCachePath = slicerApp->GetModuleCachePath();
+      }
+
+    // if user cache path is set and we can write to it, use it.
+    // if user cache path is not set or we cannot write to it, try
+    // the default cache path.
+    // if we cannot write to the default cache path, then warn and
+    // don't use a cache.
+    vtksys::Directory directory;
+    if (userCachePath != "")
+      {
+        if (!vtksys::SystemTools::FileExists(userCachePath.c_str()))
+          {
+            vtksys::SystemTools::MakeDirectory(userCachePath.c_str());
+          }
+        if (vtksys::SystemTools::FileExists(userCachePath.c_str())
+            && vtksys::SystemTools::FileIsDirectory(userCachePath.c_str()))
+          {
+            std::ofstream tst((userCachePath + "/tstCache.txt").c_str());
+            if (tst)
+              {
+                cachePath = userCachePath;
+              }
+          }
+      }
+    if (cachePath == "")
+      {
+        if (!vtksys::SystemTools::FileExists(defaultCachePath.c_str()))
+          {
+            vtksys::SystemTools::MakeDirectory(defaultCachePath.c_str());
+          }
+        if (vtksys::SystemTools::FileExists(defaultCachePath.c_str())
+            && vtksys::SystemTools::FileIsDirectory(defaultCachePath.c_str()))
+          {
+            std::ofstream tst((defaultCachePath + "/tstCache.txt").c_str());
+            if (tst)
+              {
+                cachePath = defaultCachePath;
+              }
+          }
+      }
+    if (ClearModuleCache)
+      {
+        std::string cacheFile = cachePath + "/ModuleCache.csv";
+        vtksys::SystemTools::RemoveFile(cacheFile.c_str());
+      }
+    if (NoModuleCache)
+      {
+        cachePath = "";
+      }
+    if (cachePath == "")
+      {
+        if (NoModuleCache)
+          {
+            std::cout << "Module cache disabled by command line argument."
+                      << std::endl;
+          }
+        else
+          {
+            std::cout << "Module cache disabled. Slicer application directory may not be writable, a user level cache directory may not be set, or the user level cache directory may not be writable." << std::endl;
+          }
+      }
 
     
     // ------------------------------
@@ -929,11 +1074,100 @@ int Slicer3_main(int argc, char *argv[])
     // If we need to collect them at some point, we should define 
     // other collections in the vtkSlicerApplication class.
 
+#if !defined(LOADABLEMODULES_DEBUG)
+    std::string slicerModulePath = slicerBinDir;
+
+    if (hasIntDir)
+    {
+      slicerModulePath += "/" + intDir;
+    }
+
+    LoadableModuleFactory loadableModuleFactory;
+    loadableModuleFactory.SetName("Slicer");
+    loadableModuleFactory.SetSearchPath( slicerModulePath );
+    loadableModuleFactory.SetWarningMessageCallback( WarningMessage );
+    loadableModuleFactory.SetErrorMessageCallback( ErrorMessage );
+    loadableModuleFactory.SetInformationMessageCallback( InformationMessage );
+    loadableModuleFactory.SetModuleDiscoveryMessageCallback( SplashMessage );
+    loadableModuleFactory.Scan();
+    
+    std::vector<std::string> loadableModuleNames = 
+      loadableModuleFactory.GetModuleNames();
+    std::vector<std::string>::const_iterator lmit =
+      loadableModuleNames.begin();
+    
+    while (lmit != loadableModuleNames.end())
+      {
+        LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+        slicerApp->SplashMessage(desc.GetMessage().c_str());
+
+        vtkSlicerModuleGUI* gui = desc.GetGUIPtr();
+        vtkSlicerModuleLogic* logic = desc.GetLogicPtr();
+
+        logic->SetAndObserveMRMLScene( scene );
+        logic->SetApplicationLogic( appLogic );
+        logic->SetMRMLScene( scene );
+
+        gui->SetModuleLogic ( logic );
+        gui->SetApplication( slicerApp );
+        gui->SetApplicationLogic( appLogic );
+        gui->SetApplicationGUI( appGUI );
+        gui->SetGUIName( desc.GetGUIName().c_str() );
+        gui->GetUIPanel()->SetName( gui->GetGUIName ( ) );
+        gui->GetUIPanel()->SetUserInterfaceManager( appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+        gui->GetUIPanel()->Create( );
+        
+        slicerApp->AddModuleGUI( gui );
+        
+        gui->BuildGUI ( );
+        gui->AddGUIObservers ( );
+ 
+        // add the pointer to the viewer widget, for observing pick events
+        // gui->SetViewerWidget(appGUI->GetViewerWidget());
+        // gui->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
+
+        // Initialize TCL
+
+        TclInit Tcl_Init = desc.GetTclInitFunction();
+
+        if (Tcl_Init != 0)
+        {
+          (*Tcl_Init)(interp);
+        }
+
+        lmit++;
+      }
+#else
+
+#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
+    // --- Gradient anisotropic diffusion filter module
+    slicerApp->SplashMessage("Initializing Gradient Anisotropic Module...");
+    vtkGradientAnisotropicDiffusionFilterGUI *gradientAnisotropicDiffusionFilterGUI = vtkGradientAnisotropicDiffusionFilterGUI::New ( );
+    vtkGradientAnisotropicDiffusionFilterLogic *gradientAnisotropicDiffusionFilterLogic  = vtkGradientAnisotropicDiffusionFilterLogic::New ( );
+    gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( scene );
+    gradientAnisotropicDiffusionFilterLogic->SetApplicationLogic ( appLogic );
+    //    gradientAnisotropicDiffusionFilterLogic->SetMRMLScene(scene);
+    gradientAnisotropicDiffusionFilterGUI->SetLogic ( gradientAnisotropicDiffusionFilterLogic );
+    gradientAnisotropicDiffusionFilterGUI->SetApplication ( slicerApp );
+    gradientAnisotropicDiffusionFilterGUI->SetApplicationLogic ( appLogic );
+    gradientAnisotropicDiffusionFilterGUI->SetApplicationGUI ( appGUI );
+    gradientAnisotropicDiffusionFilterGUI->SetGUIName( "GradientAnisotropicDiffusionFilter" );
+    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->SetName ( gradientAnisotropicDiffusionFilterGUI->GetGUIName ( ) );
+    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( gradientAnisotropicDiffusionFilterGUI );
+    gradientAnisotropicDiffusionFilterGUI->BuildGUI ( );
+    gradientAnisotropicDiffusionFilterGUI->AddGUIObservers ( );
+#endif
+
+#endif // LOADABLEMODULES_DEBUG
+
     // ADD INDIVIDUAL MODULES
     // (these require appGUI to be built):
     // --- Volumes module
 
-#ifndef VOLUMES_DEBUG
+#if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
     slicerApp->SplashMessage("Initializing Volumes Module...");
 
     vtkSlicerVolumesLogic *volumesLogic = vtkSlicerVolumesLogic::New ( );
@@ -1207,27 +1441,6 @@ int Slicer3_main(int argc, char *argv[])
     appGUI->InitializeViewControlGUI();
 //    appGUI->InitializeNavigationWidget();
 
-#if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
-    // --- Gradient anisotropic diffusion filter module
-    slicerApp->SplashMessage("Initializing Gradient Anisotropic Module...");
-    vtkGradientAnisotropicDiffusionFilterGUI *gradientAnisotropicDiffusionFilterGUI = vtkGradientAnisotropicDiffusionFilterGUI::New ( );
-    vtkGradientAnisotropicDiffusionFilterLogic *gradientAnisotropicDiffusionFilterLogic  = vtkGradientAnisotropicDiffusionFilterLogic::New ( );
-    gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( scene );
-    gradientAnisotropicDiffusionFilterLogic->SetApplicationLogic ( appLogic );
-    //    gradientAnisotropicDiffusionFilterLogic->SetMRMLScene(scene);
-    gradientAnisotropicDiffusionFilterGUI->SetLogic ( gradientAnisotropicDiffusionFilterLogic );
-    gradientAnisotropicDiffusionFilterGUI->SetApplication ( slicerApp );
-    gradientAnisotropicDiffusionFilterGUI->SetApplicationLogic ( appLogic );
-    gradientAnisotropicDiffusionFilterGUI->SetApplicationGUI ( appGUI );
-    gradientAnisotropicDiffusionFilterGUI->SetGUIName( "GradientAnisotropicDiffusionFilter" );
-    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->SetName ( gradientAnisotropicDiffusionFilterGUI->GetGUIName ( ) );
-    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    gradientAnisotropicDiffusionFilterGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( gradientAnisotropicDiffusionFilterGUI );
-    gradientAnisotropicDiffusionFilterGUI->BuildGUI ( );
-    gradientAnisotropicDiffusionFilterGUI->AddGUIObservers ( );
-#endif
-
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     // --- Tractography Display module
     slicerApp->SplashMessage("Initializing Tractography Display Module...");
@@ -1447,6 +1660,18 @@ int Slicer3_main(int argc, char *argv[])
     labelStatsGUI->AddGUIObservers ( );
 #endif
 
+
+    //
+    //--- Cache and RemoteIO ManagerGUI
+    //
+#if !defined (REMOTEIO_DEBUG)
+    vtkSlicerCacheAndDataIOManagerGUI *remoteIOGUI = vtkSlicerCacheAndDataIOManagerGUI::New();
+    remoteIOGUI->SetApplication ( slicerApp);
+    remoteIOGUI->SetAndObserveCacheManager ( scene->GetCacheManager() );
+    remoteIOGUI->SetAndObserveDataIOManager ( scene->GetDataIOManager() );
+    remoteIOGUI->Enter();
+#endif
+
 #if !defined(DAEMON_DEBUG) && defined(BUILD_MODULES)
     //
     // --- SlicerDaemon Module
@@ -1506,83 +1731,6 @@ int Slicer3_main(int argc, char *argv[])
       // add the default plugin directory (based on the slicer
       // installation or build tree) to the user path
       packagePath = userPackagePath + delim + defaultPackageDir;
-
-      std::string cachePath;
-      std::string defaultCachePath;
-      std::string userCachePath;
-
-      // define a default cache for module information
-      defaultCachePath = slicerBinDir + "/../lib/Slicer3/PluginsCache";
-      if (hasIntDir)
-        {
-        defaultCachePath += "/" + intDir;
-        }
-      
-      // get the cache path that the user has configured
-      if (slicerApp->GetModuleCachePath())
-        {
-        userCachePath = slicerApp->GetModuleCachePath();
-        }
-
-      // if user cache path is set and we can write to it, use it.
-      // if user cache path is not set or we cannot write to it, try
-      // the default cache path.
-      // if we cannot write to the default cache path, then warn and
-      // don't use a cache.
-      vtksys::Directory directory;
-      if (userCachePath != "")
-        {
-        if (!vtksys::SystemTools::FileExists(userCachePath.c_str()))
-          {
-          vtksys::SystemTools::MakeDirectory(userCachePath.c_str());
-          }
-        if (vtksys::SystemTools::FileExists(userCachePath.c_str())
-            && vtksys::SystemTools::FileIsDirectory(userCachePath.c_str()))
-          {
-          std::ofstream tst((userCachePath + "/tstCache.txt").c_str());
-          if (tst)
-            {
-            cachePath = userCachePath;
-            }
-          }
-        }
-      if (cachePath == "")
-        {
-        if (!vtksys::SystemTools::FileExists(defaultCachePath.c_str()))
-          {
-          vtksys::SystemTools::MakeDirectory(defaultCachePath.c_str());
-          }
-        if (vtksys::SystemTools::FileExists(defaultCachePath.c_str())
-            && vtksys::SystemTools::FileIsDirectory(defaultCachePath.c_str()))
-          {
-          std::ofstream tst((defaultCachePath + "/tstCache.txt").c_str());
-          if (tst)
-            {
-            cachePath = defaultCachePath;
-            }
-          }
-        }
-      if (ClearModuleCache)
-        {
-        std::string cacheFile = cachePath + "/ModuleCache.csv";
-        vtksys::SystemTools::RemoveFile(cacheFile.c_str());
-        }
-      if (NoModuleCache)
-        {
-        cachePath = "";
-        }
-      if (cachePath == "")
-        {
-        if (NoModuleCache)
-          {
-          std::cout << "Module cache disabled by command line argument."
-                    << std::endl;
-          }
-        else
-          {
-          std::cout << "Module cache disabled. Slicer application directory may not be writable, a user level cache directory may not be set, or the user level cache directory may not be writable." << std::endl;
-          }
-        }
 
       // Search for modules
       ModuleFactory moduleFactory;
@@ -1649,6 +1797,32 @@ int Slicer3_main(int argc, char *argv[])
     const char *name;
     name = appGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ApplicationGUI %s", name);
+
+#ifndef LOADABLEMODULES_DEBUG
+    lmit = loadableModuleNames.begin();
+    
+    while (lmit != loadableModuleNames.end())
+      {
+        LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+        vtkSlicerModuleGUI* gui = desc.GetGUIPtr();
+
+        name = gui->GetTclName();
+        std::string format("namespace eval slicer3 set ");
+        format += desc.GetShortName();
+        format += "GUI %s";
+
+        slicerApp->Script (format.c_str(), name);        
+
+        lmit++;
+      }
+#endif
+
+#ifndef REMOTEIO_DEBUG
+    name = remoteIOGUI->GetTclName();
+    slicerApp->Script ("namespace eval slicer3 set RemoteIOGUI %s", name);
+#endif
+    
 #ifndef SLICES_DEBUG
     name = slicesGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set SlicesGUI %s", name);
@@ -1928,21 +2102,14 @@ int Slicer3_main(int argc, char *argv[])
           appLogic->GetMRMLScene()->SetURL(fileName.c_str());
           // and then load it
           slicerApp->SplashMessage("Set scene url, connecting...");
-          int errorCode = appLogic->GetMRMLScene()->Connect();
-          if (errorCode != 1)
-            {
-            slicerCerr("ERROR loading MRML file " << fileName << ", error code = " << errorCode << endl);
-            }
-          else
-            {
-            slicerApp->SplashMessage("Connected to scene.");
-            }
+          std::string cmd = "after idle {update; $::slicer3::MRMLScene Connect}";
+          res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
           }                    
         else if (fileName.find(".xml",0) != std::string::npos
                  || fileName.find(".XML",0) != std::string::npos)
           {
           // if it's an xml file, load it
-          std::string cmd = "after idle {ImportSlicer2Scene \"" + *argit + "\"}";
+          std::string cmd = "after idle {update; ImportSlicer2Scene \"" + *argit + "\"}";
           slicerApp->SplashMessage("Importing Slicer2 scene...");
           res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
           slicerApp->SplashMessage("Imported scene.");
@@ -1952,20 +2119,20 @@ int Slicer3_main(int argc, char *argv[])
           {
           // if it's an xcede file, load it
           slicerApp->SplashMessage("Importing Xcede catalog ...");
-          std::string cmd = "after idle {XcedeCatalogImport \"" + *argit + "\"}";
+          std::string cmd = "after idle {update; XcedeCatalogImport \"" + *argit + "\"}";
           res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
           slicerApp->SplashMessage("Imported catalog.");
           }
         else if (fileName.find(".tcl",0) != std::string::npos)
           {
           // if it's a tcl file source it after the app starts
-          std::string cmd = "after idle {source " + *argit + "}";
+          std::string cmd = "after idle {update; source " + *argit + "}";
           res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
           }
         else
           {
           // if we're not sure, assume it is data to load...
-          std::string cmd = "::Loader::ShowDialog \"" + *argit + "\"";
+          std::string cmd = "after idle {update; ::Loader::ShowDialog \"" + *argit + "\"}";
           res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
           }
         ++argit;
@@ -1978,7 +2145,7 @@ int Slicer3_main(int argc, char *argv[])
     if ( LoadDicomDir != "" )
       {    
       // load either a directory or an archetype
-      std::string cmd = "::Loader::LoadArchetype " + LoadDicomDir;
+      std::string cmd = "after idle {update; ::Loader::LoadArchetype \"" + LoadDicomDir + "\"}";
       res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
       }
 
@@ -2007,10 +2174,25 @@ int Slicer3_main(int argc, char *argv[])
 
     // ------------------------------
     // REMOVE OBSERVERS and references to MRML and Logic
+
+#ifndef LOADABLEMODULES_DEBUG
+  lmit = loadableModuleNames.begin();
+  while (lmit != loadableModuleNames.end()) {
+    LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+    desc.GetGUIPtr()->TearDownGUI();
+    desc.GetGUIPtr()->RemoveGUIObservers();
+
+    lmit++;
+  }
+#else
+
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterGUI->RemoveGUIObservers ( );
 #endif
     
+#endif// LOADABLEMODULES_DEBUG
+
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerTractographyDisplayGUI->RemoveGUIObservers ( );
     slicerTractographyFiducialSeedingGUI->RemoveGUIObservers ( );
@@ -2131,11 +2313,61 @@ int Slicer3_main(int argc, char *argv[])
     // ------------------------------
     // DELETE 
     
-    //--- delete gui first, removing Refs to Logic and MRML
+    //
+    //--- Cache and RemoteIO ManagerGUI
+    //
+#if !defined (REMOTEIO_DEBUG)
+    remoteIOGUI->SetAndObserveDataIOManager ( NULL );
+    remoteIOGUI->SetAndObserveCacheManager ( NULL );
+    remoteIOGUI->TearDownGUI();
+    remoteIOGUI->Delete();
+#endif
+
+    //--- Remote data handling mechanisms
+    if ( dataIOManagerLogic != NULL )
+      {
+      dataIOManagerLogic->SetAndObserveDataIOManager ( NULL );
+      dataIOManagerLogic->SetMRMLScene ( NULL );
+      dataIOManagerLogic->Delete();
+      dataIOManagerLogic = NULL;
+      }
+    if ( dataIOManager != NULL )
+      {
+      dataIOManager->Delete();
+      dataIOManager = NULL;
+      }
+    if ( cacheManager != NULL )
+      {
+      cacheManager->SetMRMLScene ( NULL );
+      cacheManager->Delete();
+      cacheManager = NULL;
+      }
+    if (URIHandlerCollection != NULL )
+      {
+      URIHandlerCollection->Delete();
+      URIHandlerCollection = NULL;
+      }
+
+    
+//--- delete gui first, removing Refs to Logic and MRML
+    
+#ifndef LOADABLEMODULES_DEBUG
+  lmit = loadableModuleNames.begin();
+  while (lmit != loadableModuleNames.end()) {
+    LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+    desc.GetGUIPtr()->Delete();
+
+    lmit++;
+  }
+#else
+
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterGUI->Delete ();
 #endif
     
+#endif// LOADABLEMODULES_DEBUG
+
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerTractographyDisplayGUI->Delete ();
     slicerTractographyFiducialSeedingGUI->Delete ();
@@ -2241,10 +2473,26 @@ int Slicer3_main(int argc, char *argv[])
     //--- delete logic next, removing Refs to MRML
     appLogic->ClearCollections ( );
 
+#ifndef LOADABLEMODULES_DEBUG
+  lmit = loadableModuleNames.begin();
+  while (lmit != loadableModuleNames.end()) {
+    LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+
+    vtkSlicerModuleLogic* logic = desc.GetLogicPtr();
+
+    logic->SetAndObserveMRMLScene( NULL );
+    logic->Delete();
+
+    lmit++;
+  }
+#else
+
 #if !defined(GAD_DEBUG) && defined(BUILD_MODULES)
     gradientAnisotropicDiffusionFilterLogic->SetAndObserveMRMLScene ( NULL );
     gradientAnisotropicDiffusionFilterLogic->Delete ();
 #endif
+
+#endif// LOADABLEMODULES_DEBUG
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     slicerFiberBundleLogic->SetAndObserveMRMLScene ( NULL );

@@ -65,49 +65,21 @@ class VTK_MRML_EXPORT vtkMRMLFreeSurferModelStorageNode : public vtkMRMLModelSto
   // Description:
   // Get node XML tag name (like Storage, Model)
   virtual const char* GetNodeTagName()  {return "FreeSurferModelStorage";};
-
-
-  // Description:
-  // Get the number of overlay files
-  int GetNumberOfOverlayFiles();
   
-  // Description:
-  // Add an overlay file name to the collection of those associated with this
-  // storage node, checks for duplicates first
-  void AddOverlayFileName (const char *fileName);
-
-  // Description:
-  // Remove an overlay file name (used if remove an array)
-  void RemoveOverlayFileName (const char *fileName);
-
-  // Description:
-  // Go through the current list of overlay files and load them.
-  // Returns number of files sucessfully reloaded
-  int ReloadOverlayFiles( vtkMRMLNode *refNode );
-  
-  // Description:
-  // Get the ith overlay file name, 0 indexed, return NULL if out of range
-  const char *GetOverlayFileName(int i);
-
   // Description:
   // Control use of the triangle stipper when reading the polydata
   vtkGetMacro(UseStripper, int);
   vtkSetMacro(UseStripper, int);
   
   // Description:
-  // Set/Get the surface file name (the super class variable will be over
-  // written if this storage node is used to load overlays)
-  vtkSetStringMacro(SurfaceFileName);
-  vtkGetStringMacro(SurfaceFileName);
-
+  // Add a known file extension
 //BTX
-  // Description:
-  // Add a known overlay file extension
-  void AddOverlayFileExtension(std::string ext);
+  void AddFileExtension(std::string ext);
   // Description:
   // returns true if on the list, false otherwise
-  bool IsKnownOverlayFileExtension(std::string ext);
+  bool IsKnownFileExtension(std::string ext);
 //ETX
+  virtual int SupportedFileType(const char *fileName);
   
 protected:
   vtkMRMLFreeSurferModelStorageNode();
@@ -116,15 +88,10 @@ protected:
   void operator=(const vtkMRMLFreeSurferModelStorageNode&);
 
   // Description:
-  // the overlay files that were applied to this model
+  // a list of valid file extensions
   //BTX
-  std::vector< std::string > OverlayFiles;
-  // Description:
-  // a list of valid overlay file extensions
-  std::vector< std::string > KnownOverlayFileExtensions; 
+  std::vector< std::string > KnownFileExtensions;
   //ETX
-
-  char *SurfaceFileName;
 
   int UseStripper;
 };

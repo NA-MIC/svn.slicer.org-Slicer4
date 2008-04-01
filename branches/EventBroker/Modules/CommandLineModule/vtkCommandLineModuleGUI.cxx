@@ -846,6 +846,7 @@ void vtkCommandLineModuleGUI::UpdateGUI ()
             splitFilenames(value, names);
             //vtkWarningMacro(<<"Filenames being set: " << value);
             lsb->GetWidget()->GetLoadSaveDialog()->SetInitialSelectedFileNames(names);
+            names->Delete();
             }
           else if (rbs)
             {
@@ -912,6 +913,7 @@ void vtkCommandLineModuleGUI::Enter ( )
     this->BuildGUI();
     this->Built = true;
     this->AddGUIObservers();
+    this->Logic->SetTemporaryDirectory( ((vtkSlicerApplication*)this->GetApplication())->GetTemporaryDirectory() );
     }
     this->CreateModuleEventBindings();
 }
@@ -1337,7 +1339,11 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         std::string nodeClass;
         const char *attrName = 0;
         const char *attrValue = 0;
-        if ((*pit).GetType() == "label")
+        if ((*pit).GetType() == "any")
+          {
+          nodeClass = "vtkMRMLVolumeNode";
+          }
+        else if ((*pit).GetType() == "label")
           {
           nodeClass = "vtkMRMLScalarVolumeNode";
           attrName = labelAttrName.c_str();
@@ -1406,6 +1412,19 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
 
         tparameter->SetNodeClass(nodeClass.c_str(), attrName, attrValue, 
                                  (title + " Volume").c_str());
+        if ((*pit).GetType() == "any")
+          {
+          // Add all of the other concrete volume node types
+          tparameter->AddNodeClass("vtkMRMLVectorVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " VectorVolume").c_str());
+          tparameter->AddNodeClass("vtkMRMLDiffusionTensorVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " DiffusionTensorVolume").c_str());
+          tparameter->AddNodeClass("vtkMRMLDiffusionWeightedVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " DiffusionWeightedVolume").c_str());
+          }
         tparameter->SetNewNodeEnabled(1);
         tparameter->SetNoneEnabled(1);
         // tparameter->SetNewNodeName((title+" output").c_str());
@@ -1662,6 +1681,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         vtkSmartPointer<vtkStringArray> names = vtkStringArray::New();
         splitFilenames((*pit).GetDefault(), names);
         tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialSelectedFileNames( names );
+        names->Delete();
         if ((*pit).GetFileExtensions().size() != 0)
           {
           std::string extensionVector;

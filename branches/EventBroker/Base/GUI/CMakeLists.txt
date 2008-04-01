@@ -1,3 +1,4 @@
+
 PROJECT(SlicerBaseGUI)
 
 # If we are not in the KWWidgets source tree, make sure we can find KWWidgets
@@ -33,6 +34,7 @@ SET(LIB_SRCS
   vtkSlicerVisibilityIcons.cxx
   vtkSlicerModuleNavigationIcons.cxx
   vtkSlicerToolbarIcons.cxx
+  vtkSlicerFoundationIcons.cxx
   vtkSlicerViewControlIcons.cxx
   vtkSlicerSlicesControlIcons.cxx
   vtkSlicerCheckRadioButtonIcons.cxx
@@ -47,7 +49,6 @@ SET(LIB_SRCS
   vtkSlicerSliceViewer.cxx
   vtkSlicerSliceControllerWidget.cxx
   vtkSlicerSlicesGUI.cxx
-  vtkSlicerVolumesGUI.cxx
   vtkSlicerModelsGUI.cxx
   vtkSlicerFiducialsGUI.cxx
   vtkSlicerColorGUI.cxx
@@ -61,6 +62,9 @@ SET(LIB_SRCS
   vtkSlicerModuleChooseGUI.cxx
   vtkSlicerLogoDisplayGUI.cxx
   vtkSlicerApplicationGUI.cxx
+  vtkSlicerDataTransferIcons.cxx
+  vtkSlicerDataTransferWidget.cxx
+  vtkSlicerCacheAndDataIOManagerGUI.cxx
   # KW Widgets
   vtkKWTextWithHyperlinksWithScrollbars.cxx
   vtkSlicerModuleCollapsibleFrame.cxx
@@ -68,13 +72,7 @@ SET(LIB_SRCS
   vtkSlicerWidget.cxx
   vtkKWMatrix4x4.cxx
   vtkKWScriptedWidget.cxx
-  vtkKWWindowLevelThresholdEditor.cxx
   vtkKWProgressDialog.cxx
-  vtkSlicerVolumeDisplayWidget.cxx
-  vtkSlicerLabelMapVolumeDisplayWidget.cxx
-  vtkSlicerScalarVolumeDisplayWidget.cxx
-  vtkSlicerDiffusionWeightedVolumeDisplayWidget.cxx
-  vtkSlicerDiffusionTensorVolumeDisplayWidget.cxx
   vtkSlicerVolumeHeaderWidget.cxx
   vtkSlicerVolumeFileHeaderWidget.cxx
   vtkSlicerTransformManagerWidget.cxx
@@ -90,11 +88,13 @@ SET(LIB_SRCS
   vtkSlicerSceneSnapshotWidget.cxx
   vtkSlicerRecordSnapshotWidget.cxx
   vtkSlicerModelHierarchyWidget.cxx
+  vtkSlicerDiffusionTensorGlyphDisplayWidget.cxx
+  vtkSlicerPermissionPrompterWidget.cxx
+  vtkSlicerXNATPermissionPrompterWidget.cxx
   # VTK Replacement classes
   vtkSlicerInteractorStyle.cxx
   vtkSlicerViewerInteractorStyle.cxx
   vtkSlicerROIGUI.cxx
-  vtkSlicerGradientEditorWidget.cxx
   vtkSlicerMeasurementFrameWidget.cxx
   vtkSlicerGradientsWidget.cxx
   )
@@ -123,6 +123,8 @@ INCLUDE_DIRECTORIES(
   ${vtkTeem_BINARY_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
   ${ModuleDescriptionParser_BINARY_DIR}
+  ${LoadableModule_SOURCE_DIR}
+  ${LoadableModule_BINARY_DIR}
   ${FreeSurfer_SOURCE_DIR}
   ${FreeSurfer_BINARY_DIR}
   )

@@ -24,6 +24,7 @@ SET(MRML_SRCS
         vtkMRMLModelNode.cxx
         vtkMRMLModelStorageNode.cxx
         vtkMRMLFreeSurferModelStorageNode.cxx    
+        vtkMRMLFreeSurferModelOverlayStorageNode.cxx
         vtkMRMLModelDisplayNode.cxx
         vtkMRMLClipModelsNode.cxx
         vtkMRMLStorageNode.cxx
@@ -57,6 +58,7 @@ SET(MRML_SRCS
         vtkMRMLDiffusionImageVolumeNode.cxx
         vtkMRMLDiffusionTensorVolumeNode.cxx
         vtkMRMLDiffusionTensorVolumeDisplayNode.cxx
+        vtkMRMLDiffusionTensorVolumeSliceDisplayNode.cxx
         vtkMRMLVectorVolumeDisplayNode.cxx
         vtkMRMLFiberBundleNode.cxx
         vtkMRMLFiberBundleDisplayNode.cxx
@@ -75,6 +77,14 @@ SET(MRML_SRCS
         vtkMRMLUnstructuredGridStorageNode.cxx
         vtkMRMLDisplayNode.cxx
         vtkMRMLDisplayableNode.cxx
+        vtkMRMLStorableNode.cxx
+        # Classes for remote data handling:
+        vtkDataIOManager.cxx
+        vtkDataTransfer.cxx
+        vtkURIHandler.cxx
+        vtkCacheManager.cxx
+        vtkPermissionPrompter.cxx
+        vtkXNATPermissionPrompter.cxx
         # Note: when you add new node types, add
         # register code to the vtkMRMLScene constructor
 )
@@ -143,6 +153,7 @@ TARGET_LINK_LIBRARIES(MRML
   vtkIOTCL
   vtkGraphicsTCL
   vtkRenderingTCL
+  vtkHybridTCL
   ITKAlgorithms
   ITKNumerics 
   ITKCommon

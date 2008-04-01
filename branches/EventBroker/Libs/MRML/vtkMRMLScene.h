@@ -36,9 +36,11 @@ Version:   $Revision: 1.18 $
 
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
+#include "vtkCacheManager.h"
+#include "vtkDataIOManager.h"
 
 class vtkGeneralTransform;
-
+class vtkURIHandler;
 class VTK_MRML_EXPORT vtkMRMLScene : public vtkCollection
 {
 public:
@@ -357,6 +359,22 @@ public:
     this->SceneModifiedTime ++;
     };
 
+
+  vtkGetObjectMacro ( CacheManager, vtkCacheManager );
+  vtkSetObjectMacro ( CacheManager, vtkCacheManager );
+  vtkGetObjectMacro ( DataIOManager, vtkDataIOManager );
+  vtkSetObjectMacro ( DataIOManager, vtkDataIOManager );
+  vtkGetObjectMacro ( URIHandlerCollection, vtkCollection );
+  vtkSetObjectMacro ( URIHandlerCollection, vtkCollection );
+
+  // Description:
+  // find a URI handler in the collection that can work on the passed URI
+  // returns NULL on failure
+  vtkURIHandler *FindURIHandler(const char *URI);
+  // Description:
+  // Add a uri handler to the collection.
+  void AddURIHandler(vtkURIHandler *handler);
+  
 protected:
   vtkMRMLScene();
   ~vtkMRMLScene();
@@ -373,6 +391,11 @@ protected:
 
   vtkCollection* CurrentScene;
   
+  // data i/o handling members
+  vtkCacheManager *CacheManager;
+  vtkDataIOManager *DataIOManager;
+  vtkCollection *URIHandlerCollection;
+
   unsigned long SceneModifiedTime;
   
   int UndoStackSize;
