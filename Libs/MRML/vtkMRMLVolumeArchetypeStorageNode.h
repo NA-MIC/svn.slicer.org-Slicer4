@@ -71,6 +71,17 @@ class VTK_MRML_EXPORT vtkMRMLVolumeArchetypeStorageNode : public vtkMRMLStorageN
   vtkGetMacro(CenterImage, int);
   vtkSetMacro(CenterImage, int);
 
+  // Description:
+  // whether to read single file or the whole series
+  vtkGetMacro(SingleFile, int);
+  vtkSetMacro(SingleFile, int);
+
+  // Description:
+  // Check to see if this storage node can handle the file type in the input
+  // string. If input string is null, check URI, then check FileName. 
+  // Subclasses should implement this method.
+  virtual int SupportedFileType(const char *fileName);
+
 protected:
 
 
@@ -80,6 +91,7 @@ protected:
   void operator=(const vtkMRMLVolumeArchetypeStorageNode&);
 
   int CenterImage;
+  int SingleFile;
 
 };
 

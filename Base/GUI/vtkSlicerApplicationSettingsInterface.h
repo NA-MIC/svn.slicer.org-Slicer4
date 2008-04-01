@@ -34,6 +34,7 @@ public:
   // Refresh the interface given the current value of the Window and its
   // views/composites/widgets.
   virtual void Update();
+  virtual void UpdateRemoteIOSettings();
 
   // Description:
   // Callbacks for the Module application settings. Internal, do not use.
@@ -71,7 +72,7 @@ public:
   // Description:
   // If true, over write copies in the cache when downloading a remote
   // file. If false, rename the old copy.
-  virtual void EnableRemoteCacheOverwritingCallback(int state);
+//  virtual void EnableRemoteCacheOverwritingCallback(int state);
   // Description:
   // Set the cache directory on disk
   virtual void RemoteCacheDirectoryCallback();
@@ -112,7 +113,7 @@ private:
   vtkKWFrameWithLabel *RemoteCacheSettingsFrame;
   vtkKWCheckButton *EnableAsynchronousIOCheckButton;
   vtkKWCheckButton *EnableForceRedownloadCheckButton;
-  vtkKWCheckButton *EnableRemoteCacheOverwritingCheckButton;
+//  vtkKWCheckButton *EnableRemoteCacheOverwritingCheckButton;
   vtkKWLoadSaveButtonWithLabel *RemoteCacheDirectoryButton;
   vtkKWSpinBoxWithLabel *RemoteCacheLimitSpinBox;
   vtkKWSpinBoxWithLabel * RemoteCacheFreeBufferSizeSpinBox;

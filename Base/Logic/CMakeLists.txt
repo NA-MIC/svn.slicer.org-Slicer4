@@ -18,6 +18,7 @@ SET(SlicerBaseLogic_SRCS
   vtkSlicerModelHierarchyLogic.cxx
   vtkSlicerFiducialsLogic.cxx
   vtkSlicerColorLogic.cxx
+  vtkDataIOManagerLogic.cxx
   # slicer's vtk extensions (filters)
   vtkImageSlicePaint.cxx 
   vtkImageSlice.cxx 
@@ -31,7 +32,6 @@ SET(SlicerBaseLogic_SRCS
   vtkImageLabelChange.cxx 
   vtkImageErode.cxx 
   vtkImageNeighborhoodFilter.cxx
-  vtkSlicerGradientEditorLogic.cxx
 )
 
 # Abstract/pure virtual classes

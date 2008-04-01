@@ -111,7 +111,6 @@ void vtkMRMLColorTableStorageNode::ProcessParentNode(vtkMRMLNode *parentNode)
 }
 
 //----------------------------------------------------------------------------
-
 int vtkMRMLColorTableStorageNode::ReadData(vtkMRMLNode *refNode)
 {
   vtkDebugMacro("Reading ColorTable data");
@@ -123,16 +122,17 @@ int vtkMRMLColorTableStorageNode::ReadData(vtkMRMLNode *refNode)
     return 0;         
     }
 
-  if (this->GetFileName() == NULL) 
+  if (this->GetFileName() == NULL && this->GetURI() == NULL) 
     {
-    vtkErrorMacro("ReadData: file name is not set");
+    vtkErrorMacro("ReadData: file name and uri not set");
     return 0;
     }
 
   Superclass::StageReadData(refNode);
-  if ( this->GetReadState() == this->Pending )
+  if ( this->GetReadState() != this->Ready )
     {
     // remote file download hasn't finished
+    vtkWarningMacro("ReadData: Read state is pending, returning.");
     return 0;
     }
   
@@ -227,13 +227,16 @@ int vtkMRMLColorTableStorageNode::ReadData(vtkMRMLNode *refNode)
       ss >> g;
       ss >> b;
       ss >> a;
-      vtkDebugMacro("id " << id << ", name = " << name.c_str() << ", r = " << r << ", g = " << g << ", b = " << b << ", a = " << a);
+      
       // the file values are 0-255, colour look up table needs 0-1
       r = r / 255.0;
       g = g / 255.0;
       b = b / 255.0;
       a = a / 255.0;
-      vtkDebugMacro("Adding colour at id " << id << " and then pushing name " << name.c_str());
+      if (i < 10)
+        {
+        vtkDebugMacro("(first ten) Adding colour at id " << id << ", name = " << name.c_str() << ", r = " << r << ", g = " << g << ", b = " << b << ", a = " << a);
+        }
       colorNode->GetLookupTable()->SetTableValue(id, r, g, b, a);
       colorNode->SetColorName(id, name.c_str());
       }
@@ -246,7 +249,7 @@ int vtkMRMLColorTableStorageNode::ReadData(vtkMRMLNode *refNode)
     }
 
   // make sure that the color node points to this storage node
-  colorNode->SetStorageNodeID(this->GetID());
+  colorNode->SetAndObserveStorageNodeID(this->GetID());
   
   return 1;
 }
@@ -300,7 +303,7 @@ int vtkMRMLColorTableStorageNode::WriteData(vtkMRMLNode *refNode)
     }
 
   // put down a header
-  of << "# Color table file " << this->GetFileName() << endl;
+  of << "# Color table file " << (this->GetFileName() != NULL ? this->GetFileName() : "null") << endl;
   of << "# " << colorNode->GetLookupTable()->GetNumberOfTableValues() << " values" << endl;
   for (int i = 0; i < colorNode->GetLookupTable()->GetNumberOfTableValues(); i++)
     {
@@ -330,4 +333,47 @@ int vtkMRMLColorTableStorageNode::WriteData(vtkMRMLNode *refNode)
   
   return 1;
   
+}
+
+//----------------------------------------------------------------------------
+int vtkMRMLColorTableStorageNode::SupportedFileType(const char *fileName)
+{
+  // check to see which file name we need to check
+  std::string name;
+  if (fileName)
+    {
+    name = std::string(fileName);
+    }
+  else if (this->FileName != NULL)
+    {
+    name = std::string(this->FileName);
+    }
+  else if (this->URI != NULL)
+    {
+    name = std::string(this->URI);
+    }
+  else
+    {
+    vtkWarningMacro("SupportedFileType: no file name to check");
+    return 0;
+    }
+  
+  std::string::size_type loc = name.find_last_of(".");
+  if( loc == std::string::npos ) 
+    {
+    vtkErrorMacro("SupportedFileType: no file extension specified");
+    return 0;
+    }
+  std::string extension = name.substr(loc);
+
+  vtkDebugMacro("SupportedFileType: extension = " << extension.c_str());
+  if (extension.compare(".ctbl") == 0 ||
+      extension.compare(".txt") == 0)
+    {
+    return 1;
+    }
+  else
+    {
+    return 0;
+    }
 }

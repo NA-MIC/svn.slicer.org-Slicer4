@@ -25,6 +25,7 @@
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLTransformNode.h"
 #include "vtkMRMLColorNode.h"
+#include "vtkMRMLDiffusionTensorVolumeSliceDisplayNode.h"
 
 #include "vtkPointData.h"
 
@@ -183,7 +184,8 @@ void vtkSlicerSliceLayerLogic::ProcessMRMLEvents(vtkObject * caller,
     return;
     }
 
-  if (this->VolumeDisplayNodeObserved == vtkMRMLVolumeDisplayNode::SafeDownCast(caller) &&
+  if (this->VolumeDisplayNodeObserved != NULL && 
+      this->VolumeDisplayNodeObserved == vtkMRMLVolumeDisplayNode::SafeDownCast(caller) &&
       event == vtkCommand::ModifiedEvent)
     {
       if (this->VolumeDisplayNode && this->VolumeDisplayNodeObserved)
@@ -554,7 +556,28 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
 
   this->Slice->SetSliceTransform( this->XYToIJKTransform ); 
   this->Reslice->SetResliceTransform( this->XYToIJKTransform ); 
+  
+  this->UpdateGlyphs(slicedImageData);
 
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
+{
+  vtkMRMLDiffusionTensorVolumeNode *volumeNode = vtkMRMLDiffusionTensorVolumeNode::SafeDownCast (this->VolumeNode);
+  if (volumeNode)
+    {
+    std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = volumeNode->GetSliceGlyphDisplayNodes();
+    for (unsigned int i=0; i<dnodes.size(); i++)
+      {
+      vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = dnodes[i];
+      if (!strcmp(this->GetSliceNode()->GetLayoutName(), dnode->GetName()) )
+        {
+        dnode->SetSliceImage(sliceImage);
+        dnode->SetSlicePositionMatrix(this->SliceNode->GetXYToRAS());
+        }
+      }
+    }
 }
 
 //----------------------------------------------------------------------------

@@ -44,6 +44,11 @@ SET (SRC
 )
 
 # --------------------------------------------------------------------------
+# Find SLICERLIBCURL (slicercurl)
+FIND_PACKAGE(SLICERLIBCURL REQUIRED)
+INCLUDE(${SLICERLIBCURL_USE_FILE})
+
+# --------------------------------------------------------------------------
 # Include dirs
 # MESSAGE(STATUS "Setting up dir_list, Qdec bin dir = ${Qdec_BINARY_DIR}, Qdec src dir = ${Qdec_SOURCE_DIR}")
 
@@ -58,6 +63,10 @@ SET(dir_list
   ${MRML_BINARY_DIR}
   ${IGT_SOURCE_DIR}
   ${IGT_BINARY_DIR}
+  ${Volumes_SOURCE_DIR}
+  ${Volumes_BINARY_DIR}
+  ${Volumes_Init_SOURCE_DIR}
+  ${Volumes_Init_BINARY_DIR}
   ${GradientAnisotropicDiffusionFilter_SOURCE_DIR}
   ${GradientAnisotropicDiffusionFilter_BINARY_DIR}
   ${GradientAnisotropicDiffusionFilter_Init_SOURCE_DIR}
@@ -119,9 +128,14 @@ SET(dir_list
   ${SlicerDaemon_Init_SOURCE_DIR}
   ${SlicerDaemon_Init_BINARY_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
+  ${LoadableModule_SOURCE_DIR}
+  ${LoadableModule_BINARY_DIR}
   ${VTK_INCLUDE_DIR}
   ${NAVITRACK_INC}
   ${IGSTK_INCLUDE_DIRS}
+  ${RemoteIO_SOURCE_DIR}
+  ${RemoteIO_BINARY_DIR}
+  ${SLICERLIBCURL_INCLUDE_DIRS}
   )
 
 IF(BUILD_MODULES)
@@ -187,21 +201,30 @@ ELSE(LABELSTATISTICS)
  ADD_DEFINITIONS(-DLABELSTATISTICS_DEBUG)
 ENDIF(LABELSTATISTICS)
 
+
 TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
     SlicerBaseLogic
     SlicerBaseGUI
     MRML
     IGT
     ModuleDescriptionParser
+    LoadableModule
     vtkITK
     ITKCommon 
     ITKIO
     ${KWWidgets_LIBRARIES}
     Qdec
+    RemoteIO
+    ${SLICERLIBCURL_LIBRARIES}
 )
+
+# MESSAGE(STATUS "Slicer lib curl libs = ${SLICERLIBCURL_LIBRARIES}")
+# MESSAGE(STATUS "Slicer lib curl library dirs = ${SLICERLIBCURL_LIBRARY_DIRS}")
+
 
 IF(BUILD_MODULES)
   TARGET_LINK_LIBRARIES( Slicer3${SLICER_EXE_SUFFIX}
+    Volumes
     GradientAnisotropicDiffusionFilter
     EMSegment
     #   RealTimeImaging

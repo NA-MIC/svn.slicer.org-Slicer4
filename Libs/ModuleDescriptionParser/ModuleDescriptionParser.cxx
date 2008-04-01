@@ -113,7 +113,7 @@ public:
   int ErrorLine;                               /* Error line number */
   int Depth;                                   /* The depth of the tag */
 
-  ParserState():Debug(false),Error(false),Depth(-1),LastData(10){};
+  ParserState():LastData(10),Debug(false),Error(false),Depth(-1){};
 };
 
 /***************************
@@ -882,7 +882,8 @@ startElement(void *userData, const char *element, const char **attrs)
         }
       else if ((strcmp(attrs[2*attr], "type") == 0))
         {
-        if ((strcmp(attrs[2*attr+1], "scalar") == 0) ||
+        if ((strcmp(attrs[2*attr+1], "any") == 0) ||
+            (strcmp(attrs[2*attr+1], "scalar") == 0) ||
             (strcmp(attrs[2*attr+1], "label") == 0) ||
             (strcmp(attrs[2*attr+1], "tensor") == 0) ||
             (strcmp(attrs[2*attr+1], "diffusion-weighted") == 0) ||
@@ -892,7 +893,7 @@ startElement(void *userData, const char *element, const char **attrs)
           }
         else
           {
-          std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid value for the attribute \"" + "type" + "\". Only \"scalar\", \"label\" , \"tensor\", \"diffusion-weighted\"  and \"vector\" are accepted.");
+          std::string error("ModuleDescriptionParser Error: \"" + std::string(attrs[2*attr+1]) + "\" is not a valid value for the attribute \"" + "type" + "\". Only \"scalar\", \"label\" , \"tensor\", \"diffusion-weighted\", \"vector\" and \"any\" are accepted.");
           if (ps->ErrorDescription.size() == 0)
             {
             ps->ErrorDescription = error;
@@ -1576,7 +1577,7 @@ ModuleDescriptionParser::Parse( const std::string& xml, ModuleDescription& descr
   if (strncmp(xml.c_str(),"<?xml ", 6) != 0)
     {
     std::string required("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-    std::cerr << "ModuleDesriptionParser: first line must be " << std::endl;
+    std::cerr << "ModuleDescriptionParser: first line must be " << std::endl;
     std::cerr << required << std::endl;
     return 1;
     }

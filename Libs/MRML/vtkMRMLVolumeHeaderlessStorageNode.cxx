@@ -338,7 +338,7 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
     }
 
   Superclass::StageReadData(refNode);
-  if ( this->GetReadState() == this->Pending )
+  if ( this->GetReadState() != this->Ready )
     {
     // remote file download hasn't finished
     return 0;
@@ -441,7 +441,7 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
   archNames->Delete();
 
   // set volume attributes
-  volNode->SetStorageNodeID(this->GetID());
+  volNode->SetAndObserveStorageNodeID(this->GetID());
   //TODO update scene to send Modified event
  
   vtkImageChangeInformation *ici = vtkImageChangeInformation::New();
@@ -541,4 +541,33 @@ int vtkMRMLVolumeHeaderlessStorageNode::WriteData(vtkMRMLNode *refNode)
   return result;
 
 }
+
+//----------------------------------------------------------------------------
+int vtkMRMLVolumeHeaderlessStorageNode::SupportedFileType(const char *fileName)
+{
+  // check to see which file name we need to check
+  std::string name;
+  if (fileName)
+    {
+    name = std::string(fileName);
+    }
+  else if (this->FileName != NULL)
+    {
+    name = std::string(this->FileName);
+    }
+  else if (this->URI != NULL)
+    {
+    name = std::string(this->URI);
+    }
+  else
+    {
+    vtkWarningMacro("SupportedFileType: no file name to check");
+    return 0;
+    }
+
+  // for now, return 1
+  return 1;
+  
+}
+
 

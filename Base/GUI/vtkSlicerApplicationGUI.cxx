@@ -93,67 +93,71 @@ vtkCxxRevisionMacro(vtkSlicerApplicationGUI, "$Revision: 1.0 $");
 //---------------------------------------------------------------------------
 vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
 {
-    //---  
-    // widgets used in the Slice module
-    //---
+
+  this->MRMLScene = NULL;
+
+  //---  
+  // widgets used in the Slice module
+  //---
+
+  //--- slicer main window
+  this->MainSlicerWindow = vtkSlicerWindow::New ( );
+
+  // Frames that comprise the Main Slicer GUI
+
+  this->TopFrame = vtkKWFrame::New();
+  this->LogoFrame = vtkKWFrame::New();
+  this->SlicesControlFrame = vtkSlicerModuleCollapsibleFrame::New();
+  this->ViewControlFrame = vtkSlicerModuleCollapsibleFrame::New();
+  this->DropShadowFrame = vtkKWFrame::New();
+  this->GridFrame1 = vtkKWFrame::New ( );
+  this->GridFrame2 = vtkKWFrame::New ( );
+
+  // initialize in case any are not defined.
+  this->ApplicationToolbar = NULL;
+  this->ViewControlGUI = NULL;
+  this->SlicesControlGUI = NULL;
+  this->LogoDisplayGUI = NULL;
+  this->SlicerFoundationIcons = NULL;
   
-    //--- slicer main window
-    this->MainSlicerWindow = vtkSlicerWindow::New ( );
-
-    // Frames that comprise the Main Slicer GUI
-
-    this->TopFrame = vtkKWFrame::New();
-    this->LogoFrame = vtkKWFrame::New();
-    this->SlicesControlFrame = vtkSlicerModuleCollapsibleFrame::New();
-    this->ViewControlFrame = vtkSlicerModuleCollapsibleFrame::New();
-    this->DropShadowFrame = vtkKWFrame::New();
-    this->GridFrame1 = vtkKWFrame::New ( );
-    this->GridFrame2 = vtkKWFrame::New ( );
-
-    // initialize in case any are not defined.
-    this->ApplicationToolbar = NULL;
-    this->ViewControlGUI = NULL;
-    this->SlicesControlGUI = NULL;
-    this->LogoDisplayGUI = NULL;
-    
-    //--- GUIs containing components packed inside the Frames
+  //--- GUIs containing components packed inside the Frames
 #ifndef TOOLBAR_DEBUG
-    this->ApplicationToolbar = vtkSlicerToolbarGUI::New ( );
+  this->ApplicationToolbar = vtkSlicerToolbarGUI::New ( );
 #endif
 #ifndef VIEWCONTROL_DEBUG
-    this->ViewControlGUI = vtkSlicerViewControlGUI::New ( );
+  this->ViewControlGUI = vtkSlicerViewControlGUI::New ( );
 #endif
 #ifndef SLICESCONTROL_DEBUG
-    this->SlicesControlGUI = vtkSlicerSlicesControlGUI::New ( );
+  this->SlicesControlGUI = vtkSlicerSlicesControlGUI::New ( );
 #endif
 #ifndef LOGODISPLAY_DEBUG    
-    this->LogoDisplayGUI = vtkSlicerLogoDisplayGUI::New ( );
+  this->LogoDisplayGUI = vtkSlicerLogoDisplayGUI::New ( );
 #endif
-    
-    //--- Main viewer, 3 main slice viewers and collection.
-    this->ViewerWidget = NULL;
-    this->FiducialListWidget = NULL;
+  
+  //--- Main viewer, 3 main slice viewers and collection.
+  this->ViewerWidget = NULL;
+  this->FiducialListWidget = NULL;
 
-    this->MainSliceGUI0 = NULL;
-    this->MainSliceGUI1 = NULL;
-    this->MainSliceGUI2 = NULL;
-    this->SliceGUICollection = NULL;
-    
-    //--- Save the main slice logic in these.
-    this->MainSliceLogic0 = NULL;
-    this->MainSliceLogic1 = NULL;
-    this->MainSliceLogic2 = NULL;
+  this->MainSliceGUI0 = NULL;
+  this->MainSliceGUI1 = NULL;
+  this->MainSliceGUI2 = NULL;
+  this->SliceGUICollection = NULL;
+  
+  //--- Save the main slice logic in these.
+  this->MainSliceLogic0 = NULL;
+  this->MainSliceLogic1 = NULL;
+  this->MainSliceLogic2 = NULL;
 
 
-    //--- Save and load scene dialogs, widgets
-    this->LoadSceneDialog = vtkKWLoadSaveDialog::New();
+  //--- Save and load scene dialogs, widgets
+  this->LoadSceneDialog = vtkKWLoadSaveDialog::New();
 
-    this->SaveDataWidget = vtkSlicerMRMLSaveDataWidget::New();
+  this->SaveDataWidget = vtkSlicerMRMLSaveDataWidget::New();
 
-    //--- unique tag used to mark all view notebook pages
-    //--- so that they can be identified and deleted when 
-    //--- viewer is reformatted.
-    this->ViewerPageTag = 1999;
+  //--- unique tag used to mark all view notebook pages
+  //--- so that they can be identified and deleted when 
+  //--- viewer is reformatted.
+  this->ViewerPageTag = 1999;
 }
 
 
@@ -240,6 +244,12 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
       {
       this->SaveDataWidget->SetParent ( NULL );
       this->SaveDataWidget->Delete();
+      }
+
+    if ( this->SlicerFoundationIcons )
+      {
+      this->SlicerFoundationIcons->Delete();
+      this->SlicerFoundationIcons =  NULL;
       }
 
     this->SetApplication(NULL);
@@ -691,6 +701,8 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
                                              app->GetApplicationWindowHeight(),
                                              app->GetApplicationSlicesFrameHeight());
 
+        this->SlicerFoundationIcons = vtkSlicerFoundationIcons::New();
+        
         if ( this->MainSlicerWindow != NULL ) {
 
             // set up Slicer's main window
@@ -845,6 +857,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             //
             // View Menu
             //
+
             this->MainSlicerWindow->GetViewMenu()->InsertCascade( 2, "Font size",  this->MainSlicerWindow->GetFontSizeMenu());
             int zz;
             const char *size;
@@ -885,6 +898,10 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
                 this->MainSlicerWindow->GetFontFamilyMenu()->SetItemSelectedState ( rindex, 0 );
                 }
               }
+
+            this->GetMainSlicerWindow()->GetViewMenu()->InsertCommand (
+                                                                       this->GetMainSlicerWindow()->GetViewMenuInsertPosition(),
+                                                                       "Cache & Remote I/O Manager", NULL, "$::slicer3::RemoteIOGUI DisplayManagerWindow");
 
             //
             // Help Menu
@@ -2092,3 +2109,92 @@ void vtkSlicerApplicationGUI::BuildGUIFrames ( )
 
 }
 
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ConfigureRemoteIOSettings()
+{
+  vtkMRMLScene *scene = this->GetMRMLScene();
+  if ( this->GetApplication() != NULL )
+    {
+    vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication() );
+    if ( scene != NULL )
+      {
+      //--- update CacheManager
+      vtkCacheManager *cm = scene->GetCacheManager();
+      if ( cm != NULL )
+        {
+        if ( strcmp (cm->GetRemoteCacheDirectory(), app->GetRemoteCacheDirectory() ))
+          {
+          cm->SetRemoteCacheDirectory (app->GetRemoteCacheDirectory() );
+          }
+        if ( cm->GetEnableForceRedownload() != app->GetEnableForceRedownload() )
+          {
+          cm->SetEnableForceRedownload (app->GetEnableForceRedownload() );
+          }
+        /*
+          if ( cm->GetEnableRemoteCacheOverwriting () != app->GetEnableRemoteCacheOverwriting() )
+          {
+          cm->SetEnableRemoteCacheOverwriting (app->GetEnableRemoteCacheOverwriting() );
+          }
+        */
+        if ( cm->GetRemoteCacheLimit() != app->GetRemoteCacheLimit() )
+          {
+          cm->SetRemoteCacheLimit (app->GetRemoteCacheLimit() );
+          }
+        if ( cm->GetRemoteCacheFreeBufferSize() != app->GetRemoteCacheFreeBufferSize() )
+          {
+          cm->SetRemoteCacheFreeBufferSize (app->GetRemoteCacheFreeBufferSize() );
+          }
+        }
+      //---- update DataIOManager
+      vtkDataIOManager *dm = scene->GetDataIOManager();
+      if ( dm != NULL )
+        {
+        if ( dm->GetEnableAsynchronousIO() != app->GetEnableAsynchronousIO() )
+          {
+          dm->SetEnableAsynchronousIO (app->GetEnableAsynchronousIO() );
+          }
+        }
+
+      //---- update application settings interface if required...
+      if ( this->GetMainSlicerWindow() != NULL )
+        {
+        if ( this->GetMainSlicerWindow()->GetApplicationSettingsInterface() != NULL )
+          {
+          (vtkSlicerApplicationSettingsInterface::SafeDownCast (this->GetMainSlicerWindow()->GetApplicationSettingsInterface()))->UpdateRemoteIOSettings();
+          }
+        }
+      }
+    }
+}
+
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::UpdateRemoteIOConfigurationForRegistry()
+{
+
+  vtkMRMLScene *scene = this->GetMRMLScene();
+  if ( this->GetApplication() != NULL )
+    {
+    vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication() );
+    if ( scene != NULL )
+      {
+      vtkCacheManager *cm = scene->GetCacheManager();
+      if ( cm != NULL )
+        {
+        app->SetRemoteCacheDirectory (cm->GetRemoteCacheDirectory() );
+        app->SetEnableForceRedownload (cm->GetEnableForceRedownload() );
+        //app->SetEnableRemoteCacheOverwriting (cm->GetEnableRemoteCacheOverwriting() );
+        app->SetRemoteCacheLimit (cm->GetRemoteCacheLimit() );
+        app->SetRemoteCacheFreeBufferSize (cm->GetRemoteCacheFreeBufferSize() );
+        }
+      vtkDataIOManager *dm = scene->GetDataIOManager();
+      if ( dm != NULL )
+        {
+        app->SetEnableAsynchronousIO (dm->GetEnableAsynchronousIO() );
+        }
+      }
+    }
+}

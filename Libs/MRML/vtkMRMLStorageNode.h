@@ -21,8 +21,9 @@
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRMLScene.h"
+#include "vtkURIHandler.h"
 
-
+class vtkURIHandler;
 class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
 {
   public:
@@ -73,6 +74,9 @@ class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
   vtkSetStringMacro(URI);
   vtkGetStringMacro(URI);
   
+  vtkGetObjectMacro (URIHandler, vtkURIHandler);
+  vtkSetObjectMacro (URIHandler, vtkURIHandler);
+  
   // Description:
   // Propagate Progress Event generated in ReadData
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
@@ -91,8 +95,9 @@ class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
   //BTX
   enum
   {
-    Done,
+    Ready,
     Pending,
+    Scheduled,
   };
   //ETX
   // Description:
@@ -100,7 +105,8 @@ class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
   vtkGetMacro(ReadState,int);
   vtkSetMacro(ReadState,int);
   void SetReadStatePending() { this->SetReadState(this->Pending); };
-  void SetReadStateDone() { this->SetReadState(this->Done); };
+  void SetReadStateReady() { this->SetReadState(this->Ready); };
+  void SetReadStateScheduled() { this->SetReadState(this->Scheduled); };
   const char *GetStateAsString(int state);
   const char *GetReadStateAsString() { return this->GetStateAsString(this->ReadState); };
   
@@ -109,7 +115,8 @@ class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
   vtkGetMacro(WriteState,int);
   vtkSetMacro(WriteState,int);
   void SetWriteStatePending() { this->SetWriteState(this->Pending); };
-  void SetWriteStateDone() { this->SetWriteState(this->Done); };
+  void SetWriteStateReady() { this->SetWriteState(this->Ready); };
+  void SetWriteStateScheduled() { this->SetWriteState(this->Scheduled); };
   const char *GetWriteStateAsString() { return this->GetStateAsString(this->WriteState); };
 
   // Description:
@@ -118,6 +125,14 @@ class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
   //BTX
   std::string GetFullNameFromFileName();
   //ETX
+
+  // Description:
+  // Check to see if this storage node can handle the file type in the input
+  // string. If input string is null, check URI, then check FileName. Returns
+  // 1 if is supported, 0 otherwise.
+  // Subclasses should implement this method.
+  virtual int SupportedFileType(const char *fileName);
+  
 protected:
   vtkMRMLStorageNode();
   ~vtkMRMLStorageNode();
@@ -126,6 +141,7 @@ protected:
 
   char *FileName;
   char *URI;
+  vtkURIHandler *URIHandler;
   int UseCompression;
   int ReadState;
   int WriteState;

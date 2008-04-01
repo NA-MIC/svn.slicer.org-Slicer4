@@ -57,7 +57,7 @@ const char *vtkSlicerApplication::ApplicationSlicesFrameHeightRegKey = "Applicat
 const char *vtkSlicerApplication::ApplicationLayoutTypeRegKey = "ApplicationLayoutType";
 const char *vtkSlicerApplication::EnableAsynchronousIORegKey = "EnableAsynchronousIO";
 const char *vtkSlicerApplication::EnableForceRedownloadRegKey = "EnableForceRedownload";
-const char *vtkSlicerApplication::EnableRemoteCacheOverwritingRegKey = "EnableRemoteCacheOverwriting";
+//const char *vtkSlicerApplication::EnableRemoteCacheOverwritingRegKey = "EnableRemoteCacheOverwriting";
 const char *vtkSlicerApplication::RemoteCacheDirectoryRegKey = "RemoteCacheDirectory";
 const char *vtkSlicerApplication::RemoteCacheLimitRegKey = "RemoteCacheLimit";
 const char *vtkSlicerApplication::RemoteCacheFreeBufferSizeRegKey = "RemoteCacheFreeBufferSize";
@@ -187,6 +187,8 @@ private:
 //---------------------------------------------------------------------------
 vtkSlicerApplication::vtkSlicerApplication ( ) {
 
+    this->ApplicationGUI = NULL;
+
     strcpy(this->ConfirmDelete, "");
     
     strcpy(this->ModulePath, "");
@@ -205,12 +207,12 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     this->ApplicationSlicesFrameHeight = this->MainLayout->GetDefaultSliceGUIFrameHeight();
 
     // Remote data handling settings
-    //strcpy ( this->RemoteCacheDirectory, "");
+    strcpy ( this->RemoteCacheDirectory, "");
     this->EnableAsynchronousIO = 0;
     this->EnableForceRedownload = 0;
-    this->EnableRemoteCacheOverwriting = 1;
-    this->RemoteCacheLimit = 20;
-    this->RemoteCacheFreeBufferSize = 10;
+//    this->EnableRemoteCacheOverwriting = 1;
+    this->RemoteCacheLimit = 50;
+    this->RemoteCacheFreeBufferSize = 5;
     
     // configure the application before creating
     this->SetName ( "3D Slicer Version 3.0 Beta" );
@@ -538,7 +540,58 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
                     << " Using unmodified temporary directory path "
                     << this->TemporaryDirectory);
     }
+  
 
+
+  // Make a good guess before we read from the registry.  Default to a
+  // subdirectory called Slicer3Cache in a standard temp location.
+#ifdef _WIN32
+  GetTempPath(vtkKWRegistryHelper::RegistryKeyValueSizeMax,
+              this->RemoteCacheDirectory);
+#else
+  strcpy(this->RemoteCacheDirectory, "/tmp/cache");
+#endif
+
+
+  // Tk does not understand Windows short path names, so convert to
+  // long path names and unix slashes
+  std::string remoteCacheDirectory = this->RemoteCacheDirectory;
+  remoteCacheDirectory
+    = itksys::SystemTools::GetActualCaseForPath(remoteCacheDirectory.c_str());
+  itksys::SystemTools::ConvertToUnixSlashes( remoteCacheDirectory );
+  
+  itksys::SystemTools::SplitPath(remoteCacheDirectory.c_str(), pathcomponents);
+#ifdef _WIN32
+  pathcomponents.push_back("Slicer3Cache");
+#else
+  if ( getenv("USER") != NULL )
+    {
+    dirName = dirName + getenv("USER");
+    }
+  pathcomponents.push_back(dirName);
+#endif
+  pathWithSlicer = itksys::SystemTools::JoinPath(pathcomponents);
+  
+  itksys::SystemTools::MakeDirectory(pathWithSlicer.c_str());
+  if (pathWithSlicer.size() < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+    {
+    strcpy(this->RemoteCacheDirectory, pathWithSlicer.c_str());
+    }
+  else
+    {
+    // path with "Slicer3Cache" attached is too long. Try it without
+    // "Slicer3Cache". If still too long, use the original path. (This path
+    // may have short names in it and hence will not work with Tk).
+    if (remoteCacheDirectory.size()
+        < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+      {
+      strcpy(this->RemoteCacheDirectory, remoteCacheDirectory.c_str());
+      }
+    vtkWarningMacro("Default remoteCache directory path " << pathWithSlicer.c_str()
+                    << " is too long to be stored in the registry."
+                    << " Using unmodified remoteCache directory path "
+                    << this->RemoteCacheDirectory);
+    }
 
   //--- web browser
   // start with no browser...
@@ -565,10 +618,6 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
   strcpy(this->Zip, "");
   //--- rm
   strcpy(this->Rm, "");
-
-  //-- remote cache dir, use the temporary directory for now
-  strcpy(this->RemoteCacheDirectory,this->TemporaryDirectory);
-  
   Superclass::RestoreApplicationSettingsFromRegistry();
   
   
@@ -683,13 +732,6 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
         2, "RunTime", vtkSlicerApplication::ApplicationLayoutTypeRegKey);
     }
 
-  if (this->HasRegistryValue(
-        2, "RunTime", vtkSlicerApplication::RemoteCacheDirectoryRegKey))
-    {
-    this->GetRegistryValue(
-      2, "RunTime", vtkSlicerApplication::RemoteCacheDirectoryRegKey,
-      this->RemoteCacheDirectory);
-    }
    if (this->HasRegistryValue(
          2, "RunTime", vtkSlicerApplication::EnableAsynchronousIORegKey))
     {
@@ -702,12 +744,23 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
     this->EnableForceRedownload = this->GetIntRegistryValue(
       2, "RunTime", vtkSlicerApplication::EnableForceRedownloadRegKey);
     }
+
+
+  if (this->HasRegistryValue(
+    2, "RunTime", vtkSlicerApplication::RemoteCacheDirectoryRegKey))
+    {
+    this->GetRegistryValue(
+      2, "RunTime", vtkSlicerApplication::RemoteCacheDirectoryRegKey,
+      this->RemoteCacheDirectory);
+    }
+/*
    if (this->HasRegistryValue(
          2, "RunTime", vtkSlicerApplication::EnableRemoteCacheOverwritingRegKey))
     {
     this->EnableRemoteCacheOverwriting = this->GetIntRegistryValue(
       2, "RunTime", vtkSlicerApplication::EnableRemoteCacheOverwritingRegKey);
     }
+*/
    if (this->HasRegistryValue(
          2, "RunTime", vtkSlicerApplication::RemoteCacheLimitRegKey))
     {
@@ -719,7 +772,30 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
     {
     this->RemoteCacheFreeBufferSize = this->GetIntRegistryValue(
       2, "RunTime", vtkSlicerApplication::RemoteCacheFreeBufferSizeRegKey);
-    }  
+    }
+}
+
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::ConfigureRemoteIOSettingsFromRegistry()
+{
+  if ( this->ApplicationGUI )
+    {
+    //--- propagate this value through the GUI into MRML's CacheManager
+    this->ApplicationGUI->ConfigureRemoteIOSettings();
+    }
+}
+
+
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::UpdateRemoteIOSettingsForRegistry()
+{
+  if ( this->ApplicationGUI )
+    {
+    //--- update values from MRML, through the GUI 
+    this->ApplicationGUI->UpdateRemoteIOConfigurationForRegistry();
+    }
 }
 
 
@@ -816,9 +892,11 @@ void vtkSlicerApplication::SaveApplicationSettingsToRegistry()
   this->SetRegistryValue(
                          2, "RunTime", vtkSlicerApplication::EnableForceRedownloadRegKey, "%d", 
                          this->EnableForceRedownload);
+/*
   this->SetRegistryValue(
                          2, "RunTime", vtkSlicerApplication::EnableRemoteCacheOverwritingRegKey, "%d", 
                          this->EnableRemoteCacheOverwriting);
+*/
   this->SetRegistryValue(
                          2, "RunTime", vtkSlicerApplication::RemoteCacheLimitRegKey, "%d", 
                          this->RemoteCacheLimit);
@@ -1337,6 +1415,8 @@ void vtkSlicerApplication::DisplayLogDialog(vtkKWTopLevel* master)
     }
 }
 
+
+//----------------------------------------------------------------------------
 void vtkSlicerApplication::SplashMessage (const char *message)
 {
   if (this->GetUseSplashScreen())
@@ -1346,23 +1426,103 @@ void vtkSlicerApplication::SplashMessage (const char *message)
 }
 
 //----------------------------------------------------------------------------
+void vtkSlicerApplication::SetEnableAsynchronousIO ( int val )
+{
+  if ( val != this->EnableAsynchronousIO )
+    {
+    if ( val == 0 || val == 1 )
+      {
+      this->EnableAsynchronousIO = val;
+      this->ConfigureRemoteIOSettingsFromRegistry();
+      }
+    }
+  return;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetEnableForceRedownload ( int val )
+{
+  if ( val != this->EnableForceRedownload )
+    {
+    if ( val == 0 || val == 1 )
+      {
+      this->EnableForceRedownload = val;
+      this->ConfigureRemoteIOSettingsFromRegistry();    
+      }
+    }
+  return;
+
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetEnableRemoteCacheOverwriting ( int val )
+{
+  if ( val != this->EnableRemoteCacheOverwriting )
+    {
+    if ( val == 0 || val == 1 )
+      {
+      this->EnableRemoteCacheOverwriting = val;
+      this->ConfigureRemoteIOSettingsFromRegistry();    
+      }
+    }
+  return;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetRemoteCacheLimit ( int val )
+{
+  if ( val != this->RemoteCacheLimit )
+    {
+    if ( val > 0 )
+      {
+      this->RemoteCacheLimit = val;
+      this->ConfigureRemoteIOSettingsFromRegistry();
+      }
+    }
+  return;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetRemoteCacheFreeBufferSize ( int val )
+{
+
+  if ( val != this->RemoteCacheFreeBufferSize )
+    {
+    if ( val >= 0 )
+      {
+      this->RemoteCacheFreeBufferSize = val;
+      this->ConfigureRemoteIOSettingsFromRegistry();
+      }
+    }
+  return;
+}
+
+
+
+
+//----------------------------------------------------------------------------
 void vtkSlicerApplication::SetRemoteCacheDirectory(const char* path)
 {
   if (path)
     {
-    if (strcmp(this->RemoteCacheDirectory, path) != 0
-        && strlen(path) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+    if ( strlen(path) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
       {
-      strcpy(this->RemoteCacheDirectory, path);
-      this->Modified();
+      if ( strcmp ( this->RemoteCacheDirectory, path ) )
+        {
+        strcpy(this->RemoteCacheDirectory, path);
+        //--- propagate this value through the GUI into MRML's CacheManager
+        this->ConfigureRemoteIOSettingsFromRegistry();
+        this->Modified();
+        }
       }
     }
+  return;
 }
 
 //----------------------------------------------------------------------------
 const char* vtkSlicerApplication::GetRemoteCacheDirectory() const
 {
-  if (this->RemoteCacheDirectory)
+  if (this->RemoteCacheDirectory != NULL )
     {
     // does the path exist?
     if (!itksys::SystemTools::MakeDirectory(this->RemoteCacheDirectory))
