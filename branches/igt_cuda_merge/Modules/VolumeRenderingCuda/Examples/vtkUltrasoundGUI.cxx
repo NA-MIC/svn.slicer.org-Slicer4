@@ -49,7 +49,7 @@ vtkUltrasoundGUI::vtkUltrasoundGUI()
     this->isRendering = false;
 
 
-    
+
 
 }
 
@@ -152,7 +152,7 @@ void vtkUltrasoundGUI::CreateWidget()
 
 vtkUltrasoundGUI::~vtkUltrasoundGUI()
 {
-//    
+    //    
     // Deallocate and exit
     StartCallbackCommand->Delete();
     StopCallbackCommand->Delete();
@@ -196,27 +196,20 @@ void vtkUltrasoundGUI::LoadUltrasoundHeartSeries(void* data)
     std::cout << "done" <<  std::endl;
 }
 
-void vtkUltrasoundGUI::ReRender()
-{
-    if (!renderScheduled)
-    {
-        renderScheduled = true;
-        this->GetApplication()->Script("after 100 %s Render", renderWidget->GetTclName());
-    }
-}
-
 
 void vtkUltrasoundGUI::ScheduleRender()
 {
-    if (cb_Animate->GetSelectedState() == 1)
+    if (this->renderScheduled == false)
     {
-        if (++frameNumber >= readers.size())
-            frameNumber = 0;
-        VolumeMapper->SetInput(readers[frameNumber]->GetOutput());
-        this->renderScheduled = false;
+        if (cb_Animate->GetSelectedState() == 1)
+        {
+            if (++frameNumber >= readers.size())
+                frameNumber = 0;
+            VolumeMapper->SetInput(readers[frameNumber]->GetOutput());
+        }
+        this->renderScheduled = true;
+        this->renderWidget->Render();
     }
-
-    //this->renderWidget->Render();
 }
 
 void vtkUltrasoundGUI::GuiEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
@@ -237,24 +230,21 @@ void vtkUltrasoundGUI::GuiEvent(vtkObject* caller)
 {
     if (caller == cb_Animate && cb_Animate->GetSelectedState() == 1) 
     {
-        ReRender();
+        this->ScheduleRender();
     }
     else if (caller == VolumePropertyWidget)
     {
-        ReRender();
+        this->ScheduleRender();
     }
 }
 
 void vtkUltrasoundGUI::RenderBegin()
 {
-    ScheduleRender();
+    this->renderScheduled = true;
 }
 
 void vtkUltrasoundGUI::RenderEnd()
 {
-    if (this->renderScheduled == false)
-        {    
-            this->renderScheduled=true;
-            this->Script("after 20 %s Render", this->renderWidget->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
-        }
+        this->renderScheduled=false;
+        this->Script("after idle %s ScheduleRender", this->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
 }
