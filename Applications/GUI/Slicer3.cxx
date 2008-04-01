@@ -896,9 +896,11 @@ int Slicer3_main(int argc, char *argv[])
     
     // -- event broker
     // - script handler to pass callback strings to the tcl interp
-    // - asynchronous mode so that redunant events get collapsed
+    // - synchronous mode so that redunant events do not get collapsed
+    //   (this is compatible with standard vtk event behavior, but adds
+    //   the ability to trace event execution).
     vtkEventBroker::GetInstance()->SetScriptHandler( Slicer3_BrokerScriptHandler ); 
-    vtkEventBroker::GetInstance()->SetEventModeToAsynchronous(); 
+    vtkEventBroker::GetInstance()->SetEventModeToSynchronous(); 
 
 
     // Create MRML scene
