@@ -17,8 +17,6 @@ if(ULTRASOUNDMODULE)
 # Include dirs
 
 INCLUDE_DIRECTORIES(
-  ${FOUND_CUT_INCLUDE}
-  ${CUDA_INSTALL_PREFIX}/include
   ${UltrasoundModule_SOURCE_DIR}
   ${UltrasoundModule_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
@@ -63,10 +61,6 @@ SET(UltrasoundModule_LIBRARIES
   ${KWWidgets_LIBRARIES}
  )
 
-CUDA_ADD_LIBRARY(UltrasoundModule
-  ${UltrasoundModule_SRCS}
-  ${UltrasoundModule_TCL_SRCS}
-  )
 
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS UltrasoundModule

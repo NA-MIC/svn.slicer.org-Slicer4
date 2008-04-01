@@ -15,7 +15,6 @@ TARGET_LINK_LIBRARIES(VolumeRenderingCudaExample
 ####################
 #### ULTRASOUND ####
 ####################
-
 SET(ULTRASOUND_EXAMPLE_SRCS
   vtkUltrasoundGUI.cxx
 )

@@ -15,7 +15,6 @@ extern "C" {
 #include "CUDA_renderRayCastComposite.h"
 #include "CUDA_renderRayCastMIP.h"
 #include "CUDA_renderRayCastIsosurface.h"
-#include "CuVector3.h"
 
 // vtk includes
 //#include "vtkType.h"
