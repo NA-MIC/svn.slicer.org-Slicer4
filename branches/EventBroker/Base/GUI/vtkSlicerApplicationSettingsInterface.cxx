@@ -51,7 +51,7 @@ vtkSlicerApplicationSettingsInterface::vtkSlicerApplicationSettingsInterface()
   this->RemoteCacheSettingsFrame = NULL;
   this->EnableAsynchronousIOCheckButton = NULL;
   this->EnableForceRedownloadCheckButton = NULL;
-  this->EnableRemoteCacheOverwritingCheckButton = NULL;
+//  this->EnableRemoteCacheOverwritingCheckButton = NULL;
   this->RemoteCacheDirectoryButton = NULL;
   this->RemoteCacheLimitSpinBox = NULL;
   this->RemoteCacheFreeBufferSizeSpinBox = NULL;
@@ -154,6 +154,7 @@ vtkSlicerApplicationSettingsInterface::~vtkSlicerApplicationSettingsInterface()
     this->EnableDaemonCheckButton->Delete();
     this->EnableDaemonCheckButton = NULL;
     }
+
   if (this->RemoteCacheSettingsFrame)
     {
     this->RemoteCacheSettingsFrame->Delete();
@@ -195,6 +196,7 @@ vtkSlicerApplicationSettingsInterface::~vtkSlicerApplicationSettingsInterface()
     this->RemoteCacheFreeBufferSizeSpinBox->Delete();
     this->RemoteCacheFreeBufferSizeSpinBox = NULL;
     }
+    
 }
 
 //----------------------------------------------------------------------------
