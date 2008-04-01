@@ -15,6 +15,7 @@ class vtkKWRenderWidget;
 
 class VTK_ULTRASOUNDLIBRARY_EXPORT vtkUltrasoundGUI : public vtkKWWindow
 {
+public:
     vtkTypeRevisionMacro(vtkUltrasoundGUI, vtkKWWindow);
     static vtkUltrasoundGUI *New();
 
@@ -22,9 +23,7 @@ class VTK_ULTRASOUNDLIBRARY_EXPORT vtkUltrasoundGUI : public vtkKWWindow
 
     void ScheduleRender();
 
-
     //EVENTS: VTK is not supporting Object Calls.
-    void ReRender();
     static void GuiEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
     static void RenderBeginStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
     static void RenderEndStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
