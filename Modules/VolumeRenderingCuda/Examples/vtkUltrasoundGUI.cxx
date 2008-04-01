@@ -47,10 +47,6 @@ vtkUltrasoundGUI::vtkUltrasoundGUI()
     this->readers;
     this->renderScheduled = false;
     this->isRendering = false;
-
-
-
-
 }
 
 void vtkUltrasoundGUI::CreateWidget()
@@ -71,7 +67,7 @@ void vtkUltrasoundGUI::CreateWidget()
     this->VolumeMapper = vtkVolumeTextureMapper2D::New();
     this->Volume->SetMapper(VolumeMapper);
 
-    this->LoadUltrasoundHeartSeries("D:\\Volumes\\4DUltrasound\\3DDCM002.raw");
+    this->LoadUltrasoundHeartSeries((void*)"D:\\Volumes\\4DUltrasound\\3DDCM002.raw");
     if (!readers.empty())
         this->VolumeMapper->SetInput(readers[0]->GetOutput());
 

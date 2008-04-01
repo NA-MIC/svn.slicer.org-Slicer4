@@ -29,7 +29,7 @@ if(VOLUMERENDERINGCUDAMODULE)
     ${VolumeRenderingCudaModule_BINARY_DIR}
   )
   SET(VOLUMERENDERINGCUDAMODULE_LIBRARIES
-    ${VolumeRenderingCudaModule_BINARY_DIR}/VolumeRenderingCudaModule
+    VolumeRenderingCudaModule
   )
   ADD_DEFINITIONS(-DUSE_CUDA_VOLUME_MAPPER)
 endif(VOLUMERENDERINGCUDAMODULE)
