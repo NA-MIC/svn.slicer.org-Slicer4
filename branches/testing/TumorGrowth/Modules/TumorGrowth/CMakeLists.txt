@@ -175,3 +175,32 @@ CONFIGURE_FILE(
     COPYONLY
   )
 ENDFOREACH(simfile)
+
+
+#
+# copy over test files
+#
+SET (TEST_DIR ${TumorGrowth_BINARY_DIR}/Testing)
+IF (NOT EXISTS ${TEST_DIR})
+  FILE(MAKE_DIRECTORY ${TEST_DIR})
+ENDIF (NOT EXISTS ${TEST_DIR})
+
+SET(TESTFILES
+  scan1.nhdr
+  scan1.raw.gz
+  scan2.nhdr
+  scan2.raw.gz
+  test.mrml
+  testScript
+  GUI-AnalysisOutcome.log
+  Script-AnalysisOutcome.log
+)
+
+FOREACH(testfile ${TESTFILES})
+  CONFIGURE_FILE(
+    ${Slicer3_SOURCE_DIR}/Modules/TumorGrowth/Testing/${testfile}
+    ${TEST_DIR}/${testfile}
+    COPYONLY
+  )
+ENDFOREACH(testfile)
+
