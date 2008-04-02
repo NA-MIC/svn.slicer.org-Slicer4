@@ -163,7 +163,11 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
   if (!this->TypeIntensityCheckButton->IsCreated()) {
     this->TypeIntensityCheckButton->SetParent(this->FrameTypeIntensity);
     this->TypeIntensityCheckButton->Create();
-    this->TypeIntensityCheckButton->SelectedStateOn();
+    if (node) { 
+      this->TypeIntensityCheckButton->SetSelectedState(node->GetAnalysis_Intensity_Flag());
+    } else {
+      this->TypeIntensityCheckButton->SelectedStateOn();
+    }
     this->TypeIntensityCheckButton->SetText("Analyze Intensity Patterns (fast)");
   }
 
@@ -174,7 +178,11 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
   if (!this->TypeJacobianCheckButton->IsCreated()) {
     this->TypeJacobianCheckButton->SetParent(this->FrameTypeJacobian);
     this->TypeJacobianCheckButton->Create();
-    this->TypeJacobianCheckButton->SelectedStateOff();
+    if (node) { 
+      this->TypeJacobianCheckButton->SetSelectedState(node->GetAnalysis_Deformable_Flag()); 
+    } else {
+      this->TypeJacobianCheckButton->SelectedStateOff();
+    }
     this->TypeJacobianCheckButton->SetText("Analyze Deformation Map (slow) ");
     // Currently not yet implemented
     this->TypeJacobianCheckButton->EnabledOn();
