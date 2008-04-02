@@ -162,8 +162,8 @@ ENDIF (NOT EXISTS ${SIMULATION_DIR})
 
 SET(SIMULATIONFILES
   create_artificial_growth_deformation.sh
-  spgr-2006.nhdr
-  spgr-2006.raw.gz
+  original.nhdr
+  original.raw.gz
   copy-deformation_vectors_base.mha
 )
 
