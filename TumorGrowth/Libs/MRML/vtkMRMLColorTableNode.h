@@ -55,16 +55,6 @@ public:
   virtual void WriteXML(ostream& of, int indent);
 
   // Description:
-  // Set the storage node id, used for reading files
-  vtkSetReferenceStringMacro(StorageNodeID);
-  void SetReferenceStorageNodeID(const char *id) { this->SetStorageNodeID(id); }
-  vtkGetStringMacro(StorageNodeID);
-
-  // Description:
-  // Get associated storage MRML node
-  vtkMRMLStorageNode* GetStorageNode();
-
-  // Description:
   // Copy the node's attributes to this object
   virtual void Copy(vtkMRMLNode *node);
 
@@ -177,6 +167,11 @@ public:
   // Description:
   // reset when close the scene
   virtual void Reset();
+
+  // Description:
+  // return the index associated with this color name, which can then be used
+  // to get the colour. Returns -1 on failure.
+  int GetColorIndexByName(const char *name);
   
 protected:
   vtkMRMLColorTableNode();
@@ -192,10 +187,6 @@ protected:
   // Description: 
   // The look up table, constructed according to the Type
   vtkLookupTable *LookupTable;
-
-  // Description:
-  // id of the storage node
-  char *StorageNodeID;
 
 };
 

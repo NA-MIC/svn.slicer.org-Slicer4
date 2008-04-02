@@ -36,9 +36,11 @@ Version:   $Revision: 1.18 $
 
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
+#include "vtkCacheManager.h"
+#include "vtkDataIOManager.h"
 
 class vtkGeneralTransform;
-
+class vtkURIHandler;
 class VTK_MRML_EXPORT vtkMRMLScene : public vtkCollection
 {
 public:
@@ -131,6 +133,12 @@ public:
   // Description:
   // Remove a path from the list.
   void RemoveNode(vtkMRMLNode *n); 
+
+  // Description:
+  // Remove a path from the list without invoking NodeRemovedEvent
+  // - use this when there are no references to the passed node (e.g. singletons 
+  //   on scene load)
+  void RemoveNodeNoNotify(vtkMRMLNode *n); 
   
   // Description:
   // Determine whether a particular node is present. Returns its position
@@ -186,6 +194,12 @@ public:
   // Description:
   // Get number of nodes of a specified class in the scene
   int GetNumberOfNodesByClass(const char* className);
+  
+  // Description:
+  // Get vector of nodes of a specified class in the scene
+  //BTX
+  int GetNodesByClass(const char *className, std::vector<vtkMRMLNode *> &nodes);
+  //ETX
   
   //BTX
   std::list<std::string> GetNodeClassesList();
@@ -277,7 +291,11 @@ public:
     this->ReferencedIDChanges.clear();
   };
 
+  void RemoveReferencedNodeID(const char *id, vtkMRMLNode *refrencingNode);
+
   void RemoveNodeReferences(vtkMRMLNode *node);
+
+  void RemoveReferencesToNode(vtkMRMLNode *node);
 
   // Description: 
   // Return collection of all nodes referenced directly or indirectly by a node.
@@ -327,6 +345,36 @@ public:
     return (this->GetErrorMessage().c_str());
     }
 
+  unsigned long GetSceneModifiedTime()
+    {
+    if (this->CurrentScene && this->CurrentScene->GetMTime() > this->SceneModifiedTime)
+      {
+      this->SceneModifiedTime = this->CurrentScene->GetMTime();
+      }
+    return this->SceneModifiedTime;
+    };
+    
+  void IncrementSceneModifiedTime()
+    {
+    this->SceneModifiedTime ++;
+    };
+
+
+  vtkGetObjectMacro ( CacheManager, vtkCacheManager );
+  vtkSetObjectMacro ( CacheManager, vtkCacheManager );
+  vtkGetObjectMacro ( DataIOManager, vtkDataIOManager );
+  vtkSetObjectMacro ( DataIOManager, vtkDataIOManager );
+  vtkGetObjectMacro ( URIHandlerCollection, vtkCollection );
+  vtkSetObjectMacro ( URIHandlerCollection, vtkCollection );
+
+  // Description:
+  // find a URI handler in the collection that can work on the passed URI
+  // returns NULL on failure
+  vtkURIHandler *FindURIHandler(const char *URI);
+  // Description:
+  // Add a uri handler to the collection.
+  void AddURIHandler(vtkURIHandler *handler);
+  
 protected:
   vtkMRMLScene();
   ~vtkMRMLScene();
@@ -342,6 +390,14 @@ protected:
   void AddReferencedNodes(vtkMRMLNode *node, vtkCollection *refNodes);
 
   vtkCollection* CurrentScene;
+  
+  // data i/o handling members
+  vtkCacheManager *CacheManager;
+  vtkDataIOManager *DataIOManager;
+  vtkCollection *URIHandlerCollection;
+
+  unsigned long SceneModifiedTime;
+  
   int UndoStackSize;
   bool UndoFlag;
   

@@ -21,8 +21,9 @@
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRMLScene.h"
+#include "vtkURIHandler.h"
 
-
+class vtkURIHandler;
 class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
 {
   public:
@@ -69,9 +70,69 @@ class VTK_MRML_EXPORT vtkMRMLStorageNode : public vtkMRMLNode
   vtkSetMacro(UseCompression, int);
 
   // Description:
+  // Location of the remote copy of this file.
+  vtkSetStringMacro(URI);
+  vtkGetStringMacro(URI);
+  
+  vtkGetObjectMacro (URIHandler, vtkURIHandler);
+  vtkSetObjectMacro (URIHandler, vtkURIHandler);
+  
+  // Description:
   // Propagate Progress Event generated in ReadData
   virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
 
+  // Description:
+  // If the URI is not null, fetch it and save it to the node's FileName location or
+  // load directly into the reference node.
+  void StageReadData ( vtkMRMLNode *refNode );
+  // Description:
+  // Copy data from the local file location (node->FileName) or node to the remote
+  // location specified by the URI
+  void StageWriteData ( vtkMRMLNode *refNode );
+
+  // Description:
+  // Possible Read and Write states 
+  //BTX
+  enum
+  {
+    Ready,
+    Pending,
+    Scheduled,
+  };
+  //ETX
+  // Description:
+  // Get/Set the state of reading 
+  vtkGetMacro(ReadState,int);
+  vtkSetMacro(ReadState,int);
+  void SetReadStatePending() { this->SetReadState(this->Pending); };
+  void SetReadStateReady() { this->SetReadState(this->Ready); };
+  void SetReadStateScheduled() { this->SetReadState(this->Scheduled); };
+  const char *GetStateAsString(int state);
+  const char *GetReadStateAsString() { return this->GetStateAsString(this->ReadState); };
+  
+  // Description:
+  // Get/Set the state of writing 
+  vtkGetMacro(WriteState,int);
+  vtkSetMacro(WriteState,int);
+  void SetWriteStatePending() { this->SetWriteState(this->Pending); };
+  void SetWriteStateReady() { this->SetWriteState(this->Ready); };
+  void SetWriteStateScheduled() { this->SetWriteState(this->Scheduled); };
+  const char *GetWriteStateAsString() { return this->GetStateAsString(this->WriteState); };
+
+  // Description:
+  // Get the file's absolute path from the file name and the mrml scene root
+  // dir
+  //BTX
+  std::string GetFullNameFromFileName();
+  //ETX
+
+  // Description:
+  // Check to see if this storage node can handle the file type in the input
+  // string. If input string is null, check URI, then check FileName. Returns
+  // 1 if is supported, 0 otherwise.
+  // Subclasses should implement this method.
+  virtual int SupportedFileType(const char *fileName);
+  
 protected:
   vtkMRMLStorageNode();
   ~vtkMRMLStorageNode();
@@ -79,8 +140,12 @@ protected:
   void operator=(const vtkMRMLStorageNode&);
 
   char *FileName;
+  char *URI;
+  vtkURIHandler *URIHandler;
   int UseCompression;
-
+  int ReadState;
+  int WriteState;
+  
 };
 
 #endif

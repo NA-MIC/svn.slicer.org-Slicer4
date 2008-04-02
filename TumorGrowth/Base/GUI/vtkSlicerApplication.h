@@ -91,6 +91,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   // proper registry level set (if any).
   virtual void RestoreApplicationSettingsFromRegistry();
   virtual void SaveApplicationSettingsToRegistry();
+  virtual void ConfigureRemoteIOSettingsFromRegistry();
+  virtual void UpdateRemoteIOSettingsForRegistry();
 
   // Description:
   // Some constants
@@ -112,6 +114,12 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   static const char *ApplicationWindowHeightRegKey;
   static const char *ApplicationSlicesFrameHeightRegKey;
   static const char *ApplicationLayoutTypeRegKey;
+  static const char *EnableAsynchronousIORegKey;
+  static const char *EnableForceRedownloadRegKey;
+  static const char *EnableRemoteCacheOverwritingRegKey;
+  static const char *RemoteCacheDirectoryRegKey;
+  static const char *RemoteCacheLimitRegKey;
+  static const char *RemoteCacheFreeBufferSizeRegKey;
   //ETX
 
 
@@ -150,7 +158,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   void SetWebBrowser ( const char *browser);
   const char* GetWebBrowser () const;
 
-  // Descriptin:
+  // Description:
   // Set/Get an executable zip and unzip for modules that need one
   void SetUnzip ( const char *unzip );
   const char *GetUnzip() const;
@@ -167,6 +175,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   void SetTemporaryDirectory(const char *path);
   const char* GetTemporaryDirectory() const;
 
+  // Description:
+  // Set/Get a directory for the remote file cache
+  void SetRemoteCacheDirectory(const char *path);
+  const char* GetRemoteCacheDirectory() const;
+  
   // Description:
   // Set/Get the application window size
   // for saving in the registry.
@@ -199,6 +212,34 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   vtkSetMacro(EnableDaemon, int);
   vtkGetMacro(EnableDaemon, int);
   vtkBooleanMacro(EnableDaemon, int);
+
+  // Description:
+  // Set/Get if asynch IO should be used
+  void SetEnableAsynchronousIO ( int );
+  vtkGetMacro(EnableAsynchronousIO, int);
+  vtkBooleanMacro(EnableAsynchronousIO, int);
+
+  // Description:
+  // Set/Get if re-downloads to the cache should be forced
+  void SetEnableForceRedownload (int);
+  vtkGetMacro(EnableForceRedownload, int);
+  vtkBooleanMacro(EnableForceRedownload, int);
+
+  // Description:
+  // Set/Get if should force overwriting cache files
+  void SetEnableRemoteCacheOverwriting (int);
+  vtkGetMacro(EnableRemoteCacheOverwriting, int);
+  vtkBooleanMacro(EnableRemoteCacheOverwriting, int);
+
+  // Description:
+  // Control the remote cache directory size, in Mb
+  void SetRemoteCacheLimit ( int);
+  vtkGetMacro (RemoteCacheLimit, int);
+
+  // Description:
+  // Control the remote cache directory free buffer size, in Mb
+  void SetRemoteCacheFreeBufferSize ( int );
+  vtkGetMacro (RemoteCacheFreeBufferSize, int);  
 
   // Description:
   // Evaluate a string as a tcl expression
@@ -311,6 +352,13 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   PyObject* PythonDictionary;
 #endif
 
+  int EnableAsynchronousIO;
+  int EnableForceRedownload;
+  int EnableRemoteCacheOverwriting;
+  char RemoteCacheDirectory[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  int RemoteCacheLimit;
+  int RemoteCacheFreeBufferSize;
+  
 private:
   vtkSlicerApplication ( const vtkSlicerApplication& ); // Not implemented.
   void operator = ( const vtkSlicerApplication& ); //Not implemented.

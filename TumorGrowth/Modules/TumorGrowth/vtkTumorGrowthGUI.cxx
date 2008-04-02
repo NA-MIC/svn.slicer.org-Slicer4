@@ -11,7 +11,7 @@
 #include "vtkKWWizardWorkflow.h"
 
 // For PopulateTestingData()
-#include "vtkSlicerVolumesGUI.h"
+// #include "vtkSlicerVolumesGUI.h"
 #include "vtkSlicerVolumesLogic.h"
 #include "vtkMRMLVolumeNode.h"
 #include "vtkDirectory.h"
@@ -23,6 +23,7 @@
 #include "vtkTumorGrowthTypeStep.h"
 #include "vtkTumorGrowthAnalysisStep.h"
 #include "vtkKWScale.h"
+#include "vtkKWLabel.h"
 #include "vtkSlicerSliceControllerWidget.h"
 
 // #include "CSAILLogo.h"
@@ -504,6 +505,9 @@ AddObserverByNumber(vtkObject *observee, unsigned long event)
 } 
 
 void vtkTumorGrowthGUI::SliceLogicRemoveGUIObserver() {
+  if (!this) return;
+  if (!this->GetApplicationGUI()) return;
+
   if (this->SliceController_OffsetScale) {
     this->SliceController_OffsetScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangedEvent, this->SliceLogicCallbackCommand);
     this->SliceController_OffsetScale->GetWidget()->RemoveObservers(vtkKWScale::ScaleValueChangingEvent, this->SliceLogicCallbackCommand);
@@ -513,10 +517,8 @@ void vtkTumorGrowthGUI::SliceLogicRemoveGUIObserver() {
 }
 
 void vtkTumorGrowthGUI::SliceLogicRemove() {
-  cout << "vtkTumorGrowthGUIStep::SliceLogicRemove" << endl;
-
   this->SliceLogicRemoveGUIObserver();
- 
+  if (!this) return;
   if (this->SliceLogicCallbackCommand) {
     this->SliceLogicCallbackCommand->Delete();
     this->SliceLogicCallbackCommand = NULL; 

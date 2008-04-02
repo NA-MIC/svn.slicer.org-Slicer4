@@ -2,12 +2,10 @@
 #include "vtkMRMLNode.h"
 #include "vtkSlicerVolumeTextureMapper3D.h"
 #include "vtkPiecewiseFunction.h"
-#include "vtkLabelMapPiecewiseFunction.h"
 #include <vector>
 #include <iostream>
 #include <sstream>
 #include <string>
-
 
 vtkMRMLVolumeRenderingNode* vtkMRMLVolumeRenderingNode::New()
 {
@@ -41,6 +39,11 @@ vtkMRMLVolumeRenderingNode::vtkMRMLVolumeRenderingNode(void)
     this->IsLabelMapOff();
     //Standard is 3D-Volume Texture Mapper
     this->Mapper=0;
+    this->CroppingEnabled=0;
+    for(int i=0;i<COUNT_CROPPING_REGION_PLANES;i++)
+    {
+        this->CroppingRegionPlanes[i]=0;
+    }
 }
 
 vtkMRMLVolumeRenderingNode::~vtkMRMLVolumeRenderingNode(void)
@@ -75,6 +78,21 @@ void vtkMRMLVolumeRenderingNode::WriteXML(ostream& of, int nIndent)
         }
     }
     of<<"\"";
+
+    //Save cropping information
+    of << " croppingEnabled=\""<< this->CroppingEnabled<< "\"";
+    of << " croppingRegionPlanes=\"";
+    for(int i=0;i<COUNT_CROPPING_REGION_PLANES;i++)
+    {
+        of<<this->CroppingRegionPlanes[i];
+        if(i!=COUNT_CROPPING_REGION_PLANES-1)
+        {
+            of<<" ";
+        }
+
+    }
+    of <<"\"";
+
     //Only write opacities when LabelMap
     //if(this->GetIsLabelMap())
     //{
@@ -84,8 +102,8 @@ void vtkMRMLVolumeRenderingNode::WriteXML(ostream& of, int nIndent)
     //}
     //else
     //{
-        of << " scalarOpacity=\"" << this->getPiecewiseFunctionString(this->VolumeProperty->GetScalarOpacity())  << "\"";
-        of << " gradientOpacity=\"" <<this->getPiecewiseFunctionString(this->VolumeProperty->GetGradientOpacity())<< "\"";
+        of << " scalarOpacity=\"" << this->GetPiecewiseFunctionString(this->VolumeProperty->GetScalarOpacity())  << "\"";
+        of << " gradientOpacity=\"" <<this->GetPiecewiseFunctionString(this->VolumeProperty->GetGradientOpacity())<< "\"";
         of << " colorTransfer=\"" <<this->getColorTransferFunctionString(this->VolumeProperty->GetRGBTransferFunction())<< "\"";
 
    // }
@@ -212,19 +230,34 @@ void vtkMRMLVolumeRenderingNode::ReadXMLAttributes(const char** atts)
             ss>>specularPower;
             this->VolumeProperty->SetSpecularPower(specularPower);
         }//else if
-
-        //special behavior for labelmaps
-        else if(!strcmp(attName,"opacityLabelMap"))
+        else if (!strcmp(attName,"croppingEnabled"))
         {
-            if(this->IsLabelMap==0)
-            {
-                vtkErrorMacro("grayscale volumes don't have a opacityLabelMap");
-            }
-            vtkLabelMapPiecewiseFunction *scalarOpacityLabelmap=vtkLabelMapPiecewiseFunction::New();
-            scalarOpacityLabelmap->FillFromString(attValue);
-            this->VolumeProperty->SetScalarOpacity(scalarOpacityLabelmap);
-            scalarOpacityLabelmap->Delete();
+            std::stringstream ss;
+            ss<<attValue;
+            ss>>this->CroppingEnabled;  
         }
+        else if (!strcmp(attName,"croppingRegionPlanes"))
+        {
+            std::stringstream ss;
+            ss<<attValue;
+            for(int i=0;i<COUNT_CROPPING_REGION_PLANES;i++)
+            {
+                ss>>this->CroppingRegionPlanes[i];          
+            }
+        }
+
+        ////special behavior for labelmaps
+        //else if(!strcmp(attName,"opacityLabelMap"))
+        //{
+        //    if(this->IsLabelMap==0)
+        //    {
+        //        vtkErrorMacro("grayscale volumes don't have a opacityLabelMap");
+        //    }
+        //    vtkLabelMapPiecewiseFunction *scalarOpacityLabelmap=vtkLabelMapPiecewiseFunction::New();
+        //    scalarOpacityLabelmap->FillFromString(attValue);
+        //    this->VolumeProperty->SetScalarOpacity(scalarOpacityLabelmap);
+        //    scalarOpacityLabelmap->Delete();
+        //}
     }//while
     vtkDebugMacro("Finished reading in xml attributes, list id = " << this->GetID() << " and name = " << this->GetName() << endl);
 }
@@ -280,7 +313,6 @@ void vtkMRMLVolumeRenderingNode::CopyParameterset(vtkMRMLNode *anode)
         this->VolumeProperty->SetSpecular(node->VolumeProperty->GetSpecular(i));
         this->VolumeProperty->SetSpecularPower(node->VolumeProperty->GetSpecularPower(i));
     }
-    this->SetMapper(node->Mapper);
 }
 
 //----------------------------------------------------------------------------
@@ -328,7 +360,7 @@ void vtkMRMLVolumeRenderingNode::ProcessMRMLEvents ( vtkObject *caller,
 }
 
 
-std::string vtkMRMLVolumeRenderingNode::getPiecewiseFunctionString(vtkPiecewiseFunction* function)
+std::string vtkMRMLVolumeRenderingNode::GetPiecewiseFunctionString(vtkPiecewiseFunction* function)
 {
     std::stringstream resultStream;
     int arraysize=function->GetSize()*2;

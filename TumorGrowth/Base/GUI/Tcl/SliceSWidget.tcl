@@ -304,8 +304,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
       # - first update the annotation
       # - then handle modifying the view
       #
-      $this updateAnnotation $x $y $r $a $s
-
       if { [$_interactor GetShiftKey] } {
         $this jumpOtherSlices $r $a $s
         # need to render to show the annotation
@@ -417,11 +415,13 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     "LeftButtonPressEvent" {
       if { [info command SeedSWidget] != "" } {
         set interactionNode [$::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode]
-        set mode [$interactionNode GetCurrentInteractionMode]
-        set modeString [$interactionNode GetInteractionModeAsString $mode]
-        set modifier [expr [$_interactor GetControlKey] && [$_interactor GetShiftKey]]
-        if { $modeString == "Place" || $modifier } {
-          FiducialsSWidget::AddFiducial $r $a $s
+        if { $interactionNode != "" } {
+          set mode [$interactionNode GetCurrentInteractionMode]
+          set modeString [$interactionNode GetInteractionModeAsString $mode]
+          set modifier [expr [$_interactor GetControlKey] && [$_interactor GetShiftKey]]
+          if { $modeString == "Place" || $modifier } {
+            FiducialsSWidget::AddFiducial $r $a $s
+          }
         }
       }
     }
@@ -447,19 +447,16 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     "MouseWheelForwardEvent" { 
       $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
       $this incrementSlice 
-      $this updateAnnotation $x $y $r $a $s
     }
     "MouseWheelBackwardEvent" {
       $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
       $this decrementSlice 
-      $this updateAnnotation $x $y $r $a $s
     }
     "ExposeEvent" { }
     "ConfigureEvent" {
       $this resizeSliceNode
     }
     "EnterEvent" { 
-      $this updateAnnotation $x $y $r $a $s
       $_renderWidget CornerAnnotationVisibilityOn
       [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText "Middle Button: Pan; Right Button: Zoom"
     }
@@ -470,7 +467,7 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     "TimerEvent" { }
     "KeyPressEvent" { 
       set key [$_interactor GetKeySym]
-      if { [lsearch "v r b f space c Up Down Left Right" $key] != -1 } {
+      if { [lsearch "v r b f space c e Up Down Left Right" $key] != -1 } {
         $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
         $sliceGUI SetGUICommandAbortFlag 1
         switch [$_interactor GetKeySym] {
@@ -484,17 +481,18 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
           }
           "b" - "Left" - "Down" {
             $this decrementSlice
-            $this updateAnnotation $x $y $r $a $s
           }
           "f" - "Right" - "Up" {
             $this incrementSlice
-            $this updateAnnotation $x $y $r $a $s
           }
           "space" {
             ::Box::ShowDialog EditBox
           }
           "c" {
             ::Box::ShowDialog ColorBox
+          }
+          "e" {
+            EditorToggleErasePaintLabel
           }
           default {
             set capture 0
@@ -516,6 +514,12 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     }
     "ExitEvent" { }
   }
+
+  set xyToRAS [$_sliceNode GetXYToRAS]
+  set ras [$xyToRAS MultiplyPoint $x $y $z 1]
+  foreach {r a s t} $ras {}
+  $this updateAnnotation $x $y $r $a $s
+
 }
 
 

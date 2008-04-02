@@ -66,6 +66,7 @@ SET (SLICER_LIBRARIES_DIR "${Slicer3_BINARY_DIR}/${SLICER_INSTALL_LIBRARIES_DIR}
 
 OPTION(BUILD_TESTING "Test the project" ON)
 SET(Slicer3_BUILD_TESTING ${BUILD_TESTING})
+SET(LAUNCH_EXE ${Slicer3_BINARY_DIR}/Slicer3 --launch)
 IF(Slicer3_BUILD_TESTING)
     ENABLE_TESTING()
     INCLUDE (CTest)
@@ -203,7 +204,7 @@ FIND_PACKAGE(VTK REQUIRED)
 IF(EXISTS ${VTK_CMAKE_DIR}/VTKVersionMacros.cmake)
  INCLUDE(${VTK_CMAKE_DIR}/VTKVersionMacros.cmake)
 ELSE(EXISTS ${VTK_CMAKE_DIR}/VTKVersionMacros.cmake)
- MESSAGE("Using local version of VTKVersionMacros for compatibility.")
+ #MESSAGE("Using local version of VTKVersionMacros for compatibility.")
  INCLUDE(${Slicer3_SOURCE_DIR}/Scripts/VTKVersionMacros.cmake)
 ENDIF(EXISTS ${VTK_CMAKE_DIR}/VTKVersionMacros.cmake)
 
@@ -227,19 +228,26 @@ SET(TCLAP_DIR ${Slicer3_BINARY_DIR}/Libs/tclap)
 
 OPTION(BUILD_CLI "Build Slicer3 CLI Plugins" ON)
 MARK_AS_ADVANCED(BUILD_CLI)
+SUBDIRS(
+  Libs
+)
+
+SUBDIRS(
+  Base
+)
 
 OPTION(BUILD_MODULES "Build Slicer3 Modules" ON)
 MARK_AS_ADVANCED(BUILD_MODULES)
 
-SUBDIRS(
-  Libs
-  Base
-  Applications
-  )
-
 IF(BUILD_MODULES)
   SUBDIRS(Modules)
 ENDIF(BUILD_MODULES)
+
+## Applications need to be built after Modules to capture the TractTracing in
+## the correct ordering.
+SUBDIRS(
+  Applications
+  )
 
 IF (Slicer3_BUILD_TESTING)
     SUBDIRS( Testing )
@@ -292,8 +300,6 @@ INSTALL(FILES
 #   ${Slicer3_BINARY_DIR}/Slicer3BuildSettings.cmake
    ${Slicer3_BINARY_DIR}/UseSlicer3.cmake
    ${Slicer3_BINARY_DIR}/Utilities/Slicer3Config.cmake
-   DESTINATION lib
+   DESTINATION lib/Slicer3
    COMPONENT Development
 )
-
-

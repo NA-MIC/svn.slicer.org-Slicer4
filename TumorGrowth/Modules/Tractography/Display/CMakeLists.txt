@@ -10,7 +10,6 @@ SET(SlicerTractographyDisplay_SRCS
   vtkSlicerFiberBundleDisplayLogic.cxx
   vtkSlicerFiberBundleLogic.cxx
   vtkSlicerDiffusionTensorIcons.cxx
-  vtkSlicerDiffusionTensorGlyphDisplayWidget.cxx
 )
 
 # Abstract/pure virtual classes
@@ -71,8 +70,8 @@ ADD_LIBRARY(SlicerTractographyDisplay
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS SlicerTractographyDisplay
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(SlicerTractographyDisplay

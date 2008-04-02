@@ -85,6 +85,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerSliceGUI : public vtkSlicerComponentGU
     virtual void AddGUIObservers ( );
     virtual void RemoveGUIObservers ( );
 
+    //virtual void RemoveMRMLObservers ( );
+    
     // Description:
     // Processes all events raised by the logic
     virtual void ProcessLogicEvents ( vtkObject *caller, unsigned long event, void *callData );
@@ -95,6 +97,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerSliceGUI : public vtkSlicerComponentGU
     // Processes all events raised by MRML
     virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
 
+    virtual void RemoveMRMLObservers();
+    
     // Description:
     // Utility for accessing the event that is most recently triggered on the GUI
     vtkGetStringMacro ( CurrentGUIEvent );
@@ -136,6 +140,9 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerSliceGUI : public vtkSlicerComponentGU
     char *CurrentGUIEvent;
     char *GrabID;
 
+//BTX
+  std::vector<vtkMRMLDisplayNode *> DisplayNodes;
+//ETX
 
  private:
     vtkSlicerSliceGUI ( const vtkSlicerSliceGUI& ); // Not implemented.

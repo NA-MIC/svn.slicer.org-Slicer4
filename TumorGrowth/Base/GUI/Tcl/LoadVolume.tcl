@@ -60,6 +60,7 @@ if { [itcl::find class LoadVolume] == "" } {
 
     variable _volumeExtensions ".hdr .nhdr .nrrd .mhd .mha .vti .mgz"
     variable _observerRecords ""
+    variable _processingEvents 0
 
     # methods
     method processEvent {{caller ""} {event ""}} {}
@@ -126,8 +127,29 @@ itcl::body LoadVolume::constructor {} {
 
   set fileTable [$o(browser) GetFileListTable]
   $fileTable SetSelectionModeToSingle
+  set tag [$fileTable AddObserver DeleteEvent "itcl::delete $this"]
+  lappend _observerRecords [list $fileTable $tag]
   set tag [$fileTable AddObserver AnyEvent "$this processEvent $o(browser)"]
   lappend _observerRecords [list $fileTable $tag]
+
+  set directoryExplorer [$o(browser) GetDirectoryExplorer]
+  set tag [$directoryExplorer AddObserver DeleteEvent "itcl::delete $this"]
+  lappend _observerRecords [list $directoryExplorer $tag]
+  set tag [$directoryExplorer AddObserver AnyEvent "$this processEvent $o(browser)"]
+  lappend _observerRecords [list $directoryExplorer $tag]
+
+  #
+  # the current Path
+  #
+  set o(path) [vtkNew vtkKWEntryWithLabel]
+  $o(path) SetParent $o(topFrame)
+  $o(path) SetLabelText "Path: "
+  $o(path) Create
+  set tag [[$o(path) GetWidget] AddObserver DeleteEvent "itcl::delete $this"]
+  lappend _observerRecords [list [$o(path) GetWidget] $tag]
+  set tag [[$o(path) GetWidget] AddObserver AnyEvent "$this processEvent $o(path)"]
+  lappend _observerRecords [list [$o(path) GetWidget] $tag]
+
 
   #
   # the options frame
@@ -139,6 +161,7 @@ itcl::body LoadVolume::constructor {} {
 
   pack \
     [$o(browser) GetWidgetName] \
+    [$o(path) GetWidgetName] \
     [$o(options) GetWidgetName] \
     -side top -anchor e -padx 2 -pady 2 -expand true -fill both
 
@@ -155,18 +178,26 @@ itcl::body LoadVolume::constructor {} {
   $o(label) SetText "Label Map"
   $o(label) Create
 
+  set o(singlefile) [vtkNew vtkKWCheckButton]
+  $o(singlefile) SetParent [$o(options) GetFrame]
+  $o(singlefile) SetText "Single File"
+  $o(singlefile) Create
+
   set o(name) [vtkNew vtkKWEntryWithLabel]
   $o(name) SetParent [$o(options) GetFrame]
   $o(name) SetLabelText "Name: "
   $o(name) Create
 
-  pack \
-    [$o(centered) GetWidgetName] \
-    [$o(label) GetWidgetName] \
-    [$o(name) GetWidgetName] \
+  pack [$o(centered) GetWidgetName] \
+    -side left -anchor e -padx 2 -pady 2 -expand true -fill both
+
+  pack [$o(label) GetWidgetName] \
+    -side left -anchor e -padx 2 -pady 2 -expand true -fill both
+  pack [$o(singlefile) GetWidgetName] \
+    -side left -anchor e -padx 2 -pady 2 -expand true -fill both
+
+  pack [$o(name) GetWidgetName] \
     -side top -anchor e -padx 2 -pady 2 -expand true -fill both
-
-
 
   #
   # a status label
@@ -239,6 +270,10 @@ itcl::body LoadVolume::apply { } {
 
   set centered [$o(centered) GetSelectedState]
   set labelMap [$o(label) GetSelectedState]
+  set singleFile [$o(singlefile) GetSelectedState]
+
+  set loadingOptions [expr $labelMap * 1 + $centered * 2 + $singleFile * 4]
+
   set fileTable [$o(browser) GetFileListTable]
   set fileName [$fileTable GetNthSelectedFileName 0]
   if { $fileName == "" } {
@@ -250,7 +285,11 @@ itcl::body LoadVolume::apply { } {
   }
 
   set volumeLogic [$::slicer3::VolumesGUI GetLogic]
-  set node [$volumeLogic AddArchetypeVolume $fileName $centered $labelMap $name]
+  set ret [catch [list $volumeLogic AddArchetypeVolume "$fileName" $name $loadingOptions] node]
+  if { $ret } {
+    $this errorDialog "Could not load $fileName as a volume\n\nError is:\n$node"
+    return
+  }
   set selNode [$::slicer3::ApplicationLogic GetSelectionNode]
   if { $node == "" } {
     $this errorDialog "Could not load $fileName as a volume"
@@ -273,6 +312,10 @@ itcl::body LoadVolume::apply { } {
 #
 itcl::body LoadVolume::processEvent { {caller ""} {event ""} } {
 
+  if { $_processingEvents } {
+    return
+  }
+
   if { $caller == $o(apply) } {
     $this apply
     after idle "itcl::delete object $this"
@@ -285,11 +328,41 @@ itcl::body LoadVolume::processEvent { {caller ""} {event ""} } {
   }
 
   if { $caller == $o(browser) } {
+    set _processingEvents 1
     set fileTable [$o(browser) GetFileListTable]
     set fileName [$fileTable GetNthSelectedFileName 0]
-    $this status $fileName
-    set volName [file root [file tail $fileName]]
-    [$o(name) GetWidget] SetValue $volName
+    if { $fileName == "" } {
+      set directoryExplorer [$o(browser) GetDirectoryExplorer]
+      set directory [$directoryExplorer GetSelectedDirectory]
+      [$o(path) GetWidget] SetValue $directory
+      $this status "Directory: $directory"
+      [$o(name) GetWidget] SetValue ""
+    } else {
+      [$o(path) GetWidget] SetValue $fileName
+      $this status "File Name: $fileName"
+      set volName [file root [file tail $fileName]]
+      [$o(name) GetWidget] SetValue $volName
+    }
+    set _processingEvents 0
+    return
+  }
+
+  if { $caller == $o(path) } {
+    set _processingEvents 1
+    set path [[$o(path) GetWidget] GetValue]
+    set fileTable [$o(browser) GetFileListTable]
+    set directoryExplorer [$o(browser) GetDirectoryExplorer]
+
+    if { [file isdirectory $path] } {
+      set dir $path
+    } else {
+      set dir [file dirname $path]
+    }
+
+    $directoryExplorer SelectDirectory $dir
+    $fileTable ClearSelection
+    $fileTable SelectFileName $path
+    set _processingEvents 0
     return
   }
   

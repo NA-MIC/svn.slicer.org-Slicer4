@@ -180,7 +180,9 @@ proc ImportNodeVolume {node} {
       }
 
       set logic [$::slicer3::VolumesGUI GetLogic]
-      set volumeNode [$logic AddArchetypeVolume $fileName 1 $labelMap $n(name)]
+      ##      set volumeNode [$logic AddArchetypeVolume $fileName 1 $labelMap $n(name)]
+      set loadingOptions $labelMap
+      set volumeNode [$logic AddArchetypeVolume $fileName $n(name) $loadingOptions]
       set volumeNodeID [$volumeNode GetID]
 
     }
@@ -431,6 +433,8 @@ proc ImportNodeModelGroup {node} {
   }
 
   $hnode SetAndObserveDisplayNodeID [$dnode GetID]
+  $hnode SetHideFromEditors 0
+  $hnode SetSelectable 1
 
   set ::S2_HParent_ID [$hnode GetID]
 }
@@ -454,6 +458,9 @@ proc ImportNodeModelRef {node} {
     $hnode SetParentNodeIDReference $::S2_HParent_ID
   }
   $hnode SetModelNodeIDReference $id3
+
+  $hnode SetHideFromEditors 1
+  $hnode SetSelectable 0
 
   #$hnode SetAndObserveDisplayNodeID [$dnode GetID]
 

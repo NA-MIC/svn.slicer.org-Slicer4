@@ -5,12 +5,15 @@ from __main__ import tk
 import _slicer
 
 def StartConsole():
-    top = Tkinter.Toplevel ( tk );
+    top = Tkinter.Toplevel ( tk )
     c = Console.Console(parent=top,dict={})
     c.dict["console"] = c
     c.pack(fill=Tkinter.BOTH, expand=1)
     c.master.title("Python Console v%s" % Console.VERSION)
     return
+
+def TkCall(commandString):
+    tk.tk.call(*commandString.split())
 
 class SlicerWrapper:
     def ToArray (self):
@@ -101,25 +104,25 @@ class Slicer:
         for name in ( inName, qname ):
             # if it's a variable, find the value, and see if it's a command
             if self.__eval ( 'info exists ' + name ):
-                print "found name: ", name
-                cname = str ( self.__eval ( 'set ' + name ) );
+                # print "found name: ", name
+                cname = str ( self.__eval ( 'set ' + name ) )
                 # print "found cname: ", cname
                 if self.__eval ( 'info command ' + cname ):
-                    print "Returning Wrapped object: ", cname
+                    # print "Returning Wrapped object: ", cname
                     return SlicerWrapper ( self, cname )
                 else:
-                    print "Returning object: ", cname
+                    # print "Returning object: ", cname
                     return cname
             if self.__eval ( 'info command ' + name ):
-                print "Returning Wrapped object, wo/lookup"
+                # print "Returning Wrapped object, wo/lookup"
                 return SlicerWrapper ( self, name )
         raise Exception ( "attribute " + qname + " does not exist" )
 
 class Plugin:
     """Class to interface with Slicer3 plugins"""
     def __init__ ( self, Name ):
-        idx = GetRegisteredPlugins().index ( Name );
-        self.slicer = Slicer();
+        idx = GetRegisteredPlugins().index ( Name )
+        self.slicer = Slicer()
         self.name = Name
     def Execute ( self, *args, **keywords ):
         self.module = self.slicer.MRMLScene.CreateNodeByClass ( "vtkMRMLCommandLineModuleNode" );
@@ -128,11 +131,11 @@ class Plugin:
         diff = len(pargs) - len(args)
         if diff < 0:
             self.module.Delete();
-            raise Exception ( "Plugin: " + self.name + " requires " + len ( pargs ) + ", " + len ( args ) + " given" )
+            raise Exception ( "Plugin: " + self.name + " requires " + str(len(pargs)) + "arguments, " + str(len(args)) + " given" )
 
         print diff
 
-        arglen = len(args);
+        arglen = len(args)
 
         # Set the positional arguments
         for ii in range ( len(args) ):
@@ -141,8 +144,8 @@ class Plugin:
             if n == []:
                 self.module.Delete();
                 raise Exception ( "Plugin: " + self.name + " requires a MRML Node as a positional arg: found " + str(args[ii]) + " instead" )
-            paramName = self.module.GetParameterName ( pargs[ii][0], pargs[ii][1] );
-            self.module.SetParameterAsString ( paramName, args[ii] );
+            paramName = self.module.GetParameterName ( pargs[ii][0], pargs[ii][1] )
+            self.module.SetParameterAsString ( paramName, args[ii] )
 
         # Append empty nodes to the end...
         outputNodes = []
@@ -163,18 +166,18 @@ class Plugin:
                 c = "vtkMRMLScalarVolumeNode"
             node = self.slicer.MRMLScene.CreateNodeByClass ( c )
             node.SetScene ( self.slicer.MRMLScene )
-            node.SetName ( self.slicer.MRMLScene.GetUniqueNameByString ( c ) );
-            node = self.slicer.MRMLScene.AddNode ( node );
-            newargs.append ( node );
-            outputNodes.append ( node );
-            paramName = self.module.GetParameterName ( pargs[idx][0], pargs[idx][1] );
+            node.SetName ( self.slicer.MRMLScene.GetUniqueNameByString ( c ) )
+            node = self.slicer.MRMLScene.AddNode ( node )
+            newargs.append ( node )
+            outputNodes.append ( node )
+            paramName = self.module.GetParameterName ( pargs[idx][0], pargs[idx][1] )
             print 'Setting: ' + paramName + ' to ' + node.GetName()
-            self.module.SetParameterAsString ( paramName, node.GetID() );
+            self.module.SetParameterAsString ( paramName, node.GetID() )
 
         # Now set the keyword args
         for key in keywords.keys():
             print 'Setting: ' + str(key) + ' = ' + str(keywords[key])
-            self.module.SetParameterAsString ( key, str(keywords[key]) );
+            self.module.SetParameterAsString ( key, str(keywords[key]) )
 
         # And finally, execute the plugin
         logic = self.slicer.vtkCommandLineModuleLogic.New()
@@ -196,38 +199,38 @@ class Plugin:
         args = {}
         for group in range ( self.module.GetNumberOfParameterGroups() ):
             for arg in range ( self.module.GetNumberOfParametersInGroup ( group ) ):
-                print self.module.GetParameterIndex ( group, arg );
+                print self.module.GetParameterIndex ( group, arg )
                 if self.module.GetParameterIndex ( group, arg ) != []:
                     print self.module.GetParameterIndex ( group, arg )
                     args[int(self.module.GetParameterIndex ( group, arg ))] = (group,arg)
-        keys = args.keys();
-        keys.sort();
+        keys = args.keys()
+        keys.sort()
         print keys
         print args
         return args
 
 def TestPluginClass():
-    slicer = Slicer();
-    p = Plugin ( 'Subtract Images' );
-    vn = ListVolumeNodes ();
+    slicer = Slicer()
+    p = Plugin ( 'Subtract Images' )
+    vn = ListVolumeNodes ()
     if len ( vn ) > 0:
-        p.Execute ( vn[0].GetID(), vn[0].GetID() );
+        p.Execute ( vn[0].GetID(), vn[0].GetID() )
 
 
 def GetRegisteredPlugins ():
     slicer = Slicer();
-    n = slicer.MRMLScene.CreateNodeByClass ( "vtkMRMLCommandLineModuleNode" );
+    n = slicer.MRMLScene.CreateNodeByClass ( "vtkMRMLCommandLineModuleNode" )
     p = [];
     for idx in range ( n.GetNumberOfRegisteredModules() ):
-        p.append ( n.GetRegisteredModuleNameByIndex ( idx ) );
-    n.Delete();
+        p.append ( n.GetRegisteredModuleNameByIndex ( idx ) )
+    n.Delete()
     return p
 
 
 def CallPlugin ( name, *args, **keywords ):
     # get a slicer guy
     slicer = Slicer();
-    n = slicer.MRMLScene.CreateNodeByClass ( "vtkMRMLCommandLineModuleNode" );
+    n = slicer.MRMLScene.CreateNodeByClass ( "vtkMRMLCommandLineModuleNode" )
     # Figure out if this is a valid plugin
     validname = None
     for idx in range ( n.GetNumberOfRegisteredModules() ):
@@ -261,7 +264,7 @@ def ListVolumeNodes():
         nodes[idx] = scene.GetNthNodeByClass ( idx, 'vtkMRMLVolumeNode' )
     return nodes
 
-def ParseArgs ( ModuleArgs, ArgTags ):
+def ParseArgs ( ModuleArgs, ArgTags, ArgFlags, ArgMultiples ):
     """This is a helper function to strip off all the flags
     and make them keyword args to the eventual Execute call
     returns a tuple of FlagArgs and PositionalArgs"""
@@ -278,7 +281,7 @@ def ParseArgs ( ModuleArgs, ArgTags ):
             argval = float(arg)
         elif argtag == 'integer-vector':
             argval = [int(el) for el in arg.split(',')]
-        elif argtag in ['float-vector', 'double-vector']:
+        elif argtag in ['float-vector', 'double-vector', 'point']:
             argval = [float(el) for el in arg.split(',')]
         elif argtag == 'string-vector':
             argval = arg.split(',')
@@ -289,15 +292,25 @@ def ParseArgs ( ModuleArgs, ArgTags ):
     FlagArgs = {}
     PositionalArgs = []
 
-    # Check each argument in turn, if we hit one that
-    # does not start with a "-", it's the positional args.
-    while len ( ModuleArgs ) != 0:
-        arg = ModuleArgs.pop ( 0 );
+    while len (ModuleArgs) != 0:
+        arg = ModuleArgs.pop(0)
         print "Looking at: ", arg
         if arg.startswith ( "-" ):
-            FlagArgs[arg.lstrip( "-" )] = CastArg(ModuleArgs.pop(0),ArgTags.pop(0))
+            argflag = arg.lstrip("-")
+            argtag = ArgTags[ArgFlags.index(argflag)]
+            argmultiple = ArgMultiples[ArgFlags.index(argflag)]
+            if argmultiple == 'true':
+                if not FlagArgs.has_key(argflag):
+                    FlagArgs[argflag] = []
+                FlagArgs[argflag].append(CastArg(ModuleArgs.pop(0),argtag))
+            else:
+                FlagArgs[argflag] = CastArg(ModuleArgs.pop(0),argtag)
         else:
+            nFlags = len([argflag for argflag in ArgFlags if argflag != ''])
+            ArgTags = ArgTags[nFlags:]
             PositionalArgs.append(CastArg(arg,ArgTags.pop(0)))
-            while len ( ModuleArgs ) != 0:
+            while len(ModuleArgs) != 0:
                 PositionalArgs.append(CastArg(ModuleArgs.pop(0),ArgTags.pop(0)))
+
     return FlagArgs, PositionalArgs
+

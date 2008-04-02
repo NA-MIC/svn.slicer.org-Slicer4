@@ -21,18 +21,18 @@ Version:   $Revision: 1.3 $
 #include "vtkMRMLVolumeRenderingNode.h"
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerNodeSelectorVolumeRenderingWidget.h"
-#include "vtkSlicerVolumePropertyWidget.h"
+
 #include "vtkKWLabel.h"
 #include "vtkKWHistogram.h"
 #include "vtkKWEntryWithLabel.h"
 #include "vtkKWTkUtilities.h"
-#include "vtkSlicerLabelMapWidget.h"
 
 #include <string>
 
 class vtkSlicerVolumeTextureMapper3D;
 class vtkFixedPointVolumeRayCastMapper;
 class vtkSlicerVRHelper;
+class vtkSlicerVolumePropertyWidget;
 class VTK_VOLUMERENDERINGMODULE_EXPORT vtkVolumeRenderingModuleGUI :public vtkSlicerModuleGUI
 {
 public:
@@ -118,9 +118,10 @@ public:
     vtkGetObjectMacro (NS_VolumeRenderingDataSlicer,vtkSlicerNodeSelectorVolumeRenderingWidget);
     vtkGetObjectMacro (NS_VolumeRenderingDataScene,vtkSlicerNodeSelectorVolumeRenderingWidget);
     vtkGetObjectMacro (EWL_CreateNewVolumeRenderingNode,vtkKWEntryWithLabel);
-    vtkGetObjectMacro (detailsFrame,vtkSlicerModuleCollapsibleFrame);
-    vtkGetObjectMacro (currentNode,vtkMRMLVolumeRenderingNode);
-    vtkGetObjectMacro (presets, vtkMRMLScene);
+    vtkGetObjectMacro (DetailsFrame,vtkSlicerModuleCollapsibleFrame);
+    vtkGetObjectMacro (CurrentNode,vtkMRMLVolumeRenderingNode);
+    vtkGetObjectMacro (Presets, vtkMRMLScene);
+    vtkGetObjectMacro (Helper, vtkSlicerVRHelper);
 
 
 
@@ -181,20 +182,12 @@ protected:
     vtkKWEntryWithLabel *EWL_CreateNewVolumeRenderingNode;
 
     //Frame Details
-    vtkSlicerModuleCollapsibleFrame *detailsFrame;
+    vtkSlicerModuleCollapsibleFrame *DetailsFrame;
 
 
     //Other members
-    vtkMRMLVolumeRenderingNode  *currentNode;
-    vtkMRMLScene *presets;
-
-
-
-
-
-   
-    void PackLabelMapGUI(void);
-    void UnpackLabelMapGUI(void);
+    vtkMRMLVolumeRenderingNode  *CurrentNode;
+    vtkMRMLScene *Presets;
 
     void PackSvpGUI(void);
     void UnpackSvpGUI(void);

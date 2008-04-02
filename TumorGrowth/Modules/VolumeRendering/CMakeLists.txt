@@ -7,40 +7,30 @@ if(VOLUMERENDERINGMODULE)
   vtkVolumeRenderingModuleGUI.cxx
   vtkVolumeRenderingModuleLogic.cxx
   vtkMRMLVolumeRenderingNode.cxx
-  vtkSlicerVolumePropertyWidget.cxx
   vtkSlicerNodeSelectorVolumeRenderingWidget.cxx
   vtkSlicerVRHelper.cxx
   vtkSlicerVRGrayscaleHelper.cxx
-  vtkSlicerVolumeTextureMapper3D.cxx
-  vtkSlicerOpenGLVolumeTextureMapper3D.cxx
-  vtkSlicerVolumeRenderingFactory.cxx
-  #Ray Cast stuff
-  vtkSlicerFixedPointRayCastImage.cxx
-  vtkSlicerFixedPointVolumeRayCastCompositeGOHelper.cxx
-  vtkSlicerFixedPointVolumeRayCastCompositeGOShadeHelper.cxx
-  vtkSlicerFixedPointVolumeRayCastCompositeHelper.cxx
-  vtkSlicerFixedPointVolumeRayCastCompositeShadeHelper.cxx
-  vtkSlicerFixedPointVolumeRayCastHelper.cxx
-  vtkSlicerFixedPointVolumeRayCastMapper.cxx
-  vtkSlicerFixedPointVolumeRayCastMIPHelper.cxx
-  vtkSlicerRayCastImageDisplayHelper.cxx
-  vtkSlicerOpenGLRayCastImageDisplayHelper.cxx
+  vtkSlicerVRMenuButtonColorMode.cxx
   #LabelmapPart
-  vtkSlicerVRLabelmapHelper.cxx
-  vtkLabelMapColorTransferFunction.cxx
-  vtkLabelMapPiecewiseFunction.cxx
-  vtkSlicerLabelMapWidget.cxx
-  vtkSlicerLabelmapTree.cxx
-  vtkSlicerLabelmapElement.cxx
-  vtkSlicerBaseTree.cxx
-  vtkSlicerBaseTreeElement.cxx
+  #vtkSlicerVRLabelmapHelper.cxx
+  #vtkLabelMapColorTransferFunction.cxx
+  #vtkLabelMapPiecewiseFunction.cxx
+  #vtkSlicerLabelMapWidget.cxx
+  #vtkSlicerLabelmapTree.cxx
+  #vtkSlicerLabelmapElement.cxx
+  #vtkSlicerBaseTree.cxx
+  #vtkSlicerBaseTreeElement.cxx
   )
 #-----------------------------------------------
 # Include dirs
 
+SUBDIRS(VolumeRenderingReplacements)
+
 INCLUDE_DIRECTORIES(
   ${VolumeRenderingModule_SOURCE_DIR}
   ${VolumeRenderingModule_BINARY_DIR}
+  ${VolumeRenderingReplacements_SOURCE_DIR}
+  ${VolumeRenderingReplacements_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
@@ -75,8 +65,8 @@ ADD_LIBRARY(VolumeRenderingModule
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS VolumeRenderingModule
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(VolumeRenderingModule
@@ -84,6 +74,7 @@ TARGET_LINK_LIBRARIES(VolumeRenderingModule
   SlicerBaseGUI 
   MRML
   vtkITK
+  VolumeRenderingReplacements
   vtkCommonTCL
   vtkImagingTCL
   vtkFilteringTCL
@@ -114,7 +105,11 @@ CONFIGURE_FILE(
 )
 CONFIGURE_FILE(
   ${VolumeRenderingModule_SOURCE_DIR}/presets.xml
-  ${VolumeRenderingModule_BINARY_DIR}/presets.xml
+  ${Slicer3_BINARY_DIR}/lib/Slicer3/Modules/VolumeRendering/presets.xml
   COPYONLY
 )
+INSTALL(
+  FILES ${VolumeRenderingModule_SOURCE_DIR}/presets.xml
+  DESTINATION lib/Slicer3/Modules/VolumeRendering
+) 
 ENDIF(VOLUMERENDERINGMODULE)

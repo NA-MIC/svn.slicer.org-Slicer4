@@ -25,6 +25,7 @@
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLTransformNode.h"
 #include "vtkMRMLColorNode.h"
+#include "vtkMRMLDiffusionTensorVolumeSliceDisplayNode.h"
 
 #include "vtkPointData.h"
 
@@ -165,6 +166,7 @@ void vtkSlicerSliceLayerLogic::ProcessMRMLEvents(vtkObject * caller,
                                             unsigned long event, 
                                             void *callData)
 {
+  // ignore node events that aren't volumes or slice nodes
   if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene 
     && (event == vtkMRMLScene::NodeAddedEvent || event == vtkMRMLScene::NodeRemovedEvent ) )
     {
@@ -175,7 +177,15 @@ void vtkSlicerSliceLayerLogic::ProcessMRMLEvents(vtkObject * caller,
       }
     }
 
-  if (this->VolumeDisplayNodeObserved == vtkMRMLVolumeDisplayNode::SafeDownCast(caller) &&
+  // ignore unimportant scene events
+  if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene 
+    && (event == vtkMRMLScene::NewSceneEvent) )
+    {
+    return;
+    }
+
+  if (this->VolumeDisplayNodeObserved != NULL && 
+      this->VolumeDisplayNodeObserved == vtkMRMLVolumeDisplayNode::SafeDownCast(caller) &&
       event == vtkCommand::ModifiedEvent)
     {
       if (this->VolumeDisplayNode && this->VolumeDisplayNodeObserved)
@@ -532,8 +542,11 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
 
   if (volumeDisplayNode)
     {
-    volumeDisplayNode->SetImageData(slicedImageData);
-    volumeDisplayNode->SetBackgroundImageData(this->Reslice->GetBackgroundMask());
+    if (volumeNode != NULL && volumeNode->GetImageData() != NULL)
+      {
+      volumeDisplayNode->SetImageData(slicedImageData);
+      volumeDisplayNode->SetBackgroundImageData(this->Reslice->GetBackgroundMask());
+      }
     }
 
   if (scalarVolumeDisplayNode && scalarVolumeDisplayNode->GetInterpolate() == 0  )
@@ -543,7 +556,41 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
 
   this->Slice->SetSliceTransform( this->XYToIJKTransform ); 
   this->Reslice->SetResliceTransform( this->XYToIJKTransform ); 
+  
+  this->UpdateGlyphs(slicedImageData);
 
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
+{
+  vtkMRMLDiffusionTensorVolumeNode *volumeNode = vtkMRMLDiffusionTensorVolumeNode::SafeDownCast (this->VolumeNode);
+  if (volumeNode)
+    {
+    std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = volumeNode->GetSliceGlyphDisplayNodes();
+    for (unsigned int n=0; n<dnodes.size(); n++)
+      {
+      vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = dnodes[n];
+      if (!strcmp(this->GetSliceNode()->GetLayoutName(), dnode->GetName()) )
+        {
+        dnode->SetSliceImage(sliceImage);
+        dnode->SetSlicePositionMatrix(this->SliceNode->GetXYToRAS());
+        double dirs[3][3];
+        volumeNode->GetIJKToRASDirections(dirs);
+        vtkMatrix4x4 *trot = vtkMatrix4x4::New();
+        trot->Identity();
+        for (int i=0; i<3; i++) 
+          {
+          for (int j=0; j<3; j++)
+            {
+            trot->SetElement(i, j, dirs[i][j]);
+            }
+          }
+        dnode->SetSliceTensorRotationMatrix(trot);
+        trot->Delete();
+        }
+      }
+    }
 }
 
 //----------------------------------------------------------------------------

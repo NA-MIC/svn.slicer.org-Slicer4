@@ -199,7 +199,8 @@ vtkCommandLineModuleGUI::SetModuleDescription(const ModuleDescription& descripti
 void
 vtkCommandLineModuleGUI::SetCommandLineModuleNode(vtkMRMLCommandLineModuleNode *node)
 {
-  vtkSetObjectBodyMacro(CommandLineModuleNode, vtkMRMLCommandLineModuleNode, node);
+  //vtkSetObjectBodyMacro(CommandLineModuleNode, vtkMRMLCommandLineModuleNode, node);
+  vtkSetAndObserveMRMLNodeMacro( this->CommandLineModuleNode, node);
 }
 
 void vtkCommandLineModuleGUI::RemoveMRMLNodeObservers()
@@ -845,6 +846,7 @@ void vtkCommandLineModuleGUI::UpdateGUI ()
             splitFilenames(value, names);
             //vtkWarningMacro(<<"Filenames being set: " << value);
             lsb->GetWidget()->GetLoadSaveDialog()->SetInitialSelectedFileNames(names);
+            names->Delete();
             }
           else if (rbs)
             {
@@ -911,6 +913,7 @@ void vtkCommandLineModuleGUI::Enter ( )
     this->BuildGUI();
     this->Built = true;
     this->AddGUIObservers();
+    this->Logic->SetTemporaryDirectory( ((vtkSlicerApplication*)this->GetApplication())->GetTemporaryDirectory() );
     }
     this->CreateModuleEventBindings();
 }
@@ -1093,6 +1096,14 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
       // switch on the type of the parameter...
       vtkKWCoreWidget *parameter;
 
+      // parameters with flags can support the None node because they
+      // are optional
+      int noneEnabled = 0;
+      if ((*pit).GetLongFlag() != "" || (*pit).GetFlag() != "")
+        {
+        noneEnabled = 1;
+        }
+      
       if ((*pit).GetTag() == "integer")
         {
         if ((*pit).GetConstraints() == "")
@@ -1170,7 +1181,6 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
             ->SetRange(itk::NumericTraits<float>::NonpositiveMin(),
                        itk::NumericTraits<float>::max());
           tparameter->GetWidget()->SetIncrement( 0.1 );
-          tparameter->GetWidget()->SetValueFormat("%1.1f");
           tparameter->GetWidget()->SetValue(atof((*pit).GetDefault().c_str()));
           parameter = tparameter;
           }
@@ -1227,7 +1237,6 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
             ->SetRange(itk::NumericTraits<double>::NonpositiveMin(),
                        itk::NumericTraits<double>::max());
           tparameter->GetWidget()->SetIncrement( 0.1 );
-          tparameter->GetWidget()->SetValueFormat("%1.1f");
           tparameter->GetWidget()->SetValue(atof((*pit).GetDefault().c_str()));
           parameter = tparameter;
           }
@@ -1295,7 +1304,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
                                  NULL,
                                  (title + " FiducialList").c_str());
         tparameter->SetNewNodeEnabled(1);
-        tparameter->SetNoneEnabled(1);
+        tparameter->SetNoneEnabled(noneEnabled);
         // tparameter->SetNewNodeName((title+" output").c_str());
         tparameter->SetParent( parameterGroupFrame->GetFrame() );
         tparameter->Create();
@@ -1317,7 +1326,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
                                  NULL,
                                  (title + " RegionList").c_str());
         tparameter->SetNewNodeEnabled(1);
-        tparameter->SetNoneEnabled(1);
+        tparameter->SetNoneEnabled(noneEnabled);
         // tparameter->SetNewNodeName((title+" output").c_str());
         tparameter->SetParent( parameterGroupFrame->GetFrame() );
         tparameter->Create();
@@ -1338,7 +1347,11 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         std::string nodeClass;
         const char *attrName = 0;
         const char *attrValue = 0;
-        if ((*pit).GetType() == "label")
+        if ((*pit).GetType() == "any")
+          {
+          nodeClass = "vtkMRMLVolumeNode";
+          }
+        else if ((*pit).GetType() == "label")
           {
           nodeClass = "vtkMRMLScalarVolumeNode";
           attrName = labelAttrName.c_str();
@@ -1363,6 +1376,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
 
         tparameter->SetNodeClass(nodeClass.c_str(), attrName, attrValue, 
                                  (title + " Volume").c_str());
+        tparameter->SetNoneEnabled(noneEnabled);
         tparameter->SetParent( parameterGroupFrame->GetFrame() );
         tparameter->Create();
         tparameter->SetMRMLScene(this->Logic->GetMRMLScene());
@@ -1407,8 +1421,21 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
 
         tparameter->SetNodeClass(nodeClass.c_str(), attrName, attrValue, 
                                  (title + " Volume").c_str());
+        if ((*pit).GetType() == "any")
+          {
+          // Add all of the other concrete volume node types
+          tparameter->AddNodeClass("vtkMRMLVectorVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " VectorVolume").c_str());
+          tparameter->AddNodeClass("vtkMRMLDiffusionTensorVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " DiffusionTensorVolume").c_str());
+          tparameter->AddNodeClass("vtkMRMLDiffusionWeightedVolumeNode",
+                                   attrName, attrValue, 
+                                   (title + " DiffusionWeightedVolume").c_str());
+          }
         tparameter->SetNewNodeEnabled(1);
-        tparameter->SetNoneEnabled(1);
+        tparameter->SetNoneEnabled(noneEnabled);
         // tparameter->SetNewNodeName((title+" output").c_str());
         tparameter->SetParent( parameterGroupFrame->GetFrame() );
         tparameter->Create();
@@ -1441,6 +1468,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
                                  NULL,
                                  NULL,
                                  (title + " Model").c_str());
+        tparameter->SetNoneEnabled(noneEnabled);
         tparameter->SetParent( parameterGroupFrame->GetFrame() );
         tparameter->Create();
         tparameter->SetMRMLScene(this->Logic->GetMRMLScene());
@@ -1473,7 +1501,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
                                  NULL,
                                  (title + " Model").c_str());
         tparameter->SetNewNodeEnabled(1);
-        tparameter->SetNoneEnabled(1);
+        tparameter->SetNoneEnabled(noneEnabled);
         // tparameter->SetNewNodeName((title+" output").c_str());
         tparameter->SetParent( parameterGroupFrame->GetFrame() );
         tparameter->Create();
@@ -1572,13 +1600,14 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
           }
         else if ((*pit).GetType() == "nonlinear")
           {
-          // no nonlinear nodes are currently, so default to TransformNode
+          nodeClass = "vtkMRMLGridTransformNode";
           }
 
         tparameter->SetNodeClass(nodeClass.c_str(),
                                  NULL,
                                  NULL,
                                  (title + " Transform").c_str());
+        tparameter->SetNoneEnabled(noneEnabled);
         tparameter->SetParent( parameterGroupFrame->GetFrame() );
         tparameter->Create();
         tparameter->SetMRMLScene(this->Logic->GetMRMLScene());
@@ -1605,7 +1634,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
           }
         else if ((*pit).GetType() == "nonlinear")
           {
-          // no nonlinear nodes are currently, default to LinearTransformNode
+          nodeClass = "vtkMRMLGridTransformNode";
           }
 
 
@@ -1614,7 +1643,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
                                  NULL,
                                  (title + " Transform").c_str());
         tparameter->SetNewNodeEnabled(1);
-        tparameter->SetNoneEnabled(1);
+        tparameter->SetNoneEnabled(noneEnabled);
         // tparameter->SetNewNodeName((title+" output").c_str());
         tparameter->SetParent( parameterGroupFrame->GetFrame() );
         tparameter->Create();
@@ -1663,6 +1692,7 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         vtkSmartPointer<vtkStringArray> names = vtkStringArray::New();
         splitFilenames((*pit).GetDefault(), names);
         tparameter->GetWidget()->GetLoadSaveDialog()->SetInitialSelectedFileNames( names );
+        names->Delete();
         if ((*pit).GetFileExtensions().size() != 0)
           {
           std::string extensionVector;

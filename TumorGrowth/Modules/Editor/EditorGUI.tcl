@@ -77,7 +77,7 @@ proc EditorBuildGUI {this} {
   # help frame
   #
   set helptext "The Editor allows label maps to be created and edited. The active label map will be modified by the Editor. This module is currently a prototype and will be under active development throughout 3DSlicer's Beta release."
-  set abouttext "This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details."
+  set abouttext "This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details."
   $this BuildHelpAndAboutFrame $pageWidget $helptext $abouttext
 
   if { 0 } { 
@@ -293,6 +293,20 @@ proc EditorSetPaintLabel {index} {
   $node SetParameter "label" $index
 }
 
+proc EditorToggleErasePaintLabel {} {
+  # if in erase mode (label is 0), set to stored color
+  # if in color, store current and set to 0
+  if { [EditorGetPaintLabel] == 0 } {
+    if { [info exists ::Editor(savedLabelValue)] } {
+      EditorSetPaintLabel $::Editor(savedLabelValue)
+    }
+  } else {
+    set ::Editor(savedLabelValue) [EditorGetPaintLabel]
+    EditorSetPaintLabel 0
+  }
+}
+
+
 proc EditorGetPaintColor {this} {
 
   set sliceLogic [$::slicer3::ApplicationGUI GetMainSliceLogic0]
@@ -473,3 +487,4 @@ proc EditorCreateLabelVolume {this} {
   set range [[$volumeNode GetImageData] GetScalarRange]
   eval ::Labler::SetPaintRange $range
 }
+

@@ -106,6 +106,8 @@ INCLUDE_DIRECTORIES(
   ${EMSegment_SOURCE_DIR}/MRML
   ${EMSegment_SOURCE_DIR}/Algorithm
   ${EMSegment_SOURCE_DIR}/Registration
+  ${Volumes_SOURCE_DIR}
+  ${Volumes_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
@@ -118,6 +120,8 @@ INCLUDE_DIRECTORIES(
   ${VTK_INCLUDE_DIR}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
+  ${Volumes_SOURCE_DIR}
+  ${Volumes_BINARY_DIR}
   )
 
 #
@@ -138,13 +142,14 @@ ADD_LIBRARY(EMSegment
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS EMSegment
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(EMSegment
   SlicerBaseLogic 
-  SlicerBaseGUI 
+  SlicerBaseGUI
+  Volumes 
   MRML
   vtkITK
   vtkCommonTCL

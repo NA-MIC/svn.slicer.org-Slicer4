@@ -57,6 +57,9 @@ INCLUDE_DIRECTORIES(
   ${EMSegment_BINARY_DIR}
   ${vtkTeem_SOURCE_DIR} 
   ${vtkTeem_BINARY_DIR}
+  ${Volumes_SOURCE_DIR}
+  ${Volumes_BINARY_DIR}
+
   )
 
 # Enders work 
@@ -106,6 +109,7 @@ TARGET_LINK_LIBRARIES(TumorGrowth
   ITKIO
   ITKDICOMParser
   vtkTeem 
+  Volumes
   ${KWWidgets_LIBRARIES} 
   )
 

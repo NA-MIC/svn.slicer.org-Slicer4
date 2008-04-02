@@ -617,6 +617,12 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             p->GetMainSlicerWindow()->SetSecondaryPanelVisibility (!v );
             this->SetLayoutMenubuttonValueToCurrentLayout ();
             }
+          else if ( !strcmp ( whichLayout, "Toggle GUI panel L/R"))
+            {
+            int v = p->GetMainSlicerWindow()->GetViewPanelPosition();
+            p->GetMainSlicerWindow()->SetViewPanelPosition ( !v );
+            this->SetLayoutMenubuttonValueToCurrentLayout();
+            }
           }
         }
       else if ( menu == this->LoadSceneIconButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent )
@@ -1183,12 +1189,23 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
 //  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemVariableValueAsInt ( "Tabbed slice layout", vtkSlicerGUILayout::SlicerLayoutTabbedSliceView);
 
+  this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ("Compare view layout");
+  index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ("Compare view layout");
+  imageName = "SlicerCompareViewLayoutImage";
+  vtkKWTkUtilities::UpdatePhotoFromIcon ( this->GetApplication(), imageName, this->SlicerToolbarIcons->GetCompareViewIcon(), 0);
+  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemImage ( index, imageName );
+  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
+
   this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ( "Toggle GUI panel visibility" );
   index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ( "Toggle GUI panel visibility");
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemIndicatorVisibility ( index, 0 );
   this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ( "Toggle bottom panel visibility" );
   index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ( "Toggle bottom panel visibility");
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemIndicatorVisibility ( index, 0 );
+  this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ( "Toggle GUI panel L/R" );
+  index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ( "Toggle GUI panel L/R");
+  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemIndicatorVisibility ( index, 0 );
+  
   this->ChooseLayoutIconMenuButton->GetMenu()->AddSeparator ( );
   this->ChooseLayoutIconMenuButton->GetMenu()->AddCommand ("close");  
   this->ChooseLayoutIconMenuButton->SetBinding ( "<Button-1>", this, "StopViewRockOrSpin" );

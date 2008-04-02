@@ -12,6 +12,9 @@ CONFIGURE_FILE(
 # Sources
 
 SET(MRML_SRCS
+        vtkObserverManager.cxx
+        vtkEventBroker.cxx
+        vtkObservation.cxx
         vtkMRMLScene.cxx
         vtkMRMLParser.cxx
         vtkMRMLNode.cxx
@@ -21,6 +24,7 @@ SET(MRML_SRCS
         vtkMRMLModelNode.cxx
         vtkMRMLModelStorageNode.cxx
         vtkMRMLFreeSurferModelStorageNode.cxx    
+        vtkMRMLFreeSurferModelOverlayStorageNode.cxx
         vtkMRMLModelDisplayNode.cxx
         vtkMRMLClipModelsNode.cxx
         vtkMRMLStorageNode.cxx
@@ -32,6 +36,7 @@ SET(MRML_SRCS
         vtkMRMLVolumeGlyphDisplayNode.cxx
         vtkMRMLTransformableNode.cxx
         vtkMRMLTransformNode.cxx
+        vtkMRMLTransformStorageNode.cxx
         vtkMRMLLinearTransformNode.cxx
         vtkMRMLFiducial.cxx
         vtkMRMLFiducialListNode.cxx
@@ -39,7 +44,6 @@ SET(MRML_SRCS
         vtkMRMLSliceCompositeNode.cxx
         vtkMRMLSelectionNode.cxx
         vtkMRMLInteractionNode.cxx
-        vtkObserverManager.cxx
         vtkMRMLColorNode.cxx
         vtkMRMLColorTableStorageNode.cxx
         vtkMRMLColorTableNode.cxx
@@ -48,12 +52,14 @@ SET(MRML_SRCS
         vtkMRMLCameraNode.cxx
         vtkMRMLViewNode.cxx
         vtkMRMLTensorVolumeNode.cxx
+        vtkMRMLTimeSeriesVolumeNode.cxx
         vtkMRMLDiffusionTensorDisplayPropertiesNode.cxx
         vtkMRMLDiffusionWeightedVolumeDisplayNode.cxx
         vtkMRMLDiffusionWeightedVolumeNode.cxx
         vtkMRMLDiffusionImageVolumeNode.cxx
         vtkMRMLDiffusionTensorVolumeNode.cxx
         vtkMRMLDiffusionTensorVolumeDisplayNode.cxx
+        vtkMRMLDiffusionTensorVolumeSliceDisplayNode.cxx
         vtkMRMLVectorVolumeDisplayNode.cxx
         vtkMRMLFiberBundleNode.cxx
         vtkMRMLFiberBundleDisplayNode.cxx
@@ -72,6 +78,16 @@ SET(MRML_SRCS
         vtkMRMLUnstructuredGridStorageNode.cxx
         vtkMRMLDisplayNode.cxx
         vtkMRMLDisplayableNode.cxx
+        vtkMRMLStorableNode.cxx
+        # Classes for remote data handling:
+        vtkDataIOManager.cxx
+        vtkDataTransfer.cxx
+        vtkURIHandler.cxx
+        vtkCacheManager.cxx
+        vtkPermissionPrompter.cxx
+        vtkXNATPermissionPrompter.cxx
+        vtkMRMLNonlinearTransformNode.cxx
+        vtkMRMLGridTransformNode.cxx
         # Note: when you add new node types, add
         # register code to the vtkMRMLScene constructor
 )
@@ -128,8 +144,8 @@ ADD_LIBRARY(MRML
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS MRML
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/MRML COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/MRML COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(MRML
@@ -140,6 +156,7 @@ TARGET_LINK_LIBRARIES(MRML
   vtkIOTCL
   vtkGraphicsTCL
   vtkRenderingTCL
+  vtkHybridTCL
   ITKAlgorithms
   ITKNumerics 
   ITKCommon
