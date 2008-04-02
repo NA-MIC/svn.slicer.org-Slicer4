@@ -8,6 +8,7 @@
 #include <ModuleParameter.h>
 // Description:
 // This Widget builds out of the "module Xml description" a vtkKWWidget.
+#include "vtkSlicerBaseGUIWin32Header.h" 
 
 
 class vtkKWWidget;
@@ -20,7 +21,7 @@ class vtkKWLabel;
 class ModuleDescription;
 //ETX
 
-class vtkSlicerParameterWidget : public vtkKWObject
+class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerParameterWidget : public vtkKWObject
 {
 public:
     static vtkSlicerParameterWidget *New();
@@ -60,9 +61,9 @@ public:
     };
     
     enum{
-        ERR = -1,
-        FAIL = 0,
-        SUCC = 1        
+        PARAMETER_WIDGET_ERR = -1,
+        PARAMETER_WIDGET_FAIL = 0,
+        PARAMETER_WIDGET_SUCC = 1        
     };
     //ETX
 protected:

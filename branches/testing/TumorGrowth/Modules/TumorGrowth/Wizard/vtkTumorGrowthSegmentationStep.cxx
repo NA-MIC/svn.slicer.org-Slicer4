@@ -201,12 +201,11 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
 }
 
 void vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() {
-
-  // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() Start " << this->PreSegmentNode << endl;
-  if (this->PreSegmentNode) {
+  // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() Start " << this->PreSegmentNode << endl;  
+  if (this->PreSegmentNode && this->GetGUI()) {
     this->GetGUI()->GetMRMLScene()->RemoveNode(this->PreSegmentNode);  
-    this->PreSegmentNode = NULL;
   } 
+  this->PreSegmentNode = NULL;
 
   if (this->PreSegment) {
     this->PreSegment->Delete();
@@ -269,11 +268,13 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
 }
 
 void vtkTumorGrowthSegmentationStep::SegmentScan1Remove() {
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
-  if (Node) {
-    vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_SegmentRef()));
-    if (currentNode) this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); 
-    Node->SetScan1_SegmentRef(NULL);
+  if (this->GetGUI()) { 
+    vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+    if (Node) {
+      vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_SegmentRef()));
+      if (currentNode) this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); 
+      Node->SetScan1_SegmentRef(NULL);
+    }
   }
   if (this->SegmentNode) {
     this->SegmentNode->Delete();

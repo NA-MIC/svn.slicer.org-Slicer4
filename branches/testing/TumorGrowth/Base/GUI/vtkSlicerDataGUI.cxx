@@ -96,13 +96,14 @@ void vtkSlicerDataGUI::PrintSelf ( ostream& os, vtkIndent indent )
 void vtkSlicerDataGUI::RemoveGUIObservers ( )
 {
   this->MRMLTreeWidget->RemoveObservers (vtkSlicerMRMLTreeWidget::SelectedEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->SceneSnapshotWidget->RemoveMRMLObservers();
 }
 
 //---------------------------------------------------------------------------
 void vtkSlicerDataGUI::AddGUIObservers ( )
 {
   this->MRMLTreeWidget->AddObserver (vtkSlicerMRMLTreeWidget::SelectedEvent, (vtkCommand *)this->GUICallbackCommand );
-
+  this->SceneSnapshotWidget->AddMRMLObservers();
 }
 
 
@@ -212,7 +213,7 @@ void vtkSlicerDataGUI::BuildGUI ( )
     
     // Define your help text and build the help frame here.
     const char *help = "The Data Module displays and permits operations on the MRML tree. ";
-    const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details. ";
+    const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details. ";
     vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Data" );
     this->BuildHelpAndAboutFrame ( page, help, about );
 
@@ -267,6 +268,7 @@ void vtkSlicerDataGUI::BuildGUI ( )
     this->SceneSnapshotWidget->SetAndObserveMRMLScene(this->GetMRMLScene() );
     this->SceneSnapshotWidget->SetParent ( snapshotFrame->GetFrame() );
     this->SceneSnapshotWidget->Create ( );
+    this->SceneSnapshotWidget->SetApplication( this->GetApplication() );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->SceneSnapshotWidget->GetWidgetName(), snapshotFrame->GetFrame()->GetWidgetName());
 

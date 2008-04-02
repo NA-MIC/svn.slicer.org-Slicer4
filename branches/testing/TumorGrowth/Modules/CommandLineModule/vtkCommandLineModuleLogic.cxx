@@ -39,6 +39,7 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLFiberBundleNode.h"
 #include "vtkMRMLFiberBundleStorageNode.h"
 #include "vtkMRMLNRRDStorageNode.h"
+#include "vtkMRMLTransformStorageNode.h"
 #include "vtkMRMLColorTableStorageNode.h"
 #include "vtkMRMLModelHierarchyNode.h"
 
@@ -313,6 +314,7 @@ void vtkCommandLineModuleLogic::Apply ( vtkMRMLCommandLineModuleNode* node )
 
 
   vtkSlicerTask* task = vtkSlicerTask::New();
+  task->SetTypeToProcessing();
 
   // Pass the current node as client data to the task.  This allows
   // the user to switch to another parameter set after the task is
@@ -569,12 +571,32 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
     else if (tnd)
       {
       // always write out transform nodes
+      //
+      // depending on the extension used, we may use a storage node or
+      // may put a copy of the node in a miniscene
 
-      // no storage node for transforms. put the transform in the mini-scene.
-      vtkMRMLNode *cp = miniscene->CopyNode(nd);
+      std::string::size_type loc = (*id2fn).second.find_last_of(".");
+      if (loc != std::string::npos)
+        {
+        // if we start passing pointers to MRML transforms, then we'll
+        // need an additional check/case
+        std::string extension = (*id2fn).second.substr(loc);
 
-      // Keep track what scene node corresponds to what miniscene node
-      sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+        if (extension == ".mrml")
+          {
+          // not using a storage node.  using a mini-scene to transfer
+          // the node
+          vtkMRMLNode *cp = miniscene->CopyNode(nd);
+
+          // Keep track what scene node corresponds to what miniscene node
+          sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+          }
+        else
+          {
+          // use a storage node
+          out = vtkMRMLTransformStorageNode::New();
+          }
+        }
       }
     else if (ctnd)
       {
@@ -632,11 +654,22 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
   
     if (tnd || mhnd)
       {
-      // always put transform nodes in the miniscene
-      vtkMRMLNode *cp = miniscene->CopyNode(nd);
-      
-      // Keep track what scene node corresponds to what miniscene node
-      sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+      std::string::size_type loc = (*id2fn).second.find_last_of(".");
+      if (loc != std::string::npos)
+        {
+        // if we start passing pointers to MRML transforms, then we'll
+        // need an additional check/case
+        std::string extension = (*id2fn).second.substr(loc);
+
+        if (extension == ".mrml")
+          {
+          // put this transform node in the miniscene
+          vtkMRMLNode *cp = miniscene->CopyNode(nd);
+
+          // Keep track what scene node corresponds to what miniscene node
+          sceneToMiniSceneMap[nd->GetID()] = cp->GetID();
+          }
+        }
       }
     else if (mhnd)
       {
@@ -806,7 +839,8 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
             fname = minisceneFilename + "#" + (*mit).second;
             }
 
-          // Only put out the flag if the node is in out list
+          // Only put out the flag if the node in nodesToWrite/Reload
+          // or in the mini-scene
           if (fname.size() > 0)
             {
             commandLineAsString.push_back(prefix + flag);
@@ -1184,8 +1218,8 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
             tagstart = stdoutbuffer.rfind("<filter-comment>");
             if (tagstart != std::string::npos)
               {
-              std::string progressMessage(stdoutbuffer, tagstart+17,
-                                         tagend-tagstart-17);
+              std::string progressMessage(stdoutbuffer, tagstart+16,
+                                         tagend-tagstart-16);
               strncpy (node->GetModuleDescription().GetProcessInformation()->ProgressMessage, progressMessage.c_str(), 1023);
               foundTag = true;
               }
@@ -1434,7 +1468,9 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       "import Slicer;\n"
       "ModuleName = \"" + node->GetModuleDescription().GetTarget() + "\"\n"
       "ModuleArgs = []\n"
-      "ArgTags = []\n";
+      "ArgTags = []\n"
+      "ArgFlags = []\n"
+      "ArgMultiples = []\n";
 
     // Now add the individual command line items
     for (std::vector<std::string>::size_type i=1; i < commandLineAsString.size(); ++i)
@@ -1451,11 +1487,13 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
       std::vector<ModuleParameter>::const_iterator pit;  
       for (pit = pbeginit; pit != pendit; ++pit)
         {
-        ExecuteModuleString += "ArgTags.append ( '" + (*pit).GetTag() + "' );\n";
+        ExecuteModuleString += "ArgTags.append ( '" + (*pit).GetTag() + "' )\n";
+        ExecuteModuleString += "ArgFlags.append ( '" + (*pit).GetLongFlag() + "' )\n";
+        ExecuteModuleString += "ArgMultiples.append ( '" + (*pit).GetMultiple() + "' )\n";
         }
       }
     ExecuteModuleString +=
-      "FlagArgs, PositionalArgs = Slicer.ParseArgs ( ModuleArgs, ArgTags )\n"
+      "FlagArgs, PositionalArgs = Slicer.ParseArgs ( ModuleArgs, ArgTags , ArgFlags, ArgMultiples )\n"
       "Module = __import__ ( ModuleName )\n"
       "reload ( Module )\n"
       "Module.Execute ( *PositionalArgs, **FlagArgs )\n";
@@ -1499,12 +1537,10 @@ void vtkCommandLineModuleLogic::ApplyTask(void *clientdata)
   // import the results if the plugin was allowed to complete
   //
   //
-  if (node->GetStatus() != vtkMRMLCommandLineModuleNode::Cancelled
-      && node->GetStatus() != vtkMRMLCommandLineModuleNode::CompletedWithErrors)
+  if (node->GetStatus() != vtkMRMLCommandLineModuleNode::Cancelled &&
+      node->GetStatus() != vtkMRMLCommandLineModuleNode::CompletedWithErrors)
     {
-    for (id2fn = nodesToReload.begin();
-         id2fn != nodesToReload.end();
-         ++id2fn)
+    for (id2fn = nodesToReload.begin(); id2fn != nodesToReload.end(); ++id2fn)
       {
       // Is this node one that was put in the miniscene? Nodes in the
       // miniscene will be handled later 

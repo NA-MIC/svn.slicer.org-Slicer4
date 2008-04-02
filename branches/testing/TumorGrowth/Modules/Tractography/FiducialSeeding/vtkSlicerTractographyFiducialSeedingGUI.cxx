@@ -283,6 +283,7 @@ void vtkSlicerTractographyFiducialSeedingGUI:: CreateTracts()
     {
     return;
     }
+  
   vtkMRMLDiffusionTensorVolumeNode *volumeNode = vtkMRMLDiffusionTensorVolumeNode::SafeDownCast(this->VolumeSelector->GetSelected());
   vtkMRMLFiducialListNode *fiducialListNode = vtkMRMLFiducialListNode::SafeDownCast(this->FiducialSelector->GetSelected());
   vtkMRMLFiberBundleNode *fiberNode = vtkMRMLFiberBundleNode::SafeDownCast(this->OutFiberSelector->GetSelected());
@@ -307,7 +308,7 @@ void vtkSlicerTractographyFiducialSeedingGUI::BuildGUI ( )
   // ---
   // Define your help text and build the help frame here.
   const char *help = "The FiducialSeeding module....";
-  const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See http://www.slicer.org for details. ";
+  const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details. ";
   vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Tractography" );
   this->BuildHelpAndAboutFrame ( page, help, about );
     
@@ -411,3 +412,18 @@ void vtkSlicerTractographyFiducialSeedingGUI::BuildGUI ( )
 
   
 }
+
+void vtkSlicerTractographyFiducialSeedingGUI::SetVolumeSelector(vtkMRMLNode *node)
+  {
+  this->VolumeSelector->SetSelected(node);
+  }
+
+void vtkSlicerTractographyFiducialSeedingGUI::SetFiducialSelector(vtkMRMLNode *node)
+  {
+  this->FiducialSelector->SetSelected(node);
+  }
+
+void vtkSlicerTractographyFiducialSeedingGUI::SetOutFiberSelector(vtkMRMLNode *node)
+  {
+  this->OutFiberSelector->SetSelected(node);
+  }

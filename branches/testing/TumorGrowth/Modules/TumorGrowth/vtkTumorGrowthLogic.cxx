@@ -174,7 +174,7 @@ vtkMRMLScalarVolumeNode* vtkTumorGrowthLogic::CreateVolumeNode(vtkMRMLVolumeNode
   // clone the volume node
   vtkMRMLScalarVolumeNode *clonedVolumeNode = vtkMRMLScalarVolumeNode::New();
   clonedVolumeNode->CopyWithScene(volumeNode);
-  clonedVolumeNode->SetStorageNodeID(NULL);
+  clonedVolumeNode->SetAndObserveStorageNodeID(NULL);
   clonedVolumeNode->SetName(name);
   clonedVolumeNode->SetAndObserveDisplayNodeID(clonedDisplayNode->GetID());
 
@@ -590,7 +590,7 @@ vtkMRMLVolumeNode* vtkTumorGrowthLogic::LoadVolume(vtkSlicerApplication *app, ch
    if (!volumesGUI) return NULL;
    vtkSlicerVolumesLogic *volumesLogic = volumesGUI->GetLogic();
    // Ignore error messages - I do not know how to get around them 
-   return volumesLogic->AddArchetypeVolume(fileName,0,LabelMapFlag,volumeName);
+   return volumesLogic->AddArchetypeVolume(fileName,volumeName,LabelMapFlag);
 }
 
 

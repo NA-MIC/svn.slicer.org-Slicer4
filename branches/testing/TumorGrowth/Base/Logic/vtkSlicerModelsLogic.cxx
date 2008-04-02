@@ -24,6 +24,7 @@
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkSlicerColorLogic.h"
 #include "vtkMRMLFreeSurferModelStorageNode.h"
+#include "vtkMRMLFreeSurferModelOverlayStorageNode.h"
 
 vtkCxxRevisionMacro(vtkSlicerModelsLogic, "$Revision: 1.9.12.1 $");
 vtkStandardNewMacro(vtkSlicerModelsLogic);
@@ -96,10 +97,48 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
   vtkMRMLFreeSurferModelStorageNode *fsmStorageNode = vtkMRMLFreeSurferModelStorageNode::New();
   fsmStorageNode->SetUseStripper(0);  // turn off stripping by default (breaks some pickers)
   vtkMRMLStorageNode *storageNode = NULL;
+
+  // check for local or remote files
+  bool useURI = false;
+  if (this->GetMRMLScene()->GetCacheManager() != NULL)
+    {
+    useURI = this->GetMRMLScene()->GetCacheManager()->IsRemoteReference(filename);
+    vtkDebugMacro("AddModel: file name is remote: " << filename);
+    }
   
-  mStorageNode->SetFileName(filename);
-  fsmStorageNode->SetFileName(filename);
+  itksys_stl::string name;
+  const char *localFile;
+  if (useURI)
+    {
+    mStorageNode->SetURI(filename);
+    fsmStorageNode->SetURI(filename);
+    // reset filename to the local file name
+    localFile = ((this->GetMRMLScene())->GetCacheManager())->GetFilenameFromURI(filename);
+    }
+  else
+    {
+    mStorageNode->SetFileName(filename);
+    fsmStorageNode->SetFileName(filename);
+    localFile = filename;
+    }
+  const itksys_stl::string fname(localFile);
+  // the model name is based on the file name (itksys call should work even if
+  // file is not on disk yet)
+  name = itksys::SystemTools::GetFilenameName(fname);
+  vtkDebugMacro("AddModel: got model name = " << name.c_str());
   
+  // check to see which node can read this type of file
+  if (mStorageNode->SupportedFileType(filename))
+    {
+    storageNode = mStorageNode;
+    }
+  else if (fsmStorageNode->SupportedFileType(filename))
+    {
+    vtkDebugMacro("AddModel: have a freesurfer type model file.");
+    storageNode = fsmStorageNode;
+    }
+
+  /* don't read just yet, need to add to the scene first for remote reading
   if (mStorageNode->ReadData(modelNode) != 0)
     {
     storageNode = mStorageNode;
@@ -108,10 +147,9 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
     {
     storageNode = fsmStorageNode;
     }
+  */
   if (storageNode != NULL)
     {
-    const itksys_stl::string fname(filename);
-    itksys_stl::string name = itksys::SystemTools::GetFilenameName(fname);
     modelNode->SetName(name.c_str());
 
     this->GetMRMLScene()->SaveStateForUndo();
@@ -122,7 +160,7 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
 
     this->GetMRMLScene()->AddNodeNoNotify(storageNode);  
     this->GetMRMLScene()->AddNodeNoNotify(displayNode);
-    modelNode->SetStorageNodeID(storageNode->GetID());
+    modelNode->SetAndObserveStorageNodeID(storageNode->GetID());
     modelNode->SetAndObserveDisplayNodeID(displayNode->GetID());  
     displayNode->SetPolyData(modelNode->GetPolyData());
     
@@ -130,7 +168,12 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
 
     //this->Modified();  
 
+    // the scene points to it still
     modelNode->Delete();
+
+    // now set up the reading
+    vtkDebugMacro("AddModel: calling read on the storage node");
+    storageNode->ReadData(modelNode);
     }
   else
     {
@@ -174,7 +217,7 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::CloneModel(vtkMRMLScene *scene, vtkMRMLM
   // clone the model node
   vtkMRMLModelNode *clonedModelNode = vtkMRMLModelNode::New();
   clonedModelNode->CopyWithScene(modelNode);
-  clonedModelNode->SetStorageNodeID(NULL);
+  clonedModelNode->SetAndObserveStorageNodeID(NULL); 
   clonedModelNode->SetName(name);
   clonedModelNode->SetAndObserveDisplayNodeID(clonedDisplayNode->GetID());
 
@@ -204,6 +247,10 @@ int vtkSlicerModelsLogic::SaveModel (const char* filename, vtkMRMLModelNode *mod
 {
    if (modelNode == NULL || filename == NULL)
     {
+    vtkErrorMacro("SaveModel: unable to proceed, filename is " <<
+                  (filename == NULL ? "null" : filename) <<
+                  ", model node is " <<
+                  (modelNode == NULL ? "null" : modelNode->GetID()));
     return 0;
     }
   
@@ -218,13 +265,21 @@ int vtkSlicerModelsLogic::SaveModel (const char* filename, vtkMRMLModelNode *mod
     storageNode = vtkMRMLModelStorageNode::New();
     storageNode->SetScene(this->GetMRMLScene());
     this->GetMRMLScene()->AddNode(storageNode);  
-    modelNode->SetStorageNodeID(storageNode->GetID());
+    modelNode->SetAndObserveStorageNodeID(storageNode->GetID());
     storageNode->Delete();
     }
 
-  //storageNode->SetAbsoluteFileName(true);
-  storageNode->SetFileName(filename);
-
+  // check for a remote file
+  if ((this->GetMRMLScene()->GetCacheManager() != NULL) &&
+      this->GetMRMLScene()->GetCacheManager()->IsRemoteReference(filename))
+    {
+    storageNode->SetURI(filename);
+    }
+  else
+    {
+    storageNode->SetFileName(filename);
+    }
+  
   int res = storageNode->WriteData(modelNode);
 
   
@@ -254,20 +309,36 @@ int vtkSlicerModelsLogic::AddScalar(const char* filename, vtkMRMLModelNode *mode
     return 0;
     }  
 
-   // get the storage node and use it to read the scalar file
-  vtkMRMLFreeSurferModelStorageNode *storageNode = NULL;
-  vtkMRMLStorageNode *snode = modelNode->GetStorageNode();
-  if (snode != NULL)
+  vtkMRMLFreeSurferModelOverlayStorageNode *fsmoStorageNode = vtkMRMLFreeSurferModelOverlayStorageNode::New();
+  vtkMRMLStorageNode *storageNode = NULL;
+  
+  // check for local or remote files
+  bool useURI = false;
+  if (this->GetMRMLScene()->GetCacheManager() != NULL)
     {
-    storageNode = vtkMRMLFreeSurferModelStorageNode::SafeDownCast(snode);
+    useURI = this->GetMRMLScene()->GetCacheManager()->IsRemoteReference(filename);
+    vtkDebugMacro("AddModel: file name is remote: " << filename);
     }
-  if (storageNode == NULL)
+
+  const char *localFile;
+  if (useURI)
     {
-    vtkErrorMacro("Model "  << modelNode->GetName() << " does not have a freesurfer storage node associated with it, cannot load scalar overlay.");
-    return 0;
+    fsmoStorageNode->SetURI(filename);
+    // add other overlay storage nodes here
+    localFile = ((this->GetMRMLScene())->GetCacheManager())->GetFilenameFromURI(filename);
     }
-  storageNode->SetFileName(filename);
-  storageNode->ReadData(modelNode);
+  else
+    {
+    fsmoStorageNode->SetFileName(filename);
+    // add other overlay storage nodes here
+    localFile = filename;
+    }
+
+  // check to see if it can read it
+  if (fsmoStorageNode->SupportedFileType(filename))
+    {
+    storageNode = fsmoStorageNode;
+    }
 
   // check to see if the model display node has a colour node already
   vtkMRMLModelDisplayNode *displayNode = modelNode->GetModelDisplayNode();
@@ -284,7 +355,22 @@ int vtkSlicerModelsLogic::AddScalar(const char* filename, vtkMRMLModelNode *mode
       displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultModelColorNodeID());
       colorLogic->Delete();
       }
-    
     }
+
+  if (storageNode != NULL)
+    {
+    this->GetMRMLScene()->SaveStateForUndo();
+    storageNode->SetScene(this->GetMRMLScene());
+    this->GetMRMLScene()->AddNodeNoNotify(storageNode);
+    // now add this as another storage node on the model
+    modelNode->AddAndObserveStorageNodeID(storageNode->GetID());
+
+    // now read, since all the id's are set up
+    vtkDebugMacro("AddScalar: calling read data now.");
+    if (this->GetDebug()) { storageNode->DebugOn(); }
+    storageNode->ReadData(modelNode);
+    }
+  fsmoStorageNode->Delete();
+  
   return 1;
 }

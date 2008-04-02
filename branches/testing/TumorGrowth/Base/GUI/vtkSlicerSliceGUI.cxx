@@ -52,6 +52,7 @@ vtkSlicerSliceGUI::~vtkSlicerSliceGUI ( ) {
 
     
     this->RemoveGUIObservers ();
+    this->RemoveMRMLObservers();
 
     // Unpack and set parents to be NULL
     this->SliceController->SetParent ( NULL );
@@ -278,15 +279,31 @@ void vtkSlicerSliceGUI::ProcessLogicEvents ( vtkObject *caller,
 //       }
 
     sliceViewer->SetImageData( sliceLogic->GetImageData() );
-    
-  
-/*
-    sliceLogic->GetPolyDataCollection( );
-    sliceLogic->GetLookupTableCollection( );
-*/
- 
-    sliceViewer->SetCoordinatedPolyDataAndLookUpTableCollections( sliceLogic->GetPolyDataCollection(), sliceLogic->GetLookupTableCollection()  );
 
+    // add poly data (glyphs)
+    vtkPolyDataCollection *PolyDataCollection = vtkPolyDataCollection::New();
+    vtkCollection *LookupTableCollection = vtkCollection::New();
+    sliceLogic->GetPolyDataAndLookUpTableCollections(PolyDataCollection,
+                                                      LookupTableCollection);
+    sliceViewer->SetCoordinatedPolyDataAndLookUpTableCollections( sliceLogic->GetPolyDataCollection(), sliceLogic->GetLookupTableCollection()  );
+    PolyDataCollection->RemoveAllItems();
+    PolyDataCollection->Delete();
+    LookupTableCollection->RemoveAllItems();
+    LookupTableCollection->Delete();
+    
+    // add mrml display node observers
+    this->RemoveMRMLObservers();
+    std::vector< vtkMRMLDisplayNode*> dnodes = sliceLogic->GetPolyDataDisplayNodes();
+    for (unsigned int i=0; i< dnodes.size(); i++)
+      {
+      vtkMRMLDisplayNode* dnode = dnodes[i];
+      if (!dnode->HasObserver(vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand))
+        {
+        dnode->Register(this);
+        dnode->AddObserver ( vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand );
+        this->DisplayNodes.push_back(dnode);
+        }
+      }
     //rw->ResetCamera ( );
     sliceViewer->RequestRender ( );
     }
@@ -298,8 +315,32 @@ void vtkSlicerSliceGUI::ProcessLogicEvents ( vtkObject *caller,
 void vtkSlicerSliceGUI::ProcessMRMLEvents ( vtkObject *caller,
                                                unsigned long event, void *callData )
 {
-  if ( this->GetLogic() )
+  if ( !caller )
     {
+    return;
+    }
+
+  // process mrml changes
+  vtkMRMLDisplayNode* dnode= vtkMRMLDisplayNode::SafeDownCast(caller);
+
+  
+  if ( this->GetLogic() && dnode )
+    {
+    vtkSlicerSliceLogic *sliceLogic = this->GetLogic ( );
+
+    vtkSlicerSliceViewer *sliceViewer = this->GetSliceViewer( );
+    vtkKWRenderWidget *rw = sliceViewer->GetRenderWidget ();
+    // add poly data (glyphs)
+    vtkPolyDataCollection *PolyDataCollection = vtkPolyDataCollection::New();
+    vtkCollection *LookupTableCollection = vtkCollection::New();
+    sliceLogic->GetPolyDataAndLookUpTableCollections(PolyDataCollection,
+                                                      LookupTableCollection);
+    sliceViewer->SetCoordinatedPolyDataAndLookUpTableCollections( sliceLogic->GetPolyDataCollection(), sliceLogic->GetLookupTableCollection()  );
+    PolyDataCollection->RemoveAllItems();
+    PolyDataCollection->Delete();
+    LookupTableCollection->RemoveAllItems();
+    LookupTableCollection->Delete();
+
       /*
     vtkMRMLSliceNode *snode = this->GetLogic()->GetSliceNode();
 
@@ -309,9 +350,24 @@ void vtkSlicerSliceGUI::ProcessMRMLEvents ( vtkObject *caller,
     this->GetSliceController()->SetSliceNode (snode);
     this->GetSliceController()->SetSliceCompositeNode (scnode);
     */
+    sliceViewer->RequestRender ( );
     }
 }
 
+
+void vtkSlicerSliceGUI::RemoveMRMLObservers ( )
+{
+  for(unsigned int i=0; i<this->DisplayNodes.size(); i++)
+    {
+    vtkMRMLDisplayNode* dnode = this->DisplayNodes[i];
+    if (dnode)
+      {
+      dnode->RemoveObservers ( vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand );
+      dnode->UnRegister(this);
+      }
+    }
+  this->DisplayNodes.clear();
+}
 
 //---------------------------------------------------------------------------
 void vtkSlicerSliceGUI::Enter ( )
@@ -437,7 +493,7 @@ void vtkSlicerSliceGUI::SetupViewerAndController()
     vtkMRMLSliceCompositeNode *scnode = this->GetLogic()->GetSliceCompositeNode();
     this->GetSliceController()->SetSliceCompositeNode (scnode);
     
-    this->GetSliceController()->SetSliceLogic( this->GetLogic() );
+    this->GetSliceController()->SetAndObserveSliceLogic( this->GetLogic() );
     }
 
   if ( this->GetSliceViewer() && this->GetSliceViewer()->GetImageMapper() )

@@ -183,7 +183,7 @@ class ModuleFileMap : public std::set<std::string> {};
 struct ModuleCacheEntry
 {
   std::string Location;        // complete path to a file
-  unsigned int ModifiedTime;    // file's modified time
+  long int ModifiedTime;    // file's modified time
   std::string Type;            // SharedObjectModule, CommandLineModule, PythonModule, NotAModule
 //  std::string Title;           // name of the module
   std::string XMLDescription;  // Module description
@@ -415,7 +415,6 @@ ModuleFactory
 
     for ( unsigned int ii=0; ii < directory.GetNumberOfFiles(); ++ii)
       {
-      bool isAPlugin = true;
       const char *filename = directory.GetFile(ii);
       
       // skip any directories
@@ -887,7 +886,7 @@ ModuleFactory
                                   itksysProcess_Option_Detach, 0);
           itksysProcess_SetOption(process,
                                   itksysProcess_Option_HideWindow, 1);
-          itksysProcess_SetTimeout(process, 5.0); // 5 seconds
+          itksysProcess_SetTimeout(process, 10.0); // seconds
 
           // execute the command
           itksysProcess_Execute(process);
@@ -913,6 +912,7 @@ ModuleFactory
                 }
               }
             }
+          itksysProcess_SetTimeout(process, 10.0);
           itksysProcess_WaitForExit(process, 0);
 
           // check the exit state / error state of the process
@@ -1536,7 +1536,7 @@ ModuleFactory
                   entry.LogoLength = 0;
                   entry.Logo = "None";
                   }
-                
+
                 (*this->InternalCache)[entry.Location] = entry;
                 this->CacheModified = true;
                 }
@@ -1549,12 +1549,12 @@ ModuleFactory
     this->InformationMessage( information.str().c_str() );
     }
   t1 = itksys::SystemTools::GetTime();
-  
+
   std::stringstream information;
   information << "Tested " << numberTested << " files as command line executable plugins by peeking. Found "
               << numberFound << " new plugins in " << t1 - t0
               << " seconds." << std::endl;
-  
+
   this->InformationMessage( information.str().c_str() );
 
   return numberFound;
@@ -1586,7 +1586,7 @@ ModuleFactory
                           itksysProcess_Option_Detach, 0);
   itksysProcess_SetOption(process,
                           itksysProcess_Option_HideWindow, 1);
-  itksysProcess_SetTimeout(process, 5.0); // 5 seconds
+  itksysProcess_SetTimeout(process, 10.0); // seconds
   
   // execute the command
   itksysProcess_Execute(process);
@@ -1691,10 +1691,10 @@ long
 ModuleFactory
 ::ScanForPythonModulesByLoading()
 {
-  long numberTested = 0;
   long numberFound = 0;
-  
+
 #ifdef USE_PYTHON
+  long numberTested = 0;
 
   double t0, t1;
   // add any of the self-describing Python modules available
@@ -1795,7 +1795,7 @@ ModuleFactory
             "if 'toXML' in dir ( Module ):\n"
             "    XML = Module.ToXML()\n"
             "if not 'Execute' in dir ( Module ):\n"
-            "    XML = None\n";
+            "    XML = ''\n";
 
           PyObject* v;
       

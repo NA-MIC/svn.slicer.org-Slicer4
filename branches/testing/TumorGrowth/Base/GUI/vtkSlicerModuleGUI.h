@@ -6,7 +6,7 @@
 #include "vtkKWUserInterfacePanel.h"
 #include "vtkKWWidget.h"
 #include "vtkKWText.h"
-#include "vtkKWTextWithScrollbars.h"
+#include "vtkKWTextWithHyperlinksWithScrollbars.h"
 #include "vtkKWIcon.h"
 #include "vtkKWNotebook.h"
 #include "vtkKWFrame.h"
@@ -44,10 +44,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModuleGUI : public vtkSlicerComponentG
     vtkGetObjectMacro (HelpAndAboutNotebook, vtkKWNotebook);
     // Description:
     // Get the help text widget.
-    vtkGetObjectMacro (HelpText, vtkKWTextWithScrollbars );
+    vtkGetObjectMacro (HelpText, vtkKWTextWithHyperlinksWithScrollbars );
     // Description:
     // Get the about text widget.
-    vtkGetObjectMacro (AboutText, vtkKWTextWithScrollbars );
+    vtkGetObjectMacro (AboutText, vtkKWTextWithHyperlinksWithScrollbars );
     // Description:
     // Get the Frame into which contributor and sponsor logos are packed.
     vtkGetObjectMacro (LogoFrame, vtkKWFrame );
@@ -70,6 +70,10 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModuleGUI : public vtkSlicerComponentG
   // Description:
   // Get a logo for the module
   virtual vtkKWIcon* GetLogo() const;
+
+  // Description:
+  // Set the module logic
+  virtual void SetModuleLogic( vtkSlicerLogic *logic ) { }; 
   
   // Description:
   // Configures a module's help frame, with acknowledgment
@@ -118,12 +122,12 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModuleGUI : public vtkSlicerComponentG
     // Description:
     // HelpText contains the text describing the
     // module's functionality and how to use it.
-    vtkKWTextWithScrollbars *HelpText;
+    vtkKWTextWithHyperlinksWithScrollbars *HelpText;
 
     // Description:
     // AboutText contains text describing
     // the module's authors and sponsors.
-    vtkKWTextWithScrollbars *AboutText;
+    vtkKWTextWithHyperlinksWithScrollbars *AboutText;
     // The LogoFrame is where a contributor's logos may
     // be packed.
     vtkKWFrame *LogoFrame;

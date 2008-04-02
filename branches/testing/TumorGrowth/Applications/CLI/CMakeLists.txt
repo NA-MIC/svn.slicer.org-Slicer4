@@ -3,9 +3,11 @@ PROJECT( CLI )
 # 
 
 FIND_PACKAGE(GenerateCLP REQUIRED)
+IF(GenerateCLP_FOUND)
+  INCLUDE(${GenerateCLP_USE_FILE})
+ENDIF(GenerateCLP_FOUND)
 FIND_PACKAGE(vtkITK REQUIRED)
 
-FIND_PACKAGE(ModuleDescriptionParser REQUIRED)
 LINK_DIRECTORIES(${ModuleDescriptionParser_BINARY_DIR})
 
 FIND_PACKAGE(ITK REQUIRED)
@@ -14,12 +16,13 @@ INCLUDE(${ITK_USE_FILE})
 FIND_PACKAGE(VTK REQUIRED)
 INCLUDE(${VTK_USE_FILE})
 
-INCLUDE(${GenerateCLP_SOURCE_DIR}/UseGenerateCLP.cmake)
-
 IF (Slicer3_SOURCE_DIR)
   SET(LIBRARY_OUTPUT_PATH "${SLICER_LIBRARIES_DIR}/Plugins")
   SET(EXECUTABLE_OUTPUT_PATH "${SLICER_LIBRARIES_DIR}/Plugins")
 ENDIF (Slicer3_SOURCE_DIR)
+
+INCLUDE_DIRECTORIES( ${SlicerBaseCLI_BINARY_DIR} ${SlicerBaseCLI_SOURCE_DIR} )
+LINK_DIRECTORIES(${SlicerBaseCLI_BINARY_DIR})
 
 #####################
 SET (CLP DiffusionTensorTest)
@@ -204,7 +207,19 @@ SET_TARGET_PROPERTIES (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoi
 TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
 
 #####################
-SET (CLP GEDicom2NRRD)
+SET (CLP DicomToNrrdConverter)
+
+SET ( ${CLP}_SOURCE ${CLP}.cxx)
+GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
+ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters)
+
+ADD_LIBRARY(${CLP}Lib SHARED ${${CLP}_SOURCE})
+SET_TARGET_PROPERTIES (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
+TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
+
+#####################
+SET (CLP DWIDicomLoad)
 
 SET ( ${CLP}_SOURCE ${CLP}.cxx)
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
@@ -291,7 +306,7 @@ TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
 
 SET (CLP ModelMaker)
 
-SET ( ${CLP}_SOURCE ${CLP}.cxx vtkPluginFilterWatcher.cxx )
+SET ( ${CLP}_SOURCE ${CLP}.cxx )
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
 LINK_DIRECTORIES(${vtkITK_LIB_DIR})
 ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
@@ -302,6 +317,7 @@ TARGET_LINK_LIBRARIES (${CLP}
     ModuleDescriptionParser
     MRML
     SlicerBaseLogic
+    SlicerBaseCLI
 )
 INCLUDE_DIRECTORIES(
         ${vtkITK_SOURCE_DIR} 
@@ -313,7 +329,7 @@ INCLUDE_DIRECTORIES(
 
 SET (CLP MultipleModelsExample)
 
-SET ( ${CLP}_SOURCE ${CLP}.cxx vtkPluginFilterWatcher.cxx )
+SET ( ${CLP}_SOURCE ${CLP}.cxx )
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
 LINK_DIRECTORIES(${vtkITK_LIB_DIR})
 ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
@@ -324,6 +340,7 @@ TARGET_LINK_LIBRARIES (${CLP}
     ModuleDescriptionParser
     MRML
     SlicerBaseLogic
+    SlicerBaseCLI
 )
 INCLUDE_DIRECTORIES(
         ${vtkITK_SOURCE_DIR} 
@@ -335,7 +352,7 @@ INCLUDE_DIRECTORIES(
 #####################
 SET (CLP GrayscaleModelMaker)
 
-SET ( ${CLP}_SOURCE ${CLP}.cxx vtkPluginFilterWatcher.cxx)
+SET ( ${CLP}_SOURCE ${CLP}.cxx )
 GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
 LINK_DIRECTORIES(${vtkITK_LIB_DIR})
 ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
@@ -343,6 +360,7 @@ TARGET_LINK_LIBRARIES (${CLP}
     vtkITK vtkImaging vtkGraphics vtkIO
     ITKIO
     ModuleDescriptionParser
+    SlicerBaseCLI
 )
 INCLUDE_DIRECTORIES(${vtkITK_SOURCE_DIR} ${vtkITK_BINARY_DIR})
 
@@ -396,6 +414,17 @@ INCLUDE_DIRECTORIES(
         ${vtkITK_BINARY_DIR} 
         ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
         ${vtkTeem_SOURCE_DIR}  ${vtkTeem_BINARY_DIR})
+#####################
+SET (CLP ResampleVolume2)
+
+SET ( ${CLP}_SOURCE ${CLP}.cxx)
+GENERATECLP(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/ITKLogo.h)
+ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters ITKCommon ITKAlgorithms)
+
+ADD_LIBRARY(${CLP}Lib SHARED ${${CLP}_SOURCE})
+SET_TARGET_PROPERTIES (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
+TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters ITKCommon ITKAlgorithms)
 
 #####################
 SET (CLP ZeroCrossingBasedEdgeDetectionImageFilter)
@@ -443,9 +472,22 @@ TARGET_LINK_LIBRARIES (${CLP}Lib ITKIO ITKBasicFilters)
 #####################
 
 SUBDIRS( Realign )
+SET (CLP FreesurferSurfaceSectionExtraction)
+SET ( ${CLP}_SOURCE ${CLP}.cxx)
+GENERATECLP(${CLP}_SOURCE ${CLP}.xml)
+
+ADD_EXECUTABLE(${CLP} ${${CLP}_SOURCE})
+TARGET_LINK_LIBRARIES (${CLP} ITKIO ITKBasicFilters ITKCommon)
+
+SET( SLICER_EXE ${Slicer3_BINARY_DIR}/Slicer3 )
+
+###################
+
+SUBDIRS ( Realign )
 SUBDIRS( DiffusionApplications )
 SUBDIRS( ExtractSkeleton )
 SUBDIRS( DiffeomorphicDemonsRegistration )
+SUBDIRS( UtahBSpline )
 
 IF(USE_MIDAS)
   SUBDIRS( MIDASApplications )
@@ -505,7 +547,6 @@ IF (Slicer3_SOURCE_DIR)
     RUNTIME DESTINATION ${SLICER_INSTALL_LIBRARIES_DIR}/Plugins COMPONENT RuntimeLibraries
     LIBRARY DESTINATION ${SLICER_INSTALL_LIBRARIES_DIR}/Plugins COMPONENT RuntimeLibraries)
 
-  INSTALL(FILES itkPluginFilterWatcher.h vtkPluginFilterWatcher.h itkPluginUtilities.h DESTINATION include/Slicer3 COMPONENT Development)
 
 ENDIF (Slicer3_SOURCE_DIR)
 

@@ -48,9 +48,22 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
   void SetActiveVolumeNode (vtkMRMLVolumeNode *ActiveVolumeNode);
 
   // Description:
+  // Sub type of loading an archetype volume that is known to be a scalar
+  vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char *filename, const char* volname, int loadingOptions);
+
+  // Description:
+  // Overloaded function of AddArchetypeVolume to provide more 
+  // loading options, where variable loadingOptions is bit-coded as following:
+  // bit 0: label map
+  // bit 1: centered
+  // bit 2: loading signal file
+  // higher bits are reserved for future use
+  vtkMRMLVolumeNode* AddArchetypeVolume (const char* filename, const char* volname, int loadingOptions);
+
+  // Description:
   // Create new mrml node and associated storage node.
   // Read image data from a specified file
-  vtkMRMLVolumeNode* AddArchetypeVolume (const char* filename, int centerImage, int labelMap, const char* volname);
+  // vtkMRMLVolumeNode* AddArchetypeVolume (const char* filename, int centerImage, int labelMap, const char* volname);
 
   // Description:
   // Calculate good deafult viewing parameters 
@@ -58,10 +71,21 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
   static void CalculateScalarAutoLevels(vtkImageData *imageData, vtkMRMLScalarVolumeDisplayNode *displayNode);
 
   // Description:
+  // Overloaded function of AddHeaderVolume to provide more 
+  // loading options, where variable loadingOptions is bit-coded as following:
+  // bit 0: label map
+  // bit 1: centered
+  // bit 2: loading signal file
+  // higher bits are reserved for future use
+  vtkMRMLVolumeNode* AddHeaderVolume (const char* filename, const char* volname, 
+                                      vtkMRMLVolumeHeaderlessStorageNode *headerStorage,
+                                      int loadingOptions);
+
+  // Description:
   // Create new mrml node and associated storage node.
   // Read image data from a specified file
-  vtkMRMLVolumeNode* AddHeaderVolume (const char* filename, int centerImage, int labelMap, const char* volname, 
-                                      vtkMRMLVolumeHeaderlessStorageNode *headerStorage);
+  // vtkMRMLVolumeNode* AddHeaderVolume (const char* filename, int centerImage, int labelMap, const char* volname, 
+  //                                    vtkMRMLVolumeHeaderlessStorageNode *headerStorage);
 
   // Description:
   // Write volume's image data to a specified file

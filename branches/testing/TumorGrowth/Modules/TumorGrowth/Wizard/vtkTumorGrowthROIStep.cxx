@@ -461,32 +461,18 @@ void vtkTumorGrowthROIStep::RemoveGUIObservers()
 
 
 void vtkTumorGrowthROIStep::RemoveROISamplingGUIObservers() {
-  // Slice GUI 0
-  vtkRenderWindowInteractor *rwi0 = vtkSlicerApplicationGUI::SafeDownCast(
-    this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI0()->
-    GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
-
-  rwi0->GetInteractorStyle()->RemoveObservers(
-    vtkCommand::LeftButtonPressEvent, this->WizardGUICallbackCommand);
-
-  // Slice GUI 1
-
-  vtkRenderWindowInteractor *rwi1 = vtkSlicerApplicationGUI::SafeDownCast(
-    this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI1()->
-    GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
-
-  rwi1->GetInteractorStyle()->RemoveObservers(
-    vtkCommand::LeftButtonPressEvent, this->WizardGUICallbackCommand);
-
-  // Slice GUI 2
-
-  vtkRenderWindowInteractor *rwi2 = vtkSlicerApplicationGUI::SafeDownCast(
-    this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI2()->
-    GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
-
-  rwi2->GetInteractorStyle()->RemoveObservers(
-    vtkCommand::LeftButtonPressEvent, this->WizardGUICallbackCommand);
-
+  if (!this->GetGUI()) return;
+  vtkSlicerApplicationGUI *ApplicationGUI = vtkSlicerApplicationGUI::SafeDownCast(this->GetGUI()->GetApplicationGUI());
+  if (!ApplicationGUI) return; 
+  for (int i = 0 ; i < 3 ; i ++ ) {
+    vtkSlicerSliceGUI *MainGUI = NULL;
+    if (i == 0) MainGUI = ApplicationGUI->GetMainSliceGUI0();
+    if (i == 1) MainGUI = ApplicationGUI->GetMainSliceGUI1();
+    if (i == 2) MainGUI = ApplicationGUI->GetMainSliceGUI2();
+    if (!MainGUI) return;
+    vtkRenderWindowInteractor *rwi = MainGUI->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
+    rwi->GetInteractorStyle()->RemoveObservers(vtkCommand::LeftButtonPressEvent, this->WizardGUICallbackCommand);
+  }
 }
 
 void vtkTumorGrowthROIStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
@@ -642,10 +628,12 @@ int vtkTumorGrowthROIStep::ROIMapShow() {
 }
 
 void vtkTumorGrowthROIStep::ROIMapRemove() {
-  if (this->ROILabelMapNode) { 
+  
+  if (this->ROILabelMapNode && this->GetGUI()) { 
     this->GetGUI()->GetMRMLScene()->RemoveNode(this->ROILabelMapNode);
-    this->ROILabelMapNode = NULL;
   }
+  this->ROILabelMapNode = NULL;
+
   if (this->ROILabelMap) { 
     this->ROILabelMap->Delete();
     this->ROILabelMap = NULL;

@@ -60,13 +60,15 @@ VTK_WRAP_TCL3(GradientAnisotropicDiffusionFilter GradientAnisotropicDiffusionFil
 ADD_LIBRARY(GradientAnisotropicDiffusionFilter
   ${GradientAnisotropicDiffusionFilter_SRCS}
   ${GradientAnisotropicDiffusionFilter_TCL_SRCS}
+  #loadable module support
+  GradientAnisotropicDiffusionFilterModuleLib.cxx
   )
 
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS GradientAnisotropicDiffusionFilter
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
+      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
+      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
 
 TARGET_LINK_LIBRARIES(GradientAnisotropicDiffusionFilter

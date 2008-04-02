@@ -52,6 +52,8 @@ set ::GETBUILDTEST(upload) "false"
 set ::GETBUILDTEST(uploadFlag) "nightly"
 set ::GETBUILDTEST(doxy) "false"
 set ::GETBUILDTEST(verbose) "false"
+set ::GETBUILDTEST(buildList) ""
+
 set strippedargs ""
 set argc [llength $argv]
 for {set i 0} {$i < $argc} {incr i} {
@@ -132,9 +134,12 @@ set argv $strippedargs
 set argc [llength $argv]
 
 if {$argc > 1 } {
-    Usage
-    exit 1
+#    Usage
+#    exit 1
 }
+puts "getbuildtest: setting build list to $strippedargs"
+set ::GETBUILDTEST(buildList) $strippedargs
+
 
 
 ################################################################################
@@ -293,7 +298,14 @@ if { $::GETBUILDTEST(release) != "" } {
 if { $::GETBUILDTEST(update) != "" } {
    append cmd " $::GETBUILDTEST(update)"
 } 
+if { $::GETBUILDTEST(buildList) != "" } {
+    # puts "Passing $::GETBUILDTEST(buildList) to genlib"
+    append cmd " $::GETBUILDTEST(buildList)"
+}
+
+if { 1 } {
 eval runcmd $cmd
+}
 
 if { $::GETBUILDTEST(version-patch) == "" } {
   # TODO: add build type (win32, etc) here...
@@ -321,6 +333,13 @@ if {0 && $isDarwin} {
    set ::GETBUILDTEST(cpack-extension) ".dmg"
 }
 
+# make verbose makefiles?
+if {$::GETBUILDTEST(verbose)} {
+   set ::GETBUILDTEST(cmake-verbose) "ON"
+} else {
+   set ::GETBUILDTEST(cmake-verbose) "OFF"
+}
+
 # build the slicer
 cd $::SLICER_BUILD
 runcmd $::CMAKE \
@@ -341,6 +360,8 @@ runcmd $::CMAKE \
         -DUSE_NAVITRACK=$::NAVITRACK \
         -DNAVITRACK_LIB_DIR:FILEPATH=$::NAVITRACK_LIB_DIR \
         -DNAVITRACK_INC_DIR:FILEPATH=$::NAVITRACK_INC_DIR \
+        -DSLICERLIBCURL_DIR:FILEPATH=$SLICER_LIB/cmcurl-build \
+        -DCMAKE_VERBOSE_MAKEFILE:BOOL=$::GETBUILDTEST(cmake-verbose) \
         $SLICER_HOME
 
 if { $isWindows } {

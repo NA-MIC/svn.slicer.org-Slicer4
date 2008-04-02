@@ -72,6 +72,7 @@ int main(int argc, char * argv[])
       std::cout << "The ending label is: " << EndLabel << std::endl;
       std::cout << "The model name is: " << Name << std::endl;
       std::cout << "Do joint smoothing flag is: " << JointSmoothing << std::endl;
+      std::cout << "Generate all flag is: " << GenerateAll << std::endl;
       std::cout << "Number of smoothing iterations: " << Smooth << std::endl;
       std::cout << "Number of decimate iterations: " << Decimate << std::endl;
       std::cout << "Split normals? " << SplitNormals << std::endl;
@@ -79,6 +80,7 @@ int main(int argc, char * argv[])
       std::cout << "Filter type: " << FilterType << std::endl;
       std::cout << "Output model scene file: " << (ModelSceneFile.size() > 0 ? ModelSceneFile[0].c_str() : "None") << std::endl;
       std::cout << "Color table file : " << ColorTable.c_str() << std::endl;
+      std::cout << "Save intermediate models: " << SaveIntermediateModels << std::endl;
       std::cout << "\nStarting..." << std::endl;
       }
 
@@ -125,7 +127,12 @@ int main(int argc, char * argv[])
 
     modelScene->SetURL(sceneFilename.c_str());
     modelScene->Import();
-    
+   
+    if (debug)
+      {
+      std::cout << "Imported model scene file " << sceneFilename.c_str() << std::endl;
+      }
+ 
     // make sure we have a model hierarchy node
     vtkMRMLNode *rnd = modelScene->GetNodeByID( modelHierarchyID );
     
@@ -135,7 +142,7 @@ int main(int argc, char * argv[])
                 << modelHierarchyID << "\"" << std::endl;
       return EXIT_FAILURE;
       }
-    
+    else { if (debug) { std::cout << "Got model hierarchy node " << rnd->GetID() << std::endl; } }    
 
     vtkMRMLModelHierarchyNode *rtnd = vtkMRMLModelHierarchyNode::SafeDownCast(rnd);
   
@@ -212,6 +219,7 @@ int main(int argc, char * argv[])
     else if (GenerateAll)
       {
       makeMultiple = true;
+      if (debug) { std::cout << "GenerateAll! set make mult to true" << std::endl; }
       }
     else if (EndLabel >= StartLabel && (EndLabel != -1 && StartLabel != -1))
       {
@@ -252,6 +260,18 @@ int main(int argc, char * argv[])
       numRepeatedFilterSteps = 9;
       }
     numFilterSteps = numSingletonFilterSteps + (numRepeatedFilterSteps * numModelsToGenerate);
+    if (SaveIntermediateModels)
+      {
+      if (JointSmoothing)
+        {
+        numFilterSteps += numModelsToGenerate;
+        }
+      else
+        {
+        numFilterSteps += 3 * numModelsToGenerate;
+        }
+      }
+    
     if (debug)
       {
       std::cout << "useStartEnd = " << useStartEnd << ", numModelsToGenerate = "<< numModelsToGenerate << ", numFilterSteps " << numFilterSteps << endl;
@@ -310,7 +330,7 @@ int main(int argc, char * argv[])
         {
         std::cout << "Setting the colour node's storage node id to " << colorStorageNode->GetID() << ", it's file name = " << colorStorageNode->GetFileName() << std::endl;
         }
-      colorNode->SetStorageNodeID(colorStorageNode->GetID());
+      colorNode->SetAndObserveStorageNodeID(colorStorageNode->GetID());
       if (!colorStorageNode->ReadData(colorNode))
         {
         std::cerr << "Error reading colour file " << colorStorageNode->GetFileName() << endl;
@@ -365,9 +385,18 @@ int main(int argc, char * argv[])
           }
         min[0]++;
         }
+      if (min[0] < 0)
+        {
+        if (debug)
+          {
+          std::cout << "Histogram min was less than zero: " << min[0] << ", resetting to 1\n";
+          }
+        min[0] = 1;
+        }
+        
       if (debug)
         {
-        std::cout << "Hist: Min = " << min[0] << " and max = " << max[0] << endl;
+        std::cout << "Hist: Min = " << min[0] << " and max = " << max[0] << " (image scalar type = "  << image->GetScalarType() << ")" << endl;
         }
       if (GenerateAll)
         {
@@ -377,6 +406,7 @@ int main(int argc, char * argv[])
           }
         StartLabel = (int)floor(min[0]);
         EndLabel = (int)floor(max[0]);
+        useStartEnd = true;
         // recalculate the number of filter steps, discount the labels with no
         // voxels       
         numModelsToGenerate = 0;
@@ -393,6 +423,24 @@ int main(int argc, char * argv[])
           std::cout << endl << "GenerateAll: there are " << numModelsToGenerate << " models to be generated." << endl;
           }
         numFilterSteps = numSingletonFilterSteps + (numRepeatedFilterSteps * numModelsToGenerate);
+        if (SaveIntermediateModels)
+          {
+          if (JointSmoothing)
+            {
+            // save after decimation
+            numFilterSteps += 1 * numModelsToGenerate;
+            }
+          else
+            {
+            // if not doing joint smoothing, save after marching cubes and
+            // smoothing as well as decimation
+            numFilterSteps += 3 * numModelsToGenerate;
+            }
+          }
+         if (debug)
+           {
+           std::cout << "Reset numFilterSteps to " << numFilterSteps << endl;
+           }
         }
       
        
@@ -413,7 +461,7 @@ int main(int argc, char * argv[])
         {
         if (debug)
           {
-          std::cout << "Using end label = " << EndLabel << ", start label = " << StartLabel << endl;
+          std::cout << "Marchign cubes: Using end label = " << EndLabel << ", start label = " << StartLabel << endl;
           }
         cubes->GenerateValues((EndLabel-StartLabel +1), StartLabel, EndLabel);
         }
@@ -421,17 +469,28 @@ int main(int argc, char * argv[])
         {
         if (debug)
           {
-          std::cout << "Using max = " << labelsMax << ", min = " << labelsMin << endl;
+          std::cout << "Marching cubes: Using max = " << labelsMax << ", min = " << labelsMin << endl;
           }
         cubes->GenerateValues((labelsMax - labelsMin + 1), labelsMin, labelsMax);
         }
-      cubes->Update();
-      
+      try
+        {
+        cubes->Update();
+        }
+      catch (...)
+        {
+        std::cerr << "ERROR while updating marching cubes filter." << std::endl;
+        return EXIT_FAILURE;  
+        }
       if (JointSmoothing)
         {
         float passBand = 0.001;
         smoother = vtkWindowedSincPolyDataFilter::New();
-        std::string comment = "Joint Smooth All Models";
+        std::stringstream stream;
+        stream << "Joint Smooth All Models (";
+        stream << numModelsToGenerate;
+        stream << " to process)";
+        std::string comment = stream.str();
         vtkPluginFilterWatcher watchSmoother(smoother,
                                              comment.c_str(),
                                              CLPProcessInformation,
@@ -452,7 +511,15 @@ int main(int argc, char * argv[])
         smoother->NonManifoldSmoothingOn();
         smoother->NormalizeCoordinatesOn();
 
-        smoother->Update();
+        try
+          {
+          smoother->Update();
+          }
+        catch (...)
+          {
+          std::cerr << "ERROR while updating smoothing filter." << std::endl;
+          return EXIT_FAILURE;  
+          }
         //        smoother->ReleaseDataFlagOn();
         }
 /*
@@ -552,9 +619,9 @@ int main(int argc, char * argv[])
     transformIJKtoRAS->SetMatrix(reader->GetRasToIjkMatrix());
     if (debug)
       {
-      std::cout << "RasToIjk matrix from file = ";
-      transformIJKtoRAS->GetMatrix()->Print(std::cout);
-      std::cout << endl;
+      //std::cout << "RasToIjk matrix from file = ";
+      //transformIJKtoRAS->GetMatrix()->Print(std::cout);
+      //std::cout << endl;
       }
     transformIJKtoRAS->Inverse();
 
@@ -610,18 +677,46 @@ int main(int argc, char * argv[])
         std::string stringI =    stream.str();
         if (colorNode != NULL)
           {
-          if (colorNode->GetColorNameWithoutSpaces(i, "_").c_str() != NULL)
+          std::string colorName = std::string(colorNode->GetColorNameWithoutSpaces(i, "_"));
+          if (colorName.c_str() != NULL)
             {
-            labelName = Name + std::string("_") + stringI + std::string("_") + std::string(colorNode->GetColorNameWithoutSpaces(i, "_"));
-            if (debug)
+            if (!SkipUnNamed ||
+                (SkipUnNamed && (colorName.compare("invalid") != 0 && colorName.compare("(none)") != 0)))
               {
-              std::cout << "Got color name, set label name = " << labelName.c_str() << " (color name w/o spaces = " << colorNode->GetColorNameWithoutSpaces(i, "_") << endl;
+              labelName = Name + std::string("_") + stringI + std::string("_") + colorName;
+              if (debug)
+                {
+                std::cout << "Got color name, set label name = " << labelName.c_str() << " (color name w/o spaces = " << colorName.c_str() << ")" << endl;
+                }
+              }
+            else
+              {
+              if (debug)
+                {
+                std::cout << "Invalid colour name for " << stringI.c_str() << " = " << colorName.c_str() << ", skipping.\n";
+                }
+              skippedModels.push_back(i);
+              madeModels.pop_back();
+              continue;
               }
             }
           else
             {
-            // colour is out of range
-            labelName = Name + std::string("_") + stringI;
+            if (SkipUnNamed)
+              {
+              if (debug)
+                {
+                std::cout << "Null color name for " << i << endl;
+                }
+              skippedModels.push_back(i);
+              madeModels.pop_back();
+              continue;
+              }
+            else
+              {
+              // colour is out of range
+              labelName = Name + std::string("_") + stringI;
+              }
             }
           }
         else
@@ -689,7 +784,15 @@ int main(int argc, char * argv[])
             
         imageToStructuredPoints = vtkImageToStructuredPoints::New();
         imageToStructuredPoints->SetInput(imageThreshold->GetOutput());
-        imageToStructuredPoints->Update();
+        try
+          {
+          imageToStructuredPoints->Update();
+          }
+        catch (...)
+          {
+          std::cerr << "ERROR while updating image to structured points for label " << i << std::endl;
+          return EXIT_FAILURE;
+          }
         imageToStructuredPoints->ReleaseDataFlagOn();
         } 
       else 
@@ -744,8 +847,15 @@ int main(int argc, char * argv[])
         mcubes->ComputeGradientsOff();
         mcubes->ComputeNormalsOff();
         (mcubes->GetOutput())->ReleaseDataFlagOn();
-        mcubes->Update();
-        
+        try
+          {
+          mcubes->Update();
+          }
+        catch (...)
+          {
+          std::cerr << "ERROR while running marching cubes, for label " << i << std::endl;
+          return EXIT_FAILURE;
+          }
         if (debug)
           {
           std::cout << "\nNumber of polygons = " << (mcubes->GetOutput())->GetNumberOfPolys() << endl;
@@ -786,6 +896,38 @@ int main(int argc, char * argv[])
           skipLabel = 1;
           std::cout << "...continuing" << endl;
           continue;
+          }
+        if (SaveIntermediateModels)
+          {
+          writer = vtkPolyDataWriter::New();
+          std::string commentSaveCubes = "Writing intermediate model after marching cubes " + labelName;
+          vtkPluginFilterWatcher watchWriter(writer,
+                                             commentSaveCubes.c_str(),
+                                             CLPProcessInformation,
+                                             1.0/numFilterSteps, 
+                                             currentFilterOffset/numFilterSteps);
+          currentFilterOffset += 1.0;          
+          writer->SetInput(cubes->GetOutput());
+          writer->SetFileType(2);
+          std::string fileName;
+          if (rootDir != "")
+            {
+            fileName = rootDir + std::string("/") + labelName + std::string("-MarchingCubes.vtk");
+            }
+          else
+            {
+            fileName = labelName + std::string("-MarchingCubes.vtk");
+            }
+          if (debug)
+            {
+            watchWriter.QuietOn();
+            std::cout << "Writing intermediate file " << fileName.c_str() << std::endl;
+            }
+          writer->SetFileName(fileName.c_str());
+          writer->Write();
+          writer->SetInput(NULL);
+          writer->Delete();
+          writer = NULL;        
           }
         }
       else 
@@ -830,12 +972,52 @@ int main(int argc, char * argv[])
       //decimator->SetErrorIncrement(0.002);
       (decimator->GetOutput())->ReleaseDataFlagOff();
 
-      decimator->Update();
+      try
+        {
+        decimator->Update();
+        }
+      catch (...)
+        {
+        std::cerr << "ERROR decimating model " << i << std::endl;
+        return EXIT_FAILURE;
+        }
       if (debug)
         {
         std::cout << "After decimation, number of polygons = " << (decimator->GetOutput())->GetNumberOfPolys() << endl;
         }
 
+      if (SaveIntermediateModels)
+        {
+        writer = vtkPolyDataWriter::New();
+        std::string commentSaveDecimation = "Writing intermediate model after decimation " + labelName;
+        vtkPluginFilterWatcher watchWriter(writer,
+                                           commentSaveDecimation.c_str(),
+                                           CLPProcessInformation,
+                                           1.0/numFilterSteps, 
+                                           currentFilterOffset/numFilterSteps);
+        currentFilterOffset += 1.0;        
+        writer->SetInput(decimator->GetOutput());
+        writer->SetFileType(2);
+        std::string fileName;
+        if (rootDir != "")
+          {
+          fileName = rootDir + std::string("/") + labelName + std::string("-Decimated.vtk");
+          }
+        else
+          {
+          fileName = labelName + std::string("-MarchingCubes.vtk");
+          }
+        if (debug)
+          {
+          watchWriter.QuietOn();
+          std::cout << "Writing intermediate file " << fileName.c_str() << std::endl;
+          }
+        writer->SetFileName(fileName.c_str());
+        writer->Write();
+        writer->SetInput(NULL);
+        writer->Delete();
+        writer = NULL;        
+        }
       if ((transformIJKtoRAS->GetMatrix())->Determinant() < 0) 
         {
         if (debug)
@@ -895,8 +1077,15 @@ int main(int argc, char * argv[])
           smootherSinc->BoundarySmoothingOff();
           (smootherSinc->GetOutput())->ReleaseDataFlagOn();
           // smootherSinc->ReleaseDataFlagOn();
-
-          smootherSinc->Update();
+          try
+            {
+            smootherSinc->Update();
+            }
+          catch (...)
+            {
+            std::cerr << "ERROR updating Sinc smoother for model " << i << std::endl;
+            return EXIT_FAILURE;
+            }
           }
         else 
           {
@@ -931,11 +1120,58 @@ int main(int argc, char * argv[])
           smootherPoly->BoundarySmoothingOff();
           (smootherPoly->GetOutput())->ReleaseDataFlagOn();
           //smootherPoly->ReleaseDataFlagOn();
-            
-          smootherPoly->Update();
+          try
+            {
+            smootherPoly->Update();
+            }
+          catch (...)
+            {
+            std::cerr << "ERROR updating Poly smoother for model " << i << std::endl;
+            return EXIT_FAILURE;
+            }
+          }       
+
+        if (SaveIntermediateModels)
+          {
+          writer = vtkPolyDataWriter::New();
+          std::string commentSaveSmoothed = "Writing intermediate model after smoothing " + labelName;
+          vtkPluginFilterWatcher watchWriter(writer,
+                                             commentSaveSmoothed.c_str(),
+                                             CLPProcessInformation,
+                                             1.0/numFilterSteps, 
+                                             currentFilterOffset/numFilterSteps);
+          currentFilterOffset += 1.0;
+          if (strcmp(FilterType.c_str(),"Sinc") == 0)
+            {
+            writer->SetInput(smootherSinc->GetOutput());
+            }
+          else
+            {
+            writer->SetInput(smootherPoly->GetOutput());
+            }
+          writer->SetFileType(2);
+          std::string fileName;
+          if (rootDir != "")
+            {
+            fileName = rootDir + std::string("/") + labelName + std::string("-Smoothed.vtk");
+            }
+          else
+            {
+            fileName = labelName + std::string("-Smoothed.vtk");
+            }
+           if (debug)
+            {
+            watchWriter.QuietOn();
+            std::cout << "Writing intermediate file " << fileName.c_str() << std::endl;
+            }          
+          writer->SetFileName(fileName.c_str());
+          writer->Write();
+          writer->SetInput(NULL);
+          writer->Delete();
+          writer = NULL;        
           }
         }
-
+      
       transformer = vtkTransformPolyDataFilter::New();
       std::string comment1 = "Transform " + labelName;
       vtkPluginFilterWatcher watchTransformer(transformer,
@@ -974,7 +1210,7 @@ int main(int argc, char * argv[])
       transformer->SetTransform(transformIJKtoRAS);
       if (debug)
         {
-        transformIJKtoRAS->GetMatrix()->Print(std::cout);
+        //transformIJKtoRAS->GetMatrix()->Print(std::cout);
         }
 
       (transformer->GetOutput())->ReleaseDataFlagOn();
@@ -1023,11 +1259,19 @@ int main(int argc, char * argv[])
       
       (stripper->GetOutput())->ReleaseDataFlagOff();
       
-      // the poly data output from the stripper can be set as an input to a model's polydata
-      (stripper->GetOutput())->Update();
-
+      // the poly data output from the stripper can be set as an input to a
+      // model's polydata
+      try
+        {
+        (stripper->GetOutput())->Update();
+        }
+      catch (...)
+        {
+        std::cerr << "ERROR updating stripper for model " << i << std::endl;
+        return EXIT_FAILURE;
+        }
+      
       // but for now we're just going to write it out
-
       writer = vtkPolyDataWriter::New();
       std::string comment4 = "Write " + labelName;
       vtkPluginFilterWatcher watchWriter(writer,
@@ -1109,7 +1353,7 @@ int main(int argc, char * argv[])
           std::cout << "Added display node: id = " << (dnode->GetID() == NULL ? "(null)" : dnode->GetID()) << endl;
           std::cout << "Setting model's storage node: id = " << (snode->GetID() == NULL ? "(null)" : snode->GetID()) << endl;
           }
-        mnode->SetReferenceStorageNodeID(snode->GetID());        
+        mnode->SetAndObserveStorageNodeID(snode->GetID());        
         mnode->SetAndObserveDisplayNodeID(dnode->GetID());
         modelScene->AddNode(mnode);
 

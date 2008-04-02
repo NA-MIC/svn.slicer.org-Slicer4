@@ -11,14 +11,34 @@ SUBDIRS(
   SlicerDaemon
   Editor
   Python
+  PythonGADScriptedModule
   Meshing
   QdecModule
   QueryAtlas
   Tractography
   VolumeRendering
-  Statistics   
+  Statistics
+  Volumes
   TumorGrowth
 )
+
+## SLICES_DEBUG
+## GAD_DEBUG
+## MODELS_DEBUG
+## VOLUMES_DEBUG
+## QUERYATLAS_DEBUG
+## COLORS_DEBUG
+## FIDUCIALS_DEBUG
+## CAMERA_DEBUG
+## EMSEG_DEBUG
+## REALTIMEIMAGING_DEBUG
+## MRABLATION_DEBUG
+## NEURONAV_DEBUG
+## TRACTOGRAPHY_DEBUG
+## QDEC_DEBUG
+## COMMANDLINE_DEBUG
+## DEAMON_DEBUG
+
 
 
 IF (Slicer3_BUILD_TESTING)

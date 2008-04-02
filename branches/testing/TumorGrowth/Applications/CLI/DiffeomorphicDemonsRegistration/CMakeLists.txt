@@ -60,11 +60,11 @@ ELSE(WIN32)
   ADD_TEST(DemonsRegistrationTest1 ${EXECUTABLE_OUTPUT_PATH}/${CLP} --help) 
 ENDIF (WIN32)
 
-IF (WIN32) 
- ADD_TEST(DemonsRegistrationTest2 ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}/${CLP}  -f ${CMAKE_SOURCE_DIR}/RatLungSlice1.mha -m ${CMAKE_SOURCE_DIR}/RatLungSlice2.mha -v -s2 -g1 -i 20x20x20 )
-ELSE(WIN32) 
-  ADD_TEST(DemonsRegistrationTest2 ${EXECUTABLE_OUTPUT_PATH}/${CLP} -f ${CMAKE_SOURCE_DIR}/RatLungSlice1.mha -m ${CMAKE_SOURCE_DIR}/RatLungSlice2.mha -v -s2 -g1 -i 20x20x20) 
-ENDIF (WIN32)
+# IF (WIN32) 
+#  ADD_TEST(DemonsRegistrationTest2 ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}/${CLP}  -f ${CMAKE_SOURCE_DIR}/RatLungSlice1.mha -m ${CMAKE_SOURCE_DIR}/RatLungSlice2.mha -v -s2 -g1 -i 20x20x20 )
+# ELSE(WIN32) 
+#   ADD_TEST(DemonsRegistrationTest2 ${EXECUTABLE_OUTPUT_PATH}/${CLP} -f ${CMAKE_SOURCE_DIR}/RatLungSlice1.mha -m ${CMAKE_SOURCE_DIR}/RatLungSlice2.mha -v -s2 -g1 -i 20x20x20) 
+# ENDIF (WIN32)
 
 # ADD_TEST(CompareImage ImageCompare ${CMAKE_SOURCE_DIR}/RatLungSlice2-Reg.mha output.mha)
 

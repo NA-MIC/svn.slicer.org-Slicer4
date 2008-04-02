@@ -337,6 +337,13 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
       return 0;
     }
 
+  Superclass::StageReadData(refNode);
+  if ( this->GetReadState() != this->Ready )
+    {
+    // remote file download hasn't finished
+    return 0;
+    }
+  
   vtkMRMLVolumeNode *volNode;
 
   if ( refNode->IsA("vtkMRMLScalarVolumeNode") ) 
@@ -352,15 +359,7 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
     volNode->SetAndObserveImageData (NULL);
     }
 
-  std::string fullName;
-  if (this->SceneRootDir != NULL && this->Scene->IsFilePathRelative(this->GetFileName())) 
-    {
-    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileName());
-    }
-  else 
-    {
-    fullName = std::string(this->GetFileName());
-    }
+  std::string fullName = this->GetFullNameFromFileName();
   
   if (fullName == std::string("")) 
     {
@@ -442,7 +441,7 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
   archNames->Delete();
 
   // set volume attributes
-  volNode->SetStorageNodeID(this->GetID());
+  volNode->SetAndObserveStorageNodeID(this->GetID());
   //TODO update scene to send Modified event
  
   vtkImageChangeInformation *ici = vtkImageChangeInformation::New();
@@ -510,16 +509,7 @@ int vtkMRMLVolumeHeaderlessStorageNode::WriteData(vtkMRMLNode *refNode)
     return 0;
     }
   
-  std::string fullName;
-  if (this->SceneRootDir != NULL && this->Scene->IsFilePathRelative(this->GetFileName())) 
-    {
-    fullName = std::string(this->SceneRootDir) + std::string(this->GetFileName());
-    }
-  else 
-    {
-    fullName = std::string(this->GetFileName());
-    }
-  
+  std::string fullName = this->GetFullNameFromFileName();  
   if (fullName == std::string("")) 
     {
     vtkErrorMacro("vtkMRMLVolumeNode: File name not specified");
@@ -545,8 +535,39 @@ int vtkMRMLVolumeHeaderlessStorageNode::WriteData(vtkMRMLNode *refNode)
     result = 0;
     }
   writer->Delete();    
+
+  Superclass::StageWriteData(refNode);
   
   return result;
 
 }
+
+//----------------------------------------------------------------------------
+int vtkMRMLVolumeHeaderlessStorageNode::SupportedFileType(const char *fileName)
+{
+  // check to see which file name we need to check
+  std::string name;
+  if (fileName)
+    {
+    name = std::string(fileName);
+    }
+  else if (this->FileName != NULL)
+    {
+    name = std::string(this->FileName);
+    }
+  else if (this->URI != NULL)
+    {
+    name = std::string(this->URI);
+    }
+  else
+    {
+    vtkWarningMacro("SupportedFileType: no file name to check");
+    return 0;
+    }
+
+  // for now, return 1
+  return 1;
+  
+}
+
 
