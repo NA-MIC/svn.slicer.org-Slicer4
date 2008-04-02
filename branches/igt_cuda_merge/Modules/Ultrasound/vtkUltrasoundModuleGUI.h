@@ -4,9 +4,11 @@
 #include "vtkSlicerModuleGUI.h"
 #include "vtkUltrasoundModule.h"
 
-class vtkUltrasoundModuleLogic;
 class vtkKWCheckButton;
 class vtkKWScaleWithLabel;
+
+class vtkUltrasoundModuleLogic;
+class vtkUltrasoundScannerReader;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundModuleGUI : public vtkSlicerModuleGUI
 {
@@ -91,6 +93,7 @@ private:
 
     vtkMRMLVolumeNode*          Node;
 
+    vtkUltrasoundScannerReader* ScannerReader;
     
 };
 
