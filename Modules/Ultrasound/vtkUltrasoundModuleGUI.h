@@ -91,7 +91,7 @@ private:
 
     vtkUltrasoundModuleLogic*   Logic;
 
-    vtkMRMLVolumeNode*          Node;
+    vtkMRMLVolumeNode*          VolumeNode;
 
     vtkUltrasoundScannerReader* ScannerReader;
     
