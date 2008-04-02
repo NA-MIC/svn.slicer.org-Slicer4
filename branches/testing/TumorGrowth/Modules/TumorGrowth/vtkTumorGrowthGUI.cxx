@@ -454,7 +454,7 @@ void vtkTumorGrowthGUI::BuildGUI()
     if (!applicationGUI) return; 
   
     // char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
-    char fileName[1024] = "/home/pohl/Slicer/Slicer3/Modules/TumorGrowth/Test/data2.mrml";
+    char fileName[1024] = "/home/pohl/Slicer/Slicer3/Modules/TumorGrowth/Test/test.mrml";
     std::string fl(fileName);
     applicationGUI->GetMRMLScene()->SetURL(fileName);
     applicationGUI->GetMRMLScene()->Connect();
