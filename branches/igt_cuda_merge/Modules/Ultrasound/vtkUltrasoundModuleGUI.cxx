@@ -32,7 +32,7 @@ vtkUltrasoundModuleGUI::vtkUltrasoundModuleGUI()
     this->sc_RefreshRate = NULL;
     this->cb_Scanning = NULL;
     this->Logic = NULL;
-    this->Node = NULL;
+    this->VolumeNode = NULL;
 
     this->ScannerReader = NULL;
 }
@@ -46,6 +46,9 @@ vtkUltrasoundModuleGUI::~vtkUltrasoundModuleGUI()
 
     if (this->ScannerReader != NULL)
         this->ScannerReader->Delete();
+
+    if (this->VolumeNode != NULL)
+        this->VolumeNode->Delete();
 }
 
 
@@ -149,18 +152,17 @@ void vtkUltrasoundModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long
     {
         if (cb_Enabled->GetSelectedState() == 1)
         {
-        if (this->ScannerReader == NULL)
-            this->ScannerReader = vtkUltrasoundScannerReader::New();
+            if (this->ScannerReader == NULL)
+                this->ScannerReader = vtkUltrasoundScannerReader::New();
 
-        this->ScannerReader->StartScanning();
+            this->ScannerReader->StartScanning();
+            //this->VolumeNode =  this->AddVolumeNode("Ultrasound Scanner Data");
         }
         else // (cb_Enabled->GetSelectedState() == 0)
         {
             this->ScannerReader->StopScanning();
         }
     }
-
-
 }
 
 

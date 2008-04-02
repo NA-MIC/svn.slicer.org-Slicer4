@@ -64,5 +64,3 @@ INCLUDE_DIRECTORIES(
   ${CudaSupport_SOURCE_DIR}
   ${CudaSupport_BINARY_DIR}
 )
-
-

@@ -6,7 +6,7 @@
 #include "vtkMultiThreader.h"
 #include "vtkImageData.h"
 #include "vtkCallbackCommand.h"
-
+#include "vtkMutexLock.h"
 
 //Temporary
 
@@ -22,8 +22,11 @@ vtkUltrasoundScannerReader::vtkUltrasoundScannerReader(void)
 
     this->DataUpdated = vtkCallbackCommand::New();
 
+    this->Mutex = vtkSimpleMutexLock::New();
+
     this->Thread = NULL;
     this->ThreadRunning = false;
+
 
 }
 
@@ -33,6 +36,7 @@ vtkUltrasoundScannerReader::~vtkUltrasoundScannerReader(void)
     this->ImageBuffers[1]->Delete();
 
     this->DataUpdated->Delete();
+    this->Mutex->Delete();
 }
 
 
@@ -44,7 +48,9 @@ void vtkUltrasoundScannerReader::SwapBuffers()
 
 VTK_THREAD_RETURN_TYPE vtkUltrasoundScannerReader::StartThread(void* data)
 {
-    ((vtkUltrasoundScannerReader*) data)->UpdateData();
+    vtkMultiThreader::ThreadInfo* info =  (vtkMultiThreader::ThreadInfo*)data;
+
+    ((vtkUltrasoundScannerReader*)info->UserData)->UpdateData();
 
     return VTK_THREAD_RETURN_VALUE;
 }
@@ -54,6 +60,8 @@ VTK_THREAD_RETURN_TYPE vtkUltrasoundScannerReader::StartThread(void* data)
 
 void vtkUltrasoundScannerReader::UpdateData()
 {
+    if (this->ThreadRunning)
+        return;
     this->ThreadRunning = true;
 
     vtkstd::vector<vtkImageReader*> ImageReaders;
@@ -83,13 +91,15 @@ void vtkUltrasoundScannerReader::UpdateData()
     unsigned int frameNumber  = 0;
     while(this->ThreadRunning)
     {
-        frameNumber ++;
-        if (frameNumber > ImageReaders.size())
+        frameNumber;
+        if (++frameNumber >= ImageReaders.size())
             frameNumber = 0;
 
-        this->GetDataInHiddenBuffer()->DeepCopy(ImageReaders[frameNumber]->GetOutput());
-
+        Mutex->Lock();
+        vtkImageData* Buffer = this->GetDataInHiddenBuffer();
+        Buffer->DeepCopy(ImageReaders[frameNumber]->GetOutput());
         this->SwapBuffers();
+        Mutex->Unlock();
     }
 }
 
@@ -98,10 +108,9 @@ void vtkUltrasoundScannerReader::StartScanning()
     if (this->Thread == NULL)
     {
         this->Thread = vtkMultiThreader::New();
+        //this->Thread->SetSingleMethod(vtkUltrasoundScannerReader::StartThread, this);
     }
-    this->Thread->SetSingleMethod(vtkUltrasoundScannerReader::StartThread, this);
-    this->Thread->SingleMethodExecute();
-
+    this->Thread->SpawnThread(vtkUltrasoundScannerReader::StartThread, (void*)this);
 }
 
 void vtkUltrasoundScannerReader::StopScanning()

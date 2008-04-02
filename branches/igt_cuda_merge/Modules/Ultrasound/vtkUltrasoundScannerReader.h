@@ -7,6 +7,7 @@
 class vtkMultiThreader;
 class vtkImageData;
 class vtkCallbackCommand;
+class vtkSimpleMutexLock;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundScannerReader : public vtkObject
 {
@@ -38,12 +39,14 @@ protected:
     ~vtkUltrasoundScannerReader(void);
 
     
-    vtkImageData* ImageBuffers[2];
-    int CurrentBuffer;
+    vtkImageData*           ImageBuffers[2];
+    int                     CurrentBuffer;
 
+    vtkSimpleMutexLock*     Mutex;
 
-    vtkMultiThreader* Thread;
-    bool ThreadRunning;
+    vtkMultiThreader*       Thread;
+    bool                    ThreadRunning;
+    
 
 private:
     // Description:
