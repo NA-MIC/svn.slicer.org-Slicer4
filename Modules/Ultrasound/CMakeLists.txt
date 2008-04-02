@@ -9,6 +9,7 @@ if(ULTRASOUNDMODULE)
   SET(UltrasoundModule_SRCS
     vtkUltrasoundModuleGUI.cxx
     vtkUltrasoundModuleLogic.cxx
+    vtkUltrasoundScannerReader.cxx
     
     vtkMRMLUltrasoundNode.cxx
 )
@@ -62,16 +63,22 @@ SET(UltrasoundModule_LIBRARIES
  )
 
 
+ADD_LIBRARY(UltrasoundModule
+  ${UltrasoundModule_SRCS}
+  ${UltrasoundModule_TCL_SRCS}
+  )
+
+
+TARGET_LINK_LIBRARIES(UltrasoundModule
+  ${UltrasoundModule_LIBRARIES}
+  )
+
 IF(BUILD_SHARED_LIBS)
   INSTALL(TARGETS UltrasoundModule
       RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
       LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
       ARCHIVE DESTINATION lib COMPONENT Development)
 ENDIF(BUILD_SHARED_LIBS)
-
-TARGET_LINK_LIBRARIES(UltrasoundModule
-  ${UltrasoundModule_LIBRARIES}
-  )
 
 
 # --------------------------------------------------------------------------
