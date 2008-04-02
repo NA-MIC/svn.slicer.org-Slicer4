@@ -20,7 +20,7 @@
 #include "vtkWindowToImageFilter.h"
 #include "vtkPNGWriter.h"
 #include "vtkImageAppend.h"
-
+#include "vtkImageConstantPad.h"
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthAnalysisStep);
 vtkCxxRevisionMacro(vtkTumorGrowthAnalysisStep, "$Revision: 1.2 $");
@@ -36,8 +36,8 @@ vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
   this->GrowthLabel = NULL;
 
   this->ButtonsSave = NULL;
-  this->ButtonsSnapshot = NULL;
   this->FrameButtons = NULL;
+  this->ButtonsSnapshot = NULL;
   this->SnapshotCount = 0;
 
   this->FrameDeformable     = NULL;
@@ -486,18 +486,40 @@ void vtkTumorGrowthAnalysisStep::TakeScreenshot() {
   vtkImageAppend *screen = vtkImageAppend::New();
     screen->SetAppendAxis(0);
 
-  vtkWindowToImageFilter *window0 = vtkWindowToImageFilter::New();
-     window0->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
-     screen->AddInput(window0->GetOutput());
+  vtkWindowToImageFilter **window = new vtkWindowToImageFilter*[3];
+  vtkImageConstantPad ** windowPad = new vtkImageConstantPad*[3];          
+  for (int i = 0 ; i < 3; i++) {
+    window[i] = vtkWindowToImageFilter::New();
+    windowPad[i] = vtkImageConstantPad::New();    
+  }
 
-  vtkWindowToImageFilter *window1 = vtkWindowToImageFilter::New();
-     window1->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
-     screen->AddInput(window1->GetOutput());
+  window[0]->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
+  window[1]->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
+  window[2]->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
 
-  vtkWindowToImageFilter *window2 = vtkWindowToImageFilter::New();
-     window2->SetInput(this->GetGUI()->GetApplicationGUI()->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow());
-     screen->AddInput(window2->GetOutput());
-     
+  int maxExtent[6];
+  for (int i = 0 ; i < 3; i++) {
+    window[i]->Update();
+    if (i) {
+      int newExtent[6];
+      window[i]->GetOutput()->GetExtent(newExtent);
+      for (int j = 0 ; j < 6; j += 2) {
+    if (newExtent[j] < maxExtent[j] ) maxExtent[j] = newExtent[j]; 
+    if (newExtent[j+1] > maxExtent[j+1] ) maxExtent[j+1] = newExtent[j+1]; 
+      }
+    } else {
+      window[i]->GetOutput()->GetExtent(maxExtent);
+    } 
+  }
+
+  for (int i = 0 ; i < 3; i++) {
+    windowPad[i]->SetInput(window[i]->GetOutput()); 
+    windowPad[i]->SetOutputWholeExtent(maxExtent);
+    windowPad[i]->SetConstant(0);
+    windowPad[i]->Update();
+    screen->AddInput(windowPad[i]->GetOutput());
+  }
+
   screen->Update();
 
   vtkPNGWriter *saveWriter = vtkPNGWriter::New();
@@ -512,10 +534,15 @@ void vtkTumorGrowthAnalysisStep::TakeScreenshot() {
   saveWriter->Write();
 
   saveWriter->Delete();
- 
-  window0->Delete();
-  window1->Delete();
-  window2->Delete();
+
+  for (int i = 0 ; i < 3; i++) {
+    window[i]->Delete();
+    windowPad[i]->Delete();
+  }
+  delete[] window; 
+  delete[] windowPad;
+
+
 
   screen->Delete();
 }
