@@ -290,6 +290,16 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerSliceLogic : public vtkSlicerLogic
   // Make a slice model with the current configuration
   void CreateSliceModel();
   void DeleteSliceModel();
+  
+  // Description:
+  // Get PolyData models like glyphs etc.
+  void GetPolyDataAndLookUpTableCollections(vtkPolyDataCollection *PolyDataCollection,
+                                            vtkCollection *LookupTableCollection);
+//BTX                                            
+  // Description:
+  // Get  all slice displaynodes creating PolyData models like glyphs etc.
+  std::vector< vtkMRMLDisplayNode*> GetPolyDataDisplayNodes();
+//ETX
 
 protected:
   vtkSlicerSliceLogic();

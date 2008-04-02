@@ -59,6 +59,18 @@ vtkMRMLDiffusionTensorVolumeSliceDisplayNode::vtkMRMLDiffusionTensorVolumeSliceD
   this->DiffusionTensorGlyphFilter->SetResolution (1);
 
   this->ColorMode = vtkMRMLFiberBundleDisplayNode::colorModeScalar;
+  
+  this->SliceToXYTransformer = vtkTransformPolyDataFilter::New();
+
+  this->SliceToXYTransform = vtkTransform::New();
+  
+  this->SliceToXYMatrix = vtkMatrix4x4::New();
+  this->SliceToXYMatrix->Identity();
+  this->SliceToXYTransform->PreMultiply();
+  this->SliceToXYTransform->SetMatrix(this->SliceToXYMatrix);
+
+  this->SliceToXYTransformer->SetInput(this->DiffusionTensorGlyphFilter->GetOutput());
+  this->SliceToXYTransformer->SetTransform(this->SliceToXYTransform);
 }
 
 
@@ -67,6 +79,9 @@ vtkMRMLDiffusionTensorVolumeSliceDisplayNode::~vtkMRMLDiffusionTensorVolumeSlice
 {
   this->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
   this->DiffusionTensorGlyphFilter->Delete();
+  this->SliceToXYMatrix->Delete();
+  this->SliceToXYTransform->Delete();
+  this->SliceToXYTransformer->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -114,6 +129,12 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetSlicePositionMatrix(vtkMat
   if (this->DiffusionTensorGlyphFilter)
     {
     this->DiffusionTensorGlyphFilter->SetVolumePositionMatrix(matrix);
+    }
+  this->SliceToXYMatrix->DeepCopy(matrix);
+  this->SliceToXYMatrix->Invert();
+  if (this->SliceToXYTransform)
+    {
+    this->SliceToXYTransform->SetMatrix(this->SliceToXYMatrix);
     }
 }
 
