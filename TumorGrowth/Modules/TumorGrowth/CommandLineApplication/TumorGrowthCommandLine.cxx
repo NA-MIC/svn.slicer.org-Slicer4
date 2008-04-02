@@ -37,13 +37,15 @@ extern "C" int Vtkitk_Init(Tcl_Interp *interp);
   std::string name##Tcl;\
   tgVtkCreateMacro(name,type); 
 
-#define tgSetDataMacro(name) \
+#define tgSetDataMacro(name,matrix)               \
  virtual int Set##name(const char *fileName) { \
    if (strcmp(fileName,"None")) { \
     tgVtkCreateMacro(this->name,vtkImageData); \
-        return this->tgReadVolume(fileName,this->name); \
+    this->matrix = vtkMatrix4x4::New(); \
+    return this->tgReadVolume(fileName,this->name,this->matrix);    \
    } \
    this->name = NULL; \
+   this->matrix = NULL; \
    return 0; \
  }
 
@@ -53,8 +55,10 @@ class tgCMDLineStructure {
   tgCMDLineStructure(Tcl_Interp *init) {
     this->Scan1Data = NULL;
     this->Scan1DataTcl = "";
+    this->Scan1Matrix = NULL;
     this->Scan2Data = NULL;
     this->Scan2DataTcl = "";
+    this->Scan2Matrix = NULL;
     this->interp = init;
   } 
 
@@ -63,18 +67,30 @@ class tgCMDLineStructure {
       Scan1Data->Delete();
       this->Scan1Data = NULL;
     }
+
+    if (this->Scan1Matrix) {
+      Scan1Matrix->Delete();
+      this->Scan1Matrix = NULL;
+    }
+    
     if (this->Scan2Data) {
       Scan2Data->Delete();
       this->Scan2Data = NULL;
     }
+
+    if (this->Scan2Matrix) {
+      Scan2Matrix->Delete();
+      this->Scan2Matrix = NULL;
+    }
     this->interp = NULL;
   } 
 
-  tgSetDataMacro(Scan1Data);
-  tgSetDataMacro(Scan2Data);
+  tgSetDataMacro(Scan1Data,Scan1Matrix);
+  tgSetDataMacro(Scan2Data,Scan2Matrix);
 
   void SetWorkingDir(vtkKWApplication *app, const char* fileNameScan1) {
-    this->WorkingDir = vtksys::SystemTools::GetFilenamePath(fileNameScan1) + "-TGcmd";
+    this->WorkingDir = vtksys::SystemTools::GetFilenamePath(vtksys::SystemTools::CollapseFullPath(fileNameScan1)) + "-TGcmd";
+    cout << "Setting working directory to " << this->WorkingDir << endl;
     char CMD[1024];
     sprintf(CMD,"file isdirectory %s",this->GetWorkingDir()); 
     if (!atoi(app->Script(CMD))) { 
@@ -87,26 +103,31 @@ class tgCMDLineStructure {
 
   vtkImageData *Scan1Data; 
   std::string Scan1DataTcl;
+  vtkMatrix4x4 *Scan1Matrix; 
 
   vtkImageData *Scan2Data; 
   std::string Scan2DataTcl;
+  vtkMatrix4x4 *Scan2Matrix; 
 
   std::string WorkingDir;
 
   private:
-  int tgReadVolume(const char *fileName, vtkImageData *Output);
+  int tgReadVolume(const char *fileName, vtkImageData *outputData,  vtkMatrix4x4 *outputMatrix); 
 
   Tcl_Interp *interp;
 
 };
 
 
-int tgCMDLineStructure::tgReadVolume(const char *fileName, vtkImageData *Output) {
+int tgCMDLineStructure::tgReadVolume(const char *fileName, vtkImageData *outputData,  vtkMatrix4x4 *outputMatrix) {
   // Currently only works with nrrd files bc I do not know how to converd itk::ImageFileReader vtkImageData
   vtkNRRDReader *reader = vtkNRRDReader::New();
   reader->SetFileName(fileName);
   reader->Update();
-  Output->DeepCopy(reader->GetOutput());
+
+  outputData->DeepCopy(reader->GetOutput());
+  outputMatrix->DeepCopy(reader->GetRasToIjkMatrix());
+
   if (reader->GetReadStatus()) {
     cout << "ERROR: tgReadVolume: could not read " << fileName << endl;
     return 1;
@@ -115,21 +136,14 @@ int tgCMDLineStructure::tgReadVolume(const char *fileName, vtkImageData *Output)
   return 0;
 }
 
-void tgWriteVolume(const char *fileName, vtkImageData *Output) {
-  vtkMatrix4x4 *export_matrix = vtkMatrix4x4::New(); 
-  int *EXTENT = Output->GetExtent();
-  int dims[3] = {EXTENT[1] - EXTENT[0] + 1, EXTENT[3] - EXTENT[2] + 1,EXTENT[5] - EXTENT[4] + 1};
-  vtkMRMLVolumeNode::ComputeIJKToRASFromScanOrder("IS",Output->GetSpacing(),dims,1,export_matrix);
-  export_matrix->Invert();
-
+void tgWriteVolume(const char *fileName, vtkMatrix4x4 *export_matrix, vtkImageData *data) {
   vtkITKImageWriter *iwriter = vtkITKImageWriter::New(); 
-  iwriter->SetInput(Output); 
+  iwriter->SetInput(data); 
   iwriter->SetFileName(fileName);
   iwriter->SetRasToIJKMatrix(export_matrix);
   iwriter->SetUseCompression(1);
   iwriter->Write();
   iwriter->Delete();
-  export_matrix->Delete();
 
  // Did not save spacing 
  //vtkNRRDWriter *iwriter = vtkNRRDWriter::New();
@@ -139,6 +153,7 @@ void tgWriteVolume(const char *fileName, vtkImageData *Output) {
  // iwriter->Write();
  // iwriter->Delete();
 }
+
 
 int tgSetSLICER_HOME(char** argv)  
 { 
@@ -271,7 +286,7 @@ int main(int argc, char** argv)
      cout << "ERROR: --ROIMin or --ROIMax are not corretly defined!" << endl;
      return EXIT_FAILURE; 
     }
- 
+
     // -------------------------------------
     // Run pipeline 
     // -------------------------------------
@@ -296,11 +311,11 @@ int main(int argc, char** argv)
       app->Script(CMD.c_str());
 
       CMD = tg.WorkingDir + "/TG_scan2_Global.nhdr";
-      tgWriteVolume(CMD.c_str(),Scan2Global);    
+      tgWriteVolume(CMD.c_str(),tg.Scan1Matrix,Scan2Global);    
        
     } else {
-     cout << "Debugging - jump over global registration" << endl;
-     Scan2Global->DeepCopy(tg.Scan1Data);
+      cout << "Debugging - jump over global registration" << endl;
+      Scan2Global->DeepCopy(tg.Scan1Data);
     }
  
     // 
@@ -316,8 +331,12 @@ int main(int argc, char** argv)
     tgVtkDefineMacro(Scan2SuperSample,vtkImageData); 
     std::string Scan1SuperSampleFileName = tg.WorkingDir + "/TG_scan1_SuperSampled.nhdr";
 
+    vtkMatrix4x4 *supersampleMatrix = vtkMatrix4x4::New(); 
+
     if (1) {
       // -------------------------------------
+      // Resample Scan 1
+
       cout << "=== Define ROI for each scan ===" << endl;
       Spacing =  tg.Scan1Data->GetSpacing();
       int ROIMin[3] = {tgROIMin[0], tgROIMin[1],  tgROIMin[2]};
@@ -332,16 +351,47 @@ int main(int argc, char** argv)
        cout << "ERROR: Could not super sample scan1 " << endl;
        return EXIT_FAILURE; 
       }
-      tgWriteVolume(Scan1SuperSampleFileName.c_str(),Scan1SuperSample);    
+
+      //
+      // Necessary for creating matrix with correct origin
+      // 
+      int *EXTENT = Scan1SuperSample->GetExtent();
+      int dims[3] = {EXTENT[1] - EXTENT[0] + 1, EXTENT[3] - EXTENT[2] + 1,EXTENT[5] - EXTENT[4] + 1};
+
+      double newIJKOrigin[4] = {ROIMin[0],ROIMin[1],ROIMin[2], 1.0 };
+      double newRASOrigin[4];
+      char ScanOrder[100];
+
+      vtkMatrix4x4 *Scan1MatrixIJKToRAS = vtkMatrix4x4::New();
+        Scan1MatrixIJKToRAS->DeepCopy(tg.Scan1Matrix);
+        Scan1MatrixIJKToRAS->Invert();
+        Scan1MatrixIJKToRAS->MultiplyPoint(newIJKOrigin,newRASOrigin);
+        strcpy(ScanOrder, vtkMRMLVolumeNode::ComputeScanOrderFromIJKToRAS(Scan1MatrixIJKToRAS));
+        
+      Scan1MatrixIJKToRAS->Delete();
  
+      vtkMRMLVolumeNode::ComputeIJKToRASFromScanOrder(ScanOrder,Scan1SuperSample->GetSpacing(),dims,1,supersampleMatrix);
+      supersampleMatrix->SetElement(0,3,newRASOrigin[0]);
+      supersampleMatrix->SetElement(1,3,newRASOrigin[1]);
+      supersampleMatrix->SetElement(2,3,newRASOrigin[2]);
+      supersampleMatrix->Invert();
+
+      //
+      // Finally save results 
+      // 
+      tgWriteVolume(Scan1SuperSampleFileName.c_str(),supersampleMatrix,Scan1SuperSample);
+
+      // -------------------------------------
+      // Resample Scan2 
+
       if (logic->CreateSuperSampleFct(Scan2Global,ROIMin, ROIMax, SuperSampleSpacing,Scan2SuperSample)) {
        cout << "ERROR: Could not super sample scan1 " << endl;
        return EXIT_FAILURE; 
       }
        std::string NAME = tg.WorkingDir + "/TG_scan2_Global_SuperSampled.nhdr";
-      tgWriteVolume(NAME.c_str(),Scan2SuperSample);    
+       tgWriteVolume(NAME.c_str(),supersampleMatrix, Scan2SuperSample);    
     } else {
-     cout << "Debugging - jump over super sampling" << endl;      
+       cout << "Debugging - jump over super sampling" << endl;      
     }
  
     // 
@@ -360,7 +410,7 @@ int main(int argc, char** argv)
       vtkTumorGrowthLogic::DefineSegment(Scan1PreSegment->GetOutput(),Scan1Segment);
 
       Scan1SegmentFileName = tg.WorkingDir + "/TG_scan1_Segment.nhdr";
-      tgWriteVolume(Scan1SegmentFileName.c_str(),Scan1Segment->GetOutput());
+      tgWriteVolume(Scan1SegmentFileName.c_str(),supersampleMatrix,Scan1Segment->GetOutput());
     }
     char *Scan1SegmentOutputTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,Scan1Segment->GetOutput()));
 
@@ -380,7 +430,7 @@ int main(int argc, char** argv)
       app->Script(CMD.c_str());
 
       std::string Scan2LocalFileName = tg.WorkingDir + "/TG_scan2_Local.nhdr";
-      tgWriteVolume(Scan2LocalFileName.c_str(),Scan2Local);
+      tgWriteVolume(Scan2LocalFileName.c_str(),supersampleMatrix,Scan2Local);
 
     } else {
      cout << "Debugging - jump over local registration" << endl;
@@ -399,7 +449,7 @@ int main(int argc, char** argv)
        std::string CMD = "::TumorGrowthTcl::HistogramNormalization_FCT " + Scan1SuperSampleTcl + " " + Scan1SegmentOutputTcl + " " 
                                                                      + Scan2LocalTcl + " " + Scan2LocalNormalizedTcl;
        app->Script(CMD.c_str()); 
-       tgWriteVolume(Scan2LocalNormalizedFileName.c_str(),Scan2LocalNormalized);
+       tgWriteVolume(Scan2LocalNormalizedFileName.c_str(),supersampleMatrix, Scan2LocalNormalized);
     }
 
     // 
@@ -419,13 +469,13 @@ int main(int argc, char** argv)
       app->Script(CMD.c_str());
 
       std::string Scan1IntensityFileName = tg.WorkingDir + "/TG_scan1_Thr.nhdr";
-      tgWriteVolume(Scan1IntensityFileName.c_str(),Scan1Intensity);
+      tgWriteVolume(Scan1IntensityFileName.c_str(),supersampleMatrix, Scan1Intensity);
 
       CMD = "::TumorGrowthTcl::IntensityThresholding_Fct " + Scan2LocalNormalizedTcl + " " + Scan1SuperSampleTcl + ThreshString + Scan2IntensityTcl;
       app->Script(CMD.c_str());
 
       std::string Scan2IntensityFileName = tg.WorkingDir + "/TG_scan2_Thr.nhdr";
-      tgWriteVolume(Scan2IntensityFileName.c_str(),Scan2Intensity);
+      tgWriteVolume(Scan2IntensityFileName.c_str(),supersampleMatrix,Scan2Intensity);
 
       // ------------- ANALYSIS  --------------------
       char Sensitivity[100];
@@ -435,7 +485,7 @@ int main(int argc, char** argv)
       app->Script(CMD.c_str());
 
       CMD = tg.WorkingDir + "/TG_Analysis_Intensity.nhdr";
-      tgWriteVolume(CMD.c_str(),logic->GetAnalysis_Intensity_ROIBinReal());
+      tgWriteVolume(CMD.c_str(),supersampleMatrix,logic->GetAnalysis_Intensity_ROIBinReal());
       cout << "=========================" << endl;    
       Analysis_Intensity_Growth  = logic->MeassureGrowth();
       cout << "Analysis Intensity Growth: " <<  Analysis_Intensity_Growth  << " Super sample " << SuperSampleVol << endl;
@@ -506,8 +556,9 @@ int main(int argc, char** argv)
         outFile  << "Analysis based on Deformable Map" << "\n";
         outFile  << "  Segmentation Metric: "<<  floor(Analysis_SEGM_Growth*1000)/1000.0 << "mm^3 (" 
                  << int(Analysis_SEGM_Growth/Scan1Vol) << " Voxels)\n";
-        outFile  << "  Jacobian Metric:     "<<  floor(Analysis_SEGM_Growth*1000)/1000.0 << "mm^3 (" << int(Analysis_SEGM_Growth/Scan1Vol ) << " Voxels)\n";
+        outFile  << "  Jacobian Metric:     "<<  floor(Analysis_JACO_Growth*1000)/1000.0 << "mm^3 (" << int(Analysis_JACO_Growth/Scan1Vol ) << " Voxels)\n";
       }
+      outFile  << "\n" << endl;
       std::string CMD;
       for (int i = 0 ; i < argc ; i ++) {
     CMD.append(argv[i]);
@@ -534,6 +585,7 @@ int main(int argc, char** argv)
     if (Scan1SuperSample) Scan1SuperSample->Delete();
     if (Scan2SuperSample) Scan2SuperSample->Delete();
     if (Scan2Global)      Scan2Global->Delete();
+    supersampleMatrix->Delete();
     logic->Delete();
     app->Delete();  
 

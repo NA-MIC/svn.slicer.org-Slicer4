@@ -1070,10 +1070,10 @@ namespace eval TumorGrowthTcl {
     }
 
   proc Print { TEXT } {
-      set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
-      set LOGIC [$GUI GetLogic]
-      $LOGIC PrintText "$TEXT"
-      return
+      # set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+      # set LOGIC [$GUI GetLogic]
+      # $LOGIC PrintText "$TEXT"
+      # return
       if { [catch { set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"] }] }  {
         puts "$TEXT" 
       } else {
