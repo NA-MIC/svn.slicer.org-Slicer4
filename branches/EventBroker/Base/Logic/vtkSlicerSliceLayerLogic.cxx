@@ -575,6 +575,7 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
         {
         dnode->SetSliceImage(sliceImage);
         dnode->SetSlicePositionMatrix(this->SliceNode->GetXYToRAS());
+        trot->Delete();
         }
       }
     }

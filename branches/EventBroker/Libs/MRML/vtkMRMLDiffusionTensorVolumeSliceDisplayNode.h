@@ -89,6 +89,7 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkM
   void operator= ( const vtkMRMLDiffusionTensorVolumeSliceDisplayNode& );
 
     vtkDiffusionTensorGlyph  *DiffusionTensorGlyphFilter;
+    vtkMatrix4x4             *SliceToXYMatrix;
 };
 
 #endif

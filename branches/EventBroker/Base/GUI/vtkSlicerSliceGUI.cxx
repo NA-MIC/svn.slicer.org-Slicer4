@@ -52,6 +52,7 @@ vtkSlicerSliceGUI::~vtkSlicerSliceGUI ( ) {
 
     
     this->RemoveGUIObservers ();
+    this->RemoveMRMLObservers();
 
     // Unpack and set parents to be NULL
     this->SliceController->SetParent ( NULL );
@@ -279,14 +280,19 @@ void vtkSlicerSliceGUI::ProcessLogicEvents ( vtkObject *caller,
 
     sliceViewer->SetImageData( sliceLogic->GetImageData() );
     
-  
-/*
-    sliceLogic->GetPolyDataCollection( );
-    sliceLogic->GetLookupTableCollection( );
-*/
- 
-    sliceViewer->SetCoordinatedPolyDataAndLookUpTableCollections( sliceLogic->GetPolyDataCollection(), sliceLogic->GetLookupTableCollection()  );
-
+    // add mrml display node observers
+    this->RemoveMRMLObservers();
+    std::vector< vtkMRMLDisplayNode*> dnodes = sliceLogic->GetPolyDataDisplayNodes();
+    for (unsigned int i=0; i< dnodes.size(); i++)
+      {
+      vtkMRMLDisplayNode* dnode = dnodes[i];
+      if (!dnode->HasObserver(vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand))
+        {
+        dnode->Register(this);
+        dnode->AddObserver ( vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand );
+        this->DisplayNodes.push_back(dnode);
+        }
+      }
     //rw->ResetCamera ( );
     sliceViewer->RequestRender ( );
     }
@@ -312,6 +318,20 @@ void vtkSlicerSliceGUI::ProcessMRMLEvents ( vtkObject *caller,
     }
 }
 
+
+void vtkSlicerSliceGUI::RemoveMRMLObservers ( )
+{
+  for(unsigned int i=0; i<this->DisplayNodes.size(); i++)
+    {
+    vtkMRMLDisplayNode* dnode = this->DisplayNodes[i];
+    if (dnode)
+      {
+      dnode->RemoveObservers ( vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand );
+      dnode->UnRegister(this);
+      }
+    }
+  this->DisplayNodes.clear();
+}
 
 //---------------------------------------------------------------------------
 void vtkSlicerSliceGUI::Enter ( )
