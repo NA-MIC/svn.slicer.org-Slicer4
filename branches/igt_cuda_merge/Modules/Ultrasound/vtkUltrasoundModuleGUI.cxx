@@ -19,7 +19,7 @@
 #include "vtkMRMLScene.h"
 
 #include "vtkUltrasoundScannerReader.h"
-
+#include "vtkUltrasoundModuleLogic.h"
 
 vtkCxxRevisionMacro(vtkUltrasoundModuleGUI, "$ Revision 1.0$");
 vtkStandardNewMacro(vtkUltrasoundModuleGUI);
@@ -40,7 +40,7 @@ vtkUltrasoundModuleGUI::vtkUltrasoundModuleGUI()
 vtkUltrasoundModuleGUI::~vtkUltrasoundModuleGUI()
 {
     if (this->cb_Enabled != NULL)
-    this->cb_Enabled->Delete();
+        this->cb_Enabled->Delete();
     if (this->sc_RefreshRate != NULL)
         this->sc_RefreshRate->Delete();
 
@@ -64,7 +64,12 @@ void vtkUltrasoundModuleGUI::ProcessLogicEvents ( vtkObject *caller, unsigned lo
 /// GUI part
 void vtkUltrasoundModuleGUI::BuildGUI ( )
 {
+    if (cb_Enabled != NULL)
+        return;
+
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+    this->GetMRMLScene();
+
     this->GetUIPanel()->AddPage("Ultrasound", "Ultrasound",NULL);
 
     // Define your help text and build the help frame here.
@@ -97,7 +102,6 @@ void vtkUltrasoundModuleGUI::BuildGUI ( )
     this->sc_RefreshRate->GetLabel()->SetText("Refresh Rate");
     app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->sc_RefreshRate->GetWidgetName());
-
 }
 
 // This method releases references and key-bindings,
@@ -105,7 +109,6 @@ void vtkUltrasoundModuleGUI::BuildGUI ( )
 void vtkUltrasoundModuleGUI::TearDownGUI ( )
 {
 }
-
 
 // Description:
 // Methods for adding module-specific key bindings and
@@ -117,7 +120,6 @@ void vtkUltrasoundModuleGUI::CreateModuleEventBindings ( )
 void vtkUltrasoundModuleGUI::ReleaseModuleEventBindings ( )
 {
 }
-
 
 // Description:
 // Add obsereves to GUI widgets
@@ -150,17 +152,31 @@ void vtkUltrasoundModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long
 {
     if (caller == cb_Enabled && event == vtkKWCheckButton::SelectedStateChangedEvent)
     {
+        // ENABLE
         if (cb_Enabled->GetSelectedState() == 1)
         {
             if (this->ScannerReader == NULL)
                 this->ScannerReader = vtkUltrasoundScannerReader::New();
 
             this->ScannerReader->StartScanning();
-            //this->VolumeNode =  this->AddVolumeNode("Ultrasound Scanner Data");
+
+            if (this->VolumeNode == NULL)
+                this->VolumeNode = this->AddVolumeNode("Ultrasound Scanner Data");
+            this->ScannerReader->GetImageData(this->VolumeNode);
+
+            this->UpdateInput();
         }
+        //DISABLE 
         else // (cb_Enabled->GetSelectedState() == 0)
         {
-            this->ScannerReader->StopScanning();
+            if (this->ScannerReader != NULL)
+                this->ScannerReader->StopScanning();
+            if (this->VolumeNode != NULL)
+            {
+                this->GetLogic()->GetMRMLScene()->RemoveNode(this->VolumeNode);
+                this->VolumeNode->Delete();
+                this->VolumeNode = NULL;
+            }
         }
     }
 }
@@ -177,6 +193,15 @@ void vtkUltrasoundModuleGUI::CreateWidget()
 {
 }
 
+
+void vtkUltrasoundModuleGUI::UpdateInput()
+{
+    if (this->cb_Enabled->GetSelectedState() == 1)
+    {
+        this->ScannerReader->GetImageData(this->VolumeNode);
+        this->GetApplication()->Script("after 20 \"%s UpdateInput\"", this->GetTclName());
+    }
+}
 
 // Description:
 // Methods describe behavior at module enter and exit.
@@ -209,94 +234,32 @@ void vtkUltrasoundModuleGUI::PrintSelf(ostream& os, vtkIndent indent)
 {
 }
 
-vtkMRMLVolumeNode* vtkUltrasoundModuleGUI::AddVolumeNode(const char* volumeNodeName)
+vtkMRMLScalarVolumeNode* vtkUltrasoundModuleGUI::AddVolumeNode(const char* volumeNodeName)
 {
 
     std::cerr << "AddVolumeNode(): called." << std::endl;
 
-    vtkMRMLVolumeNode *volumeNode = NULL;
+    vtkMRMLScalarVolumeNode *volumeNode = NULL;
+    vtkImageData* imageData;
+    vtkMRMLScene* scene = this->GetLogic()->GetMRMLScene();
 
-    if (volumeNode == NULL)  // if real-time volume node has not been created
-    {
+    volumeNode = vtkMRMLScalarVolumeNode::New();
 
-        //vtkMRMLVolumeDisplayNode *displayNode = NULL;
-        vtkMRMLScalarVolumeDisplayNode *displayNode = NULL;
-        vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
-        vtkImageData* image = vtkImageData::New();
+    volumeNode->SetName(volumeNodeName);
+    volumeNode->SetDescription("Received by OpenIGTLink");
 
-        float fov = 300.0;
-        image->SetDimensions(256, 256, 1);
-        image->SetExtent(0, 255, 0, 255, 0, 0 );
-        image->SetSpacing( fov/256, fov/256, 10 );
-        image->SetOrigin( -fov/2, -fov/2, -0.0 );
-        image->SetScalarTypeToShort();
-        image->AllocateScalars();
+    imageData = vtkImageData::New();
+    imageData->SetDimensions(80,80,160);///imgheader.size[0], imgheader.size[1], imgheader.size[2]);
+    imageData->SetNumberOfScalarComponents(1);
+    imageData->SetScalarTypeToUnsignedChar();
+    imageData->AllocateScalars();
 
-        short* dest = (short*) image->GetScalarPointer();
-        if (dest)
-        {
-            memset(dest, 0x00, 256*256*sizeof(short));
-            image->Update();
-        }
+    volumeNode->SetAndObserveImageData(imageData);
+    imageData->Delete();
 
-        /*
-        vtkSlicerSliceLayerLogic *reslice = vtkSlicerSliceLayerLogic::New();
-        reslice->SetUseReslice(0);
-        */
-        scalarNode->SetAndObserveImageData(image);
+    scene->AddNode(volumeNode);
+    this->ApplicationLogic->GetSelectionNode()->SetReferenceActiveVolumeID(volumeNode->GetID());
+    this->ApplicationLogic->PropagateVolumeSelection();
 
-
-        /* Based on the code in vtkSlicerVolumeLogic::AddHeaderVolume() */
-        //displayNode = vtkMRMLVolumeDisplayNode::New();
-        displayNode = vtkMRMLScalarVolumeDisplayNode::New();
-        scalarNode->SetLabelMap(0);
-        volumeNode = scalarNode;
-
-        if (volumeNode != NULL)
-        {
-            volumeNode->SetName(volumeNodeName);
-            this->GetMRMLScene()->SaveStateForUndo();
-
-            vtkDebugMacro("Setting scene info");
-            volumeNode->SetScene(this->GetMRMLScene());
-            displayNode->SetScene(this->GetMRMLScene());
-
-
-            double range[2];
-            vtkDebugMacro("Set basic display info");
-            volumeNode->GetImageData()->GetScalarRange(range);
-            range[0] = 0.0;
-            range[1] = 256.0;
-            displayNode->SetLowerThreshold(range[0]);
-            displayNode->SetUpperThreshold(range[1]);
-            displayNode->SetWindow(range[1] - range[0]);
-            displayNode->SetLevel(0.5 * (range[1] - range[0]) );
-
-            vtkDebugMacro("Adding node..");
-            this->GetMRMLScene()->AddNode(displayNode);
-
-            //displayNode->SetDefaultColorMap();
-            vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
-            displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
-            //colorLogic->Delete();
-
-            volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
-
-            vtkDebugMacro("Name vol node "<<volumeNode->GetClassName());
-            vtkDebugMacro("Display node "<<displayNode->GetClassName());
-
-            this->GetMRMLScene()->AddNode(volumeNode);
-            vtkDebugMacro("Node added to scene");
-        }
-
-        //scalarNode->Delete();
-        /*
-        if (displayNode)
-        {
-        displayNode->Delete();
-        }
-        */
-
-    }
     return volumeNode;
 }
