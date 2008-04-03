@@ -36,6 +36,8 @@ vtkUltrasoundScannerReader::~vtkUltrasoundScannerReader(void)
 
     this->DataUpdated->Delete();
     this->Mutex->Delete();
+
+    this->StopScanning();
 }
 
 
@@ -101,9 +103,9 @@ void vtkUltrasoundScannerReader::UpdateData()
             frameNumber = 0;
 
         Mutex->Lock();
-        this->ImageBuffers[(this->CurrentBuffer == 0) ? 1 : 0] = ImageReaders[frameNumber]->GetOutput(); 
-        //vtkImageData* Buffer = this->GetDataInHiddenBuffer();
-        //Buffer->DeepCopy(ImageReaders[frameNumber]->GetOutput());
+//        this->ImageBuffers[(this->CurrentBuffer == 0) ? 1 : 0] = ImageReaders[frameNumber]->GetOutput(); 
+        vtkImageData* Buffer = this->GetDataInHiddenBuffer();
+        Buffer->DeepCopy(ImageReaders[frameNumber]->GetOutput());
         this->SwapBuffers();
         Mutex->Unlock();
         Sleep(100);

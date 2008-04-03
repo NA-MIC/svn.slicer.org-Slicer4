@@ -9,6 +9,7 @@
 #include "vtkKWMenu.h"
 #include "vtkKWScaleWithLabel.h"
 #include "vtkKWLabel.h"
+#include "vtkKWScale.h"
 
 #include "vtkSlicerApplication.h"
 #include "vtkImageData.h"
@@ -99,7 +100,8 @@ void vtkUltrasoundModuleGUI::BuildGUI ( )
     this->sc_RefreshRate = vtkKWScaleWithLabel::New();
     this->sc_RefreshRate->SetParent(usFrame->GetFrame());
     this->sc_RefreshRate->Create();
-    this->sc_RefreshRate->GetLabel()->SetText("Refresh Rate");
+    this->sc_RefreshRate->GetWidget()->SetRange(1, 30);
+    this->sc_RefreshRate->GetLabel()->SetText("Refresh Rate (fps):");
     app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->sc_RefreshRate->GetWidgetName());
 }
@@ -199,7 +201,9 @@ void vtkUltrasoundModuleGUI::UpdateInput()
     if (this->cb_Enabled->GetSelectedState() == 1)
     {
         this->ScannerReader->GetImageData(this->VolumeNode);
-        this->GetApplication()->Script("after 20 \"%s UpdateInput\"", this->GetTclName());
+        std::stringstream str;
+        str << "after " << (int) (1000 / this->sc_RefreshRate->GetWidget()->GetValue()) << " " << this->GetTclName() << " UpdateInput";
+        this->GetApplication()->Script(str.str().c_str());
     }
 }
 
