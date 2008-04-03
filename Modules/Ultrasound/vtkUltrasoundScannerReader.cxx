@@ -1,5 +1,6 @@
 #include "vtkUltrasoundScannerReader.h"
 #include "vtkObjectFactory.h"
+#include "vtkMRMLScalarVolumeNode.h"
 
 
 // Temporary
@@ -26,8 +27,6 @@ vtkUltrasoundScannerReader::vtkUltrasoundScannerReader(void)
 
     this->Thread = NULL;
     this->ThreadRunning = false;
-
-
 }
 
 vtkUltrasoundScannerReader::~vtkUltrasoundScannerReader(void)
@@ -45,19 +44,24 @@ void vtkUltrasoundScannerReader::SwapBuffers()
     this->CurrentBuffer = (this->CurrentBuffer == 0) ? 1 : 0;
 }
 
-
-VTK_THREAD_RETURN_TYPE vtkUltrasoundScannerReader::StartThread(void* data)
+void vtkUltrasoundScannerReader::GetImageData(vtkMRMLScalarVolumeNode* node)
 {
-    vtkMultiThreader::ThreadInfo* info =  (vtkMultiThreader::ThreadInfo*)data;
-
-    ((vtkUltrasoundScannerReader*)info->UserData)->UpdateData();
-
-    return VTK_THREAD_RETURN_VALUE;
+    this->Mutex->Lock();
+    node->GetImageData()->DeepCopy(this->GetData());
+    node->Modified();
+    this->Mutex->Unlock();
 }
 
 #include "vtkstd/vector"
 #include "vtkImageReader.h"
 
+VTK_THREAD_RETURN_TYPE vtkUltrasoundScannerReader::StartThread(void* data)
+{
+    vtkMultiThreader::ThreadInfo* info =  (vtkMultiThreader::ThreadInfo*)data;
+    ((vtkUltrasoundScannerReader*)info->UserData)->UpdateData();
+
+    return VTK_THREAD_RETURN_VALUE;
+}
 void vtkUltrasoundScannerReader::UpdateData()
 {
     if (this->ThreadRunning)
@@ -69,7 +73,8 @@ void vtkUltrasoundScannerReader::UpdateData()
     const char* fileName = "D:\\Volumes\\4DUltrasound\\3DDCM002.raw";
     std::cout << "Loading " << std::flush;
     int j = 92;
-    for (unsigned int i = 0; i < 50; i ++)
+    unsigned int i;
+    for (i = 0; i < 50; i ++)
     {
         ImageReaders.push_back(vtkImageReader::New());
         ImageReaders[i]->SetDataScalarTypeToUnsignedChar();
@@ -96,11 +101,16 @@ void vtkUltrasoundScannerReader::UpdateData()
             frameNumber = 0;
 
         Mutex->Lock();
-        vtkImageData* Buffer = this->GetDataInHiddenBuffer();
-        Buffer->DeepCopy(ImageReaders[frameNumber]->GetOutput());
+        this->ImageBuffers[(this->CurrentBuffer == 0) ? 1 : 0] = ImageReaders[frameNumber]->GetOutput(); 
+        //vtkImageData* Buffer = this->GetDataInHiddenBuffer();
+        //Buffer->DeepCopy(ImageReaders[frameNumber]->GetOutput());
         this->SwapBuffers();
         Mutex->Unlock();
+        Sleep(100);
     }
+
+    for (i = 0; i < ImageReaders.size(); i++)
+        ImageReaders[i]->Delete();
 }
 
 void vtkUltrasoundScannerReader::StartScanning()

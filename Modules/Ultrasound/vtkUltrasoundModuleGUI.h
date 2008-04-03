@@ -63,6 +63,8 @@ class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundModuleGUI : public vtkSlicerModul
 
     virtual void CreateWidget();
 
+    void UpdateInput();
+
     // Description:
     // Methods describe behavior at module enter and exit.
     virtual void Enter ( );
@@ -75,7 +77,7 @@ protected:
     vtkUltrasoundModuleGUI();
     virtual ~vtkUltrasoundModuleGUI();
 
-    vtkMRMLVolumeNode* AddVolumeNode(const char* volumeNodeName);
+    vtkMRMLScalarVolumeNode* AddVolumeNode(const char* volumeNodeName);
 
 
 private:
@@ -91,10 +93,9 @@ private:
 
     vtkUltrasoundModuleLogic*   Logic;
 
-    vtkMRMLVolumeNode*          VolumeNode;
+    vtkMRMLScalarVolumeNode*    VolumeNode;
 
     vtkUltrasoundScannerReader* ScannerReader;
-    
 };
 
 #endif /* __ULTRASOUND_EXAMPLE_GUI_H_ */

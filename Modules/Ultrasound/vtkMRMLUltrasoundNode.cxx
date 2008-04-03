@@ -30,7 +30,8 @@ vtkMRMLNode* vtkMRMLUltrasoundNode::CreateNodeInstance(void)
 }
 
 vtkMRMLUltrasoundNode::vtkMRMLUltrasoundNode(void)
-{   
+{
+
 }
 
 vtkMRMLUltrasoundNode::~vtkMRMLUltrasoundNode(void)

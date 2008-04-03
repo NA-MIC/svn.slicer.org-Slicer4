@@ -8,6 +8,8 @@ class vtkMultiThreader;
 class vtkImageData;
 class vtkCallbackCommand;
 class vtkSimpleMutexLock;
+class vtkMRMLScalarVolumeNode;
+class vtkMRMLVolumeNode;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundScannerReader : public vtkObject
 {
@@ -20,6 +22,8 @@ public:
     void SwapBuffers();
     vtkImageData* GetData() { return this->ImageBuffers[this->CurrentBuffer]; }
     vtkImageData* GetDataInHiddenBuffer() { return this->ImageBuffers[(this->CurrentBuffer == 0)? 1 : 0]; }
+
+    void GetImageData(vtkMRMLScalarVolumeNode* node);
 
     vtkCallbackCommand* DataUpdated;
 
@@ -38,7 +42,7 @@ protected:
     // Use ->Delete() to delete object
     ~vtkUltrasoundScannerReader(void);
 
-    
+protected:    
     vtkImageData*           ImageBuffers[2];
     int                     CurrentBuffer;
 
@@ -46,8 +50,6 @@ protected:
 
     vtkMultiThreader*       Thread;
     bool                    ThreadRunning;
-    
-
 private:
     // Description:
     // Caution: Not implemented
