@@ -7,9 +7,9 @@
   All rights reserved.
   See Copyright.txt or http://www.kitware.com/Copyright.htm for details.
 
-     This software is distributed WITHOUT ANY WARRANTY; without even
-     the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
-     PURPOSE.  See the above copyright notice for more information.
+  This software is distributed WITHOUT ANY WARRANTY; without even
+  the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
 #include "vtkServerSocket.h"
@@ -54,7 +54,7 @@ int vtkServerSocket::CreateServer(int port)
     return -1;
     }
   if ( this->BindSocket(this->SocketDescriptor, port) != 0|| 
-    this->Listen(this->SocketDescriptor) != 0)
+       this->Listen(this->SocketDescriptor) != 0)
     {
     // failed to bind or listen.
     this->CloseSocket(this->SocketDescriptor);
