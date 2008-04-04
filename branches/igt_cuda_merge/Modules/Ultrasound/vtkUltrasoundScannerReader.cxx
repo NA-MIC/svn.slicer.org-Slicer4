@@ -1,7 +1,5 @@
 #include "vtkUltrasoundScannerReader.h"
 #include "vtkObjectFactory.h"
-#include "vtkMRMLScalarVolumeNode.h"
-
 
 // Temporary
 #include "vtkMultiThreader.h"
@@ -46,11 +44,10 @@ void vtkUltrasoundScannerReader::SwapBuffers()
     this->CurrentBuffer = (this->CurrentBuffer == 0) ? 1 : 0;
 }
 
-void vtkUltrasoundScannerReader::GetImageData(vtkMRMLScalarVolumeNode* node)
+void vtkUltrasoundScannerReader::GetImageData(vtkImageData* data)
 {
     this->Mutex->Lock();
-    node->GetImageData()->DeepCopy(this->GetData());
-    node->Modified();
+    data->DeepCopy(this->GetData());
     this->Mutex->Unlock();
 }
 
@@ -108,7 +105,6 @@ void vtkUltrasoundScannerReader::UpdateData()
         Buffer->DeepCopy(ImageReaders[frameNumber]->GetOutput());
         this->SwapBuffers();
         Mutex->Unlock();
-        Sleep(100);
     }
 
     for (i = 0; i < ImageReaders.size(); i++)

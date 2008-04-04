@@ -164,7 +164,7 @@ void vtkUltrasoundModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long
 
             if (this->VolumeNode == NULL)
                 this->VolumeNode = this->AddVolumeNode("Ultrasound Scanner Data");
-            this->ScannerReader->GetImageData(this->VolumeNode);
+            this->ScannerReader->GetImageData(this->VolumeNode->GetImageData());
 
             this->UpdateInput();
         }
@@ -200,7 +200,8 @@ void vtkUltrasoundModuleGUI::UpdateInput()
 {
     if (this->cb_Enabled->GetSelectedState() == 1)
     {
-        this->ScannerReader->GetImageData(this->VolumeNode);
+        this->ScannerReader->GetImageData(this->VolumeNode->GetImageData());
+        this->VolumeNode->Modified();
         std::stringstream str;
         str << "after " << (int) (1000 / this->sc_RefreshRate->GetWidget()->GetValue()) << " " << this->GetTclName() << " UpdateInput";
         this->GetApplication()->Script(str.str().c_str());
