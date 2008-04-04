@@ -84,7 +84,6 @@ SET(MRML_SRCS
         vtkURIHandler.cxx
         vtkCacheManager.cxx
         vtkPermissionPrompter.cxx
-        vtkXNATPermissionPrompter.cxx
         # Note: when you add new node types, add
         # register code to the vtkMRMLScene constructor
 )

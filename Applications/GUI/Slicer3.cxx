@@ -176,6 +176,9 @@ extern "C" {
 #if !defined(REMOTEIO_DEBUG)
 #include "vtkHTTPHandler.h"
 #include "vtkSRBHandler.h"
+#include "vtkXNATHandler.h"
+#include "vtkSlicerPermissionPrompterWidget.h"
+#include "vtkSlicerXNATPermissionPrompterWidget.h"
 #endif
 
 //
@@ -967,12 +970,25 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(REMOTEIO_DEBUG)
     // register all existing uri handlers (add to collection)
     vtkHTTPHandler *httpHandler = vtkHTTPHandler::New();
+    httpHandler->SetPrefix ( "http://" );
     scene->AddURIHandler(httpHandler);
     httpHandler->Delete();
 
     vtkSRBHandler *srbHandler = vtkSRBHandler::New();
+    srbHandler->SetPrefix ( "srb://" );
     scene->AddURIHandler(srbHandler);
     srbHandler->Delete();
+
+    vtkXNATHandler *xnatHandler = vtkXNATHandler::New();
+    vtkSlicerXNATPermissionPrompterWidget *xnatPermissionPrompter = vtkSlicerXNATPermissionPrompterWidget::New();
+    xnatPermissionPrompter->SetApplication ( slicerApp );
+    xnatPermissionPrompter->SetPromptTitle ("Permission Prompt");
+    xnatHandler->SetPrefix ( "xnat://" );
+    xnatHandler->SetRequiresPermission (1);
+    xnatHandler->SetPermissionPrompter ( xnatPermissionPrompter );
+    scene->AddURIHandler(xnatHandler);
+    xnatPermissionPrompter->Delete();
+    xnatHandler->Delete();
 #endif
 
     // build the application GUI
@@ -1087,10 +1103,16 @@ int Slicer3_main(int argc, char *argv[])
     LoadableModuleFactory loadableModuleFactory;
     loadableModuleFactory.SetName("Slicer");
     loadableModuleFactory.SetSearchPath( slicerModulePath );
-    loadableModuleFactory.SetWarningMessageCallback( WarningMessage );
-    loadableModuleFactory.SetErrorMessageCallback( ErrorMessage );
-    loadableModuleFactory.SetInformationMessageCallback( InformationMessage );
-    loadableModuleFactory.SetModuleDiscoveryMessageCallback( SplashMessage );
+    if (VerboseModuleDiscovery)
+      {
+      loadableModuleFactory.SetWarningMessageCallback( WarningMessage );
+      loadableModuleFactory.SetErrorMessageCallback( ErrorMessage );
+      loadableModuleFactory.SetInformationMessageCallback( InformationMessage);
+      }
+    if (!NoSplash)
+      {
+      loadableModuleFactory.SetModuleDiscoveryMessageCallback( SplashMessage );
+      }
     loadableModuleFactory.Scan();
     
     std::vector<std::string> loadableModuleNames = 
@@ -1739,10 +1761,16 @@ int Slicer3_main(int argc, char *argv[])
       moduleFactory.SetName("Slicer");
       moduleFactory.SetSearchPath( packagePath );
       moduleFactory.SetCachePath( cachePath );
-      moduleFactory.SetWarningMessageCallback( WarningMessage );
-      moduleFactory.SetErrorMessageCallback( ErrorMessage );
-      moduleFactory.SetInformationMessageCallback( InformationMessage );
-      moduleFactory.SetModuleDiscoveryMessageCallback( SplashMessage );
+      if (VerboseModuleDiscovery)
+        {
+        moduleFactory.SetWarningMessageCallback( WarningMessage );
+        moduleFactory.SetErrorMessageCallback( ErrorMessage );
+        moduleFactory.SetInformationMessageCallback( InformationMessage );
+        }
+      if (!NoSplash)
+        {
+        moduleFactory.SetModuleDiscoveryMessageCallback( SplashMessage );
+        }      
       moduleFactory.Scan();
 
       // Register the node type for the command line modules

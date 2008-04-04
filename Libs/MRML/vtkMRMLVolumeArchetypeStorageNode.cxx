@@ -65,6 +65,7 @@ vtkMRMLNode* vtkMRMLVolumeArchetypeStorageNode::CreateNodeInstance()
 vtkMRMLVolumeArchetypeStorageNode::vtkMRMLVolumeArchetypeStorageNode()
 {
   this->CenterImage = 0;
+  this->SingleFile  = 1;
 }
 
 //----------------------------------------------------------------------------
@@ -145,7 +146,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     }
   
   Superclass::StageReadData(refNode);
-  if ( this->GetReadState() != this->Ready )
+  if ( this->GetReadState() != this->TransferDone )
     {
     // remote file download hasn't finished
     vtkWarningMacro("ReadData: read state is pending, remote download hasn't finished yet");
@@ -291,6 +292,8 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   reader->Delete();
   ici->Delete();
 
+  this->SetReadStateIdle();
+  
   return result;
 }
 
