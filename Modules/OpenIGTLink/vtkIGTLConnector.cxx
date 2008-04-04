@@ -1,15 +1,15 @@
 /*==========================================================================
 
-Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-See Doc/copyright/copyright.txt
-or http://www.slicer.org/copyright/copyright.txt for details.
-
-Program:   3D Slicer
-Module:    $HeadURL: $
-Date:      $Date: $
-Version:   $Revision: $
-
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+  
+  Program:   3D Slicer
+  Module:    $HeadURL: $
+  Date:      $Date: $
+  Version:   $Revision: $
+  
 ==========================================================================*/
 
 #include "vtkObjectFactory.h"
@@ -94,15 +94,15 @@ int vtkIGTLConnector::Start()
   // Check if type is defined.
   if (this->Type == vtkIGTLConnector::TYPE_NOT_DEFINED)
     {
-      std::cerr << "Connector type is not defined." << std::endl;
-      return 0;
+    std::cerr << "Connector type is not defined." << std::endl;
+    return 0;
     }
 
   // Check if thread is detached
   if (this->ThreadID >= 0)
     {
-      std::cerr << "Thread exists." << std::endl;
-      return 0;
+    std::cerr << "Thread exists." << std::endl;
+    return 0;
     }
 
   this->ServerStopFlag = false;
@@ -125,21 +125,21 @@ int vtkIGTLConnector::Stop()
   // Check if thread exists
   if (this->ThreadID >= 0)
     {
-      // NOTE: Thread should be killed by activating ServerStopFlag.
-      this->ServerStopFlag = true;
-      this->Mutex->Lock();
-      if (this->Socket)
-        {
-          this->Socket->CloseSocket();
-        }
-      this->Mutex->Unlock();
-      //this->Thread->TerminateThread(this->ThreadID);
-      //this->ThreadID = -1;
-      return 1;
+    // NOTE: Thread should be killed by activating ServerStopFlag.
+    this->ServerStopFlag = true;
+    this->Mutex->Lock();
+    if (this->Socket)
+      {
+      this->Socket->CloseSocket();
+      }
+    this->Mutex->Unlock();
+    //this->Thread->TerminateThread(this->ThreadID);
+    //this->ThreadID = -1;
+    return 1;
     }
   else
     {
-      return 0;
+    return 0;
     }
 }
 
@@ -156,37 +156,37 @@ void* vtkIGTLConnector::ThreadFunction(void* ptr)
   
   if (igtlcon->Type == TYPE_SERVER)
     {
-      igtlcon->ServerSocket = vtkServerSocket::New();
-      igtlcon->ServerSocket->CreateServer(igtlcon->ServerPort);
+    igtlcon->ServerSocket = vtkServerSocket::New();
+    igtlcon->ServerSocket->CreateServer(igtlcon->ServerPort);
     }
   
   // Communication -- common to both Server and Client
   while (!igtlcon->ServerStopFlag)
     {
-      std::cerr << "vtkOpenIGTLinkLogic::ThreadFunction(): alive." << std::endl;
-      igtlcon->Mutex->Lock();
-      igtlcon->Socket = igtlcon->WaitForConnection();
-      igtlcon->Mutex->Unlock();
-      if (igtlcon->Socket != NULL)
-        {
-          igtlcon->State = STATE_CONNECTED;
-          std::cerr << "vtkOpenIGTLinkLogic::ThreadFunction(): Client Connected." << std::endl;
-          igtlcon->ReceiveController();
-          igtlcon->State = STATE_WAIT_CONNECTION;
-        }
+    std::cerr << "vtkOpenIGTLinkLogic::ThreadFunction(): alive." << std::endl;
+    igtlcon->Mutex->Lock();
+    igtlcon->Socket = igtlcon->WaitForConnection();
+    igtlcon->Mutex->Unlock();
+    if (igtlcon->Socket != NULL)
+      {
+      igtlcon->State = STATE_CONNECTED;
+      std::cerr << "vtkOpenIGTLinkLogic::ThreadFunction(): Client Connected." << std::endl;
+      igtlcon->ReceiveController();
+      igtlcon->State = STATE_WAIT_CONNECTION;
+      }
     }
 
   if (igtlcon->ServerSocket)
     {
-      igtlcon->ServerSocket->CloseSocket();
-      igtlcon->ServerSocket->Delete();
-      igtlcon->ServerSocket = NULL;
+    igtlcon->ServerSocket->CloseSocket();
+    igtlcon->ServerSocket->Delete();
+    igtlcon->ServerSocket = NULL;
     }
   if (igtlcon->Socket)
     {
-      igtlcon->Socket->CloseSocket();
-      igtlcon->Socket->Delete();
-      igtlcon->Socket = NULL;
+    igtlcon->Socket->CloseSocket();
+    igtlcon->Socket->Delete();
+    igtlcon->Socket = NULL;
     }
   igtlcon->ThreadID = -1;
   igtlcon->State = STATE_OFF;
@@ -200,46 +200,46 @@ vtkClientSocket* vtkIGTLConnector::WaitForConnection()
 
   if (this->Type == TYPE_CLIENT)
     {
-      socket = vtkClientSocket::New();
+    socket = vtkClientSocket::New();
     }
 
   while (!this->ServerStopFlag)
     {
-      if (this->Type == TYPE_SERVER)
+    if (this->Type == TYPE_SERVER)
+      {
+      std::cerr << "vtkIGTLConnector: Waiting for client @ port #"
+                << this->ServerPort << std::endl;
+      socket = this->ServerSocket->WaitForConnection(1000);
+      if (socket != NULL) // if client connected
         {
-          std::cerr << "vtkIGTLConnector: Waiting for client @ port #"
-                    << this->ServerPort << std::endl;
-          socket = this->ServerSocket->WaitForConnection(1000);
-          if (socket != NULL) // if client connected
-            {
-              std::cerr << "vtkIGTLConnector: connected." << std::endl;
-              return socket;
-            }
+        std::cerr << "vtkIGTLConnector: connected." << std::endl;
+        return socket;
         }
-      else if (this->Type == TYPE_CLIENT) // if this->Type == TYPE_CLIENT
+      }
+    else if (this->Type == TYPE_CLIENT) // if this->Type == TYPE_CLIENT
+      {
+      std::cerr << "vtkIGTLConnector: Connecting to server..." << std::endl;
+      int r = socket->ConnectToServer(this->ServerHostname.c_str(), this->ServerPort);
+      if (r == 0) // if connected to server
         {
-          std::cerr << "vtkIGTLConnector: Connecting to server..." << std::endl;
-          int r = socket->ConnectToServer(this->ServerHostname.c_str(), this->ServerPort);
-          if (r == 0) // if connected to server
-            {
-              return socket;
-            }
-          else
-            {
-              break;
-            }
+        return socket;
         }
       else
         {
-          this->ServerStopFlag = true;
+        break;
         }
+      }
+    else
+      {
+      this->ServerStopFlag = true;
+      }
     }
 
   if (socket != NULL)
     {
-      std::cerr << "vtkOpenIGTLinkLogic::WaitForConnection(): Socket Closed." << std::endl;
-      socket->CloseSocket();
-      socket->Delete();
+    std::cerr << "vtkOpenIGTLinkLogic::WaitForConnection(): Socket Closed." << std::endl;
+    socket->CloseSocket();
+    socket->Delete();
     }
 
   return NULL;
@@ -252,86 +252,86 @@ int vtkIGTLConnector::ReceiveController()
 
   if (!this->Socket)
     {
-      return 0;
+    return 0;
     }
 
   while (!this->ServerStopFlag)
     {
 
-      // check if connection is alive
-      if (!this->Socket->GetConnected())
-        {
-          break;
-        }
+    // check if connection is alive
+    if (!this->Socket->GetConnected())
+      {
+      break;
+      }
 
-      //----------------------------------------------------------------
-      // Receive Header
+    //----------------------------------------------------------------
+    // Receive Header
 
-      int r = this->Socket->Receive(&header, IGTL_HEADER_SIZE);
+    int r = this->Socket->Receive(&header, IGTL_HEADER_SIZE);
 
-      if (r != IGTL_HEADER_SIZE)
-        {
-          std::cerr << "Irregluar size." << std::endl;
-        }
+    if (r != IGTL_HEADER_SIZE)
+      {
+      std::cerr << "Irregluar size." << std::endl;
+      }
 
-      igtl_header_convert_byte_order(&header);  
-      char deviceType[13];
-      deviceType[12] = 0;
-      memcpy((void*)deviceType, header.name, 8);
+    igtl_header_convert_byte_order(&header);  
+    char deviceType[13];
+    deviceType[12] = 0;
+    memcpy((void*)deviceType, header.name, 8);
       
-      char deviceName[21];
-      deviceName[20] = 0;
-      memcpy((void*)deviceName, header.device_name, 20);
+    char deviceName[21];
+    deviceName[20] = 0;
+    memcpy((void*)deviceName, header.device_name, 20);
       
-      std::cerr << "deviceType  = " << deviceType << std::endl;;  
-      std::cerr << "deviceName  = " << deviceName << std::endl;;  
-      std::cerr << "size = "        << header.body_size << std::endl;;  
+    std::cerr << "deviceType  = " << deviceType << std::endl;;  
+    std::cerr << "deviceName  = " << deviceName << std::endl;;  
+    std::cerr << "size = "        << header.body_size << std::endl;;  
       
-      if (header.version != IGTL_HEADER_VERSION)
+    if (header.version != IGTL_HEADER_VERSION)
+      {
+      vtkErrorMacro("Unsupported OpenIGTLink version.");
+      break;
+      }
+
+
+    //----------------------------------------------------------------
+    // Search Circular Buffer
+
+    std::string key = deviceName;
+    CircularBufferMap::iterator iter = this->Buffer.find(key);
+    if (iter == this->Buffer.end()) // First time to refer the device name
+      {
+      this->CircularBufferMutex->Lock();
+      this->Buffer[key] = vtkIGTLCircularBuffer::New();
+      this->CircularBufferMutex->Unlock();
+      }
+
+
+    //----------------------------------------------------------------
+    // Load to the circular buffer
+
+    vtkIGTLCircularBuffer* buffer = this->Buffer[key];
+
+    if (buffer && buffer->StartPush() != -1)
+      {
+      buffer->StartPush();
+      buffer->PushDeviceType(deviceType);
+
+      unsigned char* dataPtr = buffer->GetPushDataArea(header.body_size);
+      int read = this->Socket->Receive(dataPtr, header.body_size);
+      if (read != header.body_size)
         {
-          vtkErrorMacro("Unsupported OpenIGTLink version.");
-          break;
+        vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_IMAGE_HEADER_SIZE << "\n");
+        continue;
         }
 
-
-      //----------------------------------------------------------------
-      // Search Circular Buffer
-
-      std::string key = deviceName;
-      CircularBufferMap::iterator iter = this->Buffer.find(key);
-      if (iter == this->Buffer.end()) // First time to refer the device name
-        {
-          this->CircularBufferMutex->Lock();
-          this->Buffer[key] = vtkIGTLCircularBuffer::New();
-          this->CircularBufferMutex->Unlock();
-        }
-
-
-      //----------------------------------------------------------------
-      // Load to the circular buffer
-
-      vtkIGTLCircularBuffer* buffer = this->Buffer[key];
-
-      if (buffer && buffer->StartPush() != -1)
-        {
-          buffer->StartPush();
-          buffer->PushDeviceType(deviceType);
-
-          unsigned char* dataPtr = buffer->GetPushDataArea(header.body_size);
-          int read = this->Socket->Receive(dataPtr, header.body_size);
-          if (read != header.body_size)
-            {
-              vtkErrorMacro ("Only read " << read << " but expected to read " << IGTL_IMAGE_HEADER_SIZE << "\n");
-              continue;
-            }
-
-          // check CRC here
-          buffer->EndPush();
-        }
-      else
-        {
-          break;
-        }
+      // check CRC here
+      buffer->EndPush();
+      }
+    else
+      {
+      break;
+      }
       
     } // while (!this->ServerStopFlag)
 
@@ -350,10 +350,10 @@ int vtkIGTLConnector::GetUpdatedBuffersList(NameListType& nameList)
   CircularBufferMap::iterator iter;
   for (iter = this->Buffer.begin(); iter != this->Buffer.end(); iter ++)
     {
-      if (iter->second->IsUpdated())
-        {
-          nameList.push_back(iter->first);
-        }
+    if (iter->second->IsUpdated())
+      {
+      nameList.push_back(iter->first);
+      }
     }
   return nameList.size();
 }
@@ -364,11 +364,11 @@ vtkIGTLCircularBuffer* vtkIGTLConnector::GetCircularBuffer(std::string& key)
   CircularBufferMap::iterator iter = this->Buffer.find(key);
   if (iter != this->Buffer.end())
     {
-      return this->Buffer[key]; // the key has been found in the list
+    return this->Buffer[key]; // the key has been found in the list
     }
   else
     {
-      return NULL;  // nothing found
+    return NULL;  // nothing found
     }
 }
 

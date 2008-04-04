@@ -1,14 +1,14 @@
 /*==========================================================================
 
-Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-See Doc/copyright/copyright.txt
-or http://www.slicer.org/copyright/copyright.txt for details.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-Program:   3D Slicer
-Module:    $HeadURL: $
-Date:      $Date: $
-Version:   $Revision: $
+  Program:   3D Slicer
+  Module:    $HeadURL: $
+  Date:      $Date: $
+  Version:   $Revision: $
 
 ==========================================================================*/
 
@@ -39,50 +39,50 @@ vtkStandardNewMacro(vtkOpenIGTLinkLogic);
 vtkOpenIGTLinkLogic::vtkOpenIGTLinkLogic()
 {
 
-    this->SliceDriver0 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
-    this->SliceDriver1 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
-    this->SliceDriver2 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
+  this->SliceDriver0 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
+  this->SliceDriver1 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
+  this->SliceDriver2 = vtkOpenIGTLinkLogic::SLICE_DRIVER_USER;
 
 
-    // If the following code doesn't work, slice nodes should be obtained from application GUI
-    this->SliceNode0 = NULL;
-    this->SliceNode1 = NULL;
-    this->SliceNode2 = NULL;
+  // If the following code doesn't work, slice nodes should be obtained from application GUI
+  this->SliceNode0 = NULL;
+  this->SliceNode1 = NULL;
+  this->SliceNode2 = NULL;
 
-    /*
+  /*
     this->SliceNode0 = this->GetApplication()->GetApplicationGUI()->GetMainSliceLogic0()->GetSliceNode();
     this->SliceNode1 = this->GetApplication()->GetApplicationGUI()->GetMainSliceLogic1()->GetSliceNode();
     this->SliceNode2 = this->GetApplication()->GetApplicationGUI()->GetMainSliceLogic2()->GetSliceNode();
-    */
-    /*
+  */
+  /*
     this->Logic0 = appGUI->GetMainSliceGUI0()->GetLogic();
     this->Logic1 = appGUI->GetMainSliceGUI1()->GetLogic();
     this->Logic2 = appGUI->GetMainSliceGUI2()->GetLogic();
-    */
+  */
                                          
-    this->NeedRealtimeImageUpdate0 = 0;
-    this->NeedRealtimeImageUpdate1 = 0;
-    this->NeedRealtimeImageUpdate2 = 0;
+  this->NeedRealtimeImageUpdate0 = 0;
+  this->NeedRealtimeImageUpdate1 = 0;
+  this->NeedRealtimeImageUpdate2 = 0;
 
-    this->ImagingControl = 0;
+  this->ImagingControl = 0;
 
 #ifdef USE_NAVITRACK
-    this->OpenTrackerStream   = vtkOpenIGTLinkDataStream::New();
-    this->RealtimeVolumeNode = NULL;
+  this->OpenTrackerStream   = vtkOpenIGTLinkDataStream::New();
+  this->RealtimeVolumeNode = NULL;
 #endif
 
-    // Timer Handling
+  // Timer Handling
 
-    this->DataCallbackCommand = vtkCallbackCommand::New();
-    this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
-    this->DataCallbackCommand->SetCallback(vtkOpenIGTLinkLogic::DataCallback);
+  this->DataCallbackCommand = vtkCallbackCommand::New();
+  this->DataCallbackCommand->SetClientData( reinterpret_cast<void *> (this) );
+  this->DataCallbackCommand->SetCallback(vtkOpenIGTLinkLogic::DataCallback);
 
 #ifdef USE_NAVITRACK
-    this->OpenTrackerStream->AddObserver(vtkCommand::ModifiedEvent, this->DataCallbackCommand);
+  this->OpenTrackerStream->AddObserver(vtkCommand::ModifiedEvent, this->DataCallbackCommand);
 #endif 
 
-    this->ConnectorList.clear();
-    this->ConnectorPrevStateList.clear();
+  this->ConnectorList.clear();
+  this->ConnectorPrevStateList.clear();
 
 }
 
@@ -91,16 +91,16 @@ vtkOpenIGTLinkLogic::vtkOpenIGTLinkLogic()
 vtkOpenIGTLinkLogic::~vtkOpenIGTLinkLogic()
 {
 
-    if (this->DataCallbackCommand)
+  if (this->DataCallbackCommand)
     {
-      this->DataCallbackCommand->Delete();
+    this->DataCallbackCommand->Delete();
     }
 
 #ifdef USE_NAVITRACK
-    if (this->OpenTrackerStream)
+  if (this->OpenTrackerStream)
     {
-      this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
-      this->OpenTrackerStream->Delete();
+    this->OpenTrackerStream->RemoveObservers( vtkCommand::ModifiedEvent, this->DataCallbackCommand );
+    this->OpenTrackerStream->Delete();
     }
 #endif
 
@@ -110,9 +110,9 @@ vtkOpenIGTLinkLogic::~vtkOpenIGTLinkLogic()
 //---------------------------------------------------------------------------
 void vtkOpenIGTLinkLogic::PrintSelf(ostream& os, vtkIndent indent)
 {
-    this->vtkObject::PrintSelf(os, indent);
+  this->vtkObject::PrintSelf(os, indent);
 
-    os << indent << "vtkOpenIGTLinkLogic:             " << this->GetClassName() << "\n";
+  os << indent << "vtkOpenIGTLinkLogic:             " << this->GetClassName() << "\n";
 
 }
 
@@ -121,9 +121,9 @@ void vtkOpenIGTLinkLogic::PrintSelf(ostream& os, vtkIndent indent)
 void vtkOpenIGTLinkLogic::DataCallback(vtkObject *caller, 
                                        unsigned long eid, void *clientData, void *callData)
 {
-    vtkOpenIGTLinkLogic *self = reinterpret_cast<vtkOpenIGTLinkLogic *>(clientData);
-    vtkDebugWithObjectMacro(self, "In vtkOpenIGTLinkLogic DataCallback");
-    self->UpdateAll();
+  vtkOpenIGTLinkLogic *self = reinterpret_cast<vtkOpenIGTLinkLogic *>(clientData);
+  vtkDebugWithObjectMacro(self, "In vtkOpenIGTLinkLogic DataCallback");
+  self->UpdateAll();
 }
 
 
@@ -146,11 +146,11 @@ int vtkOpenIGTLinkLogic::CheckConnectorsStatusUpdates()
 
   for (int i = 0; i < nCon; i ++)
     {
-      if (this->ConnectorPrevStateList[i] != this->ConnectorList[i]->GetState())
-        {
-          updated = 1;
-          this->ConnectorPrevStateList[i] = this->ConnectorList[i]->GetState();
-        }
+    if (this->ConnectorPrevStateList[i] != this->ConnectorList[i]->GetState())
+      {
+      updated = 1;
+      this->ConnectorPrevStateList[i] = this->ConnectorList[i]->GetState();
+      }
     }
 
   return updated;
@@ -175,9 +175,9 @@ void vtkOpenIGTLinkLogic::DeleteConnector(int id)
 {
   if (id >= 0 && id < this->ConnectorList.size())
     {
-      this->ConnectorList[id]->Delete();
-      this->ConnectorList.erase(this->ConnectorList.begin() + id);
-      this->ConnectorPrevStateList.erase(this->ConnectorPrevStateList.begin() + id);
+    this->ConnectorList[id]->Delete();
+    this->ConnectorList.erase(this->ConnectorList.begin() + id);
+    this->ConnectorPrevStateList.erase(this->ConnectorPrevStateList.begin() + id);
     }
 }
 
@@ -191,11 +191,11 @@ vtkIGTLConnector* vtkOpenIGTLinkLogic::GetConnector(int id)
 {
   if (id >= 0 && id < GetNumberOfConnectors())
     {
-      return this->ConnectorList[id];
+    return this->ConnectorList[id];
     }
   else
     {
-      return NULL;
+    return NULL;
     }
 }
 
@@ -204,93 +204,93 @@ vtkIGTLConnector* vtkOpenIGTLinkLogic::GetConnector(int id)
 vtkMRMLVolumeNode* vtkOpenIGTLinkLogic::AddVolumeNode(const char* volumeNodeName)
 {
 
-    std::cerr << "AddVolumeNode(): called." << std::endl;
+  std::cerr << "AddVolumeNode(): called." << std::endl;
 
-    vtkMRMLVolumeNode *volumeNode = NULL;
+  vtkMRMLVolumeNode *volumeNode = NULL;
 
-    if (volumeNode == NULL)  // if real-time volume node has not been created
+  if (volumeNode == NULL)  // if real-time volume node has not been created
     {
 
-        //vtkMRMLVolumeDisplayNode *displayNode = NULL;
-        vtkMRMLScalarVolumeDisplayNode *displayNode = NULL;
-        vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
-        vtkImageData* image = vtkImageData::New();
+    //vtkMRMLVolumeDisplayNode *displayNode = NULL;
+    vtkMRMLScalarVolumeDisplayNode *displayNode = NULL;
+    vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
+    vtkImageData* image = vtkImageData::New();
 
-        float fov = 300.0;
-        image->SetDimensions(256, 256, 1);
-        image->SetExtent(0, 255, 0, 255, 0, 0 );
-        image->SetSpacing( fov/256, fov/256, 10 );
-        image->SetOrigin( -fov/2, -fov/2, -0.0 );
-        image->SetScalarTypeToShort();
-        image->AllocateScalars();
+    float fov = 300.0;
+    image->SetDimensions(256, 256, 1);
+    image->SetExtent(0, 255, 0, 255, 0, 0 );
+    image->SetSpacing( fov/256, fov/256, 10 );
+    image->SetOrigin( -fov/2, -fov/2, -0.0 );
+    image->SetScalarTypeToShort();
+    image->AllocateScalars();
         
-        short* dest = (short*) image->GetScalarPointer();
-        if (dest)
-        {
-          memset(dest, 0x00, 256*256*sizeof(short));
-          image->Update();
-        }
+    short* dest = (short*) image->GetScalarPointer();
+    if (dest)
+      {
+      memset(dest, 0x00, 256*256*sizeof(short));
+      image->Update();
+      }
         
-        /*
-        vtkSlicerSliceLayerLogic *reslice = vtkSlicerSliceLayerLogic::New();
-        reslice->SetUseReslice(0);
-        */
-        scalarNode->SetAndObserveImageData(image);
+    /*
+      vtkSlicerSliceLayerLogic *reslice = vtkSlicerSliceLayerLogic::New();
+      reslice->SetUseReslice(0);
+    */
+    scalarNode->SetAndObserveImageData(image);
 
         
-        /* Based on the code in vtkSlicerVolumeLogic::AddHeaderVolume() */
-        //displayNode = vtkMRMLVolumeDisplayNode::New();
-        displayNode = vtkMRMLScalarVolumeDisplayNode::New();
-        scalarNode->SetLabelMap(0);
-        volumeNode = scalarNode;
+    /* Based on the code in vtkSlicerVolumeLogic::AddHeaderVolume() */
+    //displayNode = vtkMRMLVolumeDisplayNode::New();
+    displayNode = vtkMRMLScalarVolumeDisplayNode::New();
+    scalarNode->SetLabelMap(0);
+    volumeNode = scalarNode;
         
-        if (volumeNode != NULL)
-        {
-            volumeNode->SetName(volumeNodeName);
-            this->GetMRMLScene()->SaveStateForUndo();
+    if (volumeNode != NULL)
+      {
+      volumeNode->SetName(volumeNodeName);
+      this->GetMRMLScene()->SaveStateForUndo();
             
-            vtkDebugMacro("Setting scene info");
-            volumeNode->SetScene(this->GetMRMLScene());
-            displayNode->SetScene(this->GetMRMLScene());
+      vtkDebugMacro("Setting scene info");
+      volumeNode->SetScene(this->GetMRMLScene());
+      displayNode->SetScene(this->GetMRMLScene());
             
             
-            double range[2];
-            vtkDebugMacro("Set basic display info");
-            volumeNode->GetImageData()->GetScalarRange(range);
-            range[0] = 0.0;
-            range[1] = 256.0;
-            displayNode->SetLowerThreshold(range[0]);
-            displayNode->SetUpperThreshold(range[1]);
-            displayNode->SetWindow(range[1] - range[0]);
-            displayNode->SetLevel(0.5 * (range[1] - range[0]) );
+      double range[2];
+      vtkDebugMacro("Set basic display info");
+      volumeNode->GetImageData()->GetScalarRange(range);
+      range[0] = 0.0;
+      range[1] = 256.0;
+      displayNode->SetLowerThreshold(range[0]);
+      displayNode->SetUpperThreshold(range[1]);
+      displayNode->SetWindow(range[1] - range[0]);
+      displayNode->SetLevel(0.5 * (range[1] - range[0]) );
             
-            vtkDebugMacro("Adding node..");
-            this->GetMRMLScene()->AddNode(displayNode);
+      vtkDebugMacro("Adding node..");
+      this->GetMRMLScene()->AddNode(displayNode);
             
-            //displayNode->SetDefaultColorMap();
-            vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
-            displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
-            //colorLogic->Delete();
+      //displayNode->SetDefaultColorMap();
+      vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
+      displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultVolumeColorNodeID());
+      //colorLogic->Delete();
             
-            volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
+      volumeNode->SetAndObserveDisplayNodeID(displayNode->GetID());
             
-            vtkDebugMacro("Name vol node "<<volumeNode->GetClassName());
-            vtkDebugMacro("Display node "<<displayNode->GetClassName());
+      vtkDebugMacro("Name vol node "<<volumeNode->GetClassName());
+      vtkDebugMacro("Display node "<<displayNode->GetClassName());
             
-            this->GetMRMLScene()->AddNode(volumeNode);
-            vtkDebugMacro("Node added to scene");
-        }
+      this->GetMRMLScene()->AddNode(volumeNode);
+      vtkDebugMacro("Node added to scene");
+      }
 
-        //scalarNode->Delete();
-        /*
-        if (displayNode)
-        {
-            displayNode->Delete();
-        }
-        */
+    //scalarNode->Delete();
+    /*
+      if (displayNode)
+      {
+      displayNode->Delete();
+      }
+    */
 
     }
-    return volumeNode;
+  return volumeNode;
 }
 
 
@@ -301,26 +301,26 @@ void vtkOpenIGTLinkLogic::ImportFromCircularBuffers()
 
   for (iter = this->ConnectorList.begin(); iter != this->ConnectorList.end(); iter ++)
     {
-      vtkIGTLConnector::NameListType nameList;
-      (*iter)->GetUpdatedBuffersList(nameList);
-      vtkIGTLConnector::NameListType::iterator nameIter;
-      for (nameIter = nameList.begin(); nameIter != nameList.end(); nameIter ++)
+    vtkIGTLConnector::NameListType nameList;
+    (*iter)->GetUpdatedBuffersList(nameList);
+    vtkIGTLConnector::NameListType::iterator nameIter;
+    for (nameIter = nameList.begin(); nameIter != nameList.end(); nameIter ++)
+      {
+      std::cerr << "####### Import Image from : " << *nameIter << std::endl;
+      vtkIGTLCircularBuffer* buffer = (*iter)->GetCircularBuffer(*nameIter);
+      buffer->StartPull();
+      const char* type = buffer->PullDeviceType();
+      std::cerr << "############### TYPE = " << type << std::endl;
+      if (strcmp(type, "IMAGE") == 0)
         {
-          std::cerr << "####### Import Image from : " << *nameIter << std::endl;
-          vtkIGTLCircularBuffer* buffer = (*iter)->GetCircularBuffer(*nameIter);
-          buffer->StartPull();
-          const char* type = buffer->PullDeviceType();
-          std::cerr << "############### TYPE = " << type << std::endl;
-          if (strcmp(type, "IMAGE") == 0)
-            {
-              UpdateMRMLScalarVolumeNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
-            }
-          else if (strcmp(type, "TRANSFORM") == 0)
-            {
-              UpdateMRMLLinearTransfomrNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
-            }
-          buffer->EndPull();
+        UpdateMRMLScalarVolumeNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
         }
+      else if (strcmp(type, "TRANSFORM") == 0)
+        {
+        UpdateMRMLLinearTransfomrNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
+        }
+      buffer->EndPull();
+      }
       
     }
 }
@@ -333,8 +333,8 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
 
   if (size <= IGTL_IMAGE_HEADER_SIZE)
     {
-      vtkErrorMacro ("Illegal data size" << IGTL_IMAGE_HEADER_SIZE << "\n");
-      return;
+    vtkErrorMacro ("Illegal data size" << IGTL_IMAGE_HEADER_SIZE << "\n");
+    return;
     }
 
   igtl_image_header* imgheader = (igtl_image_header*)data;
@@ -386,55 +386,55 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
 
   if (collection->GetNumberOfItems() == 0)
     {
-      volumeNode = vtkMRMLScalarVolumeNode::New();
-      volumeNode->SetName(nodeName);
-      volumeNode->SetDescription("Received by OpenIGTLink");
+    volumeNode = vtkMRMLScalarVolumeNode::New();
+    volumeNode->SetName(nodeName);
+    volumeNode->SetDescription("Received by OpenIGTLink");
 
-      imageData = vtkImageData::New();
+    imageData = vtkImageData::New();
 
-      imageData->SetDimensions(imgheader->size[0], imgheader->size[1], imgheader->size[2]);
-      imageData->SetNumberOfScalarComponents(1);
+    imageData->SetDimensions(imgheader->size[0], imgheader->size[1], imgheader->size[2]);
+    imageData->SetNumberOfScalarComponents(1);
       
-      // Scalar type
-      //  TBD: Long might not be 32-bit in some platform.
-      switch (imgheader->scalar_type)
-        {
-        case IGTL_IMAGE_STYPE_TYPE_INT8:
-          imageData->SetScalarTypeToChar();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_UINT8:
-          imageData->SetScalarTypeToUnsignedChar();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_INT16:
-          imageData->SetScalarTypeToShort();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_UINT16:
-          imageData->SetScalarTypeToUnsignedShort();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_INT32:
-          imageData->SetScalarTypeToUnsignedLong();
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_UINT32:
-          imageData->SetScalarTypeToUnsignedLong();
-          break;
-        default:
-          vtkErrorMacro ("Invalid Scalar Type\n");
-          break;
-        }
+    // Scalar type
+    //  TBD: Long might not be 32-bit in some platform.
+    switch (imgheader->scalar_type)
+      {
+      case IGTL_IMAGE_STYPE_TYPE_INT8:
+        imageData->SetScalarTypeToChar();
+        break;
+      case IGTL_IMAGE_STYPE_TYPE_UINT8:
+        imageData->SetScalarTypeToUnsignedChar();
+        break;
+      case IGTL_IMAGE_STYPE_TYPE_INT16:
+        imageData->SetScalarTypeToShort();
+        break;
+      case IGTL_IMAGE_STYPE_TYPE_UINT16:
+        imageData->SetScalarTypeToUnsignedShort();
+        break;
+      case IGTL_IMAGE_STYPE_TYPE_INT32:
+        imageData->SetScalarTypeToUnsignedLong();
+        break;
+      case IGTL_IMAGE_STYPE_TYPE_UINT32:
+        imageData->SetScalarTypeToUnsignedLong();
+        break;
+      default:
+        vtkErrorMacro ("Invalid Scalar Type\n");
+        break;
+      }
 
-      imageData->AllocateScalars();
-      volumeNode->SetAndObserveImageData(imageData);
-      imageData->Delete();
+    imageData->AllocateScalars();
+    volumeNode->SetAndObserveImageData(imageData);
+    imageData->Delete();
 
-      scene->AddNode(volumeNode);
-      this->GetApplicationLogic()->GetSelectionNode()->SetReferenceActiveVolumeID(volumeNode->GetID());
-      this->GetApplicationLogic()->PropagateVolumeSelection();
+    scene->AddNode(volumeNode);
+    this->GetApplicationLogic()->GetSelectionNode()->SetReferenceActiveVolumeID(volumeNode->GetID());
+    this->GetApplicationLogic()->PropagateVolumeSelection();
       
     }
   else
     {
-      vtkCollection* collection = scene->GetNodesByName(nodeName);
-      volumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(collection->GetItemAsObject(0));
+    vtkCollection* collection = scene->GetNodesByName(nodeName);
+    volumeNode = vtkMRMLScalarVolumeNode::SafeDownCast(collection->GetItemAsObject(0));
     }
 
   // Get vtk image from MRML node
@@ -452,63 +452,63 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
       imgheader->size[1] == imgheader->subvol_size[1] &&
       imgheader->size[2] == imgheader->subvol_size[2] )
     {
-      // In case that volume size == sub-volume size,
-      // image is read directly to the memory area of vtkImageData
-      // for better performance. 
-      memcpy(imageData->GetScalarPointer(), data, bytes);
+    // In case that volume size == sub-volume size,
+    // image is read directly to the memory area of vtkImageData
+    // for better performance. 
+    memcpy(imageData->GetScalarPointer(), data, bytes);
 
     }
   else
     {
-      // In case of volume size != sub-volume size,
-      // image is loaded into ImageReadBuffer, then copied to
-      // the memory area of vtkImageData.
+    // In case of volume size != sub-volume size,
+    // image is loaded into ImageReadBuffer, then copied to
+    // the memory area of vtkImageData.
 
-      // Check scalar size
-      int scalarSize;
-      switch (imgheader->scalar_type)
-        {
-        case IGTL_IMAGE_STYPE_TYPE_INT8:
-        case IGTL_IMAGE_STYPE_TYPE_UINT8:
-          scalarSize = 1;
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_INT16:
-        case IGTL_IMAGE_STYPE_TYPE_UINT16:
-          scalarSize = 2;
-          break;
-        case IGTL_IMAGE_STYPE_TYPE_INT32:
-        case IGTL_IMAGE_STYPE_TYPE_UINT32:
-          scalarSize = 4;
-          break;
-        default:
-          scalarSize = 0;
-          vtkErrorMacro ("Invalid Scalar Type\n");
-          break;
-        }
+    // Check scalar size
+    int scalarSize;
+    switch (imgheader->scalar_type)
+      {
+      case IGTL_IMAGE_STYPE_TYPE_INT8:
+      case IGTL_IMAGE_STYPE_TYPE_UINT8:
+        scalarSize = 1;
+        break;
+      case IGTL_IMAGE_STYPE_TYPE_INT16:
+      case IGTL_IMAGE_STYPE_TYPE_UINT16:
+        scalarSize = 2;
+        break;
+      case IGTL_IMAGE_STYPE_TYPE_INT32:
+      case IGTL_IMAGE_STYPE_TYPE_UINT32:
+        scalarSize = 4;
+        break;
+      default:
+        scalarSize = 0;
+        vtkErrorMacro ("Invalid Scalar Type\n");
+        break;
+      }
         
-      char* imgPtr = (char*) imageData->GetScalarPointer();
-      char* bufPtr = (char*) data;
-      int sizei = imgheader->size[0];
-      int sizej = imgheader->size[1];
-      int sizek = imgheader->size[2];
-      int subsizei = imgheader->subvol_size[0];
+    char* imgPtr = (char*) imageData->GetScalarPointer();
+    char* bufPtr = (char*) data;
+    int sizei = imgheader->size[0];
+    int sizej = imgheader->size[1];
+    int sizek = imgheader->size[2];
+    int subsizei = imgheader->subvol_size[0];
 
-      int bg_i = imgheader->subvol_offset[0];
-      int ed_i = bg_i + imgheader->subvol_size[0];
-      int bg_j = imgheader->subvol_offset[1];
-      int ed_j = bg_j + imgheader->subvol_size[1];
-      int bg_k = imgheader->subvol_offset[2];
-      int ed_k = bg_k + imgheader->subvol_size[2];
+    int bg_i = imgheader->subvol_offset[0];
+    int ed_i = bg_i + imgheader->subvol_size[0];
+    int bg_j = imgheader->subvol_offset[1];
+    int ed_j = bg_j + imgheader->subvol_size[1];
+    int bg_k = imgheader->subvol_offset[2];
+    int ed_k = bg_k + imgheader->subvol_size[2];
       
-      for (int k = bg_k; k < ed_k; k ++)
+    for (int k = bg_k; k < ed_k; k ++)
+      {
+      for (int j = bg_j; j < ed_j; j ++)
         {
-          for (int j = bg_j; j < ed_j; j ++)
-            {
-              memcpy(&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
-                     bufPtr, subsizei*scalarSize);
-              bufPtr += subsizei*scalarSize;
-            }
+        memcpy(&imgPtr[(sizei*sizej*k + sizei*j + bg_i)*scalarSize],
+               bufPtr, subsizei*scalarSize);
+        bufPtr += subsizei*scalarSize;
         }
+      }
     }
 
   // normalize

@@ -1,14 +1,14 @@
 /*==========================================================================
 
-Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-See Doc/copyright/copyright.txt
-or http://www.slicer.org/copyright/copyright.txt for details.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-Program:   3D Slicer
-Module:    $HeadURL: $
-Date:      $Date: $
-Version:   $Revision: $
+  Program:   3D Slicer
+  Module:    $HeadURL: $
+  Date:      $Date: $
+  Version:   $Revision: $
 
 ==========================================================================*/
 
@@ -79,58 +79,58 @@ vtkCxxRevisionMacro ( vtkOpenIGTLinkGUI, "$Revision: 1.0 $");
 //---------------------------------------------------------------------------
 // Button Colors and Labels for Work Phase Control
 const double vtkOpenIGTLinkGUI::WorkPhaseColor[vtkOpenIGTLinkLogic::NumPhases][3] =
-  {
+{
   /* St */ { 1.0, 0.6, 1.0 },
   /* Pl */ { 0.6, 1.0, 0.6 },
   /* Cl */ { 1.0, 1.0, 0.6 },
   /* Tg */ { 0.6, 0.6, 1.0 },
   /* Mn */ { 0.6, 1.0, 1.0 },
   /* Em */ { 1.0, 0.0, 0.0 },
-  };
+};
 
 const double vtkOpenIGTLinkGUI::WorkPhaseColorActive[vtkOpenIGTLinkLogic::NumPhases][3] =
-  {
+{
   /* St */ { 1.0, 0.4, 1.0 },
   /* Pl */ { 0.4, 1.0, 0.4 },
   /* Cl */ { 1.0, 1.0, 0.4 },
   /* Tg */ { 0.4, 0.4, 1.0 },
   /* Mn */ { 0.4, 1.0, 1.0 },
   /* Em */ { 1.0, 0.0, 0.0 },
-  };
+};
 
 const double vtkOpenIGTLinkGUI::WorkPhaseColorDisabled[vtkOpenIGTLinkLogic::NumPhases][3] =
-  {
+{
   /* St */ { 1.0, 0.95, 1.0 },
   /* Pl */ { 0.95, 1.0, 0.95 },
   /* Cl */ { 1.0, 1.0, 0.95 },
   /* Tg */ { 0.95, 0.95, 1.0 },
   /* Mn */ { 0.95, 1.0, 1.0 },
   /* Em */ { 1.0, 0.0, 0.0 },
-  };
+};
 
 const char *vtkOpenIGTLinkGUI::WorkPhaseStr[vtkOpenIGTLinkLogic::NumPhases] =
-  {
+{
   /* Su */ "Start Up",
   /* Pl */ "Planning",
   /* Cl */ "Calibration",
   /* Tg */ "Targeting",
   /* Mn */ "Manual",
   /* Em */ "Emergency",
-  };
+};
 
 const char *vtkOpenIGTLinkGUI::ConnectorTypeStr[vtkIGTLConnector::NUM_TYPE] = 
-  {
-    "?", // TYPE_NOT_DEFINED
-    "S", // TYPE_SERVER
-    "C", // TYPE_CLIENT
-  };
+{
+  "?", // TYPE_NOT_DEFINED
+  "S", // TYPE_SERVER
+  "C", // TYPE_CLIENT
+};
 
 const char *vtkOpenIGTLinkGUI::ConnectorStatusStr[vtkIGTLConnector::NUM_STATE] = 
-  {
-    "OFF",       // OFF
-    "WAIT",      // WAIT_CONNECTION
-    "ON",        // CONNECTED
-  };
+{
+  "OFF",       // OFF
+  "WAIT",      // WAIT_CONNECTION
+  "ON",        // CONNECTED
+};
 
 //---------------------------------------------------------------------------
 vtkOpenIGTLinkGUI::vtkOpenIGTLinkGUI ( )
@@ -193,9 +193,9 @@ vtkOpenIGTLinkGUI::vtkOpenIGTLinkGUI ( )
   this->ImagingMenu            = NULL;
 
   /*
-  this->SliceDriver0 = 0;
-  this->SliceDriver1 = 0;
-  this->SliceDriver2 = 0;
+    this->SliceDriver0 = 0;
+    this->SliceDriver1 = 0;
+    this->SliceDriver2 = 0;
   */
   
 
@@ -300,10 +300,10 @@ vtkOpenIGTLinkGUI::~vtkOpenIGTLinkGUI ( )
 
 
   if (this->LocatorCheckButton)
-  {
-  this->LocatorCheckButton->SetParent(NULL );
-  this->LocatorCheckButton->Delete ( );
-  }
+    {
+    this->LocatorCheckButton->SetParent(NULL );
+    this->LocatorCheckButton->Delete ( );
+    }
 
 }
 
@@ -312,15 +312,15 @@ vtkOpenIGTLinkGUI::~vtkOpenIGTLinkGUI ( )
 //---------------------------------------------------------------------------
 void vtkOpenIGTLinkGUI::PrintSelf ( ostream& os, vtkIndent indent )
 {
-    this->vtkObject::PrintSelf ( os, indent );
+  this->vtkObject::PrintSelf ( os, indent );
     
 
 
 
-    os << indent << "OpenIGTLinkGUI: " << this->GetClassName ( ) << "\n";
-    os << indent << "Logic: " << this->GetLogic ( ) << "\n";
+  os << indent << "OpenIGTLinkGUI: " << this->GetClassName ( ) << "\n";
+  os << indent << "Logic: " << this->GetLogic ( ) << "\n";
    
-    // print widgets?
+  // print widgets?
 }
 
 
@@ -341,53 +341,53 @@ void vtkOpenIGTLinkGUI::RemoveGUIObservers ( )
 
   if (this->ConnectorList->GetWidget())
     {
-      this->ConnectorList->GetWidget()
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->ConnectorList->GetWidget()
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
 
   if (this->AddConnectorButton)
     {
-      this->AddConnectorButton
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->AddConnectorButton
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
 
   if (this->DeleteConnectorButton)
     {
-      this->DeleteConnectorButton
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->DeleteConnectorButton
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
 
 
   if (this->ConnectorNameEntry)
     {
-      this->ConnectorNameEntry
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->ConnectorNameEntry
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
       
   if (this->ConnectorTypeButtonSet)
     {
-      this->ConnectorTypeButtonSet->GetWidget(0)
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
-      this->ConnectorTypeButtonSet->GetWidget(1)
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->ConnectorTypeButtonSet->GetWidget(0)
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->ConnectorTypeButtonSet->GetWidget(1)
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
   
   if (this->ConnectorStatusCheckButton)
     {
-      this->ConnectorStatusCheckButton
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand );
+    this->ConnectorStatusCheckButton
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand );
     }
 
   if (this->ConnectorAddressEntry)
     {
-      this->ConnectorAddressEntry
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->ConnectorAddressEntry
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
 
   if (this->ConnectorPortEntry)
     {
-      this->ConnectorPortEntry
-        ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
+    this->ConnectorPortEntry
+      ->RemoveObserver((vtkCommand *)this->GUICallbackCommand);
     }
 
   
@@ -544,12 +544,12 @@ void vtkOpenIGTLinkGUI::AddLogicObservers ( )
   if (this->GetLogic())
     {
     /*
-    this->GetLogic()->AddObserver(vtkOpenIGTLinkLogic::LocatorUpdateEvent,
-                                  (vtkCommand *)this->LogicCallbackCommand);
+      this->GetLogic()->AddObserver(vtkOpenIGTLinkLogic::LocatorUpdateEvent,
+      (vtkCommand *)this->LogicCallbackCommand);
     */
     /*
-    this->GetLogic()->AddObserver(vtkOpenIGTLinkLogic::SliceUpdateEvent,
-                                  (vtkCommand *)this->LogicCallbackCommand);
+      this->GetLogic()->AddObserver(vtkOpenIGTLinkLogic::SliceUpdateEvent,
+      (vtkCommand *)this->LogicCallbackCommand);
     */
     this->GetLogic()->AddObserver(vtkOpenIGTLinkLogic::StatusUpdateEvent,
                                   (vtkCommand *)this->LogicCallbackCommand);
@@ -642,124 +642,124 @@ void vtkOpenIGTLinkGUI::ProcessGUIEvents(vtkObject *caller,
   else if (this->ConnectorList->GetWidget() == vtkKWMultiColumnList::SafeDownCast(caller)
            && event == vtkKWMultiColumnList::SelectionChangedEvent)
     {
-      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-      UpdateConnectorPropertyFrame(selected);
+    int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+    UpdateConnectorPropertyFrame(selected);
     }
 
   else if (this->AddConnectorButton == vtkKWPushButton::SafeDownCast(caller)
            && event == vtkKWPushButton::InvokedEvent)
     {
-      this->GetLogic()->AddConnector();
-      UpdateConnectorList(UPDATE_ALL);
-      int select = this->ConnectorList->GetWidget()->GetNumberOfRows() - 1;
-      this->ConnectorList->GetWidget()->SelectSingleRow(select);
-      UpdateConnectorPropertyFrame(select);
+    this->GetLogic()->AddConnector();
+    UpdateConnectorList(UPDATE_ALL);
+    int select = this->ConnectorList->GetWidget()->GetNumberOfRows() - 1;
+    this->ConnectorList->GetWidget()->SelectSingleRow(select);
+    UpdateConnectorPropertyFrame(select);
     }
 
   else if (this->DeleteConnectorButton == vtkKWPushButton::SafeDownCast(caller)
            && event == vtkKWPushButton::InvokedEvent)
     {
-      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-      this->GetLogic()->DeleteConnector(selected);
-      UpdateConnectorList(UPDATE_ALL);
-      int nrow = this->ConnectorList->GetWidget()->GetNumberOfRows();
-      if (selected >= nrow)
-        {
-          selected = nrow - 1;
-        }
-      this->ConnectorList->GetWidget()->SelectSingleRow(selected);
-      UpdateConnectorList(UPDATE_ALL);
-      UpdateConnectorPropertyFrame(selected);
+    int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+    this->GetLogic()->DeleteConnector(selected);
+    UpdateConnectorList(UPDATE_ALL);
+    int nrow = this->ConnectorList->GetWidget()->GetNumberOfRows();
+    if (selected >= nrow)
+      {
+      selected = nrow - 1;
+      }
+    this->ConnectorList->GetWidget()->SelectSingleRow(selected);
+    UpdateConnectorList(UPDATE_ALL);
+    UpdateConnectorPropertyFrame(selected);
     }
   
   else if (this->ConnectorNameEntry == vtkKWEntry::SafeDownCast(caller)
            && event == vtkKWEntry::EntryValueChangedEvent)
     {
-      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-      vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
-      if (connector)
-        {
-          connector->SetName(this->ConnectorNameEntry->GetValue());
-          UpdateConnectorList(UPDATE_SELECTED_ONLY);
-        }
+    int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+    vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
+    if (connector)
+      {
+      connector->SetName(this->ConnectorNameEntry->GetValue());
+      UpdateConnectorList(UPDATE_SELECTED_ONLY);
+      }
     }
 
   else if (this->ConnectorTypeButtonSet->GetWidget(0) == vtkKWRadioButton::SafeDownCast(caller)
            && event == vtkKWRadioButton::SelectedStateChangedEvent
            && this->ConnectorTypeButtonSet->GetWidget(0)->GetSelectedState() == 1)
     {
-      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-      vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
-      if (connector)
-        {
-          connector->SetType(vtkIGTLConnector::TYPE_SERVER);
-          UpdateConnectorList(UPDATE_SELECTED_ONLY);
-          UpdateConnectorPropertyFrame(selected);
-        }
+    int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+    vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
+    if (connector)
+      {
+      connector->SetType(vtkIGTLConnector::TYPE_SERVER);
+      UpdateConnectorList(UPDATE_SELECTED_ONLY);
+      UpdateConnectorPropertyFrame(selected);
+      }
     }
 
   else if (this->ConnectorTypeButtonSet->GetWidget(1) == vtkKWRadioButton::SafeDownCast(caller)
            && event == vtkKWRadioButton::SelectedStateChangedEvent
            && this->ConnectorTypeButtonSet->GetWidget(1)->GetSelectedState() == 1)
     {
-      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-      vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
-      if (connector)
-        {
-          connector->SetType(vtkIGTLConnector::TYPE_CLIENT);
-          UpdateConnectorList(UPDATE_SELECTED_ONLY);
-          UpdateConnectorPropertyFrame(selected);
-        }
+    int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+    vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
+    if (connector)
+      {
+      connector->SetType(vtkIGTLConnector::TYPE_CLIENT);
+      UpdateConnectorList(UPDATE_SELECTED_ONLY);
+      UpdateConnectorPropertyFrame(selected);
+      }
     }
 
   else if (this->ConnectorStatusCheckButton == vtkKWCheckButton::SafeDownCast(caller) 
            && event == vtkKWCheckButton::SelectedStateChangedEvent )
     {
-      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-      vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
-      if (connector)
+    int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+    vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
+    if (connector)
+      {
+      if (this->ConnectorStatusCheckButton->GetSelectedState()) // Activated
         {
-          if (this->ConnectorStatusCheckButton->GetSelectedState()) // Activated
-            {
-              std::cerr << "Starting Connector..........." << std::endl;
-              connector->Start();
-              std::cerr << "Connector Started..........." << std::endl;
-              UpdateConnectorList(UPDATE_SELECTED_ONLY);
-              UpdateConnectorPropertyFrame(selected);
-            }
-          else  // Deactivated
-            {
-              std::cerr << "Stopping Connector..........." << std::endl;
-              connector->Stop();
-              std::cerr << "Connector Stopped..........." << std::endl;
-              UpdateConnectorList(UPDATE_SELECTED_ONLY);
-              UpdateConnectorPropertyFrame(selected);
-            }
+        std::cerr << "Starting Connector..........." << std::endl;
+        connector->Start();
+        std::cerr << "Connector Started..........." << std::endl;
+        UpdateConnectorList(UPDATE_SELECTED_ONLY);
+        UpdateConnectorPropertyFrame(selected);
         }
+      else  // Deactivated
+        {
+        std::cerr << "Stopping Connector..........." << std::endl;
+        connector->Stop();
+        std::cerr << "Connector Stopped..........." << std::endl;
+        UpdateConnectorList(UPDATE_SELECTED_ONLY);
+        UpdateConnectorPropertyFrame(selected);
+        }
+      }
     }
 
   else if (this->ConnectorAddressEntry == vtkKWEntry::SafeDownCast(caller)
            && event == vtkKWEntry::EntryValueChangedEvent)
     {
-      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-      vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
-      if (connector)
-        {
-          connector->SetServerHostname(this->ConnectorAddressEntry->GetValue());
-        }
-      UpdateConnectorList(UPDATE_SELECTED_ONLY);
+    int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+    vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
+    if (connector)
+      {
+      connector->SetServerHostname(this->ConnectorAddressEntry->GetValue());
+      }
+    UpdateConnectorList(UPDATE_SELECTED_ONLY);
     }
 
   else if (this->ConnectorPortEntry == vtkKWEntry::SafeDownCast(caller)
            && event == vtkKWEntry::EntryValueChangedEvent)
     {
-      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-      vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
-      if (connector)
-        {
-          connector->SetServerPort(this->ConnectorPortEntry->GetValueAsInt());
-        }
-      UpdateConnectorList(UPDATE_SELECTED_ONLY);
+    int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+    vtkIGTLConnector* connector = this->GetLogic()->GetConnector(selected);
+    if (connector)
+      {
+      connector->SetServerPort(this->ConnectorPortEntry->GetValueAsInt());
+      }
+    UpdateConnectorList(UPDATE_SELECTED_ONLY);
     }
 
 
@@ -785,21 +785,21 @@ void vtkOpenIGTLinkGUI::ProcessGUIEvents(vtkObject *caller,
       }
     }
   else if (this->RedSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
-            && event == vtkKWMenu::MenuItemInvokedEvent)
+           && event == vtkKWMenu::MenuItemInvokedEvent)
     {
     const char* selected = this->RedSliceMenu->GetValue();
     ChangeSlicePlaneDriver(vtkOpenIGTLinkGUI::SLICE_PLANE_RED, selected);
     }
 
   else if (this->YellowSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
-            && event == vtkKWMenu::MenuItemInvokedEvent)
+           && event == vtkKWMenu::MenuItemInvokedEvent)
     {
     const char* selected = this->YellowSliceMenu->GetValue();
     ChangeSlicePlaneDriver(vtkOpenIGTLinkGUI::SLICE_PLANE_YELLOW, selected);
     }
 
   else if (this->GreenSliceMenu->GetMenu() == vtkKWMenu::SafeDownCast(caller)
-          && event == vtkKWMenu::MenuItemInvokedEvent)
+           && event == vtkKWMenu::MenuItemInvokedEvent)
     {
     const char* selected = this->GreenSliceMenu->GetValue();
     ChangeSlicePlaneDriver(vtkOpenIGTLinkGUI::SLICE_PLANE_GREEN, selected);
@@ -807,7 +807,7 @@ void vtkOpenIGTLinkGUI::ProcessGUIEvents(vtkObject *caller,
 
   // -- "Locator" button 
   else if (this->SetLocatorModeButton == vtkKWPushButton::SafeDownCast(caller) 
-            && event == vtkKWPushButton::InvokedEvent)
+           && event == vtkKWPushButton::InvokedEvent)
     {
     ChangeSlicePlaneDriver(vtkOpenIGTLinkGUI::SLICE_PLANE_RED, "Locator");
     ChangeSlicePlaneDriver(vtkOpenIGTLinkGUI::SLICE_PLANE_YELLOW, "Locator");
@@ -869,12 +869,12 @@ void vtkOpenIGTLinkGUI::ProcessGUIEvents(vtkObject *caller,
   else if (this->StartScanButton == vtkKWPushButton::SafeDownCast(caller) 
            && event == vtkKWPushButton::InvokedEvent)
     {
-      //this->Logic->ScanStart();
+    //this->Logic->ScanStart();
     }
   else if (this->StopScanButton == vtkKWPushButton::SafeDownCast(caller) 
            && event == vtkKWPushButton::InvokedEvent)
     {
-      //this->Logic->ScanStop();
+    //this->Logic->ScanStop();
     }
   
 
@@ -888,34 +888,34 @@ void vtkOpenIGTLinkGUI::ProcessGUIEvents(vtkObject *caller,
 
 void vtkOpenIGTLinkGUI::Init()
 {
-    this->DataManager->SetMRMLScene(this->GetMRMLScene());
-    //   this->LocatorModelID = std::string(this->DataManager->RegisterStream(0));
-    //this->LocatorModelID_new = std::string(this->DataManager->RegisterStream_new(0));
+  this->DataManager->SetMRMLScene(this->GetMRMLScene());
+  //   this->LocatorModelID = std::string(this->DataManager->RegisterStream(0));
+  //this->LocatorModelID_new = std::string(this->DataManager->RegisterStream_new(0));
     
 }
 
 
 
 void vtkOpenIGTLinkGUI::DataCallback(vtkObject *caller, 
-        unsigned long eid, void *clientData, void *callData)
+                                     unsigned long eid, void *clientData, void *callData)
 {
-    vtkOpenIGTLinkGUI *self = reinterpret_cast<vtkOpenIGTLinkGUI *>(clientData);
-    vtkDebugWithObjectMacro(self, "In vtkOpenIGTLinkGUI DataCallback");
+  vtkOpenIGTLinkGUI *self = reinterpret_cast<vtkOpenIGTLinkGUI *>(clientData);
+  vtkDebugWithObjectMacro(self, "In vtkOpenIGTLinkGUI DataCallback");
 
-    self->UpdateAll();
+  self->UpdateAll();
 }
 
 
 //---------------------------------------------------------------------------
 void vtkOpenIGTLinkGUI::ProcessLogicEvents ( vtkObject *caller,
-    unsigned long event, void *callData )
+                                             unsigned long event, void *callData )
 {
 
   if (this->GetLogic() == vtkOpenIGTLinkLogic::SafeDownCast(caller))
     {
     if (event == vtkOpenIGTLinkLogic::StatusUpdateEvent)
       {
-        //this->UpdateDeviceStatus();
+      //this->UpdateDeviceStatus();
       }
     }
 }
@@ -923,9 +923,9 @@ void vtkOpenIGTLinkGUI::ProcessLogicEvents ( vtkObject *caller,
 
 //---------------------------------------------------------------------------
 void vtkOpenIGTLinkGUI::ProcessMRMLEvents ( vtkObject *caller,
-    unsigned long event, void *callData )
+                                            unsigned long event, void *callData )
 {
-    // Fill in
+  // Fill in
 }
 
 
@@ -934,26 +934,26 @@ void vtkOpenIGTLinkGUI::ProcessTimerEvents()
 {
   if (this->TimerFlag)
     {
-      // -----------------------------------------
-      // Check connector status
+    // -----------------------------------------
+    // Check connector status
 
-      if (this->GetLogic()->CheckConnectorsStatusUpdates())
-        {
-          int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
-          UpdateConnectorList(UPDATE_STATUS_ALL);
-          UpdateConnectorPropertyFrame(selected);
-        }
-
-
-      // -----------------------------------------
-      // Check incomming new data
-
-      this->GetLogic()->ImportFromCircularBuffers();
+    if (this->GetLogic()->CheckConnectorsStatusUpdates())
+      {
+      int selected = this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow();
+      UpdateConnectorList(UPDATE_STATUS_ALL);
+      UpdateConnectorPropertyFrame(selected);
+      }
 
 
-      vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
-                                           this->TimerInterval,
-                                           this, "ProcessTimerEvents");        
+    // -----------------------------------------
+    // Check incomming new data
+
+    this->GetLogic()->ImportFromCircularBuffers();
+
+
+    vtkKWTkUtilities::CreateTimerHandler(vtkKWApplication::GetMainInterp(), 
+                                         this->TimerInterval,
+                                         this, "ProcessTimerEvents");        
     }
 }
 
@@ -974,9 +974,9 @@ void vtkOpenIGTLinkGUI::Enter()
 
   if (this->TimerFlag == 0)
     {
-      this->TimerFlag = 1;
-      this->TimerInterval = 100;  // 100 ms
-      ProcessTimerEvents();
+    this->TimerFlag = 1;
+    this->TimerInterval = 100;  // 100 ms
+    ProcessTimerEvents();
     }
 }
 
@@ -984,7 +984,7 @@ void vtkOpenIGTLinkGUI::Enter()
 //---------------------------------------------------------------------------
 void vtkOpenIGTLinkGUI::Exit ( )
 {
-    // Fill in
+  // Fill in
 }
 
 
@@ -992,61 +992,61 @@ void vtkOpenIGTLinkGUI::Exit ( )
 void vtkOpenIGTLinkGUI::BuildGUI ( )
 {
 
-    // ---
-    // MODULE GUI FRAME 
-    // create a page
-    this->UIPanel->AddPage ( "OpenIGTLink", "OpenIGTLink", NULL );
+  // ---
+  // MODULE GUI FRAME 
+  // create a page
+  this->UIPanel->AddPage ( "OpenIGTLink", "OpenIGTLink", NULL );
 
-    BuildGUIForHelpFrame();
-    BuildGUIForConnectorBrowserFrame();
-    BuildGUIForVisualizationControlFrame();
+  BuildGUIForHelpFrame();
+  BuildGUIForConnectorBrowserFrame();
+  BuildGUIForVisualizationControlFrame();
 
-    UpdateConnectorPropertyFrame(-1);
+  UpdateConnectorPropertyFrame(-1);
 }
 
 
 void vtkOpenIGTLinkGUI::BuildGUIForHelpFrame ()
 {
 
-    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+  vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
 
-    vtkKWWidget *page = this->UIPanel->GetPageWidget ( "OpenIGTLink" );
+  vtkKWWidget *page = this->UIPanel->GetPageWidget ( "OpenIGTLink" );
 
-    // Define your help text here.
-    const char *help = 
-      "The **OpenIGTLink Module** helps you to manage OpenIGTLink connections:"
-      " OpenIGTLink is an open network protocol to provide software / hardware connectivity"
-      " for image-guided therapy, e.g. robot-navigation and imager-viewer connections."
-      " The latest information of the OpenIGTLink protocol can be found at http://wiki.na-mic.org/Wiki/index.php/OpenIGTLink ."
-      " The module is designed and implemented by Junichi Tokuda for Brigham and Women's Hospital."
-      " This work is supported by NCIGT, NA-MIC and BRP Prostate robot project.";
+  // Define your help text here.
+  const char *help = 
+    "The **OpenIGTLink Module** helps you to manage OpenIGTLink connections:"
+    " OpenIGTLink is an open network protocol to provide software / hardware connectivity"
+    " for image-guided therapy, e.g. robot-navigation and imager-viewer connections."
+    " The latest information of the OpenIGTLink protocol can be found at http://wiki.na-mic.org/Wiki/index.php/OpenIGTLink ."
+    " The module is designed and implemented by Junichi Tokuda for Brigham and Women's Hospital."
+    " This work is supported by NCIGT, NA-MIC and BRP Prostate robot project.";
 
-    // ----------------------------------------------------------------
-    // HELP FRAME         
-    // ----------------------------------------------------------------
-    vtkSlicerModuleCollapsibleFrame *OpenIGTLinkHelpFrame = vtkSlicerModuleCollapsibleFrame::New ( );
-    OpenIGTLinkHelpFrame->SetParent ( page );
-    OpenIGTLinkHelpFrame->Create ( );
-    OpenIGTLinkHelpFrame->CollapseFrame ( );
-    OpenIGTLinkHelpFrame->SetLabelText ("Help");
-    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                  OpenIGTLinkHelpFrame->GetWidgetName(), page->GetWidgetName());
+  // ----------------------------------------------------------------
+  // HELP FRAME         
+  // ----------------------------------------------------------------
+  vtkSlicerModuleCollapsibleFrame *OpenIGTLinkHelpFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+  OpenIGTLinkHelpFrame->SetParent ( page );
+  OpenIGTLinkHelpFrame->Create ( );
+  OpenIGTLinkHelpFrame->CollapseFrame ( );
+  OpenIGTLinkHelpFrame->SetLabelText ("Help");
+  app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+                OpenIGTLinkHelpFrame->GetWidgetName(), page->GetWidgetName());
     
-    // configure the parent classes help text widget
-    this->HelpText->SetParent ( OpenIGTLinkHelpFrame->GetFrame() );
-    this->HelpText->Create ( );
-    this->HelpText->SetHorizontalScrollbarVisibility ( 0 );
-    this->HelpText->SetVerticalScrollbarVisibility ( 1 );
-    this->HelpText->GetWidget()->SetText ( help );
-    this->HelpText->GetWidget()->SetReliefToFlat ( );
-    this->HelpText->GetWidget()->SetWrapToWord ( );
-    this->HelpText->GetWidget()->ReadOnlyOn ( );
-    this->HelpText->GetWidget()->QuickFormattingOn ( );
-    this->HelpText->GetWidget()->SetBalloonHelpString ( "" );
-    app->Script ( "pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 4",
-        this->HelpText->GetWidgetName ( ) );
+  // configure the parent classes help text widget
+  this->HelpText->SetParent ( OpenIGTLinkHelpFrame->GetFrame() );
+  this->HelpText->Create ( );
+  this->HelpText->SetHorizontalScrollbarVisibility ( 0 );
+  this->HelpText->SetVerticalScrollbarVisibility ( 1 );
+  this->HelpText->GetWidget()->SetText ( help );
+  this->HelpText->GetWidget()->SetReliefToFlat ( );
+  this->HelpText->GetWidget()->SetWrapToWord ( );
+  this->HelpText->GetWidget()->ReadOnlyOn ( );
+  this->HelpText->GetWidget()->QuickFormattingOn ( );
+  this->HelpText->GetWidget()->SetBalloonHelpString ( "" );
+  app->Script ( "pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 4",
+                this->HelpText->GetWidgetName ( ) );
 
-    OpenIGTLinkHelpFrame->Delete();
+  OpenIGTLinkHelpFrame->Delete();
 
 }
 
@@ -1090,12 +1090,12 @@ void vtkOpenIGTLinkGUI::BuildGUIForConnectorBrowserFrame ()
 
   for (int col = 0; col < 4; col ++)
     {
-      this->ConnectorList->GetWidget()->AddColumn(labels[col]);
-      this->ConnectorList->GetWidget()->SetColumnWidth(col, widths[col]);
-      this->ConnectorList->GetWidget()->SetColumnAlignmentToLeft(col);
-      this->ConnectorList->GetWidget()->ColumnEditableOff(col);
-      //this->ConnectorList->GetWidget()->ColumnEditableOn(col);
-      this->ConnectorList->GetWidget()->SetColumnEditWindowToSpinBox(col);
+    this->ConnectorList->GetWidget()->AddColumn(labels[col]);
+    this->ConnectorList->GetWidget()->SetColumnWidth(col, widths[col]);
+    this->ConnectorList->GetWidget()->SetColumnAlignmentToLeft(col);
+    this->ConnectorList->GetWidget()->ColumnEditableOff(col);
+    //this->ConnectorList->GetWidget()->ColumnEditableOn(col);
+    this->ConnectorList->GetWidget()->SetColumnEditWindowToSpinBox(col);
     }
   this->ConnectorList->GetWidget()->SetColumnEditWindowToCheckButton(0);
   //this->ConnectorList->GetWidget()->SetCellUpdatedCommand(this, "OnConnectorListUpdate");
@@ -1106,7 +1106,7 @@ void vtkOpenIGTLinkGUI::BuildGUIForConnectorBrowserFrame ()
   listButtonsFrame->Create();
 
   app->Script ("pack %s %s -fill both -expand true",  
- //app->Script( "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2",
+               //app->Script( "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2",
                this->ConnectorList->GetWidgetName(), listButtonsFrame->GetWidgetName());
 
   this->AddConnectorButton = vtkKWPushButton::New();
@@ -1122,7 +1122,7 @@ void vtkOpenIGTLinkGUI::BuildGUIForConnectorBrowserFrame ()
   this->DeleteConnectorButton->SetWidth (6);
 
   app->Script( "pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2",
-                this->AddConnectorButton->GetWidgetName(), this->DeleteConnectorButton->GetWidgetName());
+               this->AddConnectorButton->GetWidgetName(), this->DeleteConnectorButton->GetWidgetName());
 
   // -----------------------------------------
   // Connector Property frame
@@ -1445,11 +1445,11 @@ void vtkOpenIGTLinkGUI::UpdateAll()
 
   if (this->LocatorCheckButton->GetSelectedState())
     {
-      //this->UpdateLocator();
+    //this->UpdateLocator();
     }
   if (!this->FreezeOrientationUpdate)
     {
-      //this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
+    //this->UpdateSliceDisplay(nx, ny, nz, tx, ty, tz, px, py, pz);
     }
 
 }
@@ -1529,28 +1529,28 @@ void vtkOpenIGTLinkGUI::UpdateConnectorList(int updateLevel)
 {
   if (this->ConnectorList == NULL)
     {
-      return;
+    return;
     }
 
   //----------------------------------------------------------------
   // Change number of rows (UPDATE_ALL only)
   if (updateLevel >= UPDATE_ALL)
     {
-      // Adjust number of rows
-      int numRows = this->ConnectorList->GetWidget()->GetNumberOfRows();
-      int numConnectors = this->GetLogic()->GetNumberOfConnectors();
-      if (numRows < numConnectors)
+    // Adjust number of rows
+    int numRows = this->ConnectorList->GetWidget()->GetNumberOfRows();
+    int numConnectors = this->GetLogic()->GetNumberOfConnectors();
+    if (numRows < numConnectors)
+      {
+      this->ConnectorList->GetWidget()->AddRows(numConnectors-numRows);
+      }
+    else
+      {
+      int ndel = numRows-numConnectors;
+      for (int i = 0; i < ndel; i ++)
         {
-          this->ConnectorList->GetWidget()->AddRows(numConnectors-numRows);
+        this->ConnectorList->GetWidget()->DeleteRow(numConnectors);
         }
-      else
-        {
-          int ndel = numRows-numConnectors;
-          for (int i = 0; i < ndel; i ++)
-            {
-              this->ConnectorList->GetWidget()->DeleteRow(numConnectors);
-            }
-        }
+      }
     }
 
   int numItems = this->GetLogic()->GetNumberOfConnectors();
@@ -1563,70 +1563,70 @@ void vtkOpenIGTLinkGUI::UpdateConnectorList(int updateLevel)
   updateRows.clear();
   if (updateLevel != UPDATE_STATUS_ALL)
     {
-      if (updateLevel >= UPDATE_PROPERTY_ALL)
+    if (updateLevel >= UPDATE_PROPERTY_ALL)
+      {
+      for (int i = 0; i < numItems; i ++)
         {
-          for (int i = 0; i < numItems; i ++)
-            {
-              updateRows.push_back(i);
-            }
+        updateRows.push_back(i);
         }
-      else if (updateLevel >= UPDATE_SELECTED_ONLY)
-        {
-          updateRows.push_back(this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow());
-        }
+      }
+    else if (updateLevel >= UPDATE_SELECTED_ONLY)
+      {
+      updateRows.push_back(this->ConnectorList->GetWidget()->GetIndexOfFirstSelectedRow());
+      }
     }
       
   // update each row
   std::vector<int>::iterator iter;
   for (iter = updateRows.begin(); iter != updateRows.end(); iter ++)
     {
-      int i = *iter;
-      vtkIGTLConnector* connector = this->GetLogic()->GetConnector(i);
-      if (connector)
-        {
-          // Connector Name
-          this->ConnectorList->GetWidget()
-            ->SetCellText(i,0, connector->GetName());
+    int i = *iter;
+    vtkIGTLConnector* connector = this->GetLogic()->GetConnector(i);
+    if (connector)
+      {
+      // Connector Name
+      this->ConnectorList->GetWidget()
+        ->SetCellText(i,0, connector->GetName());
           
-          // Connector Type
-          this->ConnectorList->GetWidget()
-            ->SetCellText(i,1, vtkOpenIGTLinkGUI::ConnectorTypeStr[connector->GetType()]);
+      // Connector Type
+      this->ConnectorList->GetWidget()
+        ->SetCellText(i,1, vtkOpenIGTLinkGUI::ConnectorTypeStr[connector->GetType()]);
 
-          // Connector Status
-          this->ConnectorList->GetWidget()
-            ->SetCellText(i,2, vtkOpenIGTLinkGUI::ConnectorStatusStr[connector->GetState()]);
+      // Connector Status
+      this->ConnectorList->GetWidget()
+        ->SetCellText(i,2, vtkOpenIGTLinkGUI::ConnectorStatusStr[connector->GetState()]);
           
-          // Server and port information
-          std::ostringstream ss;
-          if (connector->GetType() == vtkIGTLConnector::TYPE_SERVER)
-            {
-              ss << "--.--.--.--" << ":" << connector->GetServerPort();
-            }
-          else if (connector->GetType() == vtkIGTLConnector::TYPE_CLIENT)
-            {
-              ss << connector->GetServerHostname() << ":" << connector->GetServerPort();
-            }
-          else
-            {
-              ss << "--.--.--.--" << ":" << "--";
-            }
-          this->ConnectorList->GetWidget()->SetCellText(i, 3, ss.str().c_str());
+      // Server and port information
+      std::ostringstream ss;
+      if (connector->GetType() == vtkIGTLConnector::TYPE_SERVER)
+        {
+        ss << "--.--.--.--" << ":" << connector->GetServerPort();
         }
+      else if (connector->GetType() == vtkIGTLConnector::TYPE_CLIENT)
+        {
+        ss << connector->GetServerHostname() << ":" << connector->GetServerPort();
+        }
+      else
+        {
+        ss << "--.--.--.--" << ":" << "--";
+        }
+      this->ConnectorList->GetWidget()->SetCellText(i, 3, ss.str().c_str());
+      }
     }
 
   //----------------------------------------------------------------
   // UPDATE_ALL, UPDATE_PROPERTY_ALL and UPDATE_STATUS_ALL
   if (updateLevel == UPDATE_STATUS_ALL)
     {
-      for (int i = 0; i < numItems; i ++)
+    for (int i = 0; i < numItems; i ++)
+      {
+      vtkIGTLConnector* connector = this->GetLogic()->GetConnector(i);
+      if (connector)
         {
-          vtkIGTLConnector* connector = this->GetLogic()->GetConnector(i);
-          if (connector)
-            {
-              this->ConnectorList->GetWidget()
-                ->SetCellText(i,2, ConnectorStatusStr[connector->GetState()]);
-            }
+        this->ConnectorList->GetWidget()
+          ->SetCellText(i,2, ConnectorStatusStr[connector->GetState()]);
         }
+      }
     }
 }
 
@@ -1641,7 +1641,7 @@ void vtkOpenIGTLinkGUI::UpdateConnectorPropertyFrame(int i)
   
   if (i >= 0 && i >= numRows)
     {
-      return;
+    return;
     }
 
 
@@ -1649,33 +1649,33 @@ void vtkOpenIGTLinkGUI::UpdateConnectorPropertyFrame(int i)
   // No connector is registered
   if (i < 0 || numRows <= 0)
     {
-      // Deactivate everything
-      // Connector Name entry
-      this->ConnectorNameEntry->SetValue("");
-      this->ConnectorNameEntry->EnabledOff();
-      this->ConnectorNameEntry->UpdateEnableState();
+    // Deactivate everything
+    // Connector Name entry
+    this->ConnectorNameEntry->SetValue("");
+    this->ConnectorNameEntry->EnabledOff();
+    this->ConnectorNameEntry->UpdateEnableState();
 
-      // Connector Type
-      this->ConnectorTypeButtonSet->GetWidget(0)->SelectedStateOff();
-      this->ConnectorTypeButtonSet->GetWidget(1)->SelectedStateOff();
-      this->ConnectorTypeButtonSet->EnabledOff();
-      this->ConnectorTypeButtonSet->UpdateEnableState();
+    // Connector Type
+    this->ConnectorTypeButtonSet->GetWidget(0)->SelectedStateOff();
+    this->ConnectorTypeButtonSet->GetWidget(1)->SelectedStateOff();
+    this->ConnectorTypeButtonSet->EnabledOff();
+    this->ConnectorTypeButtonSet->UpdateEnableState();
 
-      // Connector Status
-      this->ConnectorStatusCheckButton->SelectedStateOff();
-      this->ConnectorStatusCheckButton->EnabledOff();
+    // Connector Status
+    this->ConnectorStatusCheckButton->SelectedStateOff();
+    this->ConnectorStatusCheckButton->EnabledOff();
 
-      // Server Address
-      this->ConnectorAddressEntry->SetValue("");
-      this->ConnectorAddressEntry->EnabledOff();
-      this->ConnectorAddressEntry->UpdateEnableState();
+    // Server Address
+    this->ConnectorAddressEntry->SetValue("");
+    this->ConnectorAddressEntry->EnabledOff();
+    this->ConnectorAddressEntry->UpdateEnableState();
 
-      // Server Port
-      this->ConnectorPortEntry->SetValueAsInt(0);
-      this->ConnectorPortEntry->EnabledOff();
-      this->ConnectorPortEntry->UpdateEnableState();
+    // Server Port
+    this->ConnectorPortEntry->SetValueAsInt(0);
+    this->ConnectorPortEntry->EnabledOff();
+    this->ConnectorPortEntry->UpdateEnableState();
 
-      return;
+    return;
     }
 
 
@@ -1691,37 +1691,37 @@ void vtkOpenIGTLinkGUI::UpdateConnectorPropertyFrame(int i)
   this->ConnectorNameEntry->SetValue(connector->GetName());
   if (activeFlag)
     {
-      this->ConnectorNameEntry->EnabledOff();
+    this->ConnectorNameEntry->EnabledOff();
     }
   else
     {
-      this->ConnectorNameEntry->EnabledOn();
+    this->ConnectorNameEntry->EnabledOn();
     }
   this->ConnectorNameEntry->UpdateEnableState();
 
   // Connection Type (server or client)
   if (connector->GetType() == vtkIGTLConnector::TYPE_SERVER)
     {
-      this->ConnectorTypeButtonSet->GetWidget(0)->SelectedStateOn();
-      this->ConnectorTypeButtonSet->GetWidget(1)->SelectedStateOff();
+    this->ConnectorTypeButtonSet->GetWidget(0)->SelectedStateOn();
+    this->ConnectorTypeButtonSet->GetWidget(1)->SelectedStateOff();
     }
   else if (connector->GetType() == vtkIGTLConnector::TYPE_CLIENT)
     {
-      this->ConnectorTypeButtonSet->GetWidget(0)->SelectedStateOff();
-      this->ConnectorTypeButtonSet->GetWidget(1)->SelectedStateOn();
+    this->ConnectorTypeButtonSet->GetWidget(0)->SelectedStateOff();
+    this->ConnectorTypeButtonSet->GetWidget(1)->SelectedStateOn();
     }
   else // if (connector->GetType == TYPE_NOT_DEFINED)
     {
-      this->ConnectorTypeButtonSet->GetWidget(0)->SelectedStateOff();
-      this->ConnectorTypeButtonSet->GetWidget(1)->SelectedStateOff();
+    this->ConnectorTypeButtonSet->GetWidget(0)->SelectedStateOff();
+    this->ConnectorTypeButtonSet->GetWidget(1)->SelectedStateOff();
     }
   if (activeFlag)
     {
-      this->ConnectorTypeButtonSet->EnabledOff();
+    this->ConnectorTypeButtonSet->EnabledOff();
     }
   else
     {
-      this->ConnectorTypeButtonSet->EnabledOn();
+    this->ConnectorTypeButtonSet->EnabledOn();
     }
 
   this->ConnectorTypeButtonSet->UpdateEnableState();
@@ -1730,20 +1730,20 @@ void vtkOpenIGTLinkGUI::UpdateConnectorPropertyFrame(int i)
   // Connection Status
   if (connector->GetState() == vtkIGTLConnector::STATE_OFF)
     {
-      this->ConnectorStatusCheckButton->SelectedStateOff();
+    this->ConnectorStatusCheckButton->SelectedStateOff();
     }
   else
     {
-      this->ConnectorStatusCheckButton->SelectedStateOn();
+    this->ConnectorStatusCheckButton->SelectedStateOn();
     }
 
   if (connector->GetType() == vtkIGTLConnector::TYPE_NOT_DEFINED)  
     {
-      this->ConnectorStatusCheckButton->EnabledOff();
+    this->ConnectorStatusCheckButton->EnabledOff();
     }
   else
     {
-      this->ConnectorStatusCheckButton->EnabledOn();
+    this->ConnectorStatusCheckButton->EnabledOn();
     }
   this->ConnectorStatusCheckButton->UpdateEnableState();
 
@@ -1751,20 +1751,20 @@ void vtkOpenIGTLinkGUI::UpdateConnectorPropertyFrame(int i)
   // Connection Server Address entry
   if (connector->GetType() == vtkIGTLConnector::TYPE_SERVER)
     {
-      this->ConnectorAddressEntry->SetValue("--.--.--.--");
-      this->ConnectorAddressEntry->EnabledOff();
+    this->ConnectorAddressEntry->SetValue("--.--.--.--");
+    this->ConnectorAddressEntry->EnabledOff();
     }
   else
     {
-      this->ConnectorAddressEntry->SetValue(connector->GetServerHostname());
-      if (activeFlag)
-        {
-          this->ConnectorAddressEntry->EnabledOff();
-        }
-      else
-        {
-          this->ConnectorAddressEntry->EnabledOn();
-        }
+    this->ConnectorAddressEntry->SetValue(connector->GetServerHostname());
+    if (activeFlag)
+      {
+      this->ConnectorAddressEntry->EnabledOff();
+      }
+    else
+      {
+      this->ConnectorAddressEntry->EnabledOn();
+      }
     }
   this->ConnectorAddressEntry->UpdateEnableState();
 
@@ -1772,11 +1772,11 @@ void vtkOpenIGTLinkGUI::UpdateConnectorPropertyFrame(int i)
   this->ConnectorPortEntry->SetValueAsInt(connector->GetServerPort());
   if (activeFlag)
     {
-      this->ConnectorPortEntry->EnabledOff();
+    this->ConnectorPortEntry->EnabledOff();
     }
   else
     {
-      this->ConnectorPortEntry->EnabledOn();
+    this->ConnectorPortEntry->EnabledOn();
     }
   this->ConnectorPortEntry->UpdateEnableState();
 

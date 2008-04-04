@@ -1,14 +1,14 @@
 /*==========================================================================
 
-Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-See Doc/copyright/copyright.txt
-or http://www.slicer.org/copyright/copyright.txt for details.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-Program:   3D Slicer
-Module:    $HeadURL: $
-Date:      $Date: $
-Version:   $Revision: $
+  Program:   3D Slicer
+  Module:    $HeadURL: $
+  Date:      $Date: $
+  Version:   $Revision: $
 
 ==========================================================================*/
 
@@ -242,13 +242,13 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkGUI : public vtkSlicerModuleGUI
 
   void UpdateAll();
   /*
-  void UpdateLocator(vtkTransform *, vtkTransform *);
-  void UpdateSliceDisplay(float nx, float ny, float nz, 
-                          float tx, float ty, float tz, 
-                          float px, float py, float pz);
+    void UpdateLocator(vtkTransform *, vtkTransform *);
+    void UpdateSliceDisplay(float nx, float ny, float nz, 
+    float tx, float ty, float tz, 
+    float px, float py, float pz);
 
-  void UpdateLocator();
-  void UpdateSliceDisplay();
+    void UpdateLocator();
+    void UpdateSliceDisplay();
   */
 
  private:

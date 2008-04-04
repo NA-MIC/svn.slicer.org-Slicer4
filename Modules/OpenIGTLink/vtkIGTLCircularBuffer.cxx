@@ -1,14 +1,14 @@
 /*==========================================================================
 
-Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
-See Doc/copyright/copyright.txt
-or http://www.slicer.org/copyright/copyright.txt for details.
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
 
-Program:   3D Slicer
-Module:    $HeadURL: $
-Date:      $Date: $
-Version:   $Revision: $
+  Program:   3D Slicer
+  Module:    $HeadURL: $
+  Date:      $Date: $
+  Version:   $Revision: $
 
 ==========================================================================*/
 
@@ -35,9 +35,9 @@ vtkIGTLCircularBuffer::vtkIGTLCircularBuffer()
   this->Last  = -1;
   for (int i = 0; i < IGTLCB_CIRC_BUFFER_SIZE; i ++)
     {
-      this->DeviceType[i] = "";
-      this->Size[i]       = 0;
-      this->Data[i]       = NULL;
+    this->DeviceType[i] = "";
+    this->Size[i]       = 0;
+    this->Data[i]       = NULL;
     }
   this->UpdateFlag = 0;
   this->Mutex->Unlock();
@@ -55,10 +55,10 @@ vtkIGTLCircularBuffer::~vtkIGTLCircularBuffer()
 
   for (int i = 0; i < IGTLCB_CIRC_BUFFER_SIZE; i ++)
     {
-      if (this->Data[i] != NULL)
-        {
-          delete this->Data[i];
-        }
+    if (this->Data[i] != NULL)
+      {
+      delete this->Data[i];
+      }
     }
   this->Mutex->Delete();
 }
@@ -90,7 +90,7 @@ int vtkIGTLCircularBuffer::StartPush()
   this->InPush = (this->Last + 1) % IGTLCB_CIRC_BUFFER_SIZE;
   if (this->InPush == this->InUse)
     {
-      this->InPush = (this->Last + 1) % IGTLCB_CIRC_BUFFER_SIZE;
+    this->InPush = (this->Last + 1) % IGTLCB_CIRC_BUFFER_SIZE;
     }
   this->Mutex->Unlock();
 
@@ -103,7 +103,7 @@ void vtkIGTLCircularBuffer::PushDeviceType(const char* deviceType)
 
   if (this->DeviceType[this->InPush] != deviceType)
     {
-      this->DeviceType[this->InPush] = deviceType;
+    this->DeviceType[this->InPush] = deviceType;
     }
 
 }
@@ -114,12 +114,12 @@ void vtkIGTLCircularBuffer::PushData(int size, unsigned char* data)
   // Data and its size
   if (this->Size[this->InPush] != size)
     {
-      if (this->Data[this->InPush] != NULL)
-        {
-          delete this->Data[this->InPush];
-        }
-      this->Data[this->InPush] = new unsigned char[size];
-      this->Size[this->InPush] = size;
+    if (this->Data[this->InPush] != NULL)
+      {
+      delete this->Data[this->InPush];
+      }
+    this->Data[this->InPush] = new unsigned char[size];
+    this->Size[this->InPush] = size;
     }
   
   memcpy(this->Data[this->InPush], data, size);
@@ -132,12 +132,12 @@ unsigned char* vtkIGTLCircularBuffer::GetPushDataArea(int size)
   // Data and its size
   if (this->Size[this->InPush] != size)
     {
-      if (this->Data[this->InPush] != NULL)
-        {
-          delete this->Data[this->InPush];
-        }
-      this->Data[this->InPush] = new unsigned char[size];
-      this->Size[this->InPush] = size;
+    if (this->Data[this->InPush] != NULL)
+      {
+      delete this->Data[this->InPush];
+      }
+    this->Data[this->InPush] = new unsigned char[size];
+    this->Size[this->InPush] = size;
     }
   
   return this->Data[this->InPush];
