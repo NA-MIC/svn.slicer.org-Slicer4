@@ -18,9 +18,10 @@ vtkCacheManager::vtkCacheManager()
   this->MRMLScene = NULL;
   this->CallbackCommand = vtkCallbackCommand::New();
   this->CachedFileList.clear();
-  this->RemoteCacheLimit = 0;
+  //--- what seem reasonable default values here?
+  this->RemoteCacheLimit = 200;
+  this->RemoteCacheFreeBufferSize = 10;
   this->CurrentCacheSize = 0;
-  this->RemoteCacheFreeBufferSize = 0;
   this->EnableForceRedownload = 0;
   // this->EnableRemoteCacheOverwriting = 1;
 }
@@ -487,7 +488,7 @@ void vtkCacheManager::DeleteFromCache( const char *target )
     this->MarkNodesBeforeDeletingDataFromCache ( target );
 
     //--- remove the file or directory in str....
-    vtkWarningMacro ( "Removing " << str.c_str() << " from disk and from record of cached files." );
+    vtkDebugMacro ( "Removing " << str.c_str() << " from disk and from record of cached files." );
     if ( vtksys::SystemTools::FileIsDirectory ( str.c_str() ) )
       {
       if ( !vtksys::SystemTools::RemoveADirectory ( str.c_str() ))
