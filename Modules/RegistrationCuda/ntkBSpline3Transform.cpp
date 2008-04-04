@@ -161,7 +161,7 @@ ntk3DData* ntkBSpline3Transform::doReverseTransform(ntkTensor* inputSpline){
     tempValue=tenResult->getValue(i,j,k);
     if(tempValue<0.0)tempValue=0.0;
     if(tempValue>255.0)tempValue=255.0;
-    *(resultBuffer+k*resultDim.x*resultDim.y+j*resultDim.x+i)=(unsigned char)(round(tempValue));
+    *(resultBuffer+k*resultDim.x*resultDim.y+j*resultDim.x+i)=(unsigned char)(floor(tempValue));
       }
     }
   }
@@ -421,7 +421,7 @@ ntk3DData *ntkBSpline3Transform::doReverseHigherResTransform(ntkTensor *inputSpl
     tempValue=tenResult->getValue(i,j,k);
     if(tempValue<0.0)tempValue=0.0;
     if(tempValue>255.0)tempValue=255.0;
-    *(resultBuffer+k*resultDim.x*resultDim.y+j*resultDim.x+i)=(unsigned char)(round(tempValue));
+    *(resultBuffer+k*resultDim.x*resultDim.y+j*resultDim.x+i)=(unsigned char)(floor(tempValue));
       }
     }
   }

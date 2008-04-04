@@ -116,7 +116,7 @@ ntk2DData* ntk2DBSpline3Transform::doReverseTransform(ntkMatrix* inputSpline){
       tempValue=tenResult->getValue(i,j);
       if(tempValue<0.0)tempValue=0.0;
       if(tempValue>255.0)tempValue=255.0;
-      *(resultBuffer+j*resultDim.x+i)=(unsigned char)(round(tempValue));
+      *(resultBuffer+j*resultDim.x+i)=(unsigned char)(floor(tempValue));
     }
   }
   delete tenResult;
@@ -298,7 +298,7 @@ ntk2DData *ntk2DBSpline3Transform::doReverseHigherResTransform(ntkMatrix *inputS
       tempValue=tenResult->getValue(i,j);
       if(tempValue<0.0)tempValue=0.0;
       if(tempValue>255.0)tempValue=255.0;
-      *(resultBuffer+j*resultDim.x+i)=(unsigned char)(round(tempValue));
+      *(resultBuffer+j*resultDim.x+i)=(unsigned char)(floor(tempValue));
     }
   }
   delete tenResult;
