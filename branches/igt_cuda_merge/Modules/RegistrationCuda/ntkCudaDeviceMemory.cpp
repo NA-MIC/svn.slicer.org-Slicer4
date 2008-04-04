@@ -1,4 +1,5 @@
 #include "ntkCudaDeviceMemory.h"
+#include <stdlib.h>
 
 ntkCudaDeviceMemory::ntkCudaDeviceMemory(){
   m_size=0;

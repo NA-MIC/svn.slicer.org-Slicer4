@@ -25,10 +25,12 @@ Matrix::Matrix(int rows, int columns, double value)
 
 Matrix Matrix::inverse() const
 {
+    return Matrix();
 }
 
 Matrix Matrix::pseudo_inverse() const
 {
+    return Matrix();
 }
 
 Matrix Matrix::operator*(const Matrix& other) const
