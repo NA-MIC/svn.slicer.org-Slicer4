@@ -277,7 +277,7 @@ int vtkIGTLConnector::ReceiveController()
     igtl_header_convert_byte_order(&header);  
     char deviceType[13];
     deviceType[12] = 0;
-    memcpy((void*)deviceType, header.name, 8);
+    memcpy((void*)deviceType, header.name, 12);
       
     char deviceName[21];
     deviceName[20] = 0;

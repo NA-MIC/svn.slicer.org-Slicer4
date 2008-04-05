@@ -317,7 +317,7 @@ void vtkOpenIGTLinkLogic::ImportFromCircularBuffers()
         }
       else if (strcmp(type, "TRANSFORM") == 0)
         {
-        UpdateMRMLLinearTransfomrNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
+        UpdateMRMLLinearTransformNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
         }
       buffer->EndPull();
       }
@@ -331,9 +331,9 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
 {
   std::cerr << "vtkIGTLConnector::UpdateMRMLScalarVolumeNode()  is called  " << std::endl;
 
-  if (size <= IGTL_IMAGE_HEADER_SIZE)
+  if (size < IGTL_IMAGE_HEADER_SIZE)
     {
-    vtkErrorMacro ("Illegal data size" << IGTL_IMAGE_HEADER_SIZE << "\n");
+    vtkErrorMacro ("Illegal data size" << size << " / " << IGTL_IMAGE_HEADER_SIZE << "\n");
     return;
     }
 
@@ -588,8 +588,85 @@ void vtkOpenIGTLinkLogic::UpdateMRMLScalarVolumeNode(const char* nodeName, int s
 
 
 //---------------------------------------------------------------------------
-void vtkOpenIGTLinkLogic::UpdateMRMLLinearTransfomrNode(const char* nodeName, int size, unsigned char* data)
+void vtkOpenIGTLinkLogic::UpdateMRMLLinearTransformNode(const char* nodeName, int size, unsigned char* data)
 {
+  std::cerr << "vtkIGTLConnector::UpdateMRMLLinearTransformNode()  is called  " << std::endl;
+
+  if (size != IGTL_TRANSFORM_SIZE)
+    {
+    vtkErrorMacro ("Illegal data size" << size << "/" << IGTL_TRANSFORM_SIZE << "\n");
+    return;
+    }
+
+  float* matrix = reinterpret_cast<float*>(data);
+  igtl_transform_convert_byte_order(matrix);
+
+  vtkMRMLLinearTransformNode* transformNode;
+  vtkMRMLScene* scene = this->GetApplicationLogic()->GetMRMLScene();
+  vtkCollection* collection = scene->GetNodesByName(nodeName);
+
+  if (collection->GetNumberOfItems() == 0)
+    {
+    transformNode = vtkMRMLLinearTransformNode::New();
+    transformNode->SetName(nodeName);
+    transformNode->SetDescription("Received by OpenIGTLink");
+    
+    vtkMatrix4x4* transform = vtkMatrix4x4::New();
+    transform->Identity();
+    //transformNode->SetAndObserveImageData(transform);
+    transformNode->ApplyTransform(transform);
+    transform->Delete();
+    
+    scene->AddNode(transformNode);
+    }
+  else
+    {
+    vtkCollection* collection = scene->GetNodesByName(nodeName);
+    transformNode = vtkMRMLLinearTransformNode::SafeDownCast(collection->GetItemAsObject(0));
+    }
+  
+  float tx = matrix[0];
+  float ty = matrix[1];
+  float tz = matrix[2];
+  float sx = matrix[3];
+  float sy = matrix[4];
+  float sz = matrix[5];
+  float nx = matrix[6];
+  float ny = matrix[7];
+  float nz = matrix[8];
+  float px = matrix[9];
+  float py = matrix[10];
+  float pz = matrix[11];
+
+  std::cerr << "matrix = "<< std::endl;
+  std::cerr << tx << ", " << ty << ", " << tz << std::endl;
+  std::cerr << sx << ", " << sy << ", " << sz << std::endl;
+  std::cerr << nx << ", " << ny << ", " << nz << std::endl;
+  std::cerr << px << ", " << py << ", " << pz << std::endl;
+  
+  // set volume orientation
+  vtkMatrix4x4* transform = vtkMatrix4x4::New();
+  vtkMatrix4x4* transformToParent = transformNode->GetMatrixTransformToParent();
+  transform->Identity();
+  transform->SetElement(0, 0, tx);
+  transform->SetElement(1, 0, ty);
+  transform->SetElement(2, 0, tz);
+
+  transform->SetElement(0, 1, sx);
+  transform->SetElement(1, 1, sy);
+  transform->SetElement(2, 1, sz);
+
+  transform->SetElement(0, 2, nx);
+  transform->SetElement(1, 2, ny);
+  transform->SetElement(2, 2, nz);
+
+  transform->SetElement(0, 3, px);
+  transform->SetElement(1, 3, py);
+  transform->SetElement(2, 3, pz);
+
+  transformToParent->DeepCopy(transform);
+  transform->Delete();
+
 }
 
 

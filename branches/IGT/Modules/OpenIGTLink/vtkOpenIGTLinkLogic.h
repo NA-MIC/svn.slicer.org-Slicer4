@@ -121,7 +121,7 @@ class VTK_OPENIGTLINK_EXPORT vtkOpenIGTLinkLogic : public vtkSlicerModuleLogic
   //----------------------------------------------------------------
 
   void UpdateMRMLScalarVolumeNode(const char* nodeName, int size, unsigned char* data);
-  void UpdateMRMLLinearTransfomrNode(const char* nodeName, int size, unsigned char* data);
+  void UpdateMRMLLinearTransformNode(const char* nodeName, int size, unsigned char* data);
   void ProcCommand(const char* nodeName, int size, unsigned char* data);
 
  protected:

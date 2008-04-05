@@ -17,6 +17,8 @@
 #ifndef __IGTL_UTIL_H
 #define __IGTL_UTIL_H
 
+#include "igtl_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
