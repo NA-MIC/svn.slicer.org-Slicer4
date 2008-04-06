@@ -37,12 +37,9 @@ void igtl_transform_convert_byte_order(igtl_float32* transform)
 igtl_uint64 igtl_transform_get_crc(igtl_float32* transform)
 {
 
-  igtl_uint64 crc;
+  igtl_uint64 crc = crc64(0, 0, 0);
 
-  /*
-  unsigned long crc = crc32(0L, Z_NULL, 0);
-  crc = crc32(crc, (unsigned char*)transform, sizeof(float)*12);
-  */
+  crc = crc64((unsigned char*)transform, sizeof(igtl_uint64)*12, crc);
 
   return crc;
 }

@@ -39,6 +39,7 @@ extern "C" {
  * Test endian of the host
  */
 int igtl_is_little_endian();
+igtl_uint64 crc64(unsigned char *data, int len, igtl_uint64 crc);
 
 #ifdef __cplusplus
 }

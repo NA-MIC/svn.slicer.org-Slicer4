@@ -153,16 +153,13 @@ void igtl_image_convert_byte_order(igtl_image_header * header)
 
 igtl_uint64 igtl_image_get_crc(igtl_image_header * header, void* image)
 {
-  igtl_uint64 crc = crc32(0L, Z_NULL, 0);
-  igtl_uint64 img_size =  igtl_image_get_data_size(header);
+  igtl_uint64   crc;
+  igtl_uint64   img_size;
 
-  //crc = crc32(crc, (unsigned char*)header, IGTL_IMAGE_HEADER_SIZE);
+  img_size = igtl_image_get_data_size(header);
+  crc = crc64(0, 0, 0);
+  crc = crc64((unsigned char*) header, IGTL_IMAGE_HEADER_SIZE, crc);
+  crc = crc64((unsigned char*) image, img_size, crc);
 
-  /*
-   * NOTE: OpenIGTLink protocol supports 64-bit size info but here only allows 32-bit value;
-   *       This have to be fixed in the future.
-   */
-  //crc = crc32(crc, (unsigned char*)image, img_size);
-  
   return crc;
 }
