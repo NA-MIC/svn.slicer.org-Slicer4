@@ -306,11 +306,11 @@ void vtkOpenIGTLinkLogic::ImportFromCircularBuffers()
     vtkIGTLConnector::NameListType::iterator nameIter;
     for (nameIter = nameList.begin(); nameIter != nameList.end(); nameIter ++)
       {
-      std::cerr << "####### Import Image from : " << *nameIter << std::endl;
+      std::cerr << "vtkOpenIGTLinkLogic::ImportFromCircularBuffers(): Import Image from : " << *nameIter << std::endl;
       vtkIGTLCircularBuffer* buffer = (*iter)->GetCircularBuffer(*nameIter);
       buffer->StartPull();
       const char* type = buffer->PullDeviceType();
-      std::cerr << "############### TYPE = " << type << std::endl;
+      std::cerr << "vtkOpenIGTLinkLogic::ImportFromCircularBuffers(): TYPE = " << type << std::endl;
       if (strcmp(type, "IMAGE") == 0)
         {
         UpdateMRMLScalarVolumeNode((*nameIter).c_str(), buffer->PullSize(), buffer->PullData());
