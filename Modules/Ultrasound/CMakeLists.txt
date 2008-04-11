@@ -3,12 +3,23 @@ PROJECT(UltrasoundModule)
 OPTION(ULTRASOUNDMODULE "Would you like to build Ultrasound Module support" ON)
 if(ULTRASOUNDMODULE)
 
+OPTION(PHILLIPS_ULTRASOUND_SCANNER "Would you like to compile in Support for the Phillips Ultrasound Scanners (proprietary support only)" ON)
+if(PHILLIPS_ULTRASOUND_SCANNER)
+   FIND_LIBRARY(PHILLIPS_ULTRASOUND_SCANNER_LIBRARY
+      PipelineComDll
+      C:\\dev\\lib
+   )
+   FIND_PATH(PHILLIPS_ULTRASOUND_SCANNER_INCLUDE_DIR
+      StreamMgr.h
+      C:\\dev\\include
+   )
 
-FIND_LIBRARY(PipelineCom 
-    PipelineComDll
-    C:\\dev\\lib
-)
-
+   SET(PHILLIPS_ULTRASOUND_SCANNER_SOURCES
+      vtkPhilipsUltrasoundStreamSource.cxx
+   )
+   ADD_DEFINITIONS(-DPHILLIPS_ULTRASOUND_SCANNER_SUPPORT)
+   MESSAGE("Adding Proprietary Support for the Phillips Ultrasound Scanner")
+endif(PHILLIPS_ULTRASOUND_SCANNER)
 
 # --------------------------------------------------------------------------
 # Sources
@@ -16,10 +27,10 @@ FIND_LIBRARY(PipelineCom
     vtkUltrasoundModuleGUI.cxx
     vtkUltrasoundModuleLogic.cxx
     vtkUltrasoundStreamSource.cxx
-    vtkUltrasoundScannerReader.cxx
-    vtkPhilipsUltrasoundStreamSource.cxx
-    
+    vtkUltrasoundScannerReader.cxx    
     vtkMRMLUltrasoundNode.cxx
+    
+    ${PHILLIPS_ULTRASOUND_SCANNER_SOURCES}
 )
 
 #-----------------------------------------------
@@ -40,7 +51,7 @@ INCLUDE_DIRECTORIES(
   ${VTK_INCLUDE_DIRS}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
-  C:\\dev\\include
+  ${PHILLIPS_ULTRASOUND_SCANNER_INCLUDE_DIR}
   )
 
 
@@ -69,7 +80,7 @@ SET(UltrasoundModule_LIBRARIES
   vtkFilteringTCL
   vtkIOTCL
   ${KWWidgets_LIBRARIES}
-  ${PipelineCom}
+  ${PHILLIPS_ULTRASOUND_SCANNER_LIBRARY}
  )
 
 
