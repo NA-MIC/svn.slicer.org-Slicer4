@@ -7,7 +7,7 @@
 #include <math.h>
 
 // declaration, forward
-
+extern "C"
 void CUDAelasticTransformation_doTransformation(unsigned char* inputData, unsigned char* outputData, float* transSpline, int inSizeX, int inSizeY, int inSizeZ, int splineLevel);
 
 #endif
