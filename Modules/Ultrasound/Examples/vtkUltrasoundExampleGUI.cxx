@@ -25,6 +25,9 @@
 
 #include "vtkInteractorStyleTrackballCamera.h"
 
+#include "vtkUltrasoundStreamerGUI.h"
+#include "vtkUltrasoundStreamSource.h"
+
 #include "vtkCudaVolumeMapper.h"
 #include "vtkFixedPointVolumeRayCastMapper.h"
 #include "vtkVolumeRayCastMapper.h"
@@ -41,9 +44,9 @@ vtkUltrasoundExampleGUI::vtkUltrasoundExampleGUI()
     this->Volume = NULL;
     this->VolumeMapper = NULL;
     this->VolumePropertyWidget = NULL;
+    this->UltrasoundStreamerGUI = NULL;
+    this->ImageData = NULL;
 
-    this->frameNumber = 0;
-    this->readers;
     this->renderScheduled = false;
     this->isRendering = false;
 }
@@ -51,6 +54,8 @@ vtkUltrasoundExampleGUI::vtkUltrasoundExampleGUI()
 void vtkUltrasoundExampleGUI::CreateWidget()
 {
     this->Superclass::CreateWidget();
+
+    this->ImageData = vtkImageData::New();
 
     vtkKWApplication* app = this->GetApplication();
     // Add a render widget, attach it to the view frame, and pack
@@ -61,32 +66,67 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     this->GetApplication()->Script("pack %s -expand y -fill both -anchor c -expand y", 
         this->renderWidget->GetWidgetName());
 
+
+    /// GUI EVENT
+    this->GUICallbackCommand = vtkCallbackCommand::New ( );
+    this->GUICallbackCommand->SetCallback( vtkUltrasoundExampleGUI::GuiEventStatic );
+    this->GUICallbackCommand->SetClientData(this);
+
+    this->StartCallbackCommand = vtkCallbackCommand::New ( );
+    this->StartCallbackCommand->SetCallback( vtkUltrasoundExampleGUI::RenderBeginStatic );
+    this->StartCallbackCommand->SetClientData(this);
+
+    this->StopCallbackCommand = vtkCallbackCommand::New ( );
+    this->StopCallbackCommand->SetCallback( vtkUltrasoundExampleGUI::RenderEndStatic );
+    this->StopCallbackCommand->SetClientData(this);
+
+    this->UltrasoundCommand = vtkCallbackCommand::New ( );
+    this->UltrasoundCommand->SetCallback(vtkUltrasoundExampleGUI::UltrasoundEventStatic);
+    this->UltrasoundCommand->SetClientData(this);
+
+    // RenderWindow Setup    
+    this->renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 500, 500);
+    this->renderWidget->GetRenderer()->GetActiveCamera()->SetClippingRange(10, 1000);
+    this->renderWidget->GetRenderer()->GetActiveCamera()->ParallelProjectionOff();
+
+    vtkInteractorStyle* interactorStyle = vtkInteractorStyleTrackballCamera::New();
+    renderWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
+    renderWidget->SetRenderModeToInteractive();
+
+    renderWidget->GetRenderWindow()->AddObserver(vtkCommand::StartEvent, (vtkCommand*)StartCallbackCommand);
+    renderWidget->GetRenderWindow()->AddObserver(vtkCommand::EndEvent, (vtkCommand*)StopCallbackCommand);
+
+    this->CreateUltrasoundWidget();
+
+    this->CreateVolumeRenderingWidget();
+}
+void vtkUltrasoundExampleGUI::CreateUltrasoundWidget()
+{
+    this->UltrasoundStreamerGUI = vtkUltrasoundStreamerGUI::New();
+    this->UltrasoundStreamerGUI->SetParent(this->GetMainPanelFrame());
+    this->UltrasoundStreamerGUI->Create();
+    this->GetApplication()->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        this->UltrasoundStreamerGUI->GetWidgetName());
+    this->UltrasoundStreamerGUI->AddObserver(vtkUltrasoundStreamerGUI::EnablingEvent, (vtkCommand*)this->UltrasoundCommand);
+    this->UltrasoundStreamerGUI->AddObserver(vtkUltrasoundStreamerGUI::DisabledEvent, (vtkCommand*)this->UltrasoundCommand);
+    this->UltrasoundStreamerGUI->AddObserver(vtkUltrasoundStreamerGUI::DataUpdatedEvent, (vtkCommand*)this->UltrasoundCommand);
+    this->UltrasoundStreamerGUI->AddObserver(vtkUltrasoundStreamSource::ConnectionEstablished, (vtkCommand*)this->UltrasoundCommand);
+}
+
+void vtkUltrasoundExampleGUI::CreateVolumeRenderingWidget()
+{
+    /////////////////////////////
+    /// VOLUME RENDERING PART ///
+    /////////////////////////////
     // Create the mapper and actor
     this->Volume = vtkVolume::New();
     this->VolumeMapper = vtkVolumeTextureMapper2D::New();
     this->Volume->SetMapper(VolumeMapper);
 
-    this->LoadUltrasoundHeartSeries((void*)"D:\\Volumes\\4DUltrasound\\3DDCM002.raw");
-    if (!readers.empty())
-        this->VolumeMapper->SetInput(readers[0]->GetOutput());
 
     vtkVolumeProperty* prop = vtkVolumeProperty::New();
     this->Volume->SetProperty(prop);
     this->renderWidget->GetRenderer()->AddVolume(Volume);
-
-    /// GUI EVENT
-    this->GUICallbackCommand = vtkCallbackCommand::New ( );
-    GUICallbackCommand->SetCallback( vtkUltrasoundExampleGUI::GuiEventStatic );
-    GUICallbackCommand->SetClientData(this);
-
-    this->StartCallbackCommand = vtkCallbackCommand::New ( );
-    StartCallbackCommand->SetCallback( vtkUltrasoundExampleGUI::RenderBeginStatic );
-    StartCallbackCommand->SetClientData(this);
-
-    this->StopCallbackCommand = vtkCallbackCommand::New ( );
-    StopCallbackCommand->SetCallback( vtkUltrasoundExampleGUI::RenderEndStatic );
-    StopCallbackCommand->SetClientData(this);
-
 
 
     //mb_Mapper = vtkKWMenuButton::New();
@@ -124,31 +164,10 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     //this->GetApplication()->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
     //    ScaleFactorScale->GetWidgetName()); 
     //ScaleFactorScale->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)GUICallbackCommand);
-
-    this->cb_Animate = vtkKWCheckButton::New();
-    this->cb_Animate->SetParent(this->GetMainPanelFrame());
-    this->cb_Animate->Create();
-    this->GetApplication()->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-        this->cb_Animate->GetWidgetName());
-    this->cb_Animate->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*)GUICallbackCommand);
-
-
-    this->renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 500, 500);
-    this->renderWidget->GetRenderer()->GetActiveCamera()->SetClippingRange(10, 1000);
-    this->renderWidget->GetRenderer()->GetActiveCamera()->ParallelProjectionOff();
-
-    vtkInteractorStyle* interactorStyle = vtkInteractorStyleTrackballCamera::New();
-    renderWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
-    renderWidget->SetRenderModeToInteractive();
-
-    renderWidget->GetRenderWindow()->AddObserver(vtkCommand::StartEvent, (vtkCommand*)StartCallbackCommand);
-    renderWidget->GetRenderWindow()->AddObserver(vtkCommand::EndEvent, (vtkCommand*)StopCallbackCommand);
 }
 
 vtkUltrasoundExampleGUI::~vtkUltrasoundExampleGUI()
 {
-    //    
-    // Deallocate and exit
     StartCallbackCommand->Delete();
     StopCallbackCommand->Delete();
     GUICallbackCommand->Delete();
@@ -156,39 +175,8 @@ vtkUltrasoundExampleGUI::~vtkUltrasoundExampleGUI()
     Volume->Delete();
     VolumeMapper->Delete();
 
-    while(!readers.empty())
-    {
-        readers.back()->Delete();
-        readers.pop_back();
-    }
-
     VolumePropertyWidget->Delete();
-    cb_Animate->Delete();
     renderWidget->Delete();
-
-}
-
-
-void vtkUltrasoundExampleGUI::LoadUltrasoundHeartSeries(void* data)
-{
-    const char* fileName = (const char*)data;
-    std::cout << "Loading " << std::flush;
-    int j = 92;
-    for (unsigned int i = 0; i < 50; i ++)
-    {
-        readers.push_back(vtkImageReader::New());
-        readers[i]->SetDataScalarTypeToUnsignedChar();
-        readers[i]->SetNumberOfScalarComponents(1);
-        readers[i]->SetDataExtent(0, 79, 0, 79, 0, 159);
-        readers[i]->SetFileDimensionality(3);
-        readers[i]->SetDataSpacing(1.0f, 1.0f, 0.74f);
-        readers[i]->SetHeaderSize(i * 80 * 80 * 160 * sizeof(unsigned char));
-
-        readers[i]->SetFileName(fileName);
-        readers[i]->Update();
-        std::cout << "." << std::flush;
-    }
-    std::cout << "done" <<  std::endl;
 }
 
 
@@ -196,12 +184,12 @@ void vtkUltrasoundExampleGUI::ScheduleRender()
 {
     if (this->renderScheduled == false)
     {
-        if (cb_Animate->GetSelectedState() == 1)
-        {
-            if (++frameNumber >= readers.size())
-                frameNumber = 0;
-            VolumeMapper->SetInput(readers[frameNumber]->GetOutput());
-        }
+        //if (cb_Animate->GetSelectedState() == 1)
+        //{
+        //    if (++frameNumber >= readers.size())
+        //        frameNumber = 0;
+        //    VolumeMapper->SetInput(readers[frameNumber]->GetOutput());
+        //}
         this->renderScheduled = true;
         this->renderWidget->Render();
     }
@@ -220,17 +208,14 @@ void vtkUltrasoundExampleGUI::RenderEndStatic(vtkObject *caller, unsigned long e
     vtkUltrasoundExampleGUI::SafeDownCast((vtkObject*)clientData)->RenderEnd();
 }
 
+void vtkUltrasoundExampleGUI::UltrasoundEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
+{
+    vtkUltrasoundExampleGUI::SafeDownCast((vtkObject*)clientData)->UltrasoundEvent(eid);
+}
 
 void vtkUltrasoundExampleGUI::GuiEvent(vtkObject* caller)
 {
-    if (caller == cb_Animate && cb_Animate->GetSelectedState() == 1) 
-    {
-        this->ScheduleRender();
-    }
-    else if (caller == VolumePropertyWidget)
-    {
-        this->ScheduleRender();
-    }
+    this->ScheduleRender();
 }
 
 void vtkUltrasoundExampleGUI::RenderBegin()
@@ -240,6 +225,26 @@ void vtkUltrasoundExampleGUI::RenderBegin()
 
 void vtkUltrasoundExampleGUI::RenderEnd()
 {
-        this->renderScheduled=false;
-        this->Script("after idle %s ScheduleRender", this->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
+    this->renderScheduled=false;
+    this->Script("after idle %s ScheduleRender", this->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
+}
+
+void vtkUltrasoundExampleGUI::UltrasoundEvent(unsigned long ev)
+{
+    switch (ev)
+    {
+    case vtkUltrasoundStreamerGUI::DataUpdatedEvent:
+        this->ImageData;
+        break;
+    case vtkUltrasoundStreamerGUI::EnablingEvent:
+        this->UltrasoundStreamerGUI->SetImageData(this->ImageData);
+        break;
+    case vtkUltrasoundStreamerGUI::DisabledEvent:
+        break;
+    case vtkUltrasoundStreamSource::ConnectionEstablished:
+        this->VolumeMapper->SetInput(this->ImageData);
+        break;
+    default:
+        break;
+    }
 }

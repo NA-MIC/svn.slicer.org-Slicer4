@@ -77,6 +77,8 @@ void vtkUltrasoundScannerReader::UpdateData()
 
     unsigned int frameNumber  = 0;
     
+    this->SetConnected();
+
     do
     {
         frameNumber;
@@ -115,6 +117,7 @@ void vtkUltrasoundScannerReader::StopStreaming()
         this->ThreadRunning = false;
         while(this->ThreadAlive)
             ;//Sleep(10);
+        this->SetDisconnected();
     }
 }
 

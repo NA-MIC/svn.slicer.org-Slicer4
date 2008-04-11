@@ -37,12 +37,17 @@ void vtkPhillipsUltrasoundStreamSource::Reconnect()
 
 void vtkPhilipsUltrasoundStreamSource::StartStreaming()
 {
-    this->StreamManager.Start((char*)this->IPAddress.c_str());
+    if (this->StreamManager.Start((char*)this->IPAddress.c_str()))
+        this->SetConnected();
 }
 
 void vtkPhilipsUltrasoundStreamSource::StopStreaming()
 {
-    this->StreamManager.Stop();
+    if (this->IsConnected()
+    {
+        this->StreamManager.Stop();
+        this->SetDisconnected();
+    }
 }
 
 bool _cdecl vtkPhilipsUltrasoundStreamSource::StreamingCallback(_int64 frame_index, SClient3DArray *echo_data, SClient3DArray *color_data)

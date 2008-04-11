@@ -15,6 +15,7 @@ vtkUltrasoundStreamSource* vtkUltrasoundStreamSource::New()
 vtkUltrasoundStreamSource::vtkUltrasoundStreamSource(void)
 {
     this->CurrentBuffer = 0;
+    this->b_Connected = false;
     for (int i=0; i<2; i++)
     {
         this->ImageBuffers[i] = vtkImageData::New();
@@ -79,6 +80,19 @@ void vtkUltrasoundStreamSource::SetDataInHiddenBuffer(unsigned char* data, int w
     this->SwapBuffers();
     Mutex->Unlock();
 }
+
+void vtkUltrasoundStreamSource::SetConnected()
+{
+    this->b_Connected = true;
+    this->InvokeEvent(vtkUltrasoundStreamSource::ConnectionEstablished);
+}
+
+void vtkUltrasoundStreamSource::SetDisconnected()
+{
+    this->b_Connected = false;
+    this->InvokeEvent(vtkUltrasoundStreamSource::ConnectionClosed);
+}
+
 
 void vtkUltrasoundStreamSource::PrintSelf(ostream& os, vtkIndent indent)
 {
