@@ -27,6 +27,7 @@ TARGET_LINK_LIBRARIES(UltrasoundExampleGUILibrary
   vtkFilteringTCL
   vtkIOTCL
   ${KWWidgets_LIBRARIES}
+  UltrasoundModule
 )
 
 IF(BUILD_SHARED_LIBS)
@@ -37,11 +38,13 @@ IF(BUILD_SHARED_LIBS)
 ENDIF(BUILD_SHARED_LIBS)
 
 
-ADD_EXECUTABLE(UltrasoundHeartExample
-  UltrasoundHeartExample.cxx
+
+
+ADD_EXECUTABLE(UltrasoundExampleMain
+  UltrasoundExampleMain.cxx
 )
 
-TARGET_LINK_LIBRARIES(UltrasoundHeartExample
+TARGET_LINK_LIBRARIES(UltrasoundExampleMain
   UltrasoundExampleGUILibrary
   ${KWWidgets_LIBRARIES}
 )
@@ -53,4 +56,6 @@ INCLUDE_DIRECTORIES(
  ${VolumeRenderingCudaModule_BINARY_DIR}
  ${CudaSupport_SOURCE_DIR}
  ${CudaSupport_BINARY_DIR}
+ ${UltrasoundModule_SOURCE_DIR}
+ ${UltrasoundModule_BINARY_DIR}
 )

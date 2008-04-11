@@ -8,10 +8,12 @@
 class vtkCallbackCommand;
 class vtkVolume;
 class vtkVolumeMapper;
-class vtkImageReader;
+class vtkImageData;
 class vtkKWVolumePropertyWidget;
 class vtkKWCheckButton;
 class vtkKWRenderWidget;
+
+class vtkUltrasoundStreamerGUI;
 
 class VTK_ULTRASOUNDEXAMPLEGUILIBRARY_EXPORT vtkUltrasoundExampleGUI : public vtkKWWindow
 {
@@ -27,19 +29,24 @@ public:
     static void GuiEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
     static void RenderBeginStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
     static void RenderEndStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
+    static void UltrasoundEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
     void GuiEvent(vtkObject* caller);
     void RenderBegin();
     void RenderEnd();
+    void UltrasoundEvent(unsigned long event);
 
     vtkCallbackCommand* GUICallbackCommand;
     vtkCallbackCommand* StartCallbackCommand;
     vtkCallbackCommand* StopCallbackCommand;
+    vtkCallbackCommand* UltrasoundCommand;
 
 protected:
     vtkUltrasoundExampleGUI();
     virtual ~vtkUltrasoundExampleGUI();
 
     virtual void CreateWidget();
+    void CreateUltrasoundWidget();
+    void CreateVolumeRenderingWidget();
 
 
     private:
@@ -47,18 +54,15 @@ protected:
     vtkUltrasoundExampleGUI(const vtkUltrasoundExampleGUI&);
 
 private:
-    vtkKWRenderWidget* renderWidget;
-    vtkKWCheckButton* cb_Animate;
+    vtkKWRenderWidget*              renderWidget;
 
+    vtkImageData*                   ImageData;
+    vtkVolume*                      Volume;
+    vtkVolumeMapper*                VolumeMapper;
+    vtkKWVolumePropertyWidget*      VolumePropertyWidget;
+    
+    vtkUltrasoundStreamerGUI*       UltrasoundStreamerGUI;    
 
-    vtkVolume* Volume;
-    vtkVolumeMapper* VolumeMapper;
-    vtkKWVolumePropertyWidget* VolumePropertyWidget;
-
-    unsigned int frameNumber;
-    //BTX
-    vtkstd::vector<vtkImageReader*> readers;
-    //ETX
     bool renderScheduled;
     bool isRendering;
 };

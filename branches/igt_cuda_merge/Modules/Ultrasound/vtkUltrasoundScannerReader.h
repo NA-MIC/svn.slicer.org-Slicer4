@@ -42,6 +42,7 @@ protected:
     vtkMultiThreader*       Thread;
     bool                    ThreadAlive;
     bool                    ThreadRunning;
+
     //BTX
     std::string             FileName;
     //ETX

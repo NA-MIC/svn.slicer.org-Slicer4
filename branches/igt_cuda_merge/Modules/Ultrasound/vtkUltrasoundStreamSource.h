@@ -11,6 +11,14 @@ class vtkSimpleMutexLock;
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundStreamSource : public vtkObject
 {
 public:
+    //BTX
+    enum
+    {
+        ConnectionEstablished = 12300,
+        ConnectionClosed,
+    };
+    //ETX
+
     static vtkUltrasoundStreamSource *New();
     vtkTypeRevisionMacro(vtkUltrasoundStreamSource, vtkObject);
     
@@ -20,12 +28,15 @@ public:
     vtkImageData* GetData();
     void FetchImageData(vtkImageData* data);
 
+    bool    IsConnected() const { return b_Connected; } 
+
     virtual void Reconnect() = 0;
     virtual void StartStreaming() = 0;
     virtual void StopStreaming() = 0;
     //BTX
     virtual void SetSourceAddress(const std::string& sourceAddress) = 0;
     //ETX
+
 protected:
     // Description:
     // Use ::New() to get a new instance.
@@ -37,11 +48,16 @@ protected:
     void SetDataInHiddenBuffer(vtkImageData* data);
     void SetDataInHiddenBuffer(unsigned char* data, int width, int height, int depth);
     vtkImageData* GetDataInHiddenBuffer();
+
+    void                    SetConnected();
+    void                    SetDisconnected();
     
+protected:
     vtkImageData*           ImageBuffers[2];
     int                     CurrentBuffer;
     vtkSimpleMutexLock*     Mutex;
-    bool                    ThreadRunning;
+
+    bool                    b_Connected;
 
 private:
     vtkUltrasoundStreamSource(const vtkUltrasoundStreamSource&); //Not implemented
