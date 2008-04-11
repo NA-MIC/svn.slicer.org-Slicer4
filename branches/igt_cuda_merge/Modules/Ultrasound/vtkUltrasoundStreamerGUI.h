@@ -16,7 +16,7 @@ class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundStreamerGUI : public vtkKWFrame
 public:
     //BTX
     enum {
-        VolumeUpdatedEvent = 10001,
+        DataUpdatedEvent = 10001,
         EnablingEvent,
         EnabledEvent,
         DisablingEvent,
@@ -32,7 +32,7 @@ public:
 
     vtkGetObjectMacro(StreamSource, vtkUltrasoundStreamSource);
     vtkGetObjectMacro(ImageData, vtkImageData);
-    vtkSetObjectMacro(ImageData, vtkImageData);
+    void SetImageData(vtkImageData* imageData) { this->ImageData = imageData; } 
 
     static void ProcessGUIEventsStatic (vtkObject *caller, unsigned long event, void *callData, void* object);
 

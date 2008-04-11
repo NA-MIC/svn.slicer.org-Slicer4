@@ -18,7 +18,7 @@ public:
 
     void SwapBuffers();
     vtkImageData* GetData();
-    void GetImageData(vtkImageData* data);
+    void FetchImageData(vtkImageData* data);
 
     virtual void StartStreaming() = 0;
     virtual void StopStreaming() = 0;
