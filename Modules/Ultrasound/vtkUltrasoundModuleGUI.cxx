@@ -1,7 +1,6 @@
 #include "vtkUltrasoundModuleGUI.h"
+#include "vtkUltrasoundModuleLogic.h"
 #include "vtkObjectFactory.h"
-
-#include "vtkCallbackCommand.h"
 
 #include "vtkKWEvent.h"
 #include "vtkKWCheckButton.h"
@@ -20,9 +19,12 @@
 #include "vtkMRMLScene.h"
 
 #include "vtkUltrasoundStreamSource.h"
-#include "vtkPhilipsUltrasoundStreamSource.h"
 
-#include "vtkUltrasoundModuleLogic.h"
+#ifdef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
+  #include "vtkPhilipsUltrasoundStreamSource.h"
+#else 
+  #include "vtkUltrasoundScannerReader.h"
+#endif
 
 vtkCxxRevisionMacro(vtkUltrasoundModuleGUI, "$ Revision 1.0$");
 vtkStandardNewMacro(vtkUltrasoundModuleGUI);
@@ -161,8 +163,11 @@ void vtkUltrasoundModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long
         if (cb_Enabled->GetSelectedState() == 1)
         {
             if (this->StreamSource == NULL)
+#ifdef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
                 this->StreamSource = vtkPhilipsUltrasoundStreamSource::New();
-
+#else
+                this->StreamSource = vtkUltrasoundScannerReader::New();
+#endif /*PHILLIPS_ULTRASOUND_SCANNER_SUPPORT */
             this->StreamSource->StartStreaming();
 
             if (this->VolumeNode == NULL)

@@ -120,10 +120,12 @@ void vtkCudaMemoryTexture::BindBuffer()
 {
     if (this->CurrentRenderMode == RenderToTexture)
     {
-        CUDA_SAFE_CALL( cudaGLRegisterBufferObject(this->BufferObjectID) );
+        cudaGLRegisterBufferObject(this->BufferObjectID) ;
+        cudaThreadSynchronize();
 
         vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, this->BufferObjectID);
-        CUDA_SAFE_CALL(cudaGLMapBufferObject((void**)&this->RenderDestination, this->BufferObjectID));
+        cudaGLMapBufferObject((void**)&this->RenderDestination, this->BufferObjectID);
+        cudaThreadSynchronize();
     }
     else
     {
@@ -135,9 +137,11 @@ void vtkCudaMemoryTexture::UnbindBuffer()
 {
     if (this->CurrentRenderMode == RenderToTexture)
     {
-        CUDA_SAFE_CALL(cudaGLUnmapBufferObject(this->BufferObjectID));
+        cudaGLUnmapBufferObject(this->BufferObjectID);
+        cudaThreadSynchronize();
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, this->Width, this->Height, GL_RGBA, GL_UNSIGNED_BYTE, (0));
-        CUDA_SAFE_CALL( cudaGLUnregisterBufferObject(this->BufferObjectID) );
+        cudaGLUnregisterBufferObject(this->BufferObjectID) ;
+        cudaThreadSynchronize();
         vtkgl::BindBufferARB(vtkgl::PIXEL_UNPACK_BUFFER_ARB, 0);
     }
     else // (this->CurrentRenderMode == RenderToMemory)
