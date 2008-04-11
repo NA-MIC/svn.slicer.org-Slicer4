@@ -31,7 +31,7 @@ __device__ float getSplineValue(float x){
     return 0;
   }
 }
-
+extern "C"
 __global__ void CUDAkernel_elasticTransformation_doTransformation(unsigned char* inputData, unsigned char* outputData, float* transSpline, int tempPow)
 {
   int xIndex = (blockDim.x*blockIdx.x + threadIdx.x) % (int)c_elasticTransformation_gridSize[0];
