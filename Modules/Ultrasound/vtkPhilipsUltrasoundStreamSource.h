@@ -15,6 +15,7 @@ public:
     
     void PrintSelf(ostream& os, vtkIndent indent);
 
+    virtual void Reconnect();
     virtual void StartStreaming();
     virtual void StopStreaming();
 

@@ -29,9 +29,14 @@ void vtkPhilipsUltrasoundStreamSource::SetIPAddress(const std::string& ip_addres
     this->IPAddress = ip_address;
 }
 
+void vtkPhillipsUltrasoundStreamSource::Reconnect()
+{
+    this->StopStreaming();
+    this->StartStreaming();
+}  
+
 void vtkPhilipsUltrasoundStreamSource::StartStreaming()
 {
-
     this->StreamManager.Start((char*)this->IPAddress.c_str());
 }
 

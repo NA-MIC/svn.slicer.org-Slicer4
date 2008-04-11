@@ -17,6 +17,7 @@ vtkUltrasoundScannerReader::vtkUltrasoundScannerReader(void)
     //this->DataUpdated = vtkCallbackCommand::New();
     this->Thread = NULL;
     this->ThreadRunning = false;
+    this->ThreadAlive = false;
 }
 
 vtkUltrasoundScannerReader::~vtkUltrasoundScannerReader(void)
@@ -48,6 +49,7 @@ void vtkUltrasoundScannerReader::UpdateData()
     if (this->ThreadRunning)
         return;
     this->ThreadRunning = true;
+    this->ThreadAlive = true;
 
     vtkstd::vector<vtkImageReader*> ImageReaders;
 
@@ -69,22 +71,31 @@ void vtkUltrasoundScannerReader::UpdateData()
         std::cout << "." << std::flush;
 
         if (ThreadRunning == false)
-            return;
+            break;
     }
     std::cout << "done" <<  std::endl;
 
     unsigned int frameNumber  = 0;
-    while(this->ThreadRunning)
+    
+    do
     {
         frameNumber;
         if (++frameNumber >= ImageReaders.size())
             frameNumber = 0;
 
         this->SetDataInHiddenBuffer(ImageReaders[frameNumber]->GetOutput());
-    }
+    } while(this->ThreadRunning);
 
     for (i = 0; i < ImageReaders.size(); i++)
         ImageReaders[i]->Delete();
+
+    this->ThreadAlive = false;
+}
+
+void vtkUltrasoundScannerReader::Reconnect()
+{
+    this->StopStreaming();
+    this->StartStreaming();
 }
 
 void vtkUltrasoundScannerReader::StartStreaming()
@@ -102,6 +113,8 @@ void vtkUltrasoundScannerReader::StopStreaming()
     if (this->Thread != NULL)
     {
         this->ThreadRunning = false;
+        while(this->ThreadAlive)
+            ;//Sleep(10);
     }
 }
 

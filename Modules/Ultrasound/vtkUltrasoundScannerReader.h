@@ -18,6 +18,7 @@ public:
 
     //vtkCallbackCommand* DataUpdated;
 
+    virtual void Reconnect();
     virtual void StartStreaming();
     virtual void StopStreaming();
     
@@ -39,6 +40,7 @@ protected:
 
 protected:    
     vtkMultiThreader*       Thread;
+    bool                    ThreadAlive;
     bool                    ThreadRunning;
     //BTX
     std::string             FileName;

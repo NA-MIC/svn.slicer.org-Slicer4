@@ -6,6 +6,7 @@
 
 class vtkKWCheckButton;
 class vtkKWScaleWithLabel;
+class vtkKWEntryWithLabel;
 
 #include "vtkImageData.h"
 class vtkUltrasoundStreamSource;
@@ -29,6 +30,7 @@ public:
 
     bool IsEnabled() const;
     int GetRefreshRate() const;
+    const char* GetAddress() const;
 
     vtkGetObjectMacro(StreamSource, vtkUltrasoundStreamSource);
     vtkGetObjectMacro(ImageData, vtkImageData);
@@ -55,6 +57,7 @@ private:
     vtkUltrasoundStreamSource*  StreamSource;
     vtkKWCheckButton*           cb_Enabled;
     vtkKWScaleWithLabel*        sc_RefreshRate;
+    vtkKWEntryWithLabel*        el_Address;
 
     vtkImageData*               ImageData;
 };
