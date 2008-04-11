@@ -30,7 +30,7 @@ vtkUltrasoundModuleGUI::vtkUltrasoundModuleGUI()
     // Initialize Values
     this->Logic = NULL;
     this->VolumeNode = NULL;
-this->UltrasoundStreamerGUI = NULL;
+    this->UltrasoundStreamerGUI = NULL;
 }
 
 vtkUltrasoundModuleGUI::~vtkUltrasoundModuleGUI()
@@ -42,7 +42,6 @@ vtkUltrasoundModuleGUI::~vtkUltrasoundModuleGUI()
         this->VolumeNode = NULL;
         this->UltrasoundStreamerGUI = NULL;
     }
-
 }
 
 // Description:
@@ -84,6 +83,8 @@ void vtkUltrasoundModuleGUI::BuildGUI ( )
     this->UltrasoundStreamerGUI->Create();
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->UltrasoundStreamerGUI->GetWidgetName());
+
+    
 
 }
 

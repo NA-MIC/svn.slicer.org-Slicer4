@@ -14,6 +14,16 @@ class vtkCallbackCommand;
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundStreamerGUI : public vtkKWFrame
 {
 public:
+    //BTX
+    enum {
+        VolumeUpdatedEvent = 10001,
+        EnablingEvent,
+        EnabledEvent,
+        DisablingEvent,
+        DisabledEvent,
+    };
+    //ETX
+
     vtkTypeRevisionMacro(vtkUltrasoundStreamerGUI, vtkKWFrame);
     static vtkUltrasoundStreamerGUI* New();
 
@@ -23,6 +33,8 @@ public:
     vtkGetObjectMacro(StreamSource, vtkUltrasoundStreamSource);
     vtkGetObjectMacro(ImageData, vtkImageData);
     vtkSetObjectMacro(ImageData, vtkImageData);
+
+    static void ProcessGUIEventsStatic (vtkObject *caller, unsigned long event, void *callData, void* object);
 
     void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
     void UpdateInput();
