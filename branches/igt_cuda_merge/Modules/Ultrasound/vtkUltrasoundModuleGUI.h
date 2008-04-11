@@ -1,5 +1,5 @@
-#ifndef __ULTRASOUND_EXAMPLE_GUI_H_
-#define __ULTRASOUND_EXAMPLE_GUI_H_
+#ifndef __ULTRASOUND_MODULE_GUI_H_
+#define __ULTRASOUND_MODULE_GUI_H_
 
 #include "vtkSlicerModuleGUI.h"
 #include "vtkUltrasoundModule.h"
@@ -9,6 +9,7 @@ class vtkKWScaleWithLabel;
 
 class vtkUltrasoundModuleLogic;
 class vtkUltrasoundStreamSource;
+class vtkUltrasoundStreamerGUI;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundModuleGUI : public vtkSlicerModuleGUI
 {
@@ -61,6 +62,8 @@ class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundModuleGUI : public vtkSlicerModul
         this->Logic=logic;
     }
 
+    vtkGetObjectMacro(UltrasoundStreamerGUI, vtkUltrasoundStreamerGUI);
+
     virtual void CreateWidget();
 
     void UpdateInput();
@@ -85,17 +88,11 @@ private:
     vtkUltrasoundModuleGUI(const vtkUltrasoundModuleGUI&);
 
 private:
-    vtkKWCheckButton*           cb_Enabled;
-
-    vtkKWScaleWithLabel*        sc_RefreshRate;
-
-    vtkKWCheckButton*           cb_Scanning;
-
     vtkUltrasoundModuleLogic*   Logic;
 
     vtkMRMLScalarVolumeNode*    VolumeNode;
 
-    vtkUltrasoundStreamSource*  StreamSource;
+    vtkUltrasoundStreamerGUI*   UltrasoundStreamerGUI;
 };
 
-#endif /* __ULTRASOUND_EXAMPLE_GUI_H_ */
+#endif /* __ULTRASOUND_MODULE_GUI_H_ */

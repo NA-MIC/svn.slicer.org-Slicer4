@@ -19,6 +19,7 @@ public:
     virtual void StopStreaming();
 
     //BTX
+    virtual void SetSourceAddress(const std::string& sourceAddress) { this->SetIPAddress(sourceAddress); }
     void SetIPAddress(const std::string& ip_address);
     //ETX
 protected:

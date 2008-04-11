@@ -22,6 +22,7 @@ public:
     virtual void StopStreaming();
     
     //BTX
+    virtual void SetSourceAddress(const std::string& sourceAddress) { this->SetFileName(sourceAddress); }
     void SetFileName(const std::string& file_name);
     //ETX
 protected:

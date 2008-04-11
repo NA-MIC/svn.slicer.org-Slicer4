@@ -6,6 +6,7 @@
 
 class vtkImageData;
 class vtkSimpleMutexLock;
+#include <string>
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundStreamSource : public vtkObject
 {
@@ -21,7 +22,9 @@ public:
 
     virtual void StartStreaming() = 0;
     virtual void StopStreaming() = 0;
-    
+    //BTX
+    virtual void SetSourceAddress(const std::string& sourceAddress) = 0;
+    //ETX
 protected:
     // Description:
     // Use ::New() to get a new instance.

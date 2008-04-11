@@ -14,7 +14,7 @@ vtkPhilipsUltrasoundStreamSource* vtkPhilipsUltrasoundStreamSource::New()
  
 vtkPhilipsUltrasoundStreamSource::vtkPhilipsUltrasoundStreamSource(void)
 {
-    this->IPAddress = "192.168.1.15";
+    this->IPAddress = "";
     this->StreamManager.RegisterCallback(vtkPhilipsUltrasoundStreamSource::StreamingCallback);
     this->StreamManager.Initialize();
 }

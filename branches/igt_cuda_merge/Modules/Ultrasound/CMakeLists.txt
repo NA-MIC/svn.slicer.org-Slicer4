@@ -24,12 +24,17 @@ endif(PHILLIPS_ULTRASOUND_SCANNER)
 # --------------------------------------------------------------------------
 # Sources
   SET(UltrasoundModule_SRCS
+  ## MAIN GUI
     vtkUltrasoundModuleGUI.cxx
     vtkUltrasoundModuleLogic.cxx
+    vtkMRMLUltrasoundNode.cxx
+
+  # GUI ELEMENTS
+    vtkUltrasoundStreamerGUI.cxx
+    
+  # SCANNER CLASSES
     vtkUltrasoundStreamSource.cxx
     vtkUltrasoundScannerReader.cxx    
-    vtkMRMLUltrasoundNode.cxx
-    
     ${PHILLIPS_ULTRASOUND_SCANNER_SOURCES}
 )
 
