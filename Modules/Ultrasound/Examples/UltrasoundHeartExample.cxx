@@ -1,5 +1,5 @@
 #include "vtkKWApplication.h"
-#include "vtkUltrasoundGUI.h"
+#include "vtkUltrasoundExampleGUI.h"
 
 #include "vtkCallbackCommand.h"
 #include <vtksys/SystemTools.hxx>
@@ -35,13 +35,13 @@
 #include "vtkVolumeTextureMapper3D.h"
 
 vtkKWApplication *app;
-extern "C" int Ultrasoundlibrary_Init(Tcl_Interp *interp);
+extern "C" int Ultrasoundexampleguilibrary_Init(Tcl_Interp *interp);
 
 int my_main(int argc, char *argv[])
 {
     // Initialize Tcl
     Tcl_Interp *interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr);
-    Ultrasoundlibrary_Init(interp);
+    Ultrasoundexampleguilibrary_Init(interp);
     
     if (!interp)
     {
@@ -74,7 +74,7 @@ int my_main(int argc, char *argv[])
 
     // Add a window
     // Set 'SupportHelp' to automatically add a menu entry for the help link
-    vtkUltrasoundGUI *win = vtkUltrasoundGUI::New();
+    vtkUltrasoundExampleGUI *win = vtkUltrasoundExampleGUI::New();
     app->AddWindow(win);
     win->Create();
     win->SecondaryPanelVisibilityOff();
