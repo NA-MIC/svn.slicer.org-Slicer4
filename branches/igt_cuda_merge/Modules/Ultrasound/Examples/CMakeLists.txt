@@ -27,6 +27,7 @@ TARGET_LINK_LIBRARIES(UltrasoundExampleGUILibrary
   vtkFilteringTCL
   vtkIOTCL
   ${KWWidgets_LIBRARIES}
+  VolumeRenderingCudaModule
   UltrasoundModule
 )
 

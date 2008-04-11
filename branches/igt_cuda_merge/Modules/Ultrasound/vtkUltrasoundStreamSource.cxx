@@ -21,8 +21,10 @@ vtkUltrasoundStreamSource::vtkUltrasoundStreamSource(void)
         this->ImageBuffers[i] = vtkImageData::New();
         this->ImageBuffers[i]->SetScalarTypeToUnsignedChar();
         this->ImageBuffers[i]->SetNumberOfScalarComponents(1);
-        this->ImageBuffers[i]->SetDimensions(0, 0, 0);
+        this->ImageBuffers[i]->SetExtent(0,9, 0,9, 0,9);
         this->ImageBuffers[i]->SetSpacing(1.0f, 1.0f, 0.74f);
+        this->ImageBuffers[i]->AllocateScalars();
+        memset(this->ImageBuffers[i]->GetScalarPointer(), 0, 10*10*10*this->ImageBuffers[i]->GetScalarSize());
     }
     this->Mutex = vtkSimpleMutexLock::New();
 }

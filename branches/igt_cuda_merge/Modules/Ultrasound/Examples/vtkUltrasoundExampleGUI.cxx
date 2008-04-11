@@ -56,6 +56,12 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     this->Superclass::CreateWidget();
 
     this->ImageData = vtkImageData::New();
+    this->ImageData->SetScalarTypeToUnsignedChar();
+    this->ImageData->SetExtent(0, 9, 0, 9, 0, 9);
+    this->ImageData->SetNumberOfScalarComponents(1);
+    this->ImageData->SetSpacing(1.0f, 1.0f, 0.74f);
+    this->ImageData->AllocateScalars();
+    memset(this->ImageData->GetScalarPointer(), 0, 10*10*10*this->ImageData->GetScalarSize());;
 
     vtkKWApplication* app = this->GetApplication();
     // Add a render widget, attach it to the view frame, and pack
@@ -121,6 +127,7 @@ void vtkUltrasoundExampleGUI::CreateVolumeRenderingWidget()
     // Create the mapper and actor
     this->Volume = vtkVolume::New();
     this->VolumeMapper = vtkVolumeTextureMapper2D::New();
+    this->VolumeMapper->SetInput(this->ImageData);
     this->Volume->SetMapper(VolumeMapper);
 
 
@@ -226,7 +233,8 @@ void vtkUltrasoundExampleGUI::RenderBegin()
 void vtkUltrasoundExampleGUI::RenderEnd()
 {
     this->renderScheduled=false;
-    this->Script("after idle %s ScheduleRender", this->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
+    //this->Script("after idle %s ScheduleRender", this->GetTclName());
+    //[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");
 }
 
 void vtkUltrasoundExampleGUI::UltrasoundEvent(unsigned long ev)
@@ -234,7 +242,7 @@ void vtkUltrasoundExampleGUI::UltrasoundEvent(unsigned long ev)
     switch (ev)
     {
     case vtkUltrasoundStreamerGUI::DataUpdatedEvent:
-        this->ImageData;
+        this->ScheduleRender();
         break;
     case vtkUltrasoundStreamerGUI::EnablingEvent:
         this->UltrasoundStreamerGUI->SetImageData(this->ImageData);
