@@ -1,15 +1,14 @@
 #ifndef __vtkUltrasoundScannerReader_h
 #define __vtkUltrasoundScannerReader_h
 
-#include "vtkObject.h"
+#include "vtkUltrasoundStreamSource.h"
 #include "vtkUltrasoundModule.h"
 
+#include <string>
 class vtkMultiThreader;
-class vtkImageData;
-class vtkCallbackCommand;
-class vtkSimpleMutexLock;
+//class vtkCallbackCommand;
 
-class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundScannerReader : public vtkObject
+class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundScannerReader : public vtkUltrasoundStreamSource
 {
 public:
     static vtkUltrasoundScannerReader *New();
@@ -17,21 +16,14 @@ public:
     
     void PrintSelf(ostream& os, vtkIndent indent);
 
-    void SwapBuffers();
-    vtkImageData* GetData() { return this->ImageBuffers[this->CurrentBuffer]; }
-    vtkImageData* GetDataInHiddenBuffer() { return this->ImageBuffers[(this->CurrentBuffer == 0)? 1 : 0]; }
+    //vtkCallbackCommand* DataUpdated;
 
-    void GetImageData(vtkImageData* data);
-
+    virtual void StartStreaming();
+    virtual void StopStreaming();
+    
     //BTX
-    enum {
-        DataUpdatedEvent = 50012,
-    };
+    void SetFileName(const std::string& file_name);
     //ETX
-
-    void StartScanning();
-    void StopScanning();
-
 protected:
 
     static VTK_THREAD_RETURN_TYPE StartThread(void* data);
@@ -45,13 +37,11 @@ protected:
     ~vtkUltrasoundScannerReader(void);
 
 protected:    
-    vtkImageData*           ImageBuffers[2];
-    int                     CurrentBuffer;
-
-    vtkSimpleMutexLock*     Mutex;
-
     vtkMultiThreader*       Thread;
     bool                    ThreadRunning;
+    //BTX
+    std::string             FileName;
+    //ETX
 private:
     // Description:
     // Caution: Not implemented

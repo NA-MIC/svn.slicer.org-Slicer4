@@ -4,12 +4,20 @@ OPTION(ULTRASOUNDMODULE "Would you like to build Ultrasound Module support" ON)
 if(ULTRASOUNDMODULE)
 
 
+FIND_LIBRARY(PipelineCom 
+    PipelineComDll
+    C:\\dev\\lib
+)
+
+
 # --------------------------------------------------------------------------
 # Sources
   SET(UltrasoundModule_SRCS
     vtkUltrasoundModuleGUI.cxx
     vtkUltrasoundModuleLogic.cxx
+    vtkUltrasoundStreamSource.cxx
     vtkUltrasoundScannerReader.cxx
+    vtkPhilipsUltrasoundStreamSource.cxx
     
     vtkMRMLUltrasoundNode.cxx
 )
@@ -32,6 +40,7 @@ INCLUDE_DIRECTORIES(
   ${VTK_INCLUDE_DIRS}
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
+  C:\\dev\\include
   )
 
 
@@ -60,6 +69,7 @@ SET(UltrasoundModule_LIBRARIES
   vtkFilteringTCL
   vtkIOTCL
   ${KWWidgets_LIBRARIES}
+  ${PipelineCom}
  )
 
 

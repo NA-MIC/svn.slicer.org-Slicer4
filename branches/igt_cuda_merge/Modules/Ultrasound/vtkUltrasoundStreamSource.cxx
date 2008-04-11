@@ -1,0 +1,88 @@
+#include "vtkUltrasoundStreamSource.h"
+
+#include "vtkImageData.h"
+#include "vtkMutexLock.h"
+
+
+vtkCxxRevisionMacro(vtkUltrasoundStreamSource, "$Revision 1.0 $");
+
+//#include "vtkPhilipsUltrasoundStreamSource.h"
+vtkUltrasoundStreamSource* vtkUltrasoundStreamSource::New()
+{
+    return NULL; //vtkPhilipsUltrasoundStreamSource::New();
+}
+
+vtkUltrasoundStreamSource::vtkUltrasoundStreamSource(void)
+{
+    this->CurrentBuffer = 0;
+    for (int i=0; i<2; i++)
+    {
+        this->ImageBuffers[i] = vtkImageData::New();
+        this->ImageBuffers[i]->SetScalarTypeToUnsignedChar();
+        this->ImageBuffers[i]->SetNumberOfScalarComponents(1);
+        this->ImageBuffers[i]->SetDimensions(0, 0, 0);
+        this->ImageBuffers[i]->SetSpacing(1.0f, 1.0f, 0.74f);
+    }
+    this->Mutex = vtkSimpleMutexLock::New();
+}
+
+vtkUltrasoundStreamSource::~vtkUltrasoundStreamSource(void)
+{
+    this->ImageBuffers[0]->Delete();
+    this->ImageBuffers[1]->Delete();
+    this->Mutex->Delete();
+}
+
+void vtkUltrasoundStreamSource::SwapBuffers()
+{
+    this->CurrentBuffer = (this->CurrentBuffer == 0) ? 1 : 0;
+}
+
+vtkImageData* vtkUltrasoundStreamSource::GetData() 
+{ 
+    return this->ImageBuffers[this->CurrentBuffer]; 
+}
+    
+vtkImageData* vtkUltrasoundStreamSource::GetDataInHiddenBuffer() 
+{ 
+    return this->ImageBuffers[(this->CurrentBuffer == 0)? 1 : 0]; 
+}
+
+void vtkUltrasoundStreamSource::GetImageData(vtkImageData* data)
+{
+    this->Mutex->Lock();
+    data->DeepCopy(this->GetData());
+    this->Mutex->Unlock();
+}
+
+void vtkUltrasoundStreamSource::SetDataInHiddenBuffer(vtkImageData* data)
+{
+    Mutex->Lock();
+    vtkImageData* buffer = this->GetDataInHiddenBuffer();
+    buffer->DeepCopy(data);
+    this->SwapBuffers();
+    Mutex->Unlock();
+}
+
+void vtkUltrasoundStreamSource::SetDataInHiddenBuffer(unsigned char* data, int width, int height, int depth)
+{
+    Mutex->Lock();
+    vtkImageData* buffer = this->GetDataInHiddenBuffer();
+    int* old_dimensions = buffer->GetDimensions();
+    if (old_dimensions[0] != width || old_dimensions[1] != height || old_dimensions[2] != depth)
+    {
+        buffer->SetExtent(0, width-1, 0, height-1, 0, depth-1);
+        buffer->AllocateScalars();
+    }
+    int mem_size = width*height*depth;
+    memcpy( buffer->GetScalarPointer(), data, mem_size);
+    this->SwapBuffers();
+    Mutex->Unlock();
+}
+
+void vtkUltrasoundStreamSource::PrintSelf(ostream& os, vtkIndent indent)
+{
+    this->Superclass::PrintSelf(os, indent);
+}
+
+
