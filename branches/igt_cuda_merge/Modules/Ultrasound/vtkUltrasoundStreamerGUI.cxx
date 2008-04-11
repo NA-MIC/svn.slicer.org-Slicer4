@@ -31,6 +31,8 @@ vtkUltrasoundStreamerGUI::vtkUltrasoundStreamerGUI()
     this->StreamSource = NULL;
 
     this->GUICallbackCommand = vtkCallbackCommand::New();
+    this->GUICallbackCommand->SetCallback(&vtkUltrasoundStreamerGUI::ProcessGUIEventsStatic);
+    this->GUICallbackCommand->SetClientData(this);
 }
 
 vtkUltrasoundStreamerGUI::~vtkUltrasoundStreamerGUI()
@@ -44,6 +46,8 @@ vtkUltrasoundStreamerGUI::~vtkUltrasoundStreamerGUI()
         this->StreamSource->Delete();
     if (this->ImageData != NULL)
         this->ImageData->Delete();
+
+    this->GUICallbackCommand->Delete();
 }
 
 bool vtkUltrasoundStreamerGUI::IsEnabled() const
@@ -85,6 +89,10 @@ void vtkUltrasoundStreamerGUI::AddGUIObservers ( )
     this->cb_Enabled->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
+void vtkUltrasoundStreamerGUI::ProcessGUIEventsStatic(vtkObject *caller, unsigned long event, void *callData, void* object)
+{
+    ((vtkUltrasoundStreamerGUI*)caller)->ProcessGUIEvents(caller, event, callData);
+}
 
 void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData )
 {
@@ -93,6 +101,7 @@ void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned lo
         // ENABLE
         if (cb_Enabled->GetSelectedState() == 1)
         {
+            this->InvokeEvent(vtkUltrasoundStreamerGUI::EnablingEvent);
             if (this->StreamSource == NULL)
 #ifdef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
                 this->StreamSource = vtkPhilipsUltrasoundStreamSource::New();
@@ -103,12 +112,15 @@ void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned lo
             this->StreamSource->GetImageData(this->ImageData);
 
             this->UpdateInput();
+            this->InvokeEvent(vtkUltrasoundStreamerGUI::EnabledEvent);
         }
         //DISABLE 
         else // (cb_Enabled->GetSelectedState() == 0)
         {
+            this->InvokeEvent(vtkUltrasoundStreamerGUI::DisablingEvent);
             if (this->StreamSource != NULL)
                 this->StreamSource->StopStreaming();
+            this->InvokeEvent(vtkUltrasoundStreamerGUI::DisabledEvent);
         }
     }
 }
@@ -122,6 +134,7 @@ void vtkUltrasoundStreamerGUI::UpdateInput()
         std::stringstream str;
         str << "after " << (int) (1000.0 / this->sc_RefreshRate->GetWidget()->GetValue()) << " %s UpdateInput";
         this->GetApplication()->Script(str.str().c_str(), this->GetTclName());
+        this->InvokeEvent(vtkUltrasoundStreamerGUI::VolumeUpdatedEvent);
         //this->GetApplication()->Script("after idle %s UpdateInput", this->GetTclName());
     }
 }
