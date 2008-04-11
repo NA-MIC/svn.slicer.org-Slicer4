@@ -19,12 +19,11 @@ vtkUltrasoundScannerReader::vtkUltrasoundScannerReader(void)
     this->ImageBuffers[0] = vtkImageData::New();
     this->ImageBuffers[1] = vtkImageData::New();
 
-    this->DataUpdated = vtkCallbackCommand::New();
-
     this->Mutex = vtkSimpleMutexLock::New();
 
     this->Thread = NULL;
     this->ThreadRunning = false;
+
 }
 
 vtkUltrasoundScannerReader::~vtkUltrasoundScannerReader(void)
@@ -32,7 +31,6 @@ vtkUltrasoundScannerReader::~vtkUltrasoundScannerReader(void)
     this->ImageBuffers[0]->Delete();
     this->ImageBuffers[1]->Delete();
 
-    this->DataUpdated->Delete();
     this->Mutex->Delete();
 
     this->StopScanning();
@@ -42,12 +40,20 @@ vtkUltrasoundScannerReader::~vtkUltrasoundScannerReader(void)
 void vtkUltrasoundScannerReader::SwapBuffers()
 {
     this->CurrentBuffer = (this->CurrentBuffer == 0) ? 1 : 0;
+    this->InvokeEvent(vtkUltrasoundScannerReader::DataUpdatedEvent);
 }
 
 void vtkUltrasoundScannerReader::GetImageData(vtkImageData* data)
 {
     this->Mutex->Lock();
-    data->DeepCopy(this->GetData());
+    if (data->GetActualMemorySize() != this->GetData()->GetActualMemorySize())
+        data->DeepCopy(this->GetData());
+    else
+    {
+        int* dims = this->GetData()->GetDimensions();
+        memcpy(data->GetScalarPointer(), this->GetData()->GetScalarPointer(), 
+            dims[0] * dims[1] * dims[2] * this->GetData()->GetScalarSize());
+    }
     this->Mutex->Unlock();
 }
 

@@ -23,7 +23,11 @@ public:
 
     void GetImageData(vtkImageData* data);
 
-    vtkCallbackCommand* DataUpdated;
+    //BTX
+    enum {
+        DataUpdatedEvent = 50012,
+    };
+    //ETX
 
     void StartScanning();
     void StopScanning();
