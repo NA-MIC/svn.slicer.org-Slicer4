@@ -4,7 +4,7 @@ Project(UltrasoundModuleExamples)
 #### ULTRASOUND ####
 ####################
 SET(ULTRASOUND_EXAMPLE_SRCS
-  vtkUltrasoundGUI.cxx
+  vtkUltrasoundExampleGUI.cxx
 )
 
 ## WRAPPING
@@ -49,6 +49,8 @@ TARGET_LINK_LIBRARIES(UltrasoundHeartExample
 INCLUDE_DIRECTORIES(
  ${VolumeRenderingModule_SOURCE_DIR}
  ${VolumeRenderingModule_BINARY_DIR}
+ ${VolumeRenderingCudaModule_SOURCE_DIR}
+ ${VolumeRenderingCudaModule_BINARY_DIR}
  ${CudaSupport_SOURCE_DIR}
  ${CudaSupport_BINARY_DIR}
 )

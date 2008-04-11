@@ -28,4 +28,4 @@
 #define SLICER_VTK5
 #endif
 
-#include "vtkUltrasoundModuleWin32Header.h"
+#include "vtkUltrasoundExampleModuleWin32Header.h"
