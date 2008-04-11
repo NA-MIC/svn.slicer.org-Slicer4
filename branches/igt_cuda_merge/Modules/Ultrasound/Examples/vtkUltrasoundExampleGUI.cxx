@@ -1,5 +1,4 @@
-
-#include "vtkUltrasoundGUI.h"
+#include "vtkUltrasoundExampleGUI.h"
 #include "vtkObjectFactory.h"
 
 
@@ -32,11 +31,11 @@
 #include "vtkVolumeTextureMapper2D.h"
 #include "vtkVolumeTextureMapper3D.h"
 
-vtkCxxRevisionMacro(vtkUltrasoundGUI, "$ Revision 1.0$");
-vtkStandardNewMacro(vtkUltrasoundGUI);
+vtkCxxRevisionMacro(vtkUltrasoundExampleGUI, "$ Revision 1.0$");
+vtkStandardNewMacro(vtkUltrasoundExampleGUI);
 
 
-vtkUltrasoundGUI::vtkUltrasoundGUI()
+vtkUltrasoundExampleGUI::vtkUltrasoundExampleGUI()
 {
     // Initialize Values
     this->Volume = NULL;
@@ -49,7 +48,7 @@ vtkUltrasoundGUI::vtkUltrasoundGUI()
     this->isRendering = false;
 }
 
-void vtkUltrasoundGUI::CreateWidget()
+void vtkUltrasoundExampleGUI::CreateWidget()
 {
     this->Superclass::CreateWidget();
 
@@ -77,15 +76,15 @@ void vtkUltrasoundGUI::CreateWidget()
 
     /// GUI EVENT
     this->GUICallbackCommand = vtkCallbackCommand::New ( );
-    GUICallbackCommand->SetCallback( vtkUltrasoundGUI::GuiEventStatic );
+    GUICallbackCommand->SetCallback( vtkUltrasoundExampleGUI::GuiEventStatic );
     GUICallbackCommand->SetClientData(this);
 
     this->StartCallbackCommand = vtkCallbackCommand::New ( );
-    StartCallbackCommand->SetCallback( vtkUltrasoundGUI::RenderBeginStatic );
+    StartCallbackCommand->SetCallback( vtkUltrasoundExampleGUI::RenderBeginStatic );
     StartCallbackCommand->SetClientData(this);
 
     this->StopCallbackCommand = vtkCallbackCommand::New ( );
-    StopCallbackCommand->SetCallback( vtkUltrasoundGUI::RenderEndStatic );
+    StopCallbackCommand->SetCallback( vtkUltrasoundExampleGUI::RenderEndStatic );
     StopCallbackCommand->SetClientData(this);
 
 
@@ -146,7 +145,7 @@ void vtkUltrasoundGUI::CreateWidget()
     renderWidget->GetRenderWindow()->AddObserver(vtkCommand::EndEvent, (vtkCommand*)StopCallbackCommand);
 }
 
-vtkUltrasoundGUI::~vtkUltrasoundGUI()
+vtkUltrasoundExampleGUI::~vtkUltrasoundExampleGUI()
 {
     //    
     // Deallocate and exit
@@ -170,7 +169,7 @@ vtkUltrasoundGUI::~vtkUltrasoundGUI()
 }
 
 
-void vtkUltrasoundGUI::LoadUltrasoundHeartSeries(void* data)
+void vtkUltrasoundExampleGUI::LoadUltrasoundHeartSeries(void* data)
 {
     const char* fileName = (const char*)data;
     std::cout << "Loading " << std::flush;
@@ -193,7 +192,7 @@ void vtkUltrasoundGUI::LoadUltrasoundHeartSeries(void* data)
 }
 
 
-void vtkUltrasoundGUI::ScheduleRender()
+void vtkUltrasoundExampleGUI::ScheduleRender()
 {
     if (this->renderScheduled == false)
     {
@@ -208,21 +207,21 @@ void vtkUltrasoundGUI::ScheduleRender()
     }
 }
 
-void vtkUltrasoundGUI::GuiEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
+void vtkUltrasoundExampleGUI::GuiEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
-    vtkUltrasoundGUI::SafeDownCast((vtkObject*)clientData)->GuiEvent(caller);
+    vtkUltrasoundExampleGUI::SafeDownCast((vtkObject*)clientData)->GuiEvent(caller);
 }
-void vtkUltrasoundGUI::RenderBeginStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
+void vtkUltrasoundExampleGUI::RenderBeginStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
-    vtkUltrasoundGUI::SafeDownCast((vtkObject*)clientData)->RenderBegin();
+    vtkUltrasoundExampleGUI::SafeDownCast((vtkObject*)clientData)->RenderBegin();
 }
-void vtkUltrasoundGUI::RenderEndStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
+void vtkUltrasoundExampleGUI::RenderEndStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
-    vtkUltrasoundGUI::SafeDownCast((vtkObject*)clientData)->RenderEnd();
+    vtkUltrasoundExampleGUI::SafeDownCast((vtkObject*)clientData)->RenderEnd();
 }
 
 
-void vtkUltrasoundGUI::GuiEvent(vtkObject* caller)
+void vtkUltrasoundExampleGUI::GuiEvent(vtkObject* caller)
 {
     if (caller == cb_Animate && cb_Animate->GetSelectedState() == 1) 
     {
@@ -234,12 +233,12 @@ void vtkUltrasoundGUI::GuiEvent(vtkObject* caller)
     }
 }
 
-void vtkUltrasoundGUI::RenderBegin()
+void vtkUltrasoundExampleGUI::RenderBegin()
 {
     this->renderScheduled = true;
 }
 
-void vtkUltrasoundGUI::RenderEnd()
+void vtkUltrasoundExampleGUI::RenderEnd()
 {
         this->renderScheduled=false;
         this->Script("after idle %s ScheduleRender", this->GetTclName());//[[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindow] Render");

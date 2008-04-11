@@ -2,7 +2,7 @@
 #define __ULTRASOUND_EXAMPLE_GUI_H_
 
 #include "vtkKWWindow.h"
-#include "vtkUltrasoundModule.h"
+#include "vtkUltrasoundExampleModule.h"
 
 #include <vtkstd/vector>
 class vtkCallbackCommand;
@@ -13,11 +13,11 @@ class vtkKWVolumePropertyWidget;
 class vtkKWCheckButton;
 class vtkKWRenderWidget;
 
-class VTK_ULTRASOUNDLIBRARY_EXPORT vtkUltrasoundGUI : public vtkKWWindow
+class VTK_ULTRASOUNDEXAMPLEGUILIBRARY_EXPORT vtkUltrasoundExampleGUI : public vtkKWWindow
 {
 public:
-    vtkTypeRevisionMacro(vtkUltrasoundGUI, vtkKWWindow);
-    static vtkUltrasoundGUI *New();
+    vtkTypeRevisionMacro(vtkUltrasoundExampleGUI, vtkKWWindow);
+    static vtkUltrasoundExampleGUI *New();
 
     void LoadUltrasoundHeartSeries(void* data);
 
@@ -36,15 +36,15 @@ public:
     vtkCallbackCommand* StopCallbackCommand;
 
 protected:
-    vtkUltrasoundGUI();
-    virtual ~vtkUltrasoundGUI();
+    vtkUltrasoundExampleGUI();
+    virtual ~vtkUltrasoundExampleGUI();
 
     virtual void CreateWidget();
 
 
     private:
-    vtkUltrasoundGUI operator=(const vtkUltrasoundGUI&);
-    vtkUltrasoundGUI(const vtkUltrasoundGUI&);
+    vtkUltrasoundExampleGUI operator=(const vtkUltrasoundExampleGUI&);
+    vtkUltrasoundExampleGUI(const vtkUltrasoundExampleGUI&);
 
 private:
     vtkKWRenderWidget* renderWidget;
