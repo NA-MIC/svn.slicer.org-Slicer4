@@ -3,8 +3,10 @@
 
 #include "vtkKWLabel.h"
 #include "vtkKWScale.h"
+#include "vtkKWEntry.h"
 #include "vtkKWCheckButton.h"
 #include "vtkKWScaleWithLabel.h"
+#include "vtkKWEntryWithLabel.h"
 #include "vtkKWApplication.h"
 #include "vtkImageData.h"
 
@@ -27,6 +29,7 @@ vtkUltrasoundStreamerGUI::vtkUltrasoundStreamerGUI()
 {
     this->cb_Enabled = NULL;
     this->sc_RefreshRate = NULL;
+    this->el_Address = NULL;
 
     this->StreamSource = NULL;
 
@@ -41,11 +44,13 @@ vtkUltrasoundStreamerGUI::~vtkUltrasoundStreamerGUI()
         this->cb_Enabled->Delete();
     if (this->sc_RefreshRate != NULL)
         this->sc_RefreshRate->Delete();
+    if (this->el_Address != NULL)
+        this->el_Address->Delete();
 
     if (this->StreamSource != NULL)
         this->StreamSource->Delete();
-    if (this->ImageData != NULL)
-        this->ImageData->Delete();
+    //if (this->ImageData != NULL)
+    //    this->ImageData->Delete();
 
     this->GUICallbackCommand->Delete();
 }
@@ -57,6 +62,10 @@ bool vtkUltrasoundStreamerGUI::IsEnabled() const
 int vtkUltrasoundStreamerGUI::GetRefreshRate() const
 {
     return this->sc_RefreshRate->GetWidget()->GetValue();
+}
+const char* vtkUltrasoundStreamerGUI::GetAddress() const
+{
+    return this->el_Address->GetWidget()->GetValue();
 }
 
 void vtkUltrasoundStreamerGUI::CreateWidget()
@@ -79,6 +88,13 @@ void vtkUltrasoundStreamerGUI::CreateWidget()
     this->GetApplication()->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->sc_RefreshRate->GetWidgetName());
 
+    this->el_Address = vtkKWEntryWithLabel::New();
+    this->el_Address->SetParent(this);
+    this->el_Address->Create();
+    this->el_Address->SetLabelText("Source Address: ");
+    this->GetApplication()->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        this->el_Address->GetTclName());
+
     this->AddGUIObservers();
 }
 
@@ -87,6 +103,7 @@ void vtkUltrasoundStreamerGUI::CreateWidget()
 void vtkUltrasoundStreamerGUI::AddGUIObservers ( )
 {
     this->cb_Enabled->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    this->el_Address->GetWidget()->AddObserver(vtkKWEntry::EntryValueChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkUltrasoundStreamerGUI::ProcessGUIEventsStatic(vtkObject *caller, unsigned long ev, void *callData, void* object)
@@ -96,8 +113,7 @@ void vtkUltrasoundStreamerGUI::ProcessGUIEventsStatic(vtkObject *caller, unsigne
 
 void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long ev, void *callData )
 {
-    vtkObject* en = cb_Enabled;
-    if (caller == cb_Enabled && ev == vtkKWCheckButton::SelectedStateChangedEvent)
+    if (caller == this->cb_Enabled && ev == vtkKWCheckButton::SelectedStateChangedEvent)
     {
         // ENABLE
         if (cb_Enabled->GetSelectedState() == 1)
@@ -125,6 +141,16 @@ void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned lo
             if (this->StreamSource != NULL)
                 this->StreamSource->StopStreaming();
             this->InvokeEvent(vtkUltrasoundStreamerGUI::DisabledEvent);
+        }
+    }
+    else if (caller == this->el_Address && ev == vtkKWEntry::EntryValueChangedEvent)
+    {
+        if (this->StreamSource != NULL)
+        {
+            this->StreamSource->SetSourceAddress(el_Address->GetWidget()->GetValue());
+
+            if (this->cb_Enabled->GetSelectedState() == 1)
+                this->StreamSource->Reconnect();
         }
     }
 }

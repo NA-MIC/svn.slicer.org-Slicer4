@@ -20,6 +20,7 @@ public:
     vtkImageData* GetData();
     void FetchImageData(vtkImageData* data);
 
+    virtual void Reconnect() = 0;
     virtual void StartStreaming() = 0;
     virtual void StopStreaming() = 0;
     //BTX
