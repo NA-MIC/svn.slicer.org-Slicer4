@@ -48,7 +48,7 @@ vtkImageData* vtkUltrasoundStreamSource::GetDataInHiddenBuffer()
     return this->ImageBuffers[(this->CurrentBuffer == 0)? 1 : 0]; 
 }
 
-void vtkUltrasoundStreamSource::GetImageData(vtkImageData* data)
+void vtkUltrasoundStreamSource::FetchImageData(vtkImageData* data)
 {
     this->Mutex->Lock();
     data->DeepCopy(this->GetData());

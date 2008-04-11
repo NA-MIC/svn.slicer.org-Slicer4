@@ -66,8 +66,6 @@ class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundModuleGUI : public vtkSlicerModul
 
     virtual void CreateWidget();
 
-    void UpdateInput();
-
     // Description:
     // Methods describe behavior at module enter and exit.
     virtual void Enter ( );
