@@ -59,9 +59,9 @@ public:
     virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData);
 
     //BTX
-    void AddReference(std::string id);
-    bool HasReference(std::string id);
-    void RemoveReference(std::string id);
+    void AddReference(const std::string& id);
+    bool HasReference(const std::string& id);
+    void RemoveReference(const std::string& id);
     //ETX
 protected:
     // Description:

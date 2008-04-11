@@ -125,7 +125,7 @@ void vtkMRMLUltrasoundNode::ProcessMRMLEvents ( vtkObject *caller,
 
 
 
-void vtkMRMLUltrasoundNode::AddReference(std::string id)
+void vtkMRMLUltrasoundNode::AddReference(const std::string& id)
 {
     //test if we already have a reference
     if(this->HasReference(id))
@@ -138,7 +138,7 @@ void vtkMRMLUltrasoundNode::AddReference(std::string id)
     }
 
 }
-bool vtkMRMLUltrasoundNode::HasReference(std::string id)
+bool vtkMRMLUltrasoundNode::HasReference(const std::string& id)
 {
     //loop over vector and comparing
     for(unsigned int i=0;i<this->References.size();i++)
@@ -150,7 +150,7 @@ bool vtkMRMLUltrasoundNode::HasReference(std::string id)
     }
     return false;
 }
-void vtkMRMLUltrasoundNode::RemoveReference(std::string id)
+void vtkMRMLUltrasoundNode::RemoveReference(const std::string& id)
 {
     vtkErrorMacro("Not yet implemented");
 
