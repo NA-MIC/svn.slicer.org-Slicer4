@@ -8,7 +8,7 @@ class vtkKWCheckButton;
 class vtkKWScaleWithLabel;
 
 class vtkUltrasoundModuleLogic;
-class vtkUltrasoundScannerReader;
+class vtkUltrasoundStreamSource;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundModuleGUI : public vtkSlicerModuleGUI
 {
@@ -95,7 +95,7 @@ private:
 
     vtkMRMLScalarVolumeNode*    VolumeNode;
 
-    vtkUltrasoundScannerReader* ScannerReader;
+    vtkUltrasoundStreamSource*  StreamSource;
 };
 
 #endif /* __ULTRASOUND_EXAMPLE_GUI_H_ */
