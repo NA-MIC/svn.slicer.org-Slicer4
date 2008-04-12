@@ -63,6 +63,10 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
 VTK_WRAP_TCL3(VolumeRenderingModule VolumeRenderingModule_TCL_SRCS "${VolumeRenderingModule_SRCS}" "")
 
+# --------------------------------------------------------------------------
+# Add loadable module support
+
+GENERATELM(VolumeRenderingModule_SRCS VolumeRenderingModule.txt)
 
 # --------------------------------------------------------------------------
 # Build the library

@@ -13,11 +13,11 @@ This implementation based on Bill Lorensen's GenerateCLP utility.
 
   <parameters>
     <file>
-      <name>InputXML</name>
-      <label>Input XML</label>
+      <name>InputTxt</name>
+      <label>Input Text</label>
       <channel>input</channel>
       <index>0</index>
-      <description>XML description of interface</description>
+      <description>Text file containing key:value description of module</description>
     </file>
     <file>
       <name>OutputHeader</name>
