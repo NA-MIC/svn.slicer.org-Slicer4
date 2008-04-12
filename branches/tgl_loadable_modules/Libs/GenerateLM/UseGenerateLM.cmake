@@ -20,9 +20,9 @@ MACRO(GENERATELM SOURCES)
 
     # compute the input filename
     IF (TMP_FILEPATH)
-      SET(TMP_INPUT ${TMP_FILEPATH}/${TMP_FILENAME}.xml) 
+      SET(TMP_INPUT ${TMP_FILEPATH}/${TMP_FILENAME}.txt) 
     ELSE (TMP_FILEPATH)
-      SET(TMP_INPUT ${CMAKE_CURRENT_SOURCE_DIR}/${TMP_FILENAME}.xml)
+      SET(TMP_INPUT ${CMAKE_CURRENT_SOURCE_DIR}/${TMP_FILENAME}.txt)
     ENDIF (TMP_FILEPATH)
 
     # add custom command to output

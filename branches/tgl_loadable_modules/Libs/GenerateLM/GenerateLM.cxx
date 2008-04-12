@@ -1,19 +1,16 @@
 /*=========================================================================
 
-  Portions (c) Copyright 2006 Brigham and Women's Hospital (BWH) All Rights Reserved.
+  Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
 
   See Doc/copyright/copyright.txt
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   GenerateLM
-  Module:    $URL: http://svn.na-mic.org:8000/svn/NAMICSandBox/trunk/CommandLineAPI/GenerateCLP.cxx $
-  Date:      $Date: 2006-04-21 15:51:08 -0400 (Fri, 21 Apr 2006) $
-  Version:   $Revision: 957 $
 
-=========================================================================*/
+========================================================================*/
 
-/* Generate loadable mode support from an xml description
-   Usage: GenerateLM input_xml_file output_include_file ouput_source_file
+/* Generate loadable mode support from an key:value description
+   Usage: GenerateLM input_txt_file output_include_file ouput_source_file
 
    This program generates source code that allows module detection at
    run-time.  The module description is in an xml file.  The output
@@ -21,7 +18,7 @@
    startup to initialize the module.
 
    Typical usage is:
-   GenerateLM foo.xml fooLib.h fooLib.cxx
+   GenerateLM foo.txt fooLib.h fooLib.cxx
 
    fooLib.cxx contains:
    #include fooLib.h
@@ -34,6 +31,8 @@
 #include "expat.h"
 #include <string>
 #include <vector>
+#include <cctype>
+
 #include <itksys/SystemTools.hxx>
 
 // use GenerateCLP to make the header file that implements PARSE_ARGS
@@ -52,7 +51,7 @@ void GeneratePre(std::ofstream &, LoadableModuleDescription &, int, char *[]);
  */
 void GenerateSourceIncludes(std::ofstream &, const std::string&, int, char *[]);
 void GenerateExports(std::ofstream &);
-void GenerateModuleDataSymbols(std::ofstream &, const std::string&, const std::string&);
+void GenerateModuleDataSymbols(std::ofstream &, const LoadableModuleDescription&, const std::string&);
 void GenerateModuleEntryPoints(std::ofstream &);
 
 int
@@ -62,11 +61,11 @@ main(int argc, char *argv[])
   LoadableModuleDescription module;
   LoadableModuleDescriptionParser parser;
 
-  // Read the XML file
-  std::ifstream fin(InputXML.c_str(),std::ios::in|std::ios::binary);
+  // Read the TXT file
+  std::ifstream fin(InputTxt.c_str(),std::ios::in|std::ios::binary);
   if (fin.fail())
     {
-    std::cerr << argv[0] << ": Cannot open " << InputXML << " for input" << std::endl;
+    std::cerr << argv[0] << ": Cannot open " << InputTxt << " for input" << std::endl;
     perror(argv[0]);
     return EXIT_FAILURE;
     }
@@ -75,9 +74,9 @@ main(int argc, char *argv[])
   fin.seekg (0, std::ios::end);
   size_t len = fin.tellg();
   fin.seekg (0, std::ios::beg);
-  char * XML = new char[len+1];
-  fin.read (XML, len);
-  XML[len] = '\0';
+  char * TXT = new char[len+1];
+  fin.read (TXT, len);
+  TXT[len] = '\0';
 
   // Parse the module description
   std::cerr << "GenerateLM";
@@ -87,13 +86,37 @@ main(int argc, char *argv[])
     }
   std::cerr << std::endl;
 
-  if (parser.Parse(XML, module))
+  if (parser.ParseText(TXT, module))
     {
     std::cerr << "GenerateLM: One or more errors detected. Code generation aborted." << std::endl;
     return EXIT_FAILURE;
     }
 
-  // Do the hard stuff
+  // fixup information
+
+  std::string nospaces = module.GetName();
+  std::string::iterator iter = nospaces.begin();
+  while (iter != nospaces.end()) {
+    if ((*iter) == ' ') {
+      iter = nospaces.erase(iter);
+    } else {
+      iter++;
+    }
+  }
+
+  module.SetShortName(nospaces);
+  
+  std::transform(nospaces.begin(), nospaces.end(), nospaces.begin(), (int(*)(int)) std::tolower);
+
+  if (nospaces.empty()) {
+    // do nothing, it's empty
+  } else if (nospaces[0] > 96 && nospaces[0] < 122) {
+    // it's alphetic
+    nospaces[0] = nospaces[0] - 32;
+  }
+
+  module.SetTclInitName(nospaces + std::string("_Init"));
+  // make outputs
 
   {
     std::ofstream sout(OutputCxx.c_str(),std::ios::out);
@@ -105,12 +128,10 @@ main(int argc, char *argv[])
       }
     
     // make source cxx
-    std::string fname = itksys::SystemTools::GetFilenameName(InputXML);
-
-    std::string classname = fname.substr(0, fname.rfind('.'));
+    std::string classname = itksys::SystemTools::GetFilenameWithoutExtension(InputTxt);
 
     GenerateSourceIncludes(sout, classname, argc, argv);
-    GenerateModuleDataSymbols(sout, InputXML, classname);
+    GenerateModuleDataSymbols(sout, module, classname);
     sout.close();
   }
 
@@ -179,37 +200,22 @@ void GenerateExports(std::ofstream &sout)
   sout << std::endl;
 }
 
-void GenerateModuleDataSymbols(std::ofstream &sout, const std::string &XMLFile, const std::string &classname)
+void GenerateModuleDataSymbols(std::ofstream &sout, const LoadableModuleDescription &module, const std::string &classname)
 {
   sout << "extern \"C\" {" << std::endl;
   sout << "Module_EXPORT char " << classname << "ModuleDescription[] = " << std::endl;
-
-  std::string line;
-  std::ifstream fin(XMLFile.c_str(),std::ios::in);
-  while (!fin.eof())
-    {
-    std::getline( fin, line );
-
-    // replace quotes with escaped quotes
-    std::string cleanLine;
-    for (size_t j = 0; j < line.length(); j++)
-      {
-      if (line[j] == '\"')
-        {
-        cleanLine.append("\\\"");
-        }
-      else
-        {
-        cleanLine.append(1,line[j]);
-        }
-      }
-    sout << "\"" << cleanLine << "\\n\"" << std::endl;
-    }
+  sout << "\"<?xml version=\\\"1.0\\\" encoding=\\\"utf-8\\\"?>\\n\"" << std::endl;
+  sout << "\"<loadable>\\n\"" << std::endl;
+  sout << "\"  <name>" << module.GetName() << " Module</name>\\n\"" << std::endl;
+  sout << "\"  <shortname>" << module.GetShortName() << "</shortname>\\n\"" << std::endl;
+  sout << "\"  <guiname>" << module.GetGUIName() << "</guiname>\\n\"" << std::endl;
+  sout << "\"  <tclinitname>" << module.GetTclInitName() << "</tclinitname>\\n\"" << std::endl;
+  sout << "\"  <message>Initializing " << module.GetName() << " Module...</message>\\n\"" << std::endl;
+  sout << "\"</loadable>\\n\"" << std::endl;
+  sout << "\"\\n\"" << std::endl;
   sout << ";" << std::endl;
   sout << "}" << std::endl;
   sout << std::endl;
-
-  fin.close();
 
   sout << "char*" << std::endl;
   sout << "GetLoadableModuleDescription()" << std::endl;

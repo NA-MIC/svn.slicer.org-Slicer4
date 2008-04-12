@@ -411,3 +411,8 @@ void vtkSlicerTractographyFiducialSeedingGUI::BuildGUI ( )
 
   
 }
+
+//---------------------------------------------------------------------------
+void vtkSlicerTractographyFiducialSeedingGUI::Init ( ) 
+{
+}

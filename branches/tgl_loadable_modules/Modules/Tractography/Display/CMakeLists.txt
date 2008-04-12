@@ -11,6 +11,7 @@ SET(SlicerTractographyDisplay_SRCS
   vtkSlicerFiberBundleLogic.cxx
   vtkSlicerDiffusionTensorIcons.cxx
   vtkSlicerDiffusionTensorGlyphDisplayWidget.cxx
+  vtkSlicerTractographyDisplayLogic.cxx
 )
 
 # Abstract/pure virtual classes
@@ -59,6 +60,10 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
 VTK_WRAP_TCL3(SlicerTractographyDisplay SlicerTractographyDisplay_TCL_SRCS "${SlicerTractographyDisplay_SRCS}" "")
 
+# --------------------------------------------------------------------------
+# Loadable Module support, must be done after TCL Wrapping
+
+#GENERATELM(SlicerTractographyDisplay_SRCS SlicerTractographyDisplay.txt)
 
 # --------------------------------------------------------------------------
 # Build the library

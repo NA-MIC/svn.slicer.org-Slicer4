@@ -17,6 +17,7 @@ SUBDIRS(
       ModuleDescriptionParser
       LoadableModule
       GenerateCLP
+      GenerateLM
       SlicerIO
       ITKCommandIO
       MRMLIDImageIO
