@@ -10,6 +10,7 @@ public:
     __device__ void operator()(const int3& index,
         int outindex,
         const float* minmax /*[6] */,
+        const float2* minmaxTrace,
         const float3* rayMap,
         const cudaVolumeInformation& volInfo,
         const cudaRendererInformation& renInfo,
@@ -30,15 +31,23 @@ public:
         float A = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
         float B = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y);
 
+        float stepSize = sqrtf(rayMap[index.z*2+1].x * rayMap[index.z*2+1].x + 
+            rayMap[index.z*2+1].y * rayMap[index.z*2+1].y + 
+            rayMap[index.z*2+1].z * rayMap[index.z*2+1].z);
+
         //perform ray tracing until integration of alpha value reach threshold 
         while(depth < initialZBuffer) {
             distFromCam = B / ( depth - A);
 
+            tempPos.x = ( rayMap[index.z*2].x + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].x);
+            tempPos.y = ( rayMap[index.z*2].y + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].y);
+            tempPos.z = ( rayMap[index.z*2].z + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].z);
+
             //calculate current position in ray tracing
-            MatMul(volInfo.Transform, &tempPos, 
-                (renInfo.CameraPos.x + distFromCam * rayMap[index.z*2+1].x),
-                (renInfo.CameraPos.y + distFromCam * rayMap[index.z*2+1].y),
-                (renInfo.CameraPos.z + distFromCam * rayMap[index.z*2+1].z));
+            //MatMul(volInfo.Transform, &tempPos, 
+            //    (renInfo.CameraPos.x + distFromCam * rayMap[index.z*2+1].x),
+            //    (renInfo.CameraPos.y + distFromCam * rayMap[index.z*2+1].y),
+            //    (renInfo.CameraPos.z + distFromCam * rayMap[index.z*2+1].z));
 
             // if current position is in ROI
             if(tempPos.x >= minmax[0] && tempPos.x < minmax[1] &&
