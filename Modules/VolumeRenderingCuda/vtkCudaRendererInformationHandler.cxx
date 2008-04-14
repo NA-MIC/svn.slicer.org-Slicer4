@@ -25,7 +25,7 @@ vtkCudaRendererInformationHandler::vtkCudaRendererInformationHandler()
     this->RendererInfo.ActualResolution.x = this->RendererInfo.ActualResolution.y = 0;
     this->MemoryTexture = vtkCudaMemoryTexture::New();
 
-    this->SetRenderOutputScaleFactor(2.0f);
+    this->SetRenderOutputScaleFactor(1.0f);
 }
 
 vtkCudaRendererInformationHandler::~vtkCudaRendererInformationHandler()

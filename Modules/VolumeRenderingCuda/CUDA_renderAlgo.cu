@@ -18,7 +18,7 @@ extern "C" {
 
 // vtk includes
 //#include "vtkType.h"
-// or use these defines. they work too.
+// or use these defines. as copied from vtkType.h
 #define VTK_CHAR            2
 #define VTK_UNSIGNED_CHAR   3
 #define VTK_SHORT           4
@@ -26,36 +26,96 @@ extern "C" {
 #define VTK_INT             6
 #define VTK_UNSIGNED_INT    7
 #define VTK_FLOAT          10
-#define VTK_DOUBLE         11
-
-#define BLOCK_DIM2D 16// this must be set to 4 or more
-#define SQR(X) ((X) * (X) )
+//#define VTK_DOUBLE         11 NOT SUPPORTED BY CUDA
 
 
+#define BLOCK_DIM2D 16     // this must be set to 4 or more
 
-__device__ void CUDAkernel_SetRayMap(const int3& index, float3* raymap, const cudaRendererInformation& renInfo)
+
+__device__ void CUDAkernel_SetRayMap(const int3& index, float3* raymap, const cudaRendererInformation& renInfo, const cudaVolumeInformation& volInfo)
 {
     float rayLength;
-    float posHor= (float)index.x / (float)renInfo.Resolution.x;
-    float posVer= (float)index.y / (float)renInfo.Resolution.y;
+    float posHor = (float)index.x / (float)renInfo.Resolution.x;
+    float posVer = (float)index.y / (float)renInfo.Resolution.y;
 
     raymap[index.z*2].x = renInfo.CameraRayStart.x  + renInfo.CameraRayStartX.x * posVer + renInfo.CameraRayStartY.x * posHor;
     raymap[index.z*2].y = renInfo.CameraRayStart.y  + renInfo.CameraRayStartX.y * posVer + renInfo.CameraRayStartY.y * posHor;
     raymap[index.z*2].z = renInfo.CameraRayStart.z  + renInfo.CameraRayStartX.z * posVer + renInfo.CameraRayStartY.z * posHor;
+    
 
     // Ray Length
     raymap[index.z*2+1].x = (renInfo.CameraRayEnd.x  + renInfo.CameraRayEndX.x * posVer + renInfo.CameraRayEndY.x * posHor) - raymap[index.z*2].x;
     raymap[index.z*2+1].y = (renInfo.CameraRayEnd.y  + renInfo.CameraRayEndX.y * posVer + renInfo.CameraRayEndY.y * posHor) - raymap[index.z*2].y;
     raymap[index.z*2+1].z = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*2].z;
 
-    rayLength = sqrtf(raymap[index.z*2+1].x * raymap[index.z*2+1].x + 
-                      raymap[index.z*2+1].y * raymap[index.z*2+1].y + 
-                      raymap[index.z*2+1].z * raymap[index.z*2+1].z);
+    raymap[index.z*2] = MatMul(volInfo.Transform, raymap[index.z*2]);
+    raymap[index.z*2+1] = MatMul(volInfo.Transform, raymap[index.z*2+1]);
 
-    // Normalize the direction vector
-    raymap[index.z*2+1].x /= rayLength;
-    raymap[index.z*2+1].y /= rayLength;
-    raymap[index.z*2+1].z /= rayLength;
+    //rayLength = sqrtf(raymap[index.z*2+1].x * raymap[index.z*2+1].x + 
+    //                  raymap[index.z*2+1].y * raymap[index.z*2+1].y + 
+    //                  raymap[index.z*2+1].z * raymap[index.z*2+1].z);
+
+    //// Normalize the direction vector
+    //raymap[index.z*2+1].x /= rayLength;
+    //raymap[index.z*2+1].y /= rayLength;
+    //raymap[index.z*2+1].z /= rayLength;
+}
+
+__device__ void CUDAkernel_CalculateRayEnds(const int3& index, float* minmax/*[6]*/, float2* minmaxTrace, float3* rayMap)
+{
+ float test;
+  //calculating starting and ending point of ray tracing
+ if(rayMap[index.z*2+1].x > 1.0e-3){
+    minmaxTrace[index.z].y = ( ((minmax[1]-2) - rayMap[index.z*2].x) / rayMap[index.z*2+1].x );
+    minmaxTrace[index.z].x = ( ((minmax[0]+2) - rayMap[index.z*2].x) / rayMap[index.z*2+1].x );
+  }
+  else if(rayMap[index.z*2+1].x < -1.0e-3){
+    minmaxTrace[index.z].x = ( ((minmax[1]-2) - rayMap[index.z*2].x) / rayMap[index.z*2+1].x );
+    minmaxTrace[index.z].y = ( ((minmax[0]+2) - rayMap[index.z*2].x) / rayMap[index.z*2+1].x );
+  }
+  
+  if(rayMap[index.z*2+1].y > 1.0e-3){
+    test = ( ((minmax[3]-2) - rayMap[index.z*2].y) / rayMap[index.z*2+1].y );
+    if( test < minmaxTrace[index.z].y){
+      minmaxTrace[index.z].y = test;
+    }
+    test = ( ((minmax[2]+2) - rayMap[index.z*2].y) / rayMap[index.z*2+1].y );
+    if( test > minmaxTrace[index.z].x){
+      minmaxTrace[index.z].x = test;
+    }
+  }
+  else if(rayMap[index.z*2+1].y < -1.0e-3){
+    test = ( ((minmax[3]-2) - rayMap[index.z*2].y) / rayMap[index.z*2+1].y );
+    if( test > minmaxTrace[index.z].x){
+      minmaxTrace[index.z].x = test;
+    }
+    test = ( ((minmax[2]+2) - rayMap[index.z*2].y) / rayMap[index.z*2+1].y );
+    if( test < minmaxTrace[index.z].y){
+      minmaxTrace[index.z].y = test;
+    }
+  }
+  
+
+  if(rayMap[index.z*2+1].z > 1.0e-3){
+    test = ( ((minmax[5]-2) - rayMap[index.z*2].z) / rayMap[index.z*2+1].z );
+    if( test < minmaxTrace[index.z].y){
+      minmaxTrace[index.z].y = test;
+    }
+    test = ( ((minmax[4]+2) - rayMap[index.z*2].z) / rayMap[index.z*2+1].z );
+    if( test > minmaxTrace[index.z].x){
+      minmaxTrace[index.z].x = test;
+    }
+  }
+  else if(rayMap[index.z*2+1].z < -1.0e-3){
+    test = ( ((minmax[5]-2) - rayMap[index.z*2].z) / rayMap[index.z*2+1].z );
+    if( test > minmaxTrace[index.z].x){
+      minmaxTrace[index.z].x = test;
+    }
+    test = ( ((minmax[4]+2) - rayMap[index.z*2].z) / rayMap[index.z*2+1].z );
+    if( test < minmaxTrace[index.z].y){
+      minmaxTrace[index.z].y = test;
+    }
+  }
 }
 
 __device__ void CUDAkernel_WriteData(const int3& index, int outindex,
@@ -73,6 +133,7 @@ __device__ void CUDAkernel_WriteData(const int3& index, int outindex,
     }
 }
 
+
 __constant__ cudaVolumeInformation   volInfo;
 __constant__ cudaRendererInformation renInfo;
 
@@ -81,6 +142,7 @@ template <typename T,
           template <typename T, template <class T> class InterpolationMethod> class Algorithm>
 __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 {
+    __shared__ float2          s_minmaxTrace[BLOCK_DIM2D*BLOCK_DIM2D];
     __shared__ float3          s_rayMap[BLOCK_DIM2D*BLOCK_DIM2D*2];         //ray map: position and orientation of ray after translation and rotation transformation
     __shared__ float           s_minmax[6];                                 //region of interest of 3D data (minX, maxX, minY, maxY, minZ, maxZ)
     __shared__ float3          s_outputVal[BLOCK_DIM2D*BLOCK_DIM2D];        //output value
@@ -93,13 +155,13 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     index.z = threadIdx.x + threadIdx.y * BLOCK_DIM2D; //index in grid
 
     //copying variables into shared memory
-    if(index.z < 3){ 
-    }else if(index.z < 9){ 
+    if(index.z < 9){ 
         s_minmax[index.x%6] = volInfo.MinMaxValue[index.x%6];
     }
     s_outputVal[index.z].x = 0.0f;
     s_outputVal[index.z].y = 0.0f;
     s_outputVal[index.z].z = 0.0f;
+    __syncthreads();
 
     //initialization of variables in shared memory
     int outindex = index.x + index.y * renInfo.Resolution.x; // index of result image
@@ -112,13 +174,14 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
         s_zBuffer[index.z]=0;
     }
 
-    CUDAkernel_SetRayMap(index, s_rayMap, renInfo);
+    CUDAkernel_SetRayMap(index, s_rayMap, renInfo, volInfo);
+    CUDAkernel_CalculateRayEnds(index, s_minmax, s_minmaxTrace, s_rayMap);
 
     __syncthreads();
 
     // Call the Algorithm (Composite or MIP or Isosurface)
     Algorithm<T, InterpolationMethod> algo;
-    algo(index, outindex, s_minmax /*[6] */,
+    algo(index, outindex, s_minmax /*[6] */, s_minmaxTrace,
                                    s_rayMap, volInfo, renInfo,
                                    s_outputVal, s_zBuffer, s_remainingOpacity);
 
