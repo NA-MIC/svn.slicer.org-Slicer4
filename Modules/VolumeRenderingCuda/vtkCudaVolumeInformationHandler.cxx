@@ -145,14 +145,11 @@ void vtkCudaVolumeInformationHandler::UpdateVolume()
   //  if (this->Volume->GetProperty()->GetMTime() > this->GetMTime())
         this->UpdateVolumeProperties(this->Volume->GetProperty());
 
-
-    // HACK EREI
     vtkMatrix4x4* mat = vtkMatrix4x4::New();
     if (this->Volume->GetUserMatrix() != NULL)
         mat->DeepCopy(this->Volume->GetUserMatrix());
     else
         mat->Identity();
-
     mat->Invert();
 
     for (unsigned int i = 0; i < 4 ; i++)
