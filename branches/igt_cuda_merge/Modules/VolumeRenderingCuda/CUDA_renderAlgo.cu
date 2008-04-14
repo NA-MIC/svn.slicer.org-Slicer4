@@ -41,15 +41,14 @@ __device__ void CUDAkernel_SetRayMap(const int3& index, float3* raymap, const cu
     raymap[index.z*2].x = renInfo.CameraRayStart.x  + renInfo.CameraRayStartX.x * posVer + renInfo.CameraRayStartY.x * posHor;
     raymap[index.z*2].y = renInfo.CameraRayStart.y  + renInfo.CameraRayStartX.y * posVer + renInfo.CameraRayStartY.y * posHor;
     raymap[index.z*2].z = renInfo.CameraRayStart.z  + renInfo.CameraRayStartX.z * posVer + renInfo.CameraRayStartY.z * posHor;
-    
 
     // Ray Length
     raymap[index.z*2+1].x = (renInfo.CameraRayEnd.x  + renInfo.CameraRayEndX.x * posVer + renInfo.CameraRayEndY.x * posHor) - raymap[index.z*2].x;
     raymap[index.z*2+1].y = (renInfo.CameraRayEnd.y  + renInfo.CameraRayEndX.y * posVer + renInfo.CameraRayEndY.y * posHor) - raymap[index.z*2].y;
     raymap[index.z*2+1].z = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*2].z;
 
-    raymap[index.z*2] = MatMul(volInfo.Transform, raymap[index.z*2]);
-    raymap[index.z*2+1] = MatMul(volInfo.Transform, raymap[index.z*2+1]);
+    //raymap[index.z*2] = MatMul(volInfo.Transform, raymap[index.z*2]);
+    //raymap[index.z*2+1] = MatMul(volInfo.Transform, raymap[index.z*2+1]);
 
     //rayLength = sqrtf(raymap[index.z*2+1].x * raymap[index.z*2+1].x + 
     //                  raymap[index.z*2+1].y * raymap[index.z*2+1].y + 
@@ -154,7 +153,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     index.y = blockDim.y *blockIdx.y + threadIdx.y;
     index.z = threadIdx.x + threadIdx.y * BLOCK_DIM2D; //index in grid
 
-    //copying variables into shared memory
+    // copying variables into shared memory
     if(index.z < 9){ 
         s_minmax[index.x%6] = volInfo.MinMaxValue[index.x%6];
     }
@@ -171,7 +170,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
             index.y * renInfo.ActualResolution.x * renInfo.ActualResolution.x / renInfo.Resolution.x ];
         // (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
     } else /* outside of screen */ {
-        s_zBuffer[index.z]=0;
+        s_zBuffer[index.z] = 0;
     }
 
     CUDAkernel_SetRayMap(index, s_rayMap, renInfo, volInfo);
@@ -217,7 +216,7 @@ void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
     // CUDAkernel_Interpolate_NearestNaighbor
   #define CUDA_KERNEL_CALL(ID, TYPE)   \
     (volumeInfo.InputDataType == ID) \
-    CUDAkernel_renderAlgo_doIntegrationRender<TYPE, CUDAkernel_Interpolate_Trilinear, CUDAkernel_RayCastCompositeAlgorithm> <<< grid, threads >>>()
+    CUDAkernel_renderAlgo_doIntegrationRender<TYPE, CUDAkernel_Interpolate_NearestNaighbor, CUDAkernel_RayCastCompositeAlgorithm> <<< grid, threads >>>()
 
     // Add all the other types.
     if CUDA_KERNEL_CALL(VTK_UNSIGNED_CHAR, unsigned char);

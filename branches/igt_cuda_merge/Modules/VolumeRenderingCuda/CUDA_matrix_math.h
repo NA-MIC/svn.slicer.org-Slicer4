@@ -23,4 +23,11 @@ __device__ float3 MatMul(const float mat[4][4], const float3& in)
     return out;
 }
 
+__device__ float3 MatMul(const float mat[4][4], float inX, float inY, float inZ)
+{
+    float3 out;
+    MatMul(mat, &out, inX, inY, inZ);
+    return out;
+}
+
 #endif /* __CUDA_MATRIX_MATH_H__ */
