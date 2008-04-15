@@ -38,7 +38,6 @@ public:
             ((T*)SourceData)[(int)(base + VolumeSize.x * VolumeSize.y + VolumeSize.x + 1)]);
     }
 private:
-    template <typename T>
 __device__ T interpolater(float posX, float posY, float posZ,
                          T val1, T val2, T val3, T val4,
                          T val5, T val6, T val7, T val8)
