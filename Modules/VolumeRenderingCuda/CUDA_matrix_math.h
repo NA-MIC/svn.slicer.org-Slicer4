@@ -23,7 +23,6 @@ __device__ void MatMul(const float mat[4][4], float3* out, const float3& in)
     MatMul(mat, out, in, 1.0f);
 }
 
-
 __device__ float3 MatMul(const float mat[4][4], const float3& in)
 {
     float3 out;

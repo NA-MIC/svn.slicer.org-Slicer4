@@ -36,13 +36,12 @@ public:
             rayMap[index.z*2+1].z * rayMap[index.z*2+1].z);
 
         //perform ray tracing until integration of alpha value reach threshold 
-        while(depth < initialZBuffer) {
+        while(depth < initialZBuffer && depth < minmaxTrace[index.z].y - minmaxTrace[index.z].x ) {
             distFromCam = B / ( depth - A);
 
-            tempPos.x = ( rayMap[index.z*2].x + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].x);
-            tempPos.y = ( rayMap[index.z*2].y + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].y);
-            tempPos.z = ( rayMap[index.z*2].z + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].z);
-
+            tempPos.x = ( rayMap[index.z*2].x + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].x);
+            tempPos.y = ( rayMap[index.z*2].y + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].y);
+            tempPos.z = ( rayMap[index.z*2].z + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].z);
 
             //calculate current position in ray tracing
             //MatMul(volInfo.Transform, &tempPos, 
