@@ -207,7 +207,7 @@ void CUDArenderAlgo_doRender(const cudaRendererInformation& rendererInfo,
     // CUDAkernel_Interpolate_NearestNaighbor
   #define CUDA_KERNEL_CALL(ID, TYPE)   \
     (volumeInfo.InputDataType == ID) \
-    CUDAkernel_renderAlgo_doIntegrationRender<TYPE, CUDAkernel_Interpolate_NearestNaighbor, CUDAkernel_RayCastCompositeAlgorithm> <<< grid, threads >>>()
+    CUDAkernel_renderAlgo_doIntegrationRender<TYPE, CUDAkernel_Interpolate_Trilinear, CUDAkernel_RayCastCompositeAlgorithm> <<< grid, threads >>>()
 
     // Add all the other types.
     if CUDA_KERNEL_CALL(VTK_UNSIGNED_CHAR, unsigned char);
