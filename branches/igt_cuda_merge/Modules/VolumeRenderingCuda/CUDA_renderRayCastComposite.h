@@ -39,22 +39,10 @@ public:
         while(depth < initialZBuffer) {
             distFromCam = B / ( depth - A);
 
-            //float3 pos1;
-            //float3 pos2;
-            //MatMul(volInfo.Transform, &pos1, rayMap[index.z*2].x, 
-            //                                 rayMap[index.z*2].y, 
-            //                                 rayMap[index.z*2].z);
-            //MatMul(volInfo.Transform, &pos2,  (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].x,
-            //                                  (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].y,
-            //                                  (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].z);
-            //tempPos.x = pos1.x + pos2.x;
-            //tempPos.y = pos1.y + pos2.y;
-            //tempPos.z = pos1.z + pos2.z;
+            tempPos.x = ( rayMap[index.z*2].x + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].x);
+            tempPos.y = ( rayMap[index.z*2].y + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].y);
+            tempPos.z = ( rayMap[index.z*2].z + ((int)minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].z);
 
-            MatMul(volInfo.Transform, &tempPos, 
-                rayMap[index.z*2].x + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].x,
-                rayMap[index.z*2].y + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].y,
-                rayMap[index.z*2].z + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].z);
 
             //calculate current position in ray tracing
             //MatMul(volInfo.Transform, &tempPos, 
