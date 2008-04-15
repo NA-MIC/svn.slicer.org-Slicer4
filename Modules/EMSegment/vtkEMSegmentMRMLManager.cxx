@@ -1367,6 +1367,47 @@ SetTreeNodeClassProbability(vtkIdType nodeID, double value)
   n->GetParametersNode()->SetClassProbability(value);  
 }
 
+//----------------------------------------------------------------------------
+double
+vtkEMSegmentMRMLManager::
+GetTreeNodeChildrenSumClassProbability(vtkIdType nodeID)
+{
+  vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
+  if (n == NULL)
+    {
+    vtkErrorMacro("Tree node is null for nodeID: " << nodeID);
+    return 0;
+    }
+  double sumOfProbabilities = 0;
+  int numChildren = this->GetTreeNodeNumberOfChildren(nodeID);
+  for (int childIndex = 0; childIndex < numChildren; ++childIndex)
+    {
+    vtkIdType childID = this->GetTreeNodeChildNodeID(nodeID, childIndex);
+    sumOfProbabilities += this->GetTreeNodeClassProbability(childID);
+    }
+  return sumOfProbabilities;
+}
+
+//----------------------------------------------------------------------------
+vtkIdType
+vtkEMSegmentMRMLManager::
+GetTreeNodeFirstIDWithChildProbabilityError()
+{
+  // iterate over tree nodes
+  typedef vtkstd::vector<vtkIdType>  NodeIDList;
+  typedef NodeIDList::const_iterator NodeIDListIterator;
+  NodeIDList nodeIDList;
+  this->GetListOfTreeNodeIDs(this->GetTreeRootNodeID(), nodeIDList);
+  for (NodeIDListIterator i = nodeIDList.begin(); i != nodeIDList.end(); ++i)
+    {
+    if (!this->GetTreeNodeIsLeaf(*i) && 
+        (this->GetTreeNodeChildrenSumClassProbability(*i) != 1.0))
+      {
+      return *i;
+      }
+    }
+  return -1;
+}
 
 //----------------------------------------------------------------------------
 double
@@ -1701,6 +1742,9 @@ vtkEMSegmentMRMLManager::
 SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID, 
                                 vtkIdType volumeID)
 {
+  std::cerr << "NodeID: "   << nodeID << std::endl;
+  std::cerr << "VolumeID: " << volumeID << std::endl;
+
   vtkMRMLEMSTreeNode* n = this->GetTreeNode(nodeID);
   if (n == NULL)
     {
@@ -1724,16 +1768,12 @@ SetTreeNodeSpatialPriorVolumeID(vtkIdType nodeID,
     
     // use tree node label (or mrml id if label is not specified)
     vtksys_stl::string priorVolumeName;
-    if (n->GetLabel() == NULL || strlen(n->GetLabel()) == 0)
-      {
-      priorVolumeName = n->GetID();
-      }
-    else
-      {
-      priorVolumeName = n->GetLabel();
-      }
+    priorVolumeName = n->GetID();
     
     // add key value pair to atlas
+    std::cerr << "PriorVolumeName: " << priorVolumeName << std::endl;
+    std::cerr << "VolumeMRMLID:    " << volumeMRMLID << std::endl;
+
     this->GetAtlasInputNode()->AddVolume(priorVolumeName.c_str(), volumeMRMLID);
 
     // set name of atlas volume in tree node
