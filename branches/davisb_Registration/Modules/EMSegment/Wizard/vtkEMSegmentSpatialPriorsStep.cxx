@@ -16,6 +16,8 @@
 
 #include "vtkEMSegmentAnatomicalStructureStep.h"
 
+#include "vtkMRMLEMSAtlasNode.h"
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentSpatialPriorsStep);
 vtkCxxRevisionMacro(vtkEMSegmentSpatialPriorsStep, "$Revision: 1.2 $");
@@ -177,6 +179,9 @@ void vtkEMSegmentSpatialPriorsStep::SpatialPriorsVolumeCallback(
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
   mrmlManager->SetTreeNodeSpatialPriorVolumeID(sel_vol_id, vol_id);
+  
+  // debug
+  mrmlManager->GetAtlasInputNode()->PrintSelf(std::cerr, vtkIndent(0));
 }
 
 //----------------------------------------------------------------------------
