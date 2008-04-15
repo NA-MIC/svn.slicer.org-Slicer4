@@ -47,17 +47,8 @@ __device__ void CUDAkernel_SetRayMap(const int3& index, float3* raymap, const cu
     raymap[index.z*2+1].y = (renInfo.CameraRayEnd.y  + renInfo.CameraRayEndX.y * posVer + renInfo.CameraRayEndY.y * posHor) - raymap[index.z*2].y;
     raymap[index.z*2+1].z = (renInfo.CameraRayEnd.z  + renInfo.CameraRayEndX.z * posVer + renInfo.CameraRayEndY.z * posHor) - raymap[index.z*2].z;
 
-    //raymap[index.z*2] = MatMul(volInfo.Transform, raymap[index.z*2]);
-    //raymap[index.z*2+1] = MatMul(volInfo.Transform, raymap[index.z*2+1]);
-
-    //rayLength = sqrtf(raymap[index.z*2+1].x * raymap[index.z*2+1].x + 
-    //                  raymap[index.z*2+1].y * raymap[index.z*2+1].y + 
-    //                  raymap[index.z*2+1].z * raymap[index.z*2+1].z);
-
-    //// Normalize the direction vector
-    //raymap[index.z*2+1].x /= rayLength;
-    //raymap[index.z*2+1].y /= rayLength;
-    //raymap[index.z*2+1].z /= rayLength;
+    raymap[index.z*2] = MatMul(volInfo.Transform, raymap[index.z*2]);
+    raymap[index.z*2+1] = MatMul(volInfo.Transform, raymap[index.z*2+1], 0.0f);
 }
 
 __device__ void CUDAkernel_CalculateRayEnds(const int3& index, float* minmax/*[6]*/, float2* minmaxTrace, float3* rayMap)
