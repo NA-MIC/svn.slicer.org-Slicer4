@@ -37,11 +37,22 @@ __device__ float3 MatMul(const float mat[4][4], const float3& in, float inW)
     return out;
 }
 
+__device__ float3 MatMul(const float mat[4][4], float inX, float inY, float inZ, float inW)
+{
+    float3 out;
+    MatMul(mat, &out, inX, inY, inZ, inW);
+    return out;
+}
+
 __device__ float3 MatMul(const float mat[4][4], float inX, float inY, float inZ)
 {
     float3 out;
     MatMul(mat, &out, inX, inY, inZ);
     return out;
+}
+__device__ float VecLen(const float3& vec)
+{
+    return sqrtf(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
 }
 
 #endif /* __CUDA_MATRIX_MATH_H__ */

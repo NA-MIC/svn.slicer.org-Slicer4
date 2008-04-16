@@ -11,6 +11,7 @@ public:
         int outindex,
         const float* minmax /*[6] */,
         const float2* minmaxTrace,
+        const float2& ZBufferFactors,
         const float3* rayMap,
         const cudaVolumeInformation& volInfo,
         const cudaRendererInformation& renInfo,
@@ -19,42 +20,32 @@ public:
         float* remainingOpacity)
     {
         //ray tracing start from here
-        float depth = 0.0;  //current step distance from camera
 
         float3 tempPos;     //!< variables to store current position
-        float  distFromCam; //!< The distance from the camera to the Image
         T tempValue;        //!< A Temporary color value
         int tempIndex;      //!< Temporaty index in the 3D data
         float alpha;        //!< Alpha value of current voxel
-        float initialZBuffer  =  zBuffer[index.z]; //!< initial zBuffer from input
 
-        float A = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
-        float B = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y);
+        float depth = minmaxTrace[index.z].x;  //current step distance from camera
 
-        float stepSize = sqrtf(rayMap[index.z*2+1].x * rayMap[index.z*2+1].x + 
-            rayMap[index.z*2+1].y * rayMap[index.z*2+1].y + 
-            rayMap[index.z*2+1].z * rayMap[index.z*2+1].z);
+        float3 camPos = MatMul(volInfo.Transform, renInfo.CameraPos);
 
         //perform ray tracing until integration of alpha value reach threshold 
-        while(depth < initialZBuffer && depth < minmaxTrace[index.z].y - minmaxTrace[index.z].x ) {
-            distFromCam = B / ( depth - A);
+        while(depth < minmaxTrace[index.z].y) {
+            tempPos.x = ( rayMap[index.z*2].x + depth * rayMap[index.z*2+1].x);
+            tempPos.y = ( rayMap[index.z*2].y + depth * rayMap[index.z*2+1].y);
+            tempPos.z = ( rayMap[index.z*2].z + depth * rayMap[index.z*2+1].z);
 
-            tempPos.x = ( rayMap[index.z*2].x + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].x);
-            tempPos.y = ( rayMap[index.z*2].y + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].y);
-            tempPos.z = ( rayMap[index.z*2].z + (minmaxTrace[index.z].x + depth) * rayMap[index.z*2+1].z);
-
-            //calculate current position in ray tracing
-            //MatMul(volInfo.Transform, &tempPos, 
-            //    (renInfo.CameraPos.x + distFromCam * rayMap[index.z*2+1].x),
-            //    (renInfo.CameraPos.y + distFromCam * rayMap[index.z*2+1].y),
-            //    (renInfo.CameraPos.z + distFromCam * rayMap[index.z*2+1].z));
+            //check whether current position is in front of z buffer wall
+            float3 dist = make_float3(tempPos.x - camPos.x, tempPos.y - camPos.y, tempPos.z - camPos.z);
+            if (ZBufferFactors.x + ZBufferFactors.y / VecLen(dist) > zBuffer[index.z])
+                break;
 
             // if current position is in ROI
             if(tempPos.x >= minmax[0] && tempPos.x < minmax[1] &&
                 tempPos.y >= minmax[2] && tempPos.y < minmax[3] &&
                 tempPos.z >= minmax[4] && tempPos.z < minmax[5] )
             {
-                //check whether current position is in front of z buffer wall
 
                 // Interpolation 
                 InterpolationMethod<T> interpolate;
@@ -74,12 +65,12 @@ public:
                     }
                     else // buffer filled to the max value
                     { 
-                        zBuffer[index.z] = depth;
+                        zBuffer[index.z] = 1/depth;
                         break;
                     }
                 }
             }
-            depth += 1.0/256.0; 
+            depth += 1/*(minmaxTrace[index.z].y - minmaxTrace[index.z].x)*//256.0; 
         }
     }
 };
