@@ -11,6 +11,7 @@ extern "C" {
 //cuda includes
 #include "cudaTypeRange.h"
 #include <cutil.h>
+#include "cuda_matrix_math.h"
 
 #include "CUDA_renderRayCastComposite.h"
 #include "CUDA_renderRayCastMIP.h"
@@ -28,13 +29,10 @@ extern "C" {
 #define VTK_FLOAT          10
 //#define VTK_DOUBLE         11 NOT SUPPORTED BY CUDA
 
-
 #define BLOCK_DIM2D 16     // this must be set to 4 or more
-
 
 __device__ void CUDAkernel_SetRayMap(const int3& index, float3* raymap, const cudaRendererInformation& renInfo, const cudaVolumeInformation& volInfo)
 {
-    float rayLength;
     float posHor = (float)index.x / (float)renInfo.Resolution.x;
     float posVer = (float)index.y / (float)renInfo.Resolution.y;
 
@@ -138,6 +136,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     __shared__ float3          s_outputVal[BLOCK_DIM2D*BLOCK_DIM2D];        //output value
     __shared__ float           s_remainingOpacity[BLOCK_DIM2D*BLOCK_DIM2D]; //integration value of alpha
     __shared__ float           s_zBuffer[BLOCK_DIM2D*BLOCK_DIM2D];          // z buffer
+    __shared__ float2          s_ZBufferFactors;                            //!< ZBuffer Factors
 
     int3 index;
     index.x = blockDim.x *blockIdx.x + threadIdx.x;
@@ -145,8 +144,15 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     index.z = threadIdx.x + threadIdx.y * BLOCK_DIM2D; //index in grid
 
     // copying variables into shared memory
-    if(index.z < 9){ 
+    if(index.z < 6){ 
         s_minmax[index.x%6] = volInfo.MinMaxValue[index.x%6];
+    }
+    else if (index.z < 7) {
+    // The difference between the transformed and unTransformed Vector Size
+        float ZscaleFactor = VecLen(MatMul(volInfo.Transform, 1.0, 0.0, 0.0, 0.0));
+
+        s_ZBufferFactors.x = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
+        s_ZBufferFactors.y = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y) * ZscaleFactor;
     }
     s_outputVal[index.z].x = 0.0f;
     s_outputVal[index.z].y = 0.0f;
@@ -159,7 +165,6 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     if(index.x < renInfo.Resolution.x && index.y < renInfo.Resolution.y){
         s_zBuffer[index.z] = renInfo.ZBuffer[renInfo.ActualResolution.x - index.x * renInfo.ActualResolution.x / renInfo.Resolution.x + 
             index.y * renInfo.ActualResolution.x * renInfo.ActualResolution.x / renInfo.Resolution.x ];
-        // (renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y)) / (renInfo.ZBuffer[outindex] - renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x));
     } else /* outside of screen */ {
         s_zBuffer[index.z] = 0;
     }
@@ -171,7 +176,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
 
     // Call the Algorithm (Composite or MIP or Isosurface)
     Algorithm<T, InterpolationMethod> algo;
-    algo(index, outindex, s_minmax /*[6] */, s_minmaxTrace,
+    algo(index, outindex, s_minmax /*[6] */, s_minmaxTrace, s_ZBufferFactors,
                                    s_rayMap, volInfo, renInfo,
                                    s_outputVal, s_zBuffer, s_remainingOpacity);
 
