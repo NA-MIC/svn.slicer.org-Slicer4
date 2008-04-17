@@ -149,7 +149,7 @@ __global__ void CUDAkernel_renderAlgo_doIntegrationRender()
     }
     else if (index.z < 7) {
     // The difference between the transformed and unTransformed Vector Size
-        float ZscaleFactor = VecLen(MatMul(volInfo.Transform, 1.0, 0.0, 0.0, 0.0));
+        float ZscaleFactor = VecLen(MatMul(volInfo.Transform, renInfo.CameraDirection, 0.0));
 
         s_ZBufferFactors.x = renInfo.ClippingRange.y / (renInfo.ClippingRange.y - renInfo.ClippingRange.x);
         s_ZBufferFactors.y = renInfo.ClippingRange.y * renInfo.ClippingRange.x / (renInfo.ClippingRange.x - renInfo.ClippingRange.y) * ZscaleFactor;
