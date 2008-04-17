@@ -58,9 +58,9 @@ public:
 
                     if(remainingOpacity[index.z] > 0.02)  // check if remaining opacity has reached threshold(0.02)
                     {
-                        outputVal[index.z].x += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3];
-                        outputVal[index.z].y += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+1];
-                        outputVal[index.z].z += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+2];
+                        outputVal[index.z].x += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3] * 1.0;
+                        outputVal[index.z].y += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+1] * 1.0;
+                        outputVal[index.z].z += remainingOpacity[index.z] * alpha * volInfo.ColorTransferFunction[tempIndex*3+2] * 1.0;
                         remainingOpacity[index.z] *= (1.0 - alpha);
                     }
                     else // buffer filled to the max value
