@@ -10,6 +10,7 @@ class vtkKWScaleWithLabel;
 class vtkUltrasoundModuleLogic;
 class vtkUltrasoundStreamSource;
 class vtkUltrasoundStreamerGUI;
+class vtkUltrasoundToolGUI;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundModuleGUI : public vtkSlicerModuleGUI
 {
@@ -91,6 +92,7 @@ private:
     vtkMRMLScalarVolumeNode*    VolumeNode;
 
     vtkUltrasoundStreamerGUI*   UltrasoundStreamerGUI;
+    vtkUltrasoundToolGUI*       UltrasoundToolGUI;
 };
 
 #endif /* __ULTRASOUND_MODULE_GUI_H_ */
