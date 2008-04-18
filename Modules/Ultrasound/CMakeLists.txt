@@ -32,6 +32,8 @@ endif(PHILLIPS_ULTRASOUND_SCANNER)
   # GUI ELEMENTS
     vtkUltrasoundStreamerGUI.cxx
     
+    vtkUltrasoundToolGUI.cxx
+    
   # SCANNER CLASSES
     vtkUltrasoundStreamSource.cxx
     vtkUltrasoundScannerReader.cxx    

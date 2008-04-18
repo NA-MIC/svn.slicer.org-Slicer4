@@ -20,6 +20,7 @@
 
 
 #include "vtkUltrasoundStreamerGUI.h"
+#include "vtkUltrasoundToolGUI.h"
 
 vtkCxxRevisionMacro(vtkUltrasoundModuleGUI, "$ Revision 1.0$");
 vtkStandardNewMacro(vtkUltrasoundModuleGUI);
@@ -31,6 +32,7 @@ vtkUltrasoundModuleGUI::vtkUltrasoundModuleGUI()
     this->Logic = NULL;
     this->VolumeNode = NULL;
     this->UltrasoundStreamerGUI = NULL;
+    this->UltrasoundToolGUI = NULL;
 }
 
 vtkUltrasoundModuleGUI::~vtkUltrasoundModuleGUI()
@@ -40,7 +42,8 @@ vtkUltrasoundModuleGUI::~vtkUltrasoundModuleGUI()
         this->GetLogic()->GetMRMLScene()->RemoveNode(this->VolumeNode);
         this->VolumeNode->Delete();
         this->VolumeNode = NULL;
-        this->UltrasoundStreamerGUI = NULL;
+        this->UltrasoundStreamerGUI->Delete();
+        this->UltrasoundToolGUI->Delete();
     }
 }
 
@@ -84,8 +87,24 @@ void vtkUltrasoundModuleGUI::BuildGUI ( )
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->UltrasoundStreamerGUI->GetWidgetName());
 
+    vtkSlicerModuleCollapsibleFrame *toolFrame = vtkSlicerModuleCollapsibleFrame::New ( );
+    toolFrame->SetParent(page);
+    toolFrame->Create();
+    toolFrame->ExpandFrame();
+    toolFrame->SetLabelText("Tool");
+    app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        toolFrame->GetWidgetName());
+
+    this->UltrasoundToolGUI = vtkUltrasoundToolGUI::New();
+    this->UltrasoundToolGUI->SetParent(toolFrame->GetFrame());
+    this->UltrasoundToolGUI->Create();
+
     
 
+    this->UltrasoundToolGUI->SetRenderer(
+        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer());
+    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        this->UltrasoundToolGUI->GetWidgetName());
 }
 
 // This method releases references and key-bindings,
