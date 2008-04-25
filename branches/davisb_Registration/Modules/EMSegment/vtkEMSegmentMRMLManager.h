@@ -312,6 +312,8 @@ public:
   virtual void        MoveTargetSelectedVolume(vtkIdType volumeID,
                                                int toIndex);
 
+  virtual bool        DoTargetAndAtlasDataTypesMatch();
+
   //
   // target volume normalization
   virtual void  
@@ -420,7 +422,17 @@ public:
     AtlasToTargetDeformableRegistrationBSplineMMIFast = 3,
     AtlasToTargetDeformableRegistrationBSplineNCCFast = 4,
     AtlasToTargetDeformableRegistrationBSplineMMISlow = 5,
-    AtlasToTargetDeformableRegistrationBSplineNCCSlow = 6
+    AtlasToTargetDeformableRegistrationBSplineNCCSlow = 6,
+    AtlasToTargetDeformableRegistrationBSplineMMI3   = 7,
+    AtlasToTargetDeformableRegistrationBSplineMMI4   = 8,
+    AtlasToTargetDeformableRegistrationBSplineMMI5   = 9,
+    AtlasToTargetDeformableRegistrationBSplineMMI6   = 10,
+    AtlasToTargetDeformableRegistrationBSplineMMI7   = 11,
+    AtlasToTargetDeformableRegistrationBSplineMMI8   = 12,
+    AtlasToTargetDeformableRegistrationBSplineMMI9   = 13,
+    AtlasToTargetDeformableRegistrationBSplineMMI10  = 14,
+    AtlasToTargetDeformableRegistrationBSplineMMI20  = 15,
+    AtlasToTargetDeformableRegistrationBSplineNCC10  = 16,
     };
   //ETX
   virtual int       GetRegistrationDeformableType();

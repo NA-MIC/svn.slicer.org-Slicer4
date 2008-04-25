@@ -23,10 +23,10 @@
 
 #include "vtkImageToImageFilter.h"
 
-#include "vtkSlicerBaseLogic.h"
+#include "vtkMRML.h"
 
 
-class VTK_SLICER_BASE_LOGIC_EXPORT vtkImageAccumulateDiscrete : public vtkImageToImageFilter
+class VTK_MRML_EXPORT vtkImageAccumulateDiscrete : public vtkImageToImageFilter
 {
 public:
   static vtkImageAccumulateDiscrete *New();

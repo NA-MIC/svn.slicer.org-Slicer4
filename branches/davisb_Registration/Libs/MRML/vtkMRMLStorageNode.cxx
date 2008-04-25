@@ -164,10 +164,16 @@ void vtkMRMLStorageNode::ProcessMRMLEvents ( vtkObject *caller, unsigned long ev
 //----------------------------------------------------------------------------
 void vtkMRMLStorageNode::StageReadData ( vtkMRMLNode *refNode )
 {
-  // if the URI is null, assume the file name is set and return
-  if (this->GetURI() == NULL)
+  // if the URI is null, or emtpy assume the file name is set and return
+  if ( this->GetURI() == NULL )
     {
     vtkDebugMacro("StageReadData: uri is null, setting state to transfer done");
+    this->SetReadStateTransferDone();
+    return;
+    }
+  if ( !(strcmp(this->GetURI(), "")) )
+    {
+    vtkDebugMacro("StageReadData: uri is empty, setting state to transfer done");
     this->SetReadStateTransferDone();
     return;
     }
@@ -178,11 +184,18 @@ void vtkMRMLStorageNode::StageReadData ( vtkMRMLNode *refNode )
     return;
     }
   
-  if (!this->SupportedFileType(this->GetURI()))
+  vtkCacheManager *cacheManager = this->Scene->GetCacheManager();
+  const char *fname = NULL;
+  if ( cacheManager != NULL )
+    {
+    fname = cacheManager->GetFilenameFromURI( this->GetURI() );
+    }
+
+  if (!this->SupportedFileType(fname))
     {
     // can't read this kind of file, so return
     this->SetReadStateIdle();
-    vtkDebugMacro("StageReadData: can't read file type for URI : " << this->GetURI());
+    vtkDebugMacro("StageReadData: can't read file type for URI : " << fname);
     return;
     }
 
@@ -234,9 +247,16 @@ void vtkMRMLStorageNode::StageWriteData ( vtkMRMLNode *refNode )
   if (this->URI == NULL)
     {
     this->SetWriteStateTransferDone();
-    vtkDebugMacro("Cannot stage data for writing, URI is not set.");
+    vtkDebugMacro("StageWriteData: uri is null, setting state to transfer done");
     return;
     }
+  if ( !(strcmp(this->GetURI(), "")) )
+    {
+    vtkDebugMacro("StageWriteData: uri is empty, setting state to transfer done");
+    this->SetReadStateTransferDone();
+    return;
+    }
+
   // need to get URI handlers from the scene
   if (this->Scene == NULL)
     {

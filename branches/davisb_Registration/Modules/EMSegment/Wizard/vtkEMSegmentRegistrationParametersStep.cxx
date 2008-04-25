@@ -240,6 +240,68 @@ void vtkEMSegmentRegistrationParametersStep::ShowUserInterface()
             AtlasToTargetDeformableRegistrationBSplineMMI);
     this->RegistrationParametersDeformableMenuButton->GetWidget()->
       GetMenu()->AddRadioButton("B-Spline, MI", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI3);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 3x3x3", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI4);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 4x4x4", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI5);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 5x5x5", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI6);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 6x6x6", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI7);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 7x7x7", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI8);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 8x8x8", this, buffer);
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI9);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 9x9x9", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI10);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 10x10x10", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineNCC10);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, NCC, 10x10x10", this, buffer);
+
+    sprintf(buffer, "RegistrationDeformableCallback %d",
+            vtkEMSegmentMRMLManager::
+            AtlasToTargetDeformableRegistrationBSplineMMI20);
+    this->RegistrationParametersDeformableMenuButton->GetWidget()->
+      GetMenu()->AddRadioButton("B-Spline, MI, 20x20x20", this, buffer);
+
+
+
     sprintf(buffer, "RegistrationDeformableCallback %d",
             vtkEMSegmentMRMLManager::
             AtlasToTargetDeformableRegistrationBSplineMMISlow);
@@ -398,6 +460,56 @@ void vtkEMSegmentRegistrationParametersStep::ShowUserInterface()
              AtlasToTargetDeformableRegistrationBSplineMMI)
       {
       value = "B-Spline, MI";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI3)
+      {
+      value = "B-Spline, MI, 3x3x3";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI4)
+      {
+      value = "B-Spline, MI, 4x4x4";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI5)
+      {
+      value = "B-Spline, MI, 5x5x5";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI6)
+      {
+      value = "B-Spline, MI, 6x6x6";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI7)
+      {
+      value = "B-Spline, MI, 7x7x7";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI8)
+      {
+      value = "B-Spline, MI, 8x8x8";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI9)
+      {
+      value = "B-Spline, MI, 9x9x9";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI10)
+      {
+      value = "B-Spline, MI, 10x10x10";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineNCC10)
+      {
+      value = "B-Spline, NCC, 10x10x10";
+      }
+    else if (v == vtkEMSegmentMRMLManager::
+             AtlasToTargetDeformableRegistrationBSplineMMI20)
+      {
+      value = "B-Spline, MI, 20x20x20";
       }
     else if (v == vtkEMSegmentMRMLManager::
              AtlasToTargetDeformableRegistrationBSplineMMISlow)

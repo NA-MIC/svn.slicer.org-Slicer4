@@ -158,7 +158,10 @@ void vtkSlicerDiffusionTensorVolumeDisplayWidget::ProcessWidgetEvents ( vtkObjec
         this->DTIMathematics->Update();
         
         vtkImageData* image = this->DTIMathematics->GetOutput();
-        vtkSlicerVolumesLogic::CalculateScalarAutoLevels(image, displayNode);
+        if (vtkMRMLScalarVolumeNode::SafeDownCast(volumeNode) != NULL)
+          {
+          vtkMRMLScalarVolumeNode::SafeDownCast(volumeNode)->CalculateScalarAutoLevelsWithData(displayNode, image);
+          } else { vtkWarningMacro("Failed to calculate scalar levels, volume node is not a scalar"); }
         this->WindowLevelThresholdEditor->SetImageData(image);
         }
       }
@@ -258,6 +261,7 @@ void vtkSlicerDiffusionTensorVolumeDisplayWidget::ProcessWidgetEvents ( vtkObjec
 
     if ( displayNode )
       {
+      displayNode->DisableModifiedEventOn();
       displayNode->SetWindow(this->WindowLevelThresholdEditor->GetWindow());
       displayNode->SetLevel(this->WindowLevelThresholdEditor->GetLevel());
       displayNode->SetUpperThreshold(this->WindowLevelThresholdEditor->GetUpperThreshold());
@@ -278,6 +282,8 @@ void vtkSlicerDiffusionTensorVolumeDisplayWidget::ProcessWidgetEvents ( vtkObjec
         displayNode->SetApplyThreshold(1);
         displayNode->SetAutoThreshold(0);
         }
+     displayNode->DisableModifiedEventOff();
+     displayNode->InvokePendingModifiedEvent();
      this->UpdatingWidget = 0;
      return;
       }

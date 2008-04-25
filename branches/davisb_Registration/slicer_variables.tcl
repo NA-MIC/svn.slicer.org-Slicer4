@@ -79,7 +79,8 @@ set ::CMAKE_TAG "CMake-2-4-2"
 set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::KWWidgets_TAG "Slicer-3-0"
 set ::VTK_TAG "VTK-5-0"
-set ::ITK_TAG ITK-3-4
+set ::ITK_TAG "HEAD"
+#ITK-3-4
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
@@ -356,6 +357,14 @@ switch $::tcl_platform(os) {
             set ::GENERATOR "Visual Studio 8 2005"   ;# do NOT use the 64 bit target
             set ::MAKE "c:/Program Files (x86)/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"
             set ::COMPILER_PATH "c:/Program Files (x86)/Microsoft Visual Studio 8/VC/bin"
+        }
+        #
+        ## for Visual Studio 9
+        if { [file exists "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"] } {
+            set ::GENERATOR "Visual Studio 9 2008" 
+            set ::MAKE "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"
+            set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
+        
         }
 
         set ::COMPILER "cl"

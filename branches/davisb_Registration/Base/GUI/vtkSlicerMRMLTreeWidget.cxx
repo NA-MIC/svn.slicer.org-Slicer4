@@ -43,6 +43,7 @@ vtkSlicerMRMLTreeWidget::vtkSlicerMRMLTreeWidget ( )
 //---------------------------------------------------------------------------
 vtkSlicerMRMLTreeWidget::~vtkSlicerMRMLTreeWidget ( )
 {
+  this->RemoveMRMLObservers();
   if (this->TreeWidget)
     {
     this->TreeWidget->SetParent(NULL);
@@ -391,11 +392,46 @@ void vtkSlicerMRMLTreeWidget::HardenTransformCallback(const char *id)
 }
  
 //---------------------------------------------------------------------------
+void vtkSlicerMRMLTreeWidget::AddMRMLObservers ( )
+{
+  if (this->MRMLScene == NULL)
+    {
+    return;
+    }
+  if (this->MRMLScene->HasObserver(vtkMRMLScene::NodeRemovedEvent, (vtkCommand *)this->MRMLCallbackCommand) != 1)
+    {
+    this->MRMLScene->AddObserver(vtkMRMLScene::NodeRemovedEvent, (vtkCommand *)this->MRMLCallbackCommand);
+    this->MRMLScene->AddObserver(vtkMRMLScene::NodeAddedEvent, (vtkCommand *)this->MRMLCallbackCommand);
+    this->MRMLScene->AddObserver(vtkMRMLScene::SceneCloseEvent, (vtkCommand *)this->MRMLCallbackCommand);
+    }
+  else
+    {
+    vtkDebugMacro("MRML scene already has the node removed event being watched by the SceneSnapshotWidget");
+    }
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerMRMLTreeWidget::RemoveMRMLObservers ()
+{
+  if ( this->MRMLScene == NULL )
+    {
+    return;
+    }
+  this->MRMLScene->RemoveObservers(vtkMRMLScene::NodeRemovedEvent, (vtkCommand *)this->MRMLCallbackCommand);
+  this->MRMLScene->RemoveObservers(vtkMRMLScene::NodeAddedEvent, (vtkCommand *)this->MRMLCallbackCommand);
+  this->MRMLScene->RemoveObservers(vtkMRMLScene::SceneCloseEvent, (vtkCommand *)this->MRMLCallbackCommand);
+}
+
+//---------------------------------------------------------------------------
 void vtkSlicerMRMLTreeWidget::ProcessMRMLEvents ( vtkObject *caller,
                                                   unsigned long event, 
                                                   void *callData )
 {
-  if (event == vtkCommand::ModifiedEvent)
+  vtkMRMLNode *node = reinterpret_cast<vtkMRMLNode *>(callData);
+  vtkMRMLTransformableNode *tnode = vtkMRMLTransformableNode::SafeDownCast(node);
+  if (this->MRMLScene && (event == vtkMRMLScene::SceneCloseEvent || 
+                         vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene && tnode)) 
     {
     this->UpdateTreeFromMRML();
     }

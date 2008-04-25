@@ -24,6 +24,7 @@
 #include "vtkMRMLDiffusionWeightedVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLTransformNode.h"
+#include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLColorNode.h"
 #include "vtkMRMLDiffusionTensorVolumeSliceDisplayNode.h"
 
@@ -355,7 +356,7 @@ void vtkSlicerSliceLayerLogic::UpdateNodeReferences ()
 //----------------------------------------------------------------------------
 void vtkSlicerSliceLayerLogic::UpdateTransforms()
 {
-  int labelMap = 0;  // keep track so label maps don't get interpolated
+  //int labelMap = 0;  // keep track so label maps don't get interpolated
 
   // Ensure display node matches the one we are observing
   this->UpdateNodeReferences();
@@ -574,7 +575,22 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
       if (!strcmp(this->GetSliceNode()->GetLayoutName(), dnode->GetName()) )
         {
         dnode->SetSliceImage(sliceImage);
-        dnode->SetSlicePositionMatrix(this->SliceNode->GetXYToRAS());
+
+        vtkMRMLTransformNode* tnode = volumeNode->GetParentTransformNode();
+        vtkMatrix4x4* transformToWorld = vtkMatrix4x4::New();
+        transformToWorld->Identity();
+        if (tnode != NULL && tnode->IsLinear())
+          {
+          vtkMRMLLinearTransformNode *lnode = vtkMRMLLinearTransformNode::SafeDownCast(tnode);
+          lnode->GetMatrixTransformToWorld(transformToWorld);
+          }
+        transformToWorld->Invert();
+
+        vtkMatrix4x4* xyToRas = this->SliceNode->GetXYToRAS();
+
+        vtkMatrix4x4::Multiply4x4(transformToWorld, xyToRas, transformToWorld); 
+
+        dnode->SetSlicePositionMatrix(transformToWorld);
         double dirs[3][3];
         volumeNode->GetIJKToRASDirections(dirs);
         vtkMatrix4x4 *trot = vtkMatrix4x4::New();
@@ -588,6 +604,7 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
           }
         dnode->SetSliceTensorRotationMatrix(trot);
         trot->Delete();
+        transformToWorld->Delete();
         }
       }
     }
@@ -596,13 +613,13 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
 //----------------------------------------------------------------------------
 void vtkSlicerSliceLayerLogic::VectorVolumeNodeUpdateTransforms()
 {
-  double window = 0;
-  double level = 0;
+  //double window = 0;  UNUSED
+  //double level = 0;  UNUSED
   int interpolate = 0;
-  int applyThreshold = 0;
-  double lowerThreshold = 0;
-  double upperThreshold = 0;
-  vtkLookupTable *lookupTable = NULL;
+  //int applyThreshold = 0;  UNUSED
+  //double lowerThreshold = 0;  UNUSED
+  //double upperThreshold = 0;  UNUSED
+  //vtkLookupTable *lookupTable = NULL;  UNUSED
   vtkMRMLVectorVolumeNode *vectorVolumeNode = vtkMRMLVectorVolumeNode::SafeDownCast (this->VolumeNode);
 
   vtkMRMLVectorVolumeDisplayNode *vectorVolumeDisplayNode = vtkMRMLVectorVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
