@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <iterator>
+#include <map>
 
 class vtkCallbackCommand;
 class vtkMRMLScene;
@@ -29,6 +30,9 @@ class VTK_MRML_EXPORT vtkCacheManager : public vtkObject
   static vtkCacheManager *New();
   vtkTypeRevisionMacro(vtkCacheManager, vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
+
+  vtkGetMacro (InsufficientFreeBufferNotificationFlag, int );
+  vtkSetMacro (InsufficientFreeBufferNotificationFlag, int );
 
   // Description:
   // Sets the name of the directory to use for local file caching
@@ -124,7 +128,8 @@ class VTK_MRML_EXPORT vtkCacheManager : public vtkObject
       {
       this->MRMLScene = scene;
       }
-  
+  void MapFileToURI ( const char *uri, const char *fname );
+
   //BTX
   void MarkNode ( std::string );
   // in case we need these.
@@ -144,9 +149,13 @@ class VTK_MRML_EXPORT vtkCacheManager : public vtkObject
       CacheClearEvent,
       SettingsUpdateEvent,
     };
+
+  std::map<std::string, std::string> uriMap;
+  const char *GetFileFromURIMap (const char *uri );
   //ETX
   
  private:
+  int InsufficientFreeBufferNotificationFlag;
   int RemoteCacheLimit;
   float CurrentCacheSize;
   int RemoteCacheFreeBufferSize;

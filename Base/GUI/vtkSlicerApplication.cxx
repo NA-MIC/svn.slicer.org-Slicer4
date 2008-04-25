@@ -215,7 +215,7 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     this->RemoteCacheFreeBufferSize = 10;
     
     // configure the application before creating
-    this->SetName ( "3D Slicer Version 3.0 Beta" );
+    this->SetName ( "3D Slicer Version 3.0" );
 
 #ifdef _WIN32
     vtkKWWin32RegistryHelper *regHelper = 
@@ -429,6 +429,29 @@ int vtkSlicerApplication::StartApplication ( ) {
     // Clean up and exit
     ret = this->GetExitStatus ( );
     return ret;
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplication::DoOneTclEvent ( ) 
+{
+  //
+  // First, handle system-level events such as mouse moves, keys,
+  // socket connections, etc
+  //
+  Tcl_DoOneEvent(0);
+
+  //
+  // Then handle application-level events that were queued in 
+  // response to the system events
+  // - only do this if event broker is in asynchronous mode
+  // - have tcl first handle all its pending events (e.g. click and drag events)
+  //
+  vtkEventBroker *broker = vtkEventBroker::GetInstance();
+  if ( broker->GetEventMode() == vtkEventBroker::Asynchronous )
+    {
+    Tcl_ServiceAll();
+    broker->ProcessEventQueue();
+    }
 }
 
 //----------------------------------------------------------------------------

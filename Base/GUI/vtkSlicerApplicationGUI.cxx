@@ -345,7 +345,7 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
           }
         else if ( this->GetMRMLScene() && fl.find(".xcat") != std::string::npos )
           {
-          this->Script ( "XcedeCatalogImport %s", fileName);
+          this->Script ( "XcatalogImport \"%s\"", fileName);
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
 
@@ -364,6 +364,14 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
     return;
 }
 
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessPublishToXnatCommand()
+{
+  this->Script ("XnatPublish_PublishScene");
+}
+
+ 
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
 {
@@ -389,7 +397,7 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
           }
         else if ( this->GetMRMLScene() && fl.find(".xcat") != std::string::npos )
           {
-          this->Script ( "XcedeCatalogImport %s", fileName);
+          this->Script ( "XCatalogImport %s", fileName);
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
 
@@ -808,6 +816,9 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
                                                "Save", this, "ProcessSaveSceneAsCommand");
             this->MainSlicerWindow->GetFileMenu()->SetItemAccelerator ( i, "Ctrl-S");
             this->MainSlicerWindow->GetFileMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+
+            i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
+                                                                           "Publish to XNAT host", this, "ProcessPublishToXnatCommand");
 
             i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                                "Close Scene", this, "ProcessCloseSceneCommand");

@@ -120,9 +120,12 @@ set ::TEEM_SRC_DIR  $::SLICER_LIB/teem
 set ::TEEM_BUILD_DIR  $::SLICER_LIB/teem-build
 set ::VTK_DIR  $::SLICER_LIB/VTK-build
 set ::VTK_SRC_DIR $::SLICER_LIB/VTK
-set ::VTK_BUILD_TYPE "Debug"
 set ::CMAKE_CXX_FLAGS_DEBUG "-g"
-set ::VTK_BUILD_SUBDIR ""
+if { ![info exists ::VTK_BUILD_TYPE] } {
+  # set a default if it hasn't already been specified
+  set ::VTK_BUILD_TYPE "Debug" ;# options: Release, RelWithDebInfo, Debug
+}
+set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE 
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
 set ::KWWidgets_BUILD_DIR  $::SLICER_LIB/KWWidgets-build
 set ::KWWIDGETS_DIR  $::SLICER_LIB/KWWidgets
@@ -182,6 +185,7 @@ switch $::tcl_platform(os) {
 switch $::tcl_platform(os) {
     "SunOS" -
     "Darwin" {
+        set ::VTK_BUILD_SUBDIR ""
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
@@ -210,6 +214,7 @@ switch $::tcl_platform(os) {
         set ::SLICERLIBCURL_TEST_FILE $::SLICERLIBCURL_BUILD_DIR/bin/libslicerlibcurl.a
     }
     "Linux" {
+        set ::VTK_BUILD_SUBDIR ""
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
 
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
@@ -242,14 +247,8 @@ switch $::tcl_platform(os) {
     "Windows NT" {
     # Windows NT currently covers WinNT, Win2000, XP Home, XP Pro
 
-        #
-        ### Set your peferred build type:
-        #
-        #set ::VTK_BUILD_TYPE RelWithDebInfo ;# good if you have the full (expensive) compiler
-        #set ::VTK_BUILD_TYPE Release  ;# faster, but no debugging
-        #set ::VTK_BUILD_TYPE Debug  ;# a good default
-        #set ::VTK_BUILD_TYPE RelWithDebInfo  ;# a good default
         set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE
+        set ::CMAKE_CXX_FLAGS_DEBUG ""
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
 
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
@@ -390,6 +389,21 @@ switch $::tcl_platform(os) {
             set ::MAKE "c:/Program Files/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"
             set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 8/VC/bin"
         }
+        #
+        ## for Visual Studio 9
+        if { [file exists "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"] } {
+            set ::GENERATOR "Visual Studio 9 2008" 
+            set ::MAKE "c:/Program Files/Microsoft Visual Studio 9.0/Common7/IDE/VCExpress.exe"
+            set ::COMPILER_PATH "c:/Program Files/Microsoft Visual Studio 9.0/VC/bin"
+        
+        }
+
+        if { [file exists "c:/Program Files (x86)/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"] } {
+            set ::GENERATOR "Visual Studio 8 2005" 
+            set ::MAKE "c:/Program Files (x86)/Microsoft Visual Studio 8/Common7/IDE/devenv.exe"
+            set ::COMPILER_PATH "c:/Program Files (x86)/Microsoft Visual Studio 8/VC/bin"
+        }
+
 
         set ::COMPILER "cl"
         set ::SERIAL_MAKE $::MAKE

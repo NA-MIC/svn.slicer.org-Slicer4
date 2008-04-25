@@ -24,13 +24,13 @@
 
 #include "vtkImageToImageFilter.h"
 
-#include "vtkSlicerBaseLogic.h"
+#include "vtkMRML.h"
 
 
 #define VTK_BIMODAL_MODALITY_CT 0
 #define VTK_BIMODAL_MODALITY_MR 1
 
-class VTK_SLICER_BASE_LOGIC_EXPORT vtkImageBimodalAnalysis : public vtkImageToImageFilter
+class VTK_MRML_EXPORT vtkImageBimodalAnalysis : public vtkImageToImageFilter
 {
 public:
   static vtkImageBimodalAnalysis *New();
