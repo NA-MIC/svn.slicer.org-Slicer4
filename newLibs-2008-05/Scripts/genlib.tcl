@@ -336,9 +336,7 @@ if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
     file mkdir $SLICER_LIB/tcl
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TCL_TAG tcl"
-
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/tcl tcl
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
           # can't do windows
@@ -355,8 +353,7 @@ if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
 if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::TK_TAG tk"
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/tk tk
 
     if {$isDarwin} {
         if { ![file exists $SLICER_LIB/tcl/isPatched] } {
@@ -394,10 +391,10 @@ if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
 }
 
 if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
+
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::ITCL_TAG incrTcl"
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/incrTcl incrTcl
 
     cd $SLICER_LIB/tcl/incrTcl
 
@@ -426,8 +423,7 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
 if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer checkout -r $::IWIDGETS_TAG iwidgets"
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/iwidgets iwidgets
 
 
     if {$::GENLIB(buildit)} {
@@ -441,47 +437,6 @@ if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
         eval runcmd $::SERIAL_MAKE all
         eval runcmd $::SERIAL_MAKE install
     }
-  }
-}
-
-
-################################################################################
-# Get and build blt
-#
-
-if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
-    cd $SLICER_LIB/tcl
-    
-    runcmd $::CVS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer login
-    eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous:bwhspl@cvs.spl.harvard.edu:/projects/cvs/slicer co -r $::BLT_TAG blt"
-
-    if {$::GENLIB(buildit)} {
-      if { $isWindows } {
-        # can't do Windows
-      } elseif { $isDarwin } {
-        if { ![file exists $SLICER_LIB/tcl/isPatchedBLT] } {
-            puts "Patching..."
-            runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch
-            cd $SLICER_LIB/tcl/blt
-            runcmd patch -p2 < ../bltpatch
-            
-            # create a file to make sure BLT isn't patched twice
-            runcmd touch $SLICER_LIB/tcl/isPatchedBLT
-            file delete $SLICER_LIB/tcl/bltpatch
-      } else {
-            puts "BLT already patched."
-      }
-        cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build --enable-shared --x-includes=/usr/X11R6/include --x-libraries=/usr/X11R6/lib --with-cflags=-fno-common
-        
-        eval runcmd $::MAKE
-        eval runcmd $::MAKE install
-      } else {
-        cd $SLICER_LIB/tcl/blt
-        runcmd ./configure --with-tcl=$SLICER_LIB/tcl/tcl/unix --with-tk=$SLICER_LIB/tcl-build --prefix=$SLICER_LIB/tcl-build 
-        eval runcmd $::SERIAL_MAKE
-        eval runcmd $::SERIAL_MAKE install
-      }
   }
 }
 
@@ -538,12 +493,6 @@ if { [BuildThis $::VTK_TEST_FILE "vtk"] == 1 } {
             -DTK_LIBRARY:FILEPATH=$::VTK_TK_LIB \
             -DTCL_TCLSH:FILEPATH=$::VTK_TCLSH \
             $USE_VTK_ANSI_STDLIB \
-            -DOPENGL_INCLUDE_DIR:PATH=/usr/include \
-            -DOPENGL_gl_LIBRARY:FILEPATH=/usr/lib64/libGL.so \
-            -DOPENGL_glu_LIBRARY:FILEPATH=/usr/lib64/libGLU.so \
-            -DX11_X11_LIB:FILEPATH=/usr/lib64/libX11.so \
-            -DX11_Xext_LIB:FILEPATH=/usr/lib64/libXext.so \
-            -DCMAKE_MODULE_LINKER_FLAGS:STRING=-L/usr/lib64 \
             -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
             -DVTK_USE_64BIT_IDS:BOOL=ON \
             ../VTK
@@ -943,9 +892,6 @@ if { ![file exists $::ITCL_TEST_FILE] } {
 if { ![file exists $::IWIDGETS_TEST_FILE] } {
     puts "iwidgets test file $::IWIDGETS_TEST_FILE not found."
 }
-if { ![file exists $::BLT_TEST_FILE] } {
-    puts "BLT test file $::BLT_TEST_FILE not found."
-}
 if { ![file exists $::VTK_TEST_FILE] } {
     puts "VTK test file $::VTK_TEST_FILE not found."
 }
@@ -961,7 +907,6 @@ if { ![file exists $::CMAKE] || \
          ![file exists $::TK_TEST_FILE] || \
          ![file exists $::ITCL_TEST_FILE] || \
          ![file exists $::IWIDGETS_TEST_FILE] || \
-         ![file exists $::BLT_TEST_FILE] || \
          ![file exists $::VTK_TEST_FILE] || \
          ![file exists $::ITK_TEST_FILE] } {
     puts "Not all packages compiled; check errors and run genlib.tcl again."
