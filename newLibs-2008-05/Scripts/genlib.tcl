@@ -355,7 +355,7 @@ if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
 
     runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/tk tk
 
-    if {$isDarwin} {
+    if {0 && $isDarwin} {
         if { ![file exists $SLICER_LIB/tcl/isPatched] } {
                 puts "Patching..."
                 runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/tkEventPatch.diff
@@ -412,7 +412,7 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
         # need to run ranlib separately on lib for Darwin
         # file is created and ranlib is needed inside make all
         catch "eval runcmd $::MAKE all"
-        runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a
+        runcmd ranlib ../incrTcl/itcl/libitclstub3.4.a
       }
       eval runcmd $::MAKE all
       eval runcmd $::SERIAL_MAKE install
