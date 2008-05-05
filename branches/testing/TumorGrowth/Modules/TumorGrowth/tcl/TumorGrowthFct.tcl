@@ -299,7 +299,7 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         puts "========================= "
        
-        ::TumorGrowthReg::TumorGrowthImageDataWriter [$OUTPUT_NODE  GetImageData] newresult
+        # ::TumorGrowthReg::TumorGrowthImageDataWriter [$OUTPUT_NODE  GetImageData] newresult
 
         $NODE SetScan2_${TYPE}Ref [$OUTPUT_NODE GetID]
 

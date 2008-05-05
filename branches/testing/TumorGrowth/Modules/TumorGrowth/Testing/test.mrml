@@ -26,7 +26,7 @@
 <SliceComposite
  id="vtkMRMLSliceCompositeNode3" name="vtkMRMLSliceCompositeNode3" hideFromEditors="true" selectable="true"  backgroundVolumeID="vtkMRMLScalarVolumeNode4" foregroundVolumeID="vtkMRMLScalarVolumeNode5" labelVolumeID="" labelOpacity="1" linkedControl="0" foregroundGrid="0" backgroundGrid="0" labelGrid="1" fiducialVisibility="1" fiducialLabelVisibility="1" layoutName="Green" annotationMode="All" crosshairMode="NoCrosshair" crosshairBehavior="Normal"></SliceComposite>
 <TGParameters
- id="vtkMRMLTumorGrowthNode1" name="vtkMRMLTumorGrowthNode1" hideFromEditors="true" selectable="true"  Scan1_Ref="vtkMRMLScalarVolumeNode1" Scan2_Ref="vtkMRMLScalarVolumeNode2" ROIMin="145 172 75" ROIMax="185 207 92" SegmentThresholdMin="140" SegmentThresholdMax="441" Analysis_Intensity_Flag="1" Analysis_Deformable_Flag="1"></TGParameters>
+ id="vtkMRMLTumorGrowthNode1" name="vtkMRMLTumorGrowthNode1" hideFromEditors="true" selectable="true"  Scan1_Ref="vtkMRMLScalarVolumeNode1" Scan2_Ref="vtkMRMLScalarVolumeNode2" ROIMin="145 172 75" ROIMax="185 207 92" SegmentThresholdMin="140" SegmentThresholdMax="441" Analysis_Intensity_Flag="1" Analysis_Deformable_Flag="0"></TGParameters>
 <ScriptedModule
  id="vtkMRMLScriptedModuleNode1" name="vtkMRMLScriptedModuleNode1" hideFromEditors="true" selectable="true"  ModuleName ="Editor" parameter0= "label 1"></ScriptedModule>
 <VolumeArchetypeStorage

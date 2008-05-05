@@ -141,13 +141,19 @@ proc WriteTransformationAG {gt directory} {
       set int_G [$t IsA vtkGridTransform]
       if { ($int_H != 0)&& ($linearDone == 0) } {
           set fname $directory/LinearRegistration.txt
-          set fileid [ open $fname w ]
+          if {[catch {set fileid [ open $fname w ] } errmsg ] == 1} { 
+              puts "TumorGrowthReg.tcl::WriteTransformationAG: Could not open file  $fname !" 
+              puts "$errmsg"
+              return
+          }
           puts "Writing transformation to $fname" 
   
           WriteHomogeneousAG $t  $fileid
           set linearDone 1
   
       } 
+      return 
+      #  StructuredPointsWriter $g  $fname is not installed
       if { ($int_G != 0) && ($nonliearDOne == 0) } {  
   
           set g [$t GetDisplacementGrid]        
@@ -159,7 +165,7 @@ proc WriteTransformationAG {gt directory} {
           set nonliearDOne 1
       }
      }
-   }
+  }
   proc WriteHomogeneousAG {t fileid} {
   
       puts "Start to save homogeneous Transform"
