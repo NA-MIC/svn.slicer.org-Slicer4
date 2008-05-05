@@ -73,7 +73,7 @@ puts stderr "SLICER_HOME is $::SLICER_HOME"
 # section below, or genlib will happily build the library again.
 
 #set ::SLICER_TAG "http://www.na-mic.org/svn/Slicer3/trunk
-set ::SLICER_TAG "http://www.na-mic.org/svn/Slicer3/testing/newLibs-2008-05"
+set ::SLICER_TAG "http://www.na-mic.org/svn/Slicer3/branches/testing/newLibs-2008-05"
 #set ::TEEM_TAG "HEAD"
 set ::TEEM_TAG "Teem-1-9-0-patches"
 set ::KWWidgets_TAG "HEAD"
