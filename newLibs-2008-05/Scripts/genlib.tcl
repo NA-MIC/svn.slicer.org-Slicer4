@@ -541,9 +541,9 @@ if { [BuildThis $::VTK_TEST_FILE "vtk"] == 1 } {
             -DOPENGL_INCLUDE_DIR:PATH=/usr/include \
             -DOPENGL_gl_LIBRARY:FILEPATH=/usr/lib64/libGL.so \
             -DOPENGL_glu_LIBRARY:FILEPATH=/usr/lib64/libGLU.so \
-            -DX11_X11_LIB:FILEPATH=/usr/X11R6/lib64/libX11.a \
-            -DX11_Xext_LIB:FILEPATH=/usr/X11R6/lib64/libXext.a \
-            -DCMAKE_MODULE_LINKER_FLAGS:STRING=-L/usr/X11R6/lib64 \
+            -DX11_X11_LIB:FILEPATH=/usr/lib64/libX11.so \
+            -DX11_Xext_LIB:FILEPATH=/usr/lib64/libXext.so \
+            -DCMAKE_MODULE_LINKER_FLAGS:STRING=-L/usr/lib64 \
             -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON \
             -DVTK_USE_64BIT_IDS:BOOL=ON \
             ../VTK
