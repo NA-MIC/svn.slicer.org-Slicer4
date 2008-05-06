@@ -168,7 +168,7 @@ switch $::tcl_platform(os) {
 
         set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.5
         set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.5
-        set ::ITCL_TEST_FILE $::TCL_LIB_DIR/libitclstub3.4.a
+        set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.4/libitclstub3.4.a
         set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
