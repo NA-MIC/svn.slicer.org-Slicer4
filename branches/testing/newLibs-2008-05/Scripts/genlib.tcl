@@ -420,27 +420,6 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
   }
 }
 
-if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
-    cd $SLICER_LIB/tcl
-
-    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/iwidgets iwidgets
-
-
-    if {$::GENLIB(buildit)} {
-      if {$isWindows} {
-         # can't do windows
-      } else {
-        cd $SLICER_LIB/tcl/iwidgets
-        runcmd ../iwidgets/configure --with-tcl=$SLICER_LIB/tcl-build/lib --with-tk=$SLICER_LIB/tcl-build/lib --with-itcl=$SLICER_LIB/tcl/incrTcl --prefix=$SLICER_LIB/tcl-build
-        # make all doesn't do anything... 
-        # iwidgets won't compile in parallel (with -j flag)
-        eval runcmd $::SERIAL_MAKE all
-        eval runcmd $::SERIAL_MAKE install
-    }
-  }
-}
-
-
 ################################################################################
 # Get and build vtk
 #
@@ -890,9 +869,6 @@ if { ![file exists $::TK_TEST_FILE] } {
 if { ![file exists $::ITCL_TEST_FILE] } {
     puts "incrTcl test file $::ITCL_TEST_FILE not found."
 }
-if { ![file exists $::IWIDGETS_TEST_FILE] } {
-    puts "iwidgets test file $::IWIDGETS_TEST_FILE not found."
-}
 if { ![file exists $::VTK_TEST_FILE] } {
     puts "VTK test file $::VTK_TEST_FILE not found."
 }
@@ -907,7 +883,6 @@ if { ![file exists $::CMAKE] || \
          ![file exists $::TCL_TEST_FILE] || \
          ![file exists $::TK_TEST_FILE] || \
          ![file exists $::ITCL_TEST_FILE] || \
-         ![file exists $::IWIDGETS_TEST_FILE] || \
          ![file exists $::VTK_TEST_FILE] || \
          ![file exists $::ITK_TEST_FILE] } {
     puts "Not all packages compiled; check errors and run genlib.tcl again."
