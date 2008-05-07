@@ -83,7 +83,6 @@ set ::ITK_TAG ITK-3-6
 set ::TCL_TAG "core-8-4-6"
 set ::TK_TAG "core-8-4-6"
 set ::ITCL_TAG "itcl-3-2-1"
-set ::IWIDGETS_TAG "iwidgets-4-0-1"
 set ::BLT_TAG "blt24z"
 set ::SANDBOX_TAG "http://svn.na-mic.org/svn/NAMICSandBox/branches/Slicer-2-6"
 set ::SLICERLIBCURL_TAG "HEAD"
@@ -166,19 +165,18 @@ switch $::tcl_platform(os) {
         set ::VTK_BUILD_SUBDIR ""
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
 
-        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.5
-        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.5
+        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
+        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.4/libitclstub3.4.a
-        set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.1/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::KWWidgets_TEST_FILE $::KWWidgets_BUILD_DIR/bin/libKWWidgets.$shared_lib_ext
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
         set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
-        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.5.$shared_lib_ext 
-        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.5.$shared_lib_ext
-        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.5
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
+        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
@@ -191,19 +189,18 @@ switch $::tcl_platform(os) {
         set ::VTK_BUILD_SUBDIR ""
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin
 
-        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.5
-        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.5
+        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh8.4
+        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish8.4
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itclConfig.sh
-        set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/bltwish24
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu
         set ::VTK_TEST_FILE $::VTK_DIR/bin/vtk
         set ::KWWidgets_TEST_FILE $::KWWidgets_BUILD_DIR/bin/libKWWidgets.so
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.so
         set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/libSlicerClustering.a
-        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.5.$shared_lib_ext 
-        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.5.$shared_lib_ext
-        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.5
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/libtcl8.4.$shared_lib_ext 
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/libtk8.4.$shared_lib_ext
+        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh8.4
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/libITKCommon.$shared_lib_ext
         set ::TK_EVENT_PATCH $::SLICER_HOME/tkEventPatch.diff
         set ::BLT_PATCH $::SLICER_HOME/blt-patch.diff
@@ -219,19 +216,18 @@ switch $::tcl_platform(os) {
         set ::TEEM_BIN_DIR  $::TEEM_BUILD_DIR/bin/$::VTK_BUILD_TYPE
 
         set ::env(VTK_BUILD_SUBDIR) $::VTK_BUILD_SUBDIR
-        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh85.exe
-        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish85.exe
+        set ::TCL_TEST_FILE $::TCL_BIN_DIR/tclsh84.exe
+        set ::TK_TEST_FILE  $::TCL_BIN_DIR/wish84.exe
         set ::ITCL_TEST_FILE $::TCL_LIB_DIR/itcl3.4/itcl34.dll
-        set ::IWIDGETS_TEST_FILE $::TCL_LIB_DIR/iwidgets4.0.2/iwidgets.tcl
         set ::BLT_TEST_FILE $::TCL_BIN_DIR/BLT24.dll
         set ::TEEM_TEST_FILE $::TEEM_BIN_DIR/unu.exe
         set ::VTK_TEST_FILE $::VTK_DIR/bin/$::VTK_BUILD_TYPE/vtk.exe
         set ::KWWidgets_TEST_FILE $::KWWidgets_BUILD_DIR/bin/$::env(VTK_BUILD_SUBDIR)/KWWidgets.lib
         set ::SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
         set ::ALT_SANDBOX_TEST_FILE $::SANDBOX_BIN_DIR/$::VTK_BUILD_TYPE/SlicerClustering.lib
-        set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl85.lib
-        set ::VTK_TK_LIB $::TCL_LIB_DIR/tk85.lib
-        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh85.exe
+        set ::VTK_TCL_LIB $::TCL_LIB_DIR/tcl84.lib
+        set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
+        set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
         set ::ITK_TEST_FILE $::ITK_BINARY_PATH/bin/$::VTK_BUILD_TYPE/ITKCommon.dll
         set ::IGSTK_TEST_FILE $::IGSTK_DIR/bin/$::VTK_BUILD_TYPE/IGSTK.lib
         set ::SLICERLIBCURL_TEST_FILE $::SLICERLIBCURL_BUILD_DIR/bin/$::VTK_BUILD_TYPE/slicerlibcurl.lib
