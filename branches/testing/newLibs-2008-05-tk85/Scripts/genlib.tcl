@@ -314,13 +314,13 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
 if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
 
     if {$isWindows} {
-      runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/Binaries/Windows/tcl-build tcl-build
+      runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/Binaries/Windows/tcl85-build tcl-build
     }
 
     file mkdir $SLICER_LIB/tcl
     cd $SLICER_LIB/tcl
 
-    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl/tcl tcl
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/tcl tcl
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
           # can't do windows
@@ -337,7 +337,7 @@ if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
 if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl/tk tk
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/tk tk
 
     if {0 && $isDarwin} {
         if { ![file exists $SLICER_LIB/tcl/isPatched] } {
@@ -378,7 +378,7 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
 
     cd $SLICER_LIB/tcl
 
-    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl/incrTcl incrTcl
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/incrTcl incrTcl
 
     cd $SLICER_LIB/tcl/incrTcl
 
@@ -396,7 +396,7 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
         # need to run ranlib separately on lib for Darwin
         # file is created and ranlib is needed inside make all
         catch "eval runcmd $::MAKE all"
-        runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a
+        runcmd ranlib ../incrTcl/itcl/libitclstub3.4.a
       }
       eval runcmd $::MAKE all
       eval runcmd $::SERIAL_MAKE install
