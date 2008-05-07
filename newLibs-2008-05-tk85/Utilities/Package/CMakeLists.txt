@@ -1,11 +1,11 @@
 #SET(CPACK_INSTALLED_DIRECTORIES)
 
 SET(TCL_DIR "${Slicer3_BINARY_DIR}/../Slicer3-lib/tcl-build")
-IF(EXISTS "${TCL_DIR}/bin/tclsh8.4" OR EXISTS "${TCL_DIR}/bin/tclsh84.exe")
-ELSE(EXISTS "${TCL_DIR}/bin/tclsh8.4" OR EXISTS "${TCL_DIR}/bin/tclsh84.exe")
-  MESSAGE(STATUS "Not Packaging TCL (cannot found: ${TCL_DIR}/bin/tclsh8.4 or ${TCL_DIR}/bin/tclsh84.exe)")
+IF(EXISTS "${TCL_DIR}/bin/tclsh8.5" OR EXISTS "${TCL_DIR}/bin/tclsh85.exe")
+ELSE(EXISTS "${TCL_DIR}/bin/tclsh8.5" OR EXISTS "${TCL_DIR}/bin/tclsh85.exe")
+  MESSAGE(STATUS "Not Packaging TCL (cannot found: ${TCL_DIR}/bin/tclsh8.5 or ${TCL_DIR}/bin/tclsh85.exe)")
   SET(TCL_DIR "")
-ENDIF(EXISTS "${TCL_DIR}/bin/tclsh8.4" OR EXISTS "${TCL_DIR}/bin/tclsh84.exe")
+ENDIF(EXISTS "${TCL_DIR}/bin/tclsh8.5" OR EXISTS "${TCL_DIR}/bin/tclsh85.exe")
 
 IF(TCL_DIR)
   #SET(CPACK_INSTALLED_DIRECTORIES ${CPACK_INSTALLED_DIRECTORIES}
