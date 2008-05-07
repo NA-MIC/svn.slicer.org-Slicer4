@@ -263,17 +263,6 @@ if { ![file exists $SLICER_LIB] } {
     file mkdir $SLICER_LIB
 }
 
-################################################################################
-# Get and unzip Slicer Lib file if Windows
-#
-
-if {$isWindows} {
-    if {![file exists $::CMAKE]} {
-        cd $SLICER_LIB
-        runcmd curl -k -O http://www.na-mic.org/Slicer/Download/External/Slicer3-lib_win32.zip
-        runcmd unzip ./Slicer3-lib_win32.zip
-    }
-}
 
 ################################################################################
 # If is Darwin, don't use cvs compression to get around bug in cvs 1.12.13
@@ -297,15 +286,12 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
 
 
     if {$isWindows} {
-      if { ! $::GENLIB(update) } {
-        puts stderr "Slicer3-lib_win32.zip did not download and unzip CMAKE correctly."
-        exit
-      }
+      runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/Binaries/Windows/CMake-build CMake-build
     } else {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
         eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake"
 
-    if {$::GENLIB(buildit)} {
+        if {$::GENLIB(buildit)} {
           cd $::CMAKE_PATH
           if { $isSolaris } {
               # make sure to pick up curses.h in /local/os/include
@@ -322,21 +308,19 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
 ################################################################################
 # Get and build tcl, tk, itcl, widgets
 #
+#
 
 # on windows, tcl won't build right, as can't configure, so save commands have to run
 if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
 
     if {$isWindows} {
-      if { ! $::GENLIB(update) } {
-        puts stderr "Slicer3-lib_win32.zip did not download and unzip Tcl correctly."
-        exit
-      }
+      runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/Binaries/Windows/tcl-build tcl-build
     }
 
     file mkdir $SLICER_LIB/tcl
     cd $SLICER_LIB/tcl
 
-    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/tcl tcl
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl/tcl tcl
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
           # can't do windows
@@ -353,7 +337,7 @@ if { [BuildThis $::TCL_TEST_FILE "tcl"] == 1 } {
 if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
     cd $SLICER_LIB/tcl
 
-    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/tk tk
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl/tk tk
 
     if {0 && $isDarwin} {
         if { ![file exists $SLICER_LIB/tcl/isPatched] } {
@@ -373,7 +357,7 @@ if { [BuildThis $::TK_TEST_FILE "tk"] == 1 } {
 
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
-         # can't do windows
+         # ignore, already downloaded with tcl
       } else {
          cd $SLICER_LIB/tcl/tk/unix
          if { $isDarwin } {
@@ -394,14 +378,14 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
 
     cd $SLICER_LIB/tcl
 
-    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl85/incrTcl incrTcl
+    runcmd $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl/incrTcl incrTcl
 
     cd $SLICER_LIB/tcl/incrTcl
 
     exec chmod +x ../incrTcl/configure 
     if {$::GENLIB(buildit)} {
       if {$isWindows} {
-        # can't do windows
+         # ignore, already downloaded with tcl
       } else {
         if { $isDarwin } {
           exec cp ../incrTcl/itcl/configure ../incrTcl/itcl/configure.orig
