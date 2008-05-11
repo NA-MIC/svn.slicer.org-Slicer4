@@ -1602,6 +1602,10 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
           {
           nodeClass = "vtkMRMLGridTransformNode";
           }
+        else if ((*pit).GetType() == "bspline")
+          {
+          nodeClass = "vtkMRMLBSplineTransformNode";
+          }
 
         tparameter->SetNodeClass(nodeClass.c_str(),
                                  NULL,
@@ -1627,6 +1631,8 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         // an output type since the node selector must be able to make
         // an instance of the class.  For now, revert to LinearTransformNode.
 
+        vtkWarningMacro( "command line: type=" << (*pit).GetType() );
+
         std::string nodeClass = "vtkMRMLLinearTransformNode";
         if ((*pit).GetType() == "linear")
           {
@@ -1635,6 +1641,10 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         else if ((*pit).GetType() == "nonlinear")
           {
           nodeClass = "vtkMRMLGridTransformNode";
+          }
+        else if ((*pit).GetType() == "bspline")
+          {
+          nodeClass = "vtkMRMLBSplineTransformNode";
           }
 
 

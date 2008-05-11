@@ -22,12 +22,15 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLNonlinearTransformNode.h"
 #include "vtkMRMLGridTransformNode.h"
+#include "vtkMRMLBSplineTransformNode.h"
 
 #include "vtkMatrix4x4.h"
 #include "vtkGridTransform.h"
 #include "vtkImageData.h"
 #include "vtkDoubleArray.h"
 #include "vtkPointData.h"
+
+#include "vtkITKBSplineTransform.h"
 
 #include "itksys/SystemTools.hxx"
 
@@ -206,6 +209,9 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
     result = 0;
     }
   
+
+  vtkWarningMacro("Read the transform");
+
   // Convert the ITK transform to the appropriate type of VTK
   // transform
   if (transform)
@@ -333,6 +339,9 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
       }
     else if (refNode->IsA("vtkMRMLGridTransformNode"))
       {
+
+      vtkWarningMacro("Running Jim's code");
+
       vtkMRMLGridTransformNode *gtn
         = vtkMRMLGridTransformNode::SafeDownCast(refNode);
       
@@ -419,6 +428,57 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
         = dynamic_cast<FloatBSplineTransformType*>( transform.GetPointer() );
       if (fbt)
         {
+        }
+      
+      }
+    else if (refNode->IsA("vtkMRMLBSplineTransformNode"))
+      {
+
+      vtkWarningMacro("Running the bspline code");
+
+      vtkMRMLBSplineTransformNode *btn
+        = vtkMRMLBSplineTransformNode::SafeDownCast(refNode);
+      
+
+      static const int D = 3;
+      typedef itk::BSplineDeformableTransform<double,D,D> DoubleBSplineTransformType;
+      typedef itk::BSplineDeformableTransform<float,D,D> FloatBSplineTransformType;
+
+      vtkITKBSplineTransform* vtkBSpline = vtkITKBSplineTransform::New();
+      
+      // B-spline transform of doubles, dimension 3
+      {
+      DoubleBSplineTransformType::Pointer bst
+        = dynamic_cast<DoubleBSplineTransformType*>( transform.GetPointer() );
+      if (bst)
+        {
+        typedef DoubleBSplineTransformType SplineType;
+          
+        vtkBSpline->SetSplineOrder( 3 );
+        SplineType::ParametersType const& fp = bst->GetFixedParameters();
+        vtkBSpline->SetFixedParameters( fp.data_block(), fp.GetSize() );
+
+        if( bst->GetNumberOfParameters() != vtkBSpline->GetNumberOfParameters() )
+          {
+          vtkErrorMacro("Mismatch in number of BSpline parameters");
+          return 0;
+          }
+
+        SplineType::ParametersType const& param = bst->GetParameters();
+        vtkBSpline->SetParameters( param.data_block() );
+
+        // Set the transform on the node
+        btn->SetAndObserveWarpTransformToParent( vtkBSpline );
+        vtkBSpline->Delete();
+        }
+      }
+
+      // B-spline transform of floats, dimension 3
+      FloatBSplineTransformType::Pointer fbt
+        = dynamic_cast<FloatBSplineTransformType*>( transform.GetPointer() );
+      if (fbt)
+        {
+        vtkErrorMacro( "BSpline transform storage not yet implemented for gloat" )
         }
       
       }

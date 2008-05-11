@@ -28,6 +28,8 @@ public:
   // SetOrder MUST be called first before other set functions.
   void SetSplineOrder( unsigned int );
 
+  unsigned int GetSplineOrder() const;
+
   // The origin of the B-spline grid must be set at one grid position
   // away from the origin of the desired output image.
   void SetGridOrigin( const double origin[3] );
@@ -66,12 +68,23 @@ public:
   // The parameter values in \a param are copied, and hence can be
   // released after this call.
   //
-  void SetParameters( double* param );
+  void SetParameters( const double* param );
 
   // The number of elements in the parameter vector.
   //
   // See SetParameters(double[]).
   unsigned int GetNumberOfParameters() const;
+
+  const double* GetParameters() const;
+
+
+  void SetFixedParameters( const double* param, unsigned N );
+
+  // The number of fixed parameters.
+  unsigned int GetNumberOfFixedParameters() const;
+
+  // Return a pointer to the fixed parameter array.
+  const double* GetFixedParameters() const;
 
 protected:
   vtkITKBSplineTransform();
