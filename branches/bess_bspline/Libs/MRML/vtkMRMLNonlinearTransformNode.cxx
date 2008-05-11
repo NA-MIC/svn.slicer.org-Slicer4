@@ -80,15 +80,15 @@ void vtkMRMLNonlinearTransformNode::WriteXML(ostream& of, int nIndent)
 {
   Superclass::WriteXML(of, nIndent);
 
-  vtkIndent indent(nIndent);
+//   vtkIndent indent(nIndent);
 
-  if (this->WarpTransformToParent != NULL) 
-    {
-    std::stringstream ss;
+//   if (this->WarpTransformToParent != NULL) 
+//     {
+//     std::stringstream ss;
 
-    // jvm - push off to a TransformStorageNode?
-    //
-    //
+//     // jvm - push off to a TransformStorageNode?
+//     //
+//     //
 //     for (int row=0; row<4; row++) 
 //       {
 //       for (int col=0; col<4; col++) 
@@ -105,8 +105,8 @@ void vtkMRMLNonlinearTransformNode::WriteXML(ostream& of, int nIndent)
 //         }
 //       }
     
-    of << indent << " warpTransformToParent=\"" << ss.str() << "\"";
-    }
+//     of << indent << " warpTransformToParent=\"" << ss.str() << "\"";
+//     }
 
 }
 

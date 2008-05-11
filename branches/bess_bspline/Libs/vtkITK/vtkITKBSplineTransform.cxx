@@ -12,9 +12,13 @@ public:
   virtual unsigned int GetNumberOfParameters() = 0;
   virtual void SetParameters( ParametersType const& ) = 0;
   virtual void SetParameters( vtkDoubleArray& param ) = 0;
-  virtual void SetParameters( double* ) = 0;
+  virtual void SetParameters( double const* ) = 0;
   
   virtual ParametersType const& GetParameters() const = 0;
+
+  virtual void SetFixedParameters( double const*, unsigned N ) = 0;
+  virtual const double* GetFixedParameters( unsigned& N ) const = 0;
+
   virtual void SetGridOrigin( const double origin[3] ) = 0;
   virtual void SetGridSpacing( const double spacing[3] ) = 0;
   virtual void SetGridSize( const unsigned int size[3] ) = 0;
@@ -47,7 +51,9 @@ public:
   { return BSpline->GetParameters(); }
   virtual void SetParameters( ParametersType const& );
   virtual void SetParameters( vtkDoubleArray& param );
-  virtual void SetParameters( double* );
+  virtual void SetParameters( double const* );
+  virtual void SetFixedParameters( double const*, unsigned N );
+  virtual const double* GetFixedParameters( unsigned& N ) const;
   virtual void SetGridOrigin( const double origin[3] );
   virtual void SetGridSpacing( const double spacing[3] );
   virtual void SetGridSize( const unsigned int size[3] );
@@ -138,13 +144,31 @@ vtkITKBSplineTransform
   }
 }
 
+
+unsigned int
+vtkITKBSplineTransform
+::GetSplineOrder() const
+{
+  if( Helper )
+  {
+    return Helper->GetOrder();
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+
 void 
 vtkITKBSplineTransform
 ::SetGridOrigin( const double origin[3] ) 
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->SetGridOrigin( origin );
+  if( Helper != NULL )
+    {
+    Helper->SetGridOrigin( origin );
+    }
 }
 
 void 
@@ -152,8 +176,10 @@ vtkITKBSplineTransform
 ::SetGridSpacing( const double spacing[3] ) 
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->SetGridSpacing( spacing );
+  if( Helper != NULL )
+    {
+    Helper->SetGridSpacing( spacing );
+    }
 }
 
 void
@@ -161,8 +187,10 @@ vtkITKBSplineTransform
 ::SetGridSize( const unsigned int size[3] ) 
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->SetGridSize( size );
+  if( Helper != NULL )
+    {
+    Helper->SetGridSize( size );
+    }
 }
 
 void
@@ -170,17 +198,21 @@ vtkITKBSplineTransform
 ::SetParameters( vtkDoubleArray& param ) 
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->SetParameters( param );
+  if( Helper != NULL )
+    {
+    Helper->SetParameters( param );
+    }
 }
 
 void
 vtkITKBSplineTransform
-::SetParameters( double* param ) 
+::SetParameters( double const* param ) 
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->SetParameters( param );
+  if( Helper != NULL )
+    {
+    Helper->SetParameters( param );
+    }
 }
 
 unsigned int 
@@ -188,8 +220,66 @@ vtkITKBSplineTransform
 ::GetNumberOfParameters() const 
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  return Helper->GetNumberOfParameters();
+  if( Helper != NULL )
+    {
+    return Helper->GetNumberOfParameters();
+    }
+  else
+    {
+    return 0;
+    }
+}
+
+double const*
+vtkITKBSplineTransform
+::GetParameters() const 
+{
+  if( Helper != NULL )
+    {
+    return Helper->GetParameters().data_block();
+    }
+  else
+    {
+    return NULL;
+    }
+}
+
+void
+vtkITKBSplineTransform
+::SetFixedParameters( double const* param, unsigned N ) 
+{
+  // Need to have called SetSplineOrder before calling this.
+  if( Helper != NULL )
+    {
+    Helper->SetFixedParameters( param, N );
+    }
+}
+
+unsigned int
+vtkITKBSplineTransform
+::GetNumberOfFixedParameters() const
+{
+  unsigned N = 0;
+  if( Helper != NULL )
+    {
+    Helper->GetFixedParameters( N );
+    }
+  return N;
+}
+
+const double*
+vtkITKBSplineTransform
+::GetFixedParameters() const
+{
+  if( Helper != NULL )
+    {
+    unsigned N;
+    return Helper->GetFixedParameters(N);
+    }
+  else
+    {
+    return NULL;
+    }
 }
 
 void
@@ -336,7 +426,7 @@ vtkITKBSplineTransformHelperImpl<O>
 template< unsigned O >
 void 
 vtkITKBSplineTransformHelperImpl<O>
-::SetParameters( double* param )
+::SetParameters( double const* param )
 {
   unsigned numberOfParam = BSpline->GetNumberOfParameters();
   this->parameters.SetSize( numberOfParam );
@@ -346,6 +436,30 @@ vtkITKBSplineTransformHelperImpl<O>
 
   BSpline->SetParameters( parameters );
 }
+
+template< unsigned O >
+void 
+vtkITKBSplineTransformHelperImpl<O>
+::SetFixedParameters( double const* param, unsigned N )
+{
+  typename BSplineType::ParametersType parameters( N );
+                                         
+  for( unsigned int i=0; i<N; ++i )
+    parameters.SetElement( i, param[i] );
+
+  BSpline->SetFixedParameters( parameters );
+}
+
+
+template< unsigned O >
+const double*
+vtkITKBSplineTransformHelperImpl<O>
+::GetFixedParameters( unsigned& N ) const
+{
+  N = BSpline->GetFixedParameters().GetSize();
+  return BSpline->GetFixedParameters().data_block();
+}
+
 
 template <class T, unsigned O>
 void

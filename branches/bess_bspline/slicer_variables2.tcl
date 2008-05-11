@@ -123,7 +123,7 @@ set ::VTK_SRC_DIR $::SLICER_LIB/VTK
 set ::CMAKE_CXX_FLAGS_DEBUG "-g"
 if { ![info exists ::VTK_BUILD_TYPE] } {
   # set a default if it hasn't already been specified
-  set ::VTK_BUILD_TYPE "Debug" ;# options: Release, RelWithDebInfo, Debug
+  set ::VTK_BUILD_TYPE "Release" ;# options: Release, RelWithDebInfo, Debug
 }
 set ::VTK_BUILD_SUBDIR $::VTK_BUILD_TYPE 
 set ::env(VTK_BUILD_TYPE) $::VTK_BUILD_TYPE
