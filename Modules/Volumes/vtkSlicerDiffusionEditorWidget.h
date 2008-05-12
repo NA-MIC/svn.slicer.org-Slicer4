@@ -12,7 +12,7 @@
 class vtkSlicerDiffusionEditorLogic;
 class vtkMRMLDiffusionWeightedVolumeNode;
 class vtkSlicerMeasurementFrameWidget;
-class vtkSlicerDWITestingWidget;
+class vtkSlicerDiffusionTestingWidget;
 class vtkSlicerGradientsWidget;
 //widgets
 class vtkKWFrame;
@@ -49,6 +49,8 @@ class VTK_VOLUMES_EXPORT vtkSlicerDiffusionEditorWidget : public vtkSlicerWidget
     // Returns the logic of the DiffusionEditor.
     vtkGetObjectMacro(Logic, vtkSlicerDiffusionEditorLogic);
 
+    vtkGetObjectMacro(TestingWidget, vtkSlicerDiffusionTestingWidget);
+
   protected:
     vtkSlicerDiffusionEditorWidget(void);
     virtual ~vtkSlicerDiffusionEditorWidget(void);
@@ -61,12 +63,12 @@ class VTK_VOLUMES_EXPORT vtkSlicerDiffusionEditorWidget : public vtkSlicerWidget
     vtkSlicerDiffusionEditorLogic *Logic;
 
     //nodes
-    vtkMRMLDiffusionWeightedVolumeNode *ActiveVolumeNode;
+    vtkMRMLVolumeNode *ActiveVolumeNode;
 
     //widgets (GUI)
     vtkSlicerMeasurementFrameWidget *MeasurementFrameWidget;
     vtkSlicerGradientsWidget *GradientsWidget;
-    vtkSlicerDWITestingWidget *TestingWidget;
+    vtkSlicerDiffusionTestingWidget *TestingWidget;
     vtkKWFrame *ButtonFrame;
     vtkKWPushButton *RestoreButton;
     vtkKWPushButton *UndoButton;

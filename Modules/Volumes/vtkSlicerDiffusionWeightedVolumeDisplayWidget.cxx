@@ -126,9 +126,11 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
         this->ExtractComponent->Update();
         if (vtkMRMLScalarVolumeNode::SafeDownCast(volumeNode) != NULL)
           {
-          vtkMRMLScalarVolumeNode::SafeDownCast(volumeNode)->CalculateScalarAutoLevelsWithData(displayNode, this->ExtractComponent->GetOutput());
+          vtkMRMLScalarVolumeNode::SafeDownCast(volumeNode)->CalculateScalarAutoLevels(displayNode, this->ExtractComponent->GetOutput());
           }
         else { vtkWarningMacro("Failed to calculate scalar levels, volume node is not a scalar"); }
+
+//        volumeNode->CalculateAutoLevels();
         this->WindowLevelThresholdEditor->SetImageData(this->ExtractComponent->GetOutput());
         }
       }
@@ -406,7 +408,7 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::RemoveWidgetObservers ( )
   this->WindowLevelThresholdEditor->RemoveObservers(vtkKWWindowLevelThresholdEditor::ValueStartChangingEvent, (vtkCommand *)this->GUICallbackCommand );
   this->InterpolateButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
-  this->WindowLevelThresholdEditor->SetImageData(NULL);
+  //this->WindowLevelThresholdEditor->SetImageData(NULL);
 }
 
 

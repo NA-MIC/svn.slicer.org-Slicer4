@@ -83,13 +83,9 @@ extern "C" {
 //#define SLICES_DEBUG
 //#define MODELS_DEBUG
 //#define VOLUMES_DEBUG
-//#define QUERYATLAS_DEBUG
 //#define COLORS_DEBUG
 //#define FIDUCIALS_DEBUG
 #define CAMERA_DEBUG
-//#define EMSEG_DEBUG
-#define REALTIMEIMAGING_DEBUG
-#define MRABLATION_DEBUG
 //#define TRACTOGRAPHY_DEBUG
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
@@ -99,24 +95,9 @@ extern "C" {
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 #include "vtkSlicerFiberBundleLogic.h"
+#include "vtkSlicerTractographyDisplayLogic.h"
 #include "vtkSlicerTractographyDisplayGUI.h"
 #include "vtkSlicerTractographyFiducialSeedingGUI.h"
-#endif
-
-#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
-#include "vtkEMSegmentLogic.h"
-#include "vtkEMSegmentGUI.h"
-#include "vtkEMSegmentMRMLManager.h"
-#endif
-
-#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
-#include "vtkRealTimeImagingLogic.h"
-#include "vtkRealTimeImagingGUI.h"
-#endif
-
-#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
-#include "vtkMRAblationLogic.h"
-#include "vtkMRAblationGUI.h"
 #endif
 
 #if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
@@ -129,20 +110,10 @@ extern "C" {
 #include "vtkCommandLineModuleGUI.h"
 #endif
 
-#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
-#include "vtkQueryAtlasLogic.h"
-#include "vtkQueryAtlasGUI.h"
-#endif
-
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
 #include "vtkMRMLVolumeRenderingNode.h"
 #include "vtkVolumeRenderingModuleGUI.h"
 #include "vtkVolumeRenderingModuleLogic.h"
-#endif
-
-#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
-#include "vtkLabelStatisticsGUI.h"
-#include "vtkLabelStatisticsLogic.h"
 #endif
 
 #if !defined(REMOTEIO_DEBUG)
@@ -188,18 +159,9 @@ extern "C" int Vtkteem_Init(Tcl_Interp *interp);
 
 
 //TODO added temporary
-#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
-extern "C" int Emsegment_Init(Tcl_Interp *interp);
-#endif
-#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
-extern "C" int Realtimeimaging_Init(Tcl_Interp *interp);
-#endif
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Slicertractographydisplay_Init(Tcl_Interp *interp);
 extern "C" int Slicertractographyfiducialseeding_Init(Tcl_Interp *interp);
-#endif
-#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
-extern "C" int Queryatlas_Init(Tcl_Interp *interp);
 #endif
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Volumerenderingmodule_Init(Tcl_Interp *interp);
@@ -214,9 +176,6 @@ extern "C" int Commandlinemodule_Init(Tcl_Interp *interp);
 #endif
 #if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Scriptedmodule_Init(Tcl_Interp *interp);
-#endif
-#ifndef LABELSTATISTICS_DEBUG
-extern "C" int Labelstatistics_Init(Tcl_Interp *interp);
 #endif
 #if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Volumes_Init(Tcl_Interp *interp);
@@ -680,12 +639,6 @@ int Slicer3_main(int argc, char *argv[])
     Igt_Init(interp);
     Vtkteem_Init(interp);
 
-#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
-    Emsegment_Init(interp);
-#endif
-#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
-    Realtimeimaging_Init(interp);
-#endif
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
     Volumerenderingmodule_Init(interp);
     //Also the replacements
@@ -694,9 +647,6 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
     Slicertractographydisplay_Init(interp);
     Slicertractographyfiducialseeding_Init(interp);
-#endif
-#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
-    Queryatlas_Init(interp);
 #endif
 #if !defined(DAEMON_DEBUG) && defined(BUILD_MODULES)
     Slicerdaemon_Init(interp);
@@ -707,10 +657,7 @@ int Slicer3_main(int argc, char *argv[])
 #if !defined(TCLMODULES_DEBUG) && defined(BUILD_MODULES)
     Scriptedmodule_Init(interp);
 #endif
-#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
-    Labelstatistics_Init(interp);
-#endif
-    #if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
+#if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
     Volumes_Init(interp);
 #endif
 
@@ -1075,12 +1022,25 @@ int Slicer3_main(int argc, char *argv[])
     while (lmit != loadableModuleNames.end())
       {
         LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
-
         slicerApp->SplashMessage(desc.GetMessage().c_str());
 
+        // Initialize TCL
+
+        TclInit Tcl_Init = desc.GetTclInitFunction();
+
+        if (Tcl_Init != 0)
+        {
+          (*Tcl_Init)(interp);
+        }
+
+        vtkSlicerModuleGUI* gui = desc.GetGUIPtr();
         vtkSlicerModuleLogic* logic = desc.GetLogicPtr();
         logic->SetAndObserveMRMLScene( scene );
-        vtkSlicerModuleGUI* gui = desc.GetGUIPtr();
+
+        vtkIntArray* events = logic->NewObservableEvents();
+        logic->SetAndObserveMRMLSceneEvents(scene, events);
+        events->Delete();
+        logic->SetApplicationLogic(appLogic);
 
         gui->SetApplication( slicerApp );
         gui->SetApplicationGUI( appGUI );
@@ -1095,15 +1055,6 @@ int Slicer3_main(int argc, char *argv[])
         gui->BuildGUI ( );
         gui->AddGUIObservers ( );
         gui->Init();
-
-        // Initialize TCL
-
-        TclInit Tcl_Init = desc.GetTclInitFunction();
-
-        if (Tcl_Init != 0)
-        {
-          (*Tcl_Init)(interp);
-        }
 
         lmit++;
       }
@@ -1219,48 +1170,7 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->AddModuleGUI ( colorGUI );
 #endif
 
-#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
-    // -- Real Time Imaging module
-    vtkRealTimeImagingLogic *realtimeimagingLogic = vtkRealTimeImagingLogic::New ( );
-    realtimeimagingLogic->SetAndObserveMRMLScene ( scene );
-    realtimeimagingLogic->AddRealTimeVolumeNode ("RealTime");
-    vtkRealTimeImagingGUI *realtimeimagingGUI = vtkRealTimeImagingGUI::New ( );
-
-    realtimeimagingGUI->SetApplication ( slicerApp );
-    realtimeimagingGUI->SetApplicationGUI ( appGUI );
-    realtimeimagingGUI->SetAndObserveApplicationLogic ( appLogic );
-    realtimeimagingGUI->SetAndObserveMRMLScene ( scene );
-    realtimeimagingGUI->SetModuleLogic ( realtimeimagingLogic );
-    realtimeimagingGUI->SetGUIName( "Real Time Imaging" );
-    realtimeimagingGUI->GetUIPanel()->SetName ( realtimeimagingGUI->GetGUIName ( ) );
-    realtimeimagingGUI->GetUIPanel()->SetUserInterfaceManager(appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    realtimeimagingGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( realtimeimagingGUI );
-    realtimeimagingGUI->BuildGUI ( );
-    realtimeimagingGUI->AddGUIObservers ( );
-#endif 
-
-#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
-    // -- MRAblation module
-    vtkMRAblationLogic *ablationLogic = vtkMRAblationLogic::New(); 
-    ablationLogic->SetAndObserveMRMLScene ( scene );
-    vtkMRAblationGUI *ablationGUI = vtkMRAblationGUI::New();
-
-    ablationGUI->SetApplication ( slicerApp );
-    ablationGUI->SetApplicationGUI ( appGUI );
-    ablationGUI->SetAndObserveApplicationLogic ( appLogic );
-    ablationGUI->SetAndObserveMRMLScene ( scene );
-    ablationGUI->SetModuleLogic ( ablationLogic );
-    ablationGUI->SetGUIName( "MRAblation" );
-    ablationGUI->GetUIPanel()->SetName ( ablationGUI->GetGUIName ( ) );
-    ablationGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    ablationGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( ablationGUI );
-    ablationGUI->BuildGUI ( );
-    ablationGUI->AddGUIObservers ( );
-#endif 
-
-    // --- Transforms module
+// --- Transforms module
     slicerApp->SplashMessage("Initializing Transforms Module...");
 
     vtkSlicerTransformsGUI *transformsGUI = vtkSlicerTransformsGUI::New ( );
@@ -1371,18 +1281,18 @@ int Slicer3_main(int argc, char *argv[])
     // --- Tractography Display module
     slicerApp->SplashMessage("Initializing Tractography Display Module...");
     vtkSlicerTractographyDisplayGUI *slicerTractographyDisplayGUI = vtkSlicerTractographyDisplayGUI::New ( );
-    vtkSlicerFiberBundleLogic *slicerFiberBundleLogic  = vtkSlicerFiberBundleLogic::New ( );
-    //slicerFiberBundleLogic->DebugOn ( );
+    vtkSlicerTractographyDisplayLogic *slicerTractographyDisplayLogic  = vtkSlicerTractographyDisplayLogic::New ( );
+    //slicerTractographyDisplayLogic->DebugOn ( );
 
     // Observe scene events to handle display logic for new nodes or new scenes
     events = vtkIntArray::New();
     events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
     //events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-    slicerFiberBundleLogic->SetAndObserveMRMLSceneEvents ( scene , events );
+    slicerTractographyDisplayLogic->SetAndObserveMRMLSceneEvents ( scene , events );
     events->Delete();
 
-    slicerFiberBundleLogic->SetApplicationLogic ( appLogic );
-    slicerTractographyDisplayGUI->SetLogic ( slicerFiberBundleLogic );
+    slicerTractographyDisplayLogic->SetApplicationLogic ( appLogic );
+    slicerTractographyDisplayGUI->SetLogic ( slicerTractographyDisplayLogic );
     slicerTractographyDisplayGUI->SetApplication ( slicerApp );
     slicerTractographyDisplayGUI->SetApplicationLogic ( appLogic );
     slicerTractographyDisplayGUI->SetApplicationGUI ( appGUI );
@@ -1401,7 +1311,7 @@ int Slicer3_main(int argc, char *argv[])
     vtkSlicerTractographyFiducialSeedingGUI *slicerTractographyFiducialSeedingGUI = vtkSlicerTractographyFiducialSeedingGUI::New ( );
 
 
-    slicerFiberBundleLogic->SetApplicationLogic ( appLogic );
+    slicerTractographyDisplayLogic->SetApplicationLogic ( appLogic );
     slicerTractographyFiducialSeedingGUI->SetApplication ( slicerApp );
     slicerTractographyFiducialSeedingGUI->SetApplicationLogic ( appLogic );
     slicerTractographyFiducialSeedingGUI->SetApplicationGUI ( appGUI );
@@ -1414,83 +1324,6 @@ int Slicer3_main(int argc, char *argv[])
     slicerTractographyFiducialSeedingGUI->AddGUIObservers ( );
 #endif
 
-#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
-    //
-    // --- EMSegment Template builder module
-    //
-    vtkEMSegmentGUI *emSegmentGUI = 
-      vtkEMSegmentGUI::New ( );
-    vtkEMSegmentLogic *emSegmentLogic = 
-      vtkEMSegmentLogic::New ( );
-
-    emSegmentLogic->SetAndObserveMRMLScene(scene);
-    vtkIntArray *emsEvents = vtkIntArray::New();
-    emsEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-    emsEvents->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-    emSegmentLogic->SetAndObserveMRMLSceneEvents(scene, emsEvents);
-    emsEvents->Delete();
-    emSegmentLogic->SetApplicationLogic(appLogic);
-
-    emSegmentGUI->SetAndObserveMRMLScene (scene);
-    emSegmentGUI->SetLogic(emSegmentLogic);
-    emSegmentGUI->SetMRMLManager(emSegmentLogic->GetMRMLManager());
-    emSegmentGUI->SetApplication(slicerApp);
-    emSegmentGUI->SetApplicationLogic(appLogic);
-    emSegmentGUI->SetApplicationGUI(appGUI);
-    emSegmentGUI->SetGUIName("EMSegment Template Builder");
-    emSegmentGUI->GetUIPanel()->
-      SetName(emSegmentGUI->GetGUIName());
-    emSegmentGUI->GetUIPanel()->
-      SetUserInterfaceManager(appGUI->GetMainSlicerWindow()->
-                              GetMainUserInterfaceManager());
-    emSegmentGUI->GetUIPanel()->Create();
-    slicerApp->AddModuleGUI(emSegmentGUI);
-    emSegmentGUI->BuildGUI();
-    emSegmentGUI->AddGUIObservers();
-    //
-    // --- END EMSegment Template builder module
-    //
-#endif
-
-#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
-//#ifndef QUERYATLAS_DEBUG
-    slicerApp->SplashMessage("Initializing Query Atlas Module...");
-
-    //--- Incorporate the tcl QueryAtlas components
-    std::string qaTclCommand = "set ::QA_PACKAGE {};";
-    qaTclCommand += "set dir \"" + slicerBinDir + "/../" +
-      SLICER_INSTALL_LIBRARIES_DIR + "/Modules/Packages/QueryAtlas/Tcl\" ; ";
-    qaTclCommand += "  if { [ file exists $dir/pkgIndex.tcl ] } {";
-    qaTclCommand += "    lappend ::QA_PACKAGE [ file tail $dir ];";
-    qaTclCommand += "    lappend ::auto_path $dir;";
-    qaTclCommand += "    package require $::QA_PACKAGE;";
-    qaTclCommand += "  }";
-    Slicer3_Tcl_Eval( interp, qaTclCommand.c_str() );
-
-    //--- Query Atlas Module
-    vtkQueryAtlasGUI *queryAtlasGUI = vtkQueryAtlasGUI::New ( );
-    vtkQueryAtlasLogic *queryAtlasLogic  = vtkQueryAtlasLogic::New ( );
-    queryAtlasLogic->SetApplicationLogic ( appLogic );
-    queryAtlasGUI->SetApplication ( slicerApp );
-    queryAtlasGUI->SetApplicationLogic ( appLogic );
-    queryAtlasGUI->SetApplicationGUI ( appGUI );
-    queryAtlasGUI->SetGUIName( "QueryAtlas" );
-    queryAtlasGUI->GetUIPanel()->SetName ( queryAtlasGUI->GetGUIName ( ) );
-    queryAtlasGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    queryAtlasGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( queryAtlasGUI );
-    // add mrml observers
-    vtkIntArray *qaEvents = vtkIntArray::New();
-    qaEvents->InsertNextValue ( vtkMRMLScene::SceneCloseEvent );
-    qaEvents->InsertNextValue ( vtkMRMLScene::NodeAddedEvent );
-    qaEvents->InsertNextValue ( vtkMRMLScene::NodeRemovedEvent );
-    queryAtlasGUI->SetAndObserveMRMLSceneEvents (scene, qaEvents );
-    qaEvents->Delete();
-    queryAtlasGUI->BuildGUI ( );
-    queryAtlasGUI->AddGUIObservers ( );
-
-#endif
-    
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
 
     slicerApp->SplashMessage("Initializing Volume Rendering Module...");
@@ -1519,28 +1352,6 @@ int Slicer3_main(int argc, char *argv[])
     vrModuleGUI->SetViewerWidget(appGUI->GetViewerWidget());
     vrModuleGUI->SetInteractorStyle(vtkSlicerViewerInteractorStyle::SafeDownCast(appGUI->GetViewerWidget()->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()));
 #endif
-
-#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
-    // --- LabelStatistics  module
-    slicerApp->SplashMessage("Initializing LabelStatistics Module...");
-    vtkLabelStatisticsGUI *labelStatsGUI = vtkLabelStatisticsGUI::New ( );
-    vtkLabelStatisticsLogic *labelStatsLogic  = vtkLabelStatisticsLogic::New ( );
-    labelStatsLogic->SetAndObserveMRMLScene ( scene );
-    labelStatsLogic->SetApplicationLogic ( appLogic );
-    //    labelStatsLogic->SetMRMLScene(scene);
-    labelStatsGUI->SetLogic ( labelStatsLogic );
-    labelStatsGUI->SetApplication ( slicerApp );
-    labelStatsGUI->SetApplicationLogic ( appLogic );
-    labelStatsGUI->SetApplicationGUI ( appGUI );
-    labelStatsGUI->SetGUIName( "LabelStatistics" );
-    labelStatsGUI->GetUIPanel()->SetName ( labelStatsGUI->GetGUIName ( ) );
-    labelStatsGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
-    labelStatsGUI->GetUIPanel()->Create ( );
-    slicerApp->AddModuleGUI ( labelStatsGUI );
-    labelStatsGUI->BuildGUI ( );
-    labelStatsGUI->AddGUIObservers ( );
-#endif
-
 
     //
     //--- Cache and RemoteIO ManagerGUI
@@ -1687,22 +1498,23 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->Script ("namespace eval slicer3 set ApplicationGUI %s", name);
 
     lmit = loadableModuleNames.begin();
-    
-    while (lmit != loadableModuleNames.end())
-      {
-        LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
+     
+     while (lmit != loadableModuleNames.end())
+       {
+       LoadableModuleDescription desc = loadableModuleFactory.GetModuleDescription(*lmit);
 
-        vtkSlicerModuleGUI* gui = desc.GetGUIPtr();
+       vtkSlicerModuleGUI* gui = desc.GetGUIPtr();
 
-        name = gui->GetTclName();
-        std::string format("namespace eval slicer3 set ");
-        format += desc.GetShortName();
-        format += "GUI %s";
+       name = gui->GetTclName();
+       std::string format("namespace eval slicer3 set ");
+       format += desc.GetShortName();
+       format += "GUI %s";
 
-        slicerApp->Script (format.c_str(), name);        
+       slicerApp->Script (format.c_str(), name);        
 
-        lmit++;
-      }
+       lmit++;
+       }
+
 
 #ifndef REMOTEIO_DEBUG
     name = remoteIOGUI->GetTclName();
@@ -1735,24 +1547,10 @@ int Slicer3_main(int argc, char *argv[])
     name = colorGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set ColorGUI %s", name);
 #endif
-#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
-    name = realtimeimagingGUI->GetTclName();
-    slicerApp->Script ("namespace eval slicer3 set RealTimeImagingGUI %s", name);
-#endif
-#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
-    name = ablationGUI->GetTclName();
-    slicerApp->Script ("namespace eval slicer3 set MRAblationGUI %s", name);
-#endif
 
     name = transformsGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set TransformsGUI %s", name);
-#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
-//#ifndef QUERYATLAS_DEBUG
-    name = queryAtlasGUI->GetTclName();
-    slicerApp->Script ("namespace eval slicer3 set QueryAtlasGUI %s", name);
-#endif
-   
-    
+
 #if !defined (VOLUMERENDERINGMODULE_DEBUG) && defined (BUILD_MODULES)
     name = vrModuleGUI->GetTclName();
     slicerApp->Script ("namespace eval slicer3 set VRModuleGUI %s", name);
@@ -1905,12 +1703,14 @@ int Slicer3_main(int argc, char *argv[])
     // DISPLAY WINDOW AND RUN
     slicerApp->SplashMessage("Finalizing Startup...");
     appGUI->DisplayMainSlicerWindow ( );
+
+    Slicer3_Tcl_Eval( interp, "update" ) ;
     
     // More command line arguments:
     // use the startup script passed on command line if it exists
     if ( Script != "" )
       {    
-      std::string cmd = "source " + Script;
+      std::string cmd = "after idle source " + Script;
       Slicer3_Tcl_Eval( interp, cmd.c_str() ) ;
       }
 
@@ -1926,7 +1726,7 @@ int Slicer3_main(int argc, char *argv[])
       std::string cmd = "set ::SLICER(exec) \"" + Exec + "\" ; ";
       cmd += "regsub -all {\\.,} $::SLICER(exec) \";\" ::SLICER(exec); ";
       cmd += "regsub -all {,\\.} $::SLICER(exec) \";\" ::SLICER(exec); ";
-      cmd += "eval $::SLICER(exec);";
+      cmd += "after idle eval $::SLICER(exec);";
       res = Slicer3_Tcl_Eval( interp, cmd.c_str() );
       }
 
@@ -2044,17 +1844,6 @@ int Slicer3_main(int argc, char *argv[])
     slicerTractographyDisplayGUI->RemoveGUIObservers ( );
     slicerTractographyFiducialSeedingGUI->RemoveGUIObservers ( );
 #endif
-
-#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
-    emSegmentGUI->TearDownGUI();
-    emSegmentGUI->RemoveGUIObservers();
-#endif
-
-#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
-//#ifndef QUERYATLAS_DEBUG
-    queryAtlasGUI->RemoveGUIObservers ( );
-#endif
-
 #if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
 //    volumesGUI->RemoveGUIObservers ( );
     volumesGUI->TearDownGUI ( );
@@ -2071,20 +1860,9 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorGUI->TearDownGUI ( );
 #endif
-#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
-    realtimeimagingGUI->TearDownGUI ( );
-#endif
-#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
-    ablationGUI->TearDownGUI ( );
-#endif
-#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
-    labelStatsGUI->RemoveGUIObservers ( );
-    labelStatsGUI->TearDownGUI ( );
-#endif
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
     vrModuleGUI->TearDownGUI ( );
 #endif
-
 
     transformsGUI->TearDownGUI ( );
 #ifndef CAMERA_DEBUG
@@ -2200,15 +1978,6 @@ int Slicer3_main(int argc, char *argv[])
     slicerTractographyFiducialSeedingGUI->Delete ();
 #endif
 
-#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
-    emSegmentGUI->Delete();
-#endif
-
-#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
-//#ifndef QUERYATLAS_DEBUG
-    queryAtlasGUI->Delete ( );
-#endif
-    
 #if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
     volumesGUI->Delete ();
 #endif
@@ -2224,22 +1993,14 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorGUI->Delete();
 #endif
-#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
-    realtimeimagingGUI->Delete();
-#endif    
-#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
-    ablationGUI->Delete();
-#endif    
-#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
-    labelStatsGUI->Delete ( );
-#endif
+
+
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
-    vrModuleGUI->Delete ( );
+   vrModuleGUI->Delete();
 #endif
 
-
-    
     transformsGUI->Delete ();
+
 #ifndef CAMERA_DEBUG
     cameraGUI->Delete ();
 #endif
@@ -2300,21 +2061,11 @@ int Slicer3_main(int argc, char *argv[])
   }
 
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(BUILD_MODULES)
-    slicerFiberBundleLogic->SetAndObserveMRMLScene ( NULL );
-    slicerFiberBundleLogic->Delete ();
+    slicerTractographyDisplayLogic->SetAndObserveMRMLScene ( NULL );
+    slicerTractographyDisplayLogic->Delete ();
 #endif
         
-#if !defined(EMSEG_DEBUG) && defined(BUILD_MODULES)
-    emSegmentLogic->SetAndObserveMRMLScene ( NULL );
-    emSegmentLogic->Delete();
-#endif
-        
-#if !defined(QUERYATLAS_DEBUG) && defined(BUILD_MODULES)
-//#ifndef QUERYATLAS_DEBUG
-    queryAtlasLogic->SetAndObserveMRMLScene ( NULL );
-    queryAtlasLogic->Delete ( );
-#endif
-    
+
 #if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
     volumesLogic->SetAndObserveMRMLScene ( NULL );
     volumesLogic->Delete();
@@ -2337,20 +2088,6 @@ int Slicer3_main(int argc, char *argv[])
 #ifndef COLORS_DEBUG
     colorLogic->SetAndObserveMRMLScene ( NULL );
     colorLogic->Delete();
-#endif
-
-#if !defined(REALTIMEIMAGING_DEBUG) && defined(BUILD_MODULES)
-    realtimeimagingLogic->SetAndObserveMRMLScene ( NULL );
-    realtimeimagingLogic->Delete();
-#endif
-
-#if !defined(MRABLATION_DEBUG) && defined(BUILD_MODULES)
-    ablationLogic->SetAndObserveMRMLScene ( NULL );
-    ablationLogic->Delete();
-#endif    
-#if !defined(LABELSTATISTICS_DEBUG) && defined(BUILD_MODULES)
-    labelStatsLogic->SetAndObserveMRMLScene ( NULL );
-    labelStatsLogic->Delete ( );
 #endif
 
 #if !defined(VOLUMERENDERINGMODULE_DEBUG) && defined(BUILD_MODULES)
@@ -2390,7 +2127,6 @@ int Slicer3_main(int argc, char *argv[])
     tclCommand += "}";
     Slicer3_Tcl_Eval( interp, tclCommand.c_str() );
 #endif
-    
 
     //--- scene next;
     scene->Clear(1);
@@ -2439,13 +2175,3 @@ int main(int argc, char *argv[])
     return Slicer3_main(argc, argv);
 }
 #endif
-
-
-
-
-
-
-
-
-
-

@@ -106,8 +106,6 @@ INCLUDE_DIRECTORIES(
   ${EMSegment_SOURCE_DIR}/MRML
   ${EMSegment_SOURCE_DIR}/Algorithm
   ${EMSegment_SOURCE_DIR}/Registration
-  ${Volumes_SOURCE_DIR}
-  ${Volumes_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
@@ -131,6 +129,8 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
 VTK_WRAP_TCL3(EMSegment EMSegment_TCL_SRCS "${EMSegment_SRCS}" "")
 
+#GENERATELM(EMSegment_SRCS EMSegment.txt)
+
 #
 # Build the library
 #
@@ -149,7 +149,6 @@ ENDIF(BUILD_SHARED_LIBS)
 TARGET_LINK_LIBRARIES(EMSegment
   SlicerBaseLogic 
   SlicerBaseGUI
-  Volumes 
   MRML
   vtkITK
   vtkCommonTCL
@@ -166,6 +165,7 @@ TARGET_LINK_LIBRARIES(EMSegment
   ITKIO
   ITKDICOMParser
   ${KWWidgets_LIBRARIES} 
+  Volumes
   )
 
 #
