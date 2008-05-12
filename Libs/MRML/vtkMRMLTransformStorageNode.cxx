@@ -209,9 +209,6 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
     result = 0;
     }
   
-
-  vtkWarningMacro("Read the transform");
-
   // Convert the ITK transform to the appropriate type of VTK
   // transform
   if (transform)
@@ -340,8 +337,6 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
     else if (refNode->IsA("vtkMRMLGridTransformNode"))
       {
 
-      vtkWarningMacro("Running Jim's code");
-
       vtkMRMLGridTransformNode *gtn
         = vtkMRMLGridTransformNode::SafeDownCast(refNode);
       
@@ -433,8 +428,6 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
       }
     else if (refNode->IsA("vtkMRMLBSplineTransformNode"))
       {
-
-      vtkWarningMacro("Running the bspline code");
 
       vtkMRMLBSplineTransformNode *btn
         = vtkMRMLBSplineTransformNode::SafeDownCast(refNode);

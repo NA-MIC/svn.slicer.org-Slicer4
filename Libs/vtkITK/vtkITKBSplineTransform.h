@@ -78,12 +78,17 @@ public:
   const double* GetParameters() const;
 
 
+  // Set the fixed parameters.
+  //
+  // These are the grid spacing, the grid origin, etc.
   void SetFixedParameters( const double* param, unsigned N );
 
   // The number of fixed parameters.
   unsigned int GetNumberOfFixedParameters() const;
 
   // Return a pointer to the fixed parameter array.
+  //
+  // This is a pointer to internal data; the class still owns it.
   const double* GetFixedParameters() const;
 
 protected:
