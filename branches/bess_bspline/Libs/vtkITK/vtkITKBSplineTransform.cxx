@@ -1,6 +1,5 @@
 #include "vtkITKBSplineTransform.h"
 
-#include <cassert>
 #include "vtkObjectFactory.h"
 
 // Helper classes to handle dynamic setting of spline orders
@@ -89,8 +88,15 @@ vtkITKBSplineTransform
 {
   this->Superclass::PrintSelf(os,indent);
 
-  os << indent << "Spline order: " << Helper->GetOrder() << "\n";
-  os << indent << "Num parameters: " << Helper->GetNumberOfParameters() << "\n";
+  if( Helper != NULL )
+    {
+    os << indent << "Spline order: " << Helper->GetOrder() << "\n";
+    os << indent << "Num parameters: " << Helper->GetNumberOfParameters() << "\n";
+    }
+  else
+    {
+    os << indent << "(no spline)\n";
+    }
 }
 
 
@@ -139,7 +145,7 @@ vtkITKBSplineTransform
     Helper = new vtkITKBSplineTransformHelperImpl< 3 >;
     break;
   default:
-    abort();
+    vtkErrorMacro( "order " << order << " not yet implemented" );
     break;
   }
 }
@@ -169,6 +175,10 @@ vtkITKBSplineTransform
     {
     Helper->SetGridOrigin( origin );
     }
+  else
+    {
+    vtkErrorMacro( "need to call SetSplineOrder before SetGridOrigin" );
+    }
 }
 
 void 
@@ -179,6 +189,10 @@ vtkITKBSplineTransform
   if( Helper != NULL )
     {
     Helper->SetGridSpacing( spacing );
+    }
+  else
+    {
+    vtkErrorMacro( "need to call SetSplineOrder before SetGridSpacing" );
     }
 }
 
@@ -191,6 +205,10 @@ vtkITKBSplineTransform
     {
     Helper->SetGridSize( size );
     }
+  else
+    {
+    vtkErrorMacro( "need to call SetSplineOrder before SetGridSize" );
+    }
 }
 
 void
@@ -202,6 +220,10 @@ vtkITKBSplineTransform
     {
     Helper->SetParameters( param );
     }
+  else
+    {
+    vtkErrorMacro( "need to call SetSplineOrder before SetParameters" );
+    }
 }
 
 void
@@ -212,6 +234,10 @@ vtkITKBSplineTransform
   if( Helper != NULL )
     {
     Helper->SetParameters( param );
+    }
+  else
+    {
+    vtkErrorMacro( "need to call SetSplineOrder before SetParameters" );
     }
 }
 
@@ -253,6 +279,10 @@ vtkITKBSplineTransform
     {
     Helper->SetFixedParameters( param, N );
     }
+  else
+    {
+    vtkErrorMacro( "need to call SetSplineOrder before SetFixedParameters" );
+    }
 }
 
 unsigned int
@@ -287,8 +317,17 @@ vtkITKBSplineTransform
 ::ForwardTransformPoint( const float in[3], float out[3] )
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->ForwardTransformPoint( in, out );
+  if( Helper != NULL )
+    {
+    Helper->ForwardTransformPoint( in, out );
+    }
+  else
+    {
+    for( unsigned i = 0; i < 3; ++i )
+      {
+      out[i] = in[i];
+      }
+    }
 }
 
 void 
@@ -296,27 +335,65 @@ vtkITKBSplineTransform
 ::ForwardTransformPoint( const double in[3], double out[3] )
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->ForwardTransformPoint( in, out );
+  if( Helper != NULL )
+    {
+    Helper->ForwardTransformPoint( in, out );
+    }
+  else
+    {
+    for( unsigned i = 0; i < 3; ++i )
+      {
+      out[i] = in[i];
+      }
+    }
 }
 
 void
 vtkITKBSplineTransform
 ::ForwardTransformDerivative( const float in[3], float out[3],
-                            float derivative[3][3] )
+                              float derivative[3][3] )
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->ForwardTransformDerivative( in, out, derivative );
+  if( Helper != NULL )
+    {
+    Helper->ForwardTransformDerivative( in, out, derivative );
+    }
+  else
+    {
+    for( unsigned i = 0; i < 3; ++i )
+      {
+      out[i] = in[i];
+      }
+    for( unsigned i = 0; i < 3; ++i )
+      for( unsigned j = 0; j < 3; ++j )
+        {
+          derivative[i][j] = i==j ? 1.0f : 0.0f;
+        }
+    }
 }
+
 void
 vtkITKBSplineTransform
 ::ForwardTransformDerivative( const double in[3], double out[3],
-                            double derivative[3][3] )
+                              double derivative[3][3] )
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->ForwardTransformDerivative( in, out, derivative );
+  if( Helper != NULL )
+    {
+    Helper->ForwardTransformDerivative( in, out, derivative );
+    }
+  else
+    {
+    for( unsigned i = 0; i < 3; ++i )
+      {
+      out[i] = in[i];
+      }
+    for( unsigned i = 0; i < 3; ++i )
+      for( unsigned j = 0; j < 3; ++j )
+        {
+          derivative[i][j] = i==j ? 1.0 : 0.0;
+        }
+    }
 }
 
 void
@@ -324,8 +401,17 @@ vtkITKBSplineTransform
 ::InverseTransformPoint( const float in[3], float out[3] )
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->InverseTransformPoint( in, out );
+  if( Helper != NULL )
+    {
+    Helper->InverseTransformPoint( in, out );
+    }
+  else
+    {
+    for( unsigned i = 0; i < 3; ++i )
+      {
+      out[i] = in[i];
+      }
+    }
 }
 
 void
@@ -333,28 +419,65 @@ vtkITKBSplineTransform
 ::InverseTransformPoint( const double in[3], double out[3] )
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->InverseTransformPoint( in, out );
+  if( Helper != NULL )
+    {
+    Helper->InverseTransformPoint( in, out );
+    }
+  else
+    {
+    for( unsigned i = 0; i < 3; ++i )
+      {
+      out[i] = in[i];
+      }
+    }
 }
 
 void
 vtkITKBSplineTransform
 ::InverseTransformDerivative( const float in[3], float out[3],
-                            float derivative[3][3] )
+                              float derivative[3][3] )
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->InverseTransformDerivative( in, out, derivative );
+  if( Helper != NULL )
+    {
+    Helper->InverseTransformDerivative( in, out, derivative );
+    }
+  else
+    {
+    for( unsigned i = 0; i < 3; ++i )
+      {
+      out[i] = in[i];
+      }
+    for( unsigned i = 0; i < 3; ++i )
+      for( unsigned j = 0; j < 3; ++j )
+        {
+          derivative[i][j] = i==j ? 1.0f : 0.0f;
+        }
+    }
 }
 
 void
 vtkITKBSplineTransform
 ::InverseTransformDerivative( const double in[3], double out[3],
-                            double derivative[3][3] )
+                              double derivative[3][3] )
 {
   // Need to have called SetSplineOrder before calling this.
-  assert( Helper != 0 );
-  Helper->InverseTransformDerivative( in, out, derivative );
+  if( Helper != NULL )
+    {
+    Helper->InverseTransformDerivative( in, out, derivative );
+    }
+  else
+    {
+    for( unsigned i = 0; i < 3; ++i )
+      {
+      out[i] = in[i];
+      }
+    for( unsigned i = 0; i < 3; ++i )
+      for( unsigned j = 0; j < 3; ++j )
+        {
+          derivative[i][j] = i==j ? 1.0 : 0.0;
+        }
+    }
 }
 
 

@@ -130,6 +130,11 @@ void vtkMRMLBSplineTransformNode::ReadXMLAttributes(const char** atts)
       }
     else if (!strcmp(attName, "fixedParam"))
       {
+      if( spline == NULL )
+        {
+        vtkErrorMacro( "order attribute must be processed before parameter attributes" );
+        return;
+        }
       std::stringstream ss;
       double val;
       ss << attValue;
@@ -149,6 +154,11 @@ void vtkMRMLBSplineTransformNode::ReadXMLAttributes(const char** atts)
       }
     else if (!strcmp(attName, "param"))
       {
+      if( spline == NULL )
+        {
+        vtkErrorMacro( "order attribute must be processed before parameter attributes" );
+        return;
+        }
       std::stringstream ss;
       double val;
       ss << attValue;
