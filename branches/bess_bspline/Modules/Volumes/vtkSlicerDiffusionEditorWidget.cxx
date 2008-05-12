@@ -8,7 +8,7 @@
 //widgets
 #include "vtkSlicerMeasurementFrameWidget.h"
 #include "vtkSlicerGradientsWidget.h"
-#include "vtkSlicerDWITestingWidget.h"
+#include "vtkSlicerDiffusionTestingWidget.h"
 #include "vtkKWPushButton.h"
 #include "vtkSlicerDiffusionEditorWidget.h"
 #include "vtkSlicerMeasurementFrameWidget.h"
@@ -127,17 +127,25 @@ void vtkSlicerDiffusionEditorWidget::ProcessWidgetEvents (vtkObject *caller, uns
     event == vtkSlicerMeasurementFrameWidget::ChangedEvent) ||( event == vtkSlicerGradientsWidget::ChangedEvent && 
     this->GradientsWidget == vtkSlicerGradientsWidget::SafeDownCast(caller)))
     {
-    this->UndoButton->SetEnabled(1);
-    this->RestoreButton->SetEnabled(1);
-    this->RedoButton->SetEnabled(0);
+    this->TestingWidget->SetNewMeasurementFrame(this->MeasurementFrameWidget->GetMatrix());
+    if(this->ActiveVolumeNode->IsA("vtkMRMLDiffusionWeightedVolumeNode"))
+      {
+      this->UndoButton->SetEnabled(1);
+      this->RestoreButton->SetEnabled(1);
+      this->RedoButton->SetEnabled(0);
+      }
     }
+
+  ////////////////////////////////////////////////////////////////
+  // undo/redo/restore is only used for DWI as ActiveVolumeNode //
+  ////////////////////////////////////////////////////////////////
 
   //restore to original
   else if (this->RestoreButton == vtkKWPushButton::SafeDownCast(caller) && event == vtkKWPushButton::InvokedEvent)
     {
     this->Logic->Restore();
     this->MeasurementFrameWidget->UpdateWidget(this->ActiveVolumeNode); //update GUI
-    this->GradientsWidget->UpdateWidget(this->ActiveVolumeNode); //update GUI
+    this->GradientsWidget->UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(this->ActiveVolumeNode)); //update GUI
     this->RestoreButton->SetEnabled(0); //disable restoreButton until next change
     this->UndoButton->SetEnabled(0); //disable undoButton until next change
     this->RedoButton->SetEnabled(0);
@@ -151,7 +159,7 @@ void vtkSlicerDiffusionEditorWidget::ProcessWidgetEvents (vtkObject *caller, uns
       {
       this->Logic->Undo();
       this->MeasurementFrameWidget->UpdateWidget(this->ActiveVolumeNode); //update GUI
-      this->GradientsWidget->UpdateWidget(this->ActiveVolumeNode); //update GUI
+      this->GradientsWidget->UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(this->ActiveVolumeNode)); //update GUI
       this->RedoButton->SetEnabled(1);
       //disable buttons, when no more copys are in the stack
       if(!this->Logic->IsUndoable())
@@ -170,7 +178,7 @@ void vtkSlicerDiffusionEditorWidget::ProcessWidgetEvents (vtkObject *caller, uns
       {
       this->Logic->Redo();
       this->MeasurementFrameWidget->UpdateWidget(this->ActiveVolumeNode); //update GUI
-      this->GradientsWidget->UpdateWidget(this->ActiveVolumeNode); //update GUI
+      this->GradientsWidget->UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(this->ActiveVolumeNode)); //update GUI
       this->UndoButton->SetEnabled(1);
       this->RestoreButton->SetEnabled(1);
       //disable buttons, when no more copys are in the stack
@@ -188,7 +196,7 @@ void vtkSlicerDiffusionEditorWidget::UpdateWidget(vtkMRMLVolumeNode *node)
   {
   if (node == NULL)
     {
-    vtkErrorMacro(<< this->GetClassName() << ": dwiNode in UpdateWidget() is NULL");
+    vtkErrorMacro(<< this->GetClassName() << ": node in UpdateWidget() is NULL");
     return;
     }
 
@@ -199,6 +207,7 @@ void vtkSlicerDiffusionEditorWidget::UpdateWidget(vtkMRMLVolumeNode *node)
     {
     //gradients widget will be inaktiv
     this->GradientsWidget->SetStatus(0);
+    this->TestingWidget->SetNewMeasurementFrame(this->MeasurementFrameWidget->GetMatrix());
     }
 
   if(node->IsA("vtkMRMLDiffusionWeightedVolumeNode"))
@@ -206,15 +215,15 @@ void vtkSlicerDiffusionEditorWidget::UpdateWidget(vtkMRMLVolumeNode *node)
     //gradients widget will be aktiv
     this->GradientsWidget->SetStatus(1);
     //update gradients widget
-    this->GradientsWidget->UpdateWidget(this->ActiveVolumeNode);
+    this->GradientsWidget->UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(node));
     }
 
   //update measurement frame
-  this->MeasurementFrameWidget->UpdateWidget(this->ActiveVolumeNode);
+  this->MeasurementFrameWidget->UpdateWidget(node);
   //update testing widget
-  this->TestingWidget->UpdateWidget(this->ActiveVolumeNode);
+  this->TestingWidget->UpdateWidget(node);
   //update editor logic
-  this->Logic->SetActiveVolumeNode(this->ActiveVolumeNode);
+  this->Logic->SetActiveVolumeNode(node);
   //undo/redo/restore are enabled at the beginning
   this->RedoButton->EnabledOff();
   this->UndoButton->EnabledOff();
@@ -293,7 +302,7 @@ void vtkSlicerDiffusionEditorWidget::CreateWidget( )
     this->UndoButton->GetWidgetName());
 
   //create testing widget 
-  this->TestingWidget = vtkSlicerDWITestingWidget::New();
+  this->TestingWidget = vtkSlicerDiffusionTestingWidget::New();
   this->TestingWidget->SetParent(this->GetParent());
   this->TestingWidget->SetMRMLScene(this->GetMRMLScene());
   this->TestingWidget->SetApplication(this->Application);
