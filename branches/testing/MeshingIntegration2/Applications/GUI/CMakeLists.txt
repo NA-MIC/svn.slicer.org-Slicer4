@@ -76,6 +76,22 @@ set(dir_list
   ${EMSegment_BINARY_DIR}
   ${EMSegment_Init_SOURCE_DIR}
   ${EMSegment_Init_BINARY_DIR}
+  ${MimxMeshing_SOURCE_DIR}/MeshingWorkflow
+  ${MimxMeshing_BINARY_DIR}/MeshingWorkflow
+  ${MimxMeshing_Init_SOURCE_DIR}/MeshingWorkflow
+  ${MimxMeshing_Init_BINARY_DIR}/MeshingWorkflow
+  ${MimxMeshing_SOURCE_DIR}/Common
+  ${MimxMeshing_BINARY_DIR}/Common
+  ${MimxMeshing_Init_SOURCE_DIR}/Common
+  ${MimxMeshing_Init_BINARY_DIR}/Common
+  ${mimxCommon_SOURCE_DIR}
+  ${mimxCommon_BINARY_DIR}
+  ${MimxMeshing_SOURCE_DIR}/BuildingBlock
+  ${MimxMeshing_BINARY_DIR}/BuildingBlock
+  ${BUILDINGBLOCK_SOURCE_DIR}
+  ${BUILDINGBLOCK_BINARY_DIR}
+  ${mimxCommon_Init_SOURCE_DIR}
+  ${mimxCommon_Init_BINARY_DIR}
   ${RealTimeImaging_SOURCE_DIR}
   ${RealTimeImaging_BINARY_DIR}
   ${RealTimeImaging_Init_SOURCE_DIR}
@@ -198,6 +214,11 @@ if(BUILD_MODULES)
     SlicerTractographyDisplay
     SlicerTractographyFiducialSeeding
     VolumeRenderingModule
+    mimxCommon
+    mimxFilter
+    mimxWidgets
+    MeshingWorkflow
+    BuildingBlock
     )
 endif(BUILD_MODULES)
 
