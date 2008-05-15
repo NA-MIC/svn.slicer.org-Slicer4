@@ -4,7 +4,7 @@ SET (MIMXAdapter_SRCS
     vtkUnstructuredGridToitkMesh.cxx 
     itkMeshTovtkPolyData.cxx  
     vtkPolyDataToitkMesh.cxx
-    )
+    ) 
 
 # Include dirs
 #
