@@ -90,6 +90,7 @@ extern "C" {
 //#define COMMANDLINE_DEBUG
 //#define DEAMON_DEBUG
 //#define REMOTEIO_DEBUG
+//#define MESHING_DEBUG
 
 #include <LoadableModuleFactory.h>
 
@@ -122,6 +123,11 @@ extern "C" {
 #include "vtkXNATHandler.h"
 #include "vtkSlicerPermissionPrompterWidget.h"
 #include "vtkSlicerXNATPermissionPrompterWidget.h"
+#endif
+
+#ifndef MESHING_DEBUG
+#include "vtkMeshingWorkflowLogic.h"
+#include "vtkMeshingWorkflowGUI.h"
 #endif
 
 //
@@ -179,6 +185,12 @@ extern "C" int Scriptedmodule_Init(Tcl_Interp *interp);
 #endif
 #if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
 extern "C" int Volumes_Init(Tcl_Interp *interp);
+#endif
+
+#ifndef MESHING_DEBUG
+extern "C" int Meshingworkflow_Init(Tcl_Interp *interp);
+extern "C" int Mimxcommon_Init(Tcl_Interp *interp);
+extern "C" int Buildingblock_Init(Tcl_Interp *interp);
 #endif
 
 struct SpacesToUnderscores
@@ -659,6 +671,12 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 #if !defined(VOLUMES_DEBUG) && defined(BUILD_MODULES)
     Volumes_Init(interp);
+#endif
+
+#if !defined(MESHING_DEBUG) && defined(BUILD_MODULES)
+    Meshingworkflow_Init(interp);
+    Mimxcommon_Init(interp);
+    Buildingblock_Init(interp);
 #endif
 
   // first call to GetInstance will create the Application
@@ -1381,6 +1399,31 @@ int Slicer3_main(int argc, char *argv[])
       Slicer3_Tcl_Eval(interp, cmd.c_str());
       }
 #endif
+
+
+
+
+#ifndef MESHING_DEBUG
+    // --- Meshing Workflow filter module
+    slicerApp->SplashMessage("Initializing Meshing Workflow Module...");
+    vtkMeshingWorkflowGUI *meshingWorkflowGUI = vtkMeshingWorkflowGUI::New ( );
+    vtkMeshingWorkflowLogic *meshingWorkflowLogic  = vtkMeshingWorkflowLogic::New ( );
+    meshingWorkflowLogic->SetAndObserveMRMLScene ( scene );
+    meshingWorkflowLogic->SetApplicationLogic ( appLogic );
+    meshingWorkflowGUI->SetLogic ( meshingWorkflowLogic );
+    meshingWorkflowGUI->SetApplication ( slicerApp );
+    meshingWorkflowGUI->SetApplicationLogic ( appLogic );
+    meshingWorkflowGUI->SetApplicationGUI ( appGUI );
+    meshingWorkflowGUI->SetGUIName( "MeshingWorkflow" );
+    meshingWorkflowGUI->GetUIPanel()->SetName ( meshingWorkflowGUI->GetGUIName ( ) );
+    meshingWorkflowGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    meshingWorkflowGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( meshingWorkflowGUI );
+    meshingWorkflowGUI->BuildGUI ( );
+    meshingWorkflowGUI->AddGUIObservers ( );
+#endif
+
+
 
 #if !defined(CLIMODULES_DEBUG) && defined(BUILD_MODULES)
     std::vector<std::string> moduleNames;
