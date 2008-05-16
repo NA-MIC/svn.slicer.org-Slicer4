@@ -23,7 +23,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkMimxMeshSeed.h"
 
-#include "mimxLinkedList.h"
+#include "mimxSlicerLinkedListTemplate.h"
 
 #include "vtkCellData.h"
 #include "vtkCellTypes.h"

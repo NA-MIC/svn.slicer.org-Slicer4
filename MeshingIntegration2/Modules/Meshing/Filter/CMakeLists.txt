@@ -15,6 +15,7 @@ INCLUDE_DIRECTORIES(
   ${ITK_INCLUDE_DIR}
   ${VTK_INCLUDE_DIR}
   ${MIMXCommon_SOURCE_DIR} ${MIMXCommon_BINARY_DIR} 
+  ${mimxCommon_SOURCE_DIR} ${mimxCommon_BINARY_DIR} 
   ${MIMXCommon_SOURCE_DIR}../Adapter ${MIMXCommon_BINARY_DIR}../Adapter 
   ${MIMXAdapter_SOURCE_DIR} ${MIMXAdapter_BINARY_DIR} 
   ${VTK_SOURCE_DIR}/Utilities/verdict/include ${VTK_KITS_DIR}/verdict 
@@ -105,6 +106,7 @@ TARGET_LINK_LIBRARIES(mimxFilter
   ITKBasicFilters
   ITKIO
   ITKAlgorithms
+  mimxCommon
   ${KWWidgets_LIBRARIES}
   )
 

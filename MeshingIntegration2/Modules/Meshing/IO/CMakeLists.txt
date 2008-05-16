@@ -22,12 +22,17 @@ INCLUDE_DIRECTORIES(
 )
 
 SET (MeshIO_SRCS 
-    #vtkMimxAbaqusFileWriter.cxx
+    vtkMimxAbaqusFileWriter.cxx
     vtkMimxIntervertebralDiscAbaqusWriter.cxx
     vtkPluginFilterWatcher.cxx
     ModuleProcessInformation.cxx
 )
 
+SET_SOURCE_FILES_PROPERTIES(
+  vtkMimxAbaqusFileWriter.cxx
+  WRAP_EXCLUDE
+)
+  
 #
 # Wrapping
 #
