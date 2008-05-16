@@ -32,8 +32,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSplitUnstructuredHexahedronGridCell_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
-#include "mimxMatrixTemplate.h"
-#include "mimxLinkedList.h"
+#include "mimxSlicerMatrixTemplate.h"
+#include "mimxSlicerLinkedListTemplate.h"
 
 class vtkIdList;
 

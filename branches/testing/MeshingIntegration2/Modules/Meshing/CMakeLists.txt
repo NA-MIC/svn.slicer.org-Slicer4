@@ -1,10 +1,10 @@
 PROJECT( MimxMeshing )
  
 SUBDIRS(
+  Common
   IO
   Filter
   #CommandLine
-  Common
   Adapter
   Mesh
   BuildingBlock

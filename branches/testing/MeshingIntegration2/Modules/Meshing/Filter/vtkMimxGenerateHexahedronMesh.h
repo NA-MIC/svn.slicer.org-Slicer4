@@ -33,8 +33,8 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkUnstructuredGridToUnstructuredGridFilter.h"
 #include <list>
-#include "mimxMatrixTemplate.h"
-#include "mimxLinkedList.h"
+#include "mimxSlicerMatrixTemplate.h"
+#include "mimxSlicerLinkedListTemplate.h"
 
 class vtkActor;
 class vtkCellLocator;

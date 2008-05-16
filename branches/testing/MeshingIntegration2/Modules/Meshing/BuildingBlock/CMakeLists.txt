@@ -44,7 +44,7 @@ INCLUDE_DIRECTORIES(
   ${MIMXAdapter_SOURCE_DIR} ${MIMXAdapter_BINARY_DIR} 
   ${MIMXWidgets_SOURCE_DIR} ${MIMXWidgets_BINARY_DIR} 
   ${MIMXFilter_SOURCE_DIR} ${MIMXFilter_BINARY_DIR} 
-  ${MIMXMESHIO_SOURCE_DIR} ${MIMXMESHIO_BINARY_DIR} 
+  ${MIMXMeshIO_SOURCE_DIR} ${MIMXMeshIO_BINARY_DIR} 
   ${MIMXMesh_SOURCE_DIR} ${MIMXMesh_BINARY_DIR} 
 )
 
@@ -151,7 +151,7 @@ TARGET_LINK_LIBRARIES(${LIB_NAME}
   mimxWidgets
   mimxFilter
   mimxCommon
-  MimxMeshIO
+  mimxMeshIO
   ITKCommon
   ITKBasicFilters
   ITKIO

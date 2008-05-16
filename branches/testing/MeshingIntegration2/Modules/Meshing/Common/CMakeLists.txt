@@ -1,4 +1,4 @@
-PROJECT(mimxCommon)
+PROJECT(MIMXCommon)
 
 
 # Include dirs
@@ -72,6 +72,7 @@ SET_SOURCE_FILES_PROPERTIES(
   vtkContainer.cxx
   vtkMimxSurfacePolyDataActor.cxx
   vtkMimxUnstructuredGridActor.cxx
+  vtkMimxCircle.cxx
   WRAP_EXCLUDE
   )
 

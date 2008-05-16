@@ -32,7 +32,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 
 
-#include "mimxMatrixTemplate.h"
+#include "mimxSlicerMatrixTemplate.h"
 #include "vtkSystemIncludes.h"
 
 class vtkUnstructuredGrid;
