@@ -82,6 +82,22 @@ KWWidgets_WRAP_TCL(${LIB_NAME} LIB_TCL_SRCS "${LIB_SRCS}" "")
 # shared mode, i.e. without the STATIC keyword (Win32 compilers requires
 # an additional header file to setup DLL export symbols correctly).
 
+TARGET_LINK_LIBRARIES(${LIB_NAME}
+  ModuleDescriptionParser
+  SlicerBaseLogic 
+  SlicerBaseGUI 
+  MRML
+  vtkCommonTCL
+  vtkImagingTCL
+  vtkFilteringTCL
+  vtkIOTCL
+  vtkWidgets
+  ${KWWidgets_LIBRARIES} 
+  mimxWidgets
+  mimxFilter
+  mimxCommon
+  )
+
 
 IF(BUILD_SHARED_LIBS)
   INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} ${LIB_NAME})
