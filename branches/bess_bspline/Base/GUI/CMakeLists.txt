@@ -89,10 +89,11 @@ set(LIB_SRCS
   vtkSlicerDiffusionTensorGlyphDisplayWidget.cxx
   vtkSlicerPermissionPrompterWidget.cxx
   vtkSlicerXNATPermissionPrompterWidget.cxx
+  vtkSlicerROIGUI.cxx
   # VTK Replacement classes
   vtkSlicerInteractorStyle.cxx
   vtkSlicerViewerInteractorStyle.cxx
-  vtkSlicerROIGUI.cxx
+  vtkSlicerRenderWidget.cxx
   )
 
 # Helper classes
@@ -191,9 +192,9 @@ endif(WIN32 AND NOT BORLAND AND NOT CYGWIN)
 #### ENDIF(BUILD_TESTING)
 
 if(BUILD_TESTING)
-  add_test(Slicer3GUITest1 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --script ${Slicer3_SOURCE_DIR}/Base/GUI/Testing/TestSliceController.tcl)
-  add_test(Slicer3GUITest2 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --script ${Slicer3_SOURCE_DIR}/Base/GUI/Testing/TestProgressDialog.tcl)
-  add_test(Slicer3FiducialsTest1 ${Slicer3_BINARY_DIR}/Slicer3 --no-splash --script ${Slicer3_SOURCE_DIR}/Base/GUI/Testing/TestFiducials.tcl)
+  add_test(Slicer3GUITest1 ${Slicer3_BINARY_DIR}/Slicer3 --test-mode --script ${Slicer3_SOURCE_DIR}/Base/GUI/Testing/TestSliceController.tcl)
+  add_test(Slicer3GUITest2 ${Slicer3_BINARY_DIR}/Slicer3 --test-mode --script ${Slicer3_SOURCE_DIR}/Base/GUI/Testing/TestProgressDialog.tcl)
+  add_test(Slicer3FiducialsTest1 ${Slicer3_BINARY_DIR}/Slicer3 --test-mode --script ${Slicer3_SOURCE_DIR}/Base/GUI/Testing/TestFiducials.tcl)
 endif(BUILD_TESTING)
 
 # If needed, copy the Tcl/Tk support files required at run-time 
@@ -227,6 +228,7 @@ set(TCLFILES
   pkgIndex.tcl SliceViewerInteractor.tcl
   SWidget.tcl SliceSWidget.tcl SeedSWidget.tcl CsysSWidget.tcl
   FiducialsSWidget.tcl GridSWidget.tcl CrosshairSWidget.tcl RegionsSWidget.tcl 
+  SlicePlaneSWidget.tcl
   Slicer2Import.tcl XcedeCatalogImport.tcl XcatalogImport.tcl
   XnatXcatImport.tcl Loader.tcl LoadVolume.tcl FilteredDirectoryDialog.tcl
   XnatPublishScene.tcl MRMLWatcher.tcl

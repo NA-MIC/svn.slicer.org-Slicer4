@@ -149,7 +149,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   // test whether refNode is a valid node to hold a volume
   if ( !( refNode->IsA("vtkMRMLScalarVolumeNode") || refNode->IsA("vtkMRMLVectorVolumeNode" ) ) )
     {
-    vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
+    //vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
     return 0;         
     }
   if (this->GetFileName() == NULL && this->GetURI() == NULL) 
@@ -203,9 +203,10 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     readerSeries->SetSingleFile( this->GetSingleFile() );
 
     readerFile->SetArchetype(fullName.c_str());
+    readerSeries->SetArchetype(fullName.c_str());
     try 
       {
-      readerFile->UpdateInformation();
+      readerSeries->UpdateInformation();
       }
     catch ( ... )
       {
@@ -213,9 +214,10 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
       readerSeries->Delete();
       return 0;
       }
-    if ( readerFile->GetNumberOfFileNames() == 1 )
+    if ( readerSeries->GetNumberOfFileNames() == 1 )
       {
       reader = readerFile;
+      reader->UpdateInformation();
       readerSeries->Delete();
       }
     else
