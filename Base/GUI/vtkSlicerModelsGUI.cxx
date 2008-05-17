@@ -270,6 +270,12 @@ void vtkSlicerModelsGUI::ProcessGUIEvents ( vtkObject *caller,
          const itksys_stl::string fname(fileName);
          itksys_stl::string name = itksys::SystemTools::GetFilenameName(fname);
          this->LoadModelButton->GetWidget()->SetText (name.c_str());
+
+         // set it to be the active model, two places
+         // set the save model
+         this->ModelSelectorWidget->SetSelected(modelNode);
+         // set the display model
+         this->ModelHierarchyWidget->GetModelDisplaySelectorWidget()->SetSelected(modelNode);
         }
       }
     return;
@@ -532,7 +538,7 @@ void vtkSlicerModelsGUI::BuildGUI ( )
     this->LoadScalarsButton->GetWidget()->SetText ("None");
     this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open FreeSurfer Overlay");
     this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
-    this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {All} {.*} } { {Thickness} {.thickness} } { {Curve} {.curv} } { {Average Curve} {.avg_curv} } { {Sulc} {.sulc} } { {Area} {.area} } { {W} {.w} } { {Parcellation Annotation} {.annot} } { {Volume} {.mgz .mgh} }");
+    this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {All} {.*} } { {Thickness} {.thickness} } { {Curve} {.curv} } { {Average Curve} {.avg_curv} } { {Sulc} {.sulc} } { {Area} {.area} } { {W} {.w} } { {Parcellation Annotation} {.annot} } { {Volume} {.mgz .mgh} } { {Label} {.label} }");
     app->Script("pack %s -side top -anchor nw -padx 2 -pady 4 -ipadx 0 -ipady 0", 
                 this->LoadScalarsButton->GetWidgetName());
     
