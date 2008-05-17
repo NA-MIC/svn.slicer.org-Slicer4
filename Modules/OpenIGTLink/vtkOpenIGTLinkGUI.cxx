@@ -285,7 +285,7 @@ vtkOpenIGTLinkGUI::~vtkOpenIGTLinkGUI ( )
   if (this->StopScanButton)
     {
     this->StopScanButton->SetParent(NULL);
-    this->StartScanButton->Delete();
+    this->StopScanButton->Delete();
     }
 
   if ( this->ImagingMenu )
