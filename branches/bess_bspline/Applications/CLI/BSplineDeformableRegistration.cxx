@@ -438,19 +438,6 @@ template<class T> int DoIt( int argc, char * argv[], T )
       std::cerr << err << std::endl;
       exit( EXIT_FAILURE );
       }
-
-    outputTransformWriter= TransformWriterType::New();
-    outputTransformWriter->SetFileName( "c:/projects/tmp/out-transform.txt" );
-    outputTransformWriter->SetInput( transform );
-    try
-      {
-      outputTransformWriter->Update();
-      }
-    catch (itk::ExceptionObject &err)
-      {
-      std::cerr << err << std::endl;
-      exit( EXIT_FAILURE );
-      }
     }
 
   // Resample to the original coordinate frame (not the reoriented
