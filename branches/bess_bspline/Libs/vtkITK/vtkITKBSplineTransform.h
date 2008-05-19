@@ -91,6 +91,21 @@ public:
   // This is a pointer to internal data; the class still owns it.
   const double* GetFixedParameters() const;
 
+  // Sets whether a LPS->RAS conversion should be done.
+  //
+  // When the BSpline is created, it is assumed to be in an LPS
+  // coordinate system, as is typical for ITK BSplines.  If this
+  // switch is set to \c true, then this class will assume that the
+  // input and output points are in an RAS coordinate system, and will
+  // first convert them to LPS, call the ITK BSpline, and convert the
+  // result back to RAS.
+  //
+  // By default, this switch is is FALSE.  Thus, by default, this
+  // class will behave exactly like the wrapped ITK BSpline.
+  void SetSwitchCoordinateSystem( bool v );
+
+  bool GetSwitchCoordinateSystem() const;
+
 protected:
   vtkITKBSplineTransform();
   ~vtkITKBSplineTransform();
