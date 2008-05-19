@@ -460,6 +460,9 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
         SplineType::ParametersType const& param = bst->GetParameters();
         vtkBSpline->SetParameters( param.data_block() );
 
+        // Convert from LPS (ITK) to RAS (Slicer)
+        vtkBSpline->SetSwitchCoordinateSystem( true );
+
         // Set the transform on the node
         btn->SetAndObserveWarpTransformToParent( vtkBSpline );
         vtkBSpline->Delete();
@@ -471,7 +474,7 @@ int vtkMRMLTransformStorageNode::ReadData(vtkMRMLNode *refNode)
         = dynamic_cast<FloatBSplineTransformType*>( transform.GetPointer() );
       if (fbt)
         {
-        vtkErrorMacro( "BSpline transform storage not yet implemented for gloat" )
+        vtkErrorMacro( "BSpline transform storage not yet implemented for float" )
         }
       
       }

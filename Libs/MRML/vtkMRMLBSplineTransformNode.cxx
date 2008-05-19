@@ -88,6 +88,8 @@ void vtkMRMLBSplineTransformNode::WriteXML(ostream& of, int nIndent)
       of << " " << fp[i];
       }
     of << "\"";
+    of << " switchCoord="
+       << (spline->GetSwitchCoordinateSystem()?"\"true\"":"\"false\"");
     of << " param=\"";
     unsigned Np = spline->GetNumberOfParameters();
     double const* p = spline->GetParameters();
@@ -126,6 +128,26 @@ void vtkMRMLBSplineTransformNode::ReadXMLAttributes(const char** atts)
         {
         vtkErrorMacro( "couldn't parse bspline order" );
         return;
+        }
+      }
+    else if (!strcmp(attName, "switchCoord"))
+      {
+      if( spline == NULL )
+        {
+        vtkErrorMacro( "order attribute must be processed before parameter attributes" );
+        return;
+        }
+      if (!strcmp(attValue, "true"))
+        {
+        spline->SetSwitchCoordinateSystem( true );
+        }
+      else if (!strcmp(attValue, "false"))
+        {
+        spline->SetSwitchCoordinateSystem( false );
+        }
+      else
+        {
+        vtkErrorMacro( "\"" << attValue << "\" is not a valid value for the switchCoord attribute" );
         }
       }
     else if (!strcmp(attName, "fixedParam"))
