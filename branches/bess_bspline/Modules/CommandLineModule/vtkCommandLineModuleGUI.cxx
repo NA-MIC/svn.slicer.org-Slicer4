@@ -1631,8 +1631,6 @@ void vtkCommandLineModuleGUI::BuildGUI ( )
         // an output type since the node selector must be able to make
         // an instance of the class.  For now, revert to LinearTransformNode.
 
-        vtkWarningMacro( "command line: type=" << (*pit).GetType() );
-
         std::string nodeClass = "vtkMRMLLinearTransformNode";
         if ((*pit).GetType() == "linear")
           {
