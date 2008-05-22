@@ -158,6 +158,7 @@ void vtkUltrasoundModuleGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long
         if (event == vtkUltrasoundStreamerGUI::DataUpdatedEvent)
         {
             this->VolumeNode->Modified();
+            this->UltrasoundToolGUI->UpdateTracker();
         }
         else if (event == vtkUltrasoundStreamerGUI::EnablingEvent)
         {
@@ -205,7 +206,6 @@ void vtkUltrasoundModuleGUI::Exit ( )
 {
     vtkDebugMacro("Exit: removeObservers for VolumeRenderingModule");
     this->ReleaseModuleEventBindings();
-
 }
 
 
