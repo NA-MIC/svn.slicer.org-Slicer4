@@ -14,15 +14,19 @@ class vtkCallbackCommand;
 class vtkActor;
 class vtkPolyDataMapper;
 class vtkKWMatrixWidget;
+class vtkMiniBirdInstrumentTracker;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundToolGUI : public vtkKWFrame
 {
+public:
     vtkTypeRevisionMacro(vtkUltrasoundToolGUI, vtkKWFrame);
     static vtkUltrasoundToolGUI *New();
 
 
     void SetRenderer(vtkRenderer* renderer) { this->Renderer = renderer; }
     void SetTransformMatrix(vtkMatrix4x4* transform);
+
+    void UpdateTracker();
 
     static void ProcessGUIEventsStatic (vtkObject *caller, unsigned long event, void *callData, void* object);
     void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
@@ -49,6 +53,8 @@ private:
     vtkKWCheckButton*       cb_Enabled;
     vtkMatrix4x4*           Transform;
     vtkKWMatrixWidget*      TransformWidget;
+
+    vtkMiniBirdInstrumentTracker*    Tracker;
 };
 
 #endif /* __VTK_ULTRASOUND_TOOL_GUI_H_ */

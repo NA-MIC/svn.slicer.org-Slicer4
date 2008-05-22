@@ -21,6 +21,17 @@ if(PHILLIPS_ULTRASOUND_SCANNER)
    MESSAGE("Adding Proprietary Support for the Phillips Ultrasound Scanner")
 endif(PHILLIPS_ULTRASOUND_SCANNER)
 
+
+SET(ASCENSION_MINIBIRD_SOURCES
+    vtkMiniBirdInstrumentTracker.cxx
+   )
+FIND_PATH(ASCENSION_MINIBIRDS_INCLUDE_DIR
+    Bird.h
+    C:\\dev\\include)
+FIND_LIBRARY(ASCENSION_MINIBIRDS_LIBRARY
+    Bird
+    C:\\dev\\lib
+   )
 # --------------------------------------------------------------------------
 # Sources
   SET(UltrasoundModule_SRCS
@@ -38,6 +49,9 @@ endif(PHILLIPS_ULTRASOUND_SCANNER)
     vtkUltrasoundStreamSource.cxx
     vtkUltrasoundScannerReader.cxx    
     ${PHILLIPS_ULTRASOUND_SCANNER_SOURCES}
+    
+  #Tracking
+    ${ASCENSION_MINIBIRD_SOURCES}
 )
 
 #-----------------------------------------------
@@ -59,6 +73,7 @@ INCLUDE_DIRECTORIES(
   ${MRML_SOURCE_DIR}
   ${MRML_BINARY_DIR}
   ${PHILLIPS_ULTRASOUND_SCANNER_INCLUDE_DIR}
+  ${ASCENSION_MINIBIRDS_INCLUDE_DIR}
   )
 
 
@@ -88,6 +103,7 @@ SET(UltrasoundModule_LIBRARIES
   vtkIOTCL
   ${KWWidgets_LIBRARIES}
   ${PHILLIPS_ULTRASOUND_SCANNER_LIBRARY}
+  ${ASCENSION_MINIBIRDS_LIBRARY}
  )
 
 

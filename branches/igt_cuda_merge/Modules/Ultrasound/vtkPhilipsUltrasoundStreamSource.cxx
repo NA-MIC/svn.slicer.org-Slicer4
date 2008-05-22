@@ -29,7 +29,7 @@ void vtkPhilipsUltrasoundStreamSource::SetIPAddress(const std::string& ip_addres
     this->IPAddress = ip_address;
 }
 
-void vtkPhillipsUltrasoundStreamSource::Reconnect()
+void vtkPhilipsUltrasoundStreamSource::Reconnect()
 {
     this->StopStreaming();
     this->StartStreaming();
@@ -43,7 +43,7 @@ void vtkPhilipsUltrasoundStreamSource::StartStreaming()
 
 void vtkPhilipsUltrasoundStreamSource::StopStreaming()
 {
-    if (this->IsConnected()
+    if (this->IsConnected())
     {
         this->StreamManager.Stop();
         this->SetDisconnected();

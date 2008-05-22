@@ -11,6 +11,10 @@
 #include "vtkKWApplication.h"
 #include "vtkKWMatrixWidget.h"
 
+#include "vtkLinearTransform.h"
+
+#include "vtkMiniBirdInstrumentTracker.h"
+
 vtkCxxRevisionMacro(vtkUltrasoundToolGUI, "$Revision 1.0 $");
 vtkStandardNewMacro(vtkUltrasoundToolGUI);
 
@@ -27,6 +31,7 @@ this->Renderer = NULL;
     this->Transform = vtkMatrix4x4::New();
     this->Transform->Identity();
 
+    this->Tracker = NULL;
 
     this->GUICallbackCommand = vtkCallbackCommand::New();
     this->GUICallbackCommand->SetCallback(&vtkUltrasoundToolGUI::ProcessGUIEventsStatic);
@@ -36,6 +41,8 @@ this->Renderer = NULL;
 vtkUltrasoundToolGUI::~vtkUltrasoundToolGUI()
 {
     this->Transform->Delete();
+    if (this->Tracker != NULL)
+        this->Tracker->Delete();
 }
 
 void vtkUltrasoundToolGUI::CreateWidget()
@@ -98,7 +105,10 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
     {
         if (this->cb_Enabled->GetSelectedState() == 1)
         {
-            if (this->Rod == NULL)
+            if (this->Tracker == NULL)
+                this->Tracker = vtkMiniBirdInstrumentTracker::New();
+
+            if (this->RodActor == NULL)
             {
                 this->Rod = vtkCylinderSource::New();
                 this->RodMapper = vtkPolyDataMapper::New();
@@ -114,10 +124,17 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
                 this->RodActor->SetMapper(this->RodMapper);
             }
             this->Renderer->AddActor(this->RodActor);
+
         }
         else
         {
             this->Renderer->RemoveActor(this->RodActor);
+
+            if (this->Tracker != NULL)
+            {
+                this->Tracker->Delete();
+                this->Tracker = NULL; 
+            }
         }
     }
 
@@ -133,7 +150,26 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
             this->TransformWidget->GetElementValueAsDouble(1,1),
             this->TransformWidget->GetElementValueAsDouble(1,2));
 
+
         if (this->Renderer != NULL)
             this->Renderer->Render();
     }
+}
+
+void vtkUltrasoundToolGUI::UpdateTracker()
+{
+    if (this->Tracker != NULL)
+    {
+        this->Tracker->CalcInstrumentPos();
+        
+        if (this->RodActor != NULL)
+        {
+        //this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
+        this->RodActor->SetPosition(
+            this->TransformWidget->GetElementValueAsDouble(0,0) + this->Tracker->GetPosX(),
+            this->TransformWidget->GetElementValueAsDouble(0,1) + this->Tracker->GetPosY(),
+            this->TransformWidget->GetElementValueAsDouble(0,2) + this->Tracker->GetPosZ());
+        }
+    }
+
 }
