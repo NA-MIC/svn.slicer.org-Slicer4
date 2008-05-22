@@ -146,7 +146,7 @@ void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
   //if(!this->FEMeshMenuGroup)  this->FEMeshMenuGroup = vtkFiniteElementMRMLMeshMenuGroup::New();
 
   this->FEMeshMenuGroup->SetParent(this->Notebook->GetFrame("F E Mesh"));
-  //this->FEMeshMenuGroup->SetMimxViewWindow(this->GetMimxViewWindow());
+  this->FEMeshMenuGroup->SetMimxMainWindow(this->GetMimxMainWindow());
   this->FEMeshMenuGroup->SetApplication(this->GetApplication());
 
   // since we are using the MRML-based version, check for the existance of the MRML scene and attach

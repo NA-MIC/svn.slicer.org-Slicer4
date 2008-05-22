@@ -313,9 +313,9 @@ void vtkKWMimxSurfaceMenuGroup::LoadSTLSurfaceCallback()
                                 this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->GetActor());
                         this->GetMimxMainWindow()->GetRenderWidget()->Render();
                         this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
-                        this->GetMimxMainWindow()->GetViewProperties()->AddObjectList(
-                                this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1));
-                        this->UpdateObjectLists();
+                        //this->GetMimxMainWindow()->GetViewProperties()->AddObjectList(
+                        //        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1));
+                        //this->UpdateObjectLists();
                         
                         this->GetMimxMainWindow()->SetStatusText("Loaded STL Surface");
                 }

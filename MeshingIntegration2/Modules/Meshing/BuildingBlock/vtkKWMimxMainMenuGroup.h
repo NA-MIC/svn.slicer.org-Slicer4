@@ -59,6 +59,9 @@ public:
   virtual void UpdateEnableState();
   vtkSetObjectMacro(MimxMainWindow, vtkKWMimxMainWindow);
   vtkGetObjectMacro(MimxMainWindow, vtkKWMimxMainWindow);
+  // *** vtk macro above was failing to set local variables
+  //void SetMimxMainWindow(vtkKWMimxMainWindow* mainwin) { this->MimxMainWindow = mainwin; }
+  //vtkKWMimxMainWindow* GetMimxMainWindow(void) {return this->MimxMainWindow;}
 //  vtkGetObjectMacro(ObjectList, vtkLinkedListWrapper);
   vtkGetObjectMacro(SurfaceList, vtkLinkedListWrapper);
   vtkGetObjectMacro(BBoxList, vtkLinkedListWrapper);
