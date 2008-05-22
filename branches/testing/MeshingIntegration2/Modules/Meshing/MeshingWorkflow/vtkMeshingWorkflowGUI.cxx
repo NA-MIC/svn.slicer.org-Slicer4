@@ -262,6 +262,7 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
         this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 5 -fill x", 
              this->ViewProperties->GetMainFrame()->GetWidgetName());
         
+
         
 //            if(!this->MainUserInterfacePanel)
 //            {
