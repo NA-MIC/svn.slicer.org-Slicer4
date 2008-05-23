@@ -42,6 +42,12 @@
 #include <vtksys/stl/algorithm>
 
 #include "vtkKWMimxMainWindow.h"
+#include  "vtkKWMimxBBMenuGroup.h"
+#include  "vtkKWMimxImageMenuGroup.h"
+#include  "vtkLinkedListWrapperTree.h"
+#include  "vtkKWMimxQualityMenuGroup.h"
+#include  "vtkKWMimxMaterialPropertyMenuGroup.h"
+
 
 // define the option types
 #define VTK_KW_OPTION_NONE         0
@@ -66,10 +72,26 @@ vtkKWMimxMainWindow* vtkMeshingWorkflowMRMLNotebook::GetMimxMainWindow(void)
 }
 
 
+
+//----------------------------------------------------------------------------
+void vtkMeshingWorkflowMRMLNotebook::SetDoUndoTree(vtkLinkedListWrapperTree* doundotree)
+{
+  this->DoUndoTree = doundotree;
+}
+
+
+//----------------------------------------------------------------------------
+vtkLinkedListWrapperTree* vtkMeshingWorkflowMRMLNotebook::GetDoUndoTree(void)
+{
+  return this->DoUndoTree;
+}
+
+
 //----------------------------------------------------------------------------
 vtkMeshingWorkflowMRMLNotebook::vtkMeshingWorkflowMRMLNotebook()
 {
   this->Notebook = NULL;
+  this->BBMenuGroup = NULL;
   this->MimxViewWindow = NULL;
   this->SurfaceMenuGroup = NULL;
   this->FEMeshMenuGroup = NULL;
@@ -110,14 +132,17 @@ void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
 
   this->Notebook->AddPage("Image");
   this->Notebook->AddPage("Surface");
-  this->Notebook->AddPage("F E Mesh");
-  this->Notebook->AddPage("Mesh Quality");
+  this->Notebook->AddPage("Block(s)");
+  this->Notebook->AddPage("Mesh");
+  this->Notebook->AddPage("Quality");
+  this->Notebook->AddPage("Materials");
+ 
   
   // instead of the local storage (commented out), instantiate a MRML-based list and pass the pointer to the 
   // current MRML scene to it, so it can manage the FE Surface Nodes in the current scene. 
   
   // ---------- Setup the FE Surface Tab in the Notebook -------
-    if(!this->SurfaceMenuGroup)  this->SurfaceMenuGroup = vtkKWMimxSurfaceMenuGroup::New();
+ 
   //if(!this->SurfaceMenuGroup)  this->SurfaceMenuGroup = vtkFESurfaceMRMLMenuGroup::New();
   
 //  if(this->savedMRMLScene)
@@ -130,24 +155,35 @@ void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
 //    cerr << "Tried to initialize Surface List with null MRML scene" << endl;
 //  }
   
+  if(!this->SurfaceMenuGroup)  this->SurfaceMenuGroup = vtkKWMimxSurfaceMenuGroup::New();
   this->SurfaceMenuGroup->SetParent(this->Notebook->GetFrame("Surface"));
   this->SurfaceMenuGroup->SetMimxMainWindow(this->GetMimxMainWindow());
   this->SurfaceMenuGroup->SetApplication(this->GetApplication());
-
   this->SurfaceMenuGroup->Create();
-
   this->GetApplication()->Script("pack %s -side top -anchor nw -expand y -padx 2 -pady 5", 
     this->SurfaceMenuGroup->GetWidgetName());
+
+  if(!this->BBMenuGroup)  this->BBMenuGroup = vtkKWMimxBBMenuGroup::New();
+   this->BBMenuGroup->SetParent(this->Notebook->GetFrame("Block(s)"));
+   this->BBMenuGroup->SetMimxMainWindow(this->GetMimxMainWindow());
+   this->BBMenuGroup->SetApplication(this->GetApplication());
+   this->BBMenuGroup->SetDoUndoTree(this->DoUndoTree);
+   this->BBMenuGroup->SetSurfaceMenuGroup(this->SurfaceMenuGroup);
+   this->BBMenuGroup->Create();
+   this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 5", 
+           this->BBMenuGroup->GetWidgetName());
 
   // ---------- Setup the FE Surface Tab in the Notebook -------
   // generate menu items for FEMesh (which includes the mesh and bounding box)
   
   if(!this->FEMeshMenuGroup)  this->FEMeshMenuGroup = vtkKWMimxFEMeshMenuGroup::New();
-  //if(!this->FEMeshMenuGroup)  this->FEMeshMenuGroup = vtkFiniteElementMRMLMeshMenuGroup::New();
-
-  this->FEMeshMenuGroup->SetParent(this->Notebook->GetFrame("F E Mesh"));
+  this->FEMeshMenuGroup->SetParent(this->Notebook->GetFrame("Mesh"));
   this->FEMeshMenuGroup->SetMimxMainWindow(this->GetMimxMainWindow());
   this->FEMeshMenuGroup->SetApplication(this->GetApplication());
+  this->FEMeshMenuGroup->Create();
+  this->GetApplication()->Script("pack %s -side top -anchor nw  -expand y -padx 2 -pady 5", 
+  this->FEMeshMenuGroup->GetWidgetName());
+  this->SetLists();
 
   // since we are using the MRML-based version, check for the existance of the MRML scene and attach
   // to it
@@ -162,12 +198,9 @@ void vtkMeshingWorkflowMRMLNotebook::CreateWidget()
 //    cerr << "Tried to initialize Surface List with null MRML scene" << endl;
 //  }
   
-  this->FEMeshMenuGroup->Create();
-  //this->FEMeshMenuGroup->SetMimxViewWindow(this->GetMimxViewWindow());
+   //this->FEMeshMenuGroup->SetMimxViewWindow(this->GetMimxViewWindow());
 
-  this->GetApplication()->Script("pack %s -side top -anchor nw  -expand y -padx 2 -pady 5", 
-    this->FEMeshMenuGroup->GetWidgetName());
-  this->SetLists();
+ 
 }
 //----------------------------------------------------------------------------
 void vtkMeshingWorkflowMRMLNotebook::Update()
@@ -184,8 +217,14 @@ void vtkMeshingWorkflowMRMLNotebook::SetLists()
 {
   // list for surface operations
   this->SurfaceMenuGroup->SetFEMeshList(this->FEMeshMenuGroup->GetFEMeshList());
+  this->SurfaceMenuGroup->SetBBoxList(this->BBMenuGroup->GetBBoxList());
+
+  // list for BBlock operations
+  this->BBMenuGroup->SetBBoxList(this->BBMenuGroup->GetBBoxList());
   // list for FEMesh operations
   this->FEMeshMenuGroup->SetSurfaceList(this->SurfaceMenuGroup->GetSurfaceList());
+  this->FEMeshMenuGroup->SetBBoxList(this->BBMenuGroup->GetBBoxList());
+
 }
 //----------------------------------------------------------------------------
 void vtkMeshingWorkflowMRMLNotebook::PrintSelf(ostream& os, vtkIndent indent)
