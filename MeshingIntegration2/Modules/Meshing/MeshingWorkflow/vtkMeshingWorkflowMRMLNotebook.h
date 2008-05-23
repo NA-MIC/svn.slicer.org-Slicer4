@@ -34,6 +34,11 @@ class vtkKWMenuButtonWithLabel;
 class vtkMRMLScene;
 class vtkFiniteElementMRMLMeshMenuGroup;
 class vtkKWMimxMainWindow;
+class vtkKWMimxBBMenuGroup;
+class vtkKWMimxImageMenuGroup;
+class vtkLinkedListWrapperTree;
+class vtkKWMimxQualityMenuGroup;
+class vtkKWMimxMaterialPropertyMenuGroup;
 
 class  vtkMeshingWorkflowMRMLNotebook : public vtkKWCompositeWidget
 {
@@ -47,15 +52,22 @@ public:
   virtual void UpdateEnableState();
   vtkSetObjectMacro(MimxViewWindow, vtkKWMimxViewWindow);
   vtkGetObjectMacro(MimxViewWindow, vtkKWMimxViewWindow);
+
+ 
   
   // these VTK macro-based definitions caused a seg fault when the value was set, so implemented the 
   // methods directly instead of using the VTK macros
-  
+
+  //vtkSetObjectMacro(DoUndoTree, vtkLinkedListWrapperTree);
+  //vtkGetObjectMacro(DoUndoTree, vtkLinkedListWrapperTree);
   //vtkSetObjectMacro(MimxMainWindow, vtkKWMimxMainWindow);
   //vtkGetObjectMacro(MimxMainWindow, vtkKWMimxMainWindow);
+  virtual void SetDoUndoTree(vtkLinkedListWrapperTree*);
+  virtual vtkLinkedListWrapperTree* GetDoUndoTree();
   virtual void SetMimxMainWindow(vtkKWMimxMainWindow*);
   virtual vtkKWMimxMainWindow* GetMimxMainWindow();
   
+  // 
   // save reference to the scene to be used for storage 
    void SetMRMLSceneForStorage(vtkMRMLScene* scene);
    
@@ -69,6 +81,11 @@ protected:
         vtkKWMimxMainWindow *MimxMainWindow;
         vtkKWMimxSurfaceMenuGroup *SurfaceMenuGroup;
         vtkKWMimxFEMeshMenuGroup *FEMeshMenuGroup;
+        vtkKWMimxBBMenuGroup *BBMenuGroup;
+        vtkKWMimxImageMenuGroup *ImageMenuGroup;
+        vtkKWMimxQualityMenuGroup *QualityMenuGroup;
+        vtkKWMimxMaterialPropertyMenuGroup *MaterialPropertyMenuGroup;
+        vtkLinkedListWrapperTree *DoUndoTree;
         vtkMRMLScene             *savedMRMLScene;
 private:
   vtkMeshingWorkflowMRMLNotebook(const vtkMeshingWorkflowMRMLNotebook&); // Not implemented
