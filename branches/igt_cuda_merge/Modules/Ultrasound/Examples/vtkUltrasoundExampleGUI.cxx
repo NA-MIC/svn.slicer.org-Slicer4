@@ -28,6 +28,8 @@
 #include "vtkUltrasoundStreamerGUI.h"
 #include "vtkUltrasoundStreamSource.h"
 
+#include "vtkUltrasoundToolGUI.h"
+
 #include "vtkCudaVolumeMapper.h"
 #include "vtkFixedPointVolumeRayCastMapper.h"
 #include "vtkVolumeRayCastMapper.h"
@@ -45,6 +47,7 @@ vtkUltrasoundExampleGUI::vtkUltrasoundExampleGUI()
     this->VolumeMapper = NULL;
     this->VolumePropertyWidget = NULL;
     this->UltrasoundStreamerGUI = NULL;
+    this->UltrasoundToolGUI = NULL;
     this->ImageData = NULL;
 
     this->renderScheduled = false;
@@ -66,11 +69,20 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     vtkKWApplication* app = this->GetApplication();
     // Add a render widget, attach it to the view frame, and pack
     this->renderWidget = vtkKWRenderWidget::New();
-    this->renderWidget->SetBackgroundColor(200, 200, 200);
+    this->renderWidget->SetBackgroundColor(200, 0, 0);
     this->renderWidget->SetParent(this->GetViewFrame());
     this->renderWidget->Create();
-    this->GetApplication()->Script("pack %s -expand y -fill both -anchor c -expand y", 
+    this->renderWidget->GetRenderer()->SetBackground(200, 0, 0);
+    this->GetApplication()->Script("pack %s -expand y -fill both -anchor nw", 
         this->renderWidget->GetWidgetName());
+
+    this->renderWidget2 = vtkKWRenderWidget::New();
+    this->renderWidget2->SetBackgroundColor(0, 0, 200);
+    this->renderWidget2->SetParent(this->GetViewFrame());
+    this->renderWidget2->Create();
+    this->GetApplication()->Script("pack %s -expand y -fill both -anchor ne", 
+        this->renderWidget2->GetWidgetName());
+
 
 
     /// GUI EVENT
@@ -103,7 +115,7 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     renderWidget->GetRenderWindow()->AddObserver(vtkCommand::EndEvent, (vtkCommand*)StopCallbackCommand);
 
     this->CreateUltrasoundWidget();
-
+    this->CreateToolWidget();
     this->CreateVolumeRenderingWidget();
 }
 void vtkUltrasoundExampleGUI::CreateUltrasoundWidget()
@@ -117,6 +129,17 @@ void vtkUltrasoundExampleGUI::CreateUltrasoundWidget()
     this->UltrasoundStreamerGUI->AddObserver(vtkUltrasoundStreamerGUI::DisabledEvent, (vtkCommand*)this->UltrasoundCommand);
     this->UltrasoundStreamerGUI->AddObserver(vtkUltrasoundStreamerGUI::DataUpdatedEvent, (vtkCommand*)this->UltrasoundCommand);
     this->UltrasoundStreamerGUI->AddObserver(vtkUltrasoundStreamSource::ConnectionEstablished, (vtkCommand*)this->UltrasoundCommand);
+}
+
+void vtkUltrasoundExampleGUI::CreateToolWidget()
+{
+    this->UltrasoundToolGUI = vtkUltrasoundToolGUI::New();
+    this->UltrasoundToolGUI->SetParent(this->GetMainPanelFrame());
+    this->UltrasoundToolGUI->Create();
+    this->GetApplication()->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+        this->UltrasoundToolGUI->GetWidgetName());
+    this->UltrasoundToolGUI->SetRenderer(this->renderWidget->GetRenderer());
+
 }
 
 void vtkUltrasoundExampleGUI::CreateVolumeRenderingWidget()
@@ -175,15 +198,18 @@ void vtkUltrasoundExampleGUI::CreateVolumeRenderingWidget()
 
 vtkUltrasoundExampleGUI::~vtkUltrasoundExampleGUI()
 {
-    StartCallbackCommand->Delete();
-    StopCallbackCommand->Delete();
-    GUICallbackCommand->Delete();
+    this->StartCallbackCommand->Delete();
+    this->StopCallbackCommand->Delete();
+    this->GUICallbackCommand->Delete();
 
-    Volume->Delete();
-    VolumeMapper->Delete();
+    this->UltrasoundToolGUI->Delete();
 
-    VolumePropertyWidget->Delete();
-    renderWidget->Delete();
+    this->Volume->Delete();
+    this->VolumeMapper->Delete();
+
+    this->VolumePropertyWidget->Delete();
+    this->renderWidget->Delete();
+    this->renderWidget2->Delete();
 }
 
 

@@ -14,6 +14,7 @@ class vtkKWCheckButton;
 class vtkKWRenderWidget;
 
 class vtkUltrasoundStreamerGUI;
+class vtkUltrasoundToolGUI;
 
 class VTK_ULTRASOUNDEXAMPLEGUILIBRARY_EXPORT vtkUltrasoundExampleGUI : public vtkKWWindow
 {
@@ -46,6 +47,7 @@ protected:
 
     virtual void CreateWidget();
     void CreateUltrasoundWidget();
+    void CreateToolWidget();
     void CreateVolumeRenderingWidget();
 
 
@@ -55,13 +57,15 @@ protected:
 
 private:
     vtkKWRenderWidget*              renderWidget;
+    vtkKWRenderWidget*              renderWidget2;
 
     vtkImageData*                   ImageData;
     vtkVolume*                      Volume;
     vtkVolumeMapper*                VolumeMapper;
     vtkKWVolumePropertyWidget*      VolumePropertyWidget;
     
-    vtkUltrasoundStreamerGUI*       UltrasoundStreamerGUI;    
+    vtkUltrasoundStreamerGUI*       UltrasoundStreamerGUI;
+    vtkUltrasoundToolGUI*            UltrasoundToolGUI;
 
     bool renderScheduled;
     bool isRendering;
