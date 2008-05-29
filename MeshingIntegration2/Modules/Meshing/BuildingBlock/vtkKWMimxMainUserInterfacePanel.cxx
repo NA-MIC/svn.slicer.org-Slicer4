@@ -104,19 +104,22 @@ void vtkKWMimxMainUserInterfacePanel::CreateWidget()
         if (!this->MainFrame)   
           this->MainFrame = vtkKWFrameWithLabel::New();
         this->MainFrame->SetParent(this->GetParent());
-  this->MainFrame->Create();
-  this->MainFrame->GetFrame()->SetReliefToGroove();
-  this->MainFrame->SetLabelText("Options");
+        this->MainFrame->SetApplication(this->GetApplication());
+        this->MainFrame->Create();
+        this->MainFrame->GetFrame()->SetReliefToGroove();
+        this->MainFrame->SetLabelText("Options");
  // this->MainFrame->AllowFrameToCollapseOn();
- /* this->GetApplication()->Script(
+        // *** why was this off below before? CRL 
+  this->GetApplication()->Script(
     "pack %s -side top -anchor nw -expand y -fill y -padx 2 -pady 6 -fill x", 
     this->MainFrame->GetWidgetName());
- */   
+    
         
         if (!this->UserInterfacePanel)  
           this->UserInterfacePanel = vtkKWNotebook::New();
 //      this->UserInterfacePanel->SetName("Display Interface");
         this->UserInterfacePanel->SetParent(this->MainFrame->GetFrame());
+        this->UserInterfacePanel->SetApplication(this->GetApplication());
         this->UserInterfacePanel->Create();
         this->UserInterfacePanel->AddPage("Operation");
         //this->UserInterfacePanel->AddPage("Display");

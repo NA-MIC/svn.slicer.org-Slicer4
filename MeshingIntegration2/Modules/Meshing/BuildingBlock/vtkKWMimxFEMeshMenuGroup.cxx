@@ -196,6 +196,7 @@ void vtkKWMimxFEMeshMenuGroup::CreateWidget()
     this->MainFrame = vtkKWFrameWithLabel::New();
 
   this->MainFrame->SetParent(this->GetParent());
+  this->MainFrame->SetApplication(this->GetApplication());
   this->MainFrame->Create();
   this->MainFrame->SetHeight(50);
   this->MainFrame->SetLabelText("Mesh Operations");

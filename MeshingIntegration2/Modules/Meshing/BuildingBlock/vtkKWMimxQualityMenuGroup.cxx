@@ -112,6 +112,7 @@ void vtkKWMimxQualityMenuGroup::CreateWidget()
     this->MainFrame = vtkKWFrameWithLabel::New();
 
   this->MainFrame->SetParent(this->GetParent());
+  this->MainFrame->SetApplication(this->GetApplication());
   this->MainFrame->Create();
   this->MainFrame->SetLabelText("Quality Operations");
 

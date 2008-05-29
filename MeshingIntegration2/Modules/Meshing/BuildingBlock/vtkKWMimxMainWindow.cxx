@@ -116,15 +116,15 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
 //----------------------------------------------------------------------------
 vtkKWMimxMainWindow::~vtkKWMimxMainWindow()
 {
-        if (this->AxesRenderer) {
-                this->AxesRenderer->Delete();
-                this->PVAxesActor->Delete();
-                this->CallbackCommand->Delete();
-        }
-        if(this->RenderWidget)
-        {
-                this->RenderWidget->Delete();
-        }
+//        if (this->AxesRenderer) {
+//                this->AxesRenderer->Delete();
+//                this->PVAxesActor->Delete();
+//                this->CallbackCommand->Delete();
+//        }
+//        if(this->RenderWidget)
+//        {
+//                this->RenderWidget->Delete();
+//        }
         if(this->ChangeColorButton)
         {
                 this->ChangeColorButton->Delete();
@@ -166,7 +166,7 @@ void vtkKWMimxMainWindow::CreateWidget()
                 vtkErrorMacro("Class already created");
                 return;
         }
-//      this->Superclass::CreateWidget();
+      this->Superclass::CreateWidget();
 //
 //      // setting the render window
 //      if(!this->RenderWidget)
@@ -238,9 +238,9 @@ void vtkKWMimxMainWindow::CreateWidget()
         //      
 
         // for do and undo tree
-//      if(!this->DoUndoTree)
-//              this->DoUndoTree = vtkLinkedListWrapperTree::New();
-//
+      if(!this->DoUndoTree)
+              this->DoUndoTree = vtkLinkedListWrapperTree::New();
+
 //      if(!this->ViewProperties)
 //      {
 //              this->ViewProperties = vtkKWMimxViewProperties::New();

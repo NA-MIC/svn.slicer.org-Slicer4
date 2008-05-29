@@ -255,6 +255,7 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
         this->ViewProperties = vtkKWMimxViewProperties::New();
         this->ViewProperties->SetParent(this->UIPanel->GetPageWidget ( "MeshingWorkflow" ));
         this->ViewProperties->SetMimxMainWindow(mainwin);
+        this->ViewProperties->SetApplication(this->GetApplication());
         this->ViewProperties->Create();
         this->ViewProperties->SetBorderWidth(3);
         this->ViewProperties->SetReliefToGroove();
@@ -263,20 +264,40 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
              this->ViewProperties->GetMainFrame()->GetWidgetName());
 
   
-  // create the notebook which is the root of the pre-developed meshing workflow
-  this->MimxMainNotebook = vtkMeshingWorkflowMRMLNotebook::New();
-  // pass in the current application MRML scene, so the nodes for storage will be stored in the scene
-  //`this->MimxMainNotebook->SetMRMLSceneForStorage(this->ApplicationLogic->GetMRMLScene());
-  this->MimxMainNotebook->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
-  this->MimxMainNotebook->SetApplication(this->GetApplication());
-  this->MimxMainNotebook->SetMimxMainWindow(mainwin);
-  this->MimxMainNotebook->SetDoUndoTree(this->DoUndoTree);
-  this->MimxMainNotebook->Create ( );
-  this->MimxMainNotebook->SetWidth(200);
-  app->Script (
-       "pack %s -side top -anchor nw  -expand y -padx 0 -pady 1", 
-       this->MimxMainNotebook->GetWidgetName());
-  
+//  // create the notebook which is the root of the pre-developed meshing workflow
+//  this->MimxMainNotebook = vtkMeshingWorkflowMRMLNotebook::New();
+//  // pass in the current application MRML scene, so the nodes for storage will be stored in the scene
+//  //`this->MimxMainNotebook->SetMRMLSceneForStorage(this->ApplicationLogic->GetMRMLScene());
+//  this->MimxMainNotebook->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
+//  this->MimxMainNotebook->SetApplication(this->GetApplication());
+//  this->MimxMainNotebook->SetMimxMainWindow(mainwin);
+//  this->MimxMainNotebook->SetDoUndoTree(this->DoUndoTree);
+//  this->MimxMainNotebook->Create ( );
+//  this->MimxMainNotebook->SetWidth(200);
+//  app->Script (
+//       "pack %s -side top -anchor nw  -expand y -padx 0 -pady 1", 
+//       this->MimxMainNotebook->GetWidgetName());
+//  
+        
+//          if(!this->MainUserInterfacePanel)
+//          {
+                  this->MainUserInterfacePanel = vtkKWMimxMainUserInterfacePanel::New();
+                  this->MainUserInterfacePanel->SetMimxMainWindow(mainwin);
+                  this->MainUserInterfacePanel->SetDoUndoTree(this->DoUndoTree);
+                  this->MainUserInterfacePanel->SetMultiColumnList(
+                          this->ViewProperties->GetMultiColumnList());
+//          }
+          this->MainUserInterfacePanel->SetParent(this->UIPanel->GetPageWidget ( "MeshingWorkflow" ));
+          this->MainUserInterfacePanel->SetApplication(this->GetApplication());
+          this->MainUserInterfacePanel->Create();
+          this->MainUserInterfacePanel->SetBorderWidth(3);
+          this->MainUserInterfacePanel->SetReliefToGroove();
+          this->MainUserInterfacePanel->GetMainFrame()->ExpandFrame();
+          this->GetApplication()->Script(
+                  "pack %s -side top -anchor nw -expand n -fill y -pady 2 -fill x", 
+                  this->MainUserInterfacePanel->GetWidgetName());
+          this->ViewProperties->SetViewPropertiesGroup(
+                  this->MainUserInterfacePanel->GetViewPropertiesGroup());
 
-
+         
 }

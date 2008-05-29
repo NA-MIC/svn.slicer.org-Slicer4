@@ -100,6 +100,7 @@ void vtkKWMimxCreateBBFromBoundsGroup::CreateWidget()
      this->ObjectListComboBox = vtkKWComboBoxWithLabel::New();
   }
   this->MainFrame->SetParent(this->GetParent());
+  this->MainFrame->SetApplication(this->GetApplication());
   this->MainFrame->Create();
   this->MainFrame->SetLabelText("Create Building Block From Bounds");
 
