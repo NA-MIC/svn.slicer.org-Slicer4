@@ -156,18 +156,18 @@ void vtkKWMimxMainNotebook::CreateWidget()
   
         if (!this->Notebook) 
                this->Notebook = vtkKWUserInterfacePanel::New();
+        //this->Notebook->SetName("Operation");
+        this->Notebook->SetApplication(this->GetApplication());
         this->Notebook->SetUserInterfaceManager(
                 this->GetMimxMainWindow()->GetMainUserInterfaceManager());
         this->Notebook->Create();
-
+ 
 //        vtkKWUserInterfaceManagerNotebook *testNotebook =  vtkKWUserInterfaceManagerNotebook::SafeDownCast(
 //                      this->GetMimxMainWindow()->GetMainUserInterfaceManager());
 //        vtkKWNotebook *tmpNote = testNotebook->GetNotebook();
 
 
          
-//      this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 6 -fill x -fill y", 
-//              this->Notebook->GetWidgetName());
   
   
         this->Notebook->AddPage("<");
@@ -236,7 +236,7 @@ void vtkKWMimxMainNotebook::CreateWidget()
         this->FEMeshMenuGroup->SetApplication(this->GetApplication());
         this->FEMeshMenuGroup->SetDoUndoTree(this->DoUndoTree);
         this->FEMeshMenuGroup->Create();
-//  this->FEMeshMenuGroup->SetMimxMainWindow(this->GetMimxMainWindow());
+ //  this->FEMeshMenuGroup->SetMimxMainWindow(this->GetMimxMainWindow());
         this->GetApplication()->Script("pack %s -side top -anchor nw  -expand n -padx 2 -pady 5", 
                 this->FEMeshMenuGroup->GetWidgetName());
         
@@ -282,15 +282,16 @@ void vtkKWMimxMainNotebook::UpdateEnableState()
         this->QualityMenuGroup->SetEnabled(this->GetEnabled());
         this->MaterialPropertyMenuGroup->SetEnabled(this->GetEnabled());
         this->BoundaryConditionsMenuGroup->SetEnabled(this->GetEnabled());
-        this->Notebook->GetPageWidget("Image")->SetEnabled(this->GetEnabled());
-        this->Notebook->GetPageWidget("Surface")->SetEnabled(this->GetEnabled());
-        this->Notebook->GetPageWidget("Building Block")->SetEnabled(this->GetEnabled());
-        this->Notebook->GetPageWidget("Mesh")->SetEnabled(this->GetEnabled());
-        this->Notebook->GetPageWidget("Quality")->SetEnabled(this->GetEnabled());
-        this->Notebook->GetPageWidget("Material Property")->SetEnabled(this->GetEnabled());
-        this->Notebook->GetPageWidget("Boundary Conditions")->SetEnabled(this->GetEnabled());
-        this->Notebook->SetEnabled(this->GetEnabled());
+//        this->Notebook->GetPageWidget("Image")->SetEnabled(this->GetEnabled());
+//        this->Notebook->GetPageWidget("Surface")->SetEnabled(this->GetEnabled());
+//        this->Notebook->GetPageWidget("Building Block")->SetEnabled(this->GetEnabled());
+//        this->Notebook->GetPageWidget("Mesh")->SetEnabled(this->GetEnabled());
+//        this->Notebook->GetPageWidget("Quality")->SetEnabled(this->GetEnabled());
+//        this->Notebook->GetPageWidget("Material Property")->SetEnabled(this->GetEnabled());
+//        this->Notebook->GetPageWidget("Boundary Conditions")->SetEnabled(this->GetEnabled());
+//        this->Notebook->SetEnabled(this->GetEnabled());
 }
+
 //----------------------------------------------------------------------------
 void vtkKWMimxMainNotebook::SetLists()
 {
