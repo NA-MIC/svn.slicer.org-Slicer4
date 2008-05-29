@@ -33,17 +33,33 @@
 #include "vtkVolumeRayCastMapper.h"
 #include "vtkVolumeTextureMapper2D.h"
 #include "vtkVolumeTextureMapper3D.h"
+#include "vtkMiniBirdInstrumentTracker.h"
 
 vtkKWApplication *app;
 extern "C" int Ultrasoundexampleguilibrary_Init(Tcl_Interp *interp);
 extern "C" int Ultrasoundmodule_Init(Tcl_Interp* interp);
 int my_main(int argc, char *argv[])
 {
+
+
     // Initialize Tcl
     Tcl_Interp *interp = vtkKWApplication::InitializeTcl(argc, argv, &cerr);
     Ultrasoundexampleguilibrary_Init(interp);
     Ultrasoundmodule_Init(interp);
+
+    //int* foo = new int[20];
+    //try 
+    //{
+    //    vtkMiniBirdInstrumentTracker* tracker =     vtkMiniBirdInstrumentTracker::New();
+    //}
+    //catch (...)
+    //{
+    //    char a = '3';
+    //    printf("%c", a);
+    //}
+    //int* bar = new int[20];
     
+
     if (!interp)
     {
         cerr << "Error: InitializeTcl failed" << endl ;
