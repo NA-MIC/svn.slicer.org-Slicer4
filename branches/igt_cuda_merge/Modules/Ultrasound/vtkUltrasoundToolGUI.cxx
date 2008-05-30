@@ -162,22 +162,24 @@ void vtkUltrasoundToolGUI::UpdateTracker()
 
         if (this->RodActor != NULL)
         {
-            this->RodActor->SetOrientation(0,0,0); //this->Tracker->Get(),
-                //this->Tracker->GetTheta(),
-                //this->Tracker->GetPhi());
-                    //this->RodActor->RotateX(this->Tracker->GetPhi());
-                    //this->RodActor->RotateY(this->Tracker->GetRoll());
-                    //this->RodActor->RotateZ(this->Tracker->GetTheta());
+            this->RodActor->SetPosition(0,0,0);
+            this->RodActor->SetOrientation(0,0,0); 
+            this->RodActor->RotateZ(90);
+            this->RodActor->RotateX(this->Tracker->GetTheta());
+            this->RodActor->RotateY(this->Tracker->GetRoll());
+            this->RodActor->RotateZ(this->Tracker->GetPhi());
 //            this->RodActor->RotateX(0);
 //            this->RodActor->RotateY(this->Tracker->GetTheta());
 //            this->RodActor->RotateZ(this->Tracker->GetPhi());
                 
 
-            this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
-            //this->RodActor->SetPosition(
-            //    this->TransformWidget->GetElementValueAsDouble(0,0) + this->Tracker->GetPosX(),
-            //    this->TransformWidget->GetElementValueAsDouble(0,1) + this->Tracker->GetPosY(),
-            //    this->TransformWidget->GetElementValueAsDouble(0,2) + this->Tracker->GetPosZ());
+            this->RodActor->SetPosition(
+                this->TransformWidget->GetElementValueAsDouble(0,0) + this->Tracker->GetPosX(),
+                this->TransformWidget->GetElementValueAsDouble(0,1) + this->Tracker->GetPosY(),
+                this->TransformWidget->GetElementValueAsDouble(0,2) + this->Tracker->GetPosZ());
+
+            //this->RodActor->SetUserMatrix(NULL);
+            //this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
         }
     }
 

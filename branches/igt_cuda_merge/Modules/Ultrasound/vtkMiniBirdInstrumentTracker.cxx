@@ -40,7 +40,6 @@ vtkMiniBirdInstrumentTracker::vtkMiniBirdInstrumentTracker()
     double measurement_rate = 103.3;
     BIRDSYSTEMCONFIG sysconfig; // Holds System configuration
     BIRDDEVICECONFIG devconfig[5]; // Holds Bird configuration
-    BIRDFRAME frame; // Holds new frames of data
     int DEVCOUNT = 2; // Number of Trackers
     printf("Ascension Technology Corporation - Multiple Bird Stream Mode(RS232) 01/31/2006\n");
     printf("Initializing Flock Of Birds\n\n");
@@ -87,74 +86,6 @@ vtkMiniBirdInstrumentTracker::vtkMiniBirdInstrumentTracker()
     }
     // Start getting data...
     birdStartFrameStream(GROUP_ID);
-//    do // Until Keypress
-//    {
-//        if(birdFrameReady(GROUP_ID)) // Check if there's data available {
-//            birdGetMostRecentFrame(GROUP_ID,&frame);//Get data from bird BIRDREADING *bird_data; // Transfers data into structure
-//        for(i=1; i<DEVCOUNT+1; i++ ) // Loop to get data from birds
-//        {
-//            // Change pointer to index of first bird (1)
-//            bird_data = &frame.reading[i]; // Convert data into inches and degrees and scale
-//            pos[0] = bird_data->position.nX * 36 / 32767.;
-//            pos[1] = bird_data->position.nY * 36 / 32767.;
-//            pos[2] = bird_data->position.nZ * 36 / 32767.;
-//            ang[0] = bird_data->angles.nAzimuth * 180. / 32767.;
-//            ang[1] = bird_data->angles.nElevation * 180. / 32767.;
-//            ang[2] = bird_data->angles.nRoll * 180. / 32767.;
-//            // print data
-//            printf("%i> %+6.1f %+6.1f %+6.1f ”, i,pos[0], pos[1],pos[2]); printf(“%+6.1f %+6.1f %+6.1f \n",ang[0], ang[1], ang[2]);
-//        } // end move data from structure to screen loop
-//    } // end if frame ready loop
-//}while(!kbhit()); // loop until any key is pressed
-//printf("EXITING... \n");
-//birdStopFrameStream(GROUP_ID);
-//birdShutDown(GROUP_ID);
-//return;
-//}
-
-
-
-
-///  OLD
-////WORD comport[LOCAL_MAX_BIRDS + 1];
-//WORD comport[3];
-//BIRDSYSTEMCONFIG  sysconfig;
-//BIRDDEVICECONFIG* devconfig = new BIRDDEVICECONFIG[3];//m_NumberOfDevices+1];
-//int * foo = new int[20];
-//
-//// tell driver to look on comport 4 for master bird
-//comport[0] = 0;
-//
-//comport[1] = 5; //4;
-//comport[2] = 0;
-//
-//// wake up a flock of birds using the RS232 interface
-////birdRS232WakeUp(1,TRUE,1,comport,115200,2000,2000);    // wake-up call to stand alone bird
-//birdRS232WakeUp(1,FALSE,2,comport,115200,2000,2000);        // wake-up call to flock of birds
-//
-//delete[] foo;
-//foo = new int[20];
-//
-//// get the system configuration
-//birdGetSystemConfig(1, &sysconfig);
-//delete[] foo;
-//foo = new int[20];
-//delete[]foo;
-//// get a device configuration for each device
-//for (int i = 1; i <= m_NumberOfDevices; i++)
-//{
-//    birdGetDeviceConfig(1,i, &devconfig[i]);  
-//    devconfig[i].byDataFormat = BDF_POSITIONMATRIX;
-//    birdSetDeviceConfig(1,i,&devconfig[i]);  
-//}
-//
-//birdStartFrameStream(1);
-//delete[] foo;
-//int * bar = new int[20];
-////m_DataLogger.AddDataDouble("Staring minibird Stream", 0.0);
-////m_DataLogger.WriteBufferToFile();
-////delete[] devconfig;
-//delete[] bar;
 }
 
 vtkMiniBirdInstrumentTracker::~vtkMiniBirdInstrumentTracker()
@@ -166,6 +97,52 @@ vtkMiniBirdInstrumentTracker::~vtkMiniBirdInstrumentTracker()
     this->Transform->Delete();
 }
 
+
+void vtkMiniBirdInstrumentTracker::CalcMatrices()
+{
+    static bool running = false;
+    if (birdFrameReady(1))// && !running)
+    {
+        running = true;
+        BIRDFRAME frame;
+        birdGetMostRecentFrame(1,&frame);
+        BIRDREADING* Instrument = &frame.reading[1];
+        BIRDREADING* Probe = &frame.reading[2];
+        double pos_scale = 360.0 / 32767.0;
+
+        vtkMatrix4x4* InstrumentMatrix = vtkMatrix4x4::New();
+        vtkMatrix4x4* ProbeMatrix = vtkMatrix4x4::New();
+        ProbeMatrix->Identity();
+        InstrumentMatrix->Identity();
+        for (unsigned int iMat=0; iMat<3; iMat++)
+        {
+            for (unsigned int jMat=0; jMat<3; jMat++)
+            {
+                InstrumentMatrix->SetElement(iMat,jMat, (1.0/32767.0) * Instrument->matrix.n[iMat][jMat]);
+                ProbeMatrix->SetElement(iMat,jMat, (1.0/32767.0) * Probe->matrix.n[iMat][jMat]);
+            }
+        }
+
+        InstrumentMatrix->SetElement(0,3, Instrument->position.nX * pos_scale);
+        InstrumentMatrix->SetElement(2,3, Instrument->position.nY * pos_scale);
+        InstrumentMatrix->SetElement(1,3, Instrument->position.nZ * pos_scale);
+
+        ProbeMatrix->SetElement(0,3, Probe->position.nX * pos_scale);
+        ProbeMatrix->SetElement(2,3, Probe->position.nY * pos_scale);
+        ProbeMatrix->SetElement(1,3, Probe->position.nZ * pos_scale);
+
+        vtkMatrix4x4* InverseProbeMatrix = vtkMatrix4x4::New();
+        InverseProbeMatrix->DeepCopy(ProbeMatrix);
+        InverseProbeMatrix->Invert();
+
+        vtkMatrix4x4::Multiply4x4(InverseProbeMatrix, InstrumentMatrix, Transform);
+
+        InverseProbeMatrix->Delete();
+        InstrumentMatrix->Delete();
+        ProbeMatrix->Delete();
+        running = false;
+    }
+}
 
 void vtkMiniBirdInstrumentTracker::CalcInstrumentPos()
 {

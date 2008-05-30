@@ -83,8 +83,6 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     this->GetApplication()->Script("pack %s -expand y -fill both -anchor ne", 
         this->renderWidget2->GetWidgetName());
 
-
-
     /// GUI EVENT
     this->GUICallbackCommand = vtkCallbackCommand::New ( );
     this->GUICallbackCommand->SetCallback( vtkUltrasoundExampleGUI::GuiEventStatic );
@@ -149,7 +147,8 @@ void vtkUltrasoundExampleGUI::CreateVolumeRenderingWidget()
     /////////////////////////////
     // Create the mapper and actor
     this->Volume = vtkVolume::New();
-    this->VolumeMapper = vtkVolumeTextureMapper2D::New();
+    //this->VolumeMapper = vtkVolumeTextureMapper2D::New();
+    this->VolumeMapper = vtkCudaVolumeMapper::New();
     this->VolumeMapper->SetInput(this->ImageData);
     this->Volume->SetMapper(VolumeMapper);
 
