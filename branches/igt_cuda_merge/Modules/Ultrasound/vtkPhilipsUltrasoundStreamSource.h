@@ -31,8 +31,9 @@ protected:
     static bool _cdecl StreamingCallback(_int64 frame_index, SClient3DArray *echo_data, SClient3DArray *color_data);
     static vtkPhilipsUltrasoundStreamSource* me;
 
-    CStreamMgr StreamManager;
+    CStreamMgr  StreamManager;
     std::string IPAddress;
+
     //ETX
 private:
     vtkPhilipsUltrasoundStreamSource(const vtkPhilipsUltrasoundStreamSource&); //Not implemented

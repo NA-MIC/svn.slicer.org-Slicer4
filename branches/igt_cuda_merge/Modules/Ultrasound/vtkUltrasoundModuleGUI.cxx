@@ -99,8 +99,6 @@ void vtkUltrasoundModuleGUI::BuildGUI ( )
     this->UltrasoundToolGUI->SetParent(toolFrame->GetFrame());
     this->UltrasoundToolGUI->Create();
 
-    
-
     this->UltrasoundToolGUI->SetRenderer(
         this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer());
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
@@ -229,13 +227,14 @@ vtkMRMLScalarVolumeNode* vtkUltrasoundModuleGUI::AddVolumeNode(const char* volum
     volumeNode->SetDescription("Received by OpenIGTLink");
 
     imageData = vtkImageData::New();
-    imageData->SetDimensions(80,80,160);///imgheader.size[0], imgheader.size[1], imgheader.size[2]);
-    imageData->SetNumberOfScalarComponents(1);
     imageData->SetScalarTypeToUnsignedChar();
+    imageData->SetNumberOfScalarComponents(1);
+    imageData->SetExtent(0,9, 0,9, 0,9);
+    imageData->SetSpacing(1.0f, 1.0f, 0.74f);
     imageData->AllocateScalars();
 
     volumeNode->SetAndObserveImageData(imageData);
-    imageData->Delete();
+    //imageData->Delete();
 
     scene->AddNode(volumeNode);
     this->ApplicationLogic->GetSelectionNode()->SetReferenceActiveVolumeID(volumeNode->GetID());

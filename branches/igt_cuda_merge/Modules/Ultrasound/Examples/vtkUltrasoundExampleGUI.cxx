@@ -268,6 +268,7 @@ void vtkUltrasoundExampleGUI::UltrasoundEvent(unsigned long ev)
     switch (ev)
     {
     case vtkUltrasoundStreamerGUI::DataUpdatedEvent:
+        this->UltrasoundToolGUI->UpdateTracker();
         this->ScheduleRender();
         break;
     case vtkUltrasoundStreamerGUI::EnablingEvent:

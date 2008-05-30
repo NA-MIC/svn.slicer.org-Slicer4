@@ -127,9 +127,9 @@ void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned lo
 #ifdef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
                 this->StreamSource = vtkPhilipsUltrasoundStreamSource::New();
                 this->el_Address->GetWidget()->SetValue("192.168.1.15");
-#else
+#else /* TEST DATA SET */
                 this->StreamSource = vtkUltrasoundScannerReader::New();
-                this->el_Address->GetWidget()->SetValue("D:\\Volumes\\4DUltrasound\\3DDCM002.raw");
+                this->el_Address->GetWidget()->SetValue("C:\\temp\\3DDCM002.raw");
 #endif /*PHILLIPS_ULTRASOUND_SCANNER_SUPPORT */
             }
             // Register
