@@ -58,6 +58,7 @@ protected:
     vtkSimpleMutexLock*     Mutex;
 
     bool                    b_Connected;
+    bool                    b_DataReady;
 
 private:
     vtkUltrasoundStreamSource(const vtkUltrasoundStreamSource&); //Not implemented

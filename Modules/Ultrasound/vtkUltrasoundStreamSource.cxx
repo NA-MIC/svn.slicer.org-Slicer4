@@ -16,6 +16,7 @@ vtkUltrasoundStreamSource::vtkUltrasoundStreamSource(void)
 {
     this->CurrentBuffer = 0;
     this->b_Connected = false;
+    this->b_DataReady = false;
     for (int i=0; i<2; i++)
     {
         this->ImageBuffers[i] = vtkImageData::New();
@@ -54,7 +55,10 @@ vtkImageData* vtkUltrasoundStreamSource::GetDataInHiddenBuffer()
 void vtkUltrasoundStreamSource::FetchImageData(vtkImageData* data)
 {
     this->Mutex->Lock();
+    if (this->b_DataReady == true)
+        this->SwapBuffers();
     data->DeepCopy(this->GetData());
+    this->b_DataReady = false;
     this->Mutex->Unlock();
 }
 
@@ -63,7 +67,7 @@ void vtkUltrasoundStreamSource::SetDataInHiddenBuffer(vtkImageData* data)
     Mutex->Lock();
     vtkImageData* buffer = this->GetDataInHiddenBuffer();
     buffer->DeepCopy(data);
-    this->SwapBuffers();
+    this->b_DataReady = true;
     Mutex->Unlock();
 }
 
@@ -79,7 +83,7 @@ void vtkUltrasoundStreamSource::SetDataInHiddenBuffer(unsigned char* data, int w
     }
     int mem_size = width*height*depth;
     memcpy( buffer->GetScalarPointer(), data, mem_size);
-    this->SwapBuffers();
+    this->b_DataReady = true;
     Mutex->Unlock();
 }
 

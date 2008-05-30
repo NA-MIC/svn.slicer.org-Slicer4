@@ -20,7 +20,7 @@ vtkStandardNewMacro(vtkUltrasoundToolGUI);
 
 vtkUltrasoundToolGUI::vtkUltrasoundToolGUI()
 {
-this->Renderer = NULL;
+    this->Renderer = NULL;
 
     this->Rod = NULL;
     this->RodMapper = NULL;
@@ -32,11 +32,9 @@ this->Renderer = NULL;
     this->Transform->Identity();
 
     this->Tracker = NULL;
-
     this->GUICallbackCommand = vtkCallbackCommand::New();
     this->GUICallbackCommand->SetCallback(&vtkUltrasoundToolGUI::ProcessGUIEventsStatic);
     this->GUICallbackCommand->SetClientData(this);
-
 }
 vtkUltrasoundToolGUI::~vtkUltrasoundToolGUI()
 {
@@ -48,7 +46,7 @@ vtkUltrasoundToolGUI::~vtkUltrasoundToolGUI()
 void vtkUltrasoundToolGUI::CreateWidget()
 {
     this->Superclass::CreateWidget();
-    
+
 
     this->cb_Enabled = vtkKWCheckButton::New();
     this->cb_Enabled->SetParent(this);
@@ -86,10 +84,10 @@ void vtkUltrasoundToolGUI::AddGUIObservers()
 void vtkUltrasoundToolGUI::SetTransformMatrix(vtkMatrix4x4* transform)
 {
     this->Transform->DeepCopy(transform);
-    
+
     if (this->Rod != NULL)
     {
-        
+
     }
 }
 
@@ -140,15 +138,15 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
 
     else if (caller == this->TransformWidget && this->Rod != NULL)
     {
-        this->RodActor->SetPosition(
-            this->TransformWidget->GetElementValueAsDouble(0,0),
-            this->TransformWidget->GetElementValueAsDouble(0,1),
-            this->TransformWidget->GetElementValueAsDouble(0,2));
+        //this->RodActor->SetPosition(
+        //    this->TransformWidget->GetElementValueAsDouble(0,0),
+        //    this->TransformWidget->GetElementValueAsDouble(0,1),
+        //    this->TransformWidget->GetElementValueAsDouble(0,2));
 
-        this->RodActor->SetOrientation(
-            this->TransformWidget->GetElementValueAsDouble(1,0),
-            this->TransformWidget->GetElementValueAsDouble(1,1),
-            this->TransformWidget->GetElementValueAsDouble(1,2));
+        //this->RodActor->SetOrientation(
+        //    this->TransformWidget->GetElementValueAsDouble(1,0),
+        //    this->TransformWidget->GetElementValueAsDouble(1,1),
+        //    this->TransformWidget->GetElementValueAsDouble(1,2));
 
 
         if (this->Renderer != NULL)
@@ -161,14 +159,25 @@ void vtkUltrasoundToolGUI::UpdateTracker()
     if (this->Tracker != NULL)
     {
         this->Tracker->CalcInstrumentPos();
-        
+
         if (this->RodActor != NULL)
         {
-        //this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
-        this->RodActor->SetPosition(
-            this->TransformWidget->GetElementValueAsDouble(0,0) + this->Tracker->GetPosX(),
-            this->TransformWidget->GetElementValueAsDouble(0,1) + this->Tracker->GetPosY(),
-            this->TransformWidget->GetElementValueAsDouble(0,2) + this->Tracker->GetPosZ());
+            this->RodActor->SetOrientation(0,0,0); //this->Tracker->Get(),
+                //this->Tracker->GetTheta(),
+                //this->Tracker->GetPhi());
+                    //this->RodActor->RotateX(this->Tracker->GetPhi());
+                    //this->RodActor->RotateY(this->Tracker->GetRoll());
+                    //this->RodActor->RotateZ(this->Tracker->GetTheta());
+//            this->RodActor->RotateX(0);
+//            this->RodActor->RotateY(this->Tracker->GetTheta());
+//            this->RodActor->RotateZ(this->Tracker->GetPhi());
+                
+
+            this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
+            //this->RodActor->SetPosition(
+            //    this->TransformWidget->GetElementValueAsDouble(0,0) + this->Tracker->GetPosX(),
+            //    this->TransformWidget->GetElementValueAsDouble(0,1) + this->Tracker->GetPosY(),
+            //    this->TransformWidget->GetElementValueAsDouble(0,2) + this->Tracker->GetPosZ());
         }
     }
 

@@ -28,7 +28,6 @@ protected:
     vtkMiniBirdInstrumentTracker();
     virtual ~vtkMiniBirdInstrumentTracker();
 
-    //virtual InstrumentPosition GetInstrumentPos();
 private:
     const int m_NumberOfDevices;
 
