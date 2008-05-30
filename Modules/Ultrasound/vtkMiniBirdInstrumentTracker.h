@@ -21,7 +21,8 @@ public:
     float            GetPhi() const { return this->Phi; }
     float            GetTheta() const { return this->Theta; }
     float            GetRoll() const { return this->Roll; }
-    void            CalcInstrumentPos();
+    void             CalcMatrices();
+    void             CalcInstrumentPos();
 
 protected:
     void CollectRevisions(ostream& sos);
