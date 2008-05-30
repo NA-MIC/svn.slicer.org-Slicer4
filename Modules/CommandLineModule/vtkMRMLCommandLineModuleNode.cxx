@@ -116,8 +116,8 @@ void vtkMRMLCommandLineModuleNode::WriteXML(ostream& of, int nIndent)
 
     for (pit = pbeginit; pit != pendit; ++pit)
       {
-      of << " " << this->URLEncodeString ( (*pit).GetName().c_str() )
-         << "=\"" << this->URLEncodeString ( (*pit).GetDefault().c_str() ) << "\"";
+      of << " " << this->URLEncodeString ( (*pit).GetName().c_str() );
+      of << "=\"" << this->URLEncodeString ( (*pit).GetDefault().c_str() ) << "\"";
       }
     }
   
