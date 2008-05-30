@@ -74,7 +74,7 @@ puts stderr "Slicer3_HOME is $::Slicer3_HOME"
 
 #set ::Slicer3_TAG "http://www.na-mic.org/svn/Slicer3/branches/Slicer3.0-PreAHMBeta"
 #set ::Slicer3_TAG "http://www.na-mic.org/svn/Slicer3/branches/testing/sign_integration/Slicer3"
-set ::Slicer3_TAG "http://www.na-mic.org/svn/Slicer3/trunk"
+set ::Slicer3_TAG "http://www.na-mic.org/svn/Slicer3/branches/Slicer-3-2"
 set ::CMAKE_TAG "CMake-2-4-2"
 #set ::TEEM_TAG "HEAD"
 set ::TEEM_TAG "Teem-1-9-0-patches"
