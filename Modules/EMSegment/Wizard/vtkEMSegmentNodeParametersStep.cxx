@@ -321,6 +321,7 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     this->NodeParametersGlobalPriorScale->SetResolution(0.01);
     this->NodeParametersGlobalPriorScale->GetEntry()->
       SetCommandTriggerToAnyChange();
+    this->NodeParametersGlobalPriorScale->SetBalloonHelpString("Probability that a voxel belonging to the parent structure will also belong to this structure.  The value must be in the range [0,1].  Global priors for each set of siblings must sum to 1."); 
     }
 
   this->Script("grid %s -column 0 -row 0 -sticky nw -padx 2 -pady 2", 
@@ -346,6 +347,7 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     this->NodeParametersSpatialPriorWeightScale->SetResolution(0.01);
     this->NodeParametersSpatialPriorWeightScale->GetEntry()->
       SetCommandTriggerToAnyChange();
+    this->NodeParametersSpatialPriorWeightScale->SetBalloonHelpString("Weight of the atlas (spatial prior) in the segmentation decision.  The value must be in the range [0,1], where 0 indicates that the atlas is ignored and 1 indicates the maximum atlas weight."); 
     }
 
   this->Script("grid %s -column 0 -row 1 -sticky nw -padx 2 -pady 2", 
@@ -381,6 +383,11 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     list->SetColumnEditable(col_id, 0);
     col_id = list->AddColumn("Weight");
     list->SetColumnEditable(col_id, 1);
+
+    list->SetRightClickCommand
+      (this, "RightClickOnInputChannelWeightsListCallback");
+    list->SetBalloonHelpString
+      ("Weight of each channel in the segmentation decision.  Right-click or double-click to modify weights.  Weights should be in the range [0,1]; 0 indicates that the channel is ignored and 1 indicates the maximum channel weight.  The weights are not dependent on each other or any other weights.");
     }
 
   this->Script(
@@ -1941,29 +1948,47 @@ void vtkEMSegmentNodeParametersStep::Validate()
 
   if (mrmlManager->GetTreeRootNode() != NULL)
     {
-      vtkIdType firstBadTreeID = 
-        mrmlManager->GetTreeNodeFirstIDWithChildProbabilityError();
-      if (firstBadTreeID >= 0)
-        {
-        std::string parentNodeName = 
-          mrmlManager->GetTreeNodeName(firstBadTreeID);
-        std::string errorMessage   = parentNodeName  + 
-          ": Child probabilities must sum to one!  " +
-          "Please fix before continuing.";
-        vtkKWMessageDialog::PopupMessage(this->GetApplication(),
-                                         NULL,
-                                         "Node Parameters Error",
-                                         errorMessage.c_str(),
-                                         vtkKWMessageDialog::ErrorIcon | 
-                                         vtkKWMessageDialog::InvokeAtPointer);
-        
-        // there was an error; stay on this step
-        wizard_workflow->
-          PushInput(vtkKWWizardStep::GetValidationFailedInput());
-        wizard_workflow->ProcessInputs();
-        }
+    vtkIdType firstBadTreeID = 
+      mrmlManager->GetTreeNodeFirstIDWithChildProbabilityError();
+    if (firstBadTreeID >= 0)
+      {
+      std::stringstream ss;
+      ss << "Child probabilities must sum to one for node "
+         << mrmlManager->GetTreeNodeName(firstBadTreeID)
+         << "; right now they sum to "
+         << mrmlManager->GetTreeNodeChildrenSumClassProbability(firstBadTreeID)
+         << ".  Please fix before continuing---"
+         << "you should edit the \"Global Prior\" fields for the"
+         << " children nodes of "
+         << mrmlManager->GetTreeNodeName(firstBadTreeID) << ".";
+      
+      std::string parentNodeName = 
+        mrmlManager->GetTreeNodeName(firstBadTreeID);
+      std::string errorMessage   = parentNodeName  + 
+        ": Child probabilities must sum to one!  " +
+        "Please fix before continuing.";
+      vtkKWMessageDialog::PopupMessage(this->GetApplication(),
+                                       NULL,
+                                       "Node Parameters Error",
+                                       ss.str().c_str(),
+                                       vtkKWMessageDialog::ErrorIcon | 
+                                       vtkKWMessageDialog::InvokeAtPointer);
+      
+      // there was an error; stay on this step
+      wizard_workflow->
+        PushInput(vtkKWWizardStep::GetValidationFailedInput());
+      wizard_workflow->ProcessInputs();
+      }
     }
   this->Superclass::Validate();
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentNodeParametersStep::RightClickOnInputChannelWeightsListCallback(int row, int col, int x, int y)
+{
+  vtkKWMultiColumnList *list = 
+    this->NodeParametersInputChannelWeightsList->GetWidget()->GetWidget();
+  list->EditCell(row, col);
 }
 
 //----------------------------------------------------------------------------
