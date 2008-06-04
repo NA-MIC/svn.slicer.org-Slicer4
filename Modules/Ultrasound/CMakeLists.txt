@@ -1,6 +1,6 @@
 PROJECT(UltrasoundModule)
 
-OPTION(ULTRASOUNDMODULE "Would you like to build Ultrasound Module support" ON)
+OPTION(ULTRASOUNDMODULE "Would you like to build Ultrasound Module support" OFF)
 if(ULTRASOUNDMODULE)
 
 OPTION(PHILLIPS_ULTRASOUND_SCANNER "Would you like to compile in Support for the Phillips Ultrasound Scanners (proprietary support only)" ON)
