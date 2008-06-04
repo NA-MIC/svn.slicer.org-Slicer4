@@ -55,6 +55,8 @@ CUDA_INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}
 
 INCLUDE_REGULAR_EXPRESSION("^.h$")
 
+INSTALL_FILES(bin/ FILES ${CUDA_INSTALL_PREFIX}/cudart.dll)
+
 # --------------------------------------------------------------------------
 # Wrapping
 
