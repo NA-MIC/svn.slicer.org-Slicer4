@@ -26,6 +26,11 @@ vtkMiniBirdInstrumentTracker::vtkMiniBirdInstrumentTracker()
     this->Theta = 0.0;
     this->Roll = 0.0;
 
+    for (unsigned int i = 0; i < 3; i++) {
+        this->ToolAdjustments[i] = 0.0f;
+        this->ProbeAdjustments[i] = 0.0f;
+    }
+
 
     // local variables
     BOOL status = 0; // return status of bird calls
@@ -193,8 +198,9 @@ void vtkMiniBirdInstrumentTracker::CalcInstrumentPos()
         //TODO: BIRD OFFSET HERE
         vtkMatrix4x4* bird_to_US = vtkMatrix4x4::New();
         bird_to_US->Identity();
-        bird_to_US->SetElement(1, 3, 1.2);
-        bird_to_US->SetElement(2, 3, -2.9);
+        bird_to_US->SetElement(0, 3, this->ProbeAdjustments[0]);
+        bird_to_US->SetElement(1, 3, this->ProbeAdjustments[0]); // 1.2
+        bird_to_US->SetElement(2, 3, this->ProbeAdjustments[0]); // -2.9
 
         vtkMatrix4x4* scale_transform = vtkMatrix4x4::New();
         scale_transform->Identity();
@@ -227,7 +233,7 @@ void vtkMiniBirdInstrumentTracker::CalcInstrumentPos()
 
 
         //TODO: SET THE OFFSET TO THE TIP
-        double instrument_tip_pos[4] = {6.0, 0.0, 0, 1.0};
+        double instrument_tip_pos[4] = {this->ToolAdjustments[0], this->ToolAdjustments[1], this->ToolAdjustments[2], 1.0};
         double* transformed_tip_pos = total_transform->MultiplyDoublePoint(instrument_tip_pos);
         //transformed_tip_position = total_transform * instrument_tip_position;
 
