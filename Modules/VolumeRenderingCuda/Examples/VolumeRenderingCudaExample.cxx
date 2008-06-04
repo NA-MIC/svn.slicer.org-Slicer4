@@ -229,6 +229,31 @@ void SetClipRatio(int val)
     }
 }
 
+void SetMapper(vtkVolumeMapper* mapper)
+{
+    VolumeMapper->Delete();
+    VolumeMapper = mapper;
+    if (!readers.empty())
+        VolumeMapper->SetInput(clippers[0]->GetOutput());
+    Volume->SetMapper(VolumeMapper);
+}
+
+
+void ChangeMapper(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
+{
+    if (!strcmp(mb_Mapper->GetValue(), "CUDA"))
+        SetMapper(vtkCudaVolumeMapper::New());
+    else if (!strcmp(mb_Mapper->GetValue(), "Texture_2D"))
+        SetMapper(vtkVolumeTextureMapper2D::New());
+    else if (!strcmp(mb_Mapper->GetValue(), "Texture_3D"))
+        SetMapper(vtkVolumeTextureMapper3D::New());
+    else if (!strcmp(mb_Mapper->GetValue(), "Software_Ray_Caster"))
+        SetMapper(vtkFixedPointVolumeRayCastMapper::New());
+//    app->Script("after idle %s Render", renderWidget->GetTclName());
+}
+
+
+
 void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
 {
     cb_Animate->SetSelectedState(0);
@@ -268,29 +293,6 @@ void ChangeModel(vtkObject* caller, unsigned long eid, void* clientData, void* c
         VolumeMapper->SetInput(clippers[0]->GetOutput());
 
     app->Script("after idle %s Render", renderWidget->GetTclName());
-}
-
-void SetMapper(vtkVolumeMapper* mapper)
-{
-    VolumeMapper->Delete();
-    VolumeMapper = mapper;
-    if (!readers.empty())
-        VolumeMapper->SetInput(clippers[0]->GetOutput());
-    Volume->SetMapper(VolumeMapper);
-}
-
-
-void ChangeMapper(vtkObject* caller, unsigned long eid, void* clientData, void* callData)
-{
-    if (!strcmp(mb_Mapper->GetValue(), "CUDA"))
-        SetMapper(vtkCudaVolumeMapper::New());
-    else if (!strcmp(mb_Mapper->GetValue(), "Texture_2D"))
-        SetMapper(vtkVolumeTextureMapper2D::New());
-    else if (!strcmp(mb_Mapper->GetValue(), "Texture_3D"))
-        SetMapper(vtkVolumeTextureMapper3D::New());
-    else if (!strcmp(mb_Mapper->GetValue(), "Software_Ray_Caster"))
-        SetMapper(vtkFixedPointVolumeRayCastMapper::New());
-//    app->Script("after idle %s Render", renderWidget->GetTclName());
 }
 
 
