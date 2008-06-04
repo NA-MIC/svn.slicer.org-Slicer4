@@ -199,9 +199,9 @@ void vtkMiniBirdInstrumentTracker::CalcInstrumentPos()
         vtkMatrix4x4* scale_transform = vtkMatrix4x4::New();
         scale_transform->Identity();
         const double DEPTH = 8.0; //cm
-        scale_transform->SetElement(0,0, (DEPTH/8.0) * 25.4 / 0.640); //0.456;// (mm/inch) / (mm/voxel) = (voxel/inch) in x
-        scale_transform->SetElement(1,1, (DEPTH/8.0) * 25.4 / 0.640);// (mm/inch) / (mm/voxel) = (voxel/inch) in y
-        scale_transform->SetElement(2,2, (DEPTH/8.0) * 25.4 / 0.403);// (mm/inch) / (mm/voxel) = (voxel/inch) in z
+        scale_transform->SetElement(0,0, 25.4); //(DEPTH/8.0) * 25.4 / 0.640); //0.456;// (mm/inch) / (mm/voxel) = (voxel/inch) in x
+        scale_transform->SetElement(1,1, 25.4); //(DEPTH/8.0) * 25.4 / 0.640);// (mm/inch) / (mm/voxel) = (voxel/inch) in y
+        scale_transform->SetElement(2,2, 25.4); //(DEPTH/8.0) * 25.4 / 0.403);// (mm/inch) / (mm/voxel) = (voxel/inch) in z
         //END: IMAGE SIZE DEPENDANT
 
         vtkMatrix4x4* axis_switch = vtkMatrix4x4::New();
@@ -227,16 +227,16 @@ void vtkMiniBirdInstrumentTracker::CalcInstrumentPos()
 
 
         //TODO: SET THE OFFSET TO THE TIP
-        double instrument_tip_pos[4] = {5.0, 0.0, 0.25, 1.0};
+        double instrument_tip_pos[4] = {6.0, 0.0, 0, 1.0};
         double* transformed_tip_pos = total_transform->MultiplyDoublePoint(instrument_tip_pos);
         //transformed_tip_position = total_transform * instrument_tip_position;
 
 
         this->Transform->DeepCopy(partial_transform);
-        this->Transform->SetElement(0,3,0.0);
-        this->Transform->SetElement(1,3,0.0);
-        this->Transform->SetElement(2,3,0.0);
-        this->Transform->SetElement(3,3,1.0);
+        //this->Transform->SetElement(0,3,0.0);
+        //this->Transform->SetElement(1,3,0.0);
+        //this->Transform->SetElement(2,3,0.0);
+        //this->Transform->SetElement(3,3,1.0);
 
 
         this->PosX = ( transformed_tip_pos[0] );

@@ -147,8 +147,8 @@ void vtkUltrasoundExampleGUI::CreateVolumeRenderingWidget()
     /////////////////////////////
     // Create the mapper and actor
     this->Volume = vtkVolume::New();
-    //this->VolumeMapper = vtkVolumeTextureMapper2D::New();
-    this->VolumeMapper = vtkCudaVolumeMapper::New();
+    this->VolumeMapper = vtkVolumeTextureMapper2D::New();
+    //this->VolumeMapper = vtkCudaVolumeMapper::New();
     this->VolumeMapper->SetInput(this->ImageData);
     this->Volume->SetMapper(VolumeMapper);
 
@@ -276,6 +276,10 @@ void vtkUltrasoundExampleGUI::UltrasoundEvent(unsigned long ev)
     case vtkUltrasoundStreamerGUI::DisabledEvent:
         break;
     case vtkUltrasoundStreamSource::ConnectionEstablished:
+        //this->VolumeMapper->Delete();
+        //this->VolumeMapper = vtkCudaVolumeMapper::New();
+        //this->Volume->SetMapper(VolumeMapper);
+
         this->VolumeMapper->SetInput(this->ImageData);
         break;
     default:
