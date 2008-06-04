@@ -231,17 +231,17 @@ void vtkMiniBirdInstrumentTracker::CalcInstrumentPos()
         double* transformed_tip_pos = total_transform->MultiplyDoublePoint(instrument_tip_pos);
         //transformed_tip_position = total_transform * instrument_tip_position;
 
-
-        this->Transform->DeepCopy(partial_transform);
-        //this->Transform->SetElement(0,3,0.0);
-        //this->Transform->SetElement(1,3,0.0);
-        //this->Transform->SetElement(2,3,0.0);
-        //this->Transform->SetElement(3,3,1.0);
-
-
         this->PosX = ( transformed_tip_pos[0] );
         this->PosY = ( transformed_tip_pos[1] );
         this->PosZ = ( transformed_tip_pos[2]);
+
+        this->Transform->DeepCopy(partial_transform);
+        this->Transform->SetElement(0,3,this->PosX);
+        this->Transform->SetElement(1,3,this->PosY);
+        this->Transform->SetElement(2,3,this->PosZ);
+        this->Transform->SetElement(3,3,1.0);
+
+
 
         static const double RAD_TO_DEG = 180.0/3.14159265; 
 
