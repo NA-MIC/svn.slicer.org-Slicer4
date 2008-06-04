@@ -31,8 +31,12 @@ slicer3_install_plugins(${CLP})
 # Test it
 
 enable_testing()
-include(CTest)
-set(UPDATE_TYPE svn)
 
-add_test(HelloWorldTest1 ${Slicer3_INSTALL_PLUGINS_BIN_DIR}/${CLP} --help)
+set(Slicer3_EXE ${Slicer3_HOME}/Slicer3)
+set(BUILD_SUBDIR "")
+if(WIN32)
+  set(BUILD_SUBDIR Debug)
+endif(WIN32)
+
+add_test(HelloWorldTest1 ${Slicer3_EXE} --launch ${Slicer3_INSTALL_PLUGINS_BIN_DIR}/${BUILD_SUBDIR}/${CLP} --help)
 
