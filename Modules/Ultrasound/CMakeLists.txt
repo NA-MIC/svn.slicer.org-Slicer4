@@ -19,8 +19,11 @@ if(PHILLIPS_ULTRASOUND_SCANNER)
    )
    ADD_DEFINITIONS(-DPHILLIPS_ULTRASOUND_SCANNER_SUPPORT)
    MESSAGE("Adding Proprietary Support for the Phillips Ultrasound Scanner")
+   )
 endif(PHILLIPS_ULTRASOUND_SCANNER)
 
+OPTION(ASCENSION_MINIBIRD "Would you like to compile in support for the Ascension Minibirds?")
+if(ASCENSION_MINIBIRD)
 
 SET(ASCENSION_MINIBIRD_SOURCES
     vtkMiniBirdInstrumentTracker.cxx
@@ -31,7 +34,9 @@ FIND_PATH(ASCENSION_MINIBIRDS_INCLUDE_DIR
 FIND_LIBRARY(ASCENSION_MINIBIRDS_LIBRARY
     Bird
     C:\\dev\\lib
-   )
+   ADD_DEFINITIONS(-DASCENSION_MINIBIRD_SUPPORT)
+endif(ASCENSION_MINIBIRD)
+
 # --------------------------------------------------------------------------
 # Sources
   SET(UltrasoundModule_SRCS

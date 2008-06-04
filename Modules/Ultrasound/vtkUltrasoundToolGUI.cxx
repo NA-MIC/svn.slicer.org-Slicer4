@@ -13,7 +13,8 @@
 
 #include "vtkLinearTransform.h"
 
-#include "vtkMiniBirdInstrumentTracker.h"
+#include "vtkKWScaleWithEntry.h"
+#include "vtkKWScale.h"
 
 vtkCxxRevisionMacro(vtkUltrasoundToolGUI, "$Revision 1.0 $");
 vtkStandardNewMacro(vtkUltrasoundToolGUI);
@@ -31,6 +32,12 @@ vtkUltrasoundToolGUI::vtkUltrasoundToolGUI()
     this->Transform = vtkMatrix4x4::New();
     this->Transform->Identity();
 
+    for (unsigned int i = 0; i < 3; i++)
+    {
+        this->ToolAdjustmentScales[i]  = NULL;
+        this->ProbeAdjustmentScales[i] = NULL;
+    }
+
     this->Tracker = NULL;
     this->GUICallbackCommand = vtkCallbackCommand::New();
     this->GUICallbackCommand->SetCallback(&vtkUltrasoundToolGUI::ProcessGUIEventsStatic);
@@ -39,8 +46,10 @@ vtkUltrasoundToolGUI::vtkUltrasoundToolGUI()
 vtkUltrasoundToolGUI::~vtkUltrasoundToolGUI()
 {
     this->Transform->Delete();
+#ifdef ASCENSION_MINIBIRD_SUPPORT
     if (this->Tracker != NULL)
         this->Tracker->Delete();
+#endif /* ASCENSION_MINIBIRD_SUPPORT */
 }
 
 void vtkUltrasoundToolGUI::CreateWidget()
@@ -56,39 +65,47 @@ void vtkUltrasoundToolGUI::CreateWidget()
         this->cb_Enabled->GetWidgetName());
     this->cb_Enabled->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 
+    // Rediculous stile to set stuff... KW is praised!
+    for (unsigned int i = 0; i < 3; i++)
+    {
+        // TOOL
+        this->ToolAdjustmentScales[i]  = vtkKWScaleWithEntry::New();
+        this->ToolAdjustmentScales[i]->SetParent(this);
+        this->ToolAdjustmentScales[i]->Create();
+        this->ToolAdjustmentScales[i]->SetRange(-20, 20);
+        this->ToolAdjustmentScales[i]->SetValue(0);
+        this->ToolAdjustmentScales[i]->SetResolution(0.01);
+        this->GetApplication()->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+            this->ToolAdjustmentScales[i]->GetWidgetName());
+        this->ToolAdjustmentScales[i]->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)this->GUICallbackCommand);
+    }
+    this->ToolAdjustmentScales[0]->SetLabelText("Tool Adjust X:");
+    this->ToolAdjustmentScales[1]->SetLabelText("Tool Adjust Y:");
+    this->ToolAdjustmentScales[2]->SetLabelText("Tool Adjust Z:");
 
-    this->TransformWidget = vtkKWMatrixWidget::New();
-    this->TransformWidget->SetParent(this);
-    this->TransformWidget->Create();
-    //this->TransformWidget->Re();
-    this->TransformWidget->SetNumberOfColumns(3);
-    this->TransformWidget->SetNumberOfRows(2);
-    this->TransformWidget->SetElementValue(0,0,0);
-    this->TransformWidget->SetElementValue(0,1,0);
-    this->TransformWidget->SetElementValue(0,2,0);    
-    this->TransformWidget->SetElementValue(1,0,0);
-    this->TransformWidget->SetElementValue(1,1,0);
-    this->TransformWidget->SetElementValue(1,2,0);
-    this->GetApplication()->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-        this->TransformWidget->GetWidgetName());
-    this->TransformWidget->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
+    for (unsigned i = 0; i < 3; i++)
+    {
+        // PROBE
+        this->ProbeAdjustmentScales[i]  = vtkKWScaleWithEntry::New();
+        this->ProbeAdjustmentScales[i]->SetParent(this);
+        this->ProbeAdjustmentScales[i]->Create();
+        this->ProbeAdjustmentScales[i]->SetRange(-20, 20);
+        this->ProbeAdjustmentScales[i]->SetValue(0);
+        this->ProbeAdjustmentScales[i]->SetResolution(0.01);
+        this->GetApplication()->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+            this->ProbeAdjustmentScales[i]->GetWidgetName());
+        this->ProbeAdjustmentScales[i]->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)this->GUICallbackCommand);
+    }
+
+    this->ProbeAdjustmentScales[0]->SetLabelText("Probe Adjust X:");
+    this->ProbeAdjustmentScales[1]->SetLabelText("Probe Adjust Y:");
+    this->ProbeAdjustmentScales[2]->SetLabelText("Probe Adjust Z:");
 
 }
 
 void vtkUltrasoundToolGUI::AddGUIObservers()
 {
 
-}
-
-
-void vtkUltrasoundToolGUI::SetTransformMatrix(vtkMatrix4x4* transform)
-{
-    this->Transform->DeepCopy(transform);
-
-    if (this->Rod != NULL)
-    {
-
-    }
 }
 
 
@@ -103,9 +120,12 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
     {
         if (this->cb_Enabled->GetSelectedState() == 1)
         {
+#ifdef ASCENSION_MINIBIRD_SUPPORT
             if (this->Tracker == NULL)
                 this->Tracker = vtkMiniBirdInstrumentTracker::New();
+#else
 
+#endif
             if (this->RodActor == NULL)
             {
                 this->Rod = vtkCylinderSource::New();
@@ -128,11 +148,13 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
         {
             this->Renderer->RemoveActor(this->RodActor);
 
+#ifdef ASCENSION_MINIBIRD_SUPPORT
             if (this->Tracker != NULL)
             {
                 this->Tracker->Delete();
                 this->Tracker = NULL; 
             }
+#endif /* ASCENSION_MINIBIRD_SUPPORT */
         }
     }
 
@@ -152,13 +174,26 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
         if (this->Renderer != NULL)
             this->Renderer->Render();
     }
+
+    if (ev == vtkKWScale::ScaleValueChangingEvent)
+    {
+#ifdef ASCENSION_MINIBIRD_SUPPORT
+        if (this->Tracker != NULL)
+        {
+            this->Tracker->SetToolAdjustment(this->ToolAdjustmentScale[0]->GetWidget()->GetValue(), 
+                this->ToolAdjustmentScale[1]->GetWidget()->GetValue(), 
+                this->ToolAdjustmentScale[2]->GetWidget()->GetValue());
+            this->Tracker->SetProbeAdjustment(this->ProbeAdjustmentScales[0], this->ProbeAdjustmentScales[1], this->ProbeAdjustmentScales[2]);
+        }
+#endif /* ASCENSION_MINIBIRD_SUPPORT */
+    }
 }
 
 void vtkUltrasoundToolGUI::UpdateTracker()
 {
+#ifdef ASCENSION_MINIBIRD_SUPPORT
     if (this->Tracker != NULL)
     {
-        this->Tracker->CalcInstrumentPos();
 
         if (this->RodActor != NULL)
         {
@@ -166,28 +201,18 @@ void vtkUltrasoundToolGUI::UpdateTracker()
             this->RodActor->SetOrientation(0,0,0); 
 
             this->RodActor->RotateZ(90);
-            //this->RodActor->RotateX(this->Tracker->GetRoll());
-   //         this->RodActor->RotateY(this->Tracker->GetTheta());
-   //         this->RodActor->RotateZ(this->Tracker->GetPhi());
-//            this->RodActor->RotateX(0);
-//            this->RodActor->RotateY(this->Tracker->GetTheta());
-//            this->RodActor->RotateZ(this->Tracker->GetPhi());
-                
+
             this->RodActor->SetUserMatrix(NULL);
             this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
 
-            //this->RodActor->SetPosition(
-            //    this->TransformWidget->GetElementValueAsDouble(0,0) + this->Tracker->GetPosX(),
-            //    this->TransformWidget->GetElementValueAsDouble(0,1) + this->Tracker->GetPosY(),
-            //    this->TransformWidget->GetElementValueAsDouble(0,2) + this->Tracker->GetPosZ());
-
-            printf("Position: X: %f; Y: %f; Z: %f;\n", 
-                this->TransformWidget->GetElementValueAsDouble(0,0) + this->Tracker->GetPosX(),
-                this->TransformWidget->GetElementValueAsDouble(0,1) + this->Tracker->GetPosY(),
-                this->TransformWidget->GetElementValueAsDouble(0,2) + this->Tracker->GetPosZ());
-            //this->RodActor->SetUserMatrix(NULL);
-            //this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
         }
     }
+#else
+    if (this->RodActor != NULL)
+    {
+        this->RodActor->SetPosition(ProbeAdjustmentScales[0]->GetValue(), ProbeAdjustmentScales[1]->GetValue(), ProbeAdjustmentScales[2]->GetValue());
+        this->RodActor->SetOrientation(ToolAdjustmentScales[0]->GetValue(), ToolAdjustmentScales[1]->GetValue(), ToolAdjustmentScales[2]->GetValue());
+    }
 
+#endif /* ASCENSION_MINIBIRD_SUPPORT */
 }
