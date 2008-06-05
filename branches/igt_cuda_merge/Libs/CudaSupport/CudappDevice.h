@@ -4,6 +4,7 @@
 #include "CudappSupportModule.h"
 #include "driver_types.h"
 #include <ostream>
+
 namespace Cudapp
 {
     class CUDA_SUPPORT_EXPORT Device

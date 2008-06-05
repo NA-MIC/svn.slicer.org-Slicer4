@@ -15,11 +15,7 @@
 class vtkKWHistogramSet;
 class vtkSlicerVolumePropertyWidget;
 class vtkRenderer;
-#if defined (USE_CUDA_VOLUME_MAPPER)
- class vtkCudaVolumeMapper;
-#else
- class vtkSlicerVolumeTextureMapper3D;
-#endif
+ class vtkVolumeMapper;
 class vtkTimerLog;
 class vtkSlicerFixedPointVolumeRayCastMapper;
 class vtkKWMenuButtonWithSpinButtonsWithLabel;
@@ -381,11 +377,7 @@ protected:
 
     // Description:
     // The hardware accelerated texture mapper.
-#if defined(USE_CUDA_VOLUME_MAPPER)
-    vtkCudaVolumeMapper *MapperTexture;
-#else
-    vtkSlicerVolumeTextureMapper3D *MapperTexture;
-#endif
+    vtkVolumeMapper*     MapperTexture;
     // Description:
     // The software accelerated software mapper
     vtkSlicerFixedPointVolumeRayCastMapper *MapperRaycast;
