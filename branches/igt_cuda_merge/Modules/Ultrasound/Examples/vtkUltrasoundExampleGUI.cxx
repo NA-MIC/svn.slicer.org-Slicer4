@@ -69,18 +69,17 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     vtkKWApplication* app = this->GetApplication();
     // Add a render widget, attach it to the view frame, and pack
     this->renderWidget = vtkKWRenderWidget::New();
-    this->renderWidget->SetBackgroundColor(200, 0, 0);
     this->renderWidget->SetParent(this->GetViewFrame());
     this->renderWidget->Create();
-    this->renderWidget->GetRenderer()->SetBackground(200, 0, 0);
-    this->GetApplication()->Script("pack %s -expand y -fill both -anchor nw", 
-        this->renderWidget->GetWidgetName());
+    this->renderWidget->GetRenderer()->SetBackground(0, 0, 0);
+    //this->GetApplication()->Script("pack %s -expand y -fill both -anchor nw", 
+    //    this->renderWidget->GetWidgetName());
 
     this->renderWidget2 = vtkKWRenderWidget::New();
-    this->renderWidget2->SetBackgroundColor(0, 0, 200);
     this->renderWidget2->SetParent(this->GetViewFrame());
     this->renderWidget2->Create();
-    this->GetApplication()->Script("pack %s -expand y -fill both -anchor ne", 
+    this->GetApplication()->Script("pack %s %s -expand y -fill both -anchor w", 
+        this->renderWidget->GetWidgetName(),
         this->renderWidget2->GetWidgetName());
 
     /// GUI EVENT
@@ -147,8 +146,8 @@ void vtkUltrasoundExampleGUI::CreateVolumeRenderingWidget()
     /////////////////////////////
     // Create the mapper and actor
     this->Volume = vtkVolume::New();
-    this->VolumeMapper = vtkVolumeTextureMapper2D::New();
-    //this->VolumeMapper = vtkCudaVolumeMapper::New();
+    //this->VolumeMapper = vtkVolumeTextureMapper2D::New();
+    this->VolumeMapper = vtkCudaVolumeMapper::New();
     this->VolumeMapper->SetInput(this->ImageData);
     this->Volume->SetMapper(VolumeMapper);
 

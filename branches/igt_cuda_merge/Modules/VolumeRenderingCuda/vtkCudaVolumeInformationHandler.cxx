@@ -182,8 +182,19 @@ void vtkCudaVolumeInformationHandler::UpdateImageData()
         this->InputData->GetNumberOfScalarComponents();
 
     if (size != this->CudaInputBuffer.GetSize())
+    {
         this->CudaInputBuffer.AllocateBytes(size);
+        double range[2];
+        //    property->GetRGBTransferFunction()->GetRange(range);
+        this->InputData->GetPointData()->GetScalars()->GetRange(range);
+        this->VolumeInfo.FunctionRange[0] = range[0];
+        this->VolumeInfo.FunctionRange[1] = range[1];
+        //HACK
+        this->VolumeInfo.MaxThreshold = range[1];
 
+        this->UpdateImageData();
+        this->Modified();
+    }
     this->CudaInputBuffer.CopyFrom(this->InputData->GetScalarPointer(),
         size);
 
