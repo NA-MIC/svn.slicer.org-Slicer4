@@ -77,10 +77,10 @@ void LoadHead()
     readers.push_back(vtkImageReader::New());
     readers[0]->SetDataScalarTypeToUnsignedChar();
     readers[0]->SetNumberOfScalarComponents(1);
-    readers[0]->SetDataExtent(0, 255, 0, 255, 0, 93);
+    readers[0]->SetDataExtent(0, 255, 0, 255, 0, 255);
     readers[0]->SetDataSpacing(1.0, 1.0, 1.0);
     readers[0]->SetFileDimensionality(3);
-    readers[0]->SetFileName("D:\\fullhead94.raw");
+    readers[0]->SetFileName("D:\\fullhead256.raw");
     readers[0]->Update();
 }
 
@@ -109,7 +109,7 @@ void LoadHeart()
     readers[0]->SetDataExtent(0, 255, 0, 255, 0, 255);
     readers[0]->SetDataSpacing(1.0, 1.0, 1.0);
     readers[0]->SetFileDimensionality(3);
-    readers[0]->SetFileName("D:\\heart256.raw");
+    readers[0]->SetFileName("D:\\Volumes\\heart256.raw");
     readers[0]->Update();
 }
 
@@ -130,7 +130,7 @@ void LoadHeartSeries()
         readers[i]->SetDataSpacing(1.0, 1.0, 1.0);
 
         std::stringstream s;
-        s << "D:\\heart256-" << i+1 << ".raw";
+        s << "D:\\Volumes\\heart256-" << i+1 << ".raw";
 
         readers[i]->SetFileName(s.str().c_str());
         readers[i]->Update();

@@ -1,9 +1,5 @@
 //Slicer
-#if defined(USE_CUDA_VOLUME_MAPPER)
- #include "vtkCudaVolumeMapper.h"
-#else
- #include "vtkSlicerVolumeTextureMapper3D.h"
-#endif
+#include "vtkSlicerVolumeTextureMapper3D.h"
 #include "vtkSlicerFixedPointVolumeRayCastMapper.h"
 #include "vtkSlicerVRGrayscaleHelper.h"
 #include "vtkVolumeRenderingModuleGUI.h"
@@ -52,6 +48,15 @@
 #include "vtkKWPushButtonWithLabel.h"
 //Compiler
 #include <math.h>
+
+//CUDA
+#if defined(USE_CUDA_VOLUME_MAPPER)
+ #include "vtkCudaVolumeMapper.h"
+ #include "CudappSupport.h"
+ #define TEXTURE_MAPPER_CAST(MAPPER) vtkCudaVolumeMapper::SafeDownCast(MAPPER)
+#else
+#define TEXTURE_MAPPER_CAST(MAPPER) vtkVolumeTextureMapper3D::SafeDownCast(MAPPER)
+#endif
 
 
 vtkCxxRevisionMacro(vtkSlicerVRGrayscaleHelper, "$Revision: 1.46 $");
@@ -439,11 +444,15 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
 
     //Init the texture mapper
 #if defined(USE_CUDA_VOLUME_MAPPER)
-    this->MapperTexture=vtkCudaVolumeMapper::New();
+    // Check for CUDA support
+    if (Cudapp::Support::IsCudaSupported())
+        this->MapperTexture=vtkCudaVolumeMapper::New();
+    else
+        this->MapperTexture = vtkSlicerVolumeTextureMapper3D::New();
 #else
     this->MapperTexture=vtkSlicerVolumeTextureMapper3D::New();
 #endif
-    this->MapperTexture->SetSampleDistance(this->SampleDistanceLowRes);
+    TEXTURE_MAPPER_CAST(this->MapperTexture)->SetSampleDistance(this->SampleDistanceLowRes);
     this->MapperTexture->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
     this->Volume->SetMapper(this->MapperTexture);
 
@@ -731,7 +740,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
 
             this->Volume->SetMapper(this->MapperTexture);
             //always got to less sample distance
-            this->MapperTexture->SetSampleDistance(this->SampleDistanceLowRes);
+            TEXTURE_MAPPER_CAST(this->MapperTexture)->SetSampleDistance(this->SampleDistanceLowRes);
             this->CurrentStage=0;
             vtkSlicerVRHelperDebug("Stage 0 started","");
             //Decide if we REnder plane or not
@@ -783,7 +792,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
         if(this->CurrentStage==1)
         {
             this->Volume->SetMapper(MapperTexture);
-            this->MapperTexture->SetSampleDistance(this->SampleDistanceHighRes);
+            TEXTURE_MAPPER_CAST(this->MapperTexture)->SetSampleDistance(this->SampleDistanceHighRes);
 
             this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->GetProgressGauge()->SetNthValue(0,100);
             this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->GetProgressGauge()->SetNthValue(1,1);

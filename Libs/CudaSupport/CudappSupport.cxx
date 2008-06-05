@@ -38,4 +38,11 @@ namespace Cudapp
             this->Devices[i].PrintSelf(os);
         }
     }
+
+    bool Support::IsCudaSupported()
+    {
+        int deviceCount = 0;
+        cudaGetDeviceCount(&deviceCount);
+        return deviceCount > 0;
+    }
 }

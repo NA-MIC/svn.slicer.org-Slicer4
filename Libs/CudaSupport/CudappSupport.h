@@ -25,6 +25,8 @@ namespace Cudapp
 
         virtual void PrintSelf(std::ostream& os) const;
 
+        static bool IsCudaSupported();
+
     protected:
         int CheckSupportedCudaVersion();
         DeviceList Devices;
