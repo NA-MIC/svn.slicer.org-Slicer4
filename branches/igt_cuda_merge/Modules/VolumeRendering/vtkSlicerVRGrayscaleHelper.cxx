@@ -445,10 +445,10 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
     //Init the texture mapper
 #if defined(USE_CUDA_VOLUME_MAPPER)
     // Check for CUDA support
-    if (Cudapp::Support::IsCudaSupported())
-        this->MapperTexture=vtkCudaVolumeMapper::New();
-    else
-        this->MapperTexture = vtkSlicerVolumeTextureMapper3D::New();
+    //if (Cudapp::Support::IsCudaSupported())
+        this->MapperTexture = vtkCudaVolumeMapper::New();
+    //else
+    //    this->MapperTexture = vtkSlicerVolumeTextureMapper3D::New();
 #else
     this->MapperTexture=vtkSlicerVolumeTextureMapper3D::New();
 #endif

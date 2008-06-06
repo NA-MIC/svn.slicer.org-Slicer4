@@ -42,12 +42,9 @@ vtkVolumeRenderingCudaModuleGUI::vtkVolumeRenderingCudaModuleGUI()
 
     this->Histograms = NULL;
 
-    this->InputTypeChooser = NULL;
-    this->InputResolutionMatrix = NULL;
     this->RenderModeChooser = NULL;
     this->VolumePropertyWidget = NULL;
 
-    this->ThresholdRange = NULL;
     this->ScaleFactorScale = NULL;
 
     this->RenderScheduled = false;
@@ -71,8 +68,6 @@ vtkVolumeRenderingCudaModuleGUI::~vtkVolumeRenderingCudaModuleGUI()
     if (this->CudaVolumeProperty != NULL)
         this->CudaVolumeProperty->Delete();
 
-    DeleteWidget(this->InputTypeChooser);
-    DeleteWidget(this->InputResolutionMatrix);
     DeleteWidget(this->RenderModeChooser);
     DeleteWidget(this->VolumePropertyWidget);
     DeleteWidget(this->ScaleFactorScale);
@@ -118,39 +113,20 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         loadSaveDataFrame->GetWidgetName(), page->GetWidgetName());
 
-    this->InputTypeChooser = vtkKWTypeChooserBox::New();
-    this->InputTypeChooser->SetParent(loadSaveDataFrame->GetFrame());
-    this->InputTypeChooser->Create();
-    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        this->InputTypeChooser->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-
-    this->InputResolutionMatrix = vtkKWMatrixWidget::New();
-    this->InputResolutionMatrix->SetParent(loadSaveDataFrame->GetFrame());
-    this->InputResolutionMatrix->Create();
-    this->InputResolutionMatrix->SetRestrictElementValueToInteger();
-    this->InputResolutionMatrix->SetNumberOfColumns(4);
-    this->InputResolutionMatrix->SetNumberOfRows(1);
-    this->InputResolutionMatrix->SetElementValueAsInt(0,0,256);
-    this->InputResolutionMatrix->SetElementValueAsInt(0,1,256);
-    this->InputResolutionMatrix->SetElementValueAsInt(0,2,1);    
-    this->InputResolutionMatrix->SetElementValueAsInt(0,3,4);
-    app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        this->InputResolutionMatrix->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName());
-
+    //NodeSelector  for Node from MRML Scene
+    this->NS_ImageData=vtkSlicerNodeSelectorWidget::New();
+    this->NS_ImageData->SetParent(loadSaveDataFrame->GetFrame());
+    this->NS_ImageData->Create();
+    this->NS_ImageData->NoneEnabledOn();
+    this->NS_ImageData->SetLabelText("Source Volume: ");
+    this->NS_ImageData->SetNodeClass("vtkMRMLScalarVolumeNode","","","");
+    app->Script("pack %s -side top -fill x -anchor nw -padx 2 -pady 2",this->NS_ImageData->GetWidgetName());
 
     this->VolumePropertyWidget = vtkKWVolumePropertyWidget::New();
     this->VolumePropertyWidget->SetParent(loadSaveDataFrame->GetFrame());
     this->VolumePropertyWidget->Create();
     app->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
         this->VolumePropertyWidget->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName()); 
-
-    this->ThresholdRange = vtkKWRange::New();
-    this->ThresholdRange->SetParent(loadSaveDataFrame->GetFrame());
-    this->ThresholdRange->Create();
-    this->ThresholdRange->SetWholeRange(0, 255);
-    this->ThresholdRange->SetRange(90, 255);
-    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-        this->ThresholdRange->GetWidgetName(), loadSaveDataFrame->GetFrame()->GetWidgetName()); 
 
     this->RenderModeChooser = vtkKWMenuButton::New();
     this->RenderModeChooser->SetParent(loadSaveDataFrame->GetFrame());
@@ -171,14 +147,6 @@ void vtkVolumeRenderingCudaModuleGUI::BuildGUI ( )
     app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
         this->ScaleFactorScale->GetWidgetName()); 
 
-    //NodeSelector  for Node from MRML Scene
-    this->NS_ImageData=vtkSlicerNodeSelectorWidget::New();
-    this->NS_ImageData->SetParent(loadSaveDataFrame->GetFrame());
-    this->NS_ImageData->Create();
-    this->NS_ImageData->NoneEnabledOn();
-    this->NS_ImageData->SetLabelText("Source Volume: ");
-    this->NS_ImageData->SetNodeClass("vtkMRMLScalarVolumeNode","","","");
-    app->Script("pack %s -side top -fill x -anchor nw -padx 2 -pady 2",this->NS_ImageData->GetWidgetName());
 
 
     this->Built=true;
@@ -206,9 +174,6 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 {
     this->NS_ImageData->AddObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
 
-    this->InputTypeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->InputResolutionMatrix->AddObserver(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
-
     this->RenderModeChooser->GetMenu()->AddObserver(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 
     this->VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangedEvent, (vtkCommand*)this->GUICallbackCommand);
@@ -217,14 +182,10 @@ void vtkVolumeRenderingCudaModuleGUI::AddGUIObservers ( )
 
     this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
     this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
-
-    this->ThresholdRange->AddObserver(vtkKWRange::RangeValueChangingEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 
 void vtkVolumeRenderingCudaModuleGUI::RemoveGUIObservers ( )
 {
-    this->InputTypeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
-    this->InputResolutionMatrix->RemoveObservers(vtkKWMatrixWidget::ElementChangedEvent, (vtkCommand*)this->GUICallbackCommand);
     this->RenderModeChooser->GetMenu()->RemoveObservers(vtkKWMenu::MenuItemInvokedEvent, (vtkCommand*)this->GUICallbackCommand);
 }
 void vtkVolumeRenderingCudaModuleGUI::RemoveMRMLNodeObservers ( )
@@ -267,7 +228,6 @@ void vtkVolumeRenderingCudaModuleGUI::CreateMapper()
     if (this->CudaMapper == NULL)
     {
         this->CudaMapper = vtkCudaVolumeMapper::New();
-        this->CudaMapper->SetThreshold(this->ThresholdRange->GetRange());
     }
     if (this->CudaVolume == NULL)
     {
