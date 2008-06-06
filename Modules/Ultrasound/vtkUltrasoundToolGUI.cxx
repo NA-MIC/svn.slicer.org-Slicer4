@@ -16,6 +16,11 @@
 #include "vtkKWScaleWithEntry.h"
 #include "vtkKWScale.h"
 
+#ifdef ASCENSION_MINIBIRD_SUPPORT
+#include "vtkMiniBirdInstrumentTracker.h"
+#endif /* ASCENSION_MINIBIRD_SUPPORT */
+
+
 vtkCxxRevisionMacro(vtkUltrasoundToolGUI, "$Revision 1.0 $");
 vtkStandardNewMacro(vtkUltrasoundToolGUI);
 
@@ -180,10 +185,11 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
 #ifdef ASCENSION_MINIBIRD_SUPPORT
         if (this->Tracker != NULL)
         {
-            this->Tracker->SetToolAdjustment(this->ToolAdjustmentScale[0]->GetWidget()->GetValue(), 
-                this->ToolAdjustmentScale[1]->GetWidget()->GetValue(), 
-                this->ToolAdjustmentScale[2]->GetWidget()->GetValue());
-            this->Tracker->SetProbeAdjustment(this->ProbeAdjustmentScales[0], this->ProbeAdjustmentScales[1], this->ProbeAdjustmentScales[2]);
+            this->Tracker->SetToolAdjustment(this->ToolAdjustmentScales[0]->GetWidget()->GetValue(), 
+                this->ToolAdjustmentScales[1]->GetWidget()->GetValue(), 
+                this->ToolAdjustmentScales[2]->GetWidget()->GetValue());
+            this->Tracker->SetProbeAdjustment(this->ProbeAdjustmentScales[0]->GetValue(),
+                this->ProbeAdjustmentScales[1]->GetValue(), this->ProbeAdjustmentScales[2]->GetValue());
         }
 #endif /* ASCENSION_MINIBIRD_SUPPORT */
     }
@@ -201,6 +207,7 @@ void vtkUltrasoundToolGUI::UpdateTracker()
             this->RodActor->SetOrientation(0,0,0); 
 
             this->RodActor->RotateZ(90);
+            this->Tracker->CalcInstrumentPos();
 
             this->RodActor->SetUserMatrix(NULL);
             this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
