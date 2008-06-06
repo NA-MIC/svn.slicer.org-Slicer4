@@ -3,7 +3,7 @@ PROJECT(UltrasoundModule)
 OPTION(ULTRASOUNDMODULE "Would you like to build Ultrasound Module support" OFF)
 if(ULTRASOUNDMODULE)
 
-OPTION(PHILLIPS_ULTRASOUND_SCANNER "Would you like to compile in Support for the Phillips Ultrasound Scanners (proprietary support only)" ON)
+OPTION(PHILLIPS_ULTRASOUND_SCANNER "Would you like to compile in Support for the Phillips Ultrasound Scanners (proprietary support only)" OFF)
 if(PHILLIPS_ULTRASOUND_SCANNER)
    FIND_LIBRARY(PHILLIPS_ULTRASOUND_SCANNER_LIBRARY
       PipelineComDll
@@ -22,7 +22,7 @@ if(PHILLIPS_ULTRASOUND_SCANNER)
    
 endif(PHILLIPS_ULTRASOUND_SCANNER)
 
-OPTION(ASCENSION_MINIBIRD "Would you like to compile in support for the Ascension Minibirds?")
+OPTION(ASCENSION_MINIBIRD "Would you like to compile in support for the Ascension Minibirds?" OFF)
 if(ASCENSION_MINIBIRD)
 
    SET(ASCENSION_MINIBIRD_SOURCES
