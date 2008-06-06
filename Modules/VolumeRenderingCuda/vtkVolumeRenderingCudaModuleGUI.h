@@ -126,14 +126,9 @@ private:
   vtkSlicerViewerWidget *ViewerWidget;
   vtkSlicerViewerInteractorStyle *InteractorStyle;
 
-
-  vtkKWTypeChooserBox*   InputTypeChooser;
-  vtkKWMatrixWidget* InputResolutionMatrix;
-
   vtkKWMenuButton* RenderModeChooser;
   vtkKWVolumePropertyWidget* VolumePropertyWidget;
 
-  vtkKWRange* ThresholdRange;
   vtkKWScale* ScaleFactorScale;
 
   vtkKWHistogramSet* Histograms;
