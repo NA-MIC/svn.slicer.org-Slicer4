@@ -199,8 +199,8 @@ void vtkMiniBirdInstrumentTracker::CalcInstrumentPos()
         vtkMatrix4x4* bird_to_US = vtkMatrix4x4::New();
         bird_to_US->Identity();
         bird_to_US->SetElement(0, 3, this->ProbeAdjustments[0]);
-        bird_to_US->SetElement(1, 3, this->ProbeAdjustments[0]); // 1.2
-        bird_to_US->SetElement(2, 3, this->ProbeAdjustments[0]); // -2.9
+        bird_to_US->SetElement(1, 3, this->ProbeAdjustments[1]); // 1.2
+        bird_to_US->SetElement(2, 3, this->ProbeAdjustments[2]); // -2.9
 
         vtkMatrix4x4* scale_transform = vtkMatrix4x4::New();
         scale_transform->Identity();

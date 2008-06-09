@@ -61,7 +61,7 @@ private:
     vtkKWScaleWithEntry*    ProbeAdjustmentScales[3];
 
     vtkMiniBirdInstrumentTracker*    Tracker;
-    vtkUltrasoundScanPlane*             ScanPlane;
+    vtkUltrasoundScanPlane*          ScanPlane;
 };
 
 #endif /* __VTK_ULTRASOUND_TOOL_GUI_H_ */
