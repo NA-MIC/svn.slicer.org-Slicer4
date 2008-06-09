@@ -148,6 +148,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   this->Script("pack %s %s -side left -anchor nw -padx 2 -pady 0",this->ThresholdLabel->GetWidgetName(),this->ThresholdRange->GetWidgetName());
 
   this->CreateGridButton(); 
+  this->CreateSliceButton(); 
   // this->CreateResetButton(); 
   // ----------------------------------------
   // Show segmentation 
@@ -173,7 +174,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
    
 
   // Show Reference Image 1 in the 3D Slicer Viewer
-  this->GetGUI()->SliceLogicDefine(); 
+  // this->GetGUI()->SliceLogicDefine(); 
 
  
   // Kilian
@@ -226,8 +227,8 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   if (!Node) return;
   vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_SuperSampleRef()));
   if (!volumeNode) return;
-  vtkMRMLVolumeNode *spgrNode = vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_Ref()));
-  if (!spgrNode) return;
+  //vtkMRMLVolumeNode *spgrNode = vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_Ref()));
+  // if (!spgrNode) return;
   if (!this->ThresholdRange) return;
 
   vtkSlicerApplication      *application      =  vtkSlicerApplication::SafeDownCast(this->GetApplication()); 
@@ -342,7 +343,7 @@ void vtkTumorGrowthSegmentationStep::ThresholdRangeChangedCallback(double min , 
 //----------------------------------------------------------------------------
 void vtkTumorGrowthSegmentationStep::TransitionCallback() 
 { 
-  cout << "vtkTumorGrowthSegmentationStep::TransitionCallback()  " << endl;
+  // cout << "vtkTumorGrowthSegmentationStep::TransitionCallback()  " << endl;
   this->SegmentScan1Remove();
   if (!this->SegmentScan1Define()) return; 
   vtkSlicerApplication *application   = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication());

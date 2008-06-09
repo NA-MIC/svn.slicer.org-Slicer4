@@ -10,10 +10,11 @@
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWLabel.h"
 #include "vtkKWEntry.h"
+#include "vtkKWScale.h"
 #include "vtkSlicerApplicationLogic.h"
 #include "vtkTumorGrowthLogic.h"
 #include "vtkSlicerSliceControllerWidget.h"
-#include "vtkKWScale.h"
+#include "vtkKWCheckButton.h"
 #include "vtkSlicerApplication.h"
 #include "vtkKWPushButton.h"
 #include "vtkKWMessageDialog.h"
@@ -21,6 +22,7 @@
 #include "vtkPNGWriter.h"
 #include "vtkImageAppend.h"
 #include "vtkImageConstantPad.h"
+#include "vtkKWLoadSaveButton.h"
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkTumorGrowthAnalysisStep);
 vtkCxxRevisionMacro(vtkTumorGrowthAnalysisStep, "$Revision: 1.2 $");
@@ -32,12 +34,15 @@ vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
   this->SetDescription("Analysis of Tumor Growth"); 
   this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthAnalysisStep::WizardGUICallback);
 
-  this->SensitivityScale = NULL;
   this->GrowthLabel = NULL;
 
+  this->ButtonsWorkingDir;
+  this->ButtonsAnalysis;
   this->ButtonsSave = NULL;
   this->FrameButtons = NULL;
+  this->FrameButtonsFunctions = NULL;
   this->ButtonsSnapshot = NULL;
+  this->ButtonsInfo = NULL;
   this->SnapshotCount = 0;
 
   this->FrameDeformable     = NULL;
@@ -46,11 +51,30 @@ vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
   this->DeformableTextLabel = NULL;
   this->DeformableMeassureLabel = NULL;
 
+  this->SensitivityRadio = NULL;
+  this->SensitivityLow = NULL;
+  this->SensitivityMedium = NULL;
+  this->SensitivityHigh = NULL;
+
+
 }
 
 //----------------------------------------------------------------------------
 vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
 {
+
+  if (this->ButtonsWorkingDir) 
+    {
+      this->ButtonsWorkingDir->Delete();
+      this->ButtonsWorkingDir = NULL;
+    }
+
+  if (this->ButtonsAnalysis) 
+    {
+      this->ButtonsAnalysis->Delete();
+      this->ButtonsAnalysis = NULL;
+
+    }
 
   if (this->ButtonsSave)
     {
@@ -69,12 +93,43 @@ vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
     this->FrameButtons->Delete();
     this->FrameButtons  = NULL;
     }
-  
-  if (this->SensitivityScale)
+
+  if (this->FrameButtonsFunctions)
     {
-    this->SensitivityScale->Delete();
-    this->SensitivityScale = NULL;
+    this->FrameButtonsFunctions->Delete();
+    this->FrameButtonsFunctions  = NULL;
     }
+
+  if (this->ButtonsInfo)
+    {
+    this->ButtonsInfo->Delete();
+    this->ButtonsInfo  = NULL;
+    }
+  
+  if (this->SensitivityRadio)
+    {
+      this->SensitivityRadio->Delete();
+      this->SensitivityRadio= NULL;
+    }
+
+  if (this->SensitivityLow)
+    {
+      this->SensitivityLow->Delete();
+      this->SensitivityLow= NULL;
+    }
+
+  if (this->SensitivityMedium)
+    {
+      this->SensitivityMedium->Delete();
+      this->SensitivityMedium= NULL;
+    }
+
+  if (this->SensitivityHigh)
+    {
+      this->SensitivityHigh->Delete();
+      this->SensitivityHigh= NULL;
+    }
+
   if (this->GrowthLabel) 
     {
       this->GrowthLabel->Delete();
@@ -116,31 +171,81 @@ vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
 //----------------------------------------------------------------------------
 void vtkTumorGrowthAnalysisStep::AddGUIObservers() 
 {
-  // cout << "vtkTumorGrowthROIStep::AddGUIObservers()" << endl; 
   // Make sure you do not add the same event twice - need to do it bc of wizrd structure
-  if (this->ButtonsSnapshot && (!this->ButtonsSnapshot->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
-    {
-      this->ButtonsSnapshot->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand );  
-    } 
+  //if (this->ButtonsSnapshot && (!this->ButtonsSnapshot->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
+  //  {
+  //    this->ButtonsSnapshot->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand );  
+  //  } 
 
   if (this->ButtonsSave && (!this->ButtonsSave->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
     {
       this->ButtonsSave->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand );  
+    }
+
+  //if (this->ButtonsWorkingDir && (!this->ButtonsWorkingDir->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
+  //  {
+  //    this->ButtonsWorkingDir->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand );  
+  //  } 
+
+
+  if (this->ButtonsAnalysis && (!this->ButtonsAnalysis->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
+    {
+      this->ButtonsAnalysis->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand );  
     } 
+
+
+  if (this->SensitivityMedium && !this->SensitivityMedium->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))
+    {
+      this->SensitivityMedium->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);
+    }
+  if (this->SensitivityHigh && !this->SensitivityHigh->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))
+    {
+      this->SensitivityHigh->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);
+    }
+  if (this->SensitivityLow && !this->SensitivityLow->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))
+    {
+      this->SensitivityLow->AddObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);
+    }
 }
 
 void vtkTumorGrowthAnalysisStep::RemoveGUIObservers() 
 {
   // cout << "vtkTumorGrowthAnalysisStep::RemoveGUIObservers" << endl;
-  if (this->ButtonsSnapshot) 
-    {
-      this->ButtonsSnapshot->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);  
-    }
+  //if (this->ButtonsSnapshot) 
+  //  {
+  //    this->ButtonsSnapshot->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);  
+  //  }
 
   if (this->ButtonsSave) 
   {
       this->ButtonsSave->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);  
   }
+
+  //if (this->ButtonsWorkingDir) 
+  //{
+  //    this->ButtonsWorkingDir->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);  
+  //}
+
+
+  if (this->ButtonsAnalysis) 
+  {
+      this->ButtonsAnalysis->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);  
+  }
+
+  if (this->SensitivityLow)
+    {
+      //  this->SensitivityLow->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);
+      this->SensitivityLow->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);
+    }
+
+  if (this->SensitivityMedium)
+    {
+      this->SensitivityMedium->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);
+    }
+  if (this->SensitivityHigh)
+    {
+      this->SensitivityHigh->RemoveObservers( vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);
+    }
 }
 
 void vtkTumorGrowthAnalysisStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
@@ -157,45 +262,58 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
 
   // cout << "vtkTumorGrowthAnalysisStep::ProcessGUIEvents" << endl;
 
-  if (event == vtkKWPushButton::InvokedEvent) {
-    vtkKWPushButton *button = vtkKWPushButton::SafeDownCast(caller);
-    if (this->ButtonsSnapshot && (button == this->ButtonsSnapshot)) 
-    { 
-      this->TakeScreenshot(); 
-    }
-    else if (this->ButtonsSave && (button == this->ButtonsSave)) 
-    { 
-      vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
-      if (node) {
-        // Depends on analysis
-        // Save Data 
-    vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
-        if (node->GetAnalysis_Intensity_Flag()) { 
-          volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
-    } else if (node->GetAnalysis_Deformable_Flag()) { 
-      volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
-    }
-    if (volumeAnalysisNode) {
-      vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
-      Logic->SaveVolumeForce(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
-    } 
+  if (event != vtkKWPushButton::InvokedEvent) return;
 
-        // Save MRML 
+  vtkKWPushButton *button = vtkKWPushButton::SafeDownCast(caller);
+  //if (this->ButtonsSnapshot && (button == this->ButtonsSnapshot)) 
+  //{ 
+  //    this->TakeScreenshot(); 
+  //    return;
+  //}
+
+  if ((this->ButtonsAnalysis && (button == this->ButtonsAnalysis)) || 
+      (this->ButtonsSave && (button == this->ButtonsSave)))
+  { 
+     vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+     if (node) {
+        // Define MRML file 
         node->GetScene()->SetRootDirectory(node->GetWorkingDir());
-
         std::string fileName(node->GetWorkingDir());
         fileName.append("/Data.mrml");
         node->GetScene()->SetURL(fileName.c_str());
+   
+        if  (button == this->ButtonsAnalysis) {
+          // Depends on analysis
+          // Save Data 
+          vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
+          if (node->GetAnalysis_Intensity_Flag()) { 
+            volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
+        if (volumeAnalysisNode) {
+          vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
+          Logic->SaveVolumeForce(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
+        }   
+          }
 
-        // Saves file  
-        node->GetScene()->Commit();
+      if (node->GetAnalysis_Deformable_Flag()) { 
+            volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
+        if (volumeAnalysisNode) {
+          vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
+          Logic->SaveVolumeForce(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
+        } 
+          }
+          // Saves file  
+          node->GetScene()->Commit();
 
-        std::string infoMsg("Saved Data to ");
-        infoMsg.append(node->GetWorkingDir());
+          //std::string infoMsg("Saved Data to ");
+          //infoMsg.append(node->GetWorkingDir());
 
-        vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),
-                                         "Tumor Growth",infoMsg.c_str(), vtkKWMessageDialog::OkDefault);
+          //vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),
+          //                               "Tumor Growth",infoMsg.c_str(), vtkKWMessageDialog::OkDefault);
+        } else {
 
+
+           this->GetGUI()->GetApplicationGUI()->ProcessSaveSceneAsCommand();
+        }
       } else {
         this->GetGUI()->GetApplicationGUI()->ProcessSaveSceneAsCommand();
         node = this->GetGUI()->GetNode();
@@ -207,15 +325,30 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
         fileName.append("/AnalysisOutcome.log");
         std::ofstream outfile(fileName.c_str());
         if (outfile.fail()) {
-      cout << "Error: vtkTumorGrowthAnalysisStep::ProcessGUIEvents: Cannot write to file " << fileName.c_str() << endl;
+           cout << "Error: vtkTumorGrowthAnalysisStep::ProcessGUIEvents: Cannot write to file " << fileName.c_str() << endl;
     } else {     
-       this->GetGUI()->GetLogic()->PrintResult(outfile, vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
-      cout << "Wrote outcome of analysis to " << fileName.c_str() << endl;
-    }
+          this->GetGUI()->GetLogic()->PrintResult(outfile, vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
+          cout << "Wrote outcome of analysis to " << fileName.c_str() << endl;
+        }
       }
-
-    }
+      return;
   }
+
+  //  if (event == vtkKWPushButton::InvokedEvent ) {
+    vtkKWCheckButton *checkButton = vtkKWCheckButton::SafeDownCast(caller);
+    if (checkButton ==  this->SensitivityLow) {
+      this->SensitivityChangedCallback(1);
+      return;
+    } 
+    if (checkButton ==  this->SensitivityMedium) {
+      this->SensitivityChangedCallback(2);
+      return;
+    }
+    if (checkButton ==  this->SensitivityHigh) {
+      this->SensitivityChangedCallback(3);
+      return;
+    }
+    // }
 }
 
 //----------------------------------------------------------------------------
@@ -277,41 +410,94 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
 
   this->vtkTumorGrowthStep::ShowUserInterface();
 
-  this->Frame->SetLabelText("Intensity Pattern");
+  this->Frame->SetLabelText("Intensity Pattern Analysis");
   if (node->GetAnalysis_Intensity_Flag()) {
     this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());
   }
 
-  if (!this->SensitivityScale)
+  if (!this->SensitivityRadio)
     {
-    this->SensitivityScale = vtkKWThumbWheel::New();
+      this->SensitivityRadio = vtkKWFrame::New();
     }
-  if (!this->SensitivityScale->IsCreated())
-  {
-    this->SensitivityScale->SetParent(this->Frame->GetFrame());
-    this->SensitivityScale->Create();
-    this->SensitivityScale->SetRange(0.0,1.0);
-    this->SensitivityScale->SetMinimumValue(0.0);
-    this->SensitivityScale->ClampMinimumValueOn(); 
-    this->SensitivityScale->SetMaximumValue(1.0);
-    this->SensitivityScale->ClampMaximumValueOn(); 
-    this->SensitivityScale->SetResolution(0.75);
-    this->SensitivityScale->SetLinearThreshold(1);
-    this->SensitivityScale->SetThumbWheelSize (TUMORGROWTH_WIDGETS_SLIDER_WIDTH,TUMORGROWTH_WIDGETS_SLIDER_HEIGHT);
-    this->SensitivityScale->DisplayEntryOn();
-    this->SensitivityScale->DisplayLabelOn();
-    this->SensitivityScale->GetLabel()->SetText("Sensitivity");
-    this->SensitivityScale->SetCommand(this,"SensitivityChangedCallback");
-    this->SensitivityScale->DisplayEntryAndLabelOnTopOff(); 
-    this->SensitivityScale->SetBalloonHelpString("The further the wheel is turned to the right the more robust the result");
 
-    // this->SensitivityScale->GetEntry()->SetCommandTriggerToAnyChange();
+  if (!this->SensitivityRadio->IsCreated())
+  {
+      this->SensitivityRadio->SetParent(this->Frame->GetFrame());
+      this->SensitivityRadio->Create();
   }
 
+  this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->SensitivityRadio->GetWidgetName());
+
+  if (!this->SensitivityLow) {
+    this->SensitivityLow = vtkKWCheckButton::New();
+  } 
+
+  if (!this->SensitivityLow->IsCreated()) {
+    this->SensitivityLow->SetParent(this->SensitivityRadio);
+    this->SensitivityLow->Create();
+    this->SensitivityLow->SelectedStateOff();
+    this->SensitivityLow->SetText("Sensitive");
+    this->SensitivityLow->SetBalloonHelpString("Perform a very sensitive intensity analysis ");
+  }
+
+  if (!this->SensitivityMedium) {
+    this->SensitivityMedium = vtkKWCheckButton::New();
+  } 
+
+  if (!this->SensitivityMedium->IsCreated()) {
+    this->SensitivityMedium->SetParent(this->SensitivityRadio);
+    this->SensitivityMedium->Create();
+    this->SensitivityMedium->SelectedStateOff();
+    this->SensitivityMedium->SetText("Moderate");
+    this->SensitivityMedium->SetBalloonHelpString("Perform a moderate intensity analysis ");
+  }
+
+  if (!this->SensitivityHigh) {
+    this->SensitivityHigh = vtkKWCheckButton::New();
+  } 
+
+  if (!this->SensitivityHigh->IsCreated()) {
+    this->SensitivityHigh->SetParent(this->SensitivityRadio);
+    this->SensitivityHigh->Create();
+    this->SensitivityHigh->SelectedStateOff();
+    this->SensitivityHigh->SetText("Robust");
+    this->SensitivityHigh->SetBalloonHelpString("Perform a very robust intensity analysis ");
+  }
+
+  this->Script("pack %s %s %s -side left -anchor nw -fill x -padx 0 -pady 0", this->SensitivityLow->GetWidgetName(), this->SensitivityMedium->GetWidgetName(), this->SensitivityHigh->GetWidgetName());
+
+
+  // if (!this->SensitivityRadio)
+  //   {
+  //   this->SensitivityRadio = vtkKWThumbWheel::New();
+  //   }
+  // 
+  // if (!this->SensitivityScale->IsCreated())
+  // {
+  //   this->SensitivityScale->SetParent(this->Frame->GetFrame());
+  //   this->SensitivityScale->Create();
+  //   this->SensitivityScale->SetRange(0.0,1.0);
+  //   this->SensitivityScale->SetMinimumValue(0.0);
+  //   this->SensitivityScale->ClampMinimumValueOn(); 
+  //   this->SensitivityScale->SetMaximumValue(1.0);
+  //   this->SensitivityScale->ClampMaximumValueOn(); 
+  //   this->SensitivityScale->SetResolution(0.75);
+  //   this->SensitivityScale->SetLinearThreshold(1);
+  //   this->SensitivityScale->SetThumbWheelSize (TUMORGROWTH_WIDGETS_SLIDER_WIDTH,TUMORGROWTH_WIDGETS_SLIDER_HEIGHT);
+  //   this->SensitivityScale->DisplayEntryOn();
+  //   this->SensitivityScale->DisplayLabelOn();
+  //   this->SensitivityScale->GetLabel()->SetText("Sensitivity");
+  //   this->SensitivityScale->SetCommand(this,"SensitivityChangedCallback");
+  //   this->SensitivitySale->DisplayEntryAndLabelOnTopOff(); 
+  //   this->SensitivityScale->SetBalloonHelpString("The further the wheel is turned to the right the more robust the result");
+  // 
+  //   // this->SensitivityScale->GetEntry()->SetCommandTriggerToAnyChange();
+  // }
+
   // Initial value 
-  vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  if (mrmlNode) this->SensitivityScale->SetValue(mrmlNode->GetAnalysis_Intensity_Sensitivity());
-  this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->SensitivityScale->GetWidgetName());
+  // vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
+  // if (mrmlNode) this->SensitivityScale->SetValue(mrmlNode->GetAnalysis_Intensity_Sensitivity());
+  // this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->SensitivityScale->GetWidgetName());
 
   if (!this->GrowthLabel)
     {
@@ -391,8 +577,8 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   {
     char TEXT[1024];
     sprintf(TEXT,"%.3f mm%c (%d Voxels)\n%.3f mm%c (%d Voxels)", 
-        mrmlNode->GetAnalysis_Deformable_SegmentationGrowth(),179,int(mrmlNode->GetAnalysis_Deformable_SegmentationGrowth()/mrmlNode->GetScan1_VoxelVolume()), 
-        mrmlNode->GetAnalysis_Deformable_JacobianGrowth(),179,int(mrmlNode->GetAnalysis_Deformable_JacobianGrowth()/mrmlNode->GetScan1_VoxelVolume()));
+    node->GetAnalysis_Deformable_SegmentationGrowth(),179,int(node->GetAnalysis_Deformable_SegmentationGrowth()/node->GetScan1_VoxelVolume()), 
+    node->GetAnalysis_Deformable_JacobianGrowth(),179,int(node->GetAnalysis_Deformable_JacobianGrowth()/node->GetScan1_VoxelVolume()));
     this->DeformableMeassureLabel->SetText(TEXT);
 
   }
@@ -409,35 +595,113 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
       vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
       this->FrameButtons->SetParent(wizard_widget->GetClientArea());
       this->FrameButtons->Create();
-      this->FrameButtons->SetLabelText("Save Analysis");
+      this->FrameButtons->SetLabelText("Save");
       this->FrameButtons->AllowFrameToCollapseOff();
   }
   this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->FrameButtons->GetWidgetName());
 
- if (!this->ButtonsSnapshot) {
-    this->ButtonsSnapshot = vtkKWPushButton::New();
+  if (!this->FrameButtons)
+  {
+    this->FrameButtons = vtkKWFrameWithLabel::New();
+  }
+  if (!this->FrameButtons->IsCreated())
+  {
+      vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
+      this->FrameButtons->SetParent(wizard_widget->GetClientArea());
+      this->FrameButtons->Create();
+      this->FrameButtons->SetLabelText("Save");
+      this->FrameButtons->AllowFrameToCollapseOff();
+  }
+  this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->FrameButtons->GetWidgetName());
+
+  if (!this->FrameButtonsFunctions)
+  {
+    this->FrameButtonsFunctions = vtkKWFrame::New();
+  }
+  if (!this->FrameButtonsFunctions->IsCreated())
+  {
+      this->FrameButtonsFunctions->SetParent(this->FrameButtons->GetFrame());
+      this->FrameButtonsFunctions->Create();
   }
 
+  this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 0", this->FrameButtonsFunctions->GetWidgetName());
+
+  if (!this->ButtonsWorkingDir)
+    {
+    this->ButtonsWorkingDir = vtkKWLoadSaveButton::New();
+    }
+  if (!this->ButtonsWorkingDir->IsCreated())
+  {
+    this->ButtonsWorkingDir->SetParent(this->FrameButtonsFunctions);
+    this->ButtonsWorkingDir->Create();
+    this->ButtonsWorkingDir->SetImageToPredefinedIcon(vtkKWIcon::IconFolderOpen);
+    this->ButtonsWorkingDir->TrimPathFromFileNameOn();
+    this->ButtonsWorkingDir->SetBalloonHelpString("Define the working directory in which the results should be saved.");
+    this->ButtonsWorkingDir->SetCommand(this, "SelectDirectoryCallback");
+    this->ButtonsWorkingDir->GetLoadSaveDialog()->ChooseDirectoryOn();
+    this->ButtonsWorkingDir->SetText("Working Directory");
+
+    if (node) {
+      // set parth correctly 
+      vtksys_stl::string path = node->GetWorkingDir();
+      this->ButtonsWorkingDir->GetLoadSaveDialog()->GenerateLastPath(path.c_str());
+      this->ButtonsWorkingDir->GetLoadSaveDialog()->SetInitialFileName(path.c_str());
+    }
+  }
+
+  if (!this->ButtonsSnapshot) {
+    this->ButtonsSnapshot = vtkKWPushButton::New();
+   }
+
   if (!this->ButtonsSnapshot->IsCreated()) {
-    this->ButtonsSnapshot->SetParent(this->FrameButtons->GetFrame());
+    this->ButtonsSnapshot->SetParent(this->FrameButtonsFunctions);
     this->ButtonsSnapshot->Create();
-    this->ButtonsSnapshot->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
-    this->ButtonsSnapshot->SetText("Snapshot");
-    // this->ButtonsSnapshot->EnabledOff();
+    this->ButtonsSnapshot->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH_SMALL);
+    this->ButtonsSnapshot->SetText("Screenshot");
+    this->ButtonsSnapshot->SetBalloonHelpString("Save a screenshot of the current view in 3D Slicer.");
+    this->ButtonsSnapshot->SetCommand(this, "TakeScreenshot");
+ 
+  }
+
+  if (!this->ButtonsAnalysis) {
+    this->ButtonsAnalysis = vtkKWPushButton::New();
+  }
+  if (!this->ButtonsAnalysis->IsCreated()) {
+    this->ButtonsAnalysis->SetParent(this->FrameButtonsFunctions);
+    this->ButtonsAnalysis->Create();
+    this->ButtonsAnalysis->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH_SMALL);
+    this->ButtonsAnalysis->SetText("Analysis");
+    this->ButtonsAnalysis->SetBalloonHelpString("Save the results of the analysis to a disk."); 
   }
 
   if (!this->ButtonsSave) {
     this->ButtonsSave = vtkKWPushButton::New();
   }
   if (!this->ButtonsSave->IsCreated()) {
-    this->ButtonsSave->SetParent(this->FrameButtons->GetFrame());
+    this->ButtonsSave->SetParent(this->FrameButtonsFunctions);
     this->ButtonsSave->Create();
-    this->ButtonsSave->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    this->ButtonsSave->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH_SMALL);
     this->ButtonsSave->SetText("Data");
+    this->ButtonsSave->SetBalloonHelpString("Save all intermediate results of the analysis to disk."); 
   }
 
-  this->Script("pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
-                this->ButtonsSnapshot->GetWidgetName(),this->ButtonsSave->GetWidgetName());
+  this->Script("pack %s %s %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
+           this->ButtonsWorkingDir->GetWidgetName(), this->ButtonsSnapshot->GetWidgetName(),this->ButtonsAnalysis->GetWidgetName(), this->ButtonsSave->GetWidgetName());
+
+
+  if (!this->ButtonsInfo)
+    {
+    this->ButtonsInfo = vtkKWLabel::New();
+    }
+  if (!this->ButtonsInfo->IsCreated())
+  {
+    this->ButtonsInfo->SetParent(this->FrameButtons->GetFrame());
+    this->ButtonsInfo->Create();
+    std::string ss("Results will be saved to\n");
+    if (this->GetGUI()->GetNode()) ss += this->GetGUI()->GetNode()->GetWorkingDir();
+    this->ButtonsInfo->SetText(ss.c_str());
+  }
+  this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->ButtonsInfo->GetWidgetName());
 
   {
     vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
@@ -450,23 +714,98 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   }
 
   this->CreateGridButton();
-
-  // Show results 
-  this->SensitivityChangedCallback(0.0);
+  this->CreateSliceButton();
   this->AddGUIObservers();
-
+  this->SensitivityChangedCallback(-1);
   this->GetGUI()->PropagateVolumeSelection();
 }
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(double value)
+void vtkTumorGrowthAnalysisStep::SelectDirectoryCallback()
+{
+  // The template file has changed because of user interaction
+
+  if (this->ButtonsWorkingDir && this->ButtonsWorkingDir->IsCreated())
+    {
+    if (this->ButtonsWorkingDir->GetLoadSaveDialog()-> GetStatus() == vtkKWDialog::StatusOK)
+      {
+      this->ButtonsWorkingDir->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
+      vtksys_stl::string filename = this->ButtonsWorkingDir->GetFileName();
+      this->ButtonsWorkingDir->SetText("Working Directory");
+
+      if(!vtksys::SystemTools::FileExists(filename.c_str()) ||
+        !vtksys::SystemTools::FileIsDirectory(filename.c_str()))
+        {
+        if(!vtksys::SystemTools::MakeDirectory(filename.c_str()))
+          {
+          vtkErrorMacro("Can not create directory: " << filename.c_str());
+          return;
+          }
+        }
+
+        vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+        if (node) {
+      node->SetWorkingDir(filename.c_str());
+      if (this->ButtonsInfo)
+      {
+        std::string ss("Results will be saved to\n");
+        if (this->GetGUI()->GetNode()) ss += node->GetWorkingDir();
+        this->ButtonsInfo->SetText(ss.c_str());
+      }
+    }
+      }
+    }
+}
+
+
+
+//----------------------------------------------------------------------------
+void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(int flag)
 {
   // cout << "vtkTumorGrowthAnalysisStep::SensitivityChangedCallback" << endl;
   // Sensitivity has changed because of user interaction
   vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  if (!this->SensitivityScale || !mrmlNode || !this->GrowthLabel ) return;
-  mrmlNode->SetAnalysis_Intensity_Sensitivity(this->SensitivityScale->GetValue());
+  if (!this->SensitivityMedium || !this->SensitivityLow ||  !this->SensitivityHigh || !mrmlNode || !this->GrowthLabel ) return;
+
+  double senValue = mrmlNode->GetAnalysis_Intensity_Sensitivity();
+  if (flag == -1) {
+    if (senValue == 0.1) flag = 1;
+    else if (senValue == 1.0) flag = 3;
+    else {
+      flag = 2;
+      senValue = 0.6;
+    }
+  }
+
+  if (flag == 1) {
+    if (!this->SensitivityLow->GetSelectedState()) {
+      // make sure that it is always on even if you click on it twice
+      if (senValue == 0.1) this->SensitivityLow->SelectedStateOn();
+      // don't do anything 
+      return;
+    }
+    mrmlNode->SetAnalysis_Intensity_Sensitivity(0.1);
+    this->SensitivityMedium->SelectedStateOff();
+    this->SensitivityHigh->SelectedStateOff();
+  } else if (flag == 2) {
+    if (!this->SensitivityMedium->GetSelectedState()) {
+      if (senValue == 0.6) this->SensitivityMedium->SelectedStateOn();
+      return;
+    }
+    mrmlNode->SetAnalysis_Intensity_Sensitivity(0.6);
+    this->SensitivityLow->SelectedStateOff();
+    this->SensitivityHigh->SelectedStateOff();
+  } else if (flag == 3) {
+    if (!this->SensitivityHigh->GetSelectedState()) {
+      if (senValue == 1) this->SensitivityHigh->SelectedStateOn();
+      return;
+    }
+    mrmlNode->SetAnalysis_Intensity_Sensitivity(1);
+    this->SensitivityLow->SelectedStateOff();
+    this->SensitivityMedium->SelectedStateOff();
+  }
+  
   vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication())->Script("::TumorGrowthTcl::Analysis_Intensity_UpdateThreshold_GUI"); 
   double Growth = this->GetGUI()->GetLogic()->MeassureGrowth();
   // show here 
@@ -530,10 +869,14 @@ void vtkTumorGrowthAnalysisStep::TakeScreenshot() {
      char fileName[1024];
      sprintf(fileName,"%s/TG_Screenshot_%03d.png",this->GetGUI()->GetNode()->GetWorkingDir(),this->SnapshotCount);
      saveWriter->SetFileName(fileName);
-     cout << "Snapshot is saved to " << fileName << endl;
   saveWriter->Write();
 
   saveWriter->Delete();
+
+  //std::string infoMsg("View is saved as ");
+  //infoMsg.append(fileName);
+  //vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),
+  //                                        "Tumor Growth",infoMsg.c_str(), vtkKWMessageDialog::OkDefault);
 
   for (int i = 0 ; i < 3; i++) {
     window[i]->Delete();

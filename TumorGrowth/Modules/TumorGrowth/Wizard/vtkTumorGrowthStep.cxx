@@ -36,6 +36,7 @@ vtkTumorGrowthStep::vtkTumorGrowthStep()
   this->WizardGUICallbackCommand->SetClientData(reinterpret_cast<void *>(this));
   this->GridButton = NULL;
   this->ResetButton = NULL;
+  this->SliceButton = NULL;
 
   this->Render_Image = NULL;
   this->Render_Mapper = NULL;
@@ -76,6 +77,11 @@ vtkTumorGrowthStep::~vtkTumorGrowthStep()
       this->ResetButton = NULL;
     }
 
+  if (this->SliceButton) {
+    this->SliceButton->Delete();
+    this->SliceButton = NULL;
+    
+  } 
 
   this->RenderRemove();
 
@@ -214,6 +220,7 @@ void vtkTumorGrowthStep::CreateGridButton() {
     this->GridButton->SetWidth(wizard_widget->GetCancelButton()->GetWidth());
     this->GridButton->SetCommand(this, "GridCallback"); 
     this->GridButton->SetText("Grid");
+    this->GridButton->SetBalloonHelpString("Show original voxel grid in viewer");
   }
   this->Script("pack %s -side left -anchor nw -expand n -padx 0 -pady 2", this->GridButton->GetWidgetName()); 
 
@@ -285,15 +292,34 @@ void vtkTumorGrowthStep::CreateResetButton() {
   this->Script("pack %s -side left -anchor nw -expand n -padx 0 -pady 2", this->ResetButton->GetWidgetName()); 
 }
 
-//void vtkTumorGrowthStep::SliceLogicDefine() {
-//  vtkTumorGrowthGUI *GUI  = this->GetGUI();
-//  GUI->SliceLogicDefine();
-//  
-//  GUI->GetSliceLogic()->GetSliceCompositeNode()->SetReferenceBackgroundVolumeID(GUI->GetNode()->GetScan1_Ref());
-//  GUI->GetSliceLogic()->GetSliceNode()->SetFieldOfView(250,250,1);
-//  GUI->GetSliceLogic()->SetSliceOffset(GUI->GetSliceController_OffsetScale()->GetValue());
-//} 
+void vtkTumorGrowthStep::CreateSliceButton() {
+  if (!this->SliceButton) {
+     this->SliceButton = vtkKWPushButton::New();
+  }
 
+  if (!this->SliceButton->IsCreated()) {
+    vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
+    this->SliceButton->SetParent(wizard_widget->GetCancelButton()->GetParent());
+    this->SliceButton->Create();
+    this->SliceButton->SetWidth(wizard_widget->GetCancelButton()->GetWidth());
+    this->SliceButton->SetCommand(this, "SliceCallback"); 
+    this->SliceButton->SetText("Slice");
+    this->SliceButton->SetBalloonHelpString("Show Axial view of complete slice in 3D Viewer");
+  }
+  this->Script("pack %s -side left -anchor nw -expand n -padx 0 -pady 2", this->SliceButton->GetWidgetName()); 
+  if (this->GetGUI()->GetSliceLogic()) this->SliceButton->SetReliefToSunken();   
+}
+
+void  vtkTumorGrowthStep::SliceCallback() { 
+  if (this->GetGUI()->GetSliceLogic()) {
+    this->GetGUI()->SliceLogicRemove(); 
+    this->SliceButton->SetReliefToRidge();
+  }
+  else {
+    this->GetGUI()->SliceLogicDefine(); 
+    this->SliceButton->SetReliefToSunken();
+  }
+}
 
 /// For Rendering results
 void vtkTumorGrowthStep::ChangeRender_BandPassFilter(double min, double max) {
