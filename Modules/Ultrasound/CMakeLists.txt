@@ -51,6 +51,7 @@ endif(ASCENSION_MINIBIRD)
     vtkUltrasoundStreamerGUI.cxx
     
     vtkUltrasoundToolGUI.cxx
+    vtkUltrasoundScanPlane.cxx
     
   # SCANNER CLASSES
     vtkUltrasoundStreamSource.cxx
