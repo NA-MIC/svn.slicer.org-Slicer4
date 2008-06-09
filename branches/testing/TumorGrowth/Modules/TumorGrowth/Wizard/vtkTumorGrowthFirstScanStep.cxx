@@ -61,10 +61,17 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
       sprintf(CMD,"file mkdir %s",FilePath.c_str()); 
       application->Script(CMD); 
     }
+    // Check if it path
+    sprintf(CMD,"file writable %s",FilePath.c_str());
+
+    if (!atoi(application->Script(CMD))) {
+      FilePath = application->GetTemporaryDirectory();
+    } 
+
     if (!node->GetWorkingDir() || strcmp(FilePath.c_str(),node->GetWorkingDir())) {
-      cout << "Working directory is " <<  FilePath.c_str() << endl;
-      node->SetWorkingDir(FilePath.c_str());
+        node->SetWorkingDir(FilePath.c_str());
     }
+  
   }
 
   if (this->SecondVolumeMenuButton && this->SecondVolumeMenuButton->GetSelected() ) {
@@ -133,7 +140,7 @@ void vtkTumorGrowthFirstScanStep::ShowUserInterface()
   this->Frame->SetLabelText("Select Scan");
   this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());
   this->VolumeMenuButton->SetLabelText("1. Scan  ");
-  this->VolumeMenuButton->SetBalloonHelpString("Select consecutive scans of patient.");
+  this->VolumeMenuButton->SetBalloonHelpString("Select first scan of patient.");
 
   if (!this->SecondVolumeMenuButton) {
     this->SecondVolumeMenuButton=vtkSlicerNodeSelectorWidget::New();
@@ -144,6 +151,7 @@ void vtkTumorGrowthFirstScanStep::ShowUserInterface()
     this->SecondVolumeMenuButton->SetNodeClass("vtkMRMLScalarVolumeNode","","","");
     this->SecondVolumeMenuButton->SetMRMLScene(this->GetGUI()->GetLogic()->GetMRMLScene());
     this->SecondVolumeMenuButton->GetWidget()->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    this->SecondVolumeMenuButton->SetBalloonHelpString("Select second scan of patient.");
     // If you want to attach a function once is selected 
     // look at GrayscaleSelector vtkSlicerVolumeMathGUI::AddGUIObservers
   }

@@ -199,6 +199,7 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
   }
   
   this->CreateGridButton();
+  this->CreateSliceButton();
 
   this->AddGUIObservers(); 
 

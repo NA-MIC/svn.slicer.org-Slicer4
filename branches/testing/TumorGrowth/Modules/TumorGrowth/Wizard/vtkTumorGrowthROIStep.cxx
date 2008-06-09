@@ -27,7 +27,7 @@ vtkCxxRevisionMacro(vtkTumorGrowthROIStep, "$Revision: 1.2 $");
 vtkTumorGrowthROIStep::vtkTumorGrowthROIStep()
 {
   this->SetName("2/4. Define Region of Interest"); 
-  this->SetDescription("Define ROI by clicking <ctrl>-left mouse button\n around the tumor or moving sliders"); 
+  this->SetDescription("Define ROI by clicking left mouse button\n around the tumor or moving sliders"); 
   this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthROIStep::WizardGUICallback);
 
   this->FrameButtons    = NULL;
@@ -219,6 +219,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
     this->ButtonsShow->Create();
     this->ButtonsShow->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
     this->ButtonsShow->SetText("Show ROI");
+    this->ButtonsShow->SetBalloonHelpString("Show/hide ROI in image viewer"); 
   }
 
   if (!this->ButtonsReset) {
@@ -229,6 +230,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
     this->ButtonsReset->Create();
     this->ButtonsReset->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
     this->ButtonsReset->SetText("Reset");
+    this->ButtonsReset->SetBalloonHelpString("Reset Values"); 
   }
 
   this->Script("pack %s %s -side left -anchor nw -expand n -padx 2 -pady 2", 
@@ -773,9 +775,12 @@ void vtkTumorGrowthROIStep::TransitionCallback()
        // Update node 
        
        Node->SetScan1_SuperSampleRef(outputNode->GetID());
-       cout << "==============================" << endl;
-       cout << "vtkTumorGrowthROIStep::TransitionCallback " << Node->GetScan1_SuperSampleRef() << " " <<  Node->GetScan1_Ref() << endl;
-       cout << "==============================" << endl;
+       //cout << "==============================" << endl;
+       //cout << "vtkTumorGrowthROIStep::TransitionCallback " << Node->GetScan1_SuperSampleRef() << " " <<  Node->GetScan1_Ref() << endl;
+       //cout << "==============================" << endl;
+
+       // Remove blue ROI screen 
+       this->ROIMapRemove();
        
        this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep();
      } else {
