@@ -3,11 +3,12 @@
 
 #include "vtkTumorGrowthStep.h"
 
-class vtkKWThumbWheel;
+class vtkKWCheckButton;
 class vtkKWLabel;
 class vtkKWFrameWithLabel; 
 class vtkKWPushButton;
 class vtkKWFrame;
+class vtkKWLoadSaveButton;
 
 class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthAnalysisStep : public vtkTumorGrowthStep
 {
@@ -22,7 +23,7 @@ public:
 
   // Description:
   // Callbacks.
-  virtual void SensitivityChangedCallback(double value);
+  virtual void SensitivityChangedCallback(int value);
 
   void ResetPipelineCallback();
   // Kilian Work here tomorrow 
@@ -34,12 +35,18 @@ public:
   void RemoveGUIObservers();
   void AddGUIObservers(); 
 
+  void SelectDirectoryCallback();
+  void TakeScreenshot(); 
+
 protected:
   vtkTumorGrowthAnalysisStep();
   ~vtkTumorGrowthAnalysisStep();
 
-  // vtkKWScaleWithEntry      *SensitivetyScale;
-  vtkKWThumbWheel            *SensitivityScale;
+  vtkKWFrame        *SensitivityRadio;
+  vtkKWCheckButton  *SensitivityLow;
+  vtkKWCheckButton  *SensitivityMedium;
+  vtkKWCheckButton  *SensitivityHigh;
+
   vtkKWLabel                 *GrowthLabel;
 
   vtkKWFrameWithLabel       *FrameDeformable;
@@ -49,12 +56,15 @@ protected:
   vtkKWLabel                *DeformableMeassureLabel;
 
   vtkKWFrameWithLabel       *FrameButtons;
+  vtkKWFrame                *FrameButtonsFunctions;
+  vtkKWLoadSaveButton       *ButtonsWorkingDir;
+  vtkKWPushButton           *ButtonsAnalysis;
   vtkKWPushButton           *ButtonsSnapshot;
   vtkKWPushButton           *ButtonsSave;
+  vtkKWLabel                *ButtonsInfo;
 
   static void WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
 
-  void TakeScreenshot(); 
   int SnapshotCount; 
 
 private:

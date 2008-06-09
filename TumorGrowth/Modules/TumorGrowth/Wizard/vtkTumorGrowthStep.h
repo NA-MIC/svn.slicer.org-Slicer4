@@ -17,6 +17,7 @@ class vtkMRMLVolumeNode;
 class vtkImageData;  
 class vtkFixedPointVolumeRayCastMapper;
 
+#define TUMORGROWTH_MENU_BUTTON_WIDTH_SMALL 10
 #define TUMORGROWTH_MENU_BUTTON_WIDTH 15
 #define TUMORGROWTH_WIDGETS_LABEL_WIDTH 25
 #define TUMORGROWTH_WIDGETS_SLIDER_WIDTH 100
@@ -60,7 +61,9 @@ public:
   void SetNextStep(vtkTumorGrowthStep *init) { this->NextStep = init;}
 
   virtual void GridCallback();
- 
+  virtual void SliceCallback();
+
+
   vtkGetObjectMacro(Render_VolumeProperty, vtkVolumeProperty);
   vtkGetObjectMacro(Render_Mapper, vtkVolumeTextureMapper3D);
 
@@ -76,13 +79,14 @@ protected:
 
   void GridRemove();
   int  GridDefine();
-  void CreateGridButton(); 
+  void CreateGridButton();
   vtkKWPushButton          *GridButton;
 
   void CreateResetButton(); 
   vtkKWPushButton          *ResetButton;
 
-  //void SliceLogicDefine();
+  void CreateSliceButton(); 
+  vtkKWPushButton          *SliceButton;
   
   vtkImageData             *Render_Image;
   vtkVolumeTextureMapper3D *Render_Mapper;
