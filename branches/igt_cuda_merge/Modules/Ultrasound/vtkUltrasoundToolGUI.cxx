@@ -15,6 +15,7 @@
 
 #include "vtkKWScaleWithEntry.h"
 #include "vtkKWScale.h"
+#include "vtkUltrasoundScanPlane.h"
 
 #ifdef ASCENSION_MINIBIRD_SUPPORT
 #include "vtkMiniBirdInstrumentTracker.h"
@@ -31,6 +32,7 @@ vtkUltrasoundToolGUI::vtkUltrasoundToolGUI()
     this->Rod = NULL;
     this->RodMapper = NULL;
     this->RodActor = NULL;
+    this->ScanPlane = NULL;
 
     this->cb_Enabled = NULL;
 
@@ -145,6 +147,10 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
 
                 this->RodActor = vtkActor::New();
                 this->RodActor->SetMapper(this->RodMapper);
+
+                this->ScanPlane = vtkUltrasoundScanPlane::New();
+                this->ScanPlane->SetScale(10,10);
+                this->ScanPlane->SetRenderer(this->Renderer);
             }
             this->Renderer->AddActor(this->RodActor);
 
@@ -212,6 +218,8 @@ void vtkUltrasoundToolGUI::UpdateTracker()
             this->RodActor->SetUserMatrix(NULL);
             this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
 
+            //this->ScanPlane->SetUserMatrix(NULL);
+            this->ScanPlane->SetUserMatrix(this->Tracker->GetTransform());
         }
     }
 #else
