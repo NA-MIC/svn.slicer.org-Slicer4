@@ -57,6 +57,9 @@ vtkUltrasoundToolGUI::~vtkUltrasoundToolGUI()
     if (this->Tracker != NULL)
         this->Tracker->Delete();
 #endif /* ASCENSION_MINIBIRD_SUPPORT */
+
+    if (this->ScanPlane != NULL)
+        this->ScanPlane->Delete();
 }
 
 void vtkUltrasoundToolGUI::CreateWidget()
@@ -148,9 +151,9 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
                 this->RodActor = vtkActor::New();
                 this->RodActor->SetMapper(this->RodMapper);
 
-                this->ScanPlane = vtkUltrasoundScanPlane::New();
-                this->ScanPlane->SetScale(10,10);
-                this->ScanPlane->SetRenderer(this->Renderer);
+                //this->ScanPlane = vtkUltrasoundScanPlane::New();
+                //this->ScanPlane->SetScale(10,10);
+                //this->ScanPlane->SetRenderer(this->Renderer);
             }
             this->Renderer->AddActor(this->RodActor);
 
@@ -219,7 +222,7 @@ void vtkUltrasoundToolGUI::UpdateTracker()
             this->RodActor->SetUserMatrix(this->Tracker->GetTransform());
 
             //this->ScanPlane->SetUserMatrix(NULL);
-            this->ScanPlane->SetUserMatrix(this->Tracker->GetTransform());
+//            this->ScanPlane->SetUserMatrix(this->Tracker->GetTransform());
         }
     }
 #else
