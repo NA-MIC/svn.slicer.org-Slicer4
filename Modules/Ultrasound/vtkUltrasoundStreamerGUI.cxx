@@ -15,7 +15,7 @@
 #include <sstream>
 
 #include "vtkUltrasoundStreamSource.h"
-#ifndef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
+#ifdef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
   #include "vtkPhilipsUltrasoundStreamSource.h"
 #else 
   #include "vtkUltrasoundScannerReader.h"
@@ -124,7 +124,7 @@ void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned lo
             this->InvokeEvent(vtkUltrasoundStreamerGUI::EnablingEvent);
             if (this->StreamSource == NULL)
             {
-#ifndef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
+#ifdef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
                 this->StreamSource = vtkPhilipsUltrasoundStreamSource::New();
                 if(this->el_Address->GetWidget()->GetValue()[0] == '\0')
                     this->el_Address->GetWidget()->SetValue("192.168.1.15");

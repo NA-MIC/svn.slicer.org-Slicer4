@@ -111,6 +111,13 @@ void vtkUltrasoundToolGUI::CreateWidget()
     this->ProbeAdjustmentScales[1]->SetLabelText("Probe Adjust Y:");
     this->ProbeAdjustmentScales[2]->SetLabelText("Probe Adjust Z:");
 
+    // Setting Default Values
+    this->ProbeAdjustmentScales[0]->SetValue(0.0f);
+    this->ProbeAdjustmentScales[1]->SetValue(1.2f);
+    this->ProbeAdjustmentScales[2]->SetValue(-2.9f);
+    this->ToolAdjustmentScales[0]->SetValue(6.0f);
+    this->ToolAdjustmentScales[1]->SetValue(0.0f);
+    this->ToolAdjustmentScales[2]->SetValue(0.0f);
 }
 
 void vtkUltrasoundToolGUI::AddGUIObservers()
