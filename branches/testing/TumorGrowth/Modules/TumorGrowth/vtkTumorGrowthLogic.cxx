@@ -63,7 +63,7 @@ vtkTumorGrowthLogic::vtkTumorGrowthLogic()
   this->Analysis_Intensity_ROITotal       = NULL;
 
   // if set to zero then SaveVolume will not do anything 
-  this->SaveVolumeFlag = 1;  
+  this->SaveVolumeFlag = 0;  
 }
 
 
@@ -447,7 +447,7 @@ int vtkTumorGrowthLogic::AnalyzeGrowth(vtkSlicerApplication *app) {
     if (!atoi(app->Script("::TumorGrowthTcl::Analysis_Intensity_GUI"))) return 0; 
   } 
   if (this->TumorGrowthNode->GetAnalysis_Deformable_Flag()) {
-    if (debug && 0) {
+    if (debug) {
       if (!this->TumorGrowthNode->GetAnalysis_Deformable_Ref() || !strcmp(this->TumorGrowthNode->GetAnalysis_Deformable_Ref(),"")) { 
         char fileName[1024];
         sprintf(fileName,"%s/TG_Analysis_Deformable.nhdr",this->TumorGrowthNode->GetWorkingDir());
