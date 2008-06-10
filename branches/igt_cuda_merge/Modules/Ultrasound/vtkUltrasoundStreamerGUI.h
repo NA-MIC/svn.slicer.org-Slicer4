@@ -59,6 +59,7 @@ private:
     vtkKWScaleWithLabel*        sc_RefreshRate;
     vtkKWEntryWithLabel*        el_Address;
 
+    
     vtkImageData*               ImageData;
 };
 

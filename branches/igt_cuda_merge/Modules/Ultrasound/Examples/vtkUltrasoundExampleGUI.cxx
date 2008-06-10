@@ -36,6 +36,10 @@
 #include "vtkVolumeTextureMapper2D.h"
 #include "vtkVolumeTextureMapper3D.h"
 
+#include "vtkMatrix4x4.h"
+#include "vtkKWScaleWithEntry.h"
+#include "vtkKWScale.h"
+#include "vtkKWLabel.h"
 vtkCxxRevisionMacro(vtkUltrasoundExampleGUI, "$ Revision 1.0$");
 vtkStandardNewMacro(vtkUltrasoundExampleGUI);
 
@@ -72,15 +76,15 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     this->renderWidget->SetParent(this->GetViewFrame());
     this->renderWidget->Create();
     this->renderWidget->GetRenderer()->SetBackground(0, 0, 0);
-    //this->GetApplication()->Script("pack %s -expand y -fill both -anchor nw", 
-    //    this->renderWidget->GetWidgetName());
+    this->GetApplication()->Script("pack %s -expand y -fill both -anchor nw", 
+        this->renderWidget->GetWidgetName());
 
-    this->renderWidget2 = vtkKWRenderWidget::New();
-    this->renderWidget2->SetParent(this->GetViewFrame());
-    this->renderWidget2->Create();
-    this->GetApplication()->Script("pack %s %s -expand y -fill both -anchor w", 
-        this->renderWidget->GetWidgetName(),
-        this->renderWidget2->GetWidgetName());
+    //this->renderWidget2 = vtkKWRenderWidget::New();
+    //this->renderWidget2->SetParent(this->GetViewFrame());
+    //this->renderWidget2->Create();
+    //this->GetApplication()->Script("pack %s %s -expand y -fill both -anchor w", 
+    //    this->renderWidget->GetWidgetName(),
+    //    this->renderWidget2->GetWidgetName());
 
     /// GUI EVENT
     this->GUICallbackCommand = vtkCallbackCommand::New ( );
@@ -114,9 +118,28 @@ void vtkUltrasoundExampleGUI::CreateWidget()
     this->CreateUltrasoundWidget();
     this->CreateToolWidget();
     this->CreateVolumeRenderingWidget();
+
+
 }
 void vtkUltrasoundExampleGUI::CreateUltrasoundWidget()
 {
+    for (unsigned int i = 0; i < 3; i++)
+    {
+        this->sc_Spacings[i] = vtkKWScaleWithEntry::New();
+        this->sc_Spacings[i]->SetParent(this->GetMainPanelFrame());
+        this->sc_Spacings[i]->Create();
+        this->sc_Spacings[i]->GetWidget()->SetRange(0, 5);
+        this->sc_Spacings[i]->GetWidget()->SetResolution(.001);
+        this->sc_Spacings[i]->GetLabel()->SetText("Spacing:");
+        this->GetApplication()->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+            this->sc_Spacings[i]->GetWidgetName());
+        this->sc_Spacings[i]->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)this->GUICallbackCommand);
+    }
+    this->sc_Spacings[0]->GetWidget()->SetValue(0.64f);
+    this->sc_Spacings[1]->GetWidget()->SetValue(0.64f);
+    this->sc_Spacings[2]->GetWidget()->SetValue(0.403f);
+
+
     this->UltrasoundStreamerGUI = vtkUltrasoundStreamerGUI::New();
     this->UltrasoundStreamerGUI->SetParent(this->GetMainPanelFrame());
     this->UltrasoundStreamerGUI->Create();
@@ -207,7 +230,7 @@ vtkUltrasoundExampleGUI::~vtkUltrasoundExampleGUI()
 
     this->VolumePropertyWidget->Delete();
     this->renderWidget->Delete();
-    this->renderWidget2->Delete();
+//    this->renderWidget2->Delete();
 }
 
 
@@ -228,7 +251,7 @@ void vtkUltrasoundExampleGUI::ScheduleRender()
 
 void vtkUltrasoundExampleGUI::GuiEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
-    vtkUltrasoundExampleGUI::SafeDownCast((vtkObject*)clientData)->GuiEvent(caller);
+    vtkUltrasoundExampleGUI::SafeDownCast((vtkObject*)clientData)->GuiEvent(caller, eid);
 }
 void vtkUltrasoundExampleGUI::RenderBeginStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData)
 {
@@ -244,9 +267,25 @@ void vtkUltrasoundExampleGUI::UltrasoundEventStatic(vtkObject *caller, unsigned 
     vtkUltrasoundExampleGUI::SafeDownCast((vtkObject*)clientData)->UltrasoundEvent(eid);
 }
 
-void vtkUltrasoundExampleGUI::GuiEvent(vtkObject* caller)
+void vtkUltrasoundExampleGUI::GuiEvent(vtkObject* caller, unsigned long ev)
 {
-    this->ScheduleRender();
+
+    if (ev == vtkKWScale::ScaleValueChangingEvent)
+    {
+        if (this->VolumeMapper != NULL)
+        {
+            vtkMatrix4x4* scale = vtkMatrix4x4::New();
+            scale->Identity();
+            scale->SetElement(0,0, this->sc_Spacings[0]->GetWidget()->GetValue());
+            scale->SetElement(1,1, this->sc_Spacings[1]->GetWidget()->GetValue());
+            scale->SetElement(2,2, this->sc_Spacings[2]->GetWidget()->GetValue());
+            this->Volume->SetUserMatrix(scale);
+            scale->Delete();
+        }
+    }
+    else
+      this->ScheduleRender();
+
 }
 
 void vtkUltrasoundExampleGUI::RenderBegin()

@@ -24,11 +24,14 @@ public:
     
     void PrintSelf(ostream& os, vtkIndent indent);
 
+
     void SwapBuffers();
     vtkImageData* GetData();
     void FetchImageData(vtkImageData* data);
 
     bool    IsConnected() const { return b_Connected; } 
+
+    void SetSpacings(float x, float y, float z);
 
     virtual void Reconnect() = 0;
     virtual void StartStreaming() = 0;

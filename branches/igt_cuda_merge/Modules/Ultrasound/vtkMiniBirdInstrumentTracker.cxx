@@ -30,6 +30,7 @@ vtkMiniBirdInstrumentTracker::vtkMiniBirdInstrumentTracker()
         this->ToolAdjustments[i] = 0.0f;
         this->ProbeAdjustments[i] = 0.0f;
     }
+    this->TranslationScale = 36.0f;
 
 
     // local variables
@@ -176,7 +177,7 @@ void vtkMiniBirdInstrumentTracker::CalcInstrumentPos()
                 orientation_instrument->SetElement(iMat,jMat, (1.0/32767.0) * bird_instrument->matrix.n[iMat][jMat]);
             }
         }
-        double pos_scale = 36.0;
+        double pos_scale = this->TranslationScale;
 
         orientation_instrument->SetElement(0,3, bird_instrument->position.nX * pos_scale / 32767.0);
         orientation_instrument->SetElement(1,3, bird_instrument->position.nY * pos_scale / 32767.0);

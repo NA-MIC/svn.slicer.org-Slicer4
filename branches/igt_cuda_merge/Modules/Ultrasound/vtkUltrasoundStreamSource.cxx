@@ -23,7 +23,7 @@ vtkUltrasoundStreamSource::vtkUltrasoundStreamSource(void)
         this->ImageBuffers[i]->SetScalarTypeToUnsignedChar();
         this->ImageBuffers[i]->SetNumberOfScalarComponents(1);
         this->ImageBuffers[i]->SetExtent(0,9, 0,9, 0,9);
-        this->ImageBuffers[i]->SetSpacing(1.0f, 1.0f, 0.74f);
+        this->ImageBuffers[i]->SetSpacing(0.64f, 0.64f, 0.403f);
         this->ImageBuffers[i]->AllocateScalars();
         memset(this->ImageBuffers[i]->GetScalarPointer(), 0, 10*10*10*this->ImageBuffers[i]->GetScalarSize());
     }
@@ -69,6 +69,14 @@ void vtkUltrasoundStreamSource::SetDataInHiddenBuffer(vtkImageData* data)
     buffer->DeepCopy(data);
     this->b_DataReady = true;
     Mutex->Unlock();
+}
+
+void vtkUltrasoundStreamSource::SetSpacings(float x, float y, float z)
+{
+    for (unsigned int i =0 ; i < 2; i++)
+    {
+        this->ImageBuffers[i]->SetSpacing(x, y, z);
+    }
 }
 
 void vtkUltrasoundStreamSource::SetDataInHiddenBuffer(unsigned char* data, int width, int height, int depth)

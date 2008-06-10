@@ -63,7 +63,7 @@ void vtkUltrasoundScannerReader::UpdateData()
         ImageReaders[i]->SetNumberOfScalarComponents(1);
         ImageReaders[i]->SetDataExtent(0, 79, 0, 79, 0, 159);
         ImageReaders[i]->SetFileDimensionality(3);
-        ImageReaders[i]->SetDataSpacing(1.0f, 1.0f, 0.74f);
+        ImageReaders[i]->SetDataSpacing(0.64f, 0.64f, 0.403f);
         ImageReaders[i]->SetHeaderSize(i * 80 * 80 * 160 * sizeof(unsigned char));
 
         ImageReaders[i]->SetFileName(this->FileName.c_str());
