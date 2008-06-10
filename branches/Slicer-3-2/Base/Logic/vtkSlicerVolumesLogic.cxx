@@ -649,6 +649,18 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (const char* filena
       }    
     scalarNode->Delete(); scalarNode = NULL;
     }
+
+  // clean up the storage node
+  if (storageNode != storageNode1)
+    {
+    vtkWarningMacro("Removing storage node 1");
+    this->GetMRMLScene()->RemoveNodeNoNotify(storageNode1);
+    }
+  else if (storageNode != storageNode2)
+    {
+    vtkWarningMacro("Removing storage node 2");
+    this->GetMRMLScene()->RemoveNodeNoNotify(storageNode2);
+    }
   
   if (volumeNode != NULL)
     {
