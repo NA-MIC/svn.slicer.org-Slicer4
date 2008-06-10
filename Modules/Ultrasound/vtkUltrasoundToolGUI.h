@@ -59,7 +59,7 @@ private:
 
     vtkKWScaleWithEntry*    ToolAdjustmentScales[3];
     vtkKWScaleWithEntry*    ProbeAdjustmentScales[3];
-
+    vtkKWScaleWithEntry*    TranslationScaleAdjustmentScale;
     vtkMiniBirdInstrumentTracker*    Tracker;
     vtkUltrasoundScanPlane*          ScanPlane;
 };

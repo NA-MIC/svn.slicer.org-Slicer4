@@ -26,6 +26,7 @@ public:
 
     void             SetToolAdjustment(float x, float y, float z) { ToolAdjustments[0]=x; ToolAdjustments[1]=y; ToolAdjustments[2]=z; }
     void             SetProbeAdjustment(float x, float y, float z) { ProbeAdjustments[0]=x;ProbeAdjustments[0]=y; ProbeAdjustments[0]=z; }
+    void             SetTranslationScale(float scale) { this->TranslationScale = scale; }
 
 protected:
     void CollectRevisions(ostream& sos);
@@ -45,6 +46,7 @@ private:
 
     float             ToolAdjustments[3];
     float             ProbeAdjustments[3];
+    float             TranslationScale;
 };
 
 #endif /* __vtkMiniBirdInstrumentTracker_h */

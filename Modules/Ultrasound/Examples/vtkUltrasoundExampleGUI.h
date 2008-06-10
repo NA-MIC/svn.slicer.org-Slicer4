@@ -12,6 +12,7 @@ class vtkImageData;
 class vtkKWVolumePropertyWidget;
 class vtkKWCheckButton;
 class vtkKWRenderWidget;
+class vtkKWScaleWithEntry;
 
 class vtkUltrasoundStreamerGUI;
 class vtkUltrasoundToolGUI;
@@ -31,7 +32,7 @@ public:
     static void RenderBeginStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
     static void RenderEndStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
     static void UltrasoundEventStatic(vtkObject *caller, unsigned long eid, void *clientData, void *callData);
-    void GuiEvent(vtkObject* caller);
+    void GuiEvent(vtkObject* caller, unsigned long ev);
     void RenderBegin();
     void RenderEnd();
     void UltrasoundEvent(unsigned long event);
@@ -65,7 +66,8 @@ private:
     vtkKWVolumePropertyWidget*      VolumePropertyWidget;
     
     vtkUltrasoundStreamerGUI*       UltrasoundStreamerGUI;
-    vtkUltrasoundToolGUI*            UltrasoundToolGUI;
+    vtkUltrasoundToolGUI*           UltrasoundToolGUI;
+    vtkKWScaleWithEntry*            sc_Spacings[3];
 
     bool renderScheduled;
     bool isRendering;

@@ -44,6 +44,7 @@ vtkUltrasoundToolGUI::vtkUltrasoundToolGUI()
         this->ToolAdjustmentScales[i]  = NULL;
         this->ProbeAdjustmentScales[i] = NULL;
     }
+    this->TranslationScaleAdjustmentScale = NULL;
 
     this->Tracker = NULL;
     this->GUICallbackCommand = vtkCallbackCommand::New();
@@ -118,6 +119,17 @@ void vtkUltrasoundToolGUI::CreateWidget()
     this->ToolAdjustmentScales[0]->SetValue(6.0f);
     this->ToolAdjustmentScales[1]->SetValue(0.0f);
     this->ToolAdjustmentScales[2]->SetValue(0.0f);
+
+    this->TranslationScaleAdjustmentScale = vtkKWScaleWithEntry::New();
+        this->TranslationScaleAdjustmentScale->SetParent(this);
+        this->TranslationScaleAdjustmentScale->Create();
+        this->TranslationScaleAdjustmentScale->SetRange(-100, 100);
+        this->TranslationScaleAdjustmentScale->SetValue(36.0f);
+        this->TranslationScaleAdjustmentScale->SetResolution(0.1);
+        this->GetApplication()->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+            this->TranslationScaleAdjustmentScale->GetWidgetName());
+        this->TranslationScaleAdjustmentScale->GetWidget()->AddObserver(vtkKWScale::ScaleValueChangingEvent, (vtkCommand*)this->GUICallbackCommand);
+
 }
 
 void vtkUltrasoundToolGUI::AddGUIObservers()
@@ -206,6 +218,8 @@ void vtkUltrasoundToolGUI::ProcessGUIEvents ( vtkObject *caller, unsigned long e
                 this->ToolAdjustmentScales[2]->GetWidget()->GetValue());
             this->Tracker->SetProbeAdjustment(this->ProbeAdjustmentScales[0]->GetValue(),
                 this->ProbeAdjustmentScales[1]->GetValue(), this->ProbeAdjustmentScales[2]->GetValue());
+
+            this->Tracker->SetTranslationScale(this->TranslationScaleAdjustmentScale->GetValue());
         }
 #endif /* ASCENSION_MINIBIRD_SUPPORT */
     }

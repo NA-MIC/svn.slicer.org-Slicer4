@@ -16,9 +16,9 @@
 
 #include "vtkUltrasoundStreamSource.h"
 #ifdef PHILLIPS_ULTRASOUND_SCANNER_SUPPORT
-  #include "vtkPhilipsUltrasoundStreamSource.h"
+#include "vtkPhilipsUltrasoundStreamSource.h"
 #else 
-  #include "vtkUltrasoundScannerReader.h"
+#include "vtkUltrasoundScannerReader.h"
 #endif
 
 
@@ -132,7 +132,7 @@ void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned lo
                 this->StreamSource = vtkUltrasoundScannerReader::New();
                 if(this->el_Address->GetWidget()->GetValue()[0] == '\0')
                     this->el_Address->GetWidget()->SetValue("C:\\temp\\3DDCM002.raw");
-//                    this->el_Address->GetWidget()->SetValue("E:\\Slicer-Demos\\UltrasoundCuda\\3DDCM002.raw");
+                //                    this->el_Address->GetWidget()->SetValue("E:\\Slicer-Demos\\UltrasoundCuda\\3DDCM002.raw");
 #endif /*PHILLIPS_ULTRASOUND_SCANNER_SUPPORT */
             }
             // Register
