@@ -130,9 +130,10 @@ void vtkUltrasoundStreamerGUI::ProcessGUIEvents ( vtkObject *caller, unsigned lo
                     this->el_Address->GetWidget()->SetValue("192.168.1.15");
 #else /* TEST DATA SET */
                 this->StreamSource = vtkUltrasoundScannerReader::New();
+
                 if(this->el_Address->GetWidget()->GetValue()[0] == '\0')
-                    this->el_Address->GetWidget()->SetValue("C:\\temp\\3DDCM002.raw");
-                //                    this->el_Address->GetWidget()->SetValue("E:\\Slicer-Demos\\UltrasoundCuda\\3DDCM002.raw");
+                this->el_Address->GetWidget()->SetValue("D:\\Volumes\\4DUltrasound\\US_Raw.raw");
+                //                    this->el_Address->GetWidget()->SetValue("E:\\Slicer-Demos\\UltrasoundCuda\\US_Raw.raw");
 #endif /*PHILLIPS_ULTRASOUND_SCANNER_SUPPORT */
             }
             // Register
@@ -175,6 +176,7 @@ void vtkUltrasoundStreamerGUI::UpdateInput()
 {
     if (this->cb_Enabled->GetSelectedState() == 1)
     {
+        this->StreamSource->RequestRead();
         this->StreamSource->FetchImageData(this->ImageData);
 
         std::stringstream str;

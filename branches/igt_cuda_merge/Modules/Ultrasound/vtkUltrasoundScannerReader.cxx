@@ -5,6 +5,10 @@
 #include "vtkMultiThreader.h"
 //#include "vtkCallbackCommand.h"
 
+#if defined (__WIN32__) && ! defined (_POSIX_VERSION)
+#include "windows.h"
+#endif
+
 
 //Temporary
 
@@ -51,8 +55,6 @@ void vtkUltrasoundScannerReader::UpdateData()
     this->ThreadRunning = true;
     this->ThreadAlive = true;
 
-    vtkstd::vector<vtkImageReader*> ImageReaders;
-
     std::cout << "Loading " << std::flush;
     int j = 92;
     unsigned int i;
@@ -61,10 +63,10 @@ void vtkUltrasoundScannerReader::UpdateData()
         ImageReaders.push_back(vtkImageReader::New());
         ImageReaders[i]->SetDataScalarTypeToUnsignedChar();
         ImageReaders[i]->SetNumberOfScalarComponents(1);
-        ImageReaders[i]->SetDataExtent(0, 79, 0, 79, 0, 159);
+        ImageReaders[i]->SetDataExtent(0, 79, 0, 79, 0, 207);
         ImageReaders[i]->SetFileDimensionality(3);
         ImageReaders[i]->SetDataSpacing(0.64f, 0.64f, 0.403f);
-        ImageReaders[i]->SetHeaderSize(i * 80 * 80 * 160 * sizeof(unsigned char));
+        ImageReaders[i]->SetHeaderSize(i * 80 * 80 * 208 * sizeof(unsigned char));
 
         ImageReaders[i]->SetFileName(this->FileName.c_str());
         ImageReaders[i]->Update();
@@ -75,23 +77,35 @@ void vtkUltrasoundScannerReader::UpdateData()
     }
     std::cout << "done" <<  std::endl;
 
-    unsigned int frameNumber  = 0;
+    this->FrameNumber = 0;
     
     this->SetConnected();
 
     do
     {
-        frameNumber;
-        if (++frameNumber >= ImageReaders.size())
-            frameNumber = 0;
-
-        this->SetDataInHiddenBuffer(ImageReaders[frameNumber]->GetOutput());
+      // SLEEP
     } while(this->ThreadRunning);
 
+    while (!ImageReaders.empty())
+    {
+        vtkImageReader* reader = ImageReaders.back();
+        ImageReaders.pop_back();
+        reader->Delete();
+    }
     for (i = 0; i < ImageReaders.size(); i++)
         ImageReaders[i]->Delete();
 
     this->ThreadAlive = false;
+}
+
+void vtkUltrasoundScannerReader::RequestRead()
+{
+    if (ImageReaders.empty())
+        return;
+
+    if (++FrameNumber >= ImageReaders.size())
+            FrameNumber = 0;
+    this->SetDataInHiddenBuffer(ImageReaders[FrameNumber]->GetOutput());
 }
 
 void vtkUltrasoundScannerReader::Reconnect()

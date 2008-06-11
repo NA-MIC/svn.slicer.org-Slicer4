@@ -38,6 +38,7 @@ public:
     virtual void StopStreaming() = 0;
     //BTX
     virtual void SetSourceAddress(const std::string& sourceAddress) = 0;
+    virtual void RequestRead() {};
     //ETX
 
 protected:
