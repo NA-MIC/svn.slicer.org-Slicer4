@@ -5,7 +5,10 @@
 #include "vtkUltrasoundModule.h"
 
 #include <string>
+#include "vtkstd/vector"
+
 class vtkMultiThreader;
+class vtkImageReader;
 //class vtkCallbackCommand;
 
 class VTK_ULTRASOUNDMODULE_EXPORT vtkUltrasoundScannerReader : public vtkUltrasoundStreamSource
@@ -21,10 +24,13 @@ public:
     virtual void Reconnect();
     virtual void StartStreaming();
     virtual void StopStreaming();
+
     
     //BTX
     virtual void SetSourceAddress(const std::string& sourceAddress) { this->SetFileName(sourceAddress); }
     void SetFileName(const std::string& file_name);
+
+    virtual void RequestRead();
     //ETX
 protected:
 
@@ -38,12 +44,14 @@ protected:
     // Use ->Delete() to delete object
     ~vtkUltrasoundScannerReader(void);
 
-protected:    
+protected:
     vtkMultiThreader*       Thread;
     bool                    ThreadAlive;
     bool                    ThreadRunning;
+    unsigned int            FrameNumber;
 
     //BTX
+    vtkstd::vector<vtkImageReader*> ImageReaders;
     std::string             FileName;
     //ETX
 private:
