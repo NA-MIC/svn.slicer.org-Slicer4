@@ -1639,12 +1639,39 @@ void vtkSlicerApplicationGUI::PackConventionalView ( )
     vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
     vtkSlicerGUILayout *layout = app->GetMainLayout ( );
     double x, y, z;
+    vtkSlicerSliceGUI *g = NULL;
     
     this->MainSlicerWindow->SetSecondaryPanelVisibility ( 1 );
     this->ViewerWidget->PackWidget(this->MainSlicerWindow->GetViewFrame() );
     
     if (layout->GetCurrentViewArrangement() == vtkSlicerGUILayout::SlicerLayoutCompareView)
-      {      
+      {
+      // clear the 3D main viewer if some of the compare view slices
+      // are visible
+      char *layoutname = NULL;
+      int nSliceGUI = this->SlicesGUI->GetNumberOfSliceGUI();
+      int ncount = 0;
+      for (int i = 0; i < nSliceGUI; i++)
+        {
+        if (i == 0)
+          {
+          g = this->SlicesGUI->GetFirstSliceGUI();
+          layoutname = this->SlicesGUI->GetFirstSliceGUILayoutName();
+          }
+        else
+          {
+          g = this->SlicesGUI->GetNextSliceGUI(layoutname);
+          layoutname = this->SlicesGUI->GetNextSliceGUILayoutName(layoutname);
+          }
+        
+        if ( strcmp(layoutname, "Red") == 0 ||
+             strcmp(layoutname, "Yellow") == 0 ||
+             strcmp(layoutname, "Green") == 0)
+          continue;
+        else
+          g->GetSliceNode()->SetSliceVisible(0);
+        }
+      
       //this->Script ( "grid forget %s", this->GridFrame2->GetWidgetName() );
       
       this->Script ( "pack %s -side top -fill both -expand y -padx 0 -pady 0 ", this->GridFrame2->GetWidgetName ( ) );
@@ -1653,7 +1680,7 @@ void vtkSlicerApplicationGUI::PackConventionalView ( )
       this->Script ("grid columnconfigure %s 1 -weight 1", this->GridFrame2->GetWidgetName() );
       this->Script ("grid columnconfigure %s 2 -weight 1", this->GridFrame2->GetWidgetName() );
       
-      vtkSlicerSliceGUI *g = this->SlicesGUI->GetSliceGUI("Red");
+      g = this->SlicesGUI->GetSliceGUI("Red");
       // set the same FOV
       x = g->GetSliceNode()->GetFieldOfView()[0];
       y = g->GetSliceNode()->GetFieldOfView()[1];
@@ -1990,7 +2017,10 @@ void vtkSlicerApplicationGUI::PackCompareView()
       if ( strcmp(layoutname, "Red") == 0 ||
            strcmp(layoutname, "Yellow") == 0 ||
            strcmp(layoutname, "Green") == 0)
+        {
+        g->GetSliceNode()->SetSliceVisible(0);
         continue;
+        }
       else
         {
         g->GridSpanGUI( this->GetGridFrame2( ), ncount, 0, 1, 3 );

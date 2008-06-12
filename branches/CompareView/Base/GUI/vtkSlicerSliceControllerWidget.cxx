@@ -1313,19 +1313,47 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
   vtkKWMenu *menu = vtkKWMenu::SafeDownCast(caller);
   
   // Toggle the SliceNode's visibility.
+  //--- if slice viewers are linked, modify all Controller's SliceNodes
+  int vis = this->SliceNode->GetSliceVisible();
   if ( button == this->GetVisibilityToggle() && event == vtkKWPushButton::InvokedEvent )
     {
-    //--- if slice viewers are linked, modify all Controller's SliceNodes
-    int vis = this->SliceNode->GetSliceVisible();
     if ( link )
       {
       nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSliceNode");          
-      for ( i=0; i<nnodes; i++)
+      
+      // if compareview, send only compareview slices to 3D main viewer; otherwise, only send red, yellow, and green to 3D main viewer 
+      if ( layout->GetCurrentViewArrangement() == vtkSlicerGUILayout::SlicerLayoutCompareView )
         {
-        snode = vtkMRMLSliceNode::SafeDownCast (
-          this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
-        this->MRMLScene->SaveStateForUndo ( snode );
-        snode->SetSliceVisible ( !vis );
+        for ( i=0; i<nnodes; i++)
+          {
+          snode = vtkMRMLSliceNode::SafeDownCast (
+            this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
+          
+          if (!strcmp(snode->GetLayoutName(), "Red") ||
+              !strcmp(snode->GetLayoutName(), "Yellow") ||
+              !strcmp(snode->GetLayoutName(), "Green"))
+            continue;
+          
+          this->MRMLScene->SaveStateForUndo ( snode );
+          snode->SetSliceVisible ( !vis );
+          }
+        }
+      else
+        {
+        for ( i=0; i<nnodes; i++)
+          {
+          snode = vtkMRMLSliceNode::SafeDownCast (
+            this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceNode"));
+          
+          if (!strcmp(snode->GetLayoutName(), "Red") ||
+              !strcmp(snode->GetLayoutName(), "Yellow") ||
+              !strcmp(snode->GetLayoutName(), "Green"))
+            {    
+            
+            this->MRMLScene->SaveStateForUndo ( snode );
+            snode->SetSliceVisible ( !vis );
+            }
+          }
         }
       }
     else
