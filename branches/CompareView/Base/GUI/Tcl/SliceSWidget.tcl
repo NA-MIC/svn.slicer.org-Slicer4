@@ -495,7 +495,7 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     "MouseWheelBackwardEvent" {
       $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
       $this decrementSlice 
-      $this   $x $y $r $a $s
+      $this updateAnnotation $x $y $r $a $s
     }
     "ExposeEvent" { }
     "ConfigureEvent" {
@@ -729,20 +729,45 @@ itcl::body SliceSWidget::decrementSlice {} {
 }
 
 itcl::body SliceSWidget::moveSlice { delta } {
-  set logic [$sliceGUI GetLogic]
-  set offset [$logic GetSliceOffset]
-  #this is now set in the loop
-  #$logic SetSliceOffset [expr $offset + $delta]
+    set logic [$sliceGUI GetLogic]
+    set offset [$logic GetSliceOffset]
+    
+    set logics ""
+    set link [$_sliceCompositeNode GetLinkedControl]
+    if { $link == 1 } {
+        set ssgui [[$::slicer3::ApplicationGUI GetApplication] GetModuleGUIByName "Slices"]
+        set numsgui [$ssgui GetNumberOfSliceGUI]
 
-  # get the linked logics (including self)
-  set sliceLogics [$this getLinkedSliceLogics]
-  # save state for undo
+        for { set i 0 } { $i < $numsgui } { incr i } {
+            if { $i == 0} {
+                set sgui [$ssgui GetFirstSliceGUI]
+                set lname [$ssgui GetFirstSliceGUILayoutName]
+            } else {
+                set sgui [$ssgui GetNextSliceGUI $lname]
+                set lname [$ssgui GetNextSliceGUILayoutName $lname]
+            }
+            
+            if { [string compare $lname "Red"] == 0 || 
+             [string compare $lname "Yellow"] == 0 ||
+             [string compare $lname "Green"] == 0 } {
+                continue
+            }
 
-  # set the slice offset for all slice logics
-  foreach logic $sliceLogics {
-    $logic SetSliceOffset [expr $offset + $delta]
-  }
+            lappend logics [$sgui GetLogic]
+        }
+    } else {
+        lappend logics [$sliceGUI GetLogic]
+    }
+
+    # set the slice offset for all slice logics
+    foreach logic $logics {
+        $logic SetSliceOffset [expr $offset + $delta]
+    }    
 }
+
+#   # get the linked logics (including self)
+#   set sliceLogics [$this getLinkedSliceLogics]
+#   # save state for undo
 
 
 # Return the SliceLogics that are linked to the current 
@@ -766,9 +791,9 @@ itcl::body SliceSWidget::getLinkedSliceLogics { } {
         set lname [$ssgui GetFirstSliceGUILayoutName]
       } else {
         set sgui [$ssgui GetNextSliceGUI $lname]
-        set lname [$ssgui GetFirstSliceGUILayoutName]
+        set lname [$ssgui GetNextSliceGUILayoutName $lname]
       }
-      
+        
       lappend logics [$sgui GetLogic]
     }
   } else {
