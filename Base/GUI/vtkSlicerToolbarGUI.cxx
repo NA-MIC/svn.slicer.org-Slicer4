@@ -663,7 +663,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
      if ((pushb == this->CompareViewBoxApplyButton) && (event == vtkKWPushButton::InvokedEvent))
      {
         p->SetNCompareViewRows( this->CompareViewBoxRowEntry->GetValueAsInt() );
-        p->SetNCompareViewColumns( this->CompareViewBoxColumnEntry->GetValueAsInt() );
+        //p->SetNCompareViewColumns( this->CompareViewBoxColumnEntry->GetValueAsInt() );
 //            // First, check to see if view is spinning or rocking.
 //            // If so, stop view Spin or Rock.
             p->RepackMainViewer ( vtkSlicerGUILayout::SlicerLayoutCompareView, NULL );
@@ -1259,31 +1259,31 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
     this->CompareViewBoxRowEntry->Create ( );
     this->CompareViewBoxRowEntry->SetValueAsInt (1);
     this->CompareViewBoxRowEntry->SetWidth ( 3 );
-    this->CompareViewBoxColumnEntry = vtkKWEntry::New ( );
-    this->CompareViewBoxColumnEntry->SetParent ( popUpFrame1 );
-    this->CompareViewBoxColumnEntry->Create ( );
-    this->CompareViewBoxColumnEntry->SetWidth ( 3 );
-    this->CompareViewBoxColumnEntry->SetValueAsInt (1);
+    //this->CompareViewBoxColumnEntry = vtkKWEntry::New ( );
+    //this->CompareViewBoxColumnEntry->SetParent ( popUpFrame1 );
+    //this->CompareViewBoxColumnEntry->Create ( );
+    //this->CompareViewBoxColumnEntry->SetWidth ( 3 );
+    //this->CompareViewBoxColumnEntry->SetValueAsInt (1);
     vtkKWLabel *rowsLabel = vtkKWLabel::New();
     rowsLabel->SetParent ( popUpFrame1 );
     rowsLabel->Create ( );
     rowsLabel->SetText ( "Number of rows:" );
-    vtkKWLabel *columnsLabel = vtkKWLabel::New();
-    columnsLabel->SetParent ( popUpFrame1 );
-    columnsLabel->Create ( );
-    columnsLabel->SetText ( "Number of columns:" );
+    //vtkKWLabel *columnsLabel = vtkKWLabel::New();
+    //columnsLabel->SetParent ( popUpFrame1 );
+    //columnsLabel->Create ( );
+    //columnsLabel->SetText ( "Number of columns:" );
     this->CompareViewBoxApplyButton = vtkKWPushButton::New ( );
     this->CompareViewBoxApplyButton->SetParent ( popUpFrame1 );
     this->CompareViewBoxApplyButton->Create ( );
     this->CompareViewBoxApplyButton->SetText ("Apply");    
     this->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 8", rowsLabel->GetWidgetName());
     this->Script ( "grid %s -row 0 -column 1 -padx 6 -pady 8", this->CompareViewBoxRowEntry->GetWidgetName() );
-    this->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 8", columnsLabel->GetWidgetName());
-    this->Script ( "grid %s -row 1 -column 1 -padx 6 -pady 8", this->CompareViewBoxColumnEntry->GetWidgetName() );
+    //this->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 8", columnsLabel->GetWidgetName());
+    //this->Script ( "grid %s -row 1 -column 1 -padx 6 -pady 8", this->CompareViewBoxColumnEntry->GetWidgetName() );
     this->Script ( "grid %s -row 2 -column 0 -columnspan 2 -pady 8", this->CompareViewBoxApplyButton->GetWidgetName() );
     // delete temporary stuff
     rowsLabel->Delete();
-    columnsLabel->Delete();
+    //columnsLabel->Delete();
     popUpFrame1->Delete();
 
   vtb->AddWidget (this->ChooseLayoutIconMenuButton );

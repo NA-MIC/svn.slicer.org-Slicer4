@@ -686,7 +686,6 @@ void vtkSlicerSlicesControlGUI::RemoveSliceEventObservers()
 //---------------------------------------------------------------------------
 void vtkSlicerSlicesControlGUI::FitFOVToBackground( double fov, int viewer )
 {
-
   if ( viewer != 0 && viewer != 1 && viewer != 2 )
     {
     return;
@@ -706,24 +705,24 @@ void vtkSlicerSlicesControlGUI::FitFOVToBackground( double fov, int viewer )
       if ( viewer == 0 )
         {
         sliceNode = this->RedSliceNode;
-                compositeNode = appGUI->GetApplicationLogic()->GetSlicerSliceLogic("Red")->GetSliceCompositeNode();
+        compositeNode = appGUI->GetApplicationLogic()->GetSlicerSliceLogic("Red")->GetSliceCompositeNode();
         sgui = appGUI->GetMainSliceGUI("Red");
         }
       else if ( viewer == 1 )
         {
         sliceNode = this->YellowSliceNode;
-                compositeNode = appGUI->GetApplicationLogic()->GetSlicerSliceLogic("Yellow")->GetSliceCompositeNode();
+        compositeNode = appGUI->GetApplicationLogic()->GetSlicerSliceLogic("Yellow")->GetSliceCompositeNode();
         //compositeNode = appGUI->GetMainSliceLogic1()->GetSliceCompositeNode();
         sgui = appGUI->GetMainSliceGUI("Yellow");
         }
       else if ( viewer == 2 )
         {
         sliceNode = this->GreenSliceNode;
-                compositeNode = appGUI->GetApplicationLogic()->GetSlicerSliceLogic("Green")->GetSliceCompositeNode();
+        compositeNode = appGUI->GetApplicationLogic()->GetSlicerSliceLogic("Green")->GetSliceCompositeNode();
         sgui = appGUI->GetMainSliceGUI("Green");
         }
       appGUI->GetMRMLScene()->SaveStateForUndo( sliceNode );
-
+      
       if ( !sgui )
         {
         return;
@@ -733,31 +732,31 @@ void vtkSlicerSlicesControlGUI::FitFOVToBackground( double fov, int viewer )
         {
         return;
         }
-  
+      
       // get viewer's width and height. we may be using a LightBox
       // display, so base width and height on renderer0 in the SliceViewer.
       int width, height;
-
+      
       vtkRenderer *ren=sgui->GetSliceViewer()->GetRenderWidget()->GetRenderer();
       width = ren->GetSize()[0];
       height = ren->GetSize()[1];
-
+      
       
       // get backgroundNode  and imagedata
       backgroundNode =
         vtkMRMLScalarVolumeNode::SafeDownCast (
-                                               appGUI->GetMRMLScene()->GetNodeByID( compositeNode->GetBackgroundVolumeID() ));
+          appGUI->GetMRMLScene()->GetNodeByID( compositeNode->GetBackgroundVolumeID() ));
       vtkImageData *backgroundImage;
       if ( !backgroundNode || ! (backgroundImage = backgroundNode->GetImageData()) )
         {
         return;
         }
-
+      
       int dimensions[3];
       double rasDimensions[4];
       double doubleDimensions[4];
       vtkMatrix4x4 *ijkToRAS = vtkMatrix4x4::New();
-
+      
       // what are the actual dimensions of the imagedata?
       backgroundImage->GetDimensions(dimensions);
       doubleDimensions[0] = dimensions[0];
@@ -780,7 +779,7 @@ void vtkSlicerSlicesControlGUI::FitFOVToBackground( double fov, int viewer )
       rasToSlice->MultiplyPoint( rasDimensions, sliceDimensions );
       rasToSlice->Delete();
       rasToSlice = NULL;
-
+      
       double fovh, fovv;
       // which is bigger, slice viewer width or height?
       // assign user-specified fov to smaller slice window

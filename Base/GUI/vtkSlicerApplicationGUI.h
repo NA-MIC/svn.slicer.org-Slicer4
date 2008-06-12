@@ -255,7 +255,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     virtual void ConfigureRemoteIOSettings();
 
     void SetNCompareViewRows( int nrows ) { this->NCompareViewRows = nrows; }
-    void SetNCompareViewColumns( int ncolumns ) { this->NCompareViewColumns = ncolumns; }
+    //void SetNCompareViewColumns( int ncolumns ) { this->NCompareViewColumns = ncolumns; }
 
 protected:
     vtkSlicerApplicationGUI ( );
@@ -312,7 +312,7 @@ protected:
     // Description:
     // Set number of CompareView slice viewers
     int NCompareViewRows;
-    int NCompareViewColumns;
+//    int NCompareViewColumns;
 
     vtkSlicerMRMLSaveDataWidget *SaveDataWidget;
     
