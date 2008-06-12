@@ -49,6 +49,7 @@ if { [itcl::find class SliceSWidget] == "" } {
     method jumpSlice { r a s } {}
     method jumpOtherSlices { r a s } {}
     method getLinkedSliceLogics {} {}
+    method getValidLinkedSliceLogics {} {}
   }
 }
 
@@ -356,7 +357,7 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
           "Zoom" {
             #
             # Zoom
-            # TODO: move calculation to vtkSlicerSliceLogic
+            # TODO: move calculation to vtkSslicerSliceLogic
             $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
             set deltay [expr $windowy - [lindex $_actionStartWindowXY 1]]
 
@@ -373,7 +374,8 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
               #$_sliceNode UpdateMatrices
 
               # get the linked logics (including self)
-              set sliceLogics [$this getLinkedSliceLogics]
+#              set sliceLogics [$this getLinkedSliceLogics]
+                set sliceLogics [$this getValidLinkedSliceLogics]
               # save state for undo
                 
               # set the field of view on each slice node
@@ -730,8 +732,11 @@ itcl::body SliceSWidget::decrementSlice {} {
 
 itcl::body SliceSWidget::moveSlice { delta } {
     set logic [$sliceGUI GetLogic]
+    set sliceNode [$logic GetSliceNode]
+    set orientString [$sliceNode GetOrientationString]
+
     set offset [$logic GetSliceOffset]
-    
+
     set logics ""
     set link [$_sliceCompositeNode GetLinkedControl]
     if { $link == 1 } {
@@ -753,7 +758,11 @@ itcl::body SliceSWidget::moveSlice { delta } {
                 continue
             }
 
-            lappend logics [$sgui GetLogic]
+            set currSliceNode [$sgui GetSliceNode]
+            set currOrientString [$currSliceNode GetOrientationString]
+            if { [string compare $orientString $currOrientString] == 0 } {
+                lappend logics [$sgui GetLogic]
+            }
         }
     } else {
         lappend logics [$sliceGUI GetLogic]
@@ -813,4 +822,48 @@ itcl::body SliceSWidget::jumpOtherSlices { r a s } {
   set logic [$sliceGUI GetLogic]
   set sliceNode [$logic GetSliceNode]
   $sliceNode JumpAllSlices $r $a $s
+}
+
+itcl::body SliceSWidget::getValidLinkedSliceLogics { } {
+    set logic [$sliceGUI GetLogic]
+    set sliceNode [$logic GetSliceNode]
+    set orientString [$sliceNode GetOrientationString]
+
+    set logics ""
+    set link [$_sliceCompositeNode GetLinkedControl]
+    if { $link == 1 } {
+        set ssgui [[$::slicer3::ApplicationGUI GetApplication] GetModuleGUIByName "Slices"]
+        set layout [[$::slicer3::ApplicationGUI GetApplication] GetMainLayout]
+        set currentViewArrangement [$layout GetCurrentViewArrangement]
+
+        set numsgui [$ssgui GetNumberOfSliceGUI]
+
+        for { set i 0 } { $i < $numsgui } { incr i } {
+            if { $i == 0} {
+                set sgui [$ssgui GetFirstSliceGUI]
+                set lname [$ssgui GetFirstSliceGUILayoutName]
+            } else {
+                set sgui [$ssgui GetNextSliceGUI $lname]
+                set lname [$ssgui GetNextSliceGUILayoutName $lname]
+            }
+            
+            if { $currentViewArrangement==11 } {
+                if { [string compare $lname "Red"] == 0 || 
+                     [string compare $lname "Yellow"] == 0 ||
+                     [string compare $lname "Green"] == 0 } {
+                    continue
+                }
+            }
+
+            set currSliceNode [$sgui GetSliceNode]
+            set currOrientString [$currSliceNode GetOrientationString]
+            if { [string compare $orientString $currOrientString] == 0 } {
+                lappend logics [$sgui GetLogic]
+            }
+        }
+    } else {
+        lappend logics [$sliceGUI GetLogic]
+    }
+  
+  return $logics
 }
