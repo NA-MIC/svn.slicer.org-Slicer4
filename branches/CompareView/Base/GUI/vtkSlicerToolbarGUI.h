@@ -160,7 +160,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerToolbarGUI : public vtkSlicerComponent
 
 
     vtkKWEntry *CompareViewBoxRowEntry;
-    vtkKWEntry *CompareViewBoxColumnEntry;
+//    vtkKWEntry *CompareViewBoxColumnEntry;
     vtkKWPushButton *CompareViewBoxApplyButton;
 
 
