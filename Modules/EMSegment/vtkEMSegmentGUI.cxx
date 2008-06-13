@@ -340,18 +340,15 @@ void vtkEMSegmentGUI::BuildGUI()
   // -----------------------------------------------------------------------
   // Wizard
 
-  vtkSlicerModuleCollapsibleFrame *wizard_frame = 
-    vtkSlicerModuleCollapsibleFrame::New();
+  vtkKWFrame *wizard_frame = vtkKWFrame::New();
   wizard_frame->SetParent(module_page);
   wizard_frame->Create();
-  wizard_frame->SetLabelText("Wizard");
-  wizard_frame->ExpandFrame();
 
   app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
               wizard_frame->GetWidgetName(), 
               module_page->GetWidgetName());
    
-  this->WizardWidget->SetParent(wizard_frame->GetFrame());
+  this->WizardWidget->SetParent(wizard_frame);
   this->WizardWidget->Create();
   this->WizardWidget->GetSubTitleLabel()->SetHeight(1);
   this->WizardWidget->SetClientAreaMinimumHeight(320);
