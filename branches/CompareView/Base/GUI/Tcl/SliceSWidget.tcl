@@ -341,7 +341,7 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
             #$_sliceNode UpdateMatrices
 
             # get the linked logics (including self)
-            set sliceLogics [$this getLinkedSliceLogics]
+            set sliceLogics [$this getValidLinkedSliceLogics]
             # save state for undo
             
             # set the SliceToRAS on each slice node
