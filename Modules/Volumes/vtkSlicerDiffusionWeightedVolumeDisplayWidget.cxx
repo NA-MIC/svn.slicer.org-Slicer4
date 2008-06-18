@@ -124,7 +124,13 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
         this->ExtractComponent->SetInput(volumeNode->GetImageData());
         this->ExtractComponent->SetComponents(displayNode->GetDiffusionComponent());
         this->ExtractComponent->Update();
-        vtkSlicerVolumesLogic::CalculateScalarAutoLevels(this->ExtractComponent->GetOutput(), displayNode);
+        if (vtkMRMLScalarVolumeNode::SafeDownCast(volumeNode) != NULL)
+          {
+          vtkMRMLScalarVolumeNode::SafeDownCast(volumeNode)->CalculateScalarAutoLevels(displayNode, this->ExtractComponent->GetOutput());
+          }
+        else { vtkWarningMacro("Failed to calculate scalar levels, volume node is not a scalar"); }
+
+//        volumeNode->CalculateAutoLevels();
         this->WindowLevelThresholdEditor->SetImageData(this->ExtractComponent->GetOutput());
         }
       }
@@ -221,12 +227,34 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
 
     if ( displayNode )
       {
+      if (displayNode->GetAutoWindowLevel() != this->WindowLevelThresholdEditor->GetAutoWindowLevel() ||
+        this->WindowLevelThresholdEditor->GetAutoWindowLevel())
+        {
+        // Auto is turned on
+        // this will cause window/level recompute in the display node
+        displayNode->SetAutoWindowLevel(this->WindowLevelThresholdEditor->GetAutoWindowLevel());
+
+        //update sliders with recomputed values
+        this->WindowLevelThresholdEditor->SetWindowLevel(displayNode->GetWindow(), displayNode->GetLevel());
+        }
+
+      int thresholdType = this->WindowLevelThresholdEditor->GetThresholdType();
+      if (thresholdType == vtkKWWindowLevelThresholdEditor::ThresholdAuto && !displayNode->GetAutoThreshold())
+        {
+        // Auto is turned on
+        // this will cause window/level recompute in the display node
+        displayNode->SetAutoThreshold(1);
+
+        //update sliders with recomputed values
+        this->WindowLevelThresholdEditor->SetThreshold(displayNode->GetLowerThreshold(),
+                                                       displayNode->GetUpperThreshold());
+        }
+      displayNode->DisableModifiedEventOn();
       displayNode->SetWindow(this->WindowLevelThresholdEditor->GetWindow());
       displayNode->SetLevel(this->WindowLevelThresholdEditor->GetLevel());
       displayNode->SetUpperThreshold(this->WindowLevelThresholdEditor->GetUpperThreshold());
       displayNode->SetLowerThreshold(this->WindowLevelThresholdEditor->GetLowerThreshold());
       displayNode->SetAutoWindowLevel(this->WindowLevelThresholdEditor->GetAutoWindowLevel());
-      int thresholdType = this->WindowLevelThresholdEditor->GetThresholdType();
       if (thresholdType == vtkKWWindowLevelThresholdEditor::ThresholdOff) 
         {
         displayNode->SetApplyThreshold(0);
@@ -241,6 +269,9 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessWidgetEvents ( vtkObj
         displayNode->SetApplyThreshold(1);
         displayNode->SetAutoThreshold(0);
         }
+      displayNode->DisableModifiedEventOff();
+      displayNode->InvokePendingModifiedEvent();
+
       this->UpdatingWidget = 0;      
       return;
       }
@@ -310,12 +341,15 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::ProcessMRMLEvents ( vtkObjec
 
     }
 
-  if (event == vtkCommand::ModifiedEvent)
+  if (event == vtkCommand::ModifiedEvent || 
+      (event == vtkMRMLScene::NodeAddedEvent && 
+       (reinterpret_cast<vtkMRMLVolumeNode *>(callData) != NULL ||
+        reinterpret_cast<vtkMRMLVolumeDisplayNode *>(callData) != NULL) ) )
     {
     this->UpdateWidgetFromMRML();
-    this->UpdatingMRML = 0;
-    return;
     }
+  this->UpdatingMRML = 0;
+  
 }
 //---------------------------------------------------------------------------
 void vtkSlicerDiffusionWeightedVolumeDisplayWidget::UpdateWidgetFromMRML ()
@@ -402,7 +436,7 @@ void vtkSlicerDiffusionWeightedVolumeDisplayWidget::RemoveWidgetObservers ( )
   this->WindowLevelThresholdEditor->RemoveObservers(vtkKWWindowLevelThresholdEditor::ValueStartChangingEvent, (vtkCommand *)this->GUICallbackCommand );
   this->InterpolateButton->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand *)this->GUICallbackCommand );
 
-  this->WindowLevelThresholdEditor->SetImageData(NULL);
+  //this->WindowLevelThresholdEditor->SetImageData(NULL);
 }
 
 

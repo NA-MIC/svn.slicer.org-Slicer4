@@ -146,7 +146,8 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerApplicationLogic : public vtkSlicerL
   // Description:
   // Perform the default behavior related to selecting a volume
   // (in this case, making it the background for all SliceCompositeNodes)
-  void PropagateVolumeSelection();
+  void PropagateVolumeSelection(int fit);
+  void PropagateVolumeSelection() {this->PropagateVolumeSelection(1);}; 
 
   // Description:
   // Perform the default behaviour related to selecting a fiducial list
@@ -282,10 +283,18 @@ protected:
   // Description:
   // Callback used by a MultiThreader to start a processing thread
   static ITK_THREAD_RETURN_TYPE ProcessingThreaderCallback( void * );
+
+  // Description:
+  // Callback used by a MultiThreader to start a networking thread
+  static ITK_THREAD_RETURN_TYPE NetworkingThreaderCallback( void * );
   
   // Description:
   // Task processing loop that is run in the processing thread
-  void ProcessTasks();
+  void ProcessProcessingTasks();
+
+  // Description:
+  // Networking Task processing loop that is run in a networking thread
+  void ProcessNetworkingTasks();
 
   // Description:
   // Process a request to read data into a node.  This method is
@@ -342,6 +351,9 @@ private:
   itk::MutexLock::Pointer WriteDataQueueLock;
   //ETX
   int ProcessingThreadId;
+  //BTX
+  std::vector<int> NetworkingThreadIDs;
+  //ETX
   int ProcessingThreadActive;
   int ModifiedQueueActive;
   int ReadDataQueueActive;

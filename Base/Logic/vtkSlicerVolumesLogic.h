@@ -48,6 +48,10 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
   void SetActiveVolumeNode (vtkMRMLVolumeNode *ActiveVolumeNode);
 
   // Description:
+  // Sub type of loading an archetype volume that is known to be a scalar
+  vtkMRMLScalarVolumeNode* AddArchetypeScalarVolume (const char *filename, const char* volname, int loadingOptions);
+
+  // Description:
   // Overloaded function of AddArchetypeVolume to provide more 
   // loading options, where variable loadingOptions is bit-coded as following:
   // bit 0: label map
@@ -60,11 +64,6 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerVolumesLogic : public vtkSlicerLogic
   // Create new mrml node and associated storage node.
   // Read image data from a specified file
   // vtkMRMLVolumeNode* AddArchetypeVolume (const char* filename, int centerImage, int labelMap, const char* volname);
-
-  // Description:
-  // Calculate good deafult viewing parameters 
-  static void CalculateAutoLevels(vtkImageData *imageData, vtkMRMLScalarVolumeDisplayNode *displayNode);
-  static void CalculateScalarAutoLevels(vtkImageData *imageData, vtkMRMLScalarVolumeDisplayNode *displayNode);
 
   // Description:
   // Overloaded function of AddHeaderVolume to provide more 

@@ -230,6 +230,8 @@ public:
   virtual double   GetTreeNodeClassProbability(vtkIdType nodeID);
   virtual void     SetTreeNodeClassProbability(vtkIdType nodeID, double value);
 
+  virtual double   GetTreeNodeChildrenSumClassProbability(vtkIdType nodeID);
+
   virtual double   GetTreeNodeSpatialPriorWeight(vtkIdType nodeID);
   virtual void     SetTreeNodeSpatialPriorWeight(vtkIdType nodeID, 
                                                  double value);
@@ -277,6 +279,11 @@ public:
   // Step 7 does not depend on tree structure
 
   //
+  // functions for checking tree node parameters
+  //
+  virtual vtkIdType GetTreeNodeFirstIDWithChildProbabilityError();
+
+  //
   // functions for accessing volumes
   //
   virtual int       GetVolumeNumberOfChoices();
@@ -304,6 +311,8 @@ public:
                                                   int toIndex);
   virtual void        MoveTargetSelectedVolume(vtkIdType volumeID,
                                                int toIndex);
+
+  virtual bool        DoTargetAndAtlasDataTypesMatch();
 
   //
   // target volume normalization
@@ -437,9 +446,6 @@ public:
   virtual vtkIdType GetRegistrationAtlasVolumeID();
   virtual void      SetRegistrationAtlasVolumeID(vtkIdType volumeID);
 
-  virtual vtkIdType GetRegistrationTargetVolumeID();
-  virtual void      SetRegistrationTargetVolumeID(vtkIdType volumeID);
-
   //
   // save parameters
   //
@@ -499,8 +505,8 @@ public:
   // convienince functions for managing MRML nodes
   //
   virtual vtkMRMLEMSTemplateNode*         GetTemplateNode();
-  virtual vtkMRMLEMSTargetNode*           GetTargetNode();
-  virtual vtkMRMLEMSAtlasNode*            GetAtlasNode();
+  virtual vtkMRMLEMSTargetNode*           GetTargetInputNode();
+  virtual vtkMRMLEMSAtlasNode*            GetAtlasInputNode();
   virtual vtkMRMLScalarVolumeNode*        GetOutputVolumeNode();
   virtual vtkMRMLEMSGlobalParametersNode* GetGlobalParametersNode();
   virtual vtkMRMLEMSTreeNode*             GetTreeRootNode();
@@ -519,9 +525,15 @@ public:
 
   virtual vtkMRMLEMSTargetNode* CloneTargetNode(vtkMRMLEMSTargetNode* target,
                                                 const char* name);
-
   virtual vtkMRMLEMSAtlasNode*  CloneAtlasNode(vtkMRMLEMSAtlasNode* target,
                                                const char* name);
+
+  virtual void SynchronizeTargetNode(const vtkMRMLEMSTargetNode* templateNode,
+                                     vtkMRMLEMSTargetNode* changingNode,
+                                     const char* name);
+  virtual void SynchronizeAtlasNode(const vtkMRMLEMSAtlasNode* templateNode,
+                                    vtkMRMLEMSAtlasNode* changingNode,
+                                    const char* name);
 
 private:
   vtkEMSegmentMRMLManager();

@@ -15,6 +15,7 @@
 #include "vtkKWTclInteractor.h"
 #include "vtkKWSplashScreen.h"
 #include "vtkKWSplitFrame.h"
+#include "vtkKWDirectoryPresetSelector.h"
 
 #include "vtkSlicerBaseGUIWin32Header.h"
 #include "vtkKWRegistryHelper.h"
@@ -38,7 +39,20 @@
 #include <queue>
 #include "vtkKWMessageDialog.h"
 
-const char *vtkSlicerApplication::ModulePathRegKey = "ModulePath";
+#include "vtkSlicerConfigure.h" /* Slicer3_USE_* */
+
+#ifdef Slicer3_USE_PYTHON
+#ifdef _DEBUG
+#undef _DEBUG
+#include <Python.h>
+#define _DEBUG
+#else
+#include <Python.h>
+#endif
+#endif
+
+const char *vtkSlicerApplication::ModulePathsRegKey = "ModulePaths";
+const char *vtkSlicerApplication::PotentialModulePathsRegKey = "PotentialModulePaths";
 const char *vtkSlicerApplication::ModuleCachePathRegKey = "ModuleCachePath";
 const char *vtkSlicerApplication::TemporaryDirectoryRegKey = "TemporaryDirectory";
 const char *vtkSlicerApplication::WebBrowserRegKey = "WebBrowser";
@@ -48,6 +62,7 @@ const char *vtkSlicerApplication::RmRegKey = "Rm";
 const char *vtkSlicerApplication::ConfirmDeleteRegKey = "ConfirmDelete";
 const char *vtkSlicerApplication::HomeModuleRegKey = "HomeModule";
 const char *vtkSlicerApplication::LoadCommandLineModulesRegKey = "LoadCommandLineModules";
+const char *vtkSlicerApplication::LoadModulesRegKey = "LoadModules";
 const char *vtkSlicerApplication::EnableDaemonRegKey = "EnableDaemon";
 const char *vtkSlicerApplication::ApplicationFontSizeRegKey = "ApplicationFontSize";
 const char *vtkSlicerApplication::ApplicationFontFamilyRegKey = "ApplicationFontFamily";
@@ -191,10 +206,12 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
 
     strcpy(this->ConfirmDelete, "");
     
-    strcpy(this->ModulePath, "");
+    strcpy(this->ModulePaths, "");
+    strcpy(this->PotentialModulePaths, "");
     strcpy(this->ModuleCachePath, "");
     strcpy ( this->HomeModule, "");
     this->LoadCommandLineModules = 1;
+    this->LoadModules = 1;
     this->EnableDaemon = 0;
    
     this->MainLayout = vtkSlicerGUILayout::New ( );
@@ -211,11 +228,11 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     this->EnableAsynchronousIO = 0;
     this->EnableForceRedownload = 0;
 //    this->EnableRemoteCacheOverwriting = 1;
-    this->RemoteCacheLimit = 20;
+    this->RemoteCacheLimit = 200;
     this->RemoteCacheFreeBufferSize = 10;
     
     // configure the application before creating
-    this->SetName ( "3D Slicer Version 3.0 Beta" );
+    this->SetName ( "3D Slicer Version 3.3 Alpha" );
 
 #ifdef _WIN32
     vtkKWWin32RegistryHelper *regHelper = 
@@ -277,6 +294,11 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
 
     // Disable stereo render capability by default
     this->SetStereoEnabled(0);
+
+#ifdef Slicer3_USE_PYTHON
+    this->PythonModule = NULL; 
+    this->PythonDictionary = NULL; 
+#endif
 }
 
 //---------------------------------------------------------------------------
@@ -431,6 +453,29 @@ int vtkSlicerApplication::StartApplication ( ) {
     return ret;
 }
 
+//---------------------------------------------------------------------------
+void vtkSlicerApplication::DoOneTclEvent ( ) 
+{
+  //
+  // First, handle system-level events such as mouse moves, keys,
+  // socket connections, etc
+  //
+  Tcl_DoOneEvent(0);
+
+  //
+  // Then handle application-level events that were queued in 
+  // response to the system events
+  // - only do this if event broker is in asynchronous mode
+  // - have tcl first handle all its pending events (e.g. click and drag events)
+  //
+  vtkEventBroker *broker = vtkEventBroker::GetInstance();
+  if ( broker->GetEventMode() == vtkEventBroker::Asynchronous )
+    {
+    Tcl_ServiceAll();
+    broker->ProcessEventQueue();
+    }
+}
+
 //----------------------------------------------------------------------------
 //  access to registry values
 
@@ -518,57 +563,8 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
                     << this->TemporaryDirectory);
     }
   
-
-
-  // Make a good guess before we read from the registry.  Default to a
-  // subdirectory called Slicer3Cache in a standard temp location.
-#ifdef _WIN32
-  GetTempPath(vtkKWRegistryHelper::RegistryKeyValueSizeMax,
-              this->RemoteCacheDirectory);
-#else
-  strcpy(this->RemoteCacheDirectory, "/tmp/cache");
-#endif
-
-
-  // Tk does not understand Windows short path names, so convert to
-  // long path names and unix slashes
-  std::string remoteCacheDirectory = this->RemoteCacheDirectory;
-  remoteCacheDirectory
-    = itksys::SystemTools::GetActualCaseForPath(remoteCacheDirectory.c_str());
-  itksys::SystemTools::ConvertToUnixSlashes( remoteCacheDirectory );
-  
-  itksys::SystemTools::SplitPath(remoteCacheDirectory.c_str(), pathcomponents);
-#ifdef _WIN32
-  pathcomponents.push_back("Slicer3Cache");
-#else
-  if ( getenv("USER") != NULL )
-    {
-    dirName = dirName + getenv("USER");
-    }
-  pathcomponents.push_back(dirName);
-#endif
-  pathWithSlicer = itksys::SystemTools::JoinPath(pathcomponents);
-  
-  itksys::SystemTools::MakeDirectory(pathWithSlicer.c_str());
-  if (pathWithSlicer.size() < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
-    {
-    strcpy(this->RemoteCacheDirectory, pathWithSlicer.c_str());
-    }
-  else
-    {
-    // path with "Slicer3Cache" attached is too long. Try it without
-    // "Slicer3Cache". If still too long, use the original path. (This path
-    // may have short names in it and hence will not work with Tk).
-    if (remoteCacheDirectory.size()
-        < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
-      {
-      strcpy(this->RemoteCacheDirectory, remoteCacheDirectory.c_str());
-      }
-    vtkWarningMacro("Default remoteCache directory path " << pathWithSlicer.c_str()
-                    << " is too long to be stored in the registry."
-                    << " Using unmodified remoteCache directory path "
-                    << this->RemoteCacheDirectory);
-    }
+  //--- Set up the cache directory -- use the temporary directory initially.
+  strcpy ( this->RemoteCacheDirectory, this->TemporaryDirectory);
 
   //--- web browser
   // start with no browser...
@@ -598,6 +594,7 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
 
   Superclass::RestoreApplicationSettingsFromRegistry();
   
+  char temp_reg_value[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   
   if (this->HasRegistryValue(
     2, "RunTime", vtkSlicerApplication::ConfirmDeleteRegKey))
@@ -616,11 +613,21 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
     }
 
   if (this->HasRegistryValue(
-    2, "RunTime", vtkSlicerApplication::ModulePathRegKey))
+    2, "RunTime", vtkSlicerApplication::PotentialModulePathsRegKey))
     {
     this->GetRegistryValue(
-      2, "RunTime", vtkSlicerApplication::ModulePathRegKey,
-      this->ModulePath);
+      2, "RunTime", vtkSlicerApplication::PotentialModulePathsRegKey,
+      this->PotentialModulePaths);
+    }
+
+  if (this->HasRegistryValue(
+    2, "RunTime", vtkSlicerApplication::ModulePathsRegKey))
+    {
+    this->GetRegistryValue(
+      2, "RunTime", vtkSlicerApplication::ModulePathsRegKey,
+      temp_reg_value);
+    // Use SetModulePaths so that PotentialModulePaths is updated too
+    this->SetModulePaths(temp_reg_value); 
     }
 
   if (this->HasRegistryValue(
@@ -668,6 +675,13 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
     {
     this->LoadCommandLineModules = this->GetIntRegistryValue(
       2, "RunTime", vtkSlicerApplication::LoadCommandLineModulesRegKey);
+    }
+
+  if (this->HasRegistryValue(
+    2, "RunTime", vtkSlicerApplication::LoadModulesRegKey))
+    {
+    this->LoadModules = this->GetIntRegistryValue(
+      2, "RunTime", vtkSlicerApplication::LoadModulesRegKey);
     }
 
   if (this->HasRegistryValue(
@@ -789,7 +803,10 @@ void vtkSlicerApplication::SaveApplicationWindowConfiguration()
       this->SetApplicationSlicesFrameHeight ( this->ApplicationGUI->GetMainSlicerWindow()->GetSecondarySplitFrame()->GetFrame1Size() );
       if ( this->MainLayout)
         {
-        this->SetApplicationLayoutType ( this->MainLayout->GetCurrentViewArrangement() );
+        if (this->MainLayout->GetCurrentViewArrangement() != vtkSlicerGUILayout::SlicerLayoutCompareView)
+          {
+          this->SetApplicationLayoutType ( this->MainLayout->GetCurrentViewArrangement() );
+          }
         }
       }
     }
@@ -814,8 +831,12 @@ void vtkSlicerApplication::SaveApplicationSettingsToRegistry()
                            this->ApplicationFontSize);
 
   this->SetRegistryValue(
-    2, "RunTime", vtkSlicerApplication::ModulePathRegKey, "%s", 
-    this->ModulePath);
+    2, "RunTime", vtkSlicerApplication::PotentialModulePathsRegKey, "%s", 
+    this->PotentialModulePaths);
+
+  this->SetRegistryValue(
+    2, "RunTime", vtkSlicerApplication::ModulePathsRegKey, "%s", 
+    this->ModulePaths);
 
   this->SetRegistryValue(
     2, "RunTime", vtkSlicerApplication::ModuleCachePathRegKey, "%s", 
@@ -842,6 +863,10 @@ void vtkSlicerApplication::SaveApplicationSettingsToRegistry()
   this->SetRegistryValue(
     2, "RunTime", vtkSlicerApplication::LoadCommandLineModulesRegKey, "%d", 
     this->LoadCommandLineModules);
+
+  this->SetRegistryValue(
+    2, "RunTime", vtkSlicerApplication::LoadModulesRegKey, "%d", 
+    this->LoadModules);
 
   this->SetRegistryValue(
     2, "RunTime", vtkSlicerApplication::EnableDaemonRegKey, "%d", 
@@ -978,23 +1003,69 @@ const char *vtkSlicerApplication::GetHomeModule () const
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerApplication::SetModulePath(const char* path)
+void vtkSlicerApplication::SetModulePaths(const char* paths)
 {
-  if (path)
+#if WIN32
+  const char delim = ';';
+#else
+  const char delim = ':';
+#endif
+  if (paths)
     {
-    if (strcmp(this->ModulePath, path) != 0
-        && strlen(path) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+    if (strcmp(this->ModulePaths, paths) != 0
+        && strlen(paths) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
       {
-      strcpy(this->ModulePath, path);
+      strcpy(this->ModulePaths, paths);
+      char *str = new char [strlen(this->PotentialModulePaths) + 1];
+      strcpy(str, this->PotentialModulePaths);
+      int count = vtkKWDirectoryPresetSelector::
+        UpdatePresetDirectoriesFromEnabledPresetDirectories(
+          &str, '|', this->ModulePaths, delim);
+      if (count)
+        {
+        strcpy(this->PotentialModulePaths, str);
+        }
+      delete [] str;
       this->Modified();
       }
     }
 }
 
 //----------------------------------------------------------------------------
-const char* vtkSlicerApplication::GetModulePath() const
+const char* vtkSlicerApplication::GetModulePaths() const
 {
-  return this->ModulePath;
+  return this->ModulePaths;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::SetPotentialModulePaths(const char* paths)
+{
+#if WIN32
+  const char delim = ';';
+#else
+  const char delim = ':';
+#endif
+  if (paths)
+    {
+    if (strcmp(this->PotentialModulePaths, paths) != 0
+        && strlen(paths) < vtkKWRegistryHelper::RegistryKeyValueSizeMax)
+      {
+      strcpy(this->PotentialModulePaths, paths);
+      char *str = NULL;
+      vtkKWDirectoryPresetSelector::
+        GetEnabledPresetDirectoriesFromPresetDirectories(
+          &str, delim, this->PotentialModulePaths, '|');
+      strcpy(this->ModulePaths, str ? str : "");
+      delete [] str;
+      this->Modified();
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
+const char* vtkSlicerApplication::GetPotentialModulePaths() const
+{
+  return this->PotentialModulePaths;
 }
 
 //----------------------------------------------------------------------------
@@ -1559,4 +1630,23 @@ const char* vtkSlicerApplication::GetRemoteCacheDirectory() const
       }
     }
   return this->RemoteCacheDirectory;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplication::InitializePython(void* mod, void* dict)
+{ 
+  this->PythonModule = mod; 
+  this->PythonDictionary = dict; 
+}
+
+//----------------------------------------------------------------------------
+void* vtkSlicerApplication::GetPythonModule()
+{ 
+  return this->PythonModule; 
+}
+
+//----------------------------------------------------------------------------
+void* vtkSlicerApplication::GetPythonDictionary()
+{ 
+  return this->PythonDictionary; 
 }

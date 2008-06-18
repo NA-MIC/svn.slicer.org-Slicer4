@@ -340,7 +340,8 @@ void vtkSlicerViewerWidget::AddAxisActors()
       }
     for (unsigned int i=0; i<this->AxisLabelActors.size(); i++)
       {
-      this->AxisLabelActors[i]->SetCamera(this->MainViewer->GetRenderer()->GetActiveCamera());
+      vtkCamera *camera = this->MainViewer->GetRenderer()->GetActiveCamera();
+      this->AxisLabelActors[i]->SetCamera(camera);
       this->MainViewer->AddViewProp( this->AxisLabelActors[i]);
       }
     }
@@ -594,7 +595,7 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
     this->RequestRender();
     this->UpdateFromMRML();
     //this->MainViewer->RemoveAllViewProps();
-    this->Render();
+    this->RequestRender();
     }
   else 
     {
@@ -698,7 +699,6 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
         {
         this->UpdateClipSlicesFormMRML();
         this->UpdateModifiedModel(modelNode);
-        //this->Render();
         this->RequestRender( );
         }
       if (updateMRML)
@@ -871,6 +871,9 @@ void vtkSlicerViewerWidget::CreateWidget ( )
                                                    c[0], c[1], c[2]);
 
   
+  // Revert back to KW superclass renderwidget to address
+  // window corruption on some linux boxes:
+  //this->MainViewer = vtkSlicerRenderWidget::New ( );  
   this->MainViewer = vtkKWRenderWidget::New ( );  
   this->MainViewer->SetParent (this->ViewerFrame );
   this->MainViewer->Create ( );
@@ -924,6 +927,7 @@ void vtkSlicerViewerWidget::UpdateFromMRML()
   this->UpdateAxis();
 
   this->UpdateCameraNode();
+  this->AddAxisActors();
 
   this->UpdateClipSlicesFormMRML();
 
@@ -1187,7 +1191,7 @@ void vtkSlicerViewerWidget::UpdateModel(vtkMRMLDisplayableNode *model)
 //---------------------------------------------------------------------------
 void vtkSlicerViewerWidget::CheckModelHierarchies()
 {
-  if (this->MRMLScene == NULL)
+  if (this->MRMLScene == NULL || this->ModelHierarchyLogic == NULL)
     {
     return;
     }
@@ -1250,10 +1254,9 @@ void vtkSlicerViewerWidget::UpdateModelHierarchyVisibility(vtkMRMLModelHierarchy
 //----------------------------
 void vtkSlicerViewerWidget::UpdateModelHierarchyDisplay(vtkMRMLDisplayableNode *model)
 {
-  if (model)
+  if (model && this->ModelHierarchyLogic)
     {
     vtkMRMLModelHierarchyNode* mhnode = this->ModelHierarchyLogic->GetModelHierarchyNode(model->GetID());
-    mhnode = this->ModelHierarchyLogic->GetModelHierarchyNode(model->GetID());
 
     if (mhnode) 
       {
@@ -1623,14 +1626,15 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
               }
             actor->GetMapper()->SelectColorArray(mdnode->GetActiveScalarName());
             }
-          if (!(dnode->IsA("vtkMRMLFiberBundleDisplayNode")))
-            {
-            // still debugging fibre bundle display nodes
           if (!cellScalarsActive)
             {
             // set the scalar range
             actor->GetMapper()->SetScalarRange(mdnode->GetScalarRange());
-            actor->GetMapper()->SetScalarModeToUsePointFieldData();
+            if (!(dnode->IsA("vtkMRMLFiberBundleDisplayNode")))
+              {
+              // WHY need this, does not show glyph colors otherwise
+              actor->GetMapper()->SetScalarModeToUsePointFieldData();
+              }
             actor->GetMapper()->SetColorModeToMapScalars();            
             }
           else
@@ -1639,8 +1643,8 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
             actor->GetMapper()->SetColorModeToDefault();
             actor->GetMapper()->UseLookupTableScalarRangeOff();
             }
-            }
           }
+         //// }
         actor->GetProperty()->SetBackfaceCulling(dnode->GetBackfaceCulling());
         actor->GetProperty()->SetColor(dnode->GetColor());
         actor->GetProperty()->SetOpacity(dnode->GetOpacity());

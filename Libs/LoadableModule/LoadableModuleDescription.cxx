@@ -14,15 +14,42 @@
 
 #include "LoadableModuleDescription.h"
 
-
-LoadableModuleDescription::LoadableModuleDescription()
+LoadableModuleDescription::LoadableModuleDescription() :
+  Name(""),
+  ShortName(""),
+  GUIName(""),
+  TclInitName(""),
+  Message(""),
+  GUIPtr(NULL),
+  LogicPtr(NULL),
+  TclInitFunction(NULL),
+  Dependencies(0),
+  Type("Unknown"),
+  Target(""),
+  Location(""),
+  AlternativeType(""),
+  AlternativeTarget(""),
+  AlternativeLocation("")
 {
-  this->Type = "Unknown";
-  this->Description = "No description provided";
-}
+}// LoadableModuleDescription
 
 
-LoadableModuleDescription::LoadableModuleDescription(const LoadableModuleDescription &md)
+LoadableModuleDescription::LoadableModuleDescription(const LoadableModuleDescription &md) :
+  Name(""),
+  ShortName(""),
+  GUIName(""),
+  TclInitName(""),
+  Message(""),
+  GUIPtr(NULL),
+  LogicPtr(NULL),
+  TclInitFunction(NULL),
+  Dependencies(0),
+  Type("Unknown"),
+  Target(""),
+  Location(""),
+  AlternativeType(""),
+  AlternativeTarget(""),
+  AlternativeLocation("")
 {
   this->Name = md.Name;
   this->ShortName = md.ShortName;
@@ -36,24 +63,26 @@ LoadableModuleDescription::LoadableModuleDescription(const LoadableModuleDescrip
  
   this->TclInitFunction = md.TclInitFunction;
 
-  this->Category = md.Category;
-  this->Description = md.Description;
-  this->Version = md.Version;
-  this->DocumentationURL = md.DocumentationURL;
-  this->License = md.License;
-  this->Acknowledgements = md.Acknowledgements;
-  this->Contributor = md.Contributor;
+  std::copy(md.Dependencies.begin(),
+            md.Dependencies.end(),
+            std::back_inserter(this->Dependencies));
+
   this->Type = md.Type;
   this->Target = md.Target;
   this->Location = md.Location;
+
   this->AlternativeType = md.AlternativeType;
   this->AlternativeTarget = md.AlternativeTarget;
   this->AlternativeLocation = md.AlternativeLocation;
-}
+}// LoadableModuleDescription
 
-void
+LoadableModuleDescription&
 LoadableModuleDescription::operator=(const LoadableModuleDescription &md)
 {
+  if (this == &md) {
+    return *this;
+  }
+
   this->Name = md.Name;
   this->ShortName = md.ShortName;
   this->GUIName = md.GUIName;
@@ -66,20 +95,20 @@ LoadableModuleDescription::operator=(const LoadableModuleDescription &md)
 
   this->TclInitFunction = md.TclInitFunction;
 
-  this->Category = md.Category;
-  this->Description = md.Description;
-  this->Version = md.Version;
-  this->DocumentationURL = md.DocumentationURL;
-  this->License = md.License;
-  this->Acknowledgements = md.Acknowledgements;
-  this->Contributor = md.Contributor;
-  this->Type= md.Type;
+  std::copy(md.Dependencies.begin(),
+            md.Dependencies.end(),
+            std::back_inserter(this->Dependencies));
+
+  this->Type = md.Type;
   this->Target = md.Target;
   this->Location = md.Location;
-  this->AlternativeType= md.AlternativeType;
+
+  this->AlternativeType = md.AlternativeType;
   this->AlternativeTarget = md.AlternativeTarget;
   this->AlternativeLocation = md.AlternativeLocation;
-}
+
+  return *this;
+}// operator=
 
 std::ostream & operator<<(std::ostream &os, const LoadableModuleDescription &module)
 {
@@ -90,21 +119,21 @@ std::ostream & operator<<(std::ostream &os, const LoadableModuleDescription &mod
 
   os << "Message: " << module.GetMessage() << std::endl;
 
-  os << "Category: " << module.GetCategory() << std::endl;
-  os << "Description: " << module.GetDescription() << std::endl;
-  os << "Version: " << module.GetVersion() << std::endl;
-  os << "DocumentationURL: " << module.GetDocumentationURL() << std::endl;
-  os << "License: " << module.GetLicense() << std::endl;
-  os << "Contributor: " << module.GetContributor() << std::endl;
-  os << "Acknowledgements: " << module.GetAcknowledgements() << std::endl;
-  os << "Type: " << module.GetType() << std::endl;
+  std::vector<std::string>::const_iterator iter = module.GetDependencies().begin();
+  while (iter != module.GetDependencies().end()) {
+    os << "Dependency: " << (*iter) << std::endl;
+    iter++;
+  }
+
+  os << "Type: " <<  module.GetType() << std::endl;
   os << "Target: " << module.GetTarget() << std::endl;
   os << "Location: " << module.GetLocation() << std::endl;
-  os << "Alternative Type: " << module.GetAlternativeType() << std::endl;
-  os << "Alternative Target: " << module.GetAlternativeTarget() << std::endl;
-  os << "Alternative Location: " << module.GetAlternativeLocation() << std::endl;
+
+  os << "AlternativeType: " << module.GetAlternativeType() << std::endl;
+  os << "AlternativeTarget: " << module.GetAlternativeTarget() << std::endl;
+  os << "AlternativeLocation: " << module.GetAlternativeLocation() << std::endl;
 
   return os;
-}
+}// operator<<
 
 

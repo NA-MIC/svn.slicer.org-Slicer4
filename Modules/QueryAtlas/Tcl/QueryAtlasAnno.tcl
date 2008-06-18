@@ -392,9 +392,10 @@ proc QueryAtlasAddNewModelAnnotations { modelAnnotationDir } {
                     set dnodeID [ $node GetDisplayNodeID ]
                     set dnode [ $node GetDisplayNode ]
                     set snode [ $node GetStorageNode ]
-
+                    # there are now more than one storage nodes on the model node, each overlay has it's own storage node. The annotations have been already added 
+                    if {0} {
                     if { $snode != "" } {
-                        set numOverlays [ $snode GetNumberOfOverlayFiles ]
+                        set numOverlays [expr [ $node GetNumberOfStorageNodes ] - 1]
                         if { $numOverlays == 0 } {
                                 #--- add the scalar onto the node
                                 $mlogic AddScalar $annoFileName $node                                                        
@@ -408,7 +409,7 @@ proc QueryAtlasAddNewModelAnnotations { modelAnnotationDir } {
                                 }
                             }
                     }
-
+                    }
                     #--- progress feedback
                     set p [expr $progress + ( $pinc/9.0 ) ]
                     $prog SetValue $p
@@ -546,6 +547,10 @@ proc QueryAtlasAddNewLabelMapAnnotations { } {
     $win SetStatusText "Adding any new label map annotations..."
     $prog SetValue 0
 
+    #--- WJP test: try just starting fresh each time...
+    set ::QA(annoLabelMapIDs) ""
+    #--- end WJP test.
+    
     if {[ info exists ::QA(annoLabelMapIDs) ] } { 
         #---
         #--- LABEL MAPS
@@ -609,7 +614,7 @@ proc QueryAtlasAddNewLabelMapAnnotations { } {
             if { $name != "" } {
                 #--- is this a freesurfer LUT?
                 if {  [ string first "aseg" $name ] >= 0 } {
-                    set lutFile "$::SLICER_BUILD/../Slicer3/Libs/FreeSurfer/FreeSurferColorLUT.txt"
+                    set lutFile "$::Slicer3_HOME/share/FreeSurfer/FreeSurferColorLUT.txt"
                     if { [file exists $lutFile] } {
                         set fp [open $lutFile "r"]
                         while { ![eof $fp] } {
@@ -625,17 +630,25 @@ proc QueryAtlasAddNewLabelMapAnnotations { } {
                 } else {
                     #--- this uses some non-freesurfer lut
                     #--- TODO: get its LUT file, read it, and go....
-                    set dnode [ $node GetScalarVolumeDisplayNode ]
+                    set dnode [ $node GetDisplayNode ]
                     if { $dnode != "" } {
-                        set cid [ $dnode GetColorNodeID ]
-                        if { $cid != "" } {
-                            set cnode [ $::slicer3::MRMLScene GetNodeByID $cid ]
-                            if { $cnode != "" } {
-                                set lut [ $cnode GetLookupTable ]
-                                #...
+                        set cnode [ $dnode GetColorNode ]
+                        if { $cnode != "" } {
+                            set lut [ $cnode GetLookupTable ]
+                            if { $lut != "" } {
+                                set numColors [ $lut GetNumberOfColors ]
+                                for {set zz 0 } {$zz<$numColors } {incr zz} {
+                                    set ::QAFS($zz,name) [ $cnode GetColorName $zz ]
+                                    set colorList [ $lut GetTableValue $zz ]
+                                    set r [ lindex $colorList 0 ]
+                                    set g [ lindex $colorList 1 ]                                    
+                                    set b [ lindex $colorList 2 ]
+                                    set ::QAFS($zz,rgb) "$r $g $b"
+                                }
                             }
                         }
                     }
+                    lappend ::QA(annoLabelMapIDs) $id
                 }
             }
         }
@@ -763,15 +776,13 @@ proc QueryAtlasConfirmFreeSurferAnnotations { } {
     set n [ $::slicer3::MRMLScene GetNumberOfNodesByClass "vtkMRMLModelNode" ]
     for { set i 0 } { $i < $n } { incr i } {
         #--- for each model, check its overlays for an annotation overlay
-        set node [ $::slicer3::MRMLScene GetNthNodeByClass $i "vtkMRMLModelNode" ]            
-        set snode [ $node GetStorageNode ]
-        if { $snode != "" } {
-            set numOverlays [ $snode GetNumberOfOverlayFiles ]
-            for { set j 0 } { $j < $numOverlays } { incr j } {
-                set oname   [ $snode GetOverlayFileName $j ]
-                if { ( [ string first "lh.aparc.annot" $oname ] >= 0 ) || ( [ string first "rh.aparc.annot" $oname] >= 0 ) } {
-                    set retval 1
-                }
+        set node [ $::slicer3::MRMLScene GetNthNodeByClass $i "vtkMRMLModelNode" ]  
+        # node changed, it now has GetNumberOfStorageNodes on it, the first one will contain the polydata, search the others (or all) for the GetFileName call that returns a string matching the annots.          
+        set numOverlays [ $node GetNumberOfStorageNodes ]
+        for { set j 0 } { $j < $numOverlays } { incr j } {
+            set oname   [ [ $node GetNthStorageNode $j ] GetFileName]
+            if { ( [ string first "lh.aparc.annot" $oname ] >= 0 ) || ( [ string first "rh.aparc.annot" $oname] >= 0 ) } {
+              set retval 1
             }
         }
     }

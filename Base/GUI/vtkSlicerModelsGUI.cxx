@@ -270,6 +270,12 @@ void vtkSlicerModelsGUI::ProcessGUIEvents ( vtkObject *caller,
          const itksys_stl::string fname(fileName);
          itksys_stl::string name = itksys::SystemTools::GetFilenameName(fname);
          this->LoadModelButton->GetWidget()->SetText (name.c_str());
+
+         // set it to be the active model, two places
+         // set the save model
+         this->ModelSelectorWidget->SetSelected(modelNode);
+         // set the display model
+         this->ModelHierarchyWidget->GetModelDisplaySelectorWidget()->SetSelected(modelNode);
         }
       }
     return;
@@ -532,7 +538,7 @@ void vtkSlicerModelsGUI::BuildGUI ( )
     this->LoadScalarsButton->GetWidget()->SetText ("None");
     this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->SetTitle("Open FreeSurfer Overlay");
     this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->RetrieveLastPathFromRegistry("OpenPath");
-    this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {All} {.*} } { {Thickness} {.thickness} } { {Curve} {.curv} } { {Average Curve} {.avg_curv} } { {Sulc} {.sulc} } { {Area} {.area} } { {W} {.w} } { {Parcellation Annotation} {.annot} } { {Volume} {.mgz .mgh} }");
+    this->LoadScalarsButton->GetWidget()->GetLoadSaveDialog()->SetFileTypes("{ {All} {.*} } { {Thickness} {.thickness} } { {Curve} {.curv} } { {Average Curve} {.avg_curv} } { {Sulc} {.sulc} } { {Area} {.area} } { {W} {.w} } { {Parcellation Annotation} {.annot} } { {Volume} {.mgz .mgh} } { {Label} {.label} }");
     app->Script("pack %s -side top -anchor nw -padx 2 -pady 4 -ipadx 0 -ipady 0", 
                 this->LoadScalarsButton->GetWidgetName());
     
@@ -540,7 +546,7 @@ void vtkSlicerModelsGUI::BuildGUI ( )
     this->ModelDisplayFrame = vtkSlicerModuleCollapsibleFrame::New ( );
     this->ModelDisplayFrame->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
     this->ModelDisplayFrame->Create ( );
-    this->ModelDisplayFrame->SetLabelText ("Display");
+    this->ModelDisplayFrame->SetLabelText ("Hierarchy & Display");
     this->ModelDisplayFrame->CollapseFrame ( );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->ModelDisplayFrame->GetWidgetName(), this->UIPanel->GetPageWidget("Models")->GetWidgetName());
@@ -606,7 +612,8 @@ void vtkSlicerModelsGUI::BuildGUI ( )
     this->SaveModelButton->SetText ("Save Model");
     this->SaveModelButton->GetLoadSaveDialog()->SaveDialogOn();
     this->SaveModelButton->GetLoadSaveDialog()->SetFileTypes(
-                                                              "{ {Model} {.*} }");
+          "{{vtk PolyData} {.vtk .vtp}} {{stl} {.stl}}");
+    this->SaveModelButton->GetLoadSaveDialog()->SetDefaultExtension("vtk");
     this->SaveModelButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry(
       "OpenPath");
      app->Script("pack %s -side top -anchor w -padx 2 -pady 4", 

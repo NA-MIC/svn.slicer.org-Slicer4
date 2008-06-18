@@ -30,6 +30,8 @@ public:
     vtkIdType, double value);
   virtual void NodeParametersSpatialPriorWeightChangedCallback(
     vtkIdType, double value);
+  virtual void RightClickOnInputChannelWeightsListCallback(
+    int row, int col, int x, int y);
   virtual void NodeParametersInputChannelWeightChangedCallback(
     vtkIdType, int row, int col, const char *value);
   virtual void NodeParametersAlphaChangedCallback(vtkIdType, double value);
@@ -57,6 +59,10 @@ public:
   virtual void NodeParametersPrintMFAWeightsCallback(vtkIdType, int value);
   virtual void ExcludeIncompleteEStepCallback(vtkIdType, int state);
   virtual void GenerateBackgroundProbabilityCallback(vtkIdType, int state);
+
+  // Description:
+  // Reimplement the superclass's method.
+  virtual void Validate();
 
 protected:
   vtkEMSegmentNodeParametersStep();

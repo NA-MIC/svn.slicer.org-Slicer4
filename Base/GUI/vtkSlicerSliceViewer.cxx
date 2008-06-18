@@ -14,7 +14,7 @@
 #include "vtkSlicerGUILayout.h"
 
 #include "vtkKWWidget.h"
-#include "vtkKWRenderWidget.h"
+#include "vtkSlicerRenderWidget.h"
 #include "vtkKWFrame.h"
 
 #include "vtkImageMapper.h"
@@ -32,8 +32,20 @@ vtkCxxRevisionMacro ( vtkSlicerSliceViewer, "$Revision: 1.0 $");
 vtkSlicerSliceViewer::vtkSlicerSliceViewer ( ) {
 
     //---  
-    // widgets comprising the SliceViewer for now.
+    // widgets comprising the SliceViewer
+    //
+    
+    //
+    // Revert back to KW superclass renderwidget to address
+    // window corruption on some linux boxes:
+    //this->RenderWidget = vtkSlicerRenderWidget::New ( );
     this->RenderWidget = vtkKWRenderWidget::New ( );
+
+    // tell the render widget not to respond to the Render() method
+    // - this class turns on rendering explicitly when it's own
+    //   Render() method is called.  This avoids redundant renders
+    //   when, for example, the annotation is changed.
+    this->RenderWidget->RenderStateOff();
 
     this->ImageMapper = vtkImageMapper::New();
     this->ImageMapper->SetColorWindow(255);
@@ -88,11 +100,13 @@ vtkSlicerSliceViewer::~vtkSlicerSliceViewer ( ){
       }
     if ( this->PolyDataCollection )
       {
+      this->PolyDataCollection->RemoveAllItems();
       this->PolyDataCollection->Delete ( );
       this->PolyDataCollection = NULL;
       }
     if ( this->ActorCollection )
       {
+      this->ActorCollection->RemoveAllItems();
       this->ActorCollection->Delete ( );
       this->ActorCollection = NULL;
       }
@@ -112,69 +126,72 @@ vtkSlicerSliceViewer::~vtkSlicerSliceViewer ( ){
 void vtkSlicerSliceViewer::SetCoordinatedPolyDataAndLookUpTableCollections( vtkPolyDataCollection* newPolyDataCollection, 
                                                                             vtkCollection* newLookupTableCollection ){
   if ( newPolyDataCollection->GetNumberOfItems() == newLookupTableCollection->GetNumberOfItems() )
-  {
-      //All the actors that contain PolyDatas NOT INCLUDED in the
-      //newPolyDataCollection collection are removed from the
-      //polyDataMapper, actor and renderer collections and deleted
-      for(int i=this->PolyDataCollection->GetNumberOfItems()-1; i>=0 ; i-- ){
-        vtkActor2D* actor = vtkActor2D::SafeDownCast( this->ActorCollection->GetItemAsObject(i) );
-        vtkPolyDataMapper2D* mapper = vtkPolyDataMapper2D::SafeDownCast(actor->GetMapper());
-        vtkPolyData* polyData = mapper->GetInput();
-  
-        if ( !newPolyDataCollection->IsItemPresent(polyData) )
+    {
+    //All the actors that contain PolyDatas NOT INCLUDED in the
+    //newPolyDataCollection collection are removed from the
+    //polyDataMapper, actor and renderer collections and deleted
+    for(int i=this->PolyDataCollection->GetNumberOfItems()-1; i>=0 ; i-- )
+      {
+      vtkActor2D* actor = vtkActor2D::SafeDownCast( this->ActorCollection->GetItemAsObject(i) );
+      vtkPolyDataMapper2D* mapper = vtkPolyDataMapper2D::SafeDownCast(actor->GetMapper());
+      vtkPolyData* polyData = mapper->GetInput();
+
+      if ( !newPolyDataCollection->IsItemPresent(polyData) )
         {
-      this->PolyDataCollection->RemoveItem( polyData );
-          this->ActorCollection->RemoveItem( actor );
-          this->RenderWidget->GetRenderer()->RemoveActor( actor );
-      actor->GetMapper()->Delete();
-          actor->Delete();
+        this->PolyDataCollection->RemoveItem( polyData );
+        this->ActorCollection->RemoveItem( actor );
+        this->RenderWidget->GetRenderer()->RemoveActor( actor );
         }
-        
-      }
-  
+      } // for
+
       //All the actors that contain PolyDatas NOT INCLUDED in the
       //PolyDataCollection collection are added to the polyDataMapper, actor and renderer collections
-      for(int i=newPolyDataCollection->GetNumberOfItems()-1; i>=0 ; i-- ){
-        vtkPolyData* polyData = vtkPolyData::SafeDownCast(newPolyDataCollection->GetItemAsObject(i));
-  if (polyData==NULL)
-  {
-          vtkErrorMacro("There's an element in the PolyDataCollection which is not a PolyData");
-  } else {
-    vtkErrorMacro("PolyData to render:"<<polyData);
-  } 
-  
-  
-        if ( !this->PolyDataCollection->IsItemPresent(polyData) )
+      for(int i=newPolyDataCollection->GetNumberOfItems()-1; i>=0 ; i-- )
         {
-//           vtkPolyDataMapper* mapper = vtkPolyDataMapper::New();
-           vtkPolyDataMapper2D* mapper = vtkPolyDataMapper2D::New();
+        vtkPolyData* polyData = vtkPolyData::SafeDownCast(newPolyDataCollection->GetItemAsObject(i));
+        if (polyData==NULL)
+          {
+            vtkErrorMacro("There's an element in the PolyDataCollection which is not a PolyData");
+          } 
+          
+        if ( !this->PolyDataCollection->IsItemPresent(polyData) )
+          {
+//        vtkPolyDataMapper* mapper = vtkPolyDataMapper::New();
+          vtkPolyDataMapper2D* mapper = vtkPolyDataMapper2D::New();
 
-      mapper->SetInput( polyData );
+          mapper->SetInput( polyData );
   
           vtkScalarsToColors* lookupTable = vtkScalarsToColors::SafeDownCast(newLookupTableCollection->GetItemAsObject(i));
-          if ( lookupTable != NULL ) {
+          if ( lookupTable != NULL ) 
+            {
             mapper->SetLookupTable( lookupTable );
-    } else {
-      vtkErrorMacro("There is an object which is not a lookupTable in the newLookupTable Collection")
-      }
+            } 
+          else 
+            {
+            vtkErrorMacro("There is an object which is not a lookupTable in the newLookupTable Collection")
+            }
 
-      this->PolyDataCollection->AddItem( polyData );
-       vtkActor2D* actor = vtkActor2D::New();
+          this->PolyDataCollection->AddItem( polyData );
+          vtkActor2D* actor = vtkActor2D::New();
 
-//     vtkActor* actor = vtkActor::New();
+//        vtkActor* actor = vtkActor::New();
           actor->SetMapper( mapper );
           this->ActorCollection->AddItem( actor );
- 
+
           this->RenderWidget->GetRenderer()->AddActor( actor );
+          mapper->Delete();
+          actor->Delete();
         }
       }
   
       //Due to the double inclusion principle at the end the PolyDataCollection, ActorCollection and Renderer include only the PolyDatas and LookUp tables in the new collections and The actors and rendered actors collections are finec
   
       this->Modified();
-  } else {
-  vtkErrorMacro("The PolyDataCollection and LookupTableCollection must have the same number of items");
-  } 
+    } 
+  else 
+    {
+    vtkErrorMacro("The PolyDataCollection and LookupTableCollection must have the same number of items");
+    } 
 }
 
 //---------------------------------------------------------------------------
@@ -217,7 +234,9 @@ void vtkSlicerSliceViewer::RequestRender()
 //---------------------------------------------------------------------------
 void vtkSlicerSliceViewer::Render()
 {
+  this->GetRenderWidget()->RenderStateOn();
   this->GetRenderWidget()->Render();
+  this->GetRenderWidget()->RenderStateOff();
   this->SetRenderPending(0);
 }
 

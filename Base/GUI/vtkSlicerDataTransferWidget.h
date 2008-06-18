@@ -4,6 +4,7 @@
 #include "vtkSlicerWidget.h"
 #include "vtkDataTransfer.h"
 #include "vtkCacheManager.h"
+#include "vtkDataIOManager.h"
 #include <string>
 
 //widgets
@@ -12,7 +13,6 @@ class vtkKWLabel;
 class vtkKWPushButton;
 class vtkKWFrame;
 class vtkKWTopLevel;
-class vtkSlicerDataTransferIcons;
 class vtkKWTextWithScrollbars;
 
 
@@ -43,7 +43,6 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerDataTransferWidget : public vtkSlicerW
     vtkGetObjectMacro (InformationTopLevel, vtkKWTopLevel );
     vtkGetObjectMacro (InformationFrame, vtkKWFrame );
     vtkGetObjectMacro (InformationText, vtkKWTextWithScrollbars );
-    vtkGetObjectMacro (DataTransferIcons, vtkSlicerDataTransferIcons );
     vtkGetObjectMacro (InformationCloseButton, vtkKWPushButton );
     vtkGetObjectMacro ( DataTransfer, vtkDataTransfer);
     vtkSetObjectMacro ( DataTransfer, vtkDataTransfer);
@@ -56,6 +55,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerDataTransferWidget : public vtkSlicerW
     // managers
     vtkGetObjectMacro (CacheManager, vtkCacheManager);
     vtkSetObjectMacro (CacheManager, vtkCacheManager);
+    vtkGetObjectMacro (DataIOManager, vtkDataIOManager);
+    vtkSetObjectMacro (DataIOManager, vtkDataIOManager);
 
     // Description:
     // Add/Remove observers on widgets in the GUI.
@@ -75,9 +76,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerDataTransferWidget : public vtkSlicerW
     
     // Description:
     // Methods to handle the animated "transfer running" status display
-    virtual void StartTransferTimer();
-    virtual void KillTransferTimer();
-    virtual void UpdateTransferFeedback();
+    virtual void DisplayRunningAnimation();
+
 //BTX
     const char *GetTimerID ()
         {
@@ -124,6 +124,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerDataTransferWidget : public vtkSlicerW
     
     int TransferID;
     vtkCacheManager *CacheManager;
+    vtkDataIOManager *DataIOManager;
     
     //widgets (GUI)
     vtkKWFrame *DataTransferFrame;
@@ -133,7 +134,6 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerDataTransferWidget : public vtkSlicerW
     vtkKWPushButton *CancelButton;
     vtkKWPushButton *InformationButton;
     vtkKWPushButton *DeleteButton;
-    vtkSlicerDataTransferIcons *DataTransferIcons;
     vtkKWTopLevel *InformationTopLevel;
     vtkKWFrame *InformationFrame;
     vtkKWTextWithScrollbars *InformationText;

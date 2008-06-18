@@ -162,6 +162,11 @@ class VTK_MRML_EXPORT vtkMRMLVolumeNode : public vtkMRMLDisplayableNode
   virtual bool CanApplyNonLinearTransforms() { return false; }
   virtual void ApplyTransform(vtkMatrix4x4* transformMatrix);
   virtual void ApplyTransform(vtkAbstractTransform* transform);
+
+  // Description:
+  // Subclasses can define actions to take when the mrml scene passes an event
+  // that the image data has changed, usually call CalculateAutoLevels
+  virtual void UpdateFromMRML();
   
 protected:
   vtkMRMLVolumeNode();

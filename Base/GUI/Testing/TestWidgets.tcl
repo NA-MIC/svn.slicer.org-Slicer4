@@ -182,6 +182,44 @@ foreach w $widgets {
   pack [$pushButton GetWidgetName]
 }
 
+proc SlicePlaneWidgetCallback {planeWidget} {
+
+  set sliceNode [lindex [vtkMRMLSliceNode ListInstances] 0]
+  set sliceToRAS [$sliceNode GetSliceToRAS]
+  set p [vtkPlane New]
+  $planeWidget GetPlane $p
+  $sliceToRAS SetElement 0 3 [lindex [$p GetOrigin] 0]
+  $sliceToRAS SetElement 1 3 [lindex [$p GetOrigin] 1]
+  $sliceToRAS SetElement 2 3 [lindex [$p GetOrigin] 2]
+  $p Delete
+  $sliceNode UpdateMatrices
+}
+
+proc SlicePlaneNodeCallback {planeWidget} {
+
+  set sliceNode [lindex [vtkMRMLSliceNode ListInstances] 0]
+  set sliceToRAS [$sliceNode GetSliceToRAS]
+  set p [vtkPlane New]
+  $planeWidget GetPlane $p
+  $sliceToRAS SetElement 0 3 [lindex [$p GetOrigin] 0]
+  $sliceToRAS SetElement 1 3 [lindex [$p GetOrigin] 1]
+  $sliceToRAS SetElement 2 3 [lindex [$p GetOrigin] 2]
+  $p Delete
+  $sliceNode UpdateMatrices
+}
+
+proc TestPlaneWidget {} {
+
+  set rwi [[[$::slicer3::ApplicationGUI GetViewerWidget] GetMainViewer] GetRenderWindowInteractor]
+
+  set planeWidget [vtkImplicitPlaneWidget New]
+  $planeWidget SetInteractor $rwi
+  $planeWidget PlaceWidget -75 75  -75 75  -75 75
+  $planeWidget On
+
+  $planeWidget AddObserver AnyEvent "SlicePlaneCallback $planeWidget"
+}
+
 
 vwait ::quit
 

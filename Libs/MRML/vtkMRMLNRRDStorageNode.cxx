@@ -137,7 +137,7 @@ int vtkMRMLNRRDStorageNode::ReadData(vtkMRMLNode *refNode)
           refNode->IsA("vtkMRMLDiffusionTensorVolumeNode") )
      )
     {
-    vtkErrorMacro("Reference node is not a proper vtkMRMLVolumeNode");
+    //vtkErrorMacro("Reference node is not a proper vtkMRMLVolumeNode");
     return 0;         
     }
   if (this->GetFileName() == NULL && this->GetURI() == NULL) 
@@ -147,7 +147,7 @@ int vtkMRMLNRRDStorageNode::ReadData(vtkMRMLNode *refNode)
     }
 
   Superclass::StageReadData(refNode);
-  if ( this->GetReadState() == this->Pending )
+  if ( this->GetReadState() != this->TransferDone )
     {
     // remote file download hasn't finished
     vtkWarningMacro("ReadData: read state is pending, remote download hasn't finished yet");
@@ -250,7 +250,7 @@ int vtkMRMLNRRDStorageNode::ReadData(vtkMRMLNode *refNode)
   else if ( refNode->IsA("vtkMRMLDiffusionWeightedVolumeNode"))
     {
     vtkDebugMacro("Checking we have right info in file");
-    char *value = reader->GetHeaderValue("modality");
+    const char *value = reader->GetHeaderValue("modality");
     if (value == NULL)
       {
       reader->Delete();
@@ -331,6 +331,9 @@ int vtkMRMLNRRDStorageNode::ReadData(vtkMRMLNode *refNode)
 
   reader->Delete();
   ici->Delete();
+
+  this->SetReadStateIdle();
+  
   return 1;
 }
 

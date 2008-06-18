@@ -75,7 +75,7 @@ vtkMRMLColorTableNode::~vtkMRMLColorTableNode()
 //----------------------------------------------------------------------------
 void vtkMRMLColorTableNode::WriteXML(ostream& of, int nIndent)
 {
-  // Write all attributes not equal to their defaults
+  // Write all attributes not equal to their FullRainbows
   
   Superclass::WriteXML(of, nIndent);
   
@@ -205,7 +205,7 @@ void vtkMRMLColorTableNode::PrintSelf(ostream& os, vtkIndent indent)
   if (this->Names.size() > 0)
     {
     os << indent << "Color Names:\n";
-    for (unsigned int i = 0; (int)i < this->Names.size(); i++)
+    for (unsigned int i = 0; i < this->Names.size(); i++)
       {
       os << indent << indent << i << " " << this->GetColorName(i) << endl;
       if ( i > 10 )
@@ -224,6 +224,12 @@ void vtkMRMLColorTableNode::UpdateScene(vtkMRMLScene *scene)
   // UpdateScene on the displayable node superclass will set up the storage
   // node and call ReadData
   Superclass::UpdateScene(scene); 
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLColorTableNode::SetTypeToFullRainbow()
+{
+    this->SetType(this->FullRainbow);
 }
 
 //----------------------------------------------------------------------------
@@ -314,6 +320,10 @@ void vtkMRMLColorTableNode::SetTypeToFile()
 //----------------------------------------------------------------------------
 const char* vtkMRMLColorTableNode::GetTypeAsIDString()
 {
+  if (this->Type == this->FullRainbow)
+    {
+    return "vtkMRMLColorTableNodeFullRainbow";
+    }
   if (this->Type == this->Grey)
     {
     return "vtkMRMLColorTableNodeGrey";
@@ -376,6 +386,10 @@ const char* vtkMRMLColorTableNode::GetTypeAsIDString()
 //----------------------------------------------------------------------------
 const char* vtkMRMLColorTableNode::GetTypeAsString()
 {
+  if (this->Type == this->FullRainbow)
+    {
+    return "FullRainbow";
+    }
   if (this->Type == this->Grey)
     {
     return "Grey";
@@ -473,12 +487,24 @@ void vtkMRMLColorTableNode::SetType(int type)
       vtkLookupTable *table = vtkLookupTable::New();
       this->SetLookupTable(table);
       table->Delete();
-      // as a default, set the table range to 255
+      // as a FullRainbow, set the table range to 255
       this->GetLookupTable()->SetTableRange(0, 255);
       }
 
     // delay setting names from colours until asked for one
-    if (this->Type == this->Grey)
+    if (this->Type == this->FullRainbow)
+      {
+      // from vtkSlicerSliceLayerLogic.cxx
+      this->GetLookupTable()->SetRampToLinear();
+      this->GetLookupTable()->SetTableRange(0, 255);
+      this->GetLookupTable()->SetHueRange(0, 1);
+      this->GetLookupTable()->SetSaturationRange(1, 1);
+      this->GetLookupTable()->SetValueRange(1, 1);
+      this->GetLookupTable()->SetAlphaRange(1, 1); // not used
+      this->GetLookupTable()->Build();
+      this->SetNamesFromColors();
+      }
+    else if (this->Type == this->Grey)
       {
       // from vtkSlicerSliceLayerLogic.cxx
       this->GetLookupTable()->SetRampToLinear();
@@ -1090,7 +1116,7 @@ void vtkMRMLColorTableNode::SetNumberOfColors(int n)
     this->GetLookupTable()->SetNumberOfTableValues(n);
     }
 
-  if (this->Names.size() != n)
+  if (this->Names.size() != (unsigned int)n)
     {
     this->Names.resize(n);
     }
@@ -1174,7 +1200,7 @@ int vtkMRMLColorTableNode::GetColorIndexByName(const char *name)
   if (this->GetNamesInitialised() && name != NULL)
     {
     std::string strName = name;
-    for (unsigned int i = 0; (int)i < this->Names.size(); i++)
+    for (unsigned int i = 0; i < this->Names.size(); i++)
       {
       if (strName.compare(this->GetColorName(i)) == 0)
         {

@@ -46,7 +46,7 @@ class vtkKWEntry;
 class vtkKWEntryWithLabel;
 class vtkSlicerViewControlIcons;
 class vtkCallbackCommand;
-
+class vtkKWSimpleEntryDialog;
 
 //BTX
 #ifndef vtkSetAndObserveMRMLNodeMacro
@@ -117,10 +117,12 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   vtkGetObjectMacro (RockButton, vtkKWCheckButton);
   vtkGetObjectMacro (OrthoButton, vtkKWPushButton);
   vtkGetObjectMacro (CenterButton, vtkKWPushButton);
-  vtkGetObjectMacro (SelectViewButton, vtkKWMenuButton);
+  vtkGetObjectMacro (ScreenGrabButton, vtkKWMenuButton);
   vtkGetObjectMacro (SelectCameraButton, vtkKWMenuButton);
   vtkGetObjectMacro (StereoButton, vtkKWMenuButton);
   vtkGetObjectMacro (VisibilityButton, vtkKWMenuButton );
+  vtkGetObjectMacro ( SelectSceneSnapshotMenuButton, vtkKWMenuButton );
+  vtkGetObjectMacro ( SceneSnapshotButton, vtkKWPushButton );
 
 //  vtkGetObjectMacro (RedFOVEntry, vtkKWEntryWithLabel);
 //  vtkGetObjectMacro (YellowFOVEntry, vtkKWEntry);
@@ -224,10 +226,14 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   virtual void RemoveSliceEventObservers();
   
   // Description:
-  // Methods to update GUI, View and MRML
+  // Methods to update GUI from MRML
   virtual void UpdateViewFromMRML();
   virtual void UpdateSlicesFromMRML();
   virtual void UpdateFromMRML ( );
+  virtual void UpdateSceneSnapshotsFromMRML ( );
+
+  virtual void RestoreSceneSnapshot( const char* name);
+  virtual void DeleteSceneSnapshot( const char* name);  
   
   // Description:
   // Renders the Navigation/Zoom widget fresh
@@ -255,6 +261,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   // SliceControlGUI and FiducialsGUI
   virtual void SetMRMLFiducialPointVisibility ( int state);
   virtual void SetMRMLFiducialLabelVisibility ( int state);
+  virtual const char *CreateSceneSnapshotNode( const char *nodeName);
+  virtual int InvokeNameDialog( const char *msg, const char *name);
 
   // Description:
   // Starts and stops automatic view spinning
@@ -281,6 +289,17 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   // Description:
   // Rotates camera about selected axis by an increment in MainViewer
   virtual void MainViewRotateAround ( int axis );
+  virtual void MainViewRotateAround ( const char *axis );
+  virtual void ArbitraryRotate(double *p, double theta, double *p1, double *p2, double *q);
+
+  // Description:
+  // Basic zoom in/out, pitch roll and yaw controls for the main viewer.
+  virtual void MainViewZoomIn();
+  virtual void MainViewZoomOut();
+  virtual void MainViewPitch();
+  virtual void MainViewRoll();
+  virtual void MainViewYaw();
+
   // Description:
   // Sets either Parallel or Perspective Projection in MainViewer
   virtual void MainViewSetProjection ( );
@@ -411,13 +430,17 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   vtkKWRadioButton *RotateAroundButton;
   vtkKWPushButton *CenterButton;
   vtkKWMenuButton *StereoButton;
-  vtkKWMenuButton *SelectViewButton;
+  vtkKWMenuButton *ScreenGrabButton;
   vtkKWMenuButton *SelectCameraButton;
   vtkKWMenuButton *VisibilityButton;
 //  vtkKWEntryWithLabel *RedFOVEntry;
 //  vtkKWEntry *YellowFOVEntry;
 //  vtkKWEntry *GreenFOVEntry;
   vtkKWEntryWithLabel *ZoomEntry;
+
+  vtkKWMenuButton *SelectSceneSnapshotMenuButton;
+  vtkKWPushButton *SceneSnapshotButton;
+
     
   // navzoom scale, navzoomin/outiconbutton tmpNavigationZoom, all the icon buttons.    
   // Description:
@@ -469,12 +492,15 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerViewControlGUI : public vtkSlicerCompo
   vtkMRMLSliceNode *YellowSliceNode;
   vtkMRMLSliceNode *GreenSliceNode;
   vtkSlicerViewerInteractorStyle *MainViewerEvents;
+  vtkKWSimpleEntryDialog *NameDialog;
 
+  int SelectedSceneSnapshot;
   int RockCount;
   int NavigationZoomWidgetWid;
   int NavigationZoomWidgetHit;
   double SliceMagnification;
   int SliceInteracting;
+  const char *MySnapshotName;
 
  private:
   vtkSlicerViewControlGUI ( const vtkSlicerViewControlGUI& ); // Not implemented.

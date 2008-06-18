@@ -12,17 +12,6 @@
 
 #include "vtkSlicerApplicationGUI.h"
 
-#ifdef USE_PYTHON
-#ifdef _DEBUG
-#undef _DEBUG
-#include <Python.h>
-#define _DEBUG
-#else
-#include <Python.h>
-#endif
-#endif
-
-
 class vtkSlicerModuleGUI;
 class vtkSlicerGUILayout;
 class vtkSlicerTheme;
@@ -50,6 +39,12 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
     // Description:
     // Get the singleton
     static vtkSlicerApplication* GetInstance();
+
+    // Description:
+    // Do one tcl event and enter the event loop, allowing the application
+    // interface to actually run.
+    // - override the virtual method from vtkKWApplication to add event broker
+    virtual void DoOneTclEvent();
 
     // Description:
     // Get the layout, theme, GUI collection and main application GUI 
@@ -98,7 +93,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   // Some constants
   //BTX
   static const char *ConfirmDeleteRegKey;
-  static const char *ModulePathRegKey;
+  static const char *ModulePathsRegKey;
+  static const char *PotentialModulePathsRegKey;
   static const char *ModuleCachePathRegKey;
   static const char *TemporaryDirectoryRegKey;
   static const char *WebBrowserRegKey;
@@ -106,6 +102,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   static const char *ZipRegKey;
   static const char *RmRegKey;
   static const char *HomeModuleRegKey;
+  static const char *LoadModulesRegKey;
   static const char *LoadCommandLineModulesRegKey;
   static const char *EnableDaemonRegKey;
   static const char *ApplicationFontFamilyRegKey;
@@ -139,9 +136,29 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   const char* GetConfirmDelete() const;
   
   // Description:
-  // Set/Get the search path for modules.
-  void SetModulePath(const char *path);
-  const char* GetModulePath() const;
+  // Set/Get the search paths for modules.
+  // This is a list of paths delimited by a specific seperator: ';' on 
+  // Windows, ':' on Unix/MacOSX platforms.
+  void SetModulePaths(const char *paths);
+  const char* GetModulePaths() const;
+
+  // Description:
+  // Set/Get the potential search paths for modules.
+  // This is a list of directories that can be used as module paths. 
+  // Each item in this list is a directory and a boolean flag (0 or 1) 
+  // specifying if that directory is actually to be used as a module path
+  // (see ModulePaths, which is the subset of the paths in PotentialModulePaths
+  // that are enabled, with a different delimiter between each path). 
+  // This variable is used for GUI purposes, in that it lets people keep a
+  // list of directories and enable/disable them at will, without having
+  // to re-enter/re-pick them one by one using a file browser. It is used
+  // by the vtkSlicerApplicationSettingsInterface and computed with help its
+  // vtkKWDirectoryPresetSelector internal class. Each element is separated by
+  // a '|' delimiter (ex: "c:/temp|0|d:/foo/bar|1", where "c:/temp" is disabled
+  // and d:/foo/bar is enabled; at this point, the value of ModulePaths should
+  // actually be "d:/foo/bar").
+  void SetPotentialModulePaths(const char *paths);
+  const char* GetPotentialModulePaths() const;
 
   // Description:
   // Set/Get the cache path for modules.
@@ -202,7 +219,13 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   vtkSetMacro (ApplicationLayoutType, int );
 
   // Description:
-  // Set/Get if command line modules should be loaded
+  // Set/Get if modules should be loaded (i.e. loadable modules)
+  vtkSetMacro(LoadModules, int);
+  vtkGetMacro(LoadModules, int);
+  vtkBooleanMacro(LoadModules, int);
+
+  // Description:
+  // Set/Get if command line modules should be loaded (i.e. CLI plugins)
   vtkSetMacro(LoadCommandLineModules, int);
   vtkGetMacro(LoadCommandLineModules, int);
   vtkBooleanMacro(LoadCommandLineModules, int);
@@ -277,15 +300,13 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   virtual void DisplayTclInteractor(vtkKWTopLevel *master);
   virtual void DisplayLogDialog(vtkKWTopLevel *master);
 
-#ifdef USE_PYTHON
 //BTX
-  virtual void InitializePython( PyObject* mod, PyObject* dict )
-  { PythonModule = mod; 
-    PythonDictionary = dict; };
-  vtkGetMacro(PythonModule, PyObject*);
-  vtkGetMacro(PythonDictionary, PyObject*);
+  // Pass/cast PyObject* in place of void*
+  virtual void InitializePython(void* mod, void* dict);
+  virtual void* GetPythonModule();
+  virtual void* GetPythonDictionary();
 //ETX
-#endif
+
   // Description:
   // Add additional copyright messages
   virtual void AddAboutCopyrights(ostream &);
@@ -327,7 +348,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
 
   
   char ConfirmDelete[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
-  char ModulePath[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char ModulePaths[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char PotentialModulePaths[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char ModuleCachePath[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char WebBrowser [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
   char Unzip [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
@@ -345,12 +367,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
 
   char RegistryHolder [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
 
+  int LoadModules;
   int LoadCommandLineModules;
   int EnableDaemon;
-#ifdef USE_PYTHON
-  PyObject* PythonModule;
-  PyObject* PythonDictionary;
-#endif
+  void* PythonModule;
+  void* PythonDictionary;
 
   int EnableAsynchronousIO;
   int EnableForceRedownload;

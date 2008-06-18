@@ -1,28 +1,76 @@
-PROJECT(IGT)
+project(IGT)
+
+cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+find_package(KWWidgets REQUIRED)
+include(${KWWidgets_USE_FILE})
+ 
+find_package(ITK REQUIRED)
+include(${ITK_USE_FILE})
+
+if(NOT DEFINED BUILD_SHARED_LIBS)
+  option(BUILD_SHARED_LIBS "Build with shared libraries." ON)
+endif(NOT DEFINED BUILD_SHARED_LIBS)
+ 
+# --------------------------------------------------------------------------
+# Include dirs
+
+set(include_dirs
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+
+foreach(package 
+    MRML
+    )
+  # This is mostly to test building this lib as standalone outside Slicer3
+  if(NOT DEFINED ${package}_SOURCE_DIR)
+    set(${package}_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../${package}")
+  endif(NOT DEFINED ${package}_SOURCE_DIR)
+  if(NOT DEFINED ${package}_BINARY_DIR)
+    string(REPLACE ${PROJECT_NAME} ${package} 
+      ${package}_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+    link_directories(${${package}_BINARY_DIR})
+  endif(NOT DEFINED ${package}_BINARY_DIR)
+
+  set(include_dirs ${include_dirs}
+    ${${package}_SOURCE_DIR}
+    ${${package}_BINARY_DIR}
+    )
+endforeach(package)
+
+include_directories(${include_dirs})
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkIGTConfigure.h.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkIGTConfigure.h
+  )
+
+file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+install(FILES 
+  ${headers} 
+  "${CMAKE_CURRENT_BINARY_DIR}/vtkIGTConfigure.h"
+  DESTINATION include/${PROJECT_NAME} COMPONENT Development
+  )
 
 # --------------------------------------------------------------------------
-# Special build configs (to handle linking on windows)
-CONFIGURE_FILE(
-  ${IGT_SOURCE_DIR}/vtkIGTConfigure.h.in 
-  ${IGT_BINARY_DIR}/vtkIGTConfigure.h
-)
+# Sources
 
-
-# --------------------------------------------------------------------------
-# Settings for options
-SET(IGT_SRCS
+set(IGT_SRCS
   vtkIGTDataManager.cxx
   vtkIGTDataStream.cxx
   vtkIGTMatrixState.cxx
   vtkIGTPat2ImgRegistration.cxx
-)
-SET(TRACKING_INTERFACE_LIBRARY "")
-
+  )
+set(TRACKING_INTERFACE_LIBRARY "")
 
 #--- NH took out the following section in an effot to remove Navitrak
 #--- 10/16/07
 
-#IF(USE_NAVITRACK)
+#IF(IGT_USE_NAVITRACK)
 #  SET(IGT_SRCS
 #    vtkIGTDataManager.cxx
 #    vtkIGTDataStream.cxx
@@ -36,58 +84,40 @@ SET(TRACKING_INTERFACE_LIBRARY "")
 #  SET(TRACKING_INTERFACE_LIB  
 #    ${NAVITRACK_LIB}
 #  )
-#ENDIF(USE_NAVITRACK)
+#ENDIF(IGT_USE_NAVITRACK)
 
-IF(USE_IGSTK)
-  SET(IGT_SRCS
+if(IGT_USE_IGSTK)
+  set(IGT_SRCS
     vtkIGTDataManager.cxx
     vtkIGTDataStream.cxx
     vtkIGTMatrixState.cxx
     vtkIGTPat2ImgRegistration.cxx
     vtkIGTIGSTKStream.cxx
-  )
-  SET(TRACKING_INTERFACE_INCLUDE_DIR
+    )
+  set(TRACKING_INTERFACE_INCLUDE_DIR
     ${IGSTK_INCLUDE_DIRS}
-  )
-  SET(TRACKING_INTERFACE_LIB  
+    )
+  set(TRACKING_INTERFACE_LIB  
     ${IGSTK_LIBRARIES}
-  )
-ENDIF(USE_IGSTK)
-
-
-# --------------------------------------------------------------------------
-# Include dirs
-
-INCLUDE_DIRECTORIES(
-  ${MRML_BINARY_DIR}
-  ${MRML_SOURCE_DIR}
-  ${IGT_BINARY_DIR}
-  ${IGT_SOURCE_DIR}
-  ${ITK_INCLUDE_DIRS}
-  ${VTK_INCLUDE_DIRS}
-  ${TRACKING_INTERFACE_INCLUDE_DIR}
-  )
-
+    )
+endif(IGT_USE_IGSTK)
 
 # --------------------------------------------------------------------------
 # Wrapping
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(IGT IGT_TCL_SRCS "${IGT_SRCS}" "")
 
+include("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+vtk_wrap_tcl3(IGT IGT_TCL_SRCS "${IGT_SRCS}" "")
 
-# Build the library
-ADD_LIBRARY(IGT 
-  ${IGT_SRCS} ${IGT_TCL_SRCS}
+# --------------------------------------------------------------------------
+# Build and install the library
+
+set(lib_name IGT)
+add_library(${lib_name} 
+  ${IGT_SRCS} 
+  ${IGT_TCL_SRCS}
   )
-IF(BUILD_SHARED_LIBS)
-  INSTALL(TARGETS IGT
-      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
-ENDIF(BUILD_SHARED_LIBS)
 
-TARGET_LINK_LIBRARIES(IGT
+target_link_libraries(${lib_name}
   MRML
   vtkCommonTCL
   vtkImagingTCL
@@ -109,11 +139,15 @@ TARGET_LINK_LIBRARIES(IGT
   ${TRACKING_INTERFACE_LIB}
   )
 
+install(TARGETS ${lib_name}
+  RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+  LIBRARY DESTINATION lib/${PROJECT_NAME} COMPONENT RuntimeLibraries
+  ARCHIVE DESTINATION lib/${PROJECT_NAME} COMPONENT Development
+  )
 
 # --------------------------------------------------------------------------
 # Testing (requires some of the examples)
 
-IF(BUILD_TESTING)
-  SUBDIRS(Testing)
-ENDIF(BUILD_TESTING)
-
+if(BUILD_TESTING)
+  subdirs(Testing)
+endif(BUILD_TESTING)

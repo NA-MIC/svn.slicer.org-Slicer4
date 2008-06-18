@@ -59,6 +59,7 @@ proc XcedeCatalogImport { xcedeFile } {
         set ::XcedeCatalog(transformIDStack) ""
         set ::XcedeCatalog_HParent_ID ""
         set root [$parser GetRootElement]
+
         XcedeCatalogImportGetElement $root
 
         #--- if the catalog includes a brain.mgz, example_func.nii and
@@ -223,42 +224,11 @@ proc XcedeCatalogImportGetEntry {element } {
     set len [ llength $plist ]
     set fname [ lindex $plist [ expr $len - 1 ] ]
 
+    #set node($uriAttName) $::XcedeCatalog_Dir/$fname
+    set node(localFileName)  $::XcedeCatalog_Dir/$fname
+
     #--- check to see if it's a remote file
     set cacheManager [$::slicer3::MRMLScene GetCacheManager]
-    if {$cacheManager != ""} {
-        set isRemote [$cacheManager IsRemoteReference $node(uri)]
-        if {$isRemote == 1} {
-            $::XcedeCatalog_mainWindow SetStatusText "Loading remote $node(uri)..."
-            # puts "Trying to find URI handler for $node(uri)"
-            set uriHandler [$::slicer3::MRMLScene FindURIHandler $node(uri)]
-            if {$uriHandler != ""} {
-                # for now, do a synchronous download
-                puts "Found a file handler, doing a synchronous download from $node(uri) to $node($uriAttName)"
-                $uriHandler StageFileRead $node(uri) $::XcedeCatalog_Dir/$fname
-            } else {
-                puts "Unable to find a file handler for $node(uri)"
-            }
-        } else {
-           # puts "have a local file  $node(uri)"
-        }
-    } else {
-        # puts "Can't find the cache manager on the scene, assuming local file"
-    }
-
-    set node($uriAttName) $::XcedeCatalog_Dir/$fname
-
-    #--- make sure the uri exists
-    set node($uriAttName) [ file normalize $node($uriAttName) ]
-    if {![ file exists $node($uriAttName) ] } {
-        puts "can't find file $node($uriAttName)."
-        return
-    }
-
-    #--- make sure the uri is a file (and not a directory)
-    if { ![file isfile $node($uriAttName) ] } {
-        puts "$node($uriAttName) doesn't appear to be a file. Not trying to import."
-        return
-    }
 
     #--- get the file format
     set gotformat 0
@@ -286,8 +256,50 @@ proc XcedeCatalogImportGetEntry {element } {
     if { $fileformat == 0 } {
         puts "$node($formatAttName) is an unsupported format. Cannot import entry."
         return
+    } elseif { $fileformat == 1 } {
+#        puts "$node($formatAttName) can handle downloads automatically"
+        if {$cacheManager != ""} {
+            set isRemote [$cacheManager IsRemoteReference $node($uriAttName)]
+            if {$isRemote == 0} {
+                #--- make sure the local file exists
+                set node(localFileName) [ file normalize $node(localFileName) ]
+                if {![ file exists $node(localFileName) ] } {
+                    puts "can't find file $node(localFileName)."
+                    return
+                }
+
+                #--- make sure the local file is a file (and not a directory)
+                if { ![file isfile $node(localFileName) ] } {
+                    puts "$node(localFileName) doesn't appear to be a file. Not trying to import."
+                    return
+                }
+                # it's a local file, so reset the uri
+                set node($uriAttName) $node(localFileName)
+            }
+        }
+    } elseif { $fileformat == 2 } {
+#        puts "$node($formatAttName) is something we have to download manually if it has a remote uri"
+        if {$cacheManager != ""} {
+#            puts "Asynch Enabled = [[$::slicer3::MRMLScene GetDataIOManager] GetEnableAsynchronousIO]"
+            set isRemote [$cacheManager IsRemoteReference $node($uriAttName)]
+            if {$isRemote == 1} {
+                $::XcedeCatalog_mainWindow SetStatusText "Loading remote $node($uriAttName)..."
+#                puts "Trying to find URI handler for $node($uriAttName)"
+                set uriHandler [$::slicer3::MRMLScene FindURIHandler $node($uriAttName)]
+                if {$uriHandler != ""} {
+                    # for now, do a synchronous download
+                    # puts "Found a file handler, doing a synchronous download from $node($uriAttName) to $node(localFileName)"
+                    $uriHandler StageFileRead $node($uriAttName) $node(localFileName)
+                } else {
+                    puts "Unable to find a file handler for $node($uriAttName)"
+                }
+            }
+        }
+        # puts "\tNow resetting uri $node($uriAttName) to local file name $node(localFileName) so can read from disk"
+        set node($uriAttName) $node(localFileName)
     }
     
+
     #--- finally, create the node
     set handler XcedeCatalogImportEntry$nodeType
     
@@ -298,7 +310,7 @@ proc XcedeCatalogImportGetEntry {element } {
     }
 
     # call the handler for this element
-    puts "importing $nodeType"
+    puts "Importing $nodeType"
     $handler node
 }
 
@@ -318,29 +330,38 @@ proc XcedeCatalogImportEntryVolume {node} {
     set centered 1
     set labelmap 0
     set singleFile 0
-    set loadingOptions [expr $labelmap * 1 + $centered * 2 + $singleFile * 4]
+    set autoLevel 1
 
     if { [info exists n(labelmap) ] } {
         set labelmap 1
+        # don't do auto level calc if it's a label map
+        set autoLevel 0
     }
-    
+    if { [ string first "stat" $n(uri) ] >= 0 } {
+        # set autoLevel 0
+    }
+    set loadingOptions [expr $labelmap * 1 + $centered * 2 + $singleFile * 4 + $autoLevel * 8]
+ 
     set logic [$::slicer3::VolumesGUI GetLogic]
     if { $logic == "" } {
         puts "XcedeCatalogImportEntryVolume: Unable to access Volumes Logic. $n(uri) not imported."
         return
     }
-    set volumeNode [$logic AddArchetypeVolume $n(uri) $n(name) $loadingOptions]
+#    puts "Calling volumes logic add archetype scalar volume with uri = $n(uri) and name = $n(name)"
+#    set volumeNode [$logic AddArchetypeVolume $n(uri) $n(name) $loadingOptions]
+    set volumeNode [$logic AddArchetypeScalarVolume $n(uri) $n(name) $loadingOptions]
     if { $volumeNode == "" } {
         puts "XcedeCatalogImportEntryVolume: Unable to add Volume Node for $n(uri)."
         return
     }
+
     set volumeNodeID [$volumeNode GetID]
 
     if { [info exists n(description) ] } {
         $volumeNode SetDescription $n(description)
     }
 
-    #--- try using xcede differently than the slicer2 xform descrption
+    #--- try using xcede differently than the slicer2 xform description
     # use the current top of stack (might be "" if empty, but that's okay)
     #set transformID [lindex $::XcedeCatalog(transformIDStack) end]
     #$volumeNode SetAndObserveTransformNodeID $transformID
@@ -357,8 +378,10 @@ proc XcedeCatalogImportEntryVolume {node} {
         #--- this is likely a statistical volume.
         $volumeDisplayNode SetAndObserveColorNodeID "vtkMRMLColorTableNodefMRIPA"
         #$volumeDisplayNode SetAndObserveColorNodeID "vtkMRMLColorTableNodeIron"
-        $volumeDisplayNode SetAutoWindowLevel 0
+#        $volumeDisplayNode SetAutoWindowLevel 0
+        $volumeDisplayNode SetAutoWindowLevel 1
         #$volumeDisplayNode SetThresholdType 1
+       
     } elseif { [ string first "aseg" $n(uri) ] >= 0 } {
         #--- this is likely a freesurfer label map volume
         set colorLogic [ $::slicer3::ColorGUI GetLogic ]
@@ -378,8 +401,7 @@ proc XcedeCatalogImportEntryVolume {node} {
             $volumeDisplayNode SetAutoThreshold 1
         }
     }
-
-    #set logic [$::slicer3::VolumesGUI GetLogic]
+    # puts "\tFor volume [$volumeNode GetName], on volume display node [$volumeDisplayNode GetID], observing colour node [$volumeDisplayNode GetColorNodeID]. Display node window = [$volumeDisplayNode GetWindow], level = [$volumeDisplayNode GetLevel]"
     $logic SetActiveVolumeNode $volumeNode
                               
     #--- If volume freesurfer brain.mgz, set a global
@@ -432,6 +454,7 @@ proc XcedeCatalogImportEntryModel {node} {
         puts "XcedeCatalogImportEntryModel: couldn't retrieve Models Logic. Model $n(name) not imported."
         return
     }
+    puts "importing model for $n(uri)"
     set mnode [$logic AddModel $n(uri)]
     #--- maybe don't need this?
     #set snode [ $mnode GetModelStorageNode ]
@@ -742,6 +765,7 @@ proc XcedeCatalogImportFormatCheck { format } {
     #--- TODO: Add more as we know what their
     #--- XCEDE definitions are (analyze, etc.)
     
+# return 1 if have a valid storage node that can deal with remote uri's, return 2 if need to synch download
     if {$format == "FreeSurfer:mgz-1" } {
         return 1
     } elseif {$format == "nifti:nii-1" } {
@@ -761,13 +785,13 @@ proc XcedeCatalogImportFormatCheck { format } {
     } elseif { $format == "FreeSurfer:annot-1" } {
         return 1
     } elseif { $format == "FreeSurfer:mgh-1" } {
-        return 1
+        return 2
     } elseif { $format == "FreeSurfer:surface-1" } {
         return 1
     } elseif { $format == "FreeSurfer:overlay-1" } {
         return 1
     } elseif { $format == "FreeSurfer:matrix-1" } {
-        return 1
+        return 2
     }  else {
         return 0
     }
@@ -813,6 +837,7 @@ proc XcedeCatalogImportComputeFIPS2SlicerTransformCorrection { } {
     set volumesLogic [ $::slicer3::VolumesGUI GetLogic ]
 
     #--- compute some matrices.
+    #--- todo: deal with delayed read due to remote storage of data
     set mat [ vtkMatrix4x4 New]
     $volumesLogic ComputeTkRegVox2RASMatrix $v1 $mat
     $volumesLogic TranslateFreeSurferRegistrationMatrixIntoSlicerRASToRASMatrix $v1 $v2 $anat2exf $mat

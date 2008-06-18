@@ -1,27 +1,30 @@
-#include "vtkSlicerApplicationSettingsInterface.h"
-#include "vtkObjectFactory.h"
-#include "vtkKWWidget.h"
-#include "vtkKWFrame.h"
-#include "vtkKWMenu.h"
-#include "vtkKWFrameWithLabel.h"
-#include "vtkKWEntryWithLabel.h"
-#include "vtkKWSpinBoxWithLabel.h"
+#include "vtkKWCheckButton.h"
+#include "vtkKWDirectoryPresetSelector.h"
 #include "vtkKWEntry.h"
+#include "vtkKWEntryWithLabel.h"
+#include "vtkKWFrame.h"
+#include "vtkKWFrameWithLabel.h"
+#include "vtkKWFrameWithScrollbar.h"
 #include "vtkKWLabel.h"
-#include "vtkKWSpinBox.h"
-#include "vtkKWLoadSaveDialog.h"
 #include "vtkKWLoadSaveButton.h"
 #include "vtkKWLoadSaveButtonWithLabel.h"
-#include "vtkKWCheckButton.h"
+#include "vtkKWLoadSaveDialog.h"
+#include "vtkKWMenu.h"
 #include "vtkKWRadioButton.h"
 #include "vtkKWRadioButtonSet.h"
-#include "vtkKWFrameWithScrollbar.h"
+#include "vtkKWSpinBox.h"
+#include "vtkKWSpinBoxWithLabel.h"
+#include "vtkKWWidget.h"
+#include "vtkObjectFactory.h"
 #include "vtkSlicerApplication.h"
-#include "vtkSlicerTheme.h"
 #include "vtkSlicerApplicationGUI.h"
+#include "vtkSlicerApplicationSettingsInterface.h"
+#include "vtkSlicerFont.h"
+#include "vtkSlicerTheme.h"
 #include "vtkSlicerToolbarGUI.h"
 #include "vtkSlicerViewControlGUI.h"
-#include "vtkSlicerFont.h"
+
+#include "vtkSlicerConfigure.h" // Slicer3_INSTALL_* 
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkSlicerApplicationSettingsInterface );
@@ -35,14 +38,15 @@ vtkSlicerApplicationSettingsInterface::vtkSlicerApplicationSettingsInterface()
     
   this->FontSettingsFrame = NULL;
   this->ModuleSettingsFrame = NULL;
-  this->ModulePathEntry = NULL;
-  this->ModuleCachePathEntry = NULL;
+  this->ModulePathsPresetSelector = NULL;
+  this->ModuleCachePathButton = NULL;
   this->HomeModuleEntry = NULL;
   this->TemporaryDirectoryButton = NULL;
   this->BrowserSelectButton = NULL;
   this->ZipSelectButton = NULL;
   this->UnzipSelectButton = NULL;
   this->RmSelectButton = NULL;
+  this->LoadModulesCheckButton = NULL;
   this->LoadCommandLineModulesCheckButton = NULL;
   this->EnableDaemonCheckButton = NULL;
   this->FontSizeButtons = NULL;
@@ -95,16 +99,16 @@ vtkSlicerApplicationSettingsInterface::~vtkSlicerApplicationSettingsInterface()
     this->ModuleSettingsFrame = 0;
     }
 
-  if (this->ModulePathEntry)
+  if (this->ModulePathsPresetSelector)
     {
-    this->ModulePathEntry->Delete();
-    this->ModulePathEntry = 0;
+    this->ModulePathsPresetSelector->Delete();
+    this->ModulePathsPresetSelector = 0;
     }
 
-  if (this->ModuleCachePathEntry)
+  if (this->ModuleCachePathButton)
     {
-    this->ModuleCachePathEntry->Delete();
-    this->ModuleCachePathEntry = 0;
+    this->ModuleCachePathButton->Delete();
+    this->ModuleCachePathButton = 0;
     }
   
   if (this->HomeModuleEntry)
@@ -141,6 +145,12 @@ vtkSlicerApplicationSettingsInterface::~vtkSlicerApplicationSettingsInterface()
     {
     this->TemporaryDirectoryButton->Delete();
     this->TemporaryDirectoryButton = 0;
+    }
+
+  if (this->LoadModulesCheckButton)
+    {
+    this->LoadModulesCheckButton->Delete();
+    this->LoadModulesCheckButton = NULL;
     }
 
   if (this->LoadCommandLineModulesCheckButton)
@@ -516,7 +526,26 @@ void vtkSlicerApplicationSettingsInterface::Create()
   
 
   // --------------------------------------------------------------
-  // Module settings : Load modules on startup ?
+  // Module settings : Load modules on startup ? (i.e. loadable modules)
+
+  if (!this->LoadModulesCheckButton)
+    {
+    this->LoadModulesCheckButton = vtkKWCheckButton::New();
+    }
+  this->LoadModulesCheckButton->SetParent(frame);
+  this->LoadModulesCheckButton->Create();
+  this->LoadModulesCheckButton->SetText(
+    "Load Modules");
+  this->LoadModulesCheckButton->SetCommand(
+    this, "LoadModulesCallback");
+  this->LoadModulesCheckButton->SetBalloonHelpString(
+    "Control if modules should be loaded at startup.");
+
+  tk_cmd << "pack " << this->LoadModulesCheckButton->GetWidgetName()
+         << "  -side top -anchor w -expand no -fill none" << endl;
+
+  // --------------------------------------------------------------
+  // Module settings : Load commandline modules on startup ? (CLI plugins)
 
   if (!this->LoadCommandLineModulesCheckButton)
     {
@@ -525,17 +554,14 @@ void vtkSlicerApplicationSettingsInterface::Create()
   this->LoadCommandLineModulesCheckButton->SetParent(frame);
   this->LoadCommandLineModulesCheckButton->Create();
   this->LoadCommandLineModulesCheckButton->SetText(
-    "Load Command-Line Modules");
+    "Load Command-Line Plugins");
   this->LoadCommandLineModulesCheckButton->SetCommand(
     this, "LoadCommandLineModulesCallback");
   this->LoadCommandLineModulesCheckButton->SetBalloonHelpString(
-    "Control if modules should be loaded at startup.");
+    "Control if command-line plugins (CLI) should be loaded at startup.");
 
   tk_cmd << "pack " << this->LoadCommandLineModulesCheckButton->GetWidgetName()
          << "  -side top -anchor w -expand no -fill none" << endl;
-      // check states of all buttons in set.
-    //  configure font to use whatever state is ON
-
 
   // --------------------------------------------------------------
   // Module settings : Home Module
@@ -551,47 +577,38 @@ void vtkSlicerApplicationSettingsInterface::Create()
   this->HomeModuleEntry->GetWidget()->SetCommand ( 
     this, "HomeModuleCallback" );
   this->HomeModuleEntry->SetBalloonHelpString ( 
-    "Module displayed at startup and when 'home' icon is clicked." );
+    "Name of the module displayed at startup and when the 'Home' icon is clicked. Alternatively, you may set this entry using the 'Edit -> Set Home' menu entry." );
 
   tk_cmd << "pack " << this->HomeModuleEntry->GetWidgetName()
          << "  -side top -anchor w -expand no -fill x -padx 2 -pady 2" << endl;
 
   // --------------------------------------------------------------
-  // Module settings : Module Path
-
-  if (!this->ModulePathEntry)
-    {
-    this->ModulePathEntry = vtkKWEntryWithLabel::New();
-    }
-
-  this->ModulePathEntry->SetParent(frame);
-  this->ModulePathEntry->Create();
-  this->ModulePathEntry->SetLabelText("Module Path:");
-  this->ModulePathEntry->SetLabelWidth(label_width);
-  this->ModulePathEntry->GetWidget()->SetCommand(this, "ModulePathCallback");
-  this->ModulePathEntry->SetBalloonHelpString("Search path for modules.");
-
-  tk_cmd << "pack " << this->ModulePathEntry->GetWidgetName()
-         << "  -side top -anchor w -expand no -fill x -padx 2 -pady 2" << endl;
-
-  // --------------------------------------------------------------
   // Module settings : Module CachePath
 
-  if (!this->ModuleCachePathEntry)
+  if (!this->ModuleCachePathButton)
     {
-    this->ModuleCachePathEntry = vtkKWEntryWithLabel::New();
+    this->ModuleCachePathButton = vtkKWLoadSaveButtonWithLabel::New();
     }
 
-  this->ModuleCachePathEntry->SetParent(frame);
-  this->ModuleCachePathEntry->Create();
-  this->ModuleCachePathEntry->SetLabelText("Module Cache Path:");
-  this->ModuleCachePathEntry->SetLabelWidth(label_width);
-  this->ModuleCachePathEntry->GetWidget()->SetCommand(this, "ModuleCachePathCallback");
-  this->ModuleCachePathEntry->SetBalloonHelpString("Cache directory for modules.");
+  this->ModuleCachePathButton->SetParent(frame);
+  this->ModuleCachePathButton->Create();
+  this->ModuleCachePathButton->SetLabelText("Module Cache Path:");
+  this->ModuleCachePathButton->SetLabelWidth(label_width);
+  this->ModuleCachePathButton->GetWidget()->TrimPathFromFileNameOff();
+  this->ModuleCachePathButton->GetWidget()->SetCommand(
+    this, "ModuleCachePathCallback");
+  this->ModuleCachePathButton->GetWidget()
+    ->GetLoadSaveDialog()->ChooseDirectoryOn();
+  this->ModuleCachePathButton->GetWidget()
+    ->GetLoadSaveDialog()->SaveDialogOff();
+  this->ModuleCachePathButton->GetWidget()
+    ->GetLoadSaveDialog()->SetTitle("Select a directory for the module cache");
+  this->ModuleCachePathButton->SetBalloonHelpString(
+    "Cache directory for modules. Leave it empty for default location.");
 
-  tk_cmd << "pack " << this->ModuleCachePathEntry->GetWidgetName()
-         << "  -side top -anchor w -expand no -fill x -padx 2 -pady 2" << endl;
-  
+  tk_cmd << "pack " << this->ModuleCachePathButton->GetWidgetName()
+         << "  -side top -anchor w -expand no -padx 2 -pady 2" << endl;
+
   // --------------------------------------------------------------
   // Module settings : TemporaryDirectory
 
@@ -618,6 +635,39 @@ void vtkSlicerApplicationSettingsInterface::Create()
 
   tk_cmd << "pack " << this->TemporaryDirectoryButton->GetWidgetName()
          << "  -side top -anchor w -expand no -padx 2 -pady 2" << endl;
+
+  // --------------------------------------------------------------
+  // Module settings : User Module Paths
+
+  if (!this->ModulePathsPresetSelector)
+    {
+    this->ModulePathsPresetSelector = vtkKWDirectoryPresetSelector::New();
+    }
+
+  this->ModulePathsPresetSelector->SetParent(frame);
+  this->ModulePathsPresetSelector->Create();
+  this->ModulePathsPresetSelector->SetPresetAddCommand(
+    this, "ModulePathsAddCallback");
+  this->ModulePathsPresetSelector->SetPresetHasChangedCommand(
+    this, "ModulePathsHasChangedCallback");
+  this->ModulePathsPresetSelector->SetPresetRemovedCommand(
+    this, "ModulePathsRemovedCallback");
+
+  this->ModulePathsPresetSelector->SetBorderWidth(2);
+  this->ModulePathsPresetSelector->SetReliefToGroove();
+  this->ModulePathsPresetSelector->SetPadX(2);
+  this->ModulePathsPresetSelector->SetPadY(2);
+  this->ModulePathsPresetSelector->SetHelpLabelVisibility(1);
+  
+  this->ModulePathsPresetSelector->SetListHeight(6);
+  this->ModulePathsPresetSelector->UniqueDirectoriesOn();
+
+  std::string help_str;
+  help_str = help_str + "Click on the \"Add a preset\" button to add one or more new user module paths. A typical Module path ends with " + Slicer3_INSTALL_MODULES_LIB_DIR + ", whereas a Plugins/CLP path ends with " + Slicer3_INSTALL_PLUGINS_LIB_DIR + ".";
+  this->ModulePathsPresetSelector->SetHelpLabelText(help_str.c_str());
+
+  tk_cmd << "pack " << this->ModulePathsPresetSelector->GetWidgetName()
+         << "  -side top -anchor w -expand no -fill x -padx 2 -pady 2" << endl;
 
   // --------------------------------------------------------------
   // Remote Data Handling settings : main frame
@@ -871,6 +921,17 @@ void vtkSlicerApplicationSettingsInterface::ConfirmDeleteCallback(int state)
 }
 
 //----------------------------------------------------------------------------
+void vtkSlicerApplicationSettingsInterface::LoadModulesCallback(int state)
+{
+  vtkSlicerApplication *app
+    = vtkSlicerApplication::SafeDownCast(this->GetApplication());
+  if (app)
+    {
+    app->SetLoadModules(state ? 1 : 0);       
+    }
+}
+
+//----------------------------------------------------------------------------
 void vtkSlicerApplicationSettingsInterface::LoadCommandLineModulesCallback(int state)
 {
   vtkSlicerApplication *app
@@ -904,20 +965,39 @@ void vtkSlicerApplicationSettingsInterface::HomeModuleCallback(char *name)
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerApplicationSettingsInterface::ModulePathCallback(char *path)
+int vtkSlicerApplicationSettingsInterface::ModulePathsAddCallback()
+{
+  int id = this->ModulePathsPresetSelector->AddDirectoryCallback();
+  this->ModulePathsRemovedCallback();
+  return id;
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplicationSettingsInterface::ModulePathsHasChangedCallback(int)
+{
+  this->ModulePathsRemovedCallback();
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerApplicationSettingsInterface::ModulePathsRemovedCallback()
 {
   vtkSlicerApplication *app
     = vtkSlicerApplication::SafeDownCast(this->GetApplication());
-
   if (app)
     {
     // Store the setting in the application object
-    app->SetModulePath(path);
+    char *str;
+
+    str = NULL;
+    this->ModulePathsPresetSelector->GetPresetDirectoriesToDelimitedString(
+      &str, '|');
+    app->SetPotentialModulePaths(str);
+    delete [] str;
     }
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerApplicationSettingsInterface::ModuleCachePathCallback(char *path)
+void vtkSlicerApplicationSettingsInterface::ModuleCachePathCallback()
 {
   vtkSlicerApplication *app
     = vtkSlicerApplication::SafeDownCast(this->GetApplication());
@@ -925,7 +1005,7 @@ void vtkSlicerApplicationSettingsInterface::ModuleCachePathCallback(char *path)
   if (app)
     {
     // Store the setting in the application object
-    app->SetModuleCachePath(path);
+    app->SetModuleCachePath(this->ModuleCachePathButton->GetWidget()->GetLoadSaveDialog()->GetFileName());
     }
 }
 
@@ -1163,6 +1243,11 @@ void vtkSlicerApplicationSettingsInterface::Update()
       this->EnableDaemonCheckButton->SetSelectedState(
         app->GetEnableDaemon() ? 1 : 0);
       }
+    if (this->LoadModulesCheckButton)
+      {
+      this->LoadModulesCheckButton->SetSelectedState(
+        app->GetLoadModules() ? 1 : 0);
+      }
     if (this->LoadCommandLineModulesCheckButton)
       {
       this->LoadCommandLineModulesCheckButton->SetSelectedState(
@@ -1172,13 +1257,17 @@ void vtkSlicerApplicationSettingsInterface::Update()
       {
       this->HomeModuleEntry->GetWidget()->SetValue(app->GetHomeModule());
       }
-    if (this->ModulePathEntry)
+    if (this->ModulePathsPresetSelector)
       {
-      this->ModulePathEntry->GetWidget()->SetValue(app->GetModulePath());
+      this->ModulePathsPresetSelector->AddPresetDirectoriesFromDelimitedString(
+        app->GetPotentialModulePaths(), '|');
       }
-    if (this->ModuleCachePathEntry)
+    if (this->ModuleCachePathButton)
       {
-      this->ModuleCachePathEntry->GetWidget()->SetValue(app->GetModuleCachePath());
+      this->ModuleCachePathButton->GetWidget()
+        ->SetText(app->GetModuleCachePath());
+      this->ModuleCachePathButton->GetWidget()
+        ->GetLoadSaveDialog()->SetLastPath(app->GetModuleCachePath());
       }
     if ( this->FontSizeButtons )
       {

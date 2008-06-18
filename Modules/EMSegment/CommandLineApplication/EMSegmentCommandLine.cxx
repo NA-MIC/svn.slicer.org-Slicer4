@@ -273,6 +273,7 @@ void GenerateEmptyMRMLScene(const char* filename)
   // clean up
   mrmlScene->Clear(true);
   mrmlScene->Delete();
+  vtkEventBroker::GetInstance()->Delete(); 
   emLogic->SetAndObserveMRMLScene(NULL);
   emLogic->Delete();  
 }
@@ -393,7 +394,8 @@ int main(int argc, char** argv)
   if (!generateEmptyMRMLSceneAndQuit.empty())
     {
     GenerateEmptyMRMLScene(generateEmptyMRMLSceneAndQuit.c_str());
-    exit(0);
+    vtkEventBroker::GetInstance()->Delete(); 
+    return EXIT_SUCCESS;
     }
 
 #ifdef WIN32
@@ -413,7 +415,8 @@ int main(int argc, char** argv)
   if (!argsOK)
     {
     std::cerr << "Try --help for usage..." << std::endl;
-    exit(EXIT_FAILURE);
+    vtkEventBroker::GetInstance()->Delete(); 
+    return EXIT_FAILURE;
     }
 
   //
@@ -424,14 +427,16 @@ int main(int argc, char** argv)
     std::cerr << "Error: intermediate results directory does not exist." 
               << std::endl;
     std::cerr << intermediateResultsDirectory << std::endl;      
-    exit(EXIT_FAILURE);
+    vtkEventBroker::GetInstance()->Delete(); 
+    return EXIT_FAILURE;
     }
 
   if (!vtksys::SystemTools::FileExists(mrmlSceneFileName.c_str()))
     {
     std::cerr << "Error: MRML scene file does not exist." << std::endl;
     std::cerr << mrmlSceneFileName << std::endl;      
-    exit(EXIT_FAILURE);
+    vtkEventBroker::GetInstance()->Delete(); 
+    return EXIT_FAILURE;
     }
 
   if (!resultStandardVolumeFileName.empty() && 
@@ -440,9 +445,12 @@ int main(int argc, char** argv)
     std::cerr << "Error: result standard volume file does not exist." 
               << std::endl;
     std::cerr << resultStandardVolumeFileName << std::endl;      
-    exit(EXIT_FAILURE);
+    vtkEventBroker::GetInstance()->Delete(); 
+    return EXIT_FAILURE;
     }
 
+#ifndef EM_CL_GUI
+  // the gui uses <image>, the command line uses actual files
   for (unsigned int i = 0; i < targetVolumeFileNames.size(); ++i)
     {
     if (!vtksys::SystemTools::
@@ -451,7 +459,8 @@ int main(int argc, char** argv)
       std::cerr << "Error: target volume file " << i << " does not exist." 
                 << std::endl;
       std::cerr << targetVolumeFileNames[i] << std::endl;      
-      exit(EXIT_FAILURE);
+      vtkEventBroker::GetInstance()->Delete(); 
+      return EXIT_FAILURE;
       }
     }
 
@@ -463,9 +472,11 @@ int main(int argc, char** argv)
       std::cerr << "Error: atlas volume file " << i << " does not exist." 
                 << std::endl;
       std::cerr << atlasVolumeFileNames[i] << std::endl;      
-      exit(EXIT_FAILURE);
+      vtkEventBroker::GetInstance()->Delete(); 
+      return EXIT_FAILURE;
       }
     }
+#endif
 
   progressReporter.ReportProgress("Loading Data...", 
                                    currentStep++ / totalSteps);
@@ -627,13 +638,13 @@ int main(int argc, char** argv)
     // set the target images
     if (useDefaultTarget)
       {
-      if (!emMRMLManager->GetTargetNode())
+      if (!emMRMLManager->GetTargetInputNode())
         {
         throw std::runtime_error("ERROR: no default target node available.");
         }
       if (verbose) 
         std::cerr << "Using default target node named: " 
-                  << emMRMLManager->GetTargetNode()->GetName()
+                  << emMRMLManager->GetTargetInputNode()->GetName()
                   << std::endl;
       }
     else
@@ -648,11 +659,11 @@ int main(int argc, char** argv)
         mrmlScene->AddNodeNoNotify(targetNode);        
 
         // remove default target node
-        mrmlScene->RemoveNode(emMRMLManager->GetTargetNode());
+        mrmlScene->RemoveNode(emMRMLManager->GetTargetInputNode());
 
         // connect target node to segmenter
-        emMRMLManager->GetSegmenterNode()->
-          SetTargetNodeID(targetNode->GetID());
+        emMRMLManager->GetSegmenterNode()->GetWorkingDataNode()->
+          SetInputTargetNodeID(targetNode->GetID());
 
         if (verbose) 
           std::cerr << targetNode->GetID() << " DONE" << std::endl;
@@ -661,7 +672,7 @@ int main(int argc, char** argv)
 
         if (verbose)
           std::cerr << "Segmenter's target node is now: " 
-                    << emMRMLManager->GetTargetNode()->GetID()
+                    << emMRMLManager->GetTargetInputNode()->GetID()
                     << std::endl;
         }
       catch (...)
@@ -693,8 +704,8 @@ int main(int argc, char** argv)
             }
        
           // set volume name and ID in map
-          emMRMLManager->GetTargetNode()->AddVolume(volumeNode->GetID(), 
-                                                    volumeNode->GetID());
+          emMRMLManager->GetTargetInputNode()->AddVolume(volumeNode->GetID(), 
+                                                         volumeNode->GetID());
           }
         catch(...)
           {
@@ -711,11 +722,11 @@ int main(int argc, char** argv)
     // value in the parameters
     if (emMRMLManager->GetGlobalParametersNode()->
         GetNumberOfTargetInputChannels() !=
-        emMRMLManager->GetTargetNode()->GetNumberOfVolumes())
+        emMRMLManager->GetTargetInputNode()->GetNumberOfVolumes())
       {
       vtkstd::stringstream ss;
       ss << "ERROR: Number of input channels (" << 
-        emMRMLManager->GetTargetNode()->GetNumberOfVolumes()
+        emMRMLManager->GetTargetInputNode()->GetNumberOfVolumes()
          << ") does not match expected value from parameters (" << 
         emMRMLManager->GetGlobalParametersNode()->
         GetNumberOfTargetInputChannels() 
@@ -726,7 +737,7 @@ int main(int argc, char** argv)
       {
       if (verbose)
         std::cerr << "Number of input channels (" <<
-          emMRMLManager->GetTargetNode()->GetNumberOfVolumes()
+          emMRMLManager->GetTargetInputNode()->GetNumberOfVolumes()
                   << ") matches expected value from parameters (" <<
           emMRMLManager->GetGlobalParametersNode()->
           GetNumberOfTargetInputChannels() 
@@ -740,24 +751,24 @@ int main(int argc, char** argv)
     // set the atlas images
     if (useDefaultAtlas)
       {
-      if (!emMRMLManager->GetAtlasNode())
+      if (!emMRMLManager->GetAtlasInputNode())
         {
         throw std::runtime_error("ERROR: no default atlas node available.");
         }
       if (verbose) 
         std::cerr << "Using default atlas node named: " 
-                  << emMRMLManager->GetAtlasNode()->GetName()
+                  << emMRMLManager->GetAtlasInputNode()->GetName()
                   << std::endl;
       }
     else
       {
-      if (!emMRMLManager->GetAtlasNode())
+      if (!emMRMLManager->GetAtlasInputNode())
         {
         throw std::runtime_error("ERROR: parameters must already "
                                  "contain an atlas node if you wish "
                                  "to speficy atlas volumes.");
         }
-      vtkMRMLEMSAtlasNode* oldAtlasNode = emMRMLManager->GetAtlasNode();
+      vtkMRMLEMSAtlasNode* oldAtlasNode = emMRMLManager->GetAtlasInputNode();
       
       try 
         {
@@ -771,8 +782,8 @@ int main(int argc, char** argv)
         mrmlScene->AddNode(atlasNode);        
 
         // connect atlas node to segmenter
-        emMRMLManager->GetSegmenterNode()->
-          SetAtlasNodeID(atlasNode->GetID());
+        emMRMLManager->GetSegmenterNode()->GetWorkingDataNode()->
+          SetInputAtlasNodeID(atlasNode->GetID());
 
         if (verbose) 
           std::cerr << atlasNode->GetID() << " DONE" << std::endl;
@@ -781,7 +792,7 @@ int main(int argc, char** argv)
 
         if (verbose)
           std::cerr << "Segmenter's atlas node is now: " 
-                    << emMRMLManager->GetAtlasNode()->GetID()
+                    << emMRMLManager->GetAtlasInputNode()->GetID()
                     << std::endl;
         }
       catch (...)
@@ -813,7 +824,7 @@ int main(int argc, char** argv)
             }
        
           // set volume name and ID in map
-          emMRMLManager->GetAtlasNode()->
+          emMRMLManager->GetAtlasInputNode()->
             AddVolume(oldAtlasNode->GetNthKey(imageIndex), 
                       volumeNode->GetID());
           }
@@ -830,11 +841,11 @@ int main(int argc, char** argv)
       // make sure the number of atlas volumes matches the expected
       // value in the parameters
       if (oldAtlasNode->GetNumberOfVolumes() !=
-          emMRMLManager->GetAtlasNode()->GetNumberOfVolumes())
+          emMRMLManager->GetAtlasInputNode()->GetNumberOfVolumes())
         {
         vtkstd::stringstream ss;
         ss << "ERROR: Number of atlas volumes (" << 
-          emMRMLManager->GetAtlasNode()->GetNumberOfVolumes()
+          emMRMLManager->GetAtlasInputNode()->GetNumberOfVolumes()
            << ") does not match expected value from parameters (" << 
           oldAtlasNode->GetNumberOfVolumes() << ")";
         throw std::runtime_error(ss.str());
@@ -843,7 +854,7 @@ int main(int argc, char** argv)
         {
         if (verbose)
           std::cerr << "Number of atlas volumes (" <<
-            emMRMLManager->GetAtlasNode()->GetNumberOfVolumes()
+            emMRMLManager->GetAtlasInputNode()->GetNumberOfVolumes()
                     << ") matches expected value from parameters (" <<
             oldAtlasNode->GetNumberOfVolumes() << ")" << std::endl;
         }
@@ -874,16 +885,19 @@ int main(int argc, char** argv)
         // create volume node
         if (verbose) std::cerr << "Creating output volume node...";
 
+        vtkstd::string absolutePath = resultVolumeFileName;
+#ifndef EM_CL_GUI
+        // the gui uses <image>, the command line uses actual files
         //
         // Set up the filename so that a relative filename will be
         // relative to the current directory, not relative to the mrml
         // scene's path.
-        vtkstd::string absolutePath = resultVolumeFileName;
         if (!vtksys::SystemTools::FileIsFullPath(resultVolumeFileName.c_str()))
           {
           absolutePath = vtksys::SystemTools::
             CollapseFullPath(resultVolumeFileName.c_str());
           }
+#endif
 
         vtkMRMLVolumeNode* outputNode = 
           AddNewScalarArchetypeVolume(mrmlScene,
@@ -1097,6 +1111,7 @@ int main(int argc, char** argv)
   if (verbose) std::cerr << "Cleaning up...";
   mrmlScene->Clear(true);
   mrmlScene->Delete();
+  vtkEventBroker::GetInstance()->Delete(); 
   emLogic->SetAndObserveMRMLScene(NULL);
   emLogic->Delete();
   if (verbose) std::cerr << "DONE" << std::endl;

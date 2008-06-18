@@ -45,8 +45,9 @@ ImageToImageRegistrationHelper< TImage >
   m_FixedImage = 0;
   m_MovingImage = 0;
 
-  m_UseMasks = true;
+  m_UseFixedImageMaskObject = false;
   m_FixedImageMaskObject = 0;
+  m_UseMovingImageMaskObject = false;
   m_MovingImageMaskObject = 0;
 
   // Process
@@ -56,12 +57,12 @@ ImageToImageRegistrationHelper< TImage >
   m_EnableAffineRegistration = true;
   m_EnableBSplineRegistration = true;
 
-  m_ExpectedOffsetPixelMagnitude = 10;
-  m_ExpectedRotationMagnitude = 0.02;
-  m_ExpectedScaleMagnitude = 0.05;
-  m_ExpectedSkewMagnitude = 0.005;
+  m_ExpectedOffsetPixelMagnitude = 20;
+  m_ExpectedRotationMagnitude = 0.2;
+  m_ExpectedScaleMagnitude = 0.1;
+  m_ExpectedSkewMagnitude = 0.01;
 
-  m_SamplingIntensityThreshold = 0;
+  m_SamplingIntensityThreshold = 0.1;
 
   m_CompletedInitialization = false;
   m_CompletedStage = PRE_STAGE;
@@ -77,6 +78,8 @@ ImageToImageRegistrationHelper< TImage >
 
   m_FinalMetricValue = 0;
   m_ReportProgress = false;
+  m_UseOverlapAsROI = false;
+  m_MinimizeMemory = false;
 
   // Loaded
   m_LoadedMatrixTransform = 0;
@@ -111,12 +114,12 @@ ImageToImageRegistrationHelper< TImage >
   // BSpline
   m_BSplineSamplingRatio = 0.20;
   m_BSplineTargetError = 0.0001;
-  m_BSplineMaxIterations = 1000;
-  m_BSplineControlPointPixelSpacing = 30;
+  m_BSplineMaxIterations = 50;
+  m_BSplineControlPointPixelSpacing = 10;
   m_BSplineTransform = 0;
   m_BSplineMetricMethodEnum = OptimizedRegistrationMethodType::MATTES_MI_METRIC;
-  m_BSplineInterpolationMethodEnum = OptimizedRegistrationMethodType::LINEAR_INTERPOLATION;
-  m_BSplineOptimizationMethodEnum = OptimizedRegistrationMethodType::GRADIENT_OPTIMIZATION;
+  m_BSplineInterpolationMethodEnum = OptimizedRegistrationMethodType::BSPLINE_INTERPOLATION;
+  m_BSplineOptimizationMethodEnum = OptimizedRegistrationMethodType::MULTIRESOLUTION_OPTIMIZATION;
   m_BSplineMetricValue = 0;
 
 }
@@ -185,6 +188,50 @@ ImageToImageRegistrationHelper< TImage >
 template< class TImage >
 void
 ImageToImageRegistrationHelper< TImage >
+::SetFixedImageMaskObject( typename MaskObjectType::ConstPointer & maskObject )
+{
+  if( this->m_FixedImageMaskObject.GetPointer() != maskObject.GetPointer() )
+    {
+    this->m_FixedImageMaskObject = maskObject;
+
+    this->Modified();
+
+    if( maskObject.IsNotNull() )
+      {
+      m_UseFixedImageMaskObject = true;
+      }
+    else
+      {
+      m_UseFixedImageMaskObject = false;
+      }
+    }
+}
+
+template< class TImage >
+void
+ImageToImageRegistrationHelper< TImage >
+::SetMovingImageMaskObject( typename MaskObjectType::ConstPointer & maskObject )
+{
+  if( this->m_MovingImageMaskObject.GetPointer() != maskObject.GetPointer() )
+    {
+    this->m_MovingImageMaskObject = maskObject;
+
+    this->Modified();
+
+    if( maskObject.IsNotNull() )
+      {
+      m_UseMovingImageMaskObject = true;
+      }
+    else
+      {
+      m_UseMovingImageMaskObject = false;
+      }
+    }
+}
+
+template< class TImage >
+void
+ImageToImageRegistrationHelper< TImage >
 ::Initialize( void )
 {
   //m_LoadedTransform = 0;  Not Initialized - since it is a user parameter
@@ -235,7 +282,7 @@ ImageToImageRegistrationHelper< TImage >
 
   if( m_EnableLoadedRegistration 
       && ( m_LoadedMatrixTransform.IsNotNull() 
-           || m_LoadedBSplineTransform.IsNotNull() ) )
+          || m_LoadedBSplineTransform.IsNotNull() ) )
     {
     if( m_LoadedTransformResampledImage.IsNotNull() )
       {
@@ -249,45 +296,50 @@ ImageToImageRegistrationHelper< TImage >
                                    m_LoadedMatrixTransform,
                                    m_LoadedBSplineTransform );
       m_CurrentMovingImage = m_LoadedTransformResampledImage;
-
+ 
       }
-
+ 
     m_MatrixTransformResampledImage = 0;
     m_BSplineTransformResampledImage = 0;
-
+ 
     m_CompletedStage = LOAD_STAGE;
     m_CompletedResampling = true;
-
+ 
     m_CurrentMatrixTransform = 0;
     m_CurrentBSplineTransform = 0;
     }
 
-  if( m_EnableInitialRegistration
-      && m_InitialMethodEnum != INIT_WITH_NONE
-      && m_InitialMethodEnum != INIT_WITH_CURRENT_RESULTS )
+  if( this->GetReportProgress() )
     {
-    if( this->GetReportProgress() )
+    std::cout << "*** INITIAL REGISTRATION ***" << std::endl;
+    }
+ 
+  typename InitialRegistrationMethodType::Pointer reg =
+                                        InitialRegistrationMethodType::New();
+  reg->SetReportProgress( m_ReportProgress );
+  reg->SetMovingImage( m_CurrentMovingImage );
+  reg->SetFixedImage( m_FixedImage );
+  if( m_UseFixedImageMaskObject )
+    {
+    if( m_FixedImageMaskObject.IsNotNull() )
       {
-      std::cout << "*** INITIAL REGISTRATION ***" << std::endl;
+      reg->SetFixedImageMaskObject( m_FixedImageMaskObject );
       }
-
-    typename InitialRegistrationMethodType::Pointer reg = InitialRegistrationMethodType::New();
-    reg->SetReportProgress( m_ReportProgress );
-    reg->SetMovingImage( m_CurrentMovingImage );
-    reg->SetFixedImage( m_FixedImage );
-    if( m_UseMasks )
+    }
+  if( m_UseMovingImageMaskObject )
+    {
+    if( m_MovingImageMaskObject.IsNotNull() )
       {
-      if( m_FixedImageMaskObject.IsNotNull() )
-        {
-        reg->SetFixedImageMaskObject( m_FixedImageMaskObject );
-        }
-      if( m_MovingImageMaskObject.IsNotNull() )
-        {
-        reg->SetMovingImageMaskObject( m_MovingImageMaskObject );
-        }
+      reg->SetMovingImageMaskObject( m_MovingImageMaskObject );
       }
+    }
+  if( m_EnableInitialRegistration )
+    {
     switch( m_InitialMethodEnum )
       {
+      case INIT_WITH_NONE:
+        reg->SetComputeCenterOfRotationOnly( true );
+        break;
       case INIT_WITH_IMAGE_CENTERS:
         reg->SetNumberOfMoments( 0 );
         break;
@@ -297,22 +349,29 @@ ImageToImageRegistrationHelper< TImage >
       case INIT_WITH_SECOND_MOMENTS:
         reg->SetNumberOfMoments( 2 );
         break;
+      case INIT_WITH_CURRENT_RESULTS:
       default:
         break;
       }
-
-    reg->Update();
-
-    m_InitialTransform = reg->GetTypedTransform();
-    m_CurrentMatrixTransform = reg->GetAffineTransform();
-    m_CurrentBSplineTransform = 0;
-
-    m_CompletedStage = INIT_STAGE;
-    m_CompletedResampling = false;
     }
+  else
+    {
+    reg->SetComputeCenterOfRotationOnly( true );
+    }
+ 
+  reg->Update();
 
-  typename ImageType::SizeType fixedImageSize = m_FixedImage->GetLargestPossibleRegion().GetSize();
-  unsigned long fixedImageNumPixels = m_FixedImage->GetLargestPossibleRegion().GetNumberOfPixels();
+  m_InitialTransform = reg->GetAffineTransform();
+  m_CurrentMatrixTransform = m_InitialTransform;
+  m_CurrentBSplineTransform = 0;
+ 
+  m_CompletedStage = INIT_STAGE;
+  m_CompletedResampling = false;
+
+  typename ImageType::SizeType fixedImageSize;
+  fixedImageSize = m_FixedImage->GetLargestPossibleRegion().GetSize();
+  unsigned long fixedImageNumPixels = m_FixedImage->GetLargestPossibleRegion()
+                                                    .GetNumberOfPixels();
 
   if( m_EnableRigidRegistration )
     {
@@ -321,11 +380,13 @@ ImageToImageRegistrationHelper< TImage >
       std::cout << "*** RIGID REGISTRATION ***" << std::endl;
       }
 
-    typename RigidRegistrationMethodType::Pointer reg = RigidRegistrationMethodType::New();
+    typename RigidRegistrationMethodType::Pointer reg;
+    reg = RigidRegistrationMethodType::New();
     reg->SetReportProgress( m_ReportProgress );
     reg->SetMovingImage( m_CurrentMovingImage );
     reg->SetFixedImage( m_FixedImage );
-    reg->SetNumberOfSamples( (unsigned int)( m_RigidSamplingRatio * fixedImageNumPixels ) );
+    reg->SetNumberOfSamples( (unsigned int)( m_RigidSamplingRatio 
+                                             * fixedImageNumPixels ) );
     if( m_SamplingIntensityThreshold > 0 )
       {
       typedef MinimumMaximumImageCalculator< ImageType >  MinMaxCalcType;
@@ -336,19 +397,24 @@ ImageToImageRegistrationHelper< TImage >
       PixelType fixedImageMin = calc->GetMinimum();
 
       reg->SetFixedImageSamplesIntensityThreshold( static_cast<PixelType>( 
-                                                   ( m_SamplingIntensityThreshold 
-                                                     * (fixedImageMax - fixedImageMin) )
-                                                   + fixedImageMin ) );
+                                          ( m_SamplingIntensityThreshold 
+                                            * (fixedImageMax - fixedImageMin) )
+                                          + fixedImageMin ) );
       }
 
+    reg->SetUseOverlapAsROI( m_UseOverlapAsROI );
+    reg->SetMinimizeMemory( m_MinimizeMemory );
     reg->SetMaxIterations( m_RigidMaxIterations );
     reg->SetTargetError( m_RigidTargetError );
-    if( m_UseMasks )
+    if( m_UseFixedImageMaskObject )
       {
       if( m_FixedImageMaskObject.IsNotNull() )
         {
         reg->SetFixedImageMaskObject( m_FixedImageMaskObject );
         }
+      }
+    if( m_UseMovingImageMaskObject )
+      {
       if( m_MovingImageMaskObject.IsNotNull() )
         {
         reg->SetMovingImageMaskObject( m_MovingImageMaskObject );
@@ -379,6 +445,7 @@ ImageToImageRegistrationHelper< TImage >
       {
       std::cerr << "ERROR: Only 2 and 3 dimensional images are supported due to rigid registration transforms limitations." << std::endl;
       }
+    /*
     double minS = scales[0];
     for(unsigned int i=1; i<scales.size(); i++)
       {
@@ -393,7 +460,7 @@ ImageToImageRegistrationHelper< TImage >
         {
         scales[i] /= minS;
         }
-      }
+      }*/
     reg->SetTransformParametersScales( scales );
     
     if( m_CurrentMatrixTransform.IsNotNull() )
@@ -402,11 +469,14 @@ ImageToImageRegistrationHelper< TImage >
       reg->GetTypedTransform()->SetMatrix( m_CurrentMatrixTransform->GetMatrix() );
       reg->GetTypedTransform()->SetOffset( m_CurrentMatrixTransform->GetOffset() );
       reg->SetInitialTransformParameters( reg->GetTypedTransform()->GetParameters() );
+      reg->SetInitialTransformFixedParameters( reg->GetTypedTransform()->GetFixedParameters() );
       }
 
     reg->Update();
 
-    m_RigidTransform = reg->GetTypedTransform();
+    m_RigidTransform = RigidTransformType::New();
+    m_RigidTransform->SetFixedParameters(reg->GetTypedTransform()->GetFixedParameters() );
+    m_RigidTransform->SetParametersByValue(reg->GetTypedTransform()->GetParameters() );
     m_CurrentMatrixTransform = reg->GetAffineTransform();
     m_CurrentBSplineTransform = 0;
 
@@ -429,18 +499,37 @@ ImageToImageRegistrationHelper< TImage >
     reg->SetMovingImage( m_CurrentMovingImage );
     reg->SetFixedImage( m_FixedImage );
     reg->SetNumberOfSamples( (unsigned int)(m_AffineSamplingRatio * fixedImageNumPixels) );
+    reg->SetUseOverlapAsROI( m_UseOverlapAsROI );
+    reg->SetMinimizeMemory( m_MinimizeMemory );
     reg->SetMaxIterations( m_AffineMaxIterations );
     reg->SetTargetError( m_AffineTargetError );
-    if( m_UseMasks )
+    if( m_UseFixedImageMaskObject )
       {
       if( m_FixedImageMaskObject.IsNotNull() )
         {
         reg->SetFixedImageMaskObject( m_FixedImageMaskObject );
         }
+      }
+    if( m_UseMovingImageMaskObject )
+      {
       if( m_MovingImageMaskObject.IsNotNull() )
         {
         reg->SetMovingImageMaskObject( m_MovingImageMaskObject );
         }
+      }
+    if( m_SamplingIntensityThreshold > 0 )
+      {
+      typedef MinimumMaximumImageCalculator< ImageType >  MinMaxCalcType;
+      typename MinMaxCalcType::Pointer calc = MinMaxCalcType::New();
+      calc->SetImage( m_FixedImage );
+      calc->Compute();
+      PixelType fixedImageMax = calc->GetMaximum();
+      PixelType fixedImageMin = calc->GetMinimum();
+
+      reg->SetFixedImageSamplesIntensityThreshold( static_cast<PixelType>( 
+                                          ( m_SamplingIntensityThreshold 
+                                            * (fixedImageMax - fixedImageMin) )
+                                          + fixedImageMin ) );
       }
     reg->SetMetricMethodEnum( m_AffineMetricMethodEnum );
     reg->SetInterpolationMethodEnum( m_AffineInterpolationMethodEnum );
@@ -468,6 +557,7 @@ ImageToImageRegistrationHelper< TImage >
       scales[scaleNum] = 1.0 / (m_ExpectedOffsetPixelMagnitude * m_FixedImage->GetSpacing()[0]);
       ++scaleNum;
       }
+    /*
     double minS = scales[0];
     for(unsigned int i=1; i<scaleNum; i++)
       {
@@ -482,7 +572,7 @@ ImageToImageRegistrationHelper< TImage >
         {
         scales[i] /= minS;
         }
-      }
+      }*/
     reg->SetTransformParametersScales( scales );
 
     if( m_CurrentMatrixTransform.IsNotNull() )
@@ -491,12 +581,13 @@ ImageToImageRegistrationHelper< TImage >
       reg->GetTypedTransform()->SetMatrix( m_CurrentMatrixTransform->GetMatrix() );
       reg->GetTypedTransform()->SetOffset( m_CurrentMatrixTransform->GetOffset() );
       reg->SetInitialTransformParameters( reg->GetTypedTransform()->GetParameters() );
+      reg->SetInitialTransformFixedParameters( reg->GetTypedTransform()->GetFixedParameters() );
       }
 
     reg->Update();
 
-    m_AffineTransform = reg->GetTypedTransform();
-    m_CurrentMatrixTransform = reg->GetAffineTransform();
+    m_AffineTransform = reg->GetAffineTransform();
+    m_CurrentMatrixTransform = m_AffineTransform;
     m_CurrentBSplineTransform = 0;
 
     m_FinalMetricValue = reg->GetFinalMetricValue();
@@ -517,7 +608,7 @@ ImageToImageRegistrationHelper< TImage >
       {
       m_CurrentMovingImage = this->ResampleImage();
       m_CompletedResampling = true;
-      this->SaveImage("affineResampled.mha", m_CurrentMovingImage);
+      //this->SaveImage("affineResampled.mha", m_CurrentMovingImage);
       }
 
     typename BSplineRegistrationMethodType::Pointer reg = BSplineRegistrationMethodType::New();
@@ -525,18 +616,37 @@ ImageToImageRegistrationHelper< TImage >
     reg->SetMovingImage( m_CurrentMovingImage );
     reg->SetFixedImage( m_FixedImage );
     reg->SetNumberOfSamples( (unsigned int)(m_BSplineSamplingRatio * fixedImageNumPixels) );
+    reg->SetUseOverlapAsROI( m_UseOverlapAsROI );
+    reg->SetMinimizeMemory( m_MinimizeMemory );
     reg->SetMaxIterations( m_BSplineMaxIterations );
     reg->SetTargetError( m_BSplineTargetError );
-    if( m_UseMasks )
+    if( m_UseFixedImageMaskObject )
       {
       if( m_FixedImageMaskObject.IsNotNull() )
         {
         reg->SetFixedImageMaskObject( m_FixedImageMaskObject );
         }
+      }
+    if( m_UseMovingImageMaskObject )
+      {
       if( m_MovingImageMaskObject.IsNotNull() )
         {
         reg->SetMovingImageMaskObject( m_MovingImageMaskObject );
         }
+      }
+    if( m_SamplingIntensityThreshold > 0 )
+      {
+      typedef MinimumMaximumImageCalculator< ImageType >  MinMaxCalcType;
+      typename MinMaxCalcType::Pointer calc = MinMaxCalcType::New();
+      calc->SetImage( m_FixedImage );
+      calc->Compute();
+      PixelType fixedImageMax = calc->GetMaximum();
+      PixelType fixedImageMin = calc->GetMinimum();
+
+      reg->SetFixedImageSamplesIntensityThreshold( static_cast<PixelType>( 
+                                          ( m_SamplingIntensityThreshold 
+                                            * (fixedImageMax - fixedImageMin) )
+                                          + fixedImageMin ) );
       }
     reg->SetMetricMethodEnum( m_BSplineMetricMethodEnum );
     reg->SetInterpolationMethodEnum( m_BSplineInterpolationMethodEnum );
@@ -545,7 +655,7 @@ ImageToImageRegistrationHelper< TImage >
 
     reg->Update();
 
-    m_BSplineTransform = reg->GetTypedTransform();
+    m_BSplineTransform = reg->GetBSplineTransform();
     m_CurrentBSplineTransform = m_BSplineTransform;
 
     m_FinalMetricValue = reg->GetFinalMetricValue();
@@ -670,7 +780,7 @@ ImageToImageRegistrationHelper< TImage >
   interpolator->SetInputImage( mImage );
   resampler->SetInput( mImage );
   resampler->SetInterpolator( interpolator.GetPointer() );
-  resampler->SetOutputParametersFromImage( m_FixedImage );
+  resampler->SetOutputParametersFromConstImage( m_FixedImage );
 
   if( doLoaded 
       && ( m_LoadedMatrixTransform.IsNotNull()
@@ -900,7 +1010,7 @@ ImageToImageRegistrationHelper< TImage >
   m_LoadedBSplineTransform->SetGridRegion( tfm.GetGridRegion() );
   m_LoadedBSplineTransform->SetGridSpacing( tfm.GetGridSpacing() );
   m_LoadedBSplineTransform->SetGridOrigin( tfm.GetGridOrigin() );
-  m_LoadedBSplineTransform->SetParameters( tfm.GetParameters() );
+  m_LoadedBSplineTransform->SetParametersByValue( tfm.GetParameters() );
 
   m_EnableLoadedRegistration = true;
   m_LoadedTransformResampledImage = 0;
@@ -1005,12 +1115,14 @@ ImageToImageRegistrationHelper< TImage >
     os << indent << "Moving Image = " << m_MovingImage << std::endl;
     }
   os << indent << std::endl;
-  os << indent << "Use Masks = " << m_UseMasks << std::endl;
+  os << indent << "Use Fixed Image Mask Object = " << m_UseFixedImageMaskObject << std::endl;
   os << indent << std::endl;
   if( m_FixedImageMaskObject.IsNotNull() )
     {
     os << indent << "Fixed Image Mask Object = " << m_FixedImageMaskObject << std::endl;
     }
+  os << indent << "Use Moving Image Mask Object = " << m_UseMovingImageMaskObject << std::endl;
+  os << indent << std::endl;
   if( m_MovingImageMaskObject.IsNotNull() )
     {
     os << indent << "Moving Image Mask Object = " << m_MovingImageMaskObject << std::endl;

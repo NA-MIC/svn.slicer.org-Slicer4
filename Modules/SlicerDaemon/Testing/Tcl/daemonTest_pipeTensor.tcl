@@ -4,7 +4,15 @@ global state
 # Write tcl output to a file
 #
 
-set outfile [open "$::env(SLICER_HOME)/Modules/SlicerDaemon/Testing/DaemonTest_pipeTensor.txt" w]
+# TODO: $::env(Slicer3_HOME)/share/Slicer3/Modules should be avoided, since
+# the module could have been loaded from the user module paths (see
+# vtkSlicerApplication::GetModulePaths), therefore its testing data are
+# not inside env(Slicer3_HOME). Fix this by using 
+# vtkSlicerModuleLogic::GetModuleShareDirectory (i.e. find the SlicerDeamon
+# module reference, its logic, and call this method to retrive the full
+# path to the share/ directory for this module)
+
+set outfile [open "$::env(Slicer3_HOME)/share/Slicer3/Modules/SlicerDaemon/Testing/DaemonTest_pipeTensor.txt" w]
 puts  $outfile "This is a Slicer Daemon tensor test"
 puts  $outfile "-------------------------------------\n"
 
@@ -35,20 +43,36 @@ proc launch_FileEvent {fp} {
     }
 }
 
-$::slicer3::MRMLScene SetURL  $::env(SLICER_HOME)/../Slicer3/Modules/SlicerDaemon/Testing/slicerDaemonTensorTestData.mrml
+# TODO: $::env(Slicer3_HOME)/share/Slicer3/Modules should be avoided, since
+# the module could have been loaded from the user module paths (see
+# vtkSlicerApplication::GetModulePaths), therefore its testing data are
+# not inside env(Slicer3_HOME). Fix this by using 
+# vtkSlicerModuleLogic::GetModuleShareDirectory (i.e. find the SlicerDeamon
+# module reference, its logic, and call this method to retrive the full
+# path to the share/ directory for this module)
+
+$::slicer3::MRMLScene SetURL  $::env(Slicer3_HOME)/share/Slicer3/Modules/SlicerDaemon/Testing/slicerDaemonTensorTestData.mrml
 $::slicer3::MRMLScene Connect
 
 set tensor_name "helix-DTI.nhdr"
 set piped_tensor_name "tensor_piped_around"
 
 puts  $outfile "Open command pipeline channel for command \
-tclsh $::env(SLICER_HOME)/../Slicer3/Modules/SlicerDaemon/Tcl/slicerget.tcl $tensor_name | \
-tclsh $::env(SLICER_HOME)/../Slicer3/Modules/SlicerDaemon/Tcl/slicerput.tcl $piped_tensor_name"
+tclsh $::env(Slicer3_HOME)/lib/Slicer3/Modules/SlicerDaemon/Tcl/slicerget.tcl $tensor_name | \
+tclsh $::env(Slicer3_HOME)/lib/Slicer3/Modules/SlicerDaemon/Tcl/slicerput.tcl $piped_tensor_name"
 
 update
 set ::SLICERD(approved) "yes"
 
-set fp [open "| tclsh $::env(SLICER_HOME)/../Slicer3/Modules/SlicerDaemon/Tcl/slicerget.tcl $tensor_name | tclsh $::env(SLICER_HOME)/../Slicer3/Modules/SlicerDaemon/Tcl/slicerput.tcl $piped_tensor_name" r ]
+# TODO: $::env(Slicer3_HOME)/share/Slicer3/Modules should be avoided, since
+# the module could have been loaded from the user module paths (see
+# vtkSlicerApplication::GetModulePaths), therefore its testing data are
+# not inside env(Slicer3_HOME). Fix this by using 
+# vtkSlicerModuleLogic::GetModuleShareDirectory (i.e. find the SlicerDeamon
+# module reference, its logic, and call this method to retrive the full
+# path to the share/ directory for this module)
+
+set fp [open "| tclsh $::env(Slicer3_HOME)/lib/Slicer3/Modules/SlicerDaemon/Tcl/slicerget.tcl $tensor_name | tclsh $::env(Slicer3_HOME)/lib/Slicer3/Modules/SlicerDaemon/Tcl/slicerput.tcl $piped_tensor_name" r ]
 #fconfigure $fp -blocking 0
 
 puts $outfile "Wait until there's no more output to stdout coming from the channel ..."

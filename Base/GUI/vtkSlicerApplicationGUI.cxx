@@ -69,7 +69,9 @@
 
 #include "vtkSlicerFiducialListWidget.h"
 
-#ifdef USE_PYTHON
+#include "vtkSlicerConfigure.h" /* Slicer3_USE_* */
+
+#ifdef Slicer3_USE_PYTHON
 #ifdef _DEBUG
 #undef _DEBUG
 #include <Python.h>
@@ -119,13 +121,15 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
     this->GridFrame1 = vtkKWFrame::New ( );
     this->GridFrame2 = vtkKWFrame::New ( );
 
-    // initialize in case any are not defined.
-    this->ApplicationToolbar = NULL;
-    this->ViewControlGUI = NULL;
-    this->SlicesControlGUI = NULL;
-    this->LogoDisplayGUI = NULL;
-    
-    //--- GUIs containing components packed inside the Frames
+
+  // initialize in case any are not defined.
+  this->ApplicationToolbar = NULL;
+  this->ViewControlGUI = NULL;
+  this->SlicesControlGUI = NULL;
+  this->LogoDisplayGUI = NULL;
+  this->SlicerFoundationIcons = NULL;
+  
+  //--- GUIs containing components packed inside the Frames
 #ifndef TOOLBAR_DEBUG
     this->ApplicationToolbar = vtkSlicerToolbarGUI::New ( );
 #endif
@@ -155,7 +159,7 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
     //--- so that they can be identified and deleted when 
     //--- viewer is reformatted.
     this->ViewerPageTag = 1999;
-    this->NCompareViewRows = 0;
+    this->NCompareViewRows = 2;
 //    this->NCompareViewColumns = 0;
 }
 
@@ -241,7 +245,13 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
         this->SlicesGUI->Delete();
         this->SlicesGUI = NULL;
       }
-    
+
+    if ( this->SlicerFoundationIcons )
+      {
+      this->SlicerFoundationIcons->Delete();
+      this->SlicerFoundationIcons =  NULL;
+      }
+
     this->SetApplication(NULL);
     this->SetApplicationLogic ( NULL );
 }
@@ -335,7 +345,7 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
           }
         else if ( this->GetMRMLScene() && fl.find(".xcat") != std::string::npos )
           {
-          this->Script ( "XcedeCatalogImport %s", fileName);
+          this->Script ( "XcatalogImport \"%s\"", fileName);
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
 
@@ -354,6 +364,14 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
     return;
 }
 
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessPublishToXnatCommand()
+{
+  this->Script ("XnatPublish_PublishScene");
+}
+
+ 
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
 {
@@ -379,7 +397,7 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
           }
         else if ( this->GetMRMLScene() && fl.find(".xcat") != std::string::npos )
           {
-          this->Script ( "XcedeCatalogImport %s", fileName);
+          this->Script ( "XCatalogImport %s", fileName);
           this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
           }
 
@@ -703,6 +721,8 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
                                              app->GetApplicationWindowHeight(),
                                              app->GetApplicationSlicesFrameHeight());
 
+        this->SlicerFoundationIcons = vtkSlicerFoundationIcons::New();
+        
         if ( this->MainSlicerWindow != NULL ) {
 
             // set up Slicer's main window
@@ -771,8 +791,8 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
 
 #ifndef SLICEVIEWER_DEBUG
             // restore view layout from application registry...
-            //this->BuildMainViewer ( app->GetApplicationLayoutType());
-            this->BuildMainViewer (vtkSlicerGUILayout::SlicerLayoutDefaultView );
+            this->BuildMainViewer ( app->GetApplicationLayoutType());
+            //this->BuildMainViewer (vtkSlicerGUILayout::SlicerLayoutDefaultView );
 #endif
 
             // after SliceGUIs are created, the ViewControlGUI
@@ -810,6 +830,9 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             this->MainSlicerWindow->GetFileMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
             i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
+                                                                           "Publish to XNAT Host...", this, "ProcessPublishToXnatCommand");
+
+            i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                                "Close Scene", this, "ProcessCloseSceneCommand");
             this->MainSlicerWindow->GetFileMenu()->SetItemAccelerator ( i, "Ctrl-W");
             this->MainSlicerWindow->GetFileMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
@@ -839,7 +862,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "space");
             this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
 
-#ifdef USE_PYTHON
+#ifdef Slicer3_USE_PYTHON
             i = this->MainSlicerWindow->GetWindowMenu()->AddCommand ( "Python console", NULL, "$::slicer3::ApplicationGUI PythonConsole" );
             this->MainSlicerWindow->GetWindowMenu()->SetItemAccelerator ( i, "Ctrl+P");
             this->MainSlicerWindow->GetWindowMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
@@ -903,6 +926,12 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
                                                                        this->GetMainSlicerWindow()->GetViewMenuInsertPosition(),
                                                                        "Cache & Remote I/O Manager", NULL, "$::slicer3::RemoteIOGUI DisplayManagerWindow");
 
+            i = this->GetMainSlicerWindow()->GetViewMenu()->InsertCommand (
+                                                                       this->GetMainSlicerWindow()->GetViewMenuInsertPosition(),
+                                                                       "Module Search", NULL, "::ModuleSearch::ShowDialog");
+            this->GetMainSlicerWindow()->GetViewMenu()->SetItemAccelerator ( i, "slash");
+            this->GetMainSlicerWindow()->GetViewMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
+
             //
             // Help Menu
             //
@@ -920,7 +949,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
             
             this->LoadSceneDialog->SetParent ( this->MainSlicerWindow );
             this->LoadSceneDialog->Create ( );
-            this->LoadSceneDialog->SetFileTypes("{ {Scenes} {.mrml .xml} } { {MRML Scene} {.mrml} } { {Slicer2 Scene} {.xml} } { {Xcede Catalog} {.xcat} } { {All} {.*} }");
+            this->LoadSceneDialog->SetFileTypes("{ {Scenes} {.mrml .xml .xcat} } { {MRML Scene} {.mrml} } { {Slicer2 Scene} {.xml} } { {Xcede Catalog} {.xcat} } { {All} {.*} }");
             this->LoadSceneDialog->RetrieveLastPathFromRegistry("OpenPath");
 
 #endif
@@ -1098,8 +1127,9 @@ void vtkSlicerApplicationGUI::InitializeViewControlGUI (  )
 void vtkSlicerApplicationGUI::PythonConsole (  )
 {
   
-#ifdef USE_PYTHON
-  PyObject* d = vtkSlicerApplication::GetInstance()->GetPythonDictionary();
+#ifdef Slicer3_USE_PYTHON
+  PyObject* d = 
+    (PyObject*)(vtkSlicerApplication::GetInstance()->GetPythonDictionary());
   if ( d == NULL )
     {
     vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", "Failed to startup python interpreter: dictionary null" );

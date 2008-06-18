@@ -11,6 +11,7 @@
 #include "vtkKWNotebook.h"
 #include "vtkKWFrame.h"
 #include "vtkSmartPointer.h"
+#include "vtkIntArray.h"
 
 #include "vtkSlicerBaseGUIWin32Header.h"
 #include "vtkSlicerModuleCollapsibleFrame.h"
@@ -73,8 +74,17 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModuleGUI : public vtkSlicerComponentG
 
   // Description:
   // Set the module logic
-  virtual void SetModuleLogic( vtkSlicerLogic *logic ) { }; 
+  virtual void SetModuleLogic( vtkSlicerLogic * ); 
   
+  // Description: 
+  // The name of the Module
+  vtkGetStringMacro (ModuleName);
+  vtkSetStringMacro (ModuleName);
+
+  //Description:
+  // Implemented module initialization if needed
+  virtual void Init() { };
+
   // Description:
   // Configures a module's help frame, with acknowledgment
   // in a consistent manner
@@ -98,6 +108,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModuleGUI : public vtkSlicerComponentG
     // alternative method to propagate events generated in GUI to logic / mrml
     virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
       unsigned long /*event*/, void * /*callData*/ ) { };
+
+  // Overload in modules that observe events, used during Loadable Module
+  // discovery. CLIENT MUST DELETE!
+  virtual vtkIntArray* NewObservableEvents() { return vtkIntArray::New(); };
+
  //BTX
   enum
     {
@@ -105,6 +120,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModuleGUI : public vtkSlicerComponentG
    };
 //ETX
  protected:
+
+  char *ModuleName;
 
     // Description:
     // This user interface panel is populated with the GUI's widgets,

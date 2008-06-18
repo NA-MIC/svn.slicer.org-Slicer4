@@ -32,11 +32,11 @@ if { [itcl::find class SliceSWidget] == "" } {
     variable _actionStartViewportOrigin "0 0"
     variable _actionStartWindowXY "0 0"
     variable _actionStartFOV "250 250 250"
-    variable _kwObserverTags ""
     variable _fiducialsSWidget ""
     variable _gridSWidget ""
     variable _crosshairSWidget ""
     variable _regionsSWidget ""
+    variable _slicePlaneSWidget ""
 
     # methods
     method resizeSliceNode {} {}
@@ -49,7 +49,6 @@ if { [itcl::find class SliceSWidget] == "" } {
     method jumpSlice { r a s } {}
     method jumpOtherSlices { r a s } {}
     method getLinkedSliceLogics {} {}
-    method getValidLinkedSliceLogics {} {}
   }
 }
 
@@ -65,6 +64,7 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
   $_gridSWidget configure -layer "label"
   set _crosshairSWidget [CrosshairSWidget #auto $sliceGUI]
   set _regionsSWidget [RegionsSWidget #auto $sliceGUI]
+  set _slicePlaneSWidget [SlicePlaneSWidget #auto $sliceGUI]
  
   # create matrices to store transform state
   set o(storeXYToRAS) [$this vtkNew vtkMatrix4x4]
@@ -97,11 +97,9 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
 
   #
   # set up observers on sliceGUI and on sliceNode
-  # - track them so they can be removed in the destructor
   #
-  set _guiObserverTags ""
 
-  lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
+  $::slicer3::Broker AddObservation $sliceGUI DeleteEvent "::SWidget::ProtectedDelete $this"
 
   set events {  "MouseMoveEvent" "RightButtonPressEvent" "RightButtonReleaseEvent"
     "LeftButtonPressEvent" "LeftButtonReleaseEvent" "MiddleButtonPressEvent"
@@ -110,12 +108,12 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
     "TimerEvent" "KeyPressEvent" "KeyReleaseEvent"
     "CharEvent" "ExitEvent" "UserEvent" }
   foreach event $events {
-   lappend _guiObserverTags [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent"]    
+    $::slicer3::Broker AddObservation $sliceGUI $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI $event"
   }
 
   set node [[$sliceGUI GetLogic] GetSliceNode]
-  lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent"]
+  $::slicer3::Broker AddObservation $node DeleteEvent "::SWidget::ProtectedDelete $this"
+#  $::slicer3::Broker AddObservation $node AnyEvent "::SWidget::ProtectedCallback $this processEvent $node AnyEvent"
 }
 
 
@@ -129,17 +127,7 @@ itcl::body SliceSWidget::destructor {} {
 
   ::SWidget::ProtectedDelete $_regionsSWidget
 
-  if { [info command $sliceGUI] != "" } {
-    foreach tag $_guiObserverTags {
-      $sliceGUI RemoveObserver $tag
-    }
-  }
-
-  if { [info command $_sliceNode] != "" } {
-    foreach tag $_nodeObserverTags {
-      $_sliceNode RemoveObserver $tag
-    }
-  }
+  ::SWidget::ProtectedDelete $_slicePlaneSWidget
 
   $_renderWidget RemoveAllRenderers
 }
@@ -154,7 +142,6 @@ itcl::body SliceSWidget::destructor {} {
 # make sure the size of the slice matches the window size of the widget
 #
 itcl::body SliceSWidget::resizeSliceNode {} {
-#  puts "[$_sliceNode Print]"
 
   set epsilon 1.0e-6
 
@@ -209,8 +196,11 @@ itcl::body SliceSWidget::resizeSliceNode {} {
        set fovz [expr $sliceStep * $nodeD]
     }
 
+    $_sliceNode DisableModifiedEventOn
     $_sliceNode SetDimensions $w $h $nodeD
     $_sliceNode SetFieldOfView $fovx $fovy $fovz
+    $_sliceNode DisableModifiedEventOff
+    $_sliceNode InvokePendingModifiedEvent
   }
 }
 
@@ -218,7 +208,7 @@ itcl::body SliceSWidget::resizeSliceNode {} {
 # handle interactor events
 #
 itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
-
+  # puts "$this $_sliceNode [$_sliceNode GetLayoutName] $caller $event"
 
   if { [info command $sliceGUI] == "" } {
     # the sliceGUI was deleted behind our back, so we need to 
@@ -241,7 +231,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
   # - fill the layers info with local info
   # - get the RAS space location of the event
   #
-  set event [$sliceGUI GetCurrentGUIEvent] 
   if { $event != "ConfigureEvent" } {
     set tkwindow [$_renderWidget  GetWidgetName]
     $_interactor UpdateSize [winfo width $tkwindow] [winfo height $tkwindow]
@@ -277,7 +266,14 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
   set pokedRenderer [$_interactor FindPokedRenderer $windowx $windowy]
   set renderer0 [$_renderWidget GetRenderer]
 
-  foreach {x y z} [$this dcToXYZ $windowx $windowy] {}
+  foreach {x y z} [$this dcToXYZ $windowx $windowy] {}  
+
+  if { $x < 0 } { 
+    set x 0
+  }
+  if { $y < 0 } { 
+    set y 0
+  }
 
   # We should really use the pokedrenderer's size for these calculations.
   # However, viewports in the LightBox can differ in size by a pixel.  So 
@@ -337,11 +333,9 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
               set v [$o(scratchMatrix) GetElement $i 3]
               $o(scratchMatrix) SetElement $i 3 [expr $v - [set $d]]
             }
-            #[$_sliceNode GetSliceToRAS] DeepCopy $o(scratchMatrix)
-            #$_sliceNode UpdateMatrices
 
             # get the linked logics (including self)
-            set sliceLogics [$this getValidLinkedSliceLogics]
+            set sliceLogics [$this getLinkedSliceLogics]
             # save state for undo
             
             # set the SliceToRAS on each slice node
@@ -370,19 +364,15 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
               foreach f $_actionStartFOV factor "$percent $percent 1" {
                 lappend newFOV [expr $f * $factor]
               }
-              #eval $_sliceNode SetFieldOfView $newFOV
-              #$_sliceNode UpdateMatrices
 
               # get the linked logics (including self)
-#              set sliceLogics [$this getLinkedSliceLogics]
-                set sliceLogics [$this getValidLinkedSliceLogics]
+              set sliceLogics [$this getLinkedSliceLogics]
               # save state for undo
                 
               # set the field of view on each slice node
               foreach logic $sliceLogics {
                   set snode [$logic GetSliceNode]
                   eval $snode SetFieldOfView $newFOV
-                  $snode UpdateMatrices
               }
             }
             $sliceGUI SetGUICommandAbortFlag 1
@@ -409,10 +399,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
             $tfm SetMatrix [$_sliceNode GetSliceToRAS] 
             $tfm RotateX $ry
             $tfm RotateY $rx
-
-            #[$_sliceNode GetSliceToRAS] DeepCopy [$tfm GetMatrix]
-            #$tfm Delete
-            #$_sliceNode UpdateMatrices
 
             # get the linked logics (including self)
             set sliceLogics [$this getLinkedSliceLogics]
@@ -492,19 +478,18 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     "MouseWheelForwardEvent" { 
       $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
       $this incrementSlice 
-      $this updateAnnotation $x $y $r $a $s
     }
     "MouseWheelBackwardEvent" {
       $sliceGUI SetCurrentGUIEvent "" ;# reset event so we don't respond again
       $this decrementSlice 
-      $this updateAnnotation $x $y $r $a $s
     }
-    "ExposeEvent" { }
+    "ExposeEvent" { 
+      [$sliceGUI GetSliceViewer] RequestRender
+    }
     "ConfigureEvent" {
       $this resizeSliceNode
     }
     "EnterEvent" { 
-      $this updateAnnotation $x $y $r $a $s
       $_renderWidget CornerAnnotationVisibilityOn
       [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText "Middle Button: Pan; Right Button: Zoom"
     }
@@ -525,9 +510,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
           "r" {
             # use c++ version of calculation
 
-            #[$sliceGUI GetLogic] FitSliceToBackground $w $h
-            #$_sliceNode UpdateMatrices
-
             # get the linked logics (including self)
             set sliceLogics [$this getLinkedSliceLogics]
             # save state for undo
@@ -541,11 +523,9 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
           }
           "b" - "Left" - "Down" {
             $this decrementSlice
-            $this updateAnnotation $x $y $r $a $s
           }
           "f" - "Right" - "Up" {
             $this incrementSlice
-            $this updateAnnotation $x $y $r $a $s
           }
           "space" {
             ::Box::ShowDialog EditBox
@@ -576,6 +556,12 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     }
     "ExitEvent" { }
   }
+
+  set xyToRAS [$_sliceNode GetXYToRAS]
+  set ras [$xyToRAS MultiplyPoint $x $y $z 1]
+  foreach {r a s t} $ras {}
+  $this updateAnnotation $x $y $r $a $s
+
 }
 
 itcl::body SliceSWidget::updateAnnotations {x y r a s} {
@@ -774,43 +760,7 @@ itcl::body SliceSWidget::moveSlice { delta } {
     }    
 }
 
-#   # get the linked logics (including self)
-#   set sliceLogics [$this getLinkedSliceLogics]
-#   # save state for undo
 
-
-# Return the SliceLogics that are linked to the current 
-# SliceNode/SliceCompositeNode.  For now, this just returns all the SliceLogics
-# but someday this will be the slice logics that are linked to the current 
-# slice. 
-#
-# The list of linked logics either contains the current slice (because 
-# linking is off) or a list of logics (one for the current slice and others 
-# for linked slices).
-#
-itcl::body SliceSWidget::getLinkedSliceLogics { } {
-  set logics ""
-  set link [$_sliceCompositeNode GetLinkedControl]
-  if { $link == 1 } {
-    set ssgui [[$::slicer3::ApplicationGUI GetApplication] GetModuleGUIByName "Slices"]
-    set numsgui [$ssgui GetNumberOfSliceGUI]
-    for { set i 0 } { $i < $numsgui } { incr i } {
-      if { $i == 0} {
-        set sgui [$ssgui GetFirstSliceGUI]
-        set lname [$ssgui GetFirstSliceGUILayoutName]
-      } else {
-        set sgui [$ssgui GetNextSliceGUI $lname]
-        set lname [$ssgui GetNextSliceGUILayoutName $lname]
-      }
-        
-      lappend logics [$sgui GetLogic]
-    }
-  } else {
-    lappend logics [$sliceGUI GetLogic]
-  }
-  
-  return $logics
-}
 
 itcl::body SliceSWidget::jumpSlice { r a s } {
   set logic [$sliceGUI GetLogic]
@@ -824,7 +774,14 @@ itcl::body SliceSWidget::jumpOtherSlices { r a s } {
   $sliceNode JumpAllSlices $r $a $s
 }
 
-itcl::body SliceSWidget::getValidLinkedSliceLogics { } {
+# Return the SliceLogics that are linked to the current 
+# SliceNode/SliceCompositeNode.  
+#
+# The list of linked logics either contains the current slice (because 
+# linking is off) or a list of logics (one for the current slice and others 
+# for linked slices).
+#
+itcl::body SliceSWidget::getLinkedSliceLogics { } {
     set logic [$sliceGUI GetLogic]
     set sliceNode [$logic GetSliceNode]
     set orientString [$sliceNode GetOrientationString]
@@ -864,6 +821,6 @@ itcl::body SliceSWidget::getValidLinkedSliceLogics { } {
     } else {
         lappend logics [$sliceGUI GetLogic]
     }
-  
+
   return $logics
 }

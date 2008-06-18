@@ -352,7 +352,7 @@ void vtkSlicerModelHierarchyWidget::AllVisibiltyCallback(int visibility)
     // chnage children visibility 
     std::vector< vtkMRMLModelHierarchyNode *> childrenNodes;
     this->ModelHierarchyLogic->GetHierarchyChildrenNodes(hnode, childrenNodes);
-    for (int i=0; i<childrenNodes.size(); i++)
+    for (unsigned int i=0; i<childrenNodes.size(); i++)
       {
       vtkMRMLModelHierarchyNode *cnode = childrenNodes[i];
       vtkMRMLDisplayNode *cdnode = cnode->GetDisplayNode();
@@ -407,7 +407,7 @@ void vtkSlicerModelHierarchyWidget::HierarchyVisibiltyCallback(const char *id)
       // chnage children visibility 
       std::vector< vtkMRMLModelHierarchyNode *> childrenNodes;
       this->ModelHierarchyLogic->GetHierarchyChildrenNodes(hnode, childrenNodes);
-      for (int i=0; i<childrenNodes.size(); i++)
+      for (unsigned int i=0; i<childrenNodes.size(); i++)
         {
         vtkMRMLModelHierarchyNode *cnode = childrenNodes[i];
         vtkMRMLDisplayNode *cdnode = cnode->GetDisplayNode();
@@ -473,7 +473,7 @@ void vtkSlicerModelHierarchyWidget::ColorCallback(const char *id)
         double *rgb = dnode->GetColor();
         if (vtkKWTkUtilities::QueryUserForColor(
               this->GetApplication(),
-              this->GetWidgetName(),
+              this,
               "Select Color",
               rgb[0], rgb[1], rgb[2],
               rgb, rgb+1, rgb+2) )
@@ -819,7 +819,7 @@ void vtkSlicerModelHierarchyWidget::CreateWidget ( )
   vtkKWFrameWithLabel *frame = vtkKWFrameWithLabel::New ( );
   frame->SetParent ( this->GetParent() );
   frame->Create ( );
-  frame->SetLabelText ("Model Hierarchy Tree");
+  frame->SetLabelText ("Model Hierarchy");
   this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                  frame->GetWidgetName() );
 
@@ -843,7 +843,6 @@ void vtkSlicerModelHierarchyWidget::CreateWidget ( )
   tree->SetOpenCommand(this, "OpenHierarchyCommand");
   tree->SetCloseCommand(this, "CloseHierarchyCommand");
   tree->EnableReparentingOn();
-  tree->SetHeight(12);
 
   tree->AddObserver(
     vtkKWTree::SelectionChangedEvent, 

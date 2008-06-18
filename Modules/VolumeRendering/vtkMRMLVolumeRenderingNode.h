@@ -8,7 +8,7 @@
 
 #include "vtkMRML.h"
 #include "vtkMRMLDisplayNode.h"
-#include "vtkVolumeRenderingModule.h"
+#include "vtkVolumeRendering.h"
 #include "vtkVolumeProperty.h"
 #include "vtkPiecewiseFunction.h"
 #include "vtkColorTransferFunction.h"
@@ -18,7 +18,7 @@
 
 #define COUNT_CROPPING_REGION_PLANES 6
 
-class VTK_VOLUMERENDERINGMODULE_EXPORT vtkMRMLVolumeRenderingNode : public vtkMRMLNode
+class VTK_SLICERVOLUMERENDERING_EXPORT vtkMRMLVolumeRenderingNode : public vtkMRMLNode
 {
 public:
     //--------------------------------------------------------------------------
@@ -73,6 +73,11 @@ public:
     void RemoveReference(std::string id);
     //ETX    
 
+    // Description:
+    // 0 means hardware accelerated 3D texture Mapper, 1 fixed raycastMapper 
+    vtkSetMacro(Mapper,int);
+    vtkGetMacro(Mapper,int);
+    vtkBooleanMacro(Mapper,int);
 
     // Description:
     // Set/Get if the Node saves data of a label map or a grayscale data set.

@@ -52,7 +52,7 @@ if { [itcl::find class ThresholdEffect] == "" } {
 #                        CONSTRUCTOR/DESTRUCTOR
 # ------------------------------------------------------------------
 itcl::body ThresholdEffect::constructor {sliceGUI} {
-  # rely on superclass constructor
+  set _scopeOptions "all visible"
 }
 
 itcl::body ThresholdEffect::destructor {} {
@@ -74,8 +74,6 @@ itcl::body ThresholdEffect::processEvent { {caller ""} {event ""} } {
 
 itcl::body ThresholdEffect::apply {} {
 
-  $this configure -scope "all"
-
   if { [$this getInputBackground] == "" || [$this getInputLabel] == "" } {
     $this errorDialog "Background and Label map needed for Threshold"
     return
@@ -87,6 +85,7 @@ itcl::body ThresholdEffect::apply {} {
   $thresh SetInValue [EditorGetPaintLabel]
   $thresh SetOutValue 0
   $thresh SetOutput [$this getOutputLabel]
+  $thresh SetOutputScalarType [[$this getInputLabel] GetScalarType]
   $this setProgressFilter $thresh "Threshold"
   $thresh Update
   $thresh Delete
@@ -97,8 +96,6 @@ itcl::body ThresholdEffect::apply {} {
 
 itcl::body ThresholdEffect::preview {} {
 
-  $this configure -scope "visible"
-
   if { [$this getInputBackground] == "" || [$this getInputLabel] == "" } {
     $this errorDialog "Background and Label map needed for Threshold"
     return
@@ -107,6 +104,8 @@ itcl::body ThresholdEffect::preview {} {
   #
   # make a lookup table where inside the threshold is opaque and colored
   # by the label color, while the background is transparent (black)
+  # - apply the threshold operation to the currently visible background
+  #   (output of the layer logic's vtkImageReslice instance)
   #
 
   set color [::EditorGetPaintColor $::Editor(singleton)]
@@ -121,8 +120,8 @@ itcl::body ThresholdEffect::preview {} {
   $map SetLookupTable $o(lut)
 
   set thresh [vtkImageThreshold New]
-  #TODO: this background has already been windowed - so range is not correct
-  $thresh SetInput [$this getInputBackground]
+  set logic [[$sliceGUI GetLogic] GetBackgroundLayer]
+  $thresh SetInput [[$logic GetReslice] GetOutput]
   eval $thresh ThresholdBetween $range
   $thresh SetInValue 1
   $thresh SetOutValue 0
@@ -160,6 +159,7 @@ itcl::body ThresholdEffect::positionCursor {} {
 
 itcl::body ThresholdEffect::buildOptions { } {
 
+  chain
   
   #
   # a range setting for threshold values
@@ -235,6 +235,7 @@ itcl::body ThresholdEffect::buildOptions { } {
 }
 
 itcl::body ThresholdEffect::tearDownOptions { } {
+  chain
   if { [info exists o(range)] } {
     foreach w "range apply useForPainting cancel" {
       if { [info exists o($w)] } {

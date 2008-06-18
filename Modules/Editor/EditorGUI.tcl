@@ -110,8 +110,8 @@ proc EditorBuildGUI {this} {
   set ::Editor($this,volumesSelect) [vtkSlicerNodeSelectorWidget New]
   $::Editor($this,volumesSelect) SetParent [$::Editor($this,volumesFrame) GetFrame]
   $::Editor($this,volumesSelect) Create
-  $::Editor($this,volumesSelect) SetMRMLScene [[$this GetLogic] GetMRMLScene]
   $::Editor($this,volumesSelect) SetNodeClass "vtkMRMLScalarVolumeNode" "" "" ""
+  $::Editor($this,volumesSelect) SetMRMLScene [[$this GetLogic] GetMRMLScene]
   $::Editor($this,volumesSelect) UpdateMenu
   $::Editor($this,volumesSelect) SetLabelText "Source Volume:"
   $::Editor($this,volumesSelect) SetBalloonHelpString "The Source Volume will define the dimensions and directions for the new label map"
@@ -121,6 +121,7 @@ proc EditorBuildGUI {this} {
   $::Editor($this,volumeName) SetParent [$::Editor($this,volumesFrame) GetFrame]
   $::Editor($this,volumeName) Create
   $::Editor($this,volumeName) SetLabelText "Name for label map volume: "
+  [$::Editor($this,volumeName) GetWidget] SetValue "Working"
   $::Editor($this,volumeName) SetBalloonHelpString \
     "Leave blank for automatic label name based on input name."
   pack [$::Editor($this,volumeName) GetWidgetName] -side top -anchor e -padx 2 -pady 2 
@@ -309,7 +310,7 @@ proc EditorToggleErasePaintLabel {} {
 
 proc EditorGetPaintColor {this} {
 
-  set sliceLogic [$::slicer3::ApplicationGUI GetMainSliceLogic0]
+  set sliceLogic [$::slicer3::ApplicationLogic GetSlicerSliceLogic "Red"]
   if { $sliceLogic != "" } {
     set logic [$sliceLogic GetLabelLayer]
     if { $logic != "" } {
@@ -448,6 +449,7 @@ proc EditorEnter {this} {
     puts "EditorEnter: Adding mrml observer on selection node, modified event"
   }
   $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] 31
+  $::Editor($this,volumesSelect) UpdateMenu
 }
 
 proc EditorExit {this} {
@@ -462,6 +464,7 @@ proc EditorCreateLabelVolume {this} {
 
   set volumeNode [$::Editor($this,volumesSelect) GetSelected]
   if { $volumeNode == "" } {
+    EditorErrorDialog "Select Source Volume for Label Map"
     return;
   }
 
@@ -469,6 +472,7 @@ proc EditorCreateLabelVolume {this} {
   if { $name == "" } {
     set name "[$volumeNode GetName]-label"
   }
+
 
   set scene [[$this GetLogic] GetMRMLScene]
 
@@ -488,3 +492,13 @@ proc EditorCreateLabelVolume {this} {
   eval ::Labler::SetPaintRange $range
 }
 
+proc EditorErrorDialog {errorText} {
+  set dialog [vtkKWMessageDialog New]
+  $dialog SetParent [$::slicer3::ApplicationGUI GetMainSlicerWindow]
+  $dialog SetMasterWindow [$::slicer3::ApplicationGUI GetMainSlicerWindow]
+  $dialog SetStyleToMessage
+  $dialog SetText $errorText
+  $dialog Create
+  $dialog Invoke
+  $dialog Delete
+}

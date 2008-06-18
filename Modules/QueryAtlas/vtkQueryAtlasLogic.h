@@ -35,15 +35,15 @@ class VTK_QUERYATLAS_EXPORT vtkQueryAtlasLogic : public vtkSlicerModuleLogic
   vtkTypeRevisionMacro(vtkQueryAtlasLogic,vtkObject);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  // TODO: do we need to observe MRML here?
-  virtual void ProcessMrmlEvents ( vtkObject *caller, unsigned long event,
-                                   void *callData ){};
+  virtual void ProcessMrmlEvents ( vtkObject *caller, unsigned long event, void *callData );
 
   vtkGetObjectMacro (QueryAtlasNode, vtkMRMLQueryAtlasNode);
   vtkSetObjectMacro (QueryAtlasNode, vtkMRMLQueryAtlasNode);
   
   // The method that creates and runs VTK or ITK pipeline
   void Apply() { };
+
+  virtual vtkIntArray* NewObservableEvents();
 
 protected:
   vtkQueryAtlasLogic();

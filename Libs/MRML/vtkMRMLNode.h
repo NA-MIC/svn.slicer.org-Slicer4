@@ -28,6 +28,7 @@
 
 #include "vtkMRML.h"
 #include "vtkObserverManager.h"
+#include "vtkEventBroker.h"
 
 #ifndef vtkSetMRMLObjectMacro
 #define vtkSetMRMLObjectMacro(node,value)  {this->MRMLObserverManager->SetObject ( vtkObjectPointer( &(node)), (value) );};
@@ -377,6 +378,11 @@ protected:
 
   vtkObserverManager *MRMLObserverManager;
 
+  // Description:
+  // Get/Set the string used to manage encoding/decoding of strings/URLs with special characters
+  vtkSetStringMacro( TempURLString );
+  vtkGetStringMacro( TempURLString );
+  
 private:
   // Description:
   // ID use by other nodes to reference this node in XML
@@ -396,6 +402,10 @@ private:
   // Variable used to manage constructed ids
   std::string TempID;
   //ETX
+
+  // Description:
+  // Variable used to manage encoded/decoded URL strings
+  char * TempURLString;
 
   int DisableModifiedEvent;
   int ModifiedEventPending;

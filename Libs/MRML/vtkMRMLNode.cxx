@@ -71,10 +71,12 @@ vtkMRMLNode::vtkMRMLNode()
   this->SaveWithScene = true;
 
   this->MRMLObserverManager = vtkObserverManager::New();
+  this->MRMLObserverManager->AssignOwner( this );
   this->MRMLObserverManager->GetCallbackCommand()->SetClientData( reinterpret_cast<void *> (this) );
   this->MRMLObserverManager->GetCallbackCommand()->SetCallback(vtkMRMLNode::MRMLCallback);
 
 
+  this->TempURLString = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -98,6 +100,7 @@ vtkMRMLNode::~vtkMRMLNode()
     }
   if (this->MRMLObserverManager)
     {
+    this->MRMLObserverManager->AssignOwner( NULL );
     this->MRMLObserverManager->Delete();
     }
 
@@ -109,6 +112,11 @@ vtkMRMLNode::~vtkMRMLNode()
     this->MRMLCallbackCommand = NULL;
     }
 
+  if (this->TempURLString)
+    {
+    delete [] this->TempURLString;
+    this->TempURLString = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -335,6 +343,11 @@ const char * vtkMRMLNode::URLEncodeString(const char *inString)
     {
     return "(null)";
     }
+  if (strcmp(inString, "") == 0)
+    {
+    return "";
+    }
+  
   vtksys_stl::string kwInString = vtksys_stl::string(inString);
   // encode %
   itksys::SystemTools::ReplaceString(kwInString,
@@ -355,15 +368,10 @@ const char * vtkMRMLNode::URLEncodeString(const char *inString)
   itksys::SystemTools::ReplaceString(kwInString,
                                      "\"", "%22");
 
-  const char *inStr = kwInString.c_str();
-  char *returnString = NULL;
-  size_t n = strlen(inStr) + 1;
-  char *cp1 = new char[n];
-  const char *cp2 = (inStr);
-  returnString = cp1;
-  do { *cp1++ = *cp2++; } while ( --n );
-
-  return returnString;
+  this->DisableModifiedEventOn();
+  this->SetTempURLString(kwInString.c_str());
+  this->DisableModifiedEventOff();
+  return (this->GetTempURLString());
 }
 
 //----------------------------------------------------------------------------
@@ -372,6 +380,10 @@ const char * vtkMRMLNode::URLDecodeString(const char *inString)
   if (inString == NULL)
     {
     return "(null)";
+    }
+  if (strcmp(inString, "") == 0)
+    {
+    return "";
     }
   vtksys_stl::string kwInString = vtksys_stl::string(inString);
 
@@ -395,14 +407,10 @@ const char * vtkMRMLNode::URLDecodeString(const char *inString)
   // decode %
   itksys::SystemTools::ReplaceString(kwInString,
                                      "%25", "%");
-   const char *inStr = kwInString.c_str();
-  char *returnString = NULL;
-  size_t n = strlen(inStr) + 1;
-  char *cp1 = new char[n];
-  const char *cp2 = (inStr);
-  returnString = cp1;
-  do { *cp1++ = *cp2++; } while ( --n );
 
-  return returnString;
+  this->DisableModifiedEventOn();
+  this->SetTempURLString(kwInString.c_str());
+  this->DisableModifiedEventOff();
+  return (this->GetTempURLString());
 }
 

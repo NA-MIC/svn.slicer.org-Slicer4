@@ -1,12 +1,13 @@
 // .NAME vtkSlicerMeasurementFrameWidget 
 // .SECTION Description
-// This class implements Slicer's DWI Measurement Frame widget, part of the GradientEditor GUI.
+// This class implements Slicer's DWI Measurement Frame widget, part of the DiffusionEditor GUI.
 // Inherits most behavior from vtkSlicerWidget.
 #ifndef __vtkSlicerMeasurementFrameWidget_h
 #define __vtkSlicerMeasurementFrameWidget_h
 
 #include "vtkVolumes.h"
 #include "vtkSlicerWidget.h"
+#include "vtkSlicerDiffusionEditorLogic.h"
 
 class vtkMRMLDiffusionWeightedVolumeNode;
 class vtkMatrix4x4;
@@ -34,13 +35,15 @@ class VTK_VOLUMES_EXPORT vtkSlicerMeasurementFrameWidget : public vtkSlicerWidge
     virtual void RemoveWidgetObservers();
 
     // Description:
-    // Method to propagate events generated in GUI to logic / mrml.
+    // Propagates events generated in GUI to logic / mrml.
     virtual void ProcessWidgetEvents(vtkObject *caller, unsigned long event, void *callData);
 
     // Description:
-    // Method to update the widget when a new node is loaded.
-    void UpdateWidget(vtkMRMLDiffusionWeightedVolumeNode *dwiNode);
+    // Updates the widget when a new ActiveVolumeNode is loaded.
+    void UpdateWidget(vtkMRMLVolumeNode *node);
 
+    // Description:
+    // Event is invoked when a matrix value changed.
     //BTX
     enum
       {
@@ -48,28 +51,39 @@ class VTK_VOLUMES_EXPORT vtkSlicerMeasurementFrameWidget : public vtkSlicerWidge
       };
     //ETX
 
+    // Description:
+    // Sets the Logic to the current vtkSlicerDiffusionEditorLogic of the editor.
+    virtual void SetLogic(vtkSlicerDiffusionEditorLogic *logic);
+
+    vtkGetObjectMacro(Matrix, vtkMatrix4x4);
+
   protected:
     vtkSlicerMeasurementFrameWidget(void);
     virtual ~vtkSlicerMeasurementFrameWidget(void);
 
     // Description:
-    // Method to create the widget.
+    // Creates the widget.
     virtual void CreateWidget();
 
     // Description:
-    // Method to update the matrixWidget (GUI).
+    // Updates the MatrixWidget (GUI).
     void UpdateMatrix();
 
     // Description:
-    // Method to save changes of the matrix to the activeVolumeNode.
+    // Saves changes of the Matrix to the ActiveVolumeNode.
     void SaveMatrix();
+
+    // Description:
+    // Return value is 1 if determinat is +1 or -1; otherwise 0;
+    int CheckDeterminant();
 
     vtkMRMLDiffusionWeightedVolumeNode *ActiveVolumeNode;
     vtkMatrix4x4 *Matrix;
+    vtkSlicerDiffusionEditorLogic *Logic;
     //widgets (GUI)
     vtkKWFrameWithLabel *MeasurementFrame;
     vtkKWMatrixWidget *MatrixWidget;    
-    vtkKWPushButton *NegativeButton;
+    vtkKWPushButton *InvertButton;
     vtkKWPushButton *SwapButton;    
     vtkKWPushButton *RotateButton;
     vtkKWPushButton *IdentityButton;

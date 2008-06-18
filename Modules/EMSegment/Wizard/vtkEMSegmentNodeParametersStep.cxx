@@ -13,6 +13,7 @@
 #include "vtkKWMenu.h"
 #include "vtkKWMenuButton.h"
 #include "vtkKWMenuButtonWithLabel.h"
+#include "vtkKWMessageDialog.h"
 #include "vtkKWMultiColumnListWithScrollbarsWithLabel.h"
 #include "vtkKWMultiColumnListWithScrollbars.h"
 #include "vtkKWMultiColumnList.h"
@@ -320,6 +321,7 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     this->NodeParametersGlobalPriorScale->SetResolution(0.01);
     this->NodeParametersGlobalPriorScale->GetEntry()->
       SetCommandTriggerToAnyChange();
+    this->NodeParametersGlobalPriorScale->SetBalloonHelpString("Probability that a voxel belonging to the parent structure will also belong to this structure.  The value must be in the range [0,1].  Global priors for each set of siblings must sum to 1."); 
     }
 
   this->Script("grid %s -column 0 -row 0 -sticky nw -padx 2 -pady 2", 
@@ -345,6 +347,7 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     this->NodeParametersSpatialPriorWeightScale->SetResolution(0.01);
     this->NodeParametersSpatialPriorWeightScale->GetEntry()->
       SetCommandTriggerToAnyChange();
+    this->NodeParametersSpatialPriorWeightScale->SetBalloonHelpString("Weight of the atlas (spatial prior) in the segmentation decision.  The value must be in the range [0,1], where 0 indicates that the atlas is ignored and 1 indicates the maximum atlas weight."); 
     }
 
   this->Script("grid %s -column 0 -row 1 -sticky nw -padx 2 -pady 2", 
@@ -380,6 +383,11 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     list->SetColumnEditable(col_id, 0);
     col_id = list->AddColumn("Weight");
     list->SetColumnEditable(col_id, 1);
+
+    list->SetRightClickCommand
+      (this, "RightClickOnInputChannelWeightsListCallback");
+    list->SetBalloonHelpString
+      ("Weight of each channel in the segmentation decision.  Right-click or double-click to modify weights.  Weights should be in the range [0,1]; 0 indicates that the channel is ignored and 1 indicates the maximum channel weight.  The weights are not dependent on each other or any other weights.");
     }
 
   this->Script(
@@ -905,6 +913,10 @@ void vtkEMSegmentNodeParametersStep::DisplaySelectedNodeParametersCallback()
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
   vtkEMSegmentAnatomicalStructureStep *anat_step = 
     this->GetGUI()->GetAnatomicalStructureStep();
+  if (!mrmlManager || !anat_step)
+    {
+    return;
+    }
   vtkKWTree *tree = anat_step->GetAnatomicalStructureTree()->GetWidget();
   vtksys_stl::string sel_node;
   vtkIdType sel_vol_id = 0;
@@ -1618,7 +1630,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersGlobalPriorChangedCallback(
   // The class probability has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodeClassProbability(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodeClassProbability(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1628,7 +1643,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersSpatialPriorWeightChangedCall
   // The spatial prior weight has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodeSpatialPriorWeight(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodeSpatialPriorWeight(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1641,7 +1659,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersInputChannelWeightChangedCall
   if (w >= 0 && w <= 1.0)
     {
     vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-    mrmlManager->SetTreeNodeInputChannelWeight(sel_vol_id, row, atof(value));
+    if (mrmlManager)
+      {
+      mrmlManager->SetTreeNodeInputChannelWeight(sel_vol_id, row, atof(value));
+      }
     }
   else
     {
@@ -1659,7 +1680,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersAlphaChangedCallback(
   // The alpha has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodeAlpha(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodeAlpha(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1669,7 +1693,7 @@ void vtkEMSegmentNodeParametersStep::StoppingConditionsEMCallback(
   // The EM stopping condition has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (value != mrmlManager->GetTreeNodeStoppingConditionEMType(sel_vol_id))
+  if (mrmlManager && value != mrmlManager->GetTreeNodeStoppingConditionEMType(sel_vol_id))
     {
     mrmlManager->SetTreeNodeStoppingConditionEMType(sel_vol_id, value);
     this->DisplaySelectedNodeParametersCallback();
@@ -1684,7 +1708,7 @@ void vtkEMSegmentNodeParametersStep::StoppingConditionsEMIterationsCallback(
 
   int v = (int)abs(atoi(value));
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (v != mrmlManager->GetTreeNodeStoppingConditionEMIterations(sel_vol_id))
+  if (mrmlManager && v != mrmlManager->GetTreeNodeStoppingConditionEMIterations(sel_vol_id))
     {
     mrmlManager->SetTreeNodeStoppingConditionEMIterations(sel_vol_id, v);
     this->DisplaySelectedNodeParametersCallback(); // in case the value < 0
@@ -1698,7 +1722,10 @@ void vtkEMSegmentNodeParametersStep::StoppingConditionsEMValueCallback(
   // The EM value has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodeStoppingConditionEMValue(sel_vol_id, atof(value));
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodeStoppingConditionEMValue(sel_vol_id, atof(value));
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1708,7 +1735,7 @@ void vtkEMSegmentNodeParametersStep::StoppingConditionsMFACallback(
   // The MFA stopping condition has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (value != mrmlManager->GetTreeNodeStoppingConditionMFAType(sel_vol_id))
+  if (mrmlManager && value != mrmlManager->GetTreeNodeStoppingConditionMFAType(sel_vol_id))
     {
     mrmlManager->SetTreeNodeStoppingConditionMFAType(sel_vol_id, value);
     this->DisplaySelectedNodeParametersCallback();
@@ -1722,6 +1749,10 @@ void vtkEMSegmentNodeParametersStep::StoppingConditionsMFAIterationsCallback(
   // The MFA iterations has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+  if (!mrmlManager)
+    {
+    return;
+    }
   int v = (int)abs(atoi(value));
   if (v != mrmlManager->GetTreeNodeStoppingConditionMFAIterations(sel_vol_id))
     {
@@ -1737,7 +1768,10 @@ void vtkEMSegmentNodeParametersStep::StoppingConditionsMFAValueCallback(
   // The MFA value has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodeStoppingConditionMFAValue(sel_vol_id, atof(value));
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodeStoppingConditionMFAValue(sel_vol_id, atof(value));
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1748,8 +1782,11 @@ void vtkEMSegmentNodeParametersStep::StoppingConditionsBiasIterationsCallback(
   // has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodeBiasCalculationMaxIterations(
-    sel_vol_id, atoi(value));
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodeBiasCalculationMaxIterations(
+      sel_vol_id, atoi(value));
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1759,7 +1796,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintWeightCallback(
   // The print weight has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintWeight(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintWeight(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1769,7 +1809,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintQualityCallback(
   // The print quality has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintQuality(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintQuality(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1779,7 +1822,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintFrequencyChangedCallback
   // The print frequency has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintFrequency(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintFrequency(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1789,7 +1835,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintBiasCallback(
   // The print bias has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintBias(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintBias(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1799,7 +1848,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintLabelMapCallback(
   // The print label map has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintLabelMap(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintLabelMap(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1809,7 +1861,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintEMLabelMapCallback(
   // The print EM label map convergence has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintEMLabelMapConvergence(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintEMLabelMapConvergence(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1819,7 +1874,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintEMWeightsCallback(
   // The print EM weight convergence has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintEMWeightsConvergence(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintEMWeightsConvergence(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1828,7 +1886,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintMFALabelMapCallback(
 {
   // The print MFA label map convergence has changed because of user interaction
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintMFALabelMapConvergence(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintMFALabelMapConvergence(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1838,7 +1899,10 @@ void vtkEMSegmentNodeParametersStep::NodeParametersPrintMFAWeightsCallback(
   // The print MFA weight convergence has changed because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodePrintMFAWeightsConvergence(sel_vol_id, value);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodePrintMFAWeightsConvergence(sel_vol_id, value);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1849,7 +1913,10 @@ void vtkEMSegmentNodeParametersStep::ExcludeIncompleteEStepCallback(
   // because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodeExcludeFromIncompleteEStep(sel_vol_id, state);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodeExcludeFromIncompleteEStep(sel_vol_id, state);
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -1860,7 +1927,68 @@ void vtkEMSegmentNodeParametersStep::GenerateBackgroundProbabilityCallback(
   // because of user interaction
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  mrmlManager->SetTreeNodeGenerateBackgroundProbability(sel_vol_id, state);
+  if (mrmlManager)
+    {
+    mrmlManager->SetTreeNodeGenerateBackgroundProbability(sel_vol_id, state);
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentNodeParametersStep::Validate()
+{
+  vtkKWWizardWorkflow *wizard_workflow = 
+    this->GetGUI()->GetWizardWidget()->GetWizardWorkflow();
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+  if (!mrmlManager)
+    {
+    return;
+    }
+  // make sure that the probability for each set of sibling nodes sums
+  // to unity
+
+  if (mrmlManager->GetTreeRootNode() != NULL)
+    {
+    vtkIdType firstBadTreeID = 
+      mrmlManager->GetTreeNodeFirstIDWithChildProbabilityError();
+    if (firstBadTreeID >= 0)
+      {
+      std::stringstream ss;
+      ss << "Child probabilities must sum to one for node "
+         << mrmlManager->GetTreeNodeName(firstBadTreeID)
+         << "; right now they sum to "
+         << mrmlManager->GetTreeNodeChildrenSumClassProbability(firstBadTreeID)
+         << ".  Please fix before continuing---"
+         << "you should edit the \"Global Prior\" fields for the"
+         << " children nodes of "
+         << mrmlManager->GetTreeNodeName(firstBadTreeID) << ".";
+      
+      std::string parentNodeName = 
+        mrmlManager->GetTreeNodeName(firstBadTreeID);
+      std::string errorMessage   = parentNodeName  + 
+        ": Child probabilities must sum to one!  " +
+        "Please fix before continuing.";
+      vtkKWMessageDialog::PopupMessage(this->GetApplication(),
+                                       NULL,
+                                       "Node Parameters Error",
+                                       ss.str().c_str(),
+                                       vtkKWMessageDialog::ErrorIcon | 
+                                       vtkKWMessageDialog::InvokeAtPointer);
+      
+      // there was an error; stay on this step
+      wizard_workflow->
+        PushInput(vtkKWWizardStep::GetValidationFailedInput());
+      wizard_workflow->ProcessInputs();
+      }
+    }
+  this->Superclass::Validate();
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentNodeParametersStep::RightClickOnInputChannelWeightsListCallback(int row, int col, int x, int y)
+{
+  vtkKWMultiColumnList *list = 
+    this->NodeParametersInputChannelWeightsList->GetWidget()->GetWidget();
+  list->EditCell(row, col);
 }
 
 //----------------------------------------------------------------------------

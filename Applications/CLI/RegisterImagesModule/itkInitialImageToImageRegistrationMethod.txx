@@ -34,6 +34,8 @@ InitialImageToImageRegistrationMethod< TImage >
   this->GetTypedTransform()->SetIdentity();
 
   m_NumberOfMoments = 0 ;
+
+  m_ComputeCenterOfRotationOnly = false;
 }
 
 template< class TImage >
@@ -55,7 +57,26 @@ InitialImageToImageRegistrationMethod< TImage >
   newTransform = MomentsCalculatorType::AffineTransformType::New();
   newTransform->SetIdentity();
 
-  if(m_NumberOfMoments == 0)
+  if(m_ComputeCenterOfRotationOnly)
+    {
+    typename TImage::SizeType    size;
+
+    //  Moving image info
+    typename TImage::IndexType       movingCenterIndex;
+    Point<double, ImageDimension>    movingCenterPoint;
+
+    size = this->GetMovingImage()->GetLargestPossibleRegion().GetSize();
+
+    for(int i=0; i<ImageDimension; i++)
+      {
+      movingCenterIndex[i] = size[i]/2;
+      }
+    this->GetMovingImage()->TransformIndexToPhysicalPoint(movingCenterIndex,
+                                                          movingCenterPoint);
+
+    newTransform->SetCenter(movingCenterPoint);
+    }
+  else if(m_NumberOfMoments == 0)
     {
     typename TImage::SizeType    size;
 
@@ -100,7 +121,7 @@ InitialImageToImageRegistrationMethod< TImage >
     momCalc = MomentsCalculatorType::New();
 
     momCalc->SetImage( this->GetFixedImage() );
-    if( this->GetUseMasks() )
+    if( this->GetUseFixedImageMaskObject() )
       {
       if( this->GetFixedImageMaskObject() )
         {
@@ -109,7 +130,18 @@ InitialImageToImageRegistrationMethod< TImage >
       }
     // HELP: ImageMomentsCalculator isn't multi-threaded :(
     //momCalc->SetNumberOfThreads( this->GetRegistrationNumberOfThreads() );
-    momCalc->Compute();
+    try
+      {
+      momCalc->Compute();
+      }
+    catch( ... )
+      {
+      std::cout << "Exception thrown when computing moments of fixed image." << std::endl;
+      std::cout << "Initialization returning identity." << std::endl;
+      newTransform->SetIdentity();
+      this->SetTransform(newTransform);
+      return;
+      }
 
     typename MomentsCalculatorType::AffineTransformType::Pointer 
           fixedImageAxesTransform;
@@ -123,14 +155,26 @@ InitialImageToImageRegistrationMethod< TImage >
       }
 
     momCalc->SetImage( this->GetMovingImage() );
-    if( this->GetUseMasks() )
+    if( this->GetUseMovingImageMaskObject() )
       {
       if( this->GetMovingImageMaskObject() )
         {
         momCalc->SetSpatialObjectMask( this->GetMovingImageMaskObject() );
         }
       }
-    momCalc->Compute();
+
+    try
+      {
+      momCalc->Compute();
+      }
+    catch( ... )
+      {
+      std::cout << "Exception thrown when computing moments of moving image." << std::endl;
+      std::cout << "Initialization returning identity." << std::endl;
+      newTransform->SetIdentity();
+      this->SetTransform(newTransform);
+      return;
+      }
 
     typename MomentsCalculatorType::AffineTransformType::Pointer 
           movingImageAxesTransform;
@@ -195,6 +239,8 @@ InitialImageToImageRegistrationMethod< TImage >
   Superclass::PrintSelf( os, indent );
 
   os << indent << "Number of moments = " << m_NumberOfMoments << std::endl;
+
+  os << indent << "Compute Center Of Rotation Only = " << m_ComputeCenterOfRotationOnly << std::endl;
 }
 
 };

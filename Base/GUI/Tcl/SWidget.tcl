@@ -23,8 +23,8 @@ namespace eval SWidget {
   proc ProtectedCallback {instance args} {
     if { [info command $instance] != "" } {
       if { [catch "eval $instance $args" res] } {
-        puts $res
-        puts $::errorInfo
+        catch "puts $res"
+        catch "puts $::errorInfo"
       }
     }
   }
@@ -294,7 +294,7 @@ itcl::body SWidget::setPixel { image i j k value } {
 proc sssss {} {
   itcl::delete class SWidget
 
-  set dir $::env(SLICER_HOME)/../Slicer3/Base/GUI/Tcl
+  set dir $::env(Slicer3_HOME)/lib/Slicer3/SlicerBaseGUI/Tcl
   source $dir/SWidget.tcl
   foreach sw [glob $dir/*SWidget.tcl] {
     source $sw

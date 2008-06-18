@@ -178,6 +178,9 @@ void vtkMRMLSceneSnapshotNode::StoreScene()
       vtkMRMLNode *newNode = node->CreateNodeInstance();
       newNode->CopyWithScene(node);
       this->Nodes->vtkCollection::AddItem((vtkObject *)newNode);
+      //--- Try deleting copy after collection has a reference to it,
+      //--- in order to eliminate debug leaks..
+      newNode->Delete();
       }
     }
 }
@@ -210,7 +213,7 @@ void vtkMRMLSceneSnapshotNode::RestoreScene()
       }
     }
   std::vector<vtkMRMLNode*> removedNodes;
-  int nnodesScene = this->Scene->GetNumberOfNodes();
+  unsigned int nnodesScene = this->Scene->GetNumberOfNodes();
   for (n=0; n<nnodesScene; n++)
     {
     node = this->Scene->GetNthNode(n);

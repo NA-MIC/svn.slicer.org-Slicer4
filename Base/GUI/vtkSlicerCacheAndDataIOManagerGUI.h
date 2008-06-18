@@ -4,10 +4,11 @@
 #include "vtkSlicerBaseGUIWin32Header.h"
 #include "vtkSlicerComponentGUI.h"
 #include "vtkCacheManager.h"
-#include "vtkSlicerDataTransferIcons.h"
+#include "vtkSlicerFoundationIcons.h"
 
 #include "vtkObserverManager.h"
 #include "vtkMRMLScene.h"
+#include "vtkMRMLNode.h"
 #include "vtkDataIOManager.h"
 #include "vtkCollection.h"
 
@@ -17,6 +18,10 @@
 #include "vtkKWLabel.h"
 #include "vtkKWTopLevel.h"
 #include "vtkKWFrameWithScrollbar.h"
+#include "vtkKWSpinBox.h"
+#include "vtkKWSpinBoxWithLabel.h"
+#include "vtkKWLoadSaveButton.h"
+#include "vtkKWLoadSaveButtonWithLabel.h"
 
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerCacheAndDataIOManagerGUI : public vtkSlicerComponentGUI
 {
@@ -38,11 +43,15 @@ public:
   vtkGetObjectMacro ( CacheFreeLabel, vtkKWLabel );
   vtkGetObjectMacro ( CloseButton, vtkKWPushButton );
   vtkGetObjectMacro ( ClearCacheButton, vtkKWPushButton );
+  vtkGetObjectMacro ( ClearDisplayButton, vtkKWPushButton );
   vtkGetObjectMacro ( CancelAllButton, vtkKWPushButton );
   vtkGetObjectMacro ( RefreshButton, vtkKWPushButton );
   vtkGetObjectMacro ( ForceReloadCheckButton, vtkKWCheckButton );
   vtkGetObjectMacro ( OverwriteCacheCheckButton, vtkKWCheckButton );
   vtkGetObjectMacro ( AsynchronousCheckButton, vtkKWCheckButton );
+  vtkGetObjectMacro ( CacheDirectoryButton, vtkKWLoadSaveButtonWithLabel );
+  vtkGetObjectMacro ( CacheLimitSpinBox, vtkKWSpinBoxWithLabel );
+  vtkGetObjectMacro ( CacheFreeBufferSizeSpinBox, vtkKWSpinBoxWithLabel );
   vtkGetObjectMacro ( TimeOutCheckButton, vtkKWCheckButton );
   vtkGetObjectMacro ( ManagerTopLevel, vtkKWTopLevel );
   vtkGetObjectMacro ( ControlFrame, vtkKWFrame );
@@ -51,7 +60,6 @@ public:
   vtkSetMacro ( Built, bool );
   vtkGetMacro ( Built, bool );
   vtkGetObjectMacro ( TransferWidgetCollection, vtkCollection );
-  vtkGetObjectMacro ( DataTransferIcons, vtkSlicerDataTransferIcons );
 
   // Description:
   // This method builds the DataIOManager module GUI
@@ -129,6 +137,7 @@ protected:
   vtkKWPushButton *ClearCacheButton;
   vtkKWPushButton *CancelAllButton;
   vtkKWPushButton *RefreshButton;
+  vtkKWPushButton *ClearDisplayButton;
   vtkKWCheckButton *ForceReloadCheckButton;
   vtkKWCheckButton *OverwriteCacheCheckButton;
   vtkKWCheckButton *AsynchronousCheckButton;
@@ -141,11 +150,14 @@ protected:
   vtkDataIOManager *DataIOManager;
   vtkCacheManager *CacheManager;
   vtkCollection *TransferWidgetCollection;
-  vtkSlicerDataTransferIcons *DataTransferIcons;
 
-    // Description:
-    // Describes whether the GUI has been built or not.
-    bool Built;
+  vtkKWLoadSaveButtonWithLabel *CacheDirectoryButton;
+  vtkKWSpinBoxWithLabel *CacheLimitSpinBox;
+  vtkKWSpinBoxWithLabel *CacheFreeBufferSizeSpinBox;
+  
+  // Description:
+  // Describes whether the GUI has been built or not.
+  bool Built;
 
 private:
   vtkSlicerCacheAndDataIOManagerGUI ( const vtkSlicerCacheAndDataIOManagerGUI& ); // Not implemented.
