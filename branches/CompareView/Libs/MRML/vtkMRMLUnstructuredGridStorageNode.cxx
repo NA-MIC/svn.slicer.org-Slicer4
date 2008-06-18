@@ -64,12 +64,12 @@ int vtkMRMLUnstructuredGridStorageNode::ReadData(vtkMRMLNode *refNode)
 {
   if (!refNode->IsA("vtkMRMLUnstructuredGridNode") ) 
     {
-    vtkErrorMacro("Reference node is not a vtkMRMLUnstructuredGridNode");
+    //vtkErrorMacro("Reference node is not a vtkMRMLUnstructuredGridNode");
     return 0;
     }
 
   Superclass::StageReadData(refNode);
-  if ( this->GetReadState() == this->Pending )
+  if ( this->GetReadState() != this->TransferDone )
     {
     // remote file download hasn't finished
     return 0;
@@ -126,6 +126,8 @@ int vtkMRMLUnstructuredGridStorageNode::ReadData(vtkMRMLNode *refNode)
     result = 0;
     }
 
+  this->SetReadStateIdle();
+  
   if (modelNode->GetUnstructuredGrid() != NULL) 
     {
     modelNode->GetUnstructuredGrid()->Modified();

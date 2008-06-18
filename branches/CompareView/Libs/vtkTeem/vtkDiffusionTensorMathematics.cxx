@@ -18,9 +18,6 @@
 #endif
 
 // But, if you are on VS6.0 you don't get the define...
-#ifndef M_SQRT2
-#define M_SQRT2    1.41421356237309504880168872421      /* sqrt(2) */
-#endif
 #include "vtkInformation.h"
 #include "vtkInformationVector.h"
 #include "vtkImageData.h"
@@ -33,6 +30,9 @@
 #include "vtkPointData.h"
 #include "time.h"
 #include "vtkLookupTable.h"
+#ifndef M_SQRT2
+#define M_SQRT2    1.41421356237309504880168872421      /* sqrt(2) */
+#endif
 
 extern "C" {
 #include "teem/ten.h"
@@ -95,7 +95,7 @@ int vtkDiffusionTensorMathematics::RequestInformation (
   vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
   //vtkInformation *inInfo2 = inputVector[1]->GetInformationObject(0);
 
-  int ext[6], ext2[6], idx;
+  int ext[6];
 
   inInfo->Get(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(),ext);
  

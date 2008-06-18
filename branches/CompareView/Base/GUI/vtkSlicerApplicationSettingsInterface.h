@@ -16,6 +16,7 @@ class vtkKWLoadSaveButtonWithLabel;
 class vtkKWCheckButton;
 class vtkKWRadioButtonSet;
 class vtkKWSpinBoxWithLabel;
+class vtkKWDirectoryPresetSelector;
 
 class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationSettingsInterface
   : public vtkKWApplicationSettingsInterface
@@ -39,11 +40,14 @@ public:
   // Description:
   // Callbacks for the Module application settings. Internal, do not use.
 
-  virtual void ModulePathCallback(char *);
-  virtual void ModuleCachePathCallback(char *);
+  virtual void ModuleCachePathCallback();
   virtual void HomeModuleCallback(char *name);
   virtual void TemporaryDirectoryCallback();
   virtual void LoadCommandLineModulesCallback(int state);
+  virtual void LoadModulesCallback(int state);
+  virtual int  ModulePathsAddCallback();
+  virtual void ModulePathsHasChangedCallback(int id);
+  virtual void ModulePathsRemovedCallback();
  
   // Description:
   // Callbacks for the Slicer application settings. Internal, do not use.
@@ -98,8 +102,8 @@ private:
   vtkKWFrameWithLabel *ModuleSettingsFrame;
   vtkKWFrameWithLabel *FontSettingsFrame;
   vtkKWEntryWithLabel *HomeModuleEntry;
-  vtkKWEntryWithLabel *ModulePathEntry;
-  vtkKWEntryWithLabel *ModuleCachePathEntry;
+  vtkKWDirectoryPresetSelector *ModulePathsPresetSelector;
+  vtkKWLoadSaveButtonWithLabel *ModuleCachePathButton;
   vtkKWLoadSaveButtonWithLabel *TemporaryDirectoryButton;
   vtkKWLoadSaveButtonWithLabel *BrowserSelectButton;
   vtkKWLoadSaveButtonWithLabel *ZipSelectButton;
@@ -107,6 +111,7 @@ private:
   vtkKWLoadSaveButtonWithLabel *RmSelectButton;
   vtkKWRadioButtonSet *FontSizeButtons;
   vtkKWRadioButtonSet *FontFamilyButtons;
+  vtkKWCheckButton  *LoadModulesCheckButton;
   vtkKWCheckButton  *LoadCommandLineModulesCheckButton;
   vtkKWCheckButton  *EnableDaemonCheckButton;
 

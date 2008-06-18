@@ -44,7 +44,7 @@ if { [itcl::find class SaveIslandEffect] == "" } {
 #                        CONSTRUCTOR/DESTRUCTOR
 # ------------------------------------------------------------------
 itcl::body SaveIslandEffect::constructor {sliceGUI} {
-  # rely on superclass constructor
+  set _scopeOptions "all visible"
 }
 
 itcl::body SaveIslandEffect::destructor {} {
@@ -84,7 +84,6 @@ itcl::body SaveIslandEffect::processEvent { {caller ""} {event ""} } {
 itcl::body SaveIslandEffect::apply {} {
 
   foreach {x y} [$_interactor GetEventPosition] {}
-  $this queryLayers $x $y
 
   if { [$this getInputLabel] == "" || [$this getInputLabel] == "" } {
     $this flashCursor 3
@@ -93,9 +92,9 @@ itcl::body SaveIslandEffect::apply {} {
 
   set conn [vtkImageConnectivity New]
   $conn SetFunctionToSaveIsland
-  $conn SetSeed $_layers(label,i) $_layers(label,j) $_layers(label,k) 
   $conn SetInput [$this getInputLabel]
   $conn SetOutput [$this getOutputLabel]
+  eval $conn SetSeed [$this getLayerIJK label $x $y]
   $this setProgressFilter $conn "Save Island"
   [$this getOutputLabel] Update
   $conn Delete
@@ -105,6 +104,20 @@ itcl::body SaveIslandEffect::apply {} {
 
   
 itcl::body SaveIslandEffect::buildOptions {} {
+
+  chain
+
+  #
+  # a help button
+  #
+  set o(help) [vtkNew vtkSlicerPopUpHelpWidget]
+  $o(help) SetParent [$this getOptionsFrame]
+  $o(help) Create
+  $o(help) SetHelpTitle "Save Islands"
+  $o(help) SetHelpText "Click on an island you want to keep.  All voxels not connected to the island are set to zero."
+  $o(help) SetBalloonHelpString "Bring up help window."
+  pack [$o(help) GetWidgetName] \
+    -side right -anchor sw -padx 2 -pady 2 
 
   #
   # a cancel button
@@ -130,7 +143,8 @@ itcl::body SaveIslandEffect::buildOptions {} {
 }
 
 itcl::body SaveIslandEffect::tearDownOptions { } {
-  foreach w "cancel" {
+  chain
+  foreach w "help cancel" {
     if { [info exists o($w)] } {
       $o($w) SetParent ""
       pack forget [$o($w) GetWidgetName] 

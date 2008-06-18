@@ -36,6 +36,8 @@
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLVolumeDisplayNode.h"
 
+class vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget;
+
 class vtkDiffusionTensorMathematics;
 class vtkImageExtractComponents;
 class vtkAssignAttribute;
@@ -62,7 +64,7 @@ public:
   
   // Description:
   // removes observers on widgets in the class
-  virtual void RemoveWidgetObservers ( );
+  virtual void RemoveWidgetObservers();
 
   virtual void UpdateWidgetFromMRML();
 
@@ -76,12 +78,11 @@ protected:
 
   vtkKWMenuButtonWithSpinButtonsWithLabel* ScalarModeMenu;
   vtkSlicerModuleCollapsibleFrame* ScalarOptionsFrame; 
-  vtkKWCheckButton* GlyphButton;
-  vtkKWMenuButtonWithSpinButtonsWithLabel* GlyphModeMenu; 
   vtkSlicerNodeSelectorWidget* ColorSelectorWidget;
   vtkKWWindowLevelThresholdEditor* WindowLevelThresholdEditor;
   vtkKWCheckButton* InterpolateButton;
 
+  vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget *GlyphDisplayWidget;
   vtkDiffusionTensorMathematics *DTIMathematics;
   vtkImageExtractComponents *ExtractComponent;
   

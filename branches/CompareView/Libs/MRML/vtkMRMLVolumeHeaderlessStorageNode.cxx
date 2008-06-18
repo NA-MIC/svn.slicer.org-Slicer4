@@ -27,12 +27,17 @@ Version:   $Revision: 1.3 $
 #include "vtkImageAppend.h"
 #include "vtkImageFlip.h"
 
+#include "vtkMRMLConfigure.h" // MRML_USE*
+
 #include "vtkITKImageWriter.h"
 #include <itkArchetypeSeriesFileNames.h> 
 
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLScalarVolumeNode.h"
+
+#ifdef MRML_USE_vtkTeem
 #include "vtkMRMLVectorVolumeNode.h"
+#endif
 
 #include "vtkMRMLVolumeHeaderlessStorageNode.h"
 
@@ -329,7 +334,7 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
   // test whether refNode is a valid node to hold a volume
   if ( !(refNode->IsA("vtkMRMLScalarVolumeNode")) || refNode->IsA("vtkMRMLVectorVolumeNode" ) )
     {
-    vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
+    //vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
     return 0;         
     }
   if (this->GetFileName() == NULL) 
@@ -338,7 +343,7 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
     }
 
   Superclass::StageReadData(refNode);
-  if ( this->GetReadState() == this->Pending )
+  if ( this->GetReadState() != this->TransferDone )
     {
     // remote file download hasn't finished
     return 0;
@@ -350,10 +355,12 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
     {
     volNode = dynamic_cast <vtkMRMLScalarVolumeNode *> (refNode);
     }
+#ifdef MRML_USE_vtkTeem
   else if ( refNode->IsA("vtkMRMLVectorVolumeNode") ) 
     {
     volNode = dynamic_cast <vtkMRMLVectorVolumeNode *> (refNode);
     }
+#endif
   if (volNode->GetImageData()) 
     {
     volNode->SetAndObserveImageData (NULL);
@@ -483,6 +490,7 @@ int vtkMRMLVolumeHeaderlessStorageNode::ReadData(vtkMRMLNode *refNode)
   appender->Delete();
   ici->Delete();
 
+  this->SetReadStateIdle();
   return result;
 }
 

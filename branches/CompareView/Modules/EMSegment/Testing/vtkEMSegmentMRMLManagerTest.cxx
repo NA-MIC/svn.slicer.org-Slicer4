@@ -409,11 +409,8 @@ int main(int argc, char** argv)
       vtkTestSetGetMacro(pass, m,
                          RegistrationInterpolationType, MAGIC_INT);
       vtkIdType atlasRegID  = m->GetVolumeNthID(1);
-      vtkIdType targetRegID = m->GetTargetSelectedVolumeNthID(1);
       vtkTestSetGetMacro(pass, m,
                          RegistrationAtlasVolumeID, atlasRegID);
-      vtkTestSetGetMacro(pass, m,
-                         RegistrationTargetVolumeID, targetRegID);
       
       // save parameters
       vtkTestSetGetStringMacro(pass, m, 
@@ -801,6 +798,7 @@ int main(int argc, char** argv)
   // clean up
   mrmlScene->Clear(true);
   mrmlScene->Delete();
+  vtkEventBroker::GetInstance()->Delete(); 
   emLogic->SetAndObserveMRMLScene(NULL);
   emLogic->Delete();
   

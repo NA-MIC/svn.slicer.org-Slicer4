@@ -21,6 +21,11 @@
 
 #include "itkBSplineImageToImageRegistrationMethod.h"
 
+#include "itkBSplineResampleImageFunction.h"
+#include "itkIdentityTransform.h"
+#include "itkResampleImageFilter.h"
+#include "itkBSplineDecompositionImageFilter.h"
+
 namespace itk
 {
 
@@ -28,20 +33,11 @@ template< class TImage >
 BSplineImageToImageRegistrationMethod< TImage >
 ::BSplineImageToImageRegistrationMethod( void )
 {
-  this->SetTransform( BSplineTransformType::New() );
-  this->GetTypedTransform()->SetIdentity();
-
   m_NumberOfControlPoints = 10;
-
-  typename Superclass::TransformParametersScalesType scales;
-  scales.set_size( this->GetTypedTransform()->GetNumberOfParameters() );
-  scales.fill( 1.0f );
-  this->SetTransformParametersScales( scales );
-
-  this->SetInitialTransformParameters( this->GetTypedTransform()->GetParameters() );
-
+  m_ExpectedDeformationMagnitude = 10;
+  this->SetOptimizationMethodEnum( Superclass::MULTIRESOLUTION_OPTIMIZATION );
   this->SetTransformMethodEnum( Superclass::BSPLINE_TRANSFORM );
-
+  this->SetUseOverlapAsROI( true );
 }
 
 template< class TImage >
@@ -53,54 +49,105 @@ BSplineImageToImageRegistrationMethod< TImage >
 template< class TImage >
 void
 BSplineImageToImageRegistrationMethod< TImage >
-::Update( void )
+::ComputeGridRegion( int numberOfControlPoints,
+                 typename TransformType::RegionType::SizeType & gridSize,
+                 typename TransformType::SpacingType & gridSpacing,
+                 typename TransformType::OriginType & gridOrigin,
+                 typename TransformType::DirectionType & gridDirection)
 {
-  typename TransformType::RegionType bsplineRegion;
+  if(numberOfControlPoints < 2)
+    {
+    itkWarningMacro(<< "ComputeGridRegion: numberOfControlPoints=1; changing to 2.");
+    numberOfControlPoints = 2;
+    }
+
   typename TransformType::RegionType::SizeType gridSizeOnImage;
   typename TransformType::RegionType::SizeType gridBorderSize;
-  typename TransformType::RegionType::SizeType totalGridSize;
-
-  gridSizeOnImage.Fill( m_NumberOfControlPoints - 3 );  
-  gridBorderSize.Fill( 3 );  // Border for spline order = 3 ( 1 lower, 2 upper )
-
-  totalGridSize = gridSizeOnImage + gridBorderSize;
-
-  bsplineRegion.SetSize( totalGridSize );
-
-  typename TransformType::SpacingType spacing   = this->GetFixedImage()->GetSpacing();
-  typename TransformType::OriginType  origin    = this->GetFixedImage()->GetOrigin();
-  typename TransformType::DirectionType  direction    = this->GetFixedImage()->GetDirection();
 
   typename TImage::SizeType fixedImageSize = this->GetFixedImage()->GetLargestPossibleRegion().GetSize();
 
-  for(unsigned int r=0; r<3; r++)
+  gridSpacing   = this->GetFixedImage()->GetSpacing();
+
+  double scale = (fixedImageSize[0] * gridSpacing[0]) / numberOfControlPoints;
+  gridSizeOnImage[0] = numberOfControlPoints;
+  for(unsigned int i=1; i<ImageDimension; i++)
     {
-    spacing[r] *= floor( static_cast<double>(fixedImageSize[r] - 1)  /
-                         static_cast<double>(gridSizeOnImage[r] - 1) );
-    origin[r]  -=  spacing[r];
+    gridSizeOnImage[i] = (int)((fixedImageSize[i] * gridSpacing[i]) / scale);
+    if( gridSizeOnImage[i] < 2 )
+      {
+      gridSizeOnImage[i] = 2;
+      }
+    }
+  gridBorderSize.Fill( 3 );  // Border for spline order = 3 ( 1 lower, 2 upper )
+
+  gridSize = gridSizeOnImage + gridBorderSize;
+
+  gridOrigin    = this->GetFixedImage()->GetOrigin();
+  gridDirection    = this->GetFixedImage()->GetDirection();
+
+  for(unsigned int r=0; r<ImageDimension; r++)
+    {
+    gridSpacing[r] *=  static_cast<double>(fixedImageSize[r] - 1)  /
+                         static_cast<double>(gridSizeOnImage[r] - 1);
     }
 
-  this->GetTypedTransform()->SetGridSpacing( spacing );
-  this->GetTypedTransform()->SetGridOrigin( origin );
-  this->GetTypedTransform()->SetGridRegion( bsplineRegion );
-  this->GetTypedTransform()->SetGridDirection( direction );
+  typename TransformType::SpacingType gridOriginOffset;
+  gridOriginOffset = gridDirection * gridSpacing;
+
+  gridOrigin = gridOrigin - gridOriginOffset;
+
+  //std::cout << "gridSize = " << gridSize << std::endl;
+  //std::cout << "gridSpacing = " << gridSpacing << std::endl;
+  //std::cout << "gridOrigin = " << gridOrigin << std::endl;
+  //std::cout << "gridDirection = " << gridDirection << std::endl;
+}
+
+ 
+template< class TImage >
+void
+BSplineImageToImageRegistrationMethod< TImage >
+::Update( void )
+{
+  this->SetTransform( BSplineTransformType::New() );
+
+  typename TransformType::RegionType gridRegion;
+  typename TransformType::RegionType::SizeType gridSize;
+  typename TransformType::SpacingType  gridSpacing;
+  typename TransformType::OriginType  gridOrigin;
+  typename TransformType::DirectionType  gridDirection;
+
+  this->ComputeGridRegion( m_NumberOfControlPoints,
+                           gridSize, gridSpacing, gridOrigin,
+                           gridDirection);
+
+  gridRegion.SetSize( gridSize );
+
+  this->GetTypedTransform()->SetGridRegion( gridRegion );
+  this->GetTypedTransform()->SetGridSpacing( gridSpacing );
+  this->GetTypedTransform()->SetGridOrigin( gridOrigin );
+  this->GetTypedTransform()->SetGridDirection( gridDirection );
 
   const unsigned int numberOfParameters =
                this->GetTypedTransform()->GetNumberOfParameters();
 
-  typename Superclass::TransformParametersType params( numberOfParameters );
-  params.Fill( 0.0 );
-  //this->GetTypedTransform()->SetParametersByValue( params );
-  if( this->GetInitialTransformParameters().GetSize() != numberOfParameters )
+  if( numberOfParameters != this->GetInitialTransformParameters().GetSize() )
     {
-    this->SetInitialTransformParameters( params );
+    typename Superclass::TransformParametersType params( numberOfParameters );
+    params.Fill( 0.0 );
+    this->GetTypedTransform()->SetParametersByValue( params );
+  
+    this->SetInitialTransformParameters( this->GetTypedTransform()->GetParameters() );
     }
 
-  if( this->GetTransformParametersScales().GetSize() != numberOfParameters )
-    {
-    params.Fill( 1.0f );
-    this->SetTransformParametersScales( params );
-    }
+  this->SetInitialTransformFixedParameters( this->GetTypedTransform()->GetFixedParameters() );
+  
+  typename Superclass::TransformParametersType params( numberOfParameters );
+  typename TImage::SizeType fixedImageSize = this->GetFixedImage()->GetLargestPossibleRegion().GetSize();
+  typename TransformType::SpacingType spacing   = this->GetFixedImage()->GetSpacing();
+  double scale = 2.0 / (m_ExpectedDeformationMagnitude * spacing[0]);
+  std::cout << "BSpline Parameter Scale = " << scale << std::endl;
+  params.Fill( scale );
+  this->SetTransformParametersScales( params );
 
   Superclass::Update();
 
@@ -113,6 +160,160 @@ BSplineImageToImageRegistrationMethod< TImage >
 {
   return static_cast< TransformType  * >( Superclass::GetTransform() );
 }
+
+template< class TImage >
+typename BSplineImageToImageRegistrationMethod< TImage >::TransformType::Pointer
+BSplineImageToImageRegistrationMethod< TImage >
+::GetBSplineTransform( void )
+{
+  typename BSplineTransformType::Pointer trans = BSplineTransformType::New();
+  
+  trans->SetFixedParameters( this->GetTypedTransform()->GetFixedParameters() );
+  trans->SetParametersByValue( this->GetTypedTransform()->GetParameters() );
+
+  return trans;
+}
+
+template< class TImage >
+void
+BSplineImageToImageRegistrationMethod< TImage >
+::ResampleControlGrid(int numberOfControlPoints,
+                      ParametersType & parameters )
+{
+  typename TransformType::RegionType::SizeType gridSize;
+  typename TransformType::SpacingType  gridSpacing;
+  typename TransformType::OriginType  gridOrigin;
+  typename TransformType::DirectionType  gridDirection;
+
+  this->ComputeGridRegion( numberOfControlPoints,
+                           gridSize, gridSpacing, gridOrigin,
+                           gridDirection);
+
+  int numberOfParameters = gridSize[0];
+  for(unsigned int i=1; i<ImageDimension; i++)
+    {
+    numberOfParameters *= gridSize[i];
+    }
+  numberOfParameters *= ImageDimension;
+
+  parameters.SetSize( numberOfParameters );
+    
+  int parameterCounter = 0;
+
+  typedef typename BSplineTransformType::ImageType  ParametersImageType;
+  typedef ResampleImageFilter< ParametersImageType, ParametersImageType> 
+                                                      ResamplerType;
+  typedef BSplineResampleImageFunction< ParametersImageType, double > 
+                                                      FunctionType;
+  typedef IdentityTransform< double, ImageDimension > IdentityTransformType;
+  typedef itk::ImageFileWriter< ParametersImageType > WriterType;
+
+  for( unsigned int k = 0; k < ImageDimension; k++ )
+    {
+    typename ResamplerType::Pointer upsampler = ResamplerType::New();
+ 
+    typename FunctionType::Pointer function = FunctionType::New();
+    function->SetSplineOrder(3);
+ 
+    typename IdentityTransformType::Pointer identity = 
+                                               IdentityTransformType::New();
+
+    if( this->GetReportProgress() )
+      {
+      typename WriterType::Pointer writer = WriterType::New();
+      std::stringstream ss;
+      std::string name;
+      ss << "inCoeImage" << k << ".mha";
+      ss >> name;
+      writer->SetInput( this->GetTypedTransform()->GetCoefficientImage()[k] );
+      writer->SetFileName( name );
+      try
+        {
+        writer->Update();
+        }
+      catch( ... )
+        {
+        std::cout << "Error writing coefficient image.  Ignoring." << std::endl;
+        }
+      }
+ 
+    upsampler->SetInput( this->GetTypedTransform()
+                             ->GetCoefficientImage()[k] );
+    upsampler->SetInterpolator( function );
+    upsampler->SetTransform( identity );
+    upsampler->SetSize( gridSize );
+    upsampler->SetOutputSpacing( gridSpacing );
+    upsampler->SetOutputOrigin( gridOrigin );
+    upsampler->SetOutputDirection( gridDirection );
+    try
+      {
+      upsampler->Update();
+      }
+    catch( itk::ExceptionObject & excep )
+      {
+      std::cout << "Exception in upsampler: " << excep << std::endl;
+      }
+    catch( ... )
+      {
+      std::cout << "Uncaught exception in upsampler" << std::endl;
+      }
+ 
+    typedef BSplineDecompositionImageFilter< ParametersImageType,
+                                             ParametersImageType >
+                                                 DecompositionType;
+    typename DecompositionType::Pointer decomposition =
+                                          DecompositionType::New();
+ 
+    decomposition->SetSplineOrder( 3 );
+    decomposition->SetInput( upsampler->GetOutput() );
+    try
+      {
+      decomposition->Update();
+      }
+    catch( itk::ExceptionObject & excep )
+      {
+      std::cout << "Exception in decomposition: " << excep << std::endl;
+      }
+    catch( ... )
+      {
+      std::cout << "Uncaught exception in decomposition" << std::endl;
+      }
+ 
+    typename ParametersImageType::Pointer newCoefficients =
+                                        decomposition->GetOutput();
+ 
+    if( this->GetReportProgress() )
+      {
+      typename WriterType::Pointer writer = WriterType::New();
+      std::stringstream ss;
+      std::string name;
+      ss << "outCoeImage" << k << ".mha";
+      ss >> name;
+      writer->SetInput( newCoefficients );
+      writer->SetFileName( name );
+      try
+        {
+        writer->Update();
+        }
+      catch( ... )
+        {
+        std::cout << "Error while writing coefficient image.  Ignoring." << std::endl;
+        }
+      }
+
+    // copy the coefficients into the parameter array
+    typedef ImageRegionIterator<ParametersImageType> Iterator;
+    Iterator it( newCoefficients, 
+                 newCoefficients->GetLargestPossibleRegion() );
+    while ( !it.IsAtEnd() )
+      {
+      parameters[ parameterCounter++ ] = it.Get();
+      ++it;
+      }
+    }
+}
+
+
 
 template< class TImage >
 void

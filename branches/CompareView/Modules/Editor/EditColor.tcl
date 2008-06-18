@@ -77,6 +77,7 @@ itcl::body EditColor::create { } {
   $o(colorSpin) Create
   [$o(colorSpin) GetWidget] SetWidth 3
   [$o(colorSpin) GetWidget] SetValue [EditorGetPaintLabel]
+  $o(colorSpin) SetBalloonHelpString "Click colored patch at right to bring up color selection pop up window.  Use the 'c' key to bring up color popup menu."
 
   set o(colorOption) [vtkNew vtkKWMenuButton]
   $o(colorOption) SetParent $frame
@@ -169,7 +170,7 @@ itcl::body EditColor::updateGUI {label} {
 # get the color node for the label map in the Red slice
 #
 itcl::body EditColor::getColorNode {} {
-  set sliceLogic [$::slicer3::ApplicationGUI GetMainSliceLogic0]
+  set sliceLogic [$::slicer3::ApplicationLogic GetSlicerSliceLogic "Red"]
   if { $sliceLogic != "" } {
     set logic [$sliceLogic GetLabelLayer]
     if { $logic != "" } {

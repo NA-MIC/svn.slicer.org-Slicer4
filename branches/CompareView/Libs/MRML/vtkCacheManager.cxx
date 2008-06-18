@@ -18,11 +18,14 @@ vtkCacheManager::vtkCacheManager()
   this->MRMLScene = NULL;
   this->CallbackCommand = vtkCallbackCommand::New();
   this->CachedFileList.clear();
-  this->RemoteCacheLimit = 0;
+  //--- what seem reasonable default values here?
+  this->RemoteCacheLimit = 200;
+  this->RemoteCacheFreeBufferSize = 10;
   this->CurrentCacheSize = 0;
-  this->RemoteCacheFreeBufferSize = 0;
   this->EnableForceRedownload = 0;
+  this->InsufficientFreeBufferNotificationFlag = 0;
   // this->EnableRemoteCacheOverwriting = 1;
+  this->uriMap.clear();
 }
 
 
@@ -31,6 +34,7 @@ vtkCacheManager::~vtkCacheManager()
 {
    
   this->MRMLScene = NULL;
+  this->uriMap.clear();
   if (this->CallbackCommand)
     {
     this->CallbackCommand->Delete();
@@ -40,6 +44,7 @@ vtkCacheManager::~vtkCacheManager()
   this->CurrentCacheSize = 0;
   this->RemoteCacheFreeBufferSize = 0;
   this->EnableForceRedownload = 0;
+  this->InsufficientFreeBufferNotificationFlag = 0;
 //  this->EnableRemoteCacheOverwriting = 1;
 }
 
@@ -53,6 +58,57 @@ vtkCacheManager::~vtkCacheManager()
 //   this->InvokeEvent ( vtkCacheManager::SettingsUpdateEvent );
 //   }
 //   }
+
+//----------------------------------------------------------------------------
+const char* vtkCacheManager::GetFileFromURIMap (const char *uri )
+{
+  std::string uriString (uri);
+
+    //--- URI is first, local name is second
+    std::map<std::string, std::string>::iterator iter = this->uriMap.find(uriString);
+    if (iter != this->uriMap.end() )
+      {
+      return iter->second.c_str();
+      }
+
+  return NULL;
+}
+
+
+//----------------------------------------------------------------------------
+void vtkCacheManager::MapFileToURI ( const char *uri, const char *fname )
+{
+  if ( uri == NULL || fname == NULL )
+    {
+    vtkErrorMacro ( "MapFileToURI: got two null strings." );
+    return;
+    }
+
+  std::string remote(uri);
+  std::string local(fname);
+
+  std::map <std::string, std::string>::iterator iter;
+  //--- see if it's already here and update if so.
+
+    //--- URI is first, local name is second
+  int added = 0;
+  for (iter = this->uriMap.begin();
+       iter != this->uriMap.end();
+       iter++)
+    {
+    if (iter->first == remote )
+      {
+      iter->second = local;
+      added = 1;
+      }
+    }
+  if ( !added )
+    {
+    this->uriMap.insert (std::make_pair (remote, local ));
+    }
+}
+
+
 
 //----------------------------------------------------------------------------
 void vtkCacheManager::SetEnableForceRedownload( int val )
@@ -122,12 +178,12 @@ int vtkCacheManager::IsRemoteReference ( const char *uri )
   std::string prefix;
 
   //--- get all characters up to (and not including) the '://'
-  if ( ( index = uriString.find ( "://", 0 ) ) != std::string::npos )
+  if ( ( index = (int)(uriString.find ( "://", 0 )) ) != (int)(std::string::npos) )
     {
     prefix = uriString.substr ( 0, index );
     //--- check to see if any leading bracketed characters are
     //--- in this part of the string.
-    if ( (index = prefix.find ( "]:", 0 ) ) != std::string::npos )
+    if ( (index = (int)(prefix.find ( "]:", 0 )) ) != (int)(std::string::npos) )
       {
       //--- if so, strip off the bracketed characters in case
       //--- we adopt the gwe "[filename.ext]:" prefix.
@@ -158,12 +214,12 @@ int vtkCacheManager::IsLocalReference ( const char *uri )
   std::string prefix;
 
   //--- get all characters up to (and not including) the '://'
-  if ( ( index = uriString.find ( "://", 0 ) ) != std::string::npos )
+  if ( ( index = (int)(uriString.find ( "://", 0 )) ) != (int)(std::string::npos) )
     {
     prefix = uriString.substr ( 0, index );
     //--- check to see if any leading bracketed characters are
     //--- in this part of the string.
-    if ( (index = prefix.find ( "]:", 0 ) ) != std::string::npos )
+    if ( (index = (int)(prefix.find ( "]:", 0 )) ) != (int)(std::string::npos) )
       {
       //--- if so, strip off the bracketed characters in case
       //--- we adopt the gwe "[filename.ext]:" prefix.
@@ -194,7 +250,7 @@ int vtkCacheManager::LocalFileExists ( const char *uri )
   std::string filename;
 
   //--- get all characters up to (and not including) the '://'
-  if ( ( index = uriString.find ( "://", 0 ) ) != std::string::npos )
+  if ( ( index = (int)(uriString.find ( "://", 0 )) ) != (int)(std::string::npos) )
     {
     //--- is this the correct index???
     filename = uriString.substr ( index+3 );
@@ -371,6 +427,13 @@ const char* vtkCacheManager::GetFilenameFromURI ( const char *uri )
     vtkDebugMacro("GetFilenameFromURI: input uri is null");
     return "(null)";
     }
+
+  const char *mapcheck = this->GetFileFromURIMap( uri );
+  if ( mapcheck != NULL )
+    {
+    return (mapcheck);
+    }
+
   vtksys_stl::string kwInString = vtksys_stl::string(uri);
 
   //--- First decode special characters
@@ -487,7 +550,7 @@ void vtkCacheManager::DeleteFromCache( const char *target )
     this->MarkNodesBeforeDeletingDataFromCache ( target );
 
     //--- remove the file or directory in str....
-    vtkWarningMacro ( "Removing " << str.c_str() << " from disk and from record of cached files." );
+    vtkDebugMacro ( "Removing " << str.c_str() << " from disk and from record of cached files." );
     if ( vtksys::SystemTools::FileIsDirectory ( str.c_str() ) )
       {
       if ( !vtksys::SystemTools::RemoveADirectory ( str.c_str() ))
@@ -574,12 +637,16 @@ void vtkCacheManager::MarkNode ( std::string str )
     node = vtkMRMLStorableNode::SafeDownCast ( this->MRMLScene->GetNthNodeByClass (n, "vtkMRMLStorableNode" ));
     if ( node != NULL )
       {
-      if (node->GetStorageNode() != NULL )
+      int numStorageNodes = node->GetNumberOfStorageNodes();
+      for (int i = 0; i < numStorageNodes; i++)
         {
-        uri = node->GetStorageNode()->GetFullNameFromFileName();
-        if ( str == uri )
+        if (node->GetNthStorageNode(i) != NULL )
           {
-          node->ModifiedSinceReadOn();
+          uri = node->GetNthStorageNode(i)->GetFullNameFromFileName();
+          if ( str == uri )
+            {
+            node->ModifiedSinceReadOn();
+            }
           }
         }
       }
@@ -685,7 +752,7 @@ float vtkCacheManager::ComputeCacheSize( const char *dirName, unsigned long sz )
         if (vtksys::SystemTools::FileIsDirectory(subdirString.c_str()))
           {
           ///---compute dir and filename for recursive hunt
-          cachesize += this->ComputeCacheSize (subdirString.c_str(), 0);
+          cachesize += (long unsigned int)ceil(this->ComputeCacheSize (subdirString.c_str(), 0));
           }
         else
           {

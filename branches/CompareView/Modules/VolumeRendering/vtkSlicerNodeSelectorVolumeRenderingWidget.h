@@ -6,10 +6,10 @@
 #define __vtkSlicerNodeSelectorVolumeRenderingWidget_h
 
 #include "vtkSlicerModuleGUI.h"
-#include "vtkVolumeRenderingModule.h"
+#include "vtkVolumeRendering.h"
 #include "vtkSlicerNodeSelectorWidget.h"
 
-class VTK_VOLUMERENDERINGMODULE_EXPORT vtkSlicerNodeSelectorVolumeRenderingWidget :public vtkSlicerNodeSelectorWidget
+class VTK_SLICERVOLUMERENDERING_EXPORT vtkSlicerNodeSelectorVolumeRenderingWidget :public vtkSlicerNodeSelectorWidget
 {
 public:
     // Description:

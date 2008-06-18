@@ -65,10 +65,6 @@ itcl::body DrawEffect::constructor {sliceGUI} {
   $property SetLineWidth 1
   [$_renderWidget GetRenderer] AddActor2D $o(actor)
   lappend _actors $o(actor)
-
-  set node [[$sliceGUI GetLogic] GetSliceNode]
-  lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent $node"]
 }
 
 itcl::body DrawEffect::destructor {} {
@@ -123,6 +119,10 @@ itcl::body DrawEffect::processEvent { {caller ""} {event ""} } {
         $sliceGUI SetGrabID $this
         eval $this addPoint $_currentPosition
         $sliceGUI SetGUICommandAbortFlag 1
+      }
+      "RightButtonReleaseEvent" {
+        $this apply
+        set _actionState ""
       }
       "MouseMoveEvent" {
         switch $_actionState {

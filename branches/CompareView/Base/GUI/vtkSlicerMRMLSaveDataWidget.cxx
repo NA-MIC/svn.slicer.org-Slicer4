@@ -45,6 +45,9 @@ vtkSlicerMRMLSaveDataWidget::vtkSlicerMRMLSaveDataWidget ( )
   this->SaveSceneCheckBox = NULL;
   this->SaveDataButton = NULL;
 
+  this->SaveAllDataButton = NULL;
+  this->SaveNoDataButton = NULL;
+  
   this->DataDirectoryName = NULL;
   this->OkButton = NULL;
   this->CancelButton = NULL;
@@ -78,6 +81,16 @@ vtkSlicerMRMLSaveDataWidget::~vtkSlicerMRMLSaveDataWidget ( )
     {
     this->SaveDialog->SetParent(NULL);
     this->SaveDialog->Delete();
+    }
+  if (this->SaveAllDataButton)
+    {
+    this->SaveAllDataButton->SetParent(NULL);
+    this->SaveAllDataButton->Delete();
+    }
+  if (this->SaveNoDataButton)
+    {
+    this->SaveNoDataButton->SetParent(NULL);
+    this->SaveNoDataButton->Delete();
     }
   if (this->SaveSceneButton)
     {
@@ -154,6 +167,24 @@ void vtkSlicerMRMLSaveDataWidget::ProcessWidgetEvents ( vtkObject *caller,
       this->UpdateDataDirectory();
       }
     }
+  else if (this->SaveAllDataButton ==  vtkKWPushButton::SafeDownCast(caller) && event ==  vtkKWPushButton::InvokedEvent)
+    {
+    int nrows = this->MultiColumnList->GetWidget()->GetNumberOfRows();
+    for (int row=0; row<nrows; row++)
+      {
+      this->MultiColumnList->GetWidget()->SetCellTextAsInt(row, 2, 1);
+      this->MultiColumnList->GetWidget()->SetCellWindowCommandToCheckButton(row, 2);
+      }
+    }
+  else if (this->SaveNoDataButton ==  vtkKWPushButton::SafeDownCast(caller) && event ==  vtkKWPushButton::InvokedEvent)
+    {
+    int nrows = this->MultiColumnList->GetWidget()->GetNumberOfRows();
+    for (int row=0; row<nrows; row++)
+      {
+      this->MultiColumnList->GetWidget()->SetCellTextAsInt(row, 2, 0);
+      this->MultiColumnList->GetWidget()->SetCellWindowCommandToCheckButton(row, 2);
+      }
+    }
   else if (this->OkButton ==  vtkKWPushButton::SafeDownCast(caller) && event ==  vtkKWPushButton::InvokedEvent)
     {
     this->MultiColumnList->GetWidget()->FinishEditing();
@@ -167,7 +198,9 @@ void vtkSlicerMRMLSaveDataWidget::ProcessWidgetEvents ( vtkObject *caller,
         std::string fileName (this->MultiColumnList->GetWidget()->GetCellText(row, 4));
         const char *filePath = fileName.c_str();
         snode->SetFileName(filePath); 
-
+        // undo any URI
+        snode->SetURI(NULL);
+        
         //: ask override
         int  writeFile = 1;
         fstream fin;
@@ -449,7 +482,7 @@ int vtkSlicerMRMLSaveDataWidget::UpdateFromMRML()
     row++;
     }
   
-#if !defined(MESHING_DEBUG) && defined(BUILD_MODULES)  
+#if !defined(MESHING_DEBUG) && defined(Slicer3_BUILD_MODULES)  
   // *** add UnstructuredGrid types 
   // An additional datatype, MRMLUnstructuredGrid and its subclasses are 
   // also searched in the MRML tree.  This is done so instances of FiniteElement
@@ -565,6 +598,8 @@ void vtkSlicerMRMLSaveDataWidget::UpdateDataDirectory()
           sname += std::string(".vtk");
           }
         snode->SetFileName(sname.c_str());
+        // undo the URI if it's set
+        snode->SetURI(NULL);
         name = itksys::SystemTools::GetFilenameName(snode->GetFileName());
         }
       itksys_stl::string sname (this->DataDirectoryName);
@@ -606,6 +641,16 @@ void vtkSlicerMRMLSaveDataWidget::RemoveWidgetObservers ( )
   if (this->SaveDataButton)
     {
     this->SaveDataButton->GetWidget()->GetLoadSaveDialog()->RemoveObservers (vtkKWTopLevel::WithdrawEvent,
+        (vtkCommand *)this->GUICallbackCommand );
+    }
+  if (this->SaveAllDataButton)
+    {
+    this->SaveAllDataButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  
+        (vtkCommand *)this->GUICallbackCommand );
+    }
+  if (this->SaveNoDataButton)
+    {
+    this->SaveNoDataButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  
         (vtkCommand *)this->GUICallbackCommand );
     }
 
@@ -705,6 +750,31 @@ void vtkSlicerMRMLSaveDataWidget::CreateWidget ( )
   this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
                  this->SaveDataButton->GetWidgetName());
 
+  // add a button frame
+  vtkKWFrame *buttonFrame = vtkKWFrame::New();
+  buttonFrame->SetParent(dataFrame->GetFrame());
+  buttonFrame->Create();
+  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+                 buttonFrame->GetWidgetName() );
+  
+  // add a button to change all the save flags to on
+  this->SaveAllDataButton = vtkKWPushButton::New();
+  this->SaveAllDataButton->SetParent ( buttonFrame );
+  this->SaveAllDataButton->Create ( );
+  this->SaveAllDataButton->SetText ("Save All");
+  this->SaveAllDataButton->SetBalloonHelpString("Check all save boxes");
+  this->Script("pack %s -side left -anchor w -padx 2 -pady 4", 
+              this->SaveAllDataButton->GetWidgetName());
+
+  // add a button to change all the save flags to off
+  this->SaveNoDataButton = vtkKWPushButton::New();
+  this->SaveNoDataButton->SetParent ( buttonFrame );
+  this->SaveNoDataButton->Create ( );
+  this->SaveNoDataButton->SetText ("Save None");
+  this->SaveNoDataButton->SetBalloonHelpString("Uncheck all save boxes");
+  this->Script("pack %s -side left -anchor w -padx 2 -pady 4", 
+              this->SaveNoDataButton->GetWidgetName());
+  
   // add the multicolumn list to show the points
   this->MultiColumnList = vtkKWMultiColumnListWithScrollbars::New ( );
   this->MultiColumnList->SetParent ( dataFrame->GetFrame() );
@@ -777,6 +847,8 @@ void vtkSlicerMRMLSaveDataWidget::CreateWidget ( )
   this->CancelButton->AddObserver ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
   this->SaveSceneButton->GetWidget()->GetLoadSaveDialog()->AddObserver ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
   this->SaveDataButton->GetWidget()->GetLoadSaveDialog()->AddObserver ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->SaveAllDataButton->AddObserver(  vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
+  this->SaveNoDataButton->AddObserver(  vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
 
   
   this->MultiColumnList->SetEnabled(1);
@@ -792,6 +864,7 @@ void vtkSlicerMRMLSaveDataWidget::CreateWidget ( )
   frame->Delete();
   dataFrame->Delete();
   saveFrame->Delete();
+  buttonFrame->Delete();
   
 }
 

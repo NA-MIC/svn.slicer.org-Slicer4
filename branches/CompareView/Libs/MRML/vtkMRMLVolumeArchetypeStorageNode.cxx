@@ -16,13 +16,18 @@ Version:   $Revision: 1.6 $
 #include <iostream>
 #include <sstream>
 
+#include "vtkMRMLConfigure.h" // MRML_USE*
+
 #include "vtkObjectFactory.h"
 #include "vtkCallbackCommand.h"
 #include "vtkImageChangeInformation.h"
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLScalarVolumeNode.h"
+
+#ifdef MRML_USE_vtkTeem
 #include "vtkMRMLVectorVolumeNode.h"
+#endif
 
 #include "vtkMatrix4x4.h"
 #include "vtkImageData.h"
@@ -65,6 +70,7 @@ vtkMRMLNode* vtkMRMLVolumeArchetypeStorageNode::CreateNodeInstance()
 vtkMRMLVolumeArchetypeStorageNode::vtkMRMLVolumeArchetypeStorageNode()
 {
   this->CenterImage = 0;
+  this->SingleFile  = 0;
 }
 
 //----------------------------------------------------------------------------
@@ -80,6 +86,11 @@ void vtkMRMLVolumeArchetypeStorageNode::WriteXML(ostream& of, int nIndent)
   std::stringstream ss;
   ss << this->CenterImage;
   of << indent << " centerImage=\"" << ss.str() << "\"";
+  }
+  {
+  std::stringstream ss;
+  ss << this->SingleFile;
+  of << indent << " singleFile=\"" << ss.str() << "\"";
   }
 }
 
@@ -101,6 +112,12 @@ void vtkMRMLVolumeArchetypeStorageNode::ReadXMLAttributes(const char** atts)
       ss << attValue;
       ss >> this->CenterImage;
       }
+    if (!strcmp(attName, "singleFile")) 
+      {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> this->SingleFile;
+      }
     }
 }
 
@@ -113,6 +130,7 @@ void vtkMRMLVolumeArchetypeStorageNode::Copy(vtkMRMLNode *anode)
   vtkMRMLVolumeArchetypeStorageNode *node = (vtkMRMLVolumeArchetypeStorageNode *) anode;
 
   this->SetCenterImage(node->CenterImage);
+  this->SetSingleFile(node->SingleFile);
 }
 
 //----------------------------------------------------------------------------
@@ -120,6 +138,7 @@ void vtkMRMLVolumeArchetypeStorageNode::PrintSelf(ostream& os, vtkIndent indent)
 {  
   vtkMRMLStorageNode::PrintSelf(os,indent);
   os << indent << "CenterImage:   " << this->CenterImage << "\n";
+  os << indent << "SingleFile:   " << this->SingleFile << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -135,7 +154,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   // test whether refNode is a valid node to hold a volume
   if ( !( refNode->IsA("vtkMRMLScalarVolumeNode") || refNode->IsA("vtkMRMLVectorVolumeNode" ) ) )
     {
-    vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
+    //vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
     return 0;         
     }
   if (this->GetFileName() == NULL && this->GetURI() == NULL) 
@@ -145,7 +164,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     }
   
   Superclass::StageReadData(refNode);
-  if ( this->GetReadState() == this->Pending )
+  if ( this->GetReadState() != this->TransferDone )
     {
     // remote file download hasn't finished
     vtkWarningMacro("ReadData: read state is pending, remote download hasn't finished yet");
@@ -173,6 +192,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     reader = vtkITKArchetypeImageSeriesScalarReader::New();  
     reader->SetSingleFile( this->GetSingleFile() );
     }
+#ifdef MRML_USE_vtkTeem
   else if ( refNode->IsA("vtkMRMLVectorVolumeNode") ) 
     {
     volNode = dynamic_cast <vtkMRMLVectorVolumeNode *> (refNode);
@@ -189,9 +209,10 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
     readerSeries->SetSingleFile( this->GetSingleFile() );
 
     readerFile->SetArchetype(fullName.c_str());
+    readerSeries->SetArchetype(fullName.c_str());
     try 
       {
-      readerFile->UpdateInformation();
+      readerSeries->UpdateInformation();
       }
     catch ( ... )
       {
@@ -199,9 +220,10 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
       readerSeries->Delete();
       return 0;
       }
-    if ( readerFile->GetNumberOfFileNames() == 1 )
+    if ( readerSeries->GetNumberOfFileNames() == 1 )
       {
       reader = readerFile;
+      reader->UpdateInformation();
       readerSeries->Delete();
       }
     else
@@ -214,8 +236,8 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
       reader->Delete();
       return 0;
       }
-
     }
+#endif
 
   reader->AddObserver( vtkCommand::ProgressEvent,  this->MRMLCallbackCommand);
 
@@ -278,6 +300,7 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   else
     {
     volNode->SetAndObserveImageData (ici->GetOutput());
+    volNode->ModifiedSinceReadOff();
     }
 
   vtkMatrix4x4* mat = reader->GetRasToIjkMatrix();
@@ -291,6 +314,8 @@ int vtkMRMLVolumeArchetypeStorageNode::ReadData(vtkMRMLNode *refNode)
   reader->Delete();
   ici->Delete();
 
+  this->SetReadStateIdle();
+  
   return result;
 }
 

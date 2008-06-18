@@ -31,10 +31,12 @@
 #include "vtkMRMLModelHierarchyNode.h"
 #include "vtkMRMLTransformNode.h"
 #include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLNonlinearTransformNode.h"
 #include "vtkMRMLFiberBundleNode.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkMRMLModelStorageNode.h"
+#include "vtkMRMLTransformStorageNode.h"
 #include "vtkMRMLFiberBundleStorageNode.h"
 #include "vtkMRMLColorTableStorageNode.h"
 #include "vtkMRMLColorTableNode.h"
@@ -42,6 +44,7 @@
 #include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkMRMLLabelMapVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
+#include "vtkMRMLDiffusionTensorVolumeSliceDisplayNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 #include "vtkMRMLModelDisplayNode.h"
@@ -50,6 +53,8 @@
 #include "vtkMRMLFiberBundleGlyphDisplayNode.h"
 #include "vtkSlicerTask.h"
 #include "vtkMRMLNRRDStorageNode.h"
+#include "vtkMRMLFreeSurferModelStorageNode.h"
+#include "vtkMRMLFreeSurferModelOverlayStorageNode.h"
 
 #ifdef linux 
 #include "unistd.h"
@@ -410,7 +415,7 @@ void vtkSlicerApplicationLogic::ProcessMRMLEvents(vtkObject * /*caller*/,
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerApplicationLogic::PropagateVolumeSelection()
+void vtkSlicerApplicationLogic::PropagateVolumeSelection(int fit)
 {
   if ( !this->SelectionNode || !this->MRMLScene )
     {
@@ -430,26 +435,20 @@ void vtkSlicerApplicationLogic::PropagateVolumeSelection()
     cnode->SetLabelVolumeID( labelID );
     }
 
+  if (!fit) return;
+
   if (this->InternalSliceLogicMap)
-  {
-          SliceLogicMap::iterator lit;
-          for (lit = this->InternalSliceLogicMap->begin();
-                  lit != this->InternalSliceLogicMap->end(); ++lit)
-          {
-                  vtkSlicerSliceLogic *l = vtkSlicerSliceLogic::SafeDownCast((*lit).second);
-                  vtkMRMLSliceNode *sliceNode = l->GetSliceNode();
-                  unsigned int *dims = sliceNode->GetDimensions();
-                  l->FitSliceToAll(dims[0], dims[1]);
-          }
-  }
-  //int nitems = this->GetSlices()->GetNumberOfItems();
-  //for (i = 0; i < nitems; i++)
-  //  {
-  //  vtkSlicerSliceLogic *sliceLogic = vtkSlicerSliceLogic::SafeDownCast(this->GetSlices()->GetItemAsObject(i));
-  //  vtkMRMLSliceNode *sliceNode = sliceLogic->GetSliceNode();
-  //  unsigned int *dims = sliceNode->GetDimensions();
-  //  sliceLogic->FitSliceToAll(dims[0], dims[1]);
-  //  }
+    {
+    SliceLogicMap::iterator lit;
+    for (lit = this->InternalSliceLogicMap->begin();
+         lit != this->InternalSliceLogicMap->end(); ++lit)
+      {
+      vtkSlicerSliceLogic *l = vtkSlicerSliceLogic::SafeDownCast((*lit).second);
+      vtkMRMLSliceNode *sliceNode = l->GetSliceNode();
+      unsigned int *dims = sliceNode->GetDimensions();
+      l->FitSliceToAll(dims[0], dims[1]);
+      }
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -563,6 +562,26 @@ void vtkSlicerApplicationLogic::CreateProcessingThread()
       ->SpawnThread(vtkSlicerApplicationLogic::ProcessingThreaderCallback,
                     this);
 
+    // Start four network threads (TODO: make the number of threads a setting)
+    this->NetworkingThreadIDs.push_back ( this->ProcessingThreader
+          ->SpawnThread(vtkSlicerApplicationLogic::NetworkingThreaderCallback,
+                    this) );
+    /*
+     * TODO: it looks like curl is not thread safe by default
+     * - maybe there's a setting that cmcurl can have
+     *   similar to the --enable-threading of the standard curl build
+     *
+    this->NetworkingThreadIDs.push_back ( this->ProcessingThreader
+          ->SpawnThread(vtkSlicerApplicationLogic::NetworkingThreaderCallback,
+                    this) );
+    this->NetworkingThreadIDs.push_back ( this->ProcessingThreader
+          ->SpawnThread(vtkSlicerApplicationLogic::NetworkingThreaderCallback,
+                    this) );
+    this->NetworkingThreadIDs.push_back ( this->ProcessingThreader
+          ->SpawnThread(vtkSlicerApplicationLogic::NetworkingThreaderCallback,
+                    this) );
+    */
+
     // Setup the communication channel back to the main thread
     this->ModifiedQueueActiveLock->Lock();
     this->ModifiedQueueActive = true;
@@ -605,8 +624,17 @@ void vtkSlicerApplicationLogic::TerminateProcessingThread()
     this->ProcessingThreadActiveLock->Unlock();
 
     this->ProcessingThreader->TerminateThread( this->ProcessingThreadId );
-
     this->ProcessingThreadId = -1;
+
+    std::vector<int>::const_iterator idIterator;
+    idIterator = this->NetworkingThreadIDs.begin();
+    while (idIterator != this->NetworkingThreadIDs.end())
+      {
+      this->ProcessingThreader->TerminateThread( *idIterator );
+      ++idIterator;
+      }
+    this->NetworkingThreadIDs.clear();
+
     }
 }
 
@@ -634,12 +662,86 @@ vtkSlicerApplicationLogic
 
   // Tell the app to start processing any tasks slated for the
   // processing thread
-  appLogic->ProcessTasks();
+  appLogic->ProcessProcessingTasks();
 
   return ITK_THREAD_RETURN_VALUE;
 }
 
-void vtkSlicerApplicationLogic::ProcessTasks()
+void vtkSlicerApplicationLogic::ProcessProcessingTasks()
+{
+  int active = true;
+  vtkSmartPointer<vtkSlicerTask> task = 0;
+  
+  while (active)
+    {
+    // Check to see if we should be shutting down
+    this->ProcessingThreadActiveLock->Lock();
+    active = this->ProcessingThreadActive;
+    this->ProcessingThreadActiveLock->Unlock();
+
+    if (active)
+      {
+      // pull a task off the queue
+      this->ProcessingTaskQueueLock->Lock();
+      if ((*this->InternalTaskQueue).size() > 0)
+        {
+        // std::cout << "Number of queued tasks: " << (*this->InternalTaskQueue).size() << std::endl;
+        
+        // only handle processing tasks in this thread
+        task = (*this->InternalTaskQueue).front();
+        if ( task->GetType() == vtkSlicerTask::Processing )
+          {
+          (*this->InternalTaskQueue).pop();
+          }
+        else 
+          {
+          task = NULL;
+          }
+        }
+      this->ProcessingTaskQueueLock->Unlock();
+      
+      // process the task (should this be in a separate thread?)
+      if (task)
+        {
+        task->Execute();
+        task = 0;
+        }
+      }
+
+    // busy wait
+    itksys::SystemTools::Delay(100);
+    }
+}
+
+ITK_THREAD_RETURN_TYPE
+vtkSlicerApplicationLogic
+::NetworkingThreaderCallback( void *arg )
+{
+  
+#ifdef ITK_USE_WIN32_THREADS
+  // Adjust the priority of this thread
+  SetThreadPriority(GetCurrentThread(),
+                    THREAD_PRIORITY_BELOW_NORMAL);
+#endif
+
+#ifdef ITK_USE_PTHREADS
+  // Adjust the priority of all PROCESS level threads.  Not a perfect solution.
+  nice(20);
+#endif
+    
+  // pull out the reference to the appLogic
+  vtkSlicerApplicationLogic *appLogic
+    = (vtkSlicerApplicationLogic*)
+    (((itk::MultiThreader::ThreadInfoStruct *)(arg))->UserData);
+
+  // Tell the app to start processing any tasks slated for the
+  // processing thread
+  appLogic->ProcessNetworkingTasks();
+
+  return ITK_THREAD_RETURN_VALUE;
+}
+
+void vtkSlicerApplicationLogic::ProcessNetworkingTasks()
 {
   int active = true;
   vtkSmartPointer<vtkSlicerTask> task = 0;
@@ -659,7 +761,14 @@ void vtkSlicerApplicationLogic::ProcessTasks()
         {
         // std::cout << "Number of queued tasks: " << (*this->InternalTaskQueue).size() << std::endl;
         task = (*this->InternalTaskQueue).front();
-        (*this->InternalTaskQueue).pop();
+        if ( task->GetType() == vtkSlicerTask::Networking )
+          {
+          (*this->InternalTaskQueue).pop();
+          }
+        else 
+          {
+          task = NULL;
+          }
         }
       this->ProcessingTaskQueueLock->Unlock();
       
@@ -733,7 +842,7 @@ int vtkSlicerApplicationLogic::RequestReadData( const char *refNode, const char 
 {
   int active;
 
-//  std::cout << "Requesting " << filename << " be read into node " << refNode << ", display data = " << (displayData?"true":"false") <<  std::endl;
+  //std::cout << "RequestReadData: Requesting " << filename << " be read into node " << refNode << ", display data = " << (displayData?"true":"false") <<  std::endl;
 
   // only request to read a file if the ReadData queue is up
   this->ReadDataQueueActiveLock->Lock();
@@ -1005,7 +1114,7 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
   // What type of node is the data really? Or is it a scene
   vtkMRMLNode *nd = 0;
   vtkMRMLDisplayNode *disp = 0;
-  vtkMRMLStorageNode *in = 0;
+  vtkMRMLStorageNode *storageNode = 0;
   vtkMRMLScalarVolumeNode *svnd = 0;
   vtkMRMLVectorVolumeNode *vvnd = 0;
   vtkMRMLDiffusionTensorVolumeNode *dtvnd = 0;
@@ -1013,10 +1122,13 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
   vtkMRMLDiffusionWeightedVolumeNode *dwvnd = 0;
   vtkMRMLModelNode *mnd = 0;
   vtkMRMLLinearTransformNode *ltnd = 0;
+  vtkMRMLNonlinearTransformNode *nltnd = 0;
   vtkMRMLFiberBundleNode *fbnd = 0;
   vtkMRMLColorTableNode *cnd = 0;
   
   nd = this->MRMLScene->GetNodeByID( req.GetNode().c_str() );
+
+  vtkDebugMacro("ProcessReadNodeData: read data request node id = " << nd->GetID());
   
   svnd  = vtkMRMLScalarVolumeNode::SafeDownCast(nd);
   vvnd  = vtkMRMLVectorVolumeNode::SafeDownCast(nd);
@@ -1024,71 +1136,190 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
   dwvnd = vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(nd);
   mnd   = vtkMRMLModelNode::SafeDownCast(nd);
   ltnd  = vtkMRMLLinearTransformNode::SafeDownCast(nd);
+  nltnd  = vtkMRMLNonlinearTransformNode::SafeDownCast(nd);
   fbnd  = vtkMRMLFiberBundleNode::SafeDownCast(nd);
   cnd = vtkMRMLColorTableNode::SafeDownCast(nd);
   
-  // Read the data into the referenced node
-  if (itksys::SystemTools::FileExists( req.GetFilename().c_str() ))
+  bool useURI = this->GetMRMLScene()->GetCacheManager()->IsRemoteReference(req.GetFilename().c_str());
+  bool storageNodeExists = false;
+  int numStorageNodes = 0;
+
+  vtkMRMLStorableNode *storableNode = vtkMRMLStorableNode::SafeDownCast(nd);
+  if (storableNode)
     {
-    if (svnd || vvnd)
+    numStorageNodes = storableNode->GetNumberOfStorageNodes();
+    for (int n = 0; n < numStorageNodes; n++)
       {
-      // Load a scalar or vector volume node
-      //
-      // Need to maintain the original coordinate frame established by 
-      // the images sent to the execution model 
-      vtkMRMLVolumeArchetypeStorageNode *vin 
-        = vtkMRMLVolumeArchetypeStorageNode::New();
-      vin->SetCenterImage(0);
-      in = vin;
+      vtkMRMLStorageNode *testStorageNode = storableNode->GetNthStorageNode(n);
+      if (testStorageNode)
+        {
+        if (useURI && testStorageNode->GetURI() != NULL)
+          {
+          if (req.GetFilename().compare(testStorageNode->GetURI()) == 0)
+            {
+            // found a storage node for the remote file
+            vtkDebugMacro("ProcessReadNodeData: found a storage node with the right URI: " << testStorageNode->GetURI());
+            storageNode = testStorageNode;
+            storageNodeExists = true;
+            break;
+            }
+          }
+        else if (testStorageNode->GetFileName() != NULL &&
+                 req.GetFilename().compare(testStorageNode->GetFileName()) == 0)
+          {
+          // found the right storage node for a local file
+          vtkDebugMacro("ProcessReadNodeData: found a storage node with the right filename: " << testStorageNode->GetFileName());
+          storageNode = testStorageNode;
+          storageNodeExists = true;
+          break;
+          }
+        }
       }
-    else if (dtvnd || dwvnd)
+    }
+
+  // if there wasn't already a matching storage node on the node, make one
+  if (!storageNodeExists)
+    {
+    // Read the data into the referenced node
+    if (itksys::SystemTools::FileExists( req.GetFilename().c_str() ))
       {
-      // Load a diffusion tensor or a diffusion weighted node
-      //
-      // Need to maintain the original coordinate frame established by 
-      // the images sent to the execution model 
-      vtkMRMLNRRDStorageNode *nin = vtkMRMLNRRDStorageNode::New();
-      nin->SetCenterImage(0);
-      in = nin;
-      }
-    else if (fbnd)
-      {
-      // Load a fiber bundle node
-      in = vtkMRMLFiberBundleStorageNode::New();
-      }
-    else if (cnd)
-      {
-      // load in a color node
-      in = vtkMRMLColorTableStorageNode::New();
-      }
-    else if (mnd)
-      {
-      // Load a model node
-      in = vtkMRMLModelStorageNode::New();
-      }
-    else if (ltnd)
+      if (svnd || vvnd)
+        {
+        // Load a scalar or vector volume node
+        //
+        // Need to maintain the original coordinate frame established by 
+        // the images sent to the execution model 
+        vtkMRMLVolumeArchetypeStorageNode *vin 
+          = vtkMRMLVolumeArchetypeStorageNode::New();
+        vin->SetCenterImage(0);
+        storageNode = vin;
+        }
+      else if (dtvnd || dwvnd)
+        {
+        // Load a diffusion tensor or a diffusion weighted node
+        //
+        // Need to maintain the original coordinate frame established by 
+        // the images sent to the execution model 
+        vtkMRMLNRRDStorageNode *nin = vtkMRMLNRRDStorageNode::New();
+        nin->SetCenterImage(0);
+        storageNode = nin;
+        }
+      else if (fbnd)
+        {
+        // Load a fiber bundle node
+        storageNode = vtkMRMLFiberBundleStorageNode::New();
+        }
+      else if (cnd)
+        {
+        // load in a color node
+        storageNode = vtkMRMLColorTableStorageNode::New();
+        }
+      else if (mnd)
+        {
+        // Load a model node
+        // first determine if the model node has a storage node that already points to this file
+        /*
+        int numStorageNodes = mnd->GetNumberOfStorageNodes();
+        storageNode = NULL;
+        for (int n = 0; n < numStorageNodes; n++)
+          {
+          vtkMRMLStorageNode *testStorageNode = mnd->GetNthStorageNode(n);
+          if (testStorageNode)
+            {
+            if (useURI)
+              {
+              if (req.GetFilename().compare(testStorageNode->GetURI()) == 0)
+                {
+                // found a storage node for the remote file
+                vtkDebugMacro("ProcessReadNodeData: found a storage node with the right URI: " << testStorageNode->GetURI());
+                storageNode = testStorageNode;
+                break;
+                }
+              }
+              else if (req.GetFilename().compare(testStorageNode->GetFileName()) == 0)
+              {
+              // found the right storage node for a local file
+               vtkDebugMacro("ProcessReadNodeData: found a storage node with the right filename: " << testStorageNode->GetFileName());
+              storageNode = testStorageNode;
+              break;
+              }
+            }
+          }
+         */
+        // first determine if it's free surfer file name
+        vtkWarningMacro("ProcessReadNodeData: making a new model storage node");
+        vtkMRMLFreeSurferModelStorageNode *fssn = vtkMRMLFreeSurferModelStorageNode::New();
+        vtkMRMLModelStorageNode *msn = vtkMRMLModelStorageNode::New();
+        vtkMRMLFreeSurferModelOverlayStorageNode *fson = vtkMRMLFreeSurferModelOverlayStorageNode::New();
+        if (fssn->SupportedFileType(req.GetFilename().c_str()))
+          {
+          storageNode = fssn;
+          msn->Delete();
+          fson->Delete();
+          }
+        else if (fson->SupportedFileType(req.GetFilename().c_str()))
+          {
+          storageNode = fson;
+          msn->Delete();
+          fssn->Delete();
+          }
+        else if (msn->SupportedFileType(req.GetFilename().c_str()))
+          {
+          storageNode = msn;
+          fssn->Delete();
+          fson->Delete();
+          }
+        }
+    else if (ltnd || nltnd)
       {
       // Load a linear transform node
-      
-      // no storage node for transforms, need to read a scene (should
-      // have been in ProcessReadSceneData()
+
+      // transforms can be communicated either using storage nodes or
+      // in scenes.  we handle the former here.  the latter is handled
+      // by ProcessReadSceneData()
+
+      storageNode = vtkMRMLTransformStorageNode::New();
       }
-    
+      // file is there on disk
+      }
+     // done making a new storage node
+    }
+  
     // Have the storage node read the data into the current node
-    if (in)
+    if (storageNode)
       {
       try
         {
         vtkMRMLStorableNode *storableNode = 
           vtkMRMLStorableNode::SafeDownCast(nd);
-        if ( storableNode && storableNode->GetStorageNode() == NULL )
+        if ( storableNode && storableNode->GetStorageNode() == NULL  &&
+             !storageNodeExists)
           {
-          this->MRMLScene->AddNode( in );
-          storableNode->SetAndObserveStorageNodeID( in->GetID() );
+          vtkDebugMacro("ProcessReadNodeData: found a storable node's storage node, it didn't exist already, adding the storage node " << storageNode->GetID());
+          this->MRMLScene->AddNode( storageNode );
+          storableNode->SetAndObserveStorageNodeID( storageNode->GetID() );
           }
-        in->SetFileName( req.GetFilename().c_str() );
-        in->ReadData( nd );
-        in->SetFileName( NULL ); // clear temp file name
+        vtkDebugMacro("ProcessReadNodeData: about to call read data, storage node's read state is " << storageNode->GetReadStateAsString());
+        if (useURI)
+          {
+          storageNode->SetURI(req.GetFilename().c_str());
+          vtkDebugMacro("ProcessReadNodeData: calling ReadData on the storage node " << storageNode->GetID() << ", uri = " << storageNode->GetURI());
+          storageNode->ReadData( nd );
+          if (!storageNodeExists)
+            {
+            storageNode->SetURI(NULL);
+            }
+          }
+        else
+          {
+          storageNode->SetFileName( req.GetFilename().c_str() );
+           vtkDebugMacro("ProcessReadNodeData: calling ReadData on the storage node " << storageNode->GetID() << ", filename = " << storageNode->GetFileName());
+          storageNode->ReadData( nd );
+          if (!storageNodeExists)
+            {
+            storageNode->SetFileName( NULL ); // clear temp file name
+            }
+          }
         // since this was read from a temp location, 
         // mark it as needing to be saved when the scene is saved
         nd->SetModifiedSinceRead(1); 
@@ -1107,14 +1338,25 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
                     << req.GetFilename();
         vtkErrorMacro( << information.str().c_str() );
         }
-      in->Delete();
+      if (!storageNodeExists)
+        {
+        storageNode->Delete();
+        }
       }
     
     // Delete the file if requested
     if (req.GetDeleteFile())
       {
       int removed;
-      removed = itksys::SystemTools::RemoveFile( req.GetFilename().c_str() );
+      // is it a shared memory location?
+      if (req.GetFilename().find("slicer:0x") != std::string::npos)
+        {
+        removed = 1;
+        }
+      else
+        {
+        removed = itksys::SystemTools::RemoveFile( req.GetFilename().c_str() );
+        }
       if (!removed)
         {
         std::stringstream information;
@@ -1123,7 +1365,6 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
         vtkWarningMacro( << information.str().c_str() );
         }
       }
-    }
 
 
   // Get the right type of display node. Only create a display node
@@ -1152,11 +1393,6 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
       disp = dtvdn; // assign to superclass pointer
       dwdpn = vtkMRMLDiffusionTensorDisplayPropertiesNode::New();
       this->MRMLScene->AddNode( dwdpn );
-      dtvdn->SetAutoWindowLevel(0);
-      dtvdn->SetWindow(0);
-      dtvdn->SetLevel(0);
-      dtvdn->SetUpperThreshold(0);
-      dtvdn->SetLowerThreshold(0);
       dtvdn->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(dwdpn->GetID());
       dwdpn->Delete();
       }
@@ -1181,7 +1417,7 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
     // Model node
     disp = vtkMRMLModelDisplayNode::New();
     }
-  else if (ltnd)
+  else if (ltnd || nltnd)
     {
     // Linear transform node
     // (no display node)  
@@ -1217,19 +1453,30 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
       displayNode->SetDefaultColorMap();
       vtkMRMLVolumeNode *vnd = vtkMRMLVolumeNode::SafeDownCast(nd);
       vtkMRMLScalarVolumeDisplayNode *svdnd = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(displayNode);
-      if ( vnd )
-        {
-          vtkSlicerVolumesLogic *volumesLogic = vtkSlicerVolumesLogic::New();
-          volumesLogic->CalculateAutoLevels (vnd->GetImageData(), svdnd);
-          volumesLogic->Delete();
-        }
       } 
-    if (svnd) svnd->SetAndObserveDisplayNodeID( disp->GetID() );
-    else if (vvnd) vvnd->SetAndObserveDisplayNodeID( disp->GetID() );
-    else if (dtvnd) dtvnd->SetAndObserveDisplayNodeID( disp->GetID() );
-    else if (dwvnd) dwvnd->SetAndObserveDisplayNodeID( disp->GetID() );
-    else if (mnd) mnd->SetAndObserveDisplayNodeID( disp->GetID() );
-    
+    if (svnd) 
+      {
+      svnd->SetAndObserveDisplayNodeID( disp->GetID() );
+      }
+    else if (vvnd) 
+      {
+      vvnd->SetAndObserveDisplayNodeID( disp->GetID() );
+      }
+    else if (dtvnd) 
+      {
+      dtvnd->SetAndObserveDisplayNodeID( disp->GetID() );
+      // add slice display nodes
+      dtvnd->AddSliceGlyphDisplayNodes();
+
+      }
+    else if (dwvnd) 
+      {
+      dwvnd->SetAndObserveDisplayNodeID( disp->GetID() );
+      }
+    else if (mnd) 
+      {
+      mnd->SetAndObserveDisplayNodeID( disp->GetID() );
+      }
     disp->Delete();
     }
     

@@ -1,18 +1,46 @@
-PROJECT(vtkTeem)
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
+project(vtkTeem)
+
+cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
+
+find_package(TEEM REQUIRED)
+include(${TEEM_USE_FILE})
+
+if(NOT DEFINED BUILD_SHARED_LIBS)
+  option(BUILD_SHARED_LIBS "Build with shared libraries." ON)
+endif(NOT DEFINED BUILD_SHARED_LIBS)
+ 
+# --------------------------------------------------------------------------
+# Include dirs
+
+set(include_dirs
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
+include_directories(${include_dirs})
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkTeemConfigure.h.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkTeemConfigure.h
+  )
+
+file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+install(FILES 
+  ${headers} 
+  "${CMAKE_CURRENT_BINARY_DIR}/vtkTeemConfigure.h"
+  DESTINATION include/${PROJECT_NAME} COMPONENT Development
+  )
 
 # --------------------------------------------------------------------------
 # Sources
 
-# include a test for endianness (used to be done by default)
-INCLUDE (${CMAKE_ROOT}/Modules/TestBigEndian.cmake)
-TEST_BIG_ENDIAN(CMAKE_WORDS_BIGENDIAN)
-
-FIND_PACKAGE(VTK REQUIRED)
-INCLUDE(${VTK_USE_FILE})
-
-
-SET(vtkTeem_SRCS
+set(vtkTeem_SRCS
   vtkNRRDReader.cxx
   vtkNRRDWriter.cxx
   vtkDiffusionTensorMathematics.cxx
@@ -20,7 +48,6 @@ SET(vtkTeem_SRCS
   vtkTeemEstimateDiffusionTensor.cxx
   vtkDiffusionTensorGlyph.cxx
   vtkPolyDataTensorToColor.cxx
-
   vtkBSplineInterpolateImageFunction.cxx
   vtkHyperPointandArray.cxx
   vtkHyperStreamlineDTMRI.cxx
@@ -31,7 +58,9 @@ SET(vtkTeem_SRCS
   vtkTensorImplicitFunctionToFunctionSet.cxx
   vtkTractographyPointAndArray.cxx
   vtkTensorMask.cxx
-)
+  vtkTensorRotate.cxx
+  vtkImageLabelCombine.cxx
+  )
 
 # Abstract/pure virtual classes
 
@@ -41,58 +70,39 @@ SET(vtkTeem_SRCS
 
 # Helper classes
 
-SET_SOURCE_FILES_PROPERTIES(
+set_source_files_properties(
   vtkHyperPointandArray.cxx
   vtkTractographyPointAndArray.cxx
   WRAP_EXCLUDE
   )
 
 # --------------------------------------------------------------------------
-# Include dirs
-
-INCLUDE_DIRECTORIES(
-  ${vtkTeem_SOURCE_DIR}
-  ${vtkTeem_BINARY_DIR}
-  ${TEEM_INCLUDE_DIRS}
-  ${VTK_INCLUDE_DIRS}
-  )
-
-# --------------------------------------------------------------------------
 # Wrapping
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(vtkTeem vtkTeem_TCL_SRCS "${vtkTeem_SRCS}" "")
+include("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+vtk_wrap_tcl3(vtkTeem vtkTeem_TCL_SRCS "${vtkTeem_SRCS}" "")
 
 # --------------------------------------------------------------------------
 # Build the library
 
-ADD_LIBRARY(vtkTeem 
+set(lib_name vtkTeem)
+add_library(${lib_name} 
   ${vtkTeem_SRCS} 
   ${vtkTeem_TCL_SRCS} 
   )
 
-IF(Slicer3_SOURCE_DIR)
-  IF(BUILD_SHARED_LIBS)
-  INSTALL(TARGETS vtkTeem
-      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib COMPONENT Development)
-  ENDIF(BUILD_SHARED_LIBS)
-ENDIF(Slicer3_SOURCE_DIR)
-
 # after teem 1.9, all the teem libraries are groups in one big libteem.so
-IF ( ${TEEM_VERSION_MAJOR} GREATER 1 )
-  SET(TEEM_LIBRARIES teem)
-ELSE ( ${TEEM_VERSION_MAJOR} GREATER 1 )
-  IF ( ${TEEM_VERSION_MINOR} LESS 10 )
-    SET(TEEM_LIBRARIES air biff nrrd ten ell)
-  ELSE ( ${TEEM_VERSION_MINOR} LESS 10 )
-    SET(TEEM_LIBRARIES teem)
-  ENDIF ( ${TEEM_VERSION_MINOR} LESS 10 )
-ENDIF ( ${TEEM_VERSION_MAJOR} GREATER 1 )
+if ( ${TEEM_VERSION_MAJOR} GREATER 1 )
+  set(TEEM_LIBRARIES teem)
+else ( ${TEEM_VERSION_MAJOR} GREATER 1 )
+  if ( ${TEEM_VERSION_MINOR} LESS 10 )
+    set(TEEM_LIBRARIES air biff nrrd ten ell)
+  else ( ${TEEM_VERSION_MINOR} LESS 10 )
+    set(TEEM_LIBRARIES teem)
+  endif ( ${TEEM_VERSION_MINOR} LESS 10 )
+endif ( ${TEEM_VERSION_MAJOR} GREATER 1 )
 
-TARGET_LINK_LIBRARIES(vtkTeem 
+target_link_libraries(${lib_name} 
   vtkCommon
   vtkFiltering
   vtkImagingTCL
@@ -101,20 +111,24 @@ TARGET_LINK_LIBRARIES(vtkTeem
   ${TEEM_LIBRARIES}
   )
 
+install(TARGETS ${lib_name}
+  RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+  LIBRARY DESTINATION lib/${PROJECT_NAME} COMPONENT RuntimeLibraries
+  ARCHIVE DESTINATION lib/${PROJECT_NAME} COMPONENT Development
+  )
 
 # --------------------------------------------------------------------------
 # Testing (requires some of the examples)
 
-IF(BUILD_TESTING)
-  SUBDIRS(Testing)
-ENDIF(BUILD_TESTING)
+if(BUILD_TESTING)
+  subdirs(Testing)
+endif(BUILD_TESTING)
 
-CONFIGURE_FILE(
-  ${vtkTeem_SOURCE_DIR}/vtkTeemConfigure.h.in 
-  ${vtkTeem_BINARY_DIR}/vtkTeemConfigure.h
-)
+# --------------------------------------------------------------------------
+# Install support files
 
-CONFIGURE_FILE(
-  ${vtkTeem_SOURCE_DIR}/vtkTeemConfig.cmake.in 
-  ${vtkTeem_BINARY_DIR}/vtkTeemConfig.cmake
-)
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkTeemConfig.cmake.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkTeemConfig.cmake
+  )
+

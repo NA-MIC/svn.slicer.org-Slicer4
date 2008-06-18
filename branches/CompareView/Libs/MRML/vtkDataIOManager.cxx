@@ -311,14 +311,31 @@ void vtkDataIOManager::QueueRead ( vtkMRMLNode *node )
     vtkErrorMacro("QueueRead: unable to cast input mrml node to a storable node");
     return;
     }
+  // look for a pending storage node
+  int storageNodeIndex = -1;
   if (dnode->GetStorageNode() == NULL)
     {
     vtkErrorMacro("QueueRead: unable to get storage node from the storable node, returning");
     return;
     }
-  vtkURIHandler *handler = dnode->GetStorageNode()->GetURIHandler();
+  for (int i = 0; i < dnode->GetNumberOfStorageNodes(); i++)
+    {
+    if (dnode->GetNthStorageNode(i)->GetReadState() == vtkMRMLStorageNode::Pending)
+      {
+      vtkDebugMacro("QueueRead: found a pending storage node at index " << i << ", setting it to scheduled");
+      dnode->GetNthStorageNode(i)->SetReadStateScheduled();
+      storageNodeIndex = i;
+      break;
+      }
+    }
+  if (storageNodeIndex == -1)
+    {
+    vtkErrorMacro("QueueRead: unable to find a pending storage node!");
+    return;
+    }
+  //vtkURIHandler *handler = dnode->GetNthStorageNode(storageNodeIndex)->GetURIHandler();
   vtkDebugMacro("QueueRead: got the uri handler from the storage node");
-  const char *source = dnode->GetStorageNode()->GetURI();
+  const char *source = dnode->GetNthStorageNode(storageNodeIndex)->GetURI();
   const char *dest; 
 
   if (source == NULL)
@@ -348,13 +365,48 @@ void vtkDataIOManager::QueueRead ( vtkMRMLNode *node )
       vtkDebugMacro("QueueRead: Calling remove from cache");
       this->GetCacheManager()->DeleteFromCache ( dest );
       }
-    
-    //--- trigger logic to download, if there's cache space.
-    //--- need to convert to bytes to get a more conservative guess.
-    if ( (cm->GetCurrentCacheSize()*1000000.0) < ((float)(cm->GetRemoteCacheLimit())*1000000.0) )
+
+    //---
+    //--- WJPtest
+    //--- Test for space to download the file. If no space,
+    //--- then mark the node's read state as cancelled and
+    //--- Then,  check for InsufficientFreeBufferNotificationFlag.
+    //--- If it's already set, the user has already been notified, so do nothing.
+    //--- If not yet set, send an event, that will cause GUI to post
+    //--- a pop-up dialog notifying user that Cache is full. then set the flag.
+    //--- This flag is here to help us avoid bugging the user
+    //--- with multiple pop-up warnings if they are downloading
+    //--- a large scene that consists of multiple datasets.
+    //--- ***The risk with this implementation  is that they may
+    //--- forget to adjust the cache size, but aren't notified again... 
+    float bufsize = (cm->GetRemoteCacheLimit() * 1000000.0) -  (cm->GetRemoteCacheFreeBufferSize() * 1000000.0);
+    if ( (cm->GetCurrentCacheSize()*1000000.0) >= bufsize )
       {
+      //--- No space left in cache. Don't trigger logic to download;
+      //--- by invoking a RemoteReadEvent.
+      //--- And trigger GUI to post a pop-up dialog to inform user.
+      //--- Mark the node cancelled.
+      if ( cm->GetInsufficientFreeBufferNotificationFlag() == 0 )
+        {
+        cm->InvokeEvent ( vtkCacheManager::InsufficientFreeBufferEvent );
+        cm->SetInsufficientFreeBufferNotificationFlag(1);
+        dnode->GetNthStorageNode(storageNodeIndex)->SetReadStateCancelled();
+        }
+      }
+    else
+      {
+      //--- reset the cachemanager's flag if it's set.
+      //--- since it appears there's enough cache space
+      //--- to do the download.
+      if ( cm->GetInsufficientFreeBufferNotificationFlag() == 1 )
+        {
+        cm->SetInsufficientFreeBufferNotificationFlag(0);
+        }
+      //---END WJPtest
+      
+      //--- trigger logic to download, if there's cache space.
+      //--- and signal this remote read event to Logic and GUI.
       vtkDebugMacro("QueueRead: invoking a remote read event on the data io manager");
-      //--- signal this remote read event to Logic and GUI.
       this->InvokeEvent ( vtkDataIOManager::RemoteReadEvent, node);
       }
     }
@@ -384,10 +436,26 @@ void vtkDataIOManager::QueueWrite ( vtkMRMLNode *node )
     vtkErrorMacro("QueueWrite: unable to get storage node from the storable node, returning");
     return;
     }
-  vtkURIHandler *handler = dnode->GetStorageNode()->GetURIHandler();
+  int storageNodeIndex = -1;
+  for (int i = 0; i < dnode->GetNumberOfStorageNodes(); i++)
+    {
+    if (dnode->GetNthStorageNode(i)->GetWriteState() == vtkMRMLStorageNode::Pending)
+      {
+      vtkDebugMacro("QueueWrite: found a pending storage node at index " << i << ", changing it to scheduled");
+      dnode->GetNthStorageNode(i)->SetWriteStateScheduled();
+      storageNodeIndex = i;
+      continue;
+      }
+    }
+  if (storageNodeIndex == -1)
+    {
+    vtkErrorMacro("QueueWrite: unable to find a pending storage node!");
+    return;
+    }
+  //vtkURIHandler *handler = dnode->GetNthStorageNode(storageNodeIndex)->GetURIHandler();
   vtkDebugMacro("QueueWrite: got the uri handler from the storage node");
-  const char *source = dnode->GetStorageNode()->GetFileName();
-  const char *dest = dnode->GetStorageNode()->GetURI();
+  const char *source = dnode->GetNthStorageNode(storageNodeIndex)->GetFileName();
+  const char *dest = dnode->GetNthStorageNode(storageNodeIndex)->GetURI();
 
   if (source == NULL)
     {
@@ -416,7 +484,6 @@ int vtkDataIOManager::GetUniqueTransferID ( )
   
   //--- keep looping until we find an id that is unique
   int id = 1;
-  int i = 0;
   int exists = 0;
   vtkDataTransfer *dt;
     

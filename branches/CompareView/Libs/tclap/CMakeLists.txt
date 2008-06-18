@@ -1,19 +1,27 @@
-PROJECT(TCLAP)
+project(TCLAP)
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
+cmake_minimum_required(VERSION 2.4)
 
-INCLUDE (GenerateTCLAPConfig.cmake)
+if(NOT DEFINED BUILD_SHARED_LIBS)
+  option(BUILD_SHARED_LIBS "Build with shared libraries." ON)
+endif(NOT DEFINED BUILD_SHARED_LIBS)
+ 
+include(GenerateTCLAPConfig.cmake)
 
-CONFIGURE_FILE(${TCLAP_SOURCE_DIR}/UseTCLAP.cmake.in
-               ${TCLAP_BINARY_DIR}/UseTCLAP.cmake COPYONLY IMMEDIATE)
+configure_file(${TCLAP_SOURCE_DIR}/UseTCLAP.cmake.in
+  ${TCLAP_BINARY_DIR}/UseTCLAP.cmake COPYONLY IMMEDIATE)
 
 
-FILE(GLOB __files1 "${TCLAP_SOURCE_DIR}/include/tclap/*.h")
-INSTALL(FILES ${__files1} DESTINATION include/tclap COMPONENT Development)
+file(GLOB __files1 "${TCLAP_SOURCE_DIR}/include/tclap/*.h")
 # Note "COPYING" is a filename containing the license file
-INSTALL(FILES COPYING DESTINATION include/tclap COMPONENT Development)
+install(FILES 
+  ${__files1} 
+  COPYING
+  DESTINATION include/tclap COMPONENT Development
+  )
 
-INSTALL(FILES 
-        ${TCLAP_BINARY_DIR}/UseTCLAP.cmake 
-        ${TCLAP_BINARY_DIR}/install/TCLAPConfig.cmake 
-        DESTINATION lib/tclap COMPONENT Development)
+install(FILES 
+  ${TCLAP_BINARY_DIR}/UseTCLAP.cmake 
+  ${TCLAP_BINARY_DIR}/install/TCLAPConfig.cmake 
+  DESTINATION lib/tclap COMPONENT Development
+  )

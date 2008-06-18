@@ -1,83 +1,115 @@
-PROJECT(RemoteIO)
+project(RemoteIO)
 
-# --------------------------------------------------------------------------
-# Special build configs (to handle linking on windows)
-CONFIGURE_FILE(
-  ${RemoteIO_SOURCE_DIR}/vtkRemoteIOConfigure.h.in 
-  ${RemoteIO_BINARY_DIR}/vtkRemoteIOConfigure.h
-)
+cmake_minimum_required(VERSION 2.4)
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
 
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
 
-#
+find_package(ITK REQUIRED)
+include(${ITK_USE_FILE})
+
+find_package(SLICERLIBCURL REQUIRED)
+include(${SLICERLIBCURL_USE_FILE})
+
 # Disable MSVC 8 warnings
-IF(WIN32)
-  OPTION(DISABLE_MSVC8_DEPRECATED_WARNINGS 
-         "Disable Visual Studio 8 deprecated warnings" ON)
-  MARK_AS_ADVANCED(FORCE DISABLE_MSVC8_DEPRECATED_WARNINGS)  
-  IF(DISABLE_MSVC8_DEPRECATED_WARNINGS)
-    ADD_DEFINITIONS(-D_CRT_SECURE_NO_DEPRECATE)
-  ENDIF(DISABLE_MSVC8_DEPRECATED_WARNINGS)
-ENDIF(WIN32)
+if(WIN32)
+  option(DISABLE_MSVC8_DEPRECATED_WARNINGS 
+    "Disable Visual Studio 8 deprecated warnings" ON)
+  mark_as_advanced(FORCE DISABLE_MSVC8_DEPRECATED_WARNINGS)  
+  if(DISABLE_MSVC8_DEPRECATED_WARNINGS)
+    add_definitions(-D_CRT_SECURE_NO_DEPRECATE)
+  endif(DISABLE_MSVC8_DEPRECATED_WARNINGS)
+endif(WIN32)
 
-
-
-# --------------------------------------------------------------------------
-# Settings for options
-SET(RemoteIO_SRCS
-        vtkHTTPHandler.cxx
-        vtkSRBHandler.cxx
-)
-
-
+if(NOT DEFINED BUILD_SHARED_LIBS)
+  option(BUILD_SHARED_LIBS "Build with shared libraries." ON)
+endif(NOT DEFINED BUILD_SHARED_LIBS)
+ 
 # --------------------------------------------------------------------------
 # Include dirs
 
-INCLUDE_DIRECTORIES(
-  ${VTK_INCLUDE_DIRS}
-  ${RemoteIO_SOURCE_DIR}
-  ${RemoteIO_BINARY_DIR}
-  ${MRML_SOURCE_DIR}
-  ${MRML_BINARY_DIR}
+set(include_dirs
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
   )
 
+foreach(package 
+    MRML
+    )
+  # This is mostly to test building this lib as standalone outside Slicer3
+  if(NOT DEFINED ${package}_SOURCE_DIR)
+    set(${package}_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../${package}")
+  endif(NOT DEFINED ${package}_SOURCE_DIR)
+  if(NOT DEFINED ${package}_BINARY_DIR)
+    string(REPLACE ${PROJECT_NAME} ${package} 
+      ${package}_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+    link_directories(${${package}_BINARY_DIR})
+  endif(NOT DEFINED ${package}_BINARY_DIR)
+
+  set(include_dirs ${include_dirs}
+    ${${package}_SOURCE_DIR}
+    ${${package}_BINARY_DIR}
+    )
+endforeach(package)
+
+include_directories(${include_dirs})
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkRemoteIOConfigure.h.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkRemoteIOConfigure.h
+  )
+
+file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+install(FILES 
+  ${headers} 
+  "${CMAKE_CURRENT_BINARY_DIR}/vtkRemoteIOConfigure.h"
+  DESTINATION include/${PROJECT_NAME} COMPONENT Development
+  )
 
 # --------------------------------------------------------------------------
-# Find SLICERLIBCURL (slicercurl)
-FIND_PACKAGE(SLICERLIBCURL REQUIRED)
-INCLUDE(${SLICERLIBCURL_USE_FILE})
+# Sources
 
+set(RemoteIO_SRCS
+  vtkHTTPHandler.cxx
+  vtkSRBHandler.cxx
+  vtkXNATHandler.cxx
+  )
 
 # --------------------------------------------------------------------------
 # Wrapping
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-VTK_WRAP_TCL3(RemoteIO RemoteIO_TCL_SRCS "${RemoteIO_SRCS}" "")
+include("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
+vtk_wrap_tcl3(RemoteIO RemoteIO_TCL_SRCS "${RemoteIO_SRCS}" "")
 
+# --------------------------------------------------------------------------
+# Build and install the library
 
-# Build the library
-ADD_LIBRARY(RemoteIO
-  ${RemoteIO_SRCS} ${RemoteIO_TCL_SRCS}
+set(lib_name RemoteIO)
+add_library(${lib_name}
+  ${RemoteIO_SRCS} 
+  ${RemoteIO_TCL_SRCS}
   )
-IF(BUILD_SHARED_LIBS)
-  INSTALL(TARGETS RemoteIO
-      RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
-      LIBRARY DESTINATION lib/Slicer3 COMPONENT RuntimeLibraries
-      ARCHIVE DESTINATION lib/Slicer3 COMPONENT Development)
-ENDIF(BUILD_SHARED_LIBS)
-
-TARGET_LINK_LIBRARIES(RemoteIO
+target_link_libraries(${lib_name}
   vtkIO
   vtkIOTCL
   vtkCommonTCL
+  itksys
   ${SLICERLIBCURL_LIBRARIES}
   MRML
   )
 
+install(TARGETS ${lib_name}
+  RUNTIME DESTINATION bin COMPONENT RuntimeLibraries 
+  LIBRARY DESTINATION lib/${PROJECT_NAME} COMPONENT RuntimeLibraries
+  ARCHIVE DESTINATION lib/${PROJECT_NAME} COMPONENT Development
+  )
 
 # --------------------------------------------------------------------------
 # Testing (requires some of the examples)
 
-IF(BUILD_TESTING)
-#  SUBDIRS(Testing)
-ENDIF(BUILD_TESTING)
+if(BUILD_TESTING)
+  #  SUBDIRS(Testing)
+endif(BUILD_TESTING)
 

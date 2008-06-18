@@ -67,6 +67,11 @@ int vtkSlicerFont::GetFontSize2 ( const char *size )
     {
     return ( this->FontSizeLargest2 );
     }
+  else
+    {
+    vtkErrorMacro ("invalid font size" << size);
+    return ( this->FontSizeMedium2 );
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -89,6 +94,11 @@ int vtkSlicerFont::GetFontSize1 ( const char *size )
     {
     return ( this->FontSizeLargest1 );
     }
+  else
+    {
+    vtkErrorMacro ("invalid font size" << size);
+    return ( this->FontSizeMedium1 );
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -110,6 +120,11 @@ int vtkSlicerFont::GetFontSize0 ( const char *size )
   else if (!( strcmp (size, "largest" ) ))
     {
     return ( this->FontSizeLargest0 );
+    }
+  else
+    {
+    vtkErrorMacro ("invalid font size" << size);
+    return  ( this->FontSizeMedium0 );
     }
 }
 

@@ -64,7 +64,6 @@
 #define ONTOLOGY_FRAME
 
 //---------------------------------------------------------------------------
-vtkStandardNewMacro (vtkQueryAtlasGUI );
 vtkCxxRevisionMacro ( vtkQueryAtlasGUI, "$Revision: 1.0 $");
 
 
@@ -76,6 +75,19 @@ vtkCxxRevisionMacro ( vtkQueryAtlasGUI, "$Revision: 1.0 $");
 #define _fg 0.75
 #define _fb 0.75
 
+
+//------------------------------------------------------------------------------
+vtkQueryAtlasGUI* vtkQueryAtlasGUI::New()
+{
+  // First try to create the object from the vtkObjectFactory
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkQueryAtlasGUI");
+  if(ret)
+    {
+      return (vtkQueryAtlasGUI*)ret;
+    }
+  // If the factory was unable to create the object, then create it here.
+  return new vtkQueryAtlasGUI;
+}
 
 //---------------------------------------------------------------------------
 vtkQueryAtlasGUI::vtkQueryAtlasGUI ( )
@@ -224,14 +236,11 @@ vtkQueryAtlasGUI::vtkQueryAtlasGUI ( )
 }
 
 
+
 //---------------------------------------------------------------------------
 vtkQueryAtlasGUI::~vtkQueryAtlasGUI ( )
 {
 
-  vtkDebugMacro("vtkQueryAtlasGUI: Tearing down Tcl callbacks \n");
-  this->Script ( "QueryAtlasTearDown" );
-
-  this->RemoveMRMLObservers ( );
     this->SetModuleLogic ( NULL );
     //---
     // help and acknowledgment frame
@@ -796,6 +805,18 @@ vtkQueryAtlasGUI::~vtkQueryAtlasGUI ( )
 #endif
 
 }
+
+//---------------------------------------------------------------------------
+void vtkQueryAtlasGUI::TearDownGUI ( )
+{
+
+  vtkDebugMacro("vtkQueryAtlasGUI: Tearing down Tcl callbacks \n");
+  this->Script ( "QueryAtlasTearDown" );
+  this->SetAndObserveMRMLScene ( NULL );
+
+}
+
+
 
 
 //---------------------------------------------------------------------------
@@ -1544,7 +1565,7 @@ void vtkQueryAtlasGUI::LoadXcedeCatalogCallback ( )
 
     if ( this->GetMRMLScene() && fl.find(".xcat") != std::string::npos )
       {
-      this->Script ( "XcedeCatalogImport %s", filen);
+      this->Script ( "XcatalogImport %s", filen);
       this->LoadFIPSFSCatalogButton->GetWidget()->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
       }
 
@@ -1572,6 +1593,9 @@ void vtkQueryAtlasGUI::AutoWinLevThreshStatisticsVolume ( vtkMRMLScalarVolumeNod
 {
   int i;
   double win, level, upT, lowT;
+
+  vtkWarningMacro("AutoWinLevThreshStatisticsVolume: aborting...");
+  return;
   
   //--- look at the nnode's name; if it contains the substring "stat"
   //--- then assume this is a statistics file and auto win/lev/thresh it.
@@ -1793,7 +1817,7 @@ void vtkQueryAtlasGUI::UpdateAnnoVisibilityMenu ( )
 void vtkQueryAtlasGUI::UpdateScalarOverlayMenu ( )
 {
   vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast (this->GetApplication() );
-  vtkQdecModuleLogic *qLogic;
+  vtkQdecModuleLogic *qLogic = NULL;
   if ( app )
     {
     if ( vtkQdecModuleGUI::SafeDownCast ( app->GetModuleGUIByName("QdecModule")) != NULL )
@@ -2022,11 +2046,13 @@ void vtkQueryAtlasGUI::ProcessMRMLEvents ( vtkObject *caller,
        && (event == vtkMRMLScene::NodeAddedEvent ))
     {
     vtkMRMLScalarVolumeNode *node = vtkMRMLScalarVolumeNode::SafeDownCast ( (vtkObjectBase *)callData );
-    if ( node != NULL )
+    /*
+      if ( node != NULL )
       {
       //--- apply ballpark threshold if the node appears to be a statistics volume.
       AutoWinLevThreshStatisticsVolume ( node );
       }
+    */
     this->Script ( "QueryAtlasNodeAddedUpdate" );
     this->UpdateScalarOverlayMenu();
     this->UpdateAnnoVisibilityMenu();
@@ -2061,9 +2087,40 @@ void vtkQueryAtlasGUI::ProcessMRMLEvents ( vtkObject *caller,
 }
 
 
+//----------------------------------------------------------------------------
+vtkIntArray* vtkQueryAtlasGUI::NewObservableEvents()
+{
+  vtkIntArray* events = vtkIntArray::New();
+  events->InsertNextValue ( vtkMRMLScene::SceneCloseEvent );
+  events->InsertNextValue ( vtkMRMLScene::NodeAddedEvent );
+  events->InsertNextValue ( vtkMRMLScene::NodeRemovedEvent );
+  return events;
+}
+
+
+  
+//---------------------------------------------------------------------------
+void vtkQueryAtlasGUI::LoadTclPackage ( )
+{
+  if (!this->GetLogic())
+    {
+    return;
+    }
+  std::string dir(this->GetLogic()->GetModuleShareDirectory());
+  std::string qaTclCommand =  "set ::QA_PACKAGE {}; ";
+  qaTclCommand += "package forget QueryAtlas; ";
+  qaTclCommand += "  set dir \"" + dir + "\";";
+  qaTclCommand += "  if { [ file exists \"$dir/Tcl/pkgIndex.tcl\" ] } { ";
+  qaTclCommand += "    lappend ::auto_path $dir; ";
+  qaTclCommand += "    package require QueryAtlas ";
+  qaTclCommand += "  }";
+  this->Script ( qaTclCommand.c_str() ); 
+}
+
 //---------------------------------------------------------------------------
 void vtkQueryAtlasGUI::Enter ( )
 {
+
     vtkDebugMacro("vtkQueryAtlasGUI: Enter\n");
     this->Script ( "QueryAtlasCullOldModelAnnotations");
     this->Script ( "QueryAtlasCullOldLabelMapAnnotations");
@@ -2084,16 +2141,11 @@ void vtkQueryAtlasGUI::AddMRMLObservers()
 {
 }
 
-//---------------------------------------------------------------------------
-void vtkQueryAtlasGUI::RemoveMRMLObservers()
-{
-  this->SetAndObserveMRMLScene ( NULL );
-}
-
 
 //---------------------------------------------------------------------------
 void vtkQueryAtlasGUI::BuildGUI ( )
 {
+
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
   // Define your help text here.
 
@@ -2129,6 +2181,8 @@ void vtkQueryAtlasGUI::BuildGUI ( )
     this->BuildQueriesGUI ( );
 #endif
 //    this->BuildDisplayAndNavigationGUI ( );
+
+    this->LoadTclPackage();
 }
 
 

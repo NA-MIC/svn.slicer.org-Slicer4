@@ -17,6 +17,7 @@ if {0} { ;# comment
   DrawEffect
   PaintEffect
   LevelTracingEffect
+  ...
 
 
 
@@ -60,6 +61,7 @@ if { [itcl::find class Labeler] == "" } {
     method setMRMLDefaults {} {}
     method updateMRMLFromGUI {} {}
     method updateGUIFromMRML {} {}
+    method rotateSliceToImage {} {}
 
   }
 }
@@ -69,6 +71,7 @@ if { [itcl::find class Labeler] == "" } {
 # ------------------------------------------------------------------
 itcl::body Labeler::constructor {sliceGUI} {
   set o(painter) [vtkNew vtkImageSlicePaint]
+  $this rotateSliceToImage
 }
 
 itcl::body Labeler::destructor {} {
@@ -342,6 +345,8 @@ itcl::body Labeler::undoLastApply { } {
 
 itcl::body Labeler::buildOptions { } {
 
+  chain
+
   $this setMRMLDefaults
 
   set o(paintOver) [vtkKWCheckButtonWithLabel New]
@@ -388,6 +393,7 @@ itcl::body Labeler::buildOptions { } {
 }
 
 itcl::body Labeler::tearDownOptions { } {
+  chain
   if { [info exists o(paintOver)] } {
     foreach w "paintOver paintThreshold paintRange" {
       if { [info exists o($w)] } {
@@ -472,6 +478,142 @@ itcl::body Labeler::updateGUIFromMRML { } {
   }
 }
 
+#
+# rotateSliceToImage:
+# - adjusts the slice node to align with the 
+#   native space of the image data so that paint
+#   operations can happen cleanly between image
+#   space and screen space
+#
+itcl::body Labeler::rotateSliceToImage { } {
+
+  $this queryLayers 0 0
+
+  set ijkToRAS [vtkMatrix4x4 New]
+
+  set volumeNode $_layers(background,node)
+  $volumeNode GetIJKToRASMatrix $ijkToRAS
+
+  # define major direction
+  set dir(directions) {R L A P S I}
+  set dir(R) {  1  0  0}
+  set dir(L) { -1  0  0}
+  set dir(A) {  0  1  0}
+  set dir(P) {  0 -1  0}
+  set dir(S) {  0  0  1}
+  set dir(I) {  0  0 -1}
+
+  # get direction cosine vector for each index and its negation
+  set directionsMatrix [vtkMatrix4x4 New]
+  $volumeNode GetIJKToRASDirectionMatrix $directionsMatrix
+  foreach ijk {0 1 2} {
+    lappend iToRAS [$directionsMatrix GetElement $ijk 0]
+    lappend jToRAS [$directionsMatrix GetElement $ijk 1]
+    lappend kToRAS [$directionsMatrix GetElement $ijk 2]
+  }
+  foreach index {i j k} {
+    foreach element {0 1 2} {
+      lappend neg${index}ToRAS [expr -1. * [lindex [set ${index}ToRAS] $element]]
+    }
+  }
+
+  # find the closest major direction for each index vector
+  set sqrt2over2 [expr sqrt(2.) / 2.]
+  foreach index {i j k} {
+    foreach direction $dir(directions) {
+      set dot 0
+      foreach comp0 [set ${index}ToRAS] comp1 $dir($direction) {
+        set dot [expr $dot + $comp0 * $comp1] 
+      }
+      set dir(dot,$index,$direction) $dot
+      if { $dot > $sqrt2over2 } {
+        set dir($index,closestAxis) $direction
+      }
+    }
+  }
+
+  # define the index vector that is closest for each major direction
+  foreach index {i j k} {
+    switch $dir($index,closestAxis) {
+      "R" {
+        set dir(plane,R) [set ${index}ToRAS]
+        set dir(plane,L) [set neg${index}ToRAS]
+      }
+      "L" {
+        set dir(plane,R) [set neg${index}ToRAS]
+        set dir(plane,L) [set ${index}ToRAS]
+      }
+      "A" {
+        set dir(plane,A) [set ${index}ToRAS]
+        set dir(plane,P) [set neg${index}ToRAS]
+      }
+      "P" {
+        set dir(plane,A) [set neg${index}ToRAS]
+        set dir(plane,P) [set ${index}ToRAS]
+      }
+      "S" {
+        set dir(plane,S) [set ${index}ToRAS]
+        set dir(plane,I) [set neg${index}ToRAS]
+      }
+      "I" {
+        set dir(plane,S) [set neg${index}ToRAS]
+        set dir(plane,I) [set ${index}ToRAS]
+      }
+    }
+  }
+
+  #
+  # plug vectors into slice matrix to best approximate requested orientation
+  #
+  set sliceToRAS [$_sliceNode GetSliceToRAS]
+
+  switch [$_sliceNode GetOrientationString] {
+    "Axial" {
+      # first column is 'Left'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 0 [lindex $dir(plane,L) $index]
+      }
+      # second column is 'Anterior'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 1 [lindex $dir(plane,A) $index]
+      }
+      # third column is 'Superior'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 2 [lindex $dir(plane,S) $index]
+      }
+    }
+    "Sagittal" {
+      # first column is 'Posterior'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 0 [lindex $dir(plane,P) $index]
+      }
+      # second column is 'Superior'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 1 [lindex $dir(plane,S) $index]
+      }
+      # third column is 'Right'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 2 [lindex $dir(plane,R) $index]
+      }
+    }
+    "Coronal" {
+      # first column is 'Left'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 0 [lindex $dir(plane,L) $index]
+      }
+      # second column is 'Superior'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 1 [lindex $dir(plane,S) $index]
+      }
+      # third column is 'Anterior'
+      foreach index {0 1 2} {
+        $sliceToRAS SetElement $index 2 [lindex $dir(plane,A) $index]
+      }
+    }
+  }
+
+  after idle $_sliceNode Modified
+}
 
 namespace eval Labler {
   proc SetPaintRange {min max} {

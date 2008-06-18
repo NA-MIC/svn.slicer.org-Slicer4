@@ -9,7 +9,7 @@
 #include "vtkSlicerTractographyDisplay.h"
 #include "vtkSlicerModuleGUI.h"
 
-#include "vtkSlicerFiberBundleLogic.h"
+#include "vtkSlicerTractographyDisplayLogic.h"
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkSlicerFiberBundleDisplayWidget.h"
 #include "vtkSlicerAllFiberBundlesDisplayWidget.h"
@@ -42,15 +42,23 @@ class VTK_SLICERTRACTOGRAPHYDISPLAY_EXPORT vtkSlicerTractographyDisplayGUI : pub
 
     // Description:
     // Get logic object for this GUI  (handles load/save of fiber bundles, manages bundles)
-    vtkGetObjectMacro ( Logic, vtkSlicerFiberBundleLogic);
+    vtkGetObjectMacro ( Logic, vtkSlicerTractographyDisplayLogic);
 
     // Description:
     // Set logic object for this GUI (handles load/save of fiber bundles, manages bundles)
-    vtkSetObjectMacro ( Logic, vtkSlicerFiberBundleLogic);
+    vtkSetObjectMacro ( Logic, vtkSlicerTractographyDisplayLogic);
+
+    // Description:
+    // Set the module logic
+    virtual void SetModuleLogic( vtkSlicerLogic *logic ); 
 
     // Description:
     // This method builds the Tractography module GUI
     virtual void BuildGUI ( ) ;
+
+    // Description:
+    // Initialize module
+    virtual void Init ( ) ;
 
     // Description:
     // Add/Remove observers on widgets in the GUI
@@ -69,12 +77,14 @@ class VTK_SLICERTRACTOGRAPHYDISPLAY_EXPORT vtkSlicerTractographyDisplayGUI : pub
     virtual void Enter ( );
     virtual void Exit ( );
 
+    vtkGetObjectMacro (FiberBundleDisplayWidget, vtkSlicerFiberBundleDisplayWidget);
+
  protected:
     vtkSlicerTractographyDisplayGUI ( );
     virtual ~vtkSlicerTractographyDisplayGUI ( );
 
     // Module logic and mrml pointers 
-    vtkSlicerFiberBundleLogic *Logic;
+    vtkSlicerTractographyDisplayLogic *Logic;
     
     // Widgets for the Tractography module
     vtkKWLoadSaveButton *LoadTractographyButton;

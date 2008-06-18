@@ -5,7 +5,7 @@ vtkMRMLScene sc
 catch "vs Delete"
 vtkMRMLVolumeArchetypeStorageNode vs
 
-sc SetURL $::SLICER_BUILD/../Slicer3/Libs/MRML/Testing/undo.xml
+sc SetURL $::Slicer3_HOME/share/MRML/Testing/undo.xml
 sc Connect
 
 set n [sc GetNthNodeByClass 0 vtkMRMLVolumeArchetypeStorageNode]
@@ -37,6 +37,11 @@ puts "GetFileName = [$n GetFileName]"
 puts Undo
 sc Undo
 puts "GetFileName = [$n GetFileName]"
+
+# use this to free the singleton and avoid a leak
+set broker [vtkEventBroker New]
+$broker UnRegister sc
+$broker Delete
 
 vs Delete
 sc Delete

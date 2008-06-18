@@ -73,7 +73,7 @@ vtkSlicerVolumesGUI::vtkSlicerVolumesGUI ( )
   this->ApplyButton=NULL;
 
   this->VolumeFileHeaderWidget = NULL;
-  this->GradientEditorWidget = NULL;
+  this->DiffusionEditorWidget = NULL;
 
   NACLabel = NULL;
   NAMICLabel = NULL;
@@ -148,21 +148,25 @@ vtkSlicerVolumesGUI::~vtkSlicerVolumesGUI ( )
     }
   if (this->labelVDW)
     {
+    this->labelVDW->RemoveMRMLObservers();
     this->labelVDW->SetParent(NULL );
     this->labelVDW->Delete ( );
     }
   if (this->scalarVDW)
     {
+    this->scalarVDW->RemoveMRMLObservers();
     this->scalarVDW->SetParent(NULL );
     this->scalarVDW->Delete ( );
     }
   if (this->dwiVDW)
     {
+    this->dwiVDW->RemoveMRMLObservers();
     this->dwiVDW->SetParent(NULL );
     this->dwiVDW->Delete ( );
     }
   if (this->dtiVDW) 
     {
+    this->dtiVDW->RemoveMRMLObservers();
     this->dtiVDW->SetParent(NULL );
     this->dtiVDW->Delete ( );
     }
@@ -216,11 +220,11 @@ vtkSlicerVolumesGUI::~vtkSlicerVolumesGUI ( )
     this->GradientFrame->Delete ( );
     this->GradientFrame = NULL;
     }
-  if ( this->GradientEditorWidget )
+  if ( this->DiffusionEditorWidget )
     {
-    this->GradientEditorWidget->SetParent ( NULL );
-    this->GradientEditorWidget->Delete ( );
-    this->GradientEditorWidget = NULL;
+    this->DiffusionEditorWidget->SetParent ( NULL );
+    this->DiffusionEditorWidget->Delete ( );
+    this->DiffusionEditorWidget = NULL;
     }
   if ( this->InfoFrame )
     {
@@ -388,7 +392,7 @@ void vtkSlicerVolumesGUI::ProcessGUIEvents(vtkObject *caller, unsigned long even
     vtkMRMLVolumeHeaderlessStorageNode* snode = this->VolumeFileHeaderWidget->GetVolumeHeaderlessStorageNode();
 
     this->VolumeNode = volumeLogic->AddHeaderVolume( fileName, this->NameEntry->GetWidget()->GetValue(), 
-                                                     snode, loadingOptions );
+      snode, loadingOptions );
     return;
     }
   if (this->LoadVolumeButton->GetWidget()->GetLoadSaveDialog() == vtkKWLoadSaveDialog::SafeDownCast(caller) && event == vtkKWTopLevel::WithdrawEvent )
@@ -417,19 +421,19 @@ void vtkSlicerVolumesGUI::ProcessGUIEvents(vtkObject *caller, unsigned long even
 
       int loadingOptions = 0;
       if ( !strcmp (mb->GetValue(), "Centered") )
-      {
+        {
         loadingOptions += 2;
-      }
+        }
 
       if ( this->LabelMapCheckButton->GetSelectedState() )
-      {
+        {
         loadingOptions += 1;
-      }
+        }
 
       if ( this->SingleFileCheckButton->GetSelectedState() )
-      {
+        {
         loadingOptions += 4;
-      }
+        }
 
       std::string fileString(fileName);
       for (unsigned int i = 0; i < fileString.length(); i++)
@@ -541,7 +545,6 @@ void vtkSlicerVolumesGUI::ProcessLogicEvents ( vtkObject *caller, unsigned long 
 //---------------------------------------------------------------------------
 void vtkSlicerVolumesGUI::ProcessMRMLEvents(vtkObject *caller, unsigned long event, void *callData )
   {
-  // Fill in
   }
 
 //---------------------------------------------------------------------------
@@ -564,6 +567,7 @@ void vtkSlicerVolumesGUI::Enter ( )
     this->AddGUIObservers();
     }
   this->CreateModuleEventBindings();
+  this->UpdateFramesFromMRML();
   }
 
 //---------------------------------------------------------------------------
@@ -708,6 +712,7 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
           this->VolumeDisplayWidget->TearDownWidget();
           }
         tearDown = 1;
+        this->CreateDTIDisplayWidget();
         this->CreateDWIDisplayWidget();
         this->VolumeDisplayWidget = this->dwiVDW;
         this->VolumeDisplayFrame = this->DWIDisplayFrame;
@@ -717,7 +722,7 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
       this->GradientFrame->SetAllowFrameToCollapse(1);
       vtkMRMLDiffusionWeightedVolumeNode *dwiNode = 
         vtkMRMLDiffusionWeightedVolumeNode::SafeDownCast(refNode);
-      this->GradientEditorWidget->UpdateWidget(dwiNode);
+      this->DiffusionEditorWidget->UpdateWidget(dwiNode);
       }
     else if ( refNode->IsA("vtkMRMLDiffusionTensorVolumeNode") )
       { 
@@ -732,6 +737,11 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
         this->VolumeDisplayWidget = this->dtiVDW;
         this->VolumeDisplayFrame = this->DTIDisplayFrame;
         }
+      this->GradientFrame->EnabledOn();
+      this->GradientFrame->SetAllowFrameToCollapse(1);
+       vtkMRMLDiffusionTensorVolumeNode *dtiNode = 
+        vtkMRMLDiffusionTensorVolumeNode::SafeDownCast(refNode);
+      this->DiffusionEditorWidget->UpdateWidget(dtiNode);
       }
     else 
       {
@@ -746,12 +756,13 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
     // set the mrml scene before adding observers
     this->VolumeDisplayWidget->SetMRMLScene(this->GetMRMLScene());
     this->VolumeDisplayWidget->AddWidgetObservers();
-    this->VolumeDisplayWidget->UpdateWidgetFromMRML();
+    //this->VolumeDisplayWidget->UpdateWidgetFromMRML();
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -before %s",
       this->VolumeDisplayFrame->GetWidgetName(), oldFrame->GetWidgetName());
 
     // Unpack old VolumeDisplayWidget
     this->Script("pack forget %s", oldFrame->GetWidgetName());
+    //this->VolumeDisplayWidget->UpdateWidgetFromMRML();
     }
 
   // Update Volume Header and Display Widget
@@ -776,6 +787,16 @@ void vtkSlicerVolumesGUI::UpdateFramesFromMRML()
         this->NameEntry->GetWidget()->SetValue(volName);
         }       
       }
+    }
+
+  if(refNode == NULL)
+    {
+    // Deactivate GradientsEditor, as it should only enabled when ActiveVolumeNode is a DWI
+    this->GradientFrame->EnabledOff();
+    this->GradientFrame->SetAllowFrameToCollapse(0);
+    this->GradientFrame->CollapseFrame();
+    //delete nameEntry
+    this->NameEntry->GetWidget()->SetValue(""); 
     }
 
   // update the image origin
@@ -806,8 +827,8 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
   this->UIPanel->AddPage ( "Volumes", "Volumes", NULL );
 
   // Define your help text and build the help frame here.
-  const char *help = "The Volumes Module loads, saves and adjusts display parameters of volume data.";
-  const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details. ";
+  const char *help = "The Volumes Module loads, saves and adjusts display parameters of volume data. \nThe Diffusion Editor allows modifying parameters (gradients, bValues, measurement frame) of DWI data and provides a quick way to interpret them. For that it estimates a tensor and shows glyphs and tracts for visual exploration. Help for Diffusion Editor: <a>http://www.slicer.org/slicerWiki/index.php/Modules:Volumes:Diffusion_Editor-Documentation</a>";
+  const char *about = "This work was supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details. \n\nThe Diffusion Editor was developed by Kerstin Kessel.";
   vtkKWWidget *page = this->UIPanel->GetPageWidget ( "Volumes" );
   this->BuildHelpAndAboutFrame ( page, help, about );
 
@@ -966,21 +987,21 @@ void vtkSlicerVolumesGUI::BuildGUI ( )
   this->GradientFrame = vtkSlicerModuleCollapsibleFrame::New();
   this->GradientFrame->SetParent(page);
   this->GradientFrame->Create();
-  this->GradientFrame->SetLabelText("DWI Gradient Editor");
+  this->GradientFrame->SetLabelText("Diffusion Editor");
   this->GradientFrame->CollapseFrame();
   this->GradientFrame->EnabledOff();
   this->GradientFrame->SetAllowFrameToCollapse(0);
   app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
     this->GradientFrame->GetWidgetName(), page->GetWidgetName());
 
-  this->GradientEditorWidget = vtkSlicerGradientEditorWidget::New();
-  this->GradientEditorWidget->SetParent(this->GradientFrame->GetFrame());
-  this->GradientEditorWidget->SetAndObserveMRMLScene(this->GetMRMLScene());
-  this->GradientEditorWidget->Create();
-  this->GradientEditorWidget->AddWidgetObservers();
-  this->GradientEditorWidget->SetApplication((vtkSlicerApplication *)this->GetApplication());
+  this->DiffusionEditorWidget = vtkSlicerDiffusionEditorWidget::New();
+  this->DiffusionEditorWidget->SetApplication((vtkSlicerApplication *)this->GetApplication());
+  this->DiffusionEditorWidget->SetParent(this->GradientFrame->GetFrame());
+  this->DiffusionEditorWidget->SetAndObserveMRMLScene(this->GetMRMLScene());
+  this->DiffusionEditorWidget->Create();
+  this->DiffusionEditorWidget->AddWidgetObservers();
   app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s", 
-    this->GradientEditorWidget->GetWidgetName(), this->GradientFrame->GetFrame()->GetWidgetName());
+    this->DiffusionEditorWidget->GetWidgetName(), this->GradientFrame->GetFrame()->GetWidgetName());
 
   // ---
   // Info FRAME            
@@ -1056,6 +1077,7 @@ void vtkSlicerVolumesGUI::CreateScalarDisplayWidget ( )
     this->scalarVDW = vtkSlicerScalarVolumeDisplayWidget::New ( );
     this->scalarVDW->SetParent( this->ScalarDisplayFrame );
     this->scalarVDW->SetMRMLScene(this->GetMRMLScene());
+    //this->scalarVDW->AddMRMLObservers();
     this->scalarVDW->Create();
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
       scalarVDW->GetWidgetName(), this->ScalarDisplayFrame->GetWidgetName());
@@ -1075,6 +1097,7 @@ void vtkSlicerVolumesGUI::CreateLabelMapDisplayWidget ( )
     this->labelVDW = vtkSlicerLabelMapVolumeDisplayWidget::New ( );
     this->labelVDW->SetParent( this->LabelMapDisplayFrame );
     this->labelVDW->SetMRMLScene(this->GetMRMLScene());
+    //this->labelVDW->AddMRMLObservers();
     this->labelVDW->Create();
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
       labelVDW->GetWidgetName(), this->LabelMapDisplayFrame->GetWidgetName());
@@ -1089,6 +1112,7 @@ void vtkSlicerVolumesGUI::CreateDWIDisplayWidget ( )
     this->dwiVDW = vtkSlicerDiffusionWeightedVolumeDisplayWidget::New( );
     this->dwiVDW->SetParent( this->DWIDisplayFrame );
     this->dwiVDW->SetMRMLScene(this->GetMRMLScene());
+    //this->dwiVDW->AddMRMLObservers();
     this->dwiVDW->Create();
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
       dwiVDW->GetWidgetName(), this->DWIDisplayFrame->GetWidgetName());
@@ -1103,10 +1127,10 @@ void vtkSlicerVolumesGUI::CreateDTIDisplayWidget ( )
     this->dtiVDW = vtkSlicerDiffusionTensorVolumeDisplayWidget::New( );
     this->dtiVDW->SetParent( this->DTIDisplayFrame );
     this->dtiVDW->SetMRMLScene(this->GetMRMLScene());
+    //this->dtiVDW->AddMRMLObservers();
     this->dtiVDW->Create();
     this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
       dtiVDW->GetWidgetName(), this->DTIDisplayFrame->GetWidgetName());    
     }
-
   }
 

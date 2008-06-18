@@ -13,6 +13,7 @@
 #include "vtkQueryAtlasLogic.h"
 #include "vtkQueryAtlasCollaboratorIcons.h"
 #include "vtkQueryAtlasIcons.h"
+#include "vtkIntArray.h"
 
 class vtkKWPushButton;
 class vtkKWPushButtonWithLabel;
@@ -31,6 +32,7 @@ class vtkKWListBox;
 class vtkKWListBoxWithScrollbars;
 class vtkQueryAtlasUseSearchTermWidget;
 class vtkQueryAtlasSearchTermWidget;
+
 
 // Description:
 // This class implements Slicer's QueryAtlas GUI
@@ -169,11 +171,13 @@ class VTK_QUERYATLAS_EXPORT vtkQueryAtlasGUI : public vtkSlicerModuleGUI
 
     vtkGetMacro (ProcessingMRMLEvent, int);
     
-    void SetModuleLogic ( vtkQueryAtlasLogic *logic )
-    { this->SetLogic ( vtkObjectPointer (&this->Logic), logic ); }
-    void SetAndObserveModuleLogic ( vtkQueryAtlasLogic *logic )
-    { this->SetAndObserveLogic ( vtkObjectPointer (&this->Logic), logic ); }
-
+    virtual void SetModuleLogic ( vtkSlicerLogic *logic )
+    { this->SetLogic ( vtkObjectPointer (&this->Logic), 
+                       dynamic_cast<vtkQueryAtlasLogic*>(logic) ); }
+    virtual void SetAndObserveModuleLogic ( vtkSlicerLogic *logic )
+    { this->SetAndObserveLogic ( vtkObjectPointer (&this->Logic), 
+                                 dynamic_cast<vtkQueryAtlasLogic*>(logic));}
+    
     // Description:
     // This method builds the QueryAtlas module GUI
     virtual void BuildGUI ( ) ;
@@ -231,7 +235,7 @@ class VTK_QUERYATLAS_EXPORT vtkQueryAtlasGUI : public vtkSlicerModuleGUI
     // Description:
     // Add/Remove observers on MRML
     virtual void AddMRMLObservers ( );
-    virtual void RemoveMRMLObservers ( );
+    virtual void TearDownGUI ( );
     
     // Description:
     // Get terms from the Diagosis panel
@@ -266,6 +270,14 @@ class VTK_QUERYATLAS_EXPORT vtkQueryAtlasGUI : public vtkSlicerModuleGUI
     virtual void ProcessLogicEvents ( vtkObject *caller, unsigned long event, void *callData );
     virtual void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
     virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
+
+    virtual vtkIntArray* NewObservableEvents();
+
+    // Description:
+    // load the tcl routines into the interpreter (uses the 
+    // Slicer3_BIN global variable to find the path to the 
+    // pkgIndex.tcl file in the binary/installation tree
+    void LoadTclPackage();
 
     // Description:
     // Methods describe behavior at module enter and exit.
@@ -313,6 +325,8 @@ class VTK_QUERYATLAS_EXPORT vtkQueryAtlasGUI : public vtkSlicerModuleGUI
  protected:
     vtkQueryAtlasGUI ( );
     virtual ~vtkQueryAtlasGUI ( );
+    vtkQueryAtlasGUI ( const vtkQueryAtlasGUI& ); // Not implemented.
+    void operator = ( const vtkQueryAtlasGUI& ); //Not implemented.
 
     // Module logic and mrml pointers
     vtkQueryAtlasLogic *Logic;
@@ -458,8 +472,6 @@ class VTK_QUERYATLAS_EXPORT vtkQueryAtlasGUI : public vtkSlicerModuleGUI
     //ETX
 
 private:
-    vtkQueryAtlasGUI ( const vtkQueryAtlasGUI& ); // Not implemented.
-    void operator = ( const vtkQueryAtlasGUI& ); //Not implemented.
 };
 
 

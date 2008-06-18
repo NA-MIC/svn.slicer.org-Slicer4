@@ -77,6 +77,7 @@ vtkMRMLSliceNode::vtkMRMLSliceNode()
   this->Dimensions[1] = 256;
   this->Dimensions[2] = 1;
   this->SliceVisible = 0;
+  this->WidgetVisible = 0;
 
   this->LayoutGridColumns = 1;
   this->LayoutGridRows = 1;
@@ -302,7 +303,7 @@ void vtkMRMLSliceNode::SetSliceToRASByNTP (double Nx, double Ny, double Nz,
 void vtkMRMLSliceNode::UpdateMatrices()
 {
     double spacing[3];
-    unsigned int i;
+    unsigned int i, j;
     vtkMatrix4x4 *xyToSlice = vtkMatrix4x4::New();
     vtkMatrix4x4 *xyToRAS = vtkMatrix4x4::New();
 
@@ -334,7 +335,7 @@ void vtkMRMLSliceNode::UpdateMatrices()
     // RAS = XYToRAS * XY
     //
     vtkMatrix4x4::Multiply4x4(this->SliceToRAS, xyToSlice, xyToRAS);
-    
+
     // check to see if the matrix actually changed
     if ( !Matrix4x4AreEqual (xyToRAS, this->XYToRAS) )
       {
@@ -350,6 +351,48 @@ void vtkMRMLSliceNode::UpdateMatrices()
 
     xyToSlice->Delete();
     xyToRAS->Delete();
+
+    char *orientationString = "Reformat";
+    if ( this->SliceToRAS->GetElement(0, 0) == -1.0 &&
+         this->SliceToRAS->GetElement(1, 0) ==  0.0 &&
+         this->SliceToRAS->GetElement(2, 0) ==  0.0 &&
+         this->SliceToRAS->GetElement(0, 1) ==  0.0 &&
+         this->SliceToRAS->GetElement(1, 1) ==  1.0 &&
+         this->SliceToRAS->GetElement(2, 1) ==  0.0 &&
+         this->SliceToRAS->GetElement(0, 2) ==  0.0 &&
+         this->SliceToRAS->GetElement(1, 2) ==  0.0 &&
+         this->SliceToRAS->GetElement(2, 2) ==  1.0 )
+      {
+        orientationString = "Axial";
+      }
+
+    if ( this->SliceToRAS->GetElement(0, 0) ==  0.0 &&
+         this->SliceToRAS->GetElement(1, 0) == -1.0 &&
+         this->SliceToRAS->GetElement(2, 0) ==  0.0 &&
+         this->SliceToRAS->GetElement(0, 1) ==  0.0 &&
+         this->SliceToRAS->GetElement(1, 1) ==  0.0 &&
+         this->SliceToRAS->GetElement(2, 1) ==  1.0 &&
+         this->SliceToRAS->GetElement(0, 2) ==  1.0 &&
+         this->SliceToRAS->GetElement(1, 2) ==  0.0 &&
+         this->SliceToRAS->GetElement(2, 2) ==  0.0 )
+      {
+        orientationString = "Sagittal";
+      }
+
+    if ( this->SliceToRAS->GetElement(0, 0) == -1.0 &&
+         this->SliceToRAS->GetElement(1, 0) ==  0.0 &&
+         this->SliceToRAS->GetElement(2, 0) ==  0.0 &&
+         this->SliceToRAS->GetElement(0, 1) ==  0.0 &&
+         this->SliceToRAS->GetElement(1, 1) ==  0.0 &&
+         this->SliceToRAS->GetElement(2, 1) ==  1.0 &&
+         this->SliceToRAS->GetElement(0, 2) ==  0.0 &&
+         this->SliceToRAS->GetElement(1, 2) ==  1.0 &&
+         this->SliceToRAS->GetElement(2, 2) ==  0.0 )
+      {
+        orientationString = "Coronal";
+      }
+
+    this->SetOrientationString( orientationString );
 }
 
 
@@ -395,6 +438,7 @@ void vtkMRMLSliceNode::WriteXML(ostream& of, int nIndent)
   of << indent << " layoutName=\"" << this->GetLayoutName() << "\"";
   of << indent << " orientation=\"" << this->OrientationString << "\"";
   of << indent << " sliceVisibility=\"" << (this->SliceVisible ? "true" : "false") << "\"";
+  of << indent << " widgetVisibility=\"" << (this->WidgetVisible ? "true" : "false") << "\"";
 
 
 }
@@ -450,6 +494,17 @@ void vtkMRMLSliceNode::ReadXMLAttributes(const char** atts)
       else
         {
         this->SliceVisible = 0;
+        }
+      }
+    else if (!strcmp(attName, "widgetVisibility")) 
+      {
+      if (!strcmp(attValue,"true")) 
+        {
+        this->WidgetVisible = 1;
+        }
+      else
+        {
+        this->WidgetVisible = 0;
         }
       }
    else if (!strcmp(attName, "orientation")) 
@@ -538,6 +593,8 @@ void vtkMRMLSliceNode::PrintSelf(ostream& os, vtkIndent indent)
 
   os << indent << "SliceVisible: " <<
     (this->SliceVisible ? "not null" : "(none)") << "\n";
+  os << indent << "WidgetVisible: " <<
+    (this->WidgetVisible ? "not null" : "(none)") << "\n";
   
   os << indent << "SliceToRAS: \n";
   this->SliceToRAS->PrintSelf(os, indent.GetNextIndent());

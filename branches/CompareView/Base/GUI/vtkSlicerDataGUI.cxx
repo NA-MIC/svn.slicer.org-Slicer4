@@ -20,7 +20,7 @@ vtkCxxRevisionMacro ( vtkSlicerDataGUI, "$Revision: 1.0 $");
 vtkSlicerDataGUI::vtkSlicerDataGUI ( )
 {
   this->MRMLTreeWidget = vtkSlicerMRMLTreeWidget::New();
-  this->SceneSnapshotWidget = vtkSlicerSceneSnapshotWidget::New();
+//  this->SceneSnapshotWidget = vtkSlicerSceneSnapshotWidget::New();
   this->RecordSnapshotWidget = vtkSlicerRecordSnapshotWidget::New();
 
   NACLabel = NULL;
@@ -39,12 +39,14 @@ vtkSlicerDataGUI::~vtkSlicerDataGUI ( )
     this->MRMLTreeWidget->SetParent (NULL );
     this->MRMLTreeWidget->Delete ( );
     }
+/*
   if (this->SceneSnapshotWidget)
     {
     this->SceneSnapshotWidget->RemoveWidgetObservers ( );
     this->SceneSnapshotWidget->SetParent (NULL );
     this->SceneSnapshotWidget->Delete ( );
     }
+*/
   if (this->RecordSnapshotWidget)
     {
     this->RecordSnapshotWidget->RemoveWidgetObservers ( );
@@ -96,13 +98,15 @@ void vtkSlicerDataGUI::PrintSelf ( ostream& os, vtkIndent indent )
 void vtkSlicerDataGUI::RemoveGUIObservers ( )
 {
   this->MRMLTreeWidget->RemoveObservers (vtkSlicerMRMLTreeWidget::SelectedEvent, (vtkCommand *)this->GUICallbackCommand );
+//  this->SceneSnapshotWidget->RemoveMRMLObservers();
 }
 
 //---------------------------------------------------------------------------
 void vtkSlicerDataGUI::AddGUIObservers ( )
 {
   this->MRMLTreeWidget->AddObserver (vtkSlicerMRMLTreeWidget::SelectedEvent, (vtkCommand *)this->GUICallbackCommand );
-
+//  this->SceneSnapshotWidget->AddMRMLObservers();
+  this->MRMLTreeWidget->AddMRMLObservers();
 }
 
 
@@ -256,6 +260,7 @@ void vtkSlicerDataGUI::BuildGUI ( )
                   this->MRMLTreeWidget->GetWidgetName(), displayModifyFrame->GetFrame()->GetWidgetName());
 
     // Snapshot FRAME
+/*
     vtkSlicerModuleCollapsibleFrame *snapshotFrame = vtkSlicerModuleCollapsibleFrame::New ( );
     snapshotFrame->SetParent ( this->UIPanel->GetPageWidget ( "Data" ) );
     snapshotFrame->Create ( );
@@ -267,9 +272,10 @@ void vtkSlicerDataGUI::BuildGUI ( )
     this->SceneSnapshotWidget->SetAndObserveMRMLScene(this->GetMRMLScene() );
     this->SceneSnapshotWidget->SetParent ( snapshotFrame->GetFrame() );
     this->SceneSnapshotWidget->Create ( );
+    this->SceneSnapshotWidget->SetApplication( this->GetApplication() );
     app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   this->SceneSnapshotWidget->GetWidgetName(), snapshotFrame->GetFrame()->GetWidgetName());
-
+*/
 
     //this->RecordSnapshotWidget->SetAndObserveMRMLScene(this->GetMRMLScene() );
     //this->RecordSnapshotWidget->SetParent ( snapshotFrame->GetFrame() );
@@ -277,9 +283,8 @@ void vtkSlicerDataGUI::BuildGUI ( )
     //app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                   //this->RecordSnapshotWidget->GetWidgetName(), snapshotFrame->GetFrame()->GetWidgetName());
 
-
     displayModifyFrame->Delete ( );
-    snapshotFrame->Delete ( );
+//    snapshotFrame->Delete ( );
 }
 
 

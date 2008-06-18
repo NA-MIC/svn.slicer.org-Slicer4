@@ -19,6 +19,7 @@
 #ifndef __OptimizedImageToImageRegistrationMethod_txx
 #define __OptimizedImageToImageRegistrationMethod_txx
 
+
 #include "itkOptimizedImageToImageRegistrationMethod.h"
 
 #include "itkMattesMutualInformationImageToImageMetric.h"
@@ -32,146 +33,112 @@
 #include "itkImageRegistrationMethod.h"
 #include "itkMultiResolutionImageRegistrationMethod.h"
 
+#include "itkRealTimeClock.h"
+
 #include "itkSingleValuedNonLinearOptimizer.h"
 #include "itkOnePlusOneEvolutionaryOptimizer.h"
 #include "itkNormalVariateGenerator.h"
 #include "itkLBFGSBOptimizer.h"
-//#include "itkPowellOptimizer.h"
+#include "itkRegularStepGradientDescentOptimizer.h"
 #include "itkFRPROptimizer.h"
+#include "itkImageMaskSpatialObject.h"
+
+#include "itkBSplineImageToImageRegistrationMethod.h"
+
+#include <sstream>
 
 namespace itk
 {
 
 class ImageRegistrationViewer
-: public itk::Command
+: public Command
 {
   public :
     typedef ImageRegistrationViewer     Self;
-    typedef itk::Command                Superclass;
-    typedef itk::SmartPointer<Self>     Pointer;
+    typedef Command                Superclass;
+    typedef SmartPointer<Self>     Pointer;
   
-    itkTypeMacro( ImageRegistrationViewer, itk::Command );
+    itkTypeMacro( ImageRegistrationViewer, Command );
 
     itkNewMacro( ImageRegistrationViewer );
   
-    typedef itk::SingleValuedNonLinearOptimizer  OptimizerType;
+    typedef SingleValuedNonLinearOptimizer  OptimizerType;
   
     itkSetMacro(DontShowParameters, bool);
+    itkSetMacro(UpdateInterval, int);
   
-    void Execute( itk::Object * caller, const itk::EventObject & event )
+    void Execute( Object * caller, const EventObject & event )
       {
-      Execute( (const itk::Object *)caller, event );
+      Execute( (const Object *)caller, event );
       }
 
-    void Execute( const itk::Object * object, const itk::EventObject & event )
+    void Execute( const Object * object, const EventObject & event )
       {
-      if( typeid( event ) != typeid( itk::IterationEvent ) || object == NULL)
+      if( typeid( event ) != typeid( IterationEvent ) || object == NULL)
         {
         return;
         }
   
       const OptimizerType * opt = dynamic_cast<const OptimizerType *>(object);
   
-      if(!m_DontShowParameters)
+      if(++m_Iteration % m_UpdateInterval == 0)
         {
-        std::cout << "   " << opt->GetCurrentPosition() << " : "
-          << opt->GetValue( opt->GetCurrentPosition() )
-          << std::endl;
-        }
-      else
-        {
-        std::cout << "   " << opt->GetValue( opt->GetCurrentPosition() )
-          << std::endl;
+        RealTimeClock::TimeStampType t = m_Clock->GetTimeStamp();
+        if(!m_DontShowParameters)
+          {
+          std::cout << "   " << m_Iteration << " : " 
+                    << opt->GetCurrentPosition() << " = "
+                    << opt->GetValue( opt->GetCurrentPosition() )
+                    << "   (" << (t - m_LastTime)/m_UpdateInterval << "s)"
+                    << std::endl;
+          }
+        else
+          {
+          std::cout << "   " << m_Iteration << " : " 
+                    << opt->GetValue( opt->GetCurrentPosition() )
+                    << "   (" << (t - m_LastTime)/m_UpdateInterval << "s)"
+                    << std::endl;
+          }
+        m_LastTime = t;
         }
       }
 
     void Update()
       {
-      this->Execute ( (const itk::Object *)NULL, itk::IterationEvent() );
+      this->Execute ( (const Object *)NULL, IterationEvent() );
       }
 
   protected:
 
+    RealTimeClock::Pointer       m_Clock;
+    RealTimeClock::TimeStampType m_LastTime;
+
+    int  m_Iteration;
+    int  m_UpdateInterval;
     bool m_DontShowParameters;
 
-    ImageRegistrationViewer() { m_DontShowParameters = false; };
+    ImageRegistrationViewer() 
+      { 
+      m_Clock = RealTimeClock::New();
+      m_LastTime = m_Clock->GetTimeStamp();
+      m_Iteration = 0;
+      m_UpdateInterval = 1;
+      m_DontShowParameters = false; 
+      };
     ~ImageRegistrationViewer() {};
 
 };
 
   
-  
-  // For Hierarchical registration
-template< typename TRegistration >
-class HierarchicalRegistrationLevelObserver
-: public itk::Command
-{
-  public:
-    typedef  HierarchicalRegistrationLevelObserver  Self;
-    typedef  itk::Command                           Superclass;
-    typedef  itk::SmartPointer<Self>                Pointer;
-
-    itkTypeMacro( HierarchicalRegistrationLevelObserver, itk::Command );
-
-    itkNewMacro( Self );
-
-  protected:
-
-    HierarchicalRegistrationLevelObserver() {};
-
-  public:
-
-    typedef   TRegistration                              RegistrationType;
-    typedef   RegistrationType *                         RegistrationPointer;
-
-    typedef   SingleValuedNonLinearOptimizer             OptimizerType;
-    typedef   OptimizerType *                            OptimizerPointer;
-    typedef   OptimizerType::ScalesType                  ScalesType;
-
-    void Execute(itk::Object * object, const itk::EventObject & event)
-      {
-      if( !(itk::IterationEvent().CheckEvent( &event )) )
-        {
-        return;
-        }
-      RegistrationPointer registration =
-                            dynamic_cast<RegistrationPointer>( object );
-      OptimizerPointer optimizer = 
-                            dynamic_cast< OptimizerPointer >(
-                                 registration->GetOptimizer() );
-
-      int level = registration->GetCurrentLevel();
-      if( level == 0 )
-        {
-        return;
-        }
-      else
-        {
-        OptimizerType::ParametersType tmpScales = optimizer->GetScales();
-        for(unsigned int i=0; i<tmpScales.size(); i++)
-          {
-          tmpScales[i] = tmpScales[i] / 2;
-          }
-        optimizer->SetScales( tmpScales );
-        }
-      }
-
-    void Execute(const itk::Object * , const itk::EventObject & )
-      {
-      return;
-      }
-
-  private:
-
-};
-
-
 template< class TImage >
 OptimizedImageToImageRegistrationMethod< TImage >
 ::OptimizedImageToImageRegistrationMethod( void )
 {
   m_InitialTransformParameters = TransformParametersType(1);
   m_InitialTransformParameters.Fill( 0.0f );\
+
+  m_InitialTransformFixedParameters = TransformParametersType(1);
+  m_InitialTransformFixedParameters.Fill( 0.0f );\
 
   m_LastTransformParameters = TransformParametersType(1);
   m_LastTransformParameters.Fill( 0.0f );
@@ -180,11 +147,13 @@ OptimizedImageToImageRegistrationMethod< TImage >
   m_TransformParametersScales.Fill( 1.0f );
 
   m_MaxIterations = 500;
+  m_UseOverlapAsROI = false;
+  m_MinimizeMemory = false;
   
   m_NumberOfSamples = 20000;
   m_FixedImageSamplesIntensityThreshold = 0;
 
-  m_TargetError = 0.001;
+  m_TargetError = 0.00001;
 
   m_TransformMethodEnum = RIGID_TRANSFORM;
 
@@ -214,7 +183,13 @@ OptimizedImageToImageRegistrationMethod< TImage >
     std::cout << "UPDATE START" << std::endl;
     }
 
-  this->GetTransform()->SetParametersByValue( this->GetInitialTransformParameters() );
+  if( m_TransformMethodEnum != BSPLINE_TRANSFORM )
+    {
+    this->GetTransform()
+        ->SetFixedParameters( this->GetInitialTransformFixedParameters() );
+    }
+  this->GetTransform()
+      ->SetParametersByValue( this->GetInitialTransformParameters() );
 
   typedef ImageToImageMetric< TImage, TImage >        MetricType;
   typename MetricType::Pointer metric;
@@ -222,11 +197,18 @@ OptimizedImageToImageRegistrationMethod< TImage >
     {
     case MATTES_MI_METRIC:
       {
-      typedef MattesMutualInformationImageToImageMetric< TImage, TImage >  TypedMetricType;
+      typedef MattesMutualInformationImageToImageMetric< TImage, TImage >  
+                                                                TypedMetricType;
       metric = TypedMetricType::New();
 
-      TypedMetricType * m = static_cast< TypedMetricType * >( metric.GetPointer() );
-      m->SetNumberOfHistogramBins( 200 );
+      TypedMetricType * m = 
+                        static_cast< TypedMetricType * >( metric.GetPointer() );
+      m->SetNumberOfHistogramBins( 100 );
+      if( m_MinimizeMemory && m_TransformMethodEnum == BSPLINE_TRANSFORM )
+        {
+        m->SetUseExplicitPDFDerivatives( false );
+        m->SetUseCachingOfBSplineWeights( false );
+        }
       break;
       }
     case NORMALIZED_CORRELATION_METRIC:
@@ -240,30 +222,116 @@ OptimizedImageToImageRegistrationMethod< TImage >
       break;
       }
     }
-  metric->SetFixedImage( this->GetMovingImage() );
-  metric->SetMovingImage( this->GetMovingImage() );
-  
+  typename ImageType::ConstPointer fixedImage = this->GetFixedImage();
+  typename ImageType::ConstPointer movingImage = this->GetMovingImage();
+  metric->SetFixedImage( fixedImage );
+  metric->SetMovingImage( movingImage );
+  if( this->GetUseFixedImageMaskObject() && !this->m_UseOverlapAsROI )
+    {
+    if( this->GetFixedImageMaskObject() )
+      {
+      metric->SetFixedImageMask( const_cast<itk::SpatialObject<ImageDimension> *>(this->GetFixedImageMaskObject()) );
+      }
+    }
+  else if( this->m_UseOverlapAsROI )
+    {
+    if( this->GetReportProgress() )
+      {
+      std::cout << "Creating mask from overlap" << std::endl;
+      }
+
+    typedef itk::OrientedImage<unsigned char, ImageDimension> MaskImageType;
+    typename MaskImageType::Pointer maskImage = MaskImageType::New();
+    typename ImageType::ConstPointer fixedImage = this->GetFixedImage();
+    typename ImageType::ConstPointer movingImage = this->GetMovingImage();
+    typename ImageType::SizeType fixedSize = fixedImage
+                                             ->GetLargestPossibleRegion()
+                                               .GetSize();
+    typename ImageType::IndexType index;
+    typename ImageType::PointType fixedPoint;
+    typename ImageType::PointType movingPoint;
+    maskImage->SetRegions( fixedSize );
+    maskImage->CopyInformation( fixedImage );
+    maskImage->Allocate();
+    itk::ImageRegionIteratorWithIndex< MaskImageType > iter( maskImage,
+                                    maskImage->GetLargestPossibleRegion() );
+    iter.GoToBegin();
+    while( !iter.IsAtEnd() )
+      {
+      index = iter.GetIndex();
+      fixedImage->TransformIndexToPhysicalPoint(index, fixedPoint);
+      movingPoint = this->GetTransform()->TransformPoint( fixedPoint );
+      if( movingImage->TransformPhysicalPointToIndex( movingPoint, index ) )
+        {
+        if( this->GetUseFixedImageMaskObject() 
+            && this->GetFixedImageMaskObject() )
+          {
+          if( this->GetFixedImageMaskObject()->IsInside( movingPoint ) )
+            {
+            iter.Set( 1 );
+            }
+           else
+            {
+            iter.Set( 0 );
+            }
+          }
+        else
+          {
+          iter.Set( 1 );
+          }
+        }
+      else
+        {
+        iter.Set( 0 );
+        }
+      ++iter;
+      }
+
+    typedef itk::ImageMaskSpatialObject< ImageDimension > MaskObjectType;
+    typename MaskObjectType::Pointer maskObject = MaskObjectType::New();
+    maskObject->SetImage( maskImage );
+    metric->SetFixedImageMask( maskObject );
+    }
+
+  if( this->GetUseMovingImageMaskObject() )
+    {
+    if( this->GetMovingImageMaskObject() )
+      {
+      metric->SetMovingImageMask( const_cast<itk::SpatialObject<ImageDimension> *>(this->GetMovingImageMaskObject()) );
+      }
+    }
+
+#ifdef ITK_USE_REVIEW 
+  #ifdef ITK_USE_OPTIMIZED_REGISTRATION_METHODS
+    metric->SetNumberOfSpatialSamples( m_NumberOfSamples );
+  #else
+    itkWarningMacro(<< "ITK not compiled with ITK_USE_OPTIMIZED_REGISTRATION_METHODS. Performance will suffer.");
+  #endif
+#else
+  itkWarningMacro(<< "ITK not compiled with ITK_USE_REVIEW. Performance will suffer.");
+#endif
+
   typedef InterpolateImageFunction< TImage, double >        InterpolationType;
   typename InterpolationType::Pointer interpolator;
   switch( this->GetInterpolationMethodEnum() )
     {
-    case LINEAR_INTERPOLATION:
+  case LINEAR_INTERPOLATION:
       {
       interpolator = LinearInterpolateImageFunction< TImage, double >::New();
       break;
       }
-    case BSPLINE_INTERPOLATION:
+  case BSPLINE_INTERPOLATION:
       {
       interpolator = BSplineInterpolateImageFunction< TImage, double >::New();
       break;
       }
-    case SINC_INTERPOLATION:
+  case SINC_INTERPOLATION:
       {
       interpolator = WindowedSincInterpolateImageFunction< TImage, 
-                                                           4,
-                                                           Function::HammingWindowFunction< 4 >,
-                                                           ConstantBoundaryCondition< TImage >,
-                                                           double >::New();
+                   4,
+                   Function::HammingWindowFunction< 4 >,
+                   ConstantBoundaryCondition< TImage >,
+                   double >::New();
       break;
       }
     }
@@ -278,118 +346,362 @@ OptimizedImageToImageRegistrationMethod< TImage >
         std::cout << "MULTIRESOLUTION START" << std::endl;
         }
 
-      typedef MultiResolutionImageRegistrationMethod< TImage, TImage > RegType;
-      typedef MultiResolutionPyramidImageFilter< TImage, TImage >      PyramidType;
-      typedef SingleValuedNonLinearOptimizer                           OptimizerType;
+      typedef RecursiveMultiResolutionPyramidImageFilter< ImageType,
+                                                          ImageType > 
+                                                            PyramidType;
+      typename PyramidType::Pointer fixedPyramid = PyramidType::New();
+      typename PyramidType::Pointer movingPyramid = PyramidType::New();
 
-      int numberOfParameters = this->GetTransform()->GetNumberOfParameters();
+      typename TransformType::ParametersType nextParameters = 
+                                     this->GetInitialTransformParameters();
 
-      OptimizerType::Pointer gradOpt;
       if( m_TransformMethodEnum == BSPLINE_TRANSFORM )
         {
-        typedef LBFGSBOptimizer                  GradOptimizerType;
-        gradOpt = GradOptimizerType::New();
-        GradOptimizerType::Pointer tmpOpt = static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
+        typedef BSplineImageToImageRegistrationMethod< ImageType > RegType;
+        typename RegType::Pointer thisBSpline = dynamic_cast<RegType *>(this);
 
-        GradOptimizerType::BoundSelectionType boundSelect( numberOfParameters );
-        GradOptimizerType::BoundValueType upperBound( numberOfParameters );
-        GradOptimizerType::BoundValueType lowerBound( numberOfParameters );
-        boundSelect.Fill( 0 );
-        upperBound.Fill( 0.0 );
-        lowerBound.Fill( 0.0 );
-        tmpOpt->SetBoundSelection( boundSelect );
-        tmpOpt->SetUpperBound( upperBound );
-        tmpOpt->SetLowerBound( lowerBound );
-        tmpOpt->SetCostFunctionConvergenceFactor( this->GetTargetError() );
-        tmpOpt->SetProjectedGradientTolerance( 1e-10 );
-        tmpOpt->SetMaximumNumberOfIterations( this->GetMaxIterations() );
-        tmpOpt->SetMaximumNumberOfEvaluations( this->GetMaxIterations() );
-        tmpOpt->SetMaximumNumberOfCorrections( (int)log( (float)numberOfParameters ) );
+        unsigned int numberOfLevels = 4;
+        double controlPointFactor = 2;
+        double deformationMagFactor = 2;
+        double sampleFactor = (double)pow((double)(controlPointFactor), (double)ImageDimension);
+        unsigned int nextNumberOfSamples = this->GetNumberOfSamples();
+        unsigned int nextNumberOfControlPoints = 
+                                       thisBSpline->GetNumberOfControlPoints();
+        double nextDeformationMag = 10;
+        double nextScale = 1;
+        if(numberOfLevels>1)
+          {
+          for(unsigned int level=1; level<numberOfLevels; level++)
+            {
+            nextNumberOfSamples = (int)( nextNumberOfSamples 
+                                         / sampleFactor );
+            nextNumberOfControlPoints = (int)( nextNumberOfControlPoints 
+                                               / controlPointFactor );
+            nextDeformationMag /= deformationMagFactor;
+            nextScale *= controlPointFactor;
+            }
+          }
+        if(nextNumberOfControlPoints < 3)
+          {
+          nextNumberOfControlPoints = 3;
+          }
+
+        fixedPyramid->SetNumberOfLevels( numberOfLevels );
+        movingPyramid->SetNumberOfLevels( numberOfLevels );
+
+        typename ImageType::SpacingType fixedSpacing =
+                                            this->GetFixedImage()->GetSpacing();
+        typename ImageType::SpacingType movingSpacing =
+                                            this->GetFixedImage()->GetSpacing();
+
+        typename PyramidType::ScheduleType fixedSchedule =
+                                                   fixedPyramid->GetSchedule();
+        typename PyramidType::ScheduleType movingSchedule =
+                                                   movingPyramid->GetSchedule();
+        for(unsigned int level=0; level<numberOfLevels; level++)
+          {
+          if(level == 0)
+            {
+            for(unsigned int i=0; i<ImageDimension; i++)
+              {
+              fixedSchedule[0][i] = (unsigned int)(nextScale 
+                                          * fixedSpacing[0]/fixedSpacing[i]);
+              if(fixedSchedule[0][i]<1)
+                {
+                fixedSchedule[0][i] = 1;
+                }
+              movingSchedule[0][i] = (unsigned int)(nextScale 
+                                          * fixedSpacing[0]/movingSpacing[i]);
+              if(movingSchedule[0][i]<1)
+                {
+                movingSchedule[0][i] = 1;
+                }
+              }
+            }
+          else
+            {
+            for(unsigned int i=0; i<ImageDimension; i++)
+              {
+              fixedSchedule[level][i] = (int)(fixedSchedule[level-1][i] 
+                                              / controlPointFactor);
+              if(fixedSchedule[level][i]<1)
+                {
+                fixedSchedule[level][i] = 1;
+                }
+              movingSchedule[level][i] = (int)(movingSchedule[level-1][i] 
+                                               / controlPointFactor);
+              if(movingSchedule[level][i]<1)
+                {
+                movingSchedule[level][i] = 1;
+                }
+              }
+            }
+          }
+        fixedPyramid->SetSchedule( fixedSchedule );
+        fixedPyramid->SetInput( this->GetFixedImage() );
+        fixedPyramid->Update();
+
+        movingPyramid->SetSchedule( movingSchedule );
+        movingPyramid->SetInput( this->GetMovingImage() );
+        movingPyramid->Update();
+
+        if( this->GetReportProgress() )
+          {
+          std::cout << "Number of levels = " << numberOfLevels << std::endl;
+          std::cout << "Fixed schedule = " << std::endl << fixedSchedule;
+          std::cout << "Fixed spacing 0 = " 
+                    << fixedPyramid->GetOutput(0)->GetSpacing() << std::endl;
+          std::cout << "Moving schedule = " << std::endl << movingSchedule;
+          std::cout << "Moving spacing 0 = " 
+                    << movingPyramid->GetOutput(0)->GetSpacing() << std::endl;
+          }
+        for(unsigned int level=0; level<numberOfLevels; level++)
+          {
+          if( this->GetReportProgress() )
+            {
+            std::cout << "MULTIRESOLUTION LEVEL = " << level << std::endl;
+            std::cout << "   Number of samples = " << nextNumberOfSamples
+                      << std::endl;
+            std::cout << "   Number of control points = " 
+                      << nextNumberOfControlPoints << std::endl;
+            std::cout << "   Deformation magnitude = " 
+                      << nextDeformationMag << std::endl;
+            std::cout << "   Fixed image = " 
+                      << fixedPyramid->GetOutput(level)
+                                     ->GetLargestPossibleRegion().GetSize() 
+                      << std::endl;
+            std::cout << "   Moving image = " 
+                      << movingPyramid->GetOutput(level)
+                                      ->GetLargestPossibleRegion().GetSize() 
+                      << std::endl;
+            }
+
+          typename RegType::Pointer reg = RegType::New();
+          typename ImageType::ConstPointer fixedImage =
+                                                fixedPyramid->GetOutput(level);
+          typename ImageType::ConstPointer movingImage =
+                                                movingPyramid->GetOutput(level);
+
+          typedef itk::ImageFileWriter< ImageType > FileWriterType;
+          typename FileWriterType::Pointer writer = FileWriterType::New();
+          std::stringstream ss;
+          std::string name;
+
+          if( this->GetReportProgress() )
+            {
+            writer->SetInput( fixedImage );
+            ss << "level" << level << "Fixed.mha";
+            ss >> name;
+            writer->SetFileName( name );
+            writer->Update();
+  
+            writer->SetInput( movingImage );
+            ss.clear();
+            ss << "level" << level << "Moving.mha";
+            ss >> name;
+            writer->SetFileName( name );
+            writer->Update();
+            }
+
+          reg->SetReportProgress( this->GetReportProgress() );
+          reg->SetFixedImage( fixedImage );
+          reg->SetMovingImage( movingImage );
+          reg->SetNumberOfControlPoints( nextNumberOfControlPoints );
+          reg->SetNumberOfSamples( nextNumberOfSamples );
+          reg->SetExpectedDeformationMagnitude( nextDeformationMag );
+          reg->SetOptimizationMethodEnum(GRADIENT_OPTIMIZATION);
+          reg->SetTargetError( this->GetTargetError() );
+          if( level >= numberOfLevels/2 )
+            {
+            reg->SetMinimizeMemory( this->GetMinimizeMemory() );
+            }
+          reg->SetUseOverlapAsROI( this->GetUseOverlapAsROI() );
+          reg->SetMaxIterations( this->GetMaxIterations() );
+          reg->SetFixedImageSamplesIntensityThreshold(
+                           this->GetFixedImageSamplesIntensityThreshold() );
+          reg->SetMetricMethodEnum( this->GetMetricMethodEnum() );
+          reg->SetInterpolationMethodEnum( this->GetInterpolationMethodEnum() );
+
+          if( level > 0 )
+            {
+            reg->SetInitialTransformParameters( nextParameters );
+            }
+          try
+            {
+            reg->Update();
+            }
+          catch( itk::ExceptionObject & excep )
+            {
+            std::cout << "Exception caught during level registration." 
+                      << excep << std::endl;
+            std::cout << "Current Matrix Transform = " << std::endl; 
+            reg->GetTransform()->Print(std::cout , 2);
+            }
+          catch( ... )
+            {
+            std::cout << "Uncaught exception during helper class registration." 
+                      << std::endl;
+            }
+
+          if( this->GetReportProgress() )
+            {
+            typedef itk::ResampleImageFilter< ImageType, ImageType > ResamplerType;
+            typename ResamplerType::Pointer resampler = ResamplerType::New();
+            resampler->SetInput( movingImage );
+            resampler->SetOutputParametersFromConstImage( fixedImage );
+            reg->GetTransform()->SetParameters( reg->GetLastTransformParameters() );
+            resampler->SetTransform( reg->GetTransform() );
+            try
+              {
+              resampler->Update();
+              }
+            catch( itk::ExceptionObject & excep )
+              {
+              std::cout << "Exception during resmpling for logs:" << std::endl;
+              std::cout << excep << std::endl;
+              break;
+              }
+            catch( ... )
+              {
+              std::cout << "Exception during resmpling for logs:" << std::endl;
+              break;
+              }
+            writer->SetInput( resampler->GetOutput() );
+            ss.clear();
+            ss << "level" << level << "ResampledMoving.mha";
+            ss >> name;
+            writer->SetFileName( name );
+            writer->Update();
+            }
+
+          if( level == numberOfLevels-1 )
+            {
+            m_FinalMetricValue = reg->GetFinalMetricValue();
+            this->SetLastTransformParameters( 
+                                           reg->GetLastTransformParameters() );
+            this->GetTransform()->SetParametersByValue( 
+                                           this->GetLastTransformParameters() );
+            }
+          else
+            {
+            nextNumberOfSamples = (int)( nextNumberOfSamples
+                                           * sampleFactor );
+            nextNumberOfControlPoints = (int)( nextNumberOfControlPoints 
+                                                 * controlPointFactor );
+            nextDeformationMag *= deformationMagFactor;
+            if(nextNumberOfControlPoints 
+               > thisBSpline->GetNumberOfControlPoints())
+              {
+              nextNumberOfControlPoints = 
+                                   thisBSpline->GetNumberOfControlPoints();
+              }
+            if( level == numberOfLevels-2)
+              {
+              nextNumberOfSamples = this->GetNumberOfSamples();
+              nextNumberOfControlPoints =
+                                   thisBSpline->GetNumberOfControlPoints();
+              }
+            if( this->GetReportProgress() )
+              {
+              std::cout << "   Resampling grid..." << std::endl;
+              }
+            if(nextNumberOfControlPoints != reg->GetNumberOfControlPoints() )
+              {
+              reg->ResampleControlGrid( nextNumberOfControlPoints,
+                                        nextParameters );
+              }
+            else
+              {
+              nextParameters = reg->GetLastTransformParameters();
+              }
+            if( this->GetReportProgress() )
+              {
+              std::cout << "   Level done." << std::endl;
+              }
+            }
+          }
         }
       else
         {
-        //typedef PowellOptimizer                  GradOptimizerType;
-        typedef FRPROptimizer                  GradOptimizerType;
-
-        gradOpt = GradOptimizerType::New();
-        GradOptimizerType::Pointer tmpOpt = static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
-
-        tmpOpt->SetMaximize( false );
-        tmpOpt->SetStepLength( 2 );
-        tmpOpt->SetStepTolerance( this->GetTargetError() );
-        tmpOpt->SetMaximumIteration( this->GetTransform()->GetNumberOfParameters() * 4 );
-        tmpOpt->SetMaximumLineIteration( (int)( this->GetMaxIterations() / (this->GetTransform()->GetNumberOfParameters() * 0.5) ) );
-        tmpOpt->SetScales( this->GetTransformParametersScales() );
-        tmpOpt->SetUseUnitLengthGradient(true);
-        }
- 
-      if( this->GetReportProgress() )
-        {
-        typedef ImageRegistrationViewer ViewerCommandType;
-        typename ViewerCommandType::Pointer command = ViewerCommandType::New();
-        if( this->GetTransform()->GetNumberOfParameters() > 16)
+        int numberOfLevels = 3;
+        int nextNumberOfSamples = this->GetNumberOfSamples();
+        for(int level=1; level<numberOfLevels; level++)
           {
-          command->SetDontShowParameters( true );
+          nextNumberOfSamples /= ImageDimension;
           }
-        gradOpt->AddObserver( itk::IterationEvent(), command );
-        }
-
-      if( this->GetObserver() )
-        {
-        gradOpt->AddObserver( itk::IterationEvent(), this->GetObserver() );
-        }
-
-      typename RegType::Pointer reg = RegType::New();
-
-      reg->SetFixedImage( this->GetFixedImage() );
-      reg->SetMovingImage( this->GetMovingImage() );
-      reg->SetFixedImageRegion( this->GetFixedImage()->GetLargestPossibleRegion() );
-
-      typename PyramidType::Pointer fixedImagePyramid = PyramidType::New();
-      typename PyramidType::Pointer movingImagePyramid = PyramidType::New();
-
-      reg->SetFixedImagePyramid( fixedImagePyramid );
-      reg->SetMovingImagePyramid( movingImagePyramid );
-      reg->SetNumberOfLevels( 3 );
-
-
-      // Add the observer that adjusts registration params between levels of the hierarchy
-      typedef HierarchicalRegistrationLevelObserver< RegType > HierarchicalCommandType;
-      typename HierarchicalCommandType::Pointer hCommand = HierarchicalCommandType::New();
-      reg->AddObserver( itk::IterationEvent(), hCommand );
-
-      if( this->GetUseMasks() )
-        {
-        if( this->GetFixedImageMaskObject() )
+        for(int level=numberOfLevels-1; level>=0; level--)
           {
-          metric->SetFixedImageMask( this->GetFixedImageMaskObject() );
-          }
-        if( this->GetMovingImageMaskObject() )
-          {
-          metric->SetMovingImageMask( this->GetMovingImageMaskObject() );
+          if( this->GetReportProgress() )
+            {
+            std::cout << "MULTIRESOLUTION LEVEL = " << level << std::endl;
+            }
+
+          typedef OptimizedImageToImageRegistrationMethod< ImageType > RegType;
+          typename RegType::Pointer reg = this->New();
+          typename ImageType::ConstPointer fixedImage = this->GetFixedImage();
+          typename ImageType::ConstPointer movingImage = this->GetMovingImage();
+          reg->SetReportProgress( this->GetReportProgress() );
+          reg->SetFixedImage( fixedImage );
+          reg->SetMovingImage( movingImage );
+          reg->SetNumberOfSamples( nextNumberOfSamples );
+          reg->SetOptimizationMethodEnum(GRADIENT_OPTIMIZATION);
+          reg->SetTargetError( this->GetTargetError() );
+          reg->SetMinimizeMemory( this->GetMinimizeMemory() );
+          reg->SetUseOverlapAsROI( this->GetUseOverlapAsROI() );
+          reg->SetMaxIterations( this->GetMaxIterations() );
+          reg->SetFixedImageSamplesIntensityThreshold(
+                           this->GetFixedImageSamplesIntensityThreshold() );
+          reg->SetMetricMethodEnum( this->GetMetricMethodEnum() );
+          reg->SetInterpolationMethodEnum( this->GetInterpolationMethodEnum() );
+
+          if( level < numberOfLevels-1 )
+            {
+            reg->SetInitialTransformParameters( nextParameters );
+            reg->SetInitialTransformFixedParameters( this->GetInitialTransformFixedParameters() );
+            }
+          try
+            {
+            reg->Update();
+            }
+          catch( itk::ExceptionObject & excep )
+            {
+            std::cout << "Exception caught during level registration." 
+                      << excep << std::endl;
+            std::cout << "Current Matrix Transform = " << std::endl; 
+            reg->GetTransform()->Print(std::cout , 2);
+            }
+          catch( ... )
+            {
+            std::cout << "Uncaught exception during level registration." 
+                      << std::endl;
+            }
+
+          if( level == 0 )
+            {
+            m_FinalMetricValue = reg->GetFinalMetricValue();
+            this->SetLastTransformParameters( 
+                                            reg->GetLastTransformParameters() );
+            this->GetTransform()->SetParametersByValue( 
+                                           this->GetLastTransformParameters() );
+            }
+          else
+            {
+            nextNumberOfSamples *= ImageDimension;
+            if( level == 1)
+              {
+              nextNumberOfSamples = this->GetNumberOfSamples();
+              }
+            nextParameters = reg->GetLastTransformParameters();
+            }
           }
         }
-
-      reg->SetTransform( this->GetTransform() );
-      reg->SetInitialTransformParameters( this->GetInitialTransformParameters() );
-      reg->SetMetric( metric );
-      reg->SetInterpolator( interpolator );
-      reg->SetOptimizer( gradOpt );
-
-      reg->StartRegistration();
-
-      this->SetLastTransformParameters( reg->GetLastTransformParameters() );
-      this->GetTransform()->SetParametersByValue( this->GetLastTransformParameters() );
-
-      m_FinalMetricValue = reg->GetOptimizer()->GetValue( this->GetLastTransformParameters() );
-
       if( this->GetReportProgress() )
         {
         std::cout << "MULTIRESOLUTION END" << std::endl;
         }
       break;
       }
-    case EVOLUTIONARY_OPTIMIZATION:
+  case EVOLUTIONARY_OPTIMIZATION:
       {
       if( this->GetReportProgress() )
         {
@@ -401,52 +713,36 @@ OptimizedImageToImageRegistrationMethod< TImage >
       typedef SingleValuedNonLinearOptimizer             OptimizerType;
 
       EvoOptimizerType::Pointer evoOpt = EvoOptimizerType::New();
-      evoOpt->SetNormalVariateGenerator( Statistics::NormalVariateGenerator::New() );
-      evoOpt->SetEpsilon( 1e-10 );
-      evoOpt->Initialize( 1.01 );
-      evoOpt->SetScales( this->GetTransformParametersScales() );
-      evoOpt->SetMaximumIteration( this->GetMaxIterations() / 2 );
-
-      int numberOfParameters = this->GetTransform()->GetNumberOfParameters();
+      evoOpt->SetNormalVariateGenerator( Statistics::NormalVariateGenerator
+                                                   ::New() );
+      evoOpt->SetEpsilon( this->GetTargetError() );
+      evoOpt->Initialize( 0.1 );
+      EvoOptimizerType::ParametersType scales = 
+                                       this->GetTransformParametersScales();
+      for(unsigned int i=0; i<scales.size(); i++)
+        {
+        scales[i] = scales[i] * scales[i]; // OnePlusOne opt uses squared scales
+        }
+      evoOpt->SetScales( scales ); //this->GetTransformParametersScales() );
+      evoOpt->SetMaximumIteration( this->GetMaxIterations() );
 
       OptimizerType::Pointer gradOpt;
-      if( m_TransformMethodEnum == BSPLINE_TRANSFORM )
-        {
-        typedef LBFGSBOptimizer                  GradOptimizerType;
-        gradOpt = GradOptimizerType::New();
-        GradOptimizerType::Pointer tmpOpt = static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
+      typedef FRPROptimizer                  GradOptimizerType;
 
-        GradOptimizerType::BoundSelectionType boundSelect( numberOfParameters );
-        GradOptimizerType::BoundValueType upperBound( numberOfParameters );
-        GradOptimizerType::BoundValueType lowerBound( numberOfParameters );
-        boundSelect.Fill( 0 );
-        upperBound.Fill( 0.0 );
-        lowerBound.Fill( 0.0 );
-        tmpOpt->SetBoundSelection( boundSelect );
-        tmpOpt->SetUpperBound( upperBound );
-        tmpOpt->SetLowerBound( lowerBound );
-        tmpOpt->SetCostFunctionConvergenceFactor( this->GetTargetError() );
-        tmpOpt->SetProjectedGradientTolerance( 1e-10 );
-        tmpOpt->SetMaximumNumberOfIterations( this->GetMaxIterations() / 2 );
-        tmpOpt->SetMaximumNumberOfEvaluations( this->GetMaxIterations() / 2 );
-        tmpOpt->SetMaximumNumberOfCorrections( (int)log( (float)numberOfParameters ) );
-        }
-      else
-        {
-        //typedef PowellOptimizer                  GradOptimizerType;
-        typedef FRPROptimizer                  GradOptimizerType;
+      gradOpt = GradOptimizerType::New();
+      GradOptimizerType::Pointer tmpOpt = 
+                   static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
 
-        gradOpt = GradOptimizerType::New();
-        GradOptimizerType::Pointer tmpOpt = static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
-
-        tmpOpt->SetMaximize( false );
-        tmpOpt->SetStepLength( 0.25 );
-        tmpOpt->SetStepTolerance( this->GetTargetError() );
-        tmpOpt->SetMaximumIteration( this->GetTransform()->GetNumberOfParameters() * 4 );
-        tmpOpt->SetMaximumLineIteration( (int)( this->GetMaxIterations() / (this->GetTransform()->GetNumberOfParameters() * 0.5) ) );
-        tmpOpt->SetScales( this->GetTransformParametersScales() );
-        tmpOpt->SetUseUnitLengthGradient(true);
-        }
+      tmpOpt->SetMaximize( false );
+      tmpOpt->SetCatchGetValueException( true );
+      tmpOpt->SetMetricWorstPossibleValue( 0 );
+      tmpOpt->SetStepLength( 0.25 );
+      tmpOpt->SetStepTolerance( this->GetTargetError() );
+      tmpOpt->SetMaximumIteration( this->GetMaxIterations() );
+      tmpOpt->SetMaximumLineIteration( this->GetMaxIterations() );
+      tmpOpt->SetScales( this->GetTransformParametersScales() );
+      tmpOpt->SetUseUnitLengthGradient(true);
+      tmpOpt->SetToFletchReeves();
 
       if( this->GetReportProgress() )
         {
@@ -456,65 +752,85 @@ OptimizedImageToImageRegistrationMethod< TImage >
           {
           command->SetDontShowParameters( true );
           }
-        evoOpt->AddObserver( itk::IterationEvent(), command );
-        gradOpt->AddObserver( itk::IterationEvent(), command );
+        evoOpt->AddObserver( IterationEvent(), command );
+        gradOpt->AddObserver( IterationEvent(), command );
         }
 
       if( this->GetObserver() )
         {
-        evoOpt->AddObserver( itk::IterationEvent(), this->GetObserver() );
-        gradOpt->AddObserver( itk::IterationEvent(), this->GetObserver() );
+        evoOpt->AddObserver( IterationEvent(), this->GetObserver() );
+        gradOpt->AddObserver( IterationEvent(), this->GetObserver() );
         }
 
       typename RegType::Pointer reg = RegType::New();
-      reg->SetFixedImage( this->GetFixedImage() );
-      reg->SetMovingImage( this->GetMovingImage() );
-      reg->SetFixedImageRegion( this->GetFixedImage()->GetLargestPossibleRegion() );
-
-      if( this->GetUseMasks() )
-        {
-        if( this->GetFixedImageMaskObject() )
-          {
-          metric->SetFixedImageMask( this->GetFixedImageMaskObject() );
-          }
-        if( this->GetMovingImageMaskObject() )
-          {
-          metric->SetMovingImageMask( this->GetMovingImageMaskObject() );
-          }
-        }
-
+      typename ImageType::ConstPointer fixedImage = this->GetFixedImage();
+      typename ImageType::ConstPointer movingImage = this->GetMovingImage();
+      reg->SetFixedImage( fixedImage );
+      reg->SetMovingImage( movingImage );
+      reg->SetFixedImageRegion( this->GetFixedImage()
+                                    ->GetLargestPossibleRegion() );
       reg->SetTransform( this->GetTransform() );
-      reg->SetInitialTransformParameters( this->GetInitialTransformParameters() );
+      if( m_TransformMethodEnum != BSPLINE_TRANSFORM )
+        {
+        reg->GetTransform()->SetFixedParameters(
+                               this->GetInitialTransformFixedParameters() );
+        }
+      reg->SetInitialTransformParameters( 
+                               this->GetInitialTransformParameters() );
       reg->SetMetric( metric );
       reg->SetInterpolator( interpolator );
       reg->SetOptimizer( evoOpt );
 
       reg->StartRegistration();
 
-      this->SetLastTransformParameters( reg->GetLastTransformParameters() );
-      this->GetTransform()->SetParametersByValue( this->GetLastTransformParameters() );
+      m_FinalMetricValue = reg->GetOptimizer()->GetValue( 
+                                           reg->GetLastTransformParameters() );
 
-      m_FinalMetricValue = reg->GetOptimizer()->GetValue( this->GetLastTransformParameters() );
+      this->SetLastTransformParameters( reg->GetLastTransformParameters() );
+      this->GetTransform()->SetParametersByValue( 
+                                          this->GetLastTransformParameters() );
 
       gradOpt->SetCostFunction( metric );
       gradOpt->SetInitialPosition( reg->GetLastTransformParameters() );
+
+      if( this->GetReportProgress() )
+        {
+        std::cout << "EVOLUTIONARY GRADIENT START" << std::endl;
+        }
 
       try
         {
         gradOpt->StartOptimization();
         }
+      catch( itk::ExceptionObject & excep )
+        {
+        std::cout << "Exception caught during gradient registration." 
+                   << excep << std::endl;
+        std::cout << "  Pos = " << gradOpt->GetCurrentPosition() 
+                  << std::endl << std::endl;
+        std::cout << "  Value = " 
+                  << gradOpt->GetValue( gradOpt->GetCurrentPosition() ) 
+                  << std::endl;
+        std::cout << "  Transform = ";
+        this->GetTransform()->Print( std::cout, 2 );
+        }
       catch(...)
         {
-        std::cout << "Exception caught...continuing using best previous values..." << std::endl;
-        std::cout << "  Pos = " << gradOpt->GetCurrentPosition() << std::endl << std::endl;
-        std::cout << "  Value = " << gradOpt->GetValue( gradOpt->GetCurrentPosition() ) << std::endl;;
+        std::cout << "Exception caught...continuing using best values..." 
+                  << std::endl;
+        std::cout << "  Pos = " << gradOpt->GetCurrentPosition() 
+                  << std::endl << std::endl;
+        std::cout << "  Value = " 
+                  << gradOpt->GetValue( gradOpt->GetCurrentPosition() ) 
+                  << std::endl;;
         }
         
+      m_FinalMetricValue = gradOpt->GetValue( gradOpt->GetCurrentPosition() );
 
       this->SetLastTransformParameters( gradOpt->GetCurrentPosition() );
-      this->GetTransform()->SetParametersByValue( this->GetLastTransformParameters() );
+      this->GetTransform()
+          ->SetParametersByValue( this->GetLastTransformParameters() );
 
-      m_FinalMetricValue = reg->GetOptimizer()->GetValue( this->GetLastTransformParameters() );
       if( this->GetReportProgress() )
         {
         std::cout << "EVOLUTIONARY END" << std::endl;
@@ -532,14 +848,29 @@ OptimizedImageToImageRegistrationMethod< TImage >
 
       typedef ImageRegistrationMethod< TImage, TImage > RegType;
 
-      int numberOfParameters = this->GetTransform()->GetNumberOfParameters();
-
       OptimizerType::Pointer gradOpt;
       if( m_TransformMethodEnum == BSPLINE_TRANSFORM )
         {
+        /*
+        typedef RegularStepGradientDescentOptimizer    GradOptimizerType;
+        gradOpt = GradOptimizerType::New();
+
+        GradOptimizerType::Pointer tmpOpt =
+                      static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
+        tmpOpt->SetMaximize( false );
+        tmpOpt->SetMaximumStepLength( 0.5 );
+        tmpOpt->SetMinimumStepLength( this->GetTargetError() );
+        tmpOpt->SetNumberOfIterations( this->GetMaxIterations() );
+        tmpOpt->SetScales( this->GetTransformParametersScales() );
+        */
+
+        //
+        int numberOfParameters = this->GetTransform()->GetNumberOfParameters();
+
         typedef LBFGSBOptimizer                  GradOptimizerType;
         gradOpt = GradOptimizerType::New();
-        GradOptimizerType::Pointer tmpOpt = static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
+        GradOptimizerType::Pointer tmpOpt =
+                      static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
 
         GradOptimizerType::BoundSelectionType boundSelect( numberOfParameters );
         GradOptimizerType::BoundValueType upperBound( numberOfParameters );
@@ -550,27 +881,30 @@ OptimizedImageToImageRegistrationMethod< TImage >
         tmpOpt->SetBoundSelection( boundSelect );
         tmpOpt->SetUpperBound( upperBound );
         tmpOpt->SetLowerBound( lowerBound );
-        tmpOpt->SetCostFunctionConvergenceFactor( this->GetTargetError() );
-        tmpOpt->SetProjectedGradientTolerance( 1e-10 );
+        tmpOpt->SetCostFunctionConvergenceFactor( 1000.0 );
+        tmpOpt->SetProjectedGradientTolerance( 1e-50 );
         tmpOpt->SetMaximumNumberOfIterations( this->GetMaxIterations() );
-        tmpOpt->SetMaximumNumberOfEvaluations( this->GetMaxIterations() );
-        tmpOpt->SetMaximumNumberOfCorrections( (int)log( (float)numberOfParameters ) );
+        tmpOpt->SetMaximumNumberOfEvaluations( this->GetMaxIterations()*this->GetMaxIterations() );
+        tmpOpt->SetMaximumNumberOfCorrections( this->GetMaxIterations()*this->GetMaxIterations() );
         }
-      else
+      else 
         {
-        //typedef PowellOptimizer                  GradOptimizerType;
         typedef FRPROptimizer                  GradOptimizerType;
 
         gradOpt = GradOptimizerType::New();
-        GradOptimizerType::Pointer tmpOpt = static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
+        GradOptimizerType::Pointer tmpOpt = 
+                       static_cast<GradOptimizerType *>( gradOpt.GetPointer() );
 
         tmpOpt->SetMaximize( false );
+        tmpOpt->SetCatchGetValueException( true );
+        tmpOpt->SetMetricWorstPossibleValue( 0 );
         tmpOpt->SetStepLength( 0.25 );
         tmpOpt->SetStepTolerance( this->GetTargetError() );
-        tmpOpt->SetMaximumIteration( this->GetTransform()->GetNumberOfParameters() * 4 );
-        tmpOpt->SetMaximumLineIteration( (int)( this->GetMaxIterations() / (this->GetTransform()->GetNumberOfParameters() * 0.5) ) );
+        tmpOpt->SetMaximumIteration( this->GetMaxIterations() );
+        tmpOpt->SetMaximumLineIteration( this->GetMaxIterations() );
         tmpOpt->SetScales( this->GetTransformParametersScales() );
         tmpOpt->SetUseUnitLengthGradient(true);
+        tmpOpt->SetToFletchReeves();
         }
 
       if( this->GetReportProgress() )
@@ -581,43 +915,41 @@ OptimizedImageToImageRegistrationMethod< TImage >
           {
           command->SetDontShowParameters( true );
           }
-        gradOpt->AddObserver( itk::IterationEvent(), command );
+        gradOpt->AddObserver( IterationEvent(), command );
         }
 
       if( this->GetObserver() )
         {
-        gradOpt->AddObserver( itk::IterationEvent(), this->GetObserver() );
+        gradOpt->AddObserver( IterationEvent(), this->GetObserver() );
         }
 
       typename RegType::Pointer reg = RegType::New();
-      reg->SetFixedImage( this->GetFixedImage() );
-      reg->SetMovingImage( this->GetMovingImage() );
-      reg->SetFixedImageRegion( this->GetFixedImage()->GetLargestPossibleRegion() );
-
-      if( this->GetUseMasks() )
-        {
-        if( this->GetFixedImageMaskObject() )
-          {
-          metric->SetFixedImageMask( this->GetFixedImageMaskObject() );
-          }
-        if( this->GetMovingImageMaskObject() )
-          {
-          metric->SetMovingImageMask( this->GetMovingImageMaskObject() );
-          }
-        }
-
+      typename ImageType::ConstPointer fixedImage = this->GetFixedImage();
+      typename ImageType::ConstPointer movingImage = this->GetMovingImage();
+      reg->SetFixedImage( fixedImage );
+      reg->SetMovingImage( movingImage );
+      reg->SetFixedImageRegion( this->GetFixedImage()
+                                    ->GetLargestPossibleRegion() );
       reg->SetTransform( this->GetTransform() );
-      reg->SetInitialTransformParameters( this->GetInitialTransformParameters() );
+      if( m_TransformMethodEnum != BSPLINE_TRANSFORM )
+        {
+        reg->GetTransform()->SetFixedParameters( 
+                               this->GetInitialTransformFixedParameters() );
+        }
+      reg->SetInitialTransformParameters( 
+                               this->GetInitialTransformParameters() );
       reg->SetMetric( metric );
       reg->SetInterpolator( interpolator );
       reg->SetOptimizer( gradOpt );
 
       reg->StartRegistration();
 
-      this->SetLastTransformParameters( reg->GetLastTransformParameters() );
-      this->GetTransform()->SetParametersByValue( this->GetLastTransformParameters() );
+      m_FinalMetricValue = reg->GetOptimizer()
+                              ->GetValue( reg->GetLastTransformParameters() );
 
-      m_FinalMetricValue = reg->GetOptimizer()->GetValue( this->GetLastTransformParameters() );
+      this->SetLastTransformParameters( reg->GetLastTransformParameters() );
+      this->GetTransform()->SetParametersByValue( 
+                                         this->GetLastTransformParameters() );
 
       if( this->GetReportProgress() )
         {
@@ -643,11 +975,17 @@ OptimizedImageToImageRegistrationMethod< TImage >
 
   os << indent << "Initial Transform Parameters = " << m_InitialTransformParameters << std::endl;
 
+  os << indent << "Initial Transform Fixed Parameters = " << m_InitialTransformFixedParameters << std::endl;
+
   os << indent << "Last Transform Parameters = " << m_LastTransformParameters << std::endl;
 
   os << indent << "Transform Parameter Scales = " << m_TransformParametersScales << std::endl;
 
   os << indent << "Max Iterations = " << m_MaxIterations << std::endl;
+
+  os << indent << "Use Overlap As ROI = " << m_UseOverlapAsROI << std::endl;
+
+  os << indent << "Minimize Memory = " << m_MinimizeMemory << std::endl;
 
   os << indent << "Number of Samples = " << m_NumberOfSamples << std::endl;
 
@@ -683,7 +1021,7 @@ OptimizedImageToImageRegistrationMethod< TImage >
          << std::endl;
       break;
     default:
-      os << indent << "ERROR: Interpolation method NOT HANDLED BY itk::OptimizedImageToImageRegistrationMethod::PrintSelf"
+      os << indent << "ERROR: Interpolation method NOT HANDLED BY OptimizedImageToImageRegistrationMethod::PrintSelf"
          << std::endl;
       break;
     }
@@ -697,10 +1035,10 @@ OptimizedImageToImageRegistrationMethod< TImage >
       os << indent << "Optimization method = Evolution" << std::endl;
       break;
     case GRADIENT_OPTIMIZATION:
-      os << indent << "Optimization method = Evolution" << std::endl;
+      os << indent << "Optimization method = Gradient" << std::endl;
       break;
     default:
-      os << indent << "ERROR: Optimization method NOT HANDLED BY itk::OptimizedImageToImageRegistrationMethod::PrintSelf"
+      os << indent << "ERROR: Optimization method NOT HANDLED BY OptimizedImageToImageRegistrationMethod::PrintSelf"
          << std::endl;
       break;
     }

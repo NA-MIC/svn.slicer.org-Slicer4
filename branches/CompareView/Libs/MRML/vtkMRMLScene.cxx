@@ -20,48 +20,58 @@ Version:   $Revision: 1.18 $
 #include "vtkCommand.h"
 #include "vtkGeneralTransform.h"
 
+#include "vtkMRMLConfigure.h" // MRML_USE*
+
 #include "vtkMRMLScene.h"
 #include "vtkMRMLParser.h"
 
-#include "vtkMRMLLinearTransformNode.h"
-#include "vtkMRMLModelNode.h"
-#include "vtkMRMLModelStorageNode.h"
-#include "vtkMRMLFreeSurferModelStorageNode.h"
-#include "vtkMRMLModelDisplayNode.h"
+#include "vtkMRMLBSplineTransformNode.h"
+#include "vtkMRMLCameraNode.h"
 #include "vtkMRMLClipModelsNode.h"
-#include "vtkMRMLScalarVolumeNode.h"
-#include "vtkMRMLVectorVolumeNode.h"
-#include "vtkMRMLFiducialListNode.h"
-#include "vtkMRMLROIListNode.h"
-#include "vtkMRMLSliceCompositeNode.h"
-#include "vtkMRMLSelectionNode.h"
-#include "vtkMRMLSliceNode.h"
-#include "vtkMRMLVolumeArchetypeStorageNode.h"
-#include "vtkMRMLScalarVolumeDisplayNode.h"
-#include "vtkMRMLLabelMapVolumeDisplayNode.h"
-#include "vtkMRMLVolumeHeaderlessStorageNode.h"
 #include "vtkMRMLColorNode.h"
+#include "vtkMRMLColorTableStorageNode.h"
+#include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeNode.h"
-#include "vtkMRMLDiffusionTensorVolumeNode.h"
-#include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
-#include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
-#include "vtkMRMLFiberBundleNode.h"
-#include "vtkMRMLFiberBundleLineDisplayNode.h"
-#include "vtkMRMLFiberBundleTubeDisplayNode.h"
-#include "vtkMRMLFiberBundleGlyphDisplayNode.h"
-#include "vtkMRMLFiberBundleStorageNode.h"
-#include "vtkMRMLCameraNode.h"
-#include "vtkMRMLViewNode.h"
+#include "vtkMRMLFiducialListNode.h"
+#include "vtkMRMLFreeSurferModelOverlayStorageNode.h"
+#include "vtkMRMLFreeSurferModelStorageNode.h"
+#include "vtkMRMLGridTransformNode.h"
+#include "vtkMRMLLabelMapVolumeDisplayNode.h"
+#include "vtkMRMLLinearTransformNode.h"
+#include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLModelHierarchyNode.h"
+#include "vtkMRMLModelNode.h"
+#include "vtkMRMLModelStorageNode.h"
+#include "vtkMRMLNonlinearTransformNode.h"
+#include "vtkMRMLROIListNode.h"
+#include "vtkMRMLScalarVolumeDisplayNode.h"
+#include "vtkMRMLScalarVolumeNode.h"
 #include "vtkMRMLSceneSnapshotNode.h"
+#include "vtkMRMLSelectionNode.h"
+#include "vtkMRMLSliceCompositeNode.h"
+#include "vtkMRMLSliceNode.h"
 #include "vtkMRMLSnapshotClipNode.h"
-#include "vtkMRMLUnstructuredGridNode.h"
+#include "vtkMRMLTransformStorageNode.h"
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
+#include "vtkMRMLUnstructuredGridNode.h"
 #include "vtkMRMLUnstructuredGridStorageNode.h"
-#include "vtkMRMLNRRDStorageNode.h"
-#include "vtkMRMLColorTableStorageNode.h"
+#include "vtkMRMLViewNode.h"
+#include "vtkMRMLVolumeArchetypeStorageNode.h"
+#include "vtkMRMLVolumeHeaderlessStorageNode.h"
 #include "vtkURIHandler.h"
+
+#ifdef MRML_USE_vtkTeem
+#include "vtkMRMLNRRDStorageNode.h"
+#include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
+#include "vtkMRMLDiffusionTensorVolumeNode.h"
+#include "vtkMRMLFiberBundleGlyphDisplayNode.h"
+#include "vtkMRMLFiberBundleLineDisplayNode.h"
+#include "vtkMRMLFiberBundleNode.h"
+#include "vtkMRMLFiberBundleStorageNode.h"
+#include "vtkMRMLFiberBundleTubeDisplayNode.h"
+#include "vtkMRMLVectorVolumeNode.h"
+#endif
 
 //------------------------------------------------------------------------------
 vtkMRMLScene::vtkMRMLScene() 
@@ -114,6 +124,10 @@ vtkMRMLScene::vtkMRMLScene()
   vtkMRMLFreeSurferModelStorageNode *surfermodelstorenode = vtkMRMLFreeSurferModelStorageNode::New(); 
   this->RegisterNodeClass( surfermodelstorenode );
   surfermodelstorenode->Delete();
+
+  vtkMRMLFreeSurferModelOverlayStorageNode *surfermodeloverlaystorenode  = vtkMRMLFreeSurferModelOverlayStorageNode::New();
+  this->RegisterNodeClass ( surfermodeloverlaystorenode );
+  surfermodeloverlaystorenode->Delete();
   
   vtkMRMLModelDisplayNode *modeldisplaynode = vtkMRMLModelDisplayNode::New(); 
   this->RegisterNodeClass( modeldisplaynode );
@@ -126,10 +140,6 @@ vtkMRMLScene::vtkMRMLScene()
   vtkMRMLScalarVolumeNode *svoln = vtkMRMLScalarVolumeNode::New(); 
   this->RegisterNodeClass( svoln );
   svoln->Delete();
-  
-  vtkMRMLVectorVolumeNode *vvoln = vtkMRMLVectorVolumeNode::New(); 
-  this->RegisterNodeClass( vvoln );
-  vvoln->Delete();
   
   vtkMRMLFiducialListNode *fidln = vtkMRMLFiducialListNode::New(); 
   this->RegisterNodeClass( fidln );
@@ -171,19 +181,20 @@ vtkMRMLScene::vtkMRMLScene()
   this->RegisterNodeClass (dwvn);
   dwvn->Delete();
 
+#ifdef MRML_USE_vtkTeem
   vtkMRMLDiffusionTensorVolumeNode *dtvn = vtkMRMLDiffusionTensorVolumeNode::New();
   this->RegisterNodeClass (dtvn);
   dtvn->Delete();
-  
-  vtkMRMLDiffusionWeightedVolumeDisplayNode *dwvdn =
-                         vtkMRMLDiffusionWeightedVolumeDisplayNode::New();
-  this->RegisterNodeClass (dwvdn);
-  dwvdn->Delete();
   
   vtkMRMLDiffusionTensorVolumeDisplayNode *dtvdn =
                          vtkMRMLDiffusionTensorVolumeDisplayNode::New();
   this->RegisterNodeClass (dtvdn);
   dtvdn->Delete();
+
+  vtkMRMLDiffusionTensorVolumeSliceDisplayNode *dtvsdn =
+                         vtkMRMLDiffusionTensorVolumeSliceDisplayNode::New();
+  this->RegisterNodeClass (dtvsdn);
+  dtvsdn->Delete();
 
   vtkMRMLFiberBundleNode *fbn =
                          vtkMRMLFiberBundleNode::New();
@@ -205,17 +216,32 @@ vtkMRMLScene::vtkMRMLScene()
   this->RegisterNodeClass (fbgdn);
   fbgdn->Delete();
 
-  vtkMRMLDiffusionTensorDisplayPropertiesNode *dtdpn =
-                         vtkMRMLDiffusionTensorDisplayPropertiesNode::New();
-  this->RegisterNodeClass (dtdpn);
-  dtdpn->Delete();
-
+  vtkMRMLNRRDStorageNode *nrrd = vtkMRMLNRRDStorageNode::New();
+  this->RegisterNodeClass ( nrrd );
+  nrrd->Delete();
 
   vtkMRMLFiberBundleStorageNode *fbsn =
                          vtkMRMLFiberBundleStorageNode::New();
   this->RegisterNodeClass (fbsn);
   fbsn->Delete();
+
+  vtkMRMLVectorVolumeNode *vvoln = vtkMRMLVectorVolumeNode::New(); 
+  this->RegisterNodeClass( vvoln );
+  vvoln->Delete();
   
+#endif
+  
+  vtkMRMLDiffusionWeightedVolumeDisplayNode *dwvdn =
+                         vtkMRMLDiffusionWeightedVolumeDisplayNode::New();
+  this->RegisterNodeClass (dwvdn);
+  dwvdn->Delete();
+
+
+  vtkMRMLDiffusionTensorDisplayPropertiesNode *dtdpn =
+                         vtkMRMLDiffusionTensorDisplayPropertiesNode::New();
+  this->RegisterNodeClass (dtdpn);
+  dtdpn->Delete();
+
   vtkMRMLCameraNode *camera = vtkMRMLCameraNode::New();
   this->RegisterNodeClass ( camera );
   camera->Delete();
@@ -248,10 +274,6 @@ vtkMRMLScene::vtkMRMLScene()
   this->RegisterNodeClass ( unstgs );
   unstgs->Delete();
 
-  vtkMRMLNRRDStorageNode *nrrd = vtkMRMLNRRDStorageNode::New();
-  this->RegisterNodeClass ( nrrd );
-  nrrd->Delete();
-
   vtkMRMLColorTableNode *ctn = vtkMRMLColorTableNode::New();
   this->RegisterNodeClass (ctn);
   ctn->Delete();
@@ -259,6 +281,22 @@ vtkMRMLScene::vtkMRMLScene()
   vtkMRMLColorTableStorageNode *ctsn = vtkMRMLColorTableStorageNode::New();
   this->RegisterNodeClass ( ctsn );
   ctsn->Delete();
+
+  vtkMRMLTransformStorageNode *tsn = vtkMRMLTransformStorageNode::New();
+  this->RegisterNodeClass( tsn );
+  tsn->Delete();
+
+  vtkMRMLNonlinearTransformNode *ntn = vtkMRMLNonlinearTransformNode::New();
+  this->RegisterNodeClass( ntn );
+  ntn->Delete();
+
+  vtkMRMLGridTransformNode *gtn = vtkMRMLGridTransformNode::New();
+  this->RegisterNodeClass( gtn );
+  gtn->Delete();
+
+  vtkMRMLBSplineTransformNode *btn = vtkMRMLBSplineTransformNode::New();
+  this->RegisterNodeClass( btn );
+  btn->Delete();
 
 }
 
@@ -340,12 +378,14 @@ void vtkMRMLScene::RemoveAllNodesExceptSingletons()
   vtkMRMLNode *node;
   this->InitTraversal();
   std::vector<vtkMRMLNode *> removeNodes;
-  while (node = this->GetNextNode()) 
+  node = this->GetNextNode();
+  while(node)
     {
     if (node->GetSingletonTag() == NULL)
       {
       removeNodes.push_back(node);
       }
+    node = this->GetNextNode();
     }
     for(unsigned int i=0; i<removeNodes.size(); i++)
       {
@@ -364,9 +404,11 @@ void vtkMRMLScene::ResetNodes()
   vtkMRMLNode *node;
   std::vector <vtkMRMLNode *> nodes;
   this->InitTraversal();
-  while (node = this->GetNextNode()) 
+  node = this->GetNextNode();
+  while(node)
     {
     nodes.push_back(node);
+    node = this->GetNextNode();
     }
   for(unsigned int i=0; i<nodes.size(); i++) 
     {
@@ -499,10 +541,12 @@ int vtkMRMLScene::Connect()
   int res = this->Import();
 
 
-  this->SetErrorCode (!res);  // XML Parser return 0 on error, but scene error code of 0 is normal
-  this->SetErrorMessage (std::string("Error loading scene"));
+  if (!res)
+    {
+    this->InvokeEvent(vtkMRMLScene::SceneLoadingErrorEvent);
+    }
+    
   this->SetUndoFlag(undoFlag);
-  
   return res;
 }
 
@@ -542,7 +586,7 @@ int vtkMRMLScene::Import()
 
     for (n=0; n<nnodes; n++) 
       {
-      double progress = n / (1. * nnodes);
+      //double progress = n / (1. * nnodes);
       //this->InvokeEvent(vtkCommand::ProgressEvent,(void *)&progress);
 
       node = (vtkMRMLNode *)scene->GetItemAsObject(n);
@@ -566,7 +610,21 @@ int vtkMRMLScene::Import()
   this->SetUndoFlag(undoFlag);
   //this->ClearReferencedNodeID();
 
-  return res;
+  int returnCode = 1;
+  if (this->GetErrorCode() == 0) 
+    {
+    // report parser error
+    if (res == 0)
+      {
+      this->SetErrorMessage (std::string("Error parsing scene file"));
+      }
+    returnCode = res;
+    }
+  else
+    {
+    returnCode = 0;
+    }
+  return returnCode;
 }
 
 //------------------------------------------------------------------------------
@@ -890,7 +948,7 @@ void vtkMRMLScene::RemoveReferencedNodeID(const char *id, vtkMRMLNode *refrencin
     }
   std::vector< std::string > referencedIDs;
   std::vector< vtkMRMLNode* > referencingNodes;
-  vtkMRMLNode *node = NULL;
+  //vtkMRMLNode *node = NULL;
 
   int nnodes = this->ReferencingNodes.size();
   int i=0;
@@ -924,7 +982,7 @@ void vtkMRMLScene::RemoveNodeReferences(vtkMRMLNode *n)
 
   std::vector< std::string > referencedIDs;
   std::vector< vtkMRMLNode* > referencingNodes;
-  vtkMRMLNode *node = NULL;
+  //vtkMRMLNode *node = NULL;
 
   int nnodes = this->ReferencingNodes.size();
   int i=0;
@@ -1781,6 +1839,22 @@ int vtkMRMLScene::IsFilePathRelative(const char * filepath)
     vtkErrorMacro("IsFilePathRelative: file path is null");
     return 0;
     }
+
+  // check for shared memory objects
+  if (strncmp("slicer:", filepath, 7) == 0)
+    {
+    return 0;
+    }
+
+  // check for remote files, assume they're absolute paths
+  if (this->GetCacheManager() != NULL)
+    {
+    if (this->GetCacheManager()->IsRemoteReference(filepath))
+      {
+      return 0;
+      }
+    }
+  
   vtksys_stl::vector<vtksys_stl::string> components;
   vtksys::SystemTools::SplitPath((const char*)filepath, components);
   if (components[0] == "") 

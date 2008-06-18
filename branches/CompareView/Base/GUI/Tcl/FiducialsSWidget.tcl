@@ -31,8 +31,8 @@ if { [itcl::find class FiducialsSWidget] == "" } {
     
     # a list of seeds - the callback info includes the mapping to list and index
     variable _seedSWidgets ""
-    variable _sceneObserverTags ""
     variable _fiducialListObserverTagPairs ""
+    variable _timeOfLastKeyEvent 0
 
     # methods
     method processEvent {{caller ""} {event ""}} {}
@@ -55,24 +55,21 @@ itcl::body FiducialsSWidget::constructor {sliceGUI} {
   # - track them so they can be removed in the destructor
   #
   set node [[$sliceGUI GetLogic] GetSliceNode]
-  lappend _nodeObserverTags [$node AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-  lappend _nodeObserverTags [$node AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent $node"]
+  $::slicer3::Broker AddObservation $node DeleteEvent "::SWidget::ProtectedDelete $this"
+  $::slicer3::Broker AddObservation $node AnyEvent "::SWidget::ProtectedCallback $this processEvent $node AnyEvent"
 
 
   set scene [$sliceGUI GetMRMLScene]
-  lappend _sceneObserverTags [$scene AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-  lappend _sceneObserverTags [$scene AddObserver AnyEvent "::SWidget::ProtectedCallback $this processEvent $scene"]
+  $::slicer3::Broker AddObservation $scene DeleteEvent "::SWidget::ProtectedDelete $this"
+  $::slicer3::Broker AddObservation $scene AnyEvent "::SWidget::ProtectedCallback $this processEvent $scene"
 
 
-  set _guiObserverTags ""
-
-  lappend _guiObserverTags [$sliceGUI AddObserver DeleteEvent "::SWidget::ProtectedDelete $this"]
-
+  $::slicer3::Broker AddObservation $sliceGUI DeleteEvent "::SWidget::ProtectedDelete $this"
   set events {  
     "KeyPressEvent" 
     }
   foreach event $events {
-   lappend _guiObserverTags [$sliceGUI AddObserver $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI"]    
+   $::slicer3::Broker AddObservation $sliceGUI $event "::SWidget::ProtectedCallback $this processEvent $sliceGUI $event"
   }
 
   $this processEvent $scene
@@ -81,31 +78,10 @@ itcl::body FiducialsSWidget::constructor {sliceGUI} {
 
 itcl::body FiducialsSWidget::destructor {} {
 
-  if { [info command $sliceGUI] != "" } {
-    foreach tag $_guiObserverTags {
-      $sliceGUI RemoveObserver $tag
-    }
-  }
-
   foreach pair $_fiducialListObserverTagPairs {
     foreach {fidListNode tag} $pair {}
     if { [info command $fidListNode] != "" } {
       $fidListNode RemoveObserver $tag
-    }
-  }
-
-  if { [info command $_sliceNode] != "" } {
-    foreach tag $_nodeObserverTags {
-      $_sliceNode RemoveObserver $tag
-    }
-  }
-
-  if { [info command $sliceGUI] != "" } {
-    set scene [$sliceGUI GetMRMLScene]
-    if { [info command $scene] != "" } {
-      foreach tag $_sceneObserverTags {
-        $scene RemoveObserver $tag
-      }
     }
   }
 }
@@ -136,7 +112,7 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
   }
 
   if { $caller == $sliceGUI } {
-    set event [$sliceGUI GetCurrentGUIEvent] 
+
     switch $event {
       "KeyPressEvent" { 
         set key [$_interactor GetKeySym]
@@ -181,22 +157,30 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
               # add a fiducial to the current list
 
               #
-              # get the event position and make it relative to a renderer/viewport
+              # first check for key repeats (don't allow more than
+              # one fiducial per second)
               #
-              foreach {windowx windowy} [$_interactor GetEventPosition] {}
-              foreach {lastwindowx lastwindowy} [$_interactor GetLastEventPosition] {}
-              foreach {windoww windowh} [[$_interactor GetRenderWindow] GetSize] {}
+              set now [clock seconds]
+              if { [expr $now - $_timeOfLastKeyEvent] >= 1 } {
+                set _timeOfLastKeyEvent $now
+                #
+                # get the event position and make it relative to a renderer/viewport
+                #
+                foreach {windowx windowy} [$_interactor GetEventPosition] {}
+                foreach {lastwindowx lastwindowy} [$_interactor GetLastEventPosition] {}
+                foreach {windoww windowh} [[$_interactor GetRenderWindow] GetSize] {}
 
-              set pokedRenderer [$_interactor FindPokedRenderer $windowx $windowy]
-              set renderer0 [$_renderWidget GetRenderer]
+                set pokedRenderer [$_interactor FindPokedRenderer $windowx $windowy]
+                set renderer0 [$_renderWidget GetRenderer]
 
-              foreach {x y z} [$this dcToXYZ $windowx $windowy] {}
-              $this queryLayers $x $y $z
-              set xyToRAS [$_sliceNode GetXYToRAS]
-              set ras [$xyToRAS MultiplyPoint $x $y $z 1]
+                foreach {x y z} [$this dcToXYZ $windowx $windowy] {}
+                $this queryLayers $x $y $z
+                set xyToRAS [$_sliceNode GetXYToRAS]
+                set ras [$xyToRAS MultiplyPoint $x $y $z 1]
 
-              foreach {r a s t} $ras {}
-              FiducialsSWidget::AddFiducial $r $a $s
+                foreach {r a s t} $ras {}
+                FiducialsSWidget::AddFiducial $r $a $s
+              }
             }
           }
         }
@@ -238,14 +222,14 @@ itcl::body FiducialsSWidget::processEvent { {caller ""} {event ""} } {
   #
   set scene [$sliceGUI GetMRMLScene]
   set nLists [$scene GetNumberOfNodesByClass "vtkMRMLFiducialListNode"]
+  set node [[$sliceGUI GetLogic] GetSliceNode]
 
-  if { $nLists > 0 } {
+  if { $node != "" && $nLists > 0 } {
 
     #
     # get the rasToSlice for the SliceNode - transforming the fiducial
     # by this matrix will let us easily check the distance from the slice plane
     #
-    set node [[$sliceGUI GetLogic] GetSliceNode]
     set rasToSlice [vtkMatrix4x4 New]
     $rasToSlice DeepCopy [$node GetSliceToRAS]
     $rasToSlice Invert

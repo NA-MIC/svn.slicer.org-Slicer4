@@ -29,7 +29,7 @@
 #include "vtkSlicerModelHierarchyLogic.h"
 
 
-#include "vtkKWRenderWidget.h"
+#include "vtkSlicerRenderWidget.h"
 #include "vtkKWFrame.h"
 #include "vtkMRMLClipModelsNode.h"
 #include "vtkMRMLSliceNode.h"

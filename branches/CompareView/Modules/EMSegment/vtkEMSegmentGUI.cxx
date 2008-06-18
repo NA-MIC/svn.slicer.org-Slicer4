@@ -9,6 +9,7 @@
 #include "vtkKWProgressGauge.h"
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
+#include "vtkKWLabel.h"
 
 // For PopulateTestingData()
 #include "vtkSlicerVolumesGUI.h"
@@ -146,6 +147,14 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
     this->RunSegmentationStep->Delete();
     this->RunSegmentationStep = NULL;
     }
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentGUI::SetModuleLogic(vtkSlicerLogic* logic)
+{
+  this->SetLogic( dynamic_cast<vtkEMSegmentLogic*> (logic) );
+  this->GetLogic()->GetMRMLManager()->SetMRMLScene( this->GetMRMLScene() ); 
+  this->SetMRMLManager( this->GetLogic()->GetMRMLManager() );
 }
 
 //----------------------------------------------------------------------------
@@ -587,11 +596,21 @@ void vtkEMSegmentGUI::PopulateTestingData()
       this->MRMLManager->GetVolumeNthID(0));
     this->MRMLManager->AddTargetSelectedVolume(
       this->MRMLManager->GetVolumeNthID(1));
-    this->MRMLManager->SetRegistrationTargetVolumeID(
-      this->MRMLManager->GetVolumeNthID(1));
 
     this->MRMLManager->SetSaveWorkingDirectory(file_path.c_str());
     this->MRMLManager->
       SetSaveTemplateFilename(file_path.append("EMSTemplate.mrml").c_str());
     }
 } 
+
+//---------------------------------------------------------------------------
+void vtkEMSegmentGUI::Init()
+{
+  vtkMRMLScene *scene = this->Logic->GetMRMLScene();
+
+  vtkIntArray *emsEvents = vtkIntArray::New();
+  emsEvents->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+  emsEvents->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+  this->Logic->SetAndObserveMRMLSceneEvents(scene, emsEvents);
+  emsEvents->Delete();
+}

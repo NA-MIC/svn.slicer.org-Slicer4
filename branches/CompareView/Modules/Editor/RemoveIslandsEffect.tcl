@@ -44,7 +44,7 @@ if { [itcl::find class RemoveIslandsEffect] == "" } {
 #                        CONSTRUCTOR/DESTRUCTOR
 # ------------------------------------------------------------------
 itcl::body RemoveIslandsEffect::constructor {sliceGUI} {
-  # rely on superclass constructor
+  set _scopeOptions "all visible"
 }
 
 itcl::body RemoveIslandsEffect::destructor {} {
@@ -84,7 +84,6 @@ itcl::body RemoveIslandsEffect::processEvent { {caller ""} {event ""} } {
 itcl::body RemoveIslandsEffect::apply {} {
 
   foreach {x y} [$_interactor GetEventPosition] {}
-  $this queryLayers $x $y
 
   if { [$this getInputLabel] == "" || [$this getInputLabel] == "" } {
     $this flashCursor 3
@@ -93,9 +92,9 @@ itcl::body RemoveIslandsEffect::apply {} {
 
   set conn [vtkImageConnectivity New]
   $conn SetFunctionToRemoveIslands
-  $conn SetSeed $_layers(label,i) $_layers(label,j) $_layers(label,k) 
   $conn SetInput [$this getInputLabel]
   $conn SetOutput [$this getOutputLabel]
+  eval $conn SetSeed [$this getLayerIJK label $x $y]
   $this setProgressFilter $conn "Remove Islands"
   [$this getOutputLabel] Update
   $conn Delete
@@ -105,6 +104,20 @@ itcl::body RemoveIslandsEffect::apply {} {
 
   
 itcl::body RemoveIslandsEffect::buildOptions {} {
+
+  chain
+
+  #
+  # a help button
+  #
+  set o(help) [vtkNew vtkSlicerPopUpHelpWidget]
+  $o(help) SetParent [$this getOptionsFrame]
+  $o(help) Create
+  $o(help) SetHelpTitle "Remove Islands"
+  $o(help) SetHelpText "Click in the \"sea\" that contains islands (areas that are completely surrounded by the sea).  Islands will be converted to the sea color"
+  $o(help) SetBalloonHelpString "Bring up help window."
+  pack [$o(help) GetWidgetName] \
+    -side right -anchor sw -padx 2 -pady 2 
 
   #
   # a cancel button
@@ -130,7 +143,8 @@ itcl::body RemoveIslandsEffect::buildOptions {} {
 }
 
 itcl::body RemoveIslandsEffect::tearDownOptions { } {
-  foreach w "cancel" {
+  chain
+  foreach w "help cancel" {
     if { [info exists o($w)] } {
       $o($w) SetParent ""
       pack forget [$o($w) GetWidgetName] 

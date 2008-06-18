@@ -24,6 +24,8 @@ Version:   $Revision: 1.14 $
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLScene.h"
 
+#include "vtkMRMLScalarVolumeDisplayNode.h"
+
 //----------------------------------------------------------------------------
 vtkMRMLVolumeNode::vtkMRMLVolumeNode()
 {
@@ -144,6 +146,10 @@ void vtkMRMLVolumeNode::ReadXMLAttributes(const char** atts)
 // Does NOT copy: ID, FilePrefix, Name, VolumeID
 void vtkMRMLVolumeNode::Copy(vtkMRMLNode *anode)
 {
+  // don't modify the input node
+  int amode = anode->GetDisableModifiedEvent();
+  anode->DisableModifiedEventOn();
+
   Superclass::Copy(anode);
   vtkMRMLVolumeNode *node = (vtkMRMLVolumeNode *) anode;
 
@@ -157,10 +163,24 @@ void vtkMRMLVolumeNode::Copy(vtkMRMLNode *anode)
       this->IJKToRASDirections[i][j] = node->IJKToRASDirections[i][j];
       }
     }
+  int modified = anode->GetModifiedSinceRead();
+  unsigned long mtime = anode->GetMTime();
+
   if (node->ImageData != NULL)
     {
-    this->SetImageData(node->ImageData);
+    this->SetAndObserveImageData(node->ImageData);
     }
+
+  // this is to work around the SetAndObserveImageData causing 
+  // ModifiedSinceRead become 1 on both nodes
+  int mode = this->GetDisableModifiedEvent();
+  this->DisableModifiedEventOn();
+  this->SetModifiedSinceRead (modified);
+  this->SetDisableModifiedEvent(mode);
+
+  anode->SetModifiedSinceRead (modified);
+  anode->SetDisableModifiedEvent(amode);
+
 }
 
 //----------------------------------------------------------------------------
@@ -334,7 +354,7 @@ void vtkMRMLVolumeNode::SetIJKToRASMatrix(vtkMatrix4x4* mat)
       }
     }
 
-  int row, i=0;
+  int row;
   for (row=0; row<3; row++) 
     {
     for (col=0; col<3; col++) 
@@ -366,7 +386,7 @@ void vtkMRMLVolumeNode::GetIJKToRASMatrix(vtkMatrix4x4* mat)
 {
   // this is the full matrix including the spacing and origin
   mat->Identity();
-  int row, col, i=0;
+  int row, col;
   for (row=0; row<3; row++) 
     {
     for (col=0; col<3; col++) 
@@ -576,26 +596,35 @@ const char* vtkMRMLVolumeNode::ComputeScanOrderFromIJKToRAS(vtkMatrix4x4 *ijkToR
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLVolumeNode::SetAndObserveImageData(vtkImageData *ImageData)
+void vtkMRMLVolumeNode::SetAndObserveImageData(vtkImageData *imageData)
 {
   vtkImageData *oldImageData = this->ImageData;
 
   if (this->ImageData != NULL)
     {
-    this->ImageData->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
+    vtkEventBroker::GetInstance()->RemoveObservations(
+      this->ImageData, vtkCommand::ModifiedEvent, this, this->MRMLCallbackCommand );
     }
 
-  this->SetImageData(ImageData);
-  if (ImageData != NULL)
+  this->SetImageData(imageData);
+  if (imageData != NULL)
     {
-    ImageData->AddObserver ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
+    vtkEventBroker::GetInstance()->AddObservation(
+      imageData, vtkCommand::ModifiedEvent, this, this->MRMLCallbackCommand );
     }
 
   if ( this->ImageData != oldImageData )
     {
+    if (this->ImageData != NULL)
+      {
+      //this->ImageData->Modified();
+      this->InvokeEvent(vtkCommand::ModifiedEvent);
+      // calculating auto levels will be triggered by process mrml events
+      //calling UpdateFromMRML
+      }
     this->Modified();
     }
-    
+  /**
   int ndisp = this->GetNumberOfDisplayNodes();
   for (int n=0; n<ndisp; n++) 
     {
@@ -605,6 +634,7 @@ void vtkMRMLVolumeNode::SetAndObserveImageData(vtkImageData *ImageData)
       dnode->SetImageData(ImageData);
       }
     }
+    **/
   //vtkSetAndObserveMRMLObjectMacro(this->ImageData, ImageData);
 }
 
@@ -626,21 +656,45 @@ void vtkMRMLVolumeNode::ProcessMRMLEvents ( vtkObject *caller,
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);
 
+  // did the image data change?
   if (this->ImageData && this->ImageData == vtkImageData::SafeDownCast(caller) &&
     event ==  vtkCommand::ModifiedEvent)
     {
     this->ModifiedSinceRead = true;
     this->InvokeEvent(vtkMRMLVolumeNode::ImageDataModifiedEvent, NULL);
+    // update from mrml / calc auto levels
+    this->UpdateFromMRML();
+    return;
+    }
+
+  // did the one ofthe display nodes change?
+  for (int i=0; i<this->GetNumberOfDisplayNodes(); i++)
+    {
+    vtkMRMLDisplayNode *dnode = this->GetNthDisplayNode(i);
+    if (dnode != NULL && dnode == vtkMRMLDisplayNode::SafeDownCast(caller) &&
+        event ==  vtkCommand::ModifiedEvent)
+      {
+      vtkDebugMacro("ProcessMRMLEvents: got display node modified event on the " << i << "th display node");
+      this->UpdateFromMRML();
+      }
     }
   return;
 }
 
+//---------------------------------------------------------------------------
+void vtkMRMLVolumeNode::UpdateFromMRML()
+{
+  vtkWarningMacro("UpdateFromMRML: subclass hasn't defined this yet...");
+}
+
+//---------------------------------------------------------------------------
 void vtkMRMLVolumeNode::SetMetaDataDictionary( const itk::MetaDataDictionary& dictionary )
 {
   this->Dictionary = dictionary;
   this->Modified();
 }
 
+//---------------------------------------------------------------------------
 const
 itk::MetaDataDictionary&
 vtkMRMLVolumeNode::GetMetaDataDictionary() const
@@ -648,6 +702,7 @@ vtkMRMLVolumeNode::GetMetaDataDictionary() const
   return this->Dictionary;
 }
 
+//---------------------------------------------------------------------------
 void vtkMRMLVolumeNode::ApplyTransform(vtkMatrix4x4* transformMatrix)
 {
   vtkMatrix4x4* ijkToRASMatrix = vtkMatrix4x4::New();
@@ -661,6 +716,7 @@ void vtkMRMLVolumeNode::ApplyTransform(vtkMatrix4x4* transformMatrix)
   newIJKToRASMatrix->Delete();
 }
 
+//---------------------------------------------------------------------------
 void vtkMRMLVolumeNode::ApplyTransform(vtkAbstractTransform* transform)
 {
   if (!transform->IsA("vtkLinearTransform"))
@@ -669,4 +725,5 @@ void vtkMRMLVolumeNode::ApplyTransform(vtkAbstractTransform* transform)
     }
   this->ApplyTransform(vtkLinearTransform::SafeDownCast(transform)->GetMatrix());
 }
+
 

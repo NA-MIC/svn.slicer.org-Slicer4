@@ -24,6 +24,7 @@
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkSlicerColorLogic.h"
 #include "vtkMRMLFreeSurferModelStorageNode.h"
+#include "vtkMRMLFreeSurferModelOverlayStorageNode.h"
 
 vtkCxxRevisionMacro(vtkSlicerModelsLogic, "$Revision: 1.9.12.1 $");
 vtkStandardNewMacro(vtkSlicerModelsLogic);
@@ -87,6 +88,8 @@ int vtkSlicerModelsLogic::AddModels (const char* dirname, const char* suffix )
   return res;
 }
 
+
+
 //----------------------------------------------------------------------------
 vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
 {
@@ -98,7 +101,7 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
   vtkMRMLStorageNode *storageNode = NULL;
 
   // check for local or remote files
-  bool useURI = false;
+  int useURI = 0; // false;
   if (this->GetMRMLScene()->GetCacheManager() != NULL)
     {
     useURI = this->GetMRMLScene()->GetCacheManager()->IsRemoteReference(filename);
@@ -127,11 +130,11 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
   vtkDebugMacro("AddModel: got model name = " << name.c_str());
   
   // check to see which node can read this type of file
-  if (mStorageNode->SupportedFileType(filename))
+  if (mStorageNode->SupportedFileType(name.c_str()))
     {
     storageNode = mStorageNode;
     }
-  else if (fsmStorageNode->SupportedFileType(filename))
+  else if (fsmStorageNode->SupportedFileType(name.c_str()))
     {
     vtkDebugMacro("AddModel: have a freesurfer type model file.");
     storageNode = fsmStorageNode;
@@ -253,20 +256,36 @@ int vtkSlicerModelsLogic::AddScalar(const char* filename, vtkMRMLModelNode *mode
     return 0;
     }  
 
-   // get the storage node and use it to read the scalar file
-  vtkMRMLFreeSurferModelStorageNode *storageNode = NULL;
-  vtkMRMLStorageNode *snode = modelNode->GetStorageNode();
-  if (snode != NULL)
+  vtkMRMLFreeSurferModelOverlayStorageNode *fsmoStorageNode = vtkMRMLFreeSurferModelOverlayStorageNode::New();
+  vtkMRMLStorageNode *storageNode = NULL;
+  
+  // check for local or remote files
+  int useURI = 0; //false ;
+  if (this->GetMRMLScene()->GetCacheManager() != NULL)
     {
-    storageNode = vtkMRMLFreeSurferModelStorageNode::SafeDownCast(snode);
+    useURI = this->GetMRMLScene()->GetCacheManager()->IsRemoteReference(filename);
+    vtkDebugMacro("AddModel: file name is remote: " << filename);
     }
-  if (storageNode == NULL)
+
+  const char *localFile;
+  if (useURI)
     {
-    vtkErrorMacro("Model "  << modelNode->GetName() << " does not have a freesurfer storage node associated with it, cannot load scalar overlay.");
-    return 0;
+    fsmoStorageNode->SetURI(filename);
+    // add other overlay storage nodes here
+    localFile = ((this->GetMRMLScene())->GetCacheManager())->GetFilenameFromURI(filename);
     }
-  storageNode->SetFileName(filename);
-  storageNode->ReadData(modelNode);
+  else
+    {
+    fsmoStorageNode->SetFileName(filename);
+    // add other overlay storage nodes here
+    localFile = filename;
+    }
+
+  // check to see if it can read it
+  if (fsmoStorageNode->SupportedFileType(localFile))
+    {
+    storageNode = fsmoStorageNode;
+    }
 
   // check to see if the model display node has a colour node already
   vtkMRMLModelDisplayNode *displayNode = modelNode->GetModelDisplayNode();
@@ -283,7 +302,24 @@ int vtkSlicerModelsLogic::AddScalar(const char* filename, vtkMRMLModelNode *mode
       displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultModelColorNodeID());
       colorLogic->Delete();
       }
-    
     }
+
+  if (storageNode != NULL)
+    {
+    this->GetMRMLScene()->SaveStateForUndo();
+    storageNode->SetScene(this->GetMRMLScene());
+    this->GetMRMLScene()->AddNodeNoNotify(storageNode);
+    // now add this as another storage node on the model
+    modelNode->AddAndObserveStorageNodeID(storageNode->GetID());
+
+    // now read, since all the id's are set up
+    vtkDebugMacro("AddScalar: calling read data now.");
+    if (this->GetDebug()) { storageNode->DebugOn(); }
+    storageNode->ReadData(modelNode);
+    }
+  fsmoStorageNode->Delete();
+  
   return 1;
 }
+
+

@@ -19,7 +19,11 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <cctype>
+#include <algorithm>
 #include "expat.h"
+
+
 
 /*********************
  * Utility procedures for strings
@@ -93,10 +97,7 @@ trimLeadingAndTrailing(std::string& s, const char* extraneousChars = " \t\n")
   trimTrailing(s, extraneousChars);
 }
 
-/* ParserState: A class to keep state information for the parser. This
- * is passed to the expat code as user data.
- */
-class ParserState
+class LMParserState
 {
 public:
   XML_Parser Parser;                           /* The XML parser */
@@ -111,16 +112,18 @@ public:
   int ErrorLine;                               /* Error line number */
   int Depth;                                   /* The depth of the tag */
 
-  ParserState():Debug(false),Error(false),Depth(-1),LastData(10){};
+
+  LMParserState() : LastData(10),Debug(false),Error(false),Depth(-1){};
 };
+
 
 /***************************
  * expat callbacks to process the XML
  ***************************/
 void
-startElement(void *userData, const char *element, const char **attrs)
+lmStartElement(void *userData, const char *element, const char **attrs)
 {
-  ParserState *ps = reinterpret_cast<ParserState *>(userData);
+  LMParserState *ps = reinterpret_cast<LMParserState *>(userData);
   std::string name(element);
 
   ps->Depth++;
@@ -191,9 +194,9 @@ startElement(void *userData, const char *element, const char **attrs)
 }
 
 void
-endElement(void *userData, const char *element)
+lmEndElement(void *userData, const char *element)
 {
-  ParserState *ps = reinterpret_cast<ParserState *>(userData);
+  LMParserState *ps = reinterpret_cast<LMParserState *>(userData);
   std::string name(element);
 
   if (name == "name")
@@ -228,8 +231,17 @@ endElement(void *userData, const char *element)
     trimLeadingAndTrailing(temp);
 
     ps->CurrentDescription.SetMessage(temp);
+    } 
+  else if (name ==  "dependency")
+    {
+    std::string temp = ps->LastData[ps->Depth];
+    replaceSubWithSub(temp, "\"", "'");
+    replaceSubWithSub(temp, "\n", " ");
+    trimLeadingAndTrailing(temp);
+
+    ps->CurrentDescription.AddDependency(temp);
     }
-  else if(name != "loadable")
+ else if(name != "loadable")
     {
     std::string error("LoadableModuleDescriptionParser Error: Unrecognized element <" + name + std::string("> was found."));
     if (ps->ErrorDescription.size() == 0)
@@ -248,9 +260,9 @@ endElement(void *userData, const char *element)
 }
 
 void
-charData(void *userData, const char *s, int len)
+lmCharData(void *userData, const char *s, int len)
 {
-  ParserState *ps = reinterpret_cast<ParserState *>(userData);
+  LMParserState *ps = reinterpret_cast<LMParserState *>(userData);
   if (len)
     {
     std::string str(s,len);
@@ -270,7 +282,7 @@ LoadableModuleDescriptionParser::Parse( const std::string& xml, LoadableModuleDe
     return 1;
     }
 
-  ParserState parserState;
+  LMParserState parserState;
   parserState.CurrentDescription = description;
   
   XML_Parser parser = XML_ParserCreate(NULL);
@@ -279,8 +291,8 @@ LoadableModuleDescriptionParser::Parse( const std::string& xml, LoadableModuleDe
   parserState.Parser = parser;
 
   XML_SetUserData(parser, static_cast<void *>(&parserState));
-  XML_SetElementHandler(parser, startElement, endElement);
-  XML_SetCharacterDataHandler(parser, charData);
+  XML_SetElementHandler(parser, lmStartElement, lmEndElement);
+  XML_SetCharacterDataHandler(parser, lmCharData);
 
   // Parse the XML
   done = true;
@@ -312,4 +324,42 @@ LoadableModuleDescriptionParser::Parse( const std::string& xml, LoadableModuleDe
   description = parserState.CurrentDescription;
   return status;
 
+}
+
+int
+LoadableModuleDescriptionParser::ParseText( const std::string& txt, LoadableModuleDescription& description)
+{
+  int status = 0;
+  std::string::size_type pos = 0;
+  std::string::size_type colon = txt.find(":", pos);
+  std::string::size_type newline = txt.find("\n", pos);
+  
+  while (colon != std::string::npos) {
+    std::string key(txt.substr(pos, colon - pos));
+    std::string value(txt.substr(colon + 1, newline - (colon + 1)));
+    
+    std::transform(key.begin(), key.end(), key.begin(), (int(*)(int)) std::toupper);
+
+    trimLeadingAndTrailing(value);
+
+    if (key.compare("NAME") == 0) {
+      description.SetName(value);
+    } else if (key.compare("GUINAME") == 0) {
+      description.SetGUIName(value);
+    } else if (key.compare("DEPENDENCY") == 0) {
+      description.AddDependency(value);
+    }
+
+    pos = newline + 1;
+
+    colon = txt.find(":", pos);
+    newline = txt.find("\n", pos);
+
+  }
+
+  if (description.GetGUIName().empty()) {
+    description.SetGUIName(description.GetName());
+  }
+
+  return status;
 }
