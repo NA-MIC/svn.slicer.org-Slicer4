@@ -376,7 +376,7 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
 
     vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication() );
     vtkSlicerApplicationGUI *appGUI;
-    vtkSlicerGUILayout *layout;
+    vtkSlicerGUILayout *geom;
     //
     // if screen resolution is below a certain threshold,
     // need to pack the slice controller differently so
@@ -384,13 +384,13 @@ void vtkSlicerSliceControllerWidget::CreateWidget ( )
     //
     if ( app )
       {
-      layout = app->GetMainLayout();
+      geom = app->GetDefaultGeometry();
       appGUI = app->GetApplicationGUI();
       }
-    if ( layout )
+    if ( geom )
       {
-      screenWidthThreshold = layout ->GetSliceControllerResolutionThreshold();
-      viewerWidthThreshold = layout->GetSliceViewerWidthThreshold();
+      screenWidthThreshold = geom->GetSliceControllerResolutionThreshold();
+      viewerWidthThreshold = geom->GetSliceViewerWidthThreshold();
       }
     else
       {
@@ -1865,7 +1865,8 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
     // set an undo state when the scale starts being dragged
     this->MRMLScene->SaveStateForUndo( this->SliceNode );
     }
-  else if ( scale == this->LabelOpacityScale->GetWidget() && event == vtkKWScale::ScaleValueStartChangingEvent )
+  else if ( scale == this->LabelOpacityScale->GetWidget()
+            && event == vtkKWScale::ScaleValueStartChangingEvent )
     {
     if ( link && sgui ) 
       {

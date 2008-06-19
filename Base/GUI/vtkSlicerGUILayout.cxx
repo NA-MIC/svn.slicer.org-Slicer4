@@ -17,7 +17,7 @@ vtkSlicerGUILayout::vtkSlicerGUILayout ( )
 {
 
   this->MainSlicerWindow = NULL;
-  this->CurrentViewArrangement = this->SlicerLayoutInitialView;
+
   // DefaultGUIPanelHeight defaults to 860 pixels
   // and DefaultGUIPanelWidth is fixed at 400 pixels.
   // DefaultGUIPanelHeight should be a function of the
