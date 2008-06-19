@@ -33,7 +33,7 @@ proc QueryAtlasCullOldModelAnnotations { } {
     #--- progress feedback
     set win [ $::slicer3::ApplicationGUI GetMainSlicerWindow ]
     set prog [ $win GetProgressGauge ]
-    $win SetStatusText "Culling any old model annotations..."
+#    $win SetStatusText "Culling any old model annotations..."
     $prog SetValue 0
 
     if {[info exists ::QA(annoModelNodeIDs) ] } {
@@ -106,7 +106,7 @@ proc QueryAtlasCullOldLabelMapAnnotations { } {
     #--- progress feedback
     set win [ $::slicer3::ApplicationGUI GetMainSlicerWindow ]
     set prog [ $win GetProgressGauge ]
-    $win SetStatusText "Culling any old label map annotations..."
+#    $win SetStatusText "Culling any old label map annotations..."
     $prog SetValue 0
 
     if { [info exists ::QA(annoLabelMapIDs) ] } {
