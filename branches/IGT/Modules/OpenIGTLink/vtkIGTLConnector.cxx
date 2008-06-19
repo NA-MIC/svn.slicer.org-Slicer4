@@ -88,6 +88,9 @@ int vtkIGTLConnector::SetTypeClient(std::string hostname, int port)
   return 1;
 }
 
+
+/* test */
+
 //---------------------------------------------------------------------------
 int vtkIGTLConnector::Start()
 {
