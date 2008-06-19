@@ -60,6 +60,7 @@ vtkMRMLSelectionNode::vtkMRMLSelectionNode()
   this->ActiveROIListID  =NULL;
   this->ActiveCameraID = NULL;
   this->ActiveViewID = NULL;
+  this->ActiveLayoutID = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -95,11 +96,17 @@ vtkMRMLSelectionNode::~vtkMRMLSelectionNode()
     delete []  this->ActiveViewID;
     this->ActiveViewID = NULL;
     }
+  if ( this->ActiveLayoutID)
+    {
+    delete [] this->ActiveLayoutID;
+    this->ActiveLayoutID = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLSelectionNode::WriteXML(ostream& of, int nIndent)
 {
+
   Superclass::WriteXML(of, nIndent);
 
   vtkIndent indent(nIndent);
@@ -110,6 +117,7 @@ void vtkMRMLSelectionNode::WriteXML(ostream& of, int nIndent)
   of << indent << " activeROIListID=\"" << (this->ActiveROIListID ? this->ActiveROIListID : "NULL") << "\"";
   of << indent << " activeCameraID=\"" << (this->ActiveCameraID ? this->ActiveCameraID : "NULL") << "\"";
   of << indent << " activeViewID=\"" << (this->ActiveViewID ? this->ActiveViewID : "NULL") << "\"";
+  of << indent << " activeLayoutID=\"" << (this->ActiveLayoutID ? this->ActiveLayoutID : "NULL") << "\"";
 }
 
 //----------------------------------------------------------------------------
@@ -135,6 +143,11 @@ void vtkMRMLSelectionNode::UpdateReferenceID(const char *oldID, const char *newI
     {
     this->SetActiveViewID (newID );
     }
+  if ( this->ActiveLayoutID && !strcmp ( oldID, this->ActiveLayoutID ))
+    {
+    this->SetActiveLayoutID (newID );
+    }
+  
 }
 
 //-----------------------------------------------------------
@@ -158,6 +171,10 @@ void vtkMRMLSelectionNode::UpdateReferences()
     {
     this->SetActiveViewID(NULL);
     }
+  if (this->ActiveLayoutID != NULL && this->Scene->GetNodeByID(this->ActiveLayoutID) == NULL)
+    {
+    this->SetActiveLayoutID(NULL);
+    }  
   if (this->ActiveCameraID != NULL && this->Scene->GetNodeByID(this->ActiveCameraID) == NULL)
     {
     this->SetActiveCameraID(NULL);
@@ -201,6 +218,11 @@ void vtkMRMLSelectionNode::ReadXMLAttributes(const char** atts)
       this->SetActiveViewID (attValue);
       //this->Scene->AddReferencedNodeID ( this->ActiveViewID, this);
       }
+    if (!strcmp (attName, "activeLayoutID"))
+      {
+      this->SetActiveLayoutID (attValue);
+      //this->Scene->AddReferencedNodeID ( this->ActiveLayoutID, this);
+      }    
     }
 }
 
@@ -217,6 +239,7 @@ void vtkMRMLSelectionNode::Copy(vtkMRMLNode *anode)
   this->SetActiveFiducialListID(node->GetActiveFiducialListID());
   this->SetActiveCameraID (node->GetActiveCameraID());
   this->SetActiveViewID (node->GetActiveViewID() );
+  this->SetActiveLayoutID (node->GetActiveLayoutID() );
 }
 
 //----------------------------------------------------------------------------
@@ -229,6 +252,7 @@ void vtkMRMLSelectionNode::PrintSelf(ostream& os, vtkIndent indent)
   os << "ActiveFiducialListID: " << ( (this->ActiveFiducialListID) ? this->ActiveFiducialListID : "None" ) << "\n";
   os << "ActiveCameraID: " << ( (this->ActiveCameraID) ? this->ActiveCameraID : "None" ) << "\n";
   os << "ActiveViewID: " << ( (this->ActiveViewID) ? this->ActiveViewID : "None" ) << "\n";
+  os << "ActiveLayoutID: " << ( (this->ActiveLayoutID) ? this->ActiveLayoutID : "None" ) << "\n";
 
 }
 

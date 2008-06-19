@@ -662,7 +662,6 @@ void vtkSlicerViewControlGUI::UpdateFromMRML()
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::UpdateSceneSnapshotsFromMRML()
 {
-
   if ( this->SceneClosing )
     {
     return;
@@ -783,7 +782,7 @@ void vtkSlicerViewControlGUI::DeleteSceneSnapshot( const char *nom)
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::UpdateViewFromMRML()
 {
-    if (this->SceneClosing)
+  if (this->SceneClosing)
     {
     return;
     }
@@ -2788,7 +2787,8 @@ void vtkSlicerViewControlGUI::ProcessMRMLEvents ( vtkObject *caller,
 
   // has a node been added or deleted?
   if ( vtkMRMLScene::SafeDownCast(caller) == this->MRMLScene 
-       && (event == vtkMRMLScene::NodeAddedEvent || event == vtkMRMLScene::NodeRemovedEvent ))
+       && (event == vtkMRMLScene::NodeAddedEvent || event == vtkMRMLScene::NodeRemovedEvent )
+       || (event == vtkMRMLScene::SceneCloseEvent) || (event == vtkMRMLScene::NewSceneEvent ) )       
     {
     this->UpdateFromMRML();
     this->UpdateNavigationWidgetViewActors ( );
@@ -2905,6 +2905,8 @@ void vtkSlicerViewControlGUI::SetApplicationGUI ( vtkSlicerApplicationGUI *appGU
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::ViewControlACallback ( )
 {
+  // want to rotate around AP or look from A. Need to figure out
+  // where A-vector is wrt camera view vector.
    if ( this->ApplicationGUI)
      {
      vtkSlicerApplicationGUI *p = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI ( ));    
@@ -3262,7 +3264,6 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
     if ( p->GetApplication() != NULL )
       {
       vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast( p->GetApplication() );
-      vtkSlicerGUILayout *layout = app->GetMainLayout ( );
 
       this->SlicerViewControlIcons = vtkSlicerViewControlIcons::New ( );
       this->NameDialog  = vtkKWSimpleEntryDialog::New();
