@@ -46,6 +46,7 @@
 
 #include "vtkCacheManager.h"
 #include "vtkDataIOManager.h"
+#include "vtkMRMLLayoutNode.h"
 
 class vtkObject;
 class vtkLogoWidget;
@@ -84,9 +85,23 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     vtkGetObjectMacro (ViewerWidget, vtkSlicerViewerWidget);
 
     // Description:
+    // Get/Set the layout node
+    vtkMRMLLayoutNode *GetGUILayoutNode ( );
+    void SetAndObserveGUILayoutNode ( vtkMRMLLayoutNode *node )
+        {
+        vtkSetAndObserveMRMLNodeMacro ( this->GUILayoutNode, node);
+        }
+    const char* GetCurrentLayoutStringName ( );
+
+    vtkGetMacro (Built, bool);
+    vtkSetMacro (Built, bool);
+    vtkGetMacro (CurrentLayout, int);
+    vtkSetMacro (CurrentLayout, int);
+
+    // Description:
     // The Fiducial List Widget
     vtkGetObjectMacro (FiducialListWidget, vtkSlicerFiducialListWidget);
-    
+
     // Description:
     // A pointer to the SliceGUI's SliceGUICollection so
     // the three main Slice Viewers can be added and
@@ -166,6 +181,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     void ProcessAddVolumeCommand();
     void ProcessSaveSceneAsCommand();
     void ProcessCloseSceneCommand();
+    void UpdateLayout();
     
     // Description:
     // Methods describe behavior on startup and exit.
@@ -315,6 +331,10 @@ protected:
     vtkSlicerFiducialListWidget *FiducialListWidget;
     
     // Description:
+    // Contains the state of the ApplicationGUI's layout
+    vtkMRMLLayoutNode *GUILayoutNode;
+
+    // Description:
     // Main 3 Slice Viewers
     vtkSlicerSliceGUI *MainSliceGUI0;
     vtkSlicerSliceGUI *MainSliceGUI1;
@@ -342,6 +362,10 @@ protected:
     int ViewerPageTag;
 
     vtkSlicerMRMLSaveDataWidget *SaveDataWidget;
+    int ProcessingMRMLEvent;
+    bool SceneClosing;
+    bool Built;
+    int CurrentLayout;
     
  private:
     vtkSlicerApplicationGUI ( const vtkSlicerApplicationGUI& ); // Not implemented.

@@ -70,6 +70,7 @@ Version:   $Revision: 1.18 $
 #include "vtkMRMLFiberBundleNode.h"
 #include "vtkMRMLFiberBundleStorageNode.h"
 #include "vtkMRMLFiberBundleTubeDisplayNode.h"
+#include "vtkMRMLLayoutNode.h"
 #include "vtkMRMLVectorVolumeNode.h"
 #endif
 
@@ -249,6 +250,10 @@ vtkMRMLScene::vtkMRMLScene()
   vtkMRMLViewNode *view = vtkMRMLViewNode::New();
   this->RegisterNodeClass ( view );
   view->Delete();
+
+ vtkMRMLLayoutNode *layout = vtkMRMLLayoutNode::New();
+  this->RegisterNodeClass ( layout );
+  layout->Delete();  
 
   vtkMRMLModelHierarchyNode *mhier = vtkMRMLModelHierarchyNode::New();
   this->RegisterNodeClass ( mhier );
