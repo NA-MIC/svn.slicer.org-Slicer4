@@ -14,14 +14,14 @@
 # - configure (or cmake) with needed options
 # - build for this platform
 #
-# Packages: cmake, tcl, itcl, ITK, VTK, teem
+# Packages: cmake, tcl, itcl, iwidgets, blt, ITK, VTK, teem
 # 
 # Usage:
 #   genlib [options] [target]
 #
-# run genlib from the slicer directory where you want the packages to be build
-# E.g. if you run /home/pieper/slicer2/Scripts/genlib.tcl on a redhat7.3
-# machine it will create /home/pieper/slicer2/Lib/redhat7.3
+# run genlib from the Slicer3 directory next to where you want the packages to be built
+# E.g. if you run /home/pieper/Slicer3/Scripts/genlib.tcl it will create
+# /home/pieper/Slicer3-lib
 #
 # - sp - 2004-06-20
 #
@@ -383,6 +383,67 @@ if { [BuildThis $::ITCL_TEST_FILE "itcl"] == 1 } {
       eval runcmd $::SERIAL_MAKE install
     }
   }
+}
+
+################################################################################
+# Get and build iwidgets
+#
+
+if { [BuildThis $::IWIDGETS_TEST_FILE "iwidgets"] == 1 } {
+    cd $Slicer3_LIB/tcl
+
+    runcmd  $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl/iwidgets iwidgets
+
+    if {$::GENLIB(buildit)} {
+        if {$isWindows} {
+            # is present in the windows binary download
+        } else {
+            cd $Slicer3_LIB/tcl/iwidgets
+            runcmd ../iwidgets/configure --with-tcl=$Slicer3_LIB/tcl-build/lib --with-tk=$Slicer3_LIB/tcl-build/lib --with-itcl=$Slicer3_LIB/tcl/incrTcl --prefix=$Slicer3_LIB/tcl-build
+            # make all doesn't do anything...
+            # iwidgets won't compile in parallel (with -j flag)
+            eval runcmd $::SERIAL_MAKE all
+            eval runcmd $::SERIAL_MAKE install
+        }
+    }
+}
+
+################################################################################
+# Get and build blt
+#
+
+if { [BuildThis $::BLT_TEST_FILE "blt"] == 1 } {
+    cd $Slicer3_LIB/tcl
+
+    runcmd  $::SVN co http://www.na-mic.org/svn/Slicer3-lib-mirrors/trunk/tcl/blt blt
+
+    if {$::GENLIB(buildit)} {
+        if { $isWindows } { 
+            # is present in the windows binary download
+        } elseif { $isDarwin } {
+            if { ![file exists $Slicer3_LIB/tcl/isPatchedBLT] } { 
+              puts "Patching..." 
+              runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch 
+              cd $Slicer3_LIB/tcl/blt 
+              runcmd patch -p2 < ../bltpatch 
+
+              # create a file to make sure BLT isn't patched twice 
+              runcmd touch $Slicer3_LIB/tcl/isPatchedBLT 
+              file delete $Slicer3_LIB/tcl/bltpatch 
+            } else { 
+              puts "BLT already patched." 
+            }
+            cd $Slicer3_LIB/tcl/blt
+            runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build --enable-shared --x-includes=/usr/X11R6/include --x-libraries=/usr/X11R6/lib --with-cflags=-fno-common
+            eval runcmd $::MAKE
+            eval runcmd $::MAKE install
+        } else {
+            cd $Slicer3_LIB/tcl/blt
+            runcmd ./configure --with-tcl=$Slicer3_LIB/tcl/tcl/unix --with-tk=$Slicer3_LIB/tcl-build --prefix=$Slicer3_LIB/tcl-build
+            eval runcmd $::SERIAL_MAKE
+            eval runcmd $::SERIAL_MAKE install
+        }
+    }
 }
 
 ################################################################################
@@ -885,6 +946,12 @@ if { ![file exists $::TK_TEST_FILE] } {
 if { ![file exists $::ITCL_TEST_FILE] } {
     puts "incrTcl test file $::ITCL_TEST_FILE not found."
 }
+if { ![file exists $::IWIDGETS_TEST_FILE] } {
+    puts "iwidgets test file $::IWIDGETS_TEST_FILE not found."
+}
+if { ![file exists $::BLT_TEST_FILE] } {
+    puts "BLT test file $::BLT_TEST_FILE not found."
+}
 if { ![file exists $::VTK_TEST_FILE] } {
     puts "VTK test file $::VTK_TEST_FILE not found."
 }
@@ -898,6 +965,8 @@ if { ![file exists $::CMAKE] || \
          ![file exists $::TCL_TEST_FILE] || \
          ![file exists $::TK_TEST_FILE] || \
          ![file exists $::ITCL_TEST_FILE] || \
+         ![file exists $::IWIDGETS_TEST_FILE] || \
+         ![file exists $::BLT_TEST_FILE] || \
          ![file exists $::VTK_TEST_FILE] || \
          ![file exists $::ITK_TEST_FILE] } {
     puts "Not all packages compiled; check errors and run genlib.tcl again."
