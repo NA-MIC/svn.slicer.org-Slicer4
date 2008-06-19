@@ -90,19 +90,13 @@ void vtkMRMLStorageNode::ReadXMLAttributes(const char** atts)
     attValue = *(atts++);
     if (!strcmp(attName, "fileName")) 
       {
-      // URLDeodeString returns a buffer that was created using new[].
-      // It is up to the client to delete it.
       const char* filename = vtkMRMLNode::URLDecodeString(attValue);
       this->SetFileName(filename);
-      //delete [] filename;
       }
     else if (!strcmp(attName, "uri"))
       {
-      // URLDeodeString returns a buffer that was created using new[].
-      // It is up to the client to delete it.
       const char* uri = vtkMRMLNode::URLDecodeString(attValue);
       this->SetURI(uri);
-      //delete [] uri;
       }
     else if (!strcmp(attName, "useCompression")) 
       {
@@ -183,7 +177,13 @@ void vtkMRMLStorageNode::StageReadData ( vtkMRMLNode *refNode )
     vtkDebugMacro("StageReadData: input mrml node is null, returning.");
     return;
     }
-  
+    
+  // do not read if if we are not in the scene (for example inside snapshot)
+  if ( !this->GetAddToScene() || !refNode->GetAddToScene() )
+    {
+    return;
+    }
+ 
   vtkCacheManager *cacheManager = this->Scene->GetCacheManager();
   const char *fname = NULL;
   if ( cacheManager != NULL )
