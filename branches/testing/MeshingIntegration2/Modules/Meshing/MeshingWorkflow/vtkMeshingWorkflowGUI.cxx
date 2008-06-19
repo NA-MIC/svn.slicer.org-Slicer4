@@ -39,7 +39,7 @@ Version:   $Revision: 1.2 $
 #include "vtkKWPushButton.h"
 
 // *** Declarations added for Univ. of Iowa Meshing Integration into Slicer3
-
+ 
 // include declarations from Univ. of Iowa standalone meshing workflow GUI class hierarchy.  The
 // original notebook uses locally-maintained linked lists.  The MRML notebook moves the storage into
 // the MRML tree and keeps the same API for the client module. Change of code is minimized betweeen
@@ -236,68 +236,24 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
   app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                 moduleFrame->GetWidgetName(), this->UIPanel->GetPageWidget("MeshingWorkflow")->GetWidgetName());
   
-  
- 
-  // create a shell of the MimxViewWindow for class compability.  This class only
-  // points to an instance of the slicer viewer, but encapsulates the integration with 
-  // the slicer viewer.  The renderWindow is initialized to be the main 3D window from slicer. 
 
-  //vtkKWMimxViewWindow *viewwin = vtkKWMimxViewWindow::New();
-  vtkKWMimxMainWindow *mainwin = vtkKWMimxMainWindow::New();
-  mainwin->SetRenderWidget(this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer());
-  
-    // create the undo tree 
-    if(!this->DoUndoTree)
-                this->DoUndoTree = vtkLinkedListWrapperTree::New();
-  
-  // create the view properties 
-  
-        this->ViewProperties = vtkKWMimxViewProperties::New();
-        this->ViewProperties->SetParent(this->UIPanel->GetPageWidget ( "MeshingWorkflow" ));
-        this->ViewProperties->SetMimxMainWindow(mainwin);
-        this->ViewProperties->SetApplication(this->GetApplication());
-        this->ViewProperties->Create();
-        this->ViewProperties->SetBorderWidth(3);
-        this->ViewProperties->SetReliefToGroove();
-        this->ViewProperties->SetDoUndoTree(this->DoUndoTree);
-        this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 5 -fill x", 
-             this->ViewProperties->GetMainFrame()->GetWidgetName());
+  this->BuildSeparateFEMeshGUI();
 
-  
-//  // create the notebook which is the root of the pre-developed meshing workflow
-//  this->MimxMainNotebook = vtkMeshingWorkflowMRMLNotebook::New();
-//  // pass in the current application MRML scene, so the nodes for storage will be stored in the scene
-//  //`this->MimxMainNotebook->SetMRMLSceneForStorage(this->ApplicationLogic->GetMRMLScene());
-//  this->MimxMainNotebook->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
-//  this->MimxMainNotebook->SetApplication(this->GetApplication());
-//  this->MimxMainNotebook->SetMimxMainWindow(mainwin);
-//  this->MimxMainNotebook->SetDoUndoTree(this->DoUndoTree);
-//  this->MimxMainNotebook->Create ( );
-//  this->MimxMainNotebook->SetWidth(200);
-//  app->Script (
-//       "pack %s -side top -anchor nw  -expand y -padx 0 -pady 1", 
-//       this->MimxMainNotebook->GetWidgetName());
-//  
-        
-//          if(!this->MainUserInterfacePanel)
-//          {
-                  this->MainUserInterfacePanel = vtkKWMimxMainUserInterfacePanel::New();
-                  this->MainUserInterfacePanel->SetMimxMainWindow(mainwin);
-                  this->MainUserInterfacePanel->SetDoUndoTree(this->DoUndoTree);
-                  this->MainUserInterfacePanel->SetMultiColumnList(
-                          this->ViewProperties->GetMultiColumnList());
-//          }
-          this->MainUserInterfacePanel->SetParent(this->UIPanel->GetPageWidget ( "MeshingWorkflow" ));
-          this->MainUserInterfacePanel->SetApplication(this->GetApplication());
-          this->MainUserInterfacePanel->Create();
-          this->MainUserInterfacePanel->SetBorderWidth(3);
-          this->MainUserInterfacePanel->SetReliefToGroove();
-          this->MainUserInterfacePanel->GetMainFrame()->ExpandFrame();
-          this->GetApplication()->Script(
-                  "pack %s -side top -anchor nw -expand n -fill y -pady 2 -fill x", 
-                  this->MainUserInterfacePanel->GetWidgetName());
-          this->ViewProperties->SetViewPropertiesGroup(
-                  this->MainUserInterfacePanel->GetViewPropertiesGroup());
+     
+}
 
-         
+void vtkMeshingWorkflowGUI::BuildSeparateFEMeshGUI ( ) 
+{
+    // create an instance  of the MimxViewWindow.  A separate window is opened because the 
+    // KWWidgets integration into the slicer GUI was working against the workflow designed in the 
+    // independent Univ. of Iowa FeMesh application
+    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+    
+    vtkKWMimxMainWindow *mainwin = vtkKWMimxMainWindow::New();
+  mainwin->SetTitle("IA-FEMesh 1.0 Beta");
+  app->AddWindow(mainwin);
+  mainwin->SupportHelpOn();
+  mainwin->SecondaryPanelVisibilityOff();
+  mainwin->Create();
+  mainwin->Display();
 }

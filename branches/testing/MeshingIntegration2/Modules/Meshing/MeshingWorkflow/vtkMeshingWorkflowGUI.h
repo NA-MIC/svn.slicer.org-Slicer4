@@ -90,6 +90,8 @@ protected:
   vtkKWMimxMainUserInterfacePanel *MainUserInterfacePanel;
   vtkKWMimxDisplayPropertiesGroup *DisplayPropertyDialog;
 
+  // callback to create the separate UI
+  void BuildSeparateFEMeshGUI();
         
   vtkMeshingWorkflowLogic *Logic;
 
