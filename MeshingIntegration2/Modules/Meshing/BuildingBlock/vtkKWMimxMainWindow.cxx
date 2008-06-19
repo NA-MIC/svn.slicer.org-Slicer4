@@ -116,15 +116,15 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
 //----------------------------------------------------------------------------
 vtkKWMimxMainWindow::~vtkKWMimxMainWindow()
 {
-//        if (this->AxesRenderer) {
-//                this->AxesRenderer->Delete();
-//                this->PVAxesActor->Delete();
-//                this->CallbackCommand->Delete();
-//        }
-//        if(this->RenderWidget)
-//        {
-//                this->RenderWidget->Delete();
-//        }
+        if (this->AxesRenderer) {
+                this->AxesRenderer->Delete();
+                this->PVAxesActor->Delete();
+                this->CallbackCommand->Delete();
+        }
+        if(this->RenderWidget)
+        {
+                this->RenderWidget->Delete();
+        }
         if(this->ChangeColorButton)
         {
                 this->ChangeColorButton->Delete();
@@ -167,47 +167,47 @@ void vtkKWMimxMainWindow::CreateWidget()
                 return;
         }
       this->Superclass::CreateWidget();
-//
-//      // setting the render window
-//      if(!this->RenderWidget)
-//      {
-//              this->RenderWidget = vtkKWRenderWidget::New();
-//      }
-//      this->RenderWidget->SetParent(this->GetViewFrame());
-//      this->RenderWidget->Create();
-//
-//      this->GetApplication()->Script("pack %s -expand y -fill both -anchor c -expand y", 
-//              this->RenderWidget->GetWidgetName());
-//
-//      this->GetMenu()->Unpack();
-//
-//      // creation of axes representation
-//      // we need two renderers
-//      if(!this->AxesRenderer)
-//      {
-//              this->AxesRenderer = vtkRenderer::New();
-//              this->PVAxesActor = vtkPVAxesActor::New();
-//              this->CallbackCommand = vtkCallbackCommand::New();
-//      }
-//      this->AxesRenderer->InteractiveOff();
-//      this->RenderWidget->GetRenderWindow()->SetNumberOfLayers(2);
-//      this->RenderWidget->GetRenderer()->SetLayer(0);
-//      this->AxesRenderer->SetLayer(1);
-//      this->AxesRenderer->SetViewport(0.0,0.0,0.25,0.25);
-//      this->AxesRenderer->AddActor(this->PVAxesActor);
-//      this->CallbackCommand->SetCallback(updateAxis);
-//      this->CallbackCommand->SetClientData(this);
-//      this->RenderWidget->GetRenderer()->AddObserver(vtkCommand::AnyEvent,this->CallbackCommand);
-//      this->AxesRenderer->SetBackground(0.0,0.0,0.0);
-//      this->RenderWidget->GetRenderer()->SetBackground(0.0,0.0,0.0);
-//      this->RenderWidget->GetRenderWindow()->AddRenderer(this->AxesRenderer);
-//
-//      //vtkKeypress *Keypress = vtkKeypress::New();
-//      this->RenderWidget->GetRenderWindowInteractor()->RemoveObserver(vtkCommand::KeyPressEvent);
-//      this->RenderWidget->GetRenderWindowInteractor()->RemoveObserver(vtkCommand::KeyReleaseEvent);
-//      //this->RenderWidget->GetRenderWindowInteractor()->AddObserver(vtkCommand::KeyPressEvent, Keypress);
-//      //Keypress->Delete();
-//      this->ErrorCallback->SetKWApplication(this->GetApplication());
+
+      // setting the render window
+      if(!this->RenderWidget)
+      {
+              this->RenderWidget = vtkKWRenderWidget::New();
+      }
+      this->RenderWidget->SetParent(this->GetViewFrame());
+      this->RenderWidget->Create();
+
+      this->GetApplication()->Script("pack %s -expand y -fill both -anchor c -expand y", 
+              this->RenderWidget->GetWidgetName());
+
+      this->GetMenu()->Unpack();
+
+      // creation of axes representation
+      // we need two renderers
+      if(!this->AxesRenderer)
+      {
+              this->AxesRenderer = vtkRenderer::New();
+              this->PVAxesActor = vtkPVAxesActor::New();
+              this->CallbackCommand = vtkCallbackCommand::New();
+      }
+      this->AxesRenderer->InteractiveOff();
+      this->RenderWidget->GetRenderWindow()->SetNumberOfLayers(2);
+      this->RenderWidget->GetRenderer()->SetLayer(0);
+      this->AxesRenderer->SetLayer(1);
+      this->AxesRenderer->SetViewport(0.0,0.0,0.25,0.25);
+      this->AxesRenderer->AddActor(this->PVAxesActor);
+      this->CallbackCommand->SetCallback(updateAxis);
+      this->CallbackCommand->SetClientData(this);
+      this->RenderWidget->GetRenderer()->AddObserver(vtkCommand::AnyEvent,this->CallbackCommand);
+      this->AxesRenderer->SetBackground(0.0,0.0,0.0);
+      this->RenderWidget->GetRenderer()->SetBackground(0.0,0.0,0.0);
+      this->RenderWidget->GetRenderWindow()->AddRenderer(this->AxesRenderer);
+
+      //vtkKeypress *Keypress = vtkKeypress::New();
+      this->RenderWidget->GetRenderWindowInteractor()->RemoveObserver(vtkCommand::KeyPressEvent);
+      this->RenderWidget->GetRenderWindowInteractor()->RemoveObserver(vtkCommand::KeyReleaseEvent);
+      //this->RenderWidget->GetRenderWindowInteractor()->AddObserver(vtkCommand::KeyPressEvent, Keypress);
+      //Keypress->Delete();
+      this->ErrorCallback->SetKWApplication(this->GetApplication());
         //if(!this->ViewMenu)
         //{
         //      this->ViewMenu = vtkKWMenu::New();
@@ -241,21 +241,21 @@ void vtkKWMimxMainWindow::CreateWidget()
       if(!this->DoUndoTree)
               this->DoUndoTree = vtkLinkedListWrapperTree::New();
 
-//      if(!this->ViewProperties)
-//      {
-//              this->ViewProperties = vtkKWMimxViewProperties::New();
-////            this->ViewProperties->SetDataType(2);
-//              this->ViewProperties->SetParent(this->GetMainPanelFrame());
-//              this->ViewProperties->SetMimxMainWindow(this);
-//      //      this->ViewProperties->SetObjectList(this->BBoxList);
-//              this->ViewProperties->Create();
-//              this->ViewProperties->SetBorderWidth(3);
-//              this->ViewProperties->SetReliefToGroove();
-//              this->ViewProperties->SetDoUndoTree(this->DoUndoTree);
-//      }
-//
-//      this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 5 -fill x", 
-//              this->ViewProperties->GetMainFrame()->GetWidgetName());
+      if(!this->ViewProperties)
+      {
+              this->ViewProperties = vtkKWMimxViewProperties::New();
+//            this->ViewProperties->SetDataType(2);
+              this->ViewProperties->SetParent(this->GetMainPanelFrame());
+              this->ViewProperties->SetMimxMainWindow(this);
+      //      this->ViewProperties->SetObjectList(this->BBoxList);
+              this->ViewProperties->Create();
+              this->ViewProperties->SetBorderWidth(3);
+              this->ViewProperties->SetReliefToGroove();
+              this->ViewProperties->SetDoUndoTree(this->DoUndoTree);
+      }
+
+      this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 5 -fill x", 
+              this->ViewProperties->GetMainFrame()->GetWidgetName());
 
         // frame with scroll bar to place all tabs 
 /*      if(!this->MainNoteBookFrameScrollbar)
@@ -272,69 +272,54 @@ void vtkKWMimxMainWindow::CreateWidget()
         //      this->MainNoteBookFrameScrollbar->SetHeight(300);
         // add tabs
 
-//      if(!this->MainUserInterfacePanel)
-//      {
-//              this->MainUserInterfacePanel = vtkKWMimxMainUserInterfacePanel::New();
-//              this->MainUserInterfacePanel->SetMimxMainWindow(this);
-//              this->MainUserInterfacePanel->SetDoUndoTree(this->DoUndoTree);
-//              this->MainUserInterfacePanel->SetMultiColumnList(
-//                      this->ViewProperties->GetMultiColumnList());
-//      }
-//      this->MainUserInterfacePanel->SetParent(this->GetMainPanelFrame());
-//      this->MainUserInterfacePanel->SetApplication(this->GetApplication());
-//      this->MainUserInterfacePanel->Create();
-//      this->MainUserInterfacePanel->SetBorderWidth(3);
-//      this->MainUserInterfacePanel->SetReliefToGroove();
-//      this->MainUserInterfacePanel->GetMainFrame()->ExpandFrame();
-//      //      this->MainNotebook->SetWidth(200);
-//      this->GetApplication()->Script(
-//              "pack %s -side top -anchor nw -expand n -fill y -pady 2 -fill x", 
-//              this->MainUserInterfacePanel->GetWidgetName());
-//      this->ViewProperties->SetViewPropertiesGroup(
-//              this->MainUserInterfacePanel->GetViewPropertiesGroup());
+      if(!this->MainUserInterfacePanel)
+      {
+              this->MainUserInterfacePanel = vtkKWMimxMainUserInterfacePanel::New();
+              this->MainUserInterfacePanel->SetMimxMainWindow(this);
+              this->MainUserInterfacePanel->SetDoUndoTree(this->DoUndoTree);
+              this->MainUserInterfacePanel->SetMultiColumnList(
+                      this->ViewProperties->GetMultiColumnList());
+      }
+      this->MainUserInterfacePanel->SetParent(this->GetMainPanelFrame());
+      this->MainUserInterfacePanel->SetApplication(this->GetApplication());
+      this->MainUserInterfacePanel->Create();
+      this->MainUserInterfacePanel->SetBorderWidth(3);
+      this->MainUserInterfacePanel->SetReliefToGroove();
+      this->MainUserInterfacePanel->GetMainFrame()->ExpandFrame();
+      //      this->MainNotebook->SetWidth(200);
+      this->GetApplication()->Script(
+              "pack %s -side top -anchor nw -expand n -fill y -pady 2 -fill x", 
+              this->MainUserInterfacePanel->GetWidgetName());
+      this->ViewProperties->SetViewPropertiesGroup(
+              this->MainUserInterfacePanel->GetViewPropertiesGroup());
 
-//      if(!this->MimxMainNotebook)
-//      {
-//              this->MimxMainNotebook = vtkKWMimxMainNotebook::New();
-//              this->MimxMainNotebook->SetMimxMainWindow(this);
-//              this->MimxMainNotebook->SetDoUndoTree(this->DoUndoTree);
-//      }
-//      vtkKWFrame *frame = this->GetMainPanelFrame();
-//      this->MimxMainNotebook->SetParent(this->GetMainPanelFrame());
-//      this->MimxMainNotebook->SetApplication(this->GetApplication());
-//      this->MimxMainNotebook->Create();
-//      this->MimxMainNotebook->SetBorderWidth(3);
-//      this->MimxMainNotebook->SetReliefToGroove();
-////    this->MainNotebook->SetWidth(200);
-//      this->GetApplication()->Script(
-//              "pack %s -side top -anchor nw -expand n -fill y -pady 2 -fill x", 
-//              this->MimxMainNotebook->GetWidgetName());
+
         
         // Custom Configuration of the Toolbar Menu
-//      vtkKWMenu* fileMenu = this->GetFileMenu();
-//  fileMenu->DeleteItem (0);
-//  
-//  vtkKWMenu* viewMenu = this->GetViewMenu();
-//  viewMenu->AddCommand("View Settings", this, "DisplayPropertyCallback");
-//  viewMenu->AddSeparator( );
-//  
-//  vtkKWMenu *fontSizeMenu = vtkKWMenu::New();
-//  fontSizeMenu->SetParent(viewMenu);
-//  fontSizeMenu->Create();
-//  fontSizeMenu->AddRadioButton("small", this, "SetApplicationFontSize small");
-//  fontSizeMenu->AddRadioButton("medium", this, "SetApplicationFontSize medium");
-//  fontSizeMenu->AddRadioButton("large", this, "SetApplicationFontSize large");
-//  fontSizeMenu->AddRadioButton("largest", this, "SetApplicationFontSize largest");
-//  viewMenu->AddCascade("Font Size", fontSizeMenu);
-//  
-//  vtkKWMenu *fontTypeMenu = vtkKWMenu::New();
-//  fontTypeMenu->SetParent(viewMenu);
-//  fontTypeMenu->Create();
-//  fontTypeMenu->AddRadioButton("Arial", this, "SetApplicationFontFamily Arial");
-//  fontTypeMenu->AddRadioButton("Helvetica", this, "SetApplicationFontFamily Helvetica");
-//  fontTypeMenu->AddRadioButton("Verdana", this, "SetApplicationFontFamily Verdana");
-//  viewMenu->AddCascade("Font Family", fontTypeMenu);
-//  
+      vtkKWMenu* fileMenu = this->GetFileMenu();
+  fileMenu->DeleteItem (0);
+  
+  vtkKWMenu* viewMenu = this->GetViewMenu();
+  viewMenu->AddCommand("View Settings", this, "DisplayPropertyCallback");
+  viewMenu->AddSeparator( );
+  
+  vtkKWMenu *fontSizeMenu = vtkKWMenu::New();
+  fontSizeMenu->SetParent(viewMenu);
+  fontSizeMenu->Create();
+  fontSizeMenu->AddRadioButton("small", this, "SetApplicationFontSize small");
+  fontSizeMenu->AddRadioButton("medium", this, "SetApplicationFontSize medium");
+  fontSizeMenu->AddRadioButton("large", this, "SetApplicationFontSize large");
+  fontSizeMenu->AddRadioButton("largest", this, "SetApplicationFontSize largest");
+  viewMenu->AddCascade("Font Size", fontSizeMenu);
+  
+  vtkKWMenu *fontTypeMenu = vtkKWMenu::New();
+  fontTypeMenu->SetParent(viewMenu);
+  fontTypeMenu->Create();
+  fontTypeMenu->AddRadioButton("Arial", this, "SetApplicationFontFamily Arial");
+  fontTypeMenu->AddRadioButton("Helvetica", this, "SetApplicationFontFamily Helvetica");
+  fontTypeMenu->AddRadioButton("Verdana", this, "SetApplicationFontFamily Verdana");
+  viewMenu->AddCascade("Font Family", fontTypeMenu);
+  
   
   
  /* This can be used to add Icons to the Top Toolbar */

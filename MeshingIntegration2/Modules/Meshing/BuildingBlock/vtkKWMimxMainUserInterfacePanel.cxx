@@ -110,10 +110,10 @@ void vtkKWMimxMainUserInterfacePanel::CreateWidget()
         this->MainFrame->SetLabelText("Options");
  // this->MainFrame->AllowFrameToCollapseOn();
         // *** why was this off below before? CRL 
-  this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand y -fill y -padx 2 -pady 6 -fill x", 
-    this->MainFrame->GetWidgetName());
-    
+//  this->GetApplication()->Script(
+//    "pack %s -side top -anchor nw -expand y -fill y -padx 2 -pady 6 -fill x", 
+//    this->MainFrame->GetWidgetName());
+//    
         
         if (!this->UserInterfacePanel)  
           this->UserInterfacePanel = vtkKWNotebook::New();
@@ -145,6 +145,8 @@ void vtkKWMimxMainUserInterfacePanel::CreateWidget()
         
         this->MimxMainNotebook->SetBorderWidth(3);
         this->MimxMainNotebook->SetReliefToGroove();
+        this->MimxMainNotebook->Update();
+        
         //      this->MainNotebook->SetWidth(200);
         this->GetApplication()->Script(
                 "pack %s -side top -anchor nw -expand y -fill y -pady 2 -fill x", 

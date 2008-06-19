@@ -282,14 +282,15 @@ void vtkKWMimxMainNotebook::UpdateEnableState()
         this->QualityMenuGroup->SetEnabled(this->GetEnabled());
         this->MaterialPropertyMenuGroup->SetEnabled(this->GetEnabled());
         this->BoundaryConditionsMenuGroup->SetEnabled(this->GetEnabled());
-//        this->Notebook->GetPageWidget("Image")->SetEnabled(this->GetEnabled());
-//        this->Notebook->GetPageWidget("Surface")->SetEnabled(this->GetEnabled());
-//        this->Notebook->GetPageWidget("Building Block")->SetEnabled(this->GetEnabled());
-//        this->Notebook->GetPageWidget("Mesh")->SetEnabled(this->GetEnabled());
-//        this->Notebook->GetPageWidget("Quality")->SetEnabled(this->GetEnabled());
-//        this->Notebook->GetPageWidget("Material Property")->SetEnabled(this->GetEnabled());
-//        this->Notebook->GetPageWidget("Boundary Conditions")->SetEnabled(this->GetEnabled());
-//        this->Notebook->SetEnabled(this->GetEnabled());
+        this->Notebook->GetPageWidget("Image")->SetEnabled(this->GetEnabled());
+        this->Notebook->GetPageWidget("Surface")->SetEnabled(this->GetEnabled());
+        this->Notebook->GetPageWidget("Building Block")->SetEnabled(this->GetEnabled());
+        this->Notebook->GetPageWidget("Mesh")->SetEnabled(this->GetEnabled());
+        this->Notebook->GetPageWidget("Quality")->SetEnabled(this->GetEnabled());
+        this->Notebook->GetPageWidget("Material Property")->SetEnabled(this->GetEnabled());
+        this->Notebook->GetPageWidget("Boundary Conditions")->SetEnabled(this->GetEnabled());
+        this->Notebook->SetEnabled(this->GetEnabled());
+        this->Notebook->Raise();
 }
 
 //----------------------------------------------------------------------------
