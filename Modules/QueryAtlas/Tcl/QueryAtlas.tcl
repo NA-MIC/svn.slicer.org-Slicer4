@@ -1394,7 +1394,6 @@ proc QueryAtlasPickOnQuerySlice {x y renderer modelNode} {
 }
 
 proc QueryAtlasPickCallback {} {
-
     set _useMID ""
 
     if { ![info exists ::QA(windowToImage)] } {
@@ -1544,6 +1543,7 @@ proc QueryAtlasPickCallback {} {
         }
     }
 
+    #--- slice or model
     #--- which is best?
     if { $nearestModelRAS != "" && $nearestSliceRAS != "" } { 
         foreach {mx my mz} [eval QueryAtlasWorldToScreen $nearestModelRAS] {}
