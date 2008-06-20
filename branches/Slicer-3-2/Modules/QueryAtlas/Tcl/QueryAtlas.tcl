@@ -117,20 +117,11 @@ proc QueryAtlasDialog { msg } {
 #----------------------------------------------------------------------------------------------------
 proc QueryAtlasTearDownAnnoCursor { } {
 
-    if { [info exists ::QA(cursor,mapper)] } {
-        $::QA(cursor,mapper) Delete
-        unset -nocomplain ::QA(cursor,mapper)
-    }
 
     if { [info exists ::QA(cursor,actor)] } {
         $::QA(cursor,actor) Delete
 #        puts "deleting cursor"
         unset -nocomplain ::QA(cursor,actor)
-    }
-    
-    if { [info exists ::QA(cursor,shmapper)] } {
-        $::QA(cursor,shmapper) Delete
-        unset -nocomplain ::QA(cursor,shmapper)
     }
     
     if { [info exists ::QA(cursor,shadow)] } {
@@ -1602,9 +1593,8 @@ proc QueryAtlasUpdateCursor {} {
   #--- of the vtkTextActor.
   if { ![info exists ::QA(cursor,actor)] } {
       set ::QA(cursor,shadow) [vtkTextActor New]
-      set ::QA(cursor,shmapper) [ vtkTextMapper New ]
       set ::QA(cursor,actor) [vtkTextActor New]
-      set ::QA(cursor,mapper) [vtkTextMapper New]
+
       #--- shadow
       $::QA(cursor,shadow) ScaledTextOff
       [$::QA(cursor,shadow) GetTextProperty ] ShadowOff
@@ -1617,15 +1607,13 @@ proc QueryAtlasUpdateCursor {} {
       [$::QA(cursor,actor) GetTextProperty] SetFontSize 20
       [$::QA(cursor,actor) GetTextProperty] SetFontFamilyToArial
       [$::QA(cursor,actor) GetTextProperty] SetColor 1.0 1.0 1.0
-      
-      $::QA(cursor,shadow) SetMapper $::QA(cursor,shmapper)
-      $::QA(cursor,actor) SetMapper $::QA(cursor,mapper)
-      $renderer AddViewProp $::QA(cursor,shadow)
-      $renderer AddViewProp $::QA(cursor,actor)
+
+      $renderer AddActor2D $::QA(cursor,shadow)
+      $renderer AddActor2D $::QA(cursor,actor)
   }
 
   # update the text actor, its shadow and render
-  if { [info exists ::QA(lastLabels)] && [info exists ::QA(lastWindowXY)] && [info exists ::QA(cursor,mapper)] } {
+  if { [info exists ::QA(lastLabels)] && [info exists ::QA(lastWindowXY)] } {
       $::QA(cursor,shadow) SetInput $::QA(lastLabels)
       $::QA(cursor,actor) SetInput $::QA(lastLabels) 
                                  
