@@ -60,6 +60,8 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkToolkits.h"
 
+#include "vtkMRMLScene.h"
+
 #include "Resources/mimxSnapshot.h"
 #include "Resources/mimxPerspective.h"
 #include "Resources/mimxParallel.h"
@@ -157,6 +159,15 @@ vtkKWMimxMainWindow::~vtkKWMimxMainWindow()
         if (this->DisplayPropertyDialog )
           this->DisplayPropertyDialog->Delete();
 }
+
+
+// initialize the MRML lists for the scene to use for interaction and storage
+void vtkKWMimxMainWindow::SetMRMLSceneForStorage(vtkMRMLScene* scene)
+{
+  this->SavedMRMLScene = scene;
+}
+
+
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::CreateWidget()
 {
@@ -282,6 +293,8 @@ void vtkKWMimxMainWindow::CreateWidget()
       }
       this->MainUserInterfacePanel->SetParent(this->GetMainPanelFrame());
       this->MainUserInterfacePanel->SetApplication(this->GetApplication());
+      // ***
+      this->MainUserInterfacePanel->SetMRMLSceneForStorage(this->SavedMRMLScene);
       this->MainUserInterfacePanel->Create();
       this->MainUserInterfacePanel->SetBorderWidth(3);
       this->MainUserInterfacePanel->SetReliefToGroove();

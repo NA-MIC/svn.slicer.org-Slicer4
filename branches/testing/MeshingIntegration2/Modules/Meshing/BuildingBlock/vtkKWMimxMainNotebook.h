@@ -51,6 +51,9 @@ class vtkKWMimxQualityMenuGroup;
 class vtkKWMimxMaterialPropertyMenuGroup;
 class vtkKWMimxBoundaryConditionsMenuGroup;
 
+//***
+class vtkMRMLScene;
+
 
 class vtkKWMimxMainNotebook : public vtkKWCompositeWidget
 {
@@ -69,9 +72,14 @@ public:
   vtkGetObjectMacro(FEMeshMenuGroup, vtkKWMimxFEMeshMenuGroup);
   vtkGetObjectMacro(QualityMenuGroup, vtkKWMimxQualityMenuGroup);
   vtkSetObjectMacro(DoUndoTree, vtkLinkedListWrapperTree);
+  
+  //***
+  void SetMRMLSceneForStorage(vtkMRMLScene* scene);
+  
 protected:
         vtkKWMimxMainNotebook();
         ~vtkKWMimxMainNotebook();
+        vtkMRMLScene *SavedMRMLScene;
   void SetLists();
         virtual void CreateWidget();
         vtkKWUserInterfacePanel *Notebook;

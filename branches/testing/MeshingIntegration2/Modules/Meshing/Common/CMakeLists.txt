@@ -28,8 +28,12 @@ SET ( LIB_SRCS
     #mimxRegisterBSplineFilter.cxx 
     #mimxTransformIO.cxx 
     mimxCheckTypeOfFile.cxx
+    # container types
     vtkContainer.cxx
     vtkLinkedListWrapper.cxx
+    vtkLinkedListWrapperTree.cxx
+    vtkMRMLFESurfaceNode.cxx
+    vtkFESurfaceList.cxx
     vtkMimxCurve.cxx
     vtkMimxSTLSource.cxx
     vtkMimxUGrid.cxx
@@ -49,8 +53,7 @@ SET ( LIB_SRCS
     vtkMimxUnstructuredGridActor.cxx
     vtkMimxErrorCallback.cxx
     vtkMimxImageActor.cxx
-#    vtkMimxInteractorStyleUser.cxx
-    vtkLinkedListWrapperTree.cxx  
+#    vtkMimxInteractorStyleUser.cxx 
     vtkMimxColorCodeMeshSeedActor.cxx
 )
 
@@ -58,21 +61,22 @@ SET_SOURCE_FILES_PROPERTIES(
   mimxCheckTypeOfFile.cxx
   vtkMimxActorBase.cxx
   vtkMimxMeshActor.cxx
-  vtkLinkedListWrapper.cxx
   vtkMimxSTLSource.cxx
   vtkMimxUGrid.cxx
   vtkMimxBoundingBoxSource.cxx
   vtkMimxErrorCallback.cxx
   vtkMimxImageActor.cxx
-  vtkLinkedListWrapperTree.cxx
   vtkMimxMeshSeed.cxx
   vtkMimxMergeNodesPointAndCellData.cxx
   vtkMimxCreateIntervertebralDiscElementSets.cxx
   vtkMimxApplyNodeElementNumbers.cxx
   vtkContainer.cxx
+  vtkLinkedListWrapper.cxx
+  vtkLinkedListWrapperTree.cxx
+  vtkFESurfaceList.cxx
   vtkMimxSurfacePolyDataActor.cxx
   vtkMimxUnstructuredGridActor.cxx
-  vtkMimxCircle.cxx
+  vtkMimxCurve.cxx
   WRAP_EXCLUDE
   )
 
@@ -109,11 +113,10 @@ TARGET_LINK_LIBRARIES(${LIB_NAME}
   ITKIO
   ITKAlgorithms
   ${KWWidgets_LIBRARIES}
+  MRML
   )
 
-IF(BUILD_SHARED_LIBS)
-  INSTALL_TARGETS(${SLICER3_LIB_INSTALL_DIR} ${LIB_NAME})
-ENDIF(BUILD_SHARED_LIBS)
+
 
 
 

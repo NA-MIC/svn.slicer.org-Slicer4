@@ -81,6 +81,7 @@ vtkKWMimxSurfaceMenuGroup::vtkKWMimxSurfaceMenuGroup()
         this->OperationMenuButton = NULL;
         this->TypeMenuButton = NULL;
         this->SurfaceList = vtkLinkedListWrapper::New();
+ 
 //  this->MimxViewProperties = NULL;
   this->FileBrowserDialog = NULL;
   this->SaveSTLGroup = NULL;
@@ -116,6 +117,18 @@ vtkKWMimxSurfaceMenuGroup::~vtkKWMimxSurfaceMenuGroup()
   if(this->CreateSurfaceFromContourGroup)
           this->CreateSurfaceFromContourGroup->Delete();
 }
+
+
+
+// initialize the MRML lists for the scene to use for interaction and storage
+void vtkKWMimxSurfaceMenuGroup::SetMRMLSceneForStorage(vtkMRMLScene* scene)
+{
+    this->SurfaceList->SetMRMLSceneForStorage(scene); 
+}
+
+
+
+
 //----------------------------------------------------------------------------
 void vtkKWMimxSurfaceMenuGroup::CreateWidget()
 {

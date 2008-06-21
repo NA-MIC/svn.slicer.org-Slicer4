@@ -116,7 +116,7 @@ void vtkMeshingWorkflowGUI::AddGUIObservers ( )
 //    this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 //    this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 //    this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-
+    this->ApplyButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 }
 
 
@@ -125,7 +125,7 @@ void vtkMeshingWorkflowGUI::AddGUIObservers ( )
 void vtkMeshingWorkflowGUI::RemoveGUIObservers ( )
 {
     // Fill in 
-    //this->ApplyButton->RemoveObservers ( vtkCommand::ModifiedEvent,  (vtkCommand *)this->GUICallbackCommand );
+    this->ApplyButton->RemoveObservers ( vtkCommand::ModifiedEvent,  (vtkCommand *)this->GUICallbackCommand );
 }
 
 //---------------------------------------------------------------------------
@@ -133,59 +133,17 @@ void vtkMeshingWorkflowGUI::ProcessGUIEvents ( vtkObject *caller,
                                            unsigned long event,
                                            void *callData ) 
 {
-//  char tempstr[256], commandStr[128];
-//  vtkKWMenu *m = vtkKWMenu::SafeDownCast(caller);
-//  cout << "FE callback received!" << endl;
+  char tempstr[256], commandStr[128];
+  vtkKWMenu *m = vtkKWMenu::SafeDownCast(caller);
+  vtkKWPushButton *b = vtkKWPushButton::SafeDownCast(caller);
+
+  cout << "FE callback received!" << endl;
 //    
-//  // process events on the object menu
-//  if ( m == this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu() ) 
-//  {
-//      cout << "callback on FE ObjectMenuButton item " << endl;
-//      for (int i=0; i<m->GetNumberOfItems(); i++)
-//      {
-//          cout << "item " << i << "has value: " << m->GetItemSelectedState(i) << "command: " << m->GetItemCommand(i) << endl;
-//          strncpy(tempstr,m->GetItemCommand(i),255); 
-//          strtok(tempstr," "); 
-//          strncpy(commandStr,strtok(NULL,"\0"),127);
-//          cout << "command isolated was:" << commandStr << endl;
-//          if(!(strcmp(commandStr,"BBMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->BBMenuCallback(); break;}
-//          if(!(strcmp(commandStr,"BBMeshSeedMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->BBMeshSeedMenuCallback(); break;}
-//          if(!(strcmp(commandStr,"FEMeshMenuCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->FEMeshMenuCallback(); break;}
-//      }
-//    
-//  // process events on the operation menu       
-//  } else if (m == this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu() )
-//  {
-//     
-//      cout << "callback on FE OperationMenuButton item " << endl;
-//      for (int i=0; i<m->GetNumberOfItems(); i++)
-//      {
-//          strncpy(tempstr,m->GetItemCommand(i),255); 
-//          strtok(tempstr," "); 
-//          strncpy(commandStr,strtok(NULL,"\0"),127);
-//          if(!(strcmp(commandStr,"LoadBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->LoadBBCallback(); break;}
-//          if(!(strcmp(commandStr,"SaveBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SaveBBCallback(); break;}
-//          if(!(strcmp(commandStr,"CreateBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateBBCallback(); break;}
-//          if(!(strcmp(commandStr,"DeleteBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->DeleteBBCallback(); break;}
-//          if(!(strcmp(commandStr,"EditBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->EditBBCallback(); break;}
-//      }
-//
-//  // process operations on the type menu
-//  } else if (m == this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu() )
-//  {
-//      cout << "callback on FE TypeMenuButton item " << endl;
-//      for (int i=0; i<m->GetNumberOfItems(); i++)
-//      {
-//          strncpy(tempstr,m->GetItemCommand(i),255); 
-//          strtok(tempstr," "); 
-//          strncpy(commandStr,strtok(NULL,"\0"),127);
-//          if(!(strcmp(commandStr,"LoadVTKBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->LoadVTKBBCallback(); break;}
-//          if(!(strcmp(commandStr,"CreateBBFromBoundsCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateBBFromBoundsCallback(); break;}
-//          if(!(strcmp(commandStr,"CreateFEMeshFromBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->CreateFEMeshFromBBCallback(); break;}
-//          if(!(strcmp(commandStr,"SaveVTKBBCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SaveVTKBBCallback(); break;}
-//          if(!(strcmp(commandStr,"SmoothLaplacianFEMeshCallback")) && m->GetItemSelectedState(i)) {this->SavedMimxFEMenuGroup->SmoothLaplacianFEMeshCallback(); break;}
-//      }
-//  }
+  // process events on the object menu
+  if (b == this->ApplyButton && event == vtkKWPushButton::InvokedEvent ) 
+      {
+      this->BuildSeparateFEMeshGUI();
+      }
 
 }
 
@@ -236,8 +194,15 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
   app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                 moduleFrame->GetWidgetName(), this->UIPanel->GetPageWidget("MeshingWorkflow")->GetWidgetName());
   
-
-  this->BuildSeparateFEMeshGUI();
+   this->ApplyButton = vtkKWPushButton::New();
+   this->ApplyButton->SetParent( moduleFrame->GetFrame() );
+   this->ApplyButton->Create();
+   this->ApplyButton->SetText("Open FE Meshing Interface");
+   this->ApplyButton->SetWidth ( 8 );
+   //this->ApplyButton->SetCommand(this, "BuildSeparateFEMeshGUI");
+   app->Script("pack %s -side top -anchor e -padx 20 -pady 10", 
+                 this->ApplyButton->GetWidgetName());
+ 
 
      
 }
@@ -251,6 +216,7 @@ void vtkMeshingWorkflowGUI::BuildSeparateFEMeshGUI ( )
     
     vtkKWMimxMainWindow *mainwin = vtkKWMimxMainWindow::New();
   mainwin->SetTitle("IA-FEMesh 1.0 Beta");
+  mainwin->SetMRMLSceneForStorage(this->GetLogic()->GetMRMLScene());
   app->AddWindow(mainwin);
   mainwin->SupportHelpOn();
   mainwin->SecondaryPanelVisibilityOff();

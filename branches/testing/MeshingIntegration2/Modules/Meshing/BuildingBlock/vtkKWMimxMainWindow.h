@@ -43,6 +43,7 @@ class vtkLinkedListWrapperTree;
 class vtkKWLoadSaveDialog;
 class vtkKWMimxMainUserInterfacePanel;
 class vtkKWMimxDisplayPropertiesGroup;
+class vtkMRMLScene;
 
 
 class vtkKWMimxMainWindow : public vtkKWWindow
@@ -72,6 +73,9 @@ public:
         void SetApplicationFontFamily( const char *font );
         void SetApplicationFontSize( const char *size );
         
+        // *** pass MRML pointer through to lists
+        void SetMRMLSceneForStorage(vtkMRMLScene* scene);
+        
         //void ViewWindowProperties();
         //void CaptureWindowSnapshot();
         //void UpdateViewXaxis();
@@ -94,6 +98,7 @@ protected:
         vtkKWLoadSaveDialog *LoadSaveDialog;
         vtkKWMimxMainUserInterfacePanel *MainUserInterfacePanel;
         vtkKWMimxDisplayPropertiesGroup *DisplayPropertyDialog;
+        vtkMRMLScene *SavedMRMLScene;
         
 private:
         vtkKWMimxMainWindow(const vtkKWMimxMainWindow&);   // Not implemented.
