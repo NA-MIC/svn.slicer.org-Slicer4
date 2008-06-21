@@ -49,6 +49,10 @@
 
 #include "vtkLinkedList.txx"
 
+// store using the MRML-backed lists, do declare it here
+class vtkFESurfaceList;
+class vtkMRMLScene;
+
 #ifndef __vtkLinkedListWrapper_h
 #define __vtkLinkedListWrapper_h
 
@@ -62,9 +66,17 @@ public:
   vtkMimxActorBase* GetItem(vtkIdType);
   int GetNumberOfItems();
   int RemoveItem(int );
+  
+  // save reference to the scene to be used for storage 
+   void SetMRMLSceneForStorage(vtkMRMLScene* scene);
+   
 protected:
   vtkLinkedListWrapper();
   virtual ~vtkLinkedListWrapper();
+  
+  
+  // keep a copy of MRML lists and make duplicate entries into these lists
+  vtkFESurfaceList *MRMLSurfaceList;
 private:
   vtkLinkedListWrapper(const vtkLinkedListWrapper&); // Not implemented
   void operator=(const vtkLinkedListWrapper&); // Not implemented

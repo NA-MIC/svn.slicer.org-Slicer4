@@ -89,6 +89,8 @@ protected:
   vtkKWLoadSaveDialog *LoadSaveDialog;
   vtkKWMimxMainUserInterfacePanel *MainUserInterfacePanel;
   vtkKWMimxDisplayPropertiesGroup *DisplayPropertyDialog;
+  vtkKWPushButton* ApplyButton;
+  
 
   // callback to create the separate UI
   void BuildSeparateFEMeshGUI();

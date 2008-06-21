@@ -91,6 +91,14 @@ vtkKWMimxMainUserInterfacePanel::~vtkKWMimxMainUserInterfacePanel()
   if(this->DisplayPropertiesGroup)
           this->DisplayPropertiesGroup->Delete();
 }
+
+
+// initialize the MRML lists for the scene to use for interaction and storage
+void vtkKWMimxMainUserInterfacePanel::SetMRMLSceneForStorage(vtkMRMLScene* scene)
+{
+  this->SavedMRMLScene = scene;
+}
+
 //----------------------------------------------------------------------------
 void vtkKWMimxMainUserInterfacePanel::CreateWidget()
 {

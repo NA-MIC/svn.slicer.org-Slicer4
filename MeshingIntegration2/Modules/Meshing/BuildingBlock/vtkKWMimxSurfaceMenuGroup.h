@@ -57,6 +57,7 @@ public:
   vtkSetObjectMacro(BBoxList, vtkLinkedListWrapper);
   vtkSetObjectMacro(FEMeshList, vtkLinkedListWrapper);
   void UpdateObjectLists();
+  void SetMRMLSceneForStorage(vtkMRMLScene* scene);
 protected:
         vtkKWMimxSurfaceMenuGroup();
         ~vtkKWMimxSurfaceMenuGroup();

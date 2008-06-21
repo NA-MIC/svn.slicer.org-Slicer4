@@ -51,6 +51,7 @@ class vtkKWMimxMainNotebook;
 class vtkKWMultiColumnListWithScrollbars;
 class vtkKWMimxViewPropertiesGroup;
 class vtkKWMimxDisplayPropertiesGroup;
+class vtkMRMLScene;
 
 
 class vtkKWMimxMainUserInterfacePanel : public vtkKWCompositeWidget
@@ -71,6 +72,9 @@ public:
   vtkGetObjectMacro(MainFrame, vtkKWFrameWithLabel);
   vtkSetObjectMacro(MultiColumnList, vtkKWMultiColumnListWithScrollbars);
   vtkGetObjectMacro(ViewPropertiesGroup, vtkKWMimxViewPropertiesGroup);
+  // *** pass MRML pointer through to lists
+   void SetMRMLSceneForStorage(vtkMRMLScene* scene);
+   
 protected:
         vtkKWMimxMainUserInterfacePanel();
         ~vtkKWMimxMainUserInterfacePanel();
@@ -84,6 +88,7 @@ protected:
         vtkKWMimxViewPropertiesGroup *ViewPropertiesGroup;
         vtkKWMultiColumnListWithScrollbars *MultiColumnList;
         vtkKWMimxDisplayPropertiesGroup *DisplayPropertiesGroup;
+        vtkMRMLScene *SavedMRMLScene;
 private:
   vtkKWMimxMainUserInterfacePanel(const vtkKWMimxMainUserInterfacePanel&); // Not implemented
   void operator=(const vtkKWMimxMainUserInterfacePanel&); // Not implemented

@@ -58,6 +58,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include <vtksys/stl/list>
 #include <vtksys/stl/algorithm>
 
+//***
+#include "vtkMRMLScene.h"
 
 
 // define the option types
@@ -127,6 +129,17 @@ vtkKWMimxMainNotebook::~vtkKWMimxMainNotebook()
   }
   
 }
+
+
+
+// initialize the MRML lists for the scene to use for interaction and storage
+void vtkKWMimxMainNotebook::SetMRMLSceneForStorage(vtkMRMLScene* scene)
+{
+  this->SavedMRMLScene = scene;
+}
+
+
+
 //----------------------------------------------------------------------------
 void vtkKWMimxMainNotebook::CreateWidget()
 {
@@ -216,6 +229,8 @@ void vtkKWMimxMainNotebook::CreateWidget()
         this->SurfaceMenuGroup->SetMimxMainWindow(this->GetMimxMainWindow());
         this->SurfaceMenuGroup->SetApplication(this->GetApplication());
         this->SurfaceMenuGroup->SetDoUndoTree(this->DoUndoTree);
+        //***
+        this->SurfaceMenuGroup->SetMRMLSceneForStorage(this->SavedMRMLScene);
         this->SurfaceMenuGroup->Create();
         this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 5", 
                 this->SurfaceMenuGroup->GetWidgetName());
