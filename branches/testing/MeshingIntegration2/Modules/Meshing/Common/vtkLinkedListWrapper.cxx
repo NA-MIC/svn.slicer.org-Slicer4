@@ -40,8 +40,9 @@ vtkLinkedListWrapper::~vtkLinkedListWrapper()
 
 int vtkLinkedListWrapper::AppendItem(vtkMimxActorBase* actor)
 {
-        return this->List->AppendItem(actor);
+
         this->MRMLSurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::SafeDownCast(actor));
+        return this->List->AppendItem(actor);
 }
 
 vtkMimxActorBase* vtkLinkedListWrapper::GetItem(vtkIdType id)
@@ -56,8 +57,8 @@ int vtkLinkedListWrapper::GetNumberOfItems()
 
 int vtkLinkedListWrapper::RemoveItem(int Num)
 {
-        return this->List->RemoveItem(Num);
-        this->MRMLSurfaceList->RemoveItem(Num);
+   this->MRMLSurfaceList->RemoveItem(Num);
+   return this->List->RemoveItem(Num);
 }
 
 // initialize the MRML lists for the scene to use for interaction and storage

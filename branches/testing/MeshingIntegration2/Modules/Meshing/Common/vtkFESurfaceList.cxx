@@ -48,7 +48,9 @@ void vtkFESurfaceList::SetMRMLSceneForStorage(vtkMRMLScene* scene)
     this->savedMRMLScene = scene;
     // each MRML node class type has to be registered with the scene
     vtkMRMLFESurfaceNode* newMRMLNode = vtkMRMLFESurfaceNode::New();
-     this->savedMRMLScene->RegisterNodeClass( newMRMLNode );
+    // this->savedMRMLScene->RegisterNodeClass( newMRMLNode );
+    vtkMRMLScene::GetActiveScene()->RegisterNodeClass(newMRMLNode);
+    this->savedMRMLScene = vtkMRMLScene::GetActiveScene();
      newMRMLNode->Delete();
   
 }
