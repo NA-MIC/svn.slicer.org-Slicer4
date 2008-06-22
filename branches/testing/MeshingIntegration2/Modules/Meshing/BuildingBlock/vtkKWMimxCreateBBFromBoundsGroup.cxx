@@ -183,19 +183,38 @@ int vtkKWMimxCreateBBFromBoundsGroup::CreateBBFromBoundsApplyCallback()
     bbox->Update();
     if (!callback->GetState())
     {
-      this->BBoxList->AppendItem(vtkMimxUnstructuredGridActor::New());
-          // for do and undo tree
-          this->DoUndoTree->AppendItem(new Node);
-          int currentitem = this->BBoxList->GetNumberOfItems()-1;
-          this->DoUndoTree->GetItem(currentitem)->Parent = NULL;
-          this->DoUndoTree->GetItem(currentitem)->Child = NULL;
-          this->DoUndoTree->GetItem(currentitem)->Data = 
-                  vtkMimxUnstructuredGridActor::SafeDownCast(
-                  this->BBoxList->GetItem(this->BBoxList->GetNumberOfItems()-1));
-          ////    
-          this->BBoxList->GetItem(this->BBoxList->GetNumberOfItems()-1)->
-                   SetDataType(ACTOR_BUILDING_BLOCK);
-      vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
+//      this->BBoxList->AppendItem(vtkMimxUnstructuredGridActor::New());
+//          // for do and undo tree
+//          this->DoUndoTree->AppendItem(new Node);
+//          int currentitem = this->BBoxList->GetNumberOfItems()-1;
+//          this->DoUndoTree->GetItem(currentitem)->Parent = NULL;
+//          this->DoUndoTree->GetItem(currentitem)->Child = NULL;
+//          this->DoUndoTree->GetItem(currentitem)->Data = 
+//                  vtkMimxUnstructuredGridActor::SafeDownCast(
+//                  this->BBoxList->GetItem(this->BBoxList->GetNumberOfItems()-1));
+//          ////    
+//          this->BBoxList->GetItem(this->BBoxList->GetNumberOfItems()-1)->
+//                   SetDataType(ACTOR_BUILDING_BLOCK);
+
+        // set the datatype before adding it to the list.  Needed for MRML-backed list
+        // to select the right node type. 
+        
+        vtkMimxUnstructuredGridActor* bboxactor = vtkMimxUnstructuredGridActor::New();
+        bboxactor->SetDataType(ACTOR_BUILDING_BLOCK);
+        this->BBoxList->AppendItem(bboxactor);
+
+        // this is the first bblock, since it was created from bounds.  No edits have
+        // been done, so this undo entry has no parents or children yet. 
+        
+        this->DoUndoTree->AppendItem(new Node);
+        int currentitem = this->BBoxList->GetNumberOfItems()-1;
+        this->DoUndoTree->GetItem(currentitem)->Parent = NULL;
+        this->DoUndoTree->GetItem(currentitem)->Child = NULL;
+        this->DoUndoTree->GetItem(currentitem)->Data = 
+                          vtkMimxUnstructuredGridActor::SafeDownCast(
+                          this->BBoxList->GetItem(this->BBoxList->GetNumberOfItems()-1));       
+        
+        vtkMimxUnstructuredGridActor::SafeDownCast(this->BBoxList->GetItem(
         this->BBoxList->GetNumberOfItems()-1))->GetDataSet()->DeepCopy(bbox->GetOutput());
       this->Count++;
     /* Assign Mesh Seeds - Should be an Application Configured Parameter*/

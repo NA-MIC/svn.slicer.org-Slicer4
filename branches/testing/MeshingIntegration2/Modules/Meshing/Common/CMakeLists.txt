@@ -34,6 +34,13 @@ SET ( LIB_SRCS
     vtkLinkedListWrapperTree.cxx
     vtkMRMLFESurfaceNode.cxx
     vtkFESurfaceList.cxx
+    vtkMRMLFiniteElementBuildingBlockNode.cxx
+    vtkMRMLFiniteElementBuildingBlockDisplayNode.cxx
+    vtkMRMLFiniteElementMeshDisplayNode.cxx
+    vtkFiniteElementBuildingBlockList.cxx
+    vtkMRMLFiniteElementMeshNode.cxx
+    vtkFiniteElementMeshList.cxx
+    # end container types
     vtkMimxCurve.cxx
     vtkMimxSTLSource.cxx
     vtkMimxUGrid.cxx
@@ -74,6 +81,9 @@ SET_SOURCE_FILES_PROPERTIES(
   vtkLinkedListWrapper.cxx
   vtkLinkedListWrapperTree.cxx
   vtkFESurfaceList.cxx
+  vtkMRMLFiniteElementBuildingBlockNode.cxx
+  vtkMRMLFiniteElementBuildingBlockDisplayNode.cxx
+  vtkFiniteElementBuildingBlockList.cxx
   vtkMimxSurfacePolyDataActor.cxx
   vtkMimxUnstructuredGridActor.cxx
   vtkMimxCurve.cxx

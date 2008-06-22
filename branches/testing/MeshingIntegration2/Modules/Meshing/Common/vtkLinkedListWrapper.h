@@ -42,6 +42,11 @@
 // .SECTION See Also
 // vtkAbstractIterator, vtkAbstractList, vtkAbstractMap
 
+// Updates:
+//   The interface stayed the same, but the implementation changed
+//   to enable these lists to store data in the MRML tree as well as
+//   the local lists.  
+
 #include "vtkObject.h"
 
 #include "vtkMimxActorBase.h"
@@ -51,6 +56,8 @@
 
 // store using the MRML-backed lists, do declare it here
 class vtkFESurfaceList;
+class vtkFiniteElementBuildingBlockList;
+class vtkFiniteElementMeshList;
 class vtkMRMLScene;
 
 #ifndef __vtkLinkedListWrapper_h
@@ -59,9 +66,15 @@ class vtkMRMLScene;
 class vtkLinkedListWrapper : public vtkObject
 {
 public:
-        static vtkLinkedListWrapper *New();
+  static vtkLinkedListWrapper *New();
   vtkTypeMacro(vtkLinkedListWrapper, vtkObject);
   vtkLinkedList<vtkMimxActorBase*> *List;
+  
+  // this interface is abstract.  However, it will be used for
+  // surface dataypes, buildingBlocks, and mesh datatypes.  Inside
+  // the implementation, a test will be made on the datatype value
+  // set in the actor to decide how it should be stored in MRML. 
+  
   int AppendItem(vtkMimxActorBase*);
   vtkMimxActorBase* GetItem(vtkIdType);
   int GetNumberOfItems();
@@ -75,8 +88,11 @@ protected:
   virtual ~vtkLinkedListWrapper();
   
   
-  // keep a copy of MRML lists and make duplicate entries into these lists
+  // keep a copy of MRML lists and make duplicate entries into these lists.
   vtkFESurfaceList *MRMLSurfaceList;
+  vtkFiniteElementBuildingBlockList *MRMLBBlockList;
+  vtkFiniteElementMeshList *MRMLMeshList;
+  
 private:
   vtkLinkedListWrapper(const vtkLinkedListWrapper&); // Not implemented
   void operator=(const vtkLinkedListWrapper&); // Not implemented

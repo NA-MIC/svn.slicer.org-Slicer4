@@ -353,25 +353,41 @@ int vtkKWMimxCreateFEMeshFromBBGroup::CreateFEMeshFromBBApplyCallback()
                 apply->ApplyElementNumbers();
                 delete apply;
         
-    vtkMimxMeshActor *meshActor = vtkMimxMeshActor::New();
-    this->FEMeshList->AppendItem( meshActor );
-          meshActor->SetDataSet( equivalance->GetOutput() );
-                meshActor->SetRenderer( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer() );
-                meshActor->SetInteractor( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderWindowInteractor() );
-  
-        vtkIntArray *BoundCond = vtkIntArray::New();
-        BoundCond->SetNumberOfValues(1);
-        BoundCond->SetValue(0,1);
-        BoundCond->SetName("Boundary_Condition_Number_Of_Steps");
-        equivalance->GetOutput()->GetFieldData()->AddArray(BoundCond);
-        BoundCond->Delete();
-    this->Count++;
-    vtkMimxMeshActor::SafeDownCast(this->FEMeshList->GetItem(
-        this->FEMeshList->GetNumberOfItems()-1))->SetObjectName("FEMeshFromBB_",Count);
-    //vtkMimxMeshActor::SafeDownCast(this->FEMeshList->GetItem(
-    //    this->FEMeshList->GetNumberOfItems()-1))->GetDataSet()->Modified();
-    //this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(
-    //    this->FEMeshList->GetItem(this->FEMeshList->GetNumberOfItems()-1)->GetActor());
+//    vtkMimxMeshActor *meshActor = vtkMimxMeshActor::New();
+//    this->FEMeshList->AppendItem( meshActor );
+//          meshActor->SetDataSet( equivalance->GetOutput() );
+//                meshActor->SetRenderer( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer() );
+//                meshActor->SetInteractor( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderWindowInteractor() );
+//  
+//        vtkIntArray *BoundCond = vtkIntArray::New();
+//        BoundCond->SetNumberOfValues(1);
+//        BoundCond->SetValue(0,1);
+//        BoundCond->SetName("Boundary_Condition_Number_Of_Steps");
+//        equivalance->GetOutput()->GetFieldData()->AddArray(BoundCond);
+//        BoundCond->Delete();
+//    this->Count++;
+//    vtkMimxMeshActor::SafeDownCast(this->FEMeshList->GetItem(
+//        this->FEMeshList->GetNumberOfItems()-1))->SetObjectName("FEMeshFromBB_",Count);
+ 
+           // redo th order to have actor filled  before entry into the list
+                
+           vtkMimxMeshActor *meshActor = vtkMimxMeshActor::New();
+           meshActor->SetDataSet( equivalance->GetOutput() );
+           meshActor->SetRenderer( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer() );
+           meshActor->SetInteractor( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderWindowInteractor() );
+      
+            vtkIntArray *BoundCond = vtkIntArray::New();
+            BoundCond->SetNumberOfValues(1);
+            BoundCond->SetValue(0,1);
+            BoundCond->SetName("Boundary_Condition_Number_Of_Steps");
+            equivalance->GetOutput()->GetFieldData()->AddArray(BoundCond);
+            BoundCond->Delete();
+        this->Count++;
+        meshActor->SetObjectName("FEMeshFromBB_",Count);
+        this->FEMeshList->AppendItem( meshActor );
+   
+    
+    
     this->GetMimxMainWindow()->GetRenderWidget()->Render();
     this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
           this->GetMimxMainWindow()->GetViewProperties()->AddObjectList(

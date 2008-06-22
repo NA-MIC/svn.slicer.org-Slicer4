@@ -312,9 +312,18 @@ void vtkKWMimxSurfaceMenuGroup::LoadSTLSurfaceCallback()
                 reader->Update();
                 if(!callback->GetState())
                 {
-                        this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
-                        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->
-                                SetDataType(ACTOR_POLYDATA_SURFACE);
+      
+                         // original code that was replaced:
+//                        this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
+//                        this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->
+//                                SetDataType(ACTOR_POLYDATA_SURFACE);
+ 
+                    // *** need to set values in actors BEFORE putting them in the list, don't
+                    // assume they are local and you can poke values in them afterwards
+                    vtkMimxSurfacePolyDataActor* newactor = vtkMimxSurfacePolyDataActor::New();
+                    newactor->SetDataType(ACTOR_POLYDATA_SURFACE);
+                    this->SurfaceList->AppendItem(newactor);
+                    
                         this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFilePath(
                                 this->FileBrowserDialog->GetFileName());
                         this->SurfaceList->GetItem(this->SurfaceList->GetNumberOfItems()-1)->SetFileName(
