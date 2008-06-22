@@ -47,25 +47,34 @@ void vtkFESurfaceList::SetMRMLSceneForStorage(vtkMRMLScene* scene)
 {
     this->savedMRMLScene = scene;
     // each MRML node class type has to be registered with the scene
+
     vtkMRMLFESurfaceNode* newMRMLNode = vtkMRMLFESurfaceNode::New();
     // this->savedMRMLScene->RegisterNodeClass( newMRMLNode );
     vtkMRMLScene::GetActiveScene()->RegisterNodeClass(newMRMLNode);
     this->savedMRMLScene = vtkMRMLScene::GetActiveScene();
      newMRMLNode->Delete();
+
   
 }
 
 
 int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
 {
+    
+    static int registered=0;
  
   // allocate a new MRML node for this item and add it to the scene
    if (this->savedMRMLScene)
    {
      // create a node to contain the geometry 
      vtkMRMLFESurfaceNode* newMRMLNode = vtkMRMLFESurfaceNode::New();
-     //this->savedMRMLScene->RegisterNodeClass( newMRMLNode );
      
+     // if this is the first entry, then initialize the MRML scene
+     if (!registered)
+     {
+       this->savedMRMLScene->RegisterNodeClass( newMRMLNode );
+       registered=1;
+     }
      // copy the state variables to the MRML node
      newMRMLNode->SetFileName(actor->GetFileName());
      newMRMLNode->SetFilePath(actor->GetFilePath());
@@ -89,6 +98,9 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
       this->savedMRMLScene->AddNode(newMRMLNode);
       
      cout << "copied data to MRML node " << endl;
+   }
+   else {
+       cout << "Attempted save to MRML, but scene not initialized" << endl;
    }
   return 0;
 }
