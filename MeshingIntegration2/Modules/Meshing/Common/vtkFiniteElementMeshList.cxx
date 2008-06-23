@@ -64,9 +64,10 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
      newMRMLNode->SetFileName("filename");
      newMRMLNode->SetFilePath("filepath");
      newMRMLNode->SetDataType(actor->GetDataType());
-     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
-     ugrid->DeepCopy(actor->GetDataSet());
-     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
+//     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
+//     ugrid->DeepCopy(actor->GetDataSet());
+//     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
+     newMRMLNode->SetAndObserveUnstructuredGrid(actor->GetDataSet());
      
      // now add the display and storage nodes
       vtkMRMLFiniteElementMeshDisplayNode* dispNode = vtkMRMLFiniteElementMeshDisplayNode::New();
