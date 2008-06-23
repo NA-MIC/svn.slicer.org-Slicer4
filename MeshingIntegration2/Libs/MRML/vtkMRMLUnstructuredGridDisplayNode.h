@@ -18,20 +18,21 @@
 // or by scalar invariants), display on/off for tensor glyphs and display of 
 // trajectory as a line or tube.
 //
-
+ 
 #ifndef __vtkMRMLUnstructuredGridDisplayNode_h
 #define __vtkMRMLUnstructuredGridDisplayNode_h
 
 #include <string>
 
-#include "vtkPolyData.h"
+#include "vtkUnstructuredGrid.h"
 #include "vtkShrinkPolyData.h"
 #include "vtkGeometryFilter.h"
 
 #include "vtkMRML.h"
-#include "vtkMRMLModelDisplayNode.h"
-#include "vtkMRMLUnstructuredGridNode.h"
+#include "vtkMRMLDisplayNode.h"
+//#include "vtkMRMLUnstructuredGridNode.h"
 
+class vtkMRMLUnstructuredGridNode;
 
 class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplayNode
 {
@@ -70,7 +71,7 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
                                    void * /*callData*/ );
   // Description:
   // Sets UnstructuredGrid from UnstructuredGrid model node
-  void SetUnstructuredGrid(vtkUnstructuredGrid *grid)
+ virtual void SetUnstructuredGrid(vtkUnstructuredGrid *grid)
   {
     if (this->GeometryFilter)
       {
@@ -80,18 +81,18 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
 
   // Description:
   // Gets PlyData converted from UnstructuredGrid 
-  virtual vtkPolyData* GetPolyData()
-  {
-    if (this->ShrinkPolyData)
-      {
-      this->ShrinkPolyData->Update();
-      return this->ShrinkPolyData->GetOutput();
-      }
-    else
-      {
-      return NULL;
-      }
-  }
+//  virtual vtkPolyData* GetPolyData()
+//  {
+//    if (this->ShrinkPolyData)
+//      {
+//      this->ShrinkPolyData->Update();
+//      return this->ShrinkPolyData->GetOutput();
+//      }
+//    else
+//      {
+//      return NULL;
+//      }
+//  }
    
   // Description:
   // Update the pipeline based on this node attributes

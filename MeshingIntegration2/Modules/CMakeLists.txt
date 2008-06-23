@@ -19,6 +19,7 @@ subdirs(
   Tractography
   VolumeRendering
   Statistics
+  UnstructuredGrids
   )
 
 ## SLICES_DEBUG

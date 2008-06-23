@@ -51,6 +51,14 @@ vtkMRMLNode* vtkMRMLUnstructuredGridNode::CreateNodeInstance()
   return new vtkMRMLUnstructuredGridNode;
 }
 
+
+vtkMRMLUnstructuredGridDisplayNode* vtkMRMLUnstructuredGridNode::GetUnstructuredGridDisplayNode() 
+  {
+    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->GetDisplayNode());
+  }
+
+
+
 vtkMRMLUnstructuredGridNode::vtkMRMLUnstructuredGridNode()
 {
   this->UnstructuredGrid = NULL;
@@ -78,9 +86,24 @@ void vtkMRMLUnstructuredGridNode::PrintSelf(ostream& os, vtkIndent indent)
 void vtkMRMLUnstructuredGridNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-  //vtkMRMLUnstructuredGridNode *node = (vtkMRMLUnstructuredGridNode *) anode;
+  vtkMRMLUnstructuredGridNode *node = (vtkMRMLUnstructuredGridNode *) anode;
 
 }
+
+
+void vtkMRMLUnstructuredGridNode::ApplyTransform(vtkAbstractTransform* transform)
+{
+  vtkTransformFilter* transformFilter = vtkTransformFilter::New();
+  transformFilter->SetInput(this->GetUnstructuredGrid());
+  transformFilter->SetTransform(transform);
+  transformFilter->Update();
+
+//  this->SetAndObserveUnstructuredGrid(vtkUnstructuredGrid::SafeDownCast(transformFilter->GetOutput()));
+  this->GetUnstructuredGrid()->DeepCopy(transformFilter->GetOutput());
+
+  transformFilter->Delete();
+}
+
 
 //----------------------------------------------------------------------------
 void vtkMRMLUnstructuredGridNode::SetAndObserveUnstructuredGrid(vtkUnstructuredGrid *unstructuredGrid)
@@ -133,18 +156,5 @@ void vtkMRMLUnstructuredGridNode::ProcessMRMLEvents ( vtkObject *caller,
                                            void *callData )
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);
-}
-
-void vtkMRMLUnstructuredGridNode::ApplyTransform(vtkAbstractTransform* transform)
-{
-  vtkTransformFilter* transformFilter = vtkTransformFilter::New();
-  transformFilter->SetInput(this->GetUnstructuredGrid());
-  transformFilter->SetTransform(transform);
-  transformFilter->Update();
-
-//  this->SetAndObserveUnstructuredGrid(vtkUnstructuredGrid::SafeDownCast(transformFilter->GetOutput()));
-  this->GetUnstructuredGrid()->DeepCopy(transformFilter->GetOutput());
-
-  transformFilter->Delete();
 }
 
