@@ -59,6 +59,7 @@ vtkMRMLUnstructuredGridDisplayNode::vtkMRMLUnstructuredGridDisplayNode()
   this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
 }
 
+ 
 
 //----------------------------------------------------------------------------
 vtkMRMLUnstructuredGridDisplayNode::~vtkMRMLUnstructuredGridDisplayNode()
@@ -77,7 +78,7 @@ void vtkMRMLUnstructuredGridDisplayNode::WriteXML(ostream& of, int nIndent)
 
   vtkIndent indent(nIndent);
 
-  of << indent << " shrinkFactor =\"" << this->ShrinkFactor << "\"";
+  of << indent << " shrinkFactor =\"" << this->ShrinkFactor << "\" ";
 }
 
 

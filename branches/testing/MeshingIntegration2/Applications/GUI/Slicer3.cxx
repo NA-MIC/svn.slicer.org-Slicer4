@@ -41,6 +41,8 @@
 #include "vtkSlicerWindow.h"
 #include "vtkSlicerApplicationSettingsInterface.h"
 
+#include "vtkSlicerUnstructuredGridsGUI.h"
+#include "vtkSlicerUnstructuredGridsLogic.h"
 
 #include "vtkSlicerConfigure.h" // for VTKSLICER_CONFIGURATION_TYPES
 
@@ -82,6 +84,7 @@ extern "C" {
 //#define TCLMODULES_DEBUG
 //#define SLICES_DEBUG
 //#define MODELS_DEBUG
+//#define UGRIDS_DEBUG
 //#define VOLUMES_DEBUG
 //#define COLORS_DEBUG
 //#define FIDUCIALS_DEBUG
@@ -125,10 +128,16 @@ extern "C" {
 #include "vtkSlicerXNATPermissionPrompterWidget.h"
 #endif
 
-#ifndef MESHING_DEBUG
+#if !defined(MESHING_DEBUG)
 #include "vtkMeshingWorkflowLogic.h"
 #include "vtkMeshingWorkflowGUI.h"
 #endif
+
+#if !defined(UGRIDS_DEBUG) && defined(BUILD_MODULES)
+#include "vtkSlicerUnstructuredGridsLogic.h"
+#include "vtkSlicerUnstructuredGridsGUI.h"
+#endif
+
 
 //
 // note: always write to cout rather than cerr so log messages will
@@ -187,11 +196,16 @@ extern "C" int Scriptedmodule_Init(Tcl_Interp *interp);
 extern "C" int Volumes_Init(Tcl_Interp *interp);
 #endif
 
-#ifndef MESHING_DEBUG
+#if !defined( MESHING_DEBUG) 
 extern "C" int Meshingworkflow_Init(Tcl_Interp *interp);
 extern "C" int Mimxcommon_Init(Tcl_Interp *interp);
 extern "C" int Buildingblock_Init(Tcl_Interp *interp);
 #endif
+
+#if !defined(UGRIDS_DEBUG) && defined(BUILD_MODULES)
+extern "C" int Unstructuredgrids_Init(Tcl_Interp *interp);
+#endif
+
 
 struct SpacesToUnderscores
 {
@@ -673,11 +687,17 @@ int Slicer3_main(int argc, char *argv[])
     Volumes_Init(interp);
 #endif
 
-#if !defined(MESHING_DEBUG) && defined(BUILD_MODULES)
+#if !defined(MESHING_DEBUG)
     Meshingworkflow_Init(interp);
     Mimxcommon_Init(interp);
     Buildingblock_Init(interp);
 #endif
+
+#if !defined(UGRIDS_DEBUG) && defined(BUILD_MODULES)
+    Unstructuredgrids_Init(interp);
+#endif
+
+
 
   // first call to GetInstance will create the Application
   // 
@@ -1124,6 +1144,28 @@ int Slicer3_main(int argc, char *argv[])
     slicerApp->AddModuleGUI ( modelsGUI );
 #endif
 
+ 
+#ifndef UGRIDS_DEBUG
+    slicerApp->SplashMessage("Initializing UGrids Module...");
+
+    // --- Ugrids module    
+    vtkSlicerUnstructuredGridsLogic *ugridsLogic = vtkSlicerUnstructuredGridsLogic::New ( );
+    ugridsLogic->SetAndObserveMRMLScene ( scene );
+    vtkSlicerUnstructuredGridsGUI *ugridsGUI = vtkSlicerUnstructuredGridsGUI::New ( );
+    ugridsGUI->SetApplication ( slicerApp );
+    ugridsGUI->SetApplicationGUI ( appGUI );
+    ugridsGUI->SetAndObserveApplicationLogic ( appLogic );
+    ugridsGUI->SetAndObserveMRMLScene ( scene );
+    ugridsGUI->SetModuleLogic ( ugridsLogic );
+    ugridsGUI->SetGUIName( "UnstructuredGrids" );
+    ugridsGUI->GetUIPanel()->SetName ( ugridsGUI->GetGUIName ( ) );
+    ugridsGUI->GetUIPanel()->SetUserInterfaceManager (appGUI->GetMainSlicerWindow()->GetMainUserInterfaceManager ( ) );
+    ugridsGUI->GetUIPanel()->Create ( );
+    slicerApp->AddModuleGUI ( ugridsGUI );
+#endif
+
+
+
 
 #ifndef FIDUCIALS_DEBUG
     slicerApp->SplashMessage("Initializing Fiducials Module...");
@@ -1403,7 +1445,7 @@ int Slicer3_main(int argc, char *argv[])
 
 
 
-#ifndef MESHING_DEBUG
+#if !defined(MESHING_DEBUG) 
     // --- Meshing Workflow filter module
     slicerApp->SplashMessage("Initializing Meshing Workflow Module...");
     vtkMeshingWorkflowGUI *meshingWorkflowGUI = vtkMeshingWorkflowGUI::New ( );

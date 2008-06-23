@@ -108,6 +108,10 @@ set(dir_list
   ${VolumeRenderingModule_BINARY_DIR}
   ${VolumeRenderingModule_Init_SOURCE_DIR}
   ${VolumeRenderingModule_Init_BINARY_DIR}
+  ${UnstructuredGrids_SOURCE_DIR}
+  ${UnstructuredGrids_BINARY_DIR}
+  ${UnstructuredGrids_Init_SOURCE_DIR}
+  ${UnstructuredGrids_Init_BINARY_DIR}
   ${LabelStatistics_SOURCE_DIR}       
   ${LabelStatistics_BINARY_DIR}
   ${LabelStatistics_Init_SOURCE_DIR}
@@ -219,6 +223,7 @@ if(BUILD_MODULES)
     mimxWidgets
     MeshingWorkflow
     BuildingBlock
+    UnstructuredGrids
     )
 endif(BUILD_MODULES)
 

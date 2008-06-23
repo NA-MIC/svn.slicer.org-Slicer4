@@ -24,14 +24,17 @@
 
 #include <string>
 
-#include "vtkPolyData.h" 
 #include "vtkUnstructuredGrid.h" 
 
-#include "vtkMRML.h"
+//#include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
+
+#include "vtkMRMLDisplayableNode.h"
+
+//#include "vtkMRMLUnstructuredGridDisplayNode.h"
 
 class vtkCallbackCommand;
 
@@ -61,21 +64,22 @@ public:
   // Finds the storage node and read the data
   virtual void UpdateScene(vtkMRMLScene *scene);
 
-
   // Description:
   // Get associated model display MRML node
-  /**
-  vtkMRMLUnstructuredGridDisplayNode* GetUnstructuredGridDisplayNode() 
-  {
-    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->DisplayNode);
-  };
-  **/
+ 
+  vtkMRMLUnstructuredGridDisplayNode* GetUnstructuredGridDisplayNode(); 
+//  {
+//    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->GetDisplayNode());
+//  }
+
 
   // Description:
   // alternative method to propagate events generated in Display nodes
   virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
+  
+
     // Description:
   // Set and observe UnstructuredGrid  for this model
   vtkGetObjectMacro(UnstructuredGrid, vtkUnstructuredGrid);
