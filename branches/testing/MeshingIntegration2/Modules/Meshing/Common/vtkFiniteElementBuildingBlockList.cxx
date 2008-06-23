@@ -68,11 +68,10 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      newMRMLNode->SetFileName(actor->GetFileName());
      newMRMLNode->SetFilePath(actor->GetFilePath());
      newMRMLNode->SetDataType(actor->GetDataType());
-     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
-     ugrid->DeepCopy(actor->GetDataSet());
-     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
-     // *** delete the extra pointer to the ugrid, since MRML node has a reference to it
-     //ugrid->Delete();
+//     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
+//     ugrid->DeepCopy(actor->GetDataSet());
+//     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
+     newMRMLNode->SetAndObserveUnstructuredGrid(actor->GetDataSet());
      
      // now add the display, storage, and displayable nodes
      vtkMRMLFiniteElementBuildingBlockDisplayNode* dispNode = vtkMRMLFiniteElementBuildingBlockDisplayNode::New();
