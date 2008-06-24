@@ -68,9 +68,6 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      newMRMLNode->SetFileName(actor->GetFileName());
      newMRMLNode->SetFilePath(actor->GetFilePath());
      newMRMLNode->SetDataType(actor->GetDataType());
-//     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
-//     ugrid->DeepCopy(actor->GetDataSet());
-//     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
      newMRMLNode->SetAndObserveUnstructuredGrid(actor->GetDataSet());
      
      // now add the display, storage, and displayable nodes
@@ -83,6 +80,8 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      this->savedMRMLScene->AddNodeNoNotify(dispNode);
      this->savedMRMLScene->AddNodeNoNotify(storeNode);
      this->savedMRMLScene->AddNode(newMRMLNode);
+     
+     //cout << "added mrml bblock node " << endl;
 
      // Establish linkage between the bounding box
      // node and its display and storage nodes, so the viewer will be updated when data

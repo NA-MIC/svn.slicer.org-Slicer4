@@ -61,6 +61,7 @@ int vtkLinkedListWrapper::AppendItem(vtkMimxActorBase* actor)
       default: vtkErrorMacro("attempted storage of unsupported Mimx Actor Datatype");
       cout << "tried storage for " << actor->GetDataType() << " type" << endl;
     }
+    // a local list is kept only so we can check the type of the objects during query/retrieval
     return this->List->AppendItem(actor);
 }
 
@@ -68,23 +69,39 @@ int vtkLinkedListWrapper::AppendItem(vtkMimxActorBase* actor)
 vtkMimxActorBase* vtkLinkedListWrapper::GetItem(vtkIdType id)
 {
         return this->List->GetItem(id);
+//        switch (datatype)
+//         {
+//           case(ACTOR_POLYDATA_SURFACE): {return this->MRMLSurfaceList->GetItem(id); break;}
+//           case(ACTOR_BUILDING_BLOCK): {return this->MRMLBBlockList->GetItem(id); break;}
+//           case(ACTOR_FE_MESH): {return this->MRMLMeshList->GetItem(id); break;}
+//           default: {vtkErrorMacro("attempted retrieval of unsupported Mimx Actor Datatype");
+//               cout << "tried retrieval for " << actor->GetDataType() << " type" << endl;
+//               return NULL;
+//               }
+//         }
 }
 
 int vtkLinkedListWrapper::GetNumberOfItems()
 {
-        return this->List->GetNumberOfItems();
+    return this->List->GetNumberOfItems();
+//    int total = 0;
+//    total += this->MRMLSurfaceList->GetNumberOfItems();
+//    total += this->MRMLBBlockList->GetNumberOfItems(); 
+//    total += this->MRMLMeshList->GetNumberOfItems();
+//    return total;
 }
 
 int vtkLinkedListWrapper::RemoveItem(int Num)
 {
     vtkMimxActorBase *removedactor = this->List->GetItem(Num);
-    switch (removedactor->GetDataType())
-     {
-       case(ACTOR_POLYDATA_SURFACE): {this->MRMLSurfaceList->RemoveItem(Num); break;}
-       case(ACTOR_BUILDING_BLOCK): {this->MRMLBBlockList->RemoveItem(Num); break;}
-       case(ACTOR_FE_MESH): {this->MRMLMeshList->RemoveItem(Num); break;}
-       default: vtkErrorMacro("attempted storage of unsupported Mimx Actor Datatype")
-     }
+    vtkWarningMacro("RemoveItem is not reliable because of indexing problems with the MRML lists");
+//    switch (removedactor->GetDataType())
+//     {
+//       case(ACTOR_POLYDATA_SURFACE): {this->MRMLSurfaceList->RemoveItem(Num); break;}
+//       case(ACTOR_BUILDING_BLOCK): {this->MRMLBBlockList->RemoveItem(Num); break;}
+//       case(ACTOR_FE_MESH): {this->MRMLMeshList->RemoveItem(Num); break;}
+//       default: vtkErrorMacro("attempted storage of unsupported Mimx Actor Datatype")
+//     }
      return this->List->RemoveItem(Num);
 }
 
