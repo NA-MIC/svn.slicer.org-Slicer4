@@ -1556,7 +1556,6 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
         dnode = hdnode;
         }
         
-      //---WJP: start bug not in here
       vtkActor *actor = vtkActor::SafeDownCast(prop);
       vtkImageActor *imageActor = vtkImageActor::SafeDownCast(prop);
       prop->SetUserMatrix(transformToWorld);
@@ -1647,7 +1646,6 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
             actor->GetMapper()->UseLookupTableScalarRangeOff();
             }
           }
-          //---WJP: end bug not in here
         //// }
 
 
