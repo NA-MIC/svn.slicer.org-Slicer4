@@ -1556,16 +1556,17 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
         dnode = hdnode;
         }
         
+      //---WJP: start bug not in here
       vtkActor *actor = vtkActor::SafeDownCast(prop);
       vtkImageActor *imageActor = vtkImageActor::SafeDownCast(prop);
       prop->SetUserMatrix(transformToWorld);
-
       prop->SetVisibility(mdnode->GetVisibility());
       this->DisplayedVisibility[dnode->GetID()] = mdnode->GetVisibility();
 
       if (actor)
         {
         actor->GetMapper()->SetScalarVisibility(mdnode->GetScalarVisibility());
+
         // if the scalars are visible, set active scalars, try to get the lookup
         // table
         if (mdnode->GetScalarVisibility())
@@ -1582,6 +1583,7 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
               actor->GetMapper()->SetLookupTable((vtkScalarsToColors*)(vtkMRMLProceduralColorNode::SafeDownCast(mdnode->GetColorNode())->GetColorTransferFunction()));
               }
             }
+
 
           int cellScalarsActive = 0;
           if (mdnode->GetActiveScalarName() == NULL)
@@ -1626,6 +1628,7 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
               }
             actor->GetMapper()->SelectColorArray(mdnode->GetActiveScalarName());
             }
+
           if (!cellScalarsActive)
             {
             // set the scalar range
@@ -1644,14 +1647,22 @@ void vtkSlicerViewerWidget::SetModelDisplayProperty(vtkMRMLDisplayableNode *mode
             actor->GetMapper()->UseLookupTableScalarRangeOff();
             }
           }
-         //// }
-        actor->GetProperty()->SetBackfaceCulling(dnode->GetBackfaceCulling());
+          //---WJP: end bug not in here
+        //// }
+
+
+        //--- TODO: For now, comment out this backface culling call.
+        //--- 06/25/08 we found vtk bug that causes
+        //--- vtkTextActors to not display if model backfaceculling
+        //--- is on.
+//        actor->GetProperty()->SetBackfaceCulling(dnode->GetBackfaceCulling());
         actor->GetProperty()->SetColor(dnode->GetColor());
         actor->GetProperty()->SetOpacity(dnode->GetOpacity());
         actor->GetProperty()->SetAmbient(dnode->GetAmbient());
         actor->GetProperty()->SetDiffuse(dnode->GetDiffuse());
         actor->GetProperty()->SetSpecular(dnode->GetSpecular());
         actor->GetProperty()->SetSpecularPower(dnode->GetPower());
+        
         if (dnode->GetTextureImageData() != NULL)
           {
           if (actor->GetTexture() == NULL)
