@@ -25,7 +25,7 @@
 #define __vtkMRMLVectorVolumeDisplayNode_h
 
 #include "vtkMRML.h"
-#include "vtkMRMLVolumeGlyphDisplayNode.h"
+#include "vtkMRMLGlyphVolumeDisplayNode.h"
 #include "vtkMRMLColorNode.h"
 
 #include "vtkMatrix4x4.h"
@@ -38,11 +38,11 @@ class vtkImageShiftScale;
 class vtkImageExtractComponents;
 class vtkImageRGBToHSI;
 
-class VTK_MRML_EXPORT vtkMRMLVectorVolumeDisplayNode : public vtkMRMLVolumeGlyphDisplayNode
+class VTK_MRML_EXPORT vtkMRMLVectorVolumeDisplayNode : public vtkMRMLGlyphVolumeDisplayNode
 {
   public:
   static vtkMRMLVectorVolumeDisplayNode *New();
-  vtkTypeMacro(vtkMRMLVectorVolumeDisplayNode,vtkMRMLVolumeGlyphDisplayNode);
+  vtkTypeMacro(vtkMRMLVectorVolumeDisplayNode,vtkMRMLGlyphVolumeDisplayNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();
@@ -62,6 +62,8 @@ class VTK_MRML_EXPORT vtkMRMLVectorVolumeDisplayNode : public vtkMRMLVolumeGlyph
   // Description:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "VectorVolumeDisplay";};
+
+  virtual vtkMRMLGlyphVolumeSliceDisplayNode* GetNewGlyphVolumeSliceDisplayNode(){ return NULL; }
 
   //--------------------------------------------------------------------------
   // Display Information

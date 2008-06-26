@@ -30,6 +30,9 @@ Version:   $Revision: 1.18 $
 #include "vtkMRMLClipModelsNode.h"
 #include "vtkMRMLColorNode.h"
 #include "vtkMRMLColorTableStorageNode.h"
+#include "vtkMRMLGlyphVolumeNode.h"
+#include "vtkMRMLGlyphVolumeDisplayNode.h"
+#include "vtkMRMLGlyphVolumeSliceDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeNode.h"
@@ -177,7 +180,19 @@ vtkMRMLScene::vtkMRMLScene()
   vtkMRMLColorNode *vcn = vtkMRMLColorNode::New();
   this->RegisterNodeClass ( vcn );
   vcn->Delete();
+/*
+  vtkMRMLGlyphVolumeNode* gvn = vtkMRMLGlyphVolumeNode::New();
+  this->RegisterNodeClass( gvn );
+  gvn->Delete();
   
+  vtkMRMLGlyphVolumeDisplayNode* gvdn = vtkMRMLGlyphVolumeDisplayNode::New();
+  this->RegisterNodeClass( gvdn );
+  gvdn->Delete();
+
+  vtkMRMLGlyphVolumeSliceDisplayNode* gvsdn = vtkMRMLGlyphVolumeSliceDisplayNode::New();
+  this->RegisterNodeClass( gvsdn );
+  gvsdn->Delete();
+*/
   vtkMRMLDiffusionWeightedVolumeNode *dwvn = vtkMRMLDiffusionWeightedVolumeNode::New();
   this->RegisterNodeClass (dwvn);
   dwvn->Delete();

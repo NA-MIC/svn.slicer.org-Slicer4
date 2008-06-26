@@ -24,22 +24,20 @@
 
 #include <string>
 
-#include "vtkPolyData.h"
-#include "vtkMatrix4x4.h"
-
-#include "vtkMRML.h"
-#include "vtkMRMLFiberBundleDisplayNode.h"
-#include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
+#include "vtkMRMLGlyphVolumeSliceDisplayNode.h"
 
 class vtkDiffusionTensorGlyph;
 class vtkTransform;
+class vtkPolyData;
 class vtkTransformPolyDataFilter;
+class vtkMatrix4x4;
+class vtkMRMLDiffusionTensorDisplayPropertiesNode;
 
-class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkMRMLFiberBundleDisplayNode
+class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkMRMLGlyphVolumeSliceDisplayNode
 {
  public:
   static vtkMRMLDiffusionTensorVolumeSliceDisplayNode *New (  );
-  vtkTypeMacro ( vtkMRMLDiffusionTensorVolumeSliceDisplayNode,vtkMRMLFiberBundleDisplayNode );
+  vtkTypeMacro ( vtkMRMLDiffusionTensorVolumeSliceDisplayNode,vtkMRMLGlyphVolumeSliceDisplayNode );
   void PrintSelf ( ostream& os, vtkIndent indent );
   
   //--------------------------------------------------------------------------
@@ -67,15 +65,15 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkM
 
   // Description:
   // Sets polydata for glyph input (usually stored in FiberBundle node)
-  void SetPolyData(vtkPolyData *glyphPolyData);
+  void SetPolyData(vtkPolyData *glyphPolyData) ;
 
   // Description:
   // Gets resulting glyph PolyData 
-  virtual vtkPolyData* GetPolyData();
+  virtual vtkPolyData* GetPolyData() ;
   
   // Description:
   // Gets resulting glyph PolyData transfomed to slice XY
-  virtual vtkPolyData* GetPolyDataTransformedToSlice();
+  virtual vtkPolyData* GetPolyDataTransformedToSlice() ;
    
   // Description:
   // Update the pipeline based on this node attributes
@@ -91,7 +89,34 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkM
 
   // Description:
   // Set slice to IJK transformation
-  virtual void SetSliceTensorRotationMatrix(vtkMatrix4x4 *matrix);
+  virtual void SetSliceGlyphRotationMatrix(vtkMatrix4x4 *matrix) ;
+
+
+
+
+  //--------------------------------------------------------------------------
+  // Display Information: ColorMode for glyphs
+  //--------------------------------------------------------------------------
+  
+
+  //--------------------------------------------------------------------------
+  // MRML nodes that are observed
+  //--------------------------------------------------------------------------
+  
+  // Node reference to ALL DT nodes
+
+  // Description:
+  // Get diffusion tensor display MRML object for fiber glyph.
+  vtkMRMLDiffusionTensorDisplayPropertiesNode* GetDTDisplayPropertiesNode ( );
+
+  // Description:
+  // Set diffusion tensor display MRML object for fiber glyph.
+  void SetAndObserveDTDisplayPropertiesNodeID ( const char *ID );
+
+  // Description:
+  // Get ID of diffusion tensor display MRML object for fiber glyph.
+  vtkGetStringMacro(DTDisplayPropertiesNodeID);
+
 
  protected:
   vtkMRMLDiffusionTensorVolumeSliceDisplayNode ( );
@@ -100,9 +125,14 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkM
   void operator= ( const vtkMRMLDiffusionTensorVolumeSliceDisplayNode& );
 
     vtkDiffusionTensorGlyph  *DiffusionTensorGlyphFilter;
-    vtkTransform             *SliceToXYTransform;
-    vtkTransformPolyDataFilter *SliceToXYTransformer;
-    vtkMatrix4x4             *SliceToXYMatrix;
+
+    // ALL MRML nodes
+  vtkMRMLDiffusionTensorDisplayPropertiesNode *DTDisplayPropertiesNode;
+  char *DTDisplayPropertiesNodeID;
+
+  vtkSetReferenceStringMacro(DTDisplayPropertiesNodeID);
+
+
 };
 
 #endif

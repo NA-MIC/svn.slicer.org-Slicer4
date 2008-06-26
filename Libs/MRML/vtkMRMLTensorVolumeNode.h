@@ -33,7 +33,7 @@ class vtkMatrix4x4;
 class vtkDiffusionTensorMathematics;
 class vtkAssignAttribute;
 
-class VTK_MRML_EXPORT vtkMRMLTensorVolumeNode : public vtkMRMLScalarVolumeNode
+class VTK_MRML_EXPORT vtkMRMLTensorVolumeNode : public vtkMRMLScalarVolumeNode 
 {
   public:
   static vtkMRMLTensorVolumeNode *New();

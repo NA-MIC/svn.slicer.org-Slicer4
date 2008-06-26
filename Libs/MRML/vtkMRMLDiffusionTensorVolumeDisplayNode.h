@@ -25,18 +25,18 @@
 #define __vtkMRMLDiffusionTensorVolumeDisplayNode_h
 
 #include "vtkMRML.h"
-#include "vtkMRMLVolumeGlyphDisplayNode.h"
+#include "vtkMRMLGlyphVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 
 class vtkDiffusionTensorMathematicsSimple;
 class vtkDiffusionTensorGlyph;
 class vtkImageData;
 
-class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLVolumeGlyphDisplayNode
+class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLGlyphVolumeDisplayNode
 {
   public:
   static vtkMRMLDiffusionTensorVolumeDisplayNode *New();
-  vtkTypeMacro(vtkMRMLDiffusionTensorVolumeDisplayNode,vtkMRMLVolumeGlyphDisplayNode);
+  vtkTypeMacro(vtkMRMLDiffusionTensorVolumeDisplayNode,vtkMRMLGlyphVolumeDisplayNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();
@@ -78,6 +78,8 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLVo
                                    unsigned long /*event*/,
                                    void * /*callData*/ );
 
+
+  virtual vtkMRMLGlyphVolumeSliceDisplayNode* GetNewGlyphVolumeSliceDisplayNode();
   //--------------------------------------------------------------------------
   // Display Information
   //--------------------------------------------------------------------------

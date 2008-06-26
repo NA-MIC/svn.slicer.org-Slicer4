@@ -306,17 +306,27 @@ void vtkSlicerDiffusionTestingWidget::ProcessWidgetEvents (vtkObject *caller, un
       this->SetAllVisibilityButtons(0);
       if(this->TensorNode == NULL) return;
       //switch off glyphs from old tensorNode
-      std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glyphDisplayNodesOld = this->TensorNode->GetSliceGlyphDisplayNodes();
-      for (unsigned int i=0; i<glyphDisplayNodesOld.size(); i++)
+      vtkMRMLVolumeNode *volumeNode = this->TensorNode;
+      for (unsigned int i=0; i<volumeNode->GetNumberOfDisplayNodes(); i++)
         {
-        glyphDisplayNodesOld[i]->SetVisibility(0);
+        vtkMRMLGlyphVolumeSliceDisplayNode* dnode = vtkMRMLGlyphVolumeSliceDisplayNode::SafeDownCast( volumeNode->GetNthDisplayNode(i) );
+        if (dnode)
+          dnode->SetVisibility(0);
         }
       return;
       }
 
     //check if selected node is already finished, if still in tensor estimation show dialog
-    std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glyphDisplayNodes = selected->GetSliceGlyphDisplayNodes();
-    if(glyphDisplayNodes.size() != 3) 
+    vtkMRMLVolumeNode *volumeNode = this->TensorNode;
+    unsigned int numberOfGlyphDisplaySliceNodes = 0;
+    for (unsigned int i=0; i<volumeNode->GetNumberOfDisplayNodes(); i++)
+      {
+      vtkMRMLGlyphVolumeSliceDisplayNode* dnode = vtkMRMLGlyphVolumeSliceDisplayNode::SafeDownCast( volumeNode->GetNthDisplayNode(i) );
+      if (dnode)
+        numberOfGlyphDisplaySliceNodes++;
+      }
+
+    if(numberOfGlyphDisplaySliceNodes != 3) 
       {
       vtkKWMessageDialog *MessageDialog = vtkKWMessageDialog::New();
       MessageDialog->SetParent(this->Application->GetApplicationGUI()->GetMainSlicerWindow());
@@ -335,10 +345,12 @@ void vtkSlicerDiffusionTestingWidget::ProcessWidgetEvents (vtkObject *caller, un
       if(selected != this->TensorNode)
         {
         //switch off glyphs from old tensorNode
-        std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glyphDisplayNodesOld = this->TensorNode->GetSliceGlyphDisplayNodes();
-        for (unsigned int i=0; i<glyphDisplayNodesOld.size(); i++)
+        vtkMRMLVolumeNode *volumeNode = this->TensorNode;
+        for (unsigned int i=0; i<volumeNode->GetNumberOfDisplayNodes(); i++)
           {
-          glyphDisplayNodesOld[i]->SetVisibility(0);
+          vtkMRMLGlyphVolumeSliceDisplayNode* dnode = vtkMRMLGlyphVolumeSliceDisplayNode::SafeDownCast( volumeNode->GetNthDisplayNode(i) );
+          if (dnode)
+            dnode->SetVisibility(0);
           }
         }
       }
@@ -516,25 +528,41 @@ void vtkSlicerDiffusionTestingWidget::RunTensor()
 void vtkSlicerDiffusionTestingWidget::CreateGlyphs()
   {
   if(this->TensorNode == NULL) return;
-  std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glypDisplayNodes = this->TensorNode->GetSliceGlyphDisplayNodes();
-  if(glypDisplayNodes.size() != 3) return;
-  for (unsigned int i=0; i<3; i++)
+  vtkMRMLVolumeNode *volumeNode = this->TensorNode;
+
+  unsigned int numberOfGlyphDisplaySliceNodes = 0;
+  for (unsigned int i=0; i<volumeNode->GetNumberOfDisplayNodes(); i++)
     {
-    if(this->GlyphVisibility[i])
+    vtkMRMLGlyphVolumeSliceDisplayNode* dnode = vtkMRMLGlyphVolumeSliceDisplayNode::SafeDownCast( volumeNode->GetNthDisplayNode(i) );
+    if (dnode)
+      numberOfGlyphDisplaySliceNodes++;
+    }
+
+  if(numberOfGlyphDisplaySliceNodes != 3) return;
+
+  int modifiedGlyphVolumeSliceDisplayNodes = 0;
+  for (unsigned int i=0; i<volumeNode->GetNumberOfDisplayNodes() && modifiedGlyphVolumeSliceDisplayNodes<3 ; i++)
+    {
+    vtkMRMLGlyphVolumeSliceDisplayNode* dnode = vtkMRMLGlyphVolumeSliceDisplayNode::SafeDownCast( volumeNode->GetNthDisplayNode(i) );
+    if (dnode)
       {
-      //change current node to TensorNode in the main GUI
-      char* currentID = this->Application->GetApplicationGUI()->GetApplicationLogic()->GetSelectionNode()->GetActiveVolumeID();
-      if(currentID != this->TensorNode->GetID())
+      if(this->GlyphVisibility[ modifiedGlyphVolumeSliceDisplayNodes ])
         {
-        this->Application->GetApplicationGUI()->GetApplicationLogic()->GetSelectionNode()->SetActiveVolumeID(this->TensorNode->GetID());
-        this->Application->GetApplicationGUI()->GetApplicationLogic()->PropagateVolumeSelection();
+        //change current node to TensorNode in the main GUI
+        char* currentID = this->Application->GetApplicationGUI()->GetApplicationLogic()->GetSelectionNode()->GetActiveVolumeID();
+        if(currentID != this->TensorNode->GetID())
+          {
+          this->Application->GetApplicationGUI()->GetApplicationLogic()->GetSelectionNode()->SetActiveVolumeID(this->TensorNode->GetID());
+          this->Application->GetApplicationGUI()->GetApplicationLogic()->PropagateVolumeSelection();
+          }
+          dnode->SetVisibility(1); //glyphs on for plane 'modifiedGlyphVolumeSliceDisplayNodes'
+        this->UpdateGlyphSpacing(); //adjust glyph spacing
         }
-      glypDisplayNodes[i]->SetVisibility(1); //glyphs on for plane i
-      this->UpdateGlyphSpacing(); //adjust glyph spacing
-      }
-    else
-      {
-      glypDisplayNodes[i]->SetVisibility(0); //glyphs off
+      else
+        {
+        dnode->SetVisibility(0); //glyphs off
+        }
+      modifiedGlyphVolumeSliceDisplayNodes++;
       }
     }
   }
@@ -548,9 +576,12 @@ void vtkSlicerDiffusionTestingWidget::UpdateGlyphSpacing()
   vtkMRMLDiffusionTensorDisplayPropertiesNode *propertiesNode = NULL;
 
   //find the properties node
-  std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glypDisplayNodes = this->TensorNode->GetSliceGlyphDisplayNodes();
-  displayNode = glypDisplayNodes[0];
-  propertiesNode = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast(displayNode->GetDTDisplayPropertiesNode());
+  vtkMRMLVolumeNode *volumeNode = this->TensorNode;
+  for (unsigned int i=0; i<volumeNode->GetNumberOfDisplayNodes() and !displayNode; i++)
+    {
+    displayNode = vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SafeDownCast( volumeNode->GetNthDisplayNode(i) );
+    }
+  propertiesNode =   displayNode->GetDTDisplayPropertiesNode();
 
   //update the spacing
   if(propertiesNode == NULL) return;

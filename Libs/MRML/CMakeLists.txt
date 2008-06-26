@@ -133,7 +133,8 @@ set(MRML_SRCS
   vtkMRMLViewNode.cxx
   vtkMRMLVolumeArchetypeStorageNode.cxx
   vtkMRMLVolumeDisplayNode.cxx
-  vtkMRMLVolumeGlyphDisplayNode.cxx
+  vtkMRMLGlyphVolumeDisplayNode.cxx
+  vtkMRMLGlyphVolumeSliceDisplayNode.cxx
   vtkMRMLVolumeHeaderlessStorageNode.cxx
   vtkMRMLVolumeNode.cxx
   vtkObservation.cxx
@@ -156,6 +157,7 @@ if(MRML_USE_TEEM)
   if(MRML_USE_vtkTeem)
     set(MRML_SRCS
       ${MRML_SRCS}
+      vtkMRMLGlyphVolumeNode.cxx
       vtkMRMLDiffusionImageVolumeNode.cxx
       vtkMRMLDiffusionTensorVolumeDisplayNode.cxx
       vtkMRMLDiffusionTensorVolumeNode.cxx

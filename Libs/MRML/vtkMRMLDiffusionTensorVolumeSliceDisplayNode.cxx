@@ -21,8 +21,11 @@ Version:   $Revision: 1.3 $
 #include "vtkDiffusionTensorGlyph.h"
 
 #include "vtkTransformPolyDataFilter.h"
+#include "vtkTransform.h"
+#include "vtkMatrix4x4.h"
 
 #include "vtkMRMLDiffusionTensorVolumeSliceDisplayNode.h"
+#include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 #include "vtkMRMLScene.h"
 
 //------------------------------------------------------------------------------
@@ -58,7 +61,9 @@ vtkMRMLDiffusionTensorVolumeSliceDisplayNode::vtkMRMLDiffusionTensorVolumeSliceD
   this->DiffusionTensorGlyphFilter = vtkDiffusionTensorGlyph::New();
   this->DiffusionTensorGlyphFilter->SetResolution (1);
 
-  this->ColorMode = vtkMRMLFiberBundleDisplayNode::colorModeScalar;
+  this->DTDisplayPropertiesNode = NULL;
+
+  this->ColorMode = colorModeScalar;
   
   this->SliceToXYTransformer = vtkTransformPolyDataFilter::New();
 
@@ -123,7 +128,7 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::PrintSelf(ostream& os, vtkInd
   Superclass::PrintSelf(os,indent);
 }
 //----------------------------------------------------------------------------
-void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetSliceTensorRotationMatrix(vtkMatrix4x4 *matrix)
+void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetSliceGlyphRotationMatrix(vtkMatrix4x4 *matrix)
 {
   if (this->DiffusionTensorGlyphFilter)
     {
@@ -219,13 +224,13 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::UpdatePolyDataPipeline()
       vtkDebugMacro("setting glyph geometry" << DTDisplayNode->GetGlyphGeometry( ) );
       
       // set glyph coloring
-      if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeSolid)
+      if (this->GetColorMode ( ) == colorModeSolid)
         {
         this->ScalarVisibilityOff( );
         }
       else  
         {
-        if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeScalar)
+        if (this->GetColorMode ( ) == colorModeScalar)
           {
           this->ScalarVisibilityOn( );
 
@@ -318,4 +323,37 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::UpdatePolyDataPipeline()
 
 }
 
+
+
+//----------------------------------------------------------------------------
+vtkMRMLDiffusionTensorDisplayPropertiesNode* vtkMRMLDiffusionTensorVolumeSliceDisplayNode::GetDTDisplayPropertiesNode ( )
+{
+  vtkMRMLDiffusionTensorDisplayPropertiesNode* node = NULL;
+
+  // Find the node corresponding to the ID we have saved.
+  if  ( this->GetScene ( ) && this->GetDTDisplayPropertiesNodeID ( ) )
+    {
+    vtkMRMLNode* cnode = this->GetScene ( ) -> GetNodeByID ( this->DTDisplayPropertiesNodeID );
+    node = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast ( cnode );
+    }
+
+  return node;
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetAndObserveDTDisplayPropertiesNodeID ( const char *ID )
+{
+  // Stop observing any old node
+  vtkSetAndObserveMRMLObjectMacro ( this->DTDisplayPropertiesNode, NULL );
+
+  // Set the ID. This is the "ground truth" reference to the node.
+  this->SetDTDisplayPropertiesNodeID ( ID );
+
+  // Get the node corresponding to the ID. This pointer is only to observe the object.
+  vtkMRMLNode *cnode = this->GetDTDisplayPropertiesNode ( );
+
+  // Observe the node using the pointer.
+  vtkSetAndObserveMRMLObjectMacro ( this->DTDisplayPropertiesNode , cnode );
+
+}
 
