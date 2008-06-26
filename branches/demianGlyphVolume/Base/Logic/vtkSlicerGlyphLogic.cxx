@@ -87,12 +87,12 @@ vtkPolyData* vtkSlicerGlyphLogic::GetPolyData()
 {
   vtkIndent indent;
 
-  if ( this->ImageData && this->VolumeDisplayNode && ( this->VolumeDisplayNode->IsA("vtkMRMLVolumeGlyphDisplayNode") ) )
+  if ( this->ImageData && this->VolumeDisplayNode && ( this->VolumeDisplayNode->IsA("vtkMRMLGlyphVolumeDisplayNode") ) )
   {
     vtkErrorMacro("Trying to return the PolyData displayNode:"<<this->VolumeDisplayNode<<" ImageData:"<<this->ImageData);
     vtkErrorMacro("getting the PolyData from the child node");
-    vtkMRMLVolumeGlyphDisplayNode* VolumeGlyphDisplayNode = vtkMRMLVolumeGlyphDisplayNode::SafeDownCast(this->VolumeDisplayNode);
-    if (!VolumeGlyphDisplayNode)
+    vtkMRMLGlyphVolumeDisplayNode* GlyphVolumeDisplayNode = vtkMRMLGlyphVolumeDisplayNode::SafeDownCast(this->VolumeDisplayNode);
+    if (!GlyphVolumeDisplayNode)
     {
       vtkErrorMacro("The display node("<<this->VolumeDisplayNode<<") is not a glyphDisplayNode");
       return NULL;
@@ -102,11 +102,11 @@ vtkPolyData* vtkSlicerGlyphLogic::GetPolyData()
     this->ImageData->PrintSelf(std::cout,indent);
 
     vtkErrorMacro("To the displayNode");
-    VolumeGlyphDisplayNode->PrintSelf(std::cout,indent);
+    GlyphVolumeDisplayNode->PrintSelf(std::cout,indent);
 
     vtkErrorMacro("DONE");
 
-    vtkPolyData* polyData =  VolumeGlyphDisplayNode->ExecuteGlyphPipeLineAndGetPolyData( this->ImageData );
+    vtkPolyData* polyData =  GlyphVolumeDisplayNode->ExecuteGlyphPipeLineAndGetPolyData( this->ImageData );
 
 
     if (polyData!=NULL)
