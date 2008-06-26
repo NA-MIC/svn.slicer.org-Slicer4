@@ -28,7 +28,9 @@
 #include "vtkMRMLTensorVolumeNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeNode.h"
 
+
 class vtkDoubleArray;
+class vtkMRMLDiffusionTensorVolumeSliceDisplayNode;
 
 class VTK_MRML_EXPORT vtkMRMLDiffusionImageVolumeNode : public vtkMRMLTensorVolumeNode
 {
@@ -105,6 +107,16 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionImageVolumeNode : public vtkMRMLTensorVolu
   virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
+//BTX
+  // Description:
+  // get associated slice glyph display node or NULL if not set
+  virtual std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> GetSliceGlyphDisplayNodes(){ vtkErrorMacro("Shouldn't be calling this"); }
+
+
+  // Description:
+  // add slice glyph display nodes if not already present and return it
+  virtual std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes(){vtkErrorMacro("Shouldn't be calling this"); }
+//ETX
 
 
 protected:

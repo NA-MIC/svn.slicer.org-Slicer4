@@ -21,6 +21,7 @@
 #include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkMRMLLabelMapVolumeDisplayNode.h"
 #include "vtkMRMLVectorVolumeDisplayNode.h"
+#include "vtkMRMLDiffusionImageVolumeNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLTransformNode.h"
@@ -568,7 +569,7 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
 //----------------------------------------------------------------------------
 void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
 {
-  vtkMRMLDiffusionTensorVolumeNode *volumeNode = vtkMRMLDiffusionTensorVolumeNode::SafeDownCast (this->VolumeNode);
+  vtkMRMLDiffusionImageVolumeNode *volumeNode = vtkMRMLDiffusionImageVolumeNode::SafeDownCast (this->VolumeNode);
   if (volumeNode)
     {
     std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = volumeNode->GetSliceGlyphDisplayNodes();
