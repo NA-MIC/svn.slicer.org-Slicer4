@@ -11,7 +11,7 @@
   Version:   $Revision: 1.13 $
 
 =========================================================================auto=*/
-// .NAME vtkMRMLDiffusionTensorVolumeNode - MRML node for representing diffusion weighted MRI volume 
+// .NAME vtkMRMLGlyphVolumeNode - MRML node for representing diffusion weighted MRI volume 
 // .SECTION Description
 // Diffusion Weigthed Volume nodes describe data sets that encode diffusion weigthed
 // images. These images are the basis for computing the diffusion tensor.
@@ -21,21 +21,22 @@
 // 3. Measurement frame that relates the coordinate system where the gradients are given 
 //  to RAS.
 
-#ifndef __vtkMRMLDiffusionTensorVolumeNode_h
-#define __vtkMRMLDiffusionTensorVolumeNode_h
+#ifndef __vtkMRMLGlyphVolumeNode_h
+#define __vtkMRMLGlyphVolumeNode_h
 
 
-#include "vtkMRMLDiffusionImageVolumeNode.h"
-#include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
-#include "vtkMRMLDiffusionTensorVolumeSliceDisplayNode.h"
+#include "vtkMRMLScalarVolumeNode.h"
 
 class vtkDoubleArray;
+class vtkMRMLGlyphVolumeDisplayNode;
+class vtkMRMLGlyphVolumeSliceDisplayNode;
 
-class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeNode : public vtkMRMLDiffusionImageVolumeNode
+
+class VTK_MRML_EXPORT vtkMRMLGlyphVolumeNode : public vtkMRMLScalarVolumeNode
 {
   public:
-  static vtkMRMLDiffusionTensorVolumeNode *New();
-  vtkTypeMacro(vtkMRMLDiffusionTensorVolumeNode,vtkMRMLDiffusionImageVolumeNode);
+  static vtkMRMLGlyphVolumeNode *New();
+  vtkTypeMacro(vtkMRMLGlyphVolumeNode,vtkMRMLScalarVolumeNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();
@@ -54,11 +55,20 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeNode : public vtkMRMLDiffusion
 
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() {return "DiffusionTensorVolume";};
+  virtual const char* GetNodeTagName() {return "GlyphVolume";};
 
   // Description:
-  // Associated volume display MRML node
-  virtual void SetAndObserveDisplayNodeID(const char *DisplayNodeID);
+  // String ID of the display MRML node
+  vtkSetReferenceStringMacro(MaskNodeID);
+  vtkGetStringMacro(MaskNodeID);
+
+  // Description:
+  // Associated volume MRML node
+  vtkMRMLVolumeNode* GetMaskNode();
+
+  // Description:
+  // Associated volume MRML node
+  //vtkMRMLGlyphVolumeDisplayNode* GetDisplayNode();
 
   // Description:
   // Update the stored reference to another node in the scene
@@ -79,25 +89,26 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeNode : public vtkMRMLDiffusion
   virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
- 
-  // Description:
-  // Associated display MRML node
-  virtual vtkMRMLDiffusionTensorVolumeDisplayNode* GetDiffusionTensorVolumeDisplayNode()
-  {
-    return vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast(this->GetDisplayNode());
-  }
+
 //BTX
   // Description:
+  // get associated slice glyph display node or NULL if not set
+  virtual std::vector< vtkMRMLGlyphVolumeSliceDisplayNode* > GetSliceGlyphDisplayNodes();
+
+
+  // Description:
   // add slice glyph display nodes if not already present and return it
-//  virtual std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes();
+  virtual std::vector< vtkMRMLGlyphVolumeSliceDisplayNode* >  AddSliceGlyphDisplayNodes(){ return std::vector< vtkMRMLGlyphVolumeSliceDisplayNode* >(); }
 //ETX
 
-protected:
-  vtkMRMLDiffusionTensorVolumeNode();
-  ~vtkMRMLDiffusionTensorVolumeNode();
-  vtkMRMLDiffusionTensorVolumeNode(const vtkMRMLDiffusionTensorVolumeNode&);
-  void operator=(const vtkMRMLDiffusionTensorVolumeNode&);
 
+protected:
+  vtkMRMLGlyphVolumeNode();
+  ~vtkMRMLGlyphVolumeNode();
+  vtkMRMLGlyphVolumeNode(const vtkMRMLGlyphVolumeNode&);
+  void operator=(const vtkMRMLGlyphVolumeNode&);
+  
+  char *MaskNodeID;
 };
 
 #endif

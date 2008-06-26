@@ -145,27 +145,11 @@ void vtkMRMLDiffusionTensorVolumeNode::PrintSelf(ostream& os, vtkIndent indent)
   Superclass::PrintSelf(os,indent);
 }
 
+/*
 //----------------------------------------------------------------------------
-std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> vtkMRMLDiffusionTensorVolumeNode::GetSliceGlyphDisplayNodes()
+std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> vtkMRMLDiffusionTensorVolumeNode::AddSliceGlyphDisplayNodes()
 {
-  std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> nodes;
-  int nnodes = this->GetNumberOfDisplayNodes();
-  vtkMRMLDiffusionTensorVolumeSliceDisplayNode *node = NULL;
-  for (int n=0; n<nnodes; n++)
-    {
-    node = vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SafeDownCast(this->GetNthDisplayNode(n));
-    if (node) 
-      {
-      nodes.push_back(node);
-      }
-    }
-  return nodes;
-}
-
-//----------------------------------------------------------------------------
-std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> vtkMRMLDiffusionTensorVolumeNode::AddSliceGlyphDisplayNodes()
-{
-  std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> nodes = this->GetSliceGlyphDisplayNodes();
+  std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> nodes = this->GetSliceGlyphDisplayNodes();
   if (nodes.size() == 0)
     {
     vtkMRMLDiffusionTensorDisplayPropertiesNode *glyphDTDPN = vtkMRMLDiffusionTensorDisplayPropertiesNode::New();
@@ -200,11 +184,11 @@ std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> vtkMRMLDiffusionTens
         this->AddAndObserveDisplayNodeID(node->GetID());
         
         
-        nodes.push_back(node);
+        nodes.push_back( vtkMRMLGlyphVolumeSliceDisplayNode::SafeDownCast(node));
         }
       }
    }
   return nodes;
 }
-
+*/
  

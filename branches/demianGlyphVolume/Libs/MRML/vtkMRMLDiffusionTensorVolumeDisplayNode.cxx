@@ -20,6 +20,7 @@ Version:   $Revision: 1.2 $
 #include "vtkCallbackCommand.h"
 
 #include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
+#include "vtkMRMLDiffusionTensorVolumeSliceDisplayNode.h"
 #include "vtkMRMLScene.h"
 
 #include "vtkDiffusionTensorGlyph.h"
@@ -163,6 +164,38 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::ProcessMRMLEvents ( vtkObject *cal
     this->InvokeEvent(vtkCommand::ModifiedEvent, NULL);
     }
   return;
+}
+
+//-----------------------------------------------------------
+vtkMRMLGlyphVolumeSliceDisplayNode* vtkMRMLDiffusionTensorVolumeDisplayNode::GetNewGlyphVolumeSliceDisplayNode()
+{
+   if (this->GetScene()) 
+   {
+
+   if ( ! this->GetDiffusionTensorDisplayPropertiesNode() )
+     {
+     vtkMRMLDiffusionTensorDisplayPropertiesNode *DTDPN =  vtkMRMLDiffusionTensorDisplayPropertiesNode::New(); 
+     this->GetScene()->AddNode( DTDPN );
+     this->SetAndObserveDiffusionTensorDisplayPropertiesNodeID( DTDPN->GetID() );
+     DTDPN->Delete();
+     }
+
+   vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode =  vtkMRMLDiffusionTensorVolumeSliceDisplayNode::New();
+   this->GetScene()->AddNode(dnode);
+   dnode->SetScene( this->GetScene() );
+
+   dnode->SetAndObserveDTDisplayPropertiesNodeID( this->GetDiffusionTensorDisplayPropertiesNodeID() );
+   dnode->SetAndObserveColorNodeID("vtkMRMLColorTableNodeRainbow");
+
+   dnode->SetVisibility(0);
+   return dnode; 
+   }
+ else 
+  {
+     vtkErrorMacro("Called when the node didn't have a scene");
+     return NULL;
+  }
+
 }
 
 //-----------------------------------------------------------
