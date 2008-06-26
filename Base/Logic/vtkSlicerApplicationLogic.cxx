@@ -1364,7 +1364,7 @@ void vtkSlicerApplicationLogic::ProcessReadNodeData(ReadDataRequest& req)
       {
       dtvnd->SetAndObserveDisplayNodeID( disp->GetID() );
       // add slice display nodes
-      dtvnd->AddSliceGlyphDisplayNodes();
+//      dtvnd->AddSliceGlyphDisplayNodes();
 
       }
     else if (dwvnd) 

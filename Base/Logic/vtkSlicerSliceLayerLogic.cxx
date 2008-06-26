@@ -17,16 +17,24 @@
 
 #include "vtkSlicerSliceLayerLogic.h"
 
+#include "vtkMRMLGlyphVolumeNode.h"
+
 #include "vtkMRMLVolumeDisplayNode.h"
 #include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkMRMLLabelMapVolumeDisplayNode.h"
 #include "vtkMRMLVectorVolumeDisplayNode.h"
-#include "vtkMRMLDiffusionWeightedVolumeDisplayNode.h"
-#include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
+#include "vtkMRMLGlyphVolumeDisplayNode.h"
+#include "vtkMRMLGlyphVolumeDisplayNode.h"
+#include "vtkMRMLGlyphVolumeSliceDisplayNode.h"
+//#include "vtkMRMLDiffusionWeightedVolumeDisplayNode.h"
+//#include "vtkMRMLDiffusionTensorVolumeDisplayNode.h"
 #include "vtkMRMLTransformNode.h"
 #include "vtkMRMLLinearTransformNode.h"
 #include "vtkMRMLColorNode.h"
 #include "vtkMRMLDiffusionTensorVolumeSliceDisplayNode.h"
+
+#include "vtkMRMLDiffusionImageVolumeNode.h"
+
 
 #include "vtkPointData.h"
 
@@ -501,6 +509,11 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
     this->Slice->SetInterpolationModeToNearestNeighbor();
     this->Reslice->SetInterpolationModeToNearestNeighbor();
     }
+  else if ( this->VolumeNode->GetImageData() &&  volumeNode->IsA("vtkMRMLDiffusionImageVolumeNode")  )
+    {
+    this->Slice->SetInterpolationModeToNearestNeighbor();
+    this->Reslice->SetInterpolationModeToNearestNeighbor();
+    }
   else
     {
     this->Slice->SetInterpolationModeToLinear();
@@ -512,6 +525,9 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
   // for tensors reassign scalar data
   if ( volumeNode && volumeNode->IsA("vtkMRMLDiffusionTensorVolumeNode") )
     {
+    this->Slice->SetInterpolationModeToLinear();
+    this->Reslice->SetInterpolationModeToLinear();
+
     this->AssignAttributeTensorsFromScalars->SetInput(volumeNode->GetImageData());
     this->AssignAttributeTensorsFromScalars->Update();
     
@@ -568,18 +584,17 @@ void vtkSlicerSliceLayerLogic::UpdateImageDisplay()
 //----------------------------------------------------------------------------
 void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
 {
-  vtkMRMLDiffusionTensorVolumeNode *volumeNode = vtkMRMLDiffusionTensorVolumeNode::SafeDownCast (this->VolumeNode);
-  if (volumeNode)
+  vtkMRMLGlyphVolumeDisplayNode *displayNode = vtkMRMLGlyphVolumeDisplayNode::SafeDownCast ( this->VolumeNode->GetDisplayNode() );
+  if (displayNode)
     {
-    std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = volumeNode->GetSliceGlyphDisplayNodes();
-    for (unsigned int n=0; n<dnodes.size(); n++)
+    for (unsigned int n=0; n<this->VolumeNode->GetNumberOfDisplayNodes(); n++)
       {
-      vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = dnodes[n];
-      if (!strcmp(this->GetSliceNode()->GetLayoutName(), dnode->GetName()) )
+      vtkMRMLGlyphVolumeSliceDisplayNode* dnode = vtkMRMLGlyphVolumeSliceDisplayNode::SafeDownCast( this->VolumeNode->GetNthDisplayNode(n) );
+      if ( dnode && !strcmp(this->GetSliceNode()->GetLayoutName(), dnode->GetName()) )
         {
         dnode->SetSliceImage(sliceImage);
 
-        vtkMRMLTransformNode* tnode = volumeNode->GetParentTransformNode();
+        vtkMRMLTransformNode* tnode = this->VolumeNode->GetParentTransformNode();
         vtkMatrix4x4* transformToWorld = vtkMatrix4x4::New();
         transformToWorld->Identity();
         if (tnode != NULL && tnode->IsLinear())
@@ -595,7 +610,7 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
 
         dnode->SetSlicePositionMatrix(transformToWorld);
         double dirs[3][3];
-        volumeNode->GetIJKToRASDirections(dirs);
+        this->VolumeNode->GetIJKToRASDirections(dirs);
         vtkMatrix4x4 *trot = vtkMatrix4x4::New();
         trot->Identity();
         for (int i=0; i<3; i++) 
@@ -605,7 +620,7 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
             trot->SetElement(i, j, dirs[i][j]);
             }
           }
-        dnode->SetSliceTensorRotationMatrix(trot);
+        dnode->SetSliceGlyphRotationMatrix(trot);
         trot->Delete();
         transformToWorld->Delete();
         }

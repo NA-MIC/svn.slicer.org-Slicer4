@@ -40,7 +40,7 @@
 #include "vtkMRML.h"
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLSliceNode.h"
-#include "vtkMRMLVolumeGlyphDisplayNode.h"
+#include "vtkMRMLGlyphVolumeDisplayNode.h"
 
 #include "vtkImageData.h"
 #include "vtkPolyData.h"

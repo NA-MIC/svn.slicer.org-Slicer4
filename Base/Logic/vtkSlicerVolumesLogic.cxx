@@ -548,7 +548,7 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (const char* filena
   else if (storageNode1->ReadData(tensorNode))
     {
     vtkDebugMacro("Tensor HAS BEEN READ");    
-    tensorNode->AddSliceGlyphDisplayNodes();
+//    tensorNode->AddSliceGlyphDisplayNodes();
     displayNode = dtdisplayNode;
     volumeNode = tensorNode;
     storageNode = storageNode1;

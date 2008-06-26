@@ -334,7 +334,7 @@ protected:
   vtkMRMLLinearTransformNode *SliceModelTransformNode;
   double SliceSpacing[3];
   
-  void AddSLiceGlyphs(vtkSlicerSliceLayerLogic *layerLogic);
+  void AddSliceGlyphs(vtkSlicerSliceLayerLogic *layerLogic);
 
 };
 
