@@ -194,7 +194,7 @@ std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> vtkMRMLDiffusionTens
         this->GetScene()->AddNode(node);
         node->Delete();
 
-        node->SetAndObserveDTDisplayPropertiesNodeID(glyphDTDPN->GetID());
+        node->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(glyphDTDPN->GetID());
         node->SetAndObserveColorNodeID("vtkMRMLColorTableNodeRainbow");
 
         this->AddAndObserveDisplayNodeID(node->GetID());
