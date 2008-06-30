@@ -113,7 +113,7 @@ protected:
 
   vtkMRMLDiffusionTensorVolumeNode *DiffusionTensorVolumeNode;
 
-  vtkMRMLDiffusionTensorDisplayPropertiesNode* GetCurrentDTDisplayPropertyNode();
+  vtkMRMLDiffusionTensorDisplayPropertiesNode* GetCurrentDiffusionTensorDisplayPropertyNode();
 
 //BTX
   std::map <std::string, int> GeometryColorMap;

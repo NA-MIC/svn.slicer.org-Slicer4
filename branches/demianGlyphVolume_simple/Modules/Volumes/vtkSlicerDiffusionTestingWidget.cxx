@@ -550,7 +550,7 @@ void vtkSlicerDiffusionTestingWidget::UpdateGlyphSpacing()
   //find the properties node
   std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glypDisplayNodes = this->TensorNode->GetSliceGlyphDisplayNodes();
   displayNode = glypDisplayNodes[0];
-  propertiesNode = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast(displayNode->GetDTDisplayPropertiesNode());
+  propertiesNode = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast(displayNode->GetDiffusionTensorDisplayPropertiesNode());
 
   //update the spacing
   if(propertiesNode == NULL) return;

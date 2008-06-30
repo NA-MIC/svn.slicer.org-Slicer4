@@ -49,8 +49,6 @@ set(SlicerBaseLogic_SRCS
   vtkSlicerTask.cxx
   vtkSlicerSliceLogic.cxx 
   vtkSlicerSliceLayerLogic.cxx
-  vtkSlicerSliceGlyphLogic.cxx
-  vtkSlicerGlyphLogic.cxx
   vtkSlicerVolumesLogic.cxx 
   vtkSlicerModelsLogic.cxx 
   vtkSlicerModelHierarchyLogic.cxx

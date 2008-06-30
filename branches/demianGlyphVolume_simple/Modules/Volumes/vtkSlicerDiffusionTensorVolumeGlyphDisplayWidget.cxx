@@ -247,7 +247,7 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::UpdateMRML()
   this->UpdatingMRML = 1;
 
 
-  vtkMRMLDiffusionTensorDisplayPropertiesNode* propNode = this->GetCurrentDTDisplayPropertyNode();
+  vtkMRMLDiffusionTensorDisplayPropertiesNode* propNode = this->GetCurrentDiffusionTensorDisplayPropertyNode();
 
   if (propNode)
     {
@@ -333,7 +333,7 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::UpdateWidget()
   this->UpdatingWidget = 1;
 
 
-  vtkMRMLDiffusionTensorDisplayPropertiesNode* propNode = this->GetCurrentDTDisplayPropertyNode();
+  vtkMRMLDiffusionTensorDisplayPropertiesNode* propNode = this->GetCurrentDiffusionTensorDisplayPropertyNode();
 
   if (propNode)
     {
@@ -384,7 +384,7 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::UpdateWidget()
     } // for
 
 
-  vtkMRMLDiffusionTensorDisplayPropertiesNode *dpnode = this->GetCurrentDTDisplayPropertyNode();
+  vtkMRMLDiffusionTensorDisplayPropertiesNode *dpnode = this->GetCurrentDiffusionTensorDisplayPropertyNode();
   this->GlyphDisplayWidget->SetDiffusionTensorDisplayPropertiesNode(dpnode);
 
   // TODO glyph widget
@@ -587,13 +587,13 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::CreateWidget ( )
   }
 
 //---------------------------------------------------------------------------
-vtkMRMLDiffusionTensorDisplayPropertiesNode* vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::GetCurrentDTDisplayPropertyNode()
+vtkMRMLDiffusionTensorDisplayPropertiesNode* vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::GetCurrentDiffusionTensorDisplayPropertyNode()
   {
   vtkMRMLDiffusionTensorDisplayPropertiesNode *dpnode = NULL;
   if (this->GlypDisplayNodes.size() > 0)
     {
     vtkMRMLDiffusionTensorVolumeSliceDisplayNode *dnode = this->GlypDisplayNodes[0];
-    dpnode = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast( dnode->GetDTDisplayPropertiesNode() );
+    dpnode = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast( dnode->GetDiffusionTensorDisplayPropertiesNode() );
     }
   return dpnode;
   }
