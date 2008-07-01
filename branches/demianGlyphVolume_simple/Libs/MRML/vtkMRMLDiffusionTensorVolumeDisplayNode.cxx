@@ -300,9 +300,9 @@ void vtkMRMLDiffusionTensorVolumeDisplayNode::UpdateImageDataPipeline()
 }
 
 //----------------------------------------------------------------------------
-std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> vtkMRMLDiffusionTensorVolumeDisplayNode::GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* volumeNode )
+std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> vtkMRMLDiffusionTensorVolumeDisplayNode::GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* volumeNode )
 {
-  std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> nodes;
+  std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> nodes;
   int nnodes = volumeNode->GetNumberOfDisplayNodes();
   vtkMRMLDiffusionTensorVolumeSliceDisplayNode *node = NULL;
   for (int n=0; n<nnodes; n++)
@@ -317,9 +317,9 @@ std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> vtkMRMLDiffusionTens
 }
 
 //----------------------------------------------------------------------------
-std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> vtkMRMLDiffusionTensorVolumeDisplayNode::AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* volumeNode )
+std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> vtkMRMLDiffusionTensorVolumeDisplayNode::AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* volumeNode )
 {
-  std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> nodes = this->GetSliceGlyphDisplayNodes( volumeNode );
+  std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> nodes = this->GetSliceGlyphDisplayNodes( volumeNode );
   if (nodes.size() == 0)
     {
     vtkMRMLDiffusionTensorDisplayPropertiesNode *glyphDTDPN = vtkMRMLDiffusionTensorDisplayPropertiesNode::New();

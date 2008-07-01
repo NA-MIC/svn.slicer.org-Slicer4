@@ -144,7 +144,16 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::SetDiffusionTensorVolumeN
     vtkMRMLDiffusionTensorVolumeDisplayNode* displayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast( this->DiffusionTensorVolumeNode->GetDisplayNode() );
     if ( displayNode )
       {
-      this->GlyphDisplayNodes = displayNode->GetSliceGlyphDisplayNodes(this->DiffusionTensorVolumeNode);
+      std::vector< vtkMRMLGlyphVolumeSliceDisplayNode* > displayNodes = displayNode->GetSliceGlyphDisplayNodes(this->DiffusionTensorVolumeNode);
+      this->GlyphDisplayNodes.clear();
+      for( int i = 0 ; i<displayNodes.size(); i++ )
+      {
+        vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dtVolumeSliceDisplayNode = vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SafeDownCast( displayNodes[i] );
+        if (dtVolumeSliceDisplayNode)
+        {
+          this->GlyphDisplayNodes.push_back(dtVolumeSliceDisplayNode);
+        }
+      }
       this->UpdateWidget();
       }
     }

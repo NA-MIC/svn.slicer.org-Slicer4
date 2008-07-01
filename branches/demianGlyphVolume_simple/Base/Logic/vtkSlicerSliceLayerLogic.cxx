@@ -575,10 +575,10 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
     vtkMRMLVolumeGlyphDisplayNode *displayNode = vtkMRMLVolumeGlyphDisplayNode::SafeDownCast( this->VolumeNode->GetDisplayNode() );
     if (displayNode)
       {
-      std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes( volumeNode );
+      std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes( volumeNode );
       for (unsigned int n=0; n<dnodes.size(); n++)
         {
-        vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = dnodes[n];
+        vtkMRMLGlyphVolumeSliceDisplayNode* dnode = dnodes[n];
         if (!strcmp(this->GetSliceNode()->GetLayoutName(), dnode->GetName()) )
           {
           dnode->SetSliceImage(sliceImage);
@@ -609,7 +609,7 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
               trot->SetElement(i, j, dirs[i][j]);
               }
             }
-          dnode->SetSliceTensorRotationMatrix(trot);
+          dnode->SetSliceGlyphRotationMatrix(trot);
           trot->Delete();
           transformToWorld->Delete();
           }

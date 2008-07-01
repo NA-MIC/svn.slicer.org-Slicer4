@@ -308,7 +308,7 @@ void vtkSlicerDiffusionTestingWidget::ProcessWidgetEvents (vtkObject *caller, un
       //switch off glyphs from old tensorNode
       vtkMRMLDiffusionTensorVolumeDisplayNode* displayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast( this->TensorNode->GetDisplayNode() );
       if (displayNode==NULL) return;
-      std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glyphDisplayNodesOld = displayNode->GetSliceGlyphDisplayNodes( this->TensorNode );
+      std::vector<vtkMRMLGlyphVolumeSliceDisplayNode*> glyphDisplayNodesOld = displayNode->GetSliceGlyphDisplayNodes( this->TensorNode );
       for (unsigned int i=0; i<glyphDisplayNodesOld.size(); i++)
         {
         glyphDisplayNodesOld[i]->SetVisibility(0);
@@ -319,7 +319,7 @@ void vtkSlicerDiffusionTestingWidget::ProcessWidgetEvents (vtkObject *caller, un
     //check if selected node is already finished, if still in tensor estimation show dialog
     vtkMRMLDiffusionTensorVolumeDisplayNode* selectedDisplayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast( selected->GetDisplayNode() );
     if (selectedDisplayNode==NULL) return;
-    std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glyphDisplayNodes = selectedDisplayNode->GetSliceGlyphDisplayNodes( selected );
+    std::vector<vtkMRMLGlyphVolumeSliceDisplayNode*> glyphDisplayNodes = selectedDisplayNode->GetSliceGlyphDisplayNodes( selected );
     if(glyphDisplayNodes.size() != 3) 
       {
       vtkKWMessageDialog *MessageDialog = vtkKWMessageDialog::New();
@@ -342,7 +342,7 @@ void vtkSlicerDiffusionTestingWidget::ProcessWidgetEvents (vtkObject *caller, un
         vtkMRMLDiffusionTensorVolumeDisplayNode* displayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast( this->TensorNode->GetDisplayNode() );
         if (displayNode==NULL)
           {
-          std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glyphDisplayNodesOld = displayNode->GetSliceGlyphDisplayNodes( this->TensorNode );
+          std::vector<vtkMRMLGlyphVolumeSliceDisplayNode*> glyphDisplayNodesOld = displayNode->GetSliceGlyphDisplayNodes( this->TensorNode );
           for (unsigned int i=0; i<glyphDisplayNodesOld.size(); i++)
             {
             glyphDisplayNodesOld[i]->SetVisibility(0);
@@ -526,7 +526,7 @@ void vtkSlicerDiffusionTestingWidget::CreateGlyphs()
   if(this->TensorNode == NULL) return;
   vtkMRMLDiffusionTensorVolumeDisplayNode* displayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast( this->TensorNode->GetDisplayNode() );
   if (displayNode==NULL) return;
-  std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glyphDisplayNodes = displayNode->GetSliceGlyphDisplayNodes( this->TensorNode );
+  std::vector<vtkMRMLGlyphVolumeSliceDisplayNode*> glyphDisplayNodes = displayNode->GetSliceGlyphDisplayNodes( this->TensorNode );
   if(glyphDisplayNodes.size() != 3) return;
   for (unsigned int i=0; i<3; i++)
     {
@@ -560,16 +560,17 @@ void vtkSlicerDiffusionTestingWidget::UpdateGlyphSpacing()
   //find the properties node
   vtkMRMLDiffusionTensorVolumeDisplayNode* volumeDisplayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast( this->TensorNode->GetDisplayNode() );
   if (volumeDisplayNode==NULL) return;
-  std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> glyphDisplayNodes = volumeDisplayNode->GetSliceGlyphDisplayNodes( this->TensorNode );
+  std::vector<vtkMRMLGlyphVolumeSliceDisplayNode*> glyphDisplayNodes = volumeDisplayNode->GetSliceGlyphDisplayNodes( this->TensorNode );
 
-  displayNode = glyphDisplayNodes[0];
+  displayNode = vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SafeDownCast(glyphDisplayNodes[0]);
+  if (displayNode == NULL) return;
   propertiesNode = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast(displayNode->GetDiffusionTensorDisplayPropertiesNode());
 
   //update the spacing
   if(propertiesNode == NULL) return;
   propertiesNode->SetLineGlyphResolution((int)(this->GlyphSpacingScale->GetWidget()->GetValue()));
   propertiesNode->SetColorGlyphBy(10);//set color by scalar to "ColorOrientation"
-  }
+}
 
 //---------------------------------------------------------------------------
 void vtkSlicerDiffusionTestingWidget::CreateTracts()

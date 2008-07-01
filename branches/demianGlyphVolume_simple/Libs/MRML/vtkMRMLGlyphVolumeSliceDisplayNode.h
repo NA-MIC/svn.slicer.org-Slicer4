@@ -29,7 +29,6 @@
 
 #include "vtkMRML.h"
 #include "vtkMRMLFiberBundleDisplayNode.h"
-#include "vtkMRMLGlyphVolumeDisplayPropertiesNode.h"
 
 class vtkTransform;
 class vtkTransformPolyDataFilter;
@@ -182,19 +181,6 @@ class VTK_MRML_EXPORT vtkMRMLGlyphVolumeSliceDisplayNode : public vtkMRMLModelDi
   //--------------------------------------------------------------------------
   // MRML nodes that are observed
   //--------------------------------------------------------------------------
-  
-  // Description:
-  // Get diffusion tensor display MRML object for fiber glyph.
-  vtkMRMLGlyphVolumeDisplayPropertiesNode* GetGlyphVolumeDisplayPropertiesNode ( );
-
-  // Description:
-  // Set diffusion tensor display MRML object for fiber glyph.
-  void SetAndObserveGlyphVolumeDisplayPropertiesNodeID ( const char *ID );
-
-  // Description:
-  // Get ID of diffusion tensor display MRML object for fiber glyph.
-  vtkGetStringMacro(GlyphVolumeDisplayPropertiesNodeID);
-
  protected:
   vtkMRMLGlyphVolumeSliceDisplayNode ( );
   ~vtkMRMLGlyphVolumeSliceDisplayNode ( );
@@ -205,11 +191,6 @@ class VTK_MRML_EXPORT vtkMRMLGlyphVolumeSliceDisplayNode : public vtkMRMLModelDi
     vtkTransformPolyDataFilter *SliceToXYTransformer;
     vtkMatrix4x4             *SliceToXYMatrix;
 
-    // ALL MRML nodes
-    vtkMRMLGlyphVolumeDisplayPropertiesNode *GlyphVolumeDisplayPropertiesNode;
-    char *GlyphVolumeDisplayPropertiesNodeID;
-
-    vtkSetReferenceStringMacro(GlyphVolumeDisplayPropertiesNodeID);
 
     // Enumerated
     int ColorMode;

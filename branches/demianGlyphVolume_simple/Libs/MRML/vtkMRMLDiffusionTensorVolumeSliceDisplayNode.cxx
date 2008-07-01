@@ -100,7 +100,7 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::WriteXML(ostream& of, int nIn
 
   vtkIndent indent(nIndent);
 
-  of << indent << " colorMode =\"" << this->ColorMode << "\"";
+//  of << indent << " colorMode =\"" << this->ColorMode << "\"";
 
   if (this->DiffusionTensorDisplayPropertiesNodeID != NULL) 
     {
@@ -122,15 +122,16 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::ReadXMLAttributes(const char*
     {
     attName = *(atts++);
     attValue = *(atts++);
-
+/*
     if (!strcmp(attName, "colorMode")) 
       {
       std::stringstream ss;
       ss << attValue;
       ss >> ColorMode;
       }
-
-    else if (!strcmp(attName, "DiffusionTensorDisplayPropertiesNodeRef")) 
+    else 
+*/
+    if (!strcmp(attName, "DiffusionTensorDisplayPropertiesNodeRef")) 
       {
       this->SetDiffusionTensorDisplayPropertiesNodeID(attValue);
       //this->Scene->AddReferencedNodeID(this->FiberLineDiffusionTensorDisplayPropertiesNodeID, this);
@@ -158,7 +159,7 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::PrintSelf(ostream& os, vtkInd
  //int idx;
   
   Superclass::PrintSelf(os,indent);
-  os << indent << "ColorMode:             " << this->ColorMode << "\n";
+//  os << indent << "ColorMode:             " << this->ColorMode << "\n";
 }
 //----------------------------------------------------------------------------
 void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetSliceTensorRotationMatrix(vtkMatrix4x4 *matrix)
