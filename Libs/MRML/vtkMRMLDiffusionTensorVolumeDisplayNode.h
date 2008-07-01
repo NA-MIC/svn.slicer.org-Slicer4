@@ -25,19 +25,19 @@
 #define __vtkMRMLDiffusionTensorVolumeDisplayNode_h
 
 #include "vtkMRML.h"
-#include "vtkMRMLVolumeGlyphDisplayNode.h"
+#include "vtkMRMLGlyphableVolumeDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 
-class vtkMRMLGlyphVolumeSliceDisplayNode;
+class vtkMRMLGlyphableVolumeSliceDisplayNode;
 class vtkDiffusionTensorMathematicsSimple;
 class vtkDiffusionTensorGlyph;
 class vtkImageData;
 
-class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLVolumeGlyphDisplayNode
+class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLGlyphableVolumeDisplayNode
 {
   public:
   static vtkMRMLDiffusionTensorVolumeDisplayNode *New();
-  vtkTypeMacro(vtkMRMLDiffusionTensorVolumeDisplayNode,vtkMRMLVolumeGlyphDisplayNode);
+  vtkTypeMacro(vtkMRMLDiffusionTensorVolumeDisplayNode,vtkMRMLGlyphableVolumeDisplayNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   virtual vtkMRMLNode* CreateNodeInstance();
@@ -111,12 +111,12 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLVo
 //BTX
   // Description:
   // get associated slice glyph display node or NULL if not set
-  virtual std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node );
+  virtual std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*> GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node );
 
 
   // Description:
   // add slice glyph display nodes if not already present and return it
-  virtual std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node );
+  virtual std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node );
 //ETX
 
 

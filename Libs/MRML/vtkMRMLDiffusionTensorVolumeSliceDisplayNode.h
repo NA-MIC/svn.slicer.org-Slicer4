@@ -28,7 +28,7 @@
 #include "vtkMatrix4x4.h"
 
 #include "vtkMRML.h"
-#include "vtkMRMLGlyphVolumeSliceDisplayNode.h"
+#include "vtkMRMLGlyphableVolumeSliceDisplayNode.h"
 //#include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 
@@ -36,11 +36,11 @@ class vtkDiffusionTensorGlyph;
 class vtkTransform;
 class vtkTransformPolyDataFilter;
 
-class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkMRMLGlyphVolumeSliceDisplayNode
+class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkMRMLGlyphableVolumeSliceDisplayNode
 {
  public:
   static vtkMRMLDiffusionTensorVolumeSliceDisplayNode *New (  );
-  vtkTypeMacro ( vtkMRMLDiffusionTensorVolumeSliceDisplayNode,vtkMRMLGlyphVolumeSliceDisplayNode );
+  vtkTypeMacro ( vtkMRMLDiffusionTensorVolumeSliceDisplayNode,vtkMRMLGlyphableVolumeSliceDisplayNode );
   void PrintSelf ( ostream& os, vtkIndent indent );
   
   //--------------------------------------------------------------------------

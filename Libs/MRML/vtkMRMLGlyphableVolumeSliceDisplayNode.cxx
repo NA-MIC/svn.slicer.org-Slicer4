@@ -6,7 +6,7 @@ See Doc/copyright/copyright.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLGlyphVolumeSliceDisplayNode.cxx,v $
+Module:    $RCSfile: vtkMRMLGlyphableVolumeSliceDisplayNode.cxx,v $
 Date:      $Date: 2006/03/03 22:26:39 $
 Version:   $Revision: 1.3 $
 
@@ -20,38 +20,38 @@ Version:   $Revision: 1.3 $
 
 #include "vtkTransformPolyDataFilter.h"
 
-#include "vtkMRMLGlyphVolumeSliceDisplayNode.h"
+#include "vtkMRMLGlyphableVolumeSliceDisplayNode.h"
 #include "vtkMRMLScene.h"
 
 //------------------------------------------------------------------------------
-vtkMRMLGlyphVolumeSliceDisplayNode* vtkMRMLGlyphVolumeSliceDisplayNode::New()
+vtkMRMLGlyphableVolumeSliceDisplayNode* vtkMRMLGlyphableVolumeSliceDisplayNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLGlyphVolumeSliceDisplayNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLGlyphableVolumeSliceDisplayNode");
   if(ret)
     {
-    return (vtkMRMLGlyphVolumeSliceDisplayNode*)ret;
+    return (vtkMRMLGlyphableVolumeSliceDisplayNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLGlyphVolumeSliceDisplayNode;
+  return new vtkMRMLGlyphableVolumeSliceDisplayNode;
 }
 
 //-----------------------------------------------------------------------------
-vtkMRMLNode* vtkMRMLGlyphVolumeSliceDisplayNode::CreateNodeInstance()
+vtkMRMLNode* vtkMRMLGlyphableVolumeSliceDisplayNode::CreateNodeInstance()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLGlyphVolumeSliceDisplayNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLGlyphableVolumeSliceDisplayNode");
   if(ret)
     {
-    return (vtkMRMLGlyphVolumeSliceDisplayNode*)ret;
+    return (vtkMRMLGlyphableVolumeSliceDisplayNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLGlyphVolumeSliceDisplayNode;
+  return new vtkMRMLGlyphableVolumeSliceDisplayNode;
 }
 
 
 //----------------------------------------------------------------------------
-vtkMRMLGlyphVolumeSliceDisplayNode::vtkMRMLGlyphVolumeSliceDisplayNode()
+vtkMRMLGlyphableVolumeSliceDisplayNode::vtkMRMLGlyphableVolumeSliceDisplayNode()
 {
 
 
@@ -72,7 +72,7 @@ vtkMRMLGlyphVolumeSliceDisplayNode::vtkMRMLGlyphVolumeSliceDisplayNode()
 
 
 //----------------------------------------------------------------------------
-vtkMRMLGlyphVolumeSliceDisplayNode::~vtkMRMLGlyphVolumeSliceDisplayNode()
+vtkMRMLGlyphableVolumeSliceDisplayNode::~vtkMRMLGlyphableVolumeSliceDisplayNode()
 {
   this->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
   this->SliceToXYMatrix->Delete();
@@ -81,7 +81,7 @@ vtkMRMLGlyphVolumeSliceDisplayNode::~vtkMRMLGlyphVolumeSliceDisplayNode()
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::WriteXML(ostream& of, int nIndent)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::WriteXML(ostream& of, int nIndent)
 {
 
   // Write all attributes not equal to their defaults
@@ -96,7 +96,7 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::WriteXML(ostream& of, int nIndent)
 
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::ReadXMLAttributes(const char** atts)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::ReadXMLAttributes(const char** atts)
 {
   Superclass::ReadXMLAttributes(atts);
 
@@ -123,16 +123,16 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::ReadXMLAttributes(const char** atts)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, ID
-void vtkMRMLGlyphVolumeSliceDisplayNode::Copy(vtkMRMLNode *anode)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-  vtkMRMLGlyphVolumeSliceDisplayNode *node = (vtkMRMLGlyphVolumeSliceDisplayNode *) anode;
+  vtkMRMLGlyphableVolumeSliceDisplayNode *node = (vtkMRMLGlyphableVolumeSliceDisplayNode *) anode;
 
   this->SetColorMode(node->ColorMode);
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::PrintSelf(ostream& os, vtkIndent indent)
 {
  //int idx;
   
@@ -140,12 +140,12 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::PrintSelf(ostream& os, vtkIndent indent
   os << indent << "ColorMode:             " << this->ColorMode << "\n";
 }
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::SetSliceGlyphRotationMatrix(vtkMatrix4x4 *matrix)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::SetSliceGlyphRotationMatrix(vtkMatrix4x4 *matrix)
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::SetSlicePositionMatrix(vtkMatrix4x4 *matrix)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::SetSlicePositionMatrix(vtkMatrix4x4 *matrix)
 {
 //  if (this->GlyphGlyphFilter)
 //    {
@@ -160,7 +160,7 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::SetSlicePositionMatrix(vtkMatrix4x4 *ma
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::SetSliceImage(vtkImageData *image)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::SetSliceImage(vtkImageData *image)
 {
 /*
     if (this->GlyphGlyphFilter)
@@ -172,29 +172,29 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::SetSliceImage(vtkImageData *image)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::SetPolyData(vtkPolyData *glyphPolyData)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::SetPolyData(vtkPolyData *glyphPolyData)
 {
 }
 
 //----------------------------------------------------------------------------
-vtkPolyData* vtkMRMLGlyphVolumeSliceDisplayNode::GetPolyData()
+vtkPolyData* vtkMRMLGlyphableVolumeSliceDisplayNode::GetPolyData()
 {
     return NULL;
 }
 
 //----------------------------------------------------------------------------
-vtkPolyData* vtkMRMLGlyphVolumeSliceDisplayNode::GetPolyDataTransformedToSlice()
+vtkPolyData* vtkMRMLGlyphableVolumeSliceDisplayNode::GetPolyDataTransformedToSlice()
 {
     return NULL;
 }
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::UpdatePolyDataPipeline() 
+void vtkMRMLGlyphableVolumeSliceDisplayNode::UpdatePolyDataPipeline() 
 {
   vtkErrorMacro("Shouldn't be calling this");
 }
 
 //---------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
+void vtkMRMLGlyphableVolumeSliceDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
                                            unsigned long event, 
                                            void *callData )
 {
@@ -203,20 +203,20 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
 }
 
 //-----------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::UpdateScene(vtkMRMLScene *scene)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::UpdateScene(vtkMRMLScene *scene)
 {
    Superclass::UpdateScene(scene);
 }
 
 //-----------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::UpdateReferences()
+void vtkMRMLGlyphableVolumeSliceDisplayNode::UpdateReferences()
 {
   Superclass::UpdateReferences();
 }
 
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::UpdateReferenceID(const char *oldID, const char *newID)
+void vtkMRMLGlyphableVolumeSliceDisplayNode::UpdateReferenceID(const char *oldID, const char *newID)
 {
 }
 

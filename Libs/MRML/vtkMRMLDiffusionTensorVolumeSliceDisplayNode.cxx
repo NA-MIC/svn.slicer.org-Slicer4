@@ -54,7 +54,7 @@ vtkMRMLNode* vtkMRMLDiffusionTensorVolumeSliceDisplayNode::CreateNodeInstance()
 
 //----------------------------------------------------------------------------
 vtkMRMLDiffusionTensorVolumeSliceDisplayNode::vtkMRMLDiffusionTensorVolumeSliceDisplayNode()
-  :vtkMRMLGlyphVolumeSliceDisplayNode()
+  :vtkMRMLGlyphableVolumeSliceDisplayNode()
 {
 
   // Enumerated

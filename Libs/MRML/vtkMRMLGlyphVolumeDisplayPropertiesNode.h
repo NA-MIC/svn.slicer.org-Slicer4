@@ -11,12 +11,12 @@
   Version:   $Revision: 1.3 $
 
   =========================================================================auto=*/
-// .NAME vtkMRMLGlyphVolumeDisplayPropertiesNode - MRML node for display of a diffusion tensor.
+// .NAME vtkMRMLGlyphableVolumeDisplayPropertiesNode - MRML node for display of a diffusion tensor.
 // .SECTION Description
 // This node describes display properties at the (conceptual) single-tensor level.
 // A tensor can be displayed using various scalar invariants and glyphs.
 // This class is used by classes (vtkMRMLFiberBundleDisplayNode, 
-// vtkMRMLGlyphVolumeVolumeDisplayNode) that handle higher-level display
+// vtkMRMLGlyphableVolumeVolumeDisplayNode) that handle higher-level display
 // concepts for many diffusion tensors, such as choosing between scalars/glyphs/etc. 
 // for specific display needs.
 // This class inherits from the vtkMRMLColorNode->vtkMRMLColorTableNode superclasses,
@@ -24,19 +24,19 @@
 // provide specific lookup tables for the scalar invariant display.
 //
 
-#ifndef __vtkMRMLGlyphVolumeDisplayPropertiesNode_h
-#define __vtkMRMLGlyphVolumeDisplayPropertiesNode_h
+#ifndef __vtkMRMLGlyphableVolumeDisplayPropertiesNode_h
+#define __vtkMRMLGlyphableVolumeDisplayPropertiesNode_h
 
 #include "vtkMRML.h"
 #include "vtkMRMLColorTableNode.h"
 #include "vtkPolyData.h"
 
 
-class VTK_MRML_EXPORT vtkMRMLGlyphVolumeDisplayPropertiesNode : public vtkMRMLColorTableNode
+class VTK_MRML_EXPORT vtkMRMLGlyphableVolumeDisplayPropertiesNode : public vtkMRMLColorTableNode
 {
  public:
-  static vtkMRMLGlyphVolumeDisplayPropertiesNode *New();
-  vtkTypeMacro(vtkMRMLGlyphVolumeDisplayPropertiesNode,vtkMRMLColorTableNode);
+  static vtkMRMLGlyphableVolumeDisplayPropertiesNode *New();
+  vtkTypeMacro(vtkMRMLGlyphableVolumeDisplayPropertiesNode,vtkMRMLColorTableNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   //--------------------------------------------------------------------------
@@ -59,7 +59,7 @@ class VTK_MRML_EXPORT vtkMRMLGlyphVolumeDisplayPropertiesNode : public vtkMRMLCo
 
   // Description:
   // Get node XML tag name (like Volume, Model)
-  virtual const char* GetNodeTagName() {return "GlyphVolumeDisplayProperties";};
+  virtual const char* GetNodeTagName() {return "GlyphableVolumeDisplayProperties";};
 
   //--------------------------------------------------------------------------
   // Display Information: Parameters of glyph geometry
@@ -87,10 +87,10 @@ class VTK_MRML_EXPORT vtkMRMLGlyphVolumeDisplayPropertiesNode : public vtkMRMLCo
   virtual void UpdateGlyphSource();
 
  protected:
-  vtkMRMLGlyphVolumeDisplayPropertiesNode();
-  ~vtkMRMLGlyphVolumeDisplayPropertiesNode();
-  vtkMRMLGlyphVolumeDisplayPropertiesNode(const vtkMRMLGlyphVolumeDisplayPropertiesNode&);
-  void operator=(const vtkMRMLGlyphVolumeDisplayPropertiesNode&);
+  vtkMRMLGlyphableVolumeDisplayPropertiesNode();
+  ~vtkMRMLGlyphableVolumeDisplayPropertiesNode();
+  vtkMRMLGlyphableVolumeDisplayPropertiesNode(const vtkMRMLGlyphableVolumeDisplayPropertiesNode&);
+  void operator=(const vtkMRMLGlyphableVolumeDisplayPropertiesNode&);
 
 
   double GlyphScaleFactor; 
