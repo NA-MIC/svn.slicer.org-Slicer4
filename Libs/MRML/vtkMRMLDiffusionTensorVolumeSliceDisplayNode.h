@@ -28,18 +28,19 @@
 #include "vtkMatrix4x4.h"
 
 #include "vtkMRML.h"
-#include "vtkMRMLFiberBundleDisplayNode.h"
+#include "vtkMRMLGlyphVolumeSliceDisplayNode.h"
+//#include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 
 class vtkDiffusionTensorGlyph;
 class vtkTransform;
 class vtkTransformPolyDataFilter;
 
-class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkMRMLModelDisplayNode
+class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkMRMLGlyphVolumeSliceDisplayNode
 {
  public:
   static vtkMRMLDiffusionTensorVolumeSliceDisplayNode *New (  );
-  vtkTypeMacro ( vtkMRMLDiffusionTensorVolumeSliceDisplayNode,vtkMRMLModelDisplayNode );
+  vtkTypeMacro ( vtkMRMLDiffusionTensorVolumeSliceDisplayNode,vtkMRMLGlyphVolumeSliceDisplayNode );
   void PrintSelf ( ostream& os, vtkIndent indent );
   
   //--------------------------------------------------------------------------
@@ -206,9 +207,6 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeSliceDisplayNode : public vtkM
   void operator= ( const vtkMRMLDiffusionTensorVolumeSliceDisplayNode& );
 
     vtkDiffusionTensorGlyph  *DiffusionTensorGlyphFilter;
-    vtkTransform             *SliceToXYTransform;
-    vtkTransformPolyDataFilter *SliceToXYTransformer;
-    vtkMatrix4x4             *SliceToXYMatrix;
 
     // ALL MRML nodes
     vtkMRMLDiffusionTensorDisplayPropertiesNode *DiffusionTensorDisplayPropertiesNode;
