@@ -141,8 +141,12 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::SetDiffusionTensorVolumeN
 
   if (this->DiffusionTensorVolumeNode )
     {
-    this->GlypDisplayNodes = this->DiffusionTensorVolumeNode->GetSliceGlyphDisplayNodes();
-    this->UpdateWidget();
+    vtkMRMLDiffusionTensorVolumeDisplayNode* displayNode = vtkMRMLDiffusionTensorVolumeDisplayNode::SafeDownCast( this->DiffusionTensorVolumeNode->GetDisplayNode() );
+    if ( displayNode )
+      {
+      this->GlyphDisplayNodes = displayNode->GetSliceGlyphDisplayNodes(this->DiffusionTensorVolumeNode);
+      this->UpdateWidget();
+      }
     }
   }
 
@@ -155,9 +159,9 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::ProcessWidgetEvents ( vtk
     !(vtkKWScale::SafeDownCast(caller) == this->OpacityScale->GetWidget() && event == vtkKWScale::ScaleValueChangingEvent) &&
     !(vtkKWScale::SafeDownCast(caller) == this->OpacityScale->GetWidget() && event == vtkKWScale::ScaleValueChangedEvent))
     {
-    for (unsigned int i=0; i<this->GlypDisplayNodes.size(); i++)
+    for (unsigned int i=0; i<this->GlyphDisplayNodes.size(); i++)
       {
-      this->MRMLScene->SaveStateForUndo(this->GlypDisplayNodes[i]);
+      this->MRMLScene->SaveStateForUndo(this->GlyphDisplayNodes[i]);
       }
     }
 
@@ -177,9 +181,9 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::ProcessWidgetEvents ( vtk
         {
         this->ColorSelectorWidget->SetSelected(color);
         }
-      for (unsigned int i=0; i<this->GlypDisplayNodes.size(); i++)
+      for (unsigned int i=0; i<this->GlyphDisplayNodes.size(); i++)
         {
-        vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = this->GlypDisplayNodes[i];
+        vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = this->GlyphDisplayNodes[i];
         if (dnode != NULL)
           {
           dnode->SetScalarRange(0,255);
@@ -210,9 +214,9 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::ProcessWidgetEvents ( vtk
       vtkMRMLColorNode::SafeDownCast(this->ColorSelectorWidget->GetSelected());
     if (color != NULL)
       {
-      for (unsigned int i=0; i<this->GlypDisplayNodes.size(); i++)
+      for (unsigned int i=0; i<this->GlyphDisplayNodes.size(); i++)
         {
-        vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = this->GlypDisplayNodes[i];
+        vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = this->GlyphDisplayNodes[i];
         if (dnode != NULL)
           {
           // set and observe it's colour node id
@@ -254,9 +258,9 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::UpdateMRML()
     propNode->SetColorGlyphBy(this->GeometryColorMap[std::string(this->GeometryColorMenu->GetWidget()->GetValue())]);
     }
 
-  for (unsigned int i=0; i<this->GlypDisplayNodes.size(); i++)
+  for (unsigned int i=0; i<this->GlyphDisplayNodes.size(); i++)
     {
-    vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = this->GlypDisplayNodes[i];
+    vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = this->GlyphDisplayNodes[i];
     dnode->SetOpacity(this->OpacityScale->GetWidget()->GetValue());
     dnode->SetVisibility(this->VisibilityButton[i]->GetWidget()->GetSelectedState());
 
@@ -341,9 +345,9 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::UpdateWidget()
     this->GeometryColorMenu->GetWidget()->SetValue(propNode->GetColorGlyphByAsString());
     }
 
-  for (unsigned int i=0; i<this->GlypDisplayNodes.size(); i++)
+  for (unsigned int i=0; i<this->GlyphDisplayNodes.size(); i++)
     {
-    vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = this->GlypDisplayNodes[i];
+    vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = this->GlyphDisplayNodes[i];
 
     this->VisibilityButton[i]->GetWidget()->SetSelectedState(dnode->GetVisibility());
     if (i == 0)
@@ -590,9 +594,9 @@ void vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::CreateWidget ( )
 vtkMRMLDiffusionTensorDisplayPropertiesNode* vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget::GetCurrentDiffusionTensorDisplayPropertyNode()
   {
   vtkMRMLDiffusionTensorDisplayPropertiesNode *dpnode = NULL;
-  if (this->GlypDisplayNodes.size() > 0)
+  if (this->GlyphDisplayNodes.size() > 0)
     {
-    vtkMRMLDiffusionTensorVolumeSliceDisplayNode *dnode = this->GlypDisplayNodes[0];
+    vtkMRMLDiffusionTensorVolumeSliceDisplayNode *dnode = this->GlyphDisplayNodes[0];
     dpnode = vtkMRMLDiffusionTensorDisplayPropertiesNode::SafeDownCast( dnode->GetDiffusionTensorDisplayPropertiesNode() );
     }
   return dpnode;
