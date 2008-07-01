@@ -54,10 +54,6 @@ vtkMRMLNode* vtkMRMLGlyphVolumeSliceDisplayNode::CreateNodeInstance()
 vtkMRMLGlyphVolumeSliceDisplayNode::vtkMRMLGlyphVolumeSliceDisplayNode()
 {
 
-  // Enumerated
-  this->GlyphVolumeDisplayPropertiesNode = NULL;
-  this->GlyphVolumeDisplayPropertiesNodeID = NULL;
-
 
   this->ColorMode = this->colorModeScalar;
   
@@ -79,7 +75,6 @@ vtkMRMLGlyphVolumeSliceDisplayNode::vtkMRMLGlyphVolumeSliceDisplayNode()
 vtkMRMLGlyphVolumeSliceDisplayNode::~vtkMRMLGlyphVolumeSliceDisplayNode()
 {
   this->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
-  this->SetAndObserveGlyphVolumeDisplayPropertiesNodeID(NULL);
   this->SliceToXYMatrix->Delete();
   this->SliceToXYTransform->Delete();
   this->SliceToXYTransformer->Delete();
@@ -96,12 +91,6 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::WriteXML(ostream& of, int nIndent)
   vtkIndent indent(nIndent);
 
   of << indent << " colorMode =\"" << this->ColorMode << "\"";
-
-  if (this->GlyphVolumeDisplayPropertiesNodeID != NULL) 
-    {
-    of << indent << " GlyphVolumeDisplayPropertiesNodeRef=\"" << this->GlyphVolumeDisplayPropertiesNodeID << "\"";
-    }
-
 
 }
 
@@ -125,11 +114,6 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::ReadXMLAttributes(const char** atts)
       ss >> ColorMode;
       }
 
-    else if (!strcmp(attName, "GlyphVolumeDisplayPropertiesNodeRef")) 
-      {
-      this->SetGlyphVolumeDisplayPropertiesNodeID(attValue);
-      //this->Scene->AddReferencedNodeID(this->FiberLineGlyphVolumeDisplayPropertiesNodeID, this);
-      }
     }  
 
 
@@ -145,7 +129,6 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::Copy(vtkMRMLNode *anode)
   vtkMRMLGlyphVolumeSliceDisplayNode *node = (vtkMRMLGlyphVolumeSliceDisplayNode *) anode;
 
   this->SetColorMode(node->ColorMode);
-  this->SetGlyphVolumeDisplayPropertiesNodeID(node->GlyphVolumeDisplayPropertiesNodeID);
 }
 
 //----------------------------------------------------------------------------
@@ -210,37 +193,6 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::UpdatePolyDataPipeline()
   vtkErrorMacro("Shouldn't be calling this");
 }
 
-//----------------------------------------------------------------------------
-vtkMRMLGlyphVolumeDisplayPropertiesNode* vtkMRMLGlyphVolumeSliceDisplayNode::GetGlyphVolumeDisplayPropertiesNode ( )
-{
-  vtkMRMLGlyphVolumeDisplayPropertiesNode* node = NULL;
-
-  // Find the node corresponding to the ID we have saved.
-  if  ( this->GetScene ( ) && this->GetGlyphVolumeDisplayPropertiesNodeID ( ) )
-    {
-    vtkMRMLNode* cnode = this->GetScene ( ) -> GetNodeByID ( this->GlyphVolumeDisplayPropertiesNodeID );
-    node = vtkMRMLGlyphVolumeDisplayPropertiesNode::SafeDownCast ( cnode );
-    }
-
-  return node;
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeSliceDisplayNode::SetAndObserveGlyphVolumeDisplayPropertiesNodeID ( const char *ID )
-{
-  // Stop observing any old node
-  vtkSetAndObserveMRMLObjectMacro ( this->GlyphVolumeDisplayPropertiesNode, NULL );
-
-  // Set the ID. This is the "ground truth" reference to the node.
-  this->SetGlyphVolumeDisplayPropertiesNodeID ( ID );
-
-  // Get the node corresponding to the ID. This pointer is only to observe the object.
-  vtkMRMLNode *cnode = this->GetGlyphVolumeDisplayPropertiesNode ( );
-
-  // Observe the node using the pointer.
-  vtkSetAndObserveMRMLObjectMacro ( this->GlyphVolumeDisplayPropertiesNode , cnode );
-
-}
 //---------------------------------------------------------------------------
 void vtkMRMLGlyphVolumeSliceDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
                                            unsigned long event, 
@@ -254,29 +206,18 @@ void vtkMRMLGlyphVolumeSliceDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
 void vtkMRMLGlyphVolumeSliceDisplayNode::UpdateScene(vtkMRMLScene *scene)
 {
    Superclass::UpdateScene(scene);
-
-   this->SetAndObserveGlyphVolumeDisplayPropertiesNodeID(this->GetGlyphVolumeDisplayPropertiesNodeID());
 }
 
 //-----------------------------------------------------------
 void vtkMRMLGlyphVolumeSliceDisplayNode::UpdateReferences()
 {
   Superclass::UpdateReferences();
-
-  if (this->GlyphVolumeDisplayPropertiesNodeID != NULL && this->Scene->GetNodeByID(this->GlyphVolumeDisplayPropertiesNodeID) == NULL)
-    {
-    this->SetAndObserveGlyphVolumeDisplayPropertiesNodeID(NULL);
-    }
 }
 
 
 //----------------------------------------------------------------------------
 void vtkMRMLGlyphVolumeSliceDisplayNode::UpdateReferenceID(const char *oldID, const char *newID)
 {
-  if (this->GlyphVolumeDisplayPropertiesNodeID && !strcmp(oldID, this->GlyphVolumeDisplayPropertiesNodeID))
-    {
-    this->SetGlyphVolumeDisplayPropertiesNodeID(newID);
-    }
 }
 
 

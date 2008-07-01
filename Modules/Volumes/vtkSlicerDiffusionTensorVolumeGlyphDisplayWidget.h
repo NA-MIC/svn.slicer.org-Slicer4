@@ -22,6 +22,7 @@
 #define __vtkSlicerDiffusionTensorVolumeGlyphDisplayWidget_h
 
 #include "vtkVolumes.h"
+#include "vtkSmartPointer.h"
 
 #include "vtkSlicerWidget.h"
 
@@ -117,7 +118,7 @@ protected:
 
 //BTX
   std::map <std::string, int> GeometryColorMap;
-  std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> GlyphDisplayNodes;
+  std::vector< vtkSmartPointer< vtkMRMLDiffusionTensorVolumeSliceDisplayNode > > GlyphDisplayNodes;
 //ETX
   
 private:

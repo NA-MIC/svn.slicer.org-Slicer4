@@ -28,7 +28,7 @@
 #include "vtkMRMLVolumeGlyphDisplayNode.h"
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 
-class vtkMRMLDiffusionTensorVolumeSliceDisplayNode;
+class vtkMRMLGlyphVolumeSliceDisplayNode;
 class vtkDiffusionTensorMathematicsSimple;
 class vtkDiffusionTensorGlyph;
 class vtkImageData;
@@ -111,12 +111,12 @@ class VTK_MRML_EXPORT vtkMRMLDiffusionTensorVolumeDisplayNode : public vtkMRMLVo
 //BTX
   // Description:
   // get associated slice glyph display node or NULL if not set
-  virtual std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node );
+  virtual std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node );
 
 
   // Description:
   // add slice glyph display nodes if not already present and return it
-  virtual std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node );
+  virtual std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node );
 //ETX
 
 
