@@ -54,6 +54,7 @@ vtkMRMLNode* vtkMRMLDiffusionTensorVolumeSliceDisplayNode::CreateNodeInstance()
 
 //----------------------------------------------------------------------------
 vtkMRMLDiffusionTensorVolumeSliceDisplayNode::vtkMRMLDiffusionTensorVolumeSliceDisplayNode()
+  :vtkMRMLGlyphVolumeSliceDisplayNode()
 {
 
   // Enumerated
@@ -65,7 +66,7 @@ vtkMRMLDiffusionTensorVolumeSliceDisplayNode::vtkMRMLDiffusionTensorVolumeSliceD
   this->DiffusionTensorGlyphFilter->SetResolution (1);
 
   this->ColorMode = this->colorModeScalar;
-  
+/*  
   this->SliceToXYTransformer = vtkTransformPolyDataFilter::New();
 
   this->SliceToXYTransform = vtkTransform::New();
@@ -75,8 +76,9 @@ vtkMRMLDiffusionTensorVolumeSliceDisplayNode::vtkMRMLDiffusionTensorVolumeSliceD
   this->SliceToXYTransform->PreMultiply();
   this->SliceToXYTransform->SetMatrix(this->SliceToXYMatrix);
 
-  this->SliceToXYTransformer->SetInput(this->DiffusionTensorGlyphFilter->GetOutput());
   this->SliceToXYTransformer->SetTransform(this->SliceToXYTransform);
+*/
+  this->SliceToXYTransformer->SetInput(this->DiffusionTensorGlyphFilter->GetOutput());
 }
 
 
@@ -86,9 +88,6 @@ vtkMRMLDiffusionTensorVolumeSliceDisplayNode::~vtkMRMLDiffusionTensorVolumeSlice
   this->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
   this->SetAndObserveDiffusionTensorDisplayPropertiesNodeID(NULL);
   this->DiffusionTensorGlyphFilter->Delete();
-  this->SliceToXYMatrix->Delete();
-  this->SliceToXYTransform->Delete();
-  this->SliceToXYTransformer->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -150,7 +149,6 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLDiffusionTensorVolumeSliceDisplayNode *node = (vtkMRMLDiffusionTensorVolumeSliceDisplayNode *) anode;
 
-  this->SetColorMode(node->ColorMode);
   this->SetDiffusionTensorDisplayPropertiesNodeID(node->DiffusionTensorDisplayPropertiesNodeID);
 }
 
@@ -174,15 +172,10 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetSliceTensorRotationMatrix(
 //----------------------------------------------------------------------------
 void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetSlicePositionMatrix(vtkMatrix4x4 *matrix)
 {
+  Superclass::SetSlicePositionMatrix(matrix);
   if (this->DiffusionTensorGlyphFilter)
     {
     this->DiffusionTensorGlyphFilter->SetVolumePositionMatrix(matrix);
-    }
-  this->SliceToXYMatrix->DeepCopy(matrix);
-  this->SliceToXYMatrix->Invert();
-  if (this->SliceToXYTransform)
-    {
-    this->SliceToXYTransform->SetMatrix(this->SliceToXYMatrix);
     }
 }
 
