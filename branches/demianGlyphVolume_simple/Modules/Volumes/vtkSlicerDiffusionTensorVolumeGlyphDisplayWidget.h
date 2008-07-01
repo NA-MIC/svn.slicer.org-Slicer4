@@ -117,7 +117,7 @@ protected:
 
 //BTX
   std::map <std::string, int> GeometryColorMap;
-  std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> GlypDisplayNodes;
+  std::vector<vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> GlyphDisplayNodes;
 //ETX
   
 private:

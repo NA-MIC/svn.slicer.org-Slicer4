@@ -1351,9 +1351,10 @@ void vtkSlicerSliceLogic::AddSliceGlyphs(vtkSlicerSliceLayerLogic *layerLogic)
  if (layerLogic && layerLogic->GetVolumeNode()) 
     {
     vtkMRMLDiffusionImageVolumeNode *volumeNode = vtkMRMLDiffusionImageVolumeNode::SafeDownCast (layerLogic->GetVolumeNode());
-    if (volumeNode)
+    vtkMRMLVolumeGlyphDisplayNode *displayNode = vtkMRMLVolumeGlyphDisplayNode::SafeDownCast( layerLogic->GetVolumeNode()->GetDisplayNode() );
+    if (displayNode)
       {
-      std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = volumeNode->GetSliceGlyphDisplayNodes();
+      std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes(volumeNode);
       for (unsigned int i=0; i<dnodes.size(); i++)
         {
         vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = dnodes[i];
@@ -1390,9 +1391,10 @@ std::vector< vtkMRMLDisplayNode*> vtkSlicerSliceLogic::GetPolyDataDisplayNodes()
     if (layerLogic && layerLogic->GetVolumeNode()) 
       {
       vtkMRMLDiffusionImageVolumeNode *volumeNode = vtkMRMLDiffusionImageVolumeNode::SafeDownCast (layerLogic->GetVolumeNode());
-      if (volumeNode)
+      vtkMRMLVolumeGlyphDisplayNode *displayNode = vtkMRMLVolumeGlyphDisplayNode::SafeDownCast( layerLogic->GetVolumeNode()->GetDisplayNode() );
+      if (displayNode)
         {
-        std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = volumeNode->GetSliceGlyphDisplayNodes();
+        std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes(volumeNode);
         for (unsigned int n=0; n<dnodes.size(); n++)
           {
           vtkMRMLDiffusionTensorVolumeSliceDisplayNode* dnode = dnodes[n];

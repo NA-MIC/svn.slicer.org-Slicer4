@@ -31,6 +31,8 @@
 #include "vtkLookupTable.h"
 
 class vtkImageData;
+class vtkMRMLVolumeNode;
+class vtkMRMLDiffusionTensorVolumeSliceDisplayNode;
 
 class VTK_MRML_EXPORT vtkMRMLVolumeGlyphDisplayNode : public vtkMRMLScalarVolumeDisplayNode
 {
@@ -129,6 +131,17 @@ class VTK_MRML_EXPORT vtkMRMLVolumeGlyphDisplayNode : public vtkMRMLScalarVolume
     {
     Superclass::UpdateImageDataPipeline();
     };
+//BTX
+  // Description:
+  // get associated slice glyph display node or NULL if not set
+  virtual std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*> GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node ){ vtkErrorMacro("Shouldn't be calling this"); }
+
+
+  // Description:
+  // add slice glyph display nodes if not already present and return it
+  virtual std::vector< vtkMRMLDiffusionTensorVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node ){vtkErrorMacro("Shouldn't be calling this"); }
+//ETX
+
 protected:
   vtkMRMLVolumeGlyphDisplayNode();
   ~vtkMRMLVolumeGlyphDisplayNode();
