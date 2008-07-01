@@ -6,7 +6,7 @@ See Doc/copyright/copyright.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLGlyphVolumeDisplayPropertiesNode.cxx,v $
+Module:    $RCSfile: vtkMRMLGlyphableVolumeDisplayPropertiesNode.cxx,v $
 Date:      $Date: 2006/03/03 22:26:39 $
 Version:   $Revision: 1.0 $
 
@@ -18,41 +18,41 @@ Version:   $Revision: 1.0 $
 #include "vtkObjectFactory.h"
 #include "vtkCallbackCommand.h"
 
-#include "vtkMRMLGlyphVolumeDisplayPropertiesNode.h"
+#include "vtkMRMLGlyphableVolumeDisplayPropertiesNode.h"
 #include "vtkMRMLScene.h"
 
 #include "vtkLookupTable.h"
 
 //------------------------------------------------------------------------------
-vtkMRMLGlyphVolumeDisplayPropertiesNode* vtkMRMLGlyphVolumeDisplayPropertiesNode::New()
+vtkMRMLGlyphableVolumeDisplayPropertiesNode* vtkMRMLGlyphableVolumeDisplayPropertiesNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLGlyphVolumeDisplayPropertiesNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLGlyphableVolumeDisplayPropertiesNode");
   if(ret)
     {
-    return (vtkMRMLGlyphVolumeDisplayPropertiesNode*)ret;
+    return (vtkMRMLGlyphableVolumeDisplayPropertiesNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLGlyphVolumeDisplayPropertiesNode;
+  return new vtkMRMLGlyphableVolumeDisplayPropertiesNode;
 }
 
 //-----------------------------------------------------------------------------
 
-vtkMRMLNode* vtkMRMLGlyphVolumeDisplayPropertiesNode::CreateNodeInstance()
+vtkMRMLNode* vtkMRMLGlyphableVolumeDisplayPropertiesNode::CreateNodeInstance()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLGlyphVolumeDisplayPropertiesNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLGlyphableVolumeDisplayPropertiesNode");
   if(ret)
     {
-    return (vtkMRMLGlyphVolumeDisplayPropertiesNode*)ret;
+    return (vtkMRMLGlyphableVolumeDisplayPropertiesNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLGlyphVolumeDisplayPropertiesNode;
+  return new vtkMRMLGlyphableVolumeDisplayPropertiesNode;
 }
 
 
 //----------------------------------------------------------------------------
-vtkMRMLGlyphVolumeDisplayPropertiesNode::vtkMRMLGlyphVolumeDisplayPropertiesNode()
+vtkMRMLGlyphableVolumeDisplayPropertiesNode::vtkMRMLGlyphableVolumeDisplayPropertiesNode()
 {
 
   // Glyph general parameters
@@ -65,7 +65,7 @@ vtkMRMLGlyphVolumeDisplayPropertiesNode::vtkMRMLGlyphVolumeDisplayPropertiesNode
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLGlyphVolumeDisplayPropertiesNode::~vtkMRMLGlyphVolumeDisplayPropertiesNode()
+vtkMRMLGlyphableVolumeDisplayPropertiesNode::~vtkMRMLGlyphableVolumeDisplayPropertiesNode()
 {
   if ( this->GlyphSource != NULL )
     {
@@ -74,7 +74,7 @@ vtkMRMLGlyphVolumeDisplayPropertiesNode::~vtkMRMLGlyphVolumeDisplayPropertiesNod
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeDisplayPropertiesNode::WriteXML(ostream& of, int nIndent)
+void vtkMRMLGlyphableVolumeDisplayPropertiesNode::WriteXML(ostream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
   
@@ -87,7 +87,7 @@ void vtkMRMLGlyphVolumeDisplayPropertiesNode::WriteXML(ostream& of, int nIndent)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeDisplayPropertiesNode::ReadXMLAttributes(const char** atts)
+void vtkMRMLGlyphableVolumeDisplayPropertiesNode::ReadXMLAttributes(const char** atts)
 {
 
   Superclass::ReadXMLAttributes(atts);
@@ -112,17 +112,17 @@ void vtkMRMLGlyphVolumeDisplayPropertiesNode::ReadXMLAttributes(const char** att
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, ID
-void vtkMRMLGlyphVolumeDisplayPropertiesNode::Copy(vtkMRMLNode *anode)
+void vtkMRMLGlyphableVolumeDisplayPropertiesNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-  vtkMRMLGlyphVolumeDisplayPropertiesNode *node = (vtkMRMLGlyphVolumeDisplayPropertiesNode *) anode;
+  vtkMRMLGlyphableVolumeDisplayPropertiesNode *node = (vtkMRMLGlyphableVolumeDisplayPropertiesNode *) anode;
   
   this->SetGlyphScaleFactor(node->GlyphScaleFactor);
 
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeDisplayPropertiesNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLGlyphableVolumeDisplayPropertiesNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   Superclass::PrintSelf(os,indent);
   os << indent << "GlyphScaleFactor:             " << this->GlyphScaleFactor << "\n";
@@ -130,7 +130,7 @@ void vtkMRMLGlyphVolumeDisplayPropertiesNode::PrintSelf(ostream& os, vtkIndent i
 
 
 //----------------------------------------------------------------------------
-void vtkMRMLGlyphVolumeDisplayPropertiesNode::UpdateGlyphSource ( )
+void vtkMRMLGlyphableVolumeDisplayPropertiesNode::UpdateGlyphSource ( )
 {
   vtkErrorMacro("Shouldn't be calling this");
 }

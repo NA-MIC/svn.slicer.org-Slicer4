@@ -571,7 +571,7 @@ void vtkSlicerSliceLogic::UpdatePipeline()
     /***
     if (this->BackgroundGlyphLayer)
       {
-      if ( bgnode && (bgnode->GetDisplayNode()) && (bgnode->GetDisplayNode()->IsA("vtkMRMLVolumeGlyphDisplayNode")) && (this->BackgroundGlyphLayer->GetVolumeNode() != bgnode) ) 
+      if ( bgnode && (bgnode->GetDisplayNode()) && (bgnode->GetDisplayNode()->IsA("vtkMRMLGlyphableVolumeDisplayNode")) && (this->BackgroundGlyphLayer->GetVolumeNode() != bgnode) ) 
         {
         vtkErrorMacro("Background node is a glyph DisplayNode:"<<bgnode->GetDisplayNode());
         this->BackgroundGlyphLayer->SetVolumeNode (bgnode);
@@ -600,7 +600,7 @@ void vtkSlicerSliceLogic::UpdatePipeline()
     if (this->ForegroundGlyphLayer)
       {
 
-      if (  fgnode && (fgnode->GetDisplayNode()) && (fgnode->GetDisplayNode()->IsA("vtkMRMLVolumeGlyphDisplayNode")) && (this->ForegroundGlyphLayer->GetVolumeNode() != fgnode) ) 
+      if (  fgnode && (fgnode->GetDisplayNode()) && (fgnode->GetDisplayNode()->IsA("vtkMRMLGlyphableVolumeDisplayNode")) && (this->ForegroundGlyphLayer->GetVolumeNode() != fgnode) ) 
         {
         this->ForegroundGlyphLayer->SetVolumeNode (bgnode);
         modified = 1;
@@ -1351,13 +1351,13 @@ void vtkSlicerSliceLogic::AddSliceGlyphs(vtkSlicerSliceLayerLogic *layerLogic)
  if (layerLogic && layerLogic->GetVolumeNode()) 
     {
     vtkMRMLDiffusionImageVolumeNode *volumeNode = vtkMRMLDiffusionImageVolumeNode::SafeDownCast (layerLogic->GetVolumeNode());
-    vtkMRMLVolumeGlyphDisplayNode *displayNode = vtkMRMLVolumeGlyphDisplayNode::SafeDownCast( layerLogic->GetVolumeNode()->GetDisplayNode() );
+    vtkMRMLGlyphableVolumeDisplayNode *displayNode = vtkMRMLGlyphableVolumeDisplayNode::SafeDownCast( layerLogic->GetVolumeNode()->GetDisplayNode() );
     if (displayNode)
       {
-      std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes(volumeNode);
+      std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes(volumeNode);
       for (unsigned int i=0; i<dnodes.size(); i++)
         {
-        vtkMRMLGlyphVolumeSliceDisplayNode* dnode = dnodes[i];
+        vtkMRMLGlyphableVolumeSliceDisplayNode* dnode = dnodes[i];
         if (dnode->GetVisibility() && layerLogic->GetSliceNode() 
           && layerLogic->GetSliceNode()->GetLayoutName() 
           &&!strcmp(layerLogic->GetSliceNode()->GetLayoutName(), dnode->GetName()) )
@@ -1391,13 +1391,13 @@ std::vector< vtkMRMLDisplayNode*> vtkSlicerSliceLogic::GetPolyDataDisplayNodes()
     if (layerLogic && layerLogic->GetVolumeNode()) 
       {
       vtkMRMLDiffusionImageVolumeNode *volumeNode = vtkMRMLDiffusionImageVolumeNode::SafeDownCast (layerLogic->GetVolumeNode());
-      vtkMRMLVolumeGlyphDisplayNode *displayNode = vtkMRMLVolumeGlyphDisplayNode::SafeDownCast( layerLogic->GetVolumeNode()->GetDisplayNode() );
+      vtkMRMLGlyphableVolumeDisplayNode *displayNode = vtkMRMLGlyphableVolumeDisplayNode::SafeDownCast( layerLogic->GetVolumeNode()->GetDisplayNode() );
       if (displayNode)
         {
-        std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes(volumeNode);
+        std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes(volumeNode);
         for (unsigned int n=0; n<dnodes.size(); n++)
           {
-          vtkMRMLGlyphVolumeSliceDisplayNode* dnode = dnodes[n];
+          vtkMRMLGlyphableVolumeSliceDisplayNode* dnode = dnodes[n];
           if (layerLogic->GetSliceNode() 
             && layerLogic->GetSliceNode()->GetLayoutName()
             && !strcmp(layerLogic->GetSliceNode()->GetLayoutName(), dnode->GetName()) )

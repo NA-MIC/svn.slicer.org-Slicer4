@@ -572,13 +572,13 @@ void vtkSlicerSliceLayerLogic::UpdateGlyphs(vtkImageData *sliceImage)
   if ( this->VolumeNode )
   {
     vtkMRMLDiffusionImageVolumeNode *volumeNode = vtkMRMLDiffusionImageVolumeNode::SafeDownCast (this->VolumeNode);
-    vtkMRMLVolumeGlyphDisplayNode *displayNode = vtkMRMLVolumeGlyphDisplayNode::SafeDownCast( this->VolumeNode->GetDisplayNode() );
+    vtkMRMLGlyphableVolumeDisplayNode *displayNode = vtkMRMLGlyphableVolumeDisplayNode::SafeDownCast( this->VolumeNode->GetDisplayNode() );
     if (displayNode)
       {
-      std::vector< vtkMRMLGlyphVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes( volumeNode );
+      std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*> dnodes  = displayNode->GetSliceGlyphDisplayNodes( volumeNode );
       for (unsigned int n=0; n<dnodes.size(); n++)
         {
-        vtkMRMLGlyphVolumeSliceDisplayNode* dnode = dnodes[n];
+        vtkMRMLGlyphableVolumeSliceDisplayNode* dnode = dnodes[n];
         if (!strcmp(this->GetSliceNode()->GetLayoutName(), dnode->GetName()) )
           {
           dnode->SetSliceImage(sliceImage);

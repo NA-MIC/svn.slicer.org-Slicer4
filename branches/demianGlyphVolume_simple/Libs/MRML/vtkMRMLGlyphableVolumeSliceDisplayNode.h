@@ -11,16 +11,16 @@
   Version:   $Revision: 1.6 $
 
   =========================================================================auto=*/
-// .NAME vtkMRMLGlyphVolumeSliceDisplayNode - MRML node to represent display properties for tractography.
+// .NAME vtkMRMLGlyphableVolumeSliceDisplayNode - MRML node to represent display properties for tractography.
 // .SECTION Description
-// vtkMRMLGlyphVolumeSliceDisplayNode nodes store display properties of trajectories 
+// vtkMRMLGlyphableVolumeSliceDisplayNode nodes store display properties of trajectories 
 // from tractography in diffusion MRI data, including color type (by bundle, by fiber, 
 // or by scalar invariants), display on/off for tensor glyphs and display of 
 // trajectory as a line or tube.
 //
 
-#ifndef __vtkMRMLGlyphVolumeSliceDisplayNode_h
-#define __vtkMRMLGlyphVolumeSliceDisplayNode_h
+#ifndef __vtkMRMLGlyphableVolumeSliceDisplayNode_h
+#define __vtkMRMLGlyphableVolumeSliceDisplayNode_h
 
 #include <string>
 
@@ -33,11 +33,11 @@
 class vtkTransform;
 class vtkTransformPolyDataFilter;
 
-class VTK_MRML_EXPORT vtkMRMLGlyphVolumeSliceDisplayNode : public vtkMRMLModelDisplayNode
+class VTK_MRML_EXPORT vtkMRMLGlyphableVolumeSliceDisplayNode : public vtkMRMLModelDisplayNode
 {
  public:
-  static vtkMRMLGlyphVolumeSliceDisplayNode *New (  );
-  vtkTypeMacro ( vtkMRMLGlyphVolumeSliceDisplayNode,vtkMRMLModelDisplayNode );
+  static vtkMRMLGlyphableVolumeSliceDisplayNode *New (  );
+  vtkTypeMacro ( vtkMRMLGlyphableVolumeSliceDisplayNode,vtkMRMLModelDisplayNode );
   void PrintSelf ( ostream& os, vtkIndent indent );
   
   //--------------------------------------------------------------------------
@@ -61,7 +61,7 @@ class VTK_MRML_EXPORT vtkMRMLGlyphVolumeSliceDisplayNode : public vtkMRMLModelDi
   
   // Description:
   // Get node XML tag name (like Volume, UnstructuredGrid)
-  virtual const char* GetNodeTagName ( ) {return "GlyphVolumeSliceDisplayNode";};
+  virtual const char* GetNodeTagName ( ) {return "GlyphableVolumeSliceDisplayNode";};
 
   // Description:
   // Updates this node if it depends on other nodes 
@@ -182,10 +182,10 @@ class VTK_MRML_EXPORT vtkMRMLGlyphVolumeSliceDisplayNode : public vtkMRMLModelDi
   // MRML nodes that are observed
   //--------------------------------------------------------------------------
  protected:
-  vtkMRMLGlyphVolumeSliceDisplayNode ( );
-  ~vtkMRMLGlyphVolumeSliceDisplayNode ( );
-  vtkMRMLGlyphVolumeSliceDisplayNode ( const vtkMRMLGlyphVolumeSliceDisplayNode& );
-  void operator= ( const vtkMRMLGlyphVolumeSliceDisplayNode& );
+  vtkMRMLGlyphableVolumeSliceDisplayNode ( );
+  ~vtkMRMLGlyphableVolumeSliceDisplayNode ( );
+  vtkMRMLGlyphableVolumeSliceDisplayNode ( const vtkMRMLGlyphableVolumeSliceDisplayNode& );
+  void operator= ( const vtkMRMLGlyphableVolumeSliceDisplayNode& );
 
     vtkTransform             *SliceToXYTransform;
     vtkTransformPolyDataFilter *SliceToXYTransformer;
