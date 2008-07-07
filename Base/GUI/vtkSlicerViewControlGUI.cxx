@@ -33,6 +33,8 @@
 #include "vtkKWTkUtilities.h"
 #include "vtkKWRenderWidget.h"
 #include "vtkSlicerViewControlIcons.h"
+#include "vtkSlicerFoundationIcons.h"
+#include "vtkMRMLSceneSnapshotNode.h"
 
 #include "vtkMRMLSceneSnapshotNode.h"
 
@@ -62,6 +64,7 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->RockCount = 0;
   this->NavigationZoomWidgetWid = 150;
   this->NavigationZoomWidgetHit = 80;
+  this->MySnapshotName = "view";
 
 
   this->SliceMagnification = 10.0;
@@ -74,6 +77,7 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
   this->RockButton = NULL;
   this->OrthoButton = NULL;
 
+  this->NameDialog = NULL;
   this->CenterButton = NULL;
   this->StereoButton = NULL;
   this->ScreenGrabButton = NULL;
@@ -132,6 +136,7 @@ vtkSlicerViewControlGUI::vtkSlicerViewControlGUI ( )
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::TearDownGUI ( )
 {
+  this->SelectSceneSnapshotMenuButton->GetMenu()->DeleteAllItems();
   this->RemoveSliceEventObservers();
   this->RemoveMainViewerEventObservers();
   this->SetAndObserveMRMLScene ( NULL );
@@ -157,7 +162,6 @@ vtkSlicerViewControlGUI::~vtkSlicerViewControlGUI ( )
     this->NameDialog->Delete();
     this->NameDialog = NULL;
     }
-
   if ( this->SliceMagnifier )
     {
     this->SliceMagnifier->Delete();
@@ -515,6 +519,8 @@ void vtkSlicerViewControlGUI::RemoveGUIObservers ( )
     this->VisibilityButton->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SelectSceneSnapshotMenuButton->GetMenu()->RemoveObservers ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SceneSnapshotButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->SelectSceneSnapshotMenuButton->GetMenu()->RemoveObservers ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->SceneSnapshotButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
     this->PitchButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->RollButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -537,6 +543,8 @@ void vtkSlicerViewControlGUI::AddGUIObservers ( )
     this->CenterButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ScreenGrabButton->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->VisibilityButton->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->SelectSceneSnapshotMenuButton->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->SceneSnapshotButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SelectSceneSnapshotMenuButton->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SceneSnapshotButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -591,19 +599,19 @@ void vtkSlicerViewControlGUI::UpdateSliceGUIInteractorStyles ( )
     }
 
   // Find current SliceGUIs; if there are none, do nothing.
-  if ( ( this->GetApplicationGUI()->GetMainSliceGUI0() == NULL ) ||
-       ( this->GetApplicationGUI()->GetMainSliceGUI1() == NULL ) ||
-       ( this->GetApplicationGUI()->GetMainSliceGUI2() == NULL ))
+  if ( ( this->GetApplicationGUI()->GetMainSliceGUI("Red") == NULL ) ||
+       ( this->GetApplicationGUI()->GetMainSliceGUI("Yellow") == NULL ) ||
+       ( this->GetApplicationGUI()->GetMainSliceGUI("Green") == NULL ))
     {
     return;
     }
 
   // If the interactor and these references are out of sync...
-  if ( ( this->GetApplicationGUI()->GetMainSliceGUI0()->GetSliceViewer()->
+  if ( ( this->GetApplicationGUI()->GetMainSliceGUI("Red")->GetSliceViewer()->
          GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->RedSliceEvents ) ||
-       ( this->GetApplicationGUI()->GetMainSliceGUI1()->GetSliceViewer()->
+       ( this->GetApplicationGUI()->GetMainSliceGUI("Yellow")->GetSliceViewer()->
          GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->YellowSliceEvents ) ||
-       ( this->GetApplicationGUI()->GetMainSliceGUI2()->GetSliceViewer()->
+       ( this->GetApplicationGUI()->GetMainSliceGUI("Green")->GetSliceViewer()->
          GetRenderWidget()->GetRenderWindowInteractor()->GetInteractorStyle() != this->GreenSliceEvents ) )
     {
     this->RemoveSliceEventObservers();
@@ -613,21 +621,21 @@ void vtkSlicerViewControlGUI::UpdateSliceGUIInteractorStyles ( )
 
     this->SetRedSliceEvents( vtkSlicerInteractorStyle::SafeDownCast(
                                                                  this->GetApplicationGUI()->
-                                                                 GetMainSliceGUI0()->
+                                                                 GetMainSliceGUI("Red")->
                                                                  GetSliceViewer()->
                                                                  GetRenderWidget()->
                                                                  GetRenderWindowInteractor()->
                                                                  GetInteractorStyle() ));
     this->SetYellowSliceEvents( vtkSlicerInteractorStyle::SafeDownCast(
                                                                  this->GetApplicationGUI()->
-                                                                 GetMainSliceGUI1()->
+                                                                 GetMainSliceGUI("Yellow")->
                                                                  GetSliceViewer()->
                                                                  GetRenderWidget()->
                                                                  GetRenderWindowInteractor()->
                                                                  GetInteractorStyle() ));
     this->SetGreenSliceEvents( vtkSlicerInteractorStyle::SafeDownCast(
                                                                  this->GetApplicationGUI()->
-                                                                 GetMainSliceGUI2()->
+                                                                 GetMainSliceGUI("Green")->
                                                                  GetSliceViewer()->
                                                                  GetRenderWidget()->
                                                                  GetRenderWindowInteractor()->
@@ -653,6 +661,7 @@ void vtkSlicerViewControlGUI::UpdateFromMRML()
 
   this->UpdateViewFromMRML();
   this->UpdateSlicesFromMRML();
+  this->UpdateSceneSnapshotsFromMRML();
   this->RequestNavigationRender ( );
 }
 
@@ -662,10 +671,6 @@ void vtkSlicerViewControlGUI::UpdateFromMRML()
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::UpdateSceneSnapshotsFromMRML()
 {
-  if ( this->SceneClosing )
-    {
-    return;
-    }
   
   if (this->MRMLScene == NULL)
     {
@@ -677,6 +682,7 @@ void vtkSlicerViewControlGUI::UpdateSceneSnapshotsFromMRML()
   //---- update the SelectSceneSnapshotMenu...
   if (this->GetMRMLScene()!= NULL  && appGUI != NULL)
     {
+
     const char *name;
     int item;
     const char *imageName;
@@ -685,7 +691,6 @@ void vtkSlicerViewControlGUI::UpdateSceneSnapshotsFromMRML()
     //--- if there are none, then make the GUI current
     int num = this->GetMRMLScene()->GetNumberOfNodesByClass ( "vtkMRMLSceneSnapshotNode");
     //--- refresh the menu.
-
     this->GetSelectSceneSnapshotMenuButton()->GetMenu()->DeleteAllItems();
 
     for (int i = 0; i < num; i++ )
@@ -727,14 +732,11 @@ void vtkSlicerViewControlGUI::UpdateSceneSnapshotsFromMRML()
 
 
 
-
 //---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::RestoreSceneSnapshot( const char *nom)
+void vtkSlicerViewControlGUI::RestoreSceneSnapshot( const char *nom )
 {
  
-
-
-  vtkCollection *col = this->MRMLScene->GetNodesByClassByName ( "vtkMRMLSceneSnapshotNode", nom );
+  vtkCollection *col = this->MRMLScene->GetNodesByName ( nom );
   col->InitTraversal();
 
   //--- get the first one. Name checking should make it unique...
@@ -744,38 +746,24 @@ void vtkSlicerViewControlGUI::RestoreSceneSnapshot( const char *nom)
     this->MRMLScene->SaveStateForUndo();
     node->RestoreScene();
     }
-  col->RemoveAllItems();
-  col->Delete();
 }
 
 
 //---------------------------------------------------------------------------
-void vtkSlicerViewControlGUI::DeleteSceneSnapshot( const char *nom)
+void vtkSlicerViewControlGUI::DeleteSceneSnapshot(const char *nom )
 {
+  vtkCollection *col = this->MRMLScene->GetNodesByName ( nom );
+  col->InitTraversal();
 
-
-  vtkMRMLSceneSnapshotNode *node = NULL;
-  vtkCollection *col = this->MRMLScene->GetNodesByClassByName ( "vtkMRMLSceneSnapshotNode", nom );
   //--- get the first one. Name checking should make it unique...
-  if ( col->GetNumberOfItems() > 0)
+  vtkMRMLSceneSnapshotNode *node =  vtkMRMLSceneSnapshotNode::SafeDownCast (col->GetNextItemAsObject() );
+  if ( node)
     {
-    //  node =  vtkMRMLSceneSnapshotNode::SafeDownCast (col->GetNextItemAsObject() );
-    node =  vtkMRMLSceneSnapshotNode::SafeDownCast (col->GetItemAsObject(0) );
-    }
-
-  col->RemoveAllItems();
-  col->Delete();
-    
-  if  ( node)
-    {  
     this->MRMLScene->SaveStateForUndo();
     this->MRMLScene->RemoveNode(node);
-    node = NULL;
+    this->UpdateSceneSnapshotsFromMRML();
     }
-
 }
-
-
 
 
 
@@ -1034,11 +1022,8 @@ void vtkSlicerViewControlGUI::ResetNavigationCamera ( )
 
 
 
-
-//----------------------------------------------------------------------------
 const char* vtkSlicerViewControlGUI::CreateSceneSnapshotNode( const char *nodeName)
 {
-
   vtkMRMLSceneSnapshotNode *node = NULL;
   const char *id;
 
@@ -1071,7 +1056,6 @@ const char* vtkSlicerViewControlGUI::CreateSceneSnapshotNode( const char *nodeNa
   vtkDebugMacro("\tset the name to " << node->GetName() << endl);
 
   // the ID is set in the call to AddNode
-
   this->MRMLScene->AddNode(node);
   id = node->GetID();
   node->Delete();
@@ -1083,7 +1067,7 @@ const char* vtkSlicerViewControlGUI::CreateSceneSnapshotNode( const char *nodeNa
 //---------------------------------------------------------------------------
 int vtkSlicerViewControlGUI::InvokeNameDialog( const char *msg, const char *name)
 {
- //--- now name the node...
+  //--- now name the node...
   vtkKWEntryWithLabel *entry = this->NameDialog->GetEntry();
   this->NameDialog->SetText ( msg );
   entry->GetWidget()->SetValue(name);
@@ -1094,6 +1078,7 @@ int vtkSlicerViewControlGUI::InvokeNameDialog( const char *msg, const char *name
     }
   return 1;
 }
+
 
 
 //---------------------------------------------------------------------------
@@ -1147,12 +1132,14 @@ void vtkSlicerViewControlGUI::ProcessGUIEvents ( vtkObject *caller,
         }
 #endif
       
+
       // Make requested changes to the ViewNode      
       // save state for undo
       if ( m == this->StereoButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent ||
            m == this->VisibilityButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent ||
            m == this->StereoButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent ||
            m == this->ScreenGrabButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent ||           
+           m == this->SelectSceneSnapshotMenuButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent ||
            m == this->SelectSceneSnapshotMenuButton->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent ||
            p == this->CenterButton && event == vtkKWPushButton::InvokedEvent ||                      
            p == this->OrthoButton && event == vtkKWPushButton::InvokedEvent ||                      
@@ -1764,9 +1751,9 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
     
     if ( istyle == this->RedSliceEvents )
       {
-      if ( appGUI->GetMainSliceGUI0()->GetLogic() != NULL )
+      if ( appGUI->GetMainSliceGUI("Red")->GetLogic() != NULL )
         {
-        if (appGUI->GetMainSliceGUI0()->GetLogic()->GetImageData() != NULL )
+        if (appGUI->GetMainSliceGUI("Red")->GetLogic()->GetImageData() != NULL )
           {
           if (event == vtkCommand::EnterEvent )
             {
@@ -1776,11 +1763,11 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
 
             // check that the event position is in the window
             int *windowSize =
-              appGUI->GetMainSliceGUI0()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
+              appGUI->GetMainSliceGUI("Red")->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
             if ( x >= 0 && y >= 0 && x < windowSize[0] && y < windowSize[1] )
               {
               int xyz[3];
-              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI0(),
+              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI("Red"),
                                            x, y, xyz);
 
               this->SliceMagnifier->SetX ( xyz[0] );
@@ -1794,7 +1781,7 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
               this->SliceMagnifier->SetY( 0 );
               this->SliceMagnifier->SetZ( 0 );
               }
-            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI0()->GetLogic()->GetImageData());
+            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI("Red")->GetLogic()->GetImageData());
             this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
             this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
             this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
@@ -1817,13 +1804,13 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             y = this->RedSliceEvents->GetLastPos ()[1];
 
             int xyz[3];
-            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI0(),
+            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI("Red"),
                                            x, y, xyz);
             this->SliceMagnifier->SetX ( xyz[0] );
             this->SliceMagnifier->SetY ( xyz[1] );
             this->SliceMagnifier->SetZ ( xyz[2] );
 
-            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI0()->GetLogic()->GetImageData());
+            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI("Red")->GetLogic()->GetImageData());
             this->RequestZoomRender();
             }
           }
@@ -1832,9 +1819,9 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
     
     else if ( istyle == this->YellowSliceEvents)
       {
-      if ( appGUI->GetMainSliceGUI1()->GetLogic() != NULL )
+      if ( appGUI->GetMainSliceGUI("Yellow")->GetLogic() != NULL )
         {
-        if (appGUI->GetMainSliceGUI1()->GetLogic()->GetImageData() != NULL )
+        if (appGUI->GetMainSliceGUI("Yellow")->GetLogic()->GetImageData() != NULL )
           {
           if (event == vtkCommand::EnterEvent )
             {
@@ -1844,11 +1831,11 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
 
             // check that the event position is in the window
             int *windowSize =
-              appGUI->GetMainSliceGUI1()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
+              appGUI->GetMainSliceGUI("Yellow")->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
             if ( x >= 0 && y >= 0 && x < windowSize[0] && y < windowSize[1] )
               {
               int xyz[3];
-              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI1(),
+              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI("Yellow"),
                                            x, y, xyz);
               this->SliceMagnifier->SetX ( xyz[0] );
               this->SliceMagnifier->SetY ( xyz[1] );
@@ -1861,7 +1848,7 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
               this->SliceMagnifier->SetY( 0 );
               this->SliceMagnifier->SetZ( 0 );
               }
-            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI1()->GetLogic()->GetImageData());
+            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI("Yellow")->GetLogic()->GetImageData());
             this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
             this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
             this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
@@ -1884,13 +1871,13 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             y = this->YellowSliceEvents->GetLastPos ()[1];
 
             int xyz[3];
-            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI1(),
+            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI("Yellow"),
                                            x, y, xyz);
             this->SliceMagnifier->SetX ( xyz[0] );
             this->SliceMagnifier->SetY ( xyz[1] );
             this->SliceMagnifier->SetZ ( xyz[2] );
 
-            this->SliceMagnifier->SetInput (appGUI->GetMainSliceGUI1()->GetLogic()->GetImageData());
+            this->SliceMagnifier->SetInput (appGUI->GetMainSliceGUI("Yellow")->GetLogic()->GetImageData());
             this->RequestZoomRender();
             }
           }
@@ -1898,9 +1885,9 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
       }
     else if ( istyle == this->GreenSliceEvents )
       {
-      if ( appGUI->GetMainSliceGUI2()->GetLogic() != NULL )
+      if ( appGUI->GetMainSliceGUI("Green")->GetLogic() != NULL )
         {
-        if (appGUI->GetMainSliceGUI2()->GetLogic()->GetImageData() != NULL )
+        if (appGUI->GetMainSliceGUI("Green")->GetLogic()->GetImageData() != NULL )
           {
           if (event == vtkCommand::EnterEvent )
             {
@@ -1910,11 +1897,11 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
 
             // check that the event position is in the window
             int *windowSize =
-              appGUI->GetMainSliceGUI2()->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
+              appGUI->GetMainSliceGUI("Green")->GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor()->GetRenderWindow()->GetSize();
             if ( x >= 0 && y >= 0 && x < windowSize[0] && y < windowSize[1] )
               {
               int xyz[3];
-              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI2(),
+              this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI("Green"),
                                            x, y, xyz);
               this->SliceMagnifier->SetX ( xyz[0] );
               this->SliceMagnifier->SetY ( xyz[1] );
@@ -1927,7 +1914,7 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
               this->SliceMagnifier->SetY( 0 );
               this->SliceMagnifier->SetZ( 0 );
               }
-            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI2()->GetLogic()->GetImageData());
+            this->SliceMagnifier->SetInput ( appGUI->GetMainSliceGUI("Green")->GetLogic()->GetImageData());
             this->SliceMagnifierCursor->SetInput ( this->SliceMagnifier->GetOutput());
             this->SliceMagnifierMapper->SetInput ( this->SliceMagnifierCursor->GetOutput() );
             this->SliceMagnifierActor->SetMapper ( this->SliceMagnifierMapper );
@@ -1950,13 +1937,13 @@ void vtkSlicerViewControlGUI::SliceViewMagnify(int event, vtkSlicerInteractorSty
             y = this->GreenSliceEvents->GetLastPos ()[1];
 
             int xyz[3];
-            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI2(),
+            this->DeviceCoordinatesToXYZ(appGUI->GetMainSliceGUI("Green"),
                                            x, y, xyz);
             this->SliceMagnifier->SetX ( xyz[0] );
             this->SliceMagnifier->SetY ( xyz[1] );
             this->SliceMagnifier->SetZ ( xyz[2] );
 
-            this->SliceMagnifier->SetInput (appGUI->GetMainSliceGUI2()->GetLogic()->GetImageData());
+            this->SliceMagnifier->SetInput (appGUI->GetMainSliceGUI("Green")->GetLogic()->GetImageData());
             this->RequestZoomRender();
             }
           }
@@ -2267,7 +2254,7 @@ void vtkSlicerViewControlGUI::MainViewPitch ( )
     if ( cn != NULL )
       {
       vtkCamera *cam = cn->GetCamera();
-      cam->Elevation ( negdeg );
+      cam->Elevation ( deg );
       cam->OrthogonalizeViewUp();
       p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
       p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
@@ -2288,14 +2275,13 @@ double deg, negdeg;
     if ( cn != NULL )
       {
       vtkCamera *cam = cn->GetCamera();
-      cam->Roll ( negdeg );
+      cam->Roll ( deg );
       cam->OrthogonalizeViewUp();
       p->GetViewerWidget()->GetMainViewer()->GetRenderer()->UpdateLightsGeometryToFollowCamera();
       p->GetViewerWidget()->GetMainViewer()->GetRenderer()->Render();
       // this->NavZoomRender();        
       }
     }
-
 }
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::MainViewYaw ( )
@@ -2655,6 +2641,8 @@ void vtkSlicerViewControlGUI::MainViewLookFrom ( const char *dir )
   
 
 
+
+
 //---------------------------------------------------------------------------
 void vtkSlicerViewControlGUI::BuildVisibilityMenu ( )
 {
@@ -2724,7 +2712,6 @@ void vtkSlicerViewControlGUI::BuildScreenGrabMenu ( )
   this->ScreenGrabButton->GetMenu()->SetItemStateToDisabled ("Capture a screenshot of the GUI panel and all viewers." );
   this->ScreenGrabButton->GetMenu()->AddSeparator();
   this->ScreenGrabButton->GetMenu()->AddCommand ( "close" );
-
 }
 
 
@@ -3260,6 +3247,7 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast( p->GetApplication() );
 
       this->SlicerViewControlIcons = vtkSlicerViewControlIcons::New ( );
+
       this->NameDialog  = vtkKWSimpleEntryDialog::New();
       this->NameDialog->SetParent ( appF );
       this->NameDialog->SetTitle("Scene Snapshot Name");
@@ -3269,7 +3257,7 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       entry->SetLabelText("Snapshot Name");
       entry->GetWidget()->SetValue("");
       this->NameDialog->Create ( );
-
+      
       this->SpinButton = vtkKWCheckButton::New ( );
       this->RockButton = vtkKWCheckButton::New ( );
       this->OrthoButton = vtkKWPushButton::New ( );
@@ -3466,6 +3454,13 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       this->SelectSceneSnapshotMenuButton->SetBalloonHelpString ( "Restore or delete saved scene snapshots.");
       this->SelectSceneSnapshotMenuButton->SetBinding ( "<Button-1>", this, "UpdateSceneSnapshotsFromMRML");
       
+      //--- Pushbutton to take a scene snapshot.
+      this->SceneSnapshotButton->SetParent ( frameM);
+      this->SceneSnapshotButton->Create();
+      this->SceneSnapshotButton->SetReliefToFlat();
+      this->SceneSnapshotButton->SetBorderWidth ( 0 );
+      this->SceneSnapshotButton->SetImageToIcon ( p->GetSlicerFoundationIcons()->GetSlicerCameraIcon () );
+      this->SceneSnapshotButton->SetBalloonHelpString ( "Capture and name a scene snapshot." );
       //--- Pushbutton to take a scene snapshot.
       this->SceneSnapshotButton->SetParent ( frameM);
       this->SceneSnapshotButton->Create();
