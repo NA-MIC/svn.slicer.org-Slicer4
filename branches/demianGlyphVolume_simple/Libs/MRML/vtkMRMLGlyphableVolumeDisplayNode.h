@@ -134,12 +134,12 @@ class VTK_MRML_EXPORT vtkMRMLGlyphableVolumeDisplayNode : public vtkMRMLScalarVo
 //BTX
   // Description:
   // get associated slice glyph display node or NULL if not set
-  virtual std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*> GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node ){ vtkErrorMacro("Shouldn't be calling this"); }
+  virtual std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*> GetSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node ){ vtkErrorMacro("Shouldn't be calling this"); return std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*>();  }
 
 
   // Description:
   // add slice glyph display nodes if not already present and return it
-  virtual std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node ){vtkErrorMacro("Shouldn't be calling this"); }
+  virtual std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*>  AddSliceGlyphDisplayNodes( vtkMRMLVolumeNode* node ){vtkErrorMacro("Shouldn't be calling this");return std::vector< vtkMRMLGlyphableVolumeSliceDisplayNode*>(); }
 //ETX
 
 protected:
