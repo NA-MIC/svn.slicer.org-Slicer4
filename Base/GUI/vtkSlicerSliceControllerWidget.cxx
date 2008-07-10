@@ -2124,7 +2124,9 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
       //      modified = 1;
       }
     }
-  if ( (double) this->OffsetScale->GetValue() != this->SliceLogic->GetSliceOffset() )
+ if ( this->OffsetScale->GetWidget() == vtkKWScale::SafeDownCast( caller ) &&
+          (event == vtkKWScale::ScaleValueChangedEvent ||
+           event == vtkKWScale::ScaleValueChangingEvent) )
     {
     vtkKWScale *scale = vtkKWScale::SafeDownCast( caller );
     double min, value, offset, resolution, steps, newValue;
