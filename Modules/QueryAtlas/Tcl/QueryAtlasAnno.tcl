@@ -33,7 +33,7 @@ proc QueryAtlasCullOldModelAnnotations { } {
     #--- progress feedback
     set win [ $::slicer3::ApplicationGUI GetMainSlicerWindow ]
     set prog [ $win GetProgressGauge ]
-    $win SetStatusText "Culling any old model annotations..."
+#    $win SetStatusText "Culling any old model annotations..."
     $prog SetValue 0
 
     if {[info exists ::QA(annoModelNodeIDs) ] } {
@@ -107,7 +107,7 @@ proc QueryAtlasCullOldLabelMapAnnotations { } {
     #--- progress feedback
     set win [ $::slicer3::ApplicationGUI GetMainSlicerWindow ]
     set prog [ $win GetProgressGauge ]
-    $win SetStatusText "Culling any old label map annotations..."
+#    $win SetStatusText "Culling any old label map annotations..."
     $prog SetValue 0
 
     if { [info exists ::QA(annoLabelMapIDs) ] } {
@@ -276,7 +276,7 @@ proc QueryAtlasAddNewModelAnnotations { modelAnnotationDir } {
     #--- progress feedback
     set win [ $::slicer3::ApplicationGUI GetMainSlicerWindow ]
     set prog [ $win GetProgressGauge ]
-    $win SetStatusText "Adding any new model annotations..."
+#    $win SetStatusText "Adding any new model annotations..."
     $prog SetValue 0
 
 
@@ -537,7 +537,7 @@ proc QueryAtlasAddNewLabelMapAnnotations { } {
     #--- progress feedback
     set win [ $::slicer3::ApplicationGUI GetMainSlicerWindow ]
     set prog [ $win GetProgressGauge ]
-    $win SetStatusText "Adding any new label map annotations..."
+#    $win SetStatusText "Adding any new label map annotations..."
     $prog SetValue 0
 
     #--- WJP test: try just starting fresh each time...
@@ -587,7 +587,7 @@ proc QueryAtlasAddNewLabelMapAnnotations { } {
         if {$len == 0 } {
             #--- progress feedback
             $prog SetValue 100
-            $win SetStatusText "Found nothing new to add."
+#            $win SetStatusText "Found nothing new to add."
             return
         }
 
