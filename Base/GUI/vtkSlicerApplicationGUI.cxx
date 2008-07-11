@@ -180,11 +180,6 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
     this->SaveDataWidget=NULL;
     }
 
-  // TODO: fix this method to remove all actors, etc.
-  // from Main Viewer, slice viewers before deleting.
-  this->DestroyMain3DViewer ( );
-  this->DestroyMainSliceViewers ( );
-
   if ( this->GUILayoutNode )
     {
     this->SetAndObserveGUILayoutNode ( NULL );
@@ -249,13 +244,6 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
     this->SaveDataWidget->SetParent ( NULL );
     this->SaveDataWidget->Delete();
     }
-
-    if (this->SlicesGUI)
-      {
-        this->SlicesGUI->Delete();
-        this->SlicesGUI = NULL;
-      }
-
     if ( this->SlicerFoundationIcons )
       {
       this->SlicerFoundationIcons->Delete();
@@ -265,6 +253,15 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
   this->SetApplication(NULL);
   this->SetApplicationLogic ( NULL );
 }
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::TearDownViewers()
+{
+  this->DestroyMain3DViewer ( );
+  this->DestroyMainSliceViewers ( );
+}
+
+
 
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI:: DeleteComponentGUIs()

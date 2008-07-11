@@ -86,7 +86,6 @@ extern "C" {
 //#define FIDUCIALS_DEBUG
 //#define MODELS_DEBUG
 //#define REMOTEIO_DEBUG
-//#define SLICES_DEBUG
 //#define TCLMODULES_DEBUG
 //#define TRACTOGRAPHY_DEBUG
 //#define VOLUMES_DEBUG
@@ -887,19 +886,15 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
 
-#ifndef SLICES_DEBUG
   vtkSlicerSlicesGUI *slicesGUI = vtkSlicerSlicesGUI::New ();
-    
   // build the application GUI
   appGUI->SetSlicesGUI(slicesGUI);
-#endif
 
   appGUI->BuildGUI ( );
   appGUI->AddGUIObservers ( );
   slicerApp->SetApplicationGUI ( appGUI );
   slicerApp->ConfigureRemoteIOSettingsFromRegistry();
 
-#ifndef SLICES_DEBUG
   // set a pointer to vtkSlicerSlicesGUI in vtkSlicerApplicationGUI
   slicesGUI->SetApplication ( slicerApp );
   slicesGUI->SetApplicationGUI ( appGUI );
@@ -912,7 +907,6 @@ int Slicer3_main(int argc, char *argv[])
   slicerApp->AddModuleGUI ( slicesGUI );
   slicesGUI->BuildGUI ();
   slicesGUI->AddGUIObservers ( );
-#endif
 
   // get the module paths that the user has configured
   std::string userModulePaths;
@@ -1515,10 +1509,8 @@ int Slicer3_main(int argc, char *argv[])
   slicerApp->Script ("namespace eval slicer3 set RemoteIOGUI %s", name);
 #endif
     
-#ifndef SLICES_DEBUG
   name = slicesGUI->GetTclName();
   slicerApp->Script ("namespace eval slicer3 set SlicesGUI %s", name);
-#endif
 
 #if !defined(VOLUMES_DEBUG) && defined(Slicer3_BUILD_MODULES)
   name = volumesGUI->GetTclName();
@@ -1700,10 +1692,8 @@ int Slicer3_main(int argc, char *argv[])
   //
   slicerApp->SplashMessage("Configuring Slices and Modules...");
   appGUI->PopulateModuleChooseList ( );
-#ifndef SLICES_DEBUG
   appGUI->SetAndObserveMainSliceLogic ( appLogic->GetSliceLogic("Red"), appLogic->GetSliceLogic("Yellow"), appLogic->GetSliceLogic("Green") );
   appGUI->ConfigureMainSliceViewers ( );
-#endif
     
   // ------------------------------
   // CONFIGURE SlICER'S SHARED GUI PANEL
@@ -1882,13 +1872,8 @@ int Slicer3_main(int argc, char *argv[])
 
   dataGUI->TearDownGUI ( );
     
-#ifndef SLICES_DEBUG
-  //slicesGUI->RemoveGUIObservers ( );
-#endif
   appGUI->RemoveGUIObservers ( );
-#ifndef SLICES_DEBUG
   appGUI->SetAndObserveMainSliceLogic ( NULL, NULL, NULL );
-#endif
 
 #if !defined(COMMANDLINE_DEBUG) && (defined(Slicer3_BUILD_CLI) || defined(Slicer3_BUILD_MODULES))
   // remove the observers from the factory discovered modules
@@ -2008,9 +1993,6 @@ int Slicer3_main(int argc, char *argv[])
   cameraGUI->Delete ();
 #endif
   dataGUI->Delete ();
-#ifndef SLICES_DEBUG
-  slicesGUI->Delete ();
-#endif
 
 #if !defined(SCRIPTEDMODULE_DEBUG) && defined(Slicer3_BUILD_MODULES)
   tclCommand = "";
@@ -2022,8 +2004,8 @@ int Slicer3_main(int argc, char *argv[])
 
   // Release reference to applicaiton GUI
   // and delete it.
-  slicerApp->SetApplicationGUI ( NULL );
-  appGUI->DeleteComponentGUIs();
+  //slicerApp->SetApplicationGUI ( NULL );
+  //appGUI->DeleteComponentGUIs();
   //cout << "vtkSlicerApplicationGUI deleting app GUI\n";
   //   appGUI->Delete ();
 
@@ -2043,9 +2025,11 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
   // Release reference to applicaiton GUI
-  // and delete it.
   slicerApp->SetApplicationGUI ( NULL );
   appGUI->DeleteComponentGUIs();
+  appGUI->TearDownViewers(); 
+  appGUI->SetSlicesGUI ( NULL );
+  slicesGUI->Delete();
   appGUI->Delete ();
     
   //--- delete logic next, removing Refs to MRML
@@ -2096,7 +2080,7 @@ int Slicer3_main(int argc, char *argv[])
   appLogic->DeleteSliceLogics();
   appLogic->SetAndObserveMRMLScene ( NULL );
   appLogic->TerminateProcessingThread();
-  appLogic->Delete ();
+
 
 #if !defined(COMMANDLINE_DEBUG) && (defined(Slicer3_BUILD_CLI) || defined(Slicer3_BUILD_MODULES))
   // delete the factory discovered module Logics
@@ -2120,6 +2104,9 @@ int Slicer3_main(int argc, char *argv[])
   Slicer3_Tcl_Eval( interp, tclCommand.c_str() );
 #endif
 
+  appLogic->Delete ();
+
+  
   //--- application last
   slicerApp->Delete ();
 
