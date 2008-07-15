@@ -577,6 +577,8 @@ void vtkSlicerApplicationLogic::DeleteSliceLogics()
       {
       sliceLogic = vtkSlicerSliceLogic::SafeDownCast((*lit).second);
       sliceLogic->SetAndObserveMRMLScene( NULL );
+      // wjp test
+      sliceLogic->Delete();
       }
     (*this->InternalSliceLogicMap).clear();
     }

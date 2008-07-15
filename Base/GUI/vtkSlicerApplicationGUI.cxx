@@ -175,6 +175,7 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
 {
   if (this->SaveDataWidget)
     {
+    this->SaveDataWidget->SetAndObserveMRMLScene ( NULL );
     this->SaveDataWidget->SetParent(NULL);
     this->SaveDataWidget->Delete();
     this->SaveDataWidget=NULL;
@@ -239,11 +240,6 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
     this->MainSlicerWindow = NULL;
     }
 
-  if (this->SaveDataWidget)
-    {
-    this->SaveDataWidget->SetParent ( NULL );
-    this->SaveDataWidget->Delete();
-    }
     if ( this->SlicerFoundationIcons )
       {
       this->SlicerFoundationIcons->Delete();
@@ -1612,6 +1608,7 @@ void vtkSlicerApplicationGUI::DestroyMain3DViewer ( )
     if ( this->FiducialListWidget )
       {
       this->FiducialListWidget->RemoveMRMLObservers ();
+      this->FiducialListWidget->SetAndObserveMRMLScene ( NULL );
       this->FiducialListWidget->SetParent(NULL);
       this->FiducialListWidget->Delete();
       this->FiducialListWidget = NULL;
@@ -1632,6 +1629,7 @@ void vtkSlicerApplicationGUI::DestroyMain3DViewer ( )
         }
       this->ViewerWidget->SetApplicationLogic ( NULL );
       this->ViewerWidget->SetParent ( NULL );
+      // MRML Scene is released in delete method.
       this->ViewerWidget->Delete ( );
       this->ViewerWidget = NULL;
       }
