@@ -93,8 +93,6 @@ void vtkSlicerModuleGUI::BuildHelpAndAboutFrame ( vtkKWWidget *parent,
                                                   const char *about)
 {
 
-  const char *helptext = help;
-  const char *abouttext = about;
   
   // HELP FRAME
   this->HelpAndAboutFrame->SetParent ( parent );
@@ -131,7 +129,7 @@ void vtkSlicerModuleGUI::BuildHelpAndAboutFrame ( vtkKWWidget *parent,
   this->HelpText->GetWidget()->SetReliefToFlat ( );
   this->HelpText->GetWidget()->SetWrapToWord ( );
   this->HelpText->GetWidget()->QuickFormattingOn ( );
-  this->HelpText->SetText ( helptext );
+  this->HelpText->SetText ( help );
   //Important that Read only after SetText otherwise it doesn't work
   this->HelpText->GetWidget()->ReadOnlyOn ( );
   this->Script ( "pack %s -side top -fill x -expand y -anchor w -padx 2 -pady 4",
@@ -145,7 +143,7 @@ void vtkSlicerModuleGUI::BuildHelpAndAboutFrame ( vtkKWWidget *parent,
   this->AboutText->GetWidget()->SetReliefToFlat ( );
   this->AboutText->GetWidget()->SetWrapToWord ( );
   this->AboutText->GetWidget()->QuickFormattingOn ( );
-  this->AboutText->SetText ( abouttext );
+  this->AboutText->SetText ( about );
   //Important that Read only after SetText otherwise it doesn't work
   this->AboutText->GetWidget()->ReadOnlyOn ( );
 
