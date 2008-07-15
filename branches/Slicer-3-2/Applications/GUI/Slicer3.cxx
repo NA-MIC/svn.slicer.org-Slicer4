@@ -835,7 +835,8 @@ int Slicer3_main(int argc, char *argv[])
   slicerApp->SaveUserInterfaceGeometryOn();
 
 
-  // Create Remote I/O and Cache handling mechanisms
+#if !defined(REMOTEIO_DEBUG)
+// Create Remote I/O and Cache handling mechanisms
   // and configure them using Application registry values
   vtkCacheManager *cacheManager = vtkCacheManager::New();
   cacheManager->SetRemoteCacheLimit ( slicerApp->GetRemoteCacheLimit() );
@@ -857,12 +858,10 @@ int Slicer3_main(int argc, char *argv[])
   scene->SetDataIOManager ( dataIOManager );
   scene->SetCacheManager( cacheManager );
   vtkCollection *URIHandlerCollection = vtkCollection::New();
-  // add some new handlers
-    
-    
   scene->SetURIHandlerCollection( URIHandlerCollection );
-#if !defined(REMOTEIO_DEBUG)
-  // register all existing uri handlers (add to collection)
+
+  // add some new handlers and
+  // register register them with the scene (add to collection)
   vtkHTTPHandler *httpHandler = vtkHTTPHandler::New();
   httpHandler->SetPrefix ( "http://" );
   scene->AddURIHandler(httpHandler);
@@ -1317,8 +1316,6 @@ int Slicer3_main(int argc, char *argv[])
   appGUI->InitializeViewControlGUI();
   //    appGUI->InitializeNavigationWidget();
 
-
-  
 #if !defined(TRACTOGRAPHY_DEBUG) && defined(Slicer3_BUILD_MODULES)
   // --- Tractography Display module
   slicerApp->SplashMessage("Initializing Tractography Display Module...");
@@ -1928,6 +1925,7 @@ int Slicer3_main(int argc, char *argv[])
   remoteIOGUI->Delete();
 #endif
 
+#if !defined(REMOTEIO_DEBUG)
   //--- Remote data handling mechanisms
   if ( dataIOManagerLogic != NULL )
     {
@@ -1952,8 +1950,9 @@ int Slicer3_main(int argc, char *argv[])
     URIHandlerCollection->Delete();
     URIHandlerCollection = NULL;
     }
+#endif
 
-    
+  
   //--- delete gui first, removing Refs to Logic and MRML
     
   lmit = loadableModuleNames.begin();
@@ -2029,6 +2028,7 @@ int Slicer3_main(int argc, char *argv[])
   appGUI->DeleteComponentGUIs();
   appGUI->TearDownViewers(); 
   appGUI->SetSlicesGUI ( NULL );
+  slicesGUI->SetAndObserveMRMLScene ( NULL );
   slicesGUI->Delete();
   appGUI->Delete ();
     
