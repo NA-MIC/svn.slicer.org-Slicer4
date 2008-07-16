@@ -1941,11 +1941,14 @@ void vtkSlicerApplicationGUI::UnpackMainSliceViewers (  )
         else
           {
           g = this->SlicesGUI->GetNextSliceGUI(layoutname);
-          layoutname = this->SlicesGUI->GetNextSliceGUILayoutName(layoutname);
+          layoutname = this->SlicesGUI->GetNextSliceGUILayoutName (layoutname );
           }
         
-        if ( layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView ||
-             layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareView)
+        //--- check the previous layout (one we are dismantling.)
+        //--- take the layout apart the same way we put it together.
+        if ( layout->GetOldViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView ||
+             layout->GetOldViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareView ||
+             layout->GetOldViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutConventionalView )
           {
           g->UngridGUI();
           }
@@ -1980,7 +1983,7 @@ void vtkSlicerApplicationGUI::UnpackMain3DViewer (  )
     // 3D Viewer
     //
     this->MainSlicerWindow->GetViewNotebook()->RemovePagesMatchingTag ( this->ViewerPageTag );
-    if ( layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView )
+    if ( layout->GetOldViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView )
       {
       this->ViewerWidget->UngridWidget ( );
       }
