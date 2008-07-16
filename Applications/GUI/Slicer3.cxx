@@ -89,6 +89,7 @@ extern "C" {
 //#define TCLMODULES_DEBUG
 //#define TRACTOGRAPHY_DEBUG
 //#define VOLUMES_DEBUG
+//#define SCRIPTEDMODULE_DEBUG
 
 #define CAMERA_DEBUG
 
@@ -2105,10 +2106,6 @@ int Slicer3_main(int argc, char *argv[])
 #endif
 
   appLogic->Delete ();
-
-  
-  //--- application last
-  slicerApp->Delete ();
 
   //--- scene next;
   scene->Clear(1);
