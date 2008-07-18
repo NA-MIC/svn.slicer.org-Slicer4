@@ -436,7 +436,7 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
 
     //Init the texture mapper
     this->MapperTexture=vtkSlicerVolumeTextureMapper3D::New();
-    this->MapperTexture->SetSampleDistance(this->SampleDistanceLowRes);
+    //this->MapperTexture->SetSampleDistance(this->SampleDistanceLowRes);
     this->MapperTexture->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
     this->Volume->SetMapper(this->MapperTexture);
 
@@ -444,8 +444,8 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
     this->MapperRaycast=vtkSlicerFixedPointVolumeRayCastMapper::New();
     this->MapperRaycast->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
     this->MapperRaycast->SetAutoAdjustSampleDistances(0);
-    this->MapperRaycast->SetSampleDistance(this->SampleDistanceHighRes);
-    this->MapperRaycast->SetImageSampleDistance(this->SampleDistanceHighResImage);
+    //this->MapperRaycast->SetSampleDistance(this->SampleDistanceHighRes);
+    //this->MapperRaycast->SetImageSampleDistance(this->SampleDistanceHighResImage);
 
     //Try to load from the registry; do it here to ensure all objects are there
     if(this->Gui->GetApplication()->HasRegistryValue(2,"VolumeRendering","CB_RayCast"))
@@ -1990,21 +1990,39 @@ void vtkSlicerVRGrayscaleHelper::ProcessClippingModified(void)
 
 void vtkSlicerVRGrayscaleHelper::CalculateAndSetSampleDistances(void)
 {
-    
+//    double *spacing=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetSpacing();
+//    cout << "spacing= " << spacing[0] << "," << spacing[1] << "," << spacing[2] << endl;
+//  
+//    double minSpacing=10000;
+//    for(int i=0;i<3;i++)
+//    {
+//        if(spacing[i]<minSpacing)
+//        {
+//            minSpacing=spacing[i];
+//        }
+//    }
+//
+//    this->SampleDistanceHighRes=minSpacing/this->GetSampleDistanceFactor();
+//    this->SampleDistanceHighResImage=this->SampleDistanceHighRes;
+//    this->SampleDistanceLowRes=this->SampleDistanceHighRes*2;
+
     double *spacing=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetSpacing();
-    double minSpacing=10000;
-    for(int i=0;i<3;i++)
-    {
-        if(spacing[i]<minSpacing)
-        {
-            minSpacing=spacing[i];
-        }
-    }
+     cout << "spacing= " << spacing[0] << "," << spacing[1] << "," << spacing[2] << endl;
+   
+     double minSpacing=10000;
+     for(int i=0;i<3;i++)
+     {
+         if(spacing[i]<minSpacing)
+         {
+             minSpacing=spacing[i];
+         }
+     }
 
-    this->SampleDistanceHighRes=minSpacing/this->GetSampleDistanceFactor();
-    this->SampleDistanceHighResImage=this->SampleDistanceHighRes;
-    this->SampleDistanceLowRes=this->SampleDistanceHighRes*2;
+     this->SampleDistanceHighRes=minSpacing/this->GetSampleDistanceFactor();
+     this->SampleDistanceHighResImage=this->SampleDistanceHighRes;
+     this->SampleDistanceLowRes=this->SampleDistanceHighRes*2;
 
+    
 }
 
 void vtkSlicerVRGrayscaleHelper::ConvertWorldToBoxCoordinates(double *inputOutput)

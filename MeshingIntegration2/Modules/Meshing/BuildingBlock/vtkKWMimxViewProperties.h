@@ -38,7 +38,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 class vtkKWFrameWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
-class vtkLinkedListWrapper;
+class vtkLocalLinkedListWrapper;
 class vtkKWFrameWithScrollbar;
 class vtkLinkedListWrapperTree;
 class vtkKWMultiColumnList;
@@ -60,7 +60,7 @@ public:
   vtkGetObjectMacro(MainFrame, vtkKWFrameWithLabel);
   vtkGetObjectMacro(MultiColumnList, vtkKWMultiColumnListWithScrollbars);
   vtkSetObjectMacro(ViewPropertiesGroup, vtkKWMimxViewPropertiesGroup);
-  vtkGetObjectMacro(ObjectList, vtkLinkedListWrapper);
+  vtkGetObjectMacro(ObjectList, vtkLocalLinkedListWrapper);
   void VisibilityCallback(int );
   void AddObjectList(vtkMimxActorBase*);
   void DeleteObjectList(int DataType, int Position );
@@ -77,7 +77,7 @@ protected:
         virtual void CreateWidget();
   vtkKWMultiColumnListWithScrollbars *MultiColumnList;
   vtkKWMimxMainWindow *MimxMainWindow;
-  vtkLinkedListWrapper *ObjectList;
+  vtkLocalLinkedListWrapper *ObjectList;
   vtkKWFrameWithLabel *MainFrame;
   vtkLinkedListWrapperTree *DoUndoTree;
   vtkKWMimxViewPropertiesGroup *ViewPropertiesGroup;

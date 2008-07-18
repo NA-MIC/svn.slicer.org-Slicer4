@@ -25,6 +25,11 @@
 #include "vtkSlicerColorLogic.h"
 #include "vtkMRMLFreeSurferModelStorageNode.h"
 #include "vtkMRMLFreeSurferModelOverlayStorageNode.h"
+#include "vtkMRMLUnstructuredGridStorageNode.h"
+#include "vtkMRMLUnstructuredGridDisplayNode.h"
+
+#include "vtkUnstructuredGridReader.h"
+#include "vtkDataReader.h"
 
 vtkCxxRevisionMacro(vtkSlicerModelsLogic, "$Revision: 1.9.12.1 $");
 vtkStandardNewMacro(vtkSlicerModelsLogic);
@@ -94,8 +99,11 @@ int vtkSlicerModelsLogic::AddModels (const char* dirname, const char* suffix )
 vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
 {
   vtkMRMLModelNode *modelNode = vtkMRMLModelNode::New();
+  vtkMRMLUnstructuredGridNode *ugNode = vtkMRMLUnstructuredGridNode::New();
   vtkMRMLModelDisplayNode *displayNode = vtkMRMLModelDisplayNode::New();
+  vtkMRMLUnstructuredGridDisplayNode *ugDisplayNode = vtkMRMLUnstructuredGridDisplayNode::New();
   vtkMRMLModelStorageNode *mStorageNode = vtkMRMLModelStorageNode::New();
+  vtkMRMLUnstructuredGridStorageNode *ugStorageNode = vtkMRMLUnstructuredGridStorageNode::New();
   vtkMRMLFreeSurferModelStorageNode *fsmStorageNode = vtkMRMLFreeSurferModelStorageNode::New();
   fsmStorageNode->SetUseStripper(0);  // turn off stripping by default (breaks some pickers)
   vtkMRMLStorageNode *storageNode = NULL;
@@ -114,6 +122,7 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
     {
     mStorageNode->SetURI(filename);
     fsmStorageNode->SetURI(filename);
+    ugStorageNode->SetURI(filename);
     // reset filename to the local file name
     localFile = ((this->GetMRMLScene())->GetCacheManager())->GetFilenameFromURI(filename);
     }
@@ -121,6 +130,8 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
     {
     mStorageNode->SetFileName(filename);
     fsmStorageNode->SetFileName(filename);
+    ugStorageNode->SetFileName(filename);
+  
     localFile = filename;
     }
   const itksys_stl::string fname(localFile);
@@ -129,27 +140,39 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
   name = itksys::SystemTools::GetFilenameName(fname);
   vtkDebugMacro("AddModel: got model name = " << name.c_str());
   
+  vtkDataReader *datatypeTestReader = vtkDataReader::New();
+  datatypeTestReader->SetFileName(filename);
+   
   // check to see which node can read this type of file
   if (mStorageNode->SupportedFileType(name.c_str()))
     {
-    storageNode = mStorageNode;
+      // at this point, we know that the file is either a PolyData or UnstructuredGrid
+      // file, because it passed the filename test.  Instantiate a data reader to check if
+      // which storage node should be used. 
+      
+        if (datatypeTestReader->IsFilePolyData())
+        {
+            vtkDebugMacro("input dataset was poly data");
+            storageNode = mStorageNode;
+        }
+        else 
+        {    
+            // treat the volume as an unstructured grid, so use the correct
+            // storage, display, and main reference nodes
+            vtkDebugMacro("input dataset was ugrid data");
+            storageNode = ugStorageNode;
+            modelNode->Delete();
+            modelNode = ugNode;   
+            displayNode->Delete();
+            displayNode = ugDisplayNode;
+        }
     }
   else if (fsmStorageNode->SupportedFileType(name.c_str()))
     {
     vtkDebugMacro("AddModel: have a freesurfer type model file.");
     storageNode = fsmStorageNode;
     }
-
-  /* don't read just yet, need to add to the scene first for remote reading
-  if (mStorageNode->ReadData(modelNode) != 0)
-    {
-    storageNode = mStorageNode;
-    }
-  else if (fsmStorageNode->ReadData(modelNode) != 0)
-    {
-    storageNode = fsmStorageNode;
-    }
-  */
+ 
   if (storageNode != NULL)
     {
     modelNode->SetName(name.c_str());
@@ -164,8 +187,20 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
     this->GetMRMLScene()->AddNodeNoNotify(displayNode);
     modelNode->SetAndObserveStorageNodeID(storageNode->GetID());
     modelNode->SetAndObserveDisplayNodeID(displayNode->GetID());  
-    displayNode->SetPolyData(modelNode->GetPolyData());
     
+    // if this displayable node is really a UGrid, then we need to assign its unstructured grid data, otherwise
+    // we should assign polydata
+    if (datatypeTestReader->IsFileUnstructuredGrid())
+    {
+        vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(displayNode)->SetUnstructuredGrid(vtkMRMLUnstructuredGridNode::SafeDownCast(modelNode)->GetUnstructuredGrid());
+        cout << "set Ugrid data from node as display node dataset" << endl;
+    }
+    else
+    {
+        cout << "set poly data from node as display node dataset" << endl;
+        displayNode->SetPolyData(modelNode->GetPolyData());
+    }
+   
     this->GetMRMLScene()->AddNode(modelNode);  
 
     //this->Modified();  

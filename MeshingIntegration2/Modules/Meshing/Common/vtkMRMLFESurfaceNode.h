@@ -18,6 +18,19 @@
 #include "vtkMRMLModelNode.h"
 //#include "vtkMRMLStorageNode.h"
 
+// keep a pointer to the Mimx actor object because we are storing a direct reference
+// to the actor so the application code doesn't have to be rearranged with all attributes
+// added to the node before the commit is done.  If the same actor is used, in the local and MRML
+// lists, then we know that all the values will be good in the actor.  Use the names in the actors
+// instead of the separate fields for matching / searching. 
+
+// searching the MRML-backed lists is needed because as surface,bblock, and mesh objects are created,
+// they are stored in separate lists, according to their MRML type.  However, the application believes
+// there is only one polymorphic list, so when objects are returned or removed by ID, a search is required
+// to find the matching object. 
+
+// since we are including a reference to this object in the MRML node, its definition is included here
+#include "vtkMimxSurfacePolyDataActor.h";
 
 class VTK_MRML_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
 {
@@ -43,18 +56,30 @@ class VTK_MRML_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
   // Description:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "FiniteElementSurface";};
-
-  vtkGetMacro(DataType, int);
-  vtkSetMacro(DataType, int);
-
-  vtkGetStringMacro(FileName);
-  vtkSetStringMacro(FileName);
   
-  vtkGetStringMacro(FilePath);
-  vtkSetStringMacro(FilePath);
+  // Description:
+  // Set pointer to the Mimx actor that contains the state variables
+   void SetMimxSurfacePolyDataActor(vtkMimxSurfacePolyDataActor* ptr) {actor = ptr;}
+
+//  vtkGetMacro(DataType, int);
+//  vtkSetMacro(DataType, int);
+//
+//  vtkGetStringMacro(FileName);
+//  vtkSetStringMacro(FileName);
+//  
+//  vtkGetStringMacro(FilePath);
+//  vtkSetStringMacro(FilePath);
   
-  //void  SetSurfaceFileName(char* aString) { strcpy(SurfaceFileName,aString); }
-  //void  SetSurfaceFilePath(char* aString) { strcpy(SurfaceFilePath,aString); }
+  // can't use VTK macros anymore because the values are stored in an actor instance
+   
+  void SetDataType(int value) {this->actor->SetDataType(value);}   
+  int  GetDataType(void)      {return this->actor->GetDataType();} 
+
+  void   SetFileName(char* value) {this->actor->SetFileName(value);}   
+  char*  GetFileName(void)      {return this->actor->GetFileName();} 
+
+  void   SetFilePath(char* value) {this->actor->SetFilePath(value);}   
+  char*  GetFilePath(void)      {return this->actor->GetFilePath();} 
   
 protected:
   vtkMRMLFESurfaceNode();
@@ -62,9 +87,10 @@ protected:
   vtkMRMLFESurfaceNode(const vtkMRMLFESurfaceNode&);
   void operator=(const vtkMRMLFESurfaceNode&);
 
-  int   DataType;  
-  char *FileName;
-  char *FilePath;
+//  int   DataType;  
+//  char *FileName;
+//  char *FilePath;
+  vtkMimxSurfacePolyDataActor* actor;
 };
 
 #endif

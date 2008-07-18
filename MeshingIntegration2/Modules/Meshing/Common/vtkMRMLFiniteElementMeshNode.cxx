@@ -32,7 +32,10 @@ vtkMRMLFiniteElementMeshNode* vtkMRMLFiniteElementMeshNode::New()
       return (vtkMRMLFiniteElementMeshNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFiniteElementMeshNode;
+  vtkMimxMeshActor* newactor =  vtkMimxMeshActor::New();
+  vtkMRMLFiniteElementMeshNode* newnode = new vtkMRMLFiniteElementMeshNode;
+  newnode->SetMimxMeshActor(newactor);
+  return newnode;
 }
 
 //----------------------------------------------------------------------------
@@ -46,16 +49,16 @@ vtkMRMLFiniteElementMeshNode* vtkMRMLFiniteElementMeshNode::CreateNodeInstance()
       return (vtkMRMLFiniteElementMeshNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFiniteElementMeshNode;
+  vtkMimxMeshActor* newactor =  vtkMimxMeshActor::New();
+   vtkMRMLFiniteElementMeshNode* newnode = new vtkMRMLFiniteElementMeshNode;
+   newnode->SetMimxMeshActor(newactor);
+   return newnode;
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLFiniteElementMeshNode::vtkMRMLFiniteElementMeshNode()
 {
 
-   this->DataType = 5;
-   this->FileName = NULL;
-   this->FilePath = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -67,60 +70,65 @@ vtkMRMLFiniteElementMeshNode::~vtkMRMLFiniteElementMeshNode()
 void vtkMRMLFiniteElementMeshNode::WriteXML(ostream& of, int nIndent)
 {
   Superclass::WriteXML(of, nIndent);
-
-  // write a space between previous attribs and these new ones
+  
   of << " ";
-
   vtkIndent indent(nIndent);
   {
     std::stringstream ss;
-    ss << this->DataType;
-    of << indent << "DataType='" << ss.str() << "' ";
+    ss << this->actor->GetDataType();
+    of << indent << " DataType=\"" << ss.str() << "\"";
   }
-//  {
-//    std::stringstream ss;
-//    ss << this->FileName;
-//    of << indent << "FileName='" << ss.str() << "' ";
-//  }
-//  {
-//     std::stringstream ss;
-//     ss << this->FilePath;
-//     of << indent << "FilePath='" << ss.str() << "' ";
-//   }
+  {
+    std::stringstream ss;
+    ss << this->actor->GetFileName();
+    of << indent << " fileName=\"" << ss.str() << "\"";
+  }
+  {
+    std::stringstream ss;
+    ss << this->actor->GetFilePath();
+    of << indent << " FilePath=\"" << ss.str() << "\"";
+  }
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshNode::ReadXMLAttributes(const char** atts)
 {
 
-  vtkMRMLNode::ReadXMLAttributes(atts);
+  Superclass::ReadXMLAttributes(atts);
 
   const char* attName;
-  const char* attValue;
-  while (*atts != NULL) 
-    {
-    attName = *(atts++);
-    attValue = *(atts++);
+   const char* attValue;
+   int intAttribute;
+   char StringAttribute[1024];
+   
+   while (*atts != NULL) 
+     {
+     attName = *(atts++);
+     attValue = *(atts++);
 
-     if (!strcmp(attName, "DataType")) 
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> this->DataType;
-      }
-//    else if (!strcmp(attName, "FileName"))
-//      {
-//      std::stringstream ss;
-//      ss << attValue;
-//      ss >> this->FileName;
-//      }
-//    else if (!strcmp(attName, "FilePath"))
-//       {
-//       std::stringstream ss;
-//       ss << attValue;
-//       ss >> this->FileName;
-//       }
-    }
+      if (!strcmp(attName, "DataType")) 
+       {
+       std::stringstream ss;
+       ss << attValue;
+       ss >> intAttribute;
+       this->actor->SetDataType(intAttribute);
+       }
+     else if (!strcmp(attName, "fileName"))
+       {
+       std::stringstream ss;
+       ss << attValue;
+       ss >> StringAttribute;
+       this->SetFileName(StringAttribute);
+       //this->fileName(StringAttribute);
+       }
+     else if (!strcmp(attName, "FilePath"))
+       {
+       std::stringstream ss;
+       ss << attValue;
+       ss >> StringAttribute;
+       this->SetFilePath(StringAttribute);
+       }
+     }
 }
 
 //----------------------------------------------------------------------------
@@ -131,20 +139,21 @@ void vtkMRMLFiniteElementMeshNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLFiniteElementMeshNode *node = (vtkMRMLFiniteElementMeshNode *) anode;
 
-  this->SetDataType(node->DataType);
-  this->SetFileName(node->FileName);
-  this->SetFilePath(node->FilePath);
+  this->actor->SetDataType(node->GetDataType());
+  this->actor->SetFileName(node->GetFileName());
+  this->actor->SetFilePath(node->GetFilePath());
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
-  vtkMRMLNode::PrintSelf(os,indent);
+    Superclass::PrintSelf(os,indent);
 
-  os << indent << "DataType:   " << this->DataType << "\n";
-  os << indent << "FileName:   " << this->FileName << "\n";
-  os << indent << "FilePath:   " << this->FilePath << "\n";
+  os << indent << "DataType:   " << this->GetDataType() << "\n";
+  os << indent << "FileName:   " << this->GetFileName() << "\n";
+  os << indent << "FilePath:   " << this->GetFilePath() << "\n";
+
 
 }
 

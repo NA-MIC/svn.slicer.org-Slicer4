@@ -34,6 +34,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkLocalLinkedListWrapper.h"
 
 class vtkKWChangeColorButton;
 class vtkKWFrameWithLabel;
@@ -87,7 +88,7 @@ public:
   void SetElementSizeFromScaleCallback(double scale);
   void LineWidthCallback(double width);
   void OpacityCallback(double width);
-  vtkSetObjectMacro(ObjectList, vtkLinkedListWrapper);
+  vtkSetObjectMacro(ObjectList, vtkLocalLinkedListWrapper);
   void SetViewProperties();
   //void UpdateVisibility();
   //void UpdateNodeAndElementData();
@@ -110,10 +111,7 @@ protected:
         virtual void CreateWidget();
   vtkKWMultiColumnListWithScrollbars *MultiColumnList;
   vtkKWMimxMainWindow *MimxMainWindow;
-  vtkLinkedListWrapper *ObjectList;
- /* vtkLinkedListWrapper *BBoxList;
-  vtkLinkedListWrapper *FEMeshList;
-  vtkLinkedListWrapper *ImageList;*/
+  vtkLocalLinkedListWrapper *ObjectList;
   vtkKWFrameWithLabel *MainFrame;
   vtkKWFrameWithLabel *PropertyFrame;
   vtkKWFrameWithLabel *ColorFrame;

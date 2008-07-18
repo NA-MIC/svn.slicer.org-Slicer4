@@ -41,6 +41,9 @@ class vtkMimxSurfacePolyDataActor : public vtkMimxActorBase
 public:
   static vtkMimxSurfacePolyDataActor *New();
   vtkTypeRevisionMacro(vtkMimxSurfacePolyDataActor,vtkMimxActorBase);
+  vtkMimxSurfacePolyDataActor();
+  ~vtkMimxSurfacePolyDataActor();
+  
   void PrintSelf(ostream& os, vtkIndent indent);
  vtkPolyData* GetDataSet();
 // void SetDataType(int){};
@@ -48,8 +51,6 @@ public:
  //vtkGetMacro(PolyData, vtkPolyData*);
   // Description:   
 protected:
-  vtkMimxSurfacePolyDataActor();
-  ~vtkMimxSurfacePolyDataActor();
   vtkPolyData *PolyData;
   vtkPolyDataMapper *PolyDataMapper;
 private:

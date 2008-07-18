@@ -1,6 +1,6 @@
 /*=========================================================================
 
-  Module:    $RCSfile: vtkLinkedListWrapper.h,v $
+  Module:    $RCSfile: vtkLocalLinkedListWrapper.h,v $
 
   Copyright (c) Kitware, Inc.
   All rights reserved.
@@ -11,15 +11,15 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-// .NAME vtkLinkedListWrapper - a base class for templated containers
+// .NAME vtkLocalLinkedListWrapper - a base class for templated containers
 // .SECTION Description
-// vtkLinkedListWrapper is a superclass for all container classes.  Since it
+// vtkLocalLinkedListWrapper is a superclass for all container classes.  Since it
 // does not provide any actuall data access methods, it is not
 // templated, but it provides a set of method that can be used on all
 // containers. It also provide a simple reference counting scheme.
 
 // .SECTION Caveates
-// Since vtkLinkedListWrapper and vtkAbstractList provide some pure virtual
+// Since vtkLocalLinkedListWrapper and vtkAbstractList provide some pure virtual
 // methods, each object of type container will have v-tabe.
 //
 // For container of strings, use <const char*> as a template
@@ -58,57 +58,33 @@
 
 #include "vtkLinkedList.txx"
 
-// store using the MRML-backed lists, do declare it here
-class vtkFESurfaceList;
-class vtkFiniteElementBuildingBlockList;
-class vtkFiniteElementMeshList;
-class vtkMRMLScene;
 
-#ifndef __vtkLinkedListWrapper_h
-#define __vtkLinkedListWrapper_h
+#ifndef __vtkLocalLinkedListWrapper_h
+#define __vtkLocalLinkedListWrapper_h
 
-class vtkLinkedListWrapper : public vtkObject
+class vtkLocalLinkedListWrapper : public vtkObject
 {
 public:
-  static vtkLinkedListWrapper *New();
-  vtkTypeMacro(vtkLinkedListWrapper, vtkObject);
+  static vtkLocalLinkedListWrapper *New();
+  vtkTypeMacro(vtkLocalLinkedListWrapper, vtkObject);
   vtkLinkedList<vtkMimxActorBase*> *List;
   
-  // this interface is abstract.  However, it will be used for
-  // surface dataypes, buildingBlocks, and mesh datatypes.  Inside
-  // the implementation, a test will be made on the datatype value
-  // set in the actor to decide how it should be stored in MRML.  The
-  // abstract interface serves as a dispatching method for the correct
-  // concrete implementation
-  
+  // Store actor hierarchy members in a local (non-MRML backed) list
   int AppendItem(vtkMimxActorBase*);
-  int AppendItem(vtkMimxImageActor*);
-  int AppendItem(vtkMimxSurfacePolyDataActor* actor);
-  int AppendItem(vtkMimxUnstructuredGridActor* actor);
-  int AppendItem(vtkMimxMeshActor* actor);
-
   
   vtkMimxActorBase* GetItem(vtkIdType);
   int GetNumberOfItems();
   int RemoveItem(int );
-  
-  // save reference to the scene to be used for storage 
-   void SetMRMLSceneForStorage(vtkMRMLScene* scene);
+
    
 protected:
-  vtkLinkedListWrapper();
-  virtual ~vtkLinkedListWrapper();
+  vtkLocalLinkedListWrapper();
+  virtual ~vtkLocalLinkedListWrapper();
   
- 
-  
-  // keep a copy of MRML lists and make duplicate entries into these lists.
-  vtkFESurfaceList *MRMLSurfaceList;
-  vtkFiniteElementBuildingBlockList *MRMLBBlockList;
-  vtkFiniteElementMeshList *MRMLMeshList;
   
 private:
-  vtkLinkedListWrapper(const vtkLinkedListWrapper&); // Not implemented
-  void operator=(const vtkLinkedListWrapper&); // Not implemented
+  vtkLocalLinkedListWrapper(const vtkLocalLinkedListWrapper&); // Not implemented
+  void operator=(const vtkLocalLinkedListWrapper&); // Not implemented
 };
 #endif 
 

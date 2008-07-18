@@ -57,6 +57,11 @@ vtkMRMLUnstructuredGridDisplayNode* vtkMRMLUnstructuredGridNode::GetUnstructured
     return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->GetDisplayNode());
   }
 
+// reimplement the parent method because this node has to return a display node when called
+vtkMRMLUnstructuredGridDisplayNode* vtkMRMLUnstructuredGridNode::GetModelDisplayNode() 
+  {
+    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->GetDisplayNode());
+  }
 
 
 vtkMRMLUnstructuredGridNode::vtkMRMLUnstructuredGridNode()

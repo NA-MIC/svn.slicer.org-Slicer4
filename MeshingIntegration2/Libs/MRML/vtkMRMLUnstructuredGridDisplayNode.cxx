@@ -55,7 +55,7 @@ vtkMRMLUnstructuredGridDisplayNode::vtkMRMLUnstructuredGridDisplayNode()
   this->ShrinkPolyData = vtkShrinkPolyData::New();
   
   this->ShrinkPolyData->SetInput( this->GeometryFilter->GetOutput());
-  this->ShrinkFactor = 0.5;
+  this->ShrinkFactor = 1.0;
   this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
 }
 

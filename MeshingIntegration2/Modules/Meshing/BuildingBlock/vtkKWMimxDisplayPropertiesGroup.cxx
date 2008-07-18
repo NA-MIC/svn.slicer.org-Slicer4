@@ -23,7 +23,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkKWMimxDisplayPropertiesGroup.h"
 
-#include "vtkLinkedListWrapper.h"
+#include "vtkLocalLinkedListWrapper.h"
 #include "vtkLinkedListWrapperTree.h"
 
 #include "vtkKWApplication.h"

@@ -29,9 +29,7 @@ vtkStandardNewMacro(vtkFiniteElementBuildingBlockList);
 
 vtkFiniteElementBuildingBlockList::vtkFiniteElementBuildingBlockList() 
 { 
-    this->savedMRMLScene = NULL;
-    this->SetMRMLSceneForStorage(NULL);
-  
+    SetMRMLSceneForStorage(NULL);
 }
 
 vtkFiniteElementBuildingBlockList::~vtkFiniteElementBuildingBlockList() 
@@ -65,9 +63,7 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      vtkMRMLFiniteElementBuildingBlockNode* newMRMLNode = vtkMRMLFiniteElementBuildingBlockNode::New();
 
      // copy the state variables to the MRML node
-     newMRMLNode->SetFileName(actor->GetFileName());
-     newMRMLNode->SetFilePath(actor->GetFilePath());
-     newMRMLNode->SetDataType(actor->GetDataType());
+     newMRMLNode->SetMimxUnstructuredGridActor(actor);
      newMRMLNode->SetAndObserveUnstructuredGrid(actor->GetDataSet());
      
      // now add the display, storage, and displayable nodes
@@ -76,10 +72,9 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
 
      dispNode->SetScene(this->savedMRMLScene);
      storeNode->SetScene(this->savedMRMLScene);
-     //storeNode->SetFileName(newMRMLNode->GetFileName());
+     this->savedMRMLScene->AddNode(newMRMLNode);
      this->savedMRMLScene->AddNodeNoNotify(dispNode);
      this->savedMRMLScene->AddNodeNoNotify(storeNode);
-     this->savedMRMLScene->AddNode(newMRMLNode);
      
      //cout << "added mrml bblock node " << endl;
 
@@ -89,8 +84,7 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
      newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
      newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());   
-
-     vtkDebugMacro("copied data to MRML bbox node ");
+     //vtkDebugMacro("copied data to MRML bbox node ");
      newMRMLNode->Modified();
      
    } else 
@@ -102,54 +96,53 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
 
 
 
-int vtkFiniteElementBuildingBlockList::ModifyItem(vtkIdType index, vtkMimxUnstructuredGridActor* actor)
-{
-  
-   if (this->savedMRMLScene)
-   {
-       // first fetch the MRML node that has been requested
-        vtkMRMLFiniteElementBuildingBlockNode* requestedMrmlNode = 
-            (vtkMRMLFiniteElementBuildingBlockNode*)(this->savedMRMLScene->GetNthNodeByClass(index,"vtkMRMLFiniteElementBuildingBlockNode"));
-        
-//        vtkDataSetWriter *oldwrite = vtkDataSetWriter::New();
-//        oldwrite->SetFileName("oldgrid.vtk");
-//        oldwrite->SetInput(requestedMrmlNode->GetUnstructuredGrid());
-//        oldwrite->Write();
+//int vtkFiniteElementBuildingBlockList::ModifyItem(vtkIdType index, vtkMimxUnstructuredGridActor* actor)
+//{
+//  
+//   if (this->savedMRMLScene)
+//   {
+//       // first fetch the MRML node that has been requested
+//        vtkMRMLFiniteElementBuildingBlockNode* requestedMrmlNode = 
+//            (vtkMRMLFiniteElementBuildingBlockNode*)(this->savedMRMLScene->GetNthNodeByClass(index,"vtkMRMLFiniteElementBuildingBlockNode"));
 //        
-//        vtkDataSetWriter *modwrite = vtkDataSetWriter::New();
-//        modwrite->SetFileName("grid-to-modify-with.vtk");
-//        modwrite->SetInput(actor->GetDataSet());
-//        modwrite->Write();       
-//        
-    // copy the state variables to the MRML node
-     requestedMrmlNode->SetFileName(actor->GetFileName());
-     requestedMrmlNode->SetFilePath(actor->GetFilePath());
-     requestedMrmlNode->SetDataType(actor->GetDataType());
-     // delete the old ugrid
-//     requestedMrmlNode->GetUnstructuredGrid()->Delete();
-//     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
-//     ugrid->DeepCopy(actor->GetDataSet());
-//     requestedMrmlNode->SetAndObserveUnstructuredGrid(ugrid);
-     requestedMrmlNode->GetUnstructuredGrid()->DeepCopy(actor->GetDataSet());
-
-//     vtkDataSetWriter *newwrite = vtkDataSetWriter::New();
-//     newwrite->SetFileName("modified-mrml-grid.vtk");
-//     newwrite->SetInput(requestedMrmlNode->GetUnstructuredGrid());
-//     newwrite->Write();       
-
+////        vtkDataSetWriter *oldwrite = vtkDataSetWriter::New();
+////        oldwrite->SetFileName("oldgrid.vtk");
+////        oldwrite->SetInput(requestedMrmlNode->GetUnstructuredGrid());
+////        oldwrite->Write();
+////        
+////        vtkDataSetWriter *modwrite = vtkDataSetWriter::New();
+////        modwrite->SetFileName("grid-to-modify-with.vtk");
+////        modwrite->SetInput(actor->GetDataSet());
+////        modwrite->Write();       
+////        
+//    // copy the state variables to the MRML node
+//        newMRMLNode->SetMimxUnstructuredGridActor(actor);
+//    
+//     // delete the old ugrid
+////     requestedMrmlNode->GetUnstructuredGrid()->Delete();
+////     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
+////     ugrid->DeepCopy(actor->GetDataSet());
+////     requestedMrmlNode->SetAndObserveUnstructuredGrid(ugrid);
 //     requestedMrmlNode->GetUnstructuredGrid()->DeepCopy(actor->GetDataSet());
-      
-     // *** delete this reference? 
-     //ugrid->Delete();
-     requestedMrmlNode->Modified();
-     
-     cout << "modified MRML bbox node: " << index << endl;
-   } else 
-   {
-       vtkErrorMacro("MeshingWorkflow: modifying uninitialized MRML Scene");
-   }
-  return 0;
-}
+//
+////     vtkDataSetWriter *newwrite = vtkDataSetWriter::New();
+////     newwrite->SetFileName("modified-mrml-grid.vtk");
+////     newwrite->SetInput(requestedMrmlNode->GetUnstructuredGrid());
+////     newwrite->Write();       
+//
+////     requestedMrmlNode->GetUnstructuredGrid()->DeepCopy(actor->GetDataSet());
+//      
+//     // *** delete this reference? 
+//     //ugrid->Delete();
+//     requestedMrmlNode->Modified();
+//     
+//     cout << "modified MRML bbox node: " << index << endl;
+//   } else 
+//   {
+//       vtkErrorMacro("MeshingWorkflow: modifying uninitialized MRML Scene");
+//   }
+//  return 0;
+//}
 
 
 vtkMimxUnstructuredGridActor* vtkFiniteElementBuildingBlockList::GetItem(vtkIdType id)
@@ -172,18 +165,7 @@ vtkMimxUnstructuredGridActor* vtkFiniteElementBuildingBlockList::GetItem(vtkIdTy
 //      vtkMimxUnstructuredGridActor* returnNode = vtkMimxUnstructuredGridActor::New();
 //  }
   
-  // allocate a new node
-  returnNode = vtkMimxUnstructuredGridActor::New();
-
-  
-  // copy MRML values to the node which we will return to the client
-  returnNode->SetFileName(requestedMrmlNode->GetFileName());
-  returnNode->SetFilePath(requestedMrmlNode->GetFilePath());
-  returnNode->SetDataType(requestedMrmlNode->GetDataType()); 
-  vtkUnstructuredGrid *ugrid = requestedMrmlNode->GetUnstructuredGrid();
-  vtkUnstructuredGrid *actorGrid = returnNode->GetDataSet();
-  actorGrid = ugrid;
-  return returnNode;
+  return requestedMrmlNode->GetMimxUnstructuredGridActor();
 }
 
 

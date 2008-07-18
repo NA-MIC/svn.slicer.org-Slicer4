@@ -29,16 +29,16 @@
 #include "vtkGeometryFilter.h"
 
 #include "vtkMRML.h"
-#include "vtkMRMLDisplayNode.h"
+#include "vtkMRMLModelDisplayNode.h"
 //#include "vtkMRMLUnstructuredGridNode.h"
 
 class vtkMRMLUnstructuredGridNode;
 
-class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplayNode
+class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLModelDisplayNode
 {
  public:
   static vtkMRMLUnstructuredGridDisplayNode *New (  );
-  vtkTypeMacro ( vtkMRMLUnstructuredGridDisplayNode,vtkMRMLDisplayNode );
+  vtkTypeMacro ( vtkMRMLUnstructuredGridDisplayNode,vtkMRMLModelDisplayNode );
   void PrintSelf ( ostream& os, vtkIndent indent );
   
   //--------------------------------------------------------------------------
@@ -78,21 +78,23 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
       this->GeometryFilter->SetInput(grid);
       }
   }
+ 
+ // Description:
+  // Sets UnstructuredGrid from UnstructuredGrid model node
+ virtual void SetPolyData(vtkUnstructuredGrid *grid)
+  {
+    if (this->GeometryFilter)
+      {
+      this->GeometryFilter->SetInput(grid);
+      }
+  }
 
   // Description:
   // Gets PlyData converted from UnstructuredGrid 
-//  virtual vtkPolyData* GetPolyData()
-//  {
-//    if (this->ShrinkPolyData)
-//      {
-//      this->ShrinkPolyData->Update();
-//      return this->ShrinkPolyData->GetOutput();
-//      }
-//    else
-//      {
-//      return NULL;
-//      }
-//  }
+  virtual vtkPolyData* GetPolyData()
+  {
+    return this->ShrinkPolyData->GetOutput();
+  }
    
   // Description:
   // Update the pipeline based on this node attributes
@@ -107,6 +109,7 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
 
   // Description:
   // cell shrink factor
+  
   vtkSetMacro ( ShrinkFactor, double );
   vtkGetMacro ( ShrinkFactor, double );
 
@@ -118,7 +121,7 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
 
   double ShrinkFactor;
 
-  // dispaly pipeline
+  // display pipeline
   vtkGeometryFilter *GeometryFilter;
   vtkShrinkPolyData *ShrinkPolyData;
 };

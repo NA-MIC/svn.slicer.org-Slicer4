@@ -30,6 +30,7 @@ SET ( LIB_SRCS
     mimxCheckTypeOfFile.cxx
     # container types
     vtkContainer.cxx
+    vtkLocalLinkedListWrapper.cxx
     vtkLinkedListWrapper.cxx
     vtkLinkedListWrapperTree.cxx
     vtkMRMLFESurfaceNode.cxx
@@ -78,6 +79,7 @@ SET_SOURCE_FILES_PROPERTIES(
   vtkMimxCreateIntervertebralDiscElementSets.cxx
   vtkMimxApplyNodeElementNumbers.cxx
   vtkContainer.cxx
+  vtkLocalLinkedListWrapper.cxx
   vtkLinkedListWrapper.cxx
   vtkLinkedListWrapperTree.cxx
   vtkFESurfaceList.cxx

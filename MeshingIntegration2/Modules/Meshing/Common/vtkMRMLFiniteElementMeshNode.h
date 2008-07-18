@@ -17,7 +17,7 @@
 //#include "vtkMRML.h"
 #include "vtkMRMLUnstructuredGridNode.h"
 
-
+#include "vtkMimxMeshActor.h"
 
 class VTK_MRML_EXPORT vtkMRMLFiniteElementMeshNode : public vtkMRMLUnstructuredGridNode
 {
@@ -44,14 +44,18 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementMeshNode : public vtkMRMLUnstructuredG
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "FiniteElementMesh";};
 
-  vtkGetMacro(DataType, int);
-  vtkSetMacro(DataType, int);
+  // Description:
+   // Set pointer to the Mimx actor that contains the state variables
+   void SetMimxMeshActor(vtkMimxMeshActor* ptr) {actor = ptr;}
+   vtkMimxMeshActor* GetMimxMeshActor(void) {return actor;}
 
-  vtkGetStringMacro(FileName);
-  vtkSetStringMacro(FileName);
-  
-  vtkGetStringMacro(FilePath);
-  vtkSetStringMacro(FilePath);
+   // don't use VTK macros  because the values are stored in an actor instance
+   void   SetDataType(int value) {this->actor->SetDataType(value);}   
+   int    GetDataType(void)      {return this->actor->GetDataType();} 
+   void   SetFileName(char* value) {this->actor->SetFileName(value);}   
+   char*  GetFileName(void)      {return this->actor->GetFileName();} 
+   void   SetFilePath(char* value) {this->actor->SetFilePath(value);}   
+   char*  GetFilePath(void)      {return this->actor->GetFilePath();} 
   
 protected:
   vtkMRMLFiniteElementMeshNode();
@@ -59,9 +63,8 @@ protected:
   vtkMRMLFiniteElementMeshNode(const vtkMRMLFiniteElementMeshNode&);
   void operator=(const vtkMRMLFiniteElementMeshNode&);
 
-  int   DataType;  
-  char* FileName;
-  char* FilePath;
+  // store the state inside an actor, so it can share with the local list
+  vtkMimxMeshActor* actor;
 };
 
 #endif

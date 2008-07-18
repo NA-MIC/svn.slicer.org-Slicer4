@@ -864,7 +864,8 @@ void vtkSlicerModelHierarchyWidget::CreateWidget ( )
   this->ModelDisplaySelectorWidget->Create ( );
   this->ModelDisplaySelectorWidget->SetNodeClass("vtkMRMLModelHierarchyNode", NULL, NULL, NULL);
   this->ModelDisplaySelectorWidget->AddNodeClass("vtkMRMLModelNode", NULL, NULL, NULL);
-  this->ModelDisplaySelectorWidget->SetChildClassesEnabled(0);
+  //***
+  this->ModelDisplaySelectorWidget->SetChildClassesEnabled(1);
   this->ModelDisplaySelectorWidget->SetShowHidden(1);
   this->ModelDisplaySelectorWidget->SetMRMLScene(this->GetMRMLScene());
   this->ModelDisplaySelectorWidget->SetBorderWidth(2);

@@ -75,10 +75,9 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
        this->savedMRMLScene->RegisterNodeClass( newMRMLNode );
        registered=1;
      }
-     // copy the state variables to the MRML node
-     newMRMLNode->SetFileName(actor->GetFileName());
-     newMRMLNode->SetFilePath(actor->GetFilePath());
-     newMRMLNode->SetDataType(actor->GetDataType());
+     
+     // share the actor with the local list so all the values are populated correctly 
+     newMRMLNode->SetMimxSurfacePolyDataActor(actor);
      newMRMLNode->SetAndObservePolyData(actor->GetDataSet());
      
      // create node to use for display and storage in slicer; use standard model
@@ -86,7 +85,12 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
       // subclasses later, possibly.  
       vtkMRMLModelDisplayNode* dispNode = vtkMRMLModelDisplayNode::New();
       vtkMRMLModelStorageNode* storeNode = vtkMRMLModelStorageNode::New();
-       
+      
+      // *** this broke the mrml reload, why?
+      //storeNode->SetFileName(actor->GetFileName());
+ 
+      this->savedMRMLScene->AddNode(newMRMLNode);
+      
       // Establish linkage between the surface
       // node and its display and storage nodes, so the viewer will be updated when data
       // or attributes change
@@ -95,7 +99,6 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
       newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());
    
-      this->savedMRMLScene->AddNode(newMRMLNode);
       
      cout << "copied data to MRML node " << endl;
    }
