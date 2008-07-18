@@ -1899,8 +1899,18 @@ void vtkSlicerApplicationGUI::PackMainViewer ( int arrangmentType, const char *w
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::RepackMainViewer ( int arrangementType, const char *whichSlice )
 {
-  this->UnpackMainSliceViewers ( );
-  this->UnpackMain3DViewer ( );
+  if ( this->CurrentLayout == vtkMRMLLayoutNode::SlicerLayoutCompareView )
+    {
+    //---TODO: when we add CompareView to the layout node,
+    //--- get rid of this special case.
+    UngridCompareView ( );
+    }
+  else
+    {
+    this->UnpackMainSliceViewers ( );
+    this->UnpackMain3DViewer ( );
+    }
+
   // Since I can't find a way to re-title this main page titled "View",
   // we make sure it's visible, and then 'hide' it only when we want to
   // show tabs that say things other than "View".
@@ -1909,6 +1919,67 @@ void vtkSlicerApplicationGUI::RepackMainViewer ( int arrangementType, const char
 }
 
 
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::UngridCompareView( )
+{
+  if ( this->GetApplication() != NULL )
+    {
+    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+    vtkMRMLLayoutNode *layout = this->GetGUILayoutNode();
+    if ( layout == NULL )
+      {
+      return;
+      }
+    if (this->SlicesGUI)
+      {
+      vtkSlicerSliceGUI *g = NULL;
+      char *layoutname = NULL;
+      int nSliceGUI = this->SlicesGUI->GetNumberOfSliceGUI();
+      for (int i = 0; i < nSliceGUI; i++)
+        {
+        if (i == 0)
+          {
+          g = this->SlicesGUI->GetFirstSliceGUI();
+          layoutname = this->SlicesGUI->GetFirstSliceGUILayoutName();
+          }
+        else
+          {
+          g = this->SlicesGUI->GetNextSliceGUI(layoutname);
+          layoutname = this->SlicesGUI->GetNextSliceGUILayoutName (layoutname );
+          }
+        
+        //--- check the previous layout (one we are dismantling.)
+        //--- take the layout apart the same way we put it together.
+        g->UngridGUI();
+        }
+      }
+
+    this->ViewerWidget->UngridWidget ( );
+    if ( this->GridFrame2 )
+      {
+      //--- TODO: figure out how to update the size of GridFrame2's
+      //--- grid after its slaves have been ungridded.
+      //--- For some reason, even tho all this master frame's slaves are
+      //--- being ungridded with the geometry management forgotten,
+      //--- the grid size still retains its old metrics. So if we used to
+      //--- have 3 compare view rows, and want only two the next time,
+      //--- these two will be packed into a 3x1 grid.
+      //--- So for now, we'll try to delete the frame, and create a fresh guy.
+      app->Script ("pack forget %s ", this->GridFrame2->GetWidgetName ( ) );
+      this->GridFrame2->SetParent ( NULL );
+      this->GridFrame2->Delete();
+      this->GridFrame2 = vtkKWFrame::New ( );
+      this->GridFrame2->SetParent ( this->MainSlicerWindow->GetSecondaryPanelFrame ( ) );
+      this->GridFrame2->Create ( );            
+      }
+    if ( this->GridFrame1 )
+      {
+      app->Script ("pack forget %s ", this->GridFrame1->GetWidgetName ( ) );
+      }
+    }
+}
 
 
 //---------------------------------------------------------------------------
@@ -1958,10 +2029,9 @@ void vtkSlicerApplicationGUI::UnpackMainSliceViewers (  )
           }
         }
       }
-
-    if ( this->GridFrame1 )
+    if ( this->GridFrame2 )
       {
-      app->Script ("pack forget %s ", this->GridFrame1->GetWidgetName ( ) );
+      app->Script ("pack forget %s ", this->GridFrame2->GetWidgetName ( ) );
       }
     }
 }
@@ -1991,6 +2061,10 @@ void vtkSlicerApplicationGUI::UnpackMain3DViewer (  )
       {
       this->ViewerWidget->UnpackWidget ( );
       }
+    if ( this->GridFrame1 )
+      {
+      app->Script ("pack forget %s ", this->GridFrame1->GetWidgetName ( ) );
+      }
     }
 }
 
@@ -2015,98 +2089,22 @@ void vtkSlicerApplicationGUI::PackConventionalView ( )
     
     this->MainSlicerWindow->SetSecondaryPanelVisibility ( 1 );
     this->ViewerWidget->PackWidget(this->MainSlicerWindow->GetViewFrame() );
-    
-    if (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareView)
-      {
-      // clear the 3D main viewer if some of the compare view slices
-      // are visible
-      char *layoutname = NULL;
-      int nSliceGUI = this->SlicesGUI->GetNumberOfSliceGUI();
-      int ncount = 0;
-      for (int i = 0; i < nSliceGUI; i++)
-        {
-        if (i == 0)
-          {
-          g = this->SlicesGUI->GetFirstSliceGUI();
-          layoutname = this->SlicesGUI->GetFirstSliceGUILayoutName();
-          }
-        else
-          {
-          g = this->SlicesGUI->GetNextSliceGUI(layoutname);
-          layoutname = this->SlicesGUI->GetNextSliceGUILayoutName(layoutname);
-          }
-        
-        if ( strcmp(layoutname, "Red") == 0 ||
-             strcmp(layoutname, "Yellow") == 0 ||
-             strcmp(layoutname, "Green") == 0)
-          continue;
-        else
-          g->GetSliceNode()->SetSliceVisible(0);
-        }
+
+    this->Script ( "pack %s -side top -fill both -expand y -padx 0 -pady 0 ", this->GridFrame2->GetWidgetName ( ) );
+    this->Script ("grid columnconfigure %s 0 -weight 1", this->GridFrame2->GetWidgetName() );
+    this->Script ("grid columnconfigure %s 1 -weight 1", this->GridFrame2->GetWidgetName() );
+    this->Script ("grid columnconfigure %s 2 -weight 1", this->GridFrame2->GetWidgetName() );
+    this->Script ("grid rowconfigure %s 0 -weight 1", this->GridFrame2->GetWidgetName() );
       
-      //this->Script ( "grid forget %s", this->GridFrame2->GetWidgetName() );
-      
-      this->Script ( "pack %s -side top -fill both -expand y -padx 0 -pady 0 ", this->GridFrame2->GetWidgetName ( ) );
-      this->Script ("grid rowconfigure %s 0 -weight 1", this->GridFrame2->GetWidgetName() );
-      this->Script ("grid columnconfigure %s 0 -weight 1", this->GridFrame2->GetWidgetName() );
-      this->Script ("grid columnconfigure %s 1 -weight 1", this->GridFrame2->GetWidgetName() );
-      this->Script ("grid columnconfigure %s 2 -weight 1", this->GridFrame2->GetWidgetName() );
-      
-      g = this->SlicesGUI->GetSliceGUI("Red");
-      // set the same FOV
-      x = g->GetSliceNode()->GetFieldOfView()[0];
-      y = g->GetSliceNode()->GetFieldOfView()[1];
-      z = g->GetSliceNode()->GetFieldOfView()[2];
-      g->GetSliceNode()->SetFieldOfView(x, y, z);
-      g->GetSliceNode()->UpdateMatrices();
-      g->GridSpanGUI ( this->GetGridFrame2(), 0, 0, this->NCompareViewRows, 1 );
-      //int *rSize = g->GetSliceViewer()->GetRenderWidget()->GetRenderer()->GetSize();
-      //g->GetLogic()->FitSliceToAll ( rSize[0], rSize[1] );
-      
-      g = this->SlicesGUI->GetSliceGUI("Yellow");
-      x = g->GetSliceNode()->GetFieldOfView()[0];
-      y = g->GetSliceNode()->GetFieldOfView()[1];
-      z = g->GetSliceNode()->GetFieldOfView()[2];
-      g->GetSliceNode()->SetFieldOfView(x, y, z);
-      g->GetSliceNode()->UpdateMatrices();      
-      g->GridSpanGUI( this->GetGridFrame2(), 0, 1, this->NCompareViewRows, 1 );
-      
-      g = this->SlicesGUI->GetSliceGUI("Green");
-      x = g->GetSliceNode()->GetFieldOfView()[0];
-      y = g->GetSliceNode()->GetFieldOfView()[1];
-      z = g->GetSliceNode()->GetFieldOfView()[2];
-      g->GetSliceNode()->SetFieldOfView(x, y, z);
-      g->GetSliceNode()->UpdateMatrices();
-      g->GridSpanGUI ( this->GetGridFrame2(), 0, 2, this->NCompareViewRows, 1 );
-      }
-    else
-      {      
-      this->Script ( "pack %s -side top -fill both -expand y -padx 0 -pady 0 ", this->GridFrame2->GetWidgetName ( ) );
-      this->Script ("grid columnconfigure %s 0 -weight 1", this->GridFrame2->GetWidgetName() );
-      this->Script ("grid columnconfigure %s 1 -weight 1", this->GridFrame2->GetWidgetName() );
-      this->Script ("grid columnconfigure %s 2 -weight 1", this->GridFrame2->GetWidgetName() );
-      this->Script ("grid rowconfigure %s 0 -weight 1", this->GridFrame2->GetWidgetName() );
-      this->Script("puts %s", this->GridFrame2->GetWidgetName());
-      
-      vtkSlicerSliceGUI *g = this->SlicesGUI->GetSliceGUI("Red");            
-      if (this->NCompareViewRows == 0)
-        {
-        g->GridGUI ( this->GetGridFrame2(), 0, 0);
-        g = this->SlicesGUI->GetSliceGUI("Yellow");
-        g->GridGUI ( this->GetGridFrame2(), 0, 1);
-        g = this->SlicesGUI->GetSliceGUI("Green");
-        g->GridGUI ( this->GetGridFrame2(), 0, 2);        
-        }
-      else
-        {
-        g->GridSpanGUI ( this->GetGridFrame2(), 0, 0, this->NCompareViewRows, 1 );
-        g = this->SlicesGUI->GetSliceGUI("Yellow");
-        g->GridSpanGUI ( this->GetGridFrame2(), 0, 1, this->NCompareViewRows, 1 );
-        g = this->SlicesGUI->GetSliceGUI("Green");
-        g->GridSpanGUI ( this->GetGridFrame2(), 0, 2, this->NCompareViewRows, 1 );
-        }
-      }
-    
+    g = this->SlicesGUI->GetSliceGUI("Red");            
+    g->GridSpanGUI ( this->GetGridFrame2(), 0, 0, this->NCompareViewRows, 1);
+
+    g = this->SlicesGUI->GetSliceGUI("Yellow");
+    g->GridSpanGUI ( this->GetGridFrame2(), 0, 1, this->NCompareViewRows, 1);
+
+    g = this->SlicesGUI->GetSliceGUI("Green");
+    g->GridSpanGUI ( this->GetGridFrame2(), 0, 2, this->NCompareViewRows, 1);        
+
     this->GetSlicesControlGUI()->RequestFOVEntriesUpdate();
     this->MainSlicerWindow->GetViewNotebook()->SetAlwaysShowTabs ( 0 );
     layout->SetViewArrangement ( vtkMRMLLayoutNode::SlicerLayoutConventionalView );
@@ -2350,6 +2348,8 @@ void vtkSlicerApplicationGUI::PackTabbedSliceView ( )
     }
 }
 
+
+//---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::PackCompareView()
 {
   if ( this->GetApplication() != NULL )
@@ -2368,6 +2368,9 @@ void vtkSlicerApplicationGUI::PackCompareView()
     this->Script ("grid columnconfigure %s 0 -weight 1", this->GridFrame1->GetWidgetName() );
     this->Script ("grid columnconfigure %s 1 -weight 1", this->GridFrame1->GetWidgetName() );
     
+    //--- CompareView puts the Red Slice GUI and 3D Viewer widget side by
+    //--- side in a top row. Then, the requested compare view rows and cols
+    //--- are arrayed in a grid beneath these two.
     vtkSlicerSliceGUI *g = this->SlicesGUI->GetSliceGUI("Red");
     x = g->GetSliceNode()->GetFieldOfView()[0];
     y = g->GetSliceNode()->GetFieldOfView()[1];
@@ -2375,19 +2378,20 @@ void vtkSlicerApplicationGUI::PackCompareView()
     g->GetSliceNode()->SetFieldOfView(x, y, z);
     g->GetSliceNode()->UpdateMatrices();
     
-    if (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView || 
-        layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutDefaultView)
+    //--TODO: when Compare view gets added into the vtkMRMLLayoutNode,
+    //--- modify this to check layout->GetOldViewArrangement instead of current arrangement.
+    if (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView ||
+        layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutConventionalView)
       {
       this->ViewerWidget->GridSpanWidget ( this->GridFrame1, 0, 1, 2, 1 );
       g->GridSpanGUI ( this->GetGridFrame1( ), 0, 0, 2, 1 );
       }
     else
       {
-      this->ViewerWidget->GridWidget ( this->GridFrame1, 0, 1 );
-      g->GridGUI ( this->GetGridFrame1( ), 0, 0 );
+      this->ViewerWidget->GridSpanWidget ( this->GridFrame1, 0, 1, 2, 1 );
+      g->GridSpanGUI ( this->GetGridFrame1( ), 0, 0, 2, 1 );
       }
-    g->GetSliceViewer()->SetWidth(geom->GetDefaultSliceGUIFrameWidth());
-    
+
     // insert a number of new main slice viewers according to user's input
     char buf[20];
     for ( int i = 0; i < this->NCompareViewRows; i++)
@@ -2429,6 +2433,13 @@ void vtkSlicerApplicationGUI::PackCompareView()
         g->GetSliceViewer()->SetWidth(geom->GetDefaultSliceGUIFrameWidth());
         this->Script ("grid rowconfigure %s %d -weight 1", this->GridFrame2->GetWidgetName(), ncount );
         ncount++;
+        //--- if more compare viewers were created previously,
+        //--- but fewer are requested in this layout change,
+        //--- then we display only a subset of those already created.
+        if ( ncount == this->NCompareViewRows )
+          {
+          break;
+          }
         }
       }
     
@@ -2447,6 +2458,8 @@ void vtkSlicerApplicationGUI::PackCompareView()
     }
 }
 
+
+//---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::AddMainSliceGUI(char *layoutName)
 {
   if ( this->GetApplication() != NULL )

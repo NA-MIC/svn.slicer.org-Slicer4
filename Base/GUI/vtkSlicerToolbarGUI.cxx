@@ -643,6 +643,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
         else if (!strcmp ( whichLayout, "Compare layout"))
           {
           PopUpCompareViewCustomLayoutFrame();
+          //layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutCompareView );
           }
         else if ( !strcmp (whichLayout, "Red slice only layout") )
           {
@@ -723,6 +724,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
 //            // If so, stop view Spin or Rock.
             p->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutCompareView, NULL );
             this->ChooseLayoutIconMenuButton->GetMenu()->SetItemStateToDisabled ( "Toggle bottom panel visibility" );
+            this->HideCompareViewCustomLayoutFrame();
 //        this->ResumeViewRockOrSpin ( mode );
      }
      else if ( pushb == this->UndoIconButton && event == vtkKWPushButton::InvokedEvent )
