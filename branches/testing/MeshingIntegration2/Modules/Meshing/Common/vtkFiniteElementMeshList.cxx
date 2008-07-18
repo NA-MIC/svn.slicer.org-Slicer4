@@ -61,12 +61,13 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
      // copy the state variables to the MRML node
      //newMRMLNode->SetFileName(actor->GetFileName());
      //newMRMLNode->SetFilePath(actor->GetFilePath());
-     newMRMLNode->SetFileName("filename");
-     newMRMLNode->SetFilePath("filepath");
-     newMRMLNode->SetDataType(actor->GetDataType());
+//     newMRMLNode->SetFileName("filename");
+//     newMRMLNode->SetFilePath("filepath");
+//     newMRMLNode->SetDataType(actor->GetDataType());
 //     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
 //     ugrid->DeepCopy(actor->GetDataSet());
 //     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
+     newMRMLNode->SetMimxMeshActor(actor);
      newMRMLNode->SetAndObserveUnstructuredGrid(actor->GetDataSet());
      
      // now add the display and storage nodes

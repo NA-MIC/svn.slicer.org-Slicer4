@@ -513,8 +513,8 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
                  modelDisplayFrame->GetWidgetName() );
 
-  // Don't select child classes (like FiberBundles)
-  //this->ModelSelectorWidget->ChildClassesEnabledOff();
+  // Do select child classes (like FiberBundles, unstructuredGrids)
+  //this->ModelSelectorWidget->ChildClassesEnabledOn();
 
   this->VisibilityButton = vtkKWCheckButtonWithLabel::New();
   this->VisibilityButton->SetParent ( modelDisplayFrame );
@@ -555,6 +555,7 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
   
   // a selector to change the color node associated with this display
   this->ColorSelectorWidget = vtkSlicerNodeSelectorWidget::New() ;
+  this->ColorSelectorWidget->SetChildClassesEnabled(1);
   this->ColorSelectorWidget->SetParent ( modelDisplayFrame );
   this->ColorSelectorWidget->Create ( );
   this->ColorSelectorWidget->SetNodeClass("vtkMRMLColorNode", NULL, NULL, NULL);

@@ -40,7 +40,7 @@ class vtkKWFrameWithLabel;
 class vtkKWMenuButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
 class vtkKWThumbWheel;
-class vtkLinkedListWrapper;
+class vtkLocalLinkedListWrapper;
 class vtkKWFrameWithScrollbar;
 class vtkLinkedListWrapperTree;
 class vtkKWMultiColumnList;
@@ -87,7 +87,7 @@ protected:
         ~vtkKWMimxDisplayPropertiesGroup();
         virtual void CreateWidget();
   vtkKWMimxMainWindow *MimxMainWindow;
-  vtkLinkedListWrapper *ObjectList;
+  vtkLocalLinkedListWrapper *ObjectList;
   vtkKWFrameWithLabel *BackGroundFrame;
   vtkKWFrameWithLabel *CameraFrame;
   vtkKWChangeColorButton *BackGroundColorButton;

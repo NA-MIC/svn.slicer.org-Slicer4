@@ -49,22 +49,51 @@ vtkLinkedListWrapper::~vtkLinkedListWrapper()
 int vtkLinkedListWrapper::AppendItem(vtkMimxActorBase* actor)
 {
     // check the datatype to see which list the actor should be added to.  This is necessary because the MRML-backed
-    // storage is not polymorphic at this time.  The application must set the datatype vlue to allow objects to 
-    // be stored correctly.  Since both buildingBlocks and FEMesh are stored as unstructured grid, this enumeration
-    // is the only way to tell the difference and store them in the correct lists, so slicer can attach the correct
-    // display nodes. 
-    switch (actor->GetDataType())
-    {
-      case(ACTOR_POLYDATA_SURFACE): {this->MRMLSurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::SafeDownCast(actor)); break;}
-      case(ACTOR_BUILDING_BLOCK): {this->MRMLBBlockList->AppendItem(vtkMimxUnstructuredGridActor::SafeDownCast(actor)); break;}
-      case(ACTOR_FE_MESH): {this->MRMLMeshList->AppendItem(vtkMimxMeshActor::SafeDownCast(actor)); break;}
-      default: vtkErrorMacro("attempted storage of unsupported Mimx Actor Datatype");
-      cout << "tried storage for " << actor->GetDataType() << " type" << endl;
-    }
-    // a local list is kept only so we can check the type of the objects during query/retrieval
-    return this->List->AppendItem(actor);
+    // storage is not polymorphic at this time.  
+    if (actor->IsA("vtkMimxSurfacePolyDataActor"))
+        this->AppendItem(vtkMimxSurfacePolyDataActor::SafeDownCast(actor));
+    else if (actor->IsA("vtkMimxUnstructuredGridActor"))
+        this->AppendItem(vtkMimxUnstructuredGridActor::SafeDownCast(actor));
+    else if (actor->IsA("vtkMimxMeshActor"))
+         this->AppendItem(vtkMimxMeshActor::SafeDownCast(actor));
+    else if (actor->IsA("vtkMimxImageActor"))
+          this->AppendItem(vtkMimxImageActor::SafeDownCast(actor));
+    else
+        vtkWarningMacro("Received LinkedList Append on unknown datatype");
+   
+
 }
 
+
+int vtkLinkedListWrapper::AppendItem(vtkMimxImageActor* actor)
+{
+   // Put entry in the local list and the correct MRML list
+   //this->MRMLSurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::SafeDownCast(actor));
+   return this->List->AppendItem(actor);
+}
+
+
+
+int vtkLinkedListWrapper::AppendItem(vtkMimxSurfacePolyDataActor* actor)
+{
+   // Put entry in the local list and the correct MRML list
+   this->MRMLSurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::SafeDownCast(actor));
+   return this->List->AppendItem(actor);
+}
+
+int vtkLinkedListWrapper::AppendItem(vtkMimxUnstructuredGridActor* actor)
+{
+   // Put entry in the local list and the correct MRML list
+   this->MRMLBBlockList->AppendItem(vtkMimxUnstructuredGridActor::SafeDownCast(actor));
+   return this->List->AppendItem(actor);
+}
+
+int vtkLinkedListWrapper::AppendItem(vtkMimxMeshActor* actor)
+{
+   // Put entry in the local list and the correct MRML list
+   this->MRMLMeshList->AppendItem(vtkMimxMeshActor::SafeDownCast(actor));
+   return this->List->AppendItem(actor);
+}
 
 vtkMimxActorBase* vtkLinkedListWrapper::GetItem(vtkIdType id)
 {
@@ -84,26 +113,82 @@ vtkMimxActorBase* vtkLinkedListWrapper::GetItem(vtkIdType id)
 int vtkLinkedListWrapper::GetNumberOfItems()
 {
     return this->List->GetNumberOfItems();
-//    int total = 0;
-//    total += this->MRMLSurfaceList->GetNumberOfItems();
-//    total += this->MRMLBBlockList->GetNumberOfItems(); 
-//    total += this->MRMLMeshList->GetNumberOfItems();
-//    return total;
 }
 
 int vtkLinkedListWrapper::RemoveItem(int Num)
 {
-    vtkMimxActorBase *removedactor = this->List->GetItem(Num);
-    vtkWarningMacro("RemoveItem is not reliable because of indexing problems with the MRML lists");
-//    switch (removedactor->GetDataType())
-//     {
-//       case(ACTOR_POLYDATA_SURFACE): {this->MRMLSurfaceList->RemoveItem(Num); break;}
-//       case(ACTOR_BUILDING_BLOCK): {this->MRMLBBlockList->RemoveItem(Num); break;}
-//       case(ACTOR_FE_MESH): {this->MRMLMeshList->RemoveItem(Num); break;}
-//       default: vtkErrorMacro("attempted storage of unsupported Mimx Actor Datatype")
-//     }
-     return this->List->RemoveItem(Num);
+    
 }
+
+//*** this fails because there are dummy entries in the mrml tree coming from somewhere.
+// debug this after switching to the new code base. 
+
+//int vtkLinkedListWrapper::RemoveItem(int Num)
+//{
+//    vtkMimxActorBase *removedactor = this->List->GetItem(Num);
+//
+//    // because the entries in the local list are spread out across the different MRML list types, 
+//    // we need to do a search through the mrml lists for a match of the actor.  We can check that
+//    // the actors are equal because the actor instances are shared between the local and MRML lists
+//    // to save size and eliminate redundancy.  The application level can also add values in any order
+//    // to the actors and the MRML tree is guaranteed to get all the correct values. 
+//    
+//    int found = 0;
+//    int index;
+//    
+//    // look in each list successively but abort as soon as a match is found.
+//    // A dummy for loop is used here so we have something to break out of
+//    
+//    for (int dummy=0;dummy<1;dummy++)
+//    {
+//        cout << "looking in surface list" << endl;
+//        index=0;
+//        while ( (index < this->MRMLSurfaceList->GetNumberOfItems()) & !found) 
+//        {
+//            if (this->MRMLSurfaceList->GetItem(index) == removedactor)
+//            {
+//              found = 1; 
+//              this->MRMLSurfaceList->RemoveItem(index);
+//              cout << "found match in surface list; removed it" << endl;
+//              break;
+//            }
+//            index++;
+//        }  
+//        
+//        if (found) break;        // quit if we already found a match  
+//        index=0;
+//        cout << "looking in bblock list" << endl;
+//         while ( (index < this->MRMLBBlockList->GetNumberOfItems()) & !found) 
+//         {
+//             if (this->MRMLBBlockList->GetItem(index) == removedactor)
+//             {
+//               found = 1; 
+//               this->MRMLBBlockList->RemoveItem(index);
+//               cout << "found match in bblock list; removed it" << endl;
+//               break;
+//             }
+//             index++;
+//         }  
+//
+//         if (found) break;        // quit if we already found a match
+//         cout << "looking in mesh list" << endl;
+//         index=0;
+//           while ( (index < this->MRMLMeshList->GetNumberOfItems()) & !found) 
+//           {
+//               if (this->MRMLMeshList->GetItem(index) == removedactor)
+//               {
+//                 found = 1; 
+//                 this->MRMLMeshList->RemoveItem(index);
+//                 cout << "found match in mesh list; removed it" << endl;
+//                 break;
+//               }
+//               index++;
+//           } 
+//    }
+//    // also remove instance from local list
+//    // *** I wonder if we have to worry about double deletion of the actor here?
+//    return this->List->RemoveItem(Num);
+//}
 
 // initialize the MRML lists for the scene to use for interaction and storage
 void vtkLinkedListWrapper::SetMRMLSceneForStorage(vtkMRMLScene* scene)

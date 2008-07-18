@@ -22,6 +22,7 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLScene.h"
 
 
+
 //------------------------------------------------------------------------------
 vtkMRMLFiniteElementBuildingBlockNode* vtkMRMLFiniteElementBuildingBlockNode::New()
 {
@@ -31,8 +32,11 @@ vtkMRMLFiniteElementBuildingBlockNode* vtkMRMLFiniteElementBuildingBlockNode::Ne
     {
       return (vtkMRMLFiniteElementBuildingBlockNode*)ret;
     }
-  // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFiniteElementBuildingBlockNode;
+  // If the factory was unable to create the object, then create it here.  
+  vtkMimxUnstructuredGridActor* newactor =  vtkMimxUnstructuredGridActor::New();
+  vtkMRMLFiniteElementBuildingBlockNode* newnode = new vtkMRMLFiniteElementBuildingBlockNode;
+  newnode->SetMimxUnstructuredGridActor(newactor);
+  return newnode;
 }
 
 //----------------------------------------------------------------------------
@@ -46,18 +50,16 @@ vtkMRMLFiniteElementBuildingBlockNode* vtkMRMLFiniteElementBuildingBlockNode::Cr
       return (vtkMRMLFiniteElementBuildingBlockNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFiniteElementBuildingBlockNode;
+  vtkMimxUnstructuredGridActor* newactor =  vtkMimxUnstructuredGridActor::New();
+   vtkMRMLFiniteElementBuildingBlockNode* newnode = new vtkMRMLFiniteElementBuildingBlockNode;
+   newnode->SetMimxUnstructuredGridActor(newactor);
+   return newnode;
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLFiniteElementBuildingBlockNode::vtkMRMLFiniteElementBuildingBlockNode()
 {
 
-   this->DataType = 1;
-   this->FileName = NULL;
-   this->FilePath = NULL;
-   this->FileName = new char[1024];
-   this->FilePath = new char[1024];
 }
 
 //----------------------------------------------------------------------------
@@ -69,33 +71,37 @@ vtkMRMLFiniteElementBuildingBlockNode::~vtkMRMLFiniteElementBuildingBlockNode()
 void vtkMRMLFiniteElementBuildingBlockNode::WriteXML(ostream& of, int nIndent)
 {
 Superclass::WriteXML(of, nIndent);
-
-  vtkIndent indent(nIndent);
-  {
-    std::stringstream ss;
-    ss << this->DataType;
-    of << indent << " DataType='" << ss.str() << "' ";
-  }
-//  {
-//    std::stringstream ss;
-//    ss << this->FileName;
-//    of << indent << "FileName='" << ss.str() << "' ";
-//  }
-//  {
-//     std::stringstream ss;
-//     ss << this->FilePath;
-//     of << indent << "FilePath='" << ss.str() << "' ";
-//   }
+    
+    of << " ";
+    vtkIndent indent(nIndent);
+    {
+      std::stringstream ss;
+      ss << this->actor->GetDataType();
+      of << indent << " DataType=\"" << ss.str() << "\"";
+    }
+    {
+      std::stringstream ss;
+      ss << this->actor->GetFileName();
+      of << indent << " fileName=\"" << ss.str() << "\"";
+    }
+    {
+      std::stringstream ss;
+      ss << this->actor->GetFilePath();
+      of << indent << " FilePath=\"" << ss.str() << "\"";
+    }
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementBuildingBlockNode::ReadXMLAttributes(const char** atts)
 {
 
-  vtkMRMLNode::ReadXMLAttributes(atts);
+    Superclass::ReadXMLAttributes(atts);
 
   const char* attName;
   const char* attValue;
+  int intAttribute;
+  char StringAttribute[1024];
+  
   while (*atts != NULL) 
     {
     attName = *(atts++);
@@ -105,20 +111,24 @@ void vtkMRMLFiniteElementBuildingBlockNode::ReadXMLAttributes(const char** atts)
       {
       std::stringstream ss;
       ss << attValue;
-      ss >> this->DataType;
+      ss >> intAttribute;
+      this->actor->SetDataType(intAttribute);
       }
-//    else if (!strcmp(attName, "FileName"))
-//      {
-//      std::stringstream ss;
-//      ss << attValue;
-//      ss >> this->FileName;
-//      }
-//    else if (!strcmp(attName, "FilePath"))
-//       {
-//       std::stringstream ss;
-//       ss << attValue;
-//       ss >> this->FileName;
-//       }
+    else if (!strcmp(attName, "fileName"))
+      {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> StringAttribute;
+      this->SetFileName(StringAttribute);
+      //this->fileName(StringAttribute);
+      }
+    else if (!strcmp(attName, "FilePath"))
+      {
+      std::stringstream ss;
+      ss << attValue;
+      ss >> StringAttribute;
+      this->SetFilePath(StringAttribute);
+      }
     }
 }
 
@@ -130,20 +140,20 @@ void vtkMRMLFiniteElementBuildingBlockNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLFiniteElementBuildingBlockNode *node = (vtkMRMLFiniteElementBuildingBlockNode *) anode;
 
-  this->SetDataType(node->DataType);
-  this->SetFileName(node->FileName);
-  this->SetFilePath(node->FilePath);
+  this->actor->SetDataType(node->GetDataType());
+  this->actor->SetFileName(node->GetFileName());
+  this->actor->SetFilePath(node->GetFilePath());
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementBuildingBlockNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
-  vtkMRMLNode::PrintSelf(os,indent);
+  Superclass::PrintSelf(os,indent);
 
-  os << indent << "DataType:   " << this->DataType << "\n";
-  os << indent << "FileName:   " << this->FileName << "\n";
-  os << indent << "FilePath:   " << this->FilePath << "\n";
+   os << indent << "DataType:   " << this->GetDataType() << "\n";
+   os << indent << "FileName:   " << this->GetFileName() << "\n";
+   os << indent << "FilePath:   " << this->GetFilePath() << "\n";
 
 }
 

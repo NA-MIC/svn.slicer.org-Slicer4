@@ -23,7 +23,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkKWMimxViewProperties.h"
 
-#include "vtkLinkedListWrapper.h"
+#include "vtkLocalLinkedListWrapper.h"
 #include "vtkLinkedListWrapperTree.h"
 
 #include "vtkKWApplication.h"
@@ -70,7 +70,7 @@ vtkCxxRevisionMacro(vtkKWMimxViewProperties, "$Revision: 1.31 $");
 vtkKWMimxViewProperties::vtkKWMimxViewProperties()
 {
   this->MultiColumnList = NULL;
-  this->ObjectList = vtkLinkedListWrapper::New();
+  this->ObjectList = vtkLocalLinkedListWrapper::New();
   this->MimxMainWindow = NULL;
   this->MainFrame = NULL;
   this->DoUndoTree = NULL;

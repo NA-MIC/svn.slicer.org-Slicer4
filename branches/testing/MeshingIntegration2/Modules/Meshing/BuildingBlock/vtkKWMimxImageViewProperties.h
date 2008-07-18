@@ -33,11 +33,12 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkLocalLinkedListWrapper.h"
 
 class vtkKWFrameWithLabel;
 class vtkKWMenuButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
-class vtkLinkedListWrapper;
+class vtkLocalLinkedListWrapper;
 
 class vtkKWMimxImageViewProperties : public vtkKWCompositeWidget
 {
@@ -51,7 +52,7 @@ public:
   virtual void UpdateEnableState();
   vtkSetObjectMacro(MimxMainWindow, vtkKWMimxMainWindow);
   vtkGetObjectMacro(MimxMainWindow, vtkKWMimxMainWindow);
-  vtkSetObjectMacro(ObjectList, vtkLinkedListWrapper);
+  vtkSetObjectMacro(ObjectList, vtkLocalLinkedListWrapper);
   vtkGetObjectMacro(MainFrame, vtkKWFrameWithLabel);
   void VisibilityCallback(int );
   void AddObjectList();
@@ -63,7 +64,7 @@ protected:
         virtual void CreateWidget();
   vtkKWMultiColumnListWithScrollbars *MultiColumnList;
   vtkKWMimxMainWindow *MimxMainWindow;
-  vtkLinkedListWrapper *ObjectList;
+  vtkLocalLinkedListWrapper *ObjectList;
   vtkKWFrameWithLabel *MainFrame;
 private:
   vtkKWMimxImageViewProperties(const vtkKWMimxImageViewProperties&); // Not implemented

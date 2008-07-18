@@ -22,6 +22,8 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLScene.h"
 
 
+
+
 //------------------------------------------------------------------------------
 vtkMRMLFESurfaceNode* vtkMRMLFESurfaceNode::New()
 {
@@ -32,7 +34,10 @@ vtkMRMLFESurfaceNode* vtkMRMLFESurfaceNode::New()
       return (vtkMRMLFESurfaceNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFESurfaceNode;
+  vtkMimxSurfacePolyDataActor* newactor = new vtkMimxSurfacePolyDataActor;
+  vtkMRMLFESurfaceNode* newnode = new vtkMRMLFESurfaceNode;
+  newnode->SetMimxSurfacePolyDataActor(newactor);
+  return newnode;
   
 
 }
@@ -48,18 +53,16 @@ vtkMRMLModelNode* vtkMRMLFESurfaceNode::CreateNodeInstance()
       return (vtkMRMLFESurfaceNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFESurfaceNode;
+  vtkMimxSurfacePolyDataActor* newactor = new vtkMimxSurfacePolyDataActor;
+  vtkMRMLFESurfaceNode* newnode = new vtkMRMLFESurfaceNode;
+  newnode->SetMimxSurfacePolyDataActor(newactor);
+  return newnode;
 }
 
 //----------------------------------------------------------------------------
 vtkMRMLFESurfaceNode::vtkMRMLFESurfaceNode()
 {
 
-   this->DataType = 2;
-   this->FileName = NULL;
-   this->FilePath = NULL;
-   this->FileName = new char[1024];
-   this->FilePath = new char[1024];
 }
 
 //----------------------------------------------------------------------------
@@ -78,18 +81,18 @@ Superclass::WriteXML(of, nIndent);
   vtkIndent indent(nIndent);
   {
     std::stringstream ss;
-    ss << this->DataType;
-    of << indent << " DataType='" << ss.str() << "' ";
+    ss << this->actor->GetDataType();
+    of << indent << " DataType=\"" << ss.str() << "\"";
   }
   {
     std::stringstream ss;
-    ss << this->FileName;
-    of << indent << "FileName='" << ss.str() << "' ";
+    ss << this->actor->GetFileName();
+    of << indent << " fileName=\"" << ss.str() << "\"";
   }
   {
     std::stringstream ss;
-    ss << this->FilePath;
-    of << indent << "FilePath='" << ss.str() << "' ";
+    ss << this->actor->GetFilePath();
+    of << indent << " FilePath=\"" << ss.str() << "\"";
   }
 }
 
@@ -97,10 +100,13 @@ Superclass::WriteXML(of, nIndent);
 void vtkMRMLFESurfaceNode::ReadXMLAttributes(const char** atts)
 {
 
-  vtkMRMLNode::ReadXMLAttributes(atts);
+  Superclass::ReadXMLAttributes(atts);
 
   const char* attName;
   const char* attValue;
+  int intAttribute;
+  char StringAttribute[1024];
+  
   while (*atts != NULL) 
     {
     attName = *(atts++);
@@ -110,19 +116,23 @@ void vtkMRMLFESurfaceNode::ReadXMLAttributes(const char** atts)
       {
       std::stringstream ss;
       ss << attValue;
-      ss >> this->DataType;
+      ss >> intAttribute;
+      this->actor->SetDataType(intAttribute);
       }
-    else if (!strcmp(attName, "FileName"))
+    else if (!strcmp(attName, "fileName"))
       {
       std::stringstream ss;
       ss << attValue;
-      ss >> this->FileName;
+      ss >> StringAttribute;
+      this->SetFileName(StringAttribute);
+      //this->fileName(StringAttribute);
       }
     else if (!strcmp(attName, "FilePath"))
       {
       std::stringstream ss;
       ss << attValue;
-      ss >> this->FilePath;
+      ss >> StringAttribute;
+      this->SetFilePath(StringAttribute);
       }
     }
 }
@@ -135,19 +145,19 @@ void vtkMRMLFESurfaceNode::Copy(vtkMRMLNode *anode)
   Superclass::Copy(anode);
   vtkMRMLFESurfaceNode *node = (vtkMRMLFESurfaceNode *) anode;
 
-  this->SetDataType(node->DataType);
-  this->SetFileName(node->FileName);
-  this->SetFilePath(node->FilePath);
+  this->actor->SetDataType(node->GetDataType());
+  this->actor->SetFileName(node->GetFileName());
+  this->actor->SetFilePath(node->GetFilePath());
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLFESurfaceNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
-  vtkMRMLNode::PrintSelf(os,indent);
+    Superclass::PrintSelf(os,indent);
 
-  os << indent << "DataType:   " << this->DataType << "\n";
-  os << indent << "FileName:   " << this->FileName << "\n";
-  os << indent << "FilePath:   " << this->FilePath << "\n";
+  os << indent << "DataType:   " << this->GetDataType() << "\n";
+  os << indent << "FileName:   " << this->GetFileName() << "\n";
+  os << indent << "FilePath:   " << this->GetFilePath() << "\n";
 }
 

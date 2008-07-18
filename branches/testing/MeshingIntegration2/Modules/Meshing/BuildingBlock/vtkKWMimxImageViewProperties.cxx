@@ -24,7 +24,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxImageViewProperties.h"
 
 #include "vtkMimxImageActor.h"
-#include "vtkLinkedListWrapper.h"
+
 
 #include "vtkKWApplication.h"
 #include "vtkKWChangeColorButton.h"
@@ -147,7 +147,7 @@ void vtkKWMimxImageViewProperties::AddObjectList()
 {
 /*
   if(!this->ImageList)
-                this->ImageList = vtkLinkedListWrapper::New();
+                this->ImageList = vtkLocalLinkedListWrapper::New();
                 
   int rowIndex = this->ImageList->GetNumberOfItems();
         

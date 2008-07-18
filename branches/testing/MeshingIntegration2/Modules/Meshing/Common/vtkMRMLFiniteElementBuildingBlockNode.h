@@ -17,7 +17,18 @@
 //#include "vtkMRML.h"
 #include "vtkMRMLUnstructuredGridNode.h"
 
+// keep a pointer to the Mimx actor object because we are storing a direct reference
+// to the actor so the application code doesn't have to be rearranged with all attributes
+// added to the node before the commit is done.  If the same actor is used, in the local and MRML
+// lists, then we know that all the values will be good in the actor.  Use the names in the actors
+// instead of the separate fields for matching / searching. 
 
+// searching the MRML-backed lists is needed because as surface,bblock, and mesh objects are created,
+// they are stored in separate lists, according to their MRML type.  However, the application believes
+// there is only one polymorphic list, so when objects are returned or removed by ID, a search is required
+// to find the matching object. 
+
+#include  "vtkMimxUnstructuredGridActor.h";
 
 class VTK_MRML_EXPORT vtkMRMLFiniteElementBuildingBlockNode : public vtkMRMLUnstructuredGridNode
 {
@@ -43,29 +54,28 @@ class VTK_MRML_EXPORT vtkMRMLFiniteElementBuildingBlockNode : public vtkMRMLUnst
   // Description:
   // Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() {return "FiniteElementBuildingBlock";};
-
-  vtkGetMacro(DataType, int);
-  vtkSetMacro(DataType, int);
-
-  vtkGetStringMacro(FileName);
- // vtkSetStringMacro(FileName);
   
-  vtkGetStringMacro(FilePath);
-//  vtkSetStringMacro(FilePath);
-  
-  void  SetFileName(char* aString) { strcpy(FileName,aString); }
-  void  SetFilePath(char* aString) { strcpy(FilePath,aString); }
+  // Description:
+  // Set pointer to the Mimx actor that contains the state variables
+  void SetMimxUnstructuredGridActor(vtkMimxUnstructuredGridActor* ptr) {actor = ptr;}
+  vtkMimxUnstructuredGridActor* GetMimxUnstructuredGridActor(void) {return actor;}
+
+  // don't use VTK macros  because the values are stored in an actor instance
+  void   SetDataType(int value) {this->actor->SetDataType(value);}   
+  int    GetDataType(void)      {return this->actor->GetDataType();} 
+  void   SetFileName(char* value) {this->actor->SetFileName(value);}   
+  char*  GetFileName(void)      {return this->actor->GetFileName();} 
+  void   SetFilePath(char* value) {this->actor->SetFilePath(value);}   
+  char*  GetFilePath(void)      {return this->actor->GetFilePath();} 
  
-  
 protected:
   vtkMRMLFiniteElementBuildingBlockNode();
   ~vtkMRMLFiniteElementBuildingBlockNode();
   vtkMRMLFiniteElementBuildingBlockNode(const vtkMRMLFiniteElementBuildingBlockNode&);
   void operator=(const vtkMRMLFiniteElementBuildingBlockNode&);
 
-  int   DataType;  
-  char* FileName;
-  char* FilePath;
+ 
+  vtkMimxUnstructuredGridActor *actor;
 };
 
 #endif

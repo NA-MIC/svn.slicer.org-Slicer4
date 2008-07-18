@@ -49,7 +49,7 @@ public:
   void SetMRMLSceneForStorage(vtkMRMLScene* scene);
   
   virtual int AppendItem(vtkMimxUnstructuredGridActor*);
-  virtual int ModifyItem(vtkIdType, vtkMimxUnstructuredGridActor*);
+  //virtual int ModifyItem(vtkIdType, vtkMimxUnstructuredGridActor*);
   virtual vtkMimxUnstructuredGridActor* GetItem(vtkIdType);
   virtual int GetNumberOfItems();
   virtual int RemoveItem(int );
