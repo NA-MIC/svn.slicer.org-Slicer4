@@ -203,7 +203,6 @@ itcl::body DrawEffect::apply {} {
 
   $this applyPolyMask $o(polyData)
   $this resetPolyData
-
 }
 
 itcl::body DrawEffect::createPolyData {} {
@@ -310,6 +309,7 @@ itcl::body DrawEffect::buildOptions {} {
   set o(help) [vtkNew vtkSlicerPopUpHelpWidget]
   $o(help) SetParent [$this getOptionsFrame]
   $o(help) Create
+  [$o(help) GetHelpWindow] SetDisplayPositionToMasterWindowCenter
   $o(help) SetHelpTitle "Draw"
   $o(help) SetHelpText "Use this tool to draw an outline.\n\nLeft Click: add point.\nLeft Drag: add multiple points.\nx: delete last point.\na: apply outline."
   $o(help) SetBalloonHelpString "Bring up help window."

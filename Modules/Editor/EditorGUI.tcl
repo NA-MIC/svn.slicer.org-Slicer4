@@ -8,12 +8,6 @@ proc EditorConstructor {this} {
 proc EditorDestructor {this} {
 }
 
-
-# Note: not a method - this is invoked directly by the GUI
-# - remove the GUI from the current Application
-# - re-source the code (this file)
-# - re-build the GUI
-# Note: not a method - this is invoked directly by the GUI
 proc EditorTearDownGUI {this} {
 
   # nodeSelector  ;# disabled for now
@@ -45,6 +39,11 @@ proc EditorTearDownGUI {this} {
   }
 
   unset ::Editor(singleton)
+
+  if { [info exists ::Editor(undoImageData)] } {
+    $::Editor(undoImageData) Delete
+    unset ::Editor(undoImageData)
+  }
 
 }
 
@@ -319,6 +318,7 @@ proc EditorGetPaintColor {this} {
         set node [$volumeDisplayNode GetColorNode]
         set lut [$node GetLookupTable]
         set index [EditorGetPaintLabel]
+        set index [expr int($index)]
         return [$lut GetTableValue $index]
       }
     }
@@ -453,10 +453,15 @@ proc EditorEnter {this} {
 }
 
 proc EditorExit {this} {
+
+  EffectSWidget::RemoveAll
   if {[$this GetDebug]} {
     puts "EditorExit: Removing mrml observer on selection node modified event"
   }
   $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] 31
+  # delete the current effect - users were getting confused that the editor was still
+  # active when the module wasn't visible
+  after idle ::EffectSWidget::RemoveAll
 }
 
 # TODO: there might be a better place to put this for general use...  
@@ -492,6 +497,30 @@ proc EditorCreateLabelVolume {this} {
   eval ::Labler::SetPaintRange $range
 }
 
+#
+# store/restore a single volume 
+#
+proc EditorStoreUndoVolume {node} {
+  if { ![info exists ::Editor(undoImageData)] } {
+    set ::Editor(undoImageData) [vtkImageData New]
+  }
+  set ::Editor(undoNodeID) [$node GetID]
+  $::Editor(undoImageData) DeepCopy [$node GetImageData]
+}
+
+proc EditorRestoreUndoVolume {} {
+  if { ![info exists ::Editor(undoImageData)] } {
+    return
+  }
+  set node [$::slicer3::MRMLScene GetNodeByID $::Editor(undoNodeID)]
+  if { $node != "" } {
+    [$node GetImageData] DeepCopy $::Editor(undoImageData)
+  }
+  $node SetModifiedSinceRead 1
+  $node Modified
+}
+
+
 proc EditorErrorDialog {errorText} {
   set dialog [vtkKWMessageDialog New]
   $dialog SetParent [$::slicer3::ApplicationGUI GetMainSlicerWindow]
@@ -502,3 +531,4 @@ proc EditorErrorDialog {errorText} {
   $dialog Invoke
   $dialog Delete
 }
+

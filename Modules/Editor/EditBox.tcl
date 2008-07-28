@@ -83,7 +83,7 @@ itcl::body EditBox::findEffects { {path ""} } {
     LabelVisibilityOff LabelVisibilityOn NextFiducial 
     SnapToGridOff SnapToGridOn
     EraseLabel Threshold PinOpen PreviousFiducial  InterpolateLabels LabelOpacity
-    ToggleLabelOutline Watershed
+    ToggleLabelOutline Watershed Undo Redo
   }
 
   set _effects(list,disabled) {
@@ -99,7 +99,7 @@ itcl::body EditBox::findEffects { {path ""} } {
     LabelVisibilityOff LabelVisibilityOn 
     SnapToGridOff SnapToGridOn
     InterpolateLabels LabelOpacity
-    ToggleLabelOutline Watershed
+    ToggleLabelOutline Watershed Redo
   }
 
 
@@ -227,7 +227,7 @@ itcl::body EditBox::create { } {
   $this createButtonRow $parent {ErodeLabel DilateLabel Threshold ChangeLabel}
   $this createButtonRow $parent {InterpolateLabels MakeModel Watershed LevelTracing}
   $this createButtonRow $parent {PreviousFiducial NextFiducial FiducialVisibilityOn DeleteFiducials}
-  $this createButtonRow $parent {GoToEditorModule PinOpen }
+  $this createButtonRow $parent {GoToEditorModule PinOpen Undo }
  
   $this setMode $mode 
 
@@ -281,18 +281,25 @@ itcl::body EditBox::selectEffect { effect } {
     "EraseLabel" {
       EditorToggleErasePaintLabel
     }
+    "Undo" {
+      EditorRestoreUndoVolume
+    }
     default {
 
       #
       # create an instance of the effect for each of the active sliceGUIs
       # - have the effect reset the tool label when completed
       #
-      
-      EffectSWidget::Add $_effects($effect,class)
-      EffectSWidget::ConfigureAll $_effects($effect,class) -exitCommand "EditorSetActiveToolLabel DefaultTool"
 
-      if { $mouseTool } {
-        EffectSWidget::SetCursorAll $_effects($effect,class) $_effects($effect,imageData)
+      set ret [catch "EffectSWidget::Add $_effects($effect,class)" res]
+      if { $ret } {
+        EditorErrorDialog $res
+      } else {
+        EffectSWidget::ConfigureAll $_effects($effect,class) -exitCommand "EditorSetActiveToolLabel DefaultTool"
+
+        if { $mouseTool } {
+          EffectSWidget::SetCursorAll $_effects($effect,class) $_effects($effect,imageData)
+        }
       }
 
     }
