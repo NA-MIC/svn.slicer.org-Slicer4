@@ -192,7 +192,11 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
     // we should assign polydata
     if (datatypeTestReader->IsFileUnstructuredGrid())
     {
-        vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(displayNode)->SetUnstructuredGrid(vtkMRMLUnstructuredGridNode::SafeDownCast(modelNode)->GetUnstructuredGrid());
+        // this line might be unnecessary because this needs to be set after the readData, since the displaynode has a pipeline in it that has to be 
+        // initialized after the unstructuredgrid is loaded
+        //vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(displayNode)->SetUnstructuredGrid(vtkMRMLUnstructuredGridNode::SafeDownCast(modelNode)->GetUnstructuredGrid());
+        ((vtkMRMLUnstructuredGridDisplayNode*)displayNode)->SetUnstructuredGrid(((vtkMRMLUnstructuredGridNode*)modelNode)->GetUnstructuredGrid());
+        
         cout << "set Ugrid data from node as display node dataset" << endl;
     }
     else
@@ -205,12 +209,14 @@ vtkMRMLModelNode* vtkSlicerModelsLogic::AddModel (const char* filename)
 
     //this->Modified();  
 
-    // the scene points to it still
-    modelNode->Delete();
-
     // now set up the reading
     vtkDebugMacro("AddModel: calling read on the storage node");
     storageNode->ReadData(modelNode);
+    //vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(displayNode)->SetUnstructuredGrid(vtkMRMLUnstructuredGridNode::SafeDownCast(modelNode)->GetUnstructuredGrid());
+    //((vtkMRMLUnstructuredGridDisplayNode*)displayNode)->SetUnstructuredGrid(((vtkMRMLUnstructuredGridNode*)modelNode)->GetUnstructuredGrid());
+    
+    // the scene points to it still
+      modelNode->Delete();
     }
   else
     {
