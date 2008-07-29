@@ -11,12 +11,11 @@
   Version:   $Revision: 1.6 $
 
   =========================================================================auto=*/
-// .NAME vtkMRMLUnstructuredGridDisplayNode - MRML node to represent display properties for tractography.
+// .NAME vtkMRMLUnstructuredGridDisplayNode - MRML node to represent display properties for unstructured grids.
 // .SECTION Description
-// vtkMRMLUnstructuredGridDisplayNode nodes store display properties of trajectories 
-// from tractography in diffusion MRI data, including color type (by bundle, by fiber, 
-// or by scalar invariants), display on/off for tensor glyphs and display of 
-// trajectory as a line or tube.
+// vtkMRMLUnstructuredGridDisplayNode nodes store display properties for rendering an UnstructuredGrid 
+// datatype. This node includes a pipeline to convert from unstructured grid to poly data so the node
+// can act like a model display node.
 //
  
 #ifndef __vtkMRMLUnstructuredGridDisplayNode_h
@@ -76,18 +75,19 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLModelDi
     if (this->GeometryFilter)
       {
       this->GeometryFilter->SetInput(grid);
+      this->GeometryFilter->Update();
       }
   }
  
  // Description:
   // Sets UnstructuredGrid from UnstructuredGrid model node
- virtual void SetPolyData(vtkUnstructuredGrid *grid)
-  {
-    if (this->GeometryFilter)
-      {
-      this->GeometryFilter->SetInput(grid);
-      }
-  }
+// virtual void SetPolyData(vtkUnstructuredGrid *grid)
+//  {
+//    if (this->GeometryFilter)
+//      {
+//      this->GeometryFilter->SetInput(grid);
+//      }
+//  }
 
   // Description:
   // Gets PlyData converted from UnstructuredGrid 
@@ -101,6 +101,7 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLModelDi
   virtual void UpdatePolyDataPipeline() 
     {
     this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
+    this->GeometryFilter->Update();
     };
  
   //--------------------------------------------------------------------------

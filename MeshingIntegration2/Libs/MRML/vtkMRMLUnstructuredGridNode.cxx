@@ -77,6 +77,14 @@ vtkMRMLUnstructuredGridNode::~vtkMRMLUnstructuredGridNode()
     }
 }
 
+// set the local unstructured grid instance and also generate a polygonal 
+// representation so that this node can act like a MRMLModelNode in slicer
+void vtkMRMLUnstructuredGridNode::SetUnstructuredGrid(vtkUnstructuredGrid *grid)
+{
+    this->UnstructuredGrid = grid;
+}
+
+
 //-------------------------------
 void vtkMRMLUnstructuredGridNode::PrintSelf(ostream& os, vtkIndent indent)
 {

@@ -93,7 +93,10 @@ protected:
   vtkMRMLUnstructuredGridNode(const vtkMRMLUnstructuredGridNode&);
   void operator=(const vtkMRMLUnstructuredGridNode&);
 
-  vtkSetObjectMacro(UnstructuredGrid, vtkUnstructuredGrid);
+  // set the ugrid for this node and automatically generate a polygonal representation
+  // so that this node can respond to a GetPolyData method call as though it was a 
+  // regular polygonal model. 
+  virtual void SetUnstructuredGrid(vtkUnstructuredGrid *grid);
 
 
   // Data
