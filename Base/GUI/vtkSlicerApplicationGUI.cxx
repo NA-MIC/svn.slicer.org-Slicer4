@@ -1524,7 +1524,7 @@ void vtkSlicerApplicationGUI::PostToVisualBlog ()
   if ( this->GetApplication() != NULL )
     {
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    app->OpenLink ("http://www.na-mic.org/Wiki/index.php/Slicer3:VisualBlog" );
+    app->OpenLink ("http://www.slicer.org/slicerWiki/index.php/Slicer3:VisualBlog" );
     }
 }
 
