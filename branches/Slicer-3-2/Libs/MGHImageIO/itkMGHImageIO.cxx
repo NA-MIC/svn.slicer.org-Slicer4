@@ -275,17 +275,18 @@ namespace itk
   // x_s y_s z_s
   for(unsigned int uj=0; uj<3; ++uj)
     {
-      for(unsigned int ui=0; ui<3; ++ui)
-        {
-    TReadZ(fp, fBuffer);
-    matrix[ui][uj] = fBuffer;
-//    std::cout << "itkMGHImageIO ReadVolumeHeader: matrix[" << ui << "][" << uj << "] = " << matrix[ui][uj] << "\n";
-        }
+    for(unsigned int ui=0; ui<3; ++ui)
+      {
+      TReadZ(fp, fBuffer);
+      matrix[ui][uj] = fBuffer;
+//      std::cout << "itkMGHImageIO ReadVolumeHeader: matrix[" << ui << "][" << uj << "] = " << matrix[ui][uj] << "\n";
+      }
     }
+
   for(unsigned int ui=0; ui<3; ++ui)
-  {
+    {
     TReadZ(fp, c[ui]);
-  }
+    }
 
   std::string orientation = GetOrientation( matrix );
  
@@ -578,33 +579,51 @@ namespace itk
     
     // spacing
     for(unsigned int ui=0; ui<3; ++ui)
+      {
       TWrite( ofs, (float)m_Spacing[ui]);
-         
+      }
+
     // get directions matrix
     std::vector<std::vector<double> > vvRas;
-    for(unsigned int ui=0; ui<3; ++ui) vvRas.push_back( GetDirection(ui) );
+    for(unsigned int ui=0; ui<3; ++ui)
+      {
+      vvRas.push_back( GetDirection(ui) );
+      }
     // transpose data before writing it
     std::vector<float> vBufRas;
     // transpose the matrix
-    for(unsigned int ui(0), count(0);
-  ui < 3; ++ui)
+    for(unsigned int ui(0), count(0); ui < 3; ++ui)
+      {
       for(unsigned int uj(0); uj<3; ++uj)
-  vBufRas.push_back( (float)vvRas[uj][ui] );
+        {
+        if (uj == 0 || uj == 1)
+          {
+          // convert the coordinates from LPS to RAS
+          vBufRas.push_back (-1.0 * (float)vvRas[uj][ui] );
+          }
+        else
+          {
+          vBufRas.push_back( (float)vvRas[uj][ui] );
+          }
+        }
+      }
     
-    for(std::vector<float>::const_iterator cit = vBufRas.begin();
-  cit != vBufRas.end(); ++cit )
+    for(std::vector<float>::const_iterator cit = vBufRas.begin(); cit != vBufRas.end(); ++cit )
+      {
       TWrite( ofs, *cit);
+      }
     
     // write c_r, c_a, c_s
     // defined as origin + DC x resolution x ( dim0/2 , dim1/2, dim2/2 )
     float crasBuf;
     for(unsigned int ui=0; ui<3; ++ui)
       {
-  crasBuf = m_Origin[ui];
-  for(unsigned int uj=0; uj<3; ++uj)
-    crasBuf += vvRas[ui][uj]*m_Spacing[uj]*(float)m_Dimensions[uj]/2.0f;
-
-  TWrite( ofs, crasBuf );
+      crasBuf = m_Origin[ui];
+      for(unsigned int uj=0; uj<3; ++uj)
+        {
+        crasBuf += vvRas[ui][uj]*m_Spacing[uj]*(float)m_Dimensions[uj]/2.0f;
+        }
+      TWrite( ofs, crasBuf );
       } // next ui
     
     // fill the rest of the buffer with zeros
@@ -626,7 +645,9 @@ namespace itk
 
     // dimensions
     for(unsigned int ui=0; ui<3; ++ui)
+      {
       TWriteZ( file_p, (int)m_Dimensions[ui]);
+      }
     
     // nframes
     TWriteZ( file_p, (int)m_NumberOfComponents);
@@ -653,8 +674,10 @@ namespace itk
 
     // write the spacing
     for(unsigned int ui=0; ui<3; ++ui)
+      {
       TWriteZ( file_p, (float)m_Spacing[ui]);
-
+      }
+    
     //===================================================================
     // get directions matrix
     std::vector<std::vector<double> > vvRas;
@@ -662,27 +685,43 @@ namespace itk
     // transpose data before writing it
     std::vector<float> vBufRas;
     // transpose the matrix
-    for(unsigned int ui(0), count(0);
-  ui < 3; ++ui)
+    for(unsigned int ui(0), count(0); ui < 3; ++ui)
+      {
       for(unsigned int uj(0); uj<3; ++uj)
-  vBufRas.push_back( (float)vvRas[uj][ui] );
+        {
+        if (uj == 0 || uj == 1)
+          {
+          // convert the coordinates from LPS to RAS
+          vBufRas.push_back (-1.0 * (float)vvRas[uj][ui] );
+          //std::cout << "Flipping vBufRas at " << ui << " and " << uj << std::endl;
+          }
+        else
+          {
+          vBufRas.push_back( (float)vvRas[uj][ui] );
+          }
+        }
+      }
+    
     //===================================================================
 
     for(std::vector<float>::const_iterator cit = vBufRas.begin();
-  cit != vBufRas.end(); ++cit )
+        cit != vBufRas.end(); ++cit )
+      {
       TWriteZ( file_p, *cit );
+      }
 
     // write c_r, c_a, c_s
     float crasBuf;
     for(unsigned int ui=0; ui<3; ++ui)
       {
-  crasBuf = m_Origin[ui];
-  for(unsigned int uj=0; uj<3; ++uj)
-    crasBuf += vvRas[ui][uj]*m_Spacing[uj]*(float)m_Dimensions[uj]/2.0f;
-  
-  TWriteZ( file_p, crasBuf );
+      crasBuf = m_Origin[ui];
+      for(unsigned int uj=0; uj<3; ++uj)
+        {
+        crasBuf += vvRas[ui][uj]*m_Spacing[uj]*(float)m_Dimensions[uj]/2.0f;
+        }
+      TWriteZ( file_p, crasBuf );
       }
-    
+        
     // fill the rest of the buffer with zeros
     char* buffer = new char[ FS_UNUSED_HEADER_SIZE *sizeof(char) ];
     memset(buffer, 0, FS_UNUSED_HEADER_SIZE *sizeof(char) );
