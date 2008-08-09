@@ -60,16 +60,16 @@ proc XnatXcatImport { xnatxcatFile } {
             set root [ $parser GetRootElement ]
             XnatXcatImportGetElement $root
 
-        #--- if the catalog includes a brain.mgz, example_func.nii and
-        #--- anat2exf.dat, we assume this is a FreeSurfer/FIPS catalog
-        #--- and convert FreeSurfer tkRegister2's registration matrix
-        #--- to a Slicer RAS2RAS registration matrix. 
-        XnatXcatImportComputeFIPS2SlicerTransformCorrection
+            #--- if the catalog includes a brain.mgz, example_func.nii and
+            #--- anat2exf.dat, we assume this is a FreeSurfer/FIPS catalog
+            #--- and convert FreeSurfer tkRegister2's registration matrix
+            #--- to a Slicer RAS2RAS registration matrix. 
+            XnatXcatImportComputeFIPS2SlicerTransformCorrection
 
-        #--- if the Correction transform node is created,
-        #--- place all statistics volumes inside that.
-        XnatXcatImportApplyFIPS2SlicerTransformCorrection
-        
+            #--- if the Correction transform node is created,
+            #--- place all statistics volumes inside that.
+            XnatXcatImportApplyFIPS2SlicerTransformCorrection
+            
             #--- reset feedback things
             $::XnatXcat_ProgressGauge SetValue 0
             $::XnatXcat_mainWindow SetStatusText ""
@@ -77,9 +77,9 @@ proc XnatXcatImport { xnatxcatFile } {
             #--- update main viewer and slice viewers
             $::slicer3::MRMLScene Modified
             [$::slicer3::ApplicationGUI GetViewerWidget ] RequestRender
-            [ [$::slicer3::ApplicationGUI GetMainSliceGUI0 ] GetSliceViewer ]  RequestRender
-            [ [$::slicer3::ApplicationGUI GetMainSliceGUI1 ] GetSliceViewer ]  RequestRender
-            [ [$::slicer3::ApplicationGUI GetMainSliceGUI2 ] GetSliceViewer ]  RequestRender
+            [ [$::slicer3::ApplicationGUI GetMainSliceGUI "Red"] GetSliceViewer ]  RequestRender
+            [ [$::slicer3::ApplicationGUI GetMainSliceGUI "Yellow"] GetSliceViewer ]  RequestRender
+            [ [$::slicer3::ApplicationGUI GetMainSliceGUI "Green"] GetSliceViewer ]  RequestRender
         
             #--- clean up.
             $parser Delete
@@ -415,8 +415,8 @@ proc XnatXcatImportEntryVolume {node} {
         return
     }
 #    puts "Calling volumes logic add archetype scalar volume with uri = $n(URI) and name = $n(name)"
-#    set volumeNode [$logic AddArchetypeVolume $n(URI) $n(name) $loadingOptions]
-    set volumeNode [$logic AddArchetypeScalarVolume $n(URI) $n(name) $loadingOptions]
+    set volumeNode [$logic AddArchetypeVolume $n(URI) $n(name) $loadingOptions]
+#    set volumeNode [$logic AddArchetypeScalarVolume $n(URI) $n(name) $loadingOptions]
     if { $volumeNode == "" } {
         puts "XnatXcatImportEntryVolume: Unable to add Volume Node for $n(URI)."
         return
