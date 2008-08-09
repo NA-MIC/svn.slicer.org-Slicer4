@@ -375,12 +375,16 @@ void vtkSlicerApplicationGUI::ProcessPublishToXnatCommand()
   this->Script ("XnatPublish_PublishScene");
 }
 
- 
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
 {
   this->LoadSceneDialog->RetrieveLastPathFromRegistry(
                                                       "OpenPath");
+
+  vtkKWProgressDialog *progressDialog = vtkKWProgressDialog::New();
+  progressDialog->SetParent( this->MainSlicerWindow );
+  progressDialog->SetMasterWindow( this->MainSlicerWindow );
+  progressDialog->Create();
 
   this->LoadSceneDialog->Invoke();
   // If a file has been selected for loading...
@@ -396,12 +400,12 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
       }
     else if (this->GetMRMLScene() && fl.find(".xml") != std::string::npos ) 
       {
-      this->Script ( "ImportSlicer2Scene %s", fileName);
+      this->Script ( "ImportSlicer2Scene \"%s\"", fileName);
       this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
       }
     else if ( this->GetMRMLScene() && fl.find(".xcat") != std::string::npos )
       {
-      this->Script ( "XCatalogImport %s", fileName);
+      this->Script ( "XcatalogImport \"%s\"", fileName);
       this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
       }
 
@@ -417,6 +421,9 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
       dialog->Delete();
       }
     }
+
+  progressDialog->SetParent(NULL);
+  progressDialog->Delete();
   return;
 }
 
