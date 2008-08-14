@@ -586,7 +586,7 @@ void vtkSlicerApplicationGUI::UpdateLayout ( )
             this->GetCurrentLayout() != vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView)
     {
     mode = this->ApplicationToolbar->StopViewRockOrSpin();
-    this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutOneUpSliceView, "Red");
+    this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView, "Red");
     this->SetCurrentLayout( vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView);    
 //        this->ResumeViewRockOrSpin ( mode );
     }
@@ -594,7 +594,7 @@ void vtkSlicerApplicationGUI::UpdateLayout ( )
             this->GetCurrentLayout() != vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView)
     {
     mode = this->ApplicationToolbar->StopViewRockOrSpin();
-    this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutOneUpSliceView, "Yellow");
+    this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView, "Yellow");
     this->SetCurrentLayout( vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView);
 //        this->ResumeViewRockOrSpin ( mode );
     }
@@ -602,7 +602,7 @@ void vtkSlicerApplicationGUI::UpdateLayout ( )
             this->GetCurrentLayout() != vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView)
     {
     mode = this->ApplicationToolbar->StopViewRockOrSpin();
-    this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutOneUpSliceView, "Green");
+    this->RepackMainViewer ( vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView, "Green");
     this->SetCurrentLayout( vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView);    
 //        this->ResumeViewRockOrSpin ( mode );
     }
@@ -1086,8 +1086,14 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
 
 #ifndef SLICEVIEWER_DEBUG
   // restore view layout from application registry...
-  this->BuildMainViewer ( app->GetApplicationLayoutType());
-  this->ApplicationToolbar->SetLayoutMenubuttonValueToLayout ( app->GetApplicationLayoutType() );
+  int ltype = app->GetApplicationLayoutType ();
+  if ( ltype == NULL )
+    {
+    // default to conventional view.
+    ltype = 0;
+    }
+  this->BuildMainViewer ( ltype );
+  this->ApplicationToolbar->SetLayoutMenubuttonValueToLayout ( ltype );
 #endif
 
   // after SliceGUIs are created, the ViewControlGUI
@@ -1690,7 +1696,8 @@ void vtkSlicerApplicationGUI::DisplayMainSlicerWindow ( )
 void vtkSlicerApplicationGUI::BuildMainViewer ( int arrangementType)
 {
 
- if ( this->GetApplication() != NULL )
+
+  if ( this->GetApplication() != NULL )
     {
     vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
     vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
@@ -1702,10 +1709,31 @@ void vtkSlicerApplicationGUI::BuildMainViewer ( int arrangementType)
     this->GridFrame2->Create ( );            
     this->CreateMainSliceViewers ( arrangementType );
     this->CreateMain3DViewer (arrangementType );
-    this->PackMainViewer ( arrangementType , NULL );
-    }  
+   switch ( arrangementType )
+      {
+      case vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView:
+        this->PackMainViewer ( arrangementType , "Red" );
+        break;
+      case vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView:
+        this->PackMainViewer ( arrangementType , "Green" );
+        break;
+      case vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView:
+        this->PackMainViewer ( arrangementType , "Yellow" );
+        break;
+      case vtkMRMLLayoutNode::SlicerLayoutOneUpSliceView:
+        this->PackMainViewer ( arrangementType , "Red" );
+        break;
+      case vtkMRMLLayoutNode::SlicerLayoutTabbedSliceView:
+        this->PackMainViewer ( arrangementType , "Red" );
+        break;
+      default:
+        this->PackMainViewer ( arrangementType , NULL );
+        break;
+      }
+    }
 }
 
+//---------------------------------------------------------------------------
 vtkSlicerSliceGUI* vtkSlicerApplicationGUI::GetMainSliceGUI(char *layoutName)
 {
   if (this->SlicesGUI)
@@ -1864,19 +1892,11 @@ void vtkSlicerApplicationGUI::PackMainViewer ( int arrangmentType, const char *w
         this->SetCurrentLayout (vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView );
         break;
       case vtkMRMLLayoutNode::SlicerLayoutOneUpSliceView:
-        this->PackOneUpSliceView ( whichSlice );
-        if (!strcmp(whichSlice, "Red"))
-          {
-          this->SetCurrentLayout (vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView );
-          }
-        else if (!strcmp (whichSlice, "Yellow"))
-          {
-          this->SetCurrentLayout (vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView );
-          }
-        else if ( !strcmp (whichSlice, "Green"))
-          {
-          this->SetCurrentLayout (vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView );
-          }
+          if ( whichSlice == NULL )
+            {
+            this->PackOneUpSliceView ( "Red");
+            this->SetCurrentLayout (vtkMRMLLayoutNode::SlicerLayoutOneUpSliceView );
+            }
         break;
       case vtkMRMLLayoutNode::SlicerLayoutTabbed3DView:
         this->PackTabbed3DView ( );
