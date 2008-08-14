@@ -107,6 +107,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerSlicesControlGUI : public vtkSlicerCom
     virtual void PopUpFieldOfViewEntries ( );
     virtual void HideFieldOfViewEntries ( );
     virtual void FitFOVToBackground( double fov, int viewer );
+    virtual double GetSliceNodeFOVFromMRML (vtkMRMLSliceNode *node );
 
     virtual void BuildAnnotationMenu ( );
     virtual void BuildCrossHairMenu ( );
