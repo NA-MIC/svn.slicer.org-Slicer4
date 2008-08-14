@@ -604,7 +604,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( layout->GetViewArrangement() != vtkMRMLLayoutNode::SlicerLayoutConventionalView )
             {
-            p->GetMRMLScene()->SaveStateForUndo ( layout );
+//            p->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutConventionalView);
             }
           }
@@ -612,7 +612,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( layout->GetViewArrangement() != vtkMRMLLayoutNode::SlicerLayoutOneUp3DView )
             {
-            p->GetMRMLScene()->SaveStateForUndo ( layout );
+//            p->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutOneUp3DView);
             }
           }
@@ -620,7 +620,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( layout->GetViewArrangement() != vtkMRMLLayoutNode::SlicerLayoutFourUpView )
             {
-            p->GetMRMLScene()->SaveStateForUndo ( layout );
+//            p->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutFourUpView);
             }
           }
@@ -628,7 +628,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( layout->GetViewArrangement() != vtkMRMLLayoutNode::SlicerLayoutTabbed3DView )
             {
-            p->GetMRMLScene()->SaveStateForUndo ( layout );
+//            p->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutTabbed3DView);
             }
           }
@@ -636,7 +636,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( layout->GetViewArrangement() != vtkMRMLLayoutNode::SlicerLayoutTabbedSliceView )
             {
-            p->GetMRMLScene()->SaveStateForUndo ( layout );
+//            p->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutTabbedSliceView );
             }
           }
@@ -649,7 +649,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( layout->GetViewArrangement() != vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView )
             {
-            p->GetMRMLScene()->SaveStateForUndo ( layout );
+//            p->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView);
             }
           }
@@ -657,7 +657,7 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( layout->GetViewArrangement() != vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView )
             {
-            p->GetMRMLScene()->SaveStateForUndo ( layout );
+//            p->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView);
             }
           } 
@@ -665,14 +665,8 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
           {
           if ( layout->GetViewArrangement() != vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView )
             {
-            p->GetMRMLScene()->SaveStateForUndo ( layout );
+//            p->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView);
-            }
-          else if ( !strcmp ( whichLayout, "Toggle GUI panel L/R"))
-            {
-            int v = p->GetMainSlicerWindow()->GetViewPanelPosition();
-            p->GetMainSlicerWindow()->SetViewPanelPosition ( !v );
-            this->SetLayoutMenubuttonValueToCurrentLayout();
             }
           }
         else if ( !strcmp ( whichLayout, "Toggle GUI panel visibility"))
