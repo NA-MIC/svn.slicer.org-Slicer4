@@ -2024,9 +2024,9 @@ void vtkSlicerApplicationGUI::UnpackMainSliceViewers (  )
         
         //--- check the previous layout (one we are dismantling.)
         //--- take the layout apart the same way we put it together.
-        if ( layout->GetOldViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView ||
-             layout->GetOldViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutCompareView ||
-             layout->GetOldViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutConventionalView )
+        if ( this->CurrentLayout == vtkMRMLLayoutNode::SlicerLayoutFourUpView ||
+             this->CurrentLayout == vtkMRMLLayoutNode::SlicerLayoutCompareView  ||
+             this->CurrentLayout == vtkMRMLLayoutNode::SlicerLayoutConventionalView )
           {
           g->UngridGUI();
           }
@@ -2060,7 +2060,7 @@ void vtkSlicerApplicationGUI::UnpackMain3DViewer (  )
     // 3D Viewer
     //
     this->MainSlicerWindow->GetViewNotebook()->RemovePagesMatchingTag ( this->ViewerPageTag );
-    if ( layout->GetOldViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView )
+    if ( this->CurrentLayout == vtkMRMLLayoutNode::SlicerLayoutFourUpView )
       {
       this->ViewerWidget->UngridWidget ( );
       }
@@ -2091,7 +2091,6 @@ void vtkSlicerApplicationGUI::PackConventionalView ( )
       return;
       }
 
-    double x, y, z;
     vtkSlicerSliceGUI *g = NULL;
     
     this->MainSlicerWindow->SetSecondaryPanelVisibility ( 1 );
@@ -2112,7 +2111,7 @@ void vtkSlicerApplicationGUI::PackConventionalView ( )
     g = this->SlicesGUI->GetSliceGUI("Green");
     g->GridSpanGUI ( this->GetGridFrame2(), 0, 2, this->NCompareViewRows, 1);        
 
-    this->GetSlicesControlGUI()->RequestFOVEntriesUpdate();
+//    this->GetSlicesControlGUI()->RequestFOVEntriesUpdate();
     this->MainSlicerWindow->GetViewNotebook()->SetAlwaysShowTabs ( 0 );
     layout->SetViewArrangement ( vtkMRMLLayoutNode::SlicerLayoutConventionalView );
     if ( geom->GetDefaultSliceGUIFrameHeight() > 0 )
@@ -2183,30 +2182,42 @@ void vtkSlicerApplicationGUI::PackOneUpSliceView ( const char * whichSlice )
     
     if ( !strcmp (whichSlice, "Red" ) )
       {
+/*
       g = this->SlicesGUI->GetSliceGUI("Red");
-      g->PackGUI( this->MainSlicerWindow->GetViewFrame());
+      g->PackGUI(NULL);
       g = this->SlicesGUI->GetSliceGUI("Yellow");
       g->PackGUI(NULL);
       g = this->SlicesGUI->GetSliceGUI("Green");
       g->PackGUI(NULL);
+*/
+      g = this->SlicesGUI->GetSliceGUI("Red");
+      g->PackGUI( this->MainSlicerWindow->GetViewFrame());
       layout->SetViewArrangement ( vtkMRMLLayoutNode::SlicerLayoutOneUpRedSliceView );
       }
     else if ( !strcmp ( whichSlice, "Yellow" ) )
       {
+/*
       g = this->SlicesGUI->GetSliceGUI("Red");
       g->PackGUI(NULL);
       g = this->SlicesGUI->GetSliceGUI("Yellow");
-      g->PackGUI( this->MainSlicerWindow->GetViewFrame());
+      g->PackGUI(NULL);
       g = this->SlicesGUI->GetSliceGUI("Green");
       g->PackGUI(NULL);
+*/
+      g = this->SlicesGUI->GetSliceGUI("Yellow");
+      g->PackGUI( this->MainSlicerWindow->GetViewFrame());
       layout->SetViewArrangement ( vtkMRMLLayoutNode::SlicerLayoutOneUpYellowSliceView );
       }
     else if ( !strcmp ( whichSlice, "Green" ) )
       {
+/*
       g = this->SlicesGUI->GetSliceGUI("Red");
       g->PackGUI(NULL);
       g = this->SlicesGUI->GetSliceGUI("Yellow");
       g->PackGUI(NULL);
+      g = this->SlicesGUI->GetSliceGUI("Green");
+      g->PackGUI(NULL);
+*/
       g = this->SlicesGUI->GetSliceGUI("Green");
       g->PackGUI( this->MainSlicerWindow->GetViewFrame());
       layout->SetViewArrangement ( vtkMRMLLayoutNode::SlicerLayoutOneUpGreenSliceView );
@@ -2386,7 +2397,6 @@ void vtkSlicerApplicationGUI::PackCompareView()
     g->GetSliceNode()->UpdateMatrices();
     
     //--TODO: when Compare view gets added into the vtkMRMLLayoutNode,
-    //--- modify this to check layout->GetOldViewArrangement instead of current arrangement.
     if (layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutFourUpView ||
         layout->GetViewArrangement() == vtkMRMLLayoutNode::SlicerLayoutConventionalView)
       {
