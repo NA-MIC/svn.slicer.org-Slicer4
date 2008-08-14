@@ -45,7 +45,6 @@ vtkMRMLLayoutNode::vtkMRMLLayoutNode()
   this->BottomPanelVisibility = 1;
   this->GUIPanelLR = 0;
   this->ViewArrangement = -1;
-  this->OldViewArrangement = -1;
 
   return;
 
@@ -90,7 +89,6 @@ void vtkMRMLLayoutNode::ReadXMLAttributes(const char** atts)
       {
       std::stringstream ss;
       ss << attValue;
-      ss >> this->OldViewArrangement;
       ss >> this->ViewArrangement;
       }
     else if (!strcmp (attName, "guiPanelVisibility"))
@@ -117,24 +115,6 @@ void vtkMRMLLayoutNode::ReadXMLAttributes(const char** atts)
 
 
 //----------------------------------------------------------------------------
-void vtkMRMLLayoutNode::SetViewArrangement ( int arrNew )
-{
-  int curr = this->ViewArrangement;
-
-  if ( curr < 0 )
-    {
-    this->OldViewArrangement = arrNew;
-    }
-  else
-    {
-    this->OldViewArrangement = curr;
-    }
-  this->ViewArrangement = arrNew;
-  this->Modified();
-}
-
-
-//----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, LabelText, ID
 void vtkMRMLLayoutNode::Copy(vtkMRMLNode *anode)
@@ -142,7 +122,6 @@ void vtkMRMLLayoutNode::Copy(vtkMRMLNode *anode)
 //  vtkObject::Copy(anode);
   vtkMRMLLayoutNode *node = (vtkMRMLLayoutNode *) anode;
   this->SetViewArrangement (node->ViewArrangement);
-  this->SetOldViewArrangement (node->OldViewArrangement);
   this->SetGUIPanelVisibility(node->GUIPanelVisibility) ;
   this->SetBottomPanelVisibility (node->BottomPanelVisibility);
   this->SetGUIPanelLR ( node->GUIPanelLR);
@@ -156,7 +135,6 @@ void vtkMRMLLayoutNode::PrintSelf(ostream& os, vtkIndent indent)
   
   // Layout:
   os << indent << "ViewArrangement:" << this->ViewArrangement  << "\n";
-  os << indent << "OldViewArrangement:" << this->OldViewArrangement  << "\n";
   os << indent << "GUIPanelVisibility:" << this->GUIPanelVisibility  << "\n";
   os << indent << "GUIPanelLR:" << this->GUIPanelLR  << "\n";
   os << indent << "BottomPanelVisibility:" << this->BottomPanelVisibility  << "\n";
