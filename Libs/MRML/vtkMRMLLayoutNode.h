@@ -33,16 +33,12 @@ public:
   
   // Get/Set for Current layout
   vtkGetMacro (ViewArrangement, int );
-  virtual void SetViewArrangement ( int );
+  vtkSetMacro (ViewArrangement, int );
 
-  // Get/Set for Previous layout
-  vtkGetMacro (OldViewArrangement, int );
-  vtkSetMacro (OldViewArrangement, int );
-  
   vtkGetMacro (GUIPanelVisibility, int);
   vtkSetMacro (GUIPanelVisibility, int);
   
-  vtkGetMacro ( BottomPanelVisibility, int );
+  vtkGetMacro (BottomPanelVisibility, int );
   vtkSetMacro (BottomPanelVisibility, int );
 
   // 0 is Leftside, 1 is right side
@@ -85,7 +81,6 @@ protected:
   int BottomPanelVisibility;
   int GUIPanelLR;
   int ViewArrangement;
-  int OldViewArrangement;
 };
 
 #endif
