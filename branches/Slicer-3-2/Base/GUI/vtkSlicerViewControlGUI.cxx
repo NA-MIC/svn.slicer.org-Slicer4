@@ -518,7 +518,6 @@ void vtkSlicerViewControlGUI::RemoveGUIObservers ( )
     this->ScreenGrabButton->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->VisibilityButton->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SelectSceneSnapshotMenuButton->GetMenu()->RemoveObservers ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->SceneSnapshotButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SelectSceneSnapshotMenuButton->GetMenu()->RemoveObservers ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SceneSnapshotButton->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
@@ -546,7 +545,6 @@ void vtkSlicerViewControlGUI::AddGUIObservers ( )
     this->SelectSceneSnapshotMenuButton->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SceneSnapshotButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->SelectSceneSnapshotMenuButton->GetMenu()->AddObserver ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-    this->SceneSnapshotButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 
     this->PitchButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->RollButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -737,14 +735,18 @@ void vtkSlicerViewControlGUI::RestoreSceneSnapshot( const char *nom )
 {
  
   vtkCollection *col = this->MRMLScene->GetNodesByName ( nom );
-  col->InitTraversal();
-
-  //--- get the first one. Name checking should make it unique...
-  vtkMRMLSceneSnapshotNode *node =  vtkMRMLSceneSnapshotNode::SafeDownCast (col->GetNextItemAsObject() );
-  if (node)
+  if ( col != NULL )
     {
-    this->MRMLScene->SaveStateForUndo();
-    node->RestoreScene();
+    col->InitTraversal();
+
+    //--- get the first one. Name checking should make it unique...
+    vtkMRMLSceneSnapshotNode *node =  vtkMRMLSceneSnapshotNode::SafeDownCast (col->GetNextItemAsObject() );
+    if (node)
+      {
+      this->MRMLScene->SaveStateForUndo();
+      node->RestoreScene();
+      }
+    col->Delete();
     }
 }
 
@@ -753,15 +755,19 @@ void vtkSlicerViewControlGUI::RestoreSceneSnapshot( const char *nom )
 void vtkSlicerViewControlGUI::DeleteSceneSnapshot(const char *nom )
 {
   vtkCollection *col = this->MRMLScene->GetNodesByName ( nom );
-  col->InitTraversal();
-
-  //--- get the first one. Name checking should make it unique...
-  vtkMRMLSceneSnapshotNode *node =  vtkMRMLSceneSnapshotNode::SafeDownCast (col->GetNextItemAsObject() );
-  if ( node)
+  if ( col != NULL )
     {
-    this->MRMLScene->SaveStateForUndo();
-    this->MRMLScene->RemoveNode(node);
-    this->UpdateSceneSnapshotsFromMRML();
+    col->InitTraversal();
+
+    //--- get the first one. Name checking should make it unique...
+    vtkMRMLSceneSnapshotNode *node =  vtkMRMLSceneSnapshotNode::SafeDownCast (col->GetNextItemAsObject() );
+    if ( node)
+      {
+      this->MRMLScene->SaveStateForUndo();
+      this->MRMLScene->RemoveNode(node);
+      this->UpdateSceneSnapshotsFromMRML();
+      }
+    col->Delete();
     }
 }
 
@@ -3443,7 +3449,7 @@ void vtkSlicerViewControlGUI::BuildGUI ( vtkKWFrame *appF )
       this->ScreenGrabButton->SetBorderWidth ( 0 );
       this->ScreenGrabButton->SetImageToIcon ( this->SlicerViewControlIcons->GetScreenGrabButtonIcon() );
       this->ScreenGrabButton->IndicatorVisibilityOff ( );
-      this->ScreenGrabButton->SetBalloonHelpString ( "Capture a screenshot of the 3D view or 3D and Slice views.");
+      this->ScreenGrabButton->SetBalloonHelpString ( "Capture a screenshot of the 3D view or 3D and Slice views (Not yet implemented).");
       //--- MenuButton to select among saved scene snapshots
       this->SelectSceneSnapshotMenuButton->SetParent ( frameM);
       this->SelectSceneSnapshotMenuButton->Create ( );
