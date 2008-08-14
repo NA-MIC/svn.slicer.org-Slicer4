@@ -509,41 +509,57 @@ void vtkSlicerSlicesControlGUI::ProcessGUIEvents ( vtkObject *caller,
         }
 
 #ifndef FOV_ENTRIES_DEBUG
-      double val;
-      vtkMRMLSliceNode *snode;
-      // RedFOVEntry
-      if ( e == this->RedFOVEntry->GetWidget() && event == vtkKWEntry::EntryValueChangedEvent )
-        {
-        val = this->RedFOVEntry->GetWidget()->GetValueAsDouble();
-        snode  = p->GetMainSliceGUI("Red")->GetSliceNode();
-        p->GetMRMLScene()->SaveStateForUndo( snode );
-        if ( val > 0 && snode && p )
+        double val, fov;
+        // RedFOVEntry
+        if ( e == this->RedFOVEntry->GetWidget() && event == vtkKWEntry::EntryValueChangedEvent )
           {
-          this->FitFOVToBackground( val, 0 );
+          this->RedSliceNode  = p->GetMainSliceGUI("Red")->GetSliceNode();
+          if (this->RedSliceNode != NULL )
+            {
+            val = this->RedFOVEntry->GetWidget()->GetValueAsDouble();
+            fov = this->GetSliceNodeFOVFromMRML ( this->RedSliceNode );
+            //--- if different from mrml, then update mrml.
+            if ( val > 0.0 && val != fov )
+              {
+              p->GetMRMLScene()->SaveStateForUndo( this->RedSliceNode );
+              this->FitFOVToBackground( val, 0 );
+              }
+            }
           }
-        }
-      // YellowFOVEntry
-      if ( e == this->YellowFOVEntry->GetWidget() && event == vtkKWEntry::EntryValueChangedEvent )
-        {
-        val = this->YellowFOVEntry->GetWidget()->GetValueAsDouble();
-        snode  = p->GetMainSliceGUI("Yellow")->GetSliceNode();
-        p->GetMRMLScene()->SaveStateForUndo( snode );
-        if ( val > 0 && snode && p )
-          {   
-          this->FitFOVToBackground( val, 1 );
-          }
-        }
-      // GreenFOVEntry
-      if ( e == this->GreenFOVEntry->GetWidget() && event == vtkKWEntry::EntryValueChangedEvent )
-        {
-        val = this->GreenFOVEntry->GetWidget()->GetValueAsDouble();
-        snode  = p->GetMainSliceGUI("Green")->GetSliceNode();
-        p->GetMRMLScene()->SaveStateForUndo( snode );
-        if ( val > 0 && snode && p )
+        // YellowFOVEntry
+        if ( e == this->YellowFOVEntry->GetWidget() && event == vtkKWEntry::EntryValueChangedEvent )
           {
-          this->FitFOVToBackground( val, 2 );
+          //--- if new fov is same as old one, don't bother updating MRML
+          this->YellowSliceNode  = p->GetMainSliceGUI("Yellow")->GetSliceNode();
+          if ( this->YellowSliceNode != NULL )
+            {
+            fov = this->GetSliceNodeFOVFromMRML ( this->YellowSliceNode );
+            val = this->YellowFOVEntry->GetWidget()->GetValueAsDouble();
+            //--- if different from mrml, then update mrml.
+            if ( val > 0.0 && val != fov )
+              {
+              p->GetMRMLScene()->SaveStateForUndo( this->YellowSliceNode );
+              this->FitFOVToBackground( val, 1 );
+              }
+            }
           }
-        }
+        // GreenFOVEntry
+        if ( e == this->GreenFOVEntry->GetWidget() && event == vtkKWEntry::EntryValueChangedEvent )
+          {
+          //--- if new fov is same as old one, don't bother updating MRML
+          this->GreenSliceNode  = p->GetMainSliceGUI("Green")->GetSliceNode();
+          if ( this->GreenSliceNode != NULL )
+            {
+            val = this->GreenFOVEntry->GetWidget()->GetValueAsDouble();
+            fov = this->GetSliceNodeFOVFromMRML ( this->GreenSliceNode );
+            //--- if different from mrml, then update mrml.
+            if ( val > 0.0 && val != fov )
+              {
+              p->GetMRMLScene()->SaveStateForUndo( this->GreenSliceNode );
+              this->FitFOVToBackground( val, 2 );
+              }
+            }
+          }
 #endif
       
       // Process the label Opacity scale 
@@ -1300,6 +1316,27 @@ void vtkSlicerSlicesControlGUI::ProcessMRMLEvents ( vtkObject *caller,
 
 
 
+//---------------------------------------------------------------------------
+double vtkSlicerSlicesControlGUI::GetSliceNodeFOVFromMRML (vtkMRMLSliceNode *node )
+{
+  double fovX, fovY;
+  if ( node == NULL )
+    {
+    return 0.0;
+    }
+
+  fovX = node->GetFieldOfView()[0];
+  fovY = node->GetFieldOfView()[1];
+  if ( fovX < fovY )
+    {
+    return fovX;
+    }
+  else
+    {
+    return fovY;
+    }
+}
+
 
 //---------------------------------------------------------------------------
 void vtkSlicerSlicesControlGUI::RequestFOVEntriesUpdate ( )
@@ -1517,6 +1554,7 @@ void vtkSlicerSlicesControlGUI::PopUpFieldOfViewEntries ( )
   this->FieldOfViewTopLevel->SetPosition(x, y);
   app->ProcessPendingEvents();
   this->FieldOfViewTopLevel->DeIconify();
+  this->FOVEntriesUpdate();
   this->FieldOfViewTopLevel->Raise();
 #endif
 }
