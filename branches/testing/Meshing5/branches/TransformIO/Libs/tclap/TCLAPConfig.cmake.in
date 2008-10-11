@@ -1,2 +1,0 @@
-# The TCLAP source tree.
-SET(TCLAP_SOURCE_DIR "@TCLAP_SOURCE_DIR@")
