@@ -1,0 +1,48 @@
+project(GenerateCLP)
+
+cmake_minimum_required(VERSION 2.4)
+
+if(COMMAND cmake_policy)
+  cmake_policy(SET CMP0003 NEW)
+endif(COMMAND cmake_policy)
+
+find_package(ModuleDescriptionParser REQUIRED)
+if(ModuleDescriptionParser_FOUND)
+  include(${ModuleDescriptionParser_USE_FILE})
+endif(ModuleDescriptionParser_FOUND)
+
+find_package(TCLAP REQUIRED)
+if(TCLAP_FOUND)
+  include(${TCLAP_USE_FILE})
+endif(TCLAP_FOUND)
+
+find_package(ITK REQUIRED)
+if(ITK_FOUND)
+  include(${ITK_USE_FILE})
+endif(ITK_FOUND)
+
+set(GENERATECLP_SOURCE GenerateCLP.cxx)
+add_executable(GenerateCLP ${GENERATECLP_SOURCE})
+get_target_property(GenerateCLP_EXE_PATH GenerateCLP LOCATION)
+
+target_link_libraries(GenerateCLP
+  ModuleDescriptionParser
+  itksys
+  ITKEXPAT)
+
+if(BUILD_TESTING)
+  subdirs(Testing)
+endif(BUILD_TESTING)
+
+
+include(GenerateGenerateCLPConfig.cmake)
+
+install(TARGETS GenerateCLP RUNTIME DESTINATION bin COMPONENT Development)
+install(FILES ${GenerateCLP_BINARY_DIR}/GenerateCLPConfig.cmake_install
+  DESTINATION lib/GenerateCLP
+  COMPONENT Development
+  RENAME GenerateCLPConfig.cmake)
+install(FILES ${GenerateCLP_BINARY_DIR}/UseGenerateCLP.cmake_install
+  DESTINATION lib/GenerateCLP
+  COMPONENT Development
+  RENAME UseGenerateCLP.cmake)

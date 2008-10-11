@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>
+  Segmentation
+  </category>
+  <title>
+  EMSegment Simple
+  </title>
+  <description>
+
+  This module is under construction.
+
+  The EMSegment Simple module provides a simplified interface to the
+  EMSegment algorithm.  It should be used to segment new images once a
+  parameter set has been established.  You must specify (1) the MRML
+  scene that contains the EMSegment parameters, (2) a file that the
+  output labelmap will be stored in, and (3) a set of target input
+  images.
+
+  The MRML scene that contains the parameters should be generated
+  using the EMSegment module.  A library of example parameter files is
+  available at the wiki page.  If you have one that might be useful to
+  others, please consider contributing it.
+
+  The result labelmap can be any file name that you want to create
+  (e.g., SegmentationResult.mhd).
+
+  You should specify as many target images as are present in the
+  EMSegment parameter set (e.g., 2 if the set uses an MR T1 and MR T2
+  image).  These images should be aligned.  
+
+  </description>
+  <version>0.1.0.$Revision: 2085 $(alpha)</version>
+  <documentation-url>http://wiki.na-mic.org/Wiki/index.php/Slicer3:EM</documentation-url>
+  <license></license>
+  <contributor>Many people and organizations have contributed to the funding, design, and development of the EMSegment algorithm and its various implementations.</contributor>
+
+  <parameters>
+    <label>Inputs and Outputs</label>
+    <description>Altorithm input and output.</description>
+
+    <file fileExtensions=".mrml">
+      <name>mrmlSceneFileName</name>
+      <longflag>mrmlSceneFileName</longflag>
+
+      <description>Active MRML scene that contains EMSegment algorithm parameters.</description>
+
+      <label>MRML Scene</label>
+    </file>    
+
+    <file fileExtensions=".mhd">
+      <name>resultVolumeFileName</name>
+      <longflag>resultVolumeFileName</longflag>
+
+      <description>The file name that the segmentation result volume will be written to.</description>
+      <label>Result Labelmap</label>
+      <channel>output</channel>
+    </file>    
+
+    <file fileExtensions=".mhd">
+      <name>targetVolumeFileName1</name>
+      <longflag>targetVolumeFileName1</longflag>
+
+      <description>File names of target volumes (to be segmented).  The number of target images must be equal to the number of target images specified in the parameter set, and these images must be spatially aligned.</description>
+
+      <label>Target Volume 1</label>      
+      <channel>input</channel>
+    </file>
+
+    <file fileExtensions=".mhd">
+      <name>targetVolumeFileName2</name>
+      <longflag>targetVolumeFileName2</longflag>
+
+      <description>File names of target volumes (to be segmented).  The number of target images must be equal to the number of target images specified in the parameter set, and these images must be spatially aligned.</description>
+
+      <label>Target Volume 2</label>      
+      <channel>input</channel>
+    </file>
+
+    <file fileExtensions=".mhd">
+      <name>targetVolumeFileName3</name>
+      <longflag>targetVolumeFileName3</longflag>
+
+      <description>File names of target volumes (to be segmented).  The number of target images must be equal to the number of target images specified in the parameter set, and these images must be spatially aligned.</description>
+
+      <label>Target Volume 3</label>      
+      <channel>input</channel>
+    </file>
+
+    <file fileExtensions=".mhd">
+      <name>targetVolumeFileName4</name>
+      <longflag>targetVolumeFileName4</longflag>
+
+      <description>File names of target volumes (to be segmented).  The number of target images must be equal to the number of target images specified in the parameter set, and these images must be spatially aligned.</description>
+
+      <label>Target Volume 4</label>      
+      <channel>input</channel>
+    </file>
+
+    <file fileExtensions=".mhd">
+      <name>targetVolumeFileName5</name>
+      <longflag>targetVolumeFileName5</longflag>
+
+      <description>File names of target volumes (to be segmented).  The number of target images must be equal to the number of target images specified in the parameter set, and these images must be spatially aligned.</description>
+
+      <label>Target Volume 5</label>      
+      <channel>input</channel>
+    </file>
+
+    <file multiple="true" fileExtensions=".mhd">
+      <name>atlasVolumeFileNames</name>
+      <longflag>atlasVolumeFileNames</longflag>
+
+      <description>File names of atlas (spatial) probability maps.  The number of atlas volumes must match the number specified in the parameter set.  The ordering must match the ordering defined in the mrml parameters file.</description>
+      <label>Atlas Volumes</label>      
+      <channel>input</channel>
+    </file>
+
+  </parameters>
+
+  <parameters advanced="true">
+    <label>Parameters</label>
+    <description>Algorithm Parameters</description>
+
+    <string>
+      <name>parametersMRMLNodeName</name>
+      <longflag>parametersMRMLNodeName</longflag>
+
+      <description>The name of the EMSegment parameters node within the active MRML scene.  Leave blank for default.</description>
+
+      <label>Parameters Node Name</label>
+    </string>    
+
+    <boolean>
+      <name>disableMultithreading</name>
+      <longflag>disableMultithreading</longflag>
+      <description>Disable multithreading.</description>
+      <label>Disable Multithreading</label>
+      <default>false</default>
+    </boolean>
+
+    <boolean>
+      <name>verbose</name>
+      <longflag>verbose</longflag>
+      <description>Enable verbose output.</description>
+      <label>Verbose Output</label>
+      <default>false</default>
+    </boolean>
+
+    <file>
+      <name>resultMRMLSceneFileName</name>
+      <longflag>resultMRMLSceneFileName</longflag>
+      <description>Write out the MRML scene after command line substitutions have been made.</description>
+      <label>Output MRML scene filename.</label>
+      <channel>output</channel>
+    </file>
+
+    <boolean>
+      <name>disableCompression</name>
+      <longflag>disableCompression</longflag>
+      <description>Don't use compression when writing result image to disk.</description>
+      <label>Disable compression.</label>
+      <default>false</default>
+    </boolean>
+
+  </parameters>
+
+</executable>
+
