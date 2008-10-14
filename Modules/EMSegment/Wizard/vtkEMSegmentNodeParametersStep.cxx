@@ -381,6 +381,7 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     list->SetColumnEditable(col_id, 0);
     col_id = list->AddColumn("Weight");
     list->SetColumnEditable(col_id, 1);
+    list->SetRightClickCommand(this, "RightClickOnInputChannelWeightsListCallback");
     }
 
   this->Script(
@@ -1964,6 +1965,14 @@ void vtkEMSegmentNodeParametersStep::Validate()
         }
     }
   this->Superclass::Validate();
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentNodeParametersStep::RightClickOnInputChannelWeightsListCallback(int row, int col, int x, int y)
+{
+  vtkKWMultiColumnList *list =
+    this->NodeParametersInputChannelWeightsList->GetWidget()->GetWidget();
+  list->EditCell(row, col);
 }
 
 //----------------------------------------------------------------------------
