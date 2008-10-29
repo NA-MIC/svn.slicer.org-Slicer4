@@ -105,6 +105,11 @@ public:
         vtkGetObjectMacro(
                 MainUserInterfacePanel, vtkKWMimxMainNotebook);
         
+        // once the main window this will be drawing into is set, this method will 
+        // add and remove an orientation actor from the corner
+        void RemoveOrientationAxis();
+        void AddOrientationAxis();
+        
         // Description:
         // Set the status text in the lower left of the application. This
         // is a convience function that calls the SetStatusText() in KWWindow.

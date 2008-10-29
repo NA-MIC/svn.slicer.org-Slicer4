@@ -52,8 +52,6 @@ void vtkFESurfaceList::SetMRMLSceneForStorage(vtkMRMLScene* scene)
     vtkMRMLScene::GetActiveScene()->RegisterNodeClass(newMRMLNode);
     this->savedMRMLScene = vtkMRMLScene::GetActiveScene();
      newMRMLNode->Delete();
-
-  
 }
 
 
@@ -101,12 +99,9 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
       this->savedMRMLScene->AddNode(storeNode);
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
       newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());
-   
-      
-     cout << "copied data to MRML node " << endl;
    }
    else {
-       cout << "Attempted save to MRML, but scene not initialized" << endl;
+       vtkErrorMacro("Attempted save to MRML, but scene not initialized");
        return VTK_ERROR;
    }
   return VTK_OK;
@@ -117,20 +112,10 @@ vtkMimxSurfacePolyDataActor* vtkFESurfaceList::GetItem(vtkIdType id)
 { 
    //return this->InternalMimxObjectList->GetItem(id);
        
-   // first fetch the MRML node that has been requested
+   //  fetch the MRML node that has been requested
    vtkMRMLFESurfaceNode* requestedMrmlNode = 
        (vtkMRMLFESurfaceNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFESurfaceNode"));
-   
-//   // allocate a new node to return data
-//   // *** todo: cache local objects like the original version of the MRML-list
-//   vtkMimxSurfacePolyDataActor* returnNode = vtkMimxSurfacePolyDataActor::New();
-// 
-//   // copy MRML values to the node which we will return to the client
-//   // ***returnNode->SetFileName(requestedMrmlNode->GetFileName());
-//   returnNode->SetFilePath(requestedMrmlNode->GetFilePath());
-//   returnNode->SetDataType(requestedMrmlNode->GetDataType());
-//   // *** deep copy might be unnecessary
-//   returnNode->GetDataSet()=requestedMrmlNode->GetPolyData());
+   // then get the actor from the MRML node and return the actor
    vtkMimxSurfacePolyDataActor* returnNode = requestedMrmlNode->GetMimxSurfacePolyDataActor();
    return returnNode;
 
@@ -144,7 +129,6 @@ int vtkFESurfaceList::GetNumberOfItems()
 
 int vtkFESurfaceList::RemoveItem(int Num)
 {
-  //this->InternalMimxObjectList->RemoveItem(Num);
   this->savedMRMLScene->RemoveNode(this->savedMRMLScene->GetNthNodeByClass(Num,"vtkMRMLFESurfaceNode"));
   return VTK_OK;
 }

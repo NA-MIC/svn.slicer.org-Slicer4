@@ -52,6 +52,8 @@ Version:   $Revision: 1.2 $
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxViewWindow.h"
 #include "vtkKWRenderWidget.h"
+#include "vtkMRMLScene.h"
+#include "vtkMRMLViewNode.h"
 
 //#include "vtkKWMimxMainNotebook.h"
 //#include "vtkMeshingWorkflowMRMLNotebook.h"
@@ -203,17 +205,11 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
   moduleFrame->ExpandFrame ( );
   app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s -fill both",
                 moduleFrame->GetWidgetName(), this->UIPanel->GetPageWidget("MeshingWorkflow")->GetWidgetName());
-
-//   this->ApplyButton = vtkKWPushButton::New();
-//   this->ApplyButton->SetParent( moduleFrame->GetFrame() );
-//   this->ApplyButton->Create();
-//   this->ApplyButton->SetText("Open Mesh GUI");
-//   this->ApplyButton->SetWidth ( 8 );
-//   //this->ApplyButton->SetCommand(this, "BuildSeparateFEMeshGUI");
-//   app->Script("pack %s -side top -anchor e -padx 20 -pady 10",
-//                 this->ApplyButton->GetWidgetName());
    
-   // Create the MIMX Main Window
+   // Create the MIMX Main Window.  This is a composite widget which serves as the top of the independent
+   // meshing application.  This widget is created and the slicer render window and KWWindow are passed so that
+   // widgets created below here are controllable through slicer's interface.
+  
    this->MeshingUI = vtkKWMimxMainWindow::New();
    this->MeshingUI->SetRenderWidget( this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer() );
    this->MeshingUI->SetMainWindow( this->GetApplicationGUI()->GetMainSlicerWindow() );
@@ -222,48 +218,49 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s -fill both",
            this->MeshingUI->GetWidgetName(), moduleFrame->GetFrame()->GetWidgetName());
 
+ 
 
 }
 
 
-//void vtkMeshingWorkflowGUI::BuildSeparateFEMeshGUI ( )
-//{
-//    // create an instance  of the MimxViewWindow.  A separate window is opened because the
-//    // KWWidgets integration into the slicer GUI was working against the workflow designed in the
-//    // independent Univ. of Iowa FeMesh application
-//    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-//
-//    vtkKWMimxMainWindow *mainwin = vtkKWMimxMainWindow::New();
-//  mainwin->SetTitle("IA-FEMesh 1.0");
-//  app->AddWindow(mainwin);
-//  mainwin->SupportHelpOn();
-//  //mainwin->SecondaryPanelVisibilityOff();
-//  mainwin->Create();
-//  mainwin->Display();
-//}
 
 // Description:
 // Describe behavior at module startup and exit.
  void vtkMeshingWorkflowGUI::Enter ( )
  {
-     // *** 10/27/08 fix for the slicer interactor size = 10 10 bug is still needed
-      // it would be better to gate this to happen less often, but picking 
-      // still seems fast enough and this only occurs each time we enter move mode
-
-//         vtkRenderWindowInteractor* Interactor = this->MeshingUI->GetRenderWidget()->GetRenderWindow()->GetInteractor();
-//        int rwSizeX = Interactor->GetRenderWindow()->GetSize()[0];
-//          int rwSizeY = Interactor->GetRenderWindow()->GetSize()[1];
-//          //cout << "render window says: " << rwSizeX << " " << rwSizeY << endl;
-//          int interSizeX = Interactor->GetSize()[0];
-//          int interSizeY = Interactor->GetSize()[1];
-//          //cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
-//          Interactor->UpdateSize(rwSizeX,rwSizeY);
-//          interSizeX = Interactor->GetRenderWindow()->GetSize()[0];
-//           interSizeY = Interactor->GetRenderWindow()->GetSize()[1];
-//          //cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
-
+//     // get pointers to the current scene.  Make a temporary scene to hold some
+//     // state that we will restore when we exit the module
+//    vtkMRMLScene *SlicerScene = vtkMRMLScene::GetActiveScene();
+//    this->StoredMRMLState =  vtkMRMLScene::New();
+//    //this->StoredMRMLState
+//    
+//    // save the 3D window selections (is the box on, the background color, etc.)
+//    this->StoredMRMLState->CopyNode(SlicerScene->GetNthNodeByClass(0,"vtkMRMLView"));
+//    // save the arrangement of slice windows and 3D window 
+//    this->StoredMRMLState->CopyNode(SlicerScene->GetNthNodeByClass(0,"vtkMRMLLayout"));
+//     
+//    // turn off other MRML objects to have a clean interface for meshing
+//    ((vtkMRMLViewNode*)(SlicerScene->GetNthNodeByClass(1,"vtkMRMLView")))->SetBoxVisible(0);
+//    ((vtkMRMLViewNode*)(SlicerScene->GetNthNodeByClass(1,"vtkMRMLView")))->SetAxisLabelsVisible(0);
+//    //((vtkMRMLViewNode*)(SlicerScene->GetNthNodeByClass(1,"vtkMRMLView")))->SetBackgroundColor(0.0,0.0,0.0);
+//     
+    // add the specific application settings for this module here
+     this->MeshingUI->AddOrientationAxis();
+       
  }
  
  
  
- void vtkMeshingWorkflowGUI::Exit ( ){}
+ void vtkMeshingWorkflowGUI::Exit ( )
+ {
+     // restore the MRML Scene state
+//     vtkMRMLScene *SlicerScene = vtkMRMLScene::GetActiveScene();
+//     SlicerScene->RemoveNodeNoNotify(SlicerScene->GetNthNodeByClass(1,"vtkMRMLView"));
+//     SlicerScene->CopyNode(this->StoredMRMLState->GetNthNodeByClass(1,"vtkMRMLView"));
+//  
+        
+    // remove the specific application settings for this module here
+     this->MeshingUI->RemoveOrientationAxis();
+         
+     
+ }

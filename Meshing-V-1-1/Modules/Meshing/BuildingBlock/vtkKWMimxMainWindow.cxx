@@ -215,6 +215,52 @@ vtkKWMimxMainWindow::~vtkKWMimxMainWindow()
   if (this->FontFamilyButtons)
           this->FontFamilyButtons->Delete();
 }
+
+
+
+//----------------------------------------------------------------------------
+void vtkKWMimxMainWindow::AddOrientationAxis()
+{
+// creation of axes representation
+   // we need two renderers
+   if ( this->RenderWidget )
+   {
+       if(!this->AxesRenderer)
+       {
+               this->AxesRenderer = vtkRenderer::New();
+               this->PVAxesActor = vtkPVAxesActor::New();
+               this->CallbackCommand = vtkCallbackCommand::New();
+       }
+       this->AxesRenderer->InteractiveOff();
+       this->RenderWidget->GetRenderWindow()->SetNumberOfLayers(2);
+       this->RenderWidget->GetRenderer()->SetLayer(0);
+       this->AxesRenderer->SetLayer(1);
+       this->AxesRenderer->SetViewport(0.0,0.0,0.25,0.25);
+       this->AxesRenderer->AddActor(this->PVAxesActor);
+       this->CallbackCommand->SetCallback(updateAxis);
+       this->CallbackCommand->SetClientData(this);
+       this->RenderWidget->GetRenderer()->AddObserver(vtkCommand::AnyEvent,this->CallbackCommand);
+       this->RenderWidget->GetRenderWindow()->AddRenderer(this->AxesRenderer);
+       this->RenderWidget->Render();
+   }
+}
+
+//----------------------------------------------------------------------------
+void vtkKWMimxMainWindow::RemoveOrientationAxis()
+{
+// creation of axes representation
+   // we need two renderers
+   if ( this->RenderWidget && this->AxesRenderer)
+   {
+       this->AxesRenderer->InteractiveOff();
+       this->RenderWidget->GetRenderer()->SetLayer(0);
+       this->AxesRenderer->SetLayer(1);
+       this->RenderWidget->GetRenderer()->RemoveObserver(this->CallbackCommand);
+       this->RenderWidget->GetRenderWindow()->RemoveRenderer(this->AxesRenderer);
+       this->RenderWidget->Render();
+   }
+}
+
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::CreateWidget()
 {
@@ -226,28 +272,7 @@ void vtkKWMimxMainWindow::CreateWidget()
         }
         this->Superclass::CreateWidget();
   
-        // creation of axes representation
-        // we need two renderers
-        if ( this->StandAloneApplication )
-        {
-        if(!this->AxesRenderer)
-        {
-                this->AxesRenderer = vtkRenderer::New();
-                this->PVAxesActor = vtkPVAxesActor::New();
-                this->CallbackCommand = vtkCallbackCommand::New();
-        }
-        this->AxesRenderer->InteractiveOff();
-        this->RenderWidget->GetRenderWindow()->SetNumberOfLayers(2);
-        this->RenderWidget->GetRenderer()->SetLayer(0);
-        this->AxesRenderer->SetLayer(1);
-        this->AxesRenderer->SetViewport(0.0,0.0,0.25,0.25);
-        this->AxesRenderer->AddActor(this->PVAxesActor);
-        this->CallbackCommand->SetCallback(updateAxis);
-        this->CallbackCommand->SetClientData(this);
-        this->RenderWidget->GetRenderer()->AddObserver(vtkCommand::AnyEvent,this->CallbackCommand);
-        this->RenderWidget->GetRenderWindow()->AddRenderer(this->AxesRenderer);
-        }
-
+   
         this->ErrorCallback->SetKWApplication(this->GetApplication());
         // for do and undo tree
         if(!this->DoUndoTree)
