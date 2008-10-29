@@ -28,7 +28,7 @@ include_directories(
   ${mimxCommon_SOURCE_DIR} ${mimxCommon_BINARY_DIR} 
   ${MIMXCommon_SOURCE_DIR}../Adapter ${MIMXCommon_BINARY_DIR}../Adapter 
   ${MIMXAdapter_SOURCE_DIR} ${MIMXAdapter_BINARY_DIR} 
-    ${MIMXFilter_SOURCE_DIR} ${MIMXFilter_BINARY_DIR} 
+  ${MIMXFilter_SOURCE_DIR} ${MIMXFilter_BINARY_DIR} 
   ${ITK_INCLUDE_DIR}
   )
 
@@ -144,6 +144,7 @@ TARGET_LINK_LIBRARIES(${LIB_NAME}
   ITKIO
   ITKAlgorithms
   ${KWWidgets_LIBRARIES}
+  mimxAdapter
   MRML
   )
 
