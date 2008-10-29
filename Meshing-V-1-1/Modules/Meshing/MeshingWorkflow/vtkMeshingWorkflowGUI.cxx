@@ -250,17 +250,18 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
       // it would be better to gate this to happen less often, but picking 
       // still seems fast enough and this only occurs each time we enter move mode
 
-         vtkRenderWindowInteractor* Interactor = this->MeshingUI->GetRenderWidget()->GetRenderWindow()->GetInteractor();
-        int rwSizeX = Interactor->GetRenderWindow()->GetSize()[0];
-          int rwSizeY = Interactor->GetRenderWindow()->GetSize()[1];
-          //cout << "render window says: " << rwSizeX << " " << rwSizeY << endl;
-          int interSizeX = Interactor->GetSize()[0];
-          int interSizeY = Interactor->GetSize()[1];
-          //cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
-          Interactor->UpdateSize(rwSizeX,rwSizeY);
-          interSizeX = Interactor->GetRenderWindow()->GetSize()[0];
-           interSizeY = Interactor->GetRenderWindow()->GetSize()[1];
-          //cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
+//         vtkRenderWindowInteractor* Interactor = this->MeshingUI->GetRenderWidget()->GetRenderWindow()->GetInteractor();
+//        int rwSizeX = Interactor->GetRenderWindow()->GetSize()[0];
+//          int rwSizeY = Interactor->GetRenderWindow()->GetSize()[1];
+//          //cout << "render window says: " << rwSizeX << " " << rwSizeY << endl;
+//          int interSizeX = Interactor->GetSize()[0];
+//          int interSizeY = Interactor->GetSize()[1];
+//          //cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
+//          Interactor->UpdateSize(rwSizeX,rwSizeY);
+//          interSizeX = Interactor->GetRenderWindow()->GetSize()[0];
+//           interSizeY = Interactor->GetRenderWindow()->GetSize()[1];
+//          //cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
+
  }
  
  
