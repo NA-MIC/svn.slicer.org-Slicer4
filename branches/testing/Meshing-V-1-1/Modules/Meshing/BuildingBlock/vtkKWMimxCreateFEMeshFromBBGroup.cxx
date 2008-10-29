@@ -430,6 +430,7 @@ void vtkKWMimxCreateFEMeshFromBBGroup::CreateWidget()
   if (!this->NodeElementNumbersGroup)
     this->NodeElementNumbersGroup = vtkKWMimxNodeElementNumbersGroup::New();
   this->NodeElementNumbersGroup->SetParent(this->MainFrame);
+  this->NodeElementNumbersGroup->SetMimxMainWindow(this->MimxMainWindow); //***
   this->NodeElementNumbersGroup->Create();
   //this->NodeElementNumbersGroup->GetMainFrame()->SetLabelText("Node and Element Numbers");
   this->GetApplication()->Script(

@@ -150,7 +150,7 @@ void vtkKWMimxMainNotebook::CreateWidget()
         this->BBMenuGroup->SetApplication(this->GetApplication());
         this->BBMenuGroup->SetDoUndoTree(this->DoUndoTree);
         this->BBMenuGroup->Create();
-        this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 5", 
+        this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 5 -fill both", 
                 this->BBMenuGroup->GetWidgetName());
                 
         /* Mesh Page */

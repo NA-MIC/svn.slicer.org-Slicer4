@@ -201,7 +201,7 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
   moduleFrame->Create ( );
   moduleFrame->SetLabelText ("MeshingWorkflow");
   moduleFrame->ExpandFrame ( );
-  app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+  app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s -fill both",
                 moduleFrame->GetWidgetName(), this->UIPanel->GetPageWidget("MeshingWorkflow")->GetWidgetName());
 
 //   this->ApplyButton = vtkKWPushButton::New();
@@ -219,8 +219,8 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
    this->MeshingUI->SetMainWindow( this->GetApplicationGUI()->GetMainSlicerWindow() );
    this->MeshingUI->SetParent( moduleFrame );
    this->MeshingUI->Create();
-   app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-           this->MeshingUI->GetWidgetName(), moduleFrame->GetWidgetName());
+   app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s -fill both",
+           this->MeshingUI->GetWidgetName(), moduleFrame->GetFrame()->GetWidgetName());
 
 
 }
@@ -253,14 +253,14 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
          vtkRenderWindowInteractor* Interactor = this->MeshingUI->GetRenderWidget()->GetRenderWindow()->GetInteractor();
         int rwSizeX = Interactor->GetRenderWindow()->GetSize()[0];
           int rwSizeY = Interactor->GetRenderWindow()->GetSize()[1];
-          cout << "render window says: " << rwSizeX << " " << rwSizeY << endl;
+          //cout << "render window says: " << rwSizeX << " " << rwSizeY << endl;
           int interSizeX = Interactor->GetSize()[0];
           int interSizeY = Interactor->GetSize()[1];
-          cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
+          //cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
           Interactor->UpdateSize(rwSizeX,rwSizeY);
           interSizeX = Interactor->GetRenderWindow()->GetSize()[0];
            interSizeY = Interactor->GetRenderWindow()->GetSize()[1];
-          cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
+          //cout << "interactor says: " << interSizeX << " " << interSizeY << endl;
  }
  
  
