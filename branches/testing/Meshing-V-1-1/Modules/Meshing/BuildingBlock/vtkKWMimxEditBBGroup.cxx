@@ -392,6 +392,7 @@ void vtkKWMimxEditBBGroup::CreateWidget()
   this->SelectSubsetButton->Create();
   this->SelectSubsetButton->SetBorderWidth(2);
   this->SelectSubsetButton->SetReliefToGroove();
+  this->SelectSubsetButton->SelectedStateOff();
 
   this->SelectSubsetButton->SetCommand(this, "SelectFullSetCallback");
   this->SelectSubsetButton->IndicatorVisibilityOff();
@@ -2453,7 +2454,7 @@ void vtkKWMimxEditBBGroup::SelectSubsetCallback()
 //---------------------------------------------------------------------------------------
 void vtkKWMimxEditBBGroup::SelectFullSetCallback(int mode)
 {
-//std::cout << "Select Mode " << mode << std::endl;
+  //std::cout << "Select Mode " << mode << std::endl;
   vtkMimxErrorCallback *callback = this->GetMimxMainWindow()->GetErrorCallback();
         if(!strcmp(this->ObjectListComboBox->GetWidget()->GetValue(),""))
         {
@@ -2473,33 +2474,37 @@ void vtkKWMimxEditBBGroup::SelectFullSetCallback(int mode)
                 this->DeselectAllButtons();
                 return;
         }
-                
+        
+        // *** when mode=1, a subselection widget is created so the user can
+        // select only some bblocks
 
         if ( mode )
         {
-        vtkActor *actor = this->BBoxList->GetItem(combobox->GetValueIndex(name))->GetActor();
-        vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
-                this->BBoxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
-
-        if(!this->SelectCellsWidget)
-        {
-                this->SelectCellsWidget = vtkMimxSelectCellsWidget::New();
-        }
-        this->SelectCellsWidget->SetInput(ugrid);
-        this->SelectCellsWidget->SetInteractor(
-                this->GetMimxMainWindow()->GetRenderWidget()->GetRenderWindowInteractor());
-        this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer()->RemoveActor(actor);
-        this->SelectCellsWidget->SetEnabled(1);
-        
-        /* Currently Deselect the Mirror and Merge Options when selecting a subset
-           of the mesh - Should be re-enabled eventually */
-        this->RadioButtonSet->GetWidget(4)->SetStateToDisabled( );
-        this->RadioButtonSet->GetWidget(5)->SetStateToDisabled( );
-        this->RadioButtonSet->GetWidget(6)->SetStateToDisabled();
-        this->ObjectListComboBox->GetWidget()->SetStateToDisabled();
+            // subset mode
+            vtkActor *actor = this->BBoxList->GetItem(combobox->GetValueIndex(name))->GetActor();
+            vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
+                    this->BBoxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
+    
+            if(!this->SelectCellsWidget)
+            {
+                    this->SelectCellsWidget = vtkMimxSelectCellsWidget::New();
+            }
+            this->SelectCellsWidget->SetInput(ugrid);
+            this->SelectCellsWidget->SetInteractor(
+                    this->GetMimxMainWindow()->GetRenderWidget()->GetRenderWindowInteractor());
+            this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer()->RemoveActor(actor);
+            this->SelectCellsWidget->SetEnabled(1);
+            
+            /* Currently Deselect the Mirror and Merge Options when selecting a subset
+               of the mesh - Should be re-enabled eventually */
+            this->RadioButtonSet->GetWidget(4)->SetStateToDisabled( );
+            this->RadioButtonSet->GetWidget(5)->SetStateToDisabled( );
+            this->RadioButtonSet->GetWidget(6)->SetStateToDisabled();
+            this->ObjectListComboBox->GetWidget()->SetStateToDisabled();
         }
         else
         {
+                // full selection mode
                 vtkActor *actor = this->BBoxList->GetItem(combobox->GetValueIndex(name))->GetActor();
                 vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(
                         this->BBoxList->GetItem(combobox->GetValueIndex(name)))->GetDataSet();
@@ -2813,7 +2818,10 @@ void vtkKWMimxEditBBGroup::RepackMergeFrame()
 //----------------------------------------------------------------------------
 void vtkKWMimxEditBBGroup::GetUserInterfaceMode(int &radioMode, int &structureMode )
 {
+    //std::cout << "Select Mode from button: " << this->SelectSubsetButton->GetSelectedState() << std::endl;
+
   if (this->SelectSubsetButton->GetSelectedState())
+  
           structureMode = 1;
         else
           structureMode = 0;

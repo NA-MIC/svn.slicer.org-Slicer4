@@ -55,10 +55,11 @@ vtkMRMLUnstructuredGridDisplayNode::vtkMRMLUnstructuredGridDisplayNode()
   this->ShrinkPolyData = vtkShrinkPolyData::New();
   
   this->ShrinkPolyData->SetInput( this->GeometryFilter->GetOutput());
-  this->ShrinkFactor = 0.5;
+  this->ShrinkFactor = 1.0;
   this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
 }
 
+ 
 
 //----------------------------------------------------------------------------
 vtkMRMLUnstructuredGridDisplayNode::~vtkMRMLUnstructuredGridDisplayNode()
@@ -69,6 +70,18 @@ vtkMRMLUnstructuredGridDisplayNode::~vtkMRMLUnstructuredGridDisplayNode()
 }
 
 //----------------------------------------------------------------------------
+void vtkMRMLUnstructuredGridDisplayNode::SetUnstructuredGrid(vtkUnstructuredGrid *grid)
+ {
+   cout << "setting ugrid in display node" << endl;
+   if (this->GeometryFilter)
+     {
+     this->GeometryFilter->SetInput(grid);
+     this->GeometryFilter->Update();
+     }
+ }
+
+
+//----------------------------------------------------------------------------
 void vtkMRMLUnstructuredGridDisplayNode::WriteXML(ostream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
@@ -77,7 +90,7 @@ void vtkMRMLUnstructuredGridDisplayNode::WriteXML(ostream& of, int nIndent)
 
   vtkIndent indent(nIndent);
 
-  of << indent << " shrinkFactor =\"" << this->ShrinkFactor << "\"";
+  of << indent << " shrinkFactor =\"" << this->ShrinkFactor << "\" ";
 }
 
 

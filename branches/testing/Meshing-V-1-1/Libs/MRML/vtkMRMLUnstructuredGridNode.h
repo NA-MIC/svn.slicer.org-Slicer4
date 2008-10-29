@@ -22,22 +22,27 @@
 #ifndef __vtkMRMLUnstructuredGridNode_h
 #define __vtkMRMLUnstructuredGridNode_h
 
-#include "vtkPolyData.h" 
+#include <string>
+
 #include "vtkUnstructuredGrid.h" 
 
-#include "vtkMRML.h"
+//#include "vtkMRML.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRMLModelNode.h"
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
 
+#include "vtkMRMLDisplayableNode.h"
+
+//#include "vtkMRMLUnstructuredGridDisplayNode.h"
+
 class vtkCallbackCommand;
 
-class VTK_MRML_EXPORT vtkMRMLUnstructuredGridNode : public vtkMRMLDisplayableNode
+class VTK_MRML_EXPORT vtkMRMLUnstructuredGridNode : public vtkMRMLModelNode
 {
 public:
   static vtkMRMLUnstructuredGridNode *New();
-  vtkTypeMacro(vtkMRMLUnstructuredGridNode,vtkMRMLDisplayableNode);
+  vtkTypeMacro(vtkMRMLUnstructuredGridNode,vtkMRMLModelNode);
 
   void PrintSelf(ostream& os, vtkIndent indent);
   
@@ -59,21 +64,21 @@ public:
   // Finds the storage node and read the data
   virtual void UpdateScene(vtkMRMLScene *scene);
 
-
   // Description:
   // Get associated model display MRML node
-  /**
-  vtkMRMLUnstructuredGridDisplayNode* GetUnstructuredGridDisplayNode() 
-  {
-    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->DisplayNode);
-  };
-  **/
+ 
+  vtkMRMLUnstructuredGridDisplayNode* GetUnstructuredGridDisplayNode(); 
+  vtkMRMLUnstructuredGridDisplayNode* GetModelDisplayNode(); 
+  
+
 
   // Description:
   // alternative method to propagate events generated in Display nodes
   virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
+  
+
     // Description:
   // Set and observe UnstructuredGrid  for this model
   vtkGetObjectMacro(UnstructuredGrid, vtkUnstructuredGrid);
@@ -88,7 +93,10 @@ protected:
   vtkMRMLUnstructuredGridNode(const vtkMRMLUnstructuredGridNode&);
   void operator=(const vtkMRMLUnstructuredGridNode&);
 
-  vtkSetObjectMacro(UnstructuredGrid, vtkUnstructuredGrid);
+  // set the ugrid for this node and automatically generate a polygonal representation
+  // so that this node can respond to a GetPolyData method call as though it was a 
+  // regular polygonal model. 
+  virtual void SetUnstructuredGrid(vtkUnstructuredGrid *grid);
 
 
   // Data

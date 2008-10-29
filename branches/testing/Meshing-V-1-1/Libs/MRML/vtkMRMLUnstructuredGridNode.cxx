@@ -51,6 +51,19 @@ vtkMRMLNode* vtkMRMLUnstructuredGridNode::CreateNodeInstance()
   return new vtkMRMLUnstructuredGridNode;
 }
 
+
+vtkMRMLUnstructuredGridDisplayNode* vtkMRMLUnstructuredGridNode::GetUnstructuredGridDisplayNode() 
+  {
+    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->GetDisplayNode());
+  }
+
+// reimplement the parent method because this node has to return a display node when called
+vtkMRMLUnstructuredGridDisplayNode* vtkMRMLUnstructuredGridNode::GetModelDisplayNode() 
+  {
+    return vtkMRMLUnstructuredGridDisplayNode::SafeDownCast(this->GetDisplayNode());
+  }
+
+
 vtkMRMLUnstructuredGridNode::vtkMRMLUnstructuredGridNode()
 {
   this->UnstructuredGrid = NULL;
@@ -63,6 +76,14 @@ vtkMRMLUnstructuredGridNode::~vtkMRMLUnstructuredGridNode()
     this->SetAndObserveUnstructuredGrid(NULL);
     }
 }
+
+// set the local unstructured grid instance and also generate a polygonal 
+// representation so that this node can act like a MRMLModelNode in slicer
+void vtkMRMLUnstructuredGridNode::SetUnstructuredGrid(vtkUnstructuredGrid *grid)
+{
+    this->UnstructuredGrid = grid;
+}
+
 
 //-------------------------------
 void vtkMRMLUnstructuredGridNode::PrintSelf(ostream& os, vtkIndent indent)
@@ -78,9 +99,24 @@ void vtkMRMLUnstructuredGridNode::PrintSelf(ostream& os, vtkIndent indent)
 void vtkMRMLUnstructuredGridNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-  //vtkMRMLUnstructuredGridNode *node = (vtkMRMLUnstructuredGridNode *) anode;
+  vtkMRMLUnstructuredGridNode *node = (vtkMRMLUnstructuredGridNode *) anode;
 
 }
+
+
+void vtkMRMLUnstructuredGridNode::ApplyTransform(vtkAbstractTransform* transform)
+{
+  vtkTransformFilter* transformFilter = vtkTransformFilter::New();
+  transformFilter->SetInput(this->GetUnstructuredGrid());
+  transformFilter->SetTransform(transform);
+  transformFilter->Update();
+
+//  this->SetAndObserveUnstructuredGrid(vtkUnstructuredGrid::SafeDownCast(transformFilter->GetOutput()));
+  this->GetUnstructuredGrid()->DeepCopy(transformFilter->GetOutput());
+
+  transformFilter->Delete();
+}
+
 
 //----------------------------------------------------------------------------
 void vtkMRMLUnstructuredGridNode::SetAndObserveUnstructuredGrid(vtkUnstructuredGrid *unstructuredGrid)
@@ -133,18 +169,5 @@ void vtkMRMLUnstructuredGridNode::ProcessMRMLEvents ( vtkObject *caller,
                                            void *callData )
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);
-}
-
-void vtkMRMLUnstructuredGridNode::ApplyTransform(vtkAbstractTransform* transform)
-{
-  vtkTransformFilter* transformFilter = vtkTransformFilter::New();
-  transformFilter->SetInput(this->GetUnstructuredGrid());
-  transformFilter->SetTransform(transform);
-  transformFilter->Update();
-
-//  this->SetAndObserveUnstructuredGrid(vtkUnstructuredGrid::SafeDownCast(transformFilter->GetOutput()));
-  this->GetUnstructuredGrid()->DeepCopy(transformFilter->GetOutput());
-
-  transformFilter->Delete();
 }
 

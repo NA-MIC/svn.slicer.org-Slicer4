@@ -11,31 +11,33 @@
   Version:   $Revision: 1.6 $
 
   =========================================================================auto=*/
-// .NAME vtkMRMLUnstructuredGridDisplayNode - MRML node to represent display properties for tractography.
+// .NAME vtkMRMLUnstructuredGridDisplayNode - MRML node to represent display properties for unstructured grids.
 // .SECTION Description
-// vtkMRMLUnstructuredGridDisplayNode nodes store display properties of trajectories 
-// from tractography in diffusion MRI data, including color type (by bundle, by fiber, 
-// or by scalar invariants), display on/off for tensor glyphs and display of 
-// trajectory as a line or tube.
+// vtkMRMLUnstructuredGridDisplayNode nodes store display properties for rendering an UnstructuredGrid 
+// datatype. This node includes a pipeline to convert from unstructured grid to poly data so the node
+// can act like a model display node.
 //
-
+ 
 #ifndef __vtkMRMLUnstructuredGridDisplayNode_h
 #define __vtkMRMLUnstructuredGridDisplayNode_h
 
-#include "vtkPolyData.h"
+#include <string>
+
+#include "vtkUnstructuredGrid.h"
 #include "vtkShrinkPolyData.h"
 #include "vtkGeometryFilter.h"
 
 #include "vtkMRML.h"
 #include "vtkMRMLModelDisplayNode.h"
-#include "vtkMRMLUnstructuredGridNode.h"
+//#include "vtkMRMLUnstructuredGridNode.h"
 
+class vtkMRMLUnstructuredGridNode;
 
-class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplayNode
+class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLModelDisplayNode
 {
  public:
   static vtkMRMLUnstructuredGridDisplayNode *New (  );
-  vtkTypeMacro ( vtkMRMLUnstructuredGridDisplayNode,vtkMRMLDisplayNode );
+  vtkTypeMacro ( vtkMRMLUnstructuredGridDisplayNode,vtkMRMLModelDisplayNode );
   void PrintSelf ( ostream& os, vtkIndent indent );
   
   //--------------------------------------------------------------------------
@@ -68,27 +70,24 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
                                    void * /*callData*/ );
   // Description:
   // Sets UnstructuredGrid from UnstructuredGrid model node
-  void SetUnstructuredGrid(vtkUnstructuredGrid *grid)
-  {
-    if (this->GeometryFilter)
-      {
-      this->GeometryFilter->SetInput(grid);
-      }
-  }
+ virtual void SetUnstructuredGrid(vtkUnstructuredGrid *grid);
+
+ 
+ // Description:
+  // Sets UnstructuredGrid from UnstructuredGrid model node
+// virtual void SetPolyData(vtkUnstructuredGrid *grid)
+//  {
+//    if (this->GeometryFilter)
+//      {
+//      this->GeometryFilter->SetInput(grid);
+//      }
+//  }
 
   // Description:
   // Gets PlyData converted from UnstructuredGrid 
   virtual vtkPolyData* GetPolyData()
   {
-    if (this->ShrinkPolyData)
-      {
-      this->ShrinkPolyData->Update();
-      return this->ShrinkPolyData->GetOutput();
-      }
-    else
-      {
-      return NULL;
-      }
+    return this->ShrinkPolyData->GetOutput();
   }
    
   // Description:
@@ -96,6 +95,7 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
   virtual void UpdatePolyDataPipeline() 
     {
     this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
+    this->ShrinkPolyData->Update();
     };
  
   //--------------------------------------------------------------------------
@@ -104,6 +104,7 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
 
   // Description:
   // cell shrink factor
+  
   vtkSetMacro ( ShrinkFactor, double );
   vtkGetMacro ( ShrinkFactor, double );
 
@@ -115,7 +116,7 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
 
   double ShrinkFactor;
 
-  // dispaly pipeline
+  // display pipeline
   vtkGeometryFilter *GeometryFilter;
   vtkShrinkPolyData *ShrinkPolyData;
 };
