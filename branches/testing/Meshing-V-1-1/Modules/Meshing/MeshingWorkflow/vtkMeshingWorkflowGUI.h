@@ -38,6 +38,7 @@ class vtkLinkedListWrapperTree;
 class vtkKWLoadSaveDialog;
 class vtkKWMimxMainUserInterfacePanel;
 class vtkKWMimxMainWindow;
+class vtkMRMLScene;
 
 
 // added for UIowa Mimx integration.  Using MRML-based notebook instead of
@@ -107,7 +108,7 @@ protected:
   //void BuildSeparateFEMeshGUI();
   
   vtkKWMimxMainWindow *MeshingUI;
-  
+  vtkMRMLScene *StoredMRMLState;
   vtkMeshingWorkflowLogic *Logic;
 
 };

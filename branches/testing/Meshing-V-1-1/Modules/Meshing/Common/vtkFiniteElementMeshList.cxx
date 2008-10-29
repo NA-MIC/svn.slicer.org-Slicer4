@@ -58,15 +58,6 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
    {
      // allocate a new MRML node for this item and add it to the scene
      vtkMRMLFiniteElementMeshNode* newMRMLNode = vtkMRMLFiniteElementMeshNode::New();
-     // copy the state variables to the MRML node
-     //newMRMLNode->SetFileName(actor->GetFileName());
-     //newMRMLNode->SetFilePath(actor->GetFilePath());
-//     newMRMLNode->SetFileName("filename");
-//     newMRMLNode->SetFilePath("filepath");
-//     newMRMLNode->SetDataType(actor->GetDataType());
-//     vtkUnstructuredGrid* ugrid = vtkUnstructuredGrid::New();
-//     ugrid->DeepCopy(actor->GetDataSet());
-//     newMRMLNode->SetAndObserveUnstructuredGrid(ugrid);
      newMRMLNode->SetMimxMeshActor(actor);
      newMRMLNode->SetAndObserveUnstructuredGrid(actor->GetDataSet());
      
@@ -75,14 +66,12 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
       vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
       vtkMRMLColorTableNode* colorNode = vtkMRMLColorTableNode::New();
 
-      
       // for this version of the meshing module, we are using the Mimx
       // actors to render, so turn off the default MRML display of the geometry
       dispNode->SetVisibility(0);
  
       // this sets the default display to be colored based on selectable attribute value
       colorNode->SetTypeToRainbow();
-    
        
       // Establish linkage between the surface
       // node and its display and storage nodes, so the viewer will be updated when data
@@ -103,9 +92,7 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
 
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
       newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());      
-
-     
-     cout << "copied data to MRML mesh node " << endl;
+     //cout << "copied data to MRML mesh node " << endl;
    } else 
    {
        vtkErrorMacro("MeshingWorkflow: Adding FEMesh to uninitialized MRML Scene");
@@ -122,7 +109,6 @@ vtkMimxMeshActor* vtkFiniteElementMeshList::GetItem(vtkIdType id)
   // first fetch the MRML node that has been requested
   vtkMRMLFiniteElementMeshNode* requestedMrmlNode = 
       (vtkMRMLFiniteElementMeshNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFiniteElementMeshNode"));
-          
   return requestedMrmlNode->GetMimxMeshActor();
 
 }
