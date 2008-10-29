@@ -61,6 +61,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkMimxSurfacePolyDataActor.h"
 #include "vtkMimxUnstructuredGridActor.h"
 
+#include "vtkSlicerModuleCollapsibleFrame.h"
+
 //#include "vtkKWMimxApplication.h"
 //#include "vtkKWMimxApplicationSettingsInterface.h"
 #include "vtkKWMimxDisplayPropertiesGroup.h"
@@ -223,21 +225,6 @@ void vtkKWMimxMainWindow::CreateWidget()
                 return;
         }
         this->Superclass::CreateWidget();
-
-        // setting the render window
-        /*
-        if(!this->RenderWidget)
-        {
-                this->RenderWidget = vtkKWRenderWidget::New();
-        }
-        this->RenderWidget->SetParent(this->GetViewFrame());
-        this->RenderWidget->Create();
-
-        this->GetApplication()->Script("pack %s -expand y -fill both -anchor c -expand y", 
-                this->RenderWidget->GetWidgetName());
-
-        this->GetMenu()->Unpack();
-  */
   
         // creation of axes representation
         // we need two renderers
@@ -258,8 +245,6 @@ void vtkKWMimxMainWindow::CreateWidget()
         this->CallbackCommand->SetCallback(updateAxis);
         this->CallbackCommand->SetClientData(this);
         this->RenderWidget->GetRenderer()->AddObserver(vtkCommand::AnyEvent,this->CallbackCommand);
-//      this->AxesRenderer->SetBackground(0.0,0.0,0.0);
-//      this->RenderWidget->GetRenderer()->SetBackground(0.0,0.0,0.0);
         this->RenderWidget->GetRenderWindow()->AddRenderer(this->AxesRenderer);
         }
 
@@ -270,11 +255,19 @@ void vtkKWMimxMainWindow::CreateWidget()
                 this->DoUndoTree = vtkLinkedListWrapperTree::New();
   }
   
+    this->MainFrame = vtkSlicerModuleCollapsibleFrame::New();
+    this->MainFrame->SetParent(this);
+    this->MainFrame->Create();
+    this->MainFrame->AllowFrameToCollapseOn();
+    this->GetApplication()->Script(
+          "pack %s -side top -anchor nw -expand yes -padx 2 -pady 2 -fill both", 
+          this->MainFrame->GetWidgetName());
+    
         if(!this->ViewProperties)
         {
                 this->ViewProperties = vtkKWMimxViewProperties::New();
         }
-        this->ViewProperties->SetParent(this);
+        this->ViewProperties->SetParent(this->MainFrame->GetFrame());
         this->ViewProperties->SetMimxMainWindow(this);
         this->ViewProperties->Create();
         //this->ViewProperties->SetBorderWidth(2);
@@ -290,7 +283,7 @@ void vtkKWMimxMainWindow::CreateWidget()
         this->MainUserInterfacePanel->SetDoUndoTree(this->DoUndoTree);
         //this->MainUserInterfacePanel->SetMultiColumnList(
         //      this->ViewProperties->GetMultiColumnList());
-        this->MainUserInterfacePanel->SetParent( this );
+        this->MainUserInterfacePanel->SetParent( this->MainFrame->GetFrame() );
         this->MainUserInterfacePanel->SetApplication(this->GetApplication());
         this->MainUserInterfacePanel->Create();
         this->MainUserInterfacePanel->SetBorderWidth(3);
@@ -1263,5 +1256,14 @@ vtkKWUserInterfaceManager* vtkKWMimxMainWindow::GetMainUserInterfaceManager ( )
 void vtkKWMimxMainWindow::UpdateEnableState ( )
 {
   this->MainWindow->UpdateEnableState( );
+}
+//----------------------------------------------------------------------------------------------
+
+// Force redraw since in slicer the panels weren't redrawing automatically
+//---------------------------------------------------------------------------
+void vtkKWMimxMainWindow::ForceWidgetRedraw ( )
+{
+  this->MainFrame->CollapseFrame( );
+  this->MainFrame->ExpandFrame( );
 }
 //----------------------------------------------------------------------------------------------

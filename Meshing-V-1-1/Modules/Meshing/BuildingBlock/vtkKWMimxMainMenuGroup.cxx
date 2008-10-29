@@ -81,7 +81,7 @@ void vtkKWMimxMainMenuGroup::UpdateEnableState()
 {
         this->Superclass::UpdateEnableState();
         OperationMenuButton->SetEnabled(GetEnabled());
-        //TypeMenuButton->SetEnabled(GetEnabled());
+        this->MimxMainWindow->ForceWidgetRedraw();
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxMainMenuGroup::PrintSelf(ostream& os, vtkIndent indent)

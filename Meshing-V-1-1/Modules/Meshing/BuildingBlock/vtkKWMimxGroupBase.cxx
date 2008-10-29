@@ -100,6 +100,8 @@ void vtkKWMimxGroupBase::Update()
 void vtkKWMimxGroupBase::UpdateEnableState()
 {
         this->Superclass::UpdateEnableState();
+        // *** in slicer, the panels don't update correctly 
+        this->MimxMainWindow->ForceWidgetRedraw();
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxGroupBase::PrintSelf(ostream& os, vtkIndent indent)

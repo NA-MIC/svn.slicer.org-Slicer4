@@ -58,6 +58,9 @@ class vtkSlicerTheme;
 class vtkKWTheme;
 class vtkObject;
 
+// *** collabsible frame definition
+class vtkSlicerModuleCollapsibleFrame;
+
 class vtkKWMimxMainWindow : public vtkKWCompositeWidget
 {
 public:
@@ -237,6 +240,10 @@ public:
   virtual void InstallDefaultTheme ( );
   vtkSlicerTheme *GetSlicerTheme ( );
   
+  
+  // *** Force redraw since in slicer the panels weren't redrawing automatically
+    void ForceWidgetRedraw(void);
+    
   // Widgets that must be public
   vtkKWRenderWidget *RenderWidget;
         vtkRenderer *AxesRenderer;
@@ -251,6 +258,7 @@ protected:
         vtkKWMimxMainNotebook *MainUserInterfacePanel;
         vtkKWMimxDisplayPropertiesGroup *DisplayPropertyDialog;
         
+        vtkSlicerModuleCollapsibleFrame *MainFrame;
         
 private:
         vtkKWMimxMainWindow(const vtkKWMimxMainWindow&);   // Not implemented.
