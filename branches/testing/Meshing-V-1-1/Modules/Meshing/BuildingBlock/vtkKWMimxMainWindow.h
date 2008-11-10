@@ -57,6 +57,7 @@ class vtkKWRadioButtonSet;
 class vtkSlicerTheme;
 class vtkKWTheme;
 class vtkObject;
+class vtkKWFrameWithScrollbar;
 
 // *** collabsible frame definition
 class vtkSlicerModuleCollapsibleFrame;
@@ -249,6 +250,11 @@ public:
   // *** Force redraw since in slicer the panels weren't redrawing automatically
     void ForceWidgetRedraw(void);
     
+    // add and remove the ApplicationSettings menus
+    void CustomApplicationSettingsModuleEntry();
+    void CustomApplicationSettingsModuleExit();
+
+    
   // Widgets that must be public
   vtkKWRenderWidget *RenderWidget;
         vtkRenderer *AxesRenderer;
@@ -264,6 +270,7 @@ protected:
         vtkKWMimxDisplayPropertiesGroup *DisplayPropertyDialog;
         
         vtkSlicerModuleCollapsibleFrame *MainFrame;
+
         
 private:
         vtkKWMimxMainWindow(const vtkKWMimxMainWindow&);   // Not implemented.
@@ -289,12 +296,16 @@ private:
   vtkKWEntryWithLabel *AverageElementLengthEntry;
   vtkKWScaleWithLabel *PropertyPrecisionScale;
   
+  /* Hold Current Application Settings */
   /* Font Configuration */
   vtkKWFrameWithLabel *FontSettingsFrame;
   vtkKWRadioButtonSet *FontSizeButtons;
   vtkKWRadioButtonSet *FontFamilyButtons;
+  vtkKWFrameWithScrollbar *FontScrollFrame;
   
-  /* Hold Current Application Settings */
+  void RemoveFontApplicationSettingsPanel();
+  void RemoveCustomApplicationSettingsPanel();
+  
   vtkSlicerTheme *SlicerTheme;
   char ApplicationFontSize [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char ApplicationFontFamily [vtkKWRegistryHelper::RegistryKeyValueSizeMax];

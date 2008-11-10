@@ -110,6 +110,11 @@ protected:
   vtkKWMimxMainWindow *MeshingUI;
   vtkMRMLScene *StoredMRMLState;
   vtkMeshingWorkflowLogic *Logic;
+  
+  // save variables read from the MRML scene when entering the module 
+  int SavedBoxState;
+  int SavedAxisLabelState;
+  int SavedLayoutEnumeration;
 
 };
 
