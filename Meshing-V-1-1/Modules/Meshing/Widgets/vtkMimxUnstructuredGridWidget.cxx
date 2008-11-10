@@ -798,7 +798,8 @@ void vtkMimxUnstructuredGridWidget::CrtlLeftButtonUpCallback(vtkAbstractWidget *
 
   Self->ShowHandles(Self);
 
-  Self->EventCallbackCommand->SetAbortFlag(1);
+  // *** commented out to prevent Dolly mode from staying on constantly during Unstructured Widget display
+  //Self->EventCallbackCommand->SetAbortFlag(1);
   Self->EndInteraction();
   Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
 
