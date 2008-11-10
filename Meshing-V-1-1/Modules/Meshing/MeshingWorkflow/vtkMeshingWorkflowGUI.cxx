@@ -54,6 +54,7 @@ Version:   $Revision: 1.2 $
 #include "vtkKWRenderWidget.h"
 #include "vtkMRMLScene.h"
 #include "vtkMRMLViewNode.h"
+#include "vtkMRMLLayoutNode.h"
 
 //#include "vtkKWMimxMainNotebook.h"
 //#include "vtkMeshingWorkflowMRMLNotebook.h"
@@ -92,6 +93,11 @@ vtkMeshingWorkflowGUI::vtkMeshingWorkflowGUI()
     Tcl_Interp* interp = this->GetApplication()->GetMainInterp();
     Mimxcommon_Init(interp);
     Buildingblock_Init(interp);
+    
+    this->SavedBoxState = 0;
+    this->SavedAxisLabelState = 0;
+    this->SavedLayoutEnumeration = 0;
+
 }
 
 //----------------------------------------------------------------------------
@@ -116,17 +122,6 @@ void vtkMeshingWorkflowGUI::PrintSelf(ostream& os, vtkIndent indent)
 void vtkMeshingWorkflowGUI::AddGUIObservers ( )
 {
 
-
-    // look in the menu and add callbacks
-    // these observers don't have to be added anymore because the existing BoundingBox GUI management code handles callbacks directly. Callbacks
-    // are wrapped with the libmimxBoundingBox library and are invoked automatically
-
-//    this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-//    this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-//    this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-//    this->SavedMimxFEMenuGroup->ObjectMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-//    this->SavedMimxFEMenuGroup->OperationMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
-//    this->SavedMimxFEMenuGroup->TypeMenuButton->GetWidget()->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     //this->ApplyButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
 }
 
@@ -228,24 +223,19 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
 // Describe behavior at module startup and exit.
  void vtkMeshingWorkflowGUI::Enter ( )
  {
-//     // get pointers to the current scene.  Make a temporary scene to hold some
-//     // state that we will restore when we exit the module
-//    vtkMRMLScene *SlicerScene = vtkMRMLScene::GetActiveScene();
-//    this->StoredMRMLState =  vtkMRMLScene::New();
-//    //this->StoredMRMLState
-//    
-//    // save the 3D window selections (is the box on, the background color, etc.)
-//    this->StoredMRMLState->CopyNode(SlicerScene->GetNthNodeByClass(0,"vtkMRMLView"));
-//    // save the arrangement of slice windows and 3D window 
-//    this->StoredMRMLState->CopyNode(SlicerScene->GetNthNodeByClass(0,"vtkMRMLLayout"));
-//     
-//    // turn off other MRML objects to have a clean interface for meshing
-//    ((vtkMRMLViewNode*)(SlicerScene->GetNthNodeByClass(1,"vtkMRMLView")))->SetBoxVisible(0);
-//    ((vtkMRMLViewNode*)(SlicerScene->GetNthNodeByClass(1,"vtkMRMLView")))->SetAxisLabelsVisible(0);
-//    //((vtkMRMLViewNode*)(SlicerScene->GetNthNodeByClass(1,"vtkMRMLView")))->SetBackgroundColor(0.0,0.0,0.0);
-//     
+     // get pointers to the current scene.  
+    //vtkMRMLScene *SlicerScene = vtkMRMLScene::GetActiveScene();
+    vtkMRMLViewNode *viewnode = this->GetApplicationGUI()->GetViewControlGUI()->GetActiveView();
+    vtkMRMLLayoutNode *layoutnode = this->GetApplicationGUI()->GetGUILayoutNode();
+    this->SavedBoxState = viewnode->GetBoxVisible();
+    this->SavedAxisLabelState = viewnode->GetAxisLabelsVisible();
+    this->SavedLayoutEnumeration = layoutnode->GetViewArrangement();
+    
     // add the specific application settings for this module here
-     this->MeshingUI->AddOrientationAxis();
+    viewnode->SetBoxVisible(0);
+    viewnode->SetAxisLabelsVisible(0);
+    layoutnode->SetViewArrangement(vtkMRMLLayoutNode::SlicerLayoutOneUp3DView);    
+    this->MeshingUI->AddOrientationAxis();
        
  }
  
@@ -254,13 +244,12 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
  void vtkMeshingWorkflowGUI::Exit ( )
  {
      // restore the MRML Scene state
-//     vtkMRMLScene *SlicerScene = vtkMRMLScene::GetActiveScene();
-//     SlicerScene->RemoveNodeNoNotify(SlicerScene->GetNthNodeByClass(1,"vtkMRMLView"));
-//     SlicerScene->CopyNode(this->StoredMRMLState->GetNthNodeByClass(1,"vtkMRMLView"));
-//  
-        
-    // remove the specific application settings for this module here
-     this->MeshingUI->RemoveOrientationAxis();
-         
+     vtkMRMLViewNode *viewnode = this->GetApplicationGUI()->GetViewControlGUI()->GetActiveView();
+     vtkMRMLLayoutNode *layoutnode = this->GetApplicationGUI()->GetGUILayoutNode();
+     // remove the specific application settings for this module here
+     layoutnode->SetViewArrangement(this->SavedLayoutEnumeration);
+     viewnode->SetBoxVisible(this->SavedBoxState);
+     viewnode->SetAxisLabelsVisible(this->SavedAxisLabelState);
+     this->MeshingUI->RemoveOrientationAxis();    
      
  }

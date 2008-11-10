@@ -73,6 +73,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxViewProperties.h"
 
 #include "vtkSlicerTheme.h"
+#include "vtkKWFrameWithScrollbar.h"
 
 #include "vtkLinkedListWrapperTree.h"
 #include "vtkPVAxesActor.h"
@@ -163,7 +164,7 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
         this->BackgroundColor[0] = this->BackgroundColor[1] = this->BackgroundColor[2] = 0.0;
         
         /* The default is a standalone application */
-        this->StandAloneApplication = true;           
+        this->StandAloneApplication = false;           
 }
 
 //----------------------------------------------------------------------------
@@ -261,6 +262,58 @@ void vtkKWMimxMainWindow::RemoveOrientationAxis()
    }
 }
 
+
+void vtkKWMimxMainWindow::CustomApplicationSettingsModuleEntry()
+{
+    // Custom Configuration of the Toolbar Menu
+    if ( this->StandAloneApplication )
+      {
+            vtkKWMenu* fileMenu = this->MainWindow->GetFileMenu();
+        fileMenu->DeleteItem (0);
+        
+        vtkKWMenu* viewMenu = this->MainWindow->GetViewMenu();
+        viewMenu->AddCommand("View Settings", this, "DisplayPropertyCallback");
+        viewMenu->AddSeparator( );
+        
+        vtkKWMenu *fontSizeMenu = vtkKWMenu::New();
+        fontSizeMenu->SetParent(viewMenu);
+        fontSizeMenu->Create();
+        fontSizeMenu->AddRadioButton("small", this, "SetApplicationFontSize small");
+        fontSizeMenu->AddRadioButton("medium", this, "SetApplicationFontSize medium");
+        fontSizeMenu->AddRadioButton("large", this, "SetApplicationFontSize large");
+        fontSizeMenu->AddRadioButton("largest", this, "SetApplicationFontSize largest");
+        viewMenu->AddCascade("Font Size", fontSizeMenu);
+        
+        vtkKWMenu *fontTypeMenu = vtkKWMenu::New();
+        fontTypeMenu->SetParent(viewMenu);
+        fontTypeMenu->Create();
+        fontTypeMenu->AddRadioButton("Arial", this, "SetApplicationFontFamily Arial");
+        fontTypeMenu->AddRadioButton("Helvetica", this, "SetApplicationFontFamily Helvetica");
+        fontTypeMenu->AddRadioButton("Verdana", this, "SetApplicationFontFamily Verdana");
+        viewMenu->AddCascade("Font Family", fontTypeMenu);
+        
+        fontSizeMenu->SelectItem( this->GetApplicationFontSize() );
+        fontTypeMenu->SelectItem( this->GetApplicationFontFamily() );
+        
+        this->AddFontApplicationSettingsPanel();
+      }
+      //this->AddCustomApplicationSettingsPanel();      
+}
+
+
+
+void vtkKWMimxMainWindow::CustomApplicationSettingsModuleExit()
+{
+    // Custom Configuration of the Toolbar Menu
+    if ( this->StandAloneApplication )
+      {      
+        this->RemoveFontApplicationSettingsPanel();
+      }
+      //this->RemoveCustomApplicationSettingsPanel();      
+}
+
+
+
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::CreateWidget()
 {
@@ -318,39 +371,6 @@ void vtkKWMimxMainWindow::CreateWidget()
                 "pack %s -side top -anchor nw -expand yes -pady 2 -fill both", 
                 this->MainUserInterfacePanel->GetWidgetName());
         
-        // Custom Configuration of the Toolbar Menu
-  if ( this->StandAloneApplication )
-  {
-        vtkKWMenu* fileMenu = this->MainWindow->GetFileMenu();
-    fileMenu->DeleteItem (0);
-    
-    vtkKWMenu* viewMenu = this->MainWindow->GetViewMenu();
-    viewMenu->AddCommand("View Settings", this, "DisplayPropertyCallback");
-    viewMenu->AddSeparator( );
-    
-    vtkKWMenu *fontSizeMenu = vtkKWMenu::New();
-    fontSizeMenu->SetParent(viewMenu);
-    fontSizeMenu->Create();
-    fontSizeMenu->AddRadioButton("small", this, "SetApplicationFontSize small");
-    fontSizeMenu->AddRadioButton("medium", this, "SetApplicationFontSize medium");
-    fontSizeMenu->AddRadioButton("large", this, "SetApplicationFontSize large");
-    fontSizeMenu->AddRadioButton("largest", this, "SetApplicationFontSize largest");
-    viewMenu->AddCascade("Font Size", fontSizeMenu);
-    
-    vtkKWMenu *fontTypeMenu = vtkKWMenu::New();
-    fontTypeMenu->SetParent(viewMenu);
-    fontTypeMenu->Create();
-    fontTypeMenu->AddRadioButton("Arial", this, "SetApplicationFontFamily Arial");
-    fontTypeMenu->AddRadioButton("Helvetica", this, "SetApplicationFontFamily Helvetica");
-    fontTypeMenu->AddRadioButton("Verdana", this, "SetApplicationFontFamily Verdana");
-    viewMenu->AddCascade("Font Family", fontTypeMenu);
-    
-    fontSizeMenu->SelectItem( this->GetApplicationFontSize() );
-    fontTypeMenu->SelectItem( this->GetApplicationFontFamily() );
-    
-    this->AddFontApplicationSettingsPanel();
-  }
-  this->AddCustomApplicationSettingsPanel();
   
   this->Update();
 }
@@ -714,131 +734,29 @@ void vtkKWMimxMainWindow::SetAutoSaveDirectory(const char *dirName)
   this->GetApplication()->SetRegistryValue(1, "AutoSave", "SaveDirectory", this->AutoSaveDirectory);
 }
 
+
+
 //----------------------------------------------------------------------------
-void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
+void vtkKWMimxMainWindow::RemoveFontApplicationSettingsPanel()
 {
-  vtkKWApplicationSettingsInterface *applicationMenu = 
-           this->MainWindow->GetApplicationSettingsInterface( ); 
-
-  ostrstream tk_cmd;
-  vtkKWWidget *page;
-  vtkKWFrame *frame;
+                   
+  // --------------------------------------------------------------
+  // IA-FEMesh Interface settings : Font Settings
+  if (this->FontSettingsFrame == NULL)
+  {
+      this->Script ("pack forget %s ",
+                  this->FontSettingsFrame->GetWidgetName());
+  }
 
   // --------------------------------------------------------------
-  // Add a "Preferences" page
-
-  applicationMenu->AddPage( "Preferences" );
-  page = applicationMenu->GetPageWidget(applicationMenu->GetName());
-                                                              
-  // --------------------------------------------------------------
-  // IA-FEMesh Interface settings : main frame
-  if (this->MimxSettingsFrame == NULL)
-  {
-    this->MimxSettingsFrame = vtkKWFrameWithLabel::New();
+  // Interface settings : Font size
+  if (this->FontScrollFrame == NULL)
+  {  
+      this->Script ( "pack forget %s",
+                  this->FontScrollFrame->GetWidgetName());  
   }
-  this->MimxSettingsFrame->SetParent(applicationMenu->GetPagesParentWidget());
-  this->MimxSettingsFrame->Create();
-  this->MimxSettingsFrame->SetLabelText("IA-FEMesh Settings");
-
-  tk_cmd << "pack " << this->MimxSettingsFrame->GetWidgetName()
-         << " -side top -anchor nw -fill x -padx 2 -pady 2 " 
-         << " -in " << page->GetWidgetName() << endl;
-  
-  frame = this->MimxSettingsFrame->GetFrame();
-  
-  if (this->AutoSaveButton == NULL)
-  {
-    this->AutoSaveButton = vtkKWCheckButtonWithLabel::New();
-  }
-  this->AutoSaveButton->SetParent ( frame );
-  this->AutoSaveButton->Create();
-  this->AutoSaveButton->SetLabelText ("Autosave Work:");
-  this->AutoSaveButton->GetWidget()->SetCommand ( this, "AutoSaveModeCallback");
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2",
-                 this->AutoSaveButton->GetWidgetName());
-  
-  if (this->AutoSaveScale == NULL)
-  {
-    this->AutoSaveScale = vtkKWScaleWithLabel::New();
-  }
-  this->AutoSaveScale->SetParent ( frame );
-  this->AutoSaveScale->Create();
-  this->AutoSaveScale->SetLabelText ("Interval (Minutes):");
-  this->AutoSaveScale->GetWidget()->SetRange ( 1.0, 20.0);
-  this->AutoSaveScale->GetWidget()->SetResolution ( 1.0 );
-  this->AutoSaveScale->GetWidget()->SetCommand ( this, "AutoSaveScaleCallback");
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
-                 this->AutoSaveScale->GetWidgetName());  
-  
-  if (this->WorkingDirButton == NULL)
-  {
-    this->WorkingDirButton = vtkKWCheckButtonWithLabel::New();
-  }
-  this->WorkingDirButton->SetParent ( frame );
-  this->WorkingDirButton->Create();
-  this->WorkingDirButton->SetLabelText ("Use Working Directory:");
-  this->WorkingDirButton->GetWidget()->SetCommand ( this, "AutoSaveDirectoryModeCallback");
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2",
-                 this->WorkingDirButton->GetWidgetName());
-                 
-  if (this->AutoSaveDir == NULL)
-  {
-    this->AutoSaveDir = vtkKWLoadSaveButtonWithLabel::New();
-  }
-  this->AutoSaveDir->SetParent ( frame );
-  this->AutoSaveDir->Create();
-  this->AutoSaveDir->SetLabelText ("Autosave Directory:");
-  this->AutoSaveDir->GetWidget()->GetLoadSaveDialog()->SaveDialogOn();
-  this->AutoSaveDir->GetWidget()->GetLoadSaveDialog()->ChooseDirectoryOn();
-  this->AutoSaveDir->GetWidget()->TrimPathFromFileNameOff();
-  this->AutoSaveDir->GetWidget()->SetCommand ( this, "AutoSaveDirectoryCallback");
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
-                 this->AutoSaveDir->GetWidgetName()); 
-  
-  vtkKWSeparator *separator = vtkKWSeparator::New();
-  separator->SetParent ( frame );
-  separator->Create();
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
-                 separator->GetWidgetName()); 
-  
-  if (this->AverageElementLengthEntry == NULL)
-  {
-    this->AverageElementLengthEntry = vtkKWEntryWithLabel::New();
-  }
-  this->AverageElementLengthEntry->SetParent ( frame );
-  this->AverageElementLengthEntry->Create();
-  this->AverageElementLengthEntry->SetLabelText("Average Element Length:");
-  this->AverageElementLengthEntry->GetWidget()->SetRestrictValueToDouble( );
-  this->AverageElementLengthEntry->GetWidget()->SetCommand ( this, "AverageElementLengthCallback");
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
-                 this->AverageElementLengthEntry->GetWidgetName()); 
-  
-  if (this->PropertyPrecisionScale == NULL)
-  {
-    this->PropertyPrecisionScale = vtkKWScaleWithLabel::New();
-  }
-  this->PropertyPrecisionScale->SetParent ( frame );
-  this->PropertyPrecisionScale->Create();
-  this->PropertyPrecisionScale->SetLabelText("ABAQUS Material Propery Precision:");
-  this->PropertyPrecisionScale->GetWidget()->SetRange(0.0, 10.0);
-  this->PropertyPrecisionScale->GetWidget()->SetResolution(1.0);
-  this->PropertyPrecisionScale->GetWidget()->SetCommand( this, "ABAQUSPrecisionCallback");
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
-                 this->PropertyPrecisionScale->GetWidgetName());
-                 
-  separator->Delete();
-  
-  // --------------------------------------------------------------
-  // Pack 
-
-  tk_cmd << ends;
-  this->Script(tk_cmd.str());
-  tk_cmd.rdbuf()->freeze(0);
-
-  // Update
-
-  //this->Update();
 }
+
 
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
@@ -877,6 +795,7 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
   // Interface settings : Font size
   
   vtkKWFrameWithScrollbar *scrollframe = vtkKWFrameWithScrollbar::New();
+  this->FontScrollFrame = scrollframe;
   scrollframe->SetParent ( frame );
   scrollframe->Create();
   scrollframe->VerticalScrollbarVisibilityOn();
