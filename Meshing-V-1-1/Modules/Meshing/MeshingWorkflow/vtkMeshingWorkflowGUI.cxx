@@ -230,10 +230,12 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
     this->SavedBoxState = viewnode->GetBoxVisible();
     this->SavedAxisLabelState = viewnode->GetAxisLabelsVisible();
     this->SavedLayoutEnumeration = layoutnode->GetViewArrangement();
-    
+    viewnode->GetBackgroundColor(this->SavedBackgroundColor);
     // add the specific application settings for this module here
     viewnode->SetBoxVisible(0);
     viewnode->SetAxisLabelsVisible(0);
+    double blackBackground[3]; blackBackground[0]=blackBackground[1]=blackBackground[2] = 0.0;
+    viewnode->SetBackgroundColor(blackBackground);
     layoutnode->SetViewArrangement(vtkMRMLLayoutNode::SlicerLayoutOneUp3DView);    
     this->MeshingUI->AddOrientationAxis();
        
@@ -250,6 +252,7 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
      layoutnode->SetViewArrangement(this->SavedLayoutEnumeration);
      viewnode->SetBoxVisible(this->SavedBoxState);
      viewnode->SetAxisLabelsVisible(this->SavedAxisLabelState);
+     viewnode->SetBackgroundColor(this->SavedBackgroundColor);
      this->MeshingUI->RemoveOrientationAxis();    
      
  }

@@ -561,6 +561,7 @@ void vtkMimxUnstructuredGridWidget::CrtlLeftButtonDownCallback(vtkAbstractWidget
 
         int X = Self->Interactor->GetEventPosition()[0];
         int Y = Self->Interactor->GetEventPosition()[1];
+        //cout << "x,y " << X << " " << Y << endl; 
 
         // Okay, we can process Self. Try to pick handles first;
         // if no handles picked, then pick the bounding box.

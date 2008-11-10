@@ -115,6 +115,7 @@ protected:
   int SavedBoxState;
   int SavedAxisLabelState;
   int SavedLayoutEnumeration;
+  double SavedBackgroundColor[3];
 
 };
 

@@ -256,7 +256,7 @@ void vtkMimxSelectCellsWidget::LeftButtonDownCallback(vtkAbstractWidget *w)
         self->PickX0 = X;
         self->PickY0 = Y;
 
-                cout << "picked at " <<X<<"  "<<Y<<endl;
+        //cout << "picked at " <<X<<"  "<<Y<<endl;
         // Okay, make sure that the pick is in the current renderer
         if ( !self->CurrentRenderer || !self->CurrentRenderer->IsInViewport(X, Y) )
         {

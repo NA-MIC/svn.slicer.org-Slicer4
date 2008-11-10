@@ -354,6 +354,13 @@ void vtkKWMimxEditBBGroup::CreateWidget()
     return;
   }
 
+  // ***
+  // interactor 10,10 size fix was needed on RedHat Enterprise 11/10/08 even with updated VTK build
+  int winsizex = this->MimxMainWindow->GetRenderWidget()->GetRenderWindow()->GetSize()[0]; 
+  int winsizey = this->MimxMainWindow->GetRenderWidget()->GetRenderWindow()->GetSize()[1]; 
+  this->MimxMainWindow->GetRenderWidget()->GetRenderWindow()->GetInteractor()->UpdateSize(winsizex,winsizey);
+
+  
   this->Superclass::CreateWidget();
   this->MainFrame->SetParent(this->GetParent());
   this->MainFrame->Create();
