@@ -17,10 +17,10 @@
 #ifndef __vtkImageHistogramNormalization_h
 #define __vtkImageHistogramNormalization_h
 
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 #include "vtkImageShiftScale.h"
 
-class VTK_TUMORGROWTH_EXPORT  vtkImageHistogramNormalization : public vtkImageShiftScale
+class VTK_CHANGETRACKER_EXPORT  vtkImageHistogramNormalization : public vtkImageShiftScale
 {
 public:
   static vtkImageHistogramNormalization *New();

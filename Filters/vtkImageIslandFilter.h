@@ -50,7 +50,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  
 #include "vtkImageData.h"
 #include "vtkImageToImageFilter.h"
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 //BTX
 template<class T> class IslandMemory {
 public:
@@ -212,7 +212,7 @@ template<class T> class EMStack {
 };
 //ETX
 
-class VTK_TUMORGROWTH_EXPORT vtkImageIslandFilter : public vtkImageToImageFilter
+class VTK_CHANGETRACKER_EXPORT vtkImageIslandFilter : public vtkImageToImageFilter
 {
   public:
   static vtkImageIslandFilter *New();

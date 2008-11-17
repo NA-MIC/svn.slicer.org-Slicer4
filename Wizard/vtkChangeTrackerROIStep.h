@@ -1,7 +1,7 @@
-#ifndef __vtkTumorGrowthROIStep_h
-#define __vtkTumorGrowthROIStep_h
+#ifndef __vtkChangeTrackerROIStep_h
+#define __vtkChangeTrackerROIStep_h
 
-#include "vtkTumorGrowthStep.h"
+#include "vtkChangeTrackerStep.h"
 
 class vtkKWFrame;
 class vtkKWRange;
@@ -10,15 +10,15 @@ class vtkSlicerModuleCollapsibleFrame;
 class vtkSlicerSliceGUI;
 class vtkRenderWindowInteractor;
 class vtkMRMLScalarVolumeNode;
-class vtkMRMLTumorGrowthNode;
+class vtkMRMLChangeTrackerNode;
 class vtkKWLabel;
 class vtkImageRectangularSource;
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthROIStep : public vtkTumorGrowthStep
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerROIStep : public vtkChangeTrackerStep
 {
 public:
-  static vtkTumorGrowthROIStep *New();
-  vtkTypeRevisionMacro(vtkTumorGrowthROIStep,vtkTumorGrowthStep);
+  static vtkChangeTrackerROIStep *New();
+  vtkTypeRevisionMacro(vtkChangeTrackerROIStep,vtkChangeTrackerStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -45,8 +45,8 @@ public:
   void RemoveGUIObservers();
 
 protected:
-  vtkTumorGrowthROIStep();
-  ~vtkTumorGrowthROIStep();
+  vtkChangeTrackerROIStep();
+  ~vtkChangeTrackerROIStep();
 
   vtkKWFrame                        *FrameButtons;
   vtkKWFrame                        *FrameBlank;
@@ -70,14 +70,14 @@ protected:
   static void WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
  
 private:
-  vtkTumorGrowthROIStep(const vtkTumorGrowthROIStep&);
-  void operator=(const vtkTumorGrowthROIStep&);
+  vtkChangeTrackerROIStep(const vtkChangeTrackerROIStep&);
+  void operator=(const vtkChangeTrackerROIStep&);
  
   void ROIReset();
   void ROIUpdateWithNewSample(int ijkSample[3]);
   void ROIUpdateAxisWithNewSample(vtkKWRange *ROIAxis, int Sample);
   void ROIUpdateWithNode();
-  void ROIUpdateAxisWithNode(vtkMRMLTumorGrowthNode* Node, vtkKWRange *ROIAxis, int Axis);
+  void ROIUpdateAxisWithNode(vtkMRMLChangeTrackerNode* Node, vtkKWRange *ROIAxis, int Axis);
 
   int  ROICheck();
 

@@ -1,11 +1,11 @@
-#ifndef __vtkTumorGrowthStep_h
-#define __vtkTumorGrowthStep_h
+#ifndef __vtkChangeTrackerStep_h
+#define __vtkChangeTrackerStep_h
 
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 #include "vtkKWWizardStep.h"
 
 class vtkKWFrameWithLabel; 
-class vtkTumorGrowthGUI;
+class vtkChangeTrackerGUI;
 class vtkKWPushButton;
 class vtkVolumeTextureMapper3D;
 class vtkPiecewiseFunction;
@@ -17,23 +17,23 @@ class vtkMRMLVolumeNode;
 class vtkImageData;  
 class vtkFixedPointVolumeRayCastMapper;
 
-#define TUMORGROWTH_MENU_BUTTON_WIDTH_SMALL 10
-#define TUMORGROWTH_MENU_BUTTON_WIDTH 15
-#define TUMORGROWTH_WIDGETS_LABEL_WIDTH 25
-#define TUMORGROWTH_WIDGETS_SLIDER_WIDTH 100
-#define TUMORGROWTH_WIDGETS_SLIDER_HEIGHT 25
+#define CHANGETRACKER_MENU_BUTTON_WIDTH_SMALL 10
+#define CHANGETRACKER_MENU_BUTTON_WIDTH 15
+#define CHANGETRACKER_WIDGETS_LABEL_WIDTH 25
+#define CHANGETRACKER_WIDGETS_SLIDER_WIDTH 100
+#define CHANGETRACKER_WIDGETS_SLIDER_HEIGHT 25
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthStep : public vtkKWWizardStep
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerStep : public vtkKWWizardStep
 {
 public:
-  static vtkTumorGrowthStep *New();
-  vtkTypeRevisionMacro(vtkTumorGrowthStep,vtkKWWizardStep);
+  static vtkChangeTrackerStep *New();
+  vtkTypeRevisionMacro(vtkChangeTrackerStep,vtkKWWizardStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description: 
   // Get/Set GUI - 
-  vtkGetObjectMacro(GUI, vtkTumorGrowthGUI);
-  virtual void SetGUI(vtkTumorGrowthGUI*); 
+  vtkGetObjectMacro(GUI, vtkChangeTrackerGUI);
+  virtual void SetGUI(vtkChangeTrackerGUI*); 
 
   // Description:
   // Reimplement the superclass's method (see vtkKWWizardStep).
@@ -58,7 +58,7 @@ public:
 
   virtual void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) { }
 
-  void SetNextStep(vtkTumorGrowthStep *init) { this->NextStep = init;}
+  void SetNextStep(vtkChangeTrackerStep *init) { this->NextStep = init;}
 
   virtual void GridCallback();
   virtual void SliceCallback();
@@ -68,14 +68,14 @@ public:
   vtkGetObjectMacro(Render_Mapper, vtkVolumeTextureMapper3D);
 
 protected:
-  vtkTumorGrowthStep();
-  ~vtkTumorGrowthStep();
+  vtkChangeTrackerStep();
+  ~vtkChangeTrackerStep();
 
-  vtkTumorGrowthGUI *GUI;
+  vtkChangeTrackerGUI *GUI;
   vtkKWFrameWithLabel               *Frame;
   vtkCallbackCommand *WizardGUICallbackCommand;
   // Needed so we can clean up mess when going backwards 
-  vtkTumorGrowthStep *NextStep;
+  vtkChangeTrackerStep *NextStep;
 
   void GridRemove();
   int  GridDefine();
@@ -105,8 +105,8 @@ protected:
   void CreateRender(vtkMRMLVolumeNode *volumeNode, int RayCastFlag);
 
 private:
-  vtkTumorGrowthStep(const vtkTumorGrowthStep&);
-  void operator=(const vtkTumorGrowthStep&);
+  vtkChangeTrackerStep(const vtkChangeTrackerStep&);
+  void operator=(const vtkChangeTrackerStep&);
 };
 
 #endif

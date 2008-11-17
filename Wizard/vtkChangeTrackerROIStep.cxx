@@ -1,8 +1,8 @@
-#include "vtkTumorGrowthROIStep.h"
+#include "vtkChangeTrackerROIStep.h"
 
-#include "vtkTumorGrowthGUI.h"
-#include "vtkTumorGrowthLogic.h"
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkChangeTrackerGUI.h"
+#include "vtkChangeTrackerLogic.h"
+#include "vtkMRMLChangeTrackerNode.h"
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
@@ -21,15 +21,15 @@
 #include "vtkKWMatrixWidget.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkTumorGrowthROIStep);
-vtkCxxRevisionMacro(vtkTumorGrowthROIStep, "$Revision: 1.2 $");
+vtkStandardNewMacro(vtkChangeTrackerROIStep);
+vtkCxxRevisionMacro(vtkChangeTrackerROIStep, "$Revision: 1.2 $");
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthROIStep::vtkTumorGrowthROIStep()
+vtkChangeTrackerROIStep::vtkChangeTrackerROIStep()
 {
   this->SetName("2/4. Define Volume of Interest"); 
   this->SetDescription("Define VOI by clicking left mouse button\n around the tumor or moving sliders"); 
-  this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthROIStep::WizardGUICallback);
+  this->WizardGUICallbackCommand->SetCallback(vtkChangeTrackerROIStep::WizardGUICallback);
 
   this->FrameButtons    = NULL;
   this->FrameBlank      = NULL;
@@ -51,7 +51,7 @@ vtkTumorGrowthROIStep::vtkTumorGrowthROIStep()
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthROIStep::~vtkTumorGrowthROIStep()
+vtkChangeTrackerROIStep::~vtkChangeTrackerROIStep()
 {
   if (this->FrameButtons)
   {
@@ -138,21 +138,21 @@ vtkTumorGrowthROIStep::~vtkTumorGrowthROIStep()
 
 }
 
-void vtkTumorGrowthROIStep::DeleteSuperSampleNode() 
+void vtkChangeTrackerROIStep::DeleteSuperSampleNode() 
 {
   this->GetGUI()->GetLogic()->DeleteSuperSample(1);
 } 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::ShowUserInterface()
+void vtkChangeTrackerROIStep::ShowUserInterface()
 {
-  // cout << "vtkTumorGrowthROIStep::ShowUserInterface() Start " << endl;
+  // cout << "vtkChangeTrackerROIStep::ShowUserInterface() Start " << endl;
   // ----------------------------------------
   // Display Scan1, Delete Super Sampled and Grid  
   // ----------------------------------------
   this->DeleteSuperSampleNode();
 
-  vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
   int dimensions[3]={1,1,1};
   if (node) {
     vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_Ref()));
@@ -161,7 +161,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
       applicationLogic->GetSelectionNode()->SetActiveVolumeID(volumeNode->GetID());
       applicationLogic->PropagateVolumeSelection(); 
       if (!volumeNode->GetImageData()) {
-     vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "No image data associated with Scan 1", vtkKWMessageDialog::ErrorIcon);
+     vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Change Tracker", "No image data associated with Scan 1", vtkKWMessageDialog::ErrorIcon);
      return;
       }
       memcpy(dimensions,volumeNode->GetImageData()->GetDimensions(),sizeof(int)*3);
@@ -181,7 +181,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   // Build GUI 
   // ----------------------------------------
 
-  this->vtkTumorGrowthStep::ShowUserInterface();
+  this->vtkChangeTrackerStep::ShowUserInterface();
   // Create the frame
   // Needs to be check bc otherwise with wizrd can be created over again
 
@@ -234,7 +234,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   if (!this->ButtonsShow->IsCreated()) {
     this->ButtonsShow->SetParent(this->FrameButtons);
     this->ButtonsShow->Create();
-    this->ButtonsShow->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    this->ButtonsShow->SetWidth(CHANGETRACKER_MENU_BUTTON_WIDTH);
     this->ButtonsShow->SetText("Show VOI");
     this->ButtonsShow->SetBalloonHelpString("Show/hide VOI in image viewer"); 
   }
@@ -245,7 +245,7 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   if (!this->ButtonsReset->IsCreated()) {
     this->ButtonsReset->SetParent(this->FrameButtons);
     this->ButtonsReset->Create();
-    this->ButtonsReset->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    this->ButtonsReset->SetWidth(CHANGETRACKER_MENU_BUTTON_WIDTH);
     this->ButtonsReset->SetText("Reset");
     this->ButtonsReset->SetBalloonHelpString("Reset Values"); 
   }
@@ -383,34 +383,34 @@ void vtkTumorGrowthROIStep::ShowUserInterface()
   }
   // Very Important 
   this->AddGUIObservers();
-  // Keep seperate bc GUIObserver is also called from vtkTumorGrowthGUI ! 
+  // Keep seperate bc GUIObserver is also called from vtkChangeTrackerGUI ! 
   // You only want to add the observers below when the step is active 
   this->AddROISamplingGUIObservers();
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::ROIXChangedCallback(double min, double max)  
+void vtkChangeTrackerROIStep::ROIXChangedCallback(double min, double max)  
 {
   this->ROIChangedCallback(0,min, max);
 }
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::ROIYChangedCallback(double min, double max)  
+void vtkChangeTrackerROIStep::ROIYChangedCallback(double min, double max)  
 {
   this->ROIChangedCallback(1,min, max);
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::ROIZChangedCallback(double min, double max)  
+void vtkChangeTrackerROIStep::ROIZChangedCallback(double min, double max)  
 {
   this->ROIChangedCallback(2,min, max);
 }  
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::ROIChangedCallback(int axis, double min, double max)  
+void vtkChangeTrackerROIStep::ROIChangedCallback(int axis, double min, double max)  
 {
-  vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode *mrmlNode = this->GetGUI()->GetNode();
   if (!mrmlNode) return;
 
   mrmlNode->SetROIMin(axis,int(min));  
@@ -422,9 +422,9 @@ void vtkTumorGrowthROIStep::ROIChangedCallback(int axis, double min, double max)
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::AddGUIObservers() 
+void vtkChangeTrackerROIStep::AddGUIObservers() 
 {
-  // cout << "vtkTumorGrowthROIStep::AddGUIObservers()" << endl; 
+  // cout << "vtkChangeTrackerROIStep::AddGUIObservers()" << endl; 
   // Make sure you do not add the same event twice - need to do it bc of wizrd structure
   if (this->ButtonsShow && (!this->ButtonsShow->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
     {
@@ -437,7 +437,7 @@ void vtkTumorGrowthROIStep::AddGUIObservers()
     } 
 }
 
-void vtkTumorGrowthROIStep::AddROISamplingGUIObservers() {
+void vtkChangeTrackerROIStep::AddROISamplingGUIObservers() {
   vtkRenderWindowInteractor *rwi0 = vtkSlicerApplicationGUI::SafeDownCast(
     this->GetGUI()->GetApplicationGUI())->GetMainSliceGUI("Red")->
     GetSliceViewer()->GetRenderWidget()->GetRenderWindowInteractor();
@@ -462,7 +462,7 @@ void vtkTumorGrowthROIStep::AddROISamplingGUIObservers() {
 } 
 
 
-void vtkTumorGrowthROIStep::RemoveGUIObservers() 
+void vtkChangeTrackerROIStep::RemoveGUIObservers() 
 {
   if (this->ButtonsShow) 
     {
@@ -477,7 +477,7 @@ void vtkTumorGrowthROIStep::RemoveGUIObservers()
 }
 
 
-void vtkTumorGrowthROIStep::RemoveROISamplingGUIObservers() {
+void vtkChangeTrackerROIStep::RemoveROISamplingGUIObservers() {
   if (!this->GetGUI()) return;
   vtkSlicerApplicationGUI *ApplicationGUI = vtkSlicerApplicationGUI::SafeDownCast(this->GetGUI()->GetApplicationGUI());
   if (!ApplicationGUI) return; 
@@ -492,15 +492,15 @@ void vtkTumorGrowthROIStep::RemoveROISamplingGUIObservers() {
   }
 }
 
-void vtkTumorGrowthROIStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
+void vtkChangeTrackerROIStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
 {
-    vtkTumorGrowthROIStep *self = reinterpret_cast<vtkTumorGrowthROIStep *>(clientData);
+    vtkChangeTrackerROIStep *self = reinterpret_cast<vtkChangeTrackerROIStep *>(clientData);
     if (self) { self->ProcessGUIEvents(caller, event, callData); }
 
 
 }
 
-void vtkTumorGrowthROIStep::ROIReset() {
+void vtkChangeTrackerROIStep::ROIReset() {
   // cout << "ROIReset Start" << endl;
   if (this->ROIX) this->ROIX->SetRange(-1,-1);
   if (this->ROIY) this->ROIY->SetRange(-1,-1);
@@ -509,7 +509,7 @@ void vtkTumorGrowthROIStep::ROIReset() {
 }
 
 
-void vtkTumorGrowthROIStep::ROIUpdateAxisWithNewSample(vtkKWRange *ROIAxis, int Sample) {
+void vtkChangeTrackerROIStep::ROIUpdateAxisWithNewSample(vtkKWRange *ROIAxis, int Sample) {
   if (!ROIAxis) return;
   double *oldRange = ROIAxis->GetRange();
   double newRange[2];
@@ -521,21 +521,21 @@ void vtkTumorGrowthROIStep::ROIUpdateAxisWithNewSample(vtkKWRange *ROIAxis, int 
   ROIAxis->SetRange(newRange);
 }
 
-void vtkTumorGrowthROIStep::ROIUpdateWithNewSample(int ijkSample[3]) {
+void vtkChangeTrackerROIStep::ROIUpdateWithNewSample(int ijkSample[3]) {
   // cout << "ROIUpdateWithNewSample start " << ijkSample[0] << " " << ijkSample[1] << " " << ijkSample[2] << " " << endl;
   this->ROIUpdateAxisWithNewSample(this->ROIX,ijkSample[0]);
   this->ROIUpdateAxisWithNewSample(this->ROIY,ijkSample[1]);
   this->ROIUpdateAxisWithNewSample(this->ROIZ,ijkSample[2]);
 }
 
-void vtkTumorGrowthROIStep::ROIUpdateAxisWithNode(vtkMRMLTumorGrowthNode* Node, vtkKWRange *ROIAxis, int Axis) {
+void vtkChangeTrackerROIStep::ROIUpdateAxisWithNode(vtkMRMLChangeTrackerNode* Node, vtkKWRange *ROIAxis, int Axis) {
   if (!Node || !ROIAxis) return;
   ROIAxis->SetRange(Node->GetROIMin(Axis),Node->GetROIMax(Axis));
 }
 
-void vtkTumorGrowthROIStep::ROIUpdateWithNode() {
+void vtkChangeTrackerROIStep::ROIUpdateWithNode() {
   // cout << "ROIUpdateWithNode Start" << endl;
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   this->ROIUpdateAxisWithNode(Node, this->ROIX,0); 
   this->ROIUpdateAxisWithNode(Node, this->ROIY,1); 
   this->ROIUpdateAxisWithNode(Node, this->ROIZ,2); 
@@ -545,9 +545,9 @@ void vtkTumorGrowthROIStep::ROIUpdateWithNode() {
 
 
 // Return 1 if it is a valid ROI and zero otherwise
-int vtkTumorGrowthROIStep::ROICheck() {
+int vtkChangeTrackerROIStep::ROICheck() {
   // Define Variables
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   if (!Node) return 0;
 
   vtkMRMLVolumeNode* volumeNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_Ref()));
@@ -555,9 +555,9 @@ int vtkTumorGrowthROIStep::ROICheck() {
   return this->GetGUI()->GetLogic()->CheckROI(volumeNode);
 }
 
-void vtkTumorGrowthROIStep::ROIMapUpdate() {
+void vtkChangeTrackerROIStep::ROIMapUpdate() {
 
-  vtkMRMLTumorGrowthNode* Node      =  this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node      =  this->GetGUI()->GetNode();
   if (!this->ROILabelMapNode || !this->ROILabelMap || !Node || !this->ROICheck()) return;
 
   int size[3]   = {Node->GetROIMax(0) - Node->GetROIMin(0) + 1, Node->GetROIMax(1) - Node->GetROIMin(1) + 1, Node->GetROIMax(2) - Node->GetROIMin(2) + 1};
@@ -569,15 +569,15 @@ void vtkTumorGrowthROIStep::ROIMapUpdate() {
 }
 
 
-int vtkTumorGrowthROIStep::ROIMapShow() {
+int vtkChangeTrackerROIStep::ROIMapShow() {
   // -----
   // Initialize
   if (!this->ROICheck()) {
-    vtkKWMessageDialog::PopupMessage(this->GUI->GetApplication(), this->GUI->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Please define VOI correctly before pressing button", vtkKWMessageDialog::ErrorIcon);
+    vtkKWMessageDialog::PopupMessage(this->GUI->GetApplication(), this->GUI->GetApplicationGUI()->GetMainSlicerWindow(),"Change Tracker", "Please define VOI correctly before pressing button", vtkKWMessageDialog::ErrorIcon);
     return 0;
   }
 
-  vtkMRMLTumorGrowthNode* Node      =  this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node      =  this->GetGUI()->GetNode();
   if (!Node) return 0;
   vtkMRMLScene* mrmlScene           =  Node->GetScene();
   vtkMRMLNode* mrmlFristScanRefNode =  mrmlScene->GetNodeByID(Node->GetScan1_Ref());
@@ -645,7 +645,7 @@ int vtkTumorGrowthROIStep::ROIMapShow() {
   return 1;
 }
 
-void vtkTumorGrowthROIStep::ROIMapRemove() {
+void vtkChangeTrackerROIStep::ROIMapRemove() {
   
   if (this->ROILabelMapNode && this->GetGUI()) { 
     this->GetGUI()->GetMRMLScene()->RemoveNode(this->ROILabelMapNode);
@@ -666,17 +666,17 @@ void vtkTumorGrowthROIStep::ROIMapRemove() {
 
 
 
-void vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *sliceGUI, vtkRenderWindowInteractor *rwi,int coords[3]) {
+void vtkChangeTrackerROIStep::RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *sliceGUI, vtkRenderWindowInteractor *rwi,int coords[3]) {
 
   coords[0] = coords[1] = coords[2] = -1;
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   if (!Node) {
-    cout << "ERROR: vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates: No Node" << endl;
+    cout << "ERROR: vtkChangeTrackerROIStep::RetrieveInteractorIJKCoordinates: No Node" << endl;
     return;
   } 
 
   if (!Node->GetScan1_Ref()) {
-    cout << "ERROR: vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates: No First Volume Defined" << endl;
+    cout << "ERROR: vtkChangeTrackerROIStep::RetrieveInteractorIJKCoordinates: No First Volume Defined" << endl;
     return;
   }
   vtkMRMLNode* mrmlNode =   Node->GetScene()->GetNodeByID(Node->GetScan1_Ref());
@@ -684,7 +684,7 @@ void vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *
 
   if (!volumeNode)
     {
-      cout << "ERROR: vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates: No Scan1_Ref" << endl;
+      cout << "ERROR: vtkChangeTrackerROIStep::RetrieveInteractorIJKCoordinates: No Scan1_Ref" << endl;
       return;
     }
 
@@ -719,7 +719,7 @@ void vtkTumorGrowthROIStep::RetrieveInteractorIJKCoordinates(vtkSlicerSliceGUI *
   //cout << "Dimen: " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << " " <<  endl;
 
 }
-void vtkTumorGrowthROIStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
+void vtkChangeTrackerROIStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
 
   if (event == vtkKWPushButton::InvokedEvent) {
     vtkKWPushButton *button = vtkKWPushButton::SafeDownCast(caller);
@@ -778,9 +778,9 @@ void vtkTumorGrowthROIStep::ProcessGUIEvents(vtkObject *caller, unsigned long ev
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::TransitionCallback() 
+void vtkChangeTrackerROIStep::TransitionCallback() 
 {
-  // cout << "vtkTumorGrowthROIStep::TransitionCallback() Start" << endl; 
+  // cout << "vtkChangeTrackerROIStep::TransitionCallback() Start" << endl; 
   if (this->ROICheck()) { 
      // ----------------------------
      // Create SuperSampledVolume 
@@ -790,7 +790,7 @@ void vtkTumorGrowthROIStep::TransitionCallback()
 
     if (outputNode) {
        // Prepare to update mrml node with results 
-       vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+       vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
        if (!Node) return;
               
        // Delete old attached node first 
@@ -800,7 +800,7 @@ void vtkTumorGrowthROIStep::TransitionCallback()
        
        Node->SetScan1_SuperSampleRef(outputNode->GetID());
        //cout << "==============================" << endl;
-       //cout << "vtkTumorGrowthROIStep::TransitionCallback " << Node->GetScan1_SuperSampleRef() << " " <<  Node->GetScan1_Ref() << endl;
+       //cout << "vtkChangeTrackerROIStep::TransitionCallback " << Node->GetScan1_SuperSampleRef() << " " <<  Node->GetScan1_Ref() << endl;
        //cout << "==============================" << endl;
 
        // Remove blue ROI screen 
@@ -808,24 +808,24 @@ void vtkTumorGrowthROIStep::TransitionCallback()
 
        this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep();
      } else {
-       vtkKWMessageDialog::PopupMessage(this->GUI->GetApplication(), this->GUI->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Could not proceed to next step - scan1 might have disappeared", vtkKWMessageDialog::ErrorIcon); 
+       vtkKWMessageDialog::PopupMessage(this->GUI->GetApplication(), this->GUI->GetApplicationGUI()->GetMainSlicerWindow(),"Change Tracker", "Could not proceed to next step - scan1 might have disappeared", vtkKWMessageDialog::ErrorIcon); 
      }
      // ---------------------------------
    } else {     
-     vtkKWMessageDialog::PopupMessage(this->GUI->GetApplication(), this->GUI->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Please define VOI correctly before proceeding", vtkKWMessageDialog::ErrorIcon);
+     vtkKWMessageDialog::PopupMessage(this->GUI->GetApplication(), this->GUI->GetApplicationGUI()->GetMainSlicerWindow(),"Change Tracker", "Please define VOI correctly before proceeding", vtkKWMessageDialog::ErrorIcon);
    }
 }
 
 
 //----------------------------------------------------------------------------
-void  vtkTumorGrowthROIStep::HideUserInterface()
+void  vtkChangeTrackerROIStep::HideUserInterface()
 {
   this->Superclass::HideUserInterface();
   this->RemoveROISamplingGUIObservers();
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthROIStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkChangeTrackerROIStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }

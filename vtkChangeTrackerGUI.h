@@ -1,28 +1,28 @@
-#ifndef __vtkTumorGrowthGUI_h
-#define __vtkTumorGrowthGUI_h
+#ifndef __vtkChangeTrackerGUI_h
+#define __vtkChangeTrackerGUI_h
 
 #include "vtkSlicerModuleGUI.h"
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 #include "vtkSlicerSliceLogic.h"
 #include "vtkKWScaleWithEntry.h"
 
 
-class vtkTumorGrowthLogic;
-class vtkMRMLTumorGrowthNode;
+class vtkChangeTrackerLogic;
+class vtkMRMLChangeTrackerNode;
 class vtkKWWizardWidget;
-class vtkTumorGrowthFirstScanStep;
-class vtkTumorGrowthROIStep;
-class vtkTumorGrowthSegmentationStep;
-class vtkTumorGrowthTypeStep;
-class vtkTumorGrowthAnalysisStep;
+class vtkChangeTrackerFirstScanStep;
+class vtkChangeTrackerROIStep;
+class vtkChangeTrackerSegmentationStep;
+class vtkChangeTrackerTypeStep;
+class vtkChangeTrackerAnalysisStep;
 class vtkImageData;
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthGUI : 
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerGUI : 
   public vtkSlicerModuleGUI
 {
 public:
-  static vtkTumorGrowthGUI *New();
-  vtkTypeMacro(vtkTumorGrowthGUI,vtkSlicerModuleGUI);
+  static vtkChangeTrackerGUI *New();
+  vtkTypeMacro(vtkChangeTrackerGUI,vtkSlicerModuleGUI);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description: Get the categorization of the module.
@@ -31,8 +31,8 @@ public:
 
   // Description: 
   // Get/Set logic node
-  vtkGetObjectMacro(Logic, vtkTumorGrowthLogic);
-  virtual void SetLogic(vtkTumorGrowthLogic*);
+  vtkGetObjectMacro(Logic, vtkChangeTrackerLogic);
+  virtual void SetLogic(vtkChangeTrackerLogic*);
   
 
   // Description:
@@ -41,18 +41,18 @@ public:
   // to allow loadable modules.
   virtual void SetModuleLogic ( vtkSlicerLogic *logic )
   {
-    this->SetLogic(reinterpret_cast<vtkTumorGrowthLogic*> (logic)); 
+    this->SetLogic(reinterpret_cast<vtkChangeTrackerLogic*> (logic)); 
   }
 
   // Description: 
   // Get/Set MRML node
-  vtkGetObjectMacro(Node, vtkMRMLTumorGrowthNode);
-  virtual void SetNode(vtkMRMLTumorGrowthNode*);
+  vtkGetObjectMacro(Node, vtkMRMLChangeTrackerNode);
+  virtual void SetNode(vtkMRMLChangeTrackerNode*);
 
   // Description: 
   // Get wizard widget
   vtkGetObjectMacro(WizardWidget, vtkKWWizardWidget);
-  // vtkGetObjectMacro(AnatomicalStructureStep, vtkTumorGrowthAnatomicalStructureStep);
+  // vtkGetObjectMacro(AnatomicalStructureStep, vtkChangeTrackerAnatomicalStructureStep);
 
   // Description:
   // Create widgets
@@ -111,10 +111,10 @@ public:
   // Updates parameters values in MRML node based on GUI widgets 
   void UpdateMRML();
   
-  vtkTumorGrowthFirstScanStep* GetFirstScanStep() {return this->FirstScanStep;}
+  vtkChangeTrackerFirstScanStep* GetFirstScanStep() {return this->FirstScanStep;}
   void UpdateNode();
 
-  vtkGetObjectMacro(SegmentationStep,vtkTumorGrowthSegmentationStep);
+  vtkGetObjectMacro(SegmentationStep,vtkChangeTrackerSegmentationStep);
 
   void SliceLogicRemove();
   void SliceLogicDefine();
@@ -131,10 +131,10 @@ public:
 protected:
    static void SliceLogicCallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
 private:
-  vtkTumorGrowthGUI();
-  ~vtkTumorGrowthGUI();
-  vtkTumorGrowthGUI(const vtkTumorGrowthGUI&);
-  void operator=(const vtkTumorGrowthGUI&);
+  vtkChangeTrackerGUI();
+  ~vtkChangeTrackerGUI();
+  vtkChangeTrackerGUI(const vtkChangeTrackerGUI&);
+  void operator=(const vtkChangeTrackerGUI&);
 
   // Description:
   // Updates GUI widgets based on parameters values in MRML node
@@ -146,19 +146,19 @@ private:
 
   void SliceLogicRemoveGUIObserver();
 
-  vtkTumorGrowthLogic       *Logic;
-  vtkMRMLTumorGrowthNode    *Node;
+  vtkChangeTrackerLogic       *Logic;
+  vtkMRMLChangeTrackerNode    *Node;
   
   char *ModuleName;
 
   // Description:
   // The wizard widget and steps
   vtkKWWizardWidget                      *WizardWidget;
-  vtkTumorGrowthFirstScanStep        *FirstScanStep;
-  vtkTumorGrowthROIStep              *ROIStep;
-  vtkTumorGrowthSegmentationStep     *SegmentationStep;
-  vtkTumorGrowthTypeStep             *TypeStep;
-  vtkTumorGrowthAnalysisStep         *AnalysisStep;
+  vtkChangeTrackerFirstScanStep        *FirstScanStep;
+  vtkChangeTrackerROIStep              *ROIStep;
+  vtkChangeTrackerSegmentationStep     *SegmentationStep;
+  vtkChangeTrackerTypeStep             *TypeStep;
+  vtkChangeTrackerAnalysisStep         *AnalysisStep;
 
   vtkSlicerSliceLogic *SliceLogic;
   vtkKWScaleWithEntry *SliceController_OffsetScale;

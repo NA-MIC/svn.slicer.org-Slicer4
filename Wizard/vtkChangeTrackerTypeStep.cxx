@@ -1,9 +1,9 @@
-#include "vtkTumorGrowthTypeStep.h"
-#include "vtkTumorGrowthGUI.h"
+#include "vtkChangeTrackerTypeStep.h"
+#include "vtkChangeTrackerGUI.h"
 
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkMRMLChangeTrackerNode.h"
 
-#include "vtkTumorGrowthLogic.h"
+#include "vtkChangeTrackerLogic.h"
 #include "vtkSlicerApplicationGUI.h"
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkSlicerModelsLogic.h"
@@ -18,15 +18,15 @@
 #include "vtkSlicerSlicesControlGUI.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkTumorGrowthTypeStep);
-vtkCxxRevisionMacro(vtkTumorGrowthTypeStep, "$Revision: 1.2 $");
+vtkStandardNewMacro(vtkChangeTrackerTypeStep);
+vtkCxxRevisionMacro(vtkChangeTrackerTypeStep, "$Revision: 1.2 $");
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthTypeStep::vtkTumorGrowthTypeStep()
+vtkChangeTrackerTypeStep::vtkChangeTrackerTypeStep()
 {
   this->SetName("3/4. Define Metric"); 
   this->SetDescription("We provide several metrics to meassure growth."); 
-  this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthTypeStep::WizardGUICallback);
+  this->WizardGUICallbackCommand->SetCallback(vtkChangeTrackerTypeStep::WizardGUICallback);
 
   this->FrameTypeIntensity = NULL;
   this->FrameTypeJacobian = NULL;
@@ -37,7 +37,7 @@ vtkTumorGrowthTypeStep::vtkTumorGrowthTypeStep()
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthTypeStep::~vtkTumorGrowthTypeStep()
+vtkChangeTrackerTypeStep::~vtkChangeTrackerTypeStep()
 {
 
   if (this->FrameTypeIntensity) 
@@ -68,23 +68,23 @@ vtkTumorGrowthTypeStep::~vtkTumorGrowthTypeStep()
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthTypeStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
+void vtkChangeTrackerTypeStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
 {
-    vtkTumorGrowthTypeStep *self = reinterpret_cast<vtkTumorGrowthTypeStep *>(clientData);
+    vtkChangeTrackerTypeStep *self = reinterpret_cast<vtkChangeTrackerTypeStep *>(clientData);
     if (self) { self->ProcessGUIEvents(caller, event, callData); }
 
 
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthTypeStep::ShowUserInterface()
+void vtkChangeTrackerTypeStep::ShowUserInterface()
 {
-  // cout << "vtkTumorGrowthTypeStep::ShowUserInterface Start" << endl;
+  // cout << "vtkChangeTrackerTypeStep::ShowUserInterface Start" << endl;
   // ----------------------------------------
   // Display Super Sampled Volume 
   // ---------------------------------------- 
   this->GetGUI()->GetLogic()->DeleteAnalyzeOutput(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));      
-  vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
   if (node) { 
     vtkMRMLVolumeNode *volumeSampleNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SuperSampleRef()));
     vtkMRMLVolumeNode *volumeSegmentNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SegmentRef()));
@@ -118,7 +118,7 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
   // Build GUI 
   // ----------------------------------------
 
-  this->vtkTumorGrowthStep::ShowUserInterface();
+  this->vtkChangeTrackerStep::ShowUserInterface();
 
   // Create the frame
   // Needs to be check bc otherwise with wizrd can be created over again
@@ -210,7 +210,7 @@ void vtkTumorGrowthTypeStep::ShowUserInterface()
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthTypeStep::TransitionCallback( ) 
+void vtkChangeTrackerTypeStep::TransitionCallback( ) 
 {
   // Do not proceed if buttons are not defined
   if (!this->TypeIntensityCheckButton || !this->TypeJacobianCheckButton) return; 
@@ -222,7 +222,7 @@ void vtkTumorGrowthTypeStep::TransitionCallback( )
   // ============================
   // make sure that analyze related nodes are empty 
   // Delete old attached node first 
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   if (!Node) return;
   {
     vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetAnalysis_Intensity_Ref()));
@@ -236,7 +236,7 @@ void vtkTumorGrowthTypeStep::TransitionCallback( )
   Node->SetAnalysis_Intensity_Flag(this->TypeIntensityCheckButton->GetSelectedState());
   Node->SetAnalysis_Deformable_Flag(this->TypeJacobianCheckButton->GetSelectedState());
 
-  vtkTumorGrowthLogic* Logic = this->GetGUI()->GetLogic();
+  vtkChangeTrackerLogic* Logic = this->GetGUI()->GetLogic();
   if (!Logic->AnalyzeGrowth(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()))) return;
 
   this->RemoveResults();  
@@ -244,13 +244,13 @@ void vtkTumorGrowthTypeStep::TransitionCallback( )
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthTypeStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkChangeTrackerTypeStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
 
 
-void vtkTumorGrowthTypeStep::RemoveResults()  { 
+void vtkChangeTrackerTypeStep::RemoveResults()  { 
   this->RenderRemove();
 }
 

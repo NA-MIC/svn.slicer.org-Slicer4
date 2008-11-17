@@ -72,7 +72,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define __vtkImageKilianDistanceTransform_h
 
 #include "vtkImageDecomposeFilter.h"
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 
 #define VTK_EMKILIAN_EDT_SAITO_CACHED 0
 #define VTK_EMKILIAN_EDT_SAITO 1 
@@ -80,7 +80,7 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #define VTK_EMKILIAN_EDT_EUCLIDEAN  0
 #define VTK_EMKILIAN_EDT_SQUARE_ROOT 1
                                   
-class  VTK_TUMORGROWTH_EXPORT vtkImageKilianDistanceTransform : public vtkImageDecomposeFilter
+class  VTK_CHANGETRACKER_EXPORT vtkImageKilianDistanceTransform : public vtkImageDecomposeFilter
 {
 public:
   static vtkImageKilianDistanceTransform *New();

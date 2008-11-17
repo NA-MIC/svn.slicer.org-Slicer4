@@ -1,4 +1,4 @@
-project(TumorGrowthCommandLineExecutable)
+project(ChangeTrackerCommandLineExecutable)
 
 cmake_minimum_required(VERSION 2.4)
 if(COMMAND cmake_policy)
@@ -18,8 +18,8 @@ endif(NOT Slicer3_SOURCE_DIR)
 # Include dirs
 
 include_directories(
-  ${TumorGrowth_SOURCE_DIR}
-  ${TumorGrowth_SOURCE_DIR}/CommandLineApplication
+  ${ChangeTracker_SOURCE_DIR}
+  ${ChangeTracker_SOURCE_DIR}/CommandLineApplication
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
   ${vtkTeem_SOURCE_DIR} 
@@ -29,7 +29,7 @@ include_directories(
 # --------------------------------------------------------------------------
 # Sources
 
-set(CLP_MODULE TumorGrowthCommandLine)
+set(CLP_MODULE ChangeTrackerCommandLine)
 set(${CLP_MODULE}_SOURCE
   ${CLP_MODULE}.cxx
   )
@@ -44,7 +44,7 @@ add_executable(${CLP_MODULE} ${${CLP_MODULE}_SOURCE})
 slicer3_set_plugins_output_path(${CLP_MODULE})
 target_link_libraries(
   ${CLP_MODULE}
-  TumorGrowth
+  ChangeTracker
   ITKIO 
   ITKCommon 
   vtkTeem

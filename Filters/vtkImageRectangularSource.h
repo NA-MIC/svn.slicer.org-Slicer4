@@ -8,9 +8,9 @@
 #define __vtkImageRectangularSource_h
 
 #include "vtkImageSource.h"
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 
-class  VTK_TUMORGROWTH_EXPORT vtkImageRectangularSource : public vtkImageSource
+class  VTK_CHANGETRACKER_EXPORT vtkImageRectangularSource : public vtkImageSource
 {
 public:
   static vtkImageRectangularSource *New();

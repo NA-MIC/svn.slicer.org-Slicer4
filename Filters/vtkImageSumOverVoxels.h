@@ -26,9 +26,9 @@ MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 
 #include "vtkImageToImageFilter.h"
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 
-class VTK_TUMORGROWTH_EXPORT vtkImageSumOverVoxels : public vtkImageToImageFilter
+class VTK_CHANGETRACKER_EXPORT vtkImageSumOverVoxels : public vtkImageToImageFilter
 {
   public:
   static vtkImageSumOverVoxels *New();

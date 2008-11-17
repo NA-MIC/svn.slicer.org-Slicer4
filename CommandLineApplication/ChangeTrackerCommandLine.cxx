@@ -2,10 +2,10 @@
 #include <vector>
 #include <string>
 
-#include "vtkTumorGrowthLogic.h"
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkChangeTrackerLogic.h"
+#include "vtkMRMLChangeTrackerNode.h"
 
-#include "TumorGrowthCommandLineCLP.h"
+#include "ChangeTrackerCommandLineCLP.h"
 #include "vtkNRRDReader.h"
 #include "vtkNRRDWriter.h" 
 #include "vtkSlicerApplication.h"
@@ -21,13 +21,13 @@
 
 #include <vtksys/SystemTools.hxx>
 
-// Go to Slicer3-build/lib/Slicer3/Plugins/TumorGrowthCommandLine
-// ./TumorGrowthCommandLine --sensitivity 0.5 --threshold 100,277 --roi_min 73,135,92 --roi_max 95,165,105 --intensity_analysis --deformable_analysis --scan1 /data/local/BrainScienceFoundation/Demo/07-INRIA/data/SILVA/2006-spgr.nhdr --scan2 /data/local/BrainScienceFoundation/Demo/07-INRIA/data/SILVA/2007-spgr-scan1.nhdr
+// Go to Slicer3-build/lib/Slicer3/Plugins/ChangeTrackerCommandLine
+// ./ChangeTrackerCommandLine --sensitivity 0.5 --threshold 100,277 --roi_min 73,135,92 --roi_max 95,165,105 --intensity_analysis --deformable_analysis --scan1 /data/local/BrainScienceFoundation/Demo/07-INRIA/data/SILVA/2006-spgr.nhdr --scan2 /data/local/BrainScienceFoundation/Demo/07-INRIA/data/SILVA/2007-spgr-scan1.nhdr
 //
 //
-// This is necessary to load in TumorGrowth package in TCL interp.
+// This is necessary to load in ChangeTracker package in TCL interp.
 extern "C" int Slicerbasegui_Init(Tcl_Interp *interp);
-extern "C" int Tumorgrowth_Init(Tcl_Interp *interp);
+extern "C" int Changetracker_Init(Tcl_Interp *interp);
 extern "C" int Vtkteem_Init(Tcl_Interp *interp);
 extern "C" int Vtkitk_Init(Tcl_Interp *interp);
 
@@ -208,7 +208,7 @@ int tgRegisterAG(vtkKWApplication *app, Tcl_Interp *interp, vtkImageData* Target
   vtkGeneralTransform* Transform = vtkGeneralTransform::New();
   std::string TransformTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,Transform));
 
-  std::string CMD = "::TumorGrowthReg::RegistrationAG " +  TargetTcl + " IS " + SourceResPadOutputTcl + " IS 1 0 0 50 mono 3 " + TransformTcl;
+  std::string CMD = "::ChangeTrackerReg::RegistrationAG " +  TargetTcl + " IS " + SourceResPadOutputTcl + " IS 1 0 0 50 mono 3 " + TransformTcl;
    
   if (!app->Script(CMD.c_str())) {
     cout << "Error:  Could not perform Registration";
@@ -218,10 +218,10 @@ int tgRegisterAG(vtkKWApplication *app, Tcl_Interp *interp, vtkImageData* Target
     return 1; 
   } 
    
-  CMD = "::TumorGrowthReg::ResampleAG_GUI " + std::string(SourceResPadOutputTcl) + " " + TargetTcl + " " +  TransformTcl + " " + Output;
+  CMD = "::ChangeTrackerReg::ResampleAG_GUI " + std::string(SourceResPadOutputTcl) + " " + TargetTcl + " " +  TransformTcl + " " + Output;
   app->Script(CMD.c_str());
    
-  CMD = "::TumorGrowthReg::WriteTransformationAG "  +  TransformTcl + " " + WorkingDir;
+  CMD = "::ChangeTrackerReg::WriteTransformationAG "  +  TransformTcl + " " + WorkingDir;
   app->Script(CMD.c_str());
 
   Transform->Delete();
@@ -259,8 +259,8 @@ int main(int argc, char** argv)
       return EXIT_FAILURE; 
     }
   
-    // This is necessary to load in TumorGrowth package in TCL interp.
-    Tumorgrowth_Init(interp);
+    // This is necessary to load in ChangeTracker package in TCL interp.
+    Changetracker_Init(interp);
     Vtkteem_Init(interp);
     Vtkitk_Init(interp);
 
@@ -274,8 +274,8 @@ int main(int argc, char** argv)
     // vtkSlicerApplication *app   = vtkSlicerApplication::GetInstance();
     vtkKWApplication *app   = vtkKWApplication::New();
 
-    vtkTumorGrowthLogic  *logic = vtkTumorGrowthLogic::New();
-    logic->SetModuleName("TumorGrowth");
+    vtkChangeTrackerLogic  *logic = vtkChangeTrackerLogic::New();
+    logic->SetModuleName("ChangeTracker");
     std::string logicTcl = vtksys::SystemTools::DuplicateString(vtkKWTkUtilities::GetTclNameFromPointer(interp,logic));
     logic->SourceAnalyzeTclScripts(app);
  
@@ -395,7 +395,7 @@ int main(int argc, char** argv)
          std::string CMD = "catch { exec mv " + tg.WorkingDir + "/LinearRegistration.txt " + tg.WorkingDir + "/GlobalLinearRegistration.txt }";
          app->Script(CMD.c_str());
    
-         CMD = "catch { ::TumorGrowthReg::DeleteTransformAG }";
+         CMD = "catch { ::ChangeTrackerReg::DeleteTransformAG }";
          app->Script(CMD.c_str());
    
          CMD = tg.WorkingDir + "/TG_scan2_Global.nhdr";
@@ -448,8 +448,8 @@ int main(int argc, char** argv)
          // -------------------------------------
          cout << "=== Segment Scan1 ===" << endl;
          int range[2] = {tgThreshold[0],tgThreshold[1]};
-         vtkTumorGrowthLogic::DefinePreSegment(Scan1SuperSample,range,Scan1PreSegment);
-         vtkTumorGrowthLogic::DefineSegment(Scan1PreSegment->GetOutput(),Scan1Segment);
+         vtkChangeTrackerLogic::DefinePreSegment(Scan1SuperSample,range,Scan1PreSegment);
+         vtkChangeTrackerLogic::DefineSegment(Scan1PreSegment->GetOutput(),Scan1Segment);
    
          tgWriteVolume(Scan1SegmentFileName.c_str(),supersampleMatrix,Scan1Segment->GetOutput());
      Scan1SegmentOutput->DeepCopy(Scan1Segment->GetOutput());
@@ -467,7 +467,7 @@ int main(int argc, char** argv)
          std::string CMD = "catch { exec mv " + tg.WorkingDir + "/LinearRegistration.txt " + tg.WorkingDir + "/LocalLinearRegistration.txt }";
          app->Script(CMD.c_str());
    
-         CMD = "catch { ::TumorGrowthReg::DeleteTransformAG }";
+         CMD = "catch { ::ChangeTrackerReg::DeleteTransformAG }";
          app->Script(CMD.c_str());
 
          std::string Scan2LocalFileName = tg.WorkingDir + "/TG_scan2_Local.nhdr"; 
@@ -488,7 +488,7 @@ int main(int argc, char** argv)
     if (1) {
           // -------------------------------------
           cout << "=== Normalize Scan2 ===" << endl;
-          std::string CMD = "::TumorGrowthTcl::HistogramNormalization_FCT " + Scan1SuperSampleTcl + " " + Scan1SegmentOutputTcl + " " 
+          std::string CMD = "::ChangeTrackerTcl::HistogramNormalization_FCT " + Scan1SuperSampleTcl + " " + Scan1SegmentOutputTcl + " " 
                                                                             + Scan2LocalTcl + " " + Scan2LocalNormalizedTcl;
           app->Script(CMD.c_str()); 
           tgWriteVolume(Scan2LocalNormalizedFileName.c_str(),supersampleMatrix, Scan2LocalNormalized);
@@ -511,7 +511,7 @@ int main(int argc, char** argv)
     if (tgIntensityAnalysisFlag) { 
       cout << "=== Intensity Based Analysis ===" << endl;
 
-      std::string CMD = "return $TumorGrowthTcl::newIntensityAnalysis";
+      std::string CMD = "return $ChangeTrackerTcl::newIntensityAnalysis";
       int newIntensityAnalysis = atoi(app->Script(CMD.c_str()));
 
       char parameters[100];
@@ -519,25 +519,25 @@ int main(int argc, char** argv)
 
       if (newIntensityAnalysis) { 
       // New Form without intensity thresholding
-      CMD = "::TumorGrowthTcl::Analysis_Intensity_CMD " + logicTcl + " " + Scan1SuperSampleTcl + " " + Scan1SegmentOutputTcl + " " +  Scan2LocalNormalizedTcl + " " + parameters ;
+      CMD = "::ChangeTrackerTcl::Analysis_Intensity_CMD " + logicTcl + " " + Scan1SuperSampleTcl + " " + Scan1SegmentOutputTcl + " " +  Scan2LocalNormalizedTcl + " " + parameters ;
 
       } else {
         if (1) {
          char ThreshString[1024];
          sprintf(ThreshString," %i %i ", tgThreshold[0], tgThreshold[1]);
-         CMD = "::TumorGrowthTcl::IntensityThresholding_Fct " + Scan1SuperSampleTcl + " " + Scan1SuperSampleTcl + ThreshString + Scan1IntensityTcl;
+         CMD = "::ChangeTrackerTcl::IntensityThresholding_Fct " + Scan1SuperSampleTcl + " " + Scan1SuperSampleTcl + ThreshString + Scan1IntensityTcl;
          app->Script(CMD.c_str());
    
          std::string Scan1IntensityFileName = tg.WorkingDir + "/TG_scan1_Thr.nhdr";
          tgWriteVolume(Scan1IntensityFileName.c_str(),supersampleMatrix, Scan1Intensity);
    
-         CMD = "::TumorGrowthTcl::IntensityThresholding_Fct " + Scan2LocalNormalizedTcl + " " + Scan1SuperSampleTcl + ThreshString + Scan2IntensityTcl;
+         CMD = "::ChangeTrackerTcl::IntensityThresholding_Fct " + Scan2LocalNormalizedTcl + " " + Scan1SuperSampleTcl + ThreshString + Scan2IntensityTcl;
          app->Script(CMD.c_str());
    
          std::string Scan2IntensityFileName = tg.WorkingDir + "/TG_scan2_Thr.nhdr";
          tgWriteVolume(Scan2IntensityFileName.c_str(),supersampleMatrix,Scan2Intensity);
 
-      CMD = "::TumorGrowthTcl::Analysis_Intensity_CMD " + logicTcl + " " + Scan1IntensityTcl + " " + Scan1SegmentOutputTcl + " " + Scan2IntensityTcl + parameters;
+      CMD = "::ChangeTrackerTcl::Analysis_Intensity_CMD " + logicTcl + " " + Scan1IntensityTcl + " " + Scan1SegmentOutputTcl + " " + Scan2IntensityTcl + parameters;
     }
 
 
@@ -570,7 +570,7 @@ int main(int argc, char** argv)
       std::string ANALYSIS_SEGM_FILE                 = tg.WorkingDir + "/Analysis_Deformable_Sementation_Result.txt";    
       std::string ANALYSIS_JACOBIAN_FILE             = tg.WorkingDir + "/Analysis_Deformable_Jaccobian_Result.txt";  
 
-      std::string CMD =  "::TumorGrowthTcl::Analysis_Deformable_Fct " + Scan1SuperSampleFileName + " " + Scan1SegmentFileName + " " + Scan2LocalNormalizedFileName + " "
+      std::string CMD =  "::ChangeTrackerTcl::Analysis_Deformable_Fct " + Scan1SuperSampleFileName + " " + Scan1SegmentFileName + " " + Scan2LocalNormalizedFileName + " "
                                                                   + SCAN1_TO_SCAN2_SEGM_NAME + " " + SCAN1_TO_SCAN2_DEFORM_NAME + " " 
                                                                       + SCAN1_TO_SCAN2_DEFORM_INVERSE_NAME + " " + SCAN1_TO_SCAN2_RESAMPLED_NAME + " "  
                                                                   + ANALYSIS_SEGM_FILE + " " + ANALYSIS_JACOBIAN_FILE;
@@ -579,11 +579,11 @@ int main(int argc, char** argv)
    
       app->Script(CMD.c_str());
 
-      CMD =  "lindex [::TumorGrowthTcl::ReadASCIIFile " + ANALYSIS_SEGM_FILE +"] 0";
+      CMD =  "lindex [::ChangeTrackerTcl::ReadASCIIFile " + ANALYSIS_SEGM_FILE +"] 0";
       Analysis_SEGM_Growth = atof(app->Script(CMD.c_str()));
       cout << "Segmentation Result " << Analysis_SEGM_Growth <<endl;; 
 
-      CMD =  "lindex [::TumorGrowthTcl::ReadASCIIFile " + ANALYSIS_JACOBIAN_FILE +"] 0";
+      CMD =  "lindex [::ChangeTrackerTcl::ReadASCIIFile " + ANALYSIS_JACOBIAN_FILE +"] 0";
       Analysis_JACO_Growth = atof(app->Script(CMD.c_str()));
       cout << "Jacobian Result: " << Analysis_JACO_Growth << endl;
     } 
@@ -599,7 +599,7 @@ int main(int argc, char** argv)
      return EXIT_FAILURE;
       }
  
-      outFile  << "This file was generated by vtkMrmTumorGrowthNode " << "\n";
+      outFile  << "This file was generated by vtkMrmChangeTrackerNode " << "\n";
       outFile  << "Date:      " << app->Script("exec date") << "\n";
       outFile  << "Scan1_Ref: " << tgScan1.c_str()     << "\n";
       outFile  << "Scan2_Ref: " << tgScan2.c_str()     << "\n";

@@ -1,9 +1,9 @@
-#ifndef __vtkTumorGrowthLogic_h
-#define __vtkTumorGrowthLogic_h
+#ifndef __vtkChangeTrackerLogic_h
+#define __vtkChangeTrackerLogic_h
 
 #include "vtkSlicerModuleLogic.h"
-#include "vtkTumorGrowth.h"
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkChangeTracker.h"
+#include "vtkMRMLChangeTrackerNode.h"
 #include "vtkTransform.h"
 
 #include <string>
@@ -17,12 +17,12 @@ class vtkImageMathematics;
 class vtkImageIslandFilter;
 class vtkImageMedian3D;
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthLogic : 
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerLogic : 
   public vtkSlicerModuleLogic
 {
 public:
-  static vtkTumorGrowthLogic *New();
-  vtkTypeMacro(vtkTumorGrowthLogic,vtkSlicerModuleLogic);
+  static vtkChangeTrackerLogic *New();
+  vtkTypeMacro(vtkChangeTrackerLogic,vtkSlicerModuleLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
 
  // TODO: do we need to observe MRML here?
@@ -38,10 +38,10 @@ public:
   vtkGetStringMacro (ModuleName);
   vtkSetStringMacro (ModuleName);
 
-  vtkGetObjectMacro (TumorGrowthNode, vtkMRMLTumorGrowthNode);
-  void SetAndObserveTumorGrowthNode(vtkMRMLTumorGrowthNode *n) 
+  vtkGetObjectMacro (ChangeTrackerNode, vtkMRMLChangeTrackerNode);
+  void SetAndObserveChangeTrackerNode(vtkMRMLChangeTrackerNode *n) 
     {
-    vtkSetAndObserveMRMLNodeMacro( this->TumorGrowthNode, n);
+    vtkSetAndObserveMRMLNodeMacro( this->ChangeTrackerNode, n);
     }
 
 
@@ -134,10 +134,10 @@ public:
 
 
 private:
-  vtkTumorGrowthLogic();
-  ~vtkTumorGrowthLogic();
-  vtkTumorGrowthLogic(const vtkTumorGrowthLogic&);
-  void operator=(const vtkTumorGrowthLogic&);
+  vtkChangeTrackerLogic();
+  ~vtkChangeTrackerLogic();
+  vtkChangeTrackerLogic(const vtkChangeTrackerLogic&);
+  void operator=(const vtkChangeTrackerLogic&);
 
   // not currently used
   vtkSetStringMacro(ProgressCurrentAction);
@@ -148,7 +148,7 @@ private:
   //
   // because the mrml nodes are very complicated for this module, we
   // delegate the handeling of them to a MRML manager
-  vtkMRMLTumorGrowthNode* TumorGrowthNode;
+  vtkMRMLChangeTrackerNode* ChangeTrackerNode;
 
   char *ModuleName;
 

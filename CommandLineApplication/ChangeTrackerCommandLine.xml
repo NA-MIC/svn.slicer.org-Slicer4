@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
   <category> Filtering </category>
-  <title>TumorGrowth Command-line </title>
+  <title>ChangeTracker Command-line </title>
   <description>
-  TumorGrowth command-line module description and help.
+  ChangeTracker command-line module description and help.
   </description>
-  <contributor>Kilian Pohl</contributor>
+  <contributor>Kilian Pohl, Andriy Fedorov</contributor>
   <acknowledgements>Brain Science Foundation</acknowledgements>
    <parameters>
     <label>Inputs and Outputs</label>

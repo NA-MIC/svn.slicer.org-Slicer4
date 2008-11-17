@@ -20,7 +20,7 @@
 #ifndef __vtkImageGCR_h
 #define __vtkImageGCR_h
 
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 
 #include <vtkTransform.h>
 #include <vtkGeneralTransform.h>
@@ -31,7 +31,7 @@
 #define VTK_IMAGE_GCR_CO 3
 #define VTK_IMAGE_GCR_MI 4
 
-class VTK_TUMORGROWTH_EXPORT vtkImageGCR : public vtkTransform {
+class VTK_CHANGETRACKER_EXPORT vtkImageGCR : public vtkTransform {
 public:
   static vtkImageGCR* New();
   vtkTypeMacro(vtkImageGCR,vtkTransform);

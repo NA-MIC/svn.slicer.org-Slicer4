@@ -4,7 +4,7 @@ package require Itcl
 #
 if {0} { ;# comment
 
-  This is function is executed by TumorGrowth  
+  This is function is executed by ChangeTracker  
 
 # TODO : 
 
@@ -17,7 +17,7 @@ if {0} { ;# comment
 #
 
 # Remember to run make before executing script again so that this tcl script is copied over to slicer3-build directory 
-namespace eval TumorGrowthTcl {
+namespace eval ChangeTrackerTcl {
     variable newIntensityAnalysis 1
 
     # the region were we detect growth or shrinkage around the segmentation in square voxels 
@@ -74,7 +74,7 @@ namespace eval TumorGrowthTcl {
     proc HistogramNormalization_FCT {SCAN1 SCAN1_SEGMENT SCAN2 OUTPUT} {
       # puts "Match intensities of Scan2 to Scan1" 
       # Just use pixels that are clearly inside the tumor => generate label map of inside tumor 
-      # Kilian -we deviate here from slicer2 there SCAN1_SEGMENT =  [TumorGrowth(Scan1,PreSegment) GetOutput]
+      # Kilian -we deviate here from slicer2 there SCAN1_SEGMENT =  [ChangeTracker(Scan1,PreSegment) GetOutput]
 
       catch {TUMOR_DIST Delete}
       # This did not work anymore 
@@ -99,7 +99,7 @@ namespace eval TumorGrowthTcl {
         # This is much better - bc it is not set but for right now we set it static 
         # TUMOR_INSIDE ThresholdByUpper [expr $Max*0.5]
         # Later - compute dynamically 
-        TUMOR_INSIDE ThresholdByUpper $TumorGrowthTcl::RegionChangingBand
+        TUMOR_INSIDE ThresholdByUpper $ChangeTrackerTcl::RegionChangingBand
         TUMOR_INSIDE SetInValue 1
         TUMOR_INSIDE SetOutValue 0
       TUMOR_INSIDE Update
@@ -127,15 +127,15 @@ namespace eval TumorGrowthTcl {
        } else {
        set NormFactor [expr  double($Scan1Intensities) / double($Scan2Intensities)]
        }
-       catch {TumorGrowth(Scan2,ROISuperSampleNormalized) Delete}
-       vtkImageMathematics TumorGrowth(Scan2,ROISuperSampleNormalized)
-         TumorGrowth(Scan2,ROISuperSampleNormalized) SetInput1  $INPUT 
-         TumorGrowth(Scan2,ROISuperSampleNormalized) SetOperationToMultiplyByK 
-         TumorGrowth(Scan2,ROISuperSampleNormalized) SetConstantK $NormFactor
-       TumorGrowth(Scan2,ROISuperSampleNormalized) Update      
-       $OUTPUT DeepCopy [TumorGrowth(Scan2,ROISuperSampleNormalized) GetOutput]
+       catch {ChangeTracker(Scan2,ROISuperSampleNormalized) Delete}
+       vtkImageMathematics ChangeTracker(Scan2,ROISuperSampleNormalized)
+         ChangeTracker(Scan2,ROISuperSampleNormalized) SetInput1  $INPUT 
+         ChangeTracker(Scan2,ROISuperSampleNormalized) SetOperationToMultiplyByK 
+         ChangeTracker(Scan2,ROISuperSampleNormalized) SetConstantK $NormFactor
+       ChangeTracker(Scan2,ROISuperSampleNormalized) Update      
+       $OUTPUT DeepCopy [ChangeTracker(Scan2,ROISuperSampleNormalized) GetOutput]
        $INPUT DeepCopy  $OUTPUT
-       TumorGrowth(Scan2,ROISuperSampleNormalized) Delete
+       ChangeTracker(Scan2,ROISuperSampleNormalized) Delete
        set Scan2Intensities  [HistogramNormalization_HistFct [TUMOR_INSIDE GetOutput] $INPUT ]
        incr runs
       }
@@ -185,7 +185,7 @@ namespace eval TumorGrowthTcl {
    # -----------------------------------------------------------
     proc Scan2ToScan1Registration_GUI { TYPE } {
         # puts "=============================================="
-        # puts "TumorGrowthScan2ToScan1Registration $TYPE Start" 
+        # puts "ChangeTrackerScan2ToScan1Registration $TYPE Start" 
 
         # -------------------------------------
         # Define Interfrace Parameters 
@@ -265,8 +265,8 @@ namespace eval TumorGrowthTcl {
           $VOL2_INPUT_RES_PAD SetConstant 0
           $VOL2_INPUT_RES_PAD Update
 
-          if {[::TumorGrowthReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_INPUT_RES_PAD GetOutput] $ScanOrder 1 0 0 50 mono 3 $TRANSFORM ] == 0 }  {
-               puts "Error:  TumorGrowthScan2ToScan1Registration: $TYPE  could not perform registration"
+          if {[::ChangeTrackerReg::RegistrationAG [$VOL1_input GetOutput] $ScanOrder [$VOL2_INPUT_RES_PAD GetOutput] $ScanOrder 1 0 0 50 mono 3 $TRANSFORM ] == 0 }  {
+               puts "Error:  ChangeTrackerScan2ToScan1Registration: $TYPE  could not perform registration"
               VOL2_INPUT_RES_PAD Delete
               VOL2_INPUT_RES Delete 
               $VOL2_input Delete
@@ -275,15 +275,15 @@ namespace eval TumorGrowthTcl {
           }
 
             
-          ::TumorGrowthReg::ResampleAG_GUI [$VOL2_INPUT_RES_PAD GetOutput]  [$VOL1_input GetOutput] $TRANSFORM $OUTPUT_VOL  
+          ::ChangeTrackerReg::ResampleAG_GUI [$VOL2_INPUT_RES_PAD GetOutput]  [$VOL1_input GetOutput] $TRANSFORM $OUTPUT_VOL  
           $VOL2_INPUT_RES_PAD Delete
           $VOL2_INPUT_RES Delete 
           $VOL2_input Delete
           $VOL1_input Delete
-          ::TumorGrowthReg::DeleteTransformAG
+          ::ChangeTrackerReg::DeleteTransformAG
 
-          # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
-          # ::TumorGrowthReg::WriteTransformationAG $TRANSFORM ~/temp
+          # ::ChangeTrackerReg::WriteTransformationAG $TRANSFORM [$NODE GetWorkingDir] 
+          # ::ChangeTrackerReg::WriteTransformationAG $TRANSFORM ~/temp
           catch { exec mv [$NODE GetWorkingDir]/LinearRegistration.txt [$NODE GetWorkingDir]/${TYPE}LinearRegistration.txt }
 
           catch {$TRANSFORM Delete}     
@@ -319,7 +319,7 @@ namespace eval TumorGrowthTcl {
         # -------------------------------------
         #puts "========================= "
        
-        # ::TumorGrowthReg::TumorGrowthImageDataWriter [$OUTPUT_NODE  GetImageData] newresult
+        # ::ChangeTrackerReg::ChangeTrackerImageDataWriter [$OUTPUT_NODE  GetImageData] newresult
 
         $NODE SetScan2_${TYPE}Ref [$OUTPUT_NODE GetID]
 
@@ -329,7 +329,7 @@ namespace eval TumorGrowthTcl {
         # Clean up 
         # -------------------------------------
     
-        # puts "TumorGrowthScan2ToScan1Registration $TYPE End"
+        # puts "ChangeTrackerScan2ToScan1Registration $TYPE End"
         # puts "=============================================="
     }
 
@@ -500,7 +500,7 @@ namespace eval TumorGrowthTcl {
         Analysis_Intensity_DeleteOutput_GUI 
 
     # Changes Made to intensity Analysis in Oct 08
-    if {$TumorGrowthTcl::newIntensityAnalysis } {
+    if {$ChangeTrackerTcl::newIntensityAnalysis } {
         set SCAN1_NODE [$SCENE GetNodeByID [$NODE GetScan1_SuperSampleRef]]
         # it is important to use the Normed scan2 otherwise the analysis wont be as good
         set SCAN2_NODE [$SCENE GetNodeByID [$NODE GetScan2_NormedRef]] 
@@ -543,7 +543,7 @@ namespace eval TumorGrowthTcl {
         puts Analysis_Intensity_CMD
         # Print "Analysis_Intensity_CMD $LOGIC $SCAN1_ImageData $SCAN1_SegmData $SCAN2_ImageData $AnalysisSensitivity"
 
-        if {$TumorGrowthTcl::newIntensityAnalysis} {
+        if {$ChangeTrackerTcl::newIntensityAnalysis} {
           set AnalysisScan1ByLower         [$LOGIC CreateAnalysis_Intensity_Scan1ByLower]
           set AnalysisScan1Range           [$LOGIC CreateAnalysis_Intensity_Scan1Range]
           set AnalysisScan2ByLower         [$LOGIC CreateAnalysis_Intensity_Scan2ByLower]
@@ -613,37 +613,37 @@ namespace eval TumorGrowthTcl {
        # Part I: Does not change 
        # ----------------------------------------
 
-       catch { TumorGrowth(FinalSubtract) Delete }
-       vtkImageMathematics TumorGrowth(FinalSubtract)
-       catch { TumorGrowth(FinalSubtractSmooth) Delete }
-       vtkImageMedian3D TumorGrowth(FinalSubtractSmooth)
+       catch { ChangeTracker(FinalSubtract) Delete }
+       vtkImageMathematics ChangeTracker(FinalSubtract)
+       catch { ChangeTracker(FinalSubtractSmooth) Delete }
+       vtkImageMedian3D ChangeTracker(FinalSubtractSmooth)
 
-       Analysis_Intensity_SubtractVolume TumorGrowth(FinalSubtract) $Scan1Data $Scan2Data TumorGrowth(FinalSubtractSmooth) 
+       Analysis_Intensity_SubtractVolume ChangeTracker(FinalSubtract) $Scan1Data $Scan2Data ChangeTracker(FinalSubtractSmooth) 
 
-       if {$TumorGrowthTcl::newIntensityAnalysis} {
-          set FinalThreshold [Analysis_Intensity_ComputeThreshold_Histogram [TumorGrowth(FinalSubtractSmooth) GetOutput] $Scan1Segment $AnalysisSensitivity]
+       if {$ChangeTrackerTcl::newIntensityAnalysis} {
+          set FinalThreshold [Analysis_Intensity_ComputeThreshold_Histogram [ChangeTracker(FinalSubtractSmooth) GetOutput] $Scan1Segment $AnalysisSensitivity]
          set result "0 0 $FinalThreshold"
        } else {
-         set result [Analysis_Intensity_ComputeThreshold_Gaussian [TumorGrowth(FinalSubtractSmooth) GetOutput] $Scan1Segment $AnalysisSensitivity]
+         set result [Analysis_Intensity_ComputeThreshold_Gaussian [ChangeTracker(FinalSubtractSmooth) GetOutput] $Scan1Segment $AnalysisSensitivity]
          set FinalThreshold [lindex $result 2]
 
        }
 
-       TumorGrowth(FinalSubtractSmooth) Delete
-       TumorGrowth(FinalSubtract)  Delete 
+       ChangeTracker(FinalSubtractSmooth) Delete
+       ChangeTracker(FinalSubtract)  Delete 
 
 
        # Define ROI by assinging flipping binary map 
-       catch { TumorGrowth(FinalROIInvSegment) Delete }
-       vtkImageThreshold TumorGrowth(FinalROIInvSegment) 
-         TumorGrowth(FinalROIInvSegment)  SetInput $Scan1Segment 
-         TumorGrowth(FinalROIInvSegment)  SetInValue 1
-         TumorGrowth(FinalROIInvSegment)  SetOutValue 0
-         TumorGrowth(FinalROIInvSegment)  ThresholdByLower 0 
-         TumorGrowth(FinalROIInvSegment)  SetOutputScalarTypeToShort
-       TumorGrowth(FinalROIInvSegment) Update
+       catch { ChangeTracker(FinalROIInvSegment) Delete }
+       vtkImageThreshold ChangeTracker(FinalROIInvSegment) 
+         ChangeTracker(FinalROIInvSegment)  SetInput $Scan1Segment 
+         ChangeTracker(FinalROIInvSegment)  SetInValue 1
+         ChangeTracker(FinalROIInvSegment)  SetOutValue 0
+         ChangeTracker(FinalROIInvSegment)  ThresholdByLower 0 
+         ChangeTracker(FinalROIInvSegment)  SetOutputScalarTypeToShort
+       ChangeTracker(FinalROIInvSegment) Update
 
-       if {$TumorGrowthTcl::newIntensityAnalysis} {
+       if {$ChangeTrackerTcl::newIntensityAnalysis} {
          # Kilian - Oct - 08 
          # Also allows meassuring shrinkage
          # Start 
@@ -666,59 +666,59 @@ namespace eval TumorGrowthTcl {
            }
      }
     
-     catch {  TumorGrowth(FinalROIGlobal) Delete }
-        vtkImageRectangularSource  TumorGrowth(FinalROIGlobal) 
-       eval TumorGrowth(FinalROIGlobal) SetWholeExtent $EXTENT
-           TumorGrowth(FinalROIGlobal) SetOutputScalarTypeToShort
-           TumorGrowth(FinalROIGlobal) SetInsideGraySlopeFlag 0
-       TumorGrowth(FinalROIGlobal) SetInValue 1
-           TumorGrowth(FinalROIGlobal) SetOutValue 0
-       eval TumorGrowth(FinalROIGlobal) SetCenter $CENTER; 
-           eval TumorGrowth(FinalROIGlobal) SetSize $SIZE; 
-         TumorGrowth(FinalROIGlobal) Update
+     catch {  ChangeTracker(FinalROIGlobal) Delete }
+        vtkImageRectangularSource  ChangeTracker(FinalROIGlobal) 
+       eval ChangeTracker(FinalROIGlobal) SetWholeExtent $EXTENT
+           ChangeTracker(FinalROIGlobal) SetOutputScalarTypeToShort
+           ChangeTracker(FinalROIGlobal) SetInsideGraySlopeFlag 0
+       ChangeTracker(FinalROIGlobal) SetInValue 1
+           ChangeTracker(FinalROIGlobal) SetOutValue 0
+       eval ChangeTracker(FinalROIGlobal) SetCenter $CENTER; 
+           eval ChangeTracker(FinalROIGlobal) SetSize $SIZE; 
+         ChangeTracker(FinalROIGlobal) Update
 
-         # VolumeWriter BOX [TumorGrowth(FinalROIGlobal) GetOutput]
+         # VolumeWriter BOX [ChangeTracker(FinalROIGlobal) GetOutput]
  
 
          # vtkImageKilianDistanceTransform does not work anymore 
-     catch { TumorGrowth(FinalROIDist) Delete }
-         vtkImageEuclideanDistance TumorGrowth(FinalROIDist)
-       TumorGrowth(FinalROIDist) SetInput [TumorGrowth(FinalROIInvSegment) GetOutput]
-           TumorGrowth(FinalROIDist) SetAlgorithmToSaito
-           TumorGrowth(FinalROIDist) SetMaximumDistance 100 
-           TumorGrowth(FinalROIDist) ConsiderAnisotropyOff
-         TumorGrowth(FinalROIDist)  Update
+     catch { ChangeTracker(FinalROIDist) Delete }
+         vtkImageEuclideanDistance ChangeTracker(FinalROIDist)
+       ChangeTracker(FinalROIDist) SetInput [ChangeTracker(FinalROIInvSegment) GetOutput]
+           ChangeTracker(FinalROIDist) SetAlgorithmToSaito
+           ChangeTracker(FinalROIDist) SetMaximumDistance 100 
+           ChangeTracker(FinalROIDist) ConsiderAnisotropyOff
+         ChangeTracker(FinalROIDist)  Update
 
-     catch {  TumorGrowth(FinalROIBin) Delete }
-         vtkImageThreshold TumorGrowth(FinalROIBin)
-          TumorGrowth(FinalROIBin) SetOutputScalarType [[TumorGrowth(FinalROIInvSegment) GetOutput] GetScalarType] 
-           TumorGrowth(FinalROIBin) SetInput [TumorGrowth(FinalROIDist) GetOutput]
-           TumorGrowth(FinalROIBin) ThresholdBetween 1 $TumorGrowthTcl::RegionChangingBand
-           TumorGrowth(FinalROIBin) SetInValue 1
-           TumorGrowth(FinalROIBin) SetOutValue 0
-         TumorGrowth(FinalROIBin) Update
+     catch {  ChangeTracker(FinalROIBin) Delete }
+         vtkImageThreshold ChangeTracker(FinalROIBin)
+          ChangeTracker(FinalROIBin) SetOutputScalarType [[ChangeTracker(FinalROIInvSegment) GetOutput] GetScalarType] 
+           ChangeTracker(FinalROIBin) SetInput [ChangeTracker(FinalROIDist) GetOutput]
+           ChangeTracker(FinalROIBin) ThresholdBetween 1 $ChangeTrackerTcl::RegionChangingBand
+           ChangeTracker(FinalROIBin) SetInValue 1
+           ChangeTracker(FinalROIBin) SetOutValue 0
+         ChangeTracker(FinalROIBin) Update
 
-     catch {  TumorGrowth(FinalROIBinGlobal) Delete }
-         vtkImageMathematics TumorGrowth(FinalROIBinGlobal)
-         TumorGrowth(FinalROIBinGlobal) SetInput1 [TumorGrowth(FinalROIBin) GetOutput] 
-         TumorGrowth(FinalROIBinGlobal) SetInput2 [TumorGrowth(FinalROIGlobal) GetOutput] 
-         TumorGrowth(FinalROIBinGlobal) SetOperationToMultiply  
-         TumorGrowth(FinalROIBinGlobal) Update
+     catch {  ChangeTracker(FinalROIBinGlobal) Delete }
+         vtkImageMathematics ChangeTracker(FinalROIBinGlobal)
+         ChangeTracker(FinalROIBinGlobal) SetInput1 [ChangeTracker(FinalROIBin) GetOutput] 
+         ChangeTracker(FinalROIBinGlobal) SetInput2 [ChangeTracker(FinalROIGlobal) GetOutput] 
+         ChangeTracker(FinalROIBinGlobal) SetOperationToMultiply  
+         ChangeTracker(FinalROIBinGlobal) Update
     
 
-         $AnalysisGrowthROI DeepCopy [TumorGrowth(FinalROIBinGlobal)  GetOutput] 
+         $AnalysisGrowthROI DeepCopy [ChangeTracker(FinalROIBinGlobal)  GetOutput] 
 
-         TumorGrowth(FinalROIDist) SetInput $Scan1Segment
-         TumorGrowth(FinalROIDist) Update 
-         TumorGrowth(FinalROIBin) Update
-         TumorGrowth(FinalROIBinGlobal) Update
+         ChangeTracker(FinalROIDist) SetInput $Scan1Segment
+         ChangeTracker(FinalROIDist) Update 
+         ChangeTracker(FinalROIBin) Update
+         ChangeTracker(FinalROIBinGlobal) Update
 
-         $AnalysisShrinkROI DeepCopy [TumorGrowth(FinalROIBinGlobal)  GetOutput] 
+         $AnalysisShrinkROI DeepCopy [ChangeTracker(FinalROIBinGlobal)  GetOutput] 
 
-         TumorGrowth(FinalROIDist) Delete 
-         TumorGrowth(FinalROIBin) Delete 
-         TumorGrowth(FinalROIBinGlobal) Delete
-         TumorGrowth(FinalROIGlobal) Delete
+         ChangeTracker(FinalROIDist) Delete 
+         ChangeTracker(FinalROIBin) Delete 
+         ChangeTracker(FinalROIBinGlobal) Delete
+         ChangeTracker(FinalROIGlobal) Delete
 
          #
          # End of Change of Kilian Oct-08
@@ -726,11 +726,11 @@ namespace eval TumorGrowthTcl {
          
      } else {
        # Original Definition
-       $AnalysisGrowthROI DeepCopy [TumorGrowth(FinalROIInvSegment) GetOutput] 
-       $AnalysisShrinkROI DeepCopy [TumorGrowth(FinalROIInvSegment) GetOutput] 
+       $AnalysisGrowthROI DeepCopy [ChangeTracker(FinalROIInvSegment) GetOutput] 
+       $AnalysisShrinkROI DeepCopy [ChangeTracker(FinalROIInvSegment) GetOutput] 
      }
 
-     TumorGrowth(FinalROIInvSegment) Delete
+     ChangeTracker(FinalROIInvSegment) Delete
 
 
      # -----------------------------------------
@@ -743,7 +743,7 @@ namespace eval TumorGrowthTcl {
      # the background in one scan is much darker than the in the other scan 
      # than if we do not threshold we get too many false positive 
      
-     if {$TumorGrowthTcl::newIntensityAnalysis} {
+     if {$ChangeTrackerTcl::newIntensityAnalysis} {
         set SCAN_MIN  [expr $ThresholdMin - 0.8*$FinalThreshold ] 
         set SCAN_MAX  [expr $ThresholdMax + 0.8*$FinalThreshold ] 
         IntensityThresholding_DataFct $Scan1Data $SCAN_MIN $SCAN_MAX $AnalysisScan1ByLower $AnalysisScan1Range 
@@ -777,7 +777,7 @@ namespace eval TumorGrowthTcl {
        $AnalysisROINegativeBin Update
 
        # Initializing tumor growth prediction
-       # catch { TumorGrowth(FinalROIBin) Delete}
+       # catch { ChangeTracker(FinalROIBin) Delete}
        $AnalysisROIPositiveBin  SetInput [$AnalysisGrowthROIIntensity GetOutput] 
          $AnalysisROIPositiveBin  SetInValue 1
          $AnalysisROIPositiveBin  SetOutValue 0
@@ -785,7 +785,7 @@ namespace eval TumorGrowthTcl {
          $AnalysisROIPositiveBin  SetOutputScalarTypeToShort
        $AnalysisROIPositiveBin Update
 
-       # vtkImageMathematics TumorGrowth(FinalROIBinReal) 
+       # vtkImageMathematics ChangeTracker(FinalROIBinReal) 
          $AnalysisROIBinCombine  SetInput 0 [$AnalysisROIPositiveBin GetOutput] 
          $AnalysisROIBinCombine  SetInput 1 [$AnalysisROINegativeBin GetOutput] 
          $AnalysisROIBinCombine  SetOperationToAdd 
@@ -797,7 +797,7 @@ namespace eval TumorGrowthTcl {
          $AnalysisROIBinReal SetNeighborhoodDim3D
        $AnalysisROIBinReal Update 
 
-       # vtkImageSumOverVoxels TumorGrowth(FinalROITotal) 
+       # vtkImageSumOverVoxels ChangeTracker(FinalROITotal) 
 
          $AnalysisROITotal  SetInput [$AnalysisROIBinReal GetOutput]
 
@@ -859,7 +859,7 @@ namespace eval TumorGrowthTcl {
     } 
 
     proc Analysis_Intensity_UpdateThreshold_Fct {LOGIC  AnalysisSensitivity } {
-    if { $TumorGrowthTcl::newIntensityAnalysis } {
+    if { $ChangeTrackerTcl::newIntensityAnalysis } {
       set ThresholdValue [Analysis_Intensity_UpdateThreshold_His $AnalysisSensitivity] 
     } else {
           set AnalysisMean           [$LOGIC GetAnalysis_Intensity_Mean ]
@@ -972,7 +972,7 @@ namespace eval TumorGrowthTcl {
     vtkImageThreshold compThrROIBin
       compThrROIBin SetOutputScalarType [[compThrAbs GetOutput] GetScalarType] 
       compThrROIBin SetInput [compThrROIDis GetOutput]
-      compThrROIBin ThresholdByUpper $TumorGrowthTcl::RegionChangingBand
+      compThrROIBin ThresholdByUpper $ChangeTrackerTcl::RegionChangingBand
       compThrROIBin SetInValue 1
       compThrROIBin SetOutValue 0
     compThrROIBin Update
@@ -1028,7 +1028,7 @@ namespace eval TumorGrowthTcl {
         # puts "---- $SizeOfROI $totalSum $count $newPerIndex "
 
         while { $perIndex < $newPerIndex } {
-        set TumorGrowthTcl::ThresholdHistory($perIndex) $thrIndex
+        set ChangeTrackerTcl::ThresholdHistory($perIndex) $thrIndex
         incr perIndex
         }
         if {$perIndex > 1000} {break}
@@ -1037,7 +1037,7 @@ namespace eval TumorGrowthTcl {
     }
     # just for rounding errors - should not be needed
     while {$perIndex < 1001} {
-    set TumorGrowthTcl::ThresholdHistory($perIndex) $thrIndex
+    set ChangeTrackerTcl::ThresholdHistory($perIndex) $thrIndex
     incr perIndex
     }
 
@@ -1054,7 +1054,7 @@ namespace eval TumorGrowthTcl {
   proc Analysis_Intensity_UpdateThreshold_His { Sensitivity } {
       set probIndex [expr int($Sensitivity *1000)];
       if {$probIndex < 0 || $probIndex > 1000 } {return 1}
-      set ThrIndex  $TumorGrowthTcl::ThresholdHistory($probIndex)
+      set ThrIndex  $ChangeTrackerTcl::ThresholdHistory($probIndex)
       
       if {$ThrIndex == 0 } {return 1}
       return $ThrIndex
@@ -1380,26 +1380,26 @@ namespace eval TumorGrowthTcl {
     # SEGMENTATION Metric
     # applying the deformation field to the segmentation and computing amount of growth
     # with the user given segmentation.
-    # ${scriptDirectory}/applyDeformationITK $SegmentationFilePrefix ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Field)}.mha ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Scan1SegmentationDeformed)}.nhdr 1
+    # ${scriptDirectory}/applyDeformationITK $SegmentationFilePrefix ${ChangeTracker(save,Dir)}/${ChangeTracker(deformation,Field)}.mha ${ChangeTracker(save,Dir)}/${ChangeTracker(deformation,Scan1SegmentationDeformed)}.nhdr 1
     set CMD "$EXE_DIR/applyDeformationITK $Scan1Segmentation $Scan1ToScan2Deformation $Scan1ToScan2Segmentation 1 1"
     # Print "=== Deformable Segmentation Growth Metric ==" 
     # Print "$CMD"
     eval exec $CMD 
 
-    #  ${scriptDirectory}/DetectGrowthSegmentation $SegmentationFilePrefix ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Scan1SegmentationDeformed)}.nhdr ${TumorGrowth(save,Dir)}/deformation_analysis_results.txt    
+    #  ${scriptDirectory}/DetectGrowthSegmentation $SegmentationFilePrefix ${ChangeTracker(save,Dir)}/${ChangeTracker(deformation,Scan1SegmentationDeformed)}.nhdr ${ChangeTracker(save,Dir)}/deformation_analysis_results.txt    
     set CMD "$EXE_DIR/DetectGrowthSegmentation $Scan1Segmentation $Scan1ToScan2Segmentation $AnalysisSegmentFile"
     # Print "$CMD"
     eval exec $CMD 
 
     # ---------------------------------------------
     # JACOBIAN Metric
-    #eval exec ${scriptDirectory}/applyDeformationITK $SegmentationFilePrefix ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,Field)}.mha ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,InverseField)}.mha 0
+    #eval exec ${scriptDirectory}/applyDeformationITK $SegmentationFilePrefix ${ChangeTracker(save,Dir)}/${ChangeTracker(deformation,Field)}.mha ${ChangeTracker(save,Dir)}/${ChangeTracker(deformation,InverseField)}.mha 0
     set CMD "$EXE_DIR/applyDeformationITK $Scan1Segmentation $Scan1ToScan2Deformation $Scan1ToScan2DeformationInverse 0"
     #Print "=== Deformable Jacobian Growth Metric ==" 
     #Print "$CMD"
     eval exec $CMD 
 
-    # ${scriptDirectory}/DetectGrowth ${TumorGrowth(save,Dir)}/${TumorGrowth(deformation,InverseField)}.mha $SegmentationFilePrefix
+    # ${scriptDirectory}/DetectGrowth ${ChangeTracker(save,Dir)}/${ChangeTracker(deformation,InverseField)}.mha $SegmentationFilePrefix
     set CMD "$EXE_DIR/DetectGrowth $Scan1ToScan2DeformationInverse $Scan1Segmentation $AnalysisJaccobianFile"
     # Print "$CMD"
     eval exec $CMD 

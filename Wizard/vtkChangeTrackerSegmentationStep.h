@@ -1,7 +1,7 @@
-#ifndef __vtkTumorGrowthSegmentationStep_h
-#define __vtkTumorGrowthSegmentationStep_h
+#ifndef __vtkChangeTrackerSegmentationStep_h
+#define __vtkChangeTrackerSegmentationStep_h
 
-#include "vtkTumorGrowthStep.h"
+#include "vtkChangeTrackerStep.h"
 
 class vtkImageThreshold;
 class vtkMRMLScalarVolumeNode;   
@@ -9,11 +9,11 @@ class vtkKWFrame;
 class vtkKWLabel;
 class vtkKWRange;
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthSegmentationStep : public vtkTumorGrowthStep
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerSegmentationStep : public vtkChangeTrackerStep
 {
 public:
-  static vtkTumorGrowthSegmentationStep *New();
-  vtkTypeRevisionMacro(vtkTumorGrowthSegmentationStep,vtkTumorGrowthStep);
+  static vtkChangeTrackerSegmentationStep *New();
+  vtkTypeRevisionMacro(vtkChangeTrackerSegmentationStep,vtkChangeTrackerStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -31,16 +31,16 @@ public:
 
 
 protected:
-  vtkTumorGrowthSegmentationStep();
-  ~vtkTumorGrowthSegmentationStep();
+  vtkChangeTrackerSegmentationStep();
+  ~vtkChangeTrackerSegmentationStep();
 
   vtkKWFrame *ThresholdFrame;
   vtkKWRange *ThresholdRange;
   vtkKWLabel *ThresholdLabel;
 
 private:
-  vtkTumorGrowthSegmentationStep(const vtkTumorGrowthSegmentationStep&);
-  void operator=(const vtkTumorGrowthSegmentationStep&);
+  vtkChangeTrackerSegmentationStep(const vtkChangeTrackerSegmentationStep&);
+  void operator=(const vtkChangeTrackerSegmentationStep&);
 
   void PreSegmentScan1Remove();
   void PreSegmentScan1Define();

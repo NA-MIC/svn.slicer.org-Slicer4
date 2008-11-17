@@ -1,6 +1,6 @@
-#include "vtkTumorGrowthStep.h"
-#include "vtkTumorGrowthGUI.h"
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkChangeTrackerStep.h"
+#include "vtkChangeTrackerGUI.h"
+#include "vtkMRMLChangeTrackerNode.h"
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
@@ -10,7 +10,7 @@
 #include "vtkSlicerApplication.h"
 #include "vtkSlicerVolumesLogic.h" 
 #include "vtkSlicerVolumesGUI.h" 
-#include "vtkTumorGrowthLogic.h"
+#include "vtkChangeTrackerLogic.h"
 
 #include "vtkVolumeTextureMapper3D.h"
 #include "vtkFixedPointVolumeRayCastMapper.h"
@@ -22,12 +22,12 @@
 #include "vtkVolumeRayCastCompositeFunction.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkTumorGrowthStep);
-vtkCxxRevisionMacro(vtkTumorGrowthStep, "$Revision: 1.2 $");
-vtkCxxSetObjectMacro(vtkTumorGrowthStep,GUI,vtkTumorGrowthGUI);
+vtkStandardNewMacro(vtkChangeTrackerStep);
+vtkCxxRevisionMacro(vtkChangeTrackerStep, "$Revision: 1.2 $");
+vtkCxxSetObjectMacro(vtkChangeTrackerStep,GUI,vtkChangeTrackerGUI);
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthStep::vtkTumorGrowthStep()
+vtkChangeTrackerStep::vtkChangeTrackerStep()
 {
   this->GUI = NULL;
   this->Frame           = NULL;
@@ -49,7 +49,7 @@ vtkTumorGrowthStep::vtkTumorGrowthStep()
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthStep::~vtkTumorGrowthStep()
+vtkChangeTrackerStep::~vtkChangeTrackerStep()
 {
   this->SetGUI(NULL);
   if (this->Frame)
@@ -87,7 +87,7 @@ vtkTumorGrowthStep::~vtkTumorGrowthStep()
 
 }
 
-void vtkTumorGrowthStep::RenderRemove() { 
+void vtkChangeTrackerStep::RenderRemove() { 
   if (this->Render_Volume) {
     if (this->GetGUI()) {
       vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
@@ -137,7 +137,7 @@ void vtkTumorGrowthStep::RenderRemove() {
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthStep::HideUserInterface()
+void vtkChangeTrackerStep::HideUserInterface()
 {
   this->Superclass::HideUserInterface();
 
@@ -148,7 +148,7 @@ void vtkTumorGrowthStep::HideUserInterface()
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthStep::Validate()
+void vtkChangeTrackerStep::Validate()
 {
   this->Superclass::Validate();
 
@@ -160,12 +160,12 @@ void vtkTumorGrowthStep::Validate()
 }
 
 //----------------------------------------------------------------------------
-int vtkTumorGrowthStep::CanGoToSelf()
+int vtkChangeTrackerStep::CanGoToSelf()
 {
   return this->Superclass::CanGoToSelf() || 1;
 }
 
-void vtkTumorGrowthStep::ShowUserInterface()
+void vtkChangeTrackerStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
   
@@ -198,14 +198,14 @@ void vtkTumorGrowthStep::ShowUserInterface()
   // OK Button only is shown at the end  
 }
 //----------------------------------------------------------------------------
-void vtkTumorGrowthStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkChangeTrackerStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
 
 
-void  vtkTumorGrowthStep::GridCallback() {
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+void  vtkChangeTrackerStep::GridCallback() {
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   if (!Node) return;
  
   vtkMRMLScalarVolumeNode* currentNode =  vtkMRMLScalarVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetGrid_Ref()));
@@ -219,7 +219,7 @@ void  vtkTumorGrowthStep::GridCallback() {
   this->GetGUI()->PropagateVolumeSelection();
 }
 
-void vtkTumorGrowthStep::CreateGridButton() {
+void vtkChangeTrackerStep::CreateGridButton() {
   // Grid Button 
   if (!this->GridButton) {
      this->GridButton = vtkKWPushButton::New();
@@ -237,7 +237,7 @@ void vtkTumorGrowthStep::CreateGridButton() {
   this->Script("pack %s -side left -anchor nw -expand n -padx 0 -pady 2", this->GridButton->GetWidgetName()); 
 
   // Button is hold down if Grid already exists 
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   if (!Node) return;
 
   vtkMRMLScalarVolumeNode* currentNode =  vtkMRMLScalarVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetGrid_Ref()));
@@ -246,8 +246,8 @@ void vtkTumorGrowthStep::CreateGridButton() {
   }
 }
   
-void vtkTumorGrowthStep::GridRemove() {
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+void vtkChangeTrackerStep::GridRemove() {
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   if (Node) {
     vtkMRMLScalarVolumeNode* currentNode =  vtkMRMLScalarVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetGrid_Ref()));
     if (currentNode) this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); 
@@ -259,11 +259,11 @@ void vtkTumorGrowthStep::GridRemove() {
 }
 
 
-int vtkTumorGrowthStep::GridDefine() {
+int vtkChangeTrackerStep::GridDefine() {
   // Initialize
   this->GridRemove();
 
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   if (!Node) return 0 ;
 
   vtkMRMLScene* mrmlScene       =  Node->GetScene();
@@ -287,7 +287,7 @@ int vtkTumorGrowthStep::GridDefine() {
   return 1;
 }
 
-void vtkTumorGrowthStep::CreateResetButton() {
+void vtkChangeTrackerStep::CreateResetButton() {
   // Grid Button 
   if (!this->ResetButton) {
      this->ResetButton = vtkKWPushButton::New();
@@ -304,7 +304,7 @@ void vtkTumorGrowthStep::CreateResetButton() {
   this->Script("pack %s -side left -anchor nw -expand n -padx 0 -pady 2", this->ResetButton->GetWidgetName()); 
 }
 
-void vtkTumorGrowthStep::CreateSliceButton() {
+void vtkChangeTrackerStep::CreateSliceButton() {
   if (!this->SliceButton) {
      this->SliceButton = vtkKWPushButton::New();
   }
@@ -322,7 +322,7 @@ void vtkTumorGrowthStep::CreateSliceButton() {
   if (this->GetGUI()->GetSliceLogic()) this->SliceButton->SetReliefToSunken();   
 }
 
-void  vtkTumorGrowthStep::SliceCallback() { 
+void  vtkChangeTrackerStep::SliceCallback() { 
   if (this->GetGUI()->GetSliceLogic()) {
     this->GetGUI()->SliceLogicRemove(); 
     this->SliceButton->SetReliefToRidge();
@@ -334,7 +334,7 @@ void  vtkTumorGrowthStep::SliceCallback() {
 }
 
 /// For Rendering results
-void vtkTumorGrowthStep::ChangeRender_BandPassFilter(double min, double max) {
+void vtkChangeTrackerStep::ChangeRender_BandPassFilter(double min, double max) {
   double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
   this->Render_Filter->RemoveAllPoints();
   this->Render_Filter->AddPoint(imgRange[0], 0.0);
@@ -349,7 +349,7 @@ void vtkTumorGrowthStep::ChangeRender_BandPassFilter(double min, double max) {
   }
 }
 
-void vtkTumorGrowthStep::SetRender_BandPassFilter(double min, double max, float colorMin[3], float colorMax[3]) {
+void vtkChangeTrackerStep::SetRender_BandPassFilter(double min, double max, float colorMin[3], float colorMax[3]) {
   // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
   this->ChangeRender_BandPassFilter(min, max);
   this->Render_ColorMapping->RemoveAllPoints();
@@ -358,7 +358,7 @@ void vtkTumorGrowthStep::SetRender_BandPassFilter(double min, double max, float 
   this->Render_ColorMapping->AddRGBPoint(max, colorMin[0], colorMin[1], colorMin[2]);
 }
 
-void vtkTumorGrowthStep::SetRender_HighPassFilter(double min, float colorMin[3], float colorMax[3]) {
+void vtkChangeTrackerStep::SetRender_HighPassFilter(double min, float colorMin[3], float colorMax[3]) {
   // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
   double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
   this->Render_Filter->RemoveAllPoints();
@@ -372,7 +372,7 @@ void vtkTumorGrowthStep::SetRender_HighPassFilter(double min, float colorMin[3],
 
 }
 
-void vtkTumorGrowthStep::SetRender_BandStopFilter(double min, double max, float colorMin[3], float colorMax[3]) {
+void vtkChangeTrackerStep::SetRender_BandStopFilter(double min, double max, float colorMin[3], float colorMax[3]) {
   // cout <<  "SetPreSegment_Render_BandPassFilter " << value << endl;
   double* imgRange  =   this->Render_Image->GetPointData()->GetScalars()->GetRange();
   this->Render_Filter->RemoveAllPoints();
@@ -389,13 +389,13 @@ void vtkTumorGrowthStep::SetRender_BandStopFilter(double min, double max, float 
 }
 
 
-void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, int RayCastFlag ) {
+void vtkChangeTrackerStep::CreateRender(vtkMRMLVolumeNode *volumeNode, int RayCastFlag ) {
   this->RenderRemove();
   if (!volumeNode) return;
 
   this->Render_Image = volumeNode->GetImageData();
   
-  // set PROP [[vtkTumorGrowthAnalysisStep ListInstances] GetRender_Mapper]
+  // set PROP [[vtkChangeTrackerAnalysisStep ListInstances] GetRender_Mapper]
   if (RayCastFlag ) {
     this->Render_RayCast_Mapper = vtkFixedPointVolumeRayCastMapper::New();
     this->Render_RayCast_Mapper->SetInput(this->Render_Image);
@@ -408,7 +408,7 @@ void vtkTumorGrowthStep::CreateRender(vtkMRMLVolumeNode *volumeNode, int RayCast
   this->Render_Filter = vtkPiecewiseFunction::New();
   this->Render_ColorMapping = vtkColorTransferFunction::New();
 
-  // set PROP [[vtkTumorGrowthAnalysisStep ListInstances] GetRender_VolumeProperty]
+  // set PROP [[vtkChangeTrackerAnalysisStep ListInstances] GetRender_VolumeProperty]
 
   this->Render_VolumeProperty = vtkVolumeProperty::New();
   this->Render_VolumeProperty->SetShade(1);

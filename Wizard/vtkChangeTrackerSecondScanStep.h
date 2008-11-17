@@ -1,13 +1,13 @@
-#ifndef __vtkTumorGrowthSecondScanStep_h
-#define __vtkTumorGrowthSecondScanStep_h
+#ifndef __vtkChangeTrackerSecondScanStep_h
+#define __vtkChangeTrackerSecondScanStep_h
 
-#include "vtkTumorGrowthSelectScanStep.h"
+#include "vtkChangeTrackerSelectScanStep.h"
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthSecondScanStep : public vtkTumorGrowthSelectScanStep
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerSecondScanStep : public vtkChangeTrackerSelectScanStep
 {
 public:
-  static vtkTumorGrowthSecondScanStep *New();
-  vtkTypeRevisionMacro(vtkTumorGrowthSecondScanStep,vtkTumorGrowthStep);
+  static vtkChangeTrackerSecondScanStep *New();
+  vtkTypeRevisionMacro(vtkChangeTrackerSecondScanStep,vtkChangeTrackerStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -22,19 +22,19 @@ public:
   void UpdateMRML();
 
   void ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
-    this->vtkTumorGrowthSelectScanStep::ProcessGUIEvents(caller, event, callData); }
+    this->vtkChangeTrackerSelectScanStep::ProcessGUIEvents(caller, event, callData); }
 
 protected:
-  vtkTumorGrowthSecondScanStep();
-  ~vtkTumorGrowthSecondScanStep();
+  vtkChangeTrackerSecondScanStep();
+  ~vtkChangeTrackerSecondScanStep();
 
   static void WizardGUICallback(vtkObject *caller, unsigned long eid, void *clientData, void *callData );
   void ProcessGUIEvents(vtkObject *caller, void *callData);
 
 private:
-  vtkTumorGrowthSecondScanStep(const vtkTumorGrowthSecondScanStep&);
+  vtkChangeTrackerSecondScanStep(const vtkChangeTrackerSecondScanStep&);
   void RemoveAnalysisOutput();
-  void operator=(const vtkTumorGrowthSecondScanStep&);
+  void operator=(const vtkChangeTrackerSecondScanStep&);
 };
 
 #endif

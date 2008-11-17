@@ -1,13 +1,13 @@
-#ifndef __vtkTumorGrowthFirstScanStep_h
-#define __vtkTumorGrowthFirstScanStep_h
+#ifndef __vtkChangeTrackerFirstScanStep_h
+#define __vtkChangeTrackerFirstScanStep_h
 
-#include "vtkTumorGrowthSelectScanStep.h"
+#include "vtkChangeTrackerSelectScanStep.h"
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthFirstScanStep : public vtkTumorGrowthSelectScanStep
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerFirstScanStep : public vtkChangeTrackerSelectScanStep
 {
 public:
-  static vtkTumorGrowthFirstScanStep *New();
-  vtkTypeRevisionMacro(vtkTumorGrowthFirstScanStep,vtkTumorGrowthStep);
+  static vtkChangeTrackerFirstScanStep *New();
+  vtkTypeRevisionMacro(vtkChangeTrackerFirstScanStep,vtkChangeTrackerStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -31,8 +31,8 @@ public:
   vtkSlicerNodeSelectorWidget* GetFirstVolumeMenuButton() {return this->VolumeMenuButton;} 
 
 protected:
-  vtkTumorGrowthFirstScanStep();
-  ~vtkTumorGrowthFirstScanStep();
+  vtkChangeTrackerFirstScanStep();
+  ~vtkChangeTrackerFirstScanStep();
 
   vtkSlicerNodeSelectorWidget *SecondVolumeMenuButton;
 
@@ -40,8 +40,8 @@ protected:
   void ProcessGUIEvents(vtkObject *caller, void *callData);
 
 private:
-  vtkTumorGrowthFirstScanStep(const vtkTumorGrowthFirstScanStep&);
-  void operator=(const vtkTumorGrowthFirstScanStep&);
+  vtkChangeTrackerFirstScanStep(const vtkChangeTrackerFirstScanStep&);
+  void operator=(const vtkChangeTrackerFirstScanStep&);
 };
 
 #endif

@@ -1,7 +1,7 @@
-#include "vtkTumorGrowthSegmentationStep.h"
+#include "vtkChangeTrackerSegmentationStep.h"
 
-#include "vtkTumorGrowthGUI.h"
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkChangeTrackerGUI.h"
+#include "vtkMRMLChangeTrackerNode.h"
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
@@ -9,7 +9,7 @@
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWLabel.h"
 #include "vtkKWEntry.h"
-#include "vtkTumorGrowthLogic.h"
+#include "vtkChangeTrackerLogic.h"
 #include "vtkSlicerApplicationGUI.h"
 #include "vtkSlicerSlicesControlGUI.h"
 #include "vtkSlicerSliceControllerWidget.h"
@@ -24,11 +24,11 @@
 #include "vtkSlicerModelsLogic.h"
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkTumorGrowthSegmentationStep);
-vtkCxxRevisionMacro(vtkTumorGrowthSegmentationStep, "$Revision: 1.2 $");
+vtkStandardNewMacro(vtkChangeTrackerSegmentationStep);
+vtkCxxRevisionMacro(vtkChangeTrackerSegmentationStep, "$Revision: 1.2 $");
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthSegmentationStep::vtkTumorGrowthSegmentationStep()
+vtkChangeTrackerSegmentationStep::vtkChangeTrackerSegmentationStep()
 {
   this->SetName("3/4. Identify Tumor in First Scan"); 
   this->SetDescription("Move slider to outline boundary of tumor."); 
@@ -43,7 +43,7 @@ vtkTumorGrowthSegmentationStep::vtkTumorGrowthSegmentationStep()
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthSegmentationStep::~vtkTumorGrowthSegmentationStep()
+vtkChangeTrackerSegmentationStep::~vtkChangeTrackerSegmentationStep()
 {
  
   if (this->ThresholdFrame)
@@ -70,15 +70,15 @@ vtkTumorGrowthSegmentationStep::~vtkTumorGrowthSegmentationStep()
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthSegmentationStep::ShowUserInterface()
+void vtkChangeTrackerSegmentationStep::ShowUserInterface()
 {
   // ----------------------------------------
   // Display Super Sampled Volume 
   // ----------------------------------------
 
-  // cout << "vtkTumorGrowthSegmentationStep::ShowUserInterface()" << endl;
+  // cout << "vtkChangeTrackerSegmentationStep::ShowUserInterface()" << endl;
 
-  vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
   int intMin, intMax;
 
   if (node) { 
@@ -105,7 +105,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   // ----------------------------------------
   // Build GUI 
   // ----------------------------------------
-  this->vtkTumorGrowthStep::ShowUserInterface();
+  this->vtkChangeTrackerStep::ShowUserInterface();
   this->Frame->SetLabelText("Identify Tumor");
   this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());
 
@@ -159,7 +159,7 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   this->PreSegmentScan1Define();
 
   {
-    vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
+    vtkMRMLChangeTrackerNode *mrmlNode = this->GetGUI()->GetNode();
     double min, max;
     if (mrmlNode && (mrmlNode->GetSegmentThresholdMin() > -1) && (mrmlNode->GetSegmentThresholdMax() > -1)) {
       min =  mrmlNode->GetSegmentThresholdMin();
@@ -203,8 +203,8 @@ void vtkTumorGrowthSegmentationStep::ShowUserInterface()
   // cout << "End Show user interface" << endl;
 }
 
-void vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() {
-  // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() Start " << this->PreSegmentNode << endl;  
+void vtkChangeTrackerSegmentationStep::PreSegmentScan1Remove() {
+  // cout << "vtkChangeTrackerSegmentationStep::PreSegmentScan1Remove() Start " << this->PreSegmentNode << endl;  
   if (this->PreSegmentNode && this->GetGUI()) {
     this->GetGUI()->GetMRMLScene()->RemoveNode(this->PreSegmentNode);  
   } 
@@ -217,15 +217,15 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() {
 
   this->RenderRemove();
 
-  // cout << "vtkTumorGrowthSegmentationStep::PreSegmentScan1Remove() End " << endl;
+  // cout << "vtkChangeTrackerSegmentationStep::PreSegmentScan1Remove() End " << endl;
 }
 
-void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
+void vtkChangeTrackerSegmentationStep::PreSegmentScan1Define() {
 
   // ---------------------------------
   // Initialize Function
   // ---------------------------------
-  vtkMRMLTumorGrowthNode* Node      =  this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node      =  this->GetGUI()->GetNode();
   if (!Node) return;
   vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_SuperSampleRef()));
   if (!volumeNode) return;
@@ -246,7 +246,7 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
 
   this->PreSegment = vtkImageThreshold::New(); 
   int range[2] = {int(this->ThresholdRange->GetRange()[0]),int(this->ThresholdRange->GetRange()[1])}; 
-  vtkTumorGrowthLogic::DefinePreSegment(volumeNode->GetImageData(),range,this->PreSegment);
+  vtkChangeTrackerLogic::DefinePreSegment(volumeNode->GetImageData(),range,this->PreSegment);
 
   // ---------------------------------
   // show segmentation in Slice view 
@@ -269,9 +269,9 @@ void vtkTumorGrowthSegmentationStep::PreSegmentScan1Define() {
   return;
 }
 
-void vtkTumorGrowthSegmentationStep::SegmentScan1Remove() {
+void vtkChangeTrackerSegmentationStep::SegmentScan1Remove() {
   if (this->GetGUI()) { 
-    vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+    vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
     if (Node) {
       vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetScan1_SegmentRef()));
       if (currentNode) this->GetGUI()->GetMRMLScene()->RemoveNode(currentNode); 
@@ -284,16 +284,16 @@ void vtkTumorGrowthSegmentationStep::SegmentScan1Remove() {
   }
 }
 
-int vtkTumorGrowthSegmentationStep::SegmentScan1Define() {
+int vtkChangeTrackerSegmentationStep::SegmentScan1Define() {
   // Initialize
   if (!this->PreSegment || !this->PreSegmentNode) return 0;
-  vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
   if (!Node) return 0 ;
 
   this->SegmentScan1Remove();
 
   vtkImageIslandFilter *RemoveIslands = vtkImageIslandFilter::New();
-  vtkTumorGrowthLogic::DefineSegment(this->PreSegment->GetOutput(),RemoveIslands);
+  vtkChangeTrackerLogic::DefineSegment(this->PreSegment->GetOutput(),RemoveIslands);
 
   // Set It up 
   vtkSlicerVolumesLogic *volumesLogic         = (vtkSlicerVolumesGUI::SafeDownCast(vtkSlicerApplication::SafeDownCast(this->GetApplication())->GetModuleGUIByName("Volumes")))->GetLogic();
@@ -316,14 +316,14 @@ int vtkTumorGrowthSegmentationStep::SegmentScan1Define() {
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthSegmentationStep::ThresholdRangeChangedCallback(double min , double max)
+void vtkChangeTrackerSegmentationStep::ThresholdRangeChangedCallback(double min , double max)
 {
   if (!this->ThresholdRange || !this->PreSegment) return;
   PreSegment->ThresholdBetween(min,max); 
   PreSegment->Update();
   this->PreSegmentNode->Modified();
 
-  vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode *mrmlNode = this->GetGUI()->GetNode();
   if (!mrmlNode) return;
   mrmlNode->SetSegmentThresholdMin(min);
   mrmlNode->SetSegmentThresholdMax(max);
@@ -333,7 +333,7 @@ void vtkTumorGrowthSegmentationStep::ThresholdRangeChangedCallback(double min , 
   //  applicationGUI->GetViewerWidget()->GetMainViewer()->RequestRender();
 
 
-  // set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+  // set GUI  [$::slicer3::Application GetModuleGUIByName "ChangeTracker"]
   // set STEP [$GUI GetSegmentationStep]
   // set FILT [$STEP GetPreSegment]
 
@@ -345,7 +345,7 @@ void vtkTumorGrowthSegmentationStep::ThresholdRangeChangedCallback(double min , 
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthSegmentationStep::TransitionCallback() 
+void vtkChangeTrackerSegmentationStep::TransitionCallback() 
 { 
   this->SegmentScan1Remove();
   if (!this->SegmentScan1Define()) return; 
@@ -358,12 +358,12 @@ void vtkTumorGrowthSegmentationStep::TransitionCallback()
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthSegmentationStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkChangeTrackerSegmentationStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
 
-void vtkTumorGrowthSegmentationStep::RemoveResults()  { 
+void vtkChangeTrackerSegmentationStep::RemoveResults()  { 
     this->PreSegmentScan1Remove();
     this->GetGUI()->SliceLogicRemove();
 }

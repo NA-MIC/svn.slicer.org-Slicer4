@@ -1,12 +1,12 @@
-#include "vtkTumorGrowthFirstScanStep.h"
-#include "vtkTumorGrowthGUI.h"
+#include "vtkChangeTrackerFirstScanStep.h"
+#include "vtkChangeTrackerGUI.h"
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h" 
 #include "vtkSlicerNodeSelectorWidget.h"
 #include "vtkKWMessageDialog.h"
-#include "vtkMRMLTumorGrowthNode.h"
-#include "vtkTumorGrowthLogic.h"
+#include "vtkMRMLChangeTrackerNode.h"
+#include "vtkChangeTrackerLogic.h"
 #include "vtkSlicerSliceControllerWidget.h"
  
 #include "vtkSlicerVolumesLogic.h"
@@ -17,20 +17,20 @@
 #include <vtksys/SystemTools.hxx>
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkTumorGrowthFirstScanStep);
-vtkCxxRevisionMacro(vtkTumorGrowthFirstScanStep, "$Revision: 1.0 $");
+vtkStandardNewMacro(vtkChangeTrackerFirstScanStep);
+vtkCxxRevisionMacro(vtkChangeTrackerFirstScanStep, "$Revision: 1.0 $");
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthFirstScanStep::vtkTumorGrowthFirstScanStep()
+vtkChangeTrackerFirstScanStep::vtkChangeTrackerFirstScanStep()
 {
   this->SetName("1/4. Define Scans");
   this->SetDescription("Select first and second scan of patient.");
-  this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthFirstScanStep::WizardGUICallback);
+  this->WizardGUICallbackCommand->SetCallback(vtkChangeTrackerFirstScanStep::WizardGUICallback);
   this->SecondVolumeMenuButton = NULL;
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthFirstScanStep::~vtkTumorGrowthFirstScanStep() { 
+vtkChangeTrackerFirstScanStep::~vtkChangeTrackerFirstScanStep() { 
  if (this->SecondVolumeMenuButton)
    {
    this->SecondVolumeMenuButton->SetParent(NULL);
@@ -39,9 +39,9 @@ vtkTumorGrowthFirstScanStep::~vtkTumorGrowthFirstScanStep() {
    }
 }
 
-void vtkTumorGrowthFirstScanStep::UpdateMRML() 
+void vtkChangeTrackerFirstScanStep::UpdateMRML() 
 {
-  vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
   if (!node) { return; }
 
   if (this->VolumeMenuButton && this->VolumeMenuButton->GetSelected() ) 
@@ -88,9 +88,9 @@ void vtkTumorGrowthFirstScanStep::UpdateMRML()
 
 }
 
-void vtkTumorGrowthFirstScanStep::UpdateGUI() {
+void vtkChangeTrackerFirstScanStep::UpdateGUI() {
 
-  vtkMRMLTumorGrowthNode* n = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* n = this->GetGUI()->GetNode();
   if (!n) {
     this->GetGUI()->UpdateNode();
     n = this->GetGUI()->GetNode();
@@ -110,9 +110,9 @@ void vtkTumorGrowthFirstScanStep::UpdateGUI() {
 } 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthFirstScanStep::AddGUIObservers() 
+void vtkChangeTrackerFirstScanStep::AddGUIObservers() 
 {
-  this->vtkTumorGrowthSelectScanStep::AddGUIObservers();
+  this->vtkChangeTrackerSelectScanStep::AddGUIObservers();
  
   // Make sure you do not add the same event twice - need to do it bc of wizrd structure
   if (this->SecondVolumeMenuButton && (!this->SecondVolumeMenuButton->HasObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, this->WizardGUICallbackCommand))) 
@@ -121,17 +121,17 @@ void vtkTumorGrowthFirstScanStep::AddGUIObservers()
     } 
 }
 
-void vtkTumorGrowthFirstScanStep::RemoveGUIObservers() 
+void vtkChangeTrackerFirstScanStep::RemoveGUIObservers() 
 {
-  this->vtkTumorGrowthSelectScanStep::RemoveGUIObservers(); 
+  this->vtkChangeTrackerSelectScanStep::RemoveGUIObservers(); 
   if ( this->SecondVolumeMenuButton) 
     {
       this->SecondVolumeMenuButton->RemoveObservers(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, this->WizardGUICallbackCommand );  
     }
 }
 
-void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
-  this->vtkTumorGrowthSelectScanStep::ProcessGUIEvents(caller, event, callData); 
+void vtkChangeTrackerFirstScanStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
+  this->vtkChangeTrackerSelectScanStep::ProcessGUIEvents(caller, event, callData); 
   vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
   if (this->SecondVolumeMenuButton && selector == this->SecondVolumeMenuButton && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent && this->SecondVolumeMenuButton->GetSelected() != NULL) 
   { 
@@ -141,9 +141,9 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, unsigned l
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthFirstScanStep::ShowUserInterface()
+void vtkChangeTrackerFirstScanStep::ShowUserInterface()
 {
-  this->vtkTumorGrowthSelectScanStep::ShowUserInterface();
+  this->vtkChangeTrackerSelectScanStep::ShowUserInterface();
 
   this->Frame->SetLabelText("Select Scan");
   this->Script("pack %s -side top -anchor nw -fill x -padx 0 -pady 2", this->Frame->GetWidgetName());
@@ -158,7 +158,7 @@ void vtkTumorGrowthFirstScanStep::ShowUserInterface()
     this->SecondVolumeMenuButton->NoneEnabledOn();
     this->SecondVolumeMenuButton->SetNodeClass("vtkMRMLScalarVolumeNode","","","");
     this->SecondVolumeMenuButton->SetMRMLScene(this->GetGUI()->GetLogic()->GetMRMLScene());
-    this->SecondVolumeMenuButton->GetWidget()->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    this->SecondVolumeMenuButton->GetWidget()->SetWidth(CHANGETRACKER_MENU_BUTTON_WIDTH);
     this->SecondVolumeMenuButton->SetBalloonHelpString("Select second scan of patient.");
     // If you want to attach a function once is selected 
     // look at GrayscaleSelector vtkSlicerVolumeMathGUI::AddGUIObservers
@@ -180,21 +180,21 @@ void vtkTumorGrowthFirstScanStep::ShowUserInterface()
   // this->TransitionCallback(0);
 }
 
-void vtkTumorGrowthFirstScanStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
+void vtkChangeTrackerFirstScanStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
 {
-    vtkTumorGrowthFirstScanStep *self = reinterpret_cast<vtkTumorGrowthFirstScanStep *>(clientData);
+    vtkChangeTrackerFirstScanStep *self = reinterpret_cast<vtkChangeTrackerFirstScanStep *>(clientData);
     if( (event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent) && self) {
       self->ProcessGUIEvents(caller, callData);   
     }
 }
 
-void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *callData) {
+void vtkChangeTrackerFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *callData) {
     // This just has to be donw if you use the same Callbakc function for severall calls 
     vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
     if (!this->VolumeMenuButton || !this->SecondVolumeMenuButton ) return;
     if ((selector == this->VolumeMenuButton) || (selector == this->SecondVolumeMenuButton) ) 
     { 
-      vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+      vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
       if (!node) {
          // Create Node 
          this->GetGUI()->UpdateMRML();
@@ -214,7 +214,7 @@ void vtkTumorGrowthFirstScanStep::ProcessGUIEvents(vtkObject *caller, void *call
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthFirstScanStep::TransitionCallback(int Flag) 
+void vtkChangeTrackerFirstScanStep::TransitionCallback(int Flag) 
 {
    if (!this->VolumeMenuButton || !this->SecondVolumeMenuButton) return;
 
@@ -223,11 +223,11 @@ void vtkTumorGrowthFirstScanStep::TransitionCallback(int Flag)
 
    if (this->VolumeMenuButton->GetSelected() && this->SecondVolumeMenuButton->GetSelected() ) { 
      // Check if image data is associated with them 
-     vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+     vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
      vtkMRMLVolumeNode *volumeNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_Ref()));
      if (!volumeNode->GetImageData()) {
        if (Flag) {
-     vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "No image data associated with Scan 1", vtkKWMessageDialog::ErrorIcon);
+     vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Change Tracker", "No image data associated with Scan 1", vtkKWMessageDialog::ErrorIcon);
        }
        return;
      }
@@ -235,7 +235,7 @@ void vtkTumorGrowthFirstScanStep::TransitionCallback(int Flag)
      volumeNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan2_Ref()));
      if (!volumeNode->GetImageData()) {
        if (Flag) {
-     vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "No image data associated with Scan 2", vtkKWMessageDialog::ErrorIcon);
+     vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Change Tracker", "No image data associated with Scan 2", vtkKWMessageDialog::ErrorIcon);
        }
        return;
      }
@@ -244,14 +244,14 @@ void vtkTumorGrowthFirstScanStep::TransitionCallback(int Flag)
      wizard_widget->GetWizardWorkflow()->AttemptToGoToNextStep();
    } else {
      if (Flag) {
-       vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Tumor Growth", "Please define scans before proceeding", vtkKWMessageDialog::ErrorIcon);
+       vtkKWMessageDialog::PopupMessage(this->GetGUI()->GetApplication(), this->GetGUI()->GetApplicationGUI()->GetMainSlicerWindow(),"Change Tracker", "Please define scans before proceeding", vtkKWMessageDialog::ErrorIcon);
      }
      wizard_widget->GetCancelButton()->EnabledOff();
    }
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthFirstScanStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkChangeTrackerFirstScanStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }

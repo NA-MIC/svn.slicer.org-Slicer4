@@ -1,16 +1,16 @@
-#ifndef __vtkTumorGrowthTypeStep_h
-#define __vtkTumorGrowthTypeStep_h
+#ifndef __vtkChangeTrackerTypeStep_h
+#define __vtkChangeTrackerTypeStep_h
 
-#include "vtkTumorGrowthStep.h"
+#include "vtkChangeTrackerStep.h"
 
 class vtkKWCheckButton;
 class vtkKWFrame;
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthTypeStep : public vtkTumorGrowthStep
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerTypeStep : public vtkChangeTrackerStep
 {
 public:
-  static vtkTumorGrowthTypeStep *New();
-  vtkTypeRevisionMacro(vtkTumorGrowthTypeStep,vtkTumorGrowthStep);
+  static vtkChangeTrackerTypeStep *New();
+  vtkTypeRevisionMacro(vtkChangeTrackerTypeStep,vtkChangeTrackerStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -29,8 +29,8 @@ public:
   virtual void RemoveResults();
 
 protected:
-  vtkTumorGrowthTypeStep();
-  ~vtkTumorGrowthTypeStep();
+  vtkChangeTrackerTypeStep();
+  ~vtkChangeTrackerTypeStep();
 
   static void WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData );
 
@@ -42,8 +42,8 @@ protected:
 
 
 private:
-  vtkTumorGrowthTypeStep(const vtkTumorGrowthTypeStep&);
-  void operator=(const vtkTumorGrowthTypeStep&);
+  vtkChangeTrackerTypeStep(const vtkChangeTrackerTypeStep&);
+  void operator=(const vtkChangeTrackerTypeStep&);
 };
 
 #endif

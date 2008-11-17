@@ -16,7 +16,7 @@ if {0} { ;# comment
 # namespace procs
 #
 
-namespace eval TumorGrowthReg {
+namespace eval ChangeTrackerReg {
 
   proc ResampleAG_GUI {SOURCE TARGET TRANSFORM OUTPUT}  {
       eval $OUTPUT  SetExtent  [$TARGET GetExtent]
@@ -97,7 +97,7 @@ namespace eval TumorGrowthReg {
            puts "    ScanOrder:       $OutResampledScanOrder"
        }
   
-      # TumorGrowthImageDataWriter [ResampleCast GetOutput] AG_Cast
+      # ChangeTrackerImageDataWriter [ResampleCast GetOutput] AG_Cast
         # Results 
            ThresholdedOutputAG [ResampleCast_ GetOutput] [Reslicer GetOutput] $outResampled
            $outResampled SetOrigin 0 0 0
@@ -142,7 +142,7 @@ proc WriteTransformationAG {gt directory} {
       if { ($int_H != 0)&& ($linearDone == 0) } {
           set fname $directory/LinearRegistration.txt
           if {[catch {set fileid [ open $fname w ] } errmsg ] == 1} { 
-              puts "TumorGrowthReg.tcl::WriteTransformationAG: Could not open file  $fname !" 
+              puts "ChangeTrackerReg.tcl::WriteTransformationAG: Could not open file  $fname !" 
               puts "$errmsg"
               return
           }
@@ -670,11 +670,11 @@ proc WriteTransformationAG {gt directory} {
 
         #puts " # TARGET ===================== "
     #puts [RegisterTarget GetOrigin]
-        #::TumorGrowthTcl::VolumeWriter GCR_TARGET.nhdr RegisterTarget 
+        #::ChangeTrackerTcl::VolumeWriter GCR_TARGET.nhdr RegisterTarget 
 
     #puts  " # SOURCE ===================== "
     #puts [RegisterSource GetOrigin]
-        #::TumorGrowthTcl::VolumeWriter GCR_SOURCE.nhdr RegisterSource 
+        #::ChangeTrackerTcl::VolumeWriter GCR_SOURCE.nhdr RegisterSource 
 
         GCR SetTarget RegisterTarget
         GCR SetSource RegisterSource
@@ -711,7 +711,7 @@ proc WriteTransformationAG {gt directory} {
       return 1 
   }
 
-proc TumorGrowthImageDataWriter {ImageData Name} {
+proc ChangeTrackerImageDataWriter {ImageData Name} {
 
     set extents [$ImageData GetExtent]
     # Has to be defined otherwise it does not work - I do not know why 

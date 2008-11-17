@@ -6,30 +6,30 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $RCSfile: vtkMRMLTumorGrowthNode.h,v $
+  Module:    $RCSfile: vtkMRMLChangeTrackerNode.h,v $
   Date:      $Date: 2006/03/19 17:12:29 $
   Version:   $Revision: 1.3 $
 
 =========================================================================auto=*/
-#ifndef __vtkMRMLTumorGrowthNode_h
-#define __vtkMRMLTumorGrowthNode_h
+#ifndef __vtkMRMLChangeTrackerNode_h
+#define __vtkMRMLChangeTrackerNode_h
 
 #include "vtkMRML.h"
 #include "vtkMRMLNode.h"
 #include "vtkMRMLStorageNode.h"
 
 #include "vtkImageData.h"
-#include "vtkTumorGrowth.h"
+#include "vtkChangeTracker.h"
 
 class vtkImageData;
 class vtkImageThreshold;
 class vtkImageSumOverVoxels;
 
-class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
+class VTK_CHANGETRACKER_EXPORT vtkMRMLChangeTrackerNode : public vtkMRMLNode
 {
   public:
-  static vtkMRMLTumorGrowthNode *New();
-  vtkTypeMacro(vtkMRMLTumorGrowthNode,vtkMRMLNode);
+  static vtkMRMLChangeTrackerNode *New();
+  vtkTypeMacro(vtkMRMLChangeTrackerNode,vtkMRMLNode);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -162,10 +162,10 @@ class VTK_TUMORGROWTH_EXPORT vtkMRMLTumorGrowthNode : public vtkMRMLNode
   vtkGetStringMacro(Analysis_Deformable_Ref);
 
 protected:
-  vtkMRMLTumorGrowthNode();
-  ~vtkMRMLTumorGrowthNode();
-  vtkMRMLTumorGrowthNode(const vtkMRMLTumorGrowthNode&);
-  void operator=(const vtkMRMLTumorGrowthNode&);
+  vtkMRMLChangeTrackerNode();
+  ~vtkMRMLChangeTrackerNode();
+  vtkMRMLChangeTrackerNode(const vtkMRMLChangeTrackerNode&);
+  void operator=(const vtkMRMLChangeTrackerNode&);
 
   char* Scan1_Ref;
   char* Scan1_SuperSampleRef;

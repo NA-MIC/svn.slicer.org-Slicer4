@@ -1,4 +1,4 @@
-project(TumorGrowth)
+project(ChangeTracker)
 
 cmake_minimum_required(VERSION 2.4)
 if(COMMAND cmake_policy)
@@ -33,27 +33,30 @@ include_directories(
   ${vtkTeem_BINARY_DIR}
   ${Volumes_SOURCE_DIR}
   ${Volumes_BINARY_DIR}
+  # AF: this is needed to wrap the command line module (Linear registration)
+  ${CommandLineModule_BINARY_DIR}
+  ${CommandLineModule_SOURCE_DIR}
   )
 
 configure_file(
-  ${TumorGrowth_SOURCE_DIR}/vtkTumorGrowthConfigure.h.in 
-  ${TumorGrowth_BINARY_DIR}/vtkTumorGrowthConfigure.h
+  ${ChangeTracker_SOURCE_DIR}/vtkChangeTrackerConfigure.h.in 
+  ${ChangeTracker_BINARY_DIR}/vtkChangeTrackerConfigure.h
   )
 
 file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
 install(FILES 
   ${headers} 
-  "${CMAKE_CURRENT_BINARY_DIR}/vtkTumorGrowthConfigure.h"
+  "${CMAKE_CURRENT_BINARY_DIR}/vtkChangeTrackerConfigure.h"
   DESTINATION ${Slicer3_INSTALL_MODULES_INCLUDE_DIR}/${PROJECT_NAME} COMPONENT Development
   )
 
 # --------------------------------------------------------------------------
 # Sources
 
-set(TumorGrowth_SRCS 
+set(ChangeTracker_SRCS 
   # module
-  vtkTumorGrowthGUI.cxx
-  vtkTumorGrowthLogic.cxx 
+  vtkChangeTrackerGUI.cxx
+  vtkChangeTrackerLogic.cxx 
   # Filters
   ${CMAKE_CURRENT_SOURCE_DIR}/Filters/vtkImageRectangularSource.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Filters/vtkImageIslandFilter.cxx
@@ -62,16 +65,18 @@ set(TumorGrowth_SRCS
   ${CMAKE_CURRENT_SOURCE_DIR}/Filters/vtkImageKilianDistanceTransform.cxx
   ${CMAKE_CURRENT_SOURCE_DIR}/Filters/vtkImageSumOverVoxels.cxx 
   # wizard
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthSelectScanStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthFirstScanStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthROIStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthSegmentationStep.cxx
-  # ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthSecondScanStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthTypeStep.cxx
-  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkTumorGrowthAnalysisStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerStep.cxx
+  # AF: will commit next merged version of first+second steps
+#  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerScanSelectionStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerSelectScanStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerFirstScanStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerROIStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerSegmentationStep.cxx
+  # ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerSecondScanStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerTypeStep.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard/vtkChangeTrackerAnalysisStep.cxx
   # MRML
-  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLTumorGrowthNode.cxx
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMRMLChangeTrackerNode.cxx
 )
 
 # Enders work 
@@ -97,20 +102,20 @@ subdirs(DeformableMetric CommandLineApplication)
 # Wrapping
 
 include("${VTK_CMAKE_DIR}/vtkWrapTcl.cmake")
-vtk_wrap_tcl3(TumorGrowth TumorGrowth_TCL_SRCS "${TumorGrowth_SRCS}" "")
+vtk_wrap_tcl3(ChangeTracker ChangeTracker_TCL_SRCS "${ChangeTracker_SRCS}" "")
 
 #---------------------------------------------------------------------------
 # Add Loadable Module support
 
-generatelm(TumorGrowth_SRCS TumorGrowth.txt)
+generatelm(ChangeTracker_SRCS ChangeTracker.txt)
 
 # --------------------------------------------------------------------------
 # Build and install the library
 
-set(lib_name TumorGrowth)
+set(lib_name ChangeTracker)
 add_library(${lib_name}
-  ${TumorGrowth_SRCS}
-  ${TumorGrowth_TCL_SRCS}
+  ${ChangeTracker_SRCS}
+  ${ChangeTracker_TCL_SRCS}
   )
 slicer3_set_modules_output_path(${lib_name})
 
@@ -141,7 +146,7 @@ endif(BUILD_TESTING)
 #
 
 # Should those paths change, make sure to update 
-#   - vtkTumorGrowthLogic.cxx
+#   - vtkChangeTrackerLogic.cxx
 
 file(GLOB TCLFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "Tcl/*.tcl")
 

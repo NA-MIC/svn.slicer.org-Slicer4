@@ -1,7 +1,7 @@
-#ifndef __vtkTumorGrowthAnalysisStep_h
-#define __vtkTumorGrowthAnalysisStep_h
+#ifndef __vtkChangeTrackerAnalysisStep_h
+#define __vtkChangeTrackerAnalysisStep_h
 
-#include "vtkTumorGrowthStep.h"
+#include "vtkChangeTrackerStep.h"
 
 class vtkKWCheckButton;
 class vtkKWLabel;
@@ -10,11 +10,11 @@ class vtkKWPushButton;
 class vtkKWFrame;
 class vtkKWLoadSaveButtonWithLabel;
 
-class VTK_TUMORGROWTH_EXPORT vtkTumorGrowthAnalysisStep : public vtkTumorGrowthStep
+class VTK_CHANGETRACKER_EXPORT vtkChangeTrackerAnalysisStep : public vtkChangeTrackerStep
 {
 public:
-  static vtkTumorGrowthAnalysisStep *New();
-  vtkTypeRevisionMacro(vtkTumorGrowthAnalysisStep,vtkTumorGrowthStep);
+  static vtkChangeTrackerAnalysisStep *New();
+  vtkTypeRevisionMacro(vtkChangeTrackerAnalysisStep,vtkChangeTrackerStep);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Description:
@@ -39,8 +39,8 @@ public:
   void TakeScreenshot(); 
 
 protected:
-  vtkTumorGrowthAnalysisStep();
-  ~vtkTumorGrowthAnalysisStep();
+  vtkChangeTrackerAnalysisStep();
+  ~vtkChangeTrackerAnalysisStep();
 
   vtkKWFrame        *SensitivityRadio;
   vtkKWCheckButton  *SensitivityLow;
@@ -68,8 +68,8 @@ protected:
   int SnapshotCount; 
 
 private:
-  vtkTumorGrowthAnalysisStep(const vtkTumorGrowthAnalysisStep&);
-  void operator=(const vtkTumorGrowthAnalysisStep&);
+  vtkChangeTrackerAnalysisStep(const vtkChangeTrackerAnalysisStep&);
+  void operator=(const vtkChangeTrackerAnalysisStep&);
 };
 
 #endif

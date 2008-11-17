@@ -6,7 +6,7 @@ See Doc/copyright/copyright.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLTumorGrowthNode.cxx,v $
+Module:    $RCSfile: vtkMRMLChangeTrackerNode.cxx,v $
 Date:      $Date: 2006/03/17 15:10:10 $
 Version:   $Revision: 1.2 $
 
@@ -18,43 +18,43 @@ Version:   $Revision: 1.2 $
 
 #include "vtkObjectFactory.h"
 
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkMRMLChangeTrackerNode.h"
 #include "vtkMRMLScene.h"
 
 #include <vtksys/ios/sstream>
 
 //------------------------------------------------------------------------------
-vtkMRMLTumorGrowthNode* vtkMRMLTumorGrowthNode::New()
+vtkMRMLChangeTrackerNode* vtkMRMLChangeTrackerNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLTumorGrowthNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLChangeTrackerNode");
   if(ret)
     {
-      return (vtkMRMLTumorGrowthNode*)ret;
+      return (vtkMRMLChangeTrackerNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLTumorGrowthNode;
+  return new vtkMRMLChangeTrackerNode;
 }
 
 //----------------------------------------------------------------------------
 
-vtkMRMLNode* vtkMRMLTumorGrowthNode::CreateNodeInstance()
+vtkMRMLNode* vtkMRMLChangeTrackerNode::CreateNodeInstance()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLTumorGrowthNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLChangeTrackerNode");
   if(ret)
     {
-      return (vtkMRMLTumorGrowthNode*)ret;
+      return (vtkMRMLChangeTrackerNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLTumorGrowthNode;
+  return new vtkMRMLChangeTrackerNode;
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
+vtkMRMLChangeTrackerNode::vtkMRMLChangeTrackerNode()
 {
    // Only one node is created 
-   this->SingletonTag = "vtkMRMLTumorGrowthNode";
+   this->SingletonTag = "vtkMRMLChangeTrackerNode";
    this->HideFromEditors = true;
 
    this->Scan1_Ref = NULL;
@@ -98,7 +98,7 @@ vtkMRMLTumorGrowthNode::vtkMRMLTumorGrowthNode()
 }
 
 //----------------------------------------------------------------------------
-vtkMRMLTumorGrowthNode::~vtkMRMLTumorGrowthNode()
+vtkMRMLChangeTrackerNode::~vtkMRMLChangeTrackerNode()
 {
    this->SetScan1_Ref( NULL );
    this->SetScan2_Ref( NULL );
@@ -117,7 +117,7 @@ vtkMRMLTumorGrowthNode::~vtkMRMLTumorGrowthNode()
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
+void vtkMRMLChangeTrackerNode::WriteXML(ostream& of, int nIndent)
 {
   Superclass::WriteXML(of, nIndent);
 
@@ -160,9 +160,9 @@ void vtkMRMLTumorGrowthNode::WriteXML(ostream& of, int nIndent)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
+void vtkMRMLChangeTrackerNode::ReadXMLAttributes(const char** atts)
 {
-  // cout << "vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)" << endl;
+  // cout << "vtkMRMLChangeTrackerNode::ReadXMLAttributes(const char** atts)" << endl;
   vtkMRMLNode::ReadXMLAttributes(atts);
 
   // Read all MRML node attributes from two arrays of names and values
@@ -233,10 +233,10 @@ void vtkMRMLTumorGrowthNode::ReadXMLAttributes(const char** atts)
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, VolumeID
-void vtkMRMLTumorGrowthNode::Copy(vtkMRMLNode *anode)
+void vtkMRMLChangeTrackerNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-  vtkMRMLTumorGrowthNode *node = (vtkMRMLTumorGrowthNode *) anode;
+  vtkMRMLChangeTrackerNode *node = (vtkMRMLChangeTrackerNode *) anode;
 
   this->SetScan1_Ref(node->Scan1_Ref);
   this->SetScan2_Ref(node->Scan2_Ref);
@@ -250,7 +250,7 @@ void vtkMRMLTumorGrowthNode::Copy(vtkMRMLNode *anode)
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLTumorGrowthNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLChangeTrackerNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   
   // vtkMRMLNode::PrintSelf(os,indent);

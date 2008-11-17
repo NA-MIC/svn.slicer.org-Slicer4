@@ -1,6 +1,6 @@
-#include "vtkTumorGrowthGUI.h"
-#include "vtkTumorGrowthLogic.h"
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkChangeTrackerGUI.h"
+#include "vtkChangeTrackerLogic.h"
+#include "vtkMRMLChangeTrackerNode.h"
 
 #include "vtkKWFrame.h"
 #include "vtkKWFrameWithLabel.h"
@@ -10,19 +10,19 @@
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
 
-#include "vtkTumorGrowthSelectScanStep.h"
+#include "vtkChangeTrackerSelectScanStep.h"
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkTumorGrowthSelectScanStep);
-vtkCxxRevisionMacro(vtkTumorGrowthSelectScanStep, "$Revision: 1.0 $");
+vtkStandardNewMacro(vtkChangeTrackerSelectScanStep);
+vtkCxxRevisionMacro(vtkChangeTrackerSelectScanStep, "$Revision: 1.0 $");
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthSelectScanStep::vtkTumorGrowthSelectScanStep()
+vtkChangeTrackerSelectScanStep::vtkChangeTrackerSelectScanStep()
 {
   this->VolumeMenuButton = NULL;
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthSelectScanStep::~vtkTumorGrowthSelectScanStep()
+vtkChangeTrackerSelectScanStep::~vtkChangeTrackerSelectScanStep()
 {
   if (this->VolumeMenuButton)
   {
@@ -32,9 +32,9 @@ vtkTumorGrowthSelectScanStep::~vtkTumorGrowthSelectScanStep()
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthSelectScanStep::ShowUserInterface()
+void vtkChangeTrackerSelectScanStep::ShowUserInterface()
 {
-  this->vtkTumorGrowthStep::ShowUserInterface();
+  this->vtkChangeTrackerStep::ShowUserInterface();
 
   if (!this->VolumeMenuButton) {
     this->VolumeMenuButton=vtkSlicerNodeSelectorWidget::New();
@@ -44,7 +44,7 @@ void vtkTumorGrowthSelectScanStep::ShowUserInterface()
     this->VolumeMenuButton->NoneEnabledOn();
     this->VolumeMenuButton->SetNodeClass("vtkMRMLScalarVolumeNode","","","");
     this->VolumeMenuButton->SetMRMLScene(this->GetGUI()->GetLogic()->GetMRMLScene());
-    this->VolumeMenuButton->GetWidget()->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH);
+    this->VolumeMenuButton->GetWidget()->SetWidth(CHANGETRACKER_MENU_BUTTON_WIDTH);
     this->AddGUIObservers();
 
     // If you want to attach a function once is selected 
@@ -53,7 +53,7 @@ void vtkTumorGrowthSelectScanStep::ShowUserInterface()
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthSelectScanStep::AddGUIObservers() 
+void vtkChangeTrackerSelectScanStep::AddGUIObservers() 
 {
   // Make sure you do not add the same event twice - need to do it bc of wizrd structure
   if (this->VolumeMenuButton && (!this->VolumeMenuButton->HasObserver(vtkSlicerNodeSelectorWidget::NodeSelectedEvent, this->WizardGUICallbackCommand))) 
@@ -62,7 +62,7 @@ void vtkTumorGrowthSelectScanStep::AddGUIObservers()
     } 
 }
 
-void vtkTumorGrowthSelectScanStep::RemoveGUIObservers() 
+void vtkChangeTrackerSelectScanStep::RemoveGUIObservers() 
 {
   if ( this->VolumeMenuButton) 
     {
@@ -70,7 +70,7 @@ void vtkTumorGrowthSelectScanStep::RemoveGUIObservers()
     }
 }
 
-void vtkTumorGrowthSelectScanStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) { 
+void vtkChangeTrackerSelectScanStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) { 
   vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
   if (this->VolumeMenuButton && selector == this->VolumeMenuButton && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent && this->VolumeMenuButton->GetSelected() != NULL) 
   { 
@@ -79,7 +79,7 @@ void vtkTumorGrowthSelectScanStep::ProcessGUIEvents(vtkObject *caller, unsigned 
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthSelectScanStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkChangeTrackerSelectScanStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }

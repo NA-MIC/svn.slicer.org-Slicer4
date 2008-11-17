@@ -1,7 +1,7 @@
-#include "vtkTumorGrowthAnalysisStep.h"
+#include "vtkChangeTrackerAnalysisStep.h"
 
-#include "vtkTumorGrowthGUI.h"
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkChangeTrackerGUI.h"
+#include "vtkMRMLChangeTrackerNode.h"
 
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
@@ -12,7 +12,7 @@
 #include "vtkKWEntry.h"
 #include "vtkKWScale.h"
 #include "vtkSlicerApplicationLogic.h"
-#include "vtkTumorGrowthLogic.h"
+#include "vtkChangeTrackerLogic.h"
 #include "vtkSlicerSliceControllerWidget.h"
 #include "vtkSlicerSlicesControlGUI.h"
 #include "vtkKWCheckButton.h"
@@ -29,15 +29,15 @@
 #include <vtksys/SystemTools.hxx>
 
 //----------------------------------------------------------------------------
-vtkStandardNewMacro(vtkTumorGrowthAnalysisStep);
-vtkCxxRevisionMacro(vtkTumorGrowthAnalysisStep, "$Revision: 1.2 $");
+vtkStandardNewMacro(vtkChangeTrackerAnalysisStep);
+vtkCxxRevisionMacro(vtkChangeTrackerAnalysisStep, "$Revision: 1.2 $");
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
+vtkChangeTrackerAnalysisStep::vtkChangeTrackerAnalysisStep()
 {
   this->SetName("Analysis"); 
   this->SetDescription("Analysis of Tumor Growth"); 
-  this->WizardGUICallbackCommand->SetCallback(vtkTumorGrowthAnalysisStep::WizardGUICallback);
+  this->WizardGUICallbackCommand->SetCallback(vtkChangeTrackerAnalysisStep::WizardGUICallback);
 
   this->GrowthLabel = NULL;
 
@@ -65,7 +65,7 @@ vtkTumorGrowthAnalysisStep::vtkTumorGrowthAnalysisStep()
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
+vtkChangeTrackerAnalysisStep::~vtkChangeTrackerAnalysisStep()
 {
 
   if (this->ButtonsWorkingDir) 
@@ -174,7 +174,7 @@ vtkTumorGrowthAnalysisStep::~vtkTumorGrowthAnalysisStep()
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::AddGUIObservers() 
+void vtkChangeTrackerAnalysisStep::AddGUIObservers() 
 {
   // Make sure you do not add the same event twice - need to do it bc of wizrd structure
   //if (this->ButtonsSnapshot && (!this->ButtonsSnapshot->HasObserver(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand))) 
@@ -213,9 +213,9 @@ void vtkTumorGrowthAnalysisStep::AddGUIObservers()
     }
 }
 
-void vtkTumorGrowthAnalysisStep::RemoveGUIObservers() 
+void vtkChangeTrackerAnalysisStep::RemoveGUIObservers() 
 {
-  // cout << "vtkTumorGrowthAnalysisStep::RemoveGUIObservers" << endl;
+  // cout << "vtkChangeTrackerAnalysisStep::RemoveGUIObservers" << endl;
   //if (this->ButtonsSnapshot) 
   //  {
   //    this->ButtonsSnapshot->RemoveObservers(vtkKWPushButton::InvokedEvent, this->WizardGUICallbackCommand);  
@@ -253,19 +253,19 @@ void vtkTumorGrowthAnalysisStep::RemoveGUIObservers()
     }
 }
 
-void vtkTumorGrowthAnalysisStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
+void vtkChangeTrackerAnalysisStep::WizardGUICallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
 {
-  // cout << "void vtkTumorGrowthAnalysisStep::WizardGUICallback" << endl;
-    vtkTumorGrowthAnalysisStep *self = reinterpret_cast<vtkTumorGrowthAnalysisStep *>(clientData);
+  // cout << "void vtkChangeTrackerAnalysisStep::WizardGUICallback" << endl;
+    vtkChangeTrackerAnalysisStep *self = reinterpret_cast<vtkChangeTrackerAnalysisStep *>(clientData);
     if (self) { self->ProcessGUIEvents(caller, event, callData); }
 
 
 }
 
 
-void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
+void vtkChangeTrackerAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData) {
 
-  // cout << "vtkTumorGrowthAnalysisStep::ProcessGUIEvents" << endl;
+  // cout << "vtkChangeTrackerAnalysisStep::ProcessGUIEvents" << endl;
 
   if (event != vtkKWPushButton::InvokedEvent) return;
 
@@ -279,7 +279,7 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
   if ((this->ButtonsAnalysis && (button == this->ButtonsAnalysis)) || 
       (this->ButtonsSave && (button == this->ButtonsSave)))
   { 
-     vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+     vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
      if (node) {
         // Define MRML file 
         node->GetScene()->SetRootDirectory(node->GetWorkingDir());
@@ -294,7 +294,7 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
           if (node->GetAnalysis_Intensity_Flag()) { 
             volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Intensity_Ref()));
         if (volumeAnalysisNode) {
-          vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
+          vtkChangeTrackerLogic *Logic = this->GetGUI()->GetLogic();
           Logic->SaveVolumeForce(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
         }   
           }
@@ -302,7 +302,7 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
       if (node->GetAnalysis_Deformable_Flag()) { 
             volumeAnalysisNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetAnalysis_Deformable_Ref()));
         if (volumeAnalysisNode) {
-          vtkTumorGrowthLogic *Logic = this->GetGUI()->GetLogic();
+          vtkChangeTrackerLogic *Logic = this->GetGUI()->GetLogic();
           Logic->SaveVolumeForce(vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()),volumeAnalysisNode);
         } 
           }
@@ -330,7 +330,7 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
         fileName.append("/AnalysisOutcome.log");
         std::ofstream outfile(fileName.c_str());
         if (outfile.fail()) {
-           cout << "Error: vtkTumorGrowthAnalysisStep::ProcessGUIEvents: Cannot write to file " << fileName.c_str() << endl;
+           cout << "Error: vtkChangeTrackerAnalysisStep::ProcessGUIEvents: Cannot write to file " << fileName.c_str() << endl;
     } else {     
           this->GetGUI()->GetLogic()->PrintResult(outfile, vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication()));
           cout << "Wrote outcome of analysis to " << fileName.c_str() << endl;
@@ -357,12 +357,12 @@ void vtkTumorGrowthAnalysisStep::ProcessGUIEvents(vtkObject *caller, unsigned lo
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::ShowUserInterface()
+void vtkChangeTrackerAnalysisStep::ShowUserInterface()
 {
   // ----------------------------------------
   // Display Analysis Volume 
   // ----------------------------------------  
-  vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+  vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
   if (node) { 
     vtkMRMLVolumeNode *volumeSampleNode = vtkMRMLVolumeNode::SafeDownCast(node->GetScene()->GetNodeByID(node->GetScan1_SuperSampleRef()));
     vtkMRMLVolumeNode *volumeAnalysisNode = NULL;
@@ -412,7 +412,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   // Build GUI 
   // ----------------------------------------
 
-  this->vtkTumorGrowthStep::ShowUserInterface();
+  this->vtkChangeTrackerStep::ShowUserInterface();
 
   this->Frame->SetLabelText("Intensity Pattern Analysis");
   if (node->GetAnalysis_Intensity_Flag()) {
@@ -487,7 +487,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   //   this->SensitivityScale->ClampMaximumValueOn(); 
   //   this->SensitivityScale->SetResolution(0.75);
   //   this->SensitivityScale->SetLinearThreshold(1);
-  //   this->SensitivityScale->SetThumbWheelSize (TUMORGROWTH_WIDGETS_SLIDER_WIDTH,TUMORGROWTH_WIDGETS_SLIDER_HEIGHT);
+  //   this->SensitivityScale->SetThumbWheelSize (CHANGETRACKER_WIDGETS_SLIDER_WIDTH,CHANGETRACKER_WIDGETS_SLIDER_HEIGHT);
   //   this->SensitivityScale->DisplayEntryOn();
   //   this->SensitivityScale->DisplayLabelOn();
   //   this->SensitivityScale->GetLabel()->SetText("Sensitivity");
@@ -499,7 +499,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   // }
 
   // Initial value 
-  // vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
+  // vtkMRMLChangeTrackerNode *mrmlNode = this->GetGUI()->GetNode();
   // if (mrmlNode) this->SensitivityScale->SetValue(mrmlNode->GetAnalysis_Intensity_Sensitivity());
   // this->Script( "pack %s -side top -anchor nw -padx 2 -pady 2", this->SensitivityScale->GetWidgetName());
 
@@ -637,7 +637,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   if (!this->ButtonsSnapshot->IsCreated()) {
     this->ButtonsSnapshot->SetParent(this->FrameButtonsFunctions);
     this->ButtonsSnapshot->Create();
-    this->ButtonsSnapshot->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH_SMALL);
+    this->ButtonsSnapshot->SetWidth(CHANGETRACKER_MENU_BUTTON_WIDTH_SMALL);
     this->ButtonsSnapshot->SetText("Screenshot");
     this->ButtonsSnapshot->SetBalloonHelpString("Save a screenshot of the current view in 3D Slicer.");
     this->ButtonsSnapshot->SetCommand(this, "TakeScreenshot");
@@ -650,7 +650,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   if (!this->ButtonsAnalysis->IsCreated()) {
     this->ButtonsAnalysis->SetParent(this->FrameButtonsFunctions);
     this->ButtonsAnalysis->Create();
-    this->ButtonsAnalysis->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH_SMALL);
+    this->ButtonsAnalysis->SetWidth(CHANGETRACKER_MENU_BUTTON_WIDTH_SMALL);
     this->ButtonsAnalysis->SetText("Analysis");
     this->ButtonsAnalysis->SetBalloonHelpString("Save the results of the analysis to a disk."); 
   }
@@ -661,7 +661,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
   if (!this->ButtonsSave->IsCreated()) {
     this->ButtonsSave->SetParent(this->FrameButtonsFunctions);
     this->ButtonsSave->Create();
-    this->ButtonsSave->SetWidth(TUMORGROWTH_MENU_BUTTON_WIDTH_SMALL);
+    this->ButtonsSave->SetWidth(CHANGETRACKER_MENU_BUTTON_WIDTH_SMALL);
     this->ButtonsSave->SetText("Data");
     this->ButtonsSave->SetBalloonHelpString("Save all intermediate results of the analysis to disk."); 
   }
@@ -729,7 +729,7 @@ void vtkTumorGrowthAnalysisStep::ShowUserInterface()
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::SelectDirectoryCallback()
+void vtkChangeTrackerAnalysisStep::SelectDirectoryCallback()
 {
   // The template file has changed because of user interaction
 
@@ -751,7 +751,7 @@ void vtkTumorGrowthAnalysisStep::SelectDirectoryCallback()
           }
         }
 
-        vtkMRMLTumorGrowthNode* node = this->GetGUI()->GetNode();
+        vtkMRMLChangeTrackerNode* node = this->GetGUI()->GetNode();
         if (node) {
           node->SetWorkingDir(filename.c_str());
           if (this->ButtonsWorkingDir)
@@ -764,12 +764,12 @@ void vtkTumorGrowthAnalysisStep::SelectDirectoryCallback()
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(int flag)
+void vtkChangeTrackerAnalysisStep::SensitivityChangedCallback(int flag)
 {
-  // cout << "vtkTumorGrowthAnalysisStep::SensitivityChangedCallback" << endl;
+  // cout << "vtkChangeTrackerAnalysisStep::SensitivityChangedCallback" << endl;
   // Sensitivity has changed because of user interaction
-  vtkMRMLTumorGrowthNode *mrmlNode = this->GetGUI()->GetNode();
-  if (!this->SensitivityMedium || !this->SensitivityLow ||  !this->SensitivityHigh || !mrmlNode || !this->GrowthLabel ) return;
+  vtkMRMLChangeTrackerNode *mrmlNode = this->GetGUI()->GetNode();
+  if (!this->SensitivityMedium || !this->SensitivityLow ||  !this->SensitivityHigh || !mrmlNode || !this->GrowthLabel || !mrmlNode->GetAnalysis_Intensity_Flag()) return;
 
   double senValue = mrmlNode->GetAnalysis_Intensity_Sensitivity();
   // original values   int senValueList[3] = {0.1, 0.6, 1.0};
@@ -812,7 +812,7 @@ void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(int flag)
     this->SensitivityMedium->SelectedStateOff();
   }
   
-  vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication())->Script("::TumorGrowthTcl::Analysis_Intensity_UpdateThreshold_GUI"); 
+  vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication())->Script("::ChangeTrackerTcl::Analysis_Intensity_UpdateThreshold_GUI"); 
   double Growth = this->GetGUI()->GetLogic()->MeassureGrowth();
   // show here 
   // cout << "Growth " << Growth << " " << this->SensitivityScale->GetValue() << endl;
@@ -827,7 +827,7 @@ void vtkTumorGrowthAnalysisStep::SensitivityChangedCallback(int flag)
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::TakeScreenshot() {
+void vtkChangeTrackerAnalysisStep::TakeScreenshot() {
   vtkImageAppend *screen = vtkImageAppend::New();
     screen->SetAppendAxis(0);
 
@@ -897,18 +897,18 @@ void vtkTumorGrowthAnalysisStep::TakeScreenshot() {
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::ResetPipelineCallback() {
+void vtkChangeTrackerAnalysisStep::ResetPipelineCallback() {
   if (this->GetGUI()) this->GetGUI()->ResetPipeline();
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthAnalysisStep::PrintSelf(ostream& os, vtkIndent indent)
+void vtkChangeTrackerAnalysisStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
 
-void  vtkTumorGrowthAnalysisStep::RemoveResults()  { 
-    vtkMRMLTumorGrowthNode* Node = this->GetGUI()->GetNode();
+void  vtkChangeTrackerAnalysisStep::RemoveResults()  { 
+    vtkMRMLChangeTrackerNode* Node = this->GetGUI()->GetNode();
     if (!Node) return;
     {
        vtkMRMLVolumeNode* currentNode =  vtkMRMLVolumeNode::SafeDownCast(Node->GetScene()->GetNodeByID(Node->GetAnalysis_Intensity_Ref()));

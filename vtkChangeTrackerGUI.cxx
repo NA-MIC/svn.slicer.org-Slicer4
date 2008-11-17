@@ -1,6 +1,6 @@
-#include "vtkTumorGrowthGUI.h"
-#include "vtkTumorGrowthLogic.h"
-#include "vtkMRMLTumorGrowthNode.h"
+#include "vtkChangeTrackerGUI.h"
+#include "vtkChangeTrackerLogic.h"
+#include "vtkMRMLChangeTrackerNode.h"
 #include "vtkMRMLScene.h"
 
 #include "vtkSlicerApplication.h"
@@ -16,12 +16,12 @@
 #include "vtkMRMLVolumeNode.h"
 #include "vtkDirectory.h"
 #include "vtkIntArray.h"
-#include "vtkTumorGrowthFirstScanStep.h"
-#include "vtkTumorGrowthROIStep.h"
-#include "vtkTumorGrowthSegmentationStep.h"
-// #include "vtkTumorGrowthSecondScanStep.h"
-#include "vtkTumorGrowthTypeStep.h"
-#include "vtkTumorGrowthAnalysisStep.h"
+#include "vtkChangeTrackerFirstScanStep.h"
+#include "vtkChangeTrackerROIStep.h"
+#include "vtkChangeTrackerSegmentationStep.h"
+// #include "vtkChangeTrackerSecondScanStep.h"
+#include "vtkChangeTrackerTypeStep.h"
+#include "vtkChangeTrackerAnalysisStep.h"
 #include "vtkKWScale.h"
 #include "vtkKWLabel.h"
 #include "vtkSlicerSliceControllerWidget.h"
@@ -29,25 +29,25 @@
 // #include "CSAILLogo.h"
 #include "vtkKWIcon.h"
 
-vtkCxxSetObjectMacro(vtkTumorGrowthGUI,Node,vtkMRMLTumorGrowthNode);
-vtkCxxSetObjectMacro(vtkTumorGrowthGUI,Logic,vtkTumorGrowthLogic);
+vtkCxxSetObjectMacro(vtkChangeTrackerGUI,Node,vtkMRMLChangeTrackerNode);
+vtkCxxSetObjectMacro(vtkChangeTrackerGUI,Logic,vtkChangeTrackerLogic);
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthGUI* vtkTumorGrowthGUI::New()
+vtkChangeTrackerGUI* vtkChangeTrackerGUI::New()
 {
   // First try to create the object from the vtkObjectFactory
   vtkObject* ret = 
-    vtkObjectFactory::CreateInstance("vtkTumorGrowthGUI");
+    vtkObjectFactory::CreateInstance("vtkChangeTrackerGUI");
   if (ret)
     {
-    return (vtkTumorGrowthGUI*)ret;
+    return (vtkChangeTrackerGUI*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkTumorGrowthGUI;
+  return new vtkChangeTrackerGUI;
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthGUI::vtkTumorGrowthGUI()
+vtkChangeTrackerGUI::vtkChangeTrackerGUI()
 {
   this->Logic        = NULL;
   this->Node         = NULL;
@@ -74,7 +74,7 @@ vtkTumorGrowthGUI::vtkTumorGrowthGUI()
 }
 
 //----------------------------------------------------------------------------
-vtkTumorGrowthGUI::~vtkTumorGrowthGUI()
+vtkChangeTrackerGUI::~vtkChangeTrackerGUI()
 {
   this->RemoveMRMLNodeObservers();
   this->RemoveLogicObservers();
@@ -120,23 +120,23 @@ vtkTumorGrowthGUI::~vtkTumorGrowthGUI()
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthGUI::RemoveMRMLNodeObservers()
+void vtkChangeTrackerGUI::RemoveMRMLNodeObservers()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthGUI::RemoveLogicObservers()
+void vtkChangeTrackerGUI::RemoveLogicObservers()
 {
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthGUI::PrintSelf(ostream& os, vtkIndent indent)
+void vtkChangeTrackerGUI::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os, indent);
 }
 
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::AddGUIObservers() 
+void vtkChangeTrackerGUI::AddGUIObservers() 
 {
   // observe when nodes are added or removed from the scene
   vtkIntArray* events = vtkIntArray::New();
@@ -161,7 +161,7 @@ void vtkTumorGrowthGUI::AddGUIObservers()
 }
 
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::RemoveGUIObservers()
+void vtkChangeTrackerGUI::RemoveGUIObservers()
 {
   if (this->FirstScanStep)    this->FirstScanStep->RemoveGUIObservers();
   if (this->ROIStep)          this->ROIStep->RemoveGUIObservers();
@@ -173,7 +173,7 @@ void vtkTumorGrowthGUI::RemoveGUIObservers()
 }
 
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::ProcessGUIEvents(vtkObject *caller,
+void vtkChangeTrackerGUI::ProcessGUIEvents(vtkObject *caller,
                                                       unsigned long event,
                                                       void *callData) 
 {
@@ -186,7 +186,7 @@ void vtkTumorGrowthGUI::ProcessGUIEvents(vtkObject *caller,
 
 
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::ProcessLogicEvents (
+void vtkChangeTrackerGUI::ProcessLogicEvents (
   vtkObject *caller, unsigned long event, void *callData )
 {
   if ( !caller || !this->WizardWidget)
@@ -195,8 +195,8 @@ void vtkTumorGrowthGUI::ProcessLogicEvents (
     }
 
   // process Logic changes
-  vtkTumorGrowthLogic *callbackLogic = 
-    vtkTumorGrowthLogic::SafeDownCast(caller);
+  vtkChangeTrackerLogic *callbackLogic = 
+    vtkChangeTrackerLogic::SafeDownCast(caller);
   
   if ( callbackLogic == this->GetLogic ( ) && 
     event == vtkCommand::ProgressEvent) 
@@ -206,7 +206,7 @@ void vtkTumorGrowthGUI::ProcessLogicEvents (
 }
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthGUI::UpdateRegistrationProgress()
+void vtkChangeTrackerGUI::UpdateRegistrationProgress()
 {
   // Kilian: Do this later for analysis 
   double progress = this->Logic->GetProgressGlobalFractionCompleted();
@@ -218,7 +218,7 @@ void vtkTumorGrowthGUI::UpdateRegistrationProgress()
 }
 
 //----------------------------------------------------------------------------
-void  vtkTumorGrowthGUI::UpdateNode()
+void  vtkChangeTrackerGUI::UpdateNode()
 {
   if (this->GetMRMLScene() == NULL)
     {
@@ -226,7 +226,7 @@ void  vtkTumorGrowthGUI::UpdateNode()
     return;
     }
 
-  vtkMRMLTumorGrowthNode *tmpNode = vtkMRMLTumorGrowthNode::SafeDownCast(this->GetMRMLScene()->GetNthNodeByClass(0, "vtkMRMLTumorGrowthNode"));
+  vtkMRMLChangeTrackerNode *tmpNode = vtkMRMLChangeTrackerNode::SafeDownCast(this->GetMRMLScene()->GetNthNodeByClass(0, "vtkMRMLChangeTrackerNode"));
   if (this->GetNode() != NULL && tmpNode != NULL && strcmp(tmpNode->GetID(), this->Node->GetID()) )
     {
     vtkSetAndObserveMRMLNodeMacro(this->Node, tmpNode);
@@ -240,14 +240,14 @@ void  vtkTumorGrowthGUI::UpdateNode()
     {
       // std::cout <<"UpdateMRML: n is null, create new one?!" << "\n";
     //    no parameter node selected yet, create new    
-    tmpNode = vtkMRMLTumorGrowthNode::New();
+    tmpNode = vtkMRMLChangeTrackerNode::New();
     this->GetMRMLScene()->AddNode(tmpNode);
-    this->Logic->SetAndObserveTumorGrowthNode(tmpNode);
+    this->Logic->SetAndObserveChangeTrackerNode(tmpNode);
     vtkSetAndObserveMRMLNodeMacro(this->Node, tmpNode);
     tmpNode->Delete();
    }
   // save node parameters for Undo
-  this->GetLogic()->SetAndObserveTumorGrowthNode(this->Node);
+  this->GetLogic()->SetAndObserveChangeTrackerNode(this->Node);
   this->GetLogic()->GetMRMLScene()->SaveStateForUndo(this->Node);
 
 
@@ -255,7 +255,7 @@ void  vtkTumorGrowthGUI::UpdateNode()
 
 
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::UpdateMRML()
+void vtkChangeTrackerGUI::UpdateMRML()
 {
   this->UpdateNode();
 
@@ -269,7 +269,7 @@ void vtkTumorGrowthGUI::UpdateMRML()
 
 // according to vtkGradnientAnisotrpoicDiffusionoFilterGUI
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::UpdateGUI()
+void vtkChangeTrackerGUI::UpdateGUI()
 {
   this->UpdateNode();
   // This might have to be changed bc instances might not yet be created 
@@ -284,19 +284,19 @@ void vtkTumorGrowthGUI::UpdateGUI()
 //  according to vtkGradnientAnisotrpoicDiffusionoFilterGUI
 
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::ProcessMRMLEvents(vtkObject *caller,
+void vtkChangeTrackerGUI::ProcessMRMLEvents(vtkObject *caller,
                                        unsigned long event,
                                        void *callData) 
 {
 
-  // cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents Start ========== " << caller->GetClassName() << " " << event << endl;
+  // cout << "============ vtkChangeTrackerGUI::ProcessMRMLEvents Start ========== " << caller->GetClassName() << " " << event << endl;
   if (event == vtkMRMLScene::SceneCloseEvent ) {
     this->ResetPipeline();
     return;
   }
    
   {
-    vtkMRMLTumorGrowthNode* node = vtkMRMLTumorGrowthNode::SafeDownCast(caller);
+    vtkMRMLChangeTrackerNode* node = vtkMRMLChangeTrackerNode::SafeDownCast(caller);
     if (node != NULL && this->GetNode() == node)  
     {
       this->UpdateGUI();
@@ -315,22 +315,22 @@ void vtkTumorGrowthGUI::ProcessMRMLEvents(vtkObject *caller,
     }
   }
 
-  // cout << "============ vtkTumorGrowthGUI::ProcessMRMLEvents End ==========" << endl;
+  // cout << "============ vtkChangeTrackerGUI::ProcessMRMLEvents End ==========" << endl;
 }
 
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::BuildGUI() 
+void vtkChangeTrackerGUI::BuildGUI() 
 {
 
   vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
 
-  const char *help = "**TumorGrowth Module:** **Under Construction** ";
+  const char *help = "**ChangeTracker Module:** **Under Construction** ";
   
   this->Logic->RegisterMRMLNodesWithScene();
 
-  this->UIPanel->AddPage("TumorGrowth", "TumorGrowth", NULL);
+  this->UIPanel->AddPage("ChangeTracker", "ChangeTracker", NULL);
   vtkKWWidget *module_page = 
-    this->UIPanel->GetPageWidget("TumorGrowth");
+    this->UIPanel->GetPageWidget("ChangeTracker");
 
   // -----------------------------------------------------------------------
   // Help
@@ -400,25 +400,25 @@ void vtkTumorGrowthGUI::BuildGUI()
   // To add a step to the wizard
   // - Create files in Wizard directory
   // - Inlude them into CMakeLists.txt
-  // add variable to vtkTumorGrowthGUI.h
-  // add to vtkTumorGrowthGUI.cxx : 
+  // add variable to vtkChangeTrackerGUI.h
+  // add to vtkChangeTrackerGUI.cxx : 
   //    - header file
-  //    - vtkTumorGrowthGUI::vtkTumorGrowthGUI(), 
-  //    - vtkTumorGrowthGUI::~vtkTumorGrowthGUI(
+  //    - vtkChangeTrackerGUI::vtkChangeTrackerGUI(), 
+  //    - vtkChangeTrackerGUI::~vtkChangeTrackerGUI(
   //    - here
   //    - Tear Down GUI
 
 
   if (!this->FirstScanStep)
   {
-    this->FirstScanStep = vtkTumorGrowthFirstScanStep::New();
+    this->FirstScanStep = vtkChangeTrackerFirstScanStep::New();
     this->FirstScanStep->SetGUI(this);
   }
   wizard_workflow->AddStep(this->FirstScanStep);
 
   if (!this->ROIStep)
     {
-    this->ROIStep = vtkTumorGrowthROIStep::New();
+    this->ROIStep = vtkChangeTrackerROIStep::New();
     this->ROIStep->SetGUI(this);
     this->FirstScanStep->SetNextStep(this->ROIStep);
     }
@@ -426,7 +426,7 @@ void vtkTumorGrowthGUI::BuildGUI()
 
   if (!this->SegmentationStep)
     {
-    this->SegmentationStep = vtkTumorGrowthSegmentationStep::New();
+    this->SegmentationStep = vtkChangeTrackerSegmentationStep::New();
     this->SegmentationStep->SetGUI(this);
     this->ROIStep->SetNextStep(this->SegmentationStep);
     }
@@ -434,7 +434,7 @@ void vtkTumorGrowthGUI::BuildGUI()
 
   if (!this->TypeStep)
     {
-    this->TypeStep = vtkTumorGrowthTypeStep::New();
+    this->TypeStep = vtkChangeTrackerTypeStep::New();
     this->TypeStep->SetGUI(this);
     this->SegmentationStep->SetNextStep(this->TypeStep);
     }
@@ -442,7 +442,7 @@ void vtkTumorGrowthGUI::BuildGUI()
 
   if (!this->AnalysisStep)
     {
-    this->AnalysisStep = vtkTumorGrowthAnalysisStep::New();
+    this->AnalysisStep = vtkChangeTrackerAnalysisStep::New();
     this->AnalysisStep->SetGUI(this);
     this->TypeStep->SetNextStep(this->AnalysisStep);
     }
@@ -464,7 +464,7 @@ void vtkTumorGrowthGUI::BuildGUI()
     if (!applicationGUI) return; 
   
     // char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/blub.mrml";
-    char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/Modules/TumorGrowth/Testing/test.mrml";
+    char fileName[1024] = "/home/pohl/Slicer/Slicer3-build/Modules/ChangeTracker/Testing/test.mrml";
     std::string fl(fileName);
     applicationGUI->GetMRMLScene()->SetURL(fileName);
     applicationGUI->GetMRMLScene()->Connect();
@@ -477,7 +477,7 @@ void vtkTumorGrowthGUI::BuildGUI()
 
 
 //----------------------------------------------------------------------------
-void vtkTumorGrowthGUI::ResetPipeline() 
+void vtkChangeTrackerGUI::ResetPipeline() 
 {
    vtkKWWizardWorkflow *wizard_workflow = this->WizardWidget->GetWizardWorkflow();
    if (!wizard_workflow) return;
@@ -494,7 +494,7 @@ void vtkTumorGrowthGUI::ResetPipeline()
   
 
 //---------------------------------------------------------------------------
-void vtkTumorGrowthGUI::TearDownGUI() 
+void vtkChangeTrackerGUI::TearDownGUI() 
 {
    if (this->FirstScanStep)
    {
@@ -524,14 +524,14 @@ void vtkTumorGrowthGUI::TearDownGUI()
 }
 
 //---------------------------------------------------------------------------
-unsigned long vtkTumorGrowthGUI::
+unsigned long vtkChangeTrackerGUI::
 AddObserverByNumber(vtkObject *observee, unsigned long event) 
 {
   return (observee->AddObserver(event, 
                                 (vtkCommand *)this->GUICallbackCommand));
 } 
 
-void vtkTumorGrowthGUI::SliceLogicRemoveGUIObserver() {
+void vtkChangeTrackerGUI::SliceLogicRemoveGUIObserver() {
   if (!this) return;
   if (!this->GetApplicationGUI()) return;
 
@@ -543,7 +543,7 @@ void vtkTumorGrowthGUI::SliceLogicRemoveGUIObserver() {
   }
 }
 
-void vtkTumorGrowthGUI::SliceLogicRemove() {
+void vtkChangeTrackerGUI::SliceLogicRemove() {
   this->SliceLogicRemoveGUIObserver();
   if (!this) return;
   if (this->SliceLogicCallbackCommand) {
@@ -563,7 +563,7 @@ void vtkTumorGrowthGUI::SliceLogicRemove() {
   } 
 }
 
-void vtkTumorGrowthGUI::SliceLogicDefine() {
+void vtkChangeTrackerGUI::SliceLogicDefine() {
   if (!this->SliceLogic) {
       vtkIntArray *events = vtkIntArray::New();
       events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
@@ -591,7 +591,7 @@ void vtkTumorGrowthGUI::SliceLogicDefine() {
     if (!this->SliceLogicCallbackCommand) {
        this->SliceLogicCallbackCommand=vtkCallbackCommand::New();
        this->SliceLogicCallbackCommand->SetClientData(reinterpret_cast<void *>(this));
-       this->SliceLogicCallbackCommand->SetCallback(vtkTumorGrowthGUI::SliceLogicCallback);
+       this->SliceLogicCallbackCommand->SetCallback(vtkChangeTrackerGUI::SliceLogicCallback);
     }
 
 
@@ -609,19 +609,19 @@ void vtkTumorGrowthGUI::SliceLogicDefine() {
 
     // Note : Setting things manually in TCL 
     // Always do both together 
-    // [[[vtkTumorGrowthROIStep ListInstances] GetSliceLogic] GetSliceCompositeNode] SetReferenceBackgroundVolumeID vtkMRMLScalarVolumeNode1
+    // [[[vtkChangeTrackerROIStep ListInstances] GetSliceLogic] GetSliceCompositeNode] SetReferenceBackgroundVolumeID vtkMRMLScalarVolumeNode1
     // or 
-    //  set GUI  [$::slicer3::Application GetModuleGUIByName "TumorGrowth"]
+    //  set GUI  [$::slicer3::Application GetModuleGUIByName "ChangeTracker"]
     //  [[$GUI GetSliceLogic] GetSliceCompositeNode] SetReferenceBackgroundVolumeID vtkMRMLScalarVolumeNode1
 
-    // [[[vtkTumorGrowthROIStep ListInstances] GetSliceLogic] GetSliceNode] SetFieldOfView 200 200 1
+    // [[[vtkChangeTrackerROIStep ListInstances] GetSliceLogic] GetSliceNode] SetFieldOfView 200 200 1
     //[[$GUI GetSliceLogic] GetSliceNode] SetFieldOfView 200 200 1
 } 
 
-void  vtkTumorGrowthGUI::SliceLogicCallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
+void  vtkChangeTrackerGUI::SliceLogicCallback(vtkObject *caller, unsigned long event, void *clientData, void *callData )
 {
 
-    vtkTumorGrowthGUI *self = reinterpret_cast< vtkTumorGrowthGUI *>(clientData);
+    vtkChangeTrackerGUI *self = reinterpret_cast< vtkChangeTrackerGUI *>(clientData);
     if (self && self->GetSliceController_OffsetScale()) {
       if (event == vtkKWScale::ScaleValueChangedEvent || event == vtkKWScale::ScaleValueStartChangingEvent || event == vtkKWScale::ScaleValueChangingEvent) {
     vtkKWScale *scale = vtkKWScale::SafeDownCast(caller);
@@ -633,7 +633,7 @@ void  vtkTumorGrowthGUI::SliceLogicCallback(vtkObject *caller, unsigned long eve
     }
 }
 
-void vtkTumorGrowthGUI::PropagateVolumeSelection() {
+void vtkChangeTrackerGUI::PropagateVolumeSelection() {
    vtkSlicerApplicationLogic *applicationLogic = this->Logic->GetApplicationLogic();
    applicationLogic->PropagateVolumeSelection( 0 );
    if (!this->SliceLogic) return;
