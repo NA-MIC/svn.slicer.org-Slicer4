@@ -35,6 +35,7 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxApplyImageBasedMaterialProperties_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 #include "itkImage.h"
 #include "itkOrientedImage.h"
@@ -47,7 +48,7 @@ typedef itk::OrientedImage<signed short, 3> OrientImageType;
 typedef itk::Index<3> IntegerType;
 
 
-class vtkMimxApplyImageBasedMaterialProperties : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxApplyImageBasedMaterialProperties : public vtkUnstructuredGridAlgorithm
 {
 public:
   enum { AVERAGE=1, MEDIAN=2, MAXIMUM=3 };

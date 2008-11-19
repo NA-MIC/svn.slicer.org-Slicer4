@@ -41,6 +41,7 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxMorphStructuredGrid_h
 
 #include "vtkStructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIntArray;
 class vtkCollection;
@@ -48,7 +49,7 @@ class vtkPolyData;
 class vtkUnstructuredGrid;
 class vtkCellLocator;
 
-class vtkMimxMorphStructuredGrid : public vtkStructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxMorphStructuredGrid : public vtkStructuredGridAlgorithm
 {
 public:
   static vtkMimxMorphStructuredGrid *New();

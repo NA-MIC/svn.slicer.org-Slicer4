@@ -37,8 +37,10 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxEquivalancePoints_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxEquivalancePoints : public vtkUnstructuredGridAlgorithm
+
+class VTK_MIMXFILTER_EXPORT vtkMimxEquivalancePoints : public vtkUnstructuredGridAlgorithm
 {
 public:
   static vtkMimxEquivalancePoints *New();

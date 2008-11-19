@@ -4,6 +4,7 @@
 #include "vtkCommand.h"
 #include "vtkAlgorithm.h"
 #include "ModuleProcessInformation.h"
+#include "vtkMimxIOWin32Header.h"
 
 #include <string>
 
@@ -45,7 +46,7 @@ class vtkPluginWatcherStart;
 class vtkPluginWatcherEnd;
 class vtkPluginWatcherProgress;
 
-class vtkPluginFilterWatcher
+class VTK_MIMXIO_EXPORT vtkPluginFilterWatcher
 {
 public:
   /** Constructor. Takes a vtkAlgorithm to monitor and an optional

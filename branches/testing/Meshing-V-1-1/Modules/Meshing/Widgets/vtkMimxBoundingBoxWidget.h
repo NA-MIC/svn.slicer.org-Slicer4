@@ -80,6 +80,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxBoundingBoxWidget_h
 
 #include "vtk3DWidget.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 class vtkActor;
 class vtkCellPicker;
@@ -95,7 +97,7 @@ class vtkBBWPWCallback;
 class vtkSphereSource;
 class vtkTransform;
 
-class vtkMimxBoundingBoxWidget : public vtk3DWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxBoundingBoxWidget : public vtk3DWidget
 {
 public:
         // Description:

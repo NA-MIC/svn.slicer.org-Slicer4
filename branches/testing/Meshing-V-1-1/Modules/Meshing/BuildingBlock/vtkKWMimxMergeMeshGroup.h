@@ -33,13 +33,15 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMultiColumnListWithScrollbars;
 class vtkKWFrameWithLabel;
 class vtkKWCheckButtonWithLabel;
 class vtkKWEntryWithLabel;
 
-class vtkKWMimxMergeMeshGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMergeMeshGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxMergeMeshGroup* New();

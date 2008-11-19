@@ -32,14 +32,13 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxAssignBoundaryConditionsGroup_h
 
 #include "vtkKWMimxGroupBase.h"
-
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkActorCollection;
 class vtkCollection;
 class vtkGlyph3D;
 class vtkStringArray;
-
 class vtkKWCheckButtonWithLabel;
 class vtkKWComboBox;
 class vtkKWComboBoxWithLabel;
@@ -54,12 +53,10 @@ class vtkKWScale;
 class vtkKWSpinBoxWithLabel;
 class vtkKWTopLevel;
 class vtkKWTreeWithScrollbars;
-
 class vtkMimxBoundaryConditionActor;
-
 class vtkKWMimxDefineNodeSetGroup;
 
-class vtkKWMimxAssignBoundaryConditionsGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxAssignBoundaryConditionsGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxAssignBoundaryConditionsGroup* New();

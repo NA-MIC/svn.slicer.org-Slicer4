@@ -32,6 +32,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxGroupBase.h"
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWMenuButtonWithLabel;
@@ -47,7 +49,7 @@ class vtkKWRenderWidget;
 class vtkMimxCreateBuildingBlockFromPickWidget;
 //class vtkRightButtonPressEventCallback;
 
-class vtkKWMimxCreateBBFromRubberBandPickGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxCreateBBFromRubberBandPickGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxCreateBBFromRubberBandPickGroup* New();

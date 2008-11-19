@@ -35,8 +35,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSubdivideCurve_h
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxSubdivideCurve : public vtkPolyDataAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxSubdivideCurve : public vtkPolyDataAlgorithm
 {
 public:
 

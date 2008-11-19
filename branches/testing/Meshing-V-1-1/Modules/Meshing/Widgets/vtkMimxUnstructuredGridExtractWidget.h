@@ -33,6 +33,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxUnstructuredGridExtractWidget_h
 
 #include "vtk3DWidget.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 class vtkActor;
 class vtkCellPicker;
@@ -51,7 +53,7 @@ class vtkPointPicker;
 //#define MIMX_EXPORT __declspec( dllexport )
 
 
-class vtkMimxUnstructuredGridExtractWidget : public vtk3DWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxUnstructuredGridExtractWidget : public vtk3DWidget
 {
 public:
         // Description:

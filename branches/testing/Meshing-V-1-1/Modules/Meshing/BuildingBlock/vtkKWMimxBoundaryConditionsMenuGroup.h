@@ -36,13 +36,15 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxBoundaryConditionsMenuGroup_h
 
 #include "vtkKWMimxMainMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMimxAssignBoundaryConditionsGroup;
 class vtkKWMimxExportAbaqusFEMeshGroup;
 class vtkKWMimxSaveVTKFEMeshGroup;
 
 
-class vtkKWMimxBoundaryConditionsMenuGroup : public vtkKWMimxMainMenuGroup
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxBoundaryConditionsMenuGroup : public vtkKWMimxMainMenuGroup
 {
 public:
   static vtkKWMimxBoundaryConditionsMenuGroup* New();

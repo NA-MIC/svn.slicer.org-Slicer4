@@ -35,8 +35,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxFEMeshMenuGroup_h
 
 #include "vtkKWMimxMainMenuGroup.h"
-
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkUnstructuredGrid;
 class vtkKWMimxCreateFEMeshFromBBGroup;
@@ -47,7 +48,7 @@ class vtkKWMimxExportAbaqusFEMeshGroup;
 class vtkKWMimxSaveVTKFEMeshGroup;
 class vtkLinkedListWrapper;
 
-class vtkKWMimxFEMeshMenuGroup : public vtkKWMimxMainMenuGroup
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxFEMeshMenuGroup : public vtkKWMimxMainMenuGroup
 {
 public:
   static vtkKWMimxFEMeshMenuGroup* New();

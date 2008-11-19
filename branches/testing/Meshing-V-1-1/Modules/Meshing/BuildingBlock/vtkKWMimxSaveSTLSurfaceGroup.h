@@ -29,12 +29,14 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxSaveSTLSurfaceGroup_h
 
 #include "vtkKWMimxGroupBase.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWFrameWithLabel;
 class vtkKWLoadSaveDialog;
 
-class vtkKWMimxSaveSTLSurfaceGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxSaveSTLSurfaceGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxSaveSTLSurfaceGroup* New();

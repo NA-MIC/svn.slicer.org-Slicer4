@@ -31,10 +31,12 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWCompositeWidget.h"
 #include "vtkKWMimxViewWindow.h"
 #include "vtkKWMultiColumnList.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMenuButtonWithLabel;
 
-class KWWidgets_EXPORT vtkKWMimxOperationsMenu : public vtkKWCompositeWidget
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxOperationsMenu : public vtkKWCompositeWidget
 {
 public:
   static vtkKWMimxOperationsMenu* New();

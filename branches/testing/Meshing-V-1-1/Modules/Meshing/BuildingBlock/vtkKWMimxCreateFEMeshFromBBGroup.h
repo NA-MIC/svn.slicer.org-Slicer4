@@ -40,10 +40,11 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxCreateFEMeshFromBBGroup_h
 
 #include "vtkKWMimxGroupBase.h"
-
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 #define HEX_BB_SOLID_MESH          1
 #define HEX_EXTRUDE_SOLID_MESH     2
@@ -68,7 +69,7 @@ class vtkKWMimxDefineElSetGroup;
 class vtkKWMimxNodeElementNumbersGroup;
 class vtkMimxMeshActor;
 
-class vtkKWMimxCreateFEMeshFromBBGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxCreateFEMeshFromBBGroup : public vtkKWMimxGroupBase
 {
 public:
 

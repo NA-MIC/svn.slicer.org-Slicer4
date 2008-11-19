@@ -32,19 +32,18 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkIntArray;
-
 class vtkKWCheckButton;
 class vtkKWCheckButtonWithLabel;
 class vtkKWComboBoxWithLabel;
 class vtkKWEntryWithLabel;
 class vtkKWFrameWithLabel;
 class vtkKWMenuButtonWithLabel;
-
 class vtkKWMimxDefineElSetGroup;
 
-class vtkKWMimxApplyFEMeshMaterialPropertiesFromImageGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxApplyFEMeshMaterialPropertiesFromImageGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxApplyFEMeshMaterialPropertiesFromImageGroup* New();

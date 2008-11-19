@@ -33,17 +33,18 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMenuButtonWithLabel;
 class vtkKWFrameWithLabel;
 class vtkKWPushButton;
-
 class vtkLinkedListWrapper;
 class vtkKWComboBoxWithLabel;
 class vtkKWEntryWithLabel;
 class vtkKWRenderWidget;
 
-class vtkKWMimxCreateBBMeshSeedGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxCreateBBMeshSeedGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxCreateBBMeshSeedGroup* New();

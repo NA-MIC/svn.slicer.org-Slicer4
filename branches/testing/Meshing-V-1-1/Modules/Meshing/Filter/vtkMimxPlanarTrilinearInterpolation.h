@@ -32,8 +32,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxPlanarTrilinearInterpolation_h
 
 #include "vtkPointSetAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxPlanarTrilinearInterpolation : public vtkPointSetAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxPlanarTrilinearInterpolation : public vtkPointSetAlgorithm
 {
 public:
   static vtkMimxPlanarTrilinearInterpolation *New();

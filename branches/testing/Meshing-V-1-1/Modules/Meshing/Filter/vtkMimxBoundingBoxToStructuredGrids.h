@@ -37,13 +37,14 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxBoundingBoxToStructuredGrids_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIntArray;
 class vtkCollection;
 class vtkUnstructuredGrid;
 class vtkStructuredGrid;
 
-class vtkMimxBoundingBoxToStructuredGrids : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxBoundingBoxToStructuredGrids : public vtkUnstructuredGridAlgorithm
 {
 public:
   static vtkMimxBoundingBoxToStructuredGrids *New();

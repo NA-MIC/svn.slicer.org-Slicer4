@@ -6,8 +6,10 @@
 #include "vtkKWIcon.h"
 #include "vtkSlicerIcons.h"
 #include "./Resources/vtkSlicerCheckRadioButton_ImageData.h"
+#include "vtkBuildingBlockWin32Header.h"
 
-class vtkSlicerCheckRadioButtonIcons : public vtkSlicerIcons
+
+class VTK_BUILDINGBLOCK_EXPORT vtkSlicerCheckRadioButtonIcons : public vtkSlicerIcons
 {
  public:
   static vtkSlicerCheckRadioButtonIcons* New();

@@ -26,8 +26,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxComputeNormalsFromPolydataFilter_h
 
 #include "vtkPointSetAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxComputeNormalsFromPolydataFilter : public vtkPointSetAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxComputeNormalsFromPolydataFilter : public vtkPointSetAlgorithm
 {
 public:
   static vtkMimxComputeNormalsFromPolydataFilter *New();

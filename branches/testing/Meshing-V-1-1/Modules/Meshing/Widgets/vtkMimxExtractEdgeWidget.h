@@ -88,6 +88,8 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtk3DWidget.h"
 #include "vtkActor.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 class vtkActor;
 class vtkCellPicker;
@@ -102,7 +104,7 @@ class vtkTransform;
 class vtkUnstructuredGrid;
 class vtkIdList;
 
-class vtkMimxExtractEdgeWidget : public vtk3DWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxExtractEdgeWidget : public vtk3DWidget
 {
 public:
   // Description:

@@ -29,12 +29,13 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxSurfaceMenuGroup_h
 
 #include "vtkKWMimxMainMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 
 class vtkKWMimxDeleteObjectGroup;
 class vtkKWMimxSaveSTLSurfaceGroup;
 
-class vtkKWMimxSurfaceMenuGroup : public vtkKWMimxMainMenuGroup
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxSurfaceMenuGroup : public vtkKWMimxMainMenuGroup
 {
 public:
   static vtkKWMimxSurfaceMenuGroup* New();

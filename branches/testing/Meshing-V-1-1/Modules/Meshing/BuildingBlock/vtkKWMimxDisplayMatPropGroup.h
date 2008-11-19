@@ -35,8 +35,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxDisplayMatPropGroup_h
 
 #include "vtkKWMimxGroupBase.h"
-
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkKWCheckButton;
 class vtkKWCheckButtonWithLabel;
@@ -49,7 +49,7 @@ class vtkKWPushButton;
 class vtkKWMimxViewPropertiesOptionGroup;
 
 
-class vtkKWMimxDisplayMatPropGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxDisplayMatPropGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxDisplayMatPropGroup* New();

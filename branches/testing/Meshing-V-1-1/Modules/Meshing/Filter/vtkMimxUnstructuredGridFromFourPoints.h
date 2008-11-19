@@ -32,10 +32,11 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxUnstructuredGridFromFourPoints_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkPoints;
 
-class vtkMimxUnstructuredGridFromFourPoints : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxUnstructuredGridFromFourPoints : public vtkUnstructuredGridAlgorithm
 {
 public:
 

@@ -31,6 +31,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxApplicationSettingsInterface_h
 
 #include "vtkKWApplicationSettingsInterface.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWFrameWithLabel;
 class vtkKWEntryWithLabel;
@@ -43,7 +45,7 @@ class vtkKWSeparator;
 class vtkKWEntryWithLabel;
 class vtkKWScaleWithLabel;
 
-class vtkKWMimxApplicationSettingsInterface
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxApplicationSettingsInterface
   : public vtkKWApplicationSettingsInterface
 {
 public:

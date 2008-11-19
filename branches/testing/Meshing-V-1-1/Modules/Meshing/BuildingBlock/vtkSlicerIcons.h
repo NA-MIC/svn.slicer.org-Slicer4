@@ -4,6 +4,7 @@
 #include "vtkKWObject.h"
 #include "vtkKWResourceUtilities.h"
 #include "vtkKWIcon.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 //#include "vtkSlicerBaseGUI.h"
 
@@ -11,7 +12,7 @@
 // This class is defined in anticipation of superclass methods that
 // all Slicer Icons will use...
 
-class vtkSlicerIcons : public vtkKWObject
+class VTK_BUILDINGBLOCK_EXPORT vtkSlicerIcons : public vtkKWObject
 {
  public:
     static vtkSlicerIcons* New ( );

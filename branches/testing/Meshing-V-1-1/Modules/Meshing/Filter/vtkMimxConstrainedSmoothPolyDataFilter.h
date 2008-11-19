@@ -45,10 +45,11 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxConstrainedSmoothPolyDataFilter_h
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkSmoothPoints;
 
-class vtkMimxConstrainedSmoothPolyDataFilter : public vtkPolyDataAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxConstrainedSmoothPolyDataFilter : public vtkPolyDataAlgorithm
 {
 public:
   vtkTypeRevisionMacro(vtkMimxConstrainedSmoothPolyDataFilter,vtkPolyDataAlgorithm);

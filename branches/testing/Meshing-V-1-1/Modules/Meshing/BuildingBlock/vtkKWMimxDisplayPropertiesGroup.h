@@ -36,6 +36,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWChangeColorButton;
 class vtkKWFrameWithLabel;
@@ -44,7 +46,7 @@ class vtkKWPushButton;
 class vtkKWPushButtonSet;
 class vtkKWRadioButtonSet;
 
-class vtkKWMimxDisplayPropertiesGroup : public vtkKWTopLevel
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxDisplayPropertiesGroup : public vtkKWTopLevel
 {
 public:
   static vtkKWMimxDisplayPropertiesGroup* New();

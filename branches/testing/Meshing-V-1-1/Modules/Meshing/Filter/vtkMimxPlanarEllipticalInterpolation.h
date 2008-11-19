@@ -41,8 +41,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxPlanarEllipticalInterpolation_h
 
 #include "vtkStructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxPlanarEllipticalInterpolation : public vtkStructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxPlanarEllipticalInterpolation : public vtkStructuredGridAlgorithm
 {
 public:
   static vtkMimxPlanarEllipticalInterpolation *New();

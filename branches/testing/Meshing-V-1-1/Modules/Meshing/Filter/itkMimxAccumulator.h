@@ -45,6 +45,8 @@ it way into ITK proper.
 #ifndef __itkMimxAccumulator_h
 #define __itkMimxAccumulator_h
 
+#include "vtkMimxFilterWin32Header.h"
+
 namespace mimxFunction {
 
   /*********** Mean Accumulator Function ***********/

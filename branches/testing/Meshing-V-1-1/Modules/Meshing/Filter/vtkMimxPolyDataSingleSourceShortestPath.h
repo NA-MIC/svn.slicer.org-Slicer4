@@ -37,6 +37,7 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxPolyDataSingleSourceShortestPath_h__
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkDoubleArray;
 class vtkIntArray;
@@ -44,7 +45,7 @@ class vtkIdList;
 class vtkFloatArray;
 class vtkPolyData;
 
-class vtkMimxPolyDataSingleSourceShortestPath : public vtkPolyDataAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxPolyDataSingleSourceShortestPath : public vtkPolyDataAlgorithm
 {
 public:
         vtkTypeRevisionMacro(vtkMimxPolyDataSingleSourceShortestPath,vtkPolyDataAlgorithm);

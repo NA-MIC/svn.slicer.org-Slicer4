@@ -31,6 +31,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "itkMesh.h"
 #include "itkTriangleCell.h"
 #include "itkPoint.h"
+#include "vtkMimxAdapterWin32Header.h"
+
 
 /** 
   \class vtkPolyDataToitkMesh
@@ -39,7 +41,7 @@ PURPOSE.  See the above copyright notices for more information.
   \sa 
   */
 
-class vtkPolyDataToitkMesh
+class VTK_MIMXADAPTER_EXPORT vtkPolyDataToitkMesh
 {
 
  public:

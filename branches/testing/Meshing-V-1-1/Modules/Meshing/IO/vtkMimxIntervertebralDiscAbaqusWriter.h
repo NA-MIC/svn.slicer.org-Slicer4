@@ -30,9 +30,9 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkPolyData.h"
 #include "vtkStructuredGrid.h"
 #include "vtkUnstructuredGrid.h"
+#include "vtkMimxIOWin32Header.h"
 
-
-class vtkMimxIntervertebralDiscAbaqusWriter : public vtkDataSetWriter
+class VTK_MIMXIO_EXPORT vtkMimxIntervertebralDiscAbaqusWriter : public vtkDataSetWriter
 {
 public:
   

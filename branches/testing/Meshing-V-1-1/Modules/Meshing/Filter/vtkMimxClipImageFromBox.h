@@ -33,11 +33,12 @@ PURPOSE.  See the above copyright notices for more information.
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
 #include "itkResampleImageFilter.h"
+#include "vtkMimxFilterWin32Header.h"
 
 typedef itk::Image<signed short, 3>  ImageType;
 
 //      class for storing polydata generated from Tracing
-class vtkMimxClipImageFromBox 
+class VTK_MIMXFILTER_EXPORT vtkMimxClipImageFromBox 
 {
 public:
 

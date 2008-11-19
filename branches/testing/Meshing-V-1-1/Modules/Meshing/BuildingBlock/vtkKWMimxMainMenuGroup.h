@@ -32,17 +32,16 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxMainMenuGroup_h
 
 #include "vtkKWCompositeWidget.h"
-
 #include "vtkKWMimxMainWindow.h"
-
 #include "vtkLinkedListWrapper.h"
 #include "vtkLinkedListWrapperTree.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMenuButtonWithLabel;
-
 class vtkKWMimxViewProperties;
 
-class vtkKWMimxMainMenuGroup : public vtkKWCompositeWidget
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMainMenuGroup : public vtkKWCompositeWidget
 {
 public:
   static vtkKWMimxMainMenuGroup* New();

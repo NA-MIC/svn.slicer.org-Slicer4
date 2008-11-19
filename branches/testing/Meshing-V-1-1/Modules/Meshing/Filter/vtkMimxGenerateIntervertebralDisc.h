@@ -34,11 +34,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxGenerateIntervertebralDisc_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkPolyData;
 class vtkStructuredGrid;
 
-class vtkMimxGenerateIntervertebralDisc : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxGenerateIntervertebralDisc : public vtkUnstructuredGridAlgorithm
 {
 public:
 

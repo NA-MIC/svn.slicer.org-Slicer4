@@ -31,9 +31,9 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkStructuredGrid.h"
 #include "vtkUnstructuredGrid.h"
 #include  "vtkFloatArray.h"
+#include "vtkMimxIOWin32Header.h"
 
-
-class vtkMimxAbaqusFileWriter : public vtkDataSetWriter
+class VTK_MIMXIO_EXPORT vtkMimxAbaqusFileWriter : public vtkDataSetWriter
 {
 public:
   

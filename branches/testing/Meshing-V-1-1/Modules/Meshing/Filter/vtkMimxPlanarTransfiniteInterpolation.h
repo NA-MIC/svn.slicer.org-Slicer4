@@ -31,8 +31,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxPlanarTransfiniteInterpolation_h
 
 #include "vtkPointSetAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class  vtkMimxPlanarTransfiniteInterpolation : public vtkPointSetAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxPlanarTransfiniteInterpolation : public vtkPointSetAlgorithm
 {
 public:
   static vtkMimxPlanarTransfiniteInterpolation *New();

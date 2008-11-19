@@ -33,7 +33,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWCompositeWidget.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkLinkedListWrapperTree.h"
-
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkKWUserInterfacePanel;
 class vtkKWMimxBBMenuGroup;
@@ -45,7 +45,7 @@ class vtkKWMimxMaterialPropertyMenuGroup;
 class vtkKWMimxQualityMenuGroup;
 class vtkKWMimxSurfaceMenuGroup;
 
-class vtkKWMimxMainNotebook : public vtkKWCompositeWidget
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMainNotebook : public vtkKWCompositeWidget
 {
 public:
   static vtkKWMimxMainNotebook* New();

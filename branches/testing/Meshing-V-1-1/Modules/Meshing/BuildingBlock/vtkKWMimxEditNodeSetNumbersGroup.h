@@ -31,11 +31,13 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkKWMimxGroupBase.h"
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWEntryWithLabel;
 
-class vtkKWMimxEditNodeSetNumbersGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxEditNodeSetNumbersGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxEditNodeSetNumbersGroup* New();

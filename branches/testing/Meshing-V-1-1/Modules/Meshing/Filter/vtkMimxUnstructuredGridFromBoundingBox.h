@@ -30,10 +30,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxUnstructuredGridFromBoundingBox_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
+
 class vtkPolyData;
 class vtkUnstructuredGrid;
 
-class vtkMimxUnstructuredGridFromBoundingBox : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxUnstructuredGridFromBoundingBox : public vtkUnstructuredGridAlgorithm
 {
 public:
 

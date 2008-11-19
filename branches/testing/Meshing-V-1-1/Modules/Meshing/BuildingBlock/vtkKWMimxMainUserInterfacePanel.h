@@ -38,6 +38,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMultiColumnListWithScrollbars.h"
 #include "vtkKWMultiColumnList.h"
 #include "vtkKWUserInterfaceManager.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWUserInterfacePanel;
 class vtkKWFrameWithScrollbar;
@@ -54,7 +56,7 @@ class vtkKWMimxViewPropertiesGroup;
 class vtkKWMimxDisplayPropertiesGroup;
 
 
-class vtkKWMimxMainUserInterfacePanel : public vtkKWCompositeWidget
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMainUserInterfacePanel : public vtkKWCompositeWidget
 {
 public:
   static vtkKWMimxMainUserInterfacePanel* New();

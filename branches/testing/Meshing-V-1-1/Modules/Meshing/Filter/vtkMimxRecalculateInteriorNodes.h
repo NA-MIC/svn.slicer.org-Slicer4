@@ -36,6 +36,7 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxRecalculateInteriorNodes_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIdList;
 class vtkPoints;
@@ -43,7 +44,7 @@ class vtkPolyData;
 class vtkUnstructuredGrid;
 
 
-class vtkMimxRecalculateInteriorNodes : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxRecalculateInteriorNodes : public vtkUnstructuredGridAlgorithm
 {
 public:
   static vtkMimxRecalculateInteriorNodes *New();

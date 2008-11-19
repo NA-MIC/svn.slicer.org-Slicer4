@@ -30,6 +30,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkAbstractWidget.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkActor.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 class vtkActor;
 class vtkCellPicker;
@@ -42,7 +44,7 @@ class vtkProperty;
 class vtkActorCollection;
 class vtkIdList;
 
-class vtkMimxExtractCellWidget : public vtkAbstractWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxExtractCellWidget : public vtkAbstractWidget
 {
  public:
   // Description:

@@ -43,8 +43,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxDefineNodeSetGroup_h
 
 #include "vtkKWTopLevel.h"
-
 #include "vtkKWComboBox.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWCheckButtonSet; 
 class vtkKWComboBox;
@@ -54,14 +55,12 @@ class vtkKWPushButton;
 class vtkKWPushButtonSet;
 class vtkKWRadioButtonSet;
 class vtkKWScaleWithLabel;
-
 class vtkMimxMeshActor;
 class vtkMimxSelectPointsWidget;
 class vtkLinkedListWrapper;
-
 class vtkKWMimxMainWindow;
 
-class vtkKWMimxDefineNodeSetGroup : public vtkKWTopLevel
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxDefineNodeSetGroup : public vtkKWTopLevel
 {
 public:
   static vtkKWMimxDefineNodeSetGroup* New();

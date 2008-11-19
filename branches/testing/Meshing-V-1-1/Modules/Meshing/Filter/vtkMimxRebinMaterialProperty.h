@@ -51,11 +51,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxRebinMaterialProperty_h
 
 #include <vtkUnstructuredGridAlgorithm.h>
+#include "vtkMimxFilterWin32Header.h"
 //#include <vtkTable.h>
 
 class vtkTable;
 
-class vtkMimxRebinMaterialProperty : public vtkUnstructuredGridAlgorithm 
+class VTK_MIMXFILTER_EXPORT vtkMimxRebinMaterialProperty : public vtkUnstructuredGridAlgorithm 
 {
 public:
   void PrintSelf(ostream& os, vtkIndent indent);

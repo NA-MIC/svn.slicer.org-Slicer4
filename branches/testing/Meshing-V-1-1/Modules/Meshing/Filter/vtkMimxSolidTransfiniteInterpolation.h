@@ -30,8 +30,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSolidTransfiniteInterpolation_h
 
 #include "vtkPointSetAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxSolidTransfiniteInterpolation : public vtkPointSetAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxSolidTransfiniteInterpolation : public vtkPointSetAlgorithm
 {
 public:
   static vtkMimxSolidTransfiniteInterpolation *New();

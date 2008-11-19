@@ -33,6 +33,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxMaterialPropertyMenuGroup_h
 
 #include "vtkKWMimxMainMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMimxApplyFEMeshMaterialPropertiesFromImageGroup;
 class vtkKWMimxConstMatPropElSetGroup;
@@ -40,7 +42,7 @@ class vtkKWMimxDisplayMatPropGroup;
 class vtkKWMimxExportAbaqusFEMeshGroup;
 class vtkKWMimxSaveVTKFEMeshGroup;
 
-class vtkKWMimxMaterialPropertyMenuGroup : public vtkKWMimxMainMenuGroup
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMaterialPropertyMenuGroup : public vtkKWMimxMainMenuGroup
 {
 public:
   static vtkKWMimxMaterialPropertyMenuGroup* New();

@@ -46,7 +46,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWComboBox.h"
 #include "vtkLinkedListWrapper.h"
 #include "vtkLinkedListWrapperTree.h"
-
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkKWFrame;
 class vtkKWPushButton;
@@ -55,7 +55,7 @@ class vtkLinkedListWrapperTree;
 class vtkKWMimxMainMenuGroup;
 
 //-----------------------------------------------------------------------------
-class vtkKWMimxGroupBase : public vtkKWCompositeWidget
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxGroupBase : public vtkKWCompositeWidget
 {
 public:
   static vtkKWMimxGroupBase* New();

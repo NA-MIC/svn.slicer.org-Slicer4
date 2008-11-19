@@ -31,13 +31,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxViewPropertiesGroup_h
 
 #include "vtkKWTopLevel.h"
-
 #include "vtkKWMultiColumnListWithScrollbars.h"
-
 #include "vtkKWMimxMainWindow.h"
-
 #include "vtkLocalLinkedListWrapper.h"
 #include "vtkLinkedListWrapperTree.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWChangeColorButton;
 class vtkKWCheckButtonWithLabel;
@@ -49,7 +48,7 @@ class vtkKWPushButton;
 class vtkKWRange;
 class vtkKWSpinBoxWithLabel;
 
-class vtkKWMimxViewPropertiesGroup : public vtkKWTopLevel
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxViewPropertiesGroup : public vtkKWTopLevel
 {
 public:
   static vtkKWMimxViewPropertiesGroup* New();

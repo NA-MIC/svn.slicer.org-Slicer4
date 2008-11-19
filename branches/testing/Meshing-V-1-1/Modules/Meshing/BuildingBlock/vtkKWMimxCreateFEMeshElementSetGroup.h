@@ -33,6 +33,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWRadioButtonSet;
@@ -41,7 +43,7 @@ class vtkKWEntryWithLabel;
 class vtkKWPushButtonSet;
 class vtkMimxMeshActor;
 
-class vtkKWMimxCreateFEMeshElementSetGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxCreateFEMeshElementSetGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxCreateFEMeshElementSetGroup* New();

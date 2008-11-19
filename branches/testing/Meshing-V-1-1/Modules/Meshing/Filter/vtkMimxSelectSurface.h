@@ -52,12 +52,13 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSelectSurface_h
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIdList;
 class vtkPoints;
 class vtkPolyData;
 
-class vtkMimxSelectSurface : public vtkPolyDataAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxSelectSurface : public vtkPolyDataAlgorithm
 {
 public:
   // Description:

@@ -35,10 +35,10 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxExtractStructuredGridFace_h
 
 #include "vtkStructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 
-
-class vtkMimxExtractStructuredGridFace : public vtkStructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxExtractStructuredGridFace : public vtkStructuredGridAlgorithm
 {
 public:
   static vtkMimxExtractStructuredGridFace *New();

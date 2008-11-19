@@ -33,10 +33,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxDeleteObjectGroup_h
 
 #include "vtkKWMimxGroupBase.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 
-class vtkKWMimxDeleteObjectGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxDeleteObjectGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxDeleteObjectGroup* New();

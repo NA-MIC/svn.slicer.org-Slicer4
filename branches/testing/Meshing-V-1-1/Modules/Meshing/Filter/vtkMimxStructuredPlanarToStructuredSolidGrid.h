@@ -40,10 +40,11 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxStructuredPlanarToStructuredSolidGrid_h
 
 #include "vtkStructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkPolyData;
 
-class vtkMimxStructuredPlanarToStructuredSolidGrid : public vtkStructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxStructuredPlanarToStructuredSolidGrid : public vtkStructuredGridAlgorithm
 {
 public:
   static vtkMimxStructuredPlanarToStructuredSolidGrid *New();

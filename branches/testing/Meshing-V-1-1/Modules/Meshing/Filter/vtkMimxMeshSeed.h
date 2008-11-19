@@ -34,12 +34,13 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "mimxMatrixTemplate.h"
 #include "vtkSystemIncludes.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkUnstructuredGrid;
 class vtkIntArray;
 class vtkIdList;
 
-class vtkMimxMeshSeed
+class VTK_MIMXFILTER_EXPORT vtkMimxMeshSeed
 {
 public:
         vtkMimxMeshSeed();

@@ -35,11 +35,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxRecalculateInteriorNodesTPS_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkUnstructuredGrid;
 
 
-class vtkMimxRecalculateInteriorNodesTPS : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxRecalculateInteriorNodesTPS : public vtkUnstructuredGridAlgorithm
 {
 public:
   static vtkMimxRecalculateInteriorNodesTPS *New();

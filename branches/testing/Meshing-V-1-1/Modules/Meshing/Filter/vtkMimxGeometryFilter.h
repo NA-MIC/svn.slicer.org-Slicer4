@@ -38,11 +38,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxGeometryFilter_h
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkUnstructuredGrid;
 
 
-class vtkMimxGeometryFilter : public vtkPolyDataAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxGeometryFilter : public vtkPolyDataAlgorithm
 {
 public:
   static vtkMimxGeometryFilter *New();

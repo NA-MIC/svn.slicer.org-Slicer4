@@ -30,6 +30,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxEditUnstructuredHexahedronGrid_h
 
 #include "vtkUnstructuredGridToUnstructuredGridFilter.h"
+#include "vtkMimxFilterWin32Header.h"
+
 
 class vtkIdList;
 
@@ -38,7 +40,7 @@ class vtkIdList;
 #define VTKPROJECTION_CLOSESTPOINT 2
 #define VTKPROJECTION_PLANAR 3
 
-class  vtkMimxEditUnstructuredHexahedronGrid : public vtkUnstructuredGridToUnstructuredGridFilter
+class  VTK_MIMXFILTER_EXPORT vtkMimxEditUnstructuredHexahedronGrid : public vtkUnstructuredGridToUnstructuredGridFilter
 {
 public:
 

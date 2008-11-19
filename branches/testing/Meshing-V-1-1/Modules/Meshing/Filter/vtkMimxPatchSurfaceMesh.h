@@ -36,12 +36,13 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxPatchSurfaceMesh_h
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkPointLocator;
 class vtkPolyData;
 class vtkPolyDataCollection;
 
-class vtkMimxPatchSurfaceMesh : public vtkPolyDataAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxPatchSurfaceMesh : public vtkPolyDataAlgorithm
 {
 
 public:
