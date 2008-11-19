@@ -14,6 +14,8 @@ SET (MIMXAdapter_SRCS
 # Include dirs
 #
 INCLUDE_DIRECTORIES(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
@@ -27,6 +29,11 @@ INCLUDE_DIRECTORIES(
   ${MIMXCommon_SOURCE_DIR} ${MIMXCommon_BINARY_DIR} 
 )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMimxAdapterConfigure.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkMimxAdapterConfigure.h
+  )
+  
 #
 # Wrapping
 #

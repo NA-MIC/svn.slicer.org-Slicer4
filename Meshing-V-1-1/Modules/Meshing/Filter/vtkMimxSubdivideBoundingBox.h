@@ -33,10 +33,11 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSubdivideBoundingbox_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIdList;
 
-class vtkMimxSubdivideBoundingbox : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxSubdivideBoundingbox : public vtkUnstructuredGridAlgorithm
 {
 public:
 

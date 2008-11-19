@@ -38,11 +38,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxUnstructuredToStructuredGrid_h
 
 #include "vtkStructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkUnstructuredGrid;
 
 
-class vtkMimxUnstructuredToStructuredGrid : public vtkStructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxUnstructuredToStructuredGrid : public vtkStructuredGridAlgorithm
 {
 public:
   static vtkMimxUnstructuredToStructuredGrid *New();

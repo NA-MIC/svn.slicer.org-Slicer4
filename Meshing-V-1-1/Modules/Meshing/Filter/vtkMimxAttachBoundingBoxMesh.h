@@ -46,13 +46,14 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxAttachBoundingBoxMesh_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkCollection;
 class vtkIdList;
 class vtkMimxPatchSurfaceMesh;
 class vtkPolyData;
 
-class vtkMimxAttachBoundingBoxMesh : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxAttachBoundingBoxMesh : public vtkUnstructuredGridAlgorithm
 {
 public:
 

@@ -26,12 +26,14 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkKWWindowBase.h"
 #include "vtkKWMimxViewWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWFrameWithScrollbar;
 class vtkKWMenu;
 class vtkKWMimxMainNotebook;
 
-class vtkKWMimxMenuWindow : public vtkKWWindowBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMenuWindow : public vtkKWWindowBase
 {
 public:
         static vtkKWMimxMenuWindow* New();

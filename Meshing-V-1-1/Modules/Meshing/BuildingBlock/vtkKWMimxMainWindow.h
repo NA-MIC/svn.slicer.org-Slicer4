@@ -35,6 +35,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWRegistryHelper.h"
 #include "vtkKWRenderWidget.h"
 #include "vtkKWWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkCallbackCommand;
 class vtkPVAxesActor;
@@ -62,7 +64,7 @@ class vtkKWFrameWithScrollbar;
 // *** collabsible frame definition
 class vtkSlicerModuleCollapsibleFrame;
 
-class vtkKWMimxMainWindow : public vtkKWCompositeWidget
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMainWindow : public vtkKWCompositeWidget
 {
 public:
         static vtkKWMimxMainWindow* New();

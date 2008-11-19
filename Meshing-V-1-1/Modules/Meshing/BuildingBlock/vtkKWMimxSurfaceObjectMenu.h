@@ -30,10 +30,12 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkKWMimxObjectMenu.h"
 #include "vtkKWMimxViewWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMenuButtonWithLabel;
 
-class KWWidgets_EXPORT vtkKWMimxSurfaceObjectMenu : public vtkKWMimxObjectMenu
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxSurfaceObjectMenu : public vtkKWMimxObjectMenu
 {
 public:
   static vtkKWMimxSurfaceObjectMenu* New();

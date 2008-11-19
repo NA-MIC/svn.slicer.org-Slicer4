@@ -35,6 +35,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include <list>
 #include "mimxMatrixTemplate.h"
 #include "mimxLinkedList.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkActor;
 class vtkCellLocator;
@@ -58,7 +59,7 @@ struct Node
 };
 
 
-class  vtkMimxGenerateHexahedronMesh : public vtkUnstructuredGridToUnstructuredGridFilter
+class  VTK_MIMXFILTER_EXPORT vtkMimxGenerateHexahedronMesh : public vtkUnstructuredGridToUnstructuredGridFilter
 {
 public:
 

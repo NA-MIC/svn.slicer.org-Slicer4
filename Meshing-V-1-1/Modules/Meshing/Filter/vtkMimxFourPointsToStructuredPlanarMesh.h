@@ -39,8 +39,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxFourPointsToStructuredPlanarMesh_h
 
 #include "vtkStructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxFourPointsToStructuredPlanarMesh : public vtkStructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxFourPointsToStructuredPlanarMesh : public vtkStructuredGridAlgorithm
 {
 public:
   static vtkMimxFourPointsToStructuredPlanarMesh *New();

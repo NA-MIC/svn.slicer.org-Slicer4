@@ -25,6 +25,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxViewWindow_h
 
 #include "vtkKWWindowBase.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkCallbackCommand;
 class vtkRenderer;
@@ -35,7 +37,7 @@ class vtkMimxErrorCallback;
 
 //class vtkMimxUnstructuredGridWidget;
 
-class vtkKWMimxViewWindow : public vtkKWWindowBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxViewWindow : public vtkKWWindowBase
 {
 public:
   static vtkKWMimxViewWindow* New();

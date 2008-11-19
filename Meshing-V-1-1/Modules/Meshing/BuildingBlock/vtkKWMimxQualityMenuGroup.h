@@ -32,13 +32,15 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxQualityMenuGroup_h
 
 #include "vtkKWMimxMainMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMimxEditFEMeshLaplacianSmoothGroup;
 class vtkKWMimxEvaluateMeshQualityGroup;
 class vtkKWMimxExportAbaqusFEMeshGroup;
 class vtkKWMimxSaveVTKFEMeshGroup;
 
-class vtkKWMimxQualityMenuGroup : public vtkKWMimxMainMenuGroup
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxQualityMenuGroup : public vtkKWMimxMainMenuGroup
 {
 public:
   static vtkKWMimxQualityMenuGroup* New();

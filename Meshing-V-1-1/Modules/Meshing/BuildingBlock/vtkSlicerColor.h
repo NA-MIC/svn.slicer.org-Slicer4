@@ -2,12 +2,14 @@
 #define __vtkSlicerColor_h
 
 #include "vtkObject.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 //#include "vtkSlicerBaseGUIWin32Header.h" 
 
 // Description:
 // Color definitios used in Slicer's style.
 //
-class vtkSlicerColor : public vtkObject
+class VTK_BUILDINGBLOCK_EXPORT vtkSlicerColor : public vtkObject
 {
  public:
     static vtkSlicerColor* New ( );

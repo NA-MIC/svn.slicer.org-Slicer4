@@ -52,6 +52,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkAbstractWidget.h"
 #include "vtkUnstructuredGrid.h"
+#include "vtkMimxWidgetsWin32Header.h"
 
 class vtkActor;
 class vtkDataSet;
@@ -62,7 +63,7 @@ class vtkPolyDataMapper;
 class vtkRenderedAreaPicker;
 class vtkUnstructuredGrid;
 
-class vtkMimxSelectCellsWidgetFEMesh : public vtkAbstractWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxSelectCellsWidgetFEMesh : public vtkAbstractWidget
 {
  public:
   // Description:

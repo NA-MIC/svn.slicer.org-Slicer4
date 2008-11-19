@@ -30,12 +30,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxApplication_h
 
 #include "vtkKWApplication.h"
-
 #include "vtkKWRegistryHelper.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkSlicerTheme;
 
-class vtkKWMimxApplication : public vtkKWApplication
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxApplication : public vtkKWApplication
 {
 public:
   static vtkKWMimxApplication* New();

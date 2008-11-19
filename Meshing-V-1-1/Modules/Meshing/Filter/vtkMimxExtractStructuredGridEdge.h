@@ -35,11 +35,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxExtractStructuredGridEdge_h
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkStructuredGrid;
 
 
-class vtkMimxExtractStructuredGridEdge : public vtkPolyDataAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxExtractStructuredGridEdge : public vtkPolyDataAlgorithm
 {
 public:
   static vtkMimxExtractStructuredGridEdge *New();

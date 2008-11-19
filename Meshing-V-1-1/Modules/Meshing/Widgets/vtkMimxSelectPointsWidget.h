@@ -52,6 +52,8 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkAbstractWidget.h"
 #include "vtkUnstructuredGrid.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 class vtkActor;
 class vtkDataSet;
@@ -70,7 +72,7 @@ class vtkUnstructuredGrid;
 class vtkPointLocator;
 class vtkPoints;
 
-class vtkMimxSelectPointsWidget : public vtkAbstractWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxSelectPointsWidget : public vtkAbstractWidget
 {
  public:
   // Description:

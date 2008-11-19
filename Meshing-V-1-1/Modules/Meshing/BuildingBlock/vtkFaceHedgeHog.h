@@ -19,12 +19,13 @@
 #define VTKFACEHEDGEHOG_H_
 
 #include "vtkPolyDataAlgorithm.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 #define VTK_USE_VECTOR 0
 #define VTK_USE_NORMAL 1
 
 
-class VTK_GRAPHICS_EXPORT vtkFaceHedgeHog  : public vtkPolyDataAlgorithm
+class VTK_BUILDINGBLOCK_EXPORT vtkFaceHedgeHog  : public vtkPolyDataAlgorithm
 {
 public:
       static vtkFaceHedgeHog* New();

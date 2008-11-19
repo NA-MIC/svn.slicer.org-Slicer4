@@ -34,6 +34,7 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMeshQualityExtended_h
 
 #include "vtkMeshQuality.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkCell;
 class vtkDataArray;
@@ -42,7 +43,7 @@ class vtkDataArray;
 #define VTK_QUALITY_EDGE_COLLAPSE 30
 #define VTK_QUALITY_ANGLE_OUT_OF_BOUNDS 31
 
-class VTK_GRAPHICS_EXPORT vtkMeshQualityExtended : public vtkMeshQuality
+class VTK_MIMXFILTER_EXPORT vtkMeshQualityExtended : public vtkMeshQuality
 {
 public:
   void PrintSelf(ostream& os, vtkIndent indent);

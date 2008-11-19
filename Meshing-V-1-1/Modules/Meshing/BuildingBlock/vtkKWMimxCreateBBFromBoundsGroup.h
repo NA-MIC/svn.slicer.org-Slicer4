@@ -37,22 +37,20 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxCreateBBFromBoundsGroup_h
 
 #include "vtkKWMimxGroupBase.h"
-
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkUnstructuredGrid;
-
 class vtkKWComboBoxWithLabel;
 class vtkKWEntryWithLabel;
 class vtkKWFrame;
 class vtkKWFrameWithLabel;
 class vtkKWRadioButton;
-
 class vtkMimxCreateBuildingBlockFromPickWidget;
-
 class vtkRightButtonBBManualCreateCallback;     // For right hand mouse button manual block creation
 
-class vtkKWMimxCreateBBFromBoundsGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxCreateBBFromBoundsGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxCreateBBFromBoundsGroup* New();

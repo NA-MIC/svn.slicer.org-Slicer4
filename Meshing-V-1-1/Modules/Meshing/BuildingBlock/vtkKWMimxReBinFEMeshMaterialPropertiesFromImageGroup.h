@@ -33,6 +33,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWEntryWithLabel;
@@ -40,7 +42,7 @@ class vtkIntArray;
 class vtkKWFrame;
 class vtkKWCheckButtonWithLabel;
 
-class vtkKWMimxReBinFEMeshMaterialPropertiesFromImageGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxReBinFEMeshMaterialPropertiesFromImageGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxReBinFEMeshMaterialPropertiesFromImageGroup* New();

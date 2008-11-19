@@ -31,12 +31,14 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxNodeElementNumbersGroup_h
 
 #include "vtkKWMimxGroupBase.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWEntry;
 class vtkKWLabel;
 
-class vtkKWMimxNodeElementNumbersGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxNodeElementNumbersGroup : public vtkKWMimxGroupBase
 {
 public:
     static vtkKWMimxNodeElementNumbersGroup* New();

@@ -29,14 +29,14 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxLoadMeshGroup_h
 
 #include "vtkKWMimxGroupBase.h"
-
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkKWComboBoxWithLabel;
 class vtkKWLoadSaveDialog;
 class vtkEntryChangedEventCallback;
 class vtkKWFrameWithLabel;
 
-class vtkKWMimxLoadMeshGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxLoadMeshGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxLoadMeshGroup* New();

@@ -33,10 +33,11 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxAddUnstructuredHexahedronGridCell_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIdList;
 
-class vtkMimxAddUnstructuredHexahedronGridCell : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxAddUnstructuredHexahedronGridCell : public vtkUnstructuredGridAlgorithm
 {
 public:
 

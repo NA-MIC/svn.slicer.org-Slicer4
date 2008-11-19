@@ -33,6 +33,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWEntryWithLabel;
@@ -41,7 +43,7 @@ class vtkKWCheckButtonWithLabel;
 class vtkIntArray;
 class vtkKWMenuButtonWithLabel;
 
-class vtkKWMimxEditFEMeshLaplacianSmoothGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxEditFEMeshLaplacianSmoothGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxEditFEMeshLaplacianSmoothGroup* New();

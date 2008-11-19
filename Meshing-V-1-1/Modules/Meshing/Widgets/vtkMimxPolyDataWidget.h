@@ -80,6 +80,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxPolyDataWidget_h
 
 #include "vtk3DWidget.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 class vtkActor;
 class vtkCellPicker;
@@ -95,7 +97,7 @@ class vtkPDPWCallback;
 class vtkSphereSource;
 class vtkTransform;
 
-class vtkMimxPolyDataWidget : public vtk3DWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxPolyDataWidget : public vtk3DWidget
 {
 public:
         // Description:

@@ -31,10 +31,10 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxViewPropertiesOptionGroup_h
 
 #include "vtkKWTopLevel.h"
-
 #include "vtkKWMimxMainWindow.h"
-
 #include "vtkMimxMeshActor.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWCheckButtonWithLabel;
 class vtkKWComboBoxWithLabel;
@@ -44,7 +44,7 @@ class vtkKWFrameWithLabel;
 class vtkKWMenuButtonWithLabel;
 class vtkKWPushButton;
 
-class vtkKWMimxViewPropertiesOptionGroup : public vtkKWTopLevel
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxViewPropertiesOptionGroup : public vtkKWTopLevel
 {
 public:
   static vtkKWMimxViewPropertiesOptionGroup* New();

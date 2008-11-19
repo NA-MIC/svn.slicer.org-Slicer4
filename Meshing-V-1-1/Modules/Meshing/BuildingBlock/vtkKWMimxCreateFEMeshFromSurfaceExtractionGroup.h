@@ -32,20 +32,21 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxGroupBase.h"
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMenuButtonWithLabel;
 class vtkKWCheckButtonWithLabel;
 class vtkKWEntryWithLabel;
 class vtkKWFrameWithLabel;
 class vtkKWPushButton;
-
 class vtkLinkedListWrapper;
 class vtkIntArray;
 class vtkKWComboBoxWithLabel;
 class vtkKWRenderWidget;
 class vtkActor;
 
-class vtkKWMimxCreateFEMeshFromSurfaceExtractionGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxCreateFEMeshFromSurfaceExtractionGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxCreateFEMeshFromSurfaceExtractionGroup* New();

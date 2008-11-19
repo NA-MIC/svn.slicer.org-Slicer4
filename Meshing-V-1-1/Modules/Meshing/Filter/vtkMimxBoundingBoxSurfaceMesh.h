@@ -28,12 +28,13 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkPolyDataMapper.h"
 #include "vtkActor.h"
 #include "vtkMimxSTLSource.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkPoints;
 class vtkCellArray;
 
 //      class for storing polydata generated from vtkSTLReader
-class vtkMimxBoundingBoxSurfaceMesh : public vtkPolyDataSource
+class VTK_MIMXFILTER_EXPORT vtkMimxBoundingBoxSurfaceMesh : public vtkPolyDataSource
 {
 public:
         vtkTypeRevisionMacro(vtkMimxBoundingBoxSurfaceMesh,vtkPolyDataSource);

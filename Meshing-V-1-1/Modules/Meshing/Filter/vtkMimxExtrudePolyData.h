@@ -31,11 +31,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxExtrudePolyData_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkPoints;
 class vtkPolyData;
 
-class vtkMimxExtrudePolyData : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxExtrudePolyData : public vtkUnstructuredGridAlgorithm
 {
 public:
 

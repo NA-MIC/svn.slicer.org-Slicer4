@@ -37,6 +37,8 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkKWMimxEditBBGroup.h"
 #include "vtkKWRadioButton.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWEntryWithLabel;
 class vtkKWRadioButtonSet;
@@ -44,7 +46,7 @@ class vtkKWCheckButtonWithLabel;
 class vtkKWComboBoxWithLabel;
 class vtkPlaneWidget;
 
-class vtkKWMimxMirrorBBGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMirrorBBGroup : public vtkKWMimxGroupBase
 {
 public:
     static vtkKWMimxMirrorBBGroup* New();

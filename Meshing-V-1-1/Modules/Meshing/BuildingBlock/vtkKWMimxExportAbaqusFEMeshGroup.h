@@ -33,6 +33,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxExportAbaqusFEMeshGroup_h
 
 #include "vtkKWMimxGroupBase.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWEntryWithLabel;
@@ -41,7 +43,7 @@ class vtkKWLoadSaveDialog;
 class vtkKWTextWithScrollbarsWithLabel;
 
 
-class vtkKWMimxExportAbaqusFEMeshGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxExportAbaqusFEMeshGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxExportAbaqusFEMeshGroup* New();

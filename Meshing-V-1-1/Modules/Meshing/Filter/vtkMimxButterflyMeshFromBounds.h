@@ -35,8 +35,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxButterflyMeshFromBounds_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxButterflyMeshFromBounds : public vtkUnstructuredGridAlgorithm 
+class VTK_MIMXFILTER_EXPORT vtkMimxButterflyMeshFromBounds : public vtkUnstructuredGridAlgorithm 
 {
 public:
   vtkTypeRevisionMacro(vtkMimxButterflyMeshFromBounds,vtkUnstructuredGridAlgorithm);

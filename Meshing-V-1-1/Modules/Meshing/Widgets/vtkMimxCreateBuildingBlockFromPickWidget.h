@@ -51,6 +51,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxCreateBuildingBlockFromPickWidget_h
 
 #include "vtkAbstractWidget.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 class vtkActor;
 class vtkDataSetMapper;
@@ -59,7 +61,7 @@ class vtkPolyData;
 class vtkUnstructuredGrid;
 class vtkPoints;
 
-class vtkMimxCreateBuildingBlockFromPickWidget : public vtkAbstractWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxCreateBuildingBlockFromPickWidget : public vtkAbstractWidget
 {
  public:
   // Description:

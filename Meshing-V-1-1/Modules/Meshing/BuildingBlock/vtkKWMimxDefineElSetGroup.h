@@ -43,11 +43,11 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxDefineElSetGroup_h
 
 #include "vtkKWTopLevel.h"
-
 #include "vtkKWComboBox.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkUnstructuredGrid;
-
 class vtkKWCheckButtonSet; 
 class vtkKWComboBox;
 class vtkKWEntryWithLabel;
@@ -56,14 +56,12 @@ class vtkKWPushButton;
 class vtkKWRadioButton;
 class vtkKWRadioButtonSet;
 class vtkKWScaleWithLabel;
-
 class vtkMimxCreateElementSetWidgetFEMesh;
 class vtkMimxMeshActor;
-
 class vtkKWMimxCreateFEMeshFromBBGroup;
 class vtkKWMimxMainWindow;
 
-class vtkKWMimxDefineElSetGroup : public vtkKWTopLevel
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxDefineElSetGroup : public vtkKWTopLevel
 {
 public:
   static vtkKWMimxDefineElSetGroup* New();

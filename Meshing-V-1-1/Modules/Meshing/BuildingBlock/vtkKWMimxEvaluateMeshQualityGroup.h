@@ -25,6 +25,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxEvaluateMeshQualityGroup_h
 
 #include "vtkKWMimxGroupBase.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkDoubleArray;
 class vtkIdList;
@@ -50,7 +52,7 @@ class vtkKWMimxViewPropertiesOptionGroup;
 #define MESH_QUALITY_MIN_ANGLE 6
 #define MESH_QUALITY_MAX_ANGLE 7
 
-class vtkKWMimxEvaluateMeshQualityGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxEvaluateMeshQualityGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxEvaluateMeshQualityGroup* New();

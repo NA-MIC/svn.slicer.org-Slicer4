@@ -34,11 +34,12 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkUnstructuredGridAlgorithm.h"
 #include "mimxMatrixTemplate.h"
 #include "mimxLinkedList.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIdList;
 
 
-class vtkMimxSplitUnstructuredHexahedronGridCell : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxSplitUnstructuredHexahedronGridCell : public vtkUnstructuredGridAlgorithm
 {
 public:
 

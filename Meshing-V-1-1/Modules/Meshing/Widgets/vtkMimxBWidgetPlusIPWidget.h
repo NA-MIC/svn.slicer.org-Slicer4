@@ -26,9 +26,11 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkUnstructuredGrid.h"
 #include "vtkDataSetMapper.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 //      class for storing polydata generated from Tracing
-class vtkBWidgetPlusIPWidget 
+class VTK_MIMXWIDGETS_EXPORT vtkBWidgetPlusIPWidget 
 {
 public:
         vtkBWidgetPlusIPWidget();

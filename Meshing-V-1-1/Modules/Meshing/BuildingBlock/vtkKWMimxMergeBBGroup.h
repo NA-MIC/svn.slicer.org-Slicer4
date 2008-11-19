@@ -35,13 +35,13 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxSurfaceMenuGroup.h"
 #include "vtkKWMimxEditBBGroup.h"
 #include "vtkKWRadioButton.h"
-
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkKWMultiColumnListWithScrollbars;
 class vtkKWEntryWithLabel;
 class vtkKWRadioButton;
 
-class vtkKWMimxMergeBBGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxMergeBBGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxMergeBBGroup* New();

@@ -8,12 +8,13 @@
 #include <vtksys/hash_map.hxx>
 
 #include "vtkObject.h"
+#include "vtkBuildingBlockWin32Header.h"
 //#include "vtkSlicerBaseGUIWin32Header.h" 
 
 // Description:
 // Color definitios used in Slicer's style.
 //
-class vtkSlicerFont : public vtkObject
+class VTK_BUILDINGBLOCK_EXPORT vtkSlicerFont : public vtkObject
 {
  public:
     static vtkSlicerFont* New ( );

@@ -35,8 +35,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSelectCellsWidget_h
 
 #include "vtkAbstractWidget.h"
-
 #include "vtkActor.h"
+#include "vtkMimxWidgetsWin32Header.h"
 
 class vtkActor;
 class vtkDataSetMapper;
@@ -46,7 +46,7 @@ class vtkInteractorStyleSwitch;
 class vtkRenderedAreaPicker;
 class vtkUnstructuredGrid;
 
-class vtkMimxSelectCellsWidget : public vtkAbstractWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxSelectCellsWidget : public vtkAbstractWidget
 {
 public:
   // Description:

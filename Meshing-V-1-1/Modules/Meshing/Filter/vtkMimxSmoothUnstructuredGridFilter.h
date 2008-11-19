@@ -31,12 +31,13 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSmoothUnstructuredGridFilter_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIntArray;
 class vtkPolyData;
 class vtkIdList;
 
-class vtkMimxSmoothUnstructuredGridFilter : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxSmoothUnstructuredGridFilter : public vtkUnstructuredGridAlgorithm
 {
 public:
   static vtkMimxSmoothUnstructuredGridFilter *New();

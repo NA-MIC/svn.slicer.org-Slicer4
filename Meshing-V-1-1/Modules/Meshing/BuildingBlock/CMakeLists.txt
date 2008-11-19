@@ -29,6 +29,8 @@ INCLUDE_DIRECTORIES( ${VTK_SOURCE_DIR}/Utilities/verdict/include ${VTK_KITS_DIR}
 # Include dirs
 #
 INCLUDE_DIRECTORIES(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
@@ -49,6 +51,10 @@ INCLUDE_DIRECTORIES(
   ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR}
 )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkBuildingBlockConfigure.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkBuildingBlockConfigure.h
+  )
 
 SET(LIB_NAME "BuildingBlock")
 SET(LIB_SRCS 
@@ -114,12 +120,14 @@ SET(LIB_SRCS
   vtkKWMimxViewPropertiesGroup.cxx
    vtkKWMimxViewPropertiesOptionGroup.cxx
   vtkKWMimxDisplayPropertiesGroup.cxx
-  vtkFaceHedgeHog.cxx
-  vtkSlicerTheme.cxx
-  vtkSlicerColor.cxx
-  vtkSlicerFont.cxx
-  vtkSlicerCheckRadioButtonIcons.cxx
-  vtkSlicerIcons.cxx
+# Not Needed - This is now defined in mimxFilter
+#  vtkFaceHedgeHog.cxx
+# Not Needed - These are already defined in Slicer
+#  vtkSlicerTheme.cxx
+#  vtkSlicerColor.cxx
+#  vtkSlicerFont.cxx
+#  vtkSlicerCheckRadioButtonIcons.cxx
+#  vtkSlicerIcons.cxx
   #
   vtkKWMimxLoadBBGroup.cxx    
   vtkKWMimxLoadSurfaceGroup.cxx

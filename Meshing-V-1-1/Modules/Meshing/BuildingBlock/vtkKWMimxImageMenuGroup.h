@@ -30,6 +30,8 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxImageMenuGroup_h
 
 #include "vtkKWMimxMainMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWFileBrowserDialog;
 class vtkKWMimxDeleteObjectGroup;
@@ -38,7 +40,7 @@ class vtkFocalPlaneContourRepresentation;
 class vtkContourWidget;
 class vtkImageActor;
 
-class vtkKWMimxImageMenuGroup : public vtkKWMimxMainMenuGroup
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxImageMenuGroup : public vtkKWMimxMainMenuGroup
 {
 public:
   static vtkKWMimxImageMenuGroup* New();

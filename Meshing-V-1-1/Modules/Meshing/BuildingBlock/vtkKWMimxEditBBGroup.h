@@ -51,12 +51,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxEditBBGroup_h
 
 #include "vtkKWMimxGroupBase.h"
-
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkDataSetCollection;
 class vtkPlaneWidget;
-
 class vtkKWCheckButton;
 class vtkKWCheckButtonSet;
 class vtkKWCheckButtonWithLabel;
@@ -64,20 +64,17 @@ class vtkKWComboBoxWithLabel;
 class vtkKWEntryWithLabel;
 class vtkKWFrameWithLabel;
 class vtkKWPushButtonSet;
-
 class vtkMimxExtractCellWidget;
 class vtkMimxExtractEdgeWidget;
 class vtkMimxExtractFaceWidget;
 class vtkMimxSelectCellsWidget;
 class vtkMimxUnstructuredGridWidget;
 class vtkMimxViewMergePointsWidget;
-
 class vtkKWMimxMergeBBGroup;
 class vtkKWMimxMirrorBBGroup;
-
 class vtkRightButtonPressEventCallback;
 
-class vtkKWMimxEditBBGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxEditBBGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxEditBBGroup* New();

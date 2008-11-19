@@ -27,12 +27,12 @@
 // *** added in move of application variables to MRML node for module
 //#include "vtkKWApplication.h"
 #include "vtkKWRegistryHelper.h"
-
+#include "vtkMeshingWorkflowWin32Header.h"
 
 
 class vtkImageData;
 
-class VTK_MRML_EXPORT vtkMRMLMeshingWorkflowNode : public vtkMRMLNode
+class VTK_MESHINGWORKFLOW_EXPORT vtkMRMLMeshingWorkflowNode : public vtkMRMLNode
 {
   public:
   static vtkMRMLMeshingWorkflowNode *New();

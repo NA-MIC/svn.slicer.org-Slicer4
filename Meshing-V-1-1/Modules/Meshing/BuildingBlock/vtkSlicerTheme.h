@@ -11,8 +11,9 @@
 #include "vtkSlicerColor.h"
 #include "vtkSlicerFont.h"
 #include "vtkSlicerCheckRadioButtonIcons.h"
+#include "vtkBuildingBlockWin32Header.h"
 
-class vtkSlicerTheme : public vtkKWTheme
+class VTK_BUILDINGBLOCK_EXPORT vtkSlicerTheme : public vtkKWTheme
 {
  public:
     // Description:

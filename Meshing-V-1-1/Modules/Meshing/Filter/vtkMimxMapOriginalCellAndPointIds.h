@@ -37,10 +37,11 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxMapOriginalCellAndPointIds_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkIdList;
 
-class vtkMimxMapOriginalCellAndPointIds : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxMapOriginalCellAndPointIds : public vtkUnstructuredGridAlgorithm
 {
 public:
   static vtkMimxMapOriginalCellAndPointIds *New();

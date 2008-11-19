@@ -37,6 +37,7 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxCylindricalMesh_h
 
 #include "vtkUnstructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
 class vtkCellLocator;
 class vtkClosestPointProjection;
@@ -48,7 +49,7 @@ class vtkPolyDataCollection;
 class vtkStructuredGrid;
 
 
-class vtkMimxCylindricalMesh : public vtkUnstructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxCylindricalMesh : public vtkUnstructuredGridAlgorithm
 {
 public:
   static vtkMimxCylindricalMesh *New();

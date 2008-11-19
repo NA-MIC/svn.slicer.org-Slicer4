@@ -33,10 +33,10 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxViewProperties_h
 
 #include "vtkKWCompositeWidget.h"
-
 #include "vtkKWMimxMainWindow.h"
-
 #include "vtkLinkedListWrapperTree.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWFrameWithLabel;
 class vtkKWFrameWithScrollbar;
@@ -49,7 +49,7 @@ class vtkKWMimxViewPropertiesGroup;
 
 class vtkLocalLinkedListWrapper;
 
-class vtkKWMimxViewProperties : public vtkKWCompositeWidget
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxViewProperties : public vtkKWCompositeWidget
 {
 public:
   static vtkKWMimxViewProperties* New();

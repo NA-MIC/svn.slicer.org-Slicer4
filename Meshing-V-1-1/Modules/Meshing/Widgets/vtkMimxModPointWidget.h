@@ -79,7 +79,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtk3DWidget.h"
 #include "vtkCursor3D.h" // Needed for faster access to the Cursor3D
-
+#include "vtkMimxWidgetsWin32Header.h"
 
 
 class vtkActor;
@@ -88,7 +88,7 @@ class vtkCellPicker;
 class vtkPolyData;
 class vtkProperty;
 
-class vtkMimxModPointWidget : public vtk3DWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxModPointWidget : public vtk3DWidget
 {
 public:
         // Description:

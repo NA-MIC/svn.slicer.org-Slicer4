@@ -9,6 +9,8 @@ CONFIGURE_FILE(
 # Include dirs
 #
 INCLUDE_DIRECTORIES(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
@@ -21,6 +23,11 @@ INCLUDE_DIRECTORIES(
   ${VTK_INCLUDE_DIR}
 )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMimxIOConfigure.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkMimxIOConfigure.h
+  )
+  
 SET (MeshIO_SRCS 
     vtkMimxAbaqusFileWriter.cxx
     vtkMimxIntervertebralDiscAbaqusWriter.cxx

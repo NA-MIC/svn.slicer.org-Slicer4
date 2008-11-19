@@ -33,10 +33,12 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 
-class vtkKWMimxDeleteBoundaryConditionsGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxDeleteBoundaryConditionsGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxDeleteBoundaryConditionsGroup* New();

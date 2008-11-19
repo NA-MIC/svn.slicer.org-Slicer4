@@ -91,6 +91,8 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkKWEntryWithLabel.h"
 #include "vtkKWMenuButtonWithLabel.h"
+#include "vtkMimxWidgetsWin32Header.h"
+
 
 class vtkActor;
 class vtkCellPicker;
@@ -108,7 +110,7 @@ class vtkLocalAxesActor;
 
 //class vtkKWEntryWithLabel;
 
-class vtkMimxPlaceLocalAxesWidget : public vtk3DWidget
+class VTK_MIMXWIDGETS_EXPORT vtkMimxPlaceLocalAxesWidget : public vtk3DWidget
 {
 public:
   // Description:

@@ -33,13 +33,17 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
+#include "vtkLocalLinkedListWrapper.h"
+
+
 
 class vtkKWFrameWithLabel;
 class vtkKWMenuButtonWithLabel;
 class vtkKWMultiColumnListWithScrollbars;
-#include "vtkLocalLinkedListWrapper.h"
 
-class vtkKWMimxImageViewProperties : public vtkKWCompositeWidget
+
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxImageViewProperties : public vtkKWCompositeWidget
 {
 public:
   static vtkKWMimxImageViewProperties* New();

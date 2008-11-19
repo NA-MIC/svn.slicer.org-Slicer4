@@ -35,8 +35,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxEditBBMeshSeedGroup_h
 
 #include "vtkKWMimxGroupBase.h"
-
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWCheckButtonWithLabel;
 class vtkKWComboBoxWithLabel;
@@ -50,7 +51,7 @@ class vtkKWRadioButtonSet;
 class vtkMimxColorCodeMeshSeedActor;
 class vtkMimxPlaceLocalAxesWidget;
 
-class vtkKWMimxEditBBMeshSeedGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxEditBBMeshSeedGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxEditBBMeshSeedGroup* New();

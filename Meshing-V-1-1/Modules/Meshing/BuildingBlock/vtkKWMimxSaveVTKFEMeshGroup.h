@@ -28,12 +28,14 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxSaveVTKFEMeshGroup_h
 
 #include "vtkKWMimxGroupBase.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWComboBoxWithLabel;
 class vtkKWFrameWithLabel;
 class vtkKWLoadSaveDialog;
 
-class vtkKWMimxSaveVTKFEMeshGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxSaveVTKFEMeshGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxSaveVTKFEMeshGroup* New();

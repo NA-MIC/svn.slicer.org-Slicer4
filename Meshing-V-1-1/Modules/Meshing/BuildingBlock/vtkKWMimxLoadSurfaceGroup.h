@@ -29,6 +29,7 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkKWMimxLoadSurfaceGroup_h
 
 #include "vtkKWMimxGroupBase.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 
 class vtkKWComboBoxWithLabel;
@@ -36,7 +37,7 @@ class vtkKWLoadSaveDialog;
 class vtkEntryChangedEventCallback;
 class vtkKWFrameWithLabel;
 
-class vtkKWMimxLoadSurfaceGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxLoadSurfaceGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxLoadSurfaceGroup* New();

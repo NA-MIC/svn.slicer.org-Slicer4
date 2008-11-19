@@ -39,8 +39,9 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSolidEllipticalInterpolation_h
 
 #include "vtkStructuredGridAlgorithm.h"
+#include "vtkMimxFilterWin32Header.h"
 
-class vtkMimxSolidEllipticalInterpolation : public vtkStructuredGridAlgorithm
+class VTK_MIMXFILTER_EXPORT vtkMimxSolidEllipticalInterpolation : public vtkStructuredGridAlgorithm
 {
 public:
   static vtkMimxSolidEllipticalInterpolation *New();

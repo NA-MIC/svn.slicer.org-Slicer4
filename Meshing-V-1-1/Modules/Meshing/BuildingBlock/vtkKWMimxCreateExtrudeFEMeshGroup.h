@@ -32,6 +32,8 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxGroupBase.h"
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
+
 
 class vtkKWMenuButtonWithLabel;
 class vtkKWCheckButtonWithLabel;
@@ -51,7 +53,7 @@ class vtkMimxMeshActor;
 class vtkKWMimxNodeElementNumbersGroup;
 class vtkKWMimxDefineElSetGroup;
 
-class vtkKWMimxCreateExtrudeFEMeshGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxCreateExtrudeFEMeshGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxCreateExtrudeFEMeshGroup* New();

@@ -3,7 +3,9 @@ PROJECT( MIMXFilter )
 
 # Include dirs
 #
-INCLUDE_DIRECTORIES(
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${SlicerBase_SOURCE_DIR}
   ${SlicerBase_BINARY_DIR}
   ${SlicerBaseLogic_SOURCE_DIR}
@@ -22,11 +24,11 @@ INCLUDE_DIRECTORIES(
 )
 
 
-
-CONFIGURE_FILE(
-  ${MIMXFilter_SOURCE_DIR}/vtkFilterConfigure.h.in
-  ${MIMXFilter_BINARY_DIR}/vtkFilterConfigure.h
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMimxFilterConfigure.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkMimxFilterConfigure.h
 )
+  
 
 #
 # Wrapping

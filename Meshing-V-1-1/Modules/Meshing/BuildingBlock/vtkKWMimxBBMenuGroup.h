@@ -39,20 +39,18 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkKWMimxMainWindow.h"
 #include "vtkKWMimxSurfaceMenuGroup.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkUnstructuredGrid;
-
 class vtkKWLoadSaveDialog;
-
 class vtkMimxUnstructuredGridActor;
-
 class vtkKWMimxCreateBBFromBoundsGroup;
 class vtkKWMimxDeleteObjectGroup;
 class vtkKWMimxEditBBGroup;
 class vtkKWMimxEditBBMeshSeedGroup;
 class vtkKWMimxSaveVTKBBGroup;
 
-class vtkKWMimxBBMenuGroup : public vtkKWMimxMainMenuGroup
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxBBMenuGroup : public vtkKWMimxMainMenuGroup
 {
 public:
   

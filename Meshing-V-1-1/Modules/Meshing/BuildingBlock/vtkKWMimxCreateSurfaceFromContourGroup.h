@@ -32,6 +32,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMimxGroupBase.h"
 #include "vtkKWMimxFEMeshMenuGroup.h"
 #include "vtkKWMimxMainWindow.h"
+#include "vtkBuildingBlockWin32Header.h"
 
 class vtkKWMenuButtonWithLabel;
 class vtkKWEntryWithLabel;
@@ -45,7 +46,7 @@ class vtkKWComboBoxWithLabel;
 class vtkKWRenderWidget;
 class vtkMimxTraceContourWidget;
 
-class vtkKWMimxCreateSurfaceFromContourGroup : public vtkKWMimxGroupBase
+class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxCreateSurfaceFromContourGroup : public vtkKWMimxGroupBase
 {
 public:
   static vtkKWMimxCreateSurfaceFromContourGroup* New();
