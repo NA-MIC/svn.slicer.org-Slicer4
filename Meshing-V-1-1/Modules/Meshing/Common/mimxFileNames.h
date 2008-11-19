@@ -31,6 +31,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "Define.h"
 #include "LinkedList.h"
 #include "MergeNodesPointAndCellData.h"
+#include "vtkMimxCommonWin32Header.h"
 
 // custom written vtk files
 #include "vtkActorBase.h"

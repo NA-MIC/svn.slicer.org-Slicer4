@@ -27,6 +27,7 @@
 #include "vtkLinkedList.h"
 #include "vtkLinkedListWrapper.h"
 #include "vtkSetGet.h" // For vtkTypeMacro.
+#include "vtkMimxCommonWin32Header.h"
 
 #include "vtkMRMLFiniteElementMeshNode.h"
 
@@ -37,7 +38,7 @@ class vtkMimxMeshActor;
 #ifndef __vtkFiniteElementMeshList_h
 #define __vtkFiniteElementMeshList_h
 
-class  vtkFiniteElementMeshList : public vtkObject
+class  VTK_MIMXCOMMON_EXPORT vtkFiniteElementMeshList : public vtkObject
 {
 public:
   static vtkFiniteElementMeshList *New();

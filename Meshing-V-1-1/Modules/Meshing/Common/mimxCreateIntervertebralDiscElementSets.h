@@ -29,10 +29,12 @@ PURPOSE.  See the above copyright notices for more information.
 #ifndef __CreateIntervertebralDiscElementSets_h
 #define __CreateIntervertebralDiscElementSets_h
 
+#include "vtkMimxCommonWin32Header.h"
+
 class vtkUnstructuredGrid;
 class vtkIntArray;
 
-class CreateIntervertebralDiscElementSets
+class VTK_MIMXCOMMON_EXPORT CreateIntervertebralDiscElementSets
 {
 public:
         CreateIntervertebralDiscElementSets();

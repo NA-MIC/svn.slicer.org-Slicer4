@@ -17,6 +17,7 @@
 #define __vtkLinkedListIterator_h
 
 #include "vtkAbstractIterator.h"
+#include "vtkMimxCommonWin32Header.h"
 
 template <class DType> class vtkLinkedList;
 template <class DType> class vtkLinkedListNode;

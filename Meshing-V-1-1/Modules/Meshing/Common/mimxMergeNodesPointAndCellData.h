@@ -39,11 +39,13 @@ PURPOSE.  See the above copyright notices for more information.
 #ifndef __MergeNodesPointAndCellData_h
 #define __MergeNodesPointAndCellData_h
 
+#include "vtkMimxCommonWin32Header.h"
+
 class vtkDataSetCollection;
 class vtkIntArray;
 class vtkUnstructuredGrid;
 
-class MergeNodesPointAndCellData
+class VTK_MIMXCOMMON_EXPORT MergeNodesPointAndCellData
 {
 public:
         MergeNodesPointAndCellData();

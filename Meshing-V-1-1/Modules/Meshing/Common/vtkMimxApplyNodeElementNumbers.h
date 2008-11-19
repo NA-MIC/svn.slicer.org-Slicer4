@@ -29,11 +29,13 @@ PURPOSE.  See the above copyright notices for more information.
 #ifndef __vtkMimxApplyNodeElementNumbers_h
 #define __vtkMimxApplyNodeElementNumbers_h
 
+#include "vtkMimxCommonWin32Header.h"
+
 class vtkIdList;
 class vtkIntArray;
 class vtkUnstructuredGrid;
 
-class vtkMimxApplyNodeElementNumbers
+class VTK_MIMXCOMMON_EXPORT vtkMimxApplyNodeElementNumbers
 {
 public:
         vtkMimxApplyNodeElementNumbers();

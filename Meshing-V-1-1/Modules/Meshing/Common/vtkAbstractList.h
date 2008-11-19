@@ -82,7 +82,7 @@
 // vtkContainer vtkAbstractMap
 
 #include "vtkContainer.h"
-
+#include "vtkMimxCommonWin32Header.h"
 #ifndef __vtkAbstractList_h
 #define __vtkAbstractList_h
 

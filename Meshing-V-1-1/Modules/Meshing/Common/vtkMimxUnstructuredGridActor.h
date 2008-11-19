@@ -31,13 +31,14 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkMimxActorBase.h"
 
 #include "mimxMatrixTemplate.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkActor;
 class vtkDataSetMapper;
 class vtkIdList;
 class vtkUnstructuredGrid;
 
-class vtkMimxUnstructuredGridActor : public vtkMimxActorBase
+class VTK_MIMXCOMMON_EXPORT vtkMimxUnstructuredGridActor : public vtkMimxActorBase
 {
 public:
 

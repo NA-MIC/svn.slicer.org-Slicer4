@@ -39,11 +39,12 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxInteractorStyleUser_h
 
 #include "vtkInteractorStyleUser.h"
+#include "vtkMimxCommonWin32Header.h"
 
 // new motion flag
 #define VTKIS_USERINTERACTION 8 
 
-class VTK_RENDERING_EXPORT vtkMimxInteractorStyleUser : public vtkInteractorStyleUser 
+class VTK_MIMXCOMMON_EXPORT vtkMimxInteractorStyleUser : public vtkInteractorStyleUser 
 {
 public:
   static vtkMimxInteractorStyleUser *New();

@@ -33,11 +33,12 @@
 
 #include "vtkCommand.h"
 #include "vtkKWApplication.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkKWMessageDialog;
 
 // the old style void fund(void *) callbacks
-class vtkMimxErrorCallback : public vtkCommand
+class VTK_MIMXCOMMON_EXPORT vtkMimxErrorCallback : public vtkCommand
 {
 public:
   static vtkMimxErrorCallback *New() 

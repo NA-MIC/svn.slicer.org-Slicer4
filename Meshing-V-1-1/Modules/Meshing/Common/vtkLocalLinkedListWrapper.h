@@ -48,7 +48,7 @@
 //   the local lists.  
 
 #include "vtkObject.h"
-
+#include "vtkMimxCommonWin32Header.h"
 #include "vtkMimxSurfacePolyDataActor.h"
 #include "vtkMimxUnstructuredGridActor.h"
 #include "vtkMimxMeshActor.h"
@@ -62,7 +62,7 @@
 #ifndef __vtkLocalLinkedListWrapper_h
 #define __vtkLocalLinkedListWrapper_h
 
-class vtkLocalLinkedListWrapper : public vtkObject
+class VTK_MIMXCOMMON_EXPORT vtkLocalLinkedListWrapper : public vtkObject
 {
 public:
   static vtkLocalLinkedListWrapper *New();

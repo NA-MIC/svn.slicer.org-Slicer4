@@ -31,12 +31,13 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxSurfacePolyDataActor_h
 
 #include "vtkMimxActorBase.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkActor;
 class vtkPolyData;
 class vtkPolyDataMapper;
 
-class vtkMimxSurfacePolyDataActor : public vtkMimxActorBase
+class VTK_MIMXCOMMON_EXPORT vtkMimxSurfacePolyDataActor : public vtkMimxActorBase
 {
 public:
 

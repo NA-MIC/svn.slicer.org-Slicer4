@@ -29,8 +29,9 @@
 // to find the matching object. 
 
 #include  "vtkMimxUnstructuredGridActor.h"
+#include "vtkMimxCommonWin32Header.h"
 
-class VTK_MRML_EXPORT vtkMRMLFiniteElementBuildingBlockNode : public vtkMRMLUnstructuredGridNode
+class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementBuildingBlockNode : public vtkMRMLUnstructuredGridNode
 {
   public:
   static vtkMRMLFiniteElementBuildingBlockNode *New();

@@ -40,9 +40,10 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxEntryValueChangedCallback_h
 
 #include "vtkCommand.h"
+#include "vtkMimxCommonWin32Header.h"
 
 // the old style void fund(void *) callbacks
-class vtkMimxEntryValueChangedCallback : public vtkCommand
+class VTK_MIMXCOMMON_EXPORT vtkMimxEntryValueChangedCallback : public vtkCommand
 {
 public:
   static vtkMimxEntryValueChangedCallback *New() 

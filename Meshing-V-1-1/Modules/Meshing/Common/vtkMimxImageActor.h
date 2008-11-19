@@ -36,13 +36,14 @@ PURPOSE.  See the above copyright notices for more information.
 #include "itkImageFileReader.h"
 #include "itkImageToVTKImageFilter.h"
 #include "vtkImageData.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkImagePlaneWidget;
 class vtkRenderWindowInteractor;
 
 typedef itk::Image<signed short, 3>  ImageType;
 
-class vtkMimxImageActor : public vtkMimxActorBase
+class VTK_MIMXCOMMON_EXPORT vtkMimxImageActor : public vtkMimxActorBase
 {
 public:
   static vtkMimxImageActor *New();

@@ -35,8 +35,9 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkMimxSTLSource.h"
 #include "vtkDataSetMapper.h"
 #include "vtkStructuredGrid.h"
+#include "vtkMimxCommonWin32Header.h"
 
-class vtkMimxPlanarStructuredGridSource : public vtkPolyDataSource
+class VTK_MIMXCOMMON_EXPORT vtkMimxPlanarStructuredGridSource : public vtkPolyDataSource
 {
 public:
         vtkTypeRevisionMacro(vtkMimxPlanarStructuredGridSource,vtkPolyDataSource);

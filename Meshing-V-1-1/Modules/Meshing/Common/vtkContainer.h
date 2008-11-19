@@ -43,13 +43,13 @@
 // vtkAbstractIterator, vtkAbstractList, vtkAbstractMap
 
 #include "vtkObjectBase.h"
-
+#include "vtkMimxCommonWin32Header.h"
 #include "vtkSetGet.h" // For vtkTypeMacro.
 
 #ifndef __vtkContainer_h
 #define __vtkContainer_h
 
-class vtkContainer : public vtkObjectBase
+class VTK_MIMXCOMMON_EXPORT vtkContainer : public vtkObjectBase
 {
 public:
   vtkTypeMacro(vtkContainer, vtkObjectBase);

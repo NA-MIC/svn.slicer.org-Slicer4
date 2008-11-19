@@ -24,6 +24,7 @@
 
 #include <string>
 
+#include "vtkMimxCommonWin32Header.h"
 #include "vtkUnstructuredGrid.h"
 #include "vtkShrinkPolyData.h"
 #include "vtkGeometryFilter.h"
@@ -36,7 +37,7 @@
 class vtkPolyData;
 
 
-class VTK_MRML_EXPORT vtkMRMLNullDisplayNode : public vtkMRMLDisplayNode
+class VTK_MIMXCOMMON_EXPORT vtkMRMLNullDisplayNode : public vtkMRMLDisplayNode
 {
  public:
   static vtkMRMLNullDisplayNode *New (  );

@@ -29,10 +29,12 @@ PURPOSE.  See the above copyright notices for more information.
 #ifndef __ApplyNodeElementNumbers_h
 #define __ApplyNodeElementNumbers_h
 
+#include "vtkMimxCommonWin32Header.h"
+
 class vtkUnstructuredGrid;
 class vtkIntArray;
 
-class ApplyNodeElementNumbers
+class VTK_MIMXCOMMON_EXPORT ApplyNodeElementNumbers
 {
 public:
         ApplyNodeElementNumbers();
