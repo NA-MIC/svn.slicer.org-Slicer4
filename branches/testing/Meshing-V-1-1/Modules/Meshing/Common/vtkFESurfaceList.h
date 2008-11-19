@@ -26,7 +26,7 @@
 #include "vtkLinkedList.h"
 #include "vtkLinkedListWrapper.h"
 #include "vtkSetGet.h" // For vtkTypeMacro.
-
+#include "vtkMimxCommonWin32Header.h"
 #include "vtkMRMLFESurfaceNode.h"
 
 // pointer to the scene to use for storage
@@ -35,7 +35,7 @@ class vtkMRMLScene;
 #ifndef __vtkFESurfaceList_h
 #define __vtkFESurfaceList_h
 
-class  vtkFESurfaceList : public vtkObject
+class  VTK_MIMXCOMMON_EXPORT vtkFESurfaceList : public vtkObject
 {
 public:
   static vtkFESurfaceList *New();

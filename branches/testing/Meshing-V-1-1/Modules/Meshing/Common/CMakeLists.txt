@@ -20,6 +20,9 @@ PROJECT(MIMXCommon)
 #  ${MIMXAdapter_SOURCE_DIR} ${MIMXAdapter_BINARY_DIR} 
 #)
 
+# --------------------------------------------------------------------------
+# Include dirs
+
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -32,6 +35,11 @@ include_directories(
   ${ITK_INCLUDE_DIR}
   )
 
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/vtkMimxCommonConfigure.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/vtkMimxCommonConfigure.h
+  )
+  
 SET(LIB_NAME "mimxCommon")
 
 
@@ -145,7 +153,7 @@ TARGET_LINK_LIBRARIES(${LIB_NAME}
   ITKIO
   ITKAlgorithms
   ${KWWidgets_LIBRARIES}
-  mimxAdapter
+  #mimxAdapter
   MRML
   )
 

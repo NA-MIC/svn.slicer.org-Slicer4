@@ -24,6 +24,8 @@ PURPOSE.  See the above copyright notices for more information.
 #ifndef __mimxIncludeFileNames_h
 #define __mimxIncludeFileNames_h
 
+#include "vtkMimxCommonWin32Header.h"
+
 // file that contains all the header file names
 // custom written non-vtk files
 #include "vtkMimxApplyNodeElementNumbers.h"

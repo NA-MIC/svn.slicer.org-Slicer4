@@ -28,6 +28,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "itkImage.h"
 #include "itkImageToImageFilter.h"
 #include "itkIOCommon.h"
+#include "vtkMimxCommonWin32Header.h"
 #include <itkExtractImageFilter.h>
 #include <itkMetaDataDictionary.h>
 #include <itkMetaDataObject.h>

@@ -34,6 +34,7 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkLocalAxesActor_h
 
 #include "vtkProp3D.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkActor;
 class vtkCaptionActor2D;
@@ -47,7 +48,7 @@ class vtkProperty;
 class vtkRenderer;
 class vtkSphereSource;
 
-class vtkLocalAxesActor : public vtkProp3D
+class VTK_MIMXCOMMON_EXPORT vtkLocalAxesActor : public vtkProp3D
 {
 public:
   static vtkLocalAxesActor *New();

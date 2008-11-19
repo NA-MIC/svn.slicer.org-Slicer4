@@ -37,6 +37,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include <list>
 
 #include "vtkMimxActorBase.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkActor;
 class vtkDataSetMapper;
@@ -56,7 +57,7 @@ class vtkShrinkFilter;
 class vtkTubeFilter;
 class vtkUnstructuredGrid;
 
-class MeshDisplayProperty
+class VTK_MIMXCOMMON_EXPORT MeshDisplayProperty
 {
 public:
   std::string name;
@@ -78,7 +79,7 @@ public:
   std::string activeAttribute;
 };
 
-class vtkMimxMeshActor : public vtkMimxActorBase
+class VTK_MIMXCOMMON_EXPORT vtkMimxMeshActor : public vtkMimxActorBase
 {
 public:
   static vtkMimxMeshActor *New();

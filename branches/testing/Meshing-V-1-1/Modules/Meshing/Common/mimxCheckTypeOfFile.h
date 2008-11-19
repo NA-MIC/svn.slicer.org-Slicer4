@@ -28,10 +28,12 @@ PURPOSE.  See the above copyright notices for more information.
 #ifndef __mimxCheckTypeOfFile_h
 #define __mimxCheckTypeOfFile_h
 
+#include "vtkMimxCommonWin32Header.h"
+
 class vtkUnstructuredGrid;
 class vtkIntArray;
 
-class mimxCheckTypeOfFile
+class VTK_MIMXCOMMON_EXPORT mimxCheckTypeOfFile
 {
 public:
         mimxCheckTypeOfFile();

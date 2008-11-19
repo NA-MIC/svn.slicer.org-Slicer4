@@ -29,9 +29,11 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkMimxSTLSource.h"
 
 #include "mimxMatrixTemplate.h"
+#include "vtkMimxCommonWin32Header.h"
+
 
 //      class for storing polydata generated from Tracing
-class vtkMimxUGrid 
+class VTK_MIMXCOMMON_EXPORT vtkMimxUGrid 
 {
 public:
         static vtkMimxUGrid *New();

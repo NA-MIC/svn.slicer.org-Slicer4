@@ -24,6 +24,7 @@
 #define __vtkPVAxesActor_h
 
 #include "vtkProp3D.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkRenderer;
 class vtkPropCollection;
@@ -38,7 +39,7 @@ class vtkSphereSource;
 class vtkPolyData;
 class vtkVectorText;
 
-class vtkPVAxesActor : public vtkProp3D
+class VTK_MIMXCOMMON_EXPORT vtkPVAxesActor : public vtkProp3D
 {
 public:
   static vtkPVAxesActor *New();

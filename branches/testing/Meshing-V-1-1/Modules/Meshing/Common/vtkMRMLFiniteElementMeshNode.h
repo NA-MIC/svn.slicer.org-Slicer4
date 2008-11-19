@@ -18,8 +18,9 @@
 #include "vtkMRMLUnstructuredGridNode.h"
 
 #include "vtkMimxMeshActor.h"
+#include "vtkMimxCommonWin32Header.h"
 
-class VTK_MRML_EXPORT vtkMRMLFiniteElementMeshNode : public vtkMRMLUnstructuredGridNode
+class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshNode : public vtkMRMLUnstructuredGridNode
 {
   public:
   static vtkMRMLFiniteElementMeshNode *New();

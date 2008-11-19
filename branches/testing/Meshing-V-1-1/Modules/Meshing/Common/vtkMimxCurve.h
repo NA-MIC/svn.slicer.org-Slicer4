@@ -30,8 +30,10 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkPoints.h"
 #include "vtkCellArray.h"
 #include "vtkPolyData.h"
+#include "vtkMimxCommonWin32Header.h"
+
 //      class for storing polydata generated from Tracing
-class vtkMimxCurve : public vtkPolyDataSource
+class VTK_MIMXCOMMON_EXPORT vtkMimxCurve : public vtkPolyDataSource
 {
 public:
         vtkTypeRevisionMacro(vtkMimxCurve,vtkPolyDataSource);

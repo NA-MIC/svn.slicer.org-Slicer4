@@ -33,7 +33,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "itkTransformFileReader.h"
 #include "itkTransformFileWriter.h"
 #include "itkThinPlateR2LogRSplineKernelTransform.h"
-
+#include "vtkMimxCommonWin32Header.h"
 
 namespace itk
 {

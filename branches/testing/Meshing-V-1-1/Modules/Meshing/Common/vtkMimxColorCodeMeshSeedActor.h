@@ -45,13 +45,14 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxColorCodeMeshSeedActor_h
 
 #include "vtkProp3D.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkActor;
 class vtkPropCollection;
 class vtkScalarBarActor;
 class vtkUnstructuredGrid;
 
-class vtkMimxColorCodeMeshSeedActor : public vtkProp3D
+class VTK_MIMXCOMMON_EXPORT vtkMimxColorCodeMeshSeedActor : public vtkProp3D
 {
 public:
   static vtkMimxColorCodeMeshSeedActor *New();

@@ -31,12 +31,13 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "mimxCommonDefine.h"
 #include "vtkProp3D.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkActor;
 class vtkDataSet;
 class vtkPolyData;
 
-class vtkMimxActorBase : public vtkProp3D
+class VTK_MIMXCOMMON_EXPORT vtkMimxActorBase : public vtkProp3D
 {
 public:
  // static vtkActorBase *New();

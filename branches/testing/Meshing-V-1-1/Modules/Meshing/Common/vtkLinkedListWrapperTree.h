@@ -45,6 +45,7 @@
 #include "vtkObject.h"
 #include "vtkMimxUnstructuredGridActor.h"
 #include "vtkSetGet.h" // For vtkTypeMacro.
+#include "vtkMimxCommonWin32Header.h"
 
 #include "vtkLinkedList.txx"
 
@@ -60,7 +61,7 @@ struct Node
         Node *Child;
 };
 
-class vtkLinkedListWrapperTree : public vtkObject
+class VTK_MIMXCOMMON_EXPORT vtkLinkedListWrapperTree : public vtkObject
 {
 public:
         static vtkLinkedListWrapperTree *New();

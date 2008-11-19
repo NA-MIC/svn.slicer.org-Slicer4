@@ -21,6 +21,7 @@
 #include "vtkPlane.h"
 #include "vtkActor2D.h"
 #include "vtkKWListBoxWithScrollbars.h"
+#include "vtkMimxCommonWin32Header.h"
 
 // OO separation violation by passing an object to invoke methods on to display
 // the values of bad elements.  This is ignored if no object is connected via "AddCanvas" call
@@ -46,7 +47,7 @@ class vtkPassThroughFilter;
 // the VTK_HYBRID_EXPORT label facilitates dynamic linking in windows.  Export declarations
 // must match for all classes that are dynamically linked together under windows.
 // 
-class  VTK_HYBRID_EXPORT vtkMeshQualityClass : public vtkObject {
+class  VTK_MIMXCOMMON_EXPORT vtkMeshQualityClass : public vtkObject {
 
 private: 
   double thresholdValue;

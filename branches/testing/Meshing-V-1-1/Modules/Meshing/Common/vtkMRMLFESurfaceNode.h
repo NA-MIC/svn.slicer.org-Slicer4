@@ -14,6 +14,7 @@
 #ifndef __vtkMRMLFESurfaceNode_h
 #define __vtkMRMLFESurfaceNode_h
 
+#include "vtkMimxCommonWin32Header.h"
 #include "vtkMRML.h"
 #include "vtkMRMLModelNode.h"
 //#include "vtkMRMLStorageNode.h"
@@ -32,7 +33,7 @@
 // since we are including a reference to this object in the MRML node, its definition is included here
 #include "vtkMimxSurfacePolyDataActor.h"
 
-class VTK_MRML_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
+class VTK_MIMXCOMMON_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
 {
   public:
   static vtkMRMLFESurfaceNode *New();

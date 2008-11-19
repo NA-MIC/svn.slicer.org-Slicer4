@@ -32,8 +32,10 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkScalarBarActor.h"
 #include "vtkSphereSource.h"
 #include "vtkDoubleArray.h"
+#include "vtkMimxCommonWin32Header.h"
+
 //      class for storing polydata generated from vtkSTLReader
-class vtkMimxSTLSource : public vtkPolyDataSource
+class VTK_MIMXCOMMON_EXPORT vtkMimxSTLSource : public vtkPolyDataSource
 {
 public:
         vtkTypeRevisionMacro(vtkMimxSTLSource,vtkPolyDataSource);

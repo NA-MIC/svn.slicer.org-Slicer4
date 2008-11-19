@@ -35,7 +35,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include <list>
 
 #include "vtkMimxActorBase.h"
-
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkActor;
 class vtkDataSetMapper;
@@ -58,7 +58,7 @@ class vtkDoubleArray;
 class vtkLookupTable;
 class vtkGlyph3D;
 
-class BoundaryConditionProperty
+class VTK_MIMXCOMMON_EXPORT BoundaryConditionProperty
 {
 public:
   char name[128];
@@ -73,7 +73,7 @@ public:
   double AxisFactor;
 };
 
-class vtkMimxBoundaryConditionActor : public vtkMimxActorBase
+class VTK_MIMXCOMMON_EXPORT vtkMimxBoundaryConditionActor : public vtkMimxActorBase
 {
 public:
 

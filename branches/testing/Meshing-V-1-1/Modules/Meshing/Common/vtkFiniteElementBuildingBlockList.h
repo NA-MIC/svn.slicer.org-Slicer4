@@ -27,6 +27,7 @@
 #include "vtkLinkedList.h"
 #include "vtkLinkedListWrapper.h"
 #include "vtkSetGet.h" // For vtkTypeMacro.
+#include "vtkMimxCommonWin32Header.h"
 
 #include "vtkMRMLFiniteElementBuildingBlockNode.h"
 
@@ -36,7 +37,7 @@ class vtkMRMLScene;
 #ifndef __vtkFiniteElementBuildingBlockList_h
 #define __vtkFiniteElementBuildingBlockList_h
 
-class  vtkFiniteElementBuildingBlockList : public vtkObject
+class  VTK_MIMXCOMMON_EXPORT vtkFiniteElementBuildingBlockList : public vtkObject
 {
 public:
   static vtkFiniteElementBuildingBlockList *New();

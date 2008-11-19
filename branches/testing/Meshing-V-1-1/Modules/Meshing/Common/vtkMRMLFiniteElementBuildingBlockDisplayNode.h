@@ -27,6 +27,7 @@
 #include "vtkUnstructuredGrid.h"
 #include "vtkShrinkPolyData.h"
 #include "vtkGeometryFilter.h"
+#include "vtkMimxCommonWin32Header.h"
 
 #include "vtkMRML.h"
 #include "vtkMRMLModelDisplayNode.h"
@@ -34,7 +35,7 @@
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
 
 
-class VTK_MRML_EXPORT vtkMRMLFiniteElementBuildingBlockDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
+class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementBuildingBlockDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
 {
  public:
   static vtkMRMLFiniteElementBuildingBlockDisplayNode *New (  );

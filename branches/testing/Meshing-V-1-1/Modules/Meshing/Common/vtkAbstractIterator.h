@@ -26,6 +26,7 @@
 #define __vtkAbstractIterator_h
 
 #include "vtkObjectBase.h"
+#include "vtkMimxCommonWin32Header.h"
 
 class vtkContainer;
 

@@ -53,6 +53,7 @@
 #include "vtkMimxUnstructuredGridActor.h"
 #include "vtkMimxMeshActor.h"
 #include "vtkMimxImageActor.h"
+#include "vtkMimxCommonWin32Header.h"
 
 #include "vtkSetGet.h" // For vtkTypeMacro.
 
@@ -68,7 +69,7 @@ class vtkMRMLScene;
 #define __vtkLinkedListWrapper_h
 
 
-class vtkLinkedListWrapper : public vtkObject
+class VTK_MIMXCOMMON_EXPORT vtkLinkedListWrapper : public vtkObject
 {
 public:
   static vtkLinkedListWrapper *New();

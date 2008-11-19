@@ -32,12 +32,13 @@
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLUnstructuredGridNode.h"
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
+#include "vtkMimxCommonWin32Header.h"
 
 //class vtkMeshQualityExtended; 
 class vtkMeshQuality; 
 class vtkShrinkFilter;
 
-class VTK_MRML_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
+class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
 {
  public:
   static vtkMRMLFiniteElementMeshDisplayNode *New (  );

@@ -66,6 +66,7 @@ int vtkLinkedListWrapper::AppendItem(vtkMimxActorBase* actor)
         vtkWarningMacro("actor type is:" << actor->GetDataType());
     }
 
+    return 1;
 }
 
 
@@ -87,6 +88,8 @@ int vtkLinkedListWrapper::AppendItem(vtkMimxImageActor* actor)
     default:
       vtkErrorMacro("Attempt to add a non-image to the MimxImageList");
   }
+
+  return 1;
 }
 
 
@@ -107,6 +110,8 @@ int vtkLinkedListWrapper::AppendItem(vtkMimxSurfacePolyDataActor* actor)
   default:
     vtkErrorMacro("Attempt to add a non-surface to the MimxSurfaceList");
    }
+
+  return 1;
 }
 
 
@@ -126,6 +131,8 @@ int vtkLinkedListWrapper::AppendItem(vtkMimxUnstructuredGridActor* actor)
   default:
     vtkErrorMacro("Attempt to add an object of incorrect type to the MimxBuildingBlockList");
    }
+
+  return 1;
 }
 
 int vtkLinkedListWrapper::AppendItem(vtkMimxMeshActor* actor)
@@ -145,6 +152,8 @@ int vtkLinkedListWrapper::AppendItem(vtkMimxMeshActor* actor)
     default:
       vtkErrorMacro("Attempt to add an object of incorrect type to the MimxMeshList");
   }
+
+  return 1;
 }
 
 vtkMimxActorBase* vtkLinkedListWrapper::GetItem(vtkIdType id)
