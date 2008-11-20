@@ -213,7 +213,7 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
    app->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s -fill both",
            this->MeshingUI->GetWidgetName(), moduleFrame->GetFrame()->GetWidgetName());
 
- 
+   this->MeshingUI->CustomApplicationSettingsModuleEntry();
 
 }
 
@@ -238,6 +238,7 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
     viewnode->SetBackgroundColor(blackBackground);
     layoutnode->SetViewArrangement(vtkMRMLLayoutNode::SlicerLayoutOneUp3DView);    
     this->MeshingUI->AddOrientationAxis();
+    this->MeshingUI->CustomApplicationSettingsModuleEntry();
        
  }
  
@@ -254,5 +255,5 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
      viewnode->SetAxisLabelsVisible(this->SavedAxisLabelState);
      viewnode->SetBackgroundColor(this->SavedBackgroundColor);
      this->MeshingUI->RemoveOrientationAxis();    
-     
+     this->MeshingUI->CustomApplicationSettingsModuleExit();
  }
