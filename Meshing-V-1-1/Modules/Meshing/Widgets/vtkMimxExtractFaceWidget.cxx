@@ -410,7 +410,7 @@ void vtkMimxExtractFaceWidget::ShiftLeftButtonUpCallback(vtkAbstractWidget *w)
 {
         vtkMimxExtractFaceWidget *Self = reinterpret_cast<vtkMimxExtractFaceWidget*>(w);
         Self->State = vtkMimxExtractFaceWidget::Start;
-        Self->EventCallbackCommand->SetAbortFlag(1);
+        //Self->EventCallbackCommand->SetAbortFlag(1);
         Self->EndInteraction();
         Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
         Self->Interactor->Render();
@@ -777,7 +777,7 @@ void vtkMimxExtractFaceWidget::LeftButtonUpCallback(vtkAbstractWidget *w)
 {
         vtkMimxExtractFaceWidget *Self = reinterpret_cast<vtkMimxExtractFaceWidget*>(w);
 
-        Self->EventCallbackCommand->SetAbortFlag(1);
+        //Self->EventCallbackCommand->SetAbortFlag(1);
         Self->EndInteraction();
         Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
 
