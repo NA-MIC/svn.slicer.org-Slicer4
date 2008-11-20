@@ -297,9 +297,144 @@ void vtkKWMimxMainWindow::CustomApplicationSettingsModuleEntry()
         
         this->AddFontApplicationSettingsPanel();
       }
-      //this->AddCustomApplicationSettingsPanel();      
+
+    if (this->MimxSettingsFrame == NULL)
+    {
+      this->AddCustomApplicationSettingsPanel();
+    }      
 }
 
+
+//----------------------------------------------------------------------------
+void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
+{
+
+  vtkKWApplicationSettingsInterface *applicationMenu = 
+           this->MainWindow->GetApplicationSettingsInterface( ); 
+
+  ostrstream tk_cmd;
+  vtkKWWidget *page;
+  vtkKWFrame *frame;
+
+  // --------------------------------------------------------------
+  // Add a "Preferences" page
+
+  int id = applicationMenu->AddPage( "IA-FEMesh" );
+  page = applicationMenu->GetPageWidget(id);
+                                                              
+  // --------------------------------------------------------------
+  // IA-FEMesh Interface settings : main frame
+  if (this->MimxSettingsFrame == NULL)
+  {
+    this->MimxSettingsFrame = vtkKWFrameWithLabel::New();
+  }
+  this->MimxSettingsFrame->SetParent(applicationMenu->GetPagesParentWidget());
+  this->MimxSettingsFrame->Create();
+  this->MimxSettingsFrame->SetLabelText("IA-FEMesh Settings");
+
+  tk_cmd << "pack " << this->MimxSettingsFrame->GetWidgetName()
+         << " -side top -anchor nw -fill x -padx 2 -pady 2 " 
+         << " -in " << page->GetWidgetName() << endl;
+  
+  frame = this->MimxSettingsFrame->GetFrame();
+  
+  if ( this->StandAloneApplication )
+  {
+    if (this->AutoSaveButton == NULL)
+    {
+      this->AutoSaveButton = vtkKWCheckButtonWithLabel::New();
+    }
+    this->AutoSaveButton->SetParent ( frame );
+    this->AutoSaveButton->Create();
+    this->AutoSaveButton->SetLabelText ("Autosave Work:");
+    this->AutoSaveButton->GetWidget()->SetCommand ( this, "AutoSaveModeCallback");
+    this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2",
+                   this->AutoSaveButton->GetWidgetName());
+    
+    if (this->AutoSaveScale == NULL)
+    {
+      this->AutoSaveScale = vtkKWScaleWithLabel::New();
+    }
+    this->AutoSaveScale->SetParent ( frame );
+    this->AutoSaveScale->Create();
+    this->AutoSaveScale->SetLabelText ("Interval (Minutes):");
+    this->AutoSaveScale->GetWidget()->SetRange ( 1.0, 20.0);
+    this->AutoSaveScale->GetWidget()->SetResolution ( 1.0 );
+    this->AutoSaveScale->GetWidget()->SetCommand ( this, "AutoSaveScaleCallback");
+    this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
+                   this->AutoSaveScale->GetWidgetName());  
+    
+    if (this->WorkingDirButton == NULL)
+    {
+      this->WorkingDirButton = vtkKWCheckButtonWithLabel::New();
+    }
+    this->WorkingDirButton->SetParent ( frame );
+    this->WorkingDirButton->Create();
+    this->WorkingDirButton->SetLabelText ("Use Working Directory:");
+    this->WorkingDirButton->GetWidget()->SetCommand ( this, "AutoSaveDirectoryModeCallback");
+    this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2",
+                   this->WorkingDirButton->GetWidgetName());
+                   
+    if (this->AutoSaveDir == NULL)
+    {
+      this->AutoSaveDir = vtkKWLoadSaveButtonWithLabel::New();
+    }
+    this->AutoSaveDir->SetParent ( frame );
+    this->AutoSaveDir->Create();
+    this->AutoSaveDir->SetLabelText ("Autosave Directory:");
+    this->AutoSaveDir->GetWidget()->GetLoadSaveDialog()->SaveDialogOn();
+    this->AutoSaveDir->GetWidget()->GetLoadSaveDialog()->ChooseDirectoryOn();
+    this->AutoSaveDir->GetWidget()->TrimPathFromFileNameOff();
+    this->AutoSaveDir->GetWidget()->SetCommand ( this, "AutoSaveDirectoryCallback");
+    this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
+                   this->AutoSaveDir->GetWidgetName()); 
+    
+    vtkKWSeparator *separator = vtkKWSeparator::New();
+    separator->SetParent ( frame );
+    separator->Create();
+    this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
+                   separator->GetWidgetName());
+    separator->Delete(); 
+  }
+  
+  if (this->AverageElementLengthEntry == NULL)
+  {
+    this->AverageElementLengthEntry = vtkKWEntryWithLabel::New();
+  }
+  this->AverageElementLengthEntry->SetParent ( frame );
+  this->AverageElementLengthEntry->Create();
+  this->AverageElementLengthEntry->SetLabelText("Average Element Length:");
+  this->AverageElementLengthEntry->GetWidget()->SetRestrictValueToDouble( );
+  this->AverageElementLengthEntry->GetWidget()->SetCommand ( this, "AverageElementLengthCallback");
+  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
+                 this->AverageElementLengthEntry->GetWidgetName()); 
+  
+  if (this->PropertyPrecisionScale == NULL)
+  {
+    this->PropertyPrecisionScale = vtkKWScaleWithLabel::New();
+  }
+  this->PropertyPrecisionScale->SetParent ( frame );
+  this->PropertyPrecisionScale->Create();
+  this->PropertyPrecisionScale->SetLabelText("ABAQUS Material Propery Precision:");
+  this->PropertyPrecisionScale->GetWidget()->SetRange(0.0, 10.0);
+  this->PropertyPrecisionScale->GetWidget()->SetResolution(1.0);
+  this->PropertyPrecisionScale->GetWidget()->SetCommand( this, "ABAQUSPrecisionCallback");
+  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
+                 this->PropertyPrecisionScale->GetWidgetName());
+                 
+  
+  
+  // --------------------------------------------------------------
+  // Pack 
+
+  tk_cmd << ends;
+  this->Script(tk_cmd.str());
+  tk_cmd.rdbuf()->freeze(0);
+
+  // Update
+
+  this->Update();
+}
 
 
 void vtkKWMimxMainWindow::CustomApplicationSettingsModuleExit()
@@ -309,7 +444,8 @@ void vtkKWMimxMainWindow::CustomApplicationSettingsModuleExit()
       {      
         this->RemoveFontApplicationSettingsPanel();
       }
-      //this->RemoveCustomApplicationSettingsPanel();      
+
+    this->RemoveCustomApplicationSettingsPanel();     
 }
 
 
@@ -755,6 +891,43 @@ void vtkKWMimxMainWindow::RemoveFontApplicationSettingsPanel()
       this->Script ( "pack forget %s",
                   this->FontScrollFrame->GetWidgetName());  
   }
+}
+
+//----------------------------------------------------------------------------
+void vtkKWMimxMainWindow::RemoveCustomApplicationSettingsPanel()
+{
+  //vtkKWApplicationSettingsInterface *applicationMenu = 
+  //         this->MainWindow->GetApplicationSettingsInterface( ); 
+  //vtkKWWidget*  page = applicationMenu->GetPageWidget( "IA-FEMesh" );
+  
+  this->MimxSettingsFrame->SetEnabled(0);
+  this->AverageElementLengthEntry->SetEnabled(0);
+  this->PropertyPrecisionScale->SetEnabled(0);
+  
+  //page->Unpack();
+  /*
+  applicationMenu->RemovePage( "IA-FEMesh" );
+                     
+  this->Script ("pack forget %s ",
+                  this->MimxSettingsFrame->GetWidgetName());
+                  
+  this->MimxSettingsFrame->Delete(); 
+  this->MimxSettingsFrame = NULL;
+  this->AutoSaveButton->Delete();   
+  this->AutoSaveButton = NULL;
+  this->AutoSaveScale->Delete(); 
+  this->AutoSaveScale = NULL;
+  this->WorkingDirButton->Delete(); 
+  this->WorkingDirButton = NULL;
+  this->AutoSaveDir->Delete(); 
+  this->AutoSaveDir = NULL;
+  this->AverageElementLengthEntry->Delete(); 
+  this->AverageElementLengthEntry = NULL;
+  this->PropertyPrecisionScale->Delete(); 
+  this->PropertyPrecisionScale = NULL;
+  */
+  //applicationMenu->Update();
+  
 }
 
 

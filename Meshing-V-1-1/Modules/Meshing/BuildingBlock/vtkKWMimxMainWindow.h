@@ -255,7 +255,6 @@ public:
     // add and remove the ApplicationSettings menus
     void CustomApplicationSettingsModuleEntry();
     void CustomApplicationSettingsModuleExit();
-
     
   // Widgets that must be public
   vtkKWRenderWidget *RenderWidget;
