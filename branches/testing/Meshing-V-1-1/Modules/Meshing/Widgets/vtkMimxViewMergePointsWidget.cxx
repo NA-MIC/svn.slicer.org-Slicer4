@@ -765,7 +765,7 @@ void vtkMimxViewMergePointsWidget::ShiftLeftButtonUpCallback(vtkAbstractWidget *
         Self->State = vtkMimxViewMergePointsWidget::Start;
 
 
-        Self->EventCallbackCommand->SetAbortFlag(1);
+        //Self->EventCallbackCommand->SetAbortFlag(1);
         Self->EndInteraction();
         Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
         Self->ComputeMergePointsAndFaces(Self);
@@ -795,7 +795,7 @@ void vtkMimxViewMergePointsWidget::CrtlLeftButtonUpCallback(vtkAbstractWidget *w
   Self->State = vtkMimxViewMergePointsWidget::Start;
 
   Self->ShowHandles(Self);
-  Self->EventCallbackCommand->SetAbortFlag(1);
+  //Self->EventCallbackCommand->SetAbortFlag(1);
   Self->EndInteraction();
   Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
   Self->ComputeMergePointsAndFaces(Self);

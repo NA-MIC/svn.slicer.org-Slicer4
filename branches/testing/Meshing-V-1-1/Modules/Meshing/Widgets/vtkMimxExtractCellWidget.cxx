@@ -299,7 +299,7 @@ void vtkMimxExtractCellWidget::ShiftLeftButtonUpCallback(vtkAbstractWidget *w)
 {
         vtkMimxExtractCellWidget *Self = reinterpret_cast<vtkMimxExtractCellWidget*>(w);
         Self->State = vtkMimxExtractCellWidget::Start;
-        Self->EventCallbackCommand->SetAbortFlag(1);
+        //Self->EventCallbackCommand->SetAbortFlag(1);
         Self->EndInteraction();
         Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
         Self->Interactor->Render();
@@ -432,7 +432,7 @@ void vtkMimxExtractCellWidget::LeftButtonUpCallback(vtkAbstractWidget *w)
 {
         vtkMimxExtractCellWidget *Self = reinterpret_cast<vtkMimxExtractCellWidget*>(w);
 
-        Self->EventCallbackCommand->SetAbortFlag(1);
+        //Self->EventCallbackCommand->SetAbortFlag(1);
         Self->EndInteraction();
         Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
 

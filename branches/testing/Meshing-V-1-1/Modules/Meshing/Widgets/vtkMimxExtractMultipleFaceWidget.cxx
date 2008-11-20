@@ -420,7 +420,7 @@ void vtkMimxExtractMultipleFaceWidget::OnLeftButtonUp()
  /* this->HighlightFace(this->HighlightHandle(NULL));
   this->SizeHandles();*/
 
-  this->EventCallbackCommand->SetAbortFlag(1);
+  //this->EventCallbackCommand->SetAbortFlag(1);
   this->EndInteraction();
   this->InvokeEvent(vtkCommand::EndInteractionEvent, NULL);
   this->Interactor->Render();

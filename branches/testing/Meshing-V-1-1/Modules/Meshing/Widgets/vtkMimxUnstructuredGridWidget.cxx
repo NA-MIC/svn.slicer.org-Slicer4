@@ -769,7 +769,7 @@ void vtkMimxUnstructuredGridWidget::ShiftLeftButtonUpCallback(vtkAbstractWidget 
         Self->State = vtkMimxUnstructuredGridWidget::Start;
 
 
-        Self->EventCallbackCommand->SetAbortFlag(1);
+        //Self->EventCallbackCommand->SetAbortFlag(1);
         Self->EndInteraction();
         Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
         Self->Interactor->Render();
@@ -931,7 +931,7 @@ void vtkMimxUnstructuredGridWidget::CrtlMiddleButtonUpCallback(vtkAbstractWidget
         Self->State = vtkMimxUnstructuredGridWidget::Start;
 
 
-        Self->EventCallbackCommand->SetAbortFlag(1);
+        //Self->EventCallbackCommand->SetAbortFlag(1);
         Self->EndInteraction();
         Self->InvokeEvent(vtkCommand::EndInteractionEvent,NULL);
 
