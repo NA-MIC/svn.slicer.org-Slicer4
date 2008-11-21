@@ -106,7 +106,7 @@ void vtkKWMimxMainNotebook::CreateWidget()
         
   /* This disables the Pin/Show Menu */
   this->Notebook->EnablePageTabContextMenuOff();
-  this->Notebook->SetMinimumHeight(500);
+  this->Notebook->SetMinimumHeight(550);
   
   /* Add the Notebook Pages */          
         this->Notebook->AddPage("Image");
