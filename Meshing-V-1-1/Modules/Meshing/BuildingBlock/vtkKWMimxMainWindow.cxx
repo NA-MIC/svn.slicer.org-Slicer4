@@ -469,19 +469,19 @@ void vtkKWMimxMainWindow::CreateWidget()
                 this->DoUndoTree = vtkLinkedListWrapperTree::New();
   }
   
-    this->MainFrame = vtkSlicerModuleCollapsibleFrame::New();
-    this->MainFrame->SetParent(this);
-    this->MainFrame->Create();
-    this->MainFrame->AllowFrameToCollapseOn();
-    this->GetApplication()->Script(
-          "pack %s -side top -anchor nw -expand yes -padx 2 -pady 2 -fill both", 
-          this->MainFrame->GetWidgetName());
+    //this->MainFrame = vtkSlicerModuleCollapsibleFrame::New();
+    //this->MainFrame->SetParent(this);
+    //this->MainFrame->Create();
+    //this->MainFrame->AllowFrameToCollapseOn();
+    //this->GetApplication()->Script(
+    //      "pack %s -side top -anchor nw -expand yes -padx 2 -pady 2 -fill both", 
+    //      this->MainFrame->GetWidgetName());
     
         if(!this->ViewProperties)
         {
                 this->ViewProperties = vtkKWMimxViewProperties::New();
         }
-        this->ViewProperties->SetParent(this->MainFrame->GetFrame());
+        this->ViewProperties->SetParent(this/*->MainFrame->GetFrame()*/);
         this->ViewProperties->SetMimxMainWindow(this);
         this->ViewProperties->Create();
         //this->ViewProperties->SetBorderWidth(2);
@@ -497,7 +497,7 @@ void vtkKWMimxMainWindow::CreateWidget()
         this->MainUserInterfacePanel->SetDoUndoTree(this->DoUndoTree);
         //this->MainUserInterfacePanel->SetMultiColumnList(
         //      this->ViewProperties->GetMultiColumnList());
-        this->MainUserInterfacePanel->SetParent( this->MainFrame->GetFrame() );
+        this->MainUserInterfacePanel->SetParent( this/*->MainFrame->GetFrame()*/ );
         this->MainUserInterfacePanel->SetApplication(this->GetApplication());
         this->MainUserInterfacePanel->Create();
         this->MainUserInterfacePanel->SetBorderWidth(3);
@@ -1380,7 +1380,7 @@ void vtkKWMimxMainWindow::UpdateEnableState ( )
 //---------------------------------------------------------------------------
 void vtkKWMimxMainWindow::ForceWidgetRedraw ( )
 {
-  this->MainFrame->CollapseFrame( );
-  this->MainFrame->ExpandFrame( );
+  //this->MainFrame->CollapseFrame( );
+  //this->MainFrame->ExpandFrame( );
 }
 //----------------------------------------------------------------------------------------------
