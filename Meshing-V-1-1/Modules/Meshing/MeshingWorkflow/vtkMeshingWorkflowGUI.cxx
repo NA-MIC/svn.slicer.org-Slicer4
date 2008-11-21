@@ -182,15 +182,16 @@ void vtkMeshingWorkflowGUI::BuildGUI ( )
   // configure a page for a volume loading UI for now.
   // later, switch on the modulesButton in the SlicerControlGUI
   // ---
+  this->BuildHelpAndAboutFrame(this->UIPanel->GetPageWidget ( "MeshingWorkflow" ), "Help", "About");
 
   // HELP FRAME
-  vtkKWFrameWithLabel *helpFrame = vtkKWFrameWithLabel::New ( );
-  helpFrame->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
-  helpFrame->Create ( );
-  helpFrame->CollapseFrame ( );
-  helpFrame->SetLabelText ("Help");
-  app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-                helpFrame->GetWidgetName(), this->UIPanel->GetPageWidget("MeshingWorkflow")->GetWidgetName());
+//  vtkKWFrameWithLabel *helpFrame = vtkKWFrameWithLabel::New ( );
+//  helpFrame->SetParent ( this->UIPanel->GetPageWidget ( "MeshingWorkflow" ) );
+//  helpFrame->Create ( );
+//  helpFrame->CollapseFrame ( );
+//  helpFrame->SetLabelText ("Help");
+//  app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+//                helpFrame->GetWidgetName(), this->UIPanel->GetPageWidget("MeshingWorkflow")->GetWidgetName());
 
   vtkSlicerModuleCollapsibleFrame *moduleFrame = vtkSlicerModuleCollapsibleFrame::New ( );
   //vtkKWFrameWithLabel *moduleFrame = vtkKWFrameWithLabel::New ( );
