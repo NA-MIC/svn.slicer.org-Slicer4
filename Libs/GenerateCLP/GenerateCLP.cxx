@@ -486,7 +486,8 @@ void GenerateXML(std::ofstream &sout)
   sout << "  if (argc >= 2 && (strcmp(argv[1],\"--xml\") == 0))" << EOL << std::endl;
   sout << "    {" << EOL << std::endl;
   sout << "    std::cout << GetXMLModuleDescription();" << EOL << std::endl;
-  sout << "    return EXIT_SUCCESS;" << EOL << std::endl;
+  sout << "    std::cout.flush();" << EOL << std::endl;
+  sout << "    return (EXIT_SUCCESS);" << EOL << std::endl;
   sout << "    }" << std::endl;
 }
 
