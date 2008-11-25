@@ -925,7 +925,9 @@ ModuleFactory
             // "something" when presented with a "--xml" argument
             // (note that it may have just printed out that it did
             // not understand --xml)
-            if (itksysProcess_GetExitValue(process) == 0)
+            // (allow 127 exit code to account for bug on Suse linux machine - check XML validity anyway)
+            if ( (itksysProcess_GetExitValue(process) == 0) ||
+                 (itksysProcess_GetExitValue(process) == 127) )
               {
               // executable exited without errors, check if it
               // generated a valid xml description
@@ -1034,7 +1036,19 @@ ModuleFactory
             else
               {
               isAPlugin = false;
-              information << filename << " is not a plugin (exited with errors)." << std::endl;
+              information << filename << " is not a plugin (exited with errors, exit value = " << itksysProcess_GetExitValue(process) << ")." << std::endl;
+              information << "STDOUT: " << stdoutbuffer << std::endl;
+              const char *s;
+              s = itksysProcess_GetErrorString(process);
+              if (s)
+                {
+                information <<  "Error String: " << s << std::endl;
+                }
+              s = itksysProcess_GetExceptionString(process);
+              if (s)
+                {
+                information <<  "Exception String: " << s << std::endl;
+                }
               }
             }
           else if (result == itksysProcess_State_Expired)
