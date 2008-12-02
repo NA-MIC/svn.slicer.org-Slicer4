@@ -23,7 +23,7 @@ subdirs(
   Mesh
   BuildingBlock
   Widgets
-  MeshingWorkflow
+  IA_FEMesh
 )
 
 
