@@ -405,8 +405,7 @@ int vtkKWMimxEditFEMeshLaplacianSmoothGroup::EditFEMeshLaplacianSmoothApplyCallb
     }
 
     vtkUnstructuredGrid *bbox = vtkMimxUnstructuredGridActor::SafeDownCast(
-          this->BBoxList->GetItem(this->OriginalPosition->GetValue(
-          combobox->GetValueIndex(name))))->GetDataSet();
+          this->BBoxList->GetItem(num))->GetDataSet();
 
     combobox = this->FEMeshListComboBox->GetWidget();
     name = combobox->GetValue();
