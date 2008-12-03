@@ -83,14 +83,16 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
       this->savedMRMLScene->AddNodeNoNotify(storeNode);
       this->savedMRMLScene->AddNodeNoNotify(colorNode);
       this->savedMRMLScene->AddNode(newMRMLNode);
+      
+      // ** commented out display node to avoid crash on mac after 11/17 update
       // point the display node to the proper grid
-      dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
+      //dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
       // set the color node to specify the color table associated with the grid
-      dispNode->SetAndObserveColorNodeID(colorNode->GetID());
+      //dispNode->SetAndObserveColorNodeID(colorNode->GetID());
       // need to turn this on so the scalars are used to color the grid
-      dispNode->SetScalarVisibility(1);
-
-      newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
+      //dispNode->SetScalarVisibility(1);
+      //newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
+      
       newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());      
      //cout << "copied data to MRML mesh node " << endl;
    } else 

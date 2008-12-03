@@ -86,8 +86,10 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      // Establish linkage between the bounding box
      // node and its display and storage nodes, so the viewer will be updated when data
      // or attributes change
-     dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
-     newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
+     // *** commented out next two lines since we are using Mimx Actors for this release.
+     // set Ugrid was causing a crash on Mac
+     //dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
+     //newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
      newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());   
      //vtkDebugMacro("copied data to MRML bbox node ");
      newMRMLNode->Modified();
