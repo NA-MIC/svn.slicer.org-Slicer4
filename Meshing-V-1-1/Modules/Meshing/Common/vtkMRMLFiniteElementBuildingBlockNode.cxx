@@ -84,11 +84,11 @@ Superclass::WriteXML(of, nIndent);
       ss << this->actor->GetFileName();
       of << indent << " fileName=\"" << ss.str() << "\"";
     }
-    {
-      std::stringstream ss;
-      ss << this->actor->GetFilePath();
-      of << indent << " FilePath=\"" << ss.str() << "\"";
-    }
+//    {
+//      std::stringstream ss;
+//      ss << this->actor->GetFilePath();
+//      of << indent << " FilePath=\"" << ss.str() << "\"";
+//    }
 }
 
 //----------------------------------------------------------------------------
@@ -122,13 +122,13 @@ void vtkMRMLFiniteElementBuildingBlockNode::ReadXMLAttributes(const char** atts)
       //***this->SetFileName(StringAttribute);
       //this->fileName(StringAttribute);
       }
-    else if (!strcmp(attName, "FilePath"))
-      {
-      std::stringstream ss;
-      ss << attValue;
-      ss >> StringAttribute;
-      this->SetFilePath(StringAttribute);
-      }
+//    else if (!strcmp(attName, "FilePath"))
+//      {
+//      std::stringstream ss;
+//      ss << attValue;
+//      ss >> StringAttribute;
+//      this->SetFilePath(StringAttribute);
+//      }
     }
 }
 
@@ -142,7 +142,7 @@ void vtkMRMLFiniteElementBuildingBlockNode::Copy(vtkMRMLNode *anode)
 
   this->actor->SetDataType(node->GetDataType());
   //***this->actor->SetFileName(node->GetFileName());
-  this->actor->SetFilePath(node->GetFilePath());
+  //this->actor->SetFilePath(node->GetFilePath());
 }
 
 //----------------------------------------------------------------------------
@@ -153,7 +153,7 @@ void vtkMRMLFiniteElementBuildingBlockNode::PrintSelf(ostream& os, vtkIndent ind
 
    os << indent << "DataType:   " << this->GetDataType() << "\n";
    os << indent << "FileName:   " << this->GetFileName() << "\n";
-   os << indent << "FilePath:   " << this->GetFilePath() << "\n";
+  // os << indent << "FilePath:   " << this->GetFilePath() << "\n";
 
 }
 

@@ -77,7 +77,7 @@ vtkPolyData* vtkMRMLFiniteElementBuildingBlockDisplayNode::GetPolyData()
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementBuildingBlockDisplayNode::UpdatePolyDataPipeline() 
 {
-  this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
+  //this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
 };
  
 
