@@ -15,6 +15,8 @@ Version:   $Revision$
 #include <iostream>
 #include <sstream>
 
+#include "ModuleFactory.h"
+
 #include "vtkObjectFactory.h"
 
 #include "vtkCommandLineModuleGUI.h"
@@ -449,34 +451,8 @@ void vtkCommandLineModuleGUI::ProcessGUIEvents ( vtkObject *caller,
       // What about python targets?
       if (this->ModuleDescriptionObject.GetType() == "SharedObjectModule")
         {
-        typedef int (*ModuleEntryPoint)(int argc, char* argv[]);
-        
-        itksys::DynamicLoader::LibraryHandle lib
-          = itksys::DynamicLoader::OpenLibrary(this->ModuleDescriptionObject.GetLocation().c_str());
-        if ( lib )
-          {
-          ModuleEntryPoint entryPoint
-            = (ModuleEntryPoint)itksys::DynamicLoader::GetSymbolAddress(lib, "ModuleEntryPoint");
-
-          if (entryPoint)
-            {
-            char entryPointAsText[256];
-            std::string entryPointAsString;
-            
-            sprintf(entryPointAsText, "%p", entryPoint);
-            entryPointAsString = std::string("slicer:") + entryPointAsText;
-            
-            this->ModuleDescriptionObject.SetTarget( entryPointAsString );
-            }
-          else
-            {
-            // can't find entry point, eject.
-            itksys::DynamicLoader::CloseLibrary(lib);
-
-            vtkErrorMacro(<< "Cannot find entry point for " << this->ModuleDescriptionObject.GetLocation() << "\nCannot run module." );
-            return;
-            }
-          }
+// jvm here here here        
+//        ModuleFactory::FindAndSetTarget(this->ModuleDescriptionObject);
         }
       }
     // make sure the entry point is set on the node

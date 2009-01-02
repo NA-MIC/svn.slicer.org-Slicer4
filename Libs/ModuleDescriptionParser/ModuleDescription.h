@@ -17,6 +17,8 @@
 
 #include "ModuleDescriptionParserWin32Header.h"
 
+#include "itksys/DynamicLoader.hxx"
+
 #include "ModuleParameterGroup.h"
 
 #include "ModuleProcessInformation.h"
@@ -160,6 +162,14 @@ public:
   {
     return this->AlternativeType;
   }
+
+  // Set the library handle for a shared library module. The handle
+  // is cached for later cleanup
+  void SetLibrary( itksys::DynamicLoader::LibraryHandle lib );
+
+  // Get the library handle for a shared library module. THe handle is
+  // cached for later cleanup.
+  const itksys::DynamicLoader::LibraryHandle GetLibrary() const;
   
   // Set the target for the module.  This is the entry point for a
   // shared object module and the full command (with path) for an executable.
@@ -272,6 +282,7 @@ private:
   std::string Acknowledgements;
   std::string Contributor;
   std::string Type;
+  itksys::DynamicLoader::LibraryHandle Library;
   std::string Target;
   std::string Location;
   std::string AlternativeType;

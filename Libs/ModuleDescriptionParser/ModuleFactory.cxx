@@ -340,7 +340,52 @@ ModuleFactory
   return ModuleDescription();
 }
 
+void
+ModuleFactory
+::Close()
+{
+  // close any open libraries for shared object modules
+  ModuleDescriptionMap::iterator mit = (*this->InternalMap).begin();
+  ModuleDescriptionMap::iterator mend = (*this->InternalMap).end();
+  while (mit != mend)
+    {
+    if ((*mit).second.GetType() == "SharedObjectModule"
+        && (*mit).second.GetLibrary() != 0)
+      {
+      itksys::DynamicLoader::CloseLibrary((*mit).second.GetLibrary());
+      (*mit).second.SetLibrary(0);
+      (*mit).second.SetTarget("Unknown");
+      }
+    
+    ++mit;
+    }
 
+  // any clean up for python modules?
+  
+}
+
+void
+ModuleFactory
+::Rescan()
+{
+  // close any open libraries for shared object modules
+  this->Close();
+  
+  // any clean up for python modules? add code to Close()?
+
+  // clear the cache data structures and reinitialize
+  delete this->InternalCache;
+  delete this->InternalMap;
+  delete this->InternalFileMap;
+
+  this->InternalCache = new ModuleCache;
+  this->InternalMap = new ModuleDescriptionMap;
+  this->InternalFileMap = new ModuleFileMap;
+
+  
+  // finally scan
+  this->Scan();
+}
 
 void
 ModuleFactory
@@ -680,6 +725,10 @@ ModuleFactory
                     module.SetLogo(mLogo);
                     }
 
+                  // Store the library handle so we can close it if we
+                  // rescan for modules
+                  module.SetLibrary( lib );
+                  
                   // Store the module in the list
                   (*this->InternalMap)[module.GetTitle()] =  module ;
                   
@@ -1953,7 +2002,7 @@ ModuleFactory
     information << "Loading module cache."
                 << std::endl;
     
-    // put code here to write the cache
+    // read the cache
     std::ifstream cache( (this->CachePath + "/ModuleCache.csv").c_str() );
     
     if (cache)
@@ -2083,7 +2132,7 @@ ModuleFactory
       information << "New modules discovered, updating module cache."
                   << std::endl;
 
-      // put code here to write the cache
+      // write the cache
       std::ofstream cache( (this->CachePath + "/ModuleCache.csv").c_str() );
       
       if (cache)
@@ -2187,6 +2236,10 @@ ModuleFactory
           }
         else
           {
+          // for shared object modules, we couldn't cache the target
+          // since it is a pointer.  Mark it as unknown so other code
+          // can know it still needs to query into the library when it
+          // goes to use the target.
           module.SetTarget( "Unknown" );
           }
         module.SetLocation( commandName );
@@ -2268,4 +2321,48 @@ ModuleFactory
     }
 
   return returnval;
+}
+
+
+void
+ModuleFactory
+::FindAndSetTarget( ModuleDescription &desc )
+{
+  // What about python targets?
+  if (desc.GetType() == "SharedObjectModule")
+    {
+    typedef int (*ModuleEntryPoint)(int argc, char* argv[]);
+    
+    itksys::DynamicLoader::LibraryHandle lib
+      = itksys::DynamicLoader::OpenLibrary(desc.GetLocation().c_str());
+    if ( lib )
+      {
+      ModuleEntryPoint entryPoint
+        = (ModuleEntryPoint)itksys::DynamicLoader::GetSymbolAddress(lib, "ModuleEntryPoint");
+      
+      if (entryPoint)
+        {
+        char entryPointAsText[256];
+        std::string entryPointAsString;
+        std::string lowerName = this->Name;
+        std::transform(lowerName.begin(), lowerName.end(),
+                       lowerName.begin(),
+                       (int (*)(int))std::tolower);
+        
+        sprintf(entryPointAsText, "%p", entryPoint);
+        entryPointAsString = lowerName + entryPointAsText;
+        
+        desc.SetTarget( entryPointAsString );
+        desc.SetLibrary( lib );
+        }
+      else
+        {
+        // can't find entry point, eject.
+        itksys::DynamicLoader::CloseLibrary(lib);
+        
+        this->ErrorMessage(("Cannot find entry point for " + desc.GetLocation() + "\nCannot run module.").c_str() );
+        return;
+        }
+      }
+    }
 }

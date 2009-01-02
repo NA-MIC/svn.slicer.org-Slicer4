@@ -17,7 +17,9 @@ class vtkSlicerModuleGUI;
 class vtkSlicerGUILayout;
 class vtkSlicerTheme;
 class vtkSlicerGUICollection;
+
 //BTX
+class ModuleFactory;
 class DisplayMessageQueue;
 //ETX
 
@@ -421,6 +423,8 @@ private:
 
   int UseSplashScreen;
   int StereoEnabled;
+
+  ModuleFactory *CommandLineModuleFactory;
 }; 
 
 #endif
