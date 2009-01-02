@@ -29,6 +29,8 @@
 #include "vtkOutputWindow.h"
 #include "itkOutputWindow.h"
 
+#include "ModuleFactory.h"
+
 #ifdef WIN32
 #include "vtkKWWin32RegistryHelper.h"
 #endif
@@ -307,6 +309,13 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     this->PythonModule = NULL; 
     this->PythonDictionary = NULL; 
 #endif
+
+    // Configure the module factory for Slicer3 command line modules
+    this->CommandLineModuleFactory = new ModuleFactory;
+    this->CommandLineModuleFactory->SetName("Slicer");
+// jvm here here here (put these lines and line above is a function?)
+//     this->CommandLineModuleFactory->SetSearchPaths( pluginsPaths );
+//     this->CommandLineModuleFactory->SetCachePath( cachePath );
 }
 
 //---------------------------------------------------------------------------
@@ -339,6 +348,8 @@ vtkSlicerApplication::~vtkSlicerApplication ( ) {
 
     this->IgnoreModules->Delete();
     this->LoadableModules->Delete();
+
+    delete this->CommandLineModuleFactory;
 }
 
 //----------------------------------------------------------------------------
@@ -738,11 +749,8 @@ void vtkSlicerApplication::RestoreApplicationSettingsFromRegistry()
     }
   if ( this->HasRegistryValue (2, "RunTime", vtkSlicerApplication::ApplicationLayoutTypeRegKey))
     {
-    // TODO: don't restore registry layout on windows because some configurations cause a startup crash
-#if !defined(WIN32)
     this->ApplicationLayoutType = this->GetIntRegistryValue(
         2, "RunTime", vtkSlicerApplication::ApplicationLayoutTypeRegKey);
-#endif
     }
 
    if (this->HasRegistryValue(

@@ -54,9 +54,27 @@ public:
   const std::string& GetCachePath() const { return CachePath; }
   
   // Scan for modules in the module search path.  This will locate
-  // command line modules as well as shared object modules.
+  // command line modules, shared object modules, and python
+  // modules. Module information may be discovered by querying into a
+  // module or pulled from a cache file. Shared object modules pulled
+  // from a cache will have a Target of "unknown".
   virtual void Scan();
 
+  // Rescan for modules in the module search path. This finds new modules.
+  virtual void Rescan();
+
+  // Close. Release any handles to open libraries and set the Target
+  // to "Unknown" (the same as the setting for shared modules coming
+  // from the cache). This is useful in a
+  // Windows development cycle of where you want to rebuild modules
+  // without shutting down your application.  You can have your
+  // application call Close() and if needed Rescan(). 
+  virtual void Close();
+
+  // Method to find a Target (entry point) of shared library module.
+  // Peeks into the library (Location) to set the target entry point
+  void FindAndSetTarget( ModuleDescription& desc );
+  
   // Get the names of all the modules.
   std::vector<std::string> GetModuleNames() const;
 

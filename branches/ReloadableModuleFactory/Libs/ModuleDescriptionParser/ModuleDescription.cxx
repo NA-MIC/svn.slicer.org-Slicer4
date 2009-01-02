@@ -19,6 +19,7 @@ ModuleDescription::ModuleDescription()
 {
   this->Type = "Unknown";
   this->Description = "No description provided";
+  this->Library = 0;
 }
 
 
@@ -33,6 +34,7 @@ ModuleDescription::ModuleDescription(const ModuleDescription &md)
   this->Acknowledgements = md.Acknowledgements;
   this->Contributor = md.Contributor;
   this->Type = md.Type;
+  this->Library = md.Library;
   this->Target = md.Target;
   this->Location = md.Location;
   this->AlternativeType = md.AlternativeType;
@@ -56,6 +58,7 @@ ModuleDescription::operator=(const ModuleDescription &md)
   this->Acknowledgements = md.Acknowledgements;
   this->Contributor = md.Contributor;
   this->Type= md.Type;
+  this->Library = md.Library;
   this->Target = md.Target;
   this->Location = md.Location;
   this->AlternativeType= md.AlternativeType;
@@ -77,6 +80,7 @@ std::ostream & operator<<(std::ostream &os, const ModuleDescription &module)
   os << "Contributor: " << module.GetContributor() << std::endl;
   os << "Acknowledgements: " << module.GetAcknowledgements() << std::endl;
   os << "Type: " << module.GetType() << std::endl;
+  os << "Library: " << (void *) module.GetLibrary() << std::endl;
   os << "Target: " << module.GetTarget() << std::endl;
   os << "Location: " << module.GetLocation() << std::endl;
   os << "Alternative Type: " << module.GetAlternativeType() << std::endl;
@@ -208,4 +212,18 @@ ModuleDescription
 ::GetLogo() const
 {
   return this->Logo;
+}
+
+void
+ModuleDescription
+::SetLibrary( itksys::DynamicLoader::LibraryHandle lib)
+{
+  this->Library = lib;
+}
+
+const itksys::DynamicLoader::LibraryHandle
+ModuleDescription
+::GetLibrary() const
+{
+  return this->Library;
 }
