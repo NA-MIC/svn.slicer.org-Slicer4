@@ -41,6 +41,7 @@ endif(GenerateLM_FOUND)
 #   - ScriptedModule (at run-time for its Tcl package)
 
 subdirs(
+   CellWallSegment
    CommandLineModule
    Editor
    GradientAnisotropicDiffusionFilter
