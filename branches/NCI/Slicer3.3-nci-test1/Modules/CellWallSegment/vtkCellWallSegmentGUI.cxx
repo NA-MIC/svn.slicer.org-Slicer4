@@ -142,12 +142,7 @@ void vtkCellWallSegmentGUI::ProcessGUIEvents ( vtkObject *caller,
   vtkSlicerNodeSelectorWidget *selector = vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
  
   // check for events that specify the output volume to create
-  if (selector == this->VolumeSelector && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent &&
-    this->VolumeSelector->GetSelected() != NULL) 
-    { 
-    this->UpdateMRML();
-    }
-  else if (selector == this->OutVolumeSelector && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent  &&
+  if (selector == this->OutVolumeSelector && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent  &&
     this->OutVolumeSelector->GetSelected() != NULL) 
     { 
     this->UpdateMRML();
@@ -156,14 +151,37 @@ void vtkCellWallSegmentGUI::ProcessGUIEvents ( vtkObject *caller,
   // check if the fiducial list selection has changed and poke the new ID into the MRML node for reference during the 
   // logic's execution method
     
-   if (selector == this->FiducialListSelectorWidget &&  event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent &&
-       this->FiducialListSelectorWidget->GetSelected() != NULL)
-     {
-       //vtkDebugMacro("vtkCellWallSegmentGUI: ProcessGUIEvent Node Selector Event: " << event << ".\n");
-       vtkMRMLFiducialListNode *fidList = vtkMRMLFiducialListNode::SafeDownCast(this->FiducialListSelectorWidget->GetSelected());
-       this->CellWallSegmentNode->SetFiducialListRef(fidList->GetID());
-     }
+//   if (selector == this->FiducialListSelectorWidget &&  event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent &&
+//       this->FiducialListSelectorWidget->GetSelected() != NULL)
+//     {
+//       //vtkDebugMacro("vtkCellWallSegmentGUI: ProcessGUIEvent Node Selector Event: " << event << ".\n");
+//       cout << "vtkCellWallSegmentGUI: ProcessGUIEvent Node Selector Event: " << event << endl;
+//      vtkMRMLFiducialListNode *fidList = vtkMRMLFiducialListNode::SafeDownCast(this->FiducialListSelectorWidget->GetSelected());
+//       this->CellWallSegmentNode->SetFiducialListRef(fidList->GetID());
+//     }
 
+   if (selector == this->FiducialListSelectorWidget &&
+        event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent )
+      {
+       vtkDebugMacro("vtkCellWallSegmentGUI: ProcessGUIEvent Node Selector Event: " << event << ".\n");
+       cout << "vtkCellWallSegmentGUI: ProcessGUIEvent Node Selector Event: " << event << endl;
+       vtkMRMLFiducialListNode *fidList =
+       vtkMRMLFiducialListNode::SafeDownCast(this->FiducialListSelectorWidget->GetSelected());
+       if (fidList != NULL)
+        {
+          cout << "about to set MRML node fidlist" << endl;
+          this->CellWallSegmentNode->SetFiducialListRef(fidList->GetID());
+          cout << "completed set MRML node fidlist" << fidList->GetID() << "on MRML node: " << this->CellWallSegmentNode->GetID() << endl;
+        }
+       else
+        {
+        vtkDebugMacro("vtkCellWallSegmentGUI: ProcessGUIEvent: the selected node is null!");
+        cout << "vtkCellWallSegmentGUI: ProcessGUIEvent: the selected node is null!" << endl;
+        }
+      return;
+    }
+
+   
   
   if (b == this->OpenFileButton && event == vtkKWPushButton::InvokedEvent ) 
      {
@@ -185,6 +203,8 @@ void vtkCellWallSegmentGUI::ProcessGUIEvents ( vtkObject *caller,
 //---------------------------------------------------------------------------
 void vtkCellWallSegmentGUI::UpdateMRML ()
 {
+    cout << "entering UpdateMRML" << endl;
+    
   vtkMRMLCellWallSegmentNode* n = this->GetCellWallSegmentNode();
   if (n == NULL)
     {
@@ -195,13 +215,13 @@ void vtkCellWallSegmentGUI::UpdateMRML ()
    }
 
   // save node parameters for Undo
-  this->GetLogic()->GetMRMLScene()->SaveStateForUndo(n);
+  //this->GetLogic()->GetMRMLScene()->SaveStateForUndo(n);
 
   // set node parameters from GUI widgets
-  if (this->VolumeSelector->GetSelected() != NULL)
-    {
-    //n->SetInputVolumeRef(this->VolumeSelector->GetSelected()->GetID());
-    }
+//  if (this->VolumeSelector->GetSelected() != NULL)
+//    {
+//    //n->SetInputVolumeRef(this->VolumeSelector->GetSelected()->GetID());
+//    }
 
   if (this->OutVolumeSelector->GetSelected() != NULL)
     {
