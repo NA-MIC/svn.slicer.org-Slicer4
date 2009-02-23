@@ -255,6 +255,20 @@ set_target_properties (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoi
 target_link_libraries (${CLP}Lib ITKIO ITKBasicFilters)
 
 #####################
+set (CLP VesselEnhancingDiffusion)
+
+set ( ${CLP}_SOURCE ${CLP}.cxx)
+generateclp(${CLP}_SOURCE ${CLP}.xml ${Slicer3_SOURCE_DIR}/Resources/ITKLogo.h)
+add_executable(${CLP} ${${CLP}_SOURCE})
+slicer3_set_plugins_output_path(${CLP})
+target_link_libraries (${CLP} ITKIO ITKBasicFilters)
+
+add_library(${CLP}Lib SHARED ${${CLP}_SOURCE})
+slicer3_set_plugins_output_path(${CLP}Lib)
+set_target_properties (${CLP}Lib PROPERTIES COMPILE_FLAGS "-Dmain=ModuleEntryPoint")
+target_link_libraries (${CLP}Lib ITKIO ITKBasicFilters)
+
+#####################
 set (CLP MedianImageFilter)
 
 set ( ${CLP}_SOURCE ${CLP}.cxx)
@@ -440,7 +454,8 @@ include_directories(
   ${vtkITK_SOURCE_DIR} 
   ${vtkITK_BINARY_DIR} 
   ${MRML_SOURCE_DIR} ${MRML_BINARY_DIR} 
-  ${SlicerBaseLogic_SOURCE_DIR}  ${SlicerBaseLogic_BINARY_DIR})
+  ${SlicerBaseLogic_SOURCE_DIR}  ${SlicerBaseLogic_BINARY_DIR}
+  ${ITKExtensions_SOURCE_DIR} ${ITKExtensions_BINARY_DIR})
 
 
 #####################
@@ -619,6 +634,8 @@ if (Slicer3_SOURCE_DIR)
     CurvatureAnisotropicDiffusionLib
     GradientAnisotropicDiffusion
     GradientAnisotropicDiffusionLib
+    VesselEnhancingDiffusion
+    VesselEnhancingDiffusionLib
     MedianImageFilter 
     MedianImageFilterLib
     OtsuThresholdImageFilter
