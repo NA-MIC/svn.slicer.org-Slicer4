@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering.Denoising</category>
+  <title>Vessel Enhancing Diffusion</title>
+  <description>
+   foo
+</description>
+  <version>0.1.0.$Revision: 2104 $(alpha)</version>
+  <documentation-url></documentation-url>
+  <license></license>
+  <contributor>NCI folks who need pizza</contributor>
+  <acknowledgements>This command module was derived from Insight/Examples (copyright) Insight Software Consortium</acknowledgements>
+
+ 
+  
+  <parameters>
+    <label>IO</label>
+    <description>Input/output parameters</description>
+    <image>
+      <name>inputVolume</name>
+      <label>Input Volume</label>
+      <channel>input</channel>
+      <index>0</index>
+      <description>Input volume to be filtered</description>
+    </image>
+    <image>
+      <name>outputVolume</name>
+      <label>Output Volume</label>
+      <channel>output</channel>
+      <index>1</index>
+      <description>Output filtered</description>
+    </image>
+  </parameters>
+
+</executable>

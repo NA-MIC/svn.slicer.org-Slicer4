@@ -91,6 +91,9 @@ class VTK_IA_FEMesh_EXPORT vtkIA_FEMeshGUI : public vtkSlicerModuleGUI
      {
        this->SetLogic(reinterpret_cast<vtkIA_FEMeshLogic*> (logic));
      }
+     
+  // set this value so the module shows up under a category heading in slicer
+  const char* GetCategory() {return "Meshing";}
 
 protected:
   vtkIA_FEMeshGUI();

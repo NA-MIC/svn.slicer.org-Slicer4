@@ -26,6 +26,7 @@ set(dirs ${dirs}
   MGHImageIO
   IGT
   RemoteIO
+  ITKExtensions
   #SIGN
   #CudaSupport
   )
