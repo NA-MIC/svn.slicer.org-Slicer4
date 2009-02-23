@@ -42,8 +42,8 @@ set(include_dirs
 include_directories(${include_dirs})
 
 configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/ITKExtensionsConfigure.h.in 
-  ${CMAKE_CURRENT_BINARY_DIR}/ITKExtensionsConfigure.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/itkExtensionsConfigure.h.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/itkExtensionsConfigure.h
   )
 
 file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
