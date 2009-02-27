@@ -27,69 +27,61 @@
 #include "itkImageFileWriter.h"
 #include "itkCastImageFilter.h"
 
-#include "itkVesselEnhancingDiffusion3DImageFilter.h"
+#include "itkAnisotropicDiffusionVesselEnhancementImageFilter.h"
 
 #include "itkPluginUtilities.h"
-#include "VesselEnhancingDiffusionCLP.h"
-
-#include <vector>
-#include <iostream>
+#include "VesselEnhancingAnistropicDiffusionCLP.h"
 
 template<class T> int DoIt( int argc, char * argv[], T )
 {
 
   PARSE_ARGS;
 
-  typedef itk::VesselEnhancingDiffusion3DImageFilter<short> VT;
-  typedef VT::ImageType                                     IT;
-  typedef itk::ImageFileReader<IT>                          RT;
-  typedef itk::ImageFileWriter<IT>                          WT;
-  typedef itk::CastImageFilter<IT,IT>                 CastType;
-  typedef itk::ImageFileWriter< IT >                WriterType;
+  //Pixel Types
+  typedef    double   InputPixelType;
+  typedef    double   OutputPixelType;
+//  typedef    T       OutputPixelType;
 
-  RT::Pointer reader = RT::New();
+  //Image Types
+  typedef itk::Image< InputPixelType,  3 >   InputImageType;
+  typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 
+  //Read Image
+  typedef itk::ImageFileReader< InputImageType >  ReaderType;
+  typename ReaderType::Pointer reader = ReaderType::New();
   itk::PluginFilterWatcher watchReader(reader, "Read Volume",
                                        CLPProcessInformation);
-
   reader->SetFileName( inputVolume.c_str() );
 
-  VT::Pointer filter = VT::New();
-  itk::PluginFilterWatcher watchFilter(filter, "Vessel Enhancing Diffusion (Hacked Version)",
+  //Filter Image
+  typedef itk::AnisotropicDiffusionVesselEnhancementImageFilter<
+               InputImageType, InputImageType >  FilterType;
+  typename FilterType::Pointer filter = FilterType::New();
+  itk::PluginFilterWatcher watchFilter(filter, "Vessel Enhancing Anisotropic Diffusion",
     CLPProcessInformation);
 
   filter->SetInput( reader->GetOutput() );   
-  //filter->SetDefaultPars();
   filter->SetAlpha( Alpha );
   filter->SetBeta( Beta );
   filter->SetGamma( Gamma );
-  filter->SetEpsilon( Epsilon );
-  filter->SetOmega( Omega );
-  filter->SetSensitivity( Sensitivity );
-  filter->SetRecalculateVesselness( RecalculateVesselness);
-  filter->SetIterations( NumberOfIterations );
+  filter->SetC( C );
+  filter->SetScaleVesselnessMeasure( ScaleVesselnessMeasure );
+  filter->SetSigmaMin( StartScale );
+  filter->SetSigmaMax( StopScale );
+  filter->SetNumberOfSigmaSteps( NumberOfScales ); 
+  filter->SetEpsilon( Epsilon); 
+  filter->SetWStrength( Omega ); 
+  filter->SetSensitivity( Sensitivity ); 
   filter->SetTimeStep( TimeStep );
-  filter->SetDarkObjectLightBackground( DarkObjectLightBackground );
+  filter->SetNumberOfIterations( NumberOfIterations );
 
-  std::vector<float> scales(NumberOfScales);
-  double step = (StopScale - StartScale) / NumberOfScales;
-  for(unsigned int i = 0; i < scales.size(); i++)
-  {
-     scales[i] = StartScale + i * step;
-     std::cerr << scales[i] << std::endl;
-     std::cerr.flush();
-  }
-  
-  filter->SetScales(scales);
-
-  CastType::Pointer cast = CastType::New();
-  cast->SetInput( filter->GetOutput());
-
-  WriterType::Pointer writer = WriterType::New();
-  itk::PluginFilterWatcher watchWriter(writer, "Write Volume", 
-                                       CLPProcessInformation);
+  //Write Image
+  typedef itk::ImageFileWriter< OutputImageType > WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+  itk::PluginFilterWatcher watchWriter(writer, "Write Volume",
+                                   CLPProcessInformation);
   writer->SetFileName( outputVolume.c_str() );
-  writer->SetInput( cast->GetOutput() );
+  writer->SetInput( filter->GetOutput() );
   writer->Update();
 
   return EXIT_SUCCESS;

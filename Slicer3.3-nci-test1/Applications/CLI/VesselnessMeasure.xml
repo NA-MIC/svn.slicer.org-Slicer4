@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
   <category>Filtering.Denoising</category>
-  <title>Vessel Enhancing Diffusion (Hacked Version)</title>
+  <title>Vesselness Measure</title>
   <description>
-   This runs the Vessel Enhancing Diffusion algorithm as described in the Insight Journal Paper Id 314
+   The Vesselness Measure algorithm as described in the Insight Journal Paper Id 163.
 </description>
   <version>0.1.0.$Revision: 2104 $(alpha)</version>
   <documentation-url></documentation-url>
@@ -12,8 +12,8 @@
   <acknowledgements></acknowledgements>
 
  <parameters>
-    <label>Vessel Enhancing Diffusion (Hacked Version) Parameters</label>
-    <description>Parameters for the Vessel Enhancing Diffusion (Hacked Version)</description>
+    <label>Vesselness Measure Parameters</label>
+    <description>Vesselness Measure</description>
 
     <double>
       <name>Alpha</name>
@@ -48,6 +48,17 @@
       </constraints>
     </double>
 
+    <double>
+      <name>C</name>
+      <longflag>--C</longflag>
+      <description>C</description>
+      <label>C</label>
+      <default>10.0e-6</default>
+      <constraints>
+        <minimum>0</minimum>
+      </constraints>
+    </double>
+
     <boolean>
       <name>ScaleVesselnessMeasure</name>
       <longflag>--ScaleVesselnessMeasure</longflag>
@@ -60,8 +71,8 @@
       <name>StartScale</name>
       <longflag>--StartScale</longflag>
       <description>Start Scale</description>
-      <label>StartScale</label>
-      <default>0.300</default>
+      <label>Start Scale</label>
+      <default>0.200</default>
       <constraints>
         <minimum>.001</minimum>
       </constraints>
@@ -83,91 +94,13 @@
       <longflag>--NumberOfScales</longflag>
       <description>Number Of Scales</description>
       <label>Number Of Scales</label>
-      <default>5</default>
+      <default>10</default>
       <constraints>
         <minimum>1</minimum>
         <maximum>100</maximum>
         <step>1</step>
       </constraints>
     </integer>
-
-    <double>
-      <name>Epsilon</name>
-      <longflag>--Epsilon</longflag>
-      <description>Epsilon</description>
-      <label>Epsilon</label>
-      <default>0.01</default>
-      <constraints>
-        <minimum>0</minimum>
-      </constraints>
-    </double>
-
-    <double>
-      <name>Omega</name>
-      <longflag>--Omega</longflag>
-      <description>Omega</description>
-      <label>Omega</label>
-      <default>25.0</default>
-      <constraints>
-        <minimum>0</minimum>
-      </constraints>
-    </double>
-
-    <double>
-      <name>Sensitivity</name>
-      <longflag>--Sensitivity</longflag>
-      <description>Sensitivity</description>
-      <label>Sensitivity</label>
-      <default>5.0</default>
-      <constraints>
-        <minimum>0</minimum>
-      </constraints>
-    </double>
-
-    <double>
-      <name>TimeStep</name>
-      <longflag>--TimeStep</longflag>
-      <description>Time Step</description>
-      <label>Time Step</label>
-      <default>0.001</default>
-      <constraints>
-        <minimum>.001</minimum>
-        <maximum>1</maximum>
-        <step>.001</step>
-      </constraints>
-    </double>
-
-    <integer>
-      <name>NumberOfIterations</name>
-      <longflag>--NumberOfIterations</longflag>
-      <description>Number of iterations</description>
-      <label>Iterations</label>
-      <default>1</default>
-      <constraints>
-        <minimum>1</minimum>
-        <maximum>30</maximum>
-        <step>1</step>
-      </constraints>
-    </integer>
-
-    <double>
-      <name>RecalculateVesselness</name>
-      <longflag>--RecalculateVesselness</longflag>
-      <description>Recalculate Vesselness</description>
-      <label>Recalculate Vesselness</label>
-      <default>100</default>
-      <constraints>
-        <minimum>0</minimum>
-      </constraints>
-    </double>
-
-    <boolean>
-      <name>DarkObjectLightBackground</name>
-      <longflag>--DarkObjectLightBackground</longflag>
-      <description>Dark Object Light Background</description>
-      <label>Dark Object Light Background</label>
-      <default>false</default>
-    </boolean>
 
   </parameters>
   

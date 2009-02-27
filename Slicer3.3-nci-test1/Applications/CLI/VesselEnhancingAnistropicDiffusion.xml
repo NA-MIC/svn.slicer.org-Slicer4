@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <executable>
   <category>Filtering.Denoising</category>
-  <title>Vessel Enhancing Diffusion (Hacked Version)</title>
+  <title>Vessel Enhancing Anisotropic Diffusion </title>
   <description>
    This runs the Vessel Enhancing Diffusion algorithm as described in the Insight Journal Paper Id 314
 </description>
@@ -12,8 +12,8 @@
   <acknowledgements></acknowledgements>
 
  <parameters>
-    <label>Vessel Enhancing Diffusion (Hacked Version) Parameters</label>
-    <description>Parameters for the Vessel Enhancing Diffusion (Hacked Version)</description>
+    <label>Vessel Enhancing Anisotropic Diffusion Parameters</label>
+    <description>Parameters for the Vessel Enhancing Anisotropic Diffusion</description>
 
     <double>
       <name>Alpha</name>
@@ -43,6 +43,17 @@
       <description>Gamma</description>
       <label>Gamma</label>
       <default>5.0</default>
+      <constraints>
+        <minimum>0</minimum>
+      </constraints>
+    </double>
+
+    <double>
+      <name>C</name>
+      <longflag>--C</longflag>
+      <description>C</description>
+      <label>C</label>
+      <default>10.0e-6</default>
       <constraints>
         <minimum>0</minimum>
       </constraints>
@@ -149,25 +160,6 @@
         <step>1</step>
       </constraints>
     </integer>
-
-    <double>
-      <name>RecalculateVesselness</name>
-      <longflag>--RecalculateVesselness</longflag>
-      <description>Recalculate Vesselness</description>
-      <label>Recalculate Vesselness</label>
-      <default>100</default>
-      <constraints>
-        <minimum>0</minimum>
-      </constraints>
-    </double>
-
-    <boolean>
-      <name>DarkObjectLightBackground</name>
-      <longflag>--DarkObjectLightBackground</longflag>
-      <description>Dark Object Light Background</description>
-      <label>Dark Object Light Background</label>
-      <default>false</default>
-    </boolean>
 
   </parameters>
   

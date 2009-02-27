@@ -26,70 +26,75 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkCastImageFilter.h"
+#include "itkRescaleIntensityImageFilter.h"
 
-#include "itkVesselEnhancingDiffusion3DImageFilter.h"
+#include "itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.h"
 
 #include "itkPluginUtilities.h"
-#include "VesselEnhancingDiffusionCLP.h"
-
-#include <vector>
-#include <iostream>
+#include "VesselnessMeasureCLP.h"
 
 template<class T> int DoIt( int argc, char * argv[], T )
 {
 
   PARSE_ARGS;
 
-  typedef itk::VesselEnhancingDiffusion3DImageFilter<short> VT;
-  typedef VT::ImageType                                     IT;
-  typedef itk::ImageFileReader<IT>                          RT;
-  typedef itk::ImageFileWriter<IT>                          WT;
-  typedef itk::CastImageFilter<IT,IT>                 CastType;
-  typedef itk::ImageFileWriter< IT >                WriterType;
+  //Pixel Types
+  typedef    short   InputPixelType;
+  typedef    double   VesselnessPixelType;
+//  typedef    T       OutputPixelType;
+  typedef    unsigned char       OutputPixelType;
 
-  RT::Pointer reader = RT::New();
+  //Image Types
+  typedef itk::Image< InputPixelType,  3 >   InputImageType;
+  typedef itk::Image< VesselnessPixelType,  3 >   VesselnessImageType;
+  typedef itk::Image< OutputPixelType, 3 >   OutputImageType;
 
+  //Read Input Image
+  typedef itk::ImageFileReader< InputImageType >  ReaderType;
+  typename ReaderType::Pointer reader = ReaderType::New();
   itk::PluginFilterWatcher watchReader(reader, "Read Volume",
                                        CLPProcessInformation);
-
   reader->SetFileName( inputVolume.c_str() );
 
-  VT::Pointer filter = VT::New();
-  itk::PluginFilterWatcher watchFilter(filter, "Vessel Enhancing Diffusion (Hacked Version)",
+  //Cast Input Image to Vessel Image
+  typedef itk::CastImageFilter<InputImageType, VesselnessImageType> CastType;
+  typename CastType::Pointer cast = CastType::New();
+  cast->SetInput( reader->GetOutput());
+
+  //Create Vesselness Measure Filter
+  typedef itk::MultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter<
+               VesselnessImageType, VesselnessImageType >  FilterType;
+  typename FilterType::Pointer filter = FilterType::New();
+  itk::PluginFilterWatcher watchFilter(filter, "Vesselness Measure",
     CLPProcessInformation);
 
-  filter->SetInput( reader->GetOutput() );   
-  //filter->SetDefaultPars();
+  //Set Parameters for Vesselness Measure
+  filter->SetInput( cast->GetOutput() );   
   filter->SetAlpha( Alpha );
   filter->SetBeta( Beta );
   filter->SetGamma( Gamma );
-  filter->SetEpsilon( Epsilon );
-  filter->SetOmega( Omega );
-  filter->SetSensitivity( Sensitivity );
-  filter->SetRecalculateVesselness( RecalculateVesselness);
-  filter->SetIterations( NumberOfIterations );
-  filter->SetTimeStep( TimeStep );
-  filter->SetDarkObjectLightBackground( DarkObjectLightBackground );
+  filter->SetC( C );
+  filter->SetScaleVesselnessMeasure( ScaleVesselnessMeasure );
+  filter->SetSigmaMin( StartScale );
+  filter->SetSigmaMax( StopScale );
+  filter->SetNumberOfSigmaSteps( NumberOfScales );
 
-  std::vector<float> scales(NumberOfScales);
-  double step = (StopScale - StartScale) / NumberOfScales;
-  for(unsigned int i = 0; i < scales.size(); i++)
-  {
-     scales[i] = StartScale + i * step;
-     std::cerr << scales[i] << std::endl;
-     std::cerr.flush();
-  }
-  
-  filter->SetScales(scales);
+  //Rescale Vesselness Image to Output Image
+  typedef itk::RescaleIntensityImageFilter<VesselnessImageType, 
+                                           OutputImageType> RescaleFilterType;
+  RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+  rescale->SetInput( filter->GetOutput() );
+  rescale->SetOutputMinimum( 0 );
+  rescale->SetOutputMaximum( 255 );
+  rescale->Update();
 
-  CastType::Pointer cast = CastType::New();
-  cast->SetInput( filter->GetOutput());
-
-  WriterType::Pointer writer = WriterType::New();
-  itk::PluginFilterWatcher watchWriter(writer, "Write Volume", 
-                                       CLPProcessInformation);
+  //Write Output Image
+  typedef itk::ImageFileWriter< OutputImageType > WriterType;
+  typename WriterType::Pointer writer = WriterType::New();
+  itk::PluginFilterWatcher watchWriter(writer, "Write Volume",
+                                   CLPProcessInformation);
   writer->SetFileName( outputVolume.c_str() );
-  writer->SetInput( cast->GetOutput() );
+  writer->SetInput( rescale->GetOutput() );
   writer->Update();
 
   return EXIT_SUCCESS;

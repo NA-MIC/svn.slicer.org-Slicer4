@@ -57,6 +57,11 @@ install(FILES
 
 set(ITKEXTENSIONS_SRCS 
   itkVesselEnhancingDiffusion3DImageFilter.txx 
+  itkAnisotropicDiffusionVesselEnhancementFunction.txx
+  itkAnisotropicDiffusionVesselEnhancementImageFilter.txx
+  itkHessianSmoothed3DToVesselnessMeasureImageFilter.txx
+  itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.txx
+  itkVesselEnhancingDiffusion3DImageFilter.txx
   itkExtensionStub.cxx
   )
 
