@@ -44,9 +44,10 @@ class VTK_CellWallSegment_EXPORT vtkCellWallSegmentLogic : public vtkSlicerModul
 
   // The methods that create and run VTK or ITK pipelines.  The MRML volume 
   // is loaded, then 2D or 3D segmentation can be performed after a fiducial
-  // list is selected.
+  // list is selected.  The segmentation is written into the SegmentationVolume
   
   void InitializeMRMLVolume(char* filename);
+  void InitializeMRMLSegmentationVolume();
   void Perform2DSegmentation();
   void Perform3DSegmentation();
   
