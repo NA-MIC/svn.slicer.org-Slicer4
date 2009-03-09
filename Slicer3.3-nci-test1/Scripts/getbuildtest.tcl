@@ -34,6 +34,7 @@ proc Usage { {msg ""} } {
     set msg "$msg\n   -u --update : does a cvs/svn update on each lib"
     set msg "$msg\n   --no-slicer-update : don't update slicer source (does not effect libs)"
     set msg "$msg\n   --build-dir : override default build directory"
+    set msg "$msg\n   --doc-dir : override default documentation directory"
     set msg "$msg\n   --version-patch : set the patch string for the build (used by installer)"
     set msg "$msg\n                   : default: version-patch is the current date"
     set msg "$msg\n   --tag : same as version-patch"
@@ -52,6 +53,7 @@ set ::GETBUILDTEST(clean) "false"
 set ::GETBUILDTEST(update) ""
 set ::GETBUILDTEST(no-slicer-update) ""
 set ::GETBUILDTEST(build-dir) ""
+set ::GETBUILDTEST(doc-dir) ""
 set ::GETBUILDTEST(release) ""
 set ::GETBUILDTEST(test-type) "Experimental"
 set ::GETBUILDTEST(version-patch) ""
@@ -95,6 +97,14 @@ for {set i 0} {$i < $argc} {incr i} {
                 Usage "Missing build-dir argument"
             } else {
                 set ::GETBUILDTEST(build-dir) [lindex $argv $i]
+            }
+        }
+        "--doc-dir" {
+            incr i
+            if { $i == $argc } {
+                Usage "Missing doc-dir argument"
+            } else {
+                set ::GETBUILDTEST(doc-dir) [lindex $argv $i]
             }
         }
         "-t" -
@@ -237,15 +247,25 @@ if { $::GETBUILDTEST(build-dir) == ""} {
         # use an enviornment variables so slicer-variables.tcl can see them
         set ::env(Slicer3_LIB) $::Slicer3_HOME/../Slicer3-lib
         set ::env(Slicer3_BUILD) $::Slicer3_HOME/../Slicer3-build
-        # use an environment variable so doxygen can use it
-        set ::env(Slicer3_DOC) $::Slicer3_HOME/../Slicer3-doc
 } else {
         # use an enviornment variables so slicer-variables.tcl can see them
         set ::env(Slicer3_LIB) $::GETBUILDTEST(build-dir)/Slicer3-lib
         set ::env(Slicer3_BUILD) $::GETBUILDTEST(build-dir)/Slicer3-build
-        # use an environment variable so doxygen can use it
-        set ::env(Slicer3_DOC) $::GETBUILDTEST(build-dir)/Slicer3-doc
 }
+
+if { $::GETBUILDTEST(doc-dir) == ""} {
+    # check if there's an environment variable
+    if { [info exists ::env(Slicer3_DOC)] == 1 } {
+        set ::GETBUILDTEST(doc-dir) $::env(Slicer3_DOC)
+    } else {
+        # set an default value
+        set ::GETBUILDTEST(doc-dir)  $::Slicer3_HOME/../Slicer3-doc
+    }
+}
+# set an environment variable so doxygen can use it
+set ::env(Slicer3_DOC) $::GETBUILDTEST(doc-dir)
+
+
 set Slicer3_LIB $::env(Slicer3_LIB) 
 set Slicer3_BUILD $::env(Slicer3_BUILD) 
 
@@ -298,9 +318,16 @@ if { ![file exists $Slicer3_BUILD] } {
     file mkdir $Slicer3_BUILD
 }
 
-if { $::GETBUILDTEST(doxy) && ![file exists $::env(Slicer3_DOC)] } {
-    puts "Making documentation directory  $::env(Slicer3_DOC)"
-    file mkdir $::env(Slicer3_DOC)
+if { $::GETBUILDTEST(doxy) } {
+    if {[file exists $::env(Slicer3_DOC)] } {
+        # force removal of the old dir
+        puts "Clearing out old documentation directory $::env(Slicer3_DOC)"
+        file delete -force  $::env(Slicer3_DOC)
+    }
+    if {![file exists $::env(Slicer3_DOC)] } {
+        puts "Making documentation directory  $::env(Slicer3_DOC)"
+        file mkdir $::env(Slicer3_DOC)
+    }
 }
 
 
@@ -442,6 +469,21 @@ runcmd $::CMAKE \
         $Slicer3_HOME
 
 if { $isWindows } {
+
+    # TODO: this needs to be touched when upgrading python versions
+    # Here we put a copy of the python dll into a spot we know will be in
+    # the runtime path for GenerateCLP (which depends on python).
+    # We can't put this in the system path, since developer studio ignores
+    # the environment variables (or if you pass it the /UseEnv flag it
+    # can't find it's own executables).
+    if { $::USE_PYTHON == "ON" } {
+      if { ![file exists bin] } { file mkdir bin }
+      if { ![file exists bin/$::VTK_BUILD_TYPE] } { file mkdir bin/$::VTK_BUILD_TYPE }
+      if { ![file exists bin/$::VTK_BUILD_TYPE/python25.dll] } { 
+        file copy $::Slicer3_LIB/python-build/PCbuild/python25.dll bin/$::VTK_BUILD_TYPE 
+      }
+    }
+
     if { $MSVC6 } {
         eval runcmd $::MAKE Slicer3.dsw /MAKE $::GETBUILDTEST(test-type)
         if { $::GETBUILDTEST(pack) == "true" } {
@@ -449,18 +491,18 @@ if { $isWindows } {
         }
     } else {
         # tell cmake explicitly what command line to run when doing the ctest builds
-        set makeCmd "$::MAKE Slicer3.sln /build $::VTK_BUILD_TYPE /project ALL_BUILD"
+        set makeCmd "$::MAKE Slicer3.sln /out buildlog.txt /build $::VTK_BUILD_TYPE /project ALL_BUILD"
         runcmd $::CMAKE -DMAKECOMMAND:STRING=$makeCmd $Slicer3_HOME
 
         if { $::GETBUILDTEST(test-type) == "" } {
-            runcmd $::MAKE Slicer3.SLN /build $::VTK_BUILD_TYPE
+            runcmd $::MAKE Slicer3.SLN /out buildlog.txt /build $::VTK_BUILD_TYPE
         } else {
             # running ctest through visual studio is broken in cmake2.4, so run ctest directly
             runcmd $::CMAKE_PATH/bin/ctest -D $::GETBUILDTEST(test-type) -C $::VTK_BUILD_TYPE
         }
 
         if { $::GETBUILDTEST(pack) == "true" } {
-            runcmd $::MAKE Slicer3.SLN /build $::VTK_BUILD_TYPE /project PACKAGE
+            runcmd $::MAKE Slicer3.SLN /out packlog.txt /build $::VTK_BUILD_TYPE /project PACKAGE
         }
     }
 } else {
@@ -475,6 +517,7 @@ if { $isWindows } {
         puts "package [if $packageReturn "concat failed" "concat succeeded"]"
     }
 }
+
 # upload
 
 if {$::GETBUILDTEST(upload) == "true"} {

@@ -731,6 +731,8 @@ int Slicer3_main(int argc, char *argv[])
     tclCmd += "eval $::SLICER(eval);";
     int returnCode = Slicer3_Tcl_Eval( interp, tclCmd.c_str() );
     Slicer3_Tcl_Eval( interp, "update" );
+    // -- event broker: free the singleton instance
+    vtkEventBroker::GetInstance()->Delete(); 
     slicerApp->Delete();
     return ( returnCode );
     }
@@ -1634,6 +1636,9 @@ int Slicer3_main(int argc, char *argv[])
 
 #ifdef Slicer3_USE_PYTHON
 
+  vtkSlicerApplication::GetInstance()->InitializePython(
+    (void*)PythonModule, (void*)PythonDictionary);
+
   if ( !NoModules )
     {
     slicerApp->SplashMessage("Initializing Python Scripted Modules...");
@@ -1842,10 +1847,6 @@ int Slicer3_main(int argc, char *argv[])
     {
     appGUI->SelectModule("Data");
     }
-#ifdef Slicer3_USE_PYTHON
-  vtkSlicerApplication::GetInstance()->InitializePython(
-    (void*)PythonModule, (void*)PythonDictionary);
-#endif    
 
   //
   // Run!  - this will return when the user exits

@@ -330,6 +330,7 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
   vtkKWProgressDialog *progressDialog = vtkKWProgressDialog::New();
   progressDialog->SetParent( this->MainSlicerWindow );
   progressDialog->SetMasterWindow( this->MainSlicerWindow );
+  progressDialog->SetDisplayPositionToMasterWindowCenter();
   progressDialog->Create();
 
   if ( fileName ) 
@@ -478,7 +479,7 @@ void vtkSlicerApplicationGUI::ProcessCloseSceneCommand()
   vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
   dialog->SetParent ( this->MainSlicerWindow );
   dialog->SetStyleToOkCancel();
-  dialog->SetText("Are you sure you want to close scene?");
+  dialog->SetText("Are you sure you want to close the scene?");
   dialog->Create ( );
   if (dialog->Invoke())
     {
@@ -1443,15 +1444,19 @@ void vtkSlicerApplicationGUI::PythonCommand ( char *cmd )
     (PyObject*)(vtkSlicerApplication::GetInstance()->GetPythonDictionary());
   if ( d == NULL )
     {
-    vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", "Failed to startup python interpreter: dictionary null" );
+    vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", "Failed to startup python interpreter (command): dictionary null" );
     return;
     }
     
-  PyObject* v = PyRun_StringFlags ( cmd,
-                                    Py_file_input,
-                                    d,
-                                    d,
-                                    NULL);
+  std::string cmdString =  std::string ( "import sys;\n" );
+              cmdString += std::string ( "try:\n" );
+              cmdString += std::string (    cmd ) + std::string ( ";\n" );
+              cmdString += std::string ( "except Exception, e:\n" );
+              cmdString += std::string ( "  print 'Failed to run command ', e\n" );
+              cmdString += std::string ( "sys.stdout.flush();\n" );
+              cmdString += std::string ( "sys.stderr.flush();\n" );
+
+  PyObject* v = PyRun_String ( cmd, Py_file_input, d, d);
 
   if (v == NULL)
     {

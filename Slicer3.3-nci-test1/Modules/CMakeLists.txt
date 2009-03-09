@@ -50,7 +50,7 @@ subdirs(
 #   PythonGADScriptedModule
    QdecModule
    QueryAtlas
-#   FetchMI
+   FetchMI
    ScriptedModule
    ScriptedModuleExample
    SlicerDaemon
@@ -73,6 +73,7 @@ if(Slicer3_USE_OPENIGTLINK)
   subdirs(
     OpenIGTLinkIF
     NeuroNav
+    ProstateNav
     )
 endif(Slicer3_USE_OPENIGTLINK)
 

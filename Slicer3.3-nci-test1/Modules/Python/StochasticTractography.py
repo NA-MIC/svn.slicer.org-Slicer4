@@ -2,10 +2,18 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
 <executable>
   <category>Python Modules</category>
   <title>Python Stochastic Tractography</title>
-  <description>Python module</description>
+  <description> This module implements stochastic tractography. For more information please refer to the following link 
+
+www.na-mic.org/Wiki/index.php/Python_Stochastic_Tractography_Tutorial
+  </description>
   <version>0.1.0.$Revision: 1892 $(alpha)</version>
   <documentation-url></documentation-url>
-  <contributor>Julien von Siebenthal</contributor>
+  <contributor> Developer: Julien de Siebenthal (PNL) (jvs@bwh.harvard.edu)
+Supervisors: Marek Kubicki (PNL), Carl-Fredrik Westin (LMI), Steve Pieper (Isomics) and Sylvain Bouix (PNL)
+ </contributor>
+ <acknowledgements>
+Grants: National Alliance for Medical Image Computing (NAMIC), funded by the National Institutes of Health through the NIH Roadmap for Medical Research, Grant U54 EB005149 (Ron Kikinis, Marek Kubicki)
+ </acknowledgements>
  
 
   <parameters>
@@ -47,7 +55,7 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
   </parameters>
 
   <parameters>
-    <label>Smoothing Parameters</label>
+    <label>Smoothing</label>
     <description>Parameters for volume smoothing</description>
     <boolean>
       <name>smoothEnabled</name>
@@ -60,73 +68,20 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
     <double-vector>
       <name>FWHM</name>
       <longflag>FWHM</longflag>
-      <description>Full width half mean</description>
-      <label>FWHM</label>
+      <description>Full width half maximum</description>
+      <label>Gaussian FWHM</label>
       <default>1,1,1</default>
     </double-vector>
 
   </parameters>
 
   <parameters>
-    <label>Brain Mask Parameters</label>
-    <description>Parameters for brain mask (otsu-like)</description>
-    <boolean>
-      <name>otsuEnabled</name>
-      <longflag>otsuEnabled</longflag>
-      <description>Toggle otsu</description>
-      <label>Enabled</label>
-      <default>false</default>
-    </boolean>
-    
-    <integer>
-      <name>infOtsuThres</name>
-      <longflag>infOtsuThres</longflag>
-      <label>Inferior Otsu-like threshold</label>
-      <description>Inferior Otsu threshold </description>
-      <default>150</default>
-    </integer>
-
-    <integer>
-      <name>supOtsuThres</name>
-      <longflag>supOtsuThres</longflag>
-      <label>Superior Otsu-like threshold</label>
-      <description>Superior Otsu threshold </description>
-      <default>2500</default>
-    </integer>
-
-    <boolean>
-      <name>artsEnabled</name>
-      <longflag>artsEnabled</longflag>
-      <description>Toggle artefacts removal</description>
-      <label>Artefacts removal</label>
-      <default>false</default>
-    </boolean>
-
-    <integer>
-      <name>infARTSThres</name>
-      <longflag>infARTSThres</longflag>
-      <label>Inferior artefacts threshold</label>
-      <description>Inferior artefacts threshold </description>
-      <default>0</default>
-    </integer>
-
-    <integer>
-      <name>supARTSThres</name>
-      <longflag>supARTSThres</longflag>
-      <label>Superior artefacts threshold</label>
-      <description>Superior artefacts threshold </description>
-      <default>150</default>
-    </integer>
-
-  </parameters>
-
-  <parameters>
-     <label>White Matter Mask Parameters</label>
-     <description>Parameters for wm</description>
+     <label>Brain Mask</label>
+     <description>Parameters for brain mask</description>
      <boolean>
       <name>wmEnabled</name>
       <longflag>wmEnabled</longflag>
-      <description>Toggle wm</description>
+      <description>Toggle brain mask</description>
       <label>Enabled</label>
       <default>false</default>
      </boolean>
@@ -134,24 +89,33 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
      <integer>
       <name>infWMThres</name>
       <longflag>infWMThres</longflag>
-      <label>Inferior WM threshold</label>
-      <description>Inferior WM threshold </description>
+      <label>Lower Brain threshold</label>
+      <description>Lower Brain threshold </description>
       <default>400</default>
      </integer>
 
      <integer>
       <name>supWMThres</name>
       <longflag>supWMThres</longflag>
-      <label>Superior WM threshold</label>
-      <description>Superior WM threshold </description>
+      <label>Higher Brain threshold</label>
+      <description>Higher Brain threshold </description>
       <default>1000</default>
      </integer>
 
   </parameters>
   
   <parameters>
-    <label>Tensor Parameters</label>
-    <description>Parameters for tensor computation</description>
+    <label>Diffusion Tensor</label>
+    <description>Parameters for diffusion tensor</description>
+    
+    <boolean>
+      <name>cmEnabled</name>
+      <longflag>cmEnabled</longflag>
+      <description>Toggle DTI based tractography (tensor and connectivity)</description>
+      <label>Enabled</label>
+      <default>true</default>
+    </boolean>
+
 
     <boolean>
       <name>faEnabled</name>
@@ -181,19 +145,11 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
 
   <parameters>
     <label>
-    Stochastic Tractography Parameters
+    Tractography
     </label>
     <description>
-    Parameters for the Stochastic Tractography algorithm
+    Parameters tractography algorithm
     </description>
-    
-    <!-- <boolean>
-      <name>stEnabled</name>
-      <longflag>stEnabled</longflag>
-      <description>Toggle st</description>
-      <label>Enabled</label>
-      <default>false</default>
-    </boolean> -->
        
     <integer>
       <name>totalTracts</name>
@@ -204,7 +160,7 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
       <constraints>
         <minimum>1</minimum>
         <maximum>1000</maximum>
-        <step>10</step>
+        <step>1</step>
       </constraints>
     </integer>
 
@@ -217,7 +173,7 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
       <constraints>
         <minimum>10</minimum>
         <maximum>1000</maximum>
-        <step>10</step>
+        <step>1</step>
       </constraints>
     </integer>
     
@@ -255,7 +211,7 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
       <longflag>fa</longflag>
       <description>Stopping criteria as fractional anisotropy</description>
       <label>FA</label>
-      <default>0.1</default>
+      <default>0.0</default>
       <constraints>
         <minimum>0.0</minimum>
         <maximum>1.0</maximum>
@@ -265,35 +221,27 @@ XML = """<?xml version="1.0" encoding="utf-8"?>
     
   </parameters>
 
-   <parameters>
+  <parameters>
     <label>
-    Connectivity Map Parameters
+    Connectivity Map
     </label>
     <description>
     Parameters for computing connectivity maps
     </description>
 
-    <boolean>
-      <name>cmEnabled</name>
-      <longflag>cmEnabled</longflag>
-      <description>Toggle cm</description>
-      <label>Enabled</label>
-      <default>false</default>
-    </boolean>
-
     <string-enumeration>
       <name>probMode</name>
       <longflag>probMode</longflag>
       <description>Probability computation mode from tracts:
-              rough: voxel is counted only for the first fiber going through 
+              binary: voxel is counted only for the first fiber going through 
               cumulative: voxel is counted for each fiber going through 
-              discriminative: voxel is counted for each fiber going through based on their length ownership
+              weighted: voxel is counted for each fiber going through based on their length ownership
       </description>
       <label>Computation Mode</label>
       <default>cumulative</default>
-      <element>rough</element>
+      <element>binary</element>
       <element>cumulative</element>
-      <element>discriminative</element>
+      <element>weighted</element>
     </string-enumeration>
 
     <boolean>
@@ -332,12 +280,15 @@ import os
 
 
 vtk_types = { 2:numpy.int8, 3:numpy.uint8, 4:numpy.int16,  5:numpy.uint16,  6:numpy.int32,  7:numpy.uint32,  10:numpy.float32,  11:numpy.float64 }
-
 numpy_sizes = { numpy.int8:1, numpy.uint8:1, numpy.int16:2,  numpy.uint16:2,  numpy.int32:4,  numpy.uint32:4,  numpy.float32:4,  numpy.float64:8 }
-
 numpy_nrrd_names = { 'int8':'char', 'uint8':'unsigned char', 'int16':'short',  'uint16':'ushort',  'int32':'int',  'uint32':'uint',  'float32':'float',  'float64':'double' }
-
 numpy_vtk_types = { 'int8':'2', 'uint8':'3', 'int16':'4',  'uint16':'5',  'int32':'6',  'uint32':'7',  'float32':'10',  'float64':'11' }
+
+#vtk_types = { 2:numpy.int8, 3:numpy.uint8, 4:numpy.int16,  5:numpy.uint16,  6:numpy.int32,  7:numpy.uint32,  10:numpy.float32 }
+#numpy_sizes = { numpy.int8:1, numpy.uint8:1, numpy.int16:2,  numpy.uint16:2,  numpy.int32:4,  numpy.uint32:4,  numpy.float32:4 }
+#numpy_nrrd_names = { 'int8':'char', 'uint8':'unsigned char', 'int16':'short',  'uint16':'ushort',  'int32':'int',  'uint32':'uint',  'float32':'float' }
+#numpy_vtk_types = { 'int8':'2', 'uint8':'3', 'int16':'4',  'uint16':'5',  'int32':'6',  'uint32':'7',  'float32':'10' }
+
 
 SIZE = 4096 
 
@@ -355,8 +306,13 @@ def sendVolume(vol, c, isDti=False):
   else:
       data = vol.GetImageData().GetPointData().GetTensors().ToArray()
   
+  data = data.astype('uint16')
+
   shape = data.shape
   dtype = data.dtype
+
+  #print 'Data shape : ', shape
+  #print 'Data type : ', dtype
 
 
   org = vol.GetOrigin()
@@ -398,7 +354,6 @@ def sendVolume(vol, c, isDti=False):
   c.send(I2R.tostring())
   ack = c.recv(SIZE)
 
-
   c.send('components 1\n')
   ack = c.recv(SIZE)
 
@@ -411,10 +366,14 @@ def sendVolume(vol, c, isDti=False):
      grad = slicer.vtkDoubleArray()
      grad = vol.GetDiffusionGradients()
      G = grad.ToArray()
+     G = G.astype('float')
+     #print 'G type : ', G.dtype
 
      bval = slicer.vtkDoubleArray()
      bval = vol.GetBValues()
      b = bval.ToArray()
+     b = b.astype('float')
+     #print 'b type : ', b.dtype
 
      M2R = numpy.zeros((4,4), 'float')
      
@@ -515,15 +474,9 @@ def recvVolume( shape, dtype, c, log='report.log', isDti=False):
 def Execute (\
              smoothEnabled,\
              FWHM,\
-             otsuEnabled,\
-             infOtsuThres,\
-             supOtsuThres,\
              wmEnabled,\
              infWMThres,\
              supWMThres,\
-             artsEnabled,\
-             infARTSThres,\
-             supARTSThres,\
              faEnabled,\
              traceEnabled,\
              modeEnabled,\
@@ -547,20 +500,20 @@ def Execute (\
   slicer = Slicer.slicer
   scene = slicer.MRMLScene
 
-  if not inputVol0 and not inputVol1:
+  if not inputVol0:
       return
 
   dwi = scene.GetNodeByID(inputVol0)
+  dwiName = dwi.GetName()
 
-  roiA = scene.GetNodeByID(inputVol1)
 
-
+  roiAName = ""
   roiBName = ""
   wmName = ""
-  #tenName = ""
 
-  dwiName = dwi.GetName()
-  roiAName = roiA.GetName()
+  if inputVol1:
+      roiA = scene.GetNodeByID(inputVol1)
+      roiAName = roiA.GetName()
 
   if inputVol2:
       roiB = scene.GetNodeByID(inputVol2)
@@ -589,8 +542,9 @@ def Execute (\
   s.send('dwi ' + str(dwiName) + '\n')
   ack = s.recv(SIZE)
 
-  s.send('roiA ' + str(roiAName) + '\n')
-  ack = s.recv(SIZE)
+  if roiAName:
+     s.send('roiA ' + str(roiAName) + '\n')
+     ack = s.recv(SIZE)
 
   if roiBName:
      s.send('roiB ' + str(roiBName) + '\n')
@@ -611,17 +565,7 @@ def Execute (\
   s.send('stdDev ' + str(FWHM[0]) + ' ' + str(FWHM[1]) + ' ' + str(FWHM[2]) + '\n')
   ack = s.recv(SIZE)
 
-  # otsu
-  s.send('otsuEnabled ' + str(int(otsuEnabled)) + '\n')
-  ack = s.recv(SIZE)
-
-  s.send('infOtsuThres ' + str(infOtsuThres) + '\n')
-  ack = s.recv(SIZE)
-
-  s.send('supOtsuThres ' + str(supOtsuThres) + '\n')
-  ack = s.recv(SIZE)
-
-  # wm
+  # brain
   s.send('wmEnabled ' + str(int(wmEnabled)) + '\n')
   ack = s.recv(SIZE)
 
@@ -631,15 +575,6 @@ def Execute (\
   s.send('supWMThres ' + str(supWMThres) + '\n')
   ack = s.recv(SIZE)
 
-  s.send('artsEnabled ' + str(int(artsEnabled)) + '\n')
-  ack = s.recv(SIZE)
-
-  s.send('infARTSThres ' + str(infARTSThres) + '\n')
-  ack = s.recv(SIZE)
-
-  s.send('supARTSThres ' + str(supARTSThres) + '\n')
-  ack = s.recv(SIZE)
-
   # tensor
   s.send('tensEnabled ' + str(int(True)) + '\n')
   ack = s.recv(SIZE)
@@ -647,9 +582,6 @@ def Execute (\
   bLine = 0
   s.send('bLine ' + str(bLine) + '\n')
   ack = s.recv(SIZE)
-
-  #s.send('tensMode ' + str(tensMode) + '\n')
-  #ack = s.recv(SIZE)
 
   s.send('faEnabled ' + str(int(faEnabled)) + '\n')
   ack = s.recv(SIZE)
@@ -701,6 +633,12 @@ def Execute (\
   sendVolume(dwi, s)
 
   s.close()  
+
+  inputVol0 = ""
+  inputVol1 = ""
+  inputVol2 = ""
+  inputVol3 = ""
+
 
   return
 
