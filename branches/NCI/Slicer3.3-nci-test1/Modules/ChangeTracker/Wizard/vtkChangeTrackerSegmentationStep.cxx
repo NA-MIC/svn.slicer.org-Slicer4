@@ -31,7 +31,7 @@ vtkCxxRevisionMacro(vtkChangeTrackerSegmentationStep, "$Revision: 1.2 $");
 vtkChangeTrackerSegmentationStep::vtkChangeTrackerSegmentationStep()
 {
   this->SetName("3/4. Identify Tumor in First Scan"); 
-  this->SetDescription("Move slider to outline boundary of tumor."); 
+  this->SetDescription("Move slider to outline boundary of tumor"); 
 
   this->ThresholdFrame = NULL;
   this->ThresholdRange = NULL;
@@ -235,6 +235,8 @@ void vtkChangeTrackerSegmentationStep::PreSegmentScan1Define() {
 
   vtkSlicerApplication      *application      =  vtkSlicerApplication::SafeDownCast(this->GetApplication()); 
   vtkSlicerApplicationGUI   *applicationGUI   = this->GetGUI()->GetApplicationGUI();
+  // availability of Volumes module has been verified in the first step of the
+  // wizard
   vtkSlicerVolumesLogic     *volumesLogic      = (vtkSlicerVolumesGUI::SafeDownCast(application->GetModuleGUIByName("Volumes")))->GetLogic();
 
   if (this->PreSegment || this->PreSegmentNode) this->PreSegmentScan1Remove();
@@ -330,7 +332,7 @@ void vtkChangeTrackerSegmentationStep::ThresholdRangeChangedCallback(double min 
 
   // 3D Render 
   this->ChangeRender_BandPassFilter(min,max);
-  //  applicationGUI->GetViewerWidget()->GetMainViewer()->RequestRender();
+  this->GetGUI()->GetApplicationGUI()->GetViewerWidget()->RequestRender();
 
 
   // set GUI  [$::slicer3::Application GetModuleGUIByName "ChangeTracker"]

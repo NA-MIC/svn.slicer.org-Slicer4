@@ -122,7 +122,11 @@ if { $installed } {
 
   set ::env(TCL_DIR)            $::env(Slicer3_HOME)/lib/TclTk
   set ::env(TCL_LIBRARY)        "$::env(TCL_DIR)/lib/tcl@TCL_TK_VERSION_DOT@"
-  set ::env(PYTHON_DIR)         $::env(Slicer3_HOME)/lib/Python
+  if {$::env(BUILD) == $::WINDOWS} {
+    set ::env(PYTHON_DIR)         $::env(Slicer3_HOME)/lib/Python/PCbuild
+  } else {
+    set ::env(PYTHON_DIR)         $::env(Slicer3_HOME)/lib/Python
+  }
 
   set ::env(OpenIGTLink_DIR)      $::env(Slicer3_HOME)/lib/OpenIGTLink
   set ::env(OpenIGTLink_LIB_DIR)  $::env(Slicer3_HOME)/lib/OpenIGTLink
@@ -226,7 +230,7 @@ if { $installed } {
   set ::env(TCL_LIBRARY)        "$::env(TCL_DIR)/lib/tcl@TCL_TK_VERSION_DOT@"
 
   if {$::env(BUILD) == $::WINDOWS} {
-    set ::env(PYTHON_DIR)         [file normalize [file dirname "@PYTHON_INCLUDE_PATH@"]]
+    set ::env(PYTHON_DIR)         [file normalize [file dirname "@PYTHON_INCLUDE_PATH@"]/PCbuild]
   } else {
     set ::env(PYTHON_DIR)         [file normalize [file dirname [file dirname "@PYTHON_INCLUDE_PATH@"]]]
   }
@@ -293,7 +297,7 @@ proc launch_ParseArgs {argv} {
 
   set argv0 [lindex $::argv 0]
   set argv1 [lindex $::argv 1]
-  switch -- $argv0 {
+  switch -glob -- $argv0 {
     "--launch" {
       if { $argv1 == "" } {
         error "--launch requires argument of program to run"
@@ -306,6 +310,7 @@ proc launch_ParseArgs {argv} {
           set ::LAUNCH(showSplash) 0
       }
     }
+    "*.slicer" -
     "--launch-script" {
       set ::argv [lreplace $::argv 0 1]
       uplevel #0 source $argv1
@@ -492,6 +497,7 @@ proc launch_SetPaths {} {
     #
     if {$::env(BUILD) == $::WINDOWS} {
       set SEP ";"
+      set ::env(PYTHON_DIR) "$::env(PYTHON_DIR)/.."
     } else {
       set SEP ":"
     }

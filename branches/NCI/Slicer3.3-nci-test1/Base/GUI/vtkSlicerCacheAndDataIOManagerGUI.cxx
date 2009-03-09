@@ -3,6 +3,7 @@
 #include "vtkCommand.h"
 #include "vtkKWWidget.h"
 #include "vtkKWMessageDialog.h"
+#include "vtkKWTkUtilities.h"
 #include "vtkSlicerApplication.h"
 #include "vtkSlicerApplicationGUI.h"
 #include "vtkSlicerWindow.h"
@@ -444,6 +445,11 @@ void vtkSlicerCacheAndDataIOManagerGUI::ProcessMRMLEvents ( vtkObject *caller,
       this->AddNewDataTransfer ( dt );
       this->UpdateEntireGUI();
       }
+    else if ( event == vtkDataIOManager::DisplayManagerWindowEvent )
+      {
+      this->DisplayManagerWindow();
+      this->Script ("update idletasks");
+      }
     else if ( event == vtkDataIOManager::TransferUpdateEvent )
       {
       this->UpdateEntireGUI();
@@ -559,6 +565,7 @@ void vtkSlicerCacheAndDataIOManagerGUI::SetAndObserveDataIOManager( vtkDataIOMan
   events->InsertNextValue( vtkDataIOManager::LocalWriteEvent);
   events->InsertNextValue ( vtkDataIOManager::NewTransferEvent );
   events->InsertNextValue( vtkDataIOManager::TransferUpdateEvent);
+  events->InsertNextValue( vtkDataIOManager::DisplayManagerWindowEvent);
   events->InsertNextValue( vtkDataIOManager::SettingsUpdateEvent);
   vtkSetAndObserveMRMLNodeEventsMacro ( this->DataIOManager, iomanager, events );
   events->Delete();
@@ -780,6 +787,7 @@ void vtkSlicerCacheAndDataIOManagerGUI::AddNewDataTransfer ( vtkDataTransfer *tr
     w->UpdateWidget();
     w->AddWidgetObservers();
     this->TransferWidgetCollection->AddItem ( w );
+
     }
   vtkDebugMacro("vtkSlicerCacheAndDataIOManagerGUI: DONE adding new data transfer");
 
@@ -1188,7 +1196,9 @@ void vtkSlicerCacheAndDataIOManagerGUI::DisplayManagerWindow ( )
   vtkDebugMacro("vtkSlicerCacheAndDataIOManagerGUI: Displaying Manager Window");
   this->ManagerTopLevel->DeIconify();
   this->ManagerTopLevel->Raise();
-
+  //--- wjp test.
+  this->UpdateEntireGUI();
+  
   //--- refresh the GUI
   vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
   if ( app != NULL )

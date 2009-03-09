@@ -162,7 +162,7 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::PrintSelf(ostream& os, vtkInd
 //  os << indent << "ColorMode:             " << this->ColorMode << "\n";
 }
 //----------------------------------------------------------------------------
-void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetSliceTensorRotationMatrix(vtkMatrix4x4 *matrix)
+void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetSliceGlyphRotationMatrix(vtkMatrix4x4 *matrix)
 {
   if (this->DiffusionTensorGlyphFilter)
     {
@@ -199,7 +199,9 @@ void vtkMRMLDiffusionTensorVolumeSliceDisplayNode::SetPolyData(vtkPolyData *glyp
 vtkPolyData* vtkMRMLDiffusionTensorVolumeSliceDisplayNode::GetPolyData()
 {
  // if (this->DiffusionTensorGlyphFilter && this->Visibility != 0)
-  if ( this->DiffusionTensorGlyphFilter && this->DiffusionTensorGlyphFilter->GetInput() != NULL )
+  if ( this->DiffusionTensorGlyphFilter 
+        && this->DiffusionTensorGlyphFilter->GetInput() != NULL 
+        && this->GetDiffusionTensorDisplayPropertiesNode() != NULL )
     {
     this->UpdatePolyDataPipeline();
     this->DiffusionTensorGlyphFilter->Update();
@@ -215,7 +217,7 @@ vtkPolyData* vtkMRMLDiffusionTensorVolumeSliceDisplayNode::GetPolyData()
 vtkPolyData* vtkMRMLDiffusionTensorVolumeSliceDisplayNode::GetPolyDataTransformedToSlice()
 {
 
-  if (this->DiffusionTensorGlyphFilter && this->Visibility != 0)
+  if ( this->DiffusionTensorGlyphFilter && this->Visibility != 0 && this->GetDiffusionTensorDisplayPropertiesNode() )
     {
     this->UpdatePolyDataPipeline();
     this->DiffusionTensorGlyphFilter->Update();

@@ -9,6 +9,9 @@ vtkCxxRevisionMacro ( vtkSlicerFoundationIcons, "$Revision: 1.0 $");
 //---------------------------------------------------------------------------
 vtkSlicerFoundationIcons::vtkSlicerFoundationIcons ( )
 {
+  this->SlicerFiducialsDeleteAllInListIcon = vtkKWIcon::New();
+  this->SlicerLockOrUnlockIcon = vtkKWIcon::New();
+  this->SlicerVisibleOrInvisibleIcon = vtkKWIcon::New();
   this->SlicerSelectAllIcon = vtkKWIcon::New();
   this->SlicerDeselectAllIcon = vtkKWIcon::New();  
   this->SlicerTableIcon = vtkKWIcon::New();
@@ -76,6 +79,8 @@ vtkSlicerFoundationIcons::vtkSlicerFoundationIcons ( )
   this->SlicerFiducialsSelectNoneIcon = vtkKWIcon::New();
   this->SlicerFiducialsSelectAllInListIcon = vtkKWIcon::New();
   this->SlicerFiducialsSelectNoneInListIcon = vtkKWIcon::New();
+  this->SlicerFiducialsUpIcon = vtkKWIcon::New();
+  this->SlicerFiducialsDownIcon = vtkKWIcon::New();
   this->SlicerCompositeIcon = vtkKWIcon::New();
   this->SlicerLockIcon = vtkKWIcon::New();
   this->SlicerUnlockIcon = vtkKWIcon::New();
@@ -90,6 +95,21 @@ vtkSlicerFoundationIcons::vtkSlicerFoundationIcons ( )
 vtkSlicerFoundationIcons::~vtkSlicerFoundationIcons ( )
 {
 
+  if (this->SlicerFiducialsDeleteAllInListIcon)
+    {
+    this->SlicerFiducialsDeleteAllInListIcon->Delete();
+    this->SlicerFiducialsDeleteAllInListIcon = NULL;    
+    }
+  if (this->SlicerLockOrUnlockIcon)
+    {
+    this->SlicerLockOrUnlockIcon->Delete();
+    this->SlicerLockOrUnlockIcon = NULL;
+    }
+  if (this->SlicerVisibleOrInvisibleIcon)
+    {
+    this->SlicerVisibleOrInvisibleIcon->Delete();
+    this->SlicerVisibleOrInvisibleIcon = NULL;
+    }
   if (this->SlicerSelectAllIcon)
     {
     this->SlicerSelectAllIcon->Delete();
@@ -425,6 +445,16 @@ vtkSlicerFoundationIcons::~vtkSlicerFoundationIcons ( )
     this->SlicerFiducialsSelectNoneInListIcon->Delete();
     this->SlicerFiducialsSelectNoneInListIcon = NULL;
     }
+  if ( this->SlicerFiducialsDownIcon)
+    {
+    this->SlicerFiducialsDownIcon->Delete();
+    this->SlicerFiducialsDownIcon = NULL;    
+    }
+  if ( this->SlicerFiducialsUpIcon)
+    {
+    this->SlicerFiducialsUpIcon->Delete();
+    this->SlicerFiducialsUpIcon = NULL;    
+    }
   if ( this->SlicerCompositeIcon )
     {
     this->SlicerCompositeIcon->Delete();
@@ -457,6 +487,16 @@ vtkSlicerFoundationIcons::~vtkSlicerFoundationIcons ( )
 void vtkSlicerFoundationIcons::AssignImageDataToIcons ( )
 {
 
+  this->SlicerLockOrUnlockIcon->SetImage ( image_SlicerLockOrUnlock,
+                                           image_SlicerLockOrUnlock_width,
+                                           image_SlicerLockOrUnlock_height,
+                                           image_SlicerLockOrUnlock_pixel_size,
+                                           image_SlicerLockOrUnlock_length, 0 );
+  this->SlicerVisibleOrInvisibleIcon->SetImage (image_SlicerVisibleOrInvisible,
+                                                image_SlicerVisibleOrInvisible_width,
+                                                image_SlicerVisibleOrInvisible_height,
+                                                image_SlicerVisibleOrInvisible_pixel_size,
+                                                image_SlicerVisibleOrInvisible_length, 0);
   this->SlicerSelectAllIcon->SetImage (image_SlicerSelectAll,
                                        image_SlicerSelectAll_width,
                                        image_SlicerSelectAll_height,
@@ -763,36 +803,51 @@ void vtkSlicerFoundationIcons::AssignImageDataToIcons ( )
                                              image_SlicerFiducialsAddNew_height,
                                              image_SlicerFiducialsAddNew_pixel_size,
                                              image_SlicerFiducialsAddNew_length, 0);
-  this->SlicerFiducialsDeleteAllIcon->SetImage(image_SlicerFiducialsDeleteAll,
-                                               image_SlicerFiducialsDeleteAll_width,
-                                               image_SlicerFiducialsDeleteAll_height,
-                                               image_SlicerFiducialsDeleteAll_pixel_size,
-                                               image_SlicerFiducialsDeleteAll_length, 0);
+  this->SlicerFiducialsDeleteAllIcon->SetImage(image_SlicerFiducialListsDeleteAll,
+                                               image_SlicerFiducialListsDeleteAll_width,
+                                               image_SlicerFiducialListsDeleteAll_height,
+                                               image_SlicerFiducialListsDeleteAll_pixel_size,
+                                               image_SlicerFiducialListsDeleteAll_length, 0);
   this->SlicerFiducialsDeleteLastClickedIcon->SetImage (image_SlicerFiducialsDeleteLastClicked,
                                                         image_SlicerFiducialsDeleteLastClicked_width,
                                                         image_SlicerFiducialsDeleteLastClicked_height,
                                                         image_SlicerFiducialsDeleteLastClicked_pixel_size,
                                                         image_SlicerFiducialsDeleteLastClicked_length, 0);
-  this->SlicerFiducialsSelectAllIcon->SetImage ( image_SlicerFiducialsSelectAll,
-                                                 image_SlicerFiducialsSelectAll_width,
-                                                 image_SlicerFiducialsSelectAll_height,
-                                                 image_SlicerFiducialsSelectAll_pixel_size,
-                                                 image_SlicerFiducialsSelectAll_length, 0);
-  this->SlicerFiducialsSelectNoneIcon->SetImage (image_SlicerFiducialsSelectNone,
-                                                 image_SlicerFiducialsSelectNone_width,
-                                                 image_SlicerFiducialsSelectNone_height,
-                                                 image_SlicerFiducialsSelectNone_pixel_size,
-                                                 image_SlicerFiducialsSelectNone_length, 0);
+  this->SlicerFiducialsSelectAllIcon->SetImage ( image_SlicerFiducialListsSelectAll,
+                                                 image_SlicerFiducialListsSelectAll_width,
+                                                 image_SlicerFiducialListsSelectAll_height,
+                                                 image_SlicerFiducialListsSelectAll_pixel_size,
+                                                 image_SlicerFiducialListsSelectAll_length, 0);
+  this->SlicerFiducialsSelectNoneIcon->SetImage (image_SlicerFiducialListsSelectNone,
+                                                 image_SlicerFiducialListsSelectNone_width,
+                                                 image_SlicerFiducialListsSelectNone_height,
+                                                 image_SlicerFiducialListsSelectNone_pixel_size,
+                                                 image_SlicerFiducialListsSelectNone_length, 0);
   this->SlicerFiducialsSelectAllInListIcon->SetImage ( image_SlicerFiducialsSelectAllInList,
                                                  image_SlicerFiducialsSelectAllInList_width,
                                                  image_SlicerFiducialsSelectAllInList_height,
                                                  image_SlicerFiducialsSelectAllInList_pixel_size,
                                                  image_SlicerFiducialsSelectAllInList_length, 0);
+  this->SlicerFiducialsDeleteAllInListIcon->SetImage ( image_SlicerFiducialsDeleteAll,
+                                                 image_SlicerFiducialsDeleteAll_width,
+                                                 image_SlicerFiducialsDeleteAll_height,
+                                                 image_SlicerFiducialsDeleteAll_pixel_size,
+                                                 image_SlicerFiducialsDeleteAll_length, 0);
   this->SlicerFiducialsSelectNoneInListIcon->SetImage (image_SlicerFiducialsSelectNoneInList,
                                                  image_SlicerFiducialsSelectNoneInList_width,
                                                  image_SlicerFiducialsSelectNoneInList_height,
                                                  image_SlicerFiducialsSelectNoneInList_pixel_size,
                                                  image_SlicerFiducialsSelectNoneInList_length, 0);
+  this->SlicerFiducialsDownIcon->SetImage ( image_SlicerFiducialsDown,
+                                   image_SlicerFiducialsDown_width,
+                                   image_SlicerFiducialsDown_height,
+                                   image_SlicerFiducialsDown_pixel_size,
+                                   image_SlicerFiducialsDown_length, 0);
+  this->SlicerFiducialsUpIcon->SetImage ( image_SlicerFiducialsUp,
+                                   image_SlicerFiducialsUp_width,
+                                   image_SlicerFiducialsUp_height,
+                                   image_SlicerFiducialsUp_pixel_size,
+                                   image_SlicerFiducialsUp_length, 0);
   this->SlicerCompositeIcon->SetImage ( image_SlicerComposite,
                                         image_SlicerComposite_width,
                                         image_SlicerComposite_height,
@@ -896,9 +951,14 @@ void vtkSlicerFoundationIcons::PrintSelf ( ostream& os, vtkIndent indent )
     os << indent << "SlicerFiducialsSelectNoneIcon: " << this->GetSlicerFiducialsSelectNoneIcon() << "\n";
     os << indent << "SlicerFiducialsSelectAllInListIcon: " << this->GetSlicerFiducialsSelectAllIcon() << "\n";
     os << indent << "SlicerFiducialsSelectNoneInListIcon: " << this->GetSlicerFiducialsSelectNoneIcon() << "\n";
+    os << indent << "SlicerFiducialsDownIcon: " << this->GetSlicerFiducialsDownIcon() << "\n";
+    os << indent << "SlicerFiducialsUpIcon: " << this->GetSlicerFiducialsUpIcon() << "\n";
     os << indent << "SlicerCompositeIcon: " << this->GetSlicerCompositeIcon() << "\n";
     os << indent << "SlicerLockIcon: " << this->GetSlicerLockIcon() << "\n";
     os << indent << "SlicerUnlockIcon: " << this->GetSlicerUnlockIcon() << "\n";
     os << indent << "SlicerFoundOnDiskIcon: " << this->GetSlicerFoundOnDiskIcon() << "\n";
     os << indent << "SlicerNotFoundOnDiskIcon: " << this->GetSlicerNotFoundOnDiskIcon() << "\n";
+    os << indent << "SlicerLockOrUnlockIcon: " << this->GetSlicerLockOrUnlockIcon() << "\n";
+    os << indent << "SlicerVisibleOrInvisibleIcon: " << this->GetSlicerVisibleOrInvisibleIcon() << "\n";
+    os << indent << "SlicerFiducialsDeleteAllInListIcon: " << this->GetSlicerFiducialsDeleteAllInListIcon() << "\n";
 }

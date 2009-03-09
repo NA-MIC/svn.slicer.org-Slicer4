@@ -78,20 +78,27 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerFoundationIcons : public vtkSlicerIcon
     vtkGetObjectMacro ( SlicerVolumeIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerFiducialsAddNewIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerFiducialsDeleteAllIcon, vtkKWIcon );
+    vtkGetObjectMacro (SlicerFiducialsDeleteAllInListIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerFiducialsDeleteLastClickedIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerFiducialsSelectAllIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerFiducialsSelectNoneIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerFiducialsSelectAllInListIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerFiducialsSelectNoneInListIcon, vtkKWIcon );
+    vtkGetObjectMacro ( SlicerFiducialsUpIcon, vtkKWIcon );
+    vtkGetObjectMacro ( SlicerFiducialsDownIcon, vtkKWIcon );    
     vtkGetObjectMacro (SlicerLockIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerUnlockIcon, vtkKWIcon );
     vtkGetObjectMacro (SlicerCompositeIcon, vtkKWIcon );
+    vtkGetObjectMacro (SlicerLockOrUnlockIcon, vtkKWIcon );
+    vtkGetObjectMacro (SlicerVisibleOrInvisibleIcon, vtkKWIcon );
 
     void AssignImageDataToIcons ( );
     
  protected:
     vtkSlicerFoundationIcons ( );
     virtual ~vtkSlicerFoundationIcons ( );
+    vtkKWIcon *SlicerLockOrUnlockIcon;
+    vtkKWIcon *SlicerVisibleOrInvisibleIcon;
     vtkKWIcon *SlicerSelectAllIcon;
     vtkKWIcon *SlicerDeselectAllIcon;
     vtkKWIcon *SlicerTableIcon;
@@ -156,11 +163,14 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerFoundationIcons : public vtkSlicerIcon
     vtkKWIcon *SlicerMoreOptionsIcon;
     vtkKWIcon *SlicerFiducialsAddNewIcon;
     vtkKWIcon *SlicerFiducialsDeleteAllIcon;
+    vtkKWIcon *SlicerFiducialsDeleteAllInListIcon;
     vtkKWIcon *SlicerFiducialsDeleteLastClickedIcon;
     vtkKWIcon *SlicerFiducialsSelectAllIcon;
     vtkKWIcon *SlicerFiducialsSelectNoneIcon;
     vtkKWIcon *SlicerFiducialsSelectAllInListIcon;
     vtkKWIcon *SlicerFiducialsSelectNoneInListIcon;
+    vtkKWIcon *SlicerFiducialsUpIcon;
+    vtkKWIcon *SlicerFiducialsDownIcon;
     vtkKWIcon *SlicerCompositeIcon;
     vtkKWIcon *SlicerLockIcon;
     vtkKWIcon *SlicerUnlockIcon;

@@ -47,6 +47,11 @@ public:
   vtkTypeRevisionMacro ( vtkNeuroNavGUI, vtkSlicerModuleGUI );
   void PrintSelf (ostream& os, vtkIndent indent );
 
+  // Description: 
+  // Get the categorization of the module.
+  const char *GetCategory() const { return "IGT"; }
+
+
   // Description:    
   // Get methods on class members (no Set methods required)
   vtkGetObjectMacro ( Logic, vtkNeuroNavLogic );
@@ -140,6 +145,7 @@ private:
 
   void BuildGUIForTrackingFrame ();
   void BuildGUIForRegistrationFrame ();
+  void BuildGUIForHelpFrame ();
 
   void TrackerLoop();
 

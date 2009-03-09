@@ -641,7 +641,17 @@ int vtkMRMLScene::Import()
         node->UpdateScene(this);
         }
       }
-   
+
+    if (this->GetErrorCode() == 1)
+      {
+      //vtkErrorMacro("Import: error updating node " << node->GetID());
+      // TODO: figure out the best way to deal with an error (encountering
+      // it when fail to read a file), removing a node isn't quite right
+      // (nodes are still in the scene when save it later)
+      // this->RemoveNode(node);
+      // this->SetErrorCode(0);
+      }
+
     // send one NodeAddedEvent event per class
     std::map<std::string, vtkMRMLNode *>::iterator iter; 
     for(iter = nodesAddedByClass.begin(); iter != nodesAddedByClass.end(); iter++)
@@ -1685,7 +1695,7 @@ void vtkMRMLScene::CopyNodeInUndoStack(vtkMRMLNode *copyNode)
   vtkMRMLNode *snode = copyNode->CreateNodeInstance();
   if (snode != NULL) 
     {
-    snode->CopyWithSceneWithSingleModifiedEvent(copyNode);
+    snode->CopyWithSceneWithoutModifiedEvent(copyNode);
     }
   vtkCollection* undoScene = dynamic_cast < vtkCollection *>( this->UndoStack.back() );
   int nnodes = undoScene->GetNumberOfItems();
@@ -2206,11 +2216,22 @@ vtkURIHandler * vtkMRMLScene::FindURIHandlerByName(const char *name)
     }
   for (int i = 0; i < this->GetURIHandlerCollection()->GetNumberOfItems(); i++)
     {
-    u = vtkURIHandler::SafeDownCast(this->GetURIHandlerCollection()->GetItemAsObject(i));
-    if ( u && ( !strcmp (u->GetName(), name ) ) )
+    vtkObject *object = this->GetURIHandlerCollection()->GetItemAsObject(i);
+    if (object == NULL)
+      {
+      vtkErrorMacro("FindURIHandlerByName: got a null handler at index " << i);
+      return NULL;
+      }
+    u = vtkURIHandler::SafeDownCast(object);
+    if ( u == NULL )
+      {
+      vtkErrorMacro("FindURIHandlerByName: Got NULL URIHandler from URIHandlerCollection." );
+      return NULL;
+      }
+    if (  !strcmp (u->GetName(), name ) )
       {
       vtkDebugMacro("FindURIHandlerByName: found a handler with name " << name << " at index " << i << " in the handler collection");
-      return vtkURIHandler::SafeDownCast(this->GetURIHandlerCollection()->GetItemAsObject(i));
+      return u;
       }
     }
   vtkWarningMacro("FindURIHandlerByName: unable to find a URI handler in the collection of " << this->GetURIHandlerCollection()->GetNumberOfItems() << " handlers to match the name " << name);

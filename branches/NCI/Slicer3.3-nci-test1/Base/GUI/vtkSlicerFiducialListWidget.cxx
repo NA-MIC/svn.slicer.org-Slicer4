@@ -56,8 +56,16 @@ public:
   { return new vtkPointWidgetCallback; }
   virtual void Execute(vtkObject *caller, unsigned long event, void*)
   {
+    // save the scene for undo if it's the start of an interaction event
+    if (event == vtkCommand::StartInteractionEvent)
+      {
+      if (this->FiducialList && this->FiducialList->GetScene())
+        {
+        this->FiducialList->GetScene()->SaveStateForUndo(this->FiducialList);
+        }
+      }
     // only update the position if it's an interaction event
-    if (event == vtkCommand::InteractionEvent)
+    else if (event == vtkCommand::InteractionEvent)
       {
       vtkPointWidget *pointWidget = reinterpret_cast<vtkPointWidget*>(caller);
       if (pointWidget)
@@ -756,7 +764,11 @@ void vtkSlicerFiducialListWidget::ProcessMRMLEvents ( vtkObject *caller,
       }
     else
       {
-      vtkDebugMacro("ProcessMRMLEvents: fiducial modified, no point id given, calling update from mrml");
+      vtkDebugMacro("ProcessMRMLEvents: fiducial modified event on list " << callerList->GetName() << ", no point id given, calling update from mrml");
+      // this may be an undo that deleted a point from the list, since the
+      // point widgets are ad hoc right now, remove any widgets that don't
+      // appear in a list
+      this->RemoveExtraPointWidgets(callerList);
       this->UpdateFromMRML();
       }
     }
@@ -845,7 +857,6 @@ void vtkSlicerFiducialListWidget::AddList(vtkMRMLFiducialListNode *flist)
   // selected or not
   vtkFloatArray * glyphScalars = vtkFloatArray::New();
   this->GlyphScalarsMap[fid] = glyphScalars;
-  //glyphScalars->Delete();
 
   vtkDebugMacro("...added the new scalars...");
   
@@ -904,14 +915,13 @@ void vtkSlicerFiducialListWidget::AddList(vtkMRMLFiducialListNode *flist)
   
   // now set up the glyph
   vtkGlyph3D *glyph3D = vtkGlyph3D::New();
-  glyph3D->SetSource(this->TransformFilterMap[fid]->GetOutput());
   glyph3D->SetInput(this->GlyphPolyDataMap[fid]);
+  glyph3D->SetSource(this->TransformFilterMap[fid]->GetOutput());
   glyph3D->SetScaleFactor(1.0);
+  glyph3D->SetRange(0, 2);
   glyph3D->ClampingOn();
   glyph3D->ScalingOff();
-  glyph3D->SetRange(0, 1);
   this->Glyph3DMap[fid] = glyph3D;
-  //this->Glyph3DList->vtkCollection::AddItem(glyph3D);
   //glyph3D->Delete();
 
   vtkDebugMacro("...added the new glyph...");
@@ -919,11 +929,12 @@ void vtkSlicerFiducialListWidget::AddList(vtkMRMLFiducialListNode *flist)
   // now set up the mapper
   vtkPolyDataMapper *mapper = vtkPolyDataMapper::New();
   mapper->SetInput(this->Glyph3DMap[fid]->GetOutput());
-  //vtkLookupTable *lut = vtkLookupTable::SafeDownCast(mapper->GetLookupTable())%;
-  vtkLookupTable::SafeDownCast(mapper->GetLookupTable())->SetNumberOfTableValues(2);
-  // set the selected/unselected colours
+  vtkLookupTable::SafeDownCast(mapper->GetLookupTable())->SetNumberOfTableValues(3);
+  // set the selected/unselected colours, visib
   vtkLookupTable::SafeDownCast(mapper->GetLookupTable())->SetTableValue(0, 1, 0, 0, 1.0);
   vtkLookupTable::SafeDownCast(mapper->GetLookupTable())->SetTableValue(1, 0, 0, 1, 1.0);
+  // last value has an opacity of 0 to turn the glyph invisible
+  vtkLookupTable::SafeDownCast(mapper->GetLookupTable())->SetTableValue(2, 0, 0, 0, 0.0);
   
   this->GlyphMapperMap[fid] = mapper;
 //  lut->Delete();
@@ -1235,6 +1246,8 @@ void vtkSlicerFiducialListWidget::UpdateFiducialListFromMRML(vtkMRMLFiducialList
                                                                                                   selectedColor[2],
                                                                                                   1.0);
           }
+        // set up the invisible scalar using opacity of 0
+        vtkLookupTable::SafeDownCast(this->GlyphMapperMap[id]->GetLookupTable())->SetTableValue(2, 0, 0, 0, 0.0);
         }
       else
         {
@@ -1279,6 +1292,8 @@ void vtkSlicerFiducialListWidget::UpdateFiducialListFromMRML(vtkMRMLFiducialList
                                                                                           selectedColor[1],
                                                                                           selectedColor[2],
                                                                                           1.0);
+        // the last entry has an opacity of 0 for turning the glyph invisible
+        vtkLookupTable::SafeDownCast(actor->GetMapper()->GetLookupTable())->SetTableValue(2, 0.0, 0.0, 0.0, 0.0);
        
         } // end of glyph3d != NULL
 
@@ -1303,20 +1318,28 @@ void vtkSlicerFiducialListWidget::UpdateFiducialListFromMRML(vtkMRMLFiducialList
         this->GlyphPointsMap[id]->InsertNextPoint(worldxyz);
         //vtkWarningMacro("3D: added the next point to the glyph points map, " << f << " = " << flist->GetNthFiducialXYZ(f) << ", glyph points map now has " << this->GlyphPointsMap[id]->GetNumberOfPoints() << " points." << endl;
 
-        // update the scalar map for the point selected state
-        if (flist->GetNthFiducialSelected(f))
+         if (!flist->GetNthFiducialVisibility(f))
           {
-          //vtkWarningMacro("\tfid " << f << " is Selected, setting scalar tuple " << f << " to 1\n";
-          this->GlyphScalarsMap[id]->SetTuple1(f, 1.0);
+          // update the scalar map to make this point invisible
+          this->GlyphScalarsMap[id]->SetTuple1(f, 2.0);
           }
         else
           {
-          //vtkWarningMacro("\tfid " << f << " is unselected, setting tuple " << f << " to 0\n";
-          this->GlyphScalarsMap[id]->SetTuple1(f, 0.0);
+          // update the scalar map for the point selected state
+          if (flist->GetNthFiducialSelected(f))
+            {
+            //vtkWarningMacro("\tfid " << f << " is Selected, setting scalar tuple " << f << " to 1\n";
+            this->GlyphScalarsMap[id]->SetTuple1(f, 1.0);
+            }
+          else
+            {
+            //vtkWarningMacro("\tfid " << f << " is unselected, setting tuple " << f << " to 0\n";
+            this->GlyphScalarsMap[id]->SetTuple1(f, 0.0);
+            }
           }
-        //vtkWarningMacro("\tafter setting the tuple it's = " << this->GlyphScalarsMap[id]->GetTuple1(f) << endl;
-        
-        this->UpdateTextActor(flist, f);
+         //vtkWarningMacro("\tafter setting the tuple it's = " << this->GlyphScalarsMap[id]->GetTuple1(f) << endl;
+
+         this->UpdateTextActor(flist, f);
     
         }
       
@@ -1631,14 +1654,23 @@ void vtkSlicerFiducialListWidget::UpdatePointWidget(vtkMRMLFiducialListNode *fli
         }
       // don't need to place it when updating it, just set position
       pointIter->second->SetPosition(worldxyz);
-      pointIter->second->SetEnabled(!(flist->GetLocked()));
+      // only enable it if the point is visible and the whole list isn't
+      // locked
+      if (flist->GetVisibility() == 0 ||
+          flist->GetNthFiducialVisibility(f) == 0 ||
+          flist->GetLocked())
+        {
+        pointIter->second->EnabledOff();
+        }
+      else
+        {
+        pointIter->second->EnabledOn();
+        }
       transformToWorld->Delete();
       transformToWorld = NULL;
       }
     else { vtkDebugMacro("UpdatePointWidget: null xyz"); }
-    // 3d symbols can't do per point visibility
-    if (flist->GetVisibility() == 0 ||
-        (!this->Use3DSymbolsMap[flist->GetID()] && flist->GetNthFiducialVisibility(f) == 0))
+    if (flist->GetVisibility() == 0 || flist->GetNthFiducialVisibility(f) == 0)
       {
       // Point is not visible, disabling point widget
       vtkDebugMacro("UpdatePointWidget: Point is not visible, disabling point widget");
@@ -1855,8 +1887,7 @@ void vtkSlicerFiducialListWidget::SetFiducialDisplayProperty(vtkMRMLFiducialList
         }
       else
         {
-        // if it's a 3d list, the actor actually controls the full list,
-        // there's no way right now to do a per point visibility.
+        // if it's a 3d list, the actor actually controls the full list      
         }
       }
     }
@@ -1874,11 +1905,7 @@ void vtkSlicerFiducialListWidget::SetFiducialDisplayProperty(vtkMRMLFiducialList
       }
     else
       {
-      // right now only non 3D symbols can have per point visibility
-      if (!this->Use3DSymbolsMap[flist->GetID()])
-        {
-        textActor->SetVisibility(flist->GetNthFiducialVisibility(n));
-        }
+      textActor->SetVisibility(flist->GetNthFiducialVisibility(n));
       }
     }
 
@@ -2144,5 +2171,52 @@ void vtkSlicerFiducialListWidget::AddObserversToFiducialList(vtkMRMLFiducialList
   if (flist->HasObserver( vtkMRMLScene::NodeAddedEvent, this->MRMLCallbackCommand ) == 0)
     {
     flist->AddObserver( vtkMRMLScene::NodeAddedEvent, this->MRMLCallbackCommand );
+    }
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerFiducialListWidget::RemoveExtraPointWidgets(vtkMRMLFiducialListNode *flistToCheck)
+{
+  if (flistToCheck == NULL ||
+      this->DisplayedPointWidgets.size() == 0 ||
+      this->MRMLScene == NULL)
+    {
+    return;
+    }
+  // for now, we can't reliably tell which fid list each display point widget
+  // is associated with, so check all of them
+  std::map< std::string, vtkPointWidget *>::iterator pointIter;
+  std::vector<std::string> IDsToRemove;
+  int nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLFiducialListNode");
+  for (pointIter = this->DisplayedPointWidgets.begin();
+       pointIter != this->DisplayedPointWidgets.end();
+       pointIter++) 
+    {
+    bool inAList = false;
+    // for each list
+    for (int n=0; n<nnodes; n++)
+      {
+      vtkMRMLFiducialListNode *flist = vtkMRMLFiducialListNode::SafeDownCast(this->MRMLScene->GetNthNodeByClass(n, "vtkMRMLFiducialListNode"));
+      if (flist->GetFiducialIndex(pointIter->first.c_str()) != -1)
+        {
+        inAList = true;
+        break;
+        }
+      }
+    if (!inAList)
+      {
+      vtkDebugMacro("RemoveExtraPointWidgets: displayed point widget with id " << pointIter->first << " is not in any list, flagging it for removal");
+      IDsToRemove.push_back(pointIter->first);
+      }
+    else
+      {
+      vtkDebugMacro("RemovePointWidget: found displayed point widget with id " << pointIter->first);
+      }
+    } // end loop over all the displayed point widgets
+  // now remove any that were flagged
+  for (unsigned int i = 0; i < IDsToRemove.size(); i++)
+    {
+    vtkDebugMacro("RemoveExtraPointWidgets: removing " << IDsToRemove[i]);
+    RemovePointWidget(IDsToRemove[i].c_str());
     }
 }

@@ -156,7 +156,7 @@ itcl::body Labeler::makeMaskImage {polyData} {
   # bounding box is at 1, 1 (to avoid clipping)
   #
   set translate [vtkTransform New]
-  $translate Translate [expr 2 + -1. * $xlo] [expr 1 + -1. * $ylo] 0
+  $translate Translate [expr -1. * $xlo] [expr -1. * $ylo] 0
   set drawPoints [vtkPoints New]
   $drawPoints Reset
   $translate TransformPoints [$polyData GetPoints] $drawPoints
@@ -213,13 +213,6 @@ itcl::body Labeler::applyPolyMask {polyData} {
     # if there's no label, we can't draw
     return
   }
-
-  # first, close the polyline back to the first point
-  set lines [$polyData GetLines]
-  set idArray [$lines GetData]
-  set p [$idArray GetTuple1 1]
-  $idArray InsertNextTuple1 $p
-  $idArray SetTuple1 0 [expr [$idArray GetNumberOfTuples] - 1]
 
   set maskResult [$this makeMaskImage $polyData]
   foreach {maskIJKToRAS mask} $maskResult {}
@@ -323,6 +316,11 @@ itcl::body Labeler::applyImageMask { maskIJKToRAS mask bounds } {
   }
 
   #
+  # save the full volume as undo layer
+  #
+  EditorStoreUndoVolume $_layers(label,node)
+
+  #
   # set up the painter class and let 'r rip!
   #
   $o(painter) SetBackgroundImage [$this getInputBackground]
@@ -359,7 +357,7 @@ itcl::body Labeler::applyImageMask { maskIJKToRAS mask bounds } {
 # - be careful can only call this after when the painter class
 #   is valid (e.g. after an apply but before changing any of the volumes)
 #   it should be crash-proof in any case, but may generated warnings
-# - if extract image doesn't exists, failes silently
+# - if extract image doesn't exist, failes silently
 itcl::body Labeler::undoLastApply { } {
   if { [info exists o(extractImage)] } {
     $o(painter) SetReplaceImage $o(extractImage)
