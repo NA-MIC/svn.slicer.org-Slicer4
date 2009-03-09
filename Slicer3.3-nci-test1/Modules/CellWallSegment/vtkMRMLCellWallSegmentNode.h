@@ -80,6 +80,11 @@ class VTK_CellWallSegment_EXPORT vtkMRMLCellWallSegmentNode : public vtkMRMLNode
   vtkSetStringMacro(OutputVolumeRef);
 
   // Description:
+    // Get/Set output volume MRML Id
+    vtkGetStringMacro(SegmentationVolumeRef);
+    vtkSetStringMacro(SegmentationVolumeRef);
+    
+  // Description:
   // Get/Set output volume MRML Id
   vtkGetStringMacro(FiducialListRef);
   vtkSetStringMacro(FiducialListRef);
@@ -104,6 +109,7 @@ protected:
   
   char* InputVolumeRef;
   char* OutputVolumeRef;
+  char* SegmentationVolumeRef;
 
 };
 

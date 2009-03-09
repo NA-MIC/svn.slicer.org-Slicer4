@@ -65,6 +65,7 @@ vtkCellWallSegmentGUI::vtkCellWallSegmentGUI()
 
   this->VolumeSelector = vtkSlicerNodeSelectorWidget::New();
   this->OutVolumeSelector = vtkSlicerNodeSelectorWidget::New();
+  this->SegmentedVolumeSelector = vtkSlicerNodeSelectorWidget::New();
   this->TwoDButton = vtkKWPushButton::New();
   this->ThreeDButton = vtkKWPushButton::New();
   this->OpenFileButton = vtkKWPushButton::New();
@@ -87,6 +88,11 @@ vtkCellWallSegmentGUI::~vtkCellWallSegmentGUI()
         this->OutVolumeSelector->Delete();
         this->OutVolumeSelector = NULL;
     }
+    if ( this->SegmentedVolumeSelector ) {
+         this->SegmentedVolumeSelector->SetParent(NULL);
+         this->SegmentedVolumeSelector->Delete();
+         this->SegmentedVolumeSelector = NULL;
+     }
    if ( this->TwoDButton ) {
         this->TwoDButton->SetParent(NULL);
         this->TwoDButton->Delete();
@@ -113,6 +119,7 @@ void vtkCellWallSegmentGUI::AddGUIObservers ( )
 {
   this->VolumeSelector->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
   this->OutVolumeSelector->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
+  this->SegmentedVolumeSelector->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
   this->FiducialListSelectorWidget->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
   this->TwoDButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
   this->ThreeDButton->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -125,6 +132,7 @@ void vtkCellWallSegmentGUI::RemoveGUIObservers ( )
 {
   this->VolumeSelector->RemoveObservers (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
   this->OutVolumeSelector->RemoveObservers (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
+  this->SegmentedVolumeSelector->RemoveObservers (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );  
   this->TwoDButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
   this->ThreeDButton->RemoveObservers ( vtkKWPushButton::InvokedEvent,  (vtkCommand *)this->GUICallbackCommand );
 }
@@ -227,6 +235,13 @@ void vtkCellWallSegmentGUI::UpdateMRML ()
     {
       n->SetOutputVolumeRef(this->OutVolumeSelector->GetSelected()->GetID());
     }
+
+  if (this->SegmentedVolumeSelector->GetSelected() != NULL)
+    {
+      n->SetSegmentationVolumeRef(this->SegmentedVolumeSelector->GetSelected()->GetID());
+    }
+  
+  
 }
 
 //---------------------------------------------------------------------------
@@ -296,7 +311,7 @@ void vtkCellWallSegmentGUI::BuildGUI ( )
     //---------------------------------------------------
   
   
-  this->OutVolumeSelector->SetNodeClass("vtkMRMLScalarVolumeNode", NULL, NULL, "CellWallSegmentVolumeOut");
+  this->OutVolumeSelector->SetNodeClass("vtkMRMLScalarVolumeNode", NULL, NULL, "CellWallSegmentInputVolume");
   this->OutVolumeSelector->SetNewNodeEnabled(1);
   this->OutVolumeSelector->SetParent( moduleFrame->GetFrame() );
   this->OutVolumeSelector->Create();
@@ -308,6 +323,19 @@ void vtkCellWallSegmentGUI::BuildGUI ( )
   this->OutVolumeSelector->SetBalloonHelpString("select an output volume from the current mrml scene.");
   app->Script("pack %s -side top -anchor e -padx 20 -pady 4", 
                 this->OutVolumeSelector->GetWidgetName());
+  
+  this->SegmentedVolumeSelector->SetNodeClass("vtkMRMLScalarVolumeNode", NULL, NULL, "CellWallSegmentOutputVolume");
+   this->SegmentedVolumeSelector->SetNewNodeEnabled(1);
+   this->SegmentedVolumeSelector->SetParent( moduleFrame->GetFrame() );
+   this->SegmentedVolumeSelector->Create();
+   this->SegmentedVolumeSelector->SetMRMLScene(this->Logic->GetMRMLScene());
+   this->SegmentedVolumeSelector->UpdateMenu();
+
+   this->SegmentedVolumeSelector->SetBorderWidth(2);
+   this->SegmentedVolumeSelector->SetLabelText( "Segmented Volume: ");
+   this->SegmentedVolumeSelector->SetBalloonHelpString("select an segmentation volume from the current mrml scene.");
+   app->Script("pack %s -side top -anchor e -padx 20 -pady 4", 
+                 this->SegmentedVolumeSelector->GetWidgetName());
 
   this->OpenFileButton->SetParent( moduleFrame->GetFrame() );
   this->OpenFileButton->Create();
@@ -382,7 +410,9 @@ void vtkCellWallSegmentGUI::FileSelectionCallback ( )
         
        
         this->Logic->GetCellWallVisSeg()->readImage(filename);
+        this->Logic->GetCellWallVisSeg()->afterLoadingInit();
         this->Logic->InitializeMRMLVolume(filename);
+ 
         
 //        this->GetApplication()->SetRegistryValue(
 //                1, "RunTime", "LastPath", vtksys::SystemTools::GetFilenamePath( filename ).c_str());

@@ -119,21 +119,16 @@ protected:
   vtkKWScaleWithEntry* NumberOfIterationsScale;
   vtkSlicerNodeSelectorWidget* VolumeSelector;
   vtkSlicerNodeSelectorWidget* OutVolumeSelector;
+  vtkSlicerNodeSelectorWidget* SegmentedVolumeSelector;
   vtkSlicerNodeSelectorWidget* GADNodeSelector;
   vtkKWPushButton* TwoDButton;
   vtkKWPushButton* ThreeDButton;
-  
-
   vtkKWPushButton *OpenFileButton;
 
-  
   vtkCellWallSegmentLogic *Logic;
   vtkMRMLCellWallSegmentNode* CellWallSegmentNode;
   vtkSlicerNodeSelectorWidget* FiducialListSelectorWidget;
-
-  
-  // instance of the algorithm
-   vtkKWFileBrowserDialog* FileBrowserDialog;
+  vtkKWFileBrowserDialog* FileBrowserDialog;
 
 };
 
