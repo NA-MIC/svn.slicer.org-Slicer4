@@ -42,7 +42,8 @@ template<class T> int DoIt( int argc, char * argv[], T )
   typedef    short   InputPixelType;
   typedef    double   VesselnessPixelType;
 //  typedef    T       OutputPixelType;
-  typedef    unsigned char       OutputPixelType;
+//  typedef    unsigned char       OutputPixelType;
+  typedef    double       OutputPixelType;
 
   //Image Types
   typedef itk::Image< InputPixelType,  3 >   InputImageType;
@@ -80,13 +81,13 @@ template<class T> int DoIt( int argc, char * argv[], T )
   filter->SetNumberOfSigmaSteps( NumberOfScales );
 
   //Rescale Vesselness Image to Output Image
-  typedef itk::RescaleIntensityImageFilter<VesselnessImageType, 
-                                           OutputImageType> RescaleFilterType;
-  RescaleFilterType::Pointer rescale = RescaleFilterType::New();
-  rescale->SetInput( filter->GetOutput() );
-  rescale->SetOutputMinimum( 0 );
-  rescale->SetOutputMaximum( 255 );
-  rescale->Update();
+//  typedef itk::RescaleIntensityImageFilter<VesselnessImageType, 
+//                                           OutputImageType> RescaleFilterType;
+//  RescaleFilterType::Pointer rescale = RescaleFilterType::New();
+//  rescale->SetInput( filter->GetOutput() );
+//  rescale->SetOutputMinimum( 0 );
+//  rescale->SetOutputMaximum( 255 );
+//  rescale->Update();
 
   //Write Output Image
   typedef itk::ImageFileWriter< OutputImageType > WriterType;
@@ -94,7 +95,7 @@ template<class T> int DoIt( int argc, char * argv[], T )
   itk::PluginFilterWatcher watchWriter(writer, "Write Volume",
                                    CLPProcessInformation);
   writer->SetFileName( outputVolume.c_str() );
-  writer->SetInput( rescale->GetOutput() );
+  writer->SetInput( filter->GetOutput() );
   writer->Update();
 
   return EXIT_SUCCESS;

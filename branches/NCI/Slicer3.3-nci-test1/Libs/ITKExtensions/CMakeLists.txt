@@ -61,7 +61,9 @@ set(ITKEXTENSIONS_SRCS
   itkAnisotropicDiffusionVesselEnhancementImageFilter.txx
   itkHessianSmoothed3DToVesselnessMeasureImageFilter.txx
   itkMultiScaleHessianSmoothed3DToVesselnessMeasureImageFilter.txx
-  itkVesselEnhancingDiffusion3DImageFilter.txx
+  itkVesselEnhancingDiffusion3DImageFilter.txx 
+  itkHessianSmoothed3DToLineFilter.txx
+  itkMultiScaleLine3DFilter.txx
   itkExtensionStub.cxx
   )
 
