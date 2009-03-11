@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>Filtering.Denoising</category>
+  <title>Line Filter</title>
+  <description>
+   The Line Filter described in Yoshinobu Sato, Shin Nakajima, Nobuyuki Shiraga, Hideki Atsumi,
+  Shigeyuki Yoshida, Thomas Koller, Guido Gerig and Ron Kikinis (1998). 
+  Three-dimensional multi-scale line filter for segmentation and
+  visualization of curvilinear structures in medical images
+  Medical Image Analysis, 2(2), 143-168. 
+</description>
+  <version>0.1.0.$Revision: 2104 $(alpha)</version>
+  <documentation-url></documentation-url>
+  <license></license>
+  <contributor></contributor>
+  <acknowledgements></acknowledgements>
+
+ <parameters>
+    <label>Line Filter</label>
+    <description>Line Filter</description>
+
+    <double>
+      <name>Alpha</name>
+      <longflag>--Alpha</longflag>
+      <description>Alpha</description>
+      <label>Alpha</label>
+      <default>0.25</default>
+      <constraints>
+        <minimum>0.0001</minimum>
+        <maximum>1.0</maximum>
+      </constraints>
+    </double>
+
+    <double>
+      <name>Gamma12</name>
+      <longflag>--Gamma12</longflag>
+      <description>Gamma12</description>
+      <label>Gamma12</label>
+      <default>1.0</default>
+      <constraints>
+        <minimum>0</minimum>
+      </constraints>
+    </double>
+
+    <double>
+      <name>Gamma23</name>
+      <longflag>--Gamma23</longflag>
+      <description>Gamma23</description>
+      <label>Gamma23</label>
+      <default>1.0</default>
+      <constraints>
+        <minimum>0</minimum>
+      </constraints>
+    </double>
+
+    <double>
+      <name>StartScale</name>
+      <longflag>--StartScale</longflag>
+      <description>Start Scale</description>
+      <label>Start Scale</label>
+      <default>0.200</default>
+      <constraints>
+        <minimum>.001</minimum>
+      </constraints>
+    </double>
+
+   <double>
+      <name>StopScale</name>
+      <longflag>--StopScale</longflag>
+      <description>Stop Scale</description>
+      <label>Stop Scale</label>
+      <default>2.000</default>
+      <constraints>
+        <minimum>.001</minimum>
+      </constraints>
+    </double>
+
+    <integer>
+      <name>NumberOfScales</name>
+      <longflag>--NumberOfScales</longflag>
+      <description>Number Of Scales</description>
+      <label>Number Of Scales</label>
+      <default>10</default>
+      <constraints>
+        <minimum>1</minimum>
+        <maximum>100</maximum>
+        <step>1</step>
+      </constraints>
+    </integer>
+
+  </parameters>
+  
+  <parameters>
+    <label>IO</label>
+    <description>Input/output parameters</description>
+    <image>
+      <name>inputVolume</name>
+      <label>Input Volume</label>
+      <channel>input</channel>
+      <index>0</index>
+      <description>Input volume to be filtered</description>
+    </image>
+    <image>
+      <name>outputVolume</name>
+      <label>Output Volume</label>
+      <channel>output</channel>
+      <index>1</index>
+      <description>Output filtered</description>
+    </image>
+  </parameters>
+
+</executable>
