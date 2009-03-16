@@ -62,7 +62,7 @@ vtkCellWallSegmentGUI* vtkCellWallSegmentGUI::New()
 //----------------------------------------------------------------------------
 vtkCellWallSegmentGUI::vtkCellWallSegmentGUI()
 {
-
+  this->CellWallNodeSelector  = vtkSlicerNodeSelectorWidget::New();
   this->VolumeSelector = vtkSlicerNodeSelectorWidget::New();
   this->OutVolumeSelector = vtkSlicerNodeSelectorWidget::New();
   this->SegmentedVolumeSelector = vtkSlicerNodeSelectorWidget::New();
@@ -305,6 +305,23 @@ void vtkCellWallSegmentGUI::BuildGUI ( )
   moduleFrame->ExpandFrame ( );
   app->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                 moduleFrame->GetWidgetName(), this->UIPanel->GetPageWidget("CellWallSegment")->GetWidgetName());
+  
+  
+    this->CellWallNodeSelector->SetNodeClass("vtkMRMLCellWallSegmentNode", NULL, NULL, "CellWallSegmentationParameters"); 
+    this->CellWallNodeSelector->SetNewNodeEnabled(1);
+    this->CellWallNodeSelector->NoneEnabledOn();
+    this->CellWallNodeSelector->SetShowHidden(1);
+    this->CellWallNodeSelector->SetParent( moduleFrame->GetFrame() );
+    this->CellWallNodeSelector->Create();
+    this->CellWallNodeSelector->SetMRMLScene(this->Logic->GetMRMLScene());
+    this->CellWallNodeSelector->UpdateMenu();
+
+    this->CellWallNodeSelector->SetBorderWidth(2);
+    this->CellWallNodeSelector->SetLabelText( "Cell Wall Parameters");
+    this->CellWallNodeSelector->SetBalloonHelpString("select a CellWallSegmentation node from the current mrml scene.");
+    app->Script("pack %s -side top -anchor e -padx 20 -pady 4", 
+                  this->CellWallNodeSelector->GetWidgetName());
+  
   
   this->VolumeSelector->SetNodeClass("vtkMRMLScalarVolumeNode", NULL, NULL, NULL);
   this->VolumeSelector->SetParent( moduleFrame->GetFrame() );

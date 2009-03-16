@@ -120,7 +120,7 @@ protected:
   vtkSlicerNodeSelectorWidget* VolumeSelector;
   vtkSlicerNodeSelectorWidget* OutVolumeSelector;
   vtkSlicerNodeSelectorWidget* SegmentedVolumeSelector;
-  vtkSlicerNodeSelectorWidget* GADNodeSelector;
+  vtkSlicerNodeSelectorWidget* CellWallNodeSelector;
   vtkKWPushButton* TwoDButton;
   vtkKWPushButton* ThreeDButton;
   vtkKWPushButton *OpenFileButton;
