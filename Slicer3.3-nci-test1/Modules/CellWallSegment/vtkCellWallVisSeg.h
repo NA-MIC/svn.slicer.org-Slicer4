@@ -6,6 +6,10 @@
 #include <string.h>
 #include <math.h>
 
+
+#include "vtkImageData.h"
+
+
 #define MAX_COLS 512
 #define MAX_DEPTH 201
 #define MAX_STRING_SIZE 100
@@ -94,6 +98,12 @@ public:
         void setCellEdge(double xyzv[4]);
         void addCellEdge(double xyzv[4]);
         void addCellEdge3D(int x, int y);
+        void ResetSegmentationResult(vtkImageData* imagePtr, int CellID);
+        
+        // pass a vtkImage and a label number, the voxels in the vtk image will be set to match the label
+        // for any voxels which had been set in the segmentation
+        void RenderSegmentationResult(vtkImageData* imagePtr, int CellID);
+        
         bool resamp();
         
         RIMAGEDEF& getRimage(){return rimage;};

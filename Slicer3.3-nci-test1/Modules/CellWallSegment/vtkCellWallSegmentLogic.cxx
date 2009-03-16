@@ -130,7 +130,7 @@ void vtkCellWallSegmentLogic::InitializeMRMLVolume(char* filename)
   image->Delete();
   outVolume->SetModifiedSinceRead(1);
 
-  //outVolume->SetImageData(this->GradientAnisotropicDiffusionImageFilter->GetOutput());
+
 
   // delete the filter
   this->Reader->Delete();
@@ -148,25 +148,42 @@ void vtkCellWallSegmentLogic::InitializeMRMLSegmentationVolume()
     return;
     }
   
-  // read the segmentation volume and assign it to an output node.  This way, the volume
-    // will appear in the Slicer viewers after it is read in, and it can be 
-    // used 
-  
-  RIMAGEDEF& rimage = this->VisSegInstance->getRimage();
+   // read the segmentation volume to get the    
+   RIMAGEDEF& rimage = this->VisSegInstance->getRimage();
    unsigned char *pixbuf = this->VisSegInstance->getPixbuf();
    
-   // make new VTK image and point it to the pixbuf voxels so it can be displayed
-   vtkImageData* image = vtkImageData::New();
-      bcopy(pixbuf,image->GetScalarPointer(),(rimage.nx*rimage.ny*rimage.nz));
-      image->SetScalarTypeToUnsignedChar();
-      //image->SetExtent(0, rimage.nx-1, 0, rimage.ny-1, 0, rimage.nz-1);
-      image->SetSpacing(1.0, 1.0, rimage.aspratio);  
-      //*** don't know the depth
-      image->SetDimensions(rimage.nx,rimage.ny,1);
-      image->SetOrigin(0,0,0);
-      image->Modified();
-      image->Update();
-    
+   
+  if (this->CellWallSegmentNode->GetSegmentationVolumeRef() == NULL)
+    {
+//      // make a new VTK image so we can modify it with the segmentation
+//      vtkImageData* image = vtkImageData::New();
+//      this->CellWallSegmentNode->SetSegmentationVolumeRef(vtkMRMLScalarVolumeNode::New());
+//      image->SetScalarTypeToUnsignedChar();
+//       image->SetSpacing(1.0, 1.0, rimage.aspratio);  
+//       image->SetDimensions(rimage.nx,rimage.ny,rimage.nz);
+//       image->SetOrigin(0,0,0);
+//       image->Modified();
+//   
+      // *** need to fix this reference so the MRML volume is created and the pointer to the cellID is placed in the MRMLCellWallSegmentNode
+      //this->CellWallSegmentNode->SetSegmentationVolumeRef(this->GetGUI()->GetApplication()->GetModuleGUIByName("Volumes")->GetLogic()->CreateLabelVolume());
+      }
+}
+
+
+void vtkCellWallSegmentLogic::PaintIntoMRMLSegmentationVolume(int CellID)
+{
+
+  // check if MRML node is present 
+  if (this->CellWallSegmentNode == NULL)
+    {
+    vtkErrorMacro("No input CellWallSegmentNode found");
+    return;
+    }
+  
+   // read the segmentation volume to get the    
+   RIMAGEDEF& rimage = this->VisSegInstance->getRimage();
+   unsigned char *pixbuf = this->VisSegInstance->getPixbuf();
+   
     // find output volume
     vtkMRMLScalarVolumeNode *segmentVolume =  vtkMRMLScalarVolumeNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->CellWallSegmentNode->GetSegmentationVolumeRef()));
     if (segmentVolume == NULL)
@@ -175,20 +192,12 @@ void vtkCellWallSegmentLogic::InitializeMRMLSegmentationVolume()
       return;
       }
     
-
-  // copy RASToIJK matrix, and other attributes from input to output
-  std::string name (segmentVolume->GetName());
-  std::string id (segmentVolume->GetID());
-
-//  outVolume->CopyOrientation(inVolume);
-//  outVolume->SetAndObserveTransformNodeID(inVolume->GetTransformNodeID());
-
-  segmentVolume->SetName(name.c_str());
-  segmentVolume->SetAndObserveImageData(image);
-  image->Delete();
+  // draw the resulting contour into the label map using the correct legacy cell number  
+  this->VisSegInstance->RenderSegmentationResult(segmentVolume->GetImageData(),CellID);
   segmentVolume->SetModifiedSinceRead(1);
 
 }
+
 
 
 
@@ -227,10 +236,10 @@ void vtkCellWallSegmentLogic::Perform2DSegmentation()
         this->VisSegInstance->setCellEdge(boundaryAsDoubles);
         cout  << "found points: center ("<< centerAsDoubles[0] << " " << centerAsDoubles[1] << " " << centerAsDoubles[2] << ")" << endl;
         cout  << "found points: boundary ("<< boundaryAsDoubles[0] << " " << boundaryAsDoubles[1] << " " << boundaryAsDoubles[2] << ")" << endl;
-        this->VisSegInstance->compute2DBoundary(0);
+        this->VisSegInstance->compute2DBoundary(1);
         // copy to output volume (segmentation)
         cout << "2D boundary complete. copy to segmentation volume" << endl;
-        this->InitializeMRMLSegmentationVolume();
+        this->PaintIntoMRMLSegmentationVolume(1);
     } else 
         vtkErrorMacro("Fiducial list did not contain two points")
 }

@@ -50,6 +50,7 @@ class VTK_CellWallSegment_EXPORT vtkCellWallSegmentLogic : public vtkSlicerModul
   void InitializeMRMLSegmentationVolume();
   void Perform2DSegmentation();
   void Perform3DSegmentation();
+  void PaintIntoMRMLSegmentationVolume(int CellID);
   
   vtkCellWallVisSeg* GetCellWallVisSeg(void) { return this->VisSegInstance; }
   

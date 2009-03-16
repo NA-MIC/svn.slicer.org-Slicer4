@@ -397,9 +397,8 @@ bool vtkCellWallVisSeg::afterLoadingInit()
     {
        printf("Error in malloc for Poler image space\n");
        return false;
-    }
-         
-        return true;
+    }     
+    return true;
 }
 
 void vtkCellWallVisSeg::setCellCenter(double xyzv[4])
@@ -723,6 +722,7 @@ bool vtkCellWallVisSeg::resamp()
   return true;
 }
  
+
 void vtkCellWallVisSeg::addCellEdge(double xyzv[4])
 {
         // select additional edge points
@@ -759,6 +759,72 @@ void vtkCellWallVisSeg::compute2DBoundary(int CellID)
         if(score != 0) dispedge(CellID);                
         //============================================
 }
+
+
+
+void vtkCellWallVisSeg::ResetSegmentationResult(vtkImageData* ImagePtr, int CellID)
+{
+ //       if(FirstSeg==1) FirstSeg=0;
+        unsigned char *ptr=(unsigned char*)(ImagePtr->GetScalarPointer());
+        
+        // delete the previous results in pixbuf and data held in vtk
+        int offset=0,offset2;
+        for( int z=0;z<rimage.nz;++z)
+                for(int y=0;y<rimage.ny;++y)
+                        for(int x=0;x<rimage.nx;++x)
+                        {
+                                // note that vtk use (0,0) at left bottom corner.
+                                offset++;
+                                // note that legacy c code use (0,0) at left top corner
+                                offset2=z*rimage.ny*rimage.nx+(rimage.ny-y-1)*rimage.nx+ x;
+                
+                                // change the original value to 254 if it is 255, only performed 
+                                // at the first segmentation
+//                                if(ptr[offset2] == 255 && FirstSeg) ptr[offset2]=254;
+        
+                                // delete only the previous segmentation result in pixbuf
+                                if(pixbuf[offset*3]==CellID) 
+                                {
+                                        pixbuf[offset*3]=0;
+                                        // set back the previous segmentation results to the original 
+                                        // in the volume held by vtk
+                                        if(ptr[offset2] == 255 ) ptr[offset2]=rimage.data[x][y][z];
+                                }
+
+                        }
+}
+
+
+
+void vtkCellWallVisSeg::RenderSegmentationResult(vtkImageData* imagePtr, int CellID)
+{
+        // modify a volume held in vtk by setting boundary pixels to the Cell ID for display
+        // purpose.  This is used in Slicer by passing a label map volume to this routine, only
+        // voxels with the proper label in the segmentation result (pixbuf) will be modified in the
+        // render volume. 
+        
+//        if(FirstSeg==1) FirstSeg=0;
+        unsigned char *ptr=(unsigned char*)(imagePtr->GetScalarPointer());
+        
+        int offset=0,offset2;
+        for( int z=0;z<rimage.nz;++z)
+                for(int y=0;y<rimage.ny;++y)
+                        for(int x=0;x<rimage.nx;++x)
+                        {
+                                // record segmented result to the volume held by vtk using 255 value.
+
+                                // note that vtk use (0,0) at left bottom corner.
+                                offset++;
+                                // note that legacy c code use (0,0) at left top corner
+                                offset2=z*rimage.ny*rimage.nx+(rimage.ny-y-1)*rimage.nx+ x;
+                                // if the 
+                                if(pixbuf[offset*3]==CellID) ptr[offset2]=CellID;
+                        }
+        //a render can be done now
+}
+
+
+
 
 void vtkCellWallVisSeg::compute3DSeg(int CellID)
 {

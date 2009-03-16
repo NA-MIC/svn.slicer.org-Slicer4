@@ -52,11 +52,12 @@ vtkMRMLNode* vtkMRMLCellWallSegmentNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLCellWallSegmentNode::vtkMRMLCellWallSegmentNode()
 {
-   this->Conductance = 1.0;
-   this->NumberOfIterations = 1;
-   this->TimeStep = 0.1;
+   //this->Conductance = 1.0;
+   //this->NumberOfIterations = 1;
+   //this->TimeStep = 0.1;
    this->InputVolumeRef = NULL;
    this->OutputVolumeRef = NULL;
+   this->SegmentationVolumeRef == NULL;
    this->HideFromEditors = true;
 }
 
