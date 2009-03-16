@@ -66,6 +66,7 @@ vtkMRMLCellWallSegmentNode::~vtkMRMLCellWallSegmentNode()
 {
    this->SetInputVolumeRef( NULL );
    this->SetOutputVolumeRef( NULL );
+   this->SetSegmentationVolumeRef(NULL);
 }
 
 //----------------------------------------------------------------------------
