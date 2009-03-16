@@ -156,6 +156,13 @@ void vtkCellWallSegmentGUI::ProcessGUIEvents ( vtkObject *caller,
     this->UpdateMRML();
     }
   
+  // check for events that specify the output volume to create
+   if (selector == this->SegmentedVolumeSelector && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent  &&
+     this->SegmentedVolumeSelector->GetSelected() != NULL) 
+     { 
+     this->UpdateMRML();
+     }
+
   // check if the fiducial list selection has changed and poke the new ID into the MRML node for reference during the 
   // logic's execution method
     
@@ -216,7 +223,6 @@ void vtkCellWallSegmentGUI::UpdateMRML ()
   vtkMRMLCellWallSegmentNode* n = this->GetCellWallSegmentNode();
   if (n == NULL)
     {
-
     // set an observe new node in Logic
     this->Logic->SetAndObserveCellWallSegmentNode(n);
     vtkSetAndObserveMRMLNodeMacro(this->CellWallSegmentNode, n);
