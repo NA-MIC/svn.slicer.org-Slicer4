@@ -77,43 +77,55 @@ HessianSmoothed3DToLineFilter< TPixel >
   this->AllocateOutputs();
   oit = ImageRegionIterator<OutputImageType>(output,
                                              output->GetRequestedRegion());
+
+  //hessian
+//  typedef Image< SymmetricSecondRankTensor< double, 3 >, 3 > MatrixImageType;
+//  MatrixImageType::ConstPointer hessian = this->GetInput();
+//  ImageRegionConstIterator<MatrixImageType> hessianIter = ImageRegionConstIterator<MatrixImageType>(hessian, hessian->GetRequestedRegion());
+//  hessianIter.GoToBegin();
+
   oit.GoToBegin();
   it.GoToBegin();
   while (!it.IsAtEnd())
     {
+
+//    std::cout << "Hessian" << std::endl;
+//    std::cout << hessianIter.Get() << std::endl;
+
     // Get the eigen value
     eigenValue = it.Get();
 
     //Should be sorted by value
-    double Lambda1 = eigenValue[0];  //largest
+    double Lambda1 = eigenValue[0];  //smallest
     double Lambda2 = eigenValue[1];
-    double Lambda3 = eigenValue[2];  //smallest
+    double Lambda3 = eigenValue[2];  //largest
 
-    //Make sure they are sorted
+    //Make sure they are sorted so that Lambda1 >= Lambda2 >= Lambda3
     if ( Lambda1 < Lambda2  ) std::swap(Lambda1, Lambda2);
     if ( Lambda2 < Lambda3  ) std::swap(Lambda2, Lambda3);
-    if ( Lambda1 < Lambda2  ) std::swap(Lambda1, Lambda3);
+    if ( Lambda1 < Lambda2  ) std::swap(Lambda1, Lambda2);
 
     double Lambda2Abs = vnl_math_abs( Lambda2 );
     double Lambda3Abs = vnl_math_abs( Lambda3 );
     double SigmaSquared = this->m_Sigma * this->m_Sigma;
-
     
-    if( Lambda3 < Lambda2 < Lambda1 <= 0.0 )
+    double lineResponse = 0.0;
+    
+    if( Lambda3 < Lambda2 && Lambda2 < Lambda1 && Lambda1 <= 0.0 )
       {
         double term1 = vcl_pow (Lambda2/Lambda3, this->m_Gamma23); 
         double term2 = vcl_pow (1.0 + Lambda1/Lambda2Abs, this->m_Gamma12); 
 
-        double lineResponse = SigmaSquared * Lambda3Abs * term1 * term2;
+        lineResponse = SigmaSquared * Lambda3Abs * term1 * term2;
 
         oit.Set( lineResponse );
       }
-    else if( Lambda3 < Lambda2  < 0.0  < Lambda1 < Lambda2Abs/this->m_Alpha)
+    else if( Lambda3 < Lambda2 && Lambda2 < 0.0 && 0.0 < Lambda1 && Lambda1 < Lambda2Abs/this->m_Alpha)
       {
         double term1 = vcl_pow (Lambda2/Lambda3, this->m_Gamma23); 
         double term2 = vcl_pow (1.0 - this->m_Alpha*Lambda1/Lambda2Abs, this->m_Gamma12); 
 
-        double lineResponse =  SigmaSquared * Lambda3Abs * term1 * term2;
+        lineResponse =  SigmaSquared * Lambda3Abs * term1 * term2;
 
         oit.Set( lineResponse );
       }
@@ -123,10 +135,12 @@ HessianSmoothed3DToLineFilter< TPixel >
         oit.Set( NumericTraits< OutputPixelType >::Zero );
       } 
 
+//     std::cout << "Eigenvalues & Vesselness " << std::endl;
+//     std::cout << Lambda1 << " " << Lambda2 << " " << Lambda3 << " " << lineResponse << std::endl;
 
     ++it;
     ++oit;
-
+//    ++hessianIter;
     }
     
 }

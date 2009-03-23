@@ -88,7 +88,6 @@ HessianSmoothed3DToVesselnessMeasureImageFilter< TPixel >
     // Get the eigen value
     eigenValue = it.Get();
 
-
     // Find the smallest eigenvalue
     double smallest = vnl_math_abs( eigenValue[0] );
     double Lambda1 = eigenValue[0];
@@ -178,7 +177,11 @@ HessianSmoothed3DToVesselnessMeasureImageFilter< TPixel >
         {
         oit.Set( static_cast< OutputPixelType >( vesselnessMeasure ) );
         }
+
+        
       }
+//    std::cout << "Eigenvalues & Vesselness" << std::endl;
+//    std::cout << Lambda1 << " " << Lambda2 << " " << Lambda3 << " " << oit.Get() << std::endl;
     ++it;
     ++oit;
     }

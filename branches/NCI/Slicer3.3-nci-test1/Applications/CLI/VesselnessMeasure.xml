@@ -64,7 +64,7 @@
       <longflag>--ScaleVesselnessMeasure</longflag>
       <description>Scale Vesselness Measure</description>
       <label>Scale Vesselness Measure</label>
-      <default>false</default>
+      <default>true</default>
     </boolean>
 
     <double>
