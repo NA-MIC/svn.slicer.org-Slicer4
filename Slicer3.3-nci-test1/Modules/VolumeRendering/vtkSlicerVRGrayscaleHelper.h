@@ -240,6 +240,7 @@ protected:
     vtkKWFrameWithLabel *FrameGPURayCasting;
     vtkKWFrameWithLabel *FramePolygonBlending;
     vtkKWFrameWithLabel *FrameCPURayCasting;
+    vtkKWFrameWithLabel *FrameFPS;
     
     // Description:
     // Menu button to select which mapper to use
@@ -271,6 +272,10 @@ protected:
     // Enable/Disable adaptive framerate control
     vtkKWCheckButtonWithLabel *CB_CPURayCastForceHighQuality;
 
+    // Description:
+    // Enable/Disable CPU ray cast MIP rendering
+    vtkKWCheckButtonWithLabel *CB_CPURayCastMIP;
+    
     // Description:
     // Adjust the frame for interactive rendering methods
     vtkKWScale *SC_ExpectedFPS;
@@ -398,7 +403,9 @@ protected:
     // Description:
     // estimated sample distance for polygon blending and cpu ray casting
     double EstimatedSampleDistance;
+    double EstimatedInteractiveSampleDistance;
 
+    
     // Description:
     // if updating GUI
     int UpdateingGUI;
