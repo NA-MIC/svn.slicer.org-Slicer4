@@ -40,7 +40,7 @@ template<class T> int DoIt( int argc, char * argv[], T )
   PARSE_ARGS;
 
   //Pixel Types
-  typedef    short   InputPixelType;
+  typedef    double   InputPixelType;
   typedef    double   VesselnessPixelType;
 //  typedef    T       OutputPixelType;
 //  typedef    unsigned char       OutputPixelType;
