@@ -71,7 +71,7 @@ vtkSlicerGPURayCastVolumeTextureMapper3D::vtkSlicerGPURayCastVolumeTextureMapper
   this->RayCastSupported         =  0;
   this->RenderWindow         = NULL;
   this->RaySteps             = 100.0f;
-  this->Framerate            = 1.0f;
+  this->Framerate            = 5.0f;
   this->GlobalAlpha          = 1.0f;
 }
 

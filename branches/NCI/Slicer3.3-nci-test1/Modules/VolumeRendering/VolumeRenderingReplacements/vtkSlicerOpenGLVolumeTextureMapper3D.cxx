@@ -74,7 +74,6 @@ vtkSlicerOpenGLVolumeTextureMapper3D::vtkSlicerOpenGLVolumeTextureMapper3D()
   this->Volume3Index                 =  0;
   this->ColorLookupIndex             =  0;
   this->RenderWindow                 = NULL;
-  this->Framerate                    = 1.0f;
 }
 
 vtkSlicerOpenGLVolumeTextureMapper3D::~vtkSlicerOpenGLVolumeTextureMapper3D()
@@ -268,7 +267,7 @@ void vtkSlicerOpenGLVolumeTextureMapper3D::AdaptivePerformanceControl()
   maxSampleDistance = maxSampleDistance > spacing[2] ? maxSampleDistance : spacing[2];  
   maxSampleDistance *= 2;                          
 
- //   printf("%f %f %f\n", minSampleDistance, maxSampleDistance, this->TimeToDraw);
+//  printf("%f %f %f\n", this->Framerate, this->TimeToDraw, 1.0/this->TimeToDraw);
   // add clamp
   if (this->SampleDistance < minSampleDistance) this->SampleDistance = minSampleDistance;
   if (this->SampleDistance > maxSampleDistance) this->SampleDistance = maxSampleDistance;
