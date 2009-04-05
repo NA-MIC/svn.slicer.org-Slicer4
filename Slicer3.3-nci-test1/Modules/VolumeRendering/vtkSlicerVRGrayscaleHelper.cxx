@@ -82,6 +82,7 @@ vtkSlicerVRGrayscaleHelper::vtkSlicerVRGrayscaleHelper(void)
     this->MB_Mapper= NULL;
     this->SVP_VolumeProperty=NULL;
     
+    this->FrameFPS = NULL;
     this->FrameGPURayCasting = NULL;
     this->FramePolygonBlending = NULL;
     this->FrameCPURayCasting = NULL;
@@ -97,8 +98,8 @@ vtkSlicerVRGrayscaleHelper::vtkSlicerVRGrayscaleHelper(void)
     //ThresholdGUI
     this->MB_ThresholdMode=NULL;
     this->VRMB_ColorMode=NULL;
-    this->RA_RampRectangleHorizontal=NULL;
-    this->RA_RampRectangleVertical=NULL;
+    this->RA_RampRectangleScalar=NULL;
+    this->RA_RampRectangleOpacity=NULL;
     this->ThresholdMode=0;
     this->PB_Reset=NULL;
     this->PB_ThresholdZoomIn=NULL;
@@ -322,6 +323,8 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingGUI *gui)
     this->CreateThreshold();
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",this->SVP_VolumeProperty->GetWidgetName());
     
+    this->WithdrawProgressDialog();
+    
     this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
 }
 
@@ -433,7 +436,7 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
     {
         //Init the texture mapper
         this->MapperTexture = vtkSlicerVolumeTextureMapper3D::New();
-        this->MapperTexture->SetSampleDistance(this->EstimatedSampleDistance);
+        this->MapperTexture->SetSampleDistance(this->EstimatedSampleDistance*2.0);
         this->MapperTexture->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
  
         //create the raycast mapper
@@ -445,11 +448,11 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
         this->MapperRaycast=vtkSlicerFixedPointVolumeRayCastMapper::New();
         this->MapperRaycast->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
         this->MapperRaycast->SetSampleDistance(this->EstimatedSampleDistance*4.0);
-        this->MapperRaycast->SetInteractiveSampleDistance(this->EstimatedInteractiveSampleDistance);
-        this->MapperRaycast->SetAutoAdjustSampleDistances(1);
-        this->MapperRaycast->SetImageSampleDistance(4.0f);
-        this->MapperRaycast->SetMinimumImageSampleDistance(1.0f);
-        this->MapperRaycast->SetMaximumImageSampleDistance(20.0f);
+        this->MapperRaycast->ManualInteractiveOn();
+        this->MapperRaycast->SetManualInteractiveRate(0.2);//5 fps 
+        this->MapperRaycast->SetImageSampleDistance(2.0f);
+        this->MapperRaycast->SetMinimumImageSampleDistance(2.0f);
+        this->MapperRaycast->SetMaximumImageSampleDistance(16.0f);
         
     }
     
@@ -511,23 +514,10 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
         this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::AbortCheckEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
     }
 
-    //choose default mapper
+    //choose default mapper, set software ray mapper as default
     {
-        if (!IsTextureMappingSupported && !IsGPURayCastingSupported)
-        {
-            this->Volume->SetMapper(this->MapperRaycast);
-            this->MB_Mapper->GetWidget()->SetValue("Software Ray Casting");
-        }
-        else if (!IsGPURayCastingSupported)
-        {
-            this->Volume->SetMapper(this->MapperTexture);
-            this->MB_Mapper->GetWidget()->SetValue("OpenGL Polygon Blending");
-        }
-        else
-        {
-            this->Volume->SetMapper(this->MapperGPURaycast);
-            this->MB_Mapper->GetWidget()->SetValue("GPU Ray Casting (GLSL)");
-        }
+        this->Volume->SetMapper(this->MapperRaycast);
+        this->MB_Mapper->GetWidget()->SetValue("Software Ray Casting");
     }
     
     //TODO This is not the right place for this
@@ -731,8 +721,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
             else
                 this->MapperGPURaycast->LargeVolumeSizeOff();
                 
-            //REQUIRED REQUIRED REQUIRED
-            this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->ResetCamera();
+ //           this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->ResetCamera();
             
             this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
             return;
@@ -742,13 +731,23 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
         {
             if(callerObjectCheckButton->GetSelectedState())
             {
+                this->MapperRaycast->ManualInteractiveOff();
+                this->MapperRaycast->SetInteractiveSampleDistance(this->EstimatedInteractiveSampleDistance);
+                this->MapperRaycast->SetAutoAdjustSampleDistances(1);
                 this->MapperRaycast->SetSampleDistance(this->EstimatedSampleDistance);
                 this->MapperRaycast->SetImageSampleDistance(1.0f);
+                this->MapperRaycast->SetMinimumImageSampleDistance(1.0f);
+                this->MapperRaycast->SetMaximumImageSampleDistance(2.0f);
             }
             else
             {
-                this->MapperRaycast->SetSampleDistance(this->EstimatedSampleDistance*4.0);
-                this->MapperRaycast->SetImageSampleDistance(4.0f);
+                this->MapperRaycast->ManualInteractiveOn();
+                float desiredTime = 1.0f/this->SC_ExpectedFPS->GetValue();//expected fps will not be 0 so safe to do division here
+        
+                this->MapperRaycast->SetManualInteractiveRate(desiredTime);
+                this->MapperRaycast->SetImageSampleDistance(2.0f);
+                this->MapperRaycast->SetMinimumImageSampleDistance(2.0f);
+                this->MapperRaycast->SetMaximumImageSampleDistance(16.0f);
             }
             
             this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
@@ -1126,17 +1125,31 @@ void vtkSlicerVRGrayscaleHelper::CreateThreshold()
     this->VRMB_ColorMode->AddObserver(vtkSlicerVRMenuButtonColorMode::ColorModeChangedEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
     this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->VRMB_ColorMode->GetWidgetName());
 
+    this->RA_RampRectangleOpacity=vtkKWRange::New();
+    this->RA_RampRectangleOpacity->SetParent(thresholdFrame->GetFrame());
+    this->RA_RampRectangleOpacity->Create();
+    ss.str("");
+    ss<<"Set the lower and upper opacity levels for the ramp and the rectangle. ";
+    ss<<"Lower values make the volume more translucent.";
+    this->RA_RampRectangleOpacity->SetBalloonHelpString(ss.str().c_str());
+    this->RA_RampRectangleOpacity->SetLabelText("Opacity");
+    this->RA_RampRectangleOpacity->SetWholeRange(0,1);
+    this->RA_RampRectangleOpacity->SetRange(0,1);
+    this->RA_RampRectangleOpacity->EnabledOff();
+    this->RA_RampRectangleOpacity->SetCommand(this, "ProcessThresholdRange");
+    this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->RA_RampRectangleOpacity->GetWidgetName());
+    
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
-    this->RA_RampRectangleHorizontal=vtkKWRange::New();
-    this->RA_RampRectangleHorizontal->SetParent(thresholdFrame->GetFrame());
-    this->RA_RampRectangleHorizontal->Create();
-    this->RA_RampRectangleHorizontal->SetBalloonHelpString("Apply thresholds to the gray values of volume.");
-    this->RA_RampRectangleHorizontal->SetLabelText("Threshold");
-    this->RA_RampRectangleHorizontal->SetWholeRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
-    this->RA_RampRectangleHorizontal->SetRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
-    this->RA_RampRectangleHorizontal->SetCommand(this, "ProcessThresholdRange");
-    this->RA_RampRectangleHorizontal->EnabledOff();
-    this->Script("pack %s -side left -anchor nw -expand no -fill x -padx 2 -pady 2", this->RA_RampRectangleHorizontal->GetWidgetName());
+    this->RA_RampRectangleScalar=vtkKWRange::New();
+    this->RA_RampRectangleScalar->SetParent(thresholdFrame->GetFrame());
+    this->RA_RampRectangleScalar->Create();
+    this->RA_RampRectangleScalar->SetBalloonHelpString("Apply thresholds to the gray values of volume.");
+    this->RA_RampRectangleScalar->SetLabelText("Threshold");
+    this->RA_RampRectangleScalar->SetWholeRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
+    this->RA_RampRectangleScalar->SetRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
+    this->RA_RampRectangleScalar->SetCommand(this, "ProcessThresholdRange");
+    this->RA_RampRectangleScalar->EnabledOff();
+    this->Script("pack %s -side left -anchor nw -expand n -fill x -padx 2 -pady 2", this->RA_RampRectangleScalar->GetWidgetName());
 
     this->PB_ThresholdZoomIn=vtkKWPushButton::New();
     this->PB_ThresholdZoomIn->SetParent(thresholdFrame->GetFrame());
@@ -1158,22 +1171,7 @@ void vtkSlicerVRGrayscaleHelper::CreateThreshold()
     this->PB_Reset->SetText("Reset");
     this->PB_Reset->EnabledOff();
     this->PB_Reset->SetCommand(this,"ProcessThresholdReset");
-    this->Script("pack %s -side top -anchor nw -fill x -expand n -padx 2 -pady 2", this->PB_Reset->GetWidgetName());
-
-    this->RA_RampRectangleVertical=vtkKWRange::New();
-    this->RA_RampRectangleVertical->SetParent(thresholdFrame->GetFrame());
-    this->RA_RampRectangleVertical->Create();
-    ss.str("");
-    ss<<"Set the lower and upper opacity levels for the ramp and the rectangle. ";
-    ss<<"Lower values make the volume more translucent.";
-    this->RA_RampRectangleVertical->SetBalloonHelpString(ss.str().c_str());
-    this->RA_RampRectangleVertical->SetLabelText("Opacity");
-    this->RA_RampRectangleVertical->SetOrientationToVertical();
-    this->RA_RampRectangleVertical->SetWholeRange(1,0);
-    this->RA_RampRectangleVertical->SetRange(1,0);
-    this->RA_RampRectangleVertical->EnabledOff();
-    this->RA_RampRectangleVertical->SetCommand(this, "ProcessThresholdRange");
-    this->Script("pack %s -side left -anchor w -expand n -padx 2 -pady 2", this->RA_RampRectangleVertical->GetWidgetName());
+    this->Script("pack %s -side top -anchor nw -expand n -fill x -padx 2 -pady 2", this->PB_Reset->GetWidgetName());
 
     thresholdFrame->Delete();
 }
@@ -1186,23 +1184,23 @@ void vtkSlicerVRGrayscaleHelper::ProcessRenderingMethodEvents(int id)
     this->FramePolygonBlending->CollapseFrame();
     this->FrameCPURayCasting->CollapseFrame();
     
-    this->FrameFPS->CollapseFrame();
-    
     switch(id)
     {
-    case 0://gpu ray casting
+    case 1://gpu ray casting
         this->FrameGPURayCasting->ExpandFrame();
-        this->FrameFPS->ExpandFrame();
         if (this->Volume && this->IsGPURayCastingSupported)
             this->Volume->SetMapper(this->MapperGPURaycast);
+        else
+            vtkErrorMacro("GPU ray casting is not supported by your computer.");
         break;
-    case 1://old school opengl 2D polygon blending
+    case 2://old school opengl 2D polygon blending
         this->FramePolygonBlending->ExpandFrame();
-        this->FrameFPS->ExpandFrame();
         if (this->Volume && this->IsTextureMappingSupported)
             this->Volume->SetMapper(this->MapperTexture);
+        else
+            vtkErrorMacro("OpenGL polygon blending is not supported by your computer.");//seldom should we see this error message unless really low end graphics card...
         break;
-    case 2://softwrae ray casting
+    case 0://softwrae ray casting
         this->FrameCPURayCasting->ExpandFrame();
         if (this->Volume)
             this->Volume->SetMapper(this->MapperRaycast);
@@ -1210,7 +1208,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessRenderingMethodEvents(int id)
     }
     
     this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
-    this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
+    this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();//double rendering request to force mapper to adjust rendering quality for expected fps
 }
 
 void vtkSlicerVRGrayscaleHelper::ProcessThresholdModeEvents(int id)
@@ -1223,10 +1221,10 @@ void vtkSlicerVRGrayscaleHelper::ProcessThresholdModeEvents(int id)
     {
         this->VRMB_ColorMode->EnabledOff();
 
-        this->RA_RampRectangleHorizontal->SetRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
-        this->RA_RampRectangleHorizontal->EnabledOff();
-        this->RA_RampRectangleVertical->SetRange(1,0);
-        this->RA_RampRectangleVertical->EnabledOff();
+        this->RA_RampRectangleScalar->SetRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
+        this->RA_RampRectangleScalar->EnabledOff();
+        this->RA_RampRectangleOpacity->SetRange(0,1);
+        this->RA_RampRectangleOpacity->EnabledOff();
         this->PB_Reset->EnabledOff();
         this->PB_ThresholdZoomIn->EnabledOff();
         return;
@@ -1234,8 +1232,8 @@ void vtkSlicerVRGrayscaleHelper::ProcessThresholdModeEvents(int id)
     
     //Before we continue enabled everything
     this->VRMB_ColorMode->EnabledOn();
-    this->RA_RampRectangleHorizontal->EnabledOn();
-    this->RA_RampRectangleVertical->EnabledOn();
+    this->RA_RampRectangleScalar->EnabledOn();
+    this->RA_RampRectangleOpacity->EnabledOn();
     this->PB_Reset->EnabledOn();
     this->PB_ThresholdZoomIn->EnabledOn();
     this->ProcessThresholdRange(.0,.0);
@@ -1253,36 +1251,37 @@ void vtkSlicerVRGrayscaleHelper::ProcessThresholdRange(double notUsed,double not
     opacity->RemoveAllPoints();
     //opacity->AdjustRange(iData->GetScalarRange());
 
-    opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleVertical->GetRange()[1]);
-    opacity->AddPoint(iData->GetScalarRange()[1],this->RA_RampRectangleVertical->GetRange()[1]);
+    opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleOpacity->GetRange()[0]);
+    opacity->AddPoint(iData->GetScalarRange()[1],this->RA_RampRectangleOpacity->GetRange()[0]);
     if(this->ThresholdMode==1)
     {
-        opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleVertical->GetRange()[1]);
-        opacity->AddPoint(iData->GetScalarRange()[1],this->RA_RampRectangleVertical->GetRange()[0]);
-        opacity->AddPoint(this->RA_RampRectangleHorizontal->GetRange()[0],this->RA_RampRectangleVertical->GetRange()[1]);
-        opacity->AddPoint(this->RA_RampRectangleHorizontal->GetRange()[1],this->RA_RampRectangleVertical->GetRange()[0]);
+        opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleOpacity->GetRange()[0]);
+        opacity->AddPoint(iData->GetScalarRange()[1],this->RA_RampRectangleOpacity->GetRange()[1]);
+        opacity->AddPoint(this->RA_RampRectangleScalar->GetRange()[0],this->RA_RampRectangleOpacity->GetRange()[0]);
+        opacity->AddPoint(this->RA_RampRectangleScalar->GetRange()[1],this->RA_RampRectangleOpacity->GetRange()[1]);
 
     }
     else if(this->ThresholdMode==2)
     {
 
-        opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleVertical->GetRange()[1]);
-        opacity->AddPoint(iData->GetScalarRange()[1],this->RA_RampRectangleVertical->GetRange()[1]);
+        opacity->AddPoint(iData->GetScalarRange()[0],this->RA_RampRectangleOpacity->GetRange()[0]);
+        opacity->AddPoint(iData->GetScalarRange()[1],this->RA_RampRectangleOpacity->GetRange()[0]);
 
-        opacity->AddPoint(this->RA_RampRectangleHorizontal->GetRange()[0],this->RA_RampRectangleVertical->GetRange()[1]);
-        opacity->AddPoint(this->RA_RampRectangleHorizontal->GetRange()[0]+0.1,this->RA_RampRectangleVertical->GetRange()[0]);
-        opacity->AddPoint(this->RA_RampRectangleHorizontal->GetRange()[1]-0.1,this->RA_RampRectangleVertical->GetRange()[0]);
-        opacity->AddPoint(this->RA_RampRectangleHorizontal->GetRange()[1],this->RA_RampRectangleVertical->GetRange()[1]);
+        opacity->AddPoint(this->RA_RampRectangleScalar->GetRange()[0],this->RA_RampRectangleOpacity->GetRange()[0]);
+        opacity->AddPoint(this->RA_RampRectangleScalar->GetRange()[0]+0.1,this->RA_RampRectangleOpacity->GetRange()[1]);
+        opacity->AddPoint(this->RA_RampRectangleScalar->GetRange()[1]-0.1,this->RA_RampRectangleOpacity->GetRange()[1]);
+        opacity->AddPoint(this->RA_RampRectangleScalar->GetRange()[1],this->RA_RampRectangleOpacity->GetRange()[0]);
 
     }
     this->SVP_VolumeProperty->Update();
     this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
 }
+
 void vtkSlicerVRGrayscaleHelper::ProcessThresholdZoomIn(void)
 {
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
-    double leftBorder=this->RA_RampRectangleHorizontal->GetRange()[0];
-    double rightBorder=this->RA_RampRectangleHorizontal->GetRange()[1];
+    double leftBorder=this->RA_RampRectangleScalar->GetRange()[0];
+    double rightBorder=this->RA_RampRectangleScalar->GetRange()[1];
     double expansion=.1*(rightBorder-leftBorder);
     double leftBorderWholeRange=leftBorder-expansion;
     double rightBorderWholeRange=rightBorder+expansion;
@@ -1295,7 +1294,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessThresholdZoomIn(void)
     {
         rightBorderWholeRange=iData->GetScalarRange()[1];
     }
-    this->RA_RampRectangleHorizontal->SetWholeRange(leftBorderWholeRange,rightBorderWholeRange);
+    this->RA_RampRectangleScalar->SetWholeRange(leftBorderWholeRange,rightBorderWholeRange);
     this->SVP_VolumeProperty->GetScalarColorFunctionEditor()->SetVisibleParameterRange(leftBorderWholeRange,rightBorderWholeRange);
     this->SVP_VolumeProperty->GetScalarOpacityFunctionEditor()->SetVisibleParameterRange(leftBorderWholeRange,rightBorderWholeRange);
 }
@@ -1304,7 +1303,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessThresholdReset(void)
 {
     vtkImageData *iData=vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
 
-    this->RA_RampRectangleHorizontal->SetWholeRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
+    this->RA_RampRectangleScalar->SetWholeRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
     this->SVP_VolumeProperty->GetScalarColorFunctionEditor()->SetVisibleParameterRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
     this->SVP_VolumeProperty->GetScalarOpacityFunctionEditor()->SetVisibleParameterRange(iData->GetScalarRange()[0],iData->GetScalarRange()[1]);
 }
@@ -1519,17 +1518,17 @@ void vtkSlicerVRGrayscaleHelper::DestroyTreshold(void)
         this->VRMB_ColorMode->Delete();
         this->VRMB_ColorMode=NULL;
     }
-    if(this->RA_RampRectangleHorizontal)
+    if(this->RA_RampRectangleScalar)
     {
-        this->RA_RampRectangleHorizontal->SetParent(NULL);
-        this->RA_RampRectangleHorizontal->Delete();
-        this->RA_RampRectangleHorizontal=NULL;
+        this->RA_RampRectangleScalar->SetParent(NULL);
+        this->RA_RampRectangleScalar->Delete();
+        this->RA_RampRectangleScalar=NULL;
     }
-    if(this->RA_RampRectangleVertical)
+    if(this->RA_RampRectangleOpacity)
     {
-        this->RA_RampRectangleVertical->SetParent(NULL);
-        this->RA_RampRectangleVertical->Delete();
-        this->RA_RampRectangleVertical=NULL;
+        this->RA_RampRectangleOpacity->SetParent(NULL);
+        this->RA_RampRectangleOpacity->Delete();
+        this->RA_RampRectangleOpacity=NULL;
     }
     if(this->PB_Reset)
     {
@@ -1550,6 +1549,16 @@ void vtkSlicerVRGrayscaleHelper::ProcessExpectedFPS(void)
     this->MapperTexture->SetFramerate(this->SC_ExpectedFPS->GetValue());
     this->MapperGPURaycast->SetFramerate(this->SC_ExpectedFPS->GetValue());
     
+    //software raycasting
+    {
+        float desiredTime = 1.0f/this->SC_ExpectedFPS->GetValue();//expected fps will not be 0 so safe to do division here
+        
+        this->MapperRaycast->SetManualInteractiveRate(desiredTime);
+        this->MapperRaycast->SetImageSampleDistance(2.0f);
+        this->MapperRaycast->SetMinimumImageSampleDistance(2.0f);
+        this->MapperRaycast->SetMaximumImageSampleDistance(16.0f);
+    }
+    
     this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
 }
 
@@ -1569,13 +1578,15 @@ void vtkSlicerVRGrayscaleHelper::CreatePerformance(void)
         this->MB_Mapper->SetLabelText("Rendering Method");
         this->MB_Mapper->Create();
         this->MB_Mapper->SetBalloonHelpString("Please select one rendering method");
-        this->MB_Mapper->GetWidget()->GetMenu()->AddRadioButton("GPU Ray Casting (GLSL)");
-        this->MB_Mapper->GetWidget()->GetMenu()->SetItemCommand(0, this,"ProcessRenderingMethodEvents 0");
-        this->MB_Mapper->GetWidget()->GetMenu()->AddRadioButton("OpenGL Polygon Blending");
-        this->MB_Mapper->GetWidget()->GetMenu()->SetItemCommand(1, this,"ProcessRenderingMethodEvents 1");
         this->MB_Mapper->GetWidget()->GetMenu()->AddRadioButton("Software Ray Casting");
+        this->MB_Mapper->GetWidget()->GetMenu()->SetItemCommand(0, this,"ProcessRenderingMethodEvents 0");
+        this->MB_Mapper->GetWidget()->GetMenu()->AddRadioButton("GPU Ray Casting (GLSL)");
+        this->MB_Mapper->GetWidget()->GetMenu()->SetItemCommand(1, this,"ProcessRenderingMethodEvents 1");
+        this->MB_Mapper->GetWidget()->GetMenu()->AddRadioButton("OpenGL Polygon Blending");
         this->MB_Mapper->GetWidget()->GetMenu()->SetItemCommand(2, this,"ProcessRenderingMethodEvents 2");
+        
         this->Script ( "pack %s -side top -anchor nw -fill x -padx 8 -pady 8", this->MB_Mapper->GetWidgetName() );
+
     }
     
     //Framerate
@@ -1599,82 +1610,7 @@ void vtkSlicerVRGrayscaleHelper::CreatePerformance(void)
 
     }
     
-    int labelWidth = 30;
-    
-    //GPU ray casting
-    {
-        this->FrameGPURayCasting = vtkKWFrameWithLabel::New();
-        this->FrameGPURayCasting->SetParent(this->FramePerformance->GetFrame());
-        this->FrameGPURayCasting->Create();
-        this->FrameGPURayCasting->AllowFrameToCollapseOff();
-        this->FrameGPURayCasting->SetLabelText("GPU Ray Casting");
-        this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->FrameGPURayCasting->GetWidgetName() );
-
-        //enable/disable gpu ray casting shading
-        this->CB_GPURayCastShading=vtkKWCheckButtonWithLabel::New();
-        this->CB_GPURayCastShading->SetParent(this->FrameGPURayCasting->GetFrame());
-        this->CB_GPURayCastShading->Create();
-        this->CB_GPURayCastShading->SetBalloonHelpString("Enable shading in GPU ray cast. May not supported by some video cards.");
-        this->CB_GPURayCastShading->SetLabelText("Enable Shading");
-        this->CB_GPURayCastShading->SetLabelWidth(labelWidth);
-        this->CB_GPURayCastShading->GetWidget()->SetSelectedState(0);
-        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_GPURayCastShading->GetWidgetName() );
-        this->CB_GPURayCastShading->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
-        
-        //enable/disable gpu ray casting MIP rendering
-        this->CB_GPURayCastMIP=vtkKWCheckButtonWithLabel::New();
-        this->CB_GPURayCastMIP->SetParent(this->FrameGPURayCasting->GetFrame());
-        this->CB_GPURayCastMIP->Create();
-        this->CB_GPURayCastMIP->SetBalloonHelpString("Enable MIP rendering in GPU ray cast.");
-        this->CB_GPURayCastMIP->SetLabelText("Maximum Intensity projection");
-        this->CB_GPURayCastMIP->SetLabelWidth(labelWidth);
-        this->CB_GPURayCastMIP->GetWidget()->SetSelectedState(0);
-        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_GPURayCastMIP->GetWidgetName() );
-        this->CB_GPURayCastMIP->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
-        
-        //enable/disable adaptive frame rate control
-        this->CB_GPURayCastForceHighQuality=vtkKWCheckButtonWithLabel::New();
-        this->CB_GPURayCastForceHighQuality->SetParent(this->FrameGPURayCasting->GetFrame());
-        this->CB_GPURayCastForceHighQuality->Create();
-        this->CB_GPURayCastForceHighQuality->SetBalloonHelpString("Force GPU mapper to use high quality (high sampling rate) and ignore expected FPS. May overwhelm GPU when used with Use Large Volume option!");
-        this->CB_GPURayCastForceHighQuality->SetLabelText("Force High Quality");
-        this->CB_GPURayCastForceHighQuality->SetLabelWidth(labelWidth);
-        this->CB_GPURayCastForceHighQuality->GetWidget()->SetSelectedState(0);
-        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_GPURayCastForceHighQuality->GetWidgetName() );
-        this->CB_GPURayCastForceHighQuality->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
-        
-        //enable/disable large volume
-        this->CB_GPURayCastLargeVolume=vtkKWCheckButtonWithLabel::New();
-        this->CB_GPURayCastLargeVolume->SetParent(this->FrameGPURayCasting->GetFrame());
-        this->CB_GPURayCastLargeVolume->Create();
-        this->CB_GPURayCastLargeVolume->SetBalloonHelpString("Enable this only if you are really confident about your graphics card. To use large volume, enable this before selecting GPU ray cast.");
-        this->CB_GPURayCastLargeVolume->SetLabelText("Use Large Volume");
-        this->CB_GPURayCastLargeVolume->SetLabelWidth(labelWidth);
-        this->CB_GPURayCastLargeVolume->GetWidget()->SetSelectedState(0);
-        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_GPURayCastLargeVolume->GetWidgetName() );
-        this->CB_GPURayCastLargeVolume->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
-    }
-    
-    //opengl 2D polygon blending
-    {
-        this->FramePolygonBlending = vtkKWFrameWithLabel::New();
-        this->FramePolygonBlending->SetParent(this->FramePerformance->GetFrame());
-        this->FramePolygonBlending->Create();
-        this->FramePolygonBlending->AllowFrameToCollapseOff();
-        this->FramePolygonBlending->SetLabelText("OpenGL Polygon Blending");
-        this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->FramePolygonBlending->GetWidgetName() );
-        
-        //enable/disable adaptive frame rate control
-        this->CB_TextureMapperForceHighQuality=vtkKWCheckButtonWithLabel::New();
-        this->CB_TextureMapperForceHighQuality->SetParent(this->FramePolygonBlending->GetFrame());
-        this->CB_TextureMapperForceHighQuality->Create();
-        this->CB_TextureMapperForceHighQuality->SetBalloonHelpString("Force texture mapper to use high quality (high sampling rate) and ignore expected FPS.");
-        this->CB_TextureMapperForceHighQuality->SetLabelText("Force High Quality");
-        this->CB_TextureMapperForceHighQuality->SetLabelWidth(labelWidth);
-        this->CB_TextureMapperForceHighQuality->GetWidget()->SetSelectedState(0);
-        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_TextureMapperForceHighQuality->GetWidgetName() );
-        this->CB_TextureMapperForceHighQuality->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
-    }
+    int labelWidth = 26;
     
     //software ray casting
     {
@@ -1699,11 +1635,88 @@ void vtkSlicerVRGrayscaleHelper::CreatePerformance(void)
         this->CB_CPURayCastForceHighQuality=vtkKWCheckButtonWithLabel::New();
         this->CB_CPURayCastForceHighQuality->SetParent(this->FrameCPURayCasting->GetFrame());
         this->CB_CPURayCastForceHighQuality->Create();
-        this->CB_CPURayCastForceHighQuality->SetBalloonHelpString("Force CPU ray cast mapper to use high quality (high sampling rate) and ignore expected FPS.");
+        this->CB_CPURayCastForceHighQuality->SetBalloonHelpString("Force CPU ray cast mapper to use high quality (high sampling rate). Could be show.");
         this->CB_CPURayCastForceHighQuality->SetLabelText("Force High Quality");
         this->CB_CPURayCastForceHighQuality->SetLabelWidth(labelWidth);
         this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_CPURayCastForceHighQuality->GetWidgetName() );
         this->CB_CPURayCastForceHighQuality->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
+
+    }
+    
+    //GPU ray casting
+    {
+        this->FrameGPURayCasting = vtkKWFrameWithLabel::New();
+        this->FrameGPURayCasting->SetParent(this->FramePerformance->GetFrame());
+        this->FrameGPURayCasting->Create();
+        this->FrameGPURayCasting->AllowFrameToCollapseOff();
+        this->FrameGPURayCasting->SetLabelText("GPU Ray Casting");
+        this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->FrameGPURayCasting->GetWidgetName() );
+
+        //enable/disable gpu ray casting shading
+        this->CB_GPURayCastShading=vtkKWCheckButtonWithLabel::New();
+        this->CB_GPURayCastShading->SetParent(this->FrameGPURayCasting->GetFrame());
+        this->CB_GPURayCastShading->Create();
+        this->CB_GPURayCastShading->SetBalloonHelpString("Enable lighting/shading in GPU ray cast. May not supported by some video cards.");
+        this->CB_GPURayCastShading->SetLabelText("Enable Lighting");
+        this->CB_GPURayCastShading->SetLabelWidth(labelWidth);
+        this->CB_GPURayCastShading->GetWidget()->SetSelectedState(0);
+        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_GPURayCastShading->GetWidgetName() );
+        this->CB_GPURayCastShading->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
+        
+        //enable/disable gpu ray casting MIP rendering
+        this->CB_GPURayCastMIP=vtkKWCheckButtonWithLabel::New();
+        this->CB_GPURayCastMIP->SetParent(this->FrameGPURayCasting->GetFrame());
+        this->CB_GPURayCastMIP->Create();
+        this->CB_GPURayCastMIP->SetBalloonHelpString("Enable MIP rendering in GPU ray cast.");
+        this->CB_GPURayCastMIP->SetLabelText("Maximum Intensity projection");
+        this->CB_GPURayCastMIP->SetLabelWidth(labelWidth);
+        this->CB_GPURayCastMIP->GetWidget()->SetSelectedState(0);
+        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_GPURayCastMIP->GetWidgetName() );
+        this->CB_GPURayCastMIP->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
+        
+        //enable/disable adaptive frame rate control
+        this->CB_GPURayCastForceHighQuality=vtkKWCheckButtonWithLabel::New();
+        this->CB_GPURayCastForceHighQuality->SetParent(this->FrameGPURayCasting->GetFrame());
+        this->CB_GPURayCastForceHighQuality->Create();
+        this->CB_GPURayCastForceHighQuality->SetBalloonHelpString("Force GPU mapper to use high quality (high sampling rate) and ignore expected FPS. May overwhelm GPU when used with Use Large Volume option.");
+        this->CB_GPURayCastForceHighQuality->SetLabelText("Force High Quality");
+        this->CB_GPURayCastForceHighQuality->SetLabelWidth(labelWidth);
+        this->CB_GPURayCastForceHighQuality->GetWidget()->SetSelectedState(0);
+        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_GPURayCastForceHighQuality->GetWidgetName() );
+        this->CB_GPURayCastForceHighQuality->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
+        
+        //enable/disable large volume
+        this->CB_GPURayCastLargeVolume=vtkKWCheckButtonWithLabel::New();
+        this->CB_GPURayCastLargeVolume->SetParent(this->FrameGPURayCasting->GetFrame());
+        this->CB_GPURayCastLargeVolume->Create();
+        this->CB_GPURayCastLargeVolume->SetBalloonHelpString("Increase size for internal volume for better rendering quality.");
+        this->CB_GPURayCastLargeVolume->SetLabelText("Use Large Volume");
+        this->CB_GPURayCastLargeVolume->SetLabelWidth(labelWidth);
+        this->CB_GPURayCastLargeVolume->GetWidget()->SetSelectedState(0);
+        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_GPURayCastLargeVolume->GetWidgetName() );
+        this->CB_GPURayCastLargeVolume->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);
+
+    }
+    
+    //opengl 2D polygon blending
+    {
+        this->FramePolygonBlending = vtkKWFrameWithLabel::New();
+        this->FramePolygonBlending->SetParent(this->FramePerformance->GetFrame());
+        this->FramePolygonBlending->Create();
+        this->FramePolygonBlending->AllowFrameToCollapseOff();
+        this->FramePolygonBlending->SetLabelText("OpenGL Polygon Blending");
+        this->Script( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->FramePolygonBlending->GetWidgetName() );
+        
+        //enable/disable adaptive frame rate control
+        this->CB_TextureMapperForceHighQuality=vtkKWCheckButtonWithLabel::New();
+        this->CB_TextureMapperForceHighQuality->SetParent(this->FramePolygonBlending->GetFrame());
+        this->CB_TextureMapperForceHighQuality->Create();
+        this->CB_TextureMapperForceHighQuality->SetBalloonHelpString("Force texture mapper to use high quality (high sampling rate) and ignore expected FPS.");
+        this->CB_TextureMapperForceHighQuality->SetLabelText("Force High Quality");
+        this->CB_TextureMapperForceHighQuality->SetLabelWidth(labelWidth);
+        this->CB_TextureMapperForceHighQuality->GetWidget()->SetSelectedState(0);
+        this->Script ( "pack %s -side top -anchor nw -fill x -padx 2 -pady 2", this->CB_TextureMapperForceHighQuality->GetWidgetName() );
+        this->CB_TextureMapperForceHighQuality->GetWidget()->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*) this->VolumeRenderingCallbackCommand);   
     }
    
 }
@@ -1742,20 +1755,36 @@ void vtkSlicerVRGrayscaleHelper::DestroyPerformance(void)
         this->CB_GPURayCastMIP=NULL;
     }
     
-    if(this->CB_CPURayCastMIP!=NULL)
+    if(this->CB_GPURayCastForceHighQuality!=NULL)
     {
-        this->CB_CPURayCastMIP->GetWidget()->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
-        this->CB_CPURayCastMIP->SetParent(NULL);
-        this->CB_CPURayCastMIP->Delete();
-        this->CB_CPURayCastMIP=NULL;
+        this->CB_GPURayCastForceHighQuality->GetWidget()->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
+        this->CB_GPURayCastForceHighQuality->SetParent(NULL);
+        this->CB_GPURayCastForceHighQuality->Delete();
+        this->CB_GPURayCastForceHighQuality=NULL;
     }
-   
+    
+    if(this->CB_TextureMapperForceHighQuality!=NULL)
+    {
+        this->CB_TextureMapperForceHighQuality->GetWidget()->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
+        this->CB_TextureMapperForceHighQuality->SetParent(NULL);
+        this->CB_TextureMapperForceHighQuality->Delete();
+        this->CB_TextureMapperForceHighQuality=NULL;
+    }
+    
     if(this->SC_ExpectedFPS!=NULL)
     {
         this->SC_ExpectedFPS->RemoveObservers(vtkKWScale::ScaleValueChangedEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
         this->SC_ExpectedFPS->SetParent(NULL);
         this->SC_ExpectedFPS->Delete();
         this->SC_ExpectedFPS=NULL;
+    }
+    
+    if(this->CB_CPURayCastMIP!=NULL)
+    {
+        this->CB_CPURayCastMIP->GetWidget()->RemoveObservers(vtkKWCheckButton::SelectedStateChangedEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
+        this->CB_CPURayCastMIP->SetParent(NULL);
+        this->CB_CPURayCastMIP->Delete();
+        this->CB_CPURayCastMIP=NULL;
     }
     
     if(this->CB_CPURayCastForceHighQuality!=NULL)
@@ -1771,6 +1800,41 @@ void vtkSlicerVRGrayscaleHelper::DestroyPerformance(void)
         this->MB_Mapper->SetParent(NULL);
         this->MB_Mapper->Delete();
         this->MB_Mapper=NULL;
+    }
+    
+    if (this->FramePerformance != NULL)
+    {
+        this->FramePerformance->SetParent(NULL);
+        this->FramePerformance->Delete();
+        this->FramePerformance = NULL;
+    }
+    
+    if (this->FrameGPURayCasting != NULL)
+    {
+        this->FrameGPURayCasting->SetParent(NULL);
+        this->FrameGPURayCasting->Delete();
+        this->FrameGPURayCasting = NULL;
+    }
+    
+    if (this->FramePolygonBlending != NULL)
+    {
+        this->FramePolygonBlending->SetParent(NULL);
+        this->FramePolygonBlending->Delete();
+        this->FramePolygonBlending = NULL;
+    }
+    
+    if (this->FrameCPURayCasting != NULL)
+    {
+        this->FrameCPURayCasting->SetParent(NULL);
+        this->FrameCPURayCasting->Delete();
+        this->FrameCPURayCasting = NULL;
+    }
+    
+    if (this->FrameFPS != NULL)
+    {
+        this->FrameFPS->SetParent(NULL);
+        this->FrameFPS->Delete();
+        this->FrameFPS = NULL;
     }
 }
 
@@ -1805,6 +1869,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessClippingModified(void)
 void vtkSlicerVRGrayscaleHelper::EstimateSampleDistances(void)
 {
     double *spacing = vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetSpacing();
+    
     double minSpace = spacing[0];
     double maxSpace = spacing[0];
     
@@ -1816,8 +1881,22 @@ void vtkSlicerVRGrayscaleHelper::EstimateSampleDistances(void)
             minSpace = spacing[i];
     }
     
+    vtkImageData *imageData = vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData();
+    int *dims = imageData->GetDimensions();
+    int minDim = dims[0];
+    minDim = minDim > dims[1] ? dims[1] : minDim;
+    minDim = minDim > dims[2] ? dims[2] : minDim;
+    
     this->EstimatedInteractiveSampleDistance = maxSpace * 4;
-    this->EstimatedSampleDistance = (maxSpace + minSpace) * 0.5;
+    
+    if (minDim > 128)
+    {
+        this->EstimatedSampleDistance = (maxSpace + minSpace) * 0.5;
+    }
+    else
+    {
+        this->EstimatedSampleDistance = minSpace * 0.5;
+    }
 }
 
 void vtkSlicerVRGrayscaleHelper::ConvertWorldToBoxCoordinates(double *inputOutput)
