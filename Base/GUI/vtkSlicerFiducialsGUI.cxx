@@ -2027,7 +2027,12 @@ void vtkSlicerFiducialsGUI::BuildGUI ( )
     this->MultiColumnList->GetWidget()->SetColumnFormatCommandToEmptyOutput ( this->SelectedColumn );
     this->MultiColumnList->GetWidget()->SetColumnFormatCommandToEmptyOutput ( this->VisibilityColumn );
     this->MultiColumnList->GetWidget()->SetColumnFormatCommandToEmptyOutput ( this->LockColumn );
-    
+
+    // for now, hide the orientation columns
+    for (int hideCol = this->OrWColumn; hideCol <= this->OrZColumn; hideCol++)
+      {
+      this->MultiColumnList->GetWidget()->ColumnVisibilityOff(hideCol);
+      }
     app->Script ( "pack %s -fill both -expand true", this->MultiColumnList->GetWidgetName());
     this->MultiColumnList->GetWidget()->SetCellUpdatedCommand(this, "UpdateElement");
     // set up the right click jump slices to that fiducial point call back
