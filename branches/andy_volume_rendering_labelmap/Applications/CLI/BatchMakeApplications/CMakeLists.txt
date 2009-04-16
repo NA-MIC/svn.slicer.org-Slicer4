@@ -1,4 +1,0 @@
-SUBDIRS(
-  EMSegmentBatchMakeModule
-  GaussianBlurBatchMakeModule
-)

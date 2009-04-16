@@ -1,3 +1,0 @@
-Name: Tractography Fiducial Seeding
-GUIName: FiducialSeeding
-Dependency: Tractography Display

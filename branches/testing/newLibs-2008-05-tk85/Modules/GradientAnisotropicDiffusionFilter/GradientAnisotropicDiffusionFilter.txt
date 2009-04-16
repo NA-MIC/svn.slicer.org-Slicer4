@@ -1,2 +1,0 @@
-Name: Gradient Anisotropic
-GuiName: GradientAnisotropicFilter

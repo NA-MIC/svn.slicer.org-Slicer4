@@ -1,2 +1,0 @@
-Name: Query Atlas
-GUIName: QueryAtlas
