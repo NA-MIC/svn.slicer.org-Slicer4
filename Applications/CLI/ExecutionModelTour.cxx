@@ -74,8 +74,8 @@ int main (int argc, char *argv[])
     std::cerr << "No input transform found! Specified transform ID = " << transform1ID << std::endl;
     return EXIT_FAILURE;
     }
+  scene = 0;
   vtkEventBroker::GetInstance()->Delete();
 
-  scene->Delete();
   return EXIT_SUCCESS;
 }
