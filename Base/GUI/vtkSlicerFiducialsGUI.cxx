@@ -2041,7 +2041,7 @@ void vtkSlicerFiducialsGUI::BuildGUI ( )
     // Point-to-Point measurement
     //---
     vtkKWFrame *measurementFrame = vtkKWFrame::New();
-    measurementFrame->SetParent(fiducialFrame);
+    measurementFrame->SetParent(fiducialFrame->GetFrame());
     measurementFrame->Create();
     app->Script ("pack %s -side top -anchor nw -fill x -pady 0",
                  measurementFrame->GetWidgetName());
