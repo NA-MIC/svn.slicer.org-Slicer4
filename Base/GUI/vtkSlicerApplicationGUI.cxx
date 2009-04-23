@@ -1423,8 +1423,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
 
             
   this->LoadSceneDialog->SetApplication ( app );
-  this->LoadSceneDialog->SetParent (  app->GetNthWindow ( 0 ) );
-  this->LoadSceneDialog->SetMasterWindow( this->MainSlicerWindow );
+  this->LoadSceneDialog->SetMasterWindow(    app->GetNthWindow ( 0 ) );
   this->LoadSceneDialog->Create ( );
   this->LoadSceneDialog->ModalOn();
   this->LoadSceneDialog->SetFileTypes("{ {Scenes} {.mrml .xml .xcat} } { {MRML Scene} {.mrml} } { {Slicer2 Scene} {.xml} } { {Xcede Catalog} {.xcat} } { {All} {.*} }");
