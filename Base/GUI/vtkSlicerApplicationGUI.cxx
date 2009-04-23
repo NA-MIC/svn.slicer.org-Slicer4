@@ -1422,9 +1422,10 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
   this->GetMainSlicerWindow()->GetFeedbackMenu()->AddCommand ("Community: Slicer Visual Blog (www)", NULL, "$::slicer3::ApplicationGUI PostToVisualBlog");            
 
             
-  this->LoadSceneDialog->SetParent ( this->MainSlicerWindow );
-  this->LoadSceneDialog->Create ( );
+  this->LoadSceneDialog->SetApplication ( app );
+  this->LoadSceneDialog->SetParent (  app->GetNthWindow ( 0 ) );
   this->LoadSceneDialog->SetMasterWindow( this->MainSlicerWindow );
+  this->LoadSceneDialog->Create ( );
   this->LoadSceneDialog->ModalOn();
   this->LoadSceneDialog->SetFileTypes("{ {Scenes} {.mrml .xml .xcat} } { {MRML Scene} {.mrml} } { {Slicer2 Scene} {.xml} } { {Xcede Catalog} {.xcat} } { {All} {.*} }");
   this->LoadSceneDialog->RetrieveLastPathFromRegistry("OpenPath");
