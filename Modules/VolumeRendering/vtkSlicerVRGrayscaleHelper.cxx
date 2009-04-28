@@ -820,7 +820,7 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
     
         if(eid==vtkCommand::VolumeMapperComputeGradientsStartEvent)
         {
-            this->DisplayProgressDialog("Please standby: Gradients are calculated");
+            this->DisplayProgressDialog("Please standby: Gradients are being calculated");
             return;
         }
         else if(eid==vtkCommand::VolumeMapperComputeGradientsEndEvent)
