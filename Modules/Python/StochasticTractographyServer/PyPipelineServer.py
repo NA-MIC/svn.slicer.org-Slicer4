@@ -350,15 +350,12 @@ class PipelineHandler(asyncore.dispatcher):
 
           # correctly express gradients into RAS space
           # 04/10 - trafo not needed - bugfix in Slicer
-          m2i = numpy.dot(mu[:3, :3], numpy.sign(r2i[:3, :3]))
-     
-          G1 = numpy.dot(G, mu[:3, :3].T)
-          G2 = numpy.dot(G, m2i[:3, :3].T)
+          mu2 = numpy.dot(numpy.sign(r2i)[:3, :3], mu[:3, :3])
+
+          G1 = numpy.dot(G, mu2[:3, :3].T)
+          #G2 = numpy.dot(G, mu2[:3, :3].T)
 
           vts = vects.vectors
-          vts = numpy.dot(vts, i2r[:3,:3].T)
-          [normv(vts, i) for i in range(vts.shape[0])]
-
 
 
           logger.info("Tensor flag : %s" % str(tensEnabled))
@@ -366,7 +363,7 @@ class PipelineHandler(asyncore.dispatcher):
           if smoothEnabled:
                     for k in range(shpD[3]):
                         timeSM0 = time.time()
-                        data[...,k] = sm.smooth(data[...,k], FWHM, numpy.array([ numpy.abs(i2r[0,0]), numpy.abs(i2r[1,1]), numpy.abs(i2r[2,2]) ],'float'))
+                        data[...,k] = sm.smooth(data[...,k], FWHM, numpy.array([ spa[0], spa[1], spa[2] ],'float'))
                         logger.info("Smoothing DWI volume %i in %s sec" % (k, str(time.time()-timeSM0)))
 
           if wmEnabled:
@@ -399,7 +396,6 @@ class PipelineHandler(asyncore.dispatcher):
 
                     if not isInTensor:
                         EV, lV, xVTensor, xYTensor = tens.EvaluateTensorX1(data, G1.T, b.T, wm)
-                        EV2, lV2, xVTensor2, xYTensor2 = tens.EvaluateTensorX1(data, G2.T, b.T, wm) 
                     else:
                         EV, lV, xVTensor, xYTensor = tens.EvaluateTensorK1(self.ten.getImage(), shpD, wm)
 
@@ -440,10 +436,10 @@ class PipelineHandler(asyncore.dispatcher):
 
                         logger.info("Data type : %s" % data.dtype)
                         if tensEnabled:
-                          paths00, paths01, paths02, paths03, paths04 = track.TrackFiberY40(data.flatten(), wm, shpD, b.T, G1.T, vts.T, IJKstartpoints[0].T, r2i, i2r,\
+                          paths00, paths01, paths02, paths03, paths04 = track.TrackFiberY40(data.flatten(), wm, shpD, b.T, G1.T, vts.T, IJKstartpoints[0].T, r2i, i2r, spa,\
                                   lV, EV, xVTensor, stepSize, maxLength, fa, spaceEnabled)
                         else:
-                          paths00, paths01, paths02, paths03, paths04 = track.TrackFiberW40(data.flatten(), wm, shpD, b.T, G1.T, vts.T, IJKstartpoints[0].T, r2i, i2r,\
+                          paths00, paths01, paths02, paths03, paths04 = track.TrackFiberW40(data.flatten(), wm, shpD, b.T, G1.T, vts.T, IJKstartpoints[0].T, r2i, i2r, spa,\
                                   stepSize, maxLength, fa, spaceEnabled)
 
                         logger.info("Track fibers in %s sec" % str(time.time()-timeS2))
@@ -475,10 +471,10 @@ class PipelineHandler(asyncore.dispatcher):
 
                         logger.info("Data type : %s" % data.dtype)
                         if tensEnabled:
-                          paths10, paths11, paths12, paths13, paths14 = track.TrackFiberY40(data.flatten(), wm, shpD, b.T, G1.T, vts.T, IJKstartpoints2[0].T, r2i, i2r,\
+                          paths10, paths11, paths12, paths13, paths14 = track.TrackFiberY40(data.flatten(), wm, shpD, b.T, G1.T, vts.T, IJKstartpoints2[0].T, r2i, i2r, spa,\
                                   lV, EV, xVTensor, stepSize, maxLength, fa, spaceEnabled)
                         else:
-                          paths10, paths11, paths12, paths13, paths14 = track.TrackFiberW40(data.flatten(), wm, shpD, b.T, G1.T, vts.T, IJKstartpoints2[0].T, r2i, i2r,\
+                          paths10, paths11, paths12, paths13, paths14 = track.TrackFiberW40(data.flatten(), wm, shpD, b.T, G1.T, vts.T, IJKstartpoints2[0].T, r2i, i2r, spa,\
                                   stepSize, maxLength, fa, spaceEnabled)
 
                         logger.info("Track fibers in %s sec" % str(time.time()-timeS3))
@@ -493,8 +489,8 @@ class PipelineHandler(asyncore.dispatcher):
                             cm2 = track.ConnectFibersX2(paths11, paths14, shpD, lengthEnabled,  lengthClass)
 
                     if isInRoiA and isInRoiB:
-                        cm3 = track.FilterFibers0(paths00, paths01, paths02, paths03, paths04, self.roiA.getImage(), self.roiB.getImage(), shpD, vicinity, threshold)
-                        cm4 = track.FilterFibers0(paths10, paths11, paths12, paths13, paths14, self.roiB.getImage(), self.roiA.getImage(), shpD, vicinity, threshold)
+                        cm3 = track.FilterFibers0(paths00, paths01, paths02, paths03, paths04, self.roiA.getImage(), self.roiB.getImage(), shpD, threshold, vicinity)
+                        cm4 = track.FilterFibers0(paths10, paths11, paths12, paths13, paths14, self.roiB.getImage(), self.roiA.getImage(), shpD, threshold, vicinity)
 
 
 
@@ -532,14 +528,14 @@ class PipelineHandler(asyncore.dispatcher):
 
 
           if tensEnabled:
-                     xVTensor2 = xVTensor2.swapaxes(2,0)
-                     xVTensor2 = xVTensor2.astype('float32') # slicerd do not support double type yet
-                     xYTensor2 = xYTensor2.swapaxes(2,0)
-                     xYTensor2 = xYTensor2.astype('float32') # slicerd do not support double type yet
+                     xVTensor = xVTensor.swapaxes(2,0)
+                     xVTensor = xVTensor.astype('float32') # slicerd do not support double type yet
+                     xYTensor = xYTensor.swapaxes(2,0)
+                     xYTensor = xYTensor.astype('float32') # slicerd do not support double type yet
                      tmp= 'tensor_' + dateT
-                     xYTensor2.tofile(tmpF + tmp + '.data')
-                     createParams(xYTensor2, tmpF + tmp, True)
-                     s.putD(xVTensor2, dims, org, i2r, mu, tmp)
+                     xYTensor.tofile(tmpF + tmp + '.data')
+                     createParams(xYTensor, tmpF + tmp, True)
+                     s.putD(xVTensor, dims, org, i2r, mu, tmp)
 
 
                      if faEnabled:
