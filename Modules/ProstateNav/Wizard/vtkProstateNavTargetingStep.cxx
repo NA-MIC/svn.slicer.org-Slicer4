@@ -66,6 +66,54 @@ vtkProstateNavTargetingStep::vtkProstateNavTargetingStep()
 //----------------------------------------------------------------------------
 vtkProstateNavTargetingStep::~vtkProstateNavTargetingStep()
 {
+  if (this->MainFrame)
+    {
+    this->MainFrame->SetParent(NULL);
+    this->MainFrame->Delete();
+    this->MainFrame = NULL;
+    }
+  if (this->TargetListFrame)
+    {
+    this->TargetListFrame->SetParent(NULL);
+    this->TargetListFrame->Delete();
+    this->TargetListFrame = NULL;
+    }
+  if (this->TargetControlFrame)
+    {
+    this->TargetControlFrame->SetParent(NULL);
+    this->TargetControlFrame->Delete();
+    this->TargetControlFrame = NULL;
+    }
+  if (this->MultiColumnList)
+    {
+    this->MultiColumnList->SetParent(NULL);
+    this->MultiColumnList->Delete();
+    this->MultiColumnList = NULL;
+    }
+  if (this->NeedlePositionMatrix)
+    {
+    this->NeedlePositionMatrix->SetParent(NULL);
+    this->NeedlePositionMatrix->Delete();
+    this->NeedlePositionMatrix = NULL;
+    }
+  if (this->NeedleOrientationMatrix)
+    {
+    this->NeedleOrientationMatrix->SetParent(NULL);
+    this->NeedleOrientationMatrix->Delete();
+    this->NeedleOrientationMatrix = NULL;
+    }
+  if (this->MoveButton)
+    {
+    this->MoveButton->SetParent(NULL);
+    this->MoveButton->Delete();
+    this->MoveButton = NULL;
+    }
+  if (this->StopButton)
+    {
+    this->StopButton->SetParent(NULL);
+    this->StopButton->Delete();
+    this->StopButton = NULL;
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -324,7 +372,12 @@ void vtkProstateNavTargetingStep::ProcessGUIEvents(vtkObject *caller,
 void vtkProstateNavTargetingStep::ProcessMRMLEvents(vtkObject *caller,
                                          unsigned long event, void *callData)
 {
-  std::cerr << "vtkProstateNavTargetingStep::ProcessMRMLEvents() is called. " << std::cerr;
+  //std::cerr << "vtkProstateNavTargetingStep::ProcessMRMLEvents() is called. " << std::cerr;
+
+  if (!this->GetGUI())
+    {
+    return;
+    }
 
   vtkMRMLSelectionNode *selnode;
   if (this->GetGUI()->GetApplicationLogic())
@@ -393,7 +446,7 @@ void vtkProstateNavTargetingStep::ProcessMRMLEvents(vtkObject *caller,
 void vtkProstateNavTargetingStep::UpdateMRMLObserver(vtkMRMLSelectionNode* selnode)
 {
 
-  std::cerr << "vtkProstateNavTargetingStep::UpdateMRMLObserver()" << std::endl;
+//  std::cerr << "vtkProstateNavTargetingStep::UpdateMRMLObserver()" << std::endl;
 
   //vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
   //vtkSlicerFiducialsGUI *fidGUI
@@ -404,7 +457,7 @@ void vtkProstateNavTargetingStep::UpdateMRMLObserver(vtkMRMLSelectionNode* selno
                                           ->GetNodeByID(this->GetGUI()->GetFiducialListNodeID()));
   if (selnode != NULL)
     {
-    std::cerr << "selnode != 0;" << std::endl;
+    //std::cerr << "selnode != 0;" << std::endl;
     // is the active fid list id out of synch with our selection?
     vtkIntArray *events = vtkIntArray::New();
     events->InsertNextValue(vtkCommand::ModifiedEvent);
@@ -420,6 +473,7 @@ void vtkProstateNavTargetingStep::UpdateMRMLObserver(vtkMRMLSelectionNode* selno
       this->GetGUI()->SetFiducialListNode(fidlist);
       this->InvokeEvent (vtkCommand::ModifiedEvent);
       } 
+    events->Delete();
     }
 }
 
