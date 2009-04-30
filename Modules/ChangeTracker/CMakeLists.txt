@@ -77,9 +77,6 @@ set(ChangeTracker_SRCS
 # Enders work 
 subdirs(DeformableMetric CommandLineApplication) 
 
-# Tools for diameter estimation
-subdirs(TumorDiameterEstimation)
-
 # Abstract/pure virtual classes
 
 #SET_SOURCE_FILES_PROPERTIES(
