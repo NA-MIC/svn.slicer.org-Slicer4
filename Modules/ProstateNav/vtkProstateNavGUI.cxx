@@ -203,7 +203,9 @@ vtkProstateNavGUI::vtkProstateNavGUI ( )
   this->FiducialListNode   = NULL;
 
   this->Entered = 0;
-
+  this->CoordinateConverter = NULL;
+  this->CommandConverter = NULL;
+ 
 }
 
 //---------------------------------------------------------------------------
@@ -238,29 +240,8 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
     }
 
 
-  //----------------------------------------------------------------
-  // Wizard Frame
 
-  if ( this->WizardSteps )
-    {
-    for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
-      {
-      if ( this->WizardSteps[i] != NULL )
-        {
-        this->WizardSteps[i] = NULL;
-        }
-      }
-    delete [] this->WizardSteps;
-    this->WizardSteps = NULL;
-    }
 
-  if (this->WizardWidget)
-    {
-    this->WizardWidget->SetParent(NULL);
-    this->WizardWidget->Delete(); 
-    this->WizardWidget = NULL;
-    }
-  return;
 
   this->SetModuleLogic ( NULL );
 
@@ -333,6 +314,61 @@ vtkProstateNavGUI::~vtkProstateNavGUI ( )
     this->LocatorCheckButton->Delete ( );
     }
 
+  //----------------------------------------------------------------
+  // Wizard Frame
+
+  if (this->WizardWidget)
+    {
+    this->WizardWidget->SetParent(NULL);
+    this->WizardWidget->Delete(); 
+    this->WizardWidget = NULL;
+    }
+
+  if ( this->WizardSteps )
+    {
+    for (int i = 0; i < vtkProstateNavLogic::NumPhases; i ++)
+      {
+      if ( this->WizardSteps[i] != NULL )
+        {
+        this->WizardSteps[i]->Delete();
+        this->WizardSteps[i] = NULL;
+        }
+      }
+    delete [] this->WizardSteps;
+    this->WizardSteps = NULL;
+    }
+
+  // -----------------------------------------
+  // Work Phase Display Frame
+
+  if (this->SoftwareStatusLabelDisp)
+    {
+    this->SoftwareStatusLabelDisp->SetParent(NULL);
+    this->SoftwareStatusLabelDisp->Delete(); 
+    this->SoftwareStatusLabelDisp = NULL;
+    }
+  if (this->ScannerStatusLabelDisp)
+    {
+    this->ScannerStatusLabelDisp->SetParent(NULL);
+    this->ScannerStatusLabelDisp->Delete(); 
+    this->ScannerStatusLabelDisp = NULL;
+    }
+  if (this->RobotStatusLabelDisp)
+    {
+    this->RobotStatusLabelDisp->SetParent(NULL);
+    this->RobotStatusLabelDisp->Delete(); 
+    this->RobotStatusLabelDisp = NULL;
+    }
+  if (this->CoordinateConverter)
+    { 
+    this->CoordinateConverter->Delete();
+    this->CoordinateConverter = NULL;
+    }
+  if (this->CommandConverter)
+    {
+    this->CommandConverter->Delete();
+    this->CommandConverter = NULL;
+    }
 }
 
 
@@ -870,10 +906,16 @@ void vtkProstateNavGUI::Enter()
                                         ->GetModuleGUIByName("OpenIGTLink IF"));
     if (igtlGUI)
       {
-      vtkIGTLToMRMLCoordinate* coordinateConverter = vtkIGTLToMRMLCoordinate::New();
-      vtkIGTLToMRMLBrpRobotCommand* commandConverter = vtkIGTLToMRMLBrpRobotCommand::New();
-      igtlGUI->GetLogic()->RegisterMessageConverter(coordinateConverter);
-      igtlGUI->GetLogic()->RegisterMessageConverter(commandConverter);
+      if (!this->CoordinateConverter)
+        {
+        this->CoordinateConverter = vtkIGTLToMRMLCoordinate::New();
+        }
+      if (!this->CommandConverter)
+        {
+        this->CommandConverter = vtkIGTLToMRMLBrpRobotCommand::New();
+        }
+      igtlGUI->GetLogic()->RegisterMessageConverter(this->CoordinateConverter);
+      igtlGUI->GetLogic()->RegisterMessageConverter(this->CommandConverter);
       }
 
     this->GetLogic()->Enter();
@@ -891,35 +933,38 @@ void vtkProstateNavGUI::Enter()
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
 
     // Get a pointer to the Fiducials module
-    vtkSlicerFiducialsGUI *fidGUI
-      = (vtkSlicerFiducialsGUI*)app->GetModuleGUIByName("Fiducials");
-    fidGUI->Enter();
-
-    // Create New Fiducial list for Prostate Module
-    vtkSlicerFiducialsLogic *fidLogic = (vtkSlicerFiducialsLogic*)(fidGUI->GetLogic());
-    vtkMRMLFiducialListNode *newList = fidLogic->AddFiducialList();
-
-    if (newList != NULL)
+    vtkSlicerFiducialsGUI* fidGUI = vtkSlicerFiducialsGUI::SafeDownCast ( app->GetModuleGUIByName ("Fiducials"));
+    if (fidGUI)
       {
-      // Change the name of the list
-      newList->SetName(this->GetMRMLScene()->GetUniqueNameByString("PM"));
-
-      fidGUI->SetFiducialListNodeID(newList->GetID());
-      newList->Delete();
-      }
-    else
-      {
-        vtkErrorMacro("Unable to add a new fid list via the logic\n");
-      }
-    // now get the newly active node 
-    this->FiducialListNodeID = fidGUI->GetFiducialListNodeID();
-    this->FiducialListNode 
-      = (vtkMRMLFiducialListNode *)this->GetMRMLScene()->GetNodeByID(this->FiducialListNodeID);
-    if (this->FiducialListNode == NULL)
-      {
-      vtkErrorMacro ("ERROR adding a new fiducial list for the point...\n");
-      return;
-      }
+      // Create New Fiducial list for Prostate Module
+      vtkSlicerFiducialsLogic *fidLogic = fidGUI->GetLogic();
+      if (fidLogic)
+        {
+        vtkMRMLFiducialListNode *newList = fidLogic->AddFiducialList();
+        if (newList)
+          {
+          // Change the name of the list
+          newList->SetName(this->GetMRMLScene()->GetUniqueNameByString("PM"));
+          //fidGUI->SetFiducialListNodeID(id);
+          }
+        else
+          {
+          vtkErrorMacro("Unable to add a new fid list via the logic\n");
+          }
+          // now get the newly active node 
+//        this->FiducialListNodeID = fidGUI->GetFiducialListNodeID();
+          this->FiducialListNodeID = newList->GetID(); 
+//        this->FiducialListNode = (vtkMRMLFiducialListNode *)this->GetMRMLScene()->GetNodeByID(this->FiducialListNodeID);
+          this->FiducialListNode = (vtkMRMLFiducialListNode *)this->GetMRMLScene()->GetNodeByID(newList->GetID());
+//        newList->Delete();
+ 
+          if (this->FiducialListNode == NULL)
+            {
+            vtkErrorMacro ("ERROR adding a new fiducial list for the point...\n");
+            return;
+            }
+          }
+       }
     }
 }
 
@@ -1000,7 +1045,6 @@ void vtkProstateNavGUI::BuildGUIForWizardFrame()
 
     app->Script("pack %s -side top -anchor nw -fill both -expand y",
                 this->WizardWidget->GetWidgetName());
-
     wizardFrame->Delete();
 
     // -----------------------------------------------------------------
@@ -1065,7 +1109,6 @@ void vtkProstateNavGUI::BuildGUIForWizardFrame()
       //                                              WorkPhaseColor[i][1],
       //                                              WorkPhaseColor[i][2]);
       wizard_workflow->AddNextStep(this->WizardSteps[i]);
-//    this->WizardSteps[i]->Delete();
       }
 
 
@@ -1412,11 +1455,20 @@ void vtkProstateNavGUI::BuildGUIForVisualizationControlFrame ()
                ImagingMenu->GetWidgetName());
 
 
+  displayFrame->SetParent(NULL);
   displayFrame->Delete();
+  driverFrame->SetParent(NULL);
   driverFrame->Delete();
+  modeFrame->SetParent(NULL);
   modeFrame->Delete();
+  sliceFrame->SetParent(NULL);
   sliceFrame->Delete();
+  visCtrlFrame->SetParent(NULL);
   visCtrlFrame->Delete();
+  rtImageFrame->SetParent(NULL);
+  rtImageFrame->Delete();
+  scanFrame->SetParent(NULL);
+  scanFrame->Delete();
 }
 
 
@@ -1424,7 +1476,7 @@ void vtkProstateNavGUI::BuildGUIForVisualizationControlFrame ()
 int vtkProstateNavGUI::ChangeWorkPhase(int phase, int fChangeWizard)
 {
 
-  cerr << "ChangeWorkPhase: started" << endl;
+//  cerr << "ChangeWorkPhase: started" << endl;
     if (!this->Logic->SwitchWorkPhase(phase)) // Set next phase
     {
       cerr << "ChangeWorkPhase: Cannot make transition!" << endl;
