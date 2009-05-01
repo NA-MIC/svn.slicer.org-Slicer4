@@ -570,6 +570,11 @@ void vtkSlicerFiducialsGUI::ProcessGUIEvents ( vtkObject *caller,
         activeFiducialListNode->RemoveAllFiducials();
         this->GetMRMLScene()->RemoveNode(activeFiducialListNode);
         this->SetFiducialListNodeID(NULL);
+        // is there now another list selected?
+        if (this->FiducialListSelectorWidget->GetSelected() != NULL)
+          {
+          this->SetFiducialListNodeID(vtkMRMLFiducialListNode::SafeDownCast(this->FiducialListSelectorWidget->GetSelected())->GetID());
+          }
         }
       return;
       }
