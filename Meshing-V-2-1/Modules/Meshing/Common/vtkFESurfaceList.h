@@ -24,7 +24,7 @@
 #include "vtkObject.h"
 #include "vtkMimxSurfacePolyDataActor.h"
 #include "vtkLinkedList.h"
-#include "vtkLinkedListWrapper.h"
+#include "vtkLocalLinkedListWrapper.h"
 #include "vtkSetGet.h" // For vtkTypeMacro.
 #include "vtkMimxCommonWin32Header.h"
 #include "vtkMRMLFESurfaceNode.h"
@@ -50,6 +50,7 @@ public:
   virtual int GetNumberOfItems();
   virtual int RemoveItem(int );
 protected:
+    vtkLocalLinkedListWrapper* actorList;
     vtkMRMLScene* savedMRMLScene; 
     vtkFESurfaceList();
   virtual ~vtkFESurfaceList();

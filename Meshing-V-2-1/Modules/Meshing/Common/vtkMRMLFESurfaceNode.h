@@ -62,23 +62,11 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFESurfaceNode : public vtkMRMLModelNode
   // Set pointer to the Mimx actor that contains the state variables
    void SetMimxSurfacePolyDataActor(vtkMimxSurfacePolyDataActor* ptr) {actor = ptr;}
    vtkMimxSurfacePolyDataActor* GetMimxSurfacePolyDataActor(void) {return actor;}
-
-//  vtkGetMacro(DataType, int);
-//  vtkSetMacro(DataType, int);
-//
-//  vtkGetStringMacro(FileName);
-//  vtkSetStringMacro(FileName);
-//  
-//  vtkGetStringMacro(FilePath);
-//  vtkSetStringMacro(FilePath);
   
-  // can't use VTK macros anymore because the values are stored in an actor instance
    
   void SetDataType(int value) {this->actor->SetDataType(value);}   
   int  GetDataType(void)      {return this->actor->GetDataType();} 
 
-  //*** MimxSurfacePolyDataActor method is gone
-  //*** void   SetFileName(char* value) {this->actor->SetFileName(value);}   
   char*  GetFileName(void)      {return this->actor->GetFileName();} 
 
   void   SetFilePath(char* value) {this->actor->SetFilePath(value);}   
