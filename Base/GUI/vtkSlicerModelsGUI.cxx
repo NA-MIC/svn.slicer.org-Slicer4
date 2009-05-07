@@ -18,14 +18,12 @@
 #include "vtkKWFrameWithLabel.h"
 #include "vtkKWMenuButton.h"
 #include "vtkKWMessageDialog.h"
-
+#include "vtkKWTkUtilities.h"
 #include "vtkKWTopLevel.h"
 
 // for scalars
 #include "vtkPointData.h"
 
-// for new data module buttons
-#include "vtkSlicerDataGUI.h"
 #include "vtkSlicerApplicationGUI.h"
 
 //---------------------------------------------------------------------------
@@ -40,6 +38,7 @@ vtkSlicerModelsGUI::vtkSlicerModelsGUI ( )
   // classes not yet defined!
   this->Logic = NULL;
   this->ModelHierarchyLogic = NULL;
+  this->LoadDirectory = NULL;
 
   //this->ModelNode = NULL;
   this->LoadModelButton = NULL;
@@ -50,6 +49,15 @@ vtkSlicerModelsGUI::vtkSlicerModelsGUI ( )
   this->ModelHierarchyWidget = NULL;
   this->ModelDisplayFrame = NULL;
   this->ModelInfoWidget = NULL;
+
+  this->AddModelDialogButton = NULL;
+  this->AddModelDirectoryDialogButton = NULL;
+  this->AddModelWindow = NULL;
+
+  this->ModelSelector = NULL;
+  this->AddOverlayDialogButton = NULL;
+  this->AddOverlayWindow = NULL;
+  this->SelectedModelNode = NULL;
 
   NACLabel = NULL;
   NAMICLabel =NULL;
@@ -69,7 +77,8 @@ vtkSlicerModelsGUI::~vtkSlicerModelsGUI ( )
 
   this->SetModuleLogic ( NULL );
   this->SetModelHierarchyLogic ( NULL );
-
+  this->SetLoadDirectory ( NULL );
+  
   if (this->ModelDisplaySelectorWidget)
     {
     this->ModelDisplaySelectorWidget->SetParent(NULL);
@@ -135,11 +144,59 @@ vtkSlicerModelsGUI::~vtkSlicerModelsGUI ( )
     this->BIRNLabel->Delete();
     this->BIRNLabel = NULL;
     }
+
+  //--- widgets in temporary raised windows.
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+  if ( this->AddModelDialogButton)
+    {
+    this->AddModelDialogButton->SetParent ( NULL );
+    this->AddModelDialogButton->Delete();
+    this->AddModelDialogButton = NULL;    
+    }
+  if ( this->AddModelDirectoryDialogButton)
+    {
+    this->AddModelDirectoryDialogButton->SetParent ( NULL );
+    this->AddModelDirectoryDialogButton->Delete();
+    this->AddModelDirectoryDialogButton = NULL;    
+    }
+  if ( this->AddModelWindow )
+    {
+    if ( app )
+      {
+      app->Script ( "grab release %s", this->AddModelWindow->GetWidgetName() );
+      }
+    this->AddModelWindow->Withdraw();
+    this->AddModelWindow->Delete();
+    }
+
+  if ( this->AddOverlayDialogButton )
+    {
+    this->AddOverlayDialogButton->SetParent ( NULL );
+    this->AddOverlayDialogButton->Delete();
+    this->AddOverlayDialogButton = NULL;    
+    }
+  if ( this->ModelSelector)
+    {
+    this->ModelSelector->SetParent ( NULL );
+    this->ModelSelector->Delete();
+    this->ModelSelector = NULL;    
+    }
+  if ( this->AddOverlayWindow )
+    {
+    if ( app )
+      {
+      app->Script ( "grab release %s", this->AddOverlayWindow->GetWidgetName() );
+      }
+    this->AddOverlayWindow->Withdraw();
+    this->AddOverlayWindow->Delete();
+    }
+
   if (this->ModelDisplayFrame)
     {
     this->ModelDisplayFrame->SetParent ( NULL );
     this->ModelDisplayFrame->Delete();
     }
+
 //  this->SetViewerWidget(NULL);   
 //  this->SetInteractorStyle(NULL);
   this->Built = false;
@@ -198,6 +255,26 @@ void vtkSlicerModelsGUI::ProcessGUIEvents ( vtkObject *caller,
                                             unsigned long event, void *callData )
 {
 
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast (this->GetApplication() );
+  if ( !app )
+    {
+    vtkErrorMacro ( "ProcessGUIEvents: got Null SlicerApplication" );
+    return;
+    }
+  vtkSlicerApplicationGUI *appGUI = app->GetApplicationGUI();
+  if ( !appGUI )
+    {
+    vtkErrorMacro ( "ProcessGUIEvents: got Null SlicerApplicationGUI" );
+    return;    
+    }
+  vtkSlicerWindow *win = appGUI->GetMainSlicerWindow();
+  if ( !win )
+    {
+    vtkErrorMacro ( "ProcessGUIEvents: got NULL Slicer Window" );
+    return;
+    }
+
+
   if (vtkSlicerModelHierarchyWidget::SafeDownCast(caller) == this->ModelHierarchyWidget && 
       event == vtkSlicerModelHierarchyWidget::SelectedEvent)
     {
@@ -215,37 +292,187 @@ void vtkSlicerModelsGUI::ProcessGUIEvents ( vtkObject *caller,
       }
     return;
     }
+
+  //--- buttons
   vtkKWPushButton *b = vtkKWPushButton::SafeDownCast ( caller );
-  if (b == this->LoadModelButton || b == this->LoadScalarsButton)
+  if ( b != NULL && event == vtkKWPushButton::InvokedEvent )
     {
-    // get the data gui
-    vtkSlicerDataGUI *dataGUI = NULL;
-    if ( this->GetApplication() != NULL )
+    if (b == this->LoadModelButton)
       {
-      dataGUI = vtkSlicerDataGUI::SafeDownCast(vtkSlicerApplication::SafeDownCast(this->GetApplication())->GetModuleGUIByName("Data"));
+      this->RaiseAddModelWindow();
       }
-    if (dataGUI != NULL)
+    else if ( b == this->LoadScalarsButton)
       {
-      if (b == this->LoadModelButton)
-        {
-        dataGUI->RaiseAddModelWindow();
-        }
-      else if ( b == this->LoadScalarsButton )
-        {
-        dataGUI->RaiseAddScalarOverlayWindow();
-        }
+      this->RaiseAddScalarOverlayWindow();
       }
-    else
+    }
+
+  //--- look for file browser dialogs
+  //--- these are all pop-ups associated with adding data types. temporary solution for centralized load.
+  vtkKWLoadSaveDialog *d = vtkKWLoadSaveDialog::SafeDownCast ( caller );
+  if ( d != NULL &&  event == vtkKWTopLevel::WithdrawEvent )
+    {
+    if ( this->AddModelDialogButton != NULL && d == this->AddModelDialogButton->GetLoadSaveDialog() )
       {
-      vtkErrorMacro("Unable to get the Data module interface for loading! Please use File->Add Data");
-      vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
-      dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
-      dialog->SetStyleToMessage();
-      std::string msg = std::string("Unable to get the Data module interface for loading! Please use File->Add Data");
-      dialog->SetText(msg.c_str());
-      dialog->Create ( );
-      dialog->Invoke();
-      dialog->Delete();
+      // If a file has been selected for loading...
+      const char *fileName = this->AddModelDialogButton->GetFileName();
+      if ( fileName ) 
+        {
+        win->SetStatusText ( "Reading and loading model file..." );
+        app->Script ( "update idletasks" );
+
+        vtkMRMLModelNode *modelNode = this->Logic->AddModel( fileName );
+        if ( modelNode == NULL ) 
+          {
+          vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+          dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+          dialog->SetStyleToMessage();
+          std::string msg = std::string("Unable to read model file ") + std::string(fileName);
+          dialog->SetText(msg.c_str());
+          dialog->Create ( );
+          dialog->Invoke();
+          dialog->Delete();
+          vtkErrorMacro("Unable to read model file " << fileName);
+          }
+        else
+          {
+          win->SetStatusText ( "" );
+          app->Script ( "update idletasks" );
+          this->AddModelDialogButton->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
+          const vtksys_stl::string fname(fileName);
+          vtksys_stl::string name = vtksys::SystemTools::GetFilenameName(fname);
+          // set it to be the active model
+          // set the display model
+          this->SelectedModelNode = modelNode;
+          if ( this->ModelSelector )
+            {
+            this->ModelSelector->SetSelected(this->SelectedModelNode);
+            }
+          }
+
+        if ( this->AddModelDialogButton->GetText() )
+          {
+          this->AddModelDialogButton->SetText("");
+          }
+        //--- Withdraw and destroy the AddModelWindow
+        this->WithdrawAddModelWindow();
+        }
+      return;
+      }
+
+    else if ( this->AddModelDirectoryDialogButton != NULL && d == this->AddModelDirectoryDialogButton->GetLoadSaveDialog() )
+      {
+      // If a file has been selected for loading...
+      const char *fileName = this->AddModelDirectoryDialogButton->GetFileName();
+      if ( fileName ) 
+        {
+        if ( this->Logic != NULL )
+          {
+          vtkKWMessageDialog *dialog0 = vtkKWMessageDialog::New();
+          dialog0->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+          dialog0->SetStyleToMessage();
+          std::string msg0 = std::string("Reading *.vtk from models directory ") + std::string(fileName);
+          dialog0->SetText(msg0.c_str());
+          dialog0->Create ( );
+          dialog0->Invoke();
+          dialog0->Delete();
+
+          win->SetStatusText ( "Reading and loading files..." );
+          app->Script ( "update idletasks" );
+      
+          if (this->Logic->AddModels( fileName, ".vtk") == 0)
+            {
+            vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+            dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+            dialog->SetStyleToMessage();
+            std::string msg = std::string("Unable to read all models from directory ") + std::string(fileName);
+            dialog->SetText(msg.c_str());
+            dialog->Create ( );
+            dialog->Invoke();
+            dialog->Delete();
+            vtkErrorMacro("ProcessGUIEvents: unable to read all models from directory " << fileName);
+            }
+          else
+            {
+            this->AddModelDirectoryDialogButton->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
+            vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+            dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+            dialog->SetStyleToMessage();
+            dialog->SetText("Done reading models...");
+            dialog->Create ( );
+            dialog->Invoke();
+            dialog->Delete();
+            }
+          }
+        //--- Withdraw and destroy the AddModelWindow
+        if ( this->AddModelDirectoryDialogButton->GetText() )
+          {
+          this->AddModelDirectoryDialogButton->SetText("");
+          }
+        this->WithdrawAddModelWindow();
+        }
+
+      win->SetStatusText ( "" );
+      app->Script ( "update idletasks" );
+      return;      
+      }
+    
+    else if ( this->AddOverlayDialogButton != NULL && d == this->AddOverlayDialogButton->GetLoadSaveDialog() )
+      {
+      // If a scalar file has been selected for loading...
+      const char *fileName = this->AddOverlayDialogButton->GetFileName();
+      if ( fileName ) 
+        {
+        if ( this->SelectedModelNode == NULL )
+          {
+          vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+          dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+          dialog->SetStyleToMessage();
+          std::string msg = std::string("Please select a model to which the scalar overlay will be applied before selecting the overlay.");
+          dialog->SetText(msg.c_str());
+          dialog->Create ( );
+          dialog->Invoke();
+          dialog->Delete();
+          return;
+          }
+
+        vtkMRMLModelNode *modelNode = this->SelectedModelNode;
+        if (modelNode != NULL)
+          {
+          vtkDebugMacro("ProcessGUIEvents: loading scalar for model " << modelNode->GetName());
+          // load the scalars
+
+          win->SetStatusText ( "Reading and loading scalar overlay..." );
+          app->Script ( "update idletasks" );
+      
+          if ( !(this->Logic->AddScalar(fileName, modelNode)) )
+            {
+            vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+            dialog->SetParent ( this->UIPanel->GetPageWidget ( "Models" ) );
+            dialog->SetStyleToMessage();
+            std::string msg = std::string("Unable to read scalars file ") + std::string(fileName);
+            dialog->SetText(msg.c_str());
+            dialog->Create ( );
+            dialog->Invoke();
+            dialog->Delete();
+            vtkErrorMacro("Error loading scalar overlay file " << fileName);
+            }
+          else
+            {
+            this->AddOverlayDialogButton->GetLoadSaveDialog()->SaveLastPathToRegistry("OpenPath");
+            }
+          }
+
+        //--- Withdraw and destroy the AddOverlayWindow
+        if ( this->AddOverlayDialogButton->GetText())
+          {
+          this->AddOverlayDialogButton->SetText ("");
+          }
+        this->WithdrawAddScalarOverlayWindow();
+        }
+      win->SetStatusText ( "" );
+      app->Script ( "update idletasks" );
+      return;      
       }
     }
 }    
@@ -523,3 +750,404 @@ void vtkSlicerModelsGUI::Init(void)
     }
 }
 */
+
+
+
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerModelsGUI::WithdrawAddModelWindow ( )
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+  if ( app && this->AddModelWindow )
+    {
+    app->Script ( "grab release %s", this->AddModelWindow->GetWidgetName() );
+    }
+
+  if ( this->AddModelDialogButton )
+    {
+    this->AddModelDialogButton->GetLoadSaveDialog()->RemoveObservers ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+    }
+  if ( this->AddModelDirectoryDialogButton )
+    {
+    this->AddModelDirectoryDialogButton->GetLoadSaveDialog()->RemoveObservers ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+    }
+  if ( this->AddModelWindow )
+    {
+    this->AddModelWindow->Withdraw();
+    }
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerModelsGUI::RaiseAddModelWindow ( )
+{
+  //--- create window if not already created.
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+  if ( app == NULL )
+    {
+    vtkErrorMacro ( "RaiseAddModelWindow: got NULL SlicerApplication");
+    return;
+    }
+  vtkSlicerApplicationGUI *appGUI = app->GetApplicationGUI ( );
+  if ( appGUI == NULL )
+    {
+    vtkErrorMacro ( "RaiseAddModelWindow: got NULL SlicerApplicationGUI");
+    return;
+    }
+  vtkSlicerWindow *win = appGUI->GetMainSlicerWindow ();
+  if ( win == NULL )
+    {
+    vtkErrorMacro ( "RaiseAddModelWindow: got NULL MainSlicerWindow");
+    return;
+    }
+
+  if ( this->LoadDirectory == NULL )
+    {
+    if ( app )
+      {
+      if ( app->GetTemporaryDirectory() )
+        {
+        this->SetLoadDirectory(app->GetTemporaryDirectory() );
+        }
+      }
+    }
+  if ( this->AddModelWindow == NULL )
+    {
+    //-- top level container.
+    this->AddModelWindow = vtkKWTopLevel::New();
+    this->AddModelWindow->SetMasterWindow (win );
+    if ( this->LoadModelButton )
+      {
+      this->AddModelWindow->SetParent ( this->LoadModelButton);
+      }
+    this->AddModelWindow->SetApplication ( this->GetApplication() );
+    this->AddModelWindow->Create();
+    if ( this->GetLoadModelButton() )
+      {
+      int px, py;
+      vtkKWTkUtilities::GetWidgetCoordinates( this->GetLoadModelButton(), &px, &py );
+      this->AddModelWindow->SetPosition ( px + 10, py + 10 );
+      }
+    this->AddModelWindow->SetBorderWidth ( 1 );
+    this->AddModelWindow->SetReliefToFlat();
+    this->AddModelWindow->SetTitle ( "Add a 3D model");
+    this->AddModelWindow->SetSize ( 250, 100 );
+    this->AddModelWindow->Withdraw();
+    this->AddModelWindow->SetDeleteWindowProtocolCommand ( this, "DestroyAddModelWindow");
+
+    //--- Add model button
+    vtkKWLabel *l0 = vtkKWLabel::New();
+    l0->SetParent ( this->AddModelWindow );
+    l0->Create();
+    l0->SetText ( "Select model:" );
+
+    this->AddModelDialogButton = vtkKWLoadSaveButton::New();
+    this->AddModelDialogButton->SetParent ( this->AddModelWindow );
+    this->AddModelDialogButton->Create();
+    if ( this->GetLoadDirectory() == NULL )
+      {
+      this->AddModelDialogButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry ("OpenPath");
+      const char *lastpath = this->AddModelDialogButton->GetLoadSaveDialog()->GetLastPath();
+      if ( lastpath != NULL && !(strcmp(lastpath, "" )) )
+        {
+//        this->AddModelDialogButton->SetInitialFileName (lastpath);
+        }
+      }
+    else
+      {
+      this->AddModelDialogButton->GetLoadSaveDialog()->SetLastPath ( this->GetLoadDirectory() );
+//      this->AddModelDialogButton->SetInitialFileName ( this->GetLoadDirectory() );
+      }
+    this->AddModelDialogButton->TrimPathFromFileNameOff();
+    this->AddModelDialogButton->SetMaximumFileNameLength (128 );
+    this->AddModelDialogButton->GetLoadSaveDialog()->ChooseDirectoryOff();
+    this->AddModelDialogButton->GetLoadSaveDialog()->SetFileTypes(
+                                                             "{ {model} {*.*} }");    
+    this->AddModelDialogButton->SetBalloonHelpString ( "Select a 3D model from a pop-up file browser." );
+
+    //--- Add model directory button
+    vtkKWLabel *l1 = vtkKWLabel::New();
+    l1->SetParent ( this->AddModelWindow );
+    l1->Create();
+    l1->SetText ( "Select model directory:" );
+    this->AddModelDirectoryDialogButton = vtkKWLoadSaveButton::New();
+    this->AddModelDirectoryDialogButton->SetParent ( this->AddModelWindow );
+    this->AddModelDirectoryDialogButton->Create();
+    if ( this->GetLoadDirectory() == NULL )
+      {
+      this->AddModelDirectoryDialogButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry ("OpenPath");
+      const char *lastpath = this->AddModelDirectoryDialogButton->GetLoadSaveDialog()->GetLastPath();
+      if ( lastpath != NULL && !(strcmp(lastpath, "" )) )
+        {
+//        this->AddModelDirectoryDialogButton->SetInitialFileName (lastpath);
+        }
+      }
+    else
+      {
+      this->AddModelDirectoryDialogButton->GetLoadSaveDialog()->SetLastPath ( this->GetLoadDirectory() );
+//      this->AddModelDirectoryDialogButton->SetInitialFileName ( this->GetLoadDirectory() );
+      }
+    this->AddModelDirectoryDialogButton->TrimPathFromFileNameOff();
+    this->AddModelDirectoryDialogButton->SetMaximumFileNameLength (128 );
+    this->AddModelDirectoryDialogButton->GetLoadSaveDialog()->ChooseDirectoryOn();
+    this->AddModelDirectoryDialogButton->SetBalloonHelpString ( "Select a directory from which 3D models (*.vtk) will be loaded." );
+
+    this->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky e", l0->GetWidgetName() );
+    this->Script ( "grid %s -row 0 -column 1   -padx 2 -pady 2 -ipadx 2 -ipady 2 -sticky w", this->AddModelDialogButton->GetWidgetName() );
+    this->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky e", l1->GetWidgetName() );
+    this->Script ( "grid %s -row 1 -column 1   -padx 2 -pady 2 -ipadx 2 -ipady 2 -sticky w", this->AddModelDirectoryDialogButton->GetWidgetName() );
+    this->Script ( "grid columnconfigure %s 0 -weight 0", this->AddModelWindow->GetWidgetName() );
+    this->Script ( "grid columnconfigure %s 1 -weight 1", this->AddModelWindow->GetWidgetName() );
+    
+    l0->Delete();
+    l1->Delete();
+    }
+
+  //--- add observers.
+  this->AddModelDialogButton->GetLoadSaveDialog()->AddObserver ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->AddModelDirectoryDialogButton->GetLoadSaveDialog()->AddObserver ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+
+  // display
+  this->AddModelWindow->DeIconify();
+  this->AddModelWindow->Raise();
+  if ( app )
+    {
+    app->Script ( "grab %s", this->AddModelWindow->GetWidgetName() );
+    app->ProcessIdleTasks();
+    }
+  this->Script ( "update idletasks");
+
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerModelsGUI::WithdrawAddScalarOverlayWindow ( )
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+  if ( app && this->AddOverlayWindow )
+    {
+    app->Script ( "grab release %s", this->AddOverlayWindow->GetWidgetName() );
+    }
+
+  if ( this->AddOverlayDialogButton )
+    {
+    this->AddOverlayDialogButton->GetLoadSaveDialog()->RemoveObservers ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+    }
+  if ( this->ModelSelector )
+    {
+    this->ModelSelector->RemoveObservers ( vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
+    }
+  if ( this->AddOverlayWindow )
+    {
+    this->AddOverlayWindow->Withdraw();
+    }
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerModelsGUI::RaiseAddScalarOverlayWindow ( )
+{
+  //--- create window if not already created.
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+  if ( app == NULL )
+    {
+    vtkErrorMacro ( "RaiseAddScalarOverlayWindow: got NULL SlicerApplication");
+    return;
+    }
+  vtkSlicerApplicationGUI *appGUI = app->GetApplicationGUI ( );
+  if ( appGUI == NULL )
+    {
+    vtkErrorMacro ( "RaiseAddScalarOverlayWindow: got NULL SlicerApplicationGUI");
+    return;
+    }
+  vtkSlicerWindow *win = appGUI->GetMainSlicerWindow ();
+  if ( win == NULL )
+    {
+    vtkErrorMacro ( "RaiseAddScalarOverlayWindow: got NULL MainSlicerWindow");
+    return;
+    }
+
+  if ( this->LoadDirectory == NULL )
+    {
+    if ( app )
+      {
+      if ( app->GetTemporaryDirectory() )
+        {
+        this->SetLoadDirectory(app->GetTemporaryDirectory() );
+        }
+      }
+    }
+  
+    if ( this->AddOverlayWindow == NULL )
+    {
+    //-- top level container.
+    this->AddOverlayWindow = vtkKWTopLevel::New();
+    this->AddOverlayWindow->SetMasterWindow (win );
+    this->AddOverlayWindow->SetApplication ( this->GetApplication() );
+    this->AddOverlayWindow->Create();
+    if ( this->LoadScalarsButton )
+      {
+      int px, py;
+      vtkKWTkUtilities::GetWidgetCoordinates( this->LoadScalarsButton, &px, &py );
+      this->AddOverlayWindow->SetPosition ( px + 10, py + 10 );
+      }
+    this->AddOverlayWindow->SetBorderWidth ( 1 );
+    this->AddOverlayWindow->SetReliefToFlat();
+    this->AddOverlayWindow->SetTitle ( "Add a scalar overlay to a 3D model");
+    this->AddOverlayWindow->SetSize ( 380, 150 );
+    this->AddOverlayWindow->Withdraw();
+    this->AddOverlayWindow->SetDeleteWindowProtocolCommand ( this, "DestroyAddScalarOverlayWindow");
+
+    //-- create node selector
+    this->ModelSelector = vtkSlicerNodeSelectorWidget::New();
+    this->ModelSelector->SetParent( this->AddOverlayWindow );
+    this->ModelSelector->Create();
+    this->ModelSelector->AddNodeClass("vtkMRMLModelNode", NULL, NULL, NULL);
+    this->ModelSelector->SetChildClassesEnabled(0);
+    this->ModelSelector->SetShowHidden (1);
+    this->ModelSelector->SetMRMLScene(this->GetMRMLScene());
+    this->ModelSelector->GetWidget()->GetWidget()->SetWidth (24 );
+    this->ModelSelector->GetWidget()->GetWidget()->IndicatorVisibilityOff();
+    this->ModelSelector->SetBorderWidth(2);
+    this->ModelSelector->SetPadX(2);
+    this->ModelSelector->SetPadY(2);
+    this->ModelSelector->SetLabelText( "Select model for overlay:");
+    this->ModelSelector->UnconditionalUpdateMenu();
+    this->ModelSelector->SetBalloonHelpString("Select a model (from the scene) to which the overlay will be applied.");
+
+    //--- Add model button
+    vtkKWLabel *l1 = vtkKWLabel::New();
+    l1->SetParent ( this->AddOverlayWindow );
+    l1->Create();
+    l1->SetText ( "  Select a scalar overlay:" );
+    this->AddOverlayDialogButton = vtkKWLoadSaveButton::New();
+    this->AddOverlayDialogButton->SetParent ( this->AddOverlayWindow );
+    this->AddOverlayDialogButton->Create();
+    if ( this->GetLoadDirectory() == NULL )
+      {
+      this->AddOverlayDialogButton->GetLoadSaveDialog()->RetrieveLastPathFromRegistry ("OpenPath");
+      const char *lastpath = this->AddOverlayDialogButton->GetLoadSaveDialog()->GetLastPath();
+      if ( lastpath != NULL && !(strcmp(lastpath, "" )) )
+        {
+//        this->AddOverlayDialogButton->SetInitialFileName (lastpath);
+        }
+      }
+    else
+      {
+      this->AddOverlayDialogButton->GetLoadSaveDialog()->SetLastPath ( this->GetLoadDirectory() );
+//      this->AddOverlayDialogButton->SetInitialFileName ( this->GetLoadDirectory() );
+      }
+    this->AddOverlayDialogButton->TrimPathFromFileNameOff();
+    this->AddOverlayDialogButton->SetMaximumFileNameLength (128 );
+    this->AddOverlayDialogButton->GetLoadSaveDialog()->ChooseDirectoryOff();
+    this->AddOverlayDialogButton->GetLoadSaveDialog()->SetFileTypes("{ {All} {.*} } { {Thickness} {.thickness} } { {Curve} {.curv} } { {Average Curve} {.avg_curv} } { {Sulc} {.sulc} } { {Area} {.area} } { {W} {.w} } { {Parcellation Annotation} {.annot} } { {Volume} {.mgz .mgh} } { {Label} {.label} }");
+    this->AddOverlayDialogButton->SetBalloonHelpString ( "Select a scalar overlay and apply it to the selected model." );
+
+    this->Script ( "grid %s -row 0 -column 0 -columnspan 2  -padx 2 -pady 2 -ipadx 2 -ipady 2 -sticky w", this->ModelSelector->GetWidgetName() );
+    this->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky w", l1->GetWidgetName() );
+    this->Script ( "grid %s -row 1 -column 1   -padx 2 -pady 2 -ipadx 2 -ipady 2 -sticky w", this->AddOverlayDialogButton->GetWidgetName() );
+    this->Script ( "grid columnconfigure %s 0 -weight 0", this->AddOverlayWindow->GetWidgetName() );
+    this->Script ( "grid columnconfigure %s 1 -weight 1", this->AddOverlayWindow->GetWidgetName() );
+    
+    l1->Delete();
+    }
+
+  //--- add observers.
+  this->AddOverlayDialogButton->GetLoadSaveDialog()->AddObserver ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+  this->ModelSelector->AddObserver (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
+
+  // display
+  this->AddOverlayWindow->DeIconify();
+  this->AddOverlayWindow->Raise();
+  if ( app )
+    {
+    app->Script ( "grab %s", this->AddOverlayWindow->GetWidgetName() );
+    app->ProcessIdleTasks();
+    }
+  this->Script ( "update idletasks");
+
+}
+  
+
+//---------------------------------------------------------------------------
+  void vtkSlicerModelsGUI::DestroyAddModelWindow ( )
+{
+  if ( !this->AddModelWindow )
+    {
+    return;
+    }
+  if ( ! (this->AddModelWindow->IsCreated()) )
+    {
+    vtkErrorMacro ( "DestroyAddModelWindow: AddModelWindow is not created." );
+    return;
+    }
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+  if ( app )
+    {
+    app->Script ( "grab release %s", this->AddModelWindow->GetWidgetName() );
+    }
+  this->AddModelWindow->Withdraw();
+
+  if ( this->AddModelDialogButton )
+    {
+    this->AddModelDialogButton->GetLoadSaveDialog()->RemoveObservers ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->AddModelDialogButton->SetParent ( NULL );
+    this->AddModelDialogButton->Delete();
+    this->AddModelDialogButton = NULL;    
+    }
+  if ( this->AddModelDirectoryDialogButton )
+    {
+    this->AddModelDirectoryDialogButton->GetLoadSaveDialog()->RemoveObservers ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->AddModelDirectoryDialogButton->SetParent ( NULL);
+    this->AddModelDirectoryDialogButton->Delete();
+    this->AddModelDirectoryDialogButton = NULL;    
+    }
+  if ( this->AddModelWindow )
+    {
+    this->AddModelWindow->Delete();
+    this->AddModelWindow = NULL;
+    }
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerModelsGUI::DestroyAddScalarOverlayWindow ( )
+{
+  if ( !this->AddOverlayWindow )
+    {
+    return;
+    }
+  if ( ! (this->AddOverlayWindow->IsCreated()) )
+    {
+    vtkErrorMacro ( "DestroyAddOverlayWindow: AddOverlayWindow is not created." );
+    return;
+    }
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+  if ( app )
+    {
+    app->Script ( "grab release %s", this->AddOverlayWindow->GetWidgetName() );
+    }
+  this->AddOverlayWindow->Withdraw();
+
+  if ( this->ModelSelector  )
+    {
+    this->ModelSelector->RemoveObservers (vtkSlicerNodeSelectorWidget::NodeSelectedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ModelSelector->SetParent ( NULL );
+    this->ModelSelector->Delete();
+    this->ModelSelector = NULL;
+    }
+
+  if ( this->AddOverlayDialogButton )
+    {
+    this->AddOverlayDialogButton->GetLoadSaveDialog()->RemoveObservers ( vtkKWTopLevel::WithdrawEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->AddOverlayDialogButton->SetParent (NULL);
+    this->AddOverlayDialogButton->Delete();
+    this->AddOverlayDialogButton = NULL;
+    }
+
+  if ( this->AddOverlayWindow )
+    {
+    this->AddOverlayWindow->Delete();
+    this->AddOverlayWindow = NULL;
+    }
+}
+
