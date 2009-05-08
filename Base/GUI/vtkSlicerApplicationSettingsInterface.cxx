@@ -808,6 +808,15 @@ void vtkSlicerApplicationSettingsInterface::Create()
   tk_cmd << "pack " << this->EnableAsynchronousIOCheckButton->GetWidgetName()
          << "  -side top -anchor w -expand no -fill none" << endl;
 
+  // For now, disable asynchronous IO and disable the option.
+  this->EnableAsynchronousIOCheckButton->SetSelectedState ( 0 );
+  if (app)
+    {
+    app->SetEnableAsynchronousIO(0);       
+    }
+  this->EnableAsynchronousIOCheckButton->SetStateToDisabled();
+
+
   // --------------------------------------------------------------
   // Remote settings : Enable force redownload?
 
