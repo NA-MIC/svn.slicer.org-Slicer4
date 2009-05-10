@@ -45,12 +45,6 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     vtkGetObjectMacro ( LoadScalarsButton, vtkKWPushButton );
     //vtkGetObjectMacro ( Logic, vtkSlicerModelsLogic);
     //vtkGetObjectMacro ( ModelNode, vtkMRMLModelNode );
-
-  // Description:
-  // Get/Set on the last directory the load filebrowsers open to.
-  vtkGetStringMacro (LoadDirectory );
-  vtkSetStringMacro (LoadDirectory );
-    
     
     // Description:
     // API for setting ModelNode, Logic and
@@ -113,19 +107,6 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerModelsGUI : public vtkSlicerModuleGUI
     virtual void Exit ( );
 
     // Description:
-    // Methods to create and raise, withdraw, or destroy a window for adding models
-    void RaiseAddModelWindow();
-    void WithdrawAddModelWindow();
-    void DestroyAddModelWindow();
-
-    // Description:
-    // Methods to create and raise, withdraw, or destroy a window for adding scalar
-    // overlays to an existing model.
-    void RaiseAddScalarOverlayWindow();
-    void WithdrawAddScalarOverlayWindow();
-    void DestroyAddScalarOverlayWindow();
-    
-    // Description:
     // Get/Set the main slicer viewer widget, for picking
 //    vtkGetObjectMacro(ViewerWidget, vtkSlicerViewerWidget);
 //    virtual void SetViewerWidget(vtkSlicerViewerWidget *viewerWidget);
@@ -149,21 +130,9 @@ protected:
     //vtkMRMLModelNode *ModelNode;
     
     // Widgets for the Models module
-    
-    // Widgets for AddModel functionality
-    vtkKWLoadSaveButton *AddModelDialogButton;
-    vtkKWLoadSaveButton *AddModelDirectoryDialogButton;
-    vtkKWTopLevel *AddModelWindow;
     vtkKWPushButton *LoadModelButton;
-  
-    // Widgets for AddScalarOverlay functionality
-    vtkSlicerNodeSelectorWidget *ModelSelector;
-    vtkKWLoadSaveButton *AddOverlayDialogButton;
-    vtkKWTopLevel *AddOverlayWindow;
-    vtkMRMLModelNode *SelectedModelNode;
     vtkKWPushButton *LoadScalarsButton;
     vtkSlicerNodeSelectorWidget* ModelDisplaySelectorWidget;
-
     vtkKWLabel *NACLabel;
     vtkKWLabel *NAMICLabel;
     vtkKWLabel *NCIGTLabel;
@@ -183,8 +152,6 @@ protected:
 
     vtkSlicerModuleCollapsibleFrame *ModelDisplayFrame;
 
-    char *LoadDirectory;
-  
     // Description:
     // A pointer back to the viewer widget, useful for picking
 //    vtkSlicerViewerWidget *ViewerWidget;
