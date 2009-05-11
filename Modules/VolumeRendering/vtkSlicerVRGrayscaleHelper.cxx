@@ -1889,14 +1889,8 @@ void vtkSlicerVRGrayscaleHelper::EstimateSampleDistances(void)
     
     this->EstimatedInteractiveSampleDistance = maxSpace * 4;
     
-    if (minDim > 128)
-    {
-        this->EstimatedSampleDistance = (maxSpace + minSpace) * 0.5;
-    }
-    else
-    {
-        this->EstimatedSampleDistance = minSpace * 0.5;
-    }
+    this->EstimatedSampleDistance = minSpace * 0.5;
+    
 }
 
 void vtkSlicerVRGrayscaleHelper::ConvertWorldToBoxCoordinates(double *inputOutput)
