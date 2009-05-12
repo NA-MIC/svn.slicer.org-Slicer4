@@ -823,8 +823,8 @@ void vtkSlicerSlicesGUI::Exit ( )
       // unpack
       this->Script("pack forget %s", (*wit).second->GetWidgetName());
 
-      // remove item from map
-      (*this->InternalParameterWidgetMap).erase(wit);
+      // remove item from map - causes crash
+      //(*this->InternalParameterWidgetMap).erase(wit);
       }
     }
 
