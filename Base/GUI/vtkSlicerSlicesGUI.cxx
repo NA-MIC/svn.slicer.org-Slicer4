@@ -812,6 +812,7 @@ void vtkSlicerSlicesGUI::Exit ( )
 {
   // Destroy all SliceControllers
   ParameterWidgetMap::iterator wit;
+  ParameterWidgetMap saveMap;
 
   for (wit = (*this->InternalParameterWidgetMap).begin(); 
        wit != (*this->InternalParameterWidgetMap).end(); ++wit)
@@ -826,8 +827,12 @@ void vtkSlicerSlicesGUI::Exit ( )
       // remove item from map - causes crash
       //(*this->InternalParameterWidgetMap).erase(wit);
       }
+    else
+      {
+      saveMap[wit->first] = wit->second;
+      }
     }
-
+  *(this->InternalParameterWidgetMap) = saveMap;
 }
 
 
