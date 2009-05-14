@@ -418,7 +418,7 @@ void vtkSlicerWelcomeGUI::ProcessGUIEvents ( vtkObject *caller,
     {
     if ( cb == this->StartWithWelcome->GetWidget() )
       {
-      app->SetUseWelcomeModuleAtStartup ( this->StartWithWelcome->GetWidget()->GetSelectedState() );
+      app->SetUseWelcomeModuleAtStartup ( ! (this->StartWithWelcome->GetWidget()->GetSelectedState() ));
       }
     }
   
@@ -823,6 +823,11 @@ void vtkSlicerWelcomeGUI::BuildGUI ( )
     BIRNLabel->Create();
     BIRNLabel->SetImageToIcon ( this->GetAcknowledgementIcons()->GetBIRNLogo() );
 
+    vtkKWLabel *CTSCLabel = vtkKWLabel::New();
+    CTSCLabel->SetParent ( f );
+    CTSCLabel->Create();
+    CTSCLabel->SetImageToIcon (this->GetAcknowledgementIcons()->GetCTSCLogo() );
+    
     vtkKWTextWithHyperlinksWithScrollbars *txt = vtkKWTextWithHyperlinksWithScrollbars::New ( );
     txt->SetParent ( f ) ;
     txt->Create();
@@ -837,12 +842,14 @@ void vtkSlicerWelcomeGUI::BuildGUI ( )
     txt->GetWidget()->ReadOnlyOn();
 
     app->Script ( "grid %s -row 0 -column 0 -padx 2 -pady 2 -sticky e", NAMICLabel->GetWidgetName());
-    app->Script ("grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky w", NACLabel->GetWidgetName());
+    app->Script ("grid %s -row 0 -column 1 -padx 2 -pady 2 -sticky e", NACLabel->GetWidgetName());
     app->Script ( "grid %s -row 1 -column 0 -padx 2 -pady 2 -sticky e",  BIRNLabel->GetWidgetName());
-    app->Script ( "grid %s -row 1 -column 1 -padx 2 -pady 2 -sticky w",  NCIGTLabel->GetWidgetName());                  
-    app->Script ( "grid %s -row 2 -column 0 -columnspan 2 -padx 2 -pady 2 -sticky ew",  txt->GetWidgetName());                  
-    app->Script ( "grid columnconfigure %s 0 -weight 1", f->GetWidgetName() );
-    app->Script ( "grid columnconfigure %s 1 -weight 1", f->GetWidgetName() );
+    app->Script ( "grid %s -row 1 -column 1 -padx 2 -pady 2 -sticky e",  NCIGTLabel->GetWidgetName());                  
+    app->Script ( "grid %s -row 1 -column 2 -padx 2 -pady 2 -sticky w",  CTSCLabel->GetWidgetName());                  
+    app->Script ( "grid %s -row 2 -column 0 -columnspan 3 -padx 2 -pady 2 -sticky ew",  txt->GetWidgetName());                  
+    app->Script ( "grid columnconfigure %s 0 -weight 0", f->GetWidgetName() );
+    app->Script ( "grid columnconfigure %s 1 -weight 0", f->GetWidgetName() );
+    app->Script ( "grid columnconfigure %s 2 -weight 1", f->GetWidgetName() );
 
 
     txt->Delete();
@@ -850,6 +857,7 @@ void vtkSlicerWelcomeGUI::BuildGUI ( )
     NAMICLabel->Delete();
     NCIGTLabel->Delete();
     BIRNLabel->Delete();
+    CTSCLabel->Delete();
     f->Delete();
     this->Built = true;
 }
@@ -928,11 +936,11 @@ void vtkSlicerWelcomeGUI::BuildWelcomeAndAboutPanel( vtkKWFrame *parent )
   this->StartWithWelcome->GetLabel()->SetText ( " Don't show this module on startup." );
   if ( app->GetUseWelcomeModuleAtStartup() )
     {
-    this->StartWithWelcome->GetWidget()->SetSelectedState (app->GetUseWelcomeModuleAtStartup() );
+    this->StartWithWelcome->GetWidget()->SetSelectedState (0);
     }
   else
     {
-    this->StartWithWelcome->GetWidget()->SetSelectedState (app->GetUseWelcomeModuleAtStartup() );
+    this->StartWithWelcome->GetWidget()->SetSelectedState (1);
     }
 
   app->Script ( "pack %s -side top -anchor nw -fill x -expand y -padx 6 -pady 2",
