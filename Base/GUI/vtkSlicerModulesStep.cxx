@@ -9,8 +9,11 @@
 #include "vtkKWWizardWorkflow.h"
 #include "vtkKWLabel.h"
 #include "vtkKWMultiColumnList.h"
+#include "vtkKWMultiColumnListWithScrollbars.h"
 #include "vtkKWFrame.h"
 #include "vtkKWMessageDialog.h"
+#include "vtkKWText.h"
+#include "vtkKWTextWithLabel.h"
 
 #include "vtkSlicerModulesConfigurationStep.h"
 
@@ -254,33 +257,36 @@ void vtkSlicerModulesStep::ShowUserInterface()
 
   if (!this->ModulesMultiColumnList)
     {
-    this->ModulesMultiColumnList = vtkKWMultiColumnList::New();
+    this->ModulesMultiColumnList = vtkKWMultiColumnListWithScrollbars::New();
     }
   if (!this->ModulesMultiColumnList->IsCreated())
     {
 
     this->ModulesMultiColumnList->SetParent( this->Frame3 );
     this->ModulesMultiColumnList->Create();
-    this->ModulesMultiColumnList->SetBalloonHelpString(
-      "A list of available extensions.");
     this->ModulesMultiColumnList->SetWidth(0);
-    this->ModulesMultiColumnList->SetHeight(5);
-    this->ModulesMultiColumnList->SetSelectionTypeToCell();
+    this->ModulesMultiColumnList->SetHeight(7);
+
+    vtkKWMultiColumnList *the_list = this->ModulesMultiColumnList->GetWidget();
+
+    the_list->SetSelectionTypeToCell();
 
     int col_index;
 
-    col_index = this->ModulesMultiColumnList->AddColumn("Select");
-    this->ModulesMultiColumnList->SetColumnEditWindowToCheckButton(col_index);
-    this->ModulesMultiColumnList->SetColumnFormatCommandToEmptyOutput(col_index);
+    col_index = the_list->AddColumn("Select");
+    the_list->SetColumnEditWindowToCheckButton(col_index);
+    the_list->SetColumnFormatCommandToEmptyOutput(col_index);
     
-    col_index = this->ModulesMultiColumnList->AddColumn("Status");
-    this->ModulesMultiColumnList->SetColumnFormatCommandToEmptyOutput(col_index);
+    col_index = the_list->AddColumn("Status");
+    the_list->SetColumnFormatCommandToEmptyOutput(col_index);
 
-    col_index = this->ModulesMultiColumnList->AddColumn("Name");
-    col_index = this->ModulesMultiColumnList->AddColumn("Category");
-    col_index = this->ModulesMultiColumnList->AddColumn("Description");
-    col_index = this->ModulesMultiColumnList->AddColumn("HomePage");
-    col_index = this->ModulesMultiColumnList->AddColumn("Binary URL");
+    col_index = the_list->AddColumn("Name");
+    col_index = the_list->AddColumn("Category");
+    col_index = the_list->AddColumn("Description");
+    the_list->SetColumnFormatCommandToEmptyOutput(col_index);
+    col_index = the_list->AddColumn("HomePage");
+    the_list->SetColumnFormatCommandToEmptyOutput(col_index);
+    col_index = the_list->AddColumn("Binary URL");
 
     }
 
@@ -410,11 +416,17 @@ void vtkSlicerModulesStep::Update()
           }
         }
 
-    const char* cachedir = app->GetModuleCachePath();
+    std::string cachedir = app->GetModuleCachePath();
+    if (cachedir.empty())
+      {
+        cachedir = app->GetBinDir();
+        cachedir += "/../";
+        cachedir += Slicer3_INSTALL_MODULES_LIB_DIR;
+      }
 
     if (this->ModulesMultiColumnList)
       {
-      this->ModulesMultiColumnList->DeleteAllRows();
+      this->ModulesMultiColumnList->GetWidget()->DeleteAllRows();
 
       // Insert each extension entry discovered on the repository
       for (unsigned int i = 0; i < this->Modules.size(); i++)
@@ -431,18 +443,20 @@ void vtkSlicerModulesStep::InsertExtension(int Index,
                                            ManifestEntry* Entry,
                                            const std::string& CacheDir)
 {
-  this->ModulesMultiColumnList->InsertCellText(Index, 2, Entry->Name.c_str());
-  this->ModulesMultiColumnList->InsertCellText(Index, 3, Entry->Category.c_str());
+  vtkKWMultiColumnList *the_list = this->ModulesMultiColumnList->GetWidget();
 
-  std::string summary = Entry->Description.substr(0, 5);
-  summary += "...";
+  the_list->InsertCellText(Index, 2, Entry->Name.c_str());
+  the_list->InsertCellText(Index, 3, Entry->Category.c_str());
 
-  this->ModulesMultiColumnList->InsertCellText(Index, 4, summary.c_str());
+  the_list->SetCellText(Index, 4, Entry->Description.c_str());
+  the_list->SetCellWindowCommand(Index, 4, this, "DescriptionCommand");
 
-  this->ModulesMultiColumnList->InsertCellText(Index, 5, Entry->Homepage.c_str());
-  this->ModulesMultiColumnList->InsertCellText(Index, 6, Entry->URL.c_str());
+  the_list->SetCellText(Index, 4, Entry->Homepage.c_str());
+  the_list->SetCellWindowCommand(Index, 5, this, "HomepageCommand");
+
+  the_list->InsertCellText(Index, 6, Entry->URL.c_str());
             
-  this->ModulesMultiColumnList->SetCellWindowCommandToCheckButton(Index, 0);
+  the_list->SetCellWindowCommandToCheckButton(Index, 0);
       
   std::string extdir(CacheDir + std::string("/") + Entry->Name);
 
@@ -465,28 +479,28 @@ int vtkSlicerModulesStep::IsActionValid()
 //----------------------------------------------------------------------------
 void vtkSlicerModulesStep::SelectAll()
 {
-  int nrows = this->ModulesMultiColumnList->GetNumberOfRows();
+  int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   for (int row=0; row<nrows; row++)
     {
     if (StatusFoundOnDisk != this->GetStatus(row))
       {
-      this->ModulesMultiColumnList->SetCellText(row, 0, "1");
+      this->ModulesMultiColumnList->GetWidget()->SetCellText(row, 0, "1");
       }
     }
 
-  this->ModulesMultiColumnList->RefreshAllRowsWithWindowCommand(0);
+  this->ModulesMultiColumnList->GetWidget()->RefreshAllRowsWithWindowCommand(0);
 }
 
 //----------------------------------------------------------------------------
 void vtkSlicerModulesStep::SelectNone()
 {
-  int nrows = this->ModulesMultiColumnList->GetNumberOfRows();
+  int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   for (int row=0; row<nrows; row++)
     {
-    this->ModulesMultiColumnList->SetCellText(row, 0, "0");
+    this->ModulesMultiColumnList->GetWidget()->SetCellText(row, 0, "0");
     }
 
-  this->ModulesMultiColumnList->RefreshAllRowsWithWindowCommand(0);
+  this->ModulesMultiColumnList->GetWidget()->RefreshAllRowsWithWindowCommand(0);
 }
 
 //----------------------------------------------------------------------------
@@ -496,14 +510,14 @@ void vtkSlicerModulesStep::DownloadInstall()
 
   this->HeaderText->SetText(this->Messages["DOWNLOAD"].c_str());
 
-  int nrows = this->ModulesMultiColumnList->GetNumberOfRows();
+  int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   for (int row=0; row<nrows; row++)
     {
-      if (1 == this->ModulesMultiColumnList->GetCellTextAsInt(row, 0))
+      if (1 == this->ModulesMultiColumnList->GetWidget()->GetCellTextAsInt(row, 0))
         {
           this->SetStatus(row, vtkSlicerModulesStep::StatusWait);
-          if (this->DownloadInstallExtension(this->ModulesMultiColumnList->GetCellText(row, 2),
-                                             this->ModulesMultiColumnList->GetCellText(row, 6)))
+          if (this->DownloadInstallExtension(this->ModulesMultiColumnList->GetWidget()->GetCellText(row, 2),
+                                             this->ModulesMultiColumnList->GetWidget()->GetCellText(row, 6)))
             {
             this->SetStatus(row, vtkSlicerModulesStep::StatusSuccess);
             }
@@ -533,13 +547,13 @@ void vtkSlicerModulesStep::Uninstall()
 
   dlg->Delete();
 
-  int nrows = this->ModulesMultiColumnList->GetNumberOfRows();
+  int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   for (int row=0; row<nrows; row++)
     {
-    if (1 == this->ModulesMultiColumnList->GetCellTextAsInt(row, 0))
+    if (1 == this->ModulesMultiColumnList->GetWidget()->GetCellTextAsInt(row, 0))
       {
       this->SetStatus(row, vtkSlicerModulesStep::StatusWait);
-      if (this->UninstallExtension(this->ModulesMultiColumnList->GetCellText(row, 2)))
+      if (this->UninstallExtension(this->ModulesMultiColumnList->GetWidget()->GetCellText(row, 2)))
         {
         this->SetStatus(row, vtkSlicerModulesStep::StatusSuccess);
         }
@@ -555,14 +569,101 @@ void vtkSlicerModulesStep::Uninstall()
 }
 
 //----------------------------------------------------------------------------
+void vtkSlicerModulesStep::HomepageCommand(const char *notused,
+                                           int row_index,
+                                           int col_index,
+                                           const char *widget_name)
+{
+  vtkKWMultiColumnList *list = this->ModulesMultiColumnList->GetWidget();
+
+  vtkKWLabel *child = 
+    vtkKWLabel::SafeDownCast(list->GetCellWindowAsFrame(row_index, col_index));
+
+ 
+  if (!child)
+    {
+    child = vtkKWLabel::New();
+    child->SetWidgetName(widget_name);
+    child->SetParent(list);
+    child->Create();
+    child->Delete();
+    }
+
+  child->SetBackgroundColor(list->GetCellCurrentBackgroundColor(row_index, col_index));
+
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication()); 
+  
+  if (app)
+    {
+    vtkKWIcon *www = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerWWWIcon();
+    child->SetImageToIcon(www);
+    }
+  /*
+  char command[1024];
+  sprintf(command,
+          "HomepageCallback %s %d %d ",
+          child->GetTclName(), row_index, col_index );
+
+  child->SetCommand(this, command);
+  */
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerModulesStep::HomepageCallback(const char *widget_name,
+                                            int row_index,
+                                            int col_index)
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
+  if (app)
+    {
+    app->OpenLink("http://wire");
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerModulesStep::DescriptionCommand(const char *notused,
+                                              int row_index,
+                                              int col_index,
+                                              const char *widget_name)
+{
+  vtkKWMultiColumnList *the_list = this->ModulesMultiColumnList->GetWidget();
+
+  vtkKWLabel *child = 
+    vtkKWLabel::SafeDownCast(the_list->GetCellWindowAsFrame(row_index, col_index));
+
+ 
+  if (!child)
+    {
+    child = vtkKWLabel::New();
+    child->SetWidgetName(widget_name);
+    child->SetParent(the_list);
+    child->Create();
+    child->Delete();
+    }
+
+  child->SetBackgroundColor(the_list->GetCellCurrentBackgroundColor(row_index, col_index));
+
+  std::string description = the_list->GetCellText(row_index, col_index);
+
+  if (!description.empty())
+    {
+    std::string summary = description.substr(0, 5);
+    summary += "...";
+
+    child->SetText(summary.c_str());
+    child->SetBalloonHelpString(description.c_str());
+    }
+}
+
+//----------------------------------------------------------------------------
 int vtkSlicerModulesStep::GetStatus(int row_index)
 {
   int result = StatusUnknown;
 
-  int nrows = this->ModulesMultiColumnList->GetNumberOfRows();
+  int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   if (row_index < nrows)
     {
-    result = this->ModulesMultiColumnList->GetCellTextAsInt(row_index, 1);
+    result = this->ModulesMultiColumnList->GetWidget()->GetCellTextAsInt(row_index, 1);
     }
 
   return result;
@@ -571,38 +672,38 @@ int vtkSlicerModulesStep::GetStatus(int row_index)
 //----------------------------------------------------------------------------
 void vtkSlicerModulesStep::SetStatus(int row_index, int status)
 {
-  int nrows = this->ModulesMultiColumnList->GetNumberOfRows();
+  int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   if (row_index < nrows)
     {
-    this->ModulesMultiColumnList->SetCellTextAsInt(row_index, 1, status);
+    this->ModulesMultiColumnList->GetWidget()->SetCellTextAsInt(row_index, 1, status);
 
-    vtkSlicerApplication *app = dynamic_cast<vtkSlicerApplication*> (this->GetApplication()); 
+    vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication()); 
     
     switch (status)
       {
       case vtkSlicerModulesStep::StatusSuccess: {
         vtkKWIcon *done = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerDoneIcon();
-        this->ModulesMultiColumnList->SetCellImageToIcon(row_index, 1, done);
+        this->ModulesMultiColumnList->GetWidget()->SetCellImageToIcon(row_index, 1, done);
         } break;
       case vtkSlicerModulesStep::StatusWait: {
         vtkKWIcon *wait = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerWaitIcon();
-        this->ModulesMultiColumnList->SetCellImageToIcon(row_index, 1, wait);
+        this->ModulesMultiColumnList->GetWidget()->SetCellImageToIcon(row_index, 1, wait);
         } break;
       case vtkSlicerModulesStep::StatusCancelled: {
         vtkKWIcon *cancelled = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerCancelledIcon();
-        this->ModulesMultiColumnList->SetCellImageToIcon(row_index, 1, cancelled);
+        this->ModulesMultiColumnList->GetWidget()->SetCellImageToIcon(row_index, 1, cancelled);
         } break;
       case vtkSlicerModulesStep::StatusError: {
         vtkKWIcon *error = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerErrorIcon();
-        this->ModulesMultiColumnList->SetCellImageToIcon(row_index, 1, error);
+        this->ModulesMultiColumnList->GetWidget()->SetCellImageToIcon(row_index, 1, error);
         } break;
       case vtkSlicerModulesStep::StatusFoundOnDisk: {
         vtkKWIcon *foundondisk = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerFoundOnDiskIcon();
-        this->ModulesMultiColumnList->SetCellImageToIcon(row_index, 1, foundondisk);
+        this->ModulesMultiColumnList->GetWidget()->SetCellImageToIcon(row_index, 1, foundondisk);
         } break;
       case vtkSlicerModulesStep::StatusNotFoundOnDisk: {
         vtkKWIcon *notfoundondisk = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerNotFoundOnDiskIcon();
-        this->ModulesMultiColumnList->SetCellImageToIcon(row_index, 1, notfoundondisk);
+        this->ModulesMultiColumnList->GetWidget()->SetCellImageToIcon(row_index, 1, notfoundondisk);
         } break;
       case vtkSlicerModulesStep::StatusUnknown: default:
         // ??
@@ -798,13 +899,27 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
       
     std::string tmpfile(std::string(app->GetTemporaryDirectory()) + std::string("/") + zipname);
       
+    std::cout << "tmpfile: " << tmpfile << std::endl;
+
     handler->StageFileRead(ExtensionBinaryURL.c_str(), tmpfile.c_str());
 
     std::string cachedir = app->GetModuleCachePath();
+
+    std::cout << "cachedir: " << cachedir << std::endl;
+
     if (cachedir.empty())
       {
-        cachedir = Slicer3_INSTALL_MODULES_LIB_DIR;
+        cachedir = app->GetBinDir();
+
+        std::cout << "bindir: " << app->GetBinDir() << std::endl;
+
+        cachedir += "/../";
+        cachedir += Slicer3_INSTALL_MODULES_LIB_DIR;
+
+        std::cout << "install: " << Slicer3_INSTALL_MODULES_LIB_DIR << std::endl;
       }
+
+    std::cout << "cachedir: " << cachedir << std::endl;
 
     std::string libdir(cachedir + std::string("/") + ExtensionName);
 
@@ -856,6 +971,8 @@ bool vtkSlicerModulesStep::UninstallExtension(const std::string& ExtensionName)
     std::string cachedir = app->GetModuleCachePath();
     if (cachedir.empty())
       {
+        cachedir = app->GetBinDir();
+        cachedir += "/../";
         cachedir = Slicer3_INSTALL_MODULES_LIB_DIR;
       }
 

@@ -11,7 +11,7 @@
 
 class vtkSlicerApplication;
 class vtkSlicerModulesWizardDialog;
-class vtkKWMultiColumnList;
+class vtkKWMultiColumnListWithScrollbars;
 class vtkKWPushButton;
 class vtkKWLabel;
 class vtkKWFrame;
@@ -64,7 +64,25 @@ public:
   // Description:
   // Uninstall selected extensions.
   void Uninstall();
-
+  // Description:
+  // Command for the HTTP hyperlink cell
+  void HomepageCommand(const char *notused,
+                       int row_index,
+                       int col_index,
+                       const char *widget_name);
+  
+  // Description:
+  // Callback for when the homepage is clicked
+  void HomepageCallback(const char *widget_name,
+                        int row_index,
+                        int col_index);
+  // Description:
+  // Command for the description cell
+  void DescriptionCommand(const char *notused,
+                       int row_index,
+                       int col_index,
+                       const char *widget_name);
+  
   // Description:
   // Get/Set status code for module
   //BTX
@@ -112,7 +130,7 @@ private:
   vtkKWLabel *HeaderText;
   vtkKWPushButton *SelectAllButton;
   vtkKWPushButton *SelectNoneButton;
-  vtkKWMultiColumnList *ModulesMultiColumnList;
+  vtkKWMultiColumnListWithScrollbars *ModulesMultiColumnList;
   vtkKWPushButton *DownloadButton;
   vtkKWPushButton *UninstallButton;
   vtkKWPushButton *StopButton;
