@@ -543,7 +543,7 @@ void vtkSlicerModelDisplayWidget::CreateWidget ( )
                  modelDisplayFrame->GetWidgetName() );
 
   // Don't select child classes (like FiberBundles)
-  //this->ModelSelectorWidget->ChildClassesEnabledOff();
+  //this->ModelSelectorWidget->ChildClassesEnabledOn();
 
   this->SelectedButton = vtkKWCheckButtonWithLabel::New();
   this->SelectedButton->SetParent ( modelDisplayFrame );

@@ -32,7 +32,7 @@ vtkStandardNewMacro(vtkFiniteElementMeshList);
 vtkFiniteElementMeshList::vtkFiniteElementMeshList() 
 { 
     this->SetMRMLSceneForStorage(vtkMRMLScene::GetActiveScene());
-
+    this->actorList = vtkLocalLinkedListWrapper::New();
 }
 
 vtkFiniteElementMeshList::~vtkFiniteElementMeshList() 
@@ -63,6 +63,11 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
 {
    if (this->savedMRMLScene)
    {
+       
+     // keep a copy of the actor in the local list.  The geometry in this
+     // actor will be shared with the MRML tree.
+     this->actorList->AppendItem(actor);
+       
      // allocate a new MRML node for this item and add it to the scene
      vtkMRMLFiniteElementMeshNode* newMRMLNode = vtkMRMLFiniteElementMeshNode::New();
      newMRMLNode->SetMimxMeshActor(actor);
@@ -71,29 +76,27 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
      // now add the display and storage nodes
       vtkMRMLFiniteElementMeshDisplayNode* dispNode = vtkMRMLFiniteElementMeshDisplayNode::New();
       vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
-      vtkMRMLColorTableNode* colorNode = vtkMRMLColorTableNode::New();
+      //vtkMRMLColorTableNode* colorNode = vtkMRMLColorTableNode::New();
 
-      // for this version of the meshing module, we are using the Mimx
-      // actors to render, so turn off the default MRML display of the geometry
-      dispNode->SetVisibility(0);
- 
+      // for this version of the meshing module,we are using the default MRML display of the geometry
+      dispNode->SetVisibility(1);
+      // point the display node to the proper grid
+      dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
+    
       // this sets the default display to be colored based on selectable attribute value
-      colorNode->SetTypeToRainbow();
+      //colorNode->SetTypeToRainbow();
        
       // Establish linkage between the surface
       // node and its display and storage nodes, so the viewer will be updated when data
       // or attributes change
-      dispNode->SetScene(this->savedMRMLScene);
-      storeNode->SetScene(this->savedMRMLScene);
-      colorNode->SetScene(this->savedMRMLScene);
+      //colorNode->SetScene(this->savedMRMLScene);
       this->savedMRMLScene->AddNodeNoNotify(dispNode);
       this->savedMRMLScene->AddNodeNoNotify(storeNode);
-      this->savedMRMLScene->AddNodeNoNotify(colorNode);
+      //this->savedMRMLScene->AddNodeNoNotify(colorNode);
       this->savedMRMLScene->AddNode(newMRMLNode);
-      
-      // ** commented out display node to avoid crash on mac after 11/17 update
-      // point the display node to the proper grid
-      //dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
+      dispNode->SetScene(this->savedMRMLScene);
+      storeNode->SetScene(this->savedMRMLScene);
+        
       // set the color node to specify the color table associated with the grid
       //dispNode->SetAndObserveColorNodeID(colorNode->GetID());
       // need to turn this on so the scalars are used to color the grid
@@ -112,25 +115,26 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
 
 vtkMimxMeshActor* vtkFiniteElementMeshList::GetItem(vtkIdType id)
 {
-    //return this->InternalMimxObjectList->GetItem(id);
+    return vtkMimxMeshActor::SafeDownCast(this->actorList->GetItem(id));
      
   // first fetch the MRML node that has been requested
-  vtkMRMLFiniteElementMeshNode* requestedMrmlNode = 
-      (vtkMRMLFiniteElementMeshNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFiniteElementMeshNode"));
-  return requestedMrmlNode->GetMimxMeshActor();
+//  vtkMRMLFiniteElementMeshNode* requestedMrmlNode = 
+//      (vtkMRMLFiniteElementMeshNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFiniteElementMeshNode"));
+//  return requestedMrmlNode->GetMimxMeshActor();
 
 }
 
 
 int vtkFiniteElementMeshList::GetNumberOfItems()
 {
-  //return this->InternalMimxObjectList->GetNumberOfItems();
-  return this->savedMRMLScene->GetNumberOfNodesByClass("vtkMRMLFiniteElementMeshNode");
+  return this->actorList->GetNumberOfItems();
+  //return this->savedMRMLScene->GetNumberOfNodesByClass("vtkMRMLFiniteElementMeshNode");
 }
 
 int vtkFiniteElementMeshList::RemoveItem(int Num)
 {
-
+  // keep local list and MRML in sync by deleting both entries
+  this->actorList->RemoveItem(Num);
   this->savedMRMLScene->RemoveNode(this->savedMRMLScene->GetNthNodeByClass(Num,"vtkMRMLFiniteElementMeshNode"));
   return VTK_OK;
 }

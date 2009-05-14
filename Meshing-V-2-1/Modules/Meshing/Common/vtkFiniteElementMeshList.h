@@ -26,6 +26,7 @@
 #include "vtkMimxUnstructuredGridActor.h"
 #include "vtkLinkedList.h"
 #include "vtkLinkedListWrapper.h"
+#include "vtkLocalLinkedListWrapper.h"
 #include "vtkSetGet.h" // For vtkTypeMacro.
 #include "vtkMimxCommonWin32Header.h"
 
@@ -53,6 +54,11 @@ public:
   virtual int RemoveItem(int );
 protected:
     vtkMRMLScene* savedMRMLScene; 
+    
+    // added for second integration where rendering is in display nodes instead
+    // of in the mesh actor 
+    vtkLocalLinkedListWrapper* actorList; 
+    
     vtkFiniteElementMeshList();
   virtual ~vtkFiniteElementMeshList();
 private:

@@ -1299,23 +1299,26 @@ void vtkMimxUnstructuredGridActor::SetFillColor(double red, double green, double
 //----------------------------------------------------------------------------------
 void vtkMimxUnstructuredGridActor::SetFillColor(double rgb[3])
 {
-  this->SetFillColor(rgb[0], rgb[1], rgb[2]);
+    this->SetFillColor(rgb[0], rgb[1], rgb[2]);
+    this->myDisplayNode->SetColor(rgb[0], rgb[1], rgb[2]);
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxUnstructuredGridActor::GetFillColor(double &red, double &green, double &blue)
 {
-  red = this->FillColor[0];
-  green = this->FillColor[1];
-  blue = this->FillColor[2];
+  this->myDisplayNode->GetColor(red,green,blue);  
+//  red = this->FillColor[0];
+//  green = this->FillColor[1];
+//  blue = this->FillColor[2];
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxUnstructuredGridActor::GetFillColor(double rgb[3])
 {
-  rgb[0] = this->FillColor[0];
-  rgb[1] = this->FillColor[1];
-  rgb[2] = this->FillColor[2];
+  this->myDisplayNode->GetColor(rgb[0],rgb[1],rgb[2]);  
+//  rgb[0] = this->FillColor[0];
+//  rgb[1] = this->FillColor[1];
+//  rgb[2] = this->FillColor[2];
 }
 
 //----------------------------------------------------------------------------------
@@ -1354,4 +1357,10 @@ void vtkMimxUnstructuredGridActor::SaveVisibility(void) {this->SavedVisibility =
 void vtkMimxUnstructuredGridActor::RestoreVisibility(void) {this->Actor->SetVisibility(this->SavedVisibility);}
 void vtkMimxUnstructuredGridActor::Hide() {this->Actor->SetVisibility(0);}
 void vtkMimxUnstructuredGridActor::Show() {this->Actor->SetVisibility(1);}
+
+// set pointer to display node so that attribute changes can be passed through
+void vtkMimxUnstructuredGridActor::SetMRMLDisplayNode(vtkMRMLUnstructuredGridDisplayNode* displayNode)
+{
+    this->myDisplayNode = displayNode;
+}
 

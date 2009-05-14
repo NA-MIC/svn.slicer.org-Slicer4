@@ -272,8 +272,8 @@ void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
   actor->MeshSeedFromAverageElementLength( edgeLength, edgeLength, edgeLength );
   actor->GetDataSet()->Modified();
   
-  this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp( actor );
-  this->GetMimxMainWindow()->GetRenderWidget()->Render();
+//  this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp( actor );
+//  this->GetMimxMainWindow()->GetRenderWidget()->Render();
   this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
   this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->BBoxList->GetItem(currentitem));
 }         
@@ -341,9 +341,13 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
     actor->SetFilePath(namePrefix);
   }
   actor->GetDataSet()->Modified();
-  this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(
-        this->SurfaceList->GetItem(item)->GetActor());
-  this->GetMimxMainWindow()->GetRenderWidget()->Render();
+  
+  // in this version, actors are not added directly to the renderwindow, use 
+  // MRMLDisplayNodes instead
+  
+//  this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(
+//        this->SurfaceList->GetItem(item)->GetActor());
+//  this->GetMimxMainWindow()->GetRenderWidget()->Render();
   this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
   this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->SurfaceList->GetItem(item) );
 }

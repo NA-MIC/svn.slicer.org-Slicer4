@@ -30,6 +30,10 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkMimxActorBase.h"
 
+// link to the MRML UGrid display node because requests for visibility change, color
+// change etc will be passed through to the display node. 
+#include "vtkMRMLUnstructuredGridDisplayNode.h"
+
 #include "mimxMatrixTemplate.h"
 #include "vtkMimxCommonWin32Header.h"
 
@@ -65,6 +69,13 @@ public:
  int GetMeshSeed(int BoxNum, int Axis);
  void DeleteNodeSet(const char *Name);
  void DeleteElementSet(const char *Name);
+ 
+ // set pointer to display node so that attribute changes can be passed through
+ void SetMRMLDisplayNode(vtkMRMLUnstructuredGridDisplayNode* displayNode);
+ 
+ // methods below are reimplemented here and passed through to the related 
+ // MRML display node that is handling the actual display in Slicer3 windows
+ 
  void SetFillColor(double rgb[3]);
  void SetFillColor(double red, double green, double blue);
  void GetFillColor(double &red, double &green, double &blue);
@@ -88,6 +99,7 @@ protected:
   ~vtkMimxUnstructuredGridActor();
   vtkUnstructuredGrid *UnstructuredGrid;
   vtkDataSetMapper *UnstructuredGridMapper;
+  vtkMRMLUnstructuredGridDisplayNode* myDisplayNode;
 private:
         int Links; // to check if links need to be recomputed
         void BuildMeshSeedLinks(); // generates a matrix of values signifying the connection

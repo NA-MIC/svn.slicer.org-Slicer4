@@ -38,6 +38,7 @@ PURPOSE.  See the above copyright notices for more information.
 
 #include "vtkMimxActorBase.h"
 #include "vtkMimxCommonWin32Header.h"
+#include "vtkLocalLinkedListWrapper.h"
 
 class vtkActor;
 class vtkDataSetMapper;
@@ -407,6 +408,11 @@ private:
         int LegendPrecision;
         int InvertCuttingPlane;
         int MeshType;
+        
+  // added for second integration where rendering is in display nodes instead
+  // of in the mesh actor 
+  vtkLocalLinkedListWrapper* actorList; 
+  
   vtkMimxMeshActor(const vtkMimxMeshActor&);  // Not implemented.
   void operator=(const vtkMimxMeshActor&);  // Not implemented.
 };

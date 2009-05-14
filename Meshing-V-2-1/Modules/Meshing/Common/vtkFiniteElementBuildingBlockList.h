@@ -26,6 +26,7 @@
 #include "vtkMimxUnstructuredGridActor.h"
 #include "vtkLinkedList.h"
 #include "vtkLinkedListWrapper.h"
+#include "vtkLocalLinkedListWrapper.h"
 #include "vtkSetGet.h" // For vtkTypeMacro.
 #include "vtkMimxCommonWin32Header.h"
 
@@ -57,6 +58,7 @@ public:
   
 protected:
     vtkMRMLScene* savedMRMLScene; 
+    vtkLocalLinkedListWrapper* actorList;
     vtkFiniteElementBuildingBlockList();
     virtual ~vtkFiniteElementBuildingBlockList();
     //bool ItemMatchesMRMLNode(vtkMimxUnstructuredGridActor* actor, vtkMRMLFiniteElementBuildingBlockNode* testMRMLNode);

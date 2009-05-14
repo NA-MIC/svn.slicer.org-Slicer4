@@ -195,11 +195,16 @@ void vtkKWMimxViewProperties::VisibilityCallback(const char *objectId, int flag)
           }
           else
           {
-            this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(
-              this->ObjectList->GetItem(j)->GetActor());
-                        this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,1);
-                        this->GetMimxMainWindow()->GetRenderWidget()->Render();
-                        return;
+//            this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(
+//              this->ObjectList->GetItem(j)->GetActor());
+//                        this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,1);
+//                        this->GetMimxMainWindow()->GetRenderWidget()->Render();
+//                        return;
+              // enable the surface actor that is already in the scene
+              //vtkMimxSurfacePolyDataActor::SafeDownCast(this->ObjectList->GetItem(j))->Show();
+              this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,1);
+              return;
+            
           }
         }
         else
@@ -221,10 +226,14 @@ void vtkKWMimxViewProperties::VisibilityCallback(const char *objectId, int flag)
           }
           else
           {
-            this->GetMimxMainWindow()->GetRenderWidget()->RemoveViewProp(
-                          this->ObjectList->GetItem(j)->GetActor());
-                        this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,0);
-                        this->GetMimxMainWindow()->GetRenderWidget()->Render();
+//            this->GetMimxMainWindow()->GetRenderWidget()->RemoveViewProp(
+//                        this->ObjectList->GetItem(j)->GetActor());
+//                        this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,0);
+//                        this->GetMimxMainWindow()->GetRenderWidget()->Render();
+//                        return;
+              // leave the surface actor in the scene, just turn it off because the user toggled it off
+             // vtkMimxSurfacePolyDataActor::SafeDownCast(this->ObjectList->GetItem(j))->Hide();
+             //           this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,0);
                         return;
           }
         }

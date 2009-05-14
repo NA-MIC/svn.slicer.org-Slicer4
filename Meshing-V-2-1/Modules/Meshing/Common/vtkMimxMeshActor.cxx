@@ -1457,9 +1457,9 @@ void vtkMimxMeshActor::AddElementSetListItem( std::string setName )
 void vtkMimxMeshActor::SetRenderer(vtkRenderer *renderer)
 {
   this->Renderer = renderer;
-  this->Renderer->AddViewProp(this->Actor);
-  this->Renderer->AddViewProp(this->OutlineActor);
-  this->Renderer->AddViewProp(this->InteriorActor);
+  //this->Renderer->AddViewProp(this->Actor);
+  //this->Renderer->AddViewProp(this->OutlineActor);
+  //this->Renderer->AddViewProp(this->InteriorActor);
   this->Renderer->AddViewProp(this->LegendActor);
     
   std::list<MeshDisplayProperty*>::iterator it;
@@ -1467,9 +1467,9 @@ void vtkMimxMeshActor::SetRenderer(vtkRenderer *renderer)
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     { 
     MeshDisplayProperty *currentSet = *it;
-    this->Renderer->AddViewProp(currentSet->SurfaceActor);
-    this->Renderer->AddViewProp(currentSet->OutlineActor);
-    this->Renderer->AddViewProp(currentSet->InteriorActor);
+    //this->Renderer->AddViewProp(currentSet->SurfaceActor);
+    //this->Renderer->AddViewProp(currentSet->OutlineActor);
+    //this->Renderer->AddViewProp(currentSet->InteriorActor);
     }
   
   UpdateElementSetDisplay();
