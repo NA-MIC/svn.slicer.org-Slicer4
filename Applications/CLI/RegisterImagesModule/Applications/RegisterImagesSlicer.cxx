@@ -16,7 +16,11 @@
 
 #include "itkMultiThreader.h"
 
+#undef itkDebugMacro
+#define itkDebugMacro(args) {}
+
 #include "itkImageToImageRegistrationHelper.h"
+
 
 //#include "itkObjectFactoryBase.h"
 //#include "itkMRMLIDImageIOFactory.h"
