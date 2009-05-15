@@ -33,6 +33,10 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkMimxActorBase.h"
 #include "vtkMimxCommonWin32Header.h"
 
+// change to a specific subtype display node so we can have separate filled and
+// outline colors, but initially just use the model display node
+#include  "vtkMRMLModelDisplayNode.h"
+
 class vtkActor;
 class vtkPolyData;
 class vtkPolyDataMapper;
@@ -70,6 +74,10 @@ public:
   void RestoreVisibility(void);
   void Hide();
   void Show();
+  // set pointer to display node so that attribute changes can be passed through
+   void SetMRMLDisplayNode(vtkMRMLModelDisplayNode* displayNode) 
+                   {this->SavedDisplayNode = displayNode;}
+   
   
   // *** moved to public so can be instantiated by FESurface list factory
   vtkMimxSurfacePolyDataActor();
@@ -82,9 +90,11 @@ private:
   vtkMimxSurfacePolyDataActor(const vtkMimxSurfacePolyDataActor&);  // Not implemented.
   void operator=(const vtkMimxSurfacePolyDataActor&);  // Not implemented.
   double FillColor[3];
-        double OutlineColor[3];
-        int DisplayType;
-        bool SavedVisibility;
+  double OutlineColor[3];
+  int DisplayType;
+  bool SavedVisibility;
+  vtkMRMLModelDisplayNode* SavedDisplayNode;
+        
 };
 
 #endif

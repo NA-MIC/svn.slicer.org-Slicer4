@@ -94,8 +94,8 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
       // for this second version of the meshing module, we are using the MRML display of the geometry
       dispNode->SetVisibility(1);
       
-      // *** this broke the mrml reload, why?
-      //storeNode->SetFileName(actor->GetFileName());
+      // set pointer so actor can invoke attribute change methods
+      actor->SetMRMLDisplayNode(dispNode);
  
       this->savedMRMLScene->AddNode(newMRMLNode);
       

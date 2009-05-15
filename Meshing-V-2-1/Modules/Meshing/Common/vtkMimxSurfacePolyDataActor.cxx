@@ -87,8 +87,11 @@ void vtkMimxSurfacePolyDataActor::SetOutlineColor(double red, double green, doub
   this->OutlineColor[0] = red;
   this->OutlineColor[1] = green;
   this->OutlineColor[2] = blue;
+  
   if (this->DisplayType == DisplayOutline)
   {
+    // uncomment this when we have the specific display node
+    // this->SavedDisplayNode->SetOutlineColor(red,green,blue);
     this->Actor->GetProperty()->SetColor(red, green, blue);
     this->Actor->Modified();
   }
@@ -107,6 +110,7 @@ void vtkMimxSurfacePolyDataActor::SetFillColor(double red, double green, double 
   this->FillColor[2] = blue;
   if (this->DisplayType == DisplaySurface)
   {
+    this->SavedDisplayNode->SetColor(red, green, blue);
     this->Actor->GetProperty()->SetColor(red, green, blue);
     this->Actor->Modified();
   }
@@ -121,17 +125,19 @@ void vtkMimxSurfacePolyDataActor::SetFillColor(double rgb[3])
 //----------------------------------------------------------------------------------
 void vtkMimxSurfacePolyDataActor::GetFillColor(double &red, double &green, double &blue)
 {
-  red = this->FillColor[0];
-  green = this->FillColor[1];
-  blue = this->FillColor[2];
+  this->SavedDisplayNode->GetColor(red,green,blue);
+  //red = this->FillColor[0];
+  //green = this->FillColor[1];
+  //blue = this->FillColor[2];
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxSurfacePolyDataActor::GetFillColor(double rgb[3])
 {
-  rgb[0] = this->FillColor[0];
-  rgb[1] = this->FillColor[1];
-  rgb[2] = this->FillColor[2];
+    this->SavedDisplayNode->GetColor(rgb[0],rgb[1],rgb[2]);
+  //rgb[0] = this->FillColor[0];
+  //rgb[1] = this->FillColor[1];
+  //rgb[2] = this->FillColor[2];
 }
 
 //----------------------------------------------------------------------------------
