@@ -181,6 +181,7 @@ void vtkSlicerModuleChooseGUI::RemoveGUIObservers ( )
 {
     this->ModulesPrev->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModulesNext->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ModulesRefresh->RemoveObservers (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModulesHistory->GetMenu()->RemoveObservers ( vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModulesSearch->GetMenu()->RemoveObservers (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModulesSearchEntry->RemoveObservers (vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -192,6 +193,7 @@ void vtkSlicerModuleChooseGUI::AddGUIObservers ( )
 {
     this->ModulesPrev->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModulesNext->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
+    this->ModulesRefresh->AddObserver (vtkKWPushButton::InvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModulesHistory->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModulesSearch->GetMenu()->AddObserver (vtkKWMenu::MenuItemInvokedEvent, (vtkCommand *)this->GUICallbackCommand );
     this->ModulesSearchEntry->AddObserver ( vtkKWEntry::EntryValueChangedEvent, (vtkCommand *)this->GUICallbackCommand );
@@ -276,6 +278,14 @@ void vtkSlicerModuleChooseGUI::ProcessGUIEvents ( vtkObject *caller,
       }
 
 //    this->RaiseModule ( moduleName );
+    }
+  else if ( pushb == this->ModulesRefresh && event == vtkKWPushButton::InvokedEvent )
+    {
+      vtkSlicerApplicationGUI *gui = vtkSlicerApplicationGUI::SafeDownCast( this->GetApplicationGUI() );
+      if (gui)
+        {
+        gui->ShowModulesWizard();
+        }
     }
   if ( menu == this->ModulesHistory->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent )
     {
