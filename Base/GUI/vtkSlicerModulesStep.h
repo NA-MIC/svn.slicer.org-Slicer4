@@ -64,18 +64,11 @@ public:
   // Description:
   // Uninstall selected extensions.
   void Uninstall();
-  // Description:
-  // Command for the HTTP hyperlink cell
-  void HomepageCommand(const char *notused,
-                       int row_index,
-                       int col_index,
-                       const char *widget_name);
   
   // Description:
   // Callback for when the homepage is clicked
-  void HomepageCallback(const char *widget_name,
-                        int row_index,
-                        int col_index);
+  void OpenHomePageInBrowserCallback();
+
   // Description:
   // Command for the description cell
   void DescriptionCommand(const char *notused,
@@ -130,7 +123,10 @@ private:
   vtkKWLabel *HeaderText;
   vtkKWPushButton *SelectAllButton;
   vtkKWPushButton *SelectNoneButton;
+
   vtkKWMultiColumnListWithScrollbars *ModulesMultiColumnList;
+  int HomePageColIndex;
+
   vtkKWPushButton *DownloadButton;
   vtkKWPushButton *UninstallButton;
   vtkKWPushButton *StopButton;

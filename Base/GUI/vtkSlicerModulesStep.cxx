@@ -88,6 +88,7 @@ vtkSlicerModulesStep::vtkSlicerModulesStep()
   this->SelectAllButton = NULL;
   this->SelectNoneButton = NULL;
   this->ModulesMultiColumnList = NULL;
+  this->HomePageColIndex = NULL;
   this->DownloadButton = NULL;
   this->UninstallButton = NULL;
   this->StopButton = NULL;
@@ -282,10 +283,15 @@ void vtkSlicerModulesStep::ShowUserInterface()
 
     col_index = the_list->AddColumn("Name");
     col_index = the_list->AddColumn("Category");
+
     col_index = the_list->AddColumn("Description");
     the_list->SetColumnFormatCommandToEmptyOutput(col_index);
-    col_index = the_list->AddColumn("HomePage");
+
+    this->HomePageColIndex = col_index = the_list->AddColumn("HomePage");
+    the_list->SetColumnWidth(col_index, 0);
     the_list->SetColumnFormatCommandToEmptyOutput(col_index);
+    the_list->SetSelectionCommand( this, "OpenHomePageInBrowserCallback" );
+
     col_index = the_list->AddColumn("Binary URL");
 
     }
@@ -451,8 +457,21 @@ void vtkSlicerModulesStep::InsertExtension(int Index,
   the_list->SetCellText(Index, 4, Entry->Description.c_str());
   the_list->SetCellWindowCommand(Index, 4, this, "DescriptionCommand");
 
-  the_list->SetCellText(Index, 4, Entry->Homepage.c_str());
-  the_list->SetCellWindowCommand(Index, 5, this, "HomepageCommand");
+
+
+  the_list->SetCellText(Index, this->HomePageColIndex, Entry->Homepage.c_str());
+
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication()); 
+  
+  if (app)
+    {
+    vtkKWIcon *www = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerWWWIcon();
+    the_list->SetCellImageToIcon(Index, this->HomePageColIndex, www);
+    }
+
+  the_list->SetCellEditable(Index, this->HomePageColIndex, 0);
+
+
 
   the_list->InsertCellText(Index, 6, Entry->URL.c_str());
             
@@ -569,54 +588,30 @@ void vtkSlicerModulesStep::Uninstall()
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerModulesStep::HomepageCommand(const char *notused,
-                                           int row_index,
-                                           int col_index,
-                                           const char *widget_name)
+void vtkSlicerModulesStep::OpenHomePageInBrowserCallback()
 {
-  vtkKWMultiColumnList *list = this->ModulesMultiColumnList->GetWidget();
+  vtkKWMultiColumnList *the_list = this->ModulesMultiColumnList->GetWidget();
 
-  vtkKWLabel *child = 
-    vtkKWLabel::SafeDownCast(list->GetCellWindowAsFrame(row_index, col_index));
-
- 
-  if (!child)
-    {
-    child = vtkKWLabel::New();
-    child->SetWidgetName(widget_name);
-    child->SetParent(list);
-    child->Create();
-    child->Delete();
-    }
-
-  child->SetBackgroundColor(list->GetCellCurrentBackgroundColor(row_index, col_index));
-
-  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication()); 
+  int num_rows = the_list->GetNumberOfRows();
+  int col;
   
-  if (app)
+  for (int loop = 0; loop < num_rows; loop++)
     {
-    vtkKWIcon *www = app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerWWWIcon();
-    child->SetImageToIcon(www);
-    }
-  /*
-  char command[1024];
-  sprintf(command,
-          "HomepageCallback %s %d %d ",
-          child->GetTclName(), row_index, col_index );
-
-  child->SetCommand(this, command);
-  */
-}
-
-//----------------------------------------------------------------------------
-void vtkSlicerModulesStep::HomepageCallback(const char *widget_name,
-                                            int row_index,
-                                            int col_index)
-{
-  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
-  if (app)
-    {
-    app->OpenLink("http://wire");
+      col = the_list->IsCellSelected( loop, this->HomePageColIndex );
+    if (col)
+      {
+      const char *uri = the_list->GetCellText( loop, this->HomePageColIndex );
+      if (0 != uri)
+        {
+        vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast( this->GetApplication() );
+        if (app)
+          {
+          app->OpenLink(uri);
+          } 
+        }
+      the_list->DeselectCell( loop, this->HomePageColIndex );
+      break;
+      }
     }
 }
 
@@ -647,7 +642,7 @@ void vtkSlicerModulesStep::DescriptionCommand(const char *notused,
 
   if (!description.empty())
     {
-    std::string summary = description.substr(0, 5);
+    std::string summary = description.substr(0, 12);
     summary += "...";
 
     child->SetText(summary.c_str());
