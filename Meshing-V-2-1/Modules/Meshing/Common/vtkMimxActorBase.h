@@ -11,12 +11,12 @@ Version:   $Revision: 1.13 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -32,10 +32,12 @@ PURPOSE.  See the above copyright notices for more information.
 #include "mimxCommonDefine.h"
 #include "vtkProp3D.h"
 #include "vtkMimxCommonWin32Header.h"
+#include "vtkMRMLDisplayNode.h"
 
 class vtkActor;
 class vtkDataSet;
 class vtkPolyData;
+
 
 class VTK_MIMXCOMMON_EXPORT vtkMimxActorBase : public vtkProp3D
 {
@@ -44,7 +46,7 @@ public:
   vtkTypeRevisionMacro(vtkMimxActorBase,vtkProp3D);
   void PrintSelf(ostream& os, vtkIndent indent);
 
-  // Description: 
+  // Description:
   //virtual vtkDataSet* GetDataSet() = 0;
   vtkGetMacro(DataType, vtkIdType);
   vtkSetMacro(DataType, vtkIdType);
@@ -60,15 +62,34 @@ public:
   void SetUniqueId( const char *Id);
   void SetObjectName(const char *FilterName, vtkIdType &Count);
   void SetFoundationName(const char *FoundationName);
+
+  // added for Slicer integration - standard operations that should be supported by all actor types
+  // through an attached MRMLDisplayNode
+  void Hide();
+  void Show();
+  void  SetVisibility(int i);
+  void SaveVisibility(void);
+  void RestoreVisibility(void);
+
+  // set pointer to display node so that attribute changes can be passed through
+   void SetMRMLDisplayNode(vtkMRMLDisplayNode* displayNode)
+                   {this->SavedDisplayNode = displayNode;}
+
+
 protected:
   vtkMimxActorBase();
   virtual ~vtkMimxActorBase();
   vtkActor *Actor;
   vtkIdType DataType;
+
   char* FilePath;
   char* FileName;
   char* UniqueId;
   char* FoundationName;
+  // added for Slicer integration
+  vtkMRMLDisplayNode* SavedDisplayNode;
+  int SavedVisibility;
+
 private:
   vtkMimxActorBase(const vtkMimxActorBase&);  // Not implemented.
   void operator=(const vtkMimxActorBase&);  // Not implemented.

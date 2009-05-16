@@ -11,12 +11,12 @@ Version:   $Revision: 1.9 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -45,12 +45,12 @@ class VTK_MIMXCOMMON_EXPORT vtkMimxSurfacePolyDataActor : public vtkMimxActorBas
 {
 public:
 
-  enum { 
+  enum {
     DisplaySurface                = 1,
     DisplayOutline                = 2,
     DisplaySurfaceAndOutline      = 3
   };
-  
+
   static vtkMimxSurfacePolyDataActor *New();
   vtkTypeRevisionMacro(vtkMimxSurfacePolyDataActor,vtkMimxActorBase);
   void PrintSelf(ostream& os, vtkIndent indent);
@@ -68,22 +68,16 @@ public:
 // void SetDataType(int){};
  //vtkSetMacro(PolyData, vtkPolyData*);
  //vtkGetMacro(PolyData, vtkPolyData*);
- 
+
   // added to support slicer integration
-  void SaveVisibility(void);
-  void RestoreVisibility(void);
-  void Hide();
-  void Show();
-  // set pointer to display node so that attribute changes can be passed through
-   void SetMRMLDisplayNode(vtkMRMLModelDisplayNode* displayNode) 
-                   {this->SavedDisplayNode = displayNode;}
-   
-  
+
+
+
   // *** moved to public so can be instantiated by FESurface list factory
   vtkMimxSurfacePolyDataActor();
    ~vtkMimxSurfacePolyDataActor();
 protected:
- 
+
   vtkPolyData *PolyData;
   vtkPolyDataMapper *PolyDataMapper;
 private:
@@ -92,9 +86,8 @@ private:
   double FillColor[3];
   double OutlineColor[3];
   int DisplayType;
-  bool SavedVisibility;
-  vtkMRMLModelDisplayNode* SavedDisplayNode;
-        
+
+
 };
 
 #endif

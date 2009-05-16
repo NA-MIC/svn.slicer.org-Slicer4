@@ -11,12 +11,12 @@ Version:   $Revision: 1.10 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -53,7 +53,7 @@ vtkMimxSurfacePolyDataActor::vtkMimxSurfacePolyDataActor()
 //----------------------------------------------------------------------------------
 vtkMimxSurfacePolyDataActor::~vtkMimxSurfacePolyDataActor()
 {
-  if(this->PolyData)    
+  if(this->PolyData)
     this->PolyData->Delete();
         this->PolyDataMapper->Delete();
         this->Actor->Delete();
@@ -87,7 +87,7 @@ void vtkMimxSurfacePolyDataActor::SetOutlineColor(double red, double green, doub
   this->OutlineColor[0] = red;
   this->OutlineColor[1] = green;
   this->OutlineColor[2] = blue;
-  
+
   if (this->DisplayType == DisplayOutline)
   {
     // uncomment this when we have the specific display node
@@ -172,9 +172,4 @@ void vtkMimxSurfacePolyDataActor::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------------
 
 // added to support slicer integration
-void vtkMimxSurfacePolyDataActor::SaveVisibility(void) {this->SavedVisibility = (this->Actor->GetVisibility())?true:false;}
-void vtkMimxSurfacePolyDataActor::RestoreVisibility(void) {this->Actor->SetVisibility(this->SavedVisibility);}
-void vtkMimxSurfacePolyDataActor::Hide() {this->Actor->SetVisibility(0);}
-void vtkMimxSurfacePolyDataActor::Show() {this->Actor->SetVisibility(1);}
-
 
