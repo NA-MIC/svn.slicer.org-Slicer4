@@ -68,7 +68,7 @@ subdirs(
    #VolumeRenderingCuda
    ModelIntoLabelVolume
    ExtractSubvolume
-   FastMarchingSegmentation
+#   FastMarchingSegmentation
   )
 
 if(Slicer3_USE_OPENIGTLINK)
