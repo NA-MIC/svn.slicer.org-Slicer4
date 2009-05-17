@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<executable>
+  <category>
+  IGT
+  </category>
+  <title>
+  Endoscopy Tracker
+  </title>
+  <description>
+  Record and/or send tracking information info to server
+  </description>
+  <version>0.1.0</version>
+  <documentation-url>http://wiki.slicer.org/slicerWiki/index.php/</documentation-url>
+  <license></license>
+  <contributor>Alex Yarmarkovich</contributor>
+  <acknowledgements></acknowledgements>
+
+  <parameters>
+    <label>Source</label>
+    <description>Input parameters</description>
+
+    <string-enumeration>
+      <name>TrackingSource</name>
+      <label>Tracking Source</label>
+      <description>The source of tracking information</description>
+      <flag>-t</flag>
+      <longflag>--tracksource</longflag>        
+      <default>TrackingDevice</default>
+      <element>TrackingDevice</element>
+      <element>RecordedFiles</element>
+    </string-enumeration>
+
+    <boolean>
+      <name>CaptureVideo</name>
+       <label>Capture Video</label>
+       <flag>-d</flag>
+       <longflag>--capturevideo</longflag>
+       <description>Use Video Capture</description>
+       <default>true</default>
+    </boolean>
+
+    <integer>
+      <name>VideoChannel</name>
+      <flag>-l</flag>
+      <longflag>--videochannel</longflag>
+      <description>index of sensor attached to video source</description>
+      <label>Tracking Device Video Sensor Channel</label>
+      <default>0</default>
+    </integer>
+
+    <integer>
+      <name>ImageDimensionX</name>
+      <flag>-x</flag>
+      <longflag>--dimensionx</longflag>
+      <description>Video Source Image Dimension X</description>
+      <label>Video Source Image Dimension X</label>
+      <default>640</default>
+    </integer>
+
+    <integer>
+      <name>ImageDimensionY</name>
+      <flag>-y</flag>
+      <longflag>--dimensiony</longflag>
+      <description>Video Source Image Dimension Y</description>
+      <label>Video Source Image Dimension Y</label>
+      <default>420</default>
+    </integer>
+
+    <directory>
+      <name>SourceDirectory</name>
+      <label>Recorded File Directory</label>
+      <channel>input</channel>
+      <longflag>--sourceDirectory</longflag>
+      <description>Directory to read tracking images and transformations</description>
+    </directory>  
+
+    <string>
+       <name>SourcePattern</name>
+       <label>Recorded File Pattern</label>
+       <flag>-z</flag>
+       <longflag>--pattern</longflag>
+       <description>Recorded File Pattern</description>
+       <default>*.*</default>
+    </string>
+  
+    <boolean>
+      <name>CycleFiles</name>
+       <label>Cycle Through Recorded Files</label>
+       <flag>-c</flag>
+       <longflag>--cycle</longflag>
+       <description>Cycle Recorded Files</description>
+       <default>true</default>
+    </boolean>
+
+  </parameters>
+
+  <parameters>
+    <label>Destination</label>
+    <description>Output parameters</description>
+
+    <boolean>
+      <name>SendToServer</name>
+       <label>Send To Server</label>
+       <flag>-s</flag>
+       <longflag>--send</longflag>
+       <description>Send tracking images and transformations to server</description>
+       <default>true</default>
+    </boolean>
+
+    <boolean>
+      <name>Record</name>
+       <label>Record To Disk</label>
+       <flag>-r</flag>
+       <longflag>--record</longflag>
+       <description>Record tracking images and transformations to disk</description>
+       <default>false</default>
+    </boolean>
+
+    <directory>
+      <name>RecordDirectory</name>
+      <label>Record To File Directory</label>
+      <channel>input</channel>
+      <longflag>--recordDirectory</longflag>
+      <description>Directory to record tracking images and transformations</description>
+    </directory>  
+
+    <string>
+       <name>RecordPrefix</name>
+       <label>Record Files Prefix</label>
+       <flag>-w</flag>
+       <longflag>--prefix</longflag>
+       <description>Record Files Prefix</description>
+       <default>trackImg</default>
+    </string>
+  
+  </parameters>
+
+  <parameters>
+    <label>Connection to Server</label>
+    <description>Connection parameters to Slicer Server</description>
+
+    <string>
+       <name>Hostname</name>
+       <label>Hostname or IP</label>
+       <flag>-v</flag>
+       <longflag>--server</longflag>
+       <description>Server Hostname or IP</description>
+       <default>localhost</default>
+    </string>
+  
+
+    <integer>
+      <name>Port</name>
+      <flag>-p</flag>
+      <longflag>--port</longflag>
+      <description>Server Port</description>
+      <label>Server Port</label>
+      <default>18944</default>
+    </integer>
+
+    <integer>
+      <name>Fps</name>
+      <flag>-f</flag>
+      <longflag>--fps</longflag>
+      <description>requency (fps) to send coordinates and image</description>
+      <label>Send Frequency (fps)</label>
+      <default>20</default>
+    </integer>
+
+  </parameters>  
+</executable>
