@@ -52,6 +52,11 @@ namespace eval Loader {
   #
   proc LoadArchetype { path {centered 0} {labelMap 0} {name ""} } {
 
+    if { [info exists ::slicer3::VolumesGUI] == 0 } {
+      $this errorDialog "Volumes module is not loaded, cannot load volumes."
+      return
+    }
+    
     if { ![file exists $path] } {
       error "path does not exist: $path"
     }
@@ -184,6 +189,7 @@ itcl::body Loader::constructor { } {
     "Select All" "Select None"
     "Label All" "Label None"
     "Centered All" "Centered None"
+      "FiberBundle All" "FiberBundle None"
   }
   set widgets ""
   foreach a $actions {
@@ -216,16 +222,19 @@ itcl::body Loader::constructor { } {
   $w SetPotentialCellColorsChangedCommand $w "ScheduleRefreshColorsOfAllCellsWithWindowCommand"
   $w SetColumnSortedCommand $w "ScheduleRefreshColorsOfAllCellsWithWindowCommand"
 
-  foreach column {Select File Type Name LabelMap Centered} {
+  foreach column {Select File Type Name LabelMap Centered FiberBundle} {
     set col($column) [$w AddColumn $column]
   }
   $w SetColumnFormatCommandToEmptyOutput $col(Select)
+  $w SetColumnFormatCommandToEmptyOutput $col(LabelMap)
+  $w SetColumnFormatCommandToEmptyOutput $col(Centered)
+  $w SetColumnFormatCommandToEmptyOutput $col(FiberBundle)
 
   # configure the entries
-  foreach column {Select LabelMap Centered} {
+  foreach column {Select LabelMap Centered FiberBundle} {
     $w SetColumnEditWindowToCheckButton $col($column)
   }
-  foreach column {Select File Name LabelMap Centered} {
+  foreach column {Select File Name LabelMap Centered FiberBundle} {
     $w ColumnEditableOn $col($column)
   }
   $w SetColumnWidth $col(Select) 6
@@ -357,7 +366,13 @@ itcl::body Loader::addRow { path type } {
     set seg [string match -nocase "*seg*" $path] 
     $w InsertCellTextAsInt $i $col(LabelMap) $seg
     $w SetCellWindowCommandToCheckButton $i $col(LabelMap)
-  } 
+  }
+
+  if { $type == "Model" } {
+   #--- by default, not a fiber bundle
+    $w InsertCellTextAsInt $i $col(FiberBundle) 0
+    $w SetCellWindowCommandToCheckButton $i $col(FiberBundle)
+  }
 
 }
 
@@ -485,69 +500,85 @@ itcl::body Loader::apply { } {
   set rows [$w GetNumberOfRows]
 
   for {set row 0} {$row < $rows} {incr row} {
+      
+      $progressGauge SetValue [expr 100 * $row / (1. * $rows)]
 
-    $progressGauge SetValue [expr 100 * $row / (1. * $rows)]
+      if { [$w GetCellTextAsInt $row $col(Select)] } {
 
-    if { [$w GetCellTextAsInt $row $col(Select)] } {
+          set path [$w GetCellText $row $col(File)]
+          set name [$w GetCellText $row $col(Name)]
+          $mainWindow SetStatusText "Loading: $path"
 
-      set path [$w GetCellText $row $col(File)]
-      set name [$w GetCellText $row $col(Name)]
-      $mainWindow SetStatusText "Loading: $path"
+          switch [$w GetCellText $row $col(Type)] {
+              "Volume" {
+                  set centered [$w GetCellTextAsInt $row $col(Centered)]
+                  set labelMap [$w GetCellTextAsInt $row $col(LabelMap)]
 
-      switch [$w GetCellText $row $col(Type)] {
-        "Volume" {
-          set centered [$w GetCellTextAsInt $row $col(Centered)]
-          set labelMap [$w GetCellTextAsInt $row $col(LabelMap)]
-          set volumeLogic [$::slicer3::VolumesGUI GetLogic]
-          ## set node [$volumeLogic AddArchetypeVolume $path $centered $labelMap $name]
-          set loadingOptions [expr $labelMap * 1 + $centered * 2]
-          set node [$volumeLogic AddArchetypeVolume $path $name $loadingOptions]
-          set selNode [$::slicer3::ApplicationLogic GetSelectionNode]
-          if { $node == "" } {
-            $this errorDialog "Could not open $path"
-          } else {
-            if { $labelMap } {
-              $selNode SetReferenceActiveLabelVolumeID [$node GetID]
-            } else {
-              $selNode SetReferenceActiveVolumeID [$node GetID]
-            }
-            $::slicer3::ApplicationLogic PropagateVolumeSelection
+                  set volumeLogic [$::slicer3::VolumesGUI GetLogic]
+                  ## set node [$volumeLogic AddArchetypeVolume $path $centered $labelMap $name]
+                  set loadingOptions [expr $labelMap * 1 + $centered * 2]
+                  set node [$volumeLogic AddArchetypeVolume $path $name $loadingOptions]
+                  set selNode [$::slicer3::ApplicationLogic GetSelectionNode]
+                  if { $node == "" } {
+                      $this errorDialog "Could not open $path"
+                  } else {
+                      if { $labelMap } {
+                          $selNode SetReferenceActiveLabelVolumeID [$node GetID]
+                      } else {
+                          $selNode SetReferenceActiveVolumeID [$node GetID]
+                      }
+                      $::slicer3::ApplicationLogic PropagateVolumeSelection
+                  }
+              }
+              "Model" {
+                  set fiberBundle [ $w GetCellTextAsInt $row $col(FiberBundle)]
+                  if { $fiberBundle == 1 } {
+                      set app $::slicer3::Application
+                      set fiberBundleGUI [$app GetModuleGUIByName "FiberBundles" ]
+                      if { $fiberBundleGUI != "" } {
+                          set fiberBundleLogic [ $fiberBundleGUI GetLogic ]
+                          if { $fiberBundleLogic != "" } {
+                              set fiberBundleNode [ $fiberBundleLogic AddFiberBundle $path]
+                              if {$fiberBundleNode == "" } {
+                                  $this errorDialog "Unable to read DTI fiber bundle model file $path"
+                              }
+                          }
+                      }
+                  } else {
+                      set node [[$::slicer3::ModelsGUI GetLogic] AddModel $path]
+                      if { $node == "" } {
+                          $this errorDialog "Could not open $path"
+                      } else {
+                          $node SetName $name
+                      }
+                  }
+              }
+              "XCEDE" {
+                  set pass [ XcatalogImport $path ]
+                  if { $pass == 0 } {
+                      $this errorDialog "Could not load XCEDE catalog at $path."
+                  }
+              }
+              "QDEC" {
+                  if {[info exists ::slicer3::QdecModuleGUI]} {
+                      set err [$::slicer3::QdecModuleGUI LoadProjectFile $path]
+                      if {$err == -1} {
+                          $this errorDialog "Could not load QDEC project $path (using $tmp to unpack into)"
+                      }
+                  } else {
+                      $this errorDialog "QDEC module not present, cannot open $path"
+                  }
+              }
+              "FiducialList" {
+                  set node [[$::slicer3::FiducialsGUI GetLogic] LoadFiducialList $path]
+                  if { $node == "" } {
+                      $this errorDialog "Could not open $path"
+                  } else {
+                      $node SetName $name
+                  }  
+              }
           }
-        }
-        "Model" {
-          set node [[$::slicer3::ModelsGUI GetLogic] AddModel $path]
-          if { $node == "" } {
-            $this errorDialog "Could not open $path"
-          } else {
-            $node SetName $name
-          }
-        }
-        "XCEDE" {
-          set pass [ XcatalogImport $path ]
-          if { $pass == 0 } {
-            $this errorDialog "Could not load XCEDE catalog at $path."
-          }
-        }
-        "QDEC" {
-          if {[info exists ::slicer3::QdecModuleGUI]} {
-            set err [$::slicer3::QdecModuleGUI LoadProjectFile $path]
-            if {$err == -1} {
-              $this errorDialog "Could not load QDEC project $path (using $tmp to unpack into)"
-            }
-          } else {
-              $this errorDialog "QDEC module not present, cannot open $path"
-          }
-        }
-        "FiducialList" {
-           set node [[$::slicer3::FiducialsGUI GetLogic] LoadFiducialList $path]
-           if { $node == "" } {
-              $this errorDialog "Could not open $path"
-            } else {
-              $node SetName $name
-            }  
-        }
       }
-    }
   }
   $mainWindow SetStatusText ""
   $progressGauge SetValue 0
@@ -620,6 +651,16 @@ itcl::body Loader::processEvent { {caller ""} {event ""} } {
     return
   }
 
+  if { $caller == $o(fiberBundleAll) } {
+      $this setAll FiberBundle 1
+      return
+  }
+
+  if { $caller == $o(fiberBundleNone) } {
+      $this setAll FiberBundle 0
+      return
+  }
+
   puts "$this: unknown event from $caller"
 }
 
@@ -673,7 +714,7 @@ itcl::body Loader::chooseDirectory {} {
 
   } else {
     #
-    # use a custom dialog with filtering and recursion options
+    # use a custom dialog with filte$dddring and recursion options
     #
     set var ::Loader::browserSync_[namespace tail $this]
     set $var ""
