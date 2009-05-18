@@ -145,10 +145,18 @@ vtkSlicerVRGrayscaleHelper::vtkSlicerVRGrayscaleHelper(void)
     
     this->IsTextureMappingSupported = 0;
     this->IsGPURayCastingSupported = 0;
+
+    this->ButtonDown = 0;
+    
+    this->CPURayCastingInteractionFlag = 0;
 }
 
 vtkSlicerVRGrayscaleHelper::~vtkSlicerVRGrayscaleHelper(void)
 {   
+    //Remove Bindings
+    this->Gui->Script("bind all <Any-ButtonPress> {}",this->GetTclName());
+    this->Gui->Script("bind all <Any-ButtonRelease> {}",this->GetTclName());
+     
     this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->GetProgressGauge()->SetNthValue(0,0);
     this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->GetProgressGauge()->SetNthValue(1,0);
     this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->GetProgressGauge()->SetNthValue(2,0);
@@ -157,7 +165,8 @@ vtkSlicerVRGrayscaleHelper::~vtkSlicerVRGrayscaleHelper(void)
     this->MapperRaycast->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsStartEvent,(vtkCommand *)this->VolumeRenderingCallbackCommand);
     this->MapperRaycast->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsProgressEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
     this->MapperRaycast->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsEndEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
-    
+    this->MapperRaycast->RemoveObservers(vtkCommand::ProgressEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
+
     this->MapperGPURaycast->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsStartEvent,(vtkCommand *)this->VolumeRenderingCallbackCommand);
     this->MapperGPURaycast->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsProgressEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
     this->MapperGPURaycast->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsEndEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
@@ -167,6 +176,8 @@ vtkSlicerVRGrayscaleHelper::~vtkSlicerVRGrayscaleHelper(void)
     this->MapperTexture->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsEndEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
 
     this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->RemoveObservers(vtkCommand::AbortCheckEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
+    this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->RemoveObservers(vtkCommand::EndEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
+    
    
     //Remove Volume
     if(this->SVP_VolumeProperty!=NULL)
@@ -246,6 +257,9 @@ void vtkSlicerVRGrayscaleHelper::Init(vtkVolumeRenderingGUI *gui)
     //Start dialog right here
     Superclass::Init(gui);
 
+    this->Gui->Script("bind all <Any-ButtonPress> {%s SetButtonDown 1}",this->GetTclName());
+    this->Gui->Script("bind all <Any-ButtonRelease> {%s SetButtonDown 0}",this->GetTclName());
+    
     //TODO: Move Pause Resume Button to another Place
     //Pause Resume Button
 
@@ -436,7 +450,7 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
     {
         //Init the texture mapper
         this->MapperTexture = vtkSlicerVolumeTextureMapper3D::New();
-        this->MapperTexture->SetSampleDistance(this->EstimatedSampleDistance*2.0);
+        this->MapperTexture->SetSampleDistance(this->EstimatedSampleDistance);
         this->MapperTexture->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
  
         //create the raycast mapper
@@ -447,12 +461,11 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
         //Also take care about Ray Cast
         this->MapperRaycast=vtkSlicerFixedPointVolumeRayCastMapper::New();
         this->MapperRaycast->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(this->Gui->GetNS_ImageData()->GetSelected())->GetImageData());
-        this->MapperRaycast->SetSampleDistance(this->EstimatedSampleDistance*4.0);
-        this->MapperRaycast->ManualInteractiveOn();
-        this->MapperRaycast->SetManualInteractiveRate(0.2);//5 fps 
-        this->MapperRaycast->SetImageSampleDistance(2.0f);
-        this->MapperRaycast->SetMinimumImageSampleDistance(2.0f);
-        this->MapperRaycast->SetMaximumImageSampleDistance(16.0f);
+        this->MapperRaycast->SetSampleDistance(this->EstimatedSampleDistance);
+        this->MapperRaycast->ManualInteractiveOff();
+        this->MapperRaycast->SetImageSampleDistance(1.0f);
+        this->MapperRaycast->SetMinimumImageSampleDistance(1.0f);
+        this->MapperRaycast->SetMaximumImageSampleDistance(20.0f);
         
     }
     
@@ -505,6 +518,7 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
         this->MapperRaycast->AddObserver(vtkCommand::VolumeMapperComputeGradientsStartEvent,(vtkCommand *)this->VolumeRenderingCallbackCommand);
         this->MapperRaycast->AddObserver(vtkCommand::VolumeMapperComputeGradientsProgressEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
         this->MapperRaycast->AddObserver(vtkCommand::VolumeMapperComputeGradientsEndEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
+        this->MapperRaycast->AddObserver(vtkCommand::ProgressEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
 
         //hook up the gpu mapper
         this->MapperGPURaycast->AddObserver(vtkCommand::VolumeMapperComputeGradientsStartEvent,(vtkCommand *)this->VolumeRenderingCallbackCommand);
@@ -512,12 +526,14 @@ void vtkSlicerVRGrayscaleHelper::Rendering(void)
         this->MapperGPURaycast->AddObserver(vtkCommand::VolumeMapperComputeGradientsEndEvent,(vtkCommand *) this->VolumeRenderingCallbackCommand);
 
         this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::AbortCheckEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
+        this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand*)this->VolumeRenderingCallbackCommand);
     }
 
     //choose default mapper, set software ray mapper as default
     {
         this->Volume->SetMapper(this->MapperRaycast);
         this->MB_Mapper->GetWidget()->SetValue("Software Ray Casting");
+        this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->SetStatusText("Using CPU Raycasting: High Quality");
     }
     
     //TODO This is not the right place for this
@@ -810,6 +826,13 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
     {
         this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
     }
+
+    vtkRenderWindow *renderWindow = vtkRenderWindow::SafeDownCast(caller);
+    if (renderWindow && eid==vtkCommand::EndEvent)
+      {
+      this->Gui->GetApplicationGUI()->SetExternalProgress("Done.", 0.);
+      return;
+      }     
     
     //Check if caller equals mapper
     //All other event catchers before
@@ -836,6 +859,12 @@ void vtkSlicerVRGrayscaleHelper::ProcessVolumeRenderingEvents(vtkObject *caller,
     
             return;
         }
+        else if (eid==vtkCommand::ProgressEvent)
+          {
+          float progress=*((float*)callData);
+          this->Gui->GetApplicationGUI()->SetExternalProgress("Rendering...", progress);
+          return;
+          }     
         
     }
     
@@ -2005,3 +2034,39 @@ void vtkSlicerVRGrayscaleHelper::CheckAbort(void)
     }
 }
 
+void vtkSlicerVRGrayscaleHelper::SetupCPURayCastInteractive()
+{
+    if (this->MapperRaycast == NULL || this->Volume == NULL)
+        return;
+        
+    if (this->Volume->GetMapper() != this->MapperRaycast)
+        return;
+        
+    //when start (rendering??) set CPU ray casting to be interactive
+    if (this->ButtonDown == 1)
+    {
+        float desiredTime = 1.0f/this->SC_ExpectedFPS->GetValue();//expected fps will not be 0 so safe to do division here
+  
+        this->MapperRaycast->SetAutoAdjustSampleDistances(1);
+        this->MapperRaycast->ManualInteractiveOn();
+        this->MapperRaycast->SetManualInteractiveRate(desiredTime);
+        
+        this->CPURayCastingInteractionFlag = 1;
+        this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->SetStatusText("Using CPU Raycasting: Interactive Quality");
+    }
+    else
+    {
+        //when end (rendering??) set CPU ray casting to be non-interactive high quality
+        this->MapperRaycast->SetAutoAdjustSampleDistances(0);
+        this->MapperRaycast->SetSampleDistance(this->EstimatedSampleDistance);
+        this->MapperRaycast->SetImageSampleDistance(1.0f);
+        this->MapperRaycast->ManualInteractiveOff();
+        
+        if (this->CPURayCastingInteractionFlag == 1)//avoid endless loop
+        {
+            this->Gui->GetApplicationGUI()->GetMainSlicerWindow()->SetStatusText("Using CPU Raycasting: High Quality");
+            this->Gui->GetApplicationGUI()->GetViewerWidget()->RequestRender();
+            this->CPURayCastingInteractionFlag = 0;
+        }
+    }
+}

@@ -3313,7 +3313,9 @@ void vtkSlicerApplicationGUI::SetExternalProgress(char *message, float progress)
 
   if ( !progress_initialized )
     {
-    this->Script("set extprog_wish $::env(TCL_DIR)/bin/wish8.4");
+    // look for mac/linux style or windows style name for wish
+    this->Script("set wish_candidates [list $::env(TCL_DIR)/bin/wish8.4 $::env(TCL_DIR)/bin/wish84.exe]");
+    this->Script("foreach wc $wish_candidates {if { [file exists $wc] } {set extprog_wish $wc} }");
     this->Script("set extprog_script $::env(Slicer3_HOME)/lib/Slicer3/SlicerBaseGUI/Tcl/ExternalProgress.tcl");
     this->Script("set extprog_fp [open \"| $extprog_wish\" \"w\"]");
     this->Script("puts $extprog_fp \"source $extprog_script\"; flush $extprog_fp");
