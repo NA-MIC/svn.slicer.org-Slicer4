@@ -97,6 +97,8 @@ vtkSlicerModulesStep::vtkSlicerModulesStep()
   this->Messages["READY"] = "Select extensions, then click uninstall to remove them from\nyour version of 3D Slicer, or click download to retrieve them.";
   this->Messages["DOWNLOAD"] = "Download in progress... Clicking the cancel button will stop\nthe process after the current extension operation is finished.";
   this->Messages["FINISHED"] = "Continue selecting extensions for download or removal,\nor click finish to complete the operation.";
+
+  this->ActionTaken = vtkSlicerModulesStep::ActionIsEmpty;
 }
 
 //----------------------------------------------------------------------------
@@ -379,56 +381,54 @@ void vtkSlicerModulesStep::UpdateModulesFromRepository(vtkSlicerApplication *app
 void vtkSlicerModulesStep::Update()
 {
   vtkSlicerApplication *app =
-    dynamic_cast<vtkSlicerApplication*> (this->GetApplication());
+    vtkSlicerApplication::SafeDownCast(this->GetApplication());
 
   if (app)
     {
-      vtkSlicerModulesWizardDialog *wizard_dlg = this->GetWizardDialog();
-      
-      vtkSlicerModulesConfigurationStep *conf_step = wizard_dlg->GetModulesConfigurationStep();
+    int action = this->ActionToBeTaken();
 
-      if (vtkSlicerModulesConfigurationStep::ActionInstall == conf_step->GetSelectedAction())
+    if (vtkSlicerModulesConfigurationStep::ActionInstall == action)
+      {
+      this->UpdateModulesFromRepository(app);
+      if (this->DownloadButton)
         {
-        this->UpdateModulesFromRepository(app);
-        if (this->DownloadButton)
-          {
-          this->DownloadButton->EnabledOn();
-          }
-        if (this->UninstallButton)
-          {
-          this->UninstallButton->EnabledOff();
-          }
+        this->DownloadButton->EnabledOn();
         }
-      else if (vtkSlicerModulesConfigurationStep::ActionUninstall == conf_step->GetSelectedAction())
+      if (this->UninstallButton)
         {
-        if (this->DownloadButton)
-          {
-          this->DownloadButton->EnabledOff();
-          }
-        if (this->UninstallButton)
-          {
-          this->UninstallButton->EnabledOn();
-          }
+        this->UninstallButton->EnabledOff();
         }
-      else if (vtkSlicerModulesConfigurationStep::ActionEither == conf_step->GetSelectedAction())
+      }
+    else if (vtkSlicerModulesConfigurationStep::ActionUninstall == action)
+      {
+      if (this->DownloadButton)
         {
-        this->UpdateModulesFromRepository(app);
-        if (this->DownloadButton)
-          {
-          this->DownloadButton->EnabledOn();
-          }
-        if (this->UninstallButton)
-          {
-          this->UninstallButton->EnabledOn();
-          }
+        this->DownloadButton->EnabledOff();
         }
+      if (this->UninstallButton)
+        {
+        this->UninstallButton->EnabledOn();
+        }
+      }
+    else if (vtkSlicerModulesConfigurationStep::ActionEither == action)
+      {
+      this->UpdateModulesFromRepository(app);
+      if (this->DownloadButton)
+        {
+        this->DownloadButton->EnabledOn();
+        }
+      if (this->UninstallButton)
+        {
+        this->UninstallButton->EnabledOn();
+        }
+      }
 
     std::string cachedir = app->GetModuleCachePath();
     if (cachedir.empty())
       {
-        cachedir = app->GetBinDir();
-        cachedir += "/../";
-        cachedir += Slicer3_INSTALL_MODULES_LIB_DIR;
+      cachedir = app->GetBinDir();
+      cachedir += "/../";
+      cachedir += Slicer3_INSTALL_MODULES_LIB_DIR;
       }
 
     if (this->ModulesMultiColumnList)
@@ -499,14 +499,30 @@ int vtkSlicerModulesStep::IsActionValid()
 //----------------------------------------------------------------------------
 void vtkSlicerModulesStep::SelectAll()
 {
+  int action = this->ActionToBeTaken();
   int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   for (int row=0; row<nrows; row++)
     {
-    if (StatusFoundOnDisk != this->GetStatus(row) &&
-        StatusSuccess != this->GetStatus(row))
-      {
-      this->ModulesMultiColumnList->GetWidget()->SetCellText(row, 0, "1");
-      }
+      if (vtkSlicerModulesConfigurationStep::ActionInstall == action)
+        {
+        if (StatusFoundOnDisk != this->GetStatus(row) &&
+            StatusSuccess != this->GetStatus(row))
+          {
+          this->ModulesMultiColumnList->GetWidget()->SetCellText(row, 0, "1");
+          }
+        }
+      else if (vtkSlicerModulesConfigurationStep::ActionUninstall == action)
+        {
+        if (StatusFoundOnDisk == this->GetStatus(row) ||
+            StatusSuccess == this->GetStatus(row))
+          {
+          this->ModulesMultiColumnList->GetWidget()->SetCellText(row, 0, "1");
+          }
+        }
+      else
+        {
+        this->ModulesMultiColumnList->GetWidget()->SetCellText(row, 0, "1");
+        }
     }
 
   this->ModulesMultiColumnList->GetWidget()->RefreshAllRowsWithWindowCommand(0);
@@ -585,6 +601,7 @@ void vtkSlicerModulesStep::Uninstall()
       }
     }
 
+  this->ActionTaken = vtkSlicerModulesStep::ActionIsUninstall;
 
   this->GetWizardDialog()->GetWizardWidget()->CancelButtonVisibilityOff();
 }
@@ -721,12 +738,34 @@ void vtkSlicerModulesStep::HideUserInterface()
 //----------------------------------------------------------------------------
 void vtkSlicerModulesStep::Validate()
 {
+  vtkKWWizardWidget *wizard_widget = this->GetWizardDialog()->GetWizardWidget();
+
   vtkKWWizardWorkflow *wizard_workflow = 
     this->GetWizardDialog()->GetWizardWidget()->GetWizardWorkflow();
 
-  // This step always validates
+  int valid = this->IsActionValid();
+  if (valid != 0)
+    {
+    wizard_workflow->PushInput(vtkKWWizardStep::GetValidationSucceededInput());
+    }
+  else
+    {
+    int action = this->ActionToBeTaken();
+    if (vtkSlicerModulesConfigurationStep::ActionInstall == action)
+      {
+      wizard_widget->SetErrorText("No action taken, choose \"Download & Install\".");
+      }
+    else if (vtkSlicerModulesConfigurationStep::ActionUninstall == action)
+      {
+      wizard_widget->SetErrorText("No action taken, choose \"Uninstall\".");
+      }
+    else
+      {
+      wizard_widget->SetErrorText("No action taken, choose \"Download & Install\" or \"Uninstall\".");
+      }
 
-  wizard_workflow->PushInput(vtkKWWizardStep::GetValidationSucceededInput());
+    wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+    }
 
   wizard_workflow->ProcessInputs();
 }
@@ -1012,4 +1051,15 @@ bool vtkSlicerModulesStep::UninstallExtension(const std::string& ExtensionName)
     }
 
   return result;
+}
+
+
+//----------------------------------------------------------------------------
+int vtkSlicerModulesStep::ActionToBeTaken()
+{
+  vtkSlicerModulesWizardDialog *wizard_dlg = this->GetWizardDialog();
+      
+  vtkSlicerModulesConfigurationStep *conf_step = wizard_dlg->GetModulesConfigurationStep();
+
+  return conf_step->GetSelectedAction();
 }

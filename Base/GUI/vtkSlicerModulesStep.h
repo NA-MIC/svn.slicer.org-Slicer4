@@ -166,6 +166,15 @@ private:
   void UpdateModulesFromRepository(vtkSlicerApplication *app);
   //ETX
 
+  // Description:
+  // Helper method that asks the conf. step what action should be taken.
+  //BTX
+  int ActionToBeTaken();
+  // ETX
+
+  // Description:
+  // Keep track if anything was done or not.  Validation succeeds if
+  // at least one action was taken.
   //BTX
   int ActionTaken;
   //ETX
