@@ -226,6 +226,11 @@ vtkMRMLFiberBundleNode* vtkSlicerFiberBundleLogic::AddFiberBundle (const char* f
     displayTubeNode->SetPolyData(fiberBundleNode->GetPolyData());
     displayGlyphNode->SetPolyData(fiberBundleNode->GetPolyData());
 
+    //--- tag it.
+    fiberBundleNode->SetSlicerDataType ( "FiberBundle" );
+    vtkTagTable *tt = fiberBundleNode->GetUserTagTable();
+    tt->AddOrUpdateTag ( "SlicerDataType", fiberBundleNode->GetSlicerDataType() );
+    
     this->GetMRMLScene()->AddNode(fiberBundleNode);  
 
     // Set up display logic and any other logic classes in future

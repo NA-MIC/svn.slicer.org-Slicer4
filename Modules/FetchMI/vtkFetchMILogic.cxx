@@ -31,6 +31,8 @@
 #include "vtkMRMLColorTableNode.h"
 #include "vtkMRMLColorTableStorageNode.h"
 #include "vtkMRMLScalarVolumeNode.h"
+#include "vtkMRMLFiberBundleNode.h"
+#include "vtkMRMLFiberBundleStorageNode.h"
 
 #include "vtkHTTPHandler.h"
 #include "vtkHIDHandler.h"
@@ -1386,6 +1388,7 @@ void vtkFetchMILogic::ApplySlicerDataTypeTag()
   //--- ScalarVolume
   //--- LabelMap
   //--- VTKModel
+  //--- FiberBundle
   //--- FreeSurferModel
   //--- FreeSurferModelWithOverlay
   //--- DTIVolume
@@ -1396,7 +1399,9 @@ void vtkFetchMILogic::ApplySlicerDataTypeTag()
   //---
   this->MRMLScene->GetUserTagTable()->AddOrUpdateTag ( "SlicerDataType", "MRML", 0);
   this->SetSlicerDataTypeOnVolumeNodes();
+  // do model tagging first -- and refine fiberbundles afterward.
   this->SetSlicerDataTypeOnModelNodes();
+  this->SetSlicerDataTypeOnFiberBundleNodes();
   this->SetSlicerDataTypeOnUnstructuredGridNodes();
   this->SetSlicerDataTypeOnFiducialListNodes();
   this->SetSlicerDataTypeOnColorTableNodes();
@@ -1554,6 +1559,7 @@ void vtkFetchMILogic::SetSlicerDataTypeOnModelNodes()
   int n;
   int nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLModelNode");
   
+
   for (n=0; n<nnodes; n++)
     {
     node = this->MRMLScene->GetNthNodeByClass(n, "vtkMRMLModelNode");
@@ -1690,6 +1696,72 @@ void vtkFetchMILogic::SetSlicerDataTypeOnModelNodes()
 }
 
 
+//----------------------------------------------------------------------------
+void vtkFetchMILogic::SetSlicerDataTypeOnFiberBundleNodes()
+{
+  if ( this->FetchMINode == NULL )
+    {
+    return;
+    }
+  if (this->MRMLScene == NULL )
+    {
+    return;
+    }
+
+  vtkMRMLNode *node = NULL;
+  vtkMRMLStorableNode *stnode = NULL;
+  vtkTagTable *t = NULL;
+  
+  int n;
+  int nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLFiberBundleNode");
+  
+  for (n=0; n<nnodes; n++)
+    {
+    node = this->MRMLScene->GetNthNodeByClass(n, "vtkMRMLFiberBundleNode");
+    vtkMRMLFiberBundleNode *fiberBundleNode = vtkMRMLFiberBundleNode::SafeDownCast(node);
+
+    //--- if its tag is set (but not set to generic VTKModel), we're done.
+    if ( (fiberBundleNode->GetSlicerDataType() != NULL) &&
+         (strcmp(fiberBundleNode->GetSlicerDataType(), "")) &&
+         (strcmp(fiberBundleNode->GetSlicerDataType(), "VTKModel")) )
+      {
+      continue;
+      }
+
+    vtkMRMLStorageNode* snode = fiberBundleNode->GetStorageNode();
+    if (snode == NULL )
+      {
+      continue;
+      }
+
+    //--- make sure we have a filename
+    std::string dir = this->MRMLScene->GetRootDirectory();
+    if (dir[dir.size()-1] != '/')
+      {
+      dir += std::string("/");
+      }
+    if (snode->GetFileName() == NULL && dir.c_str() != NULL) 
+      {
+      std::string name =dir;
+      name += std::string(node->GetName());
+      name += std::string(".vtk");
+      // TODO: what about vtp???
+      snode->SetFileName(name.c_str());
+      }
+
+    //--- store node's slicerdatatype in its UserTagTable
+    fiberBundleNode->SetSlicerDataType ( "FiberBundle" );
+    vtkTagTable *tt = fiberBundleNode->GetUserTagTable();
+    tt->AddOrUpdateTag ( "SlicerDataType", fiberBundleNode->GetSlicerDataType(), 1 );
+    
+    if (node->GetModifiedSinceRead()) 
+      {
+      this->AddModifiedNode(node->GetID());
+      this->AddSelectedStorableNode(node->GetID() );
+      }
+    }
+}
+  
 
 //----------------------------------------------------------------------------
 void vtkFetchMILogic::SetSlicerDataTypeOnUnstructuredGridNodes()
