@@ -275,9 +275,11 @@ void vtkSlicerModulesStep::ShowUserInterface()
     col_index = the_list->AddColumn("Select");
     the_list->SetColumnEditWindowToCheckButton(col_index);
     the_list->SetColumnFormatCommandToEmptyOutput(col_index);
-    
+    the_list->SetColumnAlignmentToCenter(col_index);
+
     col_index = the_list->AddColumn("Status");
     the_list->SetColumnFormatCommandToEmptyOutput(col_index);
+    the_list->SetColumnAlignmentToCenter(col_index);
 
     col_index = the_list->AddColumn("Name");
     col_index = the_list->AddColumn("Category");
@@ -289,6 +291,7 @@ void vtkSlicerModulesStep::ShowUserInterface()
     the_list->SetColumnWidth(col_index, 0);
     the_list->SetColumnFormatCommandToEmptyOutput(col_index);
     the_list->SetSelectionCommand( this, "OpenHomePageInBrowserCallback" );
+    the_list->SetColumnAlignmentToCenter(col_index);
 
     col_index = the_list->AddColumn("Binary URL");
 
