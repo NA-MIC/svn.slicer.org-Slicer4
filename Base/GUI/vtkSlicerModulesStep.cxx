@@ -168,11 +168,9 @@ void vtkSlicerModulesStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
 
-  vtkKWWizardWidget *wizard_widget = 
-    this->GetWizardDialog()->GetWizardWidget();
+  vtkKWWizardWidget *wizard_widget = this->GetWizardDialog()->GetWizardWidget();
   
-  vtkSlicerApplication *app =
-    dynamic_cast<vtkSlicerApplication*> (this->GetApplication());
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
 
   if (!this->Frame1)
     {
@@ -327,10 +325,10 @@ void vtkSlicerModulesStep::ShowUserInterface()
                this->SelectAllButton->GetWidgetName(),
                this->SelectNoneButton->GetWidgetName());
 
-  this->Script("pack %s -side left", 
+  this->Script("pack %s -side left -anchor sw", 
                this->ModulesMultiColumnList->GetWidgetName());
 
-  this->Script("pack %s %s -side left -anchor w -pady 2", 
+  this->Script("pack %s %s -side left -anchor sw -pady 2", 
                this->DownloadButton->GetWidgetName(),
                this->UninstallButton->GetWidgetName());
 
@@ -340,7 +338,7 @@ void vtkSlicerModulesStep::ShowUserInterface()
 //----------------------------------------------------------------------------
 void vtkSlicerModulesStep::UpdateModulesFromRepository(vtkSlicerApplication *app)
 {
-  const char* tmp = app->GetTemporaryDirectory();
+  const char* tmp = app->GetExtensionsDownloadDirectory();
   std::string tmpfile(tmp);
   tmpfile += "/manifest.html";
 
@@ -803,7 +801,7 @@ void vtkSlicerModulesStep::DownloadParseS3ext(const std::string& s3ext,
       
     vtkSlicerApplication *app = dynamic_cast<vtkSlicerApplication*> (this->GetApplication());
       
-    std::string tmpfile(std::string(app->GetTemporaryDirectory()) + std::string("/") + s3extname);
+    std::string tmpfile(std::string(app->GetExtensionsDownloadDirectory()) + std::string("/") + s3extname);
       
     handler->StageFileRead(s3ext.c_str(), tmpfile.c_str());
 
@@ -890,9 +888,9 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
     std::string::size_type pos = ExtensionBinaryURL.rfind("/");
     std::string zipname = ExtensionBinaryURL.substr(pos + 1);
       
-    vtkSlicerApplication *app = dynamic_cast<vtkSlicerApplication*> (this->GetApplication());
+    vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
       
-    std::string tmpfile(std::string(app->GetTemporaryDirectory()) + std::string("/") + zipname);
+    std::string tmpfile(std::string(app->GetExtensionsDownloadDirectory()) + std::string("/") + zipname);
       
     std::cout << "tmpfile: " << tmpfile << std::endl;
 
@@ -918,7 +916,7 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
 
     std::string libdir(cachedir + std::string("/") + ExtensionName);
 
-    std::string tmpdir(std::string(app->GetTemporaryDirectory()) + std::string("/extension"));
+    std::string tmpdir(std::string(app->GetExtensionsDownloadDirectory()) + std::string("/extension"));
 
     if (UnzipPackage(tmpfile, libdir, tmpdir))
       {
