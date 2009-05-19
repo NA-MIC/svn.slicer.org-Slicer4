@@ -1051,8 +1051,8 @@ void vtkSlicerWelcomeGUI::BuildModulesPanel( vtkKWFrame *parent )
   extendedtxt->GetWidget()->SetReliefToGroove();
   extendedtxt->GetWidget()->SetWrapToWord();
   extendedtxt->GetWidget()->QuickFormattingOn();
-  extendedtxt->GetWidget()->SetHeight (10);
-const char *t2 = "**Extended Modules:** The Toolbar's Module menu (shown above) also provides access to additional software modules, organized by categories. \n\nThe **Previous**, **Next**, and **History** icons, and the **Search** icon and text-box are convenient ways to move quickly among modules. To customize the modules you'd like Slicer to include, select **View->ApplicationSettings->Module Settings** from Slicer's File Menu, select the **Load Modules** checkbox, and the **Select Modules** button.\n\n";
+  extendedtxt->GetWidget()->SetHeight (11);
+const char *t2 = "The Module Navigation and Search toolbar (shown above) contains a **Modules Menu**, **Previous**, **Next**, and **History** icons, and the **Search** icon with text-box as convenient ways to move quickly among loaded modules. To customize the modules you'd like Slicer to include, select **View->ApplicationSettings->Module Settings** from Slicer's File Menu, select the **Load Modules** checkbox, and the **Select Modules** button.\n\n **Extended Modules:**  this toolbar also provides access, via the **Extensions** (gear) icon, to the Module Extensions Wizard.  This Wizard can be used to locate, add or remove additional extension modules from Slicer. This Wizard requires a network connection. \n\n";
   extendedtxt->SetText ( t2 );
   //Important that Read only after SetText otherwise it doesn't work  
   extendedtxt->GetWidget()->ReadOnlyOn();
