@@ -136,28 +136,28 @@ private:
   // Description:
   // Helper method to download .s3ext file and parse
   //BTX
-  void DownloadParseS3ext(const std::string& s3ext, ManifestEntry* entry);
+  void DownloadParseS3ext(const std::string &s3ext, ManifestEntry *entry);
   //ETX
       
   // Description:
   // Helper method for dowlonad and install
   //BTX
-  bool DownloadInstallExtension(const std::string& ExtensionName,
-                                const std::string& ExtensionBinaryURL);
+  bool DownloadInstallExtension(const std::string &ExtensionName,
+                                const std::string &ExtensionBinaryURL);
   //ETX
 
   // Description:
   // Helper method for dowlonad and install
   //BTX
-  bool UninstallExtension(const std::string& ExtensionName);
+  bool UninstallExtension(const std::string &ExtensionName);
   //ETX
 
   // Description:
   // Helper method for adding extensions to the column list
   //BTX
   void InsertExtension(int Index,
-                       ManifestEntry* Entry,
-                       const std::string& CacheDir);
+                       ManifestEntry *Entry,
+                       const std::string &CacheDir);
   //ETX
 
   // Description:

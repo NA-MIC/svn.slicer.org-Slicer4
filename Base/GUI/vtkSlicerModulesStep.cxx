@@ -154,8 +154,8 @@ vtkSlicerModulesStep::~vtkSlicerModulesStep()
   std::vector<ManifestEntry*>::iterator iter = this->Modules.begin();
   while (iter != this->Modules.end())
     {
-      delete (*iter);
-      iter++;
+    delete (*iter);
+    iter++;
     }
 }
 
@@ -785,12 +785,13 @@ std::vector<ManifestEntry*> vtkSlicerModulesStep::ParseManifest(const std::strin
 
   std::string first_key(".zip\">");
   std::string second_key(".s3ext\">");
+  std::string atag_key("</a>");
 
   std::string::size_type zip = txt.find(first_key, 0);
-  std::string::size_type atag = txt.find("</a>", zip);
+  std::string::size_type atag = txt.find(atag_key, zip);
   std::string::size_type dash = txt.find("-", zip);
   std::string::size_type ext = txt.find(second_key, dash);
-  std::string::size_type atag2 = txt.find("</a>", ext);
+  std::string::size_type atag2 = txt.find(atag_key, ext);
 
   ManifestEntry* entry;
 
@@ -818,9 +819,9 @@ std::vector<ManifestEntry*> vtkSlicerModulesStep::ParseManifest(const std::strin
 
       zip = txt.find(first_key, zip + 1);
       dash = txt.find("-", zip);
-      atag = txt.find("</a>", zip);
-      ext = txt.find(second_key, dash);
-      atag2 = txt.find("</a>", dash);
+      atag = txt.find(atag_key, zip);
+      ext = txt.find(second_key, dash );
+      atag2 = txt.find(atag_key, ext);
 
       result.push_back(entry);
       }
@@ -842,7 +843,8 @@ void vtkSlicerModulesStep::DownloadParseS3ext(const std::string& s3ext,
     std::string::size_type pos = s3ext.rfind("/");
     std::string s3extname = s3ext.substr(pos + 1);
       
-    vtkSlicerApplication *app = dynamic_cast<vtkSlicerApplication*> (this->GetApplication());
+    vtkSlicerApplication *app =
+      vtkSlicerApplication::SafeDownCast(this->GetApplication());
       
     std::string tmpfile(std::string(app->GetExtensionsDownloadDirectory()) + std::string("/") + s3extname);
       
@@ -935,27 +937,17 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
       
     std::string tmpfile(std::string(app->GetExtensionsDownloadDirectory()) + std::string("/") + zipname);
       
-    std::cout << "tmpfile: " << tmpfile << std::endl;
-
     handler->StageFileRead(ExtensionBinaryURL.c_str(), tmpfile.c_str());
 
     std::string cachedir = app->GetModuleCachePath();
-
-    std::cout << "cachedir: " << cachedir << std::endl;
 
     if (cachedir.empty())
       {
         cachedir = app->GetBinDir();
 
-        std::cout << "bindir: " << app->GetBinDir() << std::endl;
-
         cachedir += "/../";
         cachedir += Slicer3_INSTALL_MODULES_LIB_DIR;
-
-        std::cout << "install: " << Slicer3_INSTALL_MODULES_LIB_DIR << std::endl;
       }
-
-    std::cout << "cachedir: " << cachedir << std::endl;
 
     std::string libdir(cachedir + std::string("/") + ExtensionName);
 
@@ -995,11 +987,11 @@ bool vtkSlicerModulesStep::UninstallExtension(const std::string& ExtensionName)
 {
   bool result = false;
 
-  vtkSlicerApplication *app = dynamic_cast<vtkSlicerApplication*> (this->GetApplication());
+  vtkSlicerApplication *app =
+    vtkSlicerApplication::SafeDownCast(this->GetApplication());
 
   if (app)
     {
-
     // :BUG: 20090108 tgl: Not guaranteed that the install of the
     // module will be under Slicer3_INSTALL_MODULES_LIB_DIR if
     // ModuelCachePath is empty.
@@ -1045,9 +1037,7 @@ bool vtkSlicerModulesStep::UninstallExtension(const std::string& ExtensionName)
         }    
 
       app->SetModulePaths(paths.c_str());
-
       }
-
     }
 
   return result;
