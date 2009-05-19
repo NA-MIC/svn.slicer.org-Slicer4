@@ -418,7 +418,8 @@ int vtkSlicerModulesConfigurationStep::IsRepositoryValid()
     {      
     std::string url = this->SearchLocationBox->GetValue();
       
-    vtkSlicerApplication *app = dynamic_cast<vtkSlicerApplication*> (this->GetApplication());
+    vtkSlicerApplication *app = 
+      vtkSlicerApplication::SafeDownCast(this->GetApplication());
 
     const char* tmp = app->GetTemporaryDirectory();
     std::string tmpfile(tmp);
