@@ -502,7 +502,8 @@ void vtkSlicerModulesStep::SelectAll()
   int nrows = this->ModulesMultiColumnList->GetWidget()->GetNumberOfRows();
   for (int row=0; row<nrows; row++)
     {
-    if (StatusFoundOnDisk != this->GetStatus(row))
+    if (StatusFoundOnDisk != this->GetStatus(row) &&
+        StatusSuccess != this->GetStatus(row))
       {
       this->ModulesMultiColumnList->GetWidget()->SetCellText(row, 0, "1");
       }
