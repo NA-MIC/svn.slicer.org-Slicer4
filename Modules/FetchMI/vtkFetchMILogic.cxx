@@ -159,17 +159,35 @@ vtkFetchMILogic::vtkFetchMILogic()
 vtkFetchMILogic::~vtkFetchMILogic()
 { 
   this->ClearExistingTagsForQuery();
+
+  this->CurrentWebService = NULL;
+    
   if ( this->ServerCollection != NULL )
     {
     int num = this->ServerCollection->GetNumberOfItems();
     for ( int i=0; i < num; i++ )
       {
       vtkFetchMIServer *s = vtkFetchMIServer::SafeDownCast (this->ServerCollection->GetItemAsObject (i) );
-      s->SetParser ( NULL );
-      s->SetWriter ( NULL );
-      s->SetWebServicesClient ( NULL );
-      s->SetURIHandlerName ( NULL );
-      s->SetURIHandler ( NULL );
+      if ( s )
+        {
+        if ( s->GetParser() )
+          {
+          s->SetParser ( NULL );
+          }
+        if ( s->GetWriter() )
+          {
+          s->SetWriter ( NULL );
+          }
+        if ( s->GetWebServicesClient() )
+          {
+          s->SetWebServicesClient ( NULL );
+          }
+        if ( s->GetURIHandler() )
+          {
+          s->SetURIHandler ( NULL );
+          }
+        s->SetURIHandlerName ( NULL );
+        }
       }
     this->ServerCollection->RemoveAllItems();
     this->ServerCollection->Delete();
