@@ -88,11 +88,12 @@ vtkSlicerModulesStep::vtkSlicerModulesStep()
   this->SelectAllButton = NULL;
   this->SelectNoneButton = NULL;
   this->ModulesMultiColumnList = NULL;
-  this->HomePageColIndex = NULL;
   this->DownloadButton = NULL;
   this->UninstallButton = NULL;
   this->StopButton = NULL;
   this->WizardDialog = NULL;
+
+  this->HomePageColIndex = 0;
 
   this->Messages["READY"] = "Select extensions, then click uninstall to remove them from\nyour version of 3D Slicer, or click download to retrieve them.";
   this->Messages["DOWNLOAD"] = "Download in progress... Clicking the cancel button will stop\nthe process after the current extension operation is finished.";
