@@ -238,6 +238,8 @@ void vtkSlicerModulesStep::ShowUserInterface()
     this->SelectAllButton->Create();
 
     this->SelectAllButton->SetText("Select All");
+    this->SelectAllButton->SetBorderWidth( 0 );
+    this->SelectAllButton->SetReliefToFlat();
     this->SelectAllButton->SetImageToIcon(app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerSelectAllIcon());
     this->SelectAllButton->SetCommand(this, "SelectAll");
     }
@@ -252,6 +254,8 @@ void vtkSlicerModulesStep::ShowUserInterface()
     this->SelectNoneButton->Create();
     
     this->SelectNoneButton->SetText("Select None");
+    this->SelectNoneButton->SetBorderWidth( 0 );
+    this->SelectNoneButton->SetReliefToFlat();
     this->SelectNoneButton->SetImageToIcon(app->GetApplicationGUI()->GetSlicerFoundationIcons()->GetSlicerDeselectAllIcon());
     this->SelectNoneButton->SetCommand(this, "SelectNone");
     }
@@ -326,7 +330,7 @@ void vtkSlicerModulesStep::ShowUserInterface()
   this->Script("pack %s -side top -pady 2 -anchor center", 
                this->HeaderText->GetWidgetName());
 
-  this->Script("pack %s %s -side left -anchor w -pady 2", 
+  this->Script("pack %s %s -side left -anchor w -pady 2 -padx 2", 
                this->SelectAllButton->GetWidgetName(),
                this->SelectNoneButton->GetWidgetName());
 
@@ -783,14 +787,34 @@ std::vector<ManifestEntry*> vtkSlicerModulesStep::ParseManifest(const std::strin
 
   std::string baseURL = wizard_dlg->GetSelectedRepositoryURL();
 
-  std::string first_key(".zip\">");
-  std::string second_key(".s3ext\">");
+  std::string zip_key(".zip\">");
+  std::string ext_key(".s3ext\">");
   std::string atag_key("</a>");
+  std::string svn_key("-svn");
+  std::string cvs_key("-cvs");
 
-  std::string::size_type zip = txt.find(first_key, 0);
+  std::string::size_type zip = txt.find(zip_key, 0);
   std::string::size_type atag = txt.find(atag_key, zip);
-  std::string::size_type dash = txt.find("-", zip);
-  std::string::size_type ext = txt.find(second_key, dash);
+  std::string::size_type dash = txt.find(svn_key, zip);
+
+  bool cvs = false;
+  if (dash > atag)
+    {
+    cvs = true;
+    dash = txt.find(cvs_key, zip);
+    }
+
+  std::string::size_type dash2;
+  if (cvs)
+    {
+    dash2 = (dash + 3 + 10);
+    }
+  else
+    {
+    dash2 = txt.find("-", dash + 1);
+    }
+
+  std::string::size_type ext = txt.find(ext_key, dash2);
   std::string::size_type atag2 = txt.find(atag_key, ext);
 
   ManifestEntry* entry;
@@ -808,19 +832,47 @@ std::vector<ManifestEntry*> vtkSlicerModulesStep::ParseManifest(const std::strin
       {
       entry->URL = baseURL;
       entry->URL += "/";
-      entry->URL += txt.substr(zip + first_key.size(), atag - (zip + first_key.size()));
-      entry->Name = txt.substr(zip + first_key.size(), dash - (zip + first_key.size()));
+      entry->URL += txt.substr(zip + zip_key.size(), atag - (zip + zip_key.size()));
       
+      if (cvs)
+        {
+        entry->Name = txt.substr(zip + zip_key.size(), dash - (zip + zip_key.size()));
+        }
+      else
+        {
+        entry->Name = txt.substr(zip + zip_key.size(), dash - (zip + zip_key.size()));
+        }
+
+      if (cvs)
+        {
+        // :NOTE: 20090519 tgl: CVS controlled extensions use an ISO date.
+        entry->Revision = txt.substr(dash + cvs_key.size(), 10);
+        }
+      else
+        {
+        entry->Revision = txt.substr(dash + svn_key.size(), dash2 - (dash + svn_key.size()));
+        }
+
       s3ext = baseURL;
       s3ext += "/";
-      s3ext += txt.substr(ext + second_key.size(), atag2 - (ext + second_key.size()));
+      s3ext += txt.substr(ext + ext_key.size(), atag2 - (ext + ext_key.size()));
 
       this->DownloadParseS3ext(s3ext, entry);
 
-      zip = txt.find(first_key, zip + 1);
-      dash = txt.find("-", zip);
+      zip = txt.find(zip_key, zip + 1);
+
+      dash = txt.find(svn_key, zip);
       atag = txt.find(atag_key, zip);
-      ext = txt.find(second_key, dash );
+
+      cvs = false;
+      if (dash > atag)
+        {
+        cvs = true;
+        dash = txt.find(cvs_key, dash);
+        }
+
+      dash2 = txt.find("-", dash + 1);
+      ext = txt.find(ext_key, dash );
       atag2 = txt.find(atag_key, ext);
 
       result.push_back(entry);

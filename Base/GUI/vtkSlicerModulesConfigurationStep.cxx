@@ -160,10 +160,13 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     this->Frame4->Create();
     }
 
-  this->Script("pack %s %s %s %s -side top -pady 5",
-               this->Frame1->GetWidgetName(),
-               this->Frame2->GetWidgetName(),
-               this->Frame3->GetWidgetName(),
+  this->Script("pack %s -side top -fill x -anchor w -padx 5 -pady 5",
+               this->Frame1->GetWidgetName() );
+  this->Script("pack %s -side top -anchor w -padx 30 -pady 5",
+               this->Frame2->GetWidgetName() );
+  this->Script("pack %s -side top -anchor w -padx 30 -pady 5",
+               this->Frame3->GetWidgetName() );
+  this->Script("pack %s -side top -fill x -anchor w -expand y -padx 5 -pady 5",
                this->Frame4->GetWidgetName());
 
   if (!this->HeaderIcon)
@@ -187,7 +190,7 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     {
     this->HeaderText->SetParent( this->Frame1 );
     this->HeaderText->Create();
-    this->HeaderText->SetText("This wizard lets you search for extensions to add to 3D Slicer,\ndownload and install them, and uninstall existing extensions.");
+    this->HeaderText->SetText("This wizard lets you search for extensions to add to 3D Slicer,\ndownload and install them, and uninstall existing extensions.\nYou will need a network connection to access remote extension\nrepositories.");
     }
 
   if (!this->ActionRadioButtonSet)
@@ -227,8 +230,9 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     {
     this->CacheDirectoryButton->SetParent( this->Frame3 );
     this->CacheDirectoryButton->Create();
-    this->CacheDirectoryButton->SetLabelText("Click to change download (cache) directory:");
-    this->CacheDirectoryButton->SetLabelWidth(40);
+    this->CacheDirectoryButton->SetLabelText("Change download (cache) directory:");
+    this->CacheDirectoryButton->SetLabelWidth(34);
+    this->CacheDirectoryButton->GetLabel()->SetAnchorToEast();
     this->CacheDirectoryButton->GetWidget()->TrimPathFromFileNameOff();
     this->CacheDirectoryButton->GetWidget()
       ->GetLoadSaveDialog()->ChooseDirectoryOn();
@@ -242,6 +246,13 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
 
     this->CacheDirectoryButton->GetWidget()->SetCommand(this, "CacheDirectoryCallback");
     }
+
+  vtkKWLabel *l = vtkKWLabel::New();
+  l->SetParent ( this->Frame3 );
+  l->Create();
+  l->SetText ( "Delete files from cache (optional):" );
+  l->SetWidth ( 34 );
+  l->SetAnchorToEast();
 
   if (!this->TrashButton)
     {
@@ -275,7 +286,8 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     this->SearchLocationLabel->SetParent( this->Frame4 );
     this->SearchLocationLabel->Create();
     this->SearchLocationLabel->SetText("Where to search:");
-    this->SearchLocationLabel->SetWidth(25);
+    this->SearchLocationLabel->SetWidth(17);
+    this->SearchLocationLabel->SetAnchorToEast();
     }
 
   if (!this->SearchLocationBox)
@@ -286,24 +298,27 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     {
     this->SearchLocationBox->SetParent( this->Frame4 );
     this->SearchLocationBox->Create();
-    this->SearchLocationBox->SetListboxWidth(500);
     }
  
-  this->Script("pack %s %s -side left", 
+  this->Script("pack %s %s -side left -anchor w -padx 5", 
                this->HeaderIcon->GetWidgetName(),
                this->HeaderText->GetWidgetName());
 
-  this->Script("pack %s -side left", 
+  this->Script("pack %s -side top -padx 2 -anchor w", 
                this->ActionRadioButtonSet->GetWidgetName());
 
-  this->Script("pack %s %s -side left -padx 5 -pady 25",
-               this->CacheDirectoryButton->GetWidgetName(),
+  this->Script("pack %s -side top -padx 2 -pady 25 -anchor w",
+               this->CacheDirectoryButton->GetWidgetName());
+
+  this->Script("pack %s %s -side left -padx 2 -pady 2 -anchor w",
+               l->GetWidgetName(),
                this->TrashButton->GetWidgetName());
 
-  this->Script("pack %s %s -side left -padx 5 -pady 25",
+  this->Script("pack %s %s -side left -anchor w -padx 5 -pady 25 -fill x -expand y",
                this->SearchLocationLabel->GetWidgetName(),
                this->SearchLocationBox->GetWidgetName());
 
+  l->Delete();
   this->Update();
 }
 
