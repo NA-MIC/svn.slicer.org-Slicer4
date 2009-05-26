@@ -78,18 +78,8 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
 
   // Description:
   // Gets PlyData converted from UnstructuredGrid 
-  virtual vtkPolyData* GetPolyData()
-  {
-    if (this->ShrinkPolyData)
-      {
-      this->ShrinkPolyData->Update();
-      return this->ShrinkPolyData->GetOutput();
-      }
-    else
-      {
-      return NULL;
-      }
-  }
+  virtual vtkPolyData* GetPolyData();
+
    
   // Description:
   // Update the pipeline based on this node attributes

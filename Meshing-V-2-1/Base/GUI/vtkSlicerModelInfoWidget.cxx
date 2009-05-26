@@ -316,7 +316,10 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->ModelSelectorWidget = vtkSlicerNodeSelectorWidget::New() ;
   this->ModelSelectorWidget->SetParent ( frame );
   this->ModelSelectorWidget->Create ( );
-  this->ModelSelectorWidget->SetNodeClass("vtkMRMLModelNode", NULL, NULL, NULL);
+  // changed from single SetNodeClass to two AddNodeClass calls and enable subclasses for meshing
+  this->ModelSelectorWidget->AddNodeClass("vtkMRMLModelNode", NULL, NULL, NULL);
+  //this->ModelSelectorWidget->AddNodeClass("vtkMRMLUnstructuredGridNode", NULL, NULL, NULL);
+  this->ModelSelectorWidget->SetChildClassesEnabled(1);
   this->ModelSelectorWidget->SetMRMLScene(this->GetMRMLScene());
   this->ModelSelectorWidget->SetBorderWidth(2);
   // this->ModelSelectorWidget->SetReliefToGroove();

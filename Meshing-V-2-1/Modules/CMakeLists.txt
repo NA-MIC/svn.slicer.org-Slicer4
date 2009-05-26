@@ -68,6 +68,7 @@ subdirs(
    #VolumeRenderingCuda
    ModelIntoLabelVolume
    ExtractSubvolume
+   #SlicerUnstructuredGrids
   )
 
 if(Slicer3_USE_OPENIGTLINK)

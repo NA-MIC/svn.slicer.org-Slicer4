@@ -21,6 +21,7 @@
 #include "vtkObjectFactory.h"
 
 #include "vtkMRMLFiniteElementMeshDisplayNode.h"
+#include "vtkMRMLFiniteElementMeshOutlineDisplayNode.h"
 #include "vtkMRMLUnstructuredGridStorageNode.h"
 #include "vtkMimxMeshActor.h"
 #include "vtkMRMLColorTableNode.h"
@@ -56,6 +57,10 @@ void vtkFiniteElementMeshList::SetMRMLSceneForStorage(vtkMRMLScene* scene)
     vtkMRMLFiniteElementMeshNode* meshListNode = vtkMRMLFiniteElementMeshNode::New();
     this->savedMRMLScene->RegisterNodeClass(meshListNode);
     meshListNode->Delete();
+    
+    vtkMRMLFiniteElementMeshOutlineDisplayNode* meshOutlineNode = vtkMRMLFiniteElementMeshOutlineDisplayNode::New();
+    this->savedMRMLScene->RegisterNodeClass(meshOutlineNode);
+    meshOutlineNode->Delete();
 }
 
 
@@ -75,6 +80,7 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
      
      // now add the display and storage nodes
       vtkMRMLFiniteElementMeshDisplayNode* dispNode = vtkMRMLFiniteElementMeshDisplayNode::New();
+      vtkMRMLFiniteElementMeshOutlineDisplayNode* dispNode2 = vtkMRMLFiniteElementMeshOutlineDisplayNode::New();
       vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
       //vtkMRMLColorTableNode* colorNode = vtkMRMLColorTableNode::New();
 
@@ -82,27 +88,33 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
       dispNode->SetVisibility(1);
       // point the display node to the proper grid
       dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
-    
-      // this sets the default display to be colored based on selectable attribute value
-      //colorNode->SetTypeToRainbow();
-       
+      dispNode2->SetVisibility(1);
+      dispNode2->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
+
+      // create an object reference from the actor to its corresponding MRML node.
+      // this is needed to pass through attribute change calls
+      actor->SetMRMLDisplayNode(dispNode);
+      actor->SetMRMLOutlineDisplayNode(dispNode2);
+   
       // Establish linkage between the surface
       // node and its display and storage nodes, so the viewer will be updated when data
       // or attributes change
       //colorNode->SetScene(this->savedMRMLScene);
       this->savedMRMLScene->AddNodeNoNotify(dispNode);
+      this->savedMRMLScene->AddNodeNoNotify(dispNode2);
       this->savedMRMLScene->AddNodeNoNotify(storeNode);
       //this->savedMRMLScene->AddNodeNoNotify(colorNode);
       this->savedMRMLScene->AddNode(newMRMLNode);
       dispNode->SetScene(this->savedMRMLScene);
+      dispNode2->SetScene(this->savedMRMLScene);
       storeNode->SetScene(this->savedMRMLScene);
         
       // set the color node to specify the color table associated with the grid
       //dispNode->SetAndObserveColorNodeID(colorNode->GetID());
       // need to turn this on so the scalars are used to color the grid
       //dispNode->SetScalarVisibility(1);
-      //newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
-      
+      newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
+      newMRMLNode->AddAndObserveDisplayNodeID(dispNode2->GetID());    
       newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());      
      //cout << "copied data to MRML mesh node " << endl;
    } else 

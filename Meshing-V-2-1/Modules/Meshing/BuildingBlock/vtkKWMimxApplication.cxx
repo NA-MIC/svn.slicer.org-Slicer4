@@ -212,6 +212,20 @@ void vtkKWMimxApplication::SetAutoSaveFlag(bool saveFlag)
 }
 
 //----------------------------------------------------------------------------
+bool vtkKWMimxApplication::GetClearDisplayOnExitFlag( )
+{
+  return this->ClearDisplayOnExitFlag;
+}
+
+//----------------------------------------------------------------------------
+void vtkKWMimxApplication::SetClearDisplayOnExitFlag(bool saveFlag)
+{
+  this->ClearDisplayOnExitFlag = saveFlag;
+  this->GetApplication()->SetRegistryValue(1, "ClearDisplay", "SaveFlag", "%d", this->ClearDisplayOnExitFlag);
+  
+}
+
+//----------------------------------------------------------------------------
 int vtkKWMimxApplication::GetAutoSaveTime( )
 {
   return this->AutoSaveTime;

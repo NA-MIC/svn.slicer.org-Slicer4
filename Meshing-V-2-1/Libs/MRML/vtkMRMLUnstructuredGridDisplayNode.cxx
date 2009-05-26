@@ -141,3 +141,17 @@ void vtkMRMLUnstructuredGridDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
   Superclass::ProcessMRMLEvents(caller, event, callData);
   return;
 }
+
+// moved here from header file so it can be overloaded. 
+vtkPolyData* vtkMRMLUnstructuredGridDisplayNode::GetPolyData()
+{
+  if (this->ShrinkPolyData)
+    {
+    this->ShrinkPolyData->Update();
+    return this->ShrinkPolyData->GetOutput();
+    }
+  else
+    {
+    return NULL;
+    }
+}

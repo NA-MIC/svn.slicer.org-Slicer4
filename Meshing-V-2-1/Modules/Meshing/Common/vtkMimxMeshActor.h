@@ -40,6 +40,9 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkMimxCommonWin32Header.h"
 #include "vtkLocalLinkedListWrapper.h"
 
+// added for slicer integration
+#include  "vtkMRMLFiniteElementMeshOutlineDisplayNode.h"
+
 class vtkActor;
 class vtkDataSetMapper;
 class vtkExtractCells;
@@ -58,6 +61,9 @@ class vtkScalarBarActor;
 class vtkShrinkFilter;
 class vtkTubeFilter;
 class vtkUnstructuredGrid;
+
+
+
 
 class VTK_MIMXCOMMON_EXPORT MeshDisplayProperty
 {
@@ -364,6 +370,11 @@ public:
   // bounds of the dataset. A field data named ElementSetName_RN would be added with
   // the co-ordinates.
   void AddReferenceNode(const char *ElementSetName);
+  
+  // *** added for Slicer
+  // set pointer to display node so that attribute changes can be passed through
+    void SetMRMLOutlineDisplayNode(vtkMRMLFiniteElementMeshOutlineDisplayNode* displayNode)
+                    {this->SavedOutlineDisplayNode = displayNode;}
 protected:
   vtkMimxMeshActor();
   ~vtkMimxMeshActor();
@@ -411,7 +422,8 @@ private:
         
   // added for second integration where rendering is in display nodes instead
   // of in the mesh actor 
-  vtkLocalLinkedListWrapper* actorList; 
+  //vtkLocalLinkedListWrapper* actorList; 
+  vtkMRMLFiniteElementMeshOutlineDisplayNode* SavedOutlineDisplayNode;
   
   vtkMimxMeshActor(const vtkMimxMeshActor&);  // Not implemented.
   void operator=(const vtkMimxMeshActor&);  // Not implemented.

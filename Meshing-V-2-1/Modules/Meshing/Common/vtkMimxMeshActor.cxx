@@ -59,6 +59,9 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkTubeFilter.h"
 #include "vtkUnstructuredGrid.h"
 
+// added for slicer integration 
+#include "vtkMRMLFiniteElementMeshOutlineDisplayNode.h"
+
 vtkCxxRevisionMacro(vtkMimxMeshActor, "$Revision: 1.48.2.3 $");
 vtkStandardNewMacro(vtkMimxMeshActor);
 
@@ -569,18 +572,26 @@ void vtkMimxMeshActor::UpdateMeshDisplay()
       {
       case vtkMimxMeshActor::DisplaySurface:
         this->Actor->SetVisibility( 1 );
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(1);
         //this->InteriorActor->SetVisibility( 1 );
         this->OutlineActor->SetVisibility( 0 );
+         if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(0);
+  
         break;
       case vtkMimxMeshActor::DisplayOutline:
         this->Actor->SetVisibility( 0 );
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(0);
         //this->InteriorActor->SetVisibility( 0 );
         this->OutlineActor->SetVisibility( 1 );
+        if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(1);
+ 
         break;
       case vtkMimxMeshActor::DisplaySurfaceAndOutline:
         this->Actor->SetVisibility( 1 );
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(1);
         //this->InteriorActor->SetVisibility( 1 );
         this->OutlineActor->SetVisibility( 1 );
+        if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(1);
         break;
       }
     }
@@ -661,6 +672,8 @@ int vtkMimxMeshActor::GetMeshDisplayType( )
 void vtkMimxMeshActor::GetMeshOutlineColor(double &red, double &green, double &blue)
 {
   this->OutlineActor->GetProperty()->GetColor(red, green, blue);
+   if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->GetColor(red,green,blue);
+
 }
 
 //----------------------------------------------------------------------------------
@@ -675,6 +688,8 @@ void vtkMimxMeshActor::SetMeshOutlineColor(double red, double green, double blue
   this->OutlineActor->GetProperty()->SetColor(red, green, blue);
   this->OutlineActor->GetProperty()->SetEdgeColor(red, green, blue);
   this->OutlineActor->Modified();
+  if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetColor(red,green,blue);
+
 }
 
 //----------------------------------------------------------------------------------
@@ -694,6 +709,7 @@ void vtkMimxMeshActor::SetMeshOutlineRadius(double radius)
 {
   this->TubeFilter->SetRadius(radius/100.0);
   this->OutlineActor->Modified();
+  if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetRadius(radius/100.0);
 }
 
 //----------------------------------------------------------------------------------
@@ -721,6 +737,7 @@ void vtkMimxMeshActor::SetMeshColor(double red, double green, double blue)
 {
   this->Actor->GetProperty()->SetColor(red, green, blue);
   this->Actor->Modified();
+  if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetColor(red,green,blue);
 }
 
 //----------------------------------------------------------------------------------
@@ -752,6 +769,10 @@ void vtkMimxMeshActor::SetMeshOpacity(double opacity)
 
   this->Actor->GetProperty()->SetOpacity( opacity );
   this->Actor->Modified();
+  
+  // *** slicer integration
+  if (this->SavedDisplayNode)
+      this->SavedDisplayNode->SetOpacity(opacity);
 }
 
 //----------------------------------------------------------------------------------
@@ -765,6 +786,9 @@ void vtkMimxMeshActor::SetMeshScalarVisibility(bool visibility)
 {
   this->UnstructuredGridMapper->SetScalarVisibility(static_cast<int>(visibility));
   this->Actor->Modified();
+  // *** slicer
+  if (this->SavedDisplayNode)
+      this->SavedDisplayNode->SetScalarVisibility(static_cast<int>(visibility));
 }
 
 //----------------------------------------------------------------------------------

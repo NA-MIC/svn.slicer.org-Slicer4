@@ -76,6 +76,11 @@ public:
   const char *GetAutoSaveDirectory() const;
   void SetAutoSaveDirectory(const char *dirName);
   
+  
+  // Set/Get if visibility of FE elements should be disabled on module exit 
+   bool GetClearDisplayOnExitFlag( );
+   void SetClearDisplayOnExitFlag(bool saveFlag);
+   
   // Description:
   // Set/Get the Current Render Window Text Color
     void SetTextColor(double color[3]);
@@ -127,6 +132,9 @@ protected:
     char SaveDirectory[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
     double AverageElementLength;
     int ABAQUSPrecision;
+    
+    // should FE elements display or not when outside this module? 
+    bool ClearDisplayOnExitFlag; 
     
     double TextColor[3];
     double BackgroundColor[3];

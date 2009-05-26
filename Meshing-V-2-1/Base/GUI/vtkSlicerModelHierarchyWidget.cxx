@@ -1006,9 +1006,13 @@ void vtkSlicerModelHierarchyWidget::AddNodeToTree(vtkMRMLNode *node)
     return;
     }
 
-  if ((!node->IsA("vtkMRMLModelNode") && !node->IsA("vtkMRMLModelHierarchyNode")) || 
-      ((node->IsA("vtkMRMLModelNode") && node->GetHideFromEditors())))
-   {
+  // CRL ** modified to include display of MRMLUnstructuredGrid subtypes as well as polygonal models
+  
+//  if ((!node->IsA("vtkMRMLModelNode") && !node->IsA("vtkMRMLModelHierarchyNode")) || 
+//      ((node->IsA("vtkMRMLModelNode") && node->GetHideFromEditors())))
+    if ((!node->IsA("vtkMRMLModelNode") && !node->IsA("vtkMRMLUnstructuredGridNode") && !node->IsA("vtkMRMLModelHierarchyNode")) || 
+          ((node->IsA("vtkMRMLModelNode") && node->GetHideFromEditors())))
+       {
     return;
    }
 
@@ -1045,11 +1049,15 @@ void vtkSlicerModelHierarchyWidget::AddNodeToTree(vtkMRMLNode *node)
 
   int open = 0;
 
+
+  
   vtkMRMLModelHierarchyNode* parentNode = NULL;
   vtkMRMLModelHierarchyNode *mhnode = vtkMRMLModelHierarchyNode::SafeDownCast(node);
 
   if ( (node->IsA("vtkMRMLModelNode")) || (node->IsA("vtkMRMLUnstructuredGridNode")))
     {
+      //cout << "found MRML node: " << node->GetID() << endl;
+      
     parentNode = this->ModelHierarchyLogic->GetModelHierarchyNode(node->GetID());
     if (parentNode)
       {

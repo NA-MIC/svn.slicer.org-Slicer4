@@ -60,6 +60,7 @@ SET ( LIB_SRCS
     vtkMRMLFiniteElementBuildingBlockDisplayNode.cxx
     vtkMRMLFiniteElementMeshDisplayNode.cxx
     vtkMRMLFiniteElementMeshQualityDisplayNode.cxx
+    vtkMRMLFiniteElementMeshOutlineDisplayNode.cxx
     vtkMRMLNullDisplayNode.cxx
     vtkFiniteElementBuildingBlockList.cxx
     vtkMRMLFiniteElementMeshNode.cxx
