@@ -31,6 +31,10 @@
 #include "vtkPoints.h"
 #include "vtkProcessObject.h"
 #include "vtkGlobFileNames.h"
+#include "vtkImageCast.h"
+#include "vtkImageLuminance.h"
+
+#include "vtkTrackingSystem.h"
 
 class vtkTrackFileData: public vtkProcessObject {
 public:
@@ -67,7 +71,10 @@ private:
   
   vtkStructuredPointsWriter *Writer;
   vtkStructuredPointsReader *Reader;
-  
+  vtkImageCast *ImageCast;
+  vtkImageLuminance *ImageLuminance;
+  vtkTrackingSystem *TrackingSystem;
+
   vtkImageReslice *Reslice;
   
   vtkGlobFileNames *FileNames;

@@ -33,6 +33,7 @@
 #include "vtkMatrix4x4.h"
 #include "vtkFieldData.h"
 #include "vtkFloatArray.h"
+#include "vtkPointData.h"
 
 #include "vtkGlobFileNames.h"
 #include "vtkImageReader.h"
@@ -326,8 +327,9 @@ int SendSensorImage(igtl::ClientSocket::Pointer &socket, vtkImageData *img, vtkM
     return 0;
     }
 
-  //int dtype = img->GetScalarType();
   int dtype = VTK_UNSIGNED_CHAR;
+  //dtype = img->GetPointData()->GetScalars()->GetDataType();
+  //dtype = img->GetScalarType();
   
   switch (dtype) {
   case VTK_FLOAT:

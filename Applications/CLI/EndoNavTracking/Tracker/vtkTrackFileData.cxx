@@ -9,6 +9,8 @@
   =========================================================================*/
 #include "vtkTrackFileData.h"
 #include "vtkObjectFactory.h"
+#include "vtkStructuredPoints.h"
+
 #include <iostream>
 #include <sstream>
 
@@ -24,6 +26,13 @@ vtkTrackFileData::vtkTrackFileData() {
   this->FileNames = vtkGlobFileNames::New();
 
   this->Reslice = vtkImageReslice::New();
+
+  this->TrackingSystem = vtkTrackingSystem::New();
+  this->TrackingSystem->SetEulerAnglesInDegrees();
+
+  this->ImageCast  = vtkImageCast::New();
+
+  this->ImageLuminance = vtkImageLuminance::New();
 
   this->NumberSourceFiles = 0;
   this->SourceImageData = NULL;
@@ -42,6 +51,15 @@ vtkTrackFileData::~vtkTrackFileData() {
   if (this->FileNames != NULL) {
     this->FileNames->Delete();
   }
+  if (this->TrackingSystem != NULL) {
+    this->TrackingSystem->Delete();
+  }
+  if (this->ImageCast != NULL) {
+    this->ImageCast->Delete();
+  }
+  if (this->ImageLuminance != NULL) {
+    this->ImageLuminance->Delete();
+  }
 }
 
 
@@ -57,13 +75,24 @@ vtkTrackFileData::InitilizeRead(const char *filename, const char *pattern)
   this->FileNames->AddFileNames(pattern);
   this->NumberSourceFiles = this->FileNames->GetNumberOfFileNames();
 
+  this->ImageCast->SetOutputScalarTypeToUnsignedChar();
+
   if (this->NumberSourceFiles == 1)
     {
     int dims[3];
     this->Reader->SetFileName(this->FileNames->GetNthFileName(0));
-    this->SourceImageData->Update();
+    this->Reader->Update();
+    this->Reader->GetOutput()->UpdateData();
+
     this->SourceImageData = (vtkImageData *)this->Reader->GetOutput();
+    //this->Reader->ReleaseDataFlagOn();
+        
     this->SourceImageData->UpdateData();
+    this->ImageLuminance->SetInput(this->SourceImageData);
+    this->ImageLuminance->Update();
+    this->SourceImageData = this->ImageLuminance->GetOutput();
+    this->SourceImageData->UpdateData();
+
     this->SourceImageData->GetDimensions(dims);
     return dims[2];
     }
@@ -129,10 +158,16 @@ vtkTrackFileData::ReadStep(int index,
     this->Reslice->SetOutputDimensionality(2);
 
     this->Reslice->SetInput(this->SourceImageData);
-    //      this->Reslice->SetOutputExtent(0,dims[0],0,dims[1],0,0);
+    this->Reslice->SetOutputExtent(0,dims[0]-1,0,dims[1]-1,0,1);
     this->Reslice->SetResliceAxesOrigin(0,0,index);
-    
-    (*image) = this->Reslice->GetOutput();
+    //this->Reslice->Update();
+    this->ImageCast->SetInput(this->Reslice->GetOutput());
+    this->ImageCast->Update();
+
+    //(*image) = this->Reslice->GetOutput();
+
+    (*image) = this->ImageCast->GetOutput();
+    (*image)->UpdateData();
     }
   else
     {
@@ -148,11 +183,18 @@ vtkTrackFileData::ReadStep(int index,
   if (reg)
     {
     *regMatrix = vtkMatrix4x4::New();
-    for (i=0;i<4;i++) 
+    if (reg->GetNumberOfComponents() == 6)
       {
-      for (j=0;j<4;j++) 
+      this->TrackingSystem->BuildMatrixFromEulerAngles(reg, *regMatrix);
+      }
+    else if (reg->GetNumberOfComponents() == 16)
+      {
+      for (i=0;i<4;i++) 
         {
-        (*regMatrix)->SetElement(i,j,reg->GetComponent(0,j+4*i));
+        for (j=0;j<4;j++) 
+          {
+          (*regMatrix)->SetElement(i,j,reg->GetComponent(0,j+4*i));
+          }
         }
       }
     }
@@ -160,14 +202,22 @@ vtkTrackFileData::ReadStep(int index,
   if (calib)
     {
     *calibMatrix = vtkMatrix4x4::New();
-    for (i=0;i<4;i++) 
+    if (calib->GetNumberOfComponents() == 6)
       {
-      for (j=0;j<4;j++) 
+      this->TrackingSystem->BuildMatrixFromEulerAngles(calib, *calibMatrix);
+      }
+    else if (calib->GetNumberOfComponents() == 16)
+      {
+      for (i=0;i<4;i++) 
         {
-        (*calibMatrix)->SetElement(i,j,calib->GetComponent(0,j+4*i));
+        for (j=0;j<4;j++) 
+          {
+          (*calibMatrix)->SetElement(i,j,calib->GetComponent(0,j+4*i));
+          }
         }
       }
     }
+
 
   if (times && sensorIndex < times->GetNumberOfTuples())
     {
@@ -178,14 +228,41 @@ vtkTrackFileData::ReadStep(int index,
   if (sensorData && sensorIndex < sensorData->GetNumberOfTuples()) 
     {
     *sensorMatrix = vtkMatrix4x4::New();
-    for (i=0;i<4;i++) 
+
+    if (sensorData->GetNumberOfComponents() == 6)
       {
-      for (j=0;j<4;j++) 
+      double r[6];
+      double mat[4][4];
+      for (i=0; i<6; i++)
         {
-        (*sensorMatrix)->SetElement(i,j,sensorData->GetComponent(sensorIndex,j+4*i));
+        r[i] = sensorData->GetComponent(index, i);
+        }
+      this->TrackingSystem->BuildMatrixFromEulerAngles(r[0],r[1],r[2],r[3],r[4],r[5], mat);
+
+      std::cerr << "Data: " << r[0]<<" "<<r[1]<<" "<<r[2]<<" "<<r[3]<<" "<<r[4]<<" "<<r[5] << "\n";
+
+      for (i=0;i<4;i++) 
+        {
+        for (j=0;j<4;j++) 
+          {
+          (*sensorMatrix)->SetElement(i,j,mat[i][j]);
+          }
+          std::cerr << "Matrix: ["<< i << "] = "  << mat[i][0]<<" "<<mat[i][1]<<" "<<mat[i][2]<<" "<<mat[i][3]<< "\n";
+        }
+
+      }
+    else if (sensorData->GetNumberOfComponents() == 16)
+      {
+      for (i=0;i<4;i++) 
+        {
+        for (j=0;j<4;j++) 
+          {
+          (*sensorMatrix)->SetElement(i,j,sensorData->GetComponent(0,j+4*i));
+          }
         }
       }
     }
+
 
 
   return 1;
