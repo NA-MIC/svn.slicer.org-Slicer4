@@ -262,19 +262,21 @@ void vtkKWMimxViewProperties::AddObjectList(vtkMimxActorBase *actor)
         this->MultiColumnList->GetWidget()->GetCellWindowAsCheckButton(rowIndex,0)->SetCommand(this, commandName);
   this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFileName());
 
+  // *** defeated add to show objects only through MRML nodes
+
   switch (actor->GetDataType())
   {
     case ACTOR_FE_MESH:
       this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 2, "Mesh");
-      this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
+     // this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
       break;
     case ACTOR_POLYDATA_SURFACE:
       this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 2, "Surface");
-      this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
+     // this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
       break;
     case ACTOR_BUILDING_BLOCK:
       this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 2, "Block");
-      this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
+     // this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
       break;
     case ACTOR_IMAGE:
       this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 2, "Image");
@@ -286,6 +288,9 @@ void vtkKWMimxViewProperties::AddObjectList(vtkMimxActorBase *actor)
   sprintf(commandName, "CreateNameCellCallback %s %d", UniqueObjectId, static_cast<int>(actor->GetDataType()));
   this->MultiColumnList->GetWidget()->SetCellWindowCommand(rowIndex, 1, this, commandName);
         this->GetMimxMainWindow()->GetRenderWidget()->Render();
+
+        // ** Slicer request render
+      // this->GetMimxMainWindow()->RequestRender();
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxViewProperties::UpdateVisibility()
