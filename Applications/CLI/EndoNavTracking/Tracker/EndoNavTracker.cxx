@@ -40,7 +40,7 @@
 #include "vtkStructuredPointsWriter.h"
 #include "vtkStructuredPointsReader.h"
 
-int SendSensorMatrix(igtl::ClientSocket::Pointer &socket, vtkMatrix4x4* sensorMatrix);
+int SendSensorMatrix(igtl::ClientSocket::Pointer &socket, vtkMatrix4x4* sensorMatrix, std::string &name);
 
 int SendSensorImage(igtl::ClientSocket::Pointer &socket, vtkImageData *img, vtkMatrix4x4 *sensorMatrix);
 
@@ -228,7 +228,9 @@ int main(int argc, char* argv[])
     if (SendToServer)
       {
       SendSensorImage(socket, img, sensorMatrix);
-      SendSensorMatrix(socket, sensorMatrix);
+      SendSensorMatrix(socket, calibMatrix, std::string("EnodNavCalibration"));
+      SendSensorMatrix(socket, regMatrix,  std::string("EnodNavRegistration"));
+      SendSensorMatrix(socket, sensorMatrix,  std::string("EnodNavSensor"));
       }
 
      if (calibMatrix) 
@@ -275,7 +277,7 @@ int main(int argc, char* argv[])
 
 //------------------------------------------------------------
 // Function to send sensor matrix.
-int SendSensorMatrix(igtl::ClientSocket::Pointer &socket, vtkMatrix4x4 *sensorMatrix)
+int SendSensorMatrix(igtl::ClientSocket::Pointer &socket, vtkMatrix4x4 *sensorMatrix, std::string &name)
 {
 
   igtl::Matrix4x4 matrix;
@@ -298,7 +300,7 @@ int SendSensorMatrix(igtl::ClientSocket::Pointer &socket, vtkMatrix4x4 *sensorMa
       
   // Allocate Transform Message Class
   igtl::TransformMessage::Pointer transMsg = igtl::TransformMessage::New();
-  transMsg->SetDeviceName("Tracker");
+  transMsg->SetDeviceName(name.c_str());
   transMsg->SetMatrix(matrix);
   transMsg->Pack();
   return socket->Send(transMsg->GetPackPointer(), transMsg->GetPackSize());
@@ -356,7 +358,7 @@ int SendSensorImage(igtl::ClientSocket::Pointer &socket, vtkImageData *img, vtkM
   imgMsg->SetDimensions(size);
   imgMsg->SetSpacing(spacing);
   imgMsg->SetScalarType(scalarType);
-  imgMsg->SetDeviceName("ImagerClient");
+  imgMsg->SetDeviceName("EndoNavImagerClient");
   imgMsg->SetSubVolume(size, svoffset);
   imgMsg->AllocateScalars();
   
