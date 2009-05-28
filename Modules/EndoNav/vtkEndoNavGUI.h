@@ -1,0 +1,344 @@
+/*==========================================================================
+
+  Portions (c) Copyright 2008 Brigham and Women's Hospital (BWH) All Rights Reserved.
+
+  See Doc/copyright/copyright.txt
+  or http://www.slicer.org/copyright/copyright.txt for details.
+
+  Program:   3D Slicer
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNav/vtkEndoNavGUI.h $
+  Date:      $Date: 2009-02-04 13:32:40 -0500 (Wed, 04 Feb 2009) $
+  Version:   $Revision: 8536 $
+
+==========================================================================*/
+
+#ifndef __vtkEndoNavGUI_h
+#define __vtkEndoNavGUI_h
+
+#ifdef WIN32
+#include "vtkEndoNavWin32Header.h"
+#endif
+
+#include "vtkSlicerModuleGUI.h"
+#include "vtkEndoNavLogic.h"
+#include "vtkIGTLConnector.h"
+
+#include "vtkIGTDataManager.h"
+#include "vtkIGTPat2ImgRegistration.h"
+#include "vtkIGTLToMRMLBase.h"
+#include "vtkIGTLToViewerImage.h"
+
+#include "vtkCallbackCommand.h"
+#include "vtkSlicerInteractorStyle.h"
+
+#include <string>
+#include <vector>
+
+class vtkKWPushButton;
+class vtkKWPushButtonSet;
+class vtkKWRadioButtonSet;
+class vtkKWEntryWithLabel;
+class vtkKWMenuButtonWithLabel;
+class vtkKWMenuButton;
+class vtkKWCheckButton;
+class vtkKWScaleWithEntry;
+class vtkKWEntry;
+class vtkKWFrame;
+class vtkKWEntryWithLabel;
+class vtkKWLoadSaveButtonWithLabel;
+class vtkKWMultiColumnListWithScrollbars;
+class vtkKWWizardWidget;
+class vtkKWTreeWithScrollbars;
+
+class vtkTransform;
+
+// Description:    
+// This class implements Slicer's Volumes GUI
+//
+class VTK_OPENIGTLINKIF_EXPORT vtkEndoNavGUI : public vtkSlicerModuleGUI
+{
+
+  //----------------------------------------------------------------
+  // Type defines
+  //----------------------------------------------------------------
+ public:
+  //BTX
+  enum {
+    SLICE_PLANE_RED    = 0,
+    SLICE_PLANE_YELLOW = 1,
+    SLICE_PLANE_GREEN  = 2
+  };
+
+  enum {
+    SLICE_RTIMAGE_NONE      = 0,
+    SLICE_RTIMAGE_PERP      = 1,
+    SLICE_RTIMAGE_INPLANE90 = 2,
+    SLICE_RTIMAGE_INPLANE   = 3
+  };
+
+  // Connector List update level options
+  enum {
+    UPDATE_SELECTED_ONLY   = 0,  // Update selected item only
+    UPDATE_STATUS_ALL      = 1,  // Update status for all items
+    UPDATE_PROPERTY_ALL    = 2,  // Update all properties for all items
+    UPDATE_ALL             = 3,  // Update whole list (incl. changed number of items)
+  };
+
+  enum {
+    NODE_NONE      = 0,
+    NODE_CONNECTOR = 1,
+    NODE_IO        = 2,
+    NODE_DEVICE    = 3
+  };
+
+  static const char* ConnectorTypeStr[vtkIGTLConnector::NUM_TYPE];
+  static const char* ConnectorStatusStr[vtkIGTLConnector::NUM_STATE];
+
+  typedef std::vector<int> ConnectorIDListType;
+  typedef struct {
+    std::string nodeName;
+    int         deviceID;
+    int         connectorID;
+    int         io;
+  } IOConfigNodeInfoType;
+
+  typedef std::list<IOConfigNodeInfoType> IOConfigNodeInfoListType;
+  //ETX
+
+  //----------------------------------------------------------------
+  // Access functions
+  //----------------------------------------------------------------
+ public:
+  // Description:    
+  // Usual vtk class functions
+  static vtkEndoNavGUI* New ();
+  vtkTypeRevisionMacro ( vtkEndoNavGUI, vtkSlicerModuleGUI );
+  void PrintSelf (ostream& os, vtkIndent indent );
+  
+  // Description: 
+  // Get the categorization of the module.
+  const char *GetCategory() const { return "IGT"; }
+
+  //SendDATANavitrack
+  // Description:    
+  // Get methods on class members (no Set methods required)
+  vtkGetObjectMacro ( Logic, vtkEndoNavLogic );
+  
+  // Description:
+  // API for setting VolumeNode, VolumeLogic and
+  // for both setting and observing them.
+  void SetModuleLogic ( vtkSlicerLogic *logic )
+  { 
+    this->SetLogic ( vtkObjectPointer (&this->Logic), logic ); }
+
+  //void SetAndObserveModuleLogic ( vtkEndoNavLogic *logic )
+  //{ this->SetAndObserveLogic ( vtkObjectPointer (&this->Logic), logic ); }
+  // Description: 
+
+  // Get Target Fiducials (used in the wizard steps)
+  vtkGetStringMacro ( FiducialListNodeID );
+  vtkSetStringMacro ( FiducialListNodeID );
+  vtkGetObjectMacro ( FiducialListNode, vtkMRMLFiducialListNode );
+  vtkSetObjectMacro ( FiducialListNode, vtkMRMLFiducialListNode );
+
+  vtkGetMacro ( TimerInterval, int );
+  vtkSetMacro ( TimerInterval, int );
+
+  //----------------------------------------------------------------
+  // Event handlers
+  //----------------------------------------------------------------
+ public:
+  // Description:    
+  // This method builds the IGTDemo module GUI
+  virtual void BuildGUI ( );
+
+ private:
+  void BuildGUIForWizardFrame();
+  void BuildGUIForHelpFrame();
+  void BuildGUIForConnectorBrowserFrame();
+  void BuildGUIForIOConfig();
+  void BuildGUIForDeviceFrame();
+  void BuildGUIForVisualizationControlFrame();
+  
+  //----------------------------------------------------------------
+  // Event handlers
+  //----------------------------------------------------------------
+ public:
+  // Description:
+  // Add/Remove observers and even handlers
+  virtual void AddGUIObservers ( );
+  virtual void RemoveGUIObservers ( );
+  void         AddLogicObservers ( );
+  void         RemoveLogicObservers ( );
+  virtual void AddNodeCallback(int conID, int io, const char* name, const char* type);
+  virtual void DeleteNodeCallback(int conID, int io, int devID);
+
+  // Description:
+  // Class's mediator methods for processing events invoked by
+  // either the Logic, MRML or GUI.    
+
+  virtual void ProcessLogicEvents ( vtkObject *caller, unsigned long event, void *callData );
+  virtual void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
+  virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
+  virtual int  OnMrmlNodeListChanged(int row, int col, const char* item);
+  void         ProcessTimerEvents();
+  void         HandleMouseEvent(vtkSlicerInteractorStyle *style);
+  //BTX
+  static void  DataCallback(vtkObject *caller, 
+                           unsigned long eid, void *clientData, void *callData);
+  //ETX
+  
+ public:
+  // Description:
+  // Describe behavior at module startup and exit.
+  virtual void Enter ( );
+  virtual void Exit ( );
+  void Init();
+
+  void UpdateAll();
+  
+  //----------------------------------------------------------------
+  // Constructor / Destructor
+  //----------------------------------------------------------------
+ protected:
+  vtkEndoNavGUI ( );
+  virtual ~vtkEndoNavGUI ( );
+
+  //----------------------------------------------------------------
+  // Operators
+  //----------------------------------------------------------------
+ private:
+  vtkEndoNavGUI ( const vtkEndoNavGUI& ); // Not implemented.
+  void operator = ( const vtkEndoNavGUI& ); //Not implemented.
+  
+  //----------------------------------------------------------------
+  // Dynamic GUIs
+  //----------------------------------------------------------------
+ private:
+  void IOConfigTreeContextMenu(const char *callData);
+  int  IsIOConfigTreeLeafSelected(const char* callData, int* conID, int* devID, int* io);
+  void AddIOConfigContextMenuItem(int type, int conID, int devID, int io);
+  void ChangeSlicePlaneDriver(int slice, const char* driver);
+  void SetLocatorSource(int selected);
+  void UpdateLocatorSourceMenu();
+  void UpdateRealTimeImageSourceMenu();
+  void UpdateIOConfigTree();
+  void UpdateConnectorList(int updateLevel);
+  void UpdateConnectorPropertyFrame(int i);
+
+
+ private:
+  //----------------------------------------------------------------
+  // Timer
+  //----------------------------------------------------------------
+  int TimerFlag;
+  int TimerInterval;
+
+  //----------------------------------------------------------------
+  // GUI widgets
+  //----------------------------------------------------------------
+  
+  //----------------------------------------------------------------
+  // Connector Browser Frame
+
+  vtkKWMultiColumnListWithScrollbars* ConnectorList;
+  vtkKWPushButton*     AddConnectorButton;
+  vtkKWPushButton*     DeleteConnectorButton;
+  vtkKWEntry*          ConnectorNameEntry;
+  vtkKWRadioButtonSet* ConnectorTypeButtonSet;
+  vtkKWCheckButton*    ConnectorStatusCheckButton;
+  vtkKWEntry*          ConnectorAddressEntry;
+  vtkKWEntry*          ConnectorPortEntry;
+  vtkKWEntry*          SleepTimeEntry;
+
+  //----------------------------------------------------------------
+  // Data I/O Configuration frame
+
+  vtkKWCheckButton*    EnableAdvancedSettingButton;
+  vtkKWTreeWithScrollbars* IOConfigTree;
+  vtkKWMenu *IOConfigContextMenu;
+  vtkKWMultiColumnListWithScrollbars* MrmlNodeList;
+
+  //----------------------------------------------------------------
+  // Visualization Control Frame
+
+  vtkKWCheckButton *FreezeImageCheckButton;
+  vtkKWCheckButton *ObliqueCheckButton;
+  vtkKWPushButton  *SetLocatorModeButton;
+  vtkKWPushButton  *SetUserModeButton;
+
+  vtkKWMenuButton  *RedSliceMenu;
+  vtkKWMenuButton  *YellowSliceMenu;
+  vtkKWMenuButton  *GreenSliceMenu;
+  vtkKWCheckButton *ImagingControlCheckButton;
+  vtkKWMenuButton  *ImagingMenu;
+
+  vtkKWMenuButton  *RealTimeImageSourceMenu;
+  vtkKWMenuButton  *LocatorSourceMenu;
+  vtkKWCheckButton *LocatorCheckButton;
+  bool              IsSliceOrientationAdded;
+  // Module logic and mrml pointers
+
+  //----------------------------------------------------------------
+  // Logic Values
+  //----------------------------------------------------------------
+
+  vtkEndoNavLogic *Logic;
+  vtkIGTLToViewerImage *ImageConverter;
+  vtkIGTLToMRMLBase *TransformConverter;
+
+  vtkIGTDataManager *DataManager;
+  vtkIGTPat2ImgRegistration *Pat2ImgReg;
+  vtkCallbackCommand *DataCallbackCommand;
+
+  // Access the slice windows
+  vtkMRMLSliceNode *SliceNode0;
+  vtkMRMLSliceNode *SliceNode1;
+  vtkMRMLSliceNode *SliceNode2;
+
+  //BTX
+  std::string LocatorModelID;
+  std::string LocatorModelID_new;
+  //ETX
+  
+  //int RealtimeImageOrient;
+
+  //----------------------------------------------------------------
+  // Connector and MRML Node list management
+  //----------------------------------------------------------------
+
+  ConnectorIDListType ConnectorIDList;
+
+  //int   CurrentMrmlNodeListID;  // row number
+  int   CurrentMrmlNodeListIndex; // row number
+  //BTX
+  vtkEndoNavLogic::IGTLMrmlNodeListType CurrentNodeListAvailable;
+  vtkEndoNavLogic::IGTLMrmlNodeListType CurrentNodeListSelected;
+  vtkEndoNavLogic::IGTLMrmlNodeListType LocatorSourceList;
+  vtkEndoNavLogic::IGTLMrmlNodeListType RealTimeImageSourceList;
+
+  IOConfigNodeInfoListType IOConfigTreeConnectorList;
+  IOConfigNodeInfoListType IOConfigTreeIOList;
+  IOConfigNodeInfoListType IOConfigTreeNodeList;
+
+  //ETX
+
+  //----------------------------------------------------------------
+  // Locator Model
+  //----------------------------------------------------------------
+
+  //vtkMRMLModelNode           *LocatorModel;
+  int                        CloseScene;
+
+  //----------------------------------------------------------------
+  // Target Fiducials
+  //----------------------------------------------------------------
+
+  char *FiducialListNodeID;
+  vtkMRMLFiducialListNode *FiducialListNode;
+
+};
+
+
+
+#endif
