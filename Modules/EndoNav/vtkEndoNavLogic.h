@@ -45,7 +45,7 @@
 class vtkIGTLConnector;
 
 
-class VTK_OPENIGTLINKIF_EXPORT vtkEndoNavLogic : public vtkSlicerModuleLogic 
+class VTK_ENDONAV_EXPORT vtkEndoNavLogic : public vtkSlicerModuleLogic 
 {
  public:
   //BTX

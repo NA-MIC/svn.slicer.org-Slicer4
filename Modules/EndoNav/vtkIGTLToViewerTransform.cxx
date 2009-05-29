@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/OpenIGTLinkIF/vtkIGTLToViewerTransform.cxx $
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNavIF/vtkIGTLToViewerTransform.cxx $
   Date:      $Date: 2009-05-01 16:40:42 -0400 (Fri, 01 May 2009) $
   Version:   $Revision: 9387 $
 

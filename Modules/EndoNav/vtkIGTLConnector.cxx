@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
   
   Program:   3D Slicer
-  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/OpenIGTLinkIF/vtkIGTLConnector.cxx $
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNavIF/vtkIGTLConnector.cxx $
   Date:      $Date: 2009-01-05 13:28:20 -0500 (Mon, 05 Jan 2009) $
   Version:   $Revision: 8267 $
   
@@ -138,7 +138,7 @@ int vtkIGTLConnector::Start()
   // since it takes for a while for the thread to update
   // this->State to non STATE_OFF value. This causes error
   // after calling vtkIGTLConnector::Start() in ProcessGUIEvent()
-  // in vtkOpenIGTLinkIFGUI class.
+  // in vtkEndoNavIFGUI class.
   this->State = STATE_WAIT_CONNECTION;
 
   return 1;
@@ -189,7 +189,7 @@ void* vtkIGTLConnector::ThreadFunction(void* ptr)
   // Communication -- common to both Server and Client
   while (!igtlcon->ServerStopFlag)
     {
-    //vtkErrorMacro("vtkOpenIGTLinkIFLogic::ThreadFunction(): alive.");
+    //vtkErrorMacro("vtkEndoNavIFLogic::ThreadFunction(): alive.");
     igtlcon->Mutex->Lock();
     //igtlcon->Socket = igtlcon->WaitForConnection();
     igtlcon->WaitForConnection();
@@ -197,7 +197,7 @@ void* vtkIGTLConnector::ThreadFunction(void* ptr)
     if (igtlcon->Socket.IsNotNull())
       {
       igtlcon->State = STATE_CONNECTED;
-      //vtkErrorMacro("vtkOpenIGTLinkIFLogic::ThreadFunction(): Client Connected.");
+      //vtkErrorMacro("vtkEndoNavIFLogic::ThreadFunction(): Client Connected.");
       igtlcon->ReceiveController();
       igtlcon->State = STATE_WAIT_CONNECTION;
       }
@@ -265,7 +265,7 @@ int vtkIGTLConnector::WaitForConnection()
 
   if (this->Socket.IsNotNull())
     {
-    //vtkErrorMacro("vtkOpenIGTLinkLogic::WaitForConnection(): Socket Closed.");
+    //vtkErrorMacro("vtkEndoNavLogic::WaitForConnection(): Socket Closed.");
     this->Socket->CloseSocket();
     }
 

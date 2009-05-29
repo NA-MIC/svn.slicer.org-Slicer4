@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/OpenIGTLinkIF/vtkIGTLToViewerImage.cxx $
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNavIF/vtkIGTLToViewerImage.cxx $
   Date:      $Date: 2009-04-30 23:14:25 -0400 (Thu, 30 Apr 2009) $
   Version:   $Revision: 9377 $
 
@@ -100,7 +100,7 @@ vtkMRMLNode* vtkIGTLToViewerImage::CreateNewNode(vtkMRMLScene* scene, const char
     
     vtkDebugMacro("Setting scene info");
     volumeNode->SetScene(scene);
-    volumeNode->SetDescription("Received by OpenIGTLink");
+    volumeNode->SetDescription("Received by EndoNav");
     
     displayNode->SetScene(scene);
     
@@ -328,8 +328,8 @@ int vtkIGTLToViewerImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLN
 
   // Shift the center
   // NOTE: The center of the image should be shifted due to different
-  // definitions of image origin between VTK (Slicer) and OpenIGTLink;
-  // OpenIGTLink image has its origin at the center, while VTK image
+  // definitions of image origin between VTK (Slicer) and EndoNav;
+  // EndoNav image has its origin at the center, while VTK image
   // has one at the corner.
   float hfovi = psi * (size[0]-1) / 2.0;
   float hfovj = psj * (size[1]-1) / 2.0;

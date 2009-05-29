@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/OpenIGTLinkIF/vtkIGTLToViewerTransform.h $
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNavIF/vtkIGTLToViewerTransform.h $
   Date:      $Date: 2009-01-05 13:28:20 -0500 (Mon, 05 Jan 2009) $
   Version:   $Revision: 8267 $
 
@@ -22,7 +22,7 @@
 
 #include "igtlTransformMessage.h"
 
-class VTK_OPENIGTLINKIF_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
+class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
 {
  public:
 

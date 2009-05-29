@@ -55,7 +55,7 @@ class vtkTransform;
 // Description:    
 // This class implements Slicer's Volumes GUI
 //
-class VTK_OPENIGTLINKIF_EXPORT vtkEndoNavGUI : public vtkSlicerModuleGUI
+class VTK_ENDONAV_EXPORT vtkEndoNavGUI : public vtkSlicerModuleGUI
 {
 
   //----------------------------------------------------------------

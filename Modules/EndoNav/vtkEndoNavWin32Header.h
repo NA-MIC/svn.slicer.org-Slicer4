@@ -19,11 +19,11 @@ Version:   $Revision: 8267 $
 
 #if defined(WIN32) && !defined(VTKSLICER_STATIC)
 #if defined(EndoNav_EXPORTS)
-#define VTK_OPENIGTLINKIF_EXPORT __declspec( dllexport ) 
+#define VTK_ENDONAV_EXPORT __declspec( dllexport ) 
 #else
-#define VTK_OPENIGTLINKIF_EXPORT __declspec( dllimport ) 
+#define VTK_ENDONAV_EXPORT __declspec( dllimport ) 
 #endif
 #else
-#define VTK_OPENIGTLINKIF_EXPORT 
+#define VTK_ENDONAV_EXPORT 
 #endif
 #endif

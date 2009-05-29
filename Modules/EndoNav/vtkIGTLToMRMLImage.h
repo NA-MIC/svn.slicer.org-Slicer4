@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/OpenIGTLinkIF/vtkIGTLToMRMLImage.h $
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNavIF/vtkIGTLToMRMLImage.h $
   Date:      $Date: 2009-03-26 14:33:00 -0400 (Thu, 26 Mar 2009) $
   Version:   $Revision: 8980 $
 
@@ -24,7 +24,7 @@
 
 class vtkMRMLVolumeNode;
 
-class VTK_OPENIGTLINKIF_EXPORT vtkIGTLToMRMLImage : public vtkIGTLToMRMLBase
+class VTK_ENDONAV_EXPORT vtkIGTLToMRMLImage : public vtkIGTLToMRMLBase
 {
  public:
 

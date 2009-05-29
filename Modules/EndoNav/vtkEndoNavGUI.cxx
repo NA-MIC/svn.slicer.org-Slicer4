@@ -367,7 +367,7 @@ void vtkEndoNavGUI::PrintSelf ( ostream& os, vtkIndent indent )
 {
   this->vtkObject::PrintSelf ( os, indent );
 
-  os << indent << "OpenIGTLinkGUI: " << this->GetClassName ( ) << "\n";
+  os << indent << "EndoNav: " << this->GetClassName ( ) << "\n";
   os << indent << "Logic: " << this->GetLogic ( ) << "\n";
    
   // print widgets?
@@ -1263,8 +1263,8 @@ void vtkEndoNavGUI::BuildGUIForHelpFrame ()
 
   // Define your help text here.
   const char *help = 
-    "**The OpenIGTLink Interface Module** helps you to manage OpenIGTLink connections:"
-    "OpenIGTLink is an open network protocol for communication among software / hardware "
+    "**The EndoNav Interface Module** helps you to manage EndoNav connections:"
+    "EndoNav is an open network protocol for communication among software / hardware "
     "for image-guided therapy. See "
     "<a>http://www.slicer.org/slicerWiki/index.php/Modules:EndoNav</a> for details.";
   const char *about =
@@ -2073,7 +2073,7 @@ void vtkEndoNavGUI::UpdateIOConfigTree()
 
   // create Root node
   vtkKWTree *tree = this->IOConfigTree->GetWidget();
-  tree->AddNode(NULL, "EndoNav", "OpenIGTLink Interface");
+  tree->AddNode(NULL, "EndoNav", "EndoNav Interface");
   const char* rootNode = "EndoNav";
 
   this->IOConfigTreeConnectorList.clear();

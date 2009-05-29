@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/OpenIGTLinkIF/vtkIGTLToMRMLLinearTransform.cxx $
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNavIF/vtkIGTLToMRMLLinearTransform.cxx $
   Date:      $Date: 2009-05-01 16:40:42 -0400 (Fri, 01 May 2009) $
   Version:   $Revision: 9387 $
 
@@ -49,7 +49,7 @@ vtkMRMLNode* vtkIGTLToMRMLLinearTransform::CreateNewNode(vtkMRMLScene* scene, co
 
   transformNode = vtkMRMLLinearTransformNode::New();
   transformNode->SetName(name);
-  transformNode->SetDescription("Received by OpenIGTLink");
+  transformNode->SetDescription("Received by EndoNav");
 
   vtkMatrix4x4* transform = vtkMatrix4x4::New();
   transform->Identity();

@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/OpenIGTLinkIF/vtkIGTLToMRMLBase.h $
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNavIF/vtkIGTLToMRMLBase.h $
   Date:      $Date: 2009-01-05 13:28:20 -0500 (Mon, 05 Jan 2009) $
   Version:   $Revision: 8267 $
 
@@ -23,14 +23,14 @@
 #include <vector>
 #include <string>
 
-class VTK_OPENIGTLINKIF_EXPORT vtkIGTLToMRMLBase : public vtkObject
+class VTK_ENDONAV_EXPORT vtkIGTLToMRMLBase : public vtkObject
 {
 
  public:
 
   // IGTL to MRML Converter types (returned values from GetConverterType())
   // NOTE: if you want to define a child class that can handle multiple types
-  // of OpenIGTLink messages, override GetConverterType() method to return
+  // of EndoNav messages, override GetConverterType() method to return
   // TYPE_MULTI_IGTL_NAME.
   //BTX
   enum {

@@ -22,7 +22,7 @@
 
 #include "igtlPositionMessage.h"
 
-class VTK_OPENIGTLINKIF_EXPORT vtkIGTLToMRMLPosition : public vtkIGTLToMRMLBase
+class VTK_ENDONAV_EXPORT vtkIGTLToMRMLPosition : public vtkIGTLToMRMLBase
 {
  public:
 

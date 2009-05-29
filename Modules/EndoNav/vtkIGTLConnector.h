@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/OpenIGTLinkIF/vtkIGTLConnector.h $
+  Module:    $HeadURL: http://svn.slicer.org/Slicer3/branches/EndoTracking/Modules/EndoNavIF/vtkIGTLConnector.h $
   Date:      $Date: 2009-01-05 13:28:20 -0500 (Mon, 05 Jan 2009) $
   Version:   $Revision: 8267 $
 
@@ -36,7 +36,7 @@ class vtkMatrix4x4;
 class vtkIGTLCircularBuffer;
 class vtkMRMLNode;
 
-class VTK_OPENIGTLINKIF_EXPORT vtkIGTLConnector : public vtkObject
+class VTK_ENDONAV_EXPORT vtkIGTLConnector : public vtkObject
 {
  public:  
   //----------------------------------------------------------------
@@ -129,7 +129,7 @@ class VTK_OPENIGTLINKIF_EXPORT vtkIGTLConnector : public vtkObject
   static void* ThreadFunction(void* ptr);
 
   //----------------------------------------------------------------
-  // OpenIGTLink Message handlers
+  // EndoNav Message handlers
   //----------------------------------------------------------------
   //BTX
   //igtl::ClientSocket::Pointer WaitForConnection();
@@ -208,7 +208,7 @@ class VTK_OPENIGTLINKIF_EXPORT vtkIGTLConnector : public vtkObject
   
   int     RestrictDeviceName;  // Flag to restrict incoming and outgoing data by device names
   //BTX
-  // -- Device Name (same as MRML node) and data type (data type string defined in OpenIGTLink)
+  // -- Device Name (same as MRML node) and data type (data type string defined in EndoNav)
   int                LastID;
   DeviceInfoMapType DeviceInfoList;
 

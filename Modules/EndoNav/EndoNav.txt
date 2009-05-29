@@ -1,2 +1,2 @@
-Name: OpenIGTLinkIF
-GUIName: OpenIGTLink IF
+Name: EndoNav
+GUIName: EndoNav
