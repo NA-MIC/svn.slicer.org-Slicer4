@@ -11,8 +11,11 @@
 #include "vtkObjectFactory.h"
 #include "vtkStructuredPoints.h"
 
+#include "itkArchetypeSeriesFileNames.h"
+
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -74,12 +77,14 @@ vtkTrackFileData::InitilizeRead(const char *filename, const char *pattern)
   this->FileNames->SetDirectory(filename);
   this->FileNames->AddFileNames(pattern);
   this->NumberSourceFiles = this->FileNames->GetNumberOfFileNames();
+  this->SortedFileNames.clear();
 
   this->ImageCast->SetOutputScalarTypeToUnsignedChar();
 
   if (this->NumberSourceFiles == 1)
     {
     int dims[3];
+    this->SortedFileNames.push_back(this->FileNames->GetNthFileName(0));
     this->Reader->SetFileName(this->FileNames->GetNthFileName(0));
     this->Reader->Update();
     this->Reader->GetOutput()->UpdateData();
@@ -98,6 +103,10 @@ vtkTrackFileData::InitilizeRead(const char *filename, const char *pattern)
     }
   else 
     {
+    itk::ArchetypeSeriesFileNames::Pointer fit = itk::ArchetypeSeriesFileNames::New();
+    fit->SetArchetype (this->FileNames->GetNthFileName(0));
+    this->SortedFileNames = fit->GetFileNames();
+
     return this->NumberSourceFiles;
     }
 }
@@ -143,7 +152,7 @@ vtkTrackFileData::ReadStep(int index,
       std::cerr << "tkTrackFileData::ReadStep() index " << index << " exceeds number of files " << this->NumberSourceFiles << "\n";
       return 0;
       }
-    this->Reader->SetFileName(this->FileNames->GetNthFileName(index));
+    this->Reader->SetFileName(this->SortedFileNames[index].c_str());
     this->Reader->Update();
     this->SourceImageData = (vtkImageData *)this->Reader->GetOutput();
     this->SourceImageData->UpdateData();

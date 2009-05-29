@@ -65,6 +65,21 @@ protected:
   vtkTrackFileData();
   ~vtkTrackFileData();
 
+
+  vtkGlobFileNames *FileNames;
+
+  std::vector<std::string> SortedFileNames;
+ 
+  int NumberSourceFiles;
+
+  vtkImageData *SourceImageData;
+
+//BTX
+  std::string OutDirectory;
+  std::string OutPrefix;
+
+//ETX
+
 private:
   vtkTrackFileData(const vtkTrackFileData&);  // Not implemented.
   void operator=(const vtkTrackFileData&);  // Not implemented.
@@ -77,17 +92,7 @@ private:
 
   vtkImageReslice *Reslice;
   
-  vtkGlobFileNames *FileNames;
- 
-  int NumberSourceFiles;
 
-  vtkImageData *SourceImageData;
-
-//BTX
-  std::string OutDirectory;
-  std::string OutPrefix;
-
-//ETX
 };
 
 #endif

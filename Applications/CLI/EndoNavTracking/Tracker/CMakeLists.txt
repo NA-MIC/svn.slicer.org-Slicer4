@@ -31,6 +31,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_BINARY_DIR}
   ${VTK_INCLUDE_DIRS}
+  ${ITK_INCLUDE_DIRS}
   ${OpenIGTLink_INCLUDE_DIRS}
   )
 
@@ -45,6 +46,7 @@ slicer3_set_plugins_output_path(${CLP})
 
 target_link_libraries (${CLP}
   ${VTK_LIBRARIES}
+  ${ITK_LIBRARIES}
   PCIBird3 Bird
   vtkIO vtkGraphics vtkImaging vtkFiltering vtkCommon vtkHybrid vtkRendering
   ${OpenIGTLink_LIBRARIES}
