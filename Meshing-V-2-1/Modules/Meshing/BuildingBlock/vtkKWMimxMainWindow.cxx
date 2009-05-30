@@ -11,12 +11,12 @@ Version:   $Revision: 1.24.4.2 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -111,20 +111,20 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
   this->DoUndoTree = NULL;
   this->MainUserInterfacePanel = NULL;
   this->DisplayPropertyDialog = NULL;
-  
+
   /* Default Icons for Apply/Cancel Buttons */
   this->applyIcon = vtkKWIcon::New();
-  this->applyIcon->SetImage( image_mimxApply, 
-                             image_mimxApply_width, 
-                             image_mimxApply_height, 
+  this->applyIcon->SetImage( image_mimxApply,
+                             image_mimxApply_width,
+                             image_mimxApply_height,
                              image_mimxApply_pixel_size);
-  
+
   this->cancelIcon = vtkKWIcon::New();
-  this->cancelIcon->SetImage( image_mimxCancel, 
-                              image_mimxCancel_width, 
-                              image_mimxCancel_height, 
-                              image_mimxCancel_pixel_size); 
-                              
+  this->cancelIcon->SetImage( image_mimxCancel,
+                              image_mimxCancel_width,
+                              image_mimxCancel_height,
+                              image_mimxCancel_pixel_size);
+
   /* Widgets used to define the Application Settings */
   this->MimxSettingsFrame = NULL;
   this->AutoSaveButton = NULL;
@@ -135,8 +135,8 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
   this->PropertyPrecisionScale = NULL;
   this->FontSettingsFrame = NULL;
   this->FontSizeButtons = NULL;
-  this->FontFamilyButtons  = NULL; 
-  
+  this->FontFamilyButtons  = NULL;
+
   /* Initialize the Default Application Settings */
   /*
    * TODO: these are disabled for use inside slicer
@@ -146,7 +146,7 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
   strcpy ( this->ApplicationFontFamily, "Arial" );
   */
   this->SlicerTheme = NULL;
-  
+
   /* Default Auto Save Settings */
   this->AutoSaveFlag = true;
   this->AutoSaveTime = 5;
@@ -155,8 +155,8 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
   this->ABAQUSPrecision = 2;
   strcpy(this->WorkingDirectory,"");
   std::string tmpDate =  "Mesh-" + vtksys::SystemTools::GetCurrentDateTime("%Y%m%d-%H%M");
-  strcpy(this->DateTimeString, tmpDate.c_str()); 
-  
+  strcpy(this->DateTimeString, tmpDate.c_str());
+
 #if defined(WIN32)
   strcpy(this->AutoSaveDirectory,"/tmp");
 #else
@@ -166,10 +166,10 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
   /* Set the Default Render Window Colors */
   this->TextColor[0] = this->TextColor[1] = this->TextColor[2] = 1.0;
   this->BackgroundColor[0] = this->BackgroundColor[1] = this->BackgroundColor[2] = 0.0;
-  
+
   /* The default is a standalone application */
-  this->StandAloneApplication = false;  
-        
+  this->StandAloneApplication = false;
+
 
 }
 
@@ -177,7 +177,7 @@ vtkKWMimxMainWindow::vtkKWMimxMainWindow()
 vtkKWMimxMainWindow::~vtkKWMimxMainWindow()
 {
   if (this->AxesRenderer)
-    { 
+    {
     this->RemoveOrientationAxis();
     this->AxesRenderer->Delete();
     }
@@ -265,9 +265,10 @@ void vtkKWMimxMainWindow::RemoveOrientationAxis()
        this->AxesRenderer->InteractiveOff();
        this->RenderWidget->GetRenderer()->SetLayer(0);
        this->AxesRenderer->SetLayer(1);
-       this->RenderWidget->GetRenderer()->RemoveObserver(this->CallbackCommand);
+      //this->RenderWidget->GetRenderer()->RemoveObserver(this->CallbackCommand);    // removed to fix bug where axis stopped moving after user left IA-FEMesh module
        this->RenderWidget->GetRenderWindow()->RemoveRenderer(this->AxesRenderer);
        this->RenderWidget->Render();
+
    }
 }
 
@@ -279,11 +280,11 @@ void vtkKWMimxMainWindow::CustomApplicationSettingsModuleEntry()
       {
             vtkKWMenu* fileMenu = this->MainWindow->GetFileMenu();
         fileMenu->DeleteItem (0);
-        
+
         vtkKWMenu* viewMenu = this->MainWindow->GetViewMenu();
         viewMenu->AddCommand("View Settings", this, "DisplayPropertyCallback");
         viewMenu->AddSeparator( );
-        
+
         vtkKWMenu *fontSizeMenu = vtkKWMenu::New();
         fontSizeMenu->SetParent(viewMenu);
         fontSizeMenu->Create();
@@ -292,7 +293,7 @@ void vtkKWMimxMainWindow::CustomApplicationSettingsModuleEntry()
         fontSizeMenu->AddRadioButton("large", this, "SetApplicationFontSize large");
         fontSizeMenu->AddRadioButton("largest", this, "SetApplicationFontSize largest");
         viewMenu->AddCascade("Font Size", fontSizeMenu);
-        
+
         vtkKWMenu *fontTypeMenu = vtkKWMenu::New();
         fontTypeMenu->SetParent(viewMenu);
         fontTypeMenu->Create();
@@ -300,17 +301,17 @@ void vtkKWMimxMainWindow::CustomApplicationSettingsModuleEntry()
         fontTypeMenu->AddRadioButton("Helvetica", this, "SetApplicationFontFamily Helvetica");
         fontTypeMenu->AddRadioButton("Verdana", this, "SetApplicationFontFamily Verdana");
         viewMenu->AddCascade("Font Family", fontTypeMenu);
-        
+
         fontSizeMenu->SelectItem( this->GetApplicationFontSize() );
         fontTypeMenu->SelectItem( this->GetApplicationFontFamily() );
-        
+
         this->AddFontApplicationSettingsPanel();
       }
 
     if (this->MimxSettingsFrame == NULL)
     {
       this->AddCustomApplicationSettingsPanel();
-    }      
+    }
 }
 
 
@@ -318,8 +319,8 @@ void vtkKWMimxMainWindow::CustomApplicationSettingsModuleEntry()
 void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
 {
 
-  vtkKWApplicationSettingsInterface *applicationMenu = 
-           this->MainWindow->GetApplicationSettingsInterface( ); 
+  vtkKWApplicationSettingsInterface *applicationMenu =
+           this->MainWindow->GetApplicationSettingsInterface( );
 
   ostrstream tk_cmd;
   vtkKWWidget *page;
@@ -330,7 +331,7 @@ void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
 
   int id = applicationMenu->AddPage( "IA-FEMesh" );
   page = applicationMenu->GetPageWidget(id);
-                                                              
+
   // --------------------------------------------------------------
   // IA-FEMesh Interface settings : main frame
   if (this->MimxSettingsFrame == NULL)
@@ -342,11 +343,11 @@ void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
   this->MimxSettingsFrame->SetLabelText("IA-FEMesh Settings");
 
   tk_cmd << "pack " << this->MimxSettingsFrame->GetWidgetName()
-         << " -side top -anchor nw -fill x -padx 2 -pady 2 " 
+         << " -side top -anchor nw -fill x -padx 2 -pady 2 "
          << " -in " << page->GetWidgetName() << endl;
-  
+
   frame = this->MimxSettingsFrame->GetFrame();
-  
+
   if ( this->StandAloneApplication )
   {
     if (this->AutoSaveButton == NULL)
@@ -359,7 +360,7 @@ void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
     this->AutoSaveButton->GetWidget()->SetCommand ( this, "AutoSaveModeCallback");
     this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2",
                    this->AutoSaveButton->GetWidgetName());
-    
+
     if (this->AutoSaveScale == NULL)
     {
       this->AutoSaveScale = vtkKWScaleWithLabel::New();
@@ -371,8 +372,8 @@ void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
     this->AutoSaveScale->GetWidget()->SetResolution ( 1.0 );
     this->AutoSaveScale->GetWidget()->SetCommand ( this, "AutoSaveScaleCallback");
     this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
-                   this->AutoSaveScale->GetWidgetName());  
-    
+                   this->AutoSaveScale->GetWidgetName());
+
     if (this->WorkingDirButton == NULL)
     {
       this->WorkingDirButton = vtkKWCheckButtonWithLabel::New();
@@ -383,7 +384,7 @@ void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
     this->WorkingDirButton->GetWidget()->SetCommand ( this, "AutoSaveDirectoryModeCallback");
     this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2",
                    this->WorkingDirButton->GetWidgetName());
-                   
+
     if (this->AutoSaveDir == NULL)
     {
       this->AutoSaveDir = vtkKWLoadSaveButtonWithLabel::New();
@@ -396,16 +397,16 @@ void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
     this->AutoSaveDir->GetWidget()->TrimPathFromFileNameOff();
     this->AutoSaveDir->GetWidget()->SetCommand ( this, "AutoSaveDirectoryCallback");
     this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
-                   this->AutoSaveDir->GetWidgetName()); 
-    
+                   this->AutoSaveDir->GetWidgetName());
+
     vtkKWSeparator *separator = vtkKWSeparator::New();
     separator->SetParent ( frame );
     separator->Create();
     this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
                    separator->GetWidgetName());
-    separator->Delete(); 
+    separator->Delete();
   }
-  
+
   if (this->AverageElementLengthEntry == NULL)
   {
     this->AverageElementLengthEntry = vtkKWEntryWithLabel::New();
@@ -416,8 +417,8 @@ void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
   this->AverageElementLengthEntry->GetWidget()->SetRestrictValueToDouble( );
   this->AverageElementLengthEntry->GetWidget()->SetCommand ( this, "AverageElementLengthCallback");
   this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
-                 this->AverageElementLengthEntry->GetWidgetName()); 
-  
+                 this->AverageElementLengthEntry->GetWidgetName());
+
   if (this->PropertyPrecisionScale == NULL)
   {
     this->PropertyPrecisionScale = vtkKWScaleWithLabel::New();
@@ -430,11 +431,11 @@ void vtkKWMimxMainWindow::AddCustomApplicationSettingsPanel()
   this->PropertyPrecisionScale->GetWidget()->SetCommand( this, "ABAQUSPrecisionCallback");
   this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
                  this->PropertyPrecisionScale->GetWidgetName());
-                 
-  
-  
+
+
+
   // --------------------------------------------------------------
-  // Pack 
+  // Pack
 
   tk_cmd << ends;
   this->Script(tk_cmd.str());
@@ -450,11 +451,11 @@ void vtkKWMimxMainWindow::CustomApplicationSettingsModuleExit()
 {
     // Custom Configuration of the Toolbar Menu
     if ( this->StandAloneApplication )
-      {      
+      {
         this->RemoveFontApplicationSettingsPanel();
       }
 
-    this->RemoveCustomApplicationSettingsPanel();     
+    this->RemoveCustomApplicationSettingsPanel();
 }
 
 
@@ -469,23 +470,23 @@ void vtkKWMimxMainWindow::CreateWidget()
                 return;
         }
         this->Superclass::CreateWidget();
-  
-   
+
+
         this->ErrorCallback->SetKWApplication(this->GetApplication());
         // for do and undo tree
         if(!this->DoUndoTree)
         {
                 this->DoUndoTree = vtkLinkedListWrapperTree::New();
   }
-  
+
     //this->MainFrame = vtkSlicerModuleCollapsibleFrame::New();
     //this->MainFrame->SetParent(this);
     //this->MainFrame->Create();
     //this->MainFrame->AllowFrameToCollapseOn();
     //this->GetApplication()->Script(
-    //      "pack %s -side top -anchor nw -expand yes -padx 2 -pady 2 -fill both", 
+    //      "pack %s -side top -anchor nw -expand yes -padx 2 -pady 2 -fill both",
     //      this->MainFrame->GetWidgetName());
-    
+
         if(!this->ViewProperties)
         {
                 this->ViewProperties = vtkKWMimxViewProperties::New();
@@ -496,7 +497,7 @@ void vtkKWMimxMainWindow::CreateWidget()
         //this->ViewProperties->SetBorderWidth(2);
         this->ViewProperties->SetReliefToGroove();
         this->ViewProperties->SetDoUndoTree(this->DoUndoTree);
-        this->GetApplication()->Script("pack %s -side top -anchor nw -expand no -fill x", 
+        this->GetApplication()->Script("pack %s -side top -anchor nw -expand no -fill x",
                 this->ViewProperties->GetMainFrame()->GetWidgetName());
 
         // add tabs
@@ -513,10 +514,10 @@ void vtkKWMimxMainWindow::CreateWidget()
         this->MainUserInterfacePanel->SetReliefToGroove();
         //this->MainUserInterfacePanel->GetMainFrame()->ExpandFrame();
         this->GetApplication()->Script(
-                "pack %s -side top -anchor nw -expand yes -pady 2 -fill both", 
+                "pack %s -side top -anchor nw -expand yes -pady 2 -fill both",
                 this->MainUserInterfacePanel->GetWidgetName());
-        
-  
+
+
   this->Update();
 }
 //----------------------------------------------------------------------------------------------
@@ -547,7 +548,7 @@ void vtkKWMimxMainWindow::DisplayPropertyCallback()
           this->DisplayPropertyDialog->Create();
         }
         this->DisplayPropertyDialog->Display();
-        
+
 }
 
 //----------------------------------------------------------------------------------------------
@@ -555,7 +556,7 @@ void vtkKWMimxMainWindow::SetApplicationFontFamily( const char *font )
 {
   char localFont[32];
   strcpy(localFont, font);
-    
+
   if ( this->SlicerTheme )
     {
     this->SlicerTheme->SetFontFamily ( localFont );
@@ -578,7 +579,7 @@ void vtkKWMimxMainWindow::SetApplicationFontSize( const char *size )
 {
   char localSize[32];
   strcpy(localSize, size);
-  
+
   if (this->SlicerTheme)
     {
     vtkSlicerFont *font = this->SlicerTheme->GetSlicerFonts();
@@ -590,11 +591,11 @@ void vtkKWMimxMainWindow::SetApplicationFontSize( const char *size )
         int f2 = font->GetFontSize2( localSize );
         int f1 = font->GetFontSize1( localSize );
         int f0 = font->GetFontSize0( localSize );
-        
+
         this->Script ( "font configure %s -size %d", this->SlicerTheme->GetApplicationFont2(), f2);
         this->Script ( "font configure %s -size %d", this->SlicerTheme->GetApplicationFont1(), f1);
         this->Script ( "font configure %s -size %d", this->SlicerTheme->GetApplicationFont0(), f0);
-        
+
         strcpy (this->ApplicationFontSize, localSize );
         this->GetApplication()->SetRegistryValue(1, "Font", "Size", localSize);
         }
@@ -652,47 +653,47 @@ void vtkKWMimxMainWindow::AutoSaveCallback( )
         saveFlag = false;
       }
     }
-    
+
     if ( saveFlag )
     {
       for (int i = 0; i < surfaceList->GetNumberOfItems(); i++)
       {
                 vtkPolyData *polydata = vtkMimxSurfacePolyDataActor::SafeDownCast(surfaceList->GetItem(i))->GetDataSet();
-         
+
                 std::string filename = surfaceList->GetItem(i)->GetFileName();
-                std::string filePath = autoSaveDir + "/" + 
+                std::string filePath = autoSaveDir + "/" +
                             vtksys::SystemTools::GetFilenameWithoutExtension( filename ) + ".vtk";
-                        
+
                 vtkPolyDataWriter *writer = vtkPolyDataWriter::New();
                 writer->SetFileName( filePath.c_str() );
                 writer->SetInput(polydata);
                 writer->Update();
-                writer->Delete();       
+                writer->Delete();
       }
-      
+
       for (int i = 0; i < meshList->GetNumberOfItems(); i++)
       {
                 vtkUnstructuredGrid *ugrid = vtkMimxMeshActor::SafeDownCast(meshList->GetItem(i))->GetDataSet();
-          
+
                 std::string filename = meshList->GetItem(i)->GetFileName();
-                std::string filePath = autoSaveDir + "/" + 
+                std::string filePath = autoSaveDir + "/" +
                             vtksys::SystemTools::GetFilenameWithoutExtension(filename) + ".vtk";
-                        
+
                 vtkUnstructuredGridWriter *writer = vtkUnstructuredGridWriter::New();
                 writer->SetFileName( filePath.c_str() );
                 writer->SetInput(ugrid);
                 writer->Update();
                 writer->Delete();
       }
-       
+
       for (int i = 0; i < bbList->GetNumberOfItems(); i++)
       {
                 vtkUnstructuredGrid *ugrid = vtkMimxUnstructuredGridActor::SafeDownCast(bbList->GetItem(i))->GetDataSet();
-          
+
                 std::string filename = bbList->GetItem(i)->GetFileName();
-                std::string filePath = autoSaveDir + "/" + 
+                std::string filePath = autoSaveDir + "/" +
                             vtksys::SystemTools::GetFilenameWithoutExtension( filename ) + ".vtk";
-        
+
                 vtkUnstructuredGridWriter *writer = vtkUnstructuredGridWriter::New();
                 writer->SetFileName( filePath.c_str() );
                 writer->SetInput(ugrid);
@@ -701,7 +702,7 @@ void vtkKWMimxMainWindow::AutoSaveCallback( )
       }
     }
   }
-  
+
   if ( this->GetAutoSaveFlag() )
   {
     const char *tmpId = vtkKWTkUtilities::CreateTimerHandler(this->GetApplication()->GetMainInterp(),
@@ -709,13 +710,13 @@ void vtkKWMimxMainWindow::AutoSaveCallback( )
                                          this,
                                          "AutoSaveCallback");
     strcpy(this->autoSaveEventId, tmpId);
-  }                                     
+  }
 }
 
 //----------------------------------------------------------------------------------------------
 void vtkKWMimxMainWindow::EnableAutoSave( )
 {
-  const char *tmpId = 
+  const char *tmpId =
     vtkKWTkUtilities::CreateTimerHandler(this->GetApplication()->GetMainInterp(),
                                         this->GetAutoSaveTime()*1000*60,  /* Convert minutes to ms */
                                         this,
@@ -731,7 +732,7 @@ void vtkKWMimxMainWindow::DisableAutoSave( )
 
 //----------------------------------------------------------------------------
 /*
-vtkKWApplicationSettingsInterface* 
+vtkKWApplicationSettingsInterface*
 vtkKWMimxMainWindow::GetApplicationSettingsInterface()
 {
   // If not created, create the application settings interface, connect it
@@ -739,7 +740,7 @@ vtkKWMimxMainWindow::GetApplicationSettingsInterface()
 
   if (!this->ApplicationSettingsInterface)
     {
-    this->ApplicationSettingsInterface = 
+    this->ApplicationSettingsInterface =
       vtkKWMimxApplicationSettingsInterface::New();
     this->ApplicationSettingsInterface->SetWindow(this);
     this->ApplicationSettingsInterface->SetUserInterfaceManager(
@@ -786,7 +787,7 @@ void vtkKWMimxMainWindow::SetTextColor( double color[3] )
   this->TextColor[0] = color[0];
   this->TextColor[1] = color[1];
   this->TextColor[2] = color[2];
-  
+
   this->GetApplication()->SaveColorRegistryValue(1, "ViewerText", this->TextColor);
 }
 
@@ -802,7 +803,7 @@ void vtkKWMimxMainWindow::SetBackgroundColor( double color[3] )
   this->BackgroundColor[0] = color[0];
   this->BackgroundColor[1] = color[1];
   this->BackgroundColor[2] = color[2];
-  
+
   this->GetApplication()->SaveColorRegistryValue(1, "ViewerBackground", this->BackgroundColor);
 }
 
@@ -821,7 +822,7 @@ void vtkKWMimxMainWindow::SetWorkingDirectory( const char *dirName )
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::InitializeWorkingDirectory( const char *dirName )
 {
-  if ( strlen(this->WorkingDirectory) == 0 ) 
+  if ( strlen(this->WorkingDirectory) == 0 )
   {
     SetWorkingDirectory(dirName);
   }
@@ -884,7 +885,7 @@ void vtkKWMimxMainWindow::SetAutoSaveDirectory(const char *dirName)
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::RemoveFontApplicationSettingsPanel()
 {
-                   
+
   // --------------------------------------------------------------
   // IA-FEMesh Interface settings : Font Settings
   if (this->FontSettingsFrame == NULL)
@@ -896,55 +897,55 @@ void vtkKWMimxMainWindow::RemoveFontApplicationSettingsPanel()
   // --------------------------------------------------------------
   // Interface settings : Font size
   if (this->FontScrollFrame == NULL)
-  {  
+  {
       this->Script ( "pack forget %s",
-                  this->FontScrollFrame->GetWidgetName());  
+                  this->FontScrollFrame->GetWidgetName());
   }
 }
 
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::RemoveCustomApplicationSettingsPanel()
 {
-  //vtkKWApplicationSettingsInterface *applicationMenu = 
-  //         this->MainWindow->GetApplicationSettingsInterface( ); 
+  //vtkKWApplicationSettingsInterface *applicationMenu =
+  //         this->MainWindow->GetApplicationSettingsInterface( );
   //vtkKWWidget*  page = applicationMenu->GetPageWidget( "IA-FEMesh" );
-  
+
   this->MimxSettingsFrame->SetEnabled(0);
   this->AverageElementLengthEntry->SetEnabled(0);
   this->PropertyPrecisionScale->SetEnabled(0);
-  
+
   //page->Unpack();
   /*
   applicationMenu->RemovePage( "IA-FEMesh" );
-                     
+
   this->Script ("pack forget %s ",
                   this->MimxSettingsFrame->GetWidgetName());
-                  
-  this->MimxSettingsFrame->Delete(); 
+
+  this->MimxSettingsFrame->Delete();
   this->MimxSettingsFrame = NULL;
-  this->AutoSaveButton->Delete();   
+  this->AutoSaveButton->Delete();
   this->AutoSaveButton = NULL;
-  this->AutoSaveScale->Delete(); 
+  this->AutoSaveScale->Delete();
   this->AutoSaveScale = NULL;
-  this->WorkingDirButton->Delete(); 
+  this->WorkingDirButton->Delete();
   this->WorkingDirButton = NULL;
-  this->AutoSaveDir->Delete(); 
+  this->AutoSaveDir->Delete();
   this->AutoSaveDir = NULL;
-  this->AverageElementLengthEntry->Delete(); 
+  this->AverageElementLengthEntry->Delete();
   this->AverageElementLengthEntry = NULL;
-  this->PropertyPrecisionScale->Delete(); 
+  this->PropertyPrecisionScale->Delete();
   this->PropertyPrecisionScale = NULL;
   */
   //applicationMenu->Update();
-  
+
 }
 
 
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
 {
-  vtkKWApplicationSettingsInterface *applicationMenu = 
-           this->MainWindow->GetApplicationSettingsInterface( ); 
+  vtkKWApplicationSettingsInterface *applicationMenu =
+           this->MainWindow->GetApplicationSettingsInterface( );
 
   ostrstream tk_cmd;
   vtkKWWidget *page;
@@ -956,7 +957,7 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
   //applicationMenu->AddPage( "Preferences" );
   page = applicationMenu->GetPageWidget(applicationMenu->GetName());
 
-                                                              
+
   // --------------------------------------------------------------
   // IA-FEMesh Interface settings : Font Settings
   if (this->FontSettingsFrame == NULL)
@@ -975,7 +976,7 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
 
   // --------------------------------------------------------------
   // Interface settings : Font size
-  
+
   vtkKWFrameWithScrollbar *scrollframe = vtkKWFrameWithScrollbar::New();
   this->FontScrollFrame = scrollframe;
   scrollframe->SetParent ( frame );
@@ -983,7 +984,7 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
   scrollframe->VerticalScrollbarVisibilityOn();
   scrollframe->HorizontalScrollbarVisibilityOn();
   this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -expand n",
-                 scrollframe->GetWidgetName());  
+                 scrollframe->GetWidgetName());
 
   vtkKWLabel *fontSizeLabel = vtkKWLabel::New();
   fontSizeLabel->SetParent ( scrollframe->GetFrame());
@@ -1001,7 +1002,7 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
   button->SetText  ( "Use small font" );
   button->SetValue ( "small" );
   button->SetCommand ( this, "SetFontSizeCallback");
-    
+
   button = this->FontSizeButtons->AddWidget ( 1 );
   button->SetText ("Use medium font" );
   button->SetValue ( "medium" );
@@ -1014,7 +1015,7 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
   button->SetCommand ( this, "SetFontSizeCallback");
   button->SetVariableName ( this->FontSizeButtons->GetWidget(0)->GetVariableName());
 
-  button = this->FontSizeButtons->AddWidget (3 ); 
+  button = this->FontSizeButtons->AddWidget (3 );
   button->SetText ( "Use largest font");
   button->SetValue ( "largest");
   button->SetCommand ( this, "SetFontSizeCallback");
@@ -1031,10 +1032,10 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
   if (this->FontFamilyButtons == NULL)
   {
     this->FontFamilyButtons = vtkKWRadioButtonSet::New();
-  }  
+  }
   this->FontFamilyButtons->SetParent (scrollframe->GetFrame());
   this->FontFamilyButtons->Create();
-  
+
   vtkSlicerTheme *theme = this->GetSlicerTheme();
   int numfonts = theme->GetSlicerFonts()->GetNumberOfFontFamilies();
   const char *font;
@@ -1047,7 +1048,7 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
     button->SetVariableName (this->FontFamilyButtons->GetWidget(0)->GetVariableName() );
     button->SetCommand( this, "SetFontFamilyCallback" );
     }
-  
+
   vtkKWLabel *restartLabel = vtkKWLabel::New();
   restartLabel->SetParent ( scrollframe->GetFrame());
   restartLabel->Create();
@@ -1060,18 +1061,18 @@ void vtkKWMimxMainWindow::AddFontApplicationSettingsPanel()
                  this->FontFamilyButtons->GetWidgetName());
   this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -expand n",
                  fontSizeLabel->GetWidgetName());
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -expand n",                 
+  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -expand n",
                  this->FontSizeButtons->GetWidgetName());
-  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -expand n",                 
+  this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -expand n",
                  restartLabel->GetWidgetName() );
 
   fontSizeLabel->Delete();
   fontFamilyLabel->Delete();
   restartLabel->Delete();
   scrollframe->Delete();
-  
+
   // --------------------------------------------------------------
-  // Pack 
+  // Pack
 
   tk_cmd << ends;
   this->Script(tk_cmd.str());
@@ -1099,25 +1100,25 @@ void vtkKWMimxMainWindow::SetFontSizeCallback ( )
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::AutoSaveModeCallback( int mode )
-{ 
+{
   if ( mode )
   {
-    this->AutoSaveScale->EnabledOn(); 
-    this->WorkingDirButton->EnabledOn(); 
+    this->AutoSaveScale->EnabledOn();
+    this->WorkingDirButton->EnabledOn();
     if ( ! this->WorkingDirButton->GetWidget()->GetSelectedState() )
     {
       this->AutoSaveDir->EnabledOn();
     }
     this->SetAutoSaveFlag( true );
-    this->EnableAutoSave(); 
+    this->EnableAutoSave();
   }
   else
   {
-    this->AutoSaveScale->EnabledOff(); 
-    this->WorkingDirButton->EnabledOff(); 
-    this->AutoSaveDir->EnabledOff(); 
+    this->AutoSaveScale->EnabledOff();
+    this->WorkingDirButton->EnabledOff();
+    this->AutoSaveDir->EnabledOff();
     this->SetAutoSaveFlag( false );
-    this->DisableAutoSave(); 
+    this->DisableAutoSave();
   }
 }
 
@@ -1131,7 +1132,7 @@ void vtkKWMimxMainWindow::AutoSaveDirectoryModeCallback( int mode )
 {
   if ( mode )
   {
-    this->AutoSaveDir->EnabledOff(); 
+    this->AutoSaveDir->EnabledOff();
     this->SetAutoSaveWorkDirFlag( true );
   }
   else
@@ -1162,67 +1163,67 @@ void vtkKWMimxMainWindow::ABAQUSPrecisionCallback( double value )
 void vtkKWMimxMainWindow::Update()
 {
   //this->Superclass::Update();
-  
+
   if ( this->GetAutoSaveFlag() )
   {
     if (this->AutoSaveButton)
-    { 
+    {
       this->AutoSaveDirectoryModeCallback( 1 );
       this->AutoSaveButton->GetWidget()->SelectedStateOn();
     }
   }
   else
   {
-    if (this->AutoSaveButton) 
+    if (this->AutoSaveButton)
     {
       this->AutoSaveDirectoryModeCallback( 0 );
       this->AutoSaveButton->GetWidget()->SelectedStateOff();
     }
   }
-  
+
   if ( this->GetAutoSaveWorkDirFlag() )
   {
     if (this->WorkingDirButton)
-    { 
+    {
       this->AutoSaveDirectoryModeCallback( 1 );
       this->WorkingDirButton->GetWidget()->SelectedStateOn();
     }
   }
   else
   {
-    if (this->WorkingDirButton) 
+    if (this->WorkingDirButton)
     {
       this->AutoSaveDirectoryModeCallback( 0 );
       this->WorkingDirButton->GetWidget()->SelectedStateOff();
     }
   }
-  
+
   double saveTime = static_cast<double>(this->GetAutoSaveTime());
   if (this->AutoSaveScale)
   {
     this->AutoSaveScale->GetWidget()->SetValue( saveTime );
   }
-  
+
   const char *autoDir =  this->GetAutoSaveDirectory();
   if (this->AutoSaveDir)
   {
     this->AutoSaveDir->GetWidget()->SetInitialFileName( autoDir );
   }
-  
+
   double elementLength = static_cast<double>(this->GetAverageElementLength());
   if (this->AverageElementLengthEntry)
   {
     if ( elementLength <= 0.0 ) elementLength = 1.0;
     this->AverageElementLengthEntry->GetWidget()->SetValueAsDouble( elementLength );
   }
-  
+
   double precision = static_cast<double>(this->GetABAQUSPrecision());
   if (this->PropertyPrecisionScale)
   {
     this->PropertyPrecisionScale->GetWidget()->SetValue( precision );
   }
-  
-  
+
+
   if ( this->FontSizeButtons )
     {
     if ( !(strcmp(this->GetApplicationFontSize(), "small" )))
@@ -1240,9 +1241,9 @@ void vtkKWMimxMainWindow::Update()
     else if ( !(strcmp(this->GetApplicationFontSize(), "largest")))
       {
       this->FontSizeButtons->GetWidget(3)->SetSelectedState(1);
-      }      
+      }
     }
-    
+
 //  if ( this->FontFamilyButtons )
 //    {
 //    if ( !(strcmp (this->GetApplicationFontFamily(), "Arial" )))
@@ -1257,77 +1258,77 @@ void vtkKWMimxMainWindow::Update()
 //      {
 //      this->FontFamilyButtons->GetWidget(2)->SetSelectedState ( 1 );
 //      }
-//    }     
+//    }
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxMainWindow::LoadRegistryApplicationSettings()
 {
   int registryFlag;
-  
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "AutoSave", "SaveFlag");
   if ( registryFlag )
   {
-    this->AutoSaveFlag = static_cast<bool> ( 
+    this->AutoSaveFlag = static_cast<bool> (
           this->GetApplication()->GetIntRegistryValue(1, "AutoSave", "SaveFlag") );
   }
-  
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "AutoSave", "SaveFrequency");
   if ( registryFlag )
   {
     this->AutoSaveTime = this->GetApplication()->GetIntRegistryValue(1, "AutoSave", "SaveFrequency");
   }
-  
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "AutoSave", "UseWorkingDirectory");
   if ( registryFlag )
   {
-    this->AutoSaveWorkDirFlag = static_cast<bool> ( 
+    this->AutoSaveWorkDirFlag = static_cast<bool> (
           this->GetApplication()->GetIntRegistryValue(1, "AutoSave", "UseWorkingDirectory") );
   }
-  
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "AutoSave", "SaveDirectory");
   if ( registryFlag )
   {
     this->GetApplication()->GetRegistryValue(1, "AutoSave", "SaveDirectory", this->AutoSaveDirectory);
   }
-  
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "ViewerBackground", "Colors");
   if ( registryFlag )
   {
     this->GetApplication()->RetrieveColorRegistryValue(1, "ViewerBackground", this->BackgroundColor);
   }
-  
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "ViewerText", "Colors");
   if ( registryFlag )
   {
     this->GetApplication()->RetrieveColorRegistryValue(1, "ViewerText", this->TextColor);
   }
-  
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "Font", "Family");
   if ( registryFlag )
   {
     this->GetApplication()->GetRegistryValue(1, "Font", "Family", this->ApplicationFontFamily);
   }
-  
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "Font", "Size");
   if ( registryFlag )
   {
     this->GetApplication()->GetRegistryValue(1, "Font", "Size", this->ApplicationFontSize);
-  } 
-  
+  }
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "MeshProperties", "ABAQUSPrecision");
   if ( registryFlag )
   {
-    this->ABAQUSPrecision = static_cast<int> ( 
+    this->ABAQUSPrecision = static_cast<int> (
           this->GetApplication()->GetIntRegistryValue(1, "MeshProperties", "ABAQUSPrecision") );
-  } 
-  
+  }
+
   registryFlag = this->GetApplication()->HasRegistryValue (1, "MeshProperties", "AverageElementLength");
   if ( registryFlag )
   {
-    this->AverageElementLength = static_cast<double> ( 
+    this->AverageElementLength = static_cast<double> (
           this->GetApplication()->GetFloatRegistryValue(1, "MeshProperties", "AverageElementLength") );
-  } 
-  
+  }
+
 }
 
 //----------------------------------------------------------------------------
@@ -1337,7 +1338,7 @@ const char *vtkKWMimxMainWindow::GetSaveDirectory()
     sprintf(this->SaveDirectory, "%s/%s", this->WorkingDirectory, this->DateTimeString);
   else
     sprintf(this->SaveDirectory, "%s/%s", this->AutoSaveDirectory, this->DateTimeString);
-  
+
   return this->SaveDirectory;
 }
 
@@ -1350,7 +1351,7 @@ void vtkKWMimxMainWindow::InstallDefaultTheme ( )
 //---------------------------------------------------------------------------
 void vtkKWMimxMainWindow::InstallTheme ( vtkKWTheme *theme )
 {
-  if ( theme != NULL ) 
+  if ( theme != NULL )
   {
     if ( vtkSlicerTheme::SafeDownCast (theme) == this->SlicerTheme ) {
         this->GetApplication()->SetTheme (this->SlicerTheme );
@@ -1395,10 +1396,10 @@ void vtkKWMimxMainWindow::ForceWidgetRedraw ( )
 //----------------------------------------------------------------------------------------------
 
 
-// clear and display the objects from the lists.  This is used when the 
+// clear and display the objects from the lists.  This is used when the
  // module is entered and exited, so the actors don't display in the slicer
  // window when we are not in the module.  This traverses the list and stores
- // state in the MRML nodes. 
+ // state in the MRML nodes.
 
  void  vtkKWMimxMainWindow::SaveVisibilityStateOfObjectLists(void)
  {
@@ -1406,11 +1407,11 @@ void vtkKWMimxMainWindow::ForceWidgetRedraw ( )
    if(this->MainUserInterfacePanel != NULL)
          this->MainUserInterfacePanel->SaveVisibilityStateOfObjectLists();
  }
- 
+
  void  vtkKWMimxMainWindow::RestoreVisibilityStateOfObjectLists(void)
  {
    if(this->MainUserInterfacePanel != NULL)
           this->MainUserInterfacePanel->RestoreVisibilityStateOfObjectLists();
  }
- 
- 
+
+

@@ -90,6 +90,7 @@ SET ( LIB_SRCS
     vtkMimxColorCodeMeshSeedActor.cxx
     #
     vtkMimxBoundaryConditionActor.cxx
+    vtkMimxMeshQualityRendering.cxx
 )
  
 SET_SOURCE_FILES_PROPERTIES(

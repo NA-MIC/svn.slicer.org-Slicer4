@@ -54,72 +54,12 @@ vtkMRMLNode* vtkMRMLFiniteElementMeshQualityDisplayNode::CreateNodeInstance()
 
 vtkMRMLFiniteElementMeshQualityDisplayNode::vtkMRMLFiniteElementMeshQualityDisplayNode()
 {
-//    this->ElementShrinkFactor = 1.0;
-//     this->DataType = ACTOR_FE_MESH;
-//     this->ElementSetName = NULL;
-//     this->IsVisible = true;
-//     this->ElementSetDisplayList.clear();
-//     this->DisplayMode = vtkMimxMeshActor::DisplayMesh;
-//     this->DisplayType = vtkMimxMeshActor::DisplaySurfaceAndOutline;
-//     this->NumberOfElementSets = 0;
-//     this->CuttingPlaneEnabled = false;
 
-
-//     vtkDataSetMapper*  meshMapper = vtkDataSetMapper::New();
-//     meshMapper->SetInputConnection(this->ShrinkFilter->GetOutputPort());
-//     this->UnstructuredGridMapper = meshMapper;
-//     this->UnstructuredGridMapper->SetScalarVisibility(0);
-//     this->Actor = vtkActor::New();
-//     this->Actor->SetMapper(this->UnstructuredGridMapper);
-           
-     // when the user selects wireframe mode, we will change the VTK pipeline
-     // to employ this wireframe filter instead of the filled poly pipeline
-     
-     /* Setup the Pipeline for the Wireframe */
- //    this->OutlineGeometryFilter = vtkGeometryFilter::New();
- //    this->OutlineGeometryFilter->SetInput( this->UnstructuredGrid );
-
-//     this->FeatureEdges = vtkFeatureEdges::New();
-//     this->FeatureEdges->SetInput( this->OutlineGeometryFilter->GetOutput() );
-//     this->FeatureEdges->BoundaryEdgesOn();
-//     this->FeatureEdges->ManifoldEdgesOn();
-//     this->FeatureEdges->FeatureEdgesOff();
-//     this->FeatureEdges->ColoringOff();    
-//     this->TubeFilter = vtkTubeFilter::New();
-//     this->TubeFilter->SetInputConnection(this->FeatureEdges->GetOutputPort());
-//     this->TubeFilter->SetRadius(0.03);
-      
-//     this->OutlineMapper = vtkPolyDataMapper::New();
-//     this->OutlineMapper->SetInputConnection(  this->TubeFilter->GetOutputPort() );
-//     this->OutlineMapper->SetScalarVisibility( 0 );
 //
-//     this->OutlineActor->GetProperty()->SetColor(0.0,0.0,0.0);
-//     this->OutlineActor->GetProperty()->SetRepresentationToSurface();
-//     this->OutlineActor->GetProperty()->SetAmbient(1);
-//     this->OutlineActor->GetProperty()->SetSpecular(0);
-//     this->OutlineActor->GetProperty()->SetDiffuse(0);
-//     this->OutlineActor->GetProperty()->SetSpecularPower(0);
-     //this->OutlineActor->GetProperty()->SetLineWidth(1.0);    
-    
-//     this->CuttingPlaneWidget = vtkPlaneWidget::New();
-//     this->CuttingPlaneWidget->SetInput( this->UnstructuredGrid );
-//     this->CuttingPlaneWidget->SetRepresentationToSurface();
-//     this->CuttingPlaneWidget->GetPlaneProperty()->SetColor(0.2,0.2,0);
-//     this->CuttingPlaneWidget->GetPlaneProperty()->SetOpacity(0.2);
-//     this->CuttingPlaneWidget->GetSelectedPlaneProperty()->SetOpacity(0.2);  
-//     this->CuttingPlaneWidget->SetHandleSize(0.02);
-     
-     // this geometry can be clipped by a clipping plane, so set up the VTK pipeline
-     // with the extract geometry filter in place that will do the selection of cells
-     
-//     this->CuttingPlane = vtkPlane::New();     
-//     this->ClipPlaneGeometryFilter = vtkExtractGeometry::New();
-//     this->ClipPlaneGeometryFilter->SetInput( this->UnstructuredGrid );
-//   
      this->SavedMeshQualityFilter = vtkMeshQuality::New();
      //vtkMeshQualityExtended* this->SavedMeshQualityFilter = vtkMeshQualityExtended::New();
      this->SavedShrinkFilter = vtkShrinkFilter::New();
-     this->ShrinkFactor = 0.80;
+     this->ShrinkFactor = 0.8;
 }
 
 
@@ -133,9 +73,8 @@ vtkMRMLFiniteElementMeshQualityDisplayNode::~vtkMRMLFiniteElementMeshQualityDisp
 
 void vtkMRMLFiniteElementMeshQualityDisplayNode::UpdatePolyDataPipeline()
 {
-   // set the type of metric to display here and the paramters for coloring, etc. 
-   //this->ShrinkFactor = whatever-was-in-the-GUI
-   //this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor); 
+   // set the type of metric to display here and the paramters for coloring, etc.
+   this->SavedShrinkFilter->SetShrinkFactor(this->ShrinkFactor);
 }
 
 //----------------------------------------------------------------------------
@@ -143,27 +82,27 @@ void vtkMRMLFiniteElementMeshQualityDisplayNode::SetUnstructuredGrid(vtkUnstruct
 {
     // assign the filter to add mesh quality scalars to points & cells
     this->SavedMeshQualityFilter->SetInput(grid);
-    //this->SavedMeshQualityFilter->SetHexQualityMeasureToJacobian();
-    this->SavedMeshQualityFilter->SetHexQualityMeasureToEdgeRatio();
-    this->SavedMeshQualityFilter->SaveCellQualityOn(); 
+    this->SavedMeshQualityFilter->SetHexQualityMeasureToJacobian();
+    //this->SavedMeshQualityFilter->SetHexQualityMeasureToEdgeRatio();
+    this->SavedMeshQualityFilter->SaveCellQualityOn();
 
     // shrink the output because the mappers will remove interior detail otherwise
-    
+
     this->SavedShrinkFilter->SetInput(this->SavedMeshQualityFilter->GetOutput());
-    this->SavedShrinkFilter->SetShrinkFactor(this->ShrinkFactor);   
+    this->SavedShrinkFilter->SetShrinkFactor(this->ShrinkFactor);
     this->GeometryFilter->SetInput(this->SavedShrinkFilter->GetOutput());
 
 }
 
 
-  
+
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshQualityDisplayNode::WriteXML(ostream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
-  
-  Superclass::WriteXML(of, nIndent);  
+
+  Superclass::WriteXML(of, nIndent);
   of << " ";
    vtkIndent indent(nIndent);
 //   {
@@ -184,14 +123,14 @@ void vtkMRMLFiniteElementMeshQualityDisplayNode::ReadXMLAttributes(const char** 
   const char* attName;
   const char* attValue;
   //int intAttribute;
-  
-  while (*atts != NULL) 
+
+  while (*atts != NULL)
     {
     attName = *(atts++);
     attValue = *(atts++);
 
 
-    }  
+    }
 }
 
 // declare a rendering pipeline for bblock data in this class
@@ -220,7 +159,7 @@ void vtkMRMLFiniteElementMeshQualityDisplayNode::Copy(vtkMRMLNode *anode)
 void vtkMRMLFiniteElementMeshQualityDisplayNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   //int idx;
-  
+
   Superclass::PrintSelf(os,indent);
   os << indent << "ShrinkFactor:             " << this->ShrinkFactor << "\n";
 }
@@ -228,7 +167,7 @@ void vtkMRMLFiniteElementMeshQualityDisplayNode::PrintSelf(ostream& os, vtkInden
 
 //---------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshQualityDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
-                                           unsigned long event, 
+                                           unsigned long event,
                                            void *callData )
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);

@@ -55,9 +55,9 @@ vtkMRMLNode* vtkMRMLFiniteElementMeshOutlineDisplayNode::CreateNodeInstance()
 
 void vtkMRMLFiniteElementMeshOutlineDisplayNode::UpdatePolyDataPipeline()
 {
-   // set the type of metric to display here and the paramters for coloring, etc. 
+   // set the type of metric to display here and the paramters for coloring, etc.
    //this->ShrinkFactor = whatever-was-in-the-GUI
-   //this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor); 
+   //this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
 }
 
 //----------------------------------------------------------------------------
@@ -67,10 +67,10 @@ vtkMRMLFiniteElementMeshOutlineDisplayNode::vtkMRMLFiniteElementMeshOutlineDispl
   //vtkMeshQualityExtended* this->SavedMeshQualityFilter = vtkMeshQualityExtended::New();
   this->SavedShrinkFilter = vtkShrinkFilter::New();
   this->ShrinkFactor = 0.80;
-  
+
   this->FeatureEdges = vtkFeatureEdges::New();
   this->TubeFilter = vtkTubeFilter::New();
-  
+
 }
 
 
@@ -86,45 +86,46 @@ vtkMRMLFiniteElementMeshOutlineDisplayNode::~vtkMRMLFiniteElementMeshOutlineDisp
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshOutlineDisplayNode::SetUnstructuredGrid(vtkUnstructuredGrid *grid)
 {
+
     // assign the filter to add mesh quality scalars to points & cells
     this->SavedMeshQualityFilter->SetInput(grid);
     //this->SavedMeshQualityFilter->SetHexQualityMeasureToJacobian();
     this->SavedMeshQualityFilter->SetHexQualityMeasureToEdgeRatio();
-    this->SavedMeshQualityFilter->SaveCellQualityOn(); 
+    this->SavedMeshQualityFilter->SaveCellQualityOn();
 
     // shrink the output because the mappers will remove interior detail otherwise
-    
+
     this->SavedShrinkFilter->SetInput(this->SavedMeshQualityFilter->GetOutput());
-    this->SavedShrinkFilter->SetShrinkFactor(this->ShrinkFactor);  
-    
-    // *** instead of using shrink output, use the original grid to avoid 
+    this->SavedShrinkFilter->SetShrinkFactor(this->ShrinkFactor);
+
+    // *** instead of using shrink output, use the original grid to avoid
     // getting all internal nodes
     //this->GeometryFilter->SetInput(this->SavedShrinkFilter->GetOutput());
     this->GeometryFilter->SetInput(grid);
-   
+
     this->FeatureEdges = vtkFeatureEdges::New();
     this->FeatureEdges->SetInput( this->GeometryFilter->GetOutput() );
     this->FeatureEdges->BoundaryEdgesOn();
     this->FeatureEdges->ManifoldEdgesOn();
     this->FeatureEdges->FeatureEdgesOff();
     this->FeatureEdges->ColoringOff();
-       
+
     this->TubeFilter = vtkTubeFilter::New();
     this->TubeFilter->SetInputConnection(this->FeatureEdges->GetOutputPort());
-    this->TubeFilter->SetRadius(0.03);
-          
+    this->TubeFilter->SetRadius(0.06);
+
 
 }
 
 
-  
+
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshOutlineDisplayNode::WriteXML(ostream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
-  
-  Superclass::WriteXML(of, nIndent);  
+
+  Superclass::WriteXML(of, nIndent);
   of << " ";
    vtkIndent indent(nIndent);
 //   {
@@ -145,14 +146,14 @@ void vtkMRMLFiniteElementMeshOutlineDisplayNode::ReadXMLAttributes(const char** 
   const char* attName;
   const char* attValue;
   //int intAttribute;
-  
-  while (*atts != NULL) 
+
+  while (*atts != NULL)
     {
     attName = *(atts++);
     attValue = *(atts++);
 
 
-    }  
+    }
 }
 
 // declare a rendering pipeline for bblock data in this class
@@ -181,7 +182,7 @@ void vtkMRMLFiniteElementMeshOutlineDisplayNode::Copy(vtkMRMLNode *anode)
 void vtkMRMLFiniteElementMeshOutlineDisplayNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   //int idx;
-  
+
   Superclass::PrintSelf(os,indent);
   os << indent << "ShrinkFactor:             " << this->ShrinkFactor << "\n";
 }
@@ -189,7 +190,7 @@ void vtkMRMLFiniteElementMeshOutlineDisplayNode::PrintSelf(ostream& os, vtkInden
 
 //---------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshOutlineDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
-                                           unsigned long event, 
+                                           unsigned long event,
                                            void *callData )
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);

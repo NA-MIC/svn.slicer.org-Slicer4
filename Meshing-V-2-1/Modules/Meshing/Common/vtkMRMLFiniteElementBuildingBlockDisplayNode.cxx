@@ -69,7 +69,7 @@ vtkPolyData* vtkMRMLFiniteElementBuildingBlockDisplayNode::GetPolyData()
   this->FeatureEdges->ManifoldEdgesOn();
   this->FeatureEdges->FeatureEdgesOff();
   this->OutlineTube->SetInput(this->FeatureEdges->GetOutput());
-  this->OutlineTube->SetRadius(0.03);
+  this->OutlineTube->SetRadius(0.035);
   return this->OutlineTube->GetOutput();
 }
 

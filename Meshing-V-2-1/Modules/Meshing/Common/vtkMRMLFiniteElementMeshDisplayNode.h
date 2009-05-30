@@ -13,9 +13,9 @@
   =========================================================================auto=*/
 // .NAME vtkMRMLUnstructuredGridDisplayNode - MRML node to represent display properties for tractography.
 // .SECTION Description
-// vtkMRMLUnstructuredGridDisplayNode nodes store display properties of trajectories 
-// from tractography in diffusion MRI data, including color type (by bundle, by fiber, 
-// or by scalar invariants), display on/off for tensor glyphs and display of 
+// vtkMRMLUnstructuredGridDisplayNode nodes store display properties of trajectories
+// from tractography in diffusion MRI data, including color type (by bundle, by fiber,
+// or by scalar invariants), display on/off for tensor glyphs and display of
 // trajectory as a line or tube.
 //
 
@@ -27,6 +27,7 @@
 #include "vtkUnstructuredGrid.h"
 #include "vtkShrinkPolyData.h"
 #include "vtkGeometryFilter.h"
+#include "vtkPlane.h"
 
 #include "vtkMRML.h"
 #include "vtkMRMLModelDisplayNode.h"
@@ -34,9 +35,8 @@
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
 #include "vtkMimxCommonWin32Header.h"
 
-//class vtkMeshQualityExtended; 
-class vtkMeshQuality; 
-class vtkShrinkFilter;
+#include "vtkMimxMeshQualityRendering.h"
+
 
 class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
 {
@@ -44,7 +44,7 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRML
   static vtkMRMLFiniteElementMeshDisplayNode *New (  );
   vtkTypeMacro ( vtkMRMLFiniteElementMeshDisplayNode,vtkMRMLUnstructuredGridDisplayNode );
   void PrintSelf ( ostream& os, vtkIndent indent );
-  
+
   //--------------------------------------------------------------------------
   // MRMLNode methods
   //--------------------------------------------------------------------------
@@ -63,48 +63,45 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRML
   // Description:
   // Copy the node's attributes to this object
   virtual void Copy ( vtkMRMLNode *node );
-  
+
   // Description:
   // Get node XML tag name (like Volume, UnstructuredGrid)
-  virtual const char* GetNodeTagName ( ) {return "FiniteElementBoundingBoxDisplay";};
+  virtual const char* GetNodeTagName ( ) {return "FiniteElementMeshDisplay";};
 
   // Description:
   // alternative method to propagate events generated in Display nodes
-  virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
-                                   unsigned long /*event*/, 
+  virtual void ProcessMRMLEvents ( vtkObject * /*caller*/,
+                                   unsigned long /*event*/,
                                    void * /*callData*/ );
- 
+
    // overload the virtual placeholder in the parent class.  This one will setup
    // the beginning of the actual pipeline for rendering an FE Mesh instead
    virtual void SetUnstructuredGrid(vtkUnstructuredGrid *grid);
- 
+
+   //--------------------------------------------------------------------------
+   // Display Information: Geometry to display (not mutually exclusive)
+   //--------------------------------------------------------------------------
+
+
    // declare a rendering pipeline for bblock data in this class
    virtual vtkPolyData* GetPolyData();
-     
-    
+
   // Description:
   // Update the pipeline based on this node attributes
   virtual void UpdatePolyDataPipeline();
- 
-  //--------------------------------------------------------------------------
-  // Display Information: Geometry to display (not mutually exclusive)
-  //--------------------------------------------------------------------------
 
-  // Description:
- 
-   //vtkMeshQualityExtended *SavedMeshQualityFilter; 
-   vtkMeshQuality *SavedMeshQualityFilter; 
-   vtkShrinkFilter *SavedShrinkFilter;
-  
+ // define the cutting plane to be used by the display
+ void SetCuttingPlane(vtkPlane *plane);
+
  protected:
      vtkMRMLFiniteElementMeshDisplayNode ( );
   ~vtkMRMLFiniteElementMeshDisplayNode ( );
   vtkMRMLFiniteElementMeshDisplayNode ( const vtkMRMLFiniteElementMeshDisplayNode& );
   void operator= ( const vtkMRMLFiniteElementMeshDisplayNode& );
 
- 
-
-  // dispaly pipeline components declared here
+  // display pipeline components declared here
+  vtkMimxMeshQualityRendering* SavedMeshQualityRendering;
+  vtkPlane* SavedCuttingPlane;
 
 };
 
