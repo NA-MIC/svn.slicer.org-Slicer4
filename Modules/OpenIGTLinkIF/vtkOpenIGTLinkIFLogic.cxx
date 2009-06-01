@@ -101,11 +101,11 @@ vtkOpenIGTLinkIFLogic::vtkOpenIGTLinkIFLogic()
 
   // register default data types
   this->LinearTransformConverter = vtkIGTLToMRMLLinearTransform::New();
-  this->ImageConverter           = vtkIGTLToMRMLImage::New();
-  this->PositionConverter        = vtkIGTLToMRMLPosition::New();
+  //this->ImageConverter           = vtkIGTLToMRMLImage::New();
+  //this->PositionConverter        = vtkIGTLToMRMLPosition::New();
   RegisterMessageConverter(this->LinearTransformConverter);
-  RegisterMessageConverter(this->ImageConverter);
-  RegisterMessageConverter(this->PositionConverter);
+  //RegisterMessageConverter(this->ImageConverter);
+  //RegisterMessageConverter(this->PositionConverter);
 
 }
 
@@ -540,7 +540,7 @@ void vtkOpenIGTLinkIFLogic::ImportFromCircularBuffers()
               }
             }
           (*iter)->IGTLToMRML(buffer, node);
-          node->Modified();
+          //node->Modified();
           //int devID = cmiter->second->GetDeviceID(buffer->GetDeviceName(), (*iter)->GetIGTLName());
           //if (devID >= 0)
           //  {

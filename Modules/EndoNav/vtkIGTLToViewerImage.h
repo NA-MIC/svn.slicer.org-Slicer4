@@ -20,8 +20,10 @@
 #include "vtkMRMLNode.h"
 #include "vtkIGTLToMRMLBase.h"
 #include "vtkImageData.h"
+#include "vtkImageViewer.h"
 
 #include "vtkSlicerSliceViewer.h"
+#include "vtkSlicerSliceGUI.h"
 
 #include "igtlTransformMessage.h"
 
@@ -50,11 +52,18 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerImage : public vtkIGTLToMRMLBase
   vtkGetObjectMacro( SliceViewer, vtkSlicerSliceViewer);
   vtkSetObjectMacro( SliceViewer, vtkSlicerSliceViewer);
 
- protected:
+  vtkGetObjectMacro( ImageViewer, vtkImageViewer);
+  vtkSetObjectMacro( ImageViewer, vtkImageViewer);
+
+  vtkGetObjectMacro( SliceGUI, vtkSlicerSliceGUI);
+  vtkSetObjectMacro( SliceGUI, vtkSlicerSliceGUI);
+
+protected:
   vtkIGTLToViewerImage();
   ~vtkIGTLToViewerImage();
 
   void CenterImage(vtkMRMLVolumeNode *volumeNode);
+  void FitImage();
 
  protected:
   //BTX
@@ -62,8 +71,11 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerImage : public vtkIGTLToMRMLBase
   //ETX
   
   vtkSlicerSliceViewer *SliceViewer;
+  vtkImageViewer* ImageViewer;
+  vtkSlicerSliceGUI *SliceGUI;
 
   vtkImageData* ImageData;
+
 
   int NodeCreated;
 

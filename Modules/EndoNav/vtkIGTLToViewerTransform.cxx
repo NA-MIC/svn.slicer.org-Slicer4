@@ -16,6 +16,7 @@
 
 #include "vtkObjectFactory.h"
 #include "vtkIGTLToViewerTransform.h"
+#include "vtkProp3D.h"
 
 #include "vtkMRMLLinearTransformNode.h"
 #include "igtlTransformMessage.h"
@@ -27,6 +28,8 @@ vtkCxxRevisionMacro(vtkIGTLToViewerTransform, "$Revision: 9387 $");
 //---------------------------------------------------------------------------
 vtkIGTLToViewerTransform::vtkIGTLToViewerTransform()
 {
+  this->Viewer = NULL;
+  this->NodeCreated = 0;
 }
 
 
@@ -45,7 +48,23 @@ void vtkIGTLToViewerTransform::PrintSelf(ostream& os, vtkIndent indent)
 //---------------------------------------------------------------------------
 vtkMRMLNode* vtkIGTLToViewerTransform::CreateNewNode(vtkMRMLScene* scene, const char* name)
 {
-  return NULL;
+  vtkMRMLLinearTransformNode* transformNode;
+
+  transformNode = vtkMRMLLinearTransformNode::New();
+  transformNode->SetName(name);
+  transformNode->SetDescription("Received by EndoNav");
+
+  vtkMatrix4x4* transform = vtkMatrix4x4::New();
+  transform->Identity();
+  //transformNode->SetAndObserveImageData(transform);
+  transformNode->ApplyTransform(transform);
+  transform->Delete();
+
+  scene->AddNode(transformNode);  
+
+  this->NodeCreated = 1;
+
+  return transformNode;
 }
 
 
@@ -73,6 +92,14 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
     return 0;
     }
 
+  if (node == NULL)
+    {
+    return 0;
+    }
+
+  vtkMRMLLinearTransformNode* transformNode = 
+    vtkMRMLLinearTransformNode::SafeDownCast(node);
+
   igtl::Matrix4x4 matrix;
   transMsg->GetMatrix(matrix);
 
@@ -97,6 +124,7 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
   
   // set volume orientation
   vtkMatrix4x4* transform = vtkMatrix4x4::New();
+  vtkMatrix4x4* transformToParent = transformNode->GetMatrixTransformToParent();
 
   transform->Identity();
   transform->SetElement(0, 0, tx);
@@ -115,6 +143,39 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
   transform->SetElement(1, 3, py);
   transform->SetElement(2, 3, pz);
 
+  if (this->NodeCreated)
+    {
+    transformToParent->DeepCopy(transform);
+    this->LocatorID = this->GetLocatorActorID(transformNode->GetScene());
+    }
+  else
+    {
+    if (this->LocatorID == "")
+      {
+      this->LocatorID = this->GetLocatorActorID(transformNode->GetScene());
+      }
+    if (std::string(transformNode->GetName()) == std::string("EnodNavSensor"))
+      {
+      transformNode->DisableModifiedEventOn();
+      transformNode->SetAndObserveMatrixTransformToParent(NULL);
+
+      if ( this->Viewer)
+        {
+        vtkProp3D *prop = this->Viewer->GetActorByID(this->LocatorID.c_str());
+        if (prop)
+          {
+          prop->SetUserMatrix(transform);
+          this->Viewer->GetMainViewer()->Render();
+          }
+        }
+
+      transformNode->SetAndObserveMatrixTransformToParent(transform);
+
+      transformNode->DisableModifiedEventOff();
+      }
+
+    }
+
   //std::cerr << "IGTL matrix = " << std::endl;
   //transform->Print(cerr);
   //std::cerr << "MRML matrix = " << std::endl;
@@ -122,8 +183,9 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
 
   transform->Delete();
 
-  return 1;
+  this->NodeCreated = 0;
 
+  return 1;
 }
 
 
@@ -135,3 +197,28 @@ int vtkIGTLToViewerTransform::MRMLToIGTL(unsigned long event, vtkMRMLNode* mrmlN
 
 }
 
+//---------------------------------------------------------------------------
+std::string vtkIGTLToViewerTransform::GetLocatorActorID(vtkMRMLScene*  scene)
+{
+  std::string locatorID = "";
+  vtkMRMLModelNode*   locatorModel = NULL;
+  vtkMRMLDisplayNode* locatorDisp = NULL;
+
+  vtkCollection* collection = scene->GetNodesByName("IGTLLocator");
+
+  if (collection != NULL && collection->GetNumberOfItems() == 1)
+    {
+    locatorModel = vtkMRMLModelNode::SafeDownCast(collection->GetItemAsObject(0));
+    }
+
+  if (locatorModel)
+    {
+    locatorDisp = locatorModel->GetDisplayNode();
+    if (locatorDisp)
+      {
+      locatorID = locatorDisp->GetID();
+      }
+    }
+  return locatorID;
+
+}

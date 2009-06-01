@@ -20,6 +20,7 @@
 #include "vtkSlicerColorLogic.h"
 
 #include "vtkImageData.h"
+#include "vtkRenderer.h"
 #include "vtkMRMLScalarVolumeNode.h"
 #include "igtlImageMessage.h"
 
@@ -31,8 +32,15 @@ vtkCxxRevisionMacro(vtkIGTLToViewerImage, "$Revision: 9377 $");
 vtkIGTLToViewerImage::vtkIGTLToViewerImage()
 {
   this->SliceViewer = NULL;
+  this->SliceGUI = NULL;
   this->ImageData = NULL;
   this->NodeCreated = 0;
+
+  this->ImageViewer = vtkImageViewer::New();
+  this->ImageViewer->SetColorWindow( 256);
+  this->ImageViewer->SetColorLevel (127.5);
+
+
 }
 
 
@@ -42,6 +50,10 @@ vtkIGTLToViewerImage::~vtkIGTLToViewerImage()
   if (this->ImageData)
     {
     this->ImageData->Delete();
+    }
+  if (this->ImageViewer)
+    {
+    this->ImageViewer->Delete();
     }
 }
 
@@ -376,6 +388,19 @@ int vtkIGTLToViewerImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLN
     volumeNode->SetIJKToRASMatrix(rtimgTransform);
     this->CenterImage(volumeNode);
     volumeNode->Modified();
+
+    if ( this->SliceViewer)
+      {
+      this->SliceViewer->SetImageData(this->ImageData);
+      this->FitImage();
+      //this->SliceViewer->GetRenderWidget()->Reset();
+      this->SliceViewer->Render();
+      }
+    else
+      {
+      this->ImageViewer->SetInput(this->ImageData);
+      this->ImageViewer->Render();
+      }
     }
   else
     {
@@ -392,12 +417,19 @@ int vtkIGTLToViewerImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLN
     if ( this->SliceViewer)
       {
       this->SliceViewer->SetImageData(this->ImageData);
+      //this->SliceViewer->GetRenderWidget()->Reset();
+      //this->FitImage();
       this->SliceViewer->Render();
+      }
+    else
+      {
+      this->ImageViewer->SetInput(this->ImageData);
+      this->ImageViewer->Render();
       }
 
     volumeNode->SetAndObserveImageData(this->ImageData);
 
-    volumeNode->DisableModifiedEventOn();
+    volumeNode->DisableModifiedEventOff();
     }
 
   rtimgTransform->Delete();
@@ -453,4 +485,16 @@ void vtkIGTLToViewerImage::CenterImage(vtkMRMLVolumeNode *volumeNode)
         ijkToRAS->Delete();
         }
       }
+}
+
+
+void vtkIGTLToViewerImage::FitImage()
+{
+
+  int *rSize = this->SliceGUI->GetSliceViewer()->GetRenderWidget()->GetRenderer()->GetSize();
+  this->SliceGUI->GetLogic()->FitSliceToAll ( rSize[0], rSize[1] );
+  this->SliceGUI->GetSliceNode()->UpdateMatrices( );
+  this->SliceGUI->GetLogic()->Modified();
+  this->SliceGUI->GetSliceNode()->Modified( );
+  // this->GetApplicationGUI()->GetSlicesControlGUI()->RequestFOVEntriesUpdate();
 }

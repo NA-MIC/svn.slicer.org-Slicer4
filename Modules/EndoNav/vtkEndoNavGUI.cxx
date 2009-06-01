@@ -172,6 +172,7 @@ vtkEndoNavGUI::vtkEndoNavGUI ( )
   this->IOConfigTreeNodeList.clear();
 
   this->ImageConverter = vtkIGTLToViewerImage::New();;
+  this->TransformConverter = vtkIGTLToViewerTransform::New();;
 
 
 }
@@ -357,6 +358,10 @@ vtkEndoNavGUI::~vtkEndoNavGUI ( )
   if (this->ImageConverter)
     {
     this->ImageConverter->Delete();
+    }
+  if (this->TransformConverter)
+    {
+    this->TransformConverter->Delete();
     }
 }
 
@@ -1249,8 +1254,13 @@ void vtkEndoNavGUI::BuildGUI ( )
   UpdateConnectorPropertyFrame(-1);
   UpdateIOConfigTree();
 
-  this->ImageConverter->SetSliceViewer(this->GetApplicationGUI()->GetMainSliceGUI("Red")->GetSliceViewer());
+  //this->ImageConverter->SetSliceViewer(this->GetApplicationGUI()->GetMainSliceGUI("Red")->GetSliceViewer());
+  this->ImageConverter->SetSliceGUI(this->GetApplicationGUI()->GetMainSliceGUI("Red"));
+
+  this->TransformConverter->SetViewer(this->GetApplicationGUI()->GetViewerWidget());
+
   this->Logic->RegisterMessageConverter(this->ImageConverter);
+  this->Logic->RegisterMessageConverter(this->TransformConverter);
 }
 
 

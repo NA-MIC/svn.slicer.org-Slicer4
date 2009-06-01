@@ -68,6 +68,7 @@ subdirs(
    #VolumeRenderingCuda
    ModelIntoLabelVolume
    ExtractSubvolume
+   EndoNav
 #   FastMarchingSegmentation
   )
 

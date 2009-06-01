@@ -19,6 +19,7 @@
 #include "vtkEndoNavWin32Header.h" 
 #include "vtkMRMLNode.h"
 #include "vtkIGTLToMRMLBase.h"
+#include "vtkSlicerViewerWidget.h"
 
 #include "igtlTransformMessage.h"
 
@@ -41,6 +42,8 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
   //ETX
   virtual int          MRMLToIGTL(unsigned long event, vtkMRMLNode* mrmlNode, int* size, void** igtlMsg);
 
+  vtkGetObjectMacro( Viewer, vtkSlicerViewerWidget);
+  vtkSetObjectMacro( Viewer, vtkSlicerViewerWidget);
 
  protected:
   vtkIGTLToViewerTransform();
@@ -49,7 +52,13 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
  protected:
   //BTX
   igtl::TransformMessage::Pointer OutTransformMsg;
+  std::string LocatorID;
+  std::string GetLocatorActorID(vtkMRMLScene*  scene);
   //ETX
+
+  vtkSlicerViewerWidget *Viewer;
+
+  int NodeCreated;
   
 };
 

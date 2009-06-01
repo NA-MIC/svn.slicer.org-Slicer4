@@ -27,6 +27,7 @@
 #include "vtkIGTPat2ImgRegistration.h"
 #include "vtkIGTLToMRMLBase.h"
 #include "vtkIGTLToViewerImage.h"
+#include "vtkIGTLToViewerTransform.h"
 
 #include "vtkCallbackCommand.h"
 #include "vtkSlicerInteractorStyle.h"
@@ -285,7 +286,7 @@ class VTK_ENDONAV_EXPORT vtkEndoNavGUI : public vtkSlicerModuleGUI
 
   vtkEndoNavLogic *Logic;
   vtkIGTLToViewerImage *ImageConverter;
-  vtkIGTLToMRMLBase *TransformConverter;
+  vtkIGTLToViewerTransform *TransformConverter;
 
   vtkIGTDataManager *DataManager;
   vtkIGTPat2ImgRegistration *Pat2ImgReg;

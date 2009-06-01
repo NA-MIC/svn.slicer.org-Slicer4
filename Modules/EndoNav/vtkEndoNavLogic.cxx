@@ -100,10 +100,10 @@ vtkEndoNavLogic::vtkEndoNavLogic()
 
 
   // register default data types
-  this->LinearTransformConverter = vtkIGTLToMRMLLinearTransform::New();
+  //this->LinearTransformConverter = vtkIGTLToMRMLLinearTransform::New();
   //this->ImageConverter           = vtkIGTLToMRMLImage::New();
   //this->PositionConverter        = vtkIGTLToMRMLPosition::New();
-  RegisterMessageConverter(this->LinearTransformConverter);
+  //RegisterMessageConverter(this->LinearTransformConverter);
   //RegisterMessageConverter(this->ImageConverter);
   //RegisterMessageConverter(this->PositionConverter);
 
