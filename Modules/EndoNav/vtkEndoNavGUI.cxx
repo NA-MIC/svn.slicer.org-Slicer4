@@ -171,8 +171,10 @@ vtkEndoNavGUI::vtkEndoNavGUI ( )
   this->IOConfigTreeIOList.clear();
   this->IOConfigTreeNodeList.clear();
 
-  this->ImageConverter = vtkIGTLToViewerImage::New();;
-  this->TransformConverter = vtkIGTLToViewerTransform::New();;
+  this->ImageConverter = NULL;
+  this->TransformConverter = NULL;
+  this->ImageViewerUS = NULL;
+  this->ImageViewerCT = NULL;
 
 
 }
@@ -362,6 +364,14 @@ vtkEndoNavGUI::~vtkEndoNavGUI ( )
   if (this->TransformConverter)
     {
     this->TransformConverter->Delete();
+    }
+  if (this->ImageViewerUS)
+    {
+    this->ImageViewerUS->Delete();
+    }
+  if (this->ImageViewerCT)
+    {
+    this->ImageViewerCT->Delete();
     }
 }
 
@@ -1252,11 +1262,25 @@ void vtkEndoNavGUI::BuildGUI ( )
   BuildGUIForVisualizationControlFrame();
 
   UpdateConnectorPropertyFrame(-1);
-  UpdateIOConfigTree();
+  //UpdateIOConfigTree();
 
-  //this->ImageConverter->SetSliceViewer(this->GetApplicationGUI()->GetMainSliceGUI("Red")->GetSliceViewer());
-  this->ImageConverter->SetSliceGUI(this->GetApplicationGUI()->GetMainSliceGUI("Red"));
+  this->ImageViewerUS = vtkImageViewer::New();
+  this->ImageViewerUS->SetColorWindow( 256);
+  this->ImageViewerUS->SetColorLevel (127.5);
 
+  this->ImageViewerCT = vtkImageViewer::New();
+  this->ImageViewerCT->SetColorWindow( 256);
+  this->ImageViewerCT->SetColorLevel (127.5);
+
+
+  this->ImageConverter = vtkIGTLToViewerImage::New();
+  this->ImageConverter->SetImageViewerUS(this->ImageViewerUS);
+
+ //this->ImageConverter->SetSliceViewer(this->GetApplicationGUI()->GetMainSliceGUI("Red")->GetSliceViewer());
+  //this->ImageConverter->SetSliceGUI(this->GetApplicationGUI()->GetMainSliceGUI("Red"));
+
+  this->TransformConverter = vtkIGTLToViewerTransform::New();
+  this->TransformConverter->SetImageViewerCT(this->ImageViewerCT);
   this->TransformConverter->SetViewer(this->GetApplicationGUI()->GetViewerWidget());
 
   this->Logic->RegisterMessageConverter(this->ImageConverter);
@@ -1274,12 +1298,10 @@ void vtkEndoNavGUI::BuildGUIForHelpFrame ()
   // Define your help text here.
   const char *help = 
     "**The EndoNav Interface Module** helps you to manage EndoNav connections:"
-    "EndoNav is an open network protocol for communication among software / hardware "
-    "for image-guided therapy. See "
     "<a>http://www.slicer.org/slicerWiki/index.php/Modules:EndoNav</a> for details.";
   const char *about =
-    "The module is designed and implemented by Junichi Tokuda for Brigham and Women's Hospital."
-    "This work is supported by NCIGT, NA-MIC and BRP \"Enabling Technologies for MRI-Guided Prostate Intervention\" project.";
+    "The module is designed and implemented by Alex Yarmarkovich (ISOMIC)."
+    "It is partially based on OpernIGTLink IF Slicer3 module.";
 
   vtkKWWidget *page = this->UIPanel->GetPageWidget ( "EndoNav" );
   this->BuildHelpAndAboutFrame (page, help, about);
@@ -1523,11 +1545,13 @@ void vtkEndoNavGUI::BuildGUIForConnectorBrowserFrame ()
   this->SleepTimeEntry->SetParent(waitFrame);
   this->SleepTimeEntry->SetRestrictValueToInteger();
   this->SleepTimeEntry->Create();
-  this->SleepTimeEntry->SetValueAsInt(100);
+  this->SleepTimeEntry->SetValueAsInt(1);
   this->SleepTimeEntry->SetWidth(8);
 
   app->Script("pack %s %s -side left -anchor w -fill x -padx 2 -pady 2", 
               waitLabel->GetWidgetName() , this->SleepTimeEntry->GetWidgetName());
+
+  controlFrame->ExpandFrame();
 
   waitFrame->Delete();
   waitLabel->Delete();
@@ -1548,8 +1572,8 @@ void vtkEndoNavGUI::BuildGUIForIOConfig()
   ioConfigFrame->Create();
   ioConfigFrame->SetLabelText("Data I/O Configurations");
   ioConfigFrame->CollapseFrame();
-  app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
-               ioConfigFrame->GetWidgetName(), page->GetWidgetName());
+  //app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
+  //             ioConfigFrame->GetWidgetName(), page->GetWidgetName());
 
   ioConfigFrame->Delete();
 
@@ -1682,8 +1706,8 @@ void vtkEndoNavGUI::BuildGUIForVisualizationControlFrame ()
   driverFrame->SetParent(visCtrlFrame->GetFrame());
   driverFrame->Create();
   driverFrame->SetLabelText ("Driver");
-  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
-               driverFrame->GetWidgetName());
+  //this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2",
+  //             driverFrame->GetWidgetName());
   
   // Source frame
   vtkKWFrame *imageSourceFrame = vtkKWFrame::New();
@@ -1793,12 +1817,15 @@ void vtkEndoNavGUI::BuildGUIForVisualizationControlFrame ()
   this->ObliqueCheckButton->Create();
   this->ObliqueCheckButton->SelectedStateOff();
   this->ObliqueCheckButton->SetText("Orient");
-
+/**
   this->Script("pack %s %s %s %s -side left -anchor w -padx 2 -pady 2", 
                this->SetLocatorModeButton->GetWidgetName(),
                this->SetUserModeButton->GetWidgetName(),
                this->FreezeImageCheckButton->GetWidgetName(),
                this->ObliqueCheckButton->GetWidgetName());
+**/
+
+  visCtrlFrame->ExpandFrame();
 
   nodeLabel->Delete();
   nodeFrame->Delete();

@@ -30,6 +30,8 @@ vtkIGTLToViewerTransform::vtkIGTLToViewerTransform()
 {
   this->Viewer = NULL;
   this->NodeCreated = 0;
+  this->ImageViewerCT = NULL;
+
 }
 
 

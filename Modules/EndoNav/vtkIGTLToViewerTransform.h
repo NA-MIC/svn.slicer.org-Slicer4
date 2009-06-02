@@ -21,6 +21,8 @@
 #include "vtkIGTLToMRMLBase.h"
 #include "vtkSlicerViewerWidget.h"
 
+#include "vtkImageViewer.h"
+
 #include "igtlTransformMessage.h"
 
 class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
@@ -45,9 +47,14 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
   vtkGetObjectMacro( Viewer, vtkSlicerViewerWidget);
   vtkSetObjectMacro( Viewer, vtkSlicerViewerWidget);
 
+  vtkGetObjectMacro( ImageViewerCT, vtkImageViewer);
+  vtkSetObjectMacro( ImageViewerCT, vtkImageViewer);
+
  protected:
   vtkIGTLToViewerTransform();
   ~vtkIGTLToViewerTransform();
+
+  vtkImageViewer* ImageViewerCT;
 
  protected:
   //BTX

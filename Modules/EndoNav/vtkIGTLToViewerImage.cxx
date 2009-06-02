@@ -35,11 +35,7 @@ vtkIGTLToViewerImage::vtkIGTLToViewerImage()
   this->SliceGUI = NULL;
   this->ImageData = NULL;
   this->NodeCreated = 0;
-
-  this->ImageViewer = vtkImageViewer::New();
-  this->ImageViewer->SetColorWindow( 256);
-  this->ImageViewer->SetColorLevel (127.5);
-
+  this->ImageViewerUS = NULL;
 
 }
 
@@ -50,10 +46,6 @@ vtkIGTLToViewerImage::~vtkIGTLToViewerImage()
   if (this->ImageData)
     {
     this->ImageData->Delete();
-    }
-  if (this->ImageViewer)
-    {
-    this->ImageViewer->Delete();
     }
 }
 
@@ -343,9 +335,14 @@ int vtkIGTLToViewerImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLN
   // definitions of image origin between VTK (Slicer) and EndoNav;
   // EndoNav image has its origin at the center, while VTK image
   // has one at the corner.
-  float hfovi = psi * (size[0]-1) / 2.0;
-  float hfovj = psj * (size[1]-1) / 2.0;
-  float hfovk = psk * (size[2]-1) / 2.0;
+
+  //float hfovi = psi * (size[0]-1) / 2.0;
+  //float hfovj = psj * (size[1]-1) / 2.0;
+  //float hfovk = psk * (size[2]-1) / 2.0;
+  float hfovi = spacing[0] * psi * (size[0]-1) / 2.0;
+  float hfovj = spacing[1] * psj * (size[1]-1) / 2.0;
+  float hfovk = spacing[2] * psk * (size[2]-1) / 2.0;
+
   //float hfovk = 0;
 
   float cx = ntx * hfovi + nsx * hfovj + nnx * hfovk;
@@ -398,8 +395,8 @@ int vtkIGTLToViewerImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLN
       }
     else
       {
-      this->ImageViewer->SetInput(this->ImageData);
-      this->ImageViewer->Render();
+      this->ImageViewerUS->SetInput(this->ImageData);
+      this->ImageViewerUS->Render();
       }
     }
   else
@@ -423,8 +420,8 @@ int vtkIGTLToViewerImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLN
       }
     else
       {
-      this->ImageViewer->SetInput(this->ImageData);
-      this->ImageViewer->Render();
+      this->ImageViewerUS->SetInput(this->ImageData);
+      this->ImageViewerUS->Render();
       }
 
     volumeNode->SetAndObserveImageData(this->ImageData);

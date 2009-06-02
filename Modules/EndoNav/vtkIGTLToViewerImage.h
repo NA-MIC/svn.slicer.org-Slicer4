@@ -52,8 +52,8 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerImage : public vtkIGTLToMRMLBase
   vtkGetObjectMacro( SliceViewer, vtkSlicerSliceViewer);
   vtkSetObjectMacro( SliceViewer, vtkSlicerSliceViewer);
 
-  vtkGetObjectMacro( ImageViewer, vtkImageViewer);
-  vtkSetObjectMacro( ImageViewer, vtkImageViewer);
+  vtkGetObjectMacro( ImageViewerUS, vtkImageViewer);
+  vtkSetObjectMacro( ImageViewerUS, vtkImageViewer);
 
   vtkGetObjectMacro( SliceGUI, vtkSlicerSliceGUI);
   vtkSetObjectMacro( SliceGUI, vtkSlicerSliceGUI);
@@ -69,9 +69,10 @@ protected:
   //BTX
   igtl::TransformMessage::Pointer OutTransformMsg;
   //ETX
+
+  vtkImageViewer* ImageViewerUS;
   
   vtkSlicerSliceViewer *SliceViewer;
-  vtkImageViewer* ImageViewer;
   vtkSlicerSliceGUI *SliceGUI;
 
   vtkImageData* ImageData;

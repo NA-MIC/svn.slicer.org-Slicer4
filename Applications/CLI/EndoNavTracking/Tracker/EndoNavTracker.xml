@@ -164,7 +164,7 @@
       <longflag>--fps</longflag>
       <description>requency (fps) to send coordinates and image</description>
       <label>Send Frequency (fps)</label>
-      <default>20</default>
+      <default>40</default>
     </integer>
 
   </parameters>  

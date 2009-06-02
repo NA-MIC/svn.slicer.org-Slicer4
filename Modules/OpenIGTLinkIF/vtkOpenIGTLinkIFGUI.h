@@ -25,9 +25,6 @@
 
 #include "vtkIGTDataManager.h"
 #include "vtkIGTPat2ImgRegistration.h"
-#include "vtkIGTLToMRMLBase.h"
-#include "vtkIGTLToViewerImage.h"
-
 #include "vtkCallbackCommand.h"
 #include "vtkSlicerInteractorStyle.h"
 
@@ -141,9 +138,6 @@ class VTK_OPENIGTLINKIF_EXPORT vtkOpenIGTLinkIFGUI : public vtkSlicerModuleGUI
   vtkGetObjectMacro ( FiducialListNode, vtkMRMLFiducialListNode );
   vtkSetObjectMacro ( FiducialListNode, vtkMRMLFiducialListNode );
 
-  vtkGetMacro ( TimerInterval, int );
-  vtkSetMacro ( TimerInterval, int );
-
   //----------------------------------------------------------------
   // Event handlers
   //----------------------------------------------------------------
@@ -249,7 +243,6 @@ class VTK_OPENIGTLINKIF_EXPORT vtkOpenIGTLinkIFGUI : public vtkSlicerModuleGUI
   vtkKWCheckButton*    ConnectorStatusCheckButton;
   vtkKWEntry*          ConnectorAddressEntry;
   vtkKWEntry*          ConnectorPortEntry;
-  vtkKWEntry*          SleepTimeEntry;
 
   //----------------------------------------------------------------
   // Data I/O Configuration frame
@@ -284,8 +277,6 @@ class VTK_OPENIGTLINKIF_EXPORT vtkOpenIGTLinkIFGUI : public vtkSlicerModuleGUI
   //----------------------------------------------------------------
 
   vtkOpenIGTLinkIFLogic *Logic;
-  vtkIGTLToViewerImage *ImageConverter;
-  vtkIGTLToMRMLBase *TransformConverter;
 
   vtkIGTDataManager *DataManager;
   vtkIGTPat2ImgRegistration *Pat2ImgReg;

@@ -31,6 +31,7 @@
 
 #include "vtkCallbackCommand.h"
 #include "vtkSlicerInteractorStyle.h"
+#include "vtkImageViewer.h"
 
 #include <string>
 #include <vector>
@@ -161,6 +162,12 @@ class VTK_ENDONAV_EXPORT vtkEndoNavGUI : public vtkSlicerModuleGUI
   void BuildGUIForDeviceFrame();
   void BuildGUIForVisualizationControlFrame();
   
+  vtkGetObjectMacro( ImageViewerUS, vtkImageViewer);
+  vtkSetObjectMacro( ImageViewerUS, vtkImageViewer);
+
+  vtkGetObjectMacro( ImageViewerCT, vtkImageViewer);
+  vtkSetObjectMacro( ImageViewerCT, vtkImageViewer);
+
   //----------------------------------------------------------------
   // Event handlers
   //----------------------------------------------------------------
@@ -204,6 +211,10 @@ class VTK_ENDONAV_EXPORT vtkEndoNavGUI : public vtkSlicerModuleGUI
  protected:
   vtkEndoNavGUI ( );
   virtual ~vtkEndoNavGUI ( );
+
+  vtkImageViewer* ImageViewerUS;
+  vtkImageViewer* ImageViewerCT;
+
 
   //----------------------------------------------------------------
   // Operators
