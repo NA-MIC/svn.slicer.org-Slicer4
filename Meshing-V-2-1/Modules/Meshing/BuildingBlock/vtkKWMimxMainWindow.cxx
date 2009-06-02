@@ -184,7 +184,12 @@ vtkKWMimxMainWindow::~vtkKWMimxMainWindow()
   if (this->PVAxesActor)
     this->PVAxesActor->Delete();
   if (this->CallbackCommand)
-    this->CallbackCommand->Delete();
+  {
+          // remove the callback that controls the orientation axis.  It causes segfault on stop of Slicer
+         //  this->RenderWidget->GetRenderer()->RemoveObserver(this->CallbackCommand);    // removed to fix bug where axis stopped moving after user left IA-FEMesh module
+            this->CallbackCommand->Delete();
+  }
+
   if (this->ErrorCallback)
     this->ErrorCallback->Delete();
   // Is this needed now???
@@ -224,6 +229,7 @@ vtkKWMimxMainWindow::~vtkKWMimxMainWindow()
     this->FontSizeButtons->Delete();
   if (this->FontFamilyButtons)
     this->FontFamilyButtons->Delete();
+
 }
 
 
@@ -242,7 +248,7 @@ void vtkKWMimxMainWindow::AddOrientationAxis()
          this->CallbackCommand = vtkCallbackCommand::New();
          this->CallbackCommand->SetCallback(updateAxis);
          this->CallbackCommand->SetClientData(this);
-         this->RenderWidget->GetRenderer()->AddObserver(vtkCommand::AnyEvent,this->CallbackCommand);
+
          }
        this->AxesRenderer->InteractiveOff();
        this->RenderWidget->GetRenderWindow()->SetNumberOfLayers(2);
@@ -251,6 +257,7 @@ void vtkKWMimxMainWindow::AddOrientationAxis()
        this->AxesRenderer->SetViewport(0.0,0.0,0.25,0.25);
        this->AxesRenderer->AddActor(this->PVAxesActor);
        this->RenderWidget->GetRenderWindow()->AddRenderer(this->AxesRenderer);
+       this->RenderWidget->GetRenderer()->AddObserver(vtkCommand::AnyEvent,this->CallbackCommand);
        this->RenderWidget->Render();
    }
 }
@@ -265,7 +272,7 @@ void vtkKWMimxMainWindow::RemoveOrientationAxis()
        this->AxesRenderer->InteractiveOff();
        this->RenderWidget->GetRenderer()->SetLayer(0);
        this->AxesRenderer->SetLayer(1);
-      //this->RenderWidget->GetRenderer()->RemoveObserver(this->CallbackCommand);    // removed to fix bug where axis stopped moving after user left IA-FEMesh module
+      this->RenderWidget->GetRenderer()->RemoveObserver(this->CallbackCommand);
        this->RenderWidget->GetRenderWindow()->RemoveRenderer(this->AxesRenderer);
        this->RenderWidget->Render();
 

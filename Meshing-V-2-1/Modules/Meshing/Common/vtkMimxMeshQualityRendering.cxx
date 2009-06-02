@@ -477,6 +477,7 @@ void vtkMimxMeshQualityRendering::FindMinimumAndMaximumQualityForMesh(vtkUnstruc
    // initialize to values that will be overwritten
    *minQualityFound = 9.9e10;
    *maxQualityFound = -9.9e10;
+   int thisID;
 
   // clear out the interesting cell list
    this->SavedCellList->Reset();
@@ -484,7 +485,7 @@ void vtkMimxMeshQualityRendering::FindMinimumAndMaximumQualityForMesh(vtkUnstruc
   // go through the cell data and record the smallest and largest values found
   // so we can use these values to autoscale the colors
   long numCells = ((mesh->GetCellData())->GetArray("Quality"))->GetNumberOfTuples();
- cout << "QualityRender: examining " << numCells << " cells" << endl;
+  // cout << "QualityRender: examining " << numCells << " cells" << endl;
 
   // if there is a canvas, be sure to clear it for display
   if (this->ReportingCanvas != NULL)
@@ -509,10 +510,15 @@ void vtkMimxMeshQualityRendering::FindMinimumAndMaximumQualityForMesh(vtkUnstruc
 
       //cout << "element ID: " << i << " has quality: " << thisQ << endl;
 
-        // *** changed for initial integration
-      // pull the element ID out of the field data, because we can't depend on the loop index
-     // int thisID = ((vtkIntArray*)mesh->GetCellData()->GetArray("ELEMENT_ID"))->GetValue(i);
-        int thisID = i;
+
+      // pull the element ID out of the field data, because we can't depend on the loop index. Added test
+      // for array existence because this pipeline is called with a zero element mesh once during initialization
+      // and this case caused a crash during that situation.
+
+//        if (numCells >0 && mesh->GetCellData()->HasArray("ELEMENT_ID"))
+//                  thisID = ((vtkIntArray*)mesh->GetCellData()->GetArray("ELEMENT_ID"))->GetValue(i);
+//       else
+                    thisID = i;
 
       // to support dynamic resolution changes, a level of indirection
       // is needed, where the format string has to be created first
@@ -785,19 +791,34 @@ void vtkMimxMeshQualityRendering::CreateProcessedMesh(void)
 
         // the first time through, create the filter.  Afterwards, use the same filter
 
-        if (!this->IsInitialized) {
-            this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
-            this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
-            this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
-            vtkMeshQualityExtended* qual = vtkMeshQualityExtended::New();
-                this->VTKQualityFilterPtr = qual;
-        }
-        else {
-            this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
-            this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
-        }
+//        if (!this->IsInitialized) {
+//            this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
+//            this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
+//            this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
+//            vtkMeshQualityExtended* qual = vtkMeshQualityExtended::New();
+//                this->VTKQualityFilterPtr = qual;
+//        }
+//        else {
+//            this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
+//            this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
+//        }
+//
 
-        this->VTKQualityFilterPtr->SetInput((vtkDataSet*)this->InitialMesh);
+        if (!this->IsInitialized) {
+                this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
+                this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
+                this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
+                vtkMeshQualityExtended* qual = vtkMeshQualityExtended::New();
+                    this->VTKQualityFilterPtr = qual;
+            }
+            else {
+                this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
+                this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
+            }
+
+            this->VTKQualityFilterPtr->SetInput((vtkDataSet*)this->InitialMesh);
+
+
 
         //vtkUnstructuredGridWriter *writer = vtkUnstructuredGridWriter::New();
         //writer->SetInput(qual->GetOutput());

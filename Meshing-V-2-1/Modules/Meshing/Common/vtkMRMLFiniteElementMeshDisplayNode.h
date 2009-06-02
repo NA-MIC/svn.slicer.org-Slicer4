@@ -90,8 +90,14 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRML
   // Update the pipeline based on this node attributes
   virtual void UpdatePolyDataPipeline();
 
- // define the cutting plane to be used by the display
+  // The mesh can be "cut" using a cutting plane. The instance of an implicit function (i.e. vtkPlane)
+  // needs to be passed here to control the rendering.  If the cutting plane is enabled, then the value
+  // of this implicit function is checked to determine which nodes are rendered
  void SetCuttingPlane(vtkPlane *plane);
+
+ // The elements inside the mesh can be sized 0.0 to 1.0, which causes them to be rendered at from 0% to
+ // 100% of their native size.  The default is 1.0.
+ void SetElementSize(double shrink);
 
  protected:
      vtkMRMLFiniteElementMeshDisplayNode ( );

@@ -21,6 +21,8 @@ Version:   $Revision: 1.3 $
 #include "vtkDataSetWriter.h"
 #include "vtkShrinkFilter.h"
 
+#include "vtkPlane.h"
+
 #include "vtkMRMLFiniteElementMeshDisplayNode.h"
 #include "vtkMRMLScene.h"
 #include "vtkMimxBoundingBoxSource.h"
@@ -65,6 +67,7 @@ void vtkMRMLFiniteElementMeshDisplayNode::UpdatePolyDataPipeline()
 vtkMRMLFiniteElementMeshDisplayNode::vtkMRMLFiniteElementMeshDisplayNode()
 {
   this->SavedMeshQualityRendering = vtkMimxMeshQualityRendering::New();
+  this->SavedCuttingPlane = NULL;
 }
 
 
@@ -84,7 +87,8 @@ void vtkMRMLFiniteElementMeshDisplayNode::SetUnstructuredGrid(vtkUnstructuredGri
 
     this->SavedMeshQualityRendering->InitializeFromExternalMesh(grid);
    // put in a null plane for now so we can instantiate the pipelines
-    this->SavedCuttingPlane = vtkPlane::New();
+    if (this->SavedCuttingPlane == NULL)
+          this->SavedCuttingPlane = vtkPlane::New();
     this->SavedMeshQualityRendering->SetCuttingPlaneFunction(  this->SavedCuttingPlane);
     this->SavedMeshQualityRendering->SetShowFilledElements(1);
     this->SavedMeshQualityRendering->SetQualityMeasureToJacobian();
@@ -101,6 +105,11 @@ void vtkMRMLFiniteElementMeshDisplayNode::SetCuttingPlane(vtkPlane *plane)
     }
 }
 
+//----------------------------------------------------------------------------
+void vtkMRMLFiniteElementMeshDisplayNode::SetElementSize(double shrink)
+{
+         if (SavedMeshQualityRendering != NULL)   this->SavedMeshQualityRendering->SetElementShrinkFactor(shrink);
+}
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshDisplayNode::WriteXML(ostream& of, int nIndent)
