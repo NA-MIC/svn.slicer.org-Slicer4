@@ -287,6 +287,7 @@ void vtkSlicerModuleChooseGUI::ProcessGUIEvents ( vtkObject *caller,
         gui->ShowModulesWizard();
         }
     }
+
   if ( menu == this->ModulesHistory->GetMenu() && event == vtkKWMenu::MenuItemInvokedEvent )
     {
     // First, get the text (modulename) of the selected module.
@@ -297,7 +298,6 @@ void vtkSlicerModuleChooseGUI::ProcessGUIEvents ( vtkObject *caller,
     // but don't want to trigger extra events by setting it. ignore for now.
     this->SelectModule ( c );
     this->GetModuleNavigator()->AddModuleNameToNavigationList ( c );
-//    this->RaiseModule ( c );
     }
   if ( entry == this->ModulesSearchEntry && event == vtkKWEntry::EntryValueChangedEvent )
     {
@@ -339,14 +339,26 @@ void vtkSlicerModuleChooseGUI::RaiseModule ( const char *moduleName )
           mName = m->GetUIPanel()->GetName();
           if ( !strcmp (moduleName, mName) ) 
            {
-            m->GetUIPanel()->Raise();
-            p->GetMainSlicerWindow()->SetStatusText ( mName );
-            this->GetModulesMenuButton()->SetValue( mName );
-            break;
+           //--- feedback to user
+           std::string statusText = "...raising module ";
+           statusText += mName;
+           statusText += "...";
+           p->GetMainSlicerWindow()->SetStatusText ( statusText.c_str() );
+           this->Script ( "update idletasks");
+
+           //--- raise the panel
+           m->GetUIPanel()->Raise();
+           p->GetMainSlicerWindow()->SetStatusText ( mName );
+           this->GetModulesMenuButton()->SetValue( mName );
+
+           //--- feedback to user
+           p->GetMainSlicerWindow()->SetStatusText ( mName );
+           this->Script ( "update idletasks");
+           break;
            }
           m = vtkSlicerModuleGUI::SafeDownCast( app->GetModuleGUICollection( )->GetNextItemAsObject( ) );
-        } // end while      
-      } // end if ( app != NULL
+        } 
+      } 
     }
 }
 
@@ -397,6 +409,15 @@ void vtkSlicerModuleChooseGUI::SelectModule ( const char *moduleName, vtkMRMLNod
           vtkSlicerModuleGUI *currentModule = app->GetModuleGUIByName( currentModuleName );
           if (currentModule != NULL )
             {
+            //--- user feedback
+            if ( this->GetApplicationGUI()->GetMainSlicerWindow() )
+              {
+              std::string statusText = "leaving ";
+              statusText += currentModuleName;
+              statusText += " ...";
+              this->GetApplicationGUI()->GetMainSlicerWindow()->SetStatusText ( statusText.c_str() );
+              this->Script ( "update idletasks");
+              }
             currentModule->Exit ( );
             }
           }
@@ -474,13 +495,13 @@ void vtkSlicerModuleChooseGUI::BuildGUI ( vtkKWFrame *appF )
   //--- Populate the Slice Control Frame
   if ( p != NULL )
     {
+    if ( p->GetApplication() != NULL )
+      {
     if ( p->GetSlicerFoundationIcons() == NULL )
       {
       vtkErrorMacro ( "BuildGUI got NULL Foundation Icons from ApplicationGUI" );
       return;
       }
-    if ( p->GetApplication() != NULL )
-      {
       vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast( p->GetApplication() );
 
       //--- ALL modules menu button label
@@ -532,7 +553,7 @@ void vtkSlicerModuleChooseGUI::BuildGUI ( vtkKWFrame *appF )
       this->ModulesRefresh->SetParent ( this->ModuleNavigationFrame );
       this->ModulesRefresh->Create ( );
       this->ModulesRefresh->SetBorderWidth ( 0 );
-      this->ModulesRefresh->SetImageToIcon ( p->GetSlicerFoundationIcons()->GetSlicerExtensionsIcon() );
+      this->ModulesRefresh->SetImageToIcon ( p->GetSlicerFoundationIcons()->GetSlicerExtensionsIcon());
       this->ModulesRefresh->SetBalloonHelpString ("Manage Slicer extensions.");
 
       this->ModulesSearch->SetParent ( this->ModuleNavigationFrame );
