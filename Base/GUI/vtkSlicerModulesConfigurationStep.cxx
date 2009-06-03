@@ -57,53 +57,75 @@ vtkSlicerModulesConfigurationStep::vtkSlicerModulesConfigurationStep()
 //----------------------------------------------------------------------------
 vtkSlicerModulesConfigurationStep::~vtkSlicerModulesConfigurationStep()
 {
-  if (this->Frame1)
-    {
-    this->Frame1->Delete();
-    }
-  if (this->Frame2)
-    {
-    this->Frame2->Delete();
-    }
-  if (this->Frame3)
-    {
-    this->Frame3->Delete();
-    }
-  if (this->Frame4)
-    {
-    this->Frame4->Delete();
-    }
   if (this->HeaderIcon)
     {
     this->HeaderIcon->Delete();
+    this->HeaderIcon = NULL;
     }
   if (this->HeaderText)
     {
+    this->HeaderText->SetParent (NULL);
     this->HeaderText->Delete();
+    this->HeaderText = NULL;
     }
   if (this->ActionRadioButtonSet)
     {
+    this->ActionRadioButtonSet->SetParent ( NULL );
     this->ActionRadioButtonSet->Delete();
+    this->ActionRadioButtonSet = NULL;
     }
   if (this->CacheDirectoryButton)
     {
+    this->CacheDirectoryButton->SetParent ( NULL );
     this->CacheDirectoryButton->Delete();
+    this->CacheDirectoryButton = NULL;
     }
   if (this->TrashButton)
     {
+    this->TrashButton->SetParent ( NULL );
     this->TrashButton->Delete();
+    this->TrashButton = NULL;
     }
   if (this->SearchLocationLabel)
     {
+    this->SearchLocationLabel->SetParent ( NULL );
     this->SearchLocationLabel->Delete();
+    this->SearchLocationLabel = NULL;
     }
   if (this->SearchLocationBox)
     {
+    this->SearchLocationBox->SetParent ( NULL);
     this->SearchLocationBox->Delete();
+    this->SearchLocationBox = NULL;
+    }
+  if (this->Frame1)
+    {
+    this->Frame1->SetParent ( NULL );
+    this->Frame1->Delete();
+    this->Frame1 = NULL;
+    }
+  if (this->Frame2)
+    {
+    this->Frame2->SetParent ( NULL );
+    this->Frame2->Delete();
+    this->Frame2 = NULL;
+    }
+  if (this->Frame3)
+    {
+    this->Frame3->SetParent ( NULL );
+    this->Frame3->Delete();
+    this->Frame3 = NULL;
+    }
+  if (this->Frame4)
+    {
+    this->Frame4->SetParent ( NULL );
+    this->Frame4->Delete();
+    this->Frame4 = NULL;
     }
 
   this->SetWizardDialog(NULL);
   this->RepositoryValidationFailed->Delete();
+  this->RepositoryValidationFailed = NULL;
 }
 
 //----------------------------------------------------------------------------

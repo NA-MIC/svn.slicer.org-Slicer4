@@ -42,26 +42,37 @@ vtkSlicerModulesResultStep::vtkSlicerModulesResultStep()
 //----------------------------------------------------------------------------
 vtkSlicerModulesResultStep::~vtkSlicerModulesResultStep()
 {
-  if (this->Frame1)
-    {
-    this->Frame1->Delete();
-    }
-  if (this->Frame2)
-    {
-    this->Frame2->Delete();
-    }
   if (this->HeaderText)
     {
+    this->HeaderText->SetParent ( NULL );
     this->HeaderText->Delete();
+    this->HeaderText = NULL;
     }
   if (this->RestartButton)
     {
+    this->RestartButton->SetParent ( NULL );
     this->RestartButton->Delete();
+    this->RestartButton = NULL;
     }
   if (this->LaterButton)
     {
+    this->LaterButton->SetParent ( NULL );
     this->LaterButton->Delete();
+    this->LaterButton = NULL;
     }
+  if (this->Frame1)
+    {
+    this->Frame1->SetParent ( NULL );
+    this->Frame1->Delete();
+    this->Frame1 = NULL;
+    }
+  if (this->Frame2)
+    {
+    this->Frame2->SetParent ( NULL );
+    this->Frame2->Delete();
+    this->Frame2 = NULL;
+    }
+
   this->SetWizardDialog(NULL);
 }
 

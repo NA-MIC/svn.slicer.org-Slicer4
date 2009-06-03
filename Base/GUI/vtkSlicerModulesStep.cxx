@@ -105,49 +105,72 @@ vtkSlicerModulesStep::vtkSlicerModulesStep()
 //----------------------------------------------------------------------------
 vtkSlicerModulesStep::~vtkSlicerModulesStep()
 {
-  if (this->Frame1)
-    {
-    this->Frame1->Delete();
-    }
-  if (this->Frame2)
-    {
-    this->Frame2->Delete();
-    }
-  if (this->Frame3)
-    {
-    this->Frame3->Delete();
-    }
-  if (this->Frame4)
-    {
-    this->Frame4->Delete();
-    }
   if (this->HeaderText)
     {
+    this->HeaderText->SetParent ( NULL );
     this->HeaderText->Delete();
+    this->HeaderText = NULL;
     }
   if (this->SelectAllButton)
     {
+    this->SelectAllButton->SetParent ( NULL );
     this->SelectAllButton->Delete();
+    this->SelectAllButton = NULL;
     }
   if (this->SelectNoneButton)
     {
+    this->SelectNoneButton->SetParent ( NULL );
     this->SelectNoneButton->Delete();
+    this->SelectNoneButton = NULL;
     }
   if (this->ModulesMultiColumnList)
     {
+    this->ModulesMultiColumnList->SetParent ( NULL );
     this->ModulesMultiColumnList->Delete();
+    this->ModulesMultiColumnList = NULL;
     }
   if (this->DownloadButton)
     {
+    this->DownloadButton->SetParent ( NULL );
     this->DownloadButton->Delete();
+    this->DownloadButton = NULL;
     }
   if (this->UninstallButton)
     {
+    this->UninstallButton->SetParent ( NULL );
     this->UninstallButton->Delete();
+    this->UninstallButton = NULL;
     }
   if (this->StopButton)
     {
+    this->StopButton->SetParent ( NULL );
     this->StopButton->Delete();
+    this->StopButton = NULL;
+    }
+
+  if (this->Frame1)
+    {
+    this->Frame1->SetParent ( NULL );
+    this->Frame1->Delete();
+    this->Frame1 = NULL;
+    }
+  if (this->Frame2)
+    {
+    this->Frame2->SetParent ( NULL );
+    this->Frame2->Delete();
+    this->Frame2 = NULL;
+    }
+  if (this->Frame3)
+    {
+    this->Frame3->SetParent ( NULL );
+    this->Frame3->Delete();
+    this->Frame3 = NULL;
+    }
+  if (this->Frame4)
+    {
+    this->Frame4->SetParent ( NULL );
+    this->Frame4->Delete();
+    this->Frame4 = NULL;
     }
 
   this->SetWizardDialog(NULL);
