@@ -22,6 +22,13 @@ class VTK_MRML_EXPORT vtkTagTable : public vtkObject
   vtkGetStringMacro ( Name );
   vtkSetStringMacro ( Name );
 
+  // Description:
+  // When a new server (or the same server) has been selected by a user,
+  // the available tags for query are refreshed. If the same server is selected
+  // we would like to restore the 'selected' status of tags and the values
+  // a user had chosen for each attribute. Teh RestoreSelectionState
+  // flag is set to 1 if the same server has been re-selected by a user,
+  // which lets the logic catch this condition and restore the state if possible.
   vtkGetMacro ( RestoreSelectionState, int);
   vtkSetMacro ( RestoreSelectionState, int);
   
