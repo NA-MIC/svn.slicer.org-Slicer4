@@ -1319,7 +1319,7 @@ void vtkEndoNavGUI::BuildGUIForConnectorBrowserFrame ()
   conBrowsFrame->SetParent(page);
   conBrowsFrame->Create();
   conBrowsFrame->SetLabelText("Connectors");
-  conBrowsFrame->CollapseFrame();
+  conBrowsFrame->ExpandFrame();
   app->Script ("pack %s -side top -anchor nw -fill x -padx 2 -pady 2 -in %s",
                conBrowsFrame->GetWidgetName(), page->GetWidgetName());
 
