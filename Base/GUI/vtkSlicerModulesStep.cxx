@@ -892,7 +892,7 @@ std::vector<ManifestEntry*> vtkSlicerModulesStep::ParseManifest(const std::strin
       if (dash > atag)
         {
         cvs = true;
-        dash = txt.find(cvs_key, dash);
+        dash = txt.find(cvs_key, zip);
         }
 
       dash2 = txt.find("-", dash + 1);
