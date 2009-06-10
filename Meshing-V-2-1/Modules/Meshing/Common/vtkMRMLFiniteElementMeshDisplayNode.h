@@ -95,6 +95,12 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRML
   // of this implicit function is checked to determine which nodes are rendered
  void SetCuttingPlane(vtkPlane *plane);
 
+ // The cutting plane can be enabled and dispabled during run-time.  Handle this or pass down to the rendering pipeline
+ void EnableCuttingPlane(void){if (this->SavedMeshQualityRendering) this->SavedMeshQualityRendering->EnableCuttingPlane();}
+ void DisableCuttingPlane(void){if (this->SavedMeshQualityRendering) this->SavedMeshQualityRendering->DisableCuttingPlane();}
+
+ void SetQualityToJacobian(void) {if (this->SavedMeshQualityRendering) this->SavedMeshQualityRendering->SetQualityMeasure(2);}
+
  // The elements inside the mesh can be sized 0.0 to 1.0, which causes them to be rendered at from 0% to
  // 100% of their native size.  The default is 1.0.
  void SetElementSize(double shrink);

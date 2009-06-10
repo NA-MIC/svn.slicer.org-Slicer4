@@ -27,6 +27,8 @@ INCLUDE_DIRECTORIES(
   ${Slicer3_Base_INCLUDE_DIRS}
   ${MIMXCommon_SOURCE_DIR} 
   ${MIMXCommon_BINARY_DIR}
+   ${MIMXFilter_SOURCE_DIR} 
+  ${MIMXFilter_BINARY_DIR}
   ${MIMXAdapter_SOURCE_DIR} 
   ${MIMXAdapter_BINARY_DIR} 
   ${MIMXMesh_SOURCE_DIR} 

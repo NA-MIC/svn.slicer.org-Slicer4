@@ -116,6 +116,9 @@ void vtkMimxMeshQualityRendering::InitVariables(void)
 
   this->SavedDisplayPrecision = 3;
 
+  // instantiate this fileter early, so the clipping plane can be set before or after the geometry
+
+  this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
 
 }
 
@@ -805,7 +808,7 @@ void vtkMimxMeshQualityRendering::CreateProcessedMesh(void)
 //
 
         if (!this->IsInitialized) {
-                this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
+               // this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
                 this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
                 this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
                 vtkMeshQualityExtended* qual = vtkMeshQualityExtended::New();

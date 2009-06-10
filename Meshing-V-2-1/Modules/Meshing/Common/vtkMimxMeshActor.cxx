@@ -880,6 +880,10 @@ void vtkMimxMeshActor::EnableMeshCuttingPlane( )
   this->OutlineGeometryFilter->SetInput( this->ClipPlaneGeometryFilter->GetOutput() );
   this->InteriorShrinkFilter->SetInput( this->ClipPlaneGeometryFilter->GetOutput() );
   this->UnstructuredGridMapper->SetInput(this->ShrinkFilter->GetOutput());
+
+  // pass this enable onto the display node, since rendering is actually in the display node for Slicer versions
+  if (this->SavedDisplayNode)
+      ((vtkMRMLFiniteElementMeshDisplayNode*)this->SavedDisplayNode)->EnableCuttingPlane();
 }
 
 //----------------------------------------------------------------------------------
@@ -897,6 +901,10 @@ void vtkMimxMeshActor::DisableMeshCuttingPlane( )
   else
     this->UnstructuredGridMapper->SetInput(this->ShrinkFilter->GetOutput());
   this->UnstructuredGridMapper->Modified();
+
+  // pass this enable onto the display node, since rendering is actually in the display node for Slicer versions
+  if (this->SavedDisplayNode)
+      ((vtkMRMLFiniteElementMeshDisplayNode*)this->SavedDisplayNode)->DisableCuttingPlane();
 
 }
 //----------------------------------------------------------------------------------

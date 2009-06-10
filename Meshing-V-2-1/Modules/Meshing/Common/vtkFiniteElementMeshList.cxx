@@ -91,7 +91,8 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
      // shrink the size of the cells, so this can be "overlapped" with the full rendering below.  Once the rendering is working, this
      // node can be removed from the scene.
 
-      vtkMRMLFiniteElementMeshQualityDisplayNode* dispNode = vtkMRMLFiniteElementMeshQualityDisplayNode::New();
+      vtkMRMLFiniteElementMeshDisplayNode* dispNode = vtkMRMLFiniteElementMeshDisplayNode::New();
+      dispNode->SetCuttingPlane(actor->GetCuttingPlane());
       dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
       dispNode->SetVisibility(1);
       dispNode->SetScalarVisibility(1);
@@ -106,15 +107,14 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
       dispNode2->SetColor(0.2,1.0,0.2);
       dispNode2->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
 
-      // now put in the high-quality display node.
-
-      vtkMRMLFiniteElementMeshDisplayNode* dispNode3 = vtkMRMLFiniteElementMeshDisplayNode::New();
-        dispNode3->SetVisibility(1);
-        dispNode3->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
+//
+//      vtkMRMLFiniteElementMeshSimpleDisplayNode* dispNode3 = vtkMRMLFiniteElementMeshDisplayNode::New();
+//        dispNode3->SetVisibility(1);
+//        dispNode3->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
 
       // create an object reference from the actor to its corresponding MRML node.
       // this is needed to pass through attribute change calls
-      actor->SetMRMLDisplayNode(dispNode3);
+      actor->SetMRMLDisplayNode(dispNode);
       actor->SetMRMLOutlineDisplayNode(dispNode2);
 
       // add the storage node
@@ -124,21 +124,21 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
       // node and its display and storage nodes, so the viewer will be updated when data
       // or attributes change
 
-    //  this->savedMRMLScene->AddNodeNoNotify(dispNode);
+      this->savedMRMLScene->AddNodeNoNotify(dispNode);
       this->savedMRMLScene->AddNodeNoNotify(dispNode2);
-      this->savedMRMLScene->AddNodeNoNotify(dispNode3);
+      //this->savedMRMLScene->AddNodeNoNotify(dispNode3);
 
       this->savedMRMLScene->AddNodeNoNotify(storeNode);
 
       this->savedMRMLScene->AddNode(newMRMLNode);
-     // dispNode->SetScene(this->savedMRMLScene);
+     dispNode->SetScene(this->savedMRMLScene);
       dispNode2->SetScene(this->savedMRMLScene);
-      dispNode3->SetScene(this->savedMRMLScene);
+      //dispNode3->SetScene(this->savedMRMLScene);
       storeNode->SetScene(this->savedMRMLScene);
 
-     // newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
+      newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode2->GetID());
-      newMRMLNode->AddAndObserveDisplayNodeID(dispNode3->GetID());
+      //newMRMLNode->AddAndObserveDisplayNodeID(dispNode3->GetID());
       newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());
 
    } else

@@ -67,7 +67,7 @@ void vtkMRMLFiniteElementMeshDisplayNode::UpdatePolyDataPipeline()
 vtkMRMLFiniteElementMeshDisplayNode::vtkMRMLFiniteElementMeshDisplayNode()
 {
   this->SavedMeshQualityRendering = vtkMimxMeshQualityRendering::New();
-  this->SavedCuttingPlane = NULL;
+  this->SavedCuttingPlane = vtkPlane::New();
 }
 
 
@@ -88,7 +88,7 @@ void vtkMRMLFiniteElementMeshDisplayNode::SetUnstructuredGrid(vtkUnstructuredGri
     this->SavedMeshQualityRendering->InitializeFromExternalMesh(grid);
    // put in a null plane for now so we can instantiate the pipelines
     if (this->SavedCuttingPlane == NULL)
-          this->SavedCuttingPlane = vtkPlane::New();
+        this->SavedCuttingPlane = vtkPlane::New();
     this->SavedMeshQualityRendering->SetCuttingPlaneFunction(  this->SavedCuttingPlane);
     this->SavedMeshQualityRendering->SetShowFilledElements(1);
     this->SavedMeshQualityRendering->SetQualityMeasureToJacobian();
