@@ -32,12 +32,32 @@ vtkIGTLToViewerTransform::vtkIGTLToViewerTransform()
   this->NodeCreated = 0;
   this->ImageViewerCT = NULL;
 
+  this->SensorMatrix = vtkMatrix4x4::New();
+  this->SensorMatrix->Identity();
+
+  this->CalibMatrix = vtkMatrix4x4::New();
+  this->CalibMatrix->Identity();
+
+  this->RegMatrix = vtkMatrix4x4::New();
+  this->RegMatrix->Identity();
 }
 
 
 //---------------------------------------------------------------------------
 vtkIGTLToViewerTransform::~vtkIGTLToViewerTransform()
 {
+  if (this->CalibMatrix)
+    {
+    this->CalibMatrix->Delete();
+    }
+  if (this->RegMatrix)
+    {
+    this->RegMatrix->Delete();
+    }
+  if (this->SensorMatrix)
+    {
+    this->SensorMatrix->Delete();
+    }
 }
 
 
@@ -156,22 +176,44 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
       {
       this->LocatorID = this->GetLocatorActorID(transformNode->GetScene());
       }
-    if (std::string(transformNode->GetName()) == std::string("EnodNavSensor"))
+
+    if (std::string(transformNode->GetName()) == std::string("EnodNavCalibration"))
       {
       transformNode->DisableModifiedEventOn();
-      transformNode->SetAndObserveMatrixTransformToParent(NULL);
+      this->CalibMatrix->DeepCopy(transform);
+      transformNode->SetAndObserveMatrixTransformToParent(CalibMatrix);
+      transformNode->DisableModifiedEventOff();
+      }
+    else if (std::string(transformNode->GetName()) == std::string("EnodNavRegistration"))
+      {
+      transformNode->DisableModifiedEventOn();
+      this->RegMatrix->DeepCopy(transform);
+      transformNode->SetAndObserveMatrixTransformToParent(RegMatrix);
+      transformNode->DisableModifiedEventOff();
+      }
+    else if (std::string(transformNode->GetName()) == std::string("EnodNavSensor"))
+      {
+      transformNode->DisableModifiedEventOn();
+      this->SensorMatrix->DeepCopy(transform);
 
       if ( this->Viewer)
         {
         vtkProp3D *prop = this->Viewer->GetActorByID(this->LocatorID.c_str());
         if (prop)
           {
+          // TODO combine calib, reg and sensor matrix
+          vtkMatrix4x4 *mat = vtkMatrix4x4::New();
+          vtkMatrix4x4::Multiply4x4(CalibMatrix, RegMatrix, mat);
+          vtkMatrix4x4::Multiply4x4(mat, SensorMatrix, transform);
+
           prop->SetUserMatrix(transform);
           this->Viewer->GetMainViewer()->Render();
+
+          mat->Delete();
           }
         }
 
-      transformNode->SetAndObserveMatrixTransformToParent(transform);
+      transformNode->SetAndObserveMatrixTransformToParent(SensorMatrix);
 
       transformNode->DisableModifiedEventOff();
       }

@@ -22,6 +22,7 @@
 #include "vtkSlicerViewerWidget.h"
 
 #include "vtkImageViewer.h"
+#include "vtkMatrix4x4.h"
 
 #include "igtlTransformMessage.h"
 
@@ -50,6 +51,15 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
   vtkGetObjectMacro( ImageViewerCT, vtkImageViewer);
   vtkSetObjectMacro( ImageViewerCT, vtkImageViewer);
 
+  vtkGetObjectMacro( SensorMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro( SensorMatrix, vtkMatrix4x4);
+
+  vtkGetObjectMacro( CalibMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro( CalibMatrix, vtkMatrix4x4);
+
+  vtkGetObjectMacro( RegMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro( RegMatrix, vtkMatrix4x4);
+
  protected:
   vtkIGTLToViewerTransform();
   ~vtkIGTLToViewerTransform();
@@ -66,6 +76,10 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
   vtkSlicerViewerWidget *Viewer;
 
   int NodeCreated;
+
+  vtkMatrix4x4 *SensorMatrix;
+  vtkMatrix4x4 *CalibMatrix;
+  vtkMatrix4x4 *RegMatrix;
   
 };
 
