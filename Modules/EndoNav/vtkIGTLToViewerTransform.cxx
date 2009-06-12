@@ -17,6 +17,7 @@
 #include "vtkObjectFactory.h"
 #include "vtkIGTLToViewerTransform.h"
 #include "vtkProp3D.h"
+#include "vtkGeneralTransform.h."
 
 #include "vtkMRMLLinearTransformNode.h"
 #include "igtlTransformMessage.h"
@@ -32,31 +33,44 @@ vtkIGTLToViewerTransform::vtkIGTLToViewerTransform()
   this->NodeCreated = 0;
   this->ImageViewerCT = NULL;
 
+  this->ImageDataCT = NULL;
+
+  this->Reslice = vtkImageReslice::New();
+
+  this->SensorTransformNodeName = "EnodNavSensor";
+  this->RegistrationTransformNodeName = "EnodNavRegistration";
+  this->CalibrationTransformNodeName = "EnodNavCalibration";
+  this->CTVolumeNodeName = "EnodNavCTVolume";
+
   this->SensorMatrix = vtkMatrix4x4::New();
   this->SensorMatrix->Identity();
 
-  this->CalibMatrix = vtkMatrix4x4::New();
-  this->CalibMatrix->Identity();
+  this->CalibrationMatrix = vtkMatrix4x4::New();
+  this->CalibrationMatrix->Identity();
 
-  this->RegMatrix = vtkMatrix4x4::New();
-  this->RegMatrix->Identity();
+  this->RegistrationMatrix = vtkMatrix4x4::New();
+  this->RegistrationMatrix->Identity();
 }
 
 
 //---------------------------------------------------------------------------
 vtkIGTLToViewerTransform::~vtkIGTLToViewerTransform()
 {
-  if (this->CalibMatrix)
+  if (this->CalibrationMatrix)
     {
-    this->CalibMatrix->Delete();
+    this->CalibrationMatrix->Delete();
     }
-  if (this->RegMatrix)
+  if (this->RegistrationMatrix)
     {
-    this->RegMatrix->Delete();
+    this->RegistrationMatrix->Delete();
     }
   if (this->SensorMatrix)
     {
     this->SensorMatrix->Delete();
+    }
+  if (this->Reslice)
+    {
+    this->Reslice->Delete();
     }
 }
 
@@ -119,6 +133,31 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
     return 0;
     }
 
+  // find CT image
+  if (this->ImageDataCT == NULL)
+    {
+    vtkCollection *nodes = node->GetScene()->GetNodesByName(this->CTVolumeNodeName.c_str());
+    if (nodes && nodes->GetNumberOfItems() > 0)
+      {
+      vtkMRMLScalarVolumeNode *vnode = vtkMRMLScalarVolumeNode::SafeDownCast(nodes->GetItemAsObject(0));
+      if (vnode)
+        {
+        this->ImageDataCT = vnode->GetImageData();
+        this->Reslice->SetInput(this->ImageDataCT);
+
+        int dims[3];
+        double sp[3];
+        this->ImageDataCT->GetDimensions(dims);
+        this->ImageDataCT->GetSpacing(sp);
+        this->Reslice->SetOutputSpacing(sp[0],sp[1],1.0);
+        this->Reslice->SetOutputDimensionality(2);
+        //this->Reslice->SetOutputExtent(0,dims[0]-1,0,dims[1]-1,0,1);
+
+        nodes->Delete();
+        }
+      }
+    }
+
   vtkMRMLLinearTransformNode* transformNode = 
     vtkMRMLLinearTransformNode::SafeDownCast(node);
 
@@ -177,21 +216,21 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
       this->LocatorID = this->GetLocatorActorID(transformNode->GetScene());
       }
 
-    if (std::string(transformNode->GetName()) == std::string("EnodNavCalibration"))
+    if (std::string(transformNode->GetName()) == this->CalibrationTransformNodeName)
       {
       transformNode->DisableModifiedEventOn();
-      this->CalibMatrix->DeepCopy(transform);
-      transformNode->SetAndObserveMatrixTransformToParent(CalibMatrix);
+      this->CalibrationMatrix->DeepCopy(transform);
+      transformNode->SetAndObserveMatrixTransformToParent(CalibrationMatrix);
       transformNode->DisableModifiedEventOff();
       }
-    else if (std::string(transformNode->GetName()) == std::string("EnodNavRegistration"))
+    else if (std::string(transformNode->GetName()) == this->RegistrationTransformNodeName)
       {
       transformNode->DisableModifiedEventOn();
-      this->RegMatrix->DeepCopy(transform);
-      transformNode->SetAndObserveMatrixTransformToParent(RegMatrix);
+      this->RegistrationMatrix->DeepCopy(transform);
+      transformNode->SetAndObserveMatrixTransformToParent(RegistrationMatrix);
       transformNode->DisableModifiedEventOff();
       }
-    else if (std::string(transformNode->GetName()) == std::string("EnodNavSensor"))
+    else if (std::string(transformNode->GetName()) == this->SensorTransformNodeName)
       {
       transformNode->DisableModifiedEventOn();
       this->SensorMatrix->DeepCopy(transform);
@@ -201,13 +240,28 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
         vtkProp3D *prop = this->Viewer->GetActorByID(this->LocatorID.c_str());
         if (prop)
           {
-          // TODO combine calib, reg and sensor matrix
+          // TODO combine properly calib, reg and sensor matrix
           vtkMatrix4x4 *mat = vtkMatrix4x4::New();
-          vtkMatrix4x4::Multiply4x4(CalibMatrix, RegMatrix, mat);
+          vtkMatrix4x4::Multiply4x4(CalibrationMatrix, RegistrationMatrix, mat);
           vtkMatrix4x4::Multiply4x4(mat, SensorMatrix, transform);
 
           prop->SetUserMatrix(transform);
           this->Viewer->GetMainViewer()->Render();
+
+          // Reslice CT image and render it
+          if (this->ImageDataCT && this->ImageViewerCT)
+            {
+            vtkGeneralTransform *xform = vtkGeneralTransform::New();
+            xform->Identity();
+            xform->Concatenate(transform);
+            this->Reslice->SetResliceTransform (xform);
+            this->Reslice->Update();
+            
+            this->ImageViewerCT->SetInput(this->Reslice->GetOutput());
+            this->ImageViewerCT->Render();
+
+            xform->Delete();
+            }
 
           mat->Delete();
           }

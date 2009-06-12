@@ -21,8 +21,10 @@
 #include "vtkIGTLToMRMLBase.h"
 #include "vtkSlicerViewerWidget.h"
 
+#include "vtkImageData.h"
 #include "vtkImageViewer.h"
 #include "vtkMatrix4x4.h"
+#include "vtkImageReslice.h"
 
 #include "igtlTransformMessage.h"
 
@@ -54,11 +56,37 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
   vtkGetObjectMacro( SensorMatrix, vtkMatrix4x4);
   vtkSetObjectMacro( SensorMatrix, vtkMatrix4x4);
 
-  vtkGetObjectMacro( CalibMatrix, vtkMatrix4x4);
-  vtkSetObjectMacro( CalibMatrix, vtkMatrix4x4);
+  vtkGetObjectMacro( CalibrationMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro( CalibrationMatrix, vtkMatrix4x4);
 
-  vtkGetObjectMacro( RegMatrix, vtkMatrix4x4);
-  vtkSetObjectMacro( RegMatrix, vtkMatrix4x4);
+  vtkGetObjectMacro( RegistrationMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro( RegistrationMatrix, vtkMatrix4x4);
+
+  vtkGetObjectMacro( ImageDataCT, vtkImageData);
+  vtkSetObjectMacro( ImageDataCT, vtkImageData);
+
+  //BTX
+  void SetSensorTransformNodeName(std::string &name)
+    {
+    this->SensorTransformNodeName = name;
+    };
+
+  void SetRegistrationTransformNodeName(std::string &name)
+    {
+    this->RegistrationTransformNodeName = name;
+    };
+
+  void SetCalibrationTransformNodeName(std::string &name)
+    {
+    this->CalibrationTransformNodeName = name;
+    };
+
+  void SetCTVolumeNodeName(std::string &name)
+    {
+    this->CTVolumeNodeName = name;
+    };
+
+  //ETX
 
  protected:
   vtkIGTLToViewerTransform();
@@ -71,15 +99,24 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
   igtl::TransformMessage::Pointer OutTransformMsg;
   std::string LocatorID;
   std::string GetLocatorActorID(vtkMRMLScene*  scene);
+
+  std::string SensorTransformNodeName;
+  std::string RegistrationTransformNodeName;
+  std::string CalibrationTransformNodeName;
+  std::string CTVolumeNodeName;
+
   //ETX
 
   vtkSlicerViewerWidget *Viewer;
+  vtkImageReslice       *Reslice;
 
   int NodeCreated;
 
+  vtkImageData *ImageDataCT;
+
   vtkMatrix4x4 *SensorMatrix;
-  vtkMatrix4x4 *CalibMatrix;
-  vtkMatrix4x4 *RegMatrix;
+  vtkMatrix4x4 *CalibrationMatrix;
+  vtkMatrix4x4 *RegistrationMatrix;
   
 };
 
