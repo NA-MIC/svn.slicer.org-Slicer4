@@ -36,9 +36,8 @@
 #include "vtkMRMLUnstructuredGridDisplayNode.h"
 #include "vtkMimxCommonWin32Header.h"
 
-//class vtkMeshQualityExtended; 
-class vtkMeshQuality; 
-class vtkShrinkFilter;
+#include "vtkMimxMeshQualityRendering.h"
+
 
 class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshOutlineDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
 {
@@ -68,7 +67,7 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshOutlineDisplayNode : public 
   
   // Description:
   // Get node XML tag name (like Volume, UnstructuredGrid)
-  virtual const char* GetNodeTagName ( ) {return "FiniteElementBoundingBoxDisplay";};
+  virtual const char* GetNodeTagName ( ) {return "FiniteElementMeshOutlineDisplay";};
 
   // Description:
   // alternative method to propagate events generated in Display nodes
@@ -93,27 +92,29 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshOutlineDisplayNode : public 
   // set the radius of the display
   void SetRadius(float radius);
  
+  
+  // The mesh can be "cut" using a cutting plane. The instance of an implicit function (i.e. vtkPlane)
+  // needs to be passed here to control the rendering.  If the cutting plane is enabled, then the value
+  // of this implicit function is checked to determine which nodes are rendered
+ void SetCuttingPlane(vtkPlane *plane);
+ 
+ // The cutting plane can be enabled and dispabled during run-time.  Handle this or pass down to the rendering pipeline
+ void EnableCuttingPlane(void){if (this->SavedMeshQualityRendering) this->SavedMeshQualityRendering->EnableCuttingPlane();}
+ void DisableCuttingPlane(void){if (this->SavedMeshQualityRendering) this->SavedMeshQualityRendering->DisableCuttingPlane();}
+
   //--------------------------------------------------------------------------
   // Display Information: Geometry to display (not mutually exclusive)
   //--------------------------------------------------------------------------
-
-  // Description:
- 
-   //vtkMeshQualityExtended *SavedMeshQualityFilter; 
-   vtkMeshQuality *SavedMeshQualityFilter; 
-   vtkShrinkFilter *SavedShrinkFilter;
-   vtkFeatureEdges *FeatureEdges;
-   vtkTubeFilter *TubeFilter;
-  
+   
  protected:
      vtkMRMLFiniteElementMeshOutlineDisplayNode ( );
   ~vtkMRMLFiniteElementMeshOutlineDisplayNode ( );
   vtkMRMLFiniteElementMeshOutlineDisplayNode ( const vtkMRMLFiniteElementMeshOutlineDisplayNode& );
   void operator= ( const vtkMRMLFiniteElementMeshOutlineDisplayNode& );
 
- 
-
-  // dispaly pipeline components declared here
+  // display pipeline components declared here
+  vtkMimxMeshQualityRendering* SavedMeshQualityRendering;
+  vtkPlane* SavedCuttingPlane;
 
 };
 

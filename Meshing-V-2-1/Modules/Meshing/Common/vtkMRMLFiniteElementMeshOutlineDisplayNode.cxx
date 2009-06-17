@@ -60,17 +60,24 @@ void vtkMRMLFiniteElementMeshOutlineDisplayNode::UpdatePolyDataPipeline()
    //this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
 }
 
+
+
+//----------------------------------------------------------------------------
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::SetCuttingPlane(vtkPlane *plane)
+{
+    this->SavedCuttingPlane = plane;
+    if (this->SavedMeshQualityRendering != NULL)
+    {
+       this->SavedMeshQualityRendering->SetCuttingPlaneFunction(plane);
+    }
+}
+
+
 //----------------------------------------------------------------------------
 vtkMRMLFiniteElementMeshOutlineDisplayNode::vtkMRMLFiniteElementMeshOutlineDisplayNode()
 {
-  this->SavedMeshQualityFilter = vtkMeshQuality::New();
-  //vtkMeshQualityExtended* this->SavedMeshQualityFilter = vtkMeshQualityExtended::New();
-  this->SavedShrinkFilter = vtkShrinkFilter::New();
-  this->ShrinkFactor = 0.80;
-
-  this->FeatureEdges = vtkFeatureEdges::New();
-  this->TubeFilter = vtkTubeFilter::New();
-
+    this->SavedMeshQualityRendering = vtkMimxMeshQualityRendering::New();
+    this->SavedCuttingPlane = NULL;
 }
 
 
@@ -78,45 +85,20 @@ vtkMRMLFiniteElementMeshOutlineDisplayNode::vtkMRMLFiniteElementMeshOutlineDispl
 vtkMRMLFiniteElementMeshOutlineDisplayNode::~vtkMRMLFiniteElementMeshOutlineDisplayNode()
 {
   this->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
-  this->GeometryFilter->Delete();
-  this->ShrinkPolyData->Delete();
-  this->SavedShrinkFilter->Delete();
 }
 
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshOutlineDisplayNode::SetUnstructuredGrid(vtkUnstructuredGrid *grid)
 {
-
-    // assign the filter to add mesh quality scalars to points & cells
-    this->SavedMeshQualityFilter->SetInput(grid);
-    //this->SavedMeshQualityFilter->SetHexQualityMeasureToJacobian();
-    this->SavedMeshQualityFilter->SetHexQualityMeasureToEdgeRatio();
-    this->SavedMeshQualityFilter->SaveCellQualityOn();
-
-    // shrink the output because the mappers will remove interior detail otherwise
-
-    this->SavedShrinkFilter->SetInput(this->SavedMeshQualityFilter->GetOutput());
-    this->SavedShrinkFilter->SetShrinkFactor(this->ShrinkFactor);
-
-    // *** instead of using shrink output, use the original grid to avoid
-    // getting all internal nodes
-    //this->GeometryFilter->SetInput(this->SavedShrinkFilter->GetOutput());
-    this->GeometryFilter->SetInput(grid);
-
-    this->FeatureEdges = vtkFeatureEdges::New();
-    this->FeatureEdges->SetInput( this->GeometryFilter->GetOutput() );
-    this->FeatureEdges->BoundaryEdgesOn();
-    this->FeatureEdges->ManifoldEdgesOn();
-    this->FeatureEdges->FeatureEdgesOff();
-    this->FeatureEdges->ColoringOff();
-
-    this->TubeFilter = vtkTubeFilter::New();
-    this->TubeFilter->SetInputConnection(this->FeatureEdges->GetOutputPort());
-    this->TubeFilter->SetRadius(0.06);
-
-
+    this->SavedMeshQualityRendering->InitializeFromExternalMesh(grid);
+   // put in a null plane for now so we can instantiate the pipelines
+    if (this->SavedCuttingPlane == NULL)
+        this->SavedCuttingPlane = vtkPlane::New();
+    this->SavedMeshQualityRendering->SetCuttingPlaneFunction(  this->SavedCuttingPlane);
+    this->SavedMeshQualityRendering->SetShowClippedOutline(1);
+    //this->SavedMeshQualityRendering->SetQualityMeasureToJacobian();
+    this->SavedMeshQualityRendering->CalculateMeshQuality();
 }
-
 
 
 
@@ -156,15 +138,12 @@ void vtkMRMLFiniteElementMeshOutlineDisplayNode::ReadXMLAttributes(const char** 
     }
 }
 
+
 // declare a rendering pipeline for bblock data in this class
 vtkPolyData* vtkMRMLFiniteElementMeshOutlineDisplayNode::GetPolyData()
 {
-  vtkDebugMacro("MeshOutlineDisplayNode invoked");
-//  vtkDataSetWriter *write = vtkDataSetWriter::New();
-//  write->SetInput(this->ShrinkPolyData->GetOutput());
-//  write->SetFileName("mesh-with-quality-from-display-node.vtk");
-//  write->Write();
-  return this->TubeFilter->GetOutput();
+      vtkDebugMacro("MeshOutlineDisplayNode invoked");
+      return this->SavedMeshQualityRendering->GetOutlinePolygons();
 }
 
 
@@ -199,5 +178,6 @@ void vtkMRMLFiniteElementMeshOutlineDisplayNode::ProcessMRMLEvents ( vtkObject *
 
 void vtkMRMLFiniteElementMeshOutlineDisplayNode::SetRadius (float radius)
 {
-    this->TubeFilter->SetRadius(radius);
+    //this->SavedMeshQualityRendering->SetRadius(radius);
+    cout << "outline display node: change radius" << endl;
 }

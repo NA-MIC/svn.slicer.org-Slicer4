@@ -80,9 +80,9 @@ SET ( FILTER_SRCS
     vtkMimxBoundingBoxFromUnstructuredGrid.cxx
     vtkMimxMapOriginalCellAndPointIds.cxx
     vtkMimxEquivalancePoints.cxx
-    vtkMeshQualityExtended.cxx
+    #vtkMeshQualityExtended.cxx
     vtkMimxMergePoints.cxx
-    vtkFaceHedgeHog.cxx
+    #vtkFaceHedgeHog.cxx
     vtkMimxExtractSurface.cxx
 )
 

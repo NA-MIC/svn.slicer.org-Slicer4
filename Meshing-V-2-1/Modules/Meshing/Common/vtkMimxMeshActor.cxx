@@ -884,6 +884,8 @@ void vtkMimxMeshActor::EnableMeshCuttingPlane( )
   // pass this enable onto the display node, since rendering is actually in the display node for Slicer versions
   if (this->SavedDisplayNode)
       ((vtkMRMLFiniteElementMeshDisplayNode*)this->SavedDisplayNode)->EnableCuttingPlane();
+  if (this->SavedOutlineDisplayNode)
+      ((vtkMRMLFiniteElementMeshOutlineDisplayNode*)this->SavedOutlineDisplayNode)->EnableCuttingPlane();
 }
 
 //----------------------------------------------------------------------------------
@@ -905,6 +907,8 @@ void vtkMimxMeshActor::DisableMeshCuttingPlane( )
   // pass this enable onto the display node, since rendering is actually in the display node for Slicer versions
   if (this->SavedDisplayNode)
       ((vtkMRMLFiniteElementMeshDisplayNode*)this->SavedDisplayNode)->DisableCuttingPlane();
+  if (this->SavedOutlineDisplayNode)
+       ((vtkMRMLFiniteElementMeshOutlineDisplayNode*)this->SavedOutlineDisplayNode)->DisableCuttingPlane();
 
 }
 //----------------------------------------------------------------------------------

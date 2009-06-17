@@ -105,6 +105,7 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
       vtkMRMLFiniteElementMeshOutlineDisplayNode* dispNode2 = vtkMRMLFiniteElementMeshOutlineDisplayNode::New();
       dispNode2->SetVisibility(1);
       dispNode2->SetColor(0.2,1.0,0.2);
+      dispNode2->SetCuttingPlane(actor->GetCuttingPlane());
       dispNode2->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
 
 //

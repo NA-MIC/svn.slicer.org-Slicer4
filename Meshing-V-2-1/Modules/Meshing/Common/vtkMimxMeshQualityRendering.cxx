@@ -648,6 +648,9 @@ void vtkMimxMeshQualityRendering::SetupClippedOutlineVTKPipeline(void)
     (outlineActor->GetProperty())->SetRepresentationToSurface();
     (outlineActor->GetProperty())->SetAmbient(0);
   this->SavedClippedOutlineActor = outlineActor;
+  
+  // add output PolyData creation for Slicer integration
+  this->SavedOutlinePolyDataForRendering = outlineTube->GetOutput();
 }
 
 
@@ -865,14 +868,14 @@ void vtkMimxMeshQualityRendering::SetupMeshFilterPipeline(void)
   this->CellSelectionFilter = vtkExtractCells::New();
   this->CreateProcessedMesh();
 
- // long numCells = ((this->SavedMesh->GetCellData())->GetArray("Quality"))->GetNumberOfTuples();
-  //cout << "found " << numCells << " cells in the dataset" << endl;
+  long numCells = ((this->SavedMesh->GetCellData())->GetArray("Quality"))->GetNumberOfTuples();
+  cout << "found " << numCells << " cells in the dataset" << endl;
   //numCells = ((mesh->GetCellData())->GetArray("ELEMENT_ID"))->GetNumberOfTuples();
   //cout << "found " << numCells << " id entries in the dataset" << endl;
 
   this->FindMinimumAndMaximumQualityForMesh(this->SavedMesh,&minQualityFound,&maxQualityFound);
-  //cout << "Min quality found: " << minQualityFound << " max quality found: " ;
-  //cout << maxQualityFound << endl;
+  cout << "Min quality found: " << minQualityFound << " max quality found: " ;
+  cout << maxQualityFound << endl;
 
   // look at the threshold value and pass only the elements which have quality
   // measure below the threshold value

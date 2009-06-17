@@ -91,6 +91,8 @@ SET ( LIB_SRCS
     #
     vtkMimxBoundaryConditionActor.cxx
     vtkMimxMeshQualityRendering.cxx
+    vtkMeshQualityExtended.cxx
+    vtkFaceHedgeHog.cxx
 )
  
 SET_SOURCE_FILES_PROPERTIES(
