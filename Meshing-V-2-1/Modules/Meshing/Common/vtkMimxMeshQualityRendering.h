@@ -106,8 +106,8 @@ private:
   vtkIdList       *SavedCellList;
 
   // handle to element thresholding filter
-  //vtkThreshold *thresholdFilter;
-  vtkPassThroughFilter  *thresholdFilter;
+  vtkThreshold *thresholdFilter;
+  //vtkPassThroughFilter  *thresholdFilter;
 
   // how much to shrink elements before display
   double ElementShrinkFactor;

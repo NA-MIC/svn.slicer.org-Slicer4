@@ -607,6 +607,12 @@ void vtkMimxMeshActor::UpdateMeshDisplay()
 
 }
 
+void vtkMimxMeshActor::SetThreshold(double value)
+{
+    if (this->SavedDisplayNode != NULL)
+          ((vtkMRMLFiniteElementMeshDisplayNode*)(this->SavedDisplayNode))->SetThreshold(value);    // *** added for slicer
+}
+
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::UpdateElementSetDisplay()
 {

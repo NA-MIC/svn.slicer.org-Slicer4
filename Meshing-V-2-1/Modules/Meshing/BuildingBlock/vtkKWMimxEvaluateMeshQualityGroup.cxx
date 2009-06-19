@@ -793,7 +793,17 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
         metricFieldName = "Jacobian";
         minMetricValue = 0.0;
         maxMetricValue = 10e20;
-        if (thisMeshActor != NULL) thisMeshActor->SetQualityToJacobian(); // ***
+
+        // invoke the method on the actor to set its rendering metric, instead of setting
+        // the filters embedded in this class.  Eventually remove the embedded VTK pipeline
+        // filters here to encapsulate all VTK pipeline rendering in the MeshActor.
+
+        if (thisMeshActor != NULL)
+                {
+                    // ***
+                    thisMeshActor->SetQualityToJacobian();
+                    cout << "setting mesh actor to jacobian rendering" << endl;
+                }
       }
       else if (meshType == VTK_TETRA)
       {

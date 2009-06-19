@@ -105,6 +105,10 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshDisplayNode : public vtkMRML
  // 100% of their native size.  The default is 1.0.
  void SetElementSize(double shrink);
 
+ // specify normalized value (0 to 1) to control what percentage of elements are rendered, according
+ // to metric value
+ void SetThreshold(double value) {if (this->SavedMeshQualityRendering) this->SavedMeshQualityRendering->SetThresholdValue(value);}
+
  protected:
      vtkMRMLFiniteElementMeshDisplayNode ( );
   ~vtkMRMLFiniteElementMeshDisplayNode ( );

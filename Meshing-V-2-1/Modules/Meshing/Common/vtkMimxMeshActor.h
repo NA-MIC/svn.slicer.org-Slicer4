@@ -387,6 +387,10 @@ public:
     void SetQualityToJacobian() {vtkMRMLFiniteElementMeshDisplayNode::SafeDownCast(this->SavedDisplayNode)->SetQualityToJacobian();}
     //*** need other methods here
 
+    // accept value between 0.0 and 1.0 to filter which elements are displayed, according to their metric.  The default
+    // is to pass all elements, unless another value is specified.
+    void SetThreshold(double value);
+
 protected:
   vtkMimxMeshActor();
   ~vtkMimxMeshActor();

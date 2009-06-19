@@ -91,6 +91,7 @@ void vtkMRMLFiniteElementMeshDisplayNode::SetUnstructuredGrid(vtkUnstructuredGri
         this->SavedCuttingPlane = vtkPlane::New();
     this->SavedMeshQualityRendering->SetCuttingPlaneFunction(  this->SavedCuttingPlane);
     this->SavedMeshQualityRendering->SetShowFilledElements(1);
+    this->SavedMeshQualityRendering->SetThresholdValue(1.0);
     this->SavedMeshQualityRendering->SetQualityMeasureToJacobian();
     this->SavedMeshQualityRendering->CalculateMeshQuality();
 }

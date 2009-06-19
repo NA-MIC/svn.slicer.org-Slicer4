@@ -58,7 +58,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkPointData.h"
 #include "vtkPassThroughFilter.h"
 
-
+#include "vtkFloatArray.h"
 
 //----------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ void vtkMimxMeshQualityRendering::InitVariables(void)
 
   // default shrink size,  opacity of each element, and other initial states
 
-  this->ElementShrinkFactor = 0.8;
+  this->ElementShrinkFactor = 1.0;
   this->ElementOpacity = 1.0;
   this->thresholdValue = 9999;
   this->SavedQualityMetric = 0;
@@ -648,7 +648,7 @@ void vtkMimxMeshQualityRendering::SetupClippedOutlineVTKPipeline(void)
     (outlineActor->GetProperty())->SetRepresentationToSurface();
     (outlineActor->GetProperty())->SetAmbient(0);
   this->SavedClippedOutlineActor = outlineActor;
-  
+
   // add output PolyData creation for Slicer integration
   this->SavedOutlinePolyDataForRendering = outlineTube->GetOutput();
 }
@@ -880,13 +880,13 @@ void vtkMimxMeshQualityRendering::SetupMeshFilterPipeline(void)
   // look at the threshold value and pass only the elements which have quality
   // measure below the threshold value
 
-//  vtkThreshold* thresh = vtkThreshold::New();
-//    thresh->SetInputConnection(this->VTKQualityFilterPtr->GetOutputPort());
-//    thresh->ThresholdByLower(this->thresholdValue);
-//    // this caused all the elements to dissappear when uncommented.  Oh no...
-//    //thresh->SetAttributeModeToUseCellData();
-//    this->thresholdFilter = thresh;
-//
+  vtkThreshold* thresh = vtkThreshold::New();
+    thresh->SetInputConnection(this->VTKQualityFilterPtr->GetOutputPort());
+    thresh->ThresholdByLower(this->thresholdValue);
+    // this caused all the elements to dissappear when uncommented.  Oh no...
+    //thresh->SetAttributeModeToUseCellData();
+    this->thresholdFilter = thresh;
+
 
 
   // shrink the elements so we can see each one.  We are using a shrink filter
@@ -895,8 +895,8 @@ void vtkMimxMeshQualityRendering::SetupMeshFilterPipeline(void)
 
   // store a handle to this filter instance so we can restrobe the pipeline
   vtkShrinkFilter* shrinker = (vtkShrinkFilter*) vtkShrinkFilter::New();
-  shrinker->SetInputConnection(this->VTKQualityFilterPtr->GetOutputPort());
-  //shrinker->SetInputConnection(thresh->GetOutputPort());
+  //shrinker->SetInputConnection(this->VTKQualityFilterPtr->GetOutputPort());
+  shrinker->SetInputConnection(thresh->GetOutputPort());
   shrinker->SetShrinkFactor(this->ElementShrinkFactor);
   this->shrinkFilter = shrinker;
   //shrinker->Update();
@@ -1020,6 +1020,17 @@ void vtkMimxMeshQualityRendering::UpdatePipeline(void)
 
     ((vtkUnstructuredGrid*)(this->VTKQualityFilterPtr->GetOutput()))->GetCellData()->SetActiveAttribute("Quality",vtkDataSetAttributes::SCALARS);
 
+    if((this->VTKQualityFilterPtr->GetOutput())->GetCellData()->GetArray("Quality"))
+        ((vtkUnstructuredGrid*)(this->VTKQualityFilterPtr->GetOutput()))->GetCellData()->GetArray("Quality")->SetName("scalars");
+
+    // try to copy the scalars to  a duplicate array named "scalars" so it will be picked up by Slicer
+//    vtkDoubleArray *attrCopy = vtkDoubleArray::New();
+//    attrCopy->SetNumberOfComponents(1);
+//    attrCopy->Allocate(VTK_DOUBLE,100);
+//    attrCopy->DeepCopy((this->VTKQualityFilterPtr->GetOutput())->GetCellData()->GetArray("Jacobian"));
+//    attrCopy->SetName("scalars");
+//    ((vtkUnstructuredGrid*)(this->VTKQualityFilterPtr->GetOutput()))->GetCellData()->AddArray(attrCopy);
+
     // autoadjust the colors if the user is not manually overriding this feature
     if (!this->OverrideMeshColorRange)
     {
@@ -1054,8 +1065,8 @@ void vtkMimxMeshQualityRendering::UpdatePipeline(void)
         // interface.  The slider on the GUI is for percent of rejection of elements, so we
         // need to project the threshold percent into an actual element value
 
-        //double threshActual = this->thresholdValue*(maxQualityFound-minQualityFound)+minQualityFound;
-        //this->thresholdFilter->ThresholdByLower(threshActual);
+        double threshActual = this->thresholdValue*(maxQualityFound-minQualityFound)+minQualityFound;
+        this->thresholdFilter->ThresholdByLower(threshActual);
   }
 
 }
