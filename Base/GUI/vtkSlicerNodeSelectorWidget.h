@@ -89,7 +89,7 @@ public:
   // Description:
   // Get a number of class names to select
   int GetNumberOfNodeClasses() {
-    return NodeClasses.size();
+    return (int)NodeClasses.size();
   };
 
   // Description:
@@ -136,6 +136,7 @@ public:
       NodeSelectedEvent = 11000,
       NewNodeEvent = 11001,
       NodeRenameEvent = 11002,
+      NodeAddedEvent = 11003
     };
 //ETX
 

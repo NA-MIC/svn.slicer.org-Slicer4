@@ -25,9 +25,14 @@ vtkSlicerVRHelper::~vtkSlicerVRHelper(void)
 {
     if(this->Volume!=NULL)
     {
-        vtkKWRenderWidget *renderWidget= this->Gui->GetApplicationGUI()->GetViewerWidget()->GetMainViewer();
+    vtkSlicerViewerWidget *active_viewer = 
+      this->Gui->GetApplicationGUI()->GetActiveViewerWidget();
+    if (active_viewer)
+      {
+      vtkKWRenderWidget *renderWidget= active_viewer->GetMainViewer();
         renderWidget->RemoveViewProp(this->Volume);
         renderWidget->Render();
+      }
         this->Volume->Delete();
         this->Volume=NULL;
     }

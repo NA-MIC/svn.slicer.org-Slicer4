@@ -248,8 +248,8 @@ void vtkVolumeRenderingCudaGUI::AddGUIObservers ( )
 
     this->VolumePropertyWidget->AddObserver(vtkKWEvent::VolumePropertyChangedEvent, (vtkCommand*)this->GUICallbackCommand);
 
-    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
-    this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
+    this->GetApplicationGUI()->GetActiveViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::StartEvent,(vtkCommand *)this->GUICallbackCommand);
+    this->GetApplicationGUI()->GetActiveViewerWidget()->GetMainViewer()->GetRenderWindow()->AddObserver(vtkCommand::EndEvent,(vtkCommand *)this->GUICallbackCommand);
 
     this->ThresholdRange->AddObserver(vtkKWRange::RangeValueChangingEvent, (vtkCommand*)this->GUICallbackCommand);
 }
@@ -285,7 +285,7 @@ void vtkVolumeRenderingCudaGUI::CreateMapper()
         this->CudaVolume = vtkVolume::New();
         this->CudaVolume->SetMapper(this->CudaMapper);
         
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
+        this->GetApplicationGUI()->GetActiveViewerWidget()->GetMainViewer()->GetRenderer()->AddVolume(this->CudaVolume);
         
     }
 
@@ -295,7 +295,7 @@ void vtkVolumeRenderingCudaGUI::DeleteMapper()
 {
     if (this->CudaVolume != NULL)
       {
-        this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderer()->RemoveVolume(this->CudaVolume);
+        this->GetApplicationGUI()->GetActiveViewerWidget()->GetMainViewer()->GetRenderer()->RemoveVolume(this->CudaVolume);
         this->CudaVolume->Delete();
         this->CudaVolume = NULL;
     }
@@ -519,7 +519,7 @@ void vtkVolumeRenderingCudaGUI::ProcessGUIEvents ( vtkObject *caller, unsigned l
  }
   
  else if(this->CudaMapper != NULL &&
-         caller==this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->GetRenderWindow() && event==vtkCommand::EndEvent)
+         caller==this->GetApplicationGUI()->GetActiveViewerWidget()->GetMainViewer()->GetRenderWindow() && event==vtkCommand::EndEvent)
    {
       
      this->SelectedImageData=vtkMRMLScalarVolumeNode::SafeDownCast(this->NS_ImageData->GetSelected());
@@ -542,7 +542,7 @@ void vtkVolumeRenderingCudaGUI::ProcessGUIEvents ( vtkObject *caller, unsigned l
 
 void vtkVolumeRenderingCudaGUI::ScheduleRender()
 {
-  this->GetApplicationGUI()->GetViewerWidget()->GetMainViewer()->Render();
+  this->GetApplicationGUI()->GetActiveViewerWidget()->GetMainViewer()->Render();
   this->RenderScheduled = false;   
 }
 

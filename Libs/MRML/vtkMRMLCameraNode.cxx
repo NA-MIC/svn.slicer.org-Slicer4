@@ -19,6 +19,7 @@ Version:   $Revision: 1.3 $
 #include "vtkCallbackCommand.h"
 
 #include "vtkMRMLCameraNode.h"
+#include "vtkMRMLViewNode.h"
 #include "vtkMRMLScene.h"
 
 //------------------------------------------------------------------------------
@@ -52,11 +53,11 @@ vtkMRMLNode* vtkMRMLCameraNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLCameraNode::vtkMRMLCameraNode()
 {
-  this->SingletonTag = const_cast<char *>("vtkMRMLCameraNode");
+  //this->SingletonTag = const_cast<char *>("vtkMRMLCameraNode");
 
-  this->HideFromEditors = 1;
+  this->HideFromEditors = 0;
 
-  this->Active = 0;
+  this->ActiveTag = NULL;
   this->Camera = NULL;
   vtkCamera *camera = vtkCamera::New();
 
@@ -102,8 +103,10 @@ void vtkMRMLCameraNode::WriteXML(ostream& of, int nIndent)
 
   of << indent << " parallelScale=\"" << this->GetParallelScale() << "\"";
 
-  of << indent << " active=\"" << (this->Active ? "true" : "false") << "\"";
-
+  if (this->ActiveTag)
+    {
+    of << indent << " activetag=\"" << this->ActiveTag << "\"";
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -168,16 +171,22 @@ void vtkMRMLCameraNode::ReadXMLAttributes(const char** atts)
       ss >> parallelScale;
       this->SetParallelScale(parallelScale);
       }
-
+    else if (!strcmp(attName, "activetag")) 
+      {
+      this->SetActiveTag(attValue);
+      }
     else if (!strcmp(attName, "active")) 
       {
-      if (!strcmp(attValue,"true")) 
+      // Legacy, was replaced by active tag, try to set ActiveTag instead
+      // to link to the main viewer
+      if (!this->ActiveTag && this->Scene)
         {
-        this->Active = 1;
+        vtkMRMLViewNode *vnode = vtkMRMLViewNode::SafeDownCast(
+          this->Scene->GetNthNodeByClass(0, "vtkMRMLViewNode")); 
+        if (vnode)
+        {
+          this->SetActiveTag(vnode->GetName());
         }
-      else
-        {
-        this->Active = 0;
         }
       }
     }  
@@ -202,7 +211,7 @@ void vtkMRMLCameraNode::Copy(vtkMRMLNode *anode)
   this->SetViewUp(node->GetViewUp());
   this->SetParallelProjection(node->GetParallelProjection());
   this->SetParallelScale(node->GetParallelScale());
-  this->SetActive(node->GetActive());
+  //this->ActiveTag = node->GetActiveTag();
 
   this->EndModify(disabledModify);
 
@@ -230,8 +239,8 @@ void vtkMRMLCameraNode::PrintSelf(ostream& os, vtkIndent indent)
     {
     os << indent << ", " << (this->GetViewUp())[idx];
     }
-  os << indent << "Active:        " << this->Active << "\n";
-
+  os << indent << "ActiveTag: " <<
+    (this->ActiveTag ? this->ActiveTag : "(none)") << "\n";
 }
 
 //----------------------------------------------------------------------------
@@ -264,23 +273,102 @@ void vtkMRMLCameraNode::ProcessMRMLEvents ( vtkObject *caller,
     }
 }
 
-//----------------------------------------------------------------------------
-void vtkMRMLCameraNode::MakeOthersInActive()
+//---------------------------------------------------------------------------
+void vtkMRMLCameraNode::SetActiveTag(const char *_arg) 
 {
-  if (this->Scene == NULL)
+  if (this->ActiveTag == NULL && _arg == NULL) 
+    { 
+    return;
+    }
+
+  if (this->ActiveTag && _arg && 
+    (!strcmp(this->ActiveTag, _arg))) 
     {
     return;
     }
+
+  // If a camera is already using that new tag, let's find it and assign it our
+  // old tag later on if it's not ourself (thus performing a swap).
+
+  vtkMRMLCameraNode *previous_owner = this->FindActiveTagInScene(_arg);
+  if (previous_owner && previous_owner != this)
+    {
+    previous_owner->SetActiveTag(NULL);
+    }
+  std::string previous_active_tag(this->ActiveTag ? this->ActiveTag : "");
+
+  if (this->ActiveTag) 
+    { 
+    delete [] this->ActiveTag; 
+    }
+
+  if (_arg)
+    {
+    this->ActiveTag = new char[strlen(_arg) + 1];
+    strcpy(this->ActiveTag, _arg);
+    }
+  else
+    {
+    this->ActiveTag = NULL;
+    }
+
+  this->Modified();
+
+  this->InvokeEvent(vtkMRMLCameraNode::ActiveTagModifiedEvent, NULL);
+
+  // Swap with previous owner
+
+  if (previous_owner && previous_owner != this)
+    {
+    previous_owner->SetActiveTag(
+      previous_active_tag.size() ? previous_active_tag.c_str() : NULL);
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkMRMLCameraNode::RemoveActiveTagInScene(const char *tag)
+{
+  if (this->Scene == NULL || tag == NULL)
+    {
+    return;
+    }
+
   vtkMRMLCameraNode *node = NULL;
   int nnodes = this->Scene->GetNumberOfNodesByClass("vtkMRMLCameraNode");
-  for (int n=0; n<nnodes; n++)
+  for (int n = 0; n < nnodes; n++)
     {
     node = vtkMRMLCameraNode::SafeDownCast (
        this->Scene->GetNthNodeByClass(n, "vtkMRMLCameraNode"));
-    if (node != this)
+    if (node != this && 
+        node->GetActiveTag() && 
+        !strcmp(node->GetActiveTag(), tag))
       {
-      node->SetActive(0);
+      node->SetActiveTag(NULL);
       }
     }
 }
 
+//----------------------------------------------------------------------------
+vtkMRMLCameraNode* vtkMRMLCameraNode::FindActiveTagInScene(const char *tag)
+{
+  if (this->Scene == NULL || tag == NULL)
+    {
+    return NULL;
+    }
+
+  vtkMRMLCameraNode *node = NULL;
+  int nnodes = this->Scene->GetNumberOfNodesByClass("vtkMRMLCameraNode");
+  for (int n = 0; n < nnodes; n++)
+    {
+    node = vtkMRMLCameraNode::SafeDownCast (
+      this->Scene->GetNthNodeByClass(n, "vtkMRMLCameraNode"));
+    if (node != this && 
+        node->GetActiveTag() && 
+        !strcmp(node->GetActiveTag(), tag))
+      {
+      return node;
+      }
+    }
+
+  return NULL;
+}

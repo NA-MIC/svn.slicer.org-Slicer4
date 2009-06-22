@@ -113,7 +113,7 @@ void vtkCudaRendererInformationHandler::Update()
         this->MemoryTexture->SetSize(this->RendererInfo.Resolution.x, this->RendererInfo.Resolution.y);
         this->RendererInfo.OutputImage = (uchar4*)this->MemoryTexture->GetRenderDestination();
 
-        vtkCamera* cam = this->Renderer->GetActiveCamera();
+        vtkCamera* cam = this->Renderer->IsActiveCameraCreated() ? this->Renderer->GetActiveCamera() : NULL;
 
         // Update Lights.
         std::vector<float3> lights;
@@ -124,17 +124,20 @@ void vtkCudaRendererInformationHandler::Update()
             this->RendererInfo.LightVectors = &lights[0];
 
         // Update Camera
-        this->RendererInfo.CameraPos.x = cam->GetPosition()[0];
-        this->RendererInfo.CameraPos.y = cam->GetPosition()[1];
-        this->RendererInfo.CameraPos.z = cam->GetPosition()[2];
-
-        this->RendererInfo.CameraDirection.x= cam->GetDirectionOfProjection()[0];
-        this->RendererInfo.CameraDirection.y= cam->GetDirectionOfProjection()[1];
-        this->RendererInfo.CameraDirection.z= cam->GetDirectionOfProjection()[2];
-        
-        this->RendererInfo.ViewUp.x = cam->GetViewUp()[0];
-        this->RendererInfo.ViewUp.y = cam->GetViewUp()[1];
-        this->RendererInfo.ViewUp.z = cam->GetViewUp()[2];
+        if (cam)
+          {
+          this->RendererInfo.CameraPos.x = cam->GetPosition()[0];
+          this->RendererInfo.CameraPos.y = cam->GetPosition()[1];
+          this->RendererInfo.CameraPos.z = cam->GetPosition()[2];
+          
+          this->RendererInfo.CameraDirection.x= cam->GetDirectionOfProjection()[0];
+          this->RendererInfo.CameraDirection.y= cam->GetDirectionOfProjection()[1];
+          this->RendererInfo.CameraDirection.z= cam->GetDirectionOfProjection()[2];
+          
+          this->RendererInfo.ViewUp.x = cam->GetViewUp()[0];
+          this->RendererInfo.ViewUp.y = cam->GetViewUp()[1];
+          this->RendererInfo.ViewUp.z = cam->GetViewUp()[2];
+          }
 
         float dot = this->RendererInfo.ViewUp.x * this->RendererInfo.CameraDirection.x +
               this->RendererInfo.ViewUp.y * this->RendererInfo.CameraDirection.y + 
@@ -237,8 +240,11 @@ void vtkCudaRendererInformationHandler::Update()
         this->RendererInfo.ClippingPlaneNormal.y/=length;
         this->RendererInfo.ClippingPlaneNormal.z/=length;
 
-        double clipRange[2];
-        cam->GetClippingRange(clipRange);
+        if (cam)
+          {
+          double clipRange[2];
+          cam->GetClippingRange(clipRange);
+          }
         this->RendererInfo.ClippingRange.x = (float)clipRange[0];
         this->RendererInfo.ClippingRange.y = (float)clipRange[1];
 

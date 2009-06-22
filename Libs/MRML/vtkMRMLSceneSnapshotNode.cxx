@@ -392,6 +392,7 @@ void vtkMRMLSceneSnapshotNode::RestoreScene()
     this->Scene->InvokeEvent(vtkMRMLScene::NodeAddedEvent, addedNodes[n] );
     }
 
+  this->Scene->InvokeEvent(vtkMRMLScene::SceneRestoredEvent, this);
 }
 
 //----------------------------------------------------------------------------

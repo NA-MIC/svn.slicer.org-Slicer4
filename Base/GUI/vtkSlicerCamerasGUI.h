@@ -2,18 +2,14 @@
 // .SECTION Description
 // Main Camera GUI and mediator methods for slicer3. 
 
-
 #ifndef __vtkSlicerCamerasGUI_h
 #define __vtkSlicerCamerasGUI_h
 
 #include "vtkSlicerBaseGUIWin32Header.h"
 #include "vtkSlicerModuleGUI.h"
 
-
-#include "vtkMRMLCameraNode.h"
-
-#include "vtkSlicerNodeSelectorWidget.h"
-
+class vtkMRMLCameraNode;
+class vtkSlicerNodeSelectorWidget;
 class vtkKWCheckButton;
 
 // Description:
@@ -37,26 +33,30 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerCamerasGUI : public vtkSlicerModuleGUI
     virtual void AddGUIObservers ( );
     virtual void RemoveGUIObservers ( );
 
-
     // Description:
     // Class's mediator methods for processing events invoked by
     // either the Logic, MRML or GUI.
-    virtual void ProcessGUIEvents ( vtkObject *caller, unsigned long event, void *callData );
-    virtual void ProcessMRMLEvents ( vtkObject *caller, unsigned long event, void *callData );
+    virtual void ProcessGUIEvents(
+      vtkObject *caller, unsigned long event, void *callData);
+    virtual void ProcessMRMLEvents(
+      vtkObject *caller, unsigned long event, void *callData);
     
     // Description:
     // Describe behavior at module startup and exit.
     virtual void Enter ( );
     virtual void Exit ( );
 
+    // Description:
+    // Update selectors
+    void UpdateViewSelector();
     void UpdateCameraSelector();
 
  protected:
     vtkSlicerCamerasGUI ( );
     virtual ~vtkSlicerCamerasGUI ( );
     
-    vtkKWCheckButton *ActiveCheckButton;
     vtkSlicerNodeSelectorWidget *CameraSelectorWidget;
+    vtkSlicerNodeSelectorWidget *ViewSelectorWidget;
 
  private:
     vtkSlicerCamerasGUI ( const vtkSlicerCamerasGUI& ); // Not implemented.

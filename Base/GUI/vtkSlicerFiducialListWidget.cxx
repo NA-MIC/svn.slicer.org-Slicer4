@@ -130,6 +130,7 @@ vtkSlicerFiducialListWidget::vtkSlicerFiducialListWidget ( )
 {
   vtkDebugMacro("vtkSlicerFiducialListWidget::Constructor");
   
+  this->MainViewer = NULL;
   this->ProcessingMRMLEvent = 0;
   this->RenderPending = 0;
   
@@ -211,6 +212,9 @@ void vtkSlicerFiducialListWidget::RemoveMRMLObservers()
 vtkSlicerFiducialListWidget::~vtkSlicerFiducialListWidget ( )
 {
   vtkDebugMacro("vtkSlicerFiducialListWidget::Destructor\n");
+
+  // let go of the pointer to the main viewer
+  this->SetMainViewer(NULL);
 
   this->RemoveMRMLObservers();
 
@@ -392,10 +396,10 @@ void vtkSlicerFiducialListWidget::PrintSelf ( ostream& os, vtkIndent indent )
     
     vtkIndent nextIndent;
     nextIndent = indent.GetNextIndent();
-    if (this->GetViewerWidget() != NULL)
+    if (this->GetMainViewer() != NULL)
       {
       os << indent << "Main Viewer:\n";
-      this->GetViewerWidget()->PrintSelf(os, nextIndent);
+      this->GetMainViewer()->PrintSelf(os, nextIndent);
       }
     
     std::map< std::string, vtkActor *>::iterator iter;
@@ -656,6 +660,11 @@ void vtkSlicerFiducialListWidget::ProcessWidgetEvents ( vtkObject *caller,
           }
         }
       }
+    }
+  else if (event == vtkSlicerViewerWidget::ActiveCameraChangedEvent &&
+           vtkSlicerViewerWidget::SafeDownCast(caller) != NULL)
+    {
+    this->UpdateFiducialsCamera();
     }
 } 
 
@@ -1041,16 +1050,11 @@ void vtkSlicerFiducialListWidget::RemoveFiducial(const char *id)
 
   std::map< std::string, vtkActor *>::iterator iter;
   iter = this->DisplayedFiducials.find(stringID);
-  vtkKWRenderWidget *mainViewer = NULL;
-  if (this->GetViewerWidget())
-    {
-    mainViewer = this->GetViewerWidget()->GetMainViewer();
-    }
   if (iter != this->DisplayedFiducials.end())
     {
-    if (mainViewer)
+    if (this->MainViewer)
       {
-      mainViewer->RemoveViewProp(this->DisplayedFiducials[stringID]);
+      this->MainViewer->RemoveViewProp(this->DisplayedFiducials[stringID]);
       }
     if (vtkFollower::SafeDownCast(this->DisplayedFiducials[stringID]) != NULL)
       {
@@ -1064,9 +1068,9 @@ void vtkSlicerFiducialListWidget::RemoveFiducial(const char *id)
    titer = this->DisplayedTextFiducials.find(stringID);
    if (titer != this->DisplayedTextFiducials.end())
      {
-     if (mainViewer)
+     if (this->MainViewer)
        {
-       mainViewer->RemoveViewProp(this->DisplayedTextFiducials[stringID]);
+       this->MainViewer->RemoveViewProp(this->DisplayedTextFiducials[stringID]);
        }
      this->DisplayedTextFiducials[stringID]->SetCamera(NULL);
      this->DisplayedTextFiducials[stringID]->SetMapper(NULL);
@@ -1103,9 +1107,9 @@ void vtkSlicerFiducialListWidget::RequestRender()
 //---------------------------------------------------------------------------
 void vtkSlicerFiducialListWidget::Render()
 {
-  if (this->GetViewerWidget())
+  if (this->MainViewer)
     {
-    this->GetViewerWidget()->RequestRender();
+    this->MainViewer->Render();
     }
   this->SetRenderPending(0);
 }
@@ -1137,7 +1141,7 @@ void vtkSlicerFiducialListWidget::UpdateFiducialsFromMRML()
   // Render
   if (this->ViewerWidget != NULL)
     {
-    this->RequestRender();
+    this->ViewerWidget->RequestRender();
     }
 }
 
@@ -1148,12 +1152,6 @@ void vtkSlicerFiducialListWidget::UpdateFiducialListFromMRML(vtkMRMLFiducialList
     {
     vtkWarningMacro("UpdateFiducialListFromMRML: null input list!");
     return;
-    }
-
-  vtkKWRenderWidget *mainViewer = NULL;
-  if (this->GetViewerWidget())
-    {
-    mainViewer = this->GetViewerWidget()->GetMainViewer();
     }
 
   vtkDebugMacro("UpdateFiducialListFromMRML: adding observers to the list");
@@ -1192,6 +1190,7 @@ void vtkSlicerFiducialListWidget::UpdateFiducialListFromMRML(vtkMRMLFiducialList
     int actorExists = 0;
     // a flag set when a point widget is found in the DisplayedPointWidgets map
     int pointWidgetExists = 0;
+
    
     // first get the list's transform node
     vtkMRMLTransformNode* tnode = flist->GetParentTransformNode();
@@ -1290,10 +1289,9 @@ void vtkSlicerFiducialListWidget::UpdateFiducialListFromMRML(vtkMRMLFiducialList
           // no actor, allocate vars and set up the pipeline
           actor = vtkFollower::New();              
           actor->SetMapper ( this->GlyphMapperMap[id] );
-          
-          if (mainViewer)
+          if (this->MainViewer)
             {
-            mainViewer->AddViewProp ( actor );
+            this->MainViewer->AddViewProp ( actor );
             }
           }
         /*
@@ -1404,15 +1402,17 @@ void vtkSlicerFiducialListWidget::UpdateFiducialListFromMRML(vtkMRMLFiducialList
           mapper = vtkPolyDataMapper::New ();
           mapper->SetInput ( glyph2d->GetOutput() );
           actor = vtkFollower::New ( );
-          if (mainViewer && mainViewer->GetRenderer())
+          if (this->MainViewer && 
+              this->MainViewer->GetRenderer() &&
+              this->MainViewer->GetRenderer()->IsActiveCameraCreated())
             {
-            actor->SetCamera(mainViewer->GetRenderer()->GetActiveCamera());
+            actor->SetCamera(this->MainViewer->GetRenderer()->GetActiveCamera());
             }
           actor->SetMapper ( mapper );
           mapper->Delete();
-          if (mainViewer)
+          if (this->MainViewer)
             {
-            mainViewer->AddViewProp ( actor );
+            this->MainViewer->AddViewProp ( actor );
             }
           }
         
@@ -1488,13 +1488,13 @@ void vtkSlicerFiducialListWidget::UpdateFiducialListFromMRML(vtkMRMLFiducialList
       // trigger the renderer so that picking the point widgets will work
       // TODO: figure out the best place to put this, should only need to be
       // called once
-      if (mainViewer)
+      if (this->MainViewer)
         {
-        int rwSizeX = mainViewer->GetRenderWindow()->GetSize()[0];
-        int rwSizeY = mainViewer->GetRenderWindow()->GetSize()[1];
+        int rwSizeX = this->MainViewer->GetRenderWindow()->GetSize()[0];
+        int rwSizeY = this->MainViewer->GetRenderWindow()->GetSize()[1];
         vtkDebugMacro("UpdateFiducialsFromMRML: New fid widget: Updating interactor size to " << rwSizeX << " , " << rwSizeY);
-        mainViewer->GetRenderWindow()->GetInteractor()->UpdateSize(rwSizeX,rwSizeY);
-        pointWidget->SetInteractor(mainViewer->GetRenderWindowInteractor()); 
+        this->MainViewer->GetRenderWindow()->GetInteractor()->UpdateSize(rwSizeX,rwSizeY);
+        pointWidget->SetInteractor(this->MainViewer->GetRenderWindowInteractor()); 
         }
       else
         {
@@ -1533,13 +1533,6 @@ void vtkSlicerFiducialListWidget::UpdateTextActor(vtkMRMLFiducialListNode *flist
     {
     return;
     }
-
-  vtkKWRenderWidget *mainViewer = NULL;
-  if (this->GetViewerWidget())
-    {
-    mainViewer = this->GetViewerWidget()->GetMainViewer();
-    }
-
   // handle text
   // check to see if this fiducial follower has actors in the
   // DisplayedTextFiducials map
@@ -1567,14 +1560,16 @@ void vtkSlicerFiducialListWidget::UpdateTextActor(vtkMRMLFiducialListNode *flist
     textMapper->SetInput ( vtext->GetOutput() );
     
     textActor = vtkFollower::New();
-    if (mainViewer && mainViewer->GetRenderer())
+    if (this->MainViewer && 
+        this->MainViewer->GetRenderer() &&
+        this->MainViewer->GetRenderer()->IsActiveCameraCreated())
       {
-      textActor->SetCamera(mainViewer->GetRenderer()->GetActiveCamera());
+      textActor->SetCamera(this->MainViewer->GetRenderer()->GetActiveCamera());
       }
     textActor->SetMapper(textMapper);
-    if (mainViewer)
+    if (this->MainViewer)
       {
-      mainViewer->AddViewProp ( textActor );
+      this->MainViewer->AddViewProp ( textActor );
       }
     }
   // offset the text string far enough from the glyph so that
@@ -1632,11 +1627,7 @@ void vtkSlicerFiducialListWidget::UpdatePointWidget(vtkMRMLFiducialListNode *fli
   
   std::map< std::string, vtkPointWidget *>::iterator pointIter;
 
-  vtkKWRenderWidget *mainViewer = NULL;
-  if (this->GetViewerWidget())
-    {
-    mainViewer = this->GetViewerWidget()->GetMainViewer();
-    }
+ 
     
   //std::string fidID = flist->GetNthFiducialID(f);
   pointIter = this->DisplayedPointWidgets.find(fidID);
@@ -1664,9 +1655,9 @@ void vtkSlicerFiducialListWidget::UpdatePointWidget(vtkMRMLFiducialListNode *fli
       transformToWorld->MultiplyPoint(xyzw, worldp);
 
       vtkDebugMacro("UpdatePointWidget: setting position for fid #" << f << ", id " << fidID << " to " << worldxyz[0] << ", " << worldxyz[1] << ", " << worldxyz[2]);
-      if (mainViewer)
+      if (this->MainViewer)
         {
-        pointIter->second->SetInteractor(mainViewer->GetRenderWindowInteractor());
+        pointIter->second->SetInteractor(this->MainViewer->GetRenderWindowInteractor());
         }
       // don't need to place it when updating it, just set position
       pointIter->second->SetPosition(worldxyz);
@@ -1708,12 +1699,6 @@ void vtkSlicerFiducialListWidget::RemoveFiducialProps()
     return;
     }
 
-  vtkKWRenderWidget *mainViewer = NULL;
-  if (this->GetViewerWidget())
-    {
-    mainViewer = this->GetViewerWidget()->GetMainViewer();
-    }
-
   vtkDebugMacro("vtkSlicerFiducialListWidget::RemoveFiducialProps: number of displayed fiducials = " << this->DisplayedFiducials.size());
   std::map< std::string, vtkActor *>::iterator iter;
   for(iter=this->DisplayedFiducials.begin(); iter != this->DisplayedFiducials.end(); iter++) 
@@ -1721,9 +1706,9 @@ void vtkSlicerFiducialListWidget::RemoveFiducialProps()
     if (iter->second != NULL)
       {
       // TODO: deal with multiple views
-      if (mainViewer)
+      if (this->MainViewer)
         {
-        mainViewer->RemoveViewProp(iter->second);
+        this->MainViewer->RemoveViewProp(iter->second);
         }
       // if the camera is set, let go of it
       if (vtkFollower::SafeDownCast(iter->second))
@@ -1741,9 +1726,9 @@ void vtkSlicerFiducialListWidget::RemoveFiducialProps()
     {
     if (titer->second != NULL)
       {
-      if (mainViewer)
+      if (this->MainViewer)
         {
-        mainViewer->RemoveViewProp(titer->second);
+        this->MainViewer->RemoveViewProp(titer->second);
         }
       titer->second->SetCamera(NULL);
       titer->second->Delete();
@@ -1974,6 +1959,41 @@ void vtkSlicerFiducialListWidget::SetFiducialDisplayProperty(vtkMRMLFiducialList
 }
 
 //---------------------------------------------------------------------------
+void vtkSlicerFiducialListWidget::UpdateFiducialsCamera()
+{
+  vtkCamera *cam = NULL;
+  if (this->MainViewer && 
+      this->MainViewer->GetRenderer() &&
+      this->MainViewer->GetRenderer()->IsActiveCameraCreated())
+    {
+    cam = this->MainViewer->GetRenderer()->GetActiveCamera();
+    }
+
+  std::map< std::string, vtkFollower *>::iterator fIter;
+  for(fIter = this->DisplayedTextFiducials.begin();
+      fIter != this->DisplayedTextFiducials.end();
+      fIter++) 
+    {
+    if (fIter->second != NULL)
+      {
+      fIter->second->SetCamera(cam);
+      }
+    }
+  
+  std::map< std::string, vtkActor *>::iterator actorIter;
+  for(actorIter = this->DisplayedFiducials.begin();
+      actorIter != this->DisplayedFiducials.end();
+      actorIter++) 
+    {
+    if (actorIter->second != NULL && 
+        vtkFollower::SafeDownCast(actorIter->second))
+      {
+      vtkFollower::SafeDownCast(actorIter->second)->SetCamera(cam);
+      }
+    }
+}
+
+//---------------------------------------------------------------------------
 std::string
 vtkSlicerFiducialListWidget::GetFiducialNodeID (const char *actorid, int &index)
 {
@@ -2037,9 +2057,29 @@ vtkSlicerFiducialListWidget::GetPointWidgetByID (const char *id)
 }
 
 //----------------------------------------------------------------------------
-void vtkSlicerFiducialListWidget::SetViewerWidget ( vtkSlicerViewerWidget *viewerWidget )
+void vtkSlicerFiducialListWidget::SetViewerWidget(
+  vtkSlicerViewerWidget *viewerWidget)
 {
+  if (this->ViewerWidget != NULL &&
+      this->ViewerWidget->HasObserver(
+        vtkSlicerViewerWidget::ActiveCameraChangedEvent, 
+        this->GUICallbackCommand) == 1)
+    {
+    this->InteractorStyle->RemoveObservers(
+      vtkSlicerViewerWidget::ActiveCameraChangedEvent, 
+      (vtkCommand *)this->GUICallbackCommand);
+    }
+
   this->ViewerWidget = viewerWidget;
+  this->SetMainViewer(
+    this->ViewerWidget ? this->ViewerWidget->GetMainViewer() : NULL);
+  
+  if (this->ViewerWidget)
+    {
+    this->ViewerWidget->AddObserver(
+      vtkSlicerViewerWidget::ActiveCameraChangedEvent, 
+      (vtkCommand *)this->GUICallbackCommand);
+    }
 }
 
 //----------------------------------------------------------------------------

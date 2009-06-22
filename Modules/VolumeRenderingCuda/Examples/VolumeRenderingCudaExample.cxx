@@ -310,7 +310,11 @@ void UpdateRenderer(vtkObject *caller, unsigned long eid, void *clientData, void
 {
     if (caller == cb_Animate)
     {
-        renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 0, 500);
+        if (renderWidget->GetRenderer()->IsActiveCameraCreated())
+          {
+          renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 0, 500);
+          }
+
         vals.clear();
         clipRatio = clipStart;
         SetClipRatio(clipRatio);
@@ -357,9 +361,12 @@ void StartRender(vtkObject* caller, unsigned long eid, void* clientData, void* c
     //cout << renderWidget->GetRenderer()->GetSize()[0] << "x" << renderWidget->GetRenderer()->GetSize()[1] << endl; 
     if (cb_Animate->GetSelectedState() == 1)
     {
+    if (renderWidget->GetRenderer()->IsActiveCameraCreated())
+      {
         renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500+ sin((float)vals.size()/5.0) * 100,
             500, 
             500 +cos((float)vals.size()/5.0) * 100);
+      }
     }
     if (++frameNumber == readers.size())
         frameNumber = 0;
@@ -636,9 +643,12 @@ int my_main(int argc, char *argv[])
     cb_Animate2->AddObserver(vtkKWCheckButton::SelectedStateChangedEvent, (vtkCommand*)GUICallbackCommand);
 
 
-    renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 500, 500);
-    renderWidget->GetRenderer()->GetActiveCamera()->SetClippingRange(100, 1000);
-    renderWidget->GetRenderer()->GetActiveCamera()->ParallelProjectionOff();
+    if (renderWidget->GetRenderer()->IsActiveCameraCreated())
+      {
+      renderWidget->GetRenderer()->GetActiveCamera()->SetPosition(500, 500, 500);
+      renderWidget->GetRenderer()->GetActiveCamera()->SetClippingRange(100, 1000);
+      renderWidget->GetRenderer()->GetActiveCamera()->ParallelProjectionOff();
+      }
 
     vtkInteractorStyle* interactorStyle = vtkInteractorStyleTrackballCamera::New();
     renderWidget->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
