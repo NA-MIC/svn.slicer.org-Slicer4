@@ -90,17 +90,9 @@ SET ( FILTER_SRCS
 ADD_LIBRARY( ${LIB_NAME} ${FILTER_SRCS} )
 
 TARGET_LINK_LIBRARIES(${LIB_NAME}
-  vtkCommonTCL
-  vtkImagingTCL
-  vtkFilteringTCL
-  vtkIOTCL
-  vtkRendering
-  ITKCommon
-  ITKBasicFilters
-  ITKIO
-  ITKAlgorithms
-  mimxCommon
   ${KWWidgets_LIBRARIES}
+  ${ITK_LIBRARIES}
+  mimxCommon
   )
 
 install(TARGETS ${LIB_NAME}
