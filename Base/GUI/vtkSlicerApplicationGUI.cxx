@@ -1900,8 +1900,8 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
     return;
     }
 
-    vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
-    vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
+  vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
+  vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
       
   // Create 3D viewer for the view nodes
       
@@ -1934,8 +1934,14 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
     }
 
   // Remove 3D viewers that have no nodes
+  // First pass, remove them from the pool so that they are not found
+  // by GetActiveViewerWidget; they still exist so that their
+  // reference count can go down as they get released by the fiducials or
+  // ROI below. The second pass will delete them later in this method.
 
-  int nb_removed = 0, done;
+  vtkSlicerApplicationGUIInternals::ViewerWidgetContainerType 
+    view_widget_to_delete;
+  int done;
   do
     {
     done = 1;
@@ -1949,17 +1955,15 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
       if (viewer_widget && 
           view_nodes.find(viewer_widget->GetViewNode()) == view_nodes.end())
         {
+        view_widget_to_delete.push_back(viewer_widget);
         viewer_widget->RemoveMRMLObservers();
-        viewer_widget->SetApplicationLogic(NULL);
-        viewer_widget->SetParent(NULL);
-        viewer_widget->Delete();
         this->Internals->ViewerWidgets.erase(it);
-        ++nb_removed;
         done = 0;
         break;
         }
       }
     } while (!done);
+
 
   // Add the fiducial list widget
 
@@ -1983,7 +1987,8 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
     events->Delete();
     }
 
-    // add the roi widget
+  // Add the roi widget
+
   if (!this->ROIViewerWidget)
     {
     this->ROIViewerWidget = vtkSlicerROIViewerWidget::New();
@@ -1992,10 +1997,29 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
     this->ROIViewerWidget->Create();
     }
 
+  // Update the dependencies. Order is important, leave it here, so that
+  // reference counts can go down (viewer widgets get partly release here).
+
   this->UpdateActiveViewerWidgetDependencies(this->GetActiveViewerWidget());
+
+  // Remove 3D viewers that have no nodes
+  // Second pass delete them
+
+  vtkSlicerApplicationGUIInternals::ViewerWidgetContainerType::iterator it = 
+    view_widget_to_delete.begin();
+  vtkSlicerApplicationGUIInternals::ViewerWidgetContainerType::iterator end = 
+    view_widget_to_delete.end();
+  for (; it != end; ++it)
+    {
+    vtkSlicerViewerWidget *viewer_widget = (*it);
+    viewer_widget->SetApplicationLogic(NULL);
+    viewer_widget->SetParent(NULL);
+    viewer_widget->Delete();
+    }
 
   // No 3D view node, let's add one for convenience
 
+  nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLViewNode");
   if (!nnodes)
     {
     vtkMRMLViewNode *view_node = vtkMRMLViewNode::New();
@@ -2034,11 +2058,10 @@ void vtkSlicerApplicationGUI::OnViewNodeRemoved(vtkMRMLViewNode *view_node)
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerApplicationGUI::UpdateActiveViewerWidgetDependencies(vtkSlicerViewerWidget *active_viewer)
+void vtkSlicerApplicationGUI::UpdateActiveViewerWidgetDependencies(
+  vtkSlicerViewerWidget *active_viewer)
 {
   this->FiducialListWidget->SetViewerWidget(active_viewer);
-  this->FiducialListWidget->SetMainViewer(
-    active_viewer ? active_viewer->GetMainViewer() : NULL);
   this->FiducialListWidget->SetInteractorStyle(active_viewer ? vtkSlicerViewerInteractorStyle::SafeDownCast(active_viewer->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()) : NULL);
   this->FiducialListWidget->UpdateFromMRML();
   
