@@ -18,11 +18,20 @@
 vtkStandardNewMacro (vtkSlicerCamerasGUI );
 vtkCxxRevisionMacro ( vtkSlicerCamerasGUI, "$Revision: 1.0 $");
 
+//----------------------------------------------------------------------------
+class vtkSlicerCamerasGUIInternals
+{
+public:
+  vtksys_stl::string ScheduleUpdateCameraSelectorTimerId;
+};
+
 //---------------------------------------------------------------------------
 vtkSlicerCamerasGUI::vtkSlicerCamerasGUI ( )
 {
+  this->Internals = new vtkSlicerCamerasGUIInternals;
+
   this->ViewSelectorWidget = NULL;
-    this->CameraSelectorWidget = NULL;
+  this->CameraSelectorWidget = NULL;
 }
 
 //---------------------------------------------------------------------------
@@ -41,6 +50,9 @@ vtkSlicerCamerasGUI::~vtkSlicerCamerasGUI ( )
     this->CameraSelectorWidget->SetParent(NULL );
     this->CameraSelectorWidget->Delete ( );
     }
+
+  delete this->Internals;
+  this->Internals = NULL;
 }
 
 //---------------------------------------------------------------------------
@@ -56,7 +68,7 @@ void vtkSlicerCamerasGUI::RemoveGUIObservers ( )
 {
   this->ViewSelectorWidget->RemoveObservers(
     vtkSlicerNodeSelectorWidget::NodeSelectedEvent, 
-                                            (vtkCommand *)this->GUICallbackCommand );
+    (vtkCommand *)this->GUICallbackCommand );
 
   this->ViewSelectorWidget->RemoveObservers(
     vtkSlicerNodeSelectorWidget::NodeAddedEvent, 
@@ -68,8 +80,15 @@ void vtkSlicerCamerasGUI::RemoveGUIObservers ( )
 
   this->CameraSelectorWidget->RemoveObservers(
     vtkSlicerNodeSelectorWidget::NodeAddedEvent, 
-                                             (vtkCommand *)this->GUICallbackCommand );
+    (vtkCommand *)this->GUICallbackCommand );
 
+  this->GetMRMLScene()->RemoveObservers(
+    vtkMRMLScene::NodeAddedEvent, 
+    (vtkCommand *)this->GUICallbackCommand );
+
+  this->GetMRMLScene()->RemoveObservers(
+    vtkMRMLScene::NodeRemovedEvent, 
+    (vtkCommand *)this->GUICallbackCommand );
 }
 
 //---------------------------------------------------------------------------
@@ -77,11 +96,11 @@ void vtkSlicerCamerasGUI::AddGUIObservers ( )
 {
   this->ViewSelectorWidget->AddObserver(
     vtkSlicerNodeSelectorWidget::NodeSelectedEvent, 
-                                        (vtkCommand *)this->GUICallbackCommand );
+    (vtkCommand *)this->GUICallbackCommand );
 
   this->ViewSelectorWidget->AddObserver(
     vtkSlicerNodeSelectorWidget::NodeAddedEvent, 
-                                             (vtkCommand *)this->GUICallbackCommand );
+    (vtkCommand *)this->GUICallbackCommand );
 
   this->CameraSelectorWidget->AddObserver(
     vtkSlicerNodeSelectorWidget::NodeSelectedEvent, 
@@ -90,12 +109,35 @@ void vtkSlicerCamerasGUI::AddGUIObservers ( )
   this->CameraSelectorWidget->AddObserver(
     vtkSlicerNodeSelectorWidget::NodeAddedEvent, 
     (vtkCommand *)this->GUICallbackCommand);
+
+  // Listen to the scene so that we can listen to camera node when their
+  // ActiveTag is modified.
+
+  this->GetMRMLScene()->AddObserver(
+    vtkMRMLScene::NodeAddedEvent, 
+    (vtkCommand *)this->GUICallbackCommand );
+
+  this->GetMRMLScene()->AddObserver(
+    vtkMRMLScene::NodeRemovedEvent, 
+    (vtkCommand *)this->GUICallbackCommand );
+
+  // Listen to camera node that have been created before we were even created
+
+  std::vector<vtkMRMLNode*> snodes;
+  int nnodes = 
+    this->GetMRMLScene()->GetNodesByClass("vtkMRMLCameraNode", snodes);
+  for (int n = 0; n < nnodes; n++)
+    {
+    vtkMRMLCameraNode *node = vtkMRMLCameraNode::SafeDownCast(snodes[n]);
+    node->AddObserver(vtkMRMLCameraNode::ActiveTagModifiedEvent, 
+                      this->GUICallbackCommand);
+    }
 }
 
 //---------------------------------------------------------------------------
 void vtkSlicerCamerasGUI::ProcessGUIEvents(
   vtkObject *caller,
-                                             unsigned long event, void *callData )
+  unsigned long event, void *callData )
 {
   if (this->ViewSelectorWidget == 
       vtkSlicerNodeSelectorWidget::SafeDownCast(caller))
@@ -107,32 +149,11 @@ void vtkSlicerCamerasGUI::ProcessGUIEvents(
       if (added_view_node)
         {
         added_view_node->SetActive(1);
-      }
-    }
-    else if (event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent)
-    {
-      vtkMRMLViewNode *selected_view_node = 
-        vtkMRMLViewNode::SafeDownCast(this->ViewSelectorWidget->GetSelected());
-      // We selected a new view, then update the camera selector to
-      // reflect which camera this view is using.
-      vtkMRMLCameraNode *found_camera_node = NULL;
-      std::vector<vtkMRMLNode*> snodes;
-      int nnodes = this->GetMRMLScene()->GetNodesByClass(
-        "vtkMRMLCameraNode", snodes);
-      for (int n = 0; n < nnodes; n++)
-        {
-        vtkMRMLCameraNode *camera_node = 
-          vtkMRMLCameraNode::SafeDownCast(snodes[n]);
-        if (camera_node && 
-            camera_node->GetActiveTag() && 
-            !strcmp(camera_node->GetActiveTag(), 
-                    selected_view_node->GetName()))
-          {
-          found_camera_node = camera_node;
-          break;
-          }
         }
-      this->CameraSelectorWidget->SetSelected(found_camera_node);
+      }
+    else if (event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent)
+      {
+      this->UpdateCameraSelector();
       }
     }
 
@@ -161,12 +182,101 @@ void vtkSlicerCamerasGUI::ProcessGUIEvents(
         }
       }
     }
-} 
+
+  // Listen to the scene so that we can listen to camera node when their
+  // ActiveTag is modified.
+
+  if (this->GetMRMLScene() == vtkMRMLScene::SafeDownCast(caller))
+    {
+    vtkMRMLNode *node = (vtkMRMLNode*) (callData);
+    if (node != NULL && node->IsA("vtkMRMLCameraNode"))
+      {
+      if (event == vtkMRMLScene::NodeAddedEvent)
+        {
+        node->AddObserver(vtkMRMLCameraNode::ActiveTagModifiedEvent, 
+                          this->GUICallbackCommand);
+        }
+      else if (event == vtkMRMLScene::NodeRemovedEvent)
+        {
+        node->RemoveObservers(vtkMRMLCameraNode::ActiveTagModifiedEvent, 
+                              this->GUICallbackCommand);
+        }
+      }
+    }
+
+  // ActiveTag modified, update the menus...
+
+  vtkMRMLCameraNode *cam_node = vtkMRMLCameraNode::SafeDownCast(caller);
+  if (cam_node && event == vtkMRMLCameraNode::ActiveTagModifiedEvent)
+    {
+    // Call UpdateCameraSelector asynchronously. We do not want to do that
+    // while ActiveTag are being reshuffled, since we may call
+    // this->CameraSelectorWidget->SetSelected and there is no way to prevent
+    // it from invoking an event and changing an ActiveTag... 
+    this->ScheduleUpdateCameraSelector();
+    }
+}
 
 //---------------------------------------------------------------------------
 void vtkSlicerCamerasGUI::UpdateCameraSelector()
 {
   this->CameraSelectorWidget->UpdateMenu();
+
+  // Update the camera selector to reflect which 
+  // camera the selected view is using.
+
+  if (this->ViewSelectorWidget)
+    {
+    vtkMRMLViewNode *selected_view_node = 
+      vtkMRMLViewNode::SafeDownCast(this->ViewSelectorWidget->GetSelected());
+    if (selected_view_node)
+      {
+      vtkMRMLCameraNode *found_camera_node = NULL;
+      std::vector<vtkMRMLNode*> snodes;
+      int nnodes = this->GetMRMLScene()->GetNodesByClass(
+        "vtkMRMLCameraNode", snodes);
+      for (int n = 0; n < nnodes; n++)
+        {
+        vtkMRMLCameraNode *camera_node = 
+          vtkMRMLCameraNode::SafeDownCast(snodes[n]);
+        if (camera_node && 
+            camera_node->GetActiveTag() && 
+            !strcmp(camera_node->GetActiveTag(), selected_view_node->GetName()))
+          {
+          found_camera_node = camera_node;
+          break;
+          }
+        }
+      this->CameraSelectorWidget->SetSelected(found_camera_node);
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerCamerasGUI::ScheduleUpdateCameraSelector()
+{
+  // Already scheduled
+
+  if (this->Internals->ScheduleUpdateCameraSelectorTimerId.size())
+    {
+    return;
+    }
+
+  this->Internals->ScheduleUpdateCameraSelectorTimerId =
+    this->Script(
+    "after 500 {catch {%s UpdateCameraSelectorCallback}}", this->GetTclName());
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerCamerasGUI::UpdateCameraSelectorCallback()
+{
+  if (!this->GetApplication() || this->GetApplication()->GetInExit())
+    {
+    return;
+    }
+
+  this->UpdateCameraSelector();
+  this->Internals->ScheduleUpdateCameraSelectorTimerId = "";
 }
 
 //---------------------------------------------------------------------------
@@ -178,21 +288,21 @@ void vtkSlicerCamerasGUI::UpdateViewSelector()
 //---------------------------------------------------------------------------
 void vtkSlicerCamerasGUI::ProcessMRMLEvents(
   vtkObject *caller,
-                                              unsigned long event, void *callData )
+  unsigned long event, void *callData )
 {
-    // Fill in
+  // Fill in
 }
 
 //---------------------------------------------------------------------------
 void vtkSlicerCamerasGUI::Enter ( )
 {
-    // Fill in
+  // Fill in
 }
 
 //---------------------------------------------------------------------------
 void vtkSlicerCamerasGUI::Exit ( )
 {
-    // Fill in
+  // Fill in
 }
 
 //---------------------------------------------------------------------------
@@ -294,8 +404,3 @@ void vtkSlicerCamerasGUI::BuildGUI ( )
   this->UpdateViewSelector();
   this->UpdateCameraSelector();
 }
-
-
-
-
-

@@ -11,6 +11,7 @@
 class vtkMRMLCameraNode;
 class vtkSlicerNodeSelectorWidget;
 class vtkKWCheckButton;
+class vtkSlicerCamerasGUIInternals;
 
 // Description:
 // This class implements Slicer's Camera GUI
@@ -48,8 +49,13 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerCamerasGUI : public vtkSlicerModuleGUI
 
     // Description:
     // Update selectors
-    void UpdateViewSelector();
-    void UpdateCameraSelector();
+    virtual void UpdateViewSelector();
+    virtual void UpdateCameraSelector();
+    virtual void ScheduleUpdateCameraSelector();
+
+    // Description:
+    // Callbacks
+    virtual void UpdateCameraSelectorCallback();
 
  protected:
     vtkSlicerCamerasGUI ( );
@@ -57,6 +63,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerCamerasGUI : public vtkSlicerModuleGUI
     
     vtkSlicerNodeSelectorWidget *CameraSelectorWidget;
     vtkSlicerNodeSelectorWidget *ViewSelectorWidget;
+
+  // PIMPL Encapsulation for STL containers
+  //BTX
+  vtkSlicerCamerasGUIInternals *Internals;
+  //ETX
 
  private:
     vtkSlicerCamerasGUI ( const vtkSlicerCamerasGUI& ); // Not implemented.
