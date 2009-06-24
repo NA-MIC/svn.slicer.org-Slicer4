@@ -62,6 +62,9 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
   vtkGetObjectMacro( RegistrationMatrix, vtkMatrix4x4);
   vtkSetObjectMacro( RegistrationMatrix, vtkMatrix4x4);
 
+  vtkGetObjectMacro( RASToIJKMatrix, vtkMatrix4x4);
+  vtkSetObjectMacro( RASToIJKMatrix, vtkMatrix4x4);
+
   vtkGetObjectMacro( ImageDataCT, vtkImageData);
   vtkSetObjectMacro( ImageDataCT, vtkImageData);
 
@@ -117,6 +120,7 @@ class VTK_ENDONAV_EXPORT vtkIGTLToViewerTransform : public vtkIGTLToMRMLBase
   vtkMatrix4x4 *SensorMatrix;
   vtkMatrix4x4 *CalibrationMatrix;
   vtkMatrix4x4 *RegistrationMatrix;
+  vtkMatrix4x4 *RASToIJKMatrix;
   
 };
 

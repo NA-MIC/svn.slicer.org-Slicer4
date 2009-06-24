@@ -1269,8 +1269,8 @@ void vtkEndoNavGUI::BuildGUI ( )
   this->ImageViewerUS->SetColorLevel (127.5);
 
   this->ImageViewerCT = vtkImageViewer::New();
-  this->ImageViewerCT->SetColorWindow( 256);
-  this->ImageViewerCT->SetColorLevel (127.5);
+  this->ImageViewerCT->SetColorWindow( 350);
+  this->ImageViewerCT->SetColorLevel (40);
 
 
   this->ImageConverter = vtkIGTLToViewerImage::New();

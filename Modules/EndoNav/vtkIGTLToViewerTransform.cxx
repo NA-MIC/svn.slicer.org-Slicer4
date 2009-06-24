@@ -40,7 +40,7 @@ vtkIGTLToViewerTransform::vtkIGTLToViewerTransform()
   this->SensorTransformNodeName = "EnodNavSensor";
   this->RegistrationTransformNodeName = "EnodNavRegistration";
   this->CalibrationTransformNodeName = "EnodNavCalibration";
-  this->CTVolumeNodeName = "EnodNavCTVolume";
+  this->CTVolumeNodeName = "EndoNavCTVolume";
 
   this->SensorMatrix = vtkMatrix4x4::New();
   this->SensorMatrix->Identity();
@@ -50,6 +50,10 @@ vtkIGTLToViewerTransform::vtkIGTLToViewerTransform()
 
   this->RegistrationMatrix = vtkMatrix4x4::New();
   this->RegistrationMatrix->Identity();
+
+  this->RASToIJKMatrix  = vtkMatrix4x4::New();
+  this->RASToIJKMatrix->Identity();
+
 }
 
 
@@ -67,6 +71,10 @@ vtkIGTLToViewerTransform::~vtkIGTLToViewerTransform()
   if (this->SensorMatrix)
     {
     this->SensorMatrix->Delete();
+    }
+  if (this->RASToIJKMatrix)
+    {
+    this->RASToIJKMatrix->Delete();
     }
   if (this->Reslice)
     {
@@ -133,6 +141,7 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
     return 0;
     }
 
+
   // find CT image
   if (this->ImageDataCT == NULL)
     {
@@ -153,9 +162,10 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
         this->Reslice->SetOutputDimensionality(2);
         //this->Reslice->SetOutputExtent(0,dims[0]-1,0,dims[1]-1,0,1);
 
-        nodes->Delete();
+        vnode->GetRASToIJKMatrix(this->RASToIJKMatrix);
         }
       }
+      nodes->Delete();
     }
 
   vtkMRMLLinearTransformNode* transformNode = 
@@ -177,12 +187,6 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
   float py = matrix[1][3];
   float pz = matrix[2][3];
 
-  //std::cerr << "\n\nmatrix = " << std::endl;
-  //std::cerr << tx << ", " << ty << ", " << tz << std::endl;
-  //std::cerr << sx << ", " << sy << ", " << sz << std::endl;
-  //std::cerr << nx << ", " << ny << ", " << nz << std::endl;
-  //std::cerr << px << ", " << py << ", " << pz << std::endl;
-  
   // set volume orientation
   vtkMatrix4x4* transform = vtkMatrix4x4::New();
   vtkMatrix4x4* transformToParent = transformNode->GetMatrixTransformToParent();
@@ -242,8 +246,8 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
           {
           // TODO combine properly calib, reg and sensor matrix
           vtkMatrix4x4 *mat = vtkMatrix4x4::New();
-          vtkMatrix4x4::Multiply4x4(CalibrationMatrix, RegistrationMatrix, mat);
-          vtkMatrix4x4::Multiply4x4(mat, SensorMatrix, transform);
+          vtkMatrix4x4::Multiply4x4(RegistrationMatrix, SensorMatrix, mat);
+          vtkMatrix4x4::Multiply4x4(mat, CalibrationMatrix, transform);
 
           prop->SetUserMatrix(transform);
           this->Viewer->GetMainViewer()->Render();
@@ -253,6 +257,7 @@ int vtkIGTLToViewerTransform::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkM
             {
             vtkGeneralTransform *xform = vtkGeneralTransform::New();
             xform->Identity();
+            xform->Concatenate(this->RASToIJKMatrix);
             xform->Concatenate(transform);
             this->Reslice->SetResliceTransform (xform);
             this->Reslice->Update();
