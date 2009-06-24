@@ -265,7 +265,7 @@ void vtkKWMimxMainWindow::RemoveOrientationAxis()
        this->AxesRenderer->InteractiveOff();
        this->RenderWidget->GetRenderer()->SetLayer(0);
        this->AxesRenderer->SetLayer(1);
-      // this->RenderWidget->GetRenderer()->RemoveObserver(this->CallbackCommand);
+       this->RenderWidget->GetRenderer()->RemoveObserver(this->CallbackCommand);
        this->RenderWidget->GetRenderWindow()->RemoveRenderer(this->AxesRenderer);
        this->RenderWidget->Render();
    }
