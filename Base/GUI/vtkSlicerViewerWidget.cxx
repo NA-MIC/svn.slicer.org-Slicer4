@@ -630,11 +630,11 @@ void vtkSlicerViewerWidget::ProcessMRMLEvents ( vtkObject *caller,
         {
         camera_node = vtkMRMLCameraNode::SafeDownCast(
           this->MRMLScene->GetNthNodeByClass(0, "vtkMRMLCameraNode"));
-        camera_node->SetActiveTag(this->ViewNode->GetName());
+        camera_node->SetActiveTag(this->ViewNode->GetID());
         }
       else if (!camera_node->GetActiveTag())
         {
-        camera_node->SetActiveTag(this->ViewNode->GetName());
+        camera_node->SetActiveTag(this->ViewNode->GetID());
         }
       }
     this->UpdateFromMRML();
@@ -809,20 +809,20 @@ void vtkSlicerViewerWidget::UpdateCameraNode()
   vtkMRMLCameraNode *camera_node = NULL;
   if (this->ViewNode && this->ViewNode->GetName())
     {
-  std::vector<vtkMRMLNode *> cnodes;
-  int nnodes = this->MRMLScene->GetNodesByClass("vtkMRMLCameraNode", cnodes);
+    std::vector<vtkMRMLNode *> cnodes;
+    int nnodes = this->MRMLScene->GetNodesByClass("vtkMRMLCameraNode", cnodes);
     vtkMRMLCameraNode *node = NULL;
-  for (int n=0; n<nnodes; n++)
-    {
-    node = vtkMRMLCameraNode::SafeDownCast (cnodes[n]);
+    for (int n=0; n<nnodes; n++)
+      {
+      node = vtkMRMLCameraNode::SafeDownCast (cnodes[n]);
       if (node &&
           node->GetActiveTag() && 
-          !strcmp(node->GetActiveTag(), this->ViewNode->GetName()))
-      {
+          !strcmp(node->GetActiveTag(), this->ViewNode->GetID()))
+        {
         camera_node = node;
-      break;
+        break;
+        }
       }
-    }
     }
 
   //  if (this->CameraNode != NULL && 
@@ -845,7 +845,7 @@ void vtkSlicerViewerWidget::UpdateCameraNode()
     camera_node->SetName(
       this->MRMLScene->GetUniqueNameByString(camera_node->GetNodeTagName()));
     camera_node->SetActiveTag(
-      this->ViewNode ? this->ViewNode->GetName() : NULL);
+      this->ViewNode ? this->ViewNode->GetID() : NULL);
     this->MRMLScene->AddNode(camera_node);
     camera_node->Delete();
     }

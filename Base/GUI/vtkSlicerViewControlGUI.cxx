@@ -4006,7 +4006,7 @@ vtkMRMLCameraNode *vtkSlicerViewControlGUI::GetActiveCamera()
         vtkMRMLCameraNode *node = vtkMRMLCameraNode::SafeDownCast(cnodes[n]);
         if (node &&
             node->GetActiveTag() && 
-            !strcmp(node->GetActiveTag(), vn->GetName()))
+            !strcmp(node->GetActiveTag(), vn->GetID()))
       {
           return node;
           }

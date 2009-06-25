@@ -19,8 +19,8 @@
 #define __vtkMRMLCameraNode_h
 
 #include "vtkMRML.h"
+#include "vtkMRMLScene.h"
 #include "vtkMRMLNode.h"
-
 #include "vtkCamera.h"
 
 class VTK_MRML_EXPORT vtkMRMLCameraNode : public vtkMRMLNode
@@ -56,7 +56,7 @@ public:
   // Description:
   // Set the camera active tag, i.e. the tag for which object (view) this
   // camera is active.
-  vtkGetStringMacro(ActiveTag);
+  const char* GetActiveTag();
   virtual void SetActiveTag(const char *);
 
   // Description:
@@ -148,6 +148,15 @@ public:
   };
   //ETX
 
+  // Description:
+  // Updates this node if it depends on other nodes 
+  // when the node is deleted in the scene
+  virtual void UpdateReferences();
+
+  // Description:
+  // Update the stored reference to another node in the scene
+  virtual void UpdateReferenceID(const char *oldID, const char *newID);
+
 protected:
   vtkMRMLCameraNode();
   ~vtkMRMLCameraNode();
@@ -159,9 +168,10 @@ protected:
   void SetAndObserveCamera(vtkCamera *camera);
   vtkCamera *Camera;
 
-  void RemoveActiveTagInScene(const char *tag);
   vtkMRMLCameraNode* FindActiveTagInScene(const char *tag);
-  char *ActiveTag;
+
+  vtkSetReferenceStringMacro(InternalActiveTag);
+  char *InternalActiveTag;
 };
 
 #endif

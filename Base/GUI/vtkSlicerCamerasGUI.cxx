@@ -177,7 +177,7 @@ void vtkSlicerCamerasGUI::ProcessGUIEvents(
             this->ViewSelectorWidget->GetSelected());
         if (selected_view_node)
           {
-          selected_camera_node->SetActiveTag(selected_view_node->GetName());
+          selected_camera_node->SetActiveTag(selected_view_node->GetID());
           }
         }
       }
@@ -241,7 +241,7 @@ void vtkSlicerCamerasGUI::UpdateCameraSelector()
           vtkMRMLCameraNode::SafeDownCast(snodes[n]);
         if (camera_node && 
             camera_node->GetActiveTag() && 
-            !strcmp(camera_node->GetActiveTag(), selected_view_node->GetName()))
+            !strcmp(camera_node->GetActiveTag(), selected_view_node->GetID()))
           {
           found_camera_node = camera_node;
           break;
