@@ -45,22 +45,29 @@
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkDiscreteGaussianImageFilter.h"
+#include "itkSmoothingRecursiveGaussianImageFilter.h"
+#include "itkResampleImageFilter.h"
 
 #include <fstream>
+#include <sstream>
 
-typedef NormalizedCorrelationCostFunction3D<double> TCostFunction;
+#define Precision float
+
+typedef itk::OrientedImage<Precision, 3> Image;
+typedef Image::Pointer ImagePointer;
+typedef Image::RegionType ImageRegion;
+typedef Image::IndexType ImageIndex;
+typedef Image::PointType ImagePoint;
+typedef Image::SpacingType ImageSpacing;
+typedef Image::SizeType ImageSize;
+typedef ImageIndex::IndexValueType IndexValue;
+
+typedef NormalizedCorrelationCostFunction3D<Precision, Image> TCostFunction;
 
 
 typedef TCostFunction::TParametric TParametric;
 typedef TCostFunction::TControlPoint TControlPoint;
 typedef TCostFunction::TControlMesh TControlMesh;
-
-typedef TCostFunction::Image Image;
-typedef TCostFunction::ImagePointer ImagePointer;
-typedef Image::RegionType ImageRegion;
-typedef Image::IndexType ImageIndex;
-typedef Image::SizeType ImageSize;
-typedef ImageIndex::IndexValueType IndexValue;
 
 typedef itk::ImageFileReader<Image> ImageReader;
 typedef ImageReader::Pointer ImageReaderPointer;
@@ -71,14 +78,55 @@ typedef itk::ImageFileWriter<Image> ImageWriter;
 typedef itk::RescaleIntensityImageFilter<Image> RescaleFilter;
 typedef RescaleFilter::Pointer RescaleFilterPointer;
 
-typedef itk::DiscreteGaussianImageFilter<Image, Image> GaussianImageFilter;
-typedef GaussianImageFilter::Pointer GaussianImageFilterPointer;
-
 typedef itk::ImageFileReader<Image> ImageReader;
 typedef ImageReader::Pointer ImageReaderPointer;
 
 typedef itk::ImageFileWriter<Image> ImageWriter;
 typedef ImageWriter::Pointer ImageWriterPointer;
+typedef itk::SmoothingRecursiveGaussianImageFilter<Image, Image> GaussianImageFilter;
+typedef GaussianImageFilter::Pointer GaussianImageFilterPointer;
+
+//typedef itk::DiscreteGaussianImageFilter<Image, Image> GaussianImageFilter;
+//typedef GaussianImageFilter::Pointer GaussianImageFilterPointer;
+
+typedef itk::ResampleImageFilter<Image, Image> ResampleFilter;
+typedef ResampleFilter::Pointer ResampleFilterPointer;
+    
+typedef Image::PointType ImagePoint;
+
+
+
+//Create image pyramid
+ImagePointer *downsample(ImagePointer im, int nres, Precision sigma){
+  ImagePointer *pyramid = new ImagePointer[nres];
+  pyramid[0] = im; 
+  //Downsample
+  for(int i=1; i<nres; i++){
+    GaussianImageFilterPointer smooth = GaussianImageFilter::New();
+    smooth->SetSigma(sigma);
+    smooth->SetInput(pyramid[i-1]);
+    smooth->Update();
+
+    ResampleFilterPointer downsample = ResampleFilter::New();
+    downsample->SetInput(smooth->GetOutput());
+                
+    ImageSize size = pyramid[i-1]->GetLargestPossibleRegion().GetSize();
+    ImageSpacing spacing = pyramid[i-1]->GetSpacing();
+    for(unsigned int n = 0; n < size.GetSizeDimension(); n++){
+      size[n] = size[n]/2;
+      spacing[n] = spacing[n]*2;
+    }
+    downsample->UseReferenceImageOff();
+    downsample->SetOutputOrigin(pyramid[i-1]->GetOrigin()); 
+    downsample->SetOutputDirection(pyramid[i-1]->GetDirection());
+    downsample->SetOutputSpacing(spacing); 
+    downsample->SetSize(size);
+
+    downsample->Update();
+    pyramid[i] = downsample->GetOutput();    
+  }
+  return pyramid;
+};
 
 ImageRegion findBoundingBox(ImagePointer maskImage){
 
@@ -128,10 +176,38 @@ ImageRegion findBoundingBox(ImagePointer maskImage){
   return bounds;
 }
 
+//Compute region for registration
+ImageRegion computeRegion(ImagePointer image){  
+  
+  //Find bounding box
+  ImageRegion region = findBoundingBox(image); 
+
+  //Add 10 pixels to region
+  ImageRegion largest = image->GetLargestPossibleRegion();
+  ImageIndex lIndex = largest.GetIndex();
+  ImageSize lSize = largest.GetSize();
+
+  ImageIndex rIndex = region.GetIndex();
+  ImageSize rSize = region.GetSize();
+  for(int i=0; i<3; i++){
+    rIndex[i] -= 10;
+    if(lIndex[i] > rIndex[i]){
+      rIndex[i] = lIndex[i];
+    }
+    rSize[i] += 10;
+    if(rSize[i] > lSize[i]){
+      rSize[i] = lSize[i];
+    }
+  }
+  return region;
+}
 
 template<class T> int DoIt( int argc, char * argv[], T )
 {
   PARSE_ARGS;
+
+
+
 
   //Read Input Image
   ImageReaderPointer fixedImageReader = ImageReader::New();
@@ -141,140 +217,253 @@ template<class T> int DoIt( int argc, char * argv[], T )
   fixedRescaleFilter->SetOutputMaximum(1);
   fixedRescaleFilter->SetOutputMinimum(0);
   fixedRescaleFilter->Update();
-  GaussianImageFilterPointer gaussian1 = GaussianImageFilter::New();
-  gaussian1->SetInput(fixedRescaleFilter->GetOutput());
-  gaussian1->SetVariance(sigma*sigma);
-  gaussian1->Update();
-  ImagePointer fixedImage = gaussian1->GetOutput();
+  ImagePointer fixedImage = fixedRescaleFilter->GetOutput();
 
 
 
   ImageReaderPointer movingImageReader = ImageReader::New();
   movingImageReader->SetFileName( MovingImageFileName.c_str() );
+  movingImageReader->Update();
+  ImagePointer movingOrig = movingImageReader->GetOutput();
+
   RescaleFilterPointer movingRescaleFilter = RescaleFilter::New();
-  movingRescaleFilter->SetInput(movingImageReader->GetOutput());
+  movingRescaleFilter->SetInput(movingOrig);
   movingRescaleFilter->SetOutputMaximum(1);
   movingRescaleFilter->SetOutputMinimum(0);
   movingRescaleFilter->Update();
-  GaussianImageFilterPointer gaussian2 = GaussianImageFilter::New();
-  gaussian2->SetInput(movingRescaleFilter->GetOutput());
-  gaussian2->SetVariance(sigma*sigma);
-  gaussian2->Update();
-  ImagePointer movingImage = gaussian2->GetOutput();
+  ImagePointer movingImage = movingRescaleFilter->GetOutput();
 
+
+  //TODO mask support
   ImageReaderPointer maskImageReader = ImageReader::New();
   maskImageReader->SetFileName( MovingImageFileName.c_str() );
   maskImageReader->Update();
   ImagePointer maskImage = maskImageReader->GetOutput();
-  // typedefs
-
-  
-  // Reorient to axials to avoid issues with registration metrics not
-  // transforming image gradients with the image orientation in
-  // calculating the derivative of metric wrt transformation
-  // parameters.
-  //
-  // Forcing image to be axials avoids this problem. Note, that
-  // reorientation only affects the internal mapping from index to
-  // physical coordinates.  The reoriented data spans the same
-  // physical space as the original data.  Thus, the registration
-  // transform calculated on the reoriented data is also the
-  // transform forthe original un-reoriented data. 
-  //
-  typedef itk::OrientImageFilter<Image,Image> OrientFilterType;
-  typename OrientFilterType::Pointer fixedOrient = OrientFilterType::New();
-  typename OrientFilterType::Pointer movingOrient = OrientFilterType::New();
-
-  fixedOrient->UseImageDirectionOn();
-  fixedOrient->SetDesiredCoordinateOrientationToAxial();
-  fixedOrient->SetInput (fixedImage);
-
-  movingOrient->UseImageDirectionOn();
-  movingOrient->SetDesiredCoordinateOrientationToAxial();
-  movingOrient->SetInput (movingImage);
 
 
-  // TODO: add the mask image support from Register.cxx (and add universally)
-
-  // Add a time probe
   itk::TimeProbesCollectorBase collector;
 
-  collector.Start( "Read fixed volume" );
-//   itk::PluginFilterWatcher watchOrientFixed(fixedOrient,
-//                                             "Orient Fixed Image",
-//                                             CLPProcessInformation,
-//                                             1.0/3.0, 0.0);
-  fixedOrient->Update();
-  collector.Stop( "Read fixed volume" );
-
-  collector.Start( "Read moving volume" );
-//   itk::PluginFilterWatcher watchOrientMoving(movingOrient,
-//                                             "Orient Moving Image",
-//                                              CLPProcessInformation,
-//                                             1.0/3.0, 1.0/3.0);
-  movingOrient->Update();
-  collector.Stop( "Read moving volume" );
 
 
-  // Setup BSpline deformation
-  //
 
-  //Optimization
-  ImageRegion region = movingImage->GetLargestPossibleRegion();
+  //Setup normalized correlation cost function
+  ImageRegion region = findBoundingBox(movingImage);
   ImageIndex index = region.GetIndex();
   ImageSize size = region.GetSize();
-  double *rangeIndex =  new double[3];
-  double *rangeSize =  new double[3];
-  int ncps[3]; 
-  int degree[3]; 
-  int nElements = 3 * gridSize * gridSize * gridSize;
-  for(int i=0; i < 3; i++){
-    rangeIndex[i] = index[i];
-    rangeSize[i] = size[i];
-    ncps[i] = gridSize;
-    degree[i] = 2;
+  
+  unsigned int maxSize = size[0];
+  unsigned int minSize = size[0];
+  for(int i=1; i<3; i++){
+    if(maxSize < size[i]){
+      maxSize = size[i];
+    }
+    if(minSize > size[i]){
+      minSize = size[i];
+    }
   }
-  TParametric surface = TParametric::createIdentity( rangeIndex, rangeSize, ncps, degree );
- 
+
+  //Set params according to level of detail
+  int gridSize = 0;
+  double alpha = 0;
+  double gdtol = 0;
+  double sigma = 1;
+  double step = 1000;
+
+  //Determine number of resolutions
+  int nResolutions = 0;
+  for(unsigned int tmpSize = minSize; tmpSize > 15; tmpSize/=2){
+    nResolutions++;
+  }
+  if(nResolutions == 0){
+    nResolutions = 1;
+  }
+
+  //early abort for coarse registrations
+  int nAbort = 0;
+
+  switch(Detail){
+    case 1:
+    alpha = 0.2;
+    gridSize = std::floor(maxSize/16);
+    gdtol = 0.0001;
+    nAbort = 3;
+    break;
+    case 2:
+    alpha = 0.2;
+    gridSize = std::floor(maxSize/16);
+    gdtol = 0.0001;
+    nAbort = 2;
+    break;
+    case 3:
+    gridSize = std::floor(maxSize/16);
+    alpha = 0.2;
+    gdtol = 0.0001;
+    nAbort = 1;
+    break;
+    case 4:
+    gridSize = std::floor(maxSize/16);
+    alpha = 0.1;
+    gdtol = 0.0001;
+    nAbort = 1;
+    break;
+    case 5:
+    gridSize = std::floor(maxSize/16);
+    alpha = 0.1;
+    gdtol =0.0001;
+    break;
+    case 6:
+    gridSize = std::floor(maxSize/8);
+    alpha = 0.1;
+    gdtol = 0.0001;
+    break;
+    case 7:
+    gridSize = std::floor(maxSize/8);
+    alpha = 0.05;
+    gdtol = 0.0001;
+    break;
+    case 8:
+    gridSize = std::floor(maxSize/4);
+    alpha = 0.05;
+    gdtol =0.0001;
+    break;
+    case 9:
+    gridSize = std::floor(maxSize/4);
+    alpha = 0;
+    gdtol = 0.0001;
+    break;
+    case 10:
+    gridSize = std::floor(maxSize/2);
+    alpha = 0;
+    gdtol = 0.0001;
+    break;
+  }
+
+  if(nAbort >= nResolutions){
+    nAbort = nResolutions-1;
+  }
+
+
+  //Setup cost function
+  bool useMask = false;
+  int nElements = 3 * gridSize * gridSize * gridSize;
   TCostFunction costFunction(nElements);
   costFunction.SetFixedImage(fixedImage);
   costFunction.SetMovingImage(movingImage);
-  costFunction.SetMaskImage(movingImage);
+  costFunction.SetMaskImage(maskImage);
   costFunction.SetRange( region );
+  costFunction.SetUseMask(useMask);
+  costFunction.SetFixedBoundary(true);
+  costFunction.ComputePhysicalRange(region);
+  
+  //Create Identity transfrom - setup BSpline deformation
+  //Physical bspline location
+  ImagePoint rangeStart = costFunction.GetStart();
+  ImagePoint rangeSize = costFunction.GetSize();
+  Precision rStart[3];
+  Precision rSize[3];
+  double maxPhysicalSize = 0;
+  for(int i=0; i<3; i++){
+    rStart[i] = rangeStart[i];
+    rSize[i] = rangeSize[i];
+    if(maxPhysicalSize < rSize[i]){
+      maxPhysicalSize =rSize[i];
+    }
+  }   
+  //Default degree 2 --- maybe change for coarser registration to 3 for a smoother warp
+  int ncps[3]; 
+  int degree[3]; 
+  for(int i=0; i < 3; i++){
+    ncps[i] = gridSize;
+    degree[i] = 2;
+  }
+  TParametric surface = TParametric::createIdentity( rStart, rSize, ncps, degree);
+  
+  //Set Idenety transform as intialization
   costFunction.SetParametric(surface);
-  costFunction.SetUseMask(/* useMask: */ 0);
-  vnl_vector<double> params(nElements);
-  costFunction.GetVNLParametersFromParametric(params);
-  costFunction.SetAlpha(alpha);
+  
+  //regularization according to phycical size  
+  costFunction.SetAlpha(alpha/maxPhysicalSize);
+  
+  //Initalize cost function
   costFunction.Init();
   costFunction.SetVerbose(10);
+
+
+  //----- Do multiresolution optimization
+  collector.Start("Computing multiresolution images");
+  ImagePointer *fixedPyramid = downsample(fixedImage, nResolutions, sigma);
+  ImagePointer *maskPyramid = NULL;
+  if(useMask){
+    maskPyramid = downsample(maskImage, nResolutions, sigma);
+  }
+  ImagePointer *movingPyramid = downsample(movingImage, nResolutions, sigma);
+  collector.Stop("Computing multiresolution images");
+
+
+
+
+ 
+ ImagePointer output = NULL;
   
-  GradientDescent optimizer;
-  optimizer.SetTolerance(tolerance);
-  optimizer.SetStepSize(step);
-  optimizer.Minimize(costFunction, params);
-  optimizer.SetVerbose(10);
+  //run registration
+  try { 
 
-  ImagePointer output = costFunction.GetTransformedImage();
+    for(int i=nResolutions-1; i>=nAbort; i--){
+      std::stringstream ss;
+      ss << "Registration Reoslution " << i; 
+      collector.Start( ss.str().c_str() );
+     
+      //Setup optimizer 
+      GradientDescent optimizer;  
+      optimizer.SetStepSize(step);
 
-  try 
-    { 
-    collector.Start( "Registration" );
-    output->Update();
-    collector.Stop( "Registration" );
-    } 
-  catch( itk::ExceptionObject & err ) 
-    { 
+      //Set lowerresolution images
+      costFunction.SetFixedImage(fixedPyramid[i]);
+      if(useMask){
+        costFunction.SetMaskImage(maskPyramid[i]); 
+        region = computeRegion(maskPyramid[i]);
+      }else{
+        costFunction.SetMaskImage(fixedPyramid[i]);
+        region = computeRegion(fixedPyramid[i]);
+      }
+      costFunction.SetMovingImage(movingPyramid[i]);
+      costFunction.SetRange(region);
+    
+      //Set up optimizer
+      optimizer.SetTolerance(gdtol / pow(10, i) );
+
+      optimizer.SetVerbose(10);
+
+      //--- minimize cost function 
+
+      //intial parameters
+      vnl_vector<double> params(nElements);
+      costFunction.GetVNLParametersFromParametric(params);
+
+      optimizer.Minimize(costFunction, params);    
+      
+      collector.Stop( ss.str().c_str() );    
+
+    }
+
+
+    //Resample original image  
+    
+    TCostFunction::TImageTransformation &transform = costFunction.GetTransformation();
+    region = computeRegion(fixedImage);
+    transform.SetRange(region);
+    transform.SetImage(movingOrig);
+    output = transform.Transform();
+
+  } 
+  catch( itk::ExceptionObject & err ) { 
     std::cerr << "ExceptionObject caught !" << std::endl; 
     std::cerr << err << std::endl; 
     return EXIT_FAILURE;
-    } 
+  } 
   
-  // Resample to the original coordinate frame (not the reoriented
-  // axial coordinate frame) of the fixed image
-  //
-  if (ResampledImageFileName != "")
-    {
+
+  if (ResampledImageFileName != ""){
     
     typedef itk::ImageFileWriter< Image >  WriterType;
     typename WriterType::Pointer      writer =  WriterType::New();
@@ -293,7 +482,7 @@ template<class T> int DoIt( int argc, char * argv[], T )
       std::cerr << err << std::endl; 
       return EXIT_FAILURE;
       }
-    }
+  }
 
   // Report the time taken by the registration
   collector.Report();
