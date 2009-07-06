@@ -284,55 +284,55 @@ template<class T> int DoIt( int argc, char * argv[], T )
   switch(Detail){
     case 1:
     alpha = 0.2;
-    gridSize = std::floor(maxSize/16);
+    gridSize = std::floor(maxSize/16.f);
     gdtol = 0.0001;
     nAbort = 3;
     break;
     case 2:
     alpha = 0.2;
-    gridSize = std::floor(maxSize/16);
+    gridSize = std::floor(maxSize/16.f);
     gdtol = 0.0001;
     nAbort = 2;
     break;
     case 3:
-    gridSize = std::floor(maxSize/16);
+    gridSize = std::floor(maxSize/16.f);
     alpha = 0.2;
     gdtol = 0.0001;
     nAbort = 1;
     break;
     case 4:
-    gridSize = std::floor(maxSize/16);
+    gridSize = std::floor(maxSize/16.f);
     alpha = 0.1;
     gdtol = 0.0001;
     nAbort = 1;
     break;
     case 5:
-    gridSize = std::floor(maxSize/16);
+    gridSize = std::floor(maxSize/16.f);
     alpha = 0.1;
     gdtol =0.0001;
     break;
     case 6:
-    gridSize = std::floor(maxSize/8);
+    gridSize = std::floor(maxSize/8.f);
     alpha = 0.1;
     gdtol = 0.0001;
     break;
     case 7:
-    gridSize = std::floor(maxSize/8);
+    gridSize = std::floor(maxSize/8.f);
     alpha = 0.05;
     gdtol = 0.0001;
     break;
     case 8:
-    gridSize = std::floor(maxSize/4);
+    gridSize = std::floor(maxSize/4.f);
     alpha = 0.05;
     gdtol =0.0001;
     break;
     case 9:
-    gridSize = std::floor(maxSize/4);
+    gridSize = std::floor(maxSize/4.f);
     alpha = 0;
     gdtol = 0.0001;
     break;
     case 10:
-    gridSize = std::floor(maxSize/2);
+    gridSize = std::floor(maxSize/2.f);
     alpha = 0;
     gdtol = 0.0001;
     break;
@@ -430,7 +430,7 @@ template<class T> int DoIt( int argc, char * argv[], T )
       costFunction.SetRange(region);
     
       //Set up optimizer
-      optimizer.SetTolerance(gdtol / pow(10, i) );
+      optimizer.SetTolerance(gdtol / pow(10.f, i) );
 
       optimizer.SetVerbose(10);
 

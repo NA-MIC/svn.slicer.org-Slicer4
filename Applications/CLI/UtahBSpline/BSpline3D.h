@@ -239,8 +239,8 @@ class BSpline3D{
 
 template <typename T, typename TP>
 BSpline3D<T, TP> 
-BSpline3D<T, TP>::createIdentity1D(BSpline3D<T, TP>::TPrecision *index,
-    BSpline3D<T, TP>::TPrecision *size, int *nControlPoints, 
+BSpline3D<T, TP>::createIdentity1D(typename BSpline3D<T, TP>::TPrecision *index,
+    typename BSpline3D<T, TP>::TPrecision *size, int *nControlPoints, 
                              int *degree)
 
 {
@@ -286,8 +286,8 @@ BSpline3D<T, TP>::createIdentity1D(BSpline3D<T, TP>::TPrecision *index,
 
 template <typename T, typename TP>
 BSpline3D<T, TP> 
-BSpline3D<T, TP>::createIdentity(BSpline3D<T, TP>::TPrecision *index,
-    BSpline3D<T, TP>::TPrecision *size, int *nControlPoints, int *degree)
+BSpline3D<T, TP>::createIdentity(typename BSpline3D<T, TP>::TPrecision *index,
+    typename BSpline3D<T, TP>::TPrecision *size, int *nControlPoints, int *degree)
 
 {
 
@@ -333,10 +333,10 @@ BSpline3D<T, TP>::createIdentity(BSpline3D<T, TP>::TPrecision *index,
 
 template <typename T, typename TP>
 void 
-BSpline3D<T, TP>::fit(BSpline3D<T, TP>::TPrecision x1,
-    BSpline3D<T, TP>::TPrecision x2, BSpline3D<T, TP>::TPrecision nC,
-    BSpline3D<T, TP>::TKnotVector &knots, BSpline3D<T, TP>::TPrecision &h, 
-    BSpline3D<T, TP>::TPrecision &start){
+BSpline3D<T, TP>::fit(typename BSpline3D<T, TP>::TPrecision x1,
+    typename BSpline3D<T, TP>::TPrecision x2, typename BSpline3D<T, TP>::TPrecision nC,
+    typename BSpline3D<T, TP>::TKnotVector &knots, typename BSpline3D<T, TP>::TPrecision &h, 
+    typename BSpline3D<T, TP>::TPrecision &start){
 
   int degree = knots.GetDegree();
 
