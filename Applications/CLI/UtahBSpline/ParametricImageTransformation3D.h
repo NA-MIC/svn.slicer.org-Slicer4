@@ -61,10 +61,9 @@ class ParametricImageTransformation3D{
       return surface; 
     };
    
-    ImagePointer Transform();
     
 
-    void Transform(ImagePointer transformed);
+    void Transform(ImagePointer transformed, ImagePointer image);
     
    /*
     void TransformAndStoreBFs(ImagePointer transformed, BFImagePointer uImage,
@@ -72,7 +71,7 @@ class ParametricImageTransformation3D{
         SpanImagePointer vspans, SpanImagePointer wspans);
    */
 
-    ImageRegion GetImageRegion(TPrecision uStart, TPrecision uEnd, TPrecision
+    ImageRegion GetImageRegion(ImagePointer image, TPrecision uStart, TPrecision uEnd, TPrecision
         vStart, TPrecision vEnd, TPrecision wStart, TPrecision wEnd);
 
 
@@ -80,7 +79,6 @@ class ParametricImageTransformation3D{
     ParametricImageTransformation3D<TParametric, TImage>& operator=(const
         ParametricImageTransformation3D<TParametric, TImage>& rhs){
        surface = rhs.surface;
-       image = rhs.image;
        range = rhs.range;
        size = rhs.szie;
        start = rhs.size;
@@ -123,12 +121,12 @@ class ParametricImageTransformation3D{
 
     };
 
-    void ComputePhysicalRange(ImageRegion range){
+    void ComputePhysicalRange(ImagePointer image, ImageRegion range){
       ImageIndex index = range.GetIndex();
       image->TransformIndexToPhysicalPoint(index, start);
       for(unsigned int i=0; i< Image::GetImageDimension(); i++){
         index[i] += range.GetSize(i);
-      } 
+      }
       image->TransformIndexToPhysicalPoint(index, size);
       size[0] -= start[0];
       size[1] -= start[1];
@@ -139,14 +137,9 @@ class ParametricImageTransformation3D{
 
   private:
     TParametric surface;
-    ImagePointer image;
     ImageRegion range;
     ImagePoint size;
     ImagePoint start;
-
-    //CastFilter for copying Images
-    typedef itk::CastImageFilter<Image, Image> CastFilter;
-    typedef typename CastFilter::Pointer CastFilterPointer;
 
     typedef itk::ImageRegionIteratorWithIndex<Image> ImageIterator;
 
@@ -158,30 +151,13 @@ class ParametricImageTransformation3D{
 
 
 
-//Non-inline implementations
-template <typename TParametric, typename TImage>
-typename ParametricImageTransformation3D<TParametric, TImage>::ImagePointer
-ParametricImageTransformation3D<TParametric, TImage>::Transform(){
-  if( image.IsNull() ){
-    return NULL;
-  }
-
-  CastFilterPointer castFilter = CastFilter::New();
-  castFilter->SetInput( image );
-  castFilter->Update();
-  ImagePointer transformed = castFilter->GetOutput();
-
-  this->Transform(transformed);
-  return transformed;
-
-}
 
 
 template <typename TParametric, typename TImage>
 typename ParametricImageTransformation3D<TParametric, TImage>::ImageRegion
-ParametricImageTransformation3D<TParametric, TImage>::GetImageRegion(TPrecision
-    uStart, TPrecision uEnd, TPrecision vStart, TPrecision vEnd, TPrecision
-    wStart, TPrecision wEnd) 
+ParametricImageTransformation3D<TParametric, TImage>::GetImageRegion(
+      ImagePointer image ,TPrecision uStart, TPrecision uEnd, TPrecision vStart, 
+      TPrecision vEnd, TPrecision wStart, TPrecision wEnd) 
 {
   
   TKnotVector &knotsU =  surface.GetUKnots();
@@ -232,7 +208,7 @@ ParametricImageTransformation3D<TParametric, TImage>::GetImageRegion(TPrecision
 template <typename TParametric, typename TImage>
 void
 ParametricImageTransformation3D<TParametric, TImage>::Transform(ImagePointer
-    transformed){
+    transformed, ImagePointer image){
  
   InterpolateFunctionPointer imageip = InterpolateFunction::New();  
 
@@ -263,6 +239,7 @@ ParametricImageTransformation3D<TParametric, TImage>::Transform(ImagePointer
   ImageIterator it( transformed, range );
 
   
+  ImageContinuousIndex cindex;
   ImagePoint pnt;
   pnt.Fill(0);
 
@@ -273,15 +250,20 @@ ParametricImageTransformation3D<TParametric, TImage>::Transform(ImagePointer
     TPrecision v = vMin + ( pnt[1] - start[1] ) * vStep;
     TPrecision w = wMin + ( pnt[2] - start[2] ) * wStep;
    
-    if( u>uMin && u<uMax && v>vMin && v<vMax && w>wMin && w<wMax ){
+    if( TKnotVector::isInside(uMin, uMax, u) &&
+        TKnotVector::isInside(vMin, vMax, v) &&
+        TKnotVector::isInside(wMin, wMax, w)    ){
+    
       surface.PointAt( u, v, w, out);
       pnt[0] = out.x;
       pnt[1] = out.y;
       pnt[2] = out.z;
     }
-
-    TPrecision pixel = (TPrecision) imageip->Evaluate( pnt);
-    it.Set( pixel );
+    bool inside = image->TransformPhysicalPointToContinuousIndex(pnt, cindex);
+    if(inside){
+      TPrecision pixel = (TPrecision) imageip->EvaluateAtContinuousIndex( cindex );
+      it.Set( pixel );
+    }
   }
 }
 

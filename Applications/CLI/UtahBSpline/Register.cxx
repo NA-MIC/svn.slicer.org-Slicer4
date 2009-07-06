@@ -2,6 +2,7 @@
 #define PRECISION 
 typedef float Precision;
 
+#include <math.h>
 #include "Config.h"
 
 #include "ImageIO.h"
@@ -15,7 +16,7 @@ typedef float Precision;
 #include "itkRescaleIntensityImageFilter.h"
 #include "itkImageRegionConstIteratorWithIndex.h"
 #include "itkDiscreteGaussianImageFilter.h"
-
+#include "itkCastImageFilter.h"
 #include "itkSmoothingRecursiveGaussianImageFilter.h"
 #include "itkResampleImageFilter.h"
 
@@ -43,6 +44,8 @@ typedef TCostFunction::TControlMesh TControlMesh;
 typedef itk::RescaleIntensityImageFilter<Image> RescaleFilter;
 typedef RescaleFilter::Pointer RescaleFilterPointer;
 
+typedef itk::CastImageFilter<Image, Image> CastFilter;
+typedef CastFilter::Pointer CastFilterPointer;
 
 typedef itk::SmoothingRecursiveGaussianImageFilter<Image, Image> GaussianImageFilter;
 typedef GaussianImageFilter::Pointer GaussianImageFilterPointer;
@@ -119,13 +122,13 @@ ImageRegion computeRegion(ImagePointer image){
 
 
 
-//Compute bspline registration for between two images (moving to fixed) and
+//Compute bspline registration for between tow images (moving to fixed) and
 //saves deformed moving image and the transformation to be used with
 //BSPlineTransfrom to deform any other images with the same transformation.
 int main(int argc, char **argv){
   
   
-  //------ Command line parsing
+  //------ Command line parsin  
   TCLAP::CmdLine cmd("BSpline image registration", ' ', "1");
 
   TCLAP::ValueArg<std::string> fixedArg("f","fixed","fixed image", true, "",
@@ -316,8 +319,8 @@ int main(int argc, char **argv){
   for(int i=0; i<DIMENSION; i++){
     rStart[i] = rangeStart[i];
     rSize[i] = rangeSize[i];
-    if(maxSize < rSize[i]){
-      maxSize = rSize[i];
+    if(maxSize < fabs(rSize[i])){
+      maxSize = fabs(rSize[i]);
     }
   }   
   
@@ -345,7 +348,7 @@ int main(int argc, char **argv){
   for(int i=nres-1; i>=0; i--){
   
     GradientDescent optimizer;  
-    optimizer.SetStepSize(step);
+    optimizer.SetStepSize(step*maxSize * pow(2, i) );
 
     //Set lowerresolution images
     costFunction.SetFixedImage(fixedPyramid[i]);
@@ -367,21 +370,26 @@ int main(int argc, char **argv){
 
     optimizer.SetVerbose(10);
 
-
+    //--- minimize cost function 
 
     //intial parameters
     vnl_vector<double> params(nElements);
     costFunction.GetVNLParametersFromParametric(params);
 
-    //minimize
     optimizer.Minimize(costFunction, params);
   }
 
 
   //Write ouput image
   TCostFunction::TImageTransformation &transform = costFunction.GetTransformation();
-  transform.SetImage(movingInImage);  
-  ImagePointer output = transform.Transform();
+  region = computeRegion(fixedImage); 
+  transform.SetRange(region);    
+  
+  CastFilterPointer castFilter = CastFilter::New();
+  castFilter->SetInput(fixedImage);
+  castFilter->Update();
+  ImagePointer output = castFilter->GetOutput(); 
+  transform.Transform(output, movingInImage);
   ImageIO<Image>::saveImage(output, warpedArg.getValue());
 
   //save bspline 

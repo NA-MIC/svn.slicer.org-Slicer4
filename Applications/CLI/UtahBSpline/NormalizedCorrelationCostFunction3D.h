@@ -5,7 +5,9 @@
 #include "vnl/vnl_least_squares_function.h"
 
 
+
 #include "itkSubtractImageFilter.h"
+#include "itkGradientImageFilter.h"
 #include "itkDerivativeImageFilter.h"
 #include "itkCastImageFilter.h"
 #include "itkImageRegionIterator.h"
@@ -75,7 +77,6 @@ class NormalizedCorrelationCostFunction3D : public vnl_cost_function {
 
     void SetMovingImage(ImagePointer moving){
       this->movingImage = moving;  
-      this->transform.SetImage(movingImage);
     };
     
     void SetRange(const ImageRegion &range){ 
@@ -84,7 +85,7 @@ class NormalizedCorrelationCostFunction3D : public vnl_cost_function {
 
 
     void ComputePhysicalRange(ImageRegion range){
-      transform.ComputePhysicalRange(range);
+      transform.ComputePhysicalRange(fixedImage, range);
     }
 
     ImagePoint GetStart(){
@@ -141,9 +142,7 @@ class NormalizedCorrelationCostFunction3D : public vnl_cost_function {
        movingImage = rhs.movingImage;
        movingTransformedImage =rhs.movingTransformedImage;
        differenceImage = rhs.differenceImage;
-       movingDxImage = rhs.movingDxImage;
-       movingDyImage = rhs.movingDyImage;
-       movingDzImage = rhs.movingDzImage;
+       movingGradient = rhs.movingGradient;
 
        useMask = rhs.useMask;
        xDistance = rhs.xDistance;
@@ -162,15 +161,21 @@ class NormalizedCorrelationCostFunction3D : public vnl_cost_function {
     typedef typename InterpolateFunction::Pointer InterpolateFunctionPointer;
     typedef typename InterpolateFunction::ContinuousIndexType ImageContinuousIndex;
     typedef typename itk::ImageRegionIteratorWithIndex<Image> ImageIterator;
-
-    
+       
     typedef itk::CastImageFilter<Image, Image> CastFilter;
     typedef typename CastFilter::Pointer CastFilterPointer;
     
-    typedef itk::DerivativeImageFilter<Image, Image> DerivativeFilter;
-    typedef typename DerivativeFilter::Pointer DerivativeFilterPointer;
-
+//    typedef itk::DerivativeImageFilter<Image, Image> DerivativeFilter;
+//    typedef typename DerivativeFilter::Pointer DerivativeFilterPointer;
+    typedef itk::GradientImageFilter<Image, TPrecision, TPrecision> GradientFilter;
+    typedef typename GradientFilter::Pointer GradientFilterPointer;
     
+    typedef typename GradientFilter::OutputImageType GradientImage;
+    typedef typename GradientImage::Pointer GradientImagePointer;
+    typedef typename GradientImage::PixelType GradientVector;
+
+    typedef typename itk::ImageRegionIterator<GradientImage> GradientImageIterator;
+
     typedef itk::SubtractImageFilter<Image, Image, Image> SubtractFilter;
     typedef typename SubtractFilter::Pointer SubtractFilterPointer;
 
@@ -181,9 +186,7 @@ class NormalizedCorrelationCostFunction3D : public vnl_cost_function {
     ImagePointer maskImage;
     ImagePointer movingTransformedImage;
     ImagePointer differenceImage;
-    ImagePointer movingDxImage;
-    ImagePointer movingDyImage;
-    ImagePointer movingDzImage;
+    GradientImagePointer movingGradient;
 
 
     
@@ -257,7 +260,7 @@ template <typename TPrecision, typename TImage>
 void 
 NormalizedCorrelationCostFunction3D<TPrecision, TImage>::ComputeTransformedImage()
 {
-  transform.Transform( movingTransformedImage );
+  transform.Transform( movingTransformedImage, movingImage );
  
   SubtractFilterPointer subtractFilter = SubtractFilter::New();
   subtractFilter->SetInput1( fixedImage );
@@ -275,30 +278,11 @@ template <typename TPrecision, typename TImage>
 void 
 NormalizedCorrelationCostFunction3D<TPrecision, TImage>::ComputeDerivativeImages(){
 
-  DerivativeFilterPointer dxFilter =  DerivativeFilter::New();
-  dxFilter->SetDirection(0);
-  dxFilter->SetOrder(1);
-  DerivativeFilterPointer dyFilter = DerivativeFilter::New();
-  dyFilter->SetDirection(1);
-  dyFilter->SetOrder(1);
-  DerivativeFilterPointer dzFilter = DerivativeFilter::New();
-  dzFilter->SetDirection(2);
-  dzFilter->SetOrder(1);
 
-  dxFilter->SetInput(movingTransformedImage);
-  dxFilter->Modified();
-  dxFilter->Update();
-  movingDxImage = dxFilter->GetOutput();
-  
-  dyFilter->SetInput(movingTransformedImage);
-  dyFilter->Modified();
-  dyFilter->Update();
-  movingDyImage = dyFilter->GetOutput();
-
-  dzFilter->SetInput(movingTransformedImage);
-  dzFilter->Modified();
-  dzFilter->Update();
-  movingDzImage = dzFilter->GetOutput();
+  GradientFilterPointer gradientFilter = GradientFilter::New();
+  gradientFilter->SetInput(movingTransformedImage);
+  gradientFilter->Update();
+  movingGradient = gradientFilter->GetOutput();
 
 };
 
@@ -509,21 +493,21 @@ NormalizedCorrelationCostFunction3D<TPrecision, TImage>::gradf(vnl_vector<double
         //Gradient
 
       
-        ImageRegion region = transform.GetImageRegion(uS, uE, vS, vE, wS, wE);
+        ImageRegion region = transform.GetImageRegion(fixedImage, uS, uE, vS, vE, wS, wE);
 
 
         ImageIterator maskIt(maskImage, region);
         ImageIterator diffIt(differenceImage, region);
-        ImageIterator dxIt(movingDxImage, region);
-        ImageIterator dyIt(movingDyImage, region);
-        ImageIterator dzIt(movingDyImage, region);
+        GradientImageIterator gIt(movingGradient, region);
+        
         bSum1 = 0;
         bSum2 = 0; 
         bSum3 = 0;   
 
   
+
         int nInside = 0;
-        for(; !diffIt.IsAtEnd(); ++diffIt, ++dxIt, ++dyIt, ++dzIt, ++maskIt){
+        for(; !diffIt.IsAtEnd(); ++diffIt, ++gIt){
           if(!useMask || maskIt.Get() != 0 ){
             ImageIndex current = diffIt.GetIndex();
             differenceImage->TransformIndexToPhysicalPoint(current, pnt);
@@ -532,7 +516,10 @@ NormalizedCorrelationCostFunction3D<TPrecision, TImage>::gradf(vnl_vector<double
             TPrecision v = vMin + ( pnt[1] - start[1] ) * vStep;
             TPrecision w = wMin + ( pnt[2] - start[2] ) * wStep;
    
-            if( u>uS && u<uE && v>vS && v<vE && w>wS && w<wE ){
+            if( TKnotVector::isInside(uS, uE, u) &&
+                TKnotVector::isInside(vS, vE, v) &&
+                TKnotVector::isInside(wS, wE, w)    ){
+
               nInside++;
 
               parametric.PointAt( u, v, w, pOut, uspan, vspan, wspan, bfu, bfv, bfw);
@@ -546,10 +533,12 @@ NormalizedCorrelationCostFunction3D<TPrecision, TImage>::gradf(vnl_vector<double
               
 
 
+              GradientVector gv = gIt.Get();
+
               TPrecision bf = 2 * diffIt.Get() * bfu[uind] * bfv[vind] * bfw[wind];
-              bSum1 += bf * dxIt.Get(); 
-              bSum2 += bf * dyIt.Get(); 
-              bSum3 += bf * dzIt.Get();
+              bSum1 += bf * gv[0]; 
+              bSum2 += bf * gv[1]; 
+              bSum3 += bf * gv[2];
             } 
           }
 

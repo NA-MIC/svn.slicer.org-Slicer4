@@ -26,7 +26,7 @@
 #include "itkOrientedImage.h"
 #include "itkOrientImageFilter.h"
 #include "itkResampleImageFilter.h"
-
+#include "itkCastImageFilter.h"
 #include "itkImageFileReader.h"
 #include "itkImageFileWriter.h"
 #include "itkTransformFileReader.h"
@@ -47,6 +47,7 @@
 #include "itkDiscreteGaussianImageFilter.h"
 #include "itkSmoothingRecursiveGaussianImageFilter.h"
 #include "itkResampleImageFilter.h"
+#include "itkMinimumMaximumImageFilter.h"
 
 #include <fstream>
 #include <sstream>
@@ -78,13 +79,20 @@ typedef itk::ImageFileWriter<Image> ImageWriter;
 typedef itk::RescaleIntensityImageFilter<Image> RescaleFilter;
 typedef RescaleFilter::Pointer RescaleFilterPointer;
 
+typedef itk::MinimumMaximumImageFilter<Image> MinMaxFilter;
+typedef MinMaxFilter::Pointer MinMaxFilterPointer;
+
 typedef itk::ImageFileReader<Image> ImageReader;
 typedef ImageReader::Pointer ImageReaderPointer;
 
 typedef itk::ImageFileWriter<Image> ImageWriter;
 typedef ImageWriter::Pointer ImageWriterPointer;
+
 typedef itk::SmoothingRecursiveGaussianImageFilter<Image, Image> GaussianImageFilter;
 typedef GaussianImageFilter::Pointer GaussianImageFilterPointer;
+
+typedef itk::CastImageFilter<Image, Image> CastFilter;
+typedef CastFilter::Pointer CastFilterPointer;
 
 //typedef itk::DiscreteGaussianImageFilter<Image, Image> GaussianImageFilter;
 //typedef GaussianImageFilter::Pointer GaussianImageFilterPointer;
@@ -209,26 +217,51 @@ template<class T> int DoIt( int argc, char * argv[], T )
 
 
 
-  //Read Input Image
+  //Read Input Images
   ImageReaderPointer fixedImageReader = ImageReader::New();
   fixedImageReader->SetFileName( FixedImageFileName.c_str() );
-  RescaleFilterPointer fixedRescaleFilter = RescaleFilter::New();
-  fixedRescaleFilter->SetInput(fixedImageReader->GetOutput());
-  fixedRescaleFilter->SetOutputMaximum(1);
-  fixedRescaleFilter->SetOutputMinimum(0);
-  fixedRescaleFilter->Update();
-  ImagePointer fixedImage = fixedRescaleFilter->GetOutput();
-
-
+  fixedImageReader->Update();
+  ImagePointer fixedOrig = fixedImageReader->GetOutput();
 
   ImageReaderPointer movingImageReader = ImageReader::New();
   movingImageReader->SetFileName( MovingImageFileName.c_str() );
   movingImageReader->Update();
   ImagePointer movingOrig = movingImageReader->GetOutput();
 
+  //Compute scaling factors
+  MinMaxFilterPointer fixedMinMax = MinMaxFilter::New();
+  fixedMinMax->SetInput(fixedOrig);
+  fixedMinMax->Update();
+  double fixedIntensityRange = fixedMinMax->GetMaximum() -
+    fixedMinMax->GetMinimum();
+
+  MinMaxFilterPointer movingMinMax = MinMaxFilter::New();
+  movingMinMax->SetInput(movingOrig);
+  movingMinMax->Update();
+  double movingIntensityRange = movingMinMax->GetMaximum() -
+    movingMinMax->GetMinimum();
+
+  double fixedScale = 1;
+  double movingScale = 1;
+  if(fixedIntensityRange > movingIntensityRange){
+    movingScale = fixedIntensityRange / movingIntensityRange;
+  }
+  else{
+    fixedScale = movingIntensityRange / fixedIntensityRange;
+  }
+
+  //rescale images
+  RescaleFilterPointer fixedRescaleFilter = RescaleFilter::New();
+  fixedRescaleFilter->SetInput(fixedOrig);
+  fixedRescaleFilter->SetOutputMaximum(fixedScale);
+  fixedRescaleFilter->SetOutputMinimum(0);
+  fixedRescaleFilter->Update();
+  ImagePointer fixedImage = fixedRescaleFilter->GetOutput();
+
+
   RescaleFilterPointer movingRescaleFilter = RescaleFilter::New();
   movingRescaleFilter->SetInput(movingOrig);
-  movingRescaleFilter->SetOutputMaximum(1);
+  movingRescaleFilter->SetOutputMaximum(movingScale);
   movingRescaleFilter->SetOutputMinimum(0);
   movingRescaleFilter->Update();
   ImagePointer movingImage = movingRescaleFilter->GetOutput();
@@ -247,18 +280,18 @@ template<class T> int DoIt( int argc, char * argv[], T )
 
 
   //Setup normalized correlation cost function
-  ImageRegion region = findBoundingBox(movingImage);
-  ImageIndex index = region.GetIndex();
-  ImageSize size = region.GetSize();
+  ImageRegion region = computeRegion(fixedImage);
+  ImageIndex imageIndex = region.GetIndex();
+  ImageSize imageSize = region.GetSize();
   
-  unsigned int maxSize = size[0];
-  unsigned int minSize = size[0];
+  unsigned int maxImageSize = imageSize[0];
+  unsigned int minImageSize = imageSize[0];
   for(int i=1; i<3; i++){
-    if(maxSize < size[i]){
-      maxSize = size[i];
+    if(maxImageSize < imageSize[i] ){
+      maxImageSize = imageSize[i];
     }
-    if(minSize > size[i]){
-      minSize = size[i];
+    if(minImageSize > imageSize[i] ){
+      minImageSize = imageSize[i];
     }
   }
 
@@ -267,11 +300,11 @@ template<class T> int DoIt( int argc, char * argv[], T )
   double alpha = 0;
   double gdtol = 0;
   double sigma = 1;
-  double step = 1000;
+  double step = 1;
 
   //Determine number of resolutions
   int nResolutions = 0;
-  for(unsigned int tmpSize = minSize; tmpSize > 15; tmpSize/=2){
+  for(unsigned int tmpSize = minImageSize; tmpSize > 10; tmpSize/=2){
     nResolutions++;
   }
   if(nResolutions == 0){
@@ -284,59 +317,71 @@ template<class T> int DoIt( int argc, char * argv[], T )
   switch(Detail){
     case 1:
     alpha = 0.2;
-    gridSize = std::floor(maxSize/16.f);
+    gridSize = 16;
     gdtol = 0.0001;
     nAbort = 3;
     break;
     case 2:
     alpha = 0.2;
-    gridSize = std::floor(maxSize/16.f);
+    gridSize = 16;
     gdtol = 0.0001;
     nAbort = 2;
     break;
     case 3:
-    gridSize = std::floor(maxSize/16.f);
+    gridSize = 16;
     alpha = 0.2;
     gdtol = 0.0001;
     nAbort = 1;
     break;
     case 4:
-    gridSize = std::floor(maxSize/16.f);
+    gridSize = 16;
     alpha = 0.1;
     gdtol = 0.0001;
     nAbort = 1;
     break;
     case 5:
-    gridSize = std::floor(maxSize/16.f);
+    gridSize = 16;
     alpha = 0.1;
     gdtol =0.0001;
     break;
     case 6:
-    gridSize = std::floor(maxSize/8.f);
+    gridSize = 8;
     alpha = 0.1;
     gdtol = 0.0001;
     break;
     case 7:
-    gridSize = std::floor(maxSize/8.f);
+    gridSize = 8;
     alpha = 0.05;
     gdtol = 0.0001;
     break;
     case 8:
-    gridSize = std::floor(maxSize/4.f);
+    gridSize = 4;
     alpha = 0.05;
     gdtol =0.0001;
     break;
     case 9:
-    gridSize = std::floor(maxSize/4.f);
+    gridSize = 4;
     alpha = 0;
     gdtol = 0.0001;
     break;
     case 10:
-    gridSize = std::floor(maxSize/2.f);
+    gridSize = 2;
     alpha = 0;
     gdtol = 0.0001;
     break;
+  }  
+  
+  int ncps[3]; 
+  int degree[3]; 
+  for(int i=0; i < 3; i++){
+    ncps[i] = floor(((float)imageSize[i])/gridSize);
+    degree[i] = 2;
+
+    if(ncps[i] < degree[i] + 2){
+      ncps[i] = degree[i] + 2;
+    }
   }
+
 
   if(nAbort >= nResolutions){
     nAbort = nResolutions-1;
@@ -345,37 +390,32 @@ template<class T> int DoIt( int argc, char * argv[], T )
 
   //Setup cost function
   bool useMask = false;
-  int nElements = 3 * gridSize * gridSize * gridSize;
+  int nElements = 3 * ncps[0] * ncps[1] * ncps[2];
   TCostFunction costFunction(nElements);
   costFunction.SetFixedImage(fixedImage);
   costFunction.SetMovingImage(movingImage);
   costFunction.SetMaskImage(maskImage);
   costFunction.SetRange( region );
   costFunction.SetUseMask(useMask);
-  costFunction.SetFixedBoundary(true);
+  costFunction.SetFixedBoundary(false);// true);
   costFunction.ComputePhysicalRange(region);
   
   //Create Identity transfrom - setup BSpline deformation
   //Physical bspline location
-  ImagePoint rangeStart = costFunction.GetStart();
-  ImagePoint rangeSize = costFunction.GetSize();
+  ImagePoint physicalRangeStart = costFunction.GetStart();
+  ImagePoint physicalRangeSize = costFunction.GetSize();
   Precision rStart[3];
   Precision rSize[3];
   double maxPhysicalSize = 0;
   for(int i=0; i<3; i++){
-    rStart[i] = rangeStart[i];
-    rSize[i] = rangeSize[i];
-    if(maxPhysicalSize < rSize[i]){
-      maxPhysicalSize =rSize[i];
+    rStart[i] = physicalRangeStart[i];
+    rSize[i] = physicalRangeSize[i];
+    if(maxPhysicalSize < fabs(rSize[i])){
+      maxPhysicalSize = fabs(rSize[i]);
     }
-  }   
+  }  
+
   //Default degree 2 --- maybe change for coarser registration to 3 for a smoother warp
-  int ncps[3]; 
-  int degree[3]; 
-  for(int i=0; i < 3; i++){
-    ncps[i] = gridSize;
-    degree[i] = 2;
-  }
   TParametric surface = TParametric::createIdentity( rStart, rSize, ncps, degree);
   
   //Set Idenety transform as intialization
@@ -402,20 +442,17 @@ template<class T> int DoIt( int argc, char * argv[], T )
 
 
 
- 
- ImagePointer output = NULL;
-  
   //run registration
   try { 
-
+  
+    collector.Start("Registration");
     for(int i=nResolutions-1; i>=nAbort; i--){
       std::stringstream ss;
-      ss << "Registration Reoslution " << i; 
       collector.Start( ss.str().c_str() );
      
       //Setup optimizer 
       GradientDescent optimizer;  
-      optimizer.SetStepSize(step);
+      optimizer.SetStepSize(step * maxPhysicalSize * pow(2.f, i));
 
       //Set lowerresolution images
       costFunction.SetFixedImage(fixedPyramid[i]);
@@ -441,19 +478,34 @@ template<class T> int DoIt( int argc, char * argv[], T )
       costFunction.GetVNLParametersFromParametric(params);
 
       optimizer.Minimize(costFunction, params);    
-      
-      collector.Stop( ss.str().c_str() );    
-
     }
+  
+    collector.Stop("Registration");
 
 
     //Resample original image  
-    
     TCostFunction::TImageTransformation &transform = costFunction.GetTransformation();
-    region = computeRegion(fixedImage);
-    transform.SetRange(region);
-    transform.SetImage(movingOrig);
-    output = transform.Transform();
+    region = computeRegion(fixedImage); 
+    transform.SetRange(region);    
+    
+    CastFilterPointer castFilter = CastFilter::New();
+    castFilter->SetInput(fixedImage);
+    castFilter->Update();
+    ImagePointer output = castFilter->GetOutput(); 
+    transform.Transform(output, movingOrig);  
+    
+
+    //write image
+    if (ResampledImageFileName != ""){
+      typedef itk::ImageFileWriter< Image >  WriterType;
+      typename WriterType::Pointer      writer =  WriterType::New();
+      writer->SetFileName( ResampledImageFileName.c_str() );
+      writer->SetInput( output );
+
+      collector.Start( "Write resampled volume" );
+      writer->Update();
+      collector.Stop( "Write resampled volume" );
+    }
 
   } 
   catch( itk::ExceptionObject & err ) { 
@@ -463,26 +515,7 @@ template<class T> int DoIt( int argc, char * argv[], T )
   } 
   
 
-  if (ResampledImageFileName != ""){
-    
-    typedef itk::ImageFileWriter< Image >  WriterType;
-    typename WriterType::Pointer      writer =  WriterType::New();
-    writer->SetFileName( ResampledImageFileName.c_str() );
-    writer->SetInput( output );
 
-    try
-      {
-      collector.Start( "Write resampled volume" );
-      writer->Update();
-      collector.Stop( "Write resampled volume" );
-      }
-    catch( itk::ExceptionObject & err ) 
-      { 
-      std::cerr << "ExceptionObject caught !" << std::endl; 
-      std::cerr << err << std::endl; 
-      return EXIT_FAILURE;
-      }
-  }
 
   // Report the time taken by the registration
   collector.Report();
