@@ -154,6 +154,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     // Description:
     // This method builds Slicer's main GUI
     virtual void BuildGUI ( );
+    virtual void CustomizeStatusBarLayout();
 
     vtkSlicerSliceGUI* GetMainSliceGUI(const char *layoutName);
     void AddMainSliceGUI(const char *layoutName);

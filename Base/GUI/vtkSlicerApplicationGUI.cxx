@@ -179,6 +179,7 @@ vtkSlicerApplicationGUI::~vtkSlicerApplicationGUI ( )
 
     if (this->ModulesWizardDialog)
       {
+      this->ModulesWizardDialog->SetParent ( NULL );
       this->ModulesWizardDialog->Delete();
       this->ModulesWizardDialog = NULL;
       }
@@ -821,6 +822,7 @@ void vtkSlicerApplicationGUI::ShowModulesWizard()
 
   if (this->ModulesWizardDialog)
     {
+    this->ModulesWizardDialog->SetParent ( NULL );
     this->ModulesWizardDialog->Delete();
     this->ModulesWizardDialog = NULL;
     }
@@ -1194,6 +1196,30 @@ void vtkSlicerApplicationGUI::SelectModule ( const char *moduleName, vtkMRMLNode
 }
 
 //---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::CustomizeStatusBarLayout()
+{
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+  // Move error log icon over to the left for MacOS
+  // which positions every window's resize hardware right over the
+  // default error icon position.
+  if (this->MainSlicerWindow->GetTrayFrame() &&
+      this->MainSlicerWindow->GetTrayFrame()->IsCreated() &&
+      this->MainSlicerWindow->GetTrayFramePosition() ==
+      vtkKWWindowBase::TrayFramePositionStatusFrame)
+    {
+    app->Script ( "%s configure -padx 15",
+                  this->MainSlicerWindow->GetTrayFrame()->GetWidgetName() );
+    app->Script ( "%s configure -background white",
+                  this->MainSlicerWindow->GetTrayFrame()->GetWidgetName() );
+  //--- if TrayImageError (a label) is made public and exposed thru the KWW API,
+  //--- we can use this. Until that, we will let it be centered in the Tray Frame,
+  //--- and its image/icon centered too.
+  //      app->Script ( "%s configure -anchor w",
+  //                    this->MainSlicerWindow->GetTrayImageError()->GetWidgetName() );
+    }
+}
+
+//---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::BuildGUI ( )
 {
   int i;
@@ -1444,6 +1470,7 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
 #endif
   }
   this->Built = true;
+  this->CustomizeStatusBarLayout();
 //  this->UpdateLayout();
 #ifndef TOOLBAR_DEBUG
 //  this->ApplicationToolbar->UpdateLayoutMenu();
@@ -3332,9 +3359,16 @@ void vtkSlicerApplicationGUI::SetExternalProgress(char *message, float progress)
   sscanf(rooty, "%d", &y);
   char newGeometry[BUFSIZ];
   sprintf(newGeometry, "%dx%d+%d+%d", w, h, x, y);
-  char progressString[BUFSIZ];
-  sprintf(progressString, "%3.f", progress * 100);
-
-  this->Script("puts $extprog_fp \"progress_Window %s %s %s\"; flush $extprog_fp",
-                    newGeometry, message, progressString);
+  if ( progress > 0 )
+    {
+    char progressString[BUFSIZ];
+    sprintf(progressString, "%3.f", progress * 100);
+    this->Script("puts $extprog_fp \"progress_Window %s %s %s\"; flush $extprog_fp",
+                 newGeometry, message, progressString);
+    }
+  else
+    {
+    this->Script("puts $extprog_fp \"progress_Window %s %s\"; flush $extprog_fp",
+                 newGeometry, message);
+    }
 }
