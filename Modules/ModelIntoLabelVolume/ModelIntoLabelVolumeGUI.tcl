@@ -150,12 +150,14 @@ proc ModelIntoLabelVolumeAddGUIObservers {this} {
 
   $this AddObserverByNumber $::ModelIntoLabelVolume($this,modelsSelect) 11000    
 
-  $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] 31
+  $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] \
+    [$this GetNumberForVTKEvent ModifiedEvent]
     
 }
 
 proc ModelIntoLabelVolumeRemoveGUIObservers {this} {
-  $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] 31
+  $this RemoveMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic] GetSelectionNode] \
+    [$this GetNumberForVTKEvent ModifiedEvent]
   $this RemoveObserverByNumber $::ModelIntoLabelVolume($this,modelsSelect) 11000
   $this RemoveObserverByNumber $::ModelIntoLabelVolume($this,run) 10000 
 }
@@ -305,7 +307,7 @@ proc ModelIntoLabelVolumeApply {this} {
       set labelmapVolumeNode [ModelIntoLabelVolumeIntersect $modelNode $volumeNode $labelValue $labelVolumeName $intensityFlag $matrixNode]
   }
   if {$labelmapVolumeNode == ""} {
-      puts "ERROR: can't find a new label map volume."
+      puts "ERROR: can't find a new label map volume with name '$labelVolumeName'"
       return
   }
   # set the new label map to be active
