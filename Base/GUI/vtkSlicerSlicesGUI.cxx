@@ -74,6 +74,7 @@ vtkSlicerSlicesGUI::~vtkSlicerSlicesGUI ( )
     {
     this->VisibilityIcons->Delete();
     }
+  this->SetSliceNode(NULL);
 }
 
 void vtkSlicerSlicesGUI::AddSliceGUI(const char *layoutName, vtkSlicerSliceGUI *pSliceGUI)
@@ -556,7 +557,7 @@ void vtkSlicerSlicesGUI::ProcessGUIEvents ( vtkObject *caller,
       this->SliceNode->RemoveObservers( vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand);
       }
     n->AddObserver(vtkCommand::ModifiedEvent, (vtkCommand *)this->MRMLCallbackCommand);
-    this->SliceNode = n;
+    this->SetSliceNode(n);
 
     // Selected a new slice node.  Fill in the GUI with the
     // information from the slice node
@@ -810,9 +811,9 @@ vtkSlicerSlicesGUI::BuildSliceController(vtkSlicerSliceGUI *g)
 //---------------------------------------------------------------------------
 void vtkSlicerSlicesGUI::Exit ( )
 {
-  // Destroy all SliceControllers
+  // Destroy all SliceControllers and make a new list of the remainders
+  ParameterWidgetMap *newMap = new ParameterWidgetMap;
   ParameterWidgetMap::iterator wit;
-  ParameterWidgetMap saveMap;
 
   for (wit = (*this->InternalParameterWidgetMap).begin(); 
        wit != (*this->InternalParameterWidgetMap).end(); ++wit)
@@ -823,16 +824,18 @@ void vtkSlicerSlicesGUI::Exit ( )
 
       // unpack
       this->Script("pack forget %s", (*wit).second->GetWidgetName());
+      (*wit).second->SetParent(NULL);
+      
 
-      // remove item from map - causes crash
-      //(*this->InternalParameterWidgetMap).erase(wit);
       }
     else
       {
-      saveMap[wit->first] = wit->second;
+      (*newMap)[(*wit).first] = (*wit).second;
       }
     }
-  *(this->InternalParameterWidgetMap) = saveMap;
+  delete this->InternalParameterWidgetMap;
+  this->InternalParameterWidgetMap = newMap;
+
 }
 
 
