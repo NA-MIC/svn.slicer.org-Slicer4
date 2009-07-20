@@ -130,7 +130,7 @@ vtkMRMLNode* vtkIGTLToMRMLImage::CreateNewNode(vtkMRMLScene* scene, const char* 
   displayNode->Delete();
   image->Delete();
 
-  this->CenterImage(volumeNode);
+  //this->CenterImage(volumeNode);
 
   return volumeNode;
 }
@@ -331,9 +331,9 @@ int vtkIGTLToMRMLImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLNod
   // definitions of image origin between VTK (Slicer) and OpenIGTLink;
   // OpenIGTLink image has its origin at the center, while VTK image
   // has one at the corner.
-  float hfovi = psi * (size[0]-1) / 2.0;
-  float hfovj = psj * (size[1]-1) / 2.0;
-  float hfovk = psk * (size[2]-1) / 2.0;
+  float hfovi = spacing[0] * psi * (size[0]-1) / 2.0;
+  float hfovj = spacing[1] * psj * (size[1]-1) / 2.0;
+  float hfovk = spacing[2] * psk * (size[2]-1) / 2.0;
   //float hfovk = 0;
 
   float cx = ntx * hfovi + nsx * hfovj + nnx * hfovk;
@@ -369,7 +369,7 @@ int vtkIGTLToMRMLImage::IGTLToMRML(igtl::MessageBase::Pointer buffer, vtkMRMLNod
   // in VolumeRenderingCuda (Suggested by Nicholas Herlambang)
   volumeNode->GetImageData()->Modified();
    
-  this->CenterImage(volumeNode);
+  //this->CenterImage(volumeNode);
 
 //  if (lps) { // LPS coordinate
 //    vtkMatrix4x4* lpsToRas = vtkMatrix4x4::New();
