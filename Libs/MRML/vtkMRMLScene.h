@@ -349,7 +349,9 @@ public:
       SceneLoadingErrorEvent = 66005,
       SceneEditedEvent = 66006,
       MetadataAddedEvent = 66007,
-    };
+      SceneLoadStartEvent = 66008,
+      SceneLoadEndEvent = 66009,
+   };
 //ETX
 
   int IsFilePathRelative(const char * filepath);
