@@ -52,7 +52,7 @@ void vtkMRMLEMSVolumeCollectionNode::WriteXML(ostream& of, int nIndent)
   Superclass::WriteXML(of, nIndent);
   vtkIndent indent(nIndent);
 
-  of << indent << "VolumeNodeIDs=\"";
+  of << indent << " VolumeNodeIDs=\"";
   for (KeyConstIterator i = this->KeyList.begin(); i != this->KeyList.end(); 
        ++i)
     {
@@ -62,10 +62,10 @@ void vtkMRMLEMSVolumeCollectionNode::WriteXML(ostream& of, int nIndent)
     if (!key.empty() && !value.empty())
       {
       of << "\n";
-      of << "Key " << key << " VolumeNodeID " << value;
+      of << " Key " << key << " VolumeNodeID " << value;
       }
     }
-  of << "\" ";
+  of << "\"";
 }
 
 //-----------------------------------------------------------------------------
