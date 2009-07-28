@@ -454,9 +454,7 @@ void vtkSlicerModulesStep::Update()
     std::string cachedir = app->GetModuleCachePath();
     if (cachedir.empty())
       {
-      cachedir = app->GetBinDir();
-      cachedir += "/../";
-      cachedir += Slicer3_INSTALL_MODULES_LIB_DIR;
+        cachedir = app->GetTemporaryDirectory();
       }
 
     if (this->ModulesMultiColumnList)
@@ -1051,10 +1049,7 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
 
     if (cachedir.empty())
       {
-        cachedir = app->GetBinDir();
-
-        cachedir += "/../";
-        cachedir += Slicer3_INSTALL_MODULES_LIB_DIR;
+        cachedir = app->GetTemporaryDirectory();
       }
 
     std::string libdir(cachedir + std::string("/") + ExtensionName);
@@ -1107,9 +1102,7 @@ bool vtkSlicerModulesStep::UninstallExtension(const std::string& ExtensionName)
     std::string cachedir = app->GetModuleCachePath();
     if (cachedir.empty())
       {
-        cachedir = app->GetBinDir();
-        cachedir += "/../";
-        cachedir = Slicer3_INSTALL_MODULES_LIB_DIR;
+        cachedir = app->GetTemporaryDirectory();
       }
 
     std::string libdir(cachedir + std::string("/") + ExtensionName);
