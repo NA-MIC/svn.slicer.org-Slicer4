@@ -95,15 +95,6 @@ void vtkMRMLEMSTreeParametersLeafNode::WriteXML(ostream& of, int nIndent)
   of << "\"";
 
   of << indent
-    << " Mean=\"";
-
-  for (unsigned int i = 0; i < this->GetNumberOfTargetInputChannels(); ++i)
-  {
-    of << this->Mean[i] << " ";
-  }
-  of << "\"";
-
-  of << indent
     << " LogCovariance=\"";
 
   for (unsigned int r = 0; r < this->GetNumberOfTargetInputChannels(); ++r)
@@ -111,23 +102,6 @@ void vtkMRMLEMSTreeParametersLeafNode::WriteXML(ostream& of, int nIndent)
     for (unsigned int c = 0; c < this->GetNumberOfTargetInputChannels(); ++c)
     {
       of << this->LogCovariance[r][c] << " ";
-    }
-
-    if (r < this->GetNumberOfTargetInputChannels() - 1)
-    {
-      of << "| ";
-    }
-  }
-  of << "\"";
-
-  of << indent
-    << " Covariance=\"";
-
-  for (unsigned int r = 0; r < this->GetNumberOfTargetInputChannels(); ++r)
-  {
-    for (unsigned int c = 0; c < this->GetNumberOfTargetInputChannels(); ++c)
-    {
-      of << this->Covariance[r][c] << " ";
     }
 
     if (r < this->GetNumberOfTargetInputChannels() - 1)
@@ -206,29 +180,6 @@ void vtkMRMLEMSTreeParametersLeafNode::ReadXMLAttributes(const char** attrs)
       // copy data
       vtksys_stl::copy(tmpVec.begin(), tmpVec.end(), this->LogMean.begin());
     }
-    else if (!strcmp(key,"Mean"))
-    {
-      // read data into a temporary vector
-      vtksys_stl::stringstream ss;
-      ss << val;
-
-      double d;
-      vtksys_stl::vector<double> tmpVec;
-
-      while (ss >> d)
-      {
-        tmpVec.push_back(d);
-      }
-
-      // update number of input channels
-      if (this->GetNumberOfTargetInputChannels() != tmpVec.size())
-      {
-        this->SetNumberOfTargetInputChannels(tmpVec.size());
-      }
-
-      // copy data
-      vtksys_stl::copy(tmpVec.begin(), tmpVec.end(), this->Mean.begin());
-    }
     else if (!strcmp(key, "LogCovariance"))
     {
       // remove visual row seperators
@@ -274,52 +225,6 @@ void vtkMRMLEMSTreeParametersLeafNode::ReadXMLAttributes(const char** attrs)
           }
         }
     }
-    else if (!strcmp(key, "Covariance"))
-    {
-      // remove visual row seperators
-      std::string valStr(val);
-
-      for (i = 0; i < valStr.size(); ++i)
-      {
-        if (valStr[i] == '|')
-        {
-          valStr[i] = ' ';
-        }
-      }
-
-      // read data into a temporary vector
-      vtksys_stl::stringstream ss;
-      ss << valStr;
-
-      double d;
-      vtksys_stl::vector<double> tmpVec;
-
-      while (ss >> d)
-      {
-        tmpVec.push_back(d);
-      }
-
-      // update number of input channels
-      // assume square matrix
-      unsigned int side = (unsigned int) sqrt((double)tmpVec.size());
-
-      if (this->GetNumberOfTargetInputChannels() != side)
-      {
-        this->SetNumberOfTargetInputChannels(side);
-      }
-
-      // copy data
-      i = 0;
-      int numTargets = this->GetNumberOfTargetInputChannels();
-
-      for (int r=0; r < numTargets; r++)
-      {
-        for (int c=0; c < numTargets; c++)
-        {
-          this->Covariance[r][c] = tmpVec[i++];
-        }
-      }
-    }
     else if (strcmp(key,"DistributionSpecificationMethod") == 0)
     {
       vtksys_stl::stringstream ss;
@@ -357,9 +262,7 @@ void vtkMRMLEMSTreeParametersLeafNode::Copy(vtkMRMLNode *rhs)
   this->SetIntensityLabel(node->IntensityLabel);
 
   this->LogMean       = node->LogMean;
-  this->Mean          = node->Mean;
   this->LogCovariance = node->LogCovariance;
-  this->Covariance    = node->Covariance;
 
   this->SetDistributionSpecificationMethod
     (node->DistributionSpecificationMethod);
@@ -390,15 +293,6 @@ void vtkMRMLEMSTreeParametersLeafNode::PrintSelf(ostream& os,vtkIndent indent)
 
   os << "\n";
 
-  os << indent << "Mean: ";
-
-  for (int i=0; i < numTargets; i++)
-  {
-    os << this->Mean[i] << " ";
-  }
-
-  os << "\n";
-
   os << indent << "LogCovariance: ";
 
   for (int r=0; r < numTargets; r++)
@@ -406,18 +300,6 @@ void vtkMRMLEMSTreeParametersLeafNode::PrintSelf(ostream& os,vtkIndent indent)
     for (int c=0; c < numTargets; c++)
       {
       os << this->LogCovariance[r][c] << " ";
-      }
-    }
-
-  os << "\n";
-
-  os << indent << "Covariance: ";
-
-  for (int r=0; r < numTargets; r++)
-    {
-    for (int c=0; c < numTargets; c++)
-      {
-      os << this->Covariance[r][c] << " ";
       }
     }
 
@@ -473,11 +355,6 @@ SetNumberOfTargetInputChannels(
 
     vtksys_stl::fill(this->LogMean.begin(), this->LogMean.end(), 0.0);
 
-    // resize Mean, do not preserve data!
-    this->Mean.resize(n);
-
-    vtksys_stl::fill(this->Mean.begin(), this->Mean.end(), 0.0);
-
     // resize LogCovariance, do not preserve data!
     this->LogCovariance.clear();
     this->LogCovariance.resize(n);
@@ -485,15 +362,6 @@ SetNumberOfTargetInputChannels(
     for (unsigned int i=0; i < n; i++)
     {
       this->LogCovariance[i].resize(n, 0.0);
-    }
-
-    // resize Covariance, do not preserve data!
-    this->Covariance.clear();
-    this->Covariance.resize(n);
-
-    for (unsigned int i=0; i < n; i++)
-    {
-      this->Covariance[i].resize(n, 0.0);
     }
   }
 }
@@ -504,18 +372,15 @@ vtkMRMLEMSTreeParametersLeafNode::
 AddTargetInputChannel()
 {
   this->LogMean.push_back(0.0);
-  this->Mean.   push_back(0.0);
 
   for (unsigned int i=0; i < this->NumberOfTargetInputChannels; i++)
   {
     this->LogCovariance[i].push_back(0.0);
-    this->Covariance[i].   push_back(0.0);
   }
 
   unsigned int numTargets = ++this->NumberOfTargetInputChannels;
 
   this->LogCovariance.push_back(vtkstd::vector<double>(numTargets,0.0));
-  this->Covariance.   push_back(vtkstd::vector<double>(numTargets,0.0));
 }
 
 //----------------------------------------------------------------------------
@@ -525,16 +390,13 @@ RemoveNthTargetInputChannel(
     int index)
 {
   this->LogMean.erase(this->LogMean.begin() + index);
-  this->Mean.   erase(this->Mean.begin()    + index);
 
   for (unsigned int i=0; i < this->NumberOfTargetInputChannels; ++i)
   {
     this->LogCovariance[i].erase(this->LogCovariance[i].begin() + index);
-    this->Covariance[i].   erase(this->Covariance[i].begin()    + index);
   }
 
   this->LogCovariance.erase(this->LogCovariance.begin() + index);
-  this->Covariance.   erase(this->Covariance.begin()    + index);
 
   this->NumberOfTargetInputChannels--;
 }
@@ -552,9 +414,6 @@ MoveNthTargetInputChannel(
 
   double movingParam2 = this->LogMean[fromIndex];
 
-  this->Mean.erase( this->Mean.begin() + fromIndex);
-  this->Mean.insert(this->Mean.begin() + toIndex, movingParam);
-
   for (unsigned int i=0; i < this->NumberOfTargetInputChannels; i++)
   {
     movingParam = this->LogCovariance[i][fromIndex];
@@ -568,19 +427,6 @@ MoveNthTargetInputChannel(
 
   this->LogCovariance.erase(this->LogCovariance.begin() + fromIndex);
   this->LogCovariance.insert(this->LogCovariance.begin() + toIndex,movingVec);
-
-  for (unsigned int i=0; i < this->NumberOfTargetInputChannels; i++)
-  {
-    movingParam2 = this->Covariance[i][fromIndex];
-    this->Covariance[i].erase(this->Covariance[i].begin() + fromIndex);
-    this->Covariance[i].insert(this->Covariance[i].begin() + toIndex,
-        movingParam2);
-  }
-
-  vtkstd::vector<double> movingVec2 = this->Covariance[fromIndex];
-  this->Covariance.erase(this->Covariance.begin() + fromIndex);
-  this->Covariance.insert(this->Covariance.begin() + toIndex,
-      movingVec2);
 }
 
 //----------------------------------------------------------------------------
@@ -590,21 +436,9 @@ double vtkMRMLEMSTreeParametersLeafNode::GetLogMean(int index) const
 }
 
 //----------------------------------------------------------------------------
-double vtkMRMLEMSTreeParametersLeafNode::GetMean(int index) const
-{
-  return this->Mean[index];
-}
-
-//----------------------------------------------------------------------------
 void vtkMRMLEMSTreeParametersLeafNode::SetLogMean(int index, double value)
 {
   this->LogMean[index] = value;
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLEMSTreeParametersLeafNode::SetMean(int index, double value)
-{
-  this->Mean[index] = value;
 }
 
 //----------------------------------------------------------------------------
@@ -612,20 +446,6 @@ double vtkMRMLEMSTreeParametersLeafNode::GetLogCovariance(int row, int column)
   const
 {
   return this->LogCovariance[row][column];
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLEMSTreeParametersLeafNode::SetCovariance(int row, int column,
-    double value)
-{
-  this->Covariance[row][column] = value;
-}
-
-//----------------------------------------------------------------------------
-double vtkMRMLEMSTreeParametersLeafNode::GetCovariance(int row, int column)
-  const
-{
-  return this->Covariance[row][column];
 }
 
 //----------------------------------------------------------------------------
