@@ -146,6 +146,12 @@ vtkSlicerSlicesControlGUI::~vtkSlicerSlicesControlGUI ( )
     this->ToggleFgBgButton->Delete ( );
     this->ToggleFgBgButton = NULL;
     }
+  if ( this->LabelOpacityTopLevel )
+    {
+    this->LabelOpacityTopLevel->SetParent ( NULL );
+    this->LabelOpacityTopLevel->Delete ( );    
+    this->LabelOpacityTopLevel = NULL;
+    }
   if ( this->LabelOpacityButton )
     {
     this->LabelOpacityButton->SetParent ( NULL );
@@ -188,12 +194,6 @@ vtkSlicerSlicesControlGUI::~vtkSlicerSlicesControlGUI ( )
     this->AnnotationButton->SetParent ( NULL );
     this->AnnotationButton->Delete ( );
     this->AnnotationButton = NULL;    
-    }
-  if ( this->LabelOpacityTopLevel )
-    {
-    this->LabelOpacityTopLevel->SetParent ( NULL );
-    this->LabelOpacityTopLevel->Delete ( );    
-    this->LabelOpacityTopLevel = NULL;
     }
   if ( this->LabelOpacityScale )
     {
@@ -1657,6 +1657,9 @@ void vtkSlicerSlicesControlGUI::BuildCompositingMenu ( )
   this->CompositingButton->GetMenu()->AddRadioButton ( "Subtract" );
   this->CompositingButton->GetMenu()->AddSeparator ( );
   this->CompositingButton->GetMenu()->AddCommand ("close");
+  //--- don't select a mode here since different non-linked viewers may
+  //--- have different selection.
+  // this->CompositingButton->GetMenu()->SelectItem ( "Alpha blend");
 }
 
 //---------------------------------------------------------------------------
@@ -2089,7 +2092,7 @@ void vtkSlicerSlicesControlGUI::BuildGUI ( vtkKWFrame *appF )
       this->Script ( "pack %s -side right -anchor e -padx 2 -pady 3 -expand n", this->ToggleFgBgButton->GetWidgetName ( ) );
 
       //--- populate menus
-      this->BuildCompositingMenu ();
+      this->BuildCompositingMenu ();      
       this->BuildAnnotationMenu ( );
       this->BuildCrossHairMenu ( );
       this->BuildSpacesMenu ( );
