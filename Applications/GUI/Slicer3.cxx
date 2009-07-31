@@ -924,6 +924,9 @@ int Slicer3_main(int argc, char *argv[])
   if ( slicerApp->FullFileSystemCheck() )
     {
     FullDisk = true;
+    //--- if there's no room on disk,
+    //--- ditch building anything that adds to cache.
+    NoModules = true;
     }
 
   // set a pointer to vtkSlicerSlicesGUI in vtkSlicerApplicationGUI

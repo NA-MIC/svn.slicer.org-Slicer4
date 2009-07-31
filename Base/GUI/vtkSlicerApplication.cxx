@@ -392,6 +392,7 @@ int vtkSlicerApplication::FullFileSystemCheck ( ) {
   //---
   std::string temporaryDirectory;
   std::string testFile;
+  bool dirGone;
   if (this->GetTemporaryDirectory() )
     {
     temporaryDirectory = this->GetTemporaryDirectory();
@@ -421,14 +422,12 @@ int vtkSlicerApplication::FullFileSystemCheck ( ) {
         message->SetStyleToOkCancel();
         message->SetText(msg.c_str());
         message->Create();
-        message->Invoke();
-        message->Delete();
         int clearDir = message->Invoke();
         message->Delete();
         if ( clearDir )
           {
           //--- empty temp directory
-          vtksys::SystemTools::RemoveADirectory ( temporaryDirectory.c_str() );
+          dirGone = vtksys::SystemTools::RemoveADirectory ( temporaryDirectory.c_str() );
           if ( vtksys::SystemTools::MakeDirectory ( temporaryDirectory.c_str() ) == false )
             {
             vtkWarningMacro ( "Temporary Directory cleared: Error: unable to recreate Temporary Directory after deleting its contents." );      
@@ -484,7 +483,7 @@ int vtkSlicerApplication::FullFileSystemCheck ( ) {
         if ( clearDir )
           {
           //--- empty temp directory
-          vtksys::SystemTools::RemoveADirectory ( cacheDirectory.c_str() );
+          dirGone = vtksys::SystemTools::RemoveADirectory ( cacheDirectory.c_str() );
           if ( vtksys::SystemTools::MakeDirectory ( cacheDirectory.c_str() ) == false )
             {
             vtkWarningMacro ( "Remote Cache Directory cleared: Error: unable to recreate Remote Cache Directory after deleting its contents." );      
