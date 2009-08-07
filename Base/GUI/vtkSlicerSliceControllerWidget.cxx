@@ -2282,15 +2282,22 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
             cnode = vtkMRMLSliceCompositeNode::SafeDownCast (
               this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceCompositeNode"));
             
-            this->MRMLScene->SaveStateForUndo ( cnode );
-            cnode->SetCompositing (vtkMRMLSliceCompositeNode::Add );
+            //--- only update the node if the value is out of sync
+            if ( cnode->GetCompositing() != vtkMRMLSliceCompositeNode::Add)
+              {
+              this->MRMLScene->SaveStateForUndo ( cnode );
+              cnode->SetCompositing (vtkMRMLSliceCompositeNode::Add );
+              }
             }
           }
         else
           {
-          this->MRMLScene->SaveStateForUndo( this->SliceCompositeNode );
-          this->SliceCompositeNode
-            ->SetCompositing(vtkMRMLSliceCompositeNode::Add);
+          //--- only update the node if the value is out of sync
+          if ( this->SliceCompositeNode->GetCompositing() != vtkMRMLSliceCompositeNode::Add)
+            {
+            this->MRMLScene->SaveStateForUndo( this->SliceCompositeNode );
+            this->SliceCompositeNode->SetCompositing(vtkMRMLSliceCompositeNode::Add);
+            }
           }
         }
       else if (!strcmp ( lbstr, "Subtract") )
@@ -2303,14 +2310,22 @@ void vtkSlicerSliceControllerWidget::ProcessWidgetEvents ( vtkObject *caller, un
             cnode = vtkMRMLSliceCompositeNode::SafeDownCast (
               this->GetMRMLScene()->GetNthNodeByClass (i, "vtkMRMLSliceCompositeNode"));
             
-            this->MRMLScene->SaveStateForUndo ( cnode );
-            cnode->SetCompositing (vtkMRMLSliceCompositeNode::Subtract );
+            //--- only update the node if the value is out of sync
+            if ( cnode->GetCompositing() != vtkMRMLSliceCompositeNode::Subtract)
+              {
+              this->MRMLScene->SaveStateForUndo ( cnode );
+              cnode->SetCompositing (vtkMRMLSliceCompositeNode::Subtract );
+              }
             }
           }
         else
           {
-          this->MRMLScene->SaveStateForUndo( this->SliceCompositeNode );
-          this->SliceCompositeNode->SetCompositing(vtkMRMLSliceCompositeNode::Subtract);
+          //--- only update the node if the value is out of sync
+          if ( this->SliceCompositeNode->GetCompositing() != vtkMRMLSliceCompositeNode::Subtract)
+            {
+            this->MRMLScene->SaveStateForUndo( this->SliceCompositeNode );
+            this->SliceCompositeNode->SetCompositing(vtkMRMLSliceCompositeNode::Subtract);
+            }
           }
         }
       }
