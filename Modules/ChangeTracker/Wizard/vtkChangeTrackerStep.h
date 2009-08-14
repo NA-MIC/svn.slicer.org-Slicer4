@@ -67,6 +67,9 @@ public:
   vtkGetObjectMacro(Render_VolumeProperty, vtkVolumeProperty);
   vtkGetObjectMacro(Render_Mapper, vtkVolumeTextureMapper3D);
 
+  void RenderShow();
+  void RenderHide();
+
 protected:
   vtkChangeTrackerStep();
   ~vtkChangeTrackerStep();

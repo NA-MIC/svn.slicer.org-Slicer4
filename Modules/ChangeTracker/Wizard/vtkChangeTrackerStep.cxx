@@ -475,3 +475,39 @@ void vtkChangeTrackerStep::CenterRYGSliceViews(double ptX, double ptY, double pt
       applicationGUI->GetMainSliceGUI("Yellow")->GetSliceController()->GetOffsetScale()->SetValue(ptX);
       applicationGUI->GetMainSliceGUI("Green")->GetSliceController()->GetOffsetScale()->SetValue(ptY);
 }
+
+void vtkChangeTrackerStep::RenderHide()
+{
+  if (this->Render_Volume) {
+    if (this->GetGUI()) {
+      vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
+      if (applicationGUI) {  
+        vtkSlicerViewerWidget *viewerWidget  = applicationGUI->GetViewerWidget();
+        if (viewerWidget) {
+          vtkKWRenderWidget* mainViewer = viewerWidget->GetMainViewer();
+          if (mainViewer) {
+            mainViewer->RemoveViewProp(this->Render_Volume);
+          }
+        }
+      }
+    }
+  }
+}
+
+void vtkChangeTrackerStep::RenderShow()
+{
+  if (this->Render_Volume) {
+    if (this->GetGUI()) {
+      vtkSlicerApplicationGUI *applicationGUI = this->GetGUI()->GetApplicationGUI();
+      if (applicationGUI) {  
+        vtkSlicerViewerWidget *viewerWidget  = applicationGUI->GetViewerWidget();
+        if (viewerWidget) {
+          vtkKWRenderWidget* mainViewer = viewerWidget->GetMainViewer();
+          if (mainViewer) {
+            mainViewer->AddViewProp(this->Render_Volume);
+          }
+        }
+      }
+    }
+  }
+}

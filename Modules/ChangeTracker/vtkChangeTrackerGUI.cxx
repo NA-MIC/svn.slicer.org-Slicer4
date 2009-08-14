@@ -179,6 +179,26 @@ void vtkChangeTrackerGUI::RemoveGUIObservers()
   this->SliceLogicRemoveGUIObserver(); 
 }
 
+void vtkChangeTrackerGUI::Enter()
+{
+  if (this->FirstScanStep)    this->FirstScanStep->RenderShow();
+  if (this->ROIStep)          this->ROIStep->RenderShow();
+  if (this->SegmentationStep) this->SegmentationStep->RenderShow();
+  if (this->TypeStep)         this->TypeStep->RenderShow();
+  if (this->AnalysisStep)     this->AnalysisStep->RenderShow();
+  this->ModuleEntered = true;
+}
+
+void vtkChangeTrackerGUI::Exit()
+{
+  if (this->FirstScanStep)    this->FirstScanStep->RenderHide();
+  if (this->ROIStep)          this->ROIStep->RenderHide();
+  if (this->SegmentationStep) this->SegmentationStep->RenderHide();
+  if (this->TypeStep)         this->TypeStep->RenderHide();
+  if (this->AnalysisStep)     this->AnalysisStep->RenderHide();
+  this->ModuleEntered = false;
+}
+
 //---------------------------------------------------------------------------
 void vtkChangeTrackerGUI::ProcessGUIEvents(vtkObject *caller,
                                                       unsigned long event,
