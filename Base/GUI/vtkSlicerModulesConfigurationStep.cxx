@@ -19,7 +19,9 @@
 #include "vtkKWFrame.h"
 
 #include "vtkSlicerApplication.h"
+#include "vtkSlicerApplicationGUI.h"
 #include "vtkSlicerModulesWizardDialog.h"
+#include "vtkSlicerFoundationIcons.h"
 
 #include "vtkHTTPHandler.h"
 
@@ -57,75 +59,53 @@ vtkSlicerModulesConfigurationStep::vtkSlicerModulesConfigurationStep()
 //----------------------------------------------------------------------------
 vtkSlicerModulesConfigurationStep::~vtkSlicerModulesConfigurationStep()
 {
-  if (this->HeaderIcon)
-    {
-    this->HeaderIcon->Delete();
-    this->HeaderIcon = NULL;
-    }
-  if (this->HeaderText)
-    {
-    this->HeaderText->SetParent (NULL);
-    this->HeaderText->Delete();
-    this->HeaderText = NULL;
-    }
-  if (this->ActionRadioButtonSet)
-    {
-    this->ActionRadioButtonSet->SetParent ( NULL );
-    this->ActionRadioButtonSet->Delete();
-    this->ActionRadioButtonSet = NULL;
-    }
-  if (this->CacheDirectoryButton)
-    {
-    this->CacheDirectoryButton->SetParent ( NULL );
-    this->CacheDirectoryButton->Delete();
-    this->CacheDirectoryButton = NULL;
-    }
-  if (this->TrashButton)
-    {
-    this->TrashButton->SetParent ( NULL );
-    this->TrashButton->Delete();
-    this->TrashButton = NULL;
-    }
-  if (this->SearchLocationLabel)
-    {
-    this->SearchLocationLabel->SetParent ( NULL );
-    this->SearchLocationLabel->Delete();
-    this->SearchLocationLabel = NULL;
-    }
-  if (this->SearchLocationBox)
-    {
-    this->SearchLocationBox->SetParent ( NULL);
-    this->SearchLocationBox->Delete();
-    this->SearchLocationBox = NULL;
-    }
   if (this->Frame1)
     {
-    this->Frame1->SetParent ( NULL );
     this->Frame1->Delete();
-    this->Frame1 = NULL;
     }
   if (this->Frame2)
     {
-    this->Frame2->SetParent ( NULL );
     this->Frame2->Delete();
-    this->Frame2 = NULL;
     }
   if (this->Frame3)
     {
-    this->Frame3->SetParent ( NULL );
     this->Frame3->Delete();
-    this->Frame3 = NULL;
     }
   if (this->Frame4)
     {
-    this->Frame4->SetParent ( NULL );
     this->Frame4->Delete();
-    this->Frame4 = NULL;
+    }
+  if (this->HeaderIcon)
+    {
+    this->HeaderIcon->Delete();
+    }
+  if (this->HeaderText)
+    {
+    this->HeaderText->Delete();
+    }
+  if (this->ActionRadioButtonSet)
+    {
+    this->ActionRadioButtonSet->Delete();
+    }
+  if (this->CacheDirectoryButton)
+    {
+    this->CacheDirectoryButton->Delete();
+    }
+  if (this->TrashButton)
+    {
+    this->TrashButton->Delete();
+    }
+  if (this->SearchLocationLabel)
+    {
+    this->SearchLocationLabel->Delete();
+    }
+  if (this->SearchLocationBox)
+    {
+    this->SearchLocationBox->Delete();
     }
 
   this->SetWizardDialog(NULL);
   this->RepositoryValidationFailed->Delete();
-  this->RepositoryValidationFailed = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -138,7 +118,7 @@ void vtkSlicerModulesConfigurationStep::SetWizardDialog(vtkSlicerModulesWizardDi
 void vtkSlicerModulesConfigurationStep::ShowUserInterface()
 {
   this->Superclass::ShowUserInterface();
-
+  
   vtkKWWizardWidget *wizard_widget = 
     this->GetWizardDialog()->GetWizardWidget();
 
@@ -252,7 +232,7 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     {
     this->CacheDirectoryButton->SetParent( this->Frame3 );
     this->CacheDirectoryButton->Create();
-    this->CacheDirectoryButton->SetLabelText("Change download (cache) directory:");
+    this->CacheDirectoryButton->SetLabelText("Change extensions install path:");
     this->CacheDirectoryButton->SetLabelWidth(34);
     this->CacheDirectoryButton->GetLabel()->SetAnchorToEast();
     this->CacheDirectoryButton->GetWidget()->TrimPathFromFileNameOff();
@@ -264,7 +244,7 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
       ->GetLoadSaveDialog()->SetTitle("Select a directory");
     this->CacheDirectoryButton->GetWidget()
       ->GetLoadSaveDialog()->SetBalloonHelpString(
-      "Select a directory to be used as a download directory (cache) for Extensions.");
+      "Select a directory to be used as an install directory for Extensions.");
 
     this->CacheDirectoryButton->GetWidget()->SetCommand(this, "CacheDirectoryCallback");
     }
@@ -272,7 +252,7 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
   vtkKWLabel *l = vtkKWLabel::New();
   l->SetParent ( this->Frame3 );
   l->Create();
-  l->SetText ( "Delete files from cache (optional):" );
+  l->SetText ( "Delete zip files from temp. dir. (optional):" );
   l->SetWidth ( 34 );
   l->SetAnchorToEast();
 
@@ -320,6 +300,7 @@ void vtkSlicerModulesConfigurationStep::ShowUserInterface()
     {
     this->SearchLocationBox->SetParent( this->Frame4 );
     this->SearchLocationBox->Create();
+    this->SearchLocationBox->SetCommand(this, "SearchLocationCallback");
     }
  
   this->Script("pack %s %s -side left -anchor w -padx 5", 
@@ -351,54 +332,25 @@ void vtkSlicerModulesConfigurationStep::Update()
 
   if (app)
     {
-    if (this->CacheDirectoryButton)
+      if (this->CacheDirectoryButton)
       {
       this->CacheDirectoryButton->GetWidget()->TrimPathFromFileNameOff();
-      this->CacheDirectoryButton->GetWidget()->SetText(app->GetModuleCachePath());
-      this->CacheDirectoryButton->GetWidget()->GetLoadSaveDialog()->SetLastPath(app->GetModuleCachePath());
+      this->CacheDirectoryButton->GetWidget()->SetText(app->GetExtensionsInstallPath());
+      this->CacheDirectoryButton->GetWidget()->GetLoadSaveDialog()->SetLastPath(app->GetExtensionsInstallPath());
       }
     }
 
   if (this->SearchLocationBox)
     {
-    std::string txtfile(app->GetBinDir());
-    txtfile += "/../";
-    txtfile += Slicer3_INSTALL_LIB_DIR;
-    txtfile += "/";
-    txtfile += "Slicer3Version.txt";
-
-    std::string platform;
-    std::string build_date;
-    std::string svnurl;
-    std::string svnrevision;
-
-    std::ifstream ifs(txtfile.c_str());
-
-    std::string line;
-    while (std::getline(ifs, line, '\n')) {
-      if (line.find("build ") == 0) {
-        platform = line.substr(6);
-      } else if (line.find("buildDate ") == 0) {
-        build_date = line.substr(10);
-      } else if (line.find("svnurl ") == 0) {
-        svnurl = line.substr(7);
-      } else if (line.find("svnrevision ") == 0) {
-        svnrevision = line.substr(12);
-      }
-    }
-
-    ifs.close();
-
     // :TODO: 20090405 tgl: URL below should be configurable.
 
     std::string ext_slicer_org("http://ext.slicer.org/ext/");
 
-    int pos = svnurl.find_last_of("/");
-    ext_slicer_org += svnurl.substr(pos + 1);
+    ext_slicer_org += app->GetSvnUrl();
     ext_slicer_org += "/";
-    ext_slicer_org += svnrevision;
+    ext_slicer_org += app->GetSvnRevision();
     ext_slicer_org += "-";
-    ext_slicer_org += platform;
+    ext_slicer_org += app->GetPlatform();
     
     this->GetWizardDialog()->SetSelectedRepositoryURL( ext_slicer_org );
         
@@ -483,8 +435,14 @@ int vtkSlicerModulesConfigurationStep::IsRepositoryValid()
       }
 
     }
-
-  return 0;//result;
+  else
+    {
+    // :NOTE: 20090728 tgl: Action is uninstall, repository checking
+    // is pointless.
+    result = 0;
+    }
+  
+  return result;
 }
 
 //----------------------------------------------------------------------------
@@ -539,8 +497,14 @@ void vtkSlicerModulesConfigurationStep::CacheDirectoryCallback()
   if (app)
     {
     // Store the setting in the application object
-    app->SetModuleCachePath(this->CacheDirectoryButton->GetWidget()->GetLoadSaveDialog()->GetFileName());
+    app->SetExtensionsInstallPath(this->CacheDirectoryButton->GetWidget()->GetLoadSaveDialog()->GetFileName());
     }
+}
+
+//----------------------------------------------------------------------------
+void vtkSlicerModulesConfigurationStep::SearchLocationCallback(const char* value)
+{
+  this->GetWizardDialog()->SetSelectedRepositoryURL(value);
 }
 
 //----------------------------------------------------------------------------

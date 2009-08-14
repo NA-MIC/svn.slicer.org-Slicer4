@@ -105,7 +105,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   static const char *ColorFilePathsRegKey;
   static const char *PotentialModulePathsRegKey;
   static const char *PotentialColorFilePathsRegKey;
-  static const char *ModuleCachePathRegKey;
+  static const char *ExtensionsInstallPathRegKey;
   static const char *TemporaryDirectoryRegKey;
   static const char *WebBrowserRegKey;
   static const char *UnzipRegKey;
@@ -149,7 +149,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   
   // Description:
   // Set/Get the search paths for modules.
-  // This is a list of paths delimited by a specific seperator: ';' on 
+  // This is a list of paths delimited by a specific separator: ';' on 
   // Windows, ':' on Unix/MacOSX platforms.
   void SetModulePaths(const char *paths);
   const char* GetModulePaths() const;
@@ -174,6 +174,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   const char* GetPotentialModulePaths() const;
 
   // Description:
+  // Helper method to append a single path the existing potential
+  // modules paths.
+  void AppendPotentialModulePath(const char *path, bool enabled);
+
+  // Description:
   // Set/Get the potential search paths for color files
   // based on SetPotentialModulePaths
   void SetColorFilePaths(const char *paths);
@@ -183,8 +188,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
 
   // Description:
   // Set/Get the cache path for modules.
-  void SetModuleCachePath(const char *path);
-  const char* GetModuleCachePath() const;
+  void SetExtensionsInstallPath(const char *path);
+  const char* GetExtensionsInstallPath();
   
   // Description:
   // Set/Get a user's home module.
@@ -218,11 +223,6 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   void SetRemoteCacheDirectory(const char *path);
   const char* GetRemoteCacheDirectory() const;
 
-  // Description:
-  // Set/Get a directory for extensions download cache
-  void SetExtensionsDownloadDirectory(const char *path);
-  const char* GetExtensionsDownloadDirectory() const;
-  
   // Description:
   // Set/Get the binary location
   void SetBinDir(const char* path);
@@ -384,6 +384,13 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   const char *Eval (const char *script) {return (this->Script(script));};
   const char *Eval (const char *script, const char *args) {return (this->Script("%s %s", script, args));};
 
+  // Description:
+  // Getter method to reference information about this build.
+  const char* GetPlatform();
+  const char* GetBuildDate();
+  const char* GetSvnUrl();
+  const char* GetSvnRevision();
+
  protected:
   vtkSlicerApplication ( );
   virtual ~vtkSlicerApplication ( );
@@ -411,7 +418,8 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   char ColorFilePaths[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char PotentialModulePaths[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char PotentialColorFilePaths[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
-  char ModuleCachePath[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char ExtensionsInstallPath[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char ExtensionsInstallPathDefault[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char WebBrowser [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
   char Unzip [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
   char Zip [vtkKWRegistryHelper::RegistryKeyValueSizeMax ];
@@ -422,7 +430,11 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
   char ApplicationFontFamily [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char IgnoreModuleNames [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
   char BinDir [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
-  char ExtensionsDownloadDir [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+
+  char Platform [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char BuildDate [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char SvnUrl [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  char SvnRevision [vtkKWRegistryHelper::RegistryKeyValueSizeMax];
 
   int ApplicationWindowWidth;
   int ApplicationWindowHeight;
@@ -456,18 +468,24 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplication : public vtkKWApplication
 private:
   vtkSlicerApplication ( const vtkSlicerApplication& ); // Not implemented.
   void operator = ( const vtkSlicerApplication& ); //Not implemented.
+
+  //BTX
+  // Description:
+  // Helper method to setup Platform, Build Date, SVN URL and SVN Revision
+  void InitializeSlicer3Version();
+  //ETX
     
   //BTX
   itk::MutexLock::Pointer DisplayMessageQueueActiveLock;
   itk::MutexLock::Pointer DisplayMessageQueueLock;
   std::string NameSeparator;
   //ETX
+
   bool DisplayMessageQueueActive;
 
   DisplayMessageQueue* InternalDisplayMessageQueue;
   
   static vtkSlicerApplication* Instance;
-
 
   int UseSplashScreen;
   int StereoEnabled;

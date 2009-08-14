@@ -381,7 +381,11 @@ if { $::GETBUILDTEST(buildList) != "" } {
     append cmd " $::GETBUILDTEST(buildList)"
 }
 
-eval runcmd $cmd
+set retval [catch "eval runcmd $cmd"]
+if {$retval == 1} {
+  puts "ERROR: failed to run getbuildtest: $cmd"
+  return
+}
 
 if { $::GETBUILDTEST(version-patch) == "" } {
   # TODO: add build type (win32, etc) here...
@@ -439,6 +443,10 @@ if {$::GETBUILDTEST(verbose)} {
 }
 
 # build the slicer
+# - first run cmake
+# - create the Slicer3Version.txt file
+# - then run plaftorm specific build command
+
 cd $::Slicer3_BUILD
 runcmd $::CMAKE \
         -G$::GENERATOR \
@@ -467,6 +475,25 @@ runcmd $::CMAKE \
         -DSLICERLIBCURL_DIR:FILEPATH=$Slicer3_LIB/cmcurl-build \
         -DCMAKE_VERBOSE_MAKEFILE:BOOL=$::GETBUILDTEST(cmake-verbose) \
         $Slicer3_HOME
+
+
+#
+# run the versioner script to create the Slicer3Version.txt file
+# that tells what slicer3 build these newly built extensions 
+# are compatibile with
+#
+
+set cmd "sh $::Slicer3_HOME/Scripts/versioner.tcl"
+set retval [catch "eval runcmd $cmd" res]
+if {$retval == 1} {
+  puts "ERROR: failed to run versioner script: $cmd"
+  puts "$res"
+  return
+}
+
+#
+# now do the actual build
+#
 
 if { $isWindows } {
 
@@ -571,6 +598,11 @@ if {$::GETBUILDTEST(upload) == "true"} {
         puts "See http://www.na-mic.org/Slicer/Download, in the $::GETBUILDTEST(uploadFlag) directory, for the uploaded file."
     }
 }
+
+
+#
+# build slicer extensions if requested on the command line
+#
 
 if { $::GETBUILDTEST(extend) == "true" } {
   # build the slicer3 extensions

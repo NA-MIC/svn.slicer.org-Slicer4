@@ -4,6 +4,7 @@
 #include "vtkStringArray.h"
 
 #include "vtkKWWizardStep.h"
+#include "vtkKWRegistryHelper.h"
 
 #include <string>
 #include <vector>
@@ -163,13 +164,19 @@ private:
   //BTX
   void InsertExtension(int Index,
                        ManifestEntry *Entry,
-                       const std::string &CacheDir);
+                       const std::string &InstallDir);
   //ETX
 
   // Description:
   // Helper method to read from repository and parse for modules
   //BTX
   void UpdateModulesFromRepository(vtkSlicerApplication *app);
+  //ETX
+
+  // Description:
+  // Helper method to read from disk and parse for modules
+  //BTX
+  void UpdateModulesFromDisk(vtkSlicerApplication *app);
   //ETX
 
   // Description:
@@ -184,6 +191,22 @@ private:
   //BTX
   int ActionTaken;
   //ETX
+
+  //Description:
+  // Helper method to clear this->Modules
+  //BTX
+  void ClearModules();
+  //ETX
+
+  // Description:
+  // Helper method to return the extensions install path
+  // @param WithToken true if the path should include @SVN@ instead of
+  // the actual subversion revision number
+  //BTX
+  const char* GetInstallPath(bool WithToken = false);
+  char InstallPath[vtkKWRegistryHelper::RegistryKeyValueSizeMax];
+  //ETX
+
 };
 
 #endif

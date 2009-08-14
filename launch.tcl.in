@@ -24,7 +24,11 @@
 # cmake such that tokens between @ signs will be replaced by the variable 
 # from the cmake cache
 #
- 
+
+# set default error code and info so we don't get confused later if no error has
+# actually occurred...
+set ::errorCode 0
+set ::errorInfo ""
 
 #
 # Slicer3_HOME: , find it relative to the location of this script
@@ -329,6 +333,7 @@ proc launch_ParseArgs {argv} {
           set ::LAUNCH(showSplash) 0
           lappend newargs $arg ;# pass arg to Slicer3-real
       }
+      "--test_mode" -
       "--test-mode" {
         set ::LAUNCH(showSplash) 0
         lappend newargs $arg ;# pass arg to Slicer3-real
@@ -399,6 +404,7 @@ proc launch_SetPaths {} {
             set ::env(LD_LIBRARY_PATH) $::env(Slicer3_PLUGINS_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(Slicer3_MODULES_DIR):$::env(LD_LIBRARY_PATH)
             set ::env(LD_LIBRARY_PATH) $::env(X11_LIB_DIR):$::env(LD_LIBRARY_PATH)
+            set ::env(PATH) "$::env(PATH):$::env(TCL_DIR)/bin"
             set ::env(PATH) "$::env(PATH):$::env(Teem_DIR)"
             set ::env(PATH) "$::env(Slicer3_BIN_DIR):$::env(PATH)"
             set ::env(PATH) "$::env(Slicer3_PLUGINS_DIR):$::env(PATH)"
@@ -434,7 +440,8 @@ proc launch_SetPaths {} {
             set ::env(DYLD_LIBRARY_PATH) $::env(Slicer3_LIB_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(Slicer3_PLUGINS_DIR):$::env(DYLD_LIBRARY_PATH)
             set ::env(DYLD_LIBRARY_PATH) $::env(Slicer3_MODULES_DIR):$::env(DYLD_LIBRARY_PATH)
-            set ::env(PATH) $::env(PATH):$::env(Teem_DIR)
+            set ::env(PATH) "$::env(PATH):$::env(TCL_DIR)/bin"
+            set ::env(PATH) "$::env(PATH):$::env(Teem_DIR)"
             set ::env(PATH) "$::env(Slicer3_BIN_DIR):$::env(PATH)"
             set ::env(PATH) "$::env(Slicer3_PLUGINS_DIR):$::env(PATH)"
             set ::env(PATH) "$::env(Slicer3_MODULES_DIR):$::env(PATH)"
@@ -521,11 +528,8 @@ proc launch_SplashScreen {} {
 
   if { $::LAUNCH(showSplash) } {
 
-    if { [catch "package require Tk"] } {
-      # if we can't open Tk, there's
-      # Removing this warning for now -- it seems to confuse more people than it helps 
-      #puts "\nWarning: cannot open DISPLAY.  This is likely to be an X Server issue."
-      #puts "Slicer will attempt to launch, but may fail.\n"
+    if { ($::env(BUILD) ==  $::DARWIN || $::env(BUILD) == $::DARWIN_X86) || [catch "package require Tk"] } {
+      puts "Setting up launch environment..."
       set $::LAUNCH(showSplash) 0
       return
     }
@@ -618,9 +622,10 @@ proc launch_puts {args} {
 
 #
 # helper proc to handle text coming from the child process
+# if output is set to 0, a variable ::globallines has to exist to buffer the lines
 #
 set ::count 0
-proc launch_FileEvent {fp} {
+proc launch_FileEvent {fp {output 1}} {
     if {[eof $fp]} {
         set ret [catch "close $fp" res]
         set ::saved_errorCode $::errorCode
@@ -630,7 +635,13 @@ proc launch_FileEvent {fp} {
         set ::END 1
     } else {
         gets $fp line
-        puts $line
+        if {$output == 1} {
+            puts $line
+        } else {
+            if {$line != ""} {
+                append ::globallines $line
+            }
+        }
         launch_SplashKill ;# just in case the pre-splash screen is still up
     }
 }
@@ -685,6 +696,7 @@ proc launch_RunProgram {} {
       set ::LAUNCH(launchCommand) $::Slicer3_REAL
     }
 
+    set ::errorCode ""  
     set ::errorInfo ""  ;# reset error info so we are sure to get errors from the 
                          # launch and not leftovers from previous 'catch' calls
 
@@ -747,6 +759,62 @@ proc launch_RunProgram {} {
     exit $code
 }
 
+#
+# run the program with the argument --print-module-paths to get the module path from
+# registry so dependencies can be set before the actual program launch
+#
+proc launch_ImportModulePaths {} {
+
+    set ::globallines ""  ; # reset buffer for global lines
+
+    # run the program with argument --print-module-paths
+    if {$::env(BUILD) == $::WINDOWS} {
+        set fp [open "| \"$::Slicer3_REAL\" --print-module-paths" r]
+    } else {
+        set fp [open "| sh -c \"'$::Slicer3_REAL' --print-module-paths \" |& cat" r]
+    }
+
+    # call the helper but do not pass thru output directly!
+    fileevent $fp readable "launch_FileEvent $fp 0"
+    set ::END 0    
+    while { ![catch "pid $fp"] && ![eof $fp] } {
+        vwait ::END
+    }
+
+    # we should have the module paths now
+
+    # parse the svn revision of the version file
+    set dp [open "$::env(Slicer3_HOME)/lib/Slicer3/Slicer3Version.txt" r]
+    set data [read $dp]
+    close $dp
+
+    set exp {svnrevision ([0-9]+)}
+
+    foreach {lines} [regexp -line $exp $data matched svnrevision] {
+        if {$lines==1} {
+            # find only one line
+            # substitute @SVN@ in $result with the found svnrevision
+            set newpath [string map [list \@SVN\@ $svnrevision] $::globallines]
+        }
+    }
+
+    # set the dependencies
+    if {$::env(BUILD) == $::SOLARIS ||
+        $::env(BUILD) == $::LINUX_64 || 
+        $::env(BUILD) == $::LINUX} {
+            set ::env(LD_LIBRARY_PATH) ":$::env(LD_LIBRARY_PATH)"
+            set ::env(LD_LIBRARY_PATH) "$newpath$::env(LD_LIBRARY_PATH)"
+        } elseif {$::env(BUILD) ==  $::DARWIN || $::env(BUILD) == $::DARWIN_X86} { 
+            set ::env(DYLD_LIBRARY_PATH) ":$::env(DYLD_LIBRARY_PATH)"
+            set ::env(DYLD_LIBRARY_PATH) "$newpath$::env(DYLD_LIBRARY_PATH)"
+        } elseif {$::env(BUILD) == $::WINDOWS} {
+            set newpath [string map [list : \;] $newpath] ; # really needed?
+            set ::env(Path) $newpath\;$::env(Path)
+        }
+
+}
+
+
 ######
 #######  The actual steps for launching:
 ######
@@ -759,6 +827,11 @@ launch_InitEnvironment
 
 launch_SetPaths 
 
+set ret [catch launch_ImportModulePaths res]
+if { $ret } {
+  puts "Could not query slicer for module paths"
+  puts $res
+}
 
 #
 # run program until it exits and then exit this script with the ouput
