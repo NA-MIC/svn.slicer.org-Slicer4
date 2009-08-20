@@ -78,6 +78,8 @@ vtkChangeTrackerGUI::vtkChangeTrackerGUI()
   this->Logo = logo;
   logo->Delete();
 
+  this->TutorialButton = NULL;
+
   this->ModuleEntered = false;
 }
 
@@ -124,6 +126,11 @@ vtkChangeTrackerGUI::~vtkChangeTrackerGUI()
     {
     this->AnalysisStep->Delete();
     this->AnalysisStep = NULL;
+    }
+  if (this->TutorialButton)
+    {
+    this->TutorialButton->Delete();
+    this->TutorialButton = NULL;
     }
 }
 
@@ -177,26 +184,6 @@ void vtkChangeTrackerGUI::RemoveGUIObservers()
   if (this->AnalysisStep)     this->AnalysisStep->RemoveGUIObservers();
 
   this->SliceLogicRemoveGUIObserver(); 
-}
-
-void vtkChangeTrackerGUI::Enter()
-{
-  if (this->FirstScanStep)    this->FirstScanStep->RenderShow();
-  if (this->ROIStep)          this->ROIStep->RenderShow();
-  if (this->SegmentationStep) this->SegmentationStep->RenderShow();
-  if (this->TypeStep)         this->TypeStep->RenderShow();
-  if (this->AnalysisStep)     this->AnalysisStep->RenderShow();
-  this->ModuleEntered = true;
-}
-
-void vtkChangeTrackerGUI::Exit()
-{
-  if (this->FirstScanStep)    this->FirstScanStep->RenderHide();
-  if (this->ROIStep)          this->ROIStep->RenderHide();
-  if (this->SegmentationStep) this->SegmentationStep->RenderHide();
-  if (this->TypeStep)         this->TypeStep->RenderHide();
-  if (this->AnalysisStep)     this->AnalysisStep->RenderHide();
-  this->ModuleEntered = false;
 }
 
 //---------------------------------------------------------------------------
@@ -278,6 +265,29 @@ void  vtkChangeTrackerGUI::UpdateNode()
   this->GetLogic()->GetMRMLScene()->SaveStateForUndo(this->Node);
 
 
+}
+
+//---------------------------------------------------------------------------
+void vtkChangeTrackerGUI::Enter()
+{
+  this->ModuleEntered = true;
+  if (this->FirstScanStep)    this->FirstScanStep->RenderShow(); 
+  if (this->ROIStep)          this->ROIStep->RenderShow(); 
+  if (this->SegmentationStep) this->SegmentationStep->RenderShow(); 
+  if (this->TypeStep)   this->TypeStep->RenderShow(); 
+  if (this->AnalysisStep)     this->AnalysisStep->RenderShow(); 
+}
+
+// according to vtkGradnientAnisotrpoicDiffusionoFilterGUI
+//---------------------------------------------------------------------------
+void vtkChangeTrackerGUI::Exit()
+{
+  this->ModuleEntered = false;
+  if (this->FirstScanStep)    this->FirstScanStep->RenderHide(); 
+  if (this->ROIStep)          this->ROIStep->RenderHide(); 
+  if (this->SegmentationStep) this->SegmentationStep->RenderHide(); 
+  if (this->TypeStep)   this->TypeStep->RenderHide(); 
+  if (this->AnalysisStep)     this->AnalysisStep->RenderHide(); 
 }
 
 
@@ -385,7 +395,23 @@ void vtkChangeTrackerGUI::BuildGUI()
     app->Script("pack %s", logoLabel->GetWidgetName() );
     logoLabel->Delete();
   }
- 
+
+  // add the ability to load tutorial data
+  if(!this->TutorialButton)
+    {
+    this->TutorialButton = vtkKWPushButton::New();
+    }
+
+  if (!this->TutorialButton->IsCreated()) {
+    this->TutorialButton->SetParent(this->GetHelpAndAboutFrame()->GetFrame());
+    this->TutorialButton->Create();
+    this->TutorialButton->SetText("Load Tutorial data");
+    this->TutorialButton->SetBalloonHelpString("Load the tutorial data.");
+    this->TutorialButton->SetCommand(this, "LoadTutorialData");
+  }
+  this->Script("pack %s -side top -anchor nw -fill x -padx 2 -pady 2", 
+               this->TutorialButton->GetWidgetName());
+
   // -----------------------------------------------------------------------
   // Define Wizard with the order of the steps
 
@@ -668,4 +694,13 @@ void vtkChangeTrackerGUI::PropagateVolumeSelection() {
 
 void vtkChangeTrackerGUI::ObserveMRMLROINode(vtkMRMLROINode* roi){
     vtkSetAndObserveMRMLNodeMacro(this->roiNode, roi);
+}
+
+void vtkChangeTrackerGUI::LoadTutorialData(){
+  vtkMRMLScene *scene = this->GetNode()->GetScene();
+  scene->SetURL(TUTORIAL_XNAT_SCENE);
+  scene->Connect();
+  if(scene->GetErrorCode())
+    vtkErrorMacro("ERROR: Failed to connect to the tutorial scene. Error code: " << scene->GetErrorCode() 
+      << "Error message: " << scene->GetErrorMessage());
 }
