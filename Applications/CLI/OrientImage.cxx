@@ -184,22 +184,29 @@ int main( int argc, char * argv[] )
 
     // This filter handles all types on input, but only produces
     // signed types
-    
     switch (componentType)
       {
       case itk::ImageIOBase::UCHAR:
+        return DoIt( argc, argv, static_cast<unsigned char>(0));
+        break;
       case itk::ImageIOBase::CHAR:
         return DoIt( argc, argv, static_cast<char>(0));
         break;
       case itk::ImageIOBase::USHORT:
+        return DoIt( argc, argv, static_cast<unsigned short>(0));
+        break;
       case itk::ImageIOBase::SHORT:
         return DoIt( argc, argv, static_cast<short>(0));
         break;
       case itk::ImageIOBase::UINT:
+        return DoIt( argc, argv, static_cast<unsigned int>(0));
+        break;
       case itk::ImageIOBase::INT:
         return DoIt( argc, argv, static_cast<int>(0));
         break;
       case itk::ImageIOBase::ULONG:
+        return DoIt( argc, argv, static_cast<unsigned long>(0));
+        break;
       case itk::ImageIOBase::LONG:
         return DoIt( argc, argv, static_cast<long>(0));
         break;
@@ -215,6 +222,7 @@ int main( int argc, char * argv[] )
         break;
       }
     }
+
   catch( itk::ExceptionObject &excep)
     {
     std::cerr << argv[0] << ": exception caught !" << std::endl;
