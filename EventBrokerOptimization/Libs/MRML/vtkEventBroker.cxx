@@ -122,6 +122,40 @@ vtkObservation *vtkEventBroker::AddObservation (
   observation->SetCallbackCommand( notify );
 
   this->AttachObservation( observation );
+
+  // TODO
+  if ( this->EventLogging && this->LogFile.is_open() )
+    {
+    this->LogFile << "# AddObservation: (subject) " \
+          << observation->GetSubject()->GetClassName() << observation->GetSubject()
+          << " -> (observer) "
+          << observation->GetObserver()->GetClassName() 
+          << " [ tag " 
+          << observation->GetEventTag()
+          << "];\n" ;
+    this->LogFile.flush();
+    }
+
+    // TODO
+    if ( this->EventLogging && this->LogFile.is_open() )
+      {
+      this->LogFile << "# AddObservations for: (observer) " \
+            << observer->GetClassName() << observer
+            << "\n" ;
+      if ( !strcmp(observer->GetClassName(), "vtkSlicerViewerWidget") )
+        {
+        this->LogFile << "# Adding: Found it! Observations {:\n";
+        std::vector< vtkObservation *>::iterator iter; 
+        KeyType observerKey = reinterpret_cast<KeyType>(observer);
+        for(iter=this->ObserverMap[observerKey].begin(); iter != this->ObserverMap[observerKey].end(); iter++)  
+          {
+          vtkIndent ind;
+          (*iter)->PrintSelf(this->LogFile, ind);
+          }
+        this->LogFile << "# }\n";
+        }
+      }
+
   return (observation);
 }
 
@@ -147,6 +181,18 @@ vtkObservation *vtkEventBroker::AddObservation (
   observation->SetScript( script );
 
   this->AttachObservation( observation );
+
+  if ( this->EventLogging && this->LogFile.is_open() )
+    {
+    this->LogFile << "# AddObservation: (subject) " \
+          << observation->GetSubject()->GetClassName() << observation->GetSubject()
+          << " -> (script) "
+          << observation->GetScript()
+          << " [ tag " 
+          << observation->GetEventTag()
+          << "];\n" ;
+    this->LogFile.flush();
+    }
   return (observation);
 }
 
@@ -288,6 +334,24 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
   std::vector< vtkObservation *>::iterator removeIter;
   for(removeIter=observations.begin(); removeIter != observations.end(); removeIter++)  
     {
+
+    //TODO
+    if ( this->EventLogging && this->LogFile.is_open() )
+      {
+      this->LogFile << "# RemovingObservation: (subject) " \
+            << (*removeIter)->GetSubject()->GetClassName() << (*removeIter)->GetSubject()
+            << " [ tag " 
+            << (*removeIter)->GetEventTag()
+            << "];\n" ;
+
+      if ( (*removeIter)->GetEventTag() == 18 &&
+            !strcmp((*removeIter)->GetSubject()->GetClassName(), "vtkMRMLSliceNode") )
+        {
+        this->LogFile << "# Removing: Found it!\n";
+        }
+      this->LogFile.flush();
+      }
+
     (*removeIter)->SetInEventQueue( 0 );
     this->DetachObservation( *removeIter );
     (*removeIter)->Delete();
@@ -332,6 +396,27 @@ std::vector< vtkObservation *> vtkEventBroker::GetObservations (vtkObject *obser
   std::vector< vtkObservation *> observationList;
   KeyType observerKey = reinterpret_cast<KeyType>(observer);
   observationList = this->ObserverMap[observerKey];
+
+    // TODO
+    if ( this->EventLogging && this->LogFile.is_open() )
+      {
+      this->LogFile << "# GetObservations for: (observer) " \
+            << observer->GetClassName() << observer
+            << "\n" ;
+      if ( !strcmp(observer->GetClassName(), "vtkSlicerViewerWidget") )
+        {
+        this->LogFile << "# Getting: Found it! Observations {:\n";
+        std::vector< vtkObservation *>::iterator iter; 
+        KeyType observerKey = reinterpret_cast<KeyType>(observer);
+        for(iter=this->ObserverMap[observerKey].begin(); iter != this->ObserverMap[observerKey].end(); iter++)  
+          {
+          vtkIndent ind;
+          (*iter)->PrintSelf(this->LogFile, ind);
+          }
+        this->LogFile << "# }\n";
+        }
+      }
+
   return( observationList );
 }
 
@@ -395,6 +480,20 @@ std::vector< vtkObservation *> vtkEventBroker::GetObservations (vtkObject *subje
 //----------------------------------------------------------------------------
 std::vector< vtkObservation *> vtkEventBroker::GetObservationsForSubjectByTag (vtkObject *subject, unsigned long tag)
 {
+  if ( this->EventLogging && this->LogFile.is_open() )
+    {
+    this->LogFile << "# Looking for: (subject) " \
+          << subject->GetClassName() << subject
+          << " [ tag " 
+          << tag
+          << "];\n" ;
+    if ( tag == 18 && !strcmp(subject->GetClassName(), "vtkMRMLSliceNode") )
+      {
+      this->LogFile << "# Looking: Found it!\n";
+      }
+
+    this->LogFile.flush();
+    }
   // find matching observations to remove
   // - all tags match 0
   std::vector< vtkObservation *> observationList;
@@ -648,10 +747,78 @@ void vtkEventBroker::ProcessEvent ( vtkObservation *observation, vtkObject *call
   // 
   // for delete events, just clean up and get out
   // - we want to forget we ever had this observation
+  //   and any that were connected to the object that is
+  //   going to be deleted.
   //
   if ( eid == vtkCommand::DeleteEvent )
     {
-    this->RemoveObservation( observation );
+
+    // TODO
+    if ( this->EventLogging && this->LogFile.is_open() )
+      {
+      this->LogFile << "# DeleteEvent for: (caller) " \
+            << caller->GetClassName() << caller
+            << "\n" ;
+      if ( !strcmp(caller->GetClassName(), "vtkMRMLSliceNode") )
+        {
+        this->LogFile << "# Deleting: Found it!\n";
+        std::vector< vtkObservation *>::iterator iter; 
+        KeyType subjectKey = reinterpret_cast<KeyType>(caller);
+        for(iter=this->SubjectMap[subjectKey].begin(); iter != this->SubjectMap[subjectKey].end(); iter++)  
+          {
+          vtkIndent ind;
+          (*iter)->PrintSelf(this->LogFile, ind);
+          }
+        }
+      if ( !strcmp(caller->GetClassName(), "vtkSlicerSliceControllerWidget") )
+        {
+        this->LogFile << "# Deleting: Got Delete from SliceController!\n";
+        }
+      this->LogFile.flush();
+      }
+
+    if ( caller == observation->GetSubject() )
+      {
+      // TODO
+      if ( this->EventLogging && this->LogFile.is_open() )
+        {
+        this->LogFile << "# Caller for: (caller) " \
+              << caller->GetClassName() << caller
+              << " is subject\n" ;
+        }
+      // Remove all observations for this subject (0 matches all tags)
+      this->RemoveObservationsForSubjectByTag (observation->GetSubject(), 0);
+      }
+    else if ( caller == observation->GetObserver() )
+      {
+      // TODO
+      if ( this->EventLogging && this->LogFile.is_open() )
+        {
+        this->LogFile << "# Caller for: (caller) " \
+              << caller->GetClassName() << caller
+              << " is observer\n" ;
+        }
+      // Remove all observations for this observer
+      this->RemoveObservations (observation->GetObserver());
+      }
+    else
+      {
+      vtkErrorMacro("Unknown caller for DeleteEvent");
+      }
+
+    // TODO
+    if ( !strcmp(caller->GetClassName(), "vtkMRMLSliceNode") )
+      {
+      this->LogFile << "# Deleting: Found it!\n";
+      std::vector< vtkObservation *>::iterator iter; 
+      KeyType subjectKey = reinterpret_cast<KeyType>(caller);
+      for(iter=this->SubjectMap[subjectKey].begin(); iter != this->SubjectMap[subjectKey].end(); iter++)  
+        {
+        vtkIndent ind;
+        (*iter)->PrintSelf(this->LogFile, ind);
+        }
+      }
+
     return;
     }
 }
