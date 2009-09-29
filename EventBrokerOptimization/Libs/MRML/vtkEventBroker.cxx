@@ -69,15 +69,13 @@ vtkEventBroker::~vtkEventBroker()
 {
 
   // for each subject, remove observations in its list
-  std::set<KeyType>::iterator siter;
+  ObjectToObservationVectorMap::iterator mapiter;
   ObservationVector::iterator oiter; 
 
-  for (siter = this->SubjectSet.begin(); siter != this->SubjectSet.end(); siter++)
+  for (mapiter = this->SubjectMap.begin(); mapiter != this->SubjectMap.end(); mapiter++)
     {
-    KeyType subjectKey = *siter;
-    ObservationVector subjectObservations = this->SubjectMap[subjectKey];
     // clear out all the observation records
-    for(oiter=subjectObservations.begin(); oiter != subjectObservations.end(); oiter++)  
+    for(oiter=(mapiter->second).begin(); oiter != (mapiter->second).end(); oiter++)  
       { 
       this->DetachObservation (*oiter);
       (*oiter)->Delete();
@@ -113,7 +111,6 @@ vtkObservation *vtkEventBroker::AddObservation (
   observation->SetEventBroker( this );
   KeyType subjectKey = reinterpret_cast<KeyType>(subject);
   this->SubjectMap[subjectKey].push_back( observation );
-  this->SubjectSet.insert(subjectKey);
   KeyType observerKey = reinterpret_cast<KeyType>(observer);
   this->ObserverMap[observerKey].push_back( observation );
   observation->AssignSubject( subject );
@@ -167,7 +164,6 @@ vtkObservation *vtkEventBroker::AddObservation (
   observation->SetEventBroker( this );
   KeyType subjectKey = reinterpret_cast<KeyType>(subject);
   this->SubjectMap[subjectKey].push_back( observation );
-  this->SubjectSet.insert(subjectKey);
   observation->AssignSubject( subject );
 
   // figure out event either as a predefined string, or

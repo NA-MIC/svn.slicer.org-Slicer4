@@ -86,7 +86,7 @@ int main(int argc, char * argv[])
     {
     broker->GenerateGraphFile( graphFile.c_str() );
     }
-    broker->GenerateGraphFile( "c:/tmp/1.dot" );
+    broker->GenerateGraphFile( "/tmp/1.dot" );
 
   // Get observations
   // - check that we can find the one we have created
@@ -139,7 +139,7 @@ int main(int argc, char * argv[])
     {
     broker->GenerateGraphFile( graphFile.c_str() );
     }
-    broker->GenerateGraphFile( "c:/tmp/2.dot" );
+    broker->GenerateGraphFile( "/tmp/2.dot" );
 
   viewer->Delete();
   callback->Delete();
