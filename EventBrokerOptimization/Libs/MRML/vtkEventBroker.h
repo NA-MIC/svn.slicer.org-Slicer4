@@ -37,9 +37,10 @@
 #include <deque>
 #include <vector>
 #include <set>
+#include <hash_map>
 #include <fstream>
 
-#include "vtksys/hash_map.hxx"
+//#include "vtksys/hash_map.hxx"
 
 class vtkCollection;
 class vtkCallbackCommand;
@@ -258,7 +259,8 @@ protected:
   // 
   typedef char *KeyType;
   typedef std::vector< vtkObservation * > ObservationVector;
-  typedef vtksys::hash_map< KeyType, ObservationVector > ObjectToObservationVectorMap;
+  //typedef vtksys::hash_map< KeyType, ObservationVector > ObjectToObservationVectorMap;
+  typedef stdext::hash_map< KeyType, ObservationVector > ObjectToObservationVectorMap;
 
   // hash maps to manage quick lookup by object
   ObjectToObservationVectorMap SubjectMap;

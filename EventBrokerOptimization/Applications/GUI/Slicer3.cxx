@@ -86,14 +86,14 @@ extern "C" {
 #include "Resources/vtkSlicerSplashScreen_ImageData.h"
 
 // uncomment these lines to disable a particular module (handy for debugging)
-//#define CLIMODULES_DEBUG
-//#define COLORS_DEBUG
-//#define COMMANDLINE_DEBUG
-//#define DAEMON_DEBUG
-//#define FIDUCIALS_DEBUG
-//#define MODELS_DEBUG
-//#define REMOTEIO_DEBUG
-//#define SCRIPTEDMODULE_DEBUG
+#define CLIMODULES_DEBUG
+#define COLORS_DEBUG
+#define COMMANDLINE_DEBUG
+#define DAEMON_DEBUG
+#define FIDUCIALS_DEBUG
+#define MODELS_DEBUG
+#define REMOTEIO_DEBUG
+#define SCRIPTEDMODULE_DEBUG
 //#define SLICESMODULE_DEBUG
 
 #define CAMERA_DEBUG

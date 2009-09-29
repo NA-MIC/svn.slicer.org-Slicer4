@@ -262,7 +262,9 @@ void vtkEventBroker::RemoveObservation ( vtkObservation *observation )
 void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observations)
 {
   // remove passed observations from:
-  // - brokers observation maps
+  // - broker's observation maps
+  // -- remove each from list of observations per subject
+  // -- remove each from list of observations per obserer
   // - current event queue
   // - detach from subject (and observer)
   // - delete the observation
@@ -276,14 +278,24 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
 
   for(inObsIter=observations.begin(); inObsIter != observations.end(); inObsIter++)  
     {
+    vtkObservation *inObs = (*inObsIter);
     newObservations.clear();
     KeyType subjectKey = reinterpret_cast<KeyType>((*inObsIter)->GetSubject());
     ObservationVector *subjectObservations = &(this->SubjectMap[subjectKey]);
     for(obsIter=(*subjectObservations).begin(); obsIter != (*subjectObservations).end(); obsIter++)  
       {
-      if ((*obsIter) != (*inObsIter))
+      vtkObservation *obs = (*obsIter);
+      if (inObs != obs)
         {
-        newObservations.push_back((*obsIter));
+        newObservations.push_back(obs);
+        }
+      else
+        {
+        //TODO
+        if ( this->EventLogging && this->LogFile.is_open() )
+          {
+          this->LogFile << "# removing observation from subject map for " << inObs->GetSubject()->GetClassName()<< "\n";
+          }
         }
       }
     this->SubjectMap[subjectKey] = newObservations;
@@ -291,16 +303,26 @@ void vtkEventBroker::RemoveObservations (std::vector< vtkObservation *>observati
 
   for(inObsIter=observations.begin(); inObsIter != observations.end(); inObsIter++)  
     {
+    vtkObservation *inObs = (*inObsIter);
     newObservations.clear();
-    if ((*inObsIter)->GetObserver())  // Observer may be NULL for scripts
+    if (inObs->GetObserver())  // Observer may be NULL for scripts
       {
-      KeyType observerKey = reinterpret_cast<KeyType>((*inObsIter)->GetObserver());
+      KeyType observerKey = reinterpret_cast<KeyType>(inObs->GetObserver());
       ObservationVector *observerObservations = &(this->ObserverMap[observerKey]);
       for(obsIter=(*observerObservations).begin(); obsIter != (*observerObservations).end(); obsIter++)  
         {
-        if ((*obsIter) != (*inObsIter))
+        vtkObservation *obs = (*obsIter);
+        if (obs != inObs)
           {
-          newObservations.push_back((*obsIter));
+          newObservations.push_back(obs);
+          }
+        else
+          {
+          //TODO
+          if ( this->EventLogging && this->LogFile.is_open() )
+            {
+            this->LogFile << "removing observation from observer map for " << inObs->GetObserver()->GetClassName()<< "\n";
+            }
           }
         }
       this->ObserverMap[observerKey] = newObservations;
@@ -497,14 +519,18 @@ std::vector< vtkObservation *> vtkEventBroker::GetObservationsForSubjectByTag (v
   // find matching observations to remove
   // - all tags match 0
   std::vector< vtkObservation *> observationList;
+  std::vector< vtkObservation *> subjectList;
   std::vector< vtkObservation *>::iterator obsIter; 
   KeyType subjectKey = reinterpret_cast<KeyType>(subject);
-  for(obsIter=this->SubjectMap[subjectKey].begin(); obsIter != this->SubjectMap[subjectKey].end(); obsIter++)  
+  subjectList = this->SubjectMap[subjectKey];
+  vtkObservation *obs;
+  for(obsIter=subjectList.begin(); obsIter != subjectList.end(); obsIter++)  
     {
-    if ( ( (*obsIter)->GetSubject() == subject ) &&
-         ( (tag == 0) || ((*obsIter)->GetEventTag() == tag) ) )
+    obs = *obsIter;
+    if ( ( obs->GetSubject() == subject ) &&
+         ( (tag == 0) || (obs->GetEventTag() == tag) ) )
       {
-      observationList.push_back( *obsIter );
+      observationList.push_back( obs );
       }
     }
   return( observationList );
