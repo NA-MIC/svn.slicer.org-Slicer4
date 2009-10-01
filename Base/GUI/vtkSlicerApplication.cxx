@@ -216,11 +216,17 @@ vtkSlicerApplication::vtkSlicerApplication ( ) {
     strcpy(this->ExtensionsInstallPath, "");
     strcpy(this->ExtensionsInstallPathDefault, "");
     strcpy ( this->HomeModule, "");
+    strcpy(this->IgnoreModuleNames, "");
+    strcpy(this->Platform, "");
+    strcpy(this->BinDir, "");
+    strcpy(this->BuildDate, "");
+    strcpy(this->SvnUrl, "");
+    strcpy(this->SvnRevision, "");
+
     this->LoadCommandLineModules = 1;
     this->LoadModules = 1;
     this->IgnoreModules = vtkStringArray::New();
     this->LoadableModules = vtkStringArray::New();
-    strcpy(this->IgnoreModuleNames, "");
     this->NameSeparator = ";";
     this->EnableDaemon = 0;
    
