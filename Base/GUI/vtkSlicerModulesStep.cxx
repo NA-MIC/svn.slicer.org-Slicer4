@@ -290,6 +290,7 @@ void vtkSlicerModulesStep::ShowUserInterface()
 
     col_index = the_list->AddColumn("Description");
     the_list->SetColumnFormatCommandToEmptyOutput(col_index);
+    the_list->SetColumnWidth(col_index, 12);
 
     this->HomePageColIndex = col_index = the_list->AddColumn("HomePage");
     the_list->SetColumnWidth(col_index, 0);
@@ -722,7 +723,8 @@ void vtkSlicerModulesStep::DescriptionCommand(const char *notused,
     std::string summary = description.substr(0, 12);
     summary += "...";
 
-    child->SetText(summary.c_str());
+    //child->SetText(summary.c_str());
+    child->SetText(description.c_str());
     child->SetBalloonHelpString(description.c_str());
     }
 }
@@ -976,6 +978,7 @@ void vtkSlicerModulesStep::DownloadParseS3ext(const std::string& s3ext,
                                               ManifestEntry* entry)
 {
   vtkHTTPHandler *handler = vtkHTTPHandler::New();
+  handler->SetForbidReuse(1);
 
   if (0 != handler->CanHandleURI(s3ext.c_str()))
     {
@@ -1066,6 +1069,7 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
   bool result = false;
 
   vtkHTTPHandler *handler = vtkHTTPHandler::New();
+  handler->SetForbidReuse(1);
 
   if (0 != handler->CanHandleURI(ExtensionBinaryURL.c_str()))
     {
@@ -1092,7 +1096,12 @@ bool vtkSlicerModulesStep::DownloadInstallExtension(const std::string& Extension
       }
     else
       {
-      app->Script("eval $::_fixed_zip_code; vfs::zip::Mount %s /zipfile; file copy -force /zipfile/* %s; vfs::zip::Unmount %s /zipfile", tmpfile.c_str(), libdir.c_str(), tmpfile.c_str());
+      app->Script("package require vfs::zip");
+      app->Script("set ::ZIPFD [vfs::zip::Mount \"%s\" /zipfile]", tmpfile.c_str());
+      app->Script("set ::ZIPFILES [glob /zipfile/*]");
+      app->Script("foreach direntry $::ZIPFILES {file copy -force $direntry \"%s\"}", 
+        libdir.c_str());
+      app->Script("vfs::zip::Unmount $::ZIPFD /zipfile");
       result = true;
       }
 
