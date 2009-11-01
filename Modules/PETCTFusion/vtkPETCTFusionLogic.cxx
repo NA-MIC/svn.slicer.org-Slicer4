@@ -253,6 +253,9 @@ void vtkPETCTFusionLogic::GetParametersFromDICOMHeader( const char *path)
   const ReaderType::FileNamesContainer & filenames = inputNames->GetFileNames(seriesUIDs[0]);
       
     std::string tag;
+    std::string yearstr;
+    std::string monthstr;
+    std::string daystr;
     std::string hourstr;
     std::string minutestr;
     std::string secondstr;
@@ -353,8 +356,6 @@ void vtkPETCTFusionLogic::GetParametersFromDICOMHeader( const char *path)
         else
           {
           this->PETCTFusionNode->SetInjectedDose( atof ( tag.c_str() ) );
-          // FIXME: this calculation is not used - commenting it out to avoid compile warning - SP
-          //float testcomp = this->PETCTFusionNode->GetInjectedDose() / 10.0;
           }
 
 
@@ -506,6 +507,66 @@ void vtkPETCTFusionLogic::GetParametersFromDICOMHeader( const char *path)
         this->PETCTFusionNode->SetDecayCorrection( "no value found" );
         }
 
+      //---
+      //--- StudyDate
+      tag.clear();
+      tag = f->GetEntryValue (0x0008,0x0021);
+      if ( tag.c_str() != NULL && strcmp (tag.c_str(), "" ) )
+        {
+        //--- YYYYMMDD
+        yearstr.clear();
+        daystr.clear();
+        monthstr.clear();
+        len = tag.length();
+        if ( len >= 4 )
+          {
+          yearstr = tag.substr(0, 4);
+          }
+        else
+          {
+          yearstr = "????";
+          }
+        if ( len >= 6 )
+          {
+          monthstr = tag.substr(4, 2);
+          }
+        else
+          {
+          monthstr = "??";
+          }
+        if ( len >= 8 )
+          {
+          daystr = tag.substr (6, 2);
+          }
+        else
+          {
+          daystr = "??";
+          }
+        tag.clear();
+        tag = yearstr.c_str();
+        tag += "/";
+        tag += monthstr.c_str();
+        tag += "/";
+        tag += daystr.c_str();
+        this->PETCTFusionNode->SetStudyDate ( tag.c_str() );
+        }
+      else
+        {
+        this->PETCTFusionNode->SetStudyDate ( "no value found" );
+        }
+
+      //---
+      //--- PatientName
+      tag.clear();
+      tag = f->GetEntryValue (0x0010,0x0010);
+      if ( tag.c_str() != NULL && strcmp (tag.c_str(), "" ) )
+        {
+        this->PETCTFusionNode->SetPatientName ( tag.c_str() );
+        }
+      else
+        {
+        this->PETCTFusionNode->SetPatientName ( "no value found");
+        }
 
       //---
       //--- DecayFactor
@@ -662,11 +723,113 @@ void vtkPETCTFusionLogic::GetParametersFromDICOMHeader( const char *path)
 
 
 //----------------------------------------------------------------------------
-void vtkPETCTFusionLogic::ComputeSUV()
+double vtkPETCTFusionLogic::ConvertImageUnitsToSUVUnits( double voxValue )
+{
+
+
+  //--- Units:
+  //--- image data = CPET(t) (tissue radioactivity in pixels) -- kBq/ml
+  //--- injected dose-- MBq and
+  //--- patient weight-- kg.
+  //--- computed SUV should be in units g/ml
+  //---
+  double weight = this->PETCTFusionNode->GetPatientWeight();
+  double dose = this->PETCTFusionNode->GetInjectedDose();
+  if ( weight == 0.0 || dose == 0.0 || this->PETCTFusionNode->GetTissueRadioactivityUnits() == NULL )
+    {
+    return ( voxValue );
+    }
+
+  double tissueConversionFactor = this->ConvertRadioactivityUnits (1, this->PETCTFusionNode->GetTissueRadioactivityUnits(), "kBq");
+  dose  = this->ConvertRadioactivityUnits ( dose, this->PETCTFusionNode->GetDoseRadioactivityUnits(), "MBq");
+  weight = this->ConvertWeightUnits ( weight, this->PETCTFusionNode->GetWeightUnits(), "kg");
+
+  double weightByDose = weight / dose;
+  double suvVal = (voxValue * tissueConversionFactor) * weightByDose;
+
+  return ( suvVal);
+}
+
+
+
+
+
+//----------------------------------------------------------------------------
+double vtkPETCTFusionLogic::ConvertSUVUnitsToImageUnits( double suvValue )
+{
+
+  
+  //--- Units:
+  //--- SUV should be in units g/ml
+  //--- injected dose-- MBq and
+  //--- patient weight-- kg.
+  //--- computed image units:kBq/ml
+  //---
+  double weight = this->PETCTFusionNode->GetPatientWeight();
+  double dose = this->PETCTFusionNode->GetInjectedDose();
+
+  if ( weight == 0.0 || dose == 0.0 || this->PETCTFusionNode->GetTissueRadioactivityUnits() == NULL )
+    {
+    return ( suvValue );
+    }
+
+  double tissueConversionFactor = this->ConvertRadioactivityUnits (1, this->PETCTFusionNode->GetTissueRadioactivityUnits(), "kBq");
+  if ( tissueConversionFactor == 0.0 )
+    {
+    //--- what's best to do here?
+    dose = .000000000001;
+    }
+  dose  = this->ConvertRadioactivityUnits ( dose, this->PETCTFusionNode->GetDoseRadioactivityUnits(), "MBq");
+  weight = this->ConvertWeightUnits ( weight, this->PETCTFusionNode->GetWeightUnits(), "kg");
+
+  double weightByDose = weight / dose;
+  double voxValue = (suvValue / weightByDose) / tissueConversionFactor;
+
+  return ( voxValue);
+}
+
+
+
+
+
+//----------------------------------------------------------------------------
+void vtkPETCTFusionLogic::ComputeSUVmax()
 {
   if ( this->PETCTFusionNode == NULL )
     {
     vtkErrorMacro ( "ComputeSUVMax: Got NULL PETCTFusionNode. ");
+    return;
+    }
+  double weight = this->PETCTFusionNode->GetPatientWeight();
+  double dose = this->PETCTFusionNode->GetInjectedDose();
+  double tissueConversionFactor = this->ConvertRadioactivityUnits (1, this->PETCTFusionNode->GetTissueRadioactivityUnits(), "kBq");
+  dose  = this->ConvertRadioactivityUnits ( dose, this->PETCTFusionNode->GetDoseRadioactivityUnits(), "MBq");
+  weight = this->ConvertWeightUnits ( weight, this->PETCTFusionNode->GetWeightUnits(), "kg");
+  
+  //--- check a possible multiply by slope -- take intercept into account?
+  if ( dose != 0.0 )
+    {
+    double weightByDose = weight / dose;
+    double suvmax = (this->PETCTFusionNode->GetPETMax() * tissueConversionFactor) * weightByDose;
+    this->PETCTFusionNode->SetPETSUVmax ( suvmax );
+    }
+  else
+    {
+    this->PETCTFusionNode->SetPETSUVmax ( 0.0 );
+    this->PETCTFusionNode->SetMessageText ( "Got an injected dose of 0.0!\n SUV computations and PET Display controls\n will not be valid.\n Please refresh DICOM information or enter\n required parameters manually." );
+    this->PETCTFusionNode->InvokeEvent ( vtkMRMLPETCTFusionNode::ErrorEvent );
+    }
+}
+
+
+
+
+//----------------------------------------------------------------------------
+void vtkPETCTFusionLogic::ComputeSUV()
+{
+  if ( this->PETCTFusionNode == NULL )
+    {
+    vtkErrorMacro ( "ComputeSUV: Got NULL PETCTFusionNode. ");
     return;
     }
   
@@ -678,6 +841,7 @@ void vtkPETCTFusionLogic::ComputeSUV()
     return;
     }
   
+
   // find input labelmap volume
   vtkMRMLScalarVolumeNode *maskVolume =  vtkMRMLScalarVolumeNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->PETCTFusionNode->GetInputMask()));
   if (maskVolume == NULL)
@@ -685,6 +849,7 @@ void vtkPETCTFusionLogic::ComputeSUV()
     vtkErrorMacro("No input volume found with id= " << this->PETCTFusionNode->GetInputMask());
     return;
     }
+
 
   //--- convert from input units.
   if ( this->PETCTFusionNode->GetDoseRadioactivityUnits() == NULL )
@@ -720,13 +885,14 @@ void vtkPETCTFusionLogic::ComputeSUV()
 
 
   std::stringstream ss;
-  //--- eliminate 0 (nolabel) label.
-  if (lo == 0)
-    {
-    lo = 1;
-    }
+
   for(int i = lo; i <= hi; i++ ) 
     {
+    if ( i == 0 )
+      {
+      //--- eliminate 0 (nolabel) label.
+      continue;
+      }
     //--- Provide some feedback
     ss.str("");
     ss << "Processing label ";
@@ -773,11 +939,11 @@ void vtkPETCTFusionLogic::ComputeSUV()
       //--- computed SUV should be in units g/ml
       double weight = this->PETCTFusionNode->GetPatientWeight();
       double dose = this->PETCTFusionNode->GetInjectedDose();
-     
       double tissueConversionFactor = this->ConvertRadioactivityUnits (1, this->PETCTFusionNode->GetTissueRadioactivityUnits(), "kBq");
       dose  = this->ConvertRadioactivityUnits ( dose, this->PETCTFusionNode->GetDoseRadioactivityUnits(), "MBq");
       weight = this->ConvertWeightUnits ( weight, this->PETCTFusionNode->GetWeightUnits(), "kg");
 
+      //--- check a possible multiply by slope -- take intercept into account?
       if ( dose != 0.0 )
         {
         double weightByDose = weight / dose;
@@ -792,15 +958,13 @@ void vtkPETCTFusionLogic::ComputeSUV()
         suvmean = 99999999999999999.;
         vtkErrorMacro ( "Warning: got an injected dose of 0.0; results of SUV computation are not valid." );
         }
-      this->PETCTFusionNode->SetSUVmax_t1((float)suvmax);
-      this->PETCTFusionNode->SetSUVmin_t1((float)suvmin);
-      this->PETCTFusionNode->SetSUVmean_t1((float)suvmean);     
-      }
-    else
-      {
-      this->PETCTFusionNode->SetSUVmax_t1(0.0);
-      this->PETCTFusionNode->SetSUVmin_t1(0.0);
-      this->PETCTFusionNode->SetSUVmean_t1(0.0);
+
+      // add an entry to the SUVEntry
+      vtkMRMLPETCTFusionNode::SUVEntry entry;
+      entry.Label = i;
+      entry.Max = suvmax;
+      entry.Mean = suvmean;
+      this->PETCTFusionNode->LabelResults.push_back(entry);
       }
     thresholder->Delete();
     labelstat->Delete();
