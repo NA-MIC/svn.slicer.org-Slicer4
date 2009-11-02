@@ -1700,7 +1700,7 @@ void vtkPETCTFusionGUI::ProcessMRMLEvents ( vtkObject *caller,
         vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
         dialog->SetParent ( this->GetApplicationGUI()->GetMainSlicerWindow() );
         dialog->SetStyleToMessage();
-        dialog->SetText ( "The PET Volume is not a DICOM file,\nso parameters cannot be extracted automatically.\nParameters for computing SUV must be entered manually." );
+        dialog->SetText ( "The PET Volume appears not to be a DICOM file.\n Since parameters cannot be extracted automatically, parameters for computing SUV must be entered manually. Also note: Window/Level adjustments may not work properly for the selected PET volume.\n\nThe use of DICOM studies is recommended for this module." );
         dialog->Create();
         dialog->Invoke();
         dialog->Delete();
@@ -1721,7 +1721,17 @@ void vtkPETCTFusionGUI::ProcessMRMLEvents ( vtkObject *caller,
       if ( (this->PETCTFusionNode->GetMessageText() != NULL) &&
            (strcmp(this->PETCTFusionNode->GetMessageText(), "" )) )
         {
-        
+        if ( this->GetApplicationGUI () && this->GetApplicationGUI()->GetMainSlicerWindow() )
+          {
+          vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+          dialog->SetParent ( this->GetApplicationGUI()->GetMainSlicerWindow() );
+          dialog->SetStyleToMessage();
+          dialog->SetText ( this->PETCTFusionNode->GetMessageText() );
+          dialog->Create();
+          dialog->Invoke();
+          dialog->Delete();
+          return;
+          }
         }
       else
         {
@@ -2505,8 +2515,8 @@ void vtkPETCTFusionGUI::BuildGUI ( )
   //---
   //--- HELP
   //---
-  const char* help_text = "The PETCTFusion displays PET/CT data and performs some PET quantifications.\n\nFrom: http://www.turkupetcentre.net/modelling/methods/suv.html: \n\nThe PET quantifier \"Standardized Uptake Value\", SUV, (or \"Dose Uptake Ratio\", DUR) is calculated as a ratio of tissue radioactivity concentration CPET(t)  at time t and in units (kBq/ml), and injected dose in units (MBq) at the time of injection divided by body weight (kg).\n\nForumula implemented: SUVbw = CPET(t) / (Injected dose / Patient's weight)\n\nThe input units are converted to those above, and the resulting SUV values are in units (g/ml).\n\nThe injected dose may also be corrected by the lean body mass, or body surface area (BSA) (Kim et al., 1994). Verbraecken et al. (2006) review the different formulas for calculating the BSA.\n\nForumula to be implemented: SUVbsa= CPET(T) / (Injected dose / BSA)\n\nCancer treatment responce is usually assessed with FDG PET by calculating the SUV on the highest image pixel in the tumour regions (SUVmax). Alternatively, tumour volume can be estimated using threshold or region growing techniques, and average SUV inside the region is reported as such or multiplied by tumour volume to calculate the total glycolytic volume, TGV (Boucek et al., 2008). Nahmias and Wahl (2008) reported that the use of SUVmax has worse reproducibility (3% ± 11%) than does the SUVmean value (1% ± 7%).\n\nCalculation of SUV does not require blood sampling or dynamic imaging. The imaging must take place at a late time point, and always at the same time point, if results are to be compared (Eckelman et al., 2000). \n\n The PET image should contain only one (late) frame. If the PET image contains more than one frame, the frames can be averaged together (check correctness of this). \n\n\nThis module is new and will be extended.";
-  const char* ack_text = "PETCTFusion was developed by Wendy Plesniak with help from Jeffrey Yapp and Ron Kikinis. This work was supported by NA-MIC, NAC, BIRN, NCIGT, CTSC, and the Slicer Community. See <a>http://www.slicer.org</a> for details.\n";
+  const char* help_text = "The PETCTFusion Module displays PET/CT data and performs some PET quantitative measurements (Standardized Uptake Value).\n\nFrom: http://www.turkupetcentre.net/modelling/methods/suv.html: \n\nThe PET quantifier \"Standardized Uptake Value\", SUV, (or \"Dose Uptake Ratio\", DUR) is calculated as a ratio of tissue radioactivity concentration CPET(t)  at time t and in units (kBq/ml), and injected dose in units (MBq) at the time of injection divided by body weight (kg).\n\nForumula implemented: SUVbw = CPET(t) / (Injected dose / Patient's weight)\n\nThe input units are converted to those above, and the resulting SUV values are in units (g/ml).\n\nThe Data Fusion panel allows the CT volume, PET volume and a tumor mask to be selected. It is recommended that the PET volume be a DICOM study so that SUV attributes can be extracted automatically from the DICOM header. The tumor mask may contain multiple tumor labels; each label ID/color will receive a separate SUVmax and SUVmean computation.\n\nThe Display panel allows the selection of different colorizing treatments for the PET volume, and Window/Level adjustments for the PET and CT volumes. The PET color range is displayed in SUV units, from 0 to the volume's SUVmax.\n\nThe Quantitative Measures panel provides a button for the computation of SUVmax and SUVmean for each label in the Tumor Mask. The Study Parameters panel allows review of SUV attributes extracted from the DICOM header (and used in the SUV computations) and a panel for setting attributes manually if the PET Volume is a non-DICOM study.\n\n";
+  const char* ack_text = "PETCTFusion was developed by Wendy Plesniak with help from Jeffrey Yapp and Ron Kikinis. This work was supported by NA-MIC, NAC, BIRN, NCIGT, Harvard CTSC, and the Slicer Community. See <a>http://www.slicer.org</a> for details.\n";
 
   vtkKWWidget *page = this->UIPanel->GetPageWidget ( "PETCTFusion" );    
   this->BuildHelpAndAboutFrame(page, help_text, ack_text);
