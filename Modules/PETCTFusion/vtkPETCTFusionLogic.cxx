@@ -216,8 +216,6 @@ void vtkPETCTFusionLogic::GetParametersFromDICOMHeader( const char *path)
   if (nFiles > 0)
     {
     //--- invoke error via the node
-    this->PETCTFusionNode->SetMessageText ( "The selected study does not appear to be a DICOM study. Please specify values manually." );
-    this->PETCTFusionNode->InvokeEvent ( vtkMRMLPETCTFusionNode::ErrorEvent );
     this->PETCTFusionNode->SetInjectedDose ( 0.0 );
     this->PETCTFusionNode->SetPatientWeight( 0.0 );
     this->PETCTFusionNode->SetNumberOfTemporalPositions( 0 );
@@ -992,6 +990,17 @@ double vtkPETCTFusionLogic::ConvertWeightUnits ( double count,
 {
   double conversion = count;
 
+  if ( fromunits == NULL && this->PETCTFusionNode != NULL)
+    {
+    vtkWarningMacro ( "Got NULL parameter fromunits. Either PET volume is non-DICOM, or a bad parameter was specified." );
+    return (-1.0);
+    }
+  if ( tounits == NULL && this->PETCTFusionNode != NULL )
+    {
+    vtkWarningMacro ( "Got NULL parameter tounits. Either PET volume is non-DICOM, or a bad parameter was specified." );
+    return (-1.0);
+    }
+
   /*
     possibilities include:
   ---------------------------
@@ -1058,6 +1067,17 @@ double vtkPETCTFusionLogic::ConvertRadioactivityUnits (double count,
 {
 
   double conversion = count;
+  if ( fromunits == NULL && this->PETCTFusionNode != NULL)
+    {
+    vtkWarningMacro ( "Got NULL parameter fromunits. Either PET volume is non-DICOM, or a bad parameter was specified." );
+    return (-1.0);
+    }
+  if ( tounits == NULL && this->PETCTFusionNode != NULL )
+    {
+    vtkWarningMacro ( "Got NULL parameter tounits. Either PET volume is non-DICOM, or a bad parameter was specified." );
+    return (-1.0);
+    }
+
 
 /*
   possibilities include:
