@@ -72,7 +72,7 @@ puts "Slicer3_HOME is $::Slicer3_HOME"
 # changes in the "Files to test if library has already been built"
 # section below, or genlib will happily build the library again.
 
-set ::Slicer3_TAG "http://svn.slicer.org/Slicer3/trunk"
+set ::Slicer3_TAG "http://svn.slicer.org/Slicer3/branches/Slicer3.5-RSNAWorkshop"
 set ::CMAKE_TAG "CMake-2-6"
 set ::Teem_TAG http://teem.svn.sourceforge.net/svnroot/teem/teem/tags/1.10.0
 set ::KWWidgets_TAG "Slicer-3-4"
@@ -158,7 +158,7 @@ set ::SLICERLIBCURL_BUILD_DIR $::Slicer3_LIB/cmcurl-build
 # getbuildtest Option for build using system Python, should be "true" or "false"
 set ::USE_SYSTEM_PYTHON "false"
 # CMake option for Python, must be "OFF" on "ON", default is "ON"
-set ::USE_PYTHON "ON"
+set ::USE_PYTHON "OFF"
 
 # CMake option for numerical Python, only matters if Python is on
 set ::USE_NUMPY "ON"
