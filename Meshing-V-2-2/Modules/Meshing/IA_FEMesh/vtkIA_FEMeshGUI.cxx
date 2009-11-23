@@ -268,6 +268,40 @@ void vtkIA_FEMeshGUI::TearDownGUI ( )
     }
 }
 
+void vtkIA_FEMeshGUI::SynchronizeSurfaceListWithModels()
+{
+    // since slicer models can serve as surfaces to begin the meshing process, we want
+    // to discover any new models and add them to the surface list.   A correspondence is
+    // created between the lists by sharing the object name.
+
+    std::vector<vtkMRMLNode *> hnodes;
+    int nnodes;
+
+    hnodes.clear();
+    nnodes = this->MRMLScene->GetNodesByClass("vtkMRMLModelNode", hnodes);
+
+    for (unsigned int i=0; i<hnodes.size(); i++)
+    {
+      vtkMRMLModelNode *hnode = vtkMRMLModelNode::SafeDownCast(hnodes[i]);
+      cout << "found model: " << hnode->GetName() << endl;
+    }
+
+    // Similarly, if a model has been deleted, we want to delete the corresponding surface
+    // list.
+}
+
+void vtkIA_FEMeshGUI::SynchronizeMeshingObjectsWithMRMLScene ( )
+{
+    // the meshing module keeps local lists of surfaces, bblocks, and meshes
+    // Slicer workflows will create models (polygonal surfaces) from segmentation
+    // and these models could act as surfaces to mesh.  Synchronize each type of
+    // meshing object.
+
+    this->SynchronizeSurfaceListWithModels();
+}
+
+
+
 // Description:
 // Describe behavior at module startup and exit.
 void vtkIA_FEMeshGUI::Enter ( )
@@ -297,6 +331,9 @@ void vtkIA_FEMeshGUI::Enter ( )
     this->FirstEntryToModule=false;  
   else
     this->MeshingUI->RestoreVisibilityStateOfObjectLists(); 
+
+  // synchronize the meshing lists with the slicer MRML scene
+  this->SynchronizeMeshingObjectsWithMRMLScene();
 }
  
  
