@@ -216,3 +216,33 @@ void vtkLinkedListWrapper::SetMRMLSceneForStorage(vtkMRMLScene* scene)
   this->MRMLSurfaceList->SetMRMLSceneForStorage(scene);
   this->MRMLBBlockList->SetMRMLSceneForStorage(scene);
 }
+
+
+vtkMimxActorBase* vtkLinkedListWrapper::GetItemByName(char* objName)
+{
+    vtkMimxActorBase* matchingEntry;
+    bool found = false;
+    char entryname[512];
+    int count = this->GetNumberOfItems();
+    int i = 0;
+     
+      while (!found &&  i < count)
+        {
+          // look through the elements in the surface list and see if any of the names match
+          if (this->GetItem(i))
+            {
+              matchingEntry = vtkMimxActorBase::SafeDownCast(this->GetItem(i)); 
+              strcpy(entryname,matchingEntry->GetFileName()); 
+              cout << "LinkedList: found entry named '" << entryname << "'" << endl;
+ 
+              // set the successful flag if any entry matches
+              //found = found || !(strcmp(surfacename,objName));
+              found = found || !strcmp(entryname,objName);
+           }
+          if (found)
+               return matchingEntry;
+          i++;
+        }
+      return false;
+}
+

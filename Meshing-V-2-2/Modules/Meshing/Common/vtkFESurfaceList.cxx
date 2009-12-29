@@ -128,6 +128,20 @@ vtkMimxSurfacePolyDataActor* vtkFESurfaceList::GetItem(vtkIdType id)
 
 }
 
+
+vtkMimxSurfacePolyDataActor* vtkFESurfaceList::GetItem(vtkIdType id)
+{ 
+   //return this->InternalMimxObjectList->GetItem(id);
+       
+   //  fetch the MRML node that has been requested
+   vtkMRMLFESurfaceNode* requestedMrmlNode = 
+       (vtkMRMLFESurfaceNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFESurfaceNode"));
+   // then get the actor from the MRML node and return the actor
+   vtkMimxSurfacePolyDataActor* returnNode = requestedMrmlNode->GetMimxSurfacePolyDataActor();
+   return returnNode;
+
+}
+
 int vtkFESurfaceList::GetNumberOfItems()
 {
   //return this->InternalMimxObjectList->GetNumberOfItems();
@@ -139,3 +153,4 @@ int vtkFESurfaceList::RemoveItem(int Num)
   this->savedMRMLScene->RemoveNode(this->savedMRMLScene->GetNthNodeByClass(Num,"vtkMRMLFESurfaceNode"));
   return VTK_OK;
 }
+

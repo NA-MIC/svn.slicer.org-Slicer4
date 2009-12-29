@@ -325,12 +325,28 @@ void vtkKWMimxMainNotebook::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "BoundaryConditionsMenuGroup: " << this->BoundaryConditionsMenuGroup << endl;
   os << indent << "DoUndoTree: " << this->DoUndoTree << endl;
 }
+
+
+//----------------------------------------------------------------------------
+// Compare a MRML node name with the names in the SurfaceList to see if this
+// node has already been inserted the surface list.  This returns true if and only if 
+// the object is in the list and its name matches the searching name. 
 //----------------------------------------------------------------------------
 
+bool vtkKWMimxMainNotebook::SurfaceListContainsObjectByName(char* objName)
+{
+   vtkMimxSurfacePolyDataActor* matchingSurface;
+   matchingSurface = vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceMenuGroup->GetSurfaceList()->GetItemByName(objName));
+   return (matchingSurface != NULL);
+}
+
+
+//----------------------------------------------------------------------------
 // The next two methods were added to the slicer integrated version of the code.  This saves the state
 // of each object in the list, with regard to visibility.  Visibility can then be temporarily turned off
 // and restored later.  This way the objects in the IA_FEMesh objects lists can be removed from the slicer
 // viewer when exiting the module, and state can be returned after re-entering the module. 
+//----------------------------------------------------------------------------
 
 void vtkKWMimxMainNotebook::SaveVisibilityStateOfObjectLists(void)
 {

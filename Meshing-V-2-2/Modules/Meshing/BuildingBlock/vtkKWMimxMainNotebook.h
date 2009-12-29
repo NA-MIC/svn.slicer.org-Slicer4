@@ -70,6 +70,9 @@ public:
   // disconnect circular references that prevent clean shutdown (leaks)
   virtual void TearDown();
   
+  // return true or false depending on a match to the object name
+  bool SurfaceListContainsObjectByName(char* objName);
+  
 protected:
         vtkKWMimxMainNotebook();
         ~vtkKWMimxMainNotebook();
