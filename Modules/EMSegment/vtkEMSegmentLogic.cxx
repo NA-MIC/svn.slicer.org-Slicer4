@@ -2102,7 +2102,9 @@ CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericClass* node,
       << "NOTE: The above warning about ROI should not lead to poor segmentation results;  the entire image shold be segmented.  It only indicates an error if you intended to segment a subregion of the image."
       << std::endl
       << "====================================================================" << std::endl;
-
+    boundMin[0] = 1; boundMax[0] = targetImageDimensions[0];
+    boundMin[1] = 1; boundMax[1] = targetImageDimensions[1];
+    boundMin[2] = 1; boundMax[2] = targetImageDimensions[2];
     }
 
   node->SetSegmentationBoundaryMin(boundMin[0], boundMin[1], boundMin[2]);
