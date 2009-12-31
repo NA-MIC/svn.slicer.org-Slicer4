@@ -66,6 +66,11 @@ public:
   void SaveVisibilityStateOfObjectLists(void);
   void RestoreVisibilityStateOfObjectLists(void);
 
+  void SynchronizeMeshingObjectsWithMRMLScene(void);
+  void SynchronizeSurfaceListWithModels(void);
+  void SynchronizeBBlockListWithModels(void);
+  void SynchronizeMeshListWithModels(void);
+
   // Description:
   // disconnect circular references that prevent clean shutdown (leaks)
   virtual void TearDown();

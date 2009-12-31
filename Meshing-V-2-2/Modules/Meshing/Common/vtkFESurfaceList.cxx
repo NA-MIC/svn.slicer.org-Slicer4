@@ -129,18 +129,25 @@ vtkMimxSurfacePolyDataActor* vtkFESurfaceList::GetItem(vtkIdType id)
 }
 
 
-vtkMimxSurfacePolyDataActor* vtkFESurfaceList::GetItem(vtkIdType id)
-{ 
-   //return this->InternalMimxObjectList->GetItem(id);
-       
-   //  fetch the MRML node that has been requested
-   vtkMRMLFESurfaceNode* requestedMrmlNode = 
-       (vtkMRMLFESurfaceNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFESurfaceNode"));
-   // then get the actor from the MRML node and return the actor
-   vtkMimxSurfacePolyDataActor* returnNode = requestedMrmlNode->GetMimxSurfacePolyDataActor();
-   return returnNode;
-
+bool vtkFESurfaceList::ContainsItemWithName(char* objName)
+{
+    //  Look through the MRML surface nodes in the current scene to see if any have matching names.
+    // Return false if no names match, return true on exact name match
+    bool returnValue = false;
+    vtkMRMLNode* node = NULL;
+    cout << "looking for node with name " << objName << endl;
+    int nNodes = this->savedMRMLScene->GetNumberOfNodesByClass("vtkMRMLFESurfaceNode");
+    cout << "SurfaceList: found " << nNodes << "nodes" << endl;
+    for (int i=0; i<nNodes; i++)
+    {
+       node = this->savedMRMLScene->GetNthNodeByClass(i,"vtkMRMLFESurfaceNode");
+       // set the found flag if the name of this node matches
+       if (node != NULL)
+         returnValue |= !strcmp(node->GetName(),objName);
+    }
+    return returnValue;
 }
+
 
 int vtkFESurfaceList::GetNumberOfItems()
 {

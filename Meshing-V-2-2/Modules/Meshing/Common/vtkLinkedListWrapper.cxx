@@ -217,7 +217,7 @@ void vtkLinkedListWrapper::SetMRMLSceneForStorage(vtkMRMLScene* scene)
   this->MRMLBBlockList->SetMRMLSceneForStorage(scene);
 }
 
-
+/*
 vtkMimxActorBase* vtkLinkedListWrapper::GetItemByName(char* objName)
 {
     vtkMimxActorBase* matchingEntry;
@@ -236,7 +236,6 @@ vtkMimxActorBase* vtkLinkedListWrapper::GetItemByName(char* objName)
               cout << "LinkedList: found entry named '" << entryname << "'" << endl;
  
               // set the successful flag if any entry matches
-              //found = found || !(strcmp(surfacename,objName));
               found = found || !strcmp(entryname,objName);
            }
           if (found)
@@ -245,4 +244,4 @@ vtkMimxActorBase* vtkLinkedListWrapper::GetItemByName(char* objName)
         }
       return false;
 }
-
+*/

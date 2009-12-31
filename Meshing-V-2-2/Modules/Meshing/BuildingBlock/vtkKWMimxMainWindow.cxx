@@ -1420,5 +1420,21 @@ void vtkKWMimxMainWindow::ForceWidgetRedraw ( )
    if(this->MainUserInterfacePanel != NULL)
           this->MainUserInterfacePanel->RestoreVisibilityStateOfObjectLists();
  }
- 
+
+ // routines below to synchronize the local meshing lists with the mrml scene
+
+ void vtkKWMimxMainWindow::SynchronizeMeshingObjectsWithMRMLScene ( )
+ {
+     // the meshing module keeps local lists of surfaces, bblocks, and meshes
+     // Slicer workflows will create models (polygonal surfaces) from segmentation
+     // and these models could act as surfaces to mesh.  Synchronize each type of
+     // meshing object.
+
+     this->MainUserInterfacePanel->SynchronizeSurfaceListWithModels();
+     this->MainUserInterfacePanel->SynchronizeBBlockListWithModels();
+     this->MainUserInterfacePanel->SynchronizeMeshListWithModels();
+
+ }
+
+
  

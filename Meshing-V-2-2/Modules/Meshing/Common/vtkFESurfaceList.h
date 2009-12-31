@@ -47,9 +47,10 @@ public:
   
   virtual int AppendItem(vtkMimxSurfacePolyDataActor*);
   virtual vtkMimxSurfacePolyDataActor* GetItem(vtkIdType);
-  virtual vtkMimxSurfacePolyDataActor* GetItemByName(char* objName);
   virtual int GetNumberOfItems();
   virtual int RemoveItem(int );
+  bool ContainsItemWithName(char* objName);
+
 protected:
     vtkMRMLScene* savedMRMLScene; 
     vtkFESurfaceList();

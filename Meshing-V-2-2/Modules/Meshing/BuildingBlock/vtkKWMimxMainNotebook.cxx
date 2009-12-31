@@ -335,9 +335,7 @@ void vtkKWMimxMainNotebook::PrintSelf(ostream& os, vtkIndent indent)
 
 bool vtkKWMimxMainNotebook::SurfaceListContainsObjectByName(char* objName)
 {
-   vtkMimxSurfacePolyDataActor* matchingSurface;
-   matchingSurface = vtkMimxSurfacePolyDataActor::SafeDownCast(this->SurfaceMenuGroup->GetSurfaceList()->GetItemByName(objName));
-   return (matchingSurface != NULL);
+   return (vtkFESurfaceList::SafeDownCast(this->SurfaceMenuGroup->GetSurfaceList())->ContainsItemWithName(objName));
 }
 
 
@@ -432,5 +430,70 @@ void vtkKWMimxMainNotebook::RestoreVisibilityStateOfObjectLists(void)
       }   
 
   
+}
+
+
+void vtkKWMimxMainNotebook::SynchronizeMeshingObjectsWithMRMLScene()
+{
+    this->SynchronizeSurfaceListWithModels();
+    this->SynchronizeBBlockListWithModels();
+    this->SynchronizeMeshListWithModels();
+}
+
+
+void vtkKWMimxMainNotebook::SynchronizeSurfaceListWithModels()
+{
+    // since slicer models can serve as surfaces to begin the meshing process, we want
+    // to discover any new models and add them to the surface list.   A correspondence is
+    // created between the lists by sharing the object name.
+
+    std::vector<vtkMRMLNode *> hnodes;
+    int nnodes;
+
+    hnodes.clear();
+    vtkMRMLScene* scene = vtkMRMLScene::GetActiveScene();
+    nnodes = scene->GetNodesByClass("vtkMRMLModelNode", hnodes);
+
+    for (unsigned int i=0; i<hnodes.size(); i++)
+    {
+
+      vtkMRMLModelNode *hnode = vtkMRMLModelNode::SafeDownCast(hnodes[i]);
+      cout << "found model        : " << hnode->GetName() << endl;
+      cout << "      model has tag: " << hnode->GetNodeTagName() << endl;
+
+      // the MRML node TagName is the type of node, the MRML node Name
+      // (mrmlnode->GetNam() ) is the unique ID to use
+      // to match against entries in the surface list and determine if the model
+      // has already been converted as a surface or if it needs to be done.
+
+      vtkFESurfaceList* surfList = vtkFESurfaceList::SafeDownCast(this->SurfaceMenuGroup->GetSurfaceList());
+      cout << "got surface list" << endl;
+      if (!(surfList->ContainsItemWithName("fred")))
+      {
+       // add model as new surface
+        cout << "Found a model not in the surface list.  Adding it..." << endl;
+        //vtkMimxSurfacePolyDataActor* surfaceActor = vtkMimxSurfacePolyDataActor::New();
+        //surfaceActor->SetData(hnode->GetPolys());
+        //this->SurfaceMenuGroup->GetSurfaceList()->AppendItem(surfaceActor);
+      }
+    }
+
+    // Similarly, if a model has been deleted, we want to delete the corresponding surface
+    // list entry.  We determine this by traversing the surface list and deleting objects that don't have a
+    // MRML scene component.
+
+    cout << "FE_MeshGUI: delete entry in surface list here" << endl;
+}
+
+
+void vtkKWMimxMainNotebook::SynchronizeBBlockListWithModels()
+{
+   cout << "SynchronizeBBlockListWithModels" << endl;
+}
+
+
+void vtkKWMimxMainNotebook::SynchronizeMeshListWithModels()
+{
+   cout << "SynchronizeMeshListWithModels" << endl;
 }
 

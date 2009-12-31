@@ -91,7 +91,7 @@ public:
 
   
   vtkMimxActorBase* GetItem(vtkIdType);
-  vtkMimxActorBase* GetItemByName(char* objName);
+  //vtkMimxActorBase* GetItemByName(char* objName);
   int GetNumberOfItems();
   int RemoveItem(int );
   

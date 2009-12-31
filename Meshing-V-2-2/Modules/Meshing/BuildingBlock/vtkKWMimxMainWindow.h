@@ -266,6 +266,10 @@ public:
     void SaveVisibilityStateOfObjectLists(void);
     void RestoreVisibilityStateOfObjectLists(void);
     
+    //  This is used to synchronize when objects are added/deleted by slicer outside of the IA-FEMesh module.
+    void SynchronizeMeshingObjectsWithMRMLScene(void);
+
+
   // Widgets that must be public
   vtkKWRenderWidget *RenderWidget;
         vtkRenderer *AxesRenderer;

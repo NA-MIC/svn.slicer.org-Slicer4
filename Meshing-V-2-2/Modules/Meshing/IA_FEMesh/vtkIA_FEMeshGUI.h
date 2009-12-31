@@ -85,10 +85,6 @@ class VTK_IA_FEMesh_EXPORT vtkIA_FEMeshGUI : public vtkSlicerModuleGUI
 
   virtual void SetActiveViewer(vtkSlicerViewerWidget *activeViewer);
 
-  // synchronize between local module lists and MRML scene
-  void SynchronizeSurfaceListWithModels();
-  void SynchronizeMeshingObjectsWithMRMLScene();
-
 
 //  vtkGetObjectMacro(ViewProperties, vtkKWMimxViewProperties);
 //  vtkGetObjectMacro(MainUserInterfacePanel, vtkKWMimxMainUserInterfacePanel);
