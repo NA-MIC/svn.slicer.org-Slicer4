@@ -871,8 +871,11 @@ void vtkEMSegmentAnatomicalStructureStep::SelectedColorChangedCallback(vtkObject
     } 
   if (numRows != 1)
     {
-    vtkWarningWithObjectMacro(self, 
+      vtkWarningWithObjectMacro(self,
+          "\n============\nIgnore following error message\n============");
+      vtkWarningWithObjectMacro(self, 
       "Error in selection: "  << numRows << " selected, select just one and try again.");
+      vtkWarningWithObjectMacro(self,"\n============ End of ignore ============");
     } 
 
   int rowInLabelEntry = self->AnatomicalNodeIntensityLabelEntry->GetWidget()->GetValueAsInt();

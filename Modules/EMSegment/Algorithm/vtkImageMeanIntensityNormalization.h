@@ -54,6 +54,10 @@ class VTK_EMSEGMENT_EXPORT vtkImageMeanIntensityNormalization : public vtkImageT
   vtkSetMacro(PrintInfo,int);
   vtkGetMacro(PrintInfo,int);
 
+  // Description:
+  // If an Error is detected during execution the flag = true otherwise flag = false
+  vtkGetMacro(ErrorExecutionFlag,bool);
+
 protected:
 
   vtkImageMeanIntensityNormalization();
@@ -86,6 +90,7 @@ protected:
   int MaxHistogramSmoothingWidth;
   float RelativeMaxVoxelNum;
   int PrintInfo;
+  bool ErrorExecutionFlag;
 
 };
 #endif

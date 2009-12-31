@@ -30,6 +30,7 @@
 #include "vtkBSplineRegistrator.h"
 #include "vtkTransformToGrid.h"
 #include "vtkIdentityTransform.h"
+#include "vtkImageAccumulate.h"
 
 // needed to translate between enums
 #include "EMLocalInterface.h"
@@ -284,10 +285,8 @@ StartPreprocessingTargetIntensityNormalization()
     std::cerr << "  Normalizing image " << i << "..." << std::endl;
     
     // get image data
-    vtkImageData* inData = 
-      inputTarget->GetNthVolumeNode(i)->GetImageData();
-    vtkImageData* outData = 
-      normalizedTarget->GetNthVolumeNode(i)->GetImageData(); 
+    vtkImageData* inData  = inputTarget->GetNthVolumeNode(i)->GetImageData();
+    vtkImageData* outData = normalizedTarget->GetNthVolumeNode(i)->GetImageData(); 
     if (inData == NULL)
       {
       vtkErrorMacro("Normalization input is null, skipping: " << i);
@@ -327,16 +326,21 @@ StartPreprocessingTargetIntensityNormalization()
       vtkWarningMacro("Error executing normalization filter for target image " 
                       << i << ".  Skipping this image.");
       }
+
+    if (normFilter->GetErrorExecutionFlag()) 
+      {
+        outData->ShallowCopy(inData);
+  return false;
+      } 
+
     outData->ShallowCopy(normFilter->GetOutput());
     normFilter->Delete();
     }
     
   std::cerr << " EMSEG: Normalization complete." << std::endl;
   m->GetWorkingDataNode()->SetNormalizedTargetNodeIsValid(1);
-
   // intensity statistics, if computed from data, must be updated
   m->UpdateIntensityDistributions();
-
   return true;
 }
 
@@ -1579,14 +1583,14 @@ StartSegmentation()
   // make sure preprocessing is up to date
   //
   std::cerr << "EMSEG: Start preprocessing..." << std::endl;
-  bool preprocessingOK = this->StartPreprocessing();
-  std::cerr << "EMSEG: Preprocessing complete." << std::endl;
-
-  if (!preprocessingOK)
+  if (!this->StartPreprocessing())
     {
     vtkErrorMacro("Preprocessing Failed!  Aborting Segmentation.");
     return;
     }
+   std::cerr << "EMSEG: Preprocessing complete." << std::endl;
+
+
   if (!this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNodeIsValid() ||
       !this->MRMLManager->GetWorkingDataNode()->GetAlignedAtlasNodeIsValid())
     {
@@ -2076,11 +2080,11 @@ CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericClass* node,
   // Specify boundary in 1-based, NOT 0-based as you might expect
   for (unsigned int i = 0; i < 3; ++i)
     {
-    if (boundMin[i] <  1                   || 
-        boundMin[i] >  targetImageDimensions[i]   ||
-        boundMax[i] <  1                   ||
-        boundMax[i] >  targetImageDimensions[i]   ||
-        boundMax[i] <= boundMin[i])
+     if (boundMin[i] <  1                   || 
+         boundMin[i] >  targetImageDimensions[i]   ||
+         boundMax[i] <  1                   ||
+         boundMax[i] >  targetImageDimensions[i]   ||
+         boundMax[i] <  boundMin[i])
       {
       useDefaultBoundary = true;
       break;
@@ -2090,17 +2094,15 @@ CopyTreeGenericDataToSegmenter(vtkImageEMLocalGenericClass* node,
     {
     std::cerr 
       << std::endl
-      << "Warning: the segmentation ROI was bogus, setting ROI to entire image"
-      << std::endl
+      << "====================================================================" << std::endl
+      << "Warning: the segmentation ROI was bogus, setting ROI to entire image"  << std::endl
+      << "Axis 0 -  Image Min: 1 <= RoiMin: " << boundMin[0] << " <= ROIMax: " << boundMax[0] << " <=  Image Max:" << targetImageDimensions[0] <<  std::endl
+      << "Axis 1 -  Image Min: 1 <= RoiMin: " << boundMin[1] << " <= ROIMax: " << boundMax[1] << " <=  Image Max:" << targetImageDimensions[1] <<  std::endl
+      << "Axis 2 -  Image Min: 1 <= RoiMin: " << boundMin[2] << " <= ROIMax: " << boundMax[2] << " <=  Image Max:" << targetImageDimensions[2] <<  std::endl
       << "NOTE: The above warning about ROI should not lead to poor segmentation results;  the entire image shold be segmented.  It only indicates an error if you intended to segment a subregion of the image."
-      << std::endl;
-    for (unsigned int i = 0; i < 3; ++i)
-      {
-      boundMin[i] = 1;
-      boundMax[i] = targetImageDimensions[i];
-      std::cerr << boundMin[i] << ", " << boundMax[i] << "   ";
-      }
-    std::cerr << std::endl;
+      << std::endl
+      << "====================================================================" << std::endl;
+
     }
 
   node->SetSegmentationBoundaryMin(boundMin[0], boundMin[1], boundMin[2]);
@@ -2278,3 +2280,5 @@ ConvertGUIEnumToAlgorithmEnumInterpolationType(int guiEnumValue)
       return -1;
     }
 }
+
+

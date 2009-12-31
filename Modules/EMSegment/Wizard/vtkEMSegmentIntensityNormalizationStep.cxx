@@ -241,8 +241,8 @@ void vtkEMSegmentIntensityNormalizationStep::ShowUserInterface()
     {
     this->NormalizationSmoothingWidthEntry->SetParent(parentFrame);
     this->NormalizationSmoothingWidthEntry->Create();
-    this->NormalizationSmoothingWidthEntry->SetLabelText("Histogram Smoothing Width:");
-    this->NormalizationSmoothingWidthEntry->SetLabelWidth(EMSEG_WIDGETS_LABEL_WIDTH -4);
+    this->NormalizationSmoothingWidthEntry->SetLabelText("Histogram Smoothing Width - Initial:");
+    // this->NormalizationSmoothingWidthEntry->SetLabelWidth(EMSEG_WIDGETS_LABEL_WIDTH -4);
     vtkKWEntry *entry = this->NormalizationSmoothingWidthEntry->GetWidget();
     entry->SetWidth(6);
     entry->SetRestrictValueToInteger();
@@ -286,8 +286,7 @@ void vtkEMSegmentIntensityNormalizationStep::ShowUserInterface()
     this->NormalizationRelativeMaxVoxelScale->Create();
     this->NormalizationRelativeMaxVoxelScale->SetEntryWidth(4);
     this->NormalizationRelativeMaxVoxelScale->SetLabelText("Relative Max Voxel Number:");
-    this->NormalizationRelativeMaxVoxelScale->GetLabel()->
-      SetWidth(EMSEG_WIDGETS_LABEL_WIDTH-4);
+    // this->NormalizationRelativeMaxVoxelScale->GetLabel()->SetWidth(EMSEG_WIDGETS_LABEL_WIDTH-4);
     this->NormalizationRelativeMaxVoxelScale->SetRange(0.0, 1.0);
     this->NormalizationRelativeMaxVoxelScale->SetResolution(0.01);
     this->NormalizationRelativeMaxVoxelScale->GetEntry()->

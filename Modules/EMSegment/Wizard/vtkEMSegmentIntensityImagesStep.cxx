@@ -267,6 +267,8 @@ void vtkEMSegmentIntensityImagesStep::Validate()
     unsigned int nb_of_currently_selected_target_volumes = 
       this->IntensityImagesTargetVolumeSelector->
       GetNumberOfElementsOnFinalList();
+
+    
     bool number_of_target_images_changed = 
       nb_of_parameter_target_volumes != nb_of_currently_selected_target_volumes;
     
@@ -286,6 +288,8 @@ void vtkEMSegmentIntensityImagesStep::Validate()
       {
       // record indices of currently selected volumes
       std::vector<vtkIdType> selectedIDs;
+      std::vector<vtkIdType> failedTestIDs;
+      
       for(unsigned int i = 0; i < nb_of_currently_selected_target_volumes; ++i) 
         {
         std::string targettext = 
@@ -295,10 +299,45 @@ void vtkEMSegmentIntensityImagesStep::Validate()
         if (pos1 != vtksys_stl::string::npos && pos2 != vtksys_stl::string::npos)
           {
           vtkIdType vol_id = atoi(targettext.substr(pos1+1, pos2-pos1-1).c_str());
-          selectedIDs.push_back(vol_id);
+    // Test if volumes are non-negative - otherwise do not proceed
+    vtkMRMLVolumeNode*  volumeNode = mrmlManager->GetVolumeNode(vol_id);
+    if (!volumeNode) {
+      vtkErrorMacro("Bug in  vtkEMSegmentIntensityImagesStep::Validate -> Please report");
+      wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+      wizard_workflow->ProcessInputs();
+    }
+    int min = volumeNode->GetImageData()->GetScalarRange()[0];
+    // std::cerr << "blub " << i << " " << min << " ++++++++ " <<  volumeNode->GetImageData()->GetScalarRange()[1] << endl;
+    if (min < 0) 
+      {
+      failedTestIDs.push_back(vol_id);
+      } else 
+      {
+      selectedIDs.push_back(vol_id);
+      }
+       
           }
         }
-      mrmlManager->ResetTargetSelectedVolumes(selectedIDs);
+      if (!failedTestIDs.empty()) 
+  {
+  std::stringstream errorMessage;
+        errorMessage <<  "EMSegmenter can currently only process non-negative input images. The following images have negative values:\n";
+        int size = failedTestIDs.size();
+  for (signed int i = 0 ; i < size; i++ ) errorMessage  << failedTestIDs[i] <<  " ";
+
+  vtkKWMessageDialog::PopupMessage
+    (this->GetApplication(), 
+     NULL, 
+     "Intensity Image Error",
+           errorMessage.str().c_str(), 
+     vtkKWMessageDialog::ErrorIcon | vtkKWMessageDialog::InvokeAtPointer);
+  // don't change number of volumes; stay on this step
+  wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+  wizard_workflow->ProcessInputs();
+  } else 
+  {
+  mrmlManager->ResetTargetSelectedVolumes(selectedIDs);
+  }
       }
     }
   this->Superclass::Validate();

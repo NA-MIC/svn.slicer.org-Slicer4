@@ -32,6 +32,8 @@ vtkImageMeanIntensityNormalization::vtkImageMeanIntensityNormalization()
   this->MaxHistogramSmoothingWidth     = -1;
   this->RelativeMaxVoxelNum            = -1;
   this->PrintInfo = 1;
+  this->ErrorExecutionFlag = false;
+
 }
 
 vtkImageMeanIntensityNormalization::~vtkImageMeanIntensityNormalization(){ }
@@ -135,7 +137,7 @@ int vtkImageMeanIntensityNormalization::DetermineFilterMin(const int* HIST_PTR, 
     }
   if (result < 0)
     { 
-    vtkErrorMacro(<< "Lower bound of image could not properly derermined");
+    vtkWarningMacro(<< "Lower bound of image could not properly derermined");
     result = 0;
     }
 
@@ -156,7 +158,7 @@ int vtkImageMeanIntensityNormalization::DetermineFirstValey(const int *aSmoothHi
   while ((LowerBound < aSmoothHistogramLength) && (aSmoothHistogram[LowerBound] <=  aSmoothHistogram[LowerBound + 1])) LowerBound++;
   if (LowerBound >= aSmoothHistogramLength -3)
     {
-    vtkErrorMacro(<< "Lower bound of image could not properly derermined");
+    vtkWarningMacro(<< "Lower bound of image could not properly derermined");
     return -1;
     }
 
@@ -188,13 +190,16 @@ void vtkImageMeanIntensityNormalization::MeanMRI(vtkImageData *Input, vtkImageDa
   // -------------------------------------
   if (this->InitialHistogramSmoothingWidth > this->MaxHistogramSmoothingWidth) 
     {
-    vtkErrorMacro(<< "HistogramSmoothingWidth is not correctly set");
-    return;
+      vtkErrorMacro(<< "HistogramSmoothingWidth is not set correctly: Initial (" << this->InitialHistogramSmoothingWidth <<") is larger than Max (" <<  this->MaxHistogramSmoothingWidth<<")");
+      this->ErrorExecutionFlag = true;
+      return;
+
     }
 
   if ((this->RelativeMaxVoxelNum <= 0) || (this->RelativeMaxVoxelNum  > 1))
     {
     vtkErrorMacro(<< "RelativeMaxIntensityValue is not set correctly");
+    this->ErrorExecutionFlag = true;
     return;
     }
 
@@ -311,6 +316,9 @@ void vtkImageMeanIntensityNormalization::ExecuteData(vtkDataObject *)
 {
   int inExt[6];
   int outExt[6];
+  this->ErrorExecutionFlag = false;
+
+
   // Necessary  for VTK
   this->ComputeInputUpdateExtent(inExt,outExt);
   // vtk4
@@ -326,14 +334,17 @@ void vtkImageMeanIntensityNormalization::ExecuteData(vtkDataObject *)
   if (inData == NULL)
     {
     vtkErrorMacro(<< "Input " << 0 << " must be specified.");
+    this->ErrorExecutionFlag = true;
     return;
     }
 
   if (inData->GetNumberOfScalarComponents() != 1)
     {
     vtkErrorMacro(<< "Number Of Scalar Components for Input has to be 1.");
+    this->ErrorExecutionFlag = true;
     return;
     }
+
 
   switch (this->NormType)
     {
