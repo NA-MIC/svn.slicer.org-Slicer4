@@ -127,7 +127,7 @@ int vtkImageMeanIntensityNormalization::DetermineFilterMin(const int* HIST_PTR, 
     if (this->PrintInfo)
       {
       std::cerr << "  " << iter << ". Histogram Smoothing" << endl;
-      std::cerr << "     Width:         " << SmoothWidth  << endl;
+      std::cerr << "     Absolute Width:         " << SmoothWidth  << endl;
       iter++;
       }
     
@@ -237,8 +237,8 @@ void vtkImageMeanIntensityNormalization::MeanMRI(vtkImageData *Input, vtkImageDa
     std::cerr << "vtkImageMeanIntensityNormalization::MeanMRI " << endl;
     std::cerr << "Histogram Parameters:" << endl;
     std::cerr << "  Image Intensity Min: " <<  ImageIntensityMin << " Max: " << ImageIntensityMax << endl;
-    std::cerr << "  Initial Histogram Smoothig Width: " << this->InitialHistogramSmoothingWidth << endl;
-    std::cerr << "  Maximum Histogram Smoothig Width: " << this->MaxHistogramSmoothingWidth << endl;
+    std::cerr << "  Initial Relative Histogram Smoothing Width: " << this->InitialHistogramSmoothingWidth << endl;
+    std::cerr << "  Maximum Relative Histogram Smoothing Width: " << this->MaxHistogramSmoothingWidth << endl;
     }
 
   // Go through Histogram and detect intensity value which combines NumVoxels * this->RelativeMaxVoxelNum
