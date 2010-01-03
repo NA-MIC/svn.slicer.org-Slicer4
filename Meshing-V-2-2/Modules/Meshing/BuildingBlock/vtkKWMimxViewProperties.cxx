@@ -254,14 +254,14 @@ void vtkKWMimxViewProperties::AddObjectList(vtkMimxActorBase *actor)
         int rowIndex = this->ObjectList->GetNumberOfItems()-1;
 
         this->MultiColumnList->GetWidget()->InsertCellTextAsInt(rowIndex, 0, 1);
-  this->MultiColumnList->GetWidget()->SetCellWindowCommandToCheckButton( rowIndex, 0);
+        this->MultiColumnList->GetWidget()->SetCellWindowCommandToCheckButton( rowIndex, 0);
 
   char commandName[256];
   sprintf(commandName, "VisibilityCallback %s", UniqueObjectId);
 
         this->MultiColumnList->GetWidget()->GetCellWindowAsCheckButton(rowIndex,0)->SetCommand(this, commandName);
-        // *** Changed FileName to FoundationName
-  this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFoundationName());
+        // *** causes crash on mesh only (surface and bblock work ok)
+        this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFileName());
 
   // *** defeated add to show objects only through MRML nodes
 
