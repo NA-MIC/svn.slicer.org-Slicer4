@@ -77,6 +77,7 @@ subdirs(
 # FourDAnalysis
   ExtractSubvolumeROI
   PETCTFusion
+   #SlicerUnstructuredGrids
   )
 
 if(Slicer3_USE_OPENIGTLINK)

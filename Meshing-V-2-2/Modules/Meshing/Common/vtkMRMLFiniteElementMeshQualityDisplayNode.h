@@ -6,7 +6,7 @@
   or http://www.slicer.org/copyright/copyright.txt for details.
 
   Program:   3D Slicer
-  Module:    $RCSfile: vtkMRMLUnstructuredGridDisplayNode.h,v $
+  Module:    $RCSfile: vtkMRMLFiniteElementMeshQualityDisplayNode.h,v $
   Date:      $Date: 2006/03/19 17:12:28 $
   Version:   $Revision: 1.6 $
 
@@ -19,23 +19,30 @@
 // trajectory as a line or tube.
 //
 
-#ifndef __vtkMRMLUnstructuredGridDisplayNode_h
-#define __vtkMRMLUnstructuredGridDisplayNode_h
+#ifndef __vtkMRMLFiniteElementMeshQualityDisplayNode_h
+#define __vtkMRMLFiniteElementMeshQualityDisplayNode_h
 
-#include "vtkPolyData.h"
+#include <string>
+
+#include "vtkUnstructuredGrid.h"
 #include "vtkShrinkPolyData.h"
 #include "vtkGeometryFilter.h"
 
 #include "vtkMRML.h"
 #include "vtkMRMLModelDisplayNode.h"
 #include "vtkMRMLUnstructuredGridNode.h"
+#include "vtkMRMLUnstructuredGridDisplayNode.h"
+#include "vtkMimxCommonWin32Header.h"
 
+//class vtkMeshQualityExtended; 
+class vtkMeshQuality; 
+class vtkShrinkFilter;
 
-class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplayNode
+class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshQualityDisplayNode : public vtkMRMLUnstructuredGridDisplayNode
 {
  public:
-  static vtkMRMLUnstructuredGridDisplayNode *New (  );
-  vtkTypeMacro ( vtkMRMLUnstructuredGridDisplayNode,vtkMRMLDisplayNode );
+  static vtkMRMLFiniteElementMeshQualityDisplayNode *New (  );
+  vtkTypeMacro ( vtkMRMLFiniteElementMeshQualityDisplayNode,vtkMRMLUnstructuredGridDisplayNode );
   void PrintSelf ( ostream& os, vtkIndent indent );
   
   //--------------------------------------------------------------------------
@@ -59,55 +66,46 @@ class VTK_MRML_EXPORT vtkMRMLUnstructuredGridDisplayNode : public vtkMRMLDisplay
   
   // Description:
   // Get node XML tag name (like Volume, UnstructuredGrid)
-  virtual const char* GetNodeTagName ( ) {return "UnstructuredGridDisplay";};
+  virtual const char* GetNodeTagName ( ) {return "FiniteElementBoundingBoxDisplay";};
 
   // Description:
   // alternative method to propagate events generated in Display nodes
   virtual void ProcessMRMLEvents ( vtkObject * /*caller*/, 
                                    unsigned long /*event*/, 
                                    void * /*callData*/ );
-  // Description:
-  // Sets UnstructuredGrid from UnstructuredGrid model node
-  void SetUnstructuredGrid(vtkUnstructuredGrid *grid)
-  {
-    if (this->GeometryFilter)
-      {
-      this->GeometryFilter->SetInput(grid);
-      }
-  }
-
-  // Description:
-  // Gets PlyData converted from UnstructuredGrid 
-  virtual vtkPolyData* GetPolyData();
-
-   
+ 
+   // overload the virtual placeholder in the parent class.  This one will setup
+   // the beginning of the actual pipeline for rendering an FE Mesh instead
+   virtual void SetUnstructuredGrid(vtkUnstructuredGrid *grid);
+ 
+   // declare a rendering pipeline for bblock data in this class
+   virtual vtkPolyData* GetPolyData();
+     
+    
   // Description:
   // Update the pipeline based on this node attributes
-  virtual void UpdatePolyDataPipeline() 
-    {
-    this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
-    };
+  virtual void UpdatePolyDataPipeline();
  
   //--------------------------------------------------------------------------
   // Display Information: Geometry to display (not mutually exclusive)
   //--------------------------------------------------------------------------
 
   // Description:
-  // cell shrink factor
-  vtkSetMacro ( ShrinkFactor, double );
-  vtkGetMacro ( ShrinkFactor, double );
-
+ 
+   //vtkMeshQualityExtended *SavedMeshQualityFilter; 
+   vtkMeshQuality *SavedMeshQualityFilter; 
+   vtkShrinkFilter *SavedShrinkFilter;
+  
  protected:
-  vtkMRMLUnstructuredGridDisplayNode ( );
-  ~vtkMRMLUnstructuredGridDisplayNode ( );
-  vtkMRMLUnstructuredGridDisplayNode ( const vtkMRMLUnstructuredGridDisplayNode& );
-  void operator= ( const vtkMRMLUnstructuredGridDisplayNode& );
+     vtkMRMLFiniteElementMeshQualityDisplayNode ( );
+  ~vtkMRMLFiniteElementMeshQualityDisplayNode ( );
+  vtkMRMLFiniteElementMeshQualityDisplayNode ( const vtkMRMLFiniteElementMeshQualityDisplayNode& );
+  void operator= ( const vtkMRMLFiniteElementMeshQualityDisplayNode& );
 
-  double ShrinkFactor;
+ 
 
-  // dispaly pipeline
-  vtkGeometryFilter *GeometryFilter;
-  vtkShrinkPolyData *ShrinkPolyData;
+  // dispaly pipeline components declared here
+
 };
 
 #endif

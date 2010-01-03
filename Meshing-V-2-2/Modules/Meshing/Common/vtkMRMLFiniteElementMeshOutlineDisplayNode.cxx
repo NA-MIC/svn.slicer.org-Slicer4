@@ -6,7 +6,7 @@ See Doc/copyright/copyright.txt
 or http://www.slicer.org/copyright/copyright.txt for details.
 
 Program:   3D Slicer
-Module:    $RCSfile: vtkMRMLFiniteElementMeshDisplayNode.cxx,v $
+Module:    $RCSfile: vtkMRMLFiniteElementMeshOutlineDisplayNode.cxx,v $
 Date:      $Date: 2006/03/03 22:26:39 $
 Version:   $Revision: 1.3 $
 
@@ -20,84 +20,50 @@ Version:   $Revision: 1.3 $
 #include "vtkMeshQuality.h"
 #include "vtkDataSetWriter.h"
 #include "vtkShrinkFilter.h"
+#include "vtkFeatureEdges.h"
 
-#include "vtkPlane.h"
-
-#include "vtkMRMLFiniteElementMeshDisplayNode.h"
+#include "vtkMRMLFiniteElementMeshOutlineDisplayNode.h"
 #include "vtkMRMLScene.h"
 #include "vtkMimxBoundingBoxSource.h"
 
-// for debugging purposes
-#include "vtkUnstructuredGridWriter.h"
-
-
 //------------------------------------------------------------------------------
-vtkMRMLFiniteElementMeshDisplayNode* vtkMRMLFiniteElementMeshDisplayNode::New()
+vtkMRMLFiniteElementMeshOutlineDisplayNode* vtkMRMLFiniteElementMeshOutlineDisplayNode::New()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFiniteElementMeshDisplayNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFiniteElementMeshOutlineDisplayNode");
   if(ret)
     {
-    return (vtkMRMLFiniteElementMeshDisplayNode*)ret;
+    return (vtkMRMLFiniteElementMeshOutlineDisplayNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFiniteElementMeshDisplayNode;
+  return new vtkMRMLFiniteElementMeshOutlineDisplayNode;
 }
 
 //-----------------------------------------------------------------------------
-vtkMRMLNode* vtkMRMLFiniteElementMeshDisplayNode::CreateNodeInstance()
+vtkMRMLNode* vtkMRMLFiniteElementMeshOutlineDisplayNode::CreateNodeInstance()
 {
   // First try to create the object from the vtkObjectFactory
-  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFiniteElementMeshDisplayNode");
+  vtkObject* ret = vtkObjectFactory::CreateInstance("vtkMRMLFiniteElementMeshOutlineDisplayNode");
   if(ret)
     {
-    return (vtkMRMLFiniteElementMeshDisplayNode*)ret;
+    return (vtkMRMLFiniteElementMeshOutlineDisplayNode*)ret;
     }
   // If the factory was unable to create the object, then create it here.
-  return new vtkMRMLFiniteElementMeshDisplayNode;
+  return new vtkMRMLFiniteElementMeshOutlineDisplayNode;
 }
 
 
-void vtkMRMLFiniteElementMeshDisplayNode::UpdatePolyDataPipeline()
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::UpdatePolyDataPipeline()
 {
-    this->SavedMeshQualityRendering->UpdatePipeline();
+   // set the type of metric to display here and the paramters for coloring, etc.
+   //this->ShrinkFactor = whatever-was-in-the-GUI
+   //this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
 }
+
+
 
 //----------------------------------------------------------------------------
-vtkMRMLFiniteElementMeshDisplayNode::vtkMRMLFiniteElementMeshDisplayNode()
-{
-  this->SavedMeshQualityRendering = vtkMimxMeshQualityRendering::New();
-  this->SavedCuttingPlane = vtkPlane::New();
-}
-
-
-
-vtkMRMLFiniteElementMeshDisplayNode::~vtkMRMLFiniteElementMeshDisplayNode()
-{
-  this->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
- if (SavedMeshQualityRendering != NULL)   this->SavedMeshQualityRendering->Delete();
-
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLFiniteElementMeshDisplayNode::SetUnstructuredGrid(vtkUnstructuredGrid *grid)
-{
-//    // assign the filter to add mesh quality scalars to points & cells
-
-
-    this->SavedMeshQualityRendering->InitializeFromExternalMesh(grid);
-   // put in a null plane for now so we can instantiate the pipelines
-    if (this->SavedCuttingPlane == NULL)
-        this->SavedCuttingPlane = vtkPlane::New();
-    this->SavedMeshQualityRendering->SetCuttingPlaneFunction(  this->SavedCuttingPlane);
-    this->SavedMeshQualityRendering->SetShowFilledElements(1);
-    this->SavedMeshQualityRendering->SetThresholdValue(1.0);
-    this->SavedMeshQualityRendering->SetQualityMeasureToJacobian();
-    this->SavedMeshQualityRendering->CalculateMeshQuality();
-}
-
-//----------------------------------------------------------------------------
-void vtkMRMLFiniteElementMeshDisplayNode::SetCuttingPlane(vtkPlane *plane)
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::SetCuttingPlane(vtkPlane *plane)
 {
     this->SavedCuttingPlane = plane;
     if (this->SavedMeshQualityRendering != NULL)
@@ -106,14 +72,38 @@ void vtkMRMLFiniteElementMeshDisplayNode::SetCuttingPlane(vtkPlane *plane)
     }
 }
 
+
 //----------------------------------------------------------------------------
-void vtkMRMLFiniteElementMeshDisplayNode::SetElementSize(double shrink)
+vtkMRMLFiniteElementMeshOutlineDisplayNode::vtkMRMLFiniteElementMeshOutlineDisplayNode()
 {
-         if (SavedMeshQualityRendering != NULL)   this->SavedMeshQualityRendering->SetElementShrinkFactor(shrink);
+    this->SavedMeshQualityRendering = vtkMimxMeshQualityRendering::New();
+    this->SavedCuttingPlane = NULL;
+}
+
+
+
+vtkMRMLFiniteElementMeshOutlineDisplayNode::~vtkMRMLFiniteElementMeshOutlineDisplayNode()
+{
+  this->RemoveObservers ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFiniteElementMeshDisplayNode::WriteXML(ostream& of, int nIndent)
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::SetUnstructuredGrid(vtkUnstructuredGrid *grid)
+{
+    this->SavedMeshQualityRendering->InitializeFromExternalMesh(grid);
+   // put in a null plane for now so we can instantiate the pipelines
+    if (this->SavedCuttingPlane == NULL)
+        this->SavedCuttingPlane = vtkPlane::New();
+    this->SavedMeshQualityRendering->SetCuttingPlaneFunction(  this->SavedCuttingPlane);
+    this->SavedMeshQualityRendering->SetShowClippedOutline(1);
+    //this->SavedMeshQualityRendering->SetQualityMeasureToJacobian();
+    this->SavedMeshQualityRendering->CalculateMeshQuality();
+}
+
+
+
+//----------------------------------------------------------------------------
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::WriteXML(ostream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
 
@@ -130,7 +120,7 @@ void vtkMRMLFiniteElementMeshDisplayNode::WriteXML(ostream& of, int nIndent)
 
 
 //----------------------------------------------------------------------------
-void vtkMRMLFiniteElementMeshDisplayNode::ReadXMLAttributes(const char** atts)
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::ReadXMLAttributes(const char** atts)
 {
 
   Superclass::ReadXMLAttributes(atts);
@@ -148,26 +138,27 @@ void vtkMRMLFiniteElementMeshDisplayNode::ReadXMLAttributes(const char** atts)
     }
 }
 
+
 // declare a rendering pipeline for bblock data in this class
-vtkPolyData* vtkMRMLFiniteElementMeshDisplayNode::GetPolyData()
+vtkPolyData* vtkMRMLFiniteElementMeshOutlineDisplayNode::GetPolyData()
 {
-  vtkDebugMacro("MeshDisplayNode invoked");
-  return this->SavedMeshQualityRendering->GetMeshPolygons();
+      vtkDebugMacro("MeshOutlineDisplayNode invoked");
+      return this->SavedMeshQualityRendering->GetOutlinePolygons();
 }
 
 
 //----------------------------------------------------------------------------
 // Copy the node's attributes to this object.
 // Does NOT copy: ID, FilePrefix, Name, ID
-void vtkMRMLFiniteElementMeshDisplayNode::Copy(vtkMRMLNode *anode)
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-  vtkMRMLFiniteElementMeshDisplayNode *node = (vtkMRMLFiniteElementMeshDisplayNode *) anode;
+  vtkMRMLFiniteElementMeshOutlineDisplayNode *node = (vtkMRMLFiniteElementMeshOutlineDisplayNode *) anode;
   this->SetShrinkFactor(node->ShrinkFactor);
 }
 
 //----------------------------------------------------------------------------
-void vtkMRMLFiniteElementMeshDisplayNode::PrintSelf(ostream& os, vtkIndent indent)
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   //int idx;
 
@@ -177,10 +168,16 @@ void vtkMRMLFiniteElementMeshDisplayNode::PrintSelf(ostream& os, vtkIndent inden
 
 
 //---------------------------------------------------------------------------
-void vtkMRMLFiniteElementMeshDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
                                            unsigned long event,
                                            void *callData )
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);
   return;
+}
+
+void vtkMRMLFiniteElementMeshOutlineDisplayNode::SetRadius (float radius)
+{
+    //this->SavedMeshQualityRendering->SetRadius(radius);
+    cout << "outline display node: change radius" << endl;
 }

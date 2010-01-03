@@ -999,7 +999,7 @@ double vtkMeshQualityExtended::TetEdgeCollapse( vtkCell* cell)
   f[2] = fabs( p3[2] - p2[2] );
   
   // now we have all the tet edges, lets examine if any segments are length 0 and 
-  // return low quality (0.01) if any segments are zero length.  This should be modified for 
+  // return low quality if any segments are zero length.  This could be modified for 
   // a zero tolerance test of "close-enough-to-zero"  
   
   if ((a[0] == a[1]) && (a[1] == a[2]) && (a[2] == 0)) 
@@ -1278,7 +1278,7 @@ double vtkMeshQualityExtended::QuadAngleOutOfBounds( vtkCell* cell)
 double vtkMeshQualityExtended::TetAngleOutOfBounds( vtkCell* cell)
 {
   double p0[3],p1[3],p2[3],p3[3];
-  double angle[9];
+  double angle[12];
 
   vtkPoints *p = cell->GetPoints();
   p->GetPoint(0, p0);
@@ -1340,15 +1340,20 @@ double vtkMeshQualityExtended::TetAngleOutOfBounds( vtkCell* cell)
   angle[6] = (vtkMath::Dot(b,c));
   angle[7] = (vtkMath::Dot(f,b));
   angle[8] = (vtkMath::Dot(f,c));
+  
+  //corner 3 
+  angle[9]  = (vtkMath::Dot(e,f));
+  angle[10] = (vtkMath::Dot(e,d));
+  angle[11] = (vtkMath::Dot(d,f));
 
-  for (int i=0; i<8; i++) 
+  for (int i=0; i<12; i++) 
     {
     std::cout << " Angle " << i << ": " << angle[i];
     }
   std::cout << std::endl;
   
   
-  for (int i=0; i<8; i++) 
+  for (int i=0; i<12; i++) 
     {
     // if the absolute value of the dot-product is greater than 0.707 then
     // the angle is either less than 45 or greater than 135

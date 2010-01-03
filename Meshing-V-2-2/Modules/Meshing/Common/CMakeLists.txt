@@ -28,8 +28,8 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${Slicer3_Libs_INCLUDE_DIRS}
   ${Slicer3_Base_INCLUDE_DIRS}
+    ${MIMXFilter_SOURCE_DIR} ${MIMXFilter_BINARY_DIR} 
   ${MIMXAdapter_SOURCE_DIR} ${MIMXAdapter_BINARY_DIR} 
-  ${MIMXFilter_SOURCE_DIR} ${MIMXFilter_BINARY_DIR} 
   ${mimxCommon_SOURCE_DIR} ${mimxCommon_BINARY_DIR} 
   ${ITK_INCLUDE_DIR}
   )
@@ -59,6 +59,8 @@ SET ( LIB_SRCS
     vtkMRMLFiniteElementBuildingBlockNode.cxx
     vtkMRMLFiniteElementBuildingBlockDisplayNode.cxx
     vtkMRMLFiniteElementMeshDisplayNode.cxx
+    vtkMRMLFiniteElementMeshQualityDisplayNode.cxx
+    vtkMRMLFiniteElementMeshOutlineDisplayNode.cxx
     vtkMRMLNullDisplayNode.cxx
     vtkFiniteElementBuildingBlockList.cxx
     vtkMRMLFiniteElementMeshNode.cxx
@@ -88,6 +90,9 @@ SET ( LIB_SRCS
     vtkMimxColorCodeMeshSeedActor.cxx
     #
     vtkMimxBoundaryConditionActor.cxx
+    vtkMimxMeshQualityRendering.cxx
+    vtkMeshQualityExtended.cxx
+    vtkFaceHedgeHog.cxx
 )
  
 SET_SOURCE_FILES_PROPERTIES(

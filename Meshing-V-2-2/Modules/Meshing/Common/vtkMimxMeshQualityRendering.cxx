@@ -1,11 +1,30 @@
- /*  vtkMeshQualityClass.cxx
- * 
- *  Created by Curtis Lisle on 1/4/07.
- *  Copyright 2007 KnowledgeVis, LLC. 
- *
- */
+/*=========================================================================
 
-#include "vtkMeshQualityClass.h"
+Program:   MIMX Meshing Toolkit
+Module:    $RCSfile: vtkMimxMeshQualityRendering.cxx,v $
+Language:  C++
+Date:      $Date: 2008/10/17 03:37:39 $
+Version:   $Revision: 1.25.2.2 $
+
+
+ Musculoskeletal Imaging, Modelling and Experimentation (MIMX)
+ Center for Computer Aided Design
+ The University of Iowa
+ Iowa City, IA 52242
+ http://www.ccad.uiowa.edu/mimx/
+
+Copyright (c) The University of Iowa. All rights reserved.
+See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
+
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the above copyright notices for more information.
+
+=========================================================================*/
+
+
+
+#include "vtkMimxMeshQualityRendering.h"
 #include "vtkObjectFactory.h"
 #include "vtkRearrangeFields.h"
 #include "vtkMeshQuality.h"
@@ -37,47 +56,43 @@
 #include "vtkExtractCells.h"
 #include "vtkIdList.h"
 #include "vtkPointData.h"
-#include "vtkTextProperty.h"
-//#include "vtkPassThroughFilter.h"
+#include "vtkPassThroughFilter.h"
 
-
+#include "vtkFloatArray.h"
 
 //----------------------------------------------------------------------------
 
-vtkStandardNewMacro( vtkMeshQualityClass );
-vtkCxxRevisionMacro(vtkMeshQualityClass, "$Revision: 1.4 $");
+vtkStandardNewMacro( vtkMimxMeshQualityRendering );
+vtkCxxRevisionMacro(vtkMimxMeshQualityRendering, "$Revision: 1.4 $");
 
 
 //----------------------------------------------------------------
-vtkMeshQualityClass::vtkMeshQualityClass(void) 
+vtkMimxMeshQualityRendering::vtkMimxMeshQualityRendering(void)
 {
   this->InitVariables();
-  this->SavedCuttingPlaneImplicitFunction = NULL;
-  this->VTKQualityFilterPtr = NULL;
-  this->ExtractSelectedGeometryFilter = NULL:
 }
 
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::InitVariables(void) 
+void vtkMimxMeshQualityRendering::InitVariables(void)
 {
-  
+
   // default shrink size,  opacity of each element, and other initial states
-        
-  this->ElementShrinkFactor = 0.8;
-  this->ElementOpacity = 1.0; 
+
+  this->ElementShrinkFactor = 1.0;
+  this->ElementOpacity = 1.0;
   this->thresholdValue = 9999;
   this->SavedQualityMetric = 0;
   this->ShowFilledElements = 1;
   this->ShowClippedOutline = 1;
   this->ShowOutline = 0;
   this->ShowInteriorOutlines = 0;
-  this->ShowSurfaceHedgehog = 0; 
+  this->ShowSurfaceHedgehog = 0;
   this->CuttingPlaneEnabled = 0;
-  
-  // initialize to a standard state, if the user doesn't modify the 
+
+  // initialize to a standard state, if the user doesn't modify the
   // parameters.  Display only the outline initially and pick the volume test
-  // 
+  //
   this->IsInitialized = 0;
   this->InitialMesh = NULL;
   this->SavedMesh = NULL;
@@ -85,42 +100,39 @@ void vtkMeshQualityClass::InitVariables(void)
   this->SavedColorLegendActor = NULL;
   this->ReportingCanvas = NULL;
   this->SavedHedgehogFilter = NULL;
-  
+  this->SavedMeshPolyDataForRendering = NULL;
+  this-> SavedOutlinePolyDataForRendering = NULL;
+  this->SavedHedgehogPolyDataForRendering = NULL;
+
   //  this is set when the user is overriding the lookup table autocolor through
   // the interface
-  
+
   this->OverrideMeshColorRange = 0;
-  
+
   // setup a re-used list to identify interesting cells that might be highlighted
   // to the user
   this->SavedCellList = vtkIdList::New();
   this->SavedCellList->Allocate(100);
-  
+
   this->SavedDisplayPrecision = 3;
 
- }
+  // instantiate this fileter early, so the clipping plane can be set before or after the geometry
 
+  this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
 
-
-//----------------------------------------------------------------
-vtkMeshQualityClass::~vtkMeshQualityClass(void) 
-{
-  cerr << "need to clean up memory here" << endl;
-  if(this->SavedCuttingPlaneImplicitFunction)
-          this->SavedCuttingPlaneImplicitFunction->Delete();
-  if(this->VTKQualityFilterPtr)
-          this->VTKQualityFilterPtr->Delete();
-
-  if (this->ExtractSelectedGeometryFilter)
-    {
-    this->ExtractSelectedGeometryFilter->Delete();
-    this->ExtractSelectedGeometryFilter = NULL;
-    }
 }
 
 
 
-void vtkMeshQualityClass::SetThresholdValue (double thresh) 
+//----------------------------------------------------------------
+vtkMimxMeshQualityRendering::~vtkMimxMeshQualityRendering(void)
+{
+  cerr << "need to clean up memory here" << endl;
+}
+
+
+
+void vtkMimxMeshQualityRendering::SetThresholdValue (double thresh)
 {
    this->thresholdValue = thresh;
    if (this->IsInitialized)
@@ -130,7 +142,7 @@ void vtkMeshQualityClass::SetThresholdValue (double thresh)
 
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::SetElementShrinkFactor(double shrink)
+void vtkMimxMeshQualityRendering::SetElementShrinkFactor(double shrink)
 {
   this->ElementShrinkFactor = shrink;
 
@@ -141,7 +153,7 @@ void vtkMeshQualityClass::SetElementShrinkFactor(double shrink)
 }
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::SetElementOpacity(double opacity)
+void vtkMimxMeshQualityRendering::SetElementOpacity(double opacity)
 {
   this->ElementOpacity = opacity;
   // test  to determine if the pipeline is initialized first
@@ -154,76 +166,76 @@ void vtkMeshQualityClass::SetElementOpacity(double opacity)
 
 
 //----------------------------------------------------------------
-vtkActor*  vtkMeshQualityClass::ReturnFilledElementsActor(void)
+vtkActor*  vtkMimxMeshQualityRendering::ReturnFilledElementsActor(void)
 {
   return this->SavedElementActor;
 }
 
 //----------------------------------------------------------------
-vtkActor*  vtkMeshQualityClass::ReturnInternalOutlinesActor(void)
+vtkActor*  vtkMimxMeshQualityRendering::ReturnInternalOutlinesActor(void)
 {
   return this->SavedInteriorOutlinesActor;
 }
 
 //----------------------------------------------------------------
-vtkActor*  vtkMeshQualityClass::ReturnOutlineActor(void)
+vtkActor*  vtkMimxMeshQualityRendering::ReturnOutlineActor(void)
 {
   return this->SavedOutlineActor;
 }
 
 //----------------------------------------------------------------
-vtkActor*  vtkMeshQualityClass::ReturnClippedOutlineActor(void)
+vtkActor*  vtkMimxMeshQualityRendering::ReturnClippedOutlineActor(void)
 {
   return this->SavedClippedOutlineActor;
 }
 
 
 //----------------------------------------------------------------
-vtkActor*  vtkMeshQualityClass::ReturnHedgehogActor(void)
+vtkActor*  vtkMimxMeshQualityRendering::ReturnHedgehogActor(void)
 {
   return this->SavedSurfaceHedgehogActor;
 }
 
 
 //----------------------------------------------------------------
-vtkActor2D*  vtkMeshQualityClass::ReturnColorLegendActor(void)
+vtkActor2D*  vtkMimxMeshQualityRendering::ReturnColorLegendActor(void)
 {
   return this->SavedColorLegendActor;
 }
 
-  
-void vtkMeshQualityClass::EnableCuttingPlane(void)
+
+void vtkMimxMeshQualityRendering::EnableCuttingPlane(void)
 {
   // use the output of the extract geometry filter to draw the filled elements.  This
   // way, the implicit plane can "cut away" some elements.  A method call to enable is
   // required to minimize the amount of re-processing of the VTK pipeline needed.  A disable
   // event is required to reset the pipeline input
-  
+
   this->ExtractSelectedGeometryFilter->Modified();
   this->ExtractSelectedGeometryFilter->Update();
   this->VTKQualityFilterPtr->SetInput((vtkDataSet*)this->ExtractSelectedGeometryFilter->GetOutput());
   this->VTKQualityFilterPtr->Modified();
   this->CuttingPlaneEnabled = 1;
-  
+
 }
 
-void vtkMeshQualityClass::SaveSelectionAsNewMeshFile(char *filename)
+void vtkMimxMeshQualityRendering::SaveSelectionAsNewMeshFile(char *filename)
 {
 
   if (CuttingPlaneEnabled) {
-    // use the output of the extract geometry filter to draw a selection, according to the 
+    // use the output of the extract geometry filter to draw a selection, according to the
     // current cutting plane.  Save the output of the filter to a new file, according to the filename
     // passed as an argument
     vtkUnstructuredGridWriter *writer = vtkUnstructuredGridWriter::New();
     writer->SetFileName(filename);
-    // CRL - changed to output of threshold so user has better control over 
+    // CRL - changed to output of threshold so user has better control over
     // part of mesh to save
     //writer->SetInput(this->ExtractSelectedGeometryFilter->GetOutput());
     //writer->SetInput(this->thresholdFilter->GetOutput());
     writer->SetInput(this->shrinkFilter->GetOutput());
     writer->Write();
-    writer->Delete();  
-  } else 
+    writer->Delete();
+  } else
   {
     cerr << "Error: cutting plane must be enabled" << endl;
   }
@@ -231,28 +243,27 @@ void vtkMeshQualityClass::SaveSelectionAsNewMeshFile(char *filename)
 
 
 
-void vtkMeshQualityClass::SetInvertCuttingPlaneSelection(int invert)
+void vtkMimxMeshQualityRendering::SetInvertCuttingPlaneSelection(int invert)
 {
- this->ExtractSelectedGeometryFilter->SetExtractInside(invert); 
+ this->ExtractSelectedGeometryFilter->SetExtractInside(invert);
    // CRL - commented out 7/24/07 seemed in wrong method (belongs in disable method)
    //this->CuttingPlaneEnabled = 0;
 }
-  
 
-void vtkMeshQualityClass::DisableCuttingPlane(void)
+
+void vtkMimxMeshQualityRendering::DisableCuttingPlane(void)
 {
-
-        this->VTKQualityFilterPtr->SetInput((vtkDataSet*)this->InitialMesh);
-        this->VTKQualityFilterPtr->Modified();
-        this->CuttingPlaneEnabled = 0;
+  this->VTKQualityFilterPtr->SetInput((vtkDataSet*)this->InitialMesh);
+  this->VTKQualityFilterPtr->Modified();
+  this->CuttingPlaneEnabled = 0;
 }
 
 
-void vtkMeshQualityClass::HighlightFocusElements(void)
+void vtkMimxMeshQualityRendering::HighlightFocusElements(void)
 {
         // there is a selection filter which passes only cells maintained on a list
         // of cell IDs.  Since the user is opting for viewing only the interesting elements,
-        // we will modify the pipeline to look at the output of a selection filter 
+        // we will modify the pipeline to look at the output of a selection filter
         this->CellSelectionFilter->SetInput(this->VTKQualityFilterPtr->GetInput());
         this->VTKQualityFilterPtr->SetInput(this->CellSelectionFilter->GetOutput());
         this->CellSelectionFilter->SetCellList(this->SavedCellList);
@@ -261,9 +272,9 @@ void vtkMeshQualityClass::HighlightFocusElements(void)
 }
 
 
-void vtkMeshQualityClass::CancelElementHighlight(void)
+void vtkMimxMeshQualityRendering::CancelElementHighlight(void)
 {
-        // this cancels highlight by removing the cell selection filter from 
+        // this cancels highlight by removing the cell selection filter from
         // the pipeline
         //this->VTKQualityFilterPtr->SetInput((vtkDataSet*)this->InitialMesh);
         this->VTKQualityFilterPtr->SetInput(this->CellSelectionFilter->GetInput());
@@ -274,17 +285,17 @@ void vtkMeshQualityClass::CancelElementHighlight(void)
 
 
 
-void vtkMeshQualityClass::SetDisplayPrecision(int precision)
+void vtkMimxMeshQualityRendering::SetDisplayPrecision(int precision)
 {
         // invoke change on color actor.  if other things need to be changed, we
         // would add them here.  There is no state recorded as an instance variable currently
         //this->DisplayedPrecision = precision;
-        this->SavedDisplayPrecision = precision; 
+        this->SavedDisplayPrecision = precision;
         int mantissa = 13-precision;
         char labelformat[20];
         sprintf(labelformat,"%%%d.%df",mantissa,precision);
-        //cout << "setting precision to: " << labelformat << endl;
-        ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetLabelFormat(labelformat);   
+        cout << "setting precision to: " << labelformat << endl;
+        ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetLabelFormat(labelformat);
         this->VTKQualityFilterPtr->Update();
 }
 
@@ -294,28 +305,28 @@ void vtkMeshQualityClass::SetDisplayPrecision(int precision)
 
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::SetCuttingPlaneFunction(vtkPlane *cuttingPlane)
+void vtkMimxMeshQualityRendering::SetCuttingPlaneFunction(vtkPlane *cuttingPlane)
 {
   // this function is called with a user-allocated vtkPlane instance that
-  // specifies a plane equation that should be used 
+  // specifies a plane equation that should be used
 
- this->ExtractSelectedGeometryFilter->SetImplicitFunction(cuttingPlane); 
+ this->ExtractSelectedGeometryFilter->SetImplicitFunction(cuttingPlane);
  this->SavedCuttingPlaneImplicitFunction = cuttingPlane;
 }
 
 
 
-void vtkMeshQualityClass::SetHedgehogScale(double value)
+void vtkMimxMeshQualityRendering::SetHedgehogScale(double value)
 {
-         if (!this->IsInitialized) 
+         if (!this->IsInitialized)
           {
                  this->SavedHedgehogFilter->SetScaleFactor(value);
                  this->SavedHedgehogFilter->Update();
           }
 }
-  
-//----------------------------------------------------------------  
-void vtkMeshQualityClass::InitializeFromFile(char* filestr)
+
+//----------------------------------------------------------------
+void vtkMimxMeshQualityRendering::InitializeFromFile(char* filestr)
 {
   this->InitVariables();
   //cout << "file read beginning" << endl;
@@ -328,27 +339,36 @@ void vtkMeshQualityClass::InitializeFromFile(char* filestr)
   this->UpdatePipeline();
 }
 
- //---------------------------------------------------------------- 
-void vtkMeshQualityClass::InitializeFromExternalMesh(vtkUnstructuredGrid *grid)
+ //----------------------------------------------------------------
+void vtkMimxMeshQualityRendering::InitializeFromExternalMesh(vtkUnstructuredGrid *grid)
 {
-  this->InitialMesh = grid;
 
-  if (!this->IsInitialized) 
-  {
-    SetupVTKPipeline();
-  }
-  else 
-  {        
-    //this->SetupOutlineVTKPipeline();
-    this->CreateProcessedMesh();
-    this->SetQualityMeasureToVolume();
-    this->UpdatePipeline();
-  }
- 
+        // first, check if the mesh is empty and skip action if it is
+//      if (grid)
+//      {
+//         int numberOfCells = grid->GetNumberOfCells();
+//
+//         // now, maybe the grid did exist, but it is empty.  If so, lets still skip processing
+//         if (numberOfCells > 0)
+//         {
+       this->InitialMesh = grid;
+
+                  if (!this->IsInitialized)
+                  {
+                        SetupVTKPipeline();
+                  }
+                  else
+                  {
+                        this->CreateProcessedMesh();
+                        this->SetQualityMeasureToVolume();
+                        this->UpdatePipeline();
+                  }
+//         }
+//      }
 }
-  
-//----------------------------------------------------------------  
-void vtkMeshQualityClass::SetQualityMeasure(int qualityTest)  
+
+//----------------------------------------------------------------
+void vtkMimxMeshQualityRendering::SetQualityMeasure(int qualityTest)
 {
 
 
@@ -364,33 +384,33 @@ void vtkMeshQualityClass::SetQualityMeasure(int qualityTest)
 }
 
 
-  
+
 //----------------------------------------------------------------
-void vtkMeshQualityClass::InvokeQualityMeasure(void)
+void vtkMimxMeshQualityRendering::InvokeQualityMeasure(void)
 {
   // here include a switch to set the most likely tests to be selected
   // using the enumerated values 0..4
-  
+
   switch (this->SavedQualityMetric)
   {
 
-    case 0: {this->VTKQualityFilterPtr->SetHexQualityMeasureToVolume(); 
-                 if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Volume"); 
+    case 0: {this->VTKQualityFilterPtr->SetHexQualityMeasureToVolume();
+                 if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Volume");
                  break;}
     case 1: {this->VTKQualityFilterPtr->SetHexQualityMeasureToEdgeCollapse();
-                if (this->IsInitialized)  ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Collapse"); 
+                if (this->IsInitialized)  ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("EdgeCollapse");
                 break;}
-    case 2: {this->VTKQualityFilterPtr->SetHexQualityMeasureToJacobian(); 
+    case 2: {this->VTKQualityFilterPtr->SetHexQualityMeasureToJacobian();
                 if (this->IsInitialized)  ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Jacobian");
                 break;}
     case 3: {this->VTKQualityFilterPtr->SetHexQualityMeasureToSkew();
-                if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Skew"); 
+                if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Skew");
                 break;}
     case 4: {this->VTKQualityFilterPtr->SetHexQualityMeasureToAngleOutOfBounds();
-                if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Angle");
+                if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("AngleBounds");
                 break;}
     default: {this->VTKQualityFilterPtr->SetHexQualityMeasureToEdgeCollapse();
-                if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Collapse");}
+                if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("EdgeCollapse");}
   }
   //this->VTKQualityFilterPtr->Modified();
   if (this->IsInitialized) {
@@ -400,22 +420,22 @@ void vtkMeshQualityClass::InvokeQualityMeasure(void)
 }
 
 
-void vtkMeshQualityClass::SetQualityMeasureToVolume(void)
+void vtkMimxMeshQualityRendering::SetQualityMeasureToVolume(void)
 {
    this->VTKQualityFilterPtr->SetHexQualityMeasureToVolume();
    this->VTKQualityFilterPtr->SetTetQualityMeasureToVolume();
-   if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Volume"); 
+   if (this->IsInitialized) ((vtkScalarBarActor*)(this->SavedColorLegendActor))->SetTitle("Volume");
 
 }
-  
-void vtkMeshQualityClass::SetQualityMeasureToShape(void)
+
+void vtkMimxMeshQualityRendering::SetQualityMeasureToShape(void)
 {
   this->VTKQualityFilterPtr->SetHexQualityMeasureToShape();
   this->VTKQualityFilterPtr->SetTetQualityMeasureToShape();
 
 }
 
-void vtkMeshQualityClass::SetQualityMeasureToJacobian(void)
+void vtkMimxMeshQualityRendering::SetQualityMeasureToJacobian(void)
 {
   this->VTKQualityFilterPtr->SetHexQualityMeasureToJacobian();
   this->VTKQualityFilterPtr->SetTetQualityMeasureToJacobian();
@@ -423,13 +443,13 @@ void vtkMeshQualityClass::SetQualityMeasureToJacobian(void)
 
 }
 
-void vtkMeshQualityClass::SetQualityMeasureToFrobenius(void)
+void vtkMimxMeshQualityRendering::SetQualityMeasureToFrobenius(void)
 {
   this->VTKQualityFilterPtr->SetHexQualityMeasureToMedAspectFrobenius();
   this->VTKQualityFilterPtr->SetTetQualityMeasureToAspectFrobenius();
 }
 
-void vtkMeshQualityClass::SetQualityMeasureToEdgeRatio(void)
+void vtkMimxMeshQualityRendering::SetQualityMeasureToEdgeRatio(void)
 {
   this->VTKQualityFilterPtr->SetHexQualityMeasureToEdgeRatio();
   this->VTKQualityFilterPtr->SetTetQualityMeasureToEdgeRatio();
@@ -439,9 +459,9 @@ void vtkMeshQualityClass::SetQualityMeasureToEdgeRatio(void)
 
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::CalculateMeshQuality(void) 
+void vtkMimxMeshQualityRendering::CalculateMeshQuality(void)
 {
-  if (!this->IsInitialized) 
+  if (!this->IsInitialized)
   {
     SetupVTKPipeline();
   }
@@ -451,50 +471,58 @@ void vtkMeshQualityClass::CalculateMeshQuality(void)
 
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::FindMinimumAndMaximumQualityForMesh(vtkUnstructuredGrid *mesh, 
-                                                                double *minQuality, 
-                                                                double *maxQuality)
+void vtkMimxMeshQualityRendering::FindMinimumAndMaximumQualityForMesh(vtkUnstructuredGrid *mesh,
+                                                                double *minQualityFound,
+                                                                double *maxQualityFound)
 {
 
     char warningText[128];
    // initialize to values that will be overwritten
-   *minQuality = 9.9e10;
-   *maxQuality = -9.9e10;
-  
+   *minQualityFound = 9.9e10;
+   *maxQualityFound = -9.9e10;
+   int thisID;
+
   // clear out the interesting cell list
    this->SavedCellList->Reset();
-   
+
   // go through the cell data and record the smallest and largest values found
   // so we can use these values to autoscale the colors
   long numCells = ((mesh->GetCellData())->GetArray("Quality"))->GetNumberOfTuples();
-  
-  
+  // cout << "QualityRender: examining " << numCells << " cells" << endl;
+
   // if there is a canvas, be sure to clear it for display
   if (this->ReportingCanvas != NULL)
      this->ReportingCanvas->GetWidget()->DeleteAll();
-  
+
   // initialize that no bad cells have been found, update these values during the loop below
   bool foundBadValue = false;
   int badValueCount = 0;
 
-  for (int i=0; i< numCells; i++) 
+  for (int i=0; i< numCells; i++)
   {
     double thisQ = ((vtkDoubleArray*)(mesh->GetCellData())->GetArray("Quality"))->GetValue(i);
-    if (thisQ > *maxQuality) *maxQuality = thisQ;
-    if (thisQ < *minQuality) *minQuality = thisQ;
-      
+    if (thisQ > *maxQualityFound) *maxQualityFound = thisQ;
+    if (thisQ < *minQualityFound) *minQualityFound = thisQ;
+
     // negative value is significant, so lets start snooping on values
     if (thisQ < 0) {
-        
+
         // record the occurance of at least one bad element
         foundBadValue |= true;
         badValueCount++;
-        
+
       //cout << "element ID: " << i << " has quality: " << thisQ << endl;
 
-      // pull the element ID out of the field data, because we can't depend on the loop index 
-      int thisID = ((vtkIntArray*)mesh->GetCellData()->GetArray("ELEMENT_ID"))->GetValue(i);
-     
+
+      // pull the element ID out of the field data, because we can't depend on the loop index. Added test
+      // for array existence because this pipeline is called with a zero element mesh once during initialization
+      // and this case caused a crash during that situation.
+
+//        if (numCells >0 && mesh->GetCellData()->HasArray("ELEMENT_ID"))
+//                  thisID = ((vtkIntArray*)mesh->GetCellData()->GetArray("ELEMENT_ID"))->GetValue(i);
+//       else
+                    thisID = i;
+
       // to support dynamic resolution changes, a level of indirection
       // is needed, where the format string has to be created first
       int mantissa = 14-this->SavedDisplayPrecision;
@@ -503,69 +531,57 @@ void vtkMeshQualityClass::FindMinimumAndMaximumQualityForMesh(vtkUnstructuredGri
       //cout << "report frame format string:" << formatstring << endl;
       sprintf(warningText,formatstring,thisID,thisQ);
       //cout << warningText << endl;
-      
+
       // keep a record in a cell list of this ID so we can highlight it later
       // if the user wants to
       this->SavedCellList->InsertNextId(i);
-      
+
       // if there is a canvas, report the value of out of bounds elements
       if (this->ReportingCanvas != NULL)
-        this->ReportingCanvas->GetWidget()->Append(warningText); 
+        this->ReportingCanvas->GetWidget()->Append(warningText);
     }
-    
+
   }
-  
-  if (numCells == 0)
-  {
-    *minQuality = 0.0;
-    *maxQuality = 1.0;
-  }
-  
+
   // if there is a canvas, add the summary report at the end and display the report
-   if ((this->ReportingCanvas != NULL) && foundBadValue) {
-        sprintf(warningText,"%d out of %d elements were distorted",badValueCount, numCells);
-       this->ReportingCanvas->GetWidget()->Append(warningText);                         
-       this->ReportingCanvas->GetWidget()->Modified(); 
+   if ((this->ReportingCanvas != NULL)) {
+        sprintf(warningText,"%d out of %d elements were distorted",badValueCount,((int) numCells));
+       this->ReportingCanvas->GetWidget()->Append(warningText);
+       this->ReportingCanvas->GetWidget()->Modified();
    }
-   
+
   //cout << "Min quality found: " << *minQualityFound << " max quality found: " ;
   //cout << *maxQualityFound << endl;
-  
+
   // we are displaying with logarithmetic coloring schemes, so force the lookup values
   // to be greater than zero
-  
- // if (*minQualityFound < 0.001) 
+
+ // if (*minQualityFound < 0.001)
  // {
  //   *minQualityFound = 0.001;
  // cout << "clamping min quality to 0.001" << endl;
  // }
 }
 
-void vtkMeshQualityClass::SetMeshColorRange(double low, double high)
+void vtkMimxMeshQualityRendering::SetMeshColorRange(double low, double high)
 {
-        // this method is called as an override to the general practice of 
+        // this method is called as an override to the general practice of
         // letting the VTK lookup table auto-scale.  The user is requesting the
-        // lookup table range to be set specifically to look at specific range of the 
+        // lookup table range to be set specifically to look at specific range of the
         // mesh values.  Generally this will be a subrange, but no boundary checking is
         // performed
         if (this->OverrideMeshColorRange)
         {
-    double binSize = (high-low)/254.0;
-    this->lutFilter->SetTableRange(low-binSize,high+binSize);
-    this->lutFilter->ForceBuild();
-    this->lutFilter->SetTableValue(255, 0.3, 0.3, 0.3, 1.0);
-    this->lutFilter->SetTableValue(0, 0.7, 0.7, 0.7, 1.0);
-          this->SavedElementMapper->SetScalarRange (low-binSize, high+binSize);
+                this->lutFilter->SetTableRange(low,high);
+                this->SavedElementMapper->SetScalarRange (low, high);
                 this->UpdatePipeline();
         }
 }
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::SetupVTKPipeline(void) 
+void vtkMimxMeshQualityRendering::SetupVTKPipeline(void)
 {
 
-   //double minQualityFound;
-   //double maxQualityFound;
 
   // setup the pipeline here
 
@@ -578,18 +594,17 @@ void vtkMeshQualityClass::SetupVTKPipeline(void)
 
   // the VTK pipeline exists, now it is OK to change values on the filters
   this->IsInitialized = 1;
-  
+
 }
 
 
 
-void vtkMeshQualityClass::SetupOutlineVTKPipeline(void)
+void vtkMimxMeshQualityRendering::SetupOutlineVTKPipeline(void)
 {
 
   //vtkExtractEdges* extractOutline = (vtkExtractEdges*) vtkExtractEdges::New();
   //  extractOutline->SetInput(this->InitialMesh);
-/***VAM***/
- vtkGeometryFilter* outlineGeo = (vtkGeometryFilter*) vtkGeometryFilter::New();
+  vtkGeometryFilter* outlineGeo = (vtkGeometryFilter*) vtkGeometryFilter::New();
     outlineGeo->SetInput(this->InitialMesh);
   vtkFeatureEdges* featureEdges = (vtkFeatureEdges*) vtkFeatureEdges::New();
     featureEdges->SetInput(outlineGeo->GetOutput());
@@ -598,7 +613,7 @@ void vtkMeshQualityClass::SetupOutlineVTKPipeline(void)
     featureEdges->FeatureEdgesOff();
   vtkTubeFilter* outlineTube = (vtkTubeFilter*) vtkTubeFilter::New();
     outlineTube->SetInputConnection(featureEdges->GetOutputPort());
-    outlineTube->SetRadius(0.01);
+    outlineTube->SetRadius(0.03);
   vtkPolyDataMapper* outlineMap = (vtkPolyDataMapper*)vtkPolyDataMapper::New();
     outlineMap->SetInputConnection(outlineTube->GetOutputPort());
   vtkActor* outlineActor = (vtkActor*)vtkActor::New();
@@ -610,7 +625,7 @@ void vtkMeshQualityClass::SetupOutlineVTKPipeline(void)
 }
 
 
-void vtkMeshQualityClass::SetupClippedOutlineVTKPipeline(void)
+void vtkMimxMeshQualityRendering::SetupClippedOutlineVTKPipeline(void)
 {
 
   //vtkExtractEdges* extractOutline = (vtkExtractEdges*) vtkExtractEdges::New();
@@ -624,7 +639,7 @@ void vtkMeshQualityClass::SetupClippedOutlineVTKPipeline(void)
     featureEdges->FeatureEdgesOff();
   vtkTubeFilter* outlineTube = (vtkTubeFilter*) vtkTubeFilter::New();
     outlineTube->SetInputConnection(featureEdges->GetOutputPort());
-    outlineTube->SetRadius(0.01);
+    outlineTube->SetRadius(0.03);
   vtkPolyDataMapper* outlineMap = (vtkPolyDataMapper*)vtkPolyDataMapper::New();
     outlineMap->SetInputConnection(outlineTube->GetOutputPort());
   vtkActor* outlineActor = (vtkActor*)vtkActor::New();
@@ -633,13 +648,16 @@ void vtkMeshQualityClass::SetupClippedOutlineVTKPipeline(void)
     (outlineActor->GetProperty())->SetRepresentationToSurface();
     (outlineActor->GetProperty())->SetAmbient(0);
   this->SavedClippedOutlineActor = outlineActor;
+
+  // add output PolyData creation for Slicer integration
+  this->SavedOutlinePolyDataForRendering = outlineTube->GetOutput();
 }
 
 
 
-void vtkMeshQualityClass::SetupInteriorVTKPipeline(void)
+void vtkMimxMeshQualityRendering::SetupInteriorVTKPipeline(void)
 {
-  // this will create a small boundary between the elements by shrinking, 
+  // this will create a small boundary between the elements by shrinking,
   // so we will see the interior elements.  This shrinking step is needed
   // because the VTK Mappers display only boundary elements, not the internal
   // elements
@@ -663,7 +681,7 @@ void vtkMeshQualityClass::SetupInteriorVTKPipeline(void)
 }
 
 
-void vtkMeshQualityClass::SetupHedgeHogVTKPipeline(void)
+void vtkMimxMeshQualityRendering::SetupHedgeHogVTKPipeline(void)
 {
   // this method takes the unstructured grid elements and pipes them through a
   // VTK hedgehog filter to render arrows aligned with the normals from the outside
@@ -672,26 +690,26 @@ void vtkMeshQualityClass::SetupHedgeHogVTKPipeline(void)
   vtkGeometryFilter* geom = (vtkGeometryFilter*) vtkGeometryFilter::New();
    geom->SetInput(this->SavedMesh);
    geom->MergingOff();
-   
+
   // set parameters to normal filter so there is a single vector at the corner
   // of each element drawn.  This isn't as good as having a normal on the center of
   // the boundary polygon, but we don't seem to be able to generate Cell Normals unless
-  // we make polygons of the boundary surface.  This will do for now. 
-  
+  // we make polygons of the boundary surface.  This will do for now.
+
   // *** later:  mesh -> contour-> normalsWithCellNormalsOnly
-  
+
   vtkPolyDataNormals* normals = (vtkPolyDataNormals*)vtkPolyDataNormals::New();
    normals->SetInput(geom->GetOutput());
    normals->SplittingOff();
    //normals->ComputePointNormalsOff();
    normals->ComputeCellNormalsOn();
-   
+
   vtkFaceHedgeHog* hedge = (vtkFaceHedgeHog*) vtkFaceHedgeHog::New();
    hedge->SetInput(normals->GetOutput());
    hedge->SetScaleFactor(1.0);
    hedge->SetVectorModeToUseNormal();
-   this->SavedHedgehogFilter = hedge; 
-   
+   this->SavedHedgehogFilter = hedge;
+
   vtkPolyDataMapper* hedgeMapper = (vtkPolyDataMapper*)vtkPolyDataMapper::New();
    hedgeMapper->SetInputConnection(hedge->GetOutputPort());
    //hedgeMapper->ScalarVisibilityOff();
@@ -706,117 +724,134 @@ void vtkMeshQualityClass::SetupHedgeHogVTKPipeline(void)
   this->SavedSurfaceHedgehogActor = hedgeActor;
 }
 
-void vtkMeshQualityClass::CreateProcessedMesh(void)
+void vtkMimxMeshQualityRendering::CreateProcessedMesh(void)
 {
         // Since we may want to cut away some elements during interaction, we can't use the position
         // in the rendering dataset as a unique id.  Instead, each element must have an index number added as
-        // a custom attribute.  Once each element has a unique ID, then this id can be used to identify 
+        // a custom attribute.  Once each element has a unique ID, then this id can be used to identify
         // elements by number, regardless of whether only some of them are currently being displayed
-        // by the interface.   The first step is to find out the total number of elements and make an 
-        // array to hold the indices 
-        
+        // by the interface.   The first step is to find out the total number of elements and make an
+        // array to hold the indices
+
         int numberOfCells = this->InitialMesh->GetNumberOfCells();
         cout << "initializing pipeline with " << numberOfCells << " cells" << endl;
+
+
         vtkFieldData* fieldData = this->InitialMesh->GetCellData();
         vtkIntArray* elementIdNumbers = vtkIntArray::New();
         elementIdNumbers->SetName("ELEMENT_ID");
-        
+
         //  Fill the element id array with increasing, unique values
-        
+
         for (int i=0; i< numberOfCells; i++) {
                   elementIdNumbers->InsertNextValue(i);
         }
-        
-        // add a cell extraction operation here.  Under control of the interface, a user can decide to display only a 
-        // subset of cells by selecting the cell IDs and updating the pipeline to put this filter in the pipeline.  For normal 
-        // display cases, this filter is not in the VTK pipeline.  
-        
+
+        // add a cell extraction operation here.  Under control of the interface, a user can decide to display only a
+        // subset of cells by selecting the cell IDs and updating the pipeline to put this filter in the pipeline.  For normal
+        // display cases, this filter is not in the VTK pipeline.
+
         this->CellSelectionFilter->SetInput(this->InitialMesh);
-  
+
         // the dataset might have point data scalars associated with it.  This
-        // causes problems with some elements not displaying, so remove the 
+        // causes problems with some elements not displaying, so remove the
         // point data
-        
+
 //      vtkPointData *pointData = this->InitialMesh->GetPointData();
 //      for (int count = 0; count < pointData->GetNumberOfArrays(); count++)
 //      {
 //              cout << "found data array on points.  Removing it." << endl;
 //              pointData->RemoveArray(pointData->GetArrayName(count));
 //      }
-        
+
         // the dataset might have cell data scalars associated with it.  This
-        // causes problems with some elements not displaying, so remove the 
+        // causes problems with some elements not displaying, so remove the
         // cell data
-        
+
 //      vtkCellData *cellData = this->InitialMesh->GetCellData();
 //      for (int count = 0; count < cellData->GetNumberOfArrays(); count++)
 //      {
 //              cout << "found  data array on cells.  Removing it." << endl;
 //              cellData->RemoveArray(cellData->GetArrayName(count));
 //      }
-        
+
         // Assign the element ID array to the mesh by putting the array in the field data
         // then there will be a new attribute with unique element ID assigned to each element
-        
+
         if (!fieldData->HasArray("ELEMENT_ID"))
         {
           fieldData->AddArray(elementIdNumbers);
         } else {
           cout << "Mesh already has element ID numbers, keeping same numbers" << endl;
         }
-        
+
         // create an extract geometry file instance in case the user enables the cutting plane
         // this would be used on the input dataset before testing for quality.   This filter
-        // is not used in the pipeline unless the "EnableCuttingPlane" method is called. 
-        // We are putting the filter early in the pipelne  because it allows the 
+        // is not used in the pipeline unless the "EnableCuttingPlane" method is called.
+        // We are putting the filter early in the pipelne  because it allows the
         // output of the quality filter to be specific to only
         // the selected cells.  This could be helpful when a subset is enabled -- then the summary
         // information (avg. quality, etc.) would pertain only to the selected element subset.
         // The vtkPlane instance must be set by calling the "SetCuttingPlane" method before enabling
-        // the use of this filter.  
-        
+        // the use of this filter.
+
         // the first time through, create the filter.  Afterwards, use the same filter
 
-        if (!this->IsInitialized) {
-            this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
-            this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
-            this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
-            vtkMeshQualityExtended* qual = vtkMeshQualityExtended::New();
-                this->VTKQualityFilterPtr = qual;
-        }
-        else {
-            this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
-            this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);                  
-        }
+//        if (!this->IsInitialized) {
+//            this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
+//            this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
+//            this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
+//            vtkMeshQualityExtended* qual = vtkMeshQualityExtended::New();
+//                this->VTKQualityFilterPtr = qual;
+//        }
+//        else {
+//            this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
+//            this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
+//        }
+//
 
-        this->VTKQualityFilterPtr->SetInput((vtkDataSet*)this->InitialMesh);
+        if (!this->IsInitialized) {
+               // this->ExtractSelectedGeometryFilter = vtkExtractGeometry::New();
+                this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
+                this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
+                vtkMeshQualityExtended* qual = vtkMeshQualityExtended::New();
+                    this->VTKQualityFilterPtr = qual;
+            }
+            else {
+                this->ExtractSelectedGeometryFilter->SetInput(this->InitialMesh);
+                this->ExtractSelectedGeometryFilter->SetImplicitFunction(this->SavedCuttingPlaneImplicitFunction);
+            }
+
+            this->VTKQualityFilterPtr->SetInput((vtkDataSet*)this->InitialMesh);
+
+
 
         //vtkUnstructuredGridWriter *writer = vtkUnstructuredGridWriter::New();
         //writer->SetInput(qual->GetOutput());
         //writer->SetFileName("before.vtk");
         //writer->Write();
-        
+
         this->InvokeQualityMeasure();
         this->VTKQualityFilterPtr->Modified();
-        this->VTKQualityFilterPtr->Update();  
+        this->VTKQualityFilterPtr->Update();
         //cout << "mesh quality algorithm completed" << endl;
-        
+
         // now loop through the quality values and find the minimum and maximum
         // values for this particular dataset
-        
+
         vtkUnstructuredGrid* mesh = (vtkUnstructuredGrid*)this->VTKQualityFilterPtr->GetOutput();
-        
+
         //vtkUnstructuredGridWriter *writer2 = vtkUnstructuredGridWriter::New();
         //writer2->SetInput(mesh);
         //writer2->SetFileName("after.vtk");
         //writer2->Write();
-        
+
         // set a pointer to look at the mesh after it has had quality added to it
         this->SavedMesh = mesh;
-        
-        // point the filters at the mesh quality attributes so thresholding will 
+
+        // point the filters at the mesh quality attributes so thresholding will
         // not get confused by other icoming attributes attached to the datasets
-        
+
         if (this->SavedMesh->GetCellData()->HasArray("Quality"))
             this->SavedMesh->GetCellData()->SetActiveAttribute("Quality",vtkDataSetAttributes::SCALARS);
         if (this->SavedMesh->GetPointData()->HasArray("Quality"))
@@ -824,132 +859,112 @@ void vtkMeshQualityClass::CreateProcessedMesh(void)
 
 }
 
-void vtkMeshQualityClass::SetupMeshFilterPipeline(void)
+void vtkMimxMeshQualityRendering::SetupMeshFilterPipeline(void)
 {
-//  double alpha; 
-  //double minQualityFound;
-  //double maxQualityFound;
+
+  double minQualityFound;
+  double maxQualityFound;
 
   this->CellSelectionFilter = vtkExtractCells::New();
   this->CreateProcessedMesh();
-  
+
   long numCells = ((this->SavedMesh->GetCellData())->GetArray("Quality"))->GetNumberOfTuples();
-  //cout << "found " << numCells << " cells in the dataset" << endl;
+  cout << "found " << numCells << " cells in the dataset" << endl;
   //numCells = ((mesh->GetCellData())->GetArray("ELEMENT_ID"))->GetNumberOfTuples();
   //cout << "found " << numCells << " id entries in the dataset" << endl;
-  if ( numCells > 0)
-  {
-    this->FindMinimumAndMaximumQualityForMesh(this->SavedMesh,&this->minQualityFound,&this->maxQualityFound);
-  }
-  else
-  {
-    this->minQualityFound = 0.0;
-    this->maxQualityFound = 1.0;
-  }
-  //cout << "Min quality found: " << minQualityFound << " max quality found: " ;
-  //cout << maxQualityFound << endl;
-  
-  // look at the threshold value and pass only the elements which have quality 
-  // measure below the threshold value
-  
-//  vtkThreshold* thresh = vtkThreshold::New();
-//    thresh->SetInputConnection(this->VTKQualityFilterPtr->GetOutputPort());
-//    thresh->ThresholdByLower(this->thresholdValue);
-//    // this caused all the elements to dissappear when uncommented.  Oh no...
-//    //thresh->SetAttributeModeToUseCellData();
-//    this->thresholdFilter = thresh;
-//    
 
-    
-  // shrink the elements so we can see each one.  We are using a shrink filter 
+  this->FindMinimumAndMaximumQualityForMesh(this->SavedMesh,&minQualityFound,&maxQualityFound);
+  cout << "Min quality found: " << minQualityFound << " max quality found: " ;
+  cout << maxQualityFound << endl;
+
+  // look at the threshold value and pass only the elements which have quality
+  // measure below the threshold value
+
+  vtkThreshold* thresh = vtkThreshold::New();
+    thresh->SetInputConnection(this->VTKQualityFilterPtr->GetOutputPort());
+    thresh->ThresholdByLower(this->thresholdValue);
+    // this caused all the elements to dissappear when uncommented.  Oh no...
+    //thresh->SetAttributeModeToUseCellData();
+    this->thresholdFilter = thresh;
+
+
+
+  // shrink the elements so we can see each one.  We are using a shrink filter
   // instantiated earlier because we needed a pointer to the filter to invoke its
   // modified method as part of a GUI callback to update the pipeline
-  
-  // store a handle to this filter instance so we can restrobe the pipeline 
+
+  // store a handle to this filter instance so we can restrobe the pipeline
   vtkShrinkFilter* shrinker = (vtkShrinkFilter*) vtkShrinkFilter::New();
-  shrinker->SetInputConnection(this->VTKQualityFilterPtr->GetOutputPort());
-  //shrinker->SetInputConnection(thresh->GetOutputPort());
+  //shrinker->SetInputConnection(this->VTKQualityFilterPtr->GetOutputPort());
+  shrinker->SetInputConnection(thresh->GetOutputPort());
   shrinker->SetShrinkFactor(this->ElementShrinkFactor);
   this->shrinkFilter = shrinker;
   //shrinker->Update();
-    
+
   //vtkLogLookupTable* lut = (vtkLogLookupTable*) vtkLogLookupTable::New();
   vtkLookupTable* lut = (vtkLookupTable*) vtkLookupTable::New();
   //lut->SetHueRange (0.0, 0.8);
   lut->SetAlphaRange(this->ElementOpacity,this->ElementOpacity);
-  lut->SetTableRange(this->minQualityFound, this->maxQualityFound);
+  lut->SetTableRange(minQualityFound, maxQualityFound);
   this->lutFilter = lut;
-  
+
    // initialize the lookup table to run through the spectrum where blue (cool)
-   // is assigned to the highest values (of good quality) and red is assigned to 
-   // the lowest values (the elements with bad quality).  We have to go through the 
-   // LUT because this red-to-blue progression is opposite the usual initialization of a 
-   // lookup table. 
-   
+   // is assigned to the highest values (of good quality) and red is assigned to
+   // the lowest values (the elements with bad quality).  We have to go through the
+   // LUT because this red-to-blue progression is opposite the usual initialization of a
+   // lookup table.
+
    // CRL *** 2/22/07 - disabled the LUT overwrite on the colors.  Let the default lookup
    // table calculate colors.  We are rescaling the table dynamically now, so this is OK as
-   // long as the quality function values increase as "quality" increases. 
-   
-//   for (int i=0; i<255; i++) 
+   // long as the quality function values increase as "quality" increases.
+
+//   for (int i=0; i<255; i++)
 //   {
 //        double si = i/256.0;
 //        double decreasing_si = 1.0 - si;
 //        double alpha = this->ElementOpacity;
-//              
-//        // assign a color according to the place in the spectrum.  
+//
+//        // assign a color according to the place in the spectrum.
 //        // Use the index and input parameters to calculate the colors
-//              
+//
 //        double r,g,b;
 //        vtkMath::HSVToRGB(decreasing_si,1.0,1.0,&r,&g,&b);
 //        //((vtkLookupTable*)this->lutFilter)->SetTableValue(i, r,g,b,alpha);
 //      }
-// 
-  
+//
+
   // The scalar mode in the mapper needs to be set to cells here so the cells are uniformly
   // colored with the mesh quality metric.  Without this,the values at the points
-  // cause color interpolation across the cell. 
-  
+  // cause color interpolation across the cell.
+
   vtkDataSetMapper*  elemMap = vtkDataSetMapper::New();
   elemMap->SetInputConnection(shrinker->GetOutputPort());
   elemMap->SetScalarModeToUseCellData();
   elemMap->SetLookupTable(lut);
-  elemMap->SetScalarRange (this->minQualityFound, this->maxQualityFound);
+  elemMap->SetScalarRange (minQualityFound, maxQualityFound);
   this->SavedElementMapper = elemMap;
 
   vtkActor* elemAct = vtkActor::New();
   elemAct->SetMapper(elemMap);
   this->SavedElementActor = elemAct;
-  
+
+  // add output PolyData creation for Slicer integration
+  vtkGeometryFilter* meshPolyExtractor = vtkGeometryFilter::New();
+  meshPolyExtractor->SetInputConnection(shrinker->GetOutputPort());
+  this->SavedMeshPolyDataForRendering = meshPolyExtractor->GetOutput();
 
 }
 
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::SetupColorLegendActor(void)
+void vtkMimxMeshQualityRendering::SetupColorLegendActor(void)
 {
   // this specialty actor is created from the lookuptable and it draws
   // a labeled legend along the left side of the render window showing the range
   // of quality metric values
-  
+
   if (this->SavedColorLegendActor == NULL) {
-    vtkScalarBarActor *scalarBar = vtkScalarBarActor::New();
-  vtkTextProperty *textProperty = scalarBar->GetTitleTextProperty();
-  textProperty->SetFontFamilyToArial();
-  textProperty->SetColor(1.0, 1.0, 1.0);
-  textProperty->ShadowOff();
-  textProperty->ItalicOff();
-  textProperty->SetFontSize(40);
-  scalarBar->SetTitleTextProperty( textProperty );
-
-  textProperty = scalarBar->GetLabelTextProperty();
-  textProperty->SetFontFamilyToArial();
-  textProperty->SetColor(1.0, 1.0, 1.0);
-  textProperty->ShadowOff();
-  textProperty->ItalicOff();
-  textProperty->SetFontSize(40);
-  scalarBar->SetLabelTextProperty( textProperty );
-
-  
+  vtkScalarBarActor *scalarBar = vtkScalarBarActor::New();
   scalarBar->SetLookupTable((this->lutFilter));
   scalarBar->SetTitle("Quality");
   scalarBar->GetPositionCoordinate()->SetCoordinateSystemToNormalizedViewport();
@@ -959,10 +974,10 @@ void vtkMeshQualityClass::SetupColorLegendActor(void)
   scalarBar->SetHeight(0.9);
   scalarBar->SetPosition(0.01,0.1);
   // This format is tricky because VTK does some autosizing.  In general, we've had
-  // good luck commmenting out this line and letting VTK autosize for us. 
+  // good luck commmenting out this line and letting VTK autosize for us.
   scalarBar->SetLabelFormat("%9.3f");
-  //scalarBar->GetLabelTextProperty()->SetColor(0,0,0); 
-  //scalarBar->GetTitleTextProperty()->SetColor(0,0,0);    
+  scalarBar->GetLabelTextProperty()->SetColor(0,1,1);
+  scalarBar->GetTitleTextProperty()->SetColor(0,1,1);
   this->SavedColorLegendActor = scalarBar;
   }
 }
@@ -970,55 +985,66 @@ void vtkMeshQualityClass::SetupColorLegendActor(void)
 
 
 //----------------------------------------------------------------
-void vtkMeshQualityClass::UpdatePipeline(void)
+void vtkMimxMeshQualityRendering::UpdatePipeline(void)
 {
-//  double alpha; 
-  //double minQualityFound;
-  //double maxQualityFound;
-  
+
+  double minQualityFound;
+  double maxQualityFound;
+
   //cout << "calling update pipeline" << endl;
-  if (this->IsInitialized) 
+  if (this->IsInitialized)
   {
-  
-     this->VTKQualityFilterPtr->Modified();  
+
+     this->VTKQualityFilterPtr->Modified();
      this->VTKQualityFilterPtr->Update();
-  
+
     // enable/disable actors according to the user parameters.  *** this might
     // force filter re-evaluation unnecessarily, but it is simpler logic than looking
-    // if the parameters have changed.  Since we are working with small meshes initially, 
+    // if the parameters have changed.  Since we are working with small meshes initially,
     // lets keep the logic simple
-    
+
     this->SavedElementActor->SetVisibility(this->ShowFilledElements);
-    this->SavedOutlineActor->SetVisibility(this->ShowOutline);  
-    this->SavedClippedOutlineActor->SetVisibility(this->ShowClippedOutline);  
-    this->SavedInteriorOutlinesActor->SetVisibility(this->ShowInteriorOutlines);  
-    this->SavedSurfaceHedgehogActor->SetVisibility(this->ShowSurfaceHedgehog);  
-  
+    this->SavedOutlineActor->SetVisibility(this->ShowOutline);
+    this->SavedClippedOutlineActor->SetVisibility(this->ShowClippedOutline);
+    this->SavedInteriorOutlinesActor->SetVisibility(this->ShowInteriorOutlines);
+    this->SavedSurfaceHedgehogActor->SetVisibility(this->ShowSurfaceHedgehog);
+
     // set the VTK supporting class to have the right test and check the range
     // of values to recalibrate the LUT when the test changes
     //this->InvokeQualityMeasure();
     //this->FindMinimumAndMaximumQualityForMesh(this->SavedMesh,&minQualityFound,&maxQualityFound);
     this->FindMinimumAndMaximumQualityForMesh(
                              (vtkUnstructuredGrid*)(this->VTKQualityFilterPtr->GetOutput()),
-                             &(this->minQualityFound),
-                             &(this->maxQualityFound));
+                             &minQualityFound,
+                             &maxQualityFound);
 
     ((vtkUnstructuredGrid*)(this->VTKQualityFilterPtr->GetOutput()))->GetCellData()->SetActiveAttribute("Quality",vtkDataSetAttributes::SCALARS);
+
+    if((this->VTKQualityFilterPtr->GetOutput())->GetCellData()->GetArray("Quality"))
+        ((vtkUnstructuredGrid*)(this->VTKQualityFilterPtr->GetOutput()))->GetCellData()->GetArray("Quality")->SetName("scalars");
+
+    // try to copy the scalars to  a duplicate array named "scalars" so it will be picked up by Slicer
+//    vtkDoubleArray *attrCopy = vtkDoubleArray::New();
+//    attrCopy->SetNumberOfComponents(1);
+//    attrCopy->Allocate(VTK_DOUBLE,100);
+//    attrCopy->DeepCopy((this->VTKQualityFilterPtr->GetOutput())->GetCellData()->GetArray("Jacobian"));
+//    attrCopy->SetName("scalars");
+//    ((vtkUnstructuredGrid*)(this->VTKQualityFilterPtr->GetOutput()))->GetCellData()->AddArray(attrCopy);
 
     // autoadjust the colors if the user is not manually overriding this feature
     if (!this->OverrideMeshColorRange)
     {
-        this->lutFilter->SetTableRange(this->minQualityFound, maxQualityFound);
+        this->lutFilter->SetTableRange(minQualityFound, maxQualityFound);
         this->lutFilter->ForceBuild();
-        this->SavedElementMapper->SetScalarRange (this->minQualityFound, this->maxQualityFound);
+        this->SavedElementMapper->SetScalarRange (minQualityFound, maxQualityFound);
 
     }
      ((vtkScalarBarActor*)this->SavedColorLegendActor)->SetLookupTable(this->lutFilter);
     this->SavedColorLegendActor->Modified();
-        
+
         // set color to blue for binary quality tests where no elements were flagged.
         // Otherwise, let the LUT do the coloring
-        if ( this->minQualityFound == this->maxQualityFound) {
+        if ( minQualityFound == maxQualityFound) {
                 this->SavedElementActor->GetProperty()->SetColor(0,0,1);
                 this->SavedElementMapper->ScalarVisibilityOff();
                 this->SavedElementActor->Modified();
@@ -1026,22 +1052,45 @@ void vtkMeshQualityClass::UpdatePipeline(void)
                 this->SavedElementMapper->ScalarVisibilityOn();
                 this->SavedElementActor->Modified();
 
-        }       
-  
+        }
+
     this->shrinkFilter->SetShrinkFactor(this->ElementShrinkFactor);
     //this->shrinkFilter->Update();
-    //cout << "shrink value is: " << this->shrinkFilter->GetShrinkFactor() << endl;   
-    
+    //cout << "shrink value is: " << this->shrinkFilter->GetShrinkFactor() << endl;
+
     // the user could have changed the opacity of the elements
     this->SavedElementActor->GetProperty()->SetOpacity(this->ElementOpacity);
 
-        // update the threshold value in the filter since the user could have tweaked the 
-        // interface.  The slider on the GUI is for percent of rejection of elements, so we 
+        // update the threshold value in the filter since the user could have tweaked the
+        // interface.  The slider on the GUI is for percent of rejection of elements, so we
         // need to project the threshold percent into an actual element value
-        
-        double threshActual = this->thresholdValue*(this->maxQualityFound-this->minQualityFound)+this->minQualityFound;
-        //this->thresholdFilter->ThresholdByLower(threshActual);                
+
+        double threshActual = this->thresholdValue*(maxQualityFound-minQualityFound)+minQualityFound;
+        this->thresholdFilter->ThresholdByLower(threshActual);
   }
-  
+
 }
 
+
+//----------------------------------------------------------------
+vtkPolyData*  vtkMimxMeshQualityRendering::GetMeshPolygons(void)
+{
+        // update may not be necessary, but it won't hurt us
+        this->UpdatePipeline();
+    return this->SavedMeshPolyDataForRendering;
+}
+
+
+
+vtkPolyData*  vtkMimxMeshQualityRendering::GetOutlinePolygons(void)
+{
+        this->UpdatePipeline();
+        return SavedOutlinePolyDataForRendering;
+}
+
+
+vtkPolyData*  vtkMimxMeshQualityRendering::GetHedgehogPolygons(void)
+{
+        this->UpdatePipeline();
+    return SavedHedgehogPolyDataForRendering;
+}

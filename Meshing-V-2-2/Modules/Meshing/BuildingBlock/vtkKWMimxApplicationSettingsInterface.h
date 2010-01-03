@@ -81,6 +81,7 @@ public:
   virtual void AutoSaveDirectoryCallback( );
   virtual void AverageElementLengthCallback(char *value);
   virtual void ABAQUSPrecisionCallback(double value);
+  virtual void ClearScreenOnExitCallback(int mode );
 
 protected:
   vtkKWMimxApplicationSettingsInterface();
@@ -96,6 +97,7 @@ private:
   vtkKWScaleWithLabel *autoSaveScale;
   vtkKWCheckButtonWithLabel *workingDirButton;
   vtkKWLoadSaveButtonWithLabel *autoSaveDir;
+  vtkKWCheckButtonWithLabel *clearDisplayOnExitButton;
   
   /* Font Configuration */
   vtkKWFrameWithLabel *FontSettingsFrame;

@@ -11,17 +11,17 @@ Version:   $Revision: 1.14 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
 
-// .NAME vtkUnstructuredGridActor - 
+// .NAME vtkUnstructuredGridActor -
 // .SECTION Description
 // vtkUnstructuredGridActor is the cla
 
@@ -29,6 +29,10 @@ PURPOSE.  See the above copyright notices for more information.
 #define __vtkMimxUnstructuredGridActor_h
 
 #include "vtkMimxActorBase.h"
+
+// link to the MRML UGrid display node because requests for visibility change, color
+// change etc will be passed through to the display node.
+#include "vtkMRMLUnstructuredGridDisplayNode.h"
 
 #include "mimxMatrixTemplate.h"
 #include "vtkMimxCommonWin32Header.h"
@@ -42,12 +46,12 @@ class VTK_MIMXCOMMON_EXPORT vtkMimxUnstructuredGridActor : public vtkMimxActorBa
 {
 public:
 
-  enum { 
+  enum {
     DisplaySurface                = 1,
     DisplayOutline                = 2,
     DisplaySurfaceAndOutline      = 3
   };
-  
+
   static vtkMimxUnstructuredGridActor *New();
   vtkTypeRevisionMacro(vtkMimxUnstructuredGridActor,vtkMimxActorBase);
   void PrintSelf(ostream& os, vtkIndent indent);
@@ -65,6 +69,13 @@ public:
  int GetMeshSeed(int BoxNum, int Axis);
  void DeleteNodeSet(const char *Name);
  void DeleteElementSet(const char *Name);
+
+ // set pointer to display node so that attribute changes can be passed through
+ void SetMRMLDisplayNode(vtkMRMLUnstructuredGridDisplayNode* displayNode);
+
+ // methods below are reimplemented here and passed through to the related
+ // MRML display node that is handling the actual display in Slicer3 windows
+
  void SetFillColor(double rgb[3]);
  void SetFillColor(double red, double green, double blue);
  void GetFillColor(double &red, double &green, double &blue);
@@ -75,12 +86,6 @@ public:
  void GetOutlineColor(double rgb[3]);
  void SetDisplayType( int mode );
  int  GetDisplayType();
-  
- // added to support slicer integration
- void SaveVisibility(void);
- void RestoreVisibility(void);
- void Hide();
- void Show();
 
 
 protected:
@@ -88,6 +93,7 @@ protected:
   ~vtkMimxUnstructuredGridActor();
   vtkUnstructuredGrid *UnstructuredGrid;
   vtkDataSetMapper *UnstructuredGridMapper;
+
 private:
         int Links; // to check if links need to be recomputed
         void BuildMeshSeedLinks(); // generates a matrix of values signifying the connection

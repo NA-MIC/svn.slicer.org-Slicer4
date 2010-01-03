@@ -10,12 +10,12 @@ Version:   $Revision: 1.14.2.3 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -39,6 +39,7 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkKWMenuButtonWithLabel.h"
 #include "vtkKWPushButton.h"
 #include "vtkKWRenderWidget.h"
+#include "vtkKWScale.h"
 
 #include "vtkMimxMeshActor.h"
 
@@ -72,6 +73,7 @@ vtkKWMimxViewPropertiesOptionGroup::vtkKWMimxViewPropertiesOptionGroup()
         this->SpecifyTitleButton = NULL;
         this->LegendTitle = NULL;
         this->CloseButton = NULL;
+        this->UpdateThreshold = NULL;
 }
 
 //----------------------------------------------------------------------------
@@ -109,7 +111,7 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
     vtkErrorMacro(<< this->GetClassName() << " already created");
     return;
     }
-  
+
   // Call the superclass to create the whole widget
 
   this->Superclass::CreateWidget();
@@ -125,10 +127,10 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
   this->OptionsFrame->SetParent(this);
   this->OptionsFrame->Create();
   this->GetApplication()->Script(
-          "pack %s -side top -anchor nw -expand n -padx 2 -pady 0 -fill x", 
+          "pack %s -side top -anchor nw -expand n -padx 2 -pady 0 -fill x",
           this->OptionsFrame->GetWidgetName());
 
-  if (!this->ColorMenuButton)   
+  if (!this->ColorMenuButton)
                 this->ColorMenuButton = vtkKWMenuButtonWithLabel::New();
         this->ColorMenuButton->SetParent(this->OptionsFrame);
         this->ColorMenuButton->Create();
@@ -138,22 +140,40 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
         this->ColorMenuButton->SetPadX(2);
         this->ColorMenuButton->SetPadY(2);
         this->ColorMenuButton->GetWidget()->SetWidth(20);
-        this->GetApplication()->Script("pack %s -side top -anchor n -padx 2 -pady 15", 
-                this->ColorMenuButton->GetWidgetName());
-        
+        this->GetApplication()->Script(
+                           "pack %s -side top -anchor n -padx 2 -pady 15",
+                   this->ColorMenuButton->GetWidgetName());
+        this->ColorMenuButton->SetEnabled(1);
+
         this->ColorMenuButton->GetWidget()->GetMenu()->AddRadioButton(
     "Red to Blue",this, "ColorModeCallback 1");
   this->ColorMenuButton->GetWidget()->GetMenu()->AddRadioButton(
     "Blue to Red",this, "ColorModeCallback 2");
   this->ColorMenuButton->GetWidget()->SetValue("Blue to Red");
-  
+
+
+  // adding a scale slider for theshold of elements to display.  Default is to
+  // display 100% of the elements
+  if(!this->UpdateThreshold)
+          this->UpdateThreshold = vtkKWScale::New();
+  this->UpdateThreshold->SetParent(this->OptionsFrame);
+  this->UpdateThreshold->Create();
+  this->UpdateThreshold->SetLabelText("Percentage of Values To Display");
+  this->UpdateThreshold->SetCommand(this, "UpdateThresholdCallback");
+  this->GetApplication()->Script(
+          "pack %s -side top -anchor n -padx 2 -pady 2",
+          this->UpdateThreshold->GetWidgetName());
+  this->UpdateThreshold->SetEnabled(1);
+
+
+
   if(!this->RangeFrame)
           this->RangeFrame = vtkKWFrameWithLabel::New();
   this->RangeFrame->SetParent(this);
   this->RangeFrame->Create();
   this->RangeFrame->SetLabelText("Color Scale");
   this->GetApplication()->Script(
-          "pack %s -side top -anchor nw -expand n -padx 2 -pady 0 -fill x", 
+          "pack %s -side top -anchor nw -expand n -padx 2 -pady 0 -fill x",
           this->RangeFrame->GetWidgetName());
 
   if (!this->SpecifyRangeButton)
@@ -164,7 +184,7 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
   this->SpecifyRangeButton->GetWidget()->SetText("Specify ");
   //  this->ViewLegendButton->GetWidget()->SetEnabled( 0 );
   this->GetApplication()->Script(
-          "grid %s -row 0 -column 0 -sticky nw -padx 2 -pady 2", 
+          "grid %s -row 0 -column 0 -sticky nw -padx 2 -pady 2",
           this->SpecifyRangeButton->GetWidgetName());
 
   if (!this->RangeMinimum)
@@ -176,7 +196,7 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
   this->RangeMinimum->GetWidget()->SetValue("");
   this->RangeMinimum->GetWidget()->SetRestrictValueToDouble();
   this->GetApplication()->Script(
-          "grid %s -row 0 -column 1 -sticky nw -padx 2 -pady 2", 
+          "grid %s -row 0 -column 1 -sticky nw -padx 2 -pady 2",
           this->RangeMinimum->GetWidgetName());
   this->RangeMinimum->SetEnabled(0);
 
@@ -189,7 +209,7 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
   this->RangeMaximum->GetWidget()->SetValue("");
   this->RangeMaximum->GetWidget()->SetRestrictValueToDouble();
   this->GetApplication()->Script(
-          "grid %s -row 0 -column 2 -sticky nw -padx 2 -pady 2", 
+          "grid %s -row 0 -column 2 -sticky nw -padx 2 -pady 2",
           this->RangeMaximum->GetWidgetName());
   this->RangeMaximum->SetEnabled(0);
 
@@ -200,19 +220,20 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
   this->UpdateRange->SetText("Update");
   this->UpdateRange->SetCommand(this, "UpdateRangeCallback");
   this->GetApplication()->Script(
-          "grid %s -row 0 -column 3 -sticky nw -padx 2 -pady 2", 
+          "grid %s -row 0 -column 3 -sticky nw -padx 2 -pady 2",
           this->UpdateRange->GetWidgetName());
   this->UpdateRange->SetEnabled(0);
-  
+
+
   if(!this->LegendFrame)
           this->LegendFrame = vtkKWFrameWithLabel::New();
   this->LegendFrame->SetParent(this);
   this->LegendFrame->Create();
   this->LegendFrame->SetLabelText("Legend");
   this->GetApplication()->Script(
-          "pack %s -side top -anchor nw -expand n -padx 2 -pady 0 -fill x", 
+          "pack %s -side top -anchor nw -expand n -padx 2 -pady 0 -fill x",
           this->LegendFrame->GetWidgetName());
-        
+
         if (!this->DecimalPrecisionWidget)
     this->DecimalPrecisionWidget = vtkKWComboBoxWithLabel::New();
   this->DecimalPrecisionWidget->SetParent( this->LegendFrame->GetFrame() );
@@ -227,10 +248,10 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
           sprintf(tmpStr,"%d",i);
           this->DecimalPrecisionWidget->GetWidget()->AddValue(tmpStr);
   }
-  this->GetApplication()->Script("grid %s -row 0 -column 1 -sticky nw -padx 2 -pady 2", 
+  this->GetApplication()->Script("grid %s -row 0 -column 1 -sticky nw -padx 2 -pady 2",
     this->DecimalPrecisionWidget->GetWidgetName());
   this->DecimalPrecisionWidget->GetWidget()->SetValue("3");
-  
+
   if (!this->SpecifyTitleButton)
           this->SpecifyTitleButton = vtkKWCheckButtonWithLabel::New();
   this->SpecifyTitleButton->SetParent(this->LegendFrame->GetFrame());
@@ -238,9 +259,9 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
   this->SpecifyTitleButton->GetWidget()->SetCommand(this, "SpecifyTitleCallback");
   this->SpecifyTitleButton->GetWidget()->SetText("Specify ");
   this->GetApplication()->Script(
-          "grid %s -row 1 -column 0 -sticky nw -padx 2 -pady 2", 
+          "grid %s -row 1 -column 0 -sticky nw -padx 2 -pady 2",
           this->SpecifyTitleButton->GetWidgetName());
-          
+
   if(!this->LegendTitle)
           this->LegendTitle = vtkKWEntryWithLabel::New();
   this->LegendTitle->SetParent( this->LegendFrame->GetFrame() );
@@ -251,15 +272,15 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
   this->LegendTitle->SetEnabled(0);
   this->LegendTitle->GetWidget()->SetCommand(this, "SetLegendTitleCallback");
   this->GetApplication()->Script(
-          "grid %s -row 1 -column 1 -sticky nw -padx 2 -pady 2", 
+          "grid %s -row 1 -column 1 -sticky nw -padx 2 -pady 2",
           this->LegendTitle->GetWidgetName());
-        
+
         vtkKWIcon *cancelIcon = vtkKWIcon::New();
-  cancelIcon->SetImage( image_mimxCancel, 
-                              image_mimxCancel_width, 
-                              image_mimxCancel_height, 
+  cancelIcon->SetImage( image_mimxCancel,
+                              image_mimxCancel_width,
+                              image_mimxCancel_height,
                               image_mimxCancel_pixel_size);
-                              
+
         if (!this->CloseButton)
     this->CloseButton = vtkKWPushButton::New();
   this->CloseButton->SetParent( this );
@@ -269,12 +290,12 @@ void vtkKWMimxViewPropertiesOptionGroup::CreateWidget()
   this->CloseButton->SetImageToIcon( cancelIcon );
   this->CloseButton->SetCommand(this, "Withdraw");
   this->GetApplication()->Script(
-          "pack %s -side right -anchor ne -padx 2 -pady 2", 
+          "pack %s -side right -anchor ne -padx 2 -pady 2",
           this->CloseButton->GetWidgetName());
 
   this->AddBinding("<Escape>", this, "Withdraw");
-    
-            
+
+
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxViewPropertiesOptionGroup::Update()
@@ -306,7 +327,7 @@ void vtkKWMimxViewPropertiesOptionGroup::ColorModeCallback(int mode)
           case 1: RangeType = vtkMimxMeshActor::RedToBlue; break;
           case 2: RangeType = vtkMimxMeshActor::BlueToRed; break;
         }
-        
+
         double *range = this->GetRange();
         this->MeshActor->SetColorRangeType(RangeType, this->ArrayName, this->ElementSetName, range);
         this->MimxMainWindow->RenderWidget->Render();
@@ -327,6 +348,27 @@ void vtkKWMimxViewPropertiesOptionGroup::UpdateRangeCallback()
         this->MimxMainWindow->RenderWidget->Render();
 //      delete range;
 }
+
+// Added a threshold scale to the menu.  The user selects the percentage of elelements
+
+//-------------------------------------------------------------------------------
+void vtkKWMimxViewPropertiesOptionGroup::UpdateThresholdCallback(double value)
+{
+
+        if(this->MeshActor)
+        {
+                   double actualThresh = value/100.0;
+                this->MeshActor->SetThreshold(actualThresh);
+        }
+        else
+        {
+            vtkErrorMacro("Tried to set threshold when no MimxActor existed");
+        }
+        this->MimxMainWindow->RenderWidget->Render();
+}
+
+
+
 //---------------------------------------------------------------------------------
 void vtkKWMimxViewPropertiesOptionGroup::SpecifyRangeCallback(int mode)
 {
@@ -414,23 +456,23 @@ void vtkKWMimxViewPropertiesOptionGroup::SetLegendTitleCallback( char *title )
 void vtkKWMimxViewPropertiesOptionGroup::ResetValues()
 {
          int colorType = vtkMimxMeshActor::RedToBlue;
-         
+
          if ( this->MeshActor )
            colorType = this->MeshActor->GetColorRangeType();
-           
+
          if(this->ColorMenuButton)
          {
                  switch ( colorType )
                  {
                    case vtkMimxMeshActor::RedToBlue:
-                     this->ColorMenuButton->GetWidget()->SetValue("Red to Blue"); 
+                     this->ColorMenuButton->GetWidget()->SetValue("Red to Blue");
                      break;
-                   case vtkMimxMeshActor::BlueToRed: 
-                     this->ColorMenuButton->GetWidget()->SetValue("Blue to Red"); 
+                   case vtkMimxMeshActor::BlueToRed:
+                     this->ColorMenuButton->GetWidget()->SetValue("Blue to Red");
                      break;
                  }
          }
-         
+
          if(this->SpecifyRangeButton)
          {
                  if (this->SpecifyRangeButton->GetWidget()->GetSelectedState())
@@ -439,7 +481,7 @@ void vtkKWMimxViewPropertiesOptionGroup::ResetValues()
          double range[2];
          if ( this->MeshActor )
            this->MeshActor->GetCurrentScalarRange( range );
-         
+
          if ((this->RangeMaximum) && ( this->MeshActor ))
          {
                  this->RangeMaximum->GetWidget()->SetValueAsDouble(range[1]);
@@ -448,7 +490,7 @@ void vtkKWMimxViewPropertiesOptionGroup::ResetValues()
          {
          this->RangeMaximum->GetWidget()->SetValue("");
          }
-         
+
          if ((this->RangeMinimum) && ( this->MeshActor ))
          {
                  this->RangeMinimum->GetWidget()->SetValueAsDouble( range[0] );

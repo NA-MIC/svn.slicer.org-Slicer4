@@ -14,7 +14,7 @@
 #include "vtkKWPushButton.h"
 #include "vtkKWPushButtonWithLabel.h"
 
-#include <itksys/SystemTools.hxx> 
+#include <itksys/SystemTools.hxx>
 
 #include <vtksys/stl/string>
 
@@ -28,16 +28,16 @@ vtkSlicerModelInfoWidget::vtkSlicerModelInfoWidget ( )
 {
   this->ModelNode = NULL;
   this->ModelSelectorWidget = NULL;
-  
+
   this->AreaEntry = NULL;
   this->VolumeEntry = NULL;
-  
+
   this->NumPointsEntry = NULL;
   this->NumCellsEntry = NULL;
-  
+
   this->NumPointScalarsEntry = NULL;
   this->NumCellScalarsEntry = NULL;
-  
+
   this->FileNameEntry = NULL;
 
   this->Triangles = vtkTriangleFilter::New();
@@ -93,7 +93,7 @@ vtkSlicerModelInfoWidget::~vtkSlicerModelInfoWidget ( )
     this->FileNameEntry->Delete();
     }
 
-  this->SetMRMLScene ( NULL );  
+  this->SetMRMLScene ( NULL );
   if (this->ModelNode)
     {
     vtkSetAndObserveMRMLNodeMacro(this->ModelNode, NULL);
@@ -114,12 +114,12 @@ void vtkSlicerModelInfoWidget::PrintSelf ( ostream& os, vtkIndent indent )
 }
 
 void vtkSlicerModelInfoWidget::SetModelNode ( vtkMRMLModelNode *modelNode )
-{ 
+{
   // Select this model node
- 
+
   if (this->ModelSelectorWidget)
     {
-    this->ModelSelectorWidget->SetSelected(modelNode); 
+    this->ModelSelectorWidget->SetSelected(modelNode);
     }
   // observe node modified events are not being observed
   vtkIntArray  *events = vtkIntArray::New();
@@ -129,8 +129,8 @@ void vtkSlicerModelInfoWidget::SetModelNode ( vtkMRMLModelNode *modelNode )
 
   vtkSetAndObserveMRMLNodeEventsMacro ( this->ModelNode, modelNode, events );
   events->Delete();
-    
-  // 
+
+  //
   // Set the member variables and do a first process
   //
   if ( modelNode != NULL)
@@ -145,7 +145,7 @@ vtkMRMLModelNode * vtkSlicerModelInfoWidget::GetModelNode ()
   vtkMRMLModelNode *model;
   if (this->ModelSelectorWidget)
     {
-    model = 
+    model =
         vtkMRMLModelNode::SafeDownCast(this->ModelSelectorWidget->GetSelected());
     }
   else
@@ -157,7 +157,7 @@ vtkMRMLModelNode * vtkSlicerModelInfoWidget::GetModelNode ()
 
 //---------------------------------------------------------------------------
 vtkMRMLStorageNode * vtkSlicerModelInfoWidget::GetModelStorageNode ()
-{ 
+{
    vtkMRMLStorageNode *storage = NULL;
    vtkMRMLModelNode *model = this->GetModelNode();
    if (model != NULL)
@@ -177,13 +177,13 @@ void vtkSlicerModelInfoWidget::ProcessWidgetEvents ( vtkObject *caller,
   //
   if (this->ModelSelectorWidget)
     {
-    vtkSlicerNodeSelectorWidget *modSelector = 
+    vtkSlicerNodeSelectorWidget *modSelector =
       vtkSlicerNodeSelectorWidget::SafeDownCast(caller);
 
-    if (modSelector == this->ModelSelectorWidget && 
-        event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent ) 
+    if (modSelector == this->ModelSelectorWidget &&
+        event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent )
       {
-      vtkMRMLModelNode *model = 
+      vtkMRMLModelNode *model =
         vtkMRMLModelNode::SafeDownCast(this->ModelSelectorWidget->GetSelected());
 
       if (model != NULL)
@@ -203,7 +203,7 @@ void vtkSlicerModelInfoWidget::ProcessWidgetEvents ( vtkObject *caller,
 void vtkSlicerModelInfoWidget::ProcessMRMLEvents ( vtkObject *caller,
                                               unsigned long event, void *callData )
 {
-  if (vtkMRMLModelNode::SafeDownCast(caller) != NULL && 
+  if (vtkMRMLModelNode::SafeDownCast(caller) != NULL &&
       vtkMRMLModelNode::SafeDownCast(caller) == this->GetModelNode() &&
      event == vtkCommand::ModifiedEvent)
     {
@@ -246,10 +246,10 @@ void vtkSlicerModelInfoWidget::UpdateWidgetFromMRML ()
     }
 
   vtkMRMLStorageNode *storageNode = this->GetModelStorageNode();
-  if (storageNode != NULL && storageNode->GetFileName() != NULL) 
+  if (storageNode != NULL && storageNode->GetFileName() != NULL)
     {
-    itksys_stl::string dir =  
-          itksys::SystemTools::GetParentDirectory(storageNode->GetFileName());   
+    itksys_stl::string dir =
+          itksys::SystemTools::GetParentDirectory(storageNode->GetFileName());
     if (dir.size() > 0 && dir[dir.size()-1] != '/')
       {
       dir = dir + vtksys_stl::string("/");
@@ -268,7 +268,7 @@ void vtkSlicerModelInfoWidget::UpdateWidgetFromMRML ()
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerModelInfoWidget::AddWidgetObservers ( ) 
+void vtkSlicerModelInfoWidget::AddWidgetObservers ( )
 {
   if (this->ModelSelectorWidget)
     {
@@ -281,7 +281,7 @@ void vtkSlicerModelInfoWidget::AddWidgetObservers ( )
 }
 
 //---------------------------------------------------------------------------
-void vtkSlicerModelInfoWidget::RemoveWidgetObservers ( ) 
+void vtkSlicerModelInfoWidget::RemoveWidgetObservers ( )
 {
   if (this->ModelSelectorWidget)
     {
@@ -303,9 +303,9 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
     }
 
   // Call the superclass to create the whole widget
-  
+
   this->Superclass::CreateWidget();
-  
+
   vtkKWFrame *frame = vtkKWFrame::New ( );
   frame->SetParent ( this->GetParent() );
   frame->Create ( );
@@ -316,7 +316,9 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->ModelSelectorWidget = vtkSlicerNodeSelectorWidget::New() ;
   this->ModelSelectorWidget->SetParent ( frame );
   this->ModelSelectorWidget->Create ( );
-  this->ModelSelectorWidget->SetNodeClass("vtkMRMLModelNode", NULL, NULL, NULL);
+  // changed from single SetNodeClass to two AddNodeClass calls and enable subclasses for meshing
+  this->ModelSelectorWidget->AddNodeClass("vtkMRMLModelNode", NULL, NULL, NULL);
+  this->ModelSelectorWidget->SetChildClassesEnabled(1);   // changed for unstructured grids to be models
   this->ModelSelectorWidget->SetMRMLScene(this->GetMRMLScene());
   this->ModelSelectorWidget->SetBorderWidth(2);
   // this->ModelSelectorWidget->SetReliefToGroove();
@@ -339,7 +341,7 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->AreaEntry->SetLabelWidth(18);
   this->AreaEntry->SetWidth(48);
   this->AreaEntry->GetWidget()->SetStateToDisabled();
-  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                this->AreaEntry->GetWidgetName());
 
 
@@ -351,7 +353,7 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->VolumeEntry->SetLabelWidth(18);
   this->VolumeEntry->SetWidth(48);
   this->VolumeEntry->GetWidget()->SetStateToDisabled();
-  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                  this->VolumeEntry->GetWidgetName ( ));
 
   this->NumPointsEntry = vtkKWEntryWithLabel::New();
@@ -362,7 +364,7 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->NumPointsEntry->SetLabelWidth(18);
   this->NumPointsEntry->SetWidth(48);
   this->NumPointsEntry->GetWidget()->SetStateToDisabled();
-  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                  this->NumPointsEntry->GetWidgetName ( ) );
 
   this->NumCellsEntry = vtkKWEntryWithLabel::New();
@@ -373,9 +375,9 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->NumCellsEntry->SetLabelWidth(18);
   this->NumCellsEntry->SetWidth(48);
   this->NumCellsEntry->GetWidget()->SetStateToDisabled();
-  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                  this->NumCellsEntry->GetWidgetName ( ) );
-  
+
   this->NumPointScalarsEntry = vtkKWEntryWithLabel::New();
   this->NumPointScalarsEntry->SetParent(frame);
   this->NumPointScalarsEntry->Create();
@@ -384,7 +386,7 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->NumPointScalarsEntry->SetLabelWidth(18);
   this->NumPointScalarsEntry->SetWidth(48);
   this->NumPointScalarsEntry->GetWidget()->SetStateToDisabled();
-  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                this->NumPointScalarsEntry->GetWidgetName());
 
 
@@ -396,7 +398,7 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->NumCellScalarsEntry->SetLabelWidth(18);
   this->NumCellScalarsEntry->SetWidth(48);
   this->NumCellScalarsEntry->GetWidget()->SetStateToDisabled();
-  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                this->NumCellScalarsEntry->GetWidgetName());
 
 
@@ -407,8 +409,8 @@ void vtkSlicerModelInfoWidget::CreateWidget ( )
   this->FileNameEntry->GetWidget()->SetValue("");
   this->FileNameEntry->SetWidth(48);
   this->FileNameEntry->SetLabelWidth(18);
-  this->FileNameEntry->GetWidget()->SetStateToDisabled();  
-  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2", 
+  this->FileNameEntry->GetWidget()->SetStateToDisabled();
+  this->Script("pack %s -side top -anchor nw -expand n -padx 2 -pady 2",
                this->FileNameEntry->GetWidgetName());
 
 

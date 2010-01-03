@@ -136,7 +136,7 @@ bool vtkFESurfaceList::ContainsItemWithName(char* objName)
     bool returnValue = false;
     vtkMRMLNode* node = NULL;
     cout << "looking for node with name " << objName << endl;
-    int nNodes = this->savedMRMLScene->GetNumberOfNodesByClass("vtkMRMLFESurfaceNode");
+    int nNodes = vtkMRMLScene::GetActiveScene()->GetNumberOfNodesByClass("vtkMRMLFESurfaceNode");
     cout << "SurfaceList: found " << nNodes << "nodes" << endl;
     for (int i=0; i<nNodes; i++)
     {

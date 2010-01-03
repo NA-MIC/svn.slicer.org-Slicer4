@@ -11,12 +11,12 @@ Version:   $Revision: 1.48.2.4 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -118,7 +118,7 @@ vtkKWMimxEvaluateMeshQualityGroup::vtkKWMimxEvaluateMeshQualityGroup()
   strcpy(this->meshName, "");
   strcpy(this->qualityName, "");
   strcpy(this->PreviousSelection, "");
-} 
+}
 
 //----------------------------------------------------------------------------
 vtkKWMimxEvaluateMeshQualityGroup::~vtkKWMimxEvaluateMeshQualityGroup()
@@ -200,7 +200,7 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
   this->MainFrame->Create();
   //this->MainFrame->SetLabelText("Mesh Quality");
   this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 0 -fill x", 
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 0 -fill x",
     this->MainFrame->GetWidgetName());
 
   if ( !this->ComponentFrame )
@@ -209,10 +209,10 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
   this->ComponentFrame->Create();
   this->ComponentFrame->SetLabelText("Mesh");
   this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 6 -fill x", 
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 6 -fill x",
     this->ComponentFrame->GetWidgetName());
-    
-  if (!this->MeshListComboBox)  
+
+  if (!this->MeshListComboBox)
     this->MeshListComboBox = vtkKWComboBoxWithLabel::New();
   this->MeshListComboBox->SetParent(this->ComponentFrame->GetFrame());
   this->MeshListComboBox->Create();
@@ -222,14 +222,14 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
   this->MeshListComboBox->GetWidget()->SetBalloonHelpString("Mesh for quality evaluation");
   this->MeshListComboBox->GetWidget()->SetCommand(this, "SelectionChangedCallback");
   this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand y -padx 2 -pady 6 -fill x", 
+    "pack %s -side top -anchor nw -expand y -padx 2 -pady 6 -fill x",
     this->MeshListComboBox->GetWidgetName());
 
   this->ComponentFrame->CollapseFrame();
 
   /* Quality Metric */
-  if (!this->QualityTypeButton) 
-    this->QualityTypeButton = vtkKWMenuButtonWithLabel::New();  
+  if (!this->QualityTypeButton)
+    this->QualityTypeButton = vtkKWMenuButtonWithLabel::New();
   this->QualityTypeButton->SetParent(this->MainFrame);
   this->QualityTypeButton->Create();
   this->QualityTypeButton->SetLabelText("Metric :");
@@ -241,25 +241,25 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
   this->QualityTypeButton->GetWidget()->GetMenu()->AddRadioButton("Skew",this, "EvaluateMeshQualityApplyCallback 4");
   this->QualityTypeButton->GetWidget()->GetMenu()->AddRadioButton("Angle Out of Bounds",this, "EvaluateMeshQualityApplyCallback 5");
   this->GetApplication()->Script(
-    "pack %s -side top -anchor n -padx 2 -pady 6", 
+    "pack %s -side top -anchor n -padx 2 -pady 6",
     this->QualityTypeButton->GetWidgetName());
-  
+
   if (!this->SummaryFrame)
           this->SummaryFrame = vtkKWFrame::New();
   this->SummaryFrame->SetParent( this->MainFrame );
   this->SummaryFrame->Create();
   this->SummaryFrame->SetReliefToFlat();
   this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -fill x",
-          this->SummaryFrame->GetWidgetName() );    
+          this->SummaryFrame->GetWidgetName() );
 
   vtkKWIcon *summaryIcon = vtkKWIcon::New();
-  summaryIcon->SetImage( image_mimxSummaryReport, 
-                         image_mimxSummaryReport_width, 
-                         image_mimxSummaryReport_height, 
+  summaryIcon->SetImage( image_mimxSummaryReport,
+                         image_mimxSummaryReport_width,
+                         image_mimxSummaryReport_height,
                          image_mimxSummaryReport_pixel_size);
 
   if (!this->SaveButton)
-    this->SaveButton = vtkKWPushButton::New(); 
+    this->SaveButton = vtkKWPushButton::New();
   this->SaveButton->SetParent(this->SummaryFrame);
   this->SaveButton->Create();
   this->SaveButton->SetImageToIcon( summaryIcon );
@@ -269,22 +269,22 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
   this->SaveButton->SetCommand(this, "ViewDistortedElemenetsCallback");
   this->SaveButton->SetBalloonHelpString("Quality overview of the mesh for the given metric");
   this->GetApplication()->Script(
-          "pack %s -side top -anchor n -expand y -padx 2 -pady 6", 
+          "pack %s -side top -anchor n -expand y -padx 2 -pady 6",
           this->SaveButton->GetWidgetName());
- 
+
   if (!this->ViewFrame)
           this->ViewFrame = vtkKWFrame::New();
   this->ViewFrame->SetParent( this->MainFrame );
   this->ViewFrame->Create();
   this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -fill x -padx 2 -pady 2",
-          this->ViewFrame->GetWidgetName() );    
-  
+          this->ViewFrame->GetWidgetName() );
+
   vtkKWIcon *displayOptionIcon = vtkKWIcon::New();
-  displayOptionIcon->SetImage( image_mimxDisplayOptions, 
-                         image_mimxDisplayOptions_width, 
-                         image_mimxDisplayOptions_height, 
+  displayOptionIcon->SetImage( image_mimxDisplayOptions,
+                         image_mimxDisplayOptions_width,
+                         image_mimxDisplayOptions_height,
                          image_mimxDisplayOptions_pixel_size);
-                         
+
   if ( !this->DisplayOptionsButton )
                 this->DisplayOptionsButton = vtkKWPushButton::New();
         this->DisplayOptionsButton->SetParent(this->ViewFrame);
@@ -292,17 +292,17 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
         this->DisplayOptionsButton->SetImageToIcon( displayOptionIcon );
         this->DisplayOptionsButton->SetCommand(this, "DisplayOptionsCallback");
         this->DisplayOptionsButton->SetBalloonHelpString("Adjusts the display properties for the quality metric");
-        this->DisplayOptionsButton->SetReliefToFlat( ); 
+        this->DisplayOptionsButton->SetReliefToFlat( );
         this->GetApplication()->Script(
-                "pack %s -side left -anchor nw -padx 2 -pady 2", 
+                "pack %s -side left -anchor nw -padx 2 -pady 2",
                 this->DisplayOptionsButton->GetWidgetName());
-                  
+
   vtkKWIcon *legendIcon = vtkKWIcon::New();
-  legendIcon->SetImage( image_mimxLegend, 
-                         image_mimxLegend_width, 
-                         image_mimxLegend_height, 
+  legendIcon->SetImage( image_mimxLegend,
+                         image_mimxLegend_width,
+                         image_mimxLegend_height,
                          image_mimxLegend_pixel_size);
-                         
+
   if (!this->ViewLegendButton)
     this->ViewLegendButton = vtkKWCheckButton::New();
   this->ViewLegendButton->SetParent(this->ViewFrame);
@@ -314,16 +314,16 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
   this->ViewLegendButton->SetBorderWidth( 2 );
   this->ViewLegendButton->SetEnabled( 0 );
   this->GetApplication()->Script(
-        "pack %s -side left -anchor nw -padx 2 -pady 2", 
+        "pack %s -side left -anchor nw -padx 2 -pady 2",
         this->ViewLegendButton->GetWidgetName());
-  
+
   vtkKWIcon *clipPlaneIcon = vtkKWIcon::New();
-  clipPlaneIcon->SetImage( image_mimxClipPlane, 
-                         image_mimxClipPlane_width, 
-                         image_mimxClipPlane_height, 
+  clipPlaneIcon->SetImage( image_mimxClipPlane,
+                         image_mimxClipPlane_width,
+                         image_mimxClipPlane_height,
                          image_mimxClipPlane_pixel_size);
-                         
-  if(!this->ClippingPlaneButton)        
+
+  if(!this->ClippingPlaneButton)
                 this->ClippingPlaneButton = vtkKWCheckButton::New();
         this->ClippingPlaneButton->SetParent(this->ViewFrame);
         this->ClippingPlaneButton->Create();
@@ -336,10 +336,10 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
   this->ClippingPlaneButton->SetCommand(this, "ClippingPlaneCallback");
   this->ClippingPlaneButton->SetBalloonHelpString("Activate/deactivate the cutting plane to visualize the mesh cross section");
         this->GetApplication()->Script(
-          "pack %s -side left -anchor nw -padx 2 -pady 2", 
+          "pack %s -side left -anchor nw -padx 2 -pady 2",
                 this->ClippingPlaneButton->GetWidgetName());
-        
-        if(!this->InvertPlaneButton)    
+
+        if(!this->InvertPlaneButton)
                 this->InvertPlaneButton = vtkKWCheckButtonWithLabel::New();
         this->InvertPlaneButton->SetParent(this->ViewFrame);
         this->InvertPlaneButton->Create();
@@ -351,15 +351,15 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
         this->InvertPlaneButton->SetBalloonHelpString("Invert the clipping plane widget");
         this->InvertPlaneButton->GetWidget()->SetCommand(this, "InvertPlaneCallback");
         this->GetApplication()->Script(
-          "pack %s -side left -anchor w -padx 2 -pady 2", 
+          "pack %s -side left -anchor w -padx 2 -pady 2",
                 this->InvertPlaneButton->GetWidgetName());
-  
+
   if (!this->ButtonFrame)
     this->ButtonFrame = vtkKWFrame::New();
   this->ButtonFrame->SetParent( this->MainFrame );
   this->ButtonFrame->Create();
   this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -fill x -padx 2 -pady 2",
-              this->ButtonFrame->GetWidgetName() );    
+              this->ButtonFrame->GetWidgetName() );
 
   this->ApplyButton->SetParent(this->ButtonFrame);
   this->ApplyButton->Create();
@@ -371,16 +371,16 @@ void vtkKWMimxEvaluateMeshQualityGroup::CreateWidget()
   this->CancelButton->SetImageToIcon( this->GetMimxMainWindow()->GetCancelButtonIcon() );
   this->CancelButton->SetCommand(this, "EvaluateMeshQualityCancelCallback");
   this->GetApplication()->Script(
-    "pack %s -side right -anchor ne -expand y -padx 5 -pady 6", 
+    "pack %s -side right -anchor ne -expand y -padx 5 -pady 6",
     this->CancelButton->GetWidgetName());
-    
+
 }
 
 //----------------------------------------------------------------------------
 int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
 {
   char textValue[128];
-  
+
   if (!this->DistortedElementDialog)
   {
     this->DistortedElementDialog = vtkKWTopLevel::New();
@@ -393,17 +393,17 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
   }
   sprintf(textValue, "%s Summary", this->qualityName);
   this->DistortedElementDialog->SetTitle( textValue );
-    
+
   if (!this->SummaryReviewFrame)
   {
     this->SummaryReviewFrame = vtkKWFrame::New();
     this->SummaryReviewFrame->SetParent( this->DistortedElementDialog );
     this->SummaryReviewFrame->Create();
     this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -fill x -padx 2 -pady 2",
-                this->SummaryReviewFrame->GetWidgetName() );    
+                this->SummaryReviewFrame->GetWidgetName() );
         }
 
- 
+
   if (!this->NumberOfElementsEntry)
   {
     this->NumberOfElementsEntry = vtkKWEntryWithLabel::New();
@@ -414,7 +414,7 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->NumberOfElementsEntry->SetLabelText("# Elements");
     this->NumberOfElementsEntry->SetBalloonHelpString("Total number of elements in the mesh");
     this->GetApplication()->Script(
-          "grid %s -row 0 -column 0 -sticky ne -padx 2 -pady 6", 
+          "grid %s -row 0 -column 0 -sticky ne -padx 2 -pady 6",
           this->NumberOfElementsEntry->GetWidgetName());
   }
   sprintf(textValue, "%d", this->NumberOfCells);
@@ -428,14 +428,14 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->NumberOfDistortedEntry->GetWidget()->ReadOnlyOn();
     this->NumberOfDistortedEntry->GetWidget()->SetWidth(10);
     this->NumberOfDistortedEntry->SetLabelText("# Distorted");
-    this->NumberOfDistortedEntry->SetBalloonHelpString("Number of distorted elements in the mesh"); 
+    this->NumberOfDistortedEntry->SetBalloonHelpString("Number of distorted elements in the mesh");
     this->GetApplication()->Script(
-      "grid %s -row 0 -column 1 -sticky ne -padx 2 -pady 6", 
+      "grid %s -row 0 -column 1 -sticky ne -padx 2 -pady 6",
     this->NumberOfDistortedEntry->GetWidgetName());
   }
   sprintf(textValue, "%d", static_cast<int>( this->DistortedElementList->GetNumberOfIds() ) );
   this->NumberOfDistortedEntry->GetWidget()->SetValue(textValue);
-   
+
   if (!this->QualityMinimumEntry)
   {
     this->QualityMinimumEntry = vtkKWEntryWithLabel::New();
@@ -446,12 +446,12 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->QualityMinimumEntry->SetLabelText("Minimum");
     this->QualityMinimumEntry->SetBalloonHelpString("Quality minimum value");
     this->GetApplication()->Script(
-      "grid %s -row 1 -column 0 -sticky ne -padx 2 -pady 6", 
+      "grid %s -row 1 -column 0 -sticky ne -padx 2 -pady 6",
       this->QualityMinimumEntry->GetWidgetName());
   }
   sprintf(textValue, "%6.3f", this->minimumQuality);
   this->QualityMinimumEntry->GetWidget()->SetValue(textValue);
- 
+
   if (!this->QualityMaximumEntry)
   {
     this->QualityMaximumEntry = vtkKWEntryWithLabel::New();
@@ -460,14 +460,14 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->QualityMaximumEntry->GetWidget()->ReadOnlyOn();
     this->QualityMaximumEntry->GetWidget()->SetWidth(10);
     this->QualityMaximumEntry->SetLabelText("Maximum");
-    this->QualityMaximumEntry->SetBalloonHelpString("Quality maximum value");  
+    this->QualityMaximumEntry->SetBalloonHelpString("Quality maximum value");
     this->GetApplication()->Script(
-      "grid %s -row 1 -column 1 -sticky ne -padx 2 -pady 6", 
+      "grid %s -row 1 -column 1 -sticky ne -padx 2 -pady 6",
       this->QualityMaximumEntry->GetWidgetName());
   }
   sprintf(textValue, "%6.3f", this->maximumQuality );
   this->QualityMaximumEntry->GetWidget()->SetValue(textValue);
- 
+
   if (!this->QualityAverageEntry)
   {
     this->QualityAverageEntry = vtkKWEntryWithLabel::New();
@@ -476,14 +476,14 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->QualityAverageEntry->GetWidget()->ReadOnlyOn();
     this->QualityAverageEntry->GetWidget()->SetWidth(10);
     this->QualityAverageEntry->SetLabelText("Average");
-    this->QualityAverageEntry->SetBalloonHelpString("Quality average value");  
+    this->QualityAverageEntry->SetBalloonHelpString("Quality average value");
     this->GetApplication()->Script(
-      "grid %s -row 2 -column 0 -sticky ne -padx 2 -pady 6", 
+      "grid %s -row 2 -column 0 -sticky ne -padx 2 -pady 6",
       this->QualityAverageEntry->GetWidgetName());
   }
   sprintf(textValue, "%6.3f", this->averageQuality);
   this->QualityAverageEntry->GetWidget()->SetValue(textValue);
-  
+
   if (!this->QualityVarianceEntry)
   {
     this->QualityVarianceEntry = vtkKWEntryWithLabel::New();
@@ -494,11 +494,11 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->QualityVarianceEntry->SetLabelText("Variance");
     this->QualityVarianceEntry->SetBalloonHelpString("Quality variance");
     this->GetApplication()->Script(
-      "grid %s -row 2 -column 1 -sticky ne -padx 2 -pady 6", 
+      "grid %s -row 2 -column 1 -sticky ne -padx 2 -pady 6",
       this->QualityVarianceEntry->GetWidgetName());
   }
   sprintf(textValue, "%6.3f", this->varianceQuality );
-  this->QualityVarianceEntry->GetWidget()->SetValue(textValue);  
+  this->QualityVarianceEntry->GetWidget()->SetValue(textValue);
 
   if (!this->DistoredListLabel)
   {
@@ -507,10 +507,10 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->DistoredListLabel->Create( );
     this->DistoredListLabel->SetText("Distorted Elements");
     this->GetApplication()->Script(
-          "pack %s -side top -anchor center -expand n -fill x -padx 2 -pady 2", 
+          "pack %s -side top -anchor center -expand n -fill x -padx 2 -pady 2",
           this->DistoredListLabel->GetWidgetName());
         }
-        
+
   if (!this->DistortedElementsReport)
   {
     this->DistortedElementsReport = vtkKWListBoxWithScrollbars::New();
@@ -524,7 +524,7 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->DistortedElementsReport->SetHeight(40);
     this->GetApplication()->Script(
       "pack %s -side top -anchor nw -expand n -fill x -padx 2 -pady 2",
-      this->DistortedElementsReport->GetWidgetName()); 
+      this->DistortedElementsReport->GetWidgetName());
   }
 
   if (!this->DistortedButtonFrame)
@@ -533,17 +533,17 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->DistortedButtonFrame->SetParent( this->DistortedElementDialog );
     this->DistortedButtonFrame->Create();
     this->GetApplication()->Script("pack %s -side top -anchor nw -expand n -fill x -padx 2 -pady 6",
-                this->DistortedButtonFrame->GetWidgetName() );    
+                this->DistortedButtonFrame->GetWidgetName() );
   }
 
   if (!this->SaveDistortedButton)
   {
     vtkKWIcon *saveIcon = vtkKWIcon::New();
-    saveIcon->SetImage( image_mimxSave, 
-                         image_mimxSave_width, 
-                         image_mimxSave_height, 
+    saveIcon->SetImage( image_mimxSave,
+                         image_mimxSave_width,
+                         image_mimxSave_height,
                          image_mimxSave_pixel_size);
-                         
+
     this->SaveDistortedButton = vtkKWPushButton::New();
     this->SaveDistortedButton->SetParent( this->DistortedButtonFrame );
     this->SaveDistortedButton->Create();
@@ -553,9 +553,9 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     //this->SaveDistortedButton->SetWidth(10);
     this->SaveDistortedButton->SetCommand(this, "DistortedElementDialogSaveCallback");
     this->GetApplication()->Script("pack %s -side left -anchor nw -expand n -fill x -padx 2 -pady 2",
-                this->SaveDistortedButton->GetWidgetName() ); 
+                this->SaveDistortedButton->GetWidgetName() );
   }
- 
+
   if (!this->CancelDistortedButton)
   {
     this->CancelDistortedButton = vtkKWPushButton::New();
@@ -565,12 +565,12 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     this->CancelDistortedButton->SetImageToIcon( this->GetMimxMainWindow()->GetCancelButtonIcon() );
     this->CancelDistortedButton->SetCommand(this, "DistortedElementDialogCancelCallback");
     this->GetApplication()->Script("pack %s -side right -anchor ne -padx 2 -pady 2",
-                this->CancelDistortedButton->GetWidgetName() ); 
+                this->CancelDistortedButton->GetWidgetName() );
   }
   this->DistortedElementsReport->GetWidget()->DeleteAll();
 
   char formatstring[80];
-  
+
   for (int i=0;i<this->DistortedElementList->GetNumberOfIds();i++)
   {
     vtkIdType thisId = this->DistortedElementList->GetId(i);
@@ -578,7 +578,7 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewDistortedElemenetsCallback()
     sprintf(formatstring, "ElementID: %06d, quality: %6.3f", static_cast<int>(thisId), thisQ);
     this->DistortedElementsReport->GetWidget()->Append(formatstring);
   }
-  
+
   this->DistortedElementDialog->Display();
   return 1;
 }
@@ -612,7 +612,7 @@ int vtkKWMimxEvaluateMeshQualityGroup::DistortedElementDialogSaveCallback()
                         const char *filename = this->FileBrowserDialog->GetFileName();
                         ofstream outFile;
       outFile.open(filename);
-      if (outFile.fail()) 
+      if (outFile.fail())
       {
         vtkMimxErrorCallback *callback = this->GetMimxMainWindow()->GetErrorCallback();
         callback->ErrorMessage("Unable to open the specified file. Check permissions.");
@@ -631,7 +631,7 @@ int vtkKWMimxEvaluateMeshQualityGroup::DistortedElementDialogSaveCallback()
       outFile << formatstring << std::endl;
       sprintf(formatstring, "Variance: %6.3f", this->varianceQuality);
       outFile << formatstring << std::endl;
-      
+
       for (int i=0;i<this->DistortedElementList->GetNumberOfIds();i++)
       {
         vtkIdType thisId = this->DistortedElementList->GetId(i);
@@ -640,11 +640,11 @@ int vtkKWMimxEvaluateMeshQualityGroup::DistortedElementDialogSaveCallback()
         outFile << formatstring << std::endl;
       }
       outFile.close();
-                        
+
                         return 1;
                 }
         }
-  
+
   return 0;
 }
 
@@ -655,32 +655,32 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityCancelCallback()
   cout << "got to EvaluateMeshQualityCancelCallback " << endl;
   cout << "meshname:(" << this->meshName << "), length=" << strlen(this->meshName) << endl;
   cout << "" << endl;
-  
+
   this->GetApplication()->Script("pack forget %s", this->MainFrame->GetWidgetName());
   this->MenuGroup->SetMenuButtonsEnabled(1);
   this->GetMimxMainWindow()->GetMainUserInterfacePanel()->SetEnabled(1);
-  
+
   vtkKWComboBox *combobox = this->MeshListComboBox->GetWidget();
-  
+
   // clear out the scalar visibility options and restore the GUI to the mode outside
   // of the quality rendering.  This logic is gated to prevent crashes in the case there
   // is not mesh in the pipeline.
-  
+
   if ( strlen(this->meshName) )
-  {    
+  {
     vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
-             this->FEMeshList->GetItem(combobox->GetValueIndex( this->meshName )));     
+             this->FEMeshList->GetItem(combobox->GetValueIndex( this->meshName )));
     meshActor->SetMeshScalarVisibility(false);
     meshActor->SetAllElementSetScalarVisibility(false);
     meshActor->SetMeshLegendVisibility(false);
     meshActor->DisableMeshCuttingPlane( );
   }
-  
-  this->GetMimxMainWindow()->GetRenderWidget()->Render(); 
- 
+
+  this->GetMimxMainWindow()->GetRenderWidget()->Render();
+
   if(this->ViewOptionsGroup)
           this->ViewOptionsGroup->Withdraw();
-   
+
   return 1;
 }
 
@@ -688,15 +688,15 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityCancelCallback()
 int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qualityType)
 {
   this->QualityType = qualityType;
-  
+
   vtkMimxErrorCallback *callback = this->GetMimxMainWindow()->GetErrorCallback();
-  
+
   if(!strcmp(this->MeshListComboBox->GetWidget()->GetValue(),""))
   {
         callback->ErrorMessage("Please select a mesh before evaluating quality");
         return 0;
   }
-  
+
   vtkKWComboBox *combobox = this->MeshListComboBox->GetWidget();
   strcpy(this->meshName, combobox->GetValue());
   int num = combobox->GetValueIndex( this->meshName );
@@ -709,42 +709,45 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
 
   vtkUnstructuredGrid *ugrid = vtkMimxMeshActor::SafeDownCast(
            this->FEMeshList->GetItem(combobox->GetValueIndex(this->meshName)))->GetDataSet();
-  
+
+   vtkMimxMeshActor* thisMeshActor = vtkMimxMeshActor::SafeDownCast(
+           this->FEMeshList->GetItem(combobox->GetValueIndex(this->meshName)));
+
   vtkMeshQualityExtended *meshQualityFilter = vtkMeshQualityExtended::New();
   meshQualityFilter->SetInput( ugrid );
-  
+
   int meshType = VTK_HEXAHEDRON;
   if (ugrid->GetNumberOfCells() > 0 )
     meshType = ugrid->GetCellType( 0 );
-  
+
   double minMetricValue;
-  double maxMetricValue;  
-  
+  double maxMetricValue;
+
   std::string metricFieldName;
   switch ( this->QualityType )
   {
-    case MESH_QUALITY_VOLUME: 
+    case MESH_QUALITY_VOLUME:
       if (meshType == VTK_HEXAHEDRON)
       {
-        meshQualityFilter->SetHexQualityMeasureToVolume( ); 
+        meshQualityFilter->SetHexQualityMeasureToVolume( );
         metricFieldName = "Volume";
         minMetricValue = 0.0;
         maxMetricValue = 10e20;
       }
       else if (meshType == VTK_TETRA)
       {
-        meshQualityFilter->SetTetQualityMeasureToVolume( ); 
+        meshQualityFilter->SetTetQualityMeasureToVolume( );
         metricFieldName = "Volume";
         minMetricValue = 0.0;
         maxMetricValue = 10e20;
       }
       else if (meshType == VTK_QUAD)
       {
-        meshQualityFilter->SetQuadQualityMeasureToArea( ); 
+        meshQualityFilter->SetQuadQualityMeasureToArea( );
         metricFieldName = "Area";
         minMetricValue = 0.0;
         maxMetricValue = 10e20;
-      } 
+      }
       else
       {
         meshQualityFilter->SetTriangleQualityMeasureToArea( );
@@ -756,25 +759,25 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
     case MESH_QUALITY_EDGE:
       if (meshType == VTK_HEXAHEDRON)
       {
-        meshQualityFilter->SetHexQualityMeasureToEdgeCollapse( ); 
+        meshQualityFilter->SetHexQualityMeasureToEdgeCollapse( );
         metricFieldName = "Edge Collapse";
         minMetricValue = 0;
         maxMetricValue = 2;
       }
       else if (meshType == VTK_TETRA)
       {
-        meshQualityFilter->SetTetQualityMeasureToEdgeCollapse( ); 
+        meshQualityFilter->SetTetQualityMeasureToEdgeCollapse( );
         metricFieldName = "Edge Collapse";
         minMetricValue = 0;
         maxMetricValue = 2;
       }
       else if (meshType == VTK_QUAD)
       {
-        meshQualityFilter->SetQuadQualityMeasureToEdgeCollapse( ); 
+        meshQualityFilter->SetQuadQualityMeasureToEdgeCollapse( );
         metricFieldName = "Edge Collapse";
         minMetricValue = 0;
         maxMetricValue = 2;
-      } 
+      }
       else
       {
         meshQualityFilter->SetTriangleQualityMeasureToEdgeCollapse( );
@@ -789,22 +792,33 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
         meshQualityFilter->SetHexQualityMeasureToJacobian( );
         metricFieldName = "Jacobian";
         minMetricValue = 0.0;
-        maxMetricValue = 10e20; 
+        maxMetricValue = 10e20;
+
+        // invoke the method on the actor to set its rendering metric, instead of setting
+        // the filters embedded in this class.  Eventually remove the embedded VTK pipeline
+        // filters here to encapsulate all VTK pipeline rendering in the MeshActor.
+
+        if (thisMeshActor != NULL)
+                {
+                    // ***
+                    thisMeshActor->SetQualityToJacobian();
+                    cout << "setting mesh actor to jacobian rendering" << endl;
+                }
       }
       else if (meshType == VTK_TETRA)
       {
-        meshQualityFilter->SetTetQualityMeasureToJacobian( ); 
+        meshQualityFilter->SetTetQualityMeasureToJacobian( );
         metricFieldName = "Jacobian";
         minMetricValue = 0.0;
         maxMetricValue = 10e20;
       }
       else if (meshType == VTK_QUAD)
       {
-        meshQualityFilter->SetQuadQualityMeasureToJacobian( ); 
+        meshQualityFilter->SetQuadQualityMeasureToJacobian( );
         metricFieldName = "Jacobian";
         minMetricValue = 0.0;
         maxMetricValue = 10e20;
-      } 
+      }
       else
       {
         meshQualityFilter->SetTriangleQualityMeasureToScaledJacobian( );
@@ -813,18 +827,18 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
         maxMetricValue = 10e20;
       }
       break;
-    case MESH_QUALITY_SKEW: 
+    case MESH_QUALITY_SKEW:
       meshQualityFilter->SetHexQualityMeasureToSkew( );
       if (meshType == VTK_HEXAHEDRON)
       {
-        meshQualityFilter->SetHexQualityMeasureToSkew( ); 
+        meshQualityFilter->SetHexQualityMeasureToSkew( );
         metricFieldName = "Skew";
         minMetricValue = 0.0;
         maxMetricValue = 0.5;
       }
       else if (meshType == VTK_TETRA)
       {
-        meshQualityFilter->SetTetQualityMeasureToEdgeRatio( ); 
+        meshQualityFilter->SetTetQualityMeasureToEdgeRatio( );
         metricFieldName = "Edge Ratio";
         minMetricValue = 1.0;
         maxMetricValue = 3.0;
@@ -832,10 +846,10 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
       else if (meshType == VTK_QUAD)
       {
         meshQualityFilter->SetQuadQualityMeasureToSkew( );
-        metricFieldName = "Skew"; 
+        metricFieldName = "Skew";
         minMetricValue = 0.5;
         maxMetricValue = 1.0;
-      } 
+      }
       else
       {
         meshQualityFilter->SetTriangleQualityMeasureToEdgeRatio( );
@@ -844,28 +858,28 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
         maxMetricValue = 1.3;
       }
       break;
-    case MESH_QUALITY_ANGLE: 
+    case MESH_QUALITY_ANGLE:
       if (meshType == VTK_HEXAHEDRON)
       {
-        meshQualityFilter->SetHexQualityMeasureToAngleOutOfBounds( ); 
+        meshQualityFilter->SetHexQualityMeasureToAngleOutOfBounds( );
         metricFieldName = "Angle Out of Bounds";
         minMetricValue = 0;
         maxMetricValue = 2;
       }
       else if (meshType == VTK_TETRA)
       {
-        meshQualityFilter->SetTetQualityMeasureToAngleOutOfBounds( ); 
+        meshQualityFilter->SetTetQualityMeasureToAngleOutOfBounds( );
         metricFieldName = "Angle Out of Bounds";
         minMetricValue = 0;
         maxMetricValue = 2;
       }
       else if (meshType == VTK_QUAD)
       {
-        meshQualityFilter->SetQuadQualityMeasureToAngleOutOfBounds( ); 
+        meshQualityFilter->SetQuadQualityMeasureToAngleOutOfBounds( );
         metricFieldName = "Angle Out of Bounds";
         minMetricValue = 0;
         maxMetricValue = 2;
-      } 
+      }
       else
       {
         meshQualityFilter->SetTriangleQualityMeasureToAngleOutOfBounds( );
@@ -877,11 +891,11 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
     case MESH_QUALITY_MAX_ANGLE:
           if (meshType == VTK_QUAD)
       {
-        meshQualityFilter->SetQuadQualityMeasureToMaxAngle( ); 
+        meshQualityFilter->SetQuadQualityMeasureToMaxAngle( );
         metricFieldName = "Max Angle";
         minMetricValue = 35;
         maxMetricValue = 145;
-      } 
+      }
       else
       {
         meshQualityFilter->SetTriangleQualityMeasureToMaxAngle( );
@@ -893,11 +907,11 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
         case MESH_QUALITY_MIN_ANGLE:
           if (meshType == VTK_QUAD)
       {
-        meshQualityFilter->SetQuadQualityMeasureToMinAngle( ); 
+        meshQualityFilter->SetQuadQualityMeasureToMinAngle( );
         metricFieldName = "Min Angle";
         minMetricValue = 35;
         maxMetricValue = 145;
-      } 
+      }
       else
       {
         meshQualityFilter->SetTriangleQualityMeasureToMinAngle( );
@@ -911,9 +925,9 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
       return 0;
   }
   meshQualityFilter->Update( );
-  
+
   strcpy(this->qualityName, metricFieldName.c_str());
-  
+
   std::string fieldDataArrayName;
   switch ( meshType )
   {
@@ -930,23 +944,23 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
       fieldDataArrayName = "Mesh Triangle Quality";
       break;
   }
-  
+
   this->minimumQuality = meshQualityFilter->GetOutput()->GetFieldData()->
-        GetArray( fieldDataArrayName.c_str() )->GetComponent( 0, 0 );   
+        GetArray( fieldDataArrayName.c_str() )->GetComponent( 0, 0 );
   this->maximumQuality = meshQualityFilter->GetOutput()->GetFieldData()->
         GetArray( fieldDataArrayName.c_str() )->GetComponent( 0, 2 );
   this->averageQuality = meshQualityFilter->GetOutput()->GetFieldData()->
          GetArray( fieldDataArrayName.c_str() )->GetComponent( 0, 1 );
   this->varianceQuality = meshQualityFilter->GetOutput()->GetFieldData()->
          GetArray( fieldDataArrayName.c_str() )->GetComponent( 0, 3 );
-  
+
   int badValueCount = 0;
   vtkUnstructuredGrid *mesh = (vtkUnstructuredGrid*) meshQualityFilter->GetOutput();
   this->DistortedElementList->Initialize();
   this->DistortedMeshQuality->Initialize();
   this->NumberOfCells = ugrid->GetNumberOfCells();
-  
-  for (int i=0; i< ugrid->GetNumberOfCells() ; i++) 
+
+  for (int i=0; i< ugrid->GetNumberOfCells() ; i++)
   {
     double thisQ = ((vtkDoubleArray*)(mesh->GetCellData())->GetArray("Quality"))->GetValue(i);
 
@@ -963,25 +977,25 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
       else
       {
         thisID = ((vtkIntArray*)mesh->GetCellData()->GetArray("Element_Numbers"))->GetValue(i);
-      }  
-      
+      }
+
       this->DistortedElementList->InsertNextId( thisID );
       this->DistortedMeshQuality->InsertNextValue( thisQ );
     }
-  } 
-  
-  
+  }
+
+
   vtkDoubleArray *qualityArray = (vtkDoubleArray*)(mesh->GetCellData())->GetArray("Quality");
   qualityArray->SetName( metricFieldName.c_str() );
   ugrid->GetCellData()->RemoveArray( metricFieldName.c_str() );
   ugrid->GetCellData()->AddArray( qualityArray );
 
-  
+
   meshQualityFilter->Delete();
-  
+
   vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
            this->FEMeshList->GetItem(combobox->GetValueIndex(this->meshName)));
-           
+
   meshActor->SetLegendTextColor( this->GetMimxMainWindow()->GetTextColor() );
   if (this->QualityType == MESH_QUALITY_MAX_ANGLE)
     meshActor->SetColorRangeType(vtkMimxMeshActor::BlueToRed, qualityName, NULL, meshActor->ComputeMeshScalarRange(qualityName));
@@ -994,9 +1008,9 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
         this->ViewOptionsGroup->ResetValues();
         this->ViewOptionsGroup->SetArrayName(qualityName);
   }
- 
+
   this->GetMimxMainWindow()->GetRenderWidget()->Render();
-  
+
   this->SaveButton->SetEnabled( 1 );
   this->ClippingPlaneButton->SetEnabled( 1 );
   this->ViewLegendButton->SetEnabled( 1 );
@@ -1004,10 +1018,10 @@ int vtkKWMimxEvaluateMeshQualityGroup::EvaluateMeshQualityApplyCallback(int qual
   this->InvertPlaneButton->GetWidget()->SetEnabled( 0 );
   this->ViewLegendButton->Select( );
   this->DisplayOptionsButton->SetEnabled( 1 );
-             
+
   this->GetMimxMainWindow()->SetStatusText("Evaluated Mesh Quality");
-  
-  return 1;      
+
+  return 1;
 }
 
 //----------------------------------------------------------------------------
@@ -1030,30 +1044,30 @@ void vtkKWMimxEvaluateMeshQualityGroup::PrintSelf(ostream& os, vtkIndent indent)
 
 //------------------------------------------------------------------------------
 void vtkKWMimxEvaluateMeshQualityGroup::UpdateObjectLists()
-{ 
-  int item = 
+{
+  int item =
      this->UpdateMeshComboBox( this->MeshListComboBox->GetWidget() );
   /*
   this->MeshListComboBox->GetWidget()->DeleteAllValues();
-  
+
   int defaultItem = -1;
   for (int i = 0; i < this->FEMeshList->GetNumberOfItems(); i++)
   {
     this->MeshListComboBox->GetWidget()->AddValue(
           this->FEMeshList->GetItem(i)->GetFileName());
 
-    vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(this->FEMeshList->GetItem(i));  
+    vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(this->FEMeshList->GetItem(i));
     bool viewedItem = meshActor->GetMeshVisibility();
-    
+
     if ( (defaultItem == -1) && ( viewedItem ) )
     {
       defaultItem = i;
     }
   }
-  
+
   if ((this->FEMeshList->GetNumberOfItems() > 0) && (defaultItem == -1))
     defaultItem = this->FEMeshList->GetNumberOfItems()-1;
-  */  
+  */
   if (item != -1)
   {
     //this->MeshListComboBox->GetWidget()->SetValue(
@@ -1066,12 +1080,12 @@ void vtkKWMimxEvaluateMeshQualityGroup::UpdateObjectLists()
   {
     this->QualityTypeButton->GetWidget()->SetStateToDisabled();
   }
-  
+
 }
 
 //------------------------------------------------------------------------------
 void vtkKWMimxEvaluateMeshQualityGroup::ClearStatsEntry()
-{ 
+{
   this->ViewLegendButton->SetEnabled( 0 );
   this->ClippingPlaneButton->SetEnabled( 0 );
   this->SaveButton->SetEnabled( 0 );
@@ -1090,10 +1104,10 @@ int vtkKWMimxEvaluateMeshQualityGroup::ClippingPlaneCallback(int mode)
   vtkKWComboBox *combobox = this->MeshListComboBox->GetWidget();
   vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
            this->FEMeshList->GetItem(combobox->GetValueIndex( this->meshName )));
-  
+
   if ( meshActor == NULL )
     return 1;
-      
+
   if ( mode )
   {
     meshActor->EnableMeshCuttingPlane();
@@ -1104,14 +1118,14 @@ int vtkKWMimxEvaluateMeshQualityGroup::ClippingPlaneCallback(int mode)
     this->InvertPlaneButton->SetEnabled( 1 );
     this->InvertPlaneButton->GetWidget()->SetEnabled( 1 );
   }
-  else 
+  else
   {
     meshActor->DisableMeshCuttingPlane();
     this->InvertPlaneButton->GetWidget()->SetState( 0 );
     this->InvertPlaneButton->SetEnabled( 0 );
   }
-  
-  this->GetMimxMainWindow()->GetRenderWidget()->Render(); 
+
+  this->GetMimxMainWindow()->GetRenderWidget()->Render();
   return 1;
 }
 
@@ -1122,22 +1136,22 @@ int vtkKWMimxEvaluateMeshQualityGroup::InvertPlaneCallback(int mode)
   vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
            this->FEMeshList->GetItem(combobox->GetValueIndex( this->meshName )));
   if(!meshActor)        return 0;
-           
+
   meshActor->SetInvertCuttingPlane( static_cast<bool>(mode) );
 
-  this->GetMimxMainWindow()->GetRenderWidget()->Render(); 
+  this->GetMimxMainWindow()->GetRenderWidget()->Render();
   return 1;
 }
 //------------------------------------------------------------------------------
 int vtkKWMimxEvaluateMeshQualityGroup::ViewQualityLegendCallback(int mode)
 {
   vtkKWComboBox *combobox = this->MeshListComboBox->GetWidget();
-  
+
   if ( strlen(this->meshName) )
   {
     vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
              this->FEMeshList->GetItem(combobox->GetValueIndex( this->meshName )));
-             
+
     if ( mode )
     {
       meshActor->SetMeshLegendVisibility(true);
@@ -1146,7 +1160,7 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewQualityLegendCallback(int mode)
     else
     {
       meshActor->SetMeshLegendVisibility(false);
-      this->GetMimxMainWindow()->GetRenderWidget()->Render(); 
+      this->GetMimxMainWindow()->GetRenderWidget()->Render();
     }
   }
   return 1;
@@ -1154,12 +1168,12 @@ int vtkKWMimxEvaluateMeshQualityGroup::ViewQualityLegendCallback(int mode)
 //------------------------------------------------------------------------------
 void vtkKWMimxEvaluateMeshQualityGroup::SelectionChangedCallback(const char* selection)
 {
-  
+
   if ( (strcmp(selection,"") != 0) && (strcmp(selection, this->PreviousSelection) != 0) )
         {
           vtkKWComboBox *combobox = this->MeshListComboBox->GetWidget();
           vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
-             this->FEMeshList->GetItem(combobox->GetValueIndex( this->PreviousSelection )));     
+             this->FEMeshList->GetItem(combobox->GetValueIndex( this->PreviousSelection )));
     meshActor->SetMeshScalarVisibility(false);
     meshActor->SetMeshLegendVisibility(false);
     meshActor->DisableMeshCuttingPlane( );
@@ -1171,21 +1185,21 @@ void vtkKWMimxEvaluateMeshQualityGroup::SelectionChangedCallback(const char* sel
                   this->ViewOptionsGroup->SetMeshActor(meshActor);
           }
           meshActor->HideMesh();
-    this->GetMimxMainWindow()->GetViewProperties()->UpdateVisibility();     
+    this->GetMimxMainWindow()->GetViewProperties()->UpdateVisibility();
         }
-        
+
         if (strcmp(selection,"") != 0)
         {
         vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
-            this->FEMeshList->GetItem(this->MeshListComboBox->GetWidget()->GetValueIndex(selection)));   
+            this->FEMeshList->GetItem(this->MeshListComboBox->GetWidget()->GetValueIndex(selection)));
         vtkUnstructuredGrid *ugrid = meshActor->GetDataSet();
     meshActor->ShowMesh();
-    this->GetMimxMainWindow()->GetViewProperties()->UpdateVisibility();     
-    
+    this->GetMimxMainWindow()->GetViewProperties()->UpdateVisibility();
+
     int meshType = VTK_HEXAHEDRON;
     if (ugrid->GetNumberOfCells() > 0 )
       meshType = ugrid->GetCellType( 0 );
-    
+
     this->QualityTypeButton->GetWidget()->GetMenu()->DeleteAllItems();
     switch (meshType)
     {
@@ -1220,8 +1234,8 @@ void vtkKWMimxEvaluateMeshQualityGroup::SelectionChangedCallback(const char* sel
                 this->QualityTypeButton->GetWidget()->GetMenu()->AddRadioButton("Max Angle",this, "EvaluateMeshQualityApplyCallback 7");
         break;
     }
-  
-  } 
+
+  }
 }
 //--------------------------------------------------------------------------------
 void vtkKWMimxEvaluateMeshQualityGroup::DisplayOptionsCallback( )

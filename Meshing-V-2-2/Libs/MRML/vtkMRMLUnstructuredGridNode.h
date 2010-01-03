@@ -34,11 +34,12 @@
 class vtkMRMLUnstructuredGridStorageNode;
 class vtkCallbackCommand;
 
-class VTK_MRML_EXPORT vtkMRMLUnstructuredGridNode : public vtkMRMLDisplayableNode
+//class VTK_MRML_EXPORT vtkMRMLUnstructuredGridNode : public vtkMRMLDisplayableNode
+class VTK_MRML_EXPORT vtkMRMLUnstructuredGridNode : public vtkMRMLModelNode
 {
 public:
   static vtkMRMLUnstructuredGridNode *New();
-  vtkTypeMacro(vtkMRMLUnstructuredGridNode,vtkMRMLDisplayableNode);
+  vtkTypeMacro(vtkMRMLUnstructuredGridNode,vtkMRMLModelNode);
 
   void PrintSelf(ostream& os, vtkIndent indent);
   

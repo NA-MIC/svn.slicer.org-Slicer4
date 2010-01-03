@@ -11,12 +11,12 @@ Version:   $Revision: 1.16.4.1 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -100,7 +100,7 @@ void vtkKWMimxGroupBase::Update()
 void vtkKWMimxGroupBase::UpdateEnableState()
 {
         this->Superclass::UpdateEnableState();
-        // *** in slicer, the panels don't update correctly 
+        // *** in slicer, the panels don't update correctly
         this->MimxMainWindow->ForceWidgetRedraw();
 }
 //----------------------------------------------------------------------------
@@ -110,16 +110,18 @@ void vtkKWMimxGroupBase::PrintSelf(ostream& os, vtkIndent indent)
 }
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
-void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh, 
+void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh,
             const char *namePrefix, const char *foundationName, const char *elementSetName)
 {
   vtkMimxMeshActor *actor = vtkMimxMeshActor::New();
   actor->SetFoundationName(foundationName);
+  cout << "MimxGroupBase: foundation= '" << foundationName << "' prefix= '" << namePrefix << "' element= '" << elementSetName << "'" << endl;
+
   this->FEMeshList->AppendItem( actor );
         actor->SetDataSet( mesh );
         actor->SetRenderer( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer() );
         actor->SetInteractor( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderWindowInteractor() );
-  
+
   bool useCounter = false;
   int offset = 1;
         std::string myName = foundationName;
@@ -130,8 +132,8 @@ void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh,
     myName += myPrefix;
     offset = 0;
   }
-  
-  
+
+
         int maxIndex = 0;
   for (int i=0;i<this->FEMeshList->GetNumberOfItems()-1;i++)
   {
@@ -144,7 +146,7 @@ void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh,
       int itemLength = strlen(itemName);
       int length = itemLength - startIndex;
       int currentIndex;
-      
+
       useCounter = true;
       if (length == 0)
       {
@@ -156,13 +158,13 @@ void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh,
         itemIndex[length-offset] = '\0';
         currentIndex = atoi(itemIndex);
       }
-      
+
       if (maxIndex < currentIndex) maxIndex = currentIndex;
     }
   }
-  
+
   vtkIdType index = maxIndex+1;
-  
+
   if ( (useCounter) || (strcmp(namePrefix, "") != 0) )
   {
     actor->SetObjectName(namePrefix,index);
@@ -171,13 +173,13 @@ void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh,
   {
     actor->SetFilePath(namePrefix);
   }
-  
+
   // check if triangle or quad elements exist
   if (elementSetName != NULL)
   {
     vtkCellTypes *cellTypes = vtkCellTypes::New();
     actor->GetDataSet()->GetCellTypes(cellTypes);
-   
+
     for (int i=0; i<cellTypes->GetNumberOfTypes(); i++)
     {
           if (cellTypes->GetCellType(i) == VTK_TRIANGLE ||
@@ -191,31 +193,31 @@ void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh,
 
   this->GetMimxMainWindow()->GetRenderWidget()->Render();
   this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
-  
+
   int itemIndex = this->FEMeshList->GetNumberOfItems()-1;
         this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->FEMeshList->GetItem( itemIndex ) );
-                      
+
 }
 //----------------------------------------------------------------------------
-void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid, 
+void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
           const char *namePrefix, const char *foundationName)
 {
   /* Create the New Display Node */
   this->BBoxList->AppendItem(vtkMimxUnstructuredGridActor::New());
   int currentitem = this->BBoxList->GetNumberOfItems()-1;
         this->BBoxList->GetItem(currentitem)->SetDataType( ACTOR_BUILDING_BLOCK );
-        
+
         vtkMimxUnstructuredGridActor *actor = vtkMimxUnstructuredGridActor::SafeDownCast(
           this->BBoxList->GetItem(currentitem));
         actor->SetFoundationName(foundationName);
         actor->GetDataSet()->DeepCopy( ugrid );
-        
+
         /* Create the Redo/Undo tree */
   this->DoUndoTree->AppendItem(new Node);
   this->DoUndoTree->GetItem(currentitem)->Parent = NULL;
   this->DoUndoTree->GetItem(currentitem)->Child = NULL;
   this->DoUndoTree->GetItem(currentitem)->Data = actor;
-        
+
         bool useCounter = false;
         int offset = 1;
         std::string myName = foundationName;
@@ -239,7 +241,7 @@ void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
       int itemLength = strlen(itemName);
       int length = itemLength - startIndex;
       int currentIndex;
-      
+
       useCounter = true;
       if (length == 0)
       {
@@ -251,13 +253,13 @@ void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
         itemIndex[length-offset] = '\0';
         currentIndex = atoi(itemIndex);
       }
-      
+
       if (maxIndex < currentIndex) maxIndex = currentIndex;
     }
   }
-  
+
   vtkIdType index = maxIndex+1;
-  
+
   if ( (useCounter) || (strcmp(namePrefix, "") != 0) )
   {
     actor->SetObjectName(namePrefix,index);
@@ -266,20 +268,20 @@ void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
   {
     actor->SetFilePath(namePrefix);
   }
-               
+
   /* Assign Mesh Seeds - The initial values are based on Application Settings */
   double edgeLength = this->GetMimxMainWindow()->GetAverageElementLength();
   actor->MeshSeedFromAverageElementLength( edgeLength, edgeLength, edgeLength );
   actor->GetDataSet()->Modified();
-  
+
   this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp( actor );
   this->GetMimxMainWindow()->GetRenderWidget()->Render();
   this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
   this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->BBoxList->GetItem(currentitem));
-}         
+}
 
 //----------------------------------------------------------------------------
-void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface, 
+void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
           const char *namePrefix, const char *foundationName)
 {
 
@@ -290,7 +292,7 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
   vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::SafeDownCast(
     this->SurfaceList->GetItem(item));
   actor->GetDataSet()->DeepCopy( surface );
-  
+
   bool useCounter = false;
   int offset = 1;
   std::string myName = foundationName;
@@ -301,7 +303,7 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
     myName += myPrefix;
     offset = 0;
   }
-  
+
   int maxIndex = 0;
   for (int i=0;i<this->SurfaceList->GetNumberOfItems()-1;i++)
   {
@@ -314,7 +316,7 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
       int itemLength = strlen(itemName);
       int length = itemLength - startIndex;
       int currentIndex;
-      
+
       useCounter = true;
       if (length == 0)
       {
@@ -326,11 +328,11 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
         itemIndex[length-offset] = '\0';
         currentIndex = atoi(itemIndex);
       }
-      
+
       if (maxIndex < currentIndex) maxIndex = currentIndex;
     }
   }
-  
+
   vtkIdType index = maxIndex + 1;
   if ( (useCounter) || (strcmp(namePrefix, "") != 0) )
   {
@@ -351,12 +353,12 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
 int vtkKWMimxGroupBase::UpdateSurfaceComboBox(vtkKWComboBox *combobox)
 {
   combobox->DeleteAllValues();
-  
+
   int defaultItem = -1;
   for (int i = 0; i < this->SurfaceList->GetNumberOfItems(); i++)
   {
     combobox->AddValue( this->SurfaceList->GetItem(i)->GetFileName() );
-      
+
     int viewedItem = this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer()->HasViewProp(
                         this->SurfaceList->GetItem(i)->GetActor());
     if ( (defaultItem == -1) && ( viewedItem ) )
@@ -364,30 +366,30 @@ int vtkKWMimxGroupBase::UpdateSurfaceComboBox(vtkKWComboBox *combobox)
                   defaultItem = i;
                 }
   }
-  
+
   if ((this->SurfaceList->GetNumberOfItems() > 0) && (defaultItem == -1))
   {
     defaultItem = this->SurfaceList->GetNumberOfItems()-1;
   }
-    
+
   if (defaultItem != -1)
   {
     combobox->SetValue(
           this->SurfaceList->GetItem(defaultItem)->GetFileName());
   }
-  
+
   return defaultItem;
 }
 //----------------------------------------------------------------------------
 int vtkKWMimxGroupBase::UpdateMeshComboBox(vtkKWComboBox *combobox)
 {
   combobox->DeleteAllValues();
-  
+
   int defaultItem = -1;
   for (int i = 0; i < this->FEMeshList->GetNumberOfItems(); i++)
   {
     combobox->AddValue( this->FEMeshList->GetItem(i)->GetFileName() );
-      
+
     int viewedItem = this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer()->HasViewProp(
                         this->FEMeshList->GetItem(i)->GetActor());
     if ( (defaultItem == -1) && ( viewedItem ) )
@@ -395,31 +397,31 @@ int vtkKWMimxGroupBase::UpdateMeshComboBox(vtkKWComboBox *combobox)
                   defaultItem = i;
                 }
   }
-  
+
   if ((this->FEMeshList->GetNumberOfItems() > 0) && (defaultItem == -1))
   {
     defaultItem = this->FEMeshList->GetNumberOfItems()-1;
   }
-    
+
   if (defaultItem != -1)
   {
     combobox->SetValue(
           this->FEMeshList->GetItem(defaultItem)->GetFileName());
   }
-  
+
   return defaultItem;
 }
 //----------------------------------------------------------------------------
 int vtkKWMimxGroupBase::UpdateBuildingBlockComboBox(vtkKWComboBox *combobox)
 {
   combobox->DeleteAllValues();
-  
+
   int defaultItem = -1;
   for (int i = 0; i < this->BBoxList->GetNumberOfItems(); i++)
   {
-    combobox->AddValue( 
+    combobox->AddValue(
       this->BBoxList->GetItem(i)->GetFileName() );
-      
+
     int viewedItem = this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer()->HasViewProp(
                         this->BBoxList->GetItem(i)->GetActor());
     if ( (defaultItem == -1) && ( viewedItem ) )
@@ -427,31 +429,31 @@ int vtkKWMimxGroupBase::UpdateBuildingBlockComboBox(vtkKWComboBox *combobox)
                   defaultItem = i;
                 }
   }
-  
+
   if ((this->BBoxList->GetNumberOfItems() > 0) && (defaultItem == -1))
   {
     defaultItem = this->BBoxList->GetNumberOfItems()-1;
   }
-    
+
   if (defaultItem != -1)
   {
     combobox->SetValue(
           this->BBoxList->GetItem(defaultItem)->GetFileName());
   }
-  
+
   return defaultItem;
 }
 //----------------------------------------------------------------------------
 int vtkKWMimxGroupBase::UpdateImageComboBox(vtkKWComboBox *combobox)
 {
   combobox->DeleteAllValues();
-  
+
   int defaultItem = -1;
   for (int i = 0; i < this->ImageList->GetNumberOfItems(); i++)
   {
-    combobox->AddValue( 
+    combobox->AddValue(
       this->ImageList->GetItem(i)->GetFileName() );
-      
+
     int viewedItem = this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer()->HasViewProp(
                         this->ImageList->GetItem(i)->GetActor());
     if ( (defaultItem == -1) && ( viewedItem ) )
@@ -459,17 +461,17 @@ int vtkKWMimxGroupBase::UpdateImageComboBox(vtkKWComboBox *combobox)
                   defaultItem = i;
                 }
   }
-  
+
   if ((this->ImageList->GetNumberOfItems() > 0) && (defaultItem == -1))
   {
     defaultItem = this->ImageList->GetNumberOfItems()-1;
   }
-    
+
   if (defaultItem != -1)
   {
     combobox->SetValue(
           this->ImageList->GetItem(defaultItem)->GetFileName());
   }
-  
+
   return defaultItem;
-}       
+}

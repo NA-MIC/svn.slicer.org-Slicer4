@@ -11,12 +11,12 @@ Version:   $Revision: 1.9 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -33,6 +33,10 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkMimxActorBase.h"
 #include "vtkMimxCommonWin32Header.h"
 
+// change to a specific subtype display node so we can have separate filled and
+// outline colors, but initially just use the model display node
+#include  "vtkMRMLModelDisplayNode.h"
+
 class vtkActor;
 class vtkPolyData;
 class vtkPolyDataMapper;
@@ -41,12 +45,12 @@ class VTK_MIMXCOMMON_EXPORT vtkMimxSurfacePolyDataActor : public vtkMimxActorBas
 {
 public:
 
-  enum { 
+  enum {
     DisplaySurface                = 1,
     DisplayOutline                = 2,
     DisplaySurfaceAndOutline      = 3
   };
-  
+
   static vtkMimxSurfacePolyDataActor *New();
   vtkTypeRevisionMacro(vtkMimxSurfacePolyDataActor,vtkMimxActorBase);
   void PrintSelf(ostream& os, vtkIndent indent);
@@ -64,7 +68,7 @@ public:
 // void SetDataType(int){};
  //vtkSetMacro(PolyData, vtkPolyData*);
  //vtkGetMacro(PolyData, vtkPolyData*);
- 
+
   // added to support slicer integration
   void SaveVisibility(void);
   void RestoreVisibility(void);
@@ -75,7 +79,7 @@ public:
   vtkMimxSurfacePolyDataActor();
    ~vtkMimxSurfacePolyDataActor();
 protected:
- 
+
   vtkPolyData *PolyData;
   vtkPolyDataMapper *PolyDataMapper;
 private:

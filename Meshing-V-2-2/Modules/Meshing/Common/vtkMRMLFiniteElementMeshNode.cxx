@@ -19,6 +19,7 @@ Version:   $Revision: 1.2 $
 #include "vtkObjectFactory.h"
 
 #include "vtkMRMLFiniteElementMeshNode.h"
+#include "vtkMRMLFiniteElementMeshDisplayNode.h"
 #include "vtkMRMLScene.h"
 
 
@@ -68,11 +69,19 @@ vtkMRMLFiniteElementMeshNode::~vtkMRMLFiniteElementMeshNode()
 
 }
 
+vtkMRMLFiniteElementMeshDisplayNode*  vtkMRMLFiniteElementMeshNode::GetModelDisplayNode()
+ {
+   return vtkMRMLFiniteElementMeshDisplayNode::SafeDownCast(this->GetDisplayNode());
+ }
+
+
+
+
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshNode::WriteXML(ostream& of, int nIndent)
 {
   Superclass::WriteXML(of, nIndent);
-  
+
   of << " ";
   vtkIndent indent(nIndent);
   {
@@ -107,13 +116,13 @@ void vtkMRMLFiniteElementMeshNode::ReadXMLAttributes(const char** atts)
    const char* attValue;
    int intAttribute;
    char StringAttribute[1024];
-   
-   while (*atts != NULL) 
+
+   while (*atts != NULL)
      {
      attName = *(atts++);
      attValue = *(atts++);
 
-      if (!strcmp(attName, "DataType")) 
+      if (!strcmp(attName, "DataType"))
        {
        std::stringstream ss;
        ss << attValue;
@@ -135,7 +144,7 @@ void vtkMRMLFiniteElementMeshNode::ReadXMLAttributes(const char** atts)
        ss >> StringAttribute;
        this->SetFilePath(StringAttribute);
        }
-     else if (!strcmp(attName, "savedVisibilityState")) 
+     else if (!strcmp(attName, "savedVisibilityState"))
        {
        std::stringstream ss;
        ss << attValue;
@@ -160,7 +169,7 @@ void vtkMRMLFiniteElementMeshNode::Copy(vtkMRMLNode *anode)
 //----------------------------------------------------------------------------
 void vtkMRMLFiniteElementMeshNode::PrintSelf(ostream& os, vtkIndent indent)
 {
-  
+
     Superclass::PrintSelf(os,indent);
 
   os << indent << "DataType:   " << this->GetDataType() << "\n";

@@ -12,17 +12,17 @@ Version:   $Revision: 1.25.2.2 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
 
-// .NAME vtkMimxMeshActor - 
+// .NAME vtkMimxMeshActor -
 // .SECTION Description
 // vtkMimxMeshActor is the class to handle display and manipulation
 // of meshes. The actor has default representation for the input unstructuredgrid.
@@ -39,6 +39,12 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkMimxActorBase.h"
 #include "vtkMimxCommonWin32Header.h"
 
+// added for slicer integration
+#include  "vtkMRMLFiniteElementMeshOutlineDisplayNode.h"
+#include  "vtkMRMLFiniteElementMeshDisplayNode.h"
+#include "vtkPlane.h"
+#include "vtkPlaneWidget.h"
+
 class vtkActor;
 class vtkDataSetMapper;
 class vtkExtractCells;
@@ -47,8 +53,6 @@ class vtkFeatureEdges;
 class vtkGeometryFilter;
 class vtkIdList;
 class vtkLookupTable;
-class vtkPlane;
-class vtkPlaneWidget;
 class vtkPointSet;
 class vtkPolyDataMapper;
 class vtkRenderer;
@@ -58,6 +62,9 @@ class vtkShrinkFilter;
 class vtkTubeFilter;
 class vtkUnstructuredGrid;
 
+
+
+
 class VTK_MIMXCOMMON_EXPORT MeshDisplayProperty
 {
 public:
@@ -65,7 +72,7 @@ public:
   bool IsVisible;
 
   int DisplayType;
-  vtkLookupTable *lutFilter; 
+  vtkLookupTable *lutFilter;
   vtkExtractCells *ExtractCellsFilter;
   vtkActor *SurfaceActor;
   vtkActor *OutlineActor;
@@ -91,23 +98,23 @@ public:
   static vtkMimxMeshActor *New();
   vtkTypeRevisionMacro(vtkMimxMeshActor,vtkMimxActorBase);
   void PrintSelf(ostream& os, vtkIndent indent);
-  
+
   vtkUnstructuredGrid* GetDataSet();
   void SetDataSet( vtkUnstructuredGrid *ugrid);
 
   // type of display
-  enum { 
+  enum {
     DisplaySurface                = 1,
     DisplayOutline                = 2,
     DisplaySurfaceAndOutline      = 3
   };
-  
+
   // what to display
-  enum { 
+  enum {
     DisplayMesh                   = 1,
     DisplayElementSets            = 2
   };
-  
+
   // scalar bar coloring
   enum{
           RedToBlue                                       = 1,
@@ -122,19 +129,19 @@ public:
   };
   vtkSetMacro(ElementSetName, char*);
   vtkGetMacro(ElementSetName, char*);
-  
+
   vtkGetMacro(OutlineActor, vtkActor*);
   vtkGetMacro(InteriorActor, vtkActor*);
-  
+
   vtkGetMacro(NumberOfElementSets, int);
- 
+
   vtkGetMacro(IsAverageEdgeLengthCalculated, int);
   vtkGetMacro(AverageEdgeLength, double);
 
   // Description:
   // Recalculate scalar display based on color range. The range is from
   // Blue to Red and Red to Blue.
-  void SetColorRangeType(int RangeType, const char *ArrayName, 
+  void SetColorRangeType(int RangeType, const char *ArrayName,
           const char *ElementSetName, double *Range);
   vtkGetMacro(ColorRangeType, int);
 
@@ -145,13 +152,13 @@ public:
   // Description:
   // Delete the element set. (not fully implemented)
   void DeleteElementSet(const char *Name);
-  
+
   void SetRenderer(vtkRenderer *renderer);
   vtkRenderer* GetRenderer();
-  
+
   void SetInteractor(vtkRenderWindowInteractor *interactor);
   vtkRenderWindowInteractor *GetInteractor( );
-  
+
   // Description:
   // Get the type of display. Modes available are, solid, wireframe
   // and solid + wireframe.
@@ -161,7 +168,13 @@ public:
   // Get the type of display. Modes available are, solid, wireframe
   // and solid + wireframe.
   void SetDisplayMode( int mode );
- 
+
+  // Return the instances of the cutting plane and widget  used in mesh rendering. These are allocated
+  // by the Actor, so that multiple actors could support multiple meshes in the scene eventually.
+
+  vtkPlane*  GetCuttingPlane(void)  { return CuttingPlane;}
+  vtkPlaneWidget* GetCuttingPlaneWidget(void) { return CuttingPlaneWidget;}
+
   // Description:
   // Display the mesh
   void ShowMesh();
@@ -173,17 +186,17 @@ public:
   bool GetMeshVisibility();
   void SaveMeshVisibility();
   void RestoreMeshVisibility();
-  
+
   // Description:
   // Setting legend formatting for scalar display
   void SetLegendTextColor( double color[3] );
   double *GetLegendTextColor( );
-  
+
   void SetLegendTitle( const char *title );
   const char *GetLegendTitle( );
   void SetLegendPrecision( int precision );
   int GetLegendPrecision( );
- 
+
   // Description:
   // Setting mesh and legend display properties and visibility
   void SetMeshDisplayType( int mode );
@@ -193,7 +206,7 @@ public:
   void GetMeshOutlineColor(double &red, double &green, double &blue);
   void GetMeshOutlineColor(double rgb[3]);
   void SetMeshOutlineRadius(double radius);
-  double GetMeshOutlineRadius(); 
+  double GetMeshOutlineRadius();
   void SetMeshShrinkFactor(double shrinkFactor);
   double GetMeshShrinkFactor();
   void SetMeshColor(double red, double green, double blue);
@@ -222,7 +235,7 @@ public:
   // Show and hide cutting plane.
   void EnableMeshCuttingPlane();
   void DisableMeshCuttingPlane();
- 
+
   // Description:
   // Invert the cutting plane
   void SetInvertCuttingPlane( bool invert );
@@ -239,7 +252,7 @@ public:
   void SetElementSetOutlineColor(std::string name, double rgb[3]);
   void GetElementSetOutlineColor(std::string name, double &red, double &green, double &blue);
   void GetElementSetOutlineColor(std::string name, double rgb[3]);
-  
+
   // Description:
   // Setting the size of element size shrink factor.
   void SetElementSetShrinkFactor(std::string name, double shrinkFactor);
@@ -257,8 +270,8 @@ public:
   // Description:
   // Changing the thickness of wireframe lines
   void SetElementSetOutlineRadius(std::string name, double radius);
-  double GetElementSetOutlineRadius(std::string name); 
-  
+  double GetElementSetOutlineRadius(std::string name);
+
   // Description:
   // To choose the array from which scalar values are obtained.
   void SetElementSetScalarName(std::string setName, std::string scalarName);
@@ -266,11 +279,11 @@ public:
   void EnableElementSetCuttingPlane( std::string setName );
   void DisableElementSetCuttingPlane( std::string setName );
   void SetAllElementSetScalarName(std::string scalarName);
-  
+
   void SetElementSetScalarVisibility(std::string setName, bool visibility);
   bool GetElementSetScalarVisibility( std::string setName );
   void SetAllElementSetScalarVisibility( bool visibility );
-  
+
   void DeleteElementSetListItem( std::string setName );
   void AddElementSetListItem( std::string setName );
   void CreateElementSetList( );
@@ -281,7 +294,7 @@ public:
 
   // Description:
   // To generate boundary condition array names. Should be modified in the future
-  void ConcatenateStrings(const char* Step, const char* Num, 
+  void ConcatenateStrings(const char* Step, const char* Num,
           const char* NodeSetName, const char* Type, const char* Direction, char *Name);
 
   // Description:
@@ -363,10 +376,24 @@ public:
   void AppendNodeSet(const char *NodeSetName, vtkIdList *NodeList);
 
   // Description:
-  // Add a reference node to the mesh. The node will be placed at the center of the 
+  // Add a reference node to the mesh. The node will be placed at the center of the
   // bounds of the dataset. A field data named ElementSetName_RN would be added with
   // the co-ordinates.
   void AddReferenceNode(const char *ElementSetName);
+
+  // *** added for Slicer
+  // set pointer to display node so that attribute changes can be passed through
+    void SetMRMLOutlineDisplayNode(vtkMRMLFiniteElementMeshOutlineDisplayNode* displayNode)
+                    {this->SavedOutlineDisplayNode = displayNode;}
+
+    // *** added for Slicer
+    void SetQualityToJacobian() {vtkMRMLFiniteElementMeshDisplayNode::SafeDownCast(this->SavedDisplayNode)->SetQualityToJacobian();}
+    //*** need other methods here
+
+    // accept value between 0.0 and 1.0 to filter which elements are displayed, according to their metric.  The default
+    // is to pass all elements, unless another value is specified.
+    void SetThreshold(double value);
+
 protected:
   vtkMimxMeshActor();
   ~vtkMimxMeshActor();
@@ -414,6 +441,12 @@ private:
         int LegendPrecision;
         int InvertCuttingPlane;
         int MeshType;
+
+  // added for second integration where rendering is in display nodes instead
+  // of in the mesh actor
+  //vtkLocalLinkedListWrapper* actorList;
+  vtkMRMLFiniteElementMeshOutlineDisplayNode* SavedOutlineDisplayNode;
+
   vtkMimxMeshActor(const vtkMimxMeshActor&);  // Not implemented.
   void operator=(const vtkMimxMeshActor&);  // Not implemented.
 };

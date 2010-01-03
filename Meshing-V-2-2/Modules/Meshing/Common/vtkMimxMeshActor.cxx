@@ -12,12 +12,12 @@ Version:   $Revision: 1.48.2.3 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -59,25 +59,29 @@ PURPOSE.  See the above copyright notices for more information.
 #include "vtkTubeFilter.h"
 #include "vtkUnstructuredGrid.h"
 
+// added for slicer integration
+#include "vtkMRMLFiniteElementMeshOutlineDisplayNode.h"
+#include "vtkMRMLFiniteElementMeshDisplayNode.h"
+
 vtkCxxRevisionMacro(vtkMimxMeshActor, "$Revision: 1.48.2.3 $");
 vtkStandardNewMacro(vtkMimxMeshActor);
 
 // Create a callback function so the selection plane can invoke this when it is
-// moved by the operator.  The corresponding implicit plane function is passed 
+// moved by the operator.  The corresponding implicit plane function is passed
 // back into a pre-allocated vtkPlane instance for use elsewhere in the application
 
 //--------------------------------------------------------------------------------------
 class vtkPlaneWidgetEventCallback : public vtkCommand
 {
 public:
-  static vtkPlaneWidgetEventCallback *New() 
+  static vtkPlaneWidgetEventCallback *New()
     { return new vtkPlaneWidgetEventCallback; }
   virtual void Execute(vtkObject *caller, unsigned long, void*)
     {
       vtkPlaneWidget *planeWidget = reinterpret_cast<vtkPlaneWidget*>(caller);
       planeWidget->GetPlane(this->PlaneInstance);
     }
-  
+
   vtkPlane *PlaneInstance;
 };
 
@@ -98,13 +102,13 @@ vtkMimxMeshActor::vtkMimxMeshActor()
   this->CuttingPlaneEnabled = false;
   this->LegendPrecision = 3;
   this->TextColor[0] = this->TextColor[1] = this->TextColor[2] = 1.0;
-        
+
   /* Setup the Pipeline for the Mesh */
   vtkPoints *points = vtkPoints::New();
   this->UnstructuredGrid = vtkUnstructuredGrid::New();
   this->UnstructuredGrid->SetPoints(points);
   points->Delete();
-  
+
   this->ShrinkFilter = vtkShrinkFilter::New();
   this->ShrinkFilter->SetInput(this->UnstructuredGrid);
   this->ShrinkFilter->SetShrinkFactor(this->ElementShrinkFactor);
@@ -115,7 +119,7 @@ vtkMimxMeshActor::vtkMimxMeshActor()
   this->UnstructuredGridMapper->SetScalarVisibility(0);
   this->Actor = vtkActor::New();
   this->Actor->SetMapper(this->UnstructuredGridMapper);
-        
+
   /* Setup the Pipeline for the Wireframe */
   this->OutlineGeometryFilter = vtkGeometryFilter::New();
   this->OutlineGeometryFilter->SetInput( this->UnstructuredGrid );
@@ -126,15 +130,15 @@ vtkMimxMeshActor::vtkMimxMeshActor()
   this->FeatureEdges->ManifoldEdgesOn();
   this->FeatureEdges->FeatureEdgesOff();
   this->FeatureEdges->ColoringOff();
-  
+
   this->TubeFilter = vtkTubeFilter::New();
   this->TubeFilter->SetInputConnection(this->FeatureEdges->GetOutputPort());
   this->TubeFilter->SetRadius(0.03);
-   
+
   this->OutlineMapper = vtkPolyDataMapper::New();
   this->OutlineMapper->SetInputConnection(  this->TubeFilter->GetOutputPort() );
   this->OutlineMapper->SetScalarVisibility( 0 );
-  
+
   this->OutlineActor = vtkActor::New();
   this->OutlineActor->SetMapper( this->OutlineMapper );
   this->OutlineActor->GetProperty()->SetColor(0.0,0.0,0.0);
@@ -144,17 +148,17 @@ vtkMimxMeshActor::vtkMimxMeshActor()
   this->OutlineActor->GetProperty()->SetDiffuse(0);
   this->OutlineActor->GetProperty()->SetSpecularPower(0);
   //this->OutlineActor->GetProperty()->SetLineWidth(1.0);
-  
+
   /* Setup the Pipeline for Interior Display */
   /*** NOTE: This is not currently being used ***/
   this->InteriorShrinkFilter = vtkShrinkFilter::New();
   this->InteriorShrinkFilter->SetInput( this->UnstructuredGrid );
   this->InteriorShrinkFilter->SetShrinkFactor(0.995);
-  
+
   this->InteriorMapper = vtkDataSetMapper::New();
   this->InteriorMapper->SetInputConnection(this->InteriorShrinkFilter->GetOutputPort());
   this->InteriorMapper->ScalarVisibilityOff();
-  
+
   this->InteriorActor = vtkActor::New();
   this->InteriorActor->SetMapper( this->InteriorMapper );
   this->InteriorActor->GetProperty()->SetColor(0.5,0.5,0.5);
@@ -163,24 +167,43 @@ vtkMimxMeshActor::vtkMimxMeshActor()
   this->InteriorActor->GetProperty()->SetAmbient(1.0);
   this->InteriorActor->SetVisibility(0);
   /* This is used to display a Portion of the Mesh when the Cutting Plane is enabled */
-  
+
   this->CuttingPlaneWidget = vtkPlaneWidget::New();
   this->CuttingPlaneWidget->SetInput( this->UnstructuredGrid );
   this->CuttingPlaneWidget->SetRepresentationToSurface();
   this->CuttingPlaneWidget->GetPlaneProperty()->SetColor(0.2,0.2,0);
   this->CuttingPlaneWidget->GetPlaneProperty()->SetOpacity(0.2);
-  this->CuttingPlaneWidget->GetSelectedPlaneProperty()->SetOpacity(0.2);  
+  this->CuttingPlaneWidget->GetSelectedPlaneProperty()->SetOpacity(0.2);
   this->CuttingPlaneWidget->SetHandleSize(0.02);
   this->CuttingPlane = vtkPlane::New();
-  
+
   this->ClipPlaneGeometryFilter = vtkExtractGeometry::New();
   this->ClipPlaneGeometryFilter->SetInput( this->UnstructuredGrid );
-        
+
   /* This is used for Scale Display */
   //
-  this->lutFilter = NULL;
-  this->LegendActor = NULL;
+  this->lutFilter = vtkLookupTable::New();
+  this->BlueToRedLookUpTable();
+  this->LegendActor = vtkScalarBarActor::New();
+  vtkTextProperty *textProperty = this->LegendActor->GetTitleTextProperty();
+  textProperty->SetFontFamilyToArial();
+  textProperty->SetColor( TextColor );
+  textProperty->ShadowOff();
+  textProperty->ItalicOff();
+  textProperty->SetFontSize(40);
 
+  this->LegendActor->SetTitleTextProperty( textProperty );
+  this->LegendActor->SetLabelTextProperty( textProperty );
+  this->LegendActor->SetLookupTable((this->lutFilter));
+  //
+  this->LegendActor->GetPositionCoordinate()->SetCoordinateSystemToNormalizedViewport();
+  this->LegendActor->GetPositionCoordinate()->SetValue(0.1,0.05);
+  this->LegendActor->SetOrientationToVertical();
+  this->LegendActor->SetWidth(0.1);
+  this->LegendActor->SetHeight(0.9);
+  this->LegendActor->SetPosition(0.01,0.1);
+  this->LegendActor->SetLabelFormat("%6.3f");
+  this->LegendActor->SetVisibility( 0 );
   this->IsAverageEdgeLengthCalculated = 0;
   this->AverageEdgeLength = 0.0;
   this->PointSetOfNodeSet = NULL;
@@ -413,7 +436,7 @@ void vtkMimxMeshActor::DeleteNodeSet(const char *Name)
 
   datasetarray = pointdata->GetArray(Name);
   if(datasetarray)        pointdata->RemoveArray(Name);
-        
+
   // for displacement related field data
   char DispX[256], DispY[256], DispZ[256];
 
@@ -520,7 +543,7 @@ void vtkMimxMeshActor::DeleteElementSet(const char *Name)
   if(!stringarray)        return;
 
   vtkDataArray *datasetarray;
-        
+
   datasetarray = celldata->GetArray(Name);
   if(datasetarray)        celldata->RemoveArray(Name);
 
@@ -535,13 +558,13 @@ void vtkMimxMeshActor::DeleteElementSet(const char *Name)
   strcat(Poisson, "_Constant_Poissons_Ratio");
   datasetarray = fielddata->GetArray(Poisson);
   if(datasetarray)        fielddata->RemoveArray(Poisson);
-        
+
   char ImageBased[256];
   strcpy(ImageBased, Name);
   strcat(ImageBased, "_Image_Based_Material_Property");
   datasetarray = celldata->GetArray(ImageBased);
   if(datasetarray)        celldata->RemoveArray(ImageBased);
-        
+
   strcat(ImageBased, "_ReBin");
   datasetarray = celldata->GetArray(ImageBased);
   if(datasetarray)        celldata->RemoveArray(ImageBased);
@@ -579,7 +602,7 @@ void vtkMimxMeshActor::SetDisplayMode( int mode )
       UpdateElementSetDisplay();
       break;
     }
-  
+
 }
 
 //----------------------------------------------------------------------------------
@@ -597,18 +620,26 @@ void vtkMimxMeshActor::UpdateMeshDisplay()
       {
       case vtkMimxMeshActor::DisplaySurface:
         this->Actor->SetVisibility( 1 );
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(1);
         //this->InteriorActor->SetVisibility( 1 );
         this->OutlineActor->SetVisibility( 0 );
+         if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(0);
+
         break;
       case vtkMimxMeshActor::DisplayOutline:
         this->Actor->SetVisibility( 0 );
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(0);
         //this->InteriorActor->SetVisibility( 0 );
         this->OutlineActor->SetVisibility( 1 );
+        if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(1);
+
         break;
       case vtkMimxMeshActor::DisplaySurfaceAndOutline:
         this->Actor->SetVisibility( 1 );
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(1);
         //this->InteriorActor->SetVisibility( 1 );
         this->OutlineActor->SetVisibility( 1 );
+        if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(1);
         break;
       }
     }
@@ -617,19 +648,27 @@ void vtkMimxMeshActor::UpdateMeshDisplay()
     this->Actor->SetVisibility( 0 );
     this->InteriorActor->SetVisibility( 0 );
     this->OutlineActor->SetVisibility( 0 );
+    if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(0);    // *** added for slicer
+    if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(0);
     }
-    
+
+}
+
+void vtkMimxMeshActor::SetThreshold(double value)
+{
+    if (this->SavedDisplayNode != NULL)
+          ((vtkMRMLFiniteElementMeshDisplayNode*)(this->SavedDisplayNode))->SetThreshold(value);    // *** added for slicer
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::UpdateElementSetDisplay()
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin(); it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    if (( currentSet->IsVisible == true ) && 
+    if (( currentSet->IsVisible == true ) &&
         (this->DisplayMode == vtkMimxMeshActor::DisplayElementSets)  &&
         (this->IsVisible == true) )
       {
@@ -659,7 +698,7 @@ void vtkMimxMeshActor::UpdateElementSetDisplay()
       currentSet->OutlineActor->SetVisibility( 0 );
       }
     }
-  
+
 }
 
 //----------------------------------------------------------------------------------
@@ -689,6 +728,8 @@ int vtkMimxMeshActor::GetMeshDisplayType( )
 void vtkMimxMeshActor::GetMeshOutlineColor(double &red, double &green, double &blue)
 {
   this->OutlineActor->GetProperty()->GetColor(red, green, blue);
+   if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->GetColor(red,green,blue);
+
 }
 
 //----------------------------------------------------------------------------------
@@ -703,6 +744,8 @@ void vtkMimxMeshActor::SetMeshOutlineColor(double red, double green, double blue
   this->OutlineActor->GetProperty()->SetColor(red, green, blue);
   this->OutlineActor->GetProperty()->SetEdgeColor(red, green, blue);
   this->OutlineActor->Modified();
+  if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetColor(red,green,blue);
+
 }
 
 //----------------------------------------------------------------------------------
@@ -722,6 +765,7 @@ void vtkMimxMeshActor::SetMeshOutlineRadius(double radius)
 {
   this->TubeFilter->SetRadius(radius/100.0);
   this->OutlineActor->Modified();
+  if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetRadius(radius/100.0);
 }
 
 //----------------------------------------------------------------------------------
@@ -738,17 +782,23 @@ void vtkMimxMeshActor::SetMeshShrinkFactor(double shrinkFactor)
   else
     this->UnstructuredGridMapper->SetInput(this->ShrinkFilter->GetOutput());
   this->UnstructuredGridMapper->Modified();
-                
+
   this->ElementShrinkFactor = shrinkFactor;
   this->ShrinkFilter->SetShrinkFactor( shrinkFactor );
   this->Actor->Modified();
+
+  // pass this change onto the display node if we are integrated with Slicer
+  if (this->SavedDisplayNode)
+      ((vtkMRMLFiniteElementMeshDisplayNode*)(this->SavedDisplayNode))->SetElementSize(shrinkFactor);
 }
+
 
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::SetMeshColor(double red, double green, double blue)
 {
   this->Actor->GetProperty()->SetColor(red, green, blue);
   this->Actor->Modified();
+  if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetColor(red,green,blue);
 }
 
 //----------------------------------------------------------------------------------
@@ -780,6 +830,10 @@ void vtkMimxMeshActor::SetMeshOpacity(double opacity)
 
   this->Actor->GetProperty()->SetOpacity( opacity );
   this->Actor->Modified();
+
+  // *** slicer integration
+  if (this->SavedDisplayNode)
+      this->SavedDisplayNode->SetOpacity(opacity);
 }
 
 //----------------------------------------------------------------------------------
@@ -793,6 +847,9 @@ void vtkMimxMeshActor::SetMeshScalarVisibility(bool visibility)
 {
   this->UnstructuredGridMapper->SetScalarVisibility(static_cast<int>(visibility));
   this->Actor->Modified();
+  // *** slicer
+  if (this->SavedDisplayNode)
+      this->SavedDisplayNode->SetScalarVisibility(static_cast<int>(visibility));
 }
 
 //----------------------------------------------------------------------------------
@@ -852,7 +909,7 @@ void vtkMimxMeshActor::SetMeshScalarName(std::string attributeName)
 {
   double* range;
   range = this->ComputeMeshScalarRange(attributeName.c_str());
-  
+
   if ( range ) this->GenerateMeshMapperLookUpTable(attributeName.c_str(), range);
   this->Actor->Modified();
   if (!this->LegendActor)
@@ -892,6 +949,12 @@ void vtkMimxMeshActor::EnableMeshCuttingPlane( )
   this->OutlineGeometryFilter->SetInput( this->ClipPlaneGeometryFilter->GetOutput() );
   this->InteriorShrinkFilter->SetInput( this->ClipPlaneGeometryFilter->GetOutput() );
   this->UnstructuredGridMapper->SetInput(this->ShrinkFilter->GetOutput());
+
+  // pass this enable onto the display node, since rendering is actually in the display node for Slicer versions
+  if (this->SavedDisplayNode)
+      ((vtkMRMLFiniteElementMeshDisplayNode*)this->SavedDisplayNode)->EnableCuttingPlane();
+  if (this->SavedOutlineDisplayNode)
+      ((vtkMRMLFiniteElementMeshOutlineDisplayNode*)this->SavedOutlineDisplayNode)->EnableCuttingPlane();
 }
 
 //----------------------------------------------------------------------------------
@@ -899,17 +962,23 @@ void vtkMimxMeshActor::DisableMeshCuttingPlane( )
 {
   this->CuttingPlaneWidget->SetEnabled( 0 );
   this->CuttingPlaneEnabled = false;
-  
+
   this->ShrinkFilter->SetInput(this->UnstructuredGrid);
   this->OutlineGeometryFilter->SetInput( this->UnstructuredGrid );
   this->InteriorShrinkFilter->SetInput( this->UnstructuredGrid );
-  
+
   if ((this->Actor->GetProperty()->GetOpacity( ) != 1.0) && (this->ElementShrinkFactor == 1.0) && (!this->CuttingPlaneEnabled))
     this->UnstructuredGridMapper->SetInput(this->UnstructuredGrid);
   else
     this->UnstructuredGridMapper->SetInput(this->ShrinkFilter->GetOutput());
   this->UnstructuredGridMapper->Modified();
-        
+
+  // pass this enable onto the display node, since rendering is actually in the display node for Slicer versions
+  if (this->SavedDisplayNode)
+      ((vtkMRMLFiniteElementMeshDisplayNode*)this->SavedDisplayNode)->DisableCuttingPlane();
+  if (this->SavedOutlineDisplayNode)
+       ((vtkMRMLFiniteElementMeshOutlineDisplayNode*)this->SavedOutlineDisplayNode)->DisableCuttingPlane();
+
 }
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::SetInvertCuttingPlane( bool invert )
@@ -930,7 +999,7 @@ bool vtkMimxMeshActor::GetInvertCuttingPlane( )
 {
   bool visibility = false;
   if(this->InvertCuttingPlane)    visibility = true;
-  return visibility; 
+  return visibility;
 }
 
 //----------------------------------------------------------------------------------
@@ -950,7 +1019,7 @@ void vtkMimxMeshActor::SaveMeshVisibility()
 void vtkMimxMeshActor::RestoreMeshVisibility()
 {
   if (this->SavedVisibility)
-   this->ShowMesh(); 
+   this->ShowMesh();
   else
     this->HideMesh();
 }
@@ -976,11 +1045,11 @@ void vtkMimxMeshActor::HideMesh()
 void vtkMimxMeshActor::SetElementSetDisplayType( std::string setName, int type )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       switch ( type )
@@ -1003,11 +1072,11 @@ void vtkMimxMeshActor::SetElementSetDisplayType( std::string setName, int type )
 int vtkMimxMeshActor::GetElementSetDisplayType( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       return currentSet->DisplayType;
@@ -1021,7 +1090,7 @@ int vtkMimxMeshActor::GetElementSetDisplayType( std::string setName )
 void vtkMimxMeshActor::GetElementSetOutlineColor(std::string setName, double &red, double &green, double &blue)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
@@ -1039,7 +1108,7 @@ void vtkMimxMeshActor::GetElementSetOutlineColor(std::string setName, double &re
 void vtkMimxMeshActor::GetElementSetOutlineColor(std::string setName, double rgb[3])
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
@@ -1057,11 +1126,11 @@ void vtkMimxMeshActor::GetElementSetOutlineColor(std::string setName, double rgb
 void vtkMimxMeshActor::SetElementSetOutlineColor(std::string setName, double red, double green, double blue)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->OutlineActor->GetProperty()->SetColor(red, green, blue);
@@ -1082,17 +1151,17 @@ void vtkMimxMeshActor::SetElementSetOutlineColor(std::string setName, double rgb
 double vtkMimxMeshActor::GetElementSetShrinkFactor( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       return currentSet->ShrinkFilter->GetShrinkFactor();
       }
     }
-  
+
   return 0.0;
 }
 
@@ -1100,11 +1169,11 @@ double vtkMimxMeshActor::GetElementSetShrinkFactor( std::string setName )
 void vtkMimxMeshActor::SetElementSetShrinkFactor(std::string setName, double shrinkFactor)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->ShrinkFilter->SetShrinkFactor( shrinkFactor );
@@ -1118,11 +1187,11 @@ void vtkMimxMeshActor::SetElementSetShrinkFactor(std::string setName, double shr
 void vtkMimxMeshActor::SetElementSetColor(std::string setName, double red, double green, double blue)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->SurfaceActor->GetProperty()->SetColor(red, green, blue);
@@ -1142,11 +1211,11 @@ void vtkMimxMeshActor::SetElementSetColor(std::string setName, double rgb[3])
 void vtkMimxMeshActor::GetElementSetColor(std::string setName, double &red, double &green, double &blue)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->SurfaceActor->GetProperty()->GetColor(red, green, blue);
@@ -1154,18 +1223,18 @@ void vtkMimxMeshActor::GetElementSetColor(std::string setName, double &red, doub
       }
     }
   red = green = blue = 0.0;
-  return;  
+  return;
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::GetElementSetColor(std::string setName, double rgb[3])
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->SurfaceActor->GetProperty()->GetColor(rgb);
@@ -1180,11 +1249,11 @@ void vtkMimxMeshActor::GetElementSetColor(std::string setName, double rgb[3])
 void vtkMimxMeshActor::SetElementSetOpacity(std::string setName, double opacity)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->SurfaceActor->GetProperty()->SetOpacity( opacity );
@@ -1198,17 +1267,17 @@ void vtkMimxMeshActor::SetElementSetOpacity(std::string setName, double opacity)
 double vtkMimxMeshActor::GetElementSetOpacity( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       return currentSet->SurfaceActor->GetProperty()->GetOpacity( );
       }
     }
-  
+
   return 0.0;
 }
 
@@ -1216,18 +1285,18 @@ double vtkMimxMeshActor::GetElementSetOpacity( std::string setName )
 void vtkMimxMeshActor::ShowElementSet( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->IsVisible = true;
       this->SetDisplayMode(vtkMimxMeshActor::DisplayElementSets);
       break;
       }
-    } 
+    }
   UpdateMeshDisplay();
   UpdateElementSetDisplay();
 }
@@ -1236,18 +1305,18 @@ void vtkMimxMeshActor::ShowElementSet( std::string setName )
 void vtkMimxMeshActor::HideElementSet( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->IsVisible = false;
       break;
       }
     }
-  
+
   UpdateMeshDisplay();
   UpdateElementSetDisplay();
 }
@@ -1268,11 +1337,11 @@ void vtkMimxMeshActor::HideAllElementSets( )
 bool vtkMimxMeshActor::GetElementSetVisibility( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       return currentSet->IsVisible;
@@ -1286,36 +1355,36 @@ bool vtkMimxMeshActor::GetElementSetVisibility( std::string setName )
 void vtkMimxMeshActor::SetElementSetOutlineRadius( std::string setName, double radius )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->TubeFilter->SetRadius(radius/100.0);
       currentSet->OutlineActor->Modified();
       break;
       }
-    }  
+    }
 }
 
 //----------------------------------------------------------------------------------
 double vtkMimxMeshActor::GetElementSetOutlineRadius( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       return currentSet->TubeFilter->GetRadius();
       break;
       }
     }
-  
+
   return 0.0;
 }
 
@@ -1340,7 +1409,7 @@ void vtkMimxMeshActor::CreateElementSetList( )
     if (currentSet->lutFilter) currentSet->lutFilter->Delete();
     ElementSetDisplayList.pop_front();
     }
-  
+
   this->NumberOfElementSets = 0;
   vtkFieldData *fielddata = this->UnstructuredGrid->GetFieldData();
   if ( fielddata )
@@ -1352,7 +1421,7 @@ void vtkMimxMeshActor::CreateElementSetList( )
       this->NumberOfElementSets = stringarray->GetNumberOfValues();
       for (int i=0;i<stringarray->GetNumberOfValues();i++)
         {
-        vtkStdString name = stringarray->GetValue(i);  
+        vtkStdString name = stringarray->GetValue(i);
         AddElementSetListItem( name );
         }
       }
@@ -1363,11 +1432,11 @@ void vtkMimxMeshActor::CreateElementSetList( )
 void vtkMimxMeshActor::DeleteElementSetListItem( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       if (currentSet->SurfaceActor) currentSet->SurfaceActor->Delete();
@@ -1386,11 +1455,11 @@ void vtkMimxMeshActor::DeleteElementSetListItem( std::string setName )
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::AddElementSetListItem( std::string setName )
 {
-  MeshDisplayProperty *elementSetProperty =  new MeshDisplayProperty;   
+  MeshDisplayProperty *elementSetProperty =  new MeshDisplayProperty;
   elementSetProperty->name = setName;
   elementSetProperty->IsVisible = false;
   elementSetProperty->DisplayType = vtkMimxMeshActor::DisplaySurfaceAndOutline;
-  
+
   /* Extract Cells */
   vtkCellData *celldata = this->UnstructuredGrid->GetCellData();
   vtkIntArray *datasetarray = vtkIntArray::SafeDownCast(celldata->GetArray(setName.c_str()));
@@ -1402,7 +1471,7 @@ void vtkMimxMeshActor::AddElementSetListItem( std::string setName )
   elementSetProperty->ExtractCellsFilter = vtkExtractCells::New();
   elementSetProperty->ExtractCellsFilter->SetInput( this->UnstructuredGrid );
   elementSetProperty->ExtractCellsFilter->SetCellList( cellIds );
- 
+
   elementSetProperty->ShrinkFilter = vtkShrinkFilter::New();
   elementSetProperty->ShrinkFilter->SetInput(elementSetProperty->ExtractCellsFilter->GetOutput());
   elementSetProperty->ShrinkFilter->SetShrinkFactor(1.0);
@@ -1420,7 +1489,7 @@ void vtkMimxMeshActor::AddElementSetListItem( std::string setName )
   greenRand = static_cast<double> ( rand() ) / static_cast<double> ( RAND_MAX );
   blueRand = static_cast<double> ( rand() ) / static_cast<double> ( RAND_MAX );
   elementSetProperty->SurfaceActor->GetProperty()->SetColor(redRand,greenRand,blueRand);
-  
+
   /* Create the Outlines */
   elementSetProperty->GeometryFilter = vtkGeometryFilter::New();
   elementSetProperty->GeometryFilter->SetInput( elementSetProperty->ExtractCellsFilter->GetOutput() );
@@ -1432,15 +1501,15 @@ void vtkMimxMeshActor::AddElementSetListItem( std::string setName )
   featureEdges->ManifoldEdgesOn();
   featureEdges->FeatureEdgesOff();
   featureEdges->ColoringOff();
-  
+
   elementSetProperty->TubeFilter = vtkTubeFilter::New();
   elementSetProperty->TubeFilter->SetInputConnection(featureEdges->GetOutputPort());
   elementSetProperty->TubeFilter->SetRadius(0.03);
-  
+
   elementSetProperty->OutlineMapper = vtkPolyDataMapper::New();
   elementSetProperty->OutlineMapper->SetInputConnection( elementSetProperty->TubeFilter->GetOutputPort() );
   elementSetProperty->OutlineMapper->SetScalarVisibility( 0 );
-  
+
   elementSetProperty->OutlineActor = vtkActor::New();
   elementSetProperty->OutlineActor->SetMapper( elementSetProperty->OutlineMapper );
   elementSetProperty->OutlineActor->GetProperty()->SetColor(0.0,0.0,0.0);
@@ -1452,11 +1521,11 @@ void vtkMimxMeshActor::AddElementSetListItem( std::string setName )
   elementSetProperty->InteriorShrinkFilter = vtkShrinkFilter::New();
   elementSetProperty->InteriorShrinkFilter->SetInput( elementSetProperty->ExtractCellsFilter->GetOutput() );
   elementSetProperty->InteriorShrinkFilter->SetShrinkFactor(0.995);
-  
+
   elementSetProperty->InteriorMapper = vtkDataSetMapper::New();
   elementSetProperty->InteriorMapper->SetInputConnection(elementSetProperty->InteriorShrinkFilter->GetOutputPort());
   elementSetProperty->InteriorMapper->ScalarVisibilityOff();
-  
+
   elementSetProperty->InteriorActor = vtkActor::New();
   elementSetProperty->InteriorActor->SetMapper( elementSetProperty->InteriorMapper );
   elementSetProperty->InteriorActor->GetProperty()->SetColor(0.5,0.5,0.5);
@@ -1514,19 +1583,19 @@ void vtkMimxMeshActor::SetRenderer(vtkRenderer *renderer)
     this->BuildScalarBar();
     }
   this->Renderer->AddViewProp(this->LegendActor);
-    
+
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
-    { 
+    {
     MeshDisplayProperty *currentSet = *it;
     this->Renderer->AddViewProp(currentSet->SurfaceActor);
     this->Renderer->AddViewProp(currentSet->OutlineActor);
     this->Renderer->AddViewProp(currentSet->InteriorActor);
     }
-  
+
   UpdateElementSetDisplay();
-  UpdateMeshDisplay(); 
+  UpdateMeshDisplay();
 }
 
 //----------------------------------------------------------------------------------
@@ -1541,11 +1610,11 @@ void vtkMimxMeshActor::SetInteractor(vtkRenderWindowInteractor *interactor)
   this->Interactor = interactor;
   this->CuttingPlaneWidget->SetInteractor( interactor );
   this->CuttingPlaneWidget->SetEnabled( 0 );
-  
+
   /***VAM ***/
   vtkPlaneWidgetEventCallback* PlaneMoveCallback = vtkPlaneWidgetEventCallback::New();
   PlaneMoveCallback->PlaneInstance = this->CuttingPlane;
-  this->CuttingPlaneWidget->AddObserver(vtkCommand::InteractionEvent,PlaneMoveCallback);  
+  this->CuttingPlaneWidget->AddObserver(vtkCommand::InteractionEvent,PlaneMoveCallback);
   this->ClipPlaneGeometryFilter->SetImplicitFunction(this->CuttingPlane);
 }
 
@@ -1569,7 +1638,7 @@ void vtkMimxMeshActor::SetLegendRange(double min, double max)
   this->LegendActor->Modified();
 }
 //---------------------------------------------------------------------------------
-void vtkMimxMeshActor::SetElementSetLegendRange(double min, double max, 
+void vtkMimxMeshActor::SetElementSetLegendRange(double min, double max,
                                                 MeshDisplayProperty *currentSet)
 {
   if(!currentSet) return;
@@ -1585,14 +1654,14 @@ void vtkMimxMeshActor::SetElementSetLegendRange(double min, double max,
 void vtkMimxMeshActor::SetAllElementSetScalarName( std::string scalarName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     double *range = ComputeElementSetScalarRange(currentSet->name.c_str(), scalarName.c_str());
     if ( range ) this->GenerateElementSetMapperLookUpTable(currentSet->name.c_str(), scalarName.c_str(), range);
-        
+
     currentSet->SurfaceActor->Modified();
     currentSet->LegendActor->SetTitle( scalarName.c_str() );
     }
@@ -1602,7 +1671,7 @@ void vtkMimxMeshActor::SetAllElementSetScalarName( std::string scalarName )
 void vtkMimxMeshActor::SetElementSetScalarName(std::string setName, std::string scalarName)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-        
+
   MeshDisplayProperty *currentSet;
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
@@ -1611,7 +1680,7 @@ void vtkMimxMeshActor::SetElementSetScalarName(std::string setName, std::string 
       {
       double *range = ComputeElementSetScalarRange(setName.c_str(), scalarName.c_str());
       if ( range ) this->GenerateElementSetMapperLookUpTable(setName.c_str(), scalarName.c_str(), range);
-        
+
       currentSet->SurfaceActor->Modified();
       currentSet->LegendActor->SetTitle( scalarName.c_str() );
       break;
@@ -1629,11 +1698,11 @@ std::string vtkMimxMeshActor::GetElementSetScalarName( std::string setName )
 void vtkMimxMeshActor::EnableElementSetCuttingPlane( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       this->ClipPlaneGeometryFilter->SetInput( currentSet->ExtractCellsFilter->GetOutput() );
@@ -1652,47 +1721,47 @@ void vtkMimxMeshActor::EnableElementSetCuttingPlane( std::string setName )
       this->CuttingPlaneWidget->SetEnabled( 1 );
       this->CuttingPlaneWidget->GetPlane( this->CuttingPlane );
       this->CuttingPlaneEnabled = true;
-      
+
       currentSet->ShrinkFilter->SetInput( this->ClipPlaneGeometryFilter->GetOutput() );
       currentSet->GeometryFilter->SetInput( this->ClipPlaneGeometryFilter->GetOutput() );
       currentSet->InteriorShrinkFilter->SetInput( this->ClipPlaneGeometryFilter->GetOutput() );
       break;
       }
-    }  
+    }
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::DisableElementSetCuttingPlane( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       this->CuttingPlaneWidget->SetEnabled( 0 );
       this->CuttingPlaneEnabled = false;
       this->ClipPlaneGeometryFilter->SetInput( this->UnstructuredGrid );
-      
+
       currentSet->ShrinkFilter->SetInput( currentSet->ExtractCellsFilter->GetOutput() );
       currentSet->GeometryFilter->SetInput( currentSet->ExtractCellsFilter->GetOutput() );
       currentSet->InteriorShrinkFilter->SetInput( currentSet->ExtractCellsFilter->GetOutput() );
       this->Actor->Modified();
       break;
       }
-    }  
+    }
 }
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::SetAllElementSetScalarVisibility( bool visibility )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     currentSet->SurfaceMapper->SetScalarVisibility(static_cast<int>(visibility));
     currentSet->SurfaceActor->Modified();
     }
@@ -1701,11 +1770,11 @@ void vtkMimxMeshActor::SetAllElementSetScalarVisibility( bool visibility )
 void vtkMimxMeshActor::SetElementSetScalarVisibility(std::string setName, bool visibility)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       currentSet->SurfaceMapper->SetScalarVisibility(static_cast<int>(visibility));
@@ -1718,23 +1787,23 @@ void vtkMimxMeshActor::SetElementSetScalarVisibility(std::string setName, bool v
 bool vtkMimxMeshActor::GetElementSetScalarVisibility( std::string setName )
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       bool visibility = false;
       if(currentSet->SurfaceMapper->GetScalarVisibility( ))   visibility = true;
-      return visibility; 
+      return visibility;
       break;
       }
     }
   return false;
 
 }
-      
+
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::DeleteBoundaryConditionStep(int StepNum)
 {
@@ -1746,7 +1815,7 @@ void vtkMimxMeshActor::DeleteBoundaryConditionStep(int StepNum)
   if(!boundCond)  return;
   int numSteps = boundCond->GetValue(0);
   if(StepNum > numSteps)  return;
-        
+
   char charStepNum0[10];
   sprintf(charStepNum0, "%d", StepNum);
 
@@ -1924,7 +1993,7 @@ void vtkMimxMeshActor::DeleteBoundaryConditionStep(int StepNum)
     for(i=0; i<nodesetnamestring->GetNumberOfValues(); i++)
       {
       const char* nodesetname =  nodesetnamestring->GetValue(i);
-                        
+
       char Concatenate13[256];
       char ConcatenateNew13[256];
       this->ConcatenateStrings("Step", charStepNum, nodesetname, "Force", "X", Concatenate13);
@@ -2088,7 +2157,7 @@ void vtkMimxMeshActor::DeleteBoundaryConditionStep(int StepNum)
   boundCond->SetValue(0, numSteps-1);
 }
 //----------------------------------------------------------------------------------
-void vtkMimxMeshActor::ConcatenateStrings(const char* Step, const char* Num, 
+void vtkMimxMeshActor::ConcatenateStrings(const char* Step, const char* Num,
                                           const char* NodeSetName, const char* Type, const char* Direction, char *Name)
 {
   strcpy(Name, Step);
@@ -2156,13 +2225,10 @@ void vtkMimxMeshActor::SetLegendTextColor(double color[3])
   TextColor[0] = color[0];
   TextColor[1] = color[1];
   TextColor[2] = color[2];
-  if (!this->LegendActor)
-    {
-    this->BuildScalarBar();
-    }
+
   vtkTextProperty *textProperty = this->LegendActor->GetTitleTextProperty();
   textProperty->SetColor( TextColor );
-  
+
   this->LegendActor->SetTitleTextProperty( textProperty );
   this->LegendActor->SetLabelTextProperty( textProperty );
 }
@@ -2172,7 +2238,7 @@ double *vtkMimxMeshActor::GetLegendTextColor( )
 {
   return TextColor;
 }
-  
+
 //----------------------------------------------------------------------------------
 void vtkMimxMeshActor::PrintSelf(ostream& os, vtkIndent indent)
 {
@@ -2219,7 +2285,7 @@ vtkPointSet* vtkMimxMeshActor::GetPointSetOfNodeSet(const char* NodeSetName)
   vtkPoints *points = vtkPoints::New();
   if(!this->PointSetOfNodeSet)    this->PointSetOfNodeSet = vtkUnstructuredGrid::New();
   else    this->PointSetOfNodeSet->Initialize();
-        
+
   int numPoints = this->UnstructuredGrid->GetNumberOfPoints();
 
   for (int i=0; i<numPoints; i++)
@@ -2276,7 +2342,7 @@ void vtkMimxMeshActor::StoreConstantMaterialProperty(
     matarray->Delete();
     }
   matarray = vtkDoubleArray::SafeDownCast(ugrid->GetCellData()->GetArray("Youngs_Modulus"));
-        
+
   for (i=0; i< numCells; i++)
     {
     if(intarray->GetValue(i))
@@ -2288,7 +2354,7 @@ void vtkMimxMeshActor::StoreConstantMaterialProperty(
   strcat(young, "_Constant_Youngs_Modulus");
 
   vtkDoubleArray *Earray = vtkDoubleArray::SafeDownCast(
-    ugrid->GetFieldData()->GetArray(young));        
+    ugrid->GetFieldData()->GetArray(young));
 
   if(Earray)
     {
@@ -2334,7 +2400,7 @@ void vtkMimxMeshActor::StoreImageBasedMaterialProperty(const char *ElSetName)
     ugrid->GetCellData()->AddArray(youngsmodulus);
     youngsmodulus->Delete();
     }
-  youngsmodulus = vtkDoubleArray::SafeDownCast(ugrid->GetCellData()->GetArray("Youngs_Modulus")); 
+  youngsmodulus = vtkDoubleArray::SafeDownCast(ugrid->GetCellData()->GetArray("Youngs_Modulus"));
 
   for (i=0; i< numCells; i++)
     {
@@ -2399,7 +2465,7 @@ void vtkMimxMeshActor::StoreImageBasedMaterialPropertyReBin(const char *ElSetNam
     ugrid->GetCellData()->AddArray(youngsmodulus);
     youngsmodulus->Delete();
     }
-  youngsmodulus = vtkDoubleArray::SafeDownCast(ugrid->GetCellData()->GetArray("Youngs_Modulus")); 
+  youngsmodulus = vtkDoubleArray::SafeDownCast(ugrid->GetCellData()->GetArray("Youngs_Modulus"));
 
   for (i=0; i< numCells; i++)
     {
@@ -2450,12 +2516,12 @@ double* vtkMimxMeshActor::ComputeMeshScalarRange(const char* ArrayName)
   double* range = new double[2];
   double min = VTK_FLOAT_MAX;
   double max = VTK_FLOAT_MIN;
- 
+
   vtkUnstructuredGrid *ugrid = this->UnstructuredGrid;
 
   vtkDoubleArray *doublearray = vtkDoubleArray::SafeDownCast(
     ugrid->GetCellData()->GetArray(ArrayName));
-  if(!doublearray)        
+  if(!doublearray)
     {
     range[0] = min;
     range[1] = max;
@@ -2492,13 +2558,13 @@ double* vtkMimxMeshActor::ComputeMeshScalarRange(const char* ArrayName)
 void vtkMimxMeshActor::ShowHideAllElementSets(bool Show)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
     currentSet->IsVisible = Show;
     }
-  
+
   UpdateMeshDisplay();
   UpdateElementSetDisplay();
 }
@@ -2540,11 +2606,11 @@ void vtkMimxMeshActor::SetElementSetScalarRangeFromElementSet(const char *setNam
 MeshDisplayProperty* vtkMimxMeshActor::GetMeshDisplayProperty(const char *setName)
 {
   std::list<MeshDisplayProperty*>::iterator it;
-  
+
   for ( it=this->ElementSetDisplayList.begin() ; it != this->ElementSetDisplayList.end(); it++ )
     {
     MeshDisplayProperty *currentSet = *it;
-    
+
     if (setName == currentSet->name)
       {
       return currentSet;
@@ -2588,7 +2654,7 @@ void vtkMimxMeshActor::GenerateMeshMapperLookUpTable(const char *ArrayName, doub
     range[1] = VTK_FLOAT_MIN;
     }
   matarray = vtkDoubleArray::SafeDownCast(ugrid->GetCellData()->GetArray(ArrayName));
-                
+
   if(range[0] == VTK_FLOAT_MAX && range[1] == VTK_FLOAT_MIN)
     {
     range[0] = 0.0; range[1] = 0.0;
@@ -3046,7 +3112,7 @@ void vtkMimxMeshActor::MapperRedToBlueLookUpTable(vtkLookupTable *Lut, const cha
     }
 }
 //-----------------------------------------------------------------------------------------------------------------
-void vtkMimxMeshActor::SetColorRangeType(int RangeType, const char *ArrayName, 
+void vtkMimxMeshActor::SetColorRangeType(int RangeType, const char *ArrayName,
                                          const char *aElementSetName, double *Range)
 {
   this->ColorRangeType = RangeType;

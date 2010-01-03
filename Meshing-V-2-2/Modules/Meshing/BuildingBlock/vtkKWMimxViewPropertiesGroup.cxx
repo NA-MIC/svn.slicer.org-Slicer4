@@ -10,12 +10,12 @@ Version:   $Revision: 1.26.4.2 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -166,7 +166,7 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
     vtkErrorMacro(<< this->GetClassName() << " already created");
     return;
     }
-  
+
   // Call the superclass to create the whole widget
 
   this->Superclass::CreateWidget();
@@ -177,9 +177,9 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->ModalOff( );
   this->SetMasterWindow(this->GetMimxMainWindow());
   this->SetTitle("Display Properties");
-      
+
   if(!this->DisplayModeButton)
-          this->DisplayModeButton = vtkKWMenuButtonWithLabel::New();      
+          this->DisplayModeButton = vtkKWMenuButtonWithLabel::New();
   this->DisplayModeButton->SetParent(this);
   this->DisplayModeButton->Create();
   this->DisplayModeButton->SetLabelPositionToLeft();
@@ -191,9 +191,9 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
           "Element Sets",this, "DisplayModeCallback 2");
   this->DisplayModeButton->GetWidget()->SetValue("Mesh");
   this->GetApplication()->Script(
-    "pack %s -side top -anchor n -expand n -padx 10 -pady 6 -fill x", 
-    this->DisplayModeButton->GetWidgetName());  
-  
+    "pack %s -side top -anchor n -expand n -padx 10 -pady 6 -fill x",
+    this->DisplayModeButton->GetWidgetName());
+
   if (!this->ElementSetList)
     this->ElementSetList = vtkKWMultiColumnListWithScrollbars::New();
 
@@ -205,25 +205,25 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->ElementSetList->GetWidget()->SetSortArrowVisibility(0);
   this->ElementSetList->GetWidget()->ColumnSeparatorsVisibilityOff();
   this->ElementSetList->GetWidget()->SetHeight( 4 );
-  
-  
-  // Add the columns 
+
+
+  // Add the columns
   int col_index;
   col_index = this->ElementSetList->GetWidget()->AddColumn(NULL);
   this->ElementSetList->GetWidget()->SetColumnFormatCommandToEmptyOutput(col_index);
   this->ElementSetList->GetWidget()->SetColumnLabelImageToPredefinedIcon(
           col_index, vtkKWIcon::IconEye);
         this->ElementSetList->GetWidget()->SetColumnWidth( col_index, 2);
-        
+
         col_index = this->ElementSetList->GetWidget()->AddColumn("Element Set Name");
   this->ElementSetList->GetWidget()->SetColumnWidth( col_index, 30);
   //this->ElementSetList->GetWidget()->SetColumnFormatCommandToEmptyOutput(col_index);
-  
+
   this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x", 
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x",
     this->ElementSetList->GetWidgetName());
-  
-      
+
+
   // Style Frame
   if (!this->StyleFrame)
   {
@@ -236,9 +236,9 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->StyleFrame->AllowFrameToCollapseOn();
   //this->StyleFrame->CollapseFrame();
   this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 6 -fill x", 
-    this->StyleFrame->GetWidgetName());  
-      
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 6 -fill x",
+    this->StyleFrame->GetWidgetName());
+
   if(!this->DisplayStyleMenuButton)
   {
           this->DisplayStyleMenuButton = vtkKWMenuButtonWithLabel::New();
@@ -257,10 +257,10 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->DisplayStyleMenuButton->GetWidget()->SetValue("Solid + Wireframe");
         this->DisplayStyleMenuButton->SetEnabled(0);
 
-  this->GetApplication()->Script( 
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x", 
+  this->GetApplication()->Script(
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x",
           this->DisplayStyleMenuButton->GetWidgetName());
-        
+
         if ( !this->ActorColorButton )
           this->ActorColorButton = vtkKWChangeColorButton::New();
   this->ActorColorButton->SetParent(this->StyleFrame->GetFrame());
@@ -271,12 +271,12 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->ActorColorButton->SetCommand(this, "SetActorColor");
   this->ActorColorButton->SetEnabled(0);
   this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x", 
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x",
           this->ActorColorButton->GetWidgetName());
-        
+
         if (!this->ElementSizeScale)
     this->ElementSizeScale = vtkKWSpinBoxWithLabel::New();
-    
+
   this->ElementSizeScale->SetParent(this->StyleFrame->GetFrame());
   this->ElementSizeScale->Create();
   this->ElementSizeScale->GetWidget()->SetRange(0.0, 100.0);
@@ -286,11 +286,11 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->ElementSizeScale->SetLabelWidth(15);
   this->ElementSizeScale->GetLabel()->SetText("Element Size (%): ");
   this->ElementSizeScale->GetWidget()->SetCommand(this, "SetElementSizeFromScaleCallback");
-  this->GetApplication()->Script( 
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x", 
+  this->GetApplication()->Script(
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x",
           this->ElementSizeScale->GetWidgetName());
   this->ElementSizeScale->SetEnabled(0);
-        
+
   if(!this->OpacityThumbwheel)
           this->OpacityThumbwheel = vtkKWSpinBoxWithLabel::New();
   this->OpacityThumbwheel->SetParent(this->StyleFrame->GetFrame());
@@ -302,20 +302,20 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->OpacityThumbwheel->SetLabelWidth(15);
   this->OpacityThumbwheel->GetLabel()->SetText("Opacity :");
   this->OpacityThumbwheel->GetWidget()->SetCommand(this, "OpacityCallback");
-  this->GetApplication()->Script( 
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x", 
+  this->GetApplication()->Script(
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x",
           this->OpacityThumbwheel->GetWidgetName());
   this->OpacityThumbwheel->SetEnabled(0);
-  
+
         vtkKWSeparator *separator = vtkKWSeparator::New();
         separator->SetParent(this->StyleFrame->GetFrame());
   separator->Create();
   separator->SetOrientationToHorizontal();
   separator->SetOrientationToHorizontal();
-  this->GetApplication()->Script( 
-    "pack %s -side top -anchor nw -expand n -padx 5 -pady 2 -fill x", 
+  this->GetApplication()->Script(
+    "pack %s -side top -anchor nw -expand n -padx 5 -pady 2 -fill x",
           separator->GetWidgetName());
-          
+
         if (!this->OutlineColorButton)
     this->OutlineColorButton = vtkKWChangeColorButton::New();
   this->OutlineColorButton->SetParent(this->StyleFrame->GetFrame());
@@ -325,11 +325,11 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->OutlineColorButton->SetLabelText("Outline Color");
   this->OutlineColorButton->SetCommand(this, "SetOutlineColor");
   this->OutlineColorButton->SetEnabled(0);
-  this->GetApplication()->Script( 
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 6 -fill x", 
+  this->GetApplication()->Script(
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 6 -fill x",
           this->OutlineColorButton->GetWidgetName());
-            
-          
+
+
   if(!this->LinewidthThumbwheel)
           this->LinewidthThumbwheel = vtkKWSpinBoxWithLabel::New();
   this->LinewidthThumbwheel->SetParent(this->StyleFrame->GetFrame());
@@ -343,16 +343,16 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->LinewidthThumbwheel->SetLabelWidth(15);
   this->LinewidthThumbwheel->GetWidget()->SetCommand(this, "LineWidthCallback");
   this->GetApplication()->Script(
-          "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x", 
+          "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x",
           this->LinewidthThumbwheel->GetWidgetName());
   this->LinewidthThumbwheel->SetEnabled(0);
 
   vtkKWIcon *closeIcon = vtkKWIcon::New();
-  closeIcon->SetImage( image_mimxClose, 
-                       image_mimxClose_width, 
-                       image_mimxClose_height, 
+  closeIcon->SetImage( image_mimxClose,
+                       image_mimxClose_width,
+                       image_mimxClose_height,
                        image_mimxClose_pixel_size);
-                             
+
   if(!this->CloseButton)
   {
     this->CloseButton = vtkKWPushButton::New();
@@ -363,7 +363,7 @@ void vtkKWMimxViewPropertiesGroup::CreateWidget()
   this->CloseButton->SetReliefToFlat( );
   this->CloseButton->SetCommand(this, "Withdraw");
   this->GetApplication()->Script(
-          "pack %s -side right -anchor ne -expand y -padx 2 -pady 6", 
+          "pack %s -side right -anchor ne -expand y -padx 2 -pady 6",
           this->CloseButton->GetWidgetName());
   this->AddBinding("<Escape>", this, "Withdraw");
 }
@@ -382,7 +382,7 @@ void vtkKWMimxViewPropertiesGroup::UpdateEnableState()
 void vtkKWMimxViewPropertiesGroup::SetActorColor(double color[3])
 {
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
         if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_FE_MESH)
         {
         vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
@@ -407,16 +407,16 @@ void vtkKWMimxViewPropertiesGroup::SetActorColor(double color[3])
         else if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_BUILDING_BLOCK)
         {
         vtkMimxUnstructuredGridActor *ugridActor = vtkMimxUnstructuredGridActor::SafeDownCast(
-      this->ObjectList->GetItem(row));   
+      this->ObjectList->GetItem(row));
         ugridActor->SetFillColor( this->ActorColorButton->GetColor() );
         }
         else
         {
         vtkMimxSurfacePolyDataActor *polyDataActor = vtkMimxSurfacePolyDataActor::SafeDownCast(
-      this->ObjectList->GetItem(row));   
+      this->ObjectList->GetItem(row));
         polyDataActor->SetFillColor( this->ActorColorButton->GetColor() );
         }
-        
+
         this->GetMimxMainWindow()->GetRenderWidget()->Render();
 }
 
@@ -424,7 +424,7 @@ void vtkKWMimxViewPropertiesGroup::SetActorColor(double color[3])
 void vtkKWMimxViewPropertiesGroup::SetOutlineColor(double color[3])
 {
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
         if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_FE_MESH)
         {
         vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
@@ -451,16 +451,16 @@ void vtkKWMimxViewPropertiesGroup::SetOutlineColor(double color[3])
         else if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_BUILDING_BLOCK)
         {
         vtkMimxUnstructuredGridActor *ugridActor = vtkMimxUnstructuredGridActor::SafeDownCast(
-      this->ObjectList->GetItem(row));   
+      this->ObjectList->GetItem(row));
         ugridActor->SetOutlineColor( this->OutlineColorButton->GetColor() );
         }
         else
         {
         vtkMimxSurfacePolyDataActor *polyDataActor = vtkMimxSurfacePolyDataActor::SafeDownCast(
-      this->ObjectList->GetItem(row));   
+      this->ObjectList->GetItem(row));
         polyDataActor->SetOutlineColor( this->OutlineColorButton->GetColor() );
         }
-        
+
         this->GetMimxMainWindow()->GetRenderWidget()->Render();
 }
 
@@ -468,9 +468,9 @@ void vtkKWMimxViewPropertiesGroup::SetOutlineColor(double color[3])
 void vtkKWMimxViewPropertiesGroup::SetViewProperties()
 {
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
         this->SetTitle(this->ItemName);
-        
+
   if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_FE_MESH)
   {
     this->DisplayStyleMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
@@ -484,13 +484,13 @@ void vtkKWMimxViewPropertiesGroup::SetViewProperties()
     //vtkUnstructuredGrid *ugrid = meshActor->GetDataSet();
     if (meshActor->GetNumberOfElementSets() == 0)
     {
-      this->DisplayModeButton->SetEnabled( 0 );  
+      this->DisplayModeButton->SetEnabled( 0 );
     }
     else
     {
-      this->DisplayModeButton->SetEnabled( 1 );  
+      this->DisplayModeButton->SetEnabled( 1 );
     }
-                if (meshActor->GetDisplayMode() == vtkMimxMeshActor::DisplayMesh)       
+                if (meshActor->GetDisplayMode() == vtkMimxMeshActor::DisplayMesh)
                 {
       this->ElementSetList->SetEnabled( 0 );
       this->DisplayModeButton->GetWidget()->SetValue("Mesh");
@@ -508,12 +508,12 @@ void vtkKWMimxViewPropertiesGroup::SetViewProperties()
   else if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_BUILDING_BLOCK)
         {
         this->ElementSetList->GetWidget()->DeleteAllRows();
-    
-    this->DisplayModeButton->SetEnabled( 0 );  
+
+    this->DisplayModeButton->SetEnabled( 0 );
     this->ElementSetList->SetEnabled( 0 );
-    
+
     vtkMimxUnstructuredGridActor *ugridActor = vtkMimxUnstructuredGridActor::SafeDownCast(
-      this->ObjectList->GetItem(row));   
+      this->ObjectList->GetItem(row));
     double color[3];
     ugridActor->GetFillColor( color );
     this->ActorColorButton->SetColor(color);
@@ -525,7 +525,7 @@ void vtkKWMimxViewPropertiesGroup::SetViewProperties()
             "Wireframe",this, "RepresentationCallback 2");
     this->DisplayStyleMenuButton->GetWidget()->GetMenu()->AddRadioButton(
             "Surface",this, "RepresentationCallback 1");
-            
+
     int representation = ugridActor->GetDisplayType();
                 if(representation == vtkMimxUnstructuredGridActor::DisplayOutline)
                 {
@@ -534,17 +534,17 @@ void vtkKWMimxViewPropertiesGroup::SetViewProperties()
                         ->GetActor()->GetProperty()->GetLineWidth());
         this->LinewidthThumbwheel->SetEnabled(1);
         this->OutlineColorButton->SetEnabled(1);
-        this->ActorColorButton->SetEnabled(0); 
+        this->ActorColorButton->SetEnabled(0);
                 }
                 else
                 {
                         this->DisplayStyleMenuButton->GetWidget()->SetValue("Surface");
                         this->LinewidthThumbwheel->SetEnabled(0);
-                        this->ActorColorButton->SetEnabled(1); 
+                        this->ActorColorButton->SetEnabled(1);
                         this->OutlineColorButton->SetEnabled(0);
                 }
                 this->DisplayStyleMenuButton->SetEnabled(1);
-            
+
                 this->OpacityThumbwheel->GetWidget()->SetValue(this->ObjectList->GetItem(row)
                         ->GetActor()->GetProperty()->GetOpacity());
                 this->OpacityThumbwheel->SetEnabled(1);
@@ -553,25 +553,25 @@ void vtkKWMimxViewPropertiesGroup::SetViewProperties()
   else
   {
     this->ElementSetList->GetWidget()->DeleteAllRows();
-    
-    this->DisplayModeButton->SetEnabled( 0 );  
+
+    this->DisplayModeButton->SetEnabled( 0 );
     this->ElementSetList->SetEnabled( 0 );
-    
+
     vtkMimxSurfacePolyDataActor *polyDataActor = vtkMimxSurfacePolyDataActor::SafeDownCast(
-          this->ObjectList->GetItem(row));   
+          this->ObjectList->GetItem(row));
     double color[3];
     polyDataActor->GetFillColor( color );
     this->ActorColorButton->SetColor(color);
     polyDataActor->GetFillColor( color );
     this->OutlineColorButton->SetColor(color);
-    
-    
+
+
     this->DisplayStyleMenuButton->GetWidget()->GetMenu()->DeleteAllItems();
           this->DisplayStyleMenuButton->GetWidget()->GetMenu()->AddRadioButton(
             "Wireframe",this, "RepresentationCallback 2");
     this->DisplayStyleMenuButton->GetWidget()->GetMenu()->AddRadioButton(
             "Surface",this, "RepresentationCallback 1");
-            
+
     int representation = polyDataActor->GetDisplayType();
                 if (representation == vtkMimxSurfacePolyDataActor::DisplayOutline)
                 {
@@ -595,14 +595,14 @@ void vtkKWMimxViewPropertiesGroup::SetViewProperties()
                 this->OpacityThumbwheel->SetEnabled(1);
                 this->ElementSizeScale->SetEnabled(0);
         }
-        
+
 }
 
 //----------------------------------------------------------------------------
 void vtkKWMimxViewPropertiesGroup::RepresentationCallback(int type)
 {
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
         switch (type)
         {
           case 1:
@@ -636,13 +636,13 @@ void vtkKWMimxViewPropertiesGroup::RepresentationCallback(int type)
         else if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_BUILDING_BLOCK)
         {
         vtkMimxUnstructuredGridActor *ugridActor = vtkMimxUnstructuredGridActor::SafeDownCast(
-          this->ObjectList->GetItem(row));   
+          this->ObjectList->GetItem(row));
         ugridActor->SetDisplayType( vtkMimxUnstructuredGridActor::DisplaySurface );
         }
         else
         {
         vtkMimxSurfacePolyDataActor *polyDataActor = vtkMimxSurfacePolyDataActor::SafeDownCast(
-          this->ObjectList->GetItem(row));   
+          this->ObjectList->GetItem(row));
         polyDataActor->SetDisplayType( vtkMimxSurfacePolyDataActor::DisplaySurface );
         }
         break;
@@ -669,18 +669,18 @@ void vtkKWMimxViewPropertiesGroup::RepresentationCallback(int type)
                   std::string setName = this->ElementSetList->GetWidget()->GetCellText(elementIndex,1);
             meshActor->SetElementSetDisplayType(setName, vtkMimxMeshActor::DisplayOutline);
           }
-        }      
+        }
         }
         else if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_BUILDING_BLOCK)
         {
         vtkMimxUnstructuredGridActor *ugridActor = vtkMimxUnstructuredGridActor::SafeDownCast(
-          this->ObjectList->GetItem(row));   
+          this->ObjectList->GetItem(row));
         ugridActor->SetDisplayType( vtkMimxUnstructuredGridActor::DisplayOutline );
         }
         else
         {
         vtkMimxSurfacePolyDataActor *polyDataActor = vtkMimxSurfacePolyDataActor::SafeDownCast(
-          this->ObjectList->GetItem(row));   
+          this->ObjectList->GetItem(row));
         polyDataActor->SetDisplayType( vtkMimxSurfacePolyDataActor::DisplayOutline );
         }
         break;
@@ -693,7 +693,7 @@ void vtkKWMimxViewPropertiesGroup::RepresentationCallback(int type)
       this->ActorColorButton->EnabledOn();
       this->LinewidthThumbwheel->EnabledOn();
       this->OpacityThumbwheel->EnabledOn();
-      
+
             if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_FE_MESH)
         {
         vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
@@ -710,12 +710,12 @@ void vtkKWMimxViewPropertiesGroup::RepresentationCallback(int type)
                   std::string setName = this->ElementSetList->GetWidget()->GetCellText(elementIndex,1);
             meshActor->SetElementSetDisplayType(setName, vtkMimxMeshActor::DisplaySurfaceAndOutline);
           }
-        } 
-        this->ElementSizeScale->EnabledOn();       
+        }
+        this->ElementSizeScale->EnabledOn();
         }
         break;
         }
-        
+
   this->GetMimxMainWindow()->GetRenderWidget()->Render();
 }
 
@@ -723,7 +723,7 @@ void vtkKWMimxViewPropertiesGroup::RepresentationCallback(int type)
 void vtkKWMimxViewPropertiesGroup::LineWidthCallback(double width)
 {
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
   if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_FE_MESH)
   {
     vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
@@ -741,7 +741,7 @@ void vtkKWMimxViewPropertiesGroup::LineWidthCallback(double width)
         meshActor->SetElementSetOutlineRadius(setName, width);
       }
     }
-    
+
   }
   else
   {
@@ -754,7 +754,7 @@ void vtkKWMimxViewPropertiesGroup::LineWidthCallback(double width)
 void vtkKWMimxViewPropertiesGroup::OpacityCallback(double opacity)
 {
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
         if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_FE_MESH)
   {
     vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
@@ -788,7 +788,7 @@ void vtkKWMimxViewPropertiesGroup::PrintSelf(ostream& os, vtkIndent indent)
 void vtkKWMimxViewPropertiesGroup::SetElementSetColor(double color[3])
 {
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
         this->ObjectList->GetItem(row)->GetActor()->GetProperty()
                 ->SetColor(this->ActorColorButton->GetColor());
         this->GetMimxMainWindow()->GetRenderWidget()->Render();
@@ -798,7 +798,7 @@ void vtkKWMimxViewPropertiesGroup::SetElementSizeFromScaleCallback(double value)
 {
         double shrinkFactor = value / 100.0;
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
         if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_FE_MESH)
         {
                 vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
@@ -815,7 +815,7 @@ void vtkKWMimxViewPropertiesGroup::SetElementSizeFromScaleCallback(double value)
           std::string setName = this->ElementSetList->GetWidget()->GetCellText(elementIndex,1);
         meshActor->SetElementSetShrinkFactor(setName, shrinkFactor);
       }
-    }  
+    }
         }
         this->GetMimxMainWindow()->GetRenderWidget()->Render();
 }
@@ -839,30 +839,30 @@ void vtkKWMimxViewPropertiesGroup::DisplayModeCallback(int mode)
           case 2:
             this->DisplayModeButton->GetWidget()->SetValue("Element Sets");
             this->ElementSetList->EnabledOn();
-            this->SetElementSetList();  
+            this->SetElementSetList();
       meshActor->SetDisplayMode(vtkMimxMeshActor::DisplayElementSets);
       this->ElementSetList->GetWidget()->SetSelectionCommand(this, "ElementSetDisplayPropertyCallback");
       this->ElementSetDisplayPropertyCallback();
             break;
         }
-        
+
 }
 //----------------------------------------------------------------------------------------------
 void vtkKWMimxViewPropertiesGroup::ElementSetVisibilityCallback(int index, int flag)
 {
         int row = this->GetItemRow(); /*this->SelectionRow;*/
-        
+
         if (this->ObjectList->GetItem(row)->GetDataType() == ACTOR_FE_MESH)
         {
         if ( index >= 0 )
         {
           vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(
         this->ObjectList->GetItem(row));
-                
+
           std::string setName = this->ElementSetList->GetWidget()->GetCellText(index,1);
-      if ( flag ) 
+      if ( flag )
         meshActor->ShowElementSet( setName );
-          else 
+          else
             meshActor->HideElementSet( setName );
     }
         }
@@ -875,9 +875,9 @@ void vtkKWMimxViewPropertiesGroup::ElementSetDisplayPropertyCallback( )
         int row = this->ElementSetList->GetWidget()->GetIndexOfFirstSelectedRow();
         if ( row < 0 )
           return;
-        
+
         std::string setName = this->ElementSetList->GetWidget()->GetCellText(row, 1);
-        
+
         int meshIndex = this->GetItemRow(); /*this->SelectionRow;*/
         vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(this->ObjectList->GetItem(meshIndex));
         int representation = meshActor->GetElementSetDisplayType( setName );
@@ -908,17 +908,17 @@ void vtkKWMimxViewPropertiesGroup::ElementSetDisplayPropertyCallback( )
     this->OpacityThumbwheel->EnabledOn();
     this->ElementSizeScale->EnabledOn();
   }
-  
+
   this->OpacityThumbwheel->GetWidget()->SetValue(meshActor->GetElementSetOpacity( setName ));
         this->ElementSizeScale->GetWidget()->SetValue(meshActor->GetElementSetShrinkFactor( setName )*100.0);
-        
+
   this->LinewidthThumbwheel->GetWidget()->SetValue(meshActor->GetElementSetOutlineRadius( setName )*100.0);
-        
+
         double rgb[3];
         meshActor->GetElementSetColor( setName, rgb );
         this->ActorColorButton->SetColor(rgb);
         meshActor->GetElementSetOutlineColor( setName, rgb );
-        this->OutlineColorButton->SetColor(rgb);        
+        this->OutlineColorButton->SetColor(rgb);
 }
 
 //----------------------------------------------------------------------------------------------
@@ -926,17 +926,17 @@ void vtkKWMimxViewPropertiesGroup::SetMeshDisplayPropertyCallback( )
 {
   int row = this->GetItemRow(); /*this->SelectionRow;*/
   vtkMimxMeshActor *meshActor = vtkMimxMeshActor::SafeDownCast(this->ObjectList->GetItem(row));
-        
+
   if (this->inializedElementSetList == false)
   {
     this->SetElementSetList();
     this->SetElementSetList();
   }
-  
+
   this->DisplayStyleMenuButton->EnabledOn();
   this->ElementSetList->EnabledOff();
-  
-  int representation = meshActor->GetMeshDisplayType();  
+
+  int representation = meshActor->GetMeshDisplayType();
   if (representation == vtkMimxMeshActor::DisplaySurface)
   {
     this->DisplayStyleMenuButton->GetWidget()->SetValue("Solid");
@@ -964,11 +964,11 @@ void vtkKWMimxViewPropertiesGroup::SetMeshDisplayPropertyCallback( )
     this->OpacityThumbwheel->EnabledOn();
     this->ElementSizeScale->EnabledOn();
   }
-  
+
   this->OpacityThumbwheel->GetWidget()->SetValue(meshActor->GetMeshOpacity());
   this->ElementSizeScale->GetWidget()->SetValue(meshActor->GetMeshShrinkFactor()*100.0);
         this->LinewidthThumbwheel->GetWidget()->SetValue(meshActor->GetMeshOutlineRadius()*100.0);
-        
+
         double rgb[3];
         meshActor->GetMeshColor( rgb );
         this->ActorColorButton->SetColor(rgb);
@@ -984,7 +984,7 @@ void vtkKWMimxViewPropertiesGroup::SetElementSetList( )
   vtkUnstructuredGrid *ugrid = meshActor->GetDataSet();
   vtkStringArray *stringarray = vtkStringArray::SafeDownCast(
                 ugrid->GetFieldData()->GetAbstractArray("Element_Set_Names"));
-        
+
         this->ElementSetList->GetWidget()->DeleteAllRows();
         if ( stringarray )
         {
@@ -1003,23 +1003,23 @@ void vtkKWMimxViewPropertiesGroup::SetElementSetList( )
           if (stringarray->GetNumberOfTuples() > 0 )
           {
             this->ElementSetList->GetWidget()->SelectRow( 0 );
-            this->DisplayModeButton->SetEnabled( 1 );  
+            this->DisplayModeButton->SetEnabled( 1 );
             //this->ElementSetList->GetWidget()->SetCellTextAsInt(0, 0, 1);
           }
         }
         this->inializedElementSetList = true;
-}  
+}
 //----------------------------------------------------------------------------------------------
 void vtkKWMimxViewPropertiesGroup::SetItemName( const char *item )
 {
   strcpy(this->ItemName, item);
-}       
+}
 
 //----------------------------------------------------------------------------------------------
 void vtkKWMimxViewPropertiesGroup::SetItemId( const char *id )
 {
   strcpy(this->ItemId, id);
-}  
+}
 
 //----------------------------------------------------------------------------------------------
 int vtkKWMimxViewPropertiesGroup::GetItemRow( )
@@ -1032,5 +1032,5 @@ int vtkKWMimxViewPropertiesGroup::GetItemRow( )
                 }
         }
         return 0;
-}                       
+}
 //-----------------------------------------------------------------------------------------------

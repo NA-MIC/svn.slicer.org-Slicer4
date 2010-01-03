@@ -54,7 +54,7 @@ vtkMRMLNode* vtkMRMLFiniteElementBuildingBlockDisplayNode::CreateNodeInstance()
 //----------------------------------------------------------------------------
 vtkMRMLFiniteElementBuildingBlockDisplayNode::vtkMRMLFiniteElementBuildingBlockDisplayNode()
 {
-  this->ShrinkFactor = 1.0;  
+  this->ShrinkFactor = 1.0;
   this->FeatureEdges = vtkFeatureEdges::New();
   this->OutlineTube = vtkTubeFilter::New();
 }
@@ -69,17 +69,17 @@ vtkPolyData* vtkMRMLFiniteElementBuildingBlockDisplayNode::GetPolyData()
   this->FeatureEdges->ManifoldEdgesOn();
   this->FeatureEdges->FeatureEdgesOff();
   this->OutlineTube->SetInput(this->FeatureEdges->GetOutput());
-  this->OutlineTube->SetRadius(0.15);
-  return this->OutlineTube->GetOutput();  
+  this->OutlineTube->SetRadius(0.035);
+  return this->OutlineTube->GetOutput();
 }
 
 
 //----------------------------------------------------------------------------
-void vtkMRMLFiniteElementBuildingBlockDisplayNode::UpdatePolyDataPipeline() 
+void vtkMRMLFiniteElementBuildingBlockDisplayNode::UpdatePolyDataPipeline()
 {
   //this->ShrinkPolyData->SetShrinkFactor(this->ShrinkFactor);
 };
- 
+
 
 //----------------------------------------------------------------------------
 vtkMRMLFiniteElementBuildingBlockDisplayNode::~vtkMRMLFiniteElementBuildingBlockDisplayNode()
@@ -93,7 +93,7 @@ vtkMRMLFiniteElementBuildingBlockDisplayNode::~vtkMRMLFiniteElementBuildingBlock
 void vtkMRMLFiniteElementBuildingBlockDisplayNode::WriteXML(ostream& of, int nIndent)
 {
   // Write all attributes not equal to their defaults
-  
+
   Superclass::WriteXML(of, nIndent);
 
   vtkIndent indent(nIndent);
@@ -111,18 +111,18 @@ void vtkMRMLFiniteElementBuildingBlockDisplayNode::ReadXMLAttributes(const char*
 
   const char* attName;
   const char* attValue;
-  while (*atts != NULL) 
+  while (*atts != NULL)
     {
     attName = *(atts++);
     attValue = *(atts++);
 
-//    if (!strcmp(attName, "shrinkFactor")) 
+//    if (!strcmp(attName, "shrinkFactor"))
 //      {
 //      std::stringstream ss;
 //      ss << attValue;
 //      ss >> ShrinkFactor;
 //      }
-    }  
+    }
 }
 
 
@@ -140,7 +140,7 @@ void vtkMRMLFiniteElementBuildingBlockDisplayNode::Copy(vtkMRMLNode *anode)
 void vtkMRMLFiniteElementBuildingBlockDisplayNode::PrintSelf(ostream& os, vtkIndent indent)
 {
   //int idx;
-  
+
   Superclass::PrintSelf(os,indent);
 //  os << indent << "ShrinkFactor:             " << this->ShrinkFactor << "\n";
 }
@@ -148,7 +148,7 @@ void vtkMRMLFiniteElementBuildingBlockDisplayNode::PrintSelf(ostream& os, vtkInd
 
 //---------------------------------------------------------------------------
 void vtkMRMLFiniteElementBuildingBlockDisplayNode::ProcessMRMLEvents ( vtkObject *caller,
-                                           unsigned long event, 
+                                           unsigned long event,
                                            void *callData )
 {
   Superclass::ProcessMRMLEvents(caller, event, callData);

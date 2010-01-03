@@ -20,6 +20,8 @@
 #include "vtkMimxMeshActor.h"
 #include "vtkMimxCommonWin32Header.h"
 
+class vtkMRMLFiniteElementMeshDisplayNode;
+
 class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshNode : public vtkMRMLUnstructuredGridNode
 {
   public:
@@ -51,16 +53,22 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshNode : public vtkMRMLUnstruc
   vtkGetObjectMacro(MimxMeshActor, vtkMimxMeshActor);
 
    // don't use VTK macros  because the values are stored in an actor instance
-   void   SetDataType(int value) {this->MimxMeshActor->SetDataType(value);}   
-   int    GetDataType(void)      {return this->MimxMeshActor->GetDataType();} 
- //***  void   SetFileName(char* value) {this->MimxMeshActor->SetFileName(value);}   
-   char*  GetFileName(void)      {return this->MimxMeshActor->GetFileName();} 
-   void   SetFilePath(char* value) {this->MimxMeshActor->SetFilePath(value);}   
-   char*  GetFilePath(void)      {return this->MimxMeshActor->GetFilePath();} 
-   
+   void   SetDataType(int value) {this->MimxMeshActor->SetDataType(value);}
+   int    GetDataType(void)      {return this->MimxMeshActor->GetDataType();}
+ //***  void   SetFileName(char* value) {this->MimxMeshActor->SetFileName(value);}
+   char*  GetFileName(void)      {return this->MimxMeshActor->GetFileName();}
+   void   SetFilePath(char* value) {this->MimxMeshActor->SetFilePath(value);}
+   char*  GetFilePath(void)      {return this->MimxMeshActor->GetFilePath();}
+
    void SetSavedVisibilityState(bool state) {this->savedVisibilityState = state;}
-   bool GetSavedVisibilityState(void) {return this->savedVisibilityState;}  
-  
+   bool GetSavedVisibilityState(void) {return this->savedVisibilityState;}
+
+
+   // need to re-implement this from the MRMLModelNode class because our displaynode
+   // type needs to be returned
+   virtual vtkMRMLFiniteElementMeshDisplayNode* GetModelDisplayNode();
+
+
 protected:
   vtkMRMLFiniteElementMeshNode();
   ~vtkMRMLFiniteElementMeshNode();
@@ -69,9 +77,9 @@ protected:
 
   // store the state inside an actor, so it can share with the local list
   vtkMimxMeshActor* MimxMeshActor;
-  
+
   // remember whether this node was on or off when IA_FEMesh was onscreen.  The state is stored here
-  // during module exit and checked during module entry. 
+  // during module exit and checked during module entry.
   bool savedVisibilityState;
 };
 

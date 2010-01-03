@@ -11,12 +11,12 @@ Version:   $Revision: 1.13 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -41,6 +41,8 @@ vtkMimxActorBase::vtkMimxActorBase()
   this->UniqueId = new char[64];
   this->FoundationName = new char[256];
   this->DataType = 0;
+  // added for Slicer
+  this->SavedDisplayNode = NULL;
 }
 
 vtkMimxActorBase::~vtkMimxActorBase()
@@ -87,4 +89,37 @@ void vtkMimxActorBase::SetObjectName(const char* aFileName, vtkIdType &Count)
   sprintf(buffer, "%ld", (long) Count);
   strcat(tempbuffer, buffer);
   strcpy(this->FileName, tempbuffer);
+}
+
+// added for Slicer integration
+
+void vtkMimxActorBase::SaveVisibility(void) {this->SavedVisibility = (this->Actor->GetVisibility())?true:false;}
+void vtkMimxActorBase::RestoreVisibility(void) {this->SetVisibility(this->SavedVisibility);}
+
+
+void vtkMimxActorBase::Hide()
+{
+    if (this->SavedDisplayNode != NULL)
+        this->SavedDisplayNode->SetVisibility(0);
+    if (this->Actor != NULL)
+        this->Actor->SetVisibility(0);
+}
+
+
+void vtkMimxActorBase::Show()
+{
+    if (this->SavedDisplayNode != NULL)
+        this->SavedDisplayNode->SetVisibility(1);
+    if (this->Actor != NULL)
+        this->Actor->SetVisibility(1);
+}
+
+
+void  vtkMimxActorBase::SetVisibility(int i)
+{
+    switch (i)
+   {
+      case 0: {this->Hide(); break;}
+      case 1: {this->Show(); break;}
+    }
 }

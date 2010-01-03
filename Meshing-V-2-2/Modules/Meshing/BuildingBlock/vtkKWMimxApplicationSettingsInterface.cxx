@@ -212,6 +212,14 @@ void vtkKWMimxApplicationSettingsInterface::Create()
   this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2 -fill x",
                  this->autoSaveDir->GetWidgetName()); 
   
+  this->clearDisplayOnExitButton = vtkKWCheckButtonWithLabel::New();
+   this->clearDisplayOnExitButton->SetParent ( frame );
+   this->clearDisplayOnExitButton->Create();
+   this->clearDisplayOnExitButton->SetLabelText ("Clear Display of Meshing Element(s) On Module Exit:");
+   this->clearDisplayOnExitButton->GetWidget()->SetCommand ( this, "ClearScreenOnExitCallback");
+   this->Script ( "pack %s -side top -anchor nw -padx 2 -pady 2",
+                  this->clearDisplayOnExitButton->GetWidgetName());
+  
   this->Separator = vtkKWSeparator::New();
   this->Separator->SetParent ( frame );
   this->Separator->Create();
@@ -437,6 +445,21 @@ void vtkKWMimxApplicationSettingsInterface::Update()
       }
     }
     
+    // app setting to control whether the Finite Element meshing elements
+    // are cleared away when exiting the module or not. The ClearDisplayOnExitFlag
+    // value is set via a callback
+    
+    if (this->clearDisplayOnExitButton)
+    {
+          app->SetClearDisplayOnExitFlag(1);
+          this->clearDisplayOnExitButton->GetWidget()->SelectedStateOn();
+    }
+    else
+    {
+        app->SetClearDisplayOnExitFlag( 0 );
+        this->clearDisplayOnExitButton->GetWidget()->SelectedStateOff();
+    }
+    
     double saveTime = static_cast<double>(app->GetAutoSaveTime());
     if (this->autoSaveScale)
     {
@@ -555,6 +578,24 @@ void vtkKWMimxApplicationSettingsInterface::AutoSaveDirectoryModeCallback( int m
     app->SetAutoSaveWorkDirFlag( false );
   }
 }
+
+
+
+
+
+//----------------------------------------------------------------------------
+void vtkKWMimxApplicationSettingsInterface::ClearScreenOnExitCallback( int mode)
+{
+  vtkKWMimxApplication *app
+    = vtkKWMimxApplication::SafeDownCast(this->GetApplication());
+  
+  if (mode)
+      app->SetClearDisplayOnExitFlag(0);
+  else
+      app->SetClearDisplayOnExitFlag(1);
+}
+
+
 //----------------------------------------------------------------------------
 void vtkKWMimxApplicationSettingsInterface::AutoSaveDirectoryCallback( )
 {

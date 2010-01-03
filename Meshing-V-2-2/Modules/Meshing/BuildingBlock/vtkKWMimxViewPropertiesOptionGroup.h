@@ -11,12 +11,12 @@ Version:   $Revision: 1.4.4.1 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -43,6 +43,7 @@ class vtkKWFrame;
 class vtkKWFrameWithLabel;
 class vtkKWMenuButtonWithLabel;
 class vtkKWPushButton;
+class vtkKWScale;
 
 class VTK_BUILDINGBLOCK_EXPORT vtkKWMimxViewPropertiesOptionGroup : public vtkKWTopLevel
 {
@@ -50,7 +51,7 @@ public:
   static vtkKWMimxViewPropertiesOptionGroup* New();
   vtkTypeRevisionMacro(vtkKWMimxViewPropertiesOptionGroup,vtkKWTopLevel);
   void PrintSelf(ostream& os, vtkIndent indent);
- 
+
   virtual void Update();
   virtual void UpdateEnableState();
 
@@ -67,9 +68,14 @@ public:
   void SpecifyRangeCallback(int mode);
   void SpecifyTitleCallback(int mode);
   void DeselectAllButtons();
+
+  // allow user to specify a threshold to display between 0.0 and 1.0. to select
+  // which elements are rendered.
+ void  UpdateThresholdCallback(double value);
+
   vtkSetObjectMacro(MimxMainWindow, vtkKWMimxMainWindow);
   vtkSetObjectMacro(MeshActor, vtkMimxMeshActor);
-  vtkSetStringMacro(ElementSetName); 
+  vtkSetStringMacro(ElementSetName);
   vtkSetStringMacro(ArrayName);
   vtkGetObjectMacro(DecimalPrecisionWidget, vtkKWComboBoxWithLabel);
   vtkGetObjectMacro(SpecifyTitleButton, vtkKWCheckButtonWithLabel);
@@ -81,30 +87,31 @@ protected:
         vtkKWMimxViewPropertiesOptionGroup();
         ~vtkKWMimxViewPropertiesOptionGroup();
         virtual void CreateWidget();
-  
+
 private:
   vtkKWMimxViewPropertiesOptionGroup(const vtkKWMimxViewPropertiesOptionGroup&); // Not implemented
   void operator=(const vtkKWMimxViewPropertiesOptionGroup&); // Not implemented
-  
+
   vtkKWMimxMainWindow *MimxMainWindow;
-  vtkMimxMeshActor *MeshActor;  
+  vtkMimxMeshActor *MeshActor;
   char *ElementSetName;
   char *ArrayName;
-  
+
   vtkKWFrame *OptionsFrame;
+ vtkKWScale * UpdateThreshold;
   vtkKWMenuButtonWithLabel *ColorMenuButton;
   vtkKWFrameWithLabel *RangeFrame;
   vtkKWCheckButtonWithLabel *SpecifyRangeButton;
   vtkKWEntryWithLabel *RangeMinimum;
   vtkKWEntryWithLabel *RangeMaximum;
   vtkKWPushButton *UpdateRange;
-  
+
   vtkKWFrameWithLabel *LegendFrame;
   vtkKWComboBoxWithLabel *DecimalPrecisionWidget;
   vtkKWCheckButtonWithLabel *SpecifyTitleButton;
   vtkKWEntryWithLabel *LegendTitle;
   vtkKWPushButton *CloseButton;
-  
+
   double* GetRange();
 };
 

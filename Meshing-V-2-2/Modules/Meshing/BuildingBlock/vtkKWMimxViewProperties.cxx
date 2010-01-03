@@ -11,12 +11,12 @@ Version:   $Revision: 1.43.4.2 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -113,7 +113,7 @@ void vtkKWMimxViewProperties::CreateWidget()
   this->MainFrame->AllowFrameToCollapseOn();
         //this->MainFrame->SetHeight(25);
   this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand y -fill x", 
+    "pack %s -side top -anchor nw -expand y -fill x",
     this->MainFrame->GetWidgetName());
 
   if(!this->MultiColumnList)
@@ -127,32 +127,32 @@ void vtkKWMimxViewProperties::CreateWidget()
 
   int col_index;
 
-  // Add the columns 
+  // Add the columns
   col_index = this->MultiColumnList->GetWidget()->AddColumn(NULL);
   this->MultiColumnList->GetWidget()->SetColumnFormatCommandToEmptyOutput(col_index);
   this->MultiColumnList->GetWidget()->SetColumnLabelImageToPredefinedIcon(
           col_index, vtkKWIcon::IconEye);
         this->MultiColumnList->GetWidget()->SetColumnWidth( col_index, 2);
-        
+
         col_index = this->MultiColumnList->GetWidget()->AddColumn("Name");
   this->MultiColumnList->GetWidget()->SetColumnWidth( col_index, 30);
   this->MultiColumnList->GetWidget()->SetColumnFormatCommandToEmptyOutput(col_index);
   this->MultiColumnList->GetWidget()->SetColumnSortedCommand(this, "SortedCommandCallback");
-  
+
   col_index = this->MultiColumnList->GetWidget()->AddColumn("Type");
   this->MultiColumnList->GetWidget()->SetColumnWidth( col_index, 10);
   this->MultiColumnList->GetWidget()->SetConfigurationOption("-font", "arial 8 bold");
-  
+
   col_index = this->MultiColumnList->GetWidget()->AddColumn("");
   this->MultiColumnList->GetWidget()->SetColumnWidth( col_index, 0);
   this->MultiColumnList->GetWidget()->SetColumnFormatCommandToEmptyOutput(col_index);
-  
+
   this->MultiColumnList->GetWidget()->SetSortArrowVisibility(0);
   this->MultiColumnList->GetWidget()->ColumnSeparatorsVisibilityOff();
   this->MultiColumnList->GetWidget()->SetHeight( 4 );
-  
+
   this->GetApplication()->Script(
-    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x", 
+    "pack %s -side top -anchor nw -expand n -padx 2 -pady 2 -fill x",
     this->MultiColumnList->GetWidgetName());
 }
 //----------------------------------------------------------------------------
@@ -195,11 +195,16 @@ void vtkKWMimxViewProperties::VisibilityCallback(const char *objectId, int flag)
           }
           else
           {
-            this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(
-              this->ObjectList->GetItem(j)->GetActor());
-                        this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,1);
-                        this->GetMimxMainWindow()->GetRenderWidget()->Render();
-                        return;
+//            this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(
+//              this->ObjectList->GetItem(j)->GetActor());
+//                        this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,1);
+//                        this->GetMimxMainWindow()->GetRenderWidget()->Render();
+//                        return;
+              // enable the surface actor that is already in the scene
+             vtkMimxActorBase::SafeDownCast(this->ObjectList->GetItem(j))->Show();
+              this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,1);
+              return;
+
           }
         }
         else
@@ -221,10 +226,14 @@ void vtkKWMimxViewProperties::VisibilityCallback(const char *objectId, int flag)
           }
           else
           {
-            this->GetMimxMainWindow()->GetRenderWidget()->RemoveViewProp(
-                          this->ObjectList->GetItem(j)->GetActor());
-                        this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,0);
-                        this->GetMimxMainWindow()->GetRenderWidget()->Render();
+//            this->GetMimxMainWindow()->GetRenderWidget()->RemoveViewProp(
+//                        this->ObjectList->GetItem(j)->GetActor());
+//                        this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,0);
+//                        this->GetMimxMainWindow()->GetRenderWidget()->Render();
+//                        return;
+              // leave the surface actor in the scene, just turn it off because the user toggled it off
+              vtkMimxActorBase::SafeDownCast(this->ObjectList->GetItem(j))->Hide();
+             //           this->MultiColumnList->GetWidget()->SetCellTextAsInt(i,0,0);
                         return;
           }
         }
@@ -239,33 +248,36 @@ void vtkKWMimxViewProperties::AddObjectList(vtkMimxActorBase *actor)
         sprintf(UniqueObjectId, "Object-%d", this->ObjectId);
         this->ObjectId++;
         actor->SetUniqueId( UniqueObjectId );
-        
+
         this->ObjectList->AppendItem(actor);
-        
+
         int rowIndex = this->ObjectList->GetNumberOfItems()-1;
-        
+
         this->MultiColumnList->GetWidget()->InsertCellTextAsInt(rowIndex, 0, 1);
   this->MultiColumnList->GetWidget()->SetCellWindowCommandToCheckButton( rowIndex, 0);
-  
+
   char commandName[256];
   sprintf(commandName, "VisibilityCallback %s", UniqueObjectId);
-  
-        this->MultiColumnList->GetWidget()->GetCellWindowAsCheckButton(rowIndex,0)->SetCommand(this, commandName);      
-  this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFileName());
-                
+
+        this->MultiColumnList->GetWidget()->GetCellWindowAsCheckButton(rowIndex,0)->SetCommand(this, commandName);
+        // *** Changed FileName to FoundationName
+  this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFoundationName());
+
+  // *** defeated add to show objects only through MRML nodes
+
   switch (actor->GetDataType())
   {
     case ACTOR_FE_MESH:
       this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 2, "Mesh");
-      this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
+     // this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
       break;
     case ACTOR_POLYDATA_SURFACE:
       this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 2, "Surface");
-      this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
+     // this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
       break;
     case ACTOR_BUILDING_BLOCK:
       this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 2, "Block");
-      this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
+     // this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(actor->GetActor());
       break;
     case ACTOR_IMAGE:
       this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 2, "Image");
@@ -273,10 +285,13 @@ void vtkKWMimxViewProperties::AddObjectList(vtkMimxActorBase *actor)
       break;
   }
   this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 3, UniqueObjectId);
-  
-  sprintf(commandName, "CreateNameCellCallback %s %d", UniqueObjectId, static_cast<int>(actor->GetDataType())); 
+
+  sprintf(commandName, "CreateNameCellCallback %s %d", UniqueObjectId, static_cast<int>(actor->GetDataType()));
   this->MultiColumnList->GetWidget()->SetCellWindowCommand(rowIndex, 1, this, commandName);
         this->GetMimxMainWindow()->GetRenderWidget()->Render();
+
+        // ** Slicer request render
+      // this->GetMimxMainWindow()->RequestRender();
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxViewProperties::UpdateVisibility()
@@ -311,6 +326,11 @@ void vtkKWMimxViewProperties::UpdateVisibility()
 //----------------------------------------------------------------------------
 void vtkKWMimxViewProperties::UpdateVisibilityList()
 {
+        // update the visibility of the object.  Meshes are handled as a special case.  Visibility to other objects are controlled
+        // by invoking a method on the MimxActor which sets its visibility.  This modification to use SetVisibility was added for
+        // integration with slicer.  Previously the actors were removed and added to the render window, which is inconsistent with
+        // the MRML scene abstraction of Slicer.
+
         for (int i=0; i<this->ObjectList->GetNumberOfItems(); i++)
         {
                 if (this->ObjectList->GetItem(i)->GetDataType() == ACTOR_FE_MESH)
@@ -328,11 +348,13 @@ void vtkKWMimxViewProperties::UpdateVisibilityList()
                 {
                         if(this->MultiColumnList->GetWidget()->GetCellWindowAsCheckButton(i,0)->GetSelectedState())
                         {
-                                this->MimxMainWindow->GetRenderWidget()->AddViewProp(this->ObjectList->GetItem(i)->GetActor());
+                                //this->MimxMainWindow->GetRenderWidget()->AddViewProp(this->ObjectList->GetItem(i)->GetActor());
+                                vtkMimxActorBase::SafeDownCast(this->ObjectList->GetItem(i))->SetVisibility(1);
                         }
                         else
                         {
-                                this->MimxMainWindow->GetRenderWidget()->RemoveViewProp(this->ObjectList->GetItem(i)->GetActor());
+                               // this->MimxMainWindow->GetRenderWidget()->RemoveViewProp(this->ObjectList->GetItem(i)->GetActor());
+                            vtkMimxActorBase::SafeDownCast(this->ObjectList->GetItem(i))->SetVisibility(0);
                         }
                 }
         }
@@ -380,7 +402,7 @@ void vtkKWMimxViewProperties::DeleteObjectList(int DataType, int Position)
 void vtkKWMimxViewProperties::DeleteObjectList(const char *name)
 {
         // match the position from one list to the other
-        int i;  
+        int i;
         for (i=0; i<this->ObjectList->GetNumberOfItems(); i++)
         {
                 //const char *name1 = this->MultiColumnList->GetWidget()->GetCellText(i,1);
@@ -413,11 +435,11 @@ void vtkKWMimxViewProperties::ViewPropertyCallback(const char *objectId, const c
           this->ViewPropertyDialog->SetItemId( objectId );
           this->ViewPropertyDialog->SetItemName(itemText);
           this->ViewPropertyDialog->Create();
-          this->ViewPropertyDialog->SetViewProperties();  
+          this->ViewPropertyDialog->SetViewProperties();
           this->ViewPropertyDialog->Display();
 }
 //----------------------------------------------------------------------------
-void vtkKWMimxViewProperties::CreateNameCellCallback(const char *objectId, int actorType, 
+void vtkKWMimxViewProperties::CreateNameCellCallback(const char *objectId, int actorType,
                                                                                                          const char *tableWidgetName, int row, int col, const char *widgetName)
 {
   vtkKWPushButton *cellButton = vtkKWPushButton::New();
@@ -435,7 +457,7 @@ void vtkKWMimxViewProperties::CreateNameCellCallback(const char *objectId, int a
     sprintf(callbackCommand, "ViewPropertyCallback %s %s", objectId, this->MultiColumnList->GetWidget()->GetCellText(row, col));
     cellButton->SetCommand(this, callbackCommand);
   }
-}    
+}
 //----------------------------------------------------------------------------
 void vtkKWMimxViewProperties::PrintSelf(ostream& os, vtkIndent indent)
 {
@@ -450,12 +472,12 @@ void vtkKWMimxViewProperties::SortedCommandCallback( )
     char commandText[64];
     sprintf(commandText, "VisibilityCallback %s", id);
     this->MultiColumnList->GetWidget()->GetCellWindowAsCheckButton(i,0)->SetCommand(this, commandText);
-  } 
+  }
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxViewProperties::EnableViewPropertyList( int mode )
 {
   this->MultiColumnList->SetEnabled( mode );
-        this->MultiColumnList->UpdateEnableState(); 
+        this->MultiColumnList->UpdateEnableState();
 }
 //----------------------------------------------------------------------------

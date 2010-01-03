@@ -11,12 +11,12 @@ Version:   $Revision: 1.19 $
  The University of Iowa
  Iowa City, IA 52242
  http://www.ccad.uiowa.edu/mimx/
- 
+
 Copyright (c) The University of Iowa. All rights reserved.
 See MIMXCopyright.txt or http://www.ccad.uiowa.edu/mimx/Copyright.htm for details.
 
-This software is distributed WITHOUT ANY WARRANTY; without even 
-the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR 
+This software is distributed WITHOUT ANY WARRANTY; without even
+the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
@@ -48,7 +48,7 @@ vtkStandardNewMacro(vtkMimxUnstructuredGridActor);
 // node which store the information during grid traversal
 struct Node
 {
-  int CellNum;    
+  int CellNum;
   int EdgeNum;
   Node* Parent;
   Node* PeerPrev;
@@ -164,7 +164,7 @@ void vtkMimxUnstructuredGridActor::BuildMeshSeedLinks()
           int k;
           k=-1;
           int count = 0;
-          do 
+          do
             {
             k++;
             if(currpar->EdgeNum == 1 )
@@ -193,7 +193,7 @@ void vtkMimxUnstructuredGridActor::BuildMeshSeedLinks()
                 }
               else
                 {
-                currchild->PeerNext = new Node; 
+                currchild->PeerNext = new Node;
                 meshseedtree->Add(currchild->PeerNext);
                 currpeerprev = currchild;
                 currchild = currchild->PeerNext;
@@ -205,13 +205,13 @@ void vtkMimxUnstructuredGridActor::BuildMeshSeedLinks()
                 count++;
                 }
               }
-            } while(k < neigh_cell_list->GetNumberOfIds()-1);                                               
+            } while(k < neigh_cell_list->GetNumberOfIds()-1);
 
           //                              currparpar = currchild->Parent;
           if (!count)
             {
             if(currpar->PeerPrev !=NULL)    currpar = currpar->PeerPrev;
-            else    
+            else
               {
               if(currpar->Parent != NULL)currpar = currpar->Parent;
               }
@@ -225,7 +225,7 @@ void vtkMimxUnstructuredGridActor::BuildMeshSeedLinks()
             this->GetCellNeighbors(currpar->CellNum, neigh_cell_list);
             if(neigh_cell_list->GetNumberOfIds() == 0)
               {
-              do 
+              do
                 {
                 if(currpar->PeerPrev == NULL)
                   {
@@ -234,7 +234,7 @@ void vtkMimxUnstructuredGridActor::BuildMeshSeedLinks()
                 else
                   {
                   currpar = currpar->PeerPrev;
-                  this->GetCellNeighbors(currpar->CellNum, neigh_cell_list);                                              
+                  this->GetCellNeighbors(currpar->CellNum, neigh_cell_list);
                   }
                 } while(neigh_cell_list->GetNumberOfIds() == 0 && currpar->Parent != NULL);
               }
@@ -326,11 +326,11 @@ int vtkMimxUnstructuredGridActor::CheckIfCellsShareEdgeX(int cellnum1, int celln
       status2 = true;
       break;
       }
-    }       
+    }
   pt2 = k;
 
   if(status1 && status2)
-    {               
+    {
     this->MeshSeedLinks(3*parcell+edgenum, cellnum2 + 1) = this->WhichEdgeOfCellBeingCompared(pt1,pt2);
     cell->Delete();
     cell_comp->Delete();
@@ -469,11 +469,11 @@ int vtkMimxUnstructuredGridActor::CheckIfCellsShareEdgeY(int cellnum1, int celln
       status2 = true;
       break;
       }
-    }       
+    }
   pt2 = k;
 
   if(status1 && status2)
-    {               
+    {
 
     this->MeshSeedLinks(3*parcell+edgenum, cellnum2 + 1) = this->WhichEdgeOfCellBeingCompared(pt1,pt2);
     cell->Delete();
@@ -590,7 +590,7 @@ int vtkMimxUnstructuredGridActor::CheckIfCellsShareEdgeY(int cellnum1, int celln
 void vtkMimxUnstructuredGridActor::EstimateMeshSeedsBasedOnAverageElementLength(
   double ElLengthX, double ElLengthY, double ElLengthZ)
 {
-  if(!this->Links)        
+  if(!this->Links)
     {
     this->BuildMeshSeedLinks();
     }
@@ -598,14 +598,14 @@ void vtkMimxUnstructuredGridActor::EstimateMeshSeedsBasedOnAverageElementLength(
   if(this->UnstructuredGrid)
     {
     int i;
-    int dim[3];     
+    int dim[3];
     if(this->UnstructuredGrid->GetCellData()->GetArray("Mesh_Seed"))
       {
       vtkIntArray *MeshSeedValues = vtkIntArray::SafeDownCast(this->UnstructuredGrid->
                                                               GetCellData()->GetArray("Mesh_Seed"));
       dim[0] = 0; dim[1] = 0; dim[2] = 0;
 
-      for (i=0; i<this->UnstructuredGrid->GetNumberOfCells(); i++) 
+      for (i=0; i<this->UnstructuredGrid->GetNumberOfCells(); i++)
         {
         MeshSeedValues->SetTupleValue(i, dim);
         }
@@ -762,11 +762,11 @@ int vtkMimxUnstructuredGridActor::CheckIfCellsShareEdgeZ(int cellnum1, int celln
       status2 = true;
       break;
       }
-    }       
+    }
   pt2 = k;
 
   if(status1 && status2)
-    {               
+    {
 
     this->MeshSeedLinks(3*parcell+edgenum, cellnum2 + 1) = this->WhichEdgeOfCellBeingCompared(pt1,pt2);
     cell->Delete();
@@ -964,7 +964,7 @@ void vtkMimxUnstructuredGridActor::SetHigherNumberedBBoxMeshSeed(int boxnum, int
 
 int vtkMimxUnstructuredGridActor::GetMeshSeed(int BoxNum, int Axis)
 {
-  if(!this->Links)        
+  if(!this->Links)
     {
     this->BuildMeshSeedLinks();
     }
@@ -976,7 +976,7 @@ int vtkMimxUnstructuredGridActor::GetMeshSeed(int BoxNum, int Axis)
       this->UnstructuredGrid->GetCellData()->GetArray("Mesh_Seed"));
     int dim[3];
     MeshSeedValues->GetTupleValue(BoxNum, dim);
-    return (dim[Axis]); 
+    return (dim[Axis]);
     }
   else
     {
@@ -986,7 +986,7 @@ int vtkMimxUnstructuredGridActor::GetMeshSeed(int BoxNum, int Axis)
 
 void vtkMimxUnstructuredGridActor::ChangeMeshSeed(int BoxNum, int Axis, int SeedNum)
 {
-  if(!this->Links)        
+  if(!this->Links)
     {
     this->BuildMeshSeedLinks();
     }
@@ -1017,7 +1017,7 @@ void vtkMimxUnstructuredGridActor::ChangeMeshSeed(int BoxNum, int Axis, int Seed
       MeshSeedValues->SetTupleValue(i, dimmod);
       }
     }
-        
+
   //else{
   //      cout <<" No mesh seed values to change "<<endl;
   //}
@@ -1067,7 +1067,7 @@ void vtkMimxUnstructuredGridActor::ChangeMeshSeed(int BoxNum, int Axis, int Seed
 void vtkMimxUnstructuredGridActor::ChangeMeshSeedAvElLength(
   int BoxNum, int Axis, double ElLength)
 {
-  //if(!this->Links)      
+  //if(!this->Links)
   //{
   //      this->BuildMeshSeedLinks();
   //}
@@ -1103,7 +1103,7 @@ void vtkMimxUnstructuredGridActor::ChangeMeshSeedAvElLength(
   //      MeshSeedValues = vtkIntArray::SafeDownCast(
   //        this->UnstructuredGrid->GetCellData()->GetArray("Mesh_Seed"));
   //}
-        
+
   MeshSeedValues->GetTupleValue(BoxNum, dim);
 
   // calculate the average length of X edges,
@@ -1209,7 +1209,7 @@ void vtkMimxUnstructuredGridActor::DeleteElementSet(const char *Name)
   if(!stringarray)        return;
 
   vtkDataArray *datasetarray;
-        
+
   datasetarray = celldata->GetArray(Name);
   if(datasetarray)        celldata->RemoveArray(Name);
 
@@ -1224,13 +1224,13 @@ void vtkMimxUnstructuredGridActor::DeleteElementSet(const char *Name)
   strcat(Poisson, "_Constant_Poissons_Ratio");
   datasetarray = fielddata->GetArray(Poisson);
   if(datasetarray)        fielddata->RemoveArray(Poisson);
-        
+
   char ImageBased[256];
   strcpy(ImageBased, Name);
   strcat(ImageBased, "_Image_Based_Material_Property");
   datasetarray = celldata->GetArray(ImageBased);
   if(datasetarray)        celldata->RemoveArray(ImageBased);
-        
+
   strcat(ImageBased, "_ReBin");
   datasetarray = celldata->GetArray(ImageBased);
   if(datasetarray)        celldata->RemoveArray(ImageBased);
@@ -1299,23 +1299,26 @@ void vtkMimxUnstructuredGridActor::SetFillColor(double red, double green, double
 //----------------------------------------------------------------------------------
 void vtkMimxUnstructuredGridActor::SetFillColor(double rgb[3])
 {
-  this->SetFillColor(rgb[0], rgb[1], rgb[2]);
+    this->SetFillColor(rgb[0], rgb[1], rgb[2]);
+    this->SavedDisplayNode->SetColor(rgb[0], rgb[1], rgb[2]);
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxUnstructuredGridActor::GetFillColor(double &red, double &green, double &blue)
 {
-  red = this->FillColor[0];
-  green = this->FillColor[1];
-  blue = this->FillColor[2];
+  this->SavedDisplayNode->GetColor(red,green,blue);
+//  red = this->FillColor[0];
+//  green = this->FillColor[1];
+//  blue = this->FillColor[2];
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxUnstructuredGridActor::GetFillColor(double rgb[3])
 {
-  rgb[0] = this->FillColor[0];
-  rgb[1] = this->FillColor[1];
-  rgb[2] = this->FillColor[2];
+  this->SavedDisplayNode->GetColor(rgb[0],rgb[1],rgb[2]);
+//  rgb[0] = this->FillColor[0];
+//  rgb[1] = this->FillColor[1];
+//  rgb[2] = this->FillColor[2];
 }
 
 //----------------------------------------------------------------------------------
@@ -1350,8 +1353,10 @@ void vtkMimxUnstructuredGridActor::PrintSelf(ostream& os, vtkIndent indent)
 
 
 // added to support slicer integration
-void vtkMimxUnstructuredGridActor::SaveVisibility(void) {this->SavedVisibility = (this->Actor->GetVisibility())?true:false;}
-void vtkMimxUnstructuredGridActor::RestoreVisibility(void) {this->Actor->SetVisibility(this->SavedVisibility);}
-void vtkMimxUnstructuredGridActor::Hide() {this->Actor->SetVisibility(0);}
-void vtkMimxUnstructuredGridActor::Show() {this->Actor->SetVisibility(1);}
+
+// set pointer to display node so that attribute changes can be passed through
+void vtkMimxUnstructuredGridActor::SetMRMLDisplayNode(vtkMRMLUnstructuredGridDisplayNode* displayNode)
+{
+    this->SavedDisplayNode = displayNode;
+}
 
