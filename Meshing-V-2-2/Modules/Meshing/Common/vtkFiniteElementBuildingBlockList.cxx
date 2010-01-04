@@ -73,7 +73,7 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      // add actor to the local list.  A local copy of the list and storage in the
      // MRML tree are kept synchronized constantly through consistent operations of
      // addition, modification, or deletion
-     this->actorList->AppendItem(actor);
+   //  this->actorList->AppendItem(actor);
 
      // allocate a new MRML node for this item and add it to the scene
      vtkMRMLFiniteElementBuildingBlockNode* newMRMLNode = vtkMRMLFiniteElementBuildingBlockNode::New();
@@ -129,11 +129,11 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
 vtkMimxUnstructuredGridActor* vtkFiniteElementBuildingBlockList::GetItem(vtkIdType id)
 {
 
-  return vtkMimxUnstructuredGridActor::SafeDownCast(this->actorList->GetItem(id));
+ // return vtkMimxUnstructuredGridActor::SafeDownCast(this->actorList->GetItem(id));
   // first fetch the MRML node that has been requested
-//  vtkMRMLFiniteElementBuildingBlockNode* requestedMrmlNode =
-//      (vtkMRMLFiniteElementBuildingBlockNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFiniteElementBuildingBlockNode"));
-//  return requestedMrmlNode->GetMimxUnstructuredGridActor();
+  vtkMRMLFiniteElementBuildingBlockNode* requestedMrmlNode =
+      (vtkMRMLFiniteElementBuildingBlockNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFiniteElementBuildingBlockNode"));
+  return requestedMrmlNode->GetMimxUnstructuredGridActor();
 }
 
 
@@ -141,13 +141,13 @@ int vtkFiniteElementBuildingBlockList::GetNumberOfItems()
 {
   // it is assumed that the local list will generally be faster than traversing the
   // MRML tree, so use local list to count objects
-  this->actorList->GetNumberOfItems();
-  //return this->savedMRMLScene->GetNumberOfNodesByClass("vtkMRMLFiniteElementBuildingBlockNode");
+  //this->actorList->GetNumberOfItems();
+  return this->savedMRMLScene->GetNumberOfNodesByClass("vtkMRMLFiniteElementBuildingBlockNode");
 }
 
 int vtkFiniteElementBuildingBlockList::RemoveItem(int Num)
 {
-  this->actorList->RemoveItem(Num);
+  //this->actorList->RemoveItem(Num);
   this->savedMRMLScene->RemoveNode(this->savedMRMLScene->GetNthNodeByClass(Num,"vtkMRMLFiniteElementBuildingBlockNode"));
   return VTK_OK;
 }

@@ -49,8 +49,11 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementMeshNode : public vtkMRMLUnstruc
 
   // Description:
   // Set pointer to the Mimx actor that contains the state variables
-  vtkSetObjectMacro(MimxMeshActor, vtkMimxMeshActor);
-  vtkGetObjectMacro(MimxMeshActor, vtkMimxMeshActor);
+  //vtkSetObjectMacro(MimxMeshActor, vtkMimxMeshActor);
+  //vtkGetObjectMacro(MimxMeshActor, vtkMimxMeshActor);
+
+  void SetMimxMeshActor(vtkMimxMeshActor *actor) {this->MimxMeshActor = actor;}
+  vtkMimxMeshActor* GetMimxMeshActor(void) {return this->MimxMeshActor; }
 
    // don't use VTK macros  because the values are stored in an actor instance
    void   SetDataType(int value) {this->MimxMeshActor->SetDataType(value);}

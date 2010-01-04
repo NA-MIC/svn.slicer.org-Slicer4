@@ -261,7 +261,8 @@ void vtkKWMimxViewProperties::AddObjectList(vtkMimxActorBase *actor)
 
         this->MultiColumnList->GetWidget()->GetCellWindowAsCheckButton(rowIndex,0)->SetCommand(this, commandName);
         // *** causes crash on mesh only (surface and bblock work ok)
-        this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFileName());
+       // this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFileName());
+        this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, actor->GetFileName());
 
   // *** defeated add to show objects only through MRML nodes
 

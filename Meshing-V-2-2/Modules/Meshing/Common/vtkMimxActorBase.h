@@ -84,7 +84,7 @@ protected:
 
   char* FilePath;
   char* FileName;
-  char* UniqueId;
+  char UniqueId[256];
   char* FoundationName;
   // added for Slicer integration
   vtkMRMLDisplayNode* SavedDisplayNode;

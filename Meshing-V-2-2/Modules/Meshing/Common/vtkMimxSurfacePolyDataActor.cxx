@@ -48,6 +48,9 @@ vtkMimxSurfacePolyDataActor::vtkMimxSurfacePolyDataActor()
         this->FillColor[0] = this->FillColor[1] = this->FillColor[2] = 1.0;
         this->OutlineColor[0] = this->OutlineColor[1] = this->OutlineColor[2] = 1.0;
         this->SetDisplayType( DisplaySurface );
+
+        // connection to display nodes is made dynamically, so start with empty pointers
+        this->SavedDisplayNode = this->SavedOutlineDisplayNode = NULL;
 }
 
 //----------------------------------------------------------------------------------
@@ -57,13 +60,12 @@ vtkMimxSurfacePolyDataActor::~vtkMimxSurfacePolyDataActor()
     this->PolyData->Delete();
         this->PolyDataMapper->Delete();
         this->Actor->Delete();
- }
 
-//----------------------------------------------------------------------------------
-vtkPolyData* vtkMimxSurfacePolyDataActor::GetDataSet()
-{
-        return this->PolyData;
+   if(SavedDisplayNode != NULL) this->SavedDisplayNode->Delete();
+   if(SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->Delete();
+
 }
+
 
 //----------------------------------------------------------------------------------
 void vtkMimxSurfacePolyDataActor::GetOutlineColor(double &red, double &green, double &blue)

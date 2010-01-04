@@ -54,7 +54,6 @@ public:
   static vtkMimxSurfacePolyDataActor *New();
   vtkTypeRevisionMacro(vtkMimxSurfacePolyDataActor,vtkMimxActorBase);
   void PrintSelf(ostream& os, vtkIndent indent);
-  vtkPolyData* GetDataSet();
   void SetFillColor(double rgb[3]);
   void SetFillColor(double red, double green, double blue);
   void GetFillColor(double &red, double &green, double &blue);
@@ -69,11 +68,18 @@ public:
  //vtkSetMacro(PolyData, vtkPolyData*);
  //vtkGetMacro(PolyData, vtkPolyData*);
 
+  // the actor keeps a pointer to the data and to display nodes, which render the data in slicer
+  vtkPolyData* GetDataSet() {return this->PolyData;}
+  void SetDataSet( vtkPolyData *polys) {this->PolyData = polys;}
+
+
   // added to support slicer integration
   void SaveVisibility(void);
   void RestoreVisibility(void);
   void Hide();
   void Show();
+  void SetMRMLOutlineDisplayNode(vtkMRMLDisplayNode* displayNode)
+                    {this->SavedOutlineDisplayNode = displayNode;}
   
   // *** moved to public so can be instantiated by FESurface list factory
   vtkMimxSurfacePolyDataActor();
@@ -82,6 +88,8 @@ protected:
 
   vtkPolyData *PolyData;
   vtkPolyDataMapper *PolyDataMapper;
+  vtkMRMLDisplayNode *SavedOutlineDisplayNode;
+
 private:
   vtkMimxSurfacePolyDataActor(const vtkMimxSurfacePolyDataActor&);  // Not implemented.
   void operator=(const vtkMimxSurfacePolyDataActor&);  // Not implemented.

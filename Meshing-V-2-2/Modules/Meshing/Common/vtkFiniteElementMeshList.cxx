@@ -36,6 +36,14 @@ vtkStandardNewMacro(vtkFiniteElementMeshList);
 vtkFiniteElementMeshList::vtkFiniteElementMeshList()
 {
     this->SetMRMLSceneForStorage(vtkMRMLScene::GetActiveScene());
+    // each MRML class type needs to be registeredv
+      vtkMRMLFiniteElementMeshNode* meshListNode = vtkMRMLFiniteElementMeshNode::New();
+      this->savedMRMLScene->RegisterNodeClass(meshListNode);
+      meshListNode->Delete();
+
+      vtkMRMLFiniteElementMeshOutlineDisplayNode* meshOutlineNode = vtkMRMLFiniteElementMeshOutlineDisplayNode::New();
+      this->savedMRMLScene->RegisterNodeClass(meshOutlineNode);
+      meshOutlineNode->Delete();
 
 }
 
@@ -56,14 +64,7 @@ vtkFiniteElementMeshList::~vtkFiniteElementMeshList()
 void vtkFiniteElementMeshList::SetMRMLSceneForStorage(vtkMRMLScene* scene)
 {
     this->savedMRMLScene = scene;
-    // each MRML class type needs to be registeredv
-    vtkMRMLFiniteElementMeshNode* meshListNode = vtkMRMLFiniteElementMeshNode::New();
-    this->savedMRMLScene->RegisterNodeClass(meshListNode);
-    meshListNode->Delete();
 
-    vtkMRMLFiniteElementMeshOutlineDisplayNode* meshOutlineNode = vtkMRMLFiniteElementMeshOutlineDisplayNode::New();
-    this->savedMRMLScene->RegisterNodeClass(meshOutlineNode);
-    meshOutlineNode->Delete();
 }
 
 

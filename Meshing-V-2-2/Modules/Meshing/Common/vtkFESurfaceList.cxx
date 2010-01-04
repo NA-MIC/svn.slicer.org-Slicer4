@@ -34,15 +34,12 @@ vtkStandardNewMacro(vtkFESurfaceList);
 vtkFESurfaceList::vtkFESurfaceList() 
 { 
 
-  this->actorList = vtkLocalLinkedListWrapper::New();
+  // this->actorList = vtkLocalLinkedListWrapper::New();
   
   // get a pointer to the current MRML scene to use for adding/removing nodes
   this->savedMRMLScene = vtkMRMLScene::GetActiveScene();
-
   vtkMRMLFESurfaceNode* newMRMLNode = vtkMRMLFESurfaceNode::New();
-  // this->savedMRMLScene->RegisterNodeClass( newMRMLNode );
   vtkMRMLScene::GetActiveScene()->RegisterNodeClass(newMRMLNode);
-  this->savedMRMLScene = vtkMRMLScene::GetActiveScene();
   newMRMLNode->Delete();
 }
 
@@ -72,7 +69,7 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
 {
     
     // add the actor to the local list
-    this->actorList->AppendItem(actor);
+   // this->actorList->AppendItem(actor);
     
   // allocate a new MRML node for this item and add it to the scene
    if (this->savedMRMLScene)
@@ -80,21 +77,14 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
      // create a node to contain the geometry 
      vtkMRMLFESurfaceNode* newMRMLNode = vtkMRMLFESurfaceNode::New();
      
-//     // if this is the first entry, then initialize the MRML scene
-//     if (!registered)
-//     {
-//       this->savedMRMLScene->RegisterNodeClass( newMRMLNode );
-//       registered=1;
-//     }
-//
-     // share the actor with the local list so all the values are populated correctly 
-     //newMRMLNode->SetMimxSurfacePolyDataActor(actor);
+     // share the data with the local list so all the values are populated correctly
      newMRMLNode->SetAndObservePolyData(actor->GetDataSet());
      
      // create node to use for display and storage in slicer; use standard model
       // node initially to learn how display nodes work. Use our own 
       // subclasses later, possibly.  
       vtkMRMLModelDisplayNode* dispNode = vtkMRMLModelDisplayNode::New();
+      vtkMRMLModelDisplayNode* dispNode2 = vtkMRMLModelDisplayNode::New();
       vtkMRMLModelStorageNode* storeNode = vtkMRMLModelStorageNode::New();
       
       // for this version of the meshing module, we are using the Mimx
@@ -104,9 +94,7 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
 
       // set pointer to actor can invoice attribute change methodes
       actor->SetMRMLDisplayNode(dispNode);
-      
-      // *** this broke the mrml reload, why?
-      //storeNode->SetFileName(actor->GetFileName());
+      //actor->SetMRMLOutlineDisplayNode(dispNode2);
  
       this->savedMRMLScene->AddNode(newMRMLNode);
       
@@ -128,14 +116,14 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
 
 vtkMimxSurfacePolyDataActor* vtkFESurfaceList::GetItem(vtkIdType id)
 { 
-   return vtkMimxSurfacePolyDataActor::SafeDownCast(this->actorList->GetItem(id));
+  // return vtkMimxSurfacePolyDataActor::SafeDownCast(this->actorList->GetItem(id));
        
-//   //  fetch the MRML node that has been requested
-//   vtkMRMLFESurfaceNode* requestedMrmlNode = 
-//       (vtkMRMLFESurfaceNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFESurfaceNode"));
-//   // then get the actor from the MRML node and return the actor
-//   vtkMimxSurfacePolyDataActor* returnNode = requestedMrmlNode->GetMimxSurfacePolyDataActor();
-//   return returnNode;
+   //  fetch the MRML node that has been requested
+   vtkMRMLFESurfaceNode* requestedMrmlNode =
+       (vtkMRMLFESurfaceNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFESurfaceNode"));
+   // then get the actor from the MRML node and return the actor
+   vtkMimxSurfacePolyDataActor* returnNode = requestedMrmlNode->GetMimxSurfacePolyDataActor();
+   return returnNode;
 
 }
 
@@ -163,14 +151,14 @@ bool vtkFESurfaceList::ContainsItemWithName(char* objName)
 int vtkFESurfaceList::GetNumberOfItems()
 {
   // there is a parallel structure, but search through the local list is likely to be faster than a MRML tree traversal
-  return this->actorList->GetNumberOfItems();
-  //return this->savedMRMLScene->GetNumberOfNodesByClass("vtkMRMLFESurfaceNode");
+ // return this->actorList->GetNumberOfItems();
+  return this->savedMRMLScene->GetNumberOfNodesByClass("vtkMRMLFESurfaceNode");
 }
 
 int vtkFESurfaceList::RemoveItem(int Num)
 {
   // there is a parallel structure between the the local list and the MRML tree, so both items should be deleted
-  this->actorList->RemoveItem(Num);
+ // this->actorList->RemoveItem(Num);
   
   // to remove object from MRML scene, first delete the storage and display nodes, then the node itself
   vtkMRMLFESurfaceNode* requestedMrmlNode = (vtkMRMLFESurfaceNode*)(this->savedMRMLScene->GetNthNodeByClass(Num,"vtkMRMLFESurfaceNode"));

@@ -38,7 +38,7 @@ vtkMimxActorBase::vtkMimxActorBase()
 {
   this->FileName = new char[256];
   this->FilePath = new char[256];
-  this->UniqueId = new char[256];
+ // this->UniqueId = new char[256];
   this->FoundationName = new char[256];
   this->DataType = 0;
   // added for Slicer
@@ -65,8 +65,7 @@ void vtkMimxActorBase::SetFilePath(const char *InputFilePath)
 
 void vtkMimxActorBase::SetUniqueId( const char *Id)
 {
-  // *** limited string length
-  strncpy(this->UniqueId, Id,250);
+  strcpy(this->UniqueId, Id);
 }
 
 void vtkMimxActorBase::SetFoundationName(const char *created)

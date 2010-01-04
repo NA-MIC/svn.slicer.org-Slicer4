@@ -195,8 +195,8 @@ void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh,
   this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
 
   int itemIndex = this->FEMeshList->GetNumberOfItems()-1;
-        this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->FEMeshList->GetItem( itemIndex ) );
-
+        //this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->FEMeshList->GetItem( itemIndex ) );
+       this->GetMimxMainWindow()->GetViewProperties()->AddObjectList(actor );
 }
 //----------------------------------------------------------------------------
 void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
@@ -285,13 +285,26 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
           const char *namePrefix, const char *foundationName)
 {
 
-  this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
-  int item = this->SurfaceList->GetNumberOfItems()-1;
-  this->SurfaceList->GetItem(item)->SetDataType(ACTOR_POLYDATA_SURFACE);
-  this->SurfaceList->GetItem(item)->SetFoundationName( foundationName );
-  vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::SafeDownCast(
-    this->SurfaceList->GetItem(item));
-  actor->GetDataSet()->DeepCopy( surface );
+//  this->SurfaceList->AppendItem(vtkMimxSurfacePolyDataActor::New());
+//  int item = this->SurfaceList->GetNumberOfItems()-1;
+//  this->SurfaceList->GetItem(item)->SetDataType(ACTOR_POLYDATA_SURFACE);
+//  this->SurfaceList->GetItem(item)->SetFoundationName( foundationName );
+//  vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::SafeDownCast(
+//    this->SurfaceList->GetItem(item));
+//  actor->GetDataSet()->DeepCopy( surface );
+
+  vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
+    actor->SetFoundationName(foundationName);
+   cout << "MimxGroupBase: foundation= '" << foundationName << "' prefix= '" << namePrefix << "'" << endl;
+
+   actor->SetDataSet( surface );
+    this->SurfaceList->AppendItem( actor );
+
+         // actor->SetRenderer( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer() );
+     int item = this->SurfaceList->GetNumberOfItems()-1;
+      this->SurfaceList->GetItem(item)->SetDataType(ACTOR_POLYDATA_SURFACE);
+      this->SurfaceList->GetItem(item)->SetFoundationName( foundationName );
+
 
   bool useCounter = false;
   int offset = 1;
@@ -342,11 +355,10 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
   {
     actor->SetFilePath(namePrefix);
   }
-  actor->GetDataSet()->Modified();
-  this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp(
-        this->SurfaceList->GetItem(item)->GetActor());
-  this->GetMimxMainWindow()->GetRenderWidget()->Render();
-  this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
+ // actor->GetDataSet()->Modified();
+  //this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp( this->SurfaceList->GetItem(item)->GetActor());
+  //this->GetMimxMainWindow()->GetRenderWidget()->Render();
+  //this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
   this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->SurfaceList->GetItem(item) );
 }
 //----------------------------------------------------------------------------
