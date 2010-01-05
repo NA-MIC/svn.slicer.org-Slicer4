@@ -83,14 +83,17 @@ vtkMimxUnstructuredGridActor::~vtkMimxUnstructuredGridActor()
   this->Actor->Delete();  //**valgrinderror
                               }
 
-//vtkDataSet* vtkMimxUnstructuredGridActor::GetDataSet()
-//{
-//      return vtkDataSet::SafeDownCast(this->UnstructuredGrid);
-//}
+
 vtkUnstructuredGrid* vtkMimxUnstructuredGridActor::GetDataSet()
 {
   return this->UnstructuredGrid;
 }
+
+void vtkMimxUnstructuredGridActor::SetDataSet(vtkUnstructuredGrid *actor)
+{
+  this->UnstructuredGrid = actor;
+}
+
 
 int vtkMimxUnstructuredGridActor::MeshSeedFromAverageElementLength(double ElLengthX, double ElLengthY, double ElLengthZ)
 {

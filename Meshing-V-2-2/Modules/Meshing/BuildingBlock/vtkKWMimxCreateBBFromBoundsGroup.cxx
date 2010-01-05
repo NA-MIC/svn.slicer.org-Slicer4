@@ -271,6 +271,7 @@ int vtkKWMimxCreateBBFromBoundsGroup::CreateBBFromBoundsApplyCallback()
         if (this->SurfaceBoundButton->GetSelectedState())
         {
     vtkMimxBoundingBoxSource *bbox = vtkMimxBoundingBoxSource::New();
+    cout << "surface polydata has " << polydata->GetNumberOfCells() << " cells" << endl;
     bbox->SetSource(polydata);
     bbox->AddObserver(vtkCommand::ErrorEvent, callback, 1.0);
     bbox->Update();

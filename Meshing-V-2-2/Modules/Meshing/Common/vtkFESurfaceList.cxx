@@ -50,16 +50,15 @@ vtkFESurfaceList::~vtkFESurfaceList()
     int NumberOfItemsInList = this->GetNumberOfItems();
     for (int i=0; i<NumberOfItemsInList; i++)
     {
-        this->actorList->RemoveItem(0);
+        this->RemoveItem(0);
         vtkDebugMacro("deleting Surface Actor");
     }
-    this->actorList->Delete();
 }
 
 // save reference to the scene to be used for storage 
 void vtkFESurfaceList::SetMRMLSceneForStorage(vtkMRMLScene* scene) 
 {
-    this->savedMRMLScene = scene;
+    //this->savedMRMLScene = scene;
     // each MRML node class type has to be registered with the scene
 
 }
@@ -72,12 +71,13 @@ int vtkFESurfaceList::AppendItem(vtkMimxSurfacePolyDataActor* actor)
    // this->actorList->AppendItem(actor);
     
   // allocate a new MRML node for this item and add it to the scene
-   if (this->savedMRMLScene)
+   if (this->savedMRMLScene  != NULL)
    {
      // create a node to contain the geometry 
      vtkMRMLFESurfaceNode* newMRMLNode = vtkMRMLFESurfaceNode::New();
      
      // share the data with the local list so all the values are populated correctly
+     newMRMLNode->SetMimxSurfacePolyDataActor(actor);
      newMRMLNode->SetAndObservePolyData(actor->GetDataSet());
      
      // create node to use for display and storage in slicer; use standard model

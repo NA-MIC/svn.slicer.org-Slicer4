@@ -66,6 +66,13 @@ vtkMimxSurfacePolyDataActor::~vtkMimxSurfacePolyDataActor()
 
 }
 
+void vtkMimxSurfacePolyDataActor::SetDataSet(vtkPolyData* surface)
+{
+
+  this->PolyData->DeepCopy( surface );
+  cout << "Surface Actor: setdataset got here" << " input surface " << surface->GetNumberOfCells() << " copied all " << this->PolyData->GetNumberOfCells() << endl;
+}
+
 
 //----------------------------------------------------------------------------------
 void vtkMimxSurfacePolyDataActor::GetOutlineColor(double &red, double &green, double &blue)
@@ -121,25 +128,35 @@ void vtkMimxSurfacePolyDataActor::SetFillColor(double red, double green, double 
 //----------------------------------------------------------------------------------
 void vtkMimxSurfacePolyDataActor::SetFillColor(double rgb[3])
 {
-  this->SetFillColor(rgb[0], rgb[1], rgb[2]);
+    if (this->SavedDisplayNode != NULL)
+       this->SavedDisplayNode->SetColor(rgb[0], rgb[1], rgb[2]);
+     //this->SetFillColor(rgb[0], rgb[1], rgb[2]);
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxSurfacePolyDataActor::GetFillColor(double &red, double &green, double &blue)
 {
-  this->SavedDisplayNode->GetColor(red,green,blue);
-  //red = this->FillColor[0];
-  //green = this->FillColor[1];
-  //blue = this->FillColor[2];
+  if (this->SavedDisplayNode != NULL)
+      this->SavedDisplayNode->GetColor(red,green,blue);
+  else
+  {
+    red = this->FillColor[0];
+    green = this->FillColor[1];
+    blue = this->FillColor[2];
+  }
 }
 
 //----------------------------------------------------------------------------------
 void vtkMimxSurfacePolyDataActor::GetFillColor(double rgb[3])
 {
+  if (this->SavedDisplayNode != NULL)
     this->SavedDisplayNode->GetColor(rgb[0],rgb[1],rgb[2]);
-  //rgb[0] = this->FillColor[0];
-  //rgb[1] = this->FillColor[1];
-  //rgb[2] = this->FillColor[2];
+  else
+  {
+    rgb[0] = this->FillColor[0];
+    rgb[1] = this->FillColor[1];
+    rgb[2] = this->FillColor[2];
+  }
 }
 
 //----------------------------------------------------------------------------------
@@ -175,7 +192,39 @@ void vtkMimxSurfacePolyDataActor::PrintSelf(ostream& os, vtkIndent indent)
 
 // added to support slicer integration
 
-void vtkMimxSurfacePolyDataActor::SaveVisibility(void){cout << "visibility ";}
-void vtkMimxSurfacePolyDataActor::RestoreVisibility(void){}
-void vtkMimxSurfacePolyDataActor::Hide() {}
-void vtkMimxSurfacePolyDataActor::Show() {}
+void vtkMimxSurfacePolyDataActor::SaveVisibility(void){this->SavedVisibility = this->IsVisible; this->UpdateSurfaceDisplay();}
+void vtkMimxSurfacePolyDataActor::RestoreVisibility(void){this->IsVisible = this->SavedVisibility;this->UpdateSurfaceDisplay();}
+void vtkMimxSurfacePolyDataActor::Hide() {this->IsVisible = false; this->UpdateSurfaceDisplay();}
+void vtkMimxSurfacePolyDataActor::Show() {this->IsVisible = true; this->UpdateSurfaceDisplay();}
+
+
+
+
+//----------------------------------------------------------------------------------
+void vtkMimxSurfacePolyDataActor::UpdateSurfaceDisplay()
+{
+  if ( (this->IsVisible == true))
+    {
+    switch ( this->DisplayType )
+      {
+      case vtkMimxSurfacePolyDataActor::DisplaySurface:
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(1);
+         if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(0);
+        break;
+      case vtkMimxSurfacePolyDataActor::DisplayOutline:
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(0);
+        if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(1);
+        break;
+      case vtkMimxSurfacePolyDataActor::DisplaySurfaceAndOutline:
+        if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(1);
+        if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(1);
+        break;
+      }
+    }
+  else
+    {
+      if (this->SavedDisplayNode != NULL) this->SavedDisplayNode->SetVisibility(0);    // *** added for slicer
+      if (this->SavedOutlineDisplayNode != NULL) this->SavedOutlineDisplayNode->SetVisibility(0);
+    }
+
+}

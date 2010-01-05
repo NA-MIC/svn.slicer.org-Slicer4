@@ -29,9 +29,16 @@ vtkStandardNewMacro(vtkFiniteElementBuildingBlockList);
 
 vtkFiniteElementBuildingBlockList::vtkFiniteElementBuildingBlockList()
 {
-    SetMRMLSceneForStorage(NULL);
-    // set the actor list maintained locally to an empty list
-    //this->actorList = vtkLocalLinkedListWrapper::New();
+    this->savedMRMLScene = vtkMRMLScene::GetActiveScene();
+    // each node type should be registered once in the MRML scene, so we do it here when the
+    // MRML scene is set, which is called only once per slicer session.
+    vtkMRMLFiniteElementBuildingBlockNode* feBBNode = vtkMRMLFiniteElementBuildingBlockNode::New();
+    vtkMRMLFiniteElementBuildingBlockDisplayNode* feBBDispNode = vtkMRMLFiniteElementBuildingBlockDisplayNode::New();
+    //vtkMRMLFiniteElementBuildingBlockStorageNode* feBBStoreNode = vtkMRMLFiniteElementBuildingBlockStorageNode::New();
+    this->savedMRMLScene->RegisterNodeClass(feBBNode);
+    this->savedMRMLScene->RegisterNodeClass(feBBDispNode);
+    feBBNode->Delete();
+    feBBDispNode->Delete();
 }
 
 vtkFiniteElementBuildingBlockList::~vtkFiniteElementBuildingBlockList()
@@ -53,16 +60,7 @@ void vtkFiniteElementBuildingBlockList::SetMRMLSceneForStorage(vtkMRMLScene* sce
 {
     // the value passed from the module was NULL, so use the Scene class to return it
     //this->savedMRMLScene = scene;
-    this->savedMRMLScene = vtkMRMLScene::GetActiveScene();
-    // each node type should be registered once in the MRML scene, so we do it here when the
-    // MRML scene is set, which is called only once per slicer session.
-    vtkMRMLFiniteElementBuildingBlockNode* feBBNode = vtkMRMLFiniteElementBuildingBlockNode::New();
-    vtkMRMLFiniteElementBuildingBlockDisplayNode* feBBDispNode = vtkMRMLFiniteElementBuildingBlockDisplayNode::New();
-    //vtkMRMLFiniteElementBuildingBlockStorageNode* feBBStoreNode = vtkMRMLFiniteElementBuildingBlockStorageNode::New();
-    this->savedMRMLScene->RegisterNodeClass(feBBNode);
-    this->savedMRMLScene->RegisterNodeClass(feBBDispNode);
-    feBBNode->Delete();
-    feBBDispNode->Delete();
+
 }
 
 
@@ -80,13 +78,10 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
 
      // copy the state variables to the MRML node.  The same UnstructuredGrid
      // instance is pointed to by both the actor and the MRML node.
-
      newMRMLNode->SetMimxUnstructuredGridActor(actor);
      newMRMLNode->SetAndObserveUnstructuredGrid(actor->GetDataSet());
 
-
-
-     // now add the display, storage, and displayable nodes
+     // now add the display, storage nodes
      vtkMRMLFiniteElementBuildingBlockDisplayNode* dispNode = vtkMRMLFiniteElementBuildingBlockDisplayNode::New();
      vtkMRMLUnstructuredGridStorageNode* storeNode = vtkMRMLUnstructuredGridStorageNode::New();
 
@@ -98,20 +93,16 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      // this is needed to pass through attribute change calls
      actor->SetMRMLDisplayNode(dispNode);
 
-
      dispNode->SetScene(this->savedMRMLScene);
      storeNode->SetScene(this->savedMRMLScene);
      this->savedMRMLScene->AddNode(newMRMLNode);
      this->savedMRMLScene->AddNodeNoNotify(dispNode);
      this->savedMRMLScene->AddNodeNoNotify(storeNode);
 
-     //cout << "added mrml bblock node " << endl;
-
      // Establish linkage between the bounding box
      // node and its display and storage nodes, so the viewer will be updated when data
      // or attributes change
-     // *** commented out next two lines since we are using Mimx Actors for this release.
-     // set Ugrid was causing a crash on Mac
+
      dispNode->SetUnstructuredGrid(newMRMLNode->GetUnstructuredGrid());
      newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
      newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());

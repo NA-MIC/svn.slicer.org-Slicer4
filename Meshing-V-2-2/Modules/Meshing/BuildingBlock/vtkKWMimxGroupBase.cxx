@@ -203,16 +203,30 @@ void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
           const char *namePrefix, const char *foundationName)
 {
   /* Create the New Display Node */
-  this->BBoxList->AppendItem(vtkMimxUnstructuredGridActor::New());
-  int currentitem = this->BBoxList->GetNumberOfItems()-1;
-        this->BBoxList->GetItem(currentitem)->SetDataType( ACTOR_BUILDING_BLOCK );
+//  this->BBoxList->AppendItem(vtkMimxUnstructuredGridActor::New());
+//  int currentitem = this->BBoxList->GetNumberOfItems()-1;
+//        this->BBoxList->GetItem(currentitem)->SetDataType( ACTOR_BUILDING_BLOCK );
+//
+//        vtkMimxUnstructuredGridActor *actor = vtkMimxUnstructuredGridActor::SafeDownCast(
+//          this->BBoxList->GetItem(currentitem));
+//        actor->SetFoundationName(foundationName);
+//        actor->GetDataSet()->DeepCopy( ugrid );
+    // actor->SetRenderer( this->GetMimxMainWindow()->GetRenderWidget()->GetRenderer() );
+//       int item = this->SurfaceList->GetNumberOfItems()-1;
+//        this->SurfaceList->GetItem(item)->SetDataType(ACTOR_BUILDING_BLOCK);
+//        this->SurfaceList->GetItem(item)->SetFoundationName( foundationName );
+//
 
-        vtkMimxUnstructuredGridActor *actor = vtkMimxUnstructuredGridActor::SafeDownCast(
-          this->BBoxList->GetItem(currentitem));
-        actor->SetFoundationName(foundationName);
-        actor->GetDataSet()->DeepCopy( ugrid );
+   vtkMimxUnstructuredGridActor *actor = vtkMimxUnstructuredGridActor::New();
+   actor->SetFoundationName(foundationName);
+   actor->SetDataType(ACTOR_BUILDING_BLOCK);
+   actor->SetDataSet( ugrid );
+   actor->SetFoundationName(foundationName);
+   this->BBoxList->AppendItem( actor );
+
 
         /* Create the Redo/Undo tree */
+  int currentitem = this->BBoxList->GetNumberOfItems()-1;
   this->DoUndoTree->AppendItem(new Node);
   this->DoUndoTree->GetItem(currentitem)->Parent = NULL;
   this->DoUndoTree->GetItem(currentitem)->Child = NULL;
@@ -274,10 +288,11 @@ void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
   actor->MeshSeedFromAverageElementLength( edgeLength, edgeLength, edgeLength );
   actor->GetDataSet()->Modified();
 
-  this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp( actor );
-  this->GetMimxMainWindow()->GetRenderWidget()->Render();
-  this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
-  this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->BBoxList->GetItem(currentitem));
+  //this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp( actor );
+  //this->GetMimxMainWindow()->GetRenderWidget()->Render();
+  //this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
+  //this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->BBoxList->GetItem(currentitem));
+  this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( actor);
 }
 
 //----------------------------------------------------------------------------
@@ -292,6 +307,8 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
 //  vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::SafeDownCast(
 //    this->SurfaceList->GetItem(item));
 //  actor->GetDataSet()->DeepCopy( surface );
+
+    cout << "GroupBase: surface has " << surface->GetNumberOfCells() << " cells" << endl;
 
   vtkMimxSurfacePolyDataActor *actor = vtkMimxSurfacePolyDataActor::New();
     actor->SetFoundationName(foundationName);
@@ -359,7 +376,8 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
   //this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp( this->SurfaceList->GetItem(item)->GetActor());
   //this->GetMimxMainWindow()->GetRenderWidget()->Render();
   //this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
-  this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->SurfaceList->GetItem(item) );
+  //this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->SurfaceList->GetItem(item) );
+  this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( actor );
 }
 //----------------------------------------------------------------------------
 int vtkKWMimxGroupBase::UpdateSurfaceComboBox(vtkKWComboBox *combobox)

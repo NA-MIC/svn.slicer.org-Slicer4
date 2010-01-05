@@ -70,10 +70,10 @@ public:
 
   // the actor keeps a pointer to the data and to display nodes, which render the data in slicer
   vtkPolyData* GetDataSet() {return this->PolyData;}
-  void SetDataSet( vtkPolyData *polys) {this->PolyData = polys;}
-
+ void SetDataSet(vtkPolyData* surface);
 
   // added to support slicer integration
+  void UpdateSurfaceDisplay();
   void SaveVisibility(void);
   void RestoreVisibility(void);
   void Hide();
@@ -96,7 +96,8 @@ private:
   double FillColor[3];
         double OutlineColor[3];
         int DisplayType;
-        bool SavedVisibility;
+        bool SavedVisibility;  // used for enter/exit of module
+        bool IsVisible;  // currently enabled by user through viewProperties
 };
 
 #endif

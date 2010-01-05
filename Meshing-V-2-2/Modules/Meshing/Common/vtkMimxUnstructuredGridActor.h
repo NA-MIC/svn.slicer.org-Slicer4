@@ -57,6 +57,8 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
   vtkUnstructuredGrid* GetDataSet();
+  void SetDataSet(vtkUnstructuredGrid *ugrid);
+
  // functions related to mesh seeding
  void ComputeMeshSeed(double AvElLength);
  int MeshSeedFromAverageElementLength(double, double, double);
