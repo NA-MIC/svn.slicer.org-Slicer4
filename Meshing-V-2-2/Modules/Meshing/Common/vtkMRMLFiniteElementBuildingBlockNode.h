@@ -58,8 +58,9 @@ class VTK_MIMXCOMMON_EXPORT vtkMRMLFiniteElementBuildingBlockNode : public vtkMR
   
   // Description:
   // Set pointer to the Mimx actor that contains the state variables
-  vtkSetObjectMacro(MimxUnstructuredGridActor, vtkMimxUnstructuredGridActor);
-  vtkGetObjectMacro(MimxUnstructuredGridActor, vtkMimxUnstructuredGridActor);
+
+  void SetMimxUnstructuredGridActor(vtkMimxUnstructuredGridActor* actor) { MimxUnstructuredGridActor = actor; }
+  vtkMimxUnstructuredGridActor* GetMimxUnstructuredGridActor(void) {return MimxUnstructuredGridActor; }
 
   // don't use VTK macros  because the values are stored in an actor instance
   void   SetDataType(int value) {this->MimxUnstructuredGridActor->SetDataType(value);}   

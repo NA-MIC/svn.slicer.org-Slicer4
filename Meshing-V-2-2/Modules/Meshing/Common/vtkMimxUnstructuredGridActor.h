@@ -55,7 +55,7 @@ public:
   static vtkMimxUnstructuredGridActor *New();
   vtkTypeRevisionMacro(vtkMimxUnstructuredGridActor,vtkMimxActorBase);
   void PrintSelf(ostream& os, vtkIndent indent);
- //vtkDataSet* GetDataSet();
+
   vtkUnstructuredGrid* GetDataSet();
  // functions related to mesh seeding
  void ComputeMeshSeed(double AvElLength);

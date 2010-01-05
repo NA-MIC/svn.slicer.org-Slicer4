@@ -31,7 +31,7 @@ vtkFiniteElementBuildingBlockList::vtkFiniteElementBuildingBlockList()
 {
     SetMRMLSceneForStorage(NULL);
     // set the actor list maintained locally to an empty list
-    this->actorList = vtkLocalLinkedListWrapper::New();
+    //this->actorList = vtkLocalLinkedListWrapper::New();
 }
 
 vtkFiniteElementBuildingBlockList::~vtkFiniteElementBuildingBlockList()
@@ -40,12 +40,12 @@ vtkFiniteElementBuildingBlockList::~vtkFiniteElementBuildingBlockList()
     // the renderwindow.  Delete off of the front of the list.  Since the lists own
     // delete method is used, both representations (local and MRML) remain in sync.
 
-    int NumberOfItemsInList = this->GetNumberOfItems();
-    for (int i=0; i<NumberOfItemsInList; i++)
-    {
-        this->RemoveItem(0);
-        vtkDebugMacro("deleting BBox Actor");
-    }
+//    int NumberOfItemsInList = this->GetNumberOfItems();
+//    for (int i=0; i<NumberOfItemsInList; i++)
+//    {
+//        this->RemoveItem(0);
+//        vtkDebugMacro("deleting BBox Actor");
+//    }
 }
 
 // save reference to the scene to be used for storage
@@ -81,8 +81,10 @@ int vtkFiniteElementBuildingBlockList::AppendItem(vtkMimxUnstructuredGridActor* 
      // copy the state variables to the MRML node.  The same UnstructuredGrid
      // instance is pointed to by both the actor and the MRML node.
 
-     //newMRMLNode->SetMimxUnstructuredGridActor(actor);
+     newMRMLNode->SetMimxUnstructuredGridActor(actor);
      newMRMLNode->SetAndObserveUnstructuredGrid(actor->GetDataSet());
+
+
 
      // now add the display, storage, and displayable nodes
      vtkMRMLFiniteElementBuildingBlockDisplayNode* dispNode = vtkMRMLFiniteElementBuildingBlockDisplayNode::New();
