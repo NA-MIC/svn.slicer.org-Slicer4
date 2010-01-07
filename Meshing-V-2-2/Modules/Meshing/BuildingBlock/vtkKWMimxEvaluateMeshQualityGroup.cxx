@@ -1072,6 +1072,7 @@ void vtkKWMimxEvaluateMeshQualityGroup::UpdateObjectLists()
   {
     //this->MeshListComboBox->GetWidget()->SetValue(
     //      this->FEMeshList->GetItem(defaultItem)->GetFileName());
+      cout << "EvaluateMeshQuality: numObjectsInMeshList - " << this->FEMeshList->GetNumberOfItems() << endl;
     strcpy(this->PreviousSelection, this->FEMeshList->GetItem(item)->GetFileName());
     this->SelectionChangedCallback(this->FEMeshList->GetItem(item)->GetFileName());
     this->QualityTypeButton->GetWidget()->SetStateToNormal();

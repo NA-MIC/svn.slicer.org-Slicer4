@@ -53,10 +53,11 @@ vtkMimxActorBase::~vtkMimxActorBase()
   delete this->FoundationName;
 }
 
-//void vtkMimxActorBase::SetFileName( const char *InputFileName)
-//{
-//  strcpy(this->FileName, InputFileName);
-//}
+void vtkMimxActorBase::SetFileName( const char *InputFileName)
+{
+  strcpy(this->FileName, InputFileName);
+}
+
 
 void vtkMimxActorBase::SetFilePath(const char *InputFilePath)
 {

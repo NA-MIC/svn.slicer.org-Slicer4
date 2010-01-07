@@ -195,7 +195,7 @@ void vtkKWMimxGroupBase::AddMeshToDisplay( vtkUnstructuredGrid *mesh,
   this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
 
   int itemIndex = this->FEMeshList->GetNumberOfItems()-1;
-        //this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->FEMeshList->GetItem( itemIndex ) );
+       //this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->FEMeshList->GetItem( itemIndex ) );
        this->GetMimxMainWindow()->GetViewProperties()->AddObjectList(actor );
 }
 //----------------------------------------------------------------------------
@@ -223,7 +223,6 @@ void vtkKWMimxGroupBase::AddBuildingBlockToDisplay(vtkUnstructuredGrid *ugrid,
    actor->SetDataSet( ugrid );
    actor->SetFoundationName(foundationName);
    this->BBoxList->AppendItem( actor );
-
 
         /* Create the Redo/Undo tree */
   int currentitem = this->BBoxList->GetNumberOfItems()-1;
@@ -374,8 +373,8 @@ void vtkKWMimxGroupBase::AddSurfaceToDisplay(vtkPolyData *surface,
   }
  // actor->GetDataSet()->Modified();
   //this->GetMimxMainWindow()->GetRenderWidget()->AddViewProp( this->SurfaceList->GetItem(item)->GetActor());
-  //this->GetMimxMainWindow()->GetRenderWidget()->Render();
-  //this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
+  this->GetMimxMainWindow()->GetRenderWidget()->ResetCamera();
+  this->GetMimxMainWindow()->GetRenderWidget()->Render();
   //this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( this->SurfaceList->GetItem(item) );
   this->GetMimxMainWindow()->GetViewProperties()->AddObjectList( actor );
 }

@@ -57,8 +57,9 @@ public:
   vtkGetMacro(FileName, char*);
   vtkGetMacro(UniqueId, char*);
   vtkGetMacro(FoundationName, char*);
+
   void SetFilePath(const char *InputFilePath);
-  //void SetFileName(const char *InputFileName);
+  void SetFileName(const char *InputFileName);
   void SetUniqueId( const char *Id);
   void SetObjectName(const char *FilterName, vtkIdType &Count);
   void SetFoundationName(const char *FoundationName);

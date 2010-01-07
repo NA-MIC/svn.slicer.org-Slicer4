@@ -1575,9 +1575,9 @@ void vtkMimxMeshActor::AddElementSetListItem( std::string setName )
 void vtkMimxMeshActor::SetRenderer(vtkRenderer *renderer)
 {
   this->Renderer = renderer;
-  this->Renderer->AddViewProp(this->Actor);
-  this->Renderer->AddViewProp(this->OutlineActor);
-  this->Renderer->AddViewProp(this->InteriorActor);
+  //this->Renderer->AddViewProp(this->Actor);
+  //this->Renderer->AddViewProp(this->OutlineActor);
+  //this->Renderer->AddViewProp(this->InteriorActor);
   if (!this->LegendActor)
     {
     this->BuildScalarBar();

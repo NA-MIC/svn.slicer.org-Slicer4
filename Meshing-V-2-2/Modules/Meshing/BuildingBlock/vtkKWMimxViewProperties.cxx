@@ -257,14 +257,18 @@ void vtkKWMimxViewProperties::AddObjectList(vtkMimxActorBase *actor)
         this->MultiColumnList->GetWidget()->SetCellWindowCommandToCheckButton( rowIndex, 0);
 
   char commandName[256];
+  char filename[256];
   sprintf(commandName, "VisibilityCallback %s", UniqueObjectId);
 
         this->MultiColumnList->GetWidget()->GetCellWindowAsCheckButton(rowIndex,0)->SetCommand(this, commandName);
         // *** causes crash on mesh only (surface and bblock work ok)
-       // this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFileName());
-        this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, actor->GetFileName());
+        cout << "ViewProperties: objectList filename: " << this->ObjectList->GetItem(rowIndex)->GetFileName() << endl;
+        strcpy(filename,actor->GetFileName());
+        //this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, this->ObjectList->GetItem(rowIndex)->GetFileName());
+        this->MultiColumnList->GetWidget()->InsertCellText(rowIndex, 1, filename);
 
-  // *** defeated add to show objects only through MRML nodes
+        // defeated add of actors to Slicer window.  We are showing
+        // objects only through MRML display nodes now.
 
   switch (actor->GetDataType())
   {

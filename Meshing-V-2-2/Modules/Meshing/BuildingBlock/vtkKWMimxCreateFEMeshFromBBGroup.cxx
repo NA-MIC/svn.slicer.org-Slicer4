@@ -779,6 +779,7 @@ void vtkKWMimxCreateFEMeshFromBBGroup::UpdateObjectLists()
 {
   this->UpdateSurfaceComboBox( this->SurfaceListComboBox->GetWidget() );
   this->UpdateBuildingBlockComboBox( this->BBListComboBox->GetWidget() );
+
   int item = this->UpdateMeshComboBox( this->MeshListComboBox->GetWidget() );
   
   //this->SurfaceListComboBox->GetWidget()->DeleteAllValues();

@@ -299,7 +299,7 @@ void vtkIA_FEMeshGUI::Enter ( )
   if (this->FirstEntryToModule)
     this->FirstEntryToModule=false;  
   else
-    this->MeshingUI->RestoreVisibilityStateOfObjectLists(); 
+    //this->MeshingUI->RestoreVisibilityStateOfObjectLists();
 
   // synchronize the meshing lists with the slicer MRML scene
   this->MeshingUI->SynchronizeMeshingObjectsWithMRMLScene();
@@ -320,5 +320,5 @@ void vtkIA_FEMeshGUI::Exit ( )
   this->MeshingUI->RemoveOrientationAxis();    
   this->MeshingUI->CustomApplicationSettingsModuleExit();
   // save the state of object visibility so we can restore later
-  this->MeshingUI->SaveVisibilityStateOfObjectLists();
+  //this->MeshingUI->SaveVisibilityStateOfObjectLists();
 }

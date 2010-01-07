@@ -128,19 +128,16 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
 
       this->savedMRMLScene->AddNodeNoNotify(dispNode);
       this->savedMRMLScene->AddNodeNoNotify(dispNode2);
-      //this->savedMRMLScene->AddNodeNoNotify(dispNode3);
 
       this->savedMRMLScene->AddNodeNoNotify(storeNode);
 
       this->savedMRMLScene->AddNode(newMRMLNode);
-     dispNode->SetScene(this->savedMRMLScene);
+      dispNode->SetScene(this->savedMRMLScene);
       dispNode2->SetScene(this->savedMRMLScene);
-      //dispNode3->SetScene(this->savedMRMLScene);
       storeNode->SetScene(this->savedMRMLScene);
 
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode->GetID());
       newMRMLNode->AddAndObserveDisplayNodeID(dispNode2->GetID());
-      //newMRMLNode->AddAndObserveDisplayNodeID(dispNode3->GetID());
       newMRMLNode->SetAndObserveStorageNodeID(storeNode->GetID());
 
    } else
@@ -158,7 +155,7 @@ vtkMimxMeshActor* vtkFiniteElementMeshList::GetItem(vtkIdType id)
   // first fetch the MRML node that has been requested
   vtkMRMLFiniteElementMeshNode* requestedMrmlNode =
       (vtkMRMLFiniteElementMeshNode*)(this->savedMRMLScene->GetNthNodeByClass(id,"vtkMRMLFiniteElementMeshNode"));
-//  return requestedMrmlNode->GetMimxMeshActor();
+  return requestedMrmlNode->GetMimxMeshActor();
 
 }
 
