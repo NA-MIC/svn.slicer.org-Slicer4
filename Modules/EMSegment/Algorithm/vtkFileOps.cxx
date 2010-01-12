@@ -128,8 +128,8 @@ void  vtkFileOps::WriteDoubleToUShortToGEFile(const char* FileName, double* vec,
 int vtkFileOps::uncompressedFileName(const char *fname, char **newFileName)
 {
 #ifndef _WIN32
-  char *p = (char *)NULL;
-  char *lastSlash = (char *)NULL;
+  const char *p = (char *)NULL;
+  const char *lastSlash = (char *)NULL;
 
     /* If the file name ends in .gz or .Z it is probably compressed */
     p = strrchr(fname, '.');
@@ -138,8 +138,8 @@ int vtkFileOps::uncompressedFileName(const char *fname, char **newFileName)
         ((strcmp(p, ".gz") == 0) || (strcmp(p, ".Z") == 0)) ) {
       (*newFileName) = strdup(fname); /* Use the same name */
       assert((*newFileName) != NULL);
-      p = strrchr(*newFileName,'.');
-      *p = '\0';
+      char * endp = strrchr(*newFileName,'.');
+      *endp = '\0';
     } else {
       (*newFileName) = strdup(fname); /* Use the same name */
       assert((*newFileName) != NULL);
@@ -157,8 +157,8 @@ int vtkFileOps::fileIsCompressed(const char *fname, char **newFileName)
   struct stat statBuf;
   vtkNotUsed(int long fileSize = 0;);
 
-  char *p = (char *)NULL;
-  char *lastSlash = (char *)NULL;
+  const char *p = (char *)NULL;
+  const char *lastSlash = (char *)NULL;
   int aFileIsCompressed = 0;
 
   char *dontcarename = NULL;
