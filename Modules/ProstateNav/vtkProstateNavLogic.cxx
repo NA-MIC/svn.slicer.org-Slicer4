@@ -225,7 +225,7 @@ int vtkProstateNavLogic::SwitchWorkPhase(int newwp)
     this->CurrentPhase  = newwp;
     this->PhaseComplete = false;
 
-    char* command = NULL;
+    std::string command;
     switch(this->CurrentPhase)
       {
       case StartUp:
@@ -263,13 +263,13 @@ int vtkProstateNavLogic::SwitchWorkPhase(int newwp)
       default:
         break;
       }
-    if (command)
+    if (!command.empty())
       {
       vtkMRMLNode* node = this->GetMRMLScene()->GetNodeByID(this->RobotCommandNodeID.c_str());
       vtkMRMLBrpRobotCommandNode* cnode = vtkMRMLBrpRobotCommandNode::SafeDownCast(node);
       if (cnode)
         {
-        cnode->PushOutgoingCommand(command);
+        cnode->PushOutgoingCommand(command.c_str());
         cnode->InvokeEvent(vtkCommand::ModifiedEvent);
         }
 
