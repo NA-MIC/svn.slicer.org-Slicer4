@@ -112,8 +112,7 @@ bool  Column2Vector::normalize()
   //  when normalizing. Return false if close to zero.
   if(vnorm<VEPSILON)
   {
-    printf("Column2Vector::normalize() - vector norm close \
-                            to zero.");
+    std::cout << "Column2Vector::normalize() - vector norm close to zero." << std::endl;
     return(false);
   }
 
@@ -141,7 +140,7 @@ float Column2Vector::norm()
   //  failure of the square root. Return zero in this case. 
   if(sqnorm<0.0)
   {
-    printf("Column2Vector::norm() - negative sqrt() argument.");
+    std::cout << "Column2Vector::norm() - negative sqrt() argument." << std::endl;
     return(0.0);
   }
   
@@ -216,7 +215,7 @@ Column2Vector Column2Vector::operator/(float divisor)
   // RISK:  Divide by zero.
   if(divisor<VEPSILON)
   {
-    printf("Column2Vector::operator/(float) - divide by zero.");
+    std::cout << "Column2Vector::operator/(float) - divide by zero." << std::endl;
     quotient.setX( 0.0 );
     quotient.setY( 0.0 );
   } else
@@ -376,8 +375,7 @@ bool  Column3Vector::normalize()
   //  when normalizing. Return false if close to zero.
   if(vnorm<VEPSILON)
   {
-    printf("Column3Vector::normalize() - \
-                            vector norm close to zero.");
+    std::cout << "Column3Vector::normalize() - vector norm close to zero." << std::endl;
     return(false);
   }
 
@@ -407,7 +405,7 @@ float Column3Vector::norm()
   //  failure of the square root. Return zero in this case. 
   if(sqnorm<0.0)
   {
-    printf( "Column2Vector::norm() - negative sqrt() argument.");
+    std::cout << "Column2Vector::norm() - negative sqrt() argument." << std::endl;
     return(0.0);
   }
   
@@ -476,8 +474,7 @@ Column3Vector Column3Vector::operator*(Column3Vector Vright)
   //        Return a zero vector in this case.
   if(result.normalize()==false)
   {
-    printf( "Column3Vector::operator*(Column3Vector) - \
-                            vector norm close to zero");
+    std::cout << "Column3Vector::operator*(Column3Vector) - vector norm close to zero" << std::endl;
     result.setvalues(0.0, 0.0, 0.0);
   }
 
@@ -516,7 +513,7 @@ Column3Vector Column3Vector::operator/(float divisor)
   // RISK:  Divide by zero.
   if(divisor<VEPSILON)
   {
-    printf( "Column3Vector::operator/(float) - divide by zero.");
+    std::cout << "Column3Vector::operator/(float) - divide by zero." << std::endl;
     quotient.setX( 0.0 );
     quotient.setY( 0.0 );
     quotient.setZ( 0.0 );
@@ -710,7 +707,7 @@ float Quaternion::norm()
   //  failure of the square root. Return zero in this case. 
   if(sqnorm<0.0)
   {
-    printf( "Quaternion::norm() - negative sqrt() argument.");
+    std::cout << "Quaternion::norm() - negative sqrt() argument." << std::endl;
     return(0.0);
   }
   
@@ -737,8 +734,7 @@ bool  Quaternion::normalize()
   //  when normalizing. Return false if close to zero.
   if(qnorm<VEPSILON)
   {
-    printf( "Quaternion::normalize() - quaternion norm \
-                            close to zero.");
+    std::cout << "Quaternion::normalize() - quaternion norm close to zero." << std::endl;
     return(false);
   }
 
