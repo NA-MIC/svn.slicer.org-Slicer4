@@ -606,7 +606,7 @@ std::string vtkMRMLVolumeArchetypeStorageNode::UpdateFileList(vtkMRMLNode *refNo
     vtkErrorMacro("Reference node is not a vtkMRMLVolumeNode");
     return returnString;
     }
-  
+
   vtkMRMLVolumeNode *volNode = NULL;
   volNode = vtkMRMLScalarVolumeNode::SafeDownCast(refNode);
   
@@ -623,6 +623,8 @@ std::string vtkMRMLVolumeArchetypeStorageNode::UpdateFileList(vtkMRMLNode *refNo
     return returnString;
     }
 
+  vtkDebugMacro("UpdateFileList: old file name = " << oldName);
+  
   // clear out the old file list
   this->ResetFileNameList();
   
@@ -709,16 +711,25 @@ std::string vtkMRMLVolumeArchetypeStorageNode::UpdateFileList(vtkMRMLNode *refNo
     // use the scene's root dir, all the files in the list will be
     // relative to it (the relative path is how you go from the root dir to
     // the dir in which the volume is saved)
-    relativePath = vtksys::SystemTools::RelativePath(volNode->GetScene()->GetRootDirectory(), localDirectory.c_str());
-    vtkDebugMacro("UpdateFileList: got the scene root dir " << volNode->GetScene()->GetRootDirectory());
+    vtksys_stl::string rootDir = volNode->GetScene()->GetRootDirectory();
+    if (rootDir.find_last_of("/") == rootDir.length() - 1)
+      {
+      vtkDebugMacro("UpdateFileList: found trailing slash in : " << rootDir);
+      rootDir = rootDir.substr(0, rootDir.length()-1);
+      }
+    // RelativePath requires two absolute paths, otherwise returns empty
+    // string
+    relativePath = vtksys::SystemTools::RelativePath(rootDir.c_str(), localDirectory.c_str());
+    vtkDebugMacro("UpdateFileList: got the scene root dir " << rootDir << ", local dir = " << localDirectory.c_str());
     }
   else
     {
     // use the archetype's directory, so that all the files in the list will
     // be relative to it
     relativePath = vtksys::SystemTools::RelativePath(originalDir.c_str(), localDirectory.c_str());
+    vtkDebugMacro("UpdateFileList: no scene root dir, using original dir = " << originalDir.c_str() << " and local dir " << localDirectory.c_str());
     }
-  vtkDebugMacro("UpdateFileList: using prefix of relative path " << relativePath.c_str());
+  vtkDebugMacro("UpdateFileList: using prefix of relative path '" << relativePath.c_str() << "'");
   // now get ready to join the relative path to thisFile
   vtksys_stl::vector<vtksys_stl::string> relativePathComponents;
   vtksys::SystemTools::SplitPath(relativePath.c_str(), relativePathComponents);
