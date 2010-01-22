@@ -156,7 +156,7 @@ void vtkCellWallSegmentGUI::ProcessGUIEvents ( vtkObject *caller,
     this->UpdateMRML();
     }
   
-  // check for events that specify the output volume to create
+  // check for events that specify the segmented volume to create
    if (selector == this->SegmentedVolumeSelector && event == vtkSlicerNodeSelectorWidget::NodeSelectedEvent  &&
      this->SegmentedVolumeSelector->GetSelected() != NULL) 
      { 
@@ -429,9 +429,8 @@ void vtkCellWallSegmentGUI::FileSelectionCallback ( )
                 return;
         }
 
-         char *filename = FileBrowserDialog->GetFileName();
+        char *filename = FileBrowserDialog->GetFileName();
         
-       
         this->Logic->GetCellWallVisSeg()->readImage(filename);
         this->Logic->GetCellWallVisSeg()->afterLoadingInit();
         this->Logic->InitializeMRMLVolume(filename);

@@ -27,7 +27,10 @@ Version:   $Revision: 1.2 $
 
 #include "vtkMRMLScene.h"
 #include "vtkMRMLScalarVolumeNode.h"
+#include "vtkMRMLScalarVolumeDisplayNode.h"
+#include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkImageReader2.h"
+#include "vtkSlicerColorLogic.h""
 
 vtkCellWallSegmentLogic* vtkCellWallSegmentLogic::New()
 {
@@ -130,8 +133,6 @@ void vtkCellWallSegmentLogic::InitializeMRMLVolume(char* filename)
   image->Delete();
   outVolume->SetModifiedSinceRead(1);
 
-
-
   // delete the filter
   this->Reader->Delete();
 }
@@ -141,6 +142,7 @@ void vtkCellWallSegmentLogic::InitializeMRMLVolume(char* filename)
 void vtkCellWallSegmentLogic::InitializeMRMLSegmentationVolume()
 {
 
+    cout << "CellWallSegment: InitializeMRMLSegmentationVolume" << endl;
   // check if MRML node is present 
   if (this->CellWallSegmentNode == NULL)
     {
@@ -155,15 +157,38 @@ void vtkCellWallSegmentLogic::InitializeMRMLSegmentationVolume()
    
   if (this->CellWallSegmentNode->GetSegmentationVolumeRef() == NULL)
     {
+      cout << "CellWallSegment: Initializing segmentation output volume" << endl;
 //      // make a new VTK image so we can modify it with the segmentation
-//      vtkImageData* image = vtkImageData::New();
-//      this->CellWallSegmentNode->SetSegmentationVolumeRef(vtkMRMLScalarVolumeNode::New());
-//      image->SetScalarTypeToUnsignedChar();
-//       image->SetSpacing(1.0, 1.0, rimage.aspratio);  
-//       image->SetDimensions(rimage.nx,rimage.ny,rimage.nz);
-//       image->SetOrigin(0,0,0);
-//       image->Modified();
-//   
+      vtkImageData* image = vtkImageData::New();
+
+      vtkMRMLScalarVolumeDisplayNode *displayNode = vtkMRMLScalarVolumeDisplayNode::New();
+      vtkMRMLScalarVolumeNode *scalarNode = vtkMRMLScalarVolumeNode::New();
+      scalarNode->SetAndObserveImageData( image );
+      vtkMRMLVolumeArchetypeStorageNode *storageNode = vtkMRMLVolumeArchetypeStorageNode::New();
+      scalarNode->SetScene(this->GetMRMLScene());
+      displayNode->SetScene(this->GetMRMLScene());
+      storageNode->SetScene(this->GetMRMLScene());
+
+      //MRMLScene::GetActiveScene()->AddNode(displayNode);
+
+      //displayNode->SetAutoWindowLevel(autoLevel);
+      //displayNode->SetInterpolate(interpolate);
+      vtkSlicerColorLogic *colorLogic = vtkSlicerColorLogic::New();
+      displayNode->SetAndObserveColorNodeID(colorLogic->GetDefaultLabelMapColorNodeID());
+
+      scalarNode->SetAndObserveStorageNodeID(storageNode->GetID());
+      scalarNode->SetAndObserveDisplayNodeID(displayNode->GetID());
+      this->GetMRMLScene()->AddNode(displayNode);
+      this->GetMRMLScene()->AddNode(scalarNode);
+      this->GetMRMLScene()->AddNode(storageNode);
+
+      this->CellWallSegmentNode->SetSegmentationVolumeRef(scalarNode->GetID());
+      image->SetScalarTypeToUnsignedChar();
+       image->SetSpacing(1.0, 1.0, rimage.aspratio);
+       image->SetDimensions(rimage.nx,rimage.ny,rimage.nz);
+       image->SetOrigin(0,0,0);
+       image->Modified();
+
       // *** need to fix this reference so the MRML volume is created and the pointer to the cellID is placed in the MRMLCellWallSegmentNode
       //this->CellWallSegmentNode->SetSegmentationVolumeRef(this->GetGUI()->GetApplication()->GetModuleGUIByName("Volumes")->GetLogic()->CreateLabelVolume());
       }
