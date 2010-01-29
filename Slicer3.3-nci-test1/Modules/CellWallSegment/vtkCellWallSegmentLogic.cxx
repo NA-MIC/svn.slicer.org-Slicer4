@@ -30,7 +30,7 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLScalarVolumeDisplayNode.h"
 #include "vtkMRMLVolumeArchetypeStorageNode.h"
 #include "vtkImageReader2.h"
-#include "vtkSlicerColorLogic.h""
+#include "vtkSlicerColorLogic.h"
 
 vtkCellWallSegmentLogic* vtkCellWallSegmentLogic::New()
 {
@@ -49,7 +49,7 @@ vtkCellWallSegmentLogic* vtkCellWallSegmentLogic::New()
 vtkCellWallSegmentLogic::vtkCellWallSegmentLogic()
 {
   this->CellWallSegmentNode = NULL;
-  this->VisSegInstance = new vtkCellWallVisSeg();  
+  this->VisSegInstance = new vtkCellWallVisSeg();
   this->Reader = NULL;
 }
 
@@ -62,7 +62,7 @@ vtkCellWallSegmentLogic::~vtkCellWallSegmentLogic()
 //----------------------------------------------------------------------------
 void vtkCellWallSegmentLogic::PrintSelf(ostream& os, vtkIndent indent)
 {
-  
+
 }
 
 
@@ -70,13 +70,13 @@ void vtkCellWallSegmentLogic::PrintSelf(ostream& os, vtkIndent indent)
 void vtkCellWallSegmentLogic::InitializeMRMLVolume(char* filename)
 {
 
-  // check if MRML node is present 
+  // check if MRML node is present
   if (this->CellWallSegmentNode == NULL)
     {
     vtkErrorMacro("No input CellWallSegmentNode found");
     return;
     }
-  
+
    // trim the extension off the filename and add .ids to point to the binary
   int filenamelength;
   char fileids[256];
@@ -87,51 +87,51 @@ void vtkCellWallSegmentLogic::InitializeMRMLVolume(char* filename)
    strcat(fileids,".ids");
 
   // read the volume and assign it to an output node.  This way, the volume
-    // will appear in the Slicer viewers after it is read in, and it can be 
-    // used 
-  
+    // will appear in the Slicer viewers after it is read in, and it can be
+    // used
+
    RIMAGEDEF& rimage = this->VisSegInstance->getRimage();
     if(Reader==NULL) Reader = vtkImageReader2::New();
       Reader->SetDataScalarTypeToUnsignedChar();
       Reader->SetDataExtent(0, rimage.nx-1, 0, rimage.ny-1, 0, rimage.nz-1);
-      Reader->SetDataSpacing(1.0, 1.0, rimage.aspratio);  
+      Reader->SetDataSpacing(1.0, 1.0, rimage.aspratio);
       Reader->SetFileDimensionality(3);
       Reader->SetDataOrigin(0,0,0);
       Reader->SetFileName(fileids);
       Reader->Modified();
       Reader->Update();
 
-    
+
     // find output volume
-    vtkMRMLScalarVolumeNode *outVolume =  vtkMRMLScalarVolumeNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->CellWallSegmentNode->GetOutputVolumeRef()));
-    if (outVolume == NULL)
+    vtkMRMLScalarVolumeNode *inVolume =  vtkMRMLScalarVolumeNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->CellWallSegmentNode->GetInputVolumeRef()));
+    if (inVolume == NULL)
       {
-      vtkErrorMacro("No output volume found with id= " << this->CellWallSegmentNode->GetOutputVolumeRef());
+      vtkErrorMacro("No output volume found with id= " << this->CellWallSegmentNode->GetInputVolumeRef());
       return;
       }
-    
+
 
   // copy RASToIJK matrix, and other attributes from input to output
-  std::string name (outVolume->GetName());
-  std::string id (outVolume->GetID());
+  std::string name (inVolume->GetName());
+  std::string id (inVolume->GetID());
 
 //  outVolume->CopyOrientation(inVolume);
 //  outVolume->SetAndObserveTransformNodeID(inVolume->GetTransformNodeID());
 
-  outVolume->SetName(name.c_str());
+  inVolume->SetName(name.c_str());
   //outVolume->SetID(id.c_str());
- 
+
   //this->VisSegInstance->compute2DBoundary(1);
-  
+
   // create filter
-  
+
   // set ouput of the filter to VolumeNode's ImageData
   // TODO FIX the bug of the image is deallocated unless we do DeepCopy
- vtkImageData* image = vtkImageData::New(); 
+ vtkImageData* image = vtkImageData::New();
   image->DeepCopy( this->Reader->GetOutput() );
-  outVolume->SetAndObserveImageData(image);
+  inVolume->SetAndObserveImageData(image);
   image->Delete();
-  outVolume->SetModifiedSinceRead(1);
+  inVolume->SetModifiedSinceRead(1);
 
   // delete the filter
   this->Reader->Delete();
@@ -143,18 +143,18 @@ void vtkCellWallSegmentLogic::InitializeMRMLSegmentationVolume()
 {
 
     cout << "CellWallSegment: InitializeMRMLSegmentationVolume" << endl;
-  // check if MRML node is present 
+  // check if MRML node is present
   if (this->CellWallSegmentNode == NULL)
     {
     vtkErrorMacro("No input CellWallSegmentNode found");
     return;
     }
-  
-   // read the segmentation volume to get the    
+
+   // read the segmentation volume to get the
    RIMAGEDEF& rimage = this->VisSegInstance->getRimage();
    unsigned char *pixbuf = this->VisSegInstance->getPixbuf();
-   
-   
+
+
   if (this->CellWallSegmentNode->GetSegmentationVolumeRef() == NULL)
     {
       cout << "CellWallSegment: Initializing segmentation output volume" << endl;
@@ -198,17 +198,17 @@ void vtkCellWallSegmentLogic::InitializeMRMLSegmentationVolume()
 void vtkCellWallSegmentLogic::PaintIntoMRMLSegmentationVolume(int CellID)
 {
 
-  // check if MRML node is present 
+  // check if MRML node is present
   if (this->CellWallSegmentNode == NULL)
     {
     vtkErrorMacro("No input CellWallSegmentNode found");
     return;
     }
-  
-   // read the segmentation volume to get the    
+
+   // read the segmentation volume to get the
    RIMAGEDEF& rimage = this->VisSegInstance->getRimage();
    unsigned char *pixbuf = this->VisSegInstance->getPixbuf();
-   
+
     // find output volume
     vtkMRMLScalarVolumeNode *segmentVolume =  vtkMRMLScalarVolumeNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->CellWallSegmentNode->GetSegmentationVolumeRef()));
     if (segmentVolume == NULL)
@@ -216,8 +216,8 @@ void vtkCellWallSegmentLogic::PaintIntoMRMLSegmentationVolume(int CellID)
       vtkErrorMacro("No segment volume found with id= " << this->CellWallSegmentNode->GetSegmentationVolumeRef());
       return;
       }
-    
-  // draw the resulting contour into the label map using the correct legacy cell number  
+
+  // draw the resulting contour into the label map using the correct legacy cell number
   this->VisSegInstance->RenderSegmentationResult(segmentVolume->GetImageData(),CellID);
   segmentVolume->SetModifiedSinceRead(1);
 
@@ -228,23 +228,23 @@ void vtkCellWallSegmentLogic::PaintIntoMRMLSegmentationVolume(int CellID)
 
 
 
-void vtkCellWallSegmentLogic::Perform2DSegmentation() 
+void vtkCellWallSegmentLogic::Perform2DSegmentation()
 {
     vtkDebugMacro("vtkCellWallSegmentLogic: 2D segmentation " << "\n");
 
     // find the currently selected fiducial list and set the cell center and cell boundary points
     // to the values in the fiducial points.
-    
+
     char* fiducialListID = this->CellWallSegmentNode->GetFiducialListRef();
     vtkMRMLFiducialListNode *fidList = vtkMRMLFiducialListNode::SafeDownCast(
                 this->GetMRMLScene()->GetNodeByID(fiducialListID));
 
     int numPoints = fidList->GetNumberOfFiducials();
-    if (numPoints == 2) 
-    { 
+    if (numPoints == 2)
+    {
         vtkDebugMacro("hurray! found two points");
         float *center, *boundary;
-        double centerAsDoubles[4], boundaryAsDoubles[4]; 
+        double centerAsDoubles[4], boundaryAsDoubles[4];
         center = fidList->GetNthFiducialXYZ(0);
         boundary = fidList->GetNthFiducialXYZ(1);
         vtkDebugMacro("found points: center ("<< center[0] << center[1] << center[2] << "\n");
@@ -254,9 +254,9 @@ void vtkCellWallSegmentLogic::Perform2DSegmentation()
             centerAsDoubles[j] = (double)center[j];
             boundaryAsDoubles[j] = (double)boundary[j];
         }
-        // set the value as a homogeneous coordinate 
+        // set the value as a homogeneous coordinate
         centerAsDoubles[3] = 1.0;  boundaryAsDoubles[3] = 1.0;
-       
+
         this->VisSegInstance->setCellCenter(centerAsDoubles);
         this->VisSegInstance->setCellEdge(boundaryAsDoubles);
         cout  << "found points: center ("<< centerAsDoubles[0] << " " << centerAsDoubles[1] << " " << centerAsDoubles[2] << ")" << endl;
@@ -264,10 +264,32 @@ void vtkCellWallSegmentLogic::Perform2DSegmentation()
         this->VisSegInstance->compute2DBoundary(1);
         // copy to output volume (segmentation)
         cout << "2D boundary complete. copy to segmentation volume" << endl;
+        this->InitializeMRMLSegmentationVolume();
         this->PaintIntoMRMLSegmentationVolume(1);
-    } else 
+    } else
         vtkErrorMacro("Fiducial list did not contain two points")
 }
 
 
- void vtkCellWallSegmentLogic::Perform3DSegmentation() {cout << "3D Segmentation" << endl;}
+ void vtkCellWallSegmentLogic::Perform3DSegmentation()
+ {
+
+      // find output volume
+      vtkMRMLScalarVolumeNode *segmentVolume =  vtkMRMLScalarVolumeNode::SafeDownCast(this->GetMRMLScene()->GetNodeByID(this->CellWallSegmentNode->GetSegmentationVolumeRef()));
+      if (segmentVolume == NULL)
+      {
+        vtkErrorMacro("No segment volume found with id= " << this->CellWallSegmentNode->GetSegmentationVolumeRef());
+        return;
+       }
+
+     // clear out the bits set in the segmentation volume by copying from the original volume again
+     cout << "3D Segmentation: rest segmentation volume" << endl;
+    this->VisSegInstance->ResetSegmentationResult(segmentVolume->GetImageData(),1);
+    cout << "3D Segmentation: computing 3D segmentation" << endl;
+    this->VisSegInstance->compute3DSeg(1);
+    cout << "3D Segmentation: segmentation complete" << endl;
+    this->PaintIntoMRMLSegmentationVolume(1);
+    segmentVolume->SetModifiedSinceRead(1);
+ }
+
+
