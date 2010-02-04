@@ -37,4 +37,10 @@ install(TARGETS DetectGrowthSegmentation RUNTIME
         DESTINATION bin COMPONENT Development
 )
 
+add_executable(BSplineRegistration BSplineRegistration.cxx)
+target_link_libraries(BSplineRegistration ITKCommon ITKNumerics ITKIO)
+install(TARGETS BSplineRegistration RUNTIME 
+        DESTINATION bin COMPONENT Development
+)
+
 #slicer3_install_plugins(DetectGrowthSegmentation)
