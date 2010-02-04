@@ -1228,8 +1228,6 @@ void vtkChangeTrackerLogic::MeassureGrowth(int SegmentThreshMin, int SegmentThre
   this->Analysis_Intensity_ROIGrowthInt->Update();
   this->Analysis_Intensity_ROIShrinkInt->Update();
 
-
-
   // See Corresponding comment in ChangeTrackerFct - reduces bias towards shrinkage
   this->Analysis_Intensity_ROINegativeBin->ThresholdByLower(-ShrinkBias*this->Analysis_Intensity_Threshold); 
   this->Analysis_Intensity_ROINegativeBin->Update(); 
@@ -1802,4 +1800,8 @@ vtkImageData* vtkChangeTrackerLogic::GetConnectivityMask(vtkImageData* growthIma
   result->DeepCopy(cast->GetOutput());
 
   return result;
+}
+
+vtkImageData*     vtkChangeTrackerLogic::GetAnalysis_Intensity_ScanSubtractSmooth(){
+    return this->Analysis_Intensity_ScanSubtractSmooth->GetOutput();
 }

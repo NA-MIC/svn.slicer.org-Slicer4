@@ -98,7 +98,11 @@ public:
   vtkImageIslandFilter* CreateAnalysis_Intensity_ROINegativeBinReal();
   vtkImageIslandFilter* CreateAnalysis_Intensity_ROIPositiveBinReal();
 
-  vtkImageData   *GetAnalysis_Intensity_ROIBinCombine();
+  vtkImageData*   GetAnalysis_Intensity_ROIBinCombine();
+  vtkImageData*   GetAnalysis_Intensity_ScanSubtractSmooth();
+  vtkImageData*   GetGrowthMask(){return this->Analysis_Intensity_ROIGrowth;}
+  vtkImageData*   GetShrinkMask(){return this->Analysis_Intensity_ROIShrink;}
+
 
   vtkImageMathematics* CreateAnalysis_Intensity_ROIBinAdd();
   vtkImageThreshold* CreateAnalysis_Intensity_ROIBinDisplay();
