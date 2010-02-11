@@ -26,6 +26,7 @@
 #include "itkMatrixOffsetTransformBase.h"
 
 #include "vtkImageEuclideanDistance.h"
+#include "vtkImageMask.h"
 
 #include <vtksys/SystemTools.hxx>
 #include <string>
@@ -279,7 +280,7 @@ void  _Print(vtkImageData *DATA,::ostream& os)  {
 }
 
 void InitializeThresholds(tgCMDLineStructure&,vtkImageData*, vtkImageData*, int&, int&,vtkMatrix4x4*);
-
+void CalculateAlternativeMeasure(tgCMDLineStructure&, vtkImageData*,vtkImageData*,vtkImageData*,double,vtkMatrix4x4*);
 
 int main(int argc, char* argv[])
 {
@@ -594,6 +595,7 @@ int main(int argc, char* argv[])
 
     cout << "=========================" << endl;    
     logic->MeassureGrowth(tgThreshold[0], tgThreshold[1], Analysis_Intensity_Shrink, Analysis_Intensity_Growth,Scan1SegmentOutput);
+    
     cout << "After measure growth" << endl;
     Analysis_Intensity_Total = Analysis_Intensity_Growth + Analysis_Intensity_Shrink; 
     CMD = tg.WorkingDir + "/TG_Analysis_Intensity.nhdr";
@@ -604,6 +606,11 @@ int main(int argc, char* argv[])
     tgWriteVolume(CMD.c_str(),supersampleMatrix,logic->GetGrowthMask());
     CMD = tg.WorkingDir + "/ROI_Shrink_mask.nrrd";
     tgWriteVolume(CMD.c_str(),supersampleMatrix,logic->GetShrinkMask());
+
+    CalculateAlternativeMeasure(tg,logic->GetAnalysis_Intensity_ScanSubtractSmooth(), logic->GetGrowthMask(),
+      logic->GetShrinkMask(), logic->GetAnalysis_Intensity_Threshold(),supersampleMatrix);
+
+
     cout << "Intensity analysis sensitivity: " << tgSensitivity << endl;
     cout << "Analysis Intensity: Shrinkage " << -Analysis_Intensity_Shrink << " Growth " << Analysis_Intensity_Growth << " Total " <<  Analysis_Intensity_Total << "Super sample " << SuperSampleVol << endl;
 
@@ -674,6 +681,7 @@ int main(int argc, char* argv[])
       outFile  << "  ROI Radius: " << tgROIRadius[0] << " " << tgROIRadius[1] << " " << tgROIRadius[2] << "\n";
       outFile  << "Threshold: [" << tgThreshold[0] <<", " << tgThreshold[1] << "]\n";
       if (tgIntensityAnalysisFlag) {
+
         outFile  << "Analysis based on Intensity Pattern" << "\n";
         outFile  << "  Sensitivity:      " << tgSensitivity << "\n";
         outFile  << "  Shrinkage:        " << floor(-Analysis_Intensity_Shrink *1000 *SuperSampleVol)/1000.0 << "mm^3 (" 
@@ -810,6 +818,91 @@ void InitializeThresholds(tgCMDLineStructure &tg, vtkImageData* image, vtkImageD
     std::cerr << "Histogram STD: " << stdev << std::endl;
 
     thrMin = mean;
-    thrMin = mean-stdev;
+//    thrMin = mean-stdev;
 
+}
+
+void CalculateAlternativeMeasure(tgCMDLineStructure &tg, vtkImageData* sub, vtkImageData* gmask,
+    vtkImageData* smask, double thresh, vtkMatrix4x4 *m){
+  vtkImageMathematics *math = vtkImageMathematics::New();
+  vtkImageMathematics *math1 = vtkImageMathematics::New();
+  vtkImageData* mask = vtkImageData::New();
+  vtkImageMask* masker1 = vtkImageMask::New();
+  vtkImageCast* cast = vtkImageCast::New();
+  vtkImageThreshold* gthresh = vtkImageThreshold::New();
+  vtkImageThreshold* sthresh = vtkImageThreshold::New();
+  std::cout << "Computing alternative measure" << std::endl;
+
+  math->SetInput(0,gmask);
+  math->SetInput(1,smask);
+  math->SetOperationToAdd();
+  math->Update();
+  std::cout << "1" << std::endl;
+//  vtkIndent v;
+//  sub->PrintSelf(std::cout, v);
+//  math->GetOutput()->PrintSelf(std::cout,
+//  v);
+  
+  math1->SetInput(0,sub);
+  math1->SetInput(1,math->GetOutput());
+  math1->SetOperationToMultiply();
+  math1->Update();
+
+  vtkImageAccumulate* hist = vtkImageAccumulate::New();
+  hist->SetInput(math1->GetOutput());
+  hist->IgnoreZeroOn();
+  hist->Update();
+  std::cout << "hist min: " << hist->GetMin()[0] << std::endl;
+  std::cout << "hist max: " << hist->GetMax()[0] << std::endl;
+//    tgWriteVolume("hist_band.nrrd",m,cast->GetOutput());
+//    tgWriteVolume("input_image.nrrd",m,cast->GetOutput());
+
+//  double max = hist->GetMax()[0];
+//  hist->SetComponentOrigin(0.,0.,0.);
+  hist->SetComponentExtent((int)hist->GetMin()[0],(int)hist->GetMax()[0],0,0,0,0);
+  hist->SetComponentSpacing(1.,0.,0.);
+  hist->IgnoreZeroOn();
+  hist->Update();
+
+    int idx = hist->GetMin()[0];
+    float meanNeg = 0, meanPos = 0, stdevNeg = 0, stdevPos = 0, cntNeg = 0, cntPos = 0;
+    for(idx=hist->GetMin()[0];idx<hist->GetMax()[0];idx++){
+      if(idx==0){
+        std::cout << "Ignoring zero" << std::endl;
+        continue;
+      }
+      float val = hist->GetOutput()->GetScalarComponentAsFloat(idx,0,0,0);
+      if(idx<0){
+        meanNeg += val*(float)idx;
+        cntNeg += val;
+      } else {
+        meanPos += val*(float)idx;
+        cntPos += val;
+      }
+    }
+  std::cout << "meanNeg = " << meanNeg/cntNeg << " cntNeg = " << cntNeg << std::endl;
+  std::cout << "meanPos = " << meanPos/cntPos << " cntPos = " << cntPos << std::endl;
+  
+
+  gthresh->SetInput(math1->GetOutput());
+  gthresh->ThresholdBetween(-255,int(-thresh));
+  gthresh->SetInValue(10);
+  gthresh->SetOutValue(0);
+  gthresh->Update();
+  std::cout << "3" << std::endl;
+  
+  
+  sthresh->SetInput(math1->GetOutput());
+  sthresh->ThresholdBetween(int(thresh),255);
+  sthresh->SetInValue(20);
+  sthresh->SetOutValue(0);
+  sthresh->Update();
+  std::cout << "Saving result" << std::endl;
+  std::string  CMD = tg.WorkingDir + "/altGrowth.nrrd";
+  tgWriteVolume(CMD.c_str(), m, gthresh->GetOutput());
+  CMD = tg.WorkingDir + "/altShrink.nrrd";
+  tgWriteVolume(CMD.c_str(), m, sthresh->GetOutput());
+  CMD = tg.WorkingDir + "/altRegion.nrrd";
+  tgWriteVolume(CMD.c_str(), m, math1->GetOutput());
+  std::cout << "Alternative growth measure computed" << std::endl;
 }
