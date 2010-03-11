@@ -102,6 +102,10 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
       dispNode->SetSpecular(0.3);
       dispNode->SetShrinkFactor(0.5);
 
+      vtkMRMLColorTableNode* cnode = vtkMRMLColorTableNode::New();
+      dispNode->SetAndObserveColorNodeID(cnode->GetID());
+      cnode->SetTypeToRainbow();
+
       // create separate display node that draws the mesh outline only.  Use a separate node so colors can be adjusted
       // independently of the rest of the model
 
@@ -128,6 +132,7 @@ int vtkFiniteElementMeshList::AppendItem(vtkMimxMeshActor* actor)
 
       this->savedMRMLScene->AddNodeNoNotify(dispNode);
       this->savedMRMLScene->AddNodeNoNotify(dispNode2);
+      this->savedMRMLScene->AddNodeNoNotify(cnode);
 
       this->savedMRMLScene->AddNodeNoNotify(storeNode);
 

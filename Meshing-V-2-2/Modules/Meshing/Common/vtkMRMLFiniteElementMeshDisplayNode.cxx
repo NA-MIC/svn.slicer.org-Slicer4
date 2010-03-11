@@ -61,6 +61,9 @@ vtkMRMLNode* vtkMRMLFiniteElementMeshDisplayNode::CreateNodeInstance()
 void vtkMRMLFiniteElementMeshDisplayNode::UpdatePolyDataPipeline()
 {
     this->SavedMeshQualityRendering->UpdatePipeline();
+    this->SetActiveScalarName("Jacobian");
+       this->ScalarVisibilityOn( );
+       cout << "MRMLFEMeshDisplayNode: (updatePipeline) scalar viz on" << endl;
 }
 
 //----------------------------------------------------------------------------
@@ -68,6 +71,8 @@ vtkMRMLFiniteElementMeshDisplayNode::vtkMRMLFiniteElementMeshDisplayNode()
 {
   this->SavedMeshQualityRendering = vtkMimxMeshQualityRendering::New();
   this->SavedCuttingPlane = vtkPlane::New();
+  cout << "MRMLFEMeshDisplayNode: (constructor)" << endl;
+
 }
 
 
@@ -94,6 +99,8 @@ void vtkMRMLFiniteElementMeshDisplayNode::SetUnstructuredGrid(vtkUnstructuredGri
     this->SavedMeshQualityRendering->SetThresholdValue(1.0);
     this->SavedMeshQualityRendering->SetQualityMeasureToJacobian();
     this->SavedMeshQualityRendering->CalculateMeshQuality();
+    this->SetActiveScalarName("Jacobian");
+    this->ScalarVisibilityOn( );
 }
 
 //----------------------------------------------------------------------------
