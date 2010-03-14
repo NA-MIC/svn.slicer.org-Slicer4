@@ -322,7 +322,7 @@ if { [BuildThis $::CMAKE "cmake"] == 1 } {
 
 
     if {$isWindows} {
-      runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/trunk/Binaries/Windows/CMake-build CMake-build
+      runcmd $::SVN co http://svn.slicer.org/Slicer3-lib-mirrors/branches/Slicer-3-4/Binaries/Windows/CMake-build CMake-build
     } else {
         runcmd $::CVS -d :pserver:anonymous:cmake@www.cmake.org:/cvsroot/CMake login
         eval "runcmd $::CVS $CVS_CO_FLAGS -d :pserver:anonymous@www.cmake.org:/cvsroot/CMake checkout -r $::CMAKE_TAG CMake"
