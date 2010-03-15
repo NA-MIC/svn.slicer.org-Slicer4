@@ -1,4 +1,4 @@
-project(ChangeTracker)
+project(ChangeTrackerExperimental)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 IF(COMMAND CMAKE_POLICY)
@@ -29,6 +29,9 @@ include_directories(
   ${vtkTeem_SOURCE_DIR} 
   ${vtkTeem_BINARY_DIR}
   ${Volumes_SOURCE_DIR}
+  ${vtkSlicerVolumesModuleLogic_SOURCE_DIR}
+  ${vtkSlicerVolumesModuleLogic_BINARY_DIR}
+  ${Volumes_INCLUDE_DIRS}
   ${Volumes_BINARY_DIR}
   # AF: this is needed to wrap the command line module (Linear registration)
   ${CommandLineModule_BINARY_DIR}
