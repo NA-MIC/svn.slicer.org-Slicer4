@@ -75,6 +75,10 @@ set(vtkITK_SRCS
   vtkITKBSplineTransform.cxx
   vtkITKTimeSeriesDatabase.cxx
   vtkITKIslandMath.cxx
+  vtkITKGrowCutSegmentationImageFilter.h
+  vtkITKGrowCutSegmentationImageFilter.cxx
+  vtkITKLogicImageFilter.h
+  vtkITKLogicImageFilter.cxx
   )
 
 # Abstract/pure virtual classes
