@@ -385,6 +385,7 @@ vtkMRMLScene::vtkMRMLScene()
 //------------------------------------------------------------------------------
 vtkMRMLScene::~vtkMRMLScene() 
 {
+  std::cerr << "vtkMRMLScene::~vtkMRMLScene" << std::endl;
   if (this->ClassNameList) 
     {
     delete this->ClassNameList;
@@ -722,7 +723,8 @@ int vtkMRMLScene::Import()
     for (n=0; n<nnodes; n++) 
       {
       node = (vtkMRMLNode *)scene->GetItemAsObject(n);
-      this->AddNodeNoNotify(node);
+      //this->AddNodeNoNotify(node);
+      this->AddNode(node);
       }
 
     // fix node refrences that may be not unique in the imported scene.
@@ -754,13 +756,13 @@ int vtkMRMLScene::Import()
       // this->SetErrorCode(0);
       }
 
-    // send one NodeAddedEvent event per class
-    std::map<std::string, vtkMRMLNode *>::iterator iter; 
-    for(iter = nodesAddedByClass.begin(); iter != nodesAddedByClass.end(); iter++)
-      {
-      vtkDebugMacro("Invoking NodeAddedEvent for: " << (iter->second)->GetName());
-      this->InvokeEvent(this->NodeAddedEvent, iter->second);        
-      }
+    // send one NodeAddedEvent event per class    
+    // std::map<std::string, vtkMRMLNode *>::iterator iter; 
+    // for(iter = nodesAddedByClass.begin(); iter != nodesAddedByClass.end(); iter++)
+    //   {
+    //   vtkDebugMacro("Invoking NodeAddedEvent for: " << (iter->second)->GetName());
+    //   this->InvokeEvent(this->NodeAddedEvent, iter->second);        
+    //   }
       
     this->Modified();
     this->RemoveUnusedNodeReferences();
