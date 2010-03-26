@@ -65,6 +65,8 @@ SET(qCTKWidgets_SRCS
   qCTKConsoleWidget.h
   qCTKCoordinatesWidget.cxx
   qCTKCoordinatesWidget.h
+  qCTKDoubleRangeSlider.cxx
+  qCTKDoubleRangeSlider.h
   qCTKDoubleSlider.cxx
   qCTKDoubleSlider.h
   qCTKDynamicSpacer.cxx
@@ -81,6 +83,8 @@ SET(qCTKWidgets_SRCS
   qCTKModelTester.h
   qCTKRangeSlider.cxx
   qCTKRangeSlider.h
+  qCTKRangeWidget.cxx
+  qCTKRangeWidget.h
   qCTKSettings.cxx
   qCTKSettings.h
   qCTKSliderSpinBoxWidget.cxx
@@ -104,6 +108,7 @@ SET(qCTKWidgets_MOC_SRCS
   qCTKColorPickerButton.h
   qCTKConsoleWidget.h
   qCTKCoordinatesWidget.h
+  qCTKDoubleRangeSlider.h
   qCTKDoubleSlider.h
   qCTKDynamicSpacer.h
   qCTKFittedTextBrowser.h
@@ -111,6 +116,7 @@ SET(qCTKWidgets_MOC_SRCS
   qCTKMenuButton.h
   qCTKModelTester.h
   qCTKRangeSlider.h
+  qCTKRangeWidget.h
   qCTKSettings.h
   qCTKSliderSpinBoxWidget.h
   qCTKTestApplication.h
@@ -122,6 +128,7 @@ SET(qCTKWidgets_MOC_SRCS
 SET(qCTKWidgets_UI_SRCS
   Resources/UI/qCTKAddRemoveComboBox.ui
   Resources/UI/qCTKSliderSpinBoxWidget.ui
+  Resources/UI/qCTKRangeWidget.ui
 )
 
 # Python wrap 

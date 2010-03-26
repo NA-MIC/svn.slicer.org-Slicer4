@@ -17,6 +17,8 @@ SET(designer_plugin_SRCS
   qCTKColorPickerButtonPlugin.h
   qCTKCoordinatesWidgetPlugin.cxx
   qCTKCoordinatesWidgetPlugin.h
+  qCTKDoubleRangeSliderPlugin.cxx
+  qCTKDoubleRangeSliderPlugin.h
   qCTKDoubleSliderPlugin.cxx
   qCTKDoubleSliderPlugin.h
   qCTKDynamicSpacerPlugin.cxx
@@ -29,6 +31,8 @@ SET(designer_plugin_SRCS
   qCTKMenuButtonPlugin.h
   qCTKRangeSliderPlugin.cxx
   qCTKRangeSliderPlugin.h
+  qCTKRangeWidgetPlugin.cxx
+  qCTKRangeWidgetPlugin.h
   qCTKTitleComboBoxPlugin.cxx
   qCTKTitleComboBoxPlugin.h
   qCTKTreeComboBoxPlugin.cxx
@@ -44,12 +48,14 @@ SET(designer_plugin_MOC_SRCS
   qCTKCollapsibleGroupBoxPlugin.h
   qCTKColorPickerButtonPlugin.h
   qCTKCoordinatesWidgetPlugin.h
+  qCTKDoubleRangeSliderPlugin.h
   qCTKDoubleSliderPlugin.h
   qCTKDynamicSpacerPlugin.h
   qCTKExtensionFactory.h
   qCTKFittedTextBrowserPlugin.h  
   qCTKMenuButtonPlugin.h
   qCTKRangeSliderPlugin.h
+  qCTKRangeWidgetPlugin.h
   qCTKTitleComboBoxPlugin.h
   qCTKTreeComboBoxPlugin.h
   qCTKSliderSpinBoxWidgetPlugin.h

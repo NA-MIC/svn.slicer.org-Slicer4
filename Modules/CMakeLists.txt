@@ -77,7 +77,7 @@ SET(modules
   FourDImage
 #  FourDAnalysis
   ExtractSubvolumeROI
-  CollectFiducials 
+  CollectFiducials
   PETCTFusion
   IGTToolSelector
   )

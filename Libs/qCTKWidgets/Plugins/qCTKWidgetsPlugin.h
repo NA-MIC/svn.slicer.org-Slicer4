@@ -6,11 +6,13 @@
 #include "qCTKCollapsibleGroupBoxPlugin.h"
 #include "qCTKColorPickerButtonPlugin.h"
 #include "qCTKCoordinatesWidgetPlugin.h"
+#include "qCTKDoubleRangeSliderPlugin.h"
 #include "qCTKDoubleSliderPlugin.h"
 #include "qCTKDynamicSpacerPlugin.h"
 #include "qCTKFittedTextBrowserPlugin.h"
 #include "qCTKMenuButtonPlugin.h"
 #include "qCTKRangeSliderPlugin.h"
+#include "qCTKRangeWidgetPlugin.h"
 #include "qCTKTitleComboBoxPlugin.h"
 #include "qCTKTreeComboBoxPlugin.h"
 #include "qCTKSliderSpinBoxWidgetPlugin.h"
@@ -32,11 +34,13 @@ public:
             << new qCTKCollapsibleGroupBoxPlugin
             << new qCTKColorPickerButtonPlugin
             << new qCTKCoordinatesWidgetPlugin
+            << new qCTKDoubleRangeSliderPlugin
             << new qCTKDoubleSliderPlugin
             << new qCTKDynamicSpacerPlugin
             << new qCTKFittedTextBrowserPlugin
             << new qCTKMenuButtonPlugin
             << new qCTKRangeSliderPlugin
+            << new qCTKRangeWidgetPlugin
             << new qCTKTitleComboBoxPlugin
             << new qCTKTreeComboBoxPlugin
             << new qCTKSliderSpinBoxWidgetPlugin;
