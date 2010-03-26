@@ -82,7 +82,7 @@ void vtkITKImageLogicExecute(vtkImageData *inData,
     case VTK_AND:
       {
   typedef itk::AndImageFilter<ImageType, ImageType > FilterType;
-  FilterType::Pointer filter = FilterType::New();
+  typename FilterType::Pointer filter = FilterType::New();
   filter->SetInput1(image1);
   filter->SetInput2(image2);
   filter->Update();
@@ -92,7 +92,7 @@ void vtkITKImageLogicExecute(vtkImageData *inData,
     case VTK_OR:
       {
   typedef itk::OrImageFilter<ImageType, ImageType > FilterType;
-  FilterType::Pointer filter = FilterType::New();
+  typename FilterType::Pointer filter = FilterType::New();
   filter->SetInput1(image1);
   filter->SetInput2(image2);
   filter->Update();
@@ -102,7 +102,7 @@ void vtkITKImageLogicExecute(vtkImageData *inData,
     case VTK_XOR:
       {
   typedef itk::XorImageFilter<ImageType, ImageType > FilterType;
-  FilterType::Pointer filter = FilterType::New();
+  typename FilterType::Pointer filter = FilterType::New();
   filter->SetInput1(image1);
   filter->SetInput2(image2);
   filter->Update();    
@@ -124,7 +124,7 @@ void vtkITKImageLogicExecute(vtkImageData *inData,
       
       for (out.GoToBegin(), in1.GoToBegin(), in2.GoToBegin(); !out.IsAtEnd(); ++out, ++in1, ++in2)
   {
-    ImageType::PixelType o = out.Get();
+    typename ImageType::PixelType o = out.Get();
     if(o)
       {
       if(in1.Get())
