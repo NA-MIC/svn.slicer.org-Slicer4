@@ -66,7 +66,7 @@ if { [itcl::find class GrowCutSegmentEffect] == "" } {
 itcl::body GrowCutSegmentEffect::constructor {sliceGUI} {
     
    $this configure -sliceGUI $sliceGUI
-:
+
    puts "GrowCutSegmentEffect"
    
    set _segmentedImage [vtkNew vtkImageData]
@@ -278,6 +278,7 @@ itcl::body GrowCutSegmentEffect::processEvent { {caller ""} {event ""} } {
        }
    }
 
+
   set event [$sliceGUI GetCurrentGUIEvent] 
   
   catch {
@@ -306,6 +307,7 @@ itcl::body GrowCutSegmentEffect::processEvent { {caller ""} {event ""} } {
   $this highlight
   $this positionActors
   [$sliceGUI GetSliceViewer] RequestRender
+
 }
 
 
@@ -377,6 +379,8 @@ itcl::body GrowCutSegmentEffect::apply {} {
 
 itcl::body GrowCutSegmentEffect::buildOptions {} {
    
+
+  puts "Build options before chaining"
  
   # call superclass version of buildOptions
   chain
