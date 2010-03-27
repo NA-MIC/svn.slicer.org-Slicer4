@@ -39,7 +39,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
    m_UseSlow = true;
    
    m_SeedStrength = 1.0;
-   m_PriorSegmentStrength = 1.0;  
+   m_PriorSegmentStrength = 0.0;  
 
    m_LabelImage = OutputImageType::New();
   
@@ -118,8 +118,8 @@ void
 GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
 ::Initialize( OutputImageType * output ) {
 
-  std::ofstream debugger;  
-  debugger.open("D:/projects/namic2010/debuglog.txt", std::ios::out|std::ios::app);
+ // std::ofstream debugger;  
+//  debugger.open("D:/projects/namic2010/debuglog.txt", std::ios::out|std::ios::app);
   
   // allocate memory for the output buffer
   output->SetBufferedRegion( output->GetRequestedRegion() );
@@ -131,7 +131,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
   
   if( lsize[0] == 0 && lsize[1] == 0 && lsize[2] == 0)
   {
-    debugger<<"Initializing label image ... "<<std::endl;
+   // debugger<<"Initializing label image ... "<<std::endl;
      m_LabelImage->CopyInformation( output );
      m_LabelImage->SetBufferedRegion( output->GetRequestedRegion() );
      m_LabelImage->Allocate();
@@ -139,20 +139,20 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
   }
   else
   {
-    debugger<<"Label Image has already been set by the user "<<std::endl;
+    //debugger<<"Label Image has already been set by the user "<<std::endl;
   }
 
   // allocate memory if the strength image has not been set already
   m_StrengthImage->CopyInformation( output );
   m_StrengthImage->SetBufferedRegion( output->GetRequestedRegion() );
   m_StrengthImage->Allocate();
-  m_StrengthImage->FillBuffer( m_SeedStrength*0.01 );   
+  m_StrengthImage->FillBuffer( m_SeedStrength*0.0 );   
  
  // allocate memory
   typename StrengthImageType::SizeType wsize = m_PrevStrengthImage->GetBufferedRegion().GetSize();
   if( wsize[0] == 0 && wsize[1] == 0 && wsize[2] == 0) 
   {
-     debugger<<"Initializing weight image ... "<<std::endl;
+     //debugger<<"Initializing weight image ... "<<std::endl;
      m_PrevStrengthImage->CopyInformation( output );
      m_PrevStrengthImage->SetBufferedRegion( output->GetRequestedRegion() );
      m_PrevStrengthImage->Allocate();
@@ -160,7 +160,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
   }
   else
   {
-   debugger<<"Weight Image has already been set by the user "<<std::endl;
+//   debugger<<"Weight Image has already been set by the user "<<std::endl;
   }
 
   
@@ -178,7 +178,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
 
   if ( m_ForegroundPoints ) {
 
-     debugger<<"There are some foreground points to initialize "<<std::endl;
+     //debugger<<"There are some foreground points to initialize "<<std::endl;
 
      typename NodeContainer::ConstIterator pointsIter = m_ForegroundPoints->Begin();
      typename NodeContainer::ConstIterator pointsEnd = m_ForegroundPoints->End();
@@ -216,7 +216,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
 
   if ( m_BackgroundPoints ) {
 
-   debugger<<"There are some background points to initialize "<<std::endl;
+   //debugger<<"There are some background points to initialize "<<std::endl;
      typename NodeContainer::ConstIterator pointsIter = m_BackgroundPoints->Begin();
      typename NodeContainer::ConstIterator pointsEnd = m_BackgroundPoints->End();
 
@@ -286,7 +286,7 @@ GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
   }
 */
 
- debugger.close();
+// debugger.close();
 
 }
 
@@ -298,10 +298,10 @@ void GrowCutSegmentationImageFilter<TInputImage, TOutputImage, TWeightPixelType>
 GrowCutSlow( OutputImageType * output)
 {
    
-  std::ofstream debugger;  
-  debugger.open("D:/projects/namic2010/debuglog.txt", std::ios::out|std::ios::app);
+//  std::ofstream debugger;  
+//  debugger.open("D:/projects/namic2010/debuglog.txt", std::ios::out|std::ios::app);
 
-  debugger<<"Applying the grow cut algorithm.. "<<std::endl;
+//  debugger<<"Applying the grow cut algorithm.. "<<std::endl;
 
     // pre-process
   StrengthImagePointer maxNeighborDistance = StrengthImageType::New();
@@ -403,9 +403,9 @@ GrowCutSlow( OutputImageType * output)
      ImageRegionIterator< OutputImageType > out(output, output->GetRequestedRegion() );
 
      std::cout<<" iteration : "<<iter<<std::endl;
-   debugger<<"iteration "<<iter<<std::endl;
+//   debugger<<"iteration "<<iter<<std::endl;
 
-   dist.GoToBegin(); 
+     dist.GoToBegin(); 
      input.GoToBegin();
      label.GoToBegin();
      weight.GoToBegin();
@@ -445,10 +445,10 @@ GrowCutSlow( OutputImageType * output)
          
          CountPixelType numEnemies = count.GetCenterPixel();
          
-       OutputImagePixelType winnerLabel = l_center;
+         OutputImagePixelType winnerLabel = l_center;
          StrengthImagePixelType winnerWeight = w_center;
 
-       OutputImagePixelType weakestLabel = l_center;
+         OutputImagePixelType weakestLabel = l_center;
          StrengthImagePixelType weakestWeight = w_center;
     
          for (; i < input.Size() && j < label.Size() && k < weight.Size() && c < count.Size(); 
@@ -459,33 +459,38 @@ GrowCutSlow( OutputImageType * output)
             OutputImagePixelType     l = label.GetPixel(j);
             StrengthImagePixelType  w = weight.GetPixel(k);
 
-      if( l == m_UnknownLabel || l == l_center) continue;
+            if( l == m_UnknownLabel || l == l_center) 
+            {
+              continue; 
+            }
+            else
+            {
+               StrengthImagePixelType attackStrength = (f_center - f)*(f_center - f);
+               attackStrength = (1.0 - attackStrength/dist.Value())*w;
             
-            StrengthImagePixelType attackStrength = (f_center - f)*(f_center - f);
-            attackStrength = (1.0 - attackStrength/dist.Value())*w;
-            
-            CountPixelType nEnemies = count.GetPixel(c);
+               CountPixelType nEnemies = count.GetPixel(c);
  
-            // keep the maximum weight and label so we saturate faster
-       if(attackStrength > winnerWeight && nEnemies < m_T1) { //attackStrength > w_center
-              winnerLabel = l;
-              winnerWeight = attackStrength;
-            }
+               // keep the maximum weight and label so we saturate faster
+               if(attackStrength > winnerWeight && 
+   nEnemies < m_T1) { //attackStrength > w_center
+                  winnerLabel = l;
+                  winnerWeight = attackStrength;
+               }
 
-            //update the weakest member
-            if(attackStrength < weakestWeight ){
+               //update the weakest member
+               if(attackStrength < weakestWeight ){
               
-              weakestLabel = l;
-              weakestWeight = attackStrength; 
-            }
-          
+                 weakestLabel = l;
+                 weakestWeight = attackStrength; 
+               }
+           } 
         } // end for
        
         // update the label and weight after applying the smoothing condition
         if(numEnemies >= m_T2 && weakestLabel != m_UnknownLabel){ // force occupy by the weakest member
           out.Set(weakestLabel);
           newWeight.SetCenterPixel(weakestWeight);
-        changedPix = true;
+          changedPix = true;
         }
         else if(winnerLabel != m_UnknownLabel){
           out.Set(winnerLabel);
@@ -500,16 +505,17 @@ GrowCutSlow( OutputImageType * output)
      m_PrevStrengthImage = tmpWeights;
 
     tmpLabels = output;
+    output = m_LabelImage; 
     m_LabelImage = tmpLabels;
-    output = m_LabelImage;
+
     std::cout<<"Setting new weights and labels to old weights and labels"<<std::endl;
-  debugger<<"Setting new weights and labels to old weights and labels"<<std::endl;
+//  debugger<<"Setting new weights and labels to old weights and labels"<<std::endl;
      ++iter;
   }
   
   this->GraftOutput(m_LabelImage);
   
-  debugger.close();
+//  debugger.close();
 }
 
 
