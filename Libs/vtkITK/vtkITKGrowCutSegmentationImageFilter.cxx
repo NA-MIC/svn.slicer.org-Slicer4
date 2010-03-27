@@ -44,7 +44,7 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
 {
 
   std::ofstream debugger;
-  debugger.open("D:/projects/namic2010/debuglog.txt", std::ios::out|std::ios::app);
+  //debugger.open("D:/projects/namic2010/debuglog.txt", std::ios::out|std::ios::app);
 //  debugger.open("D:/projects/namic2010/debuglog.txt");
 
   std::cout<<" In ExecuteData Method L4"<<std::endl;  
@@ -124,50 +124,42 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
 
   vtkIdType ngestures = GestureColors->GetNumberOfPoints();
   typename LabelImageType::PixelType backgroundColor = 0;
-  debugger<<" number of gestures "<<ngestures<<std::endl;
+  // debugger<<" number of gestures "<<ngestures<<std::endl;
+  std::cout<<" number of gestures "<<ngestures<<std::endl;
+
   for (vtkIdType i = 0; i < ngestures; i++)
   {
     double *p = GestureColors->GetPoint(i);
-    debugger<<" Gesture Color "<<i<<" : "<<p[0]<<std::endl;
+    //debugger<<" Gesture Color "<<i<<" : "<<p[0]<<std::endl;
+    std::cout<<" Gesture Color "<<i<<" : "<<p[0]<<std::endl;
     if(p[0] > backgroundColor)
       backgroundColor = p[0];
   }
-  debugger<<" Background Label Color "<<backgroundColor<<std::endl;
-
-  for (weight.GoToBegin(), label.GoToBegin(), plabel.GoToBegin(); !weight.IsAtEnd(); 
-    ++weight, ++label, ++plabel )
-  //for (weight.GoToBegin(), label.GoToBegin(); !weight.IsAtEnd(); 
-   // ++weight, ++label )
-  {
-  typename LabelImageType::PixelType color = label.Get();
-  typename LabelImageType::PixelType segColor = plabel.Get();
-
-  if (color == 0 && segColor == 0)
-  {
-    weight.Set( 0.000001);
-  }
-  else if (segColor != 0) 
-  {
-    weight.Set( PriorSegmentStrength );
-  }
-  else {
-    bool isGestureColor = false;
-    for (vtkIdType i = 0; !isGestureColor && i < ngestures; i++)
+  //debugger<<" Background Label Color "<<backgroundColor<<std::endl;
+  std::cout<<" Background Label Color "<<backgroundColor<<std::endl;
+  for(weight.GoToBegin(), label.GoToBegin(); !weight.IsAtEnd(); 
+       ++weight, ++label)
     {
-      double *p = GestureColors->GetPoint(i);
-      isGestureColor = p[0] == color;
-    }
-    if(isGestureColor)
-    {
-      weight.Set(ContrastNoiseRatio);
-    }
-    else
-    {
-      weight.Set(PriorSegmentStrength);
-    }
-  }
 
-  }
+      typename LabelImageType::PixelType color = label.Get();
+      if(color == 0)
+ {
+   weight.Set(0.0);
+ }
+      else{
+ weight.Set( ContrastNoiseRatio );
+      }
+    }
+   
+  for(weight.GoToBegin(), plabel.GoToBegin(); !weight.IsAtEnd(); 
+      ++weight, ++plabel)
+    {
+      typename LabelImageType::PixelType color = plabel.Get();
+      if(color != 0 && weight.Get() == 0.0)
+ {
+   weight.Set( PriorSegmentStrength);
+ }
+    }
 
   typedef itk::GrowCutSegmentationImageFilter<InImageType, OutImageType> FilterType;
   typename FilterType::Pointer filter = FilterType::New();
@@ -182,15 +174,16 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   
   /*writer->SetInput(filter->GetOutput());
   writer->Update();*/
-  debugger<<"Done with filter output "<<std::endl;
-  debugger<<"Done writing output of the filter "<<std::endl;
-  outputImage = filter->GetOutput();
-  itk::ImageRegionIterator< LabelImageType > out(outputImage, outputImage->GetBufferedRegion() );
-  for (out.GoToBegin(); !out.IsAtEnd(); ++out)
-  {
-  if(out.Get() == backgroundColor)
-    out.Set(0);
-  }
+  //debugger<<"Done with filter output "<<std::endl;
+  //debugger<<"Done writing output of the filter "<<std::endl;
+
+  // outputImage = filter->GetOutput();
+//   itk::ImageRegionIterator< LabelImageType > out(outputImage, outputImage->GetBufferedRegion() );
+//   for (out.GoToBegin(); !out.IsAtEnd(); ++out)
+//   {
+//   if(out.Get() == backgroundColor)
+//     out.Set(0);
+//   }
 
  // Copy to the output
  /*memcpy(output, filter->GetOutput()->GetBufferPointer(),
@@ -200,7 +193,7 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
          outputImage->GetBufferedRegion().GetNumberOfPixels()*sizeof(OT) );
  
 
- debugger.close();
+ // debugger.close();
 
 }
 
