@@ -35,7 +35,7 @@ class VTK_SLICER_BASE_LOGIC_EXPORT vtkSlicerColorLogic : public vtkSlicerLogic
   
   /// The Usual vtk class functions
   static vtkSlicerColorLogic *New();
-  vtkTypeRevisionMacro(vtkSlicerColorLogic,vtkObject);
+  vtkTypeRevisionMacro(vtkSlicerColorLogic,vtkSlicerLogic);
   void PrintSelf(ostream& os, vtkIndent indent);
 
   /// 
