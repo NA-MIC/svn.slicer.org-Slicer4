@@ -13,23 +13,30 @@
 #ifndef __qSlicerCoreIOManager_h
 #define __qSlicerCoreIOManager_h
 
+/// Qt includes
+#include <QObject>
+#include <QMap>
+
 /// qCTK includes
 #include <qCTKPimpl.h>
 
+/// QtCore includes
+#include <qSlicerIO.h>
 #include "qSlicerBaseQTCoreExport.h"
 
+class vtkMRMLNode;
 class vtkMRMLScene; 
+class vtkCollection;
 class qSlicerCoreIOManagerPrivate;
 
-class Q_SLICER_BASE_QTCORE_EXPORT qSlicerCoreIOManager
+class Q_SLICER_BASE_QTCORE_EXPORT qSlicerCoreIOManager:public QObject
 {
-
+  Q_OBJECT;
 public:
-  qSlicerCoreIOManager();
+  qSlicerCoreIOManager(QObject* parent = 0);
   virtual ~qSlicerCoreIOManager();
 
-  virtual void printAdditionalInfo(); 
-
+  /*
   /// 
   /// Load/Import scene
   void loadScene(vtkMRMLScene* mrmlScene, const QString& filename);
@@ -38,15 +45,33 @@ public:
   /// 
   /// Close scene
   void closeScene(vtkMRMLScene* mrmlScene);
+
+  bool loadFile(const qSlicerIO::IOProperties& parameters);
+  */
   
-  /// 
-  /// Get the file type using the extension
-  QString fileTypeFromExtension(const QString& extension);
+  ///
+  /// attributes are typically: 
+  /// All: fileType, fileName[s] 
+  /// Volume: LabelMap:bool, Center:bool, fileNames:QList<QString>...
+  bool loadNodes(qSlicerIO::IOFileType fileType, 
+                 const qSlicerIO::IOProperties& parameters, 
+                 vtkCollection* loadedNodes= 0);
 
   ///
-  /// Load archetype volume
-  void loadArchetypeVolume(const QString& filename);
+  /// Utility function that return the first loaded node
+  vtkMRMLNode* loadNode(qSlicerIO::IOFileType fileType, 
+                        const qSlicerIO::IOProperties& parameters);
 
+  /// 
+  /// Utility function to load/import a scene
+  bool loadScene(const QString& fileName, bool clear = true);
+
+  ///
+  ///
+  void registerIO(qSlicerIO* io);
+protected:
+  const QList<qSlicerIO*>& ios()const;
+  QList<qSlicerIO*> ios(qSlicerIO::IOFileType fileType)const;
 private:
   QCTK_DECLARE_PRIVATE(qSlicerCoreIOManager);
 };

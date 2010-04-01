@@ -25,6 +25,9 @@ public:
   qSlicerGetTitleMacro(QTMODULE_TITLE);
 
 protected:
+  ///
+  /// Initialize the module. Register the volumes reader/writer
+  virtual void setup();
 
   ///
   /// Create and return the widget representation associated to this module

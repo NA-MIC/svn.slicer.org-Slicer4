@@ -2,10 +2,15 @@
 // QT includes
 #include <QtPlugin>
 
+// qSlicer includes
+#include <qSlicerCoreApplication.h>
+#include <qSlicerCoreIOManager.h>
+
 // Volumes Logic includes
 #include <vtkSlicerVolumesLogic.h>
 
 // Volumes QTModule includes
+#include "qSlicerVolumesIO.h"
 #include "qSlicerVolumesModule.h"
 #include "qSlicerVolumesModuleWidget.h"
 
@@ -19,7 +24,19 @@ public:
 };
 
 //-----------------------------------------------------------------------------
-QCTK_CONSTRUCTOR_1_ARG_CXX(qSlicerVolumesModule, QObject*);
+qSlicerVolumesModule::qSlicerVolumesModule(QObject* _parent)
+  :Superclass(_parent)
+{
+  QCTK_INIT_PRIVATE(qSlicerVolumesModule);
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerVolumesModule::setup()
+{
+  this->Superclass::setup();
+  qSlicerCoreApplication::application()->coreIOManager()->registerIO(
+    new qSlicerVolumesIO(this));  
+}
 
 //-----------------------------------------------------------------------------
 qSlicerAbstractModuleWidget * qSlicerVolumesModule::createWidgetRepresentation()

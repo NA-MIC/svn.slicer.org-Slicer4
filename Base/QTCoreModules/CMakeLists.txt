@@ -22,6 +22,9 @@ SET(slicer_qtbase_SRCS
   qSlicerCamerasModuleWidget.cxx
   qSlicerCamerasModuleWidget.h
   
+  qSlicerModelsIO.cxx
+  qSlicerModelsIO.h
+  
   qSlicerTransformsModule.cxx
   qSlicerTransformsModule.h
   qSlicerTransformsModuleWidget.cxx
@@ -33,6 +36,8 @@ SET(slicer_qtbase_MOC_SRCS
   qSlicerCamerasModule.h
   qSlicerCamerasModuleWidget.h
   
+  qSlicerModelsIO.h
+
   qSlicerTransformsModule.h
   qSlicerTransformsModuleWidget.h
   )

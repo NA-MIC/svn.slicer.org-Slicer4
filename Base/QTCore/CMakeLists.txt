@@ -30,18 +30,25 @@ SET(slicer_qtbase_SRCS
   qSlicerCoreCommandOptions.h
   qSlicerCoreIOManager.cxx
   qSlicerCoreIOManager.h
+  qSlicerIO.cxx
+  qSlicerIO.h
   qSlicerLoadableModuleFactory.cxx
   qSlicerLoadableModuleFactory.h
   qSlicerModuleManager.cxx
   qSlicerModuleManager.h
   qSlicerModuleFactoryManager.cxx
   qSlicerModuleFactoryManager.h
+  qSlicerSlicer2SceneReader.cxx
+  qSlicerSlicer2SceneReader.h
   )
 
 # Headers that should run through moc
 SET(slicer_qtbase_MOC_SRCS
   qSlicerCoreApplication.h
+  qSlicerCoreIOManager.h
+  qSlicerIO.h
   qSlicerModuleManager.h
+  qSlicerSlicer2SceneReader.h
   ${slicer_qtbase_pythonqt_MOC_SRCS}
   )
 

@@ -17,11 +17,12 @@
 
 #ifdef Slicer3_USE_QT
 
-#include "qSlicerApplication.h"
-#include "qSlicerModulePanel.h"
 #include "qSlicerAbstractModule.h"
 #include "qSlicerAbstractModulePanel.h"
+#include "qSlicerApplication.h"
+#include "qSlicerIOManager.h"
 #include "qSlicerModuleManager.h"
+#include "qSlicerModulePanel.h"
 
 // Qt includes
 #include <QDebug>
@@ -371,17 +372,19 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
     vtkErrorMacro ( "ProcessLoadSceneCommand: Got NULL MRMLScene." );
     return;
     }
-  if ( this->LoadSceneDialog == NULL )
-    {
-    vtkErrorMacro ( "ProcessLoadSceneCommand: Got NULL LoadSceneDialog." );
-    return;
-    }
   if ( this->MainSlicerWindow == NULL )
     {
     vtkErrorMacro ( "ProcessLoadSceneCommand: Got NULL SlicerWindow." );
     return;
     }
-
+  if ( this->LoadSceneDialog == NULL )
+    {
+    vtkErrorMacro ( "ProcessLoadSceneCommand: Got NULL LoadSceneDialog." );
+    return;
+    }
+#ifdef Slicer3_USE_QT
+  qSlicerApplication::application()->ioManager()->openLoadSceneDialog();
+#else
   if ( !this->LoadSceneDialog->IsCreated() )
     {
     this->LoadSceneDialog->SetParent ( this->MainSlicerWindow );
@@ -488,6 +491,8 @@ void vtkSlicerApplicationGUI::ProcessLoadSceneCommand()
     }
   progressDialog->SetParent(NULL);
   progressDialog->Delete();
+#endif
+
   return;
 }
 
@@ -517,7 +522,10 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
     vtkErrorMacro ( "ProcessImportSceneCommand: Got NULL SlicerWindow." );
     return;
     }
-
+#ifdef Slicer3_USE_QT
+  //qSlicerApplication::application()->ioManager()->loadScene();
+  qSlicerApplication::application()->ioManager()->openImportSceneDialog();
+#else
   if ( !this->LoadSceneDialog->IsCreated() )
     {
     this->LoadSceneDialog->SetParent ( this->MainSlicerWindow );
@@ -571,9 +579,9 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
       dialog->Delete();
       }
     }
-
   progressDialog->SetParent(NULL);
   progressDialog->Delete();
+#endif
   return;
 }
 
