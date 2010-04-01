@@ -95,12 +95,10 @@ void qSlicerApplicationPrivate::init()
   this->initFont();
   this->initPalette();
   this->loadStyleSheet();
-  
-  qSlicerIOManager* _ioManager = new qSlicerIOManager;
-  Q_ASSERT(_ioManager);
+
   // Note: qSlicerCoreApplication class takes ownership of the ioManager and
   // will be responsible to delete it
-  p->setCoreIOManager(_ioManager);
+  p->setCoreIOManager(new qSlicerIOManager(p));
 }
 
 //-----------------------------------------------------------------------------
@@ -180,7 +178,7 @@ void qSlicerApplication::initialize(bool& exitWhenDone)
   // (SlicerQT, SlicerBatch, SlicerDaemon, ...).
   // The class qSlicerCommandOptions could be subclassed into, for example,
   // qSlicerGUICommandOptions, qSlicerDaemonCommandOptions, ...
-  // Each subclasse should be added in their respective Applications/Slicer{Batch, Daemon}
+  // Each subclass should be added in their respective Applications/Slicer{Batch, Daemon}
   // directory.
   // The following line should also be moved into the 'Main.cxx' specific to each app.
   // This comment should also be deleted !

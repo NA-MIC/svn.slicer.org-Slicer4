@@ -103,7 +103,7 @@ public:
 
   ///
   /// IOManager - It should exist only one instance of the factory
-  QSharedPointer<qSlicerCoreIOManager>       CoreIOManager;
+  qSlicerCoreIOManager*                CoreIOManager;
 
   ///
   /// CoreOptions - It should exist only one instance of the coreOptions
@@ -155,6 +155,7 @@ qSlicerCoreApplicationPrivate::qSlicerCoreApplicationPrivate()
   this->Argc = 0;
   this->Argv = 0;
   this->ExitWhenDone = false;
+  this->CoreIOManager = 0;
 
 #ifdef Slicer3_USE_PYTHONQT
   this->PythonManager = new qSlicerPythonManager();
@@ -333,6 +334,9 @@ qSlicerCoreApplication::qSlicerCoreApplication(int &_argc, char **_argv):Supercl
     }
   d->Argc = _argc;
   d->Argv = myArgv;
+
+  // Instanciate an iomanager
+  this->setCoreIOManager(new qSlicerCoreIOManager(this));
 }
 
 //-----------------------------------------------------------------------------
@@ -562,13 +566,19 @@ qSlicerModuleManager* qSlicerCoreApplication::moduleManager()const
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::setCoreIOManager(qSlicerCoreIOManager* manager)
 {
-  qctk_d()->CoreIOManager = QSharedPointer<qSlicerCoreIOManager>(manager);
+  QCTK_D(qSlicerCoreApplication);
+  if (d->CoreIOManager)
+    {
+    delete d->CoreIOManager;
+    }
+  d->CoreIOManager = manager;
+  manager->setParent(this);
 }
 
 //-----------------------------------------------------------------------------
 qSlicerCoreIOManager* qSlicerCoreApplication::coreIOManager()const
 {
-  return qctk_d()->CoreIOManager.data();
+  return qctk_d()->CoreIOManager;
 }
 
 //-----------------------------------------------------------------------------
