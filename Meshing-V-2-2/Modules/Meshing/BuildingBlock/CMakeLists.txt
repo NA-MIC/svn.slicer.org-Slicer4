@@ -69,6 +69,7 @@ SET(LIB_SRCS
   vtkKWMimxMainMenuGroup.cxx
   #vtkKWMimxMenuWindow.cxx
   vtkKWMimxSurfaceMenuGroup.cxx
+  vtkKWMimxImportModelSurfaceGroup.cxx
   vtkKWMimxBBMenuGroup.cxx
   #vtkKWRenderWidget.cxx
   # needs new mesh quality metrics (VTK 5.1+)
@@ -113,10 +114,8 @@ SET(LIB_SRCS
   # found on Mac
   vtkKWMimxDefineNodeSetGroup.cxx
   vtkKWMimxDefineElSetGroup.cxx
-  #
   vtkKWMimxReBinFEMeshMaterialPropertiesFromImageGroup.cxx
   vtkKWMimxEditNodeSetNumbersGroup.cxx
-  #
   vtkKWMimxMainUserInterfacePanel.cxx
   vtkKWMimxViewPropertiesGroup.cxx
    vtkKWMimxViewPropertiesOptionGroup.cxx
@@ -134,6 +133,7 @@ SET(LIB_SRCS
   vtkKWMimxLoadSurfaceGroup.cxx
   vtkKWMimxLoadMeshGroup.cxx
   vtkKWMimxDisplayMatPropGroup.cxx
+  #
   )
 
 #SET_SOURCE_FILES_PROPERTIES(

@@ -61,6 +61,9 @@ public:
   vtkSetObjectMacro(BBoxList, vtkLinkedListWrapper);
   vtkSetObjectMacro(FEMeshList, vtkLinkedListWrapper);
   
+  // slicer integration - add import of slicer model to panel
+  void ImportModelSurfaceCallback();
+
   void UpdateObjectLists();
   
 protected:

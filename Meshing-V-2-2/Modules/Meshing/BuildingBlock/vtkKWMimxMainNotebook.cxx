@@ -462,7 +462,7 @@ void vtkKWMimxMainNotebook::SynchronizeSurfaceListWithModels()
       cout << "      model has tag: " << hnode->GetNodeTagName() << endl;
 
       // the MRML node TagName is the type of node, the MRML node Name
-      // (mrmlnode->GetNam() ) is the unique ID to use
+      // (mrmlnode->GetName() ) is the unique ID to use
       // to match against entries in the surface list and determine if the model
       // has already been converted as a surface or if it needs to be done.
 
@@ -472,9 +472,9 @@ void vtkKWMimxMainNotebook::SynchronizeSurfaceListWithModels()
       {
        // add model as new surface
         cout << "Found a model not in the surface list.  Adding it..." << endl;
-        //vtkMimxSurfacePolyDataActor* surfaceActor = vtkMimxSurfacePolyDataActor::New();
-        //surfaceActor->SetData(hnode->GetPolys());
-        //this->SurfaceMenuGroup->GetSurfaceList()->AppendItem(surfaceActor);
+//        vtkMimxSurfacePolyDataActor* surfaceActor = vtkMimxSurfacePolyDataActor::New();
+//        surfaceActor->SetData(hnode->GetPolys());
+//        this->SurfaceMenuGroup->GetSurfaceList()->AppendItem(surfaceActor);
       }
     }
 
