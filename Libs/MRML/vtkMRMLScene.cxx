@@ -1098,9 +1098,29 @@ vtkMRMLNode*  vtkMRMLScene::AddNode(vtkMRMLNode *n)
     {
     return NULL;
     }
-  this->InvokeEvent(this->NodeAboutToBeAddedEvent, n);
+  bool add = true;
+  if (n->GetSingletonTag() != NULL)
+    {
+    int numNodes = this->GetNumberOfNodesByClass(n->GetClassName());
+    for (int i=0; i<numNodes; i++)
+      {
+      vtkMRMLNode *sn = this->GetNthNodeByClass(i, n->GetClassName());
+      if (sn->GetSingletonTag() != NULL && strcmp(sn->GetSingletonTag(),
+                                                  n->GetSingletonTag()) == 0)
+        {
+        add = false;
+        }
+      }
+    }
+  if (add)
+    {
+    this->InvokeEvent(this->NodeAboutToBeAddedEvent, n);
+    }
   vtkMRMLNode* node = this->AddNodeNoNotify(n);
-  this->InvokeEvent(this->NodeAddedEvent, n);
+  if (add)
+    {
+    this->InvokeEvent(this->NodeAddedEvent, n);
+    }
   this->Modified();
   return node;
 }
