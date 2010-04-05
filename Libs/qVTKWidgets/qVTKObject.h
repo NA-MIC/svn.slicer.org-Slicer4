@@ -7,27 +7,31 @@
 //-----------------------------------------------------------------------------
 #define QVTK_OBJECT_ADD_CONNECTION_METHOD                               \
 QString qvtkConnect(vtkObject* vtk_obj, unsigned long vtk_event,        \
-  const QObject* qt_obj, const char* qt_slot)                           \
+                    const QObject* qt_obj, const char* qt_slot,         \
+                    float priority = 0.0)                               \
 {                                                                       \
   return MyQVTK.addConnection(vtk_obj, vtk_event,                       \
-    qt_obj, qt_slot);                                                   \
+                              qt_obj, qt_slot, priority);               \
 }
 
 //-----------------------------------------------------------------------------
 #define QVTK_OBJECT_RECONNECT_METHOD                                    \
 QString qvtkReconnect(vtkObject* old_vtk_obj, vtkObject* vtk_obj,       \
-  unsigned long vtk_event, const QObject* qt_obj, const char* qt_slot)  \
+                      unsigned long vtk_event, const QObject* qt_obj,   \
+                      const char* qt_slot, float priority = 0.0)        \
 {                                                                       \
   return MyQVTK.addConnection(old_vtk_obj, vtk_obj, vtk_event,          \
-    qt_obj, qt_slot);                                                   \
+                              qt_obj, qt_slot, priority);               \
 }
 
 //-----------------------------------------------------------------------------
 #define QVTK_OBJECT_RECONNECT_METHOD_2                                  \
 QString qvtkReconnect(vtkObject* vtk_obj,                               \
-  unsigned long vtk_event, const QObject* qt_obj, const char* qt_slot)  \
+                      unsigned long vtk_event, const QObject* qt_obj,   \
+                      const char* qt_slot, float priority = 0.0)        \
 {                                                                       \
-  return MyQVTK.reconnection(vtk_obj, vtk_event, qt_obj, qt_slot);      \
+  return MyQVTK.reconnection(vtk_obj, vtk_event,                        \
+                             qt_obj, qt_slot, priority);                \
 }
 
 //-----------------------------------------------------------------------------

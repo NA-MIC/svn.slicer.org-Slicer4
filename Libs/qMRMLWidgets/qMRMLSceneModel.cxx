@@ -417,14 +417,23 @@ QStringList qMRMLSceneModel::postItems(vtkObject* itemParent)const
 void qMRMLSceneModel::setMRMLScene(vtkMRMLScene* scene)
 {
   QCTK_D(qMRMLSceneModel);
+  // onMRMLSceneNodeAboutToBeAdded must be call as late as possible after 
+  // vtkMRMLScene::NodeAboutToBeAddedEvent is fired. This fix the pb when a node
+  // is created in the callback of the NodeAboutToBeAddedEvent.
   this->qvtkReconnect(d->MRMLScene, scene, vtkMRMLScene::NodeAboutToBeAddedEvent,
-                      this, SLOT(onMRMLSceneNodeAboutToBeAdded(vtkObject*, vtkObject*)));
+                      this, SLOT(onMRMLSceneNodeAboutToBeAdded(vtkObject*, vtkObject*)),
+                      -10.);
+  // onMRMLSceneNodeAdded must be call as soon as possible after 
+  // vtkMRMLScene::NodeAddedEvent is fired. This fix the pb when a node is created in the 
+  // callback of the NodeAddedEvent.
   this->qvtkReconnect(d->MRMLScene, scene, vtkMRMLScene::NodeAddedEvent,
-                      this, SLOT(onMRMLSceneNodeAdded(vtkObject*, vtkObject*)));
+                      this, SLOT(onMRMLSceneNodeAdded(vtkObject*, vtkObject*)), 
+                      10.);
   this->qvtkReconnect(d->MRMLScene, scene, vtkMRMLScene::NodeAboutToBeRemovedEvent,
-                      this, SLOT(onMRMLSceneNodeAboutToBeRemoved(vtkObject*, vtkObject*)));
+                      this, SLOT(onMRMLSceneNodeAboutToBeRemoved(vtkObject*, vtkObject*)),
+                      -10.);
   this->qvtkReconnect(d->MRMLScene, scene, vtkMRMLScene::NodeRemovedEvent,
-                      this, SLOT(onMRMLSceneNodeRemoved(vtkObject*, vtkObject*)));
+                      this, SLOT(onMRMLSceneNodeRemoved(vtkObject*, vtkObject*)), 10.);
   this->qvtkReconnect(d->MRMLScene, scene, vtkCommand::DeleteEvent,
                       this, SLOT(onMRMLSceneDeleted(vtkObject*)));
   this->beginResetModel();
@@ -608,6 +617,7 @@ void qMRMLSceneModel::onMRMLSceneNodeAdded(vtkObject* scene, vtkObject* node)
     //this->onMRMLSceneNodeAboutToBeAdded(scene, node);
     d->MRMLNodeToBe = vtkMRMLNode::SafeDownCast(node);
     Q_ASSERT(d->MRMLNodeToBe);
+    Q_ASSERT(d->MRMLScene->IsNodePresent(d->MRMLNodeToBe));
     QSharedPointer<qMRMLAbstractItemHelper> sceneItem = 
       QSharedPointer<qMRMLAbstractItemHelper>(d->ItemFactory->createItem(d->MRMLScene, 0));
     int insertLocation = sceneItem->childCount() -
