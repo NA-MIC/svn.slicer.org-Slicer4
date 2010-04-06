@@ -20,4 +20,17 @@ public:
   virtual bool load(const IOProperties& properties);
 };
 
+//-----------------------------------------------------------------------------
+class qSlicerScalarOverlayIO: public qSlicerIO
+{
+  Q_OBJECT
+public: 
+  qSlicerScalarOverlayIO(QObject* parent = 0);
+  virtual QString description()const;
+  virtual IOFileType fileType()const;
+  virtual QString extensions()const;
+
+  virtual bool load(const IOProperties& properties);
+};
+
 #endif

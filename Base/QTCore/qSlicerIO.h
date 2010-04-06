@@ -32,6 +32,7 @@ public:
     VolumeFile = 2,
     TransformFile = 3,
     ModelFile = 4,
+    ScalarOverlayFile = 5,
     UserFile = 32,
   };
 
