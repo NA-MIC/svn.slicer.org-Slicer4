@@ -293,6 +293,10 @@ void qSlicerSlicer2SceneReaderPrivate::importNode(vtkXMLDataElement* element)
     {
     this->importOptionsNode(node);
     }
+  else
+    {
+    qDebug() << "Node type unsupported: " << name;
+    }
 }
 
 //proc ImportNodeMRML {node} {
