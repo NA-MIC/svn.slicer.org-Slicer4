@@ -15,6 +15,8 @@ SET(slicer_qtbase_include_directories
   ${MRMLCLI_SOURCE_DIR}
   ${MRMLCLI_BINARY_DIR}
   ${qCTKWidgets_PYTHONQT_INCLUDE_DIR}
+  ${FreeSurfer_SOURCE_DIR} # for qSlicerXcedeCatalogIO
+  ${FreeSurfer_BINARY_DIR} # for qSlicerXcedeCatalogIO
   # HACK
   #${MRML_SOURCE_DIR}
   #${MRML_BINARY_DIR}
@@ -40,6 +42,8 @@ SET(slicer_qtbase_SRCS
   qSlicerModuleFactoryManager.h
   qSlicerSlicer2SceneReader.cxx
   qSlicerSlicer2SceneReader.h
+  qSlicerXcedeCatalogIO.cxx
+  qSlicerXcedeCatalogIO.h
   )
 
 # Headers that should run through moc
@@ -49,6 +53,7 @@ SET(slicer_qtbase_MOC_SRCS
   qSlicerIO.h
   qSlicerModuleManager.h
   qSlicerSlicer2SceneReader.h
+  qSlicerXcedeCatalogIO.h
   ${slicer_qtbase_pythonqt_MOC_SRCS}
   )
 
@@ -66,6 +71,7 @@ SET(slicer_qtbase_target_libraries
   MRMLCLI
   qSlicerBaseQTBase
   ${qCTKWidgets_PYTHONQT_LIBRARIES}
+  FreeSurfer # for qSlicerXcedeCatalogIO
   # HACK
   #vtkSlicerVolumesModuleLogic
   #MRML 

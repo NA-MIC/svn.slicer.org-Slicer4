@@ -24,13 +24,13 @@
 #include "qSlicerIO.h"
 #include "qSlicerModuleManager.h"
 #include "qSlicerSlicer2SceneReader.h"
+#include "qSlicerXcedeCatalogIO.h"
 
 // MRML includes
 #include <vtkMRMLScene.h>
 
 // VTK includes
 #include <vtkSmartPointer.h>
-
 
 //-----------------------------------------------------------------------------
 class qSlicerSceneIO: public qSlicerIO
@@ -97,8 +97,11 @@ qSlicerCoreIOManager::qSlicerCoreIOManager(QObject* _parent)
   :QObject(_parent)
 {
   QCTK_INIT_PRIVATE(qSlicerCoreIOManager);
+  // FIXME move to the application level
   this->registerIO(new qSlicerSceneIO(this));
   this->registerIO(new qSlicerSlicer2SceneReader(this));
+  this->registerIO(new qSlicerXcedeCatalogIO(this));
+  // end FIXME
 }
 
 //-----------------------------------------------------------------------------
