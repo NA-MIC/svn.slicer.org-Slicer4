@@ -15,6 +15,11 @@
 // SlicerQT/CoreModules
 #include "qSlicerTransformsModule.h"
 #include "qSlicerCamerasModule.h"
+// FIXME:Move the following to the Models module (when it will be ready in Qt.)
+#include "qSlicerCoreApplication.h"
+#include "qSlicerCoreIOManager.h"
+#include "qSlicerModelsIO.h"
+// endofFIXME
   
 //-----------------------------------------------------------------------------
 class qSlicerCoreModuleFactoryPrivate:public qCTKPrivate<qSlicerCoreModuleFactory>
@@ -41,6 +46,12 @@ void qSlicerCoreModuleFactory::registerItems()
   QCTK_D(qSlicerCoreModuleFactory);
   d->registerCoreModule<qSlicerTransformsModule>();
   d->registerCoreModule<qSlicerCamerasModule>();
+  // FIXME:Move the following to the Models module (when it will be ready in Qt.)
+  qSlicerCoreApplication::application()->coreIOManager()
+    ->registerIO(new qSlicerModelsIO(0));
+  qSlicerCoreApplication::application()->coreIOManager()
+    ->registerIO(new qSlicerScalarOverlayIO(0));
+  // endofFIXME
 }
 
 //-----------------------------------------------------------------------------
