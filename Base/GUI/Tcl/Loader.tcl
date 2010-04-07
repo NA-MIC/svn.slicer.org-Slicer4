@@ -124,6 +124,7 @@ if { [itcl::find class Loader] == "" } {
     variable _fiducialExtensions ".fcsv"
     variable _colorTableExtensions ".txt .ctbl"
     variable _transformExtensions ".tfm .mat"
+    variable _volumePropertyExtensions ".vp"
     variable _observerRecords ""
     variable _cleanupDirs ""
     variable browserResult ""
@@ -486,6 +487,9 @@ itcl::body Loader::add { paths } {
         } elseif { [lsearch $_transformExtensions $ext] != -1 } {
           $this addRow $path "Transform"
           $this status ""
+        } elseif { [lsearch $_volumePropertyExtensions $ext] != -1 } {
+          $this addRow $path "VolumeProperty"
+          $this status ""
         } else {
           $this status "Cannot read file $path\nFor DICOM use File->Add Volume..."
         }
@@ -511,6 +515,7 @@ itcl::body Loader::apply { } {
 
       set path [$w GetCellText $row $col(File)]
       set name [$w GetCellText $row $col(Name)]
+      #set $name [$::slicer3::MRMLScene GetUniqueNameByString $name]
 
       set progress [expr $row / (1. * $rows)]
       $::slicer3::ApplicationGUI SetExternalProgress "Loading..." $progress
@@ -558,7 +563,7 @@ itcl::body Loader::apply { } {
                         if {$fiberBundleNode == "" } {
                             $this errorDialog "Unable to read DTI fiber bundle model file $path"
                         } else {
-                            $fiberBundleNode SetName $name
+                            #$fiberBundleNode SetName $name
                         }
                         set lastFiberBundleNode $fiberBundleNode
                     }
@@ -568,7 +573,7 @@ itcl::body Loader::apply { } {
                 if { $node == "" } {
                     $this errorDialog "Could not open $path"
                 } else {
-                    $node SetName $name
+                    #$node SetName $name
                 }
             }
         }
@@ -593,7 +598,7 @@ itcl::body Loader::apply { } {
            if { $node == "" } {
               $this errorDialog "Could not open $path"
            } else {
-              $node SetName $name
+              #$node SetName $name
            }  
         }
         "ColorTable" {
@@ -607,7 +612,18 @@ itcl::body Loader::apply { } {
            if { $node == "" } {
               $this errorDialog "Could not open $path"
            } else {
-              $node SetName $name
+              #$node SetName $name
+           }  
+        }
+        "VolumeProperty" {
+           set logic [vtkVolumeRenderingLogic New]
+           $logic SetMRMLScene $::slicer3::MRMLScene
+           set ret [catch "set node [$logic AddVolumePropertyFromFile $path]" res]
+           $logic Delete
+           if { $node == "" } {
+              $this errorDialog "Could not open $path"
+           } else {
+              #$node SetName $name
            }  
         }
       }

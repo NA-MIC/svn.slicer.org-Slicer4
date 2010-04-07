@@ -46,6 +46,7 @@ SET(modules
   AtlasCreator
   CommandLineModule
   Editor
+  Endoscopy
   GradientAnisotropicDiffusionFilter
   Meshing
   Python
@@ -72,11 +73,12 @@ SET(modules
   ClipModel
   Measurements
   ModelIntoLabelVolume
-  ExtractSubvolume
+# ExtractSubvolume <- replaced by ExtractSubvolumeROI
   FastMarchingSegmentation
   FourDImage
 #  FourDAnalysis
-  ExtractSubvolumeROI
+#  ExtractSubvolumeROI <- renamed to CropVolume
+  CropVolume
   CollectFiducials
   PETCTFusion
   IGTToolSelector

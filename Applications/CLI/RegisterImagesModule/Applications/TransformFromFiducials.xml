@@ -4,10 +4,12 @@
   <title>Transform From Fiducials</title>
   <description>Computes a rigid, similarity or affine transform from a matched list of fiducials</description>
   <version>0.1.0.$Revision$</version>
-    <documentation-url>http://www.slicer.org/slicerWiki/index.php/Modules:RegisterImages-Documentation-3.4</documentation-url>
+    <documentation-url>http://www.slicer.org/slicerWiki/index.php/Modules:TransformFromFiducials-Documentation-3.6</documentation-url>
   <license></license>
   <contributor>Casey B Goodlett</contributor>
-  <acknowledgements></acknowledgements>
+<acknowledgements>
+This work is part of the National Alliance for Medical Image Computing (NAMIC), funded by the National Institutes of Health through the NIH Roadmap for Medical Research, Grant U54 EB005149.
+</acknowledgements>
   <parameters>
     <point multiple="true">
       <name>fixedLandmarks</name>

@@ -124,9 +124,11 @@ itcl::body SliceSWidget::constructor {sliceGUI} {
   # observe NodeAdded events from the MRML scene to create
   # model intersection displays as needed
   set NodeAddedEvent 66000
+  set NodeRemovedEvent 66001
   set SceneCloseEvent 66003
   set SceneClosingEvent 66004
   $::slicer3::Broker AddObservation $::slicer3::MRMLScene $NodeAddedEvent "::SWidget::ProtectedCallback $this processEvent $::slicer3::MRMLScene NodeAddedEvent"
+  $::slicer3::Broker AddObservation $::slicer3::MRMLScene $NodeRemovedEvent "::SWidget::ProtectedCallback $this processEvent $::slicer3::MRMLScene NodeRemovedEvent"
   $::slicer3::Broker AddObservation $::slicer3::MRMLScene $SceneCloseEvent "::SWidget::ProtectedCallback $this processEvent $::slicer3::MRMLScene SceneCloseEvent"
   $::slicer3::Broker AddObservation $::slicer3::MRMLScene $SceneClosingEvent "::SWidget::ProtectedCallback $this processEvent $::slicer3::MRMLScene SceneClosingEvent"
 
@@ -316,7 +318,8 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
   
   # MRML Scene update probably means we need to create a new model intersection SWidget
   if { $caller == $::slicer3::MRMLScene && 
-       ($event == "NodeAddedEvent" || $event == "SceneCloseEvent" || $event == "SceneClosingEvent") } {
+       ($event == "NodeAddedEvent" || $event == "NodeRemovedEvent" || 
+         $event == "SceneCloseEvent" || $event == "SceneClosingEvent") } {
     $this updateSWidgets
   }
 
@@ -387,7 +390,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
   foreach {w h} [$renderer0 GetSize] {}
   foreach {rox roy} [$pokedRenderer GetOrigin] {}
 
-#  $this queryLayers $x $y $z   # moved to inside updateAnnotation*
   set xyToRAS [$_sliceNode GetXYToRAS]
   set ras [$xyToRAS MultiplyPoint $x $y $z 1]
 
@@ -562,32 +564,21 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
       if { [info command SeedSWidget] != "" } {
         set interactionNode [$::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode]
         if { $interactionNode != "" } {
+
           set mode [$interactionNode GetCurrentInteractionMode]
           set modeString [$interactionNode GetInteractionModeAsString $mode]
-          set modifier [expr [$_interactor GetControlKey] && [$_interactor GetShiftKey]]
-            # SET MODE TO PLACE...
-          if { $modeString == "Place" || $modifier } {
-            set placePersistence [ $interactionNode GetPlaceModePersistence]
-            if { $placePersistence == 0 } {
-              $interactionNode SetLastInteractionMode $mode
-            }
-            # prevent VolumesSWidget.tcl from
-            # processing the entire LeftButtonPress callback.
-            # it should just reset the lock when it  catches event.
-            $interactionNode SetWindowLevelLock 1
-            $interactionNode SetCurrentInteractionMode [ $interactionNode GetInteractionModeByString "Place" ]
+          if { $modeString == "Place" } {
             # AND PLACE FIDUCIAL.
-            $sliceGUI SetGrabID $this
-            $sliceGUI SetGUICommandAbortFlag 1
             FiducialsSWidget::AddFiducial $r $a $s
           } 
         }
       }
     }
     "LeftButtonReleaseEvent" { 
-      if { [$sliceGUI GetGrabID] == $this } {
-        $sliceGUI SetGrabID ""
-      }
+        $sliceGUI SetGUICommandAbortFlag 1
+        if { [$sliceGUI GetGrabID] == $this } {
+            $sliceGUI SetGrabID ""
+        }
 
         # RESET MOUSE MODE BACK TO
         # TRANSFORM, UNLESS USER HAS
@@ -600,11 +591,8 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
             if { $pickPersistence == 0 && $placePersistence == 0 } {
                 set mode [ $interactionNode GetInteractionModeByString "ViewTransform" ]
                 $interactionNode SetCurrentInteractionMode $mode
-                $interactionNode SetPickModePersistence 0
-                $interactionNode SetPlaceModePersistence 0
             }
         }
-        
     }
     "MiddleButtonPressEvent" {
       $_renderWidget CornerAnnotationVisibilityOff
@@ -644,7 +632,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
       $_renderWidget CornerAnnotationVisibilityOn
       [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText "Middle Button: Pan; Right Button: Zoom"
 
-      #puts "EnterEvent."
       set thisSliceSpacing [[$sliceGUI GetLogic] GetLowestVolumeSliceSpacing]
       set sliceGUIs [$this getLinkedSliceGUIs]
       foreach gui $sliceGUIs {
@@ -664,7 +651,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
       }
     }
     "LeaveEvent" { 
-      #puts "LeaveEvent"
       set _inWidget 0
 
       set sliceGUIs [$this getLinkedSliceGUIs]
@@ -680,11 +666,9 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
         if { [$this isCompareViewMode] == 1 } {
           $snode SetSliceSpacingModeToAutomatic
         }
-          
         [$gui GetSliceViewer] RequestRender
       }
       [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText ""
-      #puts "EndLeaveEvent"
     }
     "TimerEvent" { }
     "KeyPressEvent" { 
@@ -817,7 +801,7 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
     "ExitEvent" { }
   }
 
-  if { $annotationsUpdated == false } {
+  if { $annotationsUpdated == false && [$this getInWidget] } {
       set xyToRAS [$_sliceNode GetXYToRAS]
       set ras [$xyToRAS MultiplyPoint $x $y $z 1]
       foreach {r a s t} $ras {}
@@ -827,7 +811,6 @@ itcl::body SliceSWidget::processEvent { {caller ""} {event ""} } {
 
 
 itcl::body SliceSWidget::updateAnnotations {r a s} {
-#puts "updateAnnotations"
 
   $this updateStatusAnnotation $r $a $s
     
@@ -975,7 +958,7 @@ itcl::body SliceSWidget::updateAnnotations {r a s} {
 }
 
 itcl::body SliceSWidget::updateAnnotation {r a s} {
-#puts "--updateAnnotation--"
+
   $this updateStatusAnnotation $r $a $s
 
   foreach {x y z} [$this rasToXYZ "$r $a $s"] {}
@@ -1099,7 +1082,6 @@ itcl::body SliceSWidget::updateAnnotation {r a s} {
 }
 
 itcl::body SliceSWidget::updateStatusAnnotation {r a s} {
-#puts "updateStatusAnnotation"
 
   # display a subset of the annotation in the status bar because we may not
   # show the information while moving the mouse
@@ -1205,7 +1187,6 @@ itcl::body SliceSWidget::updateStatusAnnotation {r a s} {
 
   set statusText "$backgroundname $rasText$ijkText$labelText$voxelText"
   [$::slicer3::ApplicationGUI GetMainSlicerWindow]  SetStatusText $statusText
-
 }
 
 
@@ -1439,11 +1420,9 @@ itcl::body SliceSWidget::requestAnnotation { } {
                                 [$sliceGUI GetSliceViewer] RequestRender; \
                                 $this cancelAnnotation; \
                               } "]
-    #puts "requestAnnotation $_annotationTaskID"
 }
 
 itcl::body SliceSWidget::cancelAnnotation { } {
-    #puts "cancelAnnotation $_annotationTaskID"
     if {$_annotationTaskID != ""} {
         after cancel $_annotationTaskID
         set _annotationTaskID ""

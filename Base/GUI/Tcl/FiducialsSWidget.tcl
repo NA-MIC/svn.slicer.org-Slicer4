@@ -314,10 +314,9 @@ itcl::body FiducialsSWidget::processUpdate {} {
           $seedSWidget configure -text [$fidListNode GetNthFiducialLabelText $f]
           $seedSWidget configure -textScale [$fidListNode GetTextScale]
           $seedSWidget configure -inactive [$fidListNode GetLocked]
-          if { [$fidListNode GetNthFiducialSelected $f] } {
-            $seedSWidget configure -selected 1
-          }
+          $seedSWidget configure -selected [$fidListNode GetNthFiducialSelected $f]
           $seedSWidget configure -visibility [$fidListNode GetNthFiducialVisibility $f]
+          $seedSWidget processEvent
         }
       }
     }
@@ -345,7 +344,7 @@ itcl::body FiducialsSWidget::seedMovedCallback {seed fidListNode fidIndex} {
 
   $::slicer3::MRMLScene SaveStateForUndo $fidListNode
   set ras [$seed getRASPosition]
-  eval after idle "$fidListNode SetNthFiducialXYZ $fidIndex $ras"
+  eval after idle "$fidListNode SetNthFiducialXYZWorld $fidIndex $ras"
 
   set sliceNode [[$sliceGUI GetLogic] GetSliceNode]
   set compositeNode [[$sliceGUI GetLogic] GetSliceCompositeNode]
@@ -372,11 +371,8 @@ proc FiducialsSWidget::AddFiducial { r a s } {
 
   set fidLogic [$::slicer3::FiducialsGUI GetLogic]
   # the logic handles saving the state for undo
-  set fidIndex [$fidLogic AddFiducialSelected $r $a $s 1]
+  set fidIndex [$fidLogic AddFiducialPicked $r $a $s 1]
   $::slicer3::MRMLScene Modified
-
-  # make sure everything gets updated before adding another fiducial
-  update
 }
 
 #

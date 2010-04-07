@@ -34,11 +34,13 @@ if { [itcl::find class RulerSWidget] == "" } {
 
     variable _rulerNode ""
     variable _rulerNodeObservation ""
+    variable _updating 0
 
     # methods
     method processEvent {{caller ""} {event ""}} {}
     method updateMRMLFromWidget {} {}
     method updateWidgetFromMRML {} {}
+    method updateAnnotation {} {}
   }
 }
 
@@ -50,7 +52,6 @@ itcl::body RulerSWidget::constructor {sliceGUI} {
   $this configure -sliceGUI $sliceGUI
  
   set o(lineWidget) [vtkNew vtkLineWidget2]
-  $o(lineWidget) SetPriority 1.0
   $o(lineWidget) SetInteractor [$_renderWidget GetRenderWindowInteractor]
   [$o(lineWidget) GetRepresentation] PlaceWidget 0 1 0 1 0 1
   $o(lineWidget) On
@@ -73,6 +74,7 @@ itcl::body RulerSWidget::constructor {sliceGUI} {
 
 itcl::body RulerSWidget::destructor {} {
   $o(lineWidget) Off
+  [$sliceGUI GetSliceViewer] RequestRender
 }
 
 #
@@ -112,22 +114,42 @@ itcl::body RulerSWidget::updateWidgetFromMRML { } {
     return
   }
 
+  if { $_updating } {
+    return
+  }
+
   #
   # set the two endpoints in screen space
   #
 
   $this queryLayers 0 0 0
   set lineRep [$o(lineWidget) GetRepresentation]
-  eval $lineRep SetPoint1DisplayPosition [$this rasToXYZ [$_rulerNode GetPosition1]]
-  eval $lineRep SetPoint2DisplayPosition [$this rasToXYZ [$_rulerNode GetPosition2]]
+  set ras1 [$_rulerNode GetPosition1]
+  set ras2 [$_rulerNode GetPosition2]
+  set xyz1 [$this rasToXYZ $ras1]
+  set xyz2 [$this rasToXYZ $ras2]
+
+  # only show widget if on the correct slice
+  $o(lineWidget) On
+  foreach xyz [list $xyz1 $xyz2] {
+    foreach {x y z} $xyz {
+      if { [expr abs($z)] > 0.5 } {
+        $o(lineWidget) Off
+      }
+    }
+  }
+
+  eval $lineRep SetPoint1DisplayPosition $xyz1
+  eval $lineRep SetPoint2DisplayPosition $xyz2
 
   #
-  # set up the colours
+  # set up the colours and annotation
   #
   eval [[$lineRep GetPoint1Representation] GetProperty] SetColor [$_rulerNode GetPointColour]
-  # for now, both ends get coloured the same, so only set the first one as that's all that can be set via the gui, this will change with vtk 5.6
-#  eval [[$lineRep GetPoint2Representation] GetProperty] SetColor [$_rulerNode GetPoint2Colour]
+  eval [[$lineRep GetPoint2Representation] GetProperty] SetColor [$_rulerNode GetPoint2Colour]
   eval [$lineRep GetLineProperty] SetColor [$_rulerNode GetLineColour]
+
+  $this updateAnnotation
 }
 
 
@@ -137,6 +159,8 @@ itcl::body RulerSWidget::updateMRMLFromWidget { } {
     return
   }
 
+  set _updating 1
+
   #
   # set the two endpoints in screen space
   #
@@ -145,12 +169,27 @@ itcl::body RulerSWidget::updateMRMLFromWidget { } {
   $_rulerNode DisableModifiedEventOn
   $lineRep GetPoint1DisplayPosition 0 0 0
   $lineRep GetPoint2DisplayPosition 0 0 0
-  eval $_rulerNode SetPosition1 [$this xyzToRAS [$lineRep GetPoint1DisplayPosition]]
-  eval $_rulerNode SetPosition2 [$this xyzToRAS [$lineRep GetPoint2DisplayPosition]]
+  set xyzpos1 [$lineRep GetPoint1DisplayPosition]
+  set xyzpos2 [$lineRep GetPoint2DisplayPosition]
+  set pos1 [$this xyzToRAS $xyzpos1]
+  set pos2 [$this xyzToRAS $xyzpos2]
+  eval $_rulerNode SetPosition1 $pos1
+  eval $_rulerNode SetPosition2 $pos2
   $_rulerNode DisableModifiedEventOff
   $_rulerNode InvokePendingModifiedEvent
+  
+  $this updateAnnotation
+  set _updating 0
 }
 
+itcl::body RulerSWidget::updateAnnotation {} {
+
+  set lineRep [$o(lineWidget) GetRepresentation]
+  $_rulerNode UpdateCurrentDistanceAnnotation
+  $lineRep SetDistanceAnnotationFormat [$_rulerNode GetCurrentDistanceAnnotation]
+  $lineRep SetDistanceAnnotationVisibility 1
+  $lineRep SetDistanceAnnotationScale .02 .02 .02
+}
 
 itcl::body RulerSWidget::processEvent { {caller ""} {event ""} } {
 
@@ -179,52 +218,44 @@ itcl::body RulerSWidget::processEvent { {caller ""} {event ""} } {
   }
 
   if { $caller == $o(lineWidget) } {
-    if { 1 || $event == "StartInteractionEvent" } {
-          if { $event == "StartInteractionEvent" } {
-              #--- now adjust the interactionMode.
-              #--- This implementation of mouse modes turns on
-              #--- 'pick' mode when a ruler endpoint is picked.
-              set interactionNode [ $::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode ]
-              if { $interactionNode != "" } {
-                  set mode [$interactionNode GetCurrentInteractionMode]
-                  set modeString [$interactionNode GetInteractionModeAsString $mode]
-                  set pickPersistence [ $interactionNode GetPickModePersistence]
-                  if { $pickPersistence == 0 } {
-                      $interactionNode SetLastInteractionMode $mode
-                  }
-                  $interactionNode SetCurrentInteractionMode [ $interactionNode GetInteractionModeByString "PickManipulate" ]
-              }
-          }
-        $this updateMRMLFromWidget
-    }
-      [$sliceGUI GetSliceViewer] RequestRender
-  }
 
-
-
-  if { $caller == $o(lineWidget) } {
-    if { 1 || $event == "EndInteractionEvent" } {
-        if { $event == "EndInteractionEvent" } {
-            #--- now adjust the interactionMode.        
-            set interactionNode [$::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode]
-            # Reset interaction mode to default viewtransform
-            # mode if user has not selected a persistent pick or place.
-            if { $interactionNode != "" } {
-                if { [$interactionNode GetCurrentInteractionMode] != [$interactionNode GetInteractionModeByString "ViewTransform"] } {
-                    set pickPersistence [ $interactionNode GetPickModePersistence]
-                    set placePersistence [ $interactionNode GetPlaceModePersistence ]
-                    if { $pickPersistence == 0 && $placePersistence == 0 } {
-                        $interactionNode SetCurrentInteractionMode [ $interactionNode GetInteractionModeByString "ViewTransform" ]
-                        $interactionNode SetPickModePersistence 0
-                        $interactionNode SetPlaceModePersistence 0
-                    }
-                }
-            }
+    if { $event == "StartInteractionEvent" } {
+      $_renderWidget CornerAnnotationVisibilityOff
+      #--- now adjust the interactionMode.
+      #--- This implementation of mouse modes turns on
+      #--- 'pick' mode when a ruler endpoint is picked.
+      set interactionNode [ $::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode ]
+      if { $interactionNode != "" } {
+        set mode [$interactionNode GetCurrentInteractionMode]
+        set modeString [$interactionNode GetInteractionModeAsString $mode]
+        set pickPersistence [ $interactionNode GetPickModePersistence]
+        if { $pickPersistence == 0 } {
+          $interactionNode SetLastInteractionMode $mode
         }
-        $this updateMRMLFromWidget
+        $interactionNode SetCurrentInteractionMode [ $interactionNode GetInteractionModeByString "PickManipulate" ]
+      }
     }
-      [$sliceGUI GetSliceViewer] RequestRender
+
+    if { $event == "EndInteractionEvent" } {
+      $_renderWidget CornerAnnotationVisibilityOn
+      #--- now adjust the interactionMode.        
+      set interactionNode [$::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode]
+      # Reset interaction mode to default viewtransform
+      # mode if user has not selected a persistent pick or place.
+      if { $interactionNode != "" } {
+        if { [$interactionNode GetCurrentInteractionMode] != [$interactionNode GetInteractionModeByString "ViewTransform"] } {
+          set pickPersistence [ $interactionNode GetPickModePersistence]
+          set placePersistence [ $interactionNode GetPlaceModePersistence ]
+          if { $pickPersistence == 0 && $placePersistence == 0 } {
+            $interactionNode SetCurrentInteractionMode [ $interactionNode GetInteractionModeByString "ViewTransform" ]
+            $interactionNode SetPickModePersistence 0
+            $interactionNode SetPlaceModePersistence 0
+          }
+        }
+      }
+    }
+
+    $this updateMRMLFromWidget
+    [$sliceGUI GetSliceViewer] RequestRender
   }
-
-
 }

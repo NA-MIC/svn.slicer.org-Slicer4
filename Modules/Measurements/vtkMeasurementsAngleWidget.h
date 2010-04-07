@@ -37,10 +37,12 @@ class vtkKWMenuButton;
 class vtkKWMenuButtonWithLabel;
 class vtkKWLabel;
 class vtkKWEntry;
+class vtkKWPushButton;
 class vtkKWEntryWithLabel;
 class vtkMRMLMeasurementsAngleNode;
 class vtkSlicerViewerWidget;
 class vtkMeasurementsAngleWidgetClass;
+class vtkCamera;
 class VTK_MEASUREMENTS_EXPORT vtkMeasurementsAngleWidget : public vtkSlicerWidget
 {
   
@@ -52,7 +54,8 @@ public:
   /// access methods
   vtkGetObjectMacro(VisibilityButton, vtkKWCheckButtonWithLabel);
   vtkGetObjectMacro (AllVisibilityMenuButton, vtkKWMenuButton);
-
+  vtkGetObjectMacro (AnnotationFormatMenuButton, vtkKWMenuButtonWithLabel);
+  vtkGetObjectMacro ( RemoveAllAnglesButton, vtkKWPushButton);
   /// 
   /// Getting the mrml angle node id
   vtkGetStringMacro(AngleNodeID);
@@ -90,25 +93,56 @@ public:
   /// Get/set the viewer widget so can add a the angle widget to it
   vtkGetObjectMacro(ViewerWidget, vtkSlicerViewerWidget);
   virtual void SetViewerWidget(vtkSlicerViewerWidget *viewerWidget);
+
+  ///
+  /// Update the camera
+  void UpdateCamera();
+
+  ///
+  /// get the currently active camera
+  vtkCamera *GetActiveCamera();
+  
+  ///
+  /// Update the interactors on all the angle widgets
+  void UpdateAngleWidgetInteractors();
 //BTX
   /// 
   /// encapsulated 3d widgets for each angle node
   std::map<std::string, vtkMeasurementsAngleWidgetClass *> AngleWidgets;
 //ETX
   /// 
-  /// get a distance widget by angle node id
+  /// get a angle widget by angle node id
   vtkMeasurementsAngleWidgetClass *GetAngleWidget(const char * nodeID);
 
   /// 
-  /// set up a new distance widget for this node
+  /// set up a new angle widget for this node
   void AddAngleWidget(vtkMRMLMeasurementsAngleNode *angleNode);
   /// 
-  /// remove distance widget for this node
+  /// remove angle widget for this node
   void RemoveAngleWidget(vtkMRMLMeasurementsAngleNode *angleNode);
+  ///
+  /// remove all angle widgets
+  void RemoveAngleWidgets();
+
+  ///
+  /// update the visibility of the 3d widget associated with the passed node.
+  /// if hte update clicks flag is true, fool the angle widget into thinking
+  /// it's been placed, but it's false by default.
+  void Update3DWidgetVisibility(vtkMRMLMeasurementsAngleNode *angleNode, bool updateClicks = false);
+
   /// 
   /// check scene to make sure that have a widget for each angle node, and no extra widgets...
   void Update3DWidgetsFromMRML();
 
+  /// when change the colours of the end points of the angle widget, update the label
+  /// colours as a hint. If the end point colours are white, use a very very
+  /// light grey instead
+  void UpdateLabelsFromNode(vtkMRMLMeasurementsAngleNode *activeAngleNode);
+  
+  /// 
+  /// Update the angle label with the value from the angle widget
+  void UpdateAngleLabel(vtkMRMLMeasurementsAngleNode *angleNode);
+  
 protected:
   vtkMeasurementsAngleWidget();
   virtual ~vtkMeasurementsAngleWidget();
@@ -121,7 +155,7 @@ protected:
   /// update the widget GUI from the settings in the passed in angleNode
   void UpdateWidget(vtkMRMLMeasurementsAngleNode *angleNode);
   /// DescriptioN:
-  /// update the 3d distance widget from the settings in teh passed in
+  /// update the 3d angle widget from the settings in teh passed in
   /// angleNode
   void Update3DWidget(vtkMRMLMeasurementsAngleNode *angleNode);
 
@@ -146,13 +180,22 @@ protected:
   /// 
   /// Change the colour of the end points
   vtkKWChangeColorButton *PointColourButton;
+  vtkKWChangeColorButton *Point2ColourButton;
+  vtkKWChangeColorButton *PointCentreColourButton;
   /// 
   /// Change the colour of the line
   vtkKWChangeColorButton *LineColourButton;
+  ///
+  /// change the colour of the arc
+  vtkKWChangeColorButton *ArcColourButton;
   /// 
   /// Change the colour of the label text
   vtkKWChangeColorButton *TextColourButton;
-  
+
+  ///
+  /// angle label
+  vtkKWLabel *AngleLabel;
+
   /// 
   /// point position entry
   vtkKWLabel *Position1Label;
@@ -168,9 +211,12 @@ protected:
   vtkKWEntry *PositionCenterYEntry;
   vtkKWEntry *PositionCenterZEntry;
 
+  ///
+  /// remove all angle widgets
+  vtkKWPushButton *RemoveAllAnglesButton;
 
   /// 
-  /// distance annotation option entries
+  /// angle annotation option entries
   vtkKWEntryWithLabel *LabelFormatEntry;
   vtkKWEntryWithLabel *LabelScaleEntry;
   vtkKWCheckButtonWithLabel *LabelVisibilityButton;
@@ -190,6 +236,10 @@ protected:
   /// setting visibility of all angle nodes
   vtkKWMenuButton *AllVisibilityMenuButton;
 
+  ///
+  /// menu button to select different default annotation options
+  vtkKWMenuButtonWithLabel *AnnotationFormatMenuButton;
+  
   /// 
   /// flag set to 1 when updating a 3d widget (todo: set it to the index of the
   /// angle node / 3d widget once have more than one)

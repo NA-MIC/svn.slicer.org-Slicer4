@@ -20,11 +20,12 @@ class VTK_MEASUREMENTS_EXPORT vtkMRMLMeasurementsNode : public vtkMRMLTransforma
 
   /// 
   /// get/set if the widget is visible
+  vtkBooleanMacro(Visibility, int);
   vtkGetMacro(Visibility, int);
   vtkSetMacro(Visibility, int);
   
-  /// 
-  /// Create instance of a GAD node.
+  /// Description:
+  /// Create instance of a Measurements node.
   virtual vtkMRMLNode* CreateNodeInstance();
 
   /// 

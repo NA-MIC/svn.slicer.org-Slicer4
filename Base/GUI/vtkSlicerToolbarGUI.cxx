@@ -494,10 +494,6 @@ void vtkSlicerToolbarGUI::SetInteractionNode ( vtkMRMLInteractionNode *node )
     vtkSetAndObserveMRMLNodeEventsMacro (this->InteractionNode, node, events );
     events->Delete();
     }
-  else
-    {
-    vtkErrorMacro ( "Unable to find the interaction node in the scene to observe!" );
-    }
   return;
 }
 
@@ -738,10 +734,29 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
         {
         this->HideCompareViewCustomLayoutFrame();
         int disabledModify = layout->StartModify();
+        //--- note:
+        //--- if side-by-side compare view has been selected,
+        //--- then number of compare view rows is used to
+        //--- specify number of columns instead.
         layout->SetNumberOfCompareViewRows ( this->CompareViewBoxRowEntry->GetValueAsInt() );
         layout->SetNumberOfCompareViewLightboxRows ( this->CompareViewLightboxRowEntry->GetValueAsInt () );
         layout->SetNumberOfCompareViewLightboxColumns ( this->CompareViewLightboxColumnEntry->GetValueAsInt() );
-        layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutCompareView );
+        if ( this->ChooseLayoutIconMenuButton )
+          {
+          const char *whichLayout = this->ChooseLayoutIconMenuButton->GetValue();
+          if (!strcmp ( whichLayout, "Side-by-side Compare layout"))
+            {
+            layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutSideBySideCompareView );
+            }
+          else if (!strcmp ( whichLayout, "Compare layout"))
+            {
+            layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutCompareView );
+            }
+          }
+        else
+          {
+          layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutCompareView );
+          }
         layout->EndModify(disabledModify);
         }
       else if ( pushb == this->UndoIconButton )
@@ -837,6 +852,10 @@ void vtkSlicerToolbarGUI::ProcessGUIEvents ( vtkObject *caller,
             appGUI->GetMRMLScene()->SaveStateForUndo ( layout );
             layout->SetViewArrangement (vtkMRMLLayoutNode::SlicerLayoutTabbedSliceView );
             }
+          }
+        else if (!strcmp ( whichLayout, "Side-by-side Compare layout"))
+          {
+          PopUpCompareViewCustomLayoutFrame();
           }
         else if (!strcmp ( whichLayout, "Compare layout"))
           {
@@ -985,6 +1004,8 @@ if ( this->ChooseLayoutIconMenuButton->GetMenu() != NULL )
    case vtkMRMLLayoutNode::SlicerLayoutCompareView:
      this->ChooseLayoutIconMenuButton->SetValue ( "Compare layout" );
      break;
+   case vtkMRMLLayoutNode::SlicerLayoutSideBySideCompareView:
+     this->ChooseLayoutIconMenuButton->SetValue ( "Side-by-side Compare layout");
    case vtkMRMLLayoutNode::SlicerLayoutLightboxView:              
      this->ChooseLayoutIconMenuButton->SetValue ( "Lightbox layout" );
      break;
@@ -1093,7 +1114,7 @@ void vtkSlicerToolbarGUI::UpdateLayoutMenu()
 void vtkSlicerToolbarGUI::ProcessMRMLEvents ( vtkObject *caller,
                                            unsigned long event, void * vtkNotUsed(callData) )
 {
-  std::cout << "vtkSlicerToolbarGUI::ProcessMRMLEvents: got event " << event << "(modified = " << vtkCommand::ModifiedEvent << ")" << endl;
+  vtkDebugMacro("ProcessMRMLEvents: got event " << event << "(modified = " << vtkCommand::ModifiedEvent << ")");
 
   // check for a change on the selection node regarding the mouse interaction mode
   vtkMRMLInteractionNode *interactionNode = this->GetInteractionNode();
@@ -1101,14 +1122,14 @@ void vtkSlicerToolbarGUI::ProcessMRMLEvents ( vtkObject *caller,
   // has the interaction mode changed?
   if (interactionNode == NULL)
     {
-    std::cout << "vtkSlicerToolbarGUI::ProcessMRMLEvents: interaction node is null\n";
+    vtkWarningMacro("ProcessMRMLEvents: interaction node is null");
     return;
     }
 
   if ( vtkMRMLInteractionNode::SafeDownCast(caller) == interactionNode &&
        event == vtkMRMLInteractionNode::InteractionModeChangedEvent )
     {
-    std::cout << "The selection node changed\n";
+    vtkDebugMacro("ProcessMRMLEvents: The selection node changed");
     int mode = interactionNode->GetCurrentInteractionMode();
     int selected = 0;
     switch (mode)
@@ -1536,7 +1557,14 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemImage ( index, imageName.c_str() );
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
 
-
+  this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ("Side-by-side Compare layout");
+  index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ("Side-by-side Compare layout");
+  imageName.clear();
+  imageName = "SlicerSideBySideCompareViewLayoutImage";
+  vtkKWTkUtilities::UpdatePhotoFromIcon ( this->GetApplication(), imageName.c_str(), this->SlicerToolbarIcons->GetSideBySideCompareViewIcon(), 0);
+  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemImage ( index, imageName.c_str() );
+  this->ChooseLayoutIconMenuButton->GetMenu()->SetItemCompoundModeToLeft ( index );
+  
   this->ChooseLayoutIconMenuButton->GetMenu()->AddRadioButton ( "Toggle GUI panel visibility" );
   index = this->ChooseLayoutIconMenuButton->GetMenu()->GetIndexOfItem ( "Toggle GUI panel visibility");
   this->ChooseLayoutIconMenuButton->GetMenu()->SetItemIndicatorVisibility ( index, 0 );
@@ -1764,7 +1792,7 @@ void vtkSlicerToolbarGUI::BuildGUI ( )
 
 }
 
-void vtkSlicerToolbarGUI::PopUpCompareViewCustomLayoutFrame()
+void vtkSlicerToolbarGUI::PopUpCompareViewCustomLayoutFrame( )
 {
   if ( !this->ChooseLayoutIconMenuButton || !this->ChooseLayoutIconMenuButton->IsCreated())
     {
@@ -1794,6 +1822,7 @@ void vtkSlicerToolbarGUI::PopUpCompareViewCustomLayoutFrame()
  
   this->CompareViewBoxTopLevel->SetPosition(px-ph, py+ph);
   app->ProcessPendingEvents();
+
   this->CompareViewBoxTopLevel->DeIconify();
   this->CompareViewBoxTopLevel->Raise();
 }

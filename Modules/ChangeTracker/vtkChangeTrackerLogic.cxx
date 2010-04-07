@@ -1693,9 +1693,9 @@ void vtkChangeTrackerLogic::SetThresholdsFromSegmentation(){
   }
   mean = mean/cnt;
 
-  std::cerr << "Histogram min: " << hist->GetMin()[0] << std::endl;
-  std::cerr << "Histogram max: " << hist->GetMax()[0] << std::endl;
-  std::cerr << "Histogram mean: " << mean << std::endl;
+//  std::cerr << "Histogram min: " << hist->GetMin()[0] << std::endl;
+//  std::cerr << "Histogram max: " << hist->GetMax()[0] << std::endl;
+//  std::cerr << "Histogram mean: " << mean << std::endl;
 
   this->ChangeTrackerNode->SetSegmentThresholdMin(mean);
   this->ChangeTrackerNode->SetSegmentThresholdMax(hist->GetMax()[0]);
@@ -1795,6 +1795,7 @@ vtkImageData* vtkChangeTrackerLogic::GetConnectivityMask(vtkImageData* growthIma
 
   vtkImageData* result = vtkImageData::New();
   result->DeepCopy(cast->GetOutput());
+  cast->Delete();
 
   return result;
 }

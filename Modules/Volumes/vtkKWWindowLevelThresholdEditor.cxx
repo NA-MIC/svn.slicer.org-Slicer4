@@ -229,8 +229,8 @@ void vtkKWWindowLevelThresholdEditor::SetImageData(vtkImageData* imageData)
     vtkImageData* tempImageData = this->ImageData;
     if (this->ImageData == NULL)
       {
-      this->SetWindowLevel(0,0);
-      this->SetThreshold(0,0);
+      //this->SetWindowLevel(0,0);
+      //this->SetThreshold(0,0);
       }
     this->ImageData = imageData;
     if (this->ImageData != NULL)
@@ -803,10 +803,11 @@ void vtkKWWindowLevelThresholdEditor::ProcessThresholdStartCommand(double min, d
   range[0] = min;
   range[1] = max;
   //this->UpdateTransferFunction();
-  if (this->GetThresholdType() == vtkKWWindowLevelThresholdEditor::ThresholdAuto)
-    {
-    this->SetThresholdType(vtkKWWindowLevelThresholdEditor::ThresholdManual);
-    }
+  //if (this->GetThresholdType() == vtkKWWindowLevelThresholdEditor::ThresholdAuto)
+  //  {
+  this->SetThresholdType(vtkKWWindowLevelThresholdEditor::ThresholdManual);
+  //  }
+
   this->InvokeEvent(vtkKWWindowLevelThresholdEditor::ValueStartChangingEvent, range);
 }
 

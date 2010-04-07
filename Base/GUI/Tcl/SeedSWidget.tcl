@@ -297,8 +297,10 @@ itcl::body SeedSWidget::processEvent { {caller ""} {event ""} } {
     itcl::delete object $this
     return
   }
-
+  
   set grabID [$sliceGUI GetGrabID]
+
+
   if { ! ($grabID == "" || $grabID == $this) } {
     # some other widget wants these events
     # -- we can position wrt the current slice node
@@ -326,22 +328,25 @@ itcl::body SeedSWidget::processEvent { {caller ""} {event ""} } {
       $sliceGUI SetGUICommandAbortFlag 1
       switch $event {
         "LeftButtonPressEvent" {
-          if { $visibility } {
-            # only respond to mouse clicks if visible
-            set _actionState "dragging"
-            SeedSWidget::SetAllTextVisibility 0
-            # switch into pick mode when we mouse down
-            # on a seed widget -- this mirrors the
-            # behavior in the 3D viewer.
-            set interactionNode [$::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode]
-            if { $interactionNode != "" } {
-                set mode [$interactionNode GetCurrentInteractionMode]
-                set modeString [$interactionNode GetInteractionModeAsString $mode]
-                set pickPersistence [ $interactionNode GetPickModePersistence]
-                if { $pickPersistence == 0 } {
-                    $interactionNode SetLastInteractionMode $mode
-                }
-                $interactionNode SetCurrentInteractionMode [ $interactionNode GetInteractionModeByString "PickManipulate" ]
+            # only respond to seed picks if visible
+            if { $visibility } {
+                set interactionNode [$::slicer3::MRMLScene GetNthNodeByClass 0 vtkMRMLInteractionNode]
+                if { $interactionNode != "" } {
+                    set mode [$interactionNode GetCurrentInteractionMode]
+                    set modeString [$interactionNode GetInteractionModeAsString $mode]
+                    # only respond to mouse clicks if NOT in persistent
+                    # place mode. if the interaction mode is "place"
+                    # then we should just return without picking.
+                    if { $modeString == "Place" } {
+                        return
+                    }
+                set _actionState "dragging"
+                SeedSWidget::SetAllTextVisibility 0
+
+                # switch into pick mode when we mouse down
+                # on a seed widget -- this mirrors the
+                # behavior in the 3D viewer.
+                $interactionNode SetCurrentInteractionMode [ $interactionNode GetInteractionModeByString "PickManipulate" ]                    
             }
           }
         }
@@ -362,7 +367,6 @@ itcl::body SeedSWidget::processEvent { {caller ""} {event ""} } {
         }
         "LeftButtonReleaseEvent" {
           set _actionState ""
-          $sliceGUI SetGrabID ""
           set _description ""
           $_renderWidget CornerAnnotationVisibilityOn
           SeedSWidget::SetAllTextVisibility 1
@@ -374,19 +378,18 @@ itcl::body SeedSWidget::processEvent { {caller ""} {event ""} } {
             # This implementation of mouse modes turns on
             # 'pick' mode when a fiducial is highlighted.
             if { $interactionNode != "" } {
-                if { [$interactionNode GetCurrentInteractionMode] != [$interactionNode GetInteractionModeByString "ViewTransform"] } {
+                set mode [$interactionNode GetCurrentInteractionMode]
+                if { $mode != [$interactionNode GetInteractionModeByString "ViewTransform"] } {
                     set pickPersistence [ $interactionNode GetPickModePersistence]
                     set placePersistence [ $interactionNode GetPlaceModePersistence ]
                     if { $pickPersistence == 0 && $placePersistence == 0 } {
                         $interactionNode SetCurrentInteractionMode [ $interactionNode GetInteractionModeByString "ViewTransform" ]
-                        $interactionNode SetPickModePersistence 0
-                        $interactionNode SetPlaceModePersistence 0
                     }
                 }
             }
         }
       }
-    }
+  }
   }
 
   $this highlight

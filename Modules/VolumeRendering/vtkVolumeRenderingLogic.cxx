@@ -7,9 +7,7 @@
 #include "vtkMatrix4x4.h"
 #include "vtkPlanes.h"
 #include "vtkPlane.h"
-#ifdef Slicer3_USE_VTK_CVSHEAD
 #include "vtkGPUVolumeRayCastMapper.h"
-#endif
 
 #include <itksys/SystemTools.hxx> 
 #include <itksys/Directory.hxx> 
@@ -45,9 +43,7 @@ vtkVolumeRenderingLogic::vtkVolumeRenderingLogic(void)
   this->MapperGPURaycastII = vtkSlicerGPURayCastVolumeMapper::New();
 
   this->MapperRaycast = vtkSlicerFixedPointVolumeRayCastMapper::New();
-#ifdef Slicer3_USE_VTK_CVSHEAD
   this->MapperGPURaycast3 = vtkGPUVolumeRayCastMapper::New();
-#endif 
 
   //create instance of the actor
   this->Volume = vtkVolume::New();
@@ -90,14 +86,13 @@ vtkVolumeRenderingLogic::~vtkVolumeRenderingLogic(void)
     this->MapperRaycast = NULL;
   }
 
-#ifdef Slicer3_USE_VTK_CVSHEAD
   if (this->MapperGPURaycast3)
   {
     this->MapperGPURaycast3->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsProgressEvent, this->GUICallback);
     this->MapperGPURaycast3->Delete();
     this->MapperGPURaycast3 = NULL;
   }
-#endif
+
   if (this->Volume)
   {
     this->Volume->Delete();
@@ -179,9 +174,7 @@ void vtkVolumeRenderingLogic::SetGUICallbackCommand(vtkCommand* callback)
   this->MapperGPURaycast->AddObserver(vtkCommand::VolumeMapperComputeGradientsProgressEvent, callback);
 
   this->MapperGPURaycastII->AddObserver(vtkCommand::VolumeMapperComputeGradientsProgressEvent, callback);
-#ifdef Slicer3_USE_VTK_CVSHEAD
   this->MapperGPURaycast3->AddObserver(vtkCommand::VolumeMapperComputeGradientsProgressEvent, callback);
-#endif
 
   this->GUICallback = callback;
 }
@@ -214,14 +207,12 @@ void vtkVolumeRenderingLogic::Reset()
     this->MapperRaycast->Delete();
     this->MapperRaycast = NULL;
   }
-#ifdef Slicer3_USE_VTK_CVSHEAD
   if (this->MapperGPURaycast3)
   {
     this->MapperGPURaycast3->RemoveObservers(vtkCommand::VolumeMapperComputeGradientsProgressEvent, this->GUICallback);
     this->MapperGPURaycast3->Delete();
     this->MapperGPURaycast3 = NULL;
   }
-#endif
   if (this->Volume)
   {
     this->Volume->Delete();
@@ -259,9 +250,7 @@ void vtkVolumeRenderingLogic::Reset()
 
   this->MapperRaycast = vtkSlicerFixedPointVolumeRayCastMapper::New();
 
-#ifdef Slicer3_USE_VTK_CVSHEAD
   this->MapperGPURaycast3 = vtkGPUVolumeRayCastMapper::New();
-#endif
   
   //create instance of the actor
   this->Volume = vtkVolume::New();
@@ -279,9 +268,7 @@ void vtkVolumeRenderingLogic::Reset()
   this->MapperGPURaycast->AddObserver(vtkCommand::VolumeMapperComputeGradientsProgressEvent, this->GUICallback);
 
   this->MapperGPURaycastII->AddObserver(vtkCommand::VolumeMapperComputeGradientsProgressEvent, this->GUICallback);
-#ifdef Slicer3_USE_VTK_CVSHEAD
   this->MapperGPURaycast3->AddObserver(vtkCommand::VolumeMapperComputeGradientsProgressEvent, this->GUICallback);
-#endif
 }
 
 vtkMRMLVolumeRenderingParametersNode* vtkVolumeRenderingLogic::CreateParametersNode()
@@ -687,49 +674,37 @@ void vtkVolumeRenderingLogic::ComputeInternalVolumeSize(int index)
   case 0://128M
     this->MapperGPURaycast->SetInternalVolumeSize(200);
     this->MapperGPURaycastII->SetInternalVolumeSize(200);
-#ifdef Slicer3_USE_VTK_CVSHEAD
     this->MapperGPURaycast3->SetMaxMemoryInBytes(128*1024*1024);
-#endif
     this->MapperTexture->SetInternalVolumeSize(128);//has to be power-of-two in this mapper
     break;
   case 1://256M
     this->MapperGPURaycast->SetInternalVolumeSize(256);//256^3
     this->MapperGPURaycastII->SetInternalVolumeSize(256);
-#ifdef Slicer3_USE_VTK_CVSHEAD
     this->MapperGPURaycast3->SetMaxMemoryInBytes(256*1024*1024);
-#endif
     this->MapperTexture->SetInternalVolumeSize(256);
     break;
   case 2://512M
     this->MapperGPURaycast->SetInternalVolumeSize(320);
     this->MapperGPURaycastII->SetInternalVolumeSize(320);
-#ifdef Slicer3_USE_VTK_CVSHEAD
     this->MapperGPURaycast3->SetMaxMemoryInBytes(512*1024*1024);
-#endif
     this->MapperTexture->SetInternalVolumeSize(256);
     break;
   case 3://1024M
     this->MapperGPURaycast->SetInternalVolumeSize(400);
     this->MapperGPURaycastII->SetInternalVolumeSize(400);
-#ifdef Slicer3_USE_VTK_CVSHEAD
     this->MapperGPURaycast3->SetMaxMemoryInBytes(1024*1024*1024);
-#endif
     this->MapperTexture->SetInternalVolumeSize(256);
     break;
   case 4://1.5G
     this->MapperGPURaycast->SetInternalVolumeSize(460);
     this->MapperGPURaycastII->SetInternalVolumeSize(460);
-#ifdef Slicer3_USE_VTK_CVSHEAD
     this->MapperGPURaycast3->SetMaxMemoryInBytes(1536*1024*1024);
-#endif
     this->MapperTexture->SetInternalVolumeSize(256);
     break;
   case 5://2.0G
     this->MapperGPURaycast->SetInternalVolumeSize(512);
     this->MapperGPURaycastII->SetInternalVolumeSize(512);
-#ifdef Slicer3_USE_VTK_CVSHEAD
     this->MapperGPURaycast3->SetMaxMemoryInBytes(2047*1024*1024);
-#endif
     this->MapperTexture->SetInternalVolumeSize(512);
     break;
   }
@@ -803,7 +778,6 @@ void vtkVolumeRenderingLogic::SetGPURaycastIIParameters(vtkMRMLVolumeRenderingPa
 
 void vtkVolumeRenderingLogic::SetGPURaycast3Parameters(vtkMRMLVolumeRenderingParametersNode* vspNode)
 {
-#ifdef Slicer3_USE_VTK_CVSHEAD
   switch(vspNode->GetGPURaycastTechnique3())
     {
     default:
@@ -817,7 +791,6 @@ void vtkVolumeRenderingLogic::SetGPURaycast3Parameters(vtkMRMLVolumeRenderingPar
       this->MapperGPURaycast3->SetBlendMode(vtkVolumeMapper::MINIMUM_INTENSITY_BLEND);
       break;
     }
-#endif
 }
 
 void vtkVolumeRenderingLogic::EstimateSampleDistance(vtkMRMLVolumeRenderingParametersNode* vspNode)
@@ -903,7 +876,6 @@ int vtkVolumeRenderingLogic::SetupMapperFromParametersNode(vtkMRMLVolumeRenderin
       return -1;
     break;
   case 4:
-#ifdef Slicer3_USE_VTK_CVSHEAD
     this->MapperGPURaycast3->SetInput(vtkMRMLScalarVolumeNode::SafeDownCast(vspNode->GetVolumeNode())->GetImageData());
     
     //this->MapperGPURaycast3->SetFramerate(vspNode->GetExpectedFPS());
@@ -914,7 +886,6 @@ int vtkVolumeRenderingLogic::SetupMapperFromParametersNode(vtkMRMLVolumeRenderin
       //this->Volume->SetProperty(this->VolumePropertyGPURaycast3);
       this->Volume->SetProperty(vspNode->GetVolumePropertyNode()->GetVolumeProperty());
     }
-#endif
     //else
     //  return -1;
     break;
@@ -1002,9 +973,7 @@ void vtkVolumeRenderingLogic::SetROI(vtkMRMLVolumeRenderingParametersNode* vspNo
   this->MapperGPURaycast->ClippingOff();
   this->MapperGPURaycastII->RemoveAllClippingPlanes();
   this->MapperGPURaycastII->ClippingOff();
-#ifdef Slicer3_USE_VTK_CVSHEAD
   this->MapperGPURaycast3->RemoveAllClippingPlanes();
-#endif
 
   if (vspNode->GetCroppingEnabled())
   {
@@ -1020,9 +989,7 @@ void vtkVolumeRenderingLogic::SetROI(vtkMRMLVolumeRenderingParametersNode* vspNo
     this->MapperGPURaycastII->SetClippingPlanes(planes);
     this->MapperGPURaycastII->ClippingOn();
     
-#ifdef Slicer3_USE_VTK_CVSHEAD
     this->MapperGPURaycast3->SetClippingPlanes(planes);
-#endif
 
     planes->Delete();
   }
@@ -1221,7 +1188,9 @@ vtkMRMLVolumePropertyNode* vtkVolumeRenderingLogic::AddVolumePropertyFromFile (c
   */
   if (vpStorageNode != NULL)
     {
-    vpNode->SetName(name.c_str());
+    std::string uname( this->MRMLScene->GetUniqueNameByString(name.c_str()));
+
+    vpNode->SetName(uname.c_str());
 
     this->GetMRMLScene()->SaveStateForUndo();
 

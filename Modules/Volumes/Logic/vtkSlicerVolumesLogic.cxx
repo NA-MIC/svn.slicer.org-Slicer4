@@ -174,11 +174,13 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddHeaderVolume (const char* filename,
       {
       const vtksys_stl::string fname(filename);
       vtksys_stl::string name = vtksys::SystemTools::GetFilenameName(fname);
+      name = this->MRMLScene->GetUniqueNameByString(name.c_str());
       volumeNode->SetName(name.c_str());
       }
     else
       {
-      volumeNode->SetName(volname);
+      std::string name = this->MRMLScene->GetUniqueNameByString(volname);
+      volumeNode->SetName(name.c_str());
       }
 
     this->GetMRMLScene()->SaveStateForUndo();
@@ -326,11 +328,13 @@ vtkMRMLScalarVolumeNode* vtkSlicerVolumesLogic::AddArchetypeScalarVolume (const 
     {
     const vtksys_stl::string fname(filename);
     vtksys_stl::string name = vtksys::SystemTools::GetFilenameName(fname);
+    name = this->MRMLScene->GetUniqueNameByString(name.c_str());
     scalarNode->SetName(name.c_str());
     }
   else
     {
-    scalarNode->SetName(volname);
+    std::string name = this->MRMLScene->GetUniqueNameByString(volname);
+    scalarNode->SetName(name.c_str());
     }
   vtkDebugMacro("LoadArchetypeScalarVolume: set scalar node name: " << scalarNode->GetName());
   scalarNode->SetLabelMap(labelMap);
@@ -480,6 +484,8 @@ vtkMRMLVolumeNode* vtkSlicerVolumesLogic::AddArchetypeVolume (const char* filena
     volumeName = vtksys::SystemTools::GetFilenameName(fname);
     }
   // now set all the volume names, before add the volumes to the scene
+  volumeName = this->MRMLScene->GetUniqueNameByString(volumeName.c_str());
+
   scalarNode->SetName(volumeName.c_str());
   vectorNode->SetName(volumeName.c_str());
   tensorNode->SetName(volumeName.c_str());
@@ -847,7 +853,9 @@ vtkMRMLScalarVolumeNode *vtkSlicerVolumesLogic::CreateLabelVolume (vtkMRMLScene 
 
   // set the display node to have a label map lookup table
   labelDisplayNode->SetAndObserveColorNodeID ("vtkMRMLColorTableNodeLabels");
-  labelNode->SetName(name);
+  std::string uname = this->MRMLScene->GetUniqueNameByString(name);
+
+  labelNode->SetName(uname.c_str());
   labelNode->SetAndObserveDisplayNodeID( labelDisplayNode->GetID() );
 
   // make an image data of the same size and shape as the input volume,
@@ -885,8 +893,16 @@ CloneVolume (vtkMRMLScene *scene,
     }
 
   // clone the display node
-  vtkMRMLScalarVolumeDisplayNode *clonedDisplayNode = 
-    vtkMRMLScalarVolumeDisplayNode::New();
+  vtkMRMLDisplayNode *clonedDisplayNode;
+  vtkMRMLLabelMapVolumeDisplayNode *labelDisplayNode = vtkMRMLLabelMapVolumeDisplayNode::SafeDownCast(volumeNode->GetDisplayNode());
+  if ( labelDisplayNode )
+    {
+    clonedDisplayNode = vtkMRMLLabelMapVolumeDisplayNode::New();
+    }
+  else
+    {
+    clonedDisplayNode = vtkMRMLScalarVolumeDisplayNode::New();
+    }
   clonedDisplayNode->CopyWithScene(volumeNode->GetDisplayNode());
   scene->AddNode(clonedDisplayNode);
 
@@ -894,7 +910,8 @@ CloneVolume (vtkMRMLScene *scene,
   vtkMRMLScalarVolumeNode *clonedVolumeNode = vtkMRMLScalarVolumeNode::New();
   clonedVolumeNode->CopyWithScene(volumeNode);
   clonedVolumeNode->SetAndObserveStorageNodeID(NULL);
-  clonedVolumeNode->SetName(name);
+  std::string uname = this->MRMLScene->GetUniqueNameByString(name);
+  clonedVolumeNode->SetName(uname.c_str());
   clonedVolumeNode->SetAndObserveDisplayNodeID(clonedDisplayNode->GetID());
 
   // copy over the volume's data

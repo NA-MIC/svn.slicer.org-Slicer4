@@ -1,19 +1,3 @@
-/*=auto==============================================================
-
-Portions (c) Copyright 2005 Brigham and Women's Hospital (BWH) All
-Rights Reserved.
-
-See Doc/copyright/copyright.txt
-or http://www.slicer.org/copyright/copyright.txt for details.
-
-Program:   3D Slicer
-Module:    $RCSfile: vtkEMSegmentSpatialPriorsStep.cxx,v$
-Date:      $Date: 2006/01/06 17:56:51 $
-Version:   $Revision: 1.6 $
-Author:    $Nicolas Rannou (BWH), Sylvain Jaume (MIT)$
-
-==============================================================auto=*/
-
 #include "vtkEMSegmentSpatialPriorsStep.h"
 
 #include "vtkEMSegmentGUI.h"
@@ -32,6 +16,10 @@ Author:    $Nicolas Rannou (BWH), Sylvain Jaume (MIT)$
 
 #include "vtkEMSegmentAnatomicalStructureStep.h"
 
+#if IBM_FLAG
+#include "IBM/vtkEMSegmentIBMSpatialPriorsStep.cxx"
+#endif
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentSpatialPriorsStep);
 vtkCxxRevisionMacro(vtkEMSegmentSpatialPriorsStep, "$Revision: 1.2 $");
@@ -39,16 +27,24 @@ vtkCxxRevisionMacro(vtkEMSegmentSpatialPriorsStep, "$Revision: 1.2 $");
 //----------------------------------------------------------------------------
 vtkEMSegmentSpatialPriorsStep::vtkEMSegmentSpatialPriorsStep()
 {
-  this->SetName("3/9. Assign Atlas");
-  this->SetDescription("Assign atlases for anatomical structures.");
+  this->SetName("3/9. Define Atlas");
+  this->SetDescription("Define probability maps and image scans of atlas.");
 
+  this->ImageFrame      = NULL;
+  this->SpatialPriorsFrame      = NULL;
   this->SpatialPriorsVolumeFrame      = NULL;
   this->SpatialPriorsVolumeMenuButton = NULL;
+
 }
 
 //----------------------------------------------------------------------------
 vtkEMSegmentSpatialPriorsStep::~vtkEMSegmentSpatialPriorsStep()
 {
+  if (this->ImageFrame) 
+    {
+      this->ImageFrame->Delete();
+      this->ImageFrame = NULL;
+    }
   if (this->SpatialPriorsVolumeMenuButton)
     {
     this->SpatialPriorsVolumeMenuButton->Delete();
@@ -60,7 +56,14 @@ vtkEMSegmentSpatialPriorsStep::~vtkEMSegmentSpatialPriorsStep()
     this->SpatialPriorsVolumeFrame->Delete();
     this->SpatialPriorsVolumeFrame = NULL;
     }
+  if (this->SpatialPriorsFrame)
+    {
+    this->SpatialPriorsFrame->Delete();
+    this->SpatialPriorsFrame = NULL;
+    }
 }
+
+#if !IBM_FLAG  
 
 //----------------------------------------------------------------------------
 void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
@@ -70,8 +73,7 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
   vtkKWWizardWidget *wizard_widget = this->GetGUI()->GetWizardWidget();
   wizard_widget->GetCancelButton()->SetEnabled(0);
 
-  vtkEMSegmentAnatomicalStructureStep *anat_step = 
-    this->GetGUI()->GetAnatomicalStructureStep();
+  vtkEMSegmentAnatomicalStructureStep *anat_step = this->GetGUI()->GetAnatomicalStructureStep();
   anat_step->ShowAnatomicalStructureTree();
 
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
@@ -93,7 +95,6 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
   anat_step->GetAnatomicalStructureTree()->GetWidget()->SetSelectionChangedCommand(
       this, "DisplaySelectedNodeSpatialPriorsCallback");
 
-  vtkKWWidget *parent = wizard_widget->GetClientArea();
   
   // Create the frame
 
@@ -103,13 +104,13 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
     }
   if (!this->SpatialPriorsVolumeFrame->IsCreated())
     {
-    this->SpatialPriorsVolumeFrame->SetParent(parent);
+    this->SpatialPriorsVolumeFrame->SetParent(wizard_widget->GetClientArea());
     this->SpatialPriorsVolumeFrame->Create();
-    this->SpatialPriorsVolumeFrame->SetLabelText("Probabilistic Atlas");
+    this->SpatialPriorsVolumeFrame->SetLabelText("Probability Map");
     }
 
   this->Script(
-    "pack %s -side top -anchor nw -fill x -padx 0 -pady 2", 
+    "pack %s -side bottom -anchor nw -fill x -padx 0 -pady 2", 
     this->SpatialPriorsVolumeFrame->GetWidgetName());
 
   // Create the spatial prior volume selector
@@ -136,10 +137,10 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
     "pack %s -side top -anchor nw -padx 2 -pady 2", 
     this->SpatialPriorsVolumeMenuButton->GetWidgetName());
 
-  // Update the UI with the proper value, if there is a selection
-
   this->DisplaySelectedNodeSpatialPriorsCallback();
 }
+
+#endif
 
 //----------------------------------------------------------------------------
 void vtkEMSegmentSpatialPriorsStep::DisplaySelectedNodeSpatialPriorsCallback()

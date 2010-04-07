@@ -181,6 +181,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     void ProcessAddTransformCommand();
     void ProcessSaveSceneAsCommand();
     void ProcessCloseSceneCommand();
+    void ProcessAddRulerCommand();
     void UpdateLayout();
     void CustomizeStatusBarLayout();
     
@@ -217,6 +218,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     virtual void PackTabbedSliceView ( );
     virtual void PackLightboxView ( );
     virtual void PackCompareView();
+    virtual void PackSideBySideCompareView();
     virtual void PackDual3DView();
     virtual void UnpackConventionalView ( );
     virtual void UnpackOneUp3DView ( );
@@ -226,6 +228,7 @@ class VTK_SLICER_BASE_GUI_EXPORT vtkSlicerApplicationGUI : public vtkSlicerCompo
     virtual void UnpackTabbedSliceView ( );
     virtual void UnpackLightboxView ( );
     virtual void UnpackCompareView();
+    virtual void UnpackSideBySideCompareView();
     virtual void UnpackDual3DView();
 
     /// 

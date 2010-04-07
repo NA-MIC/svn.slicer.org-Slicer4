@@ -130,7 +130,7 @@ endif()
 #
 
 set(base "${CMAKE_BINARY_DIR}/CMakeExternals")
-set_property(DIRECTORY PROPERTY EP_BASE ${base})
+#set_property(DIRECTORY PROPERTY EP_BASE ${base})
 
 set(prefix "${base}/Install")
 
@@ -204,9 +204,28 @@ if(Slicer3_USE_KWWIDGETS)
     set(tcl_SVN_REPOSITORY "http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/tcl")
     set(tcl_SOURCE_DIR tcl/tcl)
     set(tcl_BUILD_IN_SOURCE 1)
-    set(tcl_CONFIGURE_COMMAND ./unix/configure --prefix=${tcl_build})
-    set(tcl_BUILD_COMMAND make ${parallelism_level})
-    set(tcl_INSTALL_COMMAND make install)
+
+    # configure, make and make install all need to be executed in tcl/unix. External_Project
+    # doesn't provide any way to set the working directory for each step so we do so by
+    # configuring a script that has an execute_process command that has the correct working
+    # directory   
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcl_configure_step.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/tcl_configure_step.cmake
+      @ONLY)
+
+    set(tcl_CONFIGURE_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/tcl_configure_step.cmake)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcl_make_step.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/tcl_make_step.cmake
+      @ONLY)
+
+    set(tcl_BUILD_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/tcl_make_step.cmake)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcl_install_step.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/tcl_install_step.cmake
+      @ONLY)
+
+    set(tcl_INSTALL_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/tcl_install_step.cmake)
   endif()
 
   ExternalProject_Add(${proj}
@@ -218,6 +237,7 @@ if(Slicer3_USE_KWWIDGETS)
     BUILD_COMMAND ${tcl_BUILD_COMMAND}
     INSTALL_COMMAND ${tcl_INSTALL_COMMAND}
   )
+
 endif(Slicer3_USE_KWWIDGETS)
 
 #-----------------------------------------------------------------------------
@@ -235,18 +255,30 @@ if(Slicer3_USE_KWWIDGETS)
   if(WIN32)
     set(tk_SOURCE_DIR tcl/tk)
   elseif(APPLE)
-  # uncmd ./configure --with-tcl=./tcl-build/lib --prefix=./tcl-build --disable-corefoundation --x-libraries=/usr/X11R6/lib --x-includes=/usr/X11R6/include --with-x
     set(tk_SOURCE_DIR tcl/tk)
     set(tk_BUILD_IN_SOURCE 1)
-    set(tk_CONFIGURE_COMMAND ./unix/configure --with-tcl=${tcl_build}/lib --prefix=${tcl_build})
-    set(tk_BUILD_COMMAND make ${parallelism_level})
-    set(tk_INSTALL_COMMAND make install)
-  else()
-    set(tk_SOURCE_DIR tcl/tk)
-    set(tk_BUILD_IN_SOURCE 1)
-    set(tk_CONFIGURE_COMMAND ./unix/configure --with-tcl=${tcl_build}/lib --prefix=${tcl_build})
-    set(tk_BUILD_COMMAND make ${parallelism_level})
-    set(tk_INSTALL_COMMAND make install)
+
+    # configure, make and make install all need to be executed in tk/unix. External_Project
+    # doesn't provide any way to set the working directory for each step so we do so by
+    # configuring a script that has an execute_process command that has the correct working
+    # directory
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tk_configure_step.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/tk_configure_step.cmake
+      @ONLY)
+
+    set(tk_CONFIGURE_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/tk_configure_step.cmake)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tk_make_step.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/tk_make_step.cmake
+      @ONLY)
+
+    set(tk_BUILD_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/tk_make_step.cmake)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tk_install_step.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/tk_install_step.cmake
+      @ONLY)
+
+    set(tk_INSTALL_COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/tk_install_step.cmake)
   endif()
 
   ExternalProject_Add(${proj}
@@ -259,6 +291,18 @@ if(Slicer3_USE_KWWIDGETS)
     BUILD_COMMAND ${tk_BUILD_COMMAND}
     INSTALL_COMMAND ${tk_INSTALL_COMMAND}
   )
+
+  if(NOT WIN32)
+    ExternalProject_Add_Step(${proj} Install_default.h
+      COMMAND ${CMAKE_COMMAND} -E copy ${tcl_base}/tk/generic/default.h ${tcl_build}/include
+      DEPENDEES install
+    )
+
+    ExternalProject_Add_Step(${proj} Install_tkUnixDefault.h
+      COMMAND ${CMAKE_COMMAND} -E copy ${tcl_base}/tk/unix/tkUnixDefault.h ${tcl_build}/include
+      DEPENDEES install
+    )
+  endif(NOT WIN32)
 endif(Slicer3_USE_KWWIDGETS)
 
 #-----------------------------------------------------------------------------
@@ -272,7 +316,6 @@ if(Slicer3_USE_KWWIDGETS)
   set(itcl_INSTALL_COMMAND "")
   set(itcl_PATCH_COMMAND "")
 
-  #make build command call cmake -P on a cmake script that sets LD_LIBRARY_PATH
   if(WIN32)
   elseif(APPLE)
     set(itcl_BUILD_IN_SOURCE 1)
@@ -291,25 +334,12 @@ if(Slicer3_USE_KWWIDGETS)
     set(itcl_BUILD_COMMAND make)
     set(itcl_INSTALL_COMMAND make install)
     
-  #  if { $isDarwin } {
-  #          exec cp ../incrTcl/itcl/configure ../incrTcl/itcl/configure.orig
-  #          exec sed -e "s/\\*\\.c | \\*\\.o | \\*\\.obj) ;;/\\*\\.c | \\*\\.o | \\*\\.obj | \\*\\.dSYM | \\*\\.gnoc ) ;;/" ../incrTcl/itcl/configure.orig > ../incrTcl/itcl/configure 
-  #      }
-  #if { $isDarwin } {
-  #        # need to run ranlib separately on lib for Darwin
-  #        # file is created and ranlib is needed inside make all
-  #        catch "eval runcmd $::MAKE all"
-  #        if { [file exists ../incrTcl/itcl/libitclstub3.2.a] } {
-  #          runcmd ranlib ../incrTcl/itcl/libitclstub3.2.a
-  #        }
   else()
     set(itcl_BUILD_IN_SOURCE 1)
     set(itcl_CONFIGURE_COMMAND sh configure --with-tcl=${tcl_build}/lib --with-tk=${tcl_build}/lib --prefix=${tcl_build})
     set(itcl_BUILD_COMMAND make ${parallelism_level} all)
     set(itcl_INSTALL_COMMAND make install)
   endif()
-
-  #exec chmod +x ../incrTcl/configure
 
   ExternalProject_Add(${proj}
     DEPENDS tk
@@ -322,43 +352,13 @@ if(Slicer3_USE_KWWIDGETS)
     INSTALL_COMMAND ${itcl_INSTALL_COMMAND}
   )
 
-
-#  ExternalProject_Add_Step(${proj} Restore_itcl_configure
-#    COMMAND ${CMAKE_COMMAND} -E copy ${tcl_base}/incrTcl/itcl/configure.orig ${tcl_base}/incrTcl/itcl/configure
-#    DEPENDEES configure
-#    DEPENDERS build
-#    )
-
-#ExternalProject_Add_Step(${proj} Sed_itcl_configure
-#    COMMAND sed -f ${CMAKE_CURRENT_SOURCE_DIR}/itcl_sed.txt ${tcl_base}/incrTcl/itcl/configure.orig > ${tcl_base}/incrTcl/itcl/configure
-#    DEPENDEES Backup_itcl_configure
-#    DEPENDERS configure
-#    )
-
-#ExternalProject_Add_Step(${proj} Backup_itcl_configure
-#    COMMAND  ${CMAKE_COMMAND} -E copy ${tcl_base}/incrTcl/itcl/configure ${tcl_base}/incrTcl/itcl/configure.orig
-#    DEPENDEES CHMOD_incrTcl_configure
-#    DEPENDERS Sed_itcl_configure
-#    )
-
-#ExternalProject_Add_Step(${proj} CHMOD_incrTcl_configure
-#    COMMAND chmod +x ${tcl_base}/incrTcl/configure
-#    DEPENDEES update
-#    DEPENDERS Backup_itcl_configure
-#    )
-
-ExternalProject_Add_Step(${proj} CHMOD_incrTcl_configure
-    COMMAND chmod +x ${tcl_base}/incrTcl/configure
-    DEPENDEES update
-    DEPENDERS configure
+  if(NOT WIN32)
+    ExternalProject_Add_Step(${proj} CHMOD_incrTcl_configure
+      COMMAND chmod +x ${tcl_base}/incrTcl/configure
+      DEPENDEES update
+      DEPENDERS configure
     )
-
-#ExternalProject_Add_Step(${proj} Patch_itcl_configure
-#  COMMAND ${itcl_PATCH_COMMAND}
-#  ALWAYS 1
-#  DEPENDEES CHMOD_incrTcl_configure
-#  DEPENDERS configure
-#  )
+  endif(NOT WIN32)
 
 endif(Slicer3_USE_KWWIDGETS)
 
@@ -396,31 +396,46 @@ if(Slicer3_USE_KWWIDGETS)
   set(proj blt)
 
   set(blt_SVN "http://svn.slicer.org/Slicer3-lib-mirrors/trunk/tcl/blt")
+  set(blt_CVS ":pserver:anonymous@blt.cvs.sourceforge.net:/cvsroot/blt")
+  #set(blt_CVS_TAG "
   set(blt_BUILD_IN_SOURCE 0)
   set(blt_CONFIGURE "")
   set(blt_BUILD "")
   set(blt_INSTALL "")
+  set(blt_PATCH "")
 
   if(WIN32)
   elseif(APPLE)
     set(blt_BUILD_IN_SOURCE 1)
-    set(blt_CONFIGURE sh configure --with-tcl=${tcl_build}/lib --with-tk=${tcl_build}/lib --prefix=${tcl_build})
-    set(blt_BUILD make ${parallelism_level})
-    set(blt_INSTAL make install)
-  #if { ![file exists $Slicer3_LIB/tcl/isPatchedBLT] } { 
-  #              puts "Patching..." 
-  #              runcmd curl -k -O https://share.spl.harvard.edu/share/birn/public/software/External/Patches/bltpatch 
-  #              cd $Slicer3_LIB/tcl/blt 
-  #              runcmd patch -p2 < ../bltpatch 
 
-                # create a file to make sure BLT isn't patched twice 
-  #              runcmd touch $Slicer3_LIB/tcl/isPatchedBLT 
-  #              file delete $Slicer3_LIB/tcl/bltpatch 
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/blt_download_tcl84_patch.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/blt_download_tcl84_patch.cmake
+      @ONLY)
+
+#  --with-blt=DIR          Install BLT scripts in DIR
+#  --with-tcl=DIR          Find tclConfig.sh in DIR
+#  --with-tk=DIR           Find tkConfig.sh in DIR
+#  --with-tclincls=DIR     Find tcl.h in DIR
+#  --with-tkincls=DIR      Find tk.h in DIR
+#  --with-tcllibs=DIR      Find Tcl library in DIR
+#  --with-tklibs=DIR       Find Tk library in DIR
+
+
+    #set(blt_PATCH patch -p2 -t -N < ${CMAKE_CURRENT_SOURCE_DIR}/../Utilities/Patches/BLT/blt_darwin_tcl84_patch.txt)
+    set(blt_PATCH patch -p2 -t -N < ${tcl_base}/blt/bltpatch)
+    set(blt_CONFIGURE sh configure --with-tcl=${tcl_base}/tcl/unix --with-tk=${tcl_build} --prefix=${tcl_build} --enable-shared --x-includes=/usr/X11R6/include --x-libraries=/usr/X11R6/lib --with-cflags=-fno-common)
+    set(blt_BUILD make)
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/blt_install_step.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/blt_install_step.cmake
+      @ONLY)
+
+    set(blt_INSTALL ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/blt_install_step.cmake)
   else()
     set(blt_BUILD_IN_SOURCE 1)
     set(blt_CONFIGURE sh configure --with-tcl=${tcl_build}/lib --with-tk=${tcl_build}/lib --prefix=${tcl_build})
-    set(blt_BUILD make ${parallelism_level})
-    set(blt_INSTAL make install)
+    set(blt_BUILD make)
+    set(blt_INSTALL make install)
   endif()
 
   ExternalProject_Add(${proj}
@@ -428,10 +443,21 @@ if(Slicer3_USE_KWWIDGETS)
     SVN_REPOSITORY ${blt_SVN}
     SOURCE_DIR tcl/blt
     BUILD_IN_SOURCE ${blt_BUILD_IN_SOURCE}
+    PATCH_COMMAND ${blt_PATCH}
     CONFIGURE_COMMAND ${blt_CONFIGURE}
     BUILD_COMMAND ${blt_BUILD}
-    INSTALL_COMMAND ${btl_INSTALL}
+    INSTALL_COMMAND ${blt_INSTALL}
   )
+
+  if(APPLE)
+    ExternalProject_Add_Step(${proj} Download_blt_patch
+      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/blt_download_tcl84_patch.cmake
+      WORKING_DIRECTORY ${tcl_base}/blt
+      DEPENDEES update
+      DEPENDERS patch
+    )
+  endif(APPLE)
+
 endif(Slicer3_USE_KWWIDGETS)
 
 #-----------------------------------------------------------------------------
@@ -796,7 +822,7 @@ set(proj VTK)
 if(Slicer3_USE_VTK_CVSHEAD)
   set(vtk_tag -dAP)
 else()
-  set(vtk_tag -r VTK-5-4)
+  set(vtk_tag -r VTK-5-6)
 endif()
 
 set(vtk_module VTK)

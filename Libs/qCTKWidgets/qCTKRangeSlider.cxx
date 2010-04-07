@@ -177,10 +177,10 @@ int qCTKRangeSlider::minimumValue() const
 }
 
 // --------------------------------------------------------------------------
-void qCTKRangeSlider::setMinimumValue( int rm )
+void qCTKRangeSlider::setMinimumValue( int min )
 {
   QCTK_D(qCTKRangeSlider);
-  this->setValues( rm, d->m_MaximumValue );
+  this->setValues( min, qMax(d->m_MaximumValue,min) );
 }
 
 // --------------------------------------------------------------------------
@@ -191,10 +191,10 @@ int qCTKRangeSlider::maximumValue() const
 }
 
 // --------------------------------------------------------------------------
-void qCTKRangeSlider::setMaximumValue( int rm )
+void qCTKRangeSlider::setMaximumValue( int max )
 {
   QCTK_D(qCTKRangeSlider);
-  this->setValues( d->m_MinimumValue, rm );
+  this->setValues( qMin(d->m_MinimumValue, max), max );
 }
 
 // --------------------------------------------------------------------------
@@ -212,9 +212,9 @@ void qCTKRangeSlider::setValues(int l, int u)
   d->m_MaximumValue = maximumValue;
   
   bool emitMinPosChanged = 
-    (minimumValue == d->m_MinimumPosition);
+    (minimumValue != d->m_MinimumPosition);
   bool emitMaxPosChanged = 
-    (maximumValue == d->m_MaximumPosition);
+    (maximumValue != d->m_MaximumPosition);
   d->m_MinimumPosition = minimumValue;
   d->m_MaximumPosition = maximumValue;
   
@@ -271,14 +271,14 @@ int qCTKRangeSlider::maximumPosition() const
 void qCTKRangeSlider::setMinimumPosition(int l)
 {
   QCTK_D(const qCTKRangeSlider);
-  this->setPositions(l, d->m_MaximumPosition);
+  this->setPositions(l, qMax(l, d->m_MaximumPosition));
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeSlider::setMaximumPosition(int u)
 {
   QCTK_D(const qCTKRangeSlider);
-  this->setPositions(d->m_MinimumPosition, u);
+  this->setPositions(qMin(d->m_MinimumPosition, u), u);
 }
 
 // --------------------------------------------------------------------------
@@ -290,9 +290,9 @@ void qCTKRangeSlider::setPositions(int min, int max)
   const int maxPosition = 
     qBound(this->minimum(), qMax(min, max), this->maximum());
 
-  bool emitMinPosChanged = (minPosition == d->m_MinimumPosition);
-  bool emitMaxPosChanged = (maxPosition == d->m_MaximumPosition);
-
+  bool emitMinPosChanged = (minPosition != d->m_MinimumPosition);
+  bool emitMaxPosChanged = (maxPosition != d->m_MaximumPosition);
+  
   if (!emitMinPosChanged && !emitMaxPosChanged)
     {
     return;
