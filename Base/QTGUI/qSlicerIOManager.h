@@ -31,6 +31,7 @@ public:
   bool openLoadSceneDialog();
   bool openImportSceneDialog();
   bool openLoadVolumeDialog();
+  inline bool openDataDialog();
 
   bool openDialog(qSlicerIO::IOFileType fileType,
                   const qSlicerIO::IOProperties& readerProperties
@@ -43,9 +44,8 @@ public:
   const QList<QUrl>& favorites()const;
 
   ///
-  /// Takes ownership and delete the dialog 
-  /// when not needed anymore, it overrides the previously set dialog
-  /// corresponding to the same fileType (only 1 dialog per filetype).
+  /// Takes ownership. Any previously set dialog corresponding to the same
+  /// fileType (only 1 dialog per filetype) is overriden.
   void registerDialog(qSlicerFileDialog* dialog);
 
 protected:
@@ -55,5 +55,10 @@ private:
   QCTK_DECLARE_PRIVATE(qSlicerIOManager);
 };
 
+//------------------------------------------------------------------------------
+bool qSlicerIOManager::openDataDialog()
+{
+  return this->openDialog(qSlicerIO::NoFile);
+}
 
 #endif

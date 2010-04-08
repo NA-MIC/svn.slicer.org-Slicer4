@@ -589,7 +589,11 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessAddDataCommand()
 {
+#ifdef Slicer3_USE_QT
+  qSlicerApplication::application()->ioManager()->openDataDialog();
+#else
   this->GetApplication()->Script("::Loader::ShowDialog");
+#endif
 }
 
 //---------------------------------------------------------------------------

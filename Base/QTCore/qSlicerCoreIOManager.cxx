@@ -91,7 +91,6 @@ vtkMRMLScene* qSlicerCoreIOManagerPrivate::currentScene()const
   return qSlicerCoreApplication::application()->mrmlScene();
 }
 
-
 //-----------------------------------------------------------------------------
 qSlicerCoreIOManager::qSlicerCoreIOManager(QObject* _parent)
   :QObject(_parent)
@@ -107,6 +106,35 @@ qSlicerCoreIOManager::qSlicerCoreIOManager(QObject* _parent)
 //-----------------------------------------------------------------------------
 qSlicerCoreIOManager::~qSlicerCoreIOManager()
 {
+}
+
+//-----------------------------------------------------------------------------
+qSlicerIO::IOFileType qSlicerCoreIOManager::fileType(const QString& fileName)const
+{
+  QCTK_D(const qSlicerCoreIOManager);
+  foreach(qSlicerIO* reader, d->Readers)
+    {
+    if (reader->canLoadFile(fileName))
+      {
+      return reader->fileType();
+      }
+    }
+  return qSlicerIO::NoFile;
+}
+
+//-----------------------------------------------------------------------------
+QString qSlicerCoreIOManager::fileDescription(const QString& fileName)const
+{
+  QCTK_D(const qSlicerCoreIOManager);
+  foreach(qSlicerIO* reader, d->Readers)
+    {
+    if (reader->canLoadFile(fileName) && 
+        reader->extensions() != "*.*")
+      {
+      return reader->description();
+      }
+    }
+  return tr("Unknown");
 }
 
 //-----------------------------------------------------------------------------
@@ -232,6 +260,7 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
       {
       continue;
       }
+    qDebug() << "reader has read the file" << parameters["fileName"].toString();
     nodes << reader->loadedNodes();
     break;
     }

@@ -48,10 +48,12 @@ public:
 
   bool loadFile(const qSlicerIO::IOProperties& parameters);
   */
+  qSlicerIO::IOFileType fileType(const QString& file)const;
+  QString fileDescription(const QString& file)const;
   
   ///
   /// attributes are typically: 
-  /// All: fileType, fileName[s] 
+  /// All: fileName[s] 
   /// Volume: LabelMap:bool, Center:bool, fileNames:QList<QString>...
   bool loadNodes(qSlicerIO::IOFileType fileType, 
                  const qSlicerIO::IOProperties& parameters, 

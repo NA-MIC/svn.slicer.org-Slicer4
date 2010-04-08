@@ -10,6 +10,7 @@
 /// qSlicer includes
 #include "qSlicerIOManager.h"
 #include "qSlicerFileDialog.h"
+#include "qSlicerDataDialog.h"
 
 /// MRML includes
 #include <vtkMRMLScene.h>
@@ -31,6 +32,7 @@ void qSlicerIOManagerPrivate::init()
   QCTK_P(qSlicerIOManager);
   this->Favorites << QUrl::fromLocalFile(QDir::homePath());
   p->registerDialog(new qSlicerStandardFileDialog(p));
+  p->registerDialog(new qSlicerDataDialog(p));
 }
 
 //-----------------------------------------------------------------------------

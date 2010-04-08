@@ -22,6 +22,8 @@ SET(slicer_qtbase_SRCS
   qSlicerApplication.h
   qSlicerCommandOptions.cxx
   qSlicerCommandOptions.h
+  qSlicerDataDialog.cxx
+  qSlicerDataDialog.h
   qSlicerFileDialog.cxx
   qSlicerFileDialog.h
   qSlicerIOManager.cxx
@@ -36,6 +38,8 @@ SET(slicer_qtbase_SRCS
 SET(slicer_qtbase_MOC_SRCS
   qSlicerAbstractModulePanel.h
   qSlicerApplication.h
+  qSlicerDataDialog.h
+  qSlicerDataDialog_p.h
   qSlicerFileDialog.h
   qSlicerIOManager.h
   qSlicerModulePanel.h
@@ -45,8 +49,9 @@ SET(slicer_qtbase_MOC_SRCS
 
 # UI files
 SET(slicer_qtbase_UI_SRCS
-  Resources/UI/qSlicerModuleSelectorWidget.ui
+  Resources/UI/qSlicerDataDialog.ui
   Resources/UI/qSlicerModulePanel.ui
+  Resources/UI/qSlicerModuleSelectorWidget.ui
 )
 
 # Additional Target libraries (QT libs already included)
