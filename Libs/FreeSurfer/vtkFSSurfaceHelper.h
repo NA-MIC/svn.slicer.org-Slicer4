@@ -19,9 +19,10 @@
 #define __vtkFSSurfaceHelper_h
 
 #include <vtkObject.h>
+#include "vtkFreeSurferWin32Header.h"
 class vtkMatrix4x4;
 
-class vtkFSSurfaceHelper: public vtkObject
+class VTK_FreeSurfer_EXPORT vtkFSSurfaceHelper: public vtkObject
 {
 public:
   static vtkFSSurfaceHelper* New();
