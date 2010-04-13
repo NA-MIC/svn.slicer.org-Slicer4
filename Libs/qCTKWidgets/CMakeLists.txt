@@ -56,6 +56,10 @@ SET(qCTKWidgets_SRCS
   qCTKAddRemoveComboBox.h
   qCTKButtonGroup.cxx
   qCTKButtonGroup.h
+  qCTKCheckableHeaderView.cxx
+  qCTKCheckableHeaderView.h
+  qCTKCheckBoxPixmaps.cxx
+  qCTKCheckBoxPixmaps.h
   qCTKCollapsibleButton.cxx
   qCTKCollapsibleButton.h
   qCTKCollapsibleGroupBox.cxx
@@ -111,6 +115,8 @@ ENDIF()
 SET(qCTKWidgets_MOC_SRCS
   qCTKAddRemoveComboBox.h
   qCTKButtonGroup.h
+  qCTKCheckableHeaderView.h
+  qCTKCheckBoxPixmaps.h
   qCTKCollapsibleButton.h
   qCTKCollapsibleGroupBox.h
   qCTKColorPickerButton.h
