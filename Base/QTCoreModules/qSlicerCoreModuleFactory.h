@@ -35,6 +35,12 @@ public:
 
   virtual void registerItems();
 
+  /// Extract module name given a core module classname
+  /// For example: 
+  ///  qSlicerCamerasModule -> cameras
+  ///  qSlicerTransformsModule -> transforms
+  static QString extractModuleName(const QString& className);
+
 private:
   QCTK_DECLARE_PRIVATE(qSlicerCoreModuleFactory);
 };

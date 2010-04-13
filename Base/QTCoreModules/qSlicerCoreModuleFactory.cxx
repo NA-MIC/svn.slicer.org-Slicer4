@@ -10,9 +10,8 @@
 
 =========================================================================auto=*/
 
-#include "qSlicerCoreModuleFactory.h"
-
 // SlicerQT/CoreModules
+#include "qSlicerCoreModuleFactory.h"
 #include "qSlicerTransformsModule.h"
 #include "qSlicerCamerasModule.h"
 // FIXME:Move the following to the Models module (when it will be ready in Qt.)
@@ -35,6 +34,26 @@ public:
 };
 
 //-----------------------------------------------------------------------------
+// qSlicerModuleFactoryPrivate methods
+
+//-----------------------------------------------------------------------------
+template<typename ClassType>
+void qSlicerCoreModuleFactoryPrivate::registerCoreModule()
+{
+  QCTK_P(qSlicerCoreModuleFactory);
+  
+  QString _moduleName;
+  if (!p->registerQObject<ClassType>(_moduleName))
+    {
+    qDebug() << "Failed to register module: " << _moduleName; 
+    return;
+    }
+}
+
+//-----------------------------------------------------------------------------
+// qSlicerCoreModuleFactory methods
+
+//-----------------------------------------------------------------------------
 qSlicerCoreModuleFactory::qSlicerCoreModuleFactory():Superclass()
 {
   QCTK_INIT_PRIVATE(qSlicerCoreModuleFactory);
@@ -55,18 +74,22 @@ void qSlicerCoreModuleFactory::registerItems()
 }
 
 //-----------------------------------------------------------------------------
-// qSlicerModuleFactoryPrivate methods
-
-//-----------------------------------------------------------------------------
-template<typename ClassType>
-void qSlicerCoreModuleFactoryPrivate::registerCoreModule()
+QString qSlicerCoreModuleFactory::extractModuleName(const QString& className)
 {
-  QCTK_P(qSlicerCoreModuleFactory);
+  QString moduleName = className;
   
-  QString _moduleName;
-  if (!p->registerQObject<ClassType>(_moduleName))
+  // Remove prefix 'qSlicer' if needed
+  if (moduleName.indexOf("qSlicer") == 0)
     {
-    qDebug() << "Failed to register module: " << _moduleName; 
-    return;
+    moduleName.remove(0, 7);
     }
+
+  // Remove suffix 'Module' if needed
+  int index = moduleName.lastIndexOf("Module");
+  if (index == (moduleName.size() - 6))
+    {
+    moduleName.remove(index, 6);
+    }
+
+  return moduleName.toLower();
 }
