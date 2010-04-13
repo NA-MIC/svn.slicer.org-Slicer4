@@ -15,20 +15,16 @@ REMOVE (TestsToRun ${KIT}CxxTests.cxx)
 SET(LIBRARY_NAME ${PROJECT_NAME})
 
 ADD_EXECUTABLE(${KIT}CxxTests ${Tests})
-TARGET_LINK_LIBRARIES(${KIT}CxxTests 
-  ${lib_name} 
-  qSlicerBaseQTBase  # FIXME: This shouldn't be necessary: there is a library dependency problem
-  qSlicerBaseQTCore  # FIXME: This shouldn't be necessary: there is a library dependency problem
-  )
+TARGET_LINK_LIBRARIES(${KIT}CxxTests ${PROJECT_NAME})
 
-SET( QTCoreModules_TESTS ${CXX_TEST_PATH}/${KIT}CxxTests)
+SET( KIT_TESTS ${CXX_TEST_PATH}/${KIT}CxxTests)
 
 IF(WIN32)
-  SET(QTCoreModules_TESTS ${CXX_TEST_PATH}/${CMAKE_BUILD_TYPE}/${KIT}CxxTests)
+  SET(KIT_TESTS ${CXX_TEST_PATH}/${CMAKE_BUILD_TYPE}/${KIT}CxxTests)
 ENDIF(WIN32)
 
 MACRO( SIMPLE_TEST  TESTNAME )
-  ADD_TEST( ${TESTNAME} ${LAUNCH_EXE} ${QTCoreModules_TESTS} ${TESTNAME} 
+  ADD_TEST( ${TESTNAME} ${LAUNCH_EXE} ${KIT_TESTS} ${TESTNAME} 
     ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/SlicerQT
     )
 ENDMACRO( SIMPLE_TEST  )
