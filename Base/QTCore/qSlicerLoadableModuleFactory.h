@@ -36,6 +36,13 @@ public:
 
   virtual void registerItems();
 
+  /// Extract module name given a library name
+  /// For example:
+  ///  on linux, libThresholdLib.so -> threshold
+  ///  on mac, libThresholdLib.{dylib, bundle, so} -> threshold
+  ///  on windows, ThresholdLib.dll -> threshold
+  static QString extractModuleName(const QString& libraryName);
+
 
 private:
   QCTK_DECLARE_PRIVATE(qSlicerLoadableModuleFactory);

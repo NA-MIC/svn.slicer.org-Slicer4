@@ -32,11 +32,56 @@ public:
   qSlicerLoadableModuleFactoryPrivate()
     {
     }
-
+  
   ///
   /// Return a list of module paths
   QStringList modulePaths() const;
 };
+
+//-----------------------------------------------------------------------------
+// qSlicerLoadableModuleFactoryPrivate Methods
+
+//-----------------------------------------------------------------------------
+QStringList qSlicerLoadableModuleFactoryPrivate::modulePaths() const
+{
+  qSlicerCoreApplication* app = qSlicerCoreApplication::application();
+  Q_ASSERT(app);
+
+  // slicerHome shouldn't be empty
+  Q_ASSERT(!app->slicerHome().isEmpty());
+  
+  // On Win32, *both* paths have to be there, since scripts are installed
+  // in the install location, and exec/libs are *automatically* installed
+  // in intDir.
+  QStringList defaultQTModulePaths;
+  defaultQTModulePaths << app->slicerHome() + "/"
+                                             + Slicer3_INSTALL_QTLOADABLEMODULES_LIB_DIR;
+
+   if (!app->intDir().isEmpty())
+     {
+     defaultQTModulePaths << app->slicerHome() + "/" + Slicer3_INSTALL_QTLOADABLEMODULES_LIB_DIR + "/" + app->intDir();
+     }
+
+  // add the default modules directory (based on the slicer
+  // installation or build tree) to the user paths
+  QStringList qtModulePaths = /*userModulePaths + PathSep + */defaultQTModulePaths;
+  foreach(const QString& path, qtModulePaths)
+    {
+    app->addLibraryPath(path);
+    }
+
+//   foreach (QString path, app->libraryPaths())
+//     {
+//     qDebug() << "libraryPath:" << path;
+//     }
+
+  //qDebug() << "qtModulePaths:" << qtModulePaths;
+  
+  return qtModulePaths; 
+}
+
+//-----------------------------------------------------------------------------
+// qSlicerLoadableModuleFactory Methods
 
 //-----------------------------------------------------------------------------
 qSlicerLoadableModuleFactory::qSlicerLoadableModuleFactory():Superclass()
@@ -93,43 +138,25 @@ void qSlicerLoadableModuleFactory::registerItems()
 }
 
 //-----------------------------------------------------------------------------
-// qSlicerLoadableModuleFactoryPrivate Methods
-
-//-----------------------------------------------------------------------------
-QStringList qSlicerLoadableModuleFactoryPrivate::modulePaths() const
+QString qSlicerLoadableModuleFactory::extractModuleName(const QString& libraryName)
 {
-  qSlicerCoreApplication* app = qSlicerCoreApplication::application();
-  Q_ASSERT(app);
-
-  // slicerHome shouldn't be empty
-  Q_ASSERT(!app->slicerHome().isEmpty());
+  QString moduleName = libraryName;
   
-  // On Win32, *both* paths have to be there, since scripts are installed
-  // in the install location, and exec/libs are *automatically* installed
-  // in intDir.
-  QStringList defaultQTModulePaths;
-  defaultQTModulePaths << app->slicerHome() + "/"
-                                             + Slicer3_INSTALL_QTLOADABLEMODULES_LIB_DIR;
-
-   if (!app->intDir().isEmpty())
-     {
-     defaultQTModulePaths << app->slicerHome() + "/" + Slicer3_INSTALL_QTLOADABLEMODULES_LIB_DIR + "/" + app->intDir();
-     }
-
-  // add the default modules directory (based on the slicer
-  // installation or build tree) to the user paths
-  QStringList qtModulePaths = /*userModulePaths + PathSep + */defaultQTModulePaths;
-  foreach(const QString& path, qtModulePaths)
+  // Truncate string before first dot "."
+  moduleName.truncate(moduleName.indexOf("."));
+  
+  // Remove prefix 'lib' if needed
+  if (moduleName.indexOf("lib") == 0)
     {
-    app->addLibraryPath(path);
+    moduleName.remove(0, 3);
     }
 
-//   foreach (QString path, app->libraryPaths())
-//     {
-//     qDebug() << "libraryPath:" << path;
-//     }
+  // Remove suffix 'Lib' if needed
+  int index = moduleName.lastIndexOf("Lib");
+  if (index == (moduleName.size() - 3))
+    {
+    moduleName.remove(index, 3);
+    }
 
-  //qDebug() << "qtModulePaths:" << qtModulePaths;
-  
-  return qtModulePaths; 
+  return moduleName.toLower();
 }
