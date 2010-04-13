@@ -66,3 +66,27 @@ QString qSlicerUtils::executableExtension()
   return QString();
 #endif
 }
+
+//-----------------------------------------------------------------------------
+QString qSlicerUtils::extractModuleNameFromLibraryName(const QString& libraryName)
+{
+  QString moduleName = libraryName;
+  
+  // Truncate string before first dot "."
+  moduleName.truncate(moduleName.indexOf("."));
+  
+  // Remove prefix 'lib' if needed
+  if (moduleName.indexOf("lib") == 0)
+    {
+    moduleName.remove(0, 3);
+    }
+
+  // Remove suffix 'Lib' if needed
+  int index = moduleName.lastIndexOf("Lib");
+  if (index == (moduleName.size() - 3))
+    {
+    moduleName.remove(index, 3);
+    }
+
+  return moduleName.toLower();
+}
