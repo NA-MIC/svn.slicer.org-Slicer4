@@ -19,7 +19,7 @@
 // QT includes
 #include <QApplication>
 
-// STL includes
+// STD includes
 #include <stdlib.h>
 #include <iostream>
 

@@ -22,7 +22,7 @@
 /// QT includes
 #include <QStringList>
 
-/// STL includes
+/// STD includes
 #include <vector>
 #include <string>
 

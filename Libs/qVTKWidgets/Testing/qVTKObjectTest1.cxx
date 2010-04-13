@@ -6,7 +6,7 @@
 
 // 
 
-// std includes
+// STD includes
 #include <stdlib.h>
 #include <iostream>
 

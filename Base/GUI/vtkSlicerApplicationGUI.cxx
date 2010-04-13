@@ -98,7 +98,7 @@
 #include "slicerPython.h"
 #endif
 
-// STL includes
+// STD includes
 #include <sstream>
 #include <string>
 

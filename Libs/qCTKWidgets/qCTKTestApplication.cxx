@@ -39,7 +39,7 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 
-// STL includes
+// STD includes
 #include <iostream>
 
 int qCTKTestApplication::Error = 0;

@@ -65,7 +65,7 @@ Version:   $Revision: 1.2 $
 // for scalar overlays
 #include "vtkMRMLProceduralColorNode.h"
 
-// STL includes
+// STD includes
 #include <string>
 #include <iostream>
 #include <sstream>

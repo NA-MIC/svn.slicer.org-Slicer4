@@ -31,7 +31,7 @@ Version:   $Revision: 1.2 $
 #include <vtksys/SystemTools.hxx>
 #include <vtksys/Directory.hxx>
 
-// STL includes
+// STD includes
 #include <string>
 #include <iostream>
 #include <sstream>

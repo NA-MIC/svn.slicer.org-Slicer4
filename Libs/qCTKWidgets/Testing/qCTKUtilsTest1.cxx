@@ -18,7 +18,7 @@
 // QT includes
 #include <QStringList>
 
-// STL includes
+// STD includes
 #include <stdlib.h>
 #include <iostream>
 #include <string>

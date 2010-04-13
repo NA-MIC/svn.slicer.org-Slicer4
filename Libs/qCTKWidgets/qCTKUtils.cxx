@@ -14,7 +14,7 @@
 
 #include "qCTKUtils.h"
 
-// STL includes
+// STD includes
 #include <algorithm>
 
 //------------------------------------------------------------------------------

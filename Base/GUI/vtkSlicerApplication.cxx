@@ -71,7 +71,7 @@
 #include "vtkMRMLScene.h"
 #include "vtkMRMLLayoutNode.h"
 
-// STL includes
+// STD includes
 #include <sstream>
 #include <queue>
 #include <algorithm>
