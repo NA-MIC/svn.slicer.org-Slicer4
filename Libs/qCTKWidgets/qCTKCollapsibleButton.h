@@ -15,13 +15,12 @@
 #ifndef __qCTKCollapsibleButton_h
 #define __qCTKCollapsibleButton_h
 
-/// qCTK includes
-#include "qCTKPimpl.h"
-
 /// QT includes
 #include <QAbstractButton>
 #include <QFrame>
 
+/// qCTK includes
+#include "qCTKPimpl.h"
 #include "qCTKWidgetsExport.h"
 
 class qCTKCollapsibleButtonPrivate;
