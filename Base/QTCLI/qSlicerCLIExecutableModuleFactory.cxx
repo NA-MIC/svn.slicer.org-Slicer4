@@ -65,3 +65,18 @@ void qSlicerCLIExecutableModuleFactory::registerItems()
 {
   
 }
+
+//-----------------------------------------------------------------------------
+QString qSlicerCLIExecutableModuleFactory::extractModuleName(const QString& executableName)
+{
+  QString moduleName = executableName;
+
+  // Remove extension if needed
+  int index = moduleName.indexOf(".");
+  if (index > 0)
+    {
+    moduleName.truncate(index);
+    }
+
+  return moduleName.toLower();
+}

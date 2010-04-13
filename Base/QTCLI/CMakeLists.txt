@@ -28,6 +28,8 @@ SET(slicer_qtbase_SRCS
   qSlicerCLIModule.h
   qSlicerCLIModuleFactoryHelper.cxx
   qSlicerCLIModuleFactoryHelper.h
+  qSlicerCLIModuleUIHelper.cxx
+  qSlicerCLIModuleUIHelper.h
   qSlicerCLIModuleWidget.cxx
   qSlicerCLIModuleWidget.h
   qSlicerCLIModuleWidget_p.h
@@ -71,7 +73,10 @@ Slicer3_build_slicer_qtbase_library(
   RESOURCES ${qt_module_resources}
   )
 
-# --------------------------------------------------------------------------
-# Subdirectories
-#
+# Plugin
 #ADD_SUBDIRECTORY(Plugins)
+
+# Testing
+IF(BUILD_TESTING)
+  ADD_SUBDIRECTORY(Testing)
+ENDIF(BUILD_TESTING)

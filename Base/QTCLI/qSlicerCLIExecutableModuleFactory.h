@@ -57,6 +57,11 @@ public:
 
   virtual void registerItems();
 
+  /// Extract module name given an executable name
+  /// For example: 
+  ///  Threshold.exe -> threshold
+  ///  Threshold -> threshold
+  static QString extractModuleName(const QString& executableName);
 
 private:
   QCTK_DECLARE_PRIVATE(qSlicerCLIExecutableModuleFactory);

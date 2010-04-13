@@ -111,8 +111,10 @@ Slicer3_build_slicer_qtbase_library(
   RESOURCES ${qt_module_resources}
   )
 
-# Sub directories
+# Plugins
 #ADD_SUBDIRECTORY(Plugins)
+
+# Testing
 IF(BUILD_TESTING)
   ADD_SUBDIRECTORY(Testing)
 ENDIF(BUILD_TESTING)
