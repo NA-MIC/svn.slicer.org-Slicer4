@@ -6,6 +6,7 @@
 #include <QUrl>
 
 /// qCTK includes
+#include <qCTKCheckableHeaderView.h>
 
 /// qSlicer includes
 #include "qSlicerApplication.h"
@@ -18,12 +19,28 @@ qSlicerDataDialogPrivate::qSlicerDataDialogPrivate(QWidget* _parent)
   :QDialog(_parent)
 {
   this->setupUi(this);
+  // checkable headers.
+  this->FileWidget->model()->setHeaderData(FileColumn, Qt::Horizontal, Qt::Unchecked, Qt::CheckStateRole);
+  QHeaderView* previousHeaderView = this->FileWidget->horizontalHeader();
+  qCTKCheckableHeaderView* headerView = new qCTKCheckableHeaderView(Qt::Horizontal, this->FileWidget);
+  headerView->setClickable(previousHeaderView->isClickable());
+  headerView->setMovable(previousHeaderView->isMovable());
+  headerView->setHighlightSections(previousHeaderView->highlightSections());
+  //headerView->setModel(previousHeaderView->model());
+  //headerView->setSelectionModel(previousHeaderView->selectionModel());
+  headerView->setPropagateToItems(true);
+  this->FileWidget->setHorizontalHeader(headerView);
+  /*
+  connect(this->FileWidget->model(), SIGNAL(headerDataChanged(Qt::Orientation, int, int)),
+          this, SLOT(updateCheckBoxes(Qt::Orientation, int, int)));
+  connect(this->FileWidget, SIGNAL(cellChanged(int,int)),
+          this, SLOT(updateCheckBoxHeader(int,int)));
+  */
   
   connect(this->AddDirectoryButton, SIGNAL(clicked()), this, SLOT(addDirectory()));
   connect(this->AddFilesButton, SIGNAL(clicked()), this, SLOT(addFiles()));
   QPushButton* resetButton = this->ButtonBox->button(QDialogButtonBox::Reset);
   connect(resetButton, SIGNAL(clicked()), this, SLOT(reset()));
-
 }
 
 //-----------------------------------------------------------------------------
@@ -35,6 +52,10 @@ qSlicerDataDialogPrivate::~qSlicerDataDialogPrivate()
 void qSlicerDataDialogPrivate::addDirectory()
 {
   QString directory = QFileDialog::getExistingDirectory(this);
+  if (directory.isNull())
+    {
+    return;
+    }
   this->addDirectory(directory);
 }
 
@@ -90,17 +111,21 @@ void qSlicerDataDialogPrivate::addFile(const QFileInfo& file)
     {
     return;
     }
-  qDebug() << "file Type: " << fileDescription;
+
+  bool sortingEnabled = this->FileWidget->isSortingEnabled();
+  this->FileWidget->setSortingEnabled(false);
   int row = this->FileWidget->rowCount();
-  this->FileWidget->setRowCount(row + 1);
+  this->FileWidget->insertRow(row);
   QTableWidgetItem *fileItem = new QTableWidgetItem(file.absoluteFilePath());
   fileItem->setFlags( (fileItem->flags() | Qt::ItemIsUserCheckable) & ~Qt::ItemIsEditable);
   fileItem->setCheckState(Qt::Checked);
   this->FileWidget->setItem(row, FileColumn, fileItem);
-  QTableWidgetItem *descriptionItem = new QTableWidgetItem(fileDescription);
-  descriptionItem->setFlags( descriptionItem->flags() & ~Qt::ItemIsEditable);
+  QTableWidgetItem *descriptionItem = new QTableWidgetItem();
+  descriptionItem->setFlags(descriptionItem->flags() & ~Qt::ItemIsEditable);
+  descriptionItem->setText(fileDescription);
   this->FileWidget->setItem(row, TypeColumn, descriptionItem);
-
+  Q_ASSERT(this->FileWidget->item(row, TypeColumn)->text() == fileDescription);
+  this->FileWidget->setSortingEnabled(sortingEnabled);
   // update columns the first time
   if(this->FileWidget->rowCount() == 1)
     {
@@ -120,9 +145,12 @@ QList<qSlicerIO::IOProperties> qSlicerDataDialogPrivate::selectedFiles()
   QList<qSlicerIO::IOProperties> files;
   for (int row = 0; row < this->FileWidget->rowCount(); ++row)
     {
+    qDebug() << "row: " << row;
     qSlicerIO::IOProperties properties;
     QTableWidgetItem* fileItem = this->FileWidget->item(row, FileColumn);
     QTableWidgetItem* typeItem = this->FileWidget->item(row, TypeColumn);
+    Q_ASSERT(fileItem);
+    Q_ASSERT(typeItem);
     if (fileItem->checkState() != Qt::Checked)
       {
       qDebug() << "unchecked" ;
@@ -134,6 +162,45 @@ QList<qSlicerIO::IOProperties> qSlicerDataDialogPrivate::selectedFiles()
     }
   return files;
 }
+/*
+//-----------------------------------------------------------------------------
+void qSlicerDataDialogPrivate::updateCheckBoxes(Qt::Orientation orientation, int first, int last)
+{
+  if (orientation != Qt::Horizontal ||
+      first > FileColumn || last < FileColumn)
+    {
+    return;
+    }
+  Qt::CheckState headerState = this->FileWidget->horizontalHeaderItem(FileColumn)->checkState();
+  if (headerState == Qt::PartiallyChecked)
+    {
+    return;
+    }
+  for (int row = 0; row < this->FileWidget->rowCount(); ++row)
+    {
+    this->FileWidget->item(row, FileColumn)->setCheckState(headerState);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerDataDialogPrivate::updateCheckBoxHeader(int itemRow, int itemColumn)
+{
+  if (itemColumn != FileColumn)
+    {
+    return;
+    }
+  Qt::CheckState headerCheckState = this->FileWidget->item(itemRow,itemColumn)->checkState();
+  for (int row = 0; row < this->FileWidget->rowCount(); ++row)
+    {    
+    if (this->FileWidget->item(row, FileColumn)->checkState() !=
+        headerCheckState)
+      {
+      this->FileWidget->model()->setHeaderData(FileColumn, Qt::Horizontal, Qt::PartiallyChecked, Qt::CheckStateRole);
+      return;
+      }
+    }
+  this->FileWidget->model()->setHeaderData(FileColumn, Qt::Horizontal, headerCheckState, Qt::CheckStateRole);
+}*/
 
 //-----------------------------------------------------------------------------
 qSlicerDataDialog::qSlicerDataDialog(QObject* _parent)
@@ -163,8 +230,11 @@ bool qSlicerDataDialog::exec(const qSlicerIO::IOProperties& readerProperties)
 #ifdef Slicer3_USE_KWWIDGETS
   d->setWindowFlags(d->windowFlags() | Qt::WindowStaysOnTopHint);
 #endif
-  d->exec();
   bool res = false;
+  if (d->exec() != QDialog::Accepted)
+    {
+    return res;
+    }
   QList<qSlicerIO::IOProperties> files = d->selectedFiles();
   foreach(qSlicerIO::IOProperties properties, files)
     {

@@ -32,6 +32,10 @@ public slots:
   void addFiles();
   void reset();
 
+protected slots:
+//  void updateCheckBoxes(Qt::Orientation orientation, int first, int last);
+//  void updateCheckBoxHeader(int row, int column);
+
 protected:
   enum ColumnType
   {
