@@ -109,6 +109,11 @@ public slots:
   /// Set the selected node.
   void setCurrentNode(vtkMRMLNode* node);
 
+  ///
+  /// Convenient function allowing to set the selected node using the Node Id
+  inline void setCurrentNode(const QString& nodeId)
+    { this->setCurrentIndex(this->findData(nodeId)); }
+
 signals:
   /// 
   /// emit the current displayed node. NULL if
