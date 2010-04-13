@@ -12,15 +12,16 @@
 
 #include "qSlicerCLILoadableModuleFactory.h"
 
+// QT includes
+#include <QStringList>
+#include <QDirIterator>
+
 // SlicerQT includes
 #include "qSlicerCLILoadableModule.h"
 #include "qSlicerCLIModuleFactoryHelper.h"
 #include "qSlicerCoreApplication.h"
 #include "qSlicerCoreCommandOptions.h"
-
-// QT includes
-#include <QStringList>
-#include <QDirIterator>
+#include "qSlicerUtils.h"
 
 //-----------------------------------------------------------------------------
 qSlicerCLILoadableModuleFactoryItem::qSlicerCLILoadableModuleFactoryItem(const QString& itemKey,
@@ -129,4 +130,10 @@ void qSlicerCLILoadableModuleFactory::registerItems()
         }
       }
     }
+}
+
+//-----------------------------------------------------------------------------
+QString qSlicerCLILoadableModuleFactory::extractModuleName(const QString& libraryName)
+{
+  return qSlicerUtils::extractModuleNameFromLibraryName(libraryName);
 }

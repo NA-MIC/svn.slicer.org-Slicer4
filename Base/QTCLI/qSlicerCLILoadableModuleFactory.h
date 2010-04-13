@@ -56,6 +56,10 @@ public:
 
   virtual void registerItems();
 
+  /// Extract module name given a library name
+  /// See qSlicerUtils::extractModuleNameFromLibraryName
+  static QString extractModuleName(const QString& libraryName);
+
 private:
   QCTK_DECLARE_PRIVATE(qSlicerCLILoadableModuleFactory);
 };
