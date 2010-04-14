@@ -28,6 +28,8 @@ SET(slicer_qtbase_SRCS
   qSlicerFileDialog.h
   qSlicerIOManager.cxx
   qSlicerIOManager.h
+  qSlicerIOOptionsWidget.cxx
+  qSlicerIOOptionsWidget.h
   qSlicerModulePanel.cxx
   qSlicerModulePanel.h
   qSlicerModuleSelectorWidget.cxx
@@ -42,6 +44,7 @@ SET(slicer_qtbase_MOC_SRCS
   qSlicerDataDialog_p.h
   qSlicerFileDialog.h
   qSlicerIOManager.h
+  qSlicerIOOptionsWidget.h
   qSlicerModulePanel.h
   qSlicerModuleSelectorWidget.h
   qSlicerModuleSelectorWidget_p.h
