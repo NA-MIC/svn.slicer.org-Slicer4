@@ -13,6 +13,7 @@
 #include "qSlicerDataDialog.h"
 #include "qSlicerDataDialog_p.h"
 #include "qSlicerIOManager.h"
+#include "qSlicerIOOptionsWidget.h"
 
 //-----------------------------------------------------------------------------
 qSlicerDataDialogPrivate::qSlicerDataDialogPrivate(QWidget* _parent)
@@ -116,15 +117,24 @@ void qSlicerDataDialogPrivate::addFile(const QFileInfo& file)
   this->FileWidget->setSortingEnabled(false);
   int row = this->FileWidget->rowCount();
   this->FileWidget->insertRow(row);
+  // File name
   QTableWidgetItem *fileItem = new QTableWidgetItem(file.absoluteFilePath());
   fileItem->setFlags( (fileItem->flags() | Qt::ItemIsUserCheckable) & ~Qt::ItemIsEditable);
   fileItem->setCheckState(Qt::Checked);
   this->FileWidget->setItem(row, FileColumn, fileItem);
+  // Description
   QTableWidgetItem *descriptionItem = new QTableWidgetItem();
   descriptionItem->setFlags(descriptionItem->flags() & ~Qt::ItemIsEditable);
   descriptionItem->setText(fileDescription);
   this->FileWidget->setItem(row, TypeColumn, descriptionItem);
-  Q_ASSERT(this->FileWidget->item(row, TypeColumn)->text() == fileDescription);
+  // Options
+  qSlicerIOOptionsWidget* optionsWidget = dynamic_cast<qSlicerIOOptionsWidget*>(
+    qSlicerCoreApplication::application()->coreIOManager()->fileOptions(
+      file.absoluteFilePath()));
+  if (optionsWidget)
+    {
+    this->FileWidget->setCellWidget(row, OptionsColumn, optionsWidget);
+    }
   this->FileWidget->setSortingEnabled(sortingEnabled);
   // update columns the first time
   if(this->FileWidget->rowCount() == 1)
@@ -149,6 +159,8 @@ QList<qSlicerIO::IOProperties> qSlicerDataDialogPrivate::selectedFiles()
     qSlicerIO::IOProperties properties;
     QTableWidgetItem* fileItem = this->FileWidget->item(row, FileColumn);
     QTableWidgetItem* typeItem = this->FileWidget->item(row, TypeColumn);
+    qSlicerIOOptionsWidget* optionsItem = dynamic_cast<qSlicerIOOptionsWidget*>(
+      this->FileWidget->cellWidget(row, OptionsColumn));
     Q_ASSERT(fileItem);
     Q_ASSERT(typeItem);
     if (fileItem->checkState() != Qt::Checked)
@@ -158,6 +170,10 @@ QList<qSlicerIO::IOProperties> qSlicerDataDialogPrivate::selectedFiles()
       }
     properties["fileName"] = fileItem->text();
     properties["fileType"] = typeItem->text().toInt();
+    if (optionsItem)
+      {
+      properties.unite(optionsItem->options());
+      }
     files << properties;
     }
   return files;
