@@ -10,6 +10,7 @@
 #include "qSlicerCoreApplication.h"
 #include "qSlicerModuleManager.h"
 #include "qSlicerVolumesIO.h"
+#include "qSlicerVolumesIOOptionsWidget.h"
 
 /// Logic includes
 #include "vtkSlicerVolumesLogic.h"
@@ -43,6 +44,12 @@ qSlicerIO::IOFileType qSlicerVolumesIO::fileType()const
 QString qSlicerVolumesIO::extensions()const
 {
   return "*.hdr *.nhdr *.nrrd *.mhd *.mha *.vti *.nii *.gz *.mgz";
+}
+
+//-----------------------------------------------------------------------------
+qSlicerIOOptions* qSlicerVolumesIO::options()const
+{
+  return new qSlicerVolumesIOOptionsWidget;
 }
 
 //-----------------------------------------------------------------------------

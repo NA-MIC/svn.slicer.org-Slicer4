@@ -15,6 +15,8 @@ SET(qt_module_include_directories
 SET(qt_module_SRCS
   qSlicerVolumesIO.cxx
   qSlicerVolumesIO.h
+  qSlicerVolumesIOOptionsWidget.cxx
+  qSlicerVolumesIOOptionsWidget.h
   qSlicerVolumesModule.cxx
   qSlicerVolumesModule.h
   qSlicerVolumesModuleWidget.cxx
@@ -28,6 +30,7 @@ SET(qt_module_SRCS
 # Headers that should run through moc
 SET(qt_module_MOC_SRCS
   qSlicerVolumesIO.h
+  qSlicerVolumesIOOptionsWidget.h
   qSlicerVolumesModuleWidget.h
   qSlicerVolumeDisplayWidget.h
   qSlicerScalarVolumeDisplayWidget.h
@@ -35,6 +38,7 @@ SET(qt_module_MOC_SRCS
 
 # UI files
 SET(qt_module_UI_SRCS
+  Resources/UI/qSlicerVolumesIOOptionsWidget.ui
   Resources/UI/qSlicerVolumesModule.ui
   Resources/UI/qSlicerScalarVolumeDisplayWidget.ui
 )
