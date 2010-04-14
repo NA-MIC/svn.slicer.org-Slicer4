@@ -71,6 +71,8 @@ public:
   ~qSlicerCoreIOManagerPrivate();
   vtkMRMLScene* currentScene()const;
   
+  qSlicerIO* reader(const QString& fileName)const;
+
   QSettings*        ExtensionFileType;
   QList<qSlicerIO*> Readers;
 };
@@ -89,6 +91,30 @@ qSlicerCoreIOManagerPrivate::~qSlicerCoreIOManagerPrivate()
 vtkMRMLScene* qSlicerCoreIOManagerPrivate::currentScene()const
 {
   return qSlicerCoreApplication::application()->mrmlScene();
+}
+
+//-----------------------------------------------------------------------------
+qSlicerIO* qSlicerCoreIOManagerPrivate::reader(const QString& fileName)const
+{
+  QList<qSlicerIO*> genericReaders;
+  foreach(qSlicerIO* reader, this->Readers)
+    {
+    if (!reader->canLoadFile(fileName))
+      {
+      continue;
+      }
+    if (reader->extensions() == "*.*")
+      {
+      genericReaders << reader;
+      continue;
+      }
+    return reader;
+    }
+  foreach(qSlicerIO* reader, genericReaders)
+    {
+    return reader;
+    }
+  return 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -112,29 +138,36 @@ qSlicerCoreIOManager::~qSlicerCoreIOManager()
 qSlicerIO::IOFileType qSlicerCoreIOManager::fileType(const QString& fileName)const
 {
   QCTK_D(const qSlicerCoreIOManager);
-  foreach(qSlicerIO* reader, d->Readers)
+  qSlicerIO* reader = d->reader(fileName);
+  if (!reader)
     {
-    if (reader->canLoadFile(fileName))
-      {
-      return reader->fileType();
-      }
+    return  qSlicerIO::NoFile;
     }
-  return qSlicerIO::NoFile;
+  return reader->fileType();
 }
 
 //-----------------------------------------------------------------------------
 QString qSlicerCoreIOManager::fileDescription(const QString& fileName)const
 {
   QCTK_D(const qSlicerCoreIOManager);
-  foreach(qSlicerIO* reader, d->Readers)
+  qSlicerIO* reader = d->reader(fileName);
+  if (!reader)
     {
-    if (reader->canLoadFile(fileName) && 
-        reader->extensions() != "*.*")
-      {
-      return reader->description();
-      }
+    return tr("Unknown");
     }
-  return tr("Unknown");
+  return reader->description();
+}
+
+//-----------------------------------------------------------------------------
+qSlicerIOOptions* qSlicerCoreIOManager::fileOptions(const QString& fileName)const
+{
+  QCTK_D(const qSlicerCoreIOManager);
+  qSlicerIO* reader = d->reader(fileName);
+  if (!reader)
+    {
+    return 0;
+    }
+  return reader->options();
 }
 
 //-----------------------------------------------------------------------------

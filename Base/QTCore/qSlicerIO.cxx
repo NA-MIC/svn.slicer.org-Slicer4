@@ -58,7 +58,9 @@ QString qSlicerIO::extensions()const
 bool qSlicerIO::canLoadFile(const QString& fileName)const
 {
   QFileInfo file(fileName);
-  if (!file.isFile() || !file.isReadable())
+  if (!file.isFile() || 
+      !file.isReadable() || 
+      file.suffix().contains('~'))
     {
     return false;
     }
@@ -73,6 +75,12 @@ bool qSlicerIO::canLoadFile(const QString& fileName)const
       }
     }
     return false;
+}
+
+//----------------------------------------------------------------------------
+qSlicerIOOptions* qSlicerIO::options()const
+{
+  return 0;
 }
 
 //----------------------------------------------------------------------------

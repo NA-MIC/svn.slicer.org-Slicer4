@@ -50,6 +50,7 @@ public:
   */
   qSlicerIO::IOFileType fileType(const QString& file)const;
   QString fileDescription(const QString& file)const;
+  qSlicerIOOptions* fileOptions(const QString& file)const;
   
   ///
   /// attributes are typically: 

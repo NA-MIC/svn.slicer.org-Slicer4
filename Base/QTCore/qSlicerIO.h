@@ -15,6 +15,7 @@
 #include "qSlicerBaseQTCoreExport.h"
 
 class vtkMRMLScene;
+class qSlicerIOOptions;
 class qSlicerIOPrivate;
 
 class Q_SLICER_BASE_QTCORE_EXPORT qSlicerIO : public QObject
@@ -42,6 +43,7 @@ public:
   virtual IOFileType fileType()const = 0;
   virtual QString extensions()const;
   bool canLoadFile(const QString& file)const;
+  virtual qSlicerIOOptions* options()const;
 
   void setMRMLScene(vtkMRMLScene* scene);
   vtkMRMLScene* mrmlScene()const;

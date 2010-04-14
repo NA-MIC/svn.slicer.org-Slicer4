@@ -34,6 +34,8 @@ SET(slicer_qtbase_SRCS
   qSlicerCoreIOManager.h
   qSlicerIO.cxx
   qSlicerIO.h
+  qSlicerIOOptions.cxx
+  qSlicerIOOptions.h
   qSlicerLoadableModuleFactory.cxx
   qSlicerLoadableModuleFactory.h
   qSlicerModuleManager.cxx
