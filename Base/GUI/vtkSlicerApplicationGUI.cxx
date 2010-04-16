@@ -687,7 +687,7 @@ const char* vtkSlicerApplicationGUI::GetCurrentLayoutStringName ( )
         {
         return ( "Conventional layout" );
         }
-      else if ( layout = vtkMRMLLayoutNode::SlicerLayoutSideBySideCompareView )
+      else if ( layout == vtkMRMLLayoutNode::SlicerLayoutSideBySideCompareView )
         {
         return ( "Side-by-side Compare layout" );
         }
@@ -1772,8 +1772,8 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
 
   // make a new measurements ruler between the last two fiducials on the
   // currently active list, only works if the measurements module is loaded.
-  i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "New Ruler Between Fiducials...", this, "ProcessAddRulerCommand");
-  this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+R");
+  i = this->MainSlicerWindow->GetEditMenu()->AddCommand ( "New Measurement Between Fiducials...", this, "ProcessAddRulerCommand");
+  this->MainSlicerWindow->GetEditMenu()->SetItemAccelerator ( i, "Ctrl+M");
   this->MainSlicerWindow->GetEditMenu()->SetBindingForItemAccelerator ( i, this->MainSlicerWindow);
   
   //
@@ -1875,8 +1875,29 @@ void vtkSlicerApplicationGUI::PythonConsole (  )
 
   if (v == NULL)
     {
-    PyErr_Print();
+    PyObject *exception, *v, *tb;
+    PyObject *exception_s, *v_s, *tb_s;
+
+    PyErr_Fetch(&exception, &v, &tb);
+    if (exception == NULL)
+      return;
+    PyErr_NormalizeException(&exception, &v, &tb);
+    if (exception == NULL)
+      return;
+    
+    exception_s = PyObject_Str(exception);
+    v_s = PyObject_Str(v);
+    tb_s = PyObject_Str(tb);
     vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", "Failed to startup python interpreter" );
+    vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", PyString_AS_STRING(exception_s) );
+    vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", PyString_AS_STRING(v_s) );
+    vtkSlicerApplication::GetInstance()->RequestDisplayMessage ( "Error", PyString_AS_STRING(tb_s) );
+    Py_DECREF ( exception_s );
+    Py_DECREF ( v_s );
+    Py_DECREF ( tb_s );
+    Py_DECREF ( exception );
+    Py_DECREF ( v );
+    if ( tb ) Py_DECREF ( tb );
     return;
     }
   Py_DECREF ( v );
@@ -1936,7 +1957,7 @@ void vtkSlicerApplicationGUI::PythonCommand ( const char *cmd )
     Py_DECREF ( tb_s );
     Py_DECREF ( exception );
     Py_DECREF ( v );
-    Py_DECREF ( tb );
+    if ( tb ) Py_DECREF ( tb );
 
     return;
     }
@@ -2427,6 +2448,14 @@ void vtkSlicerApplicationGUI::UpdateActiveViewerWidgetDependencies(
     {
     MeasurementsModule->SetActiveViewer(active_viewer);
     }
+
+  vtkSlicerModuleGUI *ColorModule = this->GetSlicerApplication()->GetModuleGUIByName("Color");
+  if (ColorModule)
+    {
+    ColorModule->SetActiveViewer(active_viewer);
+    }
+
+  
 #ifndef VIEWCONTROL_DEBUG
   vtkSlicerViewControlGUI *vcGUI = this->GetViewControlGUI ( );
   vcGUI->SetViewNode(active_viewer ? active_viewer->GetViewNode() : NULL);
@@ -3268,12 +3297,13 @@ void vtkSlicerApplicationGUI::PackTabbedSliceView ( )
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::PackSideBySideCompareView()
 {
+
     if ( this->GetApplication() != NULL )
     {
     vtkSlicerApplication *app = (vtkSlicerApplication *)this->GetApplication();
     vtkSlicerGUILayout *geom = app->GetDefaultGeometry ( );
     vtkMRMLLayoutNode *layout = this->GetGUILayoutNode ( );
-
+    double x, y, z;
 
     // Hide the top panel
     this->MainSlicerWindow->GetSecondarySplitFrame()->SetFrame2Visibility(0);
@@ -3283,6 +3313,33 @@ void vtkSlicerApplicationGUI::PackSideBySideCompareView()
 
     // Don't use tabs
     this->MainSlicerWindow->GetViewNotebook()->SetAlwaysShowTabs ( 0 );
+
+   // setup the layout for Frame1
+    this->Script ( "pack %s -side top -fill both -expand 1 -padx 0 -pady 0 ", this->GridFrame1->GetWidgetName ( ) );
+    this->Script ("grid rowconfigure %s 0 -weight 1", this->GridFrame1->GetWidgetName() );
+    this->Script ("grid columnconfigure %s 0 -weight 1 -uniform 1", this->GridFrame1->GetWidgetName() );
+    this->Script ("grid columnconfigure %s 1 -weight 1 -uniform 1", this->GridFrame1->GetWidgetName() );
+
+    //--- CompareView puts the Red Slice GUI and 3D Viewer widget side by
+    //--- side in a top row. Then, the requested compare view rows and cols
+    //--- are arrayed in a grid beneath these two.
+    vtkSlicerSliceGUI *g = this->SlicesGUI->GetSliceGUI("Red");
+    if (g->GetSliceNode())
+      {
+      x = g->GetSliceNode()->GetFieldOfView()[0];
+      y = g->GetSliceNode()->GetFieldOfView()[1];
+      z = g->GetSliceNode()->GetFieldOfView()[2];
+      g->GetSliceNode()->SetFieldOfView(x, y, z);
+      g->GetSliceNode()->UpdateMatrices();
+      }
+
+    //--TODO: when Compare view gets added into the vtkMRMLLayoutNode,
+    vtkSlicerViewerWidget *viewer_widget = this->GetActiveViewerWidget();
+    if (viewer_widget)
+      {
+      viewer_widget->GridWidget ( this->GridFrame1, 0, 1);
+      }
+    g->GridGUI ( this->GetGridFrame1( ), 0, 0 );
 
     // insert a number of new main slice viewers according to user's input
     char buf[20];
@@ -3317,7 +3374,6 @@ void vtkSlicerApplicationGUI::PackSideBySideCompareView()
     const char *layoutname = NULL;
     int nSliceGUI = this->SlicesGUI->GetNumberOfSliceGUI();
     int ncount = 0;
-    vtkSlicerSliceGUI *g;
     for (int i = 0; i < nSliceGUI; i++)
       {
       if (i == 0)

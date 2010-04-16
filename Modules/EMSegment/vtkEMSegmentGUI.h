@@ -17,6 +17,8 @@ class vtkEMSegmentNodeParametersStep;
 class vtkEMSegmentIntensityDistributionsStep;
 class vtkEMSegmentRegistrationParametersStep;
 class vtkEMSegmentRunSegmentationStep;
+class vtkEMSegmentInputChannelsStep;
+class vtkEMSegmentPreProcessingStep;
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentGUI : 
   public vtkSlicerModuleGUI
@@ -53,6 +55,11 @@ public:
   vtkGetObjectMacro(AnatomicalStructureStep, vtkEMSegmentAnatomicalStructureStep);
   vtkGetObjectMacro(ParametersSetStep,vtkEMSegmentParametersSetStep);
 
+  // Need to do it bc TCL Wrapping ignores IBM_FLAG !
+  // Need this function for Preprocessing tcl scripts !  
+  //#if IBM_FLAG
+   vtkGetObjectMacro(PreProcessingStep,vtkEMSegmentPreProcessingStep);
+   //#endif
 
   // Description:
   // Create widgets
@@ -155,6 +162,13 @@ private:
   vtkEMSegmentNodeParametersStep         *NodeParametersStep;
   vtkEMSegmentRegistrationParametersStep *RegistrationParametersStep;
   vtkEMSegmentRunSegmentationStep        *RunSegmentationStep;
+
+#if IBM_FLAG
+  vtkEMSegmentInputChannelsStep          *InputChannelStep;
+#endif
+
+  // Need to do it bc TCL Wrapping ignores IBM_FLAG for functions and otherwise have problems with Get function ! 
+  vtkEMSegmentPreProcessingStep          *PreProcessingStep;
 
   // Description:
   // Populate the logic with testing data, load some volumes

@@ -16,10 +16,6 @@
 
 #include "vtkEMSegmentAnatomicalStructureStep.h"
 
-#if IBM_FLAG
-#include "IBM/vtkEMSegmentIBMSpatialPriorsStep.cxx"
-#endif
-
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentSpatialPriorsStep);
 vtkCxxRevisionMacro(vtkEMSegmentSpatialPriorsStep, "$Revision: 1.2 $");
@@ -27,7 +23,11 @@ vtkCxxRevisionMacro(vtkEMSegmentSpatialPriorsStep, "$Revision: 1.2 $");
 //----------------------------------------------------------------------------
 vtkEMSegmentSpatialPriorsStep::vtkEMSegmentSpatialPriorsStep()
 {
+#if IBM_FLAG
+  this->SetName("4/9. Define Atlas");
+#else
   this->SetName("3/9. Define Atlas");
+#endif
   this->SetDescription("Define probability maps and image scans of atlas.");
 
   this->ImageFrame      = NULL;
@@ -63,8 +63,6 @@ vtkEMSegmentSpatialPriorsStep::~vtkEMSegmentSpatialPriorsStep()
     }
 }
 
-#if !IBM_FLAG  
-
 //----------------------------------------------------------------------------
 void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
 {
@@ -95,7 +93,6 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
   anat_step->GetAnatomicalStructureTree()->GetWidget()->SetSelectionChangedCommand(
       this, "DisplaySelectedNodeSpatialPriorsCallback");
 
-  
   // Create the frame
 
   if (!this->SpatialPriorsVolumeFrame)
@@ -110,7 +107,7 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
     }
 
   this->Script(
-    "pack %s -side bottom -anchor nw -fill x -padx 0 -pady 2", 
+    "pack %s -side top -anchor nw -fill x -padx 0 -pady 2", 
     this->SpatialPriorsVolumeFrame->GetWidgetName());
 
   // Create the spatial prior volume selector
@@ -140,7 +137,6 @@ void vtkEMSegmentSpatialPriorsStep::ShowUserInterface()
   this->DisplaySelectedNodeSpatialPriorsCallback();
 }
 
-#endif
 
 //----------------------------------------------------------------------------
 void vtkEMSegmentSpatialPriorsStep::DisplaySelectedNodeSpatialPriorsCallback()

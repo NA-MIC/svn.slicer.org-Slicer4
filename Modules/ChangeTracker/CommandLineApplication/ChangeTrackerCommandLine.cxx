@@ -647,24 +647,27 @@ void InitializeThresholds(tgCMDLineStructure &tg, vtkImageData* image, vtkImageD
     hist->IgnoreZeroOn();
     hist->Update();
 
-    thrMin = hist->GetMin()[0];
-    thrMax = hist->GetMax()[0];
+    thrMin = (int)(hist->GetMin()[0]);
+    thrMax = (int)(hist->GetMax()[0]);
 
-    int idx = hist->GetMin()[0];
+    int idx = (int)(hist->GetMin()[0]);
     float mean = 0, stdev = 0, cnt = 0;
-    for(idx=hist->GetMin()[0];idx<hist->GetMax()[0];idx++){
+    for(idx=(int)(hist->GetMin()[0]); idx<hist->GetMax()[0]; idx++)
+      {
       mean += hist->GetOutput()->GetScalarComponentAsFloat(idx,0,0,0)*(float)idx;
       cnt += hist->GetOutput()->GetScalarComponentAsFloat(idx,0,0,0);
-    }
+      }
     mean = mean/cnt;
 
-    for(idx=hist->GetMin()[0];idx<hist->GetMax()[0];idx++){
+    for(idx=(int)(hist->GetMin()[0]);
+        idx<(int)(hist->GetMax()[0]);
+        idx++){
       float d = mean - idx;
       stdev += d*d*hist->GetOutput()->GetScalarComponentAsFloat(idx,0,0,0);
     }
 
     stdev = sqrt(stdev/cnt);
-    thrMin = mean;
+    thrMin = (int)(floor(mean));
 
     dist->Delete();
     mult->Delete();

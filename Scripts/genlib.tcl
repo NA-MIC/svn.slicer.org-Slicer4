@@ -610,11 +610,14 @@ if {  [BuildThis $::PYTHON_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [stri
       file mkdir $::Slicer3_LIB/python
       cd $::Slicer3_LIB
 
-      runcmd $::SVN co $::PYTHON_TAG python-build
+      runcmd $::SVN co $::PYTHON_TAG -r $::PYTHON_REVISION python-build
       cd $Slicer3_LIB/python-build
 
       # point the tkinter build file to the slicer tcl-build 
-      replaceStringInFile "PCbuild/_tkinter.vcproj" "tcltk" "tcl-build"
+      # for python 2.5
+      #replaceStringInFile "PCbuild/_tkinter.vcproj" "tcltk" "tcl-build"
+      # for python 2.6 - replace properties file with paths to slicer's tcl-build for 8.4
+      file copy -force $::Slicer3_HOME/Base/GUI/Python/slicer.pyproject.vsprops PCbuild/pyproject.vsprops
 
       if { $::GENERATOR != "Visual Studio 7 .NET 2003" } {
          if {[file tail $::MAKE] != "VCExpress.exe"} {
@@ -653,7 +656,7 @@ if {  [BuildThis $::PYTHON_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [stri
       cd $::Slicer3_LIB
 
       cd $Slicer3_LIB/python
-      runcmd $::SVN co $::PYTHON_TAG
+      runcmd $::SVN co $::PYTHON_TAG -r $::PYTHON_REVISION
       cd $Slicer3_LIB/python/release26-maint
       foreach flag {LD_LIBRARY_PATH LDFLAGS CPPFLAGS} {
         if { ![info exists ::env($flag)] } { set ::env($flag) "" }
@@ -839,11 +842,16 @@ if {  [BuildThis $::NUMPY_TEST_FILE "python"] && !$::USE_SYSTEM_PYTHON && [strin
         cd $::Slicer3_LIB/python/numpy
         if {$::GENLIB(bitness) == "64"} {
           set ::env(CC) "$::GENLIB(compiler) -m64"
-          runcmd $::Slicer3_LIB/python-build/bin/python ./setup.py install
         } else {
           set ::env(CC) "$::GENLIB(compiler)"
-          runcmd $::Slicer3_LIB/python-build/bin/python ./setup.py install
         }
+
+
+        # for linux,
+        # explicitly disable the pfortran compiler to avoid issues with g77/gfortran incompatibilities
+        runcmd $::Slicer3_LIB/python-build/bin/python ./setup.py build --fcompiler=xxx
+        runcmd $::Slicer3_LIB/python-build/bin/python ./setup.py install
+
         # do scipy
 
         if { $::USE_SCIPY } {

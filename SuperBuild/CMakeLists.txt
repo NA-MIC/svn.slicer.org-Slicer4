@@ -254,7 +254,7 @@ if(Slicer3_USE_KWWIDGETS)
 
   if(WIN32)
     set(tk_SOURCE_DIR tcl/tk)
-  elseif(APPLE)
+  else()
     set(tk_SOURCE_DIR tcl/tk)
     set(tk_BUILD_IN_SOURCE 1)
 
@@ -847,7 +847,8 @@ if(Slicer3_USE_QT)
   set(vtk_QT_ARGS
     -DDESIRED_QT_VERSION:STRING=4
     -DVTK_USE_GUISUPPORT:BOOL=ON
-    -DVTK_USE_QVTK:BOOL=ON
+    -DVTK_USE_QVTK_QTOPENGL:BOOL=ON
+    -DVTK_USE_QT:BOOL=ON
     -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
     )
 endif(Slicer3_USE_QT)

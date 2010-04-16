@@ -12,12 +12,15 @@
 
 =========================================================================auto=*/
 
+#include "vtkSmartPointer.h"
+#include "vtkMath.h"
 #include "vtkObjectFactory.h"
 #include "vtkCallbackCommand.h"
 #include "vtkPlaneSource.h"
 #include "vtkPoints.h"
 #include "vtkImageBlend.h"
 #include "vtkImageMathematics.h"
+#include "vtkSmartPointer.h"
 
 #include "vtkMRMLCrosshairNode.h"
 #include "vtkMRMLModelDisplayNode.h"
@@ -43,6 +46,10 @@ vtkStandardNewMacro(vtkSlicerSliceLogic);
 #ifndef min
 #define min(a,b)            (((a) < (b)) ? (a) : (b))
 #endif
+
+const int vtkSlicerSliceLogic::SLICE_INDEX_ROTATED=-1;
+const int vtkSlicerSliceLogic::SLICE_INDEX_OUT_OF_VOLUME=-2;
+const int vtkSlicerSliceLogic::SLICE_INDEX_NO_VOLUME=-3;
 
 //----------------------------------------------------------------------------
 vtkSlicerSliceLogic::vtkSlicerSliceLogic()
@@ -1104,15 +1111,14 @@ void vtkSlicerSliceLogic::GetVolumeRASBox(vtkMRMLVolumeNode *volumeNode, double 
   // - map the middle of the volume to RAS for the center
   //   (IJK space always has origin at first pixel)
   //
-  vtkMatrix4x4 *ijkToRAS = vtkMatrix4x4::New();
+  vtkSmartPointer<vtkMatrix4x4> ijkToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
   volumeNode->GetIJKToRASMatrix (ijkToRAS);
   vtkMRMLTransformNode *transformNode = volumeNode->GetParentTransformNode();
   if ( transformNode )
     {
-    vtkMatrix4x4 *rasToRAS = vtkMatrix4x4::New();
+    vtkSmartPointer<vtkMatrix4x4> rasToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
     transformNode->GetMatrixTransformToWorld(rasToRAS);
     vtkMatrix4x4::Multiply4x4 (rasToRAS, ijkToRAS, ijkToRAS);
-    rasToRAS->Delete();
     }
 
   int dimensions[3];
@@ -1156,8 +1162,6 @@ void vtkSlicerSliceLogic::GetVolumeRASBox(vtkMRMLVolumeNode *volumeNode, double 
     rasDimensions[i] = maxBounds[i] - minBounds[i];
     rasCenter[i] = 0.5*(maxBounds[i] + minBounds[i]);
     }
-
-  ijkToRAS->Delete();
 }
 
 // Get the size of the volume, transformed to RAS space
@@ -1198,7 +1202,7 @@ void vtkSlicerSliceLogic::GetVolumeSliceBounds(vtkMRMLVolumeNode *volumeNode, do
   //
   // figure out how big that volume is on this particular slice plane
   //
-  vtkMatrix4x4 *rasToSlice = vtkMatrix4x4::New();
+  vtkSmartPointer<vtkMatrix4x4> rasToSlice = vtkSmartPointer<vtkMatrix4x4>::New();
   rasToSlice->DeepCopy(sliceNode->GetSliceToRAS());
   rasToSlice->SetElement(0, 3, 0.0);
   rasToSlice->SetElement(1, 3, 0.0);
@@ -1240,8 +1244,6 @@ void vtkSlicerSliceLogic::GetVolumeSliceBounds(vtkMRMLVolumeNode *volumeNode, do
         }
       }
     }
-  
-  rasToSlice->Delete();
 
   // ignore homogeneous coordinate
   sliceBounds[0] = minBounds[0];
@@ -1277,10 +1279,9 @@ double *vtkSlicerSliceLogic::GetVolumeSliceSpacing(vtkMRMLVolumeNode *volumeNode
     return (pspacing);
     }
   
-  
-  vtkMatrix4x4 *ijkToRAS = vtkMatrix4x4::New();
-  vtkMatrix4x4 *rasToSlice = vtkMatrix4x4::New();
-  vtkMatrix4x4 *ijkToSlice = vtkMatrix4x4::New();
+  vtkSmartPointer<vtkMatrix4x4> ijkToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
+  vtkSmartPointer<vtkMatrix4x4> rasToSlice = vtkSmartPointer<vtkMatrix4x4>::New();
+  vtkSmartPointer<vtkMatrix4x4> ijkToSlice = vtkSmartPointer<vtkMatrix4x4>::New();
 
   volumeNode->GetIJKToRASMatrix(ijkToRAS);
   rasToSlice->DeepCopy(sliceNode->GetSliceToRAS());
@@ -1298,10 +1299,6 @@ double *vtkSlicerSliceLogic::GetVolumeSliceSpacing(vtkMRMLVolumeNode *volumeNode
     {
     this->SliceSpacing[i] = fabs(spacing[i]);
     }
-
-  ijkToRAS->Delete();
-  rasToSlice->Delete();
-  ijkToSlice->Delete();
 
   return (this->SliceSpacing);
 }
@@ -1363,14 +1360,13 @@ void vtkSlicerSliceLogic::FitSliceToVolume(vtkMRMLVolumeNode *volumeNode, int wi
   //
   // set the origin to be the center of the volume in RAS
   //
-  vtkMatrix4x4 *sliceToRAS = vtkMatrix4x4::New();
+  vtkSmartPointer<vtkMatrix4x4> sliceToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
   sliceToRAS->DeepCopy(sliceNode->GetSliceToRAS());
   sliceToRAS->SetElement(0, 3, rasCenter[0]);
   sliceToRAS->SetElement(1, 3, rasCenter[1]);
   sliceToRAS->SetElement(2, 3, rasCenter[2]);
   sliceNode->GetSliceToRAS()->DeepCopy(sliceToRAS);
   sliceNode->UpdateMatrices( );
-  sliceToRAS->Delete();
 }
 
 
@@ -1474,7 +1470,7 @@ double vtkSlicerSliceLogic::GetSliceOffset()
     return 0.0;
     }
 
-  vtkMatrix4x4 *sliceToRAS = vtkMatrix4x4::New();
+  vtkSmartPointer<vtkMatrix4x4> sliceToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
   sliceToRAS->DeepCopy( this->SliceNode->GetSliceToRAS() );
   for (int i = 0; i < 3; i++)
     {
@@ -1489,7 +1485,6 @@ double vtkSlicerSliceLogic::GetSliceOffset()
   // bring the translation into slice space
   // and overwrite the z part
   sliceToRAS->MultiplyPoint(v1, v2);
-  sliceToRAS->Delete();
 
   return ( v2[2] );
 
@@ -1518,13 +1513,13 @@ void vtkSlicerSliceLogic::SetSliceOffset(double offset)
     return;
     }
 
-  vtkMatrix4x4 *sliceToRAS = vtkMatrix4x4::New();
+  vtkSmartPointer<vtkMatrix4x4> sliceToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
   sliceToRAS->DeepCopy( this->SliceNode->GetSliceToRAS() );
   for (int i = 0; i < 3; i++)
     {
     sliceToRAS->SetElement( i, 3, 0.0 );  // Zero out the tranlation portion
     }
-  vtkMatrix4x4 *sliceToRASInverted = vtkMatrix4x4::New(); // inverse sliceToRAS
+  vtkSmartPointer<vtkMatrix4x4> sliceToRASInverted = vtkSmartPointer<vtkMatrix4x4>::New(); // inverse sliceToRAS
   sliceToRASInverted->DeepCopy( sliceToRAS );
   sliceToRASInverted->Invert();
   double v1[4], v2[4], v3[4];
@@ -1555,8 +1550,6 @@ void vtkSlicerSliceLogic::SetSliceOffset(double offset)
     sliceNode->GetSliceToRAS()->DeepCopy( sliceToRAS );
     sliceNode->UpdateMatrices();
     }
-  sliceToRAS->Delete();
-  sliceToRASInverted->Delete();
 }
 
 void vtkSlicerSliceLogic::GetPolyDataAndLookUpTableCollections(vtkPolyDataCollection *polyDataCollection,
@@ -1648,3 +1641,123 @@ std::vector< vtkMRMLDisplayNode*> vtkSlicerSliceLogic::GetPolyDataDisplayNodes()
   return nodes;
 }
 
+int vtkSlicerSliceLogic::GetSliceIndexFromOffset(double sliceOffset, vtkMRMLVolumeNode *volumeNode)
+{
+  if ( !volumeNode )
+    {
+    return SLICE_INDEX_NO_VOLUME;
+    }
+  vtkImageData *volumeImage=NULL;
+  if ( !(volumeImage = volumeNode->GetImageData()) )
+    {
+    return SLICE_INDEX_NO_VOLUME;
+    }
+  vtkMRMLSliceNode *sliceNode = this->GetSliceNode();
+  if ( !sliceNode )
+    {
+    return SLICE_INDEX_NO_VOLUME;
+    }
+
+  vtkSmartPointer<vtkMatrix4x4> ijkToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
+  volumeNode->GetIJKToRASMatrix (ijkToRAS);
+  vtkMRMLTransformNode *transformNode = volumeNode->GetParentTransformNode();
+  if ( transformNode )
+    {
+    vtkSmartPointer<vtkMatrix4x4> rasToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
+    transformNode->GetMatrixTransformToWorld(rasToRAS);
+    vtkMatrix4x4::Multiply4x4 (rasToRAS, ijkToRAS, ijkToRAS);
+    }
+
+  // Get the slice normal in RAS
+
+  vtkSmartPointer<vtkMatrix4x4> rasToSlice = vtkSmartPointer<vtkMatrix4x4>::New();
+  rasToSlice->DeepCopy(sliceNode->GetSliceToRAS());
+  rasToSlice->Invert();
+
+  double sliceNormal_IJK[4]={0,0,1,0};  // slice normal vector in IJK coordinate system
+  double sliceNormal_RAS[4]={0,0,0,0};  // slice normal vector in RAS coordinate system
+  sliceNode->GetSliceToRAS()->MultiplyPoint(sliceNormal_IJK, sliceNormal_RAS);
+  
+  // Find an axis normal that has the same orientation as the slice normal
+  double axisDirection_RAS[3]={0,0,0};  
+  int axisIndex=0;  
+  double volumeSpacing=1.0; // spacing along axisIndex
+  for (axisIndex=0; axisIndex<3; axisIndex++)
+    {
+    axisDirection_RAS[0]=ijkToRAS->GetElement(0,axisIndex);
+    axisDirection_RAS[1]=ijkToRAS->GetElement(1,axisIndex);
+    axisDirection_RAS[2]=ijkToRAS->GetElement(2,axisIndex);
+    volumeSpacing=vtkMath::Norm(axisDirection_RAS); // spacing along axisIndex
+    vtkMath::Normalize(sliceNormal_RAS);
+    vtkMath::Normalize(axisDirection_RAS);
+    double dotProd=vtkMath::Dot(sliceNormal_RAS, axisDirection_RAS);
+    // Due to numerical inaccuracies the dot product of two normalized vectors
+    // can be slightly bigger than 1 (and acos cannot be computed) - fix that.
+    if (dotProd>1.0)
+      {
+      dotProd=1.0;
+      }
+    else if (dotProd<-1.0)
+      {
+      dotProd=-1.0;
+      }
+    double axisMisalignmentDegrees=acos(dotProd)*180.0/vtkMath::Pi();
+    if (fabs(axisMisalignmentDegrees)<0.1)
+      {
+      // found an axis that is aligned to the slice normal
+      break;
+      }
+    if (fabs(axisMisalignmentDegrees-180)<0.1 || fabs(axisMisalignmentDegrees+180)<0.1)
+      {
+      // found an axis that is aligned to the slice normal, just points to the opposite direction
+      volumeSpacing*=-1.0;
+      break;
+      }
+    }
+
+  if (axisIndex>=3)
+    {
+    // no aligned axis is found
+    return SLICE_INDEX_ROTATED;
+    }
+  
+  // Determine slice index
+  double originPos_RAS[4]={
+    ijkToRAS->GetElement( 0, 3 ),
+    ijkToRAS->GetElement( 1, 3 ),
+    ijkToRAS->GetElement( 2, 3 ),
+    0};
+  double originPos_Slice[4]={0,0,0,0};
+  rasToSlice->MultiplyPoint(originPos_RAS, originPos_Slice);
+  double volumeOriginOffset=originPos_Slice[2];
+  double sliceShift=sliceOffset-volumeOriginOffset;
+  double normalizedSliceShift=sliceShift/volumeSpacing;
+  int sliceIndex=vtkMath::Round(normalizedSliceShift)+1; // +0.5 because the slice plane is displayed in the center of the slice
+  
+  // Check if slice index is within the volume
+  int sliceCount=volumeImage->GetDimensions()[axisIndex];
+  if (sliceIndex<1 || sliceIndex>sliceCount)
+    {
+    sliceIndex=SLICE_INDEX_OUT_OF_VOLUME;
+    }
+
+  return sliceIndex;
+}
+
+// sliceIndex: DICOM slice index, 1-based
+int vtkSlicerSliceLogic::GetSliceIndexFromOffset(double sliceOffset)
+{
+  vtkMRMLVolumeNode *volumeNode;
+  for (int layer=0; layer < 3; layer++ )
+    {
+    volumeNode = this->GetLayerVolumeNode (layer);
+    if (volumeNode)
+      {
+      int sliceIndex=this->GetSliceIndexFromOffset( sliceOffset, volumeNode );
+      // return the result for the first available layer
+      return sliceIndex;
+      }
+    }
+  // slice is not aligned to any of the layers or out of the volume
+  return SLICE_INDEX_NO_VOLUME;
+}

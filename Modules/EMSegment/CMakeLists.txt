@@ -53,10 +53,44 @@ if (IBM_FLAG)
 MESSAGE(STATUS  "===========================================================")
 MESSAGE(STATUS  " Compiling with IBM Flag ")
 MESSAGE(STATUS  "===========================================================")
+
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/Wizard
+  ${CMAKE_CURRENT_SOURCE_DIR}/MRML
+  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm
+  ${CMAKE_CURRENT_SOURCE_DIR}/Registration
+  ${CMAKE_CURRENT_SOURCE_DIR}/IBM
+  ${Slicer3_Libs_INCLUDE_DIRS}
+  ${Slicer3_Base_INCLUDE_DIRS}
+  ${vtkSlicerVolumesModuleLogic_SOURCE_DIR}
+  ${vtkSlicerVolumesModuleLogic_BINARY_DIR}
+  ${Volumes_SOURCE_DIR}
+  ${Volumes_BINARY_DIR}
+  )
+
+
 file(GLOB headers
    $headers 
   "${CMAKE_CURRENT_SOURCE_DIR}/IBM/*.cxx"
   )
+
+file(GLOB TCLFILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "IBM/*.tcl")
+
+foreach(file ${TCLFILES})
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/${file}
+    ${CMAKE_BINARY_DIR}/${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}/${file}
+    COPYONLY)
+endforeach(file)
+MESSAGE(STATUS  "${TCLFILES} ${CMAKE_CURRENT_SOURCE_DIR}")
+
+install(
+  FILES ${TCLFILES}
+  DESTINATION ${Slicer3_INSTALL_MODULES_SHARE_DIR}/${PROJECT_NAME}
+  )
+
 endif(IBM_FLAG)
  
 
@@ -125,6 +159,13 @@ set(EMSegment_SRCS
   #  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMAtlasSuperClass.cxx
   #  ${CMAKE_CURRENT_SOURCE_DIR}/Algorithm/vtkImageEMMarkov.cxx
   )
+
+if (IBM_FLAG)
+  set(EMSegment_SRCS ${EMSegment_SRCS}
+   ${CMAKE_CURRENT_SOURCE_DIR}/IBM/vtkEMSegmentInputChannelsStep.cxx
+   ${CMAKE_CURRENT_SOURCE_DIR}/IBM/vtkEMSegmentPreProcessingStep.cxx
+  )
+endif(IBM_FLAG)
 
 set_source_files_properties(
   # Algorithm sources (temporary exclusion)

@@ -206,7 +206,7 @@ void vtkMRMLFiducialListNode::ReadXMLAttributes(const char** atts)
         ss >> this->GlyphType;
         // at svn version 12553, the symbol type changed by one, check if
         // this is an older file
-        /*
+        int adjustment = 0;
         if (this->GetScene())
           {
           if (this->GetScene()->GetLastLoadedVersion())
@@ -215,17 +215,29 @@ void vtkMRMLFiducialListNode::ReadXMLAttributes(const char** atts)
             int versionNumber = atoi(lastLoadedVersion);
             if (versionNumber < 12553)
               {
-              this->GlyphType = this->GlyphType + 1;
+              vtkDebugMacro("Older mrml file version " << versionNumber << ", increasing the glyph type by 1");
+              adjustment = 1;
+              }
+            else
+              {
+              vtkDebugMacro("Recent file, not incrementing glyph type number");
               }
             }
           else
             {
-            // older files don't have version numbers, so assume it's older
-            // than the change and increment
-            this->GlyphType = this->GlyphType + 1;
+            vtkDebugMacro("Not able to get a last loaded version from mrml scene, assuming older file, incrementing");
+            adjustment = 1;
+            }
+          if (adjustment)
+            {
+            vtkDebugMacro("Incrementing glyph type " << this->GlyphType << " by " << adjustment);
+            this->GlyphType = this->GlyphType + adjustment;
             }
           }
-        */
+        else
+          {
+          vtkWarningMacro("No scene to check version against, assuming correct glyph type.");
+          }
         }      
       else if (!strcmp(attName, "textScale")) 
       {
@@ -749,7 +761,7 @@ int vtkMRMLFiducialListNode::SetNthFiducialXYZWorld(int n, float x, float y, flo
 {
   // first get the list's transform node
   vtkMRMLTransformNode* tnode = this->GetParentTransformNode();
-  vtkMatrix4x4* transformToWorld = vtkMatrix4x4::New();
+  vtkSmartPointer<vtkMatrix4x4> transformToWorld = vtkSmartPointer<vtkMatrix4x4>::New();
   transformToWorld->Identity();
   if (tnode != NULL && tnode->IsLinear())
     {
@@ -766,8 +778,6 @@ int vtkMRMLFiducialListNode::SetNthFiducialXYZWorld(int n, float x, float y, flo
   double worldxyz[4], *worldp = &worldxyz[0];
   transformToWorld->MultiplyPoint(xyzw, worldp); 
 
-  transformToWorld->Delete();
-  transformToWorld = NULL;
   tnode = NULL;
 
   return this->SetNthFiducialXYZ(n, worldxyz[0], worldxyz[1], worldxyz[2]);
@@ -803,7 +813,7 @@ int vtkMRMLFiducialListNode::GetNthFiducialXYZWorld(int n, double *worldxyz)
     }
   // first get the list's transform node
   vtkMRMLTransformNode* tnode = this->GetParentTransformNode();
-  vtkMatrix4x4* transformToWorld = vtkMatrix4x4::New();
+  vtkSmartPointer<vtkMatrix4x4> transformToWorld = vtkSmartPointer<vtkMatrix4x4>::New();
   transformToWorld->Identity();
   if (tnode != NULL && tnode->IsLinear())
     {
@@ -818,9 +828,6 @@ int vtkMRMLFiducialListNode::GetNthFiducialXYZWorld(int n, double *worldxyz)
   xyzw[3] = 1.0;
 
   transformToWorld->MultiplyPoint(xyzw, worldxyz); 
-
-  transformToWorld->Delete();
-  transformToWorld = NULL;
 
   return 1;
 }
