@@ -6,9 +6,9 @@
 
 /// QtCore includes
 #include "qSlicerIOOptions.h"
-#include "qSlicerBaseQTCoreExport.h"
+#include "qSlicerBaseQTGUIExport.h"
 
-class Q_SLICER_BASE_QTCORE_EXPORT qSlicerIOOptionsWidget
+class Q_SLICER_BASE_QTGUI_EXPORT qSlicerIOOptionsWidget
   : public QWidget, public qSlicerIOOptions
 {
   Q_OBJECT
