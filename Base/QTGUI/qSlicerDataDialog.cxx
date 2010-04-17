@@ -57,7 +57,10 @@ void qSlicerDataDialogPrivate::addDirectory()
     {
     return;
     }
+  bool sortingEnabled = this->FileWidget->isSortingEnabled();
+  this->FileWidget->setSortingEnabled(false);
   this->addDirectory(directory);
+  this->FileWidget->setSortingEnabled(sortingEnabled);
 }
 
 //-----------------------------------------------------------------------------
@@ -249,6 +252,7 @@ bool qSlicerDataDialog::exec(const qSlicerIO::IOProperties& readerProperties)
   bool res = false;
   if (d->exec() != QDialog::Accepted)
     {
+    d->reset();
     return res;
     }
   QList<qSlicerIO::IOProperties> files = d->selectedFiles();
