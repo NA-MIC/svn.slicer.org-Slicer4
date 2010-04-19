@@ -30,6 +30,18 @@ set(Slicer3_INSTALL_MODULES_SHARE_DIR "${Slicer3_INSTALL_SHARE_DIR}/Modules")
 set(Slicer3_HOME "${Slicer3_BINARY_DIR}")
 
 #-----------------------------------------------------------------------------
+# Convenient macro allowing to download a file
+#
+MACRO(downloadFile url dest)
+  FILE(DOWNLOAD ${url} ${dest} STATUS status)
+  LIST(GET status 0 error_code)
+  LIST(GET status 1 error_msg)
+  IF(error_code)
+    MESSAGE(FATAL_ERROR "error: Failed to download ${url} - ${error_msg}")
+  ENDIF()
+ENDMACRO()
+
+#-----------------------------------------------------------------------------
 # Disable the warnings that DevStudio 2005 emits wrt to sprintf, strcpu, etc.
 #
 # On Visual Studio 8 MS deprecated C. This removes all 1.276E1265 security
@@ -217,6 +229,16 @@ if(NOT ITK_FOUND)
   message(FATAL_ERROR "Need ITK to build")
 endif(NOT ITK_FOUND)
 include(${ITK_USE_FILE})
+
+#-----------------------------------------------------------------------------
+# FindCTK
+#
+SET(git_repo http://github.com/pieper/CTK/raw/master/)
+
+IF (Slicer3_USE_KWWIDGETS)
+  SET(file Utilities/CMake/FindCTK.cmake)
+  downloadFile(${git_repo}/${file} ${Slicer3_BINARY_DIR}/CMake/FindCTK.cmake)
+ENDIF()
 
 #-----------------------------------------------------------------------------
 IF (Slicer3_USE_KWWIDGETS)
