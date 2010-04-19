@@ -1,10 +1,5 @@
 SET(KIT qCTKWidgets)
 CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx
-  qCTKAbstractFactoryTest1.cxx
-  qCTKAbstractLibraryFactoryTest1.cxx
-  qCTKAbstractObjectFactoryTest1.cxx
-  qCTKAbstractPluginFactoryTest1.cxx
-  qCTKAbstractQObjectFactoryTest1.cxx
   qCTKAddRemoveComboBoxTest1.cxx
   qCTKButtonGroupTest1.cxx
   qCTKCollapsibleButtonTest1.cxx

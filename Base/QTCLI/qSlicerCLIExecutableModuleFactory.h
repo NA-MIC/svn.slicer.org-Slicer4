@@ -18,15 +18,15 @@
 #include "qSlicerAbstractModule.h"
 #include "qSlicerBaseQTCLIExport.h"
 
-/// qCTK includes
+/// CTK includes
 #include <qCTKPimpl.h>
-#include <qCTKAbstractPluginFactory.h>
+#include <ctkAbstractPluginFactory.h>
 
 //-----------------------------------------------------------------------------
-class qSlicerCLIExecutableModuleFactoryItem : public qCTKAbstractFactoryItem<qSlicerAbstractModule>
+class qSlicerCLIExecutableModuleFactoryItem : public ctkAbstractFactoryItem<qSlicerAbstractModule>
 {
 public:
-  typedef qCTKAbstractFactoryItem<qSlicerAbstractModule> Superclass; 
+  typedef ctkAbstractFactoryItem<qSlicerAbstractModule> Superclass;
   explicit qSlicerCLIExecutableModuleFactoryItem(const QString& itemKey, const QString& itemPath);
   virtual ~qSlicerCLIExecutableModuleFactoryItem(){}
 
@@ -46,11 +46,11 @@ class qSlicerCLIExecutableModuleFactoryPrivate;
 
 //-----------------------------------------------------------------------------
 class Q_SLICER_BASE_QTCLI_EXPORT qSlicerCLIExecutableModuleFactory :
-  public qCTKAbstractPluginFactory<qSlicerAbstractModule,qSlicerCLIExecutableModuleFactoryItem>
+  public ctkAbstractPluginFactory<qSlicerAbstractModule,qSlicerCLIExecutableModuleFactoryItem>
 {
 public:
 
-  typedef qCTKAbstractPluginFactory<qSlicerAbstractModule,
+  typedef ctkAbstractPluginFactory<qSlicerAbstractModule,
                                     qSlicerCLIExecutableModuleFactoryItem> Superclass;
   qSlicerCLIExecutableModuleFactory();
   virtual ~qSlicerCLIExecutableModuleFactory(){}

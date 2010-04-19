@@ -42,16 +42,6 @@ SET(qCTKWidgets_PYTHONQT_LIBRARIES ${qCTKWidgets_PYTHONQT_LIBRARIES} CACHE INTER
 #
 SET(qCTKWidgets_SRCS
   qCTKPimpl.h
-  qCTKAbstractFactory.h
-  qCTKAbstractFactory.txx
-  qCTKAbstractObjectFactory.h
-  qCTKAbstractObjectFactory.txx
-  qCTKAbstractPluginFactory.h
-  qCTKAbstractPluginFactory.txx
-  qCTKAbstractQObjectFactory.h
-  qCTKAbstractQObjectFactory.txx  
-  qCTKAbstractLibraryFactory.h
-  qCTKAbstractLibraryFactory.txx
   qCTKAddRemoveComboBox.cxx
   qCTKAddRemoveComboBox.h
   qCTKButtonGroup.cxx

@@ -17,20 +17,20 @@
 /// SlicerQT includes
 #include "qSlicerAbstractModule.h"
 
-/// qCTK includes
+/// CTK includes
 #include <qCTKPimpl.h>
-#include <qCTKAbstractPluginFactory.h>
+#include <ctkAbstractPluginFactory.h>
 
 #include "qSlicerBaseQTCoreExport.h"
 
 class qSlicerLoadableModuleFactoryPrivate;
 
 class Q_SLICER_BASE_QTCORE_EXPORT qSlicerLoadableModuleFactory :
-  public qCTKAbstractPluginFactory<qSlicerAbstractModule>
+  public ctkAbstractPluginFactory<qSlicerAbstractModule>
 {
 public:
 
-  typedef qCTKAbstractPluginFactory<qSlicerAbstractModule> Superclass;
+  typedef ctkAbstractPluginFactory<qSlicerAbstractModule> Superclass;
   qSlicerLoadableModuleFactory();
   virtual ~qSlicerLoadableModuleFactory(){}
 

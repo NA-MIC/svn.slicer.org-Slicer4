@@ -24,7 +24,7 @@ class qSlicerModuleFactoryManagerPrivate : public qCTKPrivate<qSlicerModuleFacto
 public:
   // Convenient typedefs
   typedef qSlicerModuleFactoryManagerPrivate Self; 
-  typedef qCTKAbstractFactory<qSlicerAbstractModule> qSlicerAbstractModuleFactory;
+  typedef ctkAbstractFactory<qSlicerAbstractModule> qSlicerAbstractModuleFactory;
 
   // Instantiate a module
   qSlicerAbstractModule* instantiateModule(qSlicerAbstractModuleFactory* factory,

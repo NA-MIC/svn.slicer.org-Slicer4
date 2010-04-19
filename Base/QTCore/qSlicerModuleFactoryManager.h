@@ -13,8 +13,8 @@
 #ifndef __qSlicerModuleFactoryManager_h
 #define __qSlicerModuleFactoryManager_h
 
-/// qCTK includes
-#include <qCTKAbstractFactory.h>
+/// CTK includes
+#include <ctkAbstractFactory.h>
 #include <qCTKPimpl.h>
 
 /// QT includes
@@ -29,7 +29,7 @@ class qSlicerModuleFactoryManagerPrivate;
 class Q_SLICER_BASE_QTCORE_EXPORT qSlicerModuleFactoryManager
 {
 public:
-  typedef qCTKAbstractFactory<qSlicerAbstractModule> qSlicerAbstractModuleFactory;
+  typedef ctkAbstractFactory<qSlicerAbstractModule> qSlicerAbstractModuleFactory;
  
   qSlicerModuleFactoryManager();
 

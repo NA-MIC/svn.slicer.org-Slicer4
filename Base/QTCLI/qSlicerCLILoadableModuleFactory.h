@@ -18,16 +18,16 @@
 #include "qSlicerAbstractModule.h"
 #include "qSlicerBaseQTCLIExport.h"
 
-/// qCTK includes
+/// CTK includes
 #include <qCTKPimpl.h>
-#include <qCTKAbstractLibraryFactory.h>
+#include <ctkAbstractLibraryFactory.h>
 
 //-----------------------------------------------------------------------------
-class qSlicerCLILoadableModuleFactoryItem : public qCTKFactoryLibraryItem<qSlicerAbstractModule>
+class qSlicerCLILoadableModuleFactoryItem : public ctkFactoryLibraryItem<qSlicerAbstractModule>
 {
 public:
   // Convenient typedef
-  typedef qCTKFactoryLibraryItem<qSlicerAbstractModule> Superclass;
+  typedef ctkFactoryLibraryItem<qSlicerAbstractModule> Superclass;
   
   explicit qSlicerCLILoadableModuleFactoryItem(const QString& itemKey, const QString& itemPath);
   virtual ~qSlicerCLILoadableModuleFactoryItem(){}
@@ -45,11 +45,11 @@ class qSlicerCLILoadableModuleFactoryPrivate;
 
 //-----------------------------------------------------------------------------
 class Q_SLICER_BASE_QTCLI_EXPORT qSlicerCLILoadableModuleFactory :
-  public qCTKAbstractLibraryFactory<qSlicerAbstractModule,qSlicerCLILoadableModuleFactoryItem>
+  public ctkAbstractLibraryFactory<qSlicerAbstractModule,qSlicerCLILoadableModuleFactoryItem>
 {
 public:
 
-  typedef qCTKAbstractLibraryFactory<qSlicerAbstractModule,
+  typedef ctkAbstractLibraryFactory<qSlicerAbstractModule,
                                      qSlicerCLILoadableModuleFactoryItem> Superclass;
   qSlicerCLILoadableModuleFactory();
   virtual ~qSlicerCLILoadableModuleFactory(){}
