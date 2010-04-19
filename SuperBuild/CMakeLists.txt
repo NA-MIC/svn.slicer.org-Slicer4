@@ -45,6 +45,26 @@ mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 # 
 
 #-----------------------------------------------------------------------------
+# Convenient macro allowing to download a file
+#
+MACRO(downloadFile url dest)
+  FILE(DOWNLOAD ${url} ${dest} STATUS status)
+  LIST(GET status 0 error_code)
+  LIST(GET status 1 error_msg)
+  IF(error_code)
+    MESSAGE(FATAL_ERROR "error: Failed to download ${url} - ${error_msg}")
+  ENDIF()
+ENDMACRO()
+
+#-----------------------------------------------------------------------------
+# Prerequisites
+#
+set(git_repo http://github.com/pieper/CTK/raw/master/)
+
+set(file CMake/ExternalProject.cmake)
+downloadFile(${git_repo}/${file} ${CMAKE_BINARY_DIR}/${file})
+
+#-----------------------------------------------------------------------------
 # Disable the warnings that DevStudio 2005 emits wrt to sprintf, strcpu, etc.
 #
 if(CMAKE_COMPILER_2005)
