@@ -118,7 +118,12 @@ set(Slicer3_CMAKE_DIR "${Slicer3_SOURCE_DIR}/CMake" CACHE INTERNAL "")
 add_subdirectory(CMake)
 # Make sure VTK_CMAKE_DIR is at the beginning so that VTK's FindTCL is
 # used before CMake's FindTCL.
-set(CMAKE_MODULE_PATH "${VTK_CMAKE_DIR}" ${CMAKE_MODULE_PATH} "${Slicer3_CMAKE_DIR}")
+set(CMAKE_MODULE_PATH
+  "${VTK_CMAKE_DIR}"
+  "${Slicer3_CMAKE_DIR}"
+  ${Slicer3_BINARY_DIR}/CMake
+  ${CMAKE_MODULE_PATH}
+  )
 
 include("${Slicer3_CMAKE_DIR}/Slicer3PersistenceMacros.cmake")
 

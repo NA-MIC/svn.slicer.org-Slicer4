@@ -45,6 +45,15 @@ mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 # 
 
 #-----------------------------------------------------------------------------
+# Update CMake module path
+#
+set(CMAKE_MODULE_PATH
+  ${CMAKE_SOURCE_DIR}/CMake
+  ${CMAKE_BINARY_DIR}/CMake
+  ${CMAKE_MODULE_PATH}
+  )
+  
+#-----------------------------------------------------------------------------
 # Convenient macro allowing to download a file
 #
 MACRO(downloadFile url dest)
