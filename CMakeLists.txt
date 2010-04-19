@@ -248,16 +248,26 @@ IF (Slicer3_USE_KWWIDGETS)
     MESSAGE(FATAL_ERROR "Need KWWidgets to build")
   ENDIF(NOT KWWidgets_FOUND)
   INCLUDE(${KWWidgets_USE_FILE})
+  
 ELSE(Slicer3_USE_KWWIDGETS)
+
+  # VTK
   FIND_PACKAGE(VTK REQUIRED)
   IF(NOT VTK_FOUND)
-    MESSAGE(FATAL_ERROR "Need VTK to build with ")
+    MESSAGE(FATAL_ERROR "Need VTK to build")
   ELSE(NOT VTK_FOUND)
     IF(NOT VTK_USE_QVTK)
       MESSAGE("Please make sure VTK is build with VTK_USE_GUISUPPORT and VTK_USE_QVTK enabled")
     ENDIF(NOT VTK_USE_QVTK)
   ENDIF(NOT VTK_FOUND)
   INCLUDE(${VTK_USE_FILE})
+
+  # CTK
+  FIND_PACKAGE(CTK REQUIRED)
+  IF(CTK_FOUND)
+    INCLUDE(${CTK_USE_FILE})
+  ENDIF()
+  
 ENDIF (Slicer3_USE_KWWIDGETS)
 
 #-----------------------------------------------------------------------------

@@ -935,6 +935,25 @@ ExternalProject_Add(vtk
 )
 
 #-----------------------------------------------------------------------------
+# Get and build CTK
+set(ctk_source ${CMAKE_BINARY_DIR}/CTK)
+if (Slicer3_USE_QT)
+  ExternalProject_Add(CTK
+    GIT_REPOSITORY "git://github.com/pieper/CTK.git"
+    SOURCE_DIR ${ctk_source}
+    BINARY_DIR CTK-build
+    CMAKE_GENERATOR ${gen}
+    CMAKE_ARGS
+      -DCMAKE_CXX_FLAGS:STRING=${CMAKE_CXX_FLAGS}
+      -DCMAKE_C_FLAGS:STRING=${CMAKE_C_FLAGS}
+      -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
+      -DBUILD_TESTING:BOOL=OFF
+      -DQT_QMAKE_EXECUTABLE:FILEPATH=${QT_QMAKE_EXECUTABLE}
+    INSTALL_COMMAND ""
+    )
+endif()
+
+#-----------------------------------------------------------------------------
 # Get and build kwwidgets
 
 if(Slicer3_USE_KWWIDGETS)
@@ -1185,6 +1204,7 @@ ExternalProject_Add(${proj}
     -DOpenIGTLink_DIR:FILEPATH=${CMAKE_BINARY_DIR}/OpenIGTLink-build
     -DBatchMake_DIR:FILEPATH=${CMAKE_BINARY_DIR}/BatchMake-build
     -DVTK_DIR:FILEPATH=${CMAKE_BINARY_DIR}/VTK-build
+    -DCTK_DIR:FILEPATH=${CMAKE_BINARY_DIR}/CTK-build
     -DSlicer3_USE_BatchMake=ON
     -DINCR_TCL_LIBRARY:FILEPATH=${slicer_TCL_LIB}
     -DINCR_TK_LIBRARY:FILEPATH=${slicer_TK_LIB}
