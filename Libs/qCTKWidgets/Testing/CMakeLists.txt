@@ -18,7 +18,6 @@ CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx
   qCTKSliderSpinBoxWidgetTest1.cxx
   qCTKTitleComboBoxTest1.cxx
   qCTKTreeComboBoxTest1.cxx
-  qCTKUtilsTest1.cxx
   )
 
 SET (TestsToRun ${Tests})

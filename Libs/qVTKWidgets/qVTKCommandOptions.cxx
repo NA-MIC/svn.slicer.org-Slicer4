@@ -15,8 +15,8 @@
 
 #include "qVTKCommandOptions.h"
 
-// qCTK includes
-#include <qCTKUtils.h>
+// CTK includes
+#include <ctkUtils.h>
 
 // VTKSYS includes
 #include <vtksys/CommandLineArguments.hxx>
@@ -218,7 +218,7 @@ void qVTKCommandOptionsPrivate::syncQStringListPtrWithStringVectorPtr()
       {
       qStringListPtr->clear();
       QStringList convertedVector;
-      qCTKUtils::stlVectorToQList(*vectorPtr, convertedVector);
+      ctkUtils::stlVectorToQList(*vectorPtr, convertedVector);
       qStringListPtr->append(convertedVector);
       }
     }

@@ -90,8 +90,6 @@ SET(qCTKWidgets_SRCS
   qCTKTitleComboBox.h
   qCTKTreeComboBox.cxx
   qCTKTreeComboBox.h
-  qCTKUtils.cxx
-  qCTKUtils.h
   )
 
 IF(qCTKWidgets_HAVE_BFD)
