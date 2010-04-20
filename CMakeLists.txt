@@ -240,9 +240,14 @@ include(${ITK_USE_FILE})
 #
 SET(git_repo http://github.com/pieper/CTK/raw/master/)
 
-IF (Slicer3_USE_KWWIDGETS)
+if (Slicer3_USE_QT)
   SET(file Utilities/CMake/FindCTK.cmake)
   downloadFile(${git_repo}/${file} ${Slicer3_BINARY_DIR}/CMake/FindCTK.cmake)
+
+  FIND_PACKAGE(CTK REQUIRED)
+  IF(CTK_FOUND)
+    INCLUDE(${CTK_USE_FILE})
+  ENDIF()
 ENDIF()
 
 #-----------------------------------------------------------------------------
@@ -266,12 +271,6 @@ ELSE(Slicer3_USE_KWWIDGETS)
     ENDIF(NOT VTK_USE_QVTK)
   ENDIF(NOT VTK_FOUND)
   INCLUDE(${VTK_USE_FILE})
-
-  # CTK
-  FIND_PACKAGE(CTK REQUIRED)
-  IF(CTK_FOUND)
-    INCLUDE(${CTK_USE_FILE})
-  ENDIF()
   
 ENDIF (Slicer3_USE_KWWIDGETS)
 
