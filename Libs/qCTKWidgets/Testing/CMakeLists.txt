@@ -10,7 +10,6 @@ CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx
   qCTKDoubleSliderTest1.cxx
   qCTKFittedTextBrowserTest1.cxx
   qCTKFlowLayoutTest1.cxx
-  qCTKMatrixWidgetTest1.cxx
   qCTKModelTesterTest1.cxx
   qCTKRangeSliderTest1.cxx
   qCTKPimplTest1.cxx

@@ -151,6 +151,7 @@ SET(qVTKWidgets_LIBRARIES
   QVTK
   ${qVTKWidgets_PYTHONQT_LIBRARIES}
   CTKCore
+  CTKWidgets
   )
   
 TARGET_LINK_LIBRARIES(${lib_name} ${qVTKWidgets_LIBRARIES})

@@ -70,8 +70,6 @@ SET(qCTKWidgets_SRCS
   qCTKFittedTextBrowser.h
   qCTKFlowLayout.cxx
   qCTKFlowLayout.h
-  qCTKMatrixWidget.cxx
-  qCTKMatrixWidget.h
   qCTKMenuButton.cxx
   qCTKMenuButton.h
   qCTKModelTester.cxx
@@ -114,7 +112,6 @@ SET(qCTKWidgets_MOC_SRCS
   qCTKDoubleSlider.h
   qCTKDynamicSpacer.h
   qCTKFittedTextBrowser.h
-  qCTKMatrixWidget.h
   qCTKMenuButton.h
   qCTKModelTester.h
   qCTKRangeSlider.h
