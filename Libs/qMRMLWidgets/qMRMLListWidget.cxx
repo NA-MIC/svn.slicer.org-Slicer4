@@ -44,7 +44,7 @@ void qMRMLListWidgetPrivate::init()
   // signal layoutAboutToBeChanged() which eventually calls testData on the valid QModelIndex
   //new ctkModelTester(p->model(), p);
     
-  ctkModelTester tester = new ctkModelTester(p);
+  ctkModelTester* tester = new ctkModelTester(p);
   tester->setModel(transformModel);
 }
 
