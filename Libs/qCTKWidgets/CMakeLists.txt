@@ -76,8 +76,6 @@ SET(qCTKWidgets_SRCS
   qCTKRangeSlider.h
   qCTKRangeWidget.cxx
   qCTKRangeWidget.h
-  qCTKSettings.cxx
-  qCTKSettings.h
   qCTKSliderSpinBoxWidget.cxx
   qCTKSliderSpinBoxWidget.h
   qCTKTestApplication.cxx
@@ -113,7 +111,6 @@ SET(qCTKWidgets_MOC_SRCS
   qCTKMenuButton.h
   qCTKRangeSlider.h
   qCTKRangeWidget.h
-  qCTKSettings.h
   qCTKSliderSpinBoxWidget.h
   qCTKTestApplication.h
   qCTKTitleComboBox.h

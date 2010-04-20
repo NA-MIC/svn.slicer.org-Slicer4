@@ -18,8 +18,8 @@
 #include <QTimer>
 #include <QDebug>
 
-// qCTK includes
-#include <qCTKSettings.h>
+// CTK includes
+#include <ctkSettings.h>
 
 // MRML includes
 #include "vtkMRMLScene.h"
@@ -67,7 +67,7 @@ public:
 
   ///
   /// Instanciate settings object
-  qCTKSettings* instantiateSettings(const QString& suffix, bool useTmp);
+  ctkSettings* instantiateSettings(const QString& suffix, bool useTmp);
   
   ///
   /// Given the program name, should return Slicer Home Directory
@@ -95,7 +95,7 @@ public:
   vtkSmartPointer< vtkSlicerApplicationLogic >  AppLogic;
 
   QString                              SlicerHome;
-  qCTKSettings*                        Settings;
+  ctkSettings*                         Settings;
 
   ///
   /// ModuleManager - It should exist only one instance of the factory
@@ -180,8 +180,8 @@ qSlicerCoreApplicationPrivate::~qSlicerCoreApplicationPrivate()
 }
 
 //-----------------------------------------------------------------------------
-qCTKSettings* qSlicerCoreApplicationPrivate::instantiateSettings(const QString& suffix,
-                                                                 bool useTmp)
+ctkSettings* qSlicerCoreApplicationPrivate::instantiateSettings(const QString& suffix,
+                                                                bool useTmp)
 {
   QCTK_P(qSlicerCoreApplication);
 
@@ -196,7 +196,7 @@ qCTKSettings* qSlicerCoreApplicationPrivate::instantiateSettings(const QString& 
     settingsFileName += "-tmp";
     }
 
-  qCTKSettings* settings = new qCTKSettings(p->organizationName(), settingsFileName, p);
+  ctkSettings* settings = new ctkSettings(p->organizationName(), settingsFileName, p);
 
   if (useTmp)
     {
@@ -455,7 +455,7 @@ void qSlicerCoreApplication::handleCommandLineArguments()
 }
 
 //-----------------------------------------------------------------------------
-qCTKSettings* qSlicerCoreApplication::settings()
+ctkSettings* qSlicerCoreApplication::settings()
 {
   QCTK_D(qSlicerCoreApplication);
 

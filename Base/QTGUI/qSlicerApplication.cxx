@@ -1,13 +1,3 @@
-#include "qSlicerApplication.h"
-
-// SlicerQT includes
-#include "qSlicerWidget.h"
-#include "qSlicerIOManager.h"
-#include "qSlicerCommandOptions.h"
-
-// qCTK includes
-#include <qCTKSettings.h>
-
 // QT includes
 #include <QCleanlooksStyle>
 #include <QColor>
@@ -20,6 +10,15 @@
 #include <QRect>
 #include <QStyle>
 #include <QWidget>
+
+// CTK includes
+#include <ctkSettings.h>
+
+// SlicerQT includes
+#include "qSlicerWidget.h"
+#include "qSlicerIOManager.h"
+#include "qSlicerCommandOptions.h"
+#include "qSlicerApplication.h"
 
 #include "vtkSlicerConfigure.h"
 

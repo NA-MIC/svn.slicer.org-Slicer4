@@ -29,7 +29,7 @@ class qSlicerModuleManager;
 class qSlicerCoreIOManager;
 class qSlicerCoreCommandOptions; 
 class qSlicerCoreApplicationPrivate;
-class qCTKSettings;
+class ctkSettings;
 #ifdef Slicer3_USE_PYTHONQT
 class qSlicerPythonManager;
 #endif
@@ -150,8 +150,8 @@ public:
 
   ///
   /// Get application settings
-  /// Note that his method will also instanciate a qCTKSettings object if required.
-  qCTKSettings* settings();
+  /// Note that his method will also instanciate a ctkSettings object if required.
+  ctkSettings* settings();
 
   ///
   /// Disable application settings
