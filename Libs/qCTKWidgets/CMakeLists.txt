@@ -11,13 +11,12 @@ IF(NOT DEFINED BUILD_SHARED_LIBS)
   OPTION(BUILD_SHARED_LIBS "Build with shared libraries." ON)
 ENDIF(NOT DEFINED BUILD_SHARED_LIBS)
 
+# CMake module
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${qCTKWidgets_SOURCE_DIR}/CMake")
+
 # CMake Macros
 INCLUDE(CMake/qCTKParseArgumentsMacro.cmake)
 INCLUDE(CMake/qCTKDesignerPluginMacros.cmake)
-INCLUDE(CMake/qCTKBFDCheck.cmake)
-
-# CMake module
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${qCTKWidgets_SOURCE_DIR}/CMake")
 
 #-----------------------------------------------------------------------------
 # Python wrapping using PythonQT
@@ -85,13 +84,6 @@ SET(qCTKWidgets_SRCS
   qCTKTreeComboBox.cxx
   qCTKTreeComboBox.h
   )
-
-IF(qCTKWidgets_HAVE_BFD)
-  LIST(APPEND qCTKWidgets_SRCS
-    qCTKBinaryFileDescriptor.cxx
-    qCTKBinaryFileDescriptor.h
-    )
-ENDIF()
 
 # Headers that should run through moc
 SET(qCTKWidgets_MOC_SRCS
@@ -198,7 +190,7 @@ SET(qCTKWidgets_LIBRARIES
   ${qCTKWidgets_PYTHONQT_LIBRARIES}
   )
 
-TARGET_LINK_LIBRARIES(${lib_name} ${qCTKWidgets_LIBRARIES} ${qCTKWidgets_BFD_LIBRARIES})
+TARGET_LINK_LIBRARIES(${lib_name} ${qCTKWidgets_LIBRARIES})
 
 # Apply user-defined properties to the library target.
 IF(Slicer3_LIBRARY_PROPERTIES)
