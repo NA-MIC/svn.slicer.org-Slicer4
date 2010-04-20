@@ -72,8 +72,6 @@ SET(qCTKWidgets_SRCS
   qCTKFlowLayout.h
   qCTKMenuButton.cxx
   qCTKMenuButton.h
-  qCTKModelTester.cxx
-  qCTKModelTester.h
   qCTKRangeSlider.cxx
   qCTKRangeSlider.h
   qCTKRangeWidget.cxx
@@ -113,7 +111,6 @@ SET(qCTKWidgets_MOC_SRCS
   qCTKDynamicSpacer.h
   qCTKFittedTextBrowser.h
   qCTKMenuButton.h
-  qCTKModelTester.h
   qCTKRangeSlider.h
   qCTKRangeWidget.h
   qCTKSettings.h

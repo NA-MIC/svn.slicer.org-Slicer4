@@ -1,9 +1,15 @@
+
+// QT includes
+#include <QDebug>
+
+// CTK includes
+#include "ctkModelTester.h"
+
+// qMRML includes
 #include "qMRMLTreeWidget.h"
 //#include "qMRMLItemModel.h"
 #include "qMRMLSceneModel.h"
 #include "qMRMLTransformProxyModel.h"
-#include <QDebug>
-#include "qCTKModelTester.h"
 
 //------------------------------------------------------------------------------
 class qMRMLTreeWidgetPrivate: public qCTKPrivate<qMRMLTreeWidget>
@@ -23,12 +29,8 @@ void qMRMLTreeWidgetPrivate::init()
   transformModel->setSourceModel(sceneModel);
   p->QTreeView::setModel(transformModel);
   
-  //qCTKModelTester* modelTester = new qCTKModelTester(0, p);
-  //modelTester->setModel(sceneModel);
-  //new qCTKModelTester(sceneModel, p);
-  //modelTester->setModel(transformModel);
-  new qCTKModelTester(transformModel, p);
-  
+  ctkModelTester * tester = new ctkModelTester(p);
+  tester->setModel(transformModel);
 }
 
 //------------------------------------------------------------------------------

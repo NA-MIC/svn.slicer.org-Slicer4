@@ -1,15 +1,15 @@
 // QT includes
 #include <QDebug>
 
-// qCTK widgets
-#include <qCTKModelTester.h>
+// CTK includes
+#include <ctkModelTester.h>
 
 #include "qSlicerVolumesModuleWidget.h"
 #include "ui_qSlicerVolumesModule.h"
 
 //-----------------------------------------------------------------------------
 class qSlicerVolumesModuleWidgetPrivate: public qCTKPrivate<qSlicerVolumesModuleWidget>,
-                                          public Ui_qSlicerVolumesModule
+                                         public Ui_qSlicerVolumesModule
 {
 public:
 };
@@ -25,7 +25,7 @@ void qSlicerVolumesModuleWidget::setup()
 
   QObject::connect(d->ActiveVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), this, 
                                                 SLOT(setActiveVolumeNode(vtkMRMLNode*)));
-  qCTKModelTester* tester = new qCTKModelTester(this);
+  ctkModelTester* tester = new ctkModelTester(this);
   tester->setModel(d->ActiveVolumeNodeSelector->model());
 }
 

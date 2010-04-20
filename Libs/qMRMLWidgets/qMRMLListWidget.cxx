@@ -1,9 +1,15 @@
+
+// QT includes
+#include <QSortFilterProxyModel>
+
+// CTK includes
+#include "ctkModelTester.h"
+
+// qMRML includes
 #include "qMRMLListWidget.h"
 //#include "qMRMLItemModel.h"
 #include "qMRMLSceneModel.h"
 #include "qMRMLTransformProxyModel.h"
-#include <QSortFilterProxyModel>
-#include "qCTKModelTester.h"
 
 //------------------------------------------------------------------------------
 class qMRMLListWidgetPrivate: public qCTKPrivate<qMRMLListWidget>
@@ -19,7 +25,7 @@ void qMRMLListWidgetPrivate::init()
   QCTK_P(qMRMLListWidget);
   //p->QListView::setModel(new qMRMLItemModel(p));
   //p->QListView::setModel(new qMRMLSceneModel(p));
-  ///new qCTKModelTester(p->model(), p);
+  ///new ctkModelTester(p->model(), p);
   
   qMRMLSceneModel* sceneModel = new qMRMLSceneModel(p);
   qMRMLTransformProxyModel* transformModel = new qMRMLTransformProxyModel(p);
@@ -34,10 +40,12 @@ void qMRMLListWidgetPrivate::init()
   // We have a problem when the model is reset (qMRMLSceneModel::setMRMLScene(0)), 
   // the QSortFilterProxyModel doesn't realize that the rows have disappeared 
   // and QSortFilterProxyModel::rowCount(QModelIndex) returns 1(the mrmlscene), which
-  // is eventually called by the qCTKModelTester slot connected to QSortFilterProxyModel
+  // is eventually called by the ctkModelTester slot connected to QSortFilterProxyModel
   // signal layoutAboutToBeChanged() which eventually calls testData on the valid QModelIndex
-  //new qCTKModelTester(p->model(), p);
-  new qCTKModelTester(transformModel,p);
+  //new ctkModelTester(p->model(), p);
+    
+  ctkModelTester tester = new ctkModelTester(p);
+  tester->setModel(transformModel);
 }
 
 //------------------------------------------------------------------------------
