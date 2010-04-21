@@ -146,7 +146,6 @@ ADD_LIBRARY(${lib_name}
 
 SET(qVTKWidgets_LIBRARIES 
   ${QT_LIBRARIES}
-  MRML
   qCTKWidgets
   QVTK
   ${qVTKWidgets_PYTHONQT_LIBRARIES}
