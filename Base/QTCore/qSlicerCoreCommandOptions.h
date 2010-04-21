@@ -15,17 +15,17 @@
 
 // CTK includes
 #include <ctkPimpl.h>
-#include <qVTKCommandOptions.h>
+#include <ctkVTKCommandOptions.h>
 
 #include "qSlicerBaseQTCoreExport.h"
 
 class QSettings;
 class qSlicerCoreCommandOptionsPrivate;
 
-class Q_SLICER_BASE_QTCORE_EXPORT qSlicerCoreCommandOptions : public qVTKCommandOptions
+class Q_SLICER_BASE_QTCORE_EXPORT qSlicerCoreCommandOptions : public ctkVTKCommandOptions
 {
 public:
-  typedef qVTKCommandOptions Superclass;
+  typedef ctkVTKCommandOptions Superclass;
   qSlicerCoreCommandOptions(QSettings* _settings);
   virtual ~qSlicerCoreCommandOptions();
 

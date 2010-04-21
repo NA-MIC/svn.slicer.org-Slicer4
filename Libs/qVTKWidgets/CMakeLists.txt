@@ -30,8 +30,6 @@ ENDIF(qCTKWidgets_WRAP_PYTHON)
 # Sources
 #
 SET(qVTKWidgets_SRCS
-  qVTKCommandOptions.cxx
-  qVTKCommandOptions.h
   qVTKRenderView.cxx
   qVTKRenderView.h
   )
@@ -163,7 +161,7 @@ INSTALL(TARGETS ${lib_name}
 # Testing
 #
 IF(BUILD_TESTING)
-  ADD_SUBDIRECTORY(Testing)
+  #ADD_SUBDIRECTORY(Testing)
 ENDIF(BUILD_TESTING)
 
 # --------------------------------------------------------------------------
