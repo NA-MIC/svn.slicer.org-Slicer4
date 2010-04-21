@@ -3,13 +3,14 @@
 #include <QDebug>
 #include <QWeakPointer>
 
+// CTK includes
 #include "qCTKButtonGroup.h"
 
 //-----------------------------------------------------------------------------
-class qCTKButtonGroupPrivate : public qCTKPrivate<qCTKButtonGroup>
+class qCTKButtonGroupPrivate : public ctkPrivate<qCTKButtonGroup>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qCTKButtonGroup);
+  CTK_DECLARE_PUBLIC(qCTKButtonGroup);
   bool IsLastButtonPressedChecked;
 };
 
@@ -17,7 +18,7 @@ public:
 qCTKButtonGroup::qCTKButtonGroup(QObject* _parent)
   :QButtonGroup(_parent)
 {
-  QCTK_INIT_PRIVATE(qCTKButtonGroup);
+  CTK_INIT_PRIVATE(qCTKButtonGroup);
   connect(this, SIGNAL(buttonClicked(QAbstractButton*)), this, SLOT(onButtonClicked(QAbstractButton*)));
   connect(this, SIGNAL(buttonPressed(QAbstractButton*)), this, SLOT(onButtonPressed(QAbstractButton*)));
 }
@@ -25,7 +26,7 @@ qCTKButtonGroup::qCTKButtonGroup(QObject* _parent)
 //------------------------------------------------------------------------------
 void qCTKButtonGroup::onButtonClicked(QAbstractButton *clickedButton)
 {
-  QCTK_D(qCTKButtonGroup);
+  CTK_D(qCTKButtonGroup);
   if (!this->exclusive() || !d->IsLastButtonPressedChecked)
     {
     return;
@@ -38,7 +39,7 @@ void qCTKButtonGroup::onButtonClicked(QAbstractButton *clickedButton)
 //------------------------------------------------------------------------------
 void qCTKButtonGroup::onButtonPressed(QAbstractButton *pressedButton)
 {
-  QCTK_D(qCTKButtonGroup);
+  CTK_D(qCTKButtonGroup);
   Q_ASSERT(pressedButton);
   d->IsLastButtonPressedChecked = pressedButton->isChecked();
 }

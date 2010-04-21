@@ -40,7 +40,6 @@ SET(qCTKWidgets_PYTHONQT_LIBRARIES ${qCTKWidgets_PYTHONQT_LIBRARIES} CACHE INTER
 # Sources
 #
 SET(qCTKWidgets_SRCS
-  qCTKPimpl.h
   qCTKAddRemoveComboBox.cxx
   qCTKAddRemoveComboBox.h
   qCTKButtonGroup.cxx

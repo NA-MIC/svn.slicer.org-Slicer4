@@ -12,17 +12,16 @@
 
 =========================================================================*/
 
+// Qt includes
+#include <QDebug>
 
+// CTK includes
+#include <ctkPimpl.h>
 #include "qCTKAddRemoveComboBox.h"
 #include "ui_qCTKAddRemoveComboBox.h"
 
-/// qCTK includes 
-#include "qCTKPimpl.h"
-
-#include <QDebug>
-
 //-----------------------------------------------------------------------------
-class qCTKAddRemoveComboBoxPrivate : public qCTKPrivate<qCTKAddRemoveComboBox>,
+class qCTKAddRemoveComboBoxPrivate : public ctkPrivate<qCTKAddRemoveComboBox>,
                                      public Ui_qCTKAddRemoveComboBox
 {
 public:
@@ -90,13 +89,13 @@ void qCTKAddRemoveComboBoxPrivate::insertEmptyItem()
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBoxPrivate::connectComboBox(QComboBox* comboBox)
 {
-  QCTK_P(qCTKAddRemoveComboBox);
+  CTK_P(qCTKAddRemoveComboBox);
   QObject::connect(comboBox, SIGNAL(activated(int)),
                 p, SIGNAL(activated(int)));
   QObject::connect(comboBox, SIGNAL(currentIndexChanged(int)),
                 p, SIGNAL(currentIndexChanged(int)));
   /*
-  this->connect(qctk_d()->ComboBox->model(),
+  this->connect(ctk_d()->ComboBox->model(),
   SIGNAL(rowsAboutToBeInserted(const QModelIndex & _parent, int start, int end )),
   SLOT(onRowsAboutToBeInserted(const QModelIndex & _parent, int start, int end )));
   */
@@ -118,8 +117,8 @@ void qCTKAddRemoveComboBoxPrivate::connectComboBox(QComboBox* comboBox)
 // --------------------------------------------------------------------------
 qCTKAddRemoveComboBox::qCTKAddRemoveComboBox(QWidget* _parent) : Superclass(_parent)
 {
-  QCTK_INIT_PRIVATE(qCTKAddRemoveComboBox);
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_INIT_PRIVATE(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   d->setupUi(this);
   
   // connect
@@ -136,7 +135,7 @@ qCTKAddRemoveComboBox::qCTKAddRemoveComboBox(QWidget* _parent) : Superclass(_par
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::printAdditionalInfo()
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   qDebug() << "qCTKAddRemoveComboBox:" << this << endl
            << " EmptyText:" << d->EmptyText << endl
            << " AddingEmptyItem:" << d->AddingEmptyItem << endl
@@ -150,7 +149,7 @@ void qCTKAddRemoveComboBox::printAdditionalInfo()
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setComboBox(QComboBox* comboBox)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   if ((comboBox == d->ComboBox) ||
       comboBox->count())
     {
@@ -176,7 +175,7 @@ void qCTKAddRemoveComboBox::setComboBox(QComboBox* comboBox)
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setEmptyText(const QString& text)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     {
@@ -187,12 +186,12 @@ void qCTKAddRemoveComboBox::setEmptyText(const QString& text)
 }
 
 // --------------------------------------------------------------------------
-QCTK_GET_CXX(qCTKAddRemoveComboBox, QString, emptyText, EmptyText);
+CTK_GET_CXX(qCTKAddRemoveComboBox, QString, emptyText, EmptyText);
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::onRowsInserted(const QModelIndex & _parent, int start, int end)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (_parent != d->ComboBox->rootModelIndex())
     {// Rows that are to be added in the model are not displayed by the combobox
@@ -236,7 +235,7 @@ void qCTKAddRemoveComboBox::onRowsInserted(const QModelIndex & _parent, int star
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::onRowsAboutToBeRemoved(const QModelIndex & _parent, int start, int end)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
 
   if (_parent != d->ComboBox->rootModelIndex())
     {//rows that are to be added in the model are not displayed by the combobox
@@ -258,7 +257,7 @@ void qCTKAddRemoveComboBox::onRowsAboutToBeRemoved(const QModelIndex & _parent, 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::onRowsRemoved(const QModelIndex & _parent, int start, int end)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (_parent != d->ComboBox->rootModelIndex())
     {//rows that are to be added in the model are not displayed by the combobox
@@ -292,20 +291,20 @@ void qCTKAddRemoveComboBox::onRowsRemoved(const QModelIndex & _parent, int start
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setComboBoxEnabled(bool enable)
 {
-  qctk_d()->ComboBox->setEnabled(enable);
+  ctk_d()->ComboBox->setEnabled(enable);
 }
 
 // --------------------------------------------------------------------------
 bool qCTKAddRemoveComboBox::comboBoxEnabled()const
 {
   //const cast as I'm not sure why isEnabledTo doesn't take a const
-  return qctk_d()->ComboBox->isEnabledTo(const_cast<qCTKAddRemoveComboBox*>(this));
+  return ctk_d()->ComboBox->isEnabledTo(const_cast<qCTKAddRemoveComboBox*>(this));
 }
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setAddEnabled(bool enable)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   d->AddPushButton->setEnabled(enable);
   d->AddEnabled = enable;
@@ -314,13 +313,13 @@ void qCTKAddRemoveComboBox::setAddEnabled(bool enable)
 // --------------------------------------------------------------------------
 bool qCTKAddRemoveComboBox::addEnabled()const
 {
-  return qctk_d()->AddEnabled;
+  return ctk_d()->AddEnabled;
 }
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setRemoveEnabled(bool enable)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (this->count() > 0)
     {
@@ -332,13 +331,13 @@ void qCTKAddRemoveComboBox::setRemoveEnabled(bool enable)
 // --------------------------------------------------------------------------
 bool qCTKAddRemoveComboBox::removeEnabled()const
 {
-  return qctk_d()->RemoveEnabled;
+  return ctk_d()->RemoveEnabled;
 }
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setEditEnabled(bool enable)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (this->count() > 0)
     { 
@@ -350,7 +349,7 @@ void qCTKAddRemoveComboBox::setEditEnabled(bool enable)
 // --------------------------------------------------------------------------
 bool qCTKAddRemoveComboBox::editEnabled()const
 {
-  return qctk_d()->EditEnabled;
+  return ctk_d()->EditEnabled;
 }
 
 // --------------------------------------------------------------------------
@@ -371,42 +370,42 @@ void qCTKAddRemoveComboBox::onEdit()
 // --------------------------------------------------------------------------
 int qCTKAddRemoveComboBox::count()const
 {
-  QCTK_D(const qCTKAddRemoveComboBox);
+  CTK_D(const qCTKAddRemoveComboBox);
   return (d->HasEmptyItem ? 0 : d->ComboBox->count());
 }
 
 // --------------------------------------------------------------------------
-QCTK_GET_CXX(qCTKAddRemoveComboBox, bool, empty, HasEmptyItem);
+CTK_GET_CXX(qCTKAddRemoveComboBox, bool, empty, HasEmptyItem);
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setCurrentIndex(int index)
 {
-  return qctk_d()->ComboBox->setCurrentIndex(index);
+  return ctk_d()->ComboBox->setCurrentIndex(index);
 }
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::insertItem(int index, const QString &text, const QVariant &userDataVariable)
 {
   //qDebug() << __FUNCTION__ << " " << index <<  " " << text << " " << userDataVariable ;
-  qctk_d()->ComboBox->insertItem(index, text, userDataVariable);
+  ctk_d()->ComboBox->insertItem(index, text, userDataVariable);
 }
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::insertItem(int index, const QIcon &icon, const QString &text, const QVariant &userDataVariable)
 {
-  qctk_d()->ComboBox->insertItem(index, icon, text, userDataVariable);
+  ctk_d()->ComboBox->insertItem(index, icon, text, userDataVariable);
 }
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::insertItems(int index, const QStringList &texts)
 {
-  qctk_d()->ComboBox->insertItems(index, texts);
+  ctk_d()->ComboBox->insertItems(index, texts);
 }
   
 // --------------------------------------------------------------------------
 int qCTKAddRemoveComboBox::findText(const QString & text, Qt::MatchFlags flags)const
 {
-  QCTK_D(const qCTKAddRemoveComboBox);
+  CTK_D(const qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     { // if the scene is empty, don't even try to find the text (it could be the
@@ -419,7 +418,7 @@ int qCTKAddRemoveComboBox::findText(const QString & text, Qt::MatchFlags flags)c
 // --------------------------------------------------------------------------
 int qCTKAddRemoveComboBox::findData(const QVariant &dataVariable, int role, Qt::MatchFlags flags)const
 {
-  QCTK_D(const qCTKAddRemoveComboBox);
+  CTK_D(const qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     { // if the scene is empty, don't even try to find the dataVariable 
@@ -431,7 +430,7 @@ int qCTKAddRemoveComboBox::findData(const QVariant &dataVariable, int role, Qt::
 // --------------------------------------------------------------------------
 QString qCTKAddRemoveComboBox::itemText(int index) const
 {
-  QCTK_D(const qCTKAddRemoveComboBox);
+  CTK_D(const qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     {
@@ -443,7 +442,7 @@ QString qCTKAddRemoveComboBox::itemText(int index) const
 // --------------------------------------------------------------------------
 QVariant qCTKAddRemoveComboBox::itemData(int index, int role) const
 {
-  QCTK_D(const qCTKAddRemoveComboBox);
+  CTK_D(const qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     {
@@ -455,7 +454,7 @@ QVariant qCTKAddRemoveComboBox::itemData(int index, int role) const
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setItemText(int index, const QString& text)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     {
@@ -467,7 +466,7 @@ void qCTKAddRemoveComboBox::setItemText(int index, const QString& text)
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setItemData(int index, const QVariant& dataVariable, int role)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     {
@@ -479,7 +478,7 @@ void qCTKAddRemoveComboBox::setItemData(int index, const QVariant& dataVariable,
 // --------------------------------------------------------------------------
 int qCTKAddRemoveComboBox::currentIndex() const
 {
-  QCTK_D(const qCTKAddRemoveComboBox);
+  CTK_D(const qCTKAddRemoveComboBox);
   
   return d->HasEmptyItem ? -1 : d->ComboBox->currentIndex();
 }
@@ -487,7 +486,7 @@ int qCTKAddRemoveComboBox::currentIndex() const
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::removeItem(int index)
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     {
@@ -499,7 +498,7 @@ void qCTKAddRemoveComboBox::removeItem(int index)
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::clear()
 {
-  QCTK_D(qCTKAddRemoveComboBox);
+  CTK_D(qCTKAddRemoveComboBox);
   
   if (d->HasEmptyItem)
     {
@@ -511,24 +510,24 @@ void qCTKAddRemoveComboBox::clear()
 // --------------------------------------------------------------------------
 QModelIndex qCTKAddRemoveComboBox::rootModelIndex()const
 {
-  return qctk_d()->ComboBox->rootModelIndex();
+  return ctk_d()->ComboBox->rootModelIndex();
 }
 
 // --------------------------------------------------------------------------
 void qCTKAddRemoveComboBox::setRootModelIndex(const QModelIndex& root)
 {
-  qctk_d()->ComboBox->setRootModelIndex(root);
+  ctk_d()->ComboBox->setRootModelIndex(root);
 }
 
 // --------------------------------------------------------------------------
 int qCTKAddRemoveComboBox::modelColumn()const
 {
-  return qctk_d()->ComboBox->modelColumn();
+  return ctk_d()->ComboBox->modelColumn();
 }
 
 // --------------------------------------------------------------------------
 QAbstractItemModel* qCTKAddRemoveComboBox::model()const
 {
-  return qctk_d()->ComboBox->model();
+  return ctk_d()->ComboBox->model();
 }
 

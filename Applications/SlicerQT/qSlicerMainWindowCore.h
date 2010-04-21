@@ -1,11 +1,11 @@
 #ifndef __qSlicerMainWindowCore_h
 #define __qSlicerMainWindowCore_h 
 
-// QT includes
+// Qt includes
 #include <QObject>
 
-// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
 #include "qSlicerQTExport.h"
 
@@ -31,7 +31,7 @@ protected:
   qSlicerMainWindow* widget() const;
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerMainWindowCore);
+  CTK_DECLARE_PRIVATE(qSlicerMainWindowCore);
 };
 
 #endif

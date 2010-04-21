@@ -10,7 +10,7 @@
 
 =========================================================================auto=*/
 
-// SlicerQT/CoreModules
+// SlicerQt/CoreModules
 #include "qSlicerCoreModuleFactory.h"
 #include "qSlicerTransformsModule.h"
 #include "qSlicerCamerasModule.h"
@@ -21,10 +21,10 @@
 // endofFIXME
   
 //-----------------------------------------------------------------------------
-class qSlicerCoreModuleFactoryPrivate:public qCTKPrivate<qSlicerCoreModuleFactory>
+class qSlicerCoreModuleFactoryPrivate: public ctkPrivate<qSlicerCoreModuleFactory>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qSlicerCoreModuleFactory);
+  CTK_DECLARE_PUBLIC(qSlicerCoreModuleFactory);
   qSlicerCoreModuleFactoryPrivate(){}
 
   ///
@@ -40,7 +40,7 @@ public:
 template<typename ClassType>
 void qSlicerCoreModuleFactoryPrivate::registerCoreModule()
 {
-  QCTK_P(qSlicerCoreModuleFactory);
+  CTK_P(qSlicerCoreModuleFactory);
   
   QString _moduleName;
   if (!p->registerQObject<ClassType>(_moduleName))
@@ -56,13 +56,13 @@ void qSlicerCoreModuleFactoryPrivate::registerCoreModule()
 //-----------------------------------------------------------------------------
 qSlicerCoreModuleFactory::qSlicerCoreModuleFactory():Superclass()
 {
-  QCTK_INIT_PRIVATE(qSlicerCoreModuleFactory);
+  CTK_INIT_PRIVATE(qSlicerCoreModuleFactory);
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerCoreModuleFactory::registerItems()
 {
-  QCTK_D(qSlicerCoreModuleFactory);
+  CTK_D(qSlicerCoreModuleFactory);
   d->registerCoreModule<qSlicerTransformsModule>();
   d->registerCoreModule<qSlicerCamerasModule>();
   // FIXME:Move the following to the Models module (when it will be ready in Qt.)

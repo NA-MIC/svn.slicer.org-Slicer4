@@ -14,12 +14,12 @@
 #ifndef __qSlicerCLIExecutableModuleFactory_h
 #define __qSlicerCLIExecutableModuleFactory_h
 
-/// SlicerQT includes
+// SlicerQT includes
 #include "qSlicerAbstractModule.h"
 #include "qSlicerBaseQTCLIExport.h"
 
-/// CTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 #include <ctkAbstractPluginFactory.h>
 
 //-----------------------------------------------------------------------------
@@ -64,7 +64,7 @@ public:
   static QString extractModuleName(const QString& executableName);
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCLIExecutableModuleFactory);
+  CTK_DECLARE_PRIVATE(qSlicerCLIExecutableModuleFactory);
 };
 
 #endif

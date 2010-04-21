@@ -15,11 +15,11 @@
 #ifndef __qCTKTreeComboBox_h
 #define __qCTKTreeComboBox_h
 
-/// qCTK includes
-#include "qCTKPimpl.h"
-
-/// QT includes
+// Qt includes
 #include <QComboBox>
+
+// CTK includes
+#include <ctkPimpl.h>
 
 #include "qCTKWidgetsExport.h"
 
@@ -59,7 +59,7 @@ protected slots:
   void onCollapsed(const QModelIndex&);
   
 private:
-  QCTK_DECLARE_PRIVATE(qCTKTreeComboBox);
+  CTK_DECLARE_PRIVATE(qCTKTreeComboBox);
 };
 
 #endif

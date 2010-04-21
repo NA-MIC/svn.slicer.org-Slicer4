@@ -6,7 +6,7 @@
 #include <QVariant>
 #include <QFileInfo>
 
-/// qSlicer includes
+/// SlicerQt includes
 //#include "qSlicerAbstractModule.h"
 #include "qSlicerCoreApplication.h"
 //#include "qSlicerModuleManager.h"
@@ -35,6 +35,9 @@
 #include <vtkXMLDataParser.h>
 #include <vtkXMLDataElement.h>
 
+//-----------------------------------------------------------------------------
+namespace
+{
 int dataType(QString type)
 {
   type.toLower().remove(' ');
@@ -109,6 +112,7 @@ int dataType(QString type)
   return VTK_VOID;
 }
 
+}
 //-----------------------------------------------------------------------------
 /*
 vtkSlicerVolumesLogic* volumesLogic()
@@ -128,7 +132,7 @@ vtkSlicerModelsLogic* modelsLogic()
 }
 */
 //-----------------------------------------------------------------------------
-class qSlicerSlicer2SceneReaderPrivate: public qCTKPrivate<qSlicerSlicer2SceneReader>
+class qSlicerSlicer2SceneReaderPrivate: public ctkPrivate<qSlicerSlicer2SceneReader>
 {
 public:
   ///
@@ -317,7 +321,7 @@ void qSlicerSlicer2SceneReaderPrivate::importTransformNode(NodeType& node)
 //proc ImportNodeMatrix {node} {
 void qSlicerSlicer2SceneReaderPrivate::importMatrixNode(NodeType& node)
 {
-  QCTK_P(qSlicerSlicer2SceneReader);
+  CTK_P(qSlicerSlicer2SceneReader);
   //upvar $node n
   //set transformNode [vtkMRMLLinearTransformNode New]
   vtkMRMLLinearTransformNode* transformNode = vtkMRMLLinearTransformNode::New();
@@ -382,7 +386,7 @@ void qSlicerSlicer2SceneReaderPrivate::importMatrixNode(NodeType& node)
 //proc ImportNodeVolume {node} {
 void qSlicerSlicer2SceneReaderPrivate::importVolumeNode(NodeType& node)
 {
-  QCTK_P(qSlicerSlicer2SceneReader);
+  CTK_P(qSlicerSlicer2SceneReader);
   //upvar $node n
 
   //if { ![info exists n(fileType)] } {
@@ -940,7 +944,7 @@ void qSlicerSlicer2SceneReaderPrivate::importHierarchyNode(NodeType& node)
 //proc ImportNodeModelGroup {node} {
 void qSlicerSlicer2SceneReaderPrivate::importModelGroupNode(NodeType& node)
 {
-  QCTK_P(qSlicerSlicer2SceneReader);
+  CTK_P(qSlicerSlicer2SceneReader);
   //upvar $node n
   //set hnode [vtkMRMLModelHierarchyNode New]
   //set dnode [vtkMRMLModelDisplayNode New]
@@ -1028,7 +1032,7 @@ void qSlicerSlicer2SceneReaderPrivate::importModelGroupNode(NodeType& node)
 //proc ImportNodeModelRef {node} {
 void qSlicerSlicer2SceneReaderPrivate::importModelRefNode(NodeType& node)
 {
-  QCTK_P(qSlicerSlicer2SceneReader);
+  CTK_P(qSlicerSlicer2SceneReader);
   //upvar $node n
   //set hnode [vtkMRMLModelHierarchyNode New]
   //$hnode SetScene $::slicer3::MRMLScene
@@ -1072,7 +1076,7 @@ void qSlicerSlicer2SceneReaderPrivate::importModelRefNode(NodeType& node)
 //proc ImportNodeFiducials {node} {
 void qSlicerSlicer2SceneReaderPrivate::importFiducialsNode(NodeType& node)
 {  
-  QCTK_P(qSlicerSlicer2SceneReader);
+  CTK_P(qSlicerSlicer2SceneReader);
   //upvar $node n
   //set fiducialNode [vtkMRMLFiducialListNode New]
   vtkSmartPointer<vtkMRMLFiducialListNode> fiducialNode =
@@ -1170,7 +1174,7 @@ void qSlicerSlicer2SceneReaderPrivate::importPointNode(NodeType& node)
 //proc ImportNodeColor {node} {
 void qSlicerSlicer2SceneReaderPrivate::importColorNode(NodeType& node)
 {
-  QCTK_P(qSlicerSlicer2SceneReader);
+  CTK_P(qSlicerSlicer2SceneReader);
   //upvar $node n
   //if { [info exists n(name)] } {
   if (!node.contains("name"))
@@ -1214,7 +1218,7 @@ void qSlicerSlicer2SceneReaderPrivate::importColorNode(NodeType& node)
 //proc ImportNodeOptions {node} {
 void qSlicerSlicer2SceneReaderPrivate::importOptionsNode(NodeType& node)
 {
-  QCTK_P(qSlicerSlicer2SceneReader);
+  CTK_P(qSlicerSlicer2SceneReader);
   //$::slicer3::MRMLScene SetErrorMessage "warning: option nodes cannot be imported"
   //$::slicer3::MRMLScene SetErrorCode 1
   p->mrmlScene()->SetErrorMessage("Warning: option nodes cannot be imported");
@@ -1250,7 +1254,7 @@ QString qSlicerSlicer2SceneReader::extensions()const
 //-----------------------------------------------------------------------------
 bool qSlicerSlicer2SceneReader::load(const IOProperties& properties)
 {
-  QCTK_D(qSlicerSlicer2SceneReader);
+  CTK_D(qSlicerSlicer2SceneReader);
   QString file = properties["fileName"].toString();
   Q_ASSERT(file.isEmpty());
 

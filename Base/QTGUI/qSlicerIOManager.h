@@ -1,15 +1,15 @@
 #ifndef __qSlicerIOManager_h
 #define __qSlicerIOManager_h
 
-/// Qt includes
+// Qt includes
 #include <QList>
 #include <QString>
 #include <QUrl>
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-/// SlicerQT includes
+// SlicerQ includes
 #include "qSlicerCoreIOManager.h"
 #include "qSlicerFileDialog.h"
 
@@ -52,7 +52,7 @@ protected:
   friend class qSlicerFileDialog;
   using qSlicerCoreIOManager::ios;
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerIOManager);
+  CTK_DECLARE_PRIVATE(qSlicerIOManager);
 };
 
 //------------------------------------------------------------------------------

@@ -1,12 +1,10 @@
 #ifndef __qMRMLLinearTransformSlider_h
 #define __qMRMLLinearTransformSlider_h
 
-/// qVTK includes
-#include <qVTKObject.h>
-
-/// qCTK includes
+// CTK includes
 #include <qCTKSliderSpinBoxWidget.h>
-#include <qCTKPimpl.h>
+#include <ctkPimpl.h>
+#include <ctkVTKObject.h>
 
 #include "qMRMLWidgetsExport.h"
 
@@ -72,7 +70,7 @@ protected slots:
   void onMRMLTransformNodeModified(vtkObject* caller);
 
 private:
-  QCTK_DECLARE_PRIVATE(qMRMLLinearTransformSlider);
+  CTK_DECLARE_PRIVATE(qMRMLLinearTransformSlider);
 
 };
 

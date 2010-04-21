@@ -1,14 +1,14 @@
 #ifndef __qSlicerDataDialog_h
 #define __qSlicerDataDialog_h
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-// qSlicer includes
+// SlicerQt includes
 #include "qSlicerFileDialog.h"
 #include "qSlicerBaseQTGUIExport.h"
 
-/// QT declarations
+/// Forward declarations
 class qSlicerDataDialogPrivate;
 
 //------------------------------------------------------------------------------
@@ -28,7 +28,7 @@ public:
                     qSlicerIO::IOProperties());
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerDataDialog);
+  CTK_DECLARE_PRIVATE(qSlicerDataDialog);
 };
 
 #endif

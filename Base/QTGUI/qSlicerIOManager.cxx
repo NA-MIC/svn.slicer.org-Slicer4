@@ -7,7 +7,7 @@
 #include <QString>
 #include <QUrl>
 
-/// qSlicer includes
+/// SlicerQt includes
 #include "qSlicerIOManager.h"
 #include "qSlicerFileDialog.h"
 #include "qSlicerDataDialog.h"
@@ -16,10 +16,10 @@
 #include <vtkMRMLScene.h>
 
 //-----------------------------------------------------------------------------
-class qSlicerIOManagerPrivate: public qCTKPrivate<qSlicerIOManager>
+class qSlicerIOManagerPrivate: public ctkPrivate<qSlicerIOManager>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qSlicerIOManager);
+  CTK_DECLARE_PUBLIC(qSlicerIOManager);
   void init();
   QStringList                   History;
   QList<QUrl>                   Favorites;
@@ -29,7 +29,7 @@ public:
 //-----------------------------------------------------------------------------
 void qSlicerIOManagerPrivate::init()
 {
-  QCTK_P(qSlicerIOManager);
+  CTK_P(qSlicerIOManager);
   this->Favorites << QUrl::fromLocalFile(QDir::homePath());
   p->registerDialog(new qSlicerStandardFileDialog(p));
   p->registerDialog(new qSlicerDataDialog(p));
@@ -38,8 +38,8 @@ void qSlicerIOManagerPrivate::init()
 //-----------------------------------------------------------------------------
 qSlicerIOManager::qSlicerIOManager(QObject* _parent):Superclass(_parent)
 {
-  QCTK_INIT_PRIVATE(qSlicerIOManager);
-  qctk_d()->init();
+  CTK_INIT_PRIVATE(qSlicerIOManager);
+  ctk_d()->init();
 }
 
 //-----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ bool qSlicerIOManager::openLoadVolumeDialog()
 bool qSlicerIOManager::openDialog(qSlicerIO::IOFileType fileType, 
                                   const qSlicerIO::IOProperties& properties)
 {
-  QCTK_D(qSlicerIOManager);
+  CTK_D(qSlicerIOManager);
   bool deleteDialog = false;
   qSlicerFileDialog* dialog = d->Dialogs[fileType];
   if (dialog == 0)
@@ -95,35 +95,35 @@ bool qSlicerIOManager::openDialog(qSlicerIO::IOFileType fileType,
 //-----------------------------------------------------------------------------
 void qSlicerIOManager::addHistory(const QString& path)
 {
-  QCTK_D(qSlicerIOManager);
+  CTK_D(qSlicerIOManager);
   d->History << path;
 }
 
 //-----------------------------------------------------------------------------
 const QStringList& qSlicerIOManager::history()const
 {
-  QCTK_D(const qSlicerIOManager);
+  CTK_D(const qSlicerIOManager);
   return d->History;
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerIOManager::addFavorite(const QUrl& url)
 {
-  QCTK_D(qSlicerIOManager);
+  CTK_D(qSlicerIOManager);
   d->Favorites << url;
 }
 
 //-----------------------------------------------------------------------------
 const QList<QUrl>& qSlicerIOManager::favorites()const
 {
-  QCTK_D(const qSlicerIOManager);
+  CTK_D(const qSlicerIOManager);
   return d->Favorites;
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerIOManager::registerDialog(qSlicerFileDialog* dialog)
 {
-  QCTK_D(qSlicerIOManager);
+  CTK_D(qSlicerIOManager);
   if (d->Dialogs[dialog->fileType()])
     {
     delete d->Dialogs[dialog->fileType()];

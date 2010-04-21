@@ -30,28 +30,14 @@ ENDIF(qCTKWidgets_WRAP_PYTHON)
 # Sources
 #
 SET(qVTKWidgets_SRCS
-  qVTKAbstractMatrixWidget.cxx
-  qVTKAbstractMatrixWidget.h
-  qVTKAbstractMatrixWidget_p.h
   qVTKCommandOptions.cxx
   qVTKCommandOptions.h
-  qVTKConnection.cxx
-  qVTKConnection.h
-  qVTKMatrixWidget.cxx
-  qVTKMatrixWidget.h
-  qVTKObject.h
-  qVTKObjectEventsObserver.cxx
-  qVTKObjectEventsObserver.h
   qVTKRenderView.cxx
   qVTKRenderView.h
   )
 
 # Headers that should run through moc
 SET(qVTKWidgets_MOC_SRCS
-  qVTKAbstractMatrixWidget_p.h
-  qVTKConnection.h
-  qVTKObjectEventsObserver.h
-  qVTKMatrixWidget.h
   qVTKRenderView.h
   qVTKRenderView_p.h
   )

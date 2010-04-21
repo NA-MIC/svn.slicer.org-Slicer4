@@ -1,10 +1,10 @@
 #include "qSlicerWelcomeModule.h"
 
-// SlicerQT includes
-#include "qSlicerWelcomeModuleWidget.h"
-
-// QT includes
+// Qt includes
 #include <QtPlugin>
+
+// SlicerQt includes
+#include "qSlicerWelcomeModuleWidget.h"
 
 //-----------------------------------------------------------------------------
 Q_EXPORT_PLUGIN2(qSlicerWelcomeModule, qSlicerWelcomeModule);

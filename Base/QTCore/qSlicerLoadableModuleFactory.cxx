@@ -10,13 +10,12 @@
 
 =========================================================================auto=*/
 
-#include "qSlicerLoadableModuleFactory.h"
-
-// QT includes
+// Qt includes
 #include <QStringList>
 #include <QDirIterator>
 
-// SlicerQT includes
+// SlicerQt includes
+#include "qSlicerLoadableModuleFactory.h"
 #include "qSlicerCoreApplication.h"
 #include "qSlicerUtils.h"
 
@@ -25,10 +24,10 @@
 #include "vtkSlicerConfigure.h"
   
 //-----------------------------------------------------------------------------
-class qSlicerLoadableModuleFactoryPrivate:public qCTKPrivate<qSlicerLoadableModuleFactory>
+class qSlicerLoadableModuleFactoryPrivate: public ctkPrivate<qSlicerLoadableModuleFactory>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qSlicerLoadableModuleFactory);
+  CTK_DECLARE_PUBLIC(qSlicerLoadableModuleFactory);
   qSlicerLoadableModuleFactoryPrivate()
     {
     }
@@ -86,13 +85,13 @@ QStringList qSlicerLoadableModuleFactoryPrivate::modulePaths() const
 //-----------------------------------------------------------------------------
 qSlicerLoadableModuleFactory::qSlicerLoadableModuleFactory():Superclass()
 {
-  QCTK_INIT_PRIVATE(qSlicerLoadableModuleFactory);
+  CTK_INIT_PRIVATE(qSlicerLoadableModuleFactory);
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerLoadableModuleFactory::registerItems()
 {
-  QCTK_D(qSlicerLoadableModuleFactory);
+  CTK_D(qSlicerLoadableModuleFactory);
 
   QStringList modulePaths = d->modulePaths();
   

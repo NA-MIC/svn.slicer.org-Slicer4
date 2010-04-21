@@ -1,8 +1,8 @@
 
-// QT includes
+// Qt includes
 #include <QtPlugin>
 
-// qSlicer includes
+// SlicerQt includes
 #include <qSlicerCoreApplication.h>
 #include <qSlicerCoreIOManager.h>
 
@@ -18,7 +18,7 @@
 Q_EXPORT_PLUGIN2(qSlicerVolumesModule, qSlicerVolumesModule);
 
 //-----------------------------------------------------------------------------
-class qSlicerVolumesModulePrivate: public qCTKPrivate<qSlicerVolumesModule>
+class qSlicerVolumesModulePrivate: public ctkPrivate<qSlicerVolumesModule>
 {
 public:
 };
@@ -27,7 +27,7 @@ public:
 qSlicerVolumesModule::qSlicerVolumesModule(QObject* _parent)
   :Superclass(_parent)
 {
-  QCTK_INIT_PRIVATE(qSlicerVolumesModule);
+  CTK_INIT_PRIVATE(qSlicerVolumesModule);
 }
 
 //-----------------------------------------------------------------------------

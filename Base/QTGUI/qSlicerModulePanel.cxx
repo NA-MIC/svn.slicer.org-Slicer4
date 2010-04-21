@@ -1,17 +1,4 @@
-#include "qSlicerModulePanel.h"
-#include "ui_qSlicerModulePanel.h"
-
-// SlicerQT includes
-#include "qSlicerApplication.h"
-#include "qSlicerModuleManager.h"
-#include "qSlicerAbstractModule.h"
-#include "qSlicerAbstractModuleWidget.h"
-
-// qCTK includes
-#include <qCTKCollapsibleButton.h>
-#include <qCTKFittedTextBrowser.h>
-
-// QT includes
+// Qt includes
 #include <QDebug>
 #include <QLabel>
 #include <QResizeEvent>
@@ -22,8 +9,20 @@
 #include <QVBoxLayout>
 #include <QWebView>
 
+// CTK includes
+#include <qCTKCollapsibleButton.h>
+#include <qCTKFittedTextBrowser.h>
+
+// SlicerQt includes
+#include "qSlicerModulePanel.h"
+#include "ui_qSlicerModulePanel.h"
+#include "qSlicerApplication.h"
+#include "qSlicerModuleManager.h"
+#include "qSlicerAbstractModule.h"
+#include "qSlicerAbstractModuleWidget.h"
+
 //---------------------------------------------------------------------------
-class qSlicerModulePanelPrivate: public qCTKPrivate<qSlicerModulePanel>
+class qSlicerModulePanelPrivate: public ctkPrivate<qSlicerModulePanel>
                                , public Ui_qSlicerModulePanel
 {
 public:
@@ -42,15 +41,15 @@ public:
 qSlicerModulePanel::qSlicerModulePanel(QWidget* _parent, Qt::WindowFlags f)
   :qSlicerAbstractModulePanel(_parent, f)
 {
-  QCTK_INIT_PRIVATE(qSlicerModulePanel);
-  QCTK_D(qSlicerModulePanel);
+  CTK_INIT_PRIVATE(qSlicerModulePanel);
+  CTK_D(qSlicerModulePanel);
   d->setupUi(this);
 }
 
 //---------------------------------------------------------------------------
 void qSlicerModulePanel::setModule(const QString& moduleName)
 {
-  QCTK_D(qSlicerModulePanel);
+  CTK_D(qSlicerModulePanel);
 
   qSlicerAbstractModule * module = 0;
   
@@ -102,7 +101,7 @@ void qSlicerModulePanel::addModule(const QString& moduleName)
   qSlicerAbstractModuleWidget * moduleWidget = module->widgetRepresentation();
   Q_ASSERT(moduleWidget);
   
-  QCTK_D(qSlicerModulePanel);
+  CTK_D(qSlicerModulePanel);
   
   // Update module layout
   if (moduleWidget->layout())
@@ -141,7 +140,7 @@ void qSlicerModulePanel::removeModule(const QString& moduleName)
   qSlicerAbstractModuleWidget * moduleWidget = module->widgetRepresentation();
   Q_ASSERT(moduleWidget);
   
-  QCTK_D(qSlicerModulePanel);
+  CTK_D(qSlicerModulePanel);
 
   QBoxLayout* scrollAreaLayout = 
     qobject_cast<QBoxLayout*>(d->ScrollArea->widget()->layout());

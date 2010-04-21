@@ -12,8 +12,7 @@
 
 =========================================================================*/
 
-#include "qCTKCollapsibleButton.h"
-
+// Qt includes
 #include <QApplication>
 #include <QCleanlooksStyle>
 #include <QDebug>
@@ -25,11 +24,14 @@
 #include <QStyleOptionButton>
 #include <QStyleOptionFrameV3>
 
+// CTK includes
+#include "qCTKCollapsibleButton.h"
+
 //-----------------------------------------------------------------------------
-class qCTKCollapsibleButtonPrivate : public qCTKPrivate<qCTKCollapsibleButton>
+class qCTKCollapsibleButtonPrivate : public ctkPrivate<qCTKCollapsibleButton>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qCTKCollapsibleButton);
+  CTK_DECLARE_PUBLIC(qCTKCollapsibleButton);
   void init();
 
   bool     Collapsed;
@@ -50,7 +52,7 @@ public:
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButtonPrivate::init()
 {
-  QCTK_P(qCTKCollapsibleButton);
+  CTK_P(qCTKCollapsibleButton);
   p->setCheckable(true);
   // checked and Collapsed are synchronized: checked != Collapsed
   p->setChecked(true);
@@ -80,7 +82,7 @@ void qCTKCollapsibleButtonPrivate::init()
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButton::initStyleOption(QStyleOptionButton* option)const
 {
-  QCTK_D(const qCTKCollapsibleButton);
+  CTK_D(const qCTKCollapsibleButton);
   if (option == 0)
     {
     return;
@@ -112,16 +114,16 @@ void qCTKCollapsibleButton::initStyleOption(QStyleOptionButton* option)const
 qCTKCollapsibleButton::qCTKCollapsibleButton(QWidget* _parent)
   :QAbstractButton(_parent)
 {
-  QCTK_INIT_PRIVATE(qCTKCollapsibleButton);
-  qctk_d()->init();
+  CTK_INIT_PRIVATE(qCTKCollapsibleButton);
+  ctk_d()->init();
 }
 
 //-----------------------------------------------------------------------------
 qCTKCollapsibleButton::qCTKCollapsibleButton(const QString& title, QWidget* _parent)
   :QAbstractButton(_parent)
 {
-  QCTK_INIT_PRIVATE(qCTKCollapsibleButton);
-  qctk_d()->init();
+  CTK_INIT_PRIVATE(qCTKCollapsibleButton);
+  ctk_d()->init();
   this->setText(title);
 }
 
@@ -145,20 +147,20 @@ void qCTKCollapsibleButton::setCollapsed(bool c)
 //-----------------------------------------------------------------------------
 bool qCTKCollapsibleButton::collapsed()const
 {
-  return qctk_d()->Collapsed;
+  return ctk_d()->Collapsed;
 }
 
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButton::setCollapsedHeight(int h)
 {
-  qctk_d()->CollapsedHeight = h;
+  ctk_d()->CollapsedHeight = h;
   this->updateGeometry();
 }
 
 //-----------------------------------------------------------------------------
 int qCTKCollapsibleButton::collapsedHeight()const
 {
-  return qctk_d()->CollapsedHeight;
+  return ctk_d()->CollapsedHeight;
 }
 
 //-----------------------------------------------------------------------------
@@ -173,7 +175,7 @@ void qCTKCollapsibleButton::onToggled(bool checked)
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButton::collapse(bool c)
 {
-  QCTK_D(qCTKCollapsibleButton);
+  CTK_D(qCTKCollapsibleButton);
   if (c == d->Collapsed)
     {
     return;
@@ -224,49 +226,49 @@ void qCTKCollapsibleButton::collapse(bool c)
 //-----------------------------------------------------------------------------
 QFrame::Shape qCTKCollapsibleButton::contentsFrameShape() const
 {
-  return qctk_d()->ContentsFrameShape;
+  return ctk_d()->ContentsFrameShape;
 }
 
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButton::setContentsFrameShape(QFrame::Shape s)
 {
-  qctk_d()->ContentsFrameShape = s;
+  ctk_d()->ContentsFrameShape = s;
 }
 
 //-----------------------------------------------------------------------------
 QFrame::Shadow qCTKCollapsibleButton::contentsFrameShadow() const
 {
-  return qctk_d()->ContentsFrameShadow;
+  return ctk_d()->ContentsFrameShadow;
 }
 
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButton::setContentsFrameShadow(QFrame::Shadow s)
 {
-  qctk_d()->ContentsFrameShadow = s;
+  ctk_d()->ContentsFrameShadow = s;
 }
 
 //-----------------------------------------------------------------------------
 int qCTKCollapsibleButton:: contentsLineWidth() const
 {
-  return qctk_d()->ContentsLineWidth;
+  return ctk_d()->ContentsLineWidth;
 }
 
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButton::setContentsLineWidth(int w)
 {
-  qctk_d()->ContentsLineWidth = w;
+  ctk_d()->ContentsLineWidth = w;
 }
 
 //-----------------------------------------------------------------------------
 int qCTKCollapsibleButton::contentsMidLineWidth() const
 {
-  return qctk_d()->ContentsMidLineWidth;
+  return ctk_d()->ContentsMidLineWidth;
 }
 
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButton::setContentsMidLineWidth(int w)
 {
-  qctk_d()->ContentsMidLineWidth = w;
+  ctk_d()->ContentsMidLineWidth = w;
 }
 
 //-----------------------------------------------------------------------------
@@ -309,7 +311,7 @@ QSize qCTKCollapsibleButton::buttonSizeHint()const
 //-----------------------------------------------------------------------------
 QSize qCTKCollapsibleButton::minimumSizeHint()const
 {
-  QCTK_D(const qCTKCollapsibleButton);
+  CTK_D(const qCTKCollapsibleButton);
   QSize buttonSize = this->buttonSizeHint();
   if (d->Collapsed)
     {
@@ -327,7 +329,7 @@ QSize qCTKCollapsibleButton::minimumSizeHint()const
 //-----------------------------------------------------------------------------
 QSize qCTKCollapsibleButton::sizeHint()const
 {
-  QCTK_D(const qCTKCollapsibleButton);
+  CTK_D(const qCTKCollapsibleButton);
   QSize buttonSize = this->buttonSizeHint();
   if (d->Collapsed)
     {
@@ -342,7 +344,7 @@ QSize qCTKCollapsibleButton::sizeHint()const
 //-----------------------------------------------------------------------------
 void qCTKCollapsibleButton::paintEvent(QPaintEvent * _event)
 {
-  QCTK_D(qCTKCollapsibleButton);
+  CTK_D(qCTKCollapsibleButton);
 
   QPainter p(this);
   // Draw Button
@@ -473,7 +475,7 @@ void qCTKCollapsibleButton::childEvent(QChildEvent* c)
     if (c->child() && c->child()->isWidgetType())
       {
       QWidget *w = static_cast<QWidget*>(c->child());
-      w->setVisible(!qctk_d()->Collapsed);
+      w->setVisible(!ctk_d()->Collapsed);
       }
     }
   QWidget::childEvent(c);

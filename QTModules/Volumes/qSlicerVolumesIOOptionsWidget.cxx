@@ -7,10 +7,10 @@
 
 //-----------------------------------------------------------------------------
 class qSlicerVolumesIOOptionsWidgetPrivate: 
-  public qCTKPrivate<qSlicerVolumesIOOptionsWidget>,
+  public ctkPrivate<qSlicerVolumesIOOptionsWidget>,
   public Ui_qSlicerVolumesIOOptionsWidget
 {
-  QCTK_DECLARE_PUBLIC(qSlicerVolumesIOOptionsWidget);
+  CTK_DECLARE_PUBLIC(qSlicerVolumesIOOptionsWidget);
 public:
   //void init();
 };
@@ -19,15 +19,15 @@ public:
 //-----------------------------------------------------------------------------
 qSlicerVolumesIOOptionsWidget::qSlicerVolumesIOOptionsWidget(QWidget* parentWidget)
 {
-  QCTK_INIT_PRIVATE(qSlicerVolumesIOOptionsWidget);
-  qctk_d()->setupUi(this);
+  CTK_INIT_PRIVATE(qSlicerVolumesIOOptionsWidget);
+  ctk_d()->setupUi(this);
   // FIXME Replace the horizontal layout with a flow layout
 }
 
 //-----------------------------------------------------------------------------
 qSlicerIO::IOProperties qSlicerVolumesIOOptionsWidget::options()const
 {
-  QCTK_D(const qSlicerVolumesIOOptionsWidget);
+  CTK_D(const qSlicerVolumesIOOptionsWidget);
   qSlicerIO::IOProperties properties;
   if (d->NameLineEdit->text().isEmpty())
     {

@@ -1,24 +1,24 @@
-/// Qt includes
+// Qt includes
 #include <QDebug>
 #include <QMap>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
 
-/// qSlicer includes
+// SlicerQt includes
 #include "qSlicerAbstractModule.h"
 #include "qSlicerCoreApplication.h"
 #include "qSlicerModuleManager.h"
 #include "qSlicerVolumesIO.h"
 #include "qSlicerVolumesIOOptionsWidget.h"
 
-/// Logic includes
+// Logic includes
 #include "vtkSlicerVolumesLogic.h"
 
-/// MRML includes
+// MRML includes
 #include <vtkMRMLVolumeNode.h>
 
-/// VTK includes
+// VTK includes
 #include <vtkSmartPointer.h>
 #include <vtkStringArray.h>
 

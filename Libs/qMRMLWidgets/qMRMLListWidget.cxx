@@ -12,17 +12,17 @@
 #include "qMRMLTransformProxyModel.h"
 
 //------------------------------------------------------------------------------
-class qMRMLListWidgetPrivate: public qCTKPrivate<qMRMLListWidget>
+class qMRMLListWidgetPrivate: public ctkPrivate<qMRMLListWidget>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qMRMLListWidget);
+  CTK_DECLARE_PUBLIC(qMRMLListWidget);
   void init();
 };
 
 //------------------------------------------------------------------------------
 void qMRMLListWidgetPrivate::init()
 {
-  QCTK_P(qMRMLListWidget);
+  CTK_P(qMRMLListWidget);
   //p->QListView::setModel(new qMRMLItemModel(p));
   //p->QListView::setModel(new qMRMLSceneModel(p));
   ///new ctkModelTester(p->model(), p);
@@ -52,8 +52,8 @@ void qMRMLListWidgetPrivate::init()
 qMRMLListWidget::qMRMLListWidget(QWidget *_parent)
   :QListView(_parent)
 {
-  QCTK_INIT_PRIVATE(qMRMLListWidget);
-  qctk_d()->init();
+  CTK_INIT_PRIVATE(qMRMLListWidget);
+  ctk_d()->init();
 }
 
 //------------------------------------------------------------------------------

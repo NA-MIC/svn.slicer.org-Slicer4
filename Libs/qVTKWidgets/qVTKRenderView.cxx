@@ -59,7 +59,7 @@ void qVTKRenderViewPrivate::setupRendering()
 //---------------------------------------------------------------------------
 void qVTKRenderViewPrivate::setupDefaultInteractor()
 {
-  QCTK_P(qVTKRenderView);
+  CTK_P(qVTKRenderView);
   p->setInteractor(this->RenderWindow->GetInteractor());
 }
 
@@ -69,8 +69,8 @@ void qVTKRenderViewPrivate::setupDefaultInteractor()
 // --------------------------------------------------------------------------
 qVTKRenderView::qVTKRenderView(QWidget* _parent) : Superclass(_parent)
 {
-  QCTK_INIT_PRIVATE(qVTKRenderView);
-  QCTK_D(qVTKRenderView);
+  CTK_INIT_PRIVATE(qVTKRenderView);
+  CTK_D(qVTKRenderView);
   
   d->VTKWidget = new QVTKWidget(this);
   this->setLayout(new QVBoxLayout);
@@ -88,12 +88,12 @@ qVTKRenderView::~qVTKRenderView()
 }
 
 //----------------------------------------------------------------------------
-QCTK_GET_CXX(qVTKRenderView, vtkRenderWindowInteractor*, interactor, CurrentInteractor);
+CTK_GET_CXX(qVTKRenderView, vtkRenderWindowInteractor*, interactor, CurrentInteractor);
 
 //----------------------------------------------------------------------------
 void qVTKRenderView::scheduleRender()
 {
-  QCTK_D(qVTKRenderView);
+  CTK_D(qVTKRenderView);
   if (!d->RenderPending)
     {
     d->RenderPending = true;
@@ -104,7 +104,7 @@ void qVTKRenderView::scheduleRender()
 //----------------------------------------------------------------------------
 void qVTKRenderView::forceRender()
 {
-  QCTK_D(qVTKRenderView);
+  CTK_D(qVTKRenderView);
   d->RenderWindow->Render();
   d->RenderPending = false;
 }
@@ -113,7 +113,7 @@ void qVTKRenderView::forceRender()
 void qVTKRenderView::setInteractor(vtkRenderWindowInteractor* newInteractor)
 {
   Q_ASSERT(newInteractor);
-  QCTK_D(qVTKRenderView);
+  CTK_D(qVTKRenderView);
   d->RenderWindow->SetInteractor(newInteractor);
   d->Orientation->SetOrientationMarker(d->Axes);
   d->Orientation->SetInteractor(newInteractor);
@@ -125,7 +125,7 @@ void qVTKRenderView::setInteractor(vtkRenderWindowInteractor* newInteractor)
 //----------------------------------------------------------------------------
 void qVTKRenderView::setCornerAnnotationText(const QString& text)
 {
-  QCTK_D(qVTKRenderView);
+  CTK_D(qVTKRenderView);
   d->CornerAnnotation->ClearAllTexts();
   d->CornerAnnotation->SetText(2, text.toLatin1());
 }
@@ -133,7 +133,7 @@ void qVTKRenderView::setCornerAnnotationText(const QString& text)
 // --------------------------------------------------------------------------
 void qVTKRenderView::setBackgroundColor(double r, double g, double b)
 {
-  QCTK_D(qVTKRenderView);
+  CTK_D(qVTKRenderView);
   double background_color[3] = {r, g, b};
   d->Renderer->SetBackground(background_color);
 }
@@ -141,6 +141,6 @@ void qVTKRenderView::setBackgroundColor(double r, double g, double b)
 //----------------------------------------------------------------------------
 void qVTKRenderView::resetCamera()
 {
-  QCTK_D(qVTKRenderView);
+  CTK_D(qVTKRenderView);
   d->Renderer->ResetCamera();
 }

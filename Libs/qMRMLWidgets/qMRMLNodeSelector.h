@@ -1,15 +1,13 @@
 #ifndef __qMRMLNodeSelector_h
 #define __qMRMLNodeSelector_h
 
-/// qVTK includes
-#include <qVTKObject.h>
-
-/// qCTK includes
-#include <qCTKAddRemoveComboBox.h>
-#include <qCTKPimpl.h>
-
-/// QT includes
+// Qt includes
 #include <QString>
+
+// CTK includes
+#include <ctkPimpl.h>
+#include <ctkVTKObject.h>
+#include <qCTKAddRemoveComboBox.h>
 
 #include "qMRMLWidgetsExport.h"
 
@@ -169,7 +167,7 @@ protected:
 
   void populateItems();
 private:
-  QCTK_DECLARE_PRIVATE(qMRMLNodeSelector);
+  CTK_DECLARE_PRIVATE(qMRMLNodeSelector);
 };
 
 #endif

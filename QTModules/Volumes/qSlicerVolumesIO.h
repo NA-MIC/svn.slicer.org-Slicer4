@@ -1,10 +1,10 @@
 #ifndef __qSlicerVolumesIO
 #define __qSlicerVolumesIO
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-/// qSlicer includes
+// SlicerQt includes
 #include "qSlicerIO.h"
 
 //-----------------------------------------------------------------------------

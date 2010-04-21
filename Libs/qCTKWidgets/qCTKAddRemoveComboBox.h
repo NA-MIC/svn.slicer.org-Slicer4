@@ -15,13 +15,13 @@
 #ifndef __qCTKAddRemoveComboBox_h
 #define __qCTKAddRemoveComboBox_h
 
-/// qCTK includes
-#include "qCTKPimpl.h"
-
-/// QT includes
+// Qt includes
 #include <QWidget>
 #include <QVariant>
 #include <QModelIndex>
+
+// CTK includes
+#include <ctkPimpl.h>
 
 #include "qCTKWidgetsExport.h"
 
@@ -154,7 +154,7 @@ private slots:
   void onRowsRemoved(const QModelIndex & parent, int start, int end);
 
 private:
-  QCTK_DECLARE_PRIVATE(qCTKAddRemoveComboBox);
+  CTK_DECLARE_PRIVATE(qCTKAddRemoveComboBox);
 };
 
 #endif

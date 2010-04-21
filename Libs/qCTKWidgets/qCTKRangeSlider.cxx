@@ -1,5 +1,5 @@
-#include "qCTKRangeSlider.h"
 
+// Qt includes
 #include <QDebug>
 #include <QMouseEvent>
 #include <QKeyEvent>
@@ -8,7 +8,10 @@
 #include <QStylePainter>
 #include <QStyle>
 
-class qCTKRangeSliderPrivate:public qCTKPrivate<qCTKRangeSlider>
+// CTK includes
+#include "qCTKRangeSlider.h"
+
+class qCTKRangeSliderPrivate:public ctkPrivate<qCTKRangeSlider>
 {
 public:
   qCTKRangeSliderPrivate();
@@ -70,7 +73,7 @@ qCTKRangeSliderPrivate::qCTKRangeSliderPrivate()
 // --------------------------------------------------------------------------
 void qCTKRangeSliderPrivate::init()
 {
-  QCTK_P(qCTKRangeSlider);
+  CTK_P(qCTKRangeSlider);
   this->m_MinimumValue = p->minimum();
   this->m_MaximumValue = p->maximum();
   this->m_MinimumPosition = p->minimum();
@@ -83,7 +86,7 @@ void qCTKRangeSliderPrivate::init()
 //
 int qCTKRangeSliderPrivate::pixelPosToRangeValue( int pos ) const
 {
-  QCTK_P(const qCTKRangeSlider);
+  CTK_P(const qCTKRangeSlider);
   QStyleOptionSlider option;
   p->initStyleOption( &option );
 
@@ -111,7 +114,7 @@ int qCTKRangeSliderPrivate::pixelPosToRangeValue( int pos ) const
 // Draw slider at the bottom end of the range
 void qCTKRangeSliderPrivate::drawMinimumSlider( QStylePainter* painter ) const
 {
-  QCTK_P(const qCTKRangeSlider);
+  CTK_P(const qCTKRangeSlider);
   QStyleOptionSlider option;
   p->initStyleOption( &option );
 
@@ -131,7 +134,7 @@ void qCTKRangeSliderPrivate::drawMinimumSlider( QStylePainter* painter ) const
 // Draw slider at the top end of the range
 void qCTKRangeSliderPrivate::drawMaximumSlider( QStylePainter* painter ) const
 {
-  QCTK_P(const qCTKRangeSlider);
+  CTK_P(const qCTKRangeSlider);
   QStyleOptionSlider option;
   p->Superclass::initStyleOption( &option );
 
@@ -151,8 +154,8 @@ void qCTKRangeSliderPrivate::drawMaximumSlider( QStylePainter* painter ) const
 qCTKRangeSlider::qCTKRangeSlider(QWidget* parent) 
   : QSlider(parent)
 {
-  QCTK_INIT_PRIVATE(qCTKRangeSlider);
-  qctk_d()->init();
+  CTK_INIT_PRIVATE(qCTKRangeSlider);
+  ctk_d()->init();
 }
 
 // --------------------------------------------------------------------------
@@ -160,8 +163,8 @@ qCTKRangeSlider::qCTKRangeSlider( Qt::Orientation o,
                                   QWidget* parentObject )
   :QSlider(o, parentObject)
 {
-  QCTK_INIT_PRIVATE(qCTKRangeSlider);
-  qctk_d()->init();
+  CTK_INIT_PRIVATE(qCTKRangeSlider);
+  ctk_d()->init();
 }
 
 // --------------------------------------------------------------------------
@@ -172,35 +175,35 @@ qCTKRangeSlider::~qCTKRangeSlider()
 // --------------------------------------------------------------------------
 int qCTKRangeSlider::minimumValue() const
 {
-  QCTK_D(const qCTKRangeSlider);
+  CTK_D(const qCTKRangeSlider);
   return d->m_MinimumValue;
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeSlider::setMinimumValue( int min )
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   this->setValues( min, qMax(d->m_MaximumValue,min) );
 }
 
 // --------------------------------------------------------------------------
 int qCTKRangeSlider::maximumValue() const
 {
-  QCTK_D(const qCTKRangeSlider);
+  CTK_D(const qCTKRangeSlider);
   return d->m_MaximumValue;
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeSlider::setMaximumValue( int max )
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   this->setValues( qMin(d->m_MinimumValue, max), max );
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeSlider::setValues(int l, int u)
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   const int minimumValue = 
     qBound(this->minimum(), qMin(l,u), this->maximum());
   const int maximumValue = 
@@ -256,35 +259,35 @@ void qCTKRangeSlider::setValues(int l, int u)
 // --------------------------------------------------------------------------
 int qCTKRangeSlider::minimumPosition() const
 {
-  QCTK_D(const qCTKRangeSlider);
+  CTK_D(const qCTKRangeSlider);
   return d->m_MinimumPosition;
 }
 
 // --------------------------------------------------------------------------
 int qCTKRangeSlider::maximumPosition() const
 {
-  QCTK_D(const qCTKRangeSlider);
+  CTK_D(const qCTKRangeSlider);
   return d->m_MaximumPosition;
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeSlider::setMinimumPosition(int l)
 {
-  QCTK_D(const qCTKRangeSlider);
+  CTK_D(const qCTKRangeSlider);
   this->setPositions(l, qMax(l, d->m_MaximumPosition));
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeSlider::setMaximumPosition(int u)
 {
-  QCTK_D(const qCTKRangeSlider);
+  CTK_D(const qCTKRangeSlider);
   this->setPositions(qMin(d->m_MinimumPosition, u), u);
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeSlider::setPositions(int min, int max)
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   const int minPosition = 
     qBound(this->minimum(), qMin(min, max), this->maximum());
   const int maxPosition = 
@@ -330,7 +333,7 @@ void qCTKRangeSlider::setPositions(int min, int max)
 // --------------------------------------------------------------------------
 void qCTKRangeSlider::onRangeChanged(int minimum, int maximum)
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   this->setValues(d->m_MinimumValue, d->m_MaximumValue);
 }
 
@@ -338,7 +341,7 @@ void qCTKRangeSlider::onRangeChanged(int minimum, int maximum)
 // Render
 void qCTKRangeSlider::paintEvent( QPaintEvent* )
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   QStyleOptionSlider option;
   this->initStyleOption(&option);
 
@@ -416,7 +419,7 @@ void qCTKRangeSlider::paintEvent( QPaintEvent* )
 // Standard Qt UI events
 void qCTKRangeSlider::mousePressEvent(QMouseEvent* mouseEvent)
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   if (minimum() == maximum() || (mouseEvent->buttons() ^ mouseEvent->button()))
     {
     mouseEvent->ignore();
@@ -506,7 +509,7 @@ void qCTKRangeSlider::mousePressEvent(QMouseEvent* mouseEvent)
 // Standard Qt UI events
 void qCTKRangeSlider::mouseMoveEvent(QMouseEvent* mouseEvent)
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   if (d->m_MinimumSliderSelected == QStyle::SC_SliderHandle ||
       d->m_MaximumSliderSelected == QStyle::SC_SliderHandle)
     {
@@ -546,7 +549,7 @@ void qCTKRangeSlider::mouseMoveEvent(QMouseEvent* mouseEvent)
 // Standard Qt UI mouseEvents
 void qCTKRangeSlider::mouseReleaseEvent(QMouseEvent* mouseEvent)
 {
-  QCTK_D(qCTKRangeSlider);
+  CTK_D(qCTKRangeSlider);
   QSlider::mouseReleaseEvent(mouseEvent);
   setSliderDown(false);
   

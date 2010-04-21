@@ -1,17 +1,14 @@
 
-// QT includes
+// Qt includes
 #include <QSignalMapper>
 #include <QToolBar>
 #include <QAction>
 #include <QDebug>
 
-// qCTK includes
+// CTK includes
 #include <qCTKPythonShell.h>
 
-// MRML includes
-#include <vtkMRMLScene.h>
-
-// SlicerQT includes
+// SlicerQt includes
 #include "qSlicerMainWindowCore.h" 
 #include "qSlicerMainWindowCore_p.h"
 #include "qSlicerApplication.h"
@@ -20,6 +17,9 @@
 #include "qSlicerAbstractModuleWidget.h"
 #include "qSlicerModuleManager.h"
 #include "qSlicerPythonManager.h"
+
+// MRML includes
+#include <vtkMRMLScene.h>
 
 #include "vtkSlicerConfigure.h" // For Slicer3_USE_PYTHONQT
 
@@ -39,7 +39,7 @@ qSlicerMainWindowCorePrivate::qSlicerMainWindowCorePrivate()
 void qSlicerMainWindowCorePrivate::onModuleLoaded(qSlicerAbstractModule* module)
 {
   Q_ASSERT(module);
-  QCTK_P(qSlicerMainWindowCore);
+  CTK_P(qSlicerMainWindowCore);
 
   qSlicerAbstractModuleWidget* moduleWidget = module->widgetRepresentation();
   Q_ASSERT(moduleWidget);
@@ -65,7 +65,7 @@ void qSlicerMainWindowCorePrivate::onModuleLoaded(qSlicerAbstractModule* module)
 void qSlicerMainWindowCorePrivate::onModuleAboutToBeUnloaded(qSlicerAbstractModule* module)
 {
   Q_ASSERT(module);
-  QCTK_P(qSlicerMainWindowCore);
+  CTK_P(qSlicerMainWindowCore);
 
   qSlicerAbstractModuleWidget* moduleWidget = module->widgetRepresentation();
   Q_ASSERT(moduleWidget);
@@ -83,8 +83,8 @@ void qSlicerMainWindowCorePrivate::onModuleAboutToBeUnloaded(qSlicerAbstractModu
 //-----------------------------------------------------------------------------
 qSlicerMainWindowCore::qSlicerMainWindowCore(qSlicerMainWindow* _parent):Superclass(_parent)
 {
-  QCTK_INIT_PRIVATE(qSlicerMainWindowCore);
-  QCTK_D(qSlicerMainWindowCore);
+  CTK_INIT_PRIVATE(qSlicerMainWindowCore);
+  CTK_D(qSlicerMainWindowCore);
   
   d->ParentWidget = _parent;
 
@@ -106,7 +106,7 @@ qSlicerMainWindowCore::qSlicerMainWindowCore(qSlicerMainWindow* _parent):Supercl
 }
 
 //-----------------------------------------------------------------------------
-QCTK_GET_CXX(qSlicerMainWindowCore, qSlicerMainWindow*, widget, ParentWidget);
+CTK_GET_CXX(qSlicerMainWindowCore, qSlicerMainWindow*, widget, ParentWidget);
 
 //---------------------------------------------------------------------------
 void qSlicerMainWindowCore::onEditUndoActionTriggered()
@@ -124,7 +124,7 @@ void qSlicerMainWindowCore::onEditRedoActionTriggered()
 void qSlicerMainWindowCore::onWindowPythonInteractorActionTriggered()
 {
 #ifdef Slicer3_USE_PYTHONQT
-  QCTK_D(qSlicerMainWindowCore);
+  CTK_D(qSlicerMainWindowCore);
   if (!d->PythonShell)
     {
     Q_ASSERT(qSlicerApplication::application()->pythonManager());

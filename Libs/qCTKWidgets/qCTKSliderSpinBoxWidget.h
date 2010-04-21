@@ -15,11 +15,11 @@
 #ifndef __qCTKSliderSpinBoxWidget_h
 #define __qCTKSliderSpinBoxWidget_h
 
-/// qCTK includes
-#include "qCTKPimpl.h"
-
-/// QT includes
+// Qt includes
 #include <QSlider>
+
+// CTK includes
+#include <ctkPimpl.h>
 
 #include "qCTKWidgetsExport.h"
 
@@ -162,8 +162,9 @@ protected slots:
   
 protected:
   virtual bool eventFilter(QObject *obj, QEvent *event);
+  
 private:
-  QCTK_DECLARE_PRIVATE(qCTKSliderSpinBoxWidget);
+  CTK_DECLARE_PRIVATE(qCTKSliderSpinBoxWidget);
 
 };
 

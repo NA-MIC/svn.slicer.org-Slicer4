@@ -10,14 +10,14 @@
 
 =========================================================================auto=*/
 
-// QT includes
+// Qt includes
 #include <QDebug>
 #include <QFileInfo>
 #include <QSettings>
 #include <QString>
 #include <QStringList>
 
-// SlicerQT includes
+// SlicerQt includes
 #include "qSlicerAbstractModule.h"
 #include "qSlicerCoreApplication.h"
 #include "qSlicerCoreIOManager.h"
@@ -64,7 +64,7 @@ bool qSlicerSceneIO::load(const qSlicerIO::IOProperties& properties)
 }
 
 //-----------------------------------------------------------------------------
-class qSlicerCoreIOManagerPrivate: public qCTKPrivate<qSlicerCoreIOManager>
+class qSlicerCoreIOManagerPrivate: public ctkPrivate<qSlicerCoreIOManager>
 {
 public:
   qSlicerCoreIOManagerPrivate();
@@ -121,7 +121,7 @@ qSlicerIO* qSlicerCoreIOManagerPrivate::reader(const QString& fileName)const
 qSlicerCoreIOManager::qSlicerCoreIOManager(QObject* _parent)
   :QObject(_parent)
 {
-  QCTK_INIT_PRIVATE(qSlicerCoreIOManager);
+  CTK_INIT_PRIVATE(qSlicerCoreIOManager);
   // FIXME move to the application level
   this->registerIO(new qSlicerSceneIO(this));
   this->registerIO(new qSlicerSlicer2SceneReader(this));
@@ -137,7 +137,7 @@ qSlicerCoreIOManager::~qSlicerCoreIOManager()
 //-----------------------------------------------------------------------------
 qSlicerIO::IOFileType qSlicerCoreIOManager::fileType(const QString& fileName)const
 {
-  QCTK_D(const qSlicerCoreIOManager);
+  CTK_D(const qSlicerCoreIOManager);
   qSlicerIO* reader = d->reader(fileName);
   if (!reader)
     {
@@ -149,7 +149,7 @@ qSlicerIO::IOFileType qSlicerCoreIOManager::fileType(const QString& fileName)con
 //-----------------------------------------------------------------------------
 QString qSlicerCoreIOManager::fileDescription(const QString& fileName)const
 {
-  QCTK_D(const qSlicerCoreIOManager);
+  CTK_D(const qSlicerCoreIOManager);
   qSlicerIO* reader = d->reader(fileName);
   if (!reader)
     {
@@ -161,7 +161,7 @@ QString qSlicerCoreIOManager::fileDescription(const QString& fileName)const
 //-----------------------------------------------------------------------------
 qSlicerIOOptions* qSlicerCoreIOManager::fileOptions(const QString& fileName)const
 {
-  QCTK_D(const qSlicerCoreIOManager);
+  CTK_D(const qSlicerCoreIOManager);
   qSlicerIO* reader = d->reader(fileName);
   if (!reader)
     {
@@ -279,7 +279,7 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
                                      const qSlicerIO::IOProperties& parameters, 
                                      vtkCollection* loadedNodes)
 { 
-  QCTK_D(qSlicerCoreIOManager);
+  CTK_D(qSlicerCoreIOManager);
 
   Q_ASSERT(parameters.contains("fileName"));
 
@@ -317,14 +317,14 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
 //-----------------------------------------------------------------------------
 const QList<qSlicerIO*>& qSlicerCoreIOManager::ios()const
 {
-  QCTK_D(const qSlicerCoreIOManager);
+  CTK_D(const qSlicerCoreIOManager);
   return d->Readers;
 }
 
 //-----------------------------------------------------------------------------
 QList<qSlicerIO*> qSlicerCoreIOManager::ios(qSlicerIO::IOFileType fileType)const
 {
-  QCTK_D(const qSlicerCoreIOManager);
+  CTK_D(const qSlicerCoreIOManager);
   QList<qSlicerIO*> res;
   foreach(qSlicerIO* io, d->Readers)
     {
@@ -340,6 +340,6 @@ QList<qSlicerIO*> qSlicerCoreIOManager::ios(qSlicerIO::IOFileType fileType)const
 //-----------------------------------------------------------------------------
 void qSlicerCoreIOManager::registerIO(qSlicerIO* io)
 {
-  QCTK_D(qSlicerCoreIOManager);
+  CTK_D(qSlicerCoreIOManager);
   d->Readers << io;
 }

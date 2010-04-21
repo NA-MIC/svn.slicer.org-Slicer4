@@ -1,10 +1,10 @@
 #ifndef __qSlicerVolumesModule_h
 #define __qSlicerVolumesModule_h
 
-// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-// SlicerQT includes
+// SlicerQt includes
 #include "qSlicerAbstractLoadableModule.h"
 
 #include "qSlicerVolumesModuleExport.h"
@@ -38,7 +38,7 @@ protected:
   virtual vtkSlicerLogic* createLogic();
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerVolumesModule);
+  CTK_DECLARE_PRIVATE(qSlicerVolumesModule);
 };
 
 #endif

@@ -1,5 +1,5 @@
 
-// QT includes
+// Qt includes
 #include <QDebug>
 
 // CTK includes
@@ -12,17 +12,17 @@
 #include "qMRMLTransformProxyModel.h"
 
 //------------------------------------------------------------------------------
-class qMRMLTreeWidgetPrivate: public qCTKPrivate<qMRMLTreeWidget>
+class qMRMLTreeWidgetPrivate: public ctkPrivate<qMRMLTreeWidget>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qMRMLTreeWidget);
+  CTK_DECLARE_PUBLIC(qMRMLTreeWidget);
   void init();
 };
 
 //------------------------------------------------------------------------------
 void qMRMLTreeWidgetPrivate::init()
 {
-  QCTK_P(qMRMLTreeWidget);
+  CTK_P(qMRMLTreeWidget);
   //p->QTreeView::setModel(new qMRMLItemModel(p));
   qMRMLSceneModel* sceneModel = new qMRMLSceneModel(p);
   qMRMLTransformProxyModel* transformModel = new qMRMLTransformProxyModel(p);
@@ -37,8 +37,8 @@ void qMRMLTreeWidgetPrivate::init()
 qMRMLTreeWidget::qMRMLTreeWidget(QWidget *_parent)
   :QTreeView(_parent)
 {
-  QCTK_INIT_PRIVATE(qMRMLTreeWidget);
-  qctk_d()->init();
+  CTK_INIT_PRIVATE(qMRMLTreeWidget);
+  ctk_d()->init();
 }
 
 //------------------------------------------------------------------------------

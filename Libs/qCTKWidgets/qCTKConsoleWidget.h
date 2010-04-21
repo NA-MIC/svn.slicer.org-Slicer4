@@ -46,7 +46,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __qCTKConsoleWidget_h
 #define __qCTKConsoleWidget_h
 
-// QT includes
+// Qt includes
 #include <QWidget>
 #include <QTextCharFormat>
 #include <QCompleter>

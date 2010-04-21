@@ -1,17 +1,17 @@
 #ifndef __qSlicerIO_h
 #define __qSlicerIO_h
 
-/// Qt includes
+// Qt includes
 #include <QMap>
 #include <QObject>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-/// QtCore includes
+// QtCore includes
 #include "qSlicerBaseQTCoreExport.h"
 
 class vtkMRMLScene;
@@ -53,11 +53,13 @@ public:
 
   QStringList loadedNodes()const;
   QStringList savedNodes()const;
+  
 protected:
   void setLoadedNodes(const QStringList& nodes);
   void setSavedNodes(const QStringList& nodes);
+  
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerIO);
+  CTK_DECLARE_PRIVATE(qSlicerIO);
 };
 
 #endif

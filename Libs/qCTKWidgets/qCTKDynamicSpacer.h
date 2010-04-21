@@ -15,11 +15,11 @@
 #ifndef __qCTKDynamicSpacer_h
 #define __qCTKDynamicSpacer_h
 
-/// QT includes
+// Qt includes
 #include <QWidget>
 
-/// qCTK includes
-#include "qCTKPimpl.h"
+// CTK includes
+#include <ctkPimpl.h>
 #include "qCTKWidgetsExport.h"
 
 class qCTKDynamicSpacerPrivate;
@@ -48,7 +48,7 @@ public slots:
   void activate(bool enable);
 
 private:
-  QCTK_DECLARE_PRIVATE(qCTKDynamicSpacer);
+  CTK_DECLARE_PRIVATE(qCTKDynamicSpacer);
 };
 
 void qCTKDynamicSpacer::setActiveSizePolicy(QSizePolicy::Policy horizontal, QSizePolicy::Policy vertical)

@@ -14,12 +14,12 @@
 #ifndef __qSlicerLoadableModuleFactory_h
 #define __qSlicerLoadableModuleFactory_h
 
-/// SlicerQT includes
-#include "qSlicerAbstractModule.h"
-
-/// CTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 #include <ctkAbstractPluginFactory.h>
+
+// SlicerQt includes
+#include "qSlicerAbstractModule.h"
 
 #include "qSlicerBaseQTCoreExport.h"
 
@@ -42,7 +42,7 @@ public:
 
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerLoadableModuleFactory);
+  CTK_DECLARE_PRIVATE(qSlicerLoadableModuleFactory);
 };
 
 #endif

@@ -14,13 +14,13 @@
 #ifndef __qSlicerCLILoadableModuleFactory_h
 #define __qSlicerCLILoadableModuleFactory_h
 
-/// SlicerQT includes
+// CTK includes
+#include <ctkPimpl.h>
+#include <ctkAbstractLibraryFactory.h>
+
+// SlicerQt includes
 #include "qSlicerAbstractModule.h"
 #include "qSlicerBaseQTCLIExport.h"
-
-/// CTK includes
-#include <qCTKPimpl.h>
-#include <ctkAbstractLibraryFactory.h>
 
 //-----------------------------------------------------------------------------
 class qSlicerCLILoadableModuleFactoryItem : public ctkFactoryLibraryItem<qSlicerAbstractModule>
@@ -61,7 +61,7 @@ public:
   static QString extractModuleName(const QString& libraryName);
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCLILoadableModuleFactory);
+  CTK_DECLARE_PRIVATE(qSlicerCLILoadableModuleFactory);
 };
 
 #endif

@@ -15,9 +15,12 @@
 #ifndef __qCTKRangeSlider_h
 #define __qCTKRangeSlider_h
 
+// Qt includes
 #include <QSlider>
 
-#include "qCTKPimpl.h"
+// CTK includes
+#include <ctkPimpl.h>
+
 #include "qCTKWidgetsExport.h"
 
 class QStylePainter;
@@ -144,7 +147,7 @@ protected:
   virtual void paintEvent(QPaintEvent* ev);
 
 private:
-  QCTK_DECLARE_PRIVATE(qCTKRangeSlider);
+  CTK_DECLARE_PRIVATE(qCTKRangeSlider);
 };
 
 #endif

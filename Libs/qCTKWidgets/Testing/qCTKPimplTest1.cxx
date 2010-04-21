@@ -12,14 +12,14 @@
 
 =========================================================================*/
 
-// qCTK includes
-#include "qCTKPimpl.h"
-
-// QT includes
+// Qt includes
 #include <QApplication>
 
+// CTK includes
+#include <ctkPimpl.h>
+
 // STD includes
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
 
 class qCTKPimplHelper 

@@ -13,14 +13,14 @@
 #ifndef __qSlicerCoreIOManager_h
 #define __qSlicerCoreIOManager_h
 
-/// Qt includes
+// Qt includes
 #include <QObject>
 #include <QMap>
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-/// QtCore includes
+// QtCore includes
 #include <qSlicerIO.h>
 #include "qSlicerBaseQTCoreExport.h"
 
@@ -76,7 +76,7 @@ protected:
   const QList<qSlicerIO*>& ios()const;
   QList<qSlicerIO*> ios(qSlicerIO::IOFileType fileType)const;
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCoreIOManager);
+  CTK_DECLARE_PRIVATE(qSlicerCoreIOManager);
 };
 
 #endif

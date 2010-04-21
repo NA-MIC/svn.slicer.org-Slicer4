@@ -15,12 +15,12 @@
 #ifndef __qCTKDoubleRangeSlider_h
 #define __qCTKDoubleRangeSlider_h
 
-/// QT includes
+// Qt includes
 #include <QWidget>
 #include <QAbstractSlider>
 
-/// qCTK includes
-#include "qCTKPimpl.h"
+// CTK includes
+#include <ctkPimpl.h>
 #include "qCTKWidgetsExport.h"
 
 class qCTKDoubleRangeSliderPrivate;
@@ -206,7 +206,7 @@ protected slots:
   void onMaxPosChanged(int value);
   void onPositionsChanged(int min, int max);
 private:
-  QCTK_DECLARE_PRIVATE(qCTKDoubleRangeSlider);
+  CTK_DECLARE_PRIVATE(qCTKDoubleRangeSlider);
 };
 
 #endif

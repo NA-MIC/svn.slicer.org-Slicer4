@@ -33,12 +33,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef _qCTKCheckableHeaderView_h
 #define _qCTKCheckableHeaderView_h
 
-/// Qt includes
+// Qt includes
 #include <QHeaderView>
 
-/// qCTK includes
-#include "qCTKPimpl.h"
+// CTK includes
+#include <ctkPimpl.h>
+
 #include "qCTKWidgetsExport.h"
+
 class qCTKCheckableHeaderViewPrivate;
 
 class QCTK_WIDGETS_EXPORT qCTKCheckableHeaderView : public QHeaderView
@@ -104,7 +106,7 @@ protected:
   bool isPointInCheckBox(int section, QPoint pos)const;
 
 private:
-  QCTK_DECLARE_PRIVATE(qCTKCheckableHeaderView);
+  CTK_DECLARE_PRIVATE(qCTKCheckableHeaderView);
 };
 
 //-----------------------------------------------------------------------------

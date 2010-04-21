@@ -10,14 +10,13 @@
 
 =========================================================================auto=*/
 
-#include "qSlicerCLIExecutableModuleFactory.h"
+// Qt includes
+#include <QStringList>
 
-// SlicerQT includes
+// SlicerQt includes
+#include "qSlicerCLIExecutableModuleFactory.h"
 #include "qSlicerCLIModule.h"
 #include "qSlicerCLIModuleFactoryHelper.h"
-
-// QT includes
-#include <QStringList>
 
 //-----------------------------------------------------------------------------
 qSlicerCLIExecutableModuleFactoryItem::qSlicerCLIExecutableModuleFactoryItem(const QString& itemKey,
@@ -45,10 +44,10 @@ qSlicerAbstractModule* qSlicerCLIExecutableModuleFactoryItem::instanciator()
 }
 
 //-----------------------------------------------------------------------------
-class qSlicerCLIExecutableModuleFactoryPrivate:public qCTKPrivate<qSlicerCLIExecutableModuleFactory>
+class qSlicerCLIExecutableModuleFactoryPrivate:public ctkPrivate<qSlicerCLIExecutableModuleFactory>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qSlicerCLIExecutableModuleFactory);
+  CTK_DECLARE_PUBLIC(qSlicerCLIExecutableModuleFactory);
   qSlicerCLIExecutableModuleFactoryPrivate()
     {
     }
@@ -57,7 +56,7 @@ public:
 //-----------------------------------------------------------------------------
 qSlicerCLIExecutableModuleFactory::qSlicerCLIExecutableModuleFactory():Superclass()
 {
-  QCTK_INIT_PRIVATE(qSlicerCLIExecutableModuleFactory);
+  CTK_INIT_PRIVATE(qSlicerCLIExecutableModuleFactory);
 }
 
 //-----------------------------------------------------------------------------

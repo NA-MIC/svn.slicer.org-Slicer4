@@ -12,16 +12,17 @@
 
 =========================================================================*/
 
-
-#include "qCTKRangeWidget.h"
-#include "ui_qCTKRangeWidget.h"
-
+// Qt includes
 #include <QDebug>
 #include <QMouseEvent>
 
+// CTK includes
+#include "qCTKRangeWidget.h"
+#include "ui_qCTKRangeWidget.h"
+
 //-----------------------------------------------------------------------------
-class qCTKRangeWidgetPrivate: public qCTKPrivate<qCTKRangeWidget>,
-                                      public Ui_qCTKRangeWidget
+class qCTKRangeWidgetPrivate: public ctkPrivate<qCTKRangeWidget>,
+                              public Ui_qCTKRangeWidget
 {
 public:
   qCTKRangeWidgetPrivate();
@@ -74,7 +75,7 @@ void qCTKRangeWidgetPrivate::updateSpinBoxWidth()
 // --------------------------------------------------------------------------
 int qCTKRangeWidgetPrivate::synchronizedSpinBoxWidth()const
 {
-  QCTK_P(const qCTKRangeWidget);
+  CTK_P(const qCTKRangeWidget);
   //Q_ASSERT(this->MinimumSpinBox->sizeHint() == this->MaximumSpinBox->sizeHint());
   int maxWidth = qMax(this->MinimumSpinBox->sizeHint().width(),
                       this->MaximumSpinBox->sizeHint().width());
@@ -86,8 +87,8 @@ int qCTKRangeWidgetPrivate::synchronizedSpinBoxWidth()const
     p->parent()->findChildren<qCTKRangeWidget*>();
   foreach(qCTKRangeWidget* sibling, siblings)
     {
-    maxWidth = qMax(maxWidth, qMax(sibling->qctk_d()->MaximumSpinBox->sizeHint().width(),
-                                   sibling->qctk_d()->MaximumSpinBox->sizeHint().width()));
+    maxWidth = qMax(maxWidth, qMax(sibling->ctk_d()->MaximumSpinBox->sizeHint().width(),
+                                   sibling->ctk_d()->MaximumSpinBox->sizeHint().width()));
     }
   return maxWidth;
 }
@@ -95,15 +96,15 @@ int qCTKRangeWidgetPrivate::synchronizedSpinBoxWidth()const
 // --------------------------------------------------------------------------
 void qCTKRangeWidgetPrivate::synchronizeSiblingSpinBox(int width)
 {
-  QCTK_P(const qCTKRangeWidget);
+  CTK_P(const qCTKRangeWidget);
   QList<qCTKRangeWidget*> siblings = 
     p->parent()->findChildren<qCTKRangeWidget*>();
   foreach(qCTKRangeWidget* sibling, siblings)
     {
     if (sibling != p && sibling->isAutoSpinBoxWidth())
       {
-      sibling->qctk_d()->MinimumSpinBox->setMinimumWidth(width);
-      sibling->qctk_d()->MaximumSpinBox->setMinimumWidth(width);
+      sibling->ctk_d()->MinimumSpinBox->setMinimumWidth(width);
+      sibling->ctk_d()->MaximumSpinBox->setMinimumWidth(width);
       }
     }
 }
@@ -111,8 +112,8 @@ void qCTKRangeWidgetPrivate::synchronizeSiblingSpinBox(int width)
 // --------------------------------------------------------------------------
 qCTKRangeWidget::qCTKRangeWidget(QWidget* _parent) : Superclass(_parent)
 {
-  QCTK_INIT_PRIVATE(qCTKRangeWidget);
-  QCTK_D(qCTKRangeWidget);
+  CTK_INIT_PRIVATE(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   
   d->setupUi(this);
 
@@ -140,7 +141,7 @@ qCTKRangeWidget::qCTKRangeWidget(QWidget* _parent) : Superclass(_parent)
 // --------------------------------------------------------------------------
 double qCTKRangeWidget::minimum()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   Q_ASSERT(d->equal(d->MinimumSpinBox->minimum(),d->Slider->minimum()));
   return d->Slider->minimum();
 }
@@ -148,7 +149,7 @@ double qCTKRangeWidget::minimum()const
 // --------------------------------------------------------------------------
 double qCTKRangeWidget::maximum()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   Q_ASSERT(d->equal(d->MaximumSpinBox->maximum(), d->Slider->maximum()));
   return d->Slider->maximum();
 }
@@ -156,7 +157,7 @@ double qCTKRangeWidget::maximum()const
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setMinimum(double min)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->MinimumSpinBox->setMinimum(min);
   // SpinBox can truncate min (depending on decimals).
   // use Spinbox's min to set Slider's min
@@ -168,7 +169,7 @@ void qCTKRangeWidget::setMinimum(double min)
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setMaximum(double max)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->MaximumSpinBox->setMaximum(max);
   // SpinBox can truncate max (depending on decimals).
   // use Spinbox's max to set Slider's max
@@ -180,7 +181,7 @@ void qCTKRangeWidget::setMaximum(double max)
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setRange(double min, double max)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   
   d->MinimumSpinBox->setMinimum(qMin(min,max));
   d->MaximumSpinBox->setMaximum(qMax(min,max));
@@ -195,27 +196,27 @@ void qCTKRangeWidget::setRange(double min, double max)
 // --------------------------------------------------------------------------
 double qCTKRangeWidget::sliderPosition()const
 {
-  return qctk_d()->Slider->sliderPosition();
+  return ctk_d()->Slider->sliderPosition();
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setSliderPosition(double position)
 {
-  qctk_d()->Slider->setSliderPosition(position);
+  ctk_d()->Slider->setSliderPosition(position);
 }
 */
 /*
 // --------------------------------------------------------------------------
 double qCTKRangeWidget::previousSliderPosition()
 {
-  return qctk_d()->Slider->previousSliderPosition();
+  return ctk_d()->Slider->previousSliderPosition();
 }
 */
 
 // --------------------------------------------------------------------------
 double qCTKRangeWidget::minimumValue()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   Q_ASSERT(d->equal(d->Slider->minimumValue(), d->MinimumSpinBox->value()));
   return d->Changing ? d->MinimumValueBeforeChange : d->Slider->minimumValue();
 }
@@ -223,7 +224,7 @@ double qCTKRangeWidget::minimumValue()const
 // --------------------------------------------------------------------------
 double qCTKRangeWidget::maximumValue()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   Q_ASSERT(d->equal(d->Slider->maximumValue(), d->MaximumSpinBox->value()));
   return d->Changing ? d->MaximumValueBeforeChange : d->Slider->maximumValue();
 }
@@ -231,7 +232,7 @@ double qCTKRangeWidget::maximumValue()const
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setMinimumValue(double _value)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   // disable the tracking temporally to emit the
   // signal valueChanged if changeValue() is called
   bool isChanging = d->Changing;
@@ -247,7 +248,7 @@ void qCTKRangeWidget::setMinimumValue(double _value)
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setMaximumValue(double _value)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   // disable the tracking temporally to emit the
   // signal valueChanged if changeValue() is called
   bool isChanging = d->Changing;
@@ -263,19 +264,19 @@ void qCTKRangeWidget::setMaximumValue(double _value)
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setMinimumToMaximumSpinBox(double minimum)
 {
-  qctk_d()->MaximumSpinBox->setMinimum(minimum);
+  ctk_d()->MaximumSpinBox->setMinimum(minimum);
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setMaximumToMinimumSpinBox(double maximum)
 {
-  qctk_d()->MinimumSpinBox->setMaximum(maximum);
+  ctk_d()->MinimumSpinBox->setMaximum(maximum);
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::startChanging()
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   if (d->Tracking)
     {
     return;
@@ -288,7 +289,7 @@ void qCTKRangeWidget::startChanging()
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::stopChanging()
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   if (d->Tracking)
     {
     return;
@@ -307,7 +308,7 @@ void qCTKRangeWidget::stopChanging()
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::changeMinimumValue(double newValue)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   //if (d->Tracking)
     {
     emit this->minimumValueIsChanging(newValue);
@@ -321,7 +322,7 @@ void qCTKRangeWidget::changeMinimumValue(double newValue)
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::changeMaximumValue(double newValue)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   //if (d->Tracking)
     {
     emit this->maximumValueIsChanging(newValue);
@@ -361,7 +362,7 @@ bool qCTKRangeWidget::eventFilter(QObject *obj, QEvent *event)
 // --------------------------------------------------------------------------
 double qCTKRangeWidget::singleStep()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   Q_ASSERT(d->equal(d->Slider->singleStep(), d->MinimumSpinBox->singleStep()) &&
            d->equal(d->Slider->singleStep(), d->MaximumSpinBox->singleStep()));
   return d->Slider->singleStep();
@@ -370,7 +371,7 @@ double qCTKRangeWidget::singleStep()const
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setSingleStep(double step)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->MinimumSpinBox->setSingleStep(step);
   d->MaximumSpinBox->setSingleStep(step);
   d->Slider->setSingleStep(d->MinimumSpinBox->singleStep());
@@ -381,7 +382,7 @@ void qCTKRangeWidget::setSingleStep(double step)
 // --------------------------------------------------------------------------
 int qCTKRangeWidget::decimals()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   Q_ASSERT(d->MinimumSpinBox->decimals() == d->MaximumSpinBox->decimals());
   return d->MinimumSpinBox->decimals();
 }
@@ -389,7 +390,7 @@ int qCTKRangeWidget::decimals()const
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setDecimals(int newDecimals)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->MinimumSpinBox->setDecimals(newDecimals);
   d->MaximumSpinBox->setDecimals(newDecimals);
 }
@@ -397,7 +398,7 @@ void qCTKRangeWidget::setDecimals(int newDecimals)
 // --------------------------------------------------------------------------
 QString qCTKRangeWidget::prefix()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   Q_ASSERT(d->MinimumSpinBox->prefix() == d->MaximumSpinBox->prefix());
   return d->MinimumSpinBox->prefix();
 }
@@ -405,7 +406,7 @@ QString qCTKRangeWidget::prefix()const
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setPrefix(const QString& newPrefix)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->MinimumSpinBox->setPrefix(newPrefix);
   d->MaximumSpinBox->setPrefix(newPrefix);
 }
@@ -413,7 +414,7 @@ void qCTKRangeWidget::setPrefix(const QString& newPrefix)
 // --------------------------------------------------------------------------
 QString qCTKRangeWidget::suffix()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
  Q_ASSERT(d->MinimumSpinBox->suffix() == d->MaximumSpinBox->suffix());
   return d->MinimumSpinBox->suffix();
 }
@@ -421,7 +422,7 @@ QString qCTKRangeWidget::suffix()const
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setSuffix(const QString& newSuffix)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->MinimumSpinBox->setSuffix(newSuffix);
   d->MaximumSpinBox->setSuffix(newSuffix);
 }
@@ -429,14 +430,14 @@ void qCTKRangeWidget::setSuffix(const QString& newSuffix)
 // --------------------------------------------------------------------------
 double qCTKRangeWidget::tickInterval()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   return d->Slider->tickInterval();
 }
 
 // --------------------------------------------------------------------------
 void qCTKRangeWidget::setTickInterval(double ti)
 { 
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->Slider->setTickInterval(ti);
 }
 
@@ -450,7 +451,7 @@ void qCTKRangeWidget::reset()
 // -------------------------------------------------------------------------
 void qCTKRangeWidget::setSpinBoxAlignment(Qt::Alignment alignment)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->MinimumSpinBox->setAlignment(alignment);
   d->MaximumSpinBox->setAlignment(alignment);
 }
@@ -458,7 +459,7 @@ void qCTKRangeWidget::setSpinBoxAlignment(Qt::Alignment alignment)
 // -------------------------------------------------------------------------
 Qt::Alignment qCTKRangeWidget::spinBoxAlignment()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   Q_ASSERT(d->MinimumSpinBox->alignment() == d->MaximumSpinBox->alignment());
   return d->MinimumSpinBox->alignment();
 }
@@ -466,28 +467,28 @@ Qt::Alignment qCTKRangeWidget::spinBoxAlignment()const
 // -------------------------------------------------------------------------
 void qCTKRangeWidget::setTracking(bool enable)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->Tracking = enable;
 }
 
 // -------------------------------------------------------------------------
 bool qCTKRangeWidget::hasTracking()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   return d->Tracking;
 }
 
 // -------------------------------------------------------------------------
 bool qCTKRangeWidget::isAutoSpinBoxWidth()const
 {
-  QCTK_D(const qCTKRangeWidget);
+  CTK_D(const qCTKRangeWidget);
   return d->AutoSpinBoxWidth;
 }
 
 // -------------------------------------------------------------------------
 void qCTKRangeWidget::setAutoSpinBoxWidth(bool autoWidth)
 {
-  QCTK_D(qCTKRangeWidget);
+  CTK_D(qCTKRangeWidget);
   d->AutoSpinBoxWidth = autoWidth;
   d->updateSpinBoxWidth();
 }

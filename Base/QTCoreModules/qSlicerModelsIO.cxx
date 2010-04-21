@@ -1,18 +1,18 @@
-/// Qt includes
+// Qt includes
 #include <QDebug>
 #include <QString>
 #include <QVariant>
 
-/// qSlicer includes
+// SlicerQt includes
 //#include "qSlicerAbstractModule.h"
 //#include "qSlicerCoreApplication.h"
 //#include "qSlicerModuleManager.h"
 #include "qSlicerModelsIO.h"
 
-/// Logic includes
+// Logic includes
 #include "vtkSlicerModelsLogic.h"
 
-/// MRML includes
+// MRML includes
 #include <vtkMRMLModelNode.h>
 #include <vtkMRMLStorageNode.h>
 
@@ -38,7 +38,7 @@ qSlicerIO::IOFileType qSlicerModelsIO::fileType()const
 QString qSlicerModelsIO::extensions()const
 {
   return "*.vtk *.vtp *.g *.byu *.stl *.orig"
-    "*.inflated *.sphere *.white *.smoothwm *.pial";
+         "*.inflated *.sphere *.white *.smoothwm *.pial";
 }
 
 //-----------------------------------------------------------------------------

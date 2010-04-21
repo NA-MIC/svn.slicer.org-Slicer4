@@ -10,28 +10,7 @@
 
 =========================================================================auto=*/
 
-
-#include "qSlicerCLIModuleWidget.h"
-#include "qSlicerCLIModuleWidget_p.h"
-#include "vtkSlicerCLIModuleLogic.h"
-
-// SlicerQT includes
-#include "qSlicerWidget.h"
-
-// qMRML includes
-#include <qMRMLNodeComboBox.h>
-#include <qMRMLNodeFactory.h>
-
-// qCTK includes
-#include <qCTKCollapsibleButton.h>
-#include <qCTKDoubleSlider.h>
-#include <qCTKFlowLayout.h>
-
-// MRML includes
-#include <vtkMRMLScene.h>
-#include <vtkMRMLCommandLineModuleNode.h>
-
-// QT includes
+// Qt includes
 #include <QGroupBox>
 #include <QLabel>
 #include <QFormLayout>
@@ -42,7 +21,26 @@
 #include <QLineEdit>
 #include <QRadioButton>
 
-// std includes
+// CTK includes
+#include <qCTKCollapsibleButton.h>
+#include <qCTKDoubleSlider.h>
+#include <qCTKFlowLayout.h>
+
+// SlicerQt includes
+#include "qSlicerCLIModuleWidget.h"
+#include "qSlicerCLIModuleWidget_p.h"
+#include "vtkSlicerCLIModuleLogic.h"
+#include "qSlicerWidget.h"
+
+// qMRML includes
+#include <qMRMLNodeComboBox.h>
+#include <qMRMLNodeFactory.h>
+
+// MRML includes
+#include <vtkMRMLScene.h>
+#include <vtkMRMLCommandLineModuleNode.h>
+
+// STD includes
 #include <limits>
 
 //-----------------------------------------------------------------------------
@@ -58,7 +56,7 @@ QHash<QString, QString> qSlicerCLIModuleWidgetPrivate::TransformTypeAttributeToN
 //-----------------------------------------------------------------------------
 vtkSlicerCLIModuleLogic* qSlicerCLIModuleWidgetPrivate::logic()const
 {
-  QCTK_P(const qSlicerCLIModuleWidget);
+  CTK_P(const qSlicerCLIModuleWidget);
   return vtkSlicerCLIModuleLogic::SafeDownCast(p->logic());
 }
 
@@ -440,7 +438,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createPointTagWidget(const ModuleParamet
   //TODO - tparameter->SetNoneEnabled(noneEnabled);
   //TODO - tparameter->SetNewNodeName((title+" output").c_str());
 
-  QCTK_P(qSlicerCLIModuleWidget);
+  CTK_P(qSlicerCLIModuleWidget);
   widget->setMRMLScene(p->mrmlScene());
   QObject::connect(p, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)),
                   widget, SLOT(setMRMLScene(vtkMRMLScene*)));
@@ -462,7 +460,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createRegionTagWidget(const ModuleParame
   //TODO - title + " RegionList"
   //TODO - tparameter->SetNewNodeEnabled(1);
   //TODO - tparameter->SetNoneEnabled(noneEnabled);
-  QCTK_P(qSlicerCLIModuleWidget);
+  CTK_P(qSlicerCLIModuleWidget);
   widget->setMRMLScene(p->mrmlScene());
   QObject::connect(p, SIGNAL(mrmlSceneChanged(vtkMRMLScene*)),
                    widget, SLOT(setMRMLScene(vtkMRMLScene*)));
@@ -511,7 +509,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createImageTagWidget(const ModuleParamet
   // TODO - tparameter->SetNoneEnabled(noneEnabled);
   // TODO - title + " Volume"
 
-  QCTK_P(qSlicerCLIModuleWidget);
+  CTK_P(qSlicerCLIModuleWidget);
   QString _label = QString::fromStdString(moduleParameter.GetLabel());
   qMRMLNodeComboBox * widget = new qMRMLNodeComboBox;
   widget->setNodeTypes(QStringList(nodeType));
@@ -559,7 +557,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createGeometryTagWidget(const ModulePara
   // TODO - title + " Model"
   // TODO - SetNoneEnabled(noneEnabled)
   
-  QCTK_P(qSlicerCLIModuleWidget);
+  CTK_P(qSlicerCLIModuleWidget);
   QString _label = QString::fromStdString(moduleParameter.GetLabel());
   qMRMLNodeComboBox * widget = new qMRMLNodeComboBox;
   widget->setShowHidden(showHidden);
@@ -597,7 +595,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createTableTagWidget(const ModuleParamet
   // TODO - title + " Table"
   // TODO - SetNoneEnabled(1)
 
-  QCTK_P(qSlicerCLIModuleWidget);
+  CTK_P(qSlicerCLIModuleWidget);
   QString _label = QString::fromStdString(moduleParameter.GetLabel());
   qMRMLNodeComboBox * widget = new qMRMLNodeComboBox;
   widget->setNodeTypes(QStringList(nodeType));
@@ -630,7 +628,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createTransformTagWidget(const ModulePar
   // TODO - title + " Transform"
   // TODO - SetNoneEnabled(noneEnabled);
 
-  QCTK_P(qSlicerCLIModuleWidget);
+  CTK_P(qSlicerCLIModuleWidget);
   QString _label = QString::fromStdString(moduleParameter.GetLabel());
   qMRMLNodeComboBox * widget = new qMRMLNodeComboBox;
   widget->setNodeTypes(QStringList(nodeType));
@@ -757,7 +755,7 @@ QString qSlicerCLIModuleWidgetPrivate::nodeTypeFromMap(const QString& defaultVal
 //---------------------------------------------------------------------------
 void qSlicerCLIModuleWidgetPrivate::updateMRMLCommandLineModuleNode()
 { 
-  QCTK_P(qSlicerCLIModuleWidget);
+  CTK_P(qSlicerCLIModuleWidget);
   Q_ASSERT(p->mrmlScene());
    
   vtkMRMLCommandLineModuleNode* node = this->commandLineModuleNode();
@@ -802,8 +800,8 @@ qSlicerCLIModuleWidget::qSlicerCLIModuleWidget(
   ModuleDescription* desc, QWidget* _parent):Superclass(_parent)
 {
   Q_ASSERT(desc);
-  QCTK_INIT_PRIVATE(qSlicerCLIModuleWidget);
-  QCTK_D(qSlicerCLIModuleWidget);
+  CTK_INIT_PRIVATE(qSlicerCLIModuleWidget);
+  CTK_D(qSlicerCLIModuleWidget);
 
   // Set properties
   d->Title = QString::fromStdString(desc->GetTitle());
@@ -817,9 +815,9 @@ qSlicerCLIModuleWidget::qSlicerCLIModuleWidget(
 //-----------------------------------------------------------------------------
 void qSlicerCLIModuleWidget::setup()
 {
-  QCTK_D(qSlicerCLIModuleWidget);
+  CTK_D(qSlicerCLIModuleWidget);
   d->setupUi(this);
 }
 
 //-----------------------------------------------------------------------------
-QCTK_SET_CXX(qSlicerCLIModuleWidget, const QString&, setModuleEntryPoint, ModuleEntryPoint);
+CTK_SET_CXX(qSlicerCLIModuleWidget, const QString&, setModuleEntryPoint, ModuleEntryPoint);

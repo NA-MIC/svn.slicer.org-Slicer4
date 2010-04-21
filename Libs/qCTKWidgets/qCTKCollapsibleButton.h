@@ -15,12 +15,12 @@
 #ifndef __qCTKCollapsibleButton_h
 #define __qCTKCollapsibleButton_h
 
-/// QT includes
+// Qt includes
 #include <QAbstractButton>
 #include <QFrame>
 
-/// qCTK includes
-#include "qCTKPimpl.h"
+// CTK includes
+#include <ctkPimpl.h>
 #include "qCTKWidgetsExport.h"
 
 class qCTKCollapsibleButtonPrivate;
@@ -114,7 +114,7 @@ protected:
   virtual void initStyleOption(QStyleOptionButton* option)const;
 
 private:
-  QCTK_DECLARE_PRIVATE(qCTKCollapsibleButton);
+  CTK_DECLARE_PRIVATE(qCTKCollapsibleButton);
 };
 
 #endif

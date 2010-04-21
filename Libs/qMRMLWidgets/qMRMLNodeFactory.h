@@ -1,12 +1,12 @@
 #ifndef __qMRMLNodeFactory_h
 #define __qMRMLNodeFactory_h
 
-/// qCTK includes
-#include <qCTKPimpl.h>
-
-/// QT includes
+// Qt includes
 #include <QObject>
 #include <QHash>
+
+// CTK includes
+#include <ctkPimpl.h>
 
 #include "qMRMLWidgetsExport.h"
  
@@ -51,7 +51,7 @@ public slots:
   void setMRMLScene(vtkMRMLScene* mrmlScene);
   
 private:
-  QCTK_DECLARE_PRIVATE(qMRMLNodeFactory);
+  CTK_DECLARE_PRIVATE(qMRMLNodeFactory);
 }; 
 
 #endif

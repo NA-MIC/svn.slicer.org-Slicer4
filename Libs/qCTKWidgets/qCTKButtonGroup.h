@@ -4,8 +4,9 @@
 // Qt includes
 #include <QButtonGroup>
 
-// qCTK includes
-#include "qCTKPimpl.h"
+// CTK includes
+#include <ctkPimpl.h>
+
 #include "qCTKWidgetsExport.h"
 
 class qCTKButtonGroupPrivate;
@@ -26,7 +27,7 @@ protected slots:
   void onButtonPressed(QAbstractButton * button);
 
 private:
-  QCTK_DECLARE_PRIVATE(qCTKButtonGroup);
+  CTK_DECLARE_PRIVATE(qCTKButtonGroup);
 };
 
 #endif

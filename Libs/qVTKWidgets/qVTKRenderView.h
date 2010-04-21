@@ -1,11 +1,11 @@
 #ifndef __qVTKRenderView_h
 #define __qVTKRenderView_h
 
-/// qCTK includes
-#include <qCTKPimpl.h>
-
-/// QT includes
+// Qt includes
 #include <QWidget>
+
+// CTK includes
+#include <ctkPimpl.h>
 
 #include "qVTKWidgetsExport.h"
 
@@ -42,7 +42,7 @@ public:
   //virtual void setCornerText(const QString& text);
   
 private:
-  QCTK_DECLARE_PRIVATE(qVTKRenderView);
+  CTK_DECLARE_PRIVATE(qVTKRenderView);
 }; 
 
 #endif

@@ -13,8 +13,8 @@
 #ifndef __qSlicerCLIModuleUIHelper_h
 #define __qSlicerCLIModuleUIHelper_h
 
-// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
 /// ModuleDescriptionParser includes
 #include <ModuleDescription.h>
@@ -47,7 +47,7 @@ public:
   void updateUi(vtkMRMLCommandLineModuleNode* commandLineModuleNode);
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCLIModuleUIHelper);
+  CTK_DECLARE_PRIVATE(qSlicerCLIModuleUIHelper);
 };
 
 #endif

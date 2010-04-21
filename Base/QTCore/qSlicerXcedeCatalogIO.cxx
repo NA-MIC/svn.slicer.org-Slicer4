@@ -30,7 +30,7 @@
 #include <vtkXMLDataElement.h>
 #include <vtkXMLDataParser.h>
 
-class qSlicerXcedeCatalogIOPrivate: public qCTKPrivate<qSlicerXcedeCatalogIO>
+class qSlicerXcedeCatalogIOPrivate: public ctkPrivate<qSlicerXcedeCatalogIO>
 {
 public:
   typedef QMap<QString, QString> NodeType;
@@ -288,7 +288,7 @@ int qSlicerXcedeCatalogIOPrivate::checkFormat(const QString& format)const
 //proc XcedeCatalogImportGetEntry {element } {
 void qSlicerXcedeCatalogIOPrivate::importEntry(vtkXMLDataElement* element)
 {
-  QCTK_P(qSlicerXcedeCatalogIO);
+  CTK_P(qSlicerXcedeCatalogIO);
   //--- is this a catalog entry that contains a file or reference?
   //set elementType [$element GetName]
   //if { $elementType != "entry" && $elementType != "Entry" } {
@@ -865,7 +865,7 @@ void qSlicerXcedeCatalogIOPrivate::importModelNode(NodeType node)
 //proc XcedeCatalogImportEntryTransform {node} {
 void qSlicerXcedeCatalogIOPrivate::importTransformNode(NodeType node)
 {
-  QCTK_P(qSlicerXcedeCatalogIO);
+  CTK_P(qSlicerXcedeCatalogIO);
   //upvar $node n
 
 
@@ -1007,7 +1007,7 @@ void qSlicerXcedeCatalogIOPrivate::importTransformNode(NodeType node)
 //proc XcedeCatalogImportEntryOverlay {node} {
 void qSlicerXcedeCatalogIOPrivate::importOverlayNode(NodeType node)
 {
-  QCTK_P(qSlicerXcedeCatalogIO);
+  CTK_P(qSlicerXcedeCatalogIO);
   //upvar $node n
 
   // //--- not really a node, per se...
@@ -1106,7 +1106,7 @@ void qSlicerXcedeCatalogIOPrivate::importOverlayNode(NodeType node)
 //proc XcedeCatalogImportComputeFIPS2SlicerTransformCorrection { } {
 bool qSlicerXcedeCatalogIOPrivate::computeFIPS2SlicerTransformCorrection()
 {
-  QCTK_P(qSlicerXcedeCatalogIO);
+  CTK_P(qSlicerXcedeCatalogIO);
   // if { $::XcedeCatalog_MrmlID(anat2exf) == "" } {
   //     return
   // }
@@ -1196,7 +1196,7 @@ bool qSlicerXcedeCatalogIOPrivate::computeFIPS2SlicerTransformCorrection()
 //proc XcedeCatalogImportApplyFIPS2SlicerTransformCorrection { } {
 void qSlicerXcedeCatalogIOPrivate::applyFIPS2SlicerTransformCorrection()
 {
-  QCTK_P(qSlicerXcedeCatalogIO);
+  CTK_P(qSlicerXcedeCatalogIO);
   //if { $::XcedeCatalog_RAS2RASTransformCreated == 1 } {
   //$::XcedeCatalog_mainWindow SetStatusText "Applying registration matrix to statistics volumes"
   //--- move all the detected stats files under the new registration xform
@@ -1226,7 +1226,7 @@ void qSlicerXcedeCatalogIOPrivate::applyFIPS2SlicerTransformCorrection()
 qSlicerXcedeCatalogIO::qSlicerXcedeCatalogIO(QObject* _parent)
   :qSlicerIO(_parent)
 {
-  QCTK_INIT_PRIVATE(qSlicerXcedeCatalogIO);
+  CTK_INIT_PRIVATE(qSlicerXcedeCatalogIO);
 }
 
 //------------------------------------------------------------------------------
@@ -1250,7 +1250,7 @@ QString qSlicerXcedeCatalogIO::extensions()const
 //------------------------------------------------------------------------------
 bool qSlicerXcedeCatalogIO::load(const qSlicerIO::IOProperties& properties)
 {
-  QCTK_D(qSlicerXcedeCatalogIO);
+  CTK_D(qSlicerXcedeCatalogIO);
   Q_ASSERT(properties.contains("fileName"));
   QString fileName = properties["fileName"].toString();
 

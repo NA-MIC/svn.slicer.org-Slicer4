@@ -13,12 +13,12 @@
 #ifndef __qSlicerModuleFactoryManager_h
 #define __qSlicerModuleFactoryManager_h
 
-/// CTK includes
-#include <ctkAbstractFactory.h>
-#include <qCTKPimpl.h>
-
-/// QT includes
+// Qt includes
 #include <QString>
+
+// CTK includes
+#include <ctkAbstractFactory.h>
+#include <ctkPimpl.h>
 
 #include "qSlicerBaseQTCoreExport.h"
 
@@ -89,7 +89,7 @@ public:
   bool isRegistered(const QString& name)const;
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerModuleFactoryManager);
+  CTK_DECLARE_PRIVATE(qSlicerModuleFactoryManager);
 };
 
 #endif

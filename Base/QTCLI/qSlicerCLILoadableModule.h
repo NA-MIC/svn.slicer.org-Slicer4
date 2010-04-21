@@ -14,9 +14,12 @@
 #ifndef __qSlicerCLILoadableModule_h
 #define __qSlicerCLILoadableModule_h
 
+// CTK includes
+#include <ctkPimpl.h>
+
+// SlicerQt includes
 #include "qSlicerCLIModule.h"
 
-#include <qCTKPimpl.h>
 #include "qSlicerBaseQTCLIExport.h"
 
 class qSlicerCLILoadableModulePrivate;
@@ -46,7 +49,7 @@ protected:
 
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCLILoadableModule);
+  CTK_DECLARE_PRIVATE(qSlicerCLILoadableModule);
 };
 
 #endif

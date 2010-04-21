@@ -5,10 +5,10 @@
 #include <QList>
 #include <QUrl>
 
-/// qCTK includes
+/// CTK includes
 #include <qCTKCheckableHeaderView.h>
 
-/// qSlicer includes
+/// SlicerQt includes
 #include "qSlicerApplication.h"
 #include "qSlicerDataDialog.h"
 #include "qSlicerDataDialog_p.h"
@@ -226,7 +226,7 @@ qSlicerDataDialog::qSlicerDataDialog(QObject* _parent)
   :qSlicerFileDialog(_parent)
 {
   // FIXME give qSlicerDataDialog as a parent of qSlicerDataDialogPrivate;
-  QCTK_INIT_PRIVATE(qSlicerDataDialog);
+  CTK_INIT_PRIVATE(qSlicerDataDialog);
 }
 
 //-----------------------------------------------------------------------------
@@ -244,7 +244,7 @@ qSlicerIO::IOFileType qSlicerDataDialog::fileType()const
 //-----------------------------------------------------------------------------
 bool qSlicerDataDialog::exec(const qSlicerIO::IOProperties& readerProperties)
 {
-  QCTK_D(qSlicerDataDialog);
+  CTK_D(qSlicerDataDialog);
   Q_ASSERT(!readerProperties.contains("fileName"));
 #ifdef Slicer3_USE_KWWIDGETS
   d->setWindowFlags(d->windowFlags() | Qt::WindowStaysOnTopHint);

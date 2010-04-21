@@ -1,21 +1,21 @@
-/// Qt includes
+// Qt includes
 #include <QDebug>
 #include <QFileDialog>
 #include <QList>
 #include <QUrl>
 
-/// qCTK includes
+// CTK includes
 
-/// qSlicer includes
+// SlicerQt includes
 #include "qSlicerApplication.h"
 #include "qSlicerFileDialog.h"
 #include "qSlicerIOManager.h"
 /*
 //-----------------------------------------------------------------------------
-class qSlicerFileDialogPrivate: public qCTKPrivate<qSlicerFileDialog>
+class qSlicerFileDialogPrivate: public ctkPrivate<qSlicerFileDialog>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qSlicerFileDialog);
+  CTK_DECLARE_PUBLIC(qSlicerFileDialog);
 };
 */
 
@@ -23,7 +23,7 @@ public:
 qSlicerFileDialog::qSlicerFileDialog(QObject* _parent)
   :QObject(_parent)
 {
-  //QCTK_INIT_PRIVATE(qSlicerFileDialog);
+  //CTK_INIT_PRIVATE(qSlicerFileDialog);
 }
 
 //-----------------------------------------------------------------------------
@@ -49,10 +49,10 @@ QStringList qSlicerFileDialog::nameFilters(qSlicerIO::IOFileType fileType)
 }
 
 //-----------------------------------------------------------------------------
-class qSlicerStandardFileDialogPrivate: public qCTKPrivate<qSlicerStandardFileDialog>
+class qSlicerStandardFileDialogPrivate: public ctkPrivate<qSlicerStandardFileDialog>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qSlicerStandardFileDialog);
+  CTK_DECLARE_PUBLIC(qSlicerStandardFileDialog);
   qSlicerStandardFileDialogPrivate();
   qSlicerIO::IOFileType   FileType;
 };
@@ -67,20 +67,20 @@ qSlicerStandardFileDialogPrivate::qSlicerStandardFileDialogPrivate()
 qSlicerStandardFileDialog::qSlicerStandardFileDialog(QObject* _parent)
   :qSlicerFileDialog(_parent)
 {
-  QCTK_INIT_PRIVATE(qSlicerStandardFileDialog);
+  CTK_INIT_PRIVATE(qSlicerStandardFileDialog);
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerStandardFileDialog::setFileType(qSlicerIO::IOFileType _fileType)
 {
-  QCTK_D(qSlicerStandardFileDialog);
+  CTK_D(qSlicerStandardFileDialog);
   d->FileType = _fileType;
 }
 
 //-----------------------------------------------------------------------------
 qSlicerIO::IOFileType qSlicerStandardFileDialog::fileType()const
 {
-  QCTK_D(const qSlicerStandardFileDialog);
+  CTK_D(const qSlicerStandardFileDialog);
   return d->FileType;
 }
 

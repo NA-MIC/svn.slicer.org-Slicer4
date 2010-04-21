@@ -14,13 +14,13 @@
 #ifndef __qSlicerCoreModuleFactory_h
 #define __qSlicerCoreModuleFactory_h
 
-/// SlicerQT includes
+// CTK includes
+#include <ctkPimpl.h>
+#include <ctkAbstractQObjectFactory.h>
+
+// SlicerQt includes
 #include "qSlicerAbstractModule.h"
 #include "qSlicerBaseQTCoreModulesExport.h"
-
-/// CTK includes
-#include <qCTKPimpl.h>
-#include <ctkAbstractQObjectFactory.h>
 
 class qSlicerCoreModuleFactoryPrivate;
 
@@ -42,7 +42,7 @@ public:
   static QString extractModuleName(const QString& className);
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCoreModuleFactory);
+  CTK_DECLARE_PRIVATE(qSlicerCoreModuleFactory);
 };
 
 #endif

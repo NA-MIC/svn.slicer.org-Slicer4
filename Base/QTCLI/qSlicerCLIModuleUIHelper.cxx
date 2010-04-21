@@ -10,7 +10,7 @@
 
 =========================================================================auto=*/
 
-// QT includes
+// Qt includes
 #include <QLabel>
 #include <QDebug>
 #include <QSpinBox>
@@ -22,14 +22,14 @@
 #include <QRadioButton>
 #include <QHash>
 
-// qMRML includes
-#include <qMRMLNodeSelector.h>
-#include <qMRMLNodeFactory.h>
-
-// qCTK includes
+// CTK includes
 #include <qCTKCollapsibleButton.h>
 #include <qCTKDoubleSlider.h>
 #include <qCTKFlowLayout.h>
+
+// qMRML includes
+#include <qMRMLNodeSelector.h>
+#include <qMRMLNodeFactory.h>
 
 /// ModuleDescriptionParser includes
 #include <ModuleDescription.h>
@@ -118,7 +118,7 @@ this->WidgetValueWrappers.push_back(                                            
   new _NAME##WidgetValueWrapper(_PARAM_NAME, _LABEL, _WIDGET_INSTANCE));
 
 //-----------------------------------------------------------------------------
-class qSlicerCLIModuleUIHelperPrivate: public qCTKPrivate<qSlicerCLIModuleUIHelper>
+class qSlicerCLIModuleUIHelperPrivate: public ctkPrivate<qSlicerCLIModuleUIHelper>
 {
 public:
   typedef qSlicerCLIModuleUIHelperPrivate Self;
@@ -710,8 +710,8 @@ bool qSlicerCLIModuleUIHelperPrivate::shouldEnableNone(const ModuleParameter& mo
 //-----------------------------------------------------------------------------
 qSlicerCLIModuleUIHelper::qSlicerCLIModuleUIHelper(qSlicerCLIModuleWidget* cliModuleWidget)
 {
-  QCTK_INIT_PRIVATE(qSlicerCLIModuleUIHelper);
-  QCTK_D(qSlicerCLIModuleUIHelper);
+  CTK_INIT_PRIVATE(qSlicerCLIModuleUIHelper);
+  CTK_D(qSlicerCLIModuleUIHelper);
 
   Q_ASSERT(cliModuleWidget);
   d->CLIModuleWidget = cliModuleWidget; 
@@ -720,7 +720,7 @@ qSlicerCLIModuleUIHelper::qSlicerCLIModuleUIHelper(qSlicerCLIModuleWidget* cliMo
 //-----------------------------------------------------------------------------
 QWidget* qSlicerCLIModuleUIHelper::createTagWidget(const ModuleParameter& moduleParameter)
 {
-  QCTK_D(qSlicerCLIModuleUIHelper);
+  CTK_D(qSlicerCLIModuleUIHelper);
   
   Q_ASSERT(moduleParameter.GetHidden() != "true");
 
@@ -802,7 +802,7 @@ QWidget* qSlicerCLIModuleUIHelper::createTagWidget(const ModuleParameter& module
 //-----------------------------------------------------------------------------
 void qSlicerCLIModuleUIHelper::updateMRMLCommandLineModuleNode(vtkMRMLCommandLineModuleNode* node)
 {
-  QCTK_D(qSlicerCLIModuleUIHelper);
+  CTK_D(qSlicerCLIModuleUIHelper);
   Q_ASSERT(node);
   
   foreach(WidgetValueWrapper* widgetValueWrapper, d->WidgetValueWrappers)
@@ -838,7 +838,7 @@ void qSlicerCLIModuleUIHelper::updateMRMLCommandLineModuleNode(vtkMRMLCommandLin
 //-----------------------------------------------------------------------------
 void qSlicerCLIModuleUIHelper::updateUi(vtkMRMLCommandLineModuleNode* commandLineModuleNode)
 {
-  QCTK_D(qSlicerCLIModuleUIHelper);
+  CTK_D(qSlicerCLIModuleUIHelper);
 
   if (!commandLineModuleNode)
     {

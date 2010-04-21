@@ -10,7 +10,7 @@
 
 =========================================================================auto=*/
 
-// QT includes
+// Qt includes
 #include <QVector>
 #include <QSharedPointer>
 #include <QStringList>
@@ -40,7 +40,7 @@
 //  - Slicer3_USE_PYTHONQT
 #include "vtkSlicerConfigure.h"
 
-// SlicerQT includes
+// SlicerQt includes
 #include "qSlicerCoreApplication.h"
 #include "qSlicerModuleManager.h"
 #include "qSlicerCoreIOManager.h"
@@ -56,10 +56,10 @@
 #include "vtkSlicerVersionConfigure.h" // For Slicer3_VERSION_{MINOR, MAJOR}, Slicer3_VERSION_FULL
 
 //-----------------------------------------------------------------------------
-class qSlicerCoreApplicationPrivate: public qCTKPrivate<qSlicerCoreApplication>
+class qSlicerCoreApplicationPrivate: public ctkPrivate<qSlicerCoreApplication>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qSlicerCoreApplication);
+  CTK_DECLARE_PUBLIC(qSlicerCoreApplication);
   
   typedef qSlicerCoreApplicationPrivate Self; 
   qSlicerCoreApplicationPrivate();
@@ -183,7 +183,7 @@ qSlicerCoreApplicationPrivate::~qSlicerCoreApplicationPrivate()
 ctkSettings* qSlicerCoreApplicationPrivate::instantiateSettings(const QString& suffix,
                                                                 bool useTmp)
 {
-  QCTK_P(qSlicerCoreApplication);
+  CTK_P(qSlicerCoreApplication);
 
   QString settingsFileName = QString("%1-%2.%3%4").
     arg(qSlicerCoreApplication::applicationName().replace(":", "")).
@@ -271,7 +271,7 @@ QString qSlicerCoreApplicationPrivate::discoverSlicerBinDirectory(const QString&
 //-----------------------------------------------------------------------------
 bool qSlicerCoreApplicationPrivate::parseArguments(int _argc, char** _argv)
 {
-  QCTK_P(qSlicerCoreApplication);
+  CTK_P(qSlicerCoreApplication);
   
   qSlicerCoreCommandOptions* options = this->CoreCommandOptions.data();
   if (!options)
@@ -319,8 +319,8 @@ int qSlicerCoreApplicationPrivate::putEnv(const QString& value)
 //-----------------------------------------------------------------------------
 qSlicerCoreApplication::qSlicerCoreApplication(int &_argc, char **_argv):Superclass(_argc, _argv)
 {
-  QCTK_INIT_PRIVATE(qSlicerCoreApplication);
-  QCTK_D(qSlicerCoreApplication);
+  CTK_INIT_PRIVATE(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
 
   this->setOrganizationName("NAMIC");
   
@@ -352,12 +352,12 @@ qSlicerCoreApplication* qSlicerCoreApplication::application()
 }
 
 //-----------------------------------------------------------------------------
-QCTK_GET_CXX(qSlicerCoreApplication, bool, initialized, Initialized);
+CTK_GET_CXX(qSlicerCoreApplication, bool, initialized, Initialized);
 
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::initialize(bool& exitWhenDone)
 {
-  QCTK_D(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
   d->discoverSlicerHomeDirectory(this->arguments().at(0));
   
   // Create MRML scene
@@ -405,7 +405,7 @@ void qSlicerCoreApplication::initialize(bool& exitWhenDone)
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::handlePreApplicationCommandLineArguments()
 {
-  QCTK_D(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
   
   qSlicerCoreCommandOptions* options = this->coreCommandOptions();
   Q_ASSERT(options);
@@ -457,7 +457,7 @@ void qSlicerCoreApplication::handleCommandLineArguments()
 //-----------------------------------------------------------------------------
 ctkSettings* qSlicerCoreApplication::settings()
 {
-  QCTK_D(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
 
   // If required, instanciate Settings
   if(!d->Settings)
@@ -470,7 +470,7 @@ ctkSettings* qSlicerCoreApplication::settings()
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::disableSettings()
 {
-  QCTK_D(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
   Q_ASSERT(!d->Settings);
   
   // Instanciate empty Settings
@@ -480,13 +480,13 @@ void qSlicerCoreApplication::disableSettings()
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::clearSettings()
 {
-  QCTK_D(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
   Q_ASSERT(!d->Settings);
   d->Settings->clear();
 }
 
 //-----------------------------------------------------------------------------
-QCTK_GET_CXX(qSlicerCoreApplication, QString, intDir, IntDir);
+CTK_GET_CXX(qSlicerCoreApplication, QString, intDir, IntDir);
 
 //-----------------------------------------------------------------------------
 bool qSlicerCoreApplication::isInstalled()
@@ -503,21 +503,21 @@ bool qSlicerCoreApplication::isInstalled()
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::initializePaths(const QString& programPath)
 {
-  QCTK_D(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
   // we can't use this->arguments().at(0) here as argc/argv are incorrect.
   d->discoverSlicerHomeDirectory(programPath);
 }
 
 //-----------------------------------------------------------------------------
-QCTK_SET_CXX(qSlicerCoreApplication, bool, setInitialized, Initialized);
+CTK_SET_CXX(qSlicerCoreApplication, bool, setInitialized, Initialized);
 
 //-----------------------------------------------------------------------------
-QCTK_SET_CXX(qSlicerCoreApplication, vtkSlicerApplicationLogic*, setAppLogic, AppLogic);
+CTK_SET_CXX(qSlicerCoreApplication, vtkSlicerApplicationLogic*, setAppLogic, AppLogic);
 
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::setModuleManager(qSlicerModuleManager* manager)
 {
-  qctk_d()->ModuleManager = QSharedPointer<qSlicerModuleManager>(manager);
+  ctk_d()->ModuleManager = QSharedPointer<qSlicerModuleManager>(manager);
 }
 
 #endif //Slicer3_USE_KWWIDGETS
@@ -525,7 +525,7 @@ void qSlicerCoreApplication::setModuleManager(qSlicerModuleManager* manager)
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::setMRMLScene(vtkMRMLScene* _mrmlScene)
 {
-  QCTK_D(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
   if (d->MRMLScene == _mrmlScene)
     {
     return;
@@ -537,36 +537,36 @@ void qSlicerCoreApplication::setMRMLScene(vtkMRMLScene* _mrmlScene)
 }
 
 //-----------------------------------------------------------------------------
-QCTK_GET_CXX(qSlicerCoreApplication, vtkMRMLScene*, mrmlScene, MRMLScene);
+CTK_GET_CXX(qSlicerCoreApplication, vtkMRMLScene*, mrmlScene, MRMLScene);
 
 //-----------------------------------------------------------------------------
-QCTK_GET_CXX(qSlicerCoreApplication, vtkSlicerApplicationLogic*, appLogic, AppLogic);
+CTK_GET_CXX(qSlicerCoreApplication, vtkSlicerApplicationLogic*, appLogic, AppLogic);
 
 //-----------------------------------------------------------------------------
 QString qSlicerCoreApplication::slicerHome() const
 {
   // TODO Use QCoreApplication::applicationDirPath
-  return qctk_d()->SlicerHome;
+  return ctk_d()->SlicerHome;
 }
 
 //-----------------------------------------------------------------------------
-QCTK_SET_CXX(qSlicerCoreApplication, const QString&, setSlicerHome, SlicerHome);
+CTK_SET_CXX(qSlicerCoreApplication, const QString&, setSlicerHome, SlicerHome);
 
 //-----------------------------------------------------------------------------
 #ifdef Slicer3_USE_PYTHONQT
-QCTK_GET_CXX(qSlicerCoreApplication, qSlicerPythonManager*, pythonManager, PythonManager);
+CTK_GET_CXX(qSlicerCoreApplication, qSlicerPythonManager*, pythonManager, PythonManager);
 #endif
 
 //-----------------------------------------------------------------------------
 qSlicerModuleManager* qSlicerCoreApplication::moduleManager()const
 {
-  return qctk_d()->ModuleManager.data();
+  return ctk_d()->ModuleManager.data();
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::setCoreIOManager(qSlicerCoreIOManager* manager)
 {
-  QCTK_D(qSlicerCoreApplication);
+  CTK_D(qSlicerCoreApplication);
   if (d->CoreIOManager)
     {
     delete d->CoreIOManager;
@@ -578,17 +578,17 @@ void qSlicerCoreApplication::setCoreIOManager(qSlicerCoreIOManager* manager)
 //-----------------------------------------------------------------------------
 qSlicerCoreIOManager* qSlicerCoreApplication::coreIOManager()const
 {
-  return qctk_d()->CoreIOManager;
+  return ctk_d()->CoreIOManager;
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerCoreApplication::setCoreCommandOptions(qSlicerCoreCommandOptions* options)
 {
-  qctk_d()->CoreCommandOptions = QSharedPointer<qSlicerCoreCommandOptions>(options);
+  ctk_d()->CoreCommandOptions = QSharedPointer<qSlicerCoreCommandOptions>(options);
 }
 
 //-----------------------------------------------------------------------------
 qSlicerCoreCommandOptions* qSlicerCoreApplication::coreCommandOptions()const
 {
-  return qctk_d()->CoreCommandOptions.data();
+  return ctk_d()->CoreCommandOptions.data();
 }

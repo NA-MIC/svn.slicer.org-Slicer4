@@ -14,11 +14,11 @@
 #ifndef __qSlicerCLIModuleWidget_h
 #define __qSlicerCLIModuleWidget_h
 
-/// SlicerQT includes
-#include "qSlicerAbstractModuleWidget.h"
+// CTK includes
+#include <ctkPimpl.h>
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// SlicerQt includes
+#include "qSlicerAbstractModuleWidget.h"
 
 #include "qSlicerBaseQTCLIExport.h"
 
@@ -44,7 +44,7 @@ protected:
   virtual void setup();
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCLIModuleWidget);
+  CTK_DECLARE_PRIVATE(qSlicerCLIModuleWidget);
 };
 
 #endif

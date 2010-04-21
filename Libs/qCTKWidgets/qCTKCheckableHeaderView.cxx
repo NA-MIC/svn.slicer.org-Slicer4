@@ -30,9 +30,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =========================================================================*/
 
-#include "qCTKCheckableHeaderView.h"
-#include "qCTKCheckBoxPixmaps.h"
-
+// Qt includes
 #include <QAbstractItemModel>
 #include <QApplication>
 #include <QDebug>
@@ -43,10 +41,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <QPixmap>
 #include <QStyle>
 
+// CTK includes
+#include "qCTKCheckableHeaderView.h"
+#include "qCTKCheckBoxPixmaps.h"
+
 //-----------------------------------------------------------------------------
-class qCTKCheckableHeaderViewPrivate: public qCTKPrivate<qCTKCheckableHeaderView>
+class qCTKCheckableHeaderViewPrivate: public ctkPrivate<qCTKCheckableHeaderView>
 {
-  QCTK_DECLARE_PUBLIC(qCTKCheckableHeaderView)
+  CTK_DECLARE_PUBLIC(qCTKCheckableHeaderView)
 public:
   qCTKCheckableHeaderViewPrivate();
   ~qCTKCheckableHeaderViewPrivate();
@@ -82,7 +84,7 @@ qCTKCheckableHeaderViewPrivate::~qCTKCheckableHeaderViewPrivate()
 //----------------------------------------------------------------------------
 void qCTKCheckableHeaderViewPrivate::init()
 {
-  QCTK_P(qCTKCheckableHeaderView);
+  CTK_P(qCTKCheckableHeaderView);
   this->CheckBoxPixmaps = new qCTKCheckBoxPixmaps(p);
 }
 
@@ -91,8 +93,8 @@ qCTKCheckableHeaderView::qCTKCheckableHeaderView(
   Qt::Orientation orient, QWidget *widgetParent)
   : QHeaderView(orient, widgetParent)
 {
-  QCTK_INIT_PRIVATE(qCTKCheckableHeaderView);
-  qctk_d()->init();
+  CTK_INIT_PRIVATE(qCTKCheckableHeaderView);
+  ctk_d()->init();
   if(widgetParent)
     {
     // Listen for focus change events.
@@ -120,7 +122,7 @@ bool qCTKCheckableHeaderView::eventFilter(QObject *, QEvent *e)
 //-----------------------------------------------------------------------------
 void qCTKCheckableHeaderView::setModel(QAbstractItemModel *newModel)
 {
-  QCTK_D(qCTKCheckableHeaderView);
+  CTK_D(qCTKCheckableHeaderView);
   QAbstractItemModel *current = this->model();
   if (current == newModel)
     {
@@ -188,7 +190,7 @@ void qCTKCheckableHeaderView::setRootIndex(const QModelIndex &index)
 //-----------------------------------------------------------------------------
 void qCTKCheckableHeaderView::setPropagateToItems(bool propagate)
 {
-  QCTK_D(qCTKCheckableHeaderView);
+  CTK_D(qCTKCheckableHeaderView);
   d->PropagateToItems = propagate;
   if (!this->model())
     {
@@ -211,7 +213,7 @@ void qCTKCheckableHeaderView::setPropagateToItems(bool propagate)
 //-----------------------------------------------------------------------------
 bool qCTKCheckableHeaderView::propagateToItems()const
 {
-  QCTK_D(const qCTKCheckableHeaderView);
+  CTK_D(const qCTKCheckableHeaderView);
   return d->PropagateToItems;
 }
 
@@ -257,7 +259,7 @@ void qCTKCheckableHeaderView::updateHeaderData(Qt::Orientation orient,
 //-----------------------------------------------------------------------------
 void qCTKCheckableHeaderView::updateHeaders(int first, int last)
 {
-  QCTK_D(qCTKCheckableHeaderView);
+  CTK_D(qCTKCheckableHeaderView);
   if(d->HeaderIsUpdating)
     {
     return;
@@ -307,7 +309,7 @@ void qCTKCheckableHeaderView::updateHeaders(int first, int last)
 void qCTKCheckableHeaderView::updateHeadersFromItems(const QModelIndex & topLeft, 
                                                      const QModelIndex & bottomRight)
 {
-  QCTK_D(qCTKCheckableHeaderView);
+  CTK_D(qCTKCheckableHeaderView);
   if(d->ItemsAreUpdating || !d->PropagateToItems || 
      topLeft.parent() != this->rootIndex())
     {
@@ -417,7 +419,7 @@ bool qCTKCheckableHeaderView::checkState(int section, Qt::CheckState& checkState
 //-----------------------------------------------------------------------------
 void qCTKCheckableHeaderView::mousePressEvent(QMouseEvent *e)
 {
-  QCTK_D(qCTKCheckableHeaderView);
+  CTK_D(qCTKCheckableHeaderView);
   if (e->button() != Qt::LeftButton || 
       d->Pressed >= 0)
     {
@@ -440,7 +442,7 @@ void qCTKCheckableHeaderView::mousePressEvent(QMouseEvent *e)
 //-----------------------------------------------------------------------------
 void qCTKCheckableHeaderView::mouseReleaseEvent(QMouseEvent *e)
 {
-  QCTK_D(qCTKCheckableHeaderView);
+  CTK_D(qCTKCheckableHeaderView);
   if (e->button() != Qt::LeftButton || 
       d->Pressed < 0)
     {

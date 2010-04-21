@@ -15,11 +15,12 @@
 #ifndef __qCTKMenuButton_h
 #define __qCTKMenuButton_h
 
-/// QT includes
+// Qt includes
 #include <QPushButton>
 
-/// qCTK includes
-#include "qCTKPimpl.h"
+// CTK includes
+#include <ctkPimpl.h>
+
 #include "qCTKWidgetsExport.h"
 
 class qCTKMenuButtonPrivate;
@@ -45,7 +46,7 @@ protected:
   virtual bool hitButton(const QPoint & pos) const;
   virtual void initStyleOption ( QStyleOptionButton * option ) const;
 private:
-  QCTK_DECLARE_PRIVATE(qCTKMenuButton);
+  CTK_DECLARE_PRIVATE(qCTKMenuButton);
 };
 
 #endif

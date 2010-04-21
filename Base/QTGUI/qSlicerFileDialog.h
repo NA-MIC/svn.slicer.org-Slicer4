@@ -1,18 +1,18 @@
 #ifndef __qSlicerFileDialog_h
 #define __qSlicerFileDialog_h
 
-/// Qt includes
+// Qt includes
 #include <QObject>
 #include <QStringList>
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-// qSlicer includes
+// SlicerQt includes
 #include "qSlicerIO.h"
 #include "qSlicerBaseQTGUIExport.h"
 
-/// QT declarations
+/// Forward declarations
 class qSlicerIOManager;
 //class qSlicerFileDialogPrivate;
 
@@ -39,7 +39,7 @@ public:
   static QStringList nameFilters(qSlicerIO::IOFileType fileType);
 
 //private:
-//  QCTK_DECLARE_PRIVATE(qSlicerFileDialog);
+//  CTK_DECLARE_PRIVATE(qSlicerFileDialog);
 };
 
 class qSlicerStandardFileDialogPrivate;
@@ -56,7 +56,7 @@ public:
   virtual bool exec(const qSlicerIO::IOProperties& readerProperties =
                     qSlicerIO::IOProperties());
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerStandardFileDialog);
+  CTK_DECLARE_PRIVATE(qSlicerStandardFileDialog);
 };
 
 #endif

@@ -13,15 +13,7 @@
 
 =========================================================================*/
 
-#include "qVTKCommandOptions.h"
-
-// CTK includes
-#include <ctkUtils.h>
-
-// VTKSYS includes
-#include <vtksys/CommandLineArguments.hxx>
-
-// QT includes
+// Qt includes
 #include <QDebug>
 #include <QString>
 #include <QLatin1String>
@@ -31,8 +23,15 @@
 #include <QPointer>
 #include <QStringList>
 
+// CTK includes
+#include <ctkUtils.h>
+#include "qVTKCommandOptions.h"
+
+// VTKSYS includes
+#include <vtksys/CommandLineArguments.hxx>
+
 // --------------------------------------------------------------------------
-class qVTKCommandOptionsPrivate: public qCTKPrivate<qVTKCommandOptions>
+class qVTKCommandOptionsPrivate: public ctkPrivate<qVTKCommandOptions>
 {
 public:
   typedef qVTKCommandOptionsPrivate Self;
@@ -144,7 +143,7 @@ int qVTKCommandOptionsPrivate::unknownArgumentHandler(const char* argument,
 //----------------------------------------------------------------------------
 bool qVTKCommandOptionsPrivate::checkForIgnoreRestFlag(const char* argument)
 {
-  QCTK_P(qVTKCommandOptions);
+  CTK_P(qVTKCommandOptions);
   if (this->IgnoreRest)
     {
     this->IgnoredArguments << QLatin1String(argument);
@@ -164,7 +163,7 @@ int qVTKCommandOptionsPrivate::deprecatedArgumentHandler(const char* argument,
   qVTKCommandOptionsPrivate* self = static_cast<qVTKCommandOptionsPrivate*>(call_data);
   if (self)
     {
-    return self->qctk_p()->deprecatedArgument(argument);
+    return self->ctk_p()->deprecatedArgument(argument);
     }
   return 0;
 }
@@ -230,9 +229,9 @@ void qVTKCommandOptionsPrivate::syncQStringListPtrWithStringVectorPtr()
 // --------------------------------------------------------------------------
 qVTKCommandOptions::qVTKCommandOptions(QSettings* _settings)
 {
-  QCTK_INIT_PRIVATE(qVTKCommandOptions);
+  CTK_INIT_PRIVATE(qVTKCommandOptions);
   Q_ASSERT(_settings);
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   d->Settings = _settings;
 }
 
@@ -244,7 +243,7 @@ qVTKCommandOptions::~qVTKCommandOptions()
 //----------------------------------------------------------------------------
 void qVTKCommandOptions::printAdditionalInfo()
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   qDebug() << "qVTKCommandOptions:" << this << endl
            << " HelpSelected:" << this->helpSelected() << endl
            << " DisableSettings:" << d->DisableSettings << endl
@@ -253,17 +252,17 @@ void qVTKCommandOptions::printAdditionalInfo()
 }
 
 //----------------------------------------------------------------------------
-QCTK_GET_CXX(qVTKCommandOptions, QString, errorMessage, ErrorMessage);
-QCTK_GET_CXX(qVTKCommandOptions, QString, unknownArgument, UnknownArgument);
-QCTK_GET_CXX(qVTKCommandOptions, bool, helpSelected, HelpSelected);
-QCTK_GET_CXX(qVTKCommandOptions, bool, disableSettings, DisableSettings);
-QCTK_GET_CXX(qVTKCommandOptions, QSettings*, settings, Settings);
-QCTK_GET_CXX(qVTKCommandOptions, bool, ignoreRest, IgnoreRest);
-QCTK_GET_CXX(qVTKCommandOptions, QStringList, ignoredArguments, IgnoredArguments);
+CTK_GET_CXX(qVTKCommandOptions, QString, errorMessage, ErrorMessage);
+CTK_GET_CXX(qVTKCommandOptions, QString, unknownArgument, UnknownArgument);
+CTK_GET_CXX(qVTKCommandOptions, bool, helpSelected, HelpSelected);
+CTK_GET_CXX(qVTKCommandOptions, bool, disableSettings, DisableSettings);
+CTK_GET_CXX(qVTKCommandOptions, QSettings*, settings, Settings);
+CTK_GET_CXX(qVTKCommandOptions, bool, ignoreRest, IgnoreRest);
+CTK_GET_CXX(qVTKCommandOptions, QStringList, ignoredArguments, IgnoredArguments);
 
 //----------------------------------------------------------------------------
-QCTK_GET_CXX(qVTKCommandOptions, int, processType, ProcessType);
-QCTK_SET_CXX(qVTKCommandOptions, int, setProcessType, ProcessType);
+CTK_GET_CXX(qVTKCommandOptions, int, processType, ProcessType);
+CTK_SET_CXX(qVTKCommandOptions, int, setProcessType, ProcessType);
 
 //----------------------------------------------------------------------------
 void qVTKCommandOptions::initialize()
@@ -273,7 +272,7 @@ void qVTKCommandOptions::initialize()
 //----------------------------------------------------------------------------
 QString qVTKCommandOptions::help()
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   d->CMD.SetLineLength(300);
   return QLatin1String(d->CMD.GetHelp());
 }
@@ -287,7 +286,7 @@ bool qVTKCommandOptions::postProcess(int, const char* const*)
 //----------------------------------------------------------------------------
 bool qVTKCommandOptions::parse(int argc, const char* const argv[])
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   d->CMD.Initialize(argc, argv);
   this->initialize();
   this->addBooleanArgument("--help", "/?", &d->HelpSelected,
@@ -329,7 +328,7 @@ bool qVTKCommandOptions::parse(int argc, const char* const argv[])
 //----------------------------------------------------------------------------
 QStringList qVTKCommandOptions::remainingArguments()
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   QStringList tmp; 
   for(int i=0; i < d->Argc; ++i)
     {
@@ -341,7 +340,7 @@ QStringList qVTKCommandOptions::remainingArguments()
 //----------------------------------------------------------------------------
 void qVTKCommandOptions::remainingArguments(int* argc, char*** argv)
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   *argc = d->Argc;
   *argv = d->Argv;
 }
@@ -350,7 +349,7 @@ void qVTKCommandOptions::remainingArguments(int* argc, char*** argv)
 void qVTKCommandOptions::addDeprecatedArgument(const char* longarg, const char* shortarg,
                                                const char* arghelp, int type)
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
 
   // If it is for settings or not for the current process do nothing
   if((type & qVTKCommandOptions::QSETTINGS_ONLY) ||
@@ -372,7 +371,7 @@ void qVTKCommandOptions::addDeprecatedArgument(const char* longarg, const char* 
 //----------------------------------------------------------------------------
 bool qVTKCommandOptions::deprecatedArgument(const char* argument)
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   d->ErrorMessage = QString("  %1").arg(d->CMD.GetHelp(argument));
   return false;
 }
@@ -389,7 +388,7 @@ void qVTKCommandOptions::addBooleanArgument(const char* longarg, const char* sho
                                             bool* var, const char* arghelp,
                                             bool defaultValue, int type)
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
 
   // Attempt to read from settings only if longarg is different from '--disable-settings'.
   if (QLatin1String(longarg) != "--disable-settings")
@@ -417,7 +416,7 @@ void qVTKCommandOptions::addBooleanArgument(const char* longarg, const char* sho
 void qVTKCommandOptions::addArgument(const char* longarg, const char* shortarg, QString* var,
                                     const char* arghelp, const QString& defaultValue, int type)
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   *var = d->Settings->value(QLatin1String(longarg+2), defaultValue).toString();
   
   if(type & qVTKCommandOptions::QSETTINGS_ONLY)
@@ -442,7 +441,7 @@ void qVTKCommandOptions::addArgument(const char* longarg, const char* shortarg,
                                      QStringList* var, const char* arghelp,
                                      const QStringList& defaultValue, int type)
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   *var = d->Settings->value(QLatin1String(longarg+2), defaultValue).toStringList();
   
   if(type & qVTKCommandOptions::QSETTINGS_ONLY)
@@ -466,7 +465,7 @@ void qVTKCommandOptions::addArgument(const char* longarg, const char* shortarg,
 void qVTKCommandOptions::addArgument(const char* longarg, const char* shortarg, int* var,
                                      const char* arghelp, int defaultValue, int type)
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   *var = d->Settings->value(QLatin1String(longarg+2), defaultValue).toInt();
   
   if(type & qVTKCommandOptions::QSETTINGS_ONLY)
@@ -488,6 +487,6 @@ void qVTKCommandOptions::addArgument(const char* longarg, const char* shortarg, 
 //----------------------------------------------------------------------------
 int qVTKCommandOptions::indexOfLastParsedArgument()
 {
-  QCTK_D(qVTKCommandOptions);
+  CTK_D(qVTKCommandOptions);
   return d->CMD.GetLastArgument();
 }

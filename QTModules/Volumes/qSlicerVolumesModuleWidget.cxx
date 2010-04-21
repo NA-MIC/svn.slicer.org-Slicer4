@@ -1,4 +1,4 @@
-// QT includes
+// Qt includes
 #include <QDebug>
 
 // CTK includes
@@ -8,19 +8,19 @@
 #include "ui_qSlicerVolumesModule.h"
 
 //-----------------------------------------------------------------------------
-class qSlicerVolumesModuleWidgetPrivate: public qCTKPrivate<qSlicerVolumesModuleWidget>,
+class qSlicerVolumesModuleWidgetPrivate: public ctkPrivate<qSlicerVolumesModuleWidget>,
                                          public Ui_qSlicerVolumesModule
 {
 public:
 };
 
 //-----------------------------------------------------------------------------
-QCTK_CONSTRUCTOR_1_ARG_CXX(qSlicerVolumesModuleWidget, QWidget*);
+CTK_CONSTRUCTOR_1_ARG_CXX(qSlicerVolumesModuleWidget, QWidget*);
 
 //-----------------------------------------------------------------------------
 void qSlicerVolumesModuleWidget::setup()
 {
-  QCTK_D(qSlicerVolumesModuleWidget);
+  CTK_D(qSlicerVolumesModuleWidget);
   d->setupUi(this);
 
   QObject::connect(d->ActiveVolumeNodeSelector, SIGNAL(currentNodeChanged(vtkMRMLNode*)), this, 
@@ -38,6 +38,6 @@ QAction* qSlicerVolumesModuleWidget::showModuleAction()
 //-----------------------------------------------------------------------------
 void qSlicerVolumesModuleWidget::setActiveVolumeNode(vtkMRMLNode* node)
 {
-  QCTK_D(qSlicerVolumesModuleWidget);
+  CTK_D(qSlicerVolumesModuleWidget);
   d->VolumeDisplayWidget->setMRMLVolumeNode(node);
 }

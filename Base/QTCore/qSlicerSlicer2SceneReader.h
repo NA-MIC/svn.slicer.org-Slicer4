@@ -1,10 +1,10 @@
 #ifndef __qSlicerSlicer2SceneReader
 #define __qSlicerSlicer2SceneReader
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-/// qSlicer includes
+// SlicerQt includes
 #include "qSlicerIO.h"
 
 class qSlicerSlicer2SceneReaderPrivate;
@@ -21,7 +21,7 @@ public:
 
   virtual bool load(const IOProperties& properties);
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerSlicer2SceneReader);
+  CTK_DECLARE_PRIVATE(qSlicerSlicer2SceneReader);
 };
 
 #endif

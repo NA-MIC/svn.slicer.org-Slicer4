@@ -2,11 +2,11 @@
 #define __qVTKRenderView_p_h
 
 /// qVTK includes
-#include "qVTKObject.h"
 #include "qVTKRenderView.h"
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
+#include <ctkVTKObject.h>
 
 /// QT includes
 #include <QObject>
@@ -25,10 +25,10 @@ class vtkRenderWindowInteractor;
 
 //-----------------------------------------------------------------------------
 class qVTKRenderViewPrivate : public QObject,
-                              public qCTKPrivate<qVTKRenderView>
+                              public ctkPrivate<qVTKRenderView>
 {
   Q_OBJECT
-  QCTK_DECLARE_PUBLIC(qVTKRenderView);
+  CTK_DECLARE_PUBLIC(qVTKRenderView);
 public:
   qVTKRenderViewPrivate();
 

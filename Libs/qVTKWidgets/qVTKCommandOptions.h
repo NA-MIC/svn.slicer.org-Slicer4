@@ -16,13 +16,13 @@
 #ifndef __qVTKCommandOptions_h
 #define __qVTKCommandOptions_h
 
-/// qCTK includes
-#include <qCTKPimpl.h>
-
-/// QT includes
+// Qt includes
 #include <QStringList>
 
-/// STD includes
+// CTK includes
+#include <ctkPimpl.h>
+
+// STD includes
 #include <vector>
 #include <string>
 
@@ -137,7 +137,7 @@ protected:
   virtual bool deprecatedArgument(const char* argument);
   
 private:
-  QCTK_DECLARE_PRIVATE(qVTKCommandOptions);
+  CTK_DECLARE_PRIVATE(qVTKCommandOptions);
 }; 
 
 #endif

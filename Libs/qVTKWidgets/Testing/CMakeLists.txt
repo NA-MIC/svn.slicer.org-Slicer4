@@ -25,25 +25,14 @@ INCLUDE_DIRECTORIES(
 
 CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx
   qVTKCommandOptionsTest1.cxx
-  qVTKObjectTest1.cxx
   )
-
-SET(qVTKWidgetsTest_SRCS
-  qVTKObjectTest.cxx
-  )
-
-SET(qVTKWidgetsTest_MOC_SRCS
-  qVTKObjectTest.h
-  )
-
-QT4_WRAP_CPP(qVTKWidgetsTest_SRCS ${qVTKWidgetsTest_MOC_SRCS})
 
 SET (TestsToRun ${Tests})
 REMOVE (TestsToRun ${KIT}CxxTests.cxx)
 
 SET(LIBRARY_NAME ${PROJECT_NAME})
 
-ADD_EXECUTABLE(${KIT}CxxTests ${Tests} ${qVTKWidgetsTest_SRCS})
+ADD_EXECUTABLE(${KIT}CxxTests ${Tests})
 TARGET_LINK_LIBRARIES(${KIT}CxxTests ${LIBRARY_NAME})
 
 SET( qVTKWidgets_TESTS ${CXX_TEST_PATH}/${KIT}CxxTests)
@@ -100,5 +89,3 @@ ADD_TEST( qVTKCommandOptionsTest6 ${LAUNCH_EXE} ${qVTKWidgets_TESTS}
 #          qVTKCommandOptionsTest1 --test-if-ignorerest-flag-works
 #          -- --nothing=foo extra1 /? )
 
-# qVTKObjectTest1
-SIMPLE_TEST( qVTKObjectTest1 )

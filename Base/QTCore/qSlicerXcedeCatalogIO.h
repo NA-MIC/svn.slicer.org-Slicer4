@@ -1,10 +1,10 @@
 #ifndef __qSlicerXcedeCatalogIO
 #define __qSlicerXcedeCatalogIO
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-/// qSlicer includes
+// SlicerQt includes
 #include "qSlicerIO.h"
 
 class qSlicerXcedeCatalogIOPrivate;
@@ -21,7 +21,7 @@ public:
 
   virtual bool load(const IOProperties& properties);
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerXcedeCatalogIO);
+  CTK_DECLARE_PRIVATE(qSlicerXcedeCatalogIO);
 };
 
 #endif

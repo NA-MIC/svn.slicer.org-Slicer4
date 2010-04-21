@@ -12,13 +12,13 @@
 #ifndef __qSlicerAbstractModule_h
 #define __qSlicerAbstractModule_h
 
-/// QT includes
+// Qt includes
 #include <QObject>
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-/// QTBase includes
+// QTBase includes
 #include "qSlicerBaseQTBaseExport.h"
 
 class qSlicerAbstractModuleWidget;
@@ -147,7 +147,7 @@ protected:
   
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerAbstractModule);
+  CTK_DECLARE_PRIVATE(qSlicerAbstractModule);
 
   /// 
   /// Indicate if the module has already been initialized

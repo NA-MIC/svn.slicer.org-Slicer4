@@ -4,10 +4,10 @@
 // Qt includes
 #include <QComboBox>
 
-/// qCTKWidgets includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-// qMRMLWidgets includes
+// qMRML includes
 #include "qMRMLWidgetsExport.h"
 #include "qMRMLSortFilterProxyModel.h"
 
@@ -182,7 +182,7 @@ protected slots:
   void emitNodesAboutToBeRemoved(const QModelIndex & parent, int start, int end);
 
 private:
-  QCTK_DECLARE_PRIVATE(qMRMLNodeComboBox);
+  CTK_DECLARE_PRIVATE(qMRMLNodeComboBox);
 };
 
 // --------------------------------------------------------------------------

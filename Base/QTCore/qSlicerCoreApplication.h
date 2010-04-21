@@ -13,11 +13,11 @@
 #ifndef __qSlicerCoreApplication_h
 #define __qSlicerCoreApplication_h
 
-/// qCTK includes
-#include <qCTKPimpl.h>
-
-/// QT includes
+// Qt includes
 #include <QApplication>
+
+// CTK includes
+#include <ctkPimpl.h>
 
 #include "vtkSlicerConfigure.h" // For Slicer3_USE_KWWIDGETS, Slicer3_USE_PYTHONQT
 
@@ -176,7 +176,7 @@ signals:
   void currentMRMLSceneChanged(vtkMRMLScene* mrmlScene);
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCoreApplication);
+  CTK_DECLARE_PRIVATE(qSlicerCoreApplication);
 };
 
 #endif

@@ -1,4 +1,4 @@
-// QT includes
+// Qt includes
 #include <QCleanlooksStyle>
 #include <QColor>
 #include <QDebug>
@@ -14,7 +14,7 @@
 // CTK includes
 #include <ctkSettings.h>
 
-// SlicerQT includes
+// SlicerQt includes
 #include "qSlicerWidget.h"
 #include "qSlicerIOManager.h"
 #include "qSlicerCommandOptions.h"
@@ -45,10 +45,10 @@ void qSlicerApplyPalette(QPalette& palette)
 
 
 //-----------------------------------------------------------------------------
-class qSlicerApplicationPrivate: public qCTKPrivate<qSlicerApplication>
+class qSlicerApplicationPrivate: public ctkPrivate<qSlicerApplication>
 {
   public:
-  QCTK_DECLARE_PUBLIC(qSlicerApplication);
+  CTK_DECLARE_PUBLIC(qSlicerApplication);
   qSlicerApplicationPrivate();
 
   /// 
@@ -89,7 +89,7 @@ qSlicerApplicationPrivate::qSlicerApplicationPrivate()
 //-----------------------------------------------------------------------------
 void qSlicerApplicationPrivate::init()
 {
-  QCTK_P(qSlicerApplication);
+  CTK_P(qSlicerApplication);
   this->initStyle();
   this->initFont();
   this->initPalette();
@@ -103,14 +103,14 @@ void qSlicerApplicationPrivate::init()
 //-----------------------------------------------------------------------------
 void qSlicerApplicationPrivate::initStyle()
 {
-  QCTK_P(qSlicerApplication);
+  CTK_P(qSlicerApplication);
   p->setStyle(new QCleanlooksStyle);
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerApplicationPrivate::initPalette()
 {
-  QCTK_P(qSlicerApplication);
+  CTK_P(qSlicerApplication);
   QPalette myPalette = p->palette();
   qSlicerApplyPalette(myPalette);
   p->setPalette(myPalette);
@@ -120,7 +120,7 @@ void qSlicerApplicationPrivate::initPalette()
 void qSlicerApplicationPrivate::initFont()
 {
   /*
-  QCTK_P(qSlicerApplication);
+  CTK_P(qSlicerApplication);
   QFont f("Verdana", 9);
   QFontInfo ff(f);
   QFontDatabase database;
@@ -138,7 +138,7 @@ void qSlicerApplicationPrivate::initFont()
 //-----------------------------------------------------------------------------
 void qSlicerApplicationPrivate::loadStyleSheet()
 {
-//   QCTK_P(qSlicerApplication);
+//   CTK_P(qSlicerApplication);
 //   QString styleSheet =
 //     "background-color: white;"
 //     "alternate-background-color: #e4e4fe;";
@@ -153,8 +153,8 @@ void qSlicerApplicationPrivate::loadStyleSheet()
 //-----------------------------------------------------------------------------
 qSlicerApplication::qSlicerApplication(int &_argc, char **_argv):Superclass(_argc, _argv)
 {
-  QCTK_INIT_PRIVATE(qSlicerApplication);
-  QCTK_D(qSlicerApplication);
+  CTK_INIT_PRIVATE(qSlicerApplication);
+  CTK_D(qSlicerApplication);
   d->init();
 }
 
@@ -205,13 +205,13 @@ qSlicerIOManager* qSlicerApplication::ioManager()
 }
 
 //-----------------------------------------------------------------------------
-QCTK_SET_CXX(qSlicerApplication, Qt::WindowFlags, setDefaultWindowFlags, DefaultWindowFlags);
-QCTK_GET_CXX(qSlicerApplication, Qt::WindowFlags, defaultWindowFlags, DefaultWindowFlags);
+CTK_SET_CXX(qSlicerApplication, Qt::WindowFlags, setDefaultWindowFlags, DefaultWindowFlags);
+CTK_GET_CXX(qSlicerApplication, Qt::WindowFlags, defaultWindowFlags, DefaultWindowFlags);
 
 //-----------------------------------------------------------------------------
 void qSlicerApplication::setTopLevelWidgetsVisible(bool visible)
 {
-  QCTK_D(qSlicerApplication);
+  CTK_D(qSlicerApplication);
   foreach(QWidget * widget, this->topLevelWidgets())
     {
     // Store current visibility state
@@ -247,7 +247,7 @@ void qSlicerApplication::setTopLevelWidgetVisible(qSlicerWidget* widget, bool vi
 {
   if (!widget) { return; }
   Q_ASSERT(!widget->parent());
-  QCTK_D(qSlicerApplication);
+  CTK_D(qSlicerApplication);
   // When internal Map is empty, it means top widget are visible
   if (d->TopLevelWidgetsSavedVisibilityState.empty())
     {

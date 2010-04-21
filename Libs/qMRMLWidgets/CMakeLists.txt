@@ -157,6 +157,8 @@ SET(qMRMLWidgets_LIBRARIES
   MRML
   qCTKWidgets
   qVTKWidgets
+  CTKVisualizationVTKCore
+  CTKVisualizationVTKWidgets
   )
   
 TARGET_LINK_LIBRARIES(${lib_name} ${qMRMLWidgets_LIBRARIES})

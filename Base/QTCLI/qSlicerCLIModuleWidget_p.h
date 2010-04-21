@@ -14,24 +14,23 @@
 #ifndef __qSlicerCLIModuleWidget_p_h
 #define __qSlicerCLIModuleWidget_p_h
 
-#include "qSlicerCLIModuleWidget.h"
-#include "ui_qSlicerCLIModule.h"
-
-/// SlicerQT includes
-#include "qSlicerCLIModuleWidget.h"
-#include "qSlicerWidget.h"
-
-/// qCTK includes
-#include <qCTKPimpl.h>
-
-/// QT includes
+// Qt includes
 #include <QHash>
 #include <QList>
 
-/// ModuleDescriptionParser includes
+// CTK includes
+#include <ctkPimpl.h>
+
+// SlicerQt includes
+#include "qSlicerCLIModuleWidget.h"
+#include "ui_qSlicerCLIModule.h"
+#include "qSlicerCLIModuleWidget.h"
+#include "qSlicerWidget.h"
+
+// ModuleDescriptionParser includes
 #include <ModuleDescription.h>
 
-/// STL includes
+// STD includes
 #include <vector>
 
 class vtkSlicerCLIModuleLogic; 
@@ -72,11 +71,11 @@ this->WidgetValueWrappers.push_back(new _NAME##WidgetValueWrapper(_LABEL, _WIDGE
 
 //-----------------------------------------------------------------------------
 class qSlicerCLIModuleWidgetPrivate: public QObject,
-                                     public qCTKPrivate<qSlicerCLIModuleWidget>,
+                                     public ctkPrivate<qSlicerCLIModuleWidget>,
                                      public Ui_qSlicerCLIModule
 {
   Q_OBJECT
-  QCTK_DECLARE_PUBLIC(qSlicerCLIModuleWidget);
+  CTK_DECLARE_PUBLIC(qSlicerCLIModuleWidget);
   
 public:
   typedef qSlicerCLIModuleWidgetPrivate Self;

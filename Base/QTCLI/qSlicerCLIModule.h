@@ -14,9 +14,12 @@
 #ifndef __qSlicerCLIModule_h
 #define __qSlicerCLIModule_h
 
+// CTK includes
+#include <ctkPimpl.h>
+
+// SlicerQt includes
 #include "qSlicerAbstractModule.h"
 
-#include <qCTKPimpl.h>
 #include "qSlicerBaseQTCLIExport.h"
 
 class qSlicerCLIModulePrivate;
@@ -64,7 +67,7 @@ protected:
   virtual vtkSlicerLogic* createLogic();
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerCLIModule);
+  CTK_DECLARE_PRIVATE(qSlicerCLIModule);
 };
 
 #endif

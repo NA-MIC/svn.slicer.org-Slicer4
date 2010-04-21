@@ -15,12 +15,12 @@
 #ifndef __qCTKDoubleSlider_h
 #define __qCTKDoubleSlider_h
 
-/// QT includes
+// Qt includes
 #include <QSlider>
 #include <QWidget>
 
-/// qCTK includes
-#include "qCTKPimpl.h"
+// CTK includes
+#include <ctkPimpl.h>
 #include "qCTKWidgetsExport.h"
 
 class qCTKDoubleSliderPrivate;
@@ -159,7 +159,7 @@ signals:
   void sliderReleased();
   
 private:
-  QCTK_DECLARE_PRIVATE(qCTKDoubleSlider);
+  CTK_DECLARE_PRIVATE(qCTKDoubleSlider);
 };
 
 #endif

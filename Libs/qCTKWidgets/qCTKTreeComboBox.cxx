@@ -12,16 +12,18 @@
 
 =========================================================================*/
 
-#include "qCTKTreeComboBox.h"
-
+// Qt includes
 #include <QEvent>
 #include <QMouseEvent>
 #include <QModelIndex>
 #include <QTreeView>
 #include <QDebug>
 
+// CTK includes
+#include "qCTKTreeComboBox.h"
+
 // -------------------------------------------------------------------------
-class qCTKTreeComboBoxPrivate: public qCTKPrivate<qCTKTreeComboBox>
+class qCTKTreeComboBoxPrivate: public ctkPrivate<qCTKTreeComboBox>
 {
 public:
   bool SkipNextHide;
@@ -37,8 +39,8 @@ public:
 // -------------------------------------------------------------------------
 qCTKTreeComboBox::qCTKTreeComboBox(QWidget* _parent):Superclass(_parent)
 {
-  QCTK_INIT_PRIVATE(qCTKTreeComboBox);
-  QCTK_D(qCTKTreeComboBox);
+  CTK_INIT_PRIVATE(qCTKTreeComboBox);
+  CTK_D(qCTKTreeComboBox);
   
   d->init();
   QTreeView* treeView = new QTreeView(this);
@@ -56,7 +58,7 @@ qCTKTreeComboBox::qCTKTreeComboBox(QWidget* _parent):Superclass(_parent)
 // -------------------------------------------------------------------------
 bool qCTKTreeComboBox::eventFilter(QObject* object, QEvent* _event)
 {
-  QCTK_D(qCTKTreeComboBox);
+  CTK_D(qCTKTreeComboBox);
   
   bool res = false;
   if (_event->type() == QEvent::MouseButtonRelease && 
@@ -108,7 +110,7 @@ void qCTKTreeComboBox::showPopup()
 // -------------------------------------------------------------------------
 void qCTKTreeComboBox::hidePopup()
 {
-  QCTK_D(qCTKTreeComboBox);
+  CTK_D(qCTKTreeComboBox);
   
   if (d->SkipNextHide)
     {// don't hide the popup if the selected item is a parent.
@@ -133,7 +135,7 @@ void qCTKTreeComboBox::hidePopup()
 // -------------------------------------------------------------------------
 void qCTKTreeComboBox::onCollapsed(const QModelIndex& index)
 {
-  QCTK_D(qCTKTreeComboBox);
+  CTK_D(qCTKTreeComboBox);
   
   if (this->view()->currentIndex().parent() == index)
     {
@@ -147,7 +149,7 @@ void qCTKTreeComboBox::onCollapsed(const QModelIndex& index)
 // -------------------------------------------------------------------------
 void qCTKTreeComboBox::onExpanded(const QModelIndex& /*index*/)
 {
-  qctk_d()->ResetPopupSize = true;
+  ctk_d()->ResetPopupSize = true;
 }
 
 // -------------------------------------------------------------------------

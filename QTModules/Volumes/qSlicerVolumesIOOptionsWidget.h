@@ -1,13 +1,13 @@
 #ifndef __qSlicerVolumesIOOptionsWidget_h
 #define __qSlicerVolumesIOOptionsWidget_h
 
-/// qCTK includes
-#include <qCTKPimpl.h>
+// CTK includes
+#include <ctkPimpl.h>
 
-/// SlicerQT includes
+// SlicerQt includes
 #include "qSlicerIOOptionsWidget.h"
 
-/// Volumes includes
+// Volumes includes
 #include "qSlicerVolumesModuleExport.h"
 
 class qSlicerVolumesIOOptionsWidgetPrivate;
@@ -22,7 +22,7 @@ public:
   virtual qSlicerIO::IOProperties options()const;
   
 private:
-  QCTK_DECLARE_PRIVATE(qSlicerVolumesIOOptionsWidget);
+  CTK_DECLARE_PRIVATE(qSlicerVolumesIOOptionsWidget);
 };
 
 #endif

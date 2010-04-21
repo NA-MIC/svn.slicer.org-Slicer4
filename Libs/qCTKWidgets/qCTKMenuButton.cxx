@@ -12,8 +12,7 @@
 
 =========================================================================*/
 
-#include "qCTKMenuButton.h"
-
+// Qt includes
 #include <QApplication>
 #include <QCleanlooksStyle>
 #include <QDebug>
@@ -29,11 +28,14 @@
 #include <QStylePainter>
 #include <QToolBar>
 
+// CTK includes
+#include "qCTKMenuButton.h"
+
 //-----------------------------------------------------------------------------
-class qCTKMenuButtonPrivate : public qCTKPrivate<qCTKMenuButton>
+class qCTKMenuButtonPrivate : public ctkPrivate<qCTKMenuButton>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qCTKMenuButton);
+  CTK_DECLARE_PUBLIC(qCTKMenuButton);
   qCTKMenuButtonPrivate();
 
   QRect indicatorRect() const;
@@ -49,7 +51,7 @@ qCTKMenuButtonPrivate::qCTKMenuButtonPrivate()
 //-----------------------------------------------------------------------------
 QRect qCTKMenuButtonPrivate::indicatorRect()const 
 {
-  QCTK_P(const qCTKMenuButton);
+  CTK_P(const qCTKMenuButton);
   
   QStyleOptionButton option;
   p->initStyleOption(&option);
@@ -65,14 +67,14 @@ QRect qCTKMenuButtonPrivate::indicatorRect()const
 qCTKMenuButton::qCTKMenuButton(QWidget* _parent)
   :QPushButton(_parent)
 {
-  QCTK_INIT_PRIVATE(qCTKMenuButton);
+  CTK_INIT_PRIVATE(qCTKMenuButton);
 }
 
 //-----------------------------------------------------------------------------
 qCTKMenuButton::qCTKMenuButton(const QString& title, QWidget* _parent)
   :QPushButton(title, _parent)
 {
-  QCTK_INIT_PRIVATE(qCTKMenuButton);
+  CTK_INIT_PRIVATE(qCTKMenuButton);
 }
 
 //-----------------------------------------------------------------------------
@@ -98,7 +100,7 @@ QSize qCTKMenuButton::sizeHint()const
 void qCTKMenuButton::paintEvent(QPaintEvent * _event)
 {
   Q_UNUSED(_event);
-  QCTK_D(qCTKMenuButton);
+  CTK_D(qCTKMenuButton);
   QStylePainter painter(this);
   QStyleOptionButton option;
   initStyleOption(&option);
@@ -161,7 +163,7 @@ void qCTKMenuButton::paintEvent(QPaintEvent * _event)
 //-----------------------------------------------------------------------------
 bool qCTKMenuButton::hitButton(const QPoint & _pos)const
 {
-  QCTK_D(const qCTKMenuButton);
+  CTK_D(const qCTKMenuButton);
   return !d->indicatorRect().contains(_pos) 
     && this->QPushButton::hitButton(_pos);
 }
@@ -175,7 +177,7 @@ void qCTKMenuButton::initStyleOption(QStyleOptionButton* option)const
 //-----------------------------------------------------------------------------
 void qCTKMenuButton::mousePressEvent(QMouseEvent *e)
 {
-  QCTK_D(qCTKMenuButton);
+  CTK_D(qCTKMenuButton);
   // we don't want to open the menu if the mouse is clicked anywhere on
   // the button, only if it's clicked on the indecator
   this->disconnect(this,SIGNAL(pressed()), this, SLOT(_q_popupPressed()));

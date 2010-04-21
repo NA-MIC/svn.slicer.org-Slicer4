@@ -10,13 +10,12 @@
 
 =========================================================================auto=*/
 
-#include "qSlicerCLILoadableModuleFactory.h"
-
-// QT includes
+// Qt includes
 #include <QStringList>
 #include <QDirIterator>
 
 // SlicerQT includes
+#include "qSlicerCLILoadableModuleFactory.h"
 #include "qSlicerCLILoadableModule.h"
 #include "qSlicerCLIModuleFactoryHelper.h"
 #include "qSlicerCoreApplication.h"
@@ -67,10 +66,10 @@ qSlicerAbstractModule* qSlicerCLILoadableModuleFactoryItem::instanciator()
 }
 
 //-----------------------------------------------------------------------------
-class qSlicerCLILoadableModuleFactoryPrivate:public qCTKPrivate<qSlicerCLILoadableModuleFactory>
+class qSlicerCLILoadableModuleFactoryPrivate:public ctkPrivate<qSlicerCLILoadableModuleFactory>
 {
 public:
-  QCTK_DECLARE_PUBLIC(qSlicerCLILoadableModuleFactory);
+  CTK_DECLARE_PUBLIC(qSlicerCLILoadableModuleFactory);
   qSlicerCLILoadableModuleFactoryPrivate()
     {
     }
@@ -79,7 +78,7 @@ public:
 //-----------------------------------------------------------------------------
 qSlicerCLILoadableModuleFactory::qSlicerCLILoadableModuleFactory():Superclass()
 {
-  QCTK_INIT_PRIVATE(qSlicerCLILoadableModuleFactory);
+  CTK_INIT_PRIVATE(qSlicerCLILoadableModuleFactory);
   
   // Set the list of required symbols for CmdLineLoadableModule,
   // if one of these symbols can't be resolved, the library won't be registered.
