@@ -40,8 +40,6 @@ SET(qCTKWidgets_PYTHONQT_LIBRARIES ${qCTKWidgets_PYTHONQT_LIBRARIES} CACHE INTER
 # Sources
 #
 SET(qCTKWidgets_SRCS
-  qCTKAddRemoveComboBox.cxx
-  qCTKAddRemoveComboBox.h
   qCTKButtonGroup.cxx
   qCTKButtonGroup.h
   qCTKCheckableHeaderView.cxx
@@ -74,8 +72,6 @@ SET(qCTKWidgets_SRCS
   qCTKRangeWidget.h
   qCTKSliderSpinBoxWidget.cxx
   qCTKSliderSpinBoxWidget.h
-  qCTKTestApplication.cxx
-  qCTKTestApplication.h
   qCTKTitleComboBox.cxx
   qCTKTitleComboBox.h
   qCTKTreeComboBox.cxx
@@ -84,7 +80,6 @@ SET(qCTKWidgets_SRCS
 
 # Headers that should run through moc
 SET(qCTKWidgets_MOC_SRCS
-  qCTKAddRemoveComboBox.h
   qCTKButtonGroup.h
   qCTKCheckableHeaderView.h
   qCTKCheckBoxPixmaps.h
@@ -100,14 +95,12 @@ SET(qCTKWidgets_MOC_SRCS
   qCTKRangeSlider.h
   qCTKRangeWidget.h
   qCTKSliderSpinBoxWidget.h
-  qCTKTestApplication.h
   qCTKTitleComboBox.h
   qCTKTreeComboBox.h
   )
   
 # UI files
 SET(qCTKWidgets_UI_SRCS
-  Resources/UI/qCTKAddRemoveComboBox.ui
   Resources/UI/qCTKSliderSpinBoxWidget.ui
   Resources/UI/qCTKRangeWidget.ui
 )

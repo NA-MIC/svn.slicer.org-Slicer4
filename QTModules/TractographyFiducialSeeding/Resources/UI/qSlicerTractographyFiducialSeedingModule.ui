@@ -301,9 +301,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>qCTKAddRemoveComboBox</class>
+   <class>ctkAddRemoveComboBox</class>
    <extends>QWidget</extends>
-   <header>qCTKAddRemoveComboBox.h</header>
+   <header>ctkAddRemoveComboBox.h</header>
   </customwidget>
   <customwidget>
    <class>qCTKSliderSpinBoxWidget</class>

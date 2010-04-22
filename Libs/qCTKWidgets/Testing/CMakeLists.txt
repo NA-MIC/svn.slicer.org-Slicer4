@@ -1,6 +1,5 @@
 SET(KIT qCTKWidgets)
 CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx
-  qCTKAddRemoveComboBoxTest1.cxx
   qCTKButtonGroupTest1.cxx
   qCTKCollapsibleButtonTest1.cxx
   qCTKCollapsibleGroupBoxTest1.cxx
@@ -41,7 +40,6 @@ SIMPLE_TEST( qCTKAbstractLibraryFactoryTest1 )
 SIMPLE_TEST( qCTKAbstractObjectFactoryTest1 )
 SIMPLE_TEST( qCTKAbstractPluginFactoryTest1 )
 SIMPLE_TEST( qCTKAbstractQObjectFactoryTest1 )
-SIMPLE_TEST( qCTKAddRemoveComboBoxTest1 )
 SIMPLE_TEST( qCTKButtonGroupTest1 )
 SIMPLE_TEST( qCTKCollapsibleButtonTest1 )
 SIMPLE_TEST( qCTKCollapsibleGroupBoxTest1 )

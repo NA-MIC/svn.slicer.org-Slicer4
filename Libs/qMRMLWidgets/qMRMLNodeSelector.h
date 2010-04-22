@@ -7,7 +7,7 @@
 // CTK includes
 #include <ctkPimpl.h>
 #include <ctkVTKObject.h>
-#include <qCTKAddRemoveComboBox.h>
+#include <ctkAddRemoveComboBox.h>
 
 #include "qMRMLWidgetsExport.h"
 
@@ -16,7 +16,7 @@ class vtkMRMLScene;
 class vtkMRMLNode;
 class qMRMLNodeSelectorPrivate;
 
-class QMRML_WIDGETS_EXPORT qMRMLNodeSelector : public qCTKAddRemoveComboBox
+class QMRML_WIDGETS_EXPORT qMRMLNodeSelector : public ctkAddRemoveComboBox
 {
   Q_OBJECT
   QVTK_OBJECT
@@ -29,7 +29,7 @@ class QMRML_WIDGETS_EXPORT qMRMLNodeSelector : public qCTKAddRemoveComboBox
 
 public:
   /// Superclass typedef
-  typedef qCTKAddRemoveComboBox Superclass;
+  typedef ctkAddRemoveComboBox Superclass;
   
   /// Constructors
   explicit qMRMLNodeSelector(QWidget* parent = 0);
