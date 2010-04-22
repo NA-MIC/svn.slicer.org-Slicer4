@@ -4,7 +4,6 @@
 #include "qCTKWidgetsPluginExport.h"
 #include "qCTKCollapsibleButtonPlugin.h"
 #include "qCTKCollapsibleGroupBoxPlugin.h"
-#include "qCTKColorPickerButtonPlugin.h"
 #include "qCTKCoordinatesWidgetPlugin.h"
 #include "qCTKDoubleRangeSliderPlugin.h"
 #include "qCTKDoubleSliderPlugin.h"
@@ -32,7 +31,6 @@ public:
     QList<QDesignerCustomWidgetInterface *> plugins;
     plugins << new qCTKCollapsibleButtonPlugin
             << new qCTKCollapsibleGroupBoxPlugin
-            << new qCTKColorPickerButtonPlugin
             << new qCTKCoordinatesWidgetPlugin
             << new qCTKDoubleRangeSliderPlugin
             << new qCTKDoubleSliderPlugin

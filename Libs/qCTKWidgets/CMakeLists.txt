@@ -52,8 +52,6 @@ SET(qCTKWidgets_SRCS
   qCTKCollapsibleButton.h
   qCTKCollapsibleGroupBox.cxx
   qCTKCollapsibleGroupBox.h
-  qCTKColorPickerButton.cxx
-  qCTKColorPickerButton.h
   qCTKConsoleWidget.cxx
   qCTKConsoleWidget.h
   qCTKCoordinatesWidget.cxx
@@ -92,7 +90,6 @@ SET(qCTKWidgets_MOC_SRCS
   qCTKCheckBoxPixmaps.h
   qCTKCollapsibleButton.h
   qCTKCollapsibleGroupBox.h
-  qCTKColorPickerButton.h
   qCTKConsoleWidget.h
   qCTKCoordinatesWidget.h
   qCTKDoubleRangeSlider.h
