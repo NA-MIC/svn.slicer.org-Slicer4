@@ -22,7 +22,7 @@
 #include <QRadioButton>
 
 // CTK includes
-#include <qCTKCollapsibleButton.h>
+#include <ctkCollapsibleButton.h>
 #include <qCTKDoubleSlider.h>
 #include <qCTKFlowLayout.h>
 
@@ -141,7 +141,7 @@ void qSlicerCLIModuleWidgetPrivate::addParameterGroup(QBoxLayout* _layout,
 {
   Q_ASSERT(_layout);
 
-  qCTKCollapsibleButton * collapsibleWidget = new qCTKCollapsibleButton();
+  ctkCollapsibleButton * collapsibleWidget = new ctkCollapsibleButton();
   collapsibleWidget->setText(QString::fromStdString(parameterGroup.GetLabel()));
   collapsibleWidget->setCollapsed(parameterGroup.GetAdvanced() == "true");
 

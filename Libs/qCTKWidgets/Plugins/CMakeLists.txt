@@ -9,10 +9,6 @@ SET(designer_plugin_SRCS
   qCTKWidgetsPlugin.cxx  
   qCTKWidgetsAbstractPlugin.cxx
 
-  qCTKCollapsibleButtonPlugin.cxx
-  qCTKCollapsibleButtonPlugin.h
-  qCTKCollapsibleGroupBoxPlugin.cxx
-  qCTKCollapsibleGroupBoxPlugin.h
   qCTKCoordinatesWidgetPlugin.cxx
   qCTKCoordinatesWidgetPlugin.h
   qCTKDoubleRangeSliderPlugin.cxx
@@ -42,8 +38,6 @@ SET(designer_plugin_SRCS
 SET(designer_plugin_MOC_SRCS
   qCTKWidgetsPlugin.h
 
-  qCTKCollapsibleButtonPlugin.h 
-  qCTKCollapsibleGroupBoxPlugin.h
   qCTKCoordinatesWidgetPlugin.h
   qCTKDoubleRangeSliderPlugin.h
   qCTKDoubleSliderPlugin.h

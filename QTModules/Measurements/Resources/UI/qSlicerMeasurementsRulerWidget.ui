@@ -19,7 +19,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <widget class="qCTKCollapsibleButton" name="ModifyAllRulerNodesGroupBox">
+    <widget class="ctkCollapsibleButton" name="ModifyAllRulerNodesGroupBox">
      <property name="text">
       <string>Modify All Ruler Nodes</string>
      </property>
@@ -73,7 +73,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="ModifySelectedRulerNodesGroupBox">
+    <widget class="ctkCollapsibleButton" name="ModifySelectedRulerNodesGroupBox">
      <property name="text">
       <string>Modify Selected Ruler Nodes</string>
      </property>
@@ -140,7 +140,7 @@
        </layout>
       </item>
       <item>
-       <widget class="qCTKCollapsibleGroupBox" name="ConstrainRulerToModelsGroupBox">
+       <widget class="ctkCollapsibleGroupBox" name="ConstrainRulerToModelsGroupBox">
         <property name="title">
          <string>Constrain Ruler To Models</string>
         </property>
@@ -172,7 +172,7 @@
        </widget>
       </item>
       <item>
-       <widget class="qCTKCollapsibleGroupBox" name="RulerDisplayOptionsGroupBox">
+       <widget class="ctkCollapsibleGroupBox" name="RulerDisplayOptionsGroupBox">
         <property name="title">
          <string>Display Options</string>
         </property>
@@ -267,15 +267,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>qCTKCollapsibleButton</class>
+   <class>ctkCollapsibleButton</class>
    <extends>QWidget</extends>
-   <header>qCTKCollapsibleButton.h</header>
+   <header>ctkCollapsibleButton.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>qCTKCollapsibleGroupBox</class>
+   <class>ctkCollapsibleGroupBox</class>
    <extends>QGroupBox</extends>
-   <header>qCTKCollapsibleGroupBox.h</header>
+   <header>ctkCollapsibleGroupBox.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

@@ -15,7 +15,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_12">
    <item>
-    <widget class="qCTKCollapsibleButton" name="WelcomeAndAboutCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="WelcomeAndAboutCollapsibleWidget">
      <property name="text">
       <string>Welcome &amp;&amp; About</string>
      </property>
@@ -54,7 +54,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="OverviewCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="OverviewCollapsibleWidget">
      <property name="text">
       <string>Overview</string>
      </property>
@@ -96,7 +96,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="BasicAndExtendedModulesCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="BasicAndExtendedModulesCollapsibleWidget">
      <property name="text">
       <string>Basic &amp;&amp; Extended Modules</string>
      </property>
@@ -138,7 +138,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="LoadingScenesAndDataCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="LoadingScenesAndDataCollapsibleWidget">
      <property name="text">
       <string>Loading Scenes &amp;&amp; Data</string>
      </property>
@@ -180,7 +180,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="SavingScenesAndDataCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="SavingScenesAndDataCollapsibleWidget">
      <property name="text">
       <string>Saving Scenes &amp;&amp; Data</string>
      </property>
@@ -219,7 +219,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="AdjustingDataDisplayCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="AdjustingDataDisplayCollapsibleWidget">
      <property name="text">
       <string>Adjusting Data Display</string>
      </property>
@@ -261,7 +261,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="ConfiguringViewersAndLayoutCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="ConfiguringViewersAndLayoutCollapsibleWidget">
      <property name="text">
       <string>Configuring Viewers &amp;&amp; Layout</string>
      </property>
@@ -303,7 +303,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="MouseModesCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="MouseModesCollapsibleWidget">
      <property name="text">
       <string>Mouse Modes</string>
      </property>
@@ -345,7 +345,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="CustomizingSlicerCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="CustomizingSlicerCollapsibleWidget">
      <property name="text">
       <string>Customizing Slicer</string>
      </property>
@@ -387,7 +387,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="OtherUsefulHintsCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="OtherUsefulHintsCollapsibleWidget">
      <property name="text">
       <string>Other Useful Hints</string>
      </property>
@@ -429,7 +429,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="CommunityCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="CommunityCollapsibleWidget">
      <property name="text">
       <string>Community</string>
      </property>
@@ -471,7 +471,7 @@
     </widget>
    </item>
    <item>
-    <widget class="qCTKCollapsibleButton" name="AcknowledgmentCollapsibleWidget">
+    <widget class="ctkCollapsibleButton" name="AcknowledgmentCollapsibleWidget">
      <property name="text">
       <string>Acknowledgment</string>
      </property>
@@ -533,9 +533,9 @@
  <layoutdefault spacing="0" margin="0"/>
  <customwidgets>
   <customwidget>
-   <class>qCTKCollapsibleButton</class>
+   <class>ctkCollapsibleButton</class>
    <extends>QWidget</extends>
-   <header>qCTKCollapsibleButton.h</header>
+   <header>ctkCollapsibleButton.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

@@ -23,7 +23,7 @@
 #include <QHash>
 
 // CTK includes
-#include <qCTKCollapsibleButton.h>
+#include <ctkCollapsibleButton.h>
 #include <qCTKDoubleSlider.h>
 #include <qCTKFlowLayout.h>
 

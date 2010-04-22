@@ -2,8 +2,6 @@
 #define __qCTKWidgetsPlugin_h
 
 #include "qCTKWidgetsPluginExport.h"
-#include "qCTKCollapsibleButtonPlugin.h"
-#include "qCTKCollapsibleGroupBoxPlugin.h"
 #include "qCTKCoordinatesWidgetPlugin.h"
 #include "qCTKDoubleRangeSliderPlugin.h"
 #include "qCTKDoubleSliderPlugin.h"
@@ -29,9 +27,7 @@ public:
   QList<QDesignerCustomWidgetInterface*> customWidgets() const
     {
     QList<QDesignerCustomWidgetInterface *> plugins;
-    plugins << new qCTKCollapsibleButtonPlugin
-            << new qCTKCollapsibleGroupBoxPlugin
-            << new qCTKCoordinatesWidgetPlugin
+    plugins << new qCTKCoordinatesWidgetPlugin
             << new qCTKDoubleRangeSliderPlugin
             << new qCTKDoubleSliderPlugin
             << new qCTKDynamicSpacerPlugin

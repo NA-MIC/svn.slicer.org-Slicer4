@@ -48,7 +48,7 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="qCTKCollapsibleButton" name="MainCollapsibleWidget">
+        <widget class="ctkCollapsibleButton" name="MainCollapsibleWidget">
          <property name="text">
           <string>Module Title</string>
          </property>
@@ -245,9 +245,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>qCTKCollapsibleButton</class>
+   <class>ctkCollapsibleButton</class>
    <extends>QWidget</extends>
-   <header>qCTKCollapsibleButton.h</header>
+   <header>ctkCollapsibleButton.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>

@@ -10,7 +10,7 @@
 #include <QWebView>
 
 // CTK includes
-#include <qCTKCollapsibleButton.h>
+#include <ctkCollapsibleButton.h>
 #include <qCTKFittedTextBrowser.h>
 
 // SlicerQt includes
@@ -33,7 +33,7 @@ public:
   //QWebView*              HelpLabel;
   QBoxLayout*            Layout;
   QScrollArea*           ScrollArea;
-  qCTKCollapsibleButton* HelpCollapsibleButton;
+  ctkCollapsibleButton* HelpCollapsibleButton;
   */
 };
 
@@ -183,7 +183,7 @@ void qSlicerModulePanel::removeAllModule()
 void qSlicerModulePanelPrivate::setupUi(QWidget * widget)
 {
   QWidget* panel = new QWidget;
-  this->HelpCollapsibleButton = new qCTKCollapsibleButton("Help");
+  this->HelpCollapsibleButton = new ctkCollapsibleButton("Help");
   this->HelpCollapsibleButton->setCollapsed(true);
   this->HelpCollapsibleButton->setSizePolicy(
     QSizePolicy::Ignored, QSizePolicy::Minimum);

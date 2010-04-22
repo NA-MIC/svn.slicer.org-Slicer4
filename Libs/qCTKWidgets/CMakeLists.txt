@@ -40,16 +40,6 @@ SET(qCTKWidgets_PYTHONQT_LIBRARIES ${qCTKWidgets_PYTHONQT_LIBRARIES} CACHE INTER
 # Sources
 #
 SET(qCTKWidgets_SRCS
-  qCTKButtonGroup.cxx
-  qCTKButtonGroup.h
-  qCTKCheckableHeaderView.cxx
-  qCTKCheckableHeaderView.h
-  qCTKCheckBoxPixmaps.cxx
-  qCTKCheckBoxPixmaps.h
-  qCTKCollapsibleButton.cxx
-  qCTKCollapsibleButton.h
-  qCTKCollapsibleGroupBox.cxx
-  qCTKCollapsibleGroupBox.h
   qCTKConsoleWidget.cxx
   qCTKConsoleWidget.h
   qCTKCoordinatesWidget.cxx
@@ -80,11 +70,6 @@ SET(qCTKWidgets_SRCS
 
 # Headers that should run through moc
 SET(qCTKWidgets_MOC_SRCS
-  qCTKButtonGroup.h
-  qCTKCheckableHeaderView.h
-  qCTKCheckBoxPixmaps.h
-  qCTKCollapsibleButton.h
-  qCTKCollapsibleGroupBox.h
   qCTKConsoleWidget.h
   qCTKCoordinatesWidget.h
   qCTKDoubleRangeSlider.h

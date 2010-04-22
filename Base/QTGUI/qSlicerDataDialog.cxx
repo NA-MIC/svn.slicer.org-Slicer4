@@ -6,7 +6,7 @@
 #include <QUrl>
 
 /// CTK includes
-#include <qCTKCheckableHeaderView.h>
+#include <ctkCheckableHeaderView.h>
 
 /// SlicerQt includes
 #include "qSlicerApplication.h"
@@ -23,7 +23,7 @@ qSlicerDataDialogPrivate::qSlicerDataDialogPrivate(QWidget* _parent)
   // checkable headers.
   this->FileWidget->model()->setHeaderData(FileColumn, Qt::Horizontal, Qt::Unchecked, Qt::CheckStateRole);
   QHeaderView* previousHeaderView = this->FileWidget->horizontalHeader();
-  qCTKCheckableHeaderView* headerView = new qCTKCheckableHeaderView(Qt::Horizontal, this->FileWidget);
+  ctkCheckableHeaderView* headerView = new ctkCheckableHeaderView(Qt::Horizontal, this->FileWidget);
   headerView->setClickable(previousHeaderView->isClickable());
   headerView->setMovable(previousHeaderView->isMovable());
   headerView->setHighlightSections(previousHeaderView->highlightSections());
