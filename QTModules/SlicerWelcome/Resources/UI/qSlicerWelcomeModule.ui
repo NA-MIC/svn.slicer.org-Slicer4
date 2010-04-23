@@ -30,7 +30,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowse">
+       <widget class="ctkFittedTextBrowser" name="textBrowse">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -72,7 +72,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_2">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_2">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -114,7 +114,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_3">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_3">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -156,7 +156,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_4">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_4">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -198,7 +198,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="CTKFittedTextBrowser">
+       <widget class="ctkFittedTextBrowser" name="CTKFittedTextBrowser">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -237,7 +237,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_5">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_5">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -279,7 +279,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_6">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_6">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -321,7 +321,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_7">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_7">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -363,7 +363,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_8">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_8">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -405,7 +405,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_9">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_9">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -447,7 +447,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_10">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_10">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -489,7 +489,7 @@
        <number>0</number>
       </property>
       <item>
-       <widget class="qCTKFittedTextBrowser" name="textBrowser_11">
+       <widget class="ctkFittedTextBrowser" name="textBrowser_11">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Ignored" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -539,9 +539,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>qCTKFittedTextBrowser</class>
+   <class>ctkFittedTextBrowser</class>
    <extends>QTextBrowser</extends>
-   <header>qCTKFittedTextBrowser.h</header>
+   <header>ctkFittedTextBrowser.h</header>
   </customwidget>
   <customwidget>
    <class>qSlicerWidget</class>

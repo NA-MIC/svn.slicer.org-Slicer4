@@ -10,13 +10,13 @@
 Q_EXPORT_PLUGIN2(qSlicerWelcomeModule, qSlicerWelcomeModule);
 
 //-----------------------------------------------------------------------------
-class qSlicerWelcomeModulePrivate: public qCTKPrivate<qSlicerWelcomeModule>
+class qSlicerWelcomeModulePrivate: public ctkPrivate<qSlicerWelcomeModule>
 {
 public:
 };
 
 //-----------------------------------------------------------------------------
-QCTK_CONSTRUCTOR_1_ARG_CXX(qSlicerWelcomeModule, QObject*);
+CTK_CONSTRUCTOR_1_ARG_CXX(qSlicerWelcomeModule, QObject*);
 
 //-----------------------------------------------------------------------------
 qSlicerAbstractModuleWidget * qSlicerWelcomeModule::createWidgetRepresentation()
