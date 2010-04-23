@@ -11,7 +11,7 @@
 
 // CTK includes
 #include <ctkCollapsibleButton.h>
-#include <qCTKFittedTextBrowser.h>
+#include <ctkFittedTextBrowser.h>
 
 // SlicerQt includes
 #include "qSlicerModulePanel.h"
@@ -188,9 +188,9 @@ void qSlicerModulePanelPrivate::setupUi(QWidget * widget)
   this->HelpCollapsibleButton->setSizePolicy(
     QSizePolicy::Ignored, QSizePolicy::Minimum);
     
-  // Note: QWebView could be used as an alternative to qCTKFittedTextBrowser ?
+  // Note: QWebView could be used as an alternative to ctkFittedTextBrowser ?
   //this->HelpLabel = new QWebView;
-  this->HelpLabel = static_cast<QTextBrowser*>(new qCTKFittedTextBrowser);
+  this->HelpLabel = static_cast<QTextBrowser*>(new ctkFittedTextBrowser);
   this->HelpLabel->setOpenExternalLinks(true);
   this->HelpLabel->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
   this->HelpLabel->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

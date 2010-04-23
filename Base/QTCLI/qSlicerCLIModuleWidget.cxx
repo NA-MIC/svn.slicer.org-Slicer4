@@ -23,7 +23,7 @@
 
 // CTK includes
 #include <ctkCollapsibleButton.h>
-#include <qCTKDoubleSlider.h>
+#include <ctkDoubleSlider.h>
 #include <qCTKFlowLayout.h>
 
 // SlicerQt includes
@@ -336,7 +336,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createBooleanTagWidget(const ModuleParam
 
 //-----------------------------------------------------------------------------
 WIDGET_VALUE_WRAPPER(FloatWithoutConstaints, QDoubleSpinBox, value);
-WIDGET_VALUE_WRAPPER(FloatWithConstaints, qCTKDoubleSlider, value);
+WIDGET_VALUE_WRAPPER(FloatWithConstaints, ctkDoubleSlider, value);
 
 //-----------------------------------------------------------------------------
 QWidget* qSlicerCLIModuleWidgetPrivate::createFloatTagWidget(const ModuleParameter& moduleParameter)
@@ -360,7 +360,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createFloatTagWidget(const ModuleParamet
     }
   else
     {
-    qCTKDoubleSlider * slider = new qCTKDoubleSlider;
+    ctkDoubleSlider * slider = new ctkDoubleSlider;
     slider->setOrientation(Qt::Horizontal);
     slider->setTickInterval(step);
     slider->setSingleStep(step);
@@ -374,7 +374,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createFloatTagWidget(const ModuleParamet
 
 //-----------------------------------------------------------------------------
 WIDGET_VALUE_WRAPPER(DoubleWithoutConstaints, QDoubleSpinBox, value);
-WIDGET_VALUE_WRAPPER(DoubleWithConstaints, qCTKDoubleSlider, value);
+WIDGET_VALUE_WRAPPER(DoubleWithConstaints, ctkDoubleSlider, value);
 
 //-----------------------------------------------------------------------------
 QWidget* qSlicerCLIModuleWidgetPrivate::createDoubleTagWidget(const ModuleParameter& moduleParameter)
@@ -398,7 +398,7 @@ QWidget* qSlicerCLIModuleWidgetPrivate::createDoubleTagWidget(const ModuleParame
     }
   else
     {
-    qCTKDoubleSlider * slider = new qCTKDoubleSlider;
+    ctkDoubleSlider * slider = new ctkDoubleSlider;
     slider->setOrientation(Qt::Horizontal);
     slider->setSingleStep(step);
     slider->setTickInterval(step);

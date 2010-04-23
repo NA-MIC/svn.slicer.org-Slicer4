@@ -155,7 +155,7 @@ public:
 
   ///
   /// Disable application settings
-  /// Instanciate a new empty qCTKSettings object and associate it with this instance.
+  /// Instanciate a new empty ctkSettings object and associate it with this instance.
   /// Note that the original settings won't deleted.
   void disableSettings();
 

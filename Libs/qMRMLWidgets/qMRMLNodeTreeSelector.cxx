@@ -3,7 +3,7 @@
 #include <QStandardItemModel>
 
 // CTK includes
-#include <qCTKTreeComboBox.h>
+#include <ctkTreeComboBox.h>
 
 // qMRML includes
 #include "qMRMLNodeTreeSelector.h"
@@ -24,7 +24,7 @@ qMRMLNodeTreeSelector::qMRMLNodeTreeSelector(QWidget* _parent) : Superclass(_par
 {
   CTK_INIT_PRIVATE(qMRMLNodeTreeSelector);
   
-  qCTKTreeComboBox* comboBox = new qCTKTreeComboBox;
+  ctkTreeComboBox* comboBox = new ctkTreeComboBox;
   this->setComboBox(comboBox);
 }
 

@@ -8,48 +8,10 @@ PROJECT(qCTKWidgetsPlugin)
 SET(designer_plugin_SRCS
   qCTKWidgetsPlugin.cxx  
   qCTKWidgetsAbstractPlugin.cxx
-
-  qCTKCoordinatesWidgetPlugin.cxx
-  qCTKCoordinatesWidgetPlugin.h
-  qCTKDoubleRangeSliderPlugin.cxx
-  qCTKDoubleRangeSliderPlugin.h
-  qCTKDoubleSliderPlugin.cxx
-  qCTKDoubleSliderPlugin.h
-  qCTKDynamicSpacerPlugin.cxx
-  qCTKDynamicSpacerPlugin.h
-  qCTKExtensionFactory.cxx
-  qCTKExtensionFactory.h
-  qCTKFittedTextBrowserPlugin.cxx
-  qCTKFittedTextBrowserPlugin.h
-  qCTKMenuButtonPlugin.cxx
-  qCTKMenuButtonPlugin.h
-  qCTKRangeSliderPlugin.cxx
-  qCTKRangeSliderPlugin.h
-  qCTKRangeWidgetPlugin.cxx
-  qCTKRangeWidgetPlugin.h
-  qCTKTitleComboBoxPlugin.cxx
-  qCTKTitleComboBoxPlugin.h
-  qCTKTreeComboBoxPlugin.cxx
-  qCTKTreeComboBoxPlugin.h
-  qCTKSliderSpinBoxWidgetPlugin.cxx
-  qCTKSliderSpinBoxWidgetPlugin.h
   )
 
 SET(designer_plugin_MOC_SRCS
   qCTKWidgetsPlugin.h
-
-  qCTKCoordinatesWidgetPlugin.h
-  qCTKDoubleRangeSliderPlugin.h
-  qCTKDoubleSliderPlugin.h
-  qCTKDynamicSpacerPlugin.h
-  qCTKExtensionFactory.h
-  qCTKFittedTextBrowserPlugin.h  
-  qCTKMenuButtonPlugin.h
-  qCTKRangeSliderPlugin.h
-  qCTKRangeWidgetPlugin.h
-  qCTKTitleComboBoxPlugin.h
-  qCTKTreeComboBoxPlugin.h
-  qCTKSliderSpinBoxWidgetPlugin.h
   )
 
 SET(designer_plugin_TARGET_LIBRARIES

@@ -40,48 +40,12 @@ SET(qCTKWidgets_PYTHONQT_LIBRARIES ${qCTKWidgets_PYTHONQT_LIBRARIES} CACHE INTER
 # Sources
 #
 SET(qCTKWidgets_SRCS
-  qCTKConsoleWidget.cxx
-  qCTKConsoleWidget.h
-  qCTKCoordinatesWidget.cxx
-  qCTKCoordinatesWidget.h
-  qCTKDoubleRangeSlider.cxx
-  qCTKDoubleRangeSlider.h
-  qCTKDoubleSlider.cxx
-  qCTKDoubleSlider.h
-  qCTKDynamicSpacer.cxx
-  qCTKDynamicSpacer.h
-  qCTKFittedTextBrowser.cxx
-  qCTKFittedTextBrowser.h
   qCTKFlowLayout.cxx
   qCTKFlowLayout.h
-  qCTKMenuButton.cxx
-  qCTKMenuButton.h
-  qCTKRangeSlider.cxx
-  qCTKRangeSlider.h
-  qCTKRangeWidget.cxx
-  qCTKRangeWidget.h
-  qCTKSliderSpinBoxWidget.cxx
-  qCTKSliderSpinBoxWidget.h
-  qCTKTitleComboBox.cxx
-  qCTKTitleComboBox.h
-  qCTKTreeComboBox.cxx
-  qCTKTreeComboBox.h
   )
 
 # Headers that should run through moc
 SET(qCTKWidgets_MOC_SRCS
-  qCTKConsoleWidget.h
-  qCTKCoordinatesWidget.h
-  qCTKDoubleRangeSlider.h
-  qCTKDoubleSlider.h
-  qCTKDynamicSpacer.h
-  qCTKFittedTextBrowser.h
-  qCTKMenuButton.h
-  qCTKRangeSlider.h
-  qCTKRangeWidget.h
-  qCTKSliderSpinBoxWidget.h
-  qCTKTitleComboBox.h
-  qCTKTreeComboBox.h
   )
   
 # UI files

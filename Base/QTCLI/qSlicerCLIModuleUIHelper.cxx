@@ -24,7 +24,7 @@
 
 // CTK includes
 #include <ctkCollapsibleButton.h>
-#include <qCTKDoubleSlider.h>
+#include <ctkDoubleSlider.h>
 #include <qCTKFlowLayout.h>
 
 // qMRML includes
@@ -306,7 +306,7 @@ QWidget* qSlicerCLIModuleUIHelperPrivate::createBooleanTagWidget(const ModulePar
 
 //-----------------------------------------------------------------------------
 WIDGET_VALUE_WRAPPER(FloatWithoutConstaints, QDoubleSpinBox, value, setValue, Double);
-WIDGET_VALUE_WRAPPER(FloatWithConstaints, qCTKDoubleSlider, value, setValue, Double);
+WIDGET_VALUE_WRAPPER(FloatWithConstaints, ctkDoubleSlider, value, setValue, Double);
 
 //-----------------------------------------------------------------------------
 QWidget* qSlicerCLIModuleUIHelperPrivate::createFloatTagWidget(const ModuleParameter& moduleParameter)
@@ -331,7 +331,7 @@ QWidget* qSlicerCLIModuleUIHelperPrivate::createFloatTagWidget(const ModuleParam
     }
   else
     {
-    qCTKDoubleSlider * slider = new qCTKDoubleSlider;
+    ctkDoubleSlider * slider = new ctkDoubleSlider;
     slider->setOrientation(Qt::Horizontal);
     slider->setTickInterval(step);
     slider->setSingleStep(step);
@@ -345,7 +345,7 @@ QWidget* qSlicerCLIModuleUIHelperPrivate::createFloatTagWidget(const ModuleParam
 
 //-----------------------------------------------------------------------------
 WIDGET_VALUE_WRAPPER(DoubleWithoutConstaints, QDoubleSpinBox, value, setValue, Double);
-WIDGET_VALUE_WRAPPER(DoubleWithConstaints, qCTKDoubleSlider, value, setValue, Double);
+WIDGET_VALUE_WRAPPER(DoubleWithConstaints, ctkDoubleSlider, value, setValue, Double);
 
 //-----------------------------------------------------------------------------
 QWidget* qSlicerCLIModuleUIHelperPrivate::createDoubleTagWidget(const ModuleParameter& moduleParameter)
@@ -370,7 +370,7 @@ QWidget* qSlicerCLIModuleUIHelperPrivate::createDoubleTagWidget(const ModulePara
     }
   else
     {
-    qCTKDoubleSlider * slider = new qCTKDoubleSlider;
+    ctkDoubleSlider * slider = new ctkDoubleSlider;
     slider->setOrientation(Qt::Horizontal);
     slider->setSingleStep(step);
     slider->setTickInterval(step);

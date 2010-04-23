@@ -1,16 +1,6 @@
 SET(KIT qCTKWidgets)
 CREATE_TEST_SOURCELIST(Tests ${KIT}CxxTests.cxx
-  qCTKCoordinatesWidgetTest1.cxx
-  qCTKDoubleRangeSliderTest1.cxx
-  qCTKDoubleSliderTest1.cxx
-  qCTKFittedTextBrowserTest1.cxx
   qCTKFlowLayoutTest1.cxx
-  qCTKRangeSliderTest1.cxx
-  qCTKPimplTest1.cxx
-  qCTKSingletonTest1.cxx
-  qCTKSliderSpinBoxWidgetTest1.cxx
-  qCTKTitleComboBoxTest1.cxx
-  qCTKTreeComboBoxTest1.cxx
   )
 
 SET (TestsToRun ${Tests})
@@ -32,21 +22,4 @@ MACRO( SIMPLE_TEST  TESTNAME )
   ADD_TEST( ${TESTNAME} ${LAUNCH_EXE}  ${qCTKWidgets_TESTS} ${TESTNAME} )
 ENDMACRO( SIMPLE_TEST  )
 
-SIMPLE_TEST( qCTKAbstractFactoryTest1 )
-SIMPLE_TEST( qCTKAbstractLibraryFactoryTest1 )
-SIMPLE_TEST( qCTKAbstractObjectFactoryTest1 )
-SIMPLE_TEST( qCTKAbstractPluginFactoryTest1 )
-SIMPLE_TEST( qCTKAbstractQObjectFactoryTest1 )
-SIMPLE_TEST( qCTKColorPickerButtonTest1 )
-SIMPLE_TEST( qCTKCoordinatesWidgetTest1 )
-SIMPLE_TEST( qCTKDoubleRangeSliderTest1 )
-SIMPLE_TEST( qCTKDoubleSliderTest1 )
-SIMPLE_TEST( qCTKFittedTextBrowserTest1 )
 SIMPLE_TEST( qCTKFlowLayoutTest1 )
-SIMPLE_TEST( qCTKPimplTest1 )
-SIMPLE_TEST( qCTKRangeSliderTest1 )
-SIMPLE_TEST( qCTKSingletonTest1 )
-SIMPLE_TEST( qCTKSliderSpinBoxWidgetTest1 )
-SIMPLE_TEST( qCTKTitleComboBoxTest1 )
-SIMPLE_TEST( qCTKTreeComboBoxTest1 )
-SIMPLE_TEST( qCTKUtilsTest1 )

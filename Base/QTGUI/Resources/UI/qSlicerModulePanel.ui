@@ -51,7 +51,7 @@
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <widget class="qCTKFittedTextBrowser" name="HelpLabel">
+           <widget class="ctkFittedTextBrowser" name="HelpLabel">
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
             </property>
@@ -99,9 +99,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>qCTKFittedTextBrowser</class>
+   <class>ctkFittedTextBrowser</class>
    <extends>QTextBrowser</extends>
-   <header>qCTKFittedTextBrowser.h</header>
+   <header>ctkFittedTextBrowser.h</header>
   </customwidget>
   <customwidget>
    <class>qSlicerWidget</class>
