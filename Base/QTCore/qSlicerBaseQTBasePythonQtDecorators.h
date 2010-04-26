@@ -13,10 +13,10 @@
 #ifndef __qSlicerBaseQTBasePythonQtDecorators_h
 #define __qSlicerBaseQTBasePythonQtDecorators_h
 
-// QT includes
+// Qt includes
 #include <QObject>
 
-// qCTK includes
+// CTK includes
 #include <qCTKAbstractPythonManager.h>
 
 // VTK includes
