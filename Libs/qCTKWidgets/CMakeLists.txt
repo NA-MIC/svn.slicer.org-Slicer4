@@ -50,9 +50,7 @@ SET(qCTKWidgets_MOC_SRCS
   
 # UI files
 SET(qCTKWidgets_UI_SRCS
-  Resources/UI/qCTKSliderSpinBoxWidget.ui
-  Resources/UI/qCTKRangeWidget.ui
-)
+  )
 
 # Python wrap 
 IF(qCTKWidgets_WRAP_PYTHON)
@@ -77,7 +75,7 @@ ENDIF(qCTKWidgets_WRAP_PYTHON)
   
 QT4_WRAP_CPP(qCTKWidgets_SRCS ${qCTKWidgets_MOC_SRCS})
 QT4_WRAP_UI(qCTKWidgets_UI_CXX ${qCTKWidgets_UI_SRCS})
-QT4_ADD_RESOURCES(qCTKWidgets_QRC_SRCS Resources/qCTKWidgets.qrc)
+#QT4_ADD_RESOURCES(qCTKWidgets_QRC_SRCS Resources/qCTKWidgets.qrc)
 
 # --------------------------------------------------------------------------
 # Include dirs
