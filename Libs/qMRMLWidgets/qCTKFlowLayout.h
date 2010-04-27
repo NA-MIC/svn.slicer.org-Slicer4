@@ -42,13 +42,15 @@
 #ifndef __qCTKFlowLayout_h
 #define __qCTKFlowLayout_h
 
+// Qt includes
 #include <QLayout>
 #include <QRect>
 #include <QWidgetItem>
 #include <QStyle>
-#include "qCTKWidgetsExport.h"
 
-class QCTK_WIDGETS_EXPORT qCTKFlowLayout : public QLayout
+#include "qMRMLWidgetsExport.h"
+
+class QMRML_WIDGETS_EXPORT qCTKFlowLayout : public QLayout
 {
 public:
   explicit qCTKFlowLayout(QWidget *_parent, int _margin = -1, int hSpacing = -1, int vSpacing = -1);

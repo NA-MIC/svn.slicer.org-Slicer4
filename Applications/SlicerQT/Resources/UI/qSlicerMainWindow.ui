@@ -22,7 +22,7 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="qVTKRenderView" name="VTKRenderView"/>
+     <widget class="ctkVTKRenderView" name="VTKRenderView"/>
     </item>
    </layout>
   </widget>
@@ -487,9 +487,9 @@
    <header>qSlicerModulePanel.h</header>
   </customwidget>
   <customwidget>
-   <class>qVTKRenderView</class>
+   <class>ctkVTKRenderView</class>
    <extends>QWidget</extends>
-   <header>qVTKRenderView.h</header>
+   <header>ctkVTKRenderView.h</header>
   </customwidget>
  </customwidgets>
  <resources>

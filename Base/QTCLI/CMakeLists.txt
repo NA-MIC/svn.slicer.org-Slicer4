@@ -54,9 +54,9 @@ SET(qt_module_resources
 
 # Additional Target libraries (QT libs already included)
 SET(slicer_qtbase_target_libraries
-  qCTKWidgets
   qSlicerBaseQTBase
   qSlicerBaseQTCore
+  qMRMLWidgets # HACK: Added ONLY for qCTKFlowLayout
   SlicerBaseLogic
   ModuleDescriptionParser
   MRMLCLI

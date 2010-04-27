@@ -14,7 +14,6 @@ SET(slicer_qtbase_include_directories
   ${ModuleDescriptionParser_BINARY_DIR}
   ${MRMLCLI_SOURCE_DIR}
   ${MRMLCLI_BINARY_DIR}
-  ${qCTKWidgets_PYTHONQT_INCLUDE_DIR}
   ${FreeSurfer_SOURCE_DIR} # for qSlicerXcedeCatalogIO
   ${FreeSurfer_BINARY_DIR} # for qSlicerXcedeCatalogIO
   # HACK
@@ -72,7 +71,7 @@ SET(slicer_qtbase_target_libraries
   ModuleDescriptionParser
   MRMLCLI
   qSlicerBaseQTBase
-  ${qCTKWidgets_PYTHONQT_LIBRARIES}
+  #${qCTKWidgets_PYTHONQT_LIBRARIES}
   FreeSurfer # for qSlicerXcedeCatalogIO
   # HACK
   #vtkSlicerVolumesModuleLogic

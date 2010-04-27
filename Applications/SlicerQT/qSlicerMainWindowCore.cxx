@@ -6,7 +6,7 @@
 #include <QDebug>
 
 // CTK includes
-#include <qCTKPythonShell.h>
+#include <ctkPythonShell.h>
 
 // SlicerQt includes
 #include "qSlicerMainWindowCore.h" 
@@ -128,7 +128,7 @@ void qSlicerMainWindowCore::onWindowPythonInteractorActionTriggered()
   if (!d->PythonShell)
     {
     Q_ASSERT(qSlicerApplication::application()->pythonManager());
-    d->PythonShell = new qCTKPythonShell(qSlicerApplication::application()->pythonManager()/*, d->ParentWidget*/);
+    d->PythonShell = new ctkPythonShell(qSlicerApplication::application()->pythonManager()/*, d->ParentWidget*/);
     d->PythonShell->setAttribute(Qt::WA_QuitOnClose, false);
     d->PythonShell->resize(600, 280);
     }

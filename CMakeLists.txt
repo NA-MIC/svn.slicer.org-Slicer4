@@ -309,9 +309,8 @@ IF(Slicer3_USE_QT)
     IF(NOT VTK_WRAP_PYTHON)
       MESSAGE(FATAL_ERROR "Since both Slicer3_USE_QT and Slicer3_USE_PYTHONQT are ON, VTK_WRAP_PYTHON is expected to be ON. Disable Slicer3_USE_PYTHONQT or re-configure VTK with python wrapping.")
     ENDIF(NOT VTK_WRAP_PYTHON)
-    # Enable qCTKWidgets python wrapping
-    # Note that qVTKWidgets and qMRMLWidgets python wrapping will be automatically enabled
-    SET(qCTKWidgets_WRAP_PYTHON ON)
+    # Enable qMRMLWidgets python wrapping
+    SET(qMRMLWidgets_WRAP_PYTHON ON)
   ENDIF(Slicer3_USE_PYTHONQT)
 ENDIF(Slicer3_USE_QT)  
 

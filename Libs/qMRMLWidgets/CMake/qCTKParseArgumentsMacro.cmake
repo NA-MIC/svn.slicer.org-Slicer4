@@ -1,4 +1,3 @@
-
 #
 # See http://www.cmake.org/Wiki/CMakeMacroParseArguments
 #

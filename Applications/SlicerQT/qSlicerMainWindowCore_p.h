@@ -15,7 +15,7 @@
 
 class qSlicerAbstractModule; 
 class QSignalMapper;
-class qCTKPythonShell; 
+class ctkPythonShell;
 
 //-----------------------------------------------------------------------------
 class qSlicerMainWindowCorePrivate: public QObject,
@@ -40,7 +40,7 @@ public slots:
 public:
   QPointer<qSlicerMainWindow> ParentWidget;
   QSignalMapper*              ShowModuleActionMapper;
-  qCTKPythonShell*            PythonShell;
+  ctkPythonShell*             PythonShell;
   
   // For now, contains the list of module (title) we want to display in the ModuleToolbar
   QStringList ToolBarModuleList;
