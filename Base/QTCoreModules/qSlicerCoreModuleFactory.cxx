@@ -65,12 +65,19 @@ void qSlicerCoreModuleFactory::registerItems()
   CTK_D(qSlicerCoreModuleFactory);
   d->registerCoreModule<qSlicerTransformsModule>();
   d->registerCoreModule<qSlicerCamerasModule>();
-  // FIXME:Move the following to the Models module (when it will be ready in Qt.)
+  
+  // FIXME: Move the following to the Models module (when it will be ready in Qt.)
   qSlicerCoreApplication::application()->coreIOManager()
     ->registerIO(new qSlicerModelsIO(0));
   qSlicerCoreApplication::application()->coreIOManager()
     ->registerIO(new qSlicerScalarOverlayIO(0));
   // endofFIXME
+}
+
+//-----------------------------------------------------------------------------
+QString qSlicerCoreModuleFactory::objectNameToKey(const QString& objectName)
+{
+  return Self::extractModuleName(objectName);
 }
 
 //-----------------------------------------------------------------------------

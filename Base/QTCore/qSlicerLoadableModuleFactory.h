@@ -34,10 +34,17 @@ public:
   qSlicerLoadableModuleFactory();
   virtual ~qSlicerLoadableModuleFactory(){}
 
+  ///
+  /// \overload
   virtual void registerItems();
 
-  /// Extract module name given a library name
-  /// See qSlicerUtils::extractModuleNameFromLibraryName
+  ///
+  /// \overload
+  virtual QString fileNameToKey(const QString& fileName);
+
+  ///
+  /// Extract module name given \a libraryName
+  /// \sa qSlicerUtils::extractModuleNameFromLibraryName
   static QString extractModuleName(const QString& libraryName);
 
 

@@ -93,12 +93,10 @@ bool qSlicerVolumesIO::load(const IOProperties& properties)
       fileList->InsertNextValue(file.toLatin1().data());
       }
     }
-  QString volumeModuleName = 
-    qSlicerCoreApplication::application()->moduleManager()->moduleName("Volumes");
   vtkSlicerVolumesLogic* volumesLogic = 
     vtkSlicerVolumesLogic::SafeDownCast(
       qSlicerCoreApplication::application()->moduleManager()
-      ->module(volumeModuleName)->logic());
+      ->module("volumes")->logic());
   Q_ASSERT(volumesLogic);
   vtkMRMLVolumeNode* node = volumesLogic->AddArchetypeVolume(
     fileName.toLatin1().data(), 

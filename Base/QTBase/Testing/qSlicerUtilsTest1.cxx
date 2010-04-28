@@ -79,7 +79,9 @@ int qSlicerUtilsTest1(int, char * [] )
                << "Threshold.dll"
                << "libThreshold.so"
                << "libThreshold.so.2.3"
-               << "libThreshold.dylib";
+               << "libThreshold.dylib"
+               << "qSlicerThresholdModule.so"
+               << "qSlicerThreshold.dylib";
              
   QString expectedModuleName = "threshold";
 

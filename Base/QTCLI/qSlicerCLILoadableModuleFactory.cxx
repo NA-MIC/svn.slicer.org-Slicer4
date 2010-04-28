@@ -132,6 +132,12 @@ void qSlicerCLILoadableModuleFactory::registerItems()
 }
 
 //-----------------------------------------------------------------------------
+QString qSlicerCLILoadableModuleFactory::fileNameToKey(const QString& objectName)
+{
+  return Self::extractModuleName(objectName);
+}
+
+//-----------------------------------------------------------------------------
 QString qSlicerCLILoadableModuleFactory::extractModuleName(const QString& libraryName)
 {
   return qSlicerUtils::extractModuleNameFromLibraryName(libraryName);

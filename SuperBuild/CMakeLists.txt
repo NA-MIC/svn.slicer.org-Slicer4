@@ -167,8 +167,10 @@ set(prefix "${base}/Install")
 set(BUILD_SHARED_LIBS ON)
 #option(BUILD_SHARED_LIBS "Build with shared libraries." ON)
 
-# By default, let's build as Debug
-set(CMAKE_BUILD_TYPE "Release")
+# By default, let's build as Release
+if(NOT DEFINED CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 # let a dashboard override the default.
 if(CTEST_BUILD_CONFIGURATION)

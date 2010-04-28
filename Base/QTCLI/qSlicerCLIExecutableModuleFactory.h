@@ -30,7 +30,12 @@ public:
   explicit qSlicerCLIExecutableModuleFactoryItem(const QString& itemKey, const QString& itemPath);
   virtual ~qSlicerCLIExecutableModuleFactoryItem(){}
 
+  ///
+  /// \overload
   virtual bool load();
+
+  ///
+  /// Return path associated with the executable module
   QString path();
 
 protected:
@@ -55,9 +60,15 @@ public:
   qSlicerCLIExecutableModuleFactory();
   virtual ~qSlicerCLIExecutableModuleFactory(){}
 
+  ///
+  /// \overload
   virtual void registerItems();
 
-  /// Extract module name given an executable name
+  ///
+  /// \overload
+//   virtual QString fileNameToKey(const QString& fileName);
+
+  /// Extract module name given \a executableName
   /// For example: 
   ///  Threshold.exe -> threshold
   ///  Threshold -> threshold

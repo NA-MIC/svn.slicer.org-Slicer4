@@ -81,8 +81,21 @@ QString qSlicerUtils::extractModuleNameFromLibraryName(const QString& libraryNam
     moduleName.remove(0, 3);
     }
 
+  // Remove prefix 'qSlicer' if needed
+  if (moduleName.indexOf("qSlicer") == 0)
+    {
+    moduleName.remove(0, 7);
+    }
+
+  // Remove suffix 'Module' if needed
+  int index = moduleName.lastIndexOf("Module");
+  if (index != -1)
+    {
+    moduleName.remove(index, 6);
+    }
+    
   // Remove suffix 'Lib' if needed
-  int index = moduleName.lastIndexOf("Lib");
+  index = moduleName.lastIndexOf("Lib");
   if (index == (moduleName.size() - 3))
     {
     moduleName.remove(index, 3);

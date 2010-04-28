@@ -77,7 +77,6 @@ void qSlicerModuleSelectorWidgetPrivate::onComboBoxActivated(const QString& titl
   
   // Retrieve module name given its title
   QString name = qSlicerApplication::application()->moduleManager()->moduleName(title);
-  
   emit p->moduleSelected(name);
 }
 

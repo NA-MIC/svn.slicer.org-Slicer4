@@ -33,9 +33,15 @@ public:
   qSlicerCoreModuleFactory();
   virtual ~qSlicerCoreModuleFactory(){}
 
+  ///
+  /// \overload
   virtual void registerItems();
 
-  /// Extract module name given a core module classname
+  ///
+  /// \overload
+  virtual QString objectNameToKey(const QString& objectName);
+
+  /// Extract module name given a core module \a className
   /// For example: 
   ///  qSlicerCamerasModule -> cameras
   ///  qSlicerTransformsModule -> transforms

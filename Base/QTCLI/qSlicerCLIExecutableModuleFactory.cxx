@@ -66,6 +66,12 @@ void qSlicerCLIExecutableModuleFactory::registerItems()
 }
 
 //-----------------------------------------------------------------------------
+// QString qSlicerCLIExecutableModuleFactory::objectNameToKey(const QString& objectName)
+// {
+//   return Self::extractModuleName(objectName);
+// }
+
+//-----------------------------------------------------------------------------
 QString qSlicerCLIExecutableModuleFactory::extractModuleName(const QString& executableName)
 {
   QString moduleName = executableName;
