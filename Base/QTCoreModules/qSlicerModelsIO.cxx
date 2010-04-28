@@ -31,7 +31,7 @@ QString qSlicerModelsIO::description()const
 //-----------------------------------------------------------------------------
 qSlicerIO::IOFileType qSlicerModelsIO::fileType()const
 {
-  return qSlicerIO::VolumeFile;
+  return qSlicerIO::ModelFile;
 }
 
 //-----------------------------------------------------------------------------
@@ -52,6 +52,7 @@ bool qSlicerModelsIO::load(const IOProperties& properties)
   //     qSlicerCoreApplication::application()->moduleManager()
   //     ->module("Models")->logic());
   vtkSlicerModelsLogic* modelsLogic = vtkSlicerModelsLogic::New();
+  modelsLogic->SetMRMLScene(this->mrmlScene());
   Q_ASSERT(modelsLogic);
   vtkMRMLModelNode* node = modelsLogic->AddModel(
     fileName.toLatin1().data());
