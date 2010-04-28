@@ -1,0 +1,342 @@
+/// Qt includes
+#include <QComboBox>
+#include <QDebug>
+#include <QFileDialog>
+#include <QFileInfo>
+#include <QList>
+#include <QUrl>
+
+/// CTK includes
+#include <ctkCheckableHeaderView.h>
+#include <ctkDirectoryButton.h>
+
+/// SlicerQt includes
+#include "qSlicerApplication.h"
+#include "qSlicerSaveDataDialog.h"
+#include "qSlicerSaveDataDialog_p.h"
+#include "qSlicerIOManager.h"
+#include "qSlicerIOOptionsWidget.h"
+
+/// MRML includes
+#include <vtkMRMLScene.h>
+#include <vtkMRMLStorableNode.h>
+#include <vtkMRMLStorageNode.h>
+
+/// VTK includes
+#include <vtkStringArray.h>
+
+//-----------------------------------------------------------------------------
+qSlicerSaveDataDialogPrivate::qSlicerSaveDataDialogPrivate(QWidget* _parent)
+  :QDialog(_parent)
+{
+  this->setupUi(this);
+
+  // checkable headers.
+  this->FileWidget->model()->setHeaderData(NodeNameColumn, Qt::Horizontal, Qt::Unchecked, Qt::CheckStateRole);
+  QHeaderView* previousHeaderView = this->FileWidget->horizontalHeader();
+  ctkCheckableHeaderView* headerView = new ctkCheckableHeaderView(Qt::Horizontal, this->FileWidget);
+  headerView->setClickable(previousHeaderView->isClickable());
+  headerView->setMovable(previousHeaderView->isMovable());
+  headerView->setHighlightSections(previousHeaderView->highlightSections());
+  headerView->setPropagateToItems(true);
+  this->FileWidget->setHorizontalHeader(headerView);
+  
+  connect(this->DirectoryButton, SIGNAL(clicked()), this, SLOT(changeDirectory()));
+  connect(this->SelectSceneDataButton, SIGNAL(clicked()), this, SLOT(selectModifiedSceneData()));
+  connect(this->SelectDataButton, SIGNAL(clicked()), this, SLOT(selectModifiedData()));
+
+  // Pimping with icons
+  this->DirectoryButton->setIcon(this->style()->standardIcon(QStyle::SP_DirIcon));
+}
+
+//-----------------------------------------------------------------------------
+qSlicerSaveDataDialogPrivate::~qSlicerSaveDataDialogPrivate()
+{
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerSaveDataDialogPrivate::changeDirectory()
+{
+  QString directory = QFileDialog::getExistingDirectory(this);
+  if (directory.isNull())
+    {
+    return;
+    }
+  this->DirectoryButton->setText(directory);
+  const int rowCount = this->FileWidget->rowCount();
+  for( int row = 0; row < rowCount; ++row)
+    {
+    QTableWidgetItem* fileItem = this->FileWidget->item(row, NodeNameColumn);
+    Q_ASSERT(fileItem);
+    if (fileItem->checkState() == Qt::Unchecked)
+      {
+      continue;
+      }
+    QPushButton* directoryItemButton = dynamic_cast<QPushButton*>(
+      this->FileWidget->cellWidget(row, FileDirectoryColumn));
+    Q_ASSERT(directoryItemButton);
+    directoryItemButton->setText(directory);
+    }
+}
+
+void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
+{
+  this->FileWidget->setRowCount(0);
+  if (scene == 0)
+    {
+    return;
+    }
+  bool sortingEnabled = this->FileWidget->isSortingEnabled();
+  this->FileWidget->setSortingEnabled(false);
+
+  int row = 0;
+  this->FileWidget->insertRow(row);
+  // add scene here 
+  this->DirectoryButton->setText(scene->GetRootDirectory());
+  // Scene Name
+  QTableWidgetItem* sceneNameItem = new QTableWidgetItem("(Scene Description)");
+  sceneNameItem->setFlags(sceneNameItem->flags() & ~Qt::ItemIsEditable);
+  this->FileWidget->setItem(row, NodeNameColumn, sceneNameItem);
+  // Scene Type
+  QTableWidgetItem* sceneTypeItem = new QTableWidgetItem("(SCENE)");
+  sceneTypeItem->setFlags(sceneTypeItem->flags() & ~Qt::ItemIsEditable);
+  this->FileWidget->setItem(row, NodeTypeColumn, sceneTypeItem);
+  // Scene Status
+  QTableWidgetItem* sceneModifiedItem = new QTableWidgetItem("Modified");
+  sceneModifiedItem->setFlags(sceneModifiedItem->flags() & ~Qt::ItemIsEditable);
+  this->FileWidget->setItem(row, NodeStatusColumn, sceneModifiedItem);
+  // Scene Format
+  QComboBox* sceneComboBoxWidget = new QComboBox(this->FileWidget);
+  sceneComboBoxWidget->addItem("MRML (.mrml)");
+  this->FileWidget->setCellWidget(row, FileFormatColumn, sceneComboBoxWidget);
+  // Scene FileName
+  QFileInfo sceneFileInfo;
+  if (scene->GetURL())
+    {
+    sceneFileInfo = QFileInfo(QDir(scene->GetRootDirectory()),
+                              scene->GetURL());
+    }
+  else
+    {
+    sceneFileInfo = QFileInfo(QDir(scene->GetRootDirectory()),
+                              "SlicerScene1");
+    }
+  this->FileWidget->setItem(row, FileNameColumn, 
+                            new QTableWidgetItem(sceneFileInfo.fileName()));
+  // Scene Directory
+  ctkDirectoryButton* sceneDirectoryButton = 
+    new ctkDirectoryButton(sceneFileInfo.absolutePath(), this->FileWidget);
+  this->FileWidget->setCellWidget(row, FileDirectoryColumn, sceneDirectoryButton);
+  const int nodeCount = scene->GetNumberOfNodesByClass("vtkMRMLStorableNode");
+  for (int i = 0 ; i < nodeCount; ++i)
+    {
+    vtkMRMLStorableNode* node = vtkMRMLStorableNode::SafeDownCast(
+      scene->GetNthNodeByClass(i, "vtkMRMLStorableNode"));
+    Q_ASSERT(node);
+    if (node->GetHideFromEditors()) 
+      {
+      continue;
+      }
+    vtkMRMLStorageNode* storageNode = node->CreateDefaultStorageNode();
+    if (storageNode == 0)
+      {
+      continue;
+      }
+    
+    vtkMRMLStorageNode* snode = node->GetStorageNode();
+    if (snode == 0) 
+      {
+      storageNode->SetScene(scene);
+      scene->AddNode(storageNode);  
+      node->SetAndObserveStorageNodeID(storageNode->GetID());
+      storageNode->Delete();
+      snode = storageNode;
+      }
+    
+    if (snode->GetFileName() == 0 && !this->DirectoryButton->text().isEmpty()) 
+      {
+      QString fileExtension = snode->GetDefaultWriteFileExtension();
+      if (fileExtension.isEmpty())
+        {
+        fileExtension = QString(".") + fileExtension;
+        }
+      QFileInfo fileName(QDir(this->DirectoryButton->text()), 
+                         QString(node->GetName()) + fileExtension);
+      snode->SetFileName(fileName.absoluteFilePath().toLatin1().data());
+      }
+
+    // get absolute filename
+    QFileInfo fileInfo;
+    if (scene->IsFilePathRelative(snode->GetFileName()))
+      {
+      fileInfo = QFileInfo(QDir(scene->GetRootDirectory()),
+                     snode->GetFileName());
+      }
+    else
+      {
+      fileInfo = QFileInfo(snode->GetFileName());
+      }
+
+    this->FileWidget->insertRow(++row);
+
+    // Node name
+    QTableWidgetItem *nodeNameItem = new QTableWidgetItem(node->GetName());
+    nodeNameItem->setFlags( (nodeNameItem->flags() | Qt::ItemIsUserCheckable) & ~Qt::ItemIsEditable);
+    // the tooltip is used to store the id of the nodes
+    nodeNameItem->setData(Qt::ToolTipRole, QString(node->GetID()) + " " + snode->GetID() );
+    this->FileWidget->setItem(row, NodeNameColumn, nodeNameItem);
+
+    // Node type
+    QTableWidgetItem *nodeTypeItem = new QTableWidgetItem(node->GetNodeTagName());
+    nodeTypeItem->setFlags( nodeTypeItem->flags() & ~Qt::ItemIsEditable);
+    this->FileWidget->setItem(row, NodeTypeColumn, nodeTypeItem);
+
+    // Node status (modified / not modified)
+    // As a safety measure:
+    // If the data is sitting in cache, it's vulnerable to overwriting or deleting.
+    // Mark the node as modified since read so that a user will be more likely
+    // to save it to a reliable location on local (or remote) disk.
+    if ( scene->GetCacheManager() )
+      {
+      if ( scene->GetCacheManager()->GetRemoteCacheDirectory() )
+        {
+        QString cacheDir = scene->GetCacheManager()->GetRemoteCacheDirectory();
+        int pos = fileInfo.absoluteFilePath().indexOf(cacheDir);
+        if ( pos != -1)
+          {
+          node->ModifiedSinceReadOn();
+          }
+        }
+      else
+        {
+        qWarning() << "Warning saving data: cannot get a default cache directory, so not able to check whether any datafiles are residing in cache and should be marked for save by default. Please take care when saving data.";
+        }
+      }
+    else
+      {
+      qWarning() << "Warning saving data: cannot get a default cache directory, so not able to check whether any datafiles are residing in cache and should be marked for save by default. Please take care when saving data.";
+      }
+
+    QTableWidgetItem *nodeModifiedItem = 
+      new QTableWidgetItem(node->GetModifiedSinceRead() ? 
+                           tr("Modified") : tr("Not Modified"));
+    nodeModifiedItem->setFlags( nodeModifiedItem->flags() & ~Qt::ItemIsEditable);
+    this->FileWidget->setItem(row, NodeStatusColumn, nodeModifiedItem);
+    // select modified nodes by default
+    nodeNameItem->setCheckState(node->GetModifiedSinceRead() ? Qt::Checked : Qt::Unchecked);
+    
+    // File format
+    QComboBox* fileFormats = new QComboBox(this->FileWidget);
+    const int formatCount = snode->GetSupportedWriteFileTypes()->GetNumberOfValues();
+    for (int formatIt = 0; formatIt < formatCount; ++formatIt)
+      {
+      vtkStdString format = 
+        snode->GetSupportedWriteFileTypes()->GetValue(formatIt);
+      fileFormats->addItem(format.c_str());
+      }
+    this->FileWidget->setCellWidget(row, FileFormatColumn, fileFormats);
+    // File name
+    QTableWidgetItem *fileNameItem =
+      new QTableWidgetItem(fileInfo.fileName());
+    this->FileWidget->setItem(row, FileNameColumn, fileNameItem);
+    // File Directory
+    ctkDirectoryButton* directoryButton = 
+      new ctkDirectoryButton(fileInfo.absolutePath(),this->FileWidget);
+    this->FileWidget->setCellWidget(row, FileDirectoryColumn, directoryButton);
+    }
+  this->FileWidget->setSortingEnabled(sortingEnabled);
+}
+
+//-----------------------------------------------------------------------------
+QList<qSlicerIO::IOProperties> qSlicerSaveDataDialogPrivate::selectedFiles()
+{
+  QList<qSlicerIO::IOProperties> files;
+  for (int row = 0; row < this->FileWidget->rowCount(); ++row)
+    {
+    qDebug() << "row: " << row;
+    qSlicerIO::IOProperties properties;
+    QTableWidgetItem* nodeNameItem = this->FileWidget->item(row, NodeNameColumn);
+    //QTableWidgetItem* typeItem = this->FileWidget->item(row, TypeColumn);
+    //qSlicerIOOptionsWidget* optionsItem = dynamic_cast<qSlicerIOOptionsWidget*>(
+    //  this->FileWidget->cellWidget(row, OptionsColumn));
+    Q_ASSERT(nodeNameItem);
+    //Q_ASSERT(typeItem);
+    if (nodeNameItem->checkState() != Qt::Checked)
+      {
+      qDebug() << "unchecked" ;
+      continue;
+      }
+    /*
+    properties["fileName"] = fileItem->text();
+    properties["fileType"] = typeItem->text().toInt();
+    if (optionsItem)
+      {
+      properties.unite(optionsItem->options());
+      }
+    files << properties;
+    */
+    }
+  return files;
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerSaveDataDialogPrivate::selectModifiedData()
+{
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerSaveDataDialogPrivate::selectModifiedSceneData()
+{
+}
+
+//-----------------------------------------------------------------------------
+qSlicerSaveDataDialog::qSlicerSaveDataDialog(QObject* _parent)
+  :qSlicerFileDialog(_parent)
+{
+  // FIXME give qSlicerSaveDataDialog as a parent of qSlicerSaveDataDialogPrivate;
+  CTK_INIT_PRIVATE(qSlicerSaveDataDialog);
+}
+
+//-----------------------------------------------------------------------------
+qSlicerSaveDataDialog::~qSlicerSaveDataDialog()
+{
+}
+
+//-----------------------------------------------------------------------------
+qSlicerIO::IOFileType qSlicerSaveDataDialog::fileType()const
+{
+  // FIXME: not really a scene file, but more a collection of files
+  return qSlicerIO::NoFile;
+}
+
+//-----------------------------------------------------------------------------
+qSlicerFileDialog::IOAction qSlicerSaveDataDialog::action()const
+{
+  return qSlicerFileDialog::Write;
+}
+
+//-----------------------------------------------------------------------------
+bool qSlicerSaveDataDialog::exec(const qSlicerIO::IOProperties& readerProperties)
+{
+  CTK_D(qSlicerSaveDataDialog);
+  Q_ASSERT(!readerProperties.contains("fileName"));
+#ifdef Slicer3_USE_KWWIDGETS
+  d->setWindowFlags(d->windowFlags() | Qt::WindowStaysOnTopHint);
+#endif
+  d->populateItems(qSlicerCoreApplication::application()->mrmlScene());
+  bool res = false;
+  if (d->exec() != QDialog::Accepted)
+    {
+    return res;
+    }
+  QList<qSlicerIO::IOProperties> files = d->selectedFiles();
+  foreach(qSlicerIO::IOProperties properties, files)
+    {
+    properties.unite(readerProperties);
+    res = qSlicerCoreApplication::application()->coreIOManager()
+      ->saveNodes(properties["fileType"].toInt(),
+                  properties) || res;
+    }
+  return res;
+}
+

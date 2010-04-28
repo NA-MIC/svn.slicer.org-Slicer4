@@ -34,6 +34,8 @@ SET(slicer_qtbase_SRCS
   qSlicerModulePanel.h
   qSlicerModuleSelectorWidget.cxx
   qSlicerModuleSelectorWidget.h
+  qSlicerSaveDataDialog.cxx
+  qSlicerSaveDataDialog.h
   )
 
 # Headers that should run through moc
@@ -48,6 +50,8 @@ SET(slicer_qtbase_MOC_SRCS
   qSlicerModulePanel.h
   qSlicerModuleSelectorWidget.h
   qSlicerModuleSelectorWidget_p.h
+  qSlicerSaveDataDialog.h
+  qSlicerSaveDataDialog_p.h
   )
 
 # UI files
@@ -55,6 +59,7 @@ SET(slicer_qtbase_UI_SRCS
   Resources/UI/qSlicerDataDialog.ui
   Resources/UI/qSlicerModulePanel.ui
   Resources/UI/qSlicerModuleSelectorWidget.ui
+  Resources/UI/qSlicerSaveDataDialog.ui
 )
 
 # Additional Target libraries (QT libs already included)

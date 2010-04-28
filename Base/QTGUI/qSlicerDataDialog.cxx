@@ -105,9 +105,9 @@ void qSlicerDataDialogPrivate::addFile(const QFileInfo& file)
     qDebug() <<"already exists";
     return;
     }
-  // qSlicerIO::IOFileType fileType = 
-  //   qSlicerCoreApplication::application()->coreIOManager()->fileType(
-  //     file.absoluteFilePath());
+  qSlicerIO::IOFileType fileType = 
+    qSlicerCoreApplication::application()->coreIOManager()->fileType(
+       file.absoluteFilePath());
   QString fileDescription = 
     qSlicerCoreApplication::application()->coreIOManager()->fileDescription(
       file.absoluteFilePath());
@@ -129,6 +129,7 @@ void qSlicerDataDialogPrivate::addFile(const QFileInfo& file)
   QTableWidgetItem *descriptionItem = new QTableWidgetItem();
   descriptionItem->setFlags(descriptionItem->flags() & ~Qt::ItemIsEditable);
   descriptionItem->setText(fileDescription);
+  descriptionItem->setData(Qt::AccessibleDescriptionRole, fileType);
   this->FileWidget->setItem(row, TypeColumn, descriptionItem);
   // Options
   qSlicerIOOptionsWidget* optionsWidget = dynamic_cast<qSlicerIOOptionsWidget*>(
@@ -161,18 +162,18 @@ QList<qSlicerIO::IOProperties> qSlicerDataDialogPrivate::selectedFiles()
     qDebug() << "row: " << row;
     qSlicerIO::IOProperties properties;
     QTableWidgetItem* fileItem = this->FileWidget->item(row, FileColumn);
-    QTableWidgetItem* typeItem = this->FileWidget->item(row, TypeColumn);
+    QTableWidgetItem* descriptionItem = this->FileWidget->item(row, TypeColumn);
     qSlicerIOOptionsWidget* optionsItem = dynamic_cast<qSlicerIOOptionsWidget*>(
       this->FileWidget->cellWidget(row, OptionsColumn));
     Q_ASSERT(fileItem);
-    Q_ASSERT(typeItem);
+    Q_ASSERT(descriptionItem);
     if (fileItem->checkState() != Qt::Checked)
       {
       qDebug() << "unchecked" ;
       continue;
       }
     properties["fileName"] = fileItem->text();
-    properties["fileType"] = typeItem->text().toInt();
+    properties["fileType"] = descriptionItem->data(Qt::AccessibleDescriptionRole).toInt();
     if (optionsItem)
       {
       properties.unite(optionsItem->options());
@@ -239,6 +240,12 @@ qSlicerIO::IOFileType qSlicerDataDialog::fileType()const
 {
   // FIXME: not really a scene file, but more a collection of files
   return qSlicerIO::NoFile;
+}
+
+//-----------------------------------------------------------------------------
+qSlicerFileDialog::IOAction qSlicerDataDialog::action()const
+{
+  return qSlicerFileDialog::Read;
 }
 
 //-----------------------------------------------------------------------------

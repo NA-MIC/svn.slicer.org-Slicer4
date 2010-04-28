@@ -590,7 +590,7 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
 void vtkSlicerApplicationGUI::ProcessAddDataCommand()
 {
 #ifdef Slicer3_USE_QT
-  qSlicerApplication::application()->ioManager()->openDataDialog();
+  qSlicerApplication::application()->ioManager()->openLoadDataDialog();
 #else
   this->GetApplication()->Script("::Loader::ShowDialog");
 #endif
@@ -1023,6 +1023,9 @@ vtkMRMLLayoutNode *vtkSlicerApplicationGUI::GetGUILayoutNode()
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessSaveSceneAsCommand()
 {
+#ifdef Slicer3_USE_QT
+  qSlicerApplication::application()->ioManager()->openSaveDataDialog();
+#else
   this->SaveDataWidget->SetAndObserveMRMLScene(this->GetMRMLScene());
   this->SaveDataWidget->AddObserver ( vtkSlicerMRMLSaveDataWidget::DataSavedEvent,  (vtkCommand *)this->GUICallbackCommand );
   this->SaveDataWidget->SetVersion(this->GetSlicerApplication()->GetSvnRevision());
@@ -1030,6 +1033,7 @@ void vtkSlicerApplicationGUI::ProcessSaveSceneAsCommand()
 
   this->SaveDataWidget->RemoveObservers ( vtkSlicerMRMLSaveDataWidget::DataSavedEvent,  (vtkCommand *)this->GUICallbackCommand );
   return;
+#endif
 }
 
 //---------------------------------------------------------------------------
