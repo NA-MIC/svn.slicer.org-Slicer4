@@ -5,8 +5,12 @@
 #include <QAction>
 #include <QDebug>
 
+#include "vtkSlicerConfigure.h" // For Slicer3_USE_PYTHONQT
+
 // CTK includes
+#ifdef Slicer3_USE_PYTHONQT
 #include <ctkPythonShell.h>
+#endif
 
 // SlicerQt includes
 #include "qSlicerMainWindowCore.h" 
@@ -16,12 +20,12 @@
 #include "qSlicerAbstractModule.h"
 #include "qSlicerAbstractModuleWidget.h"
 #include "qSlicerModuleManager.h"
+#ifdef Slicer3_USE_PYTHONQT
 #include "qSlicerPythonManager.h"
+#endif
 
 // MRML includes
 #include <vtkMRMLScene.h>
-
-#include "vtkSlicerConfigure.h" // For Slicer3_USE_PYTHONQT
 
 //---------------------------------------------------------------------------
 // qSlicerMainWindowCorePrivate methods
