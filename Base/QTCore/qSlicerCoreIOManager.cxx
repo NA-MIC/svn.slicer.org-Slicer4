@@ -179,104 +179,9 @@ bool qSlicerCoreIOManager::loadScene(const QString& fileName, bool clear)
   return this->loadNodes(qSlicerIO::SceneFile, properties);
 }
 
-/*
 //-----------------------------------------------------------------------------
-void qSlicerCoreIOManager::loadScene(vtkMRMLScene* mrmlScene, const QString& filename)
-{
-  Q_ASSERT(mrmlScene);
-  
-  // Convert to lowercase
-  QString filenameLc = filename.toLower();
-    
-  if (filenameLc.endsWith(".mrml"))
-    {
-    mrmlScene->SetURL(filenameLc.toLatin1());
-    mrmlScene->Connect();
-    }
-  else if (filenameLc.endsWith(".xml"))
-    {
-    qDebug() << "Loading Slicer2Scene... NOT implemented";
-    // TODO See ImportSlicer2Scene script
-    }
-  else if (filenameLc.endsWith(".xcat"))
-    {
-    qDebug() << "Loading Catalog... NOT implemented";
-    // TODO See XcatalogImport script
-    }
-  else
-    {
-    qWarning() << "Unknown type of scene file:" << filenameLc; 
-    }
-  // TODO save last open path
-  //this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
-
-  if (mrmlScene->GetErrorCode() != 0 )
-    {
-    qDebug() << "Failed to load scene:" << QString::fromStdString(mrmlScene->GetErrorMessage());
-    }
-}
-
-//-----------------------------------------------------------------------------
-void qSlicerCoreIOManager::importScene(vtkMRMLScene* mrmlScene, const QString& filename)
-{
-  Q_ASSERT(mrmlScene);
-  
-  // Convert to lowercase
-  QString filenameLc = filename.toLower();
-
-  if (filenameLc.endsWith(".mrml"))
-    {
-    mrmlScene->SetURL(filenameLc.toLatin1());
-    mrmlScene->Import();
-    }
-  else if (filenameLc.endsWith(".xml"))
-    {
-    qDebug() << "Importing Slicer2Scene... NOT implemented";
-    // TODO See ImportSlicer2Scene script
-    }
-  else if (filenameLc.endsWith(".xcat"))
-    {
-    qDebug() << "Importing Catalog... NOT implemented";
-    // TODO See XcatalogImport script
-    }
-  else
-    {
-    qWarning() << "Unknown type of scene file:" << filenameLc; 
-    }
-  // TODO save last open path
-  //this->LoadSceneDialog->SaveLastPathToRegistry("OpenPath");
-
-  if (mrmlScene->GetErrorCode() != 0 )
-    {
-    qDebug() << "Failed to load scene:" << QString::fromStdString(mrmlScene->GetErrorMessage());
-    }
-}
-
-//-----------------------------------------------------------------------------
-void qSlicerCoreIOManager::closeScene(vtkMRMLScene* mrmlScene)
-{
-  Q_ASSERT(mrmlScene);
-  
-  mrmlScene->Clear(false);
-}
-*/
-
-//-----------------------------------------------------------------------------
-vtkMRMLNode* qSlicerCoreIOManager::loadNode(qSlicerIO::IOFileType fileType, 
-                                            const qSlicerIO::IOProperties& parameters)
-{ 
-  vtkSmartPointer<vtkCollection> loadedNodes = 
-    vtkSmartPointer<vtkCollection>::New();
-  this->loadNodes(fileType, parameters, loadedNodes);
-  vtkMRMLNode* node = 
-    vtkMRMLNode::SafeDownCast(loadedNodes->GetItemAsObject(0));
-  Q_ASSERT(node);
-  return node;
-}
-
-//-----------------------------------------------------------------------------
-bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType, 
-                                     const qSlicerIO::IOProperties& parameters, 
+bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
+                                     const qSlicerIO::IOProperties& parameters,
                                      vtkCollection* loadedNodes)
 { 
   CTK_D(qSlicerCoreIOManager);
@@ -285,6 +190,9 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
 
   QList<qSlicerIO*> readers = this->ios(fileType);
 
+  // If no readers were able to read and load the file(s), success will remain false
+  bool success = false;
+  
   QStringList nodes;
   foreach (qSlicerIO* reader, readers)
     {
@@ -295,12 +203,8 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
       }
     qDebug() << "reader has read the file" << parameters["fileName"].toString();
     nodes << reader->loadedNodes();
+    success = true;
     break;
-    }
-
-  if (nodes.count())
-    {
-    return false;
     }
 
   if (loadedNodes)
@@ -311,7 +215,21 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
         d->currentScene()->GetNodeByID(node.toLatin1().data()));
       }
     }
-  return true;
+    
+  return success;
+}
+
+//-----------------------------------------------------------------------------
+vtkMRMLNode* qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
+                                             const qSlicerIO::IOProperties& parameters)
+{ 
+  vtkSmartPointer<vtkCollection> loadedNodes = vtkSmartPointer<vtkCollection>::New();
+  this->loadNodes(fileType, parameters, loadedNodes);
+  
+  vtkMRMLNode* node = vtkMRMLNode::SafeDownCast(loadedNodes->GetItemAsObject(0));
+  Q_ASSERT(node);
+  
+  return node;
 }
 
 //-----------------------------------------------------------------------------

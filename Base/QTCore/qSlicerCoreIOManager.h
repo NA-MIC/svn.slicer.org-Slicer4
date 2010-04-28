@@ -36,45 +36,65 @@ public:
   qSlicerCoreIOManager(QObject* parent = 0);
   virtual ~qSlicerCoreIOManager();
 
-  /*
-  /// 
-  /// Load/Import scene
-  void loadScene(vtkMRMLScene* mrmlScene, const QString& filename);
-  void importScene(vtkMRMLScene* mrmlScene, const QString& filename);
-
-  /// 
-  /// Close scene
-  void closeScene(vtkMRMLScene* mrmlScene);
-
-  bool loadFile(const qSlicerIO::IOProperties& parameters);
-  */
+  ///
+  /// Return the file type associated with a \a file
   qSlicerIO::IOFileType fileType(const QString& file)const;
+
+  ///
+  /// Return the file description associated with a \a file
+  /// Usually the description is a short text of one or two words
   QString fileDescription(const QString& file)const;
+
+  ///
+  /// Return the file option associated with a \a file
   qSlicerIOOptions* fileOptions(const QString& file)const;
   
   ///
-  /// attributes are typically: 
-  /// All: fileName[s] 
-  /// Volume: LabelMap:bool, Center:bool, fileNames:QList<QString>...
-  bool loadNodes(qSlicerIO::IOFileType fileType, 
-                 const qSlicerIO::IOProperties& parameters, 
-                 vtkCollection* loadedNodes= 0);
+  /// Load a list of nodes corresponding to \a fileType. A given \a fileType corresponds
+  /// to a specific reader qSlicerIO.
+  /// A map of qvariant allows to specify which \a parameters should be passed to the reader.
+  /// The function return 0 if it fails.
+  ///
+  /// The map associated with most of the \a fileType should contains either
+  /// fileName (QString) or filenames (QStringList).
+  /// More specific parameters could also be set. For example, the volume reader qSlicerVolumesIO
+  /// could also be called with the following parameters: LabelMap (bool), Center (bool)
+  ///
+  /// Note: Make also sure the case of parameter name is respected
+  ///
+  /// \sa qSlicerIO::IOProperties, qSlicerIO::IOFileType
+  bool loadNodes(qSlicerIO::IOFileType fileType,
+                 const qSlicerIO::IOProperties& parameters,
+                 vtkCollection* loadedNodes);
+
 
   ///
-  /// Utility function that return the first loaded node
-  vtkMRMLNode* loadNode(qSlicerIO::IOFileType fileType, 
-                        const qSlicerIO::IOProperties& parameters);
+  /// Load a list of node corresponding to \a fileType and return the first loaded node.
+  /// This function is provided for convenience and is equivalent to call loadNodes
+  /// with a vtkCollection parameter and retrieve the first element.
+  vtkMRMLNode* loadNodes(qSlicerIO::IOFileType fileType,
+                         const qSlicerIO::IOProperties& parameters); 
+  
 
   /// 
-  /// Utility function to load/import a scene
+  /// Load/import a scene corresponding to \a fileName
+  /// This function is provided for convenience and is equivalent to call
+  /// loadNodes function with qSlicerIO::SceneFile
   bool loadScene(const QString& fileName, bool clear = true);
 
   ///
-  ///
+  /// Register the reader/writer \a io
   void registerIO(qSlicerIO* io);
+  
 protected:
+  ///
+  /// Returns the list of registered readers/writers
   const QList<qSlicerIO*>& ios()const;
+
+  ///
+  /// Returns the list of registered readers or writers associated with \a fileType
   QList<qSlicerIO*> ios(qSlicerIO::IOFileType fileType)const;
+  
 private:
   CTK_DECLARE_PRIVATE(qSlicerCoreIOManager);
 };

@@ -468,7 +468,7 @@ void qSlicerSlicer2SceneReaderPrivate::importVolumeNode(NodeType& node)
     properties["fileName"] = fileName;
     properties["labelMap"] = labelMap;
     volumeNode = vtkMRMLVolumeNode::SafeDownCast(
-      this->ioManager()->loadNode(qSlicerIO::VolumeFile, properties));
+      this->ioManager()->loadNodesAndGetFirst(qSlicerIO::VolumeFile, properties));
     volumeNodeID = volumeNode->GetID();
     this->LoadedNodes << volumeNode->GetID();
     }
@@ -517,7 +517,7 @@ void qSlicerSlicer2SceneReaderPrivate::importVolumeNode(NodeType& node)
     properties["fileName"] = fileNames[0];
     properties["fileNames"] = fileNames;
     volumeNode = vtkMRMLVolumeNode::SafeDownCast(
-      this->ioManager()->loadNode(qSlicerIO::VolumeFile, properties));
+      this->ioManager()->loadNodesAndGetFirst(qSlicerIO::VolumeFile, properties));
     Q_ASSERT(volumeNode);
     volumeNodeID = volumeNode->GetID();
     this->LoadedNodes << volumeNode->GetID();
@@ -816,7 +816,7 @@ void qSlicerSlicer2SceneReaderPrivate::importModelNode(NodeType& node)
   properties["fileName"] = fileName;
   vtkMRMLModelNode* mnode = 
     //modelsLogic()->AddModel(fileName.toLatin1().data());
-    vtkMRMLModelNode::SafeDownCast(this->ioManager()->loadNode(qSlicerIO::ModelFile, properties));
+    vtkMRMLModelNode::SafeDownCast(this->ioManager()->loadNodesAndGetFirst(qSlicerIO::ModelFile, properties));
   Q_ASSERT(mnode);
   vtkMRMLDisplayNode* dnode = 
     mnode->GetDisplayNode();

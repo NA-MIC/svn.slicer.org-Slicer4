@@ -601,7 +601,7 @@ void qSlicerXcedeCatalogIOPrivate::importVolumeNode(NodeType node)
   properties["name"] = node["name"];
   properties["fileName"] = node["uri"];
   vtkMRMLVolumeNode* volumeNode = vtkMRMLVolumeNode::SafeDownCast(
-    this->ioManager()->loadNode(qSlicerIO::VolumeFile, properties));
+    this->ioManager()->loadNodesAndGetFirst(qSlicerIO::VolumeFile, properties));
   //if { $volumeNode == "" } {
   //  puts "XcedeCatalogImportEntryVolume: Unable to add Volume Node for $n(uri)."
   //  return
@@ -784,7 +784,7 @@ void qSlicerXcedeCatalogIOPrivate::importModelNode(NodeType node)
   qSlicerIO::IOProperties properties;
   properties["fileName"] = node["uri"];
   vtkMRMLModelNode* mnode = vtkMRMLModelNode::SafeDownCast(
-    ioManager()->loadNode(qSlicerIO::ModelFile, properties));
+    ioManager()->loadNodesAndGetFirst(qSlicerIO::ModelFile, properties));
 
   // if { $mnode == "" } {
   //   puts "XcedeCatalogImportEntryModel: couldn't created Model Node. Model $n(name) not imported."
@@ -1090,7 +1090,7 @@ void qSlicerXcedeCatalogIOPrivate::importOverlayNode(NodeType node)
   properties["fileName"] = node["uri"];
   properties["modelNodeId"] = mnode->GetID();
   vtkMRMLStorageNode* scalarNode = vtkMRMLStorageNode::SafeDownCast(
-    ioManager()->loadNode(qSlicerIO::ScalarOverlayFile, properties));
+    ioManager()->loadNodesAndGetFirst(qSlicerIO::ScalarOverlayFile, properties));
   this->LoadedNodes << scalarNode->GetID();
   // //--- keep track of all annotation files loaded.
   // if { [ string first "annot" $n(uri) ] >= 0 } {
