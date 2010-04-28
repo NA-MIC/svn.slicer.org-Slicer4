@@ -26,10 +26,15 @@ public:
   virtual ~qSlicerFileDialog();
   
   virtual qSlicerIO::IOFileType fileType()const = 0;
-
+  enum IOAction
+  {
+    Read,
+    Write
+  };
+  virtual qSlicerFileDialog::IOAction action()const = 0;
   ///
   /// run the dialog to select the file/files/directory
-  virtual bool exec(const qSlicerIO::IOProperties& readerProperties =
+  virtual bool exec(const qSlicerIO::IOProperties& ioProperties =
                     qSlicerIO::IOProperties()) = 0;
 
   ///
@@ -53,7 +58,10 @@ public:
   void setFileType(qSlicerIO::IOFileType fileType);
   virtual qSlicerIO::IOFileType fileType()const;
 
-  virtual bool exec(const qSlicerIO::IOProperties& readerProperties =
+  void setAction(qSlicerFileDialog::IOAction dialogAction);
+  virtual qSlicerFileDialog::IOAction action()const;
+
+  virtual bool exec(const qSlicerIO::IOProperties& ioProperties =
                     qSlicerIO::IOProperties());
 private:
   CTK_DECLARE_PRIVATE(qSlicerStandardFileDialog);

@@ -188,7 +188,7 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
 
   Q_ASSERT(parameters.contains("fileName"));
 
-  QList<qSlicerIO*> readers = this->ios(fileType);
+  const QList<qSlicerIO*>& readers = this->ios(fileType);
 
   // If no readers were able to read and load the file(s), success will remain false
   bool success = false;
@@ -231,6 +231,45 @@ vtkMRMLNode* qSlicerCoreIOManager::loadNodesAndGetFirst(
   Q_ASSERT(node);
   
   return node;
+}
+
+//-----------------------------------------------------------------------------
+bool qSlicerCoreIOManager::saveNodes(qSlicerIO::IOFileType fileType, 
+                                     const qSlicerIO::IOProperties& parameters)
+{ 
+  CTK_D(qSlicerCoreIOManager);
+
+  Q_ASSERT(parameters.contains("fileName"));
+
+  const QList<qSlicerIO*>& writers = this->ios(fileType);
+
+  QStringList nodes;
+  foreach (qSlicerIO* writer, writers)
+    {
+    writer->setMRMLScene(d->currentScene());
+    if (!writer->save(parameters))
+      {
+      continue;
+      }
+    qDebug() << "reader has read the file" << parameters["fileName"].toString();
+    nodes << writer->savedNodes();
+    break;
+    }
+
+  if (nodes.count())
+    {
+    return false;
+    }
+  
+  //if (savedNodes)
+  //{
+  //foreach(const QString& node, nodes)
+  //{
+  //loadedNodes->AddItem(
+  //d->currentScene()->GetNodeByID(node.toLatin1().data()));
+  //}
+  //}
+  return true;
 }
 
 //-----------------------------------------------------------------------------

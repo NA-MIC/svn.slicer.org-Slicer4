@@ -83,7 +83,15 @@ public:
   bool loadScene(const QString& fileName, bool clear = true);
 
   ///
+  /// attributes are typically: 
+  /// All: fileName[s] 
+  /// Volume: LabelMap:bool, Center:bool, fileNames:QList<QString>...
+  bool saveNodes(qSlicerIO::IOFileType fileType,
+                 const qSlicerIO::IOProperties& parameters);
+  
+  ///
   /// Register the reader/writer \a io
+  ///
   void registerIO(qSlicerIO* io);
   
 protected:

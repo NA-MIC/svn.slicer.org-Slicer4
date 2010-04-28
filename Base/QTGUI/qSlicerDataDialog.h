@@ -21,6 +21,7 @@ public:
   virtual ~qSlicerDataDialog();
   
   virtual qSlicerIO::IOFileType fileType()const;
+  virtual qSlicerFileDialog::IOAction action()const;
 
   ///
   /// run the dialog to select the file/files/directory

@@ -54,13 +54,15 @@ class qSlicerStandardFileDialogPrivate: public ctkPrivate<qSlicerStandardFileDia
 public:
   CTK_DECLARE_PUBLIC(qSlicerStandardFileDialog);
   qSlicerStandardFileDialogPrivate();
-  qSlicerIO::IOFileType   FileType;
+  qSlicerIO::IOFileType       FileType;
+  qSlicerFileDialog::IOAction Action;
 };
 
 //-----------------------------------------------------------------------------
 qSlicerStandardFileDialogPrivate::qSlicerStandardFileDialogPrivate()
 {
   this->FileType = qSlicerIO::NoFile;
+  this->Action = qSlicerFileDialog::Read;
 }
 
 //-----------------------------------------------------------------------------
@@ -84,17 +86,33 @@ qSlicerIO::IOFileType qSlicerStandardFileDialog::fileType()const
   return d->FileType;
 }
 
+
 //-----------------------------------------------------------------------------
-bool qSlicerStandardFileDialog::exec(const qSlicerIO::IOProperties& readerProperties)
+void qSlicerStandardFileDialog::setAction(qSlicerFileDialog::IOAction dialogAction)
 {
-  Q_ASSERT(!readerProperties.contains("fileName"));
+  CTK_D(qSlicerStandardFileDialog);
+  d->Action = dialogAction;
+}
+
+//-----------------------------------------------------------------------------
+qSlicerFileDialog::IOAction qSlicerStandardFileDialog::action()const
+{
+  CTK_D(const qSlicerStandardFileDialog);
+  return d->Action;
+}
+
+//-----------------------------------------------------------------------------
+bool qSlicerStandardFileDialog::exec(const qSlicerIO::IOProperties& ioProperties)
+{
+  CTK_D(qSlicerStandardFileDialog);
+  Q_ASSERT(!ioProperties.contains("fileName"));
   qSlicerIOManager* ioManager = qSlicerApplication::application()->ioManager();
   QFileDialog fileDialog(qobject_cast<QWidget*>(this->parent()));
 #ifdef Slicer3_USE_KWWIDGETS
   fileDialog.setWindowFlags(fileDialog.windowFlags() | Qt::WindowStaysOnTopHint);
 #endif
   fileDialog.setNameFilters(
-    qSlicerFileDialog::nameFilters(this->fileType()));
+    qSlicerFileDialog::nameFilters(d->FileType));
   fileDialog.setHistory(ioManager->history());
   if (ioManager->favorites().count())
     {
@@ -103,9 +121,21 @@ bool qSlicerStandardFileDialog::exec(const qSlicerIO::IOProperties& readerProper
   bool res = fileDialog.exec();
   if (res)
     {
-    qSlicerIO::IOProperties properties = readerProperties;
+    qSlicerIO::IOProperties properties = ioProperties;
     properties["fileName"] = fileDialog.selectedFiles()[0];
-    ioManager->loadNodes(this->fileType(), properties);
+    if (d->Action == qSlicerFileDialog::Read)
+      {
+      ioManager->loadNodes(this->fileType(), properties);
+      }
+    else if(d->Action == qSlicerFileDialog::Write)
+      {
+      ioManager->saveNodes(this->fileType(), properties);
+      }
+    else
+      {
+      Q_ASSERT(d->Action == qSlicerFileDialog::Read ||
+               d->Action == qSlicerFileDialog::Write);
+      }
     }
   return res;
 }

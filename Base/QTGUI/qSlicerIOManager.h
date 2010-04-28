@@ -31,10 +31,12 @@ public:
   bool openLoadSceneDialog();
   bool openImportSceneDialog();
   bool openLoadVolumeDialog();
-  inline bool openDataDialog();
+  inline bool openLoadDataDialog();
+  inline bool openSaveDataDialog();
 
   bool openDialog(qSlicerIO::IOFileType fileType,
-                  const qSlicerIO::IOProperties& readerProperties
+                  qSlicerFileDialog::IOAction action,
+                  const qSlicerIO::IOProperties& ioProperties
                     = qSlicerIO::IOProperties());
 
   void addHistory(const QString& path);
@@ -56,9 +58,15 @@ private:
 };
 
 //------------------------------------------------------------------------------
-bool qSlicerIOManager::openDataDialog()
+bool qSlicerIOManager::openLoadDataDialog()
 {
-  return this->openDialog(qSlicerIO::NoFile);
+  return this->openDialog(qSlicerIO::NoFile, qSlicerFileDialog::Read);
+}
+
+//------------------------------------------------------------------------------
+bool qSlicerIOManager::openSaveDataDialog()
+{
+  return this->openDialog(qSlicerIO::NoFile, qSlicerFileDialog::Write);
 }
 
 #endif
