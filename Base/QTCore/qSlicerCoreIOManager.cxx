@@ -220,8 +220,9 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
 }
 
 //-----------------------------------------------------------------------------
-vtkMRMLNode* qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
-                                             const qSlicerIO::IOProperties& parameters)
+vtkMRMLNode* qSlicerCoreIOManager::loadNodesAndGetFirst(
+  qSlicerIO::IOFileType fileType,
+  const qSlicerIO::IOProperties& parameters)
 { 
   vtkSmartPointer<vtkCollection> loadedNodes = vtkSmartPointer<vtkCollection>::New();
   this->loadNodes(fileType, parameters, loadedNodes);

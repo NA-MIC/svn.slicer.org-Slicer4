@@ -65,16 +65,16 @@ public:
   /// \sa qSlicerIO::IOProperties, qSlicerIO::IOFileType
   bool loadNodes(qSlicerIO::IOFileType fileType,
                  const qSlicerIO::IOProperties& parameters,
-                 vtkCollection* loadedNodes);
+                 vtkCollection* loadedNodes = 0);
 
 
   ///
   /// Load a list of node corresponding to \a fileType and return the first loaded node.
   /// This function is provided for convenience and is equivalent to call loadNodes
   /// with a vtkCollection parameter and retrieve the first element.
-  vtkMRMLNode* loadNodes(qSlicerIO::IOFileType fileType,
-                         const qSlicerIO::IOProperties& parameters); 
-  
+  vtkMRMLNode* loadNodesAndGetFirst(qSlicerIO::IOFileType fileType,
+                                    const qSlicerIO::IOProperties& parameters);
+   
 
   /// 
   /// Load/import a scene corresponding to \a fileName
