@@ -185,14 +185,6 @@ else()
   set(gen "${CMAKE_GENERATOR}")
 endif()
 
-# Set the default build type---this will affect all libraries and
-# applications
-#
-set(build_type "")
-if(CMAKE_BUILD_TYPE)
-  set(build_type "${CMAKE_BUILD_TYPE}")
-endif()
-
 set(parallelism_level)
 set(build_dir ${CMAKE_CURRENT_BINARY_DIR})
 
