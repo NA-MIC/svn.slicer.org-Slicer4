@@ -1153,12 +1153,8 @@ ExternalProject_Add(${proj}
 )
 
 #-----------------------------------------------------------------------------
-# build the slicer
-# - first run cmake
-# - create the Slicer3Version.txt file
-# - then run plaftorm specific build command
-
-set(proj Slicer3)
+# Update slicer_DEPENDS variables
+#
 
 set(slicer_DEPENDS teem OpenIGTLink BatchMake vtk Insight)
 
@@ -1193,11 +1189,13 @@ if(Slicer3_USE_KWWIDGETS)
     )
 endif(Slicer3_USE_KWWIDGETS)
 
+#-----------------------------------------------------------------------------
+# Slicer Configure
+#
+SET(proj Slicer3-Configure)
+
 ExternalProject_Add(${proj}
-  DEPENDS ${slicer_DEPENDS}
   DOWNLOAD_COMMAND ""
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..
-  BINARY_DIR Slicer3-build
   CMAKE_GENERATOR ${gen}
   CMAKE_ARGS
     -DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS}
@@ -1229,5 +1227,28 @@ ExternalProject_Add(${proj}
     -DSlicer3_USE_KWWIDGETS:BOOL=${Slicer3_USE_KWWIDGETS}
     ${slicer_KWWIDGETS_ARGS}
     -DSlicer3_USE_VTK_CVSHEAD:BOOL=${Slicer3_USE_VTK_CVSHEAD}
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..
+  BINARY_DIR Slicer3-build
+  CMAKE_GENERATOR ${gen}
+  BUILD_COMMAND ""
   INSTALL_COMMAND ""
+  DEPENDS
+    ${slicer_DEPENDS}
+  )
+
+#-----------------------------------------------------------------------------
+# Build Slicer
+# - first run cmake
+# - create the Slicer3Version.txt file
+# - then run plaftorm specific build command
+
+set(proj Slicer3)
+ExternalProject_Add(${proj}
+  DOWNLOAD_COMMAND ""
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..
+  BINARY_DIR Slicer3-build
+  CMAKE_GENERATOR ${gen}
+  INSTALL_COMMAND ""
+  DEPENDS
+    "Slicer3-Configure"
 )
