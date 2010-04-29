@@ -39,8 +39,8 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>429</width>
-        <height>101</height>
+        <width>431</width>
+        <height>108</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -252,7 +252,7 @@
   </customwidget>
   <customwidget>
    <class>qMRMLNodeComboBox</class>
-   <extends>QWidget</extends>
+   <extends>QComboBox</extends>
    <header>qMRMLNodeComboBox.h</header>
   </customwidget>
   <customwidget>
