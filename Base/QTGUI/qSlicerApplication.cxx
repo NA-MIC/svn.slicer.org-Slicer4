@@ -97,7 +97,7 @@ void qSlicerApplicationPrivate::init()
 
   // Note: qSlicerCoreApplication class takes ownership of the ioManager and
   // will be responsible to delete it
-  p->setCoreIOManager(new qSlicerIOManager(p));
+  p->setCoreIOManager(new qSlicerIOManager);
 }
 
 //-----------------------------------------------------------------------------
