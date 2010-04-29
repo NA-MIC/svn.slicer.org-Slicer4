@@ -91,7 +91,7 @@ public:
   
   ///
   /// Register the reader/writer \a io
-  ///
+  /// Note also that the IOManager takes ownership of \a io
   void registerIO(qSlicerIO* io);
   
 protected:

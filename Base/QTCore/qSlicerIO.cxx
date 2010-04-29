@@ -16,6 +16,7 @@ class qSlicerIOPrivate: public ctkPrivate<qSlicerIO>
 {
 public:
   vtkWeakPointer<vtkMRMLScene> MRMLScene;
+  
   QStringList LoadedNodes;
   QStringList SavedNodes;
 };

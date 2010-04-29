@@ -68,9 +68,9 @@ void qSlicerCoreModuleFactory::registerItems()
   
   // FIXME: Move the following to the Models module (when it will be ready in Qt.)
   qSlicerCoreApplication::application()->coreIOManager()
-    ->registerIO(new qSlicerModelsIO(0));
+    ->registerIO(new qSlicerModelsIO());
   qSlicerCoreApplication::application()->coreIOManager()
-    ->registerIO(new qSlicerScalarOverlayIO(0));
+    ->registerIO(new qSlicerScalarOverlayIO());
   // endofFIXME
 }
 

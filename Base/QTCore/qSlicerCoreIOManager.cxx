@@ -298,6 +298,10 @@ QList<qSlicerIO*> qSlicerCoreIOManager::ios(qSlicerIO::IOFileType fileType)const
 //-----------------------------------------------------------------------------
 void qSlicerCoreIOManager::registerIO(qSlicerIO* io)
 {
+  Q_ASSERT(io);
   CTK_D(qSlicerCoreIOManager);
   d->Readers << io;
+
+  // Reparent - this will make sure the object is destroyed properly
+  io->setParent(this);
 }
