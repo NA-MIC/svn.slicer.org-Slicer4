@@ -22,7 +22,8 @@
 
 #include "qSlicerBaseQTCLIExport.h"
 
-class ModuleDescription; 
+class ModuleDescription;
+class vtkMRMLNode; 
 class qSlicerCLIModuleWidgetPrivate;
 
 class Q_SLICER_BASE_QTCLI_EXPORT qSlicerCLIModuleWidget : public qSlicerAbstractModuleWidget
@@ -38,6 +39,11 @@ public:
   /// Set the module entry point associated with the module
   void setModuleEntryPoint(const QString& entryPoint);
 
+public slots:
+  ///
+  /// Set the current \a commandLineModuleNode that should be displayed
+  void setCurrentCommandLineModuleNode(vtkMRMLNode* commandLineModuleNode);
+  
 protected:
   /// 
   /// Overloaded

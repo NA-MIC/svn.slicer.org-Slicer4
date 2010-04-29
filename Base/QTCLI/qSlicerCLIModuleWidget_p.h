@@ -39,35 +39,7 @@ class QBoxLayout;
 class vtkMRMLCommandLineModuleNode; 
 
 //-----------------------------------------------------------------------------
-class WidgetValueWrapper
-{
-public:
-  WidgetValueWrapper(const QString& _label):Label(_label){}
-  virtual QVariant value()const = 0;
-  QString label(){ return this->Label; }
-  QString Label; 
-};
-
-//-----------------------------------------------------------------------------
-#define WIDGET_VALUE_WRAPPER(_NAME, _WIDGET, _VALUE_GETTER)           \
-namespace{                                                            \
-class _NAME##WidgetValueWrapper: public WidgetValueWrapper            \
-{                                                                     \
-public:                                                               \
-  _NAME##WidgetValueWrapper(const QString& _label, _WIDGET * widget): \
-    WidgetValueWrapper(_label), Widget(widget){}                      \
-  virtual QVariant value()const                                       \
-    {                                                                 \
-    QVariant _value(this->Widget->_VALUE_GETTER());                   \
-    return _value;                                                    \
-    }                                                                 \
-  _WIDGET* Widget;                                                    \
-};                                                                    \
-}
-
-//-----------------------------------------------------------------------------
-#define INSTANCIATE_WIDGET_VALUE_WRAPPER(_NAME, _LABEL, _WIDGET_INSTANCE)  \
-this->WidgetValueWrappers.push_back(new _NAME##WidgetValueWrapper(_LABEL, _WIDGET_INSTANCE));
+class qSlicerCLIModuleUIHelper; 
 
 //-----------------------------------------------------------------------------
 class qSlicerCLIModuleWidgetPrivate: public QObject,
@@ -79,12 +51,7 @@ class qSlicerCLIModuleWidgetPrivate: public QObject,
   
 public:
   typedef qSlicerCLIModuleWidgetPrivate Self;
-  qSlicerCLIModuleWidgetPrivate()
-    {
-    this->ProcessInformation = 0;
-    this->Name = "NA";
-    this->CommandLineModuleNode = 0; 
-    }
+  qSlicerCLIModuleWidgetPrivate();
   
   /// 
   /// Convenient function to cast vtkSlicerLogic into vtkSlicerCLIModuleLogic
@@ -100,26 +67,11 @@ public:
   typedef std::vector<ModuleParameter>::const_iterator ParameterConstIterator;
   typedef std::vector<ModuleParameter>::iterator       ParameterIterator;
 
-  typedef std::vector<std::string>::const_iterator ElementConstIterator;
-  typedef std::vector<std::string>::iterator       ElementIterator;
-
 
   /// 
   /// Calling this method will loop trough the structure resulting
   /// from the XML parsing and generate the corresponding UI.
   void setupUi(qSlicerWidget* widget);
-  
-  /// 
-  /// Initialize the maps containing the mapping
-  ///   parameter type -> MRML node type (classname)
-  static void initializeMaps();
-
-  /// 
-  /// Convenient method allowing to retrieve the node type associated
-  /// with the parameter type
-  static QString nodeTypeFromMap(const QString& defaultValue,
-                                 const QHash<QString, QString>& map,
-                                 const QString& attribute);
                                  
   /// 
   void addParameterGroups();
@@ -130,27 +82,6 @@ public:
   void addParameters(QFormLayout* layout, const ModuleParameterGroup& parameterGroup);
   void addParameter(QFormLayout* layout, const ModuleParameter& moduleParameter);
 
-  /// 
-  /// Create widget corresponding to the different parameters
-  QWidget* createIntegerTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createBooleanTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createFloatTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createDoubleTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createStringTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createPointTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createRegionTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createImageTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createGeometryTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createTableTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createTransformTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createDirectoryTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createFileTagWidget(const ModuleParameter& moduleParameter);
-  QWidget* createEnumerationTagWidget(const ModuleParameter& moduleParameter);
-
-  /// 
-  /// Update MRMLCommandLineModuleNode properties using value entered using the UI
-  void updateMRMLCommandLineModuleNode();
-
 public slots:
   void onApplyButtonPressed();
   void onCancelButtonPressed();
@@ -160,14 +91,6 @@ public slots:
 
 public:
 
-  /// Map used to store the different relation
-  ///  parameter type -> MRML node type
-  static bool MapInitialized; 
-  static QHash<QString, QString> ImageTypeAttributeToNodeType;
-  static QHash<QString, QString> GeometryTypeAttributeToNodeType;
-  static QHash<QString, QString> TableTypeAttributeToNodeType;
-  static QHash<QString, QString> TransformTypeAttributeToNodeType;  
-
   QString           Name;
   QString           Title;
   QString           Category;
@@ -176,7 +99,7 @@ public:
   std::vector<ModuleParameterGroup> ParameterGroups;
   ModuleProcessInformation*         ProcessInformation;
 
-  QList<WidgetValueWrapper*> WidgetValueWrappers; 
+  qSlicerCLIModuleUIHelper* CLIModuleUIHelper; 
   
   vtkMRMLCommandLineModuleNode* CommandLineModuleNode;
   QString                       ModuleEntryPoint;
