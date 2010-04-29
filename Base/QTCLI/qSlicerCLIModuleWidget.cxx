@@ -787,7 +787,7 @@ void qSlicerCLIModuleWidgetPrivate::updateMRMLCommandLineModuleNode()
       }
     else
       {
-      qDebug() << "Uknown widget value type:" << type;
+      qDebug() << "Unknown widget value type:" << type;
       }
     }
 }
