@@ -259,7 +259,8 @@ void vtkSlicerSliceLogic::ProcessMRMLEvents(vtkObject * caller,
     && (event == vtkMRMLScene::NodeAddedEvent || event == vtkMRMLScene::NodeRemovedEvent ) )
     {
     vtkMRMLNode *node =  reinterpret_cast<vtkMRMLNode*> (callData);
-    if (node == NULL || !(node->IsA("vtkMRMLSliceCompositeNode") || node->IsA("vtkMRMLSliceNode") || node->IsA("vtkMRMLVolumeNode")) )
+    if (node == NULL || !(node->IsA("vtkMRMLSliceCompositeNode") || node->IsA("vtkMRMLSliceNode") || node->IsA("vtkMRMLVolumeNode")) ||
+        this->MRMLScene->GetIsClosed()) // don't do anything for performance reasons
       {
       return;
       }
