@@ -91,6 +91,8 @@ public slots:
 
   void updateUi(vtkObject* commandLineModuleNode);
 
+  void setDefaultNodeValue(vtkMRMLNode* commandLineModuleNode);
+
 public:
 
   QString           Name;
@@ -100,6 +102,7 @@ public:
 
   std::vector<ModuleParameterGroup> ParameterGroups;
   ModuleProcessInformation*         ProcessInformation;
+  ModuleDescription                 ModuleDescriptionObject;
 
   qSlicerCLIModuleUIHelper* CLIModuleUIHelper; 
   
