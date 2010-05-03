@@ -34,6 +34,9 @@ public slots:
   void selectModifiedSceneData();
   void selectModifiedData();
   
+protected slots:
+  void formatChanged();
+
 protected:
   enum ColumnType
   {

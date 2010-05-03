@@ -18,6 +18,7 @@
 #include "qSlicerIOOptionsWidget.h"
 
 /// MRML includes
+#include <vtkDataFileFormatHelper.h> // for GetFileExtensionFromFormatString()
 #include <vtkMRMLScene.h>
 #include <vtkMRMLStorableNode.h>
 #include <vtkMRMLStorageNode.h>
@@ -90,8 +91,10 @@ void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
   this->FileWidget->insertRow(row);
   // Scene Name
   QTableWidgetItem* sceneNameItem = new QTableWidgetItem("(Scene Description)");
-  sceneNameItem->setFlags(sceneNameItem->flags() & ~Qt::ItemIsEditable);
+  sceneNameItem->setFlags((sceneNameItem->flags() | Qt::ItemIsUserCheckable) & ~Qt::ItemIsEditable);
+  sceneNameItem->setCheckState(Qt::Checked);
   this->FileWidget->setItem(row, NodeNameColumn, sceneNameItem);
+  
   // Scene Type
   QTableWidgetItem* sceneTypeItem = new QTableWidgetItem("(SCENE)");
   sceneTypeItem->setFlags(sceneTypeItem->flags() & ~Qt::ItemIsEditable);
@@ -103,6 +106,7 @@ void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
   // Scene Format
   QComboBox* sceneComboBoxWidget = new QComboBox(this->FileWidget);
   sceneComboBoxWidget->addItem("MRML (.mrml)");
+  sceneComboBoxWidget->setEnabled(false);
   this->FileWidget->setCellWidget(row, FileFormatColumn, sceneComboBoxWidget);
   // Scene FileName
   if (scene->GetURL())
@@ -205,12 +209,16 @@ void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
         }
       else
         {
-        qWarning() << "Warning saving data: cannot get a default cache directory, so not able to check whether any datafiles are residing in cache and should be marked for save by default. Please take care when saving data.";
+        qWarning() << "Warning saving data: cannot get a default cache "
+"directory, so not able to check whether any datafiles are residing in cache "
+"and should be marked for save by default. Please take care when saving data.";
         }
       }
     else
       {
-      qWarning() << "Warning saving data: cannot get a default cache directory, so not able to check whether any datafiles are residing in cache and should be marked for save by default. Please take care when saving data.";
+      qWarning() << "Warning saving data: cannot get a default cache "
+"directory, so not able to check whether any datafiles are residing in cache "
+"and should be marked for save by default. Please take care when saving data.";
       }
 
     QTableWidgetItem *nodeModifiedItem = 
@@ -219,17 +227,27 @@ void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
     nodeModifiedItem->setFlags( nodeModifiedItem->flags() & ~Qt::ItemIsEditable);
     this->FileWidget->setItem(row, NodeStatusColumn, nodeModifiedItem);
     // select modified nodes by default
-    nodeNameItem->setCheckState(node->GetModifiedSinceRead() ? Qt::Checked : Qt::Unchecked);
+    nodeNameItem->setCheckState(
+      node->GetModifiedSinceRead() ? Qt::Checked : Qt::Unchecked);
     
     // File format
     QComboBox* fileFormats = new QComboBox(this->FileWidget);
     const int formatCount = snode->GetSupportedWriteFileTypes()->GetNumberOfValues();
+    int currentFormat = -1;
     for (int formatIt = 0; formatIt < formatCount; ++formatIt)
       {
       vtkStdString format = 
         snode->GetSupportedWriteFileTypes()->GetValue(formatIt);
       fileFormats->addItem(format.c_str());
+      if (QString(vtkDataFileFormatHelper::GetFileExtensionFromFormatString(
+                    format.c_str())) == (QString(".") + fileInfo.suffix()))
+        {
+        currentFormat = formatIt;
+        }
       }
+    fileFormats->setCurrentIndex(currentFormat);
+    QObject::connect(fileFormats, SIGNAL(currentIndexChanged(int)), 
+                     this, SLOT(formatChanged()));
     this->FileWidget->setCellWidget(row, FileFormatColumn, fileFormats);
     // File name
     QTableWidgetItem *fileNameItem =
@@ -241,6 +259,8 @@ void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
     this->FileWidget->setCellWidget(row, FileDirectoryColumn, directoryButton);
     }
   this->FileWidget->setSortingEnabled(sortingEnabled);
+  this->FileWidget->resizeColumnsToContents();
+  this->resize(this->sizeHint());
 }
 
 //-----------------------------------------------------------------------------
@@ -277,12 +297,63 @@ QList<qSlicerIO::IOProperties> qSlicerSaveDataDialogPrivate::selectedFiles()
 
 //-----------------------------------------------------------------------------
 void qSlicerSaveDataDialogPrivate::selectModifiedData()
-{
+{  
+  const int rowCount = this->FileWidget->rowCount();
+  for (int row = 0; row < rowCount; ++row)
+    {
+    QTableWidgetItem* statusItem = this->FileWidget->item(row, NodeStatusColumn);
+    QTableWidgetItem* typeItem = this->FileWidget->item(row, NodeTypeColumn);
+    Q_ASSERT(statusItem); 
+    Q_ASSERT(typeItem);
+    QTableWidgetItem* nodeNameItem = this->FileWidget->item(row, NodeNameColumn);
+    Q_ASSERT(nodeNameItem);
+    nodeNameItem->setCheckState(
+      statusItem->text() == tr("Modified") && 
+      typeItem->text() != tr("(SCENE)") ? Qt::Checked : Qt::Unchecked);
+    }
 }
 
 //-----------------------------------------------------------------------------
 void qSlicerSaveDataDialogPrivate::selectModifiedSceneData()
 {
+  const int rowCount = this->FileWidget->rowCount();
+  for (int row = 0; row < rowCount; ++row)
+    {
+    QTableWidgetItem* statusItem = this->FileWidget->item(row, NodeStatusColumn);
+    Q_ASSERT(statusItem);
+    if (statusItem->text() != tr("Modified"))
+      {
+      continue;
+      }
+    QTableWidgetItem* nodeNameItem = this->FileWidget->item(row, NodeNameColumn);
+    Q_ASSERT(nodeNameItem);
+    nodeNameItem->setCheckState(
+      statusItem->text() == tr("Modified") ? Qt::Checked : Qt::Unchecked);
+    }
+}
+
+//-----------------------------------------------------------------------------
+void qSlicerSaveDataDialogPrivate::formatChanged()
+{
+  //Search the item whose format has changed
+  QComboBox* changedComboBox = qobject_cast<QComboBox*>(this->sender());
+  Q_ASSERT(changedComboBox);
+  const int rowCount = this->FileWidget->rowCount();
+  int row = 0;
+  for (; row < rowCount; ++row)
+    {
+    if (changedComboBox == this->FileWidget->cellWidget(row, FileFormatColumn))
+      {
+      break;
+      }
+    }
+  Q_ASSERT(row < rowCount);
+  // Update the name with the new extension
+  QString extension = vtkDataFileFormatHelper::GetFileExtensionFromFormatString(
+    changedComboBox->currentText().toStdString().c_str());
+  QTableWidgetItem* fileNameItem = this->FileWidget->item(row, FileNameColumn);
+  Q_ASSERT(fileNameItem);
+  fileNameItem->setText(QFileInfo(fileNameItem->text()).baseName() + extension);
 }
 
 //-----------------------------------------------------------------------------

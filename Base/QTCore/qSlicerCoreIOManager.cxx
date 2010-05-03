@@ -157,6 +157,7 @@ bool qSlicerCoreIOManager::loadNodes(qSlicerIO::IOFileType fileType,
   CTK_D(qSlicerCoreIOManager);
 
   Q_ASSERT(parameters.contains("fileName"));
+  Q_ASSERT(!parameters["fileName"].toString().isEmpty());
 
   const QList<qSlicerIO*>& readers = this->ios(fileType);
 
