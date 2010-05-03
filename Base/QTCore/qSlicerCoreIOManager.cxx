@@ -23,6 +23,7 @@
 #include "qSlicerCoreIOManager.h"
 #include "qSlicerIO.h"
 #include "qSlicerModuleManager.h"
+#include "qSlicerSceneIO.h"
 #include "qSlicerSlicer2SceneReader.h"
 #include "qSlicerXcedeCatalogIO.h"
 
@@ -31,37 +32,6 @@
 
 // VTK includes
 #include <vtkSmartPointer.h>
-
-//-----------------------------------------------------------------------------
-class qSlicerSceneIO: public qSlicerIO
-{
-public: 
-  qSlicerSceneIO(QObject* _parent = 0):qSlicerIO(_parent){}
-  virtual QString description()const {return "MRML Scene";}
-  virtual qSlicerIO::IOFileType fileType()const {return qSlicerIO::SceneFile;}
-  virtual QString extensions()const {return "*.mrml";}
-  virtual bool load(const qSlicerIO::IOProperties& properties);
-};
-
-//-----------------------------------------------------------------------------
-bool qSlicerSceneIO::load(const qSlicerIO::IOProperties& properties)
-{
-  Q_ASSERT(properties.contains("fileName"));
-  Q_ASSERT(properties.contains("clear"));
-  QString file = properties["fileName"].toString();
-  this->mrmlScene()->SetURL(file.toLatin1().data());
-  bool clear = properties["clear"].toBool();
-  int res = 0;
-  if (clear)
-    {
-    res = this->mrmlScene()->Connect();
-    }
-  else
-    {
-    res = this->mrmlScene()->Import();
-    }
-  return res;
-}
 
 //-----------------------------------------------------------------------------
 class qSlicerCoreIOManagerPrivate: public ctkPrivate<qSlicerCoreIOManager>

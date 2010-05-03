@@ -41,6 +41,8 @@ SET(slicer_qtbase_SRCS
   qSlicerModuleManager.h
   qSlicerModuleFactoryManager.cxx
   qSlicerModuleFactoryManager.h
+  qSlicerSceneIO.cxx
+  qSlicerSceneIO.h
   qSlicerSlicer2SceneReader.cxx
   qSlicerSlicer2SceneReader.h
   qSlicerXcedeCatalogIO.cxx
@@ -53,6 +55,7 @@ SET(slicer_qtbase_MOC_SRCS
   qSlicerCoreIOManager.h
   qSlicerIO.h
   qSlicerModuleManager.h
+  qSlicerSceneIO.h
   qSlicerSlicer2SceneReader.h
   qSlicerXcedeCatalogIO.h
   ${slicer_qtbase_pythonqt_MOC_SRCS}
