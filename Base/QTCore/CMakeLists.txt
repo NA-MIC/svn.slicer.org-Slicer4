@@ -76,6 +76,9 @@ SET(KIT_resources
 # Python wrap 
 IF(Slicer3_USE_PYTHONQT)
 
+  LIST(APPEND KIT_target_libraries
+    CTKScriptingPythonCore
+    )
   # Sources
   LIST(APPEND KIT_SRCS
     qSlicerPythonManager.cxx

@@ -68,6 +68,13 @@ SET(KIT_target_libraries
   qSlicerBaseQTCore
   )
 
+# Python wrap 
+IF(Slicer3_USE_PYTHONQT)
+  LIST(APPEND KIT_target_libraries
+    CTKScriptingPythonWidgets
+    )
+ENDIF()
+
 # Resources
 SET(KIT_resources
   Resources/qSlicerBaseQTGUI.qrc
