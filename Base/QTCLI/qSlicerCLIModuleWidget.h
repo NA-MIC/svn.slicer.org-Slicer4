@@ -16,6 +16,7 @@
 
 // CTK includes
 #include <ctkPimpl.h>
+#include <ctkVTKObject.h>
 
 // SlicerQt includes
 #include "qSlicerAbstractModuleWidget.h"
@@ -29,6 +30,7 @@ class qSlicerCLIModuleWidgetPrivate;
 class Q_SLICER_BASE_QTCLI_EXPORT qSlicerCLIModuleWidget : public qSlicerAbstractModuleWidget
 {
   Q_OBJECT
+  QVTK_OBJECT
 public:
 
   typedef qSlicerAbstractModuleWidget Superclass;

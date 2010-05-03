@@ -114,6 +114,15 @@ void qSlicerCLIModuleWidgetPrivate::enableCommandButtonState(bool enable)
 {
   this->ApplyPushButton->setEnabled(enable);
   this->CancelPushButton->setEnabled(enable);
+
+//-----------------------------------------------------------------------------
+void qSlicerCLIModuleWidgetPrivate::updateUi(vtkObject* commandLineModuleNode)
+{
+  vtkMRMLCommandLineModuleNode * node =
+    vtkMRMLCommandLineModuleNode::SafeDownCast(commandLineModuleNode);
+  Q_ASSERT(node);
+
+  this->CLIModuleUIHelper->updateUi(node);
 }
 
 //-----------------------------------------------------------------------------
@@ -234,8 +243,18 @@ void qSlicerCLIModuleWidget::setCurrentCommandLineModuleNode(
   CTK_D(qSlicerCLIModuleWidget);
   vtkMRMLCommandLineModuleNode * node =
     vtkMRMLCommandLineModuleNode::SafeDownCast(commandLineModuleNode);
-  Q_ASSERT(node);
+  if (node == d->CommandLineModuleNode)
+    {
+    return;
+    }
+    
+  // Connect node modified event
+  this->qvtkReconnect(d->CommandLineModuleNode, node,
+    vtkCommand::ModifiedEvent,
+    d, SLOT(updateUi(vtkObject*)));
+    
   d->CLIModuleUIHelper->updateUi(node);
+  d->CommandLineModuleNode = node;
 }
 
 //-----------------------------------------------------------------------------

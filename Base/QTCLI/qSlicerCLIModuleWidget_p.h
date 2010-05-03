@@ -89,6 +89,8 @@ public slots:
 
   void enableCommandButtonState(bool enable);
 
+  void updateUi(vtkObject* commandLineModuleNode);
+
 public:
 
   QString           Name;
