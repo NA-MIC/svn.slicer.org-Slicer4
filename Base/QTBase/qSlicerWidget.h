@@ -73,7 +73,7 @@ public:
 public slots:
 
   /// 
-  /// Overloaded method from QWidget
+  /// \Overload
   virtual void setParentVisible(bool visible);
 
   /// 

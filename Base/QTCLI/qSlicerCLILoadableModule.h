@@ -44,7 +44,7 @@ public:
 
 protected:
   /// 
-  /// Overloaded
+  /// \Overload
   virtual void setup();
 
 

@@ -46,7 +46,7 @@ public slots:
   
 protected:
   /// 
-  /// Overloaded
+  /// \Overload
   virtual void setup();
 
 private:
