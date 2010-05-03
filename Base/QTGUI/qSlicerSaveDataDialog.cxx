@@ -41,12 +41,10 @@ qSlicerSaveDataDialogPrivate::qSlicerSaveDataDialogPrivate(QWidget* _parent)
   headerView->setPropagateToItems(true);
   this->FileWidget->setHorizontalHeader(headerView);
   
-  connect(this->DirectoryButton, SIGNAL(clicked()), this, SLOT(changeDirectory()));
+  connect(this->DirectoryButton, SIGNAL(directoryChanged(const QString&)), this, SLOT(setDirectory(const QString&)));
   connect(this->SelectSceneDataButton, SIGNAL(clicked()), this, SLOT(selectModifiedSceneData()));
   connect(this->SelectDataButton, SIGNAL(clicked()), this, SLOT(selectModifiedData()));
 
-  // Pimping with icons
-  this->DirectoryButton->setIcon(this->style()->standardIcon(QStyle::SP_DirIcon));
 }
 
 //-----------------------------------------------------------------------------
@@ -55,14 +53,11 @@ qSlicerSaveDataDialogPrivate::~qSlicerSaveDataDialogPrivate()
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerSaveDataDialogPrivate::changeDirectory()
+void qSlicerSaveDataDialogPrivate::setDirectory(const QString& newDirectory)
 {
-  QString directory = QFileDialog::getExistingDirectory(this);
-  if (directory.isNull())
-    {
-    return;
-    }
-  this->DirectoryButton->setText(directory);
+  QDir newDir(newDirectory);
+  Q_ASSERT(newDir.exists());
+
   const int rowCount = this->FileWidget->rowCount();
   for( int row = 0; row < rowCount; ++row)
     {
@@ -72,13 +67,14 @@ void qSlicerSaveDataDialogPrivate::changeDirectory()
       {
       continue;
       }
-    QPushButton* directoryItemButton = dynamic_cast<QPushButton*>(
+    ctkDirectoryButton* directoryItemButton = qobject_cast<ctkDirectoryButton*>(
       this->FileWidget->cellWidget(row, FileDirectoryColumn));
     Q_ASSERT(directoryItemButton);
-    directoryItemButton->setText(directory);
+    directoryItemButton->setDirectory(newDir.path());
     }
 }
 
+//-----------------------------------------------------------------------------
 void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
 {
   this->FileWidget->setRowCount(0);
@@ -90,9 +86,8 @@ void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
   this->FileWidget->setSortingEnabled(false);
 
   int row = 0;
+  this->DirectoryButton->setDirectory(scene->GetRootDirectory());
   this->FileWidget->insertRow(row);
-  // add scene here 
-  this->DirectoryButton->setText(scene->GetRootDirectory());
   // Scene Name
   QTableWidgetItem* sceneNameItem = new QTableWidgetItem("(Scene Description)");
   sceneNameItem->setFlags(sceneNameItem->flags() & ~Qt::ItemIsEditable);
@@ -110,22 +105,23 @@ void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
   sceneComboBoxWidget->addItem("MRML (.mrml)");
   this->FileWidget->setCellWidget(row, FileFormatColumn, sceneComboBoxWidget);
   // Scene FileName
-  QFileInfo sceneFileInfo;
   if (scene->GetURL())
     {
+    QFileInfo sceneFileInfo;
     sceneFileInfo = QFileInfo(QDir(scene->GetRootDirectory()),
                               scene->GetURL());
+    this->FileWidget->setItem(row, FileNameColumn, 
+                              new QTableWidgetItem(sceneFileInfo.fileName()));
     }
   else
     {
-    sceneFileInfo = QFileInfo(QDir(scene->GetRootDirectory()),
-                              "SlicerScene1");
+    this->FileWidget->setItem(row, FileNameColumn, 
+                              new QTableWidgetItem("SlicerScene1"));
+
     }
-  this->FileWidget->setItem(row, FileNameColumn, 
-                            new QTableWidgetItem(sceneFileInfo.fileName()));
   // Scene Directory
   ctkDirectoryButton* sceneDirectoryButton = 
-    new ctkDirectoryButton(sceneFileInfo.absolutePath(), this->FileWidget);
+    new ctkDirectoryButton(scene->GetRootDirectory(), this->FileWidget);
   this->FileWidget->setCellWidget(row, FileDirectoryColumn, sceneDirectoryButton);
   const int nodeCount = scene->GetNumberOfNodesByClass("vtkMRMLStorableNode");
   for (int i = 0 ; i < nodeCount; ++i)
@@ -153,14 +149,14 @@ void qSlicerSaveDataDialogPrivate::populateItems(vtkMRMLScene* scene)
       snode = storageNode;
       }
     
-    if (snode->GetFileName() == 0 && !this->DirectoryButton->text().isEmpty()) 
+    if (snode->GetFileName() == 0 && !this->DirectoryButton->directory().isEmpty()) 
       {
       QString fileExtension = snode->GetDefaultWriteFileExtension();
       if (fileExtension.isEmpty())
         {
         fileExtension = QString(".") + fileExtension;
         }
-      QFileInfo fileName(QDir(this->DirectoryButton->text()), 
+      QFileInfo fileName(QDir(this->DirectoryButton->directory()), 
                          QString(node->GetName()) + fileExtension);
       snode->SetFileName(fileName.absoluteFilePath().toLatin1().data());
       }

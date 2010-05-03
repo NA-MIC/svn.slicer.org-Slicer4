@@ -30,7 +30,7 @@ public:
   void populateItems(vtkMRMLScene* scene);
 
 public slots:
-  void changeDirectory();
+  void setDirectory(const QString& newDirectory);
   void selectModifiedSceneData();
   void selectModifiedData();
   
