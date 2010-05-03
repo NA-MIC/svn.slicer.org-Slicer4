@@ -685,16 +685,20 @@ endif(Slicer3_USE_PYTHON OR Slicer3_USE_PYTHONQT)
 set(vtk_PYTHON_ARGS)
 set(slicer_PYTHON_INCLUDE)
 set(slicer_PYTHON_LIBRARY)
+set(slicer_PYTHON_EXECUTABLE)
 
 if(WIN32)
   set(slicer_PYTHON_INCLUDE ${CMAKE_BINARY_DIR}/Python-build/Include)
   set(slicer_PYTHON_LIBRARY ${CMAKE_BINARY_DIR}/Python-build/PCbuild/python26.lib)
+  set(slicer_PYTHON_EXECUTABLE ${CMAKE_BINARY_DIR}/Python-build/PCbuild/python.exe)
 elseif(APPLE)
   set(slicer_PYTHON_INCLUDE ${CMAKE_BINARY_DIR}/python-build/include/python2.6)
   set(slicer_PYTHON_LIBRARY ${CMAKE_BINARY_DIR}/python-build/lib/libpython2.6.dylib)
+  set(slicer_PYTHON_EXECUTABLE ${CMAKE_BINARY_DIR}/python-build/bin/python)
 else()
   set(slicer_PYTHON_INCLUDE ${CMAKE_BINARY_DIR}/python-build/include/python2.6)
   set(slicer_PYTHON_LIBRARY ${CMAKE_BINARY_DIR}/python-build/lib/libpython2.6.so)
+  set(slicer_PYTHON_EXECUTABLE ${CMAKE_BINARY_DIR}/python-build/bin/python)
 endif()
 
 if(Slicer3_USE_PYTHON)
@@ -1222,6 +1226,7 @@ ExternalProject_Add(${proj}
     -DSlicer3_USE_SYSTEM_PYTHON:BOOL=OFF
     -DSlicer3_USE_NUMPY:BOOL=${Slicer3_BUILD_NUMPY}
     ${vtk_PYTHON_ARGS}
+    -DPYTHON_EXECUTABLE:FILEPATH=${slicer_PYTHON_EXECUTABLE}
     -DSlicer3_USE_QT:BOOL=${Slicer3_USE_QT}
     ${slicer_QT_ARGS}
     -DSlicer3_USE_KWWIDGETS:BOOL=${Slicer3_USE_KWWIDGETS}
