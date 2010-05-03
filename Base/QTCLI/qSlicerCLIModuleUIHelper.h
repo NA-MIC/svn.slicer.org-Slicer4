@@ -33,17 +33,17 @@ public:
   qSlicerCLIModuleUIHelper(qSlicerCLIModuleWidget* cliModuleWidget);
   virtual ~qSlicerCLIModuleUIHelper(){}
 
-  /// Create the widget associated with the given parameter.
+  /// Create the widget associated with the given \a moduleParameter
   /// The caller is responsible to delete the widget. Note also that is the widget is
   /// added to a layout, Qt will be responsible to delete the widget.
   QWidget* createTagWidget(const ModuleParameter& moduleParameter);
 
   /// 
-  /// Update MRMLCommandLineModuleNode properties using value entered from the UI
-  void updateMRMLCommandLineModuleNode(vtkMRMLCommandLineModuleNode* node);
+  /// Update \a commandLineModuleNode properties using value entered from the UI
+  void updateMRMLCommandLineModuleNode(vtkMRMLCommandLineModuleNode* commandLineModuleNode);
 
   ///
-  /// Update user interface using the given commandLineModuleNode parameter
+  /// Update user interface using the given \a commandLineModuleNode parameters
   void updateUi(vtkMRMLCommandLineModuleNode* commandLineModuleNode);
 
 private:

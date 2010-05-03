@@ -800,39 +800,48 @@ QWidget* qSlicerCLIModuleUIHelper::createTagWidget(const ModuleParameter& module
 }
 
 //-----------------------------------------------------------------------------
-void qSlicerCLIModuleUIHelper::updateMRMLCommandLineModuleNode(vtkMRMLCommandLineModuleNode* node)
+void qSlicerCLIModuleUIHelper::updateMRMLCommandLineModuleNode(
+  vtkMRMLCommandLineModuleNode* commandLineModuleNode)
 {
   CTK_D(qSlicerCLIModuleUIHelper);
-  Q_ASSERT(node);
+  Q_ASSERT(commandLineModuleNode);
+
+  commandLineModuleNode->SetDisableModifiedEvent(true);
   
   foreach(WidgetValueWrapper* widgetValueWrapper, d->WidgetValueWrappers)
     {
     QVariant::Type type = widgetValueWrapper->value().type();
     if (type == QVariant::Bool)
       {
-      node->SetParameterAsBool(widgetValueWrapper->name().toStdString(),
-                               widgetValueWrapper->value().toBool());
+      commandLineModuleNode->SetParameterAsBool(widgetValueWrapper->name().toStdString(),
+                                                widgetValueWrapper->value().toBool());
       }
     else if (type == QVariant::Int)
       {
-      node->SetParameterAsInt(widgetValueWrapper->name().toStdString(),
-                                 widgetValueWrapper->value().toInt());
+      commandLineModuleNode->SetParameterAsInt(widgetValueWrapper->name().toStdString(),
+                                               widgetValueWrapper->value().toInt());
       }
     else if (type == QVariant::Double)
       {
-      node->SetParameterAsDouble(widgetValueWrapper->name().toStdString(),
-                                 widgetValueWrapper->value().toDouble());
+      commandLineModuleNode->SetParameterAsDouble(widgetValueWrapper->name().toStdString(),
+                                                  widgetValueWrapper->value().toDouble());
       }
     else if (type == QVariant::String)
       {
-      node->SetParameterAsString(widgetValueWrapper->name().toStdString(),
-                                 widgetValueWrapper->value().toString().toStdString());
+      commandLineModuleNode->SetParameterAsString(
+        widgetValueWrapper->name().toStdString(),
+        widgetValueWrapper->value().toString().toStdString());
       }
     else
       {
       qDebug() << "Unknown widget value type:" << type;
       }
     }
+
+  commandLineModuleNode->SetDisableModifiedEvent(false);
+
+  // notify observer(s)
+  commandLineModuleNode->Modified();
 }
 
 //-----------------------------------------------------------------------------
