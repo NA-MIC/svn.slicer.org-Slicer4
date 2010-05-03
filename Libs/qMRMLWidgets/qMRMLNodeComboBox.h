@@ -158,7 +158,7 @@ signals:
   /// void nodeAboutToBeAdded(vtkMRMLNode*);
 
   ///
-  /// Signal emitt ed when \a node is added to the comboBox
+  /// Signal emitted when \a node is added to the comboBox
   /// Only nodes with valid type emit the signal
   void nodeAdded(vtkMRMLNode* node);
 
