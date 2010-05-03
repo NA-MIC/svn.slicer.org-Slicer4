@@ -4,10 +4,10 @@ PROJECT(qSlicerBaseQTCore)
 # See CMake/Slicer3QTBaseLibraryMacros.cmake for details
 #
 
-SET(slicer_qtbase_export_directive "Q_SLICER_BASE_QTCORE_EXPORT")
+SET(KIT_export_directive "Q_SLICER_BASE_QTCORE_EXPORT")
 
 # Additional directories to include
-SET(slicer_qtbase_include_directories
+SET(KIT_include_directories
   ${qSlicerBaseQTBase_SOURCE_DIR}
   ${qSlicerBaseQTBase_BINARY_DIR}
   ${ModuleDescriptionParser_SOURCE_DIR}
@@ -16,15 +16,10 @@ SET(slicer_qtbase_include_directories
   ${MRMLCLI_BINARY_DIR}
   ${FreeSurfer_SOURCE_DIR} # for qSlicerXcedeCatalogIO
   ${FreeSurfer_BINARY_DIR} # for qSlicerXcedeCatalogIO
-  # HACK
-  #${MRML_SOURCE_DIR}
-  #${MRML_BINARY_DIR}
-  #${vtkSlicerVolumesModuleLogic_SOURCE_DIR}
-  #${vtkSlicerVolumesModuleLogic_BINARY_DIR}
   )
   
 # Source files
-SET(slicer_qtbase_SRCS
+SET(KIT_SRCS
   qSlicerCoreApplication.cxx
   qSlicerCoreApplication.h
   qSlicerCoreCommandOptions.cxx
@@ -50,7 +45,7 @@ SET(slicer_qtbase_SRCS
   )
 
 # Headers that should run through moc
-SET(slicer_qtbase_MOC_SRCS
+SET(KIT_MOC_SRCS
   qSlicerCoreApplication.h
   qSlicerCoreIOManager.h
   qSlicerIO.h
@@ -58,31 +53,23 @@ SET(slicer_qtbase_MOC_SRCS
   qSlicerSceneIO.h
   qSlicerSlicer2SceneReader.h
   qSlicerXcedeCatalogIO.h
-  ${slicer_qtbase_pythonqt_MOC_SRCS}
   )
 
 # PythonQt decorator
 IF(Slicer3_USE_PYTHONQT)
-  SET(slicer_qtbase_MOC_SRCS ${slicer_qtbase_MOC_SRCS} qSlicerBaseQTBasePythonQtDecorators.h)
+  LIST(APPEND KIT_MOC_SRCS qSlicerBaseQTBasePythonQtDecorators.h)
 ENDIF(Slicer3_USE_PYTHONQT)
 
-# UI files
-#SET(slicer_qtbase_UI_SRCS)
-
 # Additional Target libraries (QT libs already included)
-SET(slicer_qtbase_target_libraries
+SET(KIT_target_libraries
   ModuleDescriptionParser
   MRMLCLI
   qSlicerBaseQTBase
-  #${qCTKWidgets_PYTHONQT_LIBRARIES}
   FreeSurfer # for qSlicerXcedeCatalogIO
-  # HACK
-  #vtkSlicerVolumesModuleLogic
-  #MRML 
   )
 
 # Resources
-SET(qt_module_resources
+SET(KIT_resources
   Resources/qSlicerBaseQTCore.qrc
 )
 
@@ -90,15 +77,13 @@ SET(qt_module_resources
 IF(Slicer3_USE_PYTHONQT)
 
   # Sources
-  SET(slicer_qtbase_SRCS
-    ${slicer_qtbase_SRCS}
+  LIST(APPEND KIT_SRCS
     qSlicerPythonManager.cxx
     qSlicerPythonManager.h
     )
 
   # Headers that should run through moc
-  SET(slicer_qtbase_MOC_SRCS
-    ${slicer_qtbase_MOC_SRCS}
+  LIST(APPEND KIT_MOC_SRCS
     qSlicerPythonManager.h
     )
     
@@ -106,13 +91,12 @@ ENDIF(Slicer3_USE_PYTHONQT)
 
 Slicer3_build_slicer_qtbase_library(
   NAME ${PROJECT_NAME}
-  EXPORT_DIRECTIVE ${slicer_qtbase_export_directive}
-  INCLUDE_DIRECTORIES ${slicer_qtbase_include_directories}
-  SRCS ${slicer_qtbase_SRCS}
-  MOC_SRCS ${slicer_qtbase_MOC_SRCS}
-  #UI_SRCS ${slicer_qtbase_UI_SRCS}
-  TARGET_LIBRARIES ${slicer_qtbase_target_libraries}
-  RESOURCES ${qt_module_resources}
+  EXPORT_DIRECTIVE ${KIT_export_directive}
+  INCLUDE_DIRECTORIES ${KIT_include_directories}
+  SRCS ${KIT_SRCS}
+  MOC_SRCS ${KIT_MOC_SRCS}
+  TARGET_LIBRARIES ${KIT_target_libraries}
+  RESOURCES ${KIT_resources}
   )
 
 # Plugins
