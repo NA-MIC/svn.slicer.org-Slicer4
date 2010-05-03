@@ -374,6 +374,8 @@ void qMRMLNodeSelector::onAdd()
     {// select the created node.
     this->setCurrentIndex(this->count() - 1);
     }
+
+  emit this->nodeAddedByUser(_node);
 }
 
 //-----------------------------------------------------------------------------

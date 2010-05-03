@@ -213,6 +213,7 @@ void qMRMLNodeComboBox::addNode()
     {// select the created node.
     this->setCurrentNode(_node);
     }
+  emit this->nodeAddedByUser(_node);
 }
 
 // --------------------------------------------------------------------------
