@@ -4,11 +4,11 @@
 // SlicerQT includes
 #include "qSlicerAbstractModuleWidget.h"
 
-// qCTK includes
-#include <qCTKPimpl.h>
+// ctk includes
+#include <ctkPimpl.h>
 
 // qVTK includes
-#include <qVTKObject.h>
+#include <ctkVTKObject.h>
 #include "qSlicermiAnnotationModuleExport.h"
 #include "qSlicermiAnnotationModuleAnnotationPropertyDialog.h"
 
@@ -102,7 +102,7 @@ protected slots:
     void onPauseButtonToggled(bool toggle);
 
 private:
-  QCTK_DECLARE_PRIVATE(qSlicermiAnnotationModuleWidget);
+  CTK_DECLARE_PRIVATE(qSlicermiAnnotationModuleWidget);
 
   qSlicermiAnnotationModuleAnnotationPropertyDialog* GetPropertyDialog(const char* id);
   void RemovePropertyDialog(const char* id);

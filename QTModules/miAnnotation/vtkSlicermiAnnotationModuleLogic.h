@@ -4,8 +4,8 @@
 // Slicer Logic includes
 #include "vtkSlicerModuleLogic.h"
 
-// qCTK includes
-#include <qCTKPimpl.h>
+// ctk includes
+#include <ctkPimpl.h>
 
 #include "qSlicermiAnnotationModuleExport.h"
 #include "vtkSlicerNodeSelectorWidget.h"
@@ -157,7 +157,7 @@ protected:
 
 
 private:
-  QCTK_DECLARE_PRIVATE(vtkSlicermiAnnotationModuleLogic);
+  CTK_DECLARE_PRIVATE(vtkSlicermiAnnotationModuleLogic);
 
   // Fiducial Related Private Functions
   vtkSlicerFiducialListWidget* GetFiducialWidget(const char *nodeID);

@@ -58,7 +58,7 @@ vtkStandardNewMacro(vtkSlicermiAnnotationModuleLogic);
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-class vtkSlicermiAnnotationModuleLogicPrivate: public qCTKPrivate<vtkSlicermiAnnotationModuleLogic>   
+class vtkSlicermiAnnotationModuleLogicPrivate: public ctkPrivate<vtkSlicermiAnnotationModuleLogic>   
 {
 public:
   vtkSlicermiAnnotationModuleLogicPrivate();
@@ -107,7 +107,7 @@ vtkSlicermiAnnotationModuleLogicPrivate::~vtkSlicermiAnnotationModuleLogicPrivat
 //-----------------------------------------------------------------------------
 vtkSlicermiAnnotationModuleLogic::vtkSlicermiAnnotationModuleLogic()
 {
-  QCTK_INIT_PRIVATE(vtkSlicermiAnnotationModuleLogic);  
+  CTK_INIT_PRIVATE(vtkSlicermiAnnotationModuleLogic);  
   this->m_RulerManager = NULL;
   this->m_AngleManager = NULL;
 
@@ -717,7 +717,7 @@ void vtkSlicermiAnnotationModuleLogic::SetFiducialPositionsByNodeID(const char* 
 //---------------------------------------------------------------------------
 void vtkSlicermiAnnotationModuleLogic::Update3DFiducial(vtkMRMLAnnotationFiducialNode *activeCPNode)
 {
-    QCTK_D(vtkSlicermiAnnotationModuleLogic);
+    CTK_D(vtkSlicermiAnnotationModuleLogic);
     cout << "vtkSlicermiAnnotationModuleLogic::Update3DFriduail Start" << endl;
 
     if (activeCPNode == NULL)
@@ -778,7 +778,7 @@ void vtkSlicermiAnnotationModuleLogic::Update3DFiducial(vtkMRMLAnnotationFiducia
 //---------------------------------------------------------------------------
 void vtkSlicermiAnnotationModuleLogic::AddFiducialWidget(vtkMRMLAnnotationFiducialNode *cpNode)
 {
-    QCTK_D(vtkSlicermiAnnotationModuleLogic);
+    CTK_D(vtkSlicermiAnnotationModuleLogic);
     if (!cpNode)
     {
         return;
@@ -812,7 +812,7 @@ void vtkSlicermiAnnotationModuleLogic::AddFiducialWidget(vtkMRMLAnnotationFiduci
 //---------------------------------------------------------------------------
 vtkSlicerFiducialListWidget* vtkSlicermiAnnotationModuleLogic::GetFiducialWidget(const char *nodeID)
 {
-    QCTK_D(vtkSlicermiAnnotationModuleLogic);
+    CTK_D(vtkSlicermiAnnotationModuleLogic);
     // This hsould be the widget not mrml class - just do it right now bc widget does not extist
     std::map<std::string, vtkSlicerFiducialListWidget *>::iterator iter;
     for (iter = d->FiducialWidgets.begin();
@@ -830,7 +830,7 @@ vtkSlicerFiducialListWidget* vtkSlicermiAnnotationModuleLogic::GetFiducialWidget
 //---------------------------------------------------------------------------
 void vtkSlicermiAnnotationModuleLogic::RemoveFiducialWidget(vtkMRMLAnnotationFiducialNode *cpNode)
 {
-    QCTK_D(vtkSlicermiAnnotationModuleLogic);
+    CTK_D(vtkSlicermiAnnotationModuleLogic);
     if (!cpNode)
     {
         return;
