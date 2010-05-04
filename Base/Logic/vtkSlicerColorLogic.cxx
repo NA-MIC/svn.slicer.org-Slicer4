@@ -678,7 +678,7 @@ const char *vtkSlicerColorLogic::GetDefaultVolumeColorNodeID()
 //----------------------------------------------------------------------------
 const char *vtkSlicerColorLogic::GetDefaultLabelMapColorNodeID()
 {
-  return this->GetDefaultFileColorNodeID("Slicer3_2010_Label_Colors.txt");
+  return vtkSlicerColorLogic::GetDefaultFileColorNodeID("Slicer3_2010_Label_Colors.txt");
 }
 
 //----------------------------------------------------------------------------
