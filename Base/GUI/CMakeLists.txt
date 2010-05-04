@@ -161,7 +161,7 @@ set(SlicerBaseGUI_SRCS
   # VTK Replacement classes
   vtkSlicerInteractorStyle.cxx
   vtkSlicerViewerInteractorStyle.cxx
-  vtkSlicerRenderWidget.cxx
+  #vtkSlicerRenderWidget.cxx - Not used
   vtkSlicerBoxRepresentation.cxx
   vtkSlicerBoxWidget2.cxx
   vtkSlicerWaitMessageWidget.cxx
