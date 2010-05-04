@@ -21,8 +21,11 @@ public:
   qSlicerMainWindowCore(qSlicerMainWindow *parent);
 
 public slots: 
-  // Description:
-  // Handle actions
+  /// 
+  /// Handle actions - See qSlicerMainWindow::setupMenuActions
+  void onFileAddDataActionTriggered();
+  void onFileImportSceneActionTriggered();
+  void onFileLoadSceneActionTriggered();
   void onEditUndoActionTriggered();
   void onEditRedoActionTriggered();
   void onWindowPythonInteractorActionTriggered();

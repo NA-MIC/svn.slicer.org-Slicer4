@@ -112,6 +112,25 @@ qSlicerMainWindowCore::qSlicerMainWindowCore(qSlicerMainWindow* _parent):Supercl
 //-----------------------------------------------------------------------------
 CTK_GET_CXX(qSlicerMainWindowCore, qSlicerMainWindow*, widget, ParentWidget);
 
+
+//---------------------------------------------------------------------------
+void qSlicerMainWindowCore::onFileAddDataActionTriggered()
+{
+  qSlicerApplication::application()->ioManager()->openLoadDataDialog();
+}
+
+//---------------------------------------------------------------------------
+void qSlicerMainWindowCore::onFileImportSceneActionTriggered()
+{
+  qSlicerApplication::application()->ioManager()->openImportSceneDialog();
+}
+
+//---------------------------------------------------------------------------
+void qSlicerMainWindowCore::onFileLoadSceneActionTriggered()
+{
+  qSlicerApplication::application()->ioManager()->openLoadSceneDialog();
+}
+
 //---------------------------------------------------------------------------
 void qSlicerMainWindowCore::onEditUndoActionTriggered()
 {

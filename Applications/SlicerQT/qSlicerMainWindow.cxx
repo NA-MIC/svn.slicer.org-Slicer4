@@ -68,6 +68,9 @@ void qSlicerMainWindow::setupMenuActions()
     d->actionFileExit, SIGNAL(triggered()),
     qSlicerApplication::instance(), SLOT(quit()));
 
+  qSlicerMainWindow_connect(FileAddData);
+  qSlicerMainWindow_connect(FileImportScene);
+  qSlicerMainWindow_connect(FileLoadScene);
   qSlicerMainWindow_connect(EditRedo);
   qSlicerMainWindow_connect(EditUndo);
   qSlicerMainWindow_connect(WindowPythonInteractor);
