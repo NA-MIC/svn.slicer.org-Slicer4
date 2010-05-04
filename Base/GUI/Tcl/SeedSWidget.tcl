@@ -125,7 +125,15 @@ itcl::configbody SeedSWidget::glyph {
     Square Circle Diamond Arrow ThickArrow HookedArrow StarBurst}
 
   if { [lsearch $validGlyphTypes $glyph] == -1 } {
-    set glyph "StarBurst"
+    if { $glyph == "Sphere3D" } {
+      # use a circle for the sphere
+      set glyph "Circle"
+    } elseif { $glyph == "Diamond3D" } {
+      # use a diamond for the 3d diamond
+      set glyph "Diamond"
+    } else {
+      set glyph "StarBurst"
+    }
   }
 
   $o(glyph) Delete
@@ -354,7 +362,7 @@ itcl::body SeedSWidget::processEvent { {caller ""} {event ""} } {
           switch $_actionState {
             "dragging" {
               if { !$inactive } {
-                $_renderWidget CornerAnnotationVisibilityOff
+                $this requestDelayedAnnotation 
                 foreach {wx wy} [$_interactor GetEventPosition] {}
                 foreach {ex ey ez} [$this dcToXYZ $wx $wy] {}
                 foreach {dx dy dz} $_startOffset {}
@@ -368,7 +376,6 @@ itcl::body SeedSWidget::processEvent { {caller ""} {event ""} } {
         "LeftButtonReleaseEvent" {
           set _actionState ""
           set _description ""
-          $_renderWidget CornerAnnotationVisibilityOn
           SeedSWidget::SetAllTextVisibility 1
             eval $movedCommand
             

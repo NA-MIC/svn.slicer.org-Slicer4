@@ -22,10 +22,15 @@
 #include "vtkKWTreeWithScrollbars.h"
 #include "vtkKWScaleWithEntry.h"
 #include "vtkKWEntryWithLabel.h"
-
 #include "vtkEMSegmentAnatomicalStructureStep.h"
+#include "vtkMath.h"
+
+#include <vector>
 
 #define EMSEG_PRINT_FREQUENCY_MAX 20
+
+#include "vtkMRMLEMSWorkingDataNode.h"
+#include "vtkMRMLEMSTargetNode.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentNodeParametersStep);
@@ -34,11 +39,7 @@ vtkCxxRevisionMacro(vtkEMSegmentNodeParametersStep, "$Revision: 1.2 $");
 //----------------------------------------------------------------------------
 vtkEMSegmentNodeParametersStep::vtkEMSegmentNodeParametersStep()
 {
-#if IBM_FLAG
   this->SetName("8/9. Edit Node-based Parameters");
-#else
-  this->SetName("7/9. Edit Node-based Parameters");
-#endif
   this->SetDescription("Specify node-based segmentation parameters.");
 
   this->NodeParametersNotebook                 = NULL;
@@ -72,6 +73,9 @@ vtkEMSegmentNodeParametersStep::vtkEMSegmentNodeParametersStep()
   this->NodeParametersExcludeIncompleteEStepCheckButton = NULL;
   this->NodeParametersGenerateBackgroundProbabilityCheckButton = NULL;
   this->NodeParametersInhomogeneityFrame       = NULL;
+  this->ClassOverviewWeightList                = NULL;
+  this->ClassOverviewWeightAutomaticRecalculateFlag = 0;
+
 }
 
 //----------------------------------------------------------------------------
@@ -256,6 +260,12 @@ vtkEMSegmentNodeParametersStep::~vtkEMSegmentNodeParametersStep()
     this->NodeParametersInhomogeneityFrame->Delete();
     this->NodeParametersInhomogeneityFrame = NULL;
     }
+
+  if (this->ClassOverviewWeightList )
+    {
+      this->ClassOverviewWeightList->Delete();
+      this->ClassOverviewWeightList = NULL;    
+    } 
 }
 
 //----------------------------------------------------------------------------
@@ -318,14 +328,14 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     this->NodeParametersGlobalPriorScale->PopupModeOn();
     this->NodeParametersGlobalPriorScale->Create();
     this->NodeParametersGlobalPriorScale->SetEntryWidth(4);
-    this->NodeParametersGlobalPriorScale->SetLabelText("Global Prior:");
+    this->NodeParametersGlobalPriorScale->SetLabelText("Class Weight:");
     this->NodeParametersGlobalPriorScale->GetLabel()->
       SetWidth(EMSEG_WIDGETS_LABEL_WIDTH - 9);
     this->NodeParametersGlobalPriorScale->SetRange(0.0, 1.0);
     this->NodeParametersGlobalPriorScale->SetResolution(0.01);
     this->NodeParametersGlobalPriorScale->GetEntry()->
       SetCommandTriggerToAnyChange();
-    this->NodeParametersGlobalPriorScale->SetBalloonHelpString("Probability that a voxel belonging to the parent structure will also belong to this structure.  The value must be in the range [0,1].  Global priors for each set of siblings must sum to 1."); 
+    this->NodeParametersGlobalPriorScale->SetBalloonHelpString("Probability that a voxel belonging to the parent structure will also belong to this structure.  The value must be in the range [0,1].  Class weights across siblings must sum to 1."); 
     }
 
   this->Script("grid %s -column 0 -row 0 -sticky nw -padx 2 -pady 2", 
@@ -383,10 +393,11 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
     list->ResizableColumnsOff();
 
     int col_id = list->AddColumn("Volume");
-    list->SetColumnWidth(col_id, 15);
+    list->SetColumnWidth(col_id, 10);
     list->SetColumnEditable(col_id, 0);
     col_id = list->AddColumn("Weight");
     list->SetColumnEditable(col_id, 1);
+    list->SetColumnFormatCommand(col_id,this,"WeightFormatCallback");
 
     list->SetRightClickCommand
       (this, "RightClickOnInputChannelWeightsListCallback");
@@ -906,7 +917,48 @@ void vtkEMSegmentNodeParametersStep::ShowUserInterface()
       SetText("Generate Background Probability:");
     }
 
+if (!this->ClassOverviewWeightList)
+    {
+    this->ClassOverviewWeightList = vtkKWMultiColumnListWithScrollbarsWithLabel::New();
+    }
+  if (!this->ClassOverviewWeightList->IsCreated())
+    {
+    this->ClassOverviewWeightList->SetParent(parent);
+    this->ClassOverviewWeightList->Create();
+    this->ClassOverviewWeightList->SetLabelText(" Overview  of Class Weights:");
+    this->ClassOverviewWeightList->SetLabelPositionToTop();
+  
+    this->ClassOverviewWeightList->GetWidget()->HorizontalScrollbarVisibilityOff();
+
+    vtkKWMultiColumnList *list = this->ClassOverviewWeightList->GetWidget()->GetWidget();
+    list->SetHeight(4);
+    list->MovableColumnsOff();
+    list->SetSelectionModeToSingle();
+    list->ResizableColumnsOff();
+
+    int col_id = list->AddColumn("Class");
+    list->SetColumnWidth(col_id, 15);
+    list->SetColumnEditable(col_id, 0);
+    col_id = list->AddColumn("Weight");
+    list->SetColumnEditable(col_id, 1);
+    list->SetColumnFormatCommand(col_id,this,"WeightFormatCallback");
+    col_id = list->AddColumn("Update");
+    list->SetColumnEditWindowToCheckButton(col_id);
+    list->SetColumnStretchable(col_id, 0);
+    list->SetColumnResizable(col_id, 0);
+    list->SetColumnWidth(col_id, 0);
+    list->SetColumnFormatCommandToEmptyOutput(col_id); 
+    list->SetColumnEditable(col_id, 1);
+
+    list->SetRightClickCommand(this, "RightClickOnClassOverviewWeightListCallback");
+    list->SetBalloonHelpString ("Automatically update class weight, so that class weight across siblings sums up to 1 !");
+    }
+  //this->Script("grid %s -column 0 -row 3 -rowspan 3 -sticky news -padx 2 -pady 2", this->ClassOverviewWeightList->GetWidgetName());
+ 
+  this->Script("pack %s -side top -padx 2 -pady 2", this->ClassOverviewWeightList->GetWidgetName());
+
   this->DisplaySelectedNodeParametersCallback();
+
 }
 
 //----------------------------------------------------------------------------
@@ -1001,11 +1053,14 @@ void vtkEMSegmentNodeParametersStep::DisplaySelectedNodeParametersCallback()
               "NodeParametersInputChannelWeightChangedCallback %d",
               static_cast<int>(sel_vol_id));
       list->SetCellUpdatedCommand(this, buffer);
+
       for (row = 0; row < nb_of_target_volumes; row++)
         {
         list->AddRow();
-        int vol_id = mrmlManager->GetTargetSelectedVolumeNthID(row);
-        list->SetCellText(row, 0, mrmlManager->GetVolumeName(vol_id));
+
+    vtkMRMLEMSTargetNode* targetNode = mrmlManager->GetWorkingDataNode()->GetInputTargetNode();
+        list->SetCellText(row, 0,  targetNode->GetNthInputChannelName(row));
+
         list->SetCellTextAsDouble(
           row, 1, 
           mrmlManager->GetTreeNodeInputChannelWeight(sel_vol_id, row));
@@ -1625,19 +1680,64 @@ void vtkEMSegmentNodeParametersStep::DisplaySelectedNodeParametersCallback()
         this->NodeParametersGenerateBackgroundProbabilityCheckButton->GetWidgetName());
       }
     }
+
+if (this->ClassOverviewWeightList)
+    {
+    vtkKWMultiColumnList *list = this->ClassOverviewWeightList->GetWidget()->GetWidget();
+    int rowNum = list->GetNumberOfRows();
+    std::vector<int> autoState;
+    autoState.resize(rowNum);
+    for (int i = 0 ; i < rowNum; i++) {
+      autoState[i] =  list->GetCellTextAsInt(i,2); 
+    }
+    
+    list->DeleteAllRows();
+
+    if (has_valid_selection)
+      {
+      this->ClassOverviewWeightList->SetEnabled(enabled);
+      char buffer[256];
+      sprintf(buffer, "ClassOverviewWeightChangedCallback %d",static_cast<int>(sel_vol_id));
+      list->SetCellUpdatedCommand(this, buffer);
+
+      vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+      vtkIdType parent = mrmlManager->GetTreeNodeParentNodeID(sel_vol_id);
+      if (!parent)
+    {
+      return;
+    }
+      int numChildren = mrmlManager->GetTreeNodeNumberOfChildren(parent);
+      for (int row = 0; row < numChildren; row++)
+        {
+        list->AddRow();
+        vtkIdType class_id = mrmlManager->GetTreeNodeChildNodeID(parent,row);
+        list->SetCellText(row, 0, mrmlManager->GetTreeNodeName(class_id));
+    list->SetCellTextAsDouble(row, 1, mrmlManager->GetTreeNodeClassProbability(class_id));
+    list->SetCellEditWindowToSpinBox(row,1);
+    if (row < rowNum) 
+      {
+        list->SetCellTextAsInt(row, 2, autoState[row]);
+      }
+    else 
+      {
+        list->SetCellTextAsInt(row, 2, 0);
+      }
+    // Improtant : Every time the value of the check box is changed it has to be reset to the check box 
+    list->SetCellWindowCommandToCheckButton(row,2);
+        }
+      }
+    else
+      {
+      this->ClassOverviewWeightList->SetEnabled(0);
+      list->SetCellUpdatedCommand(NULL, NULL);
+      }
+    }
 }
 
 //----------------------------------------------------------------------------
-void vtkEMSegmentNodeParametersStep::NodeParametersGlobalPriorChangedCallback(
-  vtkIdType sel_vol_id, double value)
+void vtkEMSegmentNodeParametersStep::NodeParametersGlobalPriorChangedCallback(vtkIdType sel_class_id, double value)
 {
-  // The class probability has changed because of user interaction
-
-  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
-  if (mrmlManager)
-    {
-    mrmlManager->SetTreeNodeClassProbability(sel_vol_id, value);
-    }
+  this->ClassWeightChangedCallback(sel_class_id,sel_class_id,value);
 }
 
 //----------------------------------------------------------------------------
@@ -2000,3 +2100,123 @@ void vtkEMSegmentNodeParametersStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
 }
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentNodeParametersStep::RightClickOnClassOverviewWeightListCallback(int row, int col, int vtkNotUsed(x), int vtkNotUsed(y))
+{
+  vtkKWMultiColumnList *list = 
+    this->ClassOverviewWeightList->GetWidget()->GetWidget();
+  list->EditCell(row, col);
+}
+
+//----------------------------------------------------------------------------
+
+const char* vtkEMSegmentNodeParametersStep::WeightFormatCallback(const char *text)
+{
+  std::stringstream s;
+  s << vtkMath::Round(atof(text)*1000)/1000.0;
+  return s.str().c_str();
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentNodeParametersStep::ClassWeightChangedCallback(vtkIdType sel_tree_class_id, vtkIdType  sel_class_id, double value)
+{
+  // General checks 
+  if (value < 0 && value > 1.0)
+    {
+    this->DisplaySelectedNodeParametersCallback();
+        return;
+    }
+  if (this->ClassOverviewWeightAutomaticRecalculateFlag)
+    {
+      return;
+    }
+
+  // Define General Variables 
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+  vtkIdType parent = mrmlManager->GetTreeNodeParentNodeID( sel_tree_class_id);
+  if (!parent) {
+    return;
+  }
+  vtkKWMultiColumnList *list = this->ClassOverviewWeightList->GetWidget()->GetWidget();
+
+  // Check if we have to do anything 
+  mrmlManager->SetTreeNodeClassProbability(sel_class_id, value);
+  // cout << "mrmlManager->SetTreeNodeClassProbability " << sel_class_id <<" v "  << value << endl;
+  double NormProb = mrmlManager->GetTreeNodeChildrenSumClassProbability(parent);
+
+  if ((NormProb == 0.0) || (fabs(NormProb -1) < 0.005))
+    {
+      return ;
+    }
+
+  // Start Normalizing
+  this->ClassOverviewWeightAutomaticRecalculateFlag = 1;
+  int numChildren = mrmlManager->GetTreeNodeNumberOfChildren(parent);
+  double FixedProb = 0.0;
+  double FlexProb  = 0.0;
+  std::vector<int> autoState;
+  autoState.resize(numChildren);
+  std::vector<vtkIdType> childID;
+  childID.resize(numChildren);
+  std::vector<double> prob;
+  prob.resize(numChildren);
+
+  for (int index = 0; index < numChildren; index++)
+    {
+      autoState[index] =  list->GetCellTextAsInt(index,2); 
+      childID[index] = mrmlManager->GetTreeNodeChildNodeID(parent,index);
+      prob[index] = mrmlManager->GetTreeNodeClassProbability(childID[index]);
+      if (autoState[index]) {
+    FlexProb += prob[index];
+      } else {
+    FixedProb += prob[index];
+      }
+    }    
+  double LeftProb = 1 - FixedProb; 
+  //cout << "LeftProb = " << LeftProb << " FlexProb " << FlexProb << endl;
+  if (LeftProb < 0) 
+    {
+      for (int index = 0; index < numChildren; index++)
+    {
+      if (autoState[index]) {
+        mrmlManager->SetTreeNodeClassProbability(childID[index],0.0);
+      }
+    }
+    }
+  else if (FlexProb > 0 ) 
+    {
+      double norm = LeftProb/FlexProb;
+      //cout << "Norm " << norm << endl;
+      for (int index = 0; index < numChildren; index++)
+    {
+      if (autoState[index]) {
+        //cout << " Prob :" << norm*prob[index] << " Index " << index << endl;  
+        mrmlManager->SetTreeNodeClassProbability(childID[index],norm*prob[index]);
+        // cout << "mrmlManager->SetTreeNodeClassProbability child" << childID[index] <<" v "  << norm*prob[index]  << endl;
+      }
+    }
+    }
+  this->DisplaySelectedNodeParametersCallback();
+  this->ClassOverviewWeightAutomaticRecalculateFlag = 0;
+}
+ 
+//----------------------------------------------------------------------------
+void vtkEMSegmentNodeParametersStep::ClassOverviewWeightChangedCallback(vtkIdType sel_tree_class_id, int row, int col, const char *value)
+{
+  // cout << "ClassOverviewWeightChangedCallback id " << sel_tree_class_id << " " << row << " C " <<  col << " " << value << " atoi " << atoi(value) << endl;
+  // The input channel weight has changed because of user interact
+  if (col ==1 ) {
+    vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+    vtkIdType parent = mrmlManager->GetTreeNodeParentNodeID( sel_tree_class_id);
+    if (!parent) {
+      return;
+    }
+    vtkIdType sel_class_id = mrmlManager->GetTreeNodeChildNodeID(parent,row);
+    this->ClassWeightChangedCallback(sel_tree_class_id, sel_class_id,  atof(value));
+    vtkKWMultiColumnList *list = this->ClassOverviewWeightList->GetWidget()->GetWidget();
+    list->SeeRow(row);
+  }
+}
+
+

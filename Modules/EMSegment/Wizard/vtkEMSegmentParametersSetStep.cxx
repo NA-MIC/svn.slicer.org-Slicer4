@@ -39,9 +39,11 @@
 #include "vtkKWMessageDialog.h"
 #include "vtkEMSegmentLogic.h"
 
-#if IBM_FLAG
-#include "IBM/vtkEMSegmentIBMParametersSetStep.cxx"
-#endif
+#include "vtkDirectory.h"
+#include "vtkMRMLEMSNode.h"
+// Need to include this bc otherwise cannot find std functions  for some g ++ compilers 
+#include <algorithm>
+
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentParametersSetStep);
 vtkCxxRevisionMacro(vtkEMSegmentParametersSetStep, "$Revision: 1.2 $");
@@ -113,6 +115,8 @@ void vtkEMSegmentParametersSetStep::ShowUserInterface()
   vtkKWWizardWidget *wizardWidget = this->GetGUI()->GetWizardWidget();
 
   wizardWidget->GetCancelButton()->SetEnabled(0);
+  wizardWidget->SetNextButtonVisibility(0);
+
 
   // Create the Parameters set frame
 
@@ -156,21 +160,6 @@ void vtkEMSegmentParametersSetStep::ShowUserInterface()
 
   this->UpdateLoadedParameterSets();
 }
-
-//----------------------------------------------------------------------------
-#if !IBM_FLAG
-void vtkEMSegmentParametersSetStep::DefineDefaultTasksList()
-{
- // set define list of parameters 
-  this->pssDefaultTasksName.clear();
-  this->pssDefaultTasksFile.clear();
-
-  // The last one is always "Create New" 
-  this->pssDefaultTasksFile.push_back(vtksys_stl::string(""));
-  this->pssDefaultTasksName.push_back("Create new task");
-
-}
-#endif
 
 //----------------------------------------------------------------------------
 void vtkEMSegmentParametersSetStep::PopulateLoadedParameterSets()
@@ -276,7 +265,6 @@ void vtkEMSegmentParametersSetStep::UpdateLoadedParameterSets()
      menuButton->GetMenu()->GetNumberOfItems() > 1)
     {
     this->ParameterSetMenuButton->GetWidget()->GetMenu()->SelectItem(1);
-    this->SelectedParameterSetChangedCallback(0);
     }
 }
 
@@ -304,9 +292,7 @@ SelectedDefaultTaskChangedCallback(int index, bool warningFlag)
       return;
     }
 
-#if IBM_FLAG 
   this->LoadTask(index, warningFlag);
-#endif
 }
 
 void vtkEMSegmentParametersSetStep::UpdateTaskListIndex(int index) 
@@ -333,7 +319,7 @@ void vtkEMSegmentParametersSetStep::UpdateTaskListIndex(int index)
 }
 
 
-void vtkEMSegmentParametersSetStep::SelectedParameterSetChangedCallback(int index)
+void vtkEMSegmentParametersSetStep::SelectedParameterSetChangedCallback(int index, int flag)
 {
   vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
 
@@ -356,11 +342,54 @@ void vtkEMSegmentParametersSetStep::SelectedParameterSetChangedCallback(int inde
     {
     anat_step->GetAnatomicalStructureTree()->GetWidget()->DeleteAllNodes();
     }
-#if IBM_FLAG
+
   std::string tclFileName = this->GetGUI()->GetLogic()->DefineTclTaskFullPathName(mrmlManager->GetNode()->GetTclTaskFilename());
 
   this->SourceTclFile(tclFileName.c_str());
-#endif
+  if (flag && (!this->SettingSegmentationMode(0)))
+      {
+    return ;
+      }
+  this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep(); 
+}
+
+
+int vtkEMSegmentParametersSetStep::SettingSegmentationMode(int flag) 
+{
+  vtkKWMessageDialog *dlg2 = vtkKWMessageDialog::New();
+  dlg2->SetApplication( this->GetApplication());
+  dlg2->SetMasterWindow(NULL);
+  dlg2->SetOptions(vtkKWMessageDialog::InvokeAtPointer | vtkKWMessageDialog::Beep | vtkKWMessageDialog::YesDefault);
+  dlg2->SetTitle("What Segmentation Mode To Proceed?");
+  dlg2->SetStyleToOkOtherCancel();
+  dlg2->SetOKButtonText("Advanced");
+  dlg2->SetOtherButtonText("Simple");
+
+  if (flag)
+    {
+      dlg2->SetText("In which mode do you want to proceed segmenting your data?\n Note, downloading the default setting might take a while!");
+    }
+  else
+    {
+      dlg2->SetText("In which mode do you want to proceed segmenting your data?");
+    }
+
+  dlg2->Invoke();
+  int status = dlg2->GetStatus();
+  dlg2->Delete();
+
+  switch  (status)
+    {
+    case vtkKWMessageDialog::StatusOther : 
+      this->GetGUI()->SetSegmentationModeToSimple();
+      return 1;
+      
+    case vtkKWMessageDialog::StatusOK :
+      this->GetGUI()->SetSegmentationModeToAdvanced();
+      return 1;
+    }
+
+  return 0;       
 }
 
 //----------------------------------------------------------------------------
@@ -381,6 +410,7 @@ void vtkEMSegmentParametersSetStep::RenameApplyCallback(const char* newName)
   mrmlManager->SetNthParameterName(this->RenameIndex,this->RenameEntry->GetWidget()->GetValue());
   this->HideRenameEntry();
   this->UpdateTaskListIndex(this->RenameIndex);
+  this->GUI->GetWizardWidget()->GetWizardWorkflow()->AttemptToGoToNextStep();
 }
 
 //---------------------------------------------------------------------------
@@ -464,3 +494,148 @@ void vtkEMSegmentParametersSetStep::PopUpRenameEntry(int index)
   this->RenameEntry->GetWidget()->Focus();
 }
 
+//----------------------------------------------------------------------------
+void vtkEMSegmentParametersSetStep::LoadTask(int index, bool warningFlag)
+{
+
+  if (index < 0 || index >  int(this->pssDefaultTasksName.size() -2) )
+    {
+      vtkErrorMacro("Index is not defined");
+      return;
+    }
+
+
+  // Load Task 
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+  if (!this->LoadDefaultData(pssDefaultTasksFile[index].c_str(),warningFlag))
+    {
+      // Remove the default selection entry from the menue, 
+      this->PopulateLoadedParameterSets();
+
+      // Figure out the index number
+      int numSets = mrmlManager->GetNumberOfParameterSets();
+      for(int index = 0; index < numSets; index++)
+      {
+        const char *name = mrmlManager->GetNthParameterSetName(index);
+        if (name && !strcmp(name,pssDefaultTasksName[index].c_str()))
+        {
+          // Select the Node 
+          this->SelectedParameterSetChangedCallback(index,0);
+      break;
+        }
+      }
+    }
+}
+
+//----------------------------------------------------------------------------
+int vtkEMSegmentParametersSetStep::LoadDefaultData(const char *tclFile, bool warningFlag)
+{
+  
+  // Load Tcl File defining the setting
+  this->SourceTclFile(tclFile);
+
+  this->GetGUI()->SetSegmentationModeToAdvanced();
+  if (warningFlag)
+    {
+      // do not want to proceed
+      if (!this->SettingSegmentationMode(1))
+    {
+      return 1;
+    }
+    }
+
+  // Load MRML File whose location is defined in the tcl file 
+  vtkEMSegmentMRMLManager *mrmlManager = this->GetGUI()->GetMRMLManager();
+  vtkMRMLScene *scene = mrmlManager->GetMRMLScene();
+  const char* mrmlFile = vtkSlicerApplication::SafeDownCast(this->GetGUI()->GetApplication())->Script("::EMSegmenterParametersStepTcl::DefineMRMLFile");
+  scene->SetURL(mrmlFile);
+  scene->Import();
+  this->GetGUI()->GetApplicationGUI()->SelectModule("EMSegmenter");
+
+  if(scene->GetErrorCode())
+    {
+      vtkErrorMacro("ERROR: Failed to connect to the data. Error code: " << scene->GetErrorCode() 
+      << " Error message: " << scene->GetErrorMessage());
+      return 1;
+    }
+  return 0;
+}
+
+//-------------vtksys_stl::string ---------------------------------------------------------------
+void vtkEMSegmentParametersSetStep::DefineDefaultTasksList()
+{
+  //  cout << "-------- DefineDefaultTasksList Start" << endl;
+ // set define list of parameters 
+  this->pssDefaultTasksName.clear();
+  this->pssDefaultTasksFile.clear();
+
+  vtkDirectory *dir = vtkDirectory::New();
+  vtksys_stl::string FilePath =  this->GetGUI()->GetLogic()->GetTclTaskDirectory();
+  if (!dir->Open(FilePath.c_str()))
+      {
+    vtkErrorMacro("Cannot open " << this->GetGUI()->GetLogic()->GetTclTaskDirectory());
+    // No special files 
+    dir->Delete();
+    return;
+      }
+    
+  for (int i = 0; i < dir->GetNumberOfFiles(); i++)
+      {
+      vtksys_stl::string filename = dir->GetFile(i);
+      //skip ., ..,  and the default file  
+      if (strcmp(filename.c_str(), ".") == 0)
+        {
+        continue;
+        }
+      if (strcmp(filename.c_str(), "..") == 0)
+        {
+        continue;
+        }
+      
+      if (strcmp(filename.c_str(), vtkMRMLEMSNode::GetDefaultTclTaskFilename()) == 0)
+        {
+        continue;
+        }
+ 
+      vtksys_stl::string fullName = this->GetGUI()->GetLogic()->DefineTclTaskFullPathName(filename.c_str());
+      
+      if (strcmp(vtksys::SystemTools::
+                 GetFilenameExtension(fullName.c_str()).c_str(), ".tcl") != 0)
+        {
+        continue;
+        }
+
+      if (!vtksys::SystemTools::FileIsDirectory(fullName.c_str()))
+        {
+
+      vtkstd::replace(filename.begin(), filename.end(), '-', ' ');
+      // Get Rid of extension
+      filename.resize(filename.size() - 4);
+      this->pssDefaultTasksFile.push_back(fullName);
+      this->pssDefaultTasksName.push_back(vtksys_stl::string(filename));
+        } 
+      }
+  dir->Delete();
+  if (!this->pssDefaultTasksFile.size()) 
+    {
+      vtkWarningMacro("No default tasks found in " << this->GetGUI()->GetLogic()->GetTclTaskDirectory());
+    }
+  // The last one is always "Create New" 
+  this->pssDefaultTasksFile.push_back(vtksys_stl::string(""));
+  this->pssDefaultTasksName.push_back("Create new task");
+  // cout << "-------- DefineDefaultTasksList End" << endl;
+
+}
+
+void vtkEMSegmentParametersSetStep::_Validate(int flag)
+{
+  if (flag) {
+    if (this->SettingSegmentationMode(0))
+    {
+      vtkKWWizardWorkflow *wizard_workflow = this->GetGUI()->GetWizardWidget()->GetWizardWorkflow();
+      wizard_workflow->PushInput(vtkKWWizardStep::GetValidationFailedInput());
+      wizard_workflow->ProcessInputs();
+      return;
+    }
+  } 
+}

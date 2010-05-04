@@ -86,13 +86,22 @@
 #include "vtkSlicerSlicesGUI.h"
 #include "vtkSlicerSlicesControlGUI.h"
 #include "vtkSlicerModulesWizardDialog.h"
+#include "vtkCacheManager.h"
 
 #include "vtkSlicerFiducialListWidget.h"
 #include "vtkSlicerROIViewerWidget.h"
 
+#include "vtkHTTPHandler.h"
+#include "vtkURIHandler.h"
+
 // MRML includes
 #include "vtkMRMLScene.h"
 #include "vtkMRMLViewNode.h"
+#include "vtkMRMLVolumeNode.h"
+#include "vtkMRMLScalarVolumeNode.h"
+#include "vtkMRMLScalarVolumeDisplayNode.h"
+#include "vtkURIHandler.h"
+#include "vtkHTTPHandler.h"
 
 #ifdef Slicer3_USE_PYTHON
 #include "slicerPython.h"
@@ -104,6 +113,7 @@
 
 // VTKSYS includes
 #include <vtksys/stl/vector>
+#include <vtksys/stl/string>
 #include <vtksys/stl/map>
 #include <vtksys/ios/fstream>
 
@@ -131,6 +141,9 @@ public:
 
   typedef vtksys_stl::vector<vtkSlicerViewerWidget*> ViewerWidgetContainerType;
   ViewerWidgetContainerType ViewerWidgets;
+
+  typedef vtksys_stl::vector<vtkSlicerFiducialListWidget*> FiducialListWidgetContainerType;
+  FiducialListWidgetContainerType FiducialListWidgets;
 };
 
 //---------------------------------------------------------------------------
@@ -181,7 +194,6 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
 #endif
 
   //--- Main viewer
-  this->FiducialListWidget = NULL;
   this->ROIViewerWidget = NULL;
 
   // use STL::MAP to hold all main slice viewers
@@ -586,6 +598,180 @@ void vtkSlicerApplicationGUI::ProcessImportSceneCommand()
   return;
 }
 
+
+//--- Note: add new methods for new sample data
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessDownloadDTIBrain()
+{
+  std::string uri_String = "http://www.slicer.org/slicerWiki/images/0/01/DTI-Brain.nrrd";
+  this->DownloadSampleVolume (uri_String.c_str() );
+}
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessDownloadCTChest()
+{
+  std::string uri_String = "http://www.slicer.org/slicerWiki/images/3/31/CT-chest.nrrd";
+  this->DownloadSampleVolume (uri_String.c_str() );
+}
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessDownloadCTACardio()
+{
+  std::string uri_String = "http://www.slicer.org/slicerWiki/images/0/00/CTA-cardio.nrrd";
+  this->DownloadSampleVolume (uri_String.c_str() );
+}
+ 
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessDownloadMRIHead()
+{
+  std::string uri_String = "http://www.slicer.org/slicerWiki/images/4/43/MR-head.nrrd";
+  this->DownloadSampleVolume (uri_String.c_str() );
+}
+
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::DownloadSampleVolume(const char *uri)
+{
+  
+  if ( uri == NULL )
+    {
+    vtkErrorMacro ( "Got NULL uri." );
+    return;
+    }
+  if ( this->GetMRMLScene() == NULL )
+    {
+    vtkErrorMacro ( "Got NULL MRML scene." );
+    return;
+    }
+  if (this->GetSlicerApplication() == NULL )
+    {
+    vtkErrorMacro ( "Got NULL Slicer Application." );
+    return;
+    }
+  if ( this->GetApplicationLogic() == NULL )
+    {
+    vtkErrorMacro ( "Got NULL Slicer Application Logic." );
+    return;
+    }
+  if ( this->GetMRMLScene()->GetCacheManager()==NULL )
+    {
+    vtkErrorMacro ( "Got NULL CacheManager." );
+      return;
+    }
+  if ( this->GetMRMLScene()->GetCacheManager()->GetRemoteCacheDirectory() == NULL )
+    {
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent (  this->MainSlicerWindow );
+    dialog->SetStyleToMessage();
+    std::string msg = "Please set your Cache Directory to enable data download. This may be done through Slicer's application settings interface.";
+    dialog->SetText(msg.c_str());
+    dialog->Create ( );
+    dialog->SetMasterWindow( this->MainSlicerWindow );
+    dialog->ModalOn();
+    dialog->Invoke();
+    dialog->Delete();
+    return;
+    }
+  std::string cacheDir = this->GetMRMLScene()->GetCacheManager()->GetRemoteCacheDirectory();
+  if ( cacheDir.empty() )
+    {
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent (  this->MainSlicerWindow );
+    dialog->SetStyleToMessage();
+    std::string msg = "Please set your Cache Directory to enable data download. This may be done through Slicer's application settings interface.";
+    dialog->SetText(msg.c_str());
+    dialog->Create ( );
+    dialog->SetMasterWindow( this->MainSlicerWindow );
+    dialog->ModalOn();
+    dialog->Invoke();
+    dialog->Delete();
+    return;
+    }
+
+
+  vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());  
+  std::string uri_String = uri;
+
+  size_t slash = uri_String.find_last_of ( "/");
+  if ( slash == std::string::npos )
+    {
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent (  this->MainSlicerWindow );
+    dialog->SetStyleToMessage();
+    std::string msg = "The uri string was poorly formed. Not able to download dataset.";
+    dialog->SetText(msg.c_str());
+    dialog->Create ( );
+    dialog->SetMasterWindow( this->MainSlicerWindow );
+    dialog->ModalOn();
+    dialog->Invoke();
+    dialog->Delete();
+    return;
+    }
+
+
+  vtkSlicerModuleGUI *vgui = this->GetSlicerApplication()->GetModuleGUIByName("Volumes");
+  if ( vgui )
+    {
+    const char *retval = this->GetSlicerApplication()->Script("set vlogic [$::slicer3::VolumesGUI GetLogic]");
+    if (strcmp(retval, "0") != 0)
+      {
+      //--- Raise CacheAndRemoteDataIOGUI
+      this->GetSlicerApplication()->Script ("$::slicer3::RemoteIOGUI DisplayManagerWindow");
+
+      //---
+      //--- Start volume download.
+      //---
+      std::string filename = vtksys::SystemTools::GetFilenameWithoutExtension ( uri_String );
+      const char *retval2 = app->Script("[$::slicer3::VolumesGUI GetLogic] AddArchetypeVolume %s %s %d", uri_String.c_str(), filename.c_str(), 10 );
+      if ( strcmp (retval2, "0") != 0)
+        {
+        //---
+        //--- don't think we can
+        //--- get the node back from tcl,
+        //--- so find it by name
+        //---
+        int num = this->MRMLScene->GetNumberOfNodesByClass ( "vtkMRMLScalarVolumeNode");
+        for ( int n=0; n <num; n++ )
+          {
+          vtkMRMLScalarVolumeNode *vnode = vtkMRMLScalarVolumeNode::SafeDownCast (this->MRMLScene->GetNthNodeByClass (n,  "vtkMRMLScalarVolumeNode"));
+          if ( vnode && vnode->GetName() != NULL )
+            {
+            if ( !(strcmp(vnode->GetName(), filename.c_str())) )
+              {
+              vtkMRMLScalarVolumeDisplayNode *dnode = vtkMRMLScalarVolumeDisplayNode::SafeDownCast(vnode->GetDisplayNode());
+              if ( dnode )
+                {
+                dnode->SetAndObserveColorNodeID ( "vtkMRMLColorTableNodeGrey" );
+                dnode->SetAutoWindowLevel ( 1 );
+                dnode->SetAutoThreshold ( 1 );
+                }
+              if (this->GetApplicationLogic()->GetSelectionNode() != NULL )
+                {
+                this->GetApplicationLogic()->GetSelectionNode()->SetReferenceActiveVolumeID ( vnode->GetID() );
+                }
+              this->GetApplicationLogic()->PropagateVolumeSelection();
+              break;
+              }
+            }
+          }
+        }
+      else
+        {
+        vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+        dialog->SetParent (  this->MainSlicerWindow );
+        dialog->SetStyleToMessage();
+        std::string msg = "Unable to access Volumes Logic to download dataset. No data downloaded.";
+        dialog->SetText(msg.c_str());
+        dialog->Create ( );
+        dialog->SetMasterWindow( this->MainSlicerWindow );
+        dialog->ModalOn();
+        dialog->Invoke();
+        dialog->Delete();
+        return;
+        }
+      }
+    }
+}
+
+
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::ProcessAddDataCommand()
 {
@@ -645,6 +831,7 @@ void vtkSlicerApplicationGUI::ProcessAddRulerCommand()
   dialog->Create ( );
   dialog->SetMasterWindow( this->MainSlicerWindow );
   dialog->ModalOn();
+  dialog->SetStyleToOkCancel();
   if (dialog->Invoke())
     {
     std::string str = dialog->GetEntry()->GetWidget()->GetValue();
@@ -1238,6 +1425,19 @@ void vtkSlicerApplicationGUI::ProcessGUIEvents ( vtkObject *caller,
           break;
           }
         }
+      int nb_fid_viewer_widgets = this->GetNumberOfFiducialListWidgets();
+      for (int i = 0; i < nb_fid_viewer_widgets; ++i)
+        {
+        vtkSlicerFiducialListWidget *fidlist_widget = this->GetNthFiducialListWidget(i);
+        if (fidlist_widget &&
+            fidlist_widget->GetViewNode() &&
+            fidlist_widget->GetViewNode()->GetName() &&
+            !strcmp(page_title, fidlist_widget->GetViewNode()->GetName()))
+          {
+          fidlist_widget->GetViewNode()->SetActive(1);
+          break;
+          }
+        }
       }
     }
 
@@ -1455,12 +1655,10 @@ void vtkSlicerApplicationGUI::UpdateLoadStatusText()
       {
       txt.append ( "..." );
       win->SetStatusText ( txt.c_str() );
-      this->Script ( "update idletasks" );
       }
     else
       {
       win->SetStatusText ( upText );
-      this->Script ( "update idletasks" );
       }
     }
 }
@@ -1706,6 +1904,23 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
   this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (
                                                              this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                                              "Import Scene...", this, "ProcessImportSceneCommand");
+
+  //---
+  //--- Load sample data
+  //---
+  vtkKWMenu *cm = vtkKWMenu::New();
+  cm->SetParent ( this->GetMainSlicerWindow()->GetFileMenu() );
+  cm->Create();
+  //--- add all instances of sample data here
+  cm->AddCommand ( "MRI Head", this, "ProcessDownloadMRIHead" );
+  cm->AddCommand ( "DTI Brain", this, "ProcessDownloadDTIBrain" );
+  cm->AddCommand ( "CT Chest", this, "ProcessDownloadCTChest" );
+  cm->AddCommand ( "CT Angiogram (Cardio)", this, "ProcessDownloadCTACardio" );
+  i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCascade (
+                                                              this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
+                                                              "Download Sample Data", cm );
+  cm->Delete();
+
 
   i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCommand (
                                                                  this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
@@ -2270,6 +2485,7 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
   vtksys_stl::map<vtkMRMLViewNode*, int> view_nodes;
 
   int nb_added = 0;
+  int nb_fidlist_added = 0;
   vtkMRMLViewNode *node = NULL;
   int n, nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLViewNode");
   for (n = 0; n < nnodes; n++)
@@ -2293,6 +2509,24 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
         node->InvokeEvent(
           vtkMRMLViewNode::GraphicalResourcesCreatedEvent, viewer_widget);
         nb_added++;
+        }
+      if (!this->GetFiducialListWidgetForNode(node))
+        {
+        vtkSlicerFiducialListWidget *fidlist_widget = vtkSlicerFiducialListWidget::New();
+        fidlist_widget->SetApplication(app);
+        fidlist_widget->SetParent(this->MainSlicerWindow);
+        fidlist_widget->SetAndObserveViewNode(node);
+        fidlist_widget->SetMRMLScene(this->MRMLScene);
+        fidlist_widget->Create();
+        vtkSlicerViewerWidget *active_viewer = this->GetViewerWidgetForNode(node);
+        fidlist_widget->SetViewerWidget(active_viewer);
+        fidlist_widget->SetInteractorStyle(active_viewer ? vtkSlicerViewerInteractorStyle::SafeDownCast(active_viewer->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()) : NULL);
+        fidlist_widget->UpdateFromMRML();
+//        fidlist_widget->SetApplicationLogic(this->GetApplicationLogic());
+        this->Internals->FiducialListWidgets.push_back(fidlist_widget);
+        node->InvokeEvent(
+          vtkMRMLViewNode::GraphicalResourcesCreatedEvent, fidlist_widget);
+        nb_fidlist_added++;
         }
       }
     }
@@ -2328,29 +2562,32 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
       }
     } while (!done);
 
-
-  // Add the fiducial list widget
-
-  if (!this->FiducialListWidget)
+  // clean up the fiducial list widgets
+  vtkSlicerApplicationGUIInternals::FiducialListWidgetContainerType
+    fidlist_widget_to_delete;
+  int fid_done; 
+  do
     {
-    this->FiducialListWidget = vtkSlicerFiducialListWidget::New();
-    this->FiducialListWidget->SetApplication( app );
-    this->FiducialListWidget->Create();
-    // add events
-    // TODO: this is wrong, this should be in the FiducialListWidget, there is
-    // no reason the app should do that... Especially if somebody create
-    // his/her own FiducialListWidget instance...
-    vtkIntArray *events = vtkIntArray::New();
-    events->InsertNextValue(vtkMRMLScene::SceneCloseEvent);
-    events->InsertNextValue(vtkMRMLScene::SceneClosingEvent);
-    events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
-    events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
-    events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
-    events->InsertNextValue(vtkCommand::ModifiedEvent);
-    this->FiducialListWidget->SetAndObserveMRMLSceneEvents (this->MRMLScene, events );
-    events->Delete();
-    }
-
+    fid_done = 1;
+    vtkSlicerApplicationGUIInternals::FiducialListWidgetContainerType::iterator it =
+      this->Internals->FiducialListWidgets.begin();
+    vtkSlicerApplicationGUIInternals::FiducialListWidgetContainerType::iterator end =
+      this->Internals->FiducialListWidgets.end();
+    for (; it != end; ++it)
+      {
+      vtkSlicerFiducialListWidget *fidlist_widget = (*it);
+      if (fidlist_widget &&
+          view_nodes.find(fidlist_widget->GetViewNode()) == view_nodes.end())
+        {
+        fidlist_widget_to_delete.push_back(fidlist_widget);
+        fidlist_widget->RemoveMRMLObservers();
+        this->Internals->FiducialListWidgets.erase(it);
+        fid_done = 0;
+        break;
+        }
+      }
+    } while (!fid_done);
+  
   // Add the roi widget
 
   if (!this->ROIViewerWidget)
@@ -2363,12 +2600,25 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
 
   // Update the dependencies. Order is important, leave it here, so that
   // reference counts can go down (viewer widgets get partly release here).
-
   this->UpdateActiveViewerWidgetDependencies(this->GetActiveViewerWidget());
 
-  // Remove 3D viewers that have no nodes
+  
   // Second pass delete them
 
+  // remove fiducial widget with no nodes (do this before the viewer widgets!)
+  vtkSlicerApplicationGUIInternals::FiducialListWidgetContainerType::iterator fid_it =
+    fidlist_widget_to_delete.begin();
+  vtkSlicerApplicationGUIInternals::FiducialListWidgetContainerType::iterator fid_end =
+    fidlist_widget_to_delete.end();
+  for (; fid_it != fid_end; ++fid_it)
+    {
+    vtkSlicerFiducialListWidget *fidlist_widget = (*fid_it);
+//    fidlist_widget->SetApplicationLogic(NULL);
+    fidlist_widget->SetParent(NULL);
+    fidlist_widget->Delete();
+    }
+
+  // Remove 3D viewers that have no nodes
   vtkSlicerApplicationGUIInternals::ViewerWidgetContainerType::iterator it =
     view_widget_to_delete.begin();
   vtkSlicerApplicationGUIInternals::ViewerWidgetContainerType::iterator end =
@@ -2380,6 +2630,8 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
     viewer_widget->SetParent(NULL);
     viewer_widget->Delete();
     }
+
+  
 }
 
 //---------------------------------------------------------------------------
@@ -2439,10 +2691,6 @@ void vtkSlicerApplicationGUI::OnViewNodeRemoved(vtkMRMLViewNode *view_node)
 void vtkSlicerApplicationGUI::UpdateActiveViewerWidgetDependencies(
   vtkSlicerViewerWidget *active_viewer)
 {
-  this->FiducialListWidget->SetViewerWidget(active_viewer);
-  this->FiducialListWidget->SetInteractorStyle(active_viewer ? vtkSlicerViewerInteractorStyle::SafeDownCast(active_viewer->GetMainViewer()->GetRenderWindowInteractor()->GetInteractorStyle()) : NULL);
-  this->FiducialListWidget->UpdateFromMRML();
-
   this->ROIViewerWidget->SetMainViewerWidget(active_viewer);
   this->ROIViewerWidget->UpdateFromMRML();
 
@@ -2509,13 +2757,23 @@ void vtkSlicerApplicationGUI::DestroyMain3DViewer ( )
       }
 
     // Destroy fiducial list
-    if ( this->FiducialListWidget )
+    vtkSlicerApplicationGUIInternals::FiducialListWidgetContainerType::iterator fid_it =
+      this->Internals->FiducialListWidgets.begin();
+    vtkSlicerApplicationGUIInternals::FiducialListWidgetContainerType::iterator fid_end =
+      this->Internals->FiducialListWidgets.end();
+    for (; fid_it != fid_end; ++fid_it)
       {
-      this->FiducialListWidget->RemoveMRMLObservers ();
-      this->FiducialListWidget->SetParent(NULL);
-      this->FiducialListWidget->Delete();
-      this->FiducialListWidget = NULL;
+      vtkSlicerFiducialListWidget *fidlist_widget = (*fid_it);
+      if (fidlist_widget)
+        {
+        fidlist_widget->RemoveMRMLObservers();
+//        fidlist_widget->SetApplicationLogic(NULL);
+        fidlist_widget->SetParent(NULL);
+        fidlist_widget->Delete();
+        }
       }
+    this->Internals->FiducialListWidgets.clear();
+    
     // Destroy roi widget
     if ( this->ROIViewerWidget )
       {
@@ -2550,7 +2808,7 @@ void vtkSlicerApplicationGUI::DestroyMain3DViewer ( )
 int vtkSlicerApplicationGUI::GetNumberOfViewerWidgets()
 {
   return (int)this->Internals->ViewerWidgets.size();
-    }
+}
 
 //---------------------------------------------------------------------------
 vtkSlicerViewerWidget* vtkSlicerApplicationGUI::GetNthViewerWidget(int idx)
@@ -2598,6 +2856,60 @@ vtkSlicerViewerWidget* vtkSlicerApplicationGUI::GetActiveViewerWidget()
   // used. Sadly, it was saved as "false", which means that now that this flag
   // is supported, snapshots start disabling the view! Try to work around this.
   return this->GetNthViewerWidget(0);
+}
+
+//---------------------------------------------------------------------------
+int vtkSlicerApplicationGUI::GetNumberOfFiducialListWidgets()
+{
+  return (int)this->Internals->FiducialListWidgets.size();
+}
+
+//---------------------------------------------------------------------------
+vtkSlicerFiducialListWidget* vtkSlicerApplicationGUI::GetNthFiducialListWidget(int idx)
+{
+  if (idx < 0 || idx >= this->GetNumberOfFiducialListWidgets())
+    {
+    return NULL;
+    }
+
+  return this->Internals->FiducialListWidgets[idx];
+}
+
+//---------------------------------------------------------------------------
+vtkSlicerFiducialListWidget* vtkSlicerApplicationGUI::GetFiducialListWidgetForNode(
+  vtkMRMLViewNode *node)
+{
+  int nb_fidlist_widgets = this->GetNumberOfFiducialListWidgets();
+  for (int i = 0; i < nb_fidlist_widgets; ++i)
+    {
+    vtkSlicerFiducialListWidget *fidlist_widget = this->GetNthFiducialListWidget(i);
+    if (fidlist_widget && fidlist_widget->GetViewNode() == node)
+      {
+      return fidlist_widget;
+      }
+    }
+
+  return NULL;
+}
+
+//---------------------------------------------------------------------------
+vtkSlicerFiducialListWidget* vtkSlicerApplicationGUI::GetActiveFiducialListWidget()
+{
+  int nb_fidlist_widgets = this->GetNumberOfFiducialListWidgets();
+  for (int i = 0; i < nb_fidlist_widgets; ++i)
+    {
+    vtkSlicerFiducialListWidget *fidlist_widget = this->GetNthFiducialListWidget(i);
+    if (fidlist_widget && fidlist_widget->GetViewNode()->GetActive() && fidlist_widget->GetViewNode()->GetVisibility())
+      {
+      return fidlist_widget;
+      }
+    }
+
+  // no active found, alright, use first one, if any
+  // Legacy support, the active flag on the vtkMRMLViewNode was saved, but not
+  // used. Sadly, it was saved as "false", which means that now that this flag
+  // is supported, snapshots start disabling the view! Try to work around this.
+  return this->GetNthFiducialListWidget(0);
 }
 
 //---------------------------------------------------------------------------
@@ -4534,3 +4846,5 @@ int vtkSlicerApplicationGUI::GetNumberOfVisibleViewNodes()
     }
   return numberOfVisibleNodes;
 }
+
+

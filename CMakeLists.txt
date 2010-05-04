@@ -185,6 +185,12 @@ IF(Slicer3_BUILD_TESTING)
   INCLUDE(CTest)
   SET(CXX_TEST_PATH ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
   MARK_AS_ADVANCED(TCL_TCLSH DART_ROOT)
+
+#-----------------------------------------------------------------------------
+# Run test through valgrind: particularly useful for testing modules.
+#
+option(USE_VALGRIND "Run tests through valgrind." OFF)
+
 ENDIF(Slicer3_BUILD_TESTING)
 
 #-----------------------------------------------------------------------------
@@ -461,8 +467,18 @@ CONFIGURE_FILE(
   )
 
 CONFIGURE_FILE(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/runValgrindForOneModule.sh.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/Scripts/runValgrindForOneModule.sh
+  )
+
+CONFIGURE_FILE(
   ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/computeCodeCoverageLocally.sh.in 
   ${CMAKE_CURRENT_BINARY_DIR}/Scripts/computeCodeCoverageLocally.sh
+  )
+
+CONFIGURE_FILE(
+  ${CMAKE_CURRENT_SOURCE_DIR}/Scripts/computeCodeCoverageForOneTest.sh.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/Scripts/computeCodeCoverageForOneTest.sh
   )
 
 CONFIGURE_FILE(

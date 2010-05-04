@@ -52,6 +52,7 @@ public:
   vtkGetObjectMacro ( MultiColumnList, vtkKWMultiColumnListWithScrollbars );
   vtkGetObjectMacro ( NodeHelpWidget, vtkSlicerPopUpHelpWidget );
   vtkGetObjectMacro ( ColorSelectorWidget, vtkSlicerNodeSelectorWidget);
+  vtkGetObjectMacro ( ScalarBarAnnotation, vtkKWScalarBarAnnotation);
 
   //Description:
   //Enable/Disable MultiSelect possibilities
@@ -70,7 +71,6 @@ public:
   /// 
   /// Getting and setting the mrml color node id
   vtkGetStringMacro(ColorNodeID);
-  //vtkSetStringMacro(ColorlListNodeID);
   void SetColorNodeID(char *id);
 
   //BTX
@@ -121,7 +121,6 @@ public:
   void SetSelectedColorIndex(int index);
 
   void AddColorIcons();
-  void AssignLUTImage ( vtkKWMenu *menu, int index, const char *name );
   
   /// 
   /// API for setting ColorNode, and observing it

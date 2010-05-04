@@ -880,7 +880,17 @@ if(Slicer3_USE_QT)
     )
 endif(Slicer3_USE_QT)
 
-
+set(vtk_MAC_ARGS)
+if(APPLE)
+  set(vtk_MAC_ARGS
+    -DCMAKE_SHARED_LINKER_FLAGS:STRING="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib"
+    -DCMAKE_EXE_LINKER_FLAGS:STRING="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib"
+    -DOPENGL_INCLUDE_DIR:PATH=/usr/X11R6/include
+    -DVTK_USE_CARBON:BOOL=OFF
+    -DVTK_USE_COCOA:BOOL=OFF
+    -DVTK_USE_X:BOOL=ON
+  )
+endif()
 
 set(slicer_TCL_LIB)
 set(slicer_TK_LIB)
@@ -916,6 +926,21 @@ endif(vtk_WRAP_TCL)
 #set ::VTK_TK_LIB $::TCL_LIB_DIR/tk84.lib
 #set ::VTK_TCLSH $::TCL_BIN_DIR/tclsh84.exe
 
+## Need to set the library path so that vtkhash is found while building the parellel libraries
+#        set ::env(DYLD_LIBRARY_PATH) "$::Slicer3_LIB/VTK-build/bin"
+#        set OpenGLString "-framework OpenGL;/usr/X11R6/lib/libGL.dylib"
+#        runcmd $::CMAKE \
+#            -DCMAKE_SKIP_RPATH:BOOL=OFF \
+#            -DCMAKE_CXX_COMPILER:STRING=$COMPILER_PATH/$COMPILER \
+#            -DCMAKE_CXX_COMPILER_FULLPATH:FILEPATH=$COMPILER_PATH/$COMPILER \
+#            -DCMAKE_SHARED_LINKER_FLAGS:STRING="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib" \
+#            -DCMAKE_EXE_LINKER_FLAGS="-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib" \
+#            -DVTK_USE_CARBON:BOOL=OFF \
+#            -DVTK_USE_COCOA:BOOL=OFF \
+#            -DVTK_USE_X:BOOL=ON \
+#            -DOPENGL_INCLUDE_DIR:PATH=/usr/X11R6/include \
+#            -DOPENGL_gl_LIBRARY:STRING=$OpenGLString \
+
 ExternalProject_Add(vtk
   DEPENDS ${vtk_DEPENDS}
   CVS_REPOSITORY ":pserver:anonymous:vtk@public.kitware.com:/cvsroot/VTK"
@@ -938,6 +963,7 @@ ExternalProject_Add(vtk
     -DVTK_WRAP_PYTHON:BOOL=${vtk_WRAP_PYTHON}
     ${vtk_PYTHON_ARGS}
     ${vtk_QT_ARGS}
+    ${vtk_MAC_ARGS}
   INSTALL_COMMAND ""
 )
 
@@ -971,7 +997,7 @@ endif()
 
 if(Slicer3_USE_KWWIDGETS)
   set(proj KWWidgets)
-  set(kwwidgets_tag Slicer-3-4)
+  set(kwwidgets_tag Slicer-3-6)
 
   ExternalProject_Add(${proj}
     DEPENDS vtk
@@ -1004,7 +1030,7 @@ set(proj Insight)
 ExternalProject_Add(${proj}
   CVS_REPOSITORY ":pserver:anonymous:insight@public.kitware.com:/cvsroot/Insight"
   CVS_MODULE "Insight"
-  CVS_TAG -r ITK-3-16
+  CVS_TAG -r ITK-3-18
   SOURCE_DIR Insight
   BINARY_DIR Insight-build
   CMAKE_GENERATOR ${gen}

@@ -14,16 +14,14 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 #include "vtkTriangleFilter.h"
 
+#include "LSops.h"
+
 vtkCxxRevisionMacro(vtkLevelSetMeshEvolver, "$Revision: 1.00 $");
 vtkStandardNewMacro(vtkLevelSetMeshEvolver);
 
 vtkLevelSetMeshEvolver::vtkLevelSetMeshEvolver()
 {
-  // assign values
-  // this->MemberVar = value
 
-  // optional second input
-  this->SetNumberOfInputPorts(2);
 }
 
 void vtkLevelSetMeshEvolver::SetSource(vtkPolyData *source)
@@ -49,7 +47,7 @@ int vtkLevelSetMeshEvolver::RequestData(
 {
    // get the info objects
   vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
-  vtkInformation *sourceInfo = inputVector[1]->GetInformationObject(0);
+  //vtkInformation *sourceInfo = inputVector[1]->GetInformationObject(0);
   vtkInformation *outInfo = outputVector->GetInformationObject(0);
   
   // update progress bar at some intervals
@@ -58,12 +56,12 @@ int vtkLevelSetMeshEvolver::RequestData(
     // get the input and ouptut
   vtkPolyData *input = vtkPolyData::SafeDownCast(
     inInfo->Get(vtkDataObject::DATA_OBJECT()));
+  /*
   vtkPolyData *source = 0;
-  if (sourceInfo)
-    {
+  if (sourceInfo)    {
     source = vtkPolyData::SafeDownCast(
-      sourceInfo->Get(vtkDataObject::DATA_OBJECT()));
-    }
+      sourceInfo->Get(vtkDataObject::DATA_OBJECT
+    ()));}*/
   vtkPolyData *output = vtkPolyData::SafeDownCast(
     outInfo->Get(vtkDataObject::DATA_OBJECT()));
   
@@ -78,28 +76,40 @@ int vtkLevelSetMeshEvolver::RequestData(
     return 1;
     }
   
-  bool bDoNothing = true;
-    if ( bDoNothing ) 
-    { //don't do anything! pass data through
+  { // copy everything through first, before updating...
     output->CopyStructure(input);
     output->GetPointData()->PassData(input->GetPointData());
     output->GetCellData()->PassData(input->GetCellData());
-    return 1;
-    }
-  vtkDebugMacro(<<"Analyzing ____ ...");
+    vtkDebugMacro(<<"Analyzing ____ ...");
+  }
+
   
+
+  // Perform LS-Sparse on Mesh 
+  // Create New Scalar Array called "ActiveContourFunctionValues"
+  // Update the vtkIntArray called "ActiveContourVertexIndices"
+  {
+    int EVOLVE_ITER = 300;
+    SparseFieldLS* sfls = new SparseFieldLS( this->myMeshData,   L_z, L_p1,   L_n1,   L_p2, L_n2, map );
+    std::vector<int> NewLZ    = sfls->Evolve( EVOLVE_ITER );
+    std::vector<double>* vals = sfls->GetPhi( );
+    // Update the array!
+    vtkDataArray* contourIdxArrayIn = input->GetPointData()->GetArray("ActiveContourVertexIndices");
+     vtkSmartPointer<vtkIntArray>  activeContourVertIdx = vtkSmartPointer<vtkIntArray>::New();
+     activeContourVertIdx = vtkIntArray::SafeDownCast( contourIdxArrayIn );
+     for( ::size_t i = 0; i < map.size(); i++ ) {
+        int val = vtkMath::Round( float( (*vals)[i] ) );
+       activeContourVertIdx->SetValue( i, val );
+     }
+     for( ::size_t i = 0; i < NewLZ.size(); i++ ) {
+        int idx = NewLZ[i];
+        activeContourVertIdx->SetValue( idx, 1 );
+     }
+     output->GetPointData()->AddArray( activeContourVertIdx );
+  }
+
   // update progress bar at some intervals
   this->UpdateProgress(0.75);
-  
-  vtkPoints* newPts = vtkPoints::New();
-  output->SetPoints(newPts);
-  newPts->Delete();
-
-  output->SetVerts(input->GetVerts());
-  output->SetLines(input->GetLines());
-  output->SetPolys(input->GetPolys());
-  output->SetStrips(input->GetStrips());
- 
   return 1;
  }
  
@@ -129,4 +139,3 @@ void vtkLevelSetMeshEvolver::PrintSelf(ostream& os, vtkIndent indent)
     os << indent << "Source (none)\n";
     }
 }
-

@@ -83,8 +83,8 @@ proc FastMarchingSegmentationBuildGUI {this} {
   #
   # help frame
   #
-  set helptext "This module performs segmentation using fast marching method with automatic estimation of region statistics. The core C++ classes were contributed by Eric Pichon in slicer2.\n\nIn order to benefit from this module, please use the following steps:\n(1) specify input scalar volume to be segmented\n(2) define fiducial seeds within the region you want to segment\n(3) specify the expected volume of the structure to be segmented. Note, overestimation of this volume is OK, because you will be able to adjust the actual volume once the segmentation is complete\n(4) specify the label color for the segmentation\n(5) Run sementation\n(6) use volume control slider to adjust segmentation result.\nDocumentation: <a>http://wiki.na-mic.org/Wiki/index.php/Slicer3:FastMarchingSegmentation</a>"
-  set abouttext "This module was designed and implemented by Andriy Fedorov and Ron Kikinis based on the original implementation of Eric Pichon in Slicer2.\nThis work was funded by Brain Science Foundation, and is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details."
+  set helptext "This module performs segmentation using fast marching method with automatic estimation of region statistics. The core C++ classes were contributed by Eric Pichon in slicer2.\n\nIn order to benefit from this module, please use the following steps:\n(1) specify input scalar volume to be segmented\n(2) define fiducial seeds within the region you want to segment\n(3) specify the expected volume of the structure to be segmented. Note, overestimation of this volume is OK, because you will be able to adjust the actual volume once the segmentation is complete\n(4) specify the label color for the segmentation\n(5) Run sementation\n(6) use volume control slider to adjust segmentation result.\nDocumentation: <a>http://wiki.slicer.org/slicerWiki/index.php/Modules:FastMarchingSegmentation-Documentation-3.6</a>"
+  set abouttext "This module was designed and implemented by Andriy Fedorov and Ron Kikinis based on the original implementation of Eric Pichon in Slicer2. PI: Ron Kikinis. \nThis work was funded by Brain Science Foundation, and is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details."
   $this BuildHelpAndAboutFrame $pageWidget $helptext $abouttext
 
   set slicerBaseIcons [vtkSlicerBaseAcknowledgementLogoIcons New]
@@ -201,7 +201,7 @@ proc FastMarchingSegmentationBuildGUI {this} {
   $segvolume SetClampMinimumValue 0
   $segvolume SetValue 0
   [$segvolume GetLabel] SetText "Target segmented volume (mL):"
-  $segvolume SetBalloonHelpString "Overestimate of the segmented structure volume"
+  $segvolume SetBalloonHelpString "Overestimate of the segmented structure volume. Hint: human mandible is about 30 mL, human head is approximately 5000 mL"
   pack [$segvolume GetWidgetName] -side top -anchor e -padx 2 -pady 2
 
   set ::FastMarchingSegmentation($this,labelColorSpin) [vtkKWScaleWithEntry New]
@@ -280,6 +280,9 @@ proc FastMarchingSegmentationBuildGUI {this} {
 
   # disable results adjustment frame to reduce confusion
   FastMarchingSegmentationDisableAdjustFrameGUI $this
+
+  set ::FastMarchingSegmentation($this,userWarnedFlag) 0
+  set ::FastMarchingSegmentation($this,newFiducialListFlag) 0
 }
 
 proc FastMarchingSegmentationAddGUIObservers {this} {
@@ -287,6 +290,9 @@ proc FastMarchingSegmentationAddGUIObservers {this} {
   $this AddObserverByNumber $::FastMarchingSegmentation($this,acceptButton) 10000 
   $this AddObserverByNumber $::FastMarchingSegmentation($this,timeScrollScale) 10000
   $this AddObserverByNumber $::FastMarchingSegmentation($this,timeScrollScale) 10001
+  # fiducial list selector: listen to new node to change the glyph, and to node
+  # selection to change the active fiducial list
+  $this AddObserverByNumber $::FastMarchingSegmentation($this,fiducialsSelector) 11001
   $this AddObserverByNumber $::FastMarchingSegmentation($this,fiducialsSelector) 11000
   $this AddObserverByNumber $::FastMarchingSegmentation($this,timescrollRange) 10001
   $this AddObserverByNumber $::FastMarchingSegmentation($this,volRenderCheckbox) 10000
@@ -332,10 +338,14 @@ proc FastMarchingSegmentationProcessGUIEvents {this caller event} {
       return
     }
 
-    FastMarchingSegmentationErrorDialog $this "WARNING: The segmentation \
-    produced by this method cannot approach closer than 3 pixels to the \
-    boundary of the image.\n\nPlease make sure there is sufficient pixel margin \
-    around the structure you are trying to segment!"
+    if { $::FastMarchingSegmentation($this,userWarnedFlag) == 0 } {
+      FastMarchingSegmentationErrorDialog $this "WARNING: The segmentation \
+      produced by this method cannot approach closer than 3 pixels to the \
+      boundary of the image.\n\nPlease make sure there is sufficient pixel margin \
+      around the structure you are trying to segment!"
+      set ::FastMarchingSegmentation($this,userWarnedFlag) 1
+    }
+
     # try to prevent user from messing up the module
     FastMarchingSegmentationDisableIOFrameGUI $this
 
@@ -357,6 +367,12 @@ proc FastMarchingSegmentationProcessGUIEvents {this caller event} {
     set tsRange $::FastMarchingSegmentation($this,timescrollRange)
     set segmentedVolume [$::FastMarchingSegmentation($this,segVolumeThumbWheel) GetValue]
     set knownpoints [$::FastMarchingSegmentation($this,fastMarchingFilter) nKnownPoints]
+    if { $knownpoints == 0 } {
+      FastMarchingSegmentationErrorDialog "Unknown error occured. Please save \
+      the scene and submit a bug report with the data to reproduce this error \
+      to the developer."
+      return
+    }
     $tsRange SetWholeRange 0.0 $segmentedVolume
     $tsRange SetRange [expr 0.05*$segmentedVolume] [expr 0.95*$segmentedVolume]
     set range [$tsRange GetRange]
@@ -397,11 +413,23 @@ proc FastMarchingSegmentationProcessGUIEvents {this caller event} {
     set selectionNode [[[$this GetLogic] GetApplicationLogic] GetSelectionNode]
     set fmFiducialListID [ [$::FastMarchingSegmentation($this,fiducialsSelector) GetSelected] GetID ]
     set fmFiducialList [$::slicer3::MRMLScene GetNodeByID $fmFiducialListID]
-    puts "Setting props for $fmFiducialList"
-    $selectionNode SetReferenceActiveFiducialListID $fmFiducialListID
-    $fmFiducialList SetGlyphTypeFromString "Sphere3D"
-    $fmFiducialList SetSymbolScale 2
-    $fmFiducialList SetTextScale 3
+
+    if { $event == 11001 } {
+      set ::FastMarchingSegmentation($this,newFiducialListFlag) 1
+    }
+
+    if { $event == 11000 } {
+      $selectionNode SetReferenceActiveFiducialListID $fmFiducialListID
+      if { $::FastMarchingSegmentation($this,newFiducialListFlag) == 1 } {
+        set ::FastMarchingSegmentation($this,newFiducialListFlag) 0
+        puts "Setting props for $fmFiducialList"
+        puts "New node event"
+        $fmFiducialList SetGlyphTypeFromString "Sphere3D"
+        $fmFiducialList SetSymbolScale 2
+        $fmFiducialList SetTextScale 3
+      }
+    }
+
   }
 
   if {$caller == $::FastMarchingSegmentation($this,timescrollRange) } {

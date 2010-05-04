@@ -10,7 +10,6 @@ class vtkMRMLEMSNode;
 class vtkKWWizardWidget;
 class vtkEMSegmentParametersSetStep;
 class vtkEMSegmentIntensityImagesStep;
-class vtkEMSegmentIntensityNormalizationStep;
 class vtkEMSegmentAnatomicalStructureStep;
 class vtkEMSegmentSpatialPriorsStep;
 class vtkEMSegmentNodeParametersStep;
@@ -19,6 +18,7 @@ class vtkEMSegmentRegistrationParametersStep;
 class vtkEMSegmentRunSegmentationStep;
 class vtkEMSegmentInputChannelsStep;
 class vtkEMSegmentPreProcessingStep;
+class vtkKWWizardStep;
 
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentGUI : 
   public vtkSlicerModuleGUI
@@ -54,12 +54,22 @@ public:
   vtkGetObjectMacro(WizardWidget, vtkKWWizardWidget);
   vtkGetObjectMacro(AnatomicalStructureStep, vtkEMSegmentAnatomicalStructureStep);
   vtkGetObjectMacro(ParametersSetStep,vtkEMSegmentParametersSetStep);
+  vtkGetObjectMacro(NodeParametersStep,vtkEMSegmentNodeParametersStep);
+  vtkGetObjectMacro(PreProcessingStep,vtkEMSegmentPreProcessingStep);
+  vtkGetObjectMacro(InputChannelStep,vtkEMSegmentInputChannelsStep);
 
-  // Need to do it bc TCL Wrapping ignores IBM_FLAG !
-  // Need this function for Preprocessing tcl scripts !  
-  //#if IBM_FLAG
-   vtkGetObjectMacro(PreProcessingStep,vtkEMSegmentPreProcessingStep);
-   //#endif
+
+  //BTX
+  enum {
+    SegmentationModeSimple = 1,
+    SegmentationModeAdvanced 
+  };
+  //ETX
+
+  void SetSegmentationModeToAdvanced() {this->SegmentationMode =  SegmentationModeAdvanced; }
+  void SetSegmentationModeToSimple() {this->SegmentationMode =  SegmentationModeSimple; }
+  vtkGetMacro(SegmentationMode,int);
+  int IsSegmentationModeAdvanced() {return (this->SegmentationMode ==  SegmentationModeAdvanced); }
 
   // Description:
   // Create widgets
@@ -124,6 +134,8 @@ public:
   // limitation in kwwidgets tcl wrapping)
   unsigned long AddObserverByNumber(vtkObject *observee, unsigned long event);
 
+  void StartSegmentation(); 
+
 protected:
 
 private:
@@ -157,22 +169,21 @@ private:
   vtkEMSegmentAnatomicalStructureStep    *AnatomicalStructureStep;
   vtkEMSegmentSpatialPriorsStep          *SpatialPriorsStep;
   vtkEMSegmentIntensityImagesStep        *IntensityImagesStep;
-  vtkEMSegmentIntensityNormalizationStep *NormalizationStep;
   vtkEMSegmentIntensityDistributionsStep *IntensityDistributionsStep;
   vtkEMSegmentNodeParametersStep         *NodeParametersStep;
   vtkEMSegmentRegistrationParametersStep *RegistrationParametersStep;
   vtkEMSegmentRunSegmentationStep        *RunSegmentationStep;
-
-#if IBM_FLAG
-  vtkEMSegmentInputChannelsStep          *InputChannelStep;
-#endif
-
-  // Need to do it bc TCL Wrapping ignores IBM_FLAG for functions and otherwise have problems with Get function ! 
+  vtkEMSegmentInputChannelsStep          *InputChannelStep;  
   vtkEMSegmentPreProcessingStep          *PreProcessingStep;
+
+  vtkKWWizardStep *StartSegmentStep;
 
   // Description:
   // Populate the logic with testing data, load some volumes
   virtual void PopulateTestingData();
+
+  int SegmentationMode;
+
 };
 
 #endif

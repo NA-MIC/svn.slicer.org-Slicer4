@@ -73,9 +73,27 @@ proc EditorBuildGUI {this} {
   #
   # help frame
   #
-  set helptext "The Editor allows label maps to be created and edited. The active label map will be modified by the Editor.  See <a>http://www.slicer.org/slicerWiki/index.php/Modules:Editor-Documentation</a>."
+  set helptext "The Editor allows label maps to be created and edited. The active label map will be modified by the Editor.  See <a>http://www.slicer.org/slicerWiki/index.php/Modules:Editor-Documentation-3.6</a>.\n\nThe Master Volume refers to the background grayscale volume to be edited (used, for example, when thresholding).  The Merge Volume refers to a volume that contains several different label values corresponding to different structures.\n\nBasic usage: selecting the Master and Merge Volume give access to the editor tools.  Each tool has a help icon to bring up a dialog with additional information.  Hover your mouse pointer over buttons and options to view Balloon Help (tool tips).  Use these to define the Label Map.\n\nAdvanced usage: open the Per-Structure Volumes tab to create independent Label Maps for each color you wish to edit.  Since many editor tools (such as threshold) will operate on the entire volume, you can use the Per-Structure Volumes feature to isolate these operations on a structure-by-structure basis.  Use the Split Merge Volume button to create a set of volumes with independent labels.  Use the Add Structure button to add a new volume.  Delete Structures will remove all the independent structure volumes.  Merge All will assemble the current structures into the Merge Volume.  Merge And Build will invoke the Model Maker module on the Merge Volume."
+
   set abouttext "This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details.  Module implemented by Steve Pieper."
   $this BuildHelpAndAboutFrame $pageWidget $helptext $abouttext
+
+
+  #
+  # Editor Volumes
+  #
+  set ::Editor($this,volumesFrame) [vtkSlicerModuleCollapsibleFrame New]
+  $::Editor($this,volumesFrame) SetParent $pageWidget
+  $::Editor($this,volumesFrame) Create
+  $::Editor($this,volumesFrame) SetLabelText "Create & Select Label Maps"
+  pack [$::Editor($this,volumesFrame) GetWidgetName] \
+    -side top -anchor nw -fill x -expand false -padx 2 -pady 2 -in [$pageWidget GetWidgetName]
+
+  # create the helper box - note this isn't a  kwwidget
+  #  but a helper class that creates kwwidgets in the given frame
+  set ::Editor($this,editHelper) [::HelperBox #auto]
+  $::Editor($this,editHelper) configure -frame [$::Editor($this,volumesFrame) GetFrame]
+  $::Editor($this,editHelper) create
 
 
   #
@@ -142,36 +160,19 @@ proc EditorBuildGUI {this} {
 
   # Enable check point check button
   set ::Editor($this,enableCheckPoint) [vtkKWCheckButton New]
-  $::Editor($this,enableCheckPoint) SetParent $::Editor($this,toolsFrame)
+  $::Editor($this,enableCheckPoint) SetParent $::Editor($this,toolsEditFrame)
   $::Editor($this,enableCheckPoint) Create
-  $::Editor($this,enableCheckPoint) SetText "Enable Volume Check Points"
+  $::Editor($this,enableCheckPoint) SetText "Check Points"
   $::Editor($this,enableCheckPoint) SetBalloonHelpString "Volume Check Points allow you to move back and forth through recent edits.\n\nNote: for large volumes, you may run out of system memory when this is enabled."
   $::Editor($this,enableCheckPoint) SetSelectedState 0
-  pack [$::Editor($this,enableCheckPoint) GetWidgetName] \
-    -side left
+  pack [$::Editor($this,enableCheckPoint) GetWidgetName] -side left
   set ::Editor(checkPointsEnabled) 0
 
-  #
-  # Editor Volumes
-  #
-  set ::Editor($this,volumesFrame) [vtkSlicerModuleCollapsibleFrame New]
-  $::Editor($this,volumesFrame) SetParent $pageWidget
-  $::Editor($this,volumesFrame) Create
-  $::Editor($this,volumesFrame) SetLabelText "Create & Select Label Maps"
-  pack [$::Editor($this,volumesFrame) GetWidgetName] \
-    -side top -anchor nw -fill x -expand true -padx 2 -pady 2 -in [$pageWidget GetWidgetName]
-
-  # create the helper box - note this isn't a  kwwidget
-  #  but a helper class that creates kwwidgets in the given frame
-  set ::Editor($this,editHelper) [::HelperBox #auto]
-  $::Editor($this,editHelper) configure -frame [$::Editor($this,volumesFrame) GetFrame]
-  $::Editor($this,editHelper) create
 }
 
 proc EditorAddGUIObservers {this} {
     $this AddObserverByNumber $::Editor($this,enableCheckPoint) 10000 
 
-# $this DebugOn
     if {[$this GetDebug]} {
         puts "Adding mrml observer to selection node, modified event"
     }
@@ -395,15 +396,6 @@ proc EditorProcessMRMLEvents {this callerID event} {
 
         # is it the one we're showing?
         if { $displayNode != "" } {
-            if {0} {
-                # deprecated, Editor(x,colorsColor) no longer used
-                if { [$displayNode GetColorNodeID] != [[$::Editor($this,colorsColor) GetColorNode] GetID] } {
-                    if { [$this GetDebug] } {
-                        puts "Resetting the color node"
-                    }
-                    $::Editor($this,colorsColor) SetColorNode [$displayNode GetColorNode]
-                }
-            }
             # add an observer on the volume node for display modified events
             if { [$this GetDebug] } {
                 puts "Adding display node observer on label volume [$labelVolume GetID]"
@@ -425,15 +417,6 @@ proc EditorProcessMRMLEvents {this callerID event} {
         if { [$this GetDebug] } {
             puts "... caller is label volume, got a display modified event, display node = $displayNode"
         }
-        if {0} {
-            # deprecated, not using colorsColor
-            if { $displayNode != "" && [$displayNode GetColorNodeID] != [[$::Editor($this,colorsColor) GetColorNode] GetID] } {
-                if { [$this GetDebug] } {
-                    puts "...resetting the color node"
-                }
-                $::Editor($this,colorsColor) SetColorNode [$displayNode GetColorNode]
-            }
-        }
         return
     }
 }
@@ -446,7 +429,21 @@ proc EditorEnter {this} {
   $this AddMRMLObserverByNumber [[[$this GetLogic] GetApplicationLogic]  GetSelectionNode] \
     [$this GetNumberForVTKEvent ModifiedEvent]
 
-  $::Editor($this,editHelper) updateStructures
+  
+  set sliceLogic [$::slicer3::ApplicationLogic GetSliceLogic "Red"]
+  set layerLogic [$sliceLogic GetBackgroundLayer]
+  set masterNode [$layerLogic GetVolumeNode]
+  set layerLogic [$sliceLogic GetLabelLayer]
+  set mergeNode [$layerLogic GetVolumeNode]
+  if { $masterNode != "" } {
+    if { $mergeNode != "" } {
+      $::Editor($this,editHelper) setVolumes $masterNode $mergeNode
+    } else {
+      if { [$masterNode GetClassName] == "vtkMRMLScalarVolumeNode" } {
+        $::Editor($this,editHelper) setMasterVolume $masterNode
+      }
+    }
+  }
 }
 
 proc EditorExit {this} {
@@ -461,6 +458,19 @@ proc EditorExit {this} {
   # delete the current effect - users were getting confused that the editor was still
   # active when the module wasn't visible
   after idle ::EffectSWidget::RemoveAll
+}
+
+proc EditorShowHideTools {showhide} {
+  set this $::Editor(singleton)
+  if { ![info exists ::Editor($this,toolsFrame)] } {
+    return
+  } 
+  if { $showhide == "show" } {
+    $::Editor($this,editColor) updateGUI [EditorGetPaintLabel]
+    $::Editor($this,toolsFrame) ExpandFrame
+  } else {
+    $::Editor($this,toolsFrame) CollapseFrame
+  }
 }
 
 # TODO: there might be a better place to put this for general use...  
@@ -530,15 +540,19 @@ proc EditorFreeCheckPointVolumes {} {
 }
 
 proc EditorUpdateCheckPointButtons {} {
-  if { $::Editor(previousCheckPointImages) != "" } {
-    EditBox::SetButtonState PreviousCheckPoint ""
-  } else {
-    EditBox::SetButtonState PreviousCheckPoint Disabled
+  if { [info exists ::Editor(previousCheckPointImages)] } {
+    if { $::Editor(previousCheckPointImages) != "" } {
+      EditBox::SetButtonState PreviousCheckPoint ""
+    } else {
+      EditBox::SetButtonState PreviousCheckPoint Disabled
+    }
   }
-  if { $::Editor(nextCheckPointImages) != "" } {
-    EditBox::SetButtonState NextCheckPoint ""
-  } else {
-    EditBox::SetButtonState NextCheckPoint Disabled
+  if { [info exists ::Editor(nextCheckPointImages)] } {
+    if { $::Editor(nextCheckPointImages) != "" } {
+      EditBox::SetButtonState NextCheckPoint ""
+    } else {
+      EditBox::SetButtonState NextCheckPoint Disabled
+    }
   }
 }
 

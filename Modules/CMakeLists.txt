@@ -28,7 +28,6 @@ endif(GenerateLM_FOUND)
 #   - Volumes
 #   - CommandLineModule (at run-time for its CLP Plugins: EMSegmentCommandLine*)
 # QueryAtlas:
-#   - QdecModule
 # MRAblation (if it wasn't broken):
 #   - Volumes
 # Editor:
@@ -43,7 +42,7 @@ endif(GenerateLM_FOUND)
 #   - ScriptedModule (at run-time for its Tcl package)
 
 SET(modules
-  AtlasCreator
+  #AtlasCreator <- culled from slicer 3.6
   CommandLineModule
   Editor
   Endoscopy
@@ -51,7 +50,6 @@ SET(modules
   Meshing
   Python
 # PythonGADScriptedModule
-  QdecModule
   QueryAtlas
   FetchMI
   SlicerWelcome
@@ -68,8 +66,9 @@ SET(modules
 # WFEngineModule  <- can't work with 2.6 and Win32??
 # MRAblation <- not working either
   ModelMirror
+  ModelTransform
   EMSegment
-  DistanceTransformModel
+  # DistanceTransformModel <- culled from slicer 3.6
   ClipModel
   Measurements
   ModelIntoLabelVolume
@@ -113,7 +112,6 @@ ENDFOREACH(module)
 ## REALTIMEIMAGING_DEBUG
 ## MRABLATION_DEBUG
 ## TRACTOGRAPHY_DEBUG
-## QDEC_DEBUG
 ## COMMANDLINE_DEBUG
 ## DEAMON_DEBUG
 

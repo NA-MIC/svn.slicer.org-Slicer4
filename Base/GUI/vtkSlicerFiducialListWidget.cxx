@@ -207,6 +207,8 @@ vtkSlicerFiducialListWidget::vtkSlicerFiducialListWidget ( )
   this->ProcessingMRMLEvent = 0;
   this->RenderPending = 0;
 
+  this->ViewNode = NULL;
+   
   // for picking
   this->ViewerWidget = NULL;
   this->InteractorStyle = NULL;
@@ -219,6 +221,8 @@ void vtkSlicerFiducialListWidget::RemoveMRMLObservers()
 {
   vtkDebugMacro("vtkSlicerFiducialListWidget::RemoveMRMLObservers\n");
   this->RemoveFiducialObservers();
+
+  this->SetAndObserveViewNode (NULL);
 }
 
 //---------------------------------------------------------------------------
@@ -238,8 +242,13 @@ vtkSlicerFiducialListWidget::~vtkSlicerFiducialListWidget ( )
     }
   this->SeedWidgets.clear();
   
-  
+  vtkSetMRMLNodeMacro(this->ViewNode, NULL);
+
+  // this call was triggering an inf loop of observers when deleting the
+  // second fid list widget
   this->SetViewerWidget(NULL);
+  //this->ViewerWidget = NULL;
+  
   this->SetInteractorStyle(NULL);
 }
 //---------------------------------------------------------------------------
@@ -586,6 +595,14 @@ void vtkSlicerFiducialListWidget::ProcessMRMLEvents ( vtkObject *caller,
     vtkDebugMacro("Got transform modified event, calling update positions on list " << callerList->GetID());
     this->Update3DWidgetPositions(callerList);
     }
+
+  else if (vtkMRMLViewNode::SafeDownCast(caller) != NULL &&
+           event == vtkCommand::ModifiedEvent)
+    {
+    vtkDebugMacro("ProcessingMRMLEvents: got a view node modified event");
+    this->UpdateViewNode();
+    this->RequestRender();
+    }
   
   this->ProcessingMRMLEvent = 0;
 
@@ -604,6 +621,20 @@ void vtkSlicerFiducialListWidget::CreateWidget ( )
   
   // Call the superclass to create the whole widget
   this->Superclass::CreateWidget();
+
+  // set up event observers
+  if (this->MRMLScene)
+    {
+    vtkIntArray *events = vtkIntArray::New();
+    events->InsertNextValue(vtkMRMLScene::SceneCloseEvent);
+    events->InsertNextValue(vtkMRMLScene::SceneClosingEvent);
+    events->InsertNextValue(vtkMRMLScene::NewSceneEvent);
+    events->InsertNextValue(vtkMRMLScene::NodeAddedEvent);
+    events->InsertNextValue(vtkMRMLScene::NodeRemovedEvent);
+    events->InsertNextValue(vtkCommand::ModifiedEvent);
+    this->SetAndObserveMRMLSceneEvents (this->MRMLScene, events );
+    events->Delete();
+    }
 }
 
 
@@ -616,6 +647,8 @@ void vtkSlicerFiducialListWidget::UpdateFromMRML()
     {
     return;
     }
+  this->UpdateViewNode();
+  
   int nnodes = this->GetMRMLScene()->GetNumberOfNodesByClass("vtkMRMLFiducialListNode");
   vtkDebugMacro("UpdateFromMRML: nnodes = " << nnodes);
   for (int n=0; n<nnodes; n++)
@@ -717,26 +750,28 @@ void vtkSlicerFiducialListWidget::UpdateSeed(vtkMRMLFiducialListNode *flist, con
     return;
     }
 
+  double worldxyz[4];
+  flist->GetNthFiducialXYZWorld(f, worldxyz);
+  
   // get the index of the seed representing this fiducial
   int seedIndex = seedWidget->GetIndexFromID(fidID);
   if (seedIndex == -1)
     {
-    vtkErrorMacro("UpdateSeed: couldn't get the seed widget index from id " << fidID << ", using fiducial index of " << f);
-    seedIndex = f;
+    vtkDebugMacro("UpdateSeed: couldn't get the seed widget index from id " << fidID << ", adding a new seed for fiducial index of " << f);
+    seedIndex = seedWidget->AddSeed(worldxyz, fidID);;
     }
   else
     {
-    vtkDebugMacro("UpdateSeed: fiducial index = " << f << ", seed index = " << seedIndex);
+    vtkDebugMacro("UpdateSeed: fiducial index = " << f << ", seed index = " << seedIndex << ", from fid id " << fidID);
     }
   
-  double worldxyz[4];
-  flist->GetNthFiducialXYZWorld(f, worldxyz);
+  
 
   // does this seed exist already?
-  if (seedWidget->GetNthSeedExists(f) == 0)
+  if (seedWidget->GetNthSeedExists(seedIndex) == 0)
     {
-    vtkDebugMacro("Seed " << f << " does not exist, adding it");
-    seedWidget->AddSeed(worldxyz, fidID);
+    vtkDebugMacro("UpdateSeed: Seed index " << seedIndex << " for fid index " << f << " does not exist, adding it with ID " << fidID);
+    seedIndex = seedWidget->AddSeed(worldxyz, fidID);
     }
 
   int visib = 1;
@@ -757,67 +792,6 @@ void vtkSlicerFiducialListWidget::UpdateSeed(vtkMRMLFiducialListNode *flist, con
                          flist->GetGlyphType(),
                          flist->GetOpacity(), flist->GetAmbient(), flist->GetDiffuse(), flist->GetSpecular(), flist->GetPower());
 
-  
-  /*
-  // make sure the camera is up to date
-  vtkCamera *cam = this->GetActiveCamera();
-  if (cam)
-    {
-    vtkDebugMacro("Setting " << f << "th seed camera");
-    seedWidget->SetNthSeedCamera(f, cam);
-    }
-  
-  double worldxyz[4];
-  if (flist->GetNthFiducialXYZWorld(f, worldxyz))
-    {
-    // does this seed exist already?
-    if (seedWidget->GetNthSeedExists(f) == 0)
-      {
-      vtkWarningMacro("Seed " << f << " does not exist, adding it");
-      seedWidget->AddSeed(worldxyz);
-      }
-    else
-      {
-      vtkDebugMacro("UpdateSeed: setting position for fid #" << f << ", id " << fidID << " to " << worldxyz[0] << ", " << worldxyz[1] << ", " << worldxyz[2]);
-      seedWidget->SetNthSeedPosition(f, worldxyz);
-      }
-    }
-  else { vtkDebugMacro("UpdateSeed: null world xyz"); }
-
-  // label text
-  const char *txt =  flist->GetNthFiducialLabelText(f);
-  vtkDebugMacro("UpdateSeed: Setting point " << f << " label text to " << (txt == NULL ? "null" : txt) );
-  seedWidget->SetNthLabelText(f,txt);
-                         */
-  /*
-  // only lock the seed if the whole list is locked
-  vtkDebugMacro("UpdateSeed: Setting point " << f << " locked to list lock value " <<  flist->GetLocked());
-  if ( flist->GetLocked())
-    {
-    seedWidget->SetNthSeedLocked(f, 1);
-    }
-  else
-    {
-    seedWidget->SetNthSeedLocked(f, 0);
-    }
-  */
-                         /*
-  int visib = 1;
-  if (flist->GetVisibility() == 0 || flist->GetNthFiducialVisibility(f) == 0)
-    {
-    // Point is not visible
-    visib = 0;
-    }
-  vtkDebugMacro("UpdateSeed: Point " << f << " visible = " << visib);
-  // nth seed visib sets the text visib
-  seedWidget->SetNthSeedVisibility(f, visib);
-  // scales
-  seedWidget->SetNthSeedTextScale(f, flist->GetTextScale());
-  seedWidget->SetNthSeedGlyphScale(f, flist->GetSymbolScale());
-  // selected
-  vtkDebugMacro("UpdateSeed: Point " << f << " selected = " <<  flist->GetNthFiducialSelected(f));
-  seedWidget->SetNthSeedSelected(f, flist->GetNthFiducialSelected(f));
-                         */
   this->RequestRender();
 }
 
@@ -1024,8 +998,8 @@ void vtkSlicerFiducialListWidget::SetViewerWidget(
     // TODO: figure out if this is necessary
     this->RemoveSeedWidgets();
     if (this->ViewerWidget->HasObserver(
-          vtkSlicerViewerWidget::ActiveCameraChangedEvent, 
-          this->GUICallbackCommand) == 1)
+            vtkSlicerViewerWidget::ActiveCameraChangedEvent, 
+             this->GUICallbackCommand) == 1)
       {
       this->ViewerWidget->RemoveObservers(
         vtkSlicerViewerWidget::ActiveCameraChangedEvent, 
@@ -1117,7 +1091,7 @@ void vtkSlicerFiducialListWidget::RemovePointWidget(const char *pointID)
     }
   else
     {
-    vtkWarningMacro("RemovePointWidget: couldn't find point widget for id " << pointID);
+    vtkDebugMacro("RemovePointWidget: couldn't find point widget for id " << pointID);
     }
 }
 
@@ -1501,7 +1475,7 @@ void vtkSlicerFiducialListWidget::RemoveSeedWidget(vtkMRMLFiducialListNode *fidu
       }
     else
       {
-      vtkWarningMacro("RemoveSeedWidget: unable to find the seed widget class for list " << fiducialListNode->GetID());
+      vtkDebugMacro("RemoveSeedWidget: unable to find the seed widget class for list " << fiducialListNode->GetID());
       }
     vtkDebugMacro("RemoveSeedWidget: removed seed widget for list " << fiducialListNode->GetID());
     }
@@ -1517,6 +1491,11 @@ void vtkSlicerFiducialListWidget::RemoveSeedWidget(vtkMRMLFiducialListNode *fidu
 //---------------------------------------------------------------------------
 void vtkSlicerFiducialListWidget::RemoveSeedWidgets()
 {
+  if (this->SeedWidgets.size() == 0)
+    {
+    // none to remove
+    return;
+    }
   int nnodes = this->MRMLScene->GetNumberOfNodesByClass("vtkMRMLFiducialListNode");
   vtkDebugMacro("RemoveSeedWidgets: have " << nnodes << " fiducial list nodes in the scene, " << this->SeedWidgets.size() << " widgets defined already");
 
@@ -2066,4 +2045,10 @@ void vtkSlicerFiducialListWidget::Swap(vtkMRMLFiducialListNode *flist, int first
   
   return;
   
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerFiducialListWidget::UpdateViewNode()
+{
+  // obsolete as per comment in vtkSlicerViewerWidget::UpdateViewNode
 }

@@ -21,6 +21,7 @@
 #include "vtkKWEntry.h"
 #include "vtkKWCheckButton.h"
 
+#include "vtkMRMLLogic.h"
 #include "vtkMRMLVolumeNode.h"
 #include "vtkMRMLDiffusionTensorVolumeNode.h"
 #include "vtkMRMLDiffusionWeightedVolumeNode.h"
@@ -213,9 +214,12 @@ void vtkSlicerMRMLSaveDataWidget::ProcessWidgetEvents ( vtkObject *caller,
       }
     }
   else if (this->CancelButton ==  vtkKWPushButton::SafeDownCast(caller) && 
-    event ==  vtkKWPushButton::InvokedEvent)
-    { 
-    this->SaveDialog->Cancel();
+           event ==  vtkKWPushButton::InvokedEvent)
+    {
+    if (this->SaveDialog)
+      {
+      this->SaveDialog->Cancel();
+      }
     }
   else if(event == vtkKWMultiColumnList::CellUpdatedEvent && 
     this->MultiColumnList->GetWidget() == vtkKWMultiColumnList::SafeDownCast(caller))
@@ -240,7 +244,10 @@ void vtkSlicerMRMLSaveDataWidget::SaveSceneWithData(int sceneRow)
     {
     vtkKWMessageDialog *message = vtkKWMessageDialog::New();
     message->SetParent ( this->GetParent() );
-    message->SetMasterWindow ( this->SaveDialog );
+    if (this->SaveDialog)
+      {
+      message->SetMasterWindow ( this->SaveDialog );
+      }
     message->SetStyleToMessage ();
     message->SetText("No scene file selected. Scene is not saved");
     message->Create();
@@ -255,7 +262,10 @@ void vtkSlicerMRMLSaveDataWidget::SaveSceneWithData(int sceneRow)
     {
     vtkKWMessageDialog *message = vtkKWMessageDialog::New();
     message->SetParent ( this->GetParent() );
-    message->SetMasterWindow ( this->SaveDialog );
+    if (this->SaveDialog)
+      {
+      message->SetMasterWindow ( this->SaveDialog );
+      }
     message->SetStyleToYesNo();
     std::string msg = "File " + sceneFileName + " exists. Do you want to replace it?";
     message->SetText(msg.c_str());
@@ -278,7 +288,10 @@ void vtkSlicerMRMLSaveDataWidget::SaveSceneWithData(int sceneRow)
     {
     if(this->SaveScene(sceneRow))
       {
-      this->SaveDialog->OK();
+      if (this->SaveDialog)
+        {
+        this->SaveDialog->OK();
+        }
       this->InvokeEvent(vtkSlicerMRMLSaveDataWidget::DataSavedEvent);
       }
     }
@@ -483,6 +496,13 @@ int vtkSlicerMRMLSaveDataWidget::SaveScene(int sceneRow)
     this->MRMLScene->SetRootDirectory(directory.c_str());
     this->SetSnapshotsRootDirectory();
     
+    // remove unreferenced nodes
+    vtkMRMLLogic *mrmlLogic = vtkMRMLLogic::New();
+    mrmlLogic->SetScene(this->GetMRMLScene());
+    mrmlLogic->RemoveUnreferencedDisplayNodes();
+    mrmlLogic->RemoveUnreferencedStorageNodes();
+    mrmlLogic->Delete();
+
     this->GetMRMLScene()->SetURL(fileName.c_str());
     this->GetMRMLScene()->SetVersion(this->GetVersion());
     this->GetMRMLScene()->Commit();  
@@ -605,6 +625,11 @@ int vtkSlicerMRMLSaveDataWidget::UpdateFromMRML()
       node->SetAndObserveStorageNodeID(storageNode->GetID());
       storageNode->Delete();
       snode = storageNode;
+      }
+    else
+      {
+      // we don't need a new default storage node
+      storageNode->Delete();
       }
     
     if (snode->GetFileName() == NULL && this->DataDirectoryName != NULL) 

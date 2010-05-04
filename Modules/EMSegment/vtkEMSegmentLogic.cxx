@@ -30,6 +30,8 @@
 #include "vtkBSplineRegistrator.h"
 #include "vtkTransformToGrid.h"
 #include "vtkIdentityTransform.h"
+#include "vtkKWApplication.h"
+#include "vtkKWTkUtilities.h"
 
 // needed to translate between enums
 #include "EMLocalInterface.h"
@@ -38,12 +40,10 @@
 #include <exception>
 
 #include <vtksys/SystemTools.hxx>
+#include "vtkDirectory.h"
+#include "vtkMatrix4x4.h"
 
 #define ERROR_NODE_VTKID 0
-
-#if IBM_FLAG
-#include "IBM/vtkEMSegmentIBMLogic.cxx" 
-#endif 
 
 // A helper class to compare two maps
 template <class T>
@@ -152,6 +152,59 @@ SaveIntermediateResults()
 }
 
 //----------------------------------------------------------------------------
+// New Task Specific Pipeline
+//----------------------------------------------------------------------------
+
+int vtkEMSegmentLogic::SourceTclFile(vtkKWApplication*app,const char *tclFile)
+{
+  // Load Tcl File defining the setting
+  if (!app->LoadScript(tclFile))
+    {
+      vtkErrorMacro("Could not load in data for task. The following file does not exist: " << tclFile);
+      return 1;
+    }
+  return 0 ;
+}
+
+//----------------------------------------------------------------------------
+
+int vtkEMSegmentLogic::SourceTaskFiles(vtkKWApplication* app) { 
+  vtksys_stl::string generalFile = this->DefineTclTaskFullPathName(vtkMRMLEMSNode::GetDefaultTclTaskFilename());
+  vtksys_stl::string specificFile = this->DefineTclTasksFileFromMRML();
+  cout << "Sourcing general Task file : " << generalFile.c_str() << endl;
+  // Have to first source the default file to set up the basic structure"
+  if (this->SourceTclFile(app,generalFile.c_str()))
+    {
+      return 1;
+    }
+  // Now we overwrite anything from the default
+  if (specificFile.compare(generalFile))
+    {
+      cout << "Sourcing task specific file: " <<   specificFile << endl;
+      return this->SourceTclFile(app,specificFile.c_str()); 
+    }
+  return 0;
+}
+
+//----------------------------------------------------------------------------  
+int vtkEMSegmentLogic::SourcePreprocessingTclFiles(vtkKWApplication* app) 
+{
+  if (this->SourceTaskFiles(app))
+    {
+      return 1;
+    }
+   // Source all files here as we otherwise sometimes do not find the function as Tcl did not finish sourcing but our cxx file is already trying to call the function 
+   vtksys_stl::string tclFile =  this->GetModuleShareDirectory();
+#ifdef _WIN32
+   tclFile.append("\\Tcl\\EMSegmentAutoSample.tcl");
+#else
+   tclFile.append("/Tcl/EMSegmentAutoSample.tcl");
+#endif
+   return this->SourceTclFile(app,tclFile.c_str());
+}
+
+
+//----------------------------------------------------------------------------
 bool
 vtkEMSegmentLogic::
 StartPreprocessing()
@@ -206,10 +259,11 @@ StartPreprocessingInitializeInputData()
 }
 
 //----------------------------------------------------------------------------
+
 bool
 vtkEMSegmentLogic::
 StartPreprocessingTargetIntensityNormalization()
-{
+{  
   std::cerr << " EMSEG: Starting intensity normalization..." << std::endl;
 
   // get a pointer to the mrml manager for easy access
@@ -235,7 +289,7 @@ StartPreprocessingTargetIntensityNormalization()
     vtkWarningMacro("Global parameters node is null, aborting!");
     return false;
     }
-  
+
   // set up the normalized target node
   vtkMRMLEMSTargetNode* normalizedTarget = 
     m->GetWorkingDataNode()->GetNormalizedTargetNode();
@@ -1114,6 +1168,62 @@ SlicerBSplineRegister(vtkMRMLVolumeNode* fixedVolumeNode,
   registrator->Delete();
 }
 
+void vtkEMSegmentLogic::StartPreprocessingResampleToTarget(vtkMRMLVolumeNode* movingVolumeNode, vtkMRMLVolumeNode* fixedVolumeNode, vtkMRMLVolumeNode* outputVolumeNode)
+{
+  if (vtkEMSegmentLogic::IsVolumeGeometryEqual(fixedVolumeNode, outputVolumeNode)) 
+    {
+      return;
+    }
+
+  std::cerr << "Warning: Target-to-target registration skipped but "
+        << "target images have differenent geometries. "
+        << std::endl
+        << "Suggestion: If you are not positive that your images are "
+        << "aligned, you should enable target-to-target registration."
+        << std::endl;
+
+  std::cerr << "Fixed Volume Node: " << std::endl;
+  PrintImageInfo(fixedVolumeNode);
+  std::cerr << "Output Volume Node: " << std::endl;
+  PrintImageInfo(outputVolumeNode);
+
+  // std::cerr << "Resampling target image " << i << "...";
+  double backgroundLevel = 0;
+  switch (movingVolumeNode->GetImageData()->GetScalarType())
+    {  
+      vtkTemplateMacro(backgroundLevel = (GuessRegistrationBackgroundLevel<VTK_TT>(movingVolumeNode->GetImageData())););
+    }
+  std::cerr << "   Guessed background level: " << backgroundLevel << std::endl;
+
+  vtkEMSegmentLogic::
+    SlicerImageReslice(movingVolumeNode, 
+               outputVolumeNode, 
+               fixedVolumeNode,
+               NULL,
+               vtkEMSegmentMRMLManager::InterpolationLinear,
+               backgroundLevel);        
+  std::cerr << "DONE" << std::endl;
+}
+
+//----------------------------------------------------------------------------
+double vtkEMSegmentLogic::GuessRegistrationBackgroundLevel(vtkMRMLVolumeNode* volumeNode)
+{
+  if (!volumeNode ||  !volumeNode->GetImageData())  
+    {
+      vtkWarningMacro(" volumeNode or volumeNode->GetImageData is null");
+      return -1;
+    }
+
+  // guess background level    
+  double backgroundLevel = 0;
+  switch (volumeNode->GetImageData()->GetScalarType())
+      {  
+        vtkTemplateMacro(backgroundLevel = (GuessRegistrationBackgroundLevel<VTK_TT>(volumeNode->GetImageData())););
+      }
+  std::cerr << "   Guessed background level: " << backgroundLevel << std::endl;
+  return backgroundLevel;
+}
+
 //----------------------------------------------------------------------------
 bool
 vtkEMSegmentLogic::
@@ -1224,24 +1334,14 @@ StartPreprocessingTargetToTargetRegistration()
       vtkWarningMacro("Registration output image is null, skipping: " << i);
       return false;
       }
-
-    //
-    // guess background level    
-    double backgroundLevel = 0;
-    switch (movingVolumeNode->GetImageData()->GetScalarType())
-      {  
-      vtkTemplateMacro(backgroundLevel = (GuessRegistrationBackgroundLevel<VTK_TT>(movingVolumeNode->GetImageData())););
-      }
-    std::cerr << "   Guessed background level: " << backgroundLevel
-              << std::endl;
-
+       
     //
     // apply rigid registration
     if (this->MRMLManager->GetEnableTargetToTargetRegistration())
       {
-      vtkTransform* fixedRASToMovingRASTransform = vtkTransform::New();
-      vtkEMSegmentLogic::
-        SlicerRigidRegister
+    double backgroundLevel = this->GuessRegistrationBackgroundLevel(movingVolumeNode);
+    vtkTransform* fixedRASToMovingRASTransform = vtkTransform::New();
+    vtkEMSegmentLogic::SlicerRigidRegister
         (fixedVolumeNode,
          movingVolumeNode,
          outputVolumeNode,
@@ -1264,37 +1364,13 @@ StartPreprocessingTargetToTargetRegistration()
         std::cerr << std::endl;
         }
       fixedRASToMovingRASTransform->Delete();
+
       }
     else
       {
       std::cerr << "  Skipping registration of target image " 
                 << i << "." << std::endl;
-      
-      if (!vtkEMSegmentLogic::
-          IsVolumeGeometryEqual(fixedVolumeNode, outputVolumeNode))
-        {
-        std::cerr << "Warning: Target-to-target registration skipped but "
-                  << "target images have differenent geometries. "
-                  << std::endl
-                  << "Suggestion: If you are not positive that your images are "
-                  << "aligned, you should enable target-to-target registration."
-                  << std::endl;
-
-        std::cerr << "Fixed Volume Node: " << std::endl;
-        PrintImageInfo(fixedVolumeNode);
-        std::cerr << "Output Volume Node: " << std::endl;
-        PrintImageInfo(outputVolumeNode);
-
-        std::cerr << "Resampling target image " << i << "...";
-        vtkEMSegmentLogic::
-          SlicerImageReslice(movingVolumeNode, 
-                             outputVolumeNode, 
-                             fixedVolumeNode,
-                             NULL,
-                             vtkEMSegmentMRMLManager::InterpolationLinear,
-                             backgroundLevel);        
-        std::cerr << "DONE" << std::endl;
-        }
+      this->StartPreprocessingResampleToTarget(movingVolumeNode, fixedVolumeNode, outputVolumeNode);
       }
     }    
   std::cerr << " EMSEG: Target-to-target registration complete." << std::endl;
@@ -1588,13 +1664,29 @@ StartSegmentation()
   //
   // make sure preprocessing is up to date
   //
-  std::cerr << "EMSEG: Start preprocessing..." << std::endl;
+  std::cerr << "EMSEG: Start preprocessing..." << std::endl; 
+
+  vtkMRMLEMSTargetNode *inputNodes = this->MRMLManager->GetTargetInputNode();
+  if (!inputNodes)
+    {
+      vtkErrorMacro("EMSEG: No Input defined");
+      return ;
+    } 
+
+
   if (! this->StartPreprocessing())
     {
-    vtkErrorMacro("Preprocessing Failed!  Aborting Segmentation.");
-    return;
+      vtkErrorMacro("Preprocessing Failed!  Aborting Segmentation.");
+      return;
     }
+  
   std::cerr << "EMSEG: Preprocessing complete." << std::endl;
+  this->StartSegmentationWithoutPreprocessing();
+}
+
+//----------------------------------------------------------------------------
+void vtkEMSegmentLogic::StartSegmentationWithoutPreprocessing()
+{
   if (!this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNodeIsValid() ||
       !this->MRMLManager->GetWorkingDataNode()->GetAlignedAtlasNodeIsValid())
     {
@@ -2289,6 +2381,176 @@ ConvertGUIEnumToAlgorithmEnumInterpolationType(int guiEnumValue)
     default:
       vtkErrorMacro("Unknown interpolation type: " << guiEnumValue);
       return -1;
+    }
+}
+
+//----------------------------------------------------------------------------
+vtksys_stl::string  vtkEMSegmentLogic::GetTclTaskDirectory()
+{
+  // Later do automatically
+   vtksys_stl::string file_path = this->GetModuleShareDirectory();
+#ifdef _WIN32
+  file_path.append("\\Tasks\\");
+#else
+  file_path.append("/Tasks/");
+#endif
+  return file_path;
+}
+
+//----------------------------------------------------------------------------
+vtksys_stl::string  vtkEMSegmentLogic::GetTclGeneralDirectory()
+{
+  // Later do automatically
+   vtksys_stl::string file_path = this->GetModuleShareDirectory();
+#ifdef _WIN32
+  file_path.append("\\Tcl\\");
+#else
+  file_path.append("/Tcl/");
+#endif
+  return file_path;
+}
+
+
+
+//----------------------------------------------------------------------------
+vtksys_stl::string vtkEMSegmentLogic::DefineTclTaskFullPathName(const char* TclFileName)
+{
+  vtksys_stl::string full_file_path(this->GetTclTaskDirectory());
+  full_file_path.append(TclFileName);
+  return  full_file_path;
+}
+
+//----------------------------------------------------------------------------
+std::string vtkEMSegmentLogic::DefineTclTasksFileFromMRML()
+{
+  //  cout << "-------- DefineDefaultTasksList Start" << endl;
+  // set define list of parameters 
+  std::string tclFile;
+  vtksys_stl::string FilePath =  this->GetTclTaskDirectory();
+  vtkDirectory *dir = vtkDirectory::New();
+  int flag = dir->Open(FilePath.c_str());
+  dir->Delete();
+
+  if (!flag)
+      {
+    vtkErrorMacro("Cannot open " << this->GetTclTaskDirectory());
+    // No special files 
+    return tclFile;
+      }
+  vtksys_stl::string tmpFile = this->MRMLManager->GetNode()->GetTclTaskFilename();
+  tclFile = FilePath + tmpFile; 
+
+  if (vtksys::SystemTools::FileExists(tclFile.c_str()) && (!vtksys::SystemTools::FileIsDirectory(tclFile.c_str())) )
+    {
+      return tclFile;
+    }
+   cout << "vtkEMSegmentLogic::DefineTclTasksFileFromMRML: " << tclFile.c_str() << " does not exist - using default file" << endl;
+  // If the file does not exists then just take the default ! 
+  tclFile = FilePath +  vtksys_stl::string(vtkMRMLEMSNode::GetDefaultTclTaskFilename());
+  return tclFile;
+  
+}
+
+void vtkEMSegmentLogic::TransferIJKToRAS(vtkMRMLVolumeNode* volumeNode, int ijk[3], double ras[3])
+{
+  vtkMatrix4x4* matrix = vtkMatrix4x4::New();
+  volumeNode->GetIJKToRASMatrix(matrix);
+  float input[4] = {ijk[0],ijk[1],ijk[2],1};
+  float output[4];
+  matrix->MultiplyPoint(input, output);
+  ras[0]= output[0];
+  ras[1]= output[1];
+  ras[2]= output[2];
+}
+
+void vtkEMSegmentLogic::TransferRASToIJK(vtkMRMLVolumeNode* volumeNode, double ras[3], int ijk[3])
+{
+  vtkMatrix4x4* matrix = vtkMatrix4x4::New();
+  volumeNode->GetRASToIJKMatrix(matrix);
+  double input[4] = {ras[0],ras[1],ras[2],1};
+  double output[4];
+  matrix->MultiplyPoint(input, output);
+  ijk[0]= int(output[0]);
+  ijk[1]= int(output[1]);
+  ijk[2]= int(output[2]);
+}
+
+// works for running stuff in TCL so that you do not need to look in two windows 
+void vtkEMSegmentLogic::PrintText(char *TEXT) {
+  cout << TEXT << endl;
+} 
+
+//-----------------------------------------------------------------------------
+// Make sure you source EMSegmentAutoSample.tcl
+
+int vtkEMSegmentLogic::ComputeIntensityDistributionsFromSpatialPrior(vtkKWApplication* app)
+{
+  // iterate over tree nodes
+  typedef vtkstd::vector<vtkIdType>  NodeIDList;
+  typedef NodeIDList::const_iterator NodeIDListIterator;
+  NodeIDList nodeIDList;
+
+  this->MRMLManager->GetListOfTreeNodeIDs(this->MRMLManager->GetTreeRootNodeID(), nodeIDList);
+  for (NodeIDListIterator i = nodeIDList.begin(); i != nodeIDList.end(); ++i)
+    {
+      if (this->MRMLManager->GetTreeNodeIsLeaf(*i)) 
+        {      
+      this->UpdateIntensityDistributionAuto(app,*i);
+        }
+    }
+  return 0;
+}
+
+//-----------------------------------------------------------------------------
+void vtkEMSegmentLogic::UpdateIntensityDistributionAuto(vtkKWApplication* app, vtkIdType nodeID)
+{
+  if (!this->MRMLManager->GetTreeNodeSpatialPriorVolumeID(nodeID)) {
+    vtkWarningMacro("Nothing to update for " << nodeID << " as atlas is not defined");
+    return ;
+  }
+  // get working node 
+  vtkMRMLEMSTargetNode* workingTarget = NULL;
+  if (this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNode() &&
+      this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNodeIsValid())
+    {
+    workingTarget = this->MRMLManager->GetWorkingDataNode()->GetAlignedTargetNode();
+    }
+  else 
+    {
+       vtkErrorMacro("Cannot update intensity distribution bc Aligned Target is not correctly defined for node " << nodeID);
+       return ;
+    }
+
+  int numTargetImages = workingTarget->GetNumberOfVolumes();
+
+   // Sample
+  {
+    vtksys_stl::stringstream CMD ;
+    CMD <<  "::EMSegmenterAutoSampleTcl::EMSegmentGaussCurveCalculationFromID " << vtkKWTkUtilities::GetTclNameFromPointer(app->GetMainInterp(), this->MRMLManager) << " 0.95 1 { " ;
+    for (int i = 0 ; i < numTargetImages; i++) {
+      CMD << workingTarget->GetNthVolumeNodeID(i) << " " ;
+    }
+    CMD << " } " << this->MRMLManager->GetVolumeNode(this->MRMLManager->GetTreeNodeSpatialPriorVolumeID(nodeID))->GetID() << " {" <<  this->MRMLManager->GetTreeNodeName(nodeID) << "} \n";
+    // cout << CMD.str().c_str() << endl;
+    if (atoi(app->Script(CMD.str().c_str()))) { return; }
+  }
+
+  //
+  // propogate data to mrml node
+  //
+
+  vtkMRMLEMSTreeParametersLeafNode* leafNode = this->MRMLManager->GetTreeNode(nodeID)->GetParametersNode()->GetLeafParametersNode();  
+  for (int r = 0; r < numTargetImages; ++r)
+    {
+      {
+    double value = atof(app->Script("expr $::EMSegment(GaussCurveCalc,Mean,%d)",r));
+    leafNode->SetAutoLogMean(r, value);
+      }
+      for (int c = 0; c < numTargetImages; ++c)
+      {
+    double value = atof(app->Script("expr $::EMSegment(GaussCurveCalc,Covariance,%d,%d)",r,c));
+    leafNode->SetAutoLogCovariance(r, c, value);
+      }
     }
 }
 

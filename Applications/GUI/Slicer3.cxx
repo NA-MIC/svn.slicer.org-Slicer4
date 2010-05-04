@@ -1826,7 +1826,7 @@ int Slicer3_main(int& argc, char *argv[])
   //
 
   std::string tclCommand;
-  if ( !NoModules )
+  if ( !NoModules && (ignoreModules->LookupValue("Scripted") < 0) )
     {
     slicerApp->SplashMessage("Initializing Scripted Modules...");
     tclCommand = "set ::Slicer3_PACKAGES(list) {};";
@@ -1839,7 +1839,7 @@ int Slicer3_main(int& argc, char *argv[])
       if (*module_path.c_str() &&
           vtksys::SystemTools::FileExists(module_path.c_str()))
         {
-        tclCommand += "set dirs [glob \"" + module_path + "/*\"]; ";
+        tclCommand += "set dirs [glob -nocomplain \"" + module_path + "/*\"]; ";
         tclCommand += "foreach d $dirs { ";
         tclCommand += "  foreach subdir {\".\" \"Tcl\"} {";
         tclCommand += "    set location [file join [file join $d $subdir] pkgIndex.tcl];";
@@ -2224,7 +2224,7 @@ int Slicer3_main(int& argc, char *argv[])
 #endif
 
 #if !defined(SCRIPTEDMODULE_DEBUG) && defined(Slicer3_BUILD_MODULES)
-  if ( !NoModules )
+  if ( !NoModules && (ignoreModules->LookupValue("Scripted") < 0) )
     {
     // remove the observers from the scripted modules
     tclCommand = "";
@@ -2340,7 +2340,7 @@ int Slicer3_main(int& argc, char *argv[])
   dataGUI->Delete ();
 
 #if !defined(SCRIPTEDMODULE_DEBUG) && defined(Slicer3_BUILD_MODULES)
-  if ( !NoModules )
+  if ( !NoModules && (ignoreModules->LookupValue("Scripted") < 0) )
     {
     tclCommand = "";
     tclCommand += "foreach package $::Slicer3_PACKAGES(list) { ";
@@ -2451,7 +2451,7 @@ int Slicer3_main(int& argc, char *argv[])
 
 
 #if !defined(SCRIPTEDMODULE_DEBUG) && defined(Slicer3_BUILD_MODULES)
-  if ( !NoModules )
+  if ( !NoModules && (ignoreModules->LookupValue("Scripted") < 0) )
     {
     // delete the scripted logics
     tclCommand = "";

@@ -11,7 +11,7 @@ class vtkKWMultiColumnListWithScrollbarsWithLabel;
 class vtkKWFrame;
 class vtkKWEntryWithLabel;
 class vtkKWCheckButtonWithLabel;
-
+class vtkKWWidget;
 class VTK_EMSEGMENT_EXPORT vtkEMSegmentNodeParametersStep : public vtkEMSegmentStep
 {
 public:
@@ -64,6 +64,15 @@ public:
   // Reimplement the superclass's method.
   virtual void Validate();
 
+  int ClassOverviewWeightAutomaticRecalculateFlag;
+  void ClassWeightChangedCallback(vtkIdType sel_tree_class_id, vtkIdType  sel_class_id, double value);
+
+  vtkKWMultiColumnListWithScrollbarsWithLabel *ClassOverviewWeightList;
+  virtual void RightClickOnClassOverviewWeightListCallback(int row, int col, int x, int y);
+  virtual void ClassOverviewWeightChangedCallback(vtkIdType sel_vol_id, int row, int col, const char *value);
+  const char* WeightFormatCallback(const char *text);
+
+
 protected:
   vtkEMSegmentNodeParametersStep();
   ~vtkEMSegmentNodeParametersStep();
@@ -100,7 +109,7 @@ protected:
   vtkKWCheckButtonWithLabel          *NodeParametersExcludeIncompleteEStepCheckButton;
   vtkKWCheckButtonWithLabel          *NodeParametersGenerateBackgroundProbabilityCheckButton;
   vtkKWFrameWithLabel                *NodeParametersInhomogeneityFrame;
-
+  
 private:
   vtkEMSegmentNodeParametersStep(const vtkEMSegmentNodeParametersStep&);
   void operator=(const vtkEMSegmentNodeParametersStep&);

@@ -1,10 +1,18 @@
 project (DicomToNrrdConverter)
 cmake_minimum_required(VERSION 2.6)
+
+enable_testing()
+
 if(COMMAND CMAKE_POLICY)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND CMAKE_POLICY)
 mark_as_advanced(CMAKE_BACKWARDS_COMPATIBILITY)
 
+if (Slicer3_SOURCE_DIR)
+  ##The current testing suite only works from within Slicer3.  Other packages
+  ##that use this tool will not properly run the test
+  ADD_SUBDIRECTORY(Testing)
+endif (Slicer3_SOURCE_DIR)
 
 set (CLP DicomToNrrdConverter)
 set ( ${CLP}_SOURCE ${CLP}.cxx)

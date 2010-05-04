@@ -29,6 +29,16 @@ namespace eval HelperBox {
   proc ShowDialog {} {
     ::Box::ShowDialog HelperBox
   }
+
+  proc Recreate {} {
+    foreach helper [itcl::find objects -class HelperBox] {
+      set f [$helper cget -frame]
+      itcl::delete object $helper
+      set helper [HelperBox #auto]
+      $helper configure -frame $f
+      $helper create
+    }
+  }
 }
 
 
@@ -45,28 +55,49 @@ if { [itcl::find class HelperBox] == "" } {
 
     variable col ;# array of column indices (for easy access)
 
-    variable _master ;# master volume node 
-    variable _observations ;# master volume node 
+    variable _master "" ;# current master volume node 
+    variable _merge "" ;# the current merge volume
+    variable _masterWhenMergeWasSet "" ;# value of the master volume last time merge was selected (to detect changes)
+    variable _colorBox ""
+
+    variable _createMergeOptions ""
+
+    variable _observations
 
     # methods
     method create {} {} ;# create the widget
 
-    method createMerge {} {} ;# make a merge volume for the current selection
+    method createMerge { } {} ;# make a merge volume for the current selection
+    method newMerge { } {} ;# prompt for a merge volume even if one exists
     method select {} {} ;# select the master volume node
     method mergeVolume {} {} ;# helper to get the merge volume for the current selected master
+    method setMergeVolume { {mergeVolume ""} } {} ;# let the user explicitly set merge volume or with dialog
+    method setMasterVolume { masterVolume } {} ;# programmatically set the master (invokes the gui callback indirectly
+    method setVolumes { masterVolume mergeVolumes } {} ;# programmatically set the master and merge (invokes the gui callback indirectly
     method structureVolume { structureName } {} ;# get the volume for a given structure name
 
     method promptStructure {} {} ;# ask which label value to use
-    method addStructure { {label ""} } {} ;# add a new dependent volume
-    method deleteStructures {} {} ;# delete all the structures
+    method addStructure { {label ""} {options ""} } {} ;# add a new dependent volume
+    method deleteStructures { {options "confirm"} } {} ;# delete all the structures
     method updateStructures {} {} ;# refresh the structure frame with currently loaded data
     method merge { {label all} } {} ;# merge the named or all structure labels into the master label
+    method split {} {} ;# extract a label volume for each distinct label in the merge volume
     method edit { {label ""} } {} ;# select structure 'label' for editing
-    method roi {label} {} ;# create a subvolume ROI for 'label'
-    method build { {label all} } {} ;# build a model for one or all labels
+    method build {} {} ;# build merged model for all labels
     method colorSelectDialog {} {} ;# pop up a dialog with color table selection
+    method labelSelectDialog {} {} ;# pop up a dialog to select a label map
 
     method processEvent { caller event } {}
+    method getNodeByName { nodeName } {}
+
+    # to support testing, accessor to instance variables
+    method variables {} {
+      set v(_master) $_master
+      set v(_merge) $_merge
+      set v(_masterWhenMergeWasSet) $_masterWhenMergeWasSet
+      set v(_colorBox) $_colorBox
+      return [array get v]
+    }
   }
 }
 
@@ -81,10 +112,20 @@ itcl::body HelperBox::destructor {} {
   foreach ob $_observations {
     $broker RemoveObservation $ob
   }
+
+  if { $_colorBox != "" } {
+    itcl::delete object $_colorBox
+  }
+}
+
+# create a merge volume for the current master even if one exists
+itcl::body HelperBox::newMerge {} {
+  set _createMergeOptions "new"
+  $this colorSelectDialog  
 }
 
 # create a merge volume for the current master
-itcl::body HelperBox::createMerge { } {
+itcl::body HelperBox::createMerge {} {
   if { $_master == "" } {
     # should never happen
     EditorErrorDialog "Cannot create merge volume without master"
@@ -93,11 +134,17 @@ itcl::body HelperBox::createMerge { } {
 
   set masterName [$_master GetName]
   set mergeName $masterName-label
-  set merge [$this mergeVolume]
+  if { [lsearch $_createMergeOptions "new"] == -1 } {
+    set merge [$this mergeVolume]
+  } else {
+    set merge ""
+  }
+  set _createMergeOptions ""
   if { $merge == "" } {
     set volumesLogic [$::slicer3::VolumesGUI GetLogic]
     set merge [$volumesLogic CreateLabelVolume $::slicer3::MRMLScene $_master $mergeName]
     [$merge GetDisplayNode] SetAndObserveColorNodeID [[$o(colorSelector) GetSelected] GetID]
+    $this setMergeVolume $merge
   }
   after idle $this select
 }
@@ -115,12 +162,14 @@ itcl::body HelperBox::select { } {
       # make the source node the active background, and the label node the active label
       set selectionNode [$::slicer3::ApplicationLogic  GetSelectionNode]
       $selectionNode SetReferenceActiveVolumeID [$_master GetID]
-      $selectionNode SetReferenceSecondaryVolumeID [$merge GetID]
+      $selectionNode SetReferenceActiveLabelVolumeID [$merge GetID]
       $::slicer3::ApplicationLogic  PropagateVolumeSelection 0
       set mergeText [$merge GetName]
+      set _merge $merge
     }
   } else {
-    # bring up dialog if picked a new master
+    # the master exists, but there is no merge volume yet 
+    # bring up dialog to create a merge with a user-selected color node
     if { $_master != "" } {
       $this colorSelectDialog
     }
@@ -129,20 +178,55 @@ itcl::body HelperBox::select { } {
   $this updateStructures
 }
 
+itcl::body HelperBox::setVolumes { masterVolume mergeVolume } {
+  # set both volumes at the same time - trick the callback into 
+  # thinking that the merge volume is already set so it won't prompt for a new one
+  set _merge $mergeVolume
+  set _masterWhenMergeWasSet $masterVolume
+  $this setMasterVolume $masterVolume
+}
+
 # select merge volume 
-itcl::body HelperBox::mergeVolume {} {
+itcl::body HelperBox::setMasterVolume { masterVolume } {
+  $o(masterSelector) SetSelected $masterVolume
+  $this select
+}
+
+# select merge volume 
+itcl::body HelperBox::setMergeVolume { {mergeVolume ""} } {
   if { $_master == "" } {
     return ""
   }
+  if { $mergeVolume != "" } {
+    set _merge $mergeVolume
+    if { [info exists o(labelMapSelector)] } {
+      $o(labelMapSelector) SetSelected $_merge
+    }
+  } else {
+    if { [info exists o(labelMapSelector)] } {
+      set _merge [$o(labelMapSelector) GetSelected]
+    }
+  }
+  set _masterWhenMergeWasSet $_master
+  $this select
+}
+
+# select merge volume 
+itcl::body HelperBox::mergeVolume {} {
+  if { $_master == "" || [info command $_master] == "" } {
+    return ""
+  }
+  if { $_merge != "" && $_master == $_masterWhenMergeWasSet } {
+    if { [$::slicer3::MRMLScene GetNodeByID [$_merge GetID]] != "" } {
+      return $_merge
+    } else {
+      set _merge ""
+    }
+  }
   set masterName [$_master GetName]
   set mergeName $masterName-label
-  set mergeCandidates [$::slicer3::MRMLScene GetNodesByName $mergeName]
-  
-  if { [$mergeCandidates GetNumberOfItems] > 1 } {
-    EditorErrorDialog "Warning: more than one merge label volume for master $masterName"
-  }
-
-  return [$mergeCandidates GetItemAsObject 0]
+  set _merge [$this getNodeByName $mergeName]
+  return $_merge
 }
 
 # select structure volume 
@@ -152,13 +236,7 @@ itcl::body HelperBox::structureVolume { structureName } {
   }
   set masterName [$_master GetName]
   set structureVolumeName $masterName-$structureName-label
-  set structureVolumeCandidates [$::slicer3::MRMLScene GetNodesByName $structureVolumeName]
-  
-  if { [$structureVolumeCandidates GetNumberOfItems] > 1 } {
-    EditorErrorDialog "Warning: more than one structure label volume for master $masterName structure $structureName"
-  }
-
-  return [$structureVolumeCandidates GetItemAsObject 0]
+  return [$this getNodeByName $structureVolumeName]
 }
 
 # ask user which label to create
@@ -175,15 +253,20 @@ itcl::body HelperBox::promptStructure {} {
     return
   }
 
-  set _colorBox [ColorBox #auto]
-  $_colorBox configure -colorNode $colorNode
-  $_colorBox configure -selectCommand "$this addStructure %d; after idle itcl::delete object [namespace current]::$_colorBox"
-  $_colorBox create
+  if { $_colorBox == "" } {
+    set _colorBox [ColorBox #auto]
+    $_colorBox configure -colorNode $colorNode
+    $_colorBox configure -selectCommand "$this addStructure %d"
+    $_colorBox create
+  } else {
+    $_colorBox configure -colorNode $colorNode
+    $_colorBox show
+  }
 }
 
 
 # create the segmentation helper box
-itcl::body HelperBox::addStructure { {label ""} } {
+itcl::body HelperBox::addStructure { {label ""} {options ""} } {
 
   set merge [$this mergeVolume]
   if { $merge == "" } {
@@ -204,11 +287,13 @@ itcl::body HelperBox::addStructure { {label ""} } {
   [$struct GetDisplayNode] SetAndObserveColorNodeID [$colorNode GetID]
 
   $this updateStructures
-  $this edit $label
+  if { [lsearch $options "noEdit"] == -1 } {
+    $this edit $label
+  }
 }
 
 # delete all the structures
-itcl::body HelperBox::deleteStructures {} {
+itcl::body HelperBox::deleteStructures { {options "confirm"} } {
 
   #
   # iterate through structures and delete them
@@ -221,7 +306,7 @@ itcl::body HelperBox::deleteStructures {} {
 
   set rows [$w GetNumberOfRows]
 
-  if { ![EditorConfirmDialog "Delete $rows structure volume(s)?"] } {
+  if { [lsearch $options "yes"] != -1 && ![EditorConfirmDialog "Delete $rows structure volume(s)?"] } {
     return
   }
 
@@ -328,18 +413,64 @@ itcl::body HelperBox::merge { {label all} } {
 
 }
 
-itcl::body HelperBox::build { {label all} } {
+# split the merge volume into individual strutures
+itcl::body HelperBox::split {} {
+
+  $this statusText "Splitting..."
+  set merge [$this mergeVolume]
+  if { $merge == "" } {
+    return
+  } 
+  set colorNode [[$merge GetDisplayNode] GetColorNode]
+
+  set w [$o(structures) GetWidget]
+
+  set accum [vtkImageAccumulate New]
+  $accum SetInput [$merge GetImageData]
+  $accum Update
+  set lo [expr int([lindex [$accum GetMin] 0])]
+  set hi [expr int([lindex [$accum GetMax] 0])]
+  $accum Delete
+
+  set thresholder [vtkImageThreshold New]
+  for {set i $lo} {$i <= $hi} {incr i} {
+    $this statusText "Splitting label $i..."
+    $thresholder SetInput [$merge GetImageData]
+    $thresholder SetInValue $i
+    $thresholder SetOutValue 0
+    $thresholder ReplaceInOn
+    $thresholder ReplaceOutOn
+    $thresholder ThresholdBetween $i $i
+    $thresholder SetOutputScalarType [[$merge GetImageData] GetScalarType]
+    $thresholder Update
+    if { [[$thresholder GetOutput] GetScalarRange] != " 0.0 0.0" } {
+      set labelName [$colorNode GetColorName [expr int($i)]]
+      $this statusText "Creating structure volume $labelName..."
+      set structureVolume [$this structureVolume $labelName]
+      if { $structureVolume == "" } {
+        addStructure $i "noEdit"
+      }
+      set structureVolume [$this structureVolume $labelName]
+      [$structureVolume GetImageData] DeepCopy [$thresholder GetOutput]
+      $structureVolume Modified
+    }
+  }
+  $thresholder Delete
+
+  $this statusText "Finished splitting."
+}
+
+itcl::body HelperBox::build {} {
 
   #
   # get the image data for the label layer
   #
-  set sliceLogic [lindex [vtkSlicerSliceLogic ListInstances] 0]
-  set layerLogic [$sliceLogic GetLabelLayer]
-  set volumeNode [$layerLogic GetVolumeNode]
-  if { $volumeNode == "" } {
-    errorDialog "Cannot make model - no volume node for $layerLogic in $sliceLogic."
+
+  $this statusText "Building..."
+  set merge [$this mergeVolume]
+  if { $merge == "" } {
     return
-  }
+  } 
 
   #
   # find the Model Maker
@@ -366,30 +497,18 @@ itcl::body HelperBox::build { {label all} } {
   $moduleNode SetName "Editor Make Model"
   $moduleNode SetModuleDescription "Model Maker"
 
-  set name [[$o(name) GetWidget] GetValue]
-  if { $name == "" } {
-    $moduleNode SetParameterAsString "Name" "Quick Model"
-  } else {
-    $moduleNode SetParameterAsString "Name" $name
-  }
   $moduleNode SetParameterAsString "FilterType" "Sinc"
-  $moduleNode SetParameterAsBool "GenerateAll" "0"
-  $moduleNode SetParameterAsString "Labels" [EditorGetPaintLabel]
-  $moduleNode SetParameterAsBool "JointSmooth" 1
+  $moduleNode SetParameterAsBool "GenerateAll" "1"
+  $moduleNode SetParameterAsBool "JointSmoothing" 1
   $moduleNode SetParameterAsBool "SplitNormals" 1
   $moduleNode SetParameterAsBool "PointNormals" 1
   $moduleNode SetParameterAsBool "SkipUnNamed" 1
   $moduleNode SetParameterAsInt "Start" -1
   $moduleNode SetParameterAsInt "End" -1
-  if { [[$o(smooth) GetWidget] GetSelectedState] } {
-    $moduleNode SetParameterAsDouble "Decimate" 0.25
-    $moduleNode SetParameterAsDouble "Smooth" 10
-  } else {
-    $moduleNode SetParameterAsDouble "Decimate" 0
-    $moduleNode SetParameterAsDouble "Smooth" 0
-  }
+  $moduleNode SetParameterAsDouble "Decimate" 0.25
+  $moduleNode SetParameterAsDouble "Smooth" 10
 
-  $moduleNode SetParameterAsString "InputVolume" [$volumeNode GetID]
+  $moduleNode SetParameterAsString "InputVolume" [$merge GetID]
 
   #
   # output 
@@ -449,6 +568,7 @@ itcl::body HelperBox::edit { {label ""} } {
     set row [[$o(structures) GetWidget] GetIndexOfFirstSelectedRow]
     set label [[$o(structures) GetWidget] GetCellText $row $col(Number)]
   }
+
   if { $label == "" } {
     # still no label means listbox is not correctly configured, must quit
     return
@@ -460,8 +580,9 @@ itcl::body HelperBox::edit { {label ""} } {
   # make the master node the active background, and the structure label node the active label
   set selectionNode [$::slicer3::ApplicationLogic  GetSelectionNode]
   $selectionNode SetReferenceActiveVolumeID [$_master GetID]
-  $selectionNode SetReferenceSecondaryVolumeID [$merge GetID]
-  $selectionNode SetReferenceActiveLabelVolumeID [$structureVolume GetID]
+  if { $structureVolume != "" } {
+    $selectionNode SetReferenceActiveLabelVolumeID [$structureVolume GetID]
+  }
   $::slicer3::ApplicationLogic  PropagateVolumeSelection 0
 
   EditorSetPaintLabel $label
@@ -473,6 +594,12 @@ itcl::body HelperBox::updateStructures {} {
 
   $o(masterSelector) UpdateMenu
 
+  if { $_master == "" } {
+    $o(setMergeButton) SetStateToDisabled
+  } else {
+    $o(setMergeButton) SetStateToNormal
+  }
+
   set w [$o(structures) GetWidget]
   $w DeleteAllRows
 
@@ -482,7 +609,9 @@ itcl::body HelperBox::updateStructures {} {
     $o(addStructureButton) SetStateToDisabled
     $o(deleteStructuresButton) SetStateToDisabled
     $o(mergeButton) SetStateToDisabled
+    $o(splitButton) SetStateToDisabled
     $o(mergeAndBuildbutton) SetStateToDisabled
+    EditorShowHideTools "hide"
     return
   }
 
@@ -490,6 +619,7 @@ itcl::body HelperBox::updateStructures {} {
   $o(addStructureButton) SetStateToNormal
   $o(deleteStructuresButton) SetStateToNormal
   $o(mergeButton) SetStateToNormal
+  $o(splitButton) SetStateToNormal
   $o(mergeAndBuildbutton) SetStateToNormal
 
   set colorNode [[$merge GetDisplayNode] GetColorNode]
@@ -517,6 +647,9 @@ itcl::body HelperBox::updateStructures {} {
     }
     set vNode [$::slicer3::MRMLScene GetNextNodeByClass "vtkMRMLScalarVolumeNode"]
   }
+  
+  # show the tools if a structure has been selected
+  EditorShowHideTools "show"
 }
 
 # create the segmentation helper box
@@ -535,9 +668,7 @@ itcl::body HelperBox::create { } {
     $o(toplevel) Create
 
     set parent $o(toplevel)
-
   }
-
 
   #
   # Master Frame
@@ -562,27 +693,43 @@ itcl::body HelperBox::create { } {
   $o(masterSelector) SetMRMLScene $::slicer3::MRMLScene
   $o(masterSelector) UpdateMenu
   $o(masterSelector) SetLabelText "Master Volume:"
-  $o(masterSelector) SetBalloonHelpString "Pick the master structural volume to define the segmentation"
+  $o(masterSelector) SetBalloonHelpString "Pick the master structural volume to define the segmentation.  A label volume with the with \"-label\" appended to the name will be created if it doesn't already exist."
   pack [$o(masterSelector) GetWidgetName] -side top -fill x
 
   # master label name
 
+  set o(mergeFrame) [vtkNew vtkKWFrame]
+  $o(mergeFrame) SetParent $masterFrame
+  $o(mergeFrame) Create
+  pack [$o(mergeFrame) GetWidgetName] -side top -anchor nw -fill x -padx 2 -pady 2
+
   set o(mergeName) [vtkNew vtkKWLabelWithLabel]
-  $o(mergeName) SetParent $masterFrame
+  $o(mergeName) SetParent $o(mergeFrame)
   $o(mergeName) Create
   $o(mergeName) SetLabelText "Merge Volume:"
   $o(mergeName) SetBalloonHelpString "Composite label map containing the merged structures (be aware that merge operations will overwrite any edits applied to this volume)"
   [$o(mergeName) GetWidget] SetText "None"
-  pack [$o(mergeName) GetWidgetName] -side top -fill x
+  pack [$o(mergeName) GetWidgetName] -side left -fill x -expand false
+
+  set o(setMergeButton) [vtkNew vtkKWPushButton]
+  $o(setMergeButton) SetParent $o(mergeFrame)
+  $o(setMergeButton) Create
+  $o(setMergeButton) SetText "Set "
+  $o(setMergeButton) SetBalloonHelpString "Set the merge volume to use with this master."
+  pack [$o(setMergeButton) GetWidgetName] -side right
+
 
   #
   # Structures Frame
   # 
-  set o(structuresFrame) [vtkNew vtkKWFrame]
+
+  set o(structuresFrame) [vtkNew vtkKWFrameWithLabel]
   $o(structuresFrame) SetParent $parent
   $o(structuresFrame) Create
-  pack [$o(structuresFrame) GetWidgetName] -side top -anchor nw -fill both -expand true -padx 2 -pady 2
-  set structuresFrame $o(structuresFrame)
+  $o(structuresFrame) SetLabelText "Per-Structure Volumes"
+  $o(structuresFrame) CollapseFrame
+  pack [$o(structuresFrame) GetWidgetName] -side top -anchor nw -fill both -expand false -padx 2 -pady 2
+  set structuresFrame [$o(structuresFrame) GetFrame]
 
   # buttons frame 
 
@@ -596,25 +743,25 @@ itcl::body HelperBox::create { } {
   set o(addStructureButton) [vtkNew vtkKWPushButton]
   $o(addStructureButton) SetParent $o(structureButtonsFrame)
   $o(addStructureButton) Create
-  $o(addStructureButton) SetText "Add Structure Volume"
+  $o(addStructureButton) SetText "Add Structure"
   $o(addStructureButton) SetBalloonHelpString "Add a label volume for a structure to edit"
   pack [$o(addStructureButton) GetWidgetName] -side left
 
-  # delete structures button
+  # split button
 
-  set o(deleteStructuresButton) [vtkNew vtkKWPushButton]
-  $o(deleteStructuresButton) SetParent $o(structureButtonsFrame)
-  $o(deleteStructuresButton) Create
-  $o(deleteStructuresButton) SetText "Delete Structure Volumes"
-  $o(deleteStructuresButton) SetBalloonHelpString "Delete all the structure volumes from the scene"
-  pack [$o(deleteStructuresButton) GetWidgetName] -side left
+  set o(splitButton) [vtkNew vtkKWPushButton]
+  $o(splitButton) SetParent $o(structureButtonsFrame)
+  $o(splitButton) Create
+  $o(splitButton) SetText "Split Merge Volume"
+  $o(splitButton) SetBalloonHelpString "Split distinct labels from merge volume into new volumes"
+  pack [$o(splitButton) GetWidgetName] -side left
 
   # structures listbox
 
   set o(structures) [vtkNew vtkKWMultiColumnListWithScrollbars]
   $o(structures) SetParent $structuresFrame
   $o(structures) Create
-  $o(structures) SetHeight 2
+  [$o(structures) GetWidget] SetHeight 4
   $o(structures) SetHorizontalScrollbarVisibility 1
   set w [$o(structures) GetWidget]
   $w SetSelectionTypeToCell
@@ -628,7 +775,7 @@ itcl::body HelperBox::create { } {
     $w ColumnEditableOff $col($column)
     $w SetColumnWidth $col($column) $width
   }
-  pack [$o(structures) GetWidgetName] -side top -anchor ne -padx 2 -pady 2 -expand true -fill both
+  pack [$o(structures) GetWidgetName] -side top -anchor ne -padx 2 -pady 2 -expand false -fill x
 
   # all buttons frame 
 
@@ -636,6 +783,16 @@ itcl::body HelperBox::create { } {
   $o(allButtonsFrame) SetParent $structuresFrame
   $o(allButtonsFrame) Create
   pack [$o(allButtonsFrame) GetWidgetName] -side bottom -anchor sw -fill x -padx 2 -pady 2
+
+
+  # delete structures button
+
+  set o(deleteStructuresButton) [vtkNew vtkKWPushButton]
+  $o(deleteStructuresButton) SetParent $o(allButtonsFrame)
+  $o(deleteStructuresButton) Create
+  $o(deleteStructuresButton) SetText "Delete Structures"
+  $o(deleteStructuresButton) SetBalloonHelpString "Delete all the structure volumes from the scene"
+  pack [$o(deleteStructuresButton) GetWidgetName] -side left
 
   # merge button
 
@@ -673,8 +830,10 @@ itcl::body HelperBox::create { } {
   # selection changed event
   $broker AddObservation [$o(structures) GetWidget] 10000 "$this edit"
   # invoked event
+  $broker AddObservation $o(splitButton) 10000 "$this split"
   $broker AddObservation $o(mergeButton) 10000 "$this merge"
   $broker AddObservation $o(mergeAndBuildbutton) 10000 "$this merge; $this build"
+  $broker AddObservation $o(setMergeButton) 10000 "$this labelSelectDialog"
 
   # new scene, node added or removed events
   lappend _observations [$broker AddObservation $::slicer3::MRMLScene 66000 "$this updateStructures"]
@@ -702,6 +861,7 @@ itcl::body HelperBox::colorSelectDialog { } {
     $o(colorSelectTopLevel) ModalOn
     $o(colorSelectTopLevel) Create
     $o(colorSelectTopLevel) SetMasterWindow [$::slicer3::ApplicationGUI GetMainSlicerWindow]
+    $o(colorSelectTopLevel) SetDisplayPositionToPointer
     $o(colorSelectTopLevel) HideDecorationOff
     $o(colorSelectTopLevel) Withdraw
     $o(colorSelectTopLevel) SetBorderWidth 2
@@ -733,6 +893,12 @@ itcl::body HelperBox::colorSelectDialog { } {
     $o(colorSelector) SetBalloonHelpString "Pick the table of structures you wish to edit"
     pack [$o(colorSelector) GetWidgetName] -side top -fill x -expand true
 
+    # pick the default editor LUT for the user
+    set defaultID [[$::slicer3::ColorGUI GetLogic] GetDefaultEditorColorNodeID]
+    set defaultNode [$::slicer3::MRMLScene GetNodeByID $defaultID]
+    if {$defaultNode != ""} {
+      $o(colorSelector) SetSelected $defaultNode
+    }
 
     set buttonFrame [vtkNew vtkKWFrame]
     $buttonFrame SetParent $topFrame
@@ -755,10 +921,96 @@ itcl::body HelperBox::colorSelectDialog { } {
     $broker AddObservation $o(colorDialogCancel) 10000 "$o(colorSelectTopLevel) Withdraw"
   }
 
-  $o(promptLabel) SetText "Create a merge label map for selected master volume [$_master GetName].\nNew volume will be [$_master GetName]-label.\nSelected the color table node will be used for segmentation labels."
+  $o(promptLabel) SetText "Create a merge label map for selected master volume [$_master GetName].\nNew volume will be [$_master GetName]-label.\nSelect the color table node will be used for segmentation labels."
 
   $o(colorSelectTopLevel) DeIconify
   $o(colorSelectTopLevel) Raise
 }
 
 
+# Label Select Dialog - prompt to pick a label map
+itcl::body HelperBox::labelSelectDialog { } {
+
+  if { ![info exists o(labelSelectTopLevel)] } {
+    set o(labelSelectTopLevel) [vtkNew vtkKWTopLevel]
+    $o(labelSelectTopLevel) SetApplication $::slicer3::Application
+    $o(labelSelectTopLevel) ModalOn
+    $o(labelSelectTopLevel) Create
+    $o(labelSelectTopLevel) SetMasterWindow [$::slicer3::ApplicationGUI GetMainSlicerWindow]
+    $o(labelSelectTopLevel) SetDisplayPositionToPointer
+    $o(labelSelectTopLevel) HideDecorationOff
+    $o(labelSelectTopLevel) Withdraw
+    $o(labelSelectTopLevel) SetBorderWidth 2
+    $o(labelSelectTopLevel) SetReliefToGroove
+
+    set topFrame [vtkNew vtkKWFrame]
+    $topFrame SetParent $o(labelSelectTopLevel)
+    $topFrame Create
+    pack [$topFrame GetWidgetName] -side top -anchor w -padx 2 -pady 2 -fill both -expand true
+
+    set o(labelPromptLabel) [vtkNew vtkKWLabel]
+    $o(labelPromptLabel) SetParent $topFrame
+    $o(labelPromptLabel) Create
+    pack [$o(labelPromptLabel) GetWidgetName] -side top -anchor w -padx 2 -pady 2 -fill both -expand true
+
+    set o(labelMapSelector) [vtkNew vtkSlicerNodeSelectorWidget]
+    $o(labelMapSelector) SetParent $topFrame
+    $o(labelMapSelector) Create
+    $o(labelMapSelector) SetNodeClass "vtkMRMLScalarVolumeNode" "LabelMap" "1" ""
+    $o(labelMapSelector) NewNodeEnabledOff
+    $o(labelMapSelector) NoneEnabledOff
+    $o(labelMapSelector) DefaultEnabledOn
+    $o(labelMapSelector) ShowHiddenOn
+    $o(labelMapSelector) ChildClassesEnabledOff
+    $o(labelMapSelector) SetMRMLScene $::slicer3::MRMLScene
+    $o(labelMapSelector) UpdateMenu
+    $o(labelMapSelector) SetLabelText "Label Map:"
+    $o(labelMapSelector) SetBalloonHelpString "Pick the label map to edit."
+    pack [$o(labelMapSelector) GetWidgetName] -side top -fill x -expand true
+
+    set buttonFrame [vtkNew vtkKWFrame]
+    $buttonFrame SetParent $topFrame
+    $buttonFrame Create
+    pack [$buttonFrame GetWidgetName] -side left -anchor w -padx 2 -pady 2 -fill both -expand true
+
+    set o(labelDialogNew) [vtkNew vtkKWPushButton]
+    $o(labelDialogNew) SetParent $buttonFrame
+    $o(labelDialogNew) Create
+    $o(labelDialogNew) SetText "Create New..."
+    set o(labelDialogApply) [vtkNew vtkKWPushButton]
+    $o(labelDialogApply) SetParent $buttonFrame
+    $o(labelDialogApply) Create
+    $o(labelDialogApply) SetText Apply
+    set o(labelDialogCancel) [vtkNew vtkKWPushButton]
+    $o(labelDialogCancel) SetParent $buttonFrame
+    $o(labelDialogCancel) Create
+    $o(labelDialogCancel) SetText Cancel
+    pack [$o(labelDialogCancel) GetWidgetName] [$o(labelDialogApply) GetWidgetName] -side left -padx 4 -anchor c 
+    pack [$o(labelDialogNew) GetWidgetName] -side right -padx 4 -anchor c 
+
+    # invoked event
+    set broker $::slicer3::Broker
+    $broker AddObservation $o(labelDialogNew) 10000 "$this newMerge; $o(labelSelectTopLevel) Withdraw"
+    $broker AddObservation $o(labelDialogApply) 10000 "$this setMergeVolume; $o(labelSelectTopLevel) Withdraw"
+    $broker AddObservation $o(labelDialogCancel) 10000 "$o(labelSelectTopLevel) Withdraw"
+  }
+
+  $o(labelPromptLabel) SetText "Select existing label map volume to edit."
+
+  $o(labelSelectTopLevel) DeIconify
+  $o(labelSelectTopLevel) Raise
+}
+
+# get the first MRML node that has the given name
+# - use a regular expression to match names post-pended with numbers
+itcl::body HelperBox::getNodeByName { name } {
+
+  $::slicer3::MRMLScene InitTraversal
+  while { [set node [$::slicer3::MRMLScene GetNextNode]] != "" } {
+    set ret [catch "$node GetName" nodeName]
+    if { !$ret && ($name == $nodeName || [string match $name\[0-9\]* $nodeName]) } {
+      return $node
+    }
+  }
+  return ""
+}

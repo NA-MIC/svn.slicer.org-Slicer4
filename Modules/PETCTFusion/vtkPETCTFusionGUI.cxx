@@ -55,6 +55,12 @@
 #include "vtkMRMLProceduralColorNode.h"
 #include "vtkMRMLPETProceduralColorNode.h"
 
+//--- goodies for plotting
+#include "vtkMRMLDoubleArrayNode.h"
+#include "vtkMRMLArrayPlotNode.h"
+#include "vtkMRMLXYPlotManagerNode.h"
+#include "vtkSlicerXYPlotWidget.h"
+
 //------------------------------------------------------------------------------
 vtkCxxRevisionMacro ( vtkPETCTFusionGUI, "$Revision: 1.0 $");
 
@@ -111,6 +117,12 @@ vtkPETCTFusionGUI::vtkPETCTFusionGUI()
   this->StudyDateLabel = NULL;
   this->ResultList = NULL;
   this->ResultListWithScrollbars = NULL;
+
+  this->ClearPlotArrayButton = NULL;
+  this->AddToPlotArrayButton = NULL;
+  this->SavePlotArrayButton = NULL;
+  this->ShowPlotButton = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -262,6 +274,30 @@ vtkPETCTFusionGUI::~vtkPETCTFusionGUI()
     this->ColorSet->SetParent ( NULL );
     this->ColorSet->Delete();
     this->ColorSet = NULL;
+    }
+  if (this->ClearPlotArrayButton)
+    {
+    this->ClearPlotArrayButton->SetParent ( NULL );
+    this->ClearPlotArrayButton->Delete();
+    this->ClearPlotArrayButton = NULL;
+    }
+  if ( this->AddToPlotArrayButton )
+    {
+    this->AddToPlotArrayButton->SetParent ( NULL );
+    this->AddToPlotArrayButton->Delete();
+    this->AddToPlotArrayButton = NULL;
+    }
+  if ( this->ShowPlotButton )
+    {
+    this->ShowPlotButton->SetParent ( NULL );
+    this->ShowPlotButton->Delete();
+    this->ShowPlotButton = NULL;
+    }
+  if ( this->SavePlotArrayButton )
+    {
+    this->SavePlotArrayButton->SetParent ( NULL );
+    this->SavePlotArrayButton->Delete();
+    this->SavePlotArrayButton = NULL;    
     }
 
   this->UpdatingLUT = 0;  
@@ -1267,6 +1303,7 @@ void vtkPETCTFusionGUI::UpdateGUIFromMRML ( int updateDICOMevent )
     events->InsertNextValue ( vtkMRMLPETCTFusionNode::WaitEvent );
     events->InsertNextValue ( vtkMRMLPETCTFusionNode::NonDICOMEvent );
     events->InsertNextValue ( vtkMRMLPETCTFusionNode::StatusEvent );    
+//    events->InsertNextValue ( vtkMRMLPETCTFusionNode::PlotReadyEvent );    
     vtkSetAndObserveMRMLNodeEventsMacro ( this->PETCTFusionNode, node, events );
     node->Delete(); 
 
@@ -1787,6 +1824,10 @@ void vtkPETCTFusionGUI::ProcessMRMLEvents ( vtkObject *caller,
       {
       this->UpdateResultsTableFromMRML();
       }
+    else if ( event == vtkMRMLPETCTFusionNode::PlotReadyEvent )
+      {
+      this->RaisePlot ();
+      }
     return;    
     }
 }
@@ -1943,6 +1984,86 @@ void vtkPETCTFusionGUI::ClearResultsTable()
 
 
 //---------------------------------------------------------------------------
+void vtkPETCTFusionGUI::RaisePlot()
+{
+
+/*
+  // TODO: this is code in progress.
+ // plot the node
+  if ( this->Logic == NULL )
+    {
+    vtkErrorMacro ( "Got NULL Logic");
+    return;
+    }
+  if ( this->Logic->GetPlots() == NULL )
+    {
+    vtkErrorMacro ( "Got NULL Plots");
+    return;
+    }
+ if ( this->Logic->GetPlots()->GetLabelList() == NULL )
+    {
+    vtkErrorMacro ( "Got NULL LabelList");
+    return;
+    }
+
+  vtkIntArray *a = this->Logic->GetPlots()->GetLabelList();
+  int size = a->GetNumberOfTuples();
+  
+  ///--- get the each node from the logic
+  ///--- and plot it in correct color.
+  int label;
+  for (int i = 0; i < size; i++ )
+    {
+    label = a->GetValue(static_cast<vtkIdType>(i));
+    vtkMRMLDoubleArrayNode *node = this->Logic->GetPlots()->GetPlotData(label);
+    if (node != NULL && node->IsA("vtkMRMLDoubleArrayNode"))
+      {
+        vtkMRMLDoubleArrayNode *dnode = vtkMRMLDoubleArrayNode::SafeDownCast(node);
+
+        vtkMRMLArrayPlotNode *plot = vtkMRMLArrayPlotNode::New();
+        this->GetMRMLScene()->AddNode(plot);
+        plot->SetAndObserveArray(dnode);
+        plot->SetColor(1, 0, 0);
+        
+        
+        vtkMRMLXYPlotManagerNode *manager = vtkMRMLXYPlotManagerNode::New();
+        this->GetMRMLScene()->AddNode(manager);
+        manager->AddPlotNode(plot);
+//        vtkMRMLDoubleArrayNode::LabelsVectorType labels = dnode->GetLabels();
+//        manager->SetXLabel(labels.at(0).c_str());
+//        manager->SetYLabel(labels.at(1).c_str());
+//        manager->SetErrorBarAll(1);
+        manager->SetBackgroundColor(0.8,0.8,1);
+        
+        vtkKWTopLevel *top = vtkKWTopLevel::New();
+        top->SetApplication(this->GetApplication());
+        top->Create();
+        
+        vtkSlicerXYPlotWidget *widget = vtkSlicerXYPlotWidget::New();
+        widget->SetParent(top);
+        widget->SetAndObservePlotManagerNode(manager);
+        widget->Create();
+        
+        this->Script ( "pack %s -fill both -expand true",
+                   widget->GetWidgetName() );
+
+        widget->UpdateGraph();
+       
+        top->SetSize(400, 200);
+        top->Display();
+
+        plot->Delete();
+        manager->Delete();
+        // top->Delete(); do I need to keep this around to have it display?
+        // what about the widget? when do I delete that? Or will the toplevel delete it?
+      }
+    }
+*/
+}
+
+
+
+//---------------------------------------------------------------------------
 void vtkPETCTFusionGUI::EnablePETCTVolumeRendering ( )
 {
 }
@@ -2035,7 +2156,7 @@ void vtkPETCTFusionGUI::BuildFusionFrame ( vtkKWWidget *page )
   this->MaskSelector->SetPadY(2);
   this->MaskSelector->GetWidget()->GetWidget()->IndicatorVisibilityOff();
   this->MaskSelector->GetWidget()->GetWidget()->SetWidth(24);
-  this->MaskSelector->SetLabelText( "Tumor Mask: ");
+  this->MaskSelector->SetLabelText( "VOI Mask: ");
   this->MaskSelector->GetLabel()->SetWidth ( 12 );
   this->MaskSelector->UpdateMenu();
   this->MaskSelector->SetBalloonHelpString("Select a segmentation of tumor(s)--only required for analysis.");
@@ -2461,6 +2582,17 @@ void vtkPETCTFusionGUI::BuildReportFrame ( vtkKWWidget *page  )
     "pack %s -side top -anchor w  -padx 2 -pady 2", 
     this->ComputeButton->GetWidgetName());
 
+  
+  // TO DO: finish and expose in the GUI.
+  //--- button to add suvmax and suvmean to plot
+  this->AddToPlotArrayButton = vtkKWPushButton::New();
+  //--- button to display plot.
+  this->ShowPlotButton = vtkKWPushButton::New();
+  //--- button to save plot arrays to a csv file
+  this->SavePlotArrayButton = vtkKWPushButton::New();
+  //--- button to clear plot arrays.
+  this->ClearPlotArrayButton = vtkKWPushButton::New();
+
 
   outputFrame->Delete();
     
@@ -2548,7 +2680,7 @@ void vtkPETCTFusionGUI::BuildGUI ( )
   //---
   //--- HELP
   //---
-  const char* help_text = "For detailed documentation on this module, please see: <a>http://www.slicer.org/slicerWiki/index.php/Modules:PETCTFusion-Documentation-3.5</a>.\n\nThe PETCTFusion Module displays PET/CT data and performs some PET quantitative measurements (Standardized Uptake Value).\n\nThe PET quantifier \"Standardized Uptake Value\", SUV, (or \"Dose Uptake Ratio\", DUR) is calculated as a ratio of tissue radioactivity concentration CPET(t)  at time t and in units (kBq/ml), and injected dose in units (MBq) at the time of injection divided by body weight (kg).\n\nForumula implemented: SUVbw = CPET(t) / (Injected dose / Patient's weight)\n\nThe input units are converted to those above, and the resulting SUV values are in units (g/ml).\n\nThe Data Fusion panel allows the CT volume, PET volume and a tumor mask to be selected. It is recommended that the PET volume be a DICOM study so that SUV attributes can be extracted automatically from the DICOM header. The tumor mask may contain multiple tumor labels; each label ID/color will receive a separate SUVmax and SUVmean computation.\n\nThe Display panel allows the selection of different colorizing treatments for the PET volume, and Window/Level adjustments for the PET and CT volumes. The PET color range is displayed in SUV units, from 0 to the volume's SUVmax.\n\nThe Quantitative Measures panel provides a button for the computation of SUVmax and SUVmean for each label in the Tumor Mask. The Study Parameters panel allows review of SUV attributes extracted from the DICOM header (and used in the SUV computations) and a panel for setting attributes manually if the PET Volume is a non-DICOM study.\n\n";
+  const char* help_text = "For detailed documentation on this module, please see: <a>http://www.slicer.org/slicerWiki/index.php/Modules:PETCTFusion-Documentation-3.6</a>.\n\nThe **PETCTFusion Module** displays PET/CT data and performs some PET quantitative measurements (Standardized Uptake Value).\n\nThe PET quantifier \"Standardized Uptake Value\", SUV, (or \"Dose Uptake Ratio\", DUR) is calculated as a ratio of tissue radioactivity concentration CPET(t)  at time t and in units (kBq/ml), and injected dose in units (MBq) at the time of injection divided by body weight (kg).\n\nForumula implemented: SUVbw = CPET(t) / (Injected dose / Patient's weight)\n\nThe input units are converted to those above, and the resulting SUV values are in units (g/ml).\n\nThe Data Fusion panel allows the CT volume, PET volume and a tumor mask to be selected. It is recommended that the PET volume be a DICOM study so that SUV attributes can be extracted automatically from the DICOM header. The tumor mask may contain multiple tumor labels; each label ID/color will receive a separate SUVmax and SUVmean computation.\n\nThe Display panel allows the selection of different colorizing treatments for the PET volume, and Window/Level adjustments for the PET and CT volumes. The PET color range is displayed in SUV units, from 0 to the volume's SUVmax.\n\nThe Quantitative Measures panel provides a button for the computation of SUVmax and SUVmean for each label in the VOI Mask. The Study Parameters panel allows review of SUV attributes extracted from the DICOM header (and used in the SUV computations) and a panel for setting attributes manually if the PET Volume is a non-DICOM study.\n\n";
   const char* ack_text = "PETCTFusion was developed by Wendy Plesniak with help from Jeffrey Yapp and Ron Kikinis. This work was supported by NA-MIC, NAC, BIRN, NCIGT, Harvard CTSC, and the Slicer Community. See <a>http://www.slicer.org</a> for details.\n";
 
   vtkKWWidget *page = this->UIPanel->GetPageWidget ( "PETCTFusion" );    
@@ -2872,8 +3004,10 @@ void vtkPETCTFusionGUI::UpdateDICOMPanel()
         if ( index  != std::string::npos )
           {
           path = tmp.substr ( 0, index );
-          this->Logic->GetParametersFromDICOMHeader(path.c_str());
-          found = 1;
+          if ( this->Logic->GetParametersFromDICOMHeader(path.c_str()) == 1)
+            {
+            found = 1;
+            }
           }
         }
       }

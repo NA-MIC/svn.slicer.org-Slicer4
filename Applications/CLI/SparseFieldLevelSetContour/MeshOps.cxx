@@ -12,6 +12,7 @@
 
 ==========================================================================*/
 #include "MeshOps.h"
+#include "vtkSmartPointer.h"
 
 void ComputeCurvatureData( MeshData* meshdata )
 {
@@ -36,6 +37,7 @@ void ComputeCurvatureData( MeshData* meshdata )
   meshdata->nz.resize(numverts);
   //std::cout << "After allocation, nx = " << meshdata->nx.size() << "\n";
   meshdata->adj = vector<AdjData>( numverts );
+  meshdata->adjimm = vector<AdjData>( numverts );
 
   ComputeAdjacency( meshdata );
   ComputeNormals( meshdata );
@@ -442,14 +444,13 @@ vector<int> InitPath( MeshData* meshdata, vector<int> pts)
     }
 
   // assign some data from curvature computation to be the new colormap
-  vtkFloatArray* scalars2 = vtkFloatArray::New(); // colormap
+  vtkSmartPointer<vtkFloatArray> scalars2 = vtkSmartPointer<vtkFloatArray>::New(); // colormap
   scalars2->SetName("InitialCurvature");
   for( int i = 0; i < numverts; i++ )
     {
     scalars2->InsertTuple1(i, meshdata->cmap0[i] );
     }
   meshdata->polydata->GetPointData()->SetScalars(scalars2);
-  scalars2->Delete();
   meshdata->polydata->Update();
 
   return C;
@@ -519,17 +520,18 @@ void ComputeNormals( MeshData* meshdata )
       vertcount[pts[1]] += 1;
       vertcount[pts[2]] += 1;
       }
-    if (meshdata->nx.size() != 0 &&
-        meshdata->ny.size() != 0 &&
-        meshdata->nz.size() != 0)
-      {
+
+    if( ! bTextInputNormals ) {
+      meshdata->nx = valarray<double>(numverts);
+      meshdata->ny = valarray<double>(numverts);
+      meshdata->nz = valarray<double>(numverts);
       for( int i = 0;  i < numverts; i++ )
-        {
+      {
         meshdata->nx[i] = fnx[i] / vertcount[i] ;
         meshdata->ny[i] = fny[i] / vertcount[i] ;
         meshdata->nz[i] = fnz[i] / vertcount[i] ;
-        }
       }
+    }
     else
       {
       std::cerr << "Normals not computed for mesh data, numverts = " << numverts << ", normal array sizes were allocated to be x = " << meshdata->nx.size() << ", y = " << meshdata->ny.size() << ", z = " << meshdata->nz.size() << "\n";
@@ -549,7 +551,35 @@ void ComputeAdjacency( MeshData* meshdata )
     std::cerr << "No cells on the poly data polys\n";
     return;
     }
-  vtkIdList* cellIds = vtkIdList::New();
+  vtkSmartPointer<vtkIdList> cellIds = vtkSmartPointer<vtkIdList>::New();
+
+  //meshdata->adjimm = meshdata->adj;
+
+  // for every face, make all vertices on the face store in the adjimm list
+  for( int i = 0; i < numverts; i++ ) {
+    meshdata->adj[i].myNeighbs    = vector<int>(1);
+    meshdata->adj[i].myNeighbs[0] = i;
+    meshdata->adj[i].myIdx = i;
+  }
+
+  int numfaces = faces->GetNumberOfCells();
+  for( int i = 0; i < numfaces; i++ ) {
+    vtkIdType npts;
+    vtkIdType* pts;
+    faces->GetCell(i*4,npts, pts );
+   // meshdata->polydata->GetCell( i );
+  //  meshdata->polydata->GetPointCells( i, cellIds );
+//    int vert0 = pts[0];
+//    int vert1 = pts[1];
+//    int vert2 = pts[2];
+    for( int k = 0 ; k < 3; k++ ) {
+      for( int kk = 0; kk < 3; kk++ ) {
+        if( 0 == count( meshdata->adjimm[pts[kk]].myNeighbs.begin(), meshdata->adjimm[pts[kk]].myNeighbs.end(),pts[k] ) ) {
+          meshdata->adjimm[pts[kk]].myNeighbs.push_back( pts[k] );
+      }
+      }
+    }
+  }
 
   for( int i = 0; i < numverts; i++ )
     {
@@ -584,16 +614,15 @@ void ComputeAdjacency( MeshData* meshdata )
         }
       }
     }
-  cellIds->Delete();
-  meshdata->adjimm = meshdata->adj;
+  
 
   // every neigbhor array appends the neigbhor arrays of its neighbors to itself
   MeshData* tempdata = new MeshData();
   tempdata->adj = meshdata->adj;
-  for( int its = 0; its < NUMADJ; its++ )
+  for( ::size_t its = 0; its < (unsigned int)NUMADJ; its++ )
     { // how many levels deep to append
     std::cout<<" adding level "<<its<<" to adjacency...\n";
-    for( int i = 0; i < numverts; i++ )
+    for( ::size_t i = 0; i < (unsigned int)numverts; i++ )
       { // for every vertex
       if( 0 == (i % 10000 ) )
         {
@@ -631,13 +660,13 @@ int CountVertsOnMesh( vtkPolyData* poly )
   vtkPoints* verts = poly->GetPoints();
   vector<bool> alreadyFound( verts->GetNumberOfPoints() );
   faces->SetTraversalLocation(0);
-  for( int i = 0; i < faces->GetNumberOfCells(); i++ )
+  for( ::size_t i = 0; i < (unsigned int)(faces->GetNumberOfCells()); i++ )
     {
     vtkIdType numpts = 0;
     vtkIdType* ptsIds = NULL;
     //faces->GetCell(i, numpts, ptsIds );
     faces->GetNextCell(numpts, ptsIds );
-    for( int k = 0; k < numpts; k++ )
+    for( ::size_t k = 0; k < (::size_t)numpts; k++ )
       {
       int pt = ptsIds[k];
       if( alreadyFound[pt] )
@@ -651,4 +680,3 @@ int CountVertsOnMesh( vtkPolyData* poly )
   
   return num;
 }
-

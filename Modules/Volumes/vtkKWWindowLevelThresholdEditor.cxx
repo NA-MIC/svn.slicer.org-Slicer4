@@ -27,6 +27,8 @@
 #include <vtksys/ios/sstream>
 #include <vtksys/stl/list>
 #include "vtkSlicerVolumesIcons.h"
+#include "vtkSlicerApplication.h"
+#include "vtkSlicerVolumesGUI.h"
 
 #include <vtkMRMLNode.h>
 #include <vtkMRMLColorTableNode.h>
@@ -58,6 +60,7 @@ vtkKWWindowLevelThresholdEditor::vtkKWWindowLevelThresholdEditor()
   //this->EndCommand   = NULL;
 
   this->ImageData = NULL;
+  this->ImageModifiedTime = 0;
 
   this->WindowLevelPresetIcons = vtkSlicerVolumesIcons::New();
   this->Internals = new vtkKWWindowLevelThresholdEditorInternals;
@@ -224,9 +227,14 @@ vtkKWWindowLevelThresholdEditor::~vtkKWWindowLevelThresholdEditor()
 //----------------------------------------------------------------------------
 void vtkKWWindowLevelThresholdEditor::SetImageData(vtkImageData* imageData)
 {
-  if (this->ImageData != imageData || (imageData != NULL && imageData->GetMTime() > this->ImageData->GetMTime()) ) 
+  if (this->ImageData != imageData || (imageData != NULL && 
+      imageData->GetMTime() > this->ImageModifiedTime) ) 
     {
     vtkImageData* tempImageData = this->ImageData;
+    if (imageData)
+      {
+      this->ImageModifiedTime = imageData->GetMTime();
+      }
     if (this->ImageData == NULL)
       {
       //this->SetWindowLevel(0,0);
@@ -565,7 +573,9 @@ void vtkKWWindowLevelThresholdEditor::UpdateFromImage()
     if ( this->ImageData->GetPointData()->GetScalars() != NULL )
       {
       this->Histogram->BuildHistogram( this->ImageData->GetPointData()->GetScalars(), 0);
-      double *range = this->Histogram->GetRange();
+      //double *range = this->Histogram->GetRange();
+      double *range = this->ImageData->GetScalarRange();
+
 //       double w = this->GetWindow();
 //       double l = this->GetLevel();
 //       double r0 = l - 0.5*w;
@@ -1101,11 +1111,27 @@ void vtkKWWindowLevelThresholdEditor::PresetWindowLevelCallback(int rank)
 //    this->Update();
     if (prop_has_changed)
       {
+      //--- TEST
+      //--- make sure Volumes GUI tracks changes to MRML node.
+      //--- widget doesn't observe MRML, so as a quick yucky
+      //--- workaround we decided to just call the Volumes GUI to update
+      //---
+      vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast ( this->GetApplication() );
+      if ( app == NULL )
+        {
+        return;
+        }
+      vtkSlicerVolumesGUI *vgui = vtkSlicerVolumesGUI::SafeDownCast (app->GetModuleGUIByName ( "Volumes"));
+      if ( vgui == NULL )
+        {
+        return;
+        }
+      vgui->UpdateFramesFromMRML();
+      //--- END TEST
 //      this->InvokePropertyChangedCommand();
 //      this->SendStateEvent(this->PropertyChangedEvent);
       }
     }
-
 }
 
 //----------------------------------------------------------------------------

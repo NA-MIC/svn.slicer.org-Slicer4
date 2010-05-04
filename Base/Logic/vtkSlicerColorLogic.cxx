@@ -422,9 +422,8 @@ void vtkSlicerColorLogic::AddDefaultColorNodes()
         vtkDebugMacro("AddDefaultColorFiles: node " << id << " already in scene");
         }
 
-      // check if this is the new default one read in from
-      // Slicer3_2010_Default_Brain_Lut.txt
-      if (strcmp(ctnode->GetName(),"Slicer3_2010_Default_Brain_Lut") == 0)
+      // check if this is the new default one read in from file
+      if (strcmp(ctnode->GetName(),"Slicer3_2010_Label_Colors") == 0)
         {
         vtkDebugMacro("Found default brain lut node");
         // remove the category attribute so it floats to the top of the node
@@ -679,7 +678,13 @@ const char *vtkSlicerColorLogic::GetDefaultVolumeColorNodeID()
 //----------------------------------------------------------------------------
 const char *vtkSlicerColorLogic::GetDefaultLabelMapColorNodeID()
 {
-  return vtkSlicerColorLogic::GetDefaultColorTableNodeID(vtkMRMLColorTableNode::Labels);
+  return this->GetDefaultFileColorNodeID("Slicer3_2010_Label_Colors.txt");
+}
+
+//----------------------------------------------------------------------------
+const char *vtkSlicerColorLogic::GetDefaultEditorColorNodeID()
+{
+  return vtkSlicerColorLogic::GetDefaultFileColorNodeID("Slicer3_2010_Brain_Labels.txt");
 }
 
 //----------------------------------------------------------------------------
@@ -810,7 +815,7 @@ void vtkSlicerColorLogic::FindColorFiles()
     struct dirent *dirp;
     if ((dp  = opendir(dirString.c_str())) == NULL)
       {
-      vtkErrorMacro("Error(" << errno << ") opening " << dirString.c_str());
+      vtkErrorMacro("\nError(" << errno << ") opening user specified color path: " << dirString.c_str() << ", no color files will be loaded from that directory\n(check View -> Application Settings -> Module Settings to adjust your User defined color file paths)");
       }
     else
       {

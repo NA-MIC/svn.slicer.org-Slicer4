@@ -214,7 +214,7 @@ void vtkVolumeRenderingGUI::BuildGUI(void)
 
   // Define your help text and build the help frame here.
   const char *help = "Volume Rendering allows the rendering of volumes in 3D space and not only as 2D surfaces defined in 3D space. \n<a>http://wiki.slicer.org/slicerWiki/index.php/Modules:VolumeRendering-Documentation-3.5</a>\n Tutorials are available at <a>http://www.na-mic.org/Wiki/index.php/Slicer3:Volume_Rendering_Tutorials</a>";
-  const char *about = "This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details. The VolumeRendering module was contributed by Yanling Liu, SAIC-Frederick, Andreas Freudling, Student Intern at SPL, BWH (Ron Kikinis) and Alex Yarmarkovich, Isomics Inc. (Steve Pieper)";
+  const char *about = "This work is supported by NA-MIC, NAC, BIRN, NCIGT, and the Slicer Community. See <a>http://www.slicer.org</a> for details. The VolumeRendering module was contributed by Yanling Liu, NCI-Frederick/SAIC-Frederick, Andreas Freudling, Student Intern at SPL, BWH (Ron Kikinis) and Alex Yarmarkovich, Isomics Inc. (Steve Pieper). Some of the transfer functions were contributed by Kitware, Inc. (VolView)";
   vtkKWWidget *page = this->UIPanel->GetPageWidget ( "VolumeRendering" );
   this->BuildHelpAndAboutFrame ( page, help, about );
 
@@ -575,6 +575,19 @@ void vtkVolumeRenderingGUI::CheckAbort(void)
   }
 }
 
+void vtkVolumeRenderingGUI::DisplayMessageDialog(const char *message)
+{
+    vtkKWMessageDialog *dialog = vtkKWMessageDialog::New();
+    dialog->SetParent (  this->GetApplicationGUI()->GetMainSlicerWindow() );
+    dialog->SetStyleToMessage();
+    dialog->SetText(message);
+    dialog->Create ( );
+    dialog->SetMasterWindow( this->GetApplicationGUI()->GetMainSlicerWindow() );
+    dialog->ModalOn();
+    dialog->Invoke();
+    dialog->Delete();
+}
+
 void vtkVolumeRenderingGUI::ProcessGUIEvents(vtkObject *caller, unsigned long event, void *callData)
 {
   if (this->ProcessingGUIEvents || this->ProcessingMRMLEvents)
@@ -645,6 +658,18 @@ void vtkVolumeRenderingGUI::ProcessGUIEvents(vtkObject *caller, unsigned long ev
   {
     if (this->NS_ImageData->GetSelected())
     {
+      int dim[3];
+      vtkMRMLVolumeNode *vnode = vtkMRMLVolumeNode::SafeDownCast(this->NS_ImageData->GetSelected());
+      vnode->GetImageData()->GetDimensions(dim);
+      for (int ii=0; ii<3; ii++)
+        {
+        if (dim[ii] < 2) 
+          {
+          this->DisplayMessageDialog("Invalid volume dimension, at least 2 is required");
+          this->NS_ImageData->SetSelected(NULL);
+          return;
+          }
+        }
       //user selected one node, init pipeline based on it
       this->InitializePipelineFromImageData();
     }
@@ -653,6 +678,19 @@ void vtkVolumeRenderingGUI::ProcessGUIEvents(vtkObject *caller, unsigned long ev
   {
     if (this->NS_ImageDataFg->GetSelected())
     {
+      int dim[3];
+      vtkMRMLVolumeNode *vnode = vtkMRMLVolumeNode::SafeDownCast(this->NS_ImageDataFg->GetSelected());
+      vnode->GetImageData()->GetDimensions(dim);
+      for (int ii=0; ii<3; ii++)
+        {
+        if (dim[ii] < 2) 
+          {
+          this->DisplayMessageDialog("Invalid volume dimension, at least 2 is required");
+          this->NS_ImageData->SetSelected(NULL);
+          return;
+          }
+        }
+
       //user selected one node, init pipeline based on it
       this->InitializePipelineFromImageDataFg();
     }

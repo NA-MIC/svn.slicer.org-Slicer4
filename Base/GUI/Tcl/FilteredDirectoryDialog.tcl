@@ -129,6 +129,12 @@ itcl::body FilteredDirectoryDialog::constructor {} {
   set path [$::slicer3::Application GetRegistryHolder]
   $o(browser) OpenDirectory $path
 
+  # scroll-to-selection
+  set fileprefix [$o(browser) GetSelectedDirectory]
+  if {$fileprefix != "" } {
+      $o(browser) ScrollToDirectory $fileprefix
+  }
+
   #
   # the options frame
   #

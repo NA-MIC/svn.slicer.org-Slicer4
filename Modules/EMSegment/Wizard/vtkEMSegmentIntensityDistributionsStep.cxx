@@ -17,10 +17,15 @@
 #include "vtkKWMatrixWidget.h"
 #include "vtkKWWizardWidget.h"
 #include "vtkKWWizardWorkflow.h"
+#include "vtkEMSegmentLogic.h" 
 
 #include "vtkEMSegmentAnatomicalStructureStep.h"
 
 #include "vtkSlicerInteractorStyle.h"
+
+#include "vtkKWPushButton.h"
+
+const char* PLOT = "PlotIntensityDistribution";
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkEMSegmentIntensityDistributionsStep);
@@ -29,11 +34,8 @@ vtkCxxRevisionMacro(vtkEMSegmentIntensityDistributionsStep, "$Revision: 1.2 $");
 //----------------------------------------------------------------------------
 vtkEMSegmentIntensityDistributionsStep::vtkEMSegmentIntensityDistributionsStep()
 {
-#if IBM_FLAG
   this->SetName("7/9. Specify Intensity Distributions");
-#else
-  this->SetName("6/9. Specify Intensity Distributions");
-#endif
+
   this->SetDescription(
     "Define intensity distribution for each anatomical structure.");
 
@@ -43,6 +45,9 @@ vtkEMSegmentIntensityDistributionsStep::vtkEMSegmentIntensityDistributionsStep()
   this->IntensityDistributionCovarianceMatrix        = NULL;
   this->IntensityDistributionManualSamplingList      = NULL;
   this->ContextMenu  = NULL;
+
+  this->ShowGraphButton = NULL;
+
 }
 
 //----------------------------------------------------------------------------
@@ -83,6 +88,12 @@ vtkEMSegmentIntensityDistributionsStep::~vtkEMSegmentIntensityDistributionsStep(
     this->ContextMenu->Delete();
     this->ContextMenu = NULL;
     }
+
+  if (this->ShowGraphButton) {
+    this->ShowGraphButton->Delete();
+    this->ShowGraphButton = NULL;     
+  }
+  this->RemovePlot();
 }
 
 //----------------------------------------------------------------------------
@@ -180,7 +191,7 @@ void vtkEMSegmentIntensityDistributionsStep::ShowUserInterface()
     {
     this->IntensityDistributionMeanMatrix->SetParent(intensity_page);
     this->IntensityDistributionMeanMatrix->Create();
-    this->IntensityDistributionMeanMatrix->SetLabelText("Log Mean:");
+    this->IntensityDistributionMeanMatrix->SetLabelText("Mean:");
     this->IntensityDistributionMeanMatrix->ExpandWidgetOff();
     this->IntensityDistributionMeanMatrix->GetLabel()->
       SetWidth(EMSEG_WIDGETS_LABEL_WIDTH);
@@ -209,8 +220,8 @@ void vtkEMSegmentIntensityDistributionsStep::ShowUserInterface()
     {
     this->IntensityDistributionCovarianceMatrix->SetParent(intensity_page);
     this->IntensityDistributionCovarianceMatrix->Create();
-    this->IntensityDistributionCovarianceMatrix->SetLabelText(
-      "Log Covariance:");
+    this->IntensityDistributionCovarianceMatrix->SetLabelText("Covariance:");
+
     this->IntensityDistributionCovarianceMatrix->ExpandWidgetOff();
     this->IntensityDistributionCovarianceMatrix->GetLabel()->
       SetWidth(EMSEG_WIDGETS_LABEL_WIDTH);
@@ -263,6 +274,21 @@ void vtkEMSegmentIntensityDistributionsStep::ShowUserInterface()
   // Update the UI with the proper value, if there is a selection
 
   this->DisplaySelectedNodeIntensityDistributionsCallback();
+
+if (!this->ShowGraphButton ) 
+    {
+      this->ShowGraphButton = vtkKWPushButton::New ();
+    } 
+  if (!this->ShowGraphButton->IsCreated()) 
+    {
+      this->ShowGraphButton->SetParent(parent);
+      this->ShowGraphButton->Create();
+      this->ShowGraphButton->SetWidth(25);
+      this->ShowGraphButton->SetText ("Plot Distributions");
+      this->ShowGraphButton->SetCommand(this, "PlotDistributionCallback");
+    }
+  this->Script("pack %s -side top -padx 0 -pady 2", this->ShowGraphButton->GetWidgetName());
+
 }
 
 //----------------------------------------------------------------------------
@@ -388,9 +414,7 @@ vtkEMSegmentIntensityDistributionsStep::DisplaySelectedNodeIntensityDistribution
 
       for(col = 0; col < nb_of_target_volumes; col++)
         {
-        matrix->SetElementValueAsDouble(
-          0, col, 
-          mrmlManager->GetTreeNodeDistributionLogMean(sel_vol_id, col));
+        matrix->SetElementValueAsDouble(0, col, mrmlManager->GetTreeNodeDistributionMean(sel_vol_id, col));
         }
       }
     else
@@ -425,10 +449,7 @@ vtkEMSegmentIntensityDistributionsStep::DisplaySelectedNodeIntensityDistribution
         {
         for (col = 0; col < nb_of_target_volumes; col++)
           {
-          matrix->SetElementValueAsDouble(
-            row, col, 
-            mrmlManager->GetTreeNodeDistributionLogCovariance(
-              sel_vol_id, row, col));
+          matrix->SetElementValueAsDouble(row, col, mrmlManager->GetTreeNodeDistributionCovariance(sel_vol_id, row, col));
           }
         }
       }
@@ -526,7 +547,7 @@ void vtkEMSegmentIntensityDistributionsStep::IntensityDistributionMeanChangedCal
     {
     return;
     }
-  mrmlManager->SetTreeNodeDistributionLogMean(sel_vol_id, col, atof(value));
+  mrmlManager->SetTreeNodeDistributionMean(sel_vol_id, col, atof(value));
 }
 
 //---------------------------------------------------------------------------
@@ -541,7 +562,7 @@ vtkEMSegmentIntensityDistributionsStep::IntensityDistributionCovarianceChangedCa
     {
     return;
     }
-  mrmlManager->SetTreeNodeDistributionLogCovariance(sel_vol_id, row,col,atof(value));
+  mrmlManager->SetTreeNodeDistributionCovariance(sel_vol_id, row,col,atof(value));
 }
 
 //----------------------------------------------------------------------------
@@ -820,4 +841,35 @@ void vtkEMSegmentIntensityDistributionsStep::ProcessManualIntensitySamplingGUIEv
 void vtkEMSegmentIntensityDistributionsStep::PrintSelf(ostream& os, vtkIndent indent)
 {
   this->Superclass::PrintSelf(os,indent);
+}
+void vtkEMSegmentIntensityDistributionsStep::RemovePlot() 
+{
+ this->Script("catch { itcl::delete object %s }", PLOT);
+}
+
+//---------------------------------------------------------------------------- 
+void vtkEMSegmentIntensityDistributionsStep::PlotDistributionCallback() 
+{
+
+  const char* result = this->Script("info command %s", PLOT);
+  if (result == NULL || !strcmp(result,"")) {
+      vtksys_stl::string tcl_dir = this->GetGUI()->GetLogic()->GetModuleShareDirectory();
+#ifdef _WIN32
+      tcl_dir.append("\\Tcl\\");
+#else
+      tcl_dir.append("/Tcl/");
+#endif
+      const char* sourceFiles[] = {"GenerateGraph.tcl", "Gui.tcl", "Graph.tcl", "Tooltips.tcl", "setget.tcl" };
+      for (int i = 0 ; i < 5 ; i++ ) { 
+    vtksys_stl::string file = tcl_dir + vtksys_stl::string(sourceFiles[i]);
+    if (this->SourceTclFile(file.c_str()))
+      {
+        return;
+      }
+      }
+    }
+  this->RemovePlot();
+  this->Script("EMSegmenterGraph %s", PLOT);
+  this->Script("%s CreateWindow",PLOT);
+  this->Script("%s AssignDefaultVolumes",PLOT);
 }

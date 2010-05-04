@@ -24,6 +24,7 @@
 #include "vtkSlicerNodeSelectorWidget.h"
 
 #include "vtkSlicerModelsLogic.h"
+#include "vtkSlicerColorLogic.h"
 
 //----------------------------------------------------------------------------
 vtkStandardNewMacro(vtkChangeTrackerSegmentationStep);
@@ -319,11 +320,29 @@ void vtkChangeTrackerSegmentationStep::PreSegmentScan1Define() {
   char segmNodeName[255];
   sprintf(segmNodeName, "%s_VOI_PreSegmented", this->GetGUI()->GetLogic()->GetInputScanName(0));
   this->PreSegmentNode = volumesLogic->CreateLabelVolume(Node->GetScene(),volumeNode, segmNodeName);
+  
+  vtkSmartPointer<vtkSlicerColorLogic> colorLogic =
+    vtkSmartPointer<vtkSlicerColorLogic>::New();
+  this->PreSegmentNode->GetDisplayNode()->SetAndObserveColorNodeID
+      (colorLogic->GetDefaultColorTableNodeID(vtkMRMLColorTableNode::Labels));
+
   this->PreSegmentNode->SetAndObserveImageData(this->PreSegment->GetOutput());
   
   this->CreateRender(volumeNode, 0);
   float color[3] = {0.8, 0.8, 0.0};
   this->SetRender_BandPassFilter(range[0],range[1],color,color);
+  
+  vtkSlicerApplicationGUI   *applicationGUI   = this->GetGUI()->GetApplicationGUI();
+  applicationGUI->GetMainSliceGUI("Red")->GetLogic()->GetSliceCompositeNode()->SetLabelVolumeID(this->PreSegmentNode->GetID());
+  applicationGUI->GetMainSliceGUI("Yellow")->GetLogic()->GetSliceCompositeNode()->SetLabelVolumeID(this->PreSegmentNode->GetID());
+  applicationGUI->GetMainSliceGUI("Green")->GetLogic()->GetSliceCompositeNode()->SetLabelVolumeID(this->PreSegmentNode->GetID());
+  
+  applicationGUI->GetMainSliceGUI("Red")->GetLogic()->GetSliceCompositeNode()->SetLabelOpacity(0.6);
+  applicationGUI->GetMainSliceGUI("Yellow")->GetLogic()->GetSliceCompositeNode()->SetLabelOpacity(0.6);
+  applicationGUI->GetMainSliceGUI("Green")->GetLogic()->GetSliceCompositeNode()->SetLabelOpacity(0.6);
+
+  applicationGUI->GetSlicesControlGUI()->GetSliceFadeScale()->SetValue(0.6);
+
 //  this->ShowSegmentedVolume(this->PreSegmentNode);
 //  this->GetGUI()->GetApplicationGUI()->GetActiveViewerWidget()->RequestRender();
   
@@ -363,6 +382,11 @@ int vtkChangeTrackerSegmentationStep::SegmentScan1Define() {
   sprintf(segmNodeName, "%s_VOI_Segmented", this->GetGUI()->GetLogic()->GetInputScanName(0));
 
   this->SegmentNode = volumesLogic->CreateLabelVolume(Node->GetScene(), this->PreSegmentNode, segmNodeName);
+
+  vtkSmartPointer<vtkSlicerColorLogic> colorLogic =
+    vtkSmartPointer<vtkSlicerColorLogic>::New();
+  this->SegmentNode->GetDisplayNode()->SetAndObserveColorNodeID
+      (colorLogic->GetDefaultColorTableNodeID(vtkMRMLColorTableNode::Labels));
 
   //return 1;
 

@@ -4,6 +4,44 @@
 #include "vtkMRMLEMSTargetNode.h"
 #include "vtkMRMLEMSAtlasNode.h"
 
+// for some reason it was otherwise not wrapping it in tcl
+// maybe take it out later 
+#define vtkSetReferenceStringMacroWDN(name) \
+void vtkMRMLEMSWorkingDataNode::Set##name (const char* _arg) \
+  { \
+  if ( this->name == NULL && _arg == NULL) { return;} \
+  if ( this->name && _arg && (!strcmp(this->name,_arg))) { return;} \
+  std::string oldValue; \
+  if (this->name) { oldValue = this->name; delete [] this->name;  } \
+  if (_arg) \
+    { \
+    size_t n = strlen(_arg) + 1; \
+    char *cp1 =  new char[n]; \
+    const char *cp2 = (_arg); \
+    this->name = cp1; \
+    do { *cp1++ = *cp2++; } while ( --n ); \
+    } \
+   else \
+    { \
+    this->name = NULL; \
+    } \
+  this->Modified(); \
+  if (this->Scene && this->name) \
+    { \
+    if (oldValue.size() > 0) \
+      { \
+      this->Scene->RemoveReferencedNodeID(oldValue.c_str(), this); \
+      } \
+    this->Scene->AddReferencedNodeID(this->name, this); \
+    } \
+  } 
+
+vtkSetReferenceStringMacroWDN(InputTargetNodeID)
+vtkSetReferenceStringMacroWDN(NormalizedTargetNodeID)
+vtkSetReferenceStringMacroWDN(AlignedTargetNodeID);
+vtkSetReferenceStringMacroWDN(InputAtlasNodeID);
+vtkSetReferenceStringMacroWDN(AlignedAtlasNodeID);
+
 //-----------------------------------------------------------------------------
 vtkMRMLEMSWorkingDataNode* 
 vtkMRMLEMSWorkingDataNode::
@@ -68,21 +106,29 @@ void vtkMRMLEMSWorkingDataNode::WriteXML(ostream& of, int nIndent)
   Superclass::WriteXML(of, nIndent);
   vtkIndent indent(nIndent);
 
- of << indent << " InputTargetNodeID=\"" 
+  of << indent << " InputTargetNodeID=\"" 
      << (this->InputTargetNodeID ? this->InputTargetNodeID : "NULL")
      << "\" ";
+  of << indent << " InputTargetNodeIsValid=\""   << this->InputTargetNodeIsValid << "\" ";
+
   of << indent << "NormalizedTargetNodeID=\"" 
      << (this->NormalizedTargetNodeID ? this->NormalizedTargetNodeID : "NULL")
      << "\" ";
   of << indent << "AlignedTargetNodeID=\"" 
      << (this->AlignedTargetNodeID ? this->AlignedTargetNodeID : "NULL")
      << "\" ";
- of << indent << "InputAtlasNodeID=\"" 
+  of << indent << " AlignedTargetNodeIsValid=\"" << this->AlignedTargetNodeIsValid  << "\" ";
+
+  of << indent << "InputAtlasNodeID=\"" 
      << (this->InputAtlasNodeID ? this->InputAtlasNodeID : "NULL")
      << "\" ";
+  of << indent << " InputAtlasNodeIsValid=\""    << this->InputAtlasNodeIsValid  << "\" ";
+
   of << indent << "AlignedAtlasNodeID=\"" 
      << (this->AlignedAtlasNodeID ? this->AlignedAtlasNodeID : "NULL")
      << "\" ";
+  of << indent << " AlignedAtlasNodeIsValid=\"" <<  this->AlignedAtlasNodeIsValid  << "\" ";
+
 }
 
 //-----------------------------------------------------------------------------
@@ -171,6 +217,12 @@ void vtkMRMLEMSWorkingDataNode::ReadXMLAttributes(const char** attrs)
       this->SetInputTargetNodeID(val);
       //this->Scene->AddReferencedNodeID(this->InputTargetNodeID, this);
       }
+    else if (!strcmp(key, "InputTargetNodeIsValid"))
+      {
+    vtksys_stl::stringstream ss;
+    ss << val;
+    ss >> this->InputTargetNodeIsValid;
+      }
     else if (!strcmp(key, "NormalizedTargetNodeID"))
       {
       this->SetNormalizedTargetNodeID(val);
@@ -181,15 +233,33 @@ void vtkMRMLEMSWorkingDataNode::ReadXMLAttributes(const char** attrs)
       this->SetAlignedTargetNodeID(val);
       //this->Scene->AddReferencedNodeID(this->AlignedTargetNodeID, this);
       }
+    else if (!strcmp(key, "AlignedTargetNodeIsValid"))
+      {
+    vtksys_stl::stringstream ss;
+    ss << val;
+    ss >> this->AlignedTargetNodeIsValid;
+      }
     else if (!strcmp(key, "InputAtlasNodeID"))
       {
       this->SetInputAtlasNodeID(val);
       //this->Scene->AddReferencedNodeID(this->InputAtlasNodeID, this);
       }
+    else if (!strcmp(key, "InputAtlasNodeIsValid"))
+      {
+    vtksys_stl::stringstream ss;
+    ss << val;
+    ss >> this->InputAtlasNodeIsValid;
+      }
     else if (!strcmp(key, "AlignedAtlasNodeID"))
       {
       this->SetAlignedAtlasNodeID(val);
       //this->Scene->AddReferencedNodeID(this->AlignedAtlasNodeID, this);
+      }
+    else if (!strcmp(key, "AlignedAtlasNodeIsValid"))
+      {
+    vtksys_stl::stringstream ss;
+    ss << val;
+    ss >> this->AlignedAtlasNodeIsValid;
       }
     }
 }
@@ -205,6 +275,10 @@ void vtkMRMLEMSWorkingDataNode::Copy(vtkMRMLNode *rhs)
   this->SetAlignedTargetNodeID(node->AlignedTargetNodeID);
   this->SetInputAtlasNodeID(node->InputAtlasNodeID);
   this->SetAlignedAtlasNodeID(node->AlignedAtlasNodeID);
+  this->InputTargetNodeIsValid           = node->InputTargetNodeIsValid;
+  this->AlignedTargetNodeIsValid         = node->AlignedTargetNodeIsValid;  
+  this->InputAtlasNodeIsValid            = node->InputAtlasNodeIsValid;  
+  this->AlignedAtlasNodeIsValid          = node->AlignedAtlasNodeIsValid;  
 }
 
 //-----------------------------------------------------------------------------
@@ -215,18 +289,26 @@ void vtkMRMLEMSWorkingDataNode::PrintSelf(ostream& os, vtkIndent indent)
   os << indent << "InputTargetNodeID: " <<
     (this->InputTargetNodeID ? this->InputTargetNodeID : "(none)") 
      << "\n";
+  os << indent << "InputTargetNodeIsValid: " << this->InputTargetNodeIsValid << "\n";
+
   os << indent << "NormalizedTargetNodeID: " <<
     (this->NormalizedTargetNodeID ? this->NormalizedTargetNodeID : "(none)") 
      << "\n";
   os << indent << "AlignedTargetNodeID: " <<
     (this->AlignedTargetNodeID ? this->AlignedTargetNodeID : "(none)") 
      << "\n";
+  os << indent << "AlignedTargetNodeIsValid: " << this->AlignedTargetNodeIsValid << "\n";
+
   os << indent << "InputAtlasNodeID: " <<
     (this->InputAtlasNodeID ? this->InputAtlasNodeID : "(none)") 
      << "\n";
+  os << indent << "InputAtlasNodeIsValid: " << this->InputAtlasNodeIsValid  << "\n";
+
   os << indent << "AlignedAtlasNodeID: " <<
     (this->AlignedAtlasNodeID ? this->AlignedAtlasNodeID : "(none)") 
      << "\n";
+  os << indent << "AlignedAtlasNodeIsValid: " << this->AlignedAtlasNodeIsValid << "\n";
+
 }
 
 //-----------------------------------------------------------------------------

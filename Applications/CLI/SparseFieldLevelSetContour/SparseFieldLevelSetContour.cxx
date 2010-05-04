@@ -16,6 +16,7 @@
 #include <vector>
 #include "vtkXMLPolyDataReader.h"
 #include "vtkXMLPolyDataWriter.h"
+#include "vtkPolyDataWriter.h"
 #include "vtkPolyData.h"
 #include "vtkPluginFilterWatcher.h"
 #include "ModuleEntry.h"
@@ -43,6 +44,9 @@ int main(int argc, char* argv[] )
   reader->SetFileName(InputSurface.c_str());
   reader->Update();
 
+  InitParam init = {evolve_its, mesh_smooth_its, H_smooth_its, adj_levels, rightHandMesh };
+
+
   if (reader->GetOutput() == NULL)
     {
     std::cerr << "ERROR reading input surface file " << InputSurface.c_str();
@@ -51,16 +55,23 @@ int main(int argc, char* argv[] )
     }
   vtkSmartPointer<vtkPolyData> polyDataInput  = reader->GetOutput();
 
-  vtkSmartPointer<vtkPolyData> polyDataOutput = entry_main( polyDataInput, ContourSeedPts );
+  vtkSmartPointer<vtkPolyData> polyDataOutput = vtkSmartPointer<vtkPolyData>::New();
+  
+  //vtkPolyData * polyDataOutput =
+  entry_main( polyDataInput, ContourSeedPts, polyDataOutput, init );
 
-  vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkXMLPolyDataWriter::New();
+  vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
   std::string commentWrite = "Writing output model " + OutputModel;
   vtkPluginFilterWatcher watchWriter(writer,
                                      commentWrite.c_str(),
                                      CLPProcessInformation);
+  polyDataOutput->Update( );
   writer->SetInput( polyDataOutput );
   writer->SetFileName( OutputModel.c_str() );
+  
+  writer->Update( );
   writer->Write();
+
   // The result is contained in the scalar colormap of the output.
 
   return EXIT_SUCCESS;

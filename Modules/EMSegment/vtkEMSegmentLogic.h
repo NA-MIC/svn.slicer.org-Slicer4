@@ -9,6 +9,7 @@ class vtkImageEMLocalSegmenter;
 class vtkImageEMLocalGenericClass;
 class vtkImageEMLocalSuperClass;
 class vtkImageEMLocalClass;
+class vtkKWApplication;
 
 class vtkGridTransform;
 
@@ -31,13 +32,31 @@ public:
   virtual void      SaveTemplateNow();
   virtual bool      SaveIntermediateResults();
 
+  // Old Pipeline
   virtual bool      StartPreprocessing();
   virtual bool      StartPreprocessingInitializeInputData();
   virtual bool      StartPreprocessingTargetIntensityNormalization();
   virtual bool      StartPreprocessingTargetToTargetRegistration();
   virtual bool      StartPreprocessingAtlasToTargetRegistration();
-
   virtual void      StartSegmentation();
+
+  // New Pipeline
+  virtual int       SourceTclFile(vtkKWApplication*app,const char *tclFile);
+  virtual int       SourceTaskFiles(vtkKWApplication* app);
+  virtual int       SourcePreprocessingTclFiles(vtkKWApplication* app); 
+  virtual void      StartSegmentationWithoutPreprocessing();
+  int               ComputeIntensityDistributionsFromSpatialPrior(vtkKWApplication* app);
+
+
+  //BTX
+  std::string DefineTclTaskFullPathName(const char* TclFileName);
+  std::string GetTclTaskDirectory();
+  std::string GetTclGeneralDirectory();
+  std::string DefineTclTasksFileFromMRML();
+  //ETX
+  
+
+
 
   // Used within StartSegmentation to copy data from the MRMLManager
   // to the segmenter algorithm.  Possibly useful for research
@@ -85,49 +104,13 @@ public:
   // events to observe
   virtual vtkIntArray* NewObservableEvents();
 
-#if IBM_FLAG
-  //BTX
-  std::string DefineTclTaskFullPathName(const char* TclFileName);
-  std::string GetTclTaskDirectory();
-  std::string DefineTclTasksFileFromMRML();
+  void StartPreprocessingResampleToTarget(vtkMRMLVolumeNode* movingVolumeNode, vtkMRMLVolumeNode* fixedVolumeNode, vtkMRMLVolumeNode* outputVolumeNode);
 
-  //ETX
-#endif 
+  static void TransferIJKToRAS(vtkMRMLVolumeNode* volumeNode, int ijk[3], double ras[3]);
+  static void TransferRASToIJK(vtkMRMLVolumeNode* volumeNode, double ras[3], int ijk[3]);
 
-private:
-  vtkEMSegmentLogic();
-  ~vtkEMSegmentLogic();
-  vtkEMSegmentLogic(const vtkEMSegmentLogic&);
-  void operator=(const vtkEMSegmentLogic&);
 
-  // the mrml manager is created in the constructor
-  vtkSetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager);
-
-  // utility---should probably go to general slicer lib at some point
-  static void SlicerImageReslice(vtkMRMLVolumeNode* inputVolumeNode,
-                                 vtkMRMLVolumeNode* outputVolumeNode,
-                                 vtkMRMLVolumeNode* outputVolumeGeometryNode,
-                                 vtkTransform* outputRASToInputRASTransform,
-                                  int iterpolationType,
-                                 double backgroundLevel);
-  //BTX
-  template <class T>
-  static T GuessRegistrationBackgroundLevel(vtkImageData* imageData);
-  //ETX
-
-  static void
-  ComposeGridTransform(vtkGridTransform* inGrid,
-                       vtkMatrix4x4*     preMultiply,
-                       vtkMatrix4x4*     postMultiply,
-                       vtkGridTransform* outGrid);
-
-  static void 
-  SlicerImageResliceWithGrid(vtkMRMLVolumeNode* inputVolumeNode,
-                             vtkMRMLVolumeNode* outputVolumeNode,
-                             vtkMRMLVolumeNode* outputVolumeGeometryNode,
-                             vtkGridTransform* outputRASToInputRASTransform,
-                             int iterpolationType,
-                             double backgroundLevel);
+  double GuessRegistrationBackgroundLevel(vtkMRMLVolumeNode* volumeNode);
 
   static void SlicerRigidRegister(vtkMRMLVolumeNode* fixedVolumeNode,
                                   vtkMRMLVolumeNode* movingVolumeNode,
@@ -146,6 +129,46 @@ private:
                         int imageMatchType,
                         int iterpolationType,
                         double backgroundLevel);
+
+  static void 
+  SlicerImageResliceWithGrid(vtkMRMLVolumeNode* inputVolumeNode,
+                             vtkMRMLVolumeNode* outputVolumeNode,
+                             vtkMRMLVolumeNode* outputVolumeGeometryNode,
+                             vtkGridTransform* outputRASToInputRASTransform,
+                             int iterpolationType,
+                             double backgroundLevel);
+
+
+  // utility---should probably go to general slicer lib at some point
+  static void SlicerImageReslice(vtkMRMLVolumeNode* inputVolumeNode,
+                                 vtkMRMLVolumeNode* outputVolumeNode,
+                                 vtkMRMLVolumeNode* outputVolumeGeometryNode,
+                                 vtkTransform* outputRASToInputRASTransform,
+                                  int iterpolationType,
+                                 double backgroundLevel);
+
+  void PrintText(char *TEXT);
+
+
+private:
+  vtkEMSegmentLogic();
+  ~vtkEMSegmentLogic();
+  vtkEMSegmentLogic(const vtkEMSegmentLogic&);
+  void operator=(const vtkEMSegmentLogic&);
+
+  // the mrml manager is created in the constructor
+  vtkSetObjectMacro(MRMLManager, vtkEMSegmentMRMLManager);
+
+  //BTX
+  template <class T>
+  static T GuessRegistrationBackgroundLevel(vtkImageData* imageData);
+  //ETX
+
+  static void
+  ComposeGridTransform(vtkGridTransform* inGrid,
+                       vtkMatrix4x4*     preMultiply,
+                       vtkMatrix4x4*     postMultiply,
+                       vtkGridTransform* outGrid);
 
   // Description:
   // Convenience method for determining if two volumes have same geometry
@@ -181,6 +204,8 @@ private:
   vtkSetStringMacro(ProgressCurrentAction);
   vtkSetMacro(ProgressGlobalFractionCompleted, double);
   vtkSetMacro(ProgressCurrentFractionCompleted, double);
+
+  void UpdateIntensityDistributionAuto(vtkKWApplication* app, vtkIdType nodeID);
 
   //
   // because the mrml nodes are very complicated for this module, we

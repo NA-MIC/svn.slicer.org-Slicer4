@@ -977,7 +977,7 @@ void vtkSlicerWelcomeGUI::BuildWelcomeAndAboutPanel( vtkKWFrame *parent )
   welcome->GetWidget()->SetWrapToWord();
   welcome->GetWidget()->QuickFormattingOn();
   welcome->GetWidget()->SetHeight ( 5 );
-  const char *about = "**3D Slicer** is a free open source software platform for medical image processing and 3D visualization of image data. This module contains some basic information and useful links to get you started using Slicer. Please see our website <a>http://www.slicer.org</a> and the documentation on our wiki for more information: <a>http://www.slicer.org/slicerWiki/index.php/Documentation-3.4</a>.";
+  const char *about = "**3D Slicer** is a free open source software platform for medical image processing and 3D visualization of image data. This module contains some basic information and useful links to get you started using Slicer. Please see our website <a>http://www.slicer.org</a> and the documentation on our wiki for more information: <a>http://www.slicer.org/slicerWiki/index.php/Documentation-3.6</a>.";
   welcome->SetText ( about );
   //Important that Read only after SetText otherwise it doesn't work
   welcome->GetWidget()->ReadOnlyOn();
@@ -1550,7 +1550,7 @@ void vtkSlicerWelcomeGUI::BuildMouseModePanel ( vtkKWFrame *parent )
   txt->GetWidget()->SetWrapToWord();
   txt->GetWidget()->QuickFormattingOn();
   txt->GetWidget()->SetHeight (7);
-  const char *t1 = "**Mouse Modes:** Slicer has three main mouse modes that apply to the 3D viewer:  **Pick** (which allows \"pickable\" objects to be selected), **Place** (which permits objects to be interactively placed and positioned), and **Transform** (rotate, pan and zoom). The toolbar icons that switch between these mouse modes are shown from left to right above, respectively. \n\n**Hint:** these modes are persistent when selected; when you are done \"picking\" or \"placing\", make sure to select the **Transform** mode again. \n\n";
+  const char *t1 = "**Mouse Modes:** Slicer has three main mouse modes that apply to the 3D viewer:  **Pick** (which allows \"pickable\" objects to be selected and manipulated), **Place** (which permits objects to be interactively created and placed), and **Transform** (rotate, pan and zoom). The toolbar icons that switch between these mouse modes are shown from left to right above, respectively. \n\n**Hint:** Transform mode is the default mouse mode. Selecting the Pick or Place icon changes the mode for **one mouse-click only**, and then the mode reverts back to \"Transform\". The \"option arrows\" beside each icon provide a way  to \"pick\" or \"place\" persistently, until another mode is manually selected. \n\n";
   txt->SetText ( t1 );
   //Important that Read only after SetText otherwise it doesn't work  
   txt->GetWidget()->ReadOnlyOn();
@@ -1587,30 +1587,14 @@ void vtkSlicerWelcomeGUI::BuildOtherHelpPanel( vtkKWFrame *parent )
   basictxt->GetWidget()->SetWrapToWord();
   basictxt->GetWidget()->QuickFormattingOn();
   basictxt->GetWidget()->SetHeight(10);
-  const char *t1 = " **Help For Performing Common Tasks:**\n\n* For general application and specific module documentation, see: <a>http://www.slicer.org/slicerWiki/index.php/Documentation-3.4</a>.\n* For information on how basic visualization operations are performed, see: <a>http://www.na-mic.org/Wiki/index.php/Slicer3.2:Training#1.1</a>.\n* For information on merging multiple datasets (and multiple modalities) for a single subject, see: <a>http://www.slicer.org/slicerWiki/index.php/Documentation-3.4#Registration</a>. \n* For information about manual segmentation of image data, see: <a>http://www.na-mic.org/Wiki/index.php/Slicer3.2:Training#1.2</a>. \n\n";
+  const char *t1 = " **Help For Performing Common Tasks:**\n\nFor general application and specific module documentation, see:\n  <a>http://www.slicer.org/slicerWiki/index.php/Documentation-3.6</a>.\n\nFor information on merging multiple datasets (and multiple modalities) for a single subject, see:\n  <a>http://www.slicer.org/slicerWiki/index.php/Documentation-3.6#Registration</a>. \n\nFor information on how basic visualization operations are performed, or information about manual segmentation of image data, see **Basic** and **Core** tutorials on our training page:\n  <a>http://www.slicer.org/slicerWiki/index.php/Slicer3.4:Training</a>. \n\n**Information About Specialized Tools:** \n\nFind tutorials for advanced features, like:\n * automated brain segmentation using the \"EMSegmenter module\",\n * Diffusion MRI processing, \n * Tool Tracking and \n * Image Guided Therapy Research \nin **Specialized** tutorials on the training page:\n  <a>http://www.slicer.org/slicerWiki/index.php/Slicer3.4:Training</a>. \n";
+
   basictxt->SetText ( t1 );
   //Important that Read only after SetText otherwise it doesn't work
   basictxt->GetWidget()->ReadOnlyOn();
-
-  vtkKWTextWithHyperlinksWithScrollbars *advtxt = vtkKWTextWithHyperlinksWithScrollbars::New ( );
-  advtxt->SetParent ( parent );
-  advtxt->Create();
-  advtxt->SetHorizontalScrollbarVisibility ( 0 );
-  advtxt->SetVerticalScrollbarVisibility ( 1 );
-  advtxt->GetWidget()->SetReliefToGroove();
-  advtxt->GetWidget()->SetWrapToWord();
-  advtxt->GetWidget()->QuickFormattingOn();
-  advtxt->GetWidget()->SetHeight(10);
-  const char *t2 = " **Information About Specialized Tools:** \n\n* Find a tutorial on automated brain segmentation using the \"EMSegmenter module\" here: <a>http://www.na-mic.org/Wiki/index.php/Slicer3.2:Training#1.3</a>. \n* Learn about Diffusion MRI processing with Slicer here: <a>http://www.na-mic.org/Wiki/index.php/Slicer3.2:Training#1.5</a>. \n* Find information about Tool Tracking and Image Guided Therapy Research here: <a>http://www.na-mic.org/Wiki/index.php/Slicer3.2:Training#2.2</a>. \n* Visit the Slicer3.2 Training Compendium and find additional tutorials and example data: <a>http://www.na-mic.org/Wiki/index.php/Slicer3.2:Training</a> \n";
-  advtxt->SetText ( t2 );
-  //Important that Read only after SetText otherwise it doesn't work
-  advtxt->GetWidget()->ReadOnlyOn();
-  
   app->Script ( "pack %s -side top -anchor nw -fill x -expand y -padx 2 -pady 4", basictxt->GetWidgetName() );
-  app->Script ( "pack %s -side top -anchor nw -fill x -expand y -padx 2 -pady 4", advtxt->GetWidgetName() );
-
   basictxt->Delete();
-  advtxt->Delete();
+
 }
 
 //---------------------------------------------------------------------------

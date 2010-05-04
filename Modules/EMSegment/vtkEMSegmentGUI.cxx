@@ -24,14 +24,11 @@
 #include "vtkEMSegmentNodeParametersStep.h"
 #include "vtkEMSegmentIntensityDistributionsStep.h"
 #include "vtkEMSegmentIntensityImagesStep.h"
-#include "vtkEMSegmentIntensityNormalizationStep.h"
 #include "vtkEMSegmentRegistrationParametersStep.h"
 #include "vtkEMSegmentRunSegmentationStep.h"
 
-#if IBM_FLAG
 #include "vtkEMSegmentInputChannelsStep.h"
 #include "vtkEMSegmentPreProcessingStep.h"
-#endif
 
 #include "CSAILLogo.h"
 #include "vtkKWIcon.h"
@@ -68,15 +65,12 @@ vtkEMSegmentGUI::vtkEMSegmentGUI()
   this->WizardWidget = vtkKWWizardWidget::New();
 
   this->ParametersSetStep          = NULL;
-#if IBM_FLAG
   this->InputChannelStep           = NULL;
-#endif 
   this->PreProcessingStep        = NULL;
 
   this->AnatomicalStructureStep    = NULL;
   this->SpatialPriorsStep          = NULL;
   this->IntensityImagesStep        = NULL;
-  this->NormalizationStep          = NULL;
   this->IntensityDistributionsStep = NULL;
   this->NodeParametersStep         = NULL;
   this->RegistrationParametersStep = NULL;
@@ -89,6 +83,9 @@ vtkEMSegmentGUI::vtkEMSegmentGUI()
                  0);
   this->Logo = logo;
   logo->Delete();
+
+  this->StartSegmentStep= NULL;
+  this->SegmentationMode = SegmentationModeAdvanced;
 }
 
 //----------------------------------------------------------------------------
@@ -113,20 +110,17 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
     this->ParametersSetStep = NULL;
     }
 
-#if IBM_FLAG
-  if (!this->InputChannelStep)
+  if (this->InputChannelStep)
     {
-      this->InputChannelStep->Delete();
-      this->InputChannelStep = NULL;
+    this->InputChannelStep->Delete();
+    this->InputChannelStep = NULL;
     }
 
-  if (!this->PreProcessingStep)
+  if (this->PreProcessingStep)
     {
-      this->PreProcessingStep->Delete();
-      this->PreProcessingStep = NULL;
+    this->PreProcessingStep->Delete();
+    this->PreProcessingStep = NULL;
     }
-
-#endif
 
   if (this->AnatomicalStructureStep)
     {
@@ -146,12 +140,6 @@ vtkEMSegmentGUI::~vtkEMSegmentGUI()
     this->IntensityImagesStep = NULL;
     }
   
-  if (this->NormalizationStep)
-    {
-    this->NormalizationStep->Delete();
-    this->NormalizationStep = NULL;
-    }
-
   if (this->IntensityDistributionsStep)
     {
     this->IntensityDistributionsStep->Delete();
@@ -316,6 +304,11 @@ void vtkEMSegmentGUI::ProcessMRMLEvents(vtkObject *caller,
         GetCurrentStep()->ShowUserInterface();
       }
     }
+
+  if (this->RunSegmentationStep)
+    {
+      this->RunSegmentationStep->ProcessMRMLEvents(caller, event, callData);  
+    }
 }
 
 //---------------------------------------------------------------------------
@@ -389,9 +382,12 @@ void vtkEMSegmentGUI::BuildGUI()
               this->WizardWidget->GetWidgetName());
   wizard_frame->Delete();
 
-  vtkKWWizardWorkflow *wizard_workflow = 
-    this->WizardWidget->GetWizardWorkflow();
-  vtkNotUsed(vtkKWWizardWidget *wizard_widget = this->WizardWidget;);
+
+  this->WizardWidget->GetFinishButton()->SetCommand(this, "StartSegmentation");
+  this->WizardWidget->GetFinishButton()->SetText("Segment");
+  this->WizardWidget->GetFinishButton()->SetBalloonHelpString("Start Segmentation");
+
+  vtkKWWizardWorkflow *wizard_workflow =  this->WizardWidget->GetWizardWorkflow();
 
   // -----------------------------------------------------------------
   // Parameter Set step
@@ -406,16 +402,13 @@ void vtkEMSegmentGUI::BuildGUI()
   // -----------------------------------------------------------------
   // Anatomical Structure step
 
-#if IBM_FLAG
     if (!this->InputChannelStep)
     {
     this->InputChannelStep = vtkEMSegmentInputChannelsStep::New();
     this->InputChannelStep->SetGUI(this);
     }
-    cout << "========Add new Step" << endl;
     wizard_workflow->AddNextStep(this->InputChannelStep);
-    cout << "========finished" << endl;
-#endif
+  this->ParametersSetStep->SetNextStep(this->InputChannelStep);
 
   if (!this->AnatomicalStructureStep)
     {
@@ -435,7 +428,6 @@ void vtkEMSegmentGUI::BuildGUI()
     }
   wizard_workflow->AddNextStep(this->SpatialPriorsStep);
 
-#if IBM_FLAG
   // -----------------------------------------------------------------
   // Registration Parameters step
   if (!this->RegistrationParametersStep)
@@ -454,30 +446,6 @@ void vtkEMSegmentGUI::BuildGUI()
     this->PreProcessingStep->SetGUI(this);
     }
   wizard_workflow->AddNextStep(this->PreProcessingStep);
-#else 
-  // -----------------------------------------------------------------
-  // Intensity Images step
-
-  if (!this->IntensityImagesStep)
-    {
-    this->IntensityImagesStep = vtkEMSegmentIntensityImagesStep::New();
-    this->IntensityImagesStep->SetGUI(this);
-    }
-  wizard_workflow->AddNextStep(this->IntensityImagesStep);
-
-  // -----------------------------------------------------------------
-  // Intensity Normalization step
-
-  if (!this->NormalizationStep)
-    {
-    this->NormalizationStep = vtkEMSegmentIntensityNormalizationStep::New();
-    this->NormalizationStep->SetGUI(this);
-    }
-  wizard_workflow->AddNextStep(this->NormalizationStep);
-
-  // -----------------------------------------------------------------
-  // Intensity Distributions step
-#endif
 
   if (!this->IntensityDistributionsStep)
     {
@@ -486,6 +454,7 @@ void vtkEMSegmentGUI::BuildGUI()
     this->IntensityDistributionsStep->SetGUI(this);
     }
   wizard_workflow->AddNextStep(this->IntensityDistributionsStep);
+  this->PreProcessingStep->SetNextStep(this->IntensityDistributionsStep);
 
   // -----------------------------------------------------------------
   // Node Parameters step
@@ -497,17 +466,6 @@ void vtkEMSegmentGUI::BuildGUI()
     }
   wizard_workflow->AddNextStep(this->NodeParametersStep);
 
-  // -----------------------------------------------------------------
-  // Registration Parameters step
-#if !IBM_FLAG
-  if (!this->RegistrationParametersStep)
-    {
-    this->RegistrationParametersStep = 
-      vtkEMSegmentRegistrationParametersStep::New();
-    this->RegistrationParametersStep->SetGUI(this);
-    }
-  wizard_workflow->AddNextStep(this->RegistrationParametersStep);
-#endif
   // -----------------------------------------------------------------
   // Run Segmentation step
 
@@ -522,7 +480,9 @@ void vtkEMSegmentGUI::BuildGUI()
   // Initial and finish step
 
   wizard_workflow->SetFinishStep(this->RunSegmentationStep);
-  wizard_workflow->CreateGoToTransitionsToFinishStep();
+
+  // wizard_workflow->CreateGoToTransitionsToFinishStep();
+
   wizard_workflow->SetInitialStep(this->ParametersSetStep);
 }
 
@@ -535,7 +495,6 @@ void vtkEMSegmentGUI::TearDownGUI()
     }
 
 
-#if IBM_FLAG
   if (this->InputChannelStep)
     {
     this->InputChannelStep->SetGUI(NULL);
@@ -544,7 +503,6 @@ void vtkEMSegmentGUI::TearDownGUI()
     {
       this->PreProcessingStep->SetGUI(NULL);
     }
-#endif
 
   if (this->AnatomicalStructureStep)
     {
@@ -559,11 +517,6 @@ void vtkEMSegmentGUI::TearDownGUI()
   if (this->IntensityImagesStep)
     {
     this->IntensityImagesStep->SetGUI(NULL);
-    }
-
-  if (this->NormalizationStep)
-    {
-    this->NormalizationStep->SetGUI(NULL);
     }
 
   if (this->IntensityDistributionsStep)
@@ -688,4 +641,49 @@ void vtkEMSegmentGUI::Init()
   emsEvents->Delete();
 }
 
+//---------------------------------------------------------------------------
+void vtkEMSegmentGUI::StartSegmentation() 
+  {
+    vtkKWWizardWorkflow *wizard_workflow =  this->WizardWidget->GetWizardWorkflow();
+    vtkKWWizardStep *currentStep =  wizard_workflow->GetCurrentStep();
 
+    // It is called for the first time 
+    if (!this->StartSegmentStep) 
+      {
+    this->StartSegmentStep = currentStep;
+      }
+
+
+    if (currentStep ==  wizard_workflow->GetFinishStep())
+      {
+    // At the final step execute the OK button
+    this->WizardWidget->GetOKButton()->CommandCallback(); 
+        // Now go back to the location where the button was pressed 
+    if (this->StartSegmentStep) 
+      {
+        
+        while (this->StartSegmentStep != currentStep)
+          {
+        wizard_workflow->AttemptToGoToPreviousStep();
+        if ((currentStep == wizard_workflow->GetCurrentStep()) ||  wizard_workflow->GetCurrentStep() == wizard_workflow->GetInitialStep())
+          {
+            break;
+          }
+        currentStep = wizard_workflow->GetCurrentStep();
+          }
+        currentStep->ShowUserInterface();
+        this->StartSegmentStep = NULL;
+      }
+
+    return;
+      }
+
+    wizard_workflow->AttemptToGoToNextStep();
+
+    if (currentStep != wizard_workflow->GetCurrentStep()) {
+      this->StartSegmentation();
+    } else {
+      // Error occured 
+      this->StartSegmentStep = NULL;
+    }
+  }

@@ -87,10 +87,16 @@ This work is part of the National Alliance for Medical Image Computing (NAMIC), 
     </boolean>
     <boolean>
       <name>boolean2</name>
-      <longflag>boolean3</longflag>
+      <longflag>boolean2</longflag>
       <description>A boolean default false</description>
       <label>Boolean Default false</label>
       <default>false</default>
+    </boolean>
+    <boolean>
+      <name>boolean3</name>
+      <longflag>boolean3</longflag>
+      <description>A boolean with no default, should be defaulting to false</description>
+      <label>Boolean No Default</label>
     </boolean>
   </parameters>
 
@@ -101,6 +107,12 @@ This work is part of the National Alliance for Medical Image Computing (NAMIC), 
       <longflag>file1</longflag>
       <description>An input file</description>
       <label>Input file</label>
+      <channel>input</channel>
+    </file>
+    <file fileExtensions=".png,.jpg,.jpeg,.bmp,.tif,.tiff,.gipl,.dcm,.dicom,.nhdr,.nrrd,.mhd,.mha,.mask,.hdr,.nii,.nii.gz,.hdr.gz,.pic,.lsm,.spr,.vtk,.vtkp,.vtki,.stl,.csv,.txt,.xml,.html"  multiple="true">
+      <longflag>files</longflag>
+      <description>Multiple input files</description>
+      <label>Input Files</label>
       <channel>input</channel>
     </file>
     <directory>
