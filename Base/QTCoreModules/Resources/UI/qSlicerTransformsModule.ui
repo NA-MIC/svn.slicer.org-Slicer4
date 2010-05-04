@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>518</width>
-    <height>756</height>
+    <width>513</width>
+    <height>759</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -91,13 +91,13 @@
         </item>
         <item>
          <widget class="qMRMLNodeComboBox" name="TransformNodeSelector">
-          <property name="editEnabled">
-           <bool>false</bool>
-          </property>
           <property name="nodeTypes">
            <stringlist>
             <string>vtkMRMLLinearTransformNode</string>
            </stringlist>
+          </property>
+          <property name="editEnabled">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -339,8 +339,13 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>qMRMLMatrixWidget</class>
+   <class>ctkMatrixWidget</class>
    <extends>QTableWidget</extends>
+   <header>ctkMatrixWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>qMRMLMatrixWidget</class>
+   <extends>ctkMatrixWidget</extends>
    <header>qMRMLMatrixWidget.h</header>
   </customwidget>
   <customwidget>
