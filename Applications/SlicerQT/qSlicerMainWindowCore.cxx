@@ -20,6 +20,7 @@
 #include "qSlicerAbstractModule.h"
 #include "qSlicerAbstractModuleWidget.h"
 #include "qSlicerModuleManager.h"
+#include "qSlicerIOManager.h"
 #ifdef Slicer3_USE_PYTHONQT
 #include "qSlicerPythonManager.h"
 #endif
@@ -36,7 +37,7 @@ qSlicerMainWindowCorePrivate::qSlicerMainWindowCorePrivate()
   this->PythonShell = 0; 
   this->ShowModuleActionMapper = new QSignalMapper(this);
 
-  this->ToolBarModuleList << "Measurements" << "Transforms" << "Volumes";
+  this->ToolBarModuleList << "Measurements" << "MRMLTree" << "Transforms" << "Volumes";
   }
     
 //---------------------------------------------------------------------------

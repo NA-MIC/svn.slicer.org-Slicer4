@@ -12,8 +12,9 @@
 
 // SlicerQt/CoreModules
 #include "qSlicerCoreModuleFactory.h"
-#include "qSlicerTransformsModule.h"
 #include "qSlicerCamerasModule.h"
+#include "qSlicerMRMLTreeModule.h"
+#include "qSlicerTransformsModule.h"
 // FIXME:Move the following to the Models module (when it will be ready in Qt.)
 #include "qSlicerCoreApplication.h"
 #include "qSlicerCoreIOManager.h"
@@ -63,8 +64,9 @@ qSlicerCoreModuleFactory::qSlicerCoreModuleFactory():Superclass()
 void qSlicerCoreModuleFactory::registerItems()
 {
   CTK_D(qSlicerCoreModuleFactory);
-  d->registerCoreModule<qSlicerTransformsModule>();
   d->registerCoreModule<qSlicerCamerasModule>();
+  d->registerCoreModule<qSlicerMRMLTreeModule>();
+  d->registerCoreModule<qSlicerTransformsModule>();
   
   // FIXME: Move the following to the Models module (when it will be ready in Qt.)
   qSlicerCoreApplication::application()->coreIOManager()
