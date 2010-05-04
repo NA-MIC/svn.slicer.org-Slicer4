@@ -100,6 +100,7 @@ void qSlicerCLIModule::setXmlModuleDescription(const char* xmlModuleDescription)
 {
   CTK_D(qSlicerCLIModule);
   //qDebug() << "xmlModuleDescription:" << xmlModuleDescription;
+  Q_ASSERT(!this->entryPoint().isEmpty());
 
   // Parse module description
   ModuleDescription desc;
@@ -126,6 +127,12 @@ void qSlicerCLIModule::setXmlModuleDescription(const char* xmlModuleDescription)
   d->Help = help.arg(
     QString::fromStdString(desc.GetDescription())).arg(
     QString::fromStdString(desc.GetDocumentationURL()));
+
+  // Set module type
+  desc.SetType(this->moduleType().toStdString());
+  
+  // Set module entry point
+  desc.SetTarget(this->entryPoint().toStdString());
 
   d->Desc = desc; 
 }

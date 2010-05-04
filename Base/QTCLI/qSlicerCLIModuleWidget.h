@@ -38,7 +38,7 @@ public:
   virtual ~qSlicerCLIModuleWidget(){}
 
   ///
-  /// Set the module entry point associated with the module
+  /// Set the \a entryPoint associated with the module
   void setModuleEntryPoint(const QString& entryPoint);
 
 public slots:

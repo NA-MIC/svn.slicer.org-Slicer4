@@ -52,9 +52,9 @@ void qSlicerCLILoadableModule::setup()
 }
 
 //-----------------------------------------------------------------------------
-QString qSlicerCLILoadableModule::entryPoint()
+QString qSlicerCLILoadableModule::entryPoint()const
 {
-  CTK_D(qSlicerCLILoadableModule);
+  CTK_D(const qSlicerCLILoadableModule);
   QString str;
   QTextStream(&str) << "slicer:" << (void*)(d->EntryPoint);
   return str; 
@@ -62,3 +62,9 @@ QString qSlicerCLILoadableModule::entryPoint()
 
 //-----------------------------------------------------------------------------
 CTK_SET_CXX(qSlicerCLILoadableModule, ModuleEntryPointType, setEntryPoint, EntryPoint);
+
+//-----------------------------------------------------------------------------
+QString qSlicerCLILoadableModule::moduleType()const
+{
+  return QLatin1String("SharedObjectModule");
+}

@@ -93,8 +93,6 @@ void qSlicerCLIModuleWidgetPrivate::setupUi(qSlicerWidget* widget)
 //-----------------------------------------------------------------------------
 void qSlicerCLIModuleWidgetPrivate::onApplyButtonPressed()
 {
-  qDebug() << "qSlicerCLIModuleWidgetPrivate::onApplyButtonPressed";
-
   vtkMRMLCommandLineModuleNode* node = this->commandLineModuleNode();
   Q_ASSERT(node);
   this->CLIModuleUIHelper->updateMRMLCommandLineModuleNode(node);

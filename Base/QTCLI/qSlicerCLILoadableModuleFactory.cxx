@@ -54,10 +54,9 @@ qSlicerAbstractModule* qSlicerCLILoadableModuleFactoryItem::instanciator()
     delete module; // Clean memory
     return 0;
     }
-    
-  module->setXmlModuleDescription(xmlDescription);
-
   module->setEntryPoint(moduleEntryPoint);
+  
+  module->setXmlModuleDescription(xmlDescription);
 
   module->setTempDirectory(
     qSlicerCoreApplication::application()->coreCommandOptions()->tempDirectory());

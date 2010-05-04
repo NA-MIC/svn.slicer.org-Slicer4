@@ -108,6 +108,7 @@ public:
   
   vtkMRMLCommandLineModuleNode* CommandLineModuleNode;
   QString                       ModuleEntryPoint;
+  QString                       ModuleType;
 };
 
 

@@ -40,7 +40,11 @@ public:
 
   ///
   /// Get entry point as string
-  virtual QString entryPoint(); 
+  virtual QString entryPoint()const;
+
+  ///
+  /// Get module type
+  virtual QString moduleType()const;
 
 protected:
   /// 

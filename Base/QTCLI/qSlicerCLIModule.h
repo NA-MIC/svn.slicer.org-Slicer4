@@ -51,7 +51,11 @@ public:
 
   ///
   /// Get entry point as string
-  virtual QString entryPoint() = 0;
+  virtual QString entryPoint()const = 0;
+
+  ///
+  /// Get module type
+  virtual QString moduleType()const = 0;
 
 protected:
   /// 
