@@ -1,11 +1,11 @@
 #ifndef __vtkSlicermiAnnotationModuleLogic_h
 #define __vtkSlicermiAnnotationModuleLogic_h
 
+// CTK includes
+#include <ctkPimpl.h>
+
 // Slicer Logic includes
 #include "vtkSlicerModuleLogic.h"
-
-// ctk includes
-#include <ctkPimpl.h>
 
 #include "qSlicermiAnnotationModuleExport.h"
 #include "vtkSlicerNodeSelectorWidget.h"

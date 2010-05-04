@@ -4,11 +4,11 @@
 // SlicerQT includes
 #include "qSlicerAbstractModuleWidget.h"
 
-// ctk includes
+// CTK includes
 #include <ctkPimpl.h>
-
-// qVTK includes
 #include <ctkVTKObject.h>
+
+// qSlicermiAnnotation
 #include "qSlicermiAnnotationModuleExport.h"
 #include "qSlicermiAnnotationModuleAnnotationPropertyDialog.h"
 
