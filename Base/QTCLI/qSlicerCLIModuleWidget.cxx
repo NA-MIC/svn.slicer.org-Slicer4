@@ -63,9 +63,6 @@ void qSlicerCLIModuleWidgetPrivate::setupUi(qSlicerWidget* widget)
 
   this->addParameterGroups();
 
-//   d->MRMLCommandLineModuleNodeSelector->addAttribute(
-//     "vtkMRMLCommandLineModuleNode", "CommandLineModule", d->Title.toStdString());
-
   // Connect buttons
   this->connect(this->ApplyPushButton,
                 SIGNAL(pressed()),

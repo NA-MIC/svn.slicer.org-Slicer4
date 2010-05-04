@@ -34,8 +34,9 @@ public:
   virtual ~qSlicerCLIModuleUIHelper(){}
 
   /// Create the widget associated with the given \a moduleParameter
-  /// The caller is responsible to delete the widget. Note also that is the widget is
-  /// added to a layout, Qt will be responsible to delete the widget.
+  /// The caller is responsible to delete the widget.
+  /// Note also that if the widget is added to a layout, Qt will
+  /// be responsible to delete the widget.
   QWidget* createTagWidget(const ModuleParameter& moduleParameter);
 
   /// 

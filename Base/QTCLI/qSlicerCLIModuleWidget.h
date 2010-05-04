@@ -43,7 +43,7 @@ public:
 
 public slots:
   ///
-  /// Set the current \a commandLineModuleNode that should be displayed
+  /// Set the current \a commandLineModuleNode
   void setCurrentCommandLineModuleNode(vtkMRMLNode* commandLineModuleNode);
   
 protected:
