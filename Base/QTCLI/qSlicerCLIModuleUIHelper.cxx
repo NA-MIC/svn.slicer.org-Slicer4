@@ -25,6 +25,7 @@
 // CTK includes
 #include <ctkCollapsibleButton.h>
 #include <ctkDoubleSlider.h>
+#include <ctkDirectoryButton.h>
 #include <qCTKFlowLayout.h>
 
 // qMRML includes
@@ -616,18 +617,35 @@ QWidget* qSlicerCLIModuleUIHelperPrivate::createTransformTagWidget(const ModuleP
 }
 
 //-----------------------------------------------------------------------------
+WIDGET_VALUE_WRAPPER(Directory, ctkDirectoryButton, directory, setDirectory, String);
+
+//-----------------------------------------------------------------------------
 QWidget* qSlicerCLIModuleUIHelperPrivate::createDirectoryTagWidget(const ModuleParameter& moduleParameter)
 {
-  Q_UNUSED(moduleParameter);
-  QPushButton* widget = new QPushButton("Select directory ...");
+  QString _label = QString::fromStdString(moduleParameter.GetLabel());
+  QString _name = QString::fromStdString(moduleParameter.GetName());
+  
+  ctkDirectoryButton* widget = new ctkDirectoryButton();
+  widget->setCaption(QString("Select %1 ...").arg(_name));
+
+  INSTANCIATE_WIDGET_VALUE_WRAPPER(Directory, _name, _label, widget);
+  
   return widget;
 }
 
 //-----------------------------------------------------------------------------
+WIDGET_VALUE_WRAPPER(File, QLineEdit, text, setText, String);
+
+//-----------------------------------------------------------------------------
 QWidget* qSlicerCLIModuleUIHelperPrivate::createFileTagWidget(const ModuleParameter& moduleParameter)
 {
-  Q_UNUSED(moduleParameter);
-  QPushButton* widget = new QPushButton("Select file ...");
+  QString _label = QString::fromStdString(moduleParameter.GetLabel());
+  QString _name = QString::fromStdString(moduleParameter.GetName());
+  
+  QLineEdit* widget = new QLineEdit(QString("Input %1").arg(_name));
+
+  INSTANCIATE_WIDGET_VALUE_WRAPPER(File, _name, _label, widget);
+  
   return widget;
 }
 
