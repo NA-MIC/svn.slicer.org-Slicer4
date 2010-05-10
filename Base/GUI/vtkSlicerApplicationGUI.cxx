@@ -155,6 +155,8 @@ vtkSlicerApplicationGUI::vtkSlicerApplicationGUI (  )
   this->Built = false;
   this->DataCount = 0;
 
+  this->UpdatingMain3DViewers = 0;
+
   //---
   // widgets used in the Slice module
   //---
@@ -623,6 +625,20 @@ void vtkSlicerApplicationGUI::ProcessDownloadCTACardio()
 void vtkSlicerApplicationGUI::ProcessDownloadMRIHead()
 {
   std::string uri_String = "http://www.slicer.org/slicerWiki/images/4/43/MR-head.nrrd";
+  this->DownloadSampleVolume (uri_String.c_str() );
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessDownloadRegistration1()
+{
+  std::string uri_String = "http://www.slicer.org/slicerWiki/images/5/59/RegLib_C01_1.nrrd";
+  this->DownloadSampleVolume (uri_String.c_str() );
+}
+
+//---------------------------------------------------------------------------
+void vtkSlicerApplicationGUI::ProcessDownloadRegistration2()
+{
+  std::string uri_String = "http://www.slicer.org/slicerWiki/images/e/e3/RegLib_C01_2.nrrd";
   this->DownloadSampleVolume (uri_String.c_str() );
 }
 
@@ -1916,6 +1932,8 @@ void vtkSlicerApplicationGUI::BuildGUI ( )
   cm->AddCommand ( "DTI Brain", this, "ProcessDownloadDTIBrain" );
   cm->AddCommand ( "CT Chest", this, "ProcessDownloadCTChest" );
   cm->AddCommand ( "CT Angiogram (Cardio)", this, "ProcessDownloadCTACardio" );
+  cm->AddCommand ( "MRI Brain (Meningioma) Time 1", this, "ProcessDownloadRegistration1" );
+  cm->AddCommand ( "MRI Brain (Meningioma) Time 2", this, "ProcessDownloadRegistration2" );
   i = this->GetMainSlicerWindow()->GetFileMenu()->InsertCascade (
                                                               this->GetMainSlicerWindow()->GetFileMenuInsertPosition(),
                                                               "Download Sample Data", cm );
@@ -2472,10 +2490,11 @@ void vtkSlicerApplicationGUI::CreateMainSliceViewers ( )
 //---------------------------------------------------------------------------
 void vtkSlicerApplicationGUI::UpdateMain3DViewers()
 {
-  if (this->GetApplication() == NULL || !this->MRMLScene)
+  if (this->GetApplication() == NULL || !this->MRMLScene || this->UpdatingMain3DViewers)
     {
     return;
     }
+  this->UpdatingMain3DViewers = 1;
 
   vtkSlicerApplication *app = vtkSlicerApplication::SafeDownCast(this->GetApplication());
   //vtkSlicerColor *color = app->GetSlicerTheme()->GetSlicerColors ( );
@@ -2631,7 +2650,8 @@ void vtkSlicerApplicationGUI::UpdateMain3DViewers()
     viewer_widget->Delete();
     }
 
-  
+ this->UpdatingMain3DViewers = 0;
+
 }
 
 //---------------------------------------------------------------------------

@@ -33,7 +33,7 @@ if(USE_VALGRIND)
   set(TestLocation "${Slicer3_BINARY_DIR}/bin/")
 else(USE_VALGRIND)
   set(Launcher_Command ${Slicer3_EXE} --launch)
-  set(TestLocation " ")
+  set(TestLocation "")
 endif(USE_VALGRIND)
 
 set(BASELINE "${Slicer3_SOURCE_DIR}/Testing/Data/Baseline/CLI")
@@ -1112,18 +1112,20 @@ target_link_libraries(${CLP}Test ${CLP}Lib)
 # leaks from tcl file
 # add_test(SparseFieldLevelSetContourTest2 ${Slicer3_BINARY_DIR}/Slicer3 --test-mode --script ${Slicer3_SOURCE_DIR}/Applications/CLI/SparseFieldLevelSetContour/Testing/SparseFieldLevelSetContourTest.tcl  ${TEST_DATA}/SparseFieldLevelSetContourTest.vtp ${TEMP}/SparseFieldLevelSetContourTest.vtp ${BASELINE}/SparseFieldLevelSetContourTest.vtp)
 
-# use a helper to compare the baseline and output
+# use a helper to compare the baseline and output, running it from the launcher to set up the paths
 
-# this doesn't compile on windows
-if (NOT WIN32)
-add_test(SparseFieldLevelSetContourTest1  ${CMAKE_COMMAND}
-  -Dtest_cmd=${Launcher_Command} ${Slicer3_BINARY_DIR}/bin/SparseFieldLevelSetContour1Test
+# the test code doesn't link on windows
+if (NOT WIN32 AND NOT APPLE)
+add_test(SparseFieldLevelSetContourTest1 ${Launcher_Command}  ${CMAKE_COMMAND}
+  -Dtest_cmd=SparseFieldLevelSetContour1Test
   -Dtest_name=SparseFieldLevelSetContour1Test
   -Dinput_scene=${TEST_DATA}/SparseFieldLevelSetContourTest.vtp
-  -Dc1=1.5,1.5,0
-  -Dc2=-1.5,1.5,0
-  -Dc3=-1.5,-1.5,0
-  -Dc4=1.5,-1.5,0
+  -Dc1=132.059,-3.68759,-378.683
+  -Dc2=127.652,-16.0285,-381.549
+  -Dc3=120.15,-27.4267,-382.79
+  -Dc4=117.438,-26.4077,-394.14
+  -Dc5=128.782,-14.2639,-389.404
+  -Dc6=134.297,1.63338,-387.623
   -Doutput_model=${TEMP}/SparseFieldLevelSetContourTest.vtp
   -Doutput_baseline=${BASELINE}/SparseFieldLevelSetContourTest.vtp
   -Doutput_test=${TEMP}/SparseFieldLevelSetContourTest.vtp
@@ -1143,7 +1145,7 @@ target_link_libraries(${CLP}Test SparseFieldLevelSetContourLib
   vtkITK  vtkIO SlicerBaseCLI
   ModuleDescriptionParser
   )
-endif (NOT WIN32)
+endif (NOT WIN32 AND NOT APPLE)
 
 # MergeModels tests
 
@@ -1161,9 +1163,8 @@ add_test(MergeModelsTestVtp ${Launcher_Command} ${TestLocation}MergeModelsTest
   )
 
 # add a test that compares the outline to a baseline .vtp
-if (NOT WIN32)
-add_test(MergeModelsTestCompare ${CMAKE_COMMAND}
-  -Dtest_cmd="${Slicer3_BINARY_DIR}/bin/MergeModelsTest"
+add_test(MergeModelsTestCompare  ${Launcher_Command} ${CMAKE_COMMAND}
+  -Dtest_cmd=MergeModelsTest
   -Dtest_name=MergeModelsTest
   -Dmodel1=${MRML_TEST_DATA}/sphere.vtp
   -Dmodel2=${MRML_TEST_DATA}/cube.vtp
@@ -1172,7 +1173,6 @@ add_test(MergeModelsTestCompare ${CMAKE_COMMAND}
   -Doutput_test=${TEMP}/sphereCube.vtp
   -P  ${Slicer3_SOURCE_DIR}/Applications/CLI/Testing/run_MergeModelsTest.cmake
 )
-endif (NOT WIN32)
 
 set (CLP MergeModels)
 add_executable(${CLP}Test ${CLP}Test.cxx)

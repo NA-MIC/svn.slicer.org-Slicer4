@@ -16,7 +16,7 @@ include_directories( ${SlicerBaseCLI_BINARY_DIR} ${SlicerBaseCLI_SOURCE_DIR} )
 #####################
 
 set(CLP SFLSRobustStat3DTest)
-set(RSS_SOURCE SFLSRobustStat3DTest.cxx labelMapPreprocessor.h SFLS.h SFLSRobustStatSegmentor3D.h SFLSRobustStatSegmentor3DLabelMap.h SFLSRobustStatSegmentor3DLabelMap_single.h SFLSSegmentor3D.h SFLSRobustStatSegmentor3DLabelMap_single.txx SFLSRobustStatSegmentor3DLabelMap.txx SFLSRobustStatSegmentor3D.txx SFLSSegmentor3D.txx SFLSRobustStat3DTestConsole.cxx SFLSRobustStat3DTest.cxx)
+set(RSS_SOURCE SFLSRobustStat3DTest.cxx SFLSRobustStat3DTestConsole.cxx labelMapPreprocessor.h SFLS.h SFLSSegmentor3D.h SFLSSegmentor3D.txx SFLSRobustStatSegmentor3DLabelMap_single.h SFLSRobustStatSegmentor3DLabelMap_single.txx)
 
 generateclp(RSS_SOURCE SFLSRobustStat3DTest.xml ${Slicer3_SOURCE_DIR}/Resources/NAMICLogo.h)
 
@@ -66,4 +66,8 @@ add_executable( SFLSRobustStat3DTestConsole SFLSRobustStat3DTestConsole.cxx)
 target_link_libraries( SFLSRobustStat3DTestConsole ITKCommon ITKBasicFilters ITKIO itkvnl)
 
 enable_testing()
-add_test(RSStest ${EXECUTABLE_OUTPUT_PATH}/SFLSRobustStat3DTestConsole grayscale.nrrd grayscale-label.nrrd rss-test-seg.nrrd 50 0.1 0.2)
+set(Slicer3_EXE ${Slicer3_BINARY_DIR}/Slicer3 )
+# message (STATUS "cmake current source dir = '${CMAKE_CURRENT_SOURCE_DIR}'")
+# message (STATUS "cmake current bin dir = '${CMAKE_CURRENT_BINARY_DIR}'")
+# message (STATUS "slicer3 exe = '${Slicer3_EXE}'")
+add_test(RSStest ${Slicer3_EXE} --launch SFLSRobustStat3DTestConsole ${CMAKE_CURRENT_SOURCE_DIR}/grayscale.nrrd ${CMAKE_CURRENT_SOURCE_DIR}/grayscale-label.nrrd ${CMAKE_CURRENT_BINARY_DIR}/rss-test-seg.nrrd 50 0.1 0.2)

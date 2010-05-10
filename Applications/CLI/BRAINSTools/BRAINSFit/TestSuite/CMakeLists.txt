@@ -1,23 +1,32 @@
 
+if (WIN32)
+  set(BUILD_SUBDIR ${CMAKE_BUILD_TYPE}/)
+endif (WIN32)
+
 configure_file(${BRAINSFit_SOURCE_DIR}/CTestCustom.ctest ${BRAINSFit_BINARY_DIR}/CTestCustom.ctest COPYONLY)
 
-add_executable(BRAINSFitTest BRAINSFitTest.cxx ../BRAINSFitPrimary.cxx)
+add_executable(BRAINSFitTest BRAINSFitTest.cxx ${BRAINSFit_SOURCE_DIR}/BRAINSFitPrimary.cxx)
 target_link_libraries(BRAINSFitTest BRAINSCommonLib ITKAlgorithms ITKIO ITKBasicFilters ${OPTIONAL_DEBUG_LINK_LIBRARIES})
-
 set_target_properties(BRAINSFitTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BRAINSFit_BINARY_DIR})
-set(BRAINSFitTest_EXEC ${BRAINSFit_BINARY_DIR}/BRAINSFitTest)
+add_dependencies(BRAINSFitTest BRAINSFit)
 
-# The following program was used to generate TestData/test2.nii.gz
-# from test.nii.gz
-if(MakeMakeXfrmImage)
-  add_executable(makexfrmedImage makexfrmedImage.cxx)
-  target_link_libraries(makexfrmedImage ITKIO)
-endif(MakeMakeXfrmImage)
+set(BRAINSFitTest_EXEC ${LAUNCH_EXE} ${BRAINSFit_BINARY_DIR}/${BUILD_SUBDIR}BRAINSFitTest)
 
-# The test driver is only needed to help generate new testcases
-add_executable(BRAINSFitTestDriver BRAINSFitTestDriver.cxx)
-target_link_libraries(BRAINSFitTestDriver ITKAlgorithms ITKIO ITKBasicFilters ${OPTIONAL_DEBUG_LINK_LIBRARIES} )
-set_target_properties(BRAINSFitTestDriver PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BRAINSFit_BINARY_DIR})
+if(0)  ## These were programs needed to create the test suite, but are not needed for actual testing!
+  # The following program was used to generate TestData/test2.nii.gz
+  # from test.nii.gz
+  if(MakeMakeXfrmImage)
+    add_executable(makexfrmedImage makexfrmedImage.cxx)
+    target_link_libraries(makexfrmedImage ITKIO)
+  endif(MakeMakeXfrmImage)
+
+  if(BRAINSFitTestDriver)
+    # The test driver is only needed to help generate new testcases
+    add_executable(BRAINSFitTestDriver BRAINSFitTestDriver.cxx)
+    target_link_libraries(BRAINSFitTestDriver ITKAlgorithms ITKIO ITKBasicFilters ${OPTIONAL_DEBUG_LINK_LIBRARIES} )
+    set_target_properties(BRAINSFitTestDriver PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${BRAINSFit_BINARY_DIR})
+  endif()
+endif()
 
 #  if(NOT XXXNO_BRAINSFIT_TESTING)  #When BRAINSFit is a sub project, it should not be tested.
   set(BRAINSFitTestName BRAINSFitTest_AffineRotationMasks)

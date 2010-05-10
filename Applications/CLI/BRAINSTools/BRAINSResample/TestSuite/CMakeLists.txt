@@ -3,13 +3,18 @@
 ###  physical space descriptions to ensure that all ITK
 ###  images are treated properly.
 
+if (WIN32)
+  set(BUILD_SUBDIR ${CMAKE_BUILD_TYPE}/)
+endif (WIN32)
 
 ### All test have been pushed to this sub-directory to keep the primary build clean.
 
 add_executable( BRAINSResampleTest  ${BRAINSResample_SOURCE_DIR}/BRAINSResamplePrimary.cxx BRAINSResampleTest.cxx  )
 target_link_libraries(BRAINSResampleTest BRAINSCommonLib ITKAlgorithms ITKIO)
 set_target_properties(BRAINSResampleTest PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-set(BRAINSResample_TESTS ${CMAKE_CURRENT_BINARY_DIR}/BRAINSResampleTest )
+add_dependencies(BRAINSResampleTest BRAINSResample)
+
+set(BRAINSResample_TESTS ${LAUNCH_EXE} ${CMAKE_CURRENT_BINARY_DIR}/${BUILD_SUBDIR}BRAINSResampleTest )
 
 
 add_test(ValidateBRAINSResampleTest4_nii ${BRAINSResample_TESTS}

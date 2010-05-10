@@ -967,15 +967,15 @@ void vtkSlicerModuleChooseGUI::Populate( )
       predefinedCategories.push_back("Informatics");
       predefinedCategories.push_back("Registration");
       predefinedCategories.push_back("Segmentation");
-      predefinedCategories.push_back("Statistics");
+      predefinedCategories.push_back("Quantification");
       predefinedCategories.push_back("Diffusion");
       predefinedCategories.push_back("Tractography");
       predefinedCategories.push_back("IGT");
+      predefinedCategories.push_back("Time Series");
       predefinedCategories.push_back("Filtering");
       predefinedCategories.push_back("Surface Models");
-      predefinedCategories.push_back("Batch Processing");
       predefinedCategories.push_back("Converters");
-      predefinedCategories.push_back("Work in Progress");
+      predefinedCategories.push_back("Endoscopy");
       predefinedCategories.push_back("Developer Tools");
       unsigned int i;
       for (i = 0; i < predefinedCategories.size(); i++)
@@ -992,6 +992,28 @@ void vtkSlicerModuleChooseGUI::Populate( )
           menu->Delete();
           }
         }
+
+      // Special cases
+      // - add link to transforms in registration pull aside and 
+      // - add link to editor in segmentation pull aside
+      {
+        int index;
+        vtkKWMenu *menu, *submenu;
+        menu = this->GetModulesMenuButton()->GetMenu();
+        index = this->GetModulesMenuButton()->GetMenu()->GetIndexOfItem( "Registration" );
+        if ( index != -1 )
+          {
+          submenu = menu->GetItemCascade(index);
+          submenu->AddRadioButton( "Transforms", this, "SelectModule Transforms" );
+          }
+        index = menu->GetIndexOfItem( "Segmentation" );
+        if ( index != -1 )
+          {
+          submenu = menu->GetItemCascade(index);
+          submenu->AddRadioButton( "Editor", this, "SelectModule Editor" );
+          }
+      }
+
 
       this->GetModulesMenuButton()->GetMenu()->AddSeparator();
 
@@ -1029,15 +1051,25 @@ void vtkSlicerModuleChooseGUI::Populate( )
           vtkKWMenu *menu = pos;
 
           // add the items to the submenu
+          // - put Welcome modules at top
           ModuleSet::iterator mit;
           mit = (*cit).second.begin();
           while (mit != (*cit).second.end())
             {
             std::stringstream methodString;
             methodString << "SelectModule \"" << (*mit).second.c_str() << "\"";
-            index = menu->AddRadioButton( (*mit).second.c_str(), this,
-                                      methodString.str().c_str());
-
+            if ( (*mit).second.compare((*mit).second.size()-7,7,"Welcome") == 0 )
+              {
+              // module name ends in "Welcome" so put it first
+              index = menu->InsertRadioButton( 0, (*mit).second.c_str(), this,
+                                        methodString.str().c_str());
+              }
+            else
+              {
+              // ordinary module, put it last
+              index = menu->AddRadioButton( (*mit).second.c_str(), this,
+                                        methodString.str().c_str());
+              }
             allMap[(*mit).second.c_str()] = methodString.str();
             ++mit;
             }
