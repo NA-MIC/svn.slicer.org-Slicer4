@@ -127,7 +127,8 @@ namespace {
   const gdcm::DictEntry PhilipsDictDiffusionDirectionAP( 0x2005, 0x10b1, "FL", "4", "Diffusion Direction A/P" );
   const gdcm::DictEntry PhilipsDictDiffusionDirectionFH( 0x2005, 0x10b2, "FL", "4", "Diffusion Direction F/H" );
 
-#if 1 //Defined in gdcm dicmoV3.dic
+#if 0 
+  //Defined in gdcm dicomV3.dic
   // Tags defined in Supplement 49 
   // 0018 9075 CS 1 Diffusion Directionality
   // 0018 9076 SQ 1 Diffusion Gradient Direction Sequence
@@ -276,7 +277,7 @@ int main(int argc, char* argv[])
 {
   PARSE_ARGS;
 
-#if 1 //Defined in gdcm dicomV3.dic
+#if 0 //Defined in gdcm dicomV3.dic
   gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(Supplement49DictDiffusionDirection);
   gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(Supplement49DictDiffusionGradientDirectionSequence);
   gdcm::Global::GetDicts()->GetDefaultPubDict()->AddEntry(Supplement49DictDiffusionBValue);
