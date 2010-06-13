@@ -1,0 +1,163 @@
+SET (CTEST_CUSTOM_MAXIMUM_NUMBER_OF_ERRORS   10000)
+SET (CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 10000)
+
+SET(CTEST_CUSTOM_ERROR_MATCH
+  ${CTEST_CUSTOM_ERROR_MATCH}
+  "CMake Error[ :]"
+  )
+
+SET(CTEST_CUSTOM_WARNING_MATCH
+  ${CTEST_CUSTOM_WARNING_MATCH}
+  "CMake Warning[ :]"
+  )
+  
+SET(CTEST_CUSTOM_WARNING_EXCEPTION
+  ${CTEST_CUSTOM_WARNING_EXCEPTION}
+  #"vtkparse.tab.c"
+  "Microsoft SDKs."
+  "VC.include."
+  
+  # Numpy warnings
+  "_configtest.*warning"
+  # C4244: 'conversion' conversion from 'type1' to 'type2', possible loss of data
+  # C4028: formal parameter 'number' different from declaration
+  # C4996: 'function': was declared deprecated
+  # C4133: '=' : incompatible types - from 'PyArray_Descr *' to 'PyObject *'
+  # C4146: unary minus operator applied to unsigned type, result still unsigned
+  # C4716: function '...' : must return a value
+  # C4723: Potential divide by zero
+  "numpy.(core|numarray|linalg|random).*warning (C4244|C4028|C4996|C4133|C4146|C4716|C4723)"
+  "NUMPY.*Warning"
+  
+  # CLAPACK
+  "CLAPACK.BLAS.SRC"
+  
+  # Tcl
+  "tcl.tcl.unix.*warning: cast"
+  
+  # Tk
+  "tcl.tk.unix.*warning: cast"
+  
+  # incrTcl
+  "generic.itk_(options|archetype).*warning"
+  "generic.itcl_.*warning"
+  
+  # Blt
+  "blt(Bgexec|Tree|TreeCmd|UnixPipe|Util|GrAxis|GrBar|GrMisc|Color|Config|Container|Hierbox|UnixImage|Table|TreeView|TreeViewCmd|TreeViewStyle|ObjConfig|Ted).c.*warning: cast"
+  "blt(List|NsUtil|Bind).c.*warning: overflow"
+  "bltCanvEps.*warning: initialization from incompatible pointer type"
+  "bltColor.c.*warning:.*defined but not used"
+  
+  # qt suppressions from vtk...
+  # Some Slicer dashboards include building bits of Qt which produce lots of
+  # the following warnings when built with the MS compilers. Qt guys should
+  # fix their code. Until they do, keep the Qt chatter off the Slicer dashboard
+  # results:
+  "include.[Qq]t([Cc]ore|[Gg]ui).*warning C4127: conditional expression is constant"
+  "[Qq]t.*h.*warning.*declaration of .* shadows a member of .this"
+  "[Qq]t.*h.*warning.*(copy constructor|assignment operator) could not be generated"  
+
+  # Suppress warning caused when QT 'foreach' loops are combined
+  ".*warning: declaration of '_container_' shadows a previous local"
+  
+  # Python
+  "Modules.zlib.gzio.*warning C4996"
+  "Modules.zlib.gzio"
+  "Modules._ctypes.libffi_msvc.ffi.*warning C4018"
+  "Modules._multiprocessing.multiprocessing.*warning C4101"
+  # Mac
+  "/usr/bin/ranlib: file:.*libpython2.6.a(pymath.o) has no symbols"
+  
+  # Make
+  "warning: jobserver unavailable"
+  
+  # Suppressing warnings about duplicate libraries in Darwin
+  # At some point this may be addressed by CMake feature request: 
+  # http://public.kitware.com/Bug/view.php?id=10179
+  "ld: warning: duplicate dylib"
+  
+  # Suppressing warnings about GL_GLEXT_LEGACY, the link reported below 
+  # report a similar problem with GL_GLEXT_PROTOTYPE.
+  # http://lists.apple.com/archives/mac-opengl/2009/Dec/msg00081.html
+  # That problem could be solved installing a newer version of X11 SDK
+  # See http://xquartz.macosforge.org/trac/changeset/343
+  ".*warning.*GL_GLEXT_LEGACY.*redefined"
+  
+  # ITK suppressions
+  "[Uu]tilities.gdcm"
+  "[Uu]tilities.vxl"
+  "[Uu]tilities.itktiff"
+  "[Ii]nsight.[Cc]ode.[Cc]ommon"
+  "[Ii]nsight.[Cc]ode.[Nn]umerics"
+  "[Ii]nsight.[Cc]ode.(IO|io)"
+  "[Ii]nsight.[Cc]ode.[Ss]patial[Oo]bject"
+  "[Ii]nsight.[Uu]tilities.[Nn]rrd(IO|io)"
+  "[Ii]nsight.[Uu]tilities.(openjpeg|nifti)"
+
+  # VTK suppressions
+  "vtkfreetype"
+  "Utilities.vtktiff"
+  "VTK.*IO.vtkMySQLQuery.cxx"
+  "VTK.*Utilities.vtkexodus2"
+  "VTK.*Utilities.vtklibproj"
+  "VTK.*Utilities.vtksqlite"
+  "VTK.*Utilities.VPIC.*cxx"
+  "VTK.*warn_unused_result"
+  "VTK.*Filtering.*cxx"
+  "VTK.*IO.*cxx"
+  "VTK.*Infovis.*cxx"
+  # exception specific to Mac/Carbon
+  "VTK.Rendering.vtkCarbonRenderWindow.*warning.*(NewRgn|DiffRgn|EqualRgn|DisposeRgn).*is deprecated"
+  # exception specific to Mac/X11
+  "VTK.Rendering.vtkOpenGL.*warning: this is the location of the previous definition"
+
+  # KWWidgets
+  "(KWW|kww)idgets.[Uu]tilities.tkdnd"
+  "(KWW|kww)idgets.vtk(KW|kw)"
+  
+  
+  # Libs/OpenIGTLink
+  "(OpenIGTLink|openigtlink).[Ss]ource.igtl"
+  
+  #Batchmake 
+  "BatchMake.Utilities.Zip.(unzipcmd|zipcmd).*warning C4996"
+  
+  # Libs/tclap
+  "tclap.include.tclap.*Arg.h.*warning C4512"
+  
+  # Python suppressions
+  # About redefinition of symbols
+  "pyconfig.h.*warning:.*redefined"
+  "features.h.*"
+
+  # curl suppressions
+  "cmcurl.*warning.*conditional expression is constant"
+  "cmcurl.*warning.*conversion from.*possible loss of data"
+  # C4701: potentially uninitialized local variable '...' used
+  # C4057: 'function' : '...' differs in indirection to slightly different base types from '...'
+  # C4245: '=' : conversion from '...' to '...', signed/unsigned mismatch
+  # C4706: assignment within conditional expression
+  # C4232: nonstandard extension used : '...' : address of dllimport '...' is not static, identity not guaranteed
+  "cmcurl.(transfer|ftp|file|cookie|url|telnet|multi|hostip4|formdata|easy).c.*warning (C4244|C4701|C4057|C4245|C4706|C4232)"
+  # C4131: uses old-style declarator
+  # C4244: conversion from '...' to '...', possible loss of data
+  # C4127: conditional expression is constant
+  "y.tab.c.*warning (C4131|C4244|C4127|C4701)"
+  # C4100: unreferenced formal parameter
+  "getdate.y.*warning(C4100|C4127|C4244)"
+  
+  # Visual studio spurious warnings...
+  "The following environment variables were not found"
+  
+  # CTK Documentation warning
+  "CMake Warning at Documentation/CMakeLists.txt:62"
+  )
+  
+SET(CTEST_CUSTOM_ERROR_EXCEPTION
+  ${CTEST_CUSTOM_ERROR_EXCEPTION}
+  # Numpy errors
+  "NUMPY.*Warning"
+  "NUMPY._configtest.*undefined reference"
+  "_configtest.*error"
+  "collect2: ld returned 1 exit status"
+  )
