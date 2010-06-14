@@ -92,12 +92,11 @@ vtkIA_FEMeshGUI::vtkIA_FEMeshGUI()
 //    this->MainUserInterfacePanel = NULL;
 //    this->DisplayPropertyDialog = NULL;
 
-  // try to load supporting libraries dynamically.  This is needed
-  // since the toplevel is a loadable module but the other libraries
-  // didn't get loaded
-  Tcl_Interp* interp = this->GetApplication()->GetMainInterp();
-  Mimxcommon_Init(interp);
-  Buildingblock_Init(interp);
+
+//  Tcl_Interp* interp = this->GetApplication()->GetMainInterp();
+//  Mimxcommon_Init(interp);
+//  Buildingblock_Init(interp);
+  this->InitializeSupportingLibraries();
     
   this->SavedBoxState = 0;
   this->SavedAxisLabelState = 0;
@@ -124,6 +123,15 @@ vtkIA_FEMeshGUI::~vtkIA_FEMeshGUI()
 
 }
 
+void vtkIA_FEMeshGUI::InitializeSupportingLibraries()
+{
+    // load supporting libraries dynamically.  This is needed
+    // since the toplevel is a loadable module but the other libraries
+    // didn't get loaded
+    Tcl_Interp* interp = this->GetApplication()->GetMainInterp();
+    Mimxcommon_Init(interp);
+    Buildingblock_Init(interp);
+}
 
 //----------------------------------------------------------------------------
 void vtkIA_FEMeshGUI::PrintSelf(ostream& os, vtkIndent indent)
@@ -168,7 +176,7 @@ void vtkIA_FEMeshGUI::ProcessGUIEvents ( vtkObject *vtkNotUsed(caller),
 
 
 //---------------------------------------------------------------------------
-void vtkIA_FEMeshGUI::ProcessMrmlEvents ( vtkObject *caller,
+void vtkIA_FEMeshGUI::ProcessMRMLEvents ( vtkObject *caller,
                                           unsigned long event,
                                           void *callData )
 {
@@ -283,7 +291,13 @@ void vtkIA_FEMeshGUI::TearDownGUI ( )
 // Describe behavior at module startup and exit.
 void vtkIA_FEMeshGUI::Enter ( )
 {
-  // get pointers to the current scene.  
+    // moved out of the constructor to reduce danger of memory leaks
+    if (this->FirstEntryToModule)
+    {
+        //this->InitializeSupportingLibraries();
+    }
+
+    // get pointers to the current scene.
   //vtkMRMLScene *SlicerScene = vtkMRMLScene::GetActiveScene();
   vtkMRMLViewNode *viewnode = this->GetApplicationGUI()->GetViewControlGUI()->GetActiveView();
   vtkMRMLLayoutNode *layoutnode = this->GetApplicationGUI()->GetGUILayoutNode();

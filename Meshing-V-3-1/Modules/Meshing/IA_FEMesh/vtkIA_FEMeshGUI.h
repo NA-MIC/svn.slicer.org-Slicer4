@@ -85,7 +85,7 @@ class VTK_IA_FEMesh_EXPORT vtkIA_FEMeshGUI : public vtkSlicerModuleGUI
                                   void *vtkNotUsed(callData)){};
   virtual void ProcessGUIEvents( vtkObject *caller, unsigned long event,
                                   void *callData );
-  virtual void ProcessMrmlEvents( vtkObject *caller, unsigned long event,
+  virtual void ProcessMRMLEvents( vtkObject *caller, unsigned long event,
                                    void *callData );
   // Description:
   // Describe behavior at module startup and exit.
@@ -113,8 +113,11 @@ class VTK_IA_FEMesh_EXPORT vtkIA_FEMeshGUI : public vtkSlicerModuleGUI
 protected:
   vtkIA_FEMeshGUI();
   virtual ~vtkIA_FEMeshGUI();
+
   vtkIA_FEMeshGUI(const vtkIA_FEMeshGUI&);
   void operator=(const vtkIA_FEMeshGUI&);
+
+  void InitializeSupportingLibraries();
 
 //  vtkIA_FEMeshMRMLNotebook *MimxMainNotebook;
 //  //vtkKWMimxMainNotebook *MimxMainNotebook;
