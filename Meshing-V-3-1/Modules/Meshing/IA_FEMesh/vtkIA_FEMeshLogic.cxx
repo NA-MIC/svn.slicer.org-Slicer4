@@ -23,10 +23,10 @@ Version:   $Revision: 1.2 $
 #include "vtkMRMLScene.h"
 #include "vtkMRMLScalarVolumeNode.h"
 
-//#include "vtkMRMLFiniteElementImageNode.h"
-//#include "vtkMRMLFiniteElementBuildingBlockNode.h"
-//#include "vtkMRMLFiniteElementMeshNode.h"
-//#include "vtkMRMLFESurfaceNode.h"
+#include "vtkMRMLFiniteElementImageNode.h"
+#include "vtkMRMLFiniteElementBuildingBlockNode.h"
+#include "vtkMRMLFiniteElementMeshNode.h"
+#include "vtkMRMLFESurfaceNode.h"
 
 vtkIA_FEMeshLogic* vtkIA_FEMeshLogic::New()
 {
@@ -65,14 +65,14 @@ void vtkIA_FEMeshLogic::RegisterNodes()
 {
  if (this->MRMLScene && this->First)
  {
-//   vtkMRMLFiniteElementImageNode *imgNode = vtkMRMLFiniteElementImageNode::New();
-//   this->MRMLScene->RegisterNodeClass(imgNode);  imgNode->Delete();
-//   vtkMRMLFESurfaceNode *sNode = vtkMRMLFESurfaceNode::New();
-//   this->MRMLScene->RegisterNodeClass(sNode);  sNode->Delete();
-//   vtkMRMLFiniteElementBuildingBlockNode *bbNode = vtkMRMLFiniteElementBuildingBlockNode::New();
-//   this->MRMLScene->RegisterNodeClass(bbNode);  bbNode->Delete();
-//   vtkMRMLFiniteElementMeshNode *mNode = vtkMRMLFiniteElementMeshNode::New();
-//   this->MRMLScene->RegisterNodeClass(mNode);  mNode->Delete();
+   vtkMRMLFiniteElementImageNode *imgNode = vtkMRMLFiniteElementImageNode::New();
+   this->MRMLScene->RegisterNodeClass(imgNode);  imgNode->Delete();
+   vtkMRMLFESurfaceNode *sNode = vtkMRMLFESurfaceNode::New();
+   this->MRMLScene->RegisterNodeClass(sNode);  sNode->Delete();
+   vtkMRMLFiniteElementBuildingBlockNode *bbNode = vtkMRMLFiniteElementBuildingBlockNode::New();
+   this->MRMLScene->RegisterNodeClass(bbNode);  bbNode->Delete();
+   vtkMRMLFiniteElementMeshNode *mNode = vtkMRMLFiniteElementMeshNode::New();
+   this->MRMLScene->RegisterNodeClass(mNode);  mNode->Delete();
    this->First = false;
  }
 }
