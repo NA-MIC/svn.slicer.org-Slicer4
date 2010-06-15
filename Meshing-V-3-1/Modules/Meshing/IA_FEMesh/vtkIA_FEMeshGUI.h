@@ -79,6 +79,9 @@ class VTK_IA_FEMesh_EXPORT vtkIA_FEMeshGUI : public vtkSlicerModuleGUI
 
   virtual void AddGUIObservers ( );
   virtual void RemoveGUIObservers ( );
+  virtual void AddMRMLObservers ( );
+  virtual void RemoveMRMLObservers ( );
+
 
   virtual void ProcessLogicEvents(vtkObject *vtkNotUsed(caller),
                                   unsigned long vtkNotUsed(event),

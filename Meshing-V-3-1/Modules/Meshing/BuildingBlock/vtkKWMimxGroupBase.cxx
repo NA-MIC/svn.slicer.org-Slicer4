@@ -365,7 +365,6 @@ void vtkKWMimxGroupBase::AddImageToDisplay(vtkImageData *surface,
   vtkImageData *imageToAdd = vtkImageData::New();
   imageToAdd->DeepCopy(surface);
   actor->SetImageDataSet( imageToAdd, matrix, origin, spacing );
-  cout << "MimxGroupBase: imageToAdd->Delete();" << endl;
   actor->SetDataType(ACTOR_IMAGE);
   actor->SetFoundationName( foundationName );
 
