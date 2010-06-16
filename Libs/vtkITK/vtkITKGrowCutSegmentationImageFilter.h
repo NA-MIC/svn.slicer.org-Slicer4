@@ -16,6 +16,7 @@
 //#include "vtkImageTwoInputFilter.h"
 #include "vtkImageMultipleInputFilter.h"
 #include "vtkPoints.h"
+#include "vtkImageData.h"
 
 
 // Usage: SetInput1 is the input feature/intensity image (required)
@@ -34,8 +35,12 @@ public:
   void PrintSelf(ostream& os, vtkIndent indent);
 
   // Methods to set/get maxIterations
-  vtkSetMacro(MaxIterations, double);
-  vtkGetMacro(MaxIterations, double);
+  //  vtkSetMacro(MaxIterations, double);
+  //vtkGetMacro(MaxIterations, double);
+
+  // Methods to set/get objectSize
+  vtkSetMacro(ObjectSize, double);
+  vtkGetMacro(ObjectSize, double);
 
   // Methods to set/get contrastNoiseRatio
   vtkSetMacro(ContrastNoiseRatio, double);
@@ -63,10 +68,12 @@ public:
     return GestureColors;
   }
 
+  
 
 public:
   // member variables
-  double MaxIterations;
+  //  double MaxIterations;
+  double ObjectSize;
   double PriorSegmentConfidence;
   double ContrastNoiseRatio;
   vtkPoints *GestureColors;
