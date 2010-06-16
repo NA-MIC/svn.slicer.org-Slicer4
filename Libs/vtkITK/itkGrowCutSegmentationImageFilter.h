@@ -6,6 +6,16 @@
 #include "itkVectorContainer.h"
 #include "vcl_list.h"
 
+#include <vcl_vector.h>
+
+
+enum PixelState{ 
+    UNLABELED = 0,
+    LABELED = 1,
+    LOCALLY_SATURATED = 2,
+    SATURATED = 3 };
+
+
 namespace itk
 {
 
@@ -60,18 +70,22 @@ template<class TInputImage,
   typedef TInputImage InputImageType;
   typedef typename InputImageType::Pointer InputImagePointer;
   typedef typename InputImageType::ConstPointer InputImageConstPointer;
-  typedef typename InputImageType::RegionType InputImageRegionType; 
+
   typedef typename InputImageType::PixelType InputImagePixelType; 
-  //typedef typename InputImageType::IndexType InputIndexType;
+  typedef typename InputImageType::IndexType InputIndexType;
   typedef typename InputImageType::SizeType SizeType;
   
   typedef TOutputImage OutputImageType;
   typedef typename OutputImageType::Pointer OutputImagePointer;
   typedef typename OutputImageType::RegionType OutputImageRegionType; 
   typedef typename OutputImageType::PixelType OutputImagePixelType;
+  typedef typename OutputImageType::IndexType OutputIndexType;
+  typedef typename InputImageType::SizeType OutputSizeType;
+  
 
   /** Smart Pointer type to a DataObject. */
   typedef typename DataObject::Pointer DataObjectPointer;
+
 
    /** Image dimension constants */
   itkStaticConstMacro(InputImageDimension, unsigned int,
@@ -97,31 +111,25 @@ template<class TInputImage,
     that are assigned to the background **/
   enum LabelType { NoLabel, ObjectLabel, BackgroundLabel };
 
-    /** LabelImage typedef support. */  
-/*    typedef Image<unsigned char, itkGetStaticConstMacro(InputImageDimension)> LabelImageType;  */
-
-    /** LabelImagePointer typedef support. */  
-/*    typedef typename LabelImageType::Pointer LabelImagePointer;  */
-/*    typedef typename LabelImageType::PixelType LabelImagePixelType;   */
-
   
-  /** StrengthImage typedef support */
+  /** WeightImage typedef support */
   /* indicates the strength of a label for a given cell */
-  //typedef Image<double, itkGetStaticConstMacro(InputImageDimension) > StrengthImageType;
-   typedef Image<TWeightPixelType, itkGetStaticConstMacro(InputImageDimension) > StrengthImageType;
+  typedef Image<TWeightPixelType, itkGetStaticConstMacro(InputImageDimension) > WeightImageType;
   
 
-  /** StrengthImagePointer typedef support. */
-  typedef typename StrengthImageType::Pointer StrengthImagePointer;
+  /** WeightImagePointer typedef support. */
+  typedef typename WeightImageType::Pointer WeightImagePointer;
   
- typedef TWeightPixelType StrengthImagePixelType;
- //typedef typename StrengthImageType::PixelType StrengthImagePixelType;
+  typedef TWeightPixelType WeightImagePixelType;
 
- typedef OutputImageType LabelImageType;
-
- typedef typename LabelImageType::Pointer LabelImagePointer;
- 
- typedef typename LabelImageType::PixelType LabelImagePixelType;
+ //  typedef OutputImageType LabelImageType;
+  
+//   typedef typename LabelImageType::Pointer LabelImagePointer;
+  
+//   typedef typename LabelImageType::PixelType LabelImagePixelType;
+  
+//   typedef typename LabelImageType::IndexType LabelIndexType;
+  
 
   // set the foreground seeds
   void SetForegroundPoints( NodeContainer *points )
@@ -174,29 +182,29 @@ template<class TInputImage,
  }
 
  /** Set the Label Image **/
- void SetLabelImage( const LabelImageType *f)
+ void SetLabelImage( const OutputImageType *f)
  {
-    this->ProcessObject::SetNthInput(1, const_cast< LabelImageType *>(f) );
-    m_LabelImage = static_cast< LabelImageType *>(this->ProcessObject::GetInput(1));
+    this->ProcessObject::SetNthInput(1, const_cast< OutputImageType *>(f) );
+    m_LabelImage = static_cast< OutputImageType *>(this->ProcessObject::GetInput(1));
  }
 
   /** Get the Label image **/
-  LabelImagePointer GetLabelImage() const
+  OutputImagePointer GetLabelImage() const
   {
     return m_LabelImage;
   }
   
-  /** Get the Strength image **/
-  StrengthImagePointer GetStrengthImage() const
+  /** Get the Weight image **/
+  WeightImagePointer GetStrengthImage() const
   {
-    return m_StrengthImage;
+    return m_WeightImage;
   }
  
  /** Set the Weight Image **/
- void SetStrengthImage( const StrengthImageType *w )
+ void SetStrengthImage( const WeightImageType *w )
  {
-   this->ProcessObject::SetNthInput(2,const_cast< StrengthImageType *>(w));
-   m_PrevStrengthImage = static_cast< StrengthImageType *>(this->ProcessObject::GetInput(2));
+   this->ProcessObject::SetNthInput(2,const_cast< WeightImageType *>(w));
+   m_PrevWeightImage = static_cast< WeightImageType *>(this->ProcessObject::GetInput(2));
  }
 
   /** Set the initial strength **/ 
@@ -217,6 +225,12 @@ template<class TInputImage,
   /** Get the number of iterations **/
   itkGetConstMacro( MaxIterations, unsigned int );
 
+ /** Set the number of iterations **/
+  itkSetMacro( ObjectRadius, unsigned int );
+  
+  /** Get the number of iterations **/
+  itkGetConstMacro( ObjectRadius, unsigned int );
+
   /** Set T1: Max number of enemies for a cell to continue attack **/
   itkSetMacro( T1, unsigned int );
   
@@ -235,13 +249,12 @@ template<class TInputImage,
   /** Get the neighborhood used **/
   itkGetConstMacro( UseSlow, bool );
 
- /** Set the radius of the neighborhood for processing. Default is 1 **/
- itkSetMacro( Radius, InputSizeType );
+  /** Set the radius of the neighborhood for processing. Default is 1 **/
+  itkSetMacro( Radius, InputSizeType );
   
- /** Get the radius of neighborhood used for processing **/
- itkGetConstMacro( Radius, InputSizeType );
-
-
+  /** Get the radius of neighborhood used for processing **/
+  itkGetConstMacro( Radius, InputSizeType );
+  
 
  protected:
   
@@ -262,26 +275,50 @@ template<class TInputImage,
 
   void GrowCutSlow( OutputImageType *);
   
- // void GrowCutFast( OutputImageType *);
+  void GrowCutFast( TOutputImage *);
+
+  void GrowCutSlowROI( TOutputImage *);
 
   
  private:
+ 
+  //typedef std::vector< OutputIndexType > LabelVectorType;
 
   GrowCutSegmentationImageFilter(const Self&); //purposely not implemented
   void operator=(const Self&); // purposely not implemented
 
+  void InitializeStateImage( OutputImageType *state );
 
+  void InitializeDistancesImage( TInputImage *input, WeightImageType *distance);
+  
+  OutputIndexType GetSeed( OutputImageType *state, vcl_vector< OutputIndexType> &prevSeeds, OutputImagePixelType labelType); 
+
+  
+  float UpdateLabels(unsigned int &newRadius,InputImageType *inputImage,OutputImageType *outputImage,OutputImageType *stateImage,WeightImageType *distancesImage, WeightImageType *maxSaturationImage, bool chooseMin, bool useROI, OutputIndexType &currSeed, vcl_vector< unsigned > &volumes);
+
+  bool IsInsideROI(OutputIndexType &seed);
+  
+  bool IsInsideImage(OutputIndexType &seed, OutputSizeType &imSize);
+
+  void ComputeLabelVolumes(TOutputImage *outputImage, vcl_vector< unsigned > &volumes, vcl_vector< unsigned > &phyVolumes);
+
+  void MaskSegmentedImageByWeight(float upperThresh);
+  
+  
+   
   NodeContainerPointer                       m_ForegroundPoints; 
   NodeContainerPointer                       m_BackgroundPoints;
   NodeContainerPointer                       m_PriorForegroundPoints;
 
+  WeightImagePixelType                       m_ConfThresh;
+
   InputSizeType                              m_Radius; 
  
-  LabelImagePointer                          m_LabelImage;
+  OutputImagePointer                         m_LabelImage;
   
-  StrengthImagePointer                       m_StrengthImage;
+  WeightImagePointer                         m_WeightImage;
 
-  StrengthImagePointer                       m_PrevStrengthImage;
+  WeightImagePointer                         m_PrevWeightImage;
 
   OutputImageRegionType                      m_BufferedRegion;
 
@@ -290,16 +327,22 @@ template<class TInputImage,
   double                                     m_PriorSegmentStrength;
 
   unsigned int                               m_MaxIterations;
+
+  unsigned int                               m_ObjectRadius;
+
   unsigned int                               m_T1; // max number of enemies a cell can have to attack
   unsigned int                               m_T2; // min number of enemies a cell can have to be consumed
   
   bool                                       m_UseSlow;
 
- OutputImagePixelType                        m_ObjectLabel;
- OutputImagePixelType                        m_BackgroundLabel;
- OutputImagePixelType                        m_UnknownLabel;
+  OutputImagePixelType                        m_ObjectLabel;
+  OutputImagePixelType                        m_BackgroundLabel;
+  OutputImagePixelType                        m_UnknownLabel;
 
- vcl_list< IndexType >                      m_AlivePoints;   
+  OutputIndexType                            m_roiStart;
+  OutputIndexType                            m_roiEnd;
+  vcl_list< IndexType >                      m_AlivePoints;   
+  
   
 
 };
