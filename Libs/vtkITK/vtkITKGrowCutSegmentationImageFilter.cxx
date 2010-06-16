@@ -30,17 +30,11 @@ vtkStandardNewMacro(vtkITKGrowCutSegmentationImageFilter);
 //// 3D filter
 template<class IT1, class IT2, class OT>
 void vtkITKImageGrowCutExecute3D(vtkImageData *inData, 
-      IT1 *inPtr1, IT2 *inPtr2, IT2 *inPtr3,
-      OT *output, int outExt[6],
-      double &MaxIterations, double &ContrastNoiseRatio, 
-      double &PriorSegmentStrength, 
-         vtkPoints *GestureColors)
-//void vtkITKImageGrowCutExecute3D(vtkImageData *inData, 
-//      IT1 *inPtr1, IT2 *inPtr2,
-//      OT *output, int outExt[6],
-//      double &MaxIterations, double &ContrastNoiseRatio, 
-//      double &PriorSegmentStrength, 
-//         vtkPoints *GestureColors)
+     IT1 *inPtr1, IT2 *inPtr2, IT2 *inPtr3,
+     OT *output, int outExt[6], double &ObjectSize,
+     double &ContrastNoiseRatio, 
+     double &PriorSegmentStrength,     
+     vtkPoints *GestureColors)
 {
 
   std::ofstream debugger;
@@ -133,24 +127,33 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
     //debugger<<" Gesture Color "<<i<<" : "<<p[0]<<std::endl;
     std::cout<<" Gesture Color "<<i<<" : "<<p[0]<<std::endl;
     if(p[0] > backgroundColor)
-      backgroundColor = p[0];
+      backgroundColor = (typename LabelImageType::PixelType)p[0];
   }
   //debugger<<" Background Label Color "<<backgroundColor<<std::endl;
   std::cout<<" Background Label Color "<<backgroundColor<<std::endl;
+  int numForegroundPixels = 0;
+  int numBackgroundPixels = 0;
+
   for(weight.GoToBegin(), label.GoToBegin(); !weight.IsAtEnd(); 
        ++weight, ++label)
     {
 
       typename LabelImageType::PixelType color = label.Get();
       if(color == 0)
- {
-   weight.Set(0.0);
- }
-      else{
- weight.Set( ContrastNoiseRatio );
+      {
+         weight.Set(0.0);
       }
+      else{
+        numBackgroundPixels += ( color == backgroundColor ) ? 1 : 0;
+        numForegroundPixels += ( color != backgroundColor ) ? 1 : 0;
+
+        weight.Set( ContrastNoiseRatio );
+      }
+
     }
-   
+  std::cout<<" number Foreground Pixels : "<<numForegroundPixels<<std::endl;
+  std::cout<<" number Background Pixels : "<<numBackgroundPixels<<std::endl;
+  
   for(weight.GoToBegin(), plabel.GoToBegin(); !weight.IsAtEnd(); 
       ++weight, ++plabel)
     {
@@ -166,9 +169,11 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   filter->SetInput( image );
   filter->SetLabelImage( labelImage );
   filter->SetStrengthImage( weightImage );
-  
+
+  filter->SetSeedStrength( ContrastNoiseRatio );
   filter->SetUseSlow(true);
-  filter->SetMaxIterations((unsigned int)MaxIterations);
+  //filter->SetMaxIterations((unsigned int)MaxIterations);
+  filter->SetObjectRadius((unsigned int)ObjectSize);
   
   filter->Update();
   
@@ -176,15 +181,25 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
   writer->Update();*/
   //debugger<<"Done with filter output "<<std::endl;
   //debugger<<"Done writing output of the filter "<<std::endl;
+  
+  int segmentedVol = 0;
+ 
+  outputImage = filter->GetOutput();
+  itk::ImageRegionIterator< LabelImageType > out(outputImage, outputImage->GetBufferedRegion() );
+  for (out.GoToBegin(); !out.IsAtEnd(); ++out)
+    {
+      if(out.Get() == backgroundColor)
+ {
+   continue;
+   // out.Set(0);
+ }
+      else if(out.Get() != 0)
+ {
+   ++segmentedVol; // this is valid only for a binary segmentation
+ }
+    }
 
-  // outputImage = filter->GetOutput();
-//   itk::ImageRegionIterator< LabelImageType > out(outputImage, outputImage->GetBufferedRegion() );
-//   for (out.GoToBegin(); !out.IsAtEnd(); ++out)
-//   {
-//   if(out.Get() == backgroundColor)
-//     out.Set(0);
-//   }
-
+  std::cout<<"Segmented Volume : "<<segmentedVol<<" pixels"<<std::endl;
  // Copy to the output
  /*memcpy(output, filter->GetOutput()->GetBufferPointer(),
          filter->GetOutput()->GetBufferedRegion().GetNumberOfPixels()*sizeof(OT) );
@@ -202,7 +217,8 @@ void vtkITKImageGrowCutExecute3D(vtkImageData *inData,
 //constructor
 vtkITKGrowCutSegmentationImageFilter::vtkITKGrowCutSegmentationImageFilter()
 {
-  MaxIterations = 5;
+  //MaxIterations = 5;
+  ObjectSize = 10;
   GestureColors = NULL;
   ContrastNoiseRatio = 1.0;
   CnrThreshold = 0.0;
@@ -254,11 +270,11 @@ void ExecuteGrowCut( vtkITKGrowCutSegmentationImageFilter *self,
   void *outPtr = outData->GetScalarPointerForExtent(outExt);
 
   vtkITKImageGrowCutExecute3D(input1, 
-      (IT1*)(inPtr1), (IT2*)(inPtr2), (IT2*) (inPtr3),
-      (OT*)(outPtr), outExt,
-      self->MaxIterations, self->ContrastNoiseRatio, 
-      self->PriorSegmentConfidence, 
-            self->GestureColors); 
+         (IT1*)(inPtr1), (IT2*)(inPtr2), (IT2*) (inPtr3),
+         (OT*)(outPtr), outExt,
+         self->ObjectSize, self->ContrastNoiseRatio, 
+         self->PriorSegmentConfidence, 
+         self->GestureColors); 
 
 
   //vtkITKImageGrowCutExecute3D(input1, 
@@ -369,7 +385,7 @@ void vtkITKGrowCutSegmentationImageFilter::PrintSelf(ostream& os, vtkIndent inde
 {
   this->Superclass::PrintSelf(os,indent);
 
-  os << indent << "Max Iterations : " << MaxIterations<< std::endl;
+  os << indent << "Object Size : " << ObjectSize<< std::endl;
 //  os << indent << "Number classes : "<< GestureAttributes->GetNumberOfPoints()<<std::endl;
   os << indent << "cnr : "<<ContrastNoiseRatio<<std::endl;
 
