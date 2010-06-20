@@ -84,6 +84,7 @@ SET(modules
   CollectFiducials
   PETCTFusion
   IGTToolSelector
+  FluidMechanicsTractography
   )
 
 if(Slicer3_USE_OPENIGTLINK)
