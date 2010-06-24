@@ -9,7 +9,7 @@ if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
 
-set(CMAKE_CXX_FLAGS "-w -fpermissive -static -static-libgcc -fexceptions")
+set(CMAKE_CXX_FLAGS "-w -fpermissive -fexceptions -O3")
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,-dylib_file,/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib")
 
 set(CLP FMTractography)
