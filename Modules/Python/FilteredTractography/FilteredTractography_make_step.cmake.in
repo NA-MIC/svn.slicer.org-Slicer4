@@ -1,0 +1,15 @@
+message("Building FilteredTractography")
+set(ENV{LD_LIBRARY_PATH} "@CMAKE_CURRENT_BINARY_DIR@/python-build/lib")
+set(ENV{VS_UNICODE_OUTPUT} "")
+
+execute_process(
+  COMMAND "@slicer_PYTHON_EXECUTABLE@" @CMAKE_CURRENT_SOURCE_DIR@/BuildFilteredTractography.py
+  WORKING_DIRECTORY "@FilteredTractography_BINARY_DIR@"
+  RESULT_VARIABLE FilteredTractography_BUILT_RESULT
+  OUTPUT_VARIABLE FilteredTractography_OUT
+  OUTPUT_VARIABLE FilteredTractography_ERR)
+
+if(NOT ${FilteredTractography_BUILT_RESULT} EQUAL 0)
+  message("FilteredTractography Errors detected: \n${FilteredTractography_OUT}\n${FilteredTractography_ERR}")
+endif()
+message("FilteredTractography build worked.")
