@@ -3,7 +3,7 @@ set(ENV{LD_LIBRARY_PATH} "@CMAKE_CURRENT_BINARY_DIR@/python-build/lib")
 set(ENV{VS_UNICODE_OUTPUT} "")
 
 execute_process(
-  COMMAND "@slicer_PYTHON_EXECUTABLE@" @CMAKE_CURRENT_SOURCE_DIR@/BuildFilteredTractography.py
+  COMMAND "@PYTHON_EXECUTABLE@" @CMAKE_CURRENT_SOURCE_DIR@/BuildFilteredTractography.py $ENV{PATH}
   WORKING_DIRECTORY "@FilteredTractography_BINARY_DIR@"
   RESULT_VARIABLE FilteredTractography_BUILT_RESULT
   OUTPUT_VARIABLE FilteredTractography_OUT
