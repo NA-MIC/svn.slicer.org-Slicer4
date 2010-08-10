@@ -137,6 +137,12 @@ def Execute(dwi_node, seeds_node, mask_node, ff_node, \
 
     state_dim = iff(is_2t, 10, 5)  # dimension of state space
 
+    print 'HACK  hard code filter parameters'
+    dt = iff(is_2t, 0.2,    0.3)
+    #Qm = iff(is_2t, 0.0030, 0.0015)
+    #Ql = iff(is_2t, 100,    25)
+    #Rs = iff(is_2t, 0.015, 0.020)
+
     theta_min = 5  # angle which triggers branch
     param = dict({'FA_min': FA_min, # fractional anisotropy stopping threshold
                   'GA_min': GA_min, # generalized anisotropy stopping threshold
@@ -730,7 +736,8 @@ def s2ga(s):
 def interp3signal(S, p, v):
     assert S.ndim == 4 and S.dtype == 'float32'
     nx,ny,nz,n = S.shape
-    sigma = 1.66*1.66*1.66
+    #sigma = 1.66*1.66*1.66
+    sigma = 1.0
     s = np.zeros((2*n,), dtype='float32')  # preallocate output (doubled)
     flt.c_interp3signal(s, S, p, v, sigma, nx, ny, nz, n)
     return s
@@ -739,7 +746,8 @@ def interp3signal(S, p, v):
 def interp3scalar(M, p, v):
     assert M.ndim == 3 and M.dtype == 'uint16'
     nx,ny,nz = M.shape
-    sigma = 1.66*1.66*1.66
+    #sigma = 1.66*1.66*1.66
+    sigma = 1.0
     return flt.c_interp3scalar(M, p, v, sigma, nx, ny, nz)
 
 # ternary operator (no short circuit)
