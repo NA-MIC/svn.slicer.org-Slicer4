@@ -1281,7 +1281,7 @@ void vtkEndoNavGUI::BuildGUI ( )
 
   this->TransformConverter = vtkIGTLToViewerTransform::New();
   this->TransformConverter->SetImageViewerCT(this->ImageViewerCT);
-  this->TransformConverter->SetViewer(this->GetApplicationGUI()->GetViewerWidget());
+  this->TransformConverter->SetViewer(this->GetApplicationGUI()->GetNthViewerWidget(0));
 
   this->Logic->RegisterMessageConverter(this->ImageConverter);
   this->Logic->RegisterMessageConverter(this->TransformConverter);
