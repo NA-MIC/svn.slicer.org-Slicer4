@@ -46,6 +46,7 @@ SET(modules
   CommandLineModule
   Editor
   Endoscopy
+  EndoNav
   GradientAnisotropicDiffusionFilter
   Meshing
   Python
@@ -84,6 +85,7 @@ SET(modules
   CollectFiducials
   PETCTFusion
   IGTToolSelector
+  CameraBasedROI
   )
 
 if(Slicer3_USE_OPENIGTLINK)
