@@ -683,7 +683,7 @@ SET(cli_modules
   SparseFieldLevelSetContour
   Realign
   DiffusionApplications
-  #EndoNavTracking
+  EndoNavTracking
   ExtractSkeleton
   #Java
   N4ITKBiasFieldCorrection
