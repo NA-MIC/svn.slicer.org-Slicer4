@@ -50,25 +50,24 @@ class DICOMLoader(object):
     fileList = vtk.vtkStringArray()
     for f in files:
       fileList.InsertNextValue(f)
-    vl = slicer.modules.volumes.logic()
+    dicomImportLogic = slicer.modules.dicomrtimport.logic()
     # TODO: pass in fileList once it is known to be in the right order
-    self.volumeNode = vl.AddArchetypeVolume( files[0], name, 0 )
-    # automatically select the volume to display
+    self.dicomObjectNode = dicomImportLogic.AddArchetypeDICOMObject( files[0], name )
+    # automatically select the object to display
     appLogic = slicer.app.applicationLogic()
     selNode = appLogic.GetSelectionNode()
-    if self.volumeNode:
-      selNode.SetReferenceActiveVolumeID(self.volumeNode.GetID())
+    if self.dicomObjectNode:
+      selNode.SetReferenceActiveVolumeID(self.dicomObjectNode.GetID())
       appLogic.PropagateVolumeSelection()
-
 
 class DICOMExporter(object):
   """Code to export slicer data to dicom database
   TODO: delete temp directories and files
   """
 
-  def __init__(self,studyUID=None,volumeNode=None,parameters=None):
+  def __init__(self,studyUID=None,dicomObjectNode=None,parameters=None):
     self.studyUID = studyUID
-    self.volumeNode = volumeNode
+    self.dicomObjectNode = dicomObjectNode
     self.parameters = parameters
     self.referenceFile = None
     self.sdbFile = None
@@ -134,13 +133,13 @@ class DICOMExporter(object):
       parameters = self.parameters
     if not parameters:
       parameters = self.parametersFromStudy()
-    if self.volumeNode:
+    if self.dicomObjectNode:
       self.createDICOMFilesForVolume(parameters)
     else:
       self.createDICOMFileForScene(parameters)
     self.addFilesToDatabase()
 
-  def createDICOMFilesForVolume(self, volumeNode, parameters):
+  def createDICOMFilesForVolume(self, dicomObjectNode, parameters):
     """
     Export the volume data using the ITK-based utility
     TODO: confirm that resulting file is valid - may need to change the CLI
@@ -161,7 +160,7 @@ class DICOMExporter(object):
     cliparameters['seriesDescription'] = parameters['Series Description']
     cliparameters['seriesNumber'] = parameters['Series Number']
 
-    cliparameters['inputVolume'] = self.volumeNode.GetID()
+    cliparameters['inputVolume'] = self.dicomObjectNode.GetID()
 
     self.dicomDirectory = tempfile.mkdtemp('', 'dicomExport', slicer.app.temporaryPath)
     cliparameters['dicomDirectory'] = self.dicomDirectory

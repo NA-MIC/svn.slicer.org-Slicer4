@@ -348,9 +348,9 @@ class DICOMWidget:
 
   def loadFiles(self, files, name):
     loader = DICOMLib.DICOMLoader(files,name)
-    if not loader.volumeNode:
-      qt.QMessageBox.warning(slicer.util.mainWindow(), 'Load', 'Could not load volume for: %s' % name)
-      print('Tried to load volume as %s using: ' % name, files)
+    #if not loader.dicomObjectNode:
+    #  qt.QMessageBox.warning(slicer.util.mainWindow(), 'Load', 'Could not load dicom object for: %s' % name)
+    #  print('Tried to load dicom object as %s using: ' % name, files)
 
   def onToggleListener(self):
     if hasattr(slicer, 'dicomListener'):
