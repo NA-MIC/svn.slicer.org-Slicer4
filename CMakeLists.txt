@@ -313,8 +313,9 @@ set(Slicer_VERSION_MAJOR "4")
 set(Slicer_VERSION_MINOR "1")
 set(Slicer_VERSION_PATCH "0")
 # Releases define a tweak level
-#set(Slicer_VERSION_TWEAK 0)
+set(Slicer_VERSION_TWEAK 0)
 #set(Slicer_VERSION_RC 1)
+set(Slicer_VERSION_NAME "QtTesting")
 
 if(NOT DEFINED Slicer_VERSION_TWEAK)
   # if it's not a release, use the date as a tweak
@@ -323,6 +324,9 @@ endif()
 
 set(Slicer_VERSION      "${Slicer_VERSION_MAJOR}.${Slicer_VERSION_MINOR}")
 set(Slicer_VERSION_FULL "${Slicer_VERSION}.${Slicer_VERSION_PATCH}")
+if(DEFINED Slicer_VERSION_NAME)
+  set(Slicer_VERSION_FULL "${Slicer_VERSION_FULL}-${Slicer_VERSION_NAME}")
+endif()
 if(Slicer_VERSION_RC)
   set(Slicer_VERSION_FULL "${Slicer_VERSION_FULL}-rc${Slicer_VERSION_RC}")
 endif()
