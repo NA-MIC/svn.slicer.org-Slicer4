@@ -61,6 +61,7 @@ void qSlicerMouseModeToolBarPrivate::init()
 
   // RotateMode action
   this->ViewTransformModeAction = new QAction(q);
+  this->ViewTransformModeAction->setObjectName("MouseRotateMode");
   this->ViewTransformModeAction->setIcon(QIcon(":/Icons/MouseRotateMode.png"));
   this->ViewTransformModeAction->setText("&Rotate");
   this->ViewTransformModeAction->setToolTip("Set the 3DViewer mouse mode to transform view");
@@ -73,8 +74,10 @@ void qSlicerMouseModeToolBarPrivate::init()
   // place once
 
   this->CreateAndPlaceMenu = new QMenu(QObject::tr("Create and Place"), q);
+  this->CreateAndPlaceMenu->setObjectName("CreateAndPlaceMenu");
 
   this->CreateAndPlaceToolButton = new QToolButton();
+  this->CreateAndPlaceToolButton->setObjectName("CreateAndPlaceToolButton");
   this->CreateAndPlaceToolButton->setCheckable(true);
 //  this->CreateAndPlaceToolButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
   this->CreateAndPlaceToolButton->setToolButtonStyle(Qt::ToolButtonIconOnly);
@@ -267,6 +270,7 @@ void qSlicerMouseModeToolBarPrivate::updateWidgetFromSelectionNode()
       {
       // add it
       QAction * newAction = new QAction(this->CreateAndPlaceMenu);
+      newAction->setObjectName(annotationID);
       newAction->setIcon(QIcon(annotationResource));
       if (newAction->icon().isNull())
         {
