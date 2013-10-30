@@ -59,8 +59,16 @@ class VTK_MRML_EXPORT vtkMRMLLinearTransformNode : public vtkMRMLTransformNode
   virtual vtkGeneralTransform* GetTransformToParent();
 
   /// 
+  /// vtkGeneral transform of this node from paren node
+  virtual vtkGeneralTransform* GetTransformFromParent();
+
+  /// 
   /// Return the vtkMatrix4x4 transform of this node to parent node
-  vtkGetObjectMacro(MatrixTransformToParent, vtkMatrix4x4);
+  virtual vtkMatrix4x4* GetMatrixTransformToParent();
+
+  /// 
+  /// Return the vtkMatrix4x4 transform of this node from parent node
+  virtual vtkMatrix4x4* GetMatrixTransformFromParent();
 
   ///
   /// Set and observe a new matrix transform of this node to parent node.
@@ -69,6 +77,14 @@ class VTK_MRML_EXPORT vtkMRMLLinearTransformNode : public vtkMRMLTransformNode
   /// ModifiedEvent() and TransformModifiedEvent() are fired after the matrix
   /// is set.
   void SetAndObserveMatrixTransformToParent(vtkMatrix4x4 *matrix);
+
+  ///
+  /// Set and observe a new matrix transform of this node from parent node.
+  /// Each time the matrix is modified,
+  /// vtkMRMLTransformableNode::TransformModifiedEvent is fired.
+  /// ModifiedEvent() and TransformModifiedEvent() are fired after the matrix
+  /// is set.
+  void SetAndObserveMatrixTransformFromParent(vtkMatrix4x4 *matrix);
 
   /// 
   /// Get concatinated transforms to the top
@@ -102,6 +118,7 @@ protected:
   void operator=(const vtkMRMLLinearTransformNode&);
 
   vtkMatrix4x4* MatrixTransformToParent;
+  vtkMatrix4x4* MatrixTransformFromParent;
 };
 
 #endif

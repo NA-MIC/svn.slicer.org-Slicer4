@@ -50,18 +50,22 @@ public:
 
   /// 
   /// Finds the storage node and read the data
-  virtual void UpdateScene(vtkMRMLScene *scene){
+  virtual void UpdateScene(vtkMRMLScene *scene)
+    {
      Superclass::UpdateScene(scene);
-  };
+    };
 
   /// 
   /// 1 if transfrom is linear, 0 otherwise
   virtual int IsLinear() = 0;
 
   /// 
-  /// vtkGeneral transform of this node
-  virtual vtkGeneralTransform* GetTransformToParent() {
-     return this->TransformToParent; };
+  /// vtkGeneral transform of this node to parent
+  virtual vtkGeneralTransform* GetTransformToParent();
+
+  /// 
+  /// vtkGeneral transform of this node from parent
+  virtual vtkGeneralTransform* GetTransformFromParent();
 
   /// 
   /// 1 if all the transforms to the top are linear, 0 otherwise
@@ -74,6 +78,10 @@ public:
   /// 
   /// Get concatinated transforms to the top
   void GetTransformToWorld(vtkGeneralTransform* transformToWorld);
+
+  /// 
+  /// Get concatinated transforms from the top
+  void GetTransformFromWorld(vtkGeneralTransform* transformToWorld);
 
   /// 
   /// Get concatinated transforms  bwetween nodes  
@@ -105,6 +113,12 @@ public:
   /// Create default storage node or NULL if does not have one
   virtual vtkMRMLStorageNode* CreateDefaultStorageNode();
 
+  /// Get/Set for ReadWriteAsTransformToParent
+  vtkGetMacro(ReadWriteAsTransformToParent, int);
+  vtkSetMacro(ReadWriteAsTransformToParent, int);
+  vtkBooleanMacro(ReadWriteAsTransformToParent, int);
+
+
   virtual bool GetModifiedSinceRead();
 protected:
   vtkMRMLTransformNode();
@@ -113,7 +127,9 @@ protected:
   void operator=(const vtkMRMLTransformNode&);
 
   vtkGeneralTransform* TransformToParent;
+  vtkGeneralTransform* TransformFromParent;
 
+  int ReadWriteAsTransformToParent;
 };
 
 #endif

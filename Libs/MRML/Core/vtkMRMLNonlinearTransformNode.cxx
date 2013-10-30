@@ -31,6 +31,7 @@ vtkMRMLNodeNewMacro(vtkMRMLNonlinearTransformNode);
 vtkMRMLNonlinearTransformNode::vtkMRMLNonlinearTransformNode()
 {
   this->WarpTransformToParent = NULL;
+  this->ReadWriteAsTransformToParent = 0;
 
   // default to a grid transform? null transform? or should this be an
   // abstract class?

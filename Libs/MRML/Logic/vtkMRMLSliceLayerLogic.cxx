@@ -36,6 +36,7 @@
 #include <vtkNew.h>
 #include <vtkPointData.h>
 #include <vtkTransform.h>
+#include <vtkGeneralTransform.h>
 
 //
 #include "vtkImageLabelOutline.h"
@@ -73,8 +74,8 @@ vtkMRMLSliceLayerLogic::vtkMRMLSliceLayerLogic()
   this->VolumeDisplayNodeObserved = 0;
   this->SliceNode = 0;
    
-  this->XYToIJKTransform = vtkTransform::New();
-  this->UVWToIJKTransform = vtkTransform::New();
+  this->XYToIJKTransform = vtkGeneralTransform ::New();
+  this->UVWToIJKTransform = vtkGeneralTransform ::New();
 
   this->IsLabelLayer = 0;
 
@@ -109,8 +110,8 @@ vtkMRMLSliceLayerLogic::vtkMRMLSliceLayerLogic()
   this->ResliceUVW->SetOutputDimensionality( 3 );
   
   // Only the transform matrix can change, not the transform itself
-  this->Reslice->SetResliceTransform( this->XYToIJKTransform ); 
-  this->ResliceUVW->SetResliceTransform( this->UVWToIJKTransform ); 
+  //this->Reslice->SetResliceTransform( this->XYToIJKTransform->GetConcatenatedTransform(0) ); 
+  //this->ResliceUVW->SetResliceTransform( this->UVWToIJKTransform->GetConcatenatedTransform(0) ); 
 
   this->UpdatingTransforms = 0;
 }
@@ -467,6 +468,12 @@ void vtkMRMLSliceLayerLogic::UpdateTransforms()
   vtkNew<vtkMatrix4x4> uvwToIJK;
   uvwToIJK->Identity();
 
+  this->XYToIJKTransform->Identity();
+  this->UVWToIJKTransform->Identity();
+
+  this->XYToIJKTransform->PostMultiply();
+  this->UVWToIJKTransform->PostMultiply();
+
   if (this->SliceNode)
     {
     vtkMatrix4x4::Multiply4x4(this->SliceNode->GetXYToRAS(), xyToIJK.GetPointer(), xyToIJK.GetPointer());
@@ -474,6 +481,9 @@ void vtkMRMLSliceLayerLogic::UpdateTransforms()
 
     vtkMatrix4x4::Multiply4x4(this->SliceNode->GetUVWToRAS(), uvwToIJK.GetPointer(), uvwToIJK.GetPointer());
     this->SliceNode->GetUVWDimensions(dimensionsUVW);
+
+    this->XYToIJKTransform->Concatenate(xyToIJK.GetPointer());
+    this->UVWToIJKTransform->Concatenate(uvwToIJK.GetPointer());
     }
 
   if (this->VolumeNode && this->VolumeNode->GetImageData())
@@ -482,6 +492,16 @@ void vtkMRMLSliceLayerLogic::UpdateTransforms()
     vtkMRMLTransformNode *transformNode = this->VolumeNode->GetParentTransformNode();
     if ( transformNode != 0 )
       {
+      vtkGeneralTransform *worldTransform = vtkGeneralTransform::New();
+      worldTransform->Identity();
+      transformNode->GetTransformFromWorld(worldTransform);
+      //worldTransform->Inverse();
+
+      this->XYToIJKTransform->Concatenate(worldTransform);
+      this->UVWToIJKTransform->Concatenate(worldTransform);
+
+      worldTransform->Delete();
+      /***
       if ( !transformNode->IsTransformToWorldLinear() )
         {
         if (!reportedNonlinearTransformSupport)
@@ -498,14 +518,28 @@ void vtkMRMLSliceLayerLogic::UpdateTransforms()
         vtkMatrix4x4::Multiply4x4(rasToRAS.GetPointer(), xyToIJK.GetPointer(), xyToIJK.GetPointer());
         vtkMatrix4x4::Multiply4x4(rasToRAS.GetPointer(), uvwToIJK.GetPointer(), uvwToIJK.GetPointer());
         }
+        ***/
       }
 
-    vtkNew<vtkMatrix4x4> rasToIJK;
-    this->VolumeNode->GetRASToIJKMatrix(rasToIJK.GetPointer());
-    vtkMatrix4x4::Multiply4x4(rasToIJK.GetPointer(), xyToIJK.GetPointer(), xyToIJK.GetPointer());
-    vtkMatrix4x4::Multiply4x4(rasToIJK.GetPointer(), uvwToIJK.GetPointer(), uvwToIJK.GetPointer());
+    vtkSmartPointer<vtkMatrix4x4> rasToIJK = vtkSmartPointer<vtkMatrix4x4>::New();
+    this->VolumeNode->GetRASToIJKMatrix(rasToIJK);
+
+    /***
+    vtkMatrix4x4::Multiply4x4(rasToIJK, xyToIJK, xyToIJK); 
+    vtkMatrix4x4::Multiply4x4(rasToIJK, uvwToIJK, uvwToIJK); 
+    ***/
+    this->XYToIJKTransform->Concatenate(rasToIJK);
+    this->UVWToIJKTransform->Concatenate(rasToIJK);
+
+    this->Reslice->SetResliceTransform( this->XYToIJKTransform ); 
+    this->ResliceUVW->SetResliceTransform( this->UVWToIJKTransform ); 
+
+    //this->XYToIJKTransform->Modified();
+    //this->UVWToIJKTransform->Modified();
+
   }
 
+  /***
   // Optimisation: If there is no volume, calling or not Modified() won't
   // have any visual impact. the transform has no sense if there is no volume
   bool transformModified = this->VolumeNode &&
@@ -521,6 +555,7 @@ void vtkMRMLSliceLayerLogic::UpdateTransforms()
     {
     this->UVWToIJKTransform->SetMatrix(uvwToIJK.GetPointer());
     }
+  ***/
 
   this->Reslice->SetOutputExtent( 0, dimensions[0]-1,
                                   0, dimensions[1]-1,
@@ -532,7 +567,7 @@ void vtkMRMLSliceLayerLogic::UpdateTransforms()
 
   this->UpdatingTransforms = 0; 
 
-  if (transformModified || transformModifiedUVW)
+  //if (transformModified || transformModifiedUVW)
     {
     this->Modified();
     }
