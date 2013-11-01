@@ -163,26 +163,14 @@ void vtkMRMLLinearTransformNode::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 vtkGeneralTransform* vtkMRMLLinearTransformNode::GetTransformToParent()
 {
-  if (this->MatrixTransformToParent == 0)
-    {
-    vtkMatrix4x4 *matrix  = vtkMatrix4x4::New();
-    matrix->Identity();
-
-    if (this->MatrixTransformFromParent)
-      {
-      matrix->DeepCopy(this->MatrixTransformFromParent);
-      matrix->Invert();
-      }
-    this->SetAndObserveMatrixTransformToParent(matrix);
-    matrix->Delete();
-    }
+  vtkMatrix4x4 *matrix = this->GetMatrixTransformToParent();
 
   if (this->TransformToParent == 0)
     {
     this->TransformToParent = vtkGeneralTransform::New();
     }
   this->TransformToParent->Identity();
-  this->TransformToParent->Concatenate(this->MatrixTransformToParent);
+  this->TransformToParent->Concatenate(matrix);
   return this->TransformToParent;
 
 }
@@ -190,26 +178,14 @@ vtkGeneralTransform* vtkMRMLLinearTransformNode::GetTransformToParent()
 //----------------------------------------------------------------------------
 vtkGeneralTransform* vtkMRMLLinearTransformNode::GetTransformFromParent()
 {
-  if (this->MatrixTransformFromParent == 0)
-    {
-    vtkMatrix4x4 *matrix  = vtkMatrix4x4::New();
-    matrix->Identity();
-
-    if (this->MatrixTransformToParent)
-      {
-      matrix->DeepCopy(this->MatrixTransformToParent);
-      matrix->Invert();
-      }
-    this->SetAndObserveMatrixTransformFromParent(matrix);
-    matrix->Delete();
-    }
+  vtkMatrix4x4 *matrix = this->GetMatrixTransformFromParent();
 
   if (this->TransformFromParent == 0)
     {
     this->TransformFromParent = vtkGeneralTransform::New();
     }
   this->TransformFromParent->Identity();
-  this->TransformFromParent->Concatenate(this->MatrixTransformFromParent);
+  this->TransformFromParent->Concatenate(matrix);
   return this->TransformFromParent;
 
 }

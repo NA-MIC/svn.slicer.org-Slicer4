@@ -27,9 +27,6 @@ vtkMRMLNodeNewMacro(vtkMRMLBSplineTransformNode);
 //----------------------------------------------------------------------------
 vtkMRMLBSplineTransformNode::vtkMRMLBSplineTransformNode()
 {
-  vtkITKBSplineTransform *spline = vtkITKBSplineTransform::New();
-  this->SetAndObserveWarpTransformToParent(spline);
-  spline->Delete();
 }
 
 //----------------------------------------------------------------------------
@@ -249,6 +246,41 @@ void vtkMRMLBSplineTransformNode::PrintSelf(ostream& os, vtkIndent indent)
   Superclass::PrintSelf(os,indent);
 }
 
+//----------------------------------------------------------------------------
+vtkWarpTransform* vtkMRMLBSplineTransformNode::GetWarpTransformToParent()
+{
+  if (this->WarpTransformToParent == 0)
+    {
+    vtkITKBSplineTransform *wrap = vtkITKBSplineTransform::New();
+
+    if (this->WarpTransformFromParent)
+      {
+      wrap->DeepCopy(this->WarpTransformFromParent);
+      wrap->Inverse();
+      }
+    this->SetAndObserveWarpTransformToParent(wrap);
+    wrap->Delete();
+    }
+  return this->WarpTransformToParent;
+}
+
+//----------------------------------------------------------------------------
+vtkWarpTransform* vtkMRMLBSplineTransformNode::GetWarpTransformFromParent()
+{
+  if (this->WarpTransformFromParent == 0)
+    {
+    vtkITKBSplineTransform *wrap = vtkITKBSplineTransform::New();
+
+    if (this->WarpTransformToParent)
+      {
+      wrap->DeepCopy(this->WarpTransformToParent);
+      wrap->Inverse();
+      }
+    this->SetAndObserveWarpTransformFromParent(wrap);
+    wrap->Delete();
+    }
+  return this->WarpTransformFromParent;
+}
 
 
 // End
