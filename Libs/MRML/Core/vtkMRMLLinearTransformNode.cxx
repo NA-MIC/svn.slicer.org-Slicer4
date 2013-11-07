@@ -31,6 +31,7 @@ vtkMRMLLinearTransformNode::vtkMRMLLinearTransformNode()
 {
   this->MatrixTransformToParent = NULL;
   this->MatrixTransformFromParent = NULL;
+  this->ReadWriteAsTransformToParent = 0;
 }
 
 //----------------------------------------------------------------------------

@@ -327,13 +327,20 @@ int vtkMRMLTransformStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
       vtkMatrix4x4::Multiply4x4(lps2ras, vtkmat, vtkmat);
       vtkMatrix4x4::Multiply4x4(vtkmat, ras2lps, vtkmat);
       
-      // Convert the sense of the transform (from an ITK resampling
-      // transform to a Slicer modeling transform)
-      //
-      vtkmat->Invert();
-      
       // Set the matrix on the node
-      ltn->SetAndObserveMatrixTransformToParent( vtkmat );
+      if (ltn->GetReadWriteAsTransformToParent())
+        {
+        // Convert the sense of the transform (from an ITK resampling
+        // transform to a Slicer modeling transform)
+        //
+        vtkmat->Invert();
+        ltn->SetAndObserveMatrixTransformToParent( vtkmat );
+        }
+      else
+        {
+        ltn->SetAndObserveMatrixTransformFromParent( vtkmat );
+        }
+
       }
     else if (refNode->IsA("vtkMRMLGridTransformNode"))
       {
@@ -405,9 +412,17 @@ int vtkMRMLTransformStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
         // Convert from LPS (ITK) to RAS (Slicer)
         vtkBSpline->SetSwitchCoordinateSystem( true );
         
-        // Set the transform on the node
-        btn->SetAndObserveWarpTransformToParent( vtkBSpline.GetPointer() );
-
+        if (btn->GetReadWriteAsTransformToParent())
+          {
+          // Convert the sense of the transform (from an ITK resampling
+          // transform to a Slicer modeling transform)
+          vtkBSpline->Inverse();
+          btn->SetAndObserveWarpTransformToParent( vtkBSpline.GetPointer() );
+          }
+        else
+          {
+          btn->SetAndObserveWarpTransformFromParent( vtkBSpline.GetPointer() );
+          }
         result = 1;
         }
       else
@@ -551,7 +566,18 @@ int vtkMRMLTransformStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
       vtkgridimage->Delete();
 
       // Set the matrix on the node
-      gtn->SetAndObserveWarpTransformToParent( vtkgrid );
+      if (gtn->GetReadWriteAsTransformToParent())
+        {
+        // Convert the sense of the transform (from an ITK resampling
+        // transform to a Slicer modeling transform)
+        vtkgrid->Inverse();
+        gtn->SetAndObserveWarpTransformToParent( vtkgrid );
+        }
+      else
+        {
+        gtn->SetAndObserveWarpTransformFromParent( vtkgrid );
+        }
+
       vtkgrid->Delete();
       }
     }
@@ -611,10 +637,13 @@ int vtkMRMLTransformStorageNode::WriteDataInternal(vtkMRMLNode *refNode)
     vtkMatrix4x4::Multiply4x4(ras2lps, mat2parent, vtkmat);
     vtkMatrix4x4::Multiply4x4(vtkmat, lps2ras, vtkmat);
     
-    // Convert the sense of the transform (from a Slicer modeling
-    // transform to an ITK resampling transform)
-    //
-    vtkmat->Invert();
+    if (ln->GetReadWriteAsTransformToParent())
+      {
+      // Convert the sense of the transform (from a Slicer modeling
+      // transform to an ITK resampling transform)
+      //
+      vtkmat->Invert();
+      }
       
     typedef AffineTransformType::MatrixType MatrixType;
     typedef AffineTransformType::OutputVectorType OffsetType;
@@ -660,6 +689,14 @@ int vtkMRMLTransformStorageNode::WriteDataInternal(vtkMRMLNode *refNode)
 
     vtkITKBSplineTransform* vtkTrans = vtkITKBSplineTransform::SafeDownCast(bs->GetWarpTransformToParent());
     
+    if (bs->GetReadWriteAsTransformToParent())
+      {
+      // Convert the sense of the transform (from a Slicer modeling
+      // transform to an ITK resampling transform)
+      //
+      vtkTrans->Inverse();
+      }
+
     // get the itkBSplineDeformableTransform directly. No need to
     // convert the coordinate from RAS to LPS.
     typedef itk::Transform<double, VTKDimension, VTKDimension > ITKTransformType;
@@ -694,6 +731,15 @@ int vtkMRMLTransformStorageNode::WriteDataInternal(vtkMRMLNode *refNode)
     {
     // Grid Transform
     vtkGridTransform* vtkTrans = vtkGridTransform::SafeDownCast(gd->GetWarpTransformToParent());
+
+    if (gd->GetReadWriteAsTransformToParent())
+      {
+      // Convert the sense of the transform (from a Slicer modeling
+      // transform to an ITK resampling transform)
+      //
+      vtkTrans->Inverse();
+      }
+
     vtkImageData* vtkgridimage = vtkTrans->GetDisplacementGrid();
 
     // initialize the vector image
