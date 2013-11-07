@@ -125,11 +125,14 @@ void vtkMRMLLinearTransformNode::Copy(vtkMRMLNode *anode)
 
   Superclass::Copy(anode);
   vtkMRMLLinearTransformNode *node = (vtkMRMLLinearTransformNode *) anode;
-  for (int i=0; i<4; i++) 
+  if (node->GetMatrixTransformToParent())
     {
-    for (int j=0; j<4; j++)
+    for (int i=0; i<4; i++) 
       {
-      this->GetMatrixTransformToParent()->SetElement(i,j,(node->GetMatrixTransformToParent()->GetElement(i,j)));
+      for (int j=0; j<4; j++)
+        {
+        this->GetMatrixTransformToParent()->SetElement(i,j,(node->GetMatrixTransformToParent()->GetElement(i,j)));
+        }
       }
     }
   this->EndModify(disabledModify);

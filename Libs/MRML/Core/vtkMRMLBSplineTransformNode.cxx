@@ -230,14 +230,13 @@ void vtkMRMLBSplineTransformNode::ReadXMLAttributes(const char** atts)
 void vtkMRMLBSplineTransformNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
-
-  // BUG: this explicit setting is required because the vtkITKBSplineTransform
-  // seems not to implement DeepCopy correctly (spline's Helper is NULL)
-  vtkMRMLBSplineTransformNode *otherBSpline = vtkMRMLBSplineTransformNode::SafeDownCast(anode);
-  if (otherBSpline)
+  vtkMRMLBSplineTransformNode *node = vtkMRMLBSplineTransformNode::SafeDownCast(anode);
+  if (node)
     {
-    this->SetAndObserveWarpTransformToParent(otherBSpline->GetWarpTransformToParent());
+    this->SetAndObserveWarpTransformToParent(node->GetWarpTransformToParent());
+    this->SetAndObserveWarpTransformFromParent(node->GetWarpTransformFromParent());
     }
+
 }
 
 //----------------------------------------------------------------------------

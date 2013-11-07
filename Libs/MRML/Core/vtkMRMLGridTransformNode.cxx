@@ -225,6 +225,14 @@ void vtkMRMLGridTransformNode::ReadXMLAttributes(const char** atts)
 void vtkMRMLGridTransformNode::Copy(vtkMRMLNode *anode)
 {
   Superclass::Copy(anode);
+  vtkMRMLGridTransformNode *node = vtkMRMLGridTransformNode::SafeDownCast(anode);
+  if (node)
+    {
+    this->SetAndObserveWarpTransformToParent(node->GetWarpTransformToParent());
+    this->SetAndObserveWarpTransformFromParent(node->GetWarpTransformFromParent());
+    }
+
+
 }
 
 //----------------------------------------------------------------------------

@@ -583,10 +583,10 @@ int vtkMRMLTransformStorageNode::ReadDataInternal(vtkMRMLNode *refNode)
     }
 
 
-  if (transformNode->GetTransformToParent() != NULL) 
-    {
+  //if (transformNode->GetTransformToParent() != NULL) 
+  //  {
     //transformNode->GetTransformToParent()->Modified();
-    }
+   // }
   return result;
 }
 
