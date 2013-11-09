@@ -216,7 +216,7 @@ void vtkMRMLGridTransformNode::ReadXMLAttributes(const char** atts)
       }
     }
   vtkgrid->SetDisplacementGrid(image.GetPointer());
-  this->SetAndObserveWarpTransformToParent(vtkgrid.GetPointer());
+  this->SetAndObserveWarpTransformFromParent(vtkgrid.GetPointer());
 }
 
 //----------------------------------------------------------------------------

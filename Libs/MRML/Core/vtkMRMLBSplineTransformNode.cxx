@@ -220,7 +220,7 @@ void vtkMRMLBSplineTransformNode::ReadXMLAttributes(const char** atts)
 
   if( spline.GetPointer() != 0 )
     {
-    this->SetAndObserveWarpTransformToParent( spline );
+    this->SetAndObserveWarpTransformFromParent( spline );
     }
 }
 

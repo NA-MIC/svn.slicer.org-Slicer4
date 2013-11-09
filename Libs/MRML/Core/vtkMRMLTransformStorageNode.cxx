@@ -687,7 +687,7 @@ int vtkMRMLTransformStorageNode::WriteDataInternal(vtkMRMLNode *refNode)
     {
     // BSpline transform
 
-    vtkITKBSplineTransform* vtkTrans = vtkITKBSplineTransform::SafeDownCast(bs->GetWarpTransformToParent());
+    vtkITKBSplineTransform* vtkTrans = vtkITKBSplineTransform::SafeDownCast(bs->GetWarpTransformFromParent());
     
     if (bs->GetReadWriteAsTransformToParent())
       {
@@ -730,7 +730,7 @@ int vtkMRMLTransformStorageNode::WriteDataInternal(vtkMRMLNode *refNode)
   else if( gd )
     {
     // Grid Transform
-    vtkGridTransform* vtkTrans = vtkGridTransform::SafeDownCast(gd->GetWarpTransformToParent());
+    vtkGridTransform* vtkTrans = vtkGridTransform::SafeDownCast(gd->GetWarpTransformFromParent());
 
     if (gd->GetReadWriteAsTransformToParent())
       {
