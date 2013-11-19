@@ -97,28 +97,28 @@ void vtkMRMLNonlinearTransformNode::PrintSelf(ostream& os, vtkIndent indent)
 //----------------------------------------------------------------------------
 vtkGeneralTransform* vtkMRMLNonlinearTransformNode::GetTransformToParent()
 {
-  vtkWarpTransform *wrap = this->GetWarpTransformToParent();
+  vtkWarpTransform *warp = this->GetWarpTransformToParent();
 
   if (this->TransformToParent == 0)
     {
     this->TransformToParent = vtkGeneralTransform::New();
     }
   this->TransformToParent->Identity();
-  this->TransformToParent->Concatenate(wrap);
+  this->TransformToParent->Concatenate(warp);
   return this->TransformToParent;
 }
 
 //----------------------------------------------------------------------------
 vtkGeneralTransform* vtkMRMLNonlinearTransformNode::GetTransformFromParent()
 {
-  vtkWarpTransform *wrap = this->GetWarpTransformFromParent();
+  vtkWarpTransform *warp = this->GetWarpTransformFromParent();
 
   if (this->TransformFromParent == 0)
     {
     this->TransformFromParent = vtkGeneralTransform::New();
     }
   this->TransformFromParent->Identity();
-  this->TransformFromParent->Concatenate(wrap);
+  this->TransformFromParent->Concatenate(warp);
   return this->TransformFromParent;
 
 }
@@ -175,6 +175,13 @@ void vtkMRMLNonlinearTransformNode::SetAndObserveWarpTransformToParent(vtkWarpTr
     {
     this->WarpTransformToParent->AddObserver ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
     }
+
+  if (warp && this->WarpTransformFromParent)
+    {
+    vtkWarpTransform *warpInv = this->GetWarpTransformFromParent();
+    warpInv->DeepCopy(warp);
+    warpInv->Inverse();
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -198,6 +205,13 @@ void vtkMRMLNonlinearTransformNode::SetAndObserveWarpTransformFromParent(vtkWarp
   if ( this->WarpTransformFromParent )
     {
     this->WarpTransformFromParent->AddObserver ( vtkCommand::ModifiedEvent, this->MRMLCallbackCommand );
+    }
+
+  if (warp && this->WarpTransformToParent)
+    {
+    vtkWarpTransform *warpInv = this->GetWarpTransformToParent();
+    warpInv->DeepCopy(warp);
+    warpInv->Inverse();
     }
 }
 

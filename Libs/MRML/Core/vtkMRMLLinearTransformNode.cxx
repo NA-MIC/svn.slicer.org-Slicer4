@@ -31,7 +31,7 @@ vtkMRMLLinearTransformNode::vtkMRMLLinearTransformNode()
 {
   this->MatrixTransformToParent = NULL;
   this->MatrixTransformFromParent = NULL;
-  this->ReadWriteAsTransformToParent = 0;
+  this->ReadWriteAsTransformToParent = 1;
 }
 
 //----------------------------------------------------------------------------
@@ -353,6 +353,14 @@ void vtkMRMLLinearTransformNode::SetAndObserveMatrixTransformToParent(vtkMatrix4
     return;
     }
   vtkSetAndObserveMRMLObjectMacro(this->MatrixTransformToParent, matrix);
+  if (matrix && this->MatrixTransformFromParent)
+    {
+    vtkMatrix4x4 *matrixInv = vtkMatrix4x4::New();
+    matrixInv->DeepCopy(matrix);
+    matrixInv->Invert();
+    vtkSetAndObserveMRMLObjectMacro(this->MatrixTransformFromParent, matrixInv);
+    matrixInv->Delete();
+    }
   this->StorableModifiedTime.Modified();
   this->Modified();
   this->InvokeEvent(vtkMRMLTransformableNode::TransformModifiedEvent, NULL);
@@ -366,6 +374,14 @@ void vtkMRMLLinearTransformNode::SetAndObserveMatrixTransformFromParent(vtkMatri
     return;
     }
   vtkSetAndObserveMRMLObjectMacro(this->MatrixTransformFromParent, matrix);
+  if (matrix && this->MatrixTransformToParent)
+    {
+    vtkMatrix4x4 *matrixInv = vtkMatrix4x4::New();
+    matrixInv->DeepCopy(matrix);
+    matrixInv->Invert();
+    vtkSetAndObserveMRMLObjectMacro(this->MatrixTransformToParent, matrixInv);
+    matrixInv->Delete();
+    }
   this->StorableModifiedTime.Modified();
   this->Modified();
   this->InvokeEvent(vtkMRMLTransformableNode::TransformModifiedEvent, NULL);

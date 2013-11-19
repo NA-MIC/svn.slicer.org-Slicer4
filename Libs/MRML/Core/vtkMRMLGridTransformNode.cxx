@@ -228,11 +228,15 @@ void vtkMRMLGridTransformNode::Copy(vtkMRMLNode *anode)
   vtkMRMLGridTransformNode *node = vtkMRMLGridTransformNode::SafeDownCast(anode);
   if (node)
     {
-    this->SetAndObserveWarpTransformToParent(node->GetWarpTransformToParent());
-    this->SetAndObserveWarpTransformFromParent(node->GetWarpTransformFromParent());
+    if (this->WarpTransformToParent)
+      {
+      this->SetAndObserveWarpTransformToParent(node->GetWarpTransformToParent());
+      }
+    if (this->WarpTransformFromParent)
+      {
+      this->SetAndObserveWarpTransformFromParent(node->GetWarpTransformFromParent());
+      }
     }
-
-
 }
 
 //----------------------------------------------------------------------------

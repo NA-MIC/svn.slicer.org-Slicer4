@@ -233,10 +233,15 @@ void vtkMRMLBSplineTransformNode::Copy(vtkMRMLNode *anode)
   vtkMRMLBSplineTransformNode *node = vtkMRMLBSplineTransformNode::SafeDownCast(anode);
   if (node)
     {
-    this->SetAndObserveWarpTransformToParent(node->GetWarpTransformToParent());
-    this->SetAndObserveWarpTransformFromParent(node->GetWarpTransformFromParent());
+    if (this->WarpTransformToParent)
+      {
+      this->SetAndObserveWarpTransformToParent(node->GetWarpTransformToParent());
+      }
+    if (this->WarpTransformFromParent)
+      {
+      this->SetAndObserveWarpTransformFromParent(node->GetWarpTransformFromParent());
+      }
     }
-
 }
 
 //----------------------------------------------------------------------------
