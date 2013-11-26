@@ -396,7 +396,7 @@ set(Slicer_VERSION_MAJOR "4")
 set(Slicer_VERSION_MINOR "3")
 set(Slicer_VERSION_PATCH "1")
 # Releases define a tweak level
-set(Slicer_VERSION_TWEAK 1)
+set(Slicer_VERSION_TWEAK 2)
 #set(Slicer_VERSION_RC 0)
 
 SlicerMacroExtractRepositoryInfo(VAR_PREFIX Slicer) # Used to configure vtkSlicerVersionConfigure.h.in
@@ -408,7 +408,7 @@ if(NOT Slicer_FORCED_WC_REVISION STREQUAL "")
 endif()
 
 # XXX Comment the following lines when doing the next tweak release
-set(Slicer_VERSION_TWEAK "${Slicer_VERSION_TWEAK}-${Slicer_BUILDDATE}")
+#set(Slicer_VERSION_TWEAK "${Slicer_VERSION_TWEAK}-${Slicer_BUILDDATE}")
 
 if(NOT DEFINED Slicer_VERSION_TWEAK)
   # if it's not a release, use the date as a tweak
