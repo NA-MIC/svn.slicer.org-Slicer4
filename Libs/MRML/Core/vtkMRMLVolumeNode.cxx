@@ -23,7 +23,13 @@ Version:   $Revision: 1.14 $
 #include <vtkImageData.h>
 #include <vtkMathUtilities.h>
 #include <vtkMatrix4x4.h>
+#include <vtkHomogeneousTransform.h>
+#include <vtkGeneralTransform.h>
+#include <vtkImageDataGeometryFilter.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkAppendPolyData.h>
 #include <vtkNew.h>
+#include <vtkSmartPointer.h>
 
 //----------------------------------------------------------------------------
 vtkCxxSetObjectMacro(vtkMRMLVolumeNode, ImageData, vtkImageData);
@@ -870,4 +876,115 @@ bool vtkMRMLVolumeNode::GetModifiedSinceRead()
 {
   return this->Superclass::GetModifiedSinceRead() ||
     (this->ImageData && this->ImageData->GetMTime() > this->GetStoredTime());
+}
+
+//---------------------------------------------------------------------------
+bool vtkMRMLVolumeNode::CanApplyNonLinearTransforms()const
+{
+  return true;
+}
+
+//-----------------------------------------------------------
+void vtkMRMLVolumeNode::ApplyTransform(vtkAbstractTransform* transform)
+{
+  vtkHomogeneousTransform* linearTransform = vtkHomogeneousTransform::SafeDownCast(transform);
+  if (linearTransform)
+    {
+    this->ApplyTransformMatrix(linearTransform->GetMatrix());
+    }
+  else
+    {
+    this->ApplyNonLinearTransform(transform);    
+
+    }
+  return;
+}
+//-----------------------------------------------------------
+void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
+{
+  if (this->GetImageData() == 0 || !this->CanApplyNonLinearTransforms())
+    {
+    return;
+    }
+
+  // Compute extents of the output image
+  // For each of 6 volume boundary planes:
+  // 1. Convert the slice image to a polydata
+  // 2. Transform polydata
+  // Then uppend all poly datas and compute RAS extents
+
+  int extent[6];
+  this->GetImageData()->GetExtent(extent);
+
+  vtkSmartPointer<vtkImageDataGeometryFilter> imageDataGeometryFilter = 
+    vtkSmartPointer<vtkImageDataGeometryFilter>::New();
+  imageDataGeometryFilter->SetInput(this->GetImageData());
+  
+  vtkGeneralTransform *IJK2WorldTransform = vtkGeneralTransform::New();
+  IJK2WorldTransform->Identity();
+  //IJK2WorldTransform->PostMultiply();
+  
+  IJK2WorldTransform->Concatenate(transform);
+
+  vtkSmartPointer<vtkMatrix4x4> rasToIJK = vtkSmartPointer<vtkMatrix4x4>::New();
+  this->GetRASToIJKMatrix(rasToIJK);
+  rasToIJK->Invert();
+  IJK2WorldTransform->Concatenate(rasToIJK.GetPointer());
+
+  vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = 
+    vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+  transformFilter->SetInput(imageDataGeometryFilter->GetOutput());
+  transformFilter->SetTransform(IJK2WorldTransform);
+
+
+  vtkSmartPointer<vtkPolyData> planes[6];
+
+  planes[0] = vtkSmartPointer<vtkPolyData>::New();
+  imageDataGeometryFilter->SetExtent(extent[0],extent[0], extent[2],extent[3],extent[4],extent[5]);
+  imageDataGeometryFilter->Update();
+  transformFilter->Update();
+  planes[0]->DeepCopy(transformFilter->GetOutput());
+
+  planes[1] = vtkSmartPointer<vtkPolyData>::New();
+  imageDataGeometryFilter->SetExtent(extent[1],extent[1], extent[2],extent[3],extent[4],extent[5]);
+  imageDataGeometryFilter->Update();
+  transformFilter->Update();
+  planes[1]->DeepCopy(transformFilter->GetOutput());
+
+  planes[2] = vtkSmartPointer<vtkPolyData>::New();
+  imageDataGeometryFilter->SetExtent(extent[0],extent[1], extent[2],extent[2],extent[4],extent[5]);
+  imageDataGeometryFilter->Update();
+  transformFilter->Update();
+  planes[2]->DeepCopy(transformFilter->GetOutput());
+
+  planes[3] = vtkSmartPointer<vtkPolyData>::New();
+  imageDataGeometryFilter->SetExtent(extent[0],extent[1], extent[3],extent[3],extent[4],extent[5]);
+  imageDataGeometryFilter->Update();
+  transformFilter->Update();
+  planes[3]->DeepCopy(transformFilter->GetOutput());
+
+  planes[4] = vtkSmartPointer<vtkPolyData>::New();
+  imageDataGeometryFilter->SetExtent(extent[0],extent[1], extent[2],extent[3],extent[4],extent[4]);
+  imageDataGeometryFilter->Update();
+  transformFilter->Update();
+  planes[4]->DeepCopy(transformFilter->GetOutput());
+
+  planes[5] = vtkSmartPointer<vtkPolyData>::New();
+  imageDataGeometryFilter->SetExtent(extent[0],extent[1], extent[2],extent[3],extent[5],extent[5]);
+  imageDataGeometryFilter->Update();
+  transformFilter->Update();
+  planes[5]->DeepCopy(transformFilter->GetOutput());
+
+  vtkSmartPointer<vtkAppendPolyData> appendPolyData
+    = vtkSmartPointer<vtkAppendPolyData>::New();
+  for (int i=0; i<6; i++)
+    {
+    appendPolyData->AddInput(planes[i]);
+    }
+  appendPolyData->Update();
+  double bounds[6];
+  appendPolyData->GetOutput()->ComputeBounds();
+  appendPolyData->GetOutput()->GetBounds(bounds);
+
+  IJK2WorldTransform->Delete();
 }
