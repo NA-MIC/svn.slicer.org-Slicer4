@@ -31,6 +31,7 @@ Version:   $Revision: 1.14 $
 #include <vtkNew.h>
 #include <vtkSmartPointer.h>
 
+#include <vtkImageResliceMask.h>
 //----------------------------------------------------------------------------
 vtkCxxSetObjectMacro(vtkMRMLVolumeNode, ImageData, vtkImageData);
 
@@ -922,13 +923,13 @@ void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
   
   vtkGeneralTransform *IJK2WorldTransform = vtkGeneralTransform::New();
   IJK2WorldTransform->Identity();
-  //IJK2WorldTransform->PostMultiply();
+  ////****IJK2WorldTransform->PostMultiply();
   
-  IJK2WorldTransform->Concatenate(transform);
+  ////****IJK2WorldTransform->Concatenate(transform);
 
   vtkSmartPointer<vtkMatrix4x4> rasToIJK = vtkSmartPointer<vtkMatrix4x4>::New();
   this->GetRASToIJKMatrix(rasToIJK);
-  rasToIJK->Invert();
+  //rasToIJK->Invert();
   IJK2WorldTransform->Concatenate(rasToIJK.GetPointer());
 
   vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = 
@@ -986,5 +987,49 @@ void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
   appendPolyData->GetOutput()->ComputeBounds();
   appendPolyData->GetOutput()->GetBounds(bounds);
 
+  vtkSmartPointer<vtkImageResliceMask> reslice
+    = vtkSmartPointer<vtkImageResliceMask>::New();
+
+  reslice->SetInput(this->GetImageData());
+  reslice->SetResliceTransform(IJK2WorldTransform); 
+  reslice->SetInterpolationModeToNearestNeighbor();
+  reslice->SetBackgroundColor(0, 0, 0, 0); 
+  reslice->AutoCropOutputOff();
+  reslice->SetOptimization(1);
+
+  reslice->SetOutputOrigin( 0, 0, 0 );
+  reslice->SetOutputSpacing( 1, 1, 1 );
+  reslice->SetOutputDimensionality( 3 );
+
+  int dimensions[3];
+  double spacing[3];
+  this->GetSpacing(spacing);
+
+  int ext[6];
+  this->GetImageData()->GetExtent(ext);
+
+  for (int i=0; i<3; i++)
+    {
+    ////**** dimensions[i] = (bounds[2*i+1] - bounds[2*i])/spacing[i];
+    dimensions[i] = (ext[2*i+1] - ext[2*i]);
+    }
+
+  reslice->SetOutputExtent( 0, dimensions[0]-1,
+                            0, dimensions[1]-1,
+                            0, dimensions[2]-1);
+
+  reslice->GetBackgroundMask()->SetUpdateExtentToWholeExtent();
+
+  reslice->Update();
+
+  vtkSmartPointer<vtkImageData> resampleImage 
+    = vtkSmartPointer<vtkImageData>::New();
+  resampleImage->DeepCopy(reslice->GetOutput());
+
+  this->SetAndObserveImageData(resampleImage);
+
   IJK2WorldTransform->Delete();
 }
+
+
+

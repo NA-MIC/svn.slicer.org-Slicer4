@@ -36,7 +36,7 @@
 // STD includes
 #include <cassert>
 
-vtkCxxRevisionMacro(vtkImageResliceMask, "$Revision$");
+vtkCxxRevisionMacro(vtkImageResliceMask, "$Revision: 22539 $");
 vtkStandardNewMacro(vtkImageResliceMask);
 vtkCxxSetObjectMacro(vtkImageResliceMask, InformationInput, vtkImageData);
 vtkCxxSetObjectMacro(vtkImageResliceMask,ResliceAxes,vtkMatrix4x4);

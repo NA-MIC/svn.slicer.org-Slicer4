@@ -135,6 +135,7 @@ set(MRMLCore_SRCS
   vtkMRMLNode.cxx
   vtkMRMLParser.cxx
   vtkMRMLProceduralColorNode.cxx
+  vtkImageResliceMask.cxx
   vtkMRMLROIListNode.cxx
   vtkMRMLROINode.cxx
   vtkMRMLScalarVolumeDisplayNode.cxx
