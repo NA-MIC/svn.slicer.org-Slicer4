@@ -923,13 +923,13 @@ void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
   
   vtkGeneralTransform *IJK2WorldTransform = vtkGeneralTransform::New();
   IJK2WorldTransform->Identity();
-  ////****IJK2WorldTransform->PostMultiply();
+  //IJK2WorldTransform->PostMultiply();
   
-  ////****IJK2WorldTransform->Concatenate(transform);
+  IJK2WorldTransform->Concatenate(transform);
 
   vtkSmartPointer<vtkMatrix4x4> rasToIJK = vtkSmartPointer<vtkMatrix4x4>::New();
   this->GetRASToIJKMatrix(rasToIJK);
-  //rasToIJK->Invert();
+  rasToIJK->Invert();
   IJK2WorldTransform->Concatenate(rasToIJK.GetPointer());
 
   vtkSmartPointer<vtkTransformPolyDataFilter> transformFilter = 
@@ -990,33 +990,42 @@ void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
   vtkSmartPointer<vtkImageResliceMask> reslice
     = vtkSmartPointer<vtkImageResliceMask>::New();
 
+  vtkGeneralTransform *resampleXform = vtkGeneralTransform::New();
+  resampleXform->Identity();
+  resampleXform->PostMultiply();
+ 
+  this->GetRASToIJKMatrix(rasToIJK);
+  rasToIJK->Invert();
+  resampleXform->Concatenate(rasToIJK.GetPointer());
+
+  resampleXform->Concatenate(transform);
+  //resampleXform->Inverse();
+
+  reslice->SetResliceTransform(resampleXform); 
+
   reslice->SetInput(this->GetImageData());
-  reslice->SetResliceTransform(IJK2WorldTransform); 
   reslice->SetInterpolationModeToNearestNeighbor();
   reslice->SetBackgroundColor(0, 0, 0, 0); 
   reslice->AutoCropOutputOff();
   reslice->SetOptimization(1);
 
-  reslice->SetOutputOrigin( 0, 0, 0 );
+  int dimensions[3];
+  double origin[3];
+  double spacing[3];
+
+  this->GetImageData()->GetOrigin(origin);
+  reslice->SetOutputOrigin( origin[0], origin[1], origin[2] );
   reslice->SetOutputSpacing( 1, 1, 1 );
   reslice->SetOutputDimensionality( 3 );
 
-  int dimensions[3];
-  double spacing[3];
   this->GetSpacing(spacing);
-
-  int ext[6];
-  this->GetImageData()->GetExtent(ext);
-
   for (int i=0; i<3; i++)
     {
-    ////**** dimensions[i] = (bounds[2*i+1] - bounds[2*i])/spacing[i];
-    dimensions[i] = (ext[2*i+1] - ext[2*i]);
+    dimensions[i] = (bounds[2*i+1] - bounds[2*i])/spacing[i];
     }
-
-  reslice->SetOutputExtent( 0, dimensions[0]-1,
-                            0, dimensions[1]-1,
-                            0, dimensions[2]-1);
+  reslice->SetOutputExtent( 0, dimensions[0],
+                            0, dimensions[1],
+                            0, dimensions[2]);
 
   reslice->GetBackgroundMask()->SetUpdateExtentToWholeExtent();
 
@@ -1029,6 +1038,7 @@ void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
   this->SetAndObserveImageData(resampleImage);
 
   IJK2WorldTransform->Delete();
+  resampleXform->Delete();
 }
 
 
