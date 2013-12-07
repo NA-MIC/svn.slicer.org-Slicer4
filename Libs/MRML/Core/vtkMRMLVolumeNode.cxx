@@ -993,12 +993,18 @@ void vtkMRMLVolumeNode::ApplyNonLinearTransform(vtkAbstractTransform* transform)
   vtkGeneralTransform *resampleXform = vtkGeneralTransform::New();
   resampleXform->Identity();
   resampleXform->PostMultiply();
- 
+
   this->GetRASToIJKMatrix(rasToIJK);
-  rasToIJK->Invert();
+
+  vtkSmartPointer<vtkMatrix4x4> IJKToRAS = vtkSmartPointer<vtkMatrix4x4>::New();
+  IJKToRAS->DeepCopy(rasToIJK);
+  IJKToRAS->Invert();
+  transform->Inverse();
+
+  resampleXform->Concatenate(IJKToRAS.GetPointer());
+  resampleXform->Concatenate(transform);
   resampleXform->Concatenate(rasToIJK.GetPointer());
 
-  resampleXform->Concatenate(transform);
   //resampleXform->Inverse();
 
   reslice->SetResliceTransform(resampleXform); 
