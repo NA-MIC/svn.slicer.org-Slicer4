@@ -61,7 +61,6 @@ public:
   /// Copy the node's attributes to this object
   void CopyOrientation(vtkMRMLVolumeNode *node);
 
-
   ///
   /// Get node XML tag name (like Volume, Model)
   virtual const char* GetNodeTagName() = 0;
@@ -154,7 +153,7 @@ public:
   /// made to store all information in the MRML node (vtkMRMLVolumeNode::Origin,
   /// vtkMRMLVolumeNode::Spacing, and vtkMRMLVolumeNode::IJKToRASDirections).
   /// \sa GetImageData(), SetImageDataConnection()
-  void SetAndObserveImageData(vtkImageData *ImageData);
+  virtual void SetAndObserveImageData(vtkImageData *ImageData);
 #if (VTK_MAJOR_VERSION <= 5)
   vtkGetObjectMacro(ImageData, vtkImageData);
 #else

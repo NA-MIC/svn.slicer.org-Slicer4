@@ -52,6 +52,24 @@
           </widget>
         </item>
         <item>
+          <widget class="QLabel" name="FiberDisplayLabel">
+            <property name="text">
+              <string>Fiber Display</string>
+            </property>
+          </widget>
+        </item>
+        <item>
+          <widget class="QComboBox" name="DisplayClassComboBox">
+            <property name="sizePolicy">
+              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+              </sizepolicy>
+            </property>
+          </widget>
+        </item>
+        
+        <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>

@@ -12,7 +12,6 @@
 
 =========================================================================auto=*/
 
-
 #include "vtkSlicerFiberBundleLogic.h"
 
 // MRML includes
@@ -45,7 +44,6 @@ vtkSlicerFiberBundleLogic::vtkSlicerFiberBundleLogic()
 //----------------------------------------------------------------------------
 vtkSlicerFiberBundleLogic::~vtkSlicerFiberBundleLogic()
 {
-
 }
 
 //----------------------------------------------------------------------------
@@ -131,15 +129,15 @@ vtkMRMLFiberBundleNode* vtkSlicerFiberBundleLogic::AddFiberBundle (const char* f
     std::string uname( this->GetMRMLScene()->GetUniqueNameByString(name.c_str()));
     fiberBundleNode->SetName(uname.c_str());
 
+    displayLineNode->SetVisibility(1);
+    displayTubeNode->SetVisibility(0);
+    displayGlyphNode->SetVisibility(0);
+
     fiberBundleNode->SetScene(this->GetMRMLScene());
     storageNode->SetScene(this->GetMRMLScene());
     displayLineNode->SetScene(this->GetMRMLScene());
     displayTubeNode->SetScene(this->GetMRMLScene());
     displayGlyphNode->SetScene(this->GetMRMLScene());
-
-    displayLineNode->SetVisibility(1);
-    displayTubeNode->SetVisibility(0);
-    displayGlyphNode->SetVisibility(0);
 
     this->GetMRMLScene()->SaveStateForUndo();
     this->GetMRMLScene()->AddNode(lineDTDPN);
@@ -220,11 +218,8 @@ int vtkSlicerFiberBundleLogic::SaveFiberBundle (const char* filename, vtkMRMLFib
 
   int res = storageNode->WriteData(fiberBundleNode);
 
-
   return res;
-
 }
-
 
 //----------------------------------------------------------------------------
 void vtkSlicerFiberBundleLogic::PrintSelf(ostream& os, vtkIndent indent)
@@ -232,9 +227,7 @@ void vtkSlicerFiberBundleLogic::PrintSelf(ostream& os, vtkIndent indent)
   this->vtkObject::PrintSelf(os, indent);
 
   os << indent << "vtkSlicerFiberBundleLogic:             " << this->GetClassName() << "\n";
-
 }
-
 
 //-----------------------------------------------------------------------------
 void vtkSlicerFiberBundleLogic::RegisterNodes()
