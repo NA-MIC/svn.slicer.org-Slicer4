@@ -293,39 +293,30 @@ void vtkMRMLFiberBundleDisplayNode::SetColorMode (int colorMode)
 {
   int oldColorMode = this->GetColorMode();
   this->ColorMode = colorMode;
-  vtkMRMLDiffusionTensorDisplayPropertiesNode * DiffusionTensorDisplayPropertiesNode =
-    this->GetDiffusionTensorDisplayPropertiesNode( );
 
-  if (DiffusionTensorDisplayPropertiesNode != NULL)
-    {
-    if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeSolid)
-      {
-      this->ScalarVisibilityOff( );
-      }
-    else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeUseCellScalars)
-      {
-      this->ScalarVisibilityOn( );
-      }
-    else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeMeanFiberOrientation)
-      {
-      this->ScalarVisibilityOn( );
-      }
-    else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModePointFiberOrientation)
-      {
-      this->ScalarVisibilityOn( );
-     }
-    else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeScalarData)
-      {
-      this->ScalarVisibilityOn( );
-      }
-    else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeScalar)
-      {
-      this->ScalarVisibilityOn( );
-      }
-    }
-  else
+  if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeSolid)
     {
     this->ScalarVisibilityOff( );
+    }
+  else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeUseCellScalars)
+    {
+    this->ScalarVisibilityOn( );
+    }
+  else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeMeanFiberOrientation)
+    {
+    this->ScalarVisibilityOn( );
+    }
+  else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModePointFiberOrientation)
+    {
+    this->ScalarVisibilityOn( );
+   }
+  else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeScalarData)
+    {
+    this->ScalarVisibilityOn( );
+    }
+  else if (this->GetColorMode ( ) == vtkMRMLFiberBundleDisplayNode::colorModeScalar)
+    {
+    this->ScalarVisibilityOn( );
     }
 
   if (this->ColorMode != oldColorMode)
