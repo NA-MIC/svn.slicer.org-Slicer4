@@ -1,0 +1,2 @@
+--modelSceneFile C:/Data/tracts/hier.mrml#vtkMRMLModelHierarchyNode1 --inputdirectory . --outputfile C:/Data/tracts/out.txt --enumeration FractionalAnisotropy 
+ 

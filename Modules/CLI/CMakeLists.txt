@@ -37,6 +37,8 @@ set(cli_modules
   SubtractScalarVolumes
   ThresholdScalarVolume
   VotingBinaryHoleFillingImageFilter
+#  FinslerTractography
+  FiberHierarchyMeasurements
   )
 if(BUILD_TESTING)
   list(APPEND cli_modules ROITest)
