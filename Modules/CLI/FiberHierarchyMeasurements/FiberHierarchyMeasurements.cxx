@@ -292,12 +292,13 @@ int main( int argc, char * argv[] )
       readerVTP->SetFileName(fileName.c_str());
       readerVTP->Update();
 
+      computeScalarMeasurements(readerVTP->GetOutput(), ofs, std::string(fileName.c_str()), std::string(""));
       if( readerVTP->GetOutput()->GetPointData()->GetTensors() == NULL )
         {
         std::cerr << argv[0] << ": No tensor data for file " << fileName << std::endl;
+        continue;
         }
 
-      computeScalarMeasurements(readerVTP->GetOutput(), ofs, std::string(fileName.c_str()), std::string(""));
       for (int o=0; o<operations.size(); o++)
         {
         computeTensorMeasurement(math,
@@ -313,12 +314,13 @@ int main( int argc, char * argv[] )
       readerVTK->SetFileName(fileName.c_str());
       readerVTK->Update();
 
+      computeScalarMeasurements(readerVTK->GetOutput(), ofs, std::string(fileName.c_str()), std::string(""));
+
       if( readerVTK->GetOutput()->GetPointData()->GetTensors() == NULL )
         {
         std::cerr << argv[0] << ": No tensor data for file " << fileName << std::endl;
+        continue;
         }
-
-      computeScalarMeasurements(readerVTK->GetOutput(), ofs, std::string(fileName.c_str()), std::string(""));
 
       for (int o=0; o<operations.size(); o++)
         {

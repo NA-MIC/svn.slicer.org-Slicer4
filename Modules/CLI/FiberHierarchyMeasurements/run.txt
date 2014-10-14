@@ -1,2 +1,3 @@
---modelSceneFile C:/Data/tracts/hier.mrml#vtkMRMLModelHierarchyNode1 --inputdirectory . --outputfile C:/Data/tracts/out.txt --enumeration FractionalAnisotropy 
- 
+--inputtype Folder --fiberSceneFile C:/Data/tracts/hier.mrml#vtkMRMLModelHierarchyNode1 --inputdirectory C:/Data/tracts --outputfile C:/Data/tracts/out.txt
+--inputtype Folder --fiberSceneFile C:/Data/tracts/hier.mrml#vtkMRMLModelHierarchyNode1 --inputdirectory C:/Data/FiberHierarchy --outputfile C:/Data/FiberHierarchy/out.txt
+--inputtype Hierarchy --fiberSceneFile C:/Data/tracts/hier.mrml#vtkMRMLModelHierarchyNode1 --inputdirectory C:/Data/tracts --outputfile C:/Data/tracts/out.txt
