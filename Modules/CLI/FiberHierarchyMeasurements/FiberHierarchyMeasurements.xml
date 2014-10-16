@@ -33,7 +33,7 @@
 
     <directory>
       <name>InputDirectory</name>
-      <label>Input Directory</label>
+      <label>Input Folder</label>
       <channel>input</channel>
       <longflag>--inputdirectory</longflag>
       <description><![CDATA[Directory from which to read fibers]]></description>
