@@ -36,15 +36,19 @@
 #include "FiberHierarchyMeasurementsCLP.h"
 
 void computeScalarMeasurements(vtkPolyData *poly,
-                               std::ofstream &ofs,
                                std::string &id,
                                std::string &operation);
+
 int computeTensorMeasurement(vtkPolyDataTensorToColor *math,
                              vtkAlgorithmOutput *input,
                              std::string &id,
-                             std::string &operation,
-                             std::ofstream &ofs);
+                             std::string &operation);
+
 bool setTensors(vtkPolyData *poly);
+
+void printTable(std::ofstream &ofs);
+
+std::map< std::string, std::map<std::string, double> > OutTable;
 
 int main( int argc, char * argv[] )
 {
@@ -167,8 +171,7 @@ int main( int argc, char * argv[] )
             computeTensorMeasurement(math,
                                      fiberNode->GetPolyDataConnection(),
                                      id,
-                                     operations[o],
-                                     ofs);
+                                     operations[o]);
             }
           }
         }
@@ -203,7 +206,7 @@ int main( int argc, char * argv[] )
       readerVTP->SetFileName(fileName.c_str());
       readerVTP->Update();
 
-      computeScalarMeasurements(readerVTP->GetOutput(), ofs, std::string(fileName.c_str()), std::string(""));
+      computeScalarMeasurements(readerVTP->GetOutput(), std::string(fileName.c_str()), std::string(""));
 
       if( !setTensors(readerVTP->GetOutput()) )
         {
@@ -216,8 +219,7 @@ int main( int argc, char * argv[] )
         computeTensorMeasurement(math,
                                  readerVTP->GetOutputPort(),
                                  std::string(fileName.c_str()),
-                                 operations[o],
-                                 ofs);
+                                 operations[o]);
         }
       }
     for (int i=0; i<fileNamesVTK->GetNumberOfValues(); i++)
@@ -226,7 +228,7 @@ int main( int argc, char * argv[] )
       readerVTK->SetFileName(fileName.c_str());
       readerVTK->Update();
 
-      computeScalarMeasurements(readerVTK->GetOutput(), ofs, std::string(fileName.c_str()), std::string(""));
+      computeScalarMeasurements(readerVTK->GetOutput(), std::string(fileName.c_str()), std::string(""));
 
       if( !setTensors(readerVTK->GetOutput()) )
         {
@@ -239,8 +241,7 @@ int main( int argc, char * argv[] )
         computeTensorMeasurement(math,
                                  readerVTK->GetOutputPort(),
                                  std::string(fileName.c_str()),
-                                 operations[o],
-                                 ofs);
+                                 operations[o]);
         }
       }
     gfnVTK->Delete();
@@ -251,11 +252,12 @@ int main( int argc, char * argv[] )
 
   math->Delete();
 
+  printTable(ofs);
+
   return EXIT_SUCCESS;
 }
 
 void computeScalarMeasurements(vtkPolyData *poly,
-                               std::ofstream &ofs,
                                std::string &id,
                                std::string &operation)
 {
@@ -284,15 +286,22 @@ void computeScalarMeasurements(vtkPolyData *poly,
     sum /= poly->GetNumberOfPoints();
 
     std::cout << " : " << name << " = " << sum << std::endl;
-    ofs << id << " : " << name << " = " << sum << std::endl;
-    }
+    //ofs << id << " : " << name << " = " << sum << std::endl;
+
+    std::map< std::string, std::map<std::string, double> >::iterator it = OutTable.find(id);
+    if (it == OutTable.end())
+      {
+      OutTable[id] = std::map<std::string, double>();
+      it = OutTable.find(id);
+      }
+      it->second[name] = sum;
+    } //for (int i=0; i<poly->GetPointData()->GetNumberOfArrays(); i++)
 }
 
 int computeTensorMeasurement(vtkPolyDataTensorToColor *math,
                              vtkAlgorithmOutput *input,
                              std::string &id,
-                             std::string &operation,
-                             std::ofstream &ofs)
+                             std::string &operation)
 {
 #if (VTK_MAJOR_VERSION <= 5)
   math->SetInput(0, input );
@@ -349,7 +358,7 @@ int computeTensorMeasurement(vtkPolyDataTensorToColor *math,
     std::cerr << "no scalars computed" << std::endl;
     }
 
-  computeScalarMeasurements(math->GetOutput(), ofs, id, operation);
+  computeScalarMeasurements(math->GetOutput(), id, operation);
 
   return EXIT_SUCCESS;
 }
@@ -377,4 +386,51 @@ bool setTensors(vtkPolyData *poly)
       }
     }
   return hasTensors;
+}
+
+void printTable(std::ofstream &ofs)
+{
+  std::map<std::string, std::string> names;
+  std::map< std::string, std::map<std::string, double> >::iterator it;
+  std::map<std::string, double>::iterator it1;
+  std::map<std::string, std::string>::iterator it2;
+
+  for(it = OutTable.begin(); it != OutTable.end(); it++)
+    {
+    for (it1 = it->second.begin(); it1 != it->second.end(); it1++)
+      {
+      names[it1->first] = it1->first;
+      }
+    }
+
+  std::cout << "Name";
+  ofs << "Name";
+
+  for (it2 = names.begin(); it2 != names.end(); it2++)
+    {
+    std::cout << " , " << it2->second;
+    ofs << " , " << it2->second;
+    }
+  std::cout << std::endl;
+  ofs << std::endl;
+
+  for(it = OutTable.begin(); it != OutTable.end(); it++)
+    {
+    std::cout << it->first;
+    ofs << it->first;
+
+    for (it2 = names.begin(); it2 != names.end(); it2++)
+      {
+      std::cout << " , ";
+      ofs << " , ";
+      it1 = it->second.find(it2->second);
+      if (it1 != it->second.end())
+        {
+        std::cout << it1->second;
+        ofs << it1->second;
+        }
+      }
+    std::cout << std::endl;
+    ofs << std::endl;
+    }
 }
