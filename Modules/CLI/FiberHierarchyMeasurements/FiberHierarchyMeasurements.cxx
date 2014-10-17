@@ -35,105 +35,16 @@
 
 #include "FiberHierarchyMeasurementsCLP.h"
 
-static void computeScalarMeasurements(vtkPolyData *poly,
-                                     std::ofstream &ofs,
-                                     std::string &id,
-                                     std::string &operation)
-{
-  // averagre measurement for each scalar array
-  for (int i=0; i<poly->GetPointData()->GetNumberOfArrays(); i++)
-    {
-    vtkDataArray *arr = poly->GetPointData()->GetArray(i);
-    if (arr->GetNumberOfComponents() > 1)
-      {
-      continue;
-      }
-
-    std::string name = operation;
-    if (arr->GetName())
-      {
-      name = std::string(arr->GetName());
-      }
-
-    double val;
-    double sum = 0;
-    for (int n=0; n<poly->GetNumberOfPoints(); n++)
-      {
-      arr->GetTuple(n, &val);
-      sum += val;
-      }
-    sum /= poly->GetNumberOfPoints();
-
-    std::cout << " : " << name << " = " << sum << std::endl;
-    ofs << id << " : " << name << " = " << sum << std::endl;
-    }
-}
-
-static int computeTensorMeasurement(vtkPolyDataTensorToColor *math,
-                                     vtkAlgorithmOutput *input,
-                                     std::string &id,
-                                     std::string &operation,
-                                     std::ofstream &ofs)
-{
-#if (VTK_MAJOR_VERSION <= 5)
-  math->SetInput(0, input );
-#else
-  math->SetInputConnection(0, input );
-#endif
-
-  if( operation == std::string("Trace") )
-    {
-    math->ColorGlyphsByTrace();
-    }
-  else if( operation == std::string("RelativeAnisotropy") )
-    {
-    math->ColorGlyphsByRelativeAnisotropy();
-    }
-  else if( operation == std::string("FractionalAnisotropy") )
-    {
-    math->ColorGlyphsByFractionalAnisotropy();
-    }
-  else if( operation == std::string("LinearMeasurement") || operation == std::string("LinearMeasure") )
-    {
-    math->ColorGlyphsByLinearMeasure();
-    }
-  else if( operation == std::string("PlanarMeasurement") || operation == std::string("PlanarMeasure") )
-    {
-    math->ColorGlyphsByPlanarMeasure();
-    }
-  else if( operation == std::string("SphericalMeasurement") || operation == std::string("SphericalMeasure") )
-    {
-    math->ColorGlyphsBySphericalMeasure();
-    }
-  else if( operation == std::string("MinEigenvalue") )
-    {
-    math->ColorGlyphsByMinEigenvalue();
-    }
-  else if( operation == std::string("MidEigenvalue") )
-    {
-    math->ColorGlyphsByMidEigenvalue();
-    }
-  else if( operation == std::string("MaxEigenvalue") )
-    {
-    math->ColorGlyphsByMaxEigenvalue();
-    }
-  else
-    {
-    std::cerr << operation << ": Operation " << operation << "not supported" << std::endl;
-    return EXIT_FAILURE;
-    }
-
-  math->Update();
-
-  if (!math->GetOutput()->GetPointData() || !math->GetOutput()->GetPointData()->GetScalars())
-    {
-    std::cerr << "no scalars computed" << std::endl;
-    }
-
-  computeScalarMeasurements(math->GetOutput(), ofs, id, operation);
-
-  return EXIT_SUCCESS;
-}
+void computeScalarMeasurements(vtkPolyData *poly,
+                               std::ofstream &ofs,
+                               std::string &id,
+                               std::string &operation);
+int computeTensorMeasurement(vtkPolyDataTensorToColor *math,
+                             vtkAlgorithmOutput *input,
+                             std::string &id,
+                             std::string &operation,
+                             std::ofstream &ofs);
+bool setTensors(vtkPolyData *poly);
 
 int main( int argc, char * argv[] )
 {
@@ -254,10 +165,10 @@ int main( int argc, char * argv[] )
           for (int o=0; o<operations.size(); o++)
             {
             computeTensorMeasurement(math,
-                                   fiberNode->GetPolyDataConnection(),
-                                   id,
-                                   operations[o],
-                                   ofs);
+                                     fiberNode->GetPolyDataConnection(),
+                                     id,
+                                     operations[o],
+                                     ofs);
             }
           }
         }
@@ -293,7 +204,8 @@ int main( int argc, char * argv[] )
       readerVTP->Update();
 
       computeScalarMeasurements(readerVTP->GetOutput(), ofs, std::string(fileName.c_str()), std::string(""));
-      if( readerVTP->GetOutput()->GetPointData()->GetTensors() == NULL )
+
+      if( !setTensors(readerVTP->GetOutput()) )
         {
         std::cerr << argv[0] << ": No tensor data for file " << fileName << std::endl;
         continue;
@@ -302,10 +214,10 @@ int main( int argc, char * argv[] )
       for (int o=0; o<operations.size(); o++)
         {
         computeTensorMeasurement(math,
-                               readerVTP->GetOutputPort(),
-                               std::string(fileName.c_str()),
-                               operations[o],
-                               ofs);
+                                 readerVTP->GetOutputPort(),
+                                 std::string(fileName.c_str()),
+                                 operations[o],
+                                 ofs);
         }
       }
     for (int i=0; i<fileNamesVTK->GetNumberOfValues(); i++)
@@ -316,7 +228,7 @@ int main( int argc, char * argv[] )
 
       computeScalarMeasurements(readerVTK->GetOutput(), ofs, std::string(fileName.c_str()), std::string(""));
 
-      if( readerVTK->GetOutput()->GetPointData()->GetTensors() == NULL )
+      if( !setTensors(readerVTK->GetOutput()) )
         {
         std::cerr << argv[0] << ": No tensor data for file " << fileName << std::endl;
         continue;
@@ -325,10 +237,10 @@ int main( int argc, char * argv[] )
       for (int o=0; o<operations.size(); o++)
         {
         computeTensorMeasurement(math,
-                               readerVTK->GetOutputPort(),
-                               std::string(fileName.c_str()),
-                               operations[o],
-                               ofs);
+                                 readerVTK->GetOutputPort(),
+                                 std::string(fileName.c_str()),
+                                 operations[o],
+                                 ofs);
         }
       }
     gfnVTK->Delete();
@@ -342,3 +254,127 @@ int main( int argc, char * argv[] )
   return EXIT_SUCCESS;
 }
 
+void computeScalarMeasurements(vtkPolyData *poly,
+                               std::ofstream &ofs,
+                               std::string &id,
+                               std::string &operation)
+{
+  // averagre measurement for each scalar array
+  for (int i=0; i<poly->GetPointData()->GetNumberOfArrays(); i++)
+    {
+    vtkDataArray *arr = poly->GetPointData()->GetArray(i);
+    if (arr->GetNumberOfComponents() > 1)
+      {
+      continue;
+      }
+
+    std::string name = operation;
+    if (arr->GetName())
+      {
+      name = std::string(arr->GetName());
+      }
+
+    double val;
+    double sum = 0;
+    for (int n=0; n<poly->GetNumberOfPoints(); n++)
+      {
+      arr->GetTuple(n, &val);
+      sum += val;
+      }
+    sum /= poly->GetNumberOfPoints();
+
+    std::cout << " : " << name << " = " << sum << std::endl;
+    ofs << id << " : " << name << " = " << sum << std::endl;
+    }
+}
+
+int computeTensorMeasurement(vtkPolyDataTensorToColor *math,
+                             vtkAlgorithmOutput *input,
+                             std::string &id,
+                             std::string &operation,
+                             std::ofstream &ofs)
+{
+#if (VTK_MAJOR_VERSION <= 5)
+  math->SetInput(0, input );
+#else
+  math->SetInputConnection(0, input );
+#endif
+
+  if( operation == std::string("Trace") )
+    {
+    math->ColorGlyphsByTrace();
+    }
+  else if( operation == std::string("RelativeAnisotropy") )
+    {
+    math->ColorGlyphsByRelativeAnisotropy();
+    }
+  else if( operation == std::string("FractionalAnisotropy") )
+    {
+    math->ColorGlyphsByFractionalAnisotropy();
+    }
+  else if( operation == std::string("LinearMeasurement") || operation == std::string("LinearMeasure") )
+    {
+    math->ColorGlyphsByLinearMeasure();
+    }
+  else if( operation == std::string("PlanarMeasurement") || operation == std::string("PlanarMeasure") )
+    {
+    math->ColorGlyphsByPlanarMeasure();
+    }
+  else if( operation == std::string("SphericalMeasurement") || operation == std::string("SphericalMeasure") )
+    {
+    math->ColorGlyphsBySphericalMeasure();
+    }
+  else if( operation == std::string("MinEigenvalue") )
+    {
+    math->ColorGlyphsByMinEigenvalue();
+    }
+  else if( operation == std::string("MidEigenvalue") )
+    {
+    math->ColorGlyphsByMidEigenvalue();
+    }
+  else if( operation == std::string("MaxEigenvalue") )
+    {
+    math->ColorGlyphsByMaxEigenvalue();
+    }
+  else
+    {
+    std::cerr << operation << ": Operation " << operation << "not supported" << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  math->Update();
+
+  if (!math->GetOutput()->GetPointData() || !math->GetOutput()->GetPointData()->GetScalars())
+    {
+    std::cerr << "no scalars computed" << std::endl;
+    }
+
+  computeScalarMeasurements(math->GetOutput(), ofs, id, operation);
+
+  return EXIT_SUCCESS;
+}
+
+bool setTensors(vtkPolyData *poly)
+{
+  bool hasTensors = false;
+  if (poly)
+    {
+    if (poly->GetPointData()->GetTensors())
+      {
+      hasTensors = true;
+      }
+    else
+      {
+      for (int i=0; i<poly->GetPointData()->GetNumberOfArrays(); i++)
+        {
+        vtkDataArray *arr = poly->GetPointData()->GetArray(i);
+        if (arr->GetNumberOfComponents() == 9)
+          {
+          poly->GetPointData()->SetTensors(arr);
+          hasTensors = true;
+          }
+        }
+      }
+    }
+  return hasTensors;
+}
