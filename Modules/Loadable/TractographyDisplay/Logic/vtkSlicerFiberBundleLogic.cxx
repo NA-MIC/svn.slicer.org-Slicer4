@@ -19,6 +19,7 @@
 #ifdef MRML_USE_vtkTeem
 #include "vtkMRMLDiffusionTensorDisplayPropertiesNode.h"
 #include "vtkMRMLFiberBundleNode.h"
+#include "vtkMRMLFiberBundleDisplayNode.h"
 #include "vtkMRMLFiberBundleStorageNode.h"
 #include "vtkMRMLFiberBundleLineDisplayNode.h"
 #include "vtkMRMLFiberBundleTubeDisplayNode.h"
@@ -30,6 +31,9 @@
 #include <vtkNew.h>
 #include <vtkObjectFactory.h>
 #include <vtkPolyData.h>
+#include <vtkPointData.h>
+#include <vtkCellData.h>
+#include <vtkDataArray.h>
 
 #include <itksys/SystemTools.hxx>
 #include <itksys/Directory.hxx>
@@ -164,6 +168,11 @@ vtkMRMLFiberBundleNode* vtkSlicerFiberBundleLogic::AddFiberBundle (const char* f
 
     this->GetMRMLScene()->AddNode(fiberBundleNode);
 
+    if (!this->SetPolyDataTensors(fiberBundleNode));
+      {
+      vtkErrorMacro("No Tensors found in: " << filename);
+      }
+
     // Set up display logic and any other logic classes in future
     //this->InitializeLogicForFiberBundleNode(fiberBundleNode);
 
@@ -245,3 +254,69 @@ void vtkSlicerFiberBundleLogic::RegisterNodes()
 #endif
 }
 
+//------------------------------------------------------------------------------
+bool vtkSlicerFiberBundleLogic::SetPolyDataTensors(vtkMRMLFiberBundleNode *fiberBundleNode)
+{
+  vtkPolyData *polyData = fiberBundleNode->GetPolyData();
+  bool hasTensors = false;
+  vtkDataArray *tensors = 0;
+  if (polyData && polyData->GetPointData()->GetTensors() )
+    {
+    tensors = polyData->GetPointData()->GetTensors();
+    hasTensors = true;
+    }
+  else if (polyData && polyData->GetPointData())
+    {
+    for (int i=0; i<polyData->GetPointData()->GetNumberOfArrays(); i++)
+      {
+      if (polyData->GetPointData()->GetArray(i)->GetNumberOfComponents() == 9)
+        {
+        if (polyData->GetPointData()->GetArray(i)->GetName() == 0)
+          {
+          std::stringstream ss;
+          ss << "Tensor_" << i;
+          polyData->GetPointData()->GetArray(i)->SetName(ss.str().c_str());
+          }
+        if (!hasTensors)
+          {
+          tensors = polyData->GetPointData()->GetArray(i);
+          polyData->GetPointData()->SetTensors(tensors);
+          hasTensors = true;
+          }
+        }
+      }
+    }
+
+  if (tensors)
+    {
+    if (polyData->GetCellData())
+      {
+      polyData->GetCellData()->SetScalars(0);
+      }
+    vtkMRMLFiberBundleDisplayNode *dnode = fiberBundleNode->GetLineDisplayNode();
+    if (dnode)
+      {
+      vtkDataArray *da = dnode->GetInputPolyData()->GetPointData()->GetArray(tensors->GetName());
+      dnode->GetInputPolyData()->GetPointData()->SetTensors(da);
+
+      dnode->SetActiveTensorName(tensors->GetName());
+      }
+    dnode = fiberBundleNode->GetTubeDisplayNode();
+    if (dnode)
+      {
+      vtkDataArray *da = dnode->GetInputPolyData()->GetPointData()->GetArray(tensors->GetName());
+      dnode->GetInputPolyData()->GetPointData()->SetTensors(da);
+
+      dnode->SetActiveTensorName(tensors->GetName());
+      }
+    dnode = fiberBundleNode->GetGlyphDisplayNode();
+    if (dnode)
+      {
+      vtkDataArray *da = dnode->GetInputPolyData()->GetPointData()->GetArray(tensors->GetName());
+      dnode->GetInputPolyData()->GetPointData()->SetTensors(da);
+
+      dnode->SetActiveTensorName(tensors->GetName());
+      }
+    }
+  return hasTensors;
+}

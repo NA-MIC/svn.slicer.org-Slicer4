@@ -277,8 +277,7 @@ void vtkMRMLFiberBundleDisplayNode::UpdatePolyDataPipeline()
   if (this->GetActiveTensorName() &&
     std::string(this->GetActiveTensorName()) != std::string("") &&
     this->GetInputPolyData() &&
-    this->GetInputPolyData()->GetPointData() &&
-    this->GetInputPolyData()->GetPointData()->GetTensors() )
+    this->GetInputPolyData()->GetPointData() )
   {
     this->AssignAttribute->Assign(
       this->GetActiveTensorName(),
